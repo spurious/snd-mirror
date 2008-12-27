@@ -624,9 +624,9 @@
       (max-case #f)
       (cases 0))
   (do ((n 1 (+ n 1)))
-      ((= n 1000))
+      ((= n 10000))
     (do ((m 1 (+ m 1)))
-	((= m 3))
+	((= m 4))
       (let ((val (sin (/ (* m pi) n)))
 	    (expr (sin-m*pi/n m n)))
 	(if expr 

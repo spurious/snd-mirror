@@ -1650,13 +1650,584 @@ static XEN g_dlerror(void)
 
 static XEN g_dlinit(XEN handle, XEN func)
 {
-  typedef void *(*snd_dl_func)(void);
-  void *proc;
-  proc = dlsym((void *)(XEN_UNWRAP_C_POINTER(handle)), XEN_TO_C_STRING(func));
+  /* 'man dlopen' suggests: double (*cosine)(double); *(void **) (&cosine) = dlsym(handle, "cos"); printf("%f\n", (*cosine)(2.0)); */
+  void (*proc)(void);
+  /* typedef void *(*snd_dl_func)(void); */
+  /* void *proc; */
+  (*(void **)(&proc)) = dlsym((void *)(XEN_UNWRAP_C_POINTER(handle)), XEN_TO_C_STRING(func));
   if (proc == NULL) return(C_TO_XEN_STRING(dlerror()));
-  ((snd_dl_func)proc)();
+  /* ((snd_dl_func)proc)(); */
+  (*proc)();
   return(XEN_TRUE);
 }
+
+
+#if MUS_DEBUGGING && HAVE_S7
+/* --------------------------------------------------------------------------------
+ *
+ * an experiment -- ideally there would not need to be any "binding" to load
+ *   an arbitrary C library and call any function in it.  Correct arg types
+ *   and number would be left to the caller, and the call itself would tell
+ *   what type to expect in return (so we would not need to parse a C header file)
+ */
+
+static void **handles = NULL;
+static int handles_size = 0, handles_top = 0;
+
+static XEN g_c_load(XEN library_filename)
+{
+  void *handle;
+  handle = (void *)(XEN_UNWRAP_C_POINTER(g_dlopen(library_filename)));
+  if (handle)
+    {
+      if (handles_top >= handles_size)
+	{
+	  handles_size += 8;
+	  if (handles)
+	    handles = (void **)REALLOC(handles, handles_size * sizeof(void *));
+	  else 
+	    {
+	      handles = (void **)MALLOC(handles_size * sizeof(void *));
+	      handles[handles_top++] = dlopen(NULL, RTLD_LAZY);
+	    }
+	}
+      handles[handles_top++] = handle;
+    }
+  return((handle) ? XEN_TRUE : XEN_FALSE);
+}
+
+static XEN g_c_call(XEN args)
+{
+  /* need a description of the return type and the arg types,
+   *   then a matching declaration and call here.
+   * arg # + types are in args
+   * so calling name gives return type:
+   *
+   * (c->real "cos" 2.0)
+   * (c->string "strcpy" "hi" "ho")
+   * 
+   * dlopen with no args can find anything currently loaded, but 
+   *   does a subsequent call add anything loaded in the meantime?
+   * (c-load "libm.so") -> handle saved in a list of handles
+   * (c->double "cos"...) would search handles in reverse order, trying main prog at end
+   *
+   * (c-load "libm.so") ; perhaps use "load" here
+   * (c-call 0 "cos" 2.0)
+   *
+   *  could this be (c->double (cos 2.0)) as a macro -> (c-call 0 "cos" 2.0)?
+   *    how to define a macro from this level? -- use eval c string for now
+   *
+   * as c->double is defined currently (below), we can do this: (c->double (j0 0.5))
+   */
+
+  int i, pos, len, return_type, op;
+  const char *func;
+  void *proc = NULL;
+
+  int int_args[5] = {0, 0, 0, 0, 0};
+  double dbl_args[5] = {0.0, 0.0, 0.0, 0.0, 0.0};
+  const char *str_args[5] = {NULL, NULL, NULL, NULL, NULL};
+  void *ptr_args[5] = {NULL, NULL, NULL, NULL, NULL};
+
+  #define C_VOID 0
+  #define C_DOUBLE 1
+  #define C_INT 2
+  #define C_STRING 3
+  #define C_POINTER 4
+  #define C_TYPES 5
+  #define CT 5
+  #define CT2 25
+  #define CT3 125
+
+  func = XEN_TO_C_STRING(XEN_CADR(args));
+
+  for (i = 0; (i < handles_top) && (!proc); i++)
+    (*(void **)(&proc)) = dlsym(handles[i], func);
+  if (!proc) return(XEN_FALSE);
+
+  return_type = XEN_TO_C_INT(XEN_CAR(args));
+  op = return_type;
+  len = XEN_LIST_LENGTH(args);
+
+  if (len == 0)
+    switch (return_type)
+      {
+      case C_DOUBLE:  dbl_args[0] = ((*(double (*)())proc)());  break;
+      case C_INT:     int_args[0] = ((*(int (*)())proc)());     break;
+      case C_STRING:  str_args[0] = ((*(char *(*)())proc)());   break;
+      case C_VOID:    (*(void (*)())proc)();                break;
+      case C_POINTER: ptr_args[0] = ((*(void *(*)())proc)());   break;
+      }
+  else
+    {
+      for (i = 2, pos = C_TYPES; i < len; i++, pos *= C_TYPES)
+	{
+	  XEN arg;
+	  arg = XEN_LIST_REF(args, i);
+	  if (XEN_INTEGER_P(arg))
+	    {
+	      op += C_INT * pos;
+	      int_args[i - 2] = XEN_TO_C_INT(arg);
+	    }
+	  else
+	    {
+	      if (XEN_DOUBLE_P(arg)) 
+		{
+		  op += C_DOUBLE * pos;
+		  dbl_args[i - 2] = XEN_TO_C_DOUBLE(arg);
+		}
+	      else
+		{
+		  if (XEN_STRING_P(arg))
+		    {
+		      op += C_STRING * pos;
+		      str_args[i - 2] = XEN_TO_C_STRING(arg);
+		    }
+		  else
+		    {
+		      op += C_POINTER * pos;
+		      ptr_args[i - 2] = (void *)XEN_UNWRAP_C_POINTER(arg);
+		    }
+		}
+	    }
+	}
+      
+      switch (op)
+	{
+	case C_VOID + C_DOUBLE * CT: ((*(void (*)(double))proc)(dbl_args[1]));  break;
+	case C_VOID + C_INT * CT: ((*(void (*)(int))proc)(int_args[1]));  break;
+	case C_VOID + C_STRING * CT: ((*(void (*)(const char *))proc)(str_args[1]));  break;
+	case C_VOID + C_POINTER * CT: ((*(void (*)(void *))proc)(ptr_args[1]));  break;
+	case C_DOUBLE + C_DOUBLE * CT: dbl_args[0] = ((*(double (*)(double))proc)(dbl_args[1]));  break;
+	case C_DOUBLE + C_INT * CT: dbl_args[0] = ((*(double (*)(int))proc)(int_args[1]));  break;
+	case C_DOUBLE + C_STRING * CT: dbl_args[0] = ((*(double (*)(const char *))proc)(str_args[1]));  break;
+	case C_DOUBLE + C_POINTER * CT: dbl_args[0] = ((*(double (*)(void *))proc)(ptr_args[1]));  break;
+	case C_INT + C_DOUBLE * CT: int_args[0] = ((*(int (*)(double))proc)(dbl_args[1]));  break;
+	case C_INT + C_INT * CT: int_args[0] = ((*(int (*)(int))proc)(int_args[1]));  break;
+	case C_INT + C_STRING * CT: int_args[0] = ((*(int (*)(const char *))proc)(str_args[1]));  break;
+	case C_INT + C_POINTER * CT: int_args[0] = ((*(int (*)(void *))proc)(ptr_args[1]));  break;
+	case C_STRING + C_DOUBLE * CT: str_args[0] = ((*(const char * (*)(double))proc)(dbl_args[1]));  break;
+	case C_STRING + C_INT * CT: str_args[0] = ((*(const char * (*)(int))proc)(int_args[1]));  break;
+	case C_STRING + C_STRING * CT: str_args[0] = ((*(const char * (*)(const char *))proc)(str_args[1]));  break;
+	case C_STRING + C_POINTER * CT: str_args[0] = ((*(const char * (*)(void *))proc)(ptr_args[1]));  break;
+	case C_POINTER + C_DOUBLE * CT: ptr_args[0] = ((*(void * (*)(double))proc)(dbl_args[1]));  break;
+	case C_POINTER + C_INT * CT: ptr_args[0] = ((*(void * (*)(int))proc)(int_args[1]));  break;
+	case C_POINTER + C_STRING * CT: ptr_args[0] = ((*(void * (*)(const char *))proc)(str_args[1]));  break;
+	case C_POINTER + C_POINTER * CT: ptr_args[0] = ((*(void * (*)(void *))proc)(ptr_args[1]));  break;
+	case C_VOID + C_DOUBLE * CT + C_DOUBLE * CT2: ((*(void (*)(double, double))proc)(dbl_args[1], dbl_args[2]));  break;
+	case C_VOID + C_DOUBLE * CT + C_INT * CT2: ((*(void (*)(double, int))proc)(dbl_args[1], int_args[2]));  break;
+	case C_VOID + C_DOUBLE * CT + C_STRING * CT2: ((*(void (*)(double, const char *))proc)(dbl_args[1], str_args[2]));  break;
+	case C_VOID + C_DOUBLE * CT + C_POINTER * CT2: ((*(void (*)(double, void *))proc)(dbl_args[1], ptr_args[2]));  break;
+	case C_VOID + C_INT * CT + C_DOUBLE * CT2: ((*(void (*)(int, double))proc)(int_args[1], dbl_args[2]));  break;
+	case C_VOID + C_INT * CT + C_INT * CT2: ((*(void (*)(int, int))proc)(int_args[1], int_args[2]));  break;
+	case C_VOID + C_INT * CT + C_STRING * CT2: ((*(void (*)(int, const char *))proc)(int_args[1], str_args[2]));  break;
+	case C_VOID + C_INT * CT + C_POINTER * CT2: ((*(void (*)(int, void *))proc)(int_args[1], ptr_args[2]));  break;
+	case C_VOID + C_STRING * CT + C_DOUBLE * CT2: ((*(void (*)(const char *, double))proc)(str_args[1], dbl_args[2]));  break;
+	case C_VOID + C_STRING * CT + C_INT * CT2: ((*(void (*)(const char *, int))proc)(str_args[1], int_args[2]));  break;
+	case C_VOID + C_STRING * CT + C_STRING * CT2: ((*(void (*)(const char *, const char *))proc)(str_args[1], str_args[2]));  break;
+	case C_VOID + C_STRING * CT + C_POINTER * CT2: ((*(void (*)(const char *, void *))proc)(str_args[1], ptr_args[2]));  break;
+	case C_VOID + C_POINTER * CT + C_DOUBLE * CT2: ((*(void (*)(void *, double))proc)(ptr_args[1], dbl_args[2]));  break;
+	case C_VOID + C_POINTER * CT + C_INT * CT2: ((*(void (*)(void *, int))proc)(ptr_args[1], int_args[2]));  break;
+	case C_VOID + C_POINTER * CT + C_STRING * CT2: ((*(void (*)(void *, const char *))proc)(ptr_args[1], str_args[2]));  break;
+	case C_VOID + C_POINTER * CT + C_POINTER * CT2: ((*(void (*)(void *, void *))proc)(ptr_args[1], ptr_args[2]));  break;
+	case C_DOUBLE + C_DOUBLE * CT + C_DOUBLE * CT2: dbl_args[0] = ((*(double (*)(double, double))proc)(dbl_args[1], dbl_args[2]));  break;
+	case C_DOUBLE + C_DOUBLE * CT + C_INT * CT2: dbl_args[0] = ((*(double (*)(double, int))proc)(dbl_args[1], int_args[2]));  break;
+	case C_DOUBLE + C_DOUBLE * CT + C_STRING * CT2: dbl_args[0] = ((*(double (*)(double, const char *))proc)(dbl_args[1], str_args[2]));  break;
+	case C_DOUBLE + C_DOUBLE * CT + C_POINTER * CT2: dbl_args[0] = ((*(double (*)(double, void *))proc)(dbl_args[1], ptr_args[2]));  break;
+	case C_DOUBLE + C_INT * CT + C_DOUBLE * CT2: dbl_args[0] = ((*(double (*)(int, double))proc)(int_args[1], dbl_args[2]));  break;
+	case C_DOUBLE + C_INT * CT + C_INT * CT2: dbl_args[0] = ((*(double (*)(int, int))proc)(int_args[1], int_args[2]));  break;
+	case C_DOUBLE + C_INT * CT + C_STRING * CT2: dbl_args[0] = ((*(double (*)(int, const char *))proc)(int_args[1], str_args[2]));  break;
+	case C_DOUBLE + C_INT * CT + C_POINTER * CT2: dbl_args[0] = ((*(double (*)(int, void *))proc)(int_args[1], ptr_args[2]));  break;
+	case C_DOUBLE + C_STRING * CT + C_DOUBLE * CT2: dbl_args[0] = ((*(double (*)(const char *, double))proc)(str_args[1], dbl_args[2]));  break;
+	case C_DOUBLE + C_STRING * CT + C_INT * CT2: dbl_args[0] = ((*(double (*)(const char *, int))proc)(str_args[1], int_args[2]));  break;
+	case C_DOUBLE + C_STRING * CT + C_STRING * CT2: dbl_args[0] = ((*(double (*)(const char *, const char *))proc)(str_args[1], str_args[2]));  break;
+	case C_DOUBLE + C_STRING * CT + C_POINTER * CT2: dbl_args[0] = ((*(double (*)(const char *, void *))proc)(str_args[1], ptr_args[2]));  break;
+	case C_DOUBLE + C_POINTER * CT + C_DOUBLE * CT2: dbl_args[0] = ((*(double (*)(void *, double))proc)(ptr_args[1], dbl_args[2]));  break;
+	case C_DOUBLE + C_POINTER * CT + C_INT * CT2: dbl_args[0] = ((*(double (*)(void *, int))proc)(ptr_args[1], int_args[2]));  break;
+	case C_DOUBLE + C_POINTER * CT + C_STRING * CT2: dbl_args[0] = ((*(double (*)(void *, const char *))proc)(ptr_args[1], str_args[2]));  break;
+	case C_DOUBLE + C_POINTER * CT + C_POINTER * CT2: dbl_args[0] = ((*(double (*)(void *, void *))proc)(ptr_args[1], ptr_args[2]));  break;
+	case C_INT + C_DOUBLE * CT + C_DOUBLE * CT2: int_args[0] = ((*(int (*)(double, double))proc)(dbl_args[1], dbl_args[2]));  break;
+	case C_INT + C_DOUBLE * CT + C_INT * CT2: int_args[0] = ((*(int (*)(double, int))proc)(dbl_args[1], int_args[2]));  break;
+	case C_INT + C_DOUBLE * CT + C_STRING * CT2: int_args[0] = ((*(int (*)(double, const char *))proc)(dbl_args[1], str_args[2]));  break;
+	case C_INT + C_DOUBLE * CT + C_POINTER * CT2: int_args[0] = ((*(int (*)(double, void *))proc)(dbl_args[1], ptr_args[2]));  break;
+	case C_INT + C_INT * CT + C_DOUBLE * CT2: int_args[0] = ((*(int (*)(int, double))proc)(int_args[1], dbl_args[2]));  break;
+	case C_INT + C_INT * CT + C_INT * CT2: int_args[0] = ((*(int (*)(int, int))proc)(int_args[1], int_args[2]));  break;
+	case C_INT + C_INT * CT + C_STRING * CT2: int_args[0] = ((*(int (*)(int, const char *))proc)(int_args[1], str_args[2]));  break;
+	case C_INT + C_INT * CT + C_POINTER * CT2: int_args[0] = ((*(int (*)(int, void *))proc)(int_args[1], ptr_args[2]));  break;
+	case C_INT + C_STRING * CT + C_DOUBLE * CT2: int_args[0] = ((*(int (*)(const char *, double))proc)(str_args[1], dbl_args[2]));  break;
+	case C_INT + C_STRING * CT + C_INT * CT2: int_args[0] = ((*(int (*)(const char *, int))proc)(str_args[1], int_args[2]));  break;
+	case C_INT + C_STRING * CT + C_STRING * CT2: int_args[0] = ((*(int (*)(const char *, const char *))proc)(str_args[1], str_args[2]));  break;
+	case C_INT + C_STRING * CT + C_POINTER * CT2: int_args[0] = ((*(int (*)(const char *, void *))proc)(str_args[1], ptr_args[2]));  break;
+	case C_INT + C_POINTER * CT + C_DOUBLE * CT2: int_args[0] = ((*(int (*)(void *, double))proc)(ptr_args[1], dbl_args[2]));  break;
+	case C_INT + C_POINTER * CT + C_INT * CT2: int_args[0] = ((*(int (*)(void *, int))proc)(ptr_args[1], int_args[2]));  break;
+	case C_INT + C_POINTER * CT + C_STRING * CT2: int_args[0] = ((*(int (*)(void *, const char *))proc)(ptr_args[1], str_args[2]));  break;
+	case C_INT + C_POINTER * CT + C_POINTER * CT2: int_args[0] = ((*(int (*)(void *, void *))proc)(ptr_args[1], ptr_args[2]));  break;
+	case C_STRING + C_DOUBLE * CT + C_DOUBLE * CT2: str_args[0] = ((*(const char * (*)(double, double))proc)(dbl_args[1], dbl_args[2]));  break;
+	case C_STRING + C_DOUBLE * CT + C_INT * CT2: str_args[0] = ((*(const char * (*)(double, int))proc)(dbl_args[1], int_args[2]));  break;
+	case C_STRING + C_DOUBLE * CT + C_STRING * CT2: str_args[0] = ((*(const char * (*)(double, const char *))proc)(dbl_args[1], str_args[2]));  break;
+	case C_STRING + C_DOUBLE * CT + C_POINTER * CT2: str_args[0] = ((*(const char * (*)(double, void *))proc)(dbl_args[1], ptr_args[2]));  break;
+	case C_STRING + C_INT * CT + C_DOUBLE * CT2: str_args[0] = ((*(const char * (*)(int, double))proc)(int_args[1], dbl_args[2]));  break;
+	case C_STRING + C_INT * CT + C_INT * CT2: str_args[0] = ((*(const char * (*)(int, int))proc)(int_args[1], int_args[2]));  break;
+	case C_STRING + C_INT * CT + C_STRING * CT2: str_args[0] = ((*(const char * (*)(int, const char *))proc)(int_args[1], str_args[2]));  break;
+	case C_STRING + C_INT * CT + C_POINTER * CT2: str_args[0] = ((*(const char * (*)(int, void *))proc)(int_args[1], ptr_args[2]));  break;
+	case C_STRING + C_STRING * CT + C_DOUBLE * CT2: str_args[0] = ((*(const char * (*)(const char *, double))proc)(str_args[1], dbl_args[2]));  break;
+	case C_STRING + C_STRING * CT + C_INT * CT2: str_args[0] = ((*(const char * (*)(const char *, int))proc)(str_args[1], int_args[2]));  break;
+	case C_STRING + C_STRING * CT + C_STRING * CT2: str_args[0] = ((*(const char * (*)(const char *, const char *))proc)(str_args[1], str_args[2]));  break;
+	case C_STRING + C_STRING * CT + C_POINTER * CT2: str_args[0] = ((*(const char * (*)(const char *, void *))proc)(str_args[1], ptr_args[2]));  break;
+	case C_STRING + C_POINTER * CT + C_DOUBLE * CT2: str_args[0] = ((*(const char * (*)(void *, double))proc)(ptr_args[1], dbl_args[2]));  break;
+	case C_STRING + C_POINTER * CT + C_INT * CT2: str_args[0] = ((*(const char * (*)(void *, int))proc)(ptr_args[1], int_args[2]));  break;
+	case C_STRING + C_POINTER * CT + C_STRING * CT2: str_args[0] = ((*(const char * (*)(void *, const char *))proc)(ptr_args[1], str_args[2]));  break;
+	case C_STRING + C_POINTER * CT + C_POINTER * CT2: str_args[0] = ((*(const char * (*)(void *, void *))proc)(ptr_args[1], ptr_args[2]));  break;
+	case C_POINTER + C_DOUBLE * CT + C_DOUBLE * CT2: ptr_args[0] = ((*(void * (*)(double, double))proc)(dbl_args[1], dbl_args[2]));  break;
+	case C_POINTER + C_DOUBLE * CT + C_INT * CT2: ptr_args[0] = ((*(void * (*)(double, int))proc)(dbl_args[1], int_args[2]));  break;
+	case C_POINTER + C_DOUBLE * CT + C_STRING * CT2: ptr_args[0] = ((*(void * (*)(double, const char *))proc)(dbl_args[1], str_args[2]));  break;
+	case C_POINTER + C_DOUBLE * CT + C_POINTER * CT2: ptr_args[0] = ((*(void * (*)(double, void *))proc)(dbl_args[1], ptr_args[2]));  break;
+	case C_POINTER + C_INT * CT + C_DOUBLE * CT2: ptr_args[0] = ((*(void * (*)(int, double))proc)(int_args[1], dbl_args[2]));  break;
+	case C_POINTER + C_INT * CT + C_INT * CT2: ptr_args[0] = ((*(void * (*)(int, int))proc)(int_args[1], int_args[2]));  break;
+	case C_POINTER + C_INT * CT + C_STRING * CT2: ptr_args[0] = ((*(void * (*)(int, const char *))proc)(int_args[1], str_args[2]));  break;
+	case C_POINTER + C_INT * CT + C_POINTER * CT2: ptr_args[0] = ((*(void * (*)(int, void *))proc)(int_args[1], ptr_args[2]));  break;
+	case C_POINTER + C_STRING * CT + C_DOUBLE * CT2: ptr_args[0] = ((*(void * (*)(const char *, double))proc)(str_args[1], dbl_args[2]));  break;
+	case C_POINTER + C_STRING * CT + C_INT * CT2: ptr_args[0] = ((*(void * (*)(const char *, int))proc)(str_args[1], int_args[2]));  break;
+	case C_POINTER + C_STRING * CT + C_STRING * CT2: ptr_args[0] = ((*(void * (*)(const char *, const char *))proc)(str_args[1], str_args[2]));  break;
+	case C_POINTER + C_STRING * CT + C_POINTER * CT2: ptr_args[0] = ((*(void * (*)(const char *, void *))proc)(str_args[1], ptr_args[2]));  break;
+	case C_POINTER + C_POINTER * CT + C_DOUBLE * CT2: ptr_args[0] = ((*(void * (*)(void *, double))proc)(ptr_args[1], dbl_args[2]));  break;
+	case C_POINTER + C_POINTER * CT + C_INT * CT2: ptr_args[0] = ((*(void * (*)(void *, int))proc)(ptr_args[1], int_args[2]));  break;
+	case C_POINTER + C_POINTER * CT + C_STRING * CT2: ptr_args[0] = ((*(void * (*)(void *, const char *))proc)(ptr_args[1], str_args[2]));  break;
+	case C_POINTER + C_POINTER * CT + C_POINTER * CT2: ptr_args[0] = ((*(void * (*)(void *, void *))proc)(ptr_args[1], ptr_args[2]));  break;
+	case C_VOID + C_DOUBLE * CT + C_DOUBLE * CT2 + C_DOUBLE * CT3: ((*(void (*)(double, double, double))proc)(dbl_args[1], dbl_args[2], dbl_args[3]));  break;
+	case C_VOID + C_DOUBLE * CT + C_DOUBLE * CT2 + C_INT * CT3: ((*(void (*)(double, double, int))proc)(dbl_args[1], dbl_args[2], int_args[3]));  break;
+	case C_VOID + C_DOUBLE * CT + C_DOUBLE * CT2 + C_STRING * CT3: ((*(void (*)(double, double, const char *))proc)(dbl_args[1], dbl_args[2], str_args[3]));  break;
+	case C_VOID + C_DOUBLE * CT + C_DOUBLE * CT2 + C_POINTER * CT3: ((*(void (*)(double, double, void *))proc)(dbl_args[1], dbl_args[2], ptr_args[3]));  break;
+	case C_VOID + C_DOUBLE * CT + C_INT * CT2 + C_DOUBLE * CT3: ((*(void (*)(double, int, double))proc)(dbl_args[1], int_args[2], dbl_args[3]));  break;
+	case C_VOID + C_DOUBLE * CT + C_INT * CT2 + C_INT * CT3: ((*(void (*)(double, int, int))proc)(dbl_args[1], int_args[2], int_args[3]));  break;
+	case C_VOID + C_DOUBLE * CT + C_INT * CT2 + C_STRING * CT3: ((*(void (*)(double, int, const char *))proc)(dbl_args[1], int_args[2], str_args[3]));  break;
+	case C_VOID + C_DOUBLE * CT + C_INT * CT2 + C_POINTER * CT3: ((*(void (*)(double, int, void *))proc)(dbl_args[1], int_args[2], ptr_args[3]));  break;
+	case C_VOID + C_DOUBLE * CT + C_STRING * CT2 + C_DOUBLE * CT3: ((*(void (*)(double, const char *, double))proc)(dbl_args[1], str_args[2], dbl_args[3]));  break;
+	case C_VOID + C_DOUBLE * CT + C_STRING * CT2 + C_INT * CT3: ((*(void (*)(double, const char *, int))proc)(dbl_args[1], str_args[2], int_args[3]));  break;
+	case C_VOID + C_DOUBLE * CT + C_STRING * CT2 + C_STRING * CT3: ((*(void (*)(double, const char *, const char *))proc)(dbl_args[1], str_args[2], str_args[3]));  break;
+	case C_VOID + C_DOUBLE * CT + C_STRING * CT2 + C_POINTER * CT3: ((*(void (*)(double, const char *, void *))proc)(dbl_args[1], str_args[2], ptr_args[3]));  break;
+	case C_VOID + C_DOUBLE * CT + C_POINTER * CT2 + C_DOUBLE * CT3: ((*(void (*)(double, void *, double))proc)(dbl_args[1], ptr_args[2], dbl_args[3]));  break;
+	case C_VOID + C_DOUBLE * CT + C_POINTER * CT2 + C_INT * CT3: ((*(void (*)(double, void *, int))proc)(dbl_args[1], ptr_args[2], int_args[3]));  break;
+	case C_VOID + C_DOUBLE * CT + C_POINTER * CT2 + C_STRING * CT3: ((*(void (*)(double, void *, const char *))proc)(dbl_args[1], ptr_args[2], str_args[3]));  break;
+	case C_VOID + C_DOUBLE * CT + C_POINTER * CT2 + C_POINTER * CT3: ((*(void (*)(double, void *, void *))proc)(dbl_args[1], ptr_args[2], ptr_args[3]));  break;
+	case C_VOID + C_INT * CT + C_DOUBLE * CT2 + C_DOUBLE * CT3: ((*(void (*)(int, double, double))proc)(int_args[1], dbl_args[2], dbl_args[3]));  break;
+	case C_VOID + C_INT * CT + C_DOUBLE * CT2 + C_INT * CT3: ((*(void (*)(int, double, int))proc)(int_args[1], dbl_args[2], int_args[3]));  break;
+	case C_VOID + C_INT * CT + C_DOUBLE * CT2 + C_STRING * CT3: ((*(void (*)(int, double, const char *))proc)(int_args[1], dbl_args[2], str_args[3]));  break;
+	case C_VOID + C_INT * CT + C_DOUBLE * CT2 + C_POINTER * CT3: ((*(void (*)(int, double, void *))proc)(int_args[1], dbl_args[2], ptr_args[3]));  break;
+	case C_VOID + C_INT * CT + C_INT * CT2 + C_DOUBLE * CT3: ((*(void (*)(int, int, double))proc)(int_args[1], int_args[2], dbl_args[3]));  break;
+	case C_VOID + C_INT * CT + C_INT * CT2 + C_INT * CT3: ((*(void (*)(int, int, int))proc)(int_args[1], int_args[2], int_args[3]));  break;
+	case C_VOID + C_INT * CT + C_INT * CT2 + C_STRING * CT3: ((*(void (*)(int, int, const char *))proc)(int_args[1], int_args[2], str_args[3]));  break;
+	case C_VOID + C_INT * CT + C_INT * CT2 + C_POINTER * CT3: ((*(void (*)(int, int, void *))proc)(int_args[1], int_args[2], ptr_args[3]));  break;
+	case C_VOID + C_INT * CT + C_STRING * CT2 + C_DOUBLE * CT3: ((*(void (*)(int, const char *, double))proc)(int_args[1], str_args[2], dbl_args[3]));  break;
+	case C_VOID + C_INT * CT + C_STRING * CT2 + C_INT * CT3: ((*(void (*)(int, const char *, int))proc)(int_args[1], str_args[2], int_args[3]));  break;
+	case C_VOID + C_INT * CT + C_STRING * CT2 + C_STRING * CT3: ((*(void (*)(int, const char *, const char *))proc)(int_args[1], str_args[2], str_args[3]));  break;
+	case C_VOID + C_INT * CT + C_STRING * CT2 + C_POINTER * CT3: ((*(void (*)(int, const char *, void *))proc)(int_args[1], str_args[2], ptr_args[3]));  break;
+	case C_VOID + C_INT * CT + C_POINTER * CT2 + C_DOUBLE * CT3: ((*(void (*)(int, void *, double))proc)(int_args[1], ptr_args[2], dbl_args[3]));  break;
+	case C_VOID + C_INT * CT + C_POINTER * CT2 + C_INT * CT3: ((*(void (*)(int, void *, int))proc)(int_args[1], ptr_args[2], int_args[3]));  break;
+	case C_VOID + C_INT * CT + C_POINTER * CT2 + C_STRING * CT3: ((*(void (*)(int, void *, const char *))proc)(int_args[1], ptr_args[2], str_args[3]));  break;
+	case C_VOID + C_INT * CT + C_POINTER * CT2 + C_POINTER * CT3: ((*(void (*)(int, void *, void *))proc)(int_args[1], ptr_args[2], ptr_args[3]));  break;
+	case C_VOID + C_STRING * CT + C_DOUBLE * CT2 + C_DOUBLE * CT3: ((*(void (*)(const char *, double, double))proc)(str_args[1], dbl_args[2], dbl_args[3]));  break;
+	case C_VOID + C_STRING * CT + C_DOUBLE * CT2 + C_INT * CT3: ((*(void (*)(const char *, double, int))proc)(str_args[1], dbl_args[2], int_args[3]));  break;
+	case C_VOID + C_STRING * CT + C_DOUBLE * CT2 + C_STRING * CT3: ((*(void (*)(const char *, double, const char *))proc)(str_args[1], dbl_args[2], str_args[3]));  break;
+	case C_VOID + C_STRING * CT + C_DOUBLE * CT2 + C_POINTER * CT3: ((*(void (*)(const char *, double, void *))proc)(str_args[1], dbl_args[2], ptr_args[3]));  break;
+	case C_VOID + C_STRING * CT + C_INT * CT2 + C_DOUBLE * CT3: ((*(void (*)(const char *, int, double))proc)(str_args[1], int_args[2], dbl_args[3]));  break;
+	case C_VOID + C_STRING * CT + C_INT * CT2 + C_INT * CT3: ((*(void (*)(const char *, int, int))proc)(str_args[1], int_args[2], int_args[3]));  break;
+	case C_VOID + C_STRING * CT + C_INT * CT2 + C_STRING * CT3: ((*(void (*)(const char *, int, const char *))proc)(str_args[1], int_args[2], str_args[3]));  break;
+	case C_VOID + C_STRING * CT + C_INT * CT2 + C_POINTER * CT3: ((*(void (*)(const char *, int, void *))proc)(str_args[1], int_args[2], ptr_args[3]));  break;
+	case C_VOID + C_STRING * CT + C_STRING * CT2 + C_DOUBLE * CT3: ((*(void (*)(const char *, const char *, double))proc)(str_args[1], str_args[2], dbl_args[3]));  break;
+	case C_VOID + C_STRING * CT + C_STRING * CT2 + C_INT * CT3: ((*(void (*)(const char *, const char *, int))proc)(str_args[1], str_args[2], int_args[3]));  break;
+	case C_VOID + C_STRING * CT + C_STRING * CT2 + C_STRING * CT3: ((*(void (*)(const char *, const char *, const char *))proc)(str_args[1], str_args[2], str_args[3]));  break;
+	case C_VOID + C_STRING * CT + C_STRING * CT2 + C_POINTER * CT3: ((*(void (*)(const char *, const char *, void *))proc)(str_args[1], str_args[2], ptr_args[3]));  break;
+	case C_VOID + C_STRING * CT + C_POINTER * CT2 + C_DOUBLE * CT3: ((*(void (*)(const char *, void *, double))proc)(str_args[1], ptr_args[2], dbl_args[3]));  break;
+	case C_VOID + C_STRING * CT + C_POINTER * CT2 + C_INT * CT3: ((*(void (*)(const char *, void *, int))proc)(str_args[1], ptr_args[2], int_args[3]));  break;
+	case C_VOID + C_STRING * CT + C_POINTER * CT2 + C_STRING * CT3: ((*(void (*)(const char *, void *, const char *))proc)(str_args[1], ptr_args[2], str_args[3]));  break;
+	case C_VOID + C_STRING * CT + C_POINTER * CT2 + C_POINTER * CT3: ((*(void (*)(const char *, void *, void *))proc)(str_args[1], ptr_args[2], ptr_args[3]));  break;
+	case C_VOID + C_POINTER * CT + C_DOUBLE * CT2 + C_DOUBLE * CT3: ((*(void (*)(void *, double, double))proc)(ptr_args[1], dbl_args[2], dbl_args[3]));  break;
+	case C_VOID + C_POINTER * CT + C_DOUBLE * CT2 + C_INT * CT3: ((*(void (*)(void *, double, int))proc)(ptr_args[1], dbl_args[2], int_args[3]));  break;
+	case C_VOID + C_POINTER * CT + C_DOUBLE * CT2 + C_STRING * CT3: ((*(void (*)(void *, double, const char *))proc)(ptr_args[1], dbl_args[2], str_args[3]));  break;
+	case C_VOID + C_POINTER * CT + C_DOUBLE * CT2 + C_POINTER * CT3: ((*(void (*)(void *, double, void *))proc)(ptr_args[1], dbl_args[2], ptr_args[3]));  break;
+	case C_VOID + C_POINTER * CT + C_INT * CT2 + C_DOUBLE * CT3: ((*(void (*)(void *, int, double))proc)(ptr_args[1], int_args[2], dbl_args[3]));  break;
+	case C_VOID + C_POINTER * CT + C_INT * CT2 + C_INT * CT3: ((*(void (*)(void *, int, int))proc)(ptr_args[1], int_args[2], int_args[3]));  break;
+	case C_VOID + C_POINTER * CT + C_INT * CT2 + C_STRING * CT3: ((*(void (*)(void *, int, const char *))proc)(ptr_args[1], int_args[2], str_args[3]));  break;
+	case C_VOID + C_POINTER * CT + C_INT * CT2 + C_POINTER * CT3: ((*(void (*)(void *, int, void *))proc)(ptr_args[1], int_args[2], ptr_args[3]));  break;
+	case C_VOID + C_POINTER * CT + C_STRING * CT2 + C_DOUBLE * CT3: ((*(void (*)(void *, const char *, double))proc)(ptr_args[1], str_args[2], dbl_args[3]));  break;
+	case C_VOID + C_POINTER * CT + C_STRING * CT2 + C_INT * CT3: ((*(void (*)(void *, const char *, int))proc)(ptr_args[1], str_args[2], int_args[3]));  break;
+	case C_VOID + C_POINTER * CT + C_STRING * CT2 + C_STRING * CT3: ((*(void (*)(void *, const char *, const char *))proc)(ptr_args[1], str_args[2], str_args[3]));  break;
+	case C_VOID + C_POINTER * CT + C_STRING * CT2 + C_POINTER * CT3: ((*(void (*)(void *, const char *, void *))proc)(ptr_args[1], str_args[2], ptr_args[3]));  break;
+	case C_VOID + C_POINTER * CT + C_POINTER * CT2 + C_DOUBLE * CT3: ((*(void (*)(void *, void *, double))proc)(ptr_args[1], ptr_args[2], dbl_args[3]));  break;
+	case C_VOID + C_POINTER * CT + C_POINTER * CT2 + C_INT * CT3: ((*(void (*)(void *, void *, int))proc)(ptr_args[1], ptr_args[2], int_args[3]));  break;
+	case C_VOID + C_POINTER * CT + C_POINTER * CT2 + C_STRING * CT3: ((*(void (*)(void *, void *, const char *))proc)(ptr_args[1], ptr_args[2], str_args[3]));  break;
+	case C_VOID + C_POINTER * CT + C_POINTER * CT2 + C_POINTER * CT3: ((*(void (*)(void *, void *, void *))proc)(ptr_args[1], ptr_args[2], ptr_args[3]));  break;
+	case C_DOUBLE + C_DOUBLE * CT + C_DOUBLE * CT2 + C_DOUBLE * CT3: dbl_args[0] = ((*(double (*)(double, double, double))proc)(dbl_args[1], dbl_args[2], dbl_args[3]));  break;
+	case C_DOUBLE + C_DOUBLE * CT + C_DOUBLE * CT2 + C_INT * CT3: dbl_args[0] = ((*(double (*)(double, double, int))proc)(dbl_args[1], dbl_args[2], int_args[3]));  break;
+	case C_DOUBLE + C_DOUBLE * CT + C_DOUBLE * CT2 + C_STRING * CT3: dbl_args[0] = ((*(double (*)(double, double, const char *))proc)(dbl_args[1], dbl_args[2], str_args[3]));  break;
+	case C_DOUBLE + C_DOUBLE * CT + C_DOUBLE * CT2 + C_POINTER * CT3: dbl_args[0] = ((*(double (*)(double, double, void *))proc)(dbl_args[1], dbl_args[2], ptr_args[3]));  break;
+	case C_DOUBLE + C_DOUBLE * CT + C_INT * CT2 + C_DOUBLE * CT3: dbl_args[0] = ((*(double (*)(double, int, double))proc)(dbl_args[1], int_args[2], dbl_args[3]));  break;
+	case C_DOUBLE + C_DOUBLE * CT + C_INT * CT2 + C_INT * CT3: dbl_args[0] = ((*(double (*)(double, int, int))proc)(dbl_args[1], int_args[2], int_args[3]));  break;
+	case C_DOUBLE + C_DOUBLE * CT + C_INT * CT2 + C_STRING * CT3: dbl_args[0] = ((*(double (*)(double, int, const char *))proc)(dbl_args[1], int_args[2], str_args[3]));  break;
+	case C_DOUBLE + C_DOUBLE * CT + C_INT * CT2 + C_POINTER * CT3: dbl_args[0] = ((*(double (*)(double, int, void *))proc)(dbl_args[1], int_args[2], ptr_args[3]));  break;
+	case C_DOUBLE + C_DOUBLE * CT + C_STRING * CT2 + C_DOUBLE * CT3: dbl_args[0] = ((*(double (*)(double, const char *, double))proc)(dbl_args[1], str_args[2], dbl_args[3]));  break;
+	case C_DOUBLE + C_DOUBLE * CT + C_STRING * CT2 + C_INT * CT3: dbl_args[0] = ((*(double (*)(double, const char *, int))proc)(dbl_args[1], str_args[2], int_args[3]));  break;
+	case C_DOUBLE + C_DOUBLE * CT + C_STRING * CT2 + C_STRING * CT3: dbl_args[0] = ((*(double (*)(double, const char *, const char *))proc)(dbl_args[1], str_args[2], str_args[3]));  break;
+	case C_DOUBLE + C_DOUBLE * CT + C_STRING * CT2 + C_POINTER * CT3: dbl_args[0] = ((*(double (*)(double, const char *, void *))proc)(dbl_args[1], str_args[2], ptr_args[3]));  break;
+	case C_DOUBLE + C_DOUBLE * CT + C_POINTER * CT2 + C_DOUBLE * CT3: dbl_args[0] = ((*(double (*)(double, void *, double))proc)(dbl_args[1], ptr_args[2], dbl_args[3]));  break;
+	case C_DOUBLE + C_DOUBLE * CT + C_POINTER * CT2 + C_INT * CT3: dbl_args[0] = ((*(double (*)(double, void *, int))proc)(dbl_args[1], ptr_args[2], int_args[3]));  break;
+	case C_DOUBLE + C_DOUBLE * CT + C_POINTER * CT2 + C_STRING * CT3: dbl_args[0] = ((*(double (*)(double, void *, const char *))proc)(dbl_args[1], ptr_args[2], str_args[3]));  break;
+	case C_DOUBLE + C_DOUBLE * CT + C_POINTER * CT2 + C_POINTER * CT3: dbl_args[0] = ((*(double (*)(double, void *, void *))proc)(dbl_args[1], ptr_args[2], ptr_args[3]));  break;
+	case C_DOUBLE + C_INT * CT + C_DOUBLE * CT2 + C_DOUBLE * CT3: dbl_args[0] = ((*(double (*)(int, double, double))proc)(int_args[1], dbl_args[2], dbl_args[3]));  break;
+	case C_DOUBLE + C_INT * CT + C_DOUBLE * CT2 + C_INT * CT3: dbl_args[0] = ((*(double (*)(int, double, int))proc)(int_args[1], dbl_args[2], int_args[3]));  break;
+	case C_DOUBLE + C_INT * CT + C_DOUBLE * CT2 + C_STRING * CT3: dbl_args[0] = ((*(double (*)(int, double, const char *))proc)(int_args[1], dbl_args[2], str_args[3]));  break;
+	case C_DOUBLE + C_INT * CT + C_DOUBLE * CT2 + C_POINTER * CT3: dbl_args[0] = ((*(double (*)(int, double, void *))proc)(int_args[1], dbl_args[2], ptr_args[3]));  break;
+	case C_DOUBLE + C_INT * CT + C_INT * CT2 + C_DOUBLE * CT3: dbl_args[0] = ((*(double (*)(int, int, double))proc)(int_args[1], int_args[2], dbl_args[3]));  break;
+	case C_DOUBLE + C_INT * CT + C_INT * CT2 + C_INT * CT3: dbl_args[0] = ((*(double (*)(int, int, int))proc)(int_args[1], int_args[2], int_args[3]));  break;
+	case C_DOUBLE + C_INT * CT + C_INT * CT2 + C_STRING * CT3: dbl_args[0] = ((*(double (*)(int, int, const char *))proc)(int_args[1], int_args[2], str_args[3]));  break;
+	case C_DOUBLE + C_INT * CT + C_INT * CT2 + C_POINTER * CT3: dbl_args[0] = ((*(double (*)(int, int, void *))proc)(int_args[1], int_args[2], ptr_args[3]));  break;
+	case C_DOUBLE + C_INT * CT + C_STRING * CT2 + C_DOUBLE * CT3: dbl_args[0] = ((*(double (*)(int, const char *, double))proc)(int_args[1], str_args[2], dbl_args[3]));  break;
+	case C_DOUBLE + C_INT * CT + C_STRING * CT2 + C_INT * CT3: dbl_args[0] = ((*(double (*)(int, const char *, int))proc)(int_args[1], str_args[2], int_args[3]));  break;
+	case C_DOUBLE + C_INT * CT + C_STRING * CT2 + C_STRING * CT3: dbl_args[0] = ((*(double (*)(int, const char *, const char *))proc)(int_args[1], str_args[2], str_args[3]));  break;
+	case C_DOUBLE + C_INT * CT + C_STRING * CT2 + C_POINTER * CT3: dbl_args[0] = ((*(double (*)(int, const char *, void *))proc)(int_args[1], str_args[2], ptr_args[3]));  break;
+	case C_DOUBLE + C_INT * CT + C_POINTER * CT2 + C_DOUBLE * CT3: dbl_args[0] = ((*(double (*)(int, void *, double))proc)(int_args[1], ptr_args[2], dbl_args[3]));  break;
+	case C_DOUBLE + C_INT * CT + C_POINTER * CT2 + C_INT * CT3: dbl_args[0] = ((*(double (*)(int, void *, int))proc)(int_args[1], ptr_args[2], int_args[3]));  break;
+	case C_DOUBLE + C_INT * CT + C_POINTER * CT2 + C_STRING * CT3: dbl_args[0] = ((*(double (*)(int, void *, const char *))proc)(int_args[1], ptr_args[2], str_args[3]));  break;
+	case C_DOUBLE + C_INT * CT + C_POINTER * CT2 + C_POINTER * CT3: dbl_args[0] = ((*(double (*)(int, void *, void *))proc)(int_args[1], ptr_args[2], ptr_args[3]));  break;
+	case C_DOUBLE + C_STRING * CT + C_DOUBLE * CT2 + C_DOUBLE * CT3: dbl_args[0] = ((*(double (*)(const char *, double, double))proc)(str_args[1], dbl_args[2], dbl_args[3]));  break;
+	case C_DOUBLE + C_STRING * CT + C_DOUBLE * CT2 + C_INT * CT3: dbl_args[0] = ((*(double (*)(const char *, double, int))proc)(str_args[1], dbl_args[2], int_args[3]));  break;
+	case C_DOUBLE + C_STRING * CT + C_DOUBLE * CT2 + C_STRING * CT3: dbl_args[0] = ((*(double (*)(const char *, double, const char *))proc)(str_args[1], dbl_args[2], str_args[3]));  break;
+	case C_DOUBLE + C_STRING * CT + C_DOUBLE * CT2 + C_POINTER * CT3: dbl_args[0] = ((*(double (*)(const char *, double, void *))proc)(str_args[1], dbl_args[2], ptr_args[3]));  break;
+	case C_DOUBLE + C_STRING * CT + C_INT * CT2 + C_DOUBLE * CT3: dbl_args[0] = ((*(double (*)(const char *, int, double))proc)(str_args[1], int_args[2], dbl_args[3]));  break;
+	case C_DOUBLE + C_STRING * CT + C_INT * CT2 + C_INT * CT3: dbl_args[0] = ((*(double (*)(const char *, int, int))proc)(str_args[1], int_args[2], int_args[3]));  break;
+	case C_DOUBLE + C_STRING * CT + C_INT * CT2 + C_STRING * CT3: dbl_args[0] = ((*(double (*)(const char *, int, const char *))proc)(str_args[1], int_args[2], str_args[3]));  break;
+	case C_DOUBLE + C_STRING * CT + C_INT * CT2 + C_POINTER * CT3: dbl_args[0] = ((*(double (*)(const char *, int, void *))proc)(str_args[1], int_args[2], ptr_args[3]));  break;
+	case C_DOUBLE + C_STRING * CT + C_STRING * CT2 + C_DOUBLE * CT3: dbl_args[0] = ((*(double (*)(const char *, const char *, double))proc)(str_args[1], str_args[2], dbl_args[3]));  break;
+	case C_DOUBLE + C_STRING * CT + C_STRING * CT2 + C_INT * CT3: dbl_args[0] = ((*(double (*)(const char *, const char *, int))proc)(str_args[1], str_args[2], int_args[3]));  break;
+	case C_DOUBLE + C_STRING * CT + C_STRING * CT2 + C_STRING * CT3: dbl_args[0] = ((*(double (*)(const char *, const char *, const char *))proc)(str_args[1], str_args[2], str_args[3]));  break;
+	case C_DOUBLE + C_STRING * CT + C_STRING * CT2 + C_POINTER * CT3: dbl_args[0] = ((*(double (*)(const char *, const char *, void *))proc)(str_args[1], str_args[2], ptr_args[3]));  break;
+	case C_DOUBLE + C_STRING * CT + C_POINTER * CT2 + C_DOUBLE * CT3: dbl_args[0] = ((*(double (*)(const char *, void *, double))proc)(str_args[1], ptr_args[2], dbl_args[3]));  break;
+	case C_DOUBLE + C_STRING * CT + C_POINTER * CT2 + C_INT * CT3: dbl_args[0] = ((*(double (*)(const char *, void *, int))proc)(str_args[1], ptr_args[2], int_args[3]));  break;
+	case C_DOUBLE + C_STRING * CT + C_POINTER * CT2 + C_STRING * CT3: dbl_args[0] = ((*(double (*)(const char *, void *, const char *))proc)(str_args[1], ptr_args[2], str_args[3]));  break;
+	case C_DOUBLE + C_STRING * CT + C_POINTER * CT2 + C_POINTER * CT3: dbl_args[0] = ((*(double (*)(const char *, void *, void *))proc)(str_args[1], ptr_args[2], ptr_args[3]));  break;
+	case C_DOUBLE + C_POINTER * CT + C_DOUBLE * CT2 + C_DOUBLE * CT3: dbl_args[0] = ((*(double (*)(void *, double, double))proc)(ptr_args[1], dbl_args[2], dbl_args[3]));  break;
+	case C_DOUBLE + C_POINTER * CT + C_DOUBLE * CT2 + C_INT * CT3: dbl_args[0] = ((*(double (*)(void *, double, int))proc)(ptr_args[1], dbl_args[2], int_args[3]));  break;
+	case C_DOUBLE + C_POINTER * CT + C_DOUBLE * CT2 + C_STRING * CT3: dbl_args[0] = ((*(double (*)(void *, double, const char *))proc)(ptr_args[1], dbl_args[2], str_args[3]));  break;
+	case C_DOUBLE + C_POINTER * CT + C_DOUBLE * CT2 + C_POINTER * CT3: dbl_args[0] = ((*(double (*)(void *, double, void *))proc)(ptr_args[1], dbl_args[2], ptr_args[3]));  break;
+	case C_DOUBLE + C_POINTER * CT + C_INT * CT2 + C_DOUBLE * CT3: dbl_args[0] = ((*(double (*)(void *, int, double))proc)(ptr_args[1], int_args[2], dbl_args[3]));  break;
+	case C_DOUBLE + C_POINTER * CT + C_INT * CT2 + C_INT * CT3: dbl_args[0] = ((*(double (*)(void *, int, int))proc)(ptr_args[1], int_args[2], int_args[3]));  break;
+	case C_DOUBLE + C_POINTER * CT + C_INT * CT2 + C_STRING * CT3: dbl_args[0] = ((*(double (*)(void *, int, const char *))proc)(ptr_args[1], int_args[2], str_args[3]));  break;
+	case C_DOUBLE + C_POINTER * CT + C_INT * CT2 + C_POINTER * CT3: dbl_args[0] = ((*(double (*)(void *, int, void *))proc)(ptr_args[1], int_args[2], ptr_args[3]));  break;
+	case C_DOUBLE + C_POINTER * CT + C_STRING * CT2 + C_DOUBLE * CT3: dbl_args[0] = ((*(double (*)(void *, const char *, double))proc)(ptr_args[1], str_args[2], dbl_args[3]));  break;
+	case C_DOUBLE + C_POINTER * CT + C_STRING * CT2 + C_INT * CT3: dbl_args[0] = ((*(double (*)(void *, const char *, int))proc)(ptr_args[1], str_args[2], int_args[3]));  break;
+	case C_DOUBLE + C_POINTER * CT + C_STRING * CT2 + C_STRING * CT3: dbl_args[0] = ((*(double (*)(void *, const char *, const char *))proc)(ptr_args[1], str_args[2], str_args[3]));  break;
+	case C_DOUBLE + C_POINTER * CT + C_STRING * CT2 + C_POINTER * CT3: dbl_args[0] = ((*(double (*)(void *, const char *, void *))proc)(ptr_args[1], str_args[2], ptr_args[3]));  break;
+	case C_DOUBLE + C_POINTER * CT + C_POINTER * CT2 + C_DOUBLE * CT3: dbl_args[0] = ((*(double (*)(void *, void *, double))proc)(ptr_args[1], ptr_args[2], dbl_args[3]));  break;
+	case C_DOUBLE + C_POINTER * CT + C_POINTER * CT2 + C_INT * CT3: dbl_args[0] = ((*(double (*)(void *, void *, int))proc)(ptr_args[1], ptr_args[2], int_args[3]));  break;
+	case C_DOUBLE + C_POINTER * CT + C_POINTER * CT2 + C_STRING * CT3: dbl_args[0] = ((*(double (*)(void *, void *, const char *))proc)(ptr_args[1], ptr_args[2], str_args[3]));  break;
+	case C_DOUBLE + C_POINTER * CT + C_POINTER * CT2 + C_POINTER * CT3: dbl_args[0] = ((*(double (*)(void *, void *, void *))proc)(ptr_args[1], ptr_args[2], ptr_args[3]));  break;
+	case C_INT + C_DOUBLE * CT + C_DOUBLE * CT2 + C_DOUBLE * CT3: int_args[0] = ((*(int (*)(double, double, double))proc)(dbl_args[1], dbl_args[2], dbl_args[3]));  break;
+	case C_INT + C_DOUBLE * CT + C_DOUBLE * CT2 + C_INT * CT3: int_args[0] = ((*(int (*)(double, double, int))proc)(dbl_args[1], dbl_args[2], int_args[3]));  break;
+	case C_INT + C_DOUBLE * CT + C_DOUBLE * CT2 + C_STRING * CT3: int_args[0] = ((*(int (*)(double, double, const char *))proc)(dbl_args[1], dbl_args[2], str_args[3]));  break;
+	case C_INT + C_DOUBLE * CT + C_DOUBLE * CT2 + C_POINTER * CT3: int_args[0] = ((*(int (*)(double, double, void *))proc)(dbl_args[1], dbl_args[2], ptr_args[3]));  break;
+	case C_INT + C_DOUBLE * CT + C_INT * CT2 + C_DOUBLE * CT3: int_args[0] = ((*(int (*)(double, int, double))proc)(dbl_args[1], int_args[2], dbl_args[3]));  break;
+	case C_INT + C_DOUBLE * CT + C_INT * CT2 + C_INT * CT3: int_args[0] = ((*(int (*)(double, int, int))proc)(dbl_args[1], int_args[2], int_args[3]));  break;
+	case C_INT + C_DOUBLE * CT + C_INT * CT2 + C_STRING * CT3: int_args[0] = ((*(int (*)(double, int, const char *))proc)(dbl_args[1], int_args[2], str_args[3]));  break;
+	case C_INT + C_DOUBLE * CT + C_INT * CT2 + C_POINTER * CT3: int_args[0] = ((*(int (*)(double, int, void *))proc)(dbl_args[1], int_args[2], ptr_args[3]));  break;
+	case C_INT + C_DOUBLE * CT + C_STRING * CT2 + C_DOUBLE * CT3: int_args[0] = ((*(int (*)(double, const char *, double))proc)(dbl_args[1], str_args[2], dbl_args[3]));  break;
+	case C_INT + C_DOUBLE * CT + C_STRING * CT2 + C_INT * CT3: int_args[0] = ((*(int (*)(double, const char *, int))proc)(dbl_args[1], str_args[2], int_args[3]));  break;
+	case C_INT + C_DOUBLE * CT + C_STRING * CT2 + C_STRING * CT3: int_args[0] = ((*(int (*)(double, const char *, const char *))proc)(dbl_args[1], str_args[2], str_args[3]));  break;
+	case C_INT + C_DOUBLE * CT + C_STRING * CT2 + C_POINTER * CT3: int_args[0] = ((*(int (*)(double, const char *, void *))proc)(dbl_args[1], str_args[2], ptr_args[3]));  break;
+	case C_INT + C_DOUBLE * CT + C_POINTER * CT2 + C_DOUBLE * CT3: int_args[0] = ((*(int (*)(double, void *, double))proc)(dbl_args[1], ptr_args[2], dbl_args[3]));  break;
+	case C_INT + C_DOUBLE * CT + C_POINTER * CT2 + C_INT * CT3: int_args[0] = ((*(int (*)(double, void *, int))proc)(dbl_args[1], ptr_args[2], int_args[3]));  break;
+	case C_INT + C_DOUBLE * CT + C_POINTER * CT2 + C_STRING * CT3: int_args[0] = ((*(int (*)(double, void *, const char *))proc)(dbl_args[1], ptr_args[2], str_args[3]));  break;
+	case C_INT + C_DOUBLE * CT + C_POINTER * CT2 + C_POINTER * CT3: int_args[0] = ((*(int (*)(double, void *, void *))proc)(dbl_args[1], ptr_args[2], ptr_args[3]));  break;
+	case C_INT + C_INT * CT + C_DOUBLE * CT2 + C_DOUBLE * CT3: int_args[0] = ((*(int (*)(int, double, double))proc)(int_args[1], dbl_args[2], dbl_args[3]));  break;
+	case C_INT + C_INT * CT + C_DOUBLE * CT2 + C_INT * CT3: int_args[0] = ((*(int (*)(int, double, int))proc)(int_args[1], dbl_args[2], int_args[3]));  break;
+	case C_INT + C_INT * CT + C_DOUBLE * CT2 + C_STRING * CT3: int_args[0] = ((*(int (*)(int, double, const char *))proc)(int_args[1], dbl_args[2], str_args[3]));  break;
+	case C_INT + C_INT * CT + C_DOUBLE * CT2 + C_POINTER * CT3: int_args[0] = ((*(int (*)(int, double, void *))proc)(int_args[1], dbl_args[2], ptr_args[3]));  break;
+	case C_INT + C_INT * CT + C_INT * CT2 + C_DOUBLE * CT3: int_args[0] = ((*(int (*)(int, int, double))proc)(int_args[1], int_args[2], dbl_args[3]));  break;
+	case C_INT + C_INT * CT + C_INT * CT2 + C_INT * CT3: int_args[0] = ((*(int (*)(int, int, int))proc)(int_args[1], int_args[2], int_args[3]));  break;
+	case C_INT + C_INT * CT + C_INT * CT2 + C_STRING * CT3: int_args[0] = ((*(int (*)(int, int, const char *))proc)(int_args[1], int_args[2], str_args[3]));  break;
+	case C_INT + C_INT * CT + C_INT * CT2 + C_POINTER * CT3: int_args[0] = ((*(int (*)(int, int, void *))proc)(int_args[1], int_args[2], ptr_args[3]));  break;
+	case C_INT + C_INT * CT + C_STRING * CT2 + C_DOUBLE * CT3: int_args[0] = ((*(int (*)(int, const char *, double))proc)(int_args[1], str_args[2], dbl_args[3]));  break;
+	case C_INT + C_INT * CT + C_STRING * CT2 + C_INT * CT3: int_args[0] = ((*(int (*)(int, const char *, int))proc)(int_args[1], str_args[2], int_args[3]));  break;
+	case C_INT + C_INT * CT + C_STRING * CT2 + C_STRING * CT3: int_args[0] = ((*(int (*)(int, const char *, const char *))proc)(int_args[1], str_args[2], str_args[3]));  break;
+	case C_INT + C_INT * CT + C_STRING * CT2 + C_POINTER * CT3: int_args[0] = ((*(int (*)(int, const char *, void *))proc)(int_args[1], str_args[2], ptr_args[3]));  break;
+	case C_INT + C_INT * CT + C_POINTER * CT2 + C_DOUBLE * CT3: int_args[0] = ((*(int (*)(int, void *, double))proc)(int_args[1], ptr_args[2], dbl_args[3]));  break;
+	case C_INT + C_INT * CT + C_POINTER * CT2 + C_INT * CT3: int_args[0] = ((*(int (*)(int, void *, int))proc)(int_args[1], ptr_args[2], int_args[3]));  break;
+	case C_INT + C_INT * CT + C_POINTER * CT2 + C_STRING * CT3: int_args[0] = ((*(int (*)(int, void *, const char *))proc)(int_args[1], ptr_args[2], str_args[3]));  break;
+	case C_INT + C_INT * CT + C_POINTER * CT2 + C_POINTER * CT3: int_args[0] = ((*(int (*)(int, void *, void *))proc)(int_args[1], ptr_args[2], ptr_args[3]));  break;
+	case C_INT + C_STRING * CT + C_DOUBLE * CT2 + C_DOUBLE * CT3: int_args[0] = ((*(int (*)(const char *, double, double))proc)(str_args[1], dbl_args[2], dbl_args[3]));  break;
+	case C_INT + C_STRING * CT + C_DOUBLE * CT2 + C_INT * CT3: int_args[0] = ((*(int (*)(const char *, double, int))proc)(str_args[1], dbl_args[2], int_args[3]));  break;
+	case C_INT + C_STRING * CT + C_DOUBLE * CT2 + C_STRING * CT3: int_args[0] = ((*(int (*)(const char *, double, const char *))proc)(str_args[1], dbl_args[2], str_args[3]));  break;
+	case C_INT + C_STRING * CT + C_DOUBLE * CT2 + C_POINTER * CT3: int_args[0] = ((*(int (*)(const char *, double, void *))proc)(str_args[1], dbl_args[2], ptr_args[3]));  break;
+	case C_INT + C_STRING * CT + C_INT * CT2 + C_DOUBLE * CT3: int_args[0] = ((*(int (*)(const char *, int, double))proc)(str_args[1], int_args[2], dbl_args[3]));  break;
+	case C_INT + C_STRING * CT + C_INT * CT2 + C_INT * CT3: int_args[0] = ((*(int (*)(const char *, int, int))proc)(str_args[1], int_args[2], int_args[3]));  break;
+	case C_INT + C_STRING * CT + C_INT * CT2 + C_STRING * CT3: int_args[0] = ((*(int (*)(const char *, int, const char *))proc)(str_args[1], int_args[2], str_args[3]));  break;
+	case C_INT + C_STRING * CT + C_INT * CT2 + C_POINTER * CT3: int_args[0] = ((*(int (*)(const char *, int, void *))proc)(str_args[1], int_args[2], ptr_args[3]));  break;
+	case C_INT + C_STRING * CT + C_STRING * CT2 + C_DOUBLE * CT3: int_args[0] = ((*(int (*)(const char *, const char *, double))proc)(str_args[1], str_args[2], dbl_args[3]));  break;
+	case C_INT + C_STRING * CT + C_STRING * CT2 + C_INT * CT3: int_args[0] = ((*(int (*)(const char *, const char *, int))proc)(str_args[1], str_args[2], int_args[3]));  break;
+	case C_INT + C_STRING * CT + C_STRING * CT2 + C_STRING * CT3: int_args[0] = ((*(int (*)(const char *, const char *, const char *))proc)(str_args[1], str_args[2], str_args[3]));  break;
+	case C_INT + C_STRING * CT + C_STRING * CT2 + C_POINTER * CT3: int_args[0] = ((*(int (*)(const char *, const char *, void *))proc)(str_args[1], str_args[2], ptr_args[3]));  break;
+	case C_INT + C_STRING * CT + C_POINTER * CT2 + C_DOUBLE * CT3: int_args[0] = ((*(int (*)(const char *, void *, double))proc)(str_args[1], ptr_args[2], dbl_args[3]));  break;
+	case C_INT + C_STRING * CT + C_POINTER * CT2 + C_INT * CT3: int_args[0] = ((*(int (*)(const char *, void *, int))proc)(str_args[1], ptr_args[2], int_args[3]));  break;
+	case C_INT + C_STRING * CT + C_POINTER * CT2 + C_STRING * CT3: int_args[0] = ((*(int (*)(const char *, void *, const char *))proc)(str_args[1], ptr_args[2], str_args[3]));  break;
+	case C_INT + C_STRING * CT + C_POINTER * CT2 + C_POINTER * CT3: int_args[0] = ((*(int (*)(const char *, void *, void *))proc)(str_args[1], ptr_args[2], ptr_args[3]));  break;
+	case C_INT + C_POINTER * CT + C_DOUBLE * CT2 + C_DOUBLE * CT3: int_args[0] = ((*(int (*)(void *, double, double))proc)(ptr_args[1], dbl_args[2], dbl_args[3]));  break;
+	case C_INT + C_POINTER * CT + C_DOUBLE * CT2 + C_INT * CT3: int_args[0] = ((*(int (*)(void *, double, int))proc)(ptr_args[1], dbl_args[2], int_args[3]));  break;
+	case C_INT + C_POINTER * CT + C_DOUBLE * CT2 + C_STRING * CT3: int_args[0] = ((*(int (*)(void *, double, const char *))proc)(ptr_args[1], dbl_args[2], str_args[3]));  break;
+	case C_INT + C_POINTER * CT + C_DOUBLE * CT2 + C_POINTER * CT3: int_args[0] = ((*(int (*)(void *, double, void *))proc)(ptr_args[1], dbl_args[2], ptr_args[3]));  break;
+	case C_INT + C_POINTER * CT + C_INT * CT2 + C_DOUBLE * CT3: int_args[0] = ((*(int (*)(void *, int, double))proc)(ptr_args[1], int_args[2], dbl_args[3]));  break;
+	case C_INT + C_POINTER * CT + C_INT * CT2 + C_INT * CT3: int_args[0] = ((*(int (*)(void *, int, int))proc)(ptr_args[1], int_args[2], int_args[3]));  break;
+	case C_INT + C_POINTER * CT + C_INT * CT2 + C_STRING * CT3: int_args[0] = ((*(int (*)(void *, int, const char *))proc)(ptr_args[1], int_args[2], str_args[3]));  break;
+	case C_INT + C_POINTER * CT + C_INT * CT2 + C_POINTER * CT3: int_args[0] = ((*(int (*)(void *, int, void *))proc)(ptr_args[1], int_args[2], ptr_args[3]));  break;
+	case C_INT + C_POINTER * CT + C_STRING * CT2 + C_DOUBLE * CT3: int_args[0] = ((*(int (*)(void *, const char *, double))proc)(ptr_args[1], str_args[2], dbl_args[3]));  break;
+	case C_INT + C_POINTER * CT + C_STRING * CT2 + C_INT * CT3: int_args[0] = ((*(int (*)(void *, const char *, int))proc)(ptr_args[1], str_args[2], int_args[3]));  break;
+	case C_INT + C_POINTER * CT + C_STRING * CT2 + C_STRING * CT3: int_args[0] = ((*(int (*)(void *, const char *, const char *))proc)(ptr_args[1], str_args[2], str_args[3]));  break;
+	case C_INT + C_POINTER * CT + C_STRING * CT2 + C_POINTER * CT3: int_args[0] = ((*(int (*)(void *, const char *, void *))proc)(ptr_args[1], str_args[2], ptr_args[3]));  break;
+	case C_INT + C_POINTER * CT + C_POINTER * CT2 + C_DOUBLE * CT3: int_args[0] = ((*(int (*)(void *, void *, double))proc)(ptr_args[1], ptr_args[2], dbl_args[3]));  break;
+	case C_INT + C_POINTER * CT + C_POINTER * CT2 + C_INT * CT3: int_args[0] = ((*(int (*)(void *, void *, int))proc)(ptr_args[1], ptr_args[2], int_args[3]));  break;
+	case C_INT + C_POINTER * CT + C_POINTER * CT2 + C_STRING * CT3: int_args[0] = ((*(int (*)(void *, void *, const char *))proc)(ptr_args[1], ptr_args[2], str_args[3]));  break;
+	case C_INT + C_POINTER * CT + C_POINTER * CT2 + C_POINTER * CT3: int_args[0] = ((*(int (*)(void *, void *, void *))proc)(ptr_args[1], ptr_args[2], ptr_args[3]));  break;
+	case C_STRING + C_DOUBLE * CT + C_DOUBLE * CT2 + C_DOUBLE * CT3: str_args[0] = ((*(const char * (*)(double, double, double))proc)(dbl_args[1], dbl_args[2], dbl_args[3]));  break;
+	case C_STRING + C_DOUBLE * CT + C_DOUBLE * CT2 + C_INT * CT3: str_args[0] = ((*(const char * (*)(double, double, int))proc)(dbl_args[1], dbl_args[2], int_args[3]));  break;
+	case C_STRING + C_DOUBLE * CT + C_DOUBLE * CT2 + C_STRING * CT3: str_args[0] = ((*(const char * (*)(double, double, const char *))proc)(dbl_args[1], dbl_args[2], str_args[3]));  break;
+	case C_STRING + C_DOUBLE * CT + C_DOUBLE * CT2 + C_POINTER * CT3: str_args[0] = ((*(const char * (*)(double, double, void *))proc)(dbl_args[1], dbl_args[2], ptr_args[3]));  break;
+	case C_STRING + C_DOUBLE * CT + C_INT * CT2 + C_DOUBLE * CT3: str_args[0] = ((*(const char * (*)(double, int, double))proc)(dbl_args[1], int_args[2], dbl_args[3]));  break;
+	case C_STRING + C_DOUBLE * CT + C_INT * CT2 + C_INT * CT3: str_args[0] = ((*(const char * (*)(double, int, int))proc)(dbl_args[1], int_args[2], int_args[3]));  break;
+	case C_STRING + C_DOUBLE * CT + C_INT * CT2 + C_STRING * CT3: str_args[0] = ((*(const char * (*)(double, int, const char *))proc)(dbl_args[1], int_args[2], str_args[3]));  break;
+	case C_STRING + C_DOUBLE * CT + C_INT * CT2 + C_POINTER * CT3: str_args[0] = ((*(const char * (*)(double, int, void *))proc)(dbl_args[1], int_args[2], ptr_args[3]));  break;
+	case C_STRING + C_DOUBLE * CT + C_STRING * CT2 + C_DOUBLE * CT3: str_args[0] = ((*(const char * (*)(double, const char *, double))proc)(dbl_args[1], str_args[2], dbl_args[3]));  break;
+	case C_STRING + C_DOUBLE * CT + C_STRING * CT2 + C_INT * CT3: str_args[0] = ((*(const char * (*)(double, const char *, int))proc)(dbl_args[1], str_args[2], int_args[3]));  break;
+	case C_STRING + C_DOUBLE * CT + C_STRING * CT2 + C_STRING * CT3: str_args[0] = ((*(const char * (*)(double, const char *, const char *))proc)(dbl_args[1], str_args[2], str_args[3]));  break;
+	case C_STRING + C_DOUBLE * CT + C_STRING * CT2 + C_POINTER * CT3: str_args[0] = ((*(const char * (*)(double, const char *, void *))proc)(dbl_args[1], str_args[2], ptr_args[3]));  break;
+	case C_STRING + C_DOUBLE * CT + C_POINTER * CT2 + C_DOUBLE * CT3: str_args[0] = ((*(const char * (*)(double, void *, double))proc)(dbl_args[1], ptr_args[2], dbl_args[3]));  break;
+	case C_STRING + C_DOUBLE * CT + C_POINTER * CT2 + C_INT * CT3: str_args[0] = ((*(const char * (*)(double, void *, int))proc)(dbl_args[1], ptr_args[2], int_args[3]));  break;
+	case C_STRING + C_DOUBLE * CT + C_POINTER * CT2 + C_STRING * CT3: str_args[0] = ((*(const char * (*)(double, void *, const char *))proc)(dbl_args[1], ptr_args[2], str_args[3]));  break;
+	case C_STRING + C_DOUBLE * CT + C_POINTER * CT2 + C_POINTER * CT3: str_args[0] = ((*(const char * (*)(double, void *, void *))proc)(dbl_args[1], ptr_args[2], ptr_args[3]));  break;
+	case C_STRING + C_INT * CT + C_DOUBLE * CT2 + C_DOUBLE * CT3: str_args[0] = ((*(const char * (*)(int, double, double))proc)(int_args[1], dbl_args[2], dbl_args[3]));  break;
+	case C_STRING + C_INT * CT + C_DOUBLE * CT2 + C_INT * CT3: str_args[0] = ((*(const char * (*)(int, double, int))proc)(int_args[1], dbl_args[2], int_args[3]));  break;
+	case C_STRING + C_INT * CT + C_DOUBLE * CT2 + C_STRING * CT3: str_args[0] = ((*(const char * (*)(int, double, const char *))proc)(int_args[1], dbl_args[2], str_args[3]));  break;
+	case C_STRING + C_INT * CT + C_DOUBLE * CT2 + C_POINTER * CT3: str_args[0] = ((*(const char * (*)(int, double, void *))proc)(int_args[1], dbl_args[2], ptr_args[3]));  break;
+	case C_STRING + C_INT * CT + C_INT * CT2 + C_DOUBLE * CT3: str_args[0] = ((*(const char * (*)(int, int, double))proc)(int_args[1], int_args[2], dbl_args[3]));  break;
+	case C_STRING + C_INT * CT + C_INT * CT2 + C_INT * CT3: str_args[0] = ((*(const char * (*)(int, int, int))proc)(int_args[1], int_args[2], int_args[3]));  break;
+	case C_STRING + C_INT * CT + C_INT * CT2 + C_STRING * CT3: str_args[0] = ((*(const char * (*)(int, int, const char *))proc)(int_args[1], int_args[2], str_args[3]));  break;
+	case C_STRING + C_INT * CT + C_INT * CT2 + C_POINTER * CT3: str_args[0] = ((*(const char * (*)(int, int, void *))proc)(int_args[1], int_args[2], ptr_args[3]));  break;
+	case C_STRING + C_INT * CT + C_STRING * CT2 + C_DOUBLE * CT3: str_args[0] = ((*(const char * (*)(int, const char *, double))proc)(int_args[1], str_args[2], dbl_args[3]));  break;
+	case C_STRING + C_INT * CT + C_STRING * CT2 + C_INT * CT3: str_args[0] = ((*(const char * (*)(int, const char *, int))proc)(int_args[1], str_args[2], int_args[3]));  break;
+	case C_STRING + C_INT * CT + C_STRING * CT2 + C_STRING * CT3: str_args[0] = ((*(const char * (*)(int, const char *, const char *))proc)(int_args[1], str_args[2], str_args[3]));  break;
+	case C_STRING + C_INT * CT + C_STRING * CT2 + C_POINTER * CT3: str_args[0] = ((*(const char * (*)(int, const char *, void *))proc)(int_args[1], str_args[2], ptr_args[3]));  break;
+	case C_STRING + C_INT * CT + C_POINTER * CT2 + C_DOUBLE * CT3: str_args[0] = ((*(const char * (*)(int, void *, double))proc)(int_args[1], ptr_args[2], dbl_args[3]));  break;
+	case C_STRING + C_INT * CT + C_POINTER * CT2 + C_INT * CT3: str_args[0] = ((*(const char * (*)(int, void *, int))proc)(int_args[1], ptr_args[2], int_args[3]));  break;
+	case C_STRING + C_INT * CT + C_POINTER * CT2 + C_STRING * CT3: str_args[0] = ((*(const char * (*)(int, void *, const char *))proc)(int_args[1], ptr_args[2], str_args[3]));  break;
+	case C_STRING + C_INT * CT + C_POINTER * CT2 + C_POINTER * CT3: str_args[0] = ((*(const char * (*)(int, void *, void *))proc)(int_args[1], ptr_args[2], ptr_args[3]));  break;
+	case C_STRING + C_STRING * CT + C_DOUBLE * CT2 + C_DOUBLE * CT3: str_args[0] = ((*(const char * (*)(const char *, double, double))proc)(str_args[1], dbl_args[2], dbl_args[3]));  break;
+	case C_STRING + C_STRING * CT + C_DOUBLE * CT2 + C_INT * CT3: str_args[0] = ((*(const char * (*)(const char *, double, int))proc)(str_args[1], dbl_args[2], int_args[3]));  break;
+	case C_STRING + C_STRING * CT + C_DOUBLE * CT2 + C_STRING * CT3: str_args[0] = ((*(const char * (*)(const char *, double, const char *))proc)(str_args[1], dbl_args[2], str_args[3]));  break;
+	case C_STRING + C_STRING * CT + C_DOUBLE * CT2 + C_POINTER * CT3: str_args[0] = ((*(const char * (*)(const char *, double, void *))proc)(str_args[1], dbl_args[2], ptr_args[3]));  break;
+	case C_STRING + C_STRING * CT + C_INT * CT2 + C_DOUBLE * CT3: str_args[0] = ((*(const char * (*)(const char *, int, double))proc)(str_args[1], int_args[2], dbl_args[3]));  break;
+	case C_STRING + C_STRING * CT + C_INT * CT2 + C_INT * CT3: str_args[0] = ((*(const char * (*)(const char *, int, int))proc)(str_args[1], int_args[2], int_args[3]));  break;
+	case C_STRING + C_STRING * CT + C_INT * CT2 + C_STRING * CT3: str_args[0] = ((*(const char * (*)(const char *, int, const char *))proc)(str_args[1], int_args[2], str_args[3]));  break;
+	case C_STRING + C_STRING * CT + C_INT * CT2 + C_POINTER * CT3: str_args[0] = ((*(const char * (*)(const char *, int, void *))proc)(str_args[1], int_args[2], ptr_args[3]));  break;
+	case C_STRING + C_STRING * CT + C_STRING * CT2 + C_DOUBLE * CT3: str_args[0] = ((*(const char * (*)(const char *, const char *, double))proc)(str_args[1], str_args[2], dbl_args[3]));  break;
+	case C_STRING + C_STRING * CT + C_STRING * CT2 + C_INT * CT3: str_args[0] = ((*(const char * (*)(const char *, const char *, int))proc)(str_args[1], str_args[2], int_args[3]));  break;
+	case C_STRING + C_STRING * CT + C_STRING * CT2 + C_STRING * CT3: str_args[0] = ((*(const char * (*)(const char *, const char *, const char *))proc)(str_args[1], str_args[2], str_args[3]));  break;
+	case C_STRING + C_STRING * CT + C_STRING * CT2 + C_POINTER * CT3: str_args[0] = ((*(const char * (*)(const char *, const char *, void *))proc)(str_args[1], str_args[2], ptr_args[3]));  break;
+	case C_STRING + C_STRING * CT + C_POINTER * CT2 + C_DOUBLE * CT3: str_args[0] = ((*(const char * (*)(const char *, void *, double))proc)(str_args[1], ptr_args[2], dbl_args[3]));  break;
+	case C_STRING + C_STRING * CT + C_POINTER * CT2 + C_INT * CT3: str_args[0] = ((*(const char * (*)(const char *, void *, int))proc)(str_args[1], ptr_args[2], int_args[3]));  break;
+	case C_STRING + C_STRING * CT + C_POINTER * CT2 + C_STRING * CT3: str_args[0] = ((*(const char * (*)(const char *, void *, const char *))proc)(str_args[1], ptr_args[2], str_args[3]));  break;
+	case C_STRING + C_STRING * CT + C_POINTER * CT2 + C_POINTER * CT3: str_args[0] = ((*(const char * (*)(const char *, void *, void *))proc)(str_args[1], ptr_args[2], ptr_args[3]));  break;
+	case C_STRING + C_POINTER * CT + C_DOUBLE * CT2 + C_DOUBLE * CT3: str_args[0] = ((*(const char * (*)(void *, double, double))proc)(ptr_args[1], dbl_args[2], dbl_args[3]));  break;
+	case C_STRING + C_POINTER * CT + C_DOUBLE * CT2 + C_INT * CT3: str_args[0] = ((*(const char * (*)(void *, double, int))proc)(ptr_args[1], dbl_args[2], int_args[3]));  break;
+	case C_STRING + C_POINTER * CT + C_DOUBLE * CT2 + C_STRING * CT3: str_args[0] = ((*(const char * (*)(void *, double, const char *))proc)(ptr_args[1], dbl_args[2], str_args[3]));  break;
+	case C_STRING + C_POINTER * CT + C_DOUBLE * CT2 + C_POINTER * CT3: str_args[0] = ((*(const char * (*)(void *, double, void *))proc)(ptr_args[1], dbl_args[2], ptr_args[3]));  break;
+	case C_STRING + C_POINTER * CT + C_INT * CT2 + C_DOUBLE * CT3: str_args[0] = ((*(const char * (*)(void *, int, double))proc)(ptr_args[1], int_args[2], dbl_args[3]));  break;
+	case C_STRING + C_POINTER * CT + C_INT * CT2 + C_INT * CT3: str_args[0] = ((*(const char * (*)(void *, int, int))proc)(ptr_args[1], int_args[2], int_args[3]));  break;
+	case C_STRING + C_POINTER * CT + C_INT * CT2 + C_STRING * CT3: str_args[0] = ((*(const char * (*)(void *, int, const char *))proc)(ptr_args[1], int_args[2], str_args[3]));  break;
+	case C_STRING + C_POINTER * CT + C_INT * CT2 + C_POINTER * CT3: str_args[0] = ((*(const char * (*)(void *, int, void *))proc)(ptr_args[1], int_args[2], ptr_args[3]));  break;
+	case C_STRING + C_POINTER * CT + C_STRING * CT2 + C_DOUBLE * CT3: str_args[0] = ((*(const char * (*)(void *, const char *, double))proc)(ptr_args[1], str_args[2], dbl_args[3]));  break;
+	case C_STRING + C_POINTER * CT + C_STRING * CT2 + C_INT * CT3: str_args[0] = ((*(const char * (*)(void *, const char *, int))proc)(ptr_args[1], str_args[2], int_args[3]));  break;
+	case C_STRING + C_POINTER * CT + C_STRING * CT2 + C_STRING * CT3: str_args[0] = ((*(const char * (*)(void *, const char *, const char *))proc)(ptr_args[1], str_args[2], str_args[3]));  break;
+	case C_STRING + C_POINTER * CT + C_STRING * CT2 + C_POINTER * CT3: str_args[0] = ((*(const char * (*)(void *, const char *, void *))proc)(ptr_args[1], str_args[2], ptr_args[3]));  break;
+	case C_STRING + C_POINTER * CT + C_POINTER * CT2 + C_DOUBLE * CT3: str_args[0] = ((*(const char * (*)(void *, void *, double))proc)(ptr_args[1], ptr_args[2], dbl_args[3]));  break;
+	case C_STRING + C_POINTER * CT + C_POINTER * CT2 + C_INT * CT3: str_args[0] = ((*(const char * (*)(void *, void *, int))proc)(ptr_args[1], ptr_args[2], int_args[3]));  break;
+	case C_STRING + C_POINTER * CT + C_POINTER * CT2 + C_STRING * CT3: str_args[0] = ((*(const char * (*)(void *, void *, const char *))proc)(ptr_args[1], ptr_args[2], str_args[3]));  break;
+	case C_STRING + C_POINTER * CT + C_POINTER * CT2 + C_POINTER * CT3: str_args[0] = ((*(const char * (*)(void *, void *, void *))proc)(ptr_args[1], ptr_args[2], ptr_args[3]));  break;
+	case C_POINTER + C_DOUBLE * CT + C_DOUBLE * CT2 + C_DOUBLE * CT3: ptr_args[0] = ((*(void * (*)(double, double, double))proc)(dbl_args[1], dbl_args[2], dbl_args[3]));  break;
+	case C_POINTER + C_DOUBLE * CT + C_DOUBLE * CT2 + C_INT * CT3: ptr_args[0] = ((*(void * (*)(double, double, int))proc)(dbl_args[1], dbl_args[2], int_args[3]));  break;
+	case C_POINTER + C_DOUBLE * CT + C_DOUBLE * CT2 + C_STRING * CT3: ptr_args[0] = ((*(void * (*)(double, double, const char *))proc)(dbl_args[1], dbl_args[2], str_args[3]));  break;
+	case C_POINTER + C_DOUBLE * CT + C_DOUBLE * CT2 + C_POINTER * CT3: ptr_args[0] = ((*(void * (*)(double, double, void *))proc)(dbl_args[1], dbl_args[2], ptr_args[3]));  break;
+	case C_POINTER + C_DOUBLE * CT + C_INT * CT2 + C_DOUBLE * CT3: ptr_args[0] = ((*(void * (*)(double, int, double))proc)(dbl_args[1], int_args[2], dbl_args[3]));  break;
+	case C_POINTER + C_DOUBLE * CT + C_INT * CT2 + C_INT * CT3: ptr_args[0] = ((*(void * (*)(double, int, int))proc)(dbl_args[1], int_args[2], int_args[3]));  break;
+	case C_POINTER + C_DOUBLE * CT + C_INT * CT2 + C_STRING * CT3: ptr_args[0] = ((*(void * (*)(double, int, const char *))proc)(dbl_args[1], int_args[2], str_args[3]));  break;
+	case C_POINTER + C_DOUBLE * CT + C_INT * CT2 + C_POINTER * CT3: ptr_args[0] = ((*(void * (*)(double, int, void *))proc)(dbl_args[1], int_args[2], ptr_args[3]));  break;
+	case C_POINTER + C_DOUBLE * CT + C_STRING * CT2 + C_DOUBLE * CT3: ptr_args[0] = ((*(void * (*)(double, const char *, double))proc)(dbl_args[1], str_args[2], dbl_args[3]));  break;
+	case C_POINTER + C_DOUBLE * CT + C_STRING * CT2 + C_INT * CT3: ptr_args[0] = ((*(void * (*)(double, const char *, int))proc)(dbl_args[1], str_args[2], int_args[3]));  break;
+	case C_POINTER + C_DOUBLE * CT + C_STRING * CT2 + C_STRING * CT3: ptr_args[0] = ((*(void * (*)(double, const char *, const char *))proc)(dbl_args[1], str_args[2], str_args[3]));  break;
+	case C_POINTER + C_DOUBLE * CT + C_STRING * CT2 + C_POINTER * CT3: ptr_args[0] = ((*(void * (*)(double, const char *, void *))proc)(dbl_args[1], str_args[2], ptr_args[3]));  break;
+	case C_POINTER + C_DOUBLE * CT + C_POINTER * CT2 + C_DOUBLE * CT3: ptr_args[0] = ((*(void * (*)(double, void *, double))proc)(dbl_args[1], ptr_args[2], dbl_args[3]));  break;
+	case C_POINTER + C_DOUBLE * CT + C_POINTER * CT2 + C_INT * CT3: ptr_args[0] = ((*(void * (*)(double, void *, int))proc)(dbl_args[1], ptr_args[2], int_args[3]));  break;
+	case C_POINTER + C_DOUBLE * CT + C_POINTER * CT2 + C_STRING * CT3: ptr_args[0] = ((*(void * (*)(double, void *, const char *))proc)(dbl_args[1], ptr_args[2], str_args[3]));  break;
+	case C_POINTER + C_DOUBLE * CT + C_POINTER * CT2 + C_POINTER * CT3: ptr_args[0] = ((*(void * (*)(double, void *, void *))proc)(dbl_args[1], ptr_args[2], ptr_args[3]));  break;
+	case C_POINTER + C_INT * CT + C_DOUBLE * CT2 + C_DOUBLE * CT3: ptr_args[0] = ((*(void * (*)(int, double, double))proc)(int_args[1], dbl_args[2], dbl_args[3]));  break;
+	case C_POINTER + C_INT * CT + C_DOUBLE * CT2 + C_INT * CT3: ptr_args[0] = ((*(void * (*)(int, double, int))proc)(int_args[1], dbl_args[2], int_args[3]));  break;
+	case C_POINTER + C_INT * CT + C_DOUBLE * CT2 + C_STRING * CT3: ptr_args[0] = ((*(void * (*)(int, double, const char *))proc)(int_args[1], dbl_args[2], str_args[3]));  break;
+	case C_POINTER + C_INT * CT + C_DOUBLE * CT2 + C_POINTER * CT3: ptr_args[0] = ((*(void * (*)(int, double, void *))proc)(int_args[1], dbl_args[2], ptr_args[3]));  break;
+	case C_POINTER + C_INT * CT + C_INT * CT2 + C_DOUBLE * CT3: ptr_args[0] = ((*(void * (*)(int, int, double))proc)(int_args[1], int_args[2], dbl_args[3]));  break;
+	case C_POINTER + C_INT * CT + C_INT * CT2 + C_INT * CT3: ptr_args[0] = ((*(void * (*)(int, int, int))proc)(int_args[1], int_args[2], int_args[3]));  break;
+	case C_POINTER + C_INT * CT + C_INT * CT2 + C_STRING * CT3: ptr_args[0] = ((*(void * (*)(int, int, const char *))proc)(int_args[1], int_args[2], str_args[3]));  break;
+	case C_POINTER + C_INT * CT + C_INT * CT2 + C_POINTER * CT3: ptr_args[0] = ((*(void * (*)(int, int, void *))proc)(int_args[1], int_args[2], ptr_args[3]));  break;
+	case C_POINTER + C_INT * CT + C_STRING * CT2 + C_DOUBLE * CT3: ptr_args[0] = ((*(void * (*)(int, const char *, double))proc)(int_args[1], str_args[2], dbl_args[3]));  break;
+	case C_POINTER + C_INT * CT + C_STRING * CT2 + C_INT * CT3: ptr_args[0] = ((*(void * (*)(int, const char *, int))proc)(int_args[1], str_args[2], int_args[3]));  break;
+	case C_POINTER + C_INT * CT + C_STRING * CT2 + C_STRING * CT3: ptr_args[0] = ((*(void * (*)(int, const char *, const char *))proc)(int_args[1], str_args[2], str_args[3]));  break;
+	case C_POINTER + C_INT * CT + C_STRING * CT2 + C_POINTER * CT3: ptr_args[0] = ((*(void * (*)(int, const char *, void *))proc)(int_args[1], str_args[2], ptr_args[3]));  break;
+	case C_POINTER + C_INT * CT + C_POINTER * CT2 + C_DOUBLE * CT3: ptr_args[0] = ((*(void * (*)(int, void *, double))proc)(int_args[1], ptr_args[2], dbl_args[3]));  break;
+	case C_POINTER + C_INT * CT + C_POINTER * CT2 + C_INT * CT3: ptr_args[0] = ((*(void * (*)(int, void *, int))proc)(int_args[1], ptr_args[2], int_args[3]));  break;
+	case C_POINTER + C_INT * CT + C_POINTER * CT2 + C_STRING * CT3: ptr_args[0] = ((*(void * (*)(int, void *, const char *))proc)(int_args[1], ptr_args[2], str_args[3]));  break;
+	case C_POINTER + C_INT * CT + C_POINTER * CT2 + C_POINTER * CT3: ptr_args[0] = ((*(void * (*)(int, void *, void *))proc)(int_args[1], ptr_args[2], ptr_args[3]));  break;
+	case C_POINTER + C_STRING * CT + C_DOUBLE * CT2 + C_DOUBLE * CT3: ptr_args[0] = ((*(void * (*)(const char *, double, double))proc)(str_args[1], dbl_args[2], dbl_args[3]));  break;
+	case C_POINTER + C_STRING * CT + C_DOUBLE * CT2 + C_INT * CT3: ptr_args[0] = ((*(void * (*)(const char *, double, int))proc)(str_args[1], dbl_args[2], int_args[3]));  break;
+	case C_POINTER + C_STRING * CT + C_DOUBLE * CT2 + C_STRING * CT3: ptr_args[0] = ((*(void * (*)(const char *, double, const char *))proc)(str_args[1], dbl_args[2], str_args[3]));  break;
+	case C_POINTER + C_STRING * CT + C_DOUBLE * CT2 + C_POINTER * CT3: ptr_args[0] = ((*(void * (*)(const char *, double, void *))proc)(str_args[1], dbl_args[2], ptr_args[3]));  break;
+	case C_POINTER + C_STRING * CT + C_INT * CT2 + C_DOUBLE * CT3: ptr_args[0] = ((*(void * (*)(const char *, int, double))proc)(str_args[1], int_args[2], dbl_args[3]));  break;
+	case C_POINTER + C_STRING * CT + C_INT * CT2 + C_INT * CT3: ptr_args[0] = ((*(void * (*)(const char *, int, int))proc)(str_args[1], int_args[2], int_args[3]));  break;
+	case C_POINTER + C_STRING * CT + C_INT * CT2 + C_STRING * CT3: ptr_args[0] = ((*(void * (*)(const char *, int, const char *))proc)(str_args[1], int_args[2], str_args[3]));  break;
+	case C_POINTER + C_STRING * CT + C_INT * CT2 + C_POINTER * CT3: ptr_args[0] = ((*(void * (*)(const char *, int, void *))proc)(str_args[1], int_args[2], ptr_args[3]));  break;
+	case C_POINTER + C_STRING * CT + C_STRING * CT2 + C_DOUBLE * CT3: ptr_args[0] = ((*(void * (*)(const char *, const char *, double))proc)(str_args[1], str_args[2], dbl_args[3]));  break;
+	case C_POINTER + C_STRING * CT + C_STRING * CT2 + C_INT * CT3: ptr_args[0] = ((*(void * (*)(const char *, const char *, int))proc)(str_args[1], str_args[2], int_args[3]));  break;
+	case C_POINTER + C_STRING * CT + C_STRING * CT2 + C_STRING * CT3: ptr_args[0] = ((*(void * (*)(const char *, const char *, const char *))proc)(str_args[1], str_args[2], str_args[3]));  break;
+	case C_POINTER + C_STRING * CT + C_STRING * CT2 + C_POINTER * CT3: ptr_args[0] = ((*(void * (*)(const char *, const char *, void *))proc)(str_args[1], str_args[2], ptr_args[3]));  break;
+	case C_POINTER + C_STRING * CT + C_POINTER * CT2 + C_DOUBLE * CT3: ptr_args[0] = ((*(void * (*)(const char *, void *, double))proc)(str_args[1], ptr_args[2], dbl_args[3]));  break;
+	case C_POINTER + C_STRING * CT + C_POINTER * CT2 + C_INT * CT3: ptr_args[0] = ((*(void * (*)(const char *, void *, int))proc)(str_args[1], ptr_args[2], int_args[3]));  break;
+	case C_POINTER + C_STRING * CT + C_POINTER * CT2 + C_STRING * CT3: ptr_args[0] = ((*(void * (*)(const char *, void *, const char *))proc)(str_args[1], ptr_args[2], str_args[3]));  break;
+	case C_POINTER + C_STRING * CT + C_POINTER * CT2 + C_POINTER * CT3: ptr_args[0] = ((*(void * (*)(const char *, void *, void *))proc)(str_args[1], ptr_args[2], ptr_args[3]));  break;
+	case C_POINTER + C_POINTER * CT + C_DOUBLE * CT2 + C_DOUBLE * CT3: ptr_args[0] = ((*(void * (*)(void *, double, double))proc)(ptr_args[1], dbl_args[2], dbl_args[3]));  break;
+	case C_POINTER + C_POINTER * CT + C_DOUBLE * CT2 + C_INT * CT3: ptr_args[0] = ((*(void * (*)(void *, double, int))proc)(ptr_args[1], dbl_args[2], int_args[3]));  break;
+	case C_POINTER + C_POINTER * CT + C_DOUBLE * CT2 + C_STRING * CT3: ptr_args[0] = ((*(void * (*)(void *, double, const char *))proc)(ptr_args[1], dbl_args[2], str_args[3]));  break;
+	case C_POINTER + C_POINTER * CT + C_DOUBLE * CT2 + C_POINTER * CT3: ptr_args[0] = ((*(void * (*)(void *, double, void *))proc)(ptr_args[1], dbl_args[2], ptr_args[3]));  break;
+	case C_POINTER + C_POINTER * CT + C_INT * CT2 + C_DOUBLE * CT3: ptr_args[0] = ((*(void * (*)(void *, int, double))proc)(ptr_args[1], int_args[2], dbl_args[3]));  break;
+	case C_POINTER + C_POINTER * CT + C_INT * CT2 + C_INT * CT3: ptr_args[0] = ((*(void * (*)(void *, int, int))proc)(ptr_args[1], int_args[2], int_args[3]));  break;
+	case C_POINTER + C_POINTER * CT + C_INT * CT2 + C_STRING * CT3: ptr_args[0] = ((*(void * (*)(void *, int, const char *))proc)(ptr_args[1], int_args[2], str_args[3]));  break;
+	case C_POINTER + C_POINTER * CT + C_INT * CT2 + C_POINTER * CT3: ptr_args[0] = ((*(void * (*)(void *, int, void *))proc)(ptr_args[1], int_args[2], ptr_args[3]));  break;
+	case C_POINTER + C_POINTER * CT + C_STRING * CT2 + C_DOUBLE * CT3: ptr_args[0] = ((*(void * (*)(void *, const char *, double))proc)(ptr_args[1], str_args[2], dbl_args[3]));  break;
+	case C_POINTER + C_POINTER * CT + C_STRING * CT2 + C_INT * CT3: ptr_args[0] = ((*(void * (*)(void *, const char *, int))proc)(ptr_args[1], str_args[2], int_args[3]));  break;
+	case C_POINTER + C_POINTER * CT + C_STRING * CT2 + C_STRING * CT3: ptr_args[0] = ((*(void * (*)(void *, const char *, const char *))proc)(ptr_args[1], str_args[2], str_args[3]));  break;
+	case C_POINTER + C_POINTER * CT + C_STRING * CT2 + C_POINTER * CT3: ptr_args[0] = ((*(void * (*)(void *, const char *, void *))proc)(ptr_args[1], str_args[2], ptr_args[3]));  break;
+	case C_POINTER + C_POINTER * CT + C_POINTER * CT2 + C_DOUBLE * CT3: ptr_args[0] = ((*(void * (*)(void *, void *, double))proc)(ptr_args[1], ptr_args[2], dbl_args[3]));  break;
+	case C_POINTER + C_POINTER * CT + C_POINTER * CT2 + C_INT * CT3: ptr_args[0] = ((*(void * (*)(void *, void *, int))proc)(ptr_args[1], ptr_args[2], int_args[3]));  break;
+	case C_POINTER + C_POINTER * CT + C_POINTER * CT2 + C_STRING * CT3: ptr_args[0] = ((*(void * (*)(void *, void *, const char *))proc)(ptr_args[1], ptr_args[2], str_args[3]));  break;
+	case C_POINTER + C_POINTER * CT + C_POINTER * CT2 + C_POINTER * CT3: ptr_args[0] = ((*(void * (*)(void *, void *, void *))proc)(ptr_args[1], ptr_args[2], ptr_args[3]));  break;
+	}
+    }
+  
+  switch (return_type)
+    {
+    case C_DOUBLE:  return(C_TO_XEN_DOUBLE(dbl_args[0]));
+    case C_INT:     return(C_TO_XEN_INT(int_args[0]));
+    case C_STRING:  return(C_TO_XEN_STRING(str_args[0]));
+    case C_VOID:    return(XEN_FALSE);
+    case C_POINTER: return(XEN_WRAP_C_POINTER(ptr_args[0]));
+    }
+  return(XEN_FALSE);
+}
+#endif
 #endif
 
 
@@ -2429,6 +3000,10 @@ static char *find_source_file(char *orig)
   XEN_NARGIFY_1(g_dlclose_w, g_dlclose)
   XEN_NARGIFY_0(g_dlerror_w, g_dlerror)
   XEN_NARGIFY_2(g_dlinit_w, g_dlinit)
+#if MUS_DEBUGGING
+  XEN_NARGIFY_1(g_c_load_w, g_c_load)
+  XEN_VARGIFY(g_c_call_w, g_c_call)
+#endif
 #endif
 #if HAVE_GUILE && (!HAVE_SCM_CONTINUATION_P)
   XEN_NARGIFY_1(g_continuation_p_w, g_continuation_p)
@@ -2496,6 +3071,10 @@ XEN_NARGIFY_1(g_add_watcher_w, g_add_watcher)
   #define g_dlclose_w g_dlclose
   #define g_dlerror_w g_dlerror
   #define g_dlinit_w g_dlinit
+#if MUS_DEBUGGING
+  #define g_c_load_w g_c_load
+  #define g_c_call_w g_c_call
+#endif
 #endif
 #if HAVE_GUILE && (!HAVE_SCM_CONTINUATION_P)
   #define g_continuation_p_w g_continuation_p
@@ -2896,6 +3475,11 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   XEN_DEFINE_PROCEDURE("dlclose", g_dlclose_w, 1, 0 ,0, "");
   XEN_DEFINE_PROCEDURE("dlerror", g_dlerror_w, 0, 0 ,0, "");
   XEN_DEFINE_PROCEDURE("dlinit",  g_dlinit_w,  2, 0 ,0, "");
+#if MUS_DEBUGGING
+  XEN_DEFINE_PROCEDURE("c-load",  g_c_load_w,  1, 0 ,0, "");
+  XEN_DEFINE_PROCEDURE("c-call",  g_c_call_w,  0, 0 ,1, "");
+#endif
+  XEN_EVAL_C_STRING("(defmacro c->double (arg) `(c-call 0 (symbol->string ',(car arg)) ,(cadr arg)))");
 #endif
 
 #if HAVE_LADSPA && HAVE_EXTENSION_LANGUAGE && HAVE_DLFCN_H && HAVE_DIRENT_H
@@ -3002,7 +3586,6 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   XEN_EVAL_C_STRING("(define (1- x) (- x 1))");
   XEN_EVAL_C_STRING("(defmacro while (cond . body) `(do () ((not ,cond)) ,@body))");
 
-  XEN_EVAL_C_STRING("(defmacro declare args `(snd-declare ',args))");
   XEN_EVAL_C_STRING("(define (identity x) x)");                    /* popup.scm uses this */
   XEN_EVAL_C_STRING("(define (throw . args) (apply error args))"); /* selection.scm uses this */
 

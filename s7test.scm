@@ -27376,6 +27376,20 @@
 	    (* (/ (sqrt N)) (- (log (abs (* -1 (expt defg -6)))))))
 	  our-pi) ; Newman and Shanks "On a Sequence Arising in Series for pi"
 
+(num-test (let* ((an (sqrt 2)) ; Borwein and Borwein "AGM Mean and Fast Computation"
+		 (bn 0)
+		 (pn (+ 2 (sqrt 2))))
+	    (do ((i 0 (+ i 1)))
+		((= i 4))
+	      (let* ((sqa (sqrt an))
+		     (an1 (* 1/2 (+ sqa (/ 1.0 sqa))))
+		     (bn1 (* sqa (/ (+ bn 1) (+ bn an))))
+		     (pn1 (* pn bn1 (/ (+ an1 1) (+ bn1 1)))))
+		(set! pn pn1)
+		(set! bn bn1)
+		(set! an an1))))
+	  our-pi)
+
 (num-test (sqrt 13) (do ((i 1 (+ i 1)) (prod 1.0 (* prod (tan (/ (* i our-pi) 13))))) ((= i 7) prod)))
 (num-test (let ((a (/ (* 2 our-pi) 13))) (* 8 (+ (cos a) (cos (* 5 a))) (+ (cos (* 2 a)) (cos (* 3 a))) (+ (cos (* 4 a)) (cos (* 6 a))))) -1.0)
 (num-test (do ((i 1 (+ i 1)) (sum 0.0 (+ sum (cos (/ (* 2 our-pi i) 11))))) ((= i 6) sum)) -0.5)

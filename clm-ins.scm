@@ -2865,7 +2865,7 @@ mjkoskin@sci.fi
 				   (/ (* grain-amp .15) max-seg-len)
 				   grain-amp))
 	       (srenv (if (list? srate) (make-env srate :duration duration) #f))
-	       (resa (if (list? srate) (cadr srate) srate))
+	       (resa (exact->inexact (if (list? srate) (cadr srate) srate)))
 	       (rampdata (if (list? ramp) ramp (list 0 ramp 1 ramp)))
 	       (rampenv (make-env rampdata :duration (/ duration update-rate)))
 	       (minramp-bug (<= (min-envelope rampdata) 0.0))

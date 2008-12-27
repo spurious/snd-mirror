@@ -11313,6 +11313,10 @@ static s7_pointer eval_symbol(s7_scheme *sc, s7_pointer sym)
   if (is_syntax(sc->x))
     return(sc->x);
 
+  if (sym == sc->UNQUOTE)
+    return(eval_error(sc, "unquote (',') occurred outside quasiquote", sc->NIL));
+  if (sym == sc->UNQUOTE_SPLICING)
+    return(eval_error(sc, "unquote-splicing (',@') occurred outside quasiquote", sc->NIL));
   return(eval_error(sc, "~A: unbound variable", sym));
 }
 
@@ -12907,6 +12911,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        *   and the following code takes that as its argument and transforms it in some way
        */
 
+      if (!s7_is_symbol(sc->code))
+	return(eval_error(sc, "macro name is not a symbol?", sc->code));
+	
       set_type(sc->value, T_MACRO);
       
       /* find name in environment, and define it */
@@ -12937,6 +12944,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        */
       sc->y = s7_gensym(sc, "defmac");
       sc->x = car(sc->code);
+      if (!s7_is_symbol(sc->x))
+	return(eval_error(sc, "defmacro macro name is not a symbol?", sc->x));
+	
       sc->code = s7_cons(sc,
 			 sc->LAMBDA,
 			 s7_cons(sc, 
@@ -12961,7 +12971,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_DEFINE_MACRO:
 
       sc->y = s7_gensym(sc, "defmac");
+      if (!is_pair(sc->x))
+	return(s7_wrong_type_arg_error(sc, "define-macro", 1, car(sc->code), "a list (name ...)"));
       sc->x = caar(sc->code);
+      if (!s7_is_symbol(sc->x))
+	return(eval_error(sc, "define-macro macro name is not a symbol?", sc->x));
+
       sc->code = s7_cons(sc,
 			 sc->LAMBDA,
 			 s7_cons(sc, 
@@ -14289,4 +14304,3 @@ s7_scheme *s7_init(void)
   }
   return(sc);
 }
-

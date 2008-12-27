@@ -26650,6 +26650,28 @@ EDITS: 2
 		   (fneq val1 val2))
 	       (snd-display ";tanh(~A): ~A ~A ~A" x val val1 val2))))
        (list 1.0 0.1 0.1 0.333)))
+
+    (if all-args
+	(let ((maxerr 0.0)
+	      (max-case #f)
+	      (cases 0))
+	  (do ((n 1 (+ n 1)))
+	      ((= n 10000))
+	    (do ((m 1 (+ m 1)))
+		((= m 4))
+	      (let ((val (sin (/ (* m pi) n)))
+		    (expr (sin-m*pi/n m n)))
+		(if expr 
+		    (let ((err (magnitude (- val (eval expr)))))
+		      (set! cases (+ cases 1))
+		      (if (> err maxerr)
+			  (begin
+			    (set! maxerr err)
+			    (set! max-case (/ m n)))))))))
+	  (if (> maxerr 1e-12)
+	      (format #t "sin-m*pi/n (~A cases) max err ~A at ~A~%" cases maxerr max-case))))
+
+
     
     ))
 
