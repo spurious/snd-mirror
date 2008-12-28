@@ -10676,7 +10676,7 @@ s7_pointer s7_out_of_range_error(s7_scheme *sc, const char *caller, int arg_n, s
   len = safe_strlen(descr) + safe_strlen(caller) + 64;
   errmsg = (char *)malloc(len * sizeof(char));
   if (arg_n <= 0) arg_n = 1;
-  slen = snprintf(errmsg, len, "%s: argument %d, ~A, is out of range (expecting %s)", caller, arg_n, descr);
+  slen = snprintf(errmsg, len, "%s: argument %d is out of range (%s)", caller, arg_n, descr);
   sc->x = make_list_2(sc, s7_make_string_with_length(sc, errmsg, slen), arg);
   free(errmsg);
 
@@ -12554,12 +12554,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       
     case OP_IF0:
-      /* check number of "args" */
-      if ((sc->code == sc->NIL) ||
-	  (cdr(sc->code) == sc->NIL) ||
-	  ((cddr(sc->code) != sc->NIL) && 
-	   (cdddr(sc->code) != sc->NIL)))
-	return(eval_error(sc, "if: syntax error: ~A", sc->code));
+      if (sc->code == sc->NIL)
+	return(eval_error(sc, "(if): if needs at least 2 expressions", sc->code));
+      if (cdr(sc->code) == sc->NIL)
+	return(eval_error(sc, "(if ~A): if needs another clause", car(sc->code)));
+      if ((cddr(sc->code) != sc->NIL) && 
+	  (cdddr(sc->code) != sc->NIL))
+	return(eval_error(sc, "too many clauses for if: ~A", sc->code));
       
       push_stack(sc, OP_IF1, sc->NIL, cdr(sc->code));
       sc->code = car(sc->code);
@@ -12968,10 +12969,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto EVAL;
       
       
+      /* TODO: defmacro/define-macro tests! */
     case OP_DEFINE_MACRO:
 
       sc->y = s7_gensym(sc, "defmac");
-      if (!is_pair(sc->x))
+      if (!is_pair(car(sc->code)))
 	return(s7_wrong_type_arg_error(sc, "define-macro", 1, car(sc->code), "a list (name ...)"));
       sc->x = caar(sc->code);
       if (!s7_is_symbol(sc->x))
