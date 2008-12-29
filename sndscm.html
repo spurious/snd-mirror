@@ -91,7 +91,7 @@ For help with Forth and Snd/CLM, see the Forth documentation section "Snd, CLM, 
 <tr><td><a href="#cleandoc">clean</a></td>
     <td onmouseout="UnTip()" onmouseover="Tip(clean_doc_tip)">noise reduction</td></tr>
 
-<tr><td bgcolor="#f2f4ff"><a href="#clminsdoc">clm-ins, clm23</a></td>
+<tr><td bgcolor="#f2f4ff"><a href="#clminsdoc">clm-ins, clm23, jcvoi</a></td>
     <td bgcolor="#f2f4ff" onmouseout="UnTip()" onmouseover="Tip(clm_ins_doc_tip)">various CLM instruments</td></tr>
 
 <tr><td><a href="#debugdoc">debug</a></td>
@@ -1481,6 +1481,30 @@ The pitch depends on the 'modfrq1' and 'modfrq2' parameters, as well as 'frq1' a
 </pre>
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
+
+
+
+<!-- fm-voice -->
+<tr><td colspan=2 bgcolor="#f2f4ff">
+<A class=def NAME="fmvoice">fm-voice</A> <code>(beg dur ...)</code>
+</td></tr><tr><td></td><td>
+This is John Chowning's FM voice instrument, used in "Phone" I think.
+It is in jcvoi.scm, not clm-ins.scm.  Its parameters are:
+<pre>
+  beg dur pitch amp vowel-1 sex-1 ampfun1 ampfun2 ampfun3 
+  indxfun skewfun vibfun ranfun
+  dis pcrev deg vibscl pcran skewscl ranpower glissfun glissamt
+</pre>
+Here's an example:
+<pre>
+(let ((ampf '(0 0 1 1 2 1 3 0))) 
+  (with-sound (:play #t) 
+    (fm-voice 0 1 300 .8 3 1 ampf ampf ampf ampf ampf ampf ampf 1 0 0 .25 1 .01 0 ampf .01)))
+</pre>
+</td></tr>
+<tr><td colspan=2 height=16></td></tr>
+
+
 
 <!-- main-index |fofins:FOF synthesis -->
 <!-- fofins -->
@@ -7533,6 +7557,7 @@ so far haven't panned out.
 <em class=emdef>Si</em> <code>x</code><br>
 <em class=emdef>Ci</em> <code>x</code><br>
 <em class=emdef>sin-m*pi/n</em> <code>m n</code><br>
+<em class=emdef>show-digits-of-pi-starting-at-digit</em> <code>start</code><br>
 </td></tr></table>
 
 <p>In this case, "the code is the documentation" &mdash; these functions
@@ -7555,7 +7580,10 @@ much.
     <em class=listener>:</em><em class=typing>(eval (sin-m*pi/n 1 (* 17 257)))</em>
     <em class=listener>0.00071906440440875</em>
 </pre>
-
+<p>Another amusing function is show-digits-of-pi-starting-at-digit, translated from a C program
+written by David Bailey.  It shows 10 (hex) digits of the expansion of pi starting from any
+point in that expansion.
+</p>
 
 <br>
 

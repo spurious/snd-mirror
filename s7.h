@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "1.7"
-#define S7_DATE "3-Dec-08"
+#define S7_VERSION "1.8"
+#define S7_DATE "29-Dec-08"
 
 
 typedef long long int s7_Int;
@@ -234,7 +234,6 @@ const char *s7_string(s7_pointer p);                                         /* 
 s7_pointer s7_make_string(s7_scheme *sc, const char *str);                   /* C string -> scheme string (str is copied) */
 s7_pointer s7_make_string_with_length(s7_scheme *sc, const char *str, int len);  /* same as s7_make_string, but provides strlen */
 
-
 bool s7_is_character(s7_pointer p);                                          /* (character? p) */
 char s7_character(s7_pointer p);                                             /* scheme character -> C char */
 s7_pointer s7_make_character(s7_scheme *sc, int c);                          /* C char (as int) -> scheme character */
@@ -424,10 +423,10 @@ void s7_define_constant(s7_scheme *sc, const char *name, s7_pointer value);
    * s7_define_constant is s7_define_variable but makes its "definee" immutable.
    */
 
-
 bool s7_is_function(s7_pointer p); 
 s7_pointer s7_make_function(s7_scheme *sc, const char *name, s7_function fnc, int required_args, int optional_args, bool rest_arg, const char *doc);
 void s7_define_function(s7_scheme *sc, const char *name, s7_function fnc, int required_args, int optional_args, bool rest_arg, const char *doc);
+s7_pointer s7_apply_function(s7_scheme *sc, s7_pointer fnc, s7_pointer args);
 
   /* s7_make_function creates a scheme function object from the s7_function 'fnc'.
    *   Its name (for s7_describe_object) is 'name', it requires 'required_args' arguments,
@@ -448,6 +447,7 @@ void s7_define_function(s7_scheme *sc, const char *name, s7_function fnc, int re
    *                                          one required arg, no optional arg, no "rest" arg
    *
    * s7_is_function returns true if its argument is a function defined in this manner.
+   * s7_apply_function applies the function (the result of s7_make_function) to the arguments.
    */
 
 s7_pointer s7_call(s7_scheme *sc, s7_pointer func, s7_pointer args);
@@ -1173,9 +1173,75 @@ int main(int argc, char **argv)
 
 
 /* --------------------------------------------------------------------------------
+ *
+ * an example of extending a built-in operator ("+" in this case):
+ */
+
+#if 0
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+
+#include "s7.h"
+
+static s7_pointer old_add;           /* the original "+" function for non-string cases */
+static s7_pointer old_string_append; /* same, for "string-append" */
+
+static s7_pointer our_add(s7_scheme *sc, s7_pointer args)
+{
+  /* this will replace the built-in "+" operator, extending it to include strings:
+   *   (+ "hi" "ho") -> "hiho" and  (+ 3 4) -> 7
+   */
+  if ((s7_is_pair(args)) &&
+      (s7_is_string(s7_car(args))))
+    return(s7_apply_function(sc, old_string_append, args));
+
+  return(s7_apply_function(sc, old_add, args));
+}
+
+int main(int argc, char **argv)
+{
+  s7_scheme *s7;
+  char buffer[512];
+  char response[1024];
+
+  s7 = s7_init();
+  /* get built-in + and string-append */
+  old_add = s7_name_to_value(s7, "+");      
+  old_string_append = s7_name_to_value(s7, "string-append");
+  /* redefine "+" */
+  s7_define_function(s7, "+", our_add, 0, 0, true, "(+ ...) adds or appends its arguments");
+
+  while (1)
+    {
+      fprintf(stdout, "\n> ");
+      fgets(buffer, 512, stdin);
+      if ((buffer[0] != '\n') || 
+	  (strlen(buffer) > 1))
+	{                            
+	  sprintf(response, "(write %s)", buffer);
+	  s7_eval_c_string(s7, response);
+	}
+    }
+}
+
+/* 
+ *    > (+ 1 2)
+ *    3
+ *    > (+ "hi" "ho")
+ *    "hiho"
+ */
+
+#endif
+
+
+
+/* --------------------------------------------------------------------------------
  * 
  *        s7 changes
  *
+ * 29-Dec:    added "+" specialization example, s7_apply_function.
  * 3-Dec:     added s7_open_output_function.
  * 30-Nov:    added s7_wrong_number_of_args_error.
  * 24-Nov:    changed s7_make_counted_string to s7_make_string_with_length.

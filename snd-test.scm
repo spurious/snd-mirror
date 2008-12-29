@@ -51957,6 +51957,7 @@ EDITS: 1
 (if (not (provided? 'snd-strad.scm)) (load "strad.scm"))
 (if (not (provided? 'snd-noise.scm)) (load "noise.scm"))
 (if (not (provided? 'snd-clm-ins.scm)) (load "clm-ins.scm"))
+(if (not (provided? 'snd-jcvoi.scm)) (load "jcvoi.scm"))
 (if (not (provided? 'snd-piano.scm)) (load "piano.scm"))
 (if (not (provided? 'snd-play.scm)) (load "play.scm"))
 (if (not (provided? 'snd-zip.scm)) (load "zip.scm"))
@@ -53087,7 +53088,8 @@ EDITS: 1
 		      
 		      (sndwarp 28 1.0 "pistol.snd")
 		      (expandn 29 .5 "oboe.snd" .2)
-		      
+		      (let ((ampf '(0 0 1 1 2 1 3 0))) 
+			(fm-voice 0 1 300 .8 3 1 ampf ampf ampf ampf ampf ampf ampf 1 0 0 .25 1 .01 0 ampf .01))
 		      (graphEq "oboe.snd")
 		      )
 	  (let ((ind (find-sound "test.snd")))

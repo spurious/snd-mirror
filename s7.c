@@ -28,6 +28,7 @@
  *        error handling using error and catch
  *        in sndlib, the run macro works giving S7 a (somewhat limited) byte compiler
  *        no invidious distinction between built-in and "foreign"
+ *          (this makes it easy to extend built-in operators like "+" -- see s7.h for an example)
  *        threads
  *
  *   many minor changes!
@@ -9023,6 +9024,12 @@ static void s7_free_function(s7_pointer a)
   if (a->object.ffptr->doc)
     free(a->object.ffptr->doc);
   free(a->object.ffptr);
+}
+
+
+s7_pointer s7_apply_function(s7_scheme *sc, s7_pointer fnc, s7_pointer args)
+{
+  return(function_call(fnc)(sc, args));
 }
 
 
