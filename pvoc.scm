@@ -283,7 +283,6 @@
 	       (let ((buffix (modulo filptr N)))
 					; buffix is the index into the input buffer
 					; it wraps around circularly as time increases in the input
-		 (if (c-g?) (break "interrupted"))
 		 (set! output 0)       ; reset the output sample counter
 		 ;; save the old amplitudes and frequencies
 		 (vct-fill! lastamp 0.0)

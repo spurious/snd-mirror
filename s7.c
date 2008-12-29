@@ -254,7 +254,7 @@ typedef enum {OP_READ_INTERNAL, OP_EVAL, OP_EVAL_ARGS0, OP_EVAL_ARGS1, OP_APPLY,
 	      OP_LOAD_RETURN_IF_EOF, OP_LOAD_CLOSE_AND_POP_IF_EOF, OP_EVAL_STRING, OP_EVAL_STRING_DONE, 
 	      OP_QUIT, OP_CATCH, OP_DYNAMIC_WIND, OP_FOR_EACH, OP_MAP, OP_DEFINE_CONSTANT0, OP_DEFINE_CONSTANT1, 
 	      OP_DO, OP_DO_END0, OP_DO_END1, OP_DO_STEP0, OP_DO_STEP1, OP_DO_STEP2, OP_DO_INIT,
-	      OP_DEFINE_STAR, OP_LAMBDA_STAR, OP_CONS_STREAM0, OP_CONS_STREAM1, 
+	      OP_DEFINE_STAR, OP_LAMBDA_STAR, OP_CONS_STREAM0, OP_CONS_STREAM1, OP_ERROR_QUIT,
 	      OP_MAX_DEFINED} opcode_t;
 
 typedef enum {TOKEN_EOF, TOKEN_LEFT_PAREN, TOKEN_RIGHT_PAREN, TOKEN_DOT, TOKEN_ATOM, TOKEN_QUOTE, TOKEN_DOUBLE_QUOTE, 
@@ -10915,7 +10915,7 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
       
       sc->value = type;
       stack_reset(sc);
-      sc->op = OP_QUIT;
+      sc->op = OP_ERROR_QUIT;
     }
   
   if (sc->longjmp_ok)
@@ -11168,6 +11168,14 @@ s7_pointer s7_call(s7_scheme *sc, s7_pointer func, s7_pointer args)
     {
       sc->longjmp_ok = old_longjmp;
       memcpy((void *)(sc->goto_start), (void *)old_goto_start, sizeof(jmp_buf));
+      
+      if ((sc->op == OP_ERROR_QUIT) &&
+	  (sc->longjmp_ok))
+	{
+	  /* fprintf(stderr, "try to pass along error quit\n"); */
+	  longjmp(sc->goto_start, 1); /* this is trying to clear the C stack back to some clean state */
+	}
+
       eval(sc, sc->op);
       return(sc->value);
     }
@@ -13065,6 +13073,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto START;
       
       
+    case OP_ERROR_QUIT:
     case OP_QUIT:
       return(sc->F);
       break;

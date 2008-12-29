@@ -14244,10 +14244,6 @@ void mus_init_run(void)
 #endif
 #endif
 
-#if HAVE_S7
-  XEN_EVAL_C_STRING("(defmacro declare args `(snd-declare ',args))");
-#endif
-
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_optimization, g_optimization_w, H_optimization, S_setB S_optimization, g_set_optimization_w,  0, 0, 1, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_run_safety, g_run_safety_w, H_run_safety, S_setB S_run_safety, g_set_run_safety_w,  0, 0, 1, 0);
   XEN_DEFINE_PROCEDURE(S_snd_declare, g_snd_declare_w, 1, 0, 0, H_snd_declare);
@@ -14269,6 +14265,9 @@ You can often slightly rewrite the form to make run happy."
 #if WITH_RUN
 #if (!USE_SND)
   current_optimization = MAX_OPTIMIZATION;
+#if HAVE_S7
+  XEN_EVAL_C_STRING("(defmacro declare args `(snd-declare ',args))");
+#endif
 #endif
   init_walkers();
   init_type_names();

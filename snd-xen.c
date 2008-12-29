@@ -3601,6 +3601,8 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   XEN_EVAL_C_STRING("(define (identity x) x)");                    /* popup.scm uses this */
   XEN_EVAL_C_STRING("(define (throw . args) (apply error args))"); /* selection.scm uses this */
 
+  XEN_EVAL_C_STRING("(defmacro declare args `(snd-declare ',args))");
+
   XEN_EVAL_C_STRING("\
         (define (apropos name)\
           (define (substring? subs s)\

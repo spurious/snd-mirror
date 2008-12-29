@@ -602,6 +602,21 @@ s7_pointer s7_thread_variable_value(s7_scheme *sc, s7_pointer obj);
 
 /* -------------------------------- examples --------------------------------
  *
+ * These are simple, but complete programs illustrating various ways to use s7:
+ *
+ *   read-eval-print loop
+ *   define a function with arguments and a returned value, and define a variable 
+ *   call a scheme-defined function from C, and get/set scheme variable values in C
+ *   use s7 in C++ and Juce
+ *   load sndlib using the XEN functions and macros into a REPL
+ *   add a new type and procedure-with-setters
+ *   redirect display/write output to a C procedure
+ *   extend a built-in operator ("+" in this case)
+ */
+
+
+/*--------------------------------------------------------------------------------
+ * 
  * a read-eval-print loop using S7: 
  */
 
