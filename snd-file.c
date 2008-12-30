@@ -2002,7 +2002,7 @@ static void sound_restore_chan_info(snd_info *nsp, snd_info *osp)
 
 static XEN update_hook;
 
-static snd_info *snd_update_1(snd_info *sp, const char *ur_filename)
+snd_info *snd_update(snd_info *sp)
 {
   /* we can't be real smart here because the channel number may have changed and so on */
   int i, old_srate, old_chans, old_format, sp_chans, old_index, gc_loc = NOT_A_GC_LOC, old_selected_channel = NO_SELECTION;
@@ -2020,6 +2020,28 @@ static snd_info *snd_update_1(snd_info *sp, const char *ur_filename)
   sp_watcher **old_watchers;
   int old_watchers_size;
   XEN update_hook_result = XEN_FALSE;
+  const char *ur_filename;
+  int app_x, app_y;
+
+#if USE_MOTIF
+  int snd_height;
+  snd_height = snd_pane_height(sp);
+#endif
+
+  if (sp->edited_region) return(sp);
+  if ((sp->inuse != SOUND_NORMAL) ||
+      (!(sp->filename)))
+    return(sp);
+
+  if (mus_file_probe(sp->filename) == 0)
+    {
+      snd_error(_("%s no longer exists!"), sp->short_filename);
+      return(sp);
+    }
+
+  app_x = widget_width(MAIN_SHELL(ss));
+  app_y = widget_height(MAIN_SHELL(ss));
+  ur_filename = sp->filename;
 
   if (XEN_HOOKED(update_hook))
     {
@@ -2089,8 +2111,6 @@ static snd_info *snd_update_1(snd_info *sp, const char *ur_filename)
   sp->watchers = NULL;       /* don't confuse watchers with a temporary close! */
   sp->watchers_size = 0;
 
-  lock_all_panes();
-
   snd_close_file(sp);
 
   /* no mus_sound_forget here because we may be simply re-interpreting the existing data (set! (data-format) ...) etc */
@@ -2104,7 +2124,13 @@ static snd_info *snd_update_1(snd_info *sp, const char *ur_filename)
 
   nsp = snd_open_file(filename, read_only);
 
-  unlock_all_panes();
+  set_widget_size(MAIN_SHELL(ss), app_x, app_y); /* was at end */
+#if USE_MOTIF
+  XtVaSetValues(w_snd_pane(sp),
+		    XmNpaneMinimum, snd_height,
+		    XmNpaneMaximum, snd_height,
+		    NULL);
+#endif
 
   ss->reloading_updated_file = 0;
   if (old_raw)
@@ -2144,6 +2170,7 @@ static snd_info *snd_update_1(snd_info *sp, const char *ur_filename)
 	  (old_channel_style != CHANNELS_SEPARATE)) /* we set it to separate before the update */
 	set_sound_channel_style(nsp, old_channel_style);
     }
+
   FREE(old_cursors);
 
   if (XEN_PROCEDURE_P(update_hook_result))
@@ -2164,28 +2191,15 @@ static snd_info *snd_update_1(snd_info *sp, const char *ur_filename)
     }
   sa = free_axes_data(sa);
   FREE(filename);
+
+#if USE_MOTIF
+  XtVaSetValues(w_snd_pane(sp),
+		    XmNpaneMinimum, 1,
+		    XmNpaneMaximum, LOTSA_PIXELS,
+		    NULL);
+#endif
+
   return(nsp);
-}
-
-
-snd_info *snd_update(snd_info *sp)
-{
-  int app_x, app_y;
-  if (sp->edited_region) return(sp);
-  if ((sp->inuse == SOUND_NORMAL) &&
-      (sp->filename))
-    {
-      if (mus_file_probe(sp->filename) == 0)
-	{
-	  snd_error(_("%s no longer exists!"), sp->short_filename);
-	  return(sp);
-	}
-      app_x = widget_width(MAIN_SHELL(ss));
-      app_y = widget_height(MAIN_SHELL(ss));
-      sp = snd_update_1(sp, sp->filename);
-      set_widget_size(MAIN_SHELL(ss), app_x, app_y);
-    }
-  return(sp);
 }
 
 

@@ -1,5 +1,7 @@
 #include "snd.h"
 
+/* TODO: fix the multichannel update resize bug! */
+
 #if HAVE_XPM
   #include <X11/xpm.h>
 #endif
@@ -87,6 +89,13 @@ Widget w_snd_pane(snd_info *sp)   {return(sp->sgx->snd_widgets[W_pane]);}
 
 #define PROGRESS_ICON(Cp)        (Cp)->sound->sgx->progress_widgets[(Cp)->chan]
 
+
+int snd_pane_height(snd_info *sp)
+{
+  Dimension height;
+  XtVaGetValues(SND_PANE(sp), XmNheight, &height, NULL);
+  return((int)height);
+}
 
 
 static void watch_minibuffer(Widget w, XtPointer context, XtPointer info)
@@ -1956,7 +1965,8 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       /* all widgets in the control-pane that would otherwise intercept the key events get this event handler */
 
       for (i = 0; i < nchans; i++)
-	add_channel_window(sp, i, chan_min_y, 0, NULL, WITH_FW_BUTTONS, WITH_EVENTS);
+	add_channel_window(sp, i, chan_min_y, 0, NULL, WITH_FW_BUTTONS, WITH_EVENTS); 
+      /* creates channel (horizontal) paned window widget as child of w_snd_pane(sp) == SND_PANE(sp) */
       
 
       /* -------- sound file name, minibuffer, various buttons -------- */
@@ -3213,4 +3223,3 @@ void g_init_gxsnd(void)
   XEN_DEFINE_PROCEDURE("watch-sash", g_watch_sash, 0, 0, 0, "autotest func");
 #endif
 }
-

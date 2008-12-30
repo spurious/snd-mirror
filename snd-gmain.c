@@ -1112,11 +1112,7 @@ class \"GtkTextView\" binding \"gtk-emacs-text-view\"\n			\
 }
  
 
-void lock_all_panes(void) {}
-void unlock_all_panes(void) {}
-
-
- void g_init_gxmain(void)
+void g_init_gxmain(void)
  {
 #if HAVE_EXTENSION_LANGUAGE
 #define H_window_property_changed_hook S_window_property_changed_hook "(command): called upon receipt of a change in SND_COMMAND (an X window property)"

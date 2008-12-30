@@ -1174,31 +1174,6 @@ void snd_doit(int argc, char **argv)
 }
 
 
-static void lock_all_panes_1(bool lock)
-{
-  switch (sound_style(ss))
-    {
-    case SOUNDS_HORIZONTAL:
-      XtVaSetValues(ss->sgx->soundpane, XmNallowResize, lock, NULL);
-      XtVaSetValues(ss->sgx->soundpanebox, XmNallowResize, lock, NULL);
-      break;
-
-    case SOUNDS_VERTICAL:
-      XtVaSetValues(ss->sgx->soundpane, XmNallowResize, lock, NULL);
-      break;
-
-    case SOUNDS_IN_SEPARATE_WINDOWS:
-    case SOUNDS_IN_NOTEBOOK:
-    default:
-      break;
-    }
-}
-
-
-void lock_all_panes(void) {lock_all_panes_1(false);}
-void unlock_all_panes(void) {lock_all_panes_1(true);}
-
-
 #if HAVE_GL
 static XEN g_snd_glx_context(void)
 {

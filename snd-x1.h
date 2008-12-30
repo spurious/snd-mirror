@@ -110,8 +110,6 @@ void snd_doit(int argc, char **argv);
 color_t get_in_between_color(color_t fg, color_t bg);
 void auto_update_restart(void);
 void save_colors(FILE *Fp);
-void lock_all_panes(void);
-void unlock_all_panes(void);
 
 #ifdef SND_AS_WIDGET
   void snd_as_widget(int argc, char **argv, XtAppContext app, Widget parent, Arg *caller_args, int caller_argn);
@@ -314,6 +312,7 @@ void g_init_gxchn(void);
 
 /* -------- snd-xsnd.c -------- */
 
+int snd_pane_height(snd_info *sp);
 int control_panel_height(snd_info *sp);
 Widget w_snd_pane(snd_info *sp);
 Widget unite_button(snd_info *sp);
