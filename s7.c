@@ -12031,7 +12031,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       sc->code = car(sc->code);
       /* goto EVAL; */
       
-      
+
     EVAL:
     case OP_EVAL:       /* main part of evaluation */
       ASSERT_IS_OBJECT(sc->envir, "env");
@@ -12101,7 +12101,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       set_type(sc->args, T_PAIR);
 
       /* 1st time, value = op, args=nil (only e0 entry is from op_eval above), code is full list (at e0) */
-
       if (is_pair(sc->code))  /* evaluate current arg */
 	{ 
 	  int typ;
@@ -12142,6 +12141,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	  sc->args = safe_reverse_in_place(sc, sc->args); 
 	  sc->code = car(sc->args);
+	  if (!is_procedure(sc->code))
+	    return(eval_error(sc, "attempt to apply ~A?\n", sc->code));
+	  
 	  set_pair_line_number(sc->code, sc->saved_line_number);
 	  sc->args = cdr(sc->args);
 	  /* goto APPLY;  */
@@ -12292,11 +12294,19 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			  {
 			    const char *name;
 			    name = s7_symbol_name(car(sc->y));
-			    if (!(lambda_star_argument_set_value(sc, 
-								 s7_make_symbol(sc, (const char *)(name + 1)), 
-								 car(cdr(sc->y)))))
-			      return(eval_error(sc, "unknown argument name: ~A", sc->y));
-			    sc->y = cddr(sc->y);
+			    if (lambda_star_argument_set_value(sc, 
+							       s7_make_symbol(sc, (const char *)(name + 1)), 
+							       car(cdr(sc->y))))
+			      {
+				sc->y = cddr(sc->y);
+			      }
+			    else         /* might be passing a keyword as a normal argument value! */
+			      {
+				if (is_pair(car(sc->x)))
+				  lambda_star_argument_set_value(sc, caar(sc->x), car(sc->y));
+				else lambda_star_argument_set_value(sc, car(sc->x), car(sc->y));
+				sc->y = cdr(sc->y);
+			      }
 			  }
 			else 
 			  {

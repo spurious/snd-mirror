@@ -1,6 +1,6 @@
 #include "snd.h"
 
-/* TODO: fix the multichannel update resize bug! */
+/* TODO: fix the multisound multichannel update resize bug! */
 
 #if HAVE_XPM
   #include <X11/xpm.h>

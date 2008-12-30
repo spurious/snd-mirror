@@ -1794,10 +1794,10 @@ void *make_axes_data(snd_info *sp)
       sa->wavep[i] = cp->graph_time_p;
       sa->fftp[i] = cp->graph_transform_p;
       
-      /* unite and sync buttons are being cleared in snd_info_cleanup and explicitly in snd_update_1
+      /* unite and sync buttons are being cleared in snd_info_cleanup and explicitly in snd_update
        *   then probably reset in change_channel_style
        *   meanwhile channel_style is saved in copy_snd_info below
-       *   but also restored explicitly in snd_update_1.
+       *   but also restored explicitly in snd_update.
        *   but... if unite was off  before the update, it seems that it is set on multi-channel files 
        *    (via channel_style(ss) which defaults to channels_combined)
        */
@@ -2124,13 +2124,13 @@ snd_info *snd_update(snd_info *sp)
 
   nsp = snd_open_file(filename, read_only);
 
-  set_widget_size(MAIN_SHELL(ss), app_x, app_y); /* was at end */
 #if USE_MOTIF
   XtVaSetValues(w_snd_pane(sp),
 		    XmNpaneMinimum, snd_height,
 		    XmNpaneMaximum, snd_height,
 		    NULL);
 #endif
+  set_widget_size(MAIN_SHELL(ss), app_x, app_y); /* was at end */
 
   ss->reloading_updated_file = 0;
   if (old_raw)

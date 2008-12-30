@@ -519,6 +519,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+29-Dec:  jcvoi.scm.\n\
 11-Dec:  snd10.scm for sum-of-sines and friends.\n\
 5-Dec:   mus-sox headers.\n\
 28-Nov:  Snd 10.2.\n\

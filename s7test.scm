@@ -32675,6 +32675,12 @@
 	(num-test (+ (hi 1.0) (hi 1.0 2.0) (hi)) 4.0)
 	(num-test (+ (hi 1.0 2.0) (hi) (hi 1.0)) 4.0))
 
+      (let ((hi (lambda* ((a 3)) a)))
+	(test :hi (hi :hi)))
+      (let ((hi (lambda* ((a 3) (b 0)) a)))
+	(test :hi (hi :hi))
+	(test 0 (hi 0 :hi)))
+
       (test (let ((hi (lambda*))) (hi)) 'error)
       (test (let ((hi (lambda* #f))) (hi)) 'error)
       (test (let ((hi (lambda* "hi" #f))) (hi)) 'error)
@@ -32748,6 +32754,16 @@
        (lambda (arg)
 	 (test (procedure-source arg) 'error))
        (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi '#(()) (list 1 2 3) '(1 . 2) "hi"))
+
+      (test (let () (defmacro hiho (a) `(+ ,a 1)) (hiho 3)) 4)
+      (test (let () (defmacro hiho () `(+ 3 1)) (hiho)) 4)
+      (test (let () (defmacro hiho () `(+ 3 1)) (hiho 1)) 'error)
+      (test (let () (defmacro hi (a) `(+ ,@a)) (hi (1 2 3))) 6)
+
+      (test (let () (define-macro (hiho a) `(+ ,a 1)) (hiho 3)) 4)
+      (test (let () (define-macro (hiho) `(+ 3 1)) (hiho)) 4)
+      (test (let () (define-macro (hiho) `(+ 3 1)) (hiho 1)) 'error)
+      (test (let () (define-macro (hi a) `(+ ,@a)) (hi (1 2 3))) 6)
 
       (if (and (defined? 'provided?)
 	       (provided? 'threads))
