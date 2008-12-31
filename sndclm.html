@@ -1043,7 +1043,7 @@ at 440 Hz when the srate is 1000, 4000, and 16000:
 (set! (x-axis-label 0 0 0) "srate: 1000")
 (set! (x-axis-label 1 0 0) "srate: 4000")
 (set! (x-axis-label 2 0 0) "srate: 16000")
-(set! (axis-labels-font) "12x24")
+(set! (axis-label-font) "12x24")
 
 (with-sound (:srate 1000) ; 4000 16000
    (let ((gen (make-oscil 440.0)))
@@ -3127,6 +3127,53 @@ Even more amusing is this algorithm (related to tanh(sin)):
         (<a class=quiet href="#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i result)))))
 </pre>
 </td></tr></table>
+
+
+
+<p>The continuously variable square-wave (tanh(B sin)) can be differentiated to get a variable pulse-train,
+and integrated to get a variable triangle-wave.
+The derivative is B * cos(x) / (cosh^2(B * sin(x))):
+</p>
+<table border=0 hspace=40><tr><td width=450>
+<pre>
+(with-sound ()
+  (let* ((Benv (make-env '(0 .1 .1 1 .7 2 2 5) 
+		 :end 10000))
+	 (osc (make-oscil 100)))	 
+    (do ((i 0 (+ i 1)))
+	((= i 10000))
+      (let* ((B (env Benv))
+	     (num (cos (mus-phase osc)))
+	     (den (cosh (* B (oscil osc)))))
+	(outa i (/ num (* den den)))))))
+</pre>
+</td><td>
+<img src="png/tanhsinderiv.png" alt="tanh(sin) as pulse train">
+</td></tr></table>
+<p>
+Similar, but simpler is B*cos(x)/(e^(B*cos(x)) - 1):
+</p>
+<pre>
+(with-sound ()
+  (let* ((gen (make-oscil 1.0))
+	 (index 10.0))
+    (run
+     (lambda ()
+       (do ((i 0 (+ i 1)))
+	   ((= i 100000))
+	 (let ((arg (* index (+ 1.0 (oscil gen)))))
+	   (outa i (/ arg (- (exp arg) 1)))))))))
+
+</pre>
+<p>
+When we integrate tanh(B sin), the peak amp depends
+on both the frequency and the "B" factor (which sets how close we get to a triangle wave):
+</p>
+
+
+<!--
+(set! (x-axis-label 0 0 0) "derivative of tanh(B*sin), B from .1 to 5")
+-->
 
 
 <p>For sawtooth output, see also <a href="#rksin">rksin</a>.
