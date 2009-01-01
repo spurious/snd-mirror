@@ -3259,6 +3259,9 @@
 	(test (number->string 12.0+0.75i 16) "c.0+0.ci")
 	(test (number->string -12.5-3.75i 16) "-c.8-3.ci")
 
+	(test (number->string our-pi 16) "3.243f6a8885a3")
+	(test (number->string our-pi 2) "11.0010010000111111011")
+
 	(for-each
 	 (lambda (expchar)
 	   (let ((exponent (string expchar)))

@@ -3130,10 +3130,11 @@ Even more amusing is this algorithm (related to tanh(sin)):
 
 
 
-<p>The continuously variable square-wave (tanh(B sin)) can be differentiated to get a variable pulse-train,
-and integrated to get a variable triangle-wave.
+<p>The continuously variable square-wave, tanh(B sin), can be differentiated to get a variable pulse-train,
+or integrated to get a variable triangle-wave.
 The derivative is B * cos(x) / (cosh^2(B * sin(x))):
 </p>
+
 <table border=0 hspace=40><tr><td width=450>
 <pre>
 (with-sound ()
@@ -3148,35 +3149,66 @@ The derivative is B * cos(x) / (cosh^2(B * sin(x))):
 	(outa i (/ num (* den den)))))))
 </pre>
 </td><td>
-<img src="png/tanhsinderiv.png" alt="tanh(sin) as pulse train">
+<img src="pix/tanhsinderiv.png" alt="tanh(sin) as pulse train">
 </td></tr></table>
+
 <p>
 Similar, but simpler is B*cos(x)/(e^(B*cos(x)) - 1):
 </p>
+
+<table border=0 hspace=40><tr><td width=480>
 <pre>
 (with-sound ()
-  (let* ((gen (make-oscil 1.0))
-	 (index 10.0))
+  (let* ((gen (make-oscil 40.0))
+	 (Benv (make-env '(0 .75 1 1.5 2 20) 
+                 :end 10000)))
     (run
      (lambda ()
        (do ((i 0 (+ i 1)))
-	   ((= i 100000))
-	 (let ((arg (* index (+ 1.0 (oscil gen)))))
+	   ((= i 10000))
+	 (let* ((B (env Benv))
+		(arg (* B pi (+ 1.0 (oscil gen)))))
 	   (outa i (/ arg (- (exp arg) 1)))))))))
-
 </pre>
+</td><td>
+<img src="pix/xex.png" alt="another pulse train">
+</td></tr></table>
+
 <p>
 When we integrate tanh(B sin), the peak amp depends
 on both the frequency and the "B" factor (which sets how close we get to a triangle wave):
 </p>
 
+<table border=0 hspace=40><tr><td width=450>
+<pre>
+(with-sound ()
+  (let* ((gen (make-oscil 30.0))
+	 (Benv (make-env '(0 .1 .25 1 2 3 3 10) 
+                 :end 20000))
+	 (scl (hz-&gt;radians 30.0))
+	 (sum 0.0))
+    (do ((i 0 (+ i 1)))
+	((= i 20000))
+      (let* ((B (env Benv))
+	     (val (/ (* scl (max 1.0 (log B)) 
+	                (tanh (* B (oscil gen)))) 
+                     B)))
+	(outa i (- sum 1.0))
+	(set! sum (+ sum val))))))
+</pre>
+</td><td>
+<img src="pix/tanhsininteg.png" alt="tanh(sin) as triangle-wave">
+</td></tr></table>
 
 <!--
+(set! (selected-graph-color) (make-color 1 1 1))
+(set! (selected-data-color) (make-color 0 0 0))
 (set! (x-axis-label 0 0 0) "derivative of tanh(B*sin), B from .1 to 5")
+(set! (x-axis-label 0 0 0) "integration of tanh(B*sin), B from .1 to 10")
 -->
 
-
-<p>For sawtooth output, see also <a href="#rksin">rksin</a>.
+<p>The amplitude scaling is obviously not right.
+For sawtooth output, see also <a href="#rksin">rksin</a>.
 In these generators, the "fm" argument is useful mainly for various sci-fi sound effects:
 </p>
 
