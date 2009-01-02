@@ -45,7 +45,6 @@
  *
  *   deliberate difference from r5rs:
  *        modulo, remainder, and quotient take integer, ratio, or real args 
- *          [this could be extended to Gaussian ints -- see gaussian.scm]
  *        lcm and gcd can take integer or ratio args
  *        delay is renamed make-promise to avoid collisions in CLM
  *        continuation? function to distinguish a continuation from a procedure
@@ -167,8 +166,8 @@
 #define WITH_R5RS_RATIONALIZE 0
 /* follow the scheme spec for rationalize (not recommended) */
 
-#define S7_DEBUGGING 0
-/* this is for a internal debugging */
+#define WITH_GMP 0
+/* an experiment */
 
 
 /* -------------------------------------------------------------------------------- */
@@ -234,7 +233,7 @@
 #include <setjmp.h>
 
 #if HAVE_PTHREADS
-#include <pthread.h>
+  #include <pthread.h>
 #endif
 
 #include "s7.h"
@@ -655,46 +654,6 @@ struct s7_scheme {
 #endif
 
 #define real(n)                       n.value.real_value
-
-
-#if S7_DEBUGGING
-static const char *type_names[T_LAST_TYPE + 1] = {
-  "unused!", "nil", "string", "number", "symbol", "pair", "closure", "closure*", "continuation",
-  "s7-function", "character", "input port", "vector", "macro", "promise", "s7-object", 
-  "goto", "output port", "catch", "dynamic-wind", "hash-table",
-};
-
-static char *describe_type(s7_pointer p)
-{
-  char *buf;
-  if (!p)
-    return(strdup("null pointer"));
-
-  buf = (char *)calloc(1024, sizeof(char));
-  snprintf(buf, 1024, "%s%s%s%s%s%s%s%s%s%s%s",
-	  ((type(p) >= 0) && (type(p) <= T_LAST_TYPE)) ? type_names[type(p)] : "bogus type",
-	  (typeflag(p) & T_SYNTAX) ? " syntax" : "",
-	  (typeflag(p) & T_IMMUTABLE) ? " immutable" : "",
-	  (typeflag(p) & T_ATOM) ? " atom" : "",
-	  (typeflag(p) & T_GC_MARK) ? " marked" : "",
-	  (typeflag(p) & T_OBJECT) ? " object" : "",
-	  (typeflag(p) & T_FINALIZABLE) ? " gc-freeable" : "",
-	  (typeflag(p) & T_SIMPLE) ? " simple" : "",
-	  (typeflag(p) & T_ETERNAL) ? " eternal" : "",
-	  (typeflag(p) & T_UNUSED_BITS) ? " and other garbage bits!" : "",
-	  ((typeflag(p) == 0) && (car(p) == 0) && (cdr(p) == 0) && (pair_line_number(p) == 0)) ? " [recently GC'd (all 0)]" : "");
-  return(buf);
-}
-
-#define is_object(x) ((x) && (((typeflag(x) & (T_UNUSED_BITS | T_OBJECT)) == T_OBJECT) && (type(x) <= T_LAST_TYPE)))
-
-#define ASSERT_IS_OBJECT(Obj, Name) \
-  if (!(is_object(Obj))) \
-    {fprintf(stderr, "%s[%d]: %s is not an object: %p %s\n", __FUNCTION__, __LINE__, Name, Obj, describe_type(Obj)); abort();}
-
-#else
-  #define ASSERT_IS_OBJECT(Obj, Name)
-#endif
 
 
 #if CASE_SENSITIVE
@@ -1231,10 +1190,6 @@ static s7_pointer new_cell(s7_scheme *sc)
    */
 
 #if HAVE_PTHREADS
-#if S7_DEBUGGING
-  typeflag(p) = T_OBJECT; /* turn off the is_object bug checks in case we're interrupted and a GC (mark pass) intervenes */
-#endif
-
   nsc->temps[nsc->temps_ctr++] = p;
   if (nsc->temps_ctr >= nsc->temps_size)
     nsc->temps_ctr = 0;
@@ -2241,6 +2196,7 @@ static s7_Complex catanh(s7_Complex z)
 #endif
 
 
+#if (!WITH_GMP)
 
 bool s7_is_number(s7_pointer p)
 {
@@ -2288,6 +2244,9 @@ bool s7_is_complex(s7_pointer p)
 {
   return(s7_is_number(p));
 }
+
+#endif 
+/* WITH_GMP */
 
 
 bool s7_is_exact(s7_pointer p)
@@ -2460,9 +2419,6 @@ s7_pointer s7_rationalize(s7_scheme *sc, s7_Double x, s7_Double error)
   s7_Int numer = 0, denom = 1;
   if (c_rationalize(x, error, &numer, &denom))
     return(s7_make_ratio(sc, numer, denom));
-#if S7_DEBUGGING
-  else fprintf(stderr, "rationalize(%lf, %lf) did not converge?\n", x, error);
-#endif
   return(s7_make_real(sc, x));
 }
 
@@ -2903,6 +2859,36 @@ static num num_add(num a, num b)
       /* NUM_COMPLEX is 4 separate types */
       return(make_complex(num_to_real_part(a) + num_to_real_part(b),
 			  num_to_imag_part(a) + num_to_imag_part(b)));
+      break;
+    }
+  return(ret);
+}
+
+
+static num num_negate(num a)
+{
+  num ret;
+  ret.type = a.type;
+  
+  switch (num_type(ret))
+    {
+    case NUM_INT: 
+      integer(ret) = -integer(a);
+      break;
+      
+    case NUM_RATIO:
+      numerator(ret) = -numerator(a);
+      denominator(ret) = denominator(a);
+      break;
+      
+    case NUM_REAL2:
+    case NUM_REAL:
+      real(ret) = -real(a);
+      break;
+      
+    default:
+      real_part(ret) = -real_part(a);
+      imag_part(ret) = -imag_part(a);
       break;
     }
   return(ret);
@@ -3914,6 +3900,9 @@ static s7_Double string_to_double_with_radix(char *str, int radix)
   return(sign * int_part);
 }
 
+#if WITH_GMP
+  static s7_pointer make_big_integer(s7_scheme *sc, const char *str);
+#endif
 
 /* make symbol or number atom from string */
 
@@ -4167,6 +4156,12 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
   if (slash1)
     return(s7_make_ratio(sc, ATOLL(q), ATOLL(slash1)));
   
+#if WITH_GMP
+  if (safe_strlen(q) > 18)
+    return(make_big_integer(sc, q));
+  /* in 64 bit case 20 digits overflows */
+#endif
+
   return(s7_make_integer(sc, ATOLL(q)));
 }
 
@@ -4202,24 +4197,26 @@ static s7_pointer g_string_to_number(s7_scheme *sc, s7_pointer args)
 
 static bool numbers_are_eqv(s7_pointer a, s7_pointer b)
 {
-  /* (eqv? 1 1.0) -> #f! */
-  if (s7_is_integer(a))
-    return((s7_is_integer(b)) &&
-	   (integer(a->object.number) == integer(b->object.number)));
-  
-  if (s7_is_ratio(a))
-    return((s7_is_ratio(b)) &&
-	   (numerator(a->object.number) == numerator(b->object.number)) &&
-	   (denominator(a->object.number) == denominator(b->object.number)));
+  if (object_number_type(a) != object_number_type(b)) /* (eqv? 1 1.0) -> #f! */
+    return(false);
 
-  if (s7_is_real(a))
-    return((s7_is_real(b)) &&
-	   (real(a->object.number) == real(b->object.number)));
+  switch (object_number_type(a))
+    {
+    case NUM_INT:
+      return((integer(a->object.number) == integer(b->object.number)));
   
-  if (s7_is_complex(a))
-    return((s7_is_complex(b)) &&
-	   (real_part(a->object.number) == real_part(b->object.number)) &&
-	   (imag_part(a->object.number) == imag_part(b->object.number)));
+    case NUM_RATIO:
+      return((numerator(a->object.number) == numerator(b->object.number)) &&
+	     (denominator(a->object.number) == denominator(b->object.number)));
+
+    case NUM_REAL:
+    case NUM_REAL2:
+      return(real(a->object.number) == real(b->object.number));
+  
+    default:
+      return((real_part(a->object.number) == real_part(b->object.number)) &&
+	     (imag_part(a->object.number) == imag_part(b->object.number)));
+    }
   
   return(false);
 }
@@ -4272,12 +4269,15 @@ static s7_pointer g_magnitude(s7_scheme *sc, s7_pointer args)
     case NUM_REAL: 
       real(sc->v) = s7_Double_abs(real(sc->v)); 
       break;
+
     case NUM_INT:
       integer(sc->v) = s7_Int_abs(integer(sc->v));
       break;
+
     case NUM_RATIO:
       numerator(sc->v) = s7_Int_abs(numerator(sc->v));
       break;
+
     default:
       {
 	s7_Double a, b;
@@ -4821,7 +4821,6 @@ static s7_pointer g_truncate(s7_scheme *sc, s7_pointer args)
 
   switch (object_number_type(sc->x))
     {
-
     case NUM_INT: 
       return(sc->x);
 
@@ -4938,18 +4937,31 @@ static s7_pointer g_gcd(s7_scheme *sc, s7_pointer args)
 }
 
 
+static s7_pointer g_add_unchecked(s7_scheme *sc, s7_pointer args)
+{
+  int i;
+  sc->v = nvalue(car(args));
+  for (i = 2, sc->x = cdr(args); sc->x != sc->NIL; i++, sc->x = cdr(sc->x)) 
+    sc->v = num_add(sc->v, nvalue(car(sc->x)));
+  return(make_number(sc, sc->v));
+}
+
+
 static s7_pointer g_add(s7_scheme *sc, s7_pointer args)
 {
   #define H_add "(+ ...) adds its arguments"
   int i;
-  sc->v = small_int_as_num(sc, 0);
-  for (i = 1, sc->x = args; sc->x != sc->NIL; i++, sc->x = cdr(sc->x)) 
-    {
-      if (!s7_is_number(car(sc->x)))
-	return(s7_wrong_type_arg_error(sc, "+", i, car(sc->x), "a number"));
-      sc->v = num_add(sc->v, nvalue(car(sc->x)));
-    }
-  return(make_number(sc, sc->v));
+  if (args == sc->NIL)
+    return(make_number(sc, small_int_as_num(sc, 0)));
+  
+  if (!s7_is_number(car(args)))
+    return(s7_wrong_type_arg_error(sc, "+", 1, car(args), "a number"));
+
+  for (i = 2, sc->x = cdr(args); sc->x != sc->NIL; i++, sc->x = cdr(sc->x)) 
+    if (!s7_is_number(car(sc->x)))
+      return(s7_wrong_type_arg_error(sc, "+", i, car(sc->x), "a number"));
+
+  return(g_add_unchecked(sc, args));
 }
 
 
@@ -4961,15 +4973,10 @@ static s7_pointer g_subtract(s7_scheme *sc, s7_pointer args)
     return(s7_wrong_type_arg_error(sc, "-", 1, car(args), "a number"));
   
   if (cdr(args) == sc->NIL) 
-    {
-      sc->x = args;
-      sc->v = small_int_as_num(sc, 0);
-    } 
-  else 
-    {
-      sc->x = cdr(args);
-      sc->v = nvalue(car(args));
-    }
+    return(make_number(sc, num_negate(nvalue(car(args)))));
+
+  sc->v = nvalue(car(args));
+  sc->x = cdr(args);
   for (i = 2; sc->x != sc->NIL; i++, sc->x = cdr(sc->x)) 
     {
       if (!s7_is_number(car(sc->x)))
@@ -4984,8 +4991,14 @@ static s7_pointer g_multiply(s7_scheme *sc, s7_pointer args)
 {
   #define H_multiply "(* ...) multiplies its arguments"
   int i;
-  sc->v = small_int_as_num(sc, 1);
-  for (i = 1, sc->x = args; sc->x != sc->NIL; i++, sc->x = cdr(sc->x)) 
+  if (args == sc->NIL)
+    return(make_number(sc, small_int_as_num(sc, 1)));
+  
+  if (!s7_is_number(car(args)))
+    return(s7_wrong_type_arg_error(sc, "*", 1, car(args), "a number"));
+
+  sc->v = nvalue(car(args));
+  for (i = 2, sc->x = cdr(args); sc->x != sc->NIL; i++, sc->x = cdr(sc->x)) 
     {
       if (!s7_is_number(car(sc->x)))
 	return(s7_wrong_type_arg_error(sc, "*", i, car(sc->x), "a number"));
@@ -5011,7 +5024,6 @@ static s7_pointer g_divide(s7_scheme *sc, s7_pointer args)
 
   sc->x = cdr(args);
   sc->v = nvalue(car(args));
-
   for (i = 2; sc->x != sc->NIL; i++, sc->x = cdr(sc->x))
     {
       
@@ -9323,16 +9335,6 @@ static void s7_mark_embedded_objects(s7_pointer a) /* called by gc, calls fobj's
       if (object_types[tag].gc_mark)
 	(*(object_types[tag].gc_mark))(a->object.fobj.value);
     }
-#if S7_DEBUGGING
-  else 
-    {
-      /* sc would need to be passed through the call chain to get a real error here,
-       *   and I believe this can only happen if the user passes a non-s7 object to
-       *   be marked, which we would want to ignore anyway.
-       */
-      fprintf(stderr, "%p, found bad type: %x %d %x\n", a, tag, tag, a->flag);
-    }
-#endif
 }
 
 
@@ -11714,12 +11716,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
   
  START:
 
-#if S7_DEBUGGING
-  sc->x = sc->NIL;
-  sc->y = sc->NIL;
-  sc->z = sc->NIL;
-#endif
-  
   switch (sc->op) 
     {
     case OP_READ_INTERNAL:
@@ -12034,9 +12030,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
     EVAL:
     case OP_EVAL:       /* main part of evaluation */
-      ASSERT_IS_OBJECT(sc->envir, "env");
-      ASSERT_IS_OBJECT(sc->code, "code");
-
       if (is_pair(sc->code)) 
 	{
 	  sc->x = car(sc->code);
@@ -12178,7 +12171,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 					  sc->code, sc->args)));
 	    
 	    sc ->value = function_call(sc->code)(sc, sc->args);
-	    ASSERT_IS_OBJECT(sc->value, "function returned value");
 	    pop_stack(sc);
 	    goto START;
 	  }
@@ -13737,6 +13729,204 @@ static void mark_s7(s7_scheme *sc)
 #endif
 
 
+/* -------------------------------- gmp/mpfr/mpc -------------------------------- */
+
+#if WITH_GMP
+#include <gmp.h>
+#include <mpfr.h>
+#include <mpc.h>
+
+/* first try at this embedded these in the s7-basic number handlers, but that got
+ *   messy, and ran into troubles involving the mpz_t embedded pointers.  So,
+ *   this version tries to do it with added types and specializations of all the
+ *   built-in number operators.  I need at least one hook into the basic number 
+ *   code -- if a bignum is seen as a bare number in make_atom, it should vector
+ *   to gmp code, not overflow in string_to_number or whatever.  Ideally the other
+ *   ops like '+' that can over/underflow would also jump to gmp code instead.
+ */
+
+
+static int big_integer_tag = 0;
+
+#define BIG_INTEGER(a) (*((mpz_t *)a))
+
+
+bool s7_is_number(s7_pointer p)
+{
+  return((type(p) == T_NUMBER) ||
+	 ((s7_is_object(p)) && 
+	  (s7_object_type(p) == big_integer_tag)));
+}
+
+
+bool s7_is_integer(s7_pointer p) 
+{ 
+  if (type(p) == T_NUMBER)
+    return(object_number_type(p) == NUM_INT);
+  return((s7_is_object(p)) && 
+	 (s7_object_type(p) == big_integer_tag));
+}
+
+
+bool s7_is_real(s7_pointer p) 
+{ 
+  if (type(p) != T_NUMBER)
+    return(false);
+  return(object_number_type(p) < NUM_COMPLEX);
+}
+
+
+bool s7_is_rational(s7_pointer p)
+{
+  if (type(p) != T_NUMBER)
+    return(false);
+  return(object_number_type(p) <= NUM_RATIO);
+}
+
+
+bool s7_is_ratio(s7_pointer p)
+{
+  if (type(p) != T_NUMBER)
+    return(false);
+  return(object_number_type(p) == NUM_RATIO);
+}
+
+
+bool s7_is_complex(s7_pointer p)
+{
+  return(type(p) == T_NUMBER);
+}
+
+
+
+
+
+static char *print_big_integer(s7_scheme *sc, void *val)
+{
+  return(mpz_get_str(NULL, 10, BIG_INTEGER(val)));
+}
+
+
+static void free_big_integer(void *val)
+{
+  mpz_clear(BIG_INTEGER(val));
+  free(val);
+}
+
+
+static bool equal_big_integer(void *val1, void *val2)
+{
+  return(mpz_cmp(BIG_INTEGER(val1), BIG_INTEGER(val2)) == 0);
+}
+
+
+static s7_pointer make_big_integer(s7_scheme *sc, const char *str)
+{
+  mpz_t *n;
+  n = (mpz_t *)malloc(sizeof(mpz_t));
+  mpz_init_set_str(*n, str, 10);
+  return(s7_make_object(sc, big_integer_tag, (void *)n));
+}
+
+#if 0
+static s7_pointer copy_big_integer(s7_scheme *sc, s7_pointer arg)
+{
+  mpz_t *n;
+  n = (mpz_t *)malloc(sizeof(mpz_t));
+  mpz_init_set(*n, BIG_INTEGER(s7_object_value(arg)));
+  return(s7_make_object(sc, big_integer_tag, (void *)n));
+}
+#endif
+
+static s7_pointer g_bignum(s7_scheme *sc, s7_pointer args)
+{
+  return(make_big_integer(sc, string_value(car(args))));
+}
+
+
+static s7_pointer integer_to_big_integer(s7_scheme *sc, s7_Int val)
+{
+  mpz_t *n;
+  n = (mpz_t *)malloc(sizeof(mpz_t));
+  if ((val <= LONG_MAX) && (val >= LONG_MIN))
+    mpz_init_set_si(*n, (int)val);
+  else
+    {
+      bool need_sign;
+      need_sign = val < 0;
+      if (need_sign) val = -val;
+      mpz_set_si(*n, val >> 32);
+      mpz_mul_2exp(*n, *n, 32);
+      mpz_add_ui(*n, *n, val && 0xffffffff);
+      if (need_sign) mpz_neg(*n, *n);
+      fprintf(stderr, "%lld ->big %s\n", val, mpz_get_str(NULL, 10, *n));
+    }
+  return(s7_make_object(sc, big_integer_tag, (void *)n));
+}
+
+
+static s7_pointer big_add(s7_scheme *sc, s7_pointer args)
+{
+  int i;
+  bool need_big_add = false;
+  /* scan for bignums or possible overflow -- if either, 
+   *   loop here collecting bignum results, else go to g_add_unchecked
+   */
+  if (args == sc->NIL)
+    return(make_number(sc, small_int_as_num(sc, 0)));
+
+  for (i = 1, sc->x = args; sc->x != sc->NIL; i++, sc->x = cdr(sc->x)) 
+    if (type(car(sc->x)) != T_NUMBER)
+      {
+	if ((!s7_is_object(car(sc->x))) ||
+	    (s7_object_type(car(sc->x)) != big_integer_tag))
+	  return(s7_wrong_type_arg_error(sc, "+", i, car(sc->x), "a number"));
+	else need_big_add = true;
+      }
+  /* TODO: else check size */
+
+  if (!need_big_add)
+    return(g_add_unchecked(sc, args));
+
+  {
+    s7_pointer result, arg;
+    sc->v = small_int_as_num(sc, 0);
+    result = integer_to_big_integer(sc, 0);
+    for (i = 1, sc->x = args; sc->x != sc->NIL; i++, sc->x = cdr(sc->x)) 
+      {
+	arg = car(sc->x);
+	if (type(arg) == T_NUMBER)
+	  {
+	    if (object_number_type(arg) == NUM_INT)
+	      mpz_add(BIG_INTEGER(s7_object_value(result)), 
+		      BIG_INTEGER(s7_object_value(result)), 
+		      BIG_INTEGER(s7_object_value(integer_to_big_integer(sc, s7_integer(arg)))));
+	    else sc->v = num_add(sc->v, nvalue(arg));
+	  }
+	else mpz_add(BIG_INTEGER(s7_object_value(result)), 
+		     BIG_INTEGER(s7_object_value(result)), 
+		     BIG_INTEGER(s7_object_value(arg)));
+      }
+    /* TODO: deal with sc->v if not 0 */
+    return(result);
+  }
+}
+
+
+static void s7_gmp_init(s7_scheme *sc)
+{
+  big_integer_tag = s7_new_type("big-integer", print_big_integer, free_big_integer, equal_big_integer, NULL, NULL, NULL);
+  
+
+  s7_define_function(sc, "+", big_add, 0, 0, true, "(+ ...) adds or appends its arguments");
+  
+  s7_define_function(sc, "bignum", g_bignum, 1, 0, false, "testing...");
+}
+
+#endif
+
+
+
 
 /* -------------------------------- initialization -------------------------------- */
 
@@ -14325,10 +14515,17 @@ s7_scheme *s7_init(void)
     s7_int_bits = (top == 8) ? 63 : 31;
     s7_define_constant(sc, "most-positive-fixnum", s7_make_integer(sc, (top == 8) ? LLONG_MAX : ((top == 4) ? LONG_MAX : SHRT_MAX)));
     s7_define_constant(sc, "most-negative-fixnum", s7_make_integer(sc, (top == 8) ? LLONG_MIN : ((top == 4) ? LONG_MIN : SHRT_MIN)));
+
     if (top == 4) default_rationalize_error = 1.0e-6;
     s7_define_constant(sc, "pi", s7_make_real(sc, 3.1415926535897932384626433832795029L)); /* M_PI is not good enough for s7_Double = long double */
+
     top_log = floor(log(pow(2.0, (s7_Double)((top * 8) - 1))));
     /* for s7_Double, float gives about 9 digits, double 18, long Double claims 28 but I don't see more than about 22? */
   }
+
+#if WITH_GMP
+  s7_gmp_init(sc);
+#endif
+
   return(sc);
 }

@@ -46,22 +46,22 @@ typedef struct {
 extern "C" {
 #endif
 
-void mus_vct_init(void);
-bool mus_vct_p(XEN obj);
-int mus_vct_print_length(void);
-void mus_vct_set_print_length(int len);
-XEN mus_array_to_list(Float *arr, off_t i, off_t len);
-char *mus_vct_to_string(vct *v);
-bool mus_vct_equalp(vct *v1, vct *v2);
-char *mus_vct_to_readable_string(vct *v);
-vct *mus_vct_make(off_t len);
-vct *mus_vct_free(vct *v);
-vct *mus_vct_copy(vct *vc);
+MUS_EXPORT void mus_vct_init(void);
+MUS_EXPORT bool mus_vct_p(XEN obj);
+MUS_EXPORT int mus_vct_print_length(void);
+MUS_EXPORT void mus_vct_set_print_length(int len);
+MUS_EXPORT XEN mus_array_to_list(Float *arr, off_t i, off_t len);
+MUS_EXPORT char *mus_vct_to_string(vct *v);
+MUS_EXPORT bool mus_vct_equalp(vct *v1, vct *v2);
+MUS_EXPORT char *mus_vct_to_readable_string(vct *v);
+MUS_EXPORT vct *mus_vct_make(off_t len);
+MUS_EXPORT vct *mus_vct_free(vct *v);
+MUS_EXPORT vct *mus_vct_copy(vct *vc);
 
-XEN xen_list_to_vct(XEN lst);
-vct *xen_to_vct(XEN arg);
-XEN xen_make_vct(off_t len, Float *data);
-XEN xen_make_vct_wrapper(off_t len, Float *data);
+MUS_EXPORT XEN xen_list_to_vct(XEN lst);
+MUS_EXPORT vct *xen_to_vct(XEN arg);
+MUS_EXPORT XEN xen_make_vct(off_t len, Float *data);
+MUS_EXPORT XEN xen_make_vct_wrapper(off_t len, Float *data);
 
 #define XEN_TO_VCT(arg) ((vct *)XEN_OBJECT_REF(arg))
 #define MUS_VCT_P(arg) mus_vct_p(arg)

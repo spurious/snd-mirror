@@ -239,7 +239,7 @@ AC_ARG_WITH(rt,
 AC_SUBST(RT_LIBS)
 
 
-# if mingw add -mwindows to the load flags
+# if mingw add -mwindows to the load flags (I think this means we're trying to build a GUI app, not just a console app??)
 case "$host" in
   *-*-mingw*)
     LDFLAGS="$LDFLAGS -mwindows"
