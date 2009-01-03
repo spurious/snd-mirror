@@ -1194,8 +1194,12 @@ if test "$have_gl" = yes ; then
   fi   
   case "$host" in
     *-apple-*)
-      GL_LIBS="-framework OpenGL"
-      # is this in place of or in addition to -lGL etc?
+
+#      GL_LIBS="-framework OpenGL"
+# is this in place of or in addition to -lGL etc?
+#   on OSX 10.5 we need the following:
+
+       GL_LIBS="-L/usr/X11/lib -lGLU -lGL -Wl,-dylib_file,/System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib:/System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib -framework OpenGL"
       ;;
   esac
 else

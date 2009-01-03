@@ -631,6 +631,8 @@ struct s7_scheme {
 #define dynamic_wind_out(p)           (p)->object.winder->out
 #define dynamic_wind_body(p)          (p)->object.winder->body
 
+#define is_object(p)                  (type(p) == T_S7_OBJECT)
+
 #define NUM_INT      0
 #define NUM_RATIO    1
 #define NUM_REAL     2
@@ -802,7 +804,7 @@ static void set_pair_line_number(s7_pointer p, int n)
 }
 
 
-static int s7_int_max = 0, s7_int_min = 0, s7_int_bits = 0; /* initialized later */
+static int s7_int_max = 0, s7_int_min = 0, s7_int_bits = 0, s7_int_digits = 0; /* initialized later */
 
 
 
@@ -1999,6 +2001,12 @@ static s7_pointer g_call_with_exit(s7_scheme *sc, s7_pointer args)
 
 /* -------------------------------- numbers -------------------------------- */
 
+#if WITH_GMP
+  static s7_pointer make_big_integer(s7_scheme *sc, const char *str);
+  static s7_pointer make_big_ratio(s7_scheme *sc, const char *str);
+  static char *big_number_to_string_with_radix(s7_scheme *sc, s7_pointer p, int radix);
+#endif
+
 
 #define s7_Int_abs(x) (x >= 0 ? x : -x)
 /* can't use abs even in gcc -- it doesn't work with long long ints! */
@@ -2834,6 +2842,7 @@ static num num_add(num a, num b)
 	if (d1 == d2)                                     /* the easy case -- if overflow here, it matches the int case */
 	  return(make_ratio(n1 + n2, d1));
 
+#if (!WITH_GMP)
 	if ((d1 > s7_int_max) || (d2 > s7_int_max) ||     /* before counting bits, check that overflow is possible */
 	    (n1 > s7_int_max) || (n2 > s7_int_max) ||
 	    (n1 < s7_int_min) || (n2 < s7_int_min))
@@ -2846,6 +2855,7 @@ static num num_add(num a, num b)
 		((d2bits + integer_length(n1)) > (s7_int_bits - 1)))
 	      return(make_real(((long double)n1 / (long double)d1) + ((long double)n2 / (long double)d2)));
 	  }
+#endif
 	return(make_ratio(n1 * d2 + n2 * d1, d1 * d2));
       }
       break;
@@ -3385,6 +3395,11 @@ static char *s7_number_to_string_base_10(s7_scheme *sc, s7_pointer obj, int widt
 {
   char *p;
 
+#if WITH_GMP
+  if (is_object(obj))
+    return(big_number_to_string_with_radix(sc, obj, 10));
+#endif
+
   switch (object_number_type(obj))
     {
     case NUM_INT:
@@ -3462,6 +3477,11 @@ static char *s7_number_to_string_base_10(s7_scheme *sc, s7_pointer obj, int widt
 static char *s7_number_to_string_with_radix(s7_scheme *sc, s7_pointer obj, int radix, int width, int precision, char float_choice)
 {
   char *p, *n, *d;
+
+#if WITH_GMP
+  if (is_object(obj))
+    return(big_number_to_string_with_radix(sc, obj, radix));
+#endif
 
   if (radix == 10)
     return(s7_number_to_string_base_10(sc, obj, width, precision, float_choice));
@@ -3550,8 +3570,10 @@ static s7_pointer g_number_to_string(s7_scheme *sc, s7_pointer args)
   #define H_number_to_string "(number->string num :optional (radix 10)) converts num into a string"
   int radix = 0;
   char *res;
+
   if (!s7_is_number(car(args)))
     return(s7_wrong_type_arg_error(sc, "number->string", 1, car(args), "a number"));
+
   if (is_pair(cdr(args)))
     {
       if (s7_is_integer(cadr(args)))
@@ -3900,9 +3922,6 @@ static s7_Double string_to_double_with_radix(char *str, int radix)
   return(sign * int_part);
 }
 
-#if WITH_GMP
-  static s7_pointer make_big_integer(s7_scheme *sc, const char *str);
-#endif
 
 /* make symbol or number atom from string */
 
@@ -4154,10 +4173,21 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
     }
   
   if (slash1)
-    return(s7_make_ratio(sc, ATOLL(q), ATOLL(slash1)));
+    {
+#if WITH_GMP
+      /* q is the whole fraction, slash1 is the denominator */
+      if (safe_strlen(q) > s7_int_digits)
+	{
+	  if ((strlen(slash1) > s7_int_digits) ||
+	      ((strlen(q) - strlen(slash1)) > s7_int_digits))
+	    return(make_big_ratio(sc, q));
+	}
+#endif      
+      return(s7_make_ratio(sc, ATOLL(q), ATOLL(slash1)));
+    }
   
 #if WITH_GMP
-  if (safe_strlen(q) > 18)
+  if (safe_strlen(q) > s7_int_digits)
     return(make_big_integer(sc, q));
   /* in 64 bit case 20 digits overflows */
 #endif
@@ -9008,7 +9038,7 @@ bool s7_is_function(s7_pointer p)
 
 bool s7_is_object(s7_pointer p) 
 { 
-  return(type(p) == T_S7_OBJECT);
+  return(is_object(p));
 }
 
 
@@ -9312,8 +9342,8 @@ static void s7_free_object(s7_pointer a)
 
 static bool s7_equalp_objects(s7_pointer a, s7_pointer b)
 {
-  if ((s7_is_object(a)) &&
-      (s7_is_object(b)) &&
+  if ((is_object(a)) &&
+      (is_object(b)) &&
       (a->object.fobj.type == b->object.fobj.type))
     {
       int tag;
@@ -9340,7 +9370,7 @@ static void s7_mark_embedded_objects(s7_pointer a) /* called by gc, calls fobj's
 
 static bool s7_is_applicable_object(s7_pointer x)
 {
-  return((s7_is_object(x)) &&
+  return((is_object(x)) &&
 	 (object_types[x->object.fobj.type].apply));
 }
 
@@ -9381,9 +9411,11 @@ void *s7_object_value(s7_pointer obj)
 }
 
 
+#define object_type(p) p->object.fobj.type
+
 int s7_object_type(s7_pointer obj)
 {
-  return(obj->object.fobj.type);
+  return(object_type(obj));
 }
 
 
@@ -9532,8 +9564,8 @@ static s7_pointer g_make_procedure_with_setter(s7_scheme *sc, s7_pointer args)
 
 bool s7_is_procedure_with_setter(s7_pointer obj)
 {
-  return((s7_is_object(obj)) &&
-	 (s7_object_type(obj) == pws_tag));
+  return((is_object(obj)) &&
+	 (object_type(obj) == pws_tag));
 }
 
 
@@ -9659,7 +9691,7 @@ bool s7_is_equal(s7_pointer x, s7_pointer y)
 	   ((string_length(x) == 0) ||
 	    (strcmp(string_value(x), string_value(y)) == 0)));
   
-  if (s7_is_object(x))
+  if (is_object(x))
     return(s7_equalp_objects(x, y));
   
   if ((s7_is_vector(x)) ||
@@ -12543,7 +12575,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    }
 	  
 	  sc->x = s7_symbol_value(sc, caar(sc->code));
-	  if ((s7_is_object(sc->x)) &&
+	  if ((is_object(sc->x)) &&
 	      (object_set_function(sc->x)))
 	    sc->code = s7_cons(sc, sc->SET_OBJECT, s7_append(sc, car(sc->code), cdr(sc->code)));   /* use set method */
 	  else return(eval_error(sc, "no generalized set for ~A", caar(sc->code)));
@@ -13437,7 +13469,7 @@ static s7_pointer g_make_thread(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_is_thread(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_thread "(thread? obj) returns #t if obj is a thread object"
-  return(make_boolean(sc, (s7_is_object(car(args))) && (s7_object_type(car(args)) == thread_tag)));
+  return(make_boolean(sc, (is_object(car(args))) && (object_type(car(args)) == thread_tag)));
 }
 
 
@@ -13498,7 +13530,7 @@ static bool lock_equal(void *obj1, void *obj2)
 static s7_pointer g_is_lock(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_lock "(lock? obj) returns #t if obj is a lock (mutex) object"
-  return(make_boolean(sc, (s7_is_object(car(args))) && (s7_object_type(car(args)) == lock_tag)));
+  return(make_boolean(sc, (is_object(car(args))) && (object_type(car(args)) == lock_tag)));
 }
 
 
@@ -13583,8 +13615,8 @@ static bool key_equal(void *obj1, void *obj2)
 
 bool s7_is_thread_variable(s7_pointer obj)
 {
-  return((s7_is_object(obj)) &&
-	 (s7_object_type(obj) == key_tag));
+  return((is_object(obj)) &&
+	 (object_type(obj) == key_tag));
 }
 
 
@@ -13747,63 +13779,95 @@ static void mark_s7(s7_scheme *sc)
 
 
 static int big_integer_tag = 0;
+static int big_ratio_tag = 0;
+static int big_real_tag = 0;
+static int big_complex_tag = 0;
 
 #define BIG_INTEGER(a) (*((mpz_t *)a))
+#define BIG_RATIO(a) (*((mpq_t *)a))
+#define BIG_REAL(a) (*((mpfr_t *)a))
+
+#define IS_BIG(p) ((is_object(p)) && \
+		   ((object_type(p) == big_integer_tag) || \
+                    (object_type(p) == big_ratio_tag) || \
+                    (object_type(p) == big_real_tag) || \
+                    (object_type(p) == big_complex_tag)))
 
 
 bool s7_is_number(s7_pointer p)
 {
-  return((type(p) == T_NUMBER) ||
-	 ((s7_is_object(p)) && 
-	  (s7_object_type(p) == big_integer_tag)));
+  return((type(p) == T_NUMBER) || (IS_BIG(p)));
 }
 
 
 bool s7_is_integer(s7_pointer p) 
 { 
-  if (type(p) == T_NUMBER)
-    return(object_number_type(p) == NUM_INT);
-  return((s7_is_object(p)) && 
-	 (s7_object_type(p) == big_integer_tag));
+  return(((type(p) == T_NUMBER) && 
+	  (object_number_type(p) == NUM_INT)) ||
+	 ((is_object(p)) && 
+	  (object_type(p) == big_integer_tag)));
 }
 
 
 bool s7_is_real(s7_pointer p) 
 { 
-  if (type(p) != T_NUMBER)
-    return(false);
-  return(object_number_type(p) < NUM_COMPLEX);
+  return(((type(p) == T_NUMBER) && 
+	  (object_number_type(p) < NUM_COMPLEX)) ||
+	 ((is_object(p)) && 
+	  ((object_type(p) == big_integer_tag) ||
+	   (object_type(p) == big_ratio_tag) ||
+	   (object_type(p) == big_real_tag))));
 }
 
 
 bool s7_is_rational(s7_pointer p)
 {
-  if (type(p) != T_NUMBER)
-    return(false);
-  return(object_number_type(p) <= NUM_RATIO);
+  return(((type(p) == T_NUMBER) && 
+	  (object_number_type(p) <= NUM_RATIO)) ||
+	 ((is_object(p)) && 
+	  ((object_type(p) == big_integer_tag) ||
+	   (object_type(p) == big_ratio_tag))));
 }
 
 
 bool s7_is_ratio(s7_pointer p)
 {
-  if (type(p) != T_NUMBER)
-    return(false);
-  return(object_number_type(p) == NUM_RATIO);
+  return(((type(p) == T_NUMBER) && 
+	  (object_number_type(p) == NUM_RATIO)) ||
+	 ((is_object(p)) && 
+	   (object_type(p) == big_ratio_tag)));
 }
 
 
 bool s7_is_complex(s7_pointer p)
 {
-  return(type(p) == T_NUMBER);
+  return(s7_is_number(p));
 }
-
-
-
 
 
 static char *print_big_integer(s7_scheme *sc, void *val)
 {
   return(mpz_get_str(NULL, 10, BIG_INTEGER(val)));
+}
+
+
+static char *print_big_ratio(s7_scheme *sc, void *val)
+{
+  return(mpq_get_str(NULL, 10, BIG_RATIO(val)));
+}
+
+
+static char *print_big_real(s7_scheme *sc, void *val)
+{
+  char *str, *tmp;
+  mp_exp_t expptr;
+  int len;
+  str = mpfr_get_str(NULL, &expptr, 10, 0, BIG_REAL(val), GMP_RNDN);
+  len = safe_strlen(str) + 128;
+  tmp = malloc(len * sizeof(char));
+  snprintf(tmp, len, "%c.%sE%d", str[0], (char *)(str + 1), (int)expptr - 1);
+  mpfr_free_str(str);
+  return(tmp);
 }
 
 
@@ -13814,33 +13878,106 @@ static void free_big_integer(void *val)
 }
 
 
+static void free_big_ratio(void *val)
+{
+  mpq_clear(BIG_RATIO(val));
+  free(val);
+}
+
+
+static void free_big_real(void *val)
+{
+  mpfr_clear(BIG_REAL(val));
+  free(val);
+}
+
+
 static bool equal_big_integer(void *val1, void *val2)
 {
   return(mpz_cmp(BIG_INTEGER(val1), BIG_INTEGER(val2)) == 0);
 }
 
 
+static bool equal_big_ratio(void *val1, void *val2)
+{
+  return(mpq_cmp(BIG_RATIO(val1), BIG_RATIO(val2)) == 0);
+}
+
+
+static bool equal_big_real(void *val1, void *val2)
+{
+  return(mpfr_cmp(BIG_REAL(val1), BIG_REAL(val2)) == 0);
+}
+
+
 static s7_pointer make_big_integer(s7_scheme *sc, const char *str)
 {
   mpz_t *n;
+  fprintf(stderr,"make big int: %s\n", str);
   n = (mpz_t *)malloc(sizeof(mpz_t));
   mpz_init_set_str(*n, str, 10);
   return(s7_make_object(sc, big_integer_tag, (void *)n));
 }
 
-#if 0
-static s7_pointer copy_big_integer(s7_scheme *sc, s7_pointer arg)
+
+static s7_pointer mpz_to_big_integer(s7_scheme *sc, mpz_t val)
 {
   mpz_t *n;
   n = (mpz_t *)malloc(sizeof(mpz_t));
-  mpz_init_set(*n, BIG_INTEGER(s7_object_value(arg)));
+  mpz_init_set(*n, val);
   return(s7_make_object(sc, big_integer_tag, (void *)n));
 }
-#endif
+
+
+static s7_pointer make_big_ratio(s7_scheme *sc, const char *str)
+{
+  mpq_t *n;
+  fprintf(stderr,"make big ratio: %s\n", str);
+  n = (mpq_t *)malloc(sizeof(mpq_t));
+  mpq_init(*n);
+  mpq_set_str(*n, str, 10);
+  mpq_canonicalize(*n);
+  if (mpz_cmp_ui(mpq_denref(*n), 1) == 0)
+    {
+      s7_pointer result;
+      result = mpz_to_big_integer(sc, mpq_numref(*n));
+      mpq_clear(*n);
+      free(n);
+      return(result);
+    }
+  return(s7_make_object(sc, big_ratio_tag, (void *)n));
+}
+
+
+static s7_pointer mpz_to_big_ratio(s7_scheme *sc, mpz_t val)
+{
+  mpq_t *n;
+  n = (mpq_t *)malloc(sizeof(mpq_t));
+  mpq_init(*n);
+  mpq_set_num(*n, val);
+  return(s7_make_object(sc, big_ratio_tag, (void *)n));
+}
+
+
+static s7_pointer make_big_real(s7_scheme *sc, const char *str)
+{
+  mpfr_t *n;
+  n = (mpfr_t *)malloc(sizeof(mpfr_t));
+  mpfr_init_set_str(*n, str, 10, GMP_RNDN);
+  return(s7_make_object(sc, big_real_tag, (void *)n));
+}
+
 
 static s7_pointer g_bignum(s7_scheme *sc, s7_pointer args)
 {
-  return(make_big_integer(sc, string_value(car(args))));
+  /* if it has "i" ->complex, if it has "/" -> ratio, if "." -> real */
+  const char *str;
+  str = string_value(car(args));
+  if (strchr(str, '/'))
+    return(make_big_ratio(sc, str));
+  if (strchr(str, '.'))
+    return(make_big_real(sc, str));
+  return(make_big_integer(sc, str));
 }
 
 
@@ -13851,76 +13988,295 @@ static s7_pointer integer_to_big_integer(s7_scheme *sc, s7_Int val)
   if ((val <= LONG_MAX) && (val >= LONG_MIN))
     mpz_init_set_si(*n, (int)val);
   else
-    {
+    { /* long long int to gmp mpz_t */
       bool need_sign;
-      need_sign = val < 0;
+      need_sign = (val < 0);
       if (need_sign) val = -val;
-      mpz_set_si(*n, val >> 32);
+      mpz_init_set_si(*n, val >> 32);
       mpz_mul_2exp(*n, *n, 32);
-      mpz_add_ui(*n, *n, val && 0xffffffff);
+      mpz_add_ui(*n, *n, (int)(val & 0xffffffff));
       if (need_sign) mpz_neg(*n, *n);
-      fprintf(stderr, "%lld ->big %s\n", val, mpz_get_str(NULL, 10, *n));
     }
   return(s7_make_object(sc, big_integer_tag, (void *)n));
 }
 
 
+static s7_pointer ratio_to_big_ratio(s7_scheme *sc, s7_Int num, s7_Int den)
+{
+  mpq_t *n;
+  n = (mpq_t *)malloc(sizeof(mpq_t));
+  mpq_init(*n);
+  if ((num <= LONG_MAX) && (num >= LONG_MIN) &&
+      (den <= LONG_MAX) && (den >= LONG_MIN))
+    mpq_set_si(*n, (long int)num, (long int)den);
+  else
+    {
+      mpq_set_num(*n, BIG_INTEGER(s7_object_value(integer_to_big_integer(sc, num))));
+      mpq_set_den(*n, BIG_INTEGER(s7_object_value(integer_to_big_integer(sc, den))));
+    }
+  return(s7_make_object(sc, big_ratio_tag, (void *)n));
+}
+
+
+
+#define T_BIG_INTEGER 0
+#define T_BIG_RATIO 1
+#define T_BIG_REAL 2
+#define T_BIG_COMPLEX 3
+
+static int canonicalize_result_type(int type)
+{
+  fprintf(stderr, "type %d (%d %d %d %d)\n", type, 1 << (big_complex_tag * 4), 1 << (big_real_tag * 4), 1 << (big_ratio_tag * 4), 1 << (big_integer_tag * 4));
+
+  if (type >= (1<< (big_complex_tag * 4))) 
+    return(T_BIG_COMPLEX);
+
+  if (type >= (1 << (big_real_tag * 4)))
+    {
+      if ((type & 0x7) >= NUM_COMPLEX)
+	return(T_BIG_COMPLEX);
+      return(T_BIG_REAL);
+    }
+
+  if (type >= (1 << (big_ratio_tag * 4)))
+    switch (type & 0x7)
+      {
+      case NUM_INT:
+      case NUM_RATIO: 
+	return(T_BIG_RATIO);
+
+      case NUM_REAL:
+      case NUM_REAL2:
+	return(T_BIG_REAL);
+
+      default:
+	return(T_BIG_COMPLEX);
+      }
+
+  switch (type & 0x7)
+    {
+    case NUM_INT: 
+      return(T_BIG_INTEGER); /* NUM_INT is 0, so this includes the pure big ints case */
+
+    case NUM_RATIO: 
+      return(T_BIG_RATIO);
+
+    case NUM_REAL:
+    case NUM_REAL2: 
+      return(T_BIG_REAL);
+
+    default:
+      return(T_BIG_COMPLEX);
+    }
+}
+
+
+static s7_pointer promote_number(s7_scheme *sc, int type, s7_pointer x)
+{
+  /* x can be any number -- need to convert it to the current result type */
+  switch (type)
+    {
+    case T_BIG_INTEGER:
+      if (is_object(x)) return(x);                       /* can only be T_BIG_INTEGER here */
+      return(integer_to_big_integer(sc, s7_integer(x))); /* can only be NUM_INT here */
+      break;
+
+    case T_BIG_RATIO:
+      if (is_object(x))
+	{
+	  if (object_type(x) == big_ratio_tag) return(x);
+	  return(mpz_to_big_ratio(sc, BIG_INTEGER(s7_object_value(x))));
+	}
+      if (object_number_type(x) == NUM_INT)
+	return(ratio_to_big_ratio(sc, s7_integer(x), 1));
+      return(ratio_to_big_ratio(sc, s7_numerator(x), s7_denominator(x)));
+      break;
+
+    default:
+      fprintf(stderr, "oops");
+      break;
+    }
+  return(sc->NIL);
+}
+
+static s7_Int add_max = 0;
+
 static s7_pointer big_add(s7_scheme *sc, s7_pointer args)
 {
-  int i;
-  bool need_big_add = false;
-  /* scan for bignums or possible overflow -- if either, 
-   *   loop here collecting bignum results, else go to g_add_unchecked
-   */
+  int i, result_type = NUM_INT;
+
   if (args == sc->NIL)
     return(make_number(sc, small_int_as_num(sc, 0)));
+  if ((cdr(args) == sc->NIL) && (s7_is_number(car(args))))
+    return(car(args));
 
   for (i = 1, sc->x = args; sc->x != sc->NIL; i++, sc->x = cdr(sc->x)) 
-    if (type(car(sc->x)) != T_NUMBER)
-      {
-	if ((!s7_is_object(car(sc->x))) ||
-	    (s7_object_type(car(sc->x)) != big_integer_tag))
-	  return(s7_wrong_type_arg_error(sc, "+", i, car(sc->x), "a number"));
-	else need_big_add = true;
-      }
-  /* TODO: else check size */
+    {
+      s7_pointer p;
+      p = car(sc->x);
+      if (type(p) != T_NUMBER)
+	{
+	  if (!IS_BIG(p))
+	    return(s7_wrong_type_arg_error(sc, "+", i, p, "a number"));
+	  else result_type |= (1 << (object_type(p) * 4));
+	}
+      else
+	{
+	  result_type |= object_number_type(p);
+	  switch (object_number_type(p))
+	    {
+	    case NUM_INT:
+	      {
+		s7_Int val;
+		val = s7_integer(p);
+		if ((val > add_max) || (val < -add_max))
+		  result_type |= (1 << (big_integer_tag * 4));
+	      }
+	      break;
 
-  if (!need_big_add)
+	    case NUM_RATIO:
+	      {
+		s7_Int val;
+		val = s7_numerator(p);
+		if ((val > add_max) || (val < -add_max))
+		  result_type |= (1 << (big_ratio_tag * 4));
+		else
+		  {
+		    val = s7_denominator(p);
+		    if ((val > add_max) || (val < -add_max))
+		      result_type |= (1 << (big_ratio_tag * 4));
+		  }
+	      }
+	      break;
+
+	    default:
+	      fprintf(stderr, "oops");
+	      break;
+	    }
+	}
+    }
+
+  if (result_type < (1 << 4)) /* we (try to) ensure that big_integer_tag is not 0 in gmp_init */
     return(g_add_unchecked(sc, args));
+  result_type = canonicalize_result_type(result_type);
 
   {
     s7_pointer result, arg;
-    sc->v = small_int_as_num(sc, 0);
-    result = integer_to_big_integer(sc, 0);
+    result = promote_number(sc, result_type, make_number(sc, small_int_as_num(sc, 0)));
+
     for (i = 1, sc->x = args; sc->x != sc->NIL; i++, sc->x = cdr(sc->x)) 
       {
-	arg = car(sc->x);
-	if (type(arg) == T_NUMBER)
+	arg = promote_number(sc, result_type, car(sc->x));
+	 fprintf(stderr, "arg: %s -> %s\n", s7_object_to_c_string(sc, car(sc->x)), s7_object_to_c_string(sc, arg)); 
+	switch (result_type)
 	  {
-	    if (object_number_type(arg) == NUM_INT)
-	      mpz_add(BIG_INTEGER(s7_object_value(result)), 
-		      BIG_INTEGER(s7_object_value(result)), 
-		      BIG_INTEGER(s7_object_value(integer_to_big_integer(sc, s7_integer(arg)))));
-	    else sc->v = num_add(sc->v, nvalue(arg));
+	  case T_BIG_INTEGER:
+	    fprintf(stderr, "add ints");
+	    mpz_add(BIG_INTEGER(s7_object_value(result)), 
+		    BIG_INTEGER(s7_object_value(result)), 
+		    BIG_INTEGER(s7_object_value(arg)));
+	    break;
+
+	  case T_BIG_RATIO:
+	    fprintf(stderr, "add rats");
+	    mpq_add(BIG_RATIO(s7_object_value(result)),
+		    BIG_RATIO(s7_object_value(result)),
+		    BIG_RATIO(s7_object_value(arg)));
+	    break;
+
+	  default: 
+	    fprintf(stderr, "oops");
+	    break;
 	  }
-	else mpz_add(BIG_INTEGER(s7_object_value(result)), 
-		     BIG_INTEGER(s7_object_value(result)), 
-		     BIG_INTEGER(s7_object_value(arg)));
       }
-    /* TODO: deal with sc->v if not 0 */
+
     return(result);
   }
 }
 
 
+static s7_pointer big_numerator(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer p;
+  p = car(args);
+  if (is_object(p))
+    {
+      if (object_type(p) == big_integer_tag)
+	return(p);
+      if (object_type(p) == big_ratio_tag)
+	return(mpz_to_big_integer(sc, mpq_numref(BIG_RATIO(s7_object_value(p)))));
+    }
+  return(g_numerator(sc, args));
+}
+
+
+static s7_pointer big_denominator(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer p;
+  p = car(args);
+  if (is_object(p))
+    {
+      if (object_type(p) == big_integer_tag)
+	return(make_number(sc, small_int_as_num(sc, 1)));
+      if (object_type(p) == big_ratio_tag)
+	return(mpz_to_big_integer(sc, mpq_denref(BIG_RATIO(s7_object_value(p)))));
+    }
+  return(g_denominator(sc, args));
+}
+
+
+static s7_pointer big_is_even(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer p;
+  p = car(args);
+  if ((is_object(p)) &&
+      (object_type(p) == big_integer_tag))
+    return(make_boolean(sc, mpz_even_p(BIG_INTEGER(s7_object_value(p)))));
+  return(g_is_even(sc, args));
+}
+
+
+static s7_pointer big_is_odd(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer p;
+  p = car(args);
+  if ((is_object(p)) &&
+      (object_type(p) == big_integer_tag))
+    return(make_boolean(sc, mpz_odd_p(BIG_INTEGER(s7_object_value(p)))));
+  return(g_is_odd(sc, args));
+}
+
+
+static char *big_number_to_string_with_radix(s7_scheme *sc, s7_pointer p, int radix)
+{
+  if (object_type(p) == big_integer_tag)
+    return(mpz_get_str(NULL, radix, BIG_INTEGER(s7_object_value(p))));
+  if (object_type(p) == big_ratio_tag)
+    return(mpq_get_str(NULL, radix, BIG_RATIO(s7_object_value(p))));
+  return(NULL);
+}
+
+/* pos neg zero */
+
+
 static void s7_gmp_init(s7_scheme *sc)
 {
   big_integer_tag = s7_new_type("big-integer", print_big_integer, free_big_integer, equal_big_integer, NULL, NULL, NULL);
-  
+  if (big_integer_tag == 0) big_integer_tag = s7_new_type("big-integer", print_big_integer, free_big_integer, equal_big_integer, NULL, NULL, NULL);
+  big_ratio_tag = s7_new_type("big-ratio",     print_big_ratio,   free_big_ratio,   equal_big_ratio,   NULL, NULL, NULL);
+  big_real_tag = s7_new_type("big-real", print_big_real, free_big_real, equal_big_real, NULL, NULL, NULL);
 
-  s7_define_function(sc, "+", big_add, 0, 0, true, "(+ ...) adds or appends its arguments");
+  big_complex_tag = s7_new_type("big-complex", print_big_integer, free_big_integer, equal_big_integer, NULL, NULL, NULL);
+
+  s7_define_function(sc, "+",              big_add,              0, 0, true, H_add);
+  s7_define_function(sc, "numerator",      big_numerator,        1, 0, false, H_numerator);
+  s7_define_function(sc, "denominator",    big_denominator,      1, 0, false, H_denominator);
+  s7_define_function(sc, "even?",          big_is_even,          1, 0, false, H_is_even);
+  s7_define_function(sc, "odd?",           big_is_odd,           1, 0, false, H_is_odd);
   
   s7_define_function(sc, "bignum", g_bignum, 1, 0, false, "testing...");
+
+  add_max = (1 << (s7_int_bits - 1));
 }
 
 #endif
@@ -14500,9 +14856,6 @@ s7_scheme *s7_init(void)
   g_provide(sc, make_list_1(sc, s7_make_symbol(sc, "threads")));
 #endif
 
-  (*(sc->gc_off)) = false;
-  s7_eval_c_string(sc, "(macro quasiquote (lambda (l) (_quasiquote_ 0 (cadr l))))");
-
   {
     int top;
 #ifndef LLONG_MAX
@@ -14513,6 +14866,7 @@ s7_scheme *s7_init(void)
     s7_int_max = (top == 8) ? LONG_MAX : SHRT_MAX;
     s7_int_min = (top == 8) ? LONG_MIN : SHRT_MIN;
     s7_int_bits = (top == 8) ? 63 : 31;
+    s7_int_digits = (top == 8) ? 18 : 8;
     s7_define_constant(sc, "most-positive-fixnum", s7_make_integer(sc, (top == 8) ? LLONG_MAX : ((top == 4) ? LONG_MAX : SHRT_MAX)));
     s7_define_constant(sc, "most-negative-fixnum", s7_make_integer(sc, (top == 8) ? LLONG_MIN : ((top == 4) ? LONG_MIN : SHRT_MIN)));
 
@@ -14522,6 +14876,9 @@ s7_scheme *s7_init(void)
     top_log = floor(log(pow(2.0, (s7_Double)((top * 8) - 1))));
     /* for s7_Double, float gives about 9 digits, double 18, long Double claims 28 but I don't see more than about 22? */
   }
+
+  (*(sc->gc_off)) = false;
+  s7_eval_c_string(sc, "(macro quasiquote (lambda (l) (_quasiquote_ 0 (cadr l))))");
 
 #if WITH_GMP
   s7_gmp_init(sc);

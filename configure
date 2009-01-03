@@ -4448,7 +4448,7 @@ fi
 
 
 
-# if mingw add -mwindows to the load flags
+# if mingw add -mwindows to the load flags (I think this means we're trying to build a GUI app, not just a console app??)
 case "$host" in
   *-*-mingw*)
     LDFLAGS="$LDFLAGS -mwindows"
@@ -17627,8 +17627,12 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
   fi
   case "$host" in
     *-apple-*)
-      GL_LIBS="-framework OpenGL"
-      # is this in place of or in addition to -lGL etc?
+
+#      GL_LIBS="-framework OpenGL"
+# is this in place of or in addition to -lGL etc?
+#   on OSX 10.5 we need the following:
+
+       GL_LIBS="-L/usr/X11/lib -lGLU -lGL -Wl,-dylib_file,/System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib:/System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib -framework OpenGL"
       ;;
   esac
 else
