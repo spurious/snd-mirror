@@ -166,7 +166,7 @@
 #define WITH_R5RS_RATIONALIZE 0
 /* follow the scheme spec for rationalize (not recommended) */
 
-#define WITH_GMP 0
+#define WITH_GMP 1
 /* an experiment */
 
 
@@ -13786,6 +13786,7 @@ static int big_complex_tag = 0;
 #define BIG_INTEGER(a) (*((mpz_t *)a))
 #define BIG_RATIO(a) (*((mpq_t *)a))
 #define BIG_REAL(a) (*((mpfr_t *)a))
+#define BIG_COMPLEX(a) (*((mpc_t *)a))
 
 #define IS_BIG(p) ((is_object(p)) && \
 		   ((object_type(p) == big_integer_tag) || \
@@ -13857,16 +13858,41 @@ static char *print_big_ratio(s7_scheme *sc, void *val)
 }
 
 
-static char *print_big_real(s7_scheme *sc, void *val)
+static char *mpfr_to_string(s7_scheme *sc, mpfr_t val)
 {
   char *str, *tmp;
   mp_exp_t expptr;
   int len;
-  str = mpfr_get_str(NULL, &expptr, 10, 0, BIG_REAL(val), GMP_RNDN);
+  str = mpfr_get_str(NULL, &expptr, 10, 0, val, GMP_RNDN);
   len = safe_strlen(str) + 128;
   tmp = malloc(len * sizeof(char));
   snprintf(tmp, len, "%c.%sE%d", str[0], (char *)(str + 1), (int)expptr - 1);
   mpfr_free_str(str);
+  return(tmp);
+}
+
+
+static char *print_big_real(s7_scheme *sc, void *val)
+{
+  return(mpfr_to_string(sc, BIG_REAL(val)));
+}
+
+
+static char *print_big_complex(s7_scheme *sc, void *val)
+{
+  char *rl, *im, *tmp;
+  int len;
+  mpfr_t r;
+  mpfr_init(r);
+  mpc_real(r, BIG_COMPLEX(val), MPC_RNDNN);
+  rl = mpfr_to_string(sc, r);
+  mpc_imag(r, BIG_COMPLEX(val), MPC_RNDNN);
+  im = mpfr_to_string(sc, r);
+  len = safe_strlen(rl) + safe_strlen(im) + 128;
+  tmp = malloc(len * sizeof(char));
+  snprintf(tmp, len, "%s%s%si", rl, (im[0] == '-') ? "" : "+", im);
+  free(rl);
+  free(im);
   return(tmp);
 }
 
@@ -13892,6 +13918,13 @@ static void free_big_real(void *val)
 }
 
 
+static void free_big_complex(void *val)
+{
+  mpc_clear(BIG_COMPLEX(val));
+  free(val);
+}
+
+
 static bool equal_big_integer(void *val1, void *val2)
 {
   return(mpz_cmp(BIG_INTEGER(val1), BIG_INTEGER(val2)) == 0);
@@ -13907,6 +13940,12 @@ static bool equal_big_ratio(void *val1, void *val2)
 static bool equal_big_real(void *val1, void *val2)
 {
   return(mpfr_cmp(BIG_REAL(val1), BIG_REAL(val2)) == 0);
+}
+
+
+static bool equal_big_complex(void *val1, void *val2)
+{
+  return(mpc_cmp(BIG_COMPLEX(val1), BIG_COMPLEX(val2)) == 0);
 }
 
 
@@ -13968,6 +14007,15 @@ static s7_pointer make_big_real(s7_scheme *sc, const char *str)
 }
 
 
+static s7_pointer make_big_complex(s7_scheme *sc, const char *str)
+{
+  /* there is no mpc_get_str equivalent, so we need to split up str,
+   *   use make_big_real to get the 2 halves, then mpc_init, then
+   *   mpc_set_fr_fr.
+   */
+}
+
+
 static s7_pointer g_bignum(s7_scheme *sc, s7_pointer args)
 {
   /* if it has "i" ->complex, if it has "/" -> ratio, if "." -> real */
@@ -13975,6 +14023,8 @@ static s7_pointer g_bignum(s7_scheme *sc, s7_pointer args)
   str = string_value(car(args));
   if (strchr(str, '/'))
     return(make_big_ratio(sc, str));
+  if (strchr(str, 'i'))
+    return(make_big_complex(sc, str));
   if (strchr(str, '.'))
     return(make_big_real(sc, str));
   return(make_big_integer(sc, str));
@@ -14262,11 +14312,10 @@ static char *big_number_to_string_with_radix(s7_scheme *sc, s7_pointer p, int ra
 static void s7_gmp_init(s7_scheme *sc)
 {
   big_integer_tag = s7_new_type("big-integer", print_big_integer, free_big_integer, equal_big_integer, NULL, NULL, NULL);
-  if (big_integer_tag == 0) big_integer_tag = s7_new_type("big-integer", print_big_integer, free_big_integer, equal_big_integer, NULL, NULL, NULL);
+  if (big_integer_tag == 0) fprintf(stderr, "big int type is zero\n");
   big_ratio_tag = s7_new_type("big-ratio",     print_big_ratio,   free_big_ratio,   equal_big_ratio,   NULL, NULL, NULL);
   big_real_tag = s7_new_type("big-real", print_big_real, free_big_real, equal_big_real, NULL, NULL, NULL);
-
-  big_complex_tag = s7_new_type("big-complex", print_big_integer, free_big_integer, equal_big_integer, NULL, NULL, NULL);
+  big_complex_tag = s7_new_type("big-complex", print_big_complex, free_big_complex, equal_big_complex, NULL, NULL, NULL);
 
   s7_define_function(sc, "+",              big_add,              0, 0, true, H_add);
   s7_define_function(sc, "numerator",      big_numerator,        1, 0, false, H_numerator);
@@ -14280,6 +14329,7 @@ static void s7_gmp_init(s7_scheme *sc)
 }
 
 #endif
+/* WITH_GMP */
 
 
 
