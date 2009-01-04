@@ -166,7 +166,7 @@
 #define WITH_R5RS_RATIONALIZE 0
 /* follow the scheme spec for rationalize (not recommended) */
 
-#define WITH_GMP 1
+#define WITH_GMP 0
 /* an experiment */
 
 
@@ -578,6 +578,8 @@ struct s7_scheme {
 #define pair_line_number(p)           (p)->object.cons.line
 
 #define symbol_location(p)            (p)->object.cons.line
+#define symbol_name(p)                string_value(car(p))
+#define symbol_name_length(p)         string_length(car(p))
 
 #define string_value(p)               ((p)->object.string.svalue)
 #define string_length(p)              ((p)->object.string.length)
@@ -1518,7 +1520,7 @@ static s7_pointer g_is_symbol(s7_scheme *sc, s7_pointer args)
 
 const char *s7_symbol_name(s7_pointer p)   
 { 
-  return(string_value(car(p)));
+  return(symbol_name(p));
 }
 
 
@@ -3568,11 +3570,36 @@ char *s7_number_to_string(s7_scheme *sc, s7_pointer obj, int radix)
 static s7_pointer g_number_to_string(s7_scheme *sc, s7_pointer args)
 {
   #define H_number_to_string "(number->string num :optional (radix 10)) converts num into a string"
-  int radix = 0;
+  int radix = 0, size = 20;
   char *res;
 
   if (!s7_is_number(car(args)))
     return(s7_wrong_type_arg_error(sc, "number->string", 1, car(args), "a number"));
+
+  if (object_number_type(car(args)) > NUM_RATIO)
+    {
+      /* if size = 20, (number->string .1) gives "0.10000000000000000555", but if it's less than 20,
+       *    large numbers (or very small numbers) mess up less significant digits.
+       */
+      if (object_number_type(car(args)) < NUM_COMPLEX)
+	{
+	  s7_Double val;
+	  val = s7_Double_abs(s7_real(car(args)));
+	  if ((val < (LONG_MAX/4)) && (val > 1.0e-6))
+	    size = 14;
+	}
+      else
+	{
+	  s7_Double rl, im;
+	  rl = s7_Double_abs(s7_real_part(car(args)));
+	  if ((rl < (LONG_MAX/4)) && (rl > 1.0e-6))
+	    {
+	      im = s7_Double_abs(s7_imag_part(car(args)));
+	      if ((im < (LONG_MAX/4)) && (im > 1.0e-6))
+		size = 14;
+	    }
+	}
+    }
 
   if (is_pair(cdr(args)))
     {
@@ -3581,9 +3608,9 @@ static s7_pointer g_number_to_string(s7_scheme *sc, s7_pointer args)
       if ((radix < 2) || (radix > 16))
 	return(s7_out_of_range_error(sc, "number->string", 2, cadr(args), "between 2 and 16"));
 
-      res = s7_number_to_string_with_radix(sc, car(args), radix, 0, 20, 'g');
+      res = s7_number_to_string_with_radix(sc, car(args), radix, 0, (radix == 10) ? size : 20, 'g');
     }
-  else res = s7_number_to_string_base_10(sc, car(args), 0, 20, 'g');
+  else res = s7_number_to_string_base_10(sc, car(args), 0, size, 'g');
   
   sc->y = s7_make_string(sc, res);
   free(res);
@@ -7438,7 +7465,7 @@ static char *s7_atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
       }
   
     case T_SYMBOL:
-      return(strdup(s7_symbol_name(obj)));
+      return(strdup(symbol_name(obj)));
   
     case T_MACRO:
       return(strdup("#<macro>"));
@@ -7450,7 +7477,7 @@ static char *s7_atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
 	s7_pointer binding;
 	binding = s7_find_value_in_environment(sc, obj);
 	if (is_pair(binding))
-	  return(strdup(s7_symbol_name(car(binding))));
+	  return(strdup(symbol_name(car(binding))));
 	return(strdup("#<closure>"));
       }
   
@@ -9741,7 +9768,8 @@ bool s7_keyword_eq_p(s7_pointer obj1, s7_pointer obj2)
 bool s7_is_keyword(s7_pointer obj)
 {
   return((s7_is_symbol(obj)) &&
-	 (s7_symbol_name(obj)[0] == ':'));
+	 ((symbol_name(obj)[0] == ':') ||
+	  (symbol_name(obj)[symbol_name_length(obj) - 1] == ':')));
 }
 
 
@@ -11358,7 +11386,7 @@ static s7_pointer eval_symbol(s7_scheme *sc, s7_pointer sym)
     return(sym);
 	  
   /* isn't this in the global env? keyword also -- both these checks seem useless */
-  sc->x = symbol_table_find_by_name(sc, s7_symbol_name(sym), symbol_location(sym));
+  sc->x = symbol_table_find_by_name(sc, symbol_name(sym), symbol_location(sym));
   if (is_syntax(sc->x))
     return(sc->x);
 
@@ -12316,14 +12344,20 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		      {
 			if (s7_is_keyword(car(sc->y)))
 			  {
-			    const char *name;
-			    name = s7_symbol_name(car(sc->y));
-			    if (lambda_star_argument_set_value(sc, 
-							       s7_make_symbol(sc, (const char *)(name + 1)), 
-							       car(cdr(sc->y))))
+			    char *name;   /* need to remove the ':' before checking the lambda args */
+			    s7_pointer sym;
+			    name = symbol_name(car(sc->y));
+			    if (name[0] == ':')
+			      sym = s7_make_symbol(sc, (const char *)(name + 1));
+			    else
 			      {
-				sc->y = cddr(sc->y);
+				/* must be a trailing ':' here, else not s7_is_keyword */
+				name[symbol_name_length(car(sc->y)) - 1] = '\0';
+				sym = s7_make_symbol(sc, name);
+				name[symbol_name_length(car(sc->y)) - 1] = ':';
 			      }
+			    if (lambda_star_argument_set_value(sc, sym, car(cdr(sc->y))))
+			      sc->y = cddr(sc->y);
 			    else         /* might be passing a keyword as a normal argument value! */
 			      {
 				if (is_pair(car(sc->x)))
