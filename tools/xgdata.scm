@@ -1065,7 +1065,7 @@
 (CFNC "void gdk_window_set_decorations GdkWindow* window GdkWMDecoration decorations")
 (CFNC "gboolean gdk_window_get_decorations GdkWindow* window GdkWMDecoration* [decorations]")
 (CFNC "void gdk_window_set_functions GdkWindow* window GdkWMFunction functions")
-(CFNC "GList* gdk_window_get_toplevels void")
+;;; out 2.15.0 (CFNC "GList* gdk_window_get_toplevels void")
 (CFNC "void gdk_window_iconify GdkWindow* window")
 (CFNC "void gdk_window_deiconify GdkWindow* window")
 (CFNC "void gdk_window_stick GdkWindow* window")
@@ -3016,7 +3016,7 @@
 ;;; out 2.3 (CFNC "void gtk_toolbar_prepend_widget GtkToolbar* toolbar GtkWidget* widget char* tooltip_text char* tooltip_private_text")
 ;;; out 2.3 (CFNC "void gtk_toolbar_insert_widget GtkToolbar* toolbar GtkWidget* widget char* tooltip_text char* tooltip_private_text gint position")
 
-(CFNC "void gtk_toolbar_set_orientation GtkToolbar* toolbar GtkOrientation orientation")
+;;; out 2.15.0 (CFNC "void gtk_toolbar_set_orientation GtkToolbar* toolbar GtkOrientation orientation")
 (CFNC "void gtk_toolbar_set_style GtkToolbar* toolbar GtkToolbarStyle style")
 (CFNC "void gtk_toolbar_unset_style GtkToolbar* toolbar")
 ;;; out 2.3 (CFNC "void gtk_toolbar_unset_icon_size GtkToolbar* toolbar")
@@ -5758,7 +5758,7 @@
 (CFNC-290 "gchar* gtk_status_icon_get_stock GtkStatusIcon* status_icon") ; 'const
 (CFNC-290 "gchar* gtk_status_icon_get_icon_name GtkStatusIcon* status_icon") ; 'const
 (CFNC-290 "gint gtk_status_icon_get_size GtkStatusIcon* status_icon")
-(CFNC-290 "void gtk_status_icon_set_tooltip GtkStatusIcon* status_icon gchar* tooltip_text")
+;;; out 2.15.0 (CFNC-290 "void gtk_status_icon_set_tooltip GtkStatusIcon* status_icon gchar* tooltip_text")
 (CFNC-290 "void gtk_status_icon_set_visible GtkStatusIcon* status_icon gboolean visible")
 (CFNC-290 "gboolean gtk_status_icon_get_visible GtkStatusIcon* status_icon")
 (CFNC-290 "void gtk_status_icon_set_blinking GtkStatusIcon* status_icon gboolean blinking")
@@ -6681,7 +6681,7 @@
 (CFNC-2134 "PangoFontFace* gtk_font_selection_get_face GtkFontSelection* fontsel")
 (CFNC-2134 "gint gtk_font_selection_get_size GtkFontSelection* fontsel")
 (CFNC-2134 "GtkWidget* gtk_font_selection_dialog_get_ok_button GtkFontSelectionDialog* fsd")
-(CFNC-2134 "GtkWidget* gtk_font_selection_dialog_get_apply_button GtkFontSelectionDialog* fsd")
+;;; out 2.15.0 (CFNC-2134 "GtkWidget* gtk_font_selection_dialog_get_apply_button GtkFontSelectionDialog* fsd")
 (CFNC-2134 "GtkWidget* gtk_font_selection_dialog_get_cancel_button GtkFontSelectionDialog* fsd")
 (CFNC-2134 "gboolean gtk_handle_box_get_child_detached GtkHandleBox* handle_box")
 (CFNC-2134 "GdkWindow* gtk_layout_get_bin_window GtkLayout* layout")
@@ -6833,14 +6833,46 @@
 
 ;;; gtkdestroynotify -> gdestroynotify
 
+(CINT-2150 "GTK_ENTRY_ICON_PRIMARY" "GtkEntryIconPosition")
+(CINT-2150 "GTK_ENTRY_ICON_SECONDARY" "GtkEntryIconPosition")
 
-#!
-2.13.7:
-+ gboolean              gtk_link_button_get_visited       (GtkLinkButton *link_button);
-+ void                  gtk_link_button_set_visited       (GtkLinkButton *link_button, bool visited)
-+ 
+(CINT-2150 "GTK_ARROWS_BOTH" "GtkArrowPlacement")
+(CINT-2150 "GTK_ARROWS_START" "GtkArrowPlacement")
+(CINT-2150 "GTK_ARROWS_END" "GtkArrowPlacement")
 
-(CFNC-2141 "guchar* gtk_selection_data_get_data GtkSelectionData* selection_data" 'const)
-(CFNC-2141 "gint gtk_selection_data_get_length GtkSelectionData *selection_data")
-
-!#
+(CFNC-2150 "gboolean gtk_link_button_get_visited GtkLinkButton* link_button")
+(CFNC-2150 "void gtk_link_button_set_visited GtkLinkButton* link_button bool visited")
+(CFNC-2150 "gboolean gdk_keymap_get_caps_lock_state GdkKeymap* keymap")
+(CFNC-2150 "GtkTreeModel* gtk_cell_view_get_model GtkCellView* cell_view")
+(CFNC-2150 "void gtk_entry_unset_invisible_char GtkEntry* entry")
+(CFNC-2150 "void gtk_entry_set_progress_fraction GtkEntry* entry gdouble fraction")
+(CFNC-2150 "gdouble gtk_entry_get_progress_fraction GtkEntry* entry")
+(CFNC-2150 "void gtk_entry_set_progress_pulse_step GtkEntry* entry gdouble fraction")
+(CFNC-2150 "gdouble gtk_entry_get_progress_pulse_step GtkEntry* entry")
+(CFNC-2150 "void gtk_entry_progress_pulse GtkEntry* entry")
+(CFNC-2150 "void gtk_entry_set_icon_from_pixbuf GtkEntry* entry GtkEntryIconPosition icon_pos GdkPixbuf* pixbuf")
+(CFNC-2150 "void gtk_entry_set_icon_from_stock GtkEntry* entry GtkEntryIconPosition icon_pos const gchar* stock_id")
+(CFNC-2150 "void gtk_entry_set_icon_from_icon_name GtkEntry* entry GtkEntryIconPosition icon_pos const gchar* icon_name")
+(CFNC-2150 "void gtk_entry_set_icon_from_gicon GtkEntry* entry GtkEntryIconPosition icon_pos GIcon* icon")
+(CFNC-2150 "GtkImageType gtk_entry_get_storage_type GtkEntry* entry GtkEntryIconPosition icon_pos")
+(CFNC-2150 "GdkPixbuf* gtk_entry_get_pixbuf GtkEntry* entry GtkEntryIconPosition icon_pos")
+(CFNC-2150 "gchar* gtk_entry_get_stock GtkEntry* entry GtkEntryIconPosition icon_pos" 'const)
+(CFNC-2150 "gchar* gtk_entry_get_icon_name GtkEntry* entry GtkEntryIconPosition icon_pos" 'const)
+(CFNC-2150 "GIcon* gtk_entry_get_gicon GtkEntry* entry GtkEntryIconPosition icon_pos")
+(CFNC-2150 "void gtk_entry_set_icon_activatable GtkEntry* entry GtkEntryIconPosition icon_pos gboolean activatable")
+(CFNC-2150 "gboolean gtk_entry_get_icon_activatable GtkEntry* entry GtkEntryIconPosition icon_pos")
+(CFNC-2150 "void gtk_entry_set_icon_sensitive GtkEntry* entry GtkEntryIconPosition icon_pos gboolean sensitive")
+(CFNC-2150 "gboolean gtk_entry_get_icon_sensitive GtkEntry* entry GtkEntryIconPosition icon_pos")
+(CFNC-2150 "gint gtk_entry_get_icon_at_pos GtkEntry* entry gint x gint y")
+(CFNC-2150 "void gtk_entry_set_icon_tooltip_text GtkEntry* entry GtkEntryIconPosition icon_pos const gchar* tooltip")
+(CFNC-2150 "void gtk_entry_set_icon_tooltip_markup GtkEntry* entry GtkEntryIconPosition icon_pos const gchar* tooltip")
+(CFNC-2150 "void gtk_entry_set_icon_drag_source GtkEntry* entry GtkEntryIconPosition icon_pos GtkTargetList* target_list GdkDragAction actions")
+(CFNC-2150 "gint gtk_entry_get_current_icon_drag_source GtkEntry* entry")
+(CFNC-2150 "void gtk_image_menu_item_set_use_stock GtkImageMenuItem* image_menu_item gboolean use_stock")
+(CFNC-2150 "gboolean gtk_image_menu_item_get_use_stock GtkImageMenuItem* image_menu_item")
+(CFNC-2150 "void gtk_image_menu_item_set_accel_group GtkImageMenuItem* image_menu_item GtkAccelGroup* accel_group")
+(CFNC-2150 "void gtk_menu_item_set_label GtkMenuItem* menu_item const gchar* label")
+(CFNC-2150 "gchar* gtk_menu_item_get_label GtkMenuItem* menu_item" 'const)
+(CFNC-2150 "void gtk_menu_item_set_use_underline GtkMenuItem* menu_item gboolean setting")
+(CFNC-2150 "gboolean gtk_menu_item_get_use_underline GtkMenuItem* menu_item")
+(CFNC-2150 "GdkAtom gtk_selection_data_get_selection GtkSelectionData* selection_data")

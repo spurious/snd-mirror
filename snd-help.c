@@ -177,6 +177,11 @@ static void main_snd_help(const char *subject, ...)
   #define XM_VERSION_NAME "xg-version"
 #endif
 
+#if WITH_GMP
+  #include <gmp.h>
+  #include <mpfr.h>
+  #include <mpc.h>
+#endif
 
 static char *xm_version(void)
 {
@@ -442,6 +447,11 @@ char *version_info(void)
   #else
 	  "\n    with fam",
   #endif
+#endif
+#if WITH_GMP
+	  "\n    gmp: ",  gmp_version, 
+	      ", mpfr: ", mpfr_get_version(), 
+	      ", mpc: ",  mpc_get_version(),
 #endif
 #if SND_AS_WIDGET
 	  _("\n    compiled as a widget"),
