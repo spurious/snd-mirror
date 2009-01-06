@@ -32291,7 +32291,7 @@
 	(test (keyword? :a-key) #t)
 	(test (keyword? ':a-key) #t)
 	(test (keyword? ':a-key:) #t)
-	(test (keyword? 'a-key:) #f)
+	(test (keyword? 'a-key:) #t)
 	(test (symbol? (keyword->symbol :hi)) #t)
 	(test (keyword? (keyword->symbol :hi)) #f)
 	(test (symbol? (symbol->keyword 'hi)) #t)
