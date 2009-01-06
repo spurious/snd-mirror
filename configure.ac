@@ -40,6 +40,7 @@ AC_DEFINE_UNQUOTED(SND_HOST, "$host")
 #   --with-snd-as-pd-external  make Snd a loadable pd external, not a standalone program
 #   --with-doubles        use doubles throughout (default is floats)
 #   --with-float-samples  represent samples internally as floats or doubles (default=yes)
+#   --with-gmp            include multiprecision arithmetic via gmp, mpfr, and mpc
 #   --enable-snd-debug    include Snd internal debugging stuff
 #   --enable-threads      include pthread stuff [also "--with-threads" since I can't remember which is correct]
 #   --disable-deprecated  do not include any deprecated stuff (in gtk, motif, guile, sndlib, clm, etc)
@@ -114,8 +115,9 @@ AC_ARG_WITH(fftw,        [  --with-fftw		  use fftw, default=yes])
 AC_ARG_WITH(xpm,         [  --with-xpm		  use xpm, default=yes])
 AC_ARG_WITH(xp,          [  --with-xp		  use xp, default=no])
 AC_ARG_WITH(fam,         [  --with-fam		  use libfam (Gamin), default=yes])
+AC_ARG_WITH(gmp,         [  --with-gmp		  include multiprecision arithmetic via gmp, mpfr, and mpc, default=no])
 
-AC_ARG_WITH(s7,          [  --with-s7  	          use S7])
+AC_ARG_WITH(s7,          [  --with-s7  	          use S7, default=yes])
 AC_ARG_WITH(extension-language, [  --with-extension-language	use some extension language, default=yes])
 
 
@@ -493,6 +495,19 @@ else
 	 AC_MSG_RESULT(yes)
     	],
 	[AC_MSG_RESULT(no)])
+fi
+
+
+#--------------------------------------------------------------------------------
+# GMP, MPFR, MPC
+#--------------------------------------------------------------------------------
+
+GMP_LIBS=""
+GMP_CFLAGS=""
+if test "$with_gmp" = yes ; then
+
+# look for gmp, mpfr, and mpc 
+
 fi
 
 

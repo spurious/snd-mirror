@@ -806,6 +806,7 @@ with_fftw
 with_xpm
 with_xp
 with_fam
+with_gmp
 with_s7
 with_extension_language
 with_sample_width
@@ -1514,7 +1515,8 @@ Optional Packages:
   --with-xpm		  use xpm, default=yes
   --with-xp		  use xp, default=no
   --with-fam		  use libfam (Gamin), default=yes
-  --with-s7  	          use S7
+  --with-gmp		  include multiprecision arithmetic via gmp, mpfr, and mpc, default=no
+  --with-s7  	          use S7, default=yes
   --with-extension-language	use some extension language, default=yes
   --with-sample-width=N   use N bits of samples
   --with-motif-prefix=PFX where Motif is installed
@@ -3731,6 +3733,7 @@ _ACEOF
 #   --with-snd-as-pd-external  make Snd a loadable pd external, not a standalone program
 #   --with-doubles        use doubles throughout (default is floats)
 #   --with-float-samples  represent samples internally as floats or doubles (default=yes)
+#   --with-gmp            include multiprecision arithmetic via gmp, mpfr, and mpc
 #   --enable-snd-debug    include Snd internal debugging stuff
 #   --enable-threads      include pthread stuff [also "--with-threads" since I can't remember which is correct]
 #   --disable-deprecated  do not include any deprecated stuff (in gtk, motif, guile, sndlib, clm, etc)
@@ -3953,6 +3956,12 @@ fi
 # Check whether --with-fam was given.
 if test "${with_fam+set}" = set; then
   withval=$with_fam;
+fi
+
+
+# Check whether --with-gmp was given.
+if test "${with_gmp+set}" = set; then
+  withval=$with_gmp;
 fi
 
 
@@ -11518,6 +11527,19 @@ fi
 rm -rf conftest.dSYM
 rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
+fi
+
+
+#--------------------------------------------------------------------------------
+# GMP, MPFR, MPC
+#--------------------------------------------------------------------------------
+
+GMP_LIBS=""
+GMP_CFLAGS=""
+if test "$with_gmp" = yes ; then
+
+# look for gmp, mpfr, and mpc
+
 fi
 
 

@@ -8291,6 +8291,7 @@
 (num-test (rationalize -1.49900000000000 0.00002000000000) -748/499)
 (num-test (rationalize 1.49900000000000 0.00000001) 1499/1000)
 (num-test (rationalize -1.49900000000000 0.00000001) -1499/1000)
+(num-test (rationalize 1.275) 51/40)
 )
 (begin ; scheme-spec rationalize
 (num-test (rationalize 0.0 1.0) 0/1)
@@ -29665,6 +29666,7 @@
        (test (logand 0 1) 0)
        (test (logand #b101 #b10001) 1)
        (test (logand 1 3 6) 0)
+       (test (logand -1 3 6) 2)
        (test (logand -6 1) 0)
        (test (logand -6 3) 2)
        (test (logand #b1 #b11 #b111 #b1111) #b1)
@@ -29673,6 +29675,10 @@
        (test (logand 0) 0)
        (test (logand -1) -1)
        (test (logand 12341234 10001111) 9964242)
+       (test (logand -1 1) 1)
+       (test (logand -1 -1) -1)
+       (test (logand 1 -1) 1)
+       (test (logand 1 1) 1)
 
 
        (test (logxor 0 1) 1)
@@ -29689,6 +29695,7 @@
        (test (lognot #b101) -6)
        (test (lognot -6) #b101)
        (test (lognot 12341234) -12341235)
+       (test (lognot #b-101) 4)
 
 
        (test (ash 0 1) 0)
@@ -29696,6 +29703,12 @@
        (test (ash 1024 -8) 4)
        (test (ash -1 8) -256)
        (test (ash -1 30) -1073741824)
+       (test (ash -1 -8) -1)
+       (test (ash -1 -12)  -1)
+       (test (ash -1 0) -1)
+       (test (ash 123 0) 123)
+       (test (ash #b-1100 -2) -3)
+       (test (ash #b-1100 2) -48)
        (test (ash 1234 6) 78976)
        (test (ash 1234 -6) 19)
        (test (ash 12341234 6) 789838976)
@@ -29723,6 +29736,13 @@
        (num-test (integer-length -21) 5)
        (num-test (integer-length -215) 8)
        (num-test (integer-length -12341234) 24)
+
+       (num-test (integer-length 127) 7)
+       (num-test (integer-length 128) 8)
+       (num-test (integer-length 129) 8)
+       (num-test (integer-length -127) 7)
+       (num-test (integer-length -128) 7)
+       (num-test (integer-length -129) 8)
 
        ))
 
