@@ -15394,7 +15394,7 @@ static s7_pointer big_asinh(s7_scheme *sc, s7_pointer args)
 	  mpc_add_ui(*n, *n, 1, MPC_RNDNN);  /* 1 + z*z */
 	  mpc_sqrt(*n, *n, MPC_RNDNN);       /* sqrt(1+z*z) */
 	  mpc_add(*n, *n, z, MPC_RNDNN);     /* z + sqrt(1+z*z) */
-	  mpc_log(*n, *n, MPC_RNDNN);        /* log(z+sqrt(z*z)) */
+	  mpc_log(*n, *n, MPC_RNDNN);        /* log(z+sqrt(1+z*z)) */
 	  mpc_clear(z);
 	  return(s7_make_object(sc, big_complex_tag, (void *)n));
 	}
@@ -15402,6 +15402,98 @@ static s7_pointer big_asinh(s7_scheme *sc, s7_pointer args)
   return(g_asinh(sc, args));
 }
 
+
+static s7_pointer big_acosh(s7_scheme *sc, s7_pointer args)
+{
+  /* the complex case is not yet implmented in mpc, so use the earlier formula for cacosh */
+  s7_pointer p;
+  p = car(args);
+  if (is_object(p))
+    {
+      if ((object_type(p) == big_integer_tag) ||
+	  (object_type(p) == big_ratio_tag) ||
+	  (object_type(p) == big_real_tag))
+	{
+	  p = promote_number(sc, T_BIG_REAL, p);
+	  if (mpfr_cmp_ui(BIG_REAL(s7_object_value(p)), 1) >= 0)
+	    {
+	      mpfr_t *n;
+	      n = malloc(sizeof(mpfr_t));
+	      mpfr_init_set(*n, BIG_REAL(s7_object_value(p)), GMP_RNDN);
+	      mpfr_acosh(*n, *n, GMP_RNDN);
+	      return(s7_make_object(sc, big_real_tag, (void *)n));
+	    }
+	  p = promote_number(sc, T_BIG_COMPLEX, p);
+	}
+      if (object_type(p) == big_complex_tag)
+	{
+	  /* better might be: 2.0 * clog(csqrt(0.5 * (z + 1.0)) + csqrt(0.5 * (z - 1.0))) */
+	  mpc_t *n;
+	  mpc_t z;
+	  n = malloc(sizeof(mpc_t));
+	  mpc_init(*n);
+	  mpc_init(z);
+	  mpc_set(z, BIG_COMPLEX(s7_object_value(p)), MPC_RNDNN);
+	  mpc_mul(*n, z, z, MPC_RNDNN);      /* z*z */
+	  mpc_sub_ui(*n, *n, 1, MPC_RNDNN);  /* z*z - 1 */
+	  mpc_sqrt(*n, *n, MPC_RNDNN);       /* sqrt(z*z-1) */
+	  mpc_add(*n, *n, z, MPC_RNDNN);     /* z + sqrt(z*z-1) */
+	  mpc_log(*n, *n, MPC_RNDNN);        /* log(z+sqrt(z*z-1)) */
+	  mpc_clear(z);
+	  return(s7_make_object(sc, big_complex_tag, (void *)n));
+	}
+    }
+  return(g_acosh(sc, args));
+}
+
+
+static s7_pointer big_atanh(s7_scheme *sc, s7_pointer args)
+{
+  /* the complex case is not yet implmented in mpc, so use the earlier formula for catanh */
+  s7_pointer p;
+  p = car(args);
+  if (is_object(p))
+    {
+      if ((object_type(p) == big_integer_tag) ||
+	  (object_type(p) == big_ratio_tag) ||
+	  (object_type(p) == big_real_tag))
+	{
+	  bool ok;
+	  mpfr_t temp;
+	  mpfr_init_set_ui(temp, 1, GMP_RNDN);
+	  p = promote_number(sc, T_BIG_REAL, p);
+	  ok = (mpfr_cmpabs(BIG_REAL(s7_object_value(p)), temp) < 0);
+	  mpfr_clear(temp);
+	  if (ok)
+	    {
+	      mpfr_t *n;
+	      n = malloc(sizeof(mpfr_t));
+	      mpfr_init_set(*n, BIG_REAL(s7_object_value(p)), GMP_RNDN);
+	      mpfr_atanh(*n, *n, GMP_RNDN);
+	      return(s7_make_object(sc, big_real_tag, (void *)n));
+	    }
+	  p = promote_number(sc, T_BIG_COMPLEX, p);
+	}
+      if (object_type(p) == big_complex_tag)
+	{
+	  mpc_t *n;
+	  mpc_t zp1, zm1;
+	  n = malloc(sizeof(mpc_t));
+	  mpc_init(*n);
+	  mpc_init(zp1);
+	  mpc_init(zm1);
+	  mpc_set(zp1, BIG_COMPLEX(s7_object_value(p)), MPC_RNDNN);
+	  mpc_set(zm1, zp1, MPC_RNDNN);
+	  mpc_add_ui(zp1, zp1, 1, MPC_RNDNN);   /* 1+z */
+	  mpc_ui_sub(zm1, 1, zm1, MPC_RNDNN);   /* 1-z */
+	  mpc_div(*n, zp1, zm1, MPC_RNDNN);     /* (1+z)/(1-z) */
+	  mpc_log(*n, *n, MPC_RNDNN);           /* log((1+z)/(1-z)) */
+	  mpc_div_ui(*n, *n, 2, MPC_RNDNN);     /* log((1+z)/(1-z))/2 */
+	  return(s7_make_object(sc, big_complex_tag, (void *)n));
+	}
+    }
+  return(g_atanh(sc, args));
+}
 
 
 
@@ -15787,6 +15879,7 @@ static void s7_gmp_init(s7_scheme *sc)
 
   s7_define_function(sc, "+",                   big_add,              0, 0, true,  H_add);
   s7_define_function(sc, "*",                   big_multiply,         0, 0, true,  H_multiply);
+
   s7_define_function(sc, "numerator",           big_numerator,        1, 0, false, H_numerator);
   s7_define_function(sc, "denominator",         big_denominator,      1, 0, false, H_denominator);
   s7_define_function(sc, "rationalize",         big_rationalize,      1, 1, false, H_rationalize);
@@ -15798,7 +15891,6 @@ static void s7_gmp_init(s7_scheme *sc)
   s7_define_function(sc, "real-part",           big_real_part,        1, 0, false, H_real_part);
   s7_define_function(sc, "imag-part",           big_imag_part,        1, 0, false, H_imag_part);
   s7_define_function(sc, "angle",               big_angle,            1, 0, false, H_angle);
-  s7_define_function(sc, "abs",                 big_abs,              1, 0, false, H_abs);
   s7_define_function(sc, "magnitude",           big_magnitude,        1, 0, false, H_magnitude);
 
   s7_define_function(sc, "lognot",              big_lognot,           1, 0, false, H_lognot);
@@ -15814,6 +15906,7 @@ static void s7_gmp_init(s7_scheme *sc)
   s7_define_function(sc, "positive?",           big_is_positive,      1, 0, false, H_is_positive);
   s7_define_function(sc, "negative?",           big_is_negative,      1, 0, false, H_is_negative);
 
+  s7_define_function(sc, "abs",                 big_abs,              1, 0, false, H_abs);
   s7_define_function(sc, "exp",                 big_exp,              1, 0, false, H_exp);
   s7_define_function(sc, "log",                 big_log,              1, 1, false, H_log);
   s7_define_function(sc, "sqrt",                big_sqrt,             1, 0, false, H_sqrt);
@@ -15823,8 +15916,9 @@ static void s7_gmp_init(s7_scheme *sc)
   s7_define_function(sc, "sinh",                big_sinh,             1, 0, false, H_sinh);
   s7_define_function(sc, "cosh",                big_cosh,             1, 0, false, H_cosh);
   s7_define_function(sc, "tanh",                big_tanh,             1, 0, false, H_tanh);
-
   s7_define_function(sc, "asinh",               big_asinh,            1, 0, false, H_asinh);
+  s7_define_function(sc, "acosh",               big_acosh,            1, 0, false, H_acosh);
+  s7_define_function(sc, "atanh",               big_atanh,            1, 0, false, H_atanh);
 
   s7_define_function(sc, "bignum",              g_bignum,             1, 0, false, H_bignum);
   s7_define_variable(sc, "bignum-precision", 

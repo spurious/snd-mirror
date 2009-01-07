@@ -1803,9 +1803,7 @@ old bus.
                             dur
                             duration
                             :rest code)
-  (define loop (rt-gensym "loop"))
-  (define sound (rt-gensym "sound"))
-  
+  (define sound (rt-gensym "sound"))  
   (if (or duration dur)
       `(let ((,sound (sound-internal_
                       ,@code)))
@@ -1818,8 +1816,32 @@ old bus.
         ,@code)))
 
 
+(define-stalin-macro (block :key
+                            dur
+                            duration
+                            :rest code)
+  (define sound (rt-gensym "sound"))
+  (if (or duration dur)
+      `(let ((,sound (sound-internal_
+                      ,@code)))
+         (wait (inexact->exact (floor ,(or dur duration))))
+         (stop ,sound)
+         ,sound)
+      `(begin
+         (sound-internal_
+          ,@code)
+         (neverending-scheduling))))
+
 #!
 
+(<rt-stalin>
+ (define o (make-oscil :freq 440))
+ (block :dur 5:-s
+   (out (oscil o)))
+ (define o (make-oscil :freq 540))
+ (block :dur 2:-s
+   (out (oscil o))))
+ 
 (<rt-stalin>
  (spawn
    (define phase 0.0)
