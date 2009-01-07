@@ -33594,7 +33594,7 @@
       (test (inexact->exact 1.0+23.0i 1.0+23.0i) 'error)
       (if with-rationalize (begin
       (test (rationalize) 'error)
-      (test (rationalize 1.23) 'error)
+;      (test (rationalize 1.23) 'error)
       (test (rationalize 1.23+1.0i 1.23+1.0i) 'error)
       (test (rationalize 1.23 1.23 1.23) 'error)))
       (test (numerator) 'error)
