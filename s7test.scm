@@ -3111,12 +3111,14 @@
 (if (not (eqv? 1234000000.000000+1234000000.000000i (string->number (number->string 1234000000.000000+1234000000.000000i))))
      (begin (display "(string<->number 1234000000.000000+1234000000.000000i) -> ") (display (number->string 1234000000.000000+1234000000.000000i)) 
 	    (display " -> ") (display (string->number (number->string 1234000000.000000+1234000000.000000i))) (newline)))
-(if (not (eqv? 0.0000001 (string->number (number->string 0.0000001))))
-    (begin (display "(string<->number 0.0000001) -> ") (display (number->string 0.0000001)) 
-	   (display " -> ") (display (string->number (number->string 0.0000001))) (newline)))
-(if (not (eqv? 0.0000001001 (string->number (number->string 0.0000001001))))
-    (begin (display "(string<->number 0.0000001001) -> ") (display (number->string 0.0000001001)) 
-	   (display " -> ") (display (string->number (number->string 0.0000001001))) (newline)))
+(if (not with-bigreals)
+    (begin
+      (if (not (eqv? 0.0000001 (string->number (number->string 0.0000001))))
+	  (begin (display "(string<->number 0.0000001) -> ") (display (number->string 0.0000001)) 
+		 (display " -> ") (display (string->number (number->string 0.0000001))) (newline)))
+      (if (not (eqv? 0.0000001001 (string->number (number->string 0.0000001001))))
+	  (begin (display "(string<->number 0.0000001001) -> ") (display (number->string 0.0000001001)) 
+		 (display " -> ") (display (string->number (number->string 0.0000001001))) (newline)))))
 
 (test (number->string 123 8) "173")
 (test (number->string 123 16) "7b")
@@ -3285,8 +3287,8 @@
 	(test (number->string 12.0+0.75i 16) "c.0+0.ci")
 	(test (number->string -12.5-3.75i 16) "-c.8-3.ci")
 
-	(test (number->string our-pi 16) "3.243f6a8885a3")
-;	(test (number->string our-pi 2) "11.0010010000111111011")
+	(test (string=? (substring (number->string our-pi 16) 0 14) "3.243f6a8885a3") #t)
+;	(test (string=? (substring (number->string our-pi 2) 0 14) "11.0010010000111111011") #t)
 
 	(for-each
 	 (lambda (expchar)
@@ -3416,7 +3418,8 @@
 		  (display " -> ") (display (string->number (number->string -1234.25 i) i)) (newline)))
 	    
 	    (let ((val (string->number (number->string 12.5+3.75i i) i)))
-	      (if (or (> (abs (- (real-part val) 12.5)) 1e-6)
+	      (if (or (not (number? val))
+		      (> (abs (- (real-part val) 12.5)) 1e-6)
 		      (> (abs (- (imag-part val) 3.75)) 1e-6))
 		  (begin 
 		    (set! happy #f) 
@@ -3440,18 +3443,22 @@
 						 "" "+") 
 					     imstr 
 					     "i")))
-		    (let ((nval (string->number (number->string (string->number str base) base) base)))
-		      (if (or (> (abs (- (real-part nval) (real-part val))) 1e-3)
+		    (let* ((sn (string->number str base))
+			   (nsn (and (number? sn) (number->string sn base)))
+			   (nval (and (string? nsn) (string->number nsn base))))
+		      (if (or (not nval)
+			      (> (abs (- (real-part nval) (real-part val))) 1e-3)
 			      (> (abs (- (imag-part nval) (imag-part val))) 1e-3))
 			  (begin
 			    (set! happy #f)
-			    (display "number<->string ")
-			    (display val)
-			    (display " ")
+			    (display "number<->string \"")
+			    (display str)
+			    (display "\" ")
 			    (display base)
 			    (display ") -> ")
 			    (display nval)
 			    (display "?")
+			    (display "[") (display sn) (display " ") (display nsn) (display "]")
 			    (newline))))))))
 	    )))))
 
@@ -28924,6 +28931,24 @@
 	    (set! mx err))))
     (if (> mx 1e-6)
 	(begin (display "dht error: ") (display mx) (newline)))))
+
+
+(test (real? (+ 1+i 1-i)) #t)
+(test (real? (- 1+i 1+i)) #t)
+(test (real? (+ 1+i -1-i)) #t)
+(test (real? (/ 1+i 1+i)) #t)
+(test (real? (* 0+i 0+i)) #t)
+(test (real? (magnitude 1+i)) #t)
+(test (real? (string->number "1+0i")) #t)
+(test (real? (make-rectangular 1 0)) #t)
+(test (real? (make-rectangular 0 0)) #t)
+(test (real? (make-polar 0 0)) #t)
+(test (real? (make-polar 1 0)) #t)
+(test (real? (angle 1+i)) #t)
+(test (real? (real-part 1+i)) #t)
+(test (real? (imag-part 1+i)) #t)
+(test (real? (expt 0+i 0+i)) #t)
+
 
 ;;; from r4rstest.scm:
 (test (number? 3) #t )
