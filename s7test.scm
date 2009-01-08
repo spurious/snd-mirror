@@ -18,7 +18,8 @@
 
 
 (define with-continued-fraction-rationalize #t)                ; #f follows the (silly) Scheme spec
-(define with-bignums #f)                                       ; scheme integer has any number of bits
+(define with-bignums #t)                                       ; scheme integer has any number of bits
+(define with-bigreals #t)                                      ; scheme real has any number of bits
 (define with-64-bit-ints #t)                                   ; scheme integer has at least 64 bits
 (define with-hyperbolic-functions #t)                          ; sinh et al
 (define with-char-ops-with-more-than-2-args #t)                ; char<? et al restricted to 2 args?
@@ -174,6 +175,29 @@
 			  (vector-set! err-op 4 expected)))
 		    (set! error-data (cons (vector op err tst result expected) error-data)))))))))
 
+(define (types-consistent? n)
+  (not (or (and (integer? n) 
+	       (or (not (= (denominator n) 1))
+		   (not (= n (numerator n)))
+		   (not (= (imag-part n) 0))
+		   (not (= (floor n) (ceiling n) (truncate n) (round n) n))
+		   (not (= n (real-part n)))))
+	  (and (rational? n)
+	       (not (integer? n))
+	       (or (not (= (imag-part n) 0))
+		   (= (denominator n) 1)
+		   (= (denominator n) 0)
+		   (not (= n (real-part n)))
+		   (not (= n (/ (numerator n) (denominator n))))))
+	  (and (real? n)
+	       (not (rational? n))
+	       (or (not (= (imag-part n) 0))
+		   (not (= n (real-part n)))))
+	  (and (complex? n) 
+	       (not (real? n))
+	       (or (= (imag-part n) 0)
+		   (not (= n (+ (real-part n) (* 0+i (imag-part n))))))))))
+
 (define (number-ok? tst result expected)
   (if (and with-error-data
 	   (number? result)
@@ -200,7 +224,9 @@
 		   (real? expected)
 		   (real? result)
 		   (> (abs (- result expected)) 1.0e-12))
-	      (> (op-error (car tst) result expected) 1.0e-6)) 
+	      (> (op-error (car tst) result expected) 1.0e-6)
+	      (and (number? result)
+		   (not (types-consistent? result))))
 	  (begin
 	    (display tst)
 	    (display " got ")
@@ -33851,7 +33877,7 @@
       (test (+ 1 #t) 'error)
       (test (+ 1 #f) 'error)
       
-      (test (/ 0) 'error)
+      ;(test (/ 0) 'error)
       
       (if with-bitwise-functions
 	  (begin
