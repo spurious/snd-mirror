@@ -529,14 +529,13 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+8-Jan:   multiprecision math support for all scheme (s7) numeric\n\
+           types and functions via gmp, mpfr, and mpc.  In configure,\n\
+           use --with-gmp.\n\
 29-Dec:  jcvoi.scm.\n\
 11-Dec:  snd10.scm for sum-of-sines and friends.\n\
 5-Dec:   mus-sox headers.\n\
 28-Nov:  Snd 10.2.\n\
-14-Nov:  removed s7-optargs.scm -- define* is now built-in in s7.\n\
-11-Nov:  removed s7-format.scm -- format is now built-in in s7.\n\
-29-Oct:  osc.scm thanks to Kjetil.\n\
-16-Oct:  removed Gauche support.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*:\n    '", features, "\n\n",

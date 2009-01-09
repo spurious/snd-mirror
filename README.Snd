@@ -78,6 +78,7 @@ The configure program has several Snd-related arguments:
    Numerics:
 
      --with-doubles            use doubles throughout (default is floats)
+     --with-gmp                use gmp, mpfr, and mpc to implement multiprecision arithmetic
 
      --with-float-samples      represent samples internally as floats (default=yes)
      --with-sample-width=N     use N bits of samples (default: 24). N = 32 or so is 

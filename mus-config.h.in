@@ -118,6 +118,7 @@
 
 #undef HAVE_FFTW
 #undef HAVE_FFTW3
+#undef WITH_GMP
 
 #undef HAVE_GSL
 #undef MUS_GSL_VERSION

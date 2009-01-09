@@ -505,10 +505,43 @@ fi
 GMP_LIBS=""
 GMP_CFLAGS=""
 if test "$with_gmp" = yes ; then
+  # look for gmp, mpfr, and mpc 
 
-# look for gmp, mpfr, and mpc 
+  SAVELIBS=$LIBS
+  LIBS="$LIBS -lgmp -lmpfr -lmpc -lm"
+  AC_CHECK_LIB(gmp, __gmpz_init,
+             [GMP_LIBS="-lgmp"],
+             [AC_MSG_ERROR(libgmp not found)])
 
+  AC_MSG_CHECKING(for libmpfr)
+  GMP_LIBS="$GMP_LIBS -lmpfr"
+  AC_LINK_IFELSE(
+        [AC_LANG_PROGRAM(
+                [#include <mpfr.h>],
+                [mpfr_t x;  mpfr_init(x) ; mpfr_clear(x);]
+        )],
+        [AC_MSG_RESULT(yes)],
+        [AC_MSG_RESULT(no)])
+
+  AC_MSG_CHECKING(for libmpc)
+  GMP_LIBS="$GMP_LIBS -lmpc"
+  AC_LINK_IFELSE(
+        [AC_LANG_PROGRAM(
+                [#include <mpc.h>],
+                [mpc_t x;  mpc_init(x); mpc_clear(x);]
+        )],
+        [AC_MSG_RESULT(yes)
+         AC_CHECK_LIB(mpc, mpc_arg, 
+                [AC_DEFINE(WITH_GMP)
+                 OPTIONAL_LIBRARIES="$OPTIONAL_LIBRARIES gmp mpfr mpc"
+		], 
+                [AC_MSG_ERROR(libmpc too old)], 
+                $GMP_LIBS)
+	],
+        [AC_MSG_RESULT(no)])
+  LIBS=$SAVELIBS
 fi
+AC_SUBST(GMP_LIBS)
 
 
 #--------------------------------------------------------------------------------

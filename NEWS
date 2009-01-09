@@ -1,22 +1,32 @@
-Snd 10.2
+Snd 10.3
 
-added osc.scm thanks to Kjetil.
+Kjetil made improvements to the rt stuff.
 
-many improvements thanks to Mike and Rick.
+Michael Gogins and Rick figured out how to build sndlib in windows --
+  I hope I correctly incorporated their changes in the configure script.
 
-removed Gauche support.
 
-moved the run macro from snd-run.c to run.c and put it in sndlib.
+added multiprecision math support for all scheme (s7) numeric
+  types and functions via gmp, mpfr, and mpc.  In configure,
+  use the --with-gmp switch.  bignum-precision can set the
+  float precision (default is 128 bits).  If this all works
+  out, I'll add this support to clm as well.  You'll need
+  mpc 0.5.2 (the latest version).
 
-removed s7-format.scm -- format is now built-in.
+sox header support.
 
-removed s7-optargs.scm -- define* is also built-in.  The main 
-  difference between the two versions of define* is that the
-  s7 version does not (currently anyway) accept expressions
-  as default values.
+jcvoi.scm (translated from jcvoi.ins) for the immortal Old Macdonald.
 
-checked: gtk 2.14.4|5, clisp 2.47, sbcl 1.0.22, fftw 3.2
+the sine-summation, sum-of-cosines, and sum-of-sines generators are deprecated.
+  Their replacements are nrxysin (or nrsin), ncos, and nsin.
+  snd10.scm has backwards-compatible definitions of these generators.
 
-Thanks!: Rick, Kjetil, Meino Cramer, Mike Scholz, David Lowenfels,
-	 Hayahiko Moro.
+removed event.scm and all the xm.c stuff that was deprecated in 2002.
 
+sin-m*pi/n and show-digits-of-pi-starting-from functions in numerics.scm
+
+
+checked: Gamin 0.1.10, sbcl 1.0.23|24, Guile 1.8.6, gtk 2.14.6|2.15.0
+
+Thanks!: Rick, Fernando, Esben Stien, Kjetil, Carlos Pita, Stanko Juzbasic,
+         Oded Ben-Tal, Michael Gogins

@@ -1,5 +1,11 @@
 Snd change log
 
+ 8-Jan:     multiprecision math support for all scheme (s7) numeric
+              types and functions via gmp, mpfr, and mpc.  In configure,
+              use --with-gmp.
+
+2009 ----------------------------------------------------------------
+
  29-Dec:     jcvoi.scm.
  11-Dec:     snd10.scm for sum-of-sines and friends.
  28-Nov:     Snd 10.2.

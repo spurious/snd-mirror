@@ -19,7 +19,8 @@
 
 (define with-continued-fraction-rationalize #t)                ; #f follows the (silly) Scheme spec
 (define with-bignums #t)                                       ; scheme integer has any number of bits
-(define with-bigreals #t)                                      ; scheme real has any number of bits
+(define with-bigfloats #t)                                     ; scheme real has any number of bits
+(define with-bignum-function #t)                               ;   this is a function that turns its string arg into a bignum
 (define with-64-bit-ints #t)                                   ; scheme integer has at least 64 bits
 (define with-hyperbolic-functions #t)                          ; sinh et al
 (define with-char-ops-with-more-than-2-args #t)                ; char<? et al restricted to 2 args?
@@ -240,10 +241,22 @@
 	    (display expected)
 	    (newline) (newline)))))
 
-(defmacro num-test (tst expected)
+(defmacro num-test (tst expected) 
   `(let ((result (catch #t (lambda () ,tst) (lambda args 'error))))
-     (number-ok? ',tst result ,expected)))
-
+     (number-ok? ',tst result ,expected)
+     (if with-bignum-function
+	 (letrec ((bigify (lambda (lst)
+			    (if (pair? lst)
+				(cons (if (number? (car lst))
+					  (list 'bignum (number->string (car lst)))
+					  (bigify (car lst)))
+				      (bigify (cdr lst)))
+				lst))))
+	   (let* ((big-test (bigify ',tst)))
+	     ;(display big-test) (newline)
+	     (let ((big-result (catch #t (lambda () (eval big-test)) (lambda args 'error))))
+	       (number-ok? big-test result ,expected)
+	       ))))))
 
 
 
@@ -2634,7 +2647,7 @@
   (if (and (number? first-bad)
 	   (< first-bad (+ 1.0 first-bad))) ; else infinite I guess
       (begin 
-	(display "string->number floats fail around ") 
+	(display "string->number floats fail around ")  ; (eqv? (string->number (number->string 1e-10)) 1e-10)
 	(display first-bad)
 	(display " (2^")
 	(display (/ (log first-bad) (log 2.0)))
@@ -3111,7 +3124,7 @@
 (if (not (eqv? 1234000000.000000+1234000000.000000i (string->number (number->string 1234000000.000000+1234000000.000000i))))
      (begin (display "(string<->number 1234000000.000000+1234000000.000000i) -> ") (display (number->string 1234000000.000000+1234000000.000000i)) 
 	    (display " -> ") (display (string->number (number->string 1234000000.000000+1234000000.000000i))) (newline)))
-(if (not with-bigreals)
+(if (not with-bigfloats)
     (begin
       (if (not (eqv? 0.0000001 (string->number (number->string 0.0000001))))
 	  (begin (display "(string<->number 0.0000001) -> ") (display (number->string 0.0000001)) 
@@ -3294,52 +3307,42 @@
 	 (lambda (expchar)
 	   (let ((exponent (string expchar)))
 	     (do ((base 2 (+ base 1)))
-		 ((= base 14))
-	       (if (not (= base 10))
-		   (if (string->number (string-append "1" exponent "1") base)
+		 ((= base 11))
+	       (let ((val (string->number (string-append "1" exponent "1") base)))
+		   (if (and (number? val)
+			    (not (= val base)))
 		       (begin
 			 (display "(string->number ") (display (string-append "1" exponent "1")) (display " ") (display base)
 			 (display ") returned ") (display (string->number (string-append "1" exponent "1") base)) 
 			 (display "?") (newline)))))
 	     
 	     (do ((base 2 (+ base 1)))
-		 ((= base 14))
-	       (if (not (= base 10))
-		   (if (string->number (string-append "1.1" exponent "1") base)
+		 ((= base 11))
+	       (let ((val (string->number (string-append "1.1" exponent "1") base)))
+		   (if (and (number? val)
+			    (not (= val (+ base 1))))
 		       (begin
 			 (display "(string->number ") (display (string-append "1.1" exponent "1")) (display " ") (display base)
 			 (display ") returned ") (display (string->number (string-append "1.1" exponent "1") base)) 
 			 (display "?") (newline)))))
 	     
 	     (do ((base 2 (+ base 1)))
-		 ((= base 17))
-	       (if (not (= base 10))
-		   (if (string->number (string-append "1" exponent "+1") base)
+		 ((= base 11))
+	       (let ((val (string->number (string-append "1" exponent "+1") base)))
+		 (if (and (number? val)
+			  (not (= val base)))
 		       (begin
 			 (display "(string->number ") (display (string-append "1" exponent "+1")) (display " ") (display base)
 			 (display ") returned ") (display (string->number (string-append "1" exponent "+1") base)) 
 			 (display "?") (newline)))))
 					; in base 16 this is still not a number because of the + (or -)
 					; but "1e+1i" is a number -- gad!
-	     (do ((base 2 (+ base 1)))
-		 ((= base 17))
-	       (if (not (= base 10))
-		   (if (not (eq? (number? (string->number (string-append "1" exponent "+1i") base)) 
-				 (or (and (> base 13)
-					  (char=? expchar #\d))
-				     (and (> base 14)
-					  (char=? expchar #\e))
-				     (and (= base 16)
-					  (char=? expchar #\f)))))
-		       (begin
-			 (display "(string->number ") (display (string-append "1" exponent "+1i")) (display " ") (display base)
-			 (display ") returned ") (display (string->number (string-append "1" exponent "+1i") base)) 
-			 (display "?") (newline)))))
 	     
 	     (do ((base 2 (+ base 1)))
-		 ((= base 17))
-	       (if (not (= base 10))
-		   (if (string->number (string-append "1" exponent "-1+1i") base)
+		 ((= base 11))
+	       (let ((val (string->number (string-append "1" exponent "-1+1i") base)))
+		 (if (and (number? val)
+			  (> (magnitude (- val (make-rectangular (/ base) 1))) 1e-6))
 		       (begin
 			 (display "(string->number ") (display (string-append "1" exponent "-1+1i")) (display " ") (display base)
 			 (display ") returned ") (display (string->number (string-append "1" exponent "-1+1i") base)) 
@@ -3429,7 +3432,7 @@
 	    (let ((happy #t))
 	      (do ((base 2 (+ base 1)))
 		  ((or (not happy)
-		       (= base 17)))
+		       (= base 11))) ;;; see s7.c for an explanation of this limit
 		(do ((i 0 (+ i 1)))
 		    ((= i 10))
 		  (let* ((rl (- (random 200.0) 100.0))
@@ -3458,7 +3461,7 @@
 			    (display ") -> ")
 			    (display nval)
 			    (display "?")
-			    (display "[") (display sn) (display " ") (display nsn) (display "]")
+			    (display " [") (display sn) (display " ") (display nsn) (display "]")
 			    (newline))))))))
 	    )))))
 
@@ -10577,6 +10580,7 @@
       (num-test (gcd 1/3 1/6 5/12 2) 1/12)
       ))
 
+(num-test (+ 1073741824 1073741824 1073741824 1073741824) (* 4 1073741824))
 (num-test (abs 0) 0)
 (num-test (abs -0) 0)
 (num-test (magnitude 0) 0)
@@ -28241,6 +28245,27 @@
 (num-test (round 1/2) 0)
 (num-test (round 3/2) 2)
 
+(test (equal? (let ((vals '())) 
+		(do ((k 1/3 (+ k 1/3))) ((> k 2) (reverse vals)) 
+		  (set! vals (cons (round k) vals)))) 
+	      (list 0 1 1 1 2 2)) 
+      #t)
+(test (equal? (let ((vals '())) 
+		(do ((k 1/3 (+ k 1/3))) ((> k 2) (reverse vals)) 
+		  (set! vals (cons (round (- k)) vals)))) 
+	      (list 0 -1 -1 -1 -2 -2)) 
+      #t)
+(test (equal? (let ((vals '())) 
+		(do ((k 1/2 (+ k 1/2))) ((> k 3) (reverse vals)) 
+		  (set! vals (cons (round k) vals)))) 
+	      (list 0 1 2 2 2 3)) 
+      #t)
+(test (equal? (let ((vals '())) 
+		(do ((k 1/2 (+ k 1/2))) ((> k 3) (reverse vals))
+		  (set! vals (cons (round (- k)) vals))))
+	      (list 0 -1 -2 -2 -2 -3)) 
+      #t)
+
 (num-test (floor 0) 0)
 (num-test (round 0) 0)
 (num-test (ceiling 0) 0)
@@ -29165,8 +29190,232 @@
   (num-test (min 12345678901234567890 12345678901234567891) 12345678901234567890)
   (num-test (gcd 12345678901234567890 12345) 15)
 
-;;;  (test (not (= (sin 12345678901234567890) (cos 12345678901234567890))) #t) ; and so on
+  ;;  (test (not (= (sin 12345678901234567890) (cos 12345678901234567890))) #t) ; and so on
 
+  (num-test (+ 4611686018427387904 1) 4611686018427387905) ; (expt 2 62) + 1 -- should work in both cases
+  (num-test (+ 4611686018427387904 -1) 4611686018427387903)
+  (num-test (+ 4611686018427387904 4611686018427387904) 9223372036854775808)
+  (num-test (+ 4611686018427387904 -4611686018427387904) 0)
+  (num-test (+ 8589934592 4611686018427387904) 4611686027017322496)
+  (num-test (+ 2147483648 4611686018427387904) 4611686020574871552)
+  (num-test (+ 2147483647 4611686018427387904) 4611686020574871551)
+  (num-test (+ 2147483649 4611686018427387904) 4611686020574871553)
+  (num-test (+ 8589934591 4611686018427387904) 4611686027017322495)
+  (num-test (+ -8589934591 4611686018427387904) 4611686009837453313)
+  (num-test (+ -8589934591 -4611686018427387904) -4611686027017322495)
+  (num-test (+ 8589934591 -4611686018427387904) -4611686009837453313)
+  (num-test (+ 2147483649 4611686018427387904 2147483649 4611686018427387904) 9223372041149743106)
+  (num-test (+ 9223372041149743106 9223372041149743106) 18446744082299486212) 
+  (num-test (+ 9223372041149743106 -9223372041149743106) 0)
+  (num-test (+ 18446744082299486212 1) 18446744082299486213)
+  (num-test (+ 9223372036854775807 -1) 9223372036854775806)
+  (num-test (+ -9223372036854775807 -1) -9223372036854775808)
+  (num-test (+ -9223372036854775807 1) -9223372036854775806)
+  (num-test (+ 1073741825 1073741825) 2147483650)
+  (num-test (+ 2147483649 -4611686018427387904 -2147483649 4611686018427387904) 0)
+  (num-test (+ 1099511627775 9223372036854775807) 9223373136366403582)
+  (num-test (+ 576460752303423488 576460752303423488 576460752303423488 576460752303423488 
+	       576460752303423488 576460752303423488 576460752303423488 576460752303423488 
+	       576460752303423488 576460752303423488 576460752303423488 576460752303423488 
+	       576460752303423488 576460752303423488 576460752303423488 576460752303423488)
+	    9223372036854775808)
+  (num-test (+ -576460752303423488 -576460752303423488 -576460752303423488 -576460752303423488 
+	       -576460752303423488 -576460752303423488 -576460752303423488 -576460752303423488 
+	       -576460752303423488 -576460752303423488 -576460752303423488 -576460752303423488 
+	       -576460752303423488 -576460752303423488 -576460752303423488 -576460752303423488)
+	    -9223372036854775808) ; this fits in both cases = -(expt 2 63)
+  
+  (num-test (+ 1e400 1e399) 1.1e400)
+  
+  (test (real? 9223372036854775808) #t)
+  (test (integer? 9223372036854775808) #t)
+  (test (number? 9223372036854775808) #t)
+  (test (rational? 9223372036854775808) #t)
+  (test (complex? 9223372036854775808) #t)
+  (test (positive? 9223372036854775808) #t)
+  (test (negative? 9223372036854775808) #f)
+  (test (zero? 9223372036854775808) #f)
+  
+  (test (real? 9223372036854775808.1) #t)
+  (test (integer? 9223372036854775808.1) #f)
+  (test (number? 9223372036854775808.1) #t)
+  (test (rational? 9223372036854775808.1) #f)
+  (test (complex? 9223372036854775808.1) #t)
+  (test (positive? 9223372036854775808.1) #t)
+  (test (negative? 9223372036854775808.1) #f)
+  (test (zero? 9223372036854775808.1) #f)
+  
+  (test (real? 9223372036854775808/3) #t)
+  (test (integer? 9223372036854775808/3) #f)
+  (test (number? 9223372036854775808/3) #t)
+  (test (rational? 9223372036854775808/3) #t)
+  (test (complex? 9223372036854775808/3) #t)
+  (test (positive? 9223372036854775808/3) #t)
+  (test (negative? 9223372036854775808/3) #f)
+  (test (zero? 9223372036854775808/3) #f)
+  
+  (test (real? 9223372036854775808.1+1.5i) #f)
+  (test (integer? 9223372036854775808.1+1.5i) #f)
+  (test (number? 9223372036854775808.1+1.5i) #t)
+  (test (rational? 9223372036854775808.1+1.5i) #f)
+  (test (complex? 9223372036854775808.1+1.5i) #t)
+  (test (zero? 9223372036854775808.1+1.5i) #f)
+  
+  (num-test (+ 2147483647 1) 2147483648)
+  (num-test (+ 2147483648 -1) 2147483647)
+  (num-test (+ 2147483647 2) 2147483649)
+  (num-test (+ 2147483648 -2) 2147483646)
+  (num-test (+ 2147483648 1) 2147483649)
+  (num-test (+ 2147483649 -1) 2147483648)
+  
+  (num-test (+ 9223372036854775807 1) 9223372036854775808)
+  (num-test (+ 9223372036854775808 -1) 9223372036854775807)
+  (num-test (+ 9223372036854775807 2) 9223372036854775809)
+  (num-test (+ 9223372036854775808 -2) 9223372036854775806)
+  (num-test (+ 9223372036854775808 1) 9223372036854775809)
+  (num-test (+ 9223372036854775809 -1) 9223372036854775808)
+  
+  (test (rational? 1234567891234567890/1234567) #t)
+  (test (real? 1234567891234567890/1234567) #t)
+  (test (complex? 1234567891234567890/1234567) #t)
+  (test (number? 1234567891234567890/1234567) #t)
+  (test (integer? 1234567891234567890/1234567) #f)
+  
+  (num-test (numerator 1234567891234567890/1234567) 1234567891234567890)
+  (num-test (denominator 1234567891234567890/1234567) 1234567)
+  
+  (num-test (numerator 9223372036854775808/9223372036854775807) 9223372036854775808)
+  (num-test (denominator 9223372036854775808/9223372036854775807) 9223372036854775807)
+  
+  (num-test (+ 9223372036854775808/9223372036854775808) 1)
+  (test (integer? 9223372036854775808/9223372036854775808) #t)
+  
+  (test (even? 9223372036854775808) #t)
+  (test (odd? 9223372036854775808) #f)
+  (test (even? 1234567891234567891) #f)
+  (test (odd? 1234567891234567891) #t)
+  (test (even? -9223372036854775808) #t)
+  (test (odd? -9223372036854775808) #f)
+  (test (even? -1234567891234567891) #f)
+  (test (odd? -1231234567891234567891) #t)
+  (test (even? 1239223372036854775808) #t)
+  (test (odd? 1239223372036854775808) #f)
+  (test (even? 1231234567891234567891) #f)
+  (test (odd? 1231234567891234567891) #t)
+  (test (even? -1239223372036854775808) #t)
+  (test (odd? -1239223372036854775808) #f)
+  (test (even? -1231234567891234567891) #f)
+  (test (odd? -1231234567891234567891) #t)
+  (test (even? 2147483647) #f)
+  (test (even? 2147483648) #t)
+  (test (even? 2147483649) #f)
+  (test (odd? 2147483647) #t)
+  (test (odd? 2147483648) #f)
+  (test (odd? 2147483649) #t)
+  (test (even? -2147483647) #f)
+  (test (even? -2147483648) #t)
+  (test (even? -2147483649) #f)
+  (test (odd? -2147483647) #t)
+  (test (odd? -2147483648) #f)
+  (test (odd? -2147483649) #t)
+  
+  (test (even? 9223372036854775808/9223372036854775807) 'error)
+  
+  (num-test (numerator (/ 2 -1)) -2)
+  (num-test (denominator (/ 2 -1)) 1)
+  (num-test (numerator (/ 9223372036854775808 -9223372036854775807)) -9223372036854775808)
+  (num-test (denominator (/ 9223372036854775808 -9223372036854775807)) 9223372036854775807)
+  
+  (num-test (+ 9223372036854775808 3/4) 36893488147419103235/4)
+  (num-test (+ 3/4 9223372036854775808) 36893488147419103235/4)
+  (num-test (+ 9223372036854775808/4 3) 2305843009213693955)
+  (num-test (+ 3 9223372036854775808/4) 2305843009213693955)
+  (num-test (+ 9223372036854775807/4 3) 9223372036854775819/4) 
+  (num-test (+ 3 9223372036854775807/4) 9223372036854775819/4) 
+  (num-test (+ 9223372036854775807/4 3/4) 4611686018427387905/2)
+  (num-test (+ 3/4 9223372036854775807/4) 4611686018427387905/2)
+  (num-test (+ 9223372036854775807/4 3/4 4611686018427387905/2) 4611686018427387905)
+  (num-test (+ 9223372036854775807/4 4611686018427387905/3) 46116860184273879041/12)
+  (num-test (+ 1/1231234567891234567891 1/4) 1231234567891234567895/4924938271564938271564)
+  (num-test (+ 1/65537 1/65538) 131075/4295163906)
+  (num-test (+ 1/65537 1/65536) 131073/4295032832)
+  (num-test (+ 1/65537 -1/65536) -1/4295032832)
+  (num-test (+ 1/65537 -1/65538) 1/4295163906)
+  (num-test (+ 1/2147483648 1/2147483647) 4294967295/4611686016279904256)
+  (num-test (+ 2147483648) 2147483648)
+  
+  (if with-bigfloats 
+      (begin
+	(num-test (+ 9223372036854775808.0 3.4) 9.2233720368547758114E18)
+	(num-test (+ 9223372036854775808.0+1.5i 3.4) 9.2233720368547758114E18+1.5i)
+	
+	(num-test (+ 1.5 9223372036854775808.0) 9.2233720368547758095E18)
+	(num-test (+ 3/2 9223372036854775808.0) 9.2233720368547758095E18)
+	(num-test (+ 1 1/2 9223372036854775808.0) 9.2233720368547758095E18)
+	(num-test (+ 1 1/2 9223372036854775808.0 0+i) 9.2233720368547758095E18+1.0i)
+	(num-test (+ 1 1/2 9223372036854775808.0 0-i) 9.2233720368547758095E18-1.0i)
+	(num-test (+ 1 1/2 0+9223372036854775808.0i 0-i) 1.5+9.223372036854775807E18i)
+	
+	(num-test (real-part 9223372036854775808.0+1.5i) 9.223372036854775808E18)
+	(num-test (imag-part 9223372036854775808.0+1.5i) 1.5)
+	(num-test (real-part 1.5+9223372036854775808.0i) 1.5)
+	(num-test (imag-part 1.5+9223372036854775808.0i) 9.223372036854775808E18)
+	
+	(num-test (real-part 9223372036854775808.0) 9223372036854775808.0)
+	(num-test (imag-part 9223372036854775808.0) 0)
+	(num-test (real-part 0+9223372036854775808.0i) 0.0)
+	(num-test (imag-part 0+9223372036854775808.0i) 9223372036854775808.0)
+	(num-test (real-part 0+1e400i) 0.0)
+	(num-test (imag-part 0+1e400i) 1e400)
+	
+	(num-test (abs 9223372036854775808.0) 9223372036854775808.0)
+	(num-test (abs -9223372036854775808.0) 9223372036854775808.0)
+
+	(test (exact? 9223372036854775808.1) #f)
+	(test (exact? 9223372036854775808) #t)
+	(test (exact? 9223372036854775808/3) #t)
+	(test (exact? 9223372036854775808.1+1.0i) #f)
+	
+	(test (inexact? 9223372036854775808.1) #t)
+	(test (inexact? 9223372036854775808) #f)
+	(test (inexact? 9223372036854775808/3) #f)
+	(test (inexact? 9223372036854775808.1+1.0i) #t)
+	
+	(num-test (magnitude 9223372036854775808.1) 9223372036854775808.1)
+	(num-test (magnitude 9223372036854775808) 9223372036854775808) 
+	(num-test (magnitude 9223372036854775808/3) 9223372036854775808/3) 
+	(num-test (magnitude 9223372036854775808.1+1.0e19i) 1.360406526484765934746566522678055771386E19)
+	(num-test (magnitude 1.0e19+9223372036854775808.1i) 1.360406526484765934746566522678055771386E19)
+	;; maxima's sqrt(2.0) is not very accurate!  use arprec: 
+	(num-test (magnitude 14142135623730950488.0168872420969+14142135623730950488.0168872420969i) 1.9999999999999999999999999999999885751772054578776001965575456E19)
+	
+	
+	;; these can be checked against arprec -- get tables of the others as well
+;	(num-test (sin 31415926535897932384626433832795028841.971693993751058209749445) 6.8290634690588564658126265428876656461078982456442870201741792E-24)
+; this test requires 500 bits of precision
+	(num-test (sin 31415926535897932384626433832795028841) -8.2584214320186030736155068085595298665361290626210864656288000E-1)
+	(num-test (sin 1.0) 0.84147098480789650665250232163029899962256306079837106567275170999191) ; if bignum here
+	
+;	(num-test (cos 31415926535897932384626433832795028841.971693993751058209749445) 9.9999999999999999999999999999999999999999999997668194606778265E-1)
+; 500 bits
+	(num-test (cos 1.0) 5.4030230586813971740093660744297660373231042061792222767009714E-1)
+	))
+  
+  (num-test (abs 9223372036854775808/3) 9223372036854775808/3)
+  (num-test (abs -9223372036854775808/3) 9223372036854775808/3)
+  
+  (num-test (abs 9223372036854775808) 9223372036854775808)
+  (num-test (abs -9223372036854775808) 9223372036854775808)
+  
+  (num-test (abs 1231234567891234567895/4924938271564938271564) 1231234567891234567895/4924938271564938271564)
+  (num-test (abs -1231234567891234567895/4924938271564938271564) 1231234567891234567895/4924938271564938271564)
+  (num-test (abs 5/4924938271564938271564) 5/4924938271564938271564)
+  (num-test (abs -5/4924938271564938271564) 5/4924938271564938271564)
+  
+  (num-test (abs 1231234567891234567895.4924938271564938271564) 1231234567891234567895.4924938271564938271564)
+  (num-test (abs -1231234567891234567895.4924938271564938271564) 1231234567891234567895.4924938271564938271564)
+  
+  
   ))
 
 (let ((string->number-2 (lambda (str radix)
@@ -34323,6 +34572,106 @@
 	     (list #\a '#(1 2 3) "hi" '() 'hi abs (lambda () 1) '#(()) (list 1 2 3) '(1 . 2)))
 	    
 	    (test (format #f "~D") 'error)
+	    
+	    ))
+
+      (let ((d 3.14)
+	    (i 32)
+	    (r 2/3)
+	    (c 1.5+0.3i))
+	(let ((check-vals (lambda (name)
+			    (if (or (not (= d 3.14))
+				    (not (= i 32))
+				    (not (= r 2/3))
+				    (not (= c 1.5+0.3i)))
+				(begin 
+				  (display name) (display " changed ")
+				  (if (not (= i 32))
+				      (begin (display "stored integer to: ") (display i))
+				      (if (not (= r 2/3))
+					  (begin (display "stored ratio to: ") (display r))
+					  (if (not (= d 3.14))
+					      (begin (display "stored real to: ") (display d))
+					      (begin (display "stored complex to: ") (display c)))))
+				  (display "?") (newline))))))
+	  (for-each
+	   (lambda (op)
+	     (let ((x (catch #t (lambda () (op i)) (lambda args 'error))))
+	       (check-vals op))
+	     (let ((x (catch #t (lambda () (op r)) (lambda args 'error))))
+	       (check-vals op))
+	     (let ((x (catch #t (lambda () (op d)) (lambda args 'error))))
+	       (check-vals op))
+	     (let ((x (catch #t (lambda () (op c)) (lambda args 'error))))
+	       (check-vals op))
+	     (let ((x (catch #t (lambda () (op i d)) (lambda args 'error))))
+	       (check-vals op))
+	     (let ((x (catch #t (lambda () (op r d)) (lambda args 'error))))
+	       (check-vals op))
+	     (let ((x (catch #t (lambda () (op d d)) (lambda args 'error))))
+	       (check-vals op))
+	     (let ((x (catch #t (lambda () (op c d)) (lambda args 'error))))
+	       (check-vals op)))
+	   (list
+	    number->string string->number make-rectangular magnitude abs exp make-polar angle
+	    sin cos tan sinh cosh tanh atan sqrt log asinh acosh atanh acos asin
+	    number? integer? real? complex? rational? even? odd? zero? positive? negative? real-part imag-part
+	    numerator denominator rationalize exact? inexact? exact->inexact inexact->exact floor ceiling truncate round
+	    logior logxor logand lognot ash integer-length
+	    + - * / quotient remainder
+	    expt = max min modulo < > <= >= lcm gcd 
+	    ))))
+      
+      (if (and with-bignums with-bignum-function with-bigfloats)
+	  (begin
+	    
+	    (let ((d (bignum "3.14"))
+		  (i (bignum "32"))
+		  (r (bignum "2/3"))
+		  (c (bignum "1.5+0.3i")))
+	      (let ((check-vals (lambda (name)
+				  (if (or (not (= d 3.14))
+					  (not (= i 32))
+					  (not (= r 2/3))
+					  (not (= c 1.5+0.3i)))
+				      (begin 
+					(display name) (display " changed ")
+					(if (not (= i 32))
+					    (begin (display "stored integer to: ") (display i))
+					    (if (not (= r 2/3))
+						(begin (display "stored ratio to: ") (display r))
+						(if (not (= d 3.14))
+						    (begin (display "stored real to: ") (display d))
+						    (begin (display "stored complex to: ") (display c)))))
+					(display "?") (newline))))))
+		(for-each
+		 (lambda (op)
+		   (let ((x (catch #t (lambda () (op i)) (lambda args 'error))))
+		     (check-vals op))
+		   (let ((x (catch #t (lambda () (op r)) (lambda args 'error))))
+		     (check-vals op))
+		   (let ((x (catch #t (lambda () (op d)) (lambda args 'error))))
+		     (check-vals op))
+		   (let ((x (catch #t (lambda () (op c)) (lambda args 'error))))
+		     (check-vals op))
+		   (let ((x (catch #t (lambda () (op i d)) (lambda args 'error))))
+		     (check-vals op))
+		   (let ((x (catch #t (lambda () (op r d)) (lambda args 'error))))
+		     (check-vals op))
+		   (let ((x (catch #t (lambda () (op d d)) (lambda args 'error))))
+		     (check-vals op))
+		   (let ((x (catch #t (lambda () (op c d)) (lambda args 'error))))
+		     (check-vals op)))
+		 (list
+		  number->string string->number make-rectangular magnitude abs exp make-polar angle
+		  sin cos tan sinh cosh tanh atan sqrt log asinh acosh atanh acos asin
+		  number? integer? real? complex? rational? even? odd? zero? positive? negative? real-part imag-part
+		  numerator denominator rationalize exact? inexact? exact->inexact inexact->exact floor ceiling truncate round
+		  logior logxor logand lognot ash integer-length
+		  + - * / quotient remainder
+		  expt = max min modulo < > <= >= lcm gcd 
+		  ))))
+	    
 	    
 	    ))
       ))
