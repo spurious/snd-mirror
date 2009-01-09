@@ -123,6 +123,10 @@
  *   will return something bogus (it will not signal an error).
  *
  * Snd's configure.ac has m4 code to handle WITH_COMPLEX and HAVE_COMPLEX_TRIG.
+ *
+ *
+ * To get multiprecision arithmetic, set WITH_GMP to 1.
+ *   You'll also need libgmp, libmpfr, and libmpc (version 0.5.2 or later)
  */
 
 
@@ -181,7 +185,7 @@
   #define WITH_GMP 0
   /* include multiprecision arithmetic for all numeric types and functions, using gmp, mpfr, and mpc
    * WITH_GMP adds the following functions: 
-   *   bignum, bignum-precision
+   *   bignum, bignum-precision, big-fft
    */
 #endif
 
@@ -14673,7 +14677,7 @@ static s7_pointer make_either_complex_1(s7_scheme *sc, char *q, char *slash1, ch
 	  else
 	    {
 	      errno = 0;
-	      (*d_rl) = string_to_double_with_radix(q, radix); /* TODO: what about cases like 1e400? */
+	      (*d_rl) = string_to_double_with_radix(q, radix);
 	      if (errno == ERANGE)
 		return(make_big_real(sc, q, radix));
 	    }
@@ -17471,9 +17475,145 @@ static s7_pointer g_set_precision(s7_scheme *sc, s7_pointer args)
 }
 
 /* TODO: log* in bug-finder
- * PERHAPS: hypot j0+ y0+ i0+?? erfc erf gamma lgamma eint? fac?
+ * PERHAPS: hypot j0+ y0+ i0+?? erfc erf gamma lgamma eint? fac? [test the fft]
  */
 
+
+/* fft
+ *     (define hi (make-vector 8))
+ *     (define ho (make-vector 8))
+ *     (do ((i 0 (+ i 1))) ((= i 8)) (vector-set! hi i (bignum "0.0")) (vector-set! ho i (bignum "0.0")))
+ *     (vector-set! ho 1 (bignum "-1.0"))
+ *     (vector-set! ho 1 (bignum "-1.0"))
+ *     (big-fft hi ho 8)
+ */
+
+static void scramble(s7_pointer *rl, s7_pointer *im, int n)
+{
+  /* bit reversal */
+
+  int i, m, j;
+  s7_pointer vr, vi;
+  j = 0;
+  for (i = 0; i < n; i++)
+    {
+      if (j > i)
+	{
+	  vr = rl[j];
+	  vi = im[j];
+	  rl[j] = rl[i];
+	  im[j] = im[i];
+	  rl[i] = vr;
+	  im[i] = vi;
+	}
+      m = n >> 1;
+      while ((m >= 2) && (j >= m))
+	{
+	  j -= m;
+	  m = m >> 1;
+	}
+      j += m;
+    }
+}
+
+
+static s7_pointer big_fft(s7_scheme *sc, s7_pointer args)
+{
+  #define H_big_fft "(big-fft rl im n (sign 1)) performs a multiprecision fft on the vectors of bigfloats rl and im"
+
+  int n, sign = 1;
+  s7_pointer *rl, *im;
+
+  int m, j, mh, ldm, lg, i, i2, j2, imh;
+  mpfr_t ur, ui, u, vr, vi, angle, c, s, temp;
+
+  #define big_rl(n) S7_BIG_REAL(rl[n])
+  #define big_im(n) S7_BIG_REAL(im[n])
+
+  n = s7_integer(caddr(args));
+  if (cdddr(args) != sc->NIL)
+    sign = s7_integer(cadddr(args));
+
+  rl = car(args)->object.vector.elements;
+  im = cadr(args)->object.vector.elements;
+
+  scramble(rl, im, n);
+
+  imh = (int)(log(n + 1) / log(2.0));
+  m = 2;
+  ldm = 1;
+  mh = n >> 1;
+
+  mpfr_init(angle);                        /* angle = (M_PI * sign) */
+  mpfr_const_pi(angle, GMP_RNDN);
+  if (sign == -1)
+    mpfr_neg(angle, angle, GMP_RNDN);
+
+  mpfr_init(c);
+  mpfr_init(s);
+  mpfr_init(ur);
+  mpfr_init(ui);
+  mpfr_init(u);
+  mpfr_init(vr);
+  mpfr_init(vi);
+  mpfr_init(temp);
+
+  for (lg = 0; lg < imh; lg++)
+    {
+      mpfr_cos(c, angle, GMP_RNDN);         /* c = cos(angle) */
+      mpfr_sin(s, angle, GMP_RNDN);         /* s = sin(angle) */
+      mpfr_set_ui(ur, 1, GMP_RNDN);         /* ur = 1.0 */
+      mpfr_set_ui(ui, 0, GMP_RNDN);         /* ui = 0.0 */
+      for (i2 = 0; i2 < ldm; i2++)
+	{
+	  i = i2;
+	  j = i2 + ldm;
+	  for (j2 = 0; j2 < mh; j2++)
+	    {
+	      mpfr_set(temp, big_im(j), GMP_RNDN);          /* vr = ur * rl[j] - ui * im[j] */
+	      mpfr_mul(temp, temp, ui, GMP_RNDN);
+	      mpfr_set(vr, big_rl(j), GMP_RNDN);
+	      mpfr_mul(vr, vr, ur, GMP_RNDN);
+	      mpfr_sub(vr, vr, temp, GMP_RNDN);
+	      
+	      mpfr_set(temp, big_rl(j), GMP_RNDN);          /* vi = ur * im[j] + ui * rl[j] */
+	      mpfr_mul(temp, temp, ui, GMP_RNDN);
+	      mpfr_set(vi, big_im(j), GMP_RNDN);
+	      mpfr_mul(vi, vi, ur, GMP_RNDN);
+	      mpfr_add(vi, vi, temp, GMP_RNDN);
+	      
+	      mpfr_set(big_rl(j), big_rl(i), GMP_RNDN);     /* rl[j] = rl[i] - vr */
+	      mpfr_sub(big_rl(j), big_rl(j), vr, GMP_RNDN);
+
+	      mpfr_set(big_im(j), big_im(i), GMP_RNDN);     /* im[j] = im[i] - vi */
+	      mpfr_sub(big_im(j), big_im(j), vi, GMP_RNDN);
+	      
+	      mpfr_add(big_rl(i), big_rl(i), vr, GMP_RNDN); /* rl[i] += vr */
+	      mpfr_add(big_im(i), big_im(i), vi, GMP_RNDN); /* im[i] += vi */
+	      
+	      i += m;
+	      j += m;
+	    }
+
+	  mpfr_set(u, ur, GMP_RNDN);             /* u = ur */
+	  mpfr_set(temp, ui, GMP_RNDN);          /* ur = (ur * c) - (ui * s) */
+	  mpfr_mul(temp, temp, s, GMP_RNDN);
+	  mpfr_mul(ur, ur, c, GMP_RNDN);
+	  mpfr_sub(ur, ur, temp, GMP_RNDN);
+	  
+	  mpfr_set(temp, u, GMP_RNDN);           /* ui = (ui * c) + (u * s) */
+	  mpfr_mul(temp, temp, s, GMP_RNDN);
+	  mpfr_mul(ui, ui, c, GMP_RNDN);
+	  mpfr_add(ui, ui, temp, GMP_RNDN);
+	}
+      mh >>= 1;
+      ldm = m;
+
+      mpfr_div_ui(angle, angle, 2, GMP_RNDN);   /* angle *= 0.5 */
+      m <<= 1;
+    }
+  return(sc->F);
+}
 
 
 static void s7_gmp_init(s7_scheme *sc)
@@ -17549,14 +17689,11 @@ static void s7_gmp_init(s7_scheme *sc)
   s7_define_function(sc, "acosh",               big_acosh,            1, 0, false, H_acosh);
   s7_define_function(sc, "atanh",               big_atanh,            1, 0, false, H_atanh);
 
+  s7_define_function(sc, "big-fft",             big_fft,              3, 1, false, H_big_fft);
+
   s7_define_function(sc, "bignum",              g_bignum,             1, 0, false, H_bignum);
   s7_define_variable(sc, "bignum-precision", 
 		     s7_make_procedure_with_setter(sc, "bignum-precision", g_get_precision, 0, 0, g_set_precision, 1, 0, H_bignum_precision));
-
-  /*
-  s7_symbol_set_value(sc, s7_make_symbol(sc, "most-positive-fixnum"), integer_to_big_integer(sc, s7_integer(s7_name_to_value(sc, "most-positive-fixnum"))));
-  s7_symbol_set_value(sc, s7_make_symbol(sc, "most-negative-fixnum"), integer_to_big_integer(sc, s7_integer(s7_name_to_value(sc, "most-negative-fixnum"))));
-  */
 
   add_max = (1 << (s7_int_bits - 1));
   mpfr_set_default_prec((mp_prec_t)128); 

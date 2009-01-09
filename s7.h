@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "1.8"
-#define S7_DATE "29-Dec-08"
+#define S7_VERSION "1.9"
+#define S7_DATE "9-Jan-09"
 
 
 typedef long long int s7_Int;
@@ -1256,6 +1256,8 @@ int main(int argc, char **argv)
  * 
  *        s7 changes
  *
+ * 9-Jan-09   added multiprecision arithmetic (gmp, mpfr, mpc) on the WITH_GMP switch
+ * --------
  * 29-Dec:    added "+" specialization example, s7_apply_function.
  * 3-Dec:     added s7_open_output_function.
  * 30-Nov:    added s7_wrong_number_of_args_error.
