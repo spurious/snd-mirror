@@ -35779,18 +35779,18 @@ expt error > 1e-6 around 2^-46.506993328423
 		
 		(list angle 
 		      (lambda (nlst v)
-			(ok-number-to-real 'angle nlst v 
-					   (lambda (n v)
-					     (let ((val (make-polar (magnitude n) v)))
-					       (< (distance val n) 1e-5)))))
+			(ok-number 'angle nlst v 
+				   (lambda (n v)
+				     (let ((val (make-polar (magnitude n) v)))
+				       (< (distance val n) 1e-5)))))
 		      choose-number)
 		
 		(list magnitude 
 		      (lambda (nlst v)
-			(ok-number-to-real 'magnitude nlst v 
-					   (lambda (n v)
-					     (let ((val (make-polar v (angle n))))
-					       (< (distance val n) 1e-5)))))
+			(ok-number 'magnitude nlst v 
+				   (lambda (n v)
+				     (let ((val (make-polar v (angle n))))
+				       (< (distance val n) 1e-5)))))
 		      choose-number)
 		
 		(list real-part 
@@ -36030,7 +36030,8 @@ expt error > 1e-6 around 2^-46.506993328423
 			(ok-number 'tan nlst v 
 				   (lambda (n v)
 				     (let ((a (/ (sin n) (cos n))))
-				       (< (distance a v) 1e-6)))))
+				       ;; this division is a problem!
+				       (< (/ (distance a v) (magnitude n)) 1e-6)))))
 		      (lambda () (let ((val (car (choose-number-small-imag)))) (list (if (zero? (cos val)) 1.0 val)))))
 		
 		(list atan 
@@ -36146,14 +36147,14 @@ expt error > 1e-6 around 2^-46.506993328423
 		      (lambda (nlst v)
 			(ok-two-numbers 'make-polar nlst v 
 					(lambda (n1 n2 v)
-					  (< (distance (* n1 (exp (* 0.0+1.0i n2))) v) 1e-6))))
+					  (< (/ (distance (* n1 (exp (* 0.0+1.0i n2))) v) (magnitude n1)) 1e-6))))
 		      (lambda () (list (car (choose-real)) (car (choose-real)))))
 		
 		(list make-rectangular
 		      (lambda (nlst v)
 			(ok-two-numbers 'make-rectangular nlst v 
 					(lambda (n1 n2 v)
-					  (< (distance (+ n1 (* 0.0+1.0i n2)) v) 1e-6))))
+					  (< (/ (distance (+ n1 (* 0.0+1.0i n2)) v) (magnitude n1)) 1e-6))))
 		      (lambda () (list (car (choose-real)) (car (choose-real)))))
 		
 		(list modulo 

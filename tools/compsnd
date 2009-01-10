@@ -104,7 +104,7 @@ echo ' '
 echo ' -------------------------------------------------------------------------------- '
 echo ' -----                   GUILE_CONFIG_path=/home/bil/test/bin -Wdeclaration-after-statement -Wmissing-field-initializer ---- '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet CFLAGS="-Wall -I/usr/X11R6/include -D_FORTIFY_SOURCE" LDFLAGS="-L/usr/X11R6/lib" GUILE_CONFIG_path=/home/bil/test/bin
+./configure --with-guile --quiet CFLAGS="-Wall -I/usr/X11R6/include -D_FORTIFY_SOURCE" LDFLAGS="-L/usr/X11R6/lib" GUILE_CONFIG_path=/home/bil/test/bin
 make
 make xm
 ./snd --version
@@ -140,6 +140,20 @@ echo ' '
 echo ' '
 ./snd --version
 ./snd -noinit --features "'clm 'snd-nogui"
+
+make allclean
+rm -f snd
+rm -f config.cache
+
+echo ' -------------------------------------------------------------------------------- '
+echo ' -----                --with-no-gui --with-gmp                              ----  '
+echo ' -------------------------------------------------------------------------------- '
+./configure --quiet --with-no-gui --with-gmp
+make
+echo ' '
+echo ' '
+./snd --version
+./snd -noinit --features "'clm 'snd-nogui 'gmp"
 
 make allclean
 rm -f snd
@@ -210,6 +224,17 @@ echo ' -------------------------------------------------------------------------
 make
 ./snd --version
 ./snd -noinit --features "'clm 'snd-gtk"
+make allclean
+
+echo ' '
+echo ' '
+echo ' -------------------------------------------------------------------------------- '
+echo ' -----                g++ --with-gtk --with-gmp --with-gsl                   ---  '
+echo ' -------------------------------------------------------------------------------- '
+./configure --quiet CC=g++ --with-gtk --with-gmp --with-gsl CFLAGS="-Wall -I/usr/X11R6/include"
+make
+./snd --version
+./snd -noinit --features "'clm 'snd-gtk 'gmp 'gsl"
 make allclean
 
 echo ' '
@@ -431,7 +456,7 @@ make
 echo ' '
 echo ' '
 ./snd --version
-./snd -noinit --features "'clm 'snd-guile"
+./snd -noinit --features "'clm 'snd-s7"
 
 echo ' '
 make allclean
@@ -449,7 +474,7 @@ make
 echo ' '
 echo ' '
 ./snd --version
-./snd -noinit --features "'clm 'snd-guile"
+./snd -noinit --features "'clm 'snd-s7"
 
 echo ' '
 echo ' '
@@ -601,6 +626,17 @@ echo ' '
 make allclean
 
 echo ' -------------------------------------------------------------------------------- '
+echo ' ----                --with-gmp                                              ---- '
+echo ' -------------------------------------------------------------------------------- '
+./configure --quiet LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include" --with-gmp
+make
+echo ' '
+echo ' '
+./snd --version
+./snd -noinit --features "'clm 'snd-debug 'snd-motif 'gmp"
+make allclean
+
+echo ' -------------------------------------------------------------------------------- '
 echo ' -----                --with-static-xm  editres                              ---- '
 echo ' -------------------------------------------------------------------------------- '
 ./configure --quiet LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include" --with-static-xm --with-editres --disable-deprecated
@@ -654,7 +690,18 @@ make
 echo ' '
 echo ' '
 ./snd --version
-./snd -noinit --features "'clm 'snd-gtk 'gsl 'gl 'snd-debug 'snd-guile 'gl2ps"
+./snd -noinit --features "'clm 'snd-gtk 'gsl 'gl 'snd-debug 'snd-s7 'gl2ps"
+
+
+echo ' -------------------------------------------------------------------------------- '
+echo ' ----                 --with-gtk --with-gmp                                  ---- '
+echo ' -------------------------------------------------------------------------------- '
+./configure --quiet --with-gtk --with-gmp
+make
+echo ' '
+echo ' '
+./snd --version
+./snd -noinit --features "'clm 'snd-gtk 'gmp"
 
 echo ' '
 echo ' '
@@ -797,7 +844,7 @@ echo ' -------------------------------------------------------------------------
 ./configure --quiet CC=g++ LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -Wextra -I/usr/X11R6/include"
 make
 ./snd --version
-./snd -noinit --features "'clm 'snd-guile 'snd-motif 'snd-ladspa 'sndlib"
+./snd -noinit --features "'clm 'snd-s7 'snd-motif 'snd-ladspa 'sndlib"
 make sndinfo
 make audinfo
 make sndplay
@@ -825,7 +872,7 @@ echo ' -------------------------------------------------------------------------
 ./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --quiet CC=g++ --with-no-gui
 make
 ./snd --version
-./snd -noinit --features "'clm 'snd-nogui 'snd-guile"
+./snd -noinit --features "'clm 'snd-nogui 'snd-s7"
 make allclean
 
 echo ' -------------------------------------------------------------------------------- '
@@ -889,7 +936,7 @@ make
 echo ' '
 echo ' '
 ./snd --version
-./snd -noinit --features "'clm 'snd-nogui 'snd-guile"
+./snd -noinit --features "'clm 'snd-nogui 'snd-s7"
 
 make allclean
 rm -f snd
@@ -903,7 +950,7 @@ echo ' -------------------------------------------------------------------------
 ./configure --quiet LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include" --disable-nls
 make
 ./snd --version
-./snd -noinit --features "'clm 'snd-guile"
+./snd -noinit --features "'clm 'snd-s7"
 make allclean
 echo ' '
 echo ' '
@@ -925,7 +972,7 @@ echo ' -------------------------------------------------------------------------
 ./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --quiet CC=g++ --with-no-gui --disable-nls
 make
 ./snd --version
-./snd -noinit --features "'clm 'snd-nogui 'snd-guile"
+./snd -noinit --features "'clm 'snd-nogui 'snd-s7"
 make allclean
 echo ' '
 echo ' '
@@ -1033,7 +1080,7 @@ echo ' -------------------------------------------------------------------------
 ./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --without-fam --quiet
 make
 ./snd --version
-./snd -noinit --features "'clm 'snd-guile 'snd-motif 'sndlib"
+./snd -noinit --features "'clm 'snd-s7 'snd-motif 'sndlib"
 make allclean
 make allclean
 echo ' '
@@ -1056,7 +1103,7 @@ echo ' -------------------------------------------------------------------------
 ./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --enable-threads --quiet
 make
 ./snd --version
-./snd -noinit --features "'clm 'snd-guile 'snd-motif 'snd-threads"
+./snd -noinit --features "'clm 'snd-s7 'snd-motif 'snd-threads"
 make allclean
 
 echo ' '
@@ -1067,7 +1114,7 @@ echo ' -------------------------------------------------------------------------
 ./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --enable-threads --quiet CC=g++
 make
 ./snd --version
-./snd -noinit --features "'clm 'snd-guile 'snd-threads"
+./snd -noinit --features "'clm 'snd-s7 'snd-threads"
 make allclean
 
 echo ' '
@@ -1089,7 +1136,7 @@ echo ' -------------------------------------------------------------------------
 ./configure --quiet --with-jack CFLAGS="-I/home/bil/test/include -I/usr/X11R6/include" LDFLAGS="-L/home/bil/test/lib -L/usr/X11R6/lib" GUILE_CONFIG_path=/home/bil/test/bin
 make
 ./snd --version
-./snd -noinit --features "'clm 'snd-guile"
+./snd -noinit --features "'clm 'snd-s7"
 make allclean
 
 echo ' '

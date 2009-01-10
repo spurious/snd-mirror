@@ -3008,11 +3008,13 @@ static char *find_source_file(char *orig)
   XEN_NARGIFY_1(g_dlclose_w, g_dlclose)
   XEN_NARGIFY_0(g_dlerror_w, g_dlerror)
   XEN_NARGIFY_2(g_dlinit_w, g_dlinit)
-#if MUS_DEBUGGING
+#endif
+
+#if MUS_DEBUGGING && HAVE_S7
   XEN_NARGIFY_1(g_c_load_w, g_c_load)
   XEN_VARGIFY(g_c_call_w, g_c_call)
 #endif
-#endif
+
 #if HAVE_GUILE && (!HAVE_SCM_CONTINUATION_P)
   XEN_NARGIFY_1(g_continuation_p_w, g_continuation_p)
 #endif
@@ -3079,11 +3081,13 @@ XEN_NARGIFY_1(g_add_watcher_w, g_add_watcher)
   #define g_dlclose_w g_dlclose
   #define g_dlerror_w g_dlerror
   #define g_dlinit_w g_dlinit
-#if MUS_DEBUGGING
+#endif
+
+#if MUS_DEBUGGING && HAVE_S7
   #define g_c_load_w g_c_load
   #define g_c_call_w g_c_call
 #endif
-#endif
+
 #if HAVE_GUILE && (!HAVE_SCM_CONTINUATION_P)
   #define g_continuation_p_w g_continuation_p
 #endif
@@ -3483,7 +3487,8 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   XEN_DEFINE_PROCEDURE("dlclose", g_dlclose_w, 1, 0 ,0, "");
   XEN_DEFINE_PROCEDURE("dlerror", g_dlerror_w, 0, 0 ,0, "");
   XEN_DEFINE_PROCEDURE("dlinit",  g_dlinit_w,  2, 0 ,0, "");
-#if MUS_DEBUGGING
+#endif
+#if MUS_DEBUGGING && HAVE_S7
   XEN_DEFINE_PROCEDURE("c-load",  g_c_load_w,  1, 0 ,0, "");
   XEN_DEFINE_PROCEDURE("c-call",  g_c_call_w,  0, 0 ,1, "");
   XEN_EVAL_C_STRING("(defmacro c->unspecified (arg) `(c-call 0 (symbol->string ',(car arg)) ,(cadr arg)))");
@@ -3491,7 +3496,6 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   XEN_EVAL_C_STRING("(defmacro c->int (arg) `(c-call 2 (symbol->string ',(car arg)) ,(cadr arg)))");
   XEN_EVAL_C_STRING("(defmacro c->string (arg) `(c-call 3 (symbol->string ',(car arg)) ,(cadr arg)))");
   XEN_EVAL_C_STRING("(defmacro c->pointer (arg) `(c-call 4 (symbol->string ',(car arg)) ,(cadr arg)))");
-#endif
 #endif
 
 #if HAVE_LADSPA && HAVE_EXTENSION_LANGUAGE && HAVE_DLFCN_H && HAVE_DIRENT_H

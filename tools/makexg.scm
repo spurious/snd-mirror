@@ -201,7 +201,7 @@
 	"gchar***" "gfloat*" "gint8*" "gssize" "guint16*" "gunichar*" "GtkFileChooserButton*" "GtkPathPriorityType"
 	"GtkCellView*" "GValue*" "GtkAboutDialog*" "PangoAttrFilterFunc" "PangoScript*" "GtkMenuToolButton*"
 	"GtkClipboardImageReceivedFunc" "PangoMatrix*" "GdkTrapezoid*" "GdkPangoRenderer*" "PangoRenderPart"
-	"GLogFunc" "GError*"
+	"GLogFunc" "GError*" "guint32*" "GtkRecentFilterInfo*"
 
 	"GConnectFlags" "GSignalFlags" "GSignalMatchType" 
 	;"GdkAxisUse" 
@@ -242,9 +242,9 @@
 	"GdkScrollDirection" "GdkSettingAction" "GdkVisibilityState" "GdkWindowState" "GdkWindowType"
 	"GtkImageType" "GtkTreeModelFlags" "gint16" "gint8" "gshort" "guint8" "lambda" 
 
-	"time_t" "GtkWindowGroup*" "GtkSettings*" "GdkDevice*"
+	"time_t" "GtkWindowGroup*" "GtkSettings*" "GdkDevice*" "GtkScaleButton*"
 	"GtkPrintOperationResult" "GtkPrintStatus"
-	"cairo_font_type_t" "bool" "cairo_pattern_type_t" "cairo_surface_type_t"
+	"cairo_font_type_t" "cairo_pattern_type_t" "cairo_surface_type_t"
 	))
 
 (define no-xen-to-c 
@@ -259,8 +259,8 @@
 	"GdkScrollDirection" "GdkSettingAction" "GdkVisibilityState" "GdkWindowState" "GdkWindowType"
 	"GtkImageType" "GtkTreeModelFlags" "etc" "gint16" "gshort"
 
-	"GtkWindowGroup*" "time_t" "GtkSettings*" "GdkDevice*"
-	"GtkPrintOperationResult" "GtkPrintStatus" "bool"
+	"GtkWindowGroup*" "time_t" "GtkSettings*" "GdkDevice*" "GtkScaleButton*"
+	"GtkPrintOperationResult" "GtkPrintStatus"
 
 	"cairo_surface_type_t" "cairo_pattern_type_t" "cairo_font_type_t"
 	))
@@ -862,6 +862,8 @@
 	(cons "GdkGravity" "INT")
 	(cons "GdkWindowHints" "INT")
 
+	(cons "GtkEntryIconPosition" "INT")
+
 	(cons "PangoAttrType" "INT")
 	(cons "PangoStyle" "INT")
 	(cons "PangoWeight" "INT")
@@ -1292,8 +1294,8 @@
 		(set! types-2150 (cons type types-2150))))
 	  (let ((strs (parse-args args '2150)))
 	    (if spec
-		(set! funcs-2134 (cons (list name type strs args spec) funcs-2150))
-		(set! funcs-2134 (cons (list name type strs args) funcs-2150)))
+		(set! funcs-2150 (cons (list name type strs args spec) funcs-2150))
+		(set! funcs-2150 (cons (list name type strs args) funcs-2150)))
 	    (set! names (cons (cons name (func-type strs)) names)))))))
 
 (define* (CAIRO-FUNC data :optional spec)
@@ -2973,6 +2975,7 @@
 	   (hey "   rtn = C_TO_XEN_~A(result);~%   g_free(result);~%   return(rtn);~%  }~%" (no-stars return-type)))
        (hey "}~%~%")
        ))))
+
 
 (for-each handle-func (reverse funcs))
 (if (not (null? funcs-21)) (with-21 hey (lambda () (for-each handle-func (reverse funcs-21)))))
