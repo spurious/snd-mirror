@@ -1664,7 +1664,7 @@ extern XEN xen_false, xen_true, xen_nil, xen_undefined;
 #define XEN_ZERO                                   s7_make_integer(s7, 0)
 #define XEN_INTEGER_P(Arg)                         s7_is_integer(Arg)
 #define C_TO_XEN_INT(Arg)                          s7_make_integer(s7, Arg)
-#define XEN_TO_C_INT(Arg)                          s7_integer(Arg)
+#define XEN_TO_C_INT(Arg)                          xen_to_c_int(Arg)
 #define XEN_TO_C_INT_OR_ELSE(Arg, Def)             ((XEN_INTEGER_P(Arg)) ? XEN_TO_C_INT(Arg) : Def)
 
 #define XEN_ULONG_P(Arg)                           s7_is_ulong(Arg)
@@ -2064,6 +2064,7 @@ XEN xen_define_variable(const char *name, XEN value);
 void xen_s7_ignore(s7_function func); /* squelch compiler warnings */
 const char *xen_s7_object_help(XEN sym);
 double xen_to_c_double(XEN a);
+int xen_to_c_int(XEN a);
 double xen_to_c_double_or_else(XEN a, double b);
 void xen_s7_set_repl_prompt(const char *new_prompt);
 #if !(defined(__GNUC__) && (!(defined(__cplusplus))))

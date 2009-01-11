@@ -3122,7 +3122,7 @@ static XEN g_set_cursor_location_offset(XEN val)
 {
   int ctime;
   #define H_cursor_location_offset "(" S_cursor_location_offset "): samples added to cursor location if cursor displayed during play."
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_setB S_cursor_location_offset, "a number"); 
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_cursor_location_offset, "an integer"); 
   ctime = XEN_TO_C_INT(val);
   set_cursor_location_offset(ctime);
   return(C_TO_XEN_INT(cursor_location_offset(ss)));

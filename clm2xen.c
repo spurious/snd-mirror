@@ -2776,7 +2776,7 @@ this can be used to re-run a particular random number sequence."
 
 static XEN g_mus_set_rand_seed(XEN a) 
 {
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(a), a, XEN_ONLY_ARG, S_setB S_mus_rand_seed, "an integer");
+  XEN_ASSERT_TYPE(XEN_ULONG_P(a), a, XEN_ONLY_ARG, S_setB S_mus_rand_seed, "an unsigned integer");
   mus_set_rand_seed(XEN_TO_C_ULONG(a)); 
   return(a);
 }
@@ -3389,7 +3389,7 @@ a0*x(n) + a1*x(n-1) + a2*x(n-2)"
 	  (found_polar_key(arg2)) ||    /* if arg1 is frequency as number, then arg2 is either key or number */
 	  ((!(XEN_BOUND_P(arg3))) &&    /* make a guess that if 2 args, no keys, and a0 > 20, it is intended as a frequency */
 	   (!(found_coeff_key(arg1))) &&
-	   (XEN_TO_C_DOUBLE(arg1) >= 20.0)))
+	   ((XEN_NUMBER_P(arg1)) && (XEN_TO_C_DOUBLE(arg1) >= 20.0))))
 	return(g_make_smpflt_1(G_TWO_ZERO, arg1, arg2, arg3, arg4));
     }
 
@@ -3409,7 +3409,7 @@ a0*x(n) - b1*y(n-1) - b2*y(n-2)"
 	  (found_polar_key(arg2)) ||    /* if arg1 is frequency as number, then arg2 is either key or number */
 	  ((!(XEN_BOUND_P(arg3))) &&
 	   (!(found_coeff_key(arg1))) &&
-	   (XEN_TO_C_DOUBLE(arg1) >= 2.0)))
+	   ((XEN_NUMBER_P(arg1)) && (XEN_TO_C_DOUBLE(arg1) >= 2.0))))
 	return(g_make_smpflt_1(G_TWO_POLE, arg1, arg2, arg3, arg4));
     }
 

@@ -10533,6 +10533,16 @@ static s7_pointer format_to_output(s7_scheme *sc, s7_pointer out_loc, const char
   s7_pointer result;
 
   out_str = format_to_c_string(sc, in_str, args, NULL);
+#if 0
+  if (safe_strlen(out_str) > 200)
+    {
+      out_str[196] = '.';
+      out_str[197] = '.';
+      out_str[198] = '.';
+      out_str[199] = '\0';
+    }
+#endif
+
   result = s7_make_string(sc, out_str);
   if (out_str) free(out_str);
 
@@ -14391,6 +14401,16 @@ static s7_pointer mpfr_to_big_real(s7_scheme *sc, mpfr_t val)
 }
 
 
+static s7_pointer big_pi(s7_scheme *sc)
+{
+  mpfr_t *n;
+  n = (mpfr_t *)malloc(sizeof(mpfr_t));
+  mpfr_init(*n);
+  mpfr_const_pi(*n, GMP_RNDN);
+  return(s7_make_object(sc, big_real_tag, (void *)n));
+}
+
+
 static s7_pointer make_big_complex(s7_scheme *sc, mpfr_t rl, mpfr_t im)
 {
   /* there is no mpc_get_str equivalent, so we need to split up str,
@@ -14522,7 +14542,7 @@ s7_Double s7_imag_part(s7_pointer x)
 }
 
 
-/* TODO: s7_is_eqv s7_is_equal rationalize? non-real to s7_real?
+/* TODO: s7_is_eqv s7_is_equal rationalize? non-real to s7_real
  */
 
 s7_Int s7_integer(s7_pointer p)
@@ -15102,7 +15122,7 @@ static s7_pointer big_add(s7_scheme *sc, s7_pointer args)
   result_type = canonicalize_result_type(result_type);
   result = copy_and_promote_number(sc, result_type, car(args));
 
-  for (i = 2, sc->x = cdr(args); sc->x != sc->NIL; i++, sc->x = cdr(sc->x)) 
+  for (sc->x = cdr(args); sc->x != sc->NIL; sc->x = cdr(sc->x)) 
     {
       s7_pointer arg;
       arg = promote_number(sc, result_type, car(sc->x));
@@ -15250,7 +15270,7 @@ static s7_pointer big_subtract(s7_scheme *sc, s7_pointer args)
   result_type = canonicalize_result_type(result_type);
   result = copy_and_promote_number(sc, result_type, car(args));
 
-  for (i = 2, sc->x = cdr(args); sc->x != sc->NIL; i++, sc->x = cdr(sc->x)) 
+  for (sc->x = cdr(args); sc->x != sc->NIL; sc->x = cdr(sc->x)) 
     {
       s7_pointer arg;
       arg = promote_number(sc, result_type, car(sc->x));
@@ -15353,7 +15373,7 @@ static s7_pointer big_multiply(s7_scheme *sc, s7_pointer args)
   result_type = canonicalize_result_type(result_type);
   result = copy_and_promote_number(sc, result_type, car(args));
 
-  for (i = 2, sc->x = cdr(args); sc->x != sc->NIL; i++, sc->x = cdr(sc->x)) 
+  for (sc->x = cdr(args); sc->x != sc->NIL; sc->x = cdr(sc->x)) 
     {
       s7_pointer arg;
       arg = promote_number(sc, result_type, car(sc->x));
@@ -15403,6 +15423,16 @@ static s7_pointer big_invert(s7_scheme *sc, s7_pointer args)
 	  mpq_init(*n);
 	  mpq_set_z(*n, S7_BIG_INTEGER(p));
 	  mpq_inv(*n, *n);
+	  /* p might have been 1 or -1 */
+	  if (mpz_cmp_ui(mpq_denref(*n), 1) == 0)
+	    {
+	      mpz_t *z;
+	      z = (mpz_t *)malloc(sizeof(mpz_t));
+	      mpz_init_set(*z, mpq_numref(*n));
+	      mpq_clear(*n);
+	      free(n);
+	      return(s7_make_object(sc, big_integer_tag, (void *)z));
+	    }
 	  return(s7_make_object(sc, big_ratio_tag, (void *)n));
 	}
       if (object_type(p) == big_ratio_tag)
@@ -15514,7 +15544,7 @@ static s7_pointer big_divide(s7_scheme *sc, s7_pointer args)
   result_type = canonicalize_result_type(result_type);
   divisor = copy_and_promote_number(sc, result_type, cadr(args));
 
-  for (i = 3, sc->x = cddr(args); sc->x != sc->NIL; i++, sc->x = cdr(sc->x)) 
+  for (sc->x = cddr(args); sc->x != sc->NIL; sc->x = cdr(sc->x)) 
     {
       s7_pointer arg;
       arg = promote_number(sc, result_type, car(sc->x));
@@ -15539,6 +15569,9 @@ static s7_pointer big_divide(s7_scheme *sc, s7_pointer args)
     }
     
   result = copy_and_promote_number(sc, result_type, car(args));
+  /*
+  fprintf(stderr, "type %d: divide %s / %s\n", result_type, s7_object_to_c_string(sc, result), s7_object_to_c_string(sc, divisor));
+  */
   switch (result_type)
     {
     case T_BIG_INTEGER:
@@ -15569,7 +15602,7 @@ static s7_pointer big_divide(s7_scheme *sc, s7_pointer args)
       break;
       
     case T_BIG_COMPLEX:
-      mpc_sub(S7_BIG_COMPLEX(result), S7_BIG_COMPLEX(result), S7_BIG_COMPLEX(divisor), MPC_RNDNN);
+      mpc_div(S7_BIG_COMPLEX(result), S7_BIG_COMPLEX(result), S7_BIG_COMPLEX(divisor), MPC_RNDNN);
       return(make_big_real_or_complex(sc, result));
       break;
     }
@@ -15764,13 +15797,25 @@ static s7_pointer big_angle(s7_scheme *sc, s7_pointer args)
   if (is_object(p))
     {
       if (object_type(p) == big_integer_tag)
-	return(s7_make_real(sc, (mpz_cmp_ui(S7_BIG_INTEGER(p), 0) < 0) ? M_PI : 0.0)); /* TODO: this loses precision if pi? */
+	{
+	  if (mpz_cmp_ui(S7_BIG_INTEGER(p), 0) >= 0)
+	    return(s7_make_integer(sc, 0));
+	  return(big_pi(sc));
+	}
 
       if (object_type(p) == big_ratio_tag)
-	return(s7_make_real(sc, (mpq_cmp_ui(S7_BIG_RATIO(p), 0, 1) < 0) ? M_PI : 0.0));
+	{
+	  if (mpq_cmp_ui(S7_BIG_RATIO(p), 0, 1) >= 0)
+	    return(s7_make_integer(sc, 0));
+	  return(big_pi(sc));
+	}
 
       if (object_type(p) == big_real_tag)
-	return(s7_make_real(sc, (mpfr_cmp_ui(S7_BIG_REAL(p), 0) < 0) ? M_PI : 0.0));
+	{
+	  if (mpfr_cmp_ui(S7_BIG_REAL(p), 0) >= 0)
+	    return(s7_make_real(sc, 0.0));
+	  return(big_pi(sc));
+	}
 
       if (object_type(p) == big_complex_tag)
 	{
@@ -15818,7 +15863,6 @@ static s7_pointer big_make_rectangular(s7_scheme *sc, s7_pointer args)
 }
 
 /* TODO: s7_number_to_real for bigs */
-/* TODO: all the big M_PI stuff should refer to const_pi instead */
 
 
 static s7_pointer big_make_polar(s7_scheme *sc, s7_pointer args)
@@ -15833,22 +15877,16 @@ static s7_pointer big_make_polar(s7_scheme *sc, s7_pointer args)
       mpc_t *n;
       mpfr_t ang, mag, rl, im;
 
-      if (!is_object(p1))
-	{
-	  if (s7_real(p1) == 0.0)
-	    return(p0);
-	  if (s7_real(p1) == M_PI)
-	    {
-	      if (is_object(p0))
-		return(big_negate(sc, s7_cons(sc, p0, sc->NIL)));
-	      else return(s7_make_real(sc, -s7_real(p0)));
-	    }
-	}
+      if ((!is_object(p1)) && (s7_real(p1) == 0.0))
+	return(p0);
       if ((!is_object(p0)) && (s7_real(p0) == 0.0))
 	return(p0);
 
-      mpfr_init_set(ang, S7_BIG_REAL(promote_number(sc, T_BIG_REAL, p1)), GMP_RNDN);
       mpfr_init_set(mag, S7_BIG_REAL(promote_number(sc, T_BIG_REAL, p0)), GMP_RNDN);
+      if (mpfr_cmp_ui(mag, 0) == 0)
+	return(p0);
+
+      mpfr_init_set(ang, S7_BIG_REAL(promote_number(sc, T_BIG_REAL, p1)), GMP_RNDN);
 
       mpfr_init_set(im, ang, GMP_RNDN);
       mpfr_sin(im, im, GMP_RNDN);
@@ -15859,20 +15897,20 @@ static s7_pointer big_make_polar(s7_scheme *sc, s7_pointer args)
 	  mpfr_clear(im);
 	  mpfr_clear(ang);
 	  mpfr_clear(mag);
-	  return(p1);
+	  return(p0);
 	}
 
       mpfr_init_set(rl, ang, GMP_RNDN);
       mpfr_cos(rl, rl, GMP_RNDN);
       mpfr_mul(rl, rl, mag, GMP_RNDN);
-      mpfr_clear(ang);
-      mpfr_clear(mag);
 
       n = (mpc_t *)malloc(sizeof(mpc_t));
       mpc_init(*n);
       mpc_set_fr_fr(*n, rl, im, MPC_RNDNN);
       mpfr_clear(rl);
       mpfr_clear(im);
+      mpfr_clear(ang);
+      mpfr_clear(mag);
       return(s7_make_object(sc, big_complex_tag, (void *)n));
     }
   return(g_make_polar(sc, args));
@@ -16142,10 +16180,13 @@ static s7_pointer big_expt(s7_scheme *sc, s7_pointer args)
   y = cadr(args);
 
   if ((s7_is_integer(y)) &&
-      (!(is_object(y))))
+      ((!(is_object(y))) ||
+       (mpz_cmpabs_ui(S7_BIG_INTEGER(y), 100) < 0)))
     {
       s7_Int yval;
-      yval = s7_integer(y);
+      if (!is_object(y))
+	yval = s7_integer(y);
+      else yval = (s7_Int)mpz_get_si(S7_BIG_INTEGER(y));
       if (yval == 0)
 	{
 	  if (s7_is_rational(x))
@@ -16368,19 +16409,27 @@ static s7_pointer big_acosh(s7_scheme *sc, s7_pointer args)
 	}
       if (object_type(p) == big_complex_tag)
 	{
-	  /* better might be: 2.0 * clog(csqrt(0.5 * (z + 1.0)) + csqrt(0.5 * (z - 1.0))) */
+	  /* use 2.0 * clog(csqrt(0.5 * (z + 1.0)) + csqrt(0.5 * (z - 1.0))) for better results when z is very large */
 	  mpc_t *n;
-	  mpc_t z;
+	  mpc_t zm1, zp1;
 	  n = (mpc_t *)malloc(sizeof(mpc_t));
 	  mpc_init(*n);
-	  mpc_init(z);
-	  mpc_set(z, S7_BIG_COMPLEX(p), MPC_RNDNN);
-	  mpc_mul(*n, z, z, MPC_RNDNN);      /* z*z */
-	  mpc_sub_ui(*n, *n, 1, MPC_RNDNN);  /* z*z - 1 */
-	  mpc_sqrt(*n, *n, MPC_RNDNN);       /* sqrt(z*z-1) */
-	  mpc_add(*n, *n, z, MPC_RNDNN);     /* z + sqrt(z*z-1) */
-	  mpc_log(*n, *n, MPC_RNDNN);        /* log(z+sqrt(z*z-1)) */
-	  mpc_clear(z);
+	  mpc_set(*n, S7_BIG_COMPLEX(p), MPC_RNDNN);
+	  mpc_init(zm1);
+	  mpc_init(zp1);
+	  mpc_set(zm1, *n, MPC_RNDNN);
+	  mpc_sub_ui(zm1, zm1, 1, MPC_RNDNN);
+	  mpc_div_ui(zm1, zm1, 2, MPC_RNDNN);
+	  mpc_sqrt(zm1, zm1, MPC_RNDNN);
+	  mpc_set(zp1, *n, MPC_RNDNN);
+	  mpc_add_ui(zp1, zp1, 1, MPC_RNDNN);
+	  mpc_div_ui(zp1, zp1, 2, MPC_RNDNN);
+	  mpc_sqrt(zp1, zp1, MPC_RNDNN);
+	  mpc_add(*n, zp1, zm1, MPC_RNDNN);
+	  mpc_log(*n, *n, MPC_RNDNN);
+	  mpc_mul_ui(*n, *n, 2, MPC_RNDNN);
+	  mpc_clear(zm1);
+	  mpc_clear(zp1);
 	  return(s7_make_object(sc, big_complex_tag, (void *)n));
 	}
     }
@@ -16525,10 +16574,40 @@ static s7_pointer big_acos(s7_scheme *sc, s7_pointer args)
 
       if (object_type(p) == big_complex_tag)
 	{
+	  bool ok;
 	  mpc_t *n;
 	  mpc_t x, ci;
+	  mpfr_t temp;
 	  n = (mpc_t *)malloc(sizeof(mpc_t));
 	  mpc_init_set(*n, S7_BIG_COMPLEX(p), MPC_RNDNN);
+
+	  /* check for very large args as in g_acos */
+	  mpfr_init_set_ui(temp, 10000000, GMP_RNDN);
+	  ok = ((mpfr_cmpabs(MPC_RE(*n), temp) <= 0) &&
+		(mpfr_cmpabs(MPC_IM(*n), temp) <= 0));
+	  mpfr_clear(temp);
+	  if (!ok)
+	    {
+	      mpc_t sq1mz, sq1pz;
+	      mpfr_t rl, im;
+	      mpc_init_set(sq1mz, *n, MPC_RNDNN);
+	      mpc_init_set(sq1pz, *n, MPC_RNDNN);
+	      mpc_ui_sub(sq1mz, 1, sq1mz, MPC_RNDNN);
+	      mpc_add_ui(sq1pz, sq1pz, 1, MPC_RNDNN);
+	      mpc_sqrt(sq1mz, sq1mz, MPC_RNDNN);
+	      mpc_sqrt(sq1pz, sq1pz, MPC_RNDNN);
+	      mpfr_init_set(rl, MPC_RE(sq1pz), GMP_RNDN);
+	      mpfr_div(rl, MPC_RE(sq1mz), rl, GMP_RNDN);
+	      mpfr_atan(rl, rl, GMP_RNDN);
+	      mpfr_mul_ui(rl, rl, 2, GMP_RNDN);
+	      mpc_conj(sq1pz, sq1pz, MPC_RNDNN);
+	      mpc_mul(sq1pz, sq1pz, sq1mz, MPC_RNDNN);
+	      mpfr_init_set(im, MPC_IM(sq1pz), GMP_RNDN);
+	      mpfr_asinh(im, im, GMP_RNDN);
+	      mpc_set_fr_fr(*n, rl, im, MPC_RNDNN);
+	      return(s7_make_object(sc, big_complex_tag, (void *)n));
+	    }
+
 	  mpc_init_set(x, *n, MPC_RNDNN);
 	  mpc_mul(x, x, x, MPC_RNDNN);
 	  mpc_ui_sub(x, 1, x, MPC_RNDNN);
@@ -16580,10 +16659,41 @@ static s7_pointer big_asin(s7_scheme *sc, s7_pointer args)
 
       if (object_type(p) == big_complex_tag)
 	{
+	  bool ok;
 	  mpc_t *n;
 	  mpc_t x, ci;
+	  mpfr_t temp;
 	  n = (mpc_t *)malloc(sizeof(mpc_t));
 	  mpc_init_set(*n, S7_BIG_COMPLEX(p), MPC_RNDNN);
+
+	  /* check for very large args as in g_asin */
+	  mpfr_init_set_ui(temp, 10000000, GMP_RNDN);
+	  ok = ((mpfr_cmpabs(MPC_RE(*n), temp) <= 0) &&
+		(mpfr_cmpabs(MPC_IM(*n), temp) <= 0));
+	  mpfr_clear(temp);
+	  if (!ok)
+	    {
+	      mpc_t sq1mz, sq1pz, ctemp;
+	      mpfr_t rl, im;
+	      mpc_init_set(sq1mz, *n, MPC_RNDNN);
+	      mpc_init_set(sq1pz, *n, MPC_RNDNN);
+	      mpc_ui_sub(sq1mz, 1, sq1mz, MPC_RNDNN);
+	      mpc_add_ui(sq1pz, sq1pz, 1, MPC_RNDNN);
+	      mpc_sqrt(sq1mz, sq1mz, MPC_RNDNN);
+	      mpc_sqrt(sq1pz, sq1pz, MPC_RNDNN);
+	      mpc_init(ctemp);
+	      mpc_mul(ctemp, sq1mz, sq1pz, MPC_RNDNN);
+	      mpfr_init_set(rl, MPC_RE(ctemp), GMP_RNDN);
+	      mpfr_div(rl, MPC_RE(*n), rl, GMP_RNDN);
+	      mpfr_atan(rl, rl, GMP_RNDN);
+	      mpc_conj(sq1mz, sq1mz, MPC_RNDNN);
+	      mpc_mul(sq1pz, sq1pz, sq1mz, MPC_RNDNN);
+	      mpfr_init_set(im, MPC_IM(sq1pz), GMP_RNDN);
+	      mpfr_asinh(im, im, GMP_RNDN);
+	      mpc_set_fr_fr(*n, rl, im, MPC_RNDNN);
+	      return(s7_make_object(sc, big_complex_tag, (void *)n));
+	    }
+
 	  mpc_init_set(x, *n, MPC_RNDNN);
 	  mpc_mul(x, x, x, MPC_RNDNN);
 	  mpc_ui_sub(x, 1, x, MPC_RNDNN);
@@ -16880,6 +16990,15 @@ static s7_pointer big_rationalize(s7_scheme *sc, s7_pointer args)
 	    if (mpfr_lessequal_p(xerr, error))
 	      {
 		mpq_t *n;
+		if (mpz_cmp_ui(b, 1) == 0)
+		  {
+		    mpz_t *n;
+		    n = (mpz_t *)malloc(sizeof(mpz_t));
+		    mpz_add(a, a, int_part);
+		    if (neg) mpz_neg(a, a);
+		    mpz_init_set(*n, a);
+		    return(s7_make_object(sc, big_integer_tag, (void *)n));
+		  }
 		n = (mpq_t *)malloc(sizeof(mpq_t));
 		mpq_init(*n);
 		mpz_mul(int_part, b, int_part);
@@ -17214,6 +17333,16 @@ static s7_pointer big_max(s7_scheme *sc, s7_pointer args)
 	  break;
 	}
     }
+  if (result_type == T_BIG_RATIO) /* maybe actual result was an int */
+    {
+      if (mpz_cmp_ui(mpq_denref(S7_BIG_RATIO(result)), 1) == 0)
+	{
+	  mpz_t *n;
+	  n = (mpz_t *)malloc(sizeof(mpz_t));
+	  mpz_init_set(*n, mpq_numref(S7_BIG_RATIO(result)));
+	  return(s7_make_object(sc, big_integer_tag, (void *)n));
+	}
+    }
   return(result);
 }
 
@@ -17252,6 +17381,16 @@ static s7_pointer big_min(s7_scheme *sc, s7_pointer args)
 	  if (mpfr_cmp(S7_BIG_REAL(result), S7_BIG_REAL(arg)) > 0)
 	    result = arg;
 	  break;
+	}
+    }
+  if (result_type == T_BIG_RATIO) /* maybe actual result was an int */
+    {
+      if (mpz_cmp_ui(mpq_denref(S7_BIG_RATIO(result)), 1) == 0)
+	{
+	  mpz_t *n;
+	  n = (mpz_t *)malloc(sizeof(mpz_t));
+	  mpz_init_set(*n, mpq_numref(S7_BIG_RATIO(result)));
+	  return(s7_make_object(sc, big_integer_tag, (void *)n));
 	}
     }
   return(result);
@@ -17500,10 +17639,10 @@ static s7_pointer big_gcd(s7_scheme *sc, s7_pointer args)
       s7_pointer rat;
       mpq_t *q;
       mpz_t n, d;
-      mpz_init(n);
-      mpz_init(d);
-      mpz_set_ui(d, 1);
-      for (sc->x = args; sc->x != sc->NIL; sc->x = cdr(sc->x)) 
+      rat = promote_number(sc, T_BIG_RATIO, car(args));
+      mpz_init_set(n, mpq_numref(S7_BIG_RATIO(rat)));
+      mpz_init_set(d, mpq_denref(S7_BIG_RATIO(rat)));
+      for (sc->x = cdr(args); sc->x != sc->NIL; sc->x = cdr(sc->x))
 	{
 	  rat = promote_number(sc, T_BIG_RATIO, car(sc->x));
 	  mpz_gcd(n, n, mpq_numref(S7_BIG_RATIO(rat)));
@@ -17511,9 +17650,10 @@ static s7_pointer big_gcd(s7_scheme *sc, s7_pointer args)
 	}
       if (mpz_cmp_ui(d, 1) == 0)
 	{
+	  rat = mpz_to_big_integer(sc, n);
 	  mpz_clear(n);
 	  mpz_clear(d);
-	  return(mpz_to_big_integer(sc, n));
+	  return(rat);
 	}
       q = (mpq_t *)malloc(sizeof(mpq_t));
       mpq_init(*q);
@@ -17566,10 +17706,15 @@ static s7_pointer big_lcm(s7_scheme *sc, s7_pointer args)
       s7_pointer rat;
       mpq_t *q;
       mpz_t n, d;
-      mpz_init(n);
-      mpz_init(d);
-      mpz_set_ui(n, 1);
-      for (sc->x = args; sc->x != sc->NIL; sc->x = cdr(sc->x)) 
+      rat = promote_number(sc, T_BIG_RATIO, car(args));
+      mpz_init_set(n, mpq_numref(S7_BIG_RATIO(rat)));
+      if (mpz_cmp_ui(n, 0) == 0)
+	{
+	  mpz_clear(n);
+	  return(s7_make_integer(sc, 0));
+	}
+      mpz_init_set(d, mpq_denref(S7_BIG_RATIO(rat)));
+      for (sc->x = cdr(args); sc->x != sc->NIL; sc->x = cdr(sc->x))
 	{
 	  rat = promote_number(sc, T_BIG_RATIO, car(sc->x));
 	  mpz_lcm(n, n, mpq_numref(S7_BIG_RATIO(rat)));
@@ -17583,9 +17728,10 @@ static s7_pointer big_lcm(s7_scheme *sc, s7_pointer args)
 	}
       if (mpz_cmp_ui(d, 1) == 0)
 	{
+	  rat = mpz_to_big_integer(sc, n);
 	  mpz_clear(n);
 	  mpz_clear(d);
-	  return(mpz_to_big_integer(sc, n));
+	  return(rat);
 	}
       q = (mpq_t *)malloc(sizeof(mpq_t));
       mpq_init(*q);
@@ -17614,6 +17760,7 @@ static s7_pointer g_set_precision(s7_scheme *sc, s7_pointer args)
   bits = (mp_prec_t)s7_integer(car(args));
   mpfr_set_default_prec(bits);
   mpc_set_default_prec(bits);
+  s7_symbol_set_value(sc, s7_make_symbol(sc, "pi"), big_pi(sc));
   return(car(args));
 }
 
@@ -17633,35 +17780,6 @@ static s7_pointer g_set_precision(s7_scheme *sc, s7_pointer args)
  *     (vector-set! ho 1 (bignum "-1.0"))
  *     (big-fft hi ho 8)
  */
-
-static void scramble(s7_pointer *rl, s7_pointer *im, int n)
-{
-  /* bit reversal */
-
-  int i, m, j;
-  s7_pointer vr, vi;
-  j = 0;
-  for (i = 0; i < n; i++)
-    {
-      if (j > i)
-	{
-	  vr = rl[j];
-	  vi = im[j];
-	  rl[j] = rl[i];
-	  im[j] = im[i];
-	  rl[i] = vr;
-	  im[i] = vi;
-	}
-      m = n >> 1;
-      while ((m >= 2) && (j >= m))
-	{
-	  j -= m;
-	  m = m >> 1;
-	}
-      j += m;
-    }
-}
-
 
 static s7_pointer big_fft(s7_scheme *sc, s7_pointer args)
 {
@@ -17683,7 +17801,31 @@ static s7_pointer big_fft(s7_scheme *sc, s7_pointer args)
   rl = car(args)->object.vector.elements;
   im = cadr(args)->object.vector.elements;
 
-  scramble(rl, im, n);
+  /* scramble(rl, im, n); */
+  {
+    int i, m, j;
+    s7_pointer vr, vi;
+    j = 0;
+    for (i = 0; i < n; i++)
+      {
+	if (j > i)
+	  {
+	    vr = rl[j];
+	    vi = im[j];
+	    rl[j] = rl[i];
+	    im[j] = im[i];
+	    rl[i] = vr;
+	    im[i] = vi;
+	  }
+	m = n >> 1;
+	while ((m >= 2) && (j >= m))
+	  {
+	    j -= m;
+	    m = m >> 1;
+	  }
+	j += m;
+      }
+  }
 
   imh = (int)(log(n + 1) / log(2.0));
   m = 2;
@@ -17844,6 +17986,7 @@ static void s7_gmp_init(s7_scheme *sc)
   add_max = (1 << (s7_int_bits - 1));
   mpfr_set_default_prec((mp_prec_t)128); 
 
+  s7_symbol_set_value(sc, s7_make_symbol(sc, "pi"), big_pi(sc));
   g_provide(sc, make_list_1(sc, s7_make_symbol(sc, "gmp")));
 }
 
@@ -18452,3 +18595,4 @@ s7_scheme *s7_init(void)
 
   return(sc);
 }
+/* TODO: check out the iir filter nan's */

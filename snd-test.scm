@@ -15966,15 +15966,15 @@ EDITS: 2
       
       ;; degree 0 + x=0
       (let ((val (poly-roots (vct 0.0 1.0))))
-	(if (not (feql val (list 0.0))) (snd-display ";poly-roots 0.0 1.0: ~A" val)))
+	(if (not (ceql val (list 0.0))) (snd-display ";poly-roots 0.0 1.0: ~A" val)))
       (let ((val (poly-roots (vct 0.0 0.0 0.0 121.0))))
-	(if (not (feql val (list 0.0 0.0 0.0))) (snd-display ";poly-roots 0.0 0.0 0.0 121.0: ~A" val)))
+	(if (not (ceql val (list 0.0 0.0 0.0))) (snd-display ";poly-roots 0.0 0.0 0.0 121.0: ~A" val)))
       
       ;; degree=1
       (let ((val (poly-roots (vct -1.0 1.0))))
-	(if (not (feql val (list 1.0))) (snd-display ";poly-roots -1.0 1.0: ~A" val)))
+	(if (not (ceql val (list 1.0))) (snd-display ";poly-roots -1.0 1.0: ~A" val)))
       (let ((val (poly-roots (vct -2.0 4.0))))
-	(if (not (feql val (list 0.5))) (snd-display ";poly-roots -2.0 4.0: ~A" val)))
+	(if (not (ceql val (list 0.5))) (snd-display ";poly-roots -2.0 4.0: ~A" val)))
       (let ((val (poly-as-vector-roots (vector 0.0-i 1))))
 	(if (not (ceql val (list -0.0+1.0i))) (snd-display ";poly-roots: -i 1: ~A" val)))
       
@@ -15992,15 +15992,15 @@ EDITS: 2
       
       ;; linear + x=0
       (let ((val (poly-roots (vct 0.0 -2.0 4.0))))
-	(if (not (feql val (list 0.0 0.5))) (snd-display ";poly-roots 0.0 -2.0 4.0: ~A" val)))
+	(if (not (ceql val (list 0.0 0.5))) (snd-display ";poly-roots 0.0 -2.0 4.0: ~A" val)))
       
       ;; degree=2
       (let ((val (poly-roots (vct -1.0 0.0 1.0))))
-	(if (not (feql val (list 1.0 -1.0))) (snd-display ";poly-roots -1.0 0.0 1.0: ~A" val)))
+	(if (not (ceql val (list 1.0 -1.0))) (snd-display ";poly-roots -1.0 0.0 1.0: ~A" val)))
       (let ((val (poly-roots (vct 15.0 -8.0 1.0))))
-	(if (not (feql val (list 5.0 3.0))) (snd-display ";poly-roots 15.0 -8.0 1.0: ~A" val)))
+	(if (not (ceql val (list 5.0 3.0))) (snd-display ";poly-roots 15.0 -8.0 1.0: ~A" val)))
       (let ((val (poly-roots (vct 1 -2 1))))
-	(if (not (feql val (list 1.0 1.0))) (snd-display ";poly-roots 1 -2 1: ~A" val)))
+	(if (not (ceql val (list 1.0 1.0))) (snd-display ";poly-roots 1 -2 1: ~A" val)))
       (let ((val (poly-as-vector-roots (vector -1 0.0+2i 1))))
 	(if (not (ceql val (list 0.0-1.0i 0.0-1.0i))) (snd-display ";poly-roots -1 2i 1: ~A" val)))
       (let ((val (poly-roots (vct 1 1 5))))
@@ -16008,12 +16008,12 @@ EDITS: 2
       
       ;; 2 + x=0
       (let ((val (poly-roots (vct 0.0 0.0 -1.0 0.0 1.0))))
-	(if (not (feql val (list 0.0 0.0 1.0 -1.0))) (snd-display ";poly-roots 0.0 0.0 -1.0 0.0 1.0: ~A" val)))
+	(if (not (ceql val (list 0.0 0.0 1.0 -1.0))) (snd-display ";poly-roots 0.0 0.0 -1.0 0.0 1.0: ~A" val)))
       
       ;; quadratic in x^(n/2)
       (let ((vals (poly-roots (vct 1.0 0.0 -2.0 0.0 1.0))))
-	(if (and (not (feql vals (list -1.0 1.0 -1.0 1.0)))
-		 (not (feql vals (list 1.0 1.0 -1.0 -1.0))))
+	(if (and (not (ceql vals (list -1.0 1.0 -1.0 1.0)))
+		 (not (ceql vals (list 1.0 1.0 -1.0 -1.0))))
 	    (snd-display ";poly-roots 1 0 -2 0 1: ~A" vals)))
       (let ((vals (poly-roots (vct 64.0 0.0 0.0 -16.0 0.0 0.0 1.0))))
 	(if (not (ceql vals (list -1.0-1.73205i -1.0+1.73205i 2.0 -1.0-1.73205i -1.0+1.73205i 2.0)))
@@ -16021,29 +16021,29 @@ EDITS: 2
       
       ;; degree=3
       (let ((val (poly-roots (vct -15.0 23.0 -9.0 1.0))))
-	(if (not (feql val (list 5.0 1.0 3.0))) (snd-display ";poly-roots 5 1 3: ~A" val)))
+	(if (not (ceql val (list 5.0 1.0 3.0))) (snd-display ";poly-roots 5 1 3: ~A" val)))
       (let ((val (poly-roots (vct -126 -15 0 1))))
 	(if (not (ceql val (list 6.0 -3.0+3.46410i -3.0-3.46410i))) (snd-display ";poly-roots -126 -15 0 1: ~A" val)))
       (let ((val (poly-roots (vct -1 3 -3 1))))
-	(if (not (feql val (list 1.0 1.0 1.0))) (snd-display ";poly-roots -1 3 -3 1: ~A" val))) 
+	(if (not (ceql val (list 1.0 1.0 1.0))) (snd-display ";poly-roots -1 3 -3 1: ~A" val))) 
       (let ((val (poly-roots (vct 1 -1 -1 1))))
-	(if (not (feql val (list 1.0 -1.0 1.0))) (snd-display ";poly-roots 1 -1 -1 1: ~A" val)))
+	(if (not (ceql val (list 1.0 -1.0 1.0))) (snd-display ";poly-roots 1 -1 -1 1: ~A" val)))
       (let ((val (poly-roots (vct 2 -2 -2 2))))
-	(if (not (feql val (list 1.0 -1.0 1.0))) (snd-display ";poly-roots 2 -2 -2 2: ~A" val)))
+	(if (not (ceql val (list 1.0 -1.0 1.0))) (snd-display ";poly-roots 2 -2 -2 2: ~A" val)))
       
       ;; degree=4
       (let ((vals (poly-roots (vct -15 8 14 -8 1))))
-	(if (not (feql vals (list 5.0 3.0 1.0 -1.0))) (snd-display ";poly-roots -15 8 14 -8 1: ~A" vals)))
+	(if (not (ceql vals (list 5.0 3.0 1.0 -1.0))) (snd-display ";poly-roots -15 8 14 -8 1: ~A" vals)))
       (let ((vals (poly-roots (poly-reduce (poly* (poly* (vct 2 1) (vct -3 1)) (poly* (vct 8 1) (vct -9 1)))))))
-	(if (not (feql vals (list 9.0 3.0 -2.0 -8.0))) (snd-display ";poly-roots 4(1): ~A" vals)))
+	(if (not (ceql vals (list 9.0 3.0 -2.0 -8.0))) (snd-display ";poly-roots 4(1): ~A" vals)))
       (let ((vals (poly-roots (poly-reduce (poly* (poly* (vct .2 1) (vct -3 1)) (poly* (vct .8 1) (vct -9 1)))))))
-	(if (not (feql vals (list 9.0 3.0 -0.2 -0.8))) (snd-display ";poly-roots 4(2): ~A" vals)))
+	(if (not (ceql vals (list 9.0 3.0 -0.2 -0.8))) (snd-display ";poly-roots 4(2): ~A" vals)))
       (let ((vals (poly-roots (poly-reduce (poly* (poly* (vct .02 1) (vct -32 1)) (poly* (vct .8 1) (vct -9 1)))))))
-	(if (not (feql vals (list 32.0 9.0 -0.02 -0.8))) (snd-display ";poly-roots 4(3): ~A" vals)))
+	(if (not (ceql vals (list 32.0 9.0 -0.02 -0.8))) (snd-display ";poly-roots 4(3): ~A" vals)))
       
       ;; degree>4
       (let ((vals (poly-roots (poly-reduce (poly* (vct 1 1) (poly* (poly* (vct 2 1) (vct -3 1)) (poly* (vct -1 1) (vct -2 1))))))))
-	(if (not (feql vals (list 3.0 2.0 -1.0 -2.0 1.0))) 
+	(if (not (ceql vals (list 3.0 2.0 -1.0 -2.0 1.0))) 
 	    (snd-display ";poly-roots n(1): ~A from ~A ~A ~A" 
 			 vals 
 			 (poly-reduce (poly* (vct 1 1) (poly* (poly* (vct 2 1) (vct -3 1)) (poly* (vct -1 1) (vct -2 1)))))
@@ -16051,15 +16051,15 @@ EDITS: 2
 			 poly-roots-epsilon)))
 
       (let ((vals (poly-roots (poly-reduce (poly* (vct 1 1) (poly* (poly* (vct 2 1) (vct -3 1)) (poly* (vct 8 1) (vct -9 1))))))))
-	(if (not (feql vals (list 9.0 3.0 -2.0 -8.0 -1.0))) (snd-display ";poly-roots n(2): ~A" vals)))
+	(if (not (ceql vals (list 9.0 3.0 -2.0 -8.0 -1.0))) (snd-display ";poly-roots n(2): ~A" vals)))
       (let ((vals (poly-roots (poly-reduce (poly* (vct -1 0 1) (poly* (poly* (vct 9 1) (vct -3 1)) (poly* (vct -10 1) (vct -2 1))))))))
-	(if (not (feql vals (list 10.0 3.0 -1.0 -9.0 2.0 1.0))) (snd-display ";poly-roots n(3): ~A" vals)))
+	(if (not (ceql vals (list 10.0 3.0 -1.0 -9.0 2.0 1.0))) (snd-display ";poly-roots n(3): ~A" vals)))
       (let ((vals (poly-roots (poly-reduce (poly* (vct -1 0 1) (poly* (poly* (vct -4 0 1) (vct -3 1)) (poly* (vct -10 1) (vct -9 0 1))))))))
-	(if (not (feql vals (list 10.0 3.0 -2.0 -3.0 -1.0 3.0 2.0 1.0))) (snd-display ";poly-roots n(4): ~A" vals)))
+	(if (not (ceql vals (list 10.0 3.0 -2.0 -3.0 -1.0 3.0 2.0 1.0))) (snd-display ";poly-roots n(4): ~A" vals)))
       (let ((vals (poly-roots (poly-reduce (poly* (vct -1 0 1) (poly* (poly* (vct -4 0 1) (vct -16 0 1)) (poly* (vct -25 0 1) (vct -9 0 1))))))))
-	(if (not (feql vals (list 5.0 -3.0 -4.0 -5.0 4.0 -2.0 3.0 -1.0 2.0 1.0))) (snd-display ";poly-roots n(5): ~A" vals)))
+	(if (not (ceql vals (list 5.0 -3.0 -4.0 -5.0 4.0 -2.0 3.0 -1.0 2.0 1.0))) (snd-display ";poly-roots n(5): ~A" vals)))
       (let ((vals (poly-roots (poly-reduce (poly* (vct 1 1) (poly* (poly* (vct 2 1) (vct -3 1)) (poly* (vct 1 1) (vct -2 1))))))))
-	(if (not (feql vals (list 3.0 -1.0 -1.0 -2.0 2.0))) (snd-display ";poly-roots n(6): ~A" vals)))
+	(if (not (ceql vals (list 3.0 -1.0 -1.0 -2.0 2.0))) (snd-display ";poly-roots n(6): ~A" vals)))
       (let ((vals (poly-roots (vct -64 0 0 0 0 0 1))))
 	(if (not (ceql vals (list 0.999999999999999-1.73205080756888i -1.0-1.73205080756888i -2.0 -1.0+1.73205080756888i 1.0+1.73205080756888i 2.0)))
 	    (snd-display ";poly-roots 64 6: ~A" vals)))
@@ -16115,22 +16115,22 @@ EDITS: 2
 	  (poly-roots v)))
       
       (let ((vals (poly-roots (vct 1 -1 -1 1))))
-	(if (not (feql vals (list 1.0 -1.0 1.0))) (snd-display ";poly-roots 1-1-11: ~A" vals)))
+	(if (not (ceql vals (list 1.0 -1.0 1.0))) (snd-display ";poly-roots 1-1-11: ~A" vals)))
       (let ((vals (poly-roots (vct 2 -1 -2 1))))
-	(if (not (feql vals (list 2.0 -1.0 1.0))) (snd-display ";poly-roots 2-1-21: ~A" vals)))
+	(if (not (ceql vals (list 2.0 -1.0 1.0))) (snd-display ";poly-roots 2-1-21: ~A" vals)))
       (let ((vals (poly-roots (vct -1 1 1 1))))
 	(if (not (ceql vals (list 0.543689012692076 -0.771844506346038+1.11514250803994i -0.771844506346038-1.11514250803994i)))
 	    (snd-display ";poly-roots -1111: ~A" vals)))
       (let ((vals (poly-roots (vct -1 3 -3 1))))
-	(if (not (feql vals (list 1.0 1.0 1.0))) (snd-display ";poly-roots -13-31: ~A" vals)))
+	(if (not (ceql vals (list 1.0 1.0 1.0))) (snd-display ";poly-roots -13-31: ~A" vals)))
       (let ((vals (poly-roots (vct 1 -4 6 -4 1))))
-	(if (not (feql vals (list 1.0 1.0 1.0 1.0))) (snd-display ";poly-roots 1-46-41: ~A" vals)))
+	(if (not (ceql vals (list 1.0 1.0 1.0 1.0))) (snd-display ";poly-roots 1-46-41: ~A" vals)))
       (let ((vals (poly-roots (vct 0.5 0 0 1.0))))
 	(if (and (not (ceql vals (list 0.396850262992049-0.687364818499302i -0.7937005259841 0.39685026299205+0.687364818499301i)))
 		 (not (ceql vals (list 0.39685026299205+0.687364818499301i 0.39685026299205-0.687364818499301i -0.7937005259841))))
 	    (snd-display ";poly-roots 0..5 3: ~A" vals)))
       (let ((vals (poly-roots (poly* (poly* (poly* (vct -1 1) (vct 1 1)) (poly* (vct -2 1) (vct 2 1))) (poly* (vct -3 1) (vct 3 1))))))
-	(if (not (feql vals (list -3.0 3.0 -1.0 1.0 -2.0 2.0)))
+	(if (not (ceql vals (list -3.0 3.0 -1.0 1.0 -2.0 2.0)))
 	    (snd-display ";cube in 2: ~A" vals)))
       ))
   
@@ -64035,7 +64035,7 @@ EDITS: 1
   
   (if with-gui
       
-      (let* ((delay-32 (make-delay 32))
+      (let* ((delay-32 (if (defined? 'make-poison-pill) (make-poison-pill) (make-delay 32)))
 	     (color-95 (make-color-with-catch .95 .95 .95))
 	     (vector-0 (make-vector 0))
 	     (vct-3 (make-vct 3))
@@ -64421,7 +64421,7 @@ EDITS: 1
 				      reverb-control-scale reverb-control? save-controls select-sound short-file-name
 				      sound-loop-info soundfont-info speed-control speed-control-style speed-control-tones srate
 				      channel-style start-progress-report sync sound-properties swap-channels)))
-		    (list vct-5 (sqrt -1.0) 1.5 "hiho"))
+		    (list vct-5 (sqrt -1.0) 1.5 "hiho" delay-32))
 	  
 	  (for-each (lambda (arg)
 		      (let ((ctr 0))
@@ -64444,7 +64444,7 @@ EDITS: 1
 					reverb-control-decay reverb-control-feedback reverb-control-length reverb-control-lowpass
 					reverb-control-scale reverb-control? sound-loop-info soundfont-info speed-control
 					speed-control-style speed-control-tones srate channel-style sync))))
-		    (list vct-5 (sqrt -1.0) 1.5 "hiho"))
+		    (list vct-5 (sqrt -1.0) 1.5 "hiho" delay-32))
 	  
 	  (let ((index (open-sound "obtest.snd")))
 	    (for-each (lambda (arg)
@@ -64466,7 +64466,7 @@ EDITS: 1
 					  reverb-control-decay reverb-control-feedback reverb-control-length reverb-control-lowpass
 					  reverb-control-scale reverb-control? speed-control speed-control-style speed-control-tones
 					  channel-style sync))))
-		      (list vct-5 (sqrt -1.0) "hiho"))
+		      (list vct-5 (sqrt -1.0) "hiho" delay-32))
 	    (close-sound index))
 	  
 	  (for-each (lambda (arg)
@@ -64479,7 +64479,7 @@ EDITS: 1
 				    (if (not (eq? tag 'wrong-type-arg))
 					(snd-display ";vct 0 wrong-type-arg ~A: ~A ~A" n tag arg))))
 				(list make-vct vct-copy vct-length vct->list vct-peak)))
-		    (list (make-vector 1) "hiho" (sqrt -1.0) 1.5 (list 1 0) '#(0 1)))
+		    (list (make-vector 1) "hiho" (sqrt -1.0) 1.5 (list 1 0) '#(0 1) delay-32))
 	  
 	  (for-each (lambda (arg1)
 		      (for-each (lambda (arg2)
@@ -64494,8 +64494,8 @@ EDITS: 1
 							     (eq? tag 'mus-error)))
 						    (snd-display ";vct 1 wrong-whatever ~A: ~A ~A ~A" n tag arg1 arg2))))
 					    (list vct-add! vct-subtract! vct-multiply! vct-ref vct-scale! vct-fill!)))
-				(list vct-5 "hiho" (sqrt -1.0) 1.5 (list 1 0) '#(0 1))))
-		    (list (make-vector 1) "hiho" (sqrt -1.0) 1.5 (list 1 0) '#(0 1)))
+				(list vct-5 "hiho" (sqrt -1.0) 1.5 (list 1 0) '#(0 1) delay-32)))
+		    (list (make-vector 1) "hiho" (sqrt -1.0) 1.5 (list 1 0) '#(0 1) delay-32))
 	  
 	  (for-each (lambda (arg)
 		      (for-each (lambda (n)
@@ -64507,7 +64507,7 @@ EDITS: 1
 				    (if (not (eq? tag 'wrong-type-arg))
 					(snd-display ";vct 2 wrong-type-arg ~A: ~A" n tag))))
 				(list vct-add! vct-subtract! vct-multiply! vct-ref vct-scale! vct-fill!)))
-		    (list (make-vector 1) "hiho" (sqrt -1.0) (list 1 0) '#(0 1)))
+		    (list (make-vector 1) "hiho" (sqrt -1.0) (list 1 0) '#(0 1) delay-32))
 	  
 	  (let ((tag
 		 (catch #t
@@ -64542,7 +64542,7 @@ EDITS: 1
 				      square-wave? src? ncos? nsin? table-lookup? 
 				      triangle-wave? two-pole? two-zero? wave-train? color? mix-sample-reader? moving-average? ssb-am?
 				      sample-reader? region-sample-reader? vct? )))
-		    (list (make-vector 1) "hiho" (sqrt -1.0) 1.5 (list 1 0) '#(0 1)))
+		    (list (make-vector 1) "hiho" (sqrt -1.0) 1.5 (list 1 0) '#(0 1) delay-32))
 	  (gc)(gc)
 	  
 	  (for-each (lambda (n)
@@ -64615,7 +64615,7 @@ EDITS: 1
 					sawtooth-wave nrxysin nrxycos square-wave src 
 					ncos nsin table-lookup tap triangle-wave
 					two-pole two-zero wave-train ssb-am))))
-		    (list (make-vector 1) color-95 (sqrt -1.0)))
+		    (list (make-vector 1) color-95 (sqrt -1.0) delay-32))
 	  (gc)(gc)
 	  
 	  (for-each (lambda (n)
@@ -65489,7 +65489,7 @@ EDITS: 1
 			  (lambda () (n arg1 arg2))
 			  (lambda args (car args))))
 		 make-procs))
-	      (list 1.5 "/hiho" (list 0 1) 1234 vct-3 :wave -1 0 1 #f #t '() vector-0 12345678901234567890 (log0) (nan))))
+	      (list 1.5 "/hiho" (list 0 1) 1234 vct-3 :wave -1 0 1 #f #t '() vector-0 12345678901234567890 delay-32 (log0) (nan))))
 	   keyargs)
 	  
 	  (if (and all-args (= test-28 0))
@@ -65506,9 +65506,9 @@ EDITS: 1
 				   (lambda () (n arg1 arg2 arg3))
 				   (lambda args (car args))))
 			  make-procs))
-		       (list 1.5 "/hiho" (list 0 1) 1234 vct-3 :wave -1 0 1 #f #t '() vector-0 12345678901234567890 (log0) (nan))))
+		       (list 1.5 "/hiho" (list 0 1) 1234 vct-3 :wave -1 0 1 #f #t '() vector-0 12345678901234567890 (log0) (nan) delay-32)))
 		    keyargs))
-		 (list 1.5 "/hiho" (list 0 1) 1234 vct-3 :wave -1 0 1 #f #t '() vector-0 12345678901234567890 (log0) (nan)))
+		 (list 1.5 "/hiho" (list 0 1) 1234 vct-3 :wave -1 0 1 #f #t '() vector-0 12345678901234567890 (log0) (nan) delay-32))
 		
 		(for-each
 		 (lambda (arg1)
@@ -65525,9 +65525,9 @@ EDITS: 1
 				      (lambda args (car args))))
 			     make-procs))
 			  keyargs))
-		       (list 1.5 "/hiho" (list 0 1) 1234 vct-3 :wave -1 0 1 #f #t '() vector-0 12345678901234567890 (log0) (nan))))
+		       (list 1.5 "/hiho" (list 0 1) 1234 vct-3 :wave -1 0 1 #f #t '() vector-0 12345678901234567890 (log0) (nan) delay-32)))
 		    keyargs))
-		 (list 1.5 "/hiho" (list 0 1) 1234 vct-3 :wave -1 0 1 #f #t '() vector-0 12345678901234567890 (log0) (nan)))))
+		 (list 1.5 "/hiho" (list 0 1) 1234 vct-3 :wave -1 0 1 #f #t '() vector-0 12345678901234567890 (log0) (nan) delay-32))))
 	  
 	  (gc)(gc)
 	  
@@ -65800,12 +65800,12 @@ EDITS: 1
 					 (if (eq? err 'wrong-number-of-args)
 					     (snd-display ";procs6: ~A ~A" err (procedure-property n 'documentation)))))
 				     procs6))
-				  (list 1.5 "/hiho" -1234 -1 0 #f #t '() vct-3 (log0))))
-			       (list 1.5 "/hiho" -1234 0 vct-5 #f #t)))
-			    (list 1.5 "/hiho" -1234 vct-3 #f #t)))
-			 (list 1.5 "/hiho" -1234 vct-3 -1 #f #t)))
-		      (list 1.5 -1234 vct-3 vct-5 -1 0 #f #t)))
-		   (list 1.5 "/hiho" -1234 #f #t vct-5))
+				  (list 1.5 "/hiho" -1234 -1 0 #f #t '() vct-3 (log0) delay-32)))
+			       (list 1.5 "/hiho" -1234 0 vct-5 #f #t delay-32)))
+			    (list 1.5 "/hiho" -1234 vct-3 #f #t delay-32)))
+			 (list 1.5 "/hiho" -1234 vct-3 -1 #f #t delay-32)))
+		      (list 1.5 -1234 vct-3 vct-5 -1 0 #f #t delay-32)))
+		   (list 1.5 "/hiho" -1234 #f #t vct-5 delay-32))
 		  (gc)(gc)
 		  
 		  (snd-display ";8 args: ~A~%" (strftime "%d-%b %H:%M %Z" (localtime (current-time))))
@@ -65835,14 +65835,14 @@ EDITS: 1
 					       (if (eq? err 'wrong-number-of-args)
 						   (snd-display ";procs8: ~A ~A" err (procedure-property n 'documentation)))))
 					   procs8))
-					(list 1.5 -1 1234 #f '() (log0))))
-				     (list "/hiho" -1 1234 '() vct-5)))
-				  (list #t #f -1 1234 '() vct-3)))
-			       (list (sqrt -1.0) 1234 0 -1 '())))
-			    (list 1.5 -1 #f 1234 vct-3 '())))
-			 (list 2 #f #t 1234 vct-5 -1)))
-		      (list #f #t -1 1234 vct-3)))
-		   (list 1.5 -1 '() 1234 "/hiho"))
+					(list 1.5 -1 1234 #f '() (log0) delay-32)))
+				     (list "/hiho" -1 1234 '() vct-5 delay-32)))
+				  (list #t #f -1 1234 '() vct-3 delay-32)))
+			       (list (sqrt -1.0) 1234 0 -1 '() delay-32)))
+			    (list 1.5 -1 #f 1234 vct-3 '() delay-32)))
+			 (list 2 #f #t 1234 vct-5 -1 delay-32)))
+		      (list #f #t -1 1234 vct-3 delay-32)))
+		   (list 1.5 -1 '() 1234 "/hiho" delay-32))
 		  (gc)(gc)
 		  
 		  (clear-sincs)
@@ -65876,16 +65876,16 @@ EDITS: 1
 						     (if (eq? err 'wrong-number-of-args)
 							 (snd-display ";procs10: ~A ~A" err (procedure-property n 'documentation)))))
 						 procs10))
-					      (list 1.5 -1 #f 1234)))
-					   (list "/hiho" -1 1234)))
-					(list #t #f vct-3 1234)))
-				     (list (sqrt -1.0) #f -1 vct-5)))
-				  (list 1.5 #f -1 1234 '())))
-			       (list -2 #f 1234 vct-3)))
-			    (list #f #t '() 1234 vct-5)))
-			 (list 1.5 -1 "/hiho" '())))
-		      (list 1.5 -1 '())))
-		   (list #f -1 1234))
+					      (list 1.5 -1 #f 1234 delay-32)))
+					   (list "/hiho" -1 1234 delay-32)))
+					(list #t #f vct-3 1234 delay-32)))
+				     (list (sqrt -1.0) #f -1 vct-5 delay-32)))
+				  (list 1.5 #f -1 1234 '() delay-32)))
+			       (list -2 #f 1234 vct-3 delay-32)))
+			    (list #f #t '() 1234 vct-5 delay-32)))
+			 (list 1.5 -1 "/hiho" '() delay-32)))
+		      (list 1.5 -1 '() delay-32)))
+		   (list #f -1 1234 delay-32))
 		  (gc)(gc)
 		  
 		  ))))

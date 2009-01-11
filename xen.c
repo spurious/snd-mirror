@@ -1580,6 +1580,16 @@ double xen_to_c_double(XEN a)
 }
 
 
+int xen_to_c_int(XEN a) 
+{
+  if (s7_is_integer(a))
+    return((int)s7_integer(a));
+  if (s7_is_rational(a))
+    return((int)(s7_numerator(a) / s7_denominator(a)));
+  return((int)s7_real(a));
+}
+
+
 double xen_to_c_double_or_else(XEN a, double b) 
 {
   if (XEN_NUMBER_P(a))

@@ -2266,6 +2266,13 @@ static XEN g_snd_sound_pointer(XEN snd)
   return(XEN_FALSE);
 }
 
+#if HAVE_S7
+static int poison_pill_tag = 0;
+static char *print_poison(s7_scheme *sc, void *val){return(strdup("bad-bad!"));}
+static void free_poison(void *val){}
+static bool equal_poison(void *val1, void *val2){return(false);}
+static s7_pointer g_make_poison_pill(s7_scheme *sc, s7_pointer args){return(s7_make_object(sc, poison_pill_tag, (void *)0));}
+#endif
 
 #if HAVE_GUILE
 static XEN g_snd_stdin_test(XEN str)
@@ -3315,6 +3322,10 @@ void g_xen_initialize(void)
 
 #if MUS_DEBUGGING
   XEN_DEFINE_PROCEDURE("snd-sound-pointer", g_snd_sound_pointer_w, 1, 0, 0, "internal testing function");
+#if HAVE_S7
+  poison_pill_tag = s7_new_type("bad-bad!", print_poison, free_poison, equal_poison, NULL, NULL, NULL);
+  s7_define_function(s7, "make-poison-pill",  g_make_poison_pill, 0, 0, false, "a debugging tool");
+#endif
 #endif
 
   XEN_DEFINE_PROCEDURE(S_gc_off, g_gc_off_w, 0, 0, 0, H_gc_off);
@@ -3543,10 +3554,14 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
    *   and in the optimizer-splicing-source case, the snd-declare, I hope.
    */
 
-  XEN_EVAL_C_STRING("(define redo-edit redo)");        /* consistency with Ruby */
-  XEN_EVAL_C_STRING("(define undo-edit undo)");
+  XEN_EVAL_C_STRING("(define (bignum x) x)");          /* consistency with s7 */
+  XEN_EVAL_C_STRING("(define bignum-precision (make-procedure-with-setter (lambda () 0) (lambda (x) x)))");
+  XEN_EVAL_C_STRING("(define (big-fft . args) #f)");
   XEN_EVAL_C_STRING("(define call-with-exit call-with-current-continuation)"); /* call/cc here doesn't work in Guile 1.6.n */
  
+  XEN_EVAL_C_STRING("(define redo-edit redo)");        /* consistency with Ruby */
+  XEN_EVAL_C_STRING("(define undo-edit undo)");
+
   /* from ice-9/r4rs.scm but with output to snd listener */
   XEN_EVAL_C_STRING("(define *snd-loaded-files* '())");
   XEN_EVAL_C_STRING("(define *snd-remember-paths* #t)");
