@@ -1169,7 +1169,7 @@ int mus_sound_close_output(int fd, off_t bytes_of_data)
     {
       int err = MUS_ERROR, old_type;
       char *fname;
-      fname = strdup(name); /* strdup defined, if necessary, in io.c */
+      fname = mus_strdup(name); 
       old_type = mus_file_header_type(fd);
       err = mus_file_close(fd);        /* this frees the original fd->name, so we copied above */
       /* fd is NULL now */

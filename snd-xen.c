@@ -2268,7 +2268,7 @@ static XEN g_snd_sound_pointer(XEN snd)
 
 #if HAVE_S7
 static int poison_pill_tag = 0;
-static char *print_poison(s7_scheme *sc, void *val){return(strdup("bad-bad!"));}
+static char *print_poison(s7_scheme *sc, void *val){return(mus_strdup("bad-bad!"));}
 static void free_poison(void *val){}
 static bool equal_poison(void *val1, void *val2){return(false);}
 static s7_pointer g_make_poison_pill(s7_scheme *sc, s7_pointer args){return(s7_make_object(sc, poison_pill_tag, (void *)0));}

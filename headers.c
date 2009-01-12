@@ -5821,6 +5821,8 @@ static int mus_header_read_1(const char *filename, int fd)
       return(read_asf_header(filename, fd));
     }
 
+  /* SMS files start with 767 (4-byte int, apparently in native order) */
+
   header_type = MUS_RAW;
   return(read_no_header(fd));
 }
@@ -5836,7 +5838,7 @@ static void local_mus_error(int type, char *msg)
   if (local_error_msg) 
     free(local_error_msg);
   if (msg)
-    local_error_msg = strdup(msg);
+    local_error_msg = mus_strdup(msg);
   else local_error_msg = NULL;
 }
 

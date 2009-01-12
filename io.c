@@ -1509,29 +1509,6 @@ void mus_reset_io_c(void)
 }
 
 
-#if (!HAVE_STRDUP)
-#if 1
-/* libit-0.7 */
-char *strdup (const char *str)
-{
-  char *newstr;
-  newstr = (char *)malloc(strlen(str) + 1);
-  if (newstr) strcpy(newstr, str);
-  return(newstr);
-}
-#else
-/* gnulib (edited) */
-char *strdup (const char *s)
-{
-  size_t len = strlen(s) + 1;
-  void *new = malloc(len);
-  if (new == NULL) return(NULL);
-  return((char *)memcpy(new, s, len));
-}
-#endif
-#endif
-
-
 #if (!HAVE_FILENO)
 /* this is needed by XtAppAddInput */
 int fileno(FILE *fp)
@@ -1595,7 +1572,7 @@ char *mus_expand_filename(const char *filename)
 {
   /* fill out under-specified library pathnames etc */
 #if defined(MUS_WINDOZE) && (!(defined(__CYGWIN__)))
-  return(strdup(filename));
+  return(mus_strdup(filename));
 #else
   char *file_name_buf = NULL;
   char *tok = NULL, *orig = NULL;
@@ -1606,7 +1583,7 @@ char *mus_expand_filename(const char *filename)
   else return(NULL);
   if (len == 0) return(NULL);
 
-  orig = strdup(filename);
+  orig = mus_strdup(filename);
   tok = orig;
   /* get rid of "//" */
   for (i = 0; i < len - 1; i++)
@@ -1739,7 +1716,7 @@ char *mus_format(const char *format, ...)
 #endif
       va_end(ap);
     }
-  rtn = strdup(buf);
+  rtn = mus_strdup(buf);
   FREE(buf);
   return(rtn);
 }
@@ -2389,13 +2366,13 @@ int mus_samples_peak(unsigned char *data, int bytes, int chans, int format, Floa
 }
 
 
-
-
 char *mus_strdup(const char *str)
 {
-  if (str)
-    return(strdup(str));
-  return(NULL);
+  char *newstr = NULL;
+  if ((!str) || (!(*str))) return(NULL);
+  newstr = (char *)malloc(strlen(str) + 1);
+  if (newstr) strcpy(newstr, str);
+  return(newstr);
 }
 
 

@@ -324,8 +324,8 @@ static sort_info *make_sort_info(const char *filename, const char *full_filename
 {
   sort_info *ptr;
   ptr = (sort_info *)CALLOC(1, sizeof(sort_info));
-  ptr->filename = strdup(filename); /* not mus_strdup -> these are glomming up memlog */
-  ptr->full_filename = strdup(full_filename);
+  ptr->filename = mus_strdup(filename); /* not mus_strdup -> these are glomming up memlog */
+  ptr->full_filename = mus_strdup(full_filename);
   return(ptr);
 }
 
@@ -777,7 +777,7 @@ static void local_error2snd(int type, char *msg)
   local_error = type;
   if (local_error_msg) free(local_error_msg);
   if (msg)
-    local_error_msg = strdup(msg);
+    local_error_msg = mus_strdup(msg);
   else local_error_msg = NULL;
 }
 

@@ -23,6 +23,18 @@ XEN xen_return_first(XEN a, ...)
 }
 
 
+char *xen_strdup(const char *str)
+{
+  char *newstr = NULL;
+  if ((!str) || (!(*str))) return(NULL);
+  newstr = (char *)malloc(strlen(str) + 1);
+  if (newstr) strcpy(newstr, str);
+  return(newstr);
+}
+
+
+
+
 /* ------------------------------ GUILE ------------------------------ */
 
 #if HAVE_GUILE
@@ -798,13 +810,13 @@ static XEN xen_rb_rep(XEN ig)
 void xen_rb_repl_set_prompt(const char *prompt)
 {
   if (rb_prompt) free(rb_prompt);
-  rb_prompt = strdup(prompt);
+  rb_prompt = xen_strdup(prompt);
 }
 
 
 static XEN xen_rb_rescue(XEN val)
 {
-  if (!rb_prompt) rb_prompt = strdup(">");
+  if (!rb_prompt) rb_prompt = xen_strdup(">");
   return(rb_rescue(XEN_PROCEDURE_CAST xen_rb_rep,
 		   XEN_FALSE,
 		   XEN_PROCEDURE_CAST xen_rb_report_error,
@@ -1603,7 +1615,7 @@ static char *xen_s7_repl_prompt = NULL;
 void xen_s7_set_repl_prompt(const char *new_prompt)
 {
   if (xen_s7_repl_prompt) free(xen_s7_repl_prompt);
-  xen_s7_repl_prompt = strdup(new_prompt);
+  xen_s7_repl_prompt = xen_strdup(new_prompt);
 }
 
 
@@ -1780,7 +1792,7 @@ static XEN g_make_hook(XEN arity, XEN help)
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arity), arity, XEN_ARG_1, "make-hook", "an integer");
   XEN_ASSERT_TYPE(XEN_STRING_P(help) || XEN_NOT_BOUND_P(help), help, XEN_ARG_2, "make-hook", "a string if bound");
   hook = make_ghook(XEN_TO_C_INT(arity));
-  if (XEN_STRING_P(help)) hook->documentation = strdup(XEN_TO_C_STRING(help));
+  if (XEN_STRING_P(help)) hook->documentation = xen_strdup(XEN_TO_C_STRING(help));
   XEN_MAKE_AND_RETURN_OBJECT(ghook_tag, hook, 0, 0);
 }
 
@@ -1907,7 +1919,7 @@ XEN_ARGIFY_3(g_add_hook_w, g_add_hook)
 
 void xen_initialize(void)
 {
-  xen_s7_repl_prompt = strdup(">");
+  xen_s7_repl_prompt = xen_strdup(">");
   s7 = s7_init();
   if (!s7) 
     {
@@ -1942,8 +1954,8 @@ void xen_initialize(void)
 
 char *xen_version(void)
 {
-#if HAVE_STRDUP
-  return(strdup("no extension language"));
+#if HAVE_XEN_STRDUP
+  return(xen_strdup("no extension language"));
 #else
   char *buf;
   buf = (char *)calloc(64, sizeof(char));

@@ -2136,7 +2136,7 @@ static int oss_mus_audio_read(int line, char *buf, int bytes)
 static char *oss_unsrc(int srcbit)
 {
   if (srcbit == 0)
-    return(strdup("none"));
+    return(mus_strdup("none"));
   else
     {
       bool need_and = false;
@@ -4241,7 +4241,7 @@ char *mus_alsa_set_playback_device(const char *name)
   if (alsa_check_device_name(name) == MUS_NO_ERROR)
     {
       char *old_name = alsa_playback_device_name;
-      alsa_playback_device_name = strdup(name); 
+      alsa_playback_device_name = mus_strdup(name); 
       if (!alsa_set_playback_parameters())
 	{
 	  alsa_playback_device_name = old_name; /* try to back out of the mistake */
@@ -4257,7 +4257,7 @@ char *mus_alsa_set_capture_device(const char *name)
   if (alsa_check_device_name(name) == MUS_NO_ERROR)
     {
       char *old_name = alsa_capture_device_name;
-      alsa_capture_device_name = strdup(name); 
+      alsa_capture_device_name = mus_strdup(name); 
       if (!alsa_set_capture_parameters())
 	{
 	  alsa_capture_device_name = old_name;
@@ -4272,7 +4272,7 @@ char *mus_alsa_set_device(const char *name)
 {
   if (alsa_check_device_name(name) == MUS_NO_ERROR)
     {
-      alsa_sndlib_device_name = strdup(name);
+      alsa_sndlib_device_name = mus_strdup(name);
       mus_alsa_set_playback_device(name);
       mus_alsa_set_capture_device(name);
     }
@@ -6141,7 +6141,8 @@ int mus_audio_open_output(int ur_dev, int srate, int chans, int format, int size
   wf.nSamplesPerSec = srate;
   wf.nBlockAlign = chans * current_datum_size;
   wf.nAvgBytesPerSec = wf.nBlockAlign * wf.nSamplesPerSec;
-  win_out_err = waveOutOpen(&fd, WAVE_MAPPER, &wf, (DWORD)next_buffer, 0, CALLBACK_FUNCTION); /* 0 here = user_data above, other case = WAVE_FORMAT_QUERY */
+  win_out_err = waveOutOpen(&fd, WAVE_MAPPER, &wf, (DWORD (*)(HWAVEOUT,UINT,DWORD,DWORD,DWORD))next_buffer, 0, CALLBACK_FUNCTION); 
+  /* 0 here = user_data above, other case = WAVE_FORMAT_QUERY */
   if (win_out_err) 
     RETURN_ERROR_EXIT(MUS_AUDIO_DEVICE_NOT_AVAILABLE,
 		      mus_format("can't open %d (%s)",
@@ -6627,7 +6628,7 @@ static void describe_audio_state_1(void)
 					   err = mixerGetControlDetails((HMIXEROBJ)mfd, &controldetails, MIXER_GETCONTROLDETAILSF_LISTTEXT);
 					   if (!err) 
 					     {
-					       for (chan = 0; chan < mixline.cChannels; chan++) 
+					       for (chan = 0; chan < (int)(mixline.cChannels); chan++) 
 						 {
 						   mus_snprintf(audio_strbuf, PRINT_BUFFER_SIZE, " [%s]", clist[chan].szName);
 						   pprint(audio_strbuf);
@@ -6836,7 +6837,7 @@ int mus_audio_open_input(int ur_dev, int srate, int chans, int format, int size)
     RETURN_ERROR_EXIT(MUS_AUDIO_SIZE_NOT_AVAILABLE,
 		      mus_format("can't allocated %d bytes for input buffer of %d (%s)",
 				 size, dev, mus_audio_device_name(dev)));
-  win_in_err = waveInOpen(&record_fd, WAVE_MAPPER, &wf, (DWORD)next_input_buffer, 0, CALLBACK_FUNCTION);
+  win_in_err = waveInOpen(&record_fd, WAVE_MAPPER, &wf, (DWORD (*)(HWAVEIN,UINT,DWORD,DWORD,DWORD))next_input_buffer, 0, CALLBACK_FUNCTION);
   if (win_in_err) 
     {
       FREE(rec_wh.lpData);
@@ -8510,7 +8511,7 @@ static int sndjack_init(void){
     sprintf(temp, "out_%d",ch+1);
     if((sndjack_channels[ch].port=jack_port_register(
 						     sndjack_client,
-						     strdup(temp),
+						     mus_strdup(temp),
 						     JACK_DEFAULT_AUDIO_TYPE,
 						     JackPortIsOutput,
 						     0
@@ -8526,7 +8527,7 @@ static int sndjack_init(void){
     sprintf(temp, "in_%d",ch+1);
     if((sndjack_read_channels[ch].port=jack_port_register(
 							  sndjack_client,
-							  strdup(temp),
+							  mus_strdup(temp),
 							  JACK_DEFAULT_AUDIO_TYPE,
 							  JackPortIsInput,
 							  0

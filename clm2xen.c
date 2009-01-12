@@ -63,7 +63,7 @@ static void local_mus_error(int type, char *msg)
 {
   local_error_type = type;
   if (local_error_msg) free(local_error_msg);
-  local_error_msg = strdup(msg);
+  local_error_msg = mus_strdup(msg);
 }
 
 
@@ -7693,8 +7693,8 @@ it in conjunction with mixer to scale/envelope all the various ins and outs. \
     }
   {
     char *outfile = NULL, *infile = NULL;
-    if (XEN_STRING_P(out)) outfile = strdup(XEN_TO_C_STRING(out));
-    if (XEN_STRING_P(in)) infile = strdup(XEN_TO_C_STRING(in));
+    if (XEN_STRING_P(out)) outfile = mus_strdup(XEN_TO_C_STRING(out));
+    if (XEN_STRING_P(in)) infile = mus_strdup(XEN_TO_C_STRING(in));
 
     if ((infile) && (outfile))
       mus_mix(outfile, infile, ostart, osamps, istart, mx1, envs1);

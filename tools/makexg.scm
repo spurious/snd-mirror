@@ -3086,7 +3086,7 @@
 (hey "  for (i = 0; i < len; i++)~%")
 (hey "    {~%")
 (hey "      val = XEN_LIST_REF(lst, i);~%")
-(hey "      targets[i].target = strdup(XEN_TO_C_STRING(XEN_LIST_REF(val, 0)));~%")
+(hey "      targets[i].target = xen_strdup(XEN_TO_C_STRING(XEN_LIST_REF(val, 0)));~%")
 (hey "      targets[i].flags = (guint)XEN_TO_C_ULONG(XEN_LIST_REF(val, 1));~%")
 (hey "      targets[i].info = (guint)XEN_TO_C_ULONG(XEN_LIST_REF(val, 2));~%")
 (hey "    }~%")

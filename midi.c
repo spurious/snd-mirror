@@ -104,7 +104,7 @@ static int new_midi_line(const char *name, snd_rawmidi_t *line, snd_rawmidi_para
     }
   midi_lines[loc] = line;
   midi_params[loc] = params;
-  midi_names[loc] = strdup(name);
+  midi_names[loc] = mus_strdup(name);
   midi_directions[loc] = input;
   return(loc);
 }
@@ -314,7 +314,7 @@ static int new_midi_line(const char *name, MDport line, int input)
 	}
     }
   midi_lines[loc] = line;
-  midi_names[loc] = strdup(name);
+  midi_names[loc] = mus_strdup(name);
   midi_directions[loc] = input;
   return(loc);
 }

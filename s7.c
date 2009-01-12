@@ -185,7 +185,7 @@
   #define WITH_GMP 0
   /* include multiprecision arithmetic for all numeric types and functions, using gmp, mpfr, and mpc
    * WITH_GMP adds the following functions: 
-   *   bignum, bignum-precision, big-fft
+   *   bignum, bignum?, bignum-precision, bignum-fft
    */
 #endif
 
@@ -234,7 +234,9 @@
 #include <limits.h>
 #include <float.h>
 #include <ctype.h>
-#include <strings.h>
+#ifndef _MSC_VER
+  #include <strings.h>
+#endif
 #include <string.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -717,6 +719,16 @@ static int safe_strlen(const char *str)
   if ((str) && (*str))
     return(strlen(str));
   return(0);
+}
+
+
+static char *s7_strdup(const char *str)
+{
+  char *newstr = NULL;
+  if (!str) return(NULL);
+  newstr = (char *)malloc(strlen(str) + 1);
+  if (newstr) strcpy(newstr, str);
+  return(newstr);
 }
 
 
@@ -4194,7 +4206,7 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
       if (q[len - 1] != 'i')
 	return((want_symbol) ? s7_make_symbol(sc, string_downcase(q)) : sc->F);
 
-      saved_q = strdup(q);
+      saved_q = s7_strdup(q);
 
       /* look for cases like 1+i */
       if ((q[len - 2] == '+') || (q[len - 2] == '-'))
@@ -4306,6 +4318,9 @@ static s7_pointer g_string_to_number(s7_scheme *sc, s7_pointer args)
 
   if (!s7_is_string(car(args)))
     return(s7_wrong_type_arg_error(sc, "string->number", 1, car(args), "a string"));
+
+  if (!(string_value(car(args))))
+    return(sc->F);
 
   if (is_pair(cdr(args)))
     {
@@ -5905,7 +5920,7 @@ s7_pointer s7_make_string_with_length(s7_scheme *sc, const char *str, int len)
   x = new_cell(sc);
   set_type(x, T_STRING | T_ATOM | T_FINALIZABLE | T_SIMPLE | T_DONT_COPY);
   if (str)
-    string_value(x) = strdup(str);
+    string_value(x) = s7_strdup(str);
   else string_value(x) = NULL;
   string_length(x) = len;
   return(x);
@@ -5939,7 +5954,7 @@ static s7_pointer s7_make_permanent_string(const char *str)
   set_type(x, T_STRING | T_ATOM | T_SIMPLE | T_CONSTANT | T_IMMUTABLE | T_DONT_COPY);
   if (str)
     {
-      string_value(x) = strdup(str);
+      string_value(x) = s7_strdup(str);
       string_length(x) = strlen(str);
     }
   else 
@@ -6707,7 +6722,7 @@ static s7_pointer s7_make_input_file(s7_scheme *sc, const char *name, FILE *fp)
   port_file(x) = fp;
   port_type(x) = FILE_PORT;
   port_is_closed(x) = false;
-  port_filename(x) = strdup(name);
+  port_filename(x) = s7_strdup(name);
   port_line_number(x) = 1;  /* 1st line is numbered 1 */
   port_needs_free(x) = false;
   return(x);
@@ -6760,7 +6775,7 @@ s7_pointer s7_open_output_file(s7_scheme *sc, const char *name, const char *mode
   x->object.port = (rport *)calloc(1, sizeof(rport));
   port_type(x) = FILE_PORT;
   port_is_closed(x) = false;
-  port_filename(x) = strdup(name);
+  port_filename(x) = s7_strdup(name);
   port_line_number(x) = 1;
   port_file(x) = fp;
   port_needs_free(x) = false;
@@ -7531,22 +7546,22 @@ static char *s7_atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
     {
     case T_NIL_TYPE:
       if (obj == sc->NIL) 
-	return(strdup("()"));
+	return(s7_strdup("()"));
   
       if (obj == sc->T)
-	return(strdup("#t"));
+	return(s7_strdup("#t"));
   
       if (obj == sc->F) 
-	return(strdup("#f"));
+	return(s7_strdup("#f"));
   
       if (obj == sc->EOF_OBJECT)
-	return(strdup("#<eof>"));
+	return(s7_strdup("#<eof>"));
   
       if (obj == sc->UNDEFINED) 
-	return(strdup("#<undefined>"));
+	return(s7_strdup("#<undefined>"));
   
       if (obj == sc->UNSPECIFIED) 
-	return(strdup("#<unspecified>"));
+	return(s7_strdup("#<unspecified>"));
 
       break;
 
@@ -7561,12 +7576,12 @@ static char *s7_atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
       if (string_length(obj) > 0)
 	{
 	  if (!use_write) 
-	    return(strdup(string_value(obj)));
+	    return(s7_strdup(string_value(obj)));
 	  return(slashify_string(string_value(obj)));
 	}
       if (!use_write)
 	return(NULL);
-      else return(strdup("\"\""));
+      else return(s7_strdup("\"\""));
 
     case T_CHARACTER:
       {
@@ -7615,10 +7630,10 @@ static char *s7_atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
       }
   
     case T_SYMBOL:
-      return(strdup(symbol_name(obj)));
+      return(s7_strdup(symbol_name(obj)));
   
     case T_MACRO:
-      return(strdup("#<macro>"));
+      return(s7_strdup("#<macro>"));
   
     case T_CLOSURE:
     case T_CLOSURE_STAR:
@@ -7627,32 +7642,32 @@ static char *s7_atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
 	s7_pointer binding;
 	binding = s7_find_value_in_environment(sc, obj);
 	if (is_pair(binding))
-	  return(strdup(symbol_name(car(binding))));
-	return(strdup("#<closure>"));
+	  return(s7_strdup(symbol_name(car(binding))));
+	return(s7_strdup("#<closure>"));
       }
   
     case T_PROMISE:
-      return(strdup("#<promise>"));
+      return(s7_strdup("#<promise>"));
   
     case T_S7_FUNCTION:
-      return(strdup(function_name(obj)));
+      return(s7_strdup(function_name(obj)));
   
     case T_CONTINUATION:
-      return(strdup("#<continuation>"));
+      return(s7_strdup("#<continuation>"));
   
     case T_GOTO:
-      return(strdup("#<goto>"));
+      return(s7_strdup("#<goto>"));
   
     case T_CATCH:
-      return(strdup("#<catch>"));
+      return(s7_strdup("#<catch>"));
   
     case T_DYNAMIC_WIND:
-      return(strdup("#<dynamic-wind>"));
+      return(s7_strdup("#<dynamic-wind>"));
   
     case T_S7_OBJECT:
       return(s7_describe_object(sc, obj)); /* this allocates already */
     }
-  return(strdup("#<unknown object!>"));
+  return(s7_strdup("#<unknown object!>"));
 }
 
 
@@ -7665,7 +7680,7 @@ static char *s7_vector_to_c_string(s7_scheme *sc, s7_pointer vect)
   
   len = vector_length(vect);
   if (len == 0)
-    return(strdup("#()"));
+    return(s7_strdup("#()"));
   
   plen = s7_integer(s7_symbol_value(sc, s7_make_symbol(sc, "*vector-print-length*")));
   if (len > plen)
@@ -7733,8 +7748,8 @@ static char *s7_list_to_c_string(s7_scheme *sc, s7_pointer lst)
   if (len == 0)                   /* either '() or a circular list */
     {
       if (lst != sc->NIL)
-	return(strdup("[circular list!]"));
-      return(strdup("()"));
+	return(s7_strdup("[circular list!]"));
+      return(s7_strdup("()"));
     }
   
   elements = (char **)malloc(len * sizeof(char *));
@@ -9230,7 +9245,7 @@ s7_pointer s7_make_function(s7_scheme *sc, const char *name, s7_function f, int 
   x->object.ffptr->ff = f;
   x->object.ffptr->name = name;
   if (doc)
-    x->object.ffptr->doc = strdup(doc);
+    x->object.ffptr->doc = s7_strdup(doc);
   x->object.ffptr->required_args = required_args;
   x->object.ffptr->optional_args = optional_args;
   x->object.ffptr->rest_arg = rest_arg;
@@ -9487,7 +9502,7 @@ int s7_new_type(const char *name,
 	}
     }
   object_types[tag].type = tag;
-  object_types[tag].name = strdup(name);
+  object_types[tag].name = s7_strdup(name);
   object_types[tag].free = free;
   object_types[tag].print = print;
   object_types[tag].equal = equal;
@@ -9504,7 +9519,7 @@ static char *s7_describe_object(s7_scheme *sc, s7_pointer a)
   tag = a->object.fobj.type;
   if (object_types[tag].print)
     return((*(object_types[tag].print))(sc, a->object.fobj.value)); /* assume allocation here (so we'll free the string later) */
-  return(strdup(object_types[tag].name));
+  return(s7_strdup(object_types[tag].name));
 }
 
 
@@ -9644,10 +9659,10 @@ s7_pointer s7_make_procedure_with_setter(s7_scheme *sc,
   f->set_req_args = set_req_args;
   f->set_opt_args = set_opt_args;
   if (documentation)
-    f->documentation = strdup(documentation);
+    f->documentation = s7_strdup(documentation);
   else f->documentation = NULL;
   if (name)
-    f->name = strdup(name);
+    f->name = s7_strdup(name);
   else f->name = NULL;
   f->scheme_getter = sc->NIL;
   f->scheme_setter = sc->NIL;
@@ -9661,8 +9676,8 @@ static char *pws_print(s7_scheme *sc, void *obj)
 {
   pws *f = (pws *)obj;
   if (f->name)
-    return(strdup(f->name));
-  return(strdup((char *)"#<procedure-with-setter>"));
+    return(s7_strdup(f->name));
+  return(s7_strdup((char *)"#<procedure-with-setter>"));
 }
 
 
@@ -10535,6 +10550,15 @@ static s7_pointer format_to_output(s7_scheme *sc, s7_pointer out_loc, const char
   char *out_str;
   s7_pointer result;
 
+  if (!in_str)
+    {
+      if (args != sc->NIL)
+	return(s7_error(sc, 
+			sc->FORMAT_ERROR, 
+			make_list_2(sc, s7_make_string(sc, "format control string is null, but there are other arguments"), args)));
+      return(s7_make_string(sc, ""));
+    }
+
   out_str = format_to_c_string(sc, in_str, args, NULL);
 #if 0
   if (safe_strlen(out_str) > 200)
@@ -10659,7 +10683,7 @@ static int remember_file_name(const char *file)
 	    file_names[i] = NULL;
 	}
     }
-  file_names[file_names_top] = strdup(file);
+  file_names[file_names_top] = s7_strdup(file);
 
 #if HAVE_PTHREADS
   pthread_mutex_unlock(&remember_files_lock);
@@ -14070,7 +14094,7 @@ static char *mpfr_to_string(s7_scheme *sc, mpfr_t val, int radix)
   int i, len;
 
   if (mpfr_zero_p(val))
-    return(strdup("0.0"));
+    return(s7_strdup("0.0"));
 
   str = mpfr_get_str(NULL, &expptr, radix, 0, val, GMP_RNDN);
   len = safe_strlen(str);
@@ -15053,6 +15077,13 @@ static s7_pointer g_bignum(s7_scheme *sc, s7_pointer args)
     case NUM_REAL2: return(promote_number(sc, T_BIG_REAL, p));
     default:        return(promote_number(sc, T_BIG_COMPLEX, p));
     }
+}
+
+
+static s7_pointer g_is_bignum(s7_scheme *sc, s7_pointer args)
+{
+  #define H_is_bignum "(bignum? obj) returns #t is obj is a multiprecision number."
+  return(s7_make_boolean(sc, IS_BIG(car(args))));
 }
 
 
@@ -17798,9 +17829,9 @@ static s7_pointer g_set_precision(s7_scheme *sc, s7_pointer args)
  *     (big-fft hi ho 8)
  */
 
-static s7_pointer big_fft(s7_scheme *sc, s7_pointer args)
+static s7_pointer bignum_fft(s7_scheme *sc, s7_pointer args)
 {
-  #define H_big_fft "(big-fft rl im n (sign 1)) performs a multiprecision fft on the vectors of bigfloats rl and im"
+  #define H_bignum_fft "(bignum-fft rl im n (sign 1)) performs a multiprecision fft on the vectors of bigfloats rl and im"
 
   int n, sign = 1;
   s7_pointer *rl, *im;
@@ -17994,9 +18025,9 @@ static void s7_gmp_init(s7_scheme *sc)
   s7_define_function(sc, "acosh",               big_acosh,            1, 0, false, H_acosh);
   s7_define_function(sc, "atanh",               big_atanh,            1, 0, false, H_atanh);
 
-  s7_define_function(sc, "big-fft",             big_fft,              3, 1, false, H_big_fft);
-
+  s7_define_function(sc, "bignum-fft",          bignum_fft,           3, 1, false, H_bignum_fft);
   s7_define_function(sc, "bignum",              g_bignum,             1, 0, false, H_bignum);
+  s7_define_function(sc, "bignum?",             g_is_bignum,          1, 0, false, H_is_bignum);
   s7_define_variable(sc, "bignum-precision", 
 		     s7_make_procedure_with_setter(sc, "bignum-precision", g_get_precision, 0, 0, g_set_precision, 1, 0, H_bignum_precision));
 

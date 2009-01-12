@@ -2353,6 +2353,8 @@ extern "C" {
 #endif
 
 XEN xen_return_first(XEN a, ...);
+char *xen_strdup(const char *str);
+
 #if (!HAVE_S7)
 int xen_to_c_int_or_else(XEN obj, int fallback);
 off_t xen_to_c_off_t_or_else(XEN obj, off_t fallback);

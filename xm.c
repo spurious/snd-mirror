@@ -6,10 +6,12 @@
 #include <mus-config.h>
 #include <stdlib.h>
 
-#define XM_DATE "11-Dec-08"
+#define XM_DATE "12-Jan-09"
 
 /* HISTORY: 
  *
+ *   12-Jan-09: changed strdup to xen_strdup.
+ *   --------
  *   11-Dec:    removed all the stuff on the XM_DISABLE_DEPRECATED switch.
  *   16-Oct:    removed Gauche support.
  *   1-Oct:     XtAppAddInput condition arg is a mess.
@@ -1749,7 +1751,7 @@ static Arg *protect_args(Arg *args, int len)
   int i;
   for (i = 0; i < len; i++)
     if (args[i].name)
-      args[i].name = strdup(args[i].name); /* XEN_TO_C_STRING will eventually gc, so protect against that until we're done with args */
+      args[i].name = xen_strdup(args[i].name); /* XEN_TO_C_STRING will eventually gc, so protect against that until we're done with args */
   return(args);
 }
 
@@ -1758,7 +1760,7 @@ static Arg *free_args(Arg *args, int len)
   int i;
   for (i = 0; i < len; i++)
     if (args[i].name)
-      free(args[i].name); /* free what we strdup'd above */
+      free(args[i].name); /* free what we xen_strdup'd above */
   FREE(args);
   return(NULL);
 }
@@ -2427,7 +2429,7 @@ static XEN gxm_XtGetValues_1(XEN arg1, XEN larg2, int len)
   for (i = 0; i < len; i++, arg2 = XEN_CDDR(arg2))
     {
       char *name;
-      name = strdup(XEN_TO_C_STRING(XEN_CAR(arg2)));
+      name = xen_strdup(XEN_TO_C_STRING(XEN_CAR(arg2)));
       XtSetArg(args[i], name, &(locs[i]));
     }
   XtGetValues(w, args, len);
@@ -2904,7 +2906,7 @@ retrieves rendition resources"
     locs = (unsigned long *)CALLOC(len, sizeof(unsigned long));
     for (i = 0; i < len; i++, arg2 = XEN_CDDR(arg2))
       {
-	name = strdup(XEN_TO_C_STRING(XEN_CAR(arg2)));
+	name = xen_strdup(XEN_TO_C_STRING(XEN_CAR(arg2)));
 	XtSetArg(args[i], name, &(locs[i]));
       }
     XmRenditionRetrieve(r, args, len);
@@ -3203,7 +3205,7 @@ retrieves attributes of a parse mapping"
     for (i = 0; i < len; i++, arg2 = XEN_CDDR(arg2))
       {
 	char *name;
-	name = strdup(XEN_TO_C_STRING(XEN_CAR(arg2)));
+	name = xen_strdup(XEN_TO_C_STRING(XEN_CAR(arg2)));
 	XtSetArg(args[i], name, &(locs[i]));
       }
     XmParseMappingGetValues(XEN_TO_C_XmParseMapping(arg1), args, len);
@@ -6161,7 +6163,7 @@ retrieves resource values set on a drop site"
   for (i = 0; i < len; i++, arg2 = XEN_CDDR(arg2))
     {
       char *name;
-      name = strdup(XEN_TO_C_STRING(XEN_CAR(arg2)));
+      name = xen_strdup(XEN_TO_C_STRING(XEN_CAR(arg2)));
       XtSetArg(args[i], name, &(locs[i]));
     }
   XmDropSiteRetrieve(XEN_TO_C_Widget(arg1), args, len);
@@ -14030,7 +14032,7 @@ static SubstitutionRec *gxm_make_subs(XEN lst_1)
 	      return(NULL);
 	    }
 	  subs[i].match = XEN_TO_C_CHAR(XEN_CAR(XEN_CAR(lst)));
-	  subs[i].substitution = strdup(XEN_TO_C_STRING(XEN_CADR(XEN_CAR(lst))));
+	  subs[i].substitution = xen_strdup(XEN_TO_C_STRING(XEN_CADR(XEN_CAR(lst))));
 	}
     }
   return(subs);
@@ -14672,7 +14674,7 @@ of the arguments is slightly different from the C Xt call.  The final arg is an 
       gcloc = xm_protect(lst);
       fallbacks = (char **)CALLOC(len + 1, sizeof(char *)); /* +1 for null termination */
       for (i = 0; i < len; i++, lst = XEN_CDR(lst)) 
-	fallbacks[i] = strdup(XEN_TO_C_STRING(XEN_CAR(lst)));
+	fallbacks[i] = xen_strdup(XEN_TO_C_STRING(XEN_CAR(lst)));
       xm_unprotect_at(gcloc);
     }
   args = XEN_TO_C_Args(arg8);
@@ -14739,7 +14741,7 @@ and the specified args and num_args and returns the created shell.  The num_args
       gcloc = xm_protect(lst);
       fallbacks = (char **)CALLOC(len + 1, sizeof(char *)); /* +1 for null termination */
       for (i = 0; i < len; i++, lst = XEN_CDR(lst)) 
-	fallbacks[i] = strdup(XEN_TO_C_STRING(XEN_CAR(lst)));
+	fallbacks[i] = xen_strdup(XEN_TO_C_STRING(XEN_CAR(lst)));
       xm_unprotect_at(gcloc);
     }
   res = XtAppInitialize(&app,
@@ -14799,7 +14801,7 @@ static XEN gxm_XtVaOpenApplication(XEN arg1, XEN arg4, XEN arg5, XEN arg7, XEN a
       gcloc = xm_protect(lst);
       fallbacks = (char **)CALLOC(len + 1, sizeof(char *)); /* +1 for null termination */
       for (i = 0; i < len; i++, lst = XEN_CDR(lst)) 
-	fallbacks[i] = strdup(XEN_TO_C_STRING(XEN_CAR(lst)));
+	fallbacks[i] = xen_strdup(XEN_TO_C_STRING(XEN_CAR(lst)));
       xm_unprotect_at(gcloc);
     }
   args = XEN_TO_C_Args(arg8);
@@ -14927,7 +14929,7 @@ static String gxm_XtLanguageProc(Display* d, String s, XtPointer context)
 				   (XEN)context,
 				   c__FUNCTION__));
   if (res)
-    return(strdup(res));
+    return(xen_strdup(res));
   return(NULL);
 }
 
@@ -16256,7 +16258,7 @@ and parameters."
     {
       params = (char **)CALLOC(len, sizeof(char *));
       for (i = 0; i < len; i++)
-	params[i] = strdup(XEN_TO_C_STRING(XEN_LIST_REF(arg4, i)));
+	params[i] = xen_strdup(XEN_TO_C_STRING(XEN_LIST_REF(arg4, i)));
     }
   XtCallActionProc(XEN_TO_C_Widget(arg1), 
 		   (char *)XEN_TO_C_STRING(arg2), 
@@ -16418,7 +16420,7 @@ static XtActionsRec *make_action_rec(int len, XEN larg2)
     {
       XEN pair;
       pair = XEN_CAR(arg2);
-      act[i].string = (String)strdup(XEN_TO_C_STRING(XEN_CAR(pair)));
+      act[i].string = (String)xen_strdup(XEN_TO_C_STRING(XEN_CAR(pair)));
       if (xm_action_ctr >= 8)
 	{
 	  fprintf(stderr,"too many actions...");
@@ -17436,7 +17438,7 @@ static XEN gxm_XpmCreatePixmapFromData(XEN arg1, XEN arg2, XEN larg3, XEN arg6)
   if (len <= 0) XEN_ASSERT_TYPE(0, arg3, 3, "XpmCreatePixmapFromData", "positive integer");
   bits = (char **)CALLOC(len, sizeof(char *));
   for (i = 0; i < len; i++, arg3 = XEN_CDR(arg3))
-    bits[i] = strdup(XEN_TO_C_STRING(XEN_CAR(arg3)));
+    bits[i] = xen_strdup(XEN_TO_C_STRING(XEN_CAR(arg3)));
   val = XpmCreatePixmapFromData(XEN_TO_C_Display(arg1), 
 				XEN_TO_C_Window(arg2), 
 				bits,
@@ -17640,8 +17642,8 @@ static XEN gxm_set_colorsymbols(XEN ptr, XEN vals)
       for (lst = XEN_COPY_ARG(vals), i = 0; i < len; i++, lst = XEN_CDR(lst))
 	{
 	  cur = XEN_TO_C_XpmColorSymbol(XEN_CAR(lst));
-	  if (cur->name) cols[i].name = strdup(cur->name);
-	  if (cur->value) cols[i].value = strdup(cur->value);
+	  if (cur->name) cols[i].name = xen_strdup(cur->name);
+	  if (cur->value) cols[i].value = xen_strdup(cur->value);
 	  cols[i].pixel = cur->pixel;
 	}
       atr->colorsymbols = cols;
@@ -18558,7 +18560,7 @@ static XEN gxm_set_name(XEN ptr, XEN val)
 #if HAVE_XPM
   XM_SET_FIELD_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ARG_2, "name", "a string");
   XM_SET_FIELD_ASSERT_TYPE(XEN_XpmColorSymbol_P(ptr), ptr, XEN_ARG_1, "name", "XpmColorSymbol");
-  (XEN_TO_C_XpmColorSymbol(ptr))->name = strdup(XEN_TO_C_STRING(val));
+  (XEN_TO_C_XpmColorSymbol(ptr))->name = xen_strdup(XEN_TO_C_STRING(val));
 #endif
   return(val);
 }
@@ -20206,7 +20208,7 @@ static XEN gxm_set_chars(XEN ptr, XEN val)
 {
   XM_SET_FIELD_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ARG_2, "chars", "a string");
   XM_SET_FIELD_ASSERT_TYPE(XEN_XTextItem_P(ptr), ptr, XEN_ARG_1, "chars", "XTextItem");
-  (XEN_TO_C_XTextItem(ptr))->chars = strdup(XEN_TO_C_STRING(val));
+  (XEN_TO_C_XTextItem(ptr))->chars = xen_strdup(XEN_TO_C_STRING(val));
   return(val);
 }
 
@@ -20669,7 +20671,7 @@ static XEN gxm_set_ptr(XEN pt, XEN val)
 {
   XM_SET_FIELD_ASSERT_TYPE(XEN_XmTextBlock_P(pt), pt, XEN_ARG_1, "ptr", "XmTextBlock");
   XM_SET_FIELD_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ARG_2, "length", "char*");
-  (XEN_TO_C_XmTextBlock(pt))->ptr = strdup(XEN_TO_C_STRING(val));
+  (XEN_TO_C_XmTextBlock(pt))->ptr = xen_strdup(XEN_TO_C_STRING(val));
   return(val);
 }
 
@@ -20703,7 +20705,7 @@ static XEN gxm_set_value(XEN ptr, XEN val)
   if (XEN_XmSelectionCallbackStruct_P(ptr)) (XEN_TO_C_XmSelectionCallbackStruct(ptr))->value = (XtPointer)XEN_TO_C_ULONG(val); else
 #endif    
 #if HAVE_XPM
-  if (XEN_XpmColorSymbol_P(ptr)) (XEN_TO_C_XpmColorSymbol(ptr))->value = strdup(XEN_TO_C_STRING(val)); else
+  if (XEN_XpmColorSymbol_P(ptr)) (XEN_TO_C_XpmColorSymbol(ptr))->value = xen_strdup(XEN_TO_C_STRING(val)); else
 #endif
   XM_SET_FIELD_ASSERT_TYPE(0, ptr, XEN_ARG_1, "value", "a struct with a value field");
   return(val);

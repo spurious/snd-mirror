@@ -753,7 +753,7 @@ static bool fsb_directory_button_press_callback(GdkEventButton *ev, void *data)
 	  char **dirs;
 	  int j = 1;
 	  dirs = (char **)CALLOC(dirs_to_display, sizeof(char *));
-	  dirs[0] = strdup("/");
+	  dirs[0] = mus_strdup("/");
 	  for (i = 1; i < len; i++)
 	    if (current_filename[i] == '/')
 	      {

@@ -680,9 +680,6 @@ MUS_EXPORT char *mus_midi_describe(void);
 #endif
 
 
-#if (!HAVE_STRDUP)
-  MUS_EXPORT char *strdup(const char *str);
-#endif
 #if (!HAVE_FILENO)
   MUS_EXPORT int fileno(FILE *fp);
 #endif

@@ -384,7 +384,7 @@ const char *mus_set_name(mus_any *ptr, const char *new_name)
       if (ptr->core->original_class)
 	{
 	  if (ptr->core->name) free(ptr->core->name);
-	  ptr->core->name = strdup(new_name);
+	  ptr->core->name = mus_strdup(new_name);
 	}
       else
 	{
@@ -392,7 +392,7 @@ const char *mus_set_name(mus_any *ptr, const char *new_name)
 	  tmp = ptr->core;
 	  ptr->core = (mus_any_class *)clm_calloc(1, sizeof(mus_any_class), "mus_set_name");
 	  memcpy((void *)(ptr->core), (void *)tmp, sizeof(mus_any_class));
-	  ptr->core->name = strdup(new_name);
+	  ptr->core->name = mus_strdup(new_name);
 	  ptr->core->original_class = (void *)tmp;
 	}
     }
@@ -434,7 +434,7 @@ int mus_free(mus_any *gen)
 char *mus_describe(mus_any *gen)
 {
   if (gen == NULL)
-    return(strdup((char *)"null"));
+    return(mus_strdup((char *)"null"));
   if ((gen->core) && (gen->core->describe))
     return((*(gen->core->describe))(gen));
   else mus_error(MUS_NO_DESCRIBE, "can't describe %s", mus_name(gen));
@@ -6528,9 +6528,9 @@ static char *describe_mixer(mus_any *ptr)
   mus_mixer *gen = (mus_mixer *)ptr;
   char *str;
   int i, j, lim;
+  char *describe_buffer;
 
   lim = mus_array_print_length();
-  char *describe_buffer;
   describe_buffer = (char *)clm_malloc(DESCRIBE_BUFFER_SIZE, "describe buffer");
   mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s chans: %d, [\n ", mus_name(ptr), gen->chans);
   str = (char *)clm_calloc(64, sizeof(char), "describe_mixer");
