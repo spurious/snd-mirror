@@ -80,7 +80,8 @@
   <li><a href="#sndandjack" onmouseout="UnTip()" onmouseover="Tip('This is the Jack audio library')">Snd and Jack</a>
   <li><a href="grfsnd.html#sndandx" onmouseout="UnTip()" onmouseover="Tip('other programs can control Snd through window properties')">Driving Snd remotely</a>
   <li><a href="#sndandgl" onmouseout="UnTip()" onmouseover="Tip('OpenGL (Mesa) extensions via gl.c')">Snd and OpenGL</a>
-  <li><a href="#sndandgsl" onmouseout="UnTip()" onmouseover="Tip('tie-ins to libgsl')">Snd and GSL</a>
+  <li><a href="#sndandgsl" onmouseout="UnTip()" onmouseover="Tip('include some special functions from GSL')">Snd and GSL</a>
+  <li><a href="#sndandgmp" onmouseout="UnTip()" onmouseover="Tip('include multiprecision arithmetic')">Snd and multiprecision arithmetic</a>
   </ul>
 </ul>
 </td><td width="40%">
@@ -2487,6 +2488,8 @@ at configuration time, and use the <a href="extsnd.html#glgraphtops">gl-graph-&g
 <br><br>
 
 
+<!-- ---------------------------------------- GSL ---------------------------------------- -->
+
 <table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndandgsl">Snd and GSL</a></h3></td></tr></table>
 
 <p>If the GSL library is available, the following functions are imported into Snd:
@@ -2547,6 +2550,14 @@ This returns the roots of the polynomial "poly" via gsl_poly_complex_solve.  See
 
 <br><br>
 
+
+<!-- ---------------------------------------- GMP, MPFR, MPC ---------------------------------------- -->
+
+<table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndandgmp">Snd and multiprecision arithmetic</a></h3></td></tr></table>
+
+
+
+<br><br>
 
 <center>
 <table bgcolor="aliceblue" border=0 cellspacing=8><tr>

@@ -228,7 +228,9 @@
 #endif
 
 
-#include <unistd.h>
+#ifndef _MSC_VER
+  #include <unistd.h>
+#endif
 #include <limits.h>
 #include <float.h>
 #include <ctype.h>
@@ -7570,8 +7572,9 @@ static char *s7_atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
       {
 	#define P_SIZE 16
 	char *p;
+	unsigned char c;
 	p = (char *)malloc(P_SIZE * sizeof(char));
-	unsigned char c = (unsigned char)s7_character(obj); /* if not unsigned, (write (integer->char 212) -> #\xffffffd4! */
+	c = (unsigned char)s7_character(obj);             /* if not unsigned, (write (integer->char 212) -> #\xffffffd4! */
 	if (!use_write) 
 	  {
 	    p[0]= c;
@@ -15931,10 +15934,21 @@ static s7_pointer big_log(s7_scheme *sc, s7_pointer args)
       if ((s7_is_real(p0)) &&
 	  ((!p1) || (s7_is_real(p1))))
 	{
+	  int p1_cmp;
 	  p0 = promote_number(sc, T_BIG_REAL, p0);
-	  if (p1) p1 = promote_number(sc, T_BIG_REAL, p1);
+	  if (p1) 
+	    {
+	      if ((!is_object(p1)) &&
+		  (s7_is_zero(p1)))
+		return(s7_out_of_range_error(sc, "log", 2, p1, "not zero"));
+
+	      p1 = promote_number(sc, T_BIG_REAL, p1);
+	      p1_cmp = (mpfr_cmp_ui(S7_BIG_REAL(p1), 0));
+	      if (p1_cmp == 0)
+		return(s7_out_of_range_error(sc, "log", 2, p1, "not zero"));
+	    }
 	  if ((mpfr_cmp_ui(S7_BIG_REAL(p0), 0) > 0) &&
-	      ((!p1) || (mpfr_cmp_ui(S7_BIG_REAL(p1), 0) > 0)))
+	      ((!p1) || (p1_cmp > 0)))
 	    {
 	      mpfr_t *n;
 	      mpfr_t base;
@@ -16181,7 +16195,7 @@ static s7_pointer big_expt(s7_scheme *sc, s7_pointer args)
 
   if ((s7_is_integer(y)) &&
       ((!(is_object(y))) ||
-       (mpz_cmpabs_ui(S7_BIG_INTEGER(y), 100) < 0)))
+       (mpz_cmpabs_ui(S7_BIG_INTEGER(y), 100) < 0))) /* TODO: check this limit */
     {
       s7_Int yval;
       if (!is_object(y))
@@ -16241,7 +16255,7 @@ static s7_pointer big_expt(s7_scheme *sc, s7_pointer args)
 	      return(s7_make_object(sc, big_ratio_tag, (void *)r));
 	    }
 	}
-      if (s7_is_ratio(x))
+      if (s7_is_ratio(x)) /* (here y is an integer) */
 	{
 	  mpz_t n, d;
 	  mpq_t *r;
@@ -16289,6 +16303,7 @@ static s7_pointer big_expt(s7_scheme *sc, s7_pointer args)
 	}
     }
 
+  /* PERHAPS: currently (expt 4 1/2) -> 2.0, but in the non-gmp version 2 (similarly for ratios) */ 
   if ((s7_is_number(x)) &&
       (s7_is_number(y)))
     {
@@ -17599,6 +17614,7 @@ static s7_pointer big_equal(s7_scheme *sc, s7_pointer args)
   return(sc->T);
 }
 
+/* TODO: need overflow tests for gcd lcm fracs */
 
 static s7_pointer big_gcd(s7_scheme *sc, s7_pointer args)
 {
@@ -17766,6 +17782,7 @@ static s7_pointer g_set_precision(s7_scheme *sc, s7_pointer args)
 
 /* TODO: log* in bug-finder
  * PERHAPS: hypot j0+ y0+ i0+?? erfc erf gamma lgamma eint? fac? [test the fft]
+ * PERHAPS: mpfr random or gmp random or even mpc random!
  *
  * j0: gsl_sf_bessel_J0|1|n([int n] double x)
  *     mpfr_j0|1|n (mpfr rop [long n] mpfr x rnd)
@@ -17985,6 +18002,7 @@ static void s7_gmp_init(s7_scheme *sc)
 
   add_max = (1 << (s7_int_bits - 1));
   mpfr_set_default_prec((mp_prec_t)128); 
+  mpc_set_default_prec((mp_prec_t)128);
 
   s7_symbol_set_value(sc, s7_make_symbol(sc, "pi"), big_pi(sc));
   g_provide(sc, make_list_1(sc, s7_make_symbol(sc, "gmp")));
@@ -18595,4 +18613,4 @@ s7_scheme *s7_init(void)
 
   return(sc);
 }
-/* TODO: check out the iir filter nan's */
+/* TODO: check out the iir filters -- can we push the order higher? does it make any musical difference? */
