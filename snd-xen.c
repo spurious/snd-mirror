@@ -1650,16 +1650,29 @@ static XEN g_dlerror(void)
 
 static XEN g_dlinit(XEN handle, XEN func)
 {
+  typedef void *(*snd_dl_func)(void);
+  void *proc;
+  proc = dlsym((void *)(XEN_UNWRAP_C_POINTER(handle)), XEN_TO_C_STRING(func));
+  if (proc == NULL) return(C_TO_XEN_STRING(dlerror()));
+  ((snd_dl_func)proc)();
+  return(XEN_TRUE);
+}
+
+#if 0
+static XEN g_dlinit(XEN handle, XEN func)
+{
   /* 'man dlopen' suggests: double (*cosine)(double); *(void **) (&cosine) = dlsym(handle, "cos"); printf("%f\n", (*cosine)(2.0)); */
   void (*proc)(void);
   /* typedef void *(*snd_dl_func)(void); */
   /* void *proc; */
   (*(void **)(&proc)) = dlsym((void *)(XEN_UNWRAP_C_POINTER(handle)), XEN_TO_C_STRING(func));
+  /* but this line triggers warnings from gcc */
   if (proc == NULL) return(C_TO_XEN_STRING(dlerror()));
   /* ((snd_dl_func)proc)(); */
   (*proc)();
   return(XEN_TRUE);
 }
+#endif
 
 
 #if MUS_DEBUGGING && HAVE_S7

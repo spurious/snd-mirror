@@ -962,7 +962,7 @@ XM_TYPE_PTR_1(GtkMenuBar_, GtkMenuBar*)
 #endif
 
 #if HAVE_GTK_LINK_BUTTON_NEW
-XM_TYPE_PTR_1(GtkRecentFilterInfo_, GtkRecentFilterInfo*)
+XM_TYPE_PTR(GtkRecentFilterInfo_, GtkRecentFilterInfo*)
 XM_TYPE_PTR(GtkLinkButton_, GtkLinkButton*)
 XM_TYPE_PTR(GtkRecentInfo_, GtkRecentInfo*)
 #define C_TO_XEN_GtkSensitivityType(Arg) C_TO_XEN_INT(Arg)
@@ -33644,7 +33644,7 @@ static XEN gxg_make_target_entry(XEN lst)
   for (i = 0; i < len; i++)
     {
       val = XEN_LIST_REF(lst, i);
-      targets[i].target = strdup(XEN_TO_C_STRING(XEN_LIST_REF(val, 0)));
+      targets[i].target = xen_strdup(XEN_TO_C_STRING(XEN_LIST_REF(val, 0)));
       targets[i].flags = (guint)XEN_TO_C_ULONG(XEN_LIST_REF(val, 1));
       targets[i].info = (guint)XEN_TO_C_ULONG(XEN_LIST_REF(val, 2));
     }
@@ -48496,7 +48496,7 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("10-Jan-09"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("13-Jan-09"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

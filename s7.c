@@ -4275,7 +4275,7 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
       (ex1))
     {
       s7_pointer result;
-      char old_e;
+      char old_e = 0;
 
       if (slash1)  /* not complex, so slash and "." is not a number */
 	return((want_symbol) ? s7_make_symbol(sc, string_downcase(q)) : sc->F);
@@ -5798,9 +5798,11 @@ static s7_pointer g_random(s7_scheme *sc, s7_pointer args)
 	r = (rng *)s7_object_value(state);
       else
 	{
+#if WITH_GMP
 	  if (object_type(state) == big_rng_tag)
 	    return(big_random(sc, args));
-	  else return(s7_wrong_type_arg_error(sc, "random", 2, state, "a random state as returned by make-random-state"));
+#endif
+	  return(s7_wrong_type_arg_error(sc, "random", 2, state, "a random state as returned by make-random-state"));
 	}
     }
   else
@@ -16005,7 +16007,7 @@ static s7_pointer big_log(s7_scheme *sc, s7_pointer args)
       if ((s7_is_real(p0)) &&
 	  ((!p1) || (s7_is_real(p1))))
 	{
-	  int p1_cmp;
+	  int p1_cmp = 0;
 	  p0 = promote_number(sc, T_BIG_REAL, p0);
 	  if (p1) 
 	    {
@@ -17912,6 +17914,7 @@ static s7_pointer make_big_random_state(s7_scheme *sc, s7_pointer args)
 static s7_pointer big_random(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer num, state;
+  state = sc->NIL;
 
   num = car(args); 
   if (cdr(args) != sc->NIL)

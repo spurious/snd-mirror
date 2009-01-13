@@ -201,7 +201,7 @@
 	"gchar***" "gfloat*" "gint8*" "gssize" "guint16*" "gunichar*" "GtkFileChooserButton*" "GtkPathPriorityType"
 	"GtkCellView*" "GValue*" "GtkAboutDialog*" "PangoAttrFilterFunc" "PangoScript*" "GtkMenuToolButton*"
 	"GtkClipboardImageReceivedFunc" "PangoMatrix*" "GdkTrapezoid*" "GdkPangoRenderer*" "PangoRenderPart"
-	"GLogFunc" "GError*" "guint32*" "GtkRecentFilterInfo*"
+	"GLogFunc" "GError*" "guint32*" ;"GtkRecentFilterInfo*"
 
 	"GConnectFlags" "GSignalFlags" "GSignalMatchType" 
 	;"GdkAxisUse" 

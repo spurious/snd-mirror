@@ -2,8 +2,9 @@ Snd 10.3
 
 Kjetil made improvements to the rt stuff.
 
-Michael Gogins and Rick figured out how to build sndlib in windows --
-  I hope I correctly incorporated their changes in the configure script.
+Michael Gogins, William Andrew Burnson, and Rick figured out how to 
+  build sndlib in windows -- I hope I correctly incorporated their 
+  changes in the configure script and various sources.
 
 
 added multiprecision math support for all scheme (s7) numeric

@@ -18,9 +18,9 @@
 
 
 (define with-continued-fraction-rationalize #t)                ; #f follows the (silly) Scheme spec
-(define with-bignums #t)                                       ; scheme integer has any number of bits
-(define with-bigfloats #t)                                     ; scheme real has any number of bits
-(define with-bignum-function #t)                               ;   this is a function that turns its string arg into a bignum
+(define with-bignums (provided? 'gmp))                         ; scheme integer has any number of bits
+(define with-bigfloats (provided? 'gmp))                       ; scheme real has any number of bits
+(define with-bignum-function (defined? 'bignum))               ;   this is a function that turns its string arg into a bignum
 (define with-64-bit-ints #t)                                   ; scheme integer has at least 64 bits
 (define with-hyperbolic-functions #t)                          ; sinh et al
 (define with-char-ops-with-more-than-2-args #t)                ; char<? et al restricted to 2 args?
