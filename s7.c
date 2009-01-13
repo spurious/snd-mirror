@@ -69,6 +69,7 @@
  *        *features*, *load-path*, *vector-print-length*
  *        define-constant, pi, most-positive-fixnum, most-negative-fixnum
  *        format (only the simple directives)
+ *        random for any numeric type and any numeric argument
  *
  * Mike Scholz provided the FreeBSD support (complex trig funcs, etc)
  *
@@ -241,6 +242,7 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <errno.h>
+#include <time.h>
 
 #if __cplusplus
   #include <cmath>
@@ -497,6 +499,8 @@ struct s7_scheme {
   int thread_id;
   int *thread_ids; /* global current top thread_id */
 #endif
+
+  void *default_rng;
 };
 
 
@@ -660,6 +664,8 @@ struct s7_scheme {
 #define dynamic_wind_body(p)          (p)->object.winder->body
 
 #define is_object(p)                  (type(p) == T_S7_OBJECT)
+#define object_type(p)                p->object.fobj.type
+
 
 #define NUM_INT      0
 #define NUM_RATIO    1
@@ -724,12 +730,16 @@ static int safe_strlen(const char *str)
 
 static char *s7_strdup(const char *str)
 {
-  char *newstr = NULL;
+  int len;
+  char *newstr;
   if (!str) return(NULL);
-  newstr = (char *)malloc(strlen(str) + 1);
-  if (newstr) strcpy(newstr, str);
+  len = strlen(str) + 1;
+  newstr = (char *)malloc(len * sizeof(char));
+  if (!newstr) return(NULL);
+  memcpy((void *)newstr, (void *)str, len);
   return(newstr);
 }
+
 
 
 static void s7_mark_object_1(s7_pointer p);
@@ -2062,6 +2072,10 @@ static s7_pointer g_call_with_exit(s7_scheme *sc, s7_pointer args)
   static s7_pointer big_subtract(s7_scheme *sc, s7_pointer args);
   static s7_pointer big_multiply(s7_scheme *sc, s7_pointer args);
   static s7_pointer big_divide(s7_scheme *sc, s7_pointer args);
+  static s7_pointer big_lcm(s7_scheme *sc, s7_pointer args);
+  static s7_pointer big_random(s7_scheme *sc, s7_pointer args);
+  static s7_pointer integer_to_big_integer(s7_scheme *sc, s7_Int val);
+  static s7_pointer ratio_to_big_ratio(s7_scheme *sc, s7_Int num, s7_Int den);
 #endif
 
 
@@ -2503,19 +2517,6 @@ static s7_Double num_to_real(num n)
 }
 
 
-s7_Double s7_number_to_real(s7_pointer x)
-{
-  switch (object_number_type(x))
-    {
-    case NUM_INT:   return((s7_Double)s7_integer(x));
-    case NUM_RATIO: return((s7_Double)s7_numerator(x) / (s7_Double)s7_denominator(x));
-    case NUM_REAL:
-    case NUM_REAL2: return(s7_real(x));
-    default:        return(s7_real_part(x));
-    }
-}
-
-
 static s7_Int num_to_numerator(num n)
 {
   if (n.type == NUM_RATIO)
@@ -2731,6 +2732,19 @@ static s7_pointer inexact_to_exact(s7_scheme *sc, s7_pointer x)
 
 
 #if (!WITH_GMP)
+s7_Double s7_number_to_real(s7_pointer x)
+{
+  switch (object_number_type(x))
+    {
+    case NUM_INT:   return((s7_Double)s7_integer(x));
+    case NUM_RATIO: return((s7_Double)s7_numerator(x) / (s7_Double)s7_denominator(x));
+    case NUM_REAL:
+    case NUM_REAL2: return(s7_real(x));
+    default:        return(s7_real_part(x));
+    }
+}
+
+
 s7_Int s7_numerator(s7_pointer x)
 {
   if (x->object.number.type == NUM_RATIO)
@@ -4096,9 +4110,7 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
 	    }
 	  else 
 	    {
-	      if (exponent_table[(int)c]) /* sigh -- what's the difference between these endless (e s f d l) exponent chars? 
-					   *   also spec says these things occur only in base 10, but that's stupid
-					   */
+	      if (exponent_table[(int)c])
 		{
 		  if (current_radix > 10)
 		    return((want_symbol) ? s7_make_symbol(sc, string_downcase(q)) : sc->F); 
@@ -5027,6 +5039,10 @@ static s7_pointer g_lcm(s7_scheme *sc, s7_pointer args)
       for (sc->x = args; sc->x != sc->NIL; sc->x = cdr(sc->x)) 
 	{
 	  n = c_lcm(n, s7_integer(car(sc->x)));
+#if WITH_GMP
+	  if ((n > LONG_MAX) || (n < LONG_MIN))
+	    return(big_lcm(sc, s7_cons(sc, integer_to_big_integer(sc, n), sc->x)));
+#endif
 	  if (n == 0)
 	    return(s7_make_integer(sc, 0));
 	}
@@ -5036,6 +5052,10 @@ static s7_pointer g_lcm(s7_scheme *sc, s7_pointer args)
   for (sc->x = args; sc->x != sc->NIL; sc->x = cdr(sc->x)) 
     {
       n = c_lcm(n, s7_numerator(car(sc->x)));
+#if WITH_GMP
+      if ((n > LONG_MAX) || (n < LONG_MIN))
+	return(big_lcm(sc, s7_cons(sc, ratio_to_big_ratio(sc, n, d), sc->x)));
+#endif
       if (n == 0)
 	return(s7_make_integer(sc, 0));
       d = c_gcd(d, s7_denominator(car(sc->x)));
@@ -5087,14 +5107,14 @@ static s7_pointer g_add_unchecked(s7_scheme *sc, s7_pointer args)
 	case NUM_INT:
 	  if ((integer(sc->v) > LONG_MAX) ||
 	      (integer(sc->v) < LONG_MIN))
-	    return(big_add(sc, s7_cons(sc, make_number(sc, sc->v), sc->x)));
+	    return(big_add(sc, s7_cons(sc, integer_to_big_integer(sc, integer(sc->v)), sc->x)));
 	  break;
 
 	case NUM_RATIO:
 	  if ((numerator(sc->v) > LONG_MAX) ||
 	      (denominator(sc->v) > LONG_MAX) ||
 	      (numerator(sc->v) < LONG_MIN))
-	    return(big_add(sc, s7_cons(sc, make_number(sc, sc->v), sc->x)));
+	    return(big_add(sc, s7_cons(sc, ratio_to_big_ratio(sc, (numerator(sc->v)), denominator(sc->v)), sc->x)));
 	  break;
 	}
 #endif
@@ -5130,14 +5150,14 @@ static s7_pointer g_subtract_unchecked(s7_scheme *sc, s7_pointer args)
 	case NUM_INT:
 	  if ((integer(sc->v) > LONG_MAX) ||
 	      (integer(sc->v) < LONG_MIN))
-	    return(big_subtract(sc, s7_cons(sc, make_number(sc, sc->v), sc->x)));
+	    return(big_subtract(sc, s7_cons(sc, integer_to_big_integer(sc, integer(sc->v)), sc->x)));
 	  break;
 
 	case NUM_RATIO:
 	  if ((numerator(sc->v) > LONG_MAX) ||
 	      (denominator(sc->v) > LONG_MAX) ||
 	      (numerator(sc->v) < LONG_MIN))
-	    return(big_subtract(sc, s7_cons(sc, make_number(sc, sc->v), sc->x)));
+	    return(big_subtract(sc, s7_cons(sc, ratio_to_big_ratio(sc, (numerator(sc->v)), denominator(sc->v)), sc->x)));
 	  break;
 	}
 #endif
@@ -5174,14 +5194,14 @@ static s7_pointer g_multiply_unchecked(s7_scheme *sc, s7_pointer args)
 	case NUM_INT:
 	  if ((integer(sc->v) > LONG_MAX) ||
 	      (integer(sc->v) < LONG_MIN))
-	    return(big_multiply(sc, s7_cons(sc, make_number(sc, sc->v), sc->x)));
+	    return(big_multiply(sc, s7_cons(sc, integer_to_big_integer(sc, integer(sc->v)), sc->x)));
 	  break;
 
 	case NUM_RATIO:
 	  if ((numerator(sc->v) > LONG_MAX) ||
 	      (denominator(sc->v) > LONG_MAX) ||
 	      (numerator(sc->v) < LONG_MIN))
-	    return(big_multiply(sc, s7_cons(sc, make_number(sc, sc->v), sc->x)));
+	    return(big_multiply(sc, s7_cons(sc, ratio_to_big_ratio(sc, (numerator(sc->v)), denominator(sc->v)), sc->x)));
 	  break;
 	}
 #endif
@@ -5217,14 +5237,14 @@ static s7_pointer g_divide_unchecked(s7_scheme *sc, s7_pointer args)
 	case NUM_INT:
 	  if ((integer(sc->v) > LONG_MAX) ||
 	      (integer(sc->v) < LONG_MIN))
-	    return(big_divide(sc, s7_cons(sc, make_number(sc, sc->v), sc->x)));
+	    return(big_divide(sc, s7_cons(sc, integer_to_big_integer(sc, integer(sc->v)), sc->x)));
 	  break;
 
 	case NUM_RATIO:
 	  if ((numerator(sc->v) > LONG_MAX) ||
 	      (denominator(sc->v) > LONG_MAX) ||
 	      (numerator(sc->v) < LONG_MIN))
-	    return(big_divide(sc, s7_cons(sc, make_number(sc, sc->v), sc->x)));
+	    return(big_divide(sc, s7_cons(sc, ratio_to_big_ratio(sc, (numerator(sc->v)), denominator(sc->v)), sc->x)));
 	  break;
 	}
 #endif
@@ -5666,6 +5686,159 @@ static s7_pointer g_ash(s7_scheme *sc, s7_pointer args)
     return(s7_make_integer(sc, arg1 << arg2));
   return(s7_make_integer(sc, arg1 >> -arg2));
 }
+
+
+/* random numbers.  The simple version used in clm.c is probably adequate,
+ *   but here I'll use Marsaglia's MWC algorithm as an experiment.
+ *     (random num) -> a number (0..num), if num == 0 return 0, use global default state
+ *     (random num state) -> same but use this state
+ *     (make-random-state seed) -> make a new state
+ *     (make-random-state seed type) ??
+ */
+
+typedef struct {
+  unsigned long long int ran_seed, ran_carry;
+} rng;
+
+static int rng_tag = 0;
+
+#if WITH_GMP
+static int big_rng_tag = 0;
+#endif
+
+static char *print_rng(s7_scheme *sc, void *val)
+{
+  char *buf;
+  rng *r = (rng *)val;
+  buf = (char *)malloc(64 * sizeof(char));
+  snprintf(buf, 64, "#<rng %ud %ud>", (unsigned int)(r->ran_seed), (unsigned int)(r->ran_carry));
+  return(buf);
+}
+
+
+static void free_rng(void *val)
+{
+  free(val);
+}
+
+
+static bool equal_rng(void *val1, void *val2)
+{
+  return(val1 == val2);
+}
+
+  
+static s7_pointer g_make_random_state(s7_scheme *sc, s7_pointer args)
+{
+  #define H_make_random_state "(make-random-state seed) returns a new random number state initialized with 'seed'"
+  rng *r;
+  r = (rng *)calloc(1, sizeof(rng));
+  r->ran_seed = s7_integer(car(args));
+  r->ran_carry = (unsigned int)time(NULL); /* TODO: not time here! */
+  return(s7_make_object(sc, rng_tag, (void *)r));
+}
+
+
+#if HAVE_PTHREADS
+static pthread_mutex_t rng_lock = PTHREAD_MUTEX_INITIALIZER;
+#endif
+  
+
+static double next_random(rng *r)
+{
+  /* The multiply-with-carry generator for 32-bit integers: 
+   *        x(n)=a*x(n-1) + carry mod 2^32 
+   * Choose multiplier a from this list: 
+   *   1791398085 1929682203 1683268614 1965537969 1675393560 
+   *   1967773755 1517746329 1447497129 1655692410 1606218150 
+   *   2051013963 1075433238 1557985959 1781943330 1893513180 
+   *   1631296680 2131995753 2083801278 1873196400 1554115554 
+   * ( or any 'a' for which both a*2^32-1 and a*2^31-1 are prime) 
+   */
+  double result;
+  unsigned long long int temp;
+  #define RAN_MULT 2131995753UL
+
+#if HAVE_PTHREADS
+  pthread_mutex_lock(&rng_lock);
+#endif
+
+  temp = r->ran_seed * RAN_MULT + r->ran_carry;
+  r->ran_seed = (temp & 0xffffffffUL);
+  r->ran_carry = (temp >> 32);
+  result = (double)((unsigned int)(r->ran_seed)) / 4294967295.0;
+
+  /* (let ((mx 0) (mn 1000)) (do ((i 0 (+ i 1))) ((= i 10000)) (let ((val (random 123))) (set! mx (max mx val)) (set! mn (min mn val)))) (list mn mx)) */
+
+#if HAVE_PTHREADS
+  pthread_mutex_unlock(&rng_lock);
+#endif
+
+  return(result);
+}
+
+
+static s7_pointer g_random(s7_scheme *sc, s7_pointer args)
+{
+  #define H_random "(random num :optional state) returns a random number between 0 and num (0 if num=0)."
+  s7_pointer num, state;
+  rng *r;
+  double dnum;
+  
+  num = car(args);
+  if (!s7_is_number(num))
+    return(s7_wrong_type_arg_error(sc, "random", 1, num, "a number"));
+
+  if (cdr(args) != sc->NIL)
+    {
+      state = cadr(args);
+      if (!is_object(state))
+	return(s7_wrong_type_arg_error(sc, "random", 2, state, "a random state as returned by make-random-state"));
+      if (object_type(state) != rng_tag)
+	r = (rng *)s7_object_value(state);
+      else
+	{
+	  if (object_type(state) == big_rng_tag)
+	    return(big_random(sc, args));
+	  else return(s7_wrong_type_arg_error(sc, "random", 2, state, "a random state as returned by make-random-state"));
+	}
+    }
+  else
+    {
+      if (!sc->default_rng)
+	{
+	  sc->default_rng = (rng *)calloc(1, sizeof(rng));
+	  ((rng *)(sc->default_rng))->ran_seed = (unsigned int)time(NULL);
+	  ((rng *)(sc->default_rng))->ran_carry = 1675393560; /* TODO: get carry */
+	}
+      r = (rng *)(sc->default_rng);
+    }
+
+  dnum = s7_number_to_real(num);
+
+  switch (object_number_type(num))
+    {
+    case NUM_INT:
+      return(s7_make_integer(sc, (s7_Int)(dnum * next_random(r))));
+
+    case NUM_RATIO:
+      {
+	s7_Int numer = 0, denom = 1;
+	c_rationalize(dnum * next_random(r), 1e-6, &numer, &denom);
+	return(s7_make_ratio(sc, numer, denom));
+      }
+
+    case NUM_REAL:
+    case NUM_REAL2:
+      return(s7_make_real(sc, dnum * next_random(r)));
+
+    default: 
+      return(s7_make_complex(sc, dnum * next_random(r), dnum * next_random(r)));
+    }
+
+  return(sc->F);
+}
+
 
 
 
@@ -9602,8 +9775,6 @@ void *s7_object_value(s7_pointer obj)
   return(obj->object.fobj.value);
 }
 
-
-#define object_type(p) p->object.fobj.type
 
 int s7_object_type(s7_pointer obj)
 {
@@ -13951,6 +14122,7 @@ static s7_scheme *clone_s7(s7_scheme *sc, s7_pointer vect)
   new_sc->backtrace_ops = NULL;
   new_sc->backtrace_args = NULL;
   new_sc->backtrace_thread_ids = NULL;
+  new_sc->default_rng = NULL;
 
   return(new_sc);
 }
@@ -13963,6 +14135,7 @@ static s7_scheme *close_s7(s7_scheme *sc)
 #if WITH_READ_LINE
   if (sc->read_line_buf) free(sc->read_line_buf);
 #endif
+  if (sc->default_rng) free(sc->default_rng);
   free(sc);
   return(NULL);
 }
@@ -14511,6 +14684,29 @@ static s7_Int big_integer_to_s7_Int(mpz_t n)
 }
 
 
+s7_Double s7_number_to_real(s7_pointer x)
+{
+  if (is_object(x))
+    {
+      if (object_type(x) == big_real_tag)
+	return((s7_Double)mpfr_get_d(S7_BIG_REAL(x), GMP_RNDN));
+      if (object_type(x) == big_integer_tag)
+	return((s7_Double)big_integer_to_s7_Int(S7_BIG_INTEGER(x)));
+      if (object_type(x) == big_ratio_tag)
+	return((s7_Double)((double)big_integer_to_s7_Int(mpq_numref(S7_BIG_RATIO(x))) / (double)big_integer_to_s7_Int(mpq_denref(S7_BIG_RATIO(x)))));
+    }
+
+  switch (object_number_type(x))
+    {
+    case NUM_INT:   return((s7_Double)s7_integer(x));
+    case NUM_RATIO: return((s7_Double)s7_numerator(x) / (s7_Double)s7_denominator(x));
+    case NUM_REAL:
+    case NUM_REAL2: return(s7_real(x));
+    default:        return(s7_real_part(x));
+    }
+}
+
+
 s7_Int s7_numerator(s7_pointer x)
 {
   if (is_object(x))
@@ -14568,9 +14764,6 @@ s7_Double s7_imag_part(s7_pointer x)
   return(num_to_imag_part(x->object.number));
 }
 
-
-/* TODO: s7_is_eqv s7_is_equal rationalize? non-real to s7_real
- */
 
 s7_Int s7_integer(s7_pointer p)
 {
@@ -15092,7 +15285,7 @@ static s7_Int add_max = 0;
 static s7_pointer big_add(s7_scheme *sc, s7_pointer args)
 {
   int i, result_type = NUM_INT;
-  s7_pointer result;
+  s7_pointer x, result;
 
   if (args == sc->NIL)
     return(make_number(sc, small_int_as_num(sc, 0)));
@@ -15100,66 +15293,29 @@ static s7_pointer big_add(s7_scheme *sc, s7_pointer args)
   if ((cdr(args) == sc->NIL) && (s7_is_number(car(args))))
     return(car(args));
 
-  for (i = 1, sc->x = args; sc->x != sc->NIL; i++, sc->x = cdr(sc->x)) 
+  for (i = 1, x = args; x != sc->NIL; i++, x = cdr(x)) 
     {
       s7_pointer p;
-      p = car(sc->x);
+      p = car(x);
       if (type(p) != T_NUMBER)
 	{
 	  if (!IS_BIG(p))
 	    return(s7_wrong_type_arg_error(sc, "+", i, p, "a number"));
 	  else result_type |= (1 << (object_type(p) * 4));
 	}
-      else
-	{
-	  result_type |= object_number_type(p);
-	  switch (object_number_type(p))
-	    {
-	    case NUM_INT:
-	      {
-		s7_Int val;
-		val = s7_integer(p);
-		if ((val > add_max) || (val < -add_max))
-		  result_type |= (1 << (big_integer_tag * 4));
-	      }
-	      break;
-
-	    case NUM_RATIO:
-	      {
-		s7_Int val;
-		val = s7_numerator(p);
-		if ((val > add_max) || (val < -add_max))
-		  result_type |= (1 << (big_ratio_tag * 4));
-		else
-		  {
-		    val = s7_denominator(p);
-		    if ((val > add_max) || (val < -add_max))
-		      result_type |= (1 << (big_ratio_tag * 4));
-		  }
-	      }
-	      break;
-
-	    case NUM_REAL:
-	    case NUM_REAL2:
-	      /* are there special cases here? */
-	      break;
-
-	    default:
-	      break;
-	    }
-	}
+      else result_type |= object_number_type(p);
     }
 
-  if (result_type < (1 << 4)) /* we should ensure that none of the big_*_tags are 0 */
+  if (result_type < (1 << 4)) 
     return(g_add_unchecked(sc, args));
 
   result_type = canonicalize_result_type(result_type);
   result = copy_and_promote_number(sc, result_type, car(args));
 
-  for (sc->x = cdr(args); sc->x != sc->NIL; sc->x = cdr(sc->x)) 
+  for (x = cdr(args); x != sc->NIL; x = cdr(x)) 
     {
       s7_pointer arg;
-      arg = promote_number(sc, result_type, car(sc->x));
+      arg = promote_number(sc, result_type, car(x));
       switch (result_type)
 	{
 	case T_BIG_INTEGER:
@@ -15240,7 +15396,7 @@ static s7_pointer big_negate(s7_scheme *sc, s7_pointer args)
 static s7_pointer big_subtract(s7_scheme *sc, s7_pointer args)
 {
   int i, result_type = NUM_INT;
-  s7_pointer result;
+  s7_pointer x, result;
 
   if (!s7_is_number(car(args)))
     return(s7_wrong_type_arg_error(sc, "-", 1, car(args), "a number"));
@@ -15248,66 +15404,29 @@ static s7_pointer big_subtract(s7_scheme *sc, s7_pointer args)
   if (cdr(args) == sc->NIL) 
     return(big_negate(sc, args));
 
-  for (i = 1, sc->x = args; sc->x != sc->NIL; i++, sc->x = cdr(sc->x)) 
+  for (i = 1, x = args; x != sc->NIL; i++, x = cdr(x)) 
     {
       s7_pointer p;
-      p = car(sc->x);
+      p = car(x);
       if (type(p) != T_NUMBER)
 	{
 	  if (!IS_BIG(p))
 	    return(s7_wrong_type_arg_error(sc, "-", i, p, "a number"));
 	  else result_type |= (1 << (object_type(p) * 4));
 	}
-      else
-	{
-	  result_type |= object_number_type(p);
-	  switch (object_number_type(p))
-	    {
-	    case NUM_INT:
-	      {
-		s7_Int val;
-		val = s7_integer(p);
-		if ((val > add_max) || (val < -add_max))
-		  result_type |= (1 << (big_integer_tag * 4));
-	      }
-	      break;
-
-	    case NUM_RATIO:
-	      {
-		s7_Int val;
-		val = s7_numerator(p);
-		if ((val > add_max) || (val < -add_max))
-		  result_type |= (1 << (big_ratio_tag * 4));
-		else
-		  {
-		    val = s7_denominator(p);
-		    if ((val > add_max) || (val < -add_max))
-		      result_type |= (1 << (big_ratio_tag * 4));
-		  }
-	      }
-	      break;
-
-	    case NUM_REAL:
-	    case NUM_REAL2:
-	      /* are there special cases here? */
-	      break;
-
-	    default:
-	      break;
-	    }
-	}
+      else result_type |= object_number_type(p);
     }
 
-  if (result_type < (1 << 4)) /* we should ensure that none of the big_*_tags are 0 */
+  if (result_type < (1 << 4)) 
     return(g_subtract_unchecked(sc, args));
 
   result_type = canonicalize_result_type(result_type);
   result = copy_and_promote_number(sc, result_type, car(args));
 
-  for (sc->x = cdr(args); sc->x != sc->NIL; sc->x = cdr(sc->x)) 
+  for (x = cdr(args); x != sc->NIL; x = cdr(x)) 
     {
       s7_pointer arg;
-      arg = promote_number(sc, result_type, car(sc->x));
+      arg = promote_number(sc, result_type, car(x));
       switch (result_type)
 	{
 	case T_BIG_INTEGER:
@@ -15343,7 +15462,7 @@ static s7_pointer big_subtract(s7_scheme *sc, s7_pointer args)
 static s7_pointer big_multiply(s7_scheme *sc, s7_pointer args)
 {
   int i, result_type = NUM_INT;
-  s7_pointer result;
+  s7_pointer x, result;
 
   if (args == sc->NIL)
     return(make_number(sc, small_int_as_num(sc, 1)));
@@ -15351,66 +15470,29 @@ static s7_pointer big_multiply(s7_scheme *sc, s7_pointer args)
   if ((cdr(args) == sc->NIL) && (s7_is_number(car(args))))
     return(car(args));
 
-  for (i = 1, sc->x = args; sc->x != sc->NIL; i++, sc->x = cdr(sc->x)) 
+  for (i = 1, x = args; x != sc->NIL; i++, x = cdr(x)) 
     {
       s7_pointer p;
-      p = car(sc->x);
+      p = car(x);
       if (type(p) != T_NUMBER)
 	{
 	  if (!IS_BIG(p))
 	    return(s7_wrong_type_arg_error(sc, "*", i, p, "a number"));
 	  else result_type |= (1 << (object_type(p) * 4));
 	}
-      else
-	{
-	  result_type |= object_number_type(p);
-	  switch (object_number_type(p))
-	    {
-	    case NUM_INT:
-	      {
-		s7_Int val;
-		val = s7_integer(p);
-		if ((val > add_max) || (val < -add_max))
-		  result_type |= (1 << (big_integer_tag * 4));
-	      }
-	      break;
-
-	    case NUM_RATIO:
-	      {
-		s7_Int val;
-		val = s7_numerator(p);
-		if ((val > add_max) || (val < -add_max))
-		  result_type |= (1 << (big_ratio_tag * 4));
-		else
-		  {
-		    val = s7_denominator(p);
-		    if ((val > add_max) || (val < -add_max))
-		      result_type |= (1 << (big_ratio_tag * 4));
-		  }
-	      }
-	      break;
-
-	    case NUM_REAL:
-	    case NUM_REAL2:
-	      /* are there special cases here? */
-	      break;
-
-	    default:
-	      break;
-	    }
-	}
+      else result_type |= object_number_type(p);
     }
 
-  if (result_type < (1 << 4)) /* we should ensure that none of the big_*_tags are 0 */
+  if (result_type < (1 << 4))
     return(g_multiply_unchecked(sc, args));
 
   result_type = canonicalize_result_type(result_type);
   result = copy_and_promote_number(sc, result_type, car(args));
 
-  for (sc->x = cdr(args); sc->x != sc->NIL; sc->x = cdr(sc->x)) 
+  for (x = cdr(args); x != sc->NIL; x = cdr(x)) 
     {
       s7_pointer arg;
-      arg = promote_number(sc, result_type, car(sc->x));
+      arg = promote_number(sc, result_type, car(x));
       switch (result_type)
 	{
 	case T_BIG_INTEGER:
@@ -15514,7 +15596,7 @@ static s7_pointer big_invert(s7_scheme *sc, s7_pointer args)
 static s7_pointer big_divide(s7_scheme *sc, s7_pointer args)
 {
   int i, result_type = NUM_INT;
-  s7_pointer divisor, result;
+  s7_pointer x, divisor, result;
 
   if (!s7_is_number(car(args)))
     return(s7_wrong_type_arg_error(sc, "/", 1, car(args), "a number"));
@@ -15522,66 +15604,29 @@ static s7_pointer big_divide(s7_scheme *sc, s7_pointer args)
   if (cdr(args) == sc->NIL) 
     return(big_invert(sc, args));
 
-  for (i = 1, sc->x = args; sc->x != sc->NIL; i++, sc->x = cdr(sc->x)) 
+  for (i = 1, x = args; x != sc->NIL; i++, x = cdr(x)) 
     {
       s7_pointer p;
-      p = car(sc->x);
+      p = car(x);
       if (type(p) != T_NUMBER)
 	{
 	  if (!IS_BIG(p))
 	    return(s7_wrong_type_arg_error(sc, "/", i, p, "a number"));
 	  else result_type |= (1 << (object_type(p) * 4));
 	}
-      else
-	{
-	  result_type |= object_number_type(p);
-	  switch (object_number_type(p))
-	    {
-	    case NUM_INT:
-	      {
-		s7_Int val;
-		val = s7_integer(p);
-		if ((val > add_max) || (val < -add_max))
-		  result_type |= (1 << (big_integer_tag * 4));
-	      }
-	      break;
-
-	    case NUM_RATIO:
-	      {
-		s7_Int val;
-		val = s7_numerator(p);
-		if ((val > add_max) || (val < -add_max))
-		  result_type |= (1 << (big_ratio_tag * 4));
-		else
-		  {
-		    val = s7_denominator(p);
-		    if ((val > add_max) || (val < -add_max))
-		      result_type |= (1 << (big_ratio_tag * 4));
-		  }
-	      }
-	      break;
-
-	    case NUM_REAL:
-	    case NUM_REAL2:
-	      /* are there special cases here? */
-	      break;
-
-	    default:
-	      break;
-	    }
-	}
+      else result_type |= object_number_type(p);
     }
 
-  if (result_type < (1 << 4)) /* we should ensure that none of the big_*_tags are 0 */
+  if (result_type < (1 << 4))
     return(g_divide_unchecked(sc, args));
 
   result_type = canonicalize_result_type(result_type);
   divisor = copy_and_promote_number(sc, result_type, cadr(args));
 
-  for (sc->x = cddr(args); sc->x != sc->NIL; sc->x = cdr(sc->x)) 
+  for (x = cddr(args); x != sc->NIL; x = cdr(x)) 
     {
       s7_pointer arg;
-      arg = promote_number(sc, result_type, car(sc->x));
+      arg = promote_number(sc, result_type, car(x));
       switch (result_type)
 	{
 	case T_BIG_INTEGER:
@@ -15643,9 +15688,6 @@ static s7_pointer big_divide(s7_scheme *sc, s7_pointer args)
 
   return(result);
 }
-
-/* TODO: clean up all the repeated code! */
-
 
 
 static s7_pointer big_numerator(s7_scheme *sc, s7_pointer args)
@@ -15895,8 +15937,6 @@ static s7_pointer big_make_rectangular(s7_scheme *sc, s7_pointer args)
     }
   return(g_make_rectangular(sc, args));
 }
-
-/* TODO: s7_number_to_real for bigs */
 
 
 static s7_pointer big_make_polar(s7_scheme *sc, s7_pointer args)
@@ -17645,7 +17685,6 @@ static s7_pointer big_equal(s7_scheme *sc, s7_pointer args)
   return(sc->T);
 }
 
-/* TODO: need overflow tests for gcd lcm fracs */
 
 static s7_pointer big_gcd(s7_scheme *sc, s7_pointer args)
 {
@@ -17715,16 +17754,17 @@ static s7_pointer big_gcd(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer big_lcm(s7_scheme *sc, s7_pointer args)
 {
+  s7_pointer x;
   int i;
   bool rats = false, bigs = false;
 
-  for (i = 1, sc->x = args; sc->x != sc->NIL; i++, sc->x = cdr(sc->x)) 
-    if (!s7_is_rational(car(sc->x)))
-      return(s7_wrong_type_arg_error(sc, "lcm", i, car(sc->x), "an integer or ratio"));
+  for (i = 1, x = args; x != sc->NIL; i++, x = cdr(x)) 
+    if (!s7_is_rational(car(x)))
+      return(s7_wrong_type_arg_error(sc, "lcm", i, car(x), "an integer or ratio"));
     else 
       {
-	rats = ((rats) || (!s7_is_integer(car(sc->x))));
-	bigs = ((bigs) || (is_object(car(sc->x))));
+	rats = ((rats) || (!s7_is_integer(car(x))));
+	bigs = ((bigs) || (is_object(car(x))));
       }
   
   if (!bigs)
@@ -17736,9 +17776,9 @@ static s7_pointer big_lcm(s7_scheme *sc, s7_pointer args)
       n = (mpz_t *)malloc(sizeof(mpz_t));
       mpz_init(*n);
       mpz_set_ui(*n, 1);
-      for (sc->x = args; sc->x != sc->NIL; sc->x = cdr(sc->x)) 
+      for (x = args; x != sc->NIL; x = cdr(x)) 
 	{
-	  mpz_lcm(*n, *n, S7_BIG_INTEGER(promote_number(sc, T_BIG_INTEGER, car(sc->x))));
+	  mpz_lcm(*n, *n, S7_BIG_INTEGER(promote_number(sc, T_BIG_INTEGER, car(x))));
 	  if (mpz_cmp_ui(*n, 0) == 0)
 	    {
 	      mpz_clear(*n);
@@ -17761,9 +17801,9 @@ static s7_pointer big_lcm(s7_scheme *sc, s7_pointer args)
 	  return(s7_make_integer(sc, 0));
 	}
       mpz_init_set(d, mpq_denref(S7_BIG_RATIO(rat)));
-      for (sc->x = cdr(args); sc->x != sc->NIL; sc->x = cdr(sc->x))
+      for (x = cdr(args); x != sc->NIL; x = cdr(x))
 	{
-	  rat = promote_number(sc, T_BIG_RATIO, car(sc->x));
+	  rat = promote_number(sc, T_BIG_RATIO, car(x));
 	  mpz_lcm(n, n, mpq_numref(S7_BIG_RATIO(rat)));
 	  if (mpz_cmp_ui(n, 0) == 0)
 	    {
@@ -17811,13 +17851,124 @@ static s7_pointer g_set_precision(s7_scheme *sc, s7_pointer args)
   return(car(args));
 }
 
-/* TODO: log* in bug-finder
+/* TODO: log* in bug-finder, tests of random
  * PERHAPS: hypot j0+ y0+ i0+?? erfc erf gamma lgamma eint? fac? [test the fft]
- * PERHAPS: mpfr random or gmp random or even mpc random!
- *
  * j0: gsl_sf_bessel_J0|1|n([int n] double x)
  *     mpfr_j0|1|n (mpfr rop [long n] mpfr x rnd)
  */
+
+typedef struct {
+  gmp_randstate_t state;
+} big_rng;
+
+
+
+static char *print_big_rng(s7_scheme *sc, void *val)
+{
+  char *buf;
+  big_rng *r = (big_rng *)val;
+  buf = (char *)malloc(64 * sizeof(char));
+  snprintf(buf, 64, "#<big-rng %p>", r);
+  return(buf);
+}
+
+
+static void free_big_rng(void *val)
+{
+  big_rng *r = (big_rng *)val;
+  gmp_randclear(r->state);
+  free(r);
+}
+
+
+static bool equal_big_rng(void *val1, void *val2)
+{
+  return(val1 == val2);
+}
+
+  
+static s7_pointer make_big_random_state(s7_scheme *sc, s7_pointer args)
+{
+  #define H_make_random_state "(make-random-state seed) returns a new random number state initialized with 'seed'"
+  big_rng *r;
+  s7_pointer seed;
+
+  seed = car(args);
+  if (!s7_is_integer(seed))
+    return(s7_wrong_type_arg_error(sc, "random", 1, seed, "an integer"));
+
+  if (is_object(seed))
+    {
+      r = (big_rng *)calloc(1, sizeof(big_rng));
+      gmp_randinit_default(r->state);
+      gmp_randseed(r->state, S7_BIG_INTEGER(seed));
+      return(s7_make_object(sc, big_rng_tag, (void *)r));
+    }
+
+  return(g_make_random_state(sc, args));
+}
+
+
+static s7_pointer big_random(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer num, state;
+
+  num = car(args); 
+  if (cdr(args) != sc->NIL)
+    {
+      state = cadr(args);
+      if ((is_object(state)) &&
+	  (object_type(state) == big_rng_tag))
+	{
+	  big_rng *r;
+	  r = (big_rng *)s7_object_value(state);
+	  if (object_type(num) == big_integer_tag)
+	    {
+	      mpz_t *n;
+	      n = (mpz_t *)malloc(sizeof(mpz_t));
+	      mpz_init(*n);
+	      mpz_urandomm(*n, r->state, S7_BIG_INTEGER(num));
+	      return(s7_make_object(sc, big_integer_tag, (void *)n));
+	    }
+	  /* TODO: big ratio random */
+	  if (object_type(num) == big_real_tag)
+	    {
+	      mpfr_t *n;
+	      n = (mpfr_t *)malloc(sizeof(mpfr_t));
+	      mpfr_init_set_ui(*n, 1, GMP_RNDN);
+	      mpfr_urandomb(*n, r->state);
+	      mpfr_mul(*n, *n, S7_BIG_REAL(num), GMP_RNDN);
+	      return(s7_make_object(sc, big_real_tag, (void *)n));
+	    }
+	  if (object_type(num) == big_complex_tag)
+	    {
+	      mpc_t *n;
+	      n = (mpc_t *)malloc(sizeof(mpc_t));
+	      mpc_init(*n);
+	      mpc_urandom(*n, r->state);
+	      mpfr_mul(MPC_RE(*n), MPC_RE(*n), MPC_RE(S7_BIG_COMPLEX(num)), GMP_RNDN);
+	      mpfr_mul(MPC_IM(*n), MPC_IM(*n), MPC_IM(S7_BIG_COMPLEX(num)), GMP_RNDN);
+	      return(s7_make_object(sc, big_complex_tag, (void *)n));
+	    }
+	}
+    }
+
+  if (is_object(num))
+    {
+      if (object_type(num) == big_real_tag)
+	num = s7_make_real(sc, (s7_Double)mpfr_get_d(S7_BIG_REAL(num), GMP_RNDN));
+      if (object_type(num) == big_integer_tag)
+	num = s7_make_integer(sc, big_integer_to_s7_Int(S7_BIG_INTEGER(num)));
+      if (object_type(num) == big_ratio_tag)
+	num = s7_make_ratio(sc, big_integer_to_s7_Int(mpq_numref(S7_BIG_RATIO(num))), big_integer_to_s7_Int(mpq_denref(S7_BIG_RATIO(num))));
+
+      if (is_object(state))
+	return(g_random(sc, make_list_2(sc, num, state)));
+
+      return(g_random(sc, make_list_1(sc, num)));
+    }
+  return(g_random(sc, args));
+}
 
 
 /* fft
@@ -18025,6 +18176,10 @@ static void s7_gmp_init(s7_scheme *sc)
   s7_define_function(sc, "acosh",               big_acosh,            1, 0, false, H_acosh);
   s7_define_function(sc, "atanh",               big_atanh,            1, 0, false, H_atanh);
 
+  big_rng_tag = s7_new_type("big-random-number-generator", print_big_rng, free_big_rng, equal_big_rng, NULL, NULL, NULL);
+  s7_define_function(sc, "random",              big_random,           1, 1, false, H_random);
+  s7_define_function(sc, "make-random-state",   make_big_random_state,1, 0, false, H_make_random_state);
+
   s7_define_function(sc, "bignum-fft",          bignum_fft,           3, 1, false, H_bignum_fft);
   s7_define_function(sc, "bignum",              g_bignum,             1, 0, false, H_bignum);
   s7_define_function(sc, "bignum?",             g_is_bignum,          1, 0, false, H_is_bignum);
@@ -18109,6 +18264,7 @@ s7_scheme *s7_init(void)
   sc->y = sc->NIL;
   sc->z = sc->NIL;
   sc->error_exiter = NULL;
+  sc->default_rng = NULL;
   
   sc->heap_size = INITIAL_HEAP_SIZE;
   sc->heap = (s7_pointer *)malloc((sc->heap_size + 1) * sizeof(s7_pointer));
@@ -18421,6 +18577,10 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "lognot",                  g_lognot,                  1, 0, false, H_lognot);
   s7_define_function(sc, "ash",                     g_ash,                     2, 0, false, H_ash);
   
+  rng_tag = s7_new_type("random-number-generator", print_rng, free_rng, equal_rng, NULL, NULL, NULL);
+  s7_define_function(sc, "random",                  g_random,                  1, 1, false, H_random);
+  s7_define_function(sc, "make-random-state",       g_make_random_state,       1, 0, false, H_make_random_state);
+
   
   s7_define_function(sc, "char-upcase",             g_char_upcase,             1, 0, false, H_char_upcase);
   s7_define_function(sc, "char-downcase",           g_char_downcase,           1, 0, false, H_char_downcase);

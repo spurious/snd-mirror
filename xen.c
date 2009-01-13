@@ -1592,13 +1592,13 @@ double xen_to_c_double(XEN a)
 }
 
 
-int xen_to_c_int(XEN a) 
+off_t xen_to_c_int(XEN a) 
 {
   if (s7_is_integer(a))
-    return((int)s7_integer(a));
+    return((off_t)s7_integer(a));
   if (s7_is_rational(a))
-    return((int)(s7_numerator(a) / s7_denominator(a)));
-  return((int)s7_real(a));
+    return((off_t)(s7_numerator(a) / s7_denominator(a)));
+  return((off_t)s7_real(a));
 }
 
 

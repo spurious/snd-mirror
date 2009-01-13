@@ -2776,13 +2776,6 @@ static XEN g_gsl_roots(XEN poly)
 
 
 #if HAVE_S7
-static XEN g_random(XEN val)
-{
-  if (XEN_INTEGER_P(val))
-    return(C_TO_XEN_INT(mus_irandom(XEN_TO_C_INT(val))));
-  return(C_TO_XEN_DOUBLE(mus_frandom(XEN_TO_C_DOUBLE(val))));
-}
-
 static XEN g_ftell(XEN fd)
 {
   return(C_TO_XEN_OFF_T(lseek(XEN_TO_C_INT(fd), 0, SEEK_CUR)));
@@ -3073,7 +3066,6 @@ XEN_NARGIFY_1(g_i0_w, g_i0)
 #endif
 
 #if HAVE_S7
-  XEN_NARGIFY_1(g_random_w, g_random)
   XEN_NARGIFY_1(g_ftell_w, g_ftell)
 #endif
 
@@ -3408,7 +3400,6 @@ void g_xen_initialize(void)
   XEN_DEFINE_PROCEDURE("tmpnam",                 g_tmpnam_w,                 0, 0, 0, H_localtime);
   XEN_DEFINE_PROCEDURE("localtime",              g_localtime_w,              1, 0, 0, H_localtime);
   XEN_DEFINE_PROCEDURE("current-time",           g_current_time_w,           0, 0, 0, H_current_time);
-  XEN_DEFINE_PROCEDURE("random",                 g_random_w,                 1, 0, 0, "(random arg): random number between 0 and arg ");
   XEN_DEFINE_PROCEDURE("ftell",                  g_ftell_w,                  1, 0, 0, "(ftell fd): lseek");
 #endif
 

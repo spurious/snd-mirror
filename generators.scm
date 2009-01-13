@@ -433,11 +433,13 @@
 
     (set! (nxy1cos-angle gen) (+ x fm (nxy1cos-frequency gen)))
 
-    (max -1.0
-	 (min 1.0
-	      (/ (* (sin (* n y))
-		    (sin (+ x (* (- n 0.5) y))))
-		 (* 2 n den))))))
+    (if (< (abs den) nearly-zero)
+	-1.0
+	(max -1.0
+	     (min 1.0
+		  (/ (* (sin (* n y))
+			(sin (+ x (* (- n 0.5) y))))
+		     (* 2 n den)))))))
 
 #|
 (with-sound (:clipped #f :statistics #t :play #t)

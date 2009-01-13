@@ -14097,11 +14097,13 @@ to Scheme and is equivalent to (thunk)."
 
   {
     XEN result;
+    XEN_ASSERT_TYPE(XEN_PROCEDURE_P(proc_and_code) && (XEN_REQUIRED_ARGS_OK(proc_and_code, 0)), proc_and_code, XEN_ONLY_ARG, S_run, "a thunk");
 
     code = XEN_LOCAL_GC_PROTECT(XEN_CONS(XEN_APPEND(XEN_CONS(C_STRING_TO_XEN_SYMBOL("lambda"), 
 							     XEN_EMPTY_LIST),
 						    XEN_CAR(proc_and_code)),
 					 XEN_CDR(proc_and_code)));
+
     pt = form_to_ptree(code);
     if (pt)
       result = eval_ptree_to_xen(pt);

@@ -2064,7 +2064,7 @@ XEN xen_define_variable(const char *name, XEN value);
 void xen_s7_ignore(s7_function func); /* squelch compiler warnings */
 const char *xen_s7_object_help(XEN sym);
 double xen_to_c_double(XEN a);
-int xen_to_c_int(XEN a);
+off_t xen_to_c_int(XEN a);
 double xen_to_c_double_or_else(XEN a, double b);
 void xen_s7_set_repl_prompt(const char *new_prompt);
 #if !(defined(__GNUC__) && (!(defined(__cplusplus))))
