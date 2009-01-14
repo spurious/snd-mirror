@@ -2082,6 +2082,8 @@ static s7_pointer g_call_with_exit(s7_scheme *sc, s7_pointer args)
 #define s7_Int_abs(x) (x >= 0 ? x : -x)
 /* can't use abs even in gcc -- it doesn't work with long long ints! */
 #define s7_Double_abs(x) fabs(x)
+#define s7_fabsl(x) ((x < 0.0) ? -x : x)
+/* fabsl doesn't exist in netBSD! */
 
 
 #if WITH_COMPLEX
@@ -5003,7 +5005,7 @@ static s7_pointer g_round(s7_scheme *sc, s7_pointer args)
 
 	truncated = numerator(sc->x->object.number) / denominator(sc->x->object.number);
 	remains = numerator(sc->x->object.number) % denominator(sc->x->object.number);
-	frac = fabsl((long double)remains / (long double)denominator(sc->x->object.number));
+	frac = s7_fabsl((long double)remains / (long double)denominator(sc->x->object.number));
 
 	if ((frac > 0.5) ||
 	    ((frac == 0.5) &&

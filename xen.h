@@ -11,11 +11,13 @@
  */
 
 #define XEN_MAJOR_VERSION 2
-#define XEN_MINOR_VERSION 23
-#define XEN_VERSION "2.23"
+#define XEN_MINOR_VERSION 24
+#define XEN_VERSION "2.24"
 
 /* HISTORY:
  *
+ *  14-Jan-09: s7_xen_initialize.
+ *  --------
  *  30-Nov-08: use s7_wrong_number_of_args_error.
  *  17-Nov-08: use s7_define_constant in XEN_DEFINE_CONSTANT.
  *  1-Nov-08:  changed s7 and Guile C_TO_XEN_STRING slightly.
@@ -2069,6 +2071,8 @@ double xen_to_c_double_or_else(XEN a, double b);
 void xen_s7_set_repl_prompt(const char *new_prompt);
 #if !(defined(__GNUC__) && (!(defined(__cplusplus))))
   XEN xen_s7_c_to_xen_string(const char *str);
+
+s7_scheme *s7_xen_initialize(s7_scheme *sc);
 #endif
 
 #ifdef __cplusplus

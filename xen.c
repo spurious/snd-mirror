@@ -1917,15 +1917,19 @@ XEN_ARGIFY_2(g_make_hook_w, g_make_hook)
 XEN_ARGIFY_3(g_add_hook_w, g_add_hook)
 
 
-void xen_initialize(void)
+s7_scheme *s7_xen_initialize(s7_scheme *sc)
 {
   xen_s7_repl_prompt = xen_strdup(">");
-  s7 = s7_init();
-  if (!s7) 
+  if (!sc)
     {
-      fprintf(stderr, "Can't initialize S7!\n");
-      return;
+      s7 = s7_init();
+      if (!s7) 
+	{
+	  fprintf(stderr, "Can't initialize S7!\n");
+	  return(NULL);
+	}
     }
+  else s7 = sc;
 
   xen_false = s7_F(s7);
   xen_true = s7_T(s7);
@@ -1942,6 +1946,13 @@ void xen_initialize(void)
   XEN_DEFINE_PROCEDURE("run-hook",     g_run_hook_w,     0, 0, 1, "(run-hook hook . args) applies each hook function to args");
   XEN_DEFINE_PROCEDURE("make-hook",    g_make_hook_w,    1, 1, 0, "(make-hook arity :optional help) makes a new hook object");
   XEN_DEFINE_PROCEDURE("add-hook!",    g_add_hook_w,     2, 1, 0, "(add-hook! hook func :optional append) adds func to the hooks function list");
+
+  return(s7);
+}
+
+void xen_initialize(void)
+{
+  s7_xen_initialize(NULL);
 }
 #endif
 
