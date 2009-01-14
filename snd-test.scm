@@ -63838,7 +63838,8 @@ EDITS: 1
 	(gc)))
 
 
-  (if (provided? 'gsl)
+  (if (and (provided? 'gsl)
+	   (provided? 'snd-s7))
       (begin
 
 	;; from GSL

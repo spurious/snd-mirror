@@ -534,18 +534,18 @@ struct s7_scheme {
 /* set_type below -- needs to maintain mark setting */
 
 #define T_SYNTAX                      (1 << (TYPE_BITS + 1))
-#define is_syntax(p)                  (typeflag(p) & T_SYNTAX)
+#define is_syntax(p)                  ((typeflag(p) & T_SYNTAX) != 0) /* the silly != 0 business is for MS C++'s benefit */
 #define syntax_opcode(x)              cdr(x)
 
 #define T_IMMUTABLE                   (1 << (TYPE_BITS + 2))
-#define is_immutable(p)               (typeflag(p) & T_IMMUTABLE)
+#define is_immutable(p)               ((typeflag(p) & T_IMMUTABLE) != 0)
 #define set_immutable(p)              typeflag(p) |= T_IMMUTABLE
 
 #define T_ATOM                        (1 << (TYPE_BITS + 3))
-#define is_atom(p)                    (typeflag(p) & T_ATOM)
+#define is_atom(p)                    ((typeflag(p) & T_ATOM) != 0)
 
 #define T_GC_MARK                     (1 << (TYPE_BITS + 4))
-#define is_marked(p)                  (typeflag(p) &  T_GC_MARK)
+#define is_marked(p)                  ((typeflag(p) &  T_GC_MARK) != 0)
 #define set_mark(p)                   typeflag(p)  |= T_GC_MARK
 #define clear_mark(p)                 typeflag(p)  &= (~T_GC_MARK)
 /* making this a separate bool field in the cell struct slightly speeds up the mark function,
@@ -554,23 +554,23 @@ struct s7_scheme {
  */
 
 #define T_CONSTANT                    (1 << (TYPE_BITS + 5))
-#define is_constant(p)                (typeflag(p) & T_CONSTANT)
+#define is_constant(p)                ((typeflag(p) & T_CONSTANT) != 0)
 #define local_protect(p)              typeflag(p) |= T_CONSTANT
 #define local_unprotect(p)            typeflag(p) &= (~T_CONSTANT)
 
 #define T_OBJECT                      (1 << (TYPE_BITS + 6))
 #define T_FINALIZABLE                 (1 << (TYPE_BITS + 7))
 #define T_SIMPLE                      (1 << (TYPE_BITS + 8))
-#define is_simple(p)                  (typeflag(p) & T_SIMPLE)
+#define is_simple(p)                  ((typeflag(p) & T_SIMPLE) != 0)
 
 #define T_DONT_COPY                   (1 << (TYPE_BITS + 9))
-#define dont_copy(p)                  (typeflag(p) & T_DONT_COPY)
+#define dont_copy(p)                  ((typeflag(p) & T_DONT_COPY) != 0)
 
 #define T_PROCEDURE                   (1 << (TYPE_BITS + 10))
-#define is_procedure(p)               (typeflag(p) & T_PROCEDURE)
+#define is_procedure(p)               ((typeflag(p) & T_PROCEDURE) != 0)
 
 #define T_ETERNAL                     (1 << (TYPE_BITS + 11))
-#define is_eternal(p)                 (typeflag(p) & T_ETERNAL)
+#define is_eternal(p)                 ((typeflag(p) & T_ETERNAL) != 0)
 
 #define T_UNUSED_BITS                 0xf0000000
 
@@ -839,7 +839,7 @@ static s7_pointer g_is_boolean(s7_scheme *sc, s7_pointer args)
 
 static bool s7_is_immutable(s7_pointer p) 
 { 
-  return(typeflag(p) & T_IMMUTABLE);
+  return((typeflag(p) & T_IMMUTABLE) != 0);
 }
 
 
@@ -18807,4 +18807,4 @@ s7_scheme *s7_init(void)
 
   return(sc);
 }
-/* TODO: check out the iir filters -- can we push the order higher? does it make any musical difference? */
+

@@ -227,7 +227,7 @@ static char *xm_version(void)
       if (snd_itoa_ctr < snd_itoa_size) snd_itoa_strs[snd_itoa_ctr++] = version;
       return(version);
     }
-  return(mus_strdup(""));
+  return(mus_strdup(" ")); /* not null because that breaks the sequence for --version (xm-version not defined by that point) */
 }
 
 

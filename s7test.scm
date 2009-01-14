@@ -2663,10 +2663,13 @@
 				 (if (= lo hi)
 				     hi
 				     (let ((mid (inexact->exact (floor (/ (+ hi lo) 2)))))
-				       (if (and (eqv? mid (string->number (number->string mid)))
-						(eqv? (- mid) (string->number (number->string (- mid)))))
-					   (search mid hi)
-					   (search lo mid)))))))
+				       (if (or (>= mid hi)
+					       (<= mid lo))
+					   mid
+					   (if (and (eqv? mid (string->number (number->string mid)))
+						    (eqv? (- mid) (string->number (number->string (- mid)))))
+					       (search mid hi)
+					       (search lo mid))))))))
 		       (return (search last-good (- (* 2 last-good) 1)))))))))))
   (set! number-to-string-top first-bad)
   (if (and (integer? first-bad)
@@ -2695,10 +2698,13 @@
 			     (if (= (inexact->exact (floor lo)) (inexact->exact (floor hi)))
 				 hi
 				 (let ((mid (/ (+ hi lo) 2)))
-				   (if (and (eqv? mid (string->number (number->string mid)))
-					    (eqv? (- mid) (string->number (number->string (- mid)))))
-				       (search mid hi)
-				       (search lo mid)))))))
+				   (if (or (>= mid hi)
+					   (<= mid lo))
+				       mid
+				       (if (and (eqv? mid (string->number (number->string mid)))
+						(eqv? (- mid) (string->number (number->string (- mid)))))
+					   (search mid hi)
+					   (search lo mid))))))))
 		   (return (search last-good (* 2 last-good))))))))))
   (if (and (number? first-bad)
 	   (< first-bad (+ 1.0 first-bad))) ; else infinite I guess
@@ -2725,10 +2731,13 @@
 			     (if (= (inexact->exact (floor (/ 1.0 lo))) (inexact->exact (floor (/ 1.0 hi))))
 				 hi
 				 (let ((mid (/ (+ hi lo) 2)))
-				   (if (and (eqv? mid (string->number (number->string mid)))
-					    (eqv? (- mid) (string->number (number->string (- mid)))))
-				       (search mid hi)
-				       (search lo mid)))))))
+				   (if (or (>= mid hi)
+					   (<= mid lo))
+				       mid
+				       (if (and (eqv? mid (string->number (number->string mid)))
+						(eqv? (- mid) (string->number (number->string (- mid)))))
+					   (search mid hi)
+					   (search lo mid))))))))
 		   (return (search (/ last-good 2.0) last-good)))))))))
   (if (number? first-bad)
       (begin 
@@ -2754,10 +2763,13 @@
 			     (if (= (inexact->exact (floor lo)) (inexact->exact (floor hi)))
 				 hi
 				 (let ((mid (/ (+ hi lo) 2)))
-				   (if (and (eqv? mid (string->number (number->string mid)))
-					    (eqv? (- mid) (string->number (number->string (- mid)))))
-				       (search mid hi)
-				       (search lo mid)))))))
+				   (if (or (>= mid hi)
+					   (<= mid lo))
+				       mid
+				       (if (and (eqv? mid (string->number (number->string mid)))
+						(eqv? (- mid) (string->number (number->string (- mid)))))
+					   (search mid hi)
+					   (search lo mid))))))))
 		   (return (search last-good (* 2 last-good))))))))))
   (if (number? first-bad)
       (begin 
