@@ -1,5 +1,6 @@
 Snd change log
 
+ 15-Jan:    Snd 10.3.
  8-Jan:     multiprecision math support for all scheme (s7) numeric
               types and functions via gmp, mpfr, and mpc.  In configure,
               use --with-gmp.

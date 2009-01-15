@@ -260,7 +260,7 @@ static char *gl_version(void)
       if (snd_itoa_ctr < snd_itoa_size) snd_itoa_strs[snd_itoa_ctr++] = version;
       return(version);
     }
-  return(mus_strdup(""));
+  return(mus_strdup(" "));
 }
 
 
@@ -293,18 +293,18 @@ static char *glx_version(void)
       Window win;
       GLXContext glCtx;
       dpy = XOpenDisplay(NULL);
-      if (!dpy) return(mus_strdup(""));
+      if (!dpy) return(mus_strdup(" "));
       scrn = DefaultScreen(dpy);
       visInfo = glXChooseVisual(dpy, scrn, glAttribs);
-      if (!visInfo) return(mus_strdup(""));
+      if (!visInfo) return(mus_strdup(" "));
       glCtx = glXCreateContext(dpy, visInfo, 0, True);
-      if (!glCtx) return(mus_strdup(""));
+      if (!glCtx) return(mus_strdup(" "));
       win = XCreateSimpleWindow(dpy, RootWindow(dpy, scrn), 0, 0, 1, 1, 0, 0, 0);
       glXMakeCurrent(dpy, win, glCtx);
       mus_snprintf(version, VERSION_SIZE, " %s", glGetString(GL_VERSION));
       return(version);
 #else
-      return(mus_strdup(""));
+      return(mus_strdup(" "));
 #endif
     }
 
@@ -529,6 +529,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+15-Jan:  Snd 10.3.\n\
 8-Jan:   multiprecision math support for all scheme (s7) numeric\n\
            types and functions via gmp, mpfr, and mpc.  In configure,\n\
            use --with-gmp.\n\

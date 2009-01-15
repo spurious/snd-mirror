@@ -16407,7 +16407,7 @@ EDITS: 2
 	       (diff (abs (- nval (vector-ref vals i)))))
 	  (if (> diff max-bad) 
 	      (set! max-bad diff))
-	  (if (> diff 1.0e-7)
+	  (if (> diff 1.0e-4)
 	      (snd-display ";bes-i0(~A): ~A ~A -> ~A" (vector-ref args i) (vector-ref vals i) nval diff)))))
     
     (let ((vals (vector -0.1775967713143383E+00 -0.3971498098638474E+00 -0.2600519549019334E+00 0.2238907791412357E+00 0.7651976865579666E+00 
@@ -17233,7 +17233,7 @@ EDITS: 2
     (let ((vals (poly-gcd (vct 2 -2 -1 1) (vct -2.5 1))))
       (if (not (vequal vals (vct 0.000))) (snd-display ";poly-gcd 7: ~A" vals)))
     
-    (poly-roots-tests)
+    (if (provided? 'snd-s7) (poly-roots-tests))
     
     (let ((val (poly-as-vector-resultant (vector -1 0 1) (vector 1 -2 1))))
       (if (fneq val 0.0) (snd-display ";poly-resultant 0: ~A" val)))
@@ -26653,12 +26653,13 @@ EDITS: 2
 	       (snd-display ";tanh(~A): ~A ~A ~A" x val val1 val2))))
        (list 1.0 0.1 0.1 0.333)))
 
-    (if all-args
+    (if (and all-args
+	     (provided? 'snd-s7))
 	(let ((maxerr 0.0)
 	      (max-case #f)
 	      (cases 0))
 	  (do ((n 1 (+ n 1)))
-	      ((= n 10000))
+	      ((= n 100))
 	    (do ((m 1 (+ m 1)))
 		((= m 4))
 	      (let ((val (sin (/ (* m pi) n)))

@@ -26,6 +26,10 @@ removed event.scm and all the xm.c stuff that was deprecated in 2002.
 
 sin-m*pi/n and show-digits-of-pi-starting-from functions in numerics.scm
 
+rpmbuild changed since I last used it, so it's not impossible the
+  rpm files are confused.  Does anyone use the rpm files that I
+  build? 
+
 
 checked: Gamin 0.1.10, sbcl 1.0.23|24, Guile 1.8.6, gtk 2.14.6|2.15.0
 

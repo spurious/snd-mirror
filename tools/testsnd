@@ -145,6 +145,7 @@ echo ' '
 echo ' '
 ./snd --version
 ./snd -l snd-test
+echo ' -------------------------------- that was full snd-test with-doubles -------------------------------- '
 
 echo ' '
 echo ' '
@@ -181,6 +182,7 @@ echo ' '
 echo ' '
 ./snd --version
 ./snd -l snd-test
+echo ' -------------------------------- that was full snd-test with-modules -------------------------------- '
 make clmclean
 
 echo ' '
@@ -273,6 +275,7 @@ echo ' '
 echo ' '
 ./snd --version
 ./snd -l snd-test
+echo ' -------------------------------- that was full snd-test with-gtk -------------------------------- '
 make allclean
 echo ' CFLAGS="-Wall -DGTK_DISABLE_DEPRECATED -DG_DISABLE_DEPRECATED -DGDK_DISABLE_DEPRECATED" --with-gtk --with-static-xm --with-x11 '
 ./configure --quiet --disable-deprecated CFLAGS="-Wall" --with-gtk --with-static-xm --with-x11
@@ -302,6 +305,7 @@ echo ' CFLAGS="-Wall -I/usr/X11R6/include" --with-static-xm '
 make
 ./snd --version
 ./snd -l snd-test
+echo ' -------------------------------- that was full snd-test with-motif -------------------------------- '
 rm xm.o
 echo ' CC=g++ --with-static-xm '
 ./configure --quiet CC=g++ --with-static-xm CFLAGS="-I/usr/X11R6/include" LDFLAGS="-L/usr/X11R6/lib"

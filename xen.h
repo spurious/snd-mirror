@@ -10,6 +10,8 @@
  * None:      all versions
  */
 
+/* TODO: need xen<->c_pointer */
+
 #define XEN_MAJOR_VERSION 2
 #define XEN_MINOR_VERSION 24
 #define XEN_VERSION "2.24"
