@@ -34,4 +34,4 @@ rpmbuild changed since I last used it, so it's not impossible the
 checked: Gamin 0.1.10, sbcl 1.0.23|24, Guile 1.8.6, gtk 2.14.6|2.15.0
 
 Thanks!: Rick, Fernando, Esben Stien, Kjetil, Carlos Pita, Stanko Juzbasic,
-         Oded Ben-Tal, Michael Gogins
+         Oded Ben-Tal, Michael Gogins, William Andrew Burnson

@@ -12174,7 +12174,7 @@ static xen_value *clm_print_1(ptree *prog, xen_value **args, int num_args)
   if (!clm_print_walk_property_set)
     {
       XEN_SET_WALKER(XEN_NAME_AS_C_STRING_TO_VARIABLE("clm-print"),
-		     C_TO_XEN_ULONG(make_walker(clm_print_1, NULL, NULL, 1, UNLIMITED_ARGS, R_STRING, false, 1, -R_XEN)));
+		     XEN_WRAP_C_POINTER(make_walker(clm_print_1, NULL, NULL, 1, UNLIMITED_ARGS, R_STRING, false, 1, -R_XEN)));
       clm_print_walk_property_set = true;
     }
   return(package_n_xen_args(prog, R_STRING, clm_print_s, "clm_print_s", args, num_args));
@@ -12195,7 +12195,7 @@ static xen_value *set_up_format(ptree *prog, xen_value **args, int num_args, boo
       if (!format_walk_property_set)
 	{
 	  XEN_SET_WALKER(format_var, 
-			 C_TO_XEN_ULONG(make_walker(format_1, NULL, NULL, 1, UNLIMITED_ARGS, R_STRING, false, 1, -R_XEN)));
+			 XEN_WRAP_C_POINTER(make_walker(format_1, NULL, NULL, 1, UNLIMITED_ARGS, R_STRING, false, 1, -R_XEN)));
 	}
       format_func = XEN_VARIABLE_REF(format_var);
       /* any further formats will be checked in walk, but this one needs explicit check */
@@ -12450,7 +12450,7 @@ static int add_clm_type(XEN name)
   w->data = run_type;
 
   XEN_SET_WALKER((XEN)(C_STRING_TO_XEN_SYMBOL(type_predicate_name)), 
-		 C_TO_XEN_ULONG(w));
+		 XEN_WRAP_C_POINTER(w));
 
   return(run_type);
 }
@@ -12521,7 +12521,7 @@ static XEN g_add_clm_field(XEN struct_name, XEN name, XEN offset, XEN type)
   w->data = field_offset;
 
   XEN_SET_WALKER((XEN)(C_STRING_TO_XEN_SYMBOL(field_name)), 
-		 C_TO_XEN_ULONG(w));
+		 XEN_WRAP_C_POINTER(w));
 
   return(name);
 }
@@ -12615,9 +12615,9 @@ static xen_value *walk(ptree *prog, XEN form, walk_result_t walk_result)
       if (XEN_SYMBOL_P(function))
 	{
 	  walker = XEN_WALKER(function);
-	  if (XEN_ULONG_P(walker))
+	  if (XEN_WRAPPED_C_POINTER_P(walker))
 	    {
-	      w = (walk_info *)(XEN_TO_C_ULONG(walker));
+	      w = (walk_info *)(XEN_UNWRAP_C_POINTER(walker));
 	      if ((w) && (w->special_walker))
 		{
 		  if (num_args < w->required_args)
@@ -13011,9 +13011,9 @@ static xen_value *lookup_generalized_set(ptree *prog, XEN acc_form, xen_value *i
   walk_info *w = NULL;
 
   walker = XEN_WALKER(acc_form);
-  if (XEN_ULONG_P(walker))
+  if (XEN_WRAPPED_C_POINTER_P(walker))
     {
-      w = (walk_info *)(XEN_TO_C_ULONG(walker));
+      w = (walk_info *)(XEN_UNWRAP_C_POINTER(walker));
       if (w)
 	{
 	  if ((w->set_walker) &&
@@ -13391,7 +13391,7 @@ static XEN eval_ptree_to_xen(ptree *pt)
 
 static void init_walkers(void)
 {
-  #define INIT_WALKER(Name, Val) XEN_SET_WALKER((XEN)(C_STRING_TO_XEN_SYMBOL(Name)), C_TO_XEN_ULONG(Val))
+  #define INIT_WALKER(Name, Val) XEN_SET_WALKER((XEN)(C_STRING_TO_XEN_SYMBOL(Name)), XEN_WRAP_C_POINTER(Val))
 
   XEN declare;
 #if (HAVE_GUILE) && (!HAVE_GUILE_CALL_CC)

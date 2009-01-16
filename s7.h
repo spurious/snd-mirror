@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "1.9"
-#define S7_DATE "9-Jan-09"
+#define S7_VERSION "1.10"
+#define S7_DATE "16-Jan-09"
 
 
 typedef long long int s7_Int;
@@ -253,8 +253,11 @@ s7_pointer s7_make_real(s7_scheme *sc, s7_Double num);                       /* 
 s7_Double s7_number_to_real(s7_pointer x);                                   /* x can be any kind of number */
 
 bool s7_is_ulong(s7_pointer arg);                                            /* returns true if arg is an unsigned long */
-unsigned long s7_ulong(s7_pointer num);                                      /* scheme unsigned long -> C */
-s7_pointer s7_make_ulong(s7_scheme *sc, unsigned long num);                  /* C unsigned lonog -> scheme */
+unsigned long s7_ulong(s7_pointer p);                                        /* scheme unsigned long -> C */
+s7_pointer s7_make_ulong(s7_scheme *sc, unsigned long n);                    /* C unsigned lonog -> scheme */
+bool s7_is_ulong_long(s7_pointer arg);                                       /* returns true if arg is an unsigned long long */
+unsigned long long s7_ulong_long(s7_pointer p);                              /* scheme unsigned long long -> C */
+s7_pointer s7_make_ulong_long(s7_scheme *sc, unsigned long long n);          /* C unsigned long long -> scheme */
   /* the ulong stuff is intended for passing uninterpreted C pointers through scheme and back to C */
 
 bool s7_is_rational(s7_pointer arg);                                        /* (rational? arg) -- integer or ratio */
@@ -1256,6 +1259,7 @@ int main(int argc, char **argv)
  * 
  *        s7 changes
  *
+ * 16-Jan:    s7_is_ulong_long and friends for C pointers in 64-bit situations.
  * 9-Jan-09   added multiprecision arithmetic (gmp, mpfr, mpc) on the WITH_GMP switch
  * --------
  * 29-Dec:    added "+" specialization example, s7_apply_function.

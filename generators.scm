@@ -362,7 +362,7 @@
 	      (sin (* 0.5 n y)))
 	   den))))
 
-;;; normalization here is hard (depends on x and y)
+;;; normalization here is hard (depends on x and y) TODO: find this formula!
 #|
 (with-sound (:clipped #f :statistics #t :play #t :scaled-to .5)
   (let ((gen (make-nxysin 300 1/3 3)))
@@ -506,17 +506,34 @@
 
 ;;; sndclm.html (G&R) 1st col 5th row (sum of odd sines)
 
+(define (find-noddsin-max n)
+    
+  (define (nodds x n) 
+    (let* ((den (sin x))
+	   (num (sin (* n x))))
+      (if (= den 0.0)
+	  0.0
+	  (/ (* num num) den))))
+
+  (define (find-mid-max n lo hi)
+    (format #t "~A ~A~%" lo hi)
+    (let ((mid (/ (+ lo hi) 2)))
+      (let ((ylo (nodds lo n))
+	    (yhi (nodds hi n)))
+	(if (< (abs (- ylo yhi)) 1e-9)
+	    (nodds mid n)
+	    (if (> ylo yhi)
+		(find-mid-max n lo mid)
+		(find-mid-max n mid hi))))))
+
+  (find-mid-max n 0.0 (/ pi (+ (* 2 n) 0.5))))
+
+
 (defgenerator (noddsin 
 	       :make-wrapper (lambda (g)
 			       (if (< (noddsin-n g) 1) (set! (noddsin-n g) 1))
 			       (set! (noddsin-frequency g) (hz->radians (noddsin-frequency g)))
-			       (set! (noddsin-norm g) (if (= (noddsin-n g) 1) 1.0
-							  (/ (if (= (noddsin-n g) 2) 1.29
-								 (if (= (noddsin-n g) 3) 1.34
-								     (if (< (noddsin-n g) 6) 1.36
-									 (if (< (noddsin-n g) 18) 1.37
-									     1.379))))
-							     (noddsin-n g))))
+			       (set! (noddsin-norm g) (/ 1.0 (find-noddsin-max (noddsin-n g))))
 			       g))
   (frequency *clm-default-frequency*) (n 1 :type int) (angle 0.0) (norm 1.0))
 
@@ -556,7 +573,12 @@
       (snd-display "~A: ~A ~A, ~A ~A ~A" i pk (/ i pk) pos (/ (* pos 0.002) (* 2 pi)) (inexact->exact (round (/ 1.0 (/ (* pos 0.002) (* 2 pi)))))))))
 
 ;;; so max is about at 2pi/(5n+4)
-;;; for sum-of-sines it's about half that 2pi/(2.5n+4) -- zero cross at 2pi/4n min at pi/n 
+;;; better: 3*pi/(8*n) -- essentially half of the nsin peak
+;;; and we end up with the same max amp as nsin!!
+;;; :(/ (* 8 (sin (* pi 3/8)) (sin (* pi 3/8))) (* 3 pi))
+;;; 7.245186202974229185687564326622851596478E-1
+
+
 |#
 
 #|

@@ -10,8 +10,6 @@
  * None:      all versions
  */
 
-/* TODO: need xen<->c_pointer */
-
 #define XEN_MAJOR_VERSION 2
 #define XEN_MINOR_VERSION 24
 #define XEN_VERSION "2.24"
@@ -1722,9 +1720,15 @@ extern XEN xen_false, xen_true, xen_nil, xen_undefined;
 #define XEN_DOCUMENTATION_SYMBOL                   C_STRING_TO_XEN_SYMBOL("documentation")
 #define XEN_SET_DOCUMENTATION(Var, Doc) 
 
-#define XEN_WRAP_C_POINTER(Arg)                    C_TO_XEN_ULONG((unsigned long)Arg)
-#define XEN_UNWRAP_C_POINTER(Arg)                  XEN_TO_C_ULONG(Arg)
-#define XEN_WRAPPED_C_POINTER_P(Arg)               XEN_ULONG_P(Arg)
+#if (SIZEOF_VOID_P == SIZEOF_UNSIGNED_LONG)
+  #define XEN_WRAP_C_POINTER(Arg)                  s7_make_ulong(s7, (unsigned long)Arg)
+  #define XEN_UNWRAP_C_POINTER(Arg)                s7_ulong(Arg)
+  #define XEN_WRAPPED_C_POINTER_P(Arg)             s7_is_ulong(Arg)
+#else
+  #define XEN_WRAP_C_POINTER(Arg)                  s7_make_ulong_long(s7, (unsigned long long)Arg)
+  #define XEN_UNWRAP_C_POINTER(Arg)                s7_ulong_long(Arg)
+  #define XEN_WRAPPED_C_POINTER_P(Arg)             s7_is_ulong_long(Arg)
+#endif
 
 #define XEN_VECTOR_P(Arg)                          s7_is_vector(Arg)
 #define XEN_VECTOR_LENGTH(Arg)                     s7_vector_length(Arg)

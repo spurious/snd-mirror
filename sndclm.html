@@ -3817,6 +3817,8 @@ kosine95
 
 
 <p>nsin produces a sum of equal amplitude sines.  It is very similar (good and bad) to <a href="#ncos">ncos</a>.
+For n greater than 10 or so, its peak amplitude occurs at approximately 3pi/4n, and is about .7245*n -- 8n*(sin^2(3pi/8))/3pi.
+The nsin generator scales its output to be between -1 and 1 for any n.
 </p>
 
 <table border=1 align=left hspace=40 vspace=10 cellpadding=4>
@@ -8922,6 +8924,11 @@ component is multiplied by -1, and "n" produces 2n-1 components.
 	  ((= i 40000))
 	(<a class=quiet href="#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i (* (<a class=quiet href="#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> ampf) (<em class=red>noddsin</em> gen))))))))
 </pre>
+
+<p>noddsin normalization is the same as nsin.  The peak happens half as far from the 0 crossing as in nsin (3pi/(4n) for nsin, 
+and 3pi/(8n) for noddsin (assuming large n)), and its amplitude is 8n*sin^2(3pi/8)/(3pi), just as in nsin.  The noddsin generator scales its output
+by the inverse of this, so it is always between -1 and 1.
+</p>
 <br>
 
 

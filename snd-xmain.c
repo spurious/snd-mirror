@@ -1178,7 +1178,7 @@ void snd_doit(int argc, char **argv)
 static XEN g_snd_glx_context(void)
 {
   return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GLXContext"), 
-		    C_TO_XEN_ULONG((unsigned long)(ss->sgx->cx))));
+		    XEN_WRAP_C_POINTER(ss->sgx->cx)));
 } 
 
 

@@ -2275,7 +2275,7 @@ static XEN g_snd_sound_pointer(XEN snd)
   int s;
   s = XEN_TO_C_INT(snd);
   if ((s < ss->max_sounds) && (s >= 0) && (ss->sounds[s]))
-    return(C_TO_XEN_ULONG((unsigned long)(ss->sounds[s])));
+    return(XEN_WRAP_C_POINTER(ss->sounds[s]));
   return(XEN_FALSE);
 }
 
@@ -3259,7 +3259,7 @@ static XEN g_strftime(XEN format, XEN tm)
   XEN result;
   XEN_ASSERT_TYPE(XEN_STRING_P(format), format, XEN_ARG_1, "strftime", "a string");
   buf = (char *)CALLOC(1024, sizeof(char));
-  strftime(buf, 1024, XEN_TO_C_STRING(format), (const struct tm *)XEN_TO_C_ULONG(tm));
+  strftime(buf, 1024, XEN_TO_C_STRING(format), (const struct tm *)XEN_UNWRAP_C_POINTER(tm));
   result = C_TO_XEN_STRING(buf);
   FREE(buf);
   return(result);
@@ -3273,7 +3273,7 @@ static XEN g_localtime(XEN tm)
   #define H_localtime "(localtime tm) breaks up tm into something suitable for strftime"
   time_t rtime;
   rtime = (time_t)XEN_TO_C_INT(tm);
-  return(C_TO_XEN_ULONG((unsigned long)localtime((time_t *)(&rtime))));
+  return(XEN_WRAP_C_POINTER(localtime((time_t *)(&rtime))));
 }
 
 static XEN g_current_time(void)

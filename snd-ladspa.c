@@ -927,14 +927,14 @@ Information about parameters can be acquired using " S_analyse_ladspa "."
 
 
 #define C_TO_XEN_Ladspa_Descriptor(Value) \
-  ((Value) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("Ladspa-Descriptor"), C_TO_XEN_ULONG((unsigned long)Value)) : XEN_FALSE)
-#define XEN_TO_C_Ladspa_Descriptor(Value) ((LADSPA_Descriptor *)(XEN_TO_C_ULONG(XEN_CADR(Value))))
+  ((Value) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("Ladspa-Descriptor"), XEN_WRAP_C_POINTER(Value)) : XEN_FALSE)
+#define XEN_TO_C_Ladspa_Descriptor(Value) ((LADSPA_Descriptor *)(XEN_UNWRAP_C_POINTER(XEN_CADR(Value))))
 #define XEN_Ladspa_Descriptor_P(Value) (XEN_LIST_P(Value) && (XEN_LIST_LENGTH(Value) >= 2) && (XEN_SYMBOL_P(XEN_CAR(Value))) && \
                             (strcmp("Ladspa-Descriptor", XEN_SYMBOL_TO_C_STRING(XEN_CAR(Value))) == 0))
   
 #define C_TO_XEN_Ladspa_Handle(Value) \
-  ((Value) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("Ladspa-Handle"), C_TO_XEN_ULONG((unsigned long)Value)) : XEN_FALSE)
-#define XEN_TO_C_Ladspa_Handle(Value) ((LADSPA_Handle *)(XEN_TO_C_ULONG(XEN_CADR(Value))))
+  ((Value) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("Ladspa-Handle"), XEN_WRAP_C_POINTER(Value)) : XEN_FALSE)
+#define XEN_TO_C_Ladspa_Handle(Value) ((LADSPA_Handle *)(XEN_UNWRAP_C_POINTER(XEN_CADR(Value))))
 #define XEN_Ladspa_Handle_P(Value) (XEN_LIST_P(Value) && (XEN_LIST_LENGTH(Value) >= 2) && (XEN_SYMBOL_P(XEN_CAR(Value))) && \
                            (strcmp("Ladspa-Handle", XEN_SYMBOL_TO_C_STRING(XEN_CAR(Value))) == 0))
   

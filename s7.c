@@ -306,6 +306,10 @@ typedef struct num {
       s7_Double imag;
     } complex_value;
     
+    unsigned long ul_value; /* these two are for uninterpreted C pointers -- not used by s7 in any way */
+
+    unsigned long long ull_value;
+
   } value;
 } num;
 
@@ -5593,21 +5597,53 @@ static s7_pointer g_is_inexact(s7_scheme *sc, s7_pointer args)
 }
 
 
-bool s7_is_ulong(s7_pointer arg)
+/* these are for uninterpreted C pointers */
+
+bool s7_is_ulong(s7_pointer arg) 
 {
   return(s7_is_integer(arg));
 }
 
 
-unsigned long s7_ulong(s7_pointer num)
+unsigned long s7_ulong(s7_pointer p) 
 {
-  return((unsigned long)s7_integer(num));
+  return(p->object.number.value.ul_value);
 }
 
 
-s7_pointer s7_make_ulong(s7_scheme *sc, unsigned long num)
+s7_pointer s7_make_ulong(s7_scheme *sc, unsigned long n) 
 {
-  return(s7_make_integer(sc, num));
+  s7_pointer x;
+  x = new_cell(sc);
+  set_type(x, T_NUMBER | T_ATOM | T_SIMPLE | T_DONT_COPY);
+  
+  x->object.number.type = NUM_INT;
+  x->object.number.value.ul_value = n;
+  return(x);
+}
+
+
+bool s7_is_ulong_long(s7_pointer arg) 
+{
+  return(s7_is_integer(arg));
+}
+
+
+unsigned long long s7_ulong_long(s7_pointer p) 
+{
+  return(p->object.number.value.ull_value);
+}
+
+
+s7_pointer s7_make_ulong_long(s7_scheme *sc, unsigned long long n) 
+{
+  s7_pointer x;
+  x = new_cell(sc);
+  set_type(x, T_NUMBER | T_ATOM | T_SIMPLE | T_DONT_COPY);
+  
+  x->object.number.type = NUM_INT;
+  x->object.number.value.ull_value = n;
+  return(x);
 }
 
 
@@ -5736,7 +5772,7 @@ static s7_pointer g_make_random_state(s7_scheme *sc, s7_pointer args)
   rng *r;
   r = (rng *)calloc(1, sizeof(rng));
   r->ran_seed = s7_integer(car(args));
-  r->ran_carry = (unsigned int)time(NULL); /* TODO: not time here! */
+  r->ran_carry = 1675393560;  /* PERHAPS: make this dependent on the seed? */
   return(s7_make_object(sc, rng_tag, (void *)r));
 }
 
@@ -5813,7 +5849,7 @@ static s7_pointer g_random(s7_scheme *sc, s7_pointer args)
 	{
 	  sc->default_rng = (rng *)calloc(1, sizeof(rng));
 	  ((rng *)(sc->default_rng))->ran_seed = (unsigned int)time(NULL);
-	  ((rng *)(sc->default_rng))->ran_carry = 1675393560; /* TODO: get carry */
+	  ((rng *)(sc->default_rng))->ran_carry = 1675393560; /* PERHAPS: carry dependent on seed? */
 	}
       r = (rng *)(sc->default_rng);
     }
@@ -14168,15 +14204,6 @@ static void mark_s7(s7_scheme *sc)
 
 #if WITH_GMP
 
-/* first try embedded these in the s7-basic number handlers, but that got
- *   messy, and ran into troubles involving the mpz_t embedded pointers.  So,
- *   this version tries to do it with added types and specializations of the
- *   built-in number operators.  I need at least one hook into the basic number 
- *   code -- if a bignum is seen as a bare number in make_atom, it should vector
- *   to gmp code, not overflow in string_to_number or whatever.  Ideally the other
- *   ops like '+' that can over/underflow would also jump to gmp code instead.
- */
-
 static s7_pointer promote_number(s7_scheme *sc, int type, s7_pointer x);
 
 static int big_integer_tag = 0;
@@ -17113,7 +17140,7 @@ static s7_pointer big_rationalize(s7_scheme *sc, s7_pointer args)
 	      }
 
 	    if (mpfr_cmp_z(x, tt) == 0)
-	      fprintf(stderr, "oops"); /* TODO: handle this error!! */
+	      return(s7_error(sc, sc->ERROR, make_list_3(sc, s7_make_string(sc, "rationalize"), args, s7_make_string(sc, "failed to converge?"))));
 
 	    mpfr_sub_z(x, x, tt, GMP_RNDN);
 	    mpfr_ui_div(x, 1, x, GMP_RNDN);
@@ -17859,6 +17886,10 @@ static s7_pointer g_set_precision(s7_scheme *sc, s7_pointer args)
  * PERHAPS: hypot j0+ y0+ i0+?? erfc erf gamma lgamma eint? fac? [test the fft]
  * j0: gsl_sf_bessel_J0|1|n([int n] double x)
  *     mpfr_j0|1|n (mpfr rop [long n] mpfr x rnd)
+ *
+ * add WITH_GSL? use libm if not, else gsl for single-precision, then mpfr for multi
+ *   and add own complex cases (from the hyperg series?)
+ * perhaps do these as an add-on module ?
  */
 
 typedef struct {
@@ -17962,10 +17993,14 @@ static s7_pointer big_random(s7_scheme *sc, s7_pointer args)
     {
       if (object_type(num) == big_real_tag)
 	num = s7_make_real(sc, (s7_Double)mpfr_get_d(S7_BIG_REAL(num), GMP_RNDN));
+
       if (object_type(num) == big_integer_tag)
 	num = s7_make_integer(sc, big_integer_to_s7_Int(S7_BIG_INTEGER(num)));
+
       if (object_type(num) == big_ratio_tag)
-	num = s7_make_ratio(sc, big_integer_to_s7_Int(mpq_numref(S7_BIG_RATIO(num))), big_integer_to_s7_Int(mpq_denref(S7_BIG_RATIO(num))));
+	num = s7_make_ratio(sc, 
+			    big_integer_to_s7_Int(mpq_numref(S7_BIG_RATIO(num))), 
+			    big_integer_to_s7_Int(mpq_denref(S7_BIG_RATIO(num))));
 
       if (is_object(state))
 	return(g_random(sc, make_list_2(sc, num, state)));

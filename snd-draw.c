@@ -681,7 +681,7 @@ static XEN g_set_current_font(XEN id, XEN snd, XEN chn, XEN ax_id)
 		  (XEN_SYMBOL_P(XEN_CAR(id))) &&
 		  (strcmp("Font", XEN_SYMBOL_TO_C_STRING(XEN_CAR(id))) == 0), id, XEN_ARG_1, S_setB S_current_font, "a Font");
   ax = TO_C_AXIS_CONTEXT(snd, chn, ax_id, S_current_font);
-  ax->current_font = (Font)XEN_TO_C_INT(XEN_CADR(id));
+  ax->current_font = (Font)XEN_TO_C_ULONG(XEN_CADR(id));
   XSetFont(ax->dp, ax->gc, ax->current_font);
   return(id);
 }
@@ -719,14 +719,14 @@ static XEN g_set_current_font(XEN id, XEN snd, XEN chn, XEN ax_id)
   ASSERT_CHANNEL(S_setB S_current_font, snd, chn, 2);
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax_id), ax_id, XEN_ARG_4, S_setB S_current_font, "an integer such as time-graph");
   ax = TO_C_AXIS_CONTEXT(snd, chn, ax_id, S_setB S_current_font);
-  XEN_ASSERT_TYPE((XEN_ULONG_P(id)) ||
+  XEN_ASSERT_TYPE((XEN_WRAPPED_C_POINTER_P(id)) ||
 		  (XEN_LIST_P(id) && 
 		   (XEN_LIST_LENGTH(id) >= 2) &&
 		   (XEN_SYMBOL_P(XEN_CAR(id)))),
 		  id, XEN_ARG_1, S_setB S_current_font, "a wrapped object or a raw pointer");
-  if (XEN_ULONG_P(id))
-    ax->current_font = (PangoFontDescription *)XEN_TO_C_ULONG(id); 
-  else ax->current_font = (PangoFontDescription *)XEN_TO_C_ULONG(XEN_CADR(id));
+  if (XEN_WRAPPED_C_POINTER_P(id))
+    ax->current_font = (PangoFontDescription *)XEN_UNWRAP_C_POINTER(id); 
+  else ax->current_font = (PangoFontDescription *)XEN_UNWRAP_C_POINTER(XEN_CADR(id));
   return(id);
 }
 
@@ -1132,9 +1132,9 @@ fltenv_basic) (13 fltenv_data))."
 #else
   #if USE_GTK
     #if USE_CAIRO
-      #define XEN_WRAP_SND_GC(Value) XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("gc_t_"), C_TO_XEN_ULONG((unsigned long)Value))
+      #define XEN_WRAP_SND_GC(Value) XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("gc_t_"), XEN_WRAP_C_POINTER(Value))
     #else
-      #define XEN_WRAP_SND_GC(Value) XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkGC_"), C_TO_XEN_ULONG((unsigned long)Value))
+      #define XEN_WRAP_SND_GC(Value) XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkGC_"), XEN_WRAP_C_POINTER(Value))
     #endif
   #else
       #define XEN_WRAP_SND_GC(Value) XEN_FALSE
@@ -1225,7 +1225,7 @@ static XEN g_snd_font(XEN choice)
 #if USE_MOTIF
   #define WRAP_FONT(Value) XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("Font"), C_TO_XEN_ULONG((unsigned long)Value))
 #else
-  #define WRAP_FONT(Value) XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("PangoFontDescription_"), C_TO_XEN_ULONG((unsigned long)Value))
+  #define WRAP_FONT(Value) XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("PangoFontDescription_"), XEN_WRAP_C_POINTER(Value))
 #endif
 
   #define H_snd_font "(" S_snd_font " num): font associated with 'num' -- see table of fonts in snd-draw.c"

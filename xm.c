@@ -10,6 +10,7 @@
 
 /* HISTORY: 
  *
+ *   16-Jan:    changed some ULONG's to C_POINTER's
  *   12-Jan-09: changed strdup to xen_strdup.
  *   --------
  *   11-Dec:    removed all the stuff on the XM_DISABLE_DEPRECATED switch.
@@ -429,8 +430,8 @@ static void define_xm_obj(void)
  *   the _PTR form treats NULL as #f and vice-versa
  */
 
-#define WRAP_FOR_XEN(Name, Value) XEN_LIST_2(C_STRING_TO_XEN_SYMBOL(Name), C_TO_XEN_ULONG((unsigned long)Value))
-#define WRAP_FOR_XEN_OBJ(Name, Value) XEN_LIST_3(C_STRING_TO_XEN_SYMBOL(Name), C_TO_XEN_ULONG((unsigned long)Value), make_xm_obj(Value))
+#define WRAP_FOR_XEN(Name, Value) XEN_LIST_2(C_STRING_TO_XEN_SYMBOL(Name), XEN_WRAP_C_POINTER(Value))
+#define WRAP_FOR_XEN_OBJ(Name, Value) XEN_LIST_3(C_STRING_TO_XEN_SYMBOL(Name), XEN_WRAP_C_POINTER(Value), make_xm_obj(Value))
 #define WRAP_P(Name, Value) (XEN_LIST_P(Value) && \
                             (XEN_LIST_LENGTH(Value) >= 2) && \
                             (XEN_SYMBOL_P(XEN_CAR(Value))) && \
@@ -438,42 +439,42 @@ static void define_xm_obj(void)
 
 #define XM_TYPE(Name, XType) \
   static XEN C_TO_XEN_ ## Name (XType val) {return(WRAP_FOR_XEN(#Name, val));} \
-  static XType XEN_TO_C_ ## Name (XEN val) {return((XType)XEN_TO_C_ULONG(XEN_CADR(val)));} \
+  static XType XEN_TO_C_ ## Name (XEN val) {return((XType)XEN_UNWRAP_C_POINTER(XEN_CADR(val)));} \
   static bool XEN_ ## Name ## _P(XEN val) {return(WRAP_P(#Name, val));} \
   static XEN XEN_ ## Name ## _p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P(#Name, val)));}
 
 #define XM_TYPE_NO_p(Name, XType) \
   static XEN C_TO_XEN_ ## Name (XType val) {return(WRAP_FOR_XEN(#Name, val));} \
-  static XType XEN_TO_C_ ## Name (XEN val) {return((XType)XEN_TO_C_ULONG(XEN_CADR(val)));} \
+  static XType XEN_TO_C_ ## Name (XEN val) {return((XType)XEN_UNWRAP_C_POINTER(XEN_CADR(val)));} \
   static bool XEN_ ## Name ## _P(XEN val) {return(WRAP_P(#Name, val));}
 
 #define XM_TYPE_PTR(Name, XType) \
   static XEN C_TO_XEN_ ## Name (XType val) {if (val) return(WRAP_FOR_XEN(#Name, val)); return(XEN_FALSE);} \
-  static XType XEN_TO_C_ ## Name (XEN val) {if (XEN_FALSE_P(val)) return((XType)NULL); return((XType)XEN_TO_C_ULONG(XEN_CADR(val)));} \
+  static XType XEN_TO_C_ ## Name (XEN val) {if (XEN_FALSE_P(val)) return((XType)NULL); return((XType)XEN_UNWRAP_C_POINTER(XEN_CADR(val)));} \
   static bool XEN_ ## Name ## _P(XEN val) {return(WRAP_P(#Name, val));} \
   static XEN XEN_ ## Name ## _p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P(#Name, val)));}
 
 #define XM_TYPE_PTR_NO_p(Name, XType) \
   static XEN C_TO_XEN_ ## Name (XType val) {if (val) return(WRAP_FOR_XEN(#Name, val)); return(XEN_FALSE);} \
-  static XType XEN_TO_C_ ## Name (XEN val) {if (XEN_FALSE_P(val)) return((XType)NULL); return((XType)XEN_TO_C_ULONG(XEN_CADR(val)));} \
+  static XType XEN_TO_C_ ## Name (XEN val) {if (XEN_FALSE_P(val)) return((XType)NULL); return((XType)XEN_UNWRAP_C_POINTER(XEN_CADR(val)));} \
   static bool XEN_ ## Name ## _P(XEN val) {return(WRAP_P(#Name, val));}
 
 #define XM_TYPE_PTR_NO_p_NO_P(Name, XType) \
   static XEN C_TO_XEN_ ## Name (XType val) {if (val) return(WRAP_FOR_XEN(#Name, val)); return(XEN_FALSE);} \
-  static XType XEN_TO_C_ ## Name (XEN val) {if (XEN_FALSE_P(val)) return((XType)NULL); return((XType)XEN_TO_C_ULONG(XEN_CADR(val)));}
+  static XType XEN_TO_C_ ## Name (XEN val) {if (XEN_FALSE_P(val)) return((XType)NULL); return((XType)XEN_UNWRAP_C_POINTER(XEN_CADR(val)));}
 
 #define XM_TYPE_PTR_NO_C2X(Name, XType) \
-  static XType XEN_TO_C_ ## Name (XEN val) {if (XEN_FALSE_P(val)) return((XType)NULL); return((XType)XEN_TO_C_ULONG(XEN_CADR(val)));} \
+  static XType XEN_TO_C_ ## Name (XEN val) {if (XEN_FALSE_P(val)) return((XType)NULL); return((XType)XEN_UNWRAP_C_POINTER(XEN_CADR(val)));} \
   static bool XEN_ ## Name ## _P(XEN val) {return(WRAP_P(#Name, val));} \
   static XEN XEN_ ## Name ## _p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P(#Name, val)));}
 
 #define XM_TYPE_PTR_NO_C2X_NO_p(Name, XType) \
-  static XType XEN_TO_C_ ## Name (XEN val) {if (XEN_FALSE_P(val)) return((XType)NULL); return((XType)XEN_TO_C_ULONG(XEN_CADR(val)));} \
+  static XType XEN_TO_C_ ## Name (XEN val) {if (XEN_FALSE_P(val)) return((XType)NULL); return((XType)XEN_UNWRAP_C_POINTER(XEN_CADR(val)));} \
   static bool XEN_ ## Name ## _P(XEN val) {return(WRAP_P(#Name, val));}
 
 #define XM_TYPE_PTR_OBJ(Name, XType) \
   static XEN C_TO_XEN_ ## Name (XType val) {if (val) return(WRAP_FOR_XEN_OBJ(#Name, val)); return(XEN_FALSE);} \
-  static XType XEN_TO_C_ ## Name (XEN val) {if (XEN_FALSE_P(val)) return(NULL); return((XType)XEN_TO_C_ULONG(XEN_CADR(val)));} \
+  static XType XEN_TO_C_ ## Name (XEN val) {if (XEN_FALSE_P(val)) return(NULL); return((XType)XEN_UNWRAP_C_POINTER(XEN_CADR(val)));} \
   static bool XEN_ ## Name ## _P(XEN val) {return(WRAP_P(#Name, val));} \
   static XEN XEN_ ## Name ## _p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P(#Name, val)));}
 
@@ -522,7 +523,7 @@ XM_TYPE_PTR(XGCValues, XGCValues *)
 XM_TYPE_PTR_NO_C2X(XTextItem, XTextItem *)
 XM_TYPE_PTR(XModifierKeymap, XModifierKeymap *) /* opaque in this implementation */
 XM_TYPE_PTR(XImage, XImage *)
-static XAnyEvent *XEN_TO_C_XAnyEvent(XEN val) {return((XAnyEvent *)XEN_TO_C_ULONG(XEN_CADR(val)));}
+static XAnyEvent *XEN_TO_C_XAnyEvent(XEN val) {return((XAnyEvent *)XEN_UNWRAP_C_POINTER(XEN_CADR(val)));}
 XM_TYPE_PTR_NO_C2X(XButtonEvent, XButtonEvent *)
 XM_TYPE_PTR_NO_C2X(XCirculateEvent, XCirculateEvent *)
 XM_TYPE_PTR_NO_C2X(XCirculateRequestEvent, XCirculateRequestEvent *)
@@ -692,11 +693,11 @@ static XEN C_TO_XEN_XEvent_1(XEvent *e, int need_free)
   if (e == NULL) return(XEN_FALSE); /* synthetic callback may have no event */
   if (need_free)
     return(XEN_LIST_4(type_to_event_symbol(e->type),
-		      C_TO_XEN_ULONG((unsigned long)e),
+		      XEN_WRAP_C_POINTER(e),
 		      make_xm_obj(e),
 		      C_STRING_TO_XEN_SYMBOL("XEvent")));
   return(XEN_LIST_4(type_to_event_symbol(e->type),
-		    C_TO_XEN_ULONG((unsigned long)e),
+		    XEN_WRAP_C_POINTER(e),
 		    XEN_FALSE,
 		    C_STRING_TO_XEN_SYMBOL("XEvent")));
 }
@@ -704,7 +705,7 @@ static XEN C_TO_XEN_XEvent_1(XEvent *e, int need_free)
 
 #define C_TO_XEN_XEvent(e)     C_TO_XEN_XEvent_1(e, false)
 #define C_TO_XEN_XEvent_OBJ(e) C_TO_XEN_XEvent_1(e, true)
-#define XEN_TO_C_XEvent(Arg)   (XEvent *)XEN_TO_C_ULONG(XEN_CADR(Arg))
+#define XEN_TO_C_XEvent(Arg)   (XEvent *)XEN_UNWRAP_C_POINTER(XEN_CADR(Arg))
 #define XEN_XEvent_P(Value)    (XEN_LIST_P(Value) &&\
                                (XEN_LIST_LENGTH(Value) == 4) &&\
                                (XEN_SYMBOL_P(XEN_CADDDR(Value))) &&\
@@ -723,7 +724,7 @@ static XEN gxm_XEvent(XEN type)
   if (XEN_INTEGER_P(type))
     e->type = XEN_TO_C_INT(type);
   return(XEN_LIST_4(type_to_event_symbol(e->type),
-		    C_TO_XEN_ULONG((unsigned long)e),
+		    XEN_WRAP_C_POINTER(e),
 		    make_xm_obj(e),
 		    C_STRING_TO_XEN_SYMBOL("XEvent")));
 }
@@ -1037,7 +1038,7 @@ static XEN C_TO_XEN_Ints(int *array, int len)
 static XEN c_to_xen_ints(XEN array, XEN len)
 {
   #define H_to_ints "->ints translates a Motif int array (from a .value reference for example) into a scheme list of ints"
-  return(C_TO_XEN_Ints((int *)XEN_TO_C_ULONG(array), XEN_TO_C_INT(len)));
+  return(C_TO_XEN_Ints((int *)XEN_UNWRAP_C_POINTER(array), XEN_TO_C_INT(len)));
 }
 #endif
 
@@ -1059,7 +1060,7 @@ static XEN C_TO_XEN_Atoms(Atom *array, int len)
 static XEN c_to_xen_atoms(XEN array, XEN len)
 {
   #define H_to_Atoms "->Atoms translates a Motif Atoms array (from a .value reference for example) into a scheme list of Atoms"
-  return(C_TO_XEN_Atoms((Atom *)XEN_TO_C_ULONG(array), XEN_TO_C_INT(len)));
+  return(C_TO_XEN_Atoms((Atom *)XEN_UNWRAP_C_POINTER(array), XEN_TO_C_INT(len)));
 }
 #endif
 
@@ -1081,14 +1082,14 @@ static XEN C_TO_XEN_Strings(char **array, int len)
 static XEN c_to_xen_strings(XEN array, XEN len)
 {
   #define H_to_strings "->strings translates a Motif string array (from a .value reference for example) into a scheme list of strings"
-  return(C_TO_XEN_Strings((char **)XEN_TO_C_ULONG(array), XEN_TO_C_INT(len)));
+  return(C_TO_XEN_Strings((char **)XEN_UNWRAP_C_POINTER(array), XEN_TO_C_INT(len)));
 }
 
 static XEN c_to_xen_string(XEN str)
 {
   #define H_to_string "->string translates a Motif string (from a .value reference for example) into a scheme string"
   char *tmp;
-  tmp = (char *)XEN_TO_C_ULONG(str);
+  tmp = (char *)XEN_UNWRAP_C_POINTER(str);
   if (tmp)
     return(C_TO_XEN_STRING(tmp));
   return(XEN_FALSE);
@@ -1124,7 +1125,7 @@ static XEN C_TO_XEN_XRectangles(XRectangle *array, int len)
 static XEN c_to_xen_xrectangles(XEN array, XEN len)
 {
   #define H_to_XRectangles "->XRectangles translates a Motif rectangle array (from a .value reference for example) into a scheme list of rectangles"
-  return(C_TO_XEN_XRectangles((XRectangle *)XEN_TO_C_ULONG(array), XEN_TO_C_INT(len)));
+  return(C_TO_XEN_XRectangles((XRectangle *)XEN_UNWRAP_C_POINTER(array), XEN_TO_C_INT(len)));
 }
 #endif
 
@@ -1595,7 +1596,7 @@ static XmIncludeStatus gxm_Parse_Callback(XtPointer *in_out, XtPointer text_end,
       if (XEN_PROCEDURE_P(code))
 	return(XEN_TO_C_INT(XEN_APPLY(code,
 				      XEN_LIST_8(C_TO_XEN_STRING((char *)(*in_out)),
-						 C_TO_XEN_ULONG(text_end), /* can't work... */
+						 XEN_WRAP_C_POINTER(text_end), /* can't work... */
 						 C_TO_XEN_INT(type),
 						 C_TO_XEN_STRING(locale_tag),
 						 C_TO_XEN_XmParseMapping(entry),
@@ -1733,13 +1734,13 @@ static Boolean gxm_XtConvertSelectionIncrProc(Widget w, Atom *selection, Atom *t
 				C_TO_XEN_Atom(*selection),
 				C_TO_XEN_Atom(*target),
 				C_TO_XEN_INT(*max_length),
-				C_TO_XEN_ULONG(client_data),
+				XEN_WRAP_C_POINTER(client_data),
 				C_TO_XEN_ULONG(*request_id)), /* XtRequestId is XtPointer */
 		     c__FUNCTION__);
   if (XEN_FALSE_P(result))
     return(0);
   (*type_return) = XEN_TO_C_Atom(XEN_LIST_REF(result, 0));
-  (*value_return) = (XtPointer)XEN_TO_C_ULONG(XEN_LIST_REF(result, 1));
+  (*value_return) = (XtPointer)XEN_UNWRAP_C_POINTER(XEN_LIST_REF(result, 1));
   (*length_return) = (unsigned long)XEN_TO_C_INT(XEN_LIST_REF(result, 2));
   (*format_return) = XEN_TO_C_INT(XEN_LIST_REF(result, 3));
   return(1);
@@ -2097,9 +2098,9 @@ static Arg *XEN_TO_C_Args(XEN inargl)
 	  else if (XEN_STRING_P(value))
 	    XtSetArg(args[i], name, (XtArgVal)(XEN_TO_C_STRING(value)));
 	  else if (XEN_LIST_P(value))
-	    XtSetArg(args[i], name, (XtArgVal)(XEN_TO_C_ULONG(XEN_CADR(value))));  /* all tagged types */
+	    XtSetArg(args[i], name, (XtArgVal)(XEN_UNWRAP_C_POINTER(XEN_CADR(value))));  /* all tagged types */
 	  else 
-	    XtSetArg(args[i], name, (XtArgVal)(XEN_TO_C_ULONG(value)));
+	    XtSetArg(args[i], name, (XtArgVal)(XEN_UNWRAP_C_POINTER(value)));
 	  break;
 	}
     }
@@ -2567,17 +2568,17 @@ static XEN gxm_XmTransferDone(XEN arg1, XEN arg2)
 static XEN gxm_XmTransferSendRequest(XEN arg1, XEN arg2)
 {
   #define H_XmTransferSendRequest "void XmTransferSendRequest(XtPointer transfer_id, Time time) transfers a MULTIPLE request"
-  XEN_ASSERT_TYPE(XEN_ULONG_P(arg1), arg1, 1, "XmTransferSendRequest", "XtPointer");
+  XEN_ASSERT_TYPE(XEN_WRAPPED_C_POINTER_P(arg1), arg1, 1, "XmTransferSendRequest", "XtPointer");
   XEN_ASSERT_TYPE(XEN_Time_P(arg2), arg2, 2, "XmTransferSendRequest", "Time");
-  XmTransferSendRequest((XtPointer)XEN_TO_C_ULONG(arg1), XEN_TO_C_Time(arg2));
+  XmTransferSendRequest((XtPointer)XEN_UNWRAP_C_POINTER(arg1), XEN_TO_C_Time(arg2));
   return(arg1);
 }
 
 static XEN gxm_XmTransferStartRequest(XEN arg1)
 {
   #define H_XmTransferStartRequest "void XmTransferStartRequest(XtPointer transfer_id) begins a MULTIPLE transfer"
-  XEN_ASSERT_TYPE(XEN_ULONG_P(arg1), arg1, 1, "XmTransferStartRequest", "XtPointer");
-  XmTransferStartRequest((XtPointer)XEN_TO_C_ULONG(arg1));
+  XEN_ASSERT_TYPE(XEN_WRAPPED_C_POINTER_P(arg1), arg1, 1, "XmTransferStartRequest", "XtPointer");
+  XmTransferStartRequest((XtPointer)XEN_UNWRAP_C_POINTER(arg1));
   return(arg1);
 }
 
@@ -2585,13 +2586,13 @@ static XEN gxm_XmTransferSetParameters(XEN arg1, XEN arg2, XEN arg3, XEN arg4, X
 {
   #define H_XmTransferSetParameters "void XmTransferSetParameters(XtPointer transfer_id, XtPointer parm, int parm_fmt, \
 unsigned long parm_length, Atom parm_type)  establishes parameters to be passed by the next call to XmTransferValue"
-  XEN_ASSERT_TYPE(XEN_ULONG_P(arg1), arg1, 1, "XmTransferSetParameters", "XtPointer");
-  XEN_ASSERT_TYPE(XEN_ULONG_P(arg2), arg2, 2, "XmTransferSetParameters", "XtPointer");
+  XEN_ASSERT_TYPE(XEN_WRAPPED_C_POINTER_P(arg1), arg1, 1, "XmTransferSetParameters", "XtPointer");
+  XEN_ASSERT_TYPE(XEN_WRAPPED_C_POINTER_P(arg2), arg2, 2, "XmTransferSetParameters", "XtPointer");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmTransferSetParameters", "an integer");
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg4), arg4, 4, "XmTransferSetParameters", "unsigned long");
   XEN_ASSERT_TYPE(XEN_Atom_P(arg5), arg5, 5, "XmTransferSetParameters", "an Atom");
-  XmTransferSetParameters((XtPointer)XEN_TO_C_ULONG(arg1), 
-			  (XtPointer)XEN_TO_C_ULONG(arg2), 
+  XmTransferSetParameters((XtPointer)XEN_UNWRAP_C_POINTER(arg1), 
+			  (XtPointer)XEN_UNWRAP_C_POINTER(arg2), 
 			  XEN_TO_C_INT(arg3),
 			  XEN_TO_C_ULONG(arg4), 
 			  XEN_TO_C_Atom(arg5));
@@ -2612,11 +2613,11 @@ static XEN gxm_XmTransferValue(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
 {
   #define H_XmTransferValue "void XmTransferValue(XtPointer transfer_id, Atom target, XtCallbackProc proc, XtPointer client_data, Time time) \
 transfers data to a destination"
-  XEN_ASSERT_TYPE(XEN_ULONG_P(arg1), arg1, 1, "XmTransferValue", "XtPointer");
+  XEN_ASSERT_TYPE(XEN_WRAPPED_C_POINTER_P(arg1), arg1, 1, "XmTransferValue", "XtPointer");
   XEN_ASSERT_TYPE(XEN_Atom_P(arg2), arg2, 2, "XmTransferValue", "an Atom");
   XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg3) && (XEN_REQUIRED_ARGS_OK(arg3, 3)), arg3, 3, "XmTransferValue", "XtCallbackProc (3 args)");
   XEN_ASSERT_TYPE(XEN_Time_P(arg5), arg5, 5, "XmTransferValue", "Time");
-  XmTransferValue((XtPointer)XEN_TO_C_ULONG(arg1), 
+  XmTransferValue((XtPointer)XEN_UNWRAP_C_POINTER(arg1), 
 		  XEN_TO_C_Atom(arg2), 
 		  gxm_TransferValueProc,
 		  (XtPointer)XEN_LIST_2(arg3, arg4),
@@ -3548,7 +3549,7 @@ returns the type, length, and value of the next component in the compound string
   val = XmStringGetNextTriple(XEN_TO_C_XmStringContext(arg1), &len, ptr);
   return(XEN_LIST_3(C_TO_XEN_INT(val),
 		    C_TO_XEN_INT((int)len),
-		    (val == XmSTRING_COMPONENT_TEXT) ? C_TO_XEN_STRING((char *)(*ptr)) : C_TO_XEN_ULONG((unsigned long)ptr)));
+		    (val == XmSTRING_COMPONENT_TEXT) ? C_TO_XEN_STRING((char *)(*ptr)) : XEN_WRAP_C_POINTER(ptr)));
 }
 
 static XEN gxm_XmStringPeekNextTriple(XEN arg1)
@@ -7211,7 +7212,7 @@ static void gxm_ProtocolProc(Widget w, XtPointer context, XtPointer info)
   XEN_CALL_3(XEN_CADR(descr),
 	     C_TO_XEN_Widget(w),
 	     XEN_CADDR(descr),
-	     C_TO_XEN_ULONG(info), /* what's this? */
+	     XEN_WRAP_C_POINTER(info), /* what's this? */
 	     c__FUNCTION__);
 }
 
@@ -10486,10 +10487,10 @@ frees the colormap storage."
 static XEN gxm_XFree(XEN arg1)
 {
   #define H_XFree "XFree(data) is a general-purpose Xlib routine that frees the specified data."
-  XEN_ASSERT_TYPE(XEN_ULONG_P(arg1) || XEN_LIST_P(arg1), arg1, 1, "XFree", "void* or xm entity");
+  XEN_ASSERT_TYPE(XEN_WRAPPED_C_POINTER_P(arg1) || XEN_LIST_P(arg1), arg1, 1, "XFree", "void* or xm entity");
   if (XEN_LIST_P(arg1))
-    XFree((void *)XEN_TO_C_ULONG(XEN_CADR(arg1)));
-  else XFree((void *)XEN_TO_C_ULONG(arg1));
+    XFree((void *)XEN_UNWRAP_C_POINTER(XEN_CADR(arg1)));
+  else XFree((void *)XEN_UNWRAP_C_POINTER(arg1));
   return(XEN_FALSE);
 }
 
@@ -10908,12 +10909,12 @@ static XEN gxm_XDrawLinesDirect(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XDrawLinesDirect", "Display*");
   XEN_ASSERT_TYPE(XEN_Window_P(arg2), arg2, 2, "XDrawLinesDirect", "Drawable");
   XEN_ASSERT_TYPE(XEN_GC_P(arg3), arg3, 3, "XDrawLinesDirect", "GC");
-  XEN_ASSERT_TYPE(XEN_ULONG_P(arg4), arg4, 4, "XDrawLinesDirect", "array of XPoints");
+  XEN_ASSERT_TYPE(XEN_WRAPPED_C_POINTER_P(arg4), arg4, 4, "XDrawLinesDirect", "array of XPoints");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg5), arg5, 5, "XDrawLines", "int");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg6), arg6, 6, "XDrawLines", "int");
   len = XEN_TO_C_INT(arg5);
   if (len <= 0) return(XEN_FALSE);
-  pt = (XPoint *)XEN_TO_C_ULONG(arg4);
+  pt = (XPoint *)XEN_UNWRAP_C_POINTER(arg4);
   XDrawLines(XEN_TO_C_Display(arg1), 
 	     XEN_TO_C_Window(arg2), 
 	     XEN_TO_C_GC(arg3), 
@@ -10938,15 +10939,15 @@ static XEN gxm_Vector2XPoints(XEN arg1)
       pt[i].x = XEN_TO_C_INT(XEN_VECTOR_REF(arg1, j));
       pt[i].y = XEN_TO_C_INT(XEN_VECTOR_REF(arg1, j + 1));
     }
-  return(C_TO_XEN_ULONG((unsigned long)pt));
+  return(XEN_WRAP_C_POINTER(pt));
 }
 
 static XEN gxm_FreeXPoints(XEN arg1)
 {
   void *pts;
   #define H_freeXPoints "(freeXPoints vect) frees an (opaque) XPoint array created by vector->Xpoints"
-  XEN_ASSERT_TYPE(XEN_ULONG_P(arg1), arg1, XEN_ONLY_ARG, "freeXPoints", "opaque XPoint array");
-  pts = (void *)(XEN_TO_C_ULONG(arg1));
+  XEN_ASSERT_TYPE(XEN_WRAPPED_C_POINTER_P(arg1), arg1, XEN_ONLY_ARG, "freeXPoints", "opaque XPoint array");
+  pts = (void *)(XEN_UNWRAP_C_POINTER(arg1));
   FREE(pts);
   return(XEN_FALSE);
 }
@@ -12853,7 +12854,7 @@ allocates the memory needed for an XImage structure for the specified display bu
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg3), arg3, 3, "XCreateImage", "unsigned int");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg4), arg4, 4, "XCreateImage", "int");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg5), arg5, 5, "XCreateImage", "int");
-  XEN_ASSERT_TYPE(XEN_ULONG_P(arg6), arg6, 6, "XCreateImage", "pointer");
+  XEN_ASSERT_TYPE(XEN_WRAPPED_C_POINTER_P(arg6), arg6, 6, "XCreateImage", "pointer");
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg7), arg7, 7, "XCreateImage", "unsigned int");
   XEN_ASSERT_TYPE(XEN_ULONG_P(arg8), arg8, 8, "XCreateImage", "unsigned int");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg9), arg9, 9, "XCreateImage", "int");
@@ -12861,7 +12862,7 @@ allocates the memory needed for an XImage structure for the specified display bu
   return(C_TO_XEN_XImage(XCreateImage(XEN_TO_C_Display(arg1), 
 				      XEN_TO_C_Visual(arg2), 
 				      XEN_TO_C_ULONG(arg3), XEN_TO_C_INT(arg4), XEN_TO_C_INT(arg5), 
-				      (char *)XEN_TO_C_ULONG(arg6),
+				      (char *)XEN_UNWRAP_C_POINTER(arg6),
 				      XEN_TO_C_ULONG(arg7), XEN_TO_C_ULONG(arg8),
 				      XEN_TO_C_INT(arg9), XEN_TO_C_INT(arg10))));
 }
@@ -14244,17 +14245,17 @@ application identified by app_context."
 static XEN gxm_XtFree(XEN arg1)
 {
   #define H_XtFree "void XtFree(ptr)"
-  XEN_ASSERT_TYPE(XEN_ULONG_P(arg1), arg1, 1, "XtFree", "pointer");
-  XtFree((char *)XEN_TO_C_ULONG(arg1));
+  XEN_ASSERT_TYPE(XEN_WRAPPED_C_POINTER_P(arg1), arg1, 1, "XtFree", "pointer");
+  XtFree((char *)XEN_UNWRAP_C_POINTER(arg1));
   return(XEN_FALSE);
 }
 
 static XEN gxm_XtRealloc(XEN arg1, XEN arg2)
 {
   #define H_XtRealloc "char *XtRealloc(ptr, num)"
-  XEN_ASSERT_TYPE(XEN_ULONG_P(arg1), arg1, 1, "XtRealloc", "pointer");
+  XEN_ASSERT_TYPE(XEN_WRAPPED_C_POINTER_P(arg1), arg1, 1, "XtRealloc", "pointer");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XtRealloc", "int");
-  return(C_TO_XEN_ULONG(XtRealloc((char *)XEN_TO_C_ULONG(arg1), XEN_TO_C_INT(arg2))));
+  return(C_TO_XEN_ULONG(XtRealloc((char *)XEN_UNWRAP_C_POINTER(arg1), XEN_TO_C_INT(arg2))));
 }
 
 static XEN gxm_XtCalloc(XEN arg1, XEN arg2)
@@ -14262,14 +14263,14 @@ static XEN gxm_XtCalloc(XEN arg1, XEN arg2)
   #define H_XtCalloc "char *XtCalloc(num, size)"
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg1), arg1, 1, "XtCalloc", "int");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XtCalloc", "int");
-  return(C_TO_XEN_ULONG(XtCalloc(XEN_TO_C_INT(arg1), XEN_TO_C_INT(arg2))));
+  return(XEN_WRAP_C_POINTER(XtCalloc(XEN_TO_C_INT(arg1), XEN_TO_C_INT(arg2))));
 }
 
 static XEN gxm_XtMalloc(XEN arg1)
 {
   #define H_XtMalloc "char *XtMalloc(size)"
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg1), arg1, 1, "XtMalloc", "int");
-  return(C_TO_XEN_ULONG(XtMalloc(XEN_TO_C_INT(arg1))));
+  return(XEN_WRAP_C_POINTER(XtMalloc(XEN_TO_C_INT(arg1))));
 }
 
 static XEN xm_XtErrorHandler;
@@ -15258,7 +15259,7 @@ specified widget's callback list. The call_data arg is assumed to be a callback 
   XtPointer val = NULL;
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XtCallCallbacks", "Widget");
   XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XtCallCallbacks", "char*");
-  if (XEN_LIST_P(arg3)) val = (XtPointer)XEN_TO_C_ULONG(XEN_CADR(arg3));
+  if (XEN_LIST_P(arg3)) val = (XtPointer)XEN_UNWRAP_C_POINTER(XEN_CADR(arg3));
   XtCallCallbacks(XEN_TO_C_Widget(arg1), (char *)XEN_TO_C_STRING(arg2), val);
   return(XEN_FALSE);
 }
@@ -16185,7 +16186,7 @@ static XEN gxm_XtGetResourceList(XEN widget_class)
 				  C_TO_XEN_INT((int)(resources[i].resource_size)),
 				  C_TO_XEN_INT((int)(resources[i].resource_offset)),
 				  C_TO_XEN_STRING(resources[i].default_type),
-				  C_TO_XEN_ULONG(resources[i].default_addr)),
+				  XEN_WRAP_C_POINTER(resources[i].default_addr)),
 		       lst);
       XtFree((char *)resources);
     }
@@ -17092,10 +17093,10 @@ static XEN gxm_XpSendOneTicket(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
   #define H_XpSendOneTicket "Status XpSendOneTicket(Display *display,Window window, Xauth *ticket,Bool more)"
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XpSendOneTicket", "Display*");
   XEN_ASSERT_TYPE(XEN_Window_P(arg2), arg2, 2, "XpSendOneTicket", "Window");
-  XEN_ASSERT_TYPE(XEN_ULONG_P(arg3), arg3, 3, "XpSendOneTicket", "Xauth*"); /* opaque */
+  XEN_ASSERT_TYPE(XEN_WRAPPED_C_POINTER_P(arg3), arg3, 3, "XpSendOneTicket", "Xauth*"); /* opaque */
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(arg4), arg4, 4, "XpSendOneTicket", "BOOLEAN");
   return(C_TO_XEN_INT(XpSendOneTicket(XEN_TO_C_Display(arg1), XEN_TO_C_Window(arg2), 
-				      (Xauth *)XEN_TO_C_ULONG(arg3), XEN_TO_C_BOOLEAN(arg4))));
+				      (Xauth *)XEN_UNWRAP_C_POINTER(arg3), XEN_TO_C_BOOLEAN(arg4))));
 }
 
 static XEN gxm_XpGetAuthParams(XEN arg1, XEN arg2)
@@ -17479,7 +17480,7 @@ static XEN gxm_XpmCreateDataFromPixmap(XEN arg1, XEN arg3, XEN arg4, XEN arg5)
 				XEN_TO_C_Pixmap(arg4), 
 				(XEN_FALSE_P(arg5)) ? NULL : XEN_TO_C_XpmAttributes(arg5));
   return(XEN_LIST_2(C_TO_XEN_INT(val),
-		    C_TO_XEN_ULONG(buf)));
+		    XEN_WRAP_C_POINTER(buf)));
 }
 
 #if HAVE_XPM_GET_ERROR_STRING
@@ -17564,7 +17565,7 @@ static XEN gxm_set_ncolors(XEN ptr, XEN val)
 static XEN gxm_set_data(XEN ptr, XEN val)
 {
   XM_SET_FIELD_ASSERT_TYPE(XEN_XpmImage_P(ptr), ptr, XEN_ARG_1, "data", "XpmImage");
-  (XEN_TO_C_XpmImage(ptr))->data = (unsigned int *)XEN_TO_C_ULONG(val);
+  (XEN_TO_C_XpmImage(ptr))->data = (unsigned int *)XEN_UNWRAP_C_POINTER(val);
   return(val);
 }
 #endif
@@ -18006,7 +18007,7 @@ static XEN gxm_sibling(XEN ptr)
 static XEN gxm_obdata(XEN ptr)
 {
   XM_FIELD_ASSERT_TYPE(XEN_XImage_P(ptr), ptr, XEN_ONLY_ARG, "obdata", "XImage");
-  return(C_TO_XEN_ULONG((XPointer)((XEN_TO_C_XImage(ptr))->obdata)));
+  return(XEN_WRAP_C_POINTER((XPointer)((XEN_TO_C_XImage(ptr))->obdata)));
 }
 
 static XEN gxm_bytes_per_line(XEN ptr)
@@ -20679,8 +20680,8 @@ static XEN gxm_value(XEN ptr)
 {
   if (XEN_XmSpinBoxCallbackStruct_P(ptr)) return(C_TO_XEN_XmString((XmString)((XEN_TO_C_XmSpinBoxCallbackStruct(ptr))->value)));
   if (XEN_XmSelectionBoxCallbackStruct_P(ptr)) return(C_TO_XEN_XmString((XmString)((XEN_TO_C_XmSelectionBoxCallbackStruct(ptr))->value)));
-  if (XEN_XmConvertCallbackStruct_P(ptr)) return(C_TO_XEN_ULONG((XtPointer)((XEN_TO_C_XmConvertCallbackStruct(ptr))->value)));
-  if (XEN_XmSelectionCallbackStruct_P(ptr)) return(C_TO_XEN_ULONG((XtPointer)((XEN_TO_C_XmSelectionCallbackStruct(ptr))->value)));
+  if (XEN_XmConvertCallbackStruct_P(ptr)) return(XEN_WRAP_C_POINTER((XtPointer)((XEN_TO_C_XmConvertCallbackStruct(ptr))->value)));
+  if (XEN_XmSelectionCallbackStruct_P(ptr)) return(XEN_WRAP_C_POINTER((XtPointer)((XEN_TO_C_XmSelectionCallbackStruct(ptr))->value)));
   if (XEN_XmScaleCallbackStruct_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XmScaleCallbackStruct(ptr))->value)));
   if (XEN_XmFileSelectionBoxCallbackStruct_P(ptr)) return(C_TO_XEN_XmString((XmString)((XEN_TO_C_XmFileSelectionBoxCallbackStruct(ptr))->value)));
   if (XEN_XmCommandCallbackStruct_P(ptr)) return(C_TO_XEN_XmString((XmString)((XEN_TO_C_XmCommandCallbackStruct(ptr))->value)));
@@ -20699,10 +20700,10 @@ static XEN gxm_set_value(XEN ptr, XEN val)
   if (XEN_XmFileSelectionBoxCallbackStruct_P(ptr)) (XEN_TO_C_XmFileSelectionBoxCallbackStruct(ptr))->value = XEN_TO_C_XmString(val); else
   if (XEN_XmCommandCallbackStruct_P(ptr)) (XEN_TO_C_XmCommandCallbackStruct(ptr))->value = XEN_TO_C_XmString(val); else
   if (XEN_XmScrollBarCallbackStruct_P(ptr)) (XEN_TO_C_XmScrollBarCallbackStruct(ptr))->value = XEN_TO_C_INT(val); else
-  if (XEN_XmConvertCallbackStruct_P(ptr)) (XEN_TO_C_XmConvertCallbackStruct(ptr))->value = (XtPointer)XEN_TO_C_ULONG(val); else
+  if (XEN_XmConvertCallbackStruct_P(ptr)) (XEN_TO_C_XmConvertCallbackStruct(ptr))->value = (XtPointer)XEN_UNWRAP_C_POINTER(val); else
   if (XEN_XmSpinBoxCallbackStruct_P(ptr)) (XEN_TO_C_XmSpinBoxCallbackStruct(ptr))->value = XEN_TO_C_XmString(val); else
   if (XEN_XmSelectionBoxCallbackStruct_P(ptr)) (XEN_TO_C_XmSelectionBoxCallbackStruct(ptr))->value = XEN_TO_C_XmString(val); else
-  if (XEN_XmSelectionCallbackStruct_P(ptr)) (XEN_TO_C_XmSelectionCallbackStruct(ptr))->value = (XtPointer)XEN_TO_C_ULONG(val); else
+  if (XEN_XmSelectionCallbackStruct_P(ptr)) (XEN_TO_C_XmSelectionCallbackStruct(ptr))->value = (XtPointer)XEN_UNWRAP_C_POINTER(val); else
 #endif    
 #if HAVE_XPM
   if (XEN_XpmColorSymbol_P(ptr)) (XEN_TO_C_XpmColorSymbol(ptr))->value = xen_strdup(XEN_TO_C_STRING(val)); else
@@ -20739,7 +20740,7 @@ static XEN gxm_parm_format(XEN ptr)
 static XEN gxm_parm(XEN ptr)
 {
   XM_FIELD_ASSERT_TYPE(XEN_XmConvertCallbackStruct_P(ptr), ptr, XEN_ONLY_ARG, "parm", "XmConvertCallbackStruct");
-  return(C_TO_XEN_ULONG((XtPointer)((XEN_TO_C_XmConvertCallbackStruct(ptr))->parm)));
+  return(XEN_WRAP_C_POINTER((XtPointer)((XEN_TO_C_XmConvertCallbackStruct(ptr))->parm)));
 }
 
 static XEN gxm_location_data(XEN ptr)
@@ -20747,20 +20748,20 @@ static XEN gxm_location_data(XEN ptr)
   /* widget-class specific interpretation -- is it worth untangling? */
   XM_FIELD_ASSERT_TYPE(XEN_XmDestinationCallbackStruct_P(ptr) || XEN_XmConvertCallbackStruct_P(ptr), 
 		  ptr, XEN_ONLY_ARG, "location_data", "a struct with a location_data field");
-  if (XEN_XmDestinationCallbackStruct_P(ptr)) return(C_TO_XEN_ULONG((XtPointer)((XEN_TO_C_XmDestinationCallbackStruct(ptr))->location_data)));
-  return(C_TO_XEN_ULONG((XtPointer)((XEN_TO_C_XmConvertCallbackStruct(ptr))->location_data)));
+  if (XEN_XmDestinationCallbackStruct_P(ptr)) return(XEN_WRAP_C_POINTER((XtPointer)((XEN_TO_C_XmDestinationCallbackStruct(ptr))->location_data)));
+  return(XEN_WRAP_C_POINTER((XtPointer)((XEN_TO_C_XmConvertCallbackStruct(ptr))->location_data)));
 }
 
 static XEN gxm_source_data(XEN ptr)
 {
   XM_FIELD_ASSERT_TYPE(XEN_XmConvertCallbackStruct_P(ptr), ptr, XEN_ONLY_ARG, "source_data", "XmConvertCallbackStruct");
-  return(C_TO_XEN_ULONG((XtPointer)((XEN_TO_C_XmConvertCallbackStruct(ptr))->source_data)));
+  return(XEN_WRAP_C_POINTER((XtPointer)((XEN_TO_C_XmConvertCallbackStruct(ptr))->source_data)));
 }
 
 static XEN gxm_client_data(XEN ptr)
 {
   XM_FIELD_ASSERT_TYPE(XEN_XmTransferDoneCallbackStruct_P(ptr), ptr, XEN_ONLY_ARG, "client_data", "XmTransferDoneCallbackStruct");
-  return(C_TO_XEN_ULONG((XtPointer)((XEN_TO_C_XmTransferDoneCallbackStruct(ptr))->client_data)));
+  return(XEN_WRAP_C_POINTER((XtPointer)((XEN_TO_C_XmTransferDoneCallbackStruct(ptr))->client_data)));
 }
 
 static XEN gxm_animate(XEN ptr)

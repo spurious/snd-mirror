@@ -1564,19 +1564,19 @@ x0 y0 x1 y1 xmin ymin xmax ymax pix_x0 pix_y0 pix_x1 pix_y1 y_offset xscale ysca
 
 
 #if USE_MOTIF
-  #define XEN_UNWRAP_SND_GC(Value) XEN_TO_C_ULONG(XEN_CADR(Value))
+  #define XEN_UNWRAP_SND_GC(Value) XEN_UNWRAP_C_POINTER(XEN_CADR(Value))
   #define XEN_SND_GC_P(Value) (XEN_LIST_P(Value) && (XEN_LIST_LENGTH(Value) >= 2) && \
                           (XEN_SYMBOL_P(XEN_CAR(Value))) && \
 			  (strcmp("GC", XEN_SYMBOL_TO_C_STRING(XEN_CAR(Value))) == 0))
 #else
   #if USE_GTK
     #if USE_CAIRO
-      #define XEN_UNWRAP_SND_GC(Value) (gc_t *)(XEN_TO_C_ULONG(XEN_CADR(Value)))
+      #define XEN_UNWRAP_SND_GC(Value) (gc_t *)(XEN_UNWRAP_C_POINTER(XEN_CADR(Value)))
       #define XEN_SND_GC_P(Value) (XEN_LIST_P(Value) && (XEN_LIST_LENGTH(Value) >= 2) && \
                               (XEN_SYMBOL_P(XEN_CAR(Value))) && \
 			      (strcmp("gc_t_", XEN_SYMBOL_TO_C_STRING(XEN_CAR(Value))) == 0))
     #else
-      #define XEN_UNWRAP_SND_GC(Value) (gc_t *)(XEN_TO_C_ULONG(XEN_CADR(Value)))
+      #define XEN_UNWRAP_SND_GC(Value) (gc_t *)(XEN_UNWRAP_C_POINTER(XEN_CADR(Value)))
       #define XEN_SND_GC_P(Value) (XEN_LIST_P(Value) && (XEN_LIST_LENGTH(Value) >= 2) && \
                               (XEN_SYMBOL_P(XEN_CAR(Value))) && \
 			      (strcmp("GdkGC_", XEN_SYMBOL_TO_C_STRING(XEN_CAR(Value))) == 0))

@@ -75,10 +75,8 @@
 
 
 #if (!HAVE_MEMMOVE)
-#if 1
-/* from libit */
 static void *memmove (char *dest, const char *source, unsigned int length)
-{
+{ /* from libit */
   char *d0 = dest;
   if (source < dest)
     /* Moving from low mem to hi mem; start at end.  */
@@ -93,26 +91,6 @@ static void *memmove (char *dest, const char *source, unsigned int length)
       }
   return (void *) d0;
 }
-#else
-/* gnulib */
-void *
-memmove (void *dest0, void const *source0, size_t length)
-{
-  char *dest = dest0;
-  char const *source = source0;
-  if (source < dest)
-    /* Moving from low mem to hi mem; start at end.  */
-    for (source += length, dest += length; length; --length)
-      *--dest = *--source;
-  else if (source != dest)
-    {
-      /* Moving from hi mem to low mem; start at beginning.  */
-      for (; length; --length)
-	*dest++ = *source++;
-    }
-  return dest0;
-}
-#endif
 #endif
 
 
@@ -950,7 +928,7 @@ void mus_rectangular_to_polar(Float *rl, Float *im, off_t size)
     {
       Float temp; /* apparently floating underflows in sqrt are bringing us to a halt */
       temp = rl[i] * rl[i] + im[i] * im[i];
-      im[i] = -atan2(im[i], rl[i]); /* "-" here so that clockwise is positive? */
+      im[i] = -atan2(im[i], rl[i]); /* "-" here so that clockwise is positive? is this backwards? */
       if (temp < .00000001) 
 	rl[i] = 0.0;
       else rl[i] = sqrt(temp);
@@ -1571,58 +1549,116 @@ bool mus_nsin_p(mus_any *ptr)
 
 
 #if 0
-/* its simplest to get these maxes by running an example and recording the maxamp, but it also
+/* its simplest to get the maxes by running an example and recording the maxamp, but it also
  *   works for small "n" to use the derivative of the sum-of-sines as a Chebyshev polynomial in cos x,
  *   find its roots, and plug acos(root) into the original, recording the max:
  *
-(define (smax coeffs)
-  (let* ((n (vct-length coeffs))
-	 (dcos (make-vct n 1.0)))
-    (do ((i 0 (1+ i)))
-	((= i n))
-      (vct-set! dcos i (* (+ i 1) (vct-ref coeffs i))))
-    (let ((partials '()))
+  (define (smax coeffs)
+    (let* ((n (vct-length coeffs))
+	   (dcos (make-vct n 1.0)))
       (do ((i 0 (1+ i)))
-	  ((= i n))
-	(set! partials (append (list (vct-ref dcos i) (+ i 1)) partials)))
-      (let ((Tn (partials->polynomial (reverse partials))))
-	(let ((roots (poly-roots Tn)))
-	  (let ((mx (* -2 n)))
-	    (for-each
-	     (lambda (root)
-	       (let ((acr (acos root))
-		     (sum 0.0))
-		 (do ((i 0 (1+ i)))
-		     ((= i n))
-		   (set! sum (+ sum (* (vct-ref coeffs i) (sin (* (+ i 1) acr))))))
-		 (if (> (abs sum) mx)
-		     (set! mx (abs sum)))))
-	     roots)
-	    mx))))))
+  	  ((= i n))
+        (vct-set! dcos i (* (+ i 1) (vct-ref coeffs i))))
+      (let ((partials '()))
+        (do ((i 0 (1+ i)))
+	    ((= i n))
+	  (set! partials (append (list (vct-ref dcos i) (+ i 1)) partials)))
+        (let ((Tn (partials->polynomial (reverse partials))))
+	  (let ((roots (poly-roots Tn)))
+	    (let ((mx (* -2 n)))
+	      (for-each
+	       (lambda (root)
+	         (let ((acr (acos root))
+		       (sum 0.0))
+		   (do ((i 0 (1+ i)))
+		       ((= i n))
+		     (set! sum (+ sum (* (vct-ref coeffs i) (sin (* (+ i 1) acr))))))
+		   (if (> (abs sum) mx)
+		       (set! mx (abs sum)))))
+	       roots)
+	      mx))))))
   
      (smax (make-vct n 1.0))
-  
+
   * but that's too much effort for an initialization function.
+  * much faster is this search (it usually hits an answer in 2 or 3 tries):
+  *
+  (define (find-nsin-max n)
+    
+    (define (ns x n) 
+      (let* ((a2 (/ x 2))
+	     (den (sin a2)))
+        (if (= den 0.0)
+	    0.0
+	    (/ (* (sin (* n a2)) (sin (* (1+ n) a2))) den))))
+
+    (define (find-mid-max n lo hi)
+      (let ((mid (/ (+ lo hi) 2)))
+        (let ((ylo (ns lo n))
+	      (yhi (ns hi n)))
+  	  (if (< (abs (- ylo yhi)) 1e-100)
+	      (list (ns mid n)
+		    (rationalize (/ mid pi) 0.0))
+	      (if (> ylo yhi)
+		  (find-mid-max n lo mid)
+		  (find-mid-max n mid hi))))))
+
+  (find-mid-max n 0.0 (/ pi (+ n .5))))
+  *
+  * the 'mid' point has a surprisingly simple relation to pi:
+  *
+  * (find-max 100000000000000)
+  * 7.24518620297426541161857919764185053934850053037407235e13
+  *
+  * (find-max 1000000000000000000000000)
+  * 7.24518620297422918568756794921595308358209723004380140e23   1/1333333333333333333333334 = .75e-24 -> (3*pi)/(4*n)
+  *
+  * (find-max 10000000000000000000000000000000000)
+  * 7.24518620297422918568756432662285195872681453497436666955413707681801083640192066844820049586929551886747925783e33
+  *
+  * which is approximately (/ (* 8 (expt (sin (* pi 3/8)) 2)) (* 3 pi)):
+  * 7.245186202974229185687564326622851596467504
+  *
+  * (to get that expression, plug in 3pi/4n, treat (n+1)/n as essentially 1 as n gets very large,
+  *    treat (sin x) as about x when x is very small, and simplify)
+  * so if n>10, we could use (ns (/ (* 3 pi) (* 4 n)) n) without major error
+  * It's possible to differentiate the nsin formula:
+  *
+  * -(cos(x/2)sin(nx/2)sin((n+1)x/2))/(2sin^2(x/2)) + ncos(nx/2)sin((n+1)x/2)/(2sin(x/2)) + (n+1)sin(nx/2)cos((n+1)x/2)/(2sin(x/2))
+  *
+  * and find the 1st 0 when n is very large -- it is very close to 3pi/(4*n)
   */
 #endif
 
 
-static Float nsin_maxamps[] = {1.0, 1.0, 1.761, 2.5, 3.24, 3.97, 4.7, 5.42, 6.15, 6.88,
-			       7.6, 8.33, 9.05, 9.78, 10.5, 11.23, 11.95, 12.68, 13.4, 14.13};
+static Float nsin_ns(Float x, int n)
+{
+  Float a2, den;
+  a2 = x / 2;
+  den = sin(a2);
+  if (den == 0.0)
+    return(0.0);
+  return(sin(n * a2) * sin((n + 1) * a2) / den);
+}
 
-static Float nsin_50 = .743;
-static Float nsin_100 = .733;
 
-/* 100: 72.8 500:362.2 1000: 724.9 10000: 7196 */
+static Float find_nsin_scaler(int n, Float lo, Float hi)
+{
+  Float mid, ylo, yhi;
+  mid = (lo + hi) / 2;
+  ylo = nsin_ns(lo, n);
+  yhi = nsin_ns(hi, n);
+  if (fabs(ylo - yhi) < 1e-12)
+    return(nsin_ns(mid, n));
+  if (ylo > yhi)
+    return(find_nsin_scaler(n, lo, mid));
+  return(find_nsin_scaler(n, mid, hi));
+}
+
 
 static Float nsin_scaler(int n)
 {
-  /* doesn't this normalization assume initial-phase = 0? */
-  if (n < 20)
-    return(1.0 / nsin_maxamps[n]);
-  if (n < 50)
-    return(1.0 / (n * nsin_50));
-  return(1.0 / (n * nsin_100));
+  return(1.0 / find_nsin_scaler(n, 0.0, M_PI / (n + 0.5)));
 }
 
 
@@ -11679,8 +11715,6 @@ void mus_initialize(void)
   last_fft_size = 0;
 #endif
 
-  nsin_50 = .743;
-  nsin_100 = .733;
   sincs = 0;
   locsig_warned = NULL;
 

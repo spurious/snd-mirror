@@ -1326,7 +1326,7 @@ void popup_menu_from(GtkWidget *w, GdkEventButton *ev, gpointer data, int snd, i
       result = run_progn_hook(gtk_popup_hook,
 			      XEN_LIST_5(XEN_WRAP_WIDGET(w),
 					 XEN_WRAP_EVENT((GdkEvent *)ev),
-					 C_TO_XEN_ULONG(data),
+					 XEN_WRAP_C_POINTER(data),
 					 C_TO_XEN_INT(snd),
 					 C_TO_XEN_INT(chn)),
 				  "gtk-popup-hook");
