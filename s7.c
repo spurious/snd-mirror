@@ -188,6 +188,7 @@
    * WITH_GMP adds the following functions: 
    *   bignum, bignum?, bignum-precision, bignum-fft
    */
+/* PERHAPS: add fft for normal reals? */
 #endif
 
 
@@ -614,6 +615,8 @@ struct s7_scheme {
 #define symbol_location(p)            (p)->object.cons.line
 #define symbol_name(p)                string_value(car(p))
 #define symbol_name_length(p)         string_length(car(p))
+#define symbol_value(Sym)             cdr(Sym)
+#define set_symbol_value(Sym, Val)    cdr(Sym) = (Val)
 
 #define string_value(p)               ((p)->object.string.svalue)
 #define string_length(p)              ((p)->object.string.length)
@@ -655,6 +658,7 @@ struct s7_scheme {
 #define is_promise(p)                 (type(p) == T_PROMISE)
 #define is_closure(p)                 (type(p) == T_CLOSURE)
 #define is_closure_star(p)            (type(p) == T_CLOSURE_STAR)
+#define closure_source(Obj)           car(Obj)
 
 #define is_catch(p)                   (type(p) == T_CATCH)
 #define catch_tag(p)                  (p)->object.catcher->tag
@@ -1657,10 +1661,6 @@ static s7_pointer add_to_current_environment(s7_scheme *sc, s7_pointer variable,
 } 
 
 
-#define symbol_value(Sym) cdr(Sym)
-#define set_symbol_value(Sym, Val) cdr(Sym) = (Val)
-
-
 s7_pointer s7_symbol_value(s7_scheme *sc, s7_pointer sym) /* was searching just the global environment? */
 {
   s7_pointer x;
@@ -1756,8 +1756,6 @@ static s7_pointer g_current_environment(s7_scheme *sc, s7_pointer args)
   return(sc->envir);
 }
 
-
-#define closure_source(Obj) car(Obj)
 
 static s7_pointer make_closure(s7_scheme *sc, s7_pointer c, s7_pointer e, int type) 
 {
@@ -17886,10 +17884,13 @@ static s7_pointer g_set_precision(s7_scheme *sc, s7_pointer args)
  * PERHAPS: hypot j0+ y0+ i0+?? erfc erf gamma lgamma eint? fac? [test the fft]
  * j0: gsl_sf_bessel_J0|1|n([int n] double x)
  *     mpfr_j0|1|n (mpfr rop [long n] mpfr x rnd)
+ * PERHAPS: pslq?
  *
  * add WITH_GSL? use libm if not, else gsl for single-precision, then mpfr for multi
  *   and add own complex cases (from the hyperg series?)
  * perhaps do these as an add-on module ?
+ *
+ * TODO: check bignums and threads
  */
 
 typedef struct {
@@ -17966,7 +17967,18 @@ static s7_pointer big_random(s7_scheme *sc, s7_pointer args)
 	      mpz_urandomm(*n, r->state, S7_BIG_INTEGER(num));
 	      return(s7_make_object(sc, big_integer_tag, (void *)n));
 	    }
-	  /* TODO: big ratio random */
+	  if (object_type(num) == big_ratio_tag)
+	    {
+	      mpfr_t *n;
+	      mpfr_t rat;
+	      n = (mpfr_t *)malloc(sizeof(mpfr_t));
+	      mpfr_init_set_ui(*n, 1, GMP_RNDN);
+	      mpfr_urandomb(*n, r->state);
+	      mpfr_init_set_q(rat, S7_BIG_RATIO(num), GMP_RNDN);
+	      mpfr_mul(*n, *n, rat, GMP_RNDN);
+	      mpfr_clear(rat);
+	      return(big_rationalize(sc, make_list_1(sc, s7_make_object(sc, big_real_tag, (void *)n))));
+	    }
 	  if (object_type(num) == big_real_tag)
 	    {
 	      mpfr_t *n;

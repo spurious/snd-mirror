@@ -3818,7 +3818,9 @@ kosine95
 
 <p>nsin produces a sum of equal amplitude sines.  It is very similar (good and bad) to <a href="#ncos">ncos</a>.
 For n greater than 10 or so, its peak amplitude occurs at approximately 3pi/4n, and is about .7245*n -- 8n*(sin^2(3pi/8))/3pi.
-The nsin generator scales its output to be between -1 and 1 for any n.
+The nsin generator scales its output to be between -1 and 1 for any n.  We can use nxysin to try any initial-phase in a
+sum of equal sinusoids.  The peak amp in this case varys sinusoidally from a sum-of-sines n * 0.7245 to a sum-of-cosines n * 1.0;
+the peak amp is nsin-max(n) + abs(sin(initial-phase))*(1 - nsin-max(n)).
 </p>
 
 <table border=1 align=left hspace=40 vspace=10 cellpadding=4>
@@ -8880,8 +8882,12 @@ think there would be any difference, even taking FM into account.
   <A class=def NAME="nxy1sin?">nxy1sin?</A> gen
 </pre>
 <p>These produce a sum of "n" sinsoids starting at "frequency", spaced by "ratio".  Since "frequency" can be treated
-as the carrier, there's no point in an ssb version.  nxysin output is not normalized.  nxy1cos is the same as nxycos, but every other
+as the carrier, there's no point in an ssb version.  nxy1cos is the same as nxycos, but every other
 component is multiplied by -1, and "n" produces 2n-1 components.
+Normalization in the "sin" cases is tricky.  If ratio is 1, we can use nsin's normalization, and if ratio = 2, noddsin's,
+but otherwise nxysin currently simply uses 1/n.  This ensures that the generator output is always between -1 and 1,
+but in some cases (mainly involving low "n" and simple "ratio"), the output might not be full amplitude.  nxy1sin is
+even trickier, so it simply divides by "n".
 </p>
 
 <br>

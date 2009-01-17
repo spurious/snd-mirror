@@ -338,11 +338,56 @@
 
 ;;; G&R 1st col rows 1&2
 
+(define (find-nxysin-max n ratio)
+    
+  (define (ns x n) 
+    (let* ((a2 (/ x 2))
+	   (den (sin a2)))
+      (if (= den 0.0)
+	  0.0
+	  (/ (* (sin (* n a2)) (sin (* (1+ n) a2))) den))))
+
+  (define (nodds x n) 
+    (let* ((den (sin x))
+	   (num (sin (* n x))))
+      (if (= den 0.0)
+	  0.0
+	  (/ (* num num) den))))
+
+  (define (find-mid-max n lo hi)
+    (let ((mid (/ (+ lo hi) 2)))
+      (let ((ylo (ns lo n))
+	    (yhi (ns hi n)))
+	(if (< (abs (- ylo yhi)) 1e-100)
+	    (ns mid n)
+	    (if (> ylo yhi)
+		(find-mid-max n lo mid)
+		(find-mid-max n mid hi))))))
+
+  (define (find-nodds-mid-max n lo hi)
+    (let ((mid (/ (+ lo hi) 2)))
+      (let ((ylo (nodds lo n))
+	    (yhi (nodds hi n)))
+	(if (< (abs (- ylo yhi)) 1e-100)
+	    (nodds mid n)
+	    (if (> ylo yhi)
+		(find-nodds-mid-max n lo mid)
+		(find-nodds-mid-max n mid hi))))))
+
+  (if (= ratio 1)
+      (find-mid-max n 0.0 (/ pi (+ n .5)))
+      (if (= ratio 2)
+	  (find-nodds-mid-max n 0.0 (/ pi (+ (* 2 n) 0.5)))
+	  n)))
+
+
 (defgenerator (nxysin
 	       :make-wrapper (lambda (g)
 			       (set! (nxysin-frequency g) (hz->radians (nxysin-frequency g)))
+			       (set! (nxysin-norm g) (/ 1.0 (find-nxysin-max (nxysin-n g) (nxysin-ratio g))))
 			       g))
-  (frequency *clm-default-frequency*) (ratio 1.0) (n 1 :type int) (angle 0.0))
+  (frequency *clm-default-frequency*) (ratio 1.0) (n 1 :type int) (angle 0.0)
+  (norm 1.0))
 
 
 (define* (nxysin gen :optional (fm 0.0))
@@ -352,6 +397,7 @@
   (let* ((x (nxysin-angle gen))
 	 (y (* x (nxysin-ratio gen)))
 	 (n (nxysin-n gen))
+	 (norm (nxysin-norm gen))
 	 (den (sin (* y 0.5))))
 
     (set! (nxysin-angle gen) (+ fm x (nxysin-frequency gen)))
@@ -359,18 +405,63 @@
     (if (< (abs den) nearly-zero)
 	0.0
 	(/ (* (sin (+ x (* 0.5 (- n 1) y)))
-	      (sin (* 0.5 n y)))
+	      (sin (* 0.5 n y))
+	      norm)
 	   den))))
 
-;;; normalization here is hard (depends on x and y) TODO: find this formula!
+;;; if x (angle) is constant (an initial-phase offset for a sum of sines,
+;;;  the peak amp is nsin-max(n) + abs(sin(initial-phase))*(1 - nsin-max(n))
+;;;  that is, it varys sinusoidally from a sum-of-sines .7245 to a sum-of-cosines 1
+;;; since we're treating "x" as the carrier (it's not a constant phase offset in this case)
+;;;  the output varies as x does, so we have a maxamp of n? There are special cases
+;;;  for low n and low integer ratio:
+
+;;;  ratio (4):    (40):   (400):
+;;;    1: 3.23      29.34       290.1
+;;;    2: 2.9404    28.97       289.7
+;;;    3: 3.85      38.6        346.8
+;;; 1.123: n
+;;;   .5: 3.55      30.0        290
+
+;;; a ratio of 1 gives a sum of equal amplitude sines, so we could use nsin-max?
+;;;            2                                odd harmonics -- use noddsin?
+;;; else use n (not so great for ratio: 3, but not way off)
+;;; worst case right now is probably ratio .5
+
 #|
-(with-sound (:clipped #f :statistics #t :play #t :scaled-to .5)
+(with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-nxysin 300 1/3 3)))
     (run 
      (lambda ()
        (do ((i 0 (+ i 1)))
 	   ((= i 20000))
 	 (outa i (nxysin gen)))))))
+
+;;; here's the varying initial-phase case:
+
+(with-sound (:clipped #f)
+  (run 
+   (lambda ()	    
+     (let ((x 0.0)
+	   (ix (/ pi 1000))
+	   (n 100))
+       (do ((i 0 (+ i 1)))
+	   ((= i 1000))
+	 (let ((pk 0.0)
+	       (phi x)
+	       (y 0.0)
+	       (iy (/ (* 2 pi) 10000)))
+	   (set! x (+ x ix))
+	   (do ((k 0 (+ k 1)))
+	       ((= k 10000))
+	     ;; x = phi
+	     (let ((den (sin (/ y 2))))
+	       (if (not (= den 0.0))
+		   (let ((sum (abs (/ (* (sin (+ phi (* y (/ (- n 1) 2)))) (sin (/ (* n y) 2))) den))))
+		     (if (> sum pk)
+			 (set! pk sum)))))
+	     (set! y (+ y iy)))
+	   (outa i pk)))))))
 |#
 
 
@@ -408,7 +499,6 @@
 	 (outa i (nxycos gen)))))))
 |#
 
-;;; is there any need for the (-1)^k case?  
 
 
 ;;; --------------------------------------------------------------------------------
@@ -487,7 +577,7 @@
 
     (/ (* (sin (+ x (* 0.5 (- n 1) (+ y pi))))
 	  (sin (* 0.5 n (+ y pi))))
-       (* n den)))) ; norm not right...
+       (* n den))))
 
 #|
 (with-sound (:clipped #f :statistics #t :play #t)
@@ -498,6 +588,14 @@
 	   ((= i 20000))
 	 (outa i (nxy1sin gen)))))))
 |#
+
+;;; TODO: scaling for nsin5 npos1cos? dblsum krksin
+;;; TODO: test x86 gtk/motif pointer handling
+;;; TODO: extend numeric testing in the bug finder
+
+;;;   we can get the sinusoidally varying maxamp by using e.g. (make-nxy1sin 1 1000 3)
+;;;   the peak starts at ca .72 and goes to 1 etc
+
 
 
 ;;; --------------------------------------------------------------------------------
@@ -516,7 +614,6 @@
 	  (/ (* num num) den))))
 
   (define (find-mid-max n lo hi)
-    (format #t "~A ~A~%" lo hi)
     (let ((mid (/ (+ lo hi) 2)))
       (let ((ylo (nodds lo n))
 	    (yhi (nodds hi n)))
@@ -533,7 +630,7 @@
 	       :make-wrapper (lambda (g)
 			       (if (< (noddsin-n g) 1) (set! (noddsin-n g) 1))
 			       (set! (noddsin-frequency g) (hz->radians (noddsin-frequency g)))
-			       (set! (noddsin-norm g) (/ 1.0 (find-noddsin-max (noddsin-n g))))
+			       (set! (noddsin-norm g) (/ 1.0 (find-noddsin-max (noddsin-n g)))) ; these could be precomputed
 			       g))
   (frequency *clm-default-frequency*) (n 1 :type int) (angle 0.0) (norm 1.0))
 
@@ -554,32 +651,12 @@
 	0.0
 	(/ (* norm snx snx) den))))
 	   
-#|
-;;; get normalization:
-(do ((i 1 (+ i 1))) 
-    ((= i 30))
-  (let ((v (with-sound (:output (make-vct 1000) :clipped #f)
-		       (let ((gen (make-noddsin (radians->hz .002) :n i)))
-			 (do ((k 0 (+ 1 k)))
-			     ((= k 1000))
-			   (outa k (noddsin gen)))))))
-    (let ((pos 0)
-	  (pk (vct-peak v)))
-      (do ((k 0 (+ 1 k)))
-	  ((or (= k 1000)
-	       (> pos 0)))
-	(if (>= (abs (vct-ref v k)) pk)
-	    (set! pos k)))
-      (snd-display "~A: ~A ~A, ~A ~A ~A" i pk (/ i pk) pos (/ (* pos 0.002) (* 2 pi)) (inexact->exact (round (/ 1.0 (/ (* pos 0.002) (* 2 pi)))))))))
 
-;;; so max is about at 2pi/(5n+4)
-;;; better: 3*pi/(8*n) -- essentially half of the nsin peak
+;;; max is at about: 3*pi/(8*n) -- essentially half of the nsin peak
 ;;; and we end up with the same max amp as nsin!!
 ;;; :(/ (* 8 (sin (* pi 3/8)) (sin (* pi 3/8))) (* 3 pi))
 ;;; 7.245186202974229185687564326622851596478E-1
 
-
-|#
 
 #|
 ;;; clarinety
@@ -3156,7 +3233,7 @@
 ;;; inf sinusoids scaled by kr^k: krksin
 
 ;;; Zygmund 1st
-;;;   this looks interesting, but how to normalize?  sum of sines is bad enough, kr^k -> 1/(1-x)^2 if x^2<1 (G&R 113)
+;;;   this looks interesting, but how to normalize?  sum of sines is bad enough, kr^k -> r/(1-r)^2 if x^2<1 (since n=inf)
 ;;;   for low n, we could use the Tn roots stuff (clm.c)
 ;;;   the formula must be assuming r<1.0 -- if greater than 1 it's acting like r2k! above
 
@@ -3173,12 +3250,14 @@
   (declare (gen krksin) (fm float))
   (let* ((x (krksin-angle gen))
 	 (r (krksin-r gen))
+	 (r1 (- 1.0 r))
 	 (r2 (* r r))
+	 (r3 (if (> r .9) r1 1.0)) ; not right yet...
 	 (den (+ 1.0 (* -2.0 r (cos x)) r2)))
 
     (set! (krksin-angle gen) (+ fm (krksin-angle gen) (krksin-frequency gen)))
 
-    (/ (* r (- 1 r2) (sin x))
+    (/ (* r1 r1 r3 (sin x))
        (* den den))))
 
 #|
@@ -3208,6 +3287,27 @@
 					   ((= i 10000))
 					 (outa i (krksin gen))))))))))
     (snd-display ";~A: ~A" (* 0.1 i) mx)))
+
+;;; relation between 1/(1-x)^2 and peak amp:
+(with-sound (:clipped #f)
+  (do ((i 0 (+ i 1))
+       (r 0.0 (+ r .01)))
+      ((= i 100))
+    (let ((val (/ 1.0 (expt (- 1 r) 2))))
+      (let ((pk 0.0))
+	(let ((gen (make-krksin 1.0 r)))
+	  (run
+	   (lambda ()
+	     (do ((k 0 (+ k 1)))
+		 ((= k 100000))
+	       (let ((x (abs (krksin gen))))
+		 (if (> x pk) (set! pk x)))))))
+	(outa i (/ pk val))))))
+
+;;; r 0: 1.0 (sin(x) in this case)
+;;; else min den is (1-2r+r^2) so peak should be around (/ (expt (+ 1 (* - 2 r) (* r r)) 2))
+;;;   but at that point sin(x)->0 as x
+		 
 |#
 
 #|

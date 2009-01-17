@@ -2557,11 +2557,62 @@ This returns the roots of the polynomial "poly" via gsl_poly_complex_solve.  See
 
 <p>Multiprecision arithmetic for integer, ratio, real, and complex numbers is available
 in Snd via the gmp, mpfr, and mpc libraries and s7.  Use the --with-gmp configuration
-switch.
+switch.  This version of s7 also supplies the functions:
 </p>
 
-<!-- TODO: bignum bignum? bignum-precision bignum-fft
--->
+<table border=0 cellspacing=4 cellpadding=6 hspace=20>
+
+<!-- bignum -->
+<tr><td colspan=2 bgcolor="#f2f4ff">
+<em class=emdef>bignum</em> <code>(num)</code>
+</td></tr><tr><td width=60></td><td>
+<p>bignum returns its argument (a string) as a big number.  This is the most convenient
+way to force a calculation to use big numbers.
+</p>
+<pre>
+    <em class=listener>:</em><em class=typing>(sqrt 2)</em>
+    <em class=listener>1.4142135623731</em>
+    <em class=listener>:</em><em class=typing>(sqrt (bignum "2"))</em>
+    <em class=listener>1.414213562373095048801688724209698078569E0</em>
+</pre>
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+<!-- bignum? -->
+<tr><td colspan=2 bgcolor="#f2f4ff">
+<em class=emdef>bignum?</em> <code>(num)</code>
+</td></tr><tr><td width=60></td><td>
+<p>bignum? returns #t if its argument is a big number.
+</p>
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+<!-- bignum-fft -->
+<tr><td colspan=2 bgcolor="#f2f4ff">
+<em class=emdef>bignum-fft</em> <code>(rl im size sign)</code>
+</td></tr><tr><td width=60></td><td>
+bignum-fft performs an FFT using big floats; rl and im are vectors of big floats.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- bignum-precision -->
+<tr><td colspan=2 bgcolor="#f2f4ff">
+<em class=emdef>bignum-precision</em> <code>()</code>
+</td></tr><tr><td width=60></td><td>
+<p>bignum-precision sets the number of bits used in floating-point big numbers (integer 
+bignums have whatever size it takes to represent them).  The default is 128 which gives
+about 40 decimal digits.
+</p>
+<pre>
+   <em class=listener>:</em><em class=typing>(* 2 pi)</em>
+   <em class=listener>6.283185307179586476925286766559005768391E0</em>
+   <em class=listener>:</em><em class=typing>(set! (bignum-precision) 256)</em>
+   <em class=listener>256</em>
+   <em class=listener>:</em><em class=typing>(* 2 pi)</em>
+   <em class=listener>6.283185307179586476925286766559005768394338798750211641949889184615632812572396E0</em>
+</pre>
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+</table>
+
 
 <br><br>
 
