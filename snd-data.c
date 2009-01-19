@@ -13,9 +13,11 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound)
       cp->cgx->progress_pct = -1.0;
 #endif
       cp->last_sonogram = NULL;
+      cp->last_wavogram = NULL;
       cp->temp_sonogram = NULL;
 #if HAVE_GL
       cp->gl_fft_list = NO_LIST;
+      cp->gl_wavo_list = NO_LIST;
 #endif
       cp->edit_hook = XEN_FALSE;
       cp->edit_hook_loc = NOT_A_GC_LOC;
@@ -114,6 +116,11 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound)
       FREE(cp->last_sonogram); 
       cp->last_sonogram = NULL;
     }
+  if (cp->last_wavogram) 
+    {
+      FREE(cp->last_wavogram); 
+      cp->last_wavogram = NULL;
+    }
   cp->active = CHANNEL_INITIALIZED;
   return(cp);
 }
@@ -178,6 +185,11 @@ static chan_info *free_chan_info(chan_info *cp)
       free_sonogram_fft_state(cp->last_sonogram);
       FREE(cp->last_sonogram); 
       cp->last_sonogram = NULL;
+    }
+  if (cp->last_wavogram) 
+    {
+      FREE(cp->last_wavogram); 
+      cp->last_wavogram = NULL;
     }
   if (cp->lisp_info) 
     {

@@ -589,9 +589,9 @@
 	 (outa i (nxy1sin gen)))))))
 |#
 
-;;; TODO: scaling for nsin5 npos1cos? dblsum krksin
 ;;; TODO: test x86 gtk/motif pointer handling
 ;;; TODO: extend numeric testing in the bug finder
+;;; TODO: check new nxysin (etc) cases [snd-test 23]
 
 ;;;   we can get the sinusoidally varying maxamp by using e.g. (make-nxy1sin 1 1000 3)
 ;;;   the peak starts at ca .72 and goes to 1 etc
@@ -904,17 +904,33 @@
 	 (outa i (ncos5 gen)))))))
 
 
+(define (find-nsin5-max n)
+    
+  (define (ns x n)
+    (let* ((den (tan (* 0.5 x))))
+      (if (< (abs den) nearly-zero)
+	  0.0
+	  (/ (- 1.0 (cos (* n x)))
+	     den))))
+
+  (define (find-mid-max n lo hi)
+    (let ((mid (/ (+ lo hi) 2)))
+      (let ((ylo (ns lo n))
+	    (yhi (ns hi n)))
+	(if (< (abs (- ylo yhi)) 1e-9)
+	    (ns mid n)
+	    (if (> ylo yhi)
+		(find-mid-max n lo mid)
+		(find-mid-max n mid hi))))))
+
+  (find-mid-max n 0.0 (/ pi (+ n .5))))
+
+
 (defgenerator (nsin5
 	       :make-wrapper (lambda (g)
 			       (set! (nsin5-frequency g) (hz->radians (nsin5-frequency g)))
 			       (set! (nsin5-n g) (max 2 (nsin5-n g)))
-			       (if (< (nsin5-n g) 40)
-				   (set! (nsin5-norm g) (list-ref (list 1.0 0.0 2.598 4.137 5.637 7.117 8.587 10.051 11.509 
-									12.971 14.422 15.880 17.320 18.764 20.224 21.693 23.136 24.554 26.048 
-									27.436 28.938 30.377 31.734 33.296 34.725 36.009 37.566 39.101 40.522 
-									41.817 43.121 44.768 46.331 47.801 49.171 50.434 51.583 53.058 54.745 56.368)
-								  (nsin5-n g)))
-				   (set! (nsin5-norm g) (* 1.45 n)))
+			       (set! (nsin5-norm g) (find-nsin5-max (nsin5-n g)))
 			       g))
   (frequency *clm-default-frequency*) (n 2 :type int) (angle 0.0) (norm 1.0))
 
@@ -937,6 +953,28 @@
 	0.0
 	(/ (- 1.0 (cos (* n x)))
 	   (* den norm)))))
+
+
+(define (find-nsin-max n)
+    
+  (define (ns x n) 
+    (let* ((a2 (/ x 2))
+	   (den (sin a2)))
+      (if (= den 0.0)
+	  0.0
+	  (/ (* (sin (* n a2)) (sin (* (1+ n) a2))) den))))
+
+  (define (find-mid-max n lo hi)
+    (let ((mid (/ (+ lo hi) 2)))
+      (let ((ylo (ns lo n))
+	    (yhi (ns hi n)))
+	(if (< (abs (- ylo yhi)) 1e-14)
+	    (ns mid n) ; rationalize (/ mid pi) for location
+	    (if (> ylo yhi)
+		(find-mid-max n lo mid)
+		(find-mid-max n mid hi))))))
+
+  (find-mid-max n 0.0 (/ pi (+ n .5))))
 
 
 (with-sound (:clipped #f :statistics #t)

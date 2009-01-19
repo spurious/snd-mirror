@@ -4,8 +4,6 @@
 
 /* SOMEDAY: fft side needs a zoom capability, not just the drag now */
 
-/* TODO: wavogram redraws itself incessantly and is very annoying! -- lisp graph has the same problem */
-
 /* it would be neat I think to change label font sizes/button sizes etc when dialog changes size
  *   but there's no way to trap the outer resizing event and
  *   in Gtk, the size is not (currently) allowed to go below the main buttons (as set by font/stock-labelling)
@@ -2778,15 +2776,19 @@ static void gl_spectrogram(sono_info *si, int gl_fft_list, Float cutoff, bool us
 			   rgb_t br, rgb_t bg, rgb_t bb)
 {
   Float lin_dB = 0.0;
-  Float xincr, yincr, x0, y0;
+  Float xincr, yincr, x0, y0, x1, y1;
   int bins = 0, slice, i, j;
   float inv_scl;
   int **js = NULL;
+
   inv_scl = 1.0 / si->scale;
   if (use_dB) lin_dB = pow(10.0, min_dB * 0.05);
+
   glNewList((GLuint)gl_fft_list, GL_COMPILE);
+
   bins = (int)(si->target_bins * cutoff);
   if (bins <= 0) bins = 1;
+
   js = (int **)CALLOC(si->active_slices, sizeof(int *));
   for (i = 0; i < si->active_slices; i++)
     {
@@ -2804,18 +2806,23 @@ static void gl_spectrogram(sono_info *si, int gl_fft_list, Float cutoff, bool us
     }
   xincr = 1.0 / (float)(si->active_slices);
   yincr = 1.0 / (float)bins;
+  x1 = -0.5;
 
-  for (x0 = -0.5, slice = 0; slice < si->active_slices - 1; slice++, x0 += xincr)
+  for (slice = 0; slice < si->active_slices - 1; slice++)
     {
-      for (i = 0, y0 = -0.5; i < bins - 1; i++, y0 += yincr)
+      x0 = x1;
+      x1 += xincr;
+      y1 = -0.5;
+
+      for (i = 0; i < bins - 1; i++)
 	{
-	  float x1, y1;
 	  rgb_t r, g, b;
 	  Float val00, val01, val11, val10;
 
 	  glBegin(GL_POLYGON);
-	  x1 = x0 + xincr;
-	  y1 = y0 + yincr;
+
+	  y0 = y1;
+	  y1 += yincr;
 
 	  val00 = si->data[slice][i] * inv_scl;
 	  val01 = si->data[slice][i + 1] * inv_scl;
@@ -2878,6 +2885,7 @@ static bool make_gl_spectrogram(chan_info *cp)
   sono_info *si;
   axis_info *fap;
   snd_info *sp;
+  bool need_relist = false;
 
   rgb_t br = RGB_MAX, bg = RGB_MAX, bb = RGB_MAX;
 #if USE_MOTIF
@@ -2906,18 +2914,24 @@ static bool make_gl_spectrogram(chan_info *cp)
     }
   set_up_for_gl(cp);
   if (cp->gl_fft_list == NO_LIST) 
-    cp->gl_fft_list = (int)glGenLists(1);
+    {
+      need_relist = true;
+      cp->gl_fft_list = (int)glGenLists(1);
+    }
   else
     {
       if (cp->fft_changed == FFT_CHANGED)
 	{
 	  glDeleteLists((GLuint)(cp->gl_fft_list), 1);
 	  cp->gl_fft_list = (int)glGenLists(1);
+	  need_relist = true;
 	}
     }
+
   glEnable(GL_DEPTH_TEST);
   glShadeModel(GL_SMOOTH);
   glClearDepth(1.0);
+
 #if USE_MOTIF
   /* get the background color */
   dpy = XtDisplay(MAIN_SHELL(ss));
@@ -2945,7 +2959,8 @@ static bool make_gl_spectrogram(chan_info *cp)
 #endif
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-  gl_spectrogram(si, cp->gl_fft_list, cp->spectro_cutoff, cp->fft_log_magnitude, cp->min_dB, br, bg, bb);
+  if (need_relist)
+    gl_spectrogram(si, cp->gl_fft_list, cp->spectro_cutoff, cp->fft_log_magnitude, cp->min_dB, br, bg, bb);
 
   glViewport(fap->graph_x0, 0, fap->width, fap->height);
   glMatrixMode(GL_PROJECTION);
@@ -2955,7 +2970,9 @@ static bool make_gl_spectrogram(chan_info *cp)
   glRotatef(cp->spectro_y_angle, 0.0, 1.0, 0.0);
   glRotatef(cp->spectro_z_angle, 0.0, 0.0, 1.0);
   glScalef(cp->spectro_x_scale, cp->spectro_y_scale, cp->spectro_z_scale);
+
   glCallList((GLuint)(cp->gl_fft_list));
+
   fap->use_gl = true;
 
   {
@@ -3078,7 +3095,6 @@ static bool make_spectrogram(chan_info *cp)
       
       for (i = 0; i < bins; i++, x += xincr)
 	{
-
 	  Float logx;
 	  if (cp->fft_log_frequency) 
 	    {
@@ -3149,6 +3165,16 @@ static bool make_spectrogram(chan_info *cp)
 }
 
 
+/* ---------------------------------------- wavograms ---------------------------------------- */
+
+typedef struct wavogram_state {
+  int hop, trace, width, height, graph_x0, cmap, cmap_size, edit_ctr;
+  bool inverted;
+  Float scale, cutoff;
+  off_t losamp;
+} wavogram_state;
+
+   
 static int make_wavogram(chan_info *cp)
 {
   snd_info *sp;
@@ -3157,14 +3183,14 @@ static int make_wavogram(chan_info *cp)
   int i, j, points = 0, yincr, yoff, xx, yy;
   Float matrix[9];
   Float xyz[3];
-  snd_fd *sf;
   axis_info *ap;
   axis_context *ax;
+  snd_fd *sf = NULL;
+
   sp = cp->sound;
   ap = cp->axis;
   if (sp) ap->losamp = (off_t)(ap->x0 * SND_SRATE(sp));
-  sf = init_sample_read(ap->losamp, cp, READ_FORWARD);
-  if (sf == NULL) return(0);
+
 #if HAVE_GL
   if (((sp->nchans == 1) || (sp->channel_style == CHANNELS_SEPARATE)) &&
       (color_map(ss) != BLACK_AND_WHITE_COLORMAP) &&
@@ -3172,69 +3198,203 @@ static int make_wavogram(chan_info *cp)
     {
       Float **samps;
       int **js;
-      float x0, x1, y0, y1;
+      float x0, x1, y0, y1, x5inc, y5inc;
       Float xinc, yinc;
+      rgb_t *rs = NULL, *gs = NULL, *bs = NULL;
+      wavogram_state *lw;
       /* each line is wavo_trace samps, there are (height / wave_hop) of these? */
       int lines, len;
-      lines = (int)(ap->height / cp->wavo_hop);
-      if (lines == 0) return(0);
-      len = cp->wavo_trace;
-      samps = (Float **)CALLOC(lines, sizeof(Float *));
-      js = (int **)CALLOC(lines, sizeof(int *));
-      for (i = 0; i < lines; i++)
+      bool need_new_list = true;
+
+      lw = cp->last_wavogram;
+      if ((lw) &&
+	  (cp->gl_wavo_list != NO_LIST) &&
+	  (lw->hop == wavo_hop(ss)) &&
+	  (lw->trace == wavo_trace(ss)) &&
+	  (lw->losamp == ap->losamp) &&
+	  (lw->width == ap->width) &&
+	  (lw->height == ap->height) &&
+	  (lw->graph_x0 == ap->graph_x0) && 
+	  (lw->cmap == color_map(ss)) &&
+	  (lw->cmap_size == color_map_size(ss)) &&
+	  (lw->edit_ctr == cp->edit_ctr) &&
+	  (lw->inverted == color_inverted(ss)) &&
+	  (lw->scale == color_scale(ss)) &&
+	  (lw->cutoff == color_cutoff(ss)))
 	{
-	  samps[i] = (Float *)CALLOC(len, sizeof(Float));
-	  js[i] = (int *)CALLOC(len, sizeof(int));
-	  for (j = 0; j < len; j++)
-	    {
-	      samps[i][j] = read_sample(sf);
-	      js[i][j] = skew_color(fabs(samps[i][j]));
-	      if (js[i][j] < 0) js[i][j] = 0;
-	    }
+	  /* use previous display list */
+	  need_new_list = false;
 	}
+      else
+	{
+	  if (cp->last_wavogram) FREE(cp->last_wavogram);
+
+	  lw = (wavogram_state *)MALLOC(sizeof(wavogram_state));
+	  lw->hop = wavo_hop(ss);
+	  lw->trace = wavo_trace(ss);
+	  lw->losamp = ap->losamp;
+	  lw->width = ap->width;
+	  lw->height = ap->height;
+	  lw->graph_x0 = ap->graph_x0;
+	  lw->cmap = color_map(ss);
+	  lw->cmap_size = color_map_size(ss);
+	  lw->edit_ctr = cp->edit_ctr;
+	  lw->inverted = color_inverted(ss);
+	  lw->scale = color_scale(ss);
+	  lw->cutoff = color_cutoff(ss);
+
+	  cp->last_wavogram = lw;
+
+	  sf = init_sample_read(ap->losamp, cp, READ_FORWARD);
+	  if (sf == NULL) return(0);
+
+	  lines = (int)(ap->height / cp->wavo_hop);
+	  if (lines == 0) return(0);
+	  len = cp->wavo_trace;
+	  samps = (Float **)CALLOC(lines, sizeof(Float *));
+	  js = (int **)CALLOC(lines, sizeof(int *));
+	  for (i = 0; i < lines; i++)
+	    {
+	      samps[i] = (Float *)CALLOC(len, sizeof(Float));
+	      js[i] = (int *)CALLOC(len, sizeof(int));
+	      for (j = 0; j < len; j++)
+		{
+		  samps[i][j] = read_sample(sf);
+		  js[i][j] = skew_color(fabs(samps[i][j]));
+		  if (js[i][j] < 0) js[i][j] = 0;
+		}
+	    }
+	  free_snd_fd(sf);
+	}
+
       set_up_for_gl(cp);
+
       glEnable(GL_DEPTH_TEST);
       glDepthFunc(GL_LEQUAL); 
       glClearDepth(1.0);
       glClearColor(1.0, 1.0, 1.0, 0.0);
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
       glViewport(ap->graph_x0, 0, ap->width, ap->height);
+
       glMatrixMode(GL_PROJECTION);
       glLoadIdentity();
       glRotatef(cp->spectro_x_angle, 1.0, 0.0, 0.0);
       glRotatef(cp->spectro_y_angle, 0.0, 1.0, 0.0);
       glRotatef(cp->spectro_z_angle, 0.0, 0.0, 1.0);
       glScalef(cp->spectro_x_scale, cp->spectro_y_scale, cp->spectro_z_scale);
-      xinc = 2.0 / (float)len;
-      yinc = 2.0 / (float)lines;
-      for (j = 0, y0 = -1.0; j < lines - 1; j++, y0 += yinc)
-	for (x0 = -1.0, i = 0; i < len - 1; i++, x0 += xinc)
-	  {
-	    rgb_t r, g, b;
-	    glBegin(GL_POLYGON);
-	    x1 = x0 + xinc;
-	    y1 = y0 + yinc;
 
-	    get_current_color(color_map(ss), js[j][i], &r, &g, &b);
-	    GL_COLOR_SET(r, g, b);
-	    glVertex3f(x0, samps[j][i], y0);
-		      
-	    get_current_color(color_map(ss), js[j + 1][i], &r, &g, &b);
-	    GL_COLOR_SET(r, g, b);
-	    glVertex3f(x1, samps[j+ 1][i], y0);
-		      
-	    get_current_color(color_map(ss), js[j + 1][i + 1], &r, &g, &b);
-	    GL_COLOR_SET(r, g, b);
-	    glVertex3f(x1, samps[j + 1][i + 1], y1);
-		      
-	    get_current_color(color_map(ss), js[j][i + 1], &r, &g, &b);
-	    GL_COLOR_SET(r, g, b);
-	    glVertex3f(x0, samps[j][i + 1], y1);
-		      
-	    glEnd();
-	  }
+      if (!need_new_list)
+	{
+	  glCallList((GLuint)(cp->gl_wavo_list));
+	  gl_display(cp);
+	  return((int)(lw->height / lw->hop));
+	}
+
+      if (cp->gl_wavo_list == NO_LIST) 
+	cp->gl_wavo_list = (int)glGenLists(1);
+      else
+	{
+	  glDeleteLists((GLuint)(cp->gl_wavo_list), 1);
+	  cp->gl_wavo_list = (int)glGenLists(1);
+	}
+
+      xinc = 2.0 / (Float)len;
+      yinc = 2.0 / (Float)lines;
+      x5inc = 1.25 * xinc;
+      y5inc = 1.25 * yinc;
+      
+      rs = color_map_reds(color_map(ss));
+      
+      glNewList((GLuint)(cp->gl_wavo_list), GL_COMPILE);
+
+      if (rs)
+	{
+	  int len1, lines1;
+	  Float xf, yf;
+
+	  fprintf(stderr, "redraw ");
+
+	  gs = color_map_greens(color_map(ss));
+	  bs = color_map_blues(color_map(ss));
+	  y1 = -1.0;
+	  len1 = len - 1;
+	  lines1 = lines - 1;
+
+	  for (j = 0; j < lines1; j++)
+	    {
+	      x1 = -1.0;
+	      y0 = y1;
+	      y1 += yinc;
+	      yf = y1 + yinc / 2.0;
+
+	      for (i = 0; i < len1; i++)
+		{
+		  int c;
+		  x0 = x1;
+		  x1 += xinc;
+		  xf = x1 + xinc / 2.0;
+		  
+		  glBegin(GL_QUADS);
+		  c = js[j][i];
+		  GL_COLOR_SET(rs[c], gs[c], bs[c]);
+		  glVertex3f(x0, samps[j][i], y0);
+		
+		  c = js[j + 1][i];
+		  GL_COLOR_SET(rs[c], gs[c], bs[c]);
+		  glVertex3f(xf, samps[j+ 1][i], y0);
+		
+		  c = js[j + 1][i + 1];
+		  GL_COLOR_SET(rs[c], gs[c], bs[c]);
+		  glVertex3f(xf, samps[j + 1][i + 1], yf);
+		
+		  c = js[j][i + 1];
+		  GL_COLOR_SET(rs[c], gs[c], bs[c]);
+		  glVertex3f(x0, samps[j][i + 1], y1 + yf);
+		  glEnd();
+		}
+	    }
+	}
+      else
+	{
+	  int len1, lines1;
+	  y1 = -1.0;
+	  len1 = len - 1;
+	  lines1 = lines - 1;
+	  for (j = 0; j < lines1; j++)
+	    {
+	      x1 = -1.0;
+	      y0 = y1;
+	      y1 += yinc;
+	      for (i = 0; i < len1; i++)
+		{
+		  rgb_t r, g, b;
+		  x0 = x1;
+		  x1 += xinc;
+
+		  glBegin(GL_QUADS);
+		  get_current_color(color_map(ss), js[j][i], &r, &g, &b);
+		  GL_COLOR_SET(r, g, b);
+		  glVertex3f(x0, samps[j][i], y0);
+		
+		  get_current_color(color_map(ss), js[j + 1][i], &r, &g, &b);
+		  GL_COLOR_SET(r, g, b);
+		  glVertex3f(x1, samps[j+ 1][i], y0);
+		
+		  get_current_color(color_map(ss), js[j + 1][i + 1], &r, &g, &b);
+		  GL_COLOR_SET(r, g, b);
+		  glVertex3f(x1, samps[j + 1][i + 1], y1);
+		
+		  get_current_color(color_map(ss), js[j][i + 1], &r, &g, &b);
+		  GL_COLOR_SET(r, g, b);
+		  glVertex3f(x0, samps[j][i + 1], y1);
+		  glEnd();
+		}
+	    }
+	}
+
+      glEndList();
+      glCallList((GLuint)(cp->gl_wavo_list));
       gl_display(cp);
-      points = j;
 
       for (i = 0; i < lines; i++) 
 	{
@@ -3243,10 +3403,12 @@ static int make_wavogram(chan_info *cp)
 	}
       FREE(samps);
       FREE(js);
-      free_snd_fd(sf);
-      return(points);
+      return(j);
     }
 #endif
+
+  sf = init_sample_read(ap->losamp, cp, READ_FORWARD);
+  if (sf == NULL) return(0);
   if (cp->printing) ps_allocate_grf_points();
   width = (ap->x_axis_x1 - ap->x_axis_x0);
   height = (ap->y_axis_y1 - ap->y_axis_y0); /* negative! */

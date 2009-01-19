@@ -72,6 +72,25 @@ static rgb_t *Floats_to_rgb_t(int size, Float *data)
 }
 
 
+static void rebuild_colormap(cmap *c)
+{
+  Float **rgb;
+  int i;
+  /* release old colormap data */
+  if (c->r) FREE(c->r);
+  if (c->g) FREE(c->g);
+  if (c->b) FREE(c->b);
+  c->size = color_map_size(ss);
+  /* make new data */
+  rgb = (*(c->make_rgb))(c->size, c->lambda);
+  c->r = Floats_to_rgb_t(c->size, rgb[0]);
+  c->g = Floats_to_rgb_t(c->size, rgb[1]);
+  c->b = Floats_to_rgb_t(c->size, rgb[2]);
+  for (i = 0; i < 3; i++) FREE(rgb[i]);
+  FREE(rgb);
+}
+
+
 void get_current_color(int index, int n, rgb_t *r, rgb_t *g, rgb_t *b)
 {
   if (is_colormap(index))
@@ -83,22 +102,7 @@ void get_current_color(int index, int n, rgb_t *r, rgb_t *g, rgb_t *b)
       else
 	{
 	  if (color_map_size(ss) != c->size)
-	    {
-	      Float **rgb;
-	      int i;
-	      /* release old colormap data */
-	      if (c->r) FREE(c->r);
-	      if (c->g) FREE(c->g);
-	      if (c->b) FREE(c->b);
-	      c->size = color_map_size(ss);
-	      /* make new data */
-	      rgb = (*(c->make_rgb))(c->size, c->lambda);
-	      c->r = Floats_to_rgb_t(c->size, rgb[0]);
-	      c->g = Floats_to_rgb_t(c->size, rgb[1]);
-	      c->b = Floats_to_rgb_t(c->size, rgb[2]);
-	      for (i = 0; i < 3; i++) FREE(rgb[i]);
-	      FREE(rgb);
-	    }
+	    rebuild_colormap(c);
 	  if (n < c->size)
 	    {
 	      (*r) = c->r[n];
@@ -108,6 +112,52 @@ void get_current_color(int index, int n, rgb_t *r, rgb_t *g, rgb_t *b)
 	}
     }
 }
+
+
+rgb_t *color_map_reds(int index)
+{
+  if (is_colormap(index))
+    {
+      cmap *c;
+      c = cmaps[index];
+      if (c->get_rgb) return(NULL);
+      if (color_map_size(ss) != c->size)
+	rebuild_colormap(c);
+      return(c->r);
+    }
+  return(NULL);
+}
+
+
+rgb_t *color_map_greens(int index)
+{
+  if (is_colormap(index))
+    {
+      cmap *c;
+      c = cmaps[index];
+      if (c->get_rgb) return(NULL);
+      if (color_map_size(ss) != c->size)
+	rebuild_colormap(c);
+      return(c->g);
+    }
+  return(NULL);
+}
+
+
+rgb_t *color_map_blues(int index)
+{
+  if (is_colormap(index))
+    {
+      cmap *c;
+      c = cmaps[index];
+      if (c->get_rgb) return(NULL);
+      if (color_map_size(ss) != c->size)
+	rebuild_colormap(c);
+      return(c->b);
+    }
+  return(NULL);
+}
+
 
 
 static cmap *new_cmap(const char *name, int size, Float **rgb)

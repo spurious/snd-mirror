@@ -320,6 +320,7 @@ typedef struct chan_info {
   chan_context *tcgx;      /* when combining chans, all should use chan[0]'s context */
   sono_info *sonogram_data;
   struct sonogram_state *last_sonogram, *temp_sonogram; /* defined in snd-fft.c */
+  struct wavogram_state *last_wavogram;                 /* defined in snd-chn.c */
   bool show_sonogram_cursor;
   struct fft_state *fft_data;          /* parallels sonogram -- try to avoid repeating large ffts needlessly */
   printing_t printing;
@@ -362,7 +363,7 @@ typedef struct chan_info {
   search_result_t last_search_result;
   bool just_zero, new_peaks, editable, tracking;
 #if HAVE_GL
-  int gl_fft_list;
+  int gl_fft_list, gl_wavo_list;
 #endif
 } chan_info;
 

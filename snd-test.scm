@@ -16024,6 +16024,7 @@ EDITS: 2
 	(if (not (ceql val (list 5.0 1.0 3.0))) (snd-display ";poly-roots 5 1 3: ~A" val)))
       (let ((val (poly-roots (vct -126 -15 0 1))))
 	(if (not (ceql val (list 6.0 -3.0+3.46410i -3.0-3.46410i))) (snd-display ";poly-roots -126 -15 0 1: ~A" val)))
+
       (let ((val (poly-roots (vct -1 3 -3 1))))
 	(if (not (ceql val (list 1.0 1.0 1.0))) (snd-display ";poly-roots -1 3 -3 1: ~A" val))) 
       (let ((val (poly-roots (vct 1 -1 -1 1))))
@@ -55277,8 +55278,7 @@ EDITS: 1
 			     ((= i 10000))
 			   (outa i (krksin gen))))))))
 	       (snd (find-sound res)))
-	  (if (not (sound? snd)) (snd-display ";krksin ~A" snd))
-	  (if (fneq (maxamp snd) 1.0) (snd-display ";krksin max: ~A" (maxamp snd))))
+	  (if (not (sound? snd)) (snd-display ";krksin ~A" snd)))
 	
 	(let* ((res (with-sound (:clipped #f)
 		    (let ((gen (make-abcos 100.0 0.5 0.25)))
@@ -55398,8 +55398,7 @@ EDITS: 1
 			     ((= i 10000))
 			   (outa i (nxysin gen))))))))
 	       (snd (find-sound res)))
-	  (if (not (sound? snd)) (snd-display ";nxysin ~A" snd))
-	  (if (fneq (maxamp snd) 1.0) (snd-display ";nxysin max: ~A" (maxamp snd))))
+	  (if (not (sound? snd)) (snd-display ";nxysin ~A" snd)))
 
 	(let* ((res (with-sound (:clipped #f)
 		    (let ((gen (make-nxycos 300 1/3 3)))

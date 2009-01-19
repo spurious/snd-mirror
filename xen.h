@@ -2074,11 +2074,11 @@ const char *xen_s7_object_help(XEN sym);
 double xen_to_c_double(XEN a);
 off_t xen_to_c_int(XEN a);
 double xen_to_c_double_or_else(XEN a, double b);
+s7_scheme *s7_xen_initialize(s7_scheme *sc);
 void xen_s7_set_repl_prompt(const char *new_prompt);
+
 #if !(defined(__GNUC__) && (!(defined(__cplusplus))))
   XEN xen_s7_c_to_xen_string(const char *str);
-
-s7_scheme *s7_xen_initialize(s7_scheme *sc);
 #endif
 
 #ifdef __cplusplus

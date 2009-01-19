@@ -7670,48 +7670,79 @@ In Ruby, this functionality is in env.rb.  It can be activated via:
 the unpulse-train, so to speak.  I started with the questions: given a sum of
 n equal amplitude harmonically related sinusoids, what set of initial phases minimizes
 the peak amplitude?  What is that peak as a function of n?  Can we find any pattern
-to the initial phases so that a tiresome search is unnecessary?  Since the initial
-phases can vary between 0.0 and 2*pi, a brute force search quickly becomes impossible:
-we need to check ((2*pi)/initial-phase-increment)^(n-1) cases.  If we check at intervals
-of 0.001, and n is only 4, we have something like 248050213442 cases, each involving
-a run of 4 sinusoids between 0 and 2 pi, looking for the peak.  Since the equations
-themselves are borderline unsolvable (even when n=3), we have to try
-some other approach.  The one used here uses two stages: first we set the phases randomly,
-and check the peak; if it is close to the current best, we then systematically vary
-each phase, trying to reduce the peak.  For n &lt; 50 or so, I tried 100000 random guesses.
+to the initial phases so that a tiresome search is unnecessary?  For the second question,
+there are several simple cases.  If all harmonics are cosines, the peak amplitude is
+n (they all are 1 at the start).  If we have 2 harmonics, and vary the initial phase of
+the 2nd from to 2*pi, graphing the resulting peak amplitude, we get:
 </p>
-
-<p>You might think something simpler would suffice, but the peak amplitude as a function
-of the initial phases is an incredibly complex function.  Start with the simplest case,
-n=2.  Here (as in all the others) the fundamental stays at initial phase 0, and we
-incrementally increase the initial phase of the second harmonic, graphing that
-starting phase on the X axis, and the resulting peak amplitude on the Y axis.
-</p>
-
 
 <img src="pix/noid2.png" hspace=20 alt="n=2 case">
 <img src="pix/sum2.png" hspace=20 alt="n=2 case">
 
+<p>The graph on the left is the 2nd harmonic's initial phase vs the peak amplitude.  Since 0.0
+appears to be a minimum, we can solve for the peak at that point using calculus: differentiate
+sin(x) + sin(2x) to get cos(x) + 2cos(2x) = 4cos^2(x) + cos(x) -2, a quadratic equation
+in cos(x).  Let y=cos(x), solve for y: (sqrt(33)-1)/8.  Plug that back into the original
+equation (x=acos(y) = 0.93592945566133), and get 1.7601725930461.  Looking back at the
+peak-amplitude graph, it appears that the peak varies as 1.76+0.24*abs(sin(initial-phase)).
+Similarly sin(x)+sin(3x) differentiated is cos(x)+3cos(3x) = cos^3(x)-8cos(x).  cos(x)=0
+is a minimum of the original, but the other case is acos(sqrt(2/3)) = 0.61547970867039,
+and plugging that into the original gives 1.539600717839.  If we vary the sin(3x) term's
+initial phase as before, we get something like 1.5396 + 0.4604 * sin(initial-phase), but
+I feel like I'm seeing other terms.
+Another case that is not too hard involves a sum of
+n sines all at 0 initial phase.  This can be expressed as:
+</p>
 
-<p>That one is easy; we can try the two minima (both initial phases 0.0, and one 0.0 the other pi)
-and find the minimum peak for n=2 is 1.76.  The graph on the right shows the two components at the phase=0 minimum and their sum.
-How hard can n=3 be?
-To graph the same function in that case seems to require a 3D projection (X axis for component 2's
-phase, Y axis for component 3's, and Z axis for the resultant peak).  But I found the graph 
-almost unreadable.  I think a much more legible approach that can be applied to any number
+<img src="pix/sceq1.png" alt="sum of sines" hspace=40>
+
+</p>which is the nsin generator in clm. Since the waveform is a two-sided
+pulse with the first local maximum at the peak, we can easily search for that peak as n increases.
+We find that it is approaching (3*pi)/(4*n), and if we plug that into the original equation,
+we get that the peak amplitude approaches 8*n*(sin^2(3*pi/8))/(3*pi), about 0.7245 * n
+(using the right hand expression above, set x to (3*pi)/(4*n), let n be large,
+so (n+1)/n approaches 1 and sin(y) is close to y if it is very small).
+A sum of n odd harmonics behaves similarly (the peak comes half as far from the zero crossing,
+but has the same max).  Those are the easy cases.  The next case involves 3 harmonics,
+where we vary the 2nd and 3rd harmonic's initial phase, looking for the minimum peak amplitude.
+One view of this terrain has the 2nd harmonic's initial phase on the Y axis, the 3rd on the X axis,
+and the color for the corresponding peak:
+</p>
+
+<img src="pix/n3a1.png" alt="3 harmonics in 3D" hspace=40>
+
+<p>
+Surprisingly reminiscent of sin(x)*sin(x-y)!
+(I tilted the graph slightly to try to show how the colors match the peak).
+A different way to view this graph that 
+that can be applied to any number
 of dimensions (until we run out of disk space and patience), is to move through the possibilities
 in much the way you'd count to 100; before each 10's digit increments, you'd count diligently
 through all the 1's.  Similarly, in the next set of graphs, we go from 0 to 2pi completely
 on one component before incrementing the next lower component.  So, we get the 2nd component
 moving slowly from 0 to 2pi, and, in the n=3 case, at each step it takes, it waits until the
 3rd component has gone from 0 to 2pi.  This way we get all possible initial phases graphed
-in a normal 2D picture.  So here is the n=3 case.  The top level looks a bit like the n=2 case, but
+in a normal 2D picture.  Here is the n=3 case.  The top level looks a bit like the n=2 case, but
 zooming in shows more complexity (each graph on the right is the selected portion of the one
-on its left).
+on its left). (The complexity in this case is mostly due to the slice-at-a-time approach).
 </p>
 
-
 <img src="pix/noid3.png" hspace=20 alt="n=3 case">
+
+<p>We're trying to pinpoint the minimum (there appear to be 4 black areas in the 3D graph,
+corresponding somehow to the four minima in the 2nd graph).
+A laborious search tells us the first minimum is 1.979799678333 when the 2nd harmonic's
+initial phases is 1.28892570352252, and the 3rd's is 5.288363163944985. But this kind
+of search is not feasible when n is more than 6 or so;
+we need to check ((2*pi)/initial-phase-increment)^(n-1) cases!  If our increment is
+0.001, and n is only 4, we have something like 248050213442 cases, each involving
+a run of 4 sinusoids between 0 and 2 pi, looking for the peak.  Since the equations
+themselves are borderline unsolvable (even when n=3), we have to try
+some other approach.  The one used here uses two stages: first we set the phases randomly,
+and check the peak; if it is close to the current best, we then systematically vary
+each phase, trying to reduce the peak.  For n &lt; 50 or so, I tried 1000000 random guesses.
+</p>
+
 
 <!--
 (set! (srate 2) (inexact->exact (round (/ 1000000 (* 2 pi)))))
@@ -7732,8 +7763,7 @@ on its left).
 (set! (x-axis-label 1 0) "2's phase")
 -->
 
-<p>One of those minima is 1.98.  
-Now try n=4 graphed in the same way:
+<p>Here is n=4 graphed in the same way:
 </p>
 
 <img src="pix/noid4.png" hspace=20 alt="n=4 case">

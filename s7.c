@@ -16415,9 +16415,21 @@ static s7_pointer big_expt(s7_scheme *sc, s7_pointer args)
       
       z = (mpc_t *)malloc(sizeof(mpc_t));
       mpc_init(*z);
+      mpc_set(*z, S7_BIG_COMPLEX(x), MPC_RNDNN);
+      if (mpc_cmp_si_si(*z, 0, 0) == 0)
+	{
+	  mpc_clear(*z);
+	  free(z);
+	  return(make_number(sc, small_int_as_num(sc, 0)));
+	}
+      if (mpc_cmp_si_si(*z, 1, 0) == 0)
+	{
+	  mpc_clear(*z);
+	  free(z);
+	  return(make_number(sc, small_int_as_num(sc, 1)));
+	}
       mpfr_init(r);
       mpfr_init(theta);
-      mpc_set(*z, S7_BIG_COMPLEX(x), MPC_RNDNN);
       mpc_abs(r, *z, GMP_RNDN);                                 /* r = cabs(x) */
       mpfr_init_set(lgr, r, GMP_RNDN);
       mpfr_log(lgr, lgr, GMP_RNDN);                             /* lgr = log(r) */
