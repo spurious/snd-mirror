@@ -7673,7 +7673,7 @@ the peak amplitude?  What is that peak as a function of n?  Can we find any patt
 to the initial phases so that a tiresome search is unnecessary?  For the second question,
 there are several simple cases.  If all harmonics are cosines, the peak amplitude is
 n (they all are 1 at the start).  If we have 2 harmonics, and vary the initial phase of
-the 2nd from to 2*pi, graphing the resulting peak amplitude, we get:
+the 2nd from 0.0 to 2*pi, graphing the resulting peak amplitude, we get:
 </p>
 
 <img src="pix/noid2.png" hspace=20 alt="n=2 case">
@@ -7684,12 +7684,24 @@ appears to be a minimum, we can solve for the peak at that point using calculus:
 sin(x) + sin(2x) to get cos(x) + 2cos(2x) = 4cos^2(x) + cos(x) -2, a quadratic equation
 in cos(x).  Let y=cos(x), solve for y: (sqrt(33)-1)/8.  Plug that back into the original
 equation (x=acos(y) = 0.93592945566133), and get 1.7601725930461.  Looking back at the
-peak-amplitude graph, it appears that the peak varies as 1.76+0.24*abs(sin(initial-phase)).
+peak-amplitude graph, it appears that the peak varies as approximately 1.76+0.24*abs(sin(initial-phase)).
+Actually, the first half very close to:
+</p>
+<pre>
+    (+ 1.7601725930461
+       (* 0.2465 (sin phi))
+       (* 0.008 (sin (* 3 phi)))
+       (* 0.0017 (sin (* 5 phi)))
+       (* 0.0006 (sin (* 7 phi)))
+       (* 0.0003 (sin (* 9 phi)))
+       (* 0.00015 (sin (* 11 phi)))
+       (* 0.00007 (sin (* 13 phi))))))
+</pre>
+<p>
 Similarly sin(x)+sin(3x) differentiated is cos(x)+3cos(3x) = cos^3(x)-8cos(x).  cos(x)=0
 is a minimum of the original, but the other case is acos(sqrt(2/3)) = 0.61547970867039,
 and plugging that into the original gives 1.539600717839.  If we vary the sin(3x) term's
-initial phase as before, we get something like 1.5396 + 0.4604 * sin(initial-phase), but
-I feel like I'm seeing other terms.
+initial phase as before, we get approximately 1.5396 + 0.4604 * sin(initial-phase).
 Another case that is not too hard involves a sum of
 n sines all at 0 initial phase.  This can be expressed as:
 </p>
@@ -7705,16 +7717,103 @@ so (n+1)/n approaches 1 and sin(y) is close to y if it is very small).
 A sum of n odd harmonics behaves similarly (the peak comes half as far from the zero crossing,
 but has the same max).  Those are the easy cases.  The next case involves 3 harmonics,
 where we vary the 2nd and 3rd harmonic's initial phase, looking for the minimum peak amplitude.
-One view of this terrain has the 2nd harmonic's initial phase on the Y axis, the 3rd on the X axis,
-and the color for the corresponding peak:
+One view of this terrain has the 2nd harmonic's initial phase on the Y axis, the 3rd's on the X axis,
+and the color for the height of the corresponding peak:
 </p>
 
-<img src="pix/n3a1.png" alt="3 harmonics in 3D" hspace=40>
+<table border=0 hspace=40>
+<tr><td>
+<table border=1>
+<tr><td>
+<img src="pix/n3a1.png" alt="3 harmonics in 3D">
+</td></tr><tr><td>
+<center>3 harmonics</center></td></tr></table>
+</td><td>
+<table border=1 hspace=40>
+<tr><td>
+<img src="pix/n3a2.png" alt="4 harmonics in 3D">
+</td></tr><tr><td>
+<center>4 harmonics</center></td></tr></table>
+</td></tr></table>
+
+<!--
+(with-sound (:clipped #f :channels 1 :statistics #t :output "n3.snd")
+  (run 
+   (lambda ()
+     (let ((i 0)
+	   (incr (/ (* 2 pi) 1000)))
+      (do ((phi1 0.0 (+ phi1 incr))
+	   (j 0 (+ j 1)))
+	  ((= j 1000))
+	(do ((phi2 0.0 (+ phi2 incr))
+	     (k 0 (+ k 1)))
+	    ((= k 1000))
+	  (let ((pk 0.0)
+		(tpk 0.0))
+	    (do ((x 0.0 (+ x incr))
+		 (n 0 (+ n 1)))
+		((= n 1000))
+	      (let ((val (+ (sin x)
+			    (sin (+ (* 2 x) phi1))
+			    (sin (+ (* 3 x) phi2)))))
+		(if (> (abs val) pk)
+		    (begin
+		      (set! pk (abs val))
+		      (set! tpk val)))))
+	    (outa i tpk)
+	    (set! i (+ i 1)))))))))
+
+(define (gad4)
+  (do ((i 0 (+ i 1)))
+      ((= i 8))
+    (map-channel (lambda (y) (/ (- (abs y) 2) 2)) 0 (frames) 0 i))
+  (set! (wavo-trace) 500)
+  (set! (wavo-hop) 1)
+  (set! (spectro-x-angle) 80)
+  (set! (spectro-y-angle) 0)
+  (set! (spectro-x-scale) 0.75)
+  (set! (spectro-y-scale) 0.9)
+  (set! (spectro-z-scale) 0.9)
+  (set! (time-graph-type) graph-as-wavogram))
+
+
+(with-sound (:clipped #f :channels 8 :statistics #t :output "n4.snd")
+  (run 
+   (lambda ()
+     (let ((i 0)
+	   (incr (/ (* 2 pi) 500)))
+      (do ((phi1 0.0 (+ phi1 incr))
+	   (j 0 (+ j 1)))
+	  ((= j 500))
+	(do ((phi2 0.0 (+ phi2 incr))
+	     (k 0 (+ k 1)))
+	    ((= k 500))
+	  (do ((phi3 0.0 (+ phi3 (/ pi 4)))
+	       (m 0 (+ m 1)))
+	      ((= m 8))
+	    (let ((pk 0.0)
+		  (tpk 0.0))
+	      (do ((x 0.0 (+ x incr))
+		   (n 0 (+ n 1)))
+		  ((= n 1000))
+		(let ((val (+ (sin x)
+			      (sin (+ (* 2 x) phi3))
+			      (sin (+ (* 3 x) phi2))
+			      (sin (+ (* 4 x) phi1)))))
+		  (if (> (abs val) pk)
+		      (begin
+			(set! pk (abs val))
+			(set! tpk val)))))
+	      (out-any i tpk m)))
+	  (set! i (+ i 1))))))))
+-->
+
 
 <p>
 Surprisingly reminiscent of sin(x)*sin(x-y)!
-(I tilted the graph slightly to try to show how the colors match the peak).
-A different way to view this graph that 
+I tilted the graph slightly to try to show how the colors match the peaks.  The graph on the right is
+an attempt to show the 4-dimensional 4-harmonic case by stacking 3-D slices.
+A different way to view these graphs that 
 that can be applied to any number
 of dimensions (until we run out of disk space and patience), is to move through the possibilities
 in much the way you'd count to 100; before each 10's digit increments, you'd count diligently
@@ -7732,7 +7831,7 @@ on its left). (The complexity in this case is mostly due to the slice-at-a-time 
 <p>We're trying to pinpoint the minimum (there appear to be 4 black areas in the 3D graph,
 corresponding somehow to the four minima in the 2nd graph).
 A laborious search tells us the first minimum is 1.979799678333 when the 2nd harmonic's
-initial phases is 1.28892570352252, and the 3rd's is 5.288363163944985. But this kind
+initial phase is 1.28892570352252, and the 3rd's is 5.288363163944985. But this kind
 of search is not feasible when n is more than 6 or so;
 we need to check ((2*pi)/initial-phase-increment)^(n-1) cases!  If our increment is
 0.001, and n is only 4, we have something like 248050213442 cases, each involving
@@ -7792,12 +7891,8 @@ n=5:
 899171, 40000 2000
 -->
 
-<p>The thing looks like a warped, upside-down bed of nails.
-The upshot of all this is that there are apparently lots of
-equivalent minima; we're happy to find one that's reasonably close
-to the actual minimum.  On the other two questions: I see no pattern
-to these phases, and sqrt(n) is always too low.  
-I think it's slightly less than (expt n .6).  Here is a graph of the values I've found so far.
+<p>In general, the minimum peak amplitude appears to be
+slightly less than (expt n .6).  Here is a graph of the values I've found so far.
 If plotted as a log-log graph, it is
 a straight line with a slope just less than 0.6. I've included the n odd, even, and prime-numbered components min peak amps
 as well.
