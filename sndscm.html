@@ -1854,7 +1854,7 @@ To see the asymmetric spectrum most clearly, set the index function above to '(0
 <em class=emdef>resflt</em> <code>(beg dur driver ...)</code>
 </td></tr><tr><td></td><td>
 resflt, developed by Richard Karpen and Xavier Serra, sets up three resonators (two-pole filters), 
-then drives them with either white noise or a <a href="sndclm.html#sum-of-cosines">sum-of-cosines</a> pulse train.
+then drives them with either white noise or an <a href="sndclm.html#ncos">ncos</a> pulse train.
 Both can be used for vocal effects:
 <pre>
     (<a class=quiet href="#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> () 
@@ -7685,7 +7685,7 @@ sin(x) + sin(2x) to get cos(x) + 2cos(2x) = 4cos^2(x) + cos(x) -2, a quadratic e
 in cos(x).  Let y=cos(x), solve for y: (sqrt(33)-1)/8.  Plug that back into the original
 equation (x=acos(y) = 0.93592945566133), and get 1.7601725930461.  Looking back at the
 peak-amplitude graph, it appears that the peak varies as approximately 1.76+0.24*abs(sin(initial-phase)).
-Actually, the first half very close to:
+Actually, the first half is very close to:
 </p>
 <pre>
     (+ 1.7601725930461
@@ -7695,7 +7695,7 @@ Actually, the first half very close to:
        (* 0.0006 (sin (* 7 phi)))
        (* 0.0003 (sin (* 9 phi)))
        (* 0.00015 (sin (* 11 phi)))
-       (* 0.00007 (sin (* 13 phi))))))
+       (* 0.00007 (sin (* 13 phi))))
 </pre>
 <p>
 Similarly sin(x)+sin(3x) differentiated is cos(x)+3cos(3x) = cos^3(x)-8cos(x).  cos(x)=0
@@ -7708,7 +7708,7 @@ n sines all at 0 initial phase.  This can be expressed as:
 
 <img src="pix/sceq1.png" alt="sum of sines" hspace=40>
 
-</p>which is the nsin generator in clm. Since the waveform is a two-sided
+<p>which is the nsin generator in clm. Since the waveform is a two-sided
 pulse with the first local maximum at the peak, we can easily search for that peak as n increases.
 We find that it is approaching (3*pi)/(4*n), and if we plug that into the original equation,
 we get that the peak amplitude approaches 8*n*(sin^2(3*pi/8))/(3*pi), about 0.7245 * n
@@ -7837,9 +7837,11 @@ we need to check ((2*pi)/initial-phase-increment)^(n-1) cases!  If our increment
 0.001, and n is only 4, we have something like 248050213442 cases, each involving
 a run of 4 sinusoids between 0 and 2 pi, looking for the peak.  Since the equations
 themselves are borderline unsolvable (even when n=3), we have to try
-some other approach.  The one used here uses two stages: first we set the phases randomly,
-and check the peak; if it is close to the current best, we then systematically vary
-each phase, trying to reduce the peak.  For n &lt; 50 or so, I tried 1000000 random guesses.
+some other approach.  
+I tried about a dozen different search strategies while collecting the data in peak-phases.scm.
+The most productive simply set the initial phases randomly to either 0 or pi (corresponding
+to setting the sign of the sinusoid).  Even this very sparse search is overwhlemed by the
+size of the "space" we are trying to probe.
 </p>
 
 
@@ -7889,6 +7891,88 @@ n=5:
 
 <!--
 899171, 40000 2000
+-->
+
+<p>Here is the corresponding 3-D graph of the 5 harmonic case.  It is trying to show 8 4-D slices
+through the 5-D landscape, each 4-D case being 8 3-D slices as before:
+</p>
+
+<table border=0 hspace=20>
+<tr>
+<td>
+<img src="pix/n51a.png" alt="5-D view of 5 harmonic case">
+</td>
+<td>
+<img src="pix/n52a.png" alt="5-D view of 5 harmonic case">
+</td>
+<td>
+<img src="pix/n53a.png" alt="5-D view of 5 harmonic case">
+</td>
+<td>
+<img src="pix/n54a.png" alt="5-D view of 5 harmonic case">
+</td>
+<td>
+<img src="pix/n55a.png" alt="5-D view of 5 harmonic case">
+</td>
+<td>
+<img src="pix/n56a.png" alt="5-D view of 5 harmonic case">
+</td>
+<td>
+<img src="pix/n57a.png" alt="5-D view of 5 harmonic case">
+</td>
+<td>
+<img src="pix/n58a.png" alt="5-D view of 5 harmonic case">
+</td>
+</tr>
+</table>
+
+
+<!--
+(with-sound (:clipped #f :channels 64 :statistics #t :output "n5a.snd")
+  (run 
+   (lambda ()
+     (let* ((i 0)
+	    (size 400)
+	    (incr (/ (* 2 pi) size))) ; n5=100 here
+      (do ((phi1 0.0 (+ phi1 incr))
+	   (j 0 (+ j 1)))
+	  ((= j size))
+	(do ((phi2 0.0 (+ phi2 incr))
+	     (k 0 (+ k 1)))
+	    ((= k size))
+	  (do ((phi3 0.0 (+ phi3 (/ pi 4)))
+	       (m 0 (+ m 1)))
+	      ((= m 8))
+	    (do ((phi4 0.0 (+ phi4 (/ pi 4)))
+		 (p 0 (+ p 1)))
+		((= p 8))
+	      (let ((pk 0.0)
+		    (tpk 0.0))
+		(do ((x 0.0 (+ x incr))
+		     (n 0 (+ n 1)))
+		    ((= n 1000))
+		  (let ((val (+ (sin x)
+				(sin (+ (* 2 x) phi1))
+				(sin (+ (* 3 x) phi2))
+				(sin (+ (* 4 x) phi3))
+				(sin (+ (* 5 x) phi4)))))
+		    (if (> (abs val) pk)
+			(begin
+			  (set! pk (abs val))
+			  (set! tpk val)))))
+		(out-any i tpk (+ (* 8 m) p)))))
+	  (set! i (+ i 1))))))))
+
+(define (gad5)
+  (do ((i 0 (+ i 1))) ((= i 64)) (map-channel (lambda (y) (/ (- (abs y) 2.3) (- 5.0 2.3))) 0 (frames) 0 i))
+  (set! (wavo-trace) 400)
+  (set! (wavo-hop) 1)
+  (set! (spectro-x-angle) 10)
+  (set! (spectro-y-angle) 0)
+  (set! (spectro-x-scale) 0.75)
+  (set! (spectro-y-scale) 0.9)
+  (set! (spectro-z-scale) 0.9)
+  (set! (time-graph-type) graph-as-wavogram))
 -->
 
 <p>In general, the minimum peak amplitude appears to be
@@ -8054,7 +8138,7 @@ as well.
     (set! (x-axis-label 0 i) "n")) ;(set! (x-axis-label 0 i) "n, black: all, red: odd, blue: prime, green: n^.6"))
   (set! (selected-graph-color) (make-color 1 1 1))
   (set! (axis-label-font) "9x15")
-  )
+  
 
 -->
 

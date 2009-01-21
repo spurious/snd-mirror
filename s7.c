@@ -13453,7 +13453,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto EVAL;
       
       
-      /* TODO: defmacro/define-macro tests! */
     case OP_DEFINE_MACRO:
 
       sc->y = s7_gensym(sc, "defmac");

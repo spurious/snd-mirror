@@ -1093,9 +1093,6 @@ var sndclm_make_src_tip = "<code>(make-src :input (:srate 1.0) (:width 10))</cod
                           " 'width' is the sine width (effectively the steepness of the low-pass filter), normally between 10 and 100.<br>" +
                           " 'input' if given is an open file stream.";
 
-var sndclm_make_sum_of_cosines_tip = "<code>(make-sum-of-cosines (:cosines 1) (:frequency *clm-default-frequency*) (:initial-phase 0.0))</code>:<br>" +
-                                     " return a new sum-of-cosines generator, producing a band-limited pulse train.";
-
 var sndclm_make_triangle_wave_tip = "<code>(make-triangle-wave (:frequency *clm-default-frequency*) (:amplitude 1.0) (:initial-phase 0.0))</code>:<br>" +
                                     " return a new triangle-wave generator.";
 
