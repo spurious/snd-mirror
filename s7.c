@@ -4817,8 +4817,6 @@ static s7_pointer g_sqrt(s7_scheme *sc, s7_pointer args)
 }
 
 
-static s7_Double top_log = 43.0;  /* approx log(2^63) */
-
 static s7_Int int_to_int(s7_Int x, s7_Int n)
 {
   /* from GSL */
@@ -4830,6 +4828,20 @@ static s7_Int int_to_int(s7_Int x, s7_Int n)
   } while (n);
   return(value);
 }
+
+
+static long long int nth_roots[63] = {
+  LLONG_MAX, LLONG_MAX, 3037000499LL, 2097151, 55108, 6208, 1448, 511, 234, 127, 78, 52, 38, 28, 22, 
+  18, 15, 13, 11, 9, 8, 7, 7, 6, 6, 5, 5, 5, 4, 4, 4, 4, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2, 
+  2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2};
+static int nth_roots_size = 63;
+
+static bool int_pow_ok(s7_Int x, s7_Int y)
+{
+  return((y < nth_roots_size) &&
+	 (nth_roots[y] >= s7_Int_abs(x)));
+}
+
 
 static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
 {
@@ -4864,7 +4876,7 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
 	      return(s7_make_integer(sc, 1));
 	    }
 
-	  if (top_log > s7_Int_abs(y) * log((s7_Double)(s7_Int_abs(x)))) /* else over/underflow; a^b < 2^63 or > 2^-63 */
+	  if (int_pow_ok(x, s7_Int_abs(y)))
 	    {
 	      if (y > 0)
 		return(s7_make_integer(sc, int_to_int(x, y)));
@@ -4880,8 +4892,8 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
 	      n = numerator(sc->x->object.number);
 	      d = denominator(sc->x->object.number);
 
-	      if ((top_log > log((s7_Double)(s7_Int_abs(n))) * s7_Int_abs(y)) &&
-		  (top_log > log((s7_Double)d) * s7_Int_abs(y)))	
+	      if ((int_pow_ok(n, s7_Int_abs(y))) &&
+		  (int_pow_ok(d, s7_Int_abs(y))))
 		{
 		  if (y > 0)
 		    return(s7_make_ratio(sc, int_to_int(n, y), int_to_int(d, y)));
@@ -16402,7 +16414,6 @@ static s7_pointer big_expt(s7_scheme *sc, s7_pointer args)
 	}
     }
 
-  /* PERHAPS: currently (expt 4 1/2) -> 2.0, but in the non-gmp version 2 (similarly for ratios) */ 
   if ((s7_is_number(x)) &&
       (s7_is_number(y)))
     {
@@ -16461,6 +16472,18 @@ static s7_pointer big_expt(s7_scheme *sc, s7_pointer args)
       if (mpfr_cmp_ui(MPC_IM(*z), 0) == 0)
 	{
 	  mpfr_t *n;
+	  if ((s7_is_rational(car(args))) &&
+	      (s7_is_rational(cadr(args))) &&
+	      (mpfr_integer_p(MPC_RE(*z)) != 0))
+	    {
+	      mpz_t *k;
+	      k = (mpz_t *)malloc(sizeof(mpz_t));
+	      mpz_init(*k);
+	      mpfr_get_z(*k, MPC_RE(*z), GMP_RNDN);
+	      mpc_clear(*z);
+	      free(z);
+	      return(s7_make_object(sc, big_integer_tag, (void *)k));
+	    }
 	  n = (mpfr_t *)malloc(sizeof(mpfr_t));
 	  mpfr_init_set(*n, MPC_RE(*z), GMP_RNDN);
 	  mpc_clear(*z);
@@ -17891,7 +17914,7 @@ static s7_pointer g_set_precision(s7_scheme *sc, s7_pointer args)
   return(car(args));
 }
 
-/* TODO: log* in bug-finder, tests of random
+/* TODO: tests of random
  * PERHAPS: hypot j0+ y0+ i0+?? erfc erf gamma lgamma eint? fac? [test the fft]
  * j0: gsl_sf_bessel_J0|1|n([int n] double x)
  *     mpfr_j0|1|n (mpfr rop [long n] mpfr x rnd)
@@ -18854,7 +18877,7 @@ s7_scheme *s7_init(void)
     if (top == 4) default_rationalize_error = 1.0e-6;
     s7_define_constant(sc, "pi", s7_make_real(sc, 3.1415926535897932384626433832795029L)); /* M_PI is not good enough for s7_Double = long double */
 
-    top_log = floor(log(pow(2.0, (s7_Double)((top * 8) - 1))));
+    if (top == 4) nth_roots_size = 31;
     /* for s7_Double, float gives about 9 digits, double 18, long Double claims 28 but I don't see more than about 22? */
   }
 

@@ -704,6 +704,9 @@ returning you to the true top-level."
 
 ;;; -------- with-mixed-sound --------
 
+
+;;; TODO: why does with-mixed-sound need an explicit srate? 
+
 (define (with-mixed-sound-mix-info id snd)
   (let ((all-info (sound-property 'with-mixed-sound-info snd)))
     ;; each entry is '(mx-id beg chans note)

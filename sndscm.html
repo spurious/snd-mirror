@@ -7702,6 +7702,62 @@ Similarly sin(x)+sin(3x) differentiated is cos(x)+3cos(3x) = cos^3(x)-8cos(x).  
 is a minimum of the original, but the other case is acos(sqrt(2/3)) = 0.61547970867039,
 and plugging that into the original gives 1.539600717839.  If we vary the sin(3x) term's
 initial phase as before, we get approximately 1.5396 + 0.4604 * sin(initial-phase).
+A better approximation (at half the fundamental frequency):
+</p>
+<pre>
+    (+ 1.539600717839
+	(* 0.4705 (sin phi))
+	(* 0.01198 (sin (* 3 phi)))
+	(* 0.0025 (sin (* 5 phi)))
+	(* 0.0009 (sin (* 7 phi)))
+	(* 0.00042 (sin (* 9 phi)))
+	(* 0.00023 (sin (* 11 phi)))
+	(* 0.00015 (sin (* 13 phi))))
+</pre>
+
+<!--
+(with-sound (:clipped #f :channels 1 :statistics #t :output "n2oddres.snd" :srate 10000 :data-format mus-ldouble)
+  (run 
+   (lambda ()
+     (let ((i 0)
+	   (base 1.539600717839)
+	   (incr (/ (* 2 pi) 10000)))
+      (do ((phi1 0.0 (+ phi1 incr))
+	   (j 0 (+ j 1)))
+	  ((= j 10000))
+	(let ((pk 0.0)
+	      (tpk 0.0))
+	  (do ((x 0.0 (+ x incr))
+	       (n 0 (+ n 1)))
+	      ((= n 10000))
+	    (let ((val (+ (sin x)
+			  (sin (+ (* 3 x) phi1)))))
+	      (if (> (abs val) pk)
+		  (begin
+		    (set! pk (abs val))
+		    (set! tpk val)))))
+	  ;(outa i (- pk base))
+	  (do ((k 0 (+ k 1)))
+	      ((= k 10))
+	    (outa (+ i (* k 10000)) (if (even? k) (- pk base) (- base pk))))
+	  (set! i (+ i 1))))))))
+
+(let ((ctr 0)) 
+  (map-channel (lambda (y) 
+		 (let* ((phi (/ (* ctr pi) 10000)) 
+			(val (- y 
+				(* 0.4705 (sin phi))
+				(* 0.01198 (sin (* 3 phi)))
+				(* 0.0025 (sin (* 5 phi)))
+				(* 0.0009 (sin (* 7 phi)))
+				(* 0.00042 (sin (* 9 phi)))
+				(* 0.00023 (sin (* 11 phi)))
+				(* 0.00015 (sin (* 13 phi)))
+				)))
+		   (set! ctr (+ ctr 1)) 
+		   val))))
+-->
+<p>
 Another case that is not too hard involves a sum of
 n sines all at 0 initial phase.  This can be expressed as:
 </p>

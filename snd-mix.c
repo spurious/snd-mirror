@@ -637,29 +637,12 @@ int previous_mix_id(int id)
 }
 
 
-static int last_lowest_id = 0;
-
 int lowest_mix_id(void)
 {
   int i;
-#if MUS_DEBUGGING
-  if (last_lowest_id > 0)
-    {
-      for (i = 0; i < last_lowest_id; i++)
-	if (mix_infos[i])
-	  {
-	    fprintf(stderr, "we skipped mix %d?", i);
-	    last_lowest_id = i;
-	    break;
-	  }
-    }
-#endif
-  for (i = last_lowest_id; i < mix_infos_ctr; i++) 
+  for (i = 0; i < mix_infos_ctr; i++) 
     if (mix_infos[i])
-      {
-	last_lowest_id = i;
-	return(i);
-      }
+      return(i);
   return(INVALID_MIX_ID);
 }
 
