@@ -7685,77 +7685,103 @@ sin(x) + sin(2x) to get cos(x) + 2cos(2x) = 4cos^2(x) + cos(x) -2, a quadratic e
 in cos(x).  Let y=cos(x), solve for y: (sqrt(33)-1)/8.  Plug that back into the original
 equation (x=acos(y) = 0.93592945566133), and get 1.7601725930461.  Looking back at the
 peak-amplitude graph, it appears that the peak varies as approximately 1.76+0.24*abs(sin(initial-phase)).
-Actually, the first half is very close to:
+If we graph the peak location, we see that it is moving linearly with the initial-phase from the
+0.9359 business given above to the corresponding peak location when the initial-phase is pi (acos((1-sqrt(33))/8) = 2.20566),
+then the two peaks cross, and the other one predominates from pi to 2*pi. So the peak amplitude as
+a function of the initial-phase ("phi" below) is:
 </p>
 <pre>
-    (+ 1.7601725930461
-       (* 0.2465 (sin phi))
-       (* 0.008 (sin (* 3 phi)))
-       (* 0.0017 (sin (* 5 phi)))
-       (* 0.0006 (sin (* 7 phi)))
-       (* 0.0003 (sin (* 9 phi)))
-       (* 0.00015 (sin (* 11 phi)))
-       (* 0.00007 (sin (* 13 phi))))
-</pre>
-<p>
-Similarly sin(x)+sin(3x) differentiated is cos(x)+3cos(3x) = cos^3(x)-8cos(x).  cos(x)=0
-is a minimum of the original, but the other case is acos(sqrt(2/3)) = 0.61547970867039,
-and plugging that into the original gives 1.539600717839.  If we vary the sin(3x) term's
-initial phase as before, we get approximately 1.5396 + 0.4604 * sin(initial-phase).
-A better approximation (at half the fundamental frequency):
-</p>
-<pre>
-    (+ 1.539600717839
-	(* 0.4705 (sin phi))
-	(* 0.01198 (sin (* 3 phi)))
-	(* 0.0025 (sin (* 5 phi)))
-	(* 0.0009 (sin (* 7 phi)))
-	(* 0.00042 (sin (* 9 phi)))
-	(* 0.00023 (sin (* 11 phi)))
-	(* 0.00015 (sin (* 13 phi))))
-</pre>
-
+  (let* ((a 9.359294556613259736065597353788460035329E-1) ; acos((sqrt(33)-1)/8)
+	 (b 2.205663197928467264856083647900656880662E0)  ; acos((1-sqrt(33))/8)
+	 (ap (- (* 2 pi) a))                              ; start location of peak 1
+	 (bp (- (* 2 pi) b))                              ; end location of peak 1
+	 (ax (+ b (* (- phi pi) (/ (- a b) pi))))         ; same for peak 2
+	 (bx (+ ap (* phi (/ (- bp ap) pi)))))            ; the 2 peaks move in opposite directions
+    (max (abs (+ (sin ax) (sin (+ (* 2 ax) phi))))        ; plug in the 2 locations and
+	 (abs (+ (sin bx) (sin (+ (* 2 bx) phi))))))      ;   return the max 
+</pre> 
 <!--
-(with-sound (:clipped #f :channels 1 :statistics #t :output "n2oddres.snd" :srate 10000 :data-format mus-ldouble)
+(with-full-sound (:clipped #f :channels 2 :statistics #t :output "n2a.snd")
+  (let ((size 10000))
   (run 
    (lambda ()
      (let ((i 0)
-	   (base 1.539600717839)
-	   (incr (/ (* 2 pi) 10000)))
+	   (incr (/ (* 2 pi) size)))
       (do ((phi1 0.0 (+ phi1 incr))
 	   (j 0 (+ j 1)))
-	  ((= j 10000))
+	  ((= j size))
 	(let ((pk 0.0)
-	      (tpk 0.0))
+	      (loc 0.0))
 	  (do ((x 0.0 (+ x incr))
 	       (n 0 (+ n 1)))
-	      ((= n 10000))
+	      ((= n size))
+	    (let ((val (+ (sin x)
+			  (sin (+ (* 2 x) phi1)))))
+	      (if (> (abs val) pk)
+		  (begin
+		    (set! pk (abs val))
+		    (set! loc x)))))
+	  (outa i pk)
+	  (let* ((a 9.359294556613259736065597353788460035329E-1)
+		 (b 2.205663197928467264856083647900656880662E0)
+		 (ap (- (* 2 pi) a))
+		 (bp (- (* 2 pi) b))
+		 (ax (+ b (* (- phi1 pi) (/ (- a b) pi))))
+		 (bx (+ ap (* phi1 (/ (- bp ap) pi)))))
+	    (outb i (max (abs (+ (sin ax) (sin (+ (* 2 ax) phi1))))
+			 (abs (+ (sin bx) (sin (+ (* 2 bx) phi1)))))))
+	  (set! i (+ i 1)))))))))
+-->
+<p>
+Similarly sin(x)+sin(3x) differentiated is cos(x)+3cos(3x) = 12cos^3(x)-8cos(x).  cos(x)=0
+is a minimum of the original, but the other case is acos(sqrt(2/3)) = 0.61547970867039,
+and plugging that into the original gives 1.539600717839.  If we vary the sin(3x) term's
+initial phase as before, we get approximately 1.5396 + 0.4604 * sin(initial-phase).
+As before, the location of the peak varies linearly with the initial-phase, the end point
+now being acos(-(sqrt(2/3))):
+</p>
+<pre>
+  (let* ((a 6.154797086703873410674645891239936878517E-1) ; acos(sqrt(2/3))
+	 (b 2.526112944919405897395178794155509196341E0)  ; acos(-sqrt(2/3))
+	 (ap (- (* 2 pi) a))                              ; start loc peak 1
+	 (bp (- (* 2 pi) b))                              ; end loc
+	 (ax (+ ap (* phi (/ (- bp ap) (* 2 pi)))))       ; peak 1 
+	 (bx (- ax pi)))                                  ; peak 2 (the two interleave)
+    (max (abs (+ (sin ax) (sin (+ (* 3 ax) phi))))        ; plug in our 2 peaks
+	 (abs (+ (sin bx) (sin (+ (* 3 bx) phi))))))      ;   and return the max
+</pre>
+
+<!--
+(with-full-sound (:clipped #f :channels 2 :statistics #t :output "n2b.snd")
+  (let ((size 10000))
+  (run 
+   (lambda ()
+     (let ((i 0)
+	   (incr (/ (* 2 pi) size)))
+      (do ((phi1 0.0 (+ phi1 incr))
+	   (j 0 (+ j 1)))
+	  ((= j size))
+	(let ((pk 0.0)
+	      (loc 0.0))
+	  (do ((x 0.0 (+ x incr))
+	       (n 0 (+ n 1)))
+	      ((= n size))
 	    (let ((val (+ (sin x)
 			  (sin (+ (* 3 x) phi1)))))
 	      (if (> (abs val) pk)
 		  (begin
 		    (set! pk (abs val))
-		    (set! tpk val)))))
-	  ;(outa i (- pk base))
-	  (do ((k 0 (+ k 1)))
-	      ((= k 10))
-	    (outa (+ i (* k 10000)) (if (even? k) (- pk base) (- base pk))))
-	  (set! i (+ i 1))))))))
-
-(let ((ctr 0)) 
-  (map-channel (lambda (y) 
-		 (let* ((phi (/ (* ctr pi) 10000)) 
-			(val (- y 
-				(* 0.4705 (sin phi))
-				(* 0.01198 (sin (* 3 phi)))
-				(* 0.0025 (sin (* 5 phi)))
-				(* 0.0009 (sin (* 7 phi)))
-				(* 0.00042 (sin (* 9 phi)))
-				(* 0.00023 (sin (* 11 phi)))
-				(* 0.00015 (sin (* 13 phi)))
-				)))
-		   (set! ctr (+ ctr 1)) 
-		   val))))
+		    (set! loc x)))))
+	  (outa i pk)
+	  (let* ((a 6.154797086703873410674645891239936878517E-1) ; acos(sqrt(2/3))
+		 (b 2.526112944919405897395178794155509196341E0)  ; acos(-sqrt(2/3))
+		 (ap (- (* 2 pi) a))                              ; start loc peak 1
+		 (bp (- (* 2 pi) b))                              ; end loc
+		 (ax (+ ap (* phi1 (/ (- bp ap) (* 2 pi)))))      ; peak 1 
+		 (bx (- ax pi)))                                  ; peak 2 (the two interleave)
+	    (outb i (max (abs (+ (sin ax) (sin (+ (* 3 ax) phi1))))
+			 (abs (+ (sin bx) (sin (+ (* 3 bx) phi1)))))))
+	  (set! i (+ i 1)))))))))
 -->
 <p>
 Another case that is not too hard involves a sum of

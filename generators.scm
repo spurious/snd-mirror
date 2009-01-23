@@ -590,7 +590,6 @@
 |#
 
 ;;; TODO: test x86 gtk/motif pointer handling
-;;; TODO: extend numeric testing in the bug finder
 
 ;;;   we can get the sinusoidally varying maxamp by using e.g. (make-nxy1sin 1 1000 3)
 ;;;   the peak starts at ca .72 and goes to 1 etc
