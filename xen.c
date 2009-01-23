@@ -186,9 +186,6 @@ int xen_to_c_int_or_else(XEN obj, int fallback)
 
 void xen_initialize(void)
 {
-#if HAVE_SCM_INIT_GUILE
-  scm_init_guile();
-#endif
 }
 
 

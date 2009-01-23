@@ -29,6 +29,10 @@
    running in the SND thread have the prefix "snd0_".
 
    TOPIC: Is gensym() (in m_class.c) thread-safe? It looks so, but I'm not sure.
+    (no it's not)
+
+   TOPIC: scm_gc is called here and there, and also scm_cons. Shouldn't scm_remember_up_to_here be called?
+   TOPIC: Perhaps 1.0 is too small in pd0_das_dispatcher
 */
 
 
@@ -85,7 +89,7 @@
 
 #include "snd_pd_external.h"
 
-static char *version = "Snd " SND_VERSION " made by Bill Schottstaedt, bil@ccrma.stanford.edu.\nSnd as a PD external made by Kjetil S. Matheussen, kjetil@ccrma.stanford.edu.";
+static char *version = "Snd " DSP_VERSION " made by Bill Schottstaedt, bil@ccrma.stanford.edu.\nSnd as a PD external made by Kjetil S. Matheussen, kjetil@ccrma.stanford.edu.";
 
 static t_class *snd_pd_class, *snd_pd_workaroundclass;
 
@@ -123,17 +127,21 @@ struct dispatch{
 
 t_symbol *snd0_gensym(char *symbol){
   t_symbol *ret;
-  struct sched_param par;
-  par.sched_priority = sched_get_priority_max(SCHED_FIFO);
-  //post("gensyming for %s\n",symbol);
-  if(sched_setscheduler(0,SCHED_FIFO,&par)==-1){
-    post("snd0_gensym: Unable to aquire SCHED_FIFO priority");
-  }
-  //sys_lock();
-  ret=gensym(symbol);
-  //sys_unlock();
-  sched_setscheduler(0,SCHED_OTHER,&par);
-  //post("Got it");
+    struct sched_param par;
+
+  {
+    par.sched_priority = sched_get_priority_max(SCHED_FIFO);
+    if(sched_setscheduler(0,SCHED_FIFO,&par)==-1){
+      post("snd0_gensym: Unable to aquire SCHED_FIFO priority");
+    }
+  }{
+    sys_lock();{
+
+      ret=gensym(symbol);
+
+    }sys_unlock();
+  }sched_setscheduler(0,SCHED_OTHER,&par);
+
   return ret;
 }
 
@@ -187,7 +195,7 @@ static SCM snd0_eval_do(void){
 
 /*****************************************************************************************************
  *****************************************************************************************************
- *    Pd dispatcher. pd0_tick is called pretty often from pd (~1000 times per second) 
+ *    Pd dispatcher. pd0_das_dispatcher is called pretty often from pd (~1000 times per second) 
  *    and checks the snd->pd ringbuffer.
  *****************************************************************************************************
  *****************************************************************************************************/
@@ -195,11 +203,15 @@ static SCM snd0_eval_do(void){
 static void pd0_das_dispatcher(void *something){
   jack_ringbuffer_t *rb=rb_snd_to_pd;
   struct dispatch d;
+  int num_nondispatched=128; // Make sure too much work is not done at once in the realtime thread.
 
   while(jack_ringbuffer_read_space(rb) >= sizeof(struct dispatch)){
     //printf("pd0: I got something to dispatch!\n");
     jack_ringbuffer_read (rb, (char *)&d, sizeof(struct dispatch));
     d.func(&d);
+    num_nondispatched--;
+    if(num_nondispatched==0)
+      break;
   }
 
   clock_delay(snd_pd_clock, 1.0);
@@ -209,15 +221,16 @@ static void pd0_das_dispatcher(void *something){
 static void snd0_send_message(struct dispatch *d){
   jack_ringbuffer_t *rb=rb_snd_to_pd;
   size_t bytes;
+  int retries=0;
 
  tryagain:
-  if(jack_ringbuffer_write_space(rb)<sizeof(struct dispatch)){
-    scm_gc();
+  //  if(jack_ringbuffer_write_space(rb)<sizeof(struct dispatch)){
+    //scm_gc();
     while(jack_ringbuffer_write_space(rb)<sizeof(struct dispatch)){
       post("Warning. Ringbuffer full. Could not send message to PD. Trying again in one second.");
       sleep(1);
     }
-  }
+    //  }
   if((bytes=jack_ringbuffer_write (rb, (char*)d, sizeof(struct dispatch))) < sizeof(struct dispatch)){
     if(bytes>0)
       post("Catastrophe snd0_send_message!!! (please report this to k.s.matheussen@notam02.no");
@@ -257,13 +270,13 @@ static void snd0_das_dispatcher(void){
 
 
 static void *read_eval_print_loop(void *arg){
-  char repl_some[500];
+  char repl_some[5000];
   int len;
   while(1){
-    fgets(repl_some,499,stdin);
+    fgets(repl_some,4950,stdin);
     len=strlen(repl_some);
-    if(len>497)
-      fprintf(stderr,"WARNING, repl buffer probably too small (%d>497). Please report to k.s.matheussen@notam02.no\n",len);
+    if(len>4950)
+      fprintf(stderr,"WARNING, repl buffer probably too small (%d>4950). Please report to k.s.matheussen@notam02.no\n",len);
     while(jack_ringbuffer_write_space(rb_repl)<len){
       usleep(50000);
     }
@@ -739,8 +752,7 @@ static SCM snd0_get_symbol(SCM symname){
  *****************************************************************************************************/
 
 
-static void *snd0_init(void *arg){
-  scm_init_guile();
+static void *snd0_init_in_guile(void *arg){
   snd_pd_main();
   XEN_YES_WE_HAVE("snd-pd-external");
 
@@ -771,6 +783,10 @@ static void *snd0_init(void *arg){
   snd0_das_dispatcher();
 
   return NULL;
+}
+
+static void *snd0_init(void *arg){
+  return scm_with_guile(snd0_init_in_guile,arg);
 }
 
 static void pd0_init(void){

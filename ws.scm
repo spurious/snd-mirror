@@ -567,6 +567,9 @@ returning you to the true top-level."
   ;; with-sound but display full sound in Snd window
   `(let ((snd (with-sound-helper (lambda () ,@body) ,@args)))
      (set! (x-bounds *snd-opened-sound*) (list 0.0 (/ (frames *snd-opened-sound*) (srate *snd-opened-sound*))))
+     (let ((mx (apply max (maxamp *snd-opened-sound* #t))))
+       (if (> mx 1.0)
+	 (set! (y-bounds *snd-opened-sound*) (list (- mx) mx))))
      snd))
 
 

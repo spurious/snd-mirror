@@ -8608,6 +8608,12 @@
 (num-test (rationalize -1.49900000000000 0.00000001) -1499/1000)
 ))
 
+(if with-bigfloats
+    (begin
+      ;; can this sort of thing be handled with locally set precisions? 
+      (num-test (rationalize 385817946978768113605842402465609185854927496022065152.5) 771635893957536227211684804931218371709854992044130305/2)
+      ))
+
 (num-test (rationalize 0.5 0.02) 1/2)
 ))
 
@@ -28385,6 +28391,8 @@
 (num-test (expt 1/64 -2/3) 16)
 (num-test (expt 1/2 -10) 1024)
 
+(num-test (expt 2718/1000 617/5) 3.858179469787681136058424024656091858698003418770850904916305853631035158956514884526199288e53) ; not an int!
+
 (num-test (expt 2/3 -5) (/ 1 (* 2/3 2/3 2/3 2/3 2/3)))
 
 (let ((x-10 (lambda (n) (- (expt n 10) (* n n n n n n n n n n)))))
@@ -30851,6 +30859,9 @@
        (test (ash 1234 -6) 19)
        (test (ash 12341234 6) 789838976)
        (test (ash 12341234 -16) 188)
+       (test (ash 1 -1) 0)
+       (test (ash 2 -2) 0)
+       (test (ash 2 -1) 1)
 
 
        (num-test (integer-length 0) 0)
@@ -30888,9 +30899,19 @@
 	     (num-test (logior (+ (expt 2 48) (expt 2 46)) (expt 2 48)) 351843720888320)
 	     (num-test (logxor (+ (expt 2 48) (expt 2 46)) (expt 2 48)) 70368744177664)
 	     (num-test (lognot (+ (expt 2 48) (expt 2 46))) -351843720888321)
+
 	     (num-test (integer-length (+ (expt 2 48) (expt 2 46))) 49)
+	     (num-test (integer-length (ash 1 64)) 65)
+	     (num-test (integer-length 9223372036854775808) 64)
+
 	     (num-test (ash 1 48) 281474976710656)
 	     (num-test (ash 281474976710656 -48) 1)
+	     
+	     (num-test (ash 1 63) 9223372036854775808)
+	     (num-test (ash 1 64) 18446744073709551616)
+	     (num-test (ash 1 100) 1267650600228229401496703205376)
+	     (num-test (ash 18446744073709551616 -63) 2)
+	     (num-test (ash 1267650600228229401496703205376 -100) 1)
 	     ))
   
 

@@ -4834,12 +4834,17 @@ static long long int nth_roots[63] = {
   LLONG_MAX, LLONG_MAX, 3037000499LL, 2097151, 55108, 6208, 1448, 511, 234, 127, 78, 52, 38, 28, 22, 
   18, 15, 13, 11, 9, 8, 7, 7, 6, 6, 5, 5, 5, 4, 4, 4, 4, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2, 
   2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2};
-static int nth_roots_size = 63;
+
+static int int_nth_roots[31] = {
+  LONG_MAX, LONG_MAX, 46340, 1290, 215, 73, 35, 21, 14, 10, 8, 7, 5, 5, 4, 4, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2};
 
 static bool int_pow_ok(s7_Int x, s7_Int y)
 {
-  return((y < nth_roots_size) &&
-	 (nth_roots[y] >= s7_Int_abs(x)));
+  if (s7_int_bits > 31)
+    return((y < 63) &&
+	   (nth_roots[y] >= s7_Int_abs(x)));
+  return((y < 31) &&
+	 (int_nth_roots[y] >= s7_Int_abs(x)));
 }
 
 
@@ -16067,11 +16072,37 @@ static s7_pointer big_log(s7_scheme *sc, s7_pointer args)
 	      mpfr_init_set(*n, S7_BIG_REAL(p0), GMP_RNDN);
 	      mpfr_log(*n, *n, GMP_RNDN);
 	      if (!p1)
-		return(s7_make_object(sc, big_real_tag, (void *)n));
+		{
+		  /* presumably log is safe with regard to real-part overflow giving a bogus int? */
+		  if ((s7_is_rational(car(args))) &&
+		      (mpfr_integer_p(*n) != 0))
+		    {
+		      mpz_t *k;
+		      k = (mpz_t *)malloc(sizeof(mpz_t));
+		      mpz_init(*k);
+		      mpfr_get_z(*k, *n, GMP_RNDN);
+		      mpfr_clear(*n);
+		      free(n);
+		      return(s7_make_object(sc, big_integer_tag, (void *)k));
+		    }
+		  return(s7_make_object(sc, big_real_tag, (void *)n));
+		}
 	      mpfr_init_set(base, S7_BIG_REAL(p1), GMP_RNDN);
 	      mpfr_log(base, base, GMP_RNDN);
 	      mpfr_div(*n, *n, base, GMP_RNDN);
 	      mpfr_clear(base);
+	      if ((s7_is_rational(car(args))) &&
+		  (s7_is_rational(cadr(args))) &&
+		  (mpfr_integer_p(*n) != 0))
+		{
+		  mpz_t *k;
+		  k = (mpz_t *)malloc(sizeof(mpz_t));
+		  mpz_init(*k);
+		  mpfr_get_z(*k, *n, GMP_RNDN);
+		  mpfr_clear(*n);
+		  free(n);
+		  return(s7_make_object(sc, big_integer_tag, (void *)k));
+		}
 	      return(s7_make_object(sc, big_real_tag, (void *)n));
 	    }
 	}
@@ -16213,6 +16244,10 @@ static s7_pointer big_trig(s7_scheme *sc, s7_pointer args, s7_function g_trig,
 	  n = (mpfr_t *)malloc(sizeof(mpfr_t));
 	  mpfr_init_set(*n, S7_BIG_REAL(promote_number(sc, T_BIG_REAL, p)), GMP_RNDN);
 	  mpfr_trig(*n, *n, GMP_RNDN);
+	  /* it's confusing to check for ints here via mpfr_integer_p because it
+	   *   is dependent on the precision!  (exp 617/5) returns an integer if
+	   *   precision is 128, but a float if 512.
+	   */
 	  return(s7_make_object(sc, big_real_tag, (void *)n));
 	}
       if (object_type(p) == big_complex_tag)
@@ -16476,13 +16511,22 @@ static s7_pointer big_expt(s7_scheme *sc, s7_pointer args)
 	      (s7_is_rational(cadr(args))) &&
 	      (mpfr_integer_p(MPC_RE(*z)) != 0))
 	    {
-	      mpz_t *k;
-	      k = (mpz_t *)malloc(sizeof(mpz_t));
-	      mpz_init(*k);
-	      mpfr_get_z(*k, MPC_RE(*z), GMP_RNDN);
-	      mpc_clear(*z);
-	      free(z);
-	      return(s7_make_object(sc, big_integer_tag, (void *)k));
+	      /* mpfr_integer_p can be confused: (expt 2718/1000 (bignum "617/5")) returns an int if precision=128, float if 512 */
+	      /*   so first make sure we're within (say) 31 bits */
+	      mpfr_t zi;
+	      mpfr_init_set_ui(zi, LONG_MAX, GMP_RNDN);
+	      if (mpfr_cmpabs(MPC_RE(*z), zi) < 0)
+		{
+		  mpz_t *k;
+		  k = (mpz_t *)malloc(sizeof(mpz_t));
+		  mpz_init(*k);
+		  mpfr_get_z(*k, MPC_RE(*z), GMP_RNDN);
+		  mpc_clear(*z);
+		  mpfr_clear(zi);
+		  free(z);
+		  return(s7_make_object(sc, big_integer_tag, (void *)k));
+		}
+	      mpfr_clear(zi);
 	    }
 	  n = (mpfr_t *)malloc(sizeof(mpfr_t));
 	  mpfr_init_set(*n, MPC_RE(*z), GMP_RNDN);
@@ -16955,8 +16999,10 @@ static s7_pointer big_ash(s7_scheme *sc, s7_pointer args)
   s7_pointer p0, p1;
   p0 = car(args);
   p1 = cadr(args);
-  if (((is_object(p0)) || (is_object(p1))) && /* if either is a bignum, and both are integers ... */
-      (s7_is_integer(p0)) && 
+  /* here, as in expt, there are cases like (ash 1 63) which need to be handled as bignums
+   *   so there's no way to tell when it's safe to drop into g_ash instead.
+   */
+  if ((s7_is_integer(p0)) && 
       (s7_is_integer(p1)))
     {
       mpz_t *n;
@@ -17058,6 +17104,10 @@ static s7_pointer big_rationalize(s7_scheme *sc, s7_pointer args)
 
       if (mpfr_integer_p(x))
 	{
+	  /* here there's a problem with precision -- if 128 bits, 385817946978768113605842402465609185854927496022065152.5
+	   *   looks like an integer to mpfr, so rationalize just throws away the .5!  Checking that x has not been
+	   *   truncated won't help -- we have to increase the precision locally to fit x.
+	   */
 	  mpz_t *n;
 	  n = (mpz_t *)malloc(sizeof(mpz_t));
 	  mpz_init(*n);
@@ -18877,7 +18927,6 @@ s7_scheme *s7_init(void)
     if (top == 4) default_rationalize_error = 1.0e-6;
     s7_define_constant(sc, "pi", s7_make_real(sc, 3.1415926535897932384626433832795029L)); /* M_PI is not good enough for s7_Double = long double */
 
-    if (top == 4) nth_roots_size = 31;
     /* for s7_Double, float gives about 9 digits, double 18, long Double claims 28 but I don't see more than about 22? */
   }
 
