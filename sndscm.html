@@ -7691,8 +7691,8 @@ then the two peaks cross, and the other one predominates from pi to 2*pi. So the
 a function of the initial-phase ("phi" below) is:
 </p>
 <pre>
-  (let* ((a 9.359294556613259736065597353788460035329E-1) ; acos((sqrt(33)-1)/8)
-	 (b 2.205663197928467264856083647900656880662E0)  ; acos((1-sqrt(33))/8)
+  (let* ((a (acos (/ (- (sqrt 33) 1) 8)))
+	 (b (acos (/ (- 1 (sqrt 33)) 8)))
 	 (ap (- (* 2 pi) a))                              ; start location of peak 1
 	 (bp (- (* 2 pi) b))                              ; end location of peak 1
 	 (ax (+ b (* (- phi pi) (/ (- a b) pi))))         ; same for peak 2
@@ -7736,18 +7736,18 @@ a function of the initial-phase ("phi" below) is:
 Similarly sin(x)+sin(3x) differentiated is cos(x)+3cos(3x) = 12cos^3(x)-8cos(x).  cos(x)=0
 is a minimum of the original, but the other case is acos(sqrt(2/3)) = 0.61547970867039,
 and plugging that into the original gives 1.539600717839.  If we vary the sin(3x) term's
-initial phase as before, we get approximately 1.5396 + 0.4604 * sin(initial-phase).
+initial phase, we get approximately 1.5396 + 0.4604 * sin(initial-phase).
 As before, the location of the peak varies linearly with the initial-phase, the end point
 now being acos(-(sqrt(2/3))):
 </p>
 <pre>
-  (let* ((a 6.154797086703873410674645891239936878517E-1) ; acos(sqrt(2/3))
-	 (b 2.526112944919405897395178794155509196341E0)  ; acos(-sqrt(2/3))
+  (let* ((a (acos (sqrt 2/3)))
+	 (b (acos (- (sqrt 2/3))))
 	 (ap (- (* 2 pi) a))                              ; start loc peak 1
 	 (bp (- (* 2 pi) b))                              ; end loc
 	 (ax (+ ap (* phi (/ (- bp ap) (* 2 pi)))))       ; peak 1 
 	 (bx (- ax pi)))                                  ; peak 2 (the two interleave)
-    (max (abs (+ (sin ax) (sin (+ (* 3 ax) phi))))        ; plug in our 2 peaks
+    (max (abs (+ (sin ax) (sin (+ (* 3 ax) phi))))        ; plug in our 2 peak locations
 	 (abs (+ (sin bx) (sin (+ (* 3 bx) phi))))))      ;   and return the max
 </pre>
 
@@ -7783,7 +7783,70 @@ now being acos(-(sqrt(2/3))):
 			 (abs (+ (sin bx) (sin (+ (* 3 bx) phi1)))))))
 	  (set! i (+ i 1)))))))))
 -->
-<p>
+<p>sin(x)+sin(4x+a) is much messier even when a=0 because we have a quartic equation in cos(x);
+the minimum peak is at initial-phase of 0, falls at 1.940859829001 and is 1.9282082241513.
+sin(x)+sin(5x+a) becomes a quadratic in cos^2(x), so we can find the peak location as a function
+of the initial-phase:
+</p>
+<pre>
+  (let* ((a0 (* pi 1/2))
+	 (a1 (acos (sqrt (/ (- 25 (sqrt 145)) 40))))
+	 (ax (+ a0 (/ (* (- a1 a0) phi) pi)))
+	 (bx (+ pi ax))
+	 (cx (- a0 (/ (* (- a1 a0) (- (* 2 pi) phi)) pi)))
+	 (dx (+ cx pi)))
+   (max (abs (+ (sin ax) (sin (+ (* 5 ax) phi))))
+	(abs (+ (sin bx) (sin (+ (* 5 bx) phi))))
+	(abs (+ (sin cx) (sin (+ (* 5 cx) phi))))
+	(abs (+ (sin dx) (sin (+ (* 5 dx) phi))))))
+</pre>
+<!--
+(with-full-sound (:clipped #f :channels 3 :statistics #t :output "n2e.snd")
+  (let ((size 10000))
+  (run 
+   (lambda ()
+     (let ((i 0)
+	   (incr (/ (* 2 pi) size)))
+      (do ((phi1 0.0 (+ phi1 incr))
+	   (j 0 (+ j 1)))
+	  ((= j size))
+	(let ((pk 0.0)
+	      (loc 0.0))
+	  (do ((x 0.0 (+ x incr))
+	       (n 0 (+ n 1)))
+	      ((= n size))
+	    (let ((val (+ (sin x)
+			  (sin (+ (* 5 x) phi1)))))
+	      (if (> (abs val) pk)
+		  (begin
+		    (set! pk (abs val))
+		    (set! loc x)))))
+	  (outa i pk)
+	  (let* ((a0 (* pi 1/2))
+		 (a1 (acos (sqrt (/ (- 25 (sqrt 145)) 40))))
+		 (ax (+ a0 (/ (* (- a1 a0) phi1) pi)))
+		 (bx (+ pi ax))
+		 (cx (- a0 (/ (* (- a1 a0) (- (* 2 pi) phi1)) pi)))
+		 (dx (+ cx pi)))
+	    (outb i (max (abs (+ (sin ax) (sin (+ (* 5 ax) phi1))))
+			 (abs (+ (sin bx) (sin (+ (* 5 bx) phi1))))
+			 (abs (+ (sin cx) (sin (+ (* 5 cx) phi1))))
+			 (abs (+ (sin dx) (sin (+ (* 5 dx) phi1)))))))
+	  (outc i loc)
+	  (set! i (+ i 1)))))))))
+
+(%i29) -80*x^2+100*x-24;
+                                   2
+(%o29)                       - 80 x  + 100 x - 24
+(%i30) solve(%, x);
+                         sqrt(145) - 25      sqrt(145) + 25
+(%o30)            [x = - --------------, x = --------------]
+                               40                  40
+
+-->
+<p>but now we have four peaks to track.  The minimum peak is at initial-phase of pi,
+and is 1.81571610422.  I think in the sin(x)+sin(nx+a) case there's always a minimum at a=pi,
+and the peak itself approaches 2 as n increases.
 Another case that is not too hard involves a sum of
 n sines all at 0 initial phase.  This can be expressed as:
 </p>
