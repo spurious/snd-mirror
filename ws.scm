@@ -472,31 +472,33 @@ returning you to the true top-level."
 		    (if to-snd 
 			snd-print 
 			display))
-		(format #f "~%;~A:~%  maxamp~A:~{ ~,4F~}~%~A  compute time: ~,3F~%"
-			      (if output-to-file
-				  output-1
-				  (if (vct? output-1) "vct" 
-				      (if (sound-data? output-1) "sound-data"
-					  (if (procedure? output-1) "function" 
-					      "flush"))))
-			      (if (or scaled-to scaled-by) 
-				  " (before scaling)" 
-				  "")
-			      (if output-to-file
-				  (if to-snd
-				      (maxamp snd-output #t) ; this is a list of chan maxs '(.1 .2)
-				      (let ((lst (mus-sound-maxamp output-1)))
-					(do ((i 0 (+ i 2)))
-					    ((>= i (length lst)))
-					  (list-set! lst i (/ (list-ref lst i) (mus-srate))))
-					lst))
-				  (if (vct? output-1)
-				      (list (vct-peak output-1))
-				      (if (sound-data? output-1)
-					  (sound-data-maxamp output-1)
-					  0.0)))
-			      (if revmax (format #f "  rev max: ~,4F~%" revmax) "")
-			      cycles)))
+		(format #f (if (not (member data-format (list mus-bdouble mus-ldouble)))
+			       "~%;~A:~%  maxamp~A:~{ ~,4F~}~%~A  compute time: ~,3F~%"
+			       "~%;~A:~%  maxamp~A:~{ ~,8F~}~%~A  compute time: ~,3F~%")
+			(if output-to-file
+			    output-1
+			    (if (vct? output-1) "vct" 
+				(if (sound-data? output-1) "sound-data"
+				    (if (procedure? output-1) "function" 
+					"flush"))))
+			(if (or scaled-to scaled-by) 
+			    " (before scaling)" 
+			    "")
+			(if output-to-file
+			    (if to-snd
+				(maxamp snd-output #t) ; this is a list of chan maxs '(.1 .2)
+				(let ((lst (mus-sound-maxamp output-1)))
+				  (do ((i 0 (+ i 2)))
+				      ((>= i (length lst)))
+				    (list-set! lst i (/ (list-ref lst i) (mus-srate))))
+				  lst))
+			    (if (vct? output-1)
+				(list (vct-peak output-1))
+				(if (sound-data? output-1)
+				    (sound-data-maxamp output-1)
+				    0.0)))
+			(if revmax (format #f "  rev max: ~,4F~%" revmax) "")
+			cycles)))
 
 	   (if (or scaled-to scaled-by)
 	       (if output-to-file

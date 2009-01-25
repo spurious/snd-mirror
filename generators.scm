@@ -6456,6 +6456,36 @@ index 10 (so 10/2 is the bes-jn arg):
 |#
 
 
+#|
+(defgenerator (circler
+	       :make-wrapper (lambda (g)
+			       (set! (circler-frequency g) (hz->radians (circler-frequency g)))
+			       g))
+  (frequency *clm-default-frequency*) (angle 0.0))
+
+(define* (circler gen :optional (fm 0.0))
+  (declare (gen circler) (fm float))
+  (let* ((x (fmod (circler-angle gen) (* 2 pi)))
+	 (xx (/ (* 4 x) (* 2 pi)))
+	 (y (if (< xx 2)
+		(sqrt (- 1 (* (- 1 xx) (- 1 xx))))
+		(- (sqrt (- 1 (* (- 3 xx) (- 3 xx))))))))
+    (set! (circler-angle gen) (+ (circler-angle gen) fm (circler-frequency gen)))
+    y))
+
+(with-sound (:clipped #f :statistics #t :play #t)
+  (let ((gen (make-circler 10.0)))
+    (run 
+     (lambda ()
+       (do ((i 0 (+ i 1)))
+	   ((= i 20000))
+	 (outa i (circler gen)))))))
+
+;;; odd harmonics: 1, .18 .081 .048 .033 .024, .019
+;;;   TODO: doc circler etc, also it should use modulo??
+|#
+
+
 ;;; --------------------------------------------------------------------------------
 ;;;
 ;;; set up make-* help strings

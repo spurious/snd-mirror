@@ -834,7 +834,7 @@ bool s7_is_boolean(s7_scheme *sc, s7_pointer x)
 
 s7_pointer s7_make_boolean(s7_scheme *sc, bool x)
 {
-  return(make_boolean(sc, x));
+  return(make_boolean(sc, (x) ? true : false)); /* this is not redundant in MS C++!! */
 }
 
 
@@ -4835,7 +4835,7 @@ static long long int nth_roots[63] = {
   18, 15, 13, 11, 9, 8, 7, 7, 6, 6, 5, 5, 5, 4, 4, 4, 4, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2, 
   2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2};
 
-static int int_nth_roots[31] = {
+static long int_nth_roots[31] = {
   LONG_MAX, LONG_MAX, 46340, 1290, 215, 73, 35, 21, 14, 10, 8, 7, 5, 5, 4, 4, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2};
 
 static bool int_pow_ok(s7_Int x, s7_Int y)
@@ -10799,11 +10799,10 @@ static s7_pointer format_to_output(s7_scheme *sc, s7_pointer out_loc, const char
   result = s7_make_string(sc, out_str);
   if (out_str) free(out_str);
 
-  if (out_loc == sc->F)
-    return(result);
+  if (out_loc != sc->F)
+    s7_display(sc, result, out_loc);
 
-  s7_display(sc, result, out_loc);
-  return(sc->F);
+  return(result);
 }
 
 

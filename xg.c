@@ -21162,24 +21162,6 @@ static XEN gxg_gtk_action_create_tool_item(XEN action)
   return(C_TO_XEN_GtkWidget_(gtk_action_create_tool_item(XEN_TO_C_GtkAction_(action))));
 }
 
-static XEN gxg_gtk_action_connect_proxy(XEN action, XEN proxy)
-{
-  #define H_gtk_action_connect_proxy "void gtk_action_connect_proxy(GtkAction* action, GtkWidget* proxy)"
-  XEN_ASSERT_TYPE(XEN_GtkAction__P(action), action, 1, "gtk_action_connect_proxy", "GtkAction*");
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(proxy), proxy, 2, "gtk_action_connect_proxy", "GtkWidget*");
-  gtk_action_connect_proxy(XEN_TO_C_GtkAction_(action), XEN_TO_C_GtkWidget_(proxy));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_action_disconnect_proxy(XEN action, XEN proxy)
-{
-  #define H_gtk_action_disconnect_proxy "void gtk_action_disconnect_proxy(GtkAction* action, GtkWidget* proxy)"
-  XEN_ASSERT_TYPE(XEN_GtkAction__P(action), action, 1, "gtk_action_disconnect_proxy", "GtkAction*");
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(proxy), proxy, 2, "gtk_action_disconnect_proxy", "GtkWidget*");
-  gtk_action_disconnect_proxy(XEN_TO_C_GtkAction_(action), XEN_TO_C_GtkWidget_(proxy));
-  return(XEN_FALSE);
-}
-
 static XEN gxg_gtk_action_get_proxies(XEN action)
 {
   #define H_gtk_action_get_proxies "GSList* gtk_action_get_proxies(GtkAction* action)"
@@ -30555,23 +30537,6 @@ static XEN gxg_gtk_plug_get_socket_window(XEN plug)
   return(C_TO_XEN_GdkWindow_(gtk_plug_get_socket_window(XEN_TO_C_GtkPlug_(plug))));
 }
 
-static XEN gxg_gtk_scale_button_get_orientation(XEN button)
-{
-  #define H_gtk_scale_button_get_orientation "GtkOrientation gtk_scale_button_get_orientation(GtkScaleButton* button)"
-  XEN_ASSERT_TYPE(XEN_GtkScaleButton__P(button), button, 1, "gtk_scale_button_get_orientation", "GtkScaleButton*");
-  return(C_TO_XEN_GtkOrientation(gtk_scale_button_get_orientation(XEN_TO_C_GtkScaleButton_(button))));
-}
-
-static XEN gxg_gtk_scale_button_set_orientation(XEN button, XEN orientation)
-{
-  #define H_gtk_scale_button_set_orientation "void gtk_scale_button_set_orientation(GtkScaleButton* button, \
-GtkOrientation orientation)"
-  XEN_ASSERT_TYPE(XEN_GtkScaleButton__P(button), button, 1, "gtk_scale_button_set_orientation", "GtkScaleButton*");
-  XEN_ASSERT_TYPE(XEN_GtkOrientation_P(orientation), orientation, 2, "gtk_scale_button_set_orientation", "GtkOrientation");
-  gtk_scale_button_set_orientation(XEN_TO_C_GtkScaleButton_(button), XEN_TO_C_GtkOrientation(orientation));
-  return(XEN_FALSE);
-}
-
 static XEN gxg_gtk_scale_button_get_plus_button(XEN button)
 {
   #define H_gtk_scale_button_get_plus_button "GtkWidget* gtk_scale_button_get_plus_button(GtkScaleButton* button)"
@@ -36896,8 +36861,6 @@ XEN_NARGIFY_1(gxg_gtk_action_activate_w, gxg_gtk_action_activate)
 XEN_NARGIFY_2(gxg_gtk_action_create_icon_w, gxg_gtk_action_create_icon)
 XEN_NARGIFY_1(gxg_gtk_action_create_menu_item_w, gxg_gtk_action_create_menu_item)
 XEN_NARGIFY_1(gxg_gtk_action_create_tool_item_w, gxg_gtk_action_create_tool_item)
-XEN_NARGIFY_2(gxg_gtk_action_connect_proxy_w, gxg_gtk_action_connect_proxy)
-XEN_NARGIFY_2(gxg_gtk_action_disconnect_proxy_w, gxg_gtk_action_disconnect_proxy)
 XEN_NARGIFY_1(gxg_gtk_action_get_proxies_w, gxg_gtk_action_get_proxies)
 XEN_NARGIFY_1(gxg_gtk_action_connect_accelerator_w, gxg_gtk_action_connect_accelerator)
 XEN_NARGIFY_1(gxg_gtk_action_disconnect_accelerator_w, gxg_gtk_action_disconnect_accelerator)
@@ -37951,8 +37914,6 @@ XEN_NARGIFY_1(gxg_gtk_menu_get_monitor_w, gxg_gtk_menu_get_monitor)
 XEN_NARGIFY_1(gxg_gtk_menu_item_get_accel_path_w, gxg_gtk_menu_item_get_accel_path)
 XEN_NARGIFY_1(gxg_gtk_plug_get_embedded_w, gxg_gtk_plug_get_embedded)
 XEN_NARGIFY_1(gxg_gtk_plug_get_socket_window_w, gxg_gtk_plug_get_socket_window)
-XEN_NARGIFY_1(gxg_gtk_scale_button_get_orientation_w, gxg_gtk_scale_button_get_orientation)
-XEN_NARGIFY_2(gxg_gtk_scale_button_set_orientation_w, gxg_gtk_scale_button_set_orientation)
 XEN_NARGIFY_1(gxg_gtk_scale_button_get_plus_button_w, gxg_gtk_scale_button_get_plus_button)
 XEN_NARGIFY_1(gxg_gtk_scale_button_get_minus_button_w, gxg_gtk_scale_button_get_minus_button)
 XEN_NARGIFY_1(gxg_gtk_scale_button_get_popup_w, gxg_gtk_scale_button_get_popup)
@@ -40826,8 +40787,6 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gtk_action_create_icon_w gxg_gtk_action_create_icon
 #define gxg_gtk_action_create_menu_item_w gxg_gtk_action_create_menu_item
 #define gxg_gtk_action_create_tool_item_w gxg_gtk_action_create_tool_item
-#define gxg_gtk_action_connect_proxy_w gxg_gtk_action_connect_proxy
-#define gxg_gtk_action_disconnect_proxy_w gxg_gtk_action_disconnect_proxy
 #define gxg_gtk_action_get_proxies_w gxg_gtk_action_get_proxies
 #define gxg_gtk_action_connect_accelerator_w gxg_gtk_action_connect_accelerator
 #define gxg_gtk_action_disconnect_accelerator_w gxg_gtk_action_disconnect_accelerator
@@ -41881,8 +41840,6 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gtk_menu_item_get_accel_path_w gxg_gtk_menu_item_get_accel_path
 #define gxg_gtk_plug_get_embedded_w gxg_gtk_plug_get_embedded
 #define gxg_gtk_plug_get_socket_window_w gxg_gtk_plug_get_socket_window
-#define gxg_gtk_scale_button_get_orientation_w gxg_gtk_scale_button_get_orientation
-#define gxg_gtk_scale_button_set_orientation_w gxg_gtk_scale_button_set_orientation
 #define gxg_gtk_scale_button_get_plus_button_w gxg_gtk_scale_button_get_plus_button
 #define gxg_gtk_scale_button_get_minus_button_w gxg_gtk_scale_button_get_minus_button
 #define gxg_gtk_scale_button_get_popup_w gxg_gtk_scale_button_get_popup
@@ -44763,8 +44720,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_action_create_icon, gxg_gtk_action_create_icon_w, 2, 0, 0, H_gtk_action_create_icon);
   XG_DEFINE_PROCEDURE(gtk_action_create_menu_item, gxg_gtk_action_create_menu_item_w, 1, 0, 0, H_gtk_action_create_menu_item);
   XG_DEFINE_PROCEDURE(gtk_action_create_tool_item, gxg_gtk_action_create_tool_item_w, 1, 0, 0, H_gtk_action_create_tool_item);
-  XG_DEFINE_PROCEDURE(gtk_action_connect_proxy, gxg_gtk_action_connect_proxy_w, 2, 0, 0, H_gtk_action_connect_proxy);
-  XG_DEFINE_PROCEDURE(gtk_action_disconnect_proxy, gxg_gtk_action_disconnect_proxy_w, 2, 0, 0, H_gtk_action_disconnect_proxy);
   XG_DEFINE_PROCEDURE(gtk_action_get_proxies, gxg_gtk_action_get_proxies_w, 1, 0, 0, H_gtk_action_get_proxies);
   XG_DEFINE_PROCEDURE(gtk_action_connect_accelerator, gxg_gtk_action_connect_accelerator_w, 1, 0, 0, H_gtk_action_connect_accelerator);
   XG_DEFINE_PROCEDURE(gtk_action_disconnect_accelerator, gxg_gtk_action_disconnect_accelerator_w, 1, 0, 0, H_gtk_action_disconnect_accelerator);
@@ -45818,8 +45773,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_menu_item_get_accel_path, gxg_gtk_menu_item_get_accel_path_w, 1, 0, 0, H_gtk_menu_item_get_accel_path);
   XG_DEFINE_PROCEDURE(gtk_plug_get_embedded, gxg_gtk_plug_get_embedded_w, 1, 0, 0, H_gtk_plug_get_embedded);
   XG_DEFINE_PROCEDURE(gtk_plug_get_socket_window, gxg_gtk_plug_get_socket_window_w, 1, 0, 0, H_gtk_plug_get_socket_window);
-  XG_DEFINE_PROCEDURE(gtk_scale_button_get_orientation, gxg_gtk_scale_button_get_orientation_w, 1, 0, 0, H_gtk_scale_button_get_orientation);
-  XG_DEFINE_PROCEDURE(gtk_scale_button_set_orientation, gxg_gtk_scale_button_set_orientation_w, 2, 0, 0, H_gtk_scale_button_set_orientation);
   XG_DEFINE_PROCEDURE(gtk_scale_button_get_plus_button, gxg_gtk_scale_button_get_plus_button_w, 1, 0, 0, H_gtk_scale_button_get_plus_button);
   XG_DEFINE_PROCEDURE(gtk_scale_button_get_minus_button, gxg_gtk_scale_button_get_minus_button_w, 1, 0, 0, H_gtk_scale_button_get_minus_button);
   XG_DEFINE_PROCEDURE(gtk_scale_button_get_popup, gxg_gtk_scale_button_get_popup_w, 1, 0, 0, H_gtk_scale_button_get_popup);
@@ -48496,7 +48449,7 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("16-Jan-09"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("25-Jan-09"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

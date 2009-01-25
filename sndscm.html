@@ -7685,20 +7685,20 @@ sin(x) + sin(2x) to get cos(x) + 2cos(2x) = 4cos^2(x) + cos(x) -2, a quadratic e
 in cos(x).  Let y=cos(x), solve for y: (sqrt(33)-1)/8.  Plug that back into the original
 equation (x=acos(y) = 0.93592945566133), and get 1.7601725930461.  Looking back at the
 peak-amplitude graph, it appears that the peak varies as approximately 1.76+0.24*abs(sin(initial-phase)).
-If we graph the peak location, we see that it is moving linearly with the initial-phase from the
+If we graph the peak location, we see that it is moving (nearly) linearly with the initial-phase from the
 0.9359 business given above to the corresponding peak location when the initial-phase is pi (acos((1-sqrt(33))/8) = 2.20566),
 then the two peaks cross, and the other one predominates from pi to 2*pi. So the peak amplitude as
-a function of the initial-phase ("phi" below) is:
+a function of the initial-phase ("phi" below) is (very nearly):
 </p>
 <pre>
   (let* ((a (acos (/ (- (sqrt 33) 1) 8)))
 	 (b (acos (/ (- 1 (sqrt 33)) 8)))
-	 (ap (- (* 2 pi) a))                              ; start location of peak 1
-	 (bp (- (* 2 pi) b))                              ; end location of peak 1
-	 (ax (+ b (* (- phi pi) (/ (- a b) pi))))         ; same for peak 2
-	 (bx (+ ap (* phi (/ (- bp ap) pi)))))            ; the 2 peaks move in opposite directions
-    (max (abs (+ (sin ax) (sin (+ (* 2 ax) phi))))        ; plug in the 2 locations and
-	 (abs (+ (sin bx) (sin (+ (* 2 bx) phi))))))      ;   return the max 
+	 (ap (- (* 2 pi) a))                          ; start location of peak 1 (the peak when phi is 0..pi)
+	 (bp (- (* 2 pi) b))                          ; end location of peak 1 
+	 (ax (+ b (* (- phi pi) (/ (- a b) pi))))     ; same for peak 2 (the peak when phi is pi..2pi)
+	 (bx (+ ap (* phi (/ (- bp ap) pi)))))        ; the 2 peaks move in opposite directions
+    (max (abs (+ (sin ax) (sin (+ (* 2 ax) phi))))    ; plug in the 2 locations and
+	 (abs (+ (sin bx) (sin (+ (* 2 bx) phi))))))  ;   return the max 
 </pre> 
 <!--
 (with-full-sound (:clipped #f :channels 2 :statistics #t :output "n2a.snd")
@@ -7733,11 +7733,29 @@ a function of the initial-phase ("phi" below) is:
 	  (set! i (+ i 1)))))))))
 -->
 <p>
+I believe the non-linearity is real, not some sort of computational artifact:
+changing the granularity of the computation by a factor of 1000 does not
+change the result at all.  My attempt to prove it one way or the other
+got thouroughly bogged down.
+We can reduce the peak difference below .00000002 by using:
+</p>
+<pre>
+  (let* ((waver (+ (* .002565 (sin (* 2 phi)))
+                   (* .0003645 (sin (* 4 phi)))
+                   (* .0001 (sin (* 6 phi)))
+                   (* .00004 (sin (* 8 phi)))
+                   (* .00002 (sin (* 10 phi)))
+                   (* .00001 (sin (* 12 phi)))
+                   (* .0000035 (sin (* 14 phi)))))
+         (ax (- (+ b (* (- phi pi) (/ (- a b) pi))) waver))
+         (bx (- (+ ap (* phi (/ (- bp ap) pi))) waver)))
+</pre>
+<p>
 Similarly sin(x)+sin(3x) differentiated is cos(x)+3cos(3x) = 12cos^3(x)-8cos(x).  cos(x)=0
 is a minimum of the original, but the other case is acos(sqrt(2/3)) = 0.61547970867039,
 and plugging that into the original gives 1.539600717839.  If we vary the sin(3x) term's
 initial phase, we get approximately 1.5396 + 0.4604 * sin(initial-phase).
-As before, the location of the peak varies linearly with the initial-phase, the end point
+As before, the location of the peak varies nearly linearly with the initial-phase, the end point
 now being acos(-(sqrt(2/3))):
 </p>
 <pre>
@@ -7845,8 +7863,8 @@ of the initial-phase:
 
 -->
 <p>but now we have four peaks to track.  The minimum peak is at initial-phase of pi,
-and is 1.81571610422.  I think in the sin(x)+sin(nx+a) case there's always a minimum at a=pi,
-and the peak itself approaches 2 as n increases.
+and is 1.81571610422.  I think in the sin(x)+sin(nx+a) case there's a minimum at a=pi, except when n=4k+3,
+and the peak itself (at either pi/2 or 3pi/2) approaches 2 as n increases.  See sin-nx-peak in numerics.scm.
 Another case that is not too hard involves a sum of
 n sines all at 0 initial phase.  This can be expressed as:
 </p>
