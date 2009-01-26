@@ -588,7 +588,11 @@ struct s7_scheme {
 
 #define is_true(p)                    ((p) != sc->F)
 #define is_false(p)                   ((p) == sc->F)
-#define make_boolean(sc, Val)         ((Val) ? sc->T : sc->F)
+#ifdef _MSC_VER
+  #define make_boolean(sc, Val)       (((Val) &0xff) ? sc->T : sc->F)
+#else
+  #define make_boolean(sc, Val)       ((Val) ? sc->T : sc->F)
+#endif
 
 #define is_pair(p)                    (type(p) == T_PAIR)
 #define car(p)                        ((p)->object.cons.car)
@@ -834,7 +838,7 @@ bool s7_is_boolean(s7_scheme *sc, s7_pointer x)
 
 s7_pointer s7_make_boolean(s7_scheme *sc, bool x)
 {
-  return(make_boolean(sc, (x) ? true : false)); /* this is not redundant in MS C++!! */
+  return(make_boolean(sc, x));
 }
 
 
@@ -9223,7 +9227,7 @@ s7_pointer s7_make_vector(s7_scheme *sc, int len)
   if (len > 0)
     {
       x->object.vector.elements = (s7_pointer *)malloc(len * sizeof(s7_pointer));
-      s7_vector_fill(x, sc->NIL);
+      s7_vector_fill(sc, x, sc->NIL);
     }
   else x->object.vector.elements = NULL;
   return(x);
@@ -9236,7 +9240,8 @@ int s7_vector_length(s7_pointer vec)
 }
 
 
-void s7_vector_fill(s7_pointer vec, s7_pointer obj) 
+#if (!WITH_GMP)
+void s7_vector_fill(s7_scheme *sc, s7_pointer vec, s7_pointer obj) 
 {
   int i, len;
   s7_pointer *tp;
@@ -9245,6 +9250,7 @@ void s7_vector_fill(s7_pointer vec, s7_pointer obj)
   for(i = 0; i < len; i++) 
     tp[i] = obj;
 }
+#endif
 
 
 static s7_pointer g_vector_fill(s7_scheme *sc, s7_pointer args)
@@ -9252,7 +9258,7 @@ static s7_pointer g_vector_fill(s7_scheme *sc, s7_pointer args)
   #define H_vector_fill "(vector-fill! v val) sets all elements of the vector v to val"
   if (!s7_is_vector(car(args)))
     return(s7_wrong_type_arg_error(sc, "vector-fill!", 1, car(args), "a vector"));
-  s7_vector_fill(car(args), cadr(args));
+  s7_vector_fill(sc, car(args), cadr(args));
   return(sc->UNSPECIFIED);
 }
 
@@ -9313,7 +9319,7 @@ s7_pointer s7_make_and_fill_vector(s7_scheme *sc, int len, s7_pointer fill)
   s7_pointer vect;
   vect = s7_make_vector(sc, len);
   if (fill != sc->NIL)
-    s7_vector_fill(vect, fill);
+    s7_vector_fill(sc, vect, fill);
   return(vect);
 }
 
@@ -9420,7 +9426,7 @@ static s7_pointer g_make_vector(s7_scheme *sc, s7_pointer args)
   
   vec = s7_make_vector(sc, len);
   if (fill != sc->NIL)
-    s7_vector_fill(vec, fill);
+    s7_vector_fill(sc, vec, fill);
   
   return(vec);
 }
@@ -15300,6 +15306,46 @@ static s7_pointer copy_and_promote_number(s7_scheme *sc, int type, s7_pointer x)
 }
 
 
+void s7_vector_fill(s7_scheme *sc, s7_pointer vec, s7_pointer obj) 
+{
+  int i, len;
+  s7_pointer *tp;
+  len = vector_length(vec);
+  tp = (s7_pointer *)(vec->object.vector.elements);
+
+  /* if the same bignum object is assigned to each element, different vector elements
+   *    are actually the same -- we need to make a copy of obj for each one
+   */
+
+  if (IS_BIG(obj))
+    {
+      int type;
+      type = object_type(obj);
+      for(i = 0; i < len; i++) 
+	{
+	  if (type == big_real_tag)
+	    tp[i] = mpfr_to_big_real(sc, S7_BIG_REAL(obj));
+	  else
+	    {
+	      if (type == big_integer_tag)
+		tp[i] = mpz_to_big_integer(sc, S7_BIG_INTEGER(obj));
+	      else
+		{
+		  if (type == big_complex_tag)
+		    tp[i] = mpc_to_big_complex(sc, S7_BIG_COMPLEX(obj));
+		  else tp[i] = mpq_to_big_ratio(sc, S7_BIG_RATIO(obj));
+		}
+	    }
+	}
+    }
+  else
+    {
+      for(i = 0; i < len; i++) 
+	tp[i] = obj;
+    }
+}
+
+
 static s7_pointer g_bignum(s7_scheme *sc, s7_pointer args)
 {
   #define H_bignum "(bignum val :optional radix) returns a multiprecision version of the string 'val'"
@@ -18088,15 +18134,18 @@ static s7_pointer big_random(s7_scheme *sc, s7_pointer args)
     {
       if (object_type(num) == big_real_tag)
 	num = s7_make_real(sc, (s7_Double)mpfr_get_d(S7_BIG_REAL(num), GMP_RNDN));
-
-      if (object_type(num) == big_integer_tag)
-	num = s7_make_integer(sc, big_integer_to_s7_Int(S7_BIG_INTEGER(num)));
-
-      if (object_type(num) == big_ratio_tag)
-	num = s7_make_ratio(sc, 
-			    big_integer_to_s7_Int(mpq_numref(S7_BIG_RATIO(num))), 
-			    big_integer_to_s7_Int(mpq_denref(S7_BIG_RATIO(num))));
-
+      else
+	{
+	  if (object_type(num) == big_integer_tag)
+	    num = s7_make_integer(sc, big_integer_to_s7_Int(S7_BIG_INTEGER(num)));
+	  else
+	    {
+	      if (object_type(num) == big_ratio_tag)
+		num = s7_make_ratio(sc, 
+				    big_integer_to_s7_Int(mpq_numref(S7_BIG_RATIO(num))), 
+				    big_integer_to_s7_Int(mpq_denref(S7_BIG_RATIO(num))));
+	    }
+	}
       if (is_object(state))
 	return(g_random(sc, make_list_2(sc, num, state)));
 
@@ -18105,6 +18154,8 @@ static s7_pointer big_random(s7_scheme *sc, s7_pointer args)
   return(g_random(sc, args));
 }
 
+/* TODO: check big random!! */
+
 
 /* fft
  *     (define hi (make-vector 8))
@@ -18112,7 +18163,11 @@ static s7_pointer big_random(s7_scheme *sc, s7_pointer args)
  *     (do ((i 0 (+ i 1))) ((= i 8)) (vector-set! hi i (bignum "0.0")) (vector-set! ho i (bignum "0.0")))
  *     (vector-set! ho 1 (bignum "-1.0"))
  *     (vector-set! ho 1 (bignum "-1.0"))
- *     (big-fft hi ho 8)
+ *     (bignum-fft hi ho 8)
+ *
+ * this is tricky -- perhaps a bad idea.  vector elements are changed in place which means
+ *   they better be unique!  and there are no checks that each element actually is a bignum
+ *   which means we'll segfault if a normal real leaks through.
  */
 
 static s7_pointer bignum_fft(s7_scheme *sc, s7_pointer args)
@@ -18134,6 +18189,7 @@ static s7_pointer bignum_fft(s7_scheme *sc, s7_pointer args)
 
   rl = car(args)->object.vector.elements;
   im = cadr(args)->object.vector.elements;
+  /* PERHAPS: copy and promote fft data? or add an argument to bignum_fft for that? */
 
   /* scramble(rl, im, n); */
   {

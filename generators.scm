@@ -6464,8 +6464,11 @@ index 10 (so 10/2 is the bes-jn arg):
   (frequency *clm-default-frequency*) (angle 0.0))
 
 (define* (circler gen :optional (fm 0.0))
+  "(make-circler (frequency 0.0) returns a circler generator.\n\
+(circler gen (fm 0.0)) produces a waveform made up of half circles"
   (declare (gen circler) (fm float))
   (let* ((x (fmod (circler-angle gen) (* 2 pi)))
+	 ;; not modulo here because the run macro assumes mod handles only ints
 	 (xx (/ (* 4 x) (* 2 pi)))
 	 (y (if (< xx 2)
 		(sqrt (- 1 (* (- 1 xx) (- 1 xx))))
@@ -6482,7 +6485,6 @@ index 10 (so 10/2 is the bes-jn arg):
 	 (outa i (circler gen)))))))
 
 ;;; odd harmonics: 1, .18 .081 .048 .033 .024, .019
-;;;   TODO: doc circler etc, also it should use modulo??
 |#
 
 

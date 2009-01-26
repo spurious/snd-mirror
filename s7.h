@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "1.10"
-#define S7_DATE "16-Jan-09"
+#define S7_VERSION "1.11"
+#define S7_DATE "26-Jan-09"
 
 
 typedef long long int s7_Int;
@@ -275,7 +275,7 @@ char *s7_number_to_string(s7_scheme *sc, s7_pointer obj, int radix);        /* (
 
 
 bool s7_is_vector(s7_pointer p);                                            /* (vector? p) */
-void s7_vector_fill(s7_pointer vec, s7_pointer obj);                        /* (vector-fill! vec obj) */
+void s7_vector_fill(s7_scheme *sc, s7_pointer vec, s7_pointer obj);         /* (vector-fill! vec obj) */
 s7_pointer s7_vector_ref(s7_scheme *sc, s7_pointer vec, int index);         /* (vector-ref vec index) */
 s7_pointer s7_vector_set(s7_scheme *sc, s7_pointer vec, int index, s7_pointer a);  /* (vector-set! vec index a) */
 s7_pointer s7_make_vector(s7_scheme *sc, int len);                          /* (make-vector len) */
@@ -1259,6 +1259,7 @@ int main(int argc, char **argv)
  * 
  *        s7 changes
  *
+ * 26-Jan:    added s7_scheme arg to s7_vector_fill.
  * 16-Jan:    s7_is_ulong_long and friends for C pointers in 64-bit situations.
  * 9-Jan-09   added multiprecision arithmetic (gmp, mpfr, mpc) on the WITH_GMP switch
  * --------

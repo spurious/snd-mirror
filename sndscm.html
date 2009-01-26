@@ -7735,8 +7735,7 @@ a function of the initial-phase ("phi" below) is (very nearly):
 <p>
 I believe the non-linearity is real, not some sort of computational artifact:
 changing the granularity of the computation by a factor of 1000 does not
-change the result at all.  My attempt to prove it one way or the other
-got thouroughly bogged down.
+change the result at all.  
 We can reduce the peak difference below .00000002 by using:
 </p>
 <pre>
@@ -7801,8 +7800,7 @@ now being acos(-(sqrt(2/3))):
 			 (abs (+ (sin bx) (sin (+ (* 3 bx) phi1)))))))
 	  (set! i (+ i 1)))))))))
 -->
-<p>sin(x)+sin(4x+a) is much messier even when a=0 because we have a quartic equation in cos(x);
-the minimum peak is at initial-phase of 0, falls at 1.940859829001 and is 1.9282082241513.
+<p>
 sin(x)+sin(5x+a) becomes a quadratic in cos^2(x), so we can find the peak location as a function
 of the initial-phase:
 </p>
@@ -7863,8 +7861,14 @@ of the initial-phase:
 
 -->
 <p>but now we have four peaks to track.  The minimum peak is at initial-phase of pi,
-and is 1.81571610422.  I think in the sin(x)+sin(nx+a) case there's a minimum at a=pi, except when n=4k+3,
-and the peak itself (at either pi/2 or 3pi/2) approaches 2 as n increases.  See sin-nx-peak in numerics.scm.
+and is 1.81571610422.  
+sin(x)+sin(4x+a) is much messier to handle in this manner when a=0 because it ends up in a quartic equation in cos(x).
+A glance at the derivative, cos(x)+4*cos(4x+a), shows there is a 0 at (x=0, a=acos(-1/4)),
+(x=pi, a=acos(1/4)), (x=pi/2, a=pi/2) and so on, but these points do not seem to be at maxima of the original.
+A brute force search finds that the minimum peak (which is at initial-phase of 0) is at 1.940859829001 and is 1.9282082241513.
+I think in the sin(x)+sin(nx+a) case there's a minimum at a=pi, except when n=4k+3,
+and the peak itself (at either pi/2 or 3pi/2) approaches 2 as n increases.
+See sin-nx-peak in numerics.scm.
 Another case that is not too hard involves a sum of
 n sines all at 0 initial phase.  This can be expressed as:
 </p>
@@ -8006,7 +8010,6 @@ The most productive simply set the initial phases randomly to either 0 or pi (co
 to setting the sign of the sinusoid).  Even this very sparse search is overwhlemed by the
 size of the "space" we are trying to probe.
 </p>
-
 
 <!--
 (set! (srate 2) (inexact->exact (round (/ 1000000 (* 2 pi)))))
@@ -8311,7 +8314,31 @@ as well.
 
 <img src="pix/sum5.png" hspace=20 alt="n=5 case">
 
-<p>
+
+<p>We can also use <a href="#withmixedsound">with-mixed-sound</a> to watch the waveforms "in real-time":
+</p>
+
+<table border=0 hspace=40><tr><td>
+<pre>
+(definstrument (sine-wave start dur freq amp)
+  (let* ((beg (seconds-&gt;samples start))
+	 (end (+ beg (seconds-&gt;samples dur)))
+	 (osc (make-oscil freq)))
+    (run 
+     (lambda ()
+       (do ((i beg (1+ i))) 
+	   ((= i end))
+	 (outa i (* amp (oscil osc))))))))
+
+(with-mixed-sound (:srate 10000)
+  (sine-wave 0 1 10.0 1.0)
+  (sine-wave 0 1 20.0 1.0)
+  (sine-wave 0 1 30.0 1.0))
+</pre>
+</td></tr></table>
+
+<p>Now the resultant waveform is displayed as you drag any of the mix tags (which corresponds to
+changing the initial phase).  
 And on a really random note, if the component amplitudes are scaled by (say) 0.5^k,
 or if we substitute triangle waves for the sinusoids,
 the minima are different and fall at different locations.
