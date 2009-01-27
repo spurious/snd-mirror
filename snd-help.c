@@ -3936,15 +3936,34 @@ and its value is returned."
 
 #if HAVE_S7
   {
+    /* hooks and vars are broken here */
     XEN sym = XEN_FALSE;
-    subject = (char *)XEN_TO_C_STRING(text);
     if (XEN_STRING_P(text))
-      sym = C_STRING_TO_XEN_SYMBOL(XEN_TO_C_STRING(text));
-    else sym = text;
-
-    if (XEN_HOOK_P(sym))
-      str = (char *)xen_s7_hook_documentation(sym);
-    else str = (char *)s7_procedure_documentation(s7, sym);
+      {
+	subject = (char *)XEN_TO_C_STRING(text);
+	sym = s7_name_to_value(s7, subject);
+      }
+    else 
+      {
+	if (XEN_SYMBOL_P(text))
+	  {
+	    subject = (char *)XEN_SYMBOL_TO_C_STRING(text);
+	    sym = s7_symbol_value(s7, text);
+	  }
+	else
+	  {
+	    sym = text;
+	  }
+      }
+    
+    if (XEN_PROCEDURE_P(sym))
+      str = (char *)s7_procedure_documentation(s7, sym);
+    else
+      {
+	if (XEN_HOOK_P(sym))
+	  str = (char *)xen_s7_hook_documentation(sym);
+	else str = (char *)xen_s7_constant_help(subject);
+      }
   }
 #endif
 

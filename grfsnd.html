@@ -81,7 +81,7 @@
   <li><a href="grfsnd.html#sndandx" onmouseout="UnTip()" onmouseover="Tip('other programs can control Snd through window properties')">Driving Snd remotely</a>
   <li><a href="#sndandgl" onmouseout="UnTip()" onmouseover="Tip('OpenGL (Mesa) extensions via gl.c')">Snd and OpenGL</a>
   <li><a href="#sndandgsl" onmouseout="UnTip()" onmouseover="Tip('include some special functions from GSL')">Snd and GSL</a>
-  <li><a href="#sndandgmp" onmouseout="UnTip()" onmouseover="Tip('include multiprecision arithmetic')">Snd and multiprecision arithmetic</a>
+  <li><a href="#sndandgmp" onmouseout="UnTip()" onmouseover="Tip('include multiprecision arithmetic')">Snd and multiprecision arithmetic (gmp, mpfr, mpc)</a>
   </ul>
 </ul>
 </td><td width="40%">
@@ -2575,6 +2575,34 @@ way to force a calculation to use big numbers.
     <em class=listener>:</em><em class=typing>(sqrt (bignum "2"))</em>
     <em class=listener>1.414213562373095048801688724209698078569E0</em>
 </pre>
+<p>
+s7 uses normal C arithmetic unless something causes it to be suspicious.
+Since a number like 1.2345e-14 does not trigger an underflow in C,
+and is short (it's written with less than 20 characters), s7 trusts it even in a case
+such as:
+</p>
+<pre>
+    :(+ 1.2345e-15 1.0 -1.0)
+    1.3322676295502e-15
+</pre>
+<p>In any case like this where C doubles are going to lose, you can force
+big float arithmetic by making one of the operands a bignum:
+</p>
+<pre>
+    :(+ (bignum "1.2345e-15") 1.0 -1.0)
+    1.234500000000000042481989819014552503046E-15
+</pre>
+<p>There are lots of similar cases:
+</p>
+<pre>
+    :(* 2e-170 3e-170 4e+170 5e+170)
+    0.0
+    :(* (bignum "2e-170") 3e-170 4e+170 5e+170)
+    1.200000000000000019643628722298292475697E2
+</pre>
+<p>but presumably you know when you're using these kinds
+of numbers.
+</p>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- bignum? -->
@@ -2608,6 +2636,17 @@ about 40 decimal digits.
    <em class=listener>256</em>
    <em class=listener>:</em><em class=typing>(* 2 pi)</em>
    <em class=listener>6.283185307179586476925286766559005768394338798750211641949889184615632812572396E0</em>
+</pre>
+<p>If a big float is so large that the current bignum-precision has to approximate it,
+you can get confusing results:
+</p>
+<pre>
+    :(rationalize 385817946978768113605842402465609185854927496022065152.5)
+    385817946978768113605842402465609185854927496022065152
+    :(set! (bignum-precision) 512)
+    512
+    :(rationalize 385817946978768113605842402465609185854927496022065152.5)
+    771635893957536227211684804931218371709854992044130305/2
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 

@@ -4910,9 +4910,27 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
 		  return(s7_make_ratio(sc, int_to_int(d, -y), int_to_int(n, -y)));
 		}
 	    }
-	  /* occasionally int^rat can be int but it happens so infrequently it's not worth checking */
+	  /* occasionally int^rat can be int but it happens so infrequently it's probably not worth checking */
+	  /* but... it's sad that 
+	   *    :(expt -8 1/3)
+	   *    1+1.7320508075689i ; a real always has a real cbrt -- would be nice to stick to that
+	   *                       ; expts x y [x and y rational] -> a list of values?
+	   * or even
+	   *    :(sqrt 1/9)
+	   *    1/3
+	   *    :(expt 1/9 1/2) ; see below -- this is fixed now
+	   *    0.33333333333333
+	   *    :(expt 1/32 1/5)
+	   *    0.5
+	   *   add internal cbrt y=1/3 etc?
+	   */
 	}
     }
+
+  if ((object_number_type(sc->y) == NUM_RATIO) &&
+      (denominator(sc->y->object.number) == 2) &&
+      (numerator(sc->y->object.number) == 1))
+    return(g_sqrt(sc, args));
   
   if ((s7_is_real(sc->x)) &&
       (s7_is_real(sc->y)))

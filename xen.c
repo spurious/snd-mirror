@@ -1678,6 +1678,54 @@ XEN xen_s7_c_to_xen_string(const char *str)
 #endif
 
 
+static const char **constant_names = NULL, **constant_helps = NULL;
+static int constant_size = 0, constant_top = -1;
+
+void xen_s7_define_constant(s7_scheme *sc, const char *name, s7_pointer value, const char *help)
+{
+  /* save doc string */
+  constant_top++;
+  if (constant_top >= constant_size)
+    {
+      if (constant_size == 0)
+	{
+	  constant_size = 128;
+	  constant_names = (const char **)calloc(constant_size, sizeof(char *));
+	  constant_helps = (const char **)calloc(constant_size, sizeof(char *));
+	}
+      else
+	{
+	  int i;
+	  i = constant_size;
+	  constant_size += 128;
+	  constant_names = (const char **)realloc(constant_names, constant_size * sizeof(char *));
+	  constant_helps = (const char **)realloc(constant_helps, constant_size * sizeof(char *));
+	  for (; i < constant_size; i++)
+	    {
+	      constant_names[i] = NULL;
+	      constant_helps[i] = NULL;
+	    }
+	}
+    }
+  constant_names[constant_top] = xen_strdup(name);
+  constant_helps[constant_top] = xen_strdup(help);
+  s7_define_constant(s7, name, value);
+}
+
+
+const char *xen_s7_constant_help(const char *name)
+{
+  int i;
+  if (name)
+    {
+      for (i = 0; i <= constant_top; i++)
+	if (strcmp(name, constant_names[i]) == 0)
+	  return(constant_helps[i]);
+    }
+  return(NULL);
+}
+
+
 /* hooks */
 
 typedef struct {

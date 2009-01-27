@@ -5913,7 +5913,13 @@ static xen_value *atan2_1(ptree *prog, xen_value **args, int num_args)
 }
 
 
-static void fmod_f(int *args, ptree *pt) {FLOAT_RESULT = fmod(FLOAT_ARG_1, FLOAT_ARG_2);}
+static void fmod_f(int *args, ptree *pt) 
+{
+  FLOAT_RESULT = fmod(FLOAT_ARG_1, FLOAT_ARG_2);
+  if (((FLOAT_ARG_2 > 0.0) && (FLOAT_RESULT < 0.0)) ||
+      ((FLOAT_ARG_2 < 0.0) && (FLOAT_RESULT > 0.0)))
+    FLOAT_RESULT += FLOAT_ARG_2;
+}
 
 
 static xen_value *fmod_1(ptree *prog, xen_value **args, int num_args)
@@ -5932,7 +5938,16 @@ static xen_value *fmod_1(ptree *prog, xen_value **args, int num_args)
       FREE(temp);
     }
   if (prog->constants == 2)
-    return(make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, fmod(prog->dbls[args[1]->addr], prog->dbls[args[2]->addr])), R_CONSTANT));
+    {
+      double x, y, val;
+      x = prog->dbls[args[1]->addr];
+      y = prog->dbls[args[2]->addr];
+      val = fmod(x, y);
+      if (((y > 0.0) && (val < 0.0)) ||
+	  ((y < 0.0) && (val > 0.0)))
+	val += y;
+      return(make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, val), R_CONSTANT));
+    }
   return(package(prog, R_FLOAT, fmod_f, "fmod_f", args, 2));
 }
 
@@ -6291,13 +6306,15 @@ static xen_value *lcm_1(ptree *prog, xen_value **args, int num_args)
 
 /* ---------------- remainder, quotient, modulo ---------------- */
 
-/* TODO: make run's modulo etc work with reals */
-
 static void modulo_i(int *args, ptree *pt) {INT_RESULT = c_mod(INT_ARG_1, INT_ARG_2);}
 
 
 static xen_value *modulo_1(ptree *prog, xen_value **args, int num_args)
 {
+  if ((args[1]->type == R_FLOAT) ||
+      (args[2]->type == R_FLOAT))
+    return(fmod_1(prog, args, num_args));
+
   args[1] = convert_to_int(prog, args[1]);
   if (args[1] == NULL) return(run_warn("modulo arg1 can't convert to int"));
   args[2] = convert_to_int(prog, args[2]);

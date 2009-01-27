@@ -2352,9 +2352,16 @@ static XEN g_continuation_p(XEN obj)
 
 static XEN g_fmod(XEN a, XEN b)
 {
+  double val, x, y;
   XEN_ASSERT_TYPE(XEN_NUMBER_P(a), a, XEN_ARG_1, "fmod", " a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(b), b, XEN_ARG_2, "fmod", " a number");
-  return(C_TO_XEN_DOUBLE(fmod(XEN_TO_C_DOUBLE(a), XEN_TO_C_DOUBLE(b))));
+  x = XEN_TO_C_DOUBLE(a);
+  y = XEN_TO_C_DOUBLE(b);
+  val = fmod(x, y);
+  if (((y > 0.0) && (val < 0.0)) ||
+      ((y < 0.0) && (val > 0.0)))
+    return(C_TO_XEN_DOUBLE(val + y));
+  return(C_TO_XEN_DOUBLE(val));
 }
 
 

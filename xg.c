@@ -31177,6 +31177,190 @@ static XEN gxg_gtk_selection_data_get_selection(XEN selection_data)
   return(C_TO_XEN_GdkAtom(gtk_selection_data_get_selection(XEN_TO_C_GtkSelectionData_(selection_data))));
 }
 
+static XEN gxg_gtk_action_set_label(XEN action, XEN label)
+{
+  #define H_gtk_action_set_label "void gtk_action_set_label(GtkAction* action, gchar* label)"
+  XEN_ASSERT_TYPE(XEN_GtkAction__P(action), action, 1, "gtk_action_set_label", "GtkAction*");
+  XEN_ASSERT_TYPE(XEN_gchar__P(label), label, 2, "gtk_action_set_label", "gchar*");
+  gtk_action_set_label(XEN_TO_C_GtkAction_(action), XEN_TO_C_gchar_(label));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_action_get_label(XEN action)
+{
+  #define H_gtk_action_get_label "gchar* gtk_action_get_label(GtkAction* action)"
+  XEN_ASSERT_TYPE(XEN_GtkAction__P(action), action, 1, "gtk_action_get_label", "GtkAction*");
+  return(C_TO_XEN_gchar_(gtk_action_get_label(XEN_TO_C_GtkAction_(action))));
+}
+
+static XEN gxg_gtk_action_set_short_label(XEN action, XEN short_label)
+{
+  #define H_gtk_action_set_short_label "void gtk_action_set_short_label(GtkAction* action, gchar* short_label)"
+  XEN_ASSERT_TYPE(XEN_GtkAction__P(action), action, 1, "gtk_action_set_short_label", "GtkAction*");
+  XEN_ASSERT_TYPE(XEN_gchar__P(short_label), short_label, 2, "gtk_action_set_short_label", "gchar*");
+  gtk_action_set_short_label(XEN_TO_C_GtkAction_(action), XEN_TO_C_gchar_(short_label));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_action_get_short_label(XEN action)
+{
+  #define H_gtk_action_get_short_label "gchar* gtk_action_get_short_label(GtkAction* action)"
+  XEN_ASSERT_TYPE(XEN_GtkAction__P(action), action, 1, "gtk_action_get_short_label", "GtkAction*");
+  return(C_TO_XEN_gchar_(gtk_action_get_short_label(XEN_TO_C_GtkAction_(action))));
+}
+
+static XEN gxg_gtk_action_set_tooltip(XEN action, XEN tooltip)
+{
+  #define H_gtk_action_set_tooltip "void gtk_action_set_tooltip(GtkAction* action, gchar* tooltip)"
+  XEN_ASSERT_TYPE(XEN_GtkAction__P(action), action, 1, "gtk_action_set_tooltip", "GtkAction*");
+  XEN_ASSERT_TYPE(XEN_gchar__P(tooltip), tooltip, 2, "gtk_action_set_tooltip", "gchar*");
+  gtk_action_set_tooltip(XEN_TO_C_GtkAction_(action), XEN_TO_C_gchar_(tooltip));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_action_get_tooltip(XEN action)
+{
+  #define H_gtk_action_get_tooltip "gchar* gtk_action_get_tooltip(GtkAction* action)"
+  XEN_ASSERT_TYPE(XEN_GtkAction__P(action), action, 1, "gtk_action_get_tooltip", "GtkAction*");
+  return(C_TO_XEN_gchar_(gtk_action_get_tooltip(XEN_TO_C_GtkAction_(action))));
+}
+
+static XEN gxg_gtk_action_set_stock_id(XEN action, XEN stock_id)
+{
+  #define H_gtk_action_set_stock_id "void gtk_action_set_stock_id(GtkAction* action, gchar* stock_id)"
+  XEN_ASSERT_TYPE(XEN_GtkAction__P(action), action, 1, "gtk_action_set_stock_id", "GtkAction*");
+  XEN_ASSERT_TYPE(XEN_gchar__P(stock_id), stock_id, 2, "gtk_action_set_stock_id", "gchar*");
+  gtk_action_set_stock_id(XEN_TO_C_GtkAction_(action), XEN_TO_C_gchar_(stock_id));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_action_get_stock_id(XEN action)
+{
+  #define H_gtk_action_get_stock_id "gchar* gtk_action_get_stock_id(GtkAction* action)"
+  XEN_ASSERT_TYPE(XEN_GtkAction__P(action), action, 1, "gtk_action_get_stock_id", "GtkAction*");
+  return(C_TO_XEN_gchar_(gtk_action_get_stock_id(XEN_TO_C_GtkAction_(action))));
+}
+
+static XEN gxg_gtk_action_set_gicon(XEN action, XEN icon)
+{
+  #define H_gtk_action_set_gicon "void gtk_action_set_gicon(GtkAction* action, GIcon* icon)"
+  XEN_ASSERT_TYPE(XEN_GtkAction__P(action), action, 1, "gtk_action_set_gicon", "GtkAction*");
+  XEN_ASSERT_TYPE(XEN_GIcon__P(icon), icon, 2, "gtk_action_set_gicon", "GIcon*");
+  gtk_action_set_gicon(XEN_TO_C_GtkAction_(action), XEN_TO_C_GIcon_(icon));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_action_get_gicon(XEN action)
+{
+  #define H_gtk_action_get_gicon "GIcon* gtk_action_get_gicon(GtkAction* action)"
+  XEN_ASSERT_TYPE(XEN_GtkAction__P(action), action, 1, "gtk_action_get_gicon", "GtkAction*");
+  return(C_TO_XEN_GIcon_(gtk_action_get_gicon(XEN_TO_C_GtkAction_(action))));
+}
+
+static XEN gxg_gtk_action_set_icon_name(XEN action, XEN icon_name)
+{
+  #define H_gtk_action_set_icon_name "void gtk_action_set_icon_name(GtkAction* action, gchar* icon_name)"
+  XEN_ASSERT_TYPE(XEN_GtkAction__P(action), action, 1, "gtk_action_set_icon_name", "GtkAction*");
+  XEN_ASSERT_TYPE(XEN_gchar__P(icon_name), icon_name, 2, "gtk_action_set_icon_name", "gchar*");
+  gtk_action_set_icon_name(XEN_TO_C_GtkAction_(action), XEN_TO_C_gchar_(icon_name));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_action_get_icon_name(XEN action)
+{
+  #define H_gtk_action_get_icon_name "gchar* gtk_action_get_icon_name(GtkAction* action)"
+  XEN_ASSERT_TYPE(XEN_GtkAction__P(action), action, 1, "gtk_action_get_icon_name", "GtkAction*");
+  return(C_TO_XEN_gchar_(gtk_action_get_icon_name(XEN_TO_C_GtkAction_(action))));
+}
+
+static XEN gxg_gtk_action_set_visible_horizontal(XEN action, XEN visible_horizontal)
+{
+  #define H_gtk_action_set_visible_horizontal "void gtk_action_set_visible_horizontal(GtkAction* action, \
+gboolean visible_horizontal)"
+  XEN_ASSERT_TYPE(XEN_GtkAction__P(action), action, 1, "gtk_action_set_visible_horizontal", "GtkAction*");
+  XEN_ASSERT_TYPE(XEN_gboolean_P(visible_horizontal), visible_horizontal, 2, "gtk_action_set_visible_horizontal", "gboolean");
+  gtk_action_set_visible_horizontal(XEN_TO_C_GtkAction_(action), XEN_TO_C_gboolean(visible_horizontal));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_action_get_visible_horizontal(XEN action)
+{
+  #define H_gtk_action_get_visible_horizontal "gboolean gtk_action_get_visible_horizontal(GtkAction* action)"
+  XEN_ASSERT_TYPE(XEN_GtkAction__P(action), action, 1, "gtk_action_get_visible_horizontal", "GtkAction*");
+  return(C_TO_XEN_gboolean(gtk_action_get_visible_horizontal(XEN_TO_C_GtkAction_(action))));
+}
+
+static XEN gxg_gtk_action_set_visible_vertical(XEN action, XEN visible_vertical)
+{
+  #define H_gtk_action_set_visible_vertical "void gtk_action_set_visible_vertical(GtkAction* action, \
+gboolean visible_vertical)"
+  XEN_ASSERT_TYPE(XEN_GtkAction__P(action), action, 1, "gtk_action_set_visible_vertical", "GtkAction*");
+  XEN_ASSERT_TYPE(XEN_gboolean_P(visible_vertical), visible_vertical, 2, "gtk_action_set_visible_vertical", "gboolean");
+  gtk_action_set_visible_vertical(XEN_TO_C_GtkAction_(action), XEN_TO_C_gboolean(visible_vertical));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_action_get_visible_vertical(XEN action)
+{
+  #define H_gtk_action_get_visible_vertical "gboolean gtk_action_get_visible_vertical(GtkAction* action)"
+  XEN_ASSERT_TYPE(XEN_GtkAction__P(action), action, 1, "gtk_action_get_visible_vertical", "GtkAction*");
+  return(C_TO_XEN_gboolean(gtk_action_get_visible_vertical(XEN_TO_C_GtkAction_(action))));
+}
+
+static XEN gxg_gtk_action_set_is_important(XEN action, XEN is_important)
+{
+  #define H_gtk_action_set_is_important "void gtk_action_set_is_important(GtkAction* action, gboolean is_important)"
+  XEN_ASSERT_TYPE(XEN_GtkAction__P(action), action, 1, "gtk_action_set_is_important", "GtkAction*");
+  XEN_ASSERT_TYPE(XEN_gboolean_P(is_important), is_important, 2, "gtk_action_set_is_important", "gboolean");
+  gtk_action_set_is_important(XEN_TO_C_GtkAction_(action), XEN_TO_C_gboolean(is_important));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_action_get_is_important(XEN action)
+{
+  #define H_gtk_action_get_is_important "gboolean gtk_action_get_is_important(GtkAction* action)"
+  XEN_ASSERT_TYPE(XEN_GtkAction__P(action), action, 1, "gtk_action_get_is_important", "GtkAction*");
+  return(C_TO_XEN_gboolean(gtk_action_get_is_important(XEN_TO_C_GtkAction_(action))));
+}
+
+static XEN gxg_gtk_entry_get_icon_tooltip_text(XEN entry, XEN icon_pos)
+{
+  #define H_gtk_entry_get_icon_tooltip_text "gchar* gtk_entry_get_icon_tooltip_text(GtkEntry* entry, \
+GtkEntryIconPosition icon_pos)"
+  XEN_ASSERT_TYPE(XEN_GtkEntry__P(entry), entry, 1, "gtk_entry_get_icon_tooltip_text", "GtkEntry*");
+  XEN_ASSERT_TYPE(XEN_GtkEntryIconPosition_P(icon_pos), icon_pos, 2, "gtk_entry_get_icon_tooltip_text", "GtkEntryIconPosition");
+  return(C_TO_XEN_gchar_(gtk_entry_get_icon_tooltip_text(XEN_TO_C_GtkEntry_(entry), XEN_TO_C_GtkEntryIconPosition(icon_pos))));
+}
+
+static XEN gxg_gtk_entry_get_icon_tooltip_markup(XEN entry, XEN icon_pos)
+{
+  #define H_gtk_entry_get_icon_tooltip_markup "gchar* gtk_entry_get_icon_tooltip_markup(GtkEntry* entry, \
+GtkEntryIconPosition icon_pos)"
+  XEN_ASSERT_TYPE(XEN_GtkEntry__P(entry), entry, 1, "gtk_entry_get_icon_tooltip_markup", "GtkEntry*");
+  XEN_ASSERT_TYPE(XEN_GtkEntryIconPosition_P(icon_pos), icon_pos, 2, "gtk_entry_get_icon_tooltip_markup", "GtkEntryIconPosition");
+  return(C_TO_XEN_gchar_(gtk_entry_get_icon_tooltip_markup(XEN_TO_C_GtkEntry_(entry), XEN_TO_C_GtkEntryIconPosition(icon_pos))));
+}
+
+static XEN gxg_gtk_scale_add_mark(XEN scale, XEN value, XEN position, XEN markup)
+{
+  #define H_gtk_scale_add_mark "void gtk_scale_add_mark(GtkScale* scale, gdouble value, GtkPositionType position, \
+gchar* markup)"
+  XEN_ASSERT_TYPE(XEN_GtkScale__P(scale), scale, 1, "gtk_scale_add_mark", "GtkScale*");
+  XEN_ASSERT_TYPE(XEN_gdouble_P(value), value, 2, "gtk_scale_add_mark", "gdouble");
+  XEN_ASSERT_TYPE(XEN_GtkPositionType_P(position), position, 3, "gtk_scale_add_mark", "GtkPositionType");
+  XEN_ASSERT_TYPE(XEN_gchar__P(markup), markup, 4, "gtk_scale_add_mark", "gchar*");
+  gtk_scale_add_mark(XEN_TO_C_GtkScale_(scale), XEN_TO_C_gdouble(value), XEN_TO_C_GtkPositionType(position), XEN_TO_C_gchar_(markup));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_scale_clear_marks(XEN scale)
+{
+  #define H_gtk_scale_clear_marks "void gtk_scale_clear_marks(GtkScale* scale)"
+  XEN_ASSERT_TYPE(XEN_GtkScale__P(scale), scale, 1, "gtk_scale_clear_marks", "GtkScale*");
+  gtk_scale_clear_marks(XEN_TO_C_GtkScale_(scale));
+  return(XEN_FALSE);
+}
+
 #endif
 
 #if HAVE_CAIRO_CREATE
@@ -37987,6 +38171,28 @@ XEN_NARGIFY_1(gxg_gtk_menu_item_get_label_w, gxg_gtk_menu_item_get_label)
 XEN_NARGIFY_2(gxg_gtk_menu_item_set_use_underline_w, gxg_gtk_menu_item_set_use_underline)
 XEN_NARGIFY_1(gxg_gtk_menu_item_get_use_underline_w, gxg_gtk_menu_item_get_use_underline)
 XEN_NARGIFY_1(gxg_gtk_selection_data_get_selection_w, gxg_gtk_selection_data_get_selection)
+XEN_NARGIFY_2(gxg_gtk_action_set_label_w, gxg_gtk_action_set_label)
+XEN_NARGIFY_1(gxg_gtk_action_get_label_w, gxg_gtk_action_get_label)
+XEN_NARGIFY_2(gxg_gtk_action_set_short_label_w, gxg_gtk_action_set_short_label)
+XEN_NARGIFY_1(gxg_gtk_action_get_short_label_w, gxg_gtk_action_get_short_label)
+XEN_NARGIFY_2(gxg_gtk_action_set_tooltip_w, gxg_gtk_action_set_tooltip)
+XEN_NARGIFY_1(gxg_gtk_action_get_tooltip_w, gxg_gtk_action_get_tooltip)
+XEN_NARGIFY_2(gxg_gtk_action_set_stock_id_w, gxg_gtk_action_set_stock_id)
+XEN_NARGIFY_1(gxg_gtk_action_get_stock_id_w, gxg_gtk_action_get_stock_id)
+XEN_NARGIFY_2(gxg_gtk_action_set_gicon_w, gxg_gtk_action_set_gicon)
+XEN_NARGIFY_1(gxg_gtk_action_get_gicon_w, gxg_gtk_action_get_gicon)
+XEN_NARGIFY_2(gxg_gtk_action_set_icon_name_w, gxg_gtk_action_set_icon_name)
+XEN_NARGIFY_1(gxg_gtk_action_get_icon_name_w, gxg_gtk_action_get_icon_name)
+XEN_NARGIFY_2(gxg_gtk_action_set_visible_horizontal_w, gxg_gtk_action_set_visible_horizontal)
+XEN_NARGIFY_1(gxg_gtk_action_get_visible_horizontal_w, gxg_gtk_action_get_visible_horizontal)
+XEN_NARGIFY_2(gxg_gtk_action_set_visible_vertical_w, gxg_gtk_action_set_visible_vertical)
+XEN_NARGIFY_1(gxg_gtk_action_get_visible_vertical_w, gxg_gtk_action_get_visible_vertical)
+XEN_NARGIFY_2(gxg_gtk_action_set_is_important_w, gxg_gtk_action_set_is_important)
+XEN_NARGIFY_1(gxg_gtk_action_get_is_important_w, gxg_gtk_action_get_is_important)
+XEN_NARGIFY_2(gxg_gtk_entry_get_icon_tooltip_text_w, gxg_gtk_entry_get_icon_tooltip_text)
+XEN_NARGIFY_2(gxg_gtk_entry_get_icon_tooltip_markup_w, gxg_gtk_entry_get_icon_tooltip_markup)
+XEN_NARGIFY_4(gxg_gtk_scale_add_mark_w, gxg_gtk_scale_add_mark)
+XEN_NARGIFY_1(gxg_gtk_scale_clear_marks_w, gxg_gtk_scale_clear_marks)
 #endif
 
 #if HAVE_CAIRO_CREATE
@@ -41913,6 +42119,28 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gtk_menu_item_set_use_underline_w gxg_gtk_menu_item_set_use_underline
 #define gxg_gtk_menu_item_get_use_underline_w gxg_gtk_menu_item_get_use_underline
 #define gxg_gtk_selection_data_get_selection_w gxg_gtk_selection_data_get_selection
+#define gxg_gtk_action_set_label_w gxg_gtk_action_set_label
+#define gxg_gtk_action_get_label_w gxg_gtk_action_get_label
+#define gxg_gtk_action_set_short_label_w gxg_gtk_action_set_short_label
+#define gxg_gtk_action_get_short_label_w gxg_gtk_action_get_short_label
+#define gxg_gtk_action_set_tooltip_w gxg_gtk_action_set_tooltip
+#define gxg_gtk_action_get_tooltip_w gxg_gtk_action_get_tooltip
+#define gxg_gtk_action_set_stock_id_w gxg_gtk_action_set_stock_id
+#define gxg_gtk_action_get_stock_id_w gxg_gtk_action_get_stock_id
+#define gxg_gtk_action_set_gicon_w gxg_gtk_action_set_gicon
+#define gxg_gtk_action_get_gicon_w gxg_gtk_action_get_gicon
+#define gxg_gtk_action_set_icon_name_w gxg_gtk_action_set_icon_name
+#define gxg_gtk_action_get_icon_name_w gxg_gtk_action_get_icon_name
+#define gxg_gtk_action_set_visible_horizontal_w gxg_gtk_action_set_visible_horizontal
+#define gxg_gtk_action_get_visible_horizontal_w gxg_gtk_action_get_visible_horizontal
+#define gxg_gtk_action_set_visible_vertical_w gxg_gtk_action_set_visible_vertical
+#define gxg_gtk_action_get_visible_vertical_w gxg_gtk_action_get_visible_vertical
+#define gxg_gtk_action_set_is_important_w gxg_gtk_action_set_is_important
+#define gxg_gtk_action_get_is_important_w gxg_gtk_action_get_is_important
+#define gxg_gtk_entry_get_icon_tooltip_text_w gxg_gtk_entry_get_icon_tooltip_text
+#define gxg_gtk_entry_get_icon_tooltip_markup_w gxg_gtk_entry_get_icon_tooltip_markup
+#define gxg_gtk_scale_add_mark_w gxg_gtk_scale_add_mark
+#define gxg_gtk_scale_clear_marks_w gxg_gtk_scale_clear_marks
 #endif
 
 #if HAVE_CAIRO_CREATE
@@ -45846,6 +46074,28 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_menu_item_set_use_underline, gxg_gtk_menu_item_set_use_underline_w, 2, 0, 0, H_gtk_menu_item_set_use_underline);
   XG_DEFINE_PROCEDURE(gtk_menu_item_get_use_underline, gxg_gtk_menu_item_get_use_underline_w, 1, 0, 0, H_gtk_menu_item_get_use_underline);
   XG_DEFINE_PROCEDURE(gtk_selection_data_get_selection, gxg_gtk_selection_data_get_selection_w, 1, 0, 0, H_gtk_selection_data_get_selection);
+  XG_DEFINE_PROCEDURE(gtk_action_set_label, gxg_gtk_action_set_label_w, 2, 0, 0, H_gtk_action_set_label);
+  XG_DEFINE_PROCEDURE(gtk_action_get_label, gxg_gtk_action_get_label_w, 1, 0, 0, H_gtk_action_get_label);
+  XG_DEFINE_PROCEDURE(gtk_action_set_short_label, gxg_gtk_action_set_short_label_w, 2, 0, 0, H_gtk_action_set_short_label);
+  XG_DEFINE_PROCEDURE(gtk_action_get_short_label, gxg_gtk_action_get_short_label_w, 1, 0, 0, H_gtk_action_get_short_label);
+  XG_DEFINE_PROCEDURE(gtk_action_set_tooltip, gxg_gtk_action_set_tooltip_w, 2, 0, 0, H_gtk_action_set_tooltip);
+  XG_DEFINE_PROCEDURE(gtk_action_get_tooltip, gxg_gtk_action_get_tooltip_w, 1, 0, 0, H_gtk_action_get_tooltip);
+  XG_DEFINE_PROCEDURE(gtk_action_set_stock_id, gxg_gtk_action_set_stock_id_w, 2, 0, 0, H_gtk_action_set_stock_id);
+  XG_DEFINE_PROCEDURE(gtk_action_get_stock_id, gxg_gtk_action_get_stock_id_w, 1, 0, 0, H_gtk_action_get_stock_id);
+  XG_DEFINE_PROCEDURE(gtk_action_set_gicon, gxg_gtk_action_set_gicon_w, 2, 0, 0, H_gtk_action_set_gicon);
+  XG_DEFINE_PROCEDURE(gtk_action_get_gicon, gxg_gtk_action_get_gicon_w, 1, 0, 0, H_gtk_action_get_gicon);
+  XG_DEFINE_PROCEDURE(gtk_action_set_icon_name, gxg_gtk_action_set_icon_name_w, 2, 0, 0, H_gtk_action_set_icon_name);
+  XG_DEFINE_PROCEDURE(gtk_action_get_icon_name, gxg_gtk_action_get_icon_name_w, 1, 0, 0, H_gtk_action_get_icon_name);
+  XG_DEFINE_PROCEDURE(gtk_action_set_visible_horizontal, gxg_gtk_action_set_visible_horizontal_w, 2, 0, 0, H_gtk_action_set_visible_horizontal);
+  XG_DEFINE_PROCEDURE(gtk_action_get_visible_horizontal, gxg_gtk_action_get_visible_horizontal_w, 1, 0, 0, H_gtk_action_get_visible_horizontal);
+  XG_DEFINE_PROCEDURE(gtk_action_set_visible_vertical, gxg_gtk_action_set_visible_vertical_w, 2, 0, 0, H_gtk_action_set_visible_vertical);
+  XG_DEFINE_PROCEDURE(gtk_action_get_visible_vertical, gxg_gtk_action_get_visible_vertical_w, 1, 0, 0, H_gtk_action_get_visible_vertical);
+  XG_DEFINE_PROCEDURE(gtk_action_set_is_important, gxg_gtk_action_set_is_important_w, 2, 0, 0, H_gtk_action_set_is_important);
+  XG_DEFINE_PROCEDURE(gtk_action_get_is_important, gxg_gtk_action_get_is_important_w, 1, 0, 0, H_gtk_action_get_is_important);
+  XG_DEFINE_PROCEDURE(gtk_entry_get_icon_tooltip_text, gxg_gtk_entry_get_icon_tooltip_text_w, 2, 0, 0, H_gtk_entry_get_icon_tooltip_text);
+  XG_DEFINE_PROCEDURE(gtk_entry_get_icon_tooltip_markup, gxg_gtk_entry_get_icon_tooltip_markup_w, 2, 0, 0, H_gtk_entry_get_icon_tooltip_markup);
+  XG_DEFINE_PROCEDURE(gtk_scale_add_mark, gxg_gtk_scale_add_mark_w, 4, 0, 0, H_gtk_scale_add_mark);
+  XG_DEFINE_PROCEDURE(gtk_scale_clear_marks, gxg_gtk_scale_clear_marks_w, 1, 0, 0, H_gtk_scale_clear_marks);
 #endif
 
 #if HAVE_CAIRO_CREATE
@@ -47834,6 +48084,7 @@ static void define_integers(void)
   DEFINE_INTEGER(GTK_ARROWS_BOTH);
   DEFINE_INTEGER(GTK_ARROWS_START);
   DEFINE_INTEGER(GTK_ARROWS_END);
+  DEFINE_INTEGER(GDK_BLANK_CURSOR );
 #endif
 
 #if HAVE_CAIRO_CREATE
@@ -48430,6 +48681,10 @@ static void define_strings(void)
   DEFINE_STRING(GTK_STOCK_DISCARD);
 #endif
 
+#if HAVE_GTK_ENTRY_SET_ICON_FROM_STOCK
+  DEFINE_STRING(GTK_STOCK_CAPS_LOCK_WARNING);
+#endif
+
 }
 
 /* -------------------------------- initialization -------------------------------- */
@@ -48449,7 +48704,7 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("25-Jan-09"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("27-Jan-09"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

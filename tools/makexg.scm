@@ -1451,6 +1451,13 @@
 	(set! strings-211 (cons name strings-211))
 	(set! names-211 (cons (cons name 'string) names-211)))))
 
+(define (CSTR-2150 name)
+  (if (assoc name names-2150)
+      (no-way "~A CSTR-2150~%" name)
+      (begin
+	(set! strings-2150 (cons name strings-2150))
+	(set! names-2150 (cons (cons name 'string) names-2150)))))
+
 (define (CDBL name)
   (if (assoc name names)
       (no-way "~A CDBL~%" name)

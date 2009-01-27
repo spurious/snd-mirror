@@ -2021,7 +2021,7 @@ extern XEN xen_false, xen_true, xen_nil, xen_undefined;
 #define XEN_APPLY_NO_CATCH(Func, Args)                                s7_call(s7, Func, Args)
 typedef XEN (*XEN_CATCH_BODY_TYPE)                                    (void *data);
 
-#define XEN_DEFINE_CONSTANT(Name, Value, Help)                        s7_define_constant(s7, Name, s7_make_integer(s7, Value))
+#define XEN_DEFINE_CONSTANT(Name, Value, Help)                        xen_s7_define_constant(s7, Name, s7_make_integer(s7, Value), Help)
 #define XEN_DEFINE(Name, Value)                                       s7_define_variable(s7, Name, Value)
 
 #define XEN_DEFINE_VARIABLE(Name, Var, Value)                         Var = xen_define_variable(Name, Value)
@@ -2076,6 +2076,8 @@ off_t xen_to_c_int(XEN a);
 double xen_to_c_double_or_else(XEN a, double b);
 s7_scheme *s7_xen_initialize(s7_scheme *sc);
 void xen_s7_set_repl_prompt(const char *new_prompt);
+void xen_s7_define_constant(s7_scheme *sc, const char *name, s7_pointer value, const char *help);
+const char *xen_s7_constant_help(const char *name);
 
 #if !(defined(__GNUC__) && (!(defined(__cplusplus))))
   XEN xen_s7_c_to_xen_string(const char *str);
