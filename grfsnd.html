@@ -1,4 +1,4 @@
-<html>
+	<html>
 <head>
 <title>Snd Customization and Extension</title>
 <style type="text/css">
@@ -1038,13 +1038,13 @@ these declarations in ~/.snd:
 (define data (<a class=quiet href="extsnd.html#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> data-size))
 
 (define (run-gen func)        ; func is a function of no arguments (a "thunk")
-  (do ((i 0 (1+ i))) 
+  (do ((i 0 (+ 1 i))) 
       ((= i data-size))
     (<a class=quiet href="extsnd.html#vctset" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctset_tip)">vct-set!</a> data i (func))) ; fill data vct with output of 'func'
   (<a class=quiet href="extsnd.html#graph" onmouseout="UnTip()" onmouseover="Tip(extsnd_graph_tip)">graph</a> data))               ; display data as a graph
 
 (define (run-fft func)
-  (do ((i 0 (1+ i))) 
+  (do ((i 0 (+ 1 i))) 
       ((= i data-size))
     (<a class=quiet href="extsnd.html#vctset" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctset_tip)">vct-set!</a> data i (func)))
   (<a class=quiet href="extsnd.html#graph" onmouseout="UnTip()" onmouseover="Tip(extsnd_graph_tip)">graph</a> (<a class=quiet href="extsnd.html#sndspectrum" onmouseout="UnTip()" onmouseover="Tip(extsnd_sndspectrum_tip)">snd-spectrum</a> data blackman2-window data-size #t)))
@@ -1281,7 +1281,7 @@ but in the following example, I'll start -noinit, and load it explicitly.
           (nd (+ st (seconds-&gt;samples dur))))
      (run
        (lambda ()
-         (do ((i st (1+ i)))
+         (do ((i st (+ 1 i)))
              ((= i nd))
            (outa i (* amp (oscil o))))))))</em>
 <em class=listener>#&lt;values ()&gt;</em>
@@ -1849,7 +1849,7 @@ the following displays all the comments it finds:
 (use-modules (ice-9 format))
 (if (= (length (<a class=quiet href="extsnd.html#scriptargs" onmouseout="UnTip()" onmouseover="Tip(extsnd_scriptargs_tip)">script-args</a>)) 2) ;i.e. ("-l" "script")
   (display "usage: script file-name...")
-  (do ((arg (+ (<a class=quiet href="extsnd.html#scriptarg" onmouseout="UnTip()" onmouseover="Tip(extsnd_scriptarg_tip)">script-arg</a>) 1) (1+ arg)))
+  (do ((arg (+ (<a class=quiet href="extsnd.html#scriptarg" onmouseout="UnTip()" onmouseover="Tip(extsnd_scriptarg_tip)">script-arg</a>) 1) (+ 1 arg)))
       ((= arg (length (<a class=quiet href="extsnd.html#scriptargs" onmouseout="UnTip()" onmouseover="Tip(extsnd_scriptargs_tip)">script-args</a>))))
     (let ((name (list-ref (<a class=quiet href="extsnd.html#scriptargs" onmouseout="UnTip()" onmouseover="Tip(extsnd_scriptargs_tip)">script-args</a>) arg)))
       (display (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "~A: ~A~%" name (<a class=quiet href="extsnd.html#mussoundcomment" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundcomment_tip)">mus-sound-comment</a> name))))))
@@ -1884,7 +1884,7 @@ than 40 seconds in duration, and truncates them to 40 seconds:
 !#
 (if (= (length (<a class=quiet href="extsnd.html#scriptargs" onmouseout="UnTip()" onmouseover="Tip(extsnd_scriptargs_tip)">script-args</a>)) 2)
   (display "usage: trunc.scm file-name...")
-  (do ((arg (+ (<a class=quiet href="extsnd.html#scriptarg" onmouseout="UnTip()" onmouseover="Tip(extsnd_scriptarg_tip)">script-arg</a>) 1) (1+ arg)))
+  (do ((arg (+ (<a class=quiet href="extsnd.html#scriptarg" onmouseout="UnTip()" onmouseover="Tip(extsnd_scriptarg_tip)">script-arg</a>) 1) (+ 1 arg)))
       ((= arg (length (<a class=quiet href="extsnd.html#scriptargs" onmouseout="UnTip()" onmouseover="Tip(extsnd_scriptargs_tip)">script-args</a>))))
     (let* ((name (list-ref (<a class=quiet href="extsnd.html#scriptargs" onmouseout="UnTip()" onmouseover="Tip(extsnd_scriptargs_tip)">script-args</a>) arg)))
       (if (&gt; (<a class=quiet href="extsnd.html#mussoundduration" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundduration_tip)">mus-sound-duration</a> name) 40.0)
@@ -1913,11 +1913,11 @@ into a bunch of mono files:
 !#
 (if (= (length (<a class=quiet href="extsnd.html#scriptargs" onmouseout="UnTip()" onmouseover="Tip(extsnd_scriptargs_tip)">script-args</a>)) 2)
   (display "usage: split.scm filename")
-  (let* ((name (list-ref (<a class=quiet href="extsnd.html#scriptargs" onmouseout="UnTip()" onmouseover="Tip(extsnd_scriptargs_tip)">script-args</a>) (1+ (<a class=quiet href="extsnd.html#scriptarg" onmouseout="UnTip()" onmouseover="Tip(extsnd_scriptarg_tip)">script-arg</a>))))
+  (let* ((name (list-ref (<a class=quiet href="extsnd.html#scriptargs" onmouseout="UnTip()" onmouseover="Tip(extsnd_scriptargs_tip)">script-args</a>) (+ 1 (<a class=quiet href="extsnd.html#scriptarg" onmouseout="UnTip()" onmouseover="Tip(extsnd_scriptarg_tip)">script-arg</a>))))
 	 (chns (<a class=quiet href="extsnd.html#mussoundchans" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundchans_tip)">mus-sound-chans</a> name)))
     (if (&gt; chns 1)
 	(let ((ind (<a class=quiet href="extsnd.html#opensound" onmouseout="UnTip()" onmouseover="Tip(extsnd_opensound_tip)">open-sound</a> name)))
-	  (do ((i 0 (1+ i)))
+	  (do ((i 0 (+ 1 i)))
 	      ((= i chns))
 	    (display (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "~A.~D " name i))
 	    (<a class=quiet href="extsnd.html#savesoundas" onmouseout="UnTip()" onmouseover="Tip(extsnd_savesoundas_tip)">save-sound-as</a> (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "~A.~D" name i)
@@ -2292,7 +2292,7 @@ data directly to the DAC:
 	      (if (not (= (logand port LADSPA_PORT_INPUT) 0))
 		  (ladspa-connect-port descriptor handle count in-block)
 		  (ladspa-connect-port descriptor handle count out-block)))
-	  (set! count (1+ count)))
+	  (set! count (+ 1 count)))
 	(.PortDescriptors descriptor))))
    (lambda ()
      (ladspa-activate descriptor handle)

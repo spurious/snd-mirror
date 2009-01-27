@@ -179,16 +179,17 @@
 
 #ifndef WITH_R5RS_RATIONALIZE
   #define WITH_R5RS_RATIONALIZE 0
-  /* follow the scheme spec for rationalize (not recommended) */
+  /* this causes s7 to follow the scheme spec for rationalize (not recommended) --
+   *   consider a linear search for a bignum ratio!!  
+   */
 #endif
 
 #ifndef WITH_GMP
   #define WITH_GMP 0
-  /* include multiprecision arithmetic for all numeric types and functions, using gmp, mpfr, and mpc
+  /* this includes multiprecision arithmetic for all numeric types and functions, using gmp, mpfr, and mpc
    * WITH_GMP adds the following functions: 
    *   bignum, bignum?, bignum-precision, bignum-fft
    */
-/* PERHAPS: add fft for normal reals? */
 #endif
 
 
@@ -6288,6 +6289,7 @@ static s7_pointer g_string_set(s7_scheme *sc, s7_pointer args)
   if (s7_is_immutable(car(args)))
     return(s7_wrong_type_arg_error(sc, "string-set!", 1, car(args), "a mutable string"));
   
+  /* PERHAPS: does this need a lock? would it lock out all string-ops? what about vector-set!? etc */
   str = string_value(car(args));
   str[s7_integer(index)] = (char)s7_character(caddr(args));
   return(car(args));
@@ -18154,7 +18156,10 @@ static s7_pointer big_random(s7_scheme *sc, s7_pointer args)
   return(g_random(sc, args));
 }
 
-/* TODO: check big random!! */
+/* TODO: check big random!! 
+ * TODO: if random-state is made with bignum, but then random is called with non-bignum and that state,
+ *         g_random complains about the type
+ */
 
 
 /* fft
@@ -18189,7 +18194,6 @@ static s7_pointer bignum_fft(s7_scheme *sc, s7_pointer args)
 
   rl = car(args)->object.vector.elements;
   im = cadr(args)->object.vector.elements;
-  /* PERHAPS: copy and promote fft data? or add an argument to bignum_fft for that? */
 
   /* scramble(rl, im, n); */
   {
@@ -18995,3 +18999,5 @@ s7_scheme *s7_init(void)
   return(sc);
 }
 
+/* unicode is probably do-able if it is sequestered in the s7 strings 
+ */

@@ -6291,6 +6291,7 @@ static xen_value *lcm_1(ptree *prog, xen_value **args, int num_args)
 
 /* ---------------- remainder, quotient, modulo ---------------- */
 
+/* TODO: make run's modulo etc work with reals */
 
 static void modulo_i(int *args, ptree *pt) {INT_RESULT = c_mod(INT_ARG_1, INT_ARG_2);}
 

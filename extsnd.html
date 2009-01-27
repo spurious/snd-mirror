@@ -1430,7 +1430,7 @@ and filled graphs (not line segments or dots, etc):
   (lambda (snd)
     (if (&gt; (<a class=quiet href="#channels" onmouseout="UnTip()" onmouseover="Tip(extsnd_channels_tip)">channels</a> snd) 1)
         (begin
-          (set! (<a class=quiet href="#sync" onmouseout="UnTip()" onmouseover="Tip(extsnd_sync_tip)">sync</a> snd) (1+ snd)) ; 0 = #f
+          (set! (<a class=quiet href="#sync" onmouseout="UnTip()" onmouseover="Tip(extsnd_sync_tip)">sync</a> snd) (+ 1 snd)) ; 0 = #f
           (set! (<a class=quiet href="#channelstyle" onmouseout="UnTip()" onmouseover="Tip(extsnd_channelstyle_tip)">channel-style</a> snd) <a class=quiet href="#channelstyle" onmouseout="UnTip()" onmouseover="Tip(extsnd_channelstyle_tip)">channels-combined</a>)
           (set! (<a class=quiet href="#graphstyle" onmouseout="UnTip()" onmouseover="Tip(extsnd_graphstyle_tip)">graph-style</a> snd) <a class=quiet href="#graphstyle" onmouseout="UnTip()" onmouseover="Tip(extsnd_graphstyle_tip)">graph-filled</a>)))))
 </pre></td></tr></table>
@@ -1534,12 +1534,12 @@ we're saving the selection.
   (lambda (index filename selection sr type format comment)
     (if (not (= sr (<a class=quiet href="#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a> index)))
         (let ((chns (<a class=quiet href="#chans" onmouseout="UnTip()" onmouseover="Tip(extsnd_chans_tip)">chans</a> index)))
-	  (do ((i 0 (1+ i)))
+	  (do ((i 0 (+ 1 i)))
 	      ((= i chns))
 	    (<a class=quiet href="#srcchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_srcchannel_tip)">src-channel</a> (exact-&gt;inexact (/ (<a class=quiet href="#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a> index) sr)) 0 #f index i))
 	  (<a class=quiet href="#savesoundas" onmouseout="UnTip()" onmouseover="Tip(extsnd_savesoundas_tip)">save-sound-as</a> filename index :header-type type :data-format format :srate sr :comment comment) 
 	  ;; hook won't be invoked recursively
-	  (do ((i 0 (1+ i)))
+	  (do ((i 0 (+ 1 i)))
 	      ((= i chns))
 	    (<a class=quiet href="#undo" onmouseout="UnTip()" onmouseover="Tip(extsnd_undo_tip)">undo</a> 1 index i))
 	  #t) ; tell Snd that the sound is already saved
@@ -1993,7 +1993,7 @@ and if the <a href="#marksync">mark-sync</a> is not 0, the hook is called on eac
 		   (sr (<a class=quiet href="#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a> snd))
 		   (beat (floor (/ (* samp bps) sr)))
 		   (lower (inexact-&gt;exact (/ (* beat sr) bps)))
-		   (higher (inexact-&gt;exact (/ (* (1+ beat) sr) bps))))
+		   (higher (inexact-&gt;exact (/ (* (+ 1 beat) sr) bps))))
 	      (set! (<a class=quiet href="#marksample" onmouseout="UnTip()" onmouseover="Tip(extsnd_marksample_tip)">mark-sample</a> mrk)
 	      (if (&lt; (- samp lower) (- higher samp))
 		  lower
@@ -2670,7 +2670,7 @@ I use update-hook to make sure the y axis bounds reflect the new maxamp, if it i
 (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_add_hook_tip)">add-hook!</a> <em class=red>update-hook</em>
   (lambda (old-snd)
     (lambda (snd)
-      (do ((i 0 (1+ i)))
+      (do ((i 0 (+ 1 i)))
 	  ((= i (<a class=quiet href="#chans" onmouseout="UnTip()" onmouseover="Tip(extsnd_chans_tip)">chans</a> snd)))
 	(let ((mx (<a class=quiet href="#maxamp" onmouseout="UnTip()" onmouseover="Tip(extsnd_maxamp_tip)">maxamp</a> snd i)))
 	  (if (&gt; mx 1.0)
@@ -2947,7 +2947,7 @@ between two edits:
   (lambda () ;assume mono, get diff between current state and previous
     (let* ((index (<a class=quiet href="#selectedsound" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectedsound_tip)">selected-sound</a>))
            (edit-pos (<a class=quiet href="#editposition" onmouseout="UnTip()" onmouseover="Tip(extsnd_editposition_tip)">edit-position</a> index))
-           (previous-edit (<em class=red>make-sample-reader</em> 0 0 index 1 (1- edit-pos))))
+           (previous-edit (<em class=red>make-sample-reader</em> 0 0 index 1 (- edit-pos 1))))
       (lambda (x)
         (- x (<a class=quiet href="#readsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_readsample_tip)">read-sample</a> previous-edit)) #f))))
 
@@ -3008,7 +3008,7 @@ read-region-sample returns the next sample read by the region-sample-reader 'obj
 	  (let* ((reader (<em class=red>make-region-sample-reader</em> 0 reg chn))
 		 (len (<a class=quiet href="#regionframes" onmouseout="UnTip()" onmouseover="Tip(extsnd_regionframes_tip)">region-frames</a> reg))
 		 (data (<a class=quiet href="#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> len)))
-	    (do ((i 0 (1+ i)))
+	    (do ((i 0 (+ 1 i)))
 		((= i len) data)
 	      (<a class=quiet href="#vctset" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctset_tip)">vct-set!</a> data i (<em class=red>reader</em>))))
 	  (throw 'no-such-channel (list "region-&gt;vct" reg chn)))
@@ -3290,7 +3290,7 @@ We can use vct-move! to maintain a sliding window on a sound:
 	     (samps (<a class=quiet href="#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> size)))
         (lambda (y)
          (<em class=red>vct-move!</em> samps 0 1)
-         (<a class=quiet href="#vctset" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctset_tip)">vct-set!</a> samps (1- size) y)
+         (<a class=quiet href="#vctset" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctset_tip)">vct-set!</a> samps (- size 1) y)
          ...)))
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
@@ -3489,8 +3489,8 @@ channel:
 (define (vct-polynomial v coeffs)
   (let* ((v-len (<em class=red>vct-length</em> v))
 	 (num-coeffs (<em class=red>vct-length</em> coeffs))
-	 (new-v (<em class=red>make-vct</em> v-len (<em class=red>vct-ref</em> coeffs (1- num-coeffs)))))
-    (do ((i (- num-coeffs 2) (1- i)))
+	 (new-v (<em class=red>make-vct</em> v-len (<em class=red>vct-ref</em> coeffs (- num-coeffs 1)))))
+    (do ((i (- num-coeffs 2) (- i 1)))
 	((&lt; i 0))
       (<em class=red>vct-offset!</em> (<em class=red>vct-multiply!</em> new-v v) (<em class=red>vct-ref</em> coeffs i)))
     new-v))
@@ -3573,8 +3573,8 @@ sound-data-add! adds the contents of sd2 into sd1 and returns sd1.
 <pre>
     :<em class=typing>(define sd1 (make-sound-data 2 5))</em>
     <em class=listener>#&lt;unspecified&gt;</em>
-    :<em class=typing>(do ((chn 0 (1+ chn))) ((= chn 2)) 
-       (do ((i 0 (1+ i))) ((= i 5)) 
+    :<em class=typing>(do ((chn 0 (+ 1 chn))) ((= chn 2)) 
+       (do ((i 0 (+ 1 i))) ((= i 5)) 
          (sound-data-set! sd1 chn i (+ i (* 5 chn)))))</em>
     <em class=listener>#&lt;unspecified&gt;</em>
     :<em class=typing>sd1</em>
@@ -3829,7 +3829,7 @@ or <a href="#musaudioopenoutput">mus-audio-open-output</a>).
        (data (<a class=quiet href="#makesounddata" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesounddata_tip)">make-sound-data</a> 1 512)))                ; output buffer (1 chan, 512 samples)
   (do ((beg 0 (+ beg 512)))                           ; fill a buffer at a time
       ((&gt; beg 22050))                                 ;   stop playing after 1 second
-    (do ((i 0 (1+ i)))                                ; write each sample of the sinusoid
+    (do ((i 0 (+ 1 i)))                                ; write each sample of the sinusoid
 	((= i 512))                                   ;   until this buffer is full
       (<a class=quiet href="#sounddataset" onmouseout="UnTip()" onmouseover="Tip(extsnd_sounddataset_tip)">sound-data-set!</a> data 0 i (* .1 (<a class=quiet href="sndclm.html#oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_oscil_tip)">oscil</a> osc))))  ;   .1 amp
     (<a class=quiet href="#musaudiowrite" onmouseout="UnTip()" onmouseover="Tip(extsnd_musaudiowrite_tip)">mus-audio-write</a> audio-fd data 512))              ; send a buffer to the DAC
@@ -4821,7 +4821,7 @@ We can use <a href="sndscm.html#dlocsigdoc">dlocsig</a> in conjunction with mix 
 		              (end (caddr vals)))
 	                (run
 		         (lambda ()
-		           (do ((i beg (1+ i)))
+		           (do ((i beg (+ 1 i)))
 		               ((= i end))
 		             (<em class=red>dlocsig</em> dloc i (<a class=quiet href="#readsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_readsample_tip)">read-sample</a> rd)))))))))
 
@@ -5237,7 +5237,7 @@ function uses insert-region (and other region functions) to rotate the samples i
 (define* (<a name="rotatechannel">rotate-channel</a> :optional (samps 1) snd chn)
   (let* ((ind (or snd (<a class=quiet href="#selectedsound" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectedsound_tip)">selected-sound</a>) (car (<a class=quiet href="#sounds" onmouseout="UnTip()" onmouseover="Tip(extsnd_sounds_tip)">sounds</a>))))
 	 (chan (or chn (<a class=quiet href="#selectedchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectedchannel_tip)">selected-channel</a>) 0)))
-    (let ((reg (<em class=red>make-region</em> 0 (1- samps) ind chan)))
+    (let ((reg (<em class=red>make-region</em> 0 (- samps 1) ind chan)))
       (<a class=quiet href="#asoneedit" onmouseout="UnTip()" onmouseover="Tip(extsnd_asoneedit_tip)">as-one-edit</a>
        (lambda ()
 	 (<a class=quiet href="#deletesamples" onmouseout="UnTip()" onmouseover="Tip(extsnd_deletesamples_tip)">delete-samples</a> 0 samps ind chan)
@@ -5548,7 +5548,7 @@ saving them in files named 'base'.n: (brksnd 1.0 \"sec\")"
         (old-sync (<a class=quiet href="#sync" onmouseout="UnTip()" onmouseover="Tip(extsnd_sync_tip)">sync</a>)))
     (set! (<a class=quiet href="#sync" onmouseout="UnTip()" onmouseover="Tip(extsnd_sync_tip)">sync</a>) 1) ; save all chans
     (do ((i 0 (+ i hop))
-	 (j 0 (1+ j)))
+	 (j 0 (+ 1 j)))
 	((&gt;= i len))
       (<a class=quiet href="sndscm.html#makeselection" onmouseout="UnTip()" onmouseover="Tip(sndscm_makeselection_tip)">make-selection</a> i (+ i hop)) ; in extensions.scm
       (<em class=red>save-selection</em> (string-append base "." (number-&gt;string j))))
@@ -5880,7 +5880,7 @@ send channel 1 data to channel 1 of the DAC, and so on).
 	(end (<a class=quiet href="#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a> snd)))
     (<a class=quiet href="#musaudiomixerread" onmouseout="UnTip()" onmouseover="Tip(extsnd_musaudiomixerread_tip)">mus-audio-mixer-read</a> mus-audio-default mus-audio-channel 3 vals)
     (let ((chans (max (inexact-&gt;exact (<a class=quiet href="#vctref" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctref_tip)">vct-ref</a> vals 0)) 2))) ; assume stereo is out there
-      (do ((chan 0 (1+ chan)))                               ; get a player for each output channel
+      (do ((chan 0 (+ 1 chan)))                               ; get a player for each output channel
 	  ((= chan chans))
 	(let ((player (<em class=red>make-player</em> snd 0)))
 	  (<em class=red>add-player</em> player 0 end current-edit-position #f chan)))
@@ -5938,7 +5938,7 @@ then restore that state upon "Page Up":
 	    (let ((last-page-state 
 	            (map (lambda (snd) 
 			   (let ((data (list snd (<a class=quiet href="#filename" onmouseout="UnTip()" onmouseover="Tip(extsnd_filename_tip)">file-name</a> snd))))
-			     (do ((i 0 (1+ i)))
+			     (do ((i 0 (+ 1 i)))
  				 ((= i (<a class=quiet href="#channels" onmouseout="UnTip()" onmouseover="Tip(extsnd_channels_tip)">chans</a> snd)) data)
 			       (set! data (append data (list (cons i (<em class=red>axis-info</em> snd i))))))))
 		         (<a class=quiet href="#sounds" onmouseout="UnTip()" onmouseover="Tip(extsnd_sounds_tip)">sounds</a>))))
@@ -6558,7 +6558,7 @@ curve's exponent and 'env-base'.  Here's a brief restatement:
 <table border=0 cellpadding=5 vspace=10><tr><td><pre>
 (define (compare-exp k)
    (let ((e (<a class=quiet href="sndclm.html#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> (list 0 1 1 (exp (- k))) :base (exp k) :length 11)))
-      (do ((i 0 (1+ i )))
+      (do ((i 0 (+ 1 i )))
          ((= i 10))
          (<a class=quiet href="#sndprint" onmouseout="UnTip()" onmouseover="Tip(extsnd_sndprint_tip)">snd-print</a> (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "~A ~A~%" (<a class=quiet href="sndclm.html#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> e) (exp (* (- k) (/ i 10.0))))))))
 </pre></td></tr></table>
@@ -6767,13 +6767,13 @@ scanning forwards), but it's not hard to write a function to find in reverse:
 
 <pre>
 (define* (<A NAME="findchannelinreverse">find-channel-in-reverse</A> proc :optional beg snd chn edpos)
-  (let* ((sample (or beg (1- (<a class=quiet href="#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a> snd chn)))) ; or cursor?
+  (let* ((sample (or beg (- (<a class=quiet href="#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a> snd chn) 1))) ; or cursor?
 	 (reader (<a class=quiet href="#makesamplereader" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesamplereader_tip)">make-sample-reader</a> sample snd chn -1 edpos))
 	 (result #f))
-    (do ((i sample (1- i)))
+    (do ((i sample (- i 1)))
 	((or result (&lt; i 0)) 
 	 (and result
-	     (list result (1+ i))))
+	     (list result (+ 1 i))))
       (set! result (proc (reader))))))
 </pre>
 
@@ -7126,7 +7126,7 @@ sound with individual amplitudes for the channels:
 (define play-with-amps
   (lambda (sound . amps)
     (let ((chans (<a class=quiet href="#chans" onmouseout="UnTip()" onmouseover="Tip(extsnd_chans_tip)">chans</a> sound)))
-      (do ((chan 0 (1+ chan)))
+      (do ((chan 0 (+ 1 chan)))
           ((= chan chans))
         (let ((player (<em class=red>make-player</em> sound chan)))
           (set! (<a class=quiet href="#ampcontrol" onmouseout="UnTip()" onmouseover="Tip(extsnd_ampcontrol_tip)">amp-control</a> player) (list-ref amps chan))
@@ -7263,7 +7263,7 @@ It is possible to break out of a map, flushing any edits, via call-with-current-
 (call-with-current-continuation 
   (lambda (return)
     (<em class=red>map-channel</em> (lambda (val)
-                   (set! ctr (1+ ctr)) 
+                   (set! ctr (+ 1 ctr)) 
                    (if (&gt; ctr 100) 
                      (return "quitting!") 
                      val)))))
@@ -7296,7 +7296,7 @@ is an example of this.
 
 <table border=0 cellpadding=5 vspace=10><tr><td><pre>
 (define* (map-sound-chans proc :optional (beg 0) dur snd edpos origin)
-  (do ((i 0 (1+ i)))
+  (do ((i 0 (+ 1 i)))
       ((= i (<a class=quiet href="#chans" onmouseout="UnTip()" onmouseover="Tip(extsnd_chans_tip)">chans</a> snd)))
     (<em class=red>map-channel</em> proc beg dur snd i edpos origin)))
 </pre></td></tr></table>
@@ -7582,7 +7582,7 @@ The argument passed to 'stop-proc' provides the reason the play is stopping; it 
 
 The 'pos' argument makes it easier to try "A:B" comparisons; this plays the version before the latest edit:
 <pre>
-    (play 0 #f #f #f #f (1- (<a class=quiet href="#editposition" onmouseout="UnTip()" onmouseover="Tip(extsnd_editposition_tip)">edit-position</a>)))
+    (play 0 #f #f #f #f (- (<a class=quiet href="#editposition" onmouseout="UnTip()" onmouseover="Tip(extsnd_editposition_tip)">edit-position</a>) 1))
 </pre>
 
 The following code binds the "p" key to play all channels of the current sound from the cursor, and
@@ -7590,7 +7590,7 @@ the "P" key to play the previous version of the current sound:
 
 <table border=0 cellpadding=5 vspace=10><tr><td><pre>
 (define (play-from-cursor current)
-  (<em class=red>play</em> (<a class=quiet href="#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a>) #f #f #f #f (if current #f (1- (<a class=quiet href="#editposition" onmouseout="UnTip()" onmouseover="Tip(extsnd_editposition_tip)">edit-position</a>)))))
+  (<em class=red>play</em> (<a class=quiet href="#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a>) #f #f #f #f (if current #f (- (<a class=quiet href="#editposition" onmouseout="UnTip()" onmouseover="Tip(extsnd_editposition_tip)">edit-position</a>) 1))))
 
 (<a class=quiet href="#bindkey" onmouseout="UnTip()" onmouseover="Tip(extsnd_bindkey_tip)">bind-key</a> (char-&gt;integer #\p) 0 
   (lambda () "play from cursor" (play-from-cursor #t) <a class=quiet onmouseout="UnTip()" onmouseover="Tip(extsnd_keyboard_no_action_tip)">keyboard-no-action</a>))
@@ -7621,7 +7621,7 @@ function option to time the playing each mix in a sequence of mixes.  Another ex
   (let* ((len 22050)
 	 (osc (<a class=quiet href="sndclm.html#make-oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_oscil_tip)">make-oscil</a> freq)))
     (<em class=red>play</em> (lambda ()
-	    (set! len (1- len))
+	    (set! len (- len 1))
 	    (if (&lt;= len 0)        ; we've sent 22050 samples, so it's time to stop
 		#f
 		(* amp (<a class=quiet href="sndclm.html#oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_oscil_tip)">oscil</a> osc)))))))
@@ -7991,7 +7991,7 @@ the following call:
 <table border=0 cellpadding=5 vspace=10><tr><td><pre>
    (let ((ctr 0)) 
      (<em class=red>ptree-channel</em> (lambda (y) 
-                      (set! ctr (1+ ctr)) 
+                      (set! ctr (+ 1 ctr)) 
                       (* ctr .0001))))
 </pre></td></tr></table>
 
@@ -8054,7 +8054,7 @@ could in this case be:
 		 (let ((edpos (<a class=quiet href="#editposition" onmouseout="UnTip()" onmouseover="Tip(extsnd_editposition_tip)">edit-position</a> ind 0)))
 		   (lambda (pos dur)
 		     (<a class=quiet href="#vct" onmouseout="UnTip()" onmouseover="Tip(extsnd_vct_tip)">vct</a> (if (= pos 0) 0.0
-			      (<a class=quiet href="#sample" onmouseout="UnTip()" onmouseover="Tip(extsnd_sample_tip)">sample</a> (1- pos) ind 0 edpos))))))
+			      (<a class=quiet href="#sample" onmouseout="UnTip()" onmouseover="Tip(extsnd_sample_tip)">sample</a> (- pos 1) ind 0 edpos))))))
 </pre></td></tr></table>
 
 See also virtual-filter-channel in snd-test.scm; it uses the optional third argument to the init function
@@ -8326,7 +8326,7 @@ of the speed of CL+run+C in CLM.  Currently, only S7 and Guile support this opti
   (let ((o (<a class=quiet href="sndclm.html#make-oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_oscil_tip)">make-oscil</a> freq)))
     (<em class=red>run</em>
      (lambda ()
-       (do ((i 0 (1+ i)))
+       (do ((i 0 (+ 1 i)))
 	   ((= i 100))
 	 (<a class=quiet href="sndclm.html#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i (<a class=quiet href="sndclm.html#oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_oscil_tip)">oscil</a> o)))))))
 </pre></td></tr></table>
@@ -8547,7 +8547,7 @@ There are approximately a bazillion ways to scale samples in Snd; here's a potpo
   (<a class=quiet href="sndclm.html#fft" onmouseout="UnTip()" onmouseover="Tip(sndclm_fft_tip)">mus-fft</a> rl im fsize)
   (<a class=quiet href="#vcttochannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_vcttochannel_tip)">vct-&gt;channel</a> (<a class=quiet href="#vctscale" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctscale_tip)">vct-scale!</a> rl (/ 2.0 (* fsize fsize))) 0 len))
 
-(do ((i 0 (1+ i)))
+(do ((i 0 (+ 1 i)))
     ((= i (<a class=quiet href="#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a>)))
   ;; don't actually do this! &mdash; it involves a separate edit on each sample
   (set! (<a class=quiet href="#sample" onmouseout="UnTip()" onmouseover="Tip(extsnd_sample_tip)">sample</a> i) (* 2 (<a class=quiet href="#sample" onmouseout="UnTip()" onmouseover="Tip(extsnd_sample_tip)">sample</a> i))))
@@ -8648,7 +8648,7 @@ will die with a segfault (this is fixable, with much effort and grumbling).  If 
       #f
       (let ((val (last-proc (reader))))
 	(if val 
-	    (list val (1- (<a class=quiet href="#samplereaderposition" onmouseout="UnTip()" onmouseover="Tip(extsnd_samplereaderposition_tip)">sample-reader-position</a> reader)))
+	    (list val (- (<a class=quiet href="#samplereaderposition" onmouseout="UnTip()" onmouseover="Tip(extsnd_samplereaderposition_tip)">sample-reader-position</a> reader) 1))
 	    (scan-again)))))
 (define (my-scan-chan proc)
   (set! last-proc proc)
@@ -8753,13 +8753,13 @@ it's probably simpler to use <a href="sndscm.html#withsound">with-sound</a> (see
 	 (incr (+ 2.0 (<a class=quiet href="sndclm.html#oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_oscil_tip)">oscil</a> o)))	  
 	 (tempfile (<em class=red>with-sound</em> (:output (<a class=quiet href="#sndtempnam" onmouseout="UnTip()" onmouseover="Tip(extsnd_sndtempnam_tip)">snd-tempnam</a>) :srate (<a class=quiet href="#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a>) :to-snd #f)
 		     (<a class=quiet href="sndscm.html#run" onmouseout="UnTip()" onmouseover="Tip(sndscm_run_tip)">run</a> (lambda ()
-			    (do ((samp 0 (1+ samp)))
+			    (do ((samp 0 (+ 1 samp)))
 				((or (c-g?) (<a class=quiet href="#samplereaderatendQ" onmouseout="UnTip()" onmouseover="Tip(extsnd_samplereaderatendQ_tip)">sample-reader-at-end?</a> rd)))
 			      (<a class=quiet href="sndclm.html#out-any" onmouseout="UnTip()" onmouseover="Tip(sndclm_out_any_tip)">out-any</a> samp (<a class=quiet href="sndclm.html#src" onmouseout="UnTip()" onmouseover="Tip(sndclm_src_tip)">src</a> s incr (lambda (dir) (<a class=quiet href="#readsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_readsample_tip)">read-sample</a> rd))) 0)
 			      (if (= (modulo samp 2205) 0)
 				  (set! incr (+ 2.0 (<a class=quiet href="sndclm.html#oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_oscil_tip)">oscil</a> o)))))))))
 	 (len (<a class=quiet href="#mussoundframes" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundframes_tip)">mus-sound-frames</a> tempfile)))
-    (<em class=red>set-samples</em> 0 (1- len) tempfile #f #f #t "step-src" 0 #f #t)))
+    (<em class=red>set-samples</em> 0 (- len 1) tempfile #f #f #t "step-src" 0 #f #t)))
 </pre></td></tr></table>
 </td></tr><tr><td colspan=2 height=18></td></tr>
 
@@ -8891,11 +8891,11 @@ the end points:
 <table border=0 cellpadding=5 vspace=10><tr><td><pre>
 (define (smoother y0 y1 num)
    "go sinusoidally from y0 to y1 over num samps"
-   (let ((v (<a class=quiet href="#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> (1+ num))) 
+   (let ((v (<a class=quiet href="#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> (+ 1 num))) 
 	 (angle (if (&gt; y1 y0) pi 0.0)) 
 	 (off (* .5 (+ y0 y1))) 
 	 (scale (* 0.5 (abs (- y1 y0)))))
-     (do ((i 0 (1+ i)))
+     (do ((i 0 (+ 1 i)))
          ((= i num) v)
        (<a class=quiet href="#vctset" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctset_tip)">vct-set!</a> v i 
          (+ off (* scale (cos (+ angle (* i (/ pi num))))))))))
@@ -8999,7 +8999,7 @@ take the "snd chn" arguments):
   (let ((sndlist '())
         (chnlist '()))
     (for-each (lambda (snd)
-                (do ((i (1- (<a class=quiet href="#channels" onmouseout="UnTip()" onmouseover="Tip(extsnd_channels_tip)">channels</a> snd)) (1- i)))
+                (do ((i (- (<a class=quiet href="#channels" onmouseout="UnTip()" onmouseover="Tip(extsnd_channels_tip)">channels</a> snd) 1) (- i 1)))
                     ((&lt; i 0))
                   (set! sndlist (cons snd sndlist))
                   (set! chnlist (cons i chnlist))))
@@ -9300,8 +9300,8 @@ For example, the following function reverses the channel order:
     (let ((swaps (inexact-&gt;exact (floor (/ chns 2)))))
       (<a class=quiet href="#asoneedit" onmouseout="UnTip()" onmouseover="Tip(extsnd_asoneedit_tip)">as-one-edit</a>
        (lambda ()
-	 (do ((i 0 (1+ i))
-	      (j (1- chns) (1- j)))
+	 (do ((i 0 (+ 1 i))
+	      (j (- chns 1) (- j 1)))
 	     ((= i swaps))
 	   (<em class=red>swap-channels</em> ind i ind j)))))))
 </pre></td></tr></table>
@@ -9333,7 +9333,7 @@ move together when you drag an x-axis slider and so on.
 This is the maximum <a href="#sync">sync</a> setting seen so far &mdash; it provides a painless way to get a sync value that
 is guaranteed to be unique. To sync all currently open sounds:
 <pre>
-    (let ((new-sync (1+ (<em class=red>sync-max</em>))))
+    (let ((new-sync (+ 1 (<em class=red>sync-max</em>))))
       (for-each (lambda (snd) (set! (<a class=quiet href="#sync" onmouseout="UnTip()" onmouseover="Tip(extsnd_sync_tip)">sync</a> snd) new-sync)) (<a class=quiet href="#sounds" onmouseout="UnTip()" onmouseover="Tip(extsnd_sounds_tip)">sounds</a>)))
 </pre>
 </td></tr><tr><td colspan=2 height=18></td></tr>
@@ -9363,8 +9363,8 @@ The choices are:
 
 
 <!--
-(with-sound (:channels 5) (do ((i 0 (1+ i))) ((= i 5)) (fm-violin 0 .4 (* (1+ i) 100) .1 :degree (* i 72))))
-(do ((i 0 (1+ i))) ((= i 5)) (set! (time-graph-style 0 i) i))
+(with-sound (:channels 5) (do ((i 0 (+ 1 i))) ((= i 5)) (fm-violin 0 .4 (* (+ 1 i) 100) .1 :degree (* i 72))))
+(do ((i 0 (+ 1 i))) ((= i 5)) (set! (time-graph-style 0 i) i))
 (set! (dot-size) 4)
 (set! (selected-graph-color) (make-color 1 1 1))
 (set! (selected-data-color) (make-color 0 0 0))
@@ -9801,7 +9801,7 @@ To set all channels at once using the selected sound's maxamp:
 
 <table border=0 cellpadding=5 vspace=10><tr><td><pre>
 (let ((maxval (apply max (<a class=quiet href="#maxamp" onmouseout="UnTip()" onmouseover="Tip(extsnd_maxamp_tip)">maxamp</a> #f #t)))) 
-  (do ((i 0 (1+ i))) 
+  (do ((i 0 (+ 1 i))) 
       ((= i (<a class=quiet href="#chans" onmouseout="UnTip()" onmouseover="Tip(extsnd_chans_tip)">chans</a>))) 
     (set! (<em class=red>y-bounds</em> #f i) (list (- maxval) maxval))))
 </pre></td></tr></table>
@@ -9809,7 +9809,7 @@ To set all channels at once using the selected sound's maxamp:
 Or to set each channel to its own maxamp:
 
 <table border=0 cellpadding=5 vspace=10><tr><td><pre>
-(do ((i 0 (1+ i))) 
+(do ((i 0 (+ 1 i))) 
     ((= i (<a class=quiet href="#chans" onmouseout="UnTip()" onmouseover="Tip(extsnd_chans_tip)">chans</a>)))
   (let ((maxval (<a class=quiet href="#maxamp" onmouseout="UnTip()" onmouseover="Tip(extsnd_maxamp_tip)">maxamp</a> #f i))) 
     (set! (<em class=red>y-bounds</em> #f i) (list (- maxval) maxval))))
@@ -10675,11 +10675,11 @@ Here's an example that displays a histogram of the current values in 16 bins:
     (let ((v (<a class=quiet href="#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> len))
           (steps (/ len 16))
           (step (/ 1.0 len)))
-      (do ((i 0 (1+ i))) 
+      (do ((i 0 (+ 1 i))) 
           ((= i len) v)
         (let* ((val (<a class=quiet href="#readsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_readsample_tip)">read-sample</a> fd))
                (bin (inexact-&gt;exact (* (abs val) 16.0))))
-          (do ((j 0 (1+ j))) 
+          (do ((j 0 (+ 1 j))) 
               ((= j steps))
             (<a class=quiet href="#vctset" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctset_tip)">vct-set!</a> v 
                       (+ j bin) 
@@ -10692,7 +10692,7 @@ This code ties the Hilbert transform in dsp.scm into the user-interface:
 (<em class=red>add-transform</em> "Hilbert" "Hilbert" 0.0 1.0
   (lambda (len fd)
     (let ((flt (<a class=quiet href="sndscm.html#makehilberttransform" onmouseout="UnTip()" onmouseover="Tip(sndscm_makehilberttransform_tip)">make-hilbert-transform</a> 40)))
-      (do ((i 0 (1+ i))) ; preload first samples
+      (do ((i 0 (+ 1 i))) ; preload first samples
 	  ((= i 40))
 	(<a class=quiet href="sndclm.html#fir-filter" onmouseout="UnTip()" onmouseover="Tip(sndclm_fir_filter_tip)">fir-filter</a> flt (<a class=quiet href="#readsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_readsample_tip)">read-sample</a> fd)))
       (<a class=quiet href="#vctmap" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctmap_tip)">vct-map!</a> 
@@ -10707,7 +10707,7 @@ If GSL is included in Snd, the following code ties in the (slow) Hankel transfor
 (<em class=red>add-transform</em> "Hankel" "Hankel" 0.0 1.0
    (lambda (n rd)
       (let ((v (<a class=quiet href="#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> n)))
-         (do ((i 0 (1+ i))) ((= i n)) (<a class=quiet href="#vctset" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctset_tip)">vct-set!</a> v i (rd)))
+         (do ((i 0 (+ 1 i))) ((= i n)) (<a class=quiet href="#vctset" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctset_tip)">vct-set!</a> v i (rd)))
          (gsl-dht n v 1.0 1.0)
          v)))
 </pre></td></tr></table></td></tr><tr><td colspan=2 height=16></td></tr>
@@ -11886,7 +11886,7 @@ cases, remove the XK_ or GDK_ prefix.  So, for example, the key marked "Page Dow
 (<em class=red>bind-key</em> #\v 0 
           (lambda () 
             "remove click" 
-            (set! (<a class=quiet href="#sample" onmouseout="UnTip()" onmouseover="Tip(extsnd_sample_tip)">sample</a> (<a class=quiet href="#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a>)) (* 0.5 (+ (<a class=quiet href="#sample" onmouseout="UnTip()" onmouseover="Tip(extsnd_sample_tip)">sample</a> (1- (<a class=quiet href="#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a>))) (<a class=quiet href="#sample" onmouseout="UnTip()" onmouseover="Tip(extsnd_sample_tip)">sample</a> (1+ (<a class=quiet href="#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a>)))))) 
+            (set! (<a class=quiet href="#sample" onmouseout="UnTip()" onmouseover="Tip(extsnd_sample_tip)">sample</a> (<a class=quiet href="#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a>)) (* 0.5 (+ (<a class=quiet href="#sample" onmouseout="UnTip()" onmouseover="Tip(extsnd_sample_tip)">sample</a> (- (<a class=quiet href="#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a>) 1)) (<a class=quiet href="#sample" onmouseout="UnTip()" onmouseover="Tip(extsnd_sample_tip)">sample</a> (+ 1 (<a class=quiet href="#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a>)))))) 
             cursor-in-view))
 </pre></td></tr></table>
 
@@ -12021,17 +12021,17 @@ In the next example, we rebind them to treat same-sense zero-crossings as line m
 
 (<em class=red>bind-key</em> #\k 4 (lambda (arg) 
   "delete to next zero crossing"
-  (do ((i 0 (1+ i))) 
+  (do ((i 0 (+ 1 i))) 
       ((= i (abs arg)))
     (delete-to-zero (&gt; arg 0)))))
 (<em class=red>bind-key</em> #\n 4 (lambda (arg) 
   "go to next zero crossing"
-  (do ((i 0 (1+ i))) 
+  (do ((i 0 (+ 1 i))) 
       ((= i (abs arg)))
     (go-to-zero (&gt; arg 0)))))
 (<em class=red>bind-key</em> #\p 4 (lambda (arg) 
   "go to previous zero crossing"
-  (do ((i 0 (1+ i))) 
+  (do ((i 0 (+ 1 i))) 
       ((= i (abs arg)))
     (go-to-zero (&lt; arg 0)))))
 </pre></td></tr></table>
@@ -13042,7 +13042,7 @@ of FractInt's royal colormap):
 	  (er (list 0 60 60 116 128 252 192 252 256 60))
 	  (eg (list 0 0  64 0   128 252 192 252 256 0))
 	  (eb (list 0 80        128 252 192 0   256 80)))
-      (do ((i 0 (1+ i))
+      (do ((i 0 (+ 1 i))
 	   (x 0.0 (+ x incr)))
 	  ((= i size))
         (<a class=quiet href="#vctset" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctset_tip)">vct-set!</a> r i (exact-&gt;inexact (/ (<a class=quiet href="sndscm.html#envelopeinterp" onmouseout="UnTip()" onmouseover="Tip(sndscm_envelopeinterp_tip)">envelope-interp</a> x er) 256.0))) ; from env.scm
@@ -13057,7 +13057,7 @@ of FractInt's royal colormap):
 	  (g (<a class=quiet href="#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> size))
 	  (b (<a class=quiet href="#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> size))
 	  (incr (exact-&gt;inexact (/ 3.14159 size))))
-      (do ((i 0 (1+ i))
+      (do ((i 0 (+ 1 i))
 	   (x 0.0 (+ x incr)))
 	  ((= i size))
 	(<a class=quiet href="#vctset" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctset_tip)">vct-set!</a> r i (abs (sin (* 1.5 x))))
@@ -13495,7 +13495,7 @@ The result can be used in the lisp graph:
 	      (if (&lt; val .001)
 	          -60.0
 	          (* 20.0 (log10 val))))
-            (do ((i 0 (1+ i)))
+            (do ((i 0 (+ 1 i)))
 	        ((= i len))
 	      (<a class=quiet href="#vctset" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctset_tip)">vct-set!</a> data i (+ 60.0 (dB (abs (<a class=quiet href="#vctref" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctref_tip)">vct-ref</a> data i))))))
               (<a class=quiet href="#graph" onmouseout="UnTip()" onmouseover="Tip(extsnd_graph_tip)">graph</a> data "dB" 

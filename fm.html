@@ -153,7 +153,7 @@ functions that there is no difference in run-time computational expense or accur
         (carrier-phase-incr (hz-&gt;radians freq))
         (modulator-phase 0.0)
         (modulator-phase-incr (hz-&gt;radians (* mc-ratio freq))))
-    (do ((i beg (1+ i)))
+    (do ((i beg (+ 1 i)))
 	((= i end))
       (let* ((modulation (* index (sin modulator-phase)))
 	     (pm-val (* amp (sin (+ carrier-phase modulation))))) 
@@ -170,7 +170,7 @@ functions that there is no difference in run-time computational expense or accur
 	 ;; (pi+incr)/2 to get (centered) sin after integration, to match pm case above
 	 (fm-index (hz-&gt;radians (* mc-ratio freq index))))
 	 ;; fix up fm index (it's a frequency change)
-    (do ((i beg (1+ i)))
+    (do ((i beg (+ 1 i)))
 	((= i end))
       (let ((modulation (* fm-index (sin modulator-phase)))
 	    (fm-val (* amp (sin carrier-phase))))
@@ -200,7 +200,7 @@ functions that there is no difference in run-time computational expense or accur
 	 (mx 0.0)
 	 (mxloc 0)
 	 (N (min (frames s1 c1) (frames s2 c2))))
-    (do ((i 0 (1+ i)))
+    (do ((i 0 (+ 1 i)))
 	((= i N))
       (let ((diff (- (r1) (r2))))
 	(if (> (abs diff) mx)
@@ -576,7 +576,7 @@ the 15 main components, with their sum in black:
       (let ((gen (make-polyoid freq cur-phases)))
 	(run 
 	 (lambda ()
-	   (do ((i 0 (1+ i)))
+	   (do ((i 0 (+ 1 i)))
 	       ((= i 88200))
 	     (outa i (polyoid gen 0.0)))))))))
 
@@ -584,7 +584,7 @@ the 15 main components, with their sum in black:
   (let* ((cgen (make-oscil 1000))
          (mgen (make-oscil 100))
 	 (index (hz->radians (* 3 100))))
-    (do ((i 0 (1+ i)))
+    (do ((i 0 (+ 1 i)))
 	((= i 44100))
       (outa i (oscil cgen (* index (oscil mgen)))))))
 
@@ -596,14 +596,14 @@ the 15 main components, with their sum in black:
 	 (fm-index (hz->radians (* index freq))))
 
     (with-sound (:clipped #f)
-      (do ((try 0 (1+ try))
+      (do ((try 0 (+ 1 try))
 	   (mod-phase 0.0 (+ mod-phase incr)))
 	  ((= try tries))
 	(let* ((cargen (make-oscil (* freq 10) (/ pi 2))) ; or 0 phase
 	       (modgen (make-oscil freq mod-phase))
 	       (samps 44100)
 	       (sum 0.0))
-	  (do ((samp 0 (1+ samp)))
+	  (do ((samp 0 (+ 1 samp)))
 	      ((= samp samps))
 	    (let ((val (oscil cargen (* fm-index (oscil modgen)))))
 	      (set! sum (+ sum (* val val)))))
@@ -697,7 +697,7 @@ Just for completeness, here's a derivation following Gray and Mathews, "A Treati
          (indf (make-env index-env :scaler fm-index :duration dur)))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ 1 i)))
 	   ((= i end))
 	 (outa i (* (env ampf)                       ; amplitude env
                     (oscil cr (* (env indf)          ; carrier + modulation env
@@ -821,7 +821,7 @@ real and imaginary parts &mdash; unexplored territory!
 	 (md-incr (hz->radians (* freq mc-ratio)))
 	 (md 0.0) ; (* 0.5 (+ pi md-incr)))
          (fm-index (/ (* 2 pi index mc-ratio freq) (mus-srate)))) ; hz->radians with complex arg and result
-    (do ((i start (1+ i)))
+    (do ((i start (+ 1 i)))
 	((= i end))
       (outa i (* amp (real-part (sin cr)))) ; or magnitude in place of real-part
       (set! cr (+ cr cr-incr (* fm-index (sin md))))
@@ -836,7 +836,7 @@ real and imaginary parts &mdash; unexplored territory!
 	 (cr-incr (hz->radians freq))
 	 (md-incr (hz->radians (* freq mc-ratio)))
 	 (md 0.0))
-    (do ((i start (1+ i)))
+    (do ((i start (+ 1 i)))
 	((= i end))
       (outa i (* amp (real-part (sin (+ cr (* fm-index (sin md)))))))
       (set! cr (+ cr cr-incr))
@@ -851,7 +851,7 @@ real and imaginary parts &mdash; unexplored territory!
 	 (cr-incr (hz->radians freq))
 	 (md-incr (hz->radians (* freq mc-ratio)))
 	 (md 0.0))
-    (do ((i start (1+ i)))
+    (do ((i start (+ 1 i)))
 	((= i end))
       (let ((val (sin (+ cr (* fm-index (sin md))))))
         (outa i (* amp (+ (* (- 1.0 interp) (real-part val))
@@ -1082,7 +1082,7 @@ instrument:
 	 (md (make-oscil freq mod-phase)))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ 1 i)))
 	   ((= i end))
 	 (outa i (* amp (oscil cr 0.0 
                           (* fm-index (oscil md))))))))))
@@ -1122,7 +1122,7 @@ CLM instrument that shows this (subtle) effect:
 (definstrument fm (beg end freq amp mc-ratio index car-phase mod-phase skew-func skew)
   (let ((cr (make-oscil freq car-phase))
         (md (make-oscil (* freq mc-ratio) mod-phase))
-        (skewf (make-env skew-func :scaler (hz-&gt;radians (* skew mc-ratio freq)) :length (1+ (- end beg))))
+        (skewf (make-env skew-func :scaler (hz-&gt;radians (* skew mc-ratio freq)) :length (+ 1 (- end beg))))
         (fm-index (hz-&gt;radians (* index mc-ratio freq))))
     (run
       (loop for i from beg to end do
@@ -1142,7 +1142,7 @@ CLM instrument that shows this (subtle) effect:
 	 (skewf (make-env (list 0.0 0.0 1.0 pi) :duration dur)))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ 1 i)))
 	   ((= i end))
         (outa i (* amp (oscil cr 0.0 (* index (oscil md 0.0 (env skewf)))))))))))
 
@@ -1206,7 +1206,7 @@ but not anything we'd claim was single side-band.
 	 (mod-incr (hz-&gt;radians modfreq))
 	 (start (seconds-&gt;samples beg))
 	 (stop (+ start (seconds-&gt;samples dur))))
-    (do ((i start (1+ i)))
+    (do ((i start (+ 1 i)))
 	((= i stop))
       (outa i (* amp (- (* (cos cx)  ; cos * sum-of-cos
 			   (sin (* index (cos mx))))
@@ -1246,7 +1246,7 @@ examples which come from a collection of "imaginary machines":
                  :duration dur :scaler (hz-&gt;radians (abs gliss)))))
     (run 
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ 1 i)))
 	   ((= i stop)) 
 	 (set! (fmssb-index gen) (env indf))
 	 (outa i (* (env ampf) (fmssb gen (env frqf)))))))))
@@ -1269,7 +1269,7 @@ examples which come from a collection of "imaginary machines":
 	(frqf (make-env '(0 0 1 1 2 0 10 0 11 1 12 0 20 0) :duration 11.0 :scaler (hz-&gt;radians 1.0))))
     (run 
      (lambda ()
-       (do ((i 0 (1+ i)))
+       (do ((i 0 (+ 1 i)))
 	   ((= i (* 12 44100)))
 	 (outa i (* (env ampf) 
 		    (+ (rkoddssb gen1 (env frqf))
@@ -1313,7 +1313,7 @@ any exponential in the numerator, so we can get many interesting effects: moving
   (let ((gen (make-rxyk!cos 1000 100 2)))
     (run 
      (lambda ()
-       (do ((i 0 (1+ i)))
+       (do ((i 0 (+ 1 i)))
 	   ((= i 10000))
 	 (outa i (rxyk!cos gen 0.0)))))))
 -->
@@ -1374,7 +1374,7 @@ Asymmetric FM with index=2.0, r=0.5:
 (with-sound ()
   (let ((gen (make-asymmetric-fm 2000.0 
                        :ratio .2 :r 0.5)))
-    (do ((i 0 (1+ i)))
+    (do ((i 0 (+ 1 i)))
         ((= i 20000))
       (outa i (asymmetric-fm gen 2.0)))))
 </pre>
@@ -1493,16 +1493,16 @@ In general:
          (n (length mc-ratios))
          (modulators (make-vector n))
          (fm-indices (make-vct n)))
-    (do ((i 0 (1+ i)))
+    (do ((i 0 (+ 1 i)))
 	((= i n))
       (vector-set! modulators i (make-oscil (* freq (list-ref mc-ratios i)) (list-ref mod-phases i)))
       (vct-set! fm-indices i (hz-&gt;radians (* freq (list-ref indexes i) (list-ref mc-ratios i)))))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ 1 i)))
 	   ((= i end))
 	 (let ((sum 0.0))
-	   (do ((k 0 (1+ k)))
+	   (do ((k 0 (+ 1 k)))
 	       ((= k n))
 	     (set! sum (+ sum (* (vct-ref fm-indices k) (oscil (vector-ref modulators k))))))
 	   (outa i (* amp (oscil cr sum)))))))))
@@ -1552,7 +1552,7 @@ here's the code to get that info:
 	     (index (car inds))
 	     (mx (inexact->exact (ceiling (* 5 index))))
 	     (wm (car wms)))
-	(do ((k (- mx) (1+ k)))
+	(do ((k (- mx) (+ 1 k)))
 	    ((>= k mx) sum)
 	  (set! sum (+ sum (multifm-component freq-we-want (+ wc (* k wm)) (cdr wms) (cdr inds) 
 					      (append ns (list k)) (append bs (list index)) 
@@ -1636,7 +1636,7 @@ A pared down version of the fm-violin is:
          (ranvib (make-rand-interp 16 :amplitude (* .005 frq-scl))))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ 1 i)))
 	   ((= i end))
 	 (let ((vib (+ (triangle-wave pervib) (rand-interp ranvib))))
 	   (outa i (* (env ampf)
@@ -1695,7 +1695,7 @@ cascade.png:
 	 (fm-ind1 (hz->radians (* casind casfreq))))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ 1 i)))
 	   ((= i end))
 	 (outa i (* amp 
                     (oscil cr (* fm-ind0 
@@ -1794,7 +1794,7 @@ to show how strong this effect is:
 	 (fm-ind1 (hz-&gt;radians (* casind casrat freq))))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ 1 i)))
 	   ((= i end))
 	 (outa i (* amp 
                     (oscil cr (* fm-ind0 
@@ -1820,10 +1820,10 @@ it seems to be approaching a square wave as k heads into the stratosphere:
 (with-sound () 
   (let ((angle 0.0)
 	(incr (hz->radians 100.0)))
-    (do ((i 0 (1+ i)))
+    (do ((i 0 (+ 1 i)))
 	((= i 20000))
       (let* ((result (sin angle)))
-	(do ((k 0 (1+ k)))
+	(do ((k 0 (+ 1 k)))
 	    ((= k 2))
 	  (set! result (sin result)))
 	(set! angle (+ angle incr))
@@ -1863,10 +1863,10 @@ As z increases above 1.27, we get a square wave, then period doubling, and final
   (let ((angle 0.0) 
 	(z 1.18)
 	(incr (hz->radians 100.0)))
-    (do ((i 0 (1+ i)))
+    (do ((i 0 (+ 1 i)))
 	((= i 20000))
       (let* ((result (* z (cos angle))))
-	(do ((k 0 (1+ k)))
+	(do ((k 0 (+ 1 k)))
 	    ((= k 100))
 	  (set! result (* z (cos result))))
 	(set! angle (+ angle incr))
@@ -1953,7 +1953,7 @@ so, just as in normal FM, if the index is 0, we get a pure sine wave.
 	 (end (+ start (seconds-&gt;samples dur)))
 	 (y 0.0)
 	 (x-incr (hz-&gt;radians freq)))
-    (do ((i start (1+ i))
+    (do ((i start (+ 1 i))
          (x 0.0 (+ x x-incr)))
         ((= i end))
       (set! y (+ x (* index (sin y))))
@@ -2031,7 +2031,7 @@ The take-home message is: "keep the index below 1.0!".
 	 (x-incr (hz->radians freq)))
     (run 
      (lambda ()
-       (do ((i start (1+ i))
+       (do ((i start (+ 1 i))
 	    (x 0.0 (+ x x-incr)))
 	   ((= i end))
 	 (out-any i y 0)                    ;0: previous y (effective phase)
@@ -2075,7 +2075,7 @@ we can use the phase to minimize the difference with the sum:
 	 (x-incr (hz->radians freq)))
     (run 
      (lambda ()
-       (do ((i start (1+ i))
+       (do ((i start (+ 1 i))
 	    (x 0.0 (+ x x-incr)))
 	   ((or (c-g?)
 		(= i end)))
@@ -2084,7 +2084,7 @@ we can use the phase to minimize the difference with the sum:
 	 (let ((result (* amp (sin y)))
 	       (sum 0.0))
 
-	   (do ((n 1 (1+ n))) 
+	   (do ((n 1 (+ 1 n))) 
 	       ((= n iters)) 
 	     (set! sum (+ sum (/ (* 2.0 
 				    (bes-jn n (* index n))
@@ -2120,7 +2120,7 @@ random number frequency times its index &mdash; is this just Mr Carson again?):
   (let ((gen (make-oscil 5000))
 	(noise (make-rand 1000 :envelope '(-1 1 0 0 1 1))) ; "eared"
 	(index (hz-&gt;radians 1000))) ; index=1.0 so bandwith=4 Khz (2 Khz on each side)
-    (do ((i 0 (1+ i)))
+    (do ((i 0 (+ 1 i)))
 	((= i 50000))
       (outa i (oscil gen (* index (rand noise)))))))
 </pre>
@@ -2209,7 +2209,7 @@ FM(e^x) = PM(e^x).  FM(square-wave) is <img src="pix/fmeq58.png" alt="fm(noise)"
 	 (sqsum 0.0))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ 1 i)))
 	   ((= i end))
 	 (let ((vol (env ampf))
 	       (sq (* fm-index (- (square-wave fm-modulator) 1.0)))
@@ -2235,7 +2235,7 @@ FM(e^x) = PM(e^x).  FM(square-wave) is <img src="pix/fmeq58.png" alt="fm(noise)"
 	 (sumex 0.0))
     (run
      (lambda ()
-       (do ((i start (1+ i))
+       (do ((i start (+ 1 i))
             (x 0.0 (+ x .0001)))
 	   ((= i end))
 	 (let ((vol (env ampf))
@@ -2260,7 +2260,7 @@ FM(e^x) = PM(e^x).  FM(square-wave) is <img src="pix/fmeq58.png" alt="fm(noise)"
 	 (fm-index (hz->radians (* index freq))))
     (run
      (lambda ()
-       (do ((i start (1+ i))
+       (do ((i start (+ 1 i))
             (x 0.0 (+ x .0001)))
 	   ((= i end))
 	 (let ((vol (env ampf))
@@ -2286,7 +2286,7 @@ FM(e^x) = PM(e^x).  FM(square-wave) is <img src="pix/fmeq58.png" alt="fm(noise)"
 	 (sqsum 0.0))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ 1 i)))
 	   ((= i end))
 	 (let ((vol (env ampf))
 	       (pulse (* index (nxy1sin fm-modulator)))
@@ -2399,7 +2399,7 @@ used in "Colony" and other pieces:
          (indices (apply vct indexes))
          (per-vib (make-triangle-wave 6 :amplitude (* freq .03)))
          (ran-vib (make-rand-interp 20 :amplitude (* freq .5 .02))))
-    (do ((i 0 (1+ i)))
+    (do ((i 0 (+ 1 i)))
 	((= i 3))
       (vector-set! evens i (make-oscil 0))
       (vector-set! odds i (make-oscil 0)))
@@ -2410,12 +2410,12 @@ used in "Colony" and other pieces:
 
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ 1 i)))
 	   ((= i end))
 	 (let* ((frq (+ freq (triangle-wave per-vib) (rand-interp ran-vib)))
 		(car (oscil car-os (hz-&gt;radians frq)))
 		(sum 0.0))
-	   (do ((k 0 (1+ k)))
+	   (do ((k 0 (+ 1 k)))
 	       ((= k 3))
 	     (let* ((frm (env (vector-ref frmfs k)))
 		    (frm0 (/ frm frq))

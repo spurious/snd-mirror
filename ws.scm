@@ -709,9 +709,6 @@ returning you to the true top-level."
 
 ;;; -------- with-mixed-sound --------
 
-
-;;; TODO: why does with-mixed-sound need an explicit srate? 
-
 (define (with-mixed-sound-mix-info id snd)
   (let ((all-info (sound-property 'with-mixed-sound-info snd)))
     ;; each entry is '(mx-id beg chans note)
@@ -767,7 +764,7 @@ returning you to the true top-level."
 	       (lambda ()
 		 (for-each
 		  (lambda (note)
-		    (let* ((snd (with-temp-sound (list ,@args :ignore-output #t) (eval (append (list (car note) 0.0) (cddr note)) (current-module))))
+		    (let* ((snd (with-temp-sound (,@args :ignore-output #t) (eval (append (list (car note) 0.0) (cddr note)) (current-module))))
 			   ;; I can't immediately find a way around the "eval" 
 			   (beg (inexact->exact (floor (* (srate outsnd) (cadr note)))))
 			   ;; can't use seconds->samples here because the global mus-srate value might not match the local one
