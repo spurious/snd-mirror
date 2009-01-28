@@ -217,10 +217,11 @@
 ;; try to get a different random number sequence on each run
 (set! (mus-rand-seed) (current-time))
 
-(define (random n)
-  (if (exact? n)
-      (mus-irandom n)
-      (mus-frandom n)))
+(if (provided? 'snd-guile)
+    (define (random n)
+      (if (exact? n)
+	  (mus-irandom n)
+	  (mus-frandom n))))
 
 (define rs (lambda (n) #t))
 

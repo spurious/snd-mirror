@@ -1759,6 +1759,12 @@ static XEN g_mus_file_name(XEN gen)
 {
   #define H_mus_file_name "(" S_mus_file_name " gen): file associated with gen, if any"
   if (XEN_LIST_P(gen)) return(call_get_method(gen, S_mus_file_name));
+
+#if HAVE_S7 && HAVE_PTHREADS
+  if (s7_is_thread_variable(gen))
+    gen = s7_thread_variable_value(s7, gen);
+#endif
+
   XEN_ASSERT_TYPE(MUS_XEN_P(gen), gen, XEN_ONLY_ARG, S_mus_file_name, "a generator");
   return(C_TO_XEN_STRING(mus_file_name(XEN_TO_MUS_ANY(gen))));
 }

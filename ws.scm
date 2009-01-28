@@ -675,11 +675,6 @@ returning you to the true top-level."
 
 
 
-;;; TODO: reverb saw; check the output-safety stuff again, mus-channels[added] and others often take *output* as arg -- need to handle these cases 
-;;;       mus-channels[ok], mus-mix?, frame->file?[ok], make-locsig [for *output* chans etc], mus-close[ok], mus-output?[ok], mus-file-name?, 
-;;; TODO: don't fire up thread if list is empty
-
-
 
 ;;; -------- with-temp-sound --------
 

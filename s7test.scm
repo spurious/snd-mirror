@@ -29523,6 +29523,168 @@
   (num-test (expt f-3.25 0) 1.0 )
   (num-test (atan 1 1) (atan 1)))
 
+(if (defined? 'random)
+    (let ((v (lambda (n range chker) ; chi^2 or mus-random
+	       (let ((hits (make-vector 100 0)))
+		 (do ((i 0 (+ 1 i )))
+		     ((= i n))
+		   (let ((y (random range)))
+		     (if (not (chker y))
+			 (format #t "(random ~A) -> ~A?~%" y))
+		     (let ((iy (inexact->exact (floor (* 100 (/ y range))))))
+		       (vector-set! hits iy (+ 1 (vector-ref hits iy))))))
+		 (let ((sum 0.0)
+		       (p (/ n 100.0)))
+		   (do ((i 0 (+ 1 i)))
+		       ((= i 100) sum)
+		     (let ((num (- (vector-ref hits i) p)))
+		       (set! sum (+ sum (/ (* num num) p))))))))))
+
+      (num-test (random 0) 0)
+      (num-test (random 0.0) 0.0)
+
+      (let ((vr (v 1000 
+		   1.0
+		   (lambda (val)
+		     (and (real? val)
+			  (not (negative? val))
+			  (<= val 1.0))))))
+	(if (or (< vr 40)
+		(> vr 400))
+	    (format #t "(random 1.0) not so random? ~A~%" vr)))
+
+      (let ((vr (v 1000 
+		   100
+		   (lambda (val)
+		     (and (integer? val)
+			  (not (negative? val))
+			  (<= val 100))))))
+	(if (or (< vr 40)
+		(> vr 400))
+	    (format #t "(random 100) not so random? ~A~%" vr)))
+
+      (let ((vr (v 1000 
+		   1/2
+		   (lambda (val)
+		     (and (rational? val)
+			  (not (negative? val))
+			  (<= val 1/2))))))
+	(if (or (< vr 40)
+		(> vr 400))
+	    (format #t "(random 1/2) not so random? ~A~%" vr)))
+
+      (let ((vr (v 1000 
+		   -10.0
+		   (lambda (val)
+		     (and (real? val)
+			  (not (positive? val))
+			  (>= val -10.0))))))
+	(if (or (< vr 40)
+		(> vr 400))
+	    (format #t "(random -10.0) not so random? ~A~%" vr)))
+
+      (do ((i 0 (+ i 1)))
+	  ((= i 100))
+	(let ((val (random 1.0+1.0i)))
+	  (if (or (not (complex? val))
+		  (> (real-part val) 1.0)
+		  (> (imag-part val) 1.0)
+		  (< (real-part val) 0.0))
+	      (format #t "(random 1.0+1.0i) -> ~A?~%" val))))
+
+      (let ((rs (make-random-state 12345678)))
+	(do ((i 0 (+ i 1)))
+	    ((= i 100))
+	  (let ((val (random 1.0 rs)))
+	    (if (or (not (real? val))
+		    (negative? val)
+		    (> val 1.0))
+		(format #t "(random 1.0 rs) -> ~A?~%" val)))))
+
+      (if with-bigfloats
+	  (begin
+	    (num-test (random (bignum "0")) 0)
+	    (num-test (random (bignum "0.0")) 0.0)
+
+	    (let ((vr (v 1000 
+			 (bignum "1.0")
+			 (lambda (val)
+			   (and (real? val)
+				(not (negative? val))
+				(<= val 1.0))))))
+	      (if (or (< vr 40)
+		      (> vr 400))
+		  (format #t "(big-random 1.0) not so random? ~A~%" vr)))
+
+	    (let ((vr (v 1000 
+			 (bignum "100")
+			 (lambda (val)
+			   (and (integer? val)
+				(not (negative? val))
+				(<= val 100))))))
+	      (if (or (< vr 40)
+		      (> vr 400))
+		  (format #t "(big-random 100) not so random? ~A~%" vr)))
+
+	    (let ((vr (v 1000 
+			 (bignum "1/2")
+			 (lambda (val)
+			   (and (rational? val)
+				(not (negative? val))
+				(<= val 1/2))))))
+	      (if (or (< vr 40)
+		      (> vr 400))
+		  (format #t "(big-random 1/2) not so random? ~A~%" vr)))
+
+	    (let ((vr (v 1000 
+			 (bignum "-10.0")
+			 (lambda (val)
+			   (and (real? val)
+				(not (positive? val))
+				(>= val -10.0))))))
+	      (if (or (< vr 40)
+		      (> vr 400))
+		  (format #t "(big-random -10.0) not so random? ~A~%" vr)))
+
+	    (do ((i 0 (+ i 1)))
+		((= i 100))
+	      (let ((val (random (bignum "1.0+1.0i"))))
+		(if (or (not (complex? val))
+			(> (real-part val) 1.0)
+			(> (imag-part val) 1.0)
+			(< (real-part val) 0.0))
+		    (format #t "(big-random 1.0+1.0i) -> ~A?~%" val))))
+
+	    (let ((rs (make-random-state (bignum "12345678"))))
+	      (do ((i 0 (+ i 1)))
+		  ((= i 100))
+		(let ((val (random (bignum "1.0") rs)))
+		  (if (or (not (real? val))
+			  (negative? val)
+			  (> val 1.0))
+		      (format #t "(big-random 1.0 rs) -> ~A?~%" val)))
+		(let ((val (random 1.0 rs)))
+		  (if (or (not (real? val))
+			  (negative? val)
+			  (> val 1.0))
+		      (format #t "(big-random small-1.0 rs) -> ~A?~%" val)))))
+
+	    (let ((rs (make-random-state 1234)))
+	      (do ((i 0 (+ i 1)))
+		  ((= i 100))
+		(let ((val (random (bignum "1.0") rs)))
+		  (if (or (not (real? val))
+			  (negative? val)
+			  (> val 1.0))
+		      (format #t "(big-random 1.0 small-rs) -> ~A?~%" val)))
+		(let ((val (random 1.0 rs)))
+		  (if (or (not (real? val))
+			  (negative? val)
+			  (> val 1.0))
+		      (format #t "(random small-1.0 rs) -> ~A?~%" val)))))
+	    ))
+      ))
+
 
 (if with-bignums (begin
   (define tb

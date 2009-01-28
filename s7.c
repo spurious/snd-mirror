@@ -4922,6 +4922,8 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
 	   *    0.33333333333333
 	   *    :(expt 1/32 1/5)
 	   *    0.5
+	   *    :(expt 4 -1/2)
+	   *    0.5
 	   *   add internal cbrt y=1/3 etc?
 	   */
 	}
@@ -4931,7 +4933,7 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
       (denominator(sc->y->object.number) == 2) &&
       (numerator(sc->y->object.number) == 1))
     return(g_sqrt(sc, args));
-  
+
   if ((s7_is_real(sc->x)) &&
       (s7_is_real(sc->y)))
     {
@@ -5787,7 +5789,7 @@ static char *print_rng(s7_scheme *sc, void *val)
   char *buf;
   rng *r = (rng *)val;
   buf = (char *)malloc(64 * sizeof(char));
-  snprintf(buf, 64, "#<rng %ud %ud>", (unsigned int)(r->ran_seed), (unsigned int)(r->ran_carry));
+  snprintf(buf, 64, "#<rng %d %d>", (unsigned int)(r->ran_seed), (unsigned int)(r->ran_carry));
   return(buf);
 }
 
@@ -5810,7 +5812,7 @@ static s7_pointer g_make_random_state(s7_scheme *sc, s7_pointer args)
   rng *r;
   r = (rng *)calloc(1, sizeof(rng));
   r->ran_seed = s7_integer(car(args));
-  r->ran_carry = 1675393560;  /* PERHAPS: make this dependent on the seed? */
+  r->ran_carry = 1675393560;  /* should this be dependent on the seed? */
   return(s7_make_object(sc, rng_tag, (void *)r));
 }
 
@@ -5870,7 +5872,8 @@ static s7_pointer g_random(s7_scheme *sc, s7_pointer args)
       state = cadr(args);
       if (!is_object(state))
 	return(s7_wrong_type_arg_error(sc, "random", 2, state, "a random state as returned by make-random-state"));
-      if (object_type(state) != rng_tag)
+
+      if (object_type(state) == rng_tag)
 	r = (rng *)s7_object_value(state);
       else
 	{
@@ -5887,7 +5890,7 @@ static s7_pointer g_random(s7_scheme *sc, s7_pointer args)
 	{
 	  sc->default_rng = (rng *)calloc(1, sizeof(rng));
 	  ((rng *)(sc->default_rng))->ran_seed = (unsigned int)time(NULL);
-	  ((rng *)(sc->default_rng))->ran_carry = 1675393560; /* PERHAPS: carry dependent on seed? */
+	  ((rng *)(sc->default_rng))->ran_carry = 1675393560;
 	}
       r = (rng *)(sc->default_rng);
     }
@@ -16404,9 +16407,7 @@ static s7_pointer big_expt(s7_scheme *sc, s7_pointer args)
   x = car(args);
   y = cadr(args);
 
-  if ((s7_is_integer(y)) &&
-      ((!(is_object(y))) ||
-       (mpz_cmpabs_ui(S7_BIG_INTEGER(y), 100) < 0))) /* TODO: check this limit */
+  if (s7_is_integer(y))
     {
       s7_Int yval;
       if (!is_object(y))
@@ -18029,14 +18030,16 @@ static s7_pointer g_set_precision(s7_scheme *sc, s7_pointer args)
   return(car(args));
 }
 
-/* TODO: tests of random
- * PERHAPS: hypot j0+ y0+ i0+?? erfc erf gamma lgamma eint? fac? [test the fft]
- * j0: gsl_sf_bessel_J0|1|n([int n] double x)
+/*
+ * PERHAPS: j0+ i0+?? erfc erf gamma lgamma
+  * j0: gsl_sf_bessel_J0|1|n([int n] double x)
  *     mpfr_j0|1|n (mpfr rop [long n] mpfr x rnd)
- * PERHAPS: pslq?
+ *     need complex too(?)
+ *     arprec has erf, polyroot, gamma, "bessel" = i0 I think, binomial, "besselexp"?
+ *     maxima has bessel.lisp (falls back on slatec dbesj0 zbesj etc)
  *
  * add WITH_GSL? use libm if not, else gsl for single-precision, then mpfr for multi
- *   and add own complex cases (from the hyperg series?)
+ *   and add own complex cases (from the hyperg series? slatec?)
  * perhaps do these as an add-on module ?
  *
  * TODO: check bignums and threads
@@ -18100,6 +18103,9 @@ static s7_pointer big_random(s7_scheme *sc, s7_pointer args)
   state = sc->NIL;
 
   num = car(args); 
+  if (!s7_is_number(num))
+    return(s7_wrong_type_arg_error(sc, "random", 1, num, "a number"));
+
   if (cdr(args) != sc->NIL)
     {
       state = cadr(args);
@@ -18108,6 +18114,29 @@ static s7_pointer big_random(s7_scheme *sc, s7_pointer args)
 	{
 	  big_rng *r;
 	  r = (big_rng *)s7_object_value(state);
+	  if (!is_object(num))
+	    {
+	      switch (object_number_type(num))
+		{
+		case NUM_INT:
+		  num = promote_number(sc, T_BIG_INTEGER, num);
+		  break;
+
+		case NUM_RATIO:
+		  num = promote_number(sc, T_BIG_RATIO, num);
+		  break;
+
+		case NUM_REAL:
+		case NUM_REAL2:
+		  num = promote_number(sc, T_BIG_REAL, num);
+		  break;
+
+		default:
+		  num = promote_number(sc, T_BIG_COMPLEX, num);
+		  break;
+		}
+	    }
+	    
 	  if (object_type(num) == big_integer_tag)
 	    {
 	      mpz_t *n;
@@ -18116,6 +18145,7 @@ static s7_pointer big_random(s7_scheme *sc, s7_pointer args)
 	      mpz_urandomm(*n, r->state, S7_BIG_INTEGER(num));
 	      return(s7_make_object(sc, big_integer_tag, (void *)n));
 	    }
+
 	  if (object_type(num) == big_ratio_tag)
 	    {
 	      mpfr_t *n;
@@ -18128,6 +18158,7 @@ static s7_pointer big_random(s7_scheme *sc, s7_pointer args)
 	      mpfr_clear(rat);
 	      return(big_rationalize(sc, make_list_1(sc, s7_make_object(sc, big_real_tag, (void *)n))));
 	    }
+
 	  if (object_type(num) == big_real_tag)
 	    {
 	      mpfr_t *n;
@@ -18137,6 +18168,7 @@ static s7_pointer big_random(s7_scheme *sc, s7_pointer args)
 	      mpfr_mul(*n, *n, S7_BIG_REAL(num), GMP_RNDN);
 	      return(s7_make_object(sc, big_real_tag, (void *)n));
 	    }
+
 	  if (object_type(num) == big_complex_tag)
 	    {
 	      mpc_t *n;
@@ -18173,11 +18205,6 @@ static s7_pointer big_random(s7_scheme *sc, s7_pointer args)
     }
   return(g_random(sc, args));
 }
-
-/* TODO: check big random!! 
- * TODO: if random-state is made with bignum, but then random is called with non-bignum and that state,
- *         g_random complains about the type
- */
 
 
 /* fft
