@@ -152,9 +152,8 @@
     #define UNPROTECT_AT(Loc) s7_gc_unprotect_at(s7, Loc)
   #endif
   #if HAVE_GUILE
-    /* TODO: fix no-snd guile gc protect case somehow */
-    #define PROTECT(Obj) (XEN_PROTECT_FROM_GC(Obj), 0)
-    #define UNPROTECT_AT(Loc)
+    #define PROTECT(Obj) run_guile_gc_protect(Obj)
+    #define UNPROTECT_AT(Loc) run_guile_gc_unprotect_at(Loc)
   #endif
 #endif
 
@@ -244,6 +243,51 @@ static XEN walk_sym;
 /* find and set (Scheme) variable values */
 
 #if HAVE_GUILE
+#if (!USE_SND)
+static XEN *gc_protected = NULL;
+static int gc_protected_size = 0;
+
+
+static run_guile_gc_protect(XEN obj)
+{
+  int i, loc;
+  scm_gc_protect(obj);
+
+  if (gc_protected_size == 0)
+    {
+      gc_protected_size = 8;
+      gc_protected = (XEN *)malloc(gc_protected_size * sizeof(XEN));
+      gc_protected[0] = obj;
+      for (i = 1; i < gc_protected_size; i++)
+	gc_protected[i] = XEN_FALSE;
+      return(0);
+    }
+
+  for (i = 0; i < gc_protected_size; i++)
+    if (gc_protected[i] == XEN_FALSE)
+      {
+	gc_protected[i] = obj;
+	return(i);
+      }
+  loc = gc_protected_size;
+  gc_protected_size *= 2;
+  gc_protected = (XEN *)realloc(gc_protected, gc_protected_size * sizeof(XEN));
+  for (i = loc + 1; i < gc_protected_size; i++)
+    gc_protected[i] = XEN_FALSE;
+  gc_protected[loc] = obj;
+  return(loc);
+}
+
+
+static run_guile_gc_unprotect_at(int loc)
+{
+  scm_gc_unprotect(gc_protected[loc]);
+  gc_protected[loc] = XEN_FALSE;
+}
+
+#endif
+
+
 static void xen_symbol_name_set_value(const char *a, XEN b)
 {
   XEN var = XEN_FALSE;

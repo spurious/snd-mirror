@@ -2155,6 +2155,7 @@ static int read_soundforge_header(const char *filename, int fd)
 	break;
       if (chunksize < 0)
 	break;
+
       if (match_four_chars((unsigned char *)hdrbuf, I_fmt_))
 	{
 	  off = 16;
@@ -2170,20 +2171,22 @@ static int read_soundforge_header(const char *filename, int fd)
 	  if ((match_four_chars((unsigned char *)hdrbuf, I_data)) && (data_location == 0))
 	    {
 	      data_location = offset + 16 + 8;
-	      data_size = mus_char_to_ulint((unsigned char *)(hdrbuf + 16));
+	      data_size = mus_char_to_loff_t((unsigned char *)(hdrbuf + 16));
 	      if (chunksize == 0) break; /* see aiff comment */
 	    }
 	  else
 	    {
 	      if (match_four_chars((unsigned char *)hdrbuf, I_fact))
 		{
-		  fact_samples = mus_char_to_lint((unsigned char *)(hdrbuf + 8));
+		  fact_samples = mus_char_to_loff_t((unsigned char *)(hdrbuf + 8));
 		}
 	    }
 	}
-      chunkloc = (8 + chunksize);
-      chunkloc -= 8; 
-      if (chunksize & 1) chunkloc++; /* extra null appended to odd-length chunks */
+      chunkloc = chunksize % 8;
+      if (chunkloc == 0)
+	chunkloc = chunksize;
+      else chunkloc = chunksize + 8 - chunkloc;
+      /* I think they are rounding up to a multiple of 8 here (sigh) */
     }
   if (data_location == 0)
     return(mus_error(MUS_HEADER_READ_FAILED, "%s: no data chunk?", filename));
@@ -2208,7 +2211,7 @@ static int read_soundforge_header(const char *filename, int fd)
  *   data 0xFFFFFFFF data...
  *
  * if RIFF WAVE is being written with possibility of overflow size, use
- * RIFF size WAVE JUNK then the dsp64 chunk as above
+ * RIFF size WAVE JUNK then the ds64 chunk as above
  *   if size overflows, reset RIFF->RF64, JUNK->ds64, size->-1 twice etc
  *
  * JUNK size = 28
