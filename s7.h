@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "1.11"
-#define S7_DATE "26-Jan-09"
+#define S7_VERSION "1.12"
+#define S7_DATE "29-Jan-09"
 
 
 typedef long long int s7_Int;
@@ -282,6 +282,7 @@ s7_pointer s7_make_vector(s7_scheme *sc, int len);                          /* (
 s7_pointer s7_make_and_fill_vector(s7_scheme *sc, int len, s7_pointer fill);/* (make-vector len fill) */
 int s7_vector_length(s7_pointer vec);                                       /* (vector-length vec) */
 s7_pointer s7_vector_to_list(s7_scheme *sc, s7_pointer vect);               /* (vector->list vect) */
+s7_pointer *s7_vector_elements(s7_pointer vec);                             /* a pointer to the array of s7_pointers */
 
 
 bool s7_is_hash_table(s7_pointer p);                                        /* (hash-table? p) */
@@ -594,6 +595,22 @@ s7_pointer s7_thread_variable_value(s7_scheme *sc, s7_pointer obj);
  *
  * see with-threaded-sound in ws.scm or sndlib-ws.scm for an example.
  */
+
+#if WITH_GMP
+  #include <gmp.h>
+  #include <mpfr.h>
+  #include <mpc.h>
+
+  bool s7_is_bignum(s7_pointer obj);
+  mpfr_t *s7_big_real(s7_pointer x);
+  mpz_t *s7_big_integer(s7_pointer x);
+  mpq_t *s7_big_ratio(s7_pointer x);
+  mpc_t *s7_big_complex(s7_pointer x);
+  s7_pointer s7_make_big_integer(s7_scheme *sc, mpz_t *val);
+  s7_pointer s7_make_big_ratio(s7_scheme *sc, mpq_t *val);
+  s7_pointer s7_make_big_real(s7_scheme *sc, mpfr_t *val);
+  s7_pointer s7_make_big_complex(s7_scheme *sc, mpc_t *val);
+#endif
 
 
 #ifdef __cplusplus
@@ -1259,6 +1276,7 @@ int main(int argc, char **argv)
  * 
  *        s7 changes
  *
+ * 29-Jan:    s7_is_bignum and friends.
  * 26-Jan:    added s7_scheme arg to s7_vector_fill.
  * 16-Jan:    s7_is_ulong_long and friends for C pointers in 64-bit situations.
  * 9-Jan-09   added multiprecision arithmetic (gmp, mpfr, mpc) on the WITH_GMP switch

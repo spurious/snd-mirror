@@ -188,7 +188,7 @@
   #define WITH_GMP 0
   /* this includes multiprecision arithmetic for all numeric types and functions, using gmp, mpfr, and mpc
    * WITH_GMP adds the following functions: 
-   *   bignum, bignum?, bignum-precision, bignum-fft
+   *   bignum, bignum?, bignum-precision
    */
 #endif
 
@@ -2062,10 +2062,6 @@ static s7_pointer g_call_with_exit(s7_scheme *sc, s7_pointer args)
 /* -------------------------------- numbers -------------------------------- */
 
 #if WITH_GMP
-  #include <gmp.h>
-  #include <mpfr.h>
-  #include <mpc.h>
-
   static char *big_number_to_string_with_radix(s7_scheme *sc, s7_pointer p, int radix);
   static bool big_numbers_are_eqv(s7_pointer a, s7_pointer b);
   static s7_pointer make_either_integer(s7_scheme *sc, const char *str, int radix);
@@ -9305,6 +9301,12 @@ s7_pointer s7_vector_set(s7_scheme *sc, s7_pointer vec, int index, s7_pointer a)
 }
 
 
+s7_pointer *s7_vector_elements(s7_pointer vec)
+{
+  return(vec->object.vector.elements);
+}
+
+
 s7_pointer s7_vector_to_list(s7_scheme *sc, s7_pointer vect)
 {
   s7_pointer lst = sc->NIL;
@@ -14270,6 +14272,30 @@ static int big_complex_tag = 0;
                     (object_type(p) == big_complex_tag)))
 
 
+mpfr_t *s7_big_real(s7_pointer x)
+{
+  return((mpfr_t *)s7_object_value(x));
+}
+
+
+mpz_t *s7_big_integer(s7_pointer x)
+{
+  return((mpz_t *)s7_object_value(x));
+}
+
+
+mpq_t *s7_big_ratio(s7_pointer x)
+{
+  return((mpq_t *)s7_object_value(x));
+}
+
+
+mpc_t *s7_big_complex(s7_pointer x)
+{
+  return((mpc_t *)s7_object_value(x));
+}
+
+
 bool s7_is_number(s7_pointer p)
 {
   return((type(p) == T_NUMBER) || (IS_BIG(p)));
@@ -14464,6 +14490,12 @@ static s7_pointer mpz_to_big_integer(s7_scheme *sc, mpz_t val)
 }
 
 
+s7_pointer s7_make_big_integer(s7_scheme *sc, mpz_t *val)
+{
+  return(mpz_to_big_integer(sc, *val));
+}
+
+
 static s7_pointer make_big_ratio(s7_scheme *sc, const char *str, int radix)
 {
   mpq_t *n;
@@ -14610,6 +14642,13 @@ static s7_pointer mpq_to_big_ratio(s7_scheme *sc, mpq_t val)
 }
 
 
+s7_pointer s7_make_big_ratio(s7_scheme *sc, mpq_t *val)
+{
+  return(mpq_to_big_ratio(sc, *val));
+}
+
+
+
 static s7_pointer mpz_to_big_complex(s7_scheme *sc, mpz_t val)
 {
   mpc_t *n;
@@ -14665,6 +14704,12 @@ static s7_pointer mpc_to_big_complex(s7_scheme *sc, mpc_t val)
 }
 
 
+s7_pointer s7_make_big_complex(s7_scheme *sc, mpc_t *val)
+{
+  return(mpc_to_big_complex(sc, *val));
+}
+
+
 static s7_pointer mpfr_to_big_real(s7_scheme *sc, mpfr_t val)
 {
   mpfr_t *n;
@@ -14672,6 +14717,13 @@ static s7_pointer mpfr_to_big_real(s7_scheme *sc, mpfr_t val)
   mpfr_init_set(*n, val, GMP_RNDN);
   return(s7_make_object(sc, big_real_tag, (void *)n));
 }
+
+
+s7_pointer s7_make_big_real(s7_scheme *sc, mpfr_t *val)
+{
+  return(mpfr_to_big_real(sc, *val));
+}
+
 
 
 static s7_pointer big_pi(s7_scheme *sc)
@@ -15383,6 +15435,12 @@ static s7_pointer g_bignum(s7_scheme *sc, s7_pointer args)
     case NUM_REAL2: return(promote_number(sc, T_BIG_REAL, p));
     default:        return(promote_number(sc, T_BIG_COMPLEX, p));
     }
+}
+
+
+bool s7_is_bignum(s7_pointer obj)
+{
+  return(IS_BIG(obj));
 }
 
 
@@ -18031,17 +18089,6 @@ static s7_pointer g_set_precision(s7_scheme *sc, s7_pointer args)
 }
 
 /*
- * PERHAPS: j0+ i0+?? erfc erf gamma lgamma
-  * j0: gsl_sf_bessel_J0|1|n([int n] double x)
- *     mpfr_j0|1|n (mpfr rop [long n] mpfr x rnd)
- *     need complex too(?)
- *     arprec has erf, polyroot, gamma, "bessel" = i0 I think, binomial, "besselexp"?
- *     maxima has bessel.lisp (falls back on slatec dbesj0 zbesj etc)
- *
- * add WITH_GSL? use libm if not, else gsl for single-precision, then mpfr for multi
- *   and add own complex cases (from the hyperg series? slatec?)
- * perhaps do these as an add-on module ?
- *
  * TODO: check bignums and threads
  */
 
@@ -18207,140 +18254,6 @@ static s7_pointer big_random(s7_scheme *sc, s7_pointer args)
 }
 
 
-/* fft
- *     (define hi (make-vector 8))
- *     (define ho (make-vector 8))
- *     (do ((i 0 (+ i 1))) ((= i 8)) (vector-set! hi i (bignum "0.0")) (vector-set! ho i (bignum "0.0")))
- *     (vector-set! ho 1 (bignum "-1.0"))
- *     (vector-set! ho 1 (bignum "-1.0"))
- *     (bignum-fft hi ho 8)
- *
- * this is tricky -- perhaps a bad idea.  vector elements are changed in place which means
- *   they better be unique!  and there are no checks that each element actually is a bignum
- *   which means we'll segfault if a normal real leaks through.
- */
-
-static s7_pointer bignum_fft(s7_scheme *sc, s7_pointer args)
-{
-  #define H_bignum_fft "(bignum-fft rl im n (sign 1)) performs a multiprecision fft on the vectors of bigfloats rl and im"
-
-  int n, sign = 1;
-  s7_pointer *rl, *im;
-
-  int m, j, mh, ldm, lg, i, i2, j2, imh;
-  mpfr_t ur, ui, u, vr, vi, angle, c, s, temp;
-
-  #define big_rl(n) S7_BIG_REAL(rl[n])
-  #define big_im(n) S7_BIG_REAL(im[n])
-
-  n = s7_integer(caddr(args));
-  if (cdddr(args) != sc->NIL)
-    sign = s7_integer(cadddr(args));
-
-  rl = car(args)->object.vector.elements;
-  im = cadr(args)->object.vector.elements;
-
-  /* scramble(rl, im, n); */
-  {
-    int i, m, j;
-    s7_pointer vr, vi;
-    j = 0;
-    for (i = 0; i < n; i++)
-      {
-	if (j > i)
-	  {
-	    vr = rl[j];
-	    vi = im[j];
-	    rl[j] = rl[i];
-	    im[j] = im[i];
-	    rl[i] = vr;
-	    im[i] = vi;
-	  }
-	m = n >> 1;
-	while ((m >= 2) && (j >= m))
-	  {
-	    j -= m;
-	    m = m >> 1;
-	  }
-	j += m;
-      }
-  }
-
-  imh = (int)(log(n + 1) / log(2.0));
-  m = 2;
-  ldm = 1;
-  mh = n >> 1;
-
-  mpfr_init(angle);                        /* angle = (M_PI * sign) */
-  mpfr_const_pi(angle, GMP_RNDN);
-  if (sign == -1)
-    mpfr_neg(angle, angle, GMP_RNDN);
-
-  mpfr_init(c);
-  mpfr_init(s);
-  mpfr_init(ur);
-  mpfr_init(ui);
-  mpfr_init(u);
-  mpfr_init(vr);
-  mpfr_init(vi);
-  mpfr_init(temp);
-
-  for (lg = 0; lg < imh; lg++)
-    {
-      mpfr_cos(c, angle, GMP_RNDN);         /* c = cos(angle) */
-      mpfr_sin(s, angle, GMP_RNDN);         /* s = sin(angle) */
-      mpfr_set_ui(ur, 1, GMP_RNDN);         /* ur = 1.0 */
-      mpfr_set_ui(ui, 0, GMP_RNDN);         /* ui = 0.0 */
-      for (i2 = 0; i2 < ldm; i2++)
-	{
-	  i = i2;
-	  j = i2 + ldm;
-	  for (j2 = 0; j2 < mh; j2++)
-	    {
-	      mpfr_set(temp, big_im(j), GMP_RNDN);          /* vr = ur * rl[j] - ui * im[j] */
-	      mpfr_mul(temp, temp, ui, GMP_RNDN);
-	      mpfr_set(vr, big_rl(j), GMP_RNDN);
-	      mpfr_mul(vr, vr, ur, GMP_RNDN);
-	      mpfr_sub(vr, vr, temp, GMP_RNDN);
-	      
-	      mpfr_set(temp, big_rl(j), GMP_RNDN);          /* vi = ur * im[j] + ui * rl[j] */
-	      mpfr_mul(temp, temp, ui, GMP_RNDN);
-	      mpfr_set(vi, big_im(j), GMP_RNDN);
-	      mpfr_mul(vi, vi, ur, GMP_RNDN);
-	      mpfr_add(vi, vi, temp, GMP_RNDN);
-	      
-	      mpfr_set(big_rl(j), big_rl(i), GMP_RNDN);     /* rl[j] = rl[i] - vr */
-	      mpfr_sub(big_rl(j), big_rl(j), vr, GMP_RNDN);
-
-	      mpfr_set(big_im(j), big_im(i), GMP_RNDN);     /* im[j] = im[i] - vi */
-	      mpfr_sub(big_im(j), big_im(j), vi, GMP_RNDN);
-	      
-	      mpfr_add(big_rl(i), big_rl(i), vr, GMP_RNDN); /* rl[i] += vr */
-	      mpfr_add(big_im(i), big_im(i), vi, GMP_RNDN); /* im[i] += vi */
-	      
-	      i += m;
-	      j += m;
-	    }
-
-	  mpfr_set(u, ur, GMP_RNDN);             /* u = ur */
-	  mpfr_set(temp, ui, GMP_RNDN);          /* ur = (ur * c) - (ui * s) */
-	  mpfr_mul(temp, temp, s, GMP_RNDN);
-	  mpfr_mul(ur, ur, c, GMP_RNDN);
-	  mpfr_sub(ur, ur, temp, GMP_RNDN);
-	  
-	  mpfr_set(temp, u, GMP_RNDN);           /* ui = (ui * c) + (u * s) */
-	  mpfr_mul(temp, temp, s, GMP_RNDN);
-	  mpfr_mul(ui, ui, c, GMP_RNDN);
-	  mpfr_add(ui, ui, temp, GMP_RNDN);
-	}
-      mh >>= 1;
-      ldm = m;
-
-      mpfr_div_ui(angle, angle, 2, GMP_RNDN);   /* angle *= 0.5 */
-      m <<= 1;
-    }
-  return(sc->F);
-}
 
 
 static void s7_gmp_init(s7_scheme *sc)
@@ -18420,7 +18333,6 @@ static void s7_gmp_init(s7_scheme *sc)
   s7_define_function(sc, "random",              big_random,           1, 1, false, H_random);
   s7_define_function(sc, "make-random-state",   make_big_random_state,1, 0, false, H_make_random_state);
 
-  s7_define_function(sc, "bignum-fft",          bignum_fft,           3, 1, false, H_bignum_fft);
   s7_define_function(sc, "bignum",              g_bignum,             1, 0, false, H_bignum);
   s7_define_function(sc, "bignum?",             g_is_bignum,          1, 0, false, H_is_bignum);
   s7_define_variable(sc, "bignum-precision", 

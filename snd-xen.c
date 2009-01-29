@@ -2376,12 +2376,202 @@ static XEN g_fmod(XEN a, XEN b)
 
 
 /* ---------------------------------------- use libm ---------------------------------------- */
-#if HAVE_SPECIAL_FUNCTIONS && (!HAVE_GSL)
 
+#if HAVE_S7 && WITH_GMP && HAVE_SPECIAL_FUNCTIONS
+
+#include <gmp.h>
+#include <mpfr.h>
+#include <mpc.h>
+
+static XEN big_math_1(XEN x, 
+		      int (*mpfr_math)(mpfr_ptr, mpfr_srcptr, mpfr_rnd_t))
+{
+  s7_pointer val;
+  mpfr_t y;
+  mpfr_init_set(y, *s7_big_real(x), GMP_RNDN);
+  mpfr_math(y, y, GMP_RNDN);
+  val = s7_make_big_real(s7, &y);
+  mpfr_clear(y);
+  return(val);
+}
+
+
+static XEN big_j0(XEN x) {return(big_math_1(x, mpfr_j0));}
+static XEN big_j1(XEN x) {return(big_math_1(x, mpfr_j1));}
+static XEN big_y0(XEN x) {return(big_math_1(x, mpfr_y0));}
+static XEN big_y1(XEN x) {return(big_math_1(x, mpfr_y1));}
+
+static XEN big_erf(XEN x) {return(big_math_1(x, mpfr_erf));}
+static XEN big_erfc(XEN x) {return(big_math_1(x, mpfr_erfc));}
+
+
+static XEN big_math_2(XEN n, XEN x, 
+		      int (*mpfr_math)(mpfr_ptr, long, mpfr_srcptr, mpfr_rnd_t))
+{
+  s7_pointer val;
+  mpfr_t y;
+  mpfr_init_set(y, *s7_big_real(x), GMP_RNDN);
+  mpfr_math(y, XEN_TO_C_INT(n), y, GMP_RNDN);
+  val = s7_make_big_real(s7, &y);
+  mpfr_clear(y);
+  return(val);
+}
+
+
+static XEN big_jn(XEN n, XEN x) {return(big_math_2(n, x, mpfr_jn));}
+static XEN big_yn(XEN n, XEN x) {return(big_math_2(n, x, mpfr_yn));}
+
+
+/* fft
+ *     (define hi (make-vector 8))
+ *     (define ho (make-vector 8))
+ *     (do ((i 0 (+ i 1))) ((= i 8)) (vector-set! hi i (bignum "0.0")) (vector-set! ho i (bignum "0.0")))
+ *     (vector-set! ho 1 (bignum "-1.0"))
+ *     (vector-set! ho 1 (bignum "-1.0"))
+ *     (bignum-fft hi ho 8)
+ *
+ * this is tricky -- perhaps a bad idea.  vector elements are changed in place which means
+ *   they better be unique!  and there are no checks that each element actually is a bignum
+ *   which means we'll segfault if a normal real leaks through.
+ */
+
+static s7_pointer bignum_fft(s7_scheme *sc, s7_pointer args)
+{
+  #define H_bignum_fft "(bignum-fft rl im n (sign 1)) performs a multiprecision fft on the vectors of bigfloats rl and im"
+
+  int n, sign = 1;
+  s7_pointer *rl, *im;
+
+  int m, j, mh, ldm, lg, i, i2, j2, imh;
+  mpfr_t ur, ui, u, vr, vi, angle, c, s, temp;
+
+  #define big_rl(n) (*(s7_big_real(rl[n])))
+  #define big_im(n) (*(s7_big_real(im[n])))
+
+  n = s7_integer(s7_list_ref(sc, args, 2));
+  if (s7_list_length(sc, args) > 3)
+    sign = s7_integer(s7_list_ref(sc, args, 3));
+
+  rl = s7_vector_elements(s7_list_ref(sc, args, 0));
+  im = s7_vector_elements(s7_list_ref(sc, args, 1));
+
+  /* scramble(rl, im, n); */
+  {
+    int i, m, j;
+    s7_pointer vr, vi;
+    j = 0;
+    for (i = 0; i < n; i++)
+      {
+	if (j > i)
+	  {
+	    vr = rl[j];
+	    vi = im[j];
+	    rl[j] = rl[i];
+	    im[j] = im[i];
+	    rl[i] = vr;
+	    im[i] = vi;
+	  }
+	m = n >> 1;
+	while ((m >= 2) && (j >= m))
+	  {
+	    j -= m;
+	    m = m >> 1;
+	  }
+	j += m;
+      }
+  }
+
+  imh = (int)(log(n + 1) / log(2.0));
+  m = 2;
+  ldm = 1;
+  mh = n >> 1;
+
+  mpfr_init(angle);                        /* angle = (M_PI * sign) */
+  mpfr_const_pi(angle, GMP_RNDN);
+  if (sign == -1)
+    mpfr_neg(angle, angle, GMP_RNDN);
+
+  mpfr_init(c);
+  mpfr_init(s);
+  mpfr_init(ur);
+  mpfr_init(ui);
+  mpfr_init(u);
+  mpfr_init(vr);
+  mpfr_init(vi);
+  mpfr_init(temp);
+
+  for (lg = 0; lg < imh; lg++)
+    {
+      mpfr_cos(c, angle, GMP_RNDN);         /* c = cos(angle) */
+      mpfr_sin(s, angle, GMP_RNDN);         /* s = sin(angle) */
+      mpfr_set_ui(ur, 1, GMP_RNDN);         /* ur = 1.0 */
+      mpfr_set_ui(ui, 0, GMP_RNDN);         /* ui = 0.0 */
+      for (i2 = 0; i2 < ldm; i2++)
+	{
+	  i = i2;
+	  j = i2 + ldm;
+	  for (j2 = 0; j2 < mh; j2++)
+	    {
+	      mpfr_set(temp, big_im(j), GMP_RNDN);          /* vr = ur * rl[j] - ui * im[j] */
+	      mpfr_mul(temp, temp, ui, GMP_RNDN);
+	      mpfr_set(vr, big_rl(j), GMP_RNDN);
+	      mpfr_mul(vr, vr, ur, GMP_RNDN);
+	      mpfr_sub(vr, vr, temp, GMP_RNDN);
+	      
+	      mpfr_set(temp, big_rl(j), GMP_RNDN);          /* vi = ur * im[j] + ui * rl[j] */
+	      mpfr_mul(temp, temp, ui, GMP_RNDN);
+	      mpfr_set(vi, big_im(j), GMP_RNDN);
+	      mpfr_mul(vi, vi, ur, GMP_RNDN);
+	      mpfr_add(vi, vi, temp, GMP_RNDN);
+	      
+	      mpfr_set(big_rl(j), big_rl(i), GMP_RNDN);     /* rl[j] = rl[i] - vr */
+	      mpfr_sub(big_rl(j), big_rl(j), vr, GMP_RNDN);
+
+	      mpfr_set(big_im(j), big_im(i), GMP_RNDN);     /* im[j] = im[i] - vi */
+	      mpfr_sub(big_im(j), big_im(j), vi, GMP_RNDN);
+	      
+	      mpfr_add(big_rl(i), big_rl(i), vr, GMP_RNDN); /* rl[i] += vr */
+	      mpfr_add(big_im(i), big_im(i), vi, GMP_RNDN); /* im[i] += vi */
+	      
+	      i += m;
+	      j += m;
+	    }
+
+	  mpfr_set(u, ur, GMP_RNDN);             /* u = ur */
+	  mpfr_set(temp, ui, GMP_RNDN);          /* ur = (ur * c) - (ui * s) */
+	  mpfr_mul(temp, temp, s, GMP_RNDN);
+	  mpfr_mul(ur, ur, c, GMP_RNDN);
+	  mpfr_sub(ur, ur, temp, GMP_RNDN);
+	  
+	  mpfr_set(temp, u, GMP_RNDN);           /* ui = (ui * c) + (u * s) */
+	  mpfr_mul(temp, temp, s, GMP_RNDN);
+	  mpfr_mul(ui, ui, c, GMP_RNDN);
+	  mpfr_add(ui, ui, temp, GMP_RNDN);
+	}
+      mh >>= 1;
+      ldm = m;
+
+      mpfr_div_ui(angle, angle, 2, GMP_RNDN);   /* angle *= 0.5 */
+      m <<= 1;
+    }
+  return(s7_F(sc));
+}
+
+#endif
+
+
+#if HAVE_SPECIAL_FUNCTIONS && (!HAVE_GSL)
 static XEN g_j0(XEN x)
 {
   #define H_j0 "(" S_bes_j0 " x): returns the regular cylindrical bessel function J0(x)"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ONLY_ARG, S_bes_j0, " a number");
+
+#if HAVE_S7 && WITH_GMP
+  if ((s7_is_bignum(x)) &&
+      (s7_is_real(x)) &&
+      (!(s7_is_rational(x))))
+    return(big_j0(x));
+#endif
   return(C_TO_XEN_DOUBLE(j0(XEN_TO_C_DOUBLE(x))));
 }
 
@@ -2390,6 +2580,13 @@ static XEN g_j1(XEN x)
 {
   #define H_j1 "(" S_bes_j1 " x): returns the regular cylindrical bessel function J1(x)"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ONLY_ARG, S_bes_j1, " a number");
+
+#if HAVE_S7 && WITH_GMP
+  if ((s7_is_bignum(x)) &&
+      (s7_is_real(x)) &&
+      (!(s7_is_rational(x))))
+    return(big_j1(x));
+#endif
   return(C_TO_XEN_DOUBLE(j1(XEN_TO_C_DOUBLE(x))));
 }
 
@@ -2399,6 +2596,13 @@ static XEN g_jn(XEN order, XEN x)
   #define H_jn "(" S_bes_jn " n x): returns the regular cylindrical bessel function Jn(x)"
   XEN_ASSERT_TYPE(XEN_INTEGER_P(order), x, XEN_ARG_1, S_bes_jn, " an int");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ARG_2, S_bes_jn, " a number");
+
+#if HAVE_S7 && WITH_GMP
+  if ((s7_is_bignum(x)) &&
+      (s7_is_real(x)) &&
+      (!(s7_is_rational(x))))
+    return(big_jn(order, x));
+#endif
   return(C_TO_XEN_DOUBLE(jn(XEN_TO_C_INT(order), XEN_TO_C_DOUBLE(x))));
 }
 
@@ -2407,6 +2611,12 @@ static XEN g_y0(XEN x)
 {
   #define H_y0 "(" S_bes_y0 " x): returns the irregular cylindrical bessel function Y0(x)"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ONLY_ARG, S_bes_y0, " a number");
+#if HAVE_S7 && WITH_GMP
+  if ((s7_is_bignum(x)) &&
+      (s7_is_real(x)) &&
+      (!(s7_is_rational(x))))
+    return(big_y0(x));
+#endif
   return(C_TO_XEN_DOUBLE(y0(XEN_TO_C_DOUBLE(x))));
 }
 
@@ -2415,6 +2625,12 @@ static XEN g_y1(XEN x)
 {
   #define H_y1 "(" S_bes_y1 " x): returns the irregular cylindrical bessel function Y1(x)"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ONLY_ARG, S_bes_y1, " a number");
+#if HAVE_S7 && WITH_GMP
+  if ((s7_is_bignum(x)) &&
+      (s7_is_real(x)) &&
+      (!(s7_is_rational(x))))
+    return(big_y1(x));
+#endif
   return(C_TO_XEN_DOUBLE(y1(XEN_TO_C_DOUBLE(x))));
 }
 
@@ -2424,6 +2640,12 @@ static XEN g_yn(XEN order, XEN x)
   #define H_yn "(" S_bes_yn " n x): returns the irregular cylindrical bessel function Yn(x)"
   XEN_ASSERT_TYPE(XEN_INTEGER_P(order), x, XEN_ARG_1, S_bes_yn, " an int");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ARG_2, S_bes_yn, " a number");
+#if HAVE_S7 && WITH_GMP
+  if ((s7_is_bignum(x)) &&
+      (s7_is_real(x)) &&
+      (!(s7_is_rational(x))))
+    return(big_yn(order, x));
+#endif
   return(C_TO_XEN_DOUBLE(yn(XEN_TO_C_INT(order), XEN_TO_C_DOUBLE(x))));
 }
 
@@ -2432,6 +2654,12 @@ static XEN g_erf(XEN x)
 {
   #define H_erf "(erf x): returns the error function erf(x)"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ONLY_ARG, "erf", " a number");
+#if HAVE_S7 && WITH_GMP
+  if ((s7_is_bignum(x)) &&
+      (s7_is_real(x)) &&
+      (!(s7_is_rational(x))))
+    return(big_erf(x));
+#endif
   return(C_TO_XEN_DOUBLE(erf(XEN_TO_C_DOUBLE(x))));
 }
 
@@ -2440,6 +2668,12 @@ static XEN g_erfc(XEN x)
 {
   #define H_erfc "(erfc x): returns the complementary error function erfc(x)"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ONLY_ARG, "erfc", " a number");
+#if HAVE_S7 && WITH_GMP
+  if ((s7_is_bignum(x)) &&
+      (s7_is_real(x)) &&
+      (!(s7_is_rational(x))))
+    return(big_erfc(x));
+#endif
   return(C_TO_XEN_DOUBLE(erfc(XEN_TO_C_DOUBLE(x))));
 }
 
@@ -2473,6 +2707,13 @@ static XEN g_j0(XEN x)
 {
   #define H_j0 "(" S_bes_j0 " x): returns the regular cylindrical bessel function J0(x)"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ONLY_ARG, S_bes_j0, " a number");
+
+#if HAVE_S7 && WITH_GMP
+  if ((s7_is_bignum(x)) &&
+      (s7_is_real(x)) &&
+      (!(s7_is_rational(x))))
+    return(big_j0(x));
+#endif
   return(C_TO_XEN_DOUBLE(gsl_sf_bessel_J0(XEN_TO_C_DOUBLE(x))));
 }
 
@@ -2481,6 +2722,13 @@ static XEN g_j1(XEN x)
 {
   #define H_j1 "(" S_bes_j1 " x): returns the regular cylindrical bessel function J1(x)"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ONLY_ARG, S_bes_j1, " a number");
+
+#if HAVE_S7 && WITH_GMP
+  if ((s7_is_bignum(x)) &&
+      (s7_is_real(x)) &&
+      (!(s7_is_rational(x))))
+    return(big_j1(x));
+#endif
   return(C_TO_XEN_DOUBLE(gsl_sf_bessel_J1(XEN_TO_C_DOUBLE(x))));
 }
 
@@ -2490,6 +2738,13 @@ static XEN g_jn(XEN order, XEN x)
   #define H_jn "(" S_bes_jn " n x): returns the regular cylindrical bessel function Jn(x)"
   XEN_ASSERT_TYPE(XEN_INTEGER_P(order), x, XEN_ARG_1, S_bes_jn, " an int");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ARG_2, S_bes_jn, " a number");
+
+#if HAVE_S7 && WITH_GMP
+  if ((s7_is_bignum(x)) &&
+      (s7_is_real(x)) &&
+      (!(s7_is_rational(x))))
+    return(big_jn(order, x));
+#endif
   return(C_TO_XEN_DOUBLE(gsl_sf_bessel_Jn(XEN_TO_C_INT(order), XEN_TO_C_DOUBLE(x))));
 }
 
@@ -2498,6 +2753,12 @@ static XEN g_y0(XEN x)
 {
   #define H_y0 "(" S_bes_y0 " x): returns the irregular cylindrical bessel function Y0(x)"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ONLY_ARG, S_bes_y0, " a number");
+#if HAVE_S7 && WITH_GMP
+  if ((s7_is_bignum(x)) &&
+      (s7_is_real(x)) &&
+      (!(s7_is_rational(x))))
+    return(big_y0(x));
+#endif
   return(C_TO_XEN_DOUBLE(gsl_sf_bessel_Y0(XEN_TO_C_DOUBLE(x))));
 }
 
@@ -2506,6 +2767,12 @@ static XEN g_y1(XEN x)
 {
   #define H_y1 "(" S_bes_y1 " x): returns the irregular cylindrical bessel function Y1(x)"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ONLY_ARG, S_bes_y1, " a number");
+#if HAVE_S7 && WITH_GMP
+  if ((s7_is_bignum(x)) &&
+      (s7_is_real(x)) &&
+      (!(s7_is_rational(x))))
+    return(big_y1(x));
+#endif
   return(C_TO_XEN_DOUBLE(gsl_sf_bessel_Y1(XEN_TO_C_DOUBLE(x))));
 }
 
@@ -2515,6 +2782,12 @@ static XEN g_yn(XEN order, XEN x)
   #define H_yn "(" S_bes_yn " n x): returns the irregular cylindrical bessel function Yn(x)"
   XEN_ASSERT_TYPE(XEN_INTEGER_P(order), x, XEN_ARG_1, S_bes_yn, " an int");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ARG_2, S_bes_yn, " a number");
+#if HAVE_S7 && WITH_GMP
+  if ((s7_is_bignum(x)) &&
+      (s7_is_real(x)) &&
+      (!(s7_is_rational(x))))
+    return(big_yn(order, x));
+#endif
   return(C_TO_XEN_DOUBLE(gsl_sf_bessel_Yn(XEN_TO_C_INT(order), XEN_TO_C_DOUBLE(x))));
 }
 
@@ -2572,6 +2845,12 @@ static XEN g_erf(XEN x)
 {
   #define H_erf "(erf x): returns the error function erf(x)"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ONLY_ARG, "erf", " a number");
+#if HAVE_S7 && WITH_GMP
+  if ((s7_is_bignum(x)) &&
+      (s7_is_real(x)) &&
+      (!(s7_is_rational(x))))
+    return(big_erf(x));
+#endif
   return(C_TO_XEN_DOUBLE(gsl_sf_erf(XEN_TO_C_DOUBLE(x))));
 }
 
@@ -2580,8 +2859,15 @@ static XEN g_erfc(XEN x)
 {
   #define H_erfc "(erfc x): returns the complementary error function erfc(x)"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ONLY_ARG, "erfc", " a number");
+#if HAVE_S7 && WITH_GMP
+  if ((s7_is_bignum(x)) &&
+      (s7_is_real(x)) &&
+      (!(s7_is_rational(x))))
+    return(big_erfc(x));
+#endif
   return(C_TO_XEN_DOUBLE(gsl_sf_erfc(XEN_TO_C_DOUBLE(x))));
 }
+
 
 #include <gsl/gsl_sf_gamma.h>
 static XEN g_lgamma(XEN x)
@@ -3421,6 +3707,9 @@ void g_xen_initialize(void)
   XEN_DEFINE_PROCEDURE("localtime",              g_localtime_w,              1, 0, 0, H_localtime);
   XEN_DEFINE_PROCEDURE("current-time",           g_current_time_w,           0, 0, 0, H_current_time);
   XEN_DEFINE_PROCEDURE("ftell",                  g_ftell_w,                  1, 0, 0, "(ftell fd): lseek");
+#if WITH_GMP
+  s7_define_function(s7, "bignum-fft",           bignum_fft,                 3, 1, false, H_bignum_fft);
+#endif
 #endif
 
   XEN_DEFINE_PROCEDURE(S_delete_watcher, g_delete_watcher_w, 1, 0, 0, H_delete_watcher);
