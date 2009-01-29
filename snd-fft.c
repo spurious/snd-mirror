@@ -2,8 +2,6 @@
 #include "clm2xen.h"
 #include "sndlib2xen.h"
 
-/* SOMEDAY: eventually add support for 64-bit fftw sizes */
-
 #if WITH_SHARED_SNDLIB
 #if HAVE_FFTW3
 #include <fftw3.h>
@@ -557,6 +555,7 @@ static int add_transform(const char *name, const char *xlabel, Float lo, Float h
   af->hi = hi;
   af->proc = proc;
   af->gc_loc = snd_protect(proc);
+  make_transform_type_list();
   return(af->type);
 }
 

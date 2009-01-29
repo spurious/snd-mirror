@@ -466,7 +466,7 @@ static void clear_point_label(void)
 
 static char brkpt_buf[LABEL_BUFFER_SIZE];
 
-void enved_display_point_label(Float x, Float y)
+static void enved_display_point_label(Float x, Float y)
 {
   if ((enved_in_dB(ss)) && (min_dB(ss) < -60))
     mus_snprintf(brkpt_buf, LABEL_BUFFER_SIZE, "%.3f : %.5f", x, y);

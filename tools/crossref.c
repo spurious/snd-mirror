@@ -787,8 +787,18 @@ int main(int argc, char **argv)
 			}
 
 		      if ((static_case) &&
-			  (strcmp(files[j], qs[i]->def) != 0))
-			static_case = false;
+			  (strcmp(files[j], qs[i]->def) != 0) &&
+			  (strcmp(files[j], "snd-nogui.c") != 0))
+			{
+			  if (((strncmp(files[j], "snd-x", 5) == 0) || 
+			       (strncmp(files[j], "snd-g", 5) == 0)) &&
+			      ((strncmp(qs[i]->def, "snd-x", 5) == 0) || 
+			       (strncmp(qs[i]->def, "snd-g", 5) == 0)) &&
+			      (strcmp((const char *)(files[j] + 5), (const char *)(qs[i]->def + 5)) == 0))
+			    {
+			    }
+			  else static_case = false;
+			}
 		      
 		      fprintf(FD,"\n    %s: %d", files[j], counts[qs[i]->i][j]);
 		      nfiles++;

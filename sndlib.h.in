@@ -398,36 +398,6 @@ MUS_EXPORT Float mus_file_set_prescaler(int tfd, Float val);
 MUS_EXPORT Float mus_prescaler(void);
 MUS_EXPORT Float mus_set_prescaler(Float new_value);
 
-#ifndef SNDLIB_DISABLE_DEPRECATED
-MUS_EXPORT void mus_bint_to_char(unsigned char *j, int x);
-MUS_EXPORT int mus_char_to_bint(const unsigned char *inp);
-MUS_EXPORT void mus_lint_to_char(unsigned char *j, int x);
-MUS_EXPORT int mus_char_to_lint(const unsigned char *inp);
-MUS_EXPORT off_t mus_char_to_loff_t(const unsigned char *inp);
-MUS_EXPORT off_t mus_char_to_boff_t(const unsigned char *inp);
-MUS_EXPORT int mus_char_to_uninterpreted_int(const unsigned char *inp);
-MUS_EXPORT void mus_bfloat_to_char(unsigned char *j, float x);
-MUS_EXPORT float mus_char_to_bfloat(const unsigned char *inp);
-MUS_EXPORT void mus_lfloat_to_char(unsigned char *j, float x);
-MUS_EXPORT float mus_char_to_lfloat(const unsigned char *inp);
-MUS_EXPORT void mus_bshort_to_char(unsigned char *j, short x);
-MUS_EXPORT short mus_char_to_bshort(const unsigned char *inp);
-MUS_EXPORT void mus_lshort_to_char(unsigned char *j, short x);
-MUS_EXPORT short mus_char_to_lshort(const unsigned char *inp);
-MUS_EXPORT void mus_ubshort_to_char(unsigned char *j, unsigned short x);
-MUS_EXPORT unsigned short mus_char_to_ubshort(const unsigned char *inp);
-MUS_EXPORT void mus_ulshort_to_char(unsigned char *j, unsigned short x);
-MUS_EXPORT unsigned short mus_char_to_ulshort(const unsigned char *inp);
-MUS_EXPORT double mus_char_to_ldouble(const unsigned char *inp);
-MUS_EXPORT double mus_char_to_bdouble(const unsigned char *inp);
-MUS_EXPORT void mus_bdouble_to_char(unsigned char *j, double x);
-MUS_EXPORT void mus_ldouble_to_char(unsigned char *j, double x);
-MUS_EXPORT void mus_boff_t_to_char(unsigned char *j, off_t x);
-MUS_EXPORT void mus_loff_t_to_char(unsigned char *j, off_t x);
-MUS_EXPORT unsigned int mus_char_to_ubint(const unsigned char *inp);
-MUS_EXPORT unsigned int mus_char_to_ulint(const unsigned char *inp);
-#endif
-
 MUS_EXPORT int mus_iclamp(int lo, int val, int hi);
 MUS_EXPORT off_t mus_oclamp(off_t lo, off_t val, off_t hi);
 MUS_EXPORT Float mus_fclamp(Float lo, Float val, Float hi);

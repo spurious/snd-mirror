@@ -56,7 +56,6 @@ typedef enum {WITH_DEFAULT_BACKGROUND, WITH_WHITE_BACKGROUND} snd_entry_bg_t;
 #if HAVE_GTK_ADJUSTMENT_GET_UPPER
   /* 2.13.6 */
   #define WIDGET_TO_WINDOW(Widget)                gtk_widget_get_window(Widget)
-  #define WIDGET_TO_ALLOCATION(Widget)            gtk_widget_get_allocation(Widget)
   #define DIALOG_ACTION_AREA(Dialog)              gtk_dialog_get_action_area(GTK_DIALOG(Dialog))
   #define DIALOG_CONTENT_AREA(Dialog)             gtk_dialog_get_content_area(GTK_DIALOG(Dialog))
   #define ADJUSTMENT_VALUE(Adjust)                gtk_adjustment_get_value(GTK_ADJUSTMENT(Adjust))
@@ -67,7 +66,6 @@ typedef enum {WITH_DEFAULT_BACKGROUND, WITH_WHITE_BACKGROUND} snd_entry_bg_t;
   #define ADJUSTMENT_SET_PAGE_SIZE(Adjust, Value) gtk_adjustment_set_page_size(GTK_ADJUSTMENT(Adjust), Value)
 #else
   #define WIDGET_TO_WINDOW(Widget)                ((Widget)->window)
-  #define WIDGET_TO_ALLOCATION(Widget)            ((Widget)->allocation)
   #define DIALOG_ACTION_AREA(Dialog)              ((GTK_DIALOG(Dialog))->action_area)
   #define DIALOG_CONTENT_AREA(Dialog)             ((GTK_DIALOG(Dialog))->vbox)
   #define ADJUSTMENT_VALUE(Adjust)                ((GTK_ADJUSTMENT(Adjust))->value)

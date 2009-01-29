@@ -2265,14 +2265,14 @@ static void chans_drop(Widget w, XtPointer context, XtPointer info)
 
 #define PANEL_COMMENT_SPACE 8
 
-file_data *make_file_data_panel(Widget parent, const char *name, Arg *in_args, int in_n, 
-				dialog_channels_t with_chan, 
-				int header_type, int data_format,
-				dialog_data_location_t with_loc, 
-				dialog_samples_t with_samples,
-				dialog_header_type_t with_header_type,
-				dialog_comment_t with_comment,
-				header_choice_t header_choice)
+static file_data *make_file_data_panel(Widget parent, const char *name, Arg *in_args, int in_n, 
+				       dialog_channels_t with_chan, 
+				       int header_type, int data_format,
+				       dialog_data_location_t with_loc, 
+				       dialog_samples_t with_samples,
+				       dialog_header_type_t with_header_type,
+				       dialog_comment_t with_comment,
+				       header_choice_t header_choice)
 {
   Widget form, header_label, data_label, srate_label, chans_label, sep1, sep2 = NULL, sep3, sep4;
   Widget comment_label = NULL, location_label, samples_label;

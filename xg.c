@@ -1032,7 +1032,6 @@ XM_TYPE_PTR(GFile_, GFile*)
 #endif
 
 #if HAVE_GTK_ENTRY_SET_ICON_FROM_STOCK
-#define C_TO_XEN_GtkEntryIconPosition(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkEntryIconPosition(Arg) (GtkEntryIconPosition)(XEN_TO_C_INT(Arg))
 #define XEN_GtkEntryIconPosition_P(Arg) XEN_INTEGER_P(Arg)
 XM_TYPE_PTR(GIcon_, GIcon*)
@@ -48704,7 +48703,7 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("27-Jan-09"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("29-Jan-09"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

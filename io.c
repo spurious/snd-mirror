@@ -33,6 +33,36 @@
 #include "_sndlib.h"
 
 
+/* ---------------------------------------- */
+/* in io.c but not in _sndlib.h (these are now internal to sndlib, but I don't like the C-oid "_" prefix): */
+void mus_bint_to_char(unsigned char *j, int x);
+int mus_char_to_bint(const unsigned char *inp);
+void mus_lint_to_char(unsigned char *j, int x);
+int mus_char_to_lint(const unsigned char *inp);
+off_t mus_char_to_loff_t(const unsigned char *inp);
+off_t mus_char_to_boff_t(const unsigned char *inp);
+int mus_char_to_uninterpreted_int(const unsigned char *inp);
+void mus_bfloat_to_char(unsigned char *j, float x);
+float mus_char_to_bfloat(const unsigned char *inp);
+void mus_lfloat_to_char(unsigned char *j, float x);
+float mus_char_to_lfloat(const unsigned char *inp);
+void mus_bshort_to_char(unsigned char *j, short x);
+short mus_char_to_bshort(const unsigned char *inp);
+void mus_lshort_to_char(unsigned char *j, short x);
+short mus_char_to_lshort(const unsigned char *inp);
+unsigned short mus_char_to_ubshort(const unsigned char *inp);
+unsigned short mus_char_to_ulshort(const unsigned char *inp);
+double mus_char_to_ldouble(const unsigned char *inp);
+double mus_char_to_bdouble(const unsigned char *inp);
+void mus_bdouble_to_char(unsigned char *j, double x);
+void mus_boff_t_to_char(unsigned char *j, off_t x);
+void mus_loff_t_to_char(unsigned char *j, off_t x);
+unsigned int mus_char_to_ubint(const unsigned char *inp);
+unsigned int mus_char_to_ulint(const unsigned char *inp);
+/* ---------------------------------------- */
+
+
+
 static off_t mus_maximum_malloc = MUS_MAX_MALLOC_DEFAULT;
 
 off_t mus_max_malloc(void)
@@ -255,7 +285,8 @@ short mus_char_to_lshort(const unsigned char *inp)
 }
 
 
-void mus_ubshort_to_char(unsigned char *j, unsigned short x)
+#if ((MUS_LITTLE_ENDIAN) && (!HAVE_BYTESWAP_H)) || ((!MUS_LITTLE_ENDIAN) && (MUS_SUN))
+static void mus_ubshort_to_char(unsigned char *j, unsigned short x)
 {
   unsigned char *ox = (unsigned char *)&x;
 #if MUS_LITTLE_ENDIAN
@@ -264,6 +295,7 @@ void mus_ubshort_to_char(unsigned char *j, unsigned short x)
   memcpy((void *)j, (void *)ox, 2);
 #endif
 }
+#endif
 
 
 unsigned short mus_char_to_ubshort(const unsigned char *inp)
@@ -279,7 +311,8 @@ unsigned short mus_char_to_ubshort(const unsigned char *inp)
 }
 
 
-void mus_ulshort_to_char(unsigned char *j, unsigned short x)
+#if (!MUS_LITTLE_ENDIAN) && (!HAVE_BYTESWAP_H)
+static void mus_ulshort_to_char(unsigned char *j, unsigned short x)
 {
   unsigned char *ox = (unsigned char *)&x;
 #if (!MUS_LITTLE_ENDIAN)
@@ -288,6 +321,7 @@ void mus_ulshort_to_char(unsigned char *j, unsigned short x)
   memcpy((void *)j, (void *)ox, 2);
 #endif
 }
+#endif
 
 
 unsigned short mus_char_to_ulshort(const unsigned char *inp)
@@ -327,7 +361,8 @@ double mus_char_to_ldouble(const unsigned char *inp)
 }
 
 
-void mus_ldouble_to_char(unsigned char *j, double x)
+#if (!MUS_LITTLE_ENDIAN)
+static void mus_ldouble_to_char(unsigned char *j, double x)
 {
   unsigned char *ox = (unsigned char *)&x;
 #if (MUS_LITTLE_ENDIAN)
@@ -336,6 +371,7 @@ void mus_ldouble_to_char(unsigned char *j, double x)
   j[0] = ox[7]; j[1] = ox[6]; j[2] = ox[5]; j[3] = ox[4]; j[4] = ox[3]; j[5] = ox[2]; j[6] = ox[1]; j[7] = ox[0];
 #endif
 }
+#endif
 
 
 double mus_char_to_bdouble(const unsigned char *inp)
@@ -432,7 +468,7 @@ unsigned int mus_char_to_ulint(const unsigned char *inp)
 
 #else
 
-  #ifndef MUS_SUN
+#if (!MUS_SUN)
     #define big_endian_short(n)                  (*((short *)n))
     #define big_endian_int(n)                    (*((int *)n))
     #define big_endian_float(n)                  (*((float *)n))

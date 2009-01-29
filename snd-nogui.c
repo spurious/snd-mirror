@@ -229,6 +229,7 @@ void set_transform_size(off_t val) {in_set_transform_size(val);}
 void set_fft_window(mus_fft_window_t val) {in_set_fft_window(val);}
 void set_transform_type(int val) {in_set_transform_type(val);}
 void set_wavelet_type(int val) {in_set_wavelet_type(val);}
+void make_transform_type_list(void) {}
 void set_transform_graph_type(graph_type_t val) {in_set_transform_graph_type(val);}
 void set_amp(snd_info *sp, Float val) {sp->amp_control = val;}
 void set_expand(snd_info *sp, Float val) {sp->expand_control = val;}

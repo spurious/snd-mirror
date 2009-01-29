@@ -375,10 +375,6 @@ void clear_minibuffer_error(snd_info *sp);
 /* -------- snd-xfile.c -------- */
 
 char *get_file_dialog_sound_attributes(file_data *fdat, int *srate, int *chans, int *type, int *format, off_t *location, off_t *samples, int min_chan);
-file_data *make_file_data_panel(Widget parent, const char *name, Arg *args, int n, dialog_channels_t with_chan, 
-				int header_type, int data_format, dialog_data_location_t with_loc, 
-				dialog_samples_t with_samples, dialog_header_type_t with_header_type, dialog_comment_t with_comment,
-				header_choice_t header_choice);
 void alert_new_file(void);
 widget_t make_open_file_dialog(read_only_t read_only, bool managed);
 widget_t make_sound_save_as_dialog(bool managed);
@@ -419,7 +415,6 @@ void new_active_channel_alert(void);
 void env_redisplay(void);
 void env_redisplay_with_print(void);
 void update_enved_background_waveform(chan_info *cp);
-void enved_display_point_label(Float x, Float y);
 void enved_print(char *name);
 Widget create_envelope_editor(void);
 void set_enved_clip_p(bool val);

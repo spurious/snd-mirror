@@ -2870,6 +2870,7 @@ A more reasonable square-wave can be generated via
 ;;; 16 560 15456 399520 10106096 253715280 6352447936 158897291840 "central factorial"
 
 ;;; B^7 is 49 
+;;; B^9 is probably 81 etc
 
 
 (%o3)                        tanh(sin(y) + sin(x))
@@ -3132,7 +3133,7 @@ we can truncate its spectrum at the desired number of harmonics:
 <img src="pix/tanhexs.png">
 </td></tr></table>
 
-<p>See also the <a href="#tanhsin">tanhsin</a> in generators.scm.
+<p>See also <a href="#tanhsin">tanhsin</a> in generators.scm.
 Another square-wave choice is <a href="#eoddcos">eoddcos</a> in <a href="#othergenerators">generators.scm</a>, 
 based on atan; as its "r" parameter approaches 0.0, you get closer to a square wave.
 Even more amusing is this algorithm (related to tanh(sin)):

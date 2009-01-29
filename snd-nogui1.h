@@ -108,6 +108,7 @@ void set_transform_graph_type(graph_type_t val);
 void reflect_peaks_in_transform_dialog(void);
 void reflect_log_freq_start_in_transform_dialog(void);
 void reflect_min_db_in_transform_dialog(void);
+void make_transform_type_list(void);
 
 
 /* -------- snd-xregion.c -------- */

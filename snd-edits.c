@@ -550,8 +550,8 @@ typedef struct {
 #define ED_XSPLIT(Ed)                        (Ed)->ptrees->xsplit
 
 #define ED_MIXES(Ed)                         (Ed)->mixes
-#define ED_MIX_LIST_SIZE(Ed)                 (Ed)->mixes->size
 #define ED_MIX_LIST(Ed)                      (Ed)->mixes->mix_list
+/* #define ED_MIX_LIST_SIZE(Ed)                 (Ed)->mixes->size */
 /* #define ED_MIX_STATE(Ed, Mix)                (Ed)->mixes->mix_list[Mix] */
 /* #define ED_MIX_INDEX(Ed, Mix)                (Ed)->mixes->mix_list[Mix]->index */
 /* #define ED_MIX_LENGTH(Ed, Mix)               (Ed)->mixes->mix_list[Mix]->len */

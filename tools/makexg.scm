@@ -226,7 +226,7 @@
 	"cairo_font_weight_t" "cairo_font_slant_t"
 
 	"GtkPrintOperationAction"
-	"GtkTooltip*" "GtkCalendarDetailFunc" "GtkScaleButton*" 
+	"GtkTooltip*" "GtkCalendarDetailFunc" "GtkScaleButton*" "GtkEntryIconPosition"
 	"GdkDragAction" "GdkImageType"
 	))
 
