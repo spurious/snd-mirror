@@ -61,7 +61,7 @@ bool send_mozilla(const char *html_viewer, const char *url)
   Display *dpy;
   char *command;
   dpy = MAIN_DISPLAY(ss);
-  command = (char *)CALLOC(mus_strlen(url) + mus_strlen(html_viewer) + 32, sizeof(char));
+  command = (char *)calloc(mus_strlen(url) + mus_strlen(html_viewer) + 32, sizeof(char));
   window = find_window(dpy, DefaultRootWindow(dpy), NS_VERSION, compare_window);
   if (window)
     {
@@ -82,12 +82,12 @@ bool send_mozilla(const char *html_viewer, const char *url)
 	  sprintf(command, "%s file:%s", html_viewer, url);
 	  if (execl("/bin/sh", "/bin/sh", "-c", command, NULL) == -1)
 	    {
-	      FREE(command);
+	      free(command);
 	      return(false);
 	    }
 	}
     }
-  FREE(command);
+  free(command);
   return(true);
 }
 
@@ -164,7 +164,7 @@ static XEN g_set_window_property(XEN winat, XEN name, XEN command)
     c = mus_strdup(XEN_TO_C_STRING(command));
   else c = g_print_1(command);
   change_window_property(XEN_TO_C_STRING(winat), XEN_TO_C_STRING(name), c);
-  if (c) FREE(c);
+  if (c) free(c);
   return(XEN_FALSE);
 }
 

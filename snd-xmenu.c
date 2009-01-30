@@ -35,10 +35,10 @@ static void file_open_recent_callback(Widget w, XtPointer info, XtPointer contex
       if (size > recent_file_items_size)
 	{
 	  if (recent_file_items_size == 0)
-	    recent_file_items = (Widget *)CALLOC(size, sizeof(Widget));
+	    recent_file_items = (Widget *)calloc(size, sizeof(Widget));
 	  else
 	    {
-	      recent_file_items = (Widget *)REALLOC(recent_file_items, size * sizeof(Widget));
+	      recent_file_items = (Widget *)realloc(recent_file_items, size * sizeof(Widget));
 	      for (i = recent_file_items_size; i < size; i++)
 		recent_file_items[i] = NULL;
 	    }
@@ -220,10 +220,10 @@ static void view_files_callback(Widget w, XtPointer info, XtPointer context)
       if (size > view_files_items_size)
 	{
 	  if (view_files_items_size == 0)
-	    view_files_items = (Widget *)CALLOC(size, sizeof(Widget));
+	    view_files_items = (Widget *)calloc(size, sizeof(Widget));
 	  else
 	    {
-	      view_files_items = (Widget *)REALLOC(view_files_items, size * sizeof(Widget));
+	      view_files_items = (Widget *)realloc(view_files_items, size * sizeof(Widget));
 	      for (i = view_files_items_size; i < size; i++)
 		view_files_items[i] = NULL;
 	    }
@@ -246,9 +246,9 @@ static void view_files_callback(Widget w, XtPointer info, XtPointer context)
 	      set_label(view_files_items[i], view_files_names[i]);
 	      XtManageChild(view_files_items[i]);
 	    }
-	  FREE(view_files_names[i]);
+	  free(view_files_names[i]);
 	}
-      FREE(view_files_names);
+      free(view_files_names);
     }
 }
 
@@ -419,7 +419,7 @@ static void menu_drag_watcher(Widget w, const char *str, Position x, Position y,
       new_title = mus_format("%s: drop to open file", ss->startup_title);
       XtVaSetValues(MAIN_SHELL(ss), XmNtitle, (char *)new_title, NULL);
       XmChangeColor(w, ss->sgx->pushed_button_color);
-      FREE(new_title);
+      free(new_title);
       break;
     case DRAG_LEAVE:
       reflect_file_change_in_title();

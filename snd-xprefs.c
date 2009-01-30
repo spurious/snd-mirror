@@ -87,7 +87,7 @@ static void post_prefs_error(const char *msg, prefs_info *data);
 #define SET_TOGGLE(Toggle, Value) XmToggleButtonSetState(Toggle, Value, false)
 #define GET_TEXT(Text)            XmTextFieldGetString(Text)
 #define SET_TEXT(Text, Val)       XmTextFieldSetString(Text, (char *)Val)
-#define FREE_TEXT(Val)            XtFree(Val)
+#define free_TEXT(Val)            XtFree(Val)
 #define SET_SCALE(Value)          XmScaleSetValue(prf->scale, (int)(100 * Value))
 #define SET_SENSITIVE(Wid, Val)   XtSetSensitive(Wid, Val)
 #define black_text(Prf)           XtVaSetValues(Prf->label, XmNforeground, ss->sgx->black, NULL)
@@ -567,7 +567,7 @@ static prefs_info *prefs_row_with_toggle(const char *label, const char *varname,
 {
   prefs_info *prf = NULL;
   Widget sep, help;
-  prf = (prefs_info *)CALLOC(1, sizeof(prefs_info));
+  prf = (prefs_info *)calloc(1, sizeof(prefs_info));
   prf->var_name = varname;
   prf->toggle_func = toggle_func;
 
@@ -600,7 +600,7 @@ static prefs_info *prefs_row_with_two_toggles(const char *label, const char *var
 {
   prefs_info *prf = NULL;
   Widget sep, help, sep1;
-  prf = (prefs_info *)CALLOC(1, sizeof(prefs_info));
+  prf = (prefs_info *)calloc(1, sizeof(prefs_info));
   prf->var_name = varname;
   prf->toggle_func = toggle_func;
   prf->toggle2_func = toggle2_func;
@@ -680,7 +680,7 @@ static prefs_info *prefs_row_with_toggle_with_text(const char *label, const char
 {
   prefs_info *prf = NULL;
   Widget sep, sep1, lab1, help;
-  prf = (prefs_info *)CALLOC(1, sizeof(prefs_info));
+  prf = (prefs_info *)calloc(1, sizeof(prefs_info));
   prf->var_name = varname;
   prf->toggle_func = toggle_func;
   prf->text_func = text_func;
@@ -709,7 +709,7 @@ static prefs_info *prefs_row_with_toggle_with_two_texts(const char *label, const
 {
   prefs_info *prf = NULL;
   Widget sep, lab1, lab2, help, sep1;
-  prf = (prefs_info *)CALLOC(1, sizeof(prefs_info));
+  prf = (prefs_info *)calloc(1, sizeof(prefs_info));
   prf->var_name = varname;
   prf->toggle_func = toggle_func;
   prf->text_func = text_func;
@@ -742,7 +742,7 @@ static prefs_info *prefs_row_with_text_with_toggle(const char *label, const char
 {
   prefs_info *prf = NULL;
   Widget sep, sep1, lab1, help;
-  prf = (prefs_info *)CALLOC(1, sizeof(prefs_info));
+  prf = (prefs_info *)calloc(1, sizeof(prefs_info));
   prf->var_name = varname;
   prf->toggle_func = toggle_func;
   prf->text_func = text_func;
@@ -774,7 +774,7 @@ static prefs_info *prefs_row_with_text_and_three_toggles(const char *label, cons
 {
   prefs_info *prf = NULL;
   Widget sep, sep1, lab1, sep2, lab2, lab3, sep3, lab4, help;
-  prf = (prefs_info *)CALLOC(1, sizeof(prefs_info));
+  prf = (prefs_info *)calloc(1, sizeof(prefs_info));
   prf->var_name = varname;
   prf->text_func = text_func;
 
@@ -820,7 +820,7 @@ static Widget make_row_radio_box(prefs_info *prf,
   int i, n;
   Widget w;
 
-  prf->radio_buttons = (Widget *)CALLOC(num_labels, sizeof(Widget));
+  prf->radio_buttons = (Widget *)calloc(num_labels, sizeof(Widget));
   prf->num_buttons = num_labels;
 
   n = 0;
@@ -872,7 +872,7 @@ static prefs_info *prefs_row_with_radio_box(const char *label, const char *varna
 {
   prefs_info *prf = NULL;
   Widget sep, help;
-  prf = (prefs_info *)CALLOC(1, sizeof(prefs_info));
+  prf = (prefs_info *)calloc(1, sizeof(prefs_info));
   prf->var_name = varname;
   prf->toggle_func = toggle_func;
   prf->label = make_row_label(prf, label, box, top_widget);
@@ -895,7 +895,7 @@ static prefs_info *prefs_row_with_radio_box_and_number(const char *label, const 
 {
   prefs_info *prf = NULL;
   Widget sep, help;
-  prf = (prefs_info *)CALLOC(1, sizeof(prefs_info));
+  prf = (prefs_info *)calloc(1, sizeof(prefs_info));
   prf->var_name = varname;
   prf->toggle_func = toggle_func;
   prf->text_func = text_func;
@@ -952,17 +952,17 @@ static prefs_info *prefs_row_with_scale(const char *label, const char *varname,
   XtCallbackList n1, n2;
   char *str;
 
-  prf = (prefs_info *)CALLOC(1, sizeof(prefs_info));
+  prf = (prefs_info *)calloc(1, sizeof(prefs_info));
   prf->var_name = varname;
   prf->scale_max = max_val;
 
   prf->label = make_row_label(prf, label, box, top_widget);
   sep = make_row_middle_separator(prf->label, box, top_widget);
   
-  str = (char *)CALLOC(12, sizeof(char));
+  str = (char *)calloc(12, sizeof(char));
   mus_snprintf(str, 12, "%.3f", current_value);
   prf->text = make_row_text(prf, str, 6, sep, box, top_widget);
-  FREE(str);
+  free(str);
   
   n = 0;
   XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
@@ -994,8 +994,8 @@ static prefs_info *prefs_row_with_scale(const char *label, const char *varname,
   XtAddEventHandler(prf->scale, EnterWindowMask, false, mouse_enter_pref_callback, (XtPointer)prf);
   XtAddEventHandler(prf->scale, LeaveWindowMask, false, mouse_leave_pref_callback, (XtPointer)prf);
 
-  FREE(n1);
-  FREE(n2);
+  free(n1);
+  free(n2);
 
   return(prf);
 }
@@ -1009,7 +1009,7 @@ static prefs_info *prefs_row_with_text(const char *label, const char *varname, c
 {
   prefs_info *prf = NULL;
   Widget sep, help;
-  prf = (prefs_info *)CALLOC(1, sizeof(prefs_info));
+  prf = (prefs_info *)calloc(1, sizeof(prefs_info));
   prf->var_name = varname;
 
   prf->label = make_row_label(prf, label, box, top_widget);
@@ -1033,7 +1033,7 @@ static prefs_info *prefs_row_with_two_texts(const char *label, const char *varna
 {
   prefs_info *prf = NULL;
   Widget sep, lab1, lab2, help;
-  prf = (prefs_info *)CALLOC(1, sizeof(prefs_info));
+  prf = (prefs_info *)calloc(1, sizeof(prefs_info));
   prf->var_name = varname;
 
   prf->label = make_row_label(prf, label, box, top_widget);
@@ -1061,7 +1061,7 @@ static prefs_info *prefs_row_with_number(const char *label, const char *varname,
 {
   prefs_info *prf = NULL;
   Widget sep, help;
-  prf = (prefs_info *)CALLOC(1, sizeof(prefs_info));
+  prf = (prefs_info *)calloc(1, sizeof(prefs_info));
   prf->var_name = varname;
 
   prf->label = make_row_label(prf, label, box, top_widget);
@@ -1091,7 +1091,7 @@ typedef struct {
 static list_entry *make_list_entry(prefs_info *prf, char *value)
 {
   list_entry *le;
-  le = (list_entry *)CALLOC(1, sizeof(list_entry));
+  le = (list_entry *)calloc(1, sizeof(list_entry));
   le->prf = prf;
   le->value = value;
   return(le);
@@ -1117,7 +1117,7 @@ static prefs_info *prefs_row_with_list(const char *label, const char *varname, c
   int n, i, cols = 0;
   prefs_info *prf = NULL;
   Widget sep, sbar, help;
-  prf = (prefs_info *)CALLOC(1, sizeof(prefs_info));
+  prf = (prefs_info *)calloc(1, sizeof(prefs_info));
   prf->var_name = varname;
 
   prf->label = make_row_label(prf, label, box, top_widget);
@@ -1220,7 +1220,7 @@ static XColor *rgb_to_color_1(Float r, Float g, Float b)
 {
   Display *dpy;
   XColor *new_color;
-  new_color = (XColor *)CALLOC(1, sizeof(XColor));
+  new_color = (XColor *)calloc(1, sizeof(XColor));
   new_color->flags = DoRed | DoGreen | DoBlue;
   new_color->red = FLOAT_TO_RGB(r);
   new_color->green = FLOAT_TO_RGB(g);
@@ -1237,7 +1237,7 @@ static color_t rgb_to_color(Float r, Float g, Float b)
   XColor *color;
   color = rgb_to_color_1(r, g, b);
   temp = color->pixel;
-  FREE(color);
+  free(color);
   return(temp);
 }
 
@@ -1273,7 +1273,7 @@ static void reflect_color(prefs_info *prf)
   b = RGB_TO_FLOAT(current_color->blue);
 
   pixel = current_color->pixel;
-  FREE(current_color);
+  free(current_color);
   current_color = NULL;
 
   XtVaSetValues(prf->color, XmNbackground, pixel, NULL);
@@ -1401,7 +1401,7 @@ static prefs_info *prefs_color_selector_row(const char *label, const char *varna
   XtCallbackList n1;
   float r = 0.0, g = 0.0, b = 0.0;
 
-  prf = (prefs_info *)CALLOC(1, sizeof(prefs_info));
+  prf = (prefs_info *)calloc(1, sizeof(prefs_info));
   prf->var_name = varname;
   pixel_to_rgb(current_pixel, &r, &g, &b);
 
@@ -1527,7 +1527,7 @@ static prefs_info *prefs_color_selector_row(const char *label, const char *varna
   XtAddEventHandler(prf->bscl, LeaveWindowMask, false, mouse_leave_pref_callback, (XtPointer)prf);
 
   prf->color_func = color_func;
-  FREE(n1);
+  free(n1);
   return(prf);
 }
 
@@ -1655,7 +1655,7 @@ static void prefs_set_dialog_title(const char *filename)
   char *str;
   if (filename)
     {
-      if (prefs_saved_filename) FREE(prefs_saved_filename);
+      if (prefs_saved_filename) free(prefs_saved_filename);
       prefs_saved_filename = mus_strdup(filename);
     }
   if (prefs_saved_filename)
@@ -1665,7 +1665,7 @@ static void prefs_set_dialog_title(const char *filename)
   else str = mus_format("Preferences%s",
 			(prefs_unsaved) ? "*" : "");
   title = XmStringCreateLocalized(str);
-  FREE(str);
+  free(str);
   XtVaSetValues(preferences_dialog, 
 		XmNdialogTitle, title, 
 		NULL);
@@ -1724,7 +1724,7 @@ static void va_post_prefs_error(const char *msg, prefs_info *data, ...)
   buf = vstr(msg, ap);
   va_end(ap);
   post_prefs_error(buf, data);
-  FREE(buf);
+  free(buf);
 }
 
 
@@ -1858,8 +1858,8 @@ widget_t start_preferences_dialog(void)
 				   startup_size_text);
     /* this is not reflected */
     remember_pref(prf, NULL, save_init_window_size, NULL, clear_init_window_size, revert_init_window_size); 
-    FREE(str2);
-    FREE(str1);
+    free(str2);
+    free(str1);
 
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
     prf = prefs_row_with_toggle("ask before overwriting anything", S_ask_before_overwrite,
@@ -1942,7 +1942,7 @@ widget_t start_preferences_dialog(void)
 					  dpy_box, current_sep,
 					  selection_creates_region_toggle, max_regions_text);
     remember_pref(prf, reflect_selection_creates_region, save_selection_creates_region, NULL, NULL, revert_selection_creates_region);
-    FREE(str);
+    free(str);
 
     /* ---------------- file options ---------------- */
 
@@ -2059,7 +2059,7 @@ widget_t start_preferences_dialog(void)
       rts_raw_data_format = format;
       str = mus_format("%d", chans);
       str1 = mus_format("%d", srate);
-      raw_data_format_choices = (char **)CALLOC(MUS_NUM_DATA_FORMATS - 1, sizeof(char *));
+      raw_data_format_choices = (char **)calloc(MUS_NUM_DATA_FORMATS - 1, sizeof(char *));
       for (i = 1; i < MUS_NUM_DATA_FORMATS; i++)
 	raw_data_format_choices[i - 1] = raw_data_format_to_string(i); /* skip MUS_UNKNOWN */
       prf = prefs_row_with_text("default raw sound attributes: chans", S_mus_header_raw_defaults, str,
@@ -2079,8 +2079,8 @@ widget_t start_preferences_dialog(void)
 				NULL, NULL,
 				raw_data_format_from_menu);
       remember_pref(prf, reflect_raw_data_format, save_raw_data_format, NULL, NULL, revert_raw_data_format);
-      FREE(str);
-      FREE(str1);
+      free(str);
+      free(str1);
     }
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
 
@@ -2157,7 +2157,7 @@ widget_t start_preferences_dialog(void)
 						  dpy_box, key_label,
 						  bind_play_from_cursor);
       remember_pref(prf, reflect_play_from_cursor, save_pfc_binding, help_play_from_cursor, clear_play_from_cursor, NULL);
-      FREE(ki);
+      free(ki);
 
       current_sep = make_inter_variable_separator(dpy_box, prf->label);
       ki = find_prefs_key_binding("show-all");
@@ -2167,7 +2167,7 @@ widget_t start_preferences_dialog(void)
 						  dpy_box, current_sep,
 						  bind_show_all);
       remember_pref(prf, reflect_show_all, save_show_all_binding, help_show_all, clear_show_all, NULL);
-      FREE(ki);
+      free(ki);
 
       current_sep = make_inter_variable_separator(dpy_box, prf->label);
       ki = find_prefs_key_binding("select-all");
@@ -2177,7 +2177,7 @@ widget_t start_preferences_dialog(void)
 						  dpy_box, current_sep,
 						  bind_select_all);
       remember_pref(prf, reflect_select_all, save_select_all_binding, help_select_all, clear_select_all, NULL);
-      FREE(ki);
+      free(ki);
 
       current_sep = make_inter_variable_separator(dpy_box, prf->label);
       ki = find_prefs_key_binding("show-selection");
@@ -2187,7 +2187,7 @@ widget_t start_preferences_dialog(void)
 						  dpy_box, current_sep,
 						  bind_show_selection);
       remember_pref(prf, reflect_show_selection, save_show_selection_binding, help_show_selection, clear_show_selection, NULL);
-      FREE(ki);
+      free(ki);
 
       current_sep = make_inter_variable_separator(dpy_box, prf->label);
       ki = find_prefs_key_binding("revert-sound");
@@ -2197,7 +2197,7 @@ widget_t start_preferences_dialog(void)
 						  dpy_box, current_sep,
 						  bind_revert);
       remember_pref(prf, reflect_revert, save_revert_binding, help_revert, clear_revert_sound, NULL);
-      FREE(ki);
+      free(ki);
 
       current_sep = make_inter_variable_separator(dpy_box, prf->label);
       ki = find_prefs_key_binding("exit");
@@ -2207,7 +2207,7 @@ widget_t start_preferences_dialog(void)
 						  dpy_box, current_sep,
 						  bind_exit);
       remember_pref(prf, reflect_exit, save_exit_binding, help_exit, clear_exit, NULL);
-      FREE(ki);
+      free(ki);
 
       current_sep = make_inter_variable_separator(dpy_box, prf->label);
       ki = find_prefs_key_binding("goto-maxamp");
@@ -2217,7 +2217,7 @@ widget_t start_preferences_dialog(void)
 						  dpy_box, current_sep,
 						  bind_goto_maxamp);
       remember_pref(prf, reflect_goto_maxamp, save_goto_maxamp_binding, help_goto_maxamp, clear_goto_maxamp, NULL);
-      FREE(ki);
+      free(ki);
 
     }
 
@@ -2246,8 +2246,8 @@ widget_t start_preferences_dialog(void)
 						 with_tracking_cursor_toggle,
 						 cursor_location_text);
       remember_pref(prf, reflect_with_tracking_cursor, save_with_tracking_cursor, NULL, NULL, revert_with_tracking_cursor);
-      FREE(str);
-      FREE(str1);
+      free(str);
+      free(str1);
     }
 
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
@@ -2257,7 +2257,7 @@ widget_t start_preferences_dialog(void)
 				dpy_box, current_sep,
 				cursor_size_up, cursor_size_down, cursor_size_from_text);
     remember_pref(prf, reflect_cursor_size, save_cursor_size, NULL, NULL, revert_cursor_size);
-    FREE(str);
+    free(str);
     if (cursor_size(ss) <= 0) XtSetSensitive(prf->arrow_down, false);
 
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
@@ -2342,7 +2342,7 @@ widget_t start_preferences_dialog(void)
 				grf_box, current_sep,
 				dot_size_up, dot_size_down, dot_size_from_text);
     remember_pref(prf, reflect_dot_size, save_dot_size, NULL, NULL, revert_dot_size);
-    FREE(str);
+    free(str);
     if (dot_size(ss) <= 0) XtSetSensitive(prf->arrow_down, false);
 
     current_sep = make_inter_variable_separator(grf_box, prf->label);
@@ -2355,7 +2355,7 @@ widget_t start_preferences_dialog(void)
 					  grf_box, current_sep,
 					  initial_bounds_toggle,
 					  initial_bounds_text);
-    FREE(str);
+    free(str);
     remember_pref(prf, reflect_initial_bounds, save_initial_bounds, help_initial_bounds, clear_initial_bounds, revert_initial_bounds);
 
     current_sep = make_inter_variable_separator(grf_box, prf->label);
@@ -2524,7 +2524,7 @@ widget_t start_preferences_dialog(void)
 				fft_box, fft_label, 
 				fft_size_up, fft_size_down, fft_size_from_text);
     remember_pref(prf, reflect_fft_size, save_fft_size, NULL, NULL, revert_fft_size);
-    FREE(str);
+    free(str);
     if (transform_size(ss) <= 2) XtSetSensitive(prf->arrow_down, false);
 
     current_sep = make_inter_variable_separator(fft_box, prf->label);
@@ -2570,14 +2570,14 @@ widget_t start_preferences_dialog(void)
 					  fft_box, current_sep,
 					  transform_peaks_toggle, max_peaks_text);
     remember_pref(prf, reflect_transform_peaks, save_transform_peaks, NULL, NULL, revert_transform_peaks);
-    FREE(str);
+    free(str);
 
     current_sep = make_inter_variable_separator(fft_box, prf->label);
     {
       const char **cmaps;
       int i, len;
       len = num_colormaps();
-      cmaps = (const char **)CALLOC(len, sizeof(const char *));
+      cmaps = (const char **)calloc(len, sizeof(const char *));
       for (i = 0; i < len; i++)
 	cmaps[i] = (const char *)colormap_name(i);
       rts_colormap = color_map(ss);
@@ -2588,7 +2588,7 @@ widget_t start_preferences_dialog(void)
 				colormap_completer, NULL,
 				colormap_from_menu);
       remember_pref(prf, reflect_colormap, save_colormap, NULL, clear_colormap, revert_colormap);
-      FREE(cmaps);
+      free(cmaps);
     }
 
     current_sep = make_inter_variable_separator(fft_box, prf->label);
@@ -2604,7 +2604,7 @@ widget_t start_preferences_dialog(void)
 			      fft_box, current_sep,
 			      min_dB_text);
     remember_pref(prf, reflect_min_dB, save_min_dB, NULL, NULL, revert_min_dB);
-    FREE(str);
+    free(str);
 
     current_sep = make_inter_variable_separator(fft_box, prf->label);
     prf = prefs_row_with_toggle("x axis as log freq", S_fft_log_frequency,
@@ -2649,8 +2649,8 @@ widget_t start_preferences_dialog(void)
 				   mmr_box, current_sep,
 				   mark_tag_size_text);
     remember_pref(prf, reflect_mark_tag_size, save_mark_tag_size, NULL, NULL, revert_mark_tag_size);
-    FREE(str2);
-    FREE(str1);
+    free(str2);
+    free(str1);
 
     current_sep = make_inter_variable_separator(mmr_box, prf->label);
     str1 = mus_format("%d", rts_mix_tag_width = mix_tag_width(ss));
@@ -2660,8 +2660,8 @@ widget_t start_preferences_dialog(void)
 				   mmr_box, current_sep,
 				   mix_tag_size_text);
     remember_pref(prf, reflect_mix_tag_size, save_mix_tag_size, NULL, NULL, revert_mix_tag_size);
-    FREE(str2);
-    FREE(str1);
+    free(str2);
+    free(str1);
 
     current_sep = make_inter_variable_separator(mmr_box, prf->label);
     saved_mix_color = ss->sgx->mix_color;
@@ -2678,7 +2678,7 @@ widget_t start_preferences_dialog(void)
 					  mmr_box, current_sep,
 					  show_mix_waveforms_toggle, mix_waveform_height_text);
     remember_pref(prf, reflect_mix_waveforms, save_mix_waveforms, NULL, NULL, revert_mix_waveforms);
-    FREE(str);
+    free(str);
 
     current_sep = make_inter_variable_separator(mmr_box, prf->label);
     prf = prefs_row_with_toggle("include mark pane", "mark-pane",
@@ -2716,7 +2716,7 @@ widget_t start_preferences_dialog(void)
 					      speed_control_choice, speed_control_up, speed_control_down, speed_control_text);
     XtSetSensitive(prf->arrow_down, (speed_control_tones(ss) > MIN_SPEED_CONTROL_SEMITONES));
     remember_pref(prf, reflect_speed_control, save_speed_control, NULL, NULL, revert_speed_control);
-    FREE(str);
+    free(str);
 
 #if HAVE_SCHEME
     current_sep = make_inter_variable_separator(clm_box, prf->label);
@@ -2733,7 +2733,7 @@ widget_t start_preferences_dialog(void)
 			      clm_box, current_sep,
 			      sinc_width_text);
     remember_pref(prf, reflect_sinc_width, save_sinc_width, NULL, NULL, revert_sinc_width);
-    FREE(str);
+    free(str);
 
     current_sep = make_inter_variable_separator(clm_box, prf->label);
     rts_clm_file_name = mus_strdup(find_clm_file_name());
@@ -2778,7 +2778,7 @@ widget_t start_preferences_dialog(void)
 				prg_box, current_sep, 
 				optimization_up, optimization_down, optimization_from_text);
     remember_pref(prf, reflect_optimization, save_optimization, NULL, NULL, revert_optimization);
-    FREE(str);
+    free(str);
     if (optimization(ss) == 6) XtSetSensitive(prf->arrow_up, false);
     if (optimization(ss) == 0) XtSetSensitive(prf->arrow_down, false);
 #endif
@@ -2814,7 +2814,7 @@ widget_t start_preferences_dialog(void)
 			      prg_box, current_sep,
 			      print_length_text);
     remember_pref(prf, reflect_print_length, save_print_length, NULL, NULL, revert_print_length);
-    FREE(str);
+    free(str);
 
     current_sep = make_inter_variable_separator(prg_box, prf->label);
     rts_listener_font = mus_strdup(listener_font(ss));
@@ -2856,7 +2856,7 @@ widget_t start_preferences_dialog(void)
 			      aud_box, aud_label,
 			      dac_size_text);
     remember_pref(prf, reflect_dac_size, save_dac_size, NULL, NULL, revert_dac_size);
-    FREE(str);
+    free(str);
 
     current_sep = make_inter_variable_separator(aud_box, prf->label);
     prf = prefs_row_with_toggle("fold in otherwise unplayable channels", S_dac_combines_channels,

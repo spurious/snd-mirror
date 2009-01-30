@@ -147,7 +147,7 @@ static void print_ok_callback(Widget w, XtPointer context, XtPointer info)
 		report_in_error_info(_("can't print!"), NULL);
 	      snd_remove(name, IGNORE_CACHE);
 	    }
-	  FREE(name);
+	  free(name);
 	}
       else 
 	{

@@ -306,16 +306,16 @@ static int make_callback_slot(void)
       callbacks_size += CALLBACK_INCR;
       if (callb == 0)
 	{
-	  menu_functions = (XEN *)CALLOC(callbacks_size, sizeof(XEN));
+	  menu_functions = (XEN *)calloc(callbacks_size, sizeof(XEN));
 	  for (i = 0; i < callbacks_size; i++) menu_functions[i] = XEN_UNDEFINED;
-	  menu_functions_loc = (int *)CALLOC(callbacks_size, sizeof(int));
+	  menu_functions_loc = (int *)calloc(callbacks_size, sizeof(int));
 	  for (i = 0; i < callbacks_size; i++) menu_functions_loc[i] = NOT_A_GC_LOC;
 	}
       else 
 	{
-	  menu_functions = (XEN *)REALLOC(menu_functions, callbacks_size * sizeof(XEN));
+	  menu_functions = (XEN *)realloc(menu_functions, callbacks_size * sizeof(XEN));
 	  for (i = callbacks_size - CALLBACK_INCR; i < callbacks_size; i++) menu_functions[i] = XEN_UNDEFINED;
-	  menu_functions_loc = (int *)REALLOC(menu_functions_loc, callbacks_size * sizeof(int));
+	  menu_functions_loc = (int *)realloc(menu_functions_loc, callbacks_size * sizeof(int));
 	  for (i = callbacks_size - CALLBACK_INCR; i < callbacks_size; i++) menu_functions_loc[i] = NOT_A_GC_LOC;
 	}
     }
@@ -366,7 +366,7 @@ static XEN gl_add_to_main_menu(XEN label, XEN callback)
 	{
 	  XEN errm;
 	  errm = C_TO_XEN_STRING(err);
-	  FREE(err);
+	  free(err);
 	  return(snd_bad_arity_error(S_add_to_main_menu, errm, callback));
 	}
     }
@@ -422,7 +422,7 @@ func (a function of no args) when the new menu is activated. Returns the new men
     {
       XEN errm;
       errm = C_TO_XEN_STRING(errmsg);
-      FREE(errmsg);
+      free(errmsg);
       return(snd_bad_arity_error(S_add_to_menu, errm, callback));
     }
   return(XEN_WRAP_WIDGET(result));

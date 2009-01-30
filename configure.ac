@@ -2231,16 +2231,6 @@ AC_SUBST(SNDLIB_LIB)
 if test "$enable_nls" != no ; then
   AM_GNU_GETTEXT([external])
   OPTIONAL_LIBRARIES="$OPTIONAL_LIBRARIES gettext"
-
-  AC_CHECK_HEADER(nl_types.h,
-    [AC_MSG_CHECKING([whether nl_types.h defines MALLOC])
-     AC_COMPILE_IFELSE(
-       [AC_LANG_PROGRAM([#include <langinfo.h>],
-		        [char i; i = MALLOC; return(0)])],
-       [AC_DEFINE(NL_TYPES_H_DEFINES_MALLOC)
-        AC_MSG_RESULT(yes)
-       ],
-       [AC_MSG_RESULT(no)])])
 else
 # desperation!
 cp makefile.in makefile.gettext

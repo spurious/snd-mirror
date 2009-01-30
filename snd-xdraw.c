@@ -45,7 +45,7 @@ static void draw_polygon_va(axis_context *ax, bool filled, int points, va_list a
 {
   int i;
   XPoint *pts;
-  pts = (XPoint *)CALLOC(points, sizeof(XPoint));
+  pts = (XPoint *)calloc(points, sizeof(XPoint));
   for (i = 0; i < points; i++)
     {
       pts[i].x = va_arg(ap, int);
@@ -54,7 +54,7 @@ static void draw_polygon_va(axis_context *ax, bool filled, int points, va_list a
   if (filled)
     XFillPolygon(ax->dp, ax->wn, ax->gc, pts, points, Convex, CoordModeOrigin);
   else XDrawLines(ax->dp, ax->wn, ax->gc, pts, points, CoordModeOrigin);
-  FREE(pts);
+  free(pts);
 }
 
 
@@ -96,7 +96,7 @@ void draw_points(axis_context *ax, point_t *points, int num, int size)
       XArc *rs;
       /* create squares or whatever centered on each point */
       size2 = size / 2;
-      rs = (XArc *)CALLOC(num, sizeof(XArc));
+      rs = (XArc *)calloc(num, sizeof(XArc));
       for (i = 0; i < num; i++)
 	{
 	  rs[i].x = points[i].x - size2;
@@ -107,7 +107,7 @@ void draw_points(axis_context *ax, point_t *points, int num, int size)
 	  rs[i].height = size;
 	}
       XFillArcs(ax->dp, ax->wn, ax->gc, rs, num);
-      FREE(rs);
+      free(rs);
     }
 }
 
@@ -220,7 +220,7 @@ void check_colormap_sizes(int colors)
 	{
 	  old_size = current_colors_size;
 	  current_colors_size = colors;
-	  current_colors = (Pixel *)REALLOC(current_colors, current_colors_size * sizeof(Pixel));
+	  current_colors = (Pixel *)realloc(current_colors, current_colors_size * sizeof(Pixel));
 	  for (i = old_size; i < current_colors_size; i++) current_colors[i] = 0;
 	}
     }
@@ -228,8 +228,8 @@ void check_colormap_sizes(int colors)
     {
       old_size = sono_colors;
       sono_colors = colors;
-      sono_data = (XRectangle **)REALLOC(sono_data, sono_colors * sizeof(XRectangle *));
-      for (i = old_size; i < sono_colors; i++) sono_data[i] = (XRectangle *)CALLOC(sono_bins, sizeof(XRectangle));
+      sono_data = (XRectangle **)realloc(sono_data, sono_colors * sizeof(XRectangle *));
+      for (i = old_size; i < sono_colors; i++) sono_data[i] = (XRectangle *)calloc(sono_bins, sizeof(XRectangle));
     }
 }
 
@@ -243,9 +243,9 @@ void initialize_colormap(void)
   gv.foreground = sx->data_color;
   colormap_GC = XCreateGC(MAIN_DISPLAY(ss), XtWindow(MAIN_SHELL(ss)), GCForeground | GCBackground, &gv);
   sono_colors = color_map_size(ss);
-  sono_data = (XRectangle **)CALLOC(sono_colors, sizeof(XRectangle *));
+  sono_data = (XRectangle **)calloc(sono_colors, sizeof(XRectangle *));
   current_colors_size = color_map_size(ss);
-  current_colors = (Pixel *)CALLOC(current_colors_size, sizeof(Pixel));
+  current_colors = (Pixel *)calloc(current_colors_size, sizeof(Pixel));
 }
 
 
@@ -282,8 +282,8 @@ void allocate_sono_rects(int bins)
       for (i = 0; i < sono_colors; i++)
 	{
 	  if ((sono_bins > 0) && (sono_data[i]))
-	    FREE(sono_data[i]); /* each is array of XRectangle structs, but it's the wrong size */
-	  sono_data[i] = (XRectangle *)CALLOC(bins, sizeof(XRectangle));
+	    free(sono_data[i]); /* each is array of XRectangle structs, but it's the wrong size */
+	  sono_data[i] = (XRectangle *)calloc(bins, sizeof(XRectangle));
 	}
       sono_bins = bins;
     }
@@ -563,7 +563,7 @@ void reflect_color_list(bool setup_time)
       int i, size;
       XmString *cmaps;
       size = num_colormaps();
-      cmaps = (XmString *)CALLOC(size, sizeof(XmString));
+      cmaps = (XmString *)calloc(size, sizeof(XmString));
       for (i = 0; i < size; i++)
 	cmaps[i] = XmStringCreateLocalized(colormap_name(i));
       XtVaSetValues(ccd->list, 
@@ -575,7 +575,7 @@ void reflect_color_list(bool setup_time)
 		      XmNvisibleItemCount, 6,
 		      NULL);
       for (i = 0; i < size; i++) XmStringFree(cmaps[i]);
-      FREE(cmaps);
+      free(cmaps);
     }
 }
 
@@ -592,7 +592,7 @@ static void start_view_color_dialog(bool managed)
       Widget mainform, light_label, sep, sep1;
 
       /* create color chooser dialog window */
-      ccd = (color_chooser_info *)CALLOC(1, sizeof(color_chooser_info));
+      ccd = (color_chooser_info *)calloc(1, sizeof(color_chooser_info));
 
       xdismiss = XmStringCreateLocalized(_("Go Away")); /* needed by template dialog */
       xhelp = XmStringCreateLocalized(_("Help"));
@@ -807,7 +807,7 @@ static XmString scale_label(const char *orig_label, int value, bool dec)
     lab = mus_format("%s: %d", orig_label, value);
   else lab = mus_format("%s: %.2f", orig_label, value * 0.01);
   x = XmStringCreateLocalized(lab);
-  FREE(lab);
+  free(lab);
   return(x);
 }
 
@@ -827,7 +827,7 @@ static void scale_set_label(const char *orig_label, Widget w, int value, bool de
   else lab = mus_format("%s: %.2f", orig_label, value * 0.01);
   x = XmStringCreateLocalized(lab);
   XtVaSetValues(w, XmNtitleString, x, NULL);
-  FREE(lab);
+  free(lab);
   XmStringFree(x);
 }
 
@@ -1169,7 +1169,7 @@ static void start_view_orientation_dialog(bool managed)
       Arg args[32];
 
       /* create orientation window */
-      oid = (orientation_info *)CALLOC(1, sizeof(orientation_info));
+      oid = (orientation_info *)calloc(1, sizeof(orientation_info));
 
       xdismiss = XmStringCreateLocalized(_("Go Away"));
       xhelp = XmStringCreateLocalized(_("Help"));

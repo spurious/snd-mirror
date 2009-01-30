@@ -105,7 +105,7 @@ static int be_snd_checked_write(int fd, unsigned char *buf, int bytes, const cha
   do { \
     if (fs != -1) snd_close(fs, NewName); \
     if (fd != -1) snd_close(fd, OldName); \
-      if (buf) FREE(buf); \
+      if (buf) free(buf); \
      } \
   while (false)
 
@@ -120,7 +120,7 @@ static int be_snd_checked_write(int fd, unsigned char *buf, int bytes, const cha
         CLEANUP(OldName, NewName); \
         RETURN_MUS_IO_ERROR("open", OldName); \
       } \
-    buf = (BufType *)CALLOC(BufSize, sizeof(BufType)); \
+    buf = (BufType *)calloc(BufSize, sizeof(BufType)); \
     if (buf == NULL) \
       { \
         CLEANUP(OldName, NewName); \
@@ -533,19 +533,19 @@ static int read_hcom(const char *oldname, const char *newname, char *hdr)
       count = mus_char_to_bint((unsigned char *)buf) - 1;
       dc = mus_char_to_bint((unsigned char *)(buf + 8));
       size = mus_char_to_bshort((unsigned char *)(buf + 16));
-      d = (short **)CALLOC(size, sizeof(short *));
+      d = (short **)calloc(size, sizeof(short *));
       bytes = read(fd, buf, size * 4 + 2); /* 2 for pad byte + first sample */
     }
   if (bytes == 0)
     {
-      if (d) FREE(d);
+      if (d) free(d);
       CLEANUP(oldname, newname);
       RETURN_MUS_WRITE_ERROR(oldname, newname); /* read actually, but it's a generic message */
     }
   osp = 0;
   for (i = 0; i < size; i++) 
     {
-      d[i] = (short *)CALLOC(2, sizeof(short));
+      d[i] = (short *)calloc(2, sizeof(short));
       d[i][0] = mus_char_to_bshort((unsigned char *)(buf + osp)); osp += 2;
       d[i][1] = mus_char_to_bshort((unsigned char *)(buf + osp)); osp += 2;
     }
@@ -574,8 +574,8 @@ static int read_hcom(const char *oldname, const char *newname, char *hdr)
 	{
 	  if (snd_checked_write(fs, (unsigned char *)hdr, TRANS_BUF_SIZE, newname) == MUS_ERROR) 
 	    {
-	      for (i = 0; i < size; i++) FREE(d[i]);
-	      FREE(d);
+	      for (i = 0; i < size; i++) free(d[i]);
+	      free(d);
 	      CLEANUP(oldname, newname);
 	      RETURN_MUS_WRITE_ERROR(oldname, newname);
 	    }
@@ -608,8 +608,8 @@ static int read_hcom(const char *oldname, const char *newname, char *hdr)
 	}
     }
   err = snd_checked_write(fs, (unsigned char *)hdr, outp, newname);
-  for (i = 0; i < size; i++) FREE(d[i]);
-  FREE(d);
+  for (i = 0; i < size; i++) free(d[i]);
+  free(d);
   CLEANUP(oldname, newname);
   if (err == MUS_ERROR) RETURN_MUS_WRITE_ERROR(oldname, newname);
   return(MUS_NO_ERROR);
@@ -781,7 +781,7 @@ static int read_ibm_adpcm(const char *oldname, const char *newname, char *hdr)
       RETURN_MUS_WRITE_ERROR(oldname, newname);
     }
   lseek(fd, loc, SEEK_SET);
-  buf1 = (short *)CALLOC(TRANS_BUF_SIZE, sizeof(short));
+  buf1 = (short *)calloc(TRANS_BUF_SIZE, sizeof(short));
   while (true)
     {
       ssize_t totalin;
@@ -808,12 +808,12 @@ static int read_ibm_adpcm(const char *oldname, const char *newname, char *hdr)
 	}
       if (be_snd_checked_write(fs, (unsigned char *)buf1, j * 2, newname) == MUS_ERROR) 
 	{
-	  FREE(buf1);
+	  free(buf1);
 	  CLEANUP(oldname, newname);
 	  RETURN_MUS_WRITE_ERROR(oldname, newname);
 	}
     }
-  FREE(buf1);
+  free(buf1);
   CLEANUP(oldname, newname);
   return(MUS_NO_ERROR);
 }
@@ -984,7 +984,7 @@ static int read_oki_adpcm(const char *oldname, const char *newname, char *hdr)
   blksiz = mus_sound_block_align(oldname);
   if (blksiz == 0) blksiz = 256;
   STARTUP(oldname, newname, blksiz, unsigned char);
-  buf1 = (short *)CALLOC(blksiz * 2, sizeof(short));
+  buf1 = (short *)calloc(blksiz * 2, sizeof(short));
   samps = mus_sound_fact_samples(oldname);
   if (samps == 0) samps = (int)mus_sound_frames(oldname);
   srate = mus_sound_srate(oldname);
@@ -992,7 +992,7 @@ static int read_oki_adpcm(const char *oldname, const char *newname, char *hdr)
   mus_bint_to_char((unsigned char *)(hdr + 20), chans);
   if (snd_checked_write(fs, (unsigned char *)hdr, 28, newname) == MUS_ERROR)
     {
-      FREE(buf1);
+      free(buf1);
       CLEANUP(oldname, newname);
       RETURN_MUS_WRITE_ERROR(oldname, newname);
     }
@@ -1013,13 +1013,13 @@ static int read_oki_adpcm(const char *oldname, const char *newname, char *hdr)
       samps_read = totalin * 2;
       if (be_snd_checked_write(fs, (unsigned char *)buf1, samps_read * 2, newname) == MUS_ERROR) 
 	{
-	  FREE(buf1);
+	  free(buf1);
 	  CLEANUP(oldname, newname);
 	  RETURN_MUS_WRITE_ERROR(oldname, newname);
 	}
       samps -= samps_read;
     }
-  FREE(buf1);
+  free(buf1);
   CLEANUP(oldname, newname);
   return(MUS_NO_ERROR);
 }
@@ -1048,7 +1048,7 @@ static int read_12bit(const char *oldname, const char *newname, char *hdr)
       RETURN_MUS_WRITE_ERROR(oldname, newname);
     }
   lseek(fd, loc, SEEK_SET);
-  buf1 = (short *)CALLOC(TRANS_BUF_SIZE, sizeof(short));
+  buf1 = (short *)calloc(TRANS_BUF_SIZE, sizeof(short));
   while (samps > 0)
     {
       totalin = read(fd, buf, (int)(TRANS_BUF_SIZE * 1.5));
@@ -1060,13 +1060,13 @@ static int read_12bit(const char *oldname, const char *newname, char *hdr)
 	}
       if (be_snd_checked_write(fs, (unsigned char *)buf1, j * 2, newname) == MUS_ERROR) 
 	{
-	  FREE(buf1);
+	  free(buf1);
 	  CLEANUP(oldname, newname);
 	  RETURN_MUS_WRITE_ERROR(oldname, newname);
 	}
       samps -= j;
     }
-  FREE(buf1);
+  free(buf1);
   CLEANUP(oldname, newname);
   return(MUS_NO_ERROR);
 }
@@ -1387,7 +1387,7 @@ static int read_g72x_adpcm(const char *oldname, const char *newname, char *hdr, 
       snd_fclose(fd, oldname);
       RETURN_MUS_WRITE_ERROR(oldname, newname);
     }
-  buf = (short *)CALLOC(TRANS_BUF_SIZE, sizeof(short));
+  buf = (short *)calloc(TRANS_BUF_SIZE, sizeof(short));
   if (buf == NULL) 
     {
       snd_close(fs, newname); 
@@ -1399,7 +1399,7 @@ static int read_g72x_adpcm(const char *oldname, const char *newname, char *hdr, 
     {
       snd_close(fs, newname); 
       snd_fclose(fd, oldname); 
-      FREE(buf); 
+      free(buf); 
       RETURN_MUS_WRITE_ERROR(oldname, newname);
     }
   switch (which_g)
@@ -1423,7 +1423,7 @@ static int read_g72x_adpcm(const char *oldname, const char *newname, char *hdr, 
 	    {
 	      snd_close(fs, newname); 
 	      snd_fclose(fd, oldname); 
-	      FREE(buf); 
+	      free(buf); 
 	      RETURN_MUS_WRITE_ERROR(oldname, newname);
 	    }
 	  j = 0;
@@ -1432,7 +1432,7 @@ static int read_g72x_adpcm(const char *oldname, const char *newname, char *hdr, 
   if (j > 0) err = be_snd_checked_write(fs, (unsigned char *)buf, j * 2, newname);
   snd_close(fs, newname);
   snd_fclose(fd, oldname);
-  FREE(buf);
+  free(buf);
   if (err == MUS_ERROR) RETURN_MUS_WRITE_ERROR(oldname, newname);
   return(MUS_NO_ERROR);
 }
@@ -1475,7 +1475,7 @@ int snd_translate(const char *oldname, const char *newname, int type)
   char *hdr = NULL;
   if (MUS_CANT_TRANSLATE == 0) MUS_CANT_TRANSLATE = mus_make_error((char *)"can't translate");
   err = MUS_CANT_TRANSLATE;
-  hdr = (char *)CALLOC(TRANS_BUF_SIZE, sizeof(char));
+  hdr = (char *)calloc(TRANS_BUF_SIZE, sizeof(char));
   /* set up default output header */
   mus_bint_to_char((unsigned char *)hdr, 0x2e736e64);   /* .snd */
   mus_bint_to_char((unsigned char *)(hdr + 4), 28);     /* data location */
@@ -1534,7 +1534,7 @@ int snd_translate(const char *oldname, const char *newname, int type)
 	err = MUS_NO_ERROR;
       break;
     }
-  FREE(hdr);
+  free(hdr);
   if (err == MUS_CANT_TRANSLATE)
     return(mus_error(MUS_CANT_TRANSLATE,
 		     _("can't translate %s\n  (%s header: %s (0x%x) data format)\n"),

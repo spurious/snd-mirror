@@ -114,7 +114,7 @@ static void make_region_labels(file_info *hdr)
 {
   char *str;
   if (hdr == NULL) return;
-  str = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
+  str = (char *)calloc(PRINT_BUFFER_SIZE, sizeof(char));
   mus_snprintf(str, PRINT_BUFFER_SIZE, _("srate: %d"), hdr->srate);
   set_label(srate_text, str);
   mus_snprintf(str, PRINT_BUFFER_SIZE, _("chans: %d"), hdr->chans);
@@ -123,7 +123,7 @@ static void make_region_labels(file_info *hdr)
   set_label(length_text, str);
   mus_snprintf(str, PRINT_BUFFER_SIZE, _("maxamp: %.3f"), region_maxamp(region_list_position_to_id(current_region)));
   set_label(maxamp_text, str);
-  FREE(str);
+  free(str);
 }
 
 
@@ -396,7 +396,7 @@ static gboolean regrow_mouse_leave_label(GtkWidget *w, GdkEventCrossing *ev, gpo
 static regrow *make_regrow(GtkWidget *ww, GCallback play_callback, GCallback name_callback)
 {
   regrow *r;
-  r = (regrow *)CALLOC(1, sizeof(regrow));
+  r = (regrow *)calloc(1, sizeof(regrow));
 
   /* assume "ww" is a vbox widget in this case */
   r->rw = gtk_hbox_new(false, 0);
@@ -522,7 +522,7 @@ static void make_region_dialog(void)
   gtk_box_pack_start(GTK_BOX(toppane), infobox, false, false, 2);
   gtk_widget_show(infobox);
   
-  region_rows = (regrow **)CALLOC(max_regions(ss), sizeof(regrow *));
+  region_rows = (regrow **)calloc(max_regions(ss), sizeof(regrow *));
   region_rows_size = max_regions(ss);
   for (i = 0; i < max_regions(ss); i++)
     {
@@ -648,7 +648,7 @@ void allocate_region_rows(int n)
       (n > region_rows_size))
     {
       int i;
-      region_rows = (regrow **)REALLOC(region_rows, n * sizeof(regrow *));
+      region_rows = (regrow **)realloc(region_rows, n * sizeof(regrow *));
       for (i = region_rows_size; i < n; i++) region_rows[i] = NULL;
       region_rows_size = n;
     }

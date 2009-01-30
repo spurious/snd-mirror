@@ -652,12 +652,12 @@ void add_channel_data_1(chan_info *cp, int srate, off_t frames, channel_graph_t 
   bool ymin_set = false, ymax_set = false;
 
   cp->edit_size = INITIAL_EDIT_SIZE;
-  cp->edits = (ed_list **)CALLOC(cp->edit_size, sizeof(ed_list *));
+  cp->edits = (ed_list **)calloc(cp->edit_size, sizeof(ed_list *));
   cp->edit_ctr = 0;
   cp->edits[0] = initial_ed_list(0, frames - 1);
   cp->sound_size = INITIAL_EDIT_SIZE;
   cp->sound_ctr = 0;
-  cp->sounds = (snd_data **)CALLOC(cp->sound_size, sizeof(snd_data *));
+  cp->sounds = (snd_data **)calloc(cp->sound_size, sizeof(snd_data *));
 
   cp->active = CHANNEL_HAS_EDIT_LIST;
 
@@ -754,7 +754,7 @@ void add_channel_data_1(chan_info *cp, int srate, off_t frames, channel_graph_t 
   if (ymin >= ymax) ymin = ymax - .01;
   if (y0 >= y1) y0 = y1 - .01;
   ap = make_axis_info(cp, 0.0, xmax, ymin, ymax, (hook_label) ? hook_label : label, x0, x1, y0, y1, NULL);
-  if (hook_label) FREE(hook_label);
+  if (hook_label) free(hook_label);
 
   if (dur == 0)
     {
@@ -1369,7 +1369,7 @@ snd_info *make_simple_channel_display(int srate, int initial_length, fw_button_t
   sp->nchans = 1;
   sp->inuse = SOUND_WRAPPER;
   sp->active = true;
-  sp->hdr = (file_info *)CALLOC(1, sizeof(file_info));
+  sp->hdr = (file_info *)calloc(1, sizeof(file_info));
   sp->search_proc = XEN_UNDEFINED;
   sp->prompt_callback = XEN_UNDEFINED;
   hdr = sp->hdr;
@@ -1380,9 +1380,9 @@ snd_info *make_simple_channel_display(int srate, int initial_length, fw_button_t
   err = add_channel_window(sp, 0, 0, 0, container, with_arrows, with_events);
   if (err == -1)
     {
-      FREE(sp->chans);
-      FREE(sp->hdr);
-      FREE(sp);
+      free(sp->chans);
+      free(sp->hdr);
+      free(sp);
       return(NULL);
     }
   cp = sp->chans[0];
@@ -1793,7 +1793,7 @@ XEN make_graph_data(chan_info *cp, int edit_pos, off_t losamp, off_t hisamp)
       data_size = (int)samps;
       sf = init_sample_read_any(losamp, cp, READ_FORWARD, edit_pos);
       if (sf == NULL) return(XEN_FALSE); /* should this throw an error? (CHANNEL_BEING_DEALLOCATED) */
-      data = (Float *)MALLOC(data_size * sizeof(Float));
+      data = (Float *)malloc(data_size * sizeof(Float));
       for (i = 0; i < data_size; i++)
 	data[i] = read_sample(sf);
     }
@@ -1806,8 +1806,8 @@ XEN make_graph_data(chan_info *cp, int edit_pos, off_t losamp, off_t hisamp)
 	  int k, kk;
 	  peak_env_info *ep;
 	  data_size = pixels + 1;
-	  data = (Float *)CALLOC(data_size, sizeof(Float));
-	  data1 = (Float *)CALLOC(data_size, sizeof(Float));
+	  data = (Float *)calloc(data_size, sizeof(Float));
+	  data1 = (Float *)calloc(data_size, sizeof(Float));
 	  ep = cp->edits[edit_pos]->peak_env;
 	  step = samples_per_pixel / (Float)(ep->samps_per_bin);
 	  xf = (double)(losamp) / (double)(ep->samps_per_bin);
@@ -1843,8 +1843,8 @@ XEN make_graph_data(chan_info *cp, int edit_pos, off_t losamp, off_t hisamp)
 	  data_size = pixels + 1;
 	  sf = init_sample_read_any(losamp, cp, READ_FORWARD, edit_pos);
 	  if (sf == NULL) return(XEN_FALSE);
-	  data = (Float *)CALLOC(data_size, sizeof(Float));
-	  data1 = (Float *)CALLOC(data_size, sizeof(Float));
+	  data = (Float *)calloc(data_size, sizeof(Float));
+	  data1 = (Float *)calloc(data_size, sizeof(Float));
 	  j = 0;      /* graph point counter */
 	  ymin = 100.0;
 	  ymax = -100.0;
@@ -1980,8 +1980,8 @@ static void display_peaks(chan_info *cp, axis_info *fap, Float *data, int scaler
   if (num_peaks <= 0) return;
   if (num_peaks > cp->max_transform_peaks) num_peaks = cp->max_transform_peaks;
 
-  peak_freqs = (fft_peak *)CALLOC(cp->max_transform_peaks, sizeof(fft_peak));
-  peak_amps = (fft_peak *)CALLOC(cp->max_transform_peaks, sizeof(fft_peak));
+  peak_freqs = (fft_peak *)calloc(cp->max_transform_peaks, sizeof(fft_peak));
+  peak_amps = (fft_peak *)calloc(cp->max_transform_peaks, sizeof(fft_peak));
 
   if (fft_data)
     num_peaks = find_and_sort_transform_peaks(data, peak_freqs, num_peaks, samps, 1, samps_per_pixel, fft_scale); /* srate 1.0=>freqs between 0 and 1.0 */
@@ -1991,8 +1991,8 @@ static void display_peaks(chan_info *cp, axis_info *fap, Float *data, int scaler
       ((num_peaks == 1) && 
        ((peak_freqs[0].freq == 1.0) || (peak_freqs[0].freq == 0.0))))
     {
-      FREE(peak_freqs); 
-      FREE(peak_amps); 
+      free(peak_freqs); 
+      free(peak_amps); 
       return;
     }
 
@@ -2048,7 +2048,7 @@ static void display_peaks(chan_info *cp, axis_info *fap, Float *data, int scaler
 	      fstr = prettyf(px * scaler, tens);
 	      draw_string(ax, frq_col, row, fstr, strlen(fstr));
 	      if (cp->printing) ps_draw_string(fap, frq_col, row, fstr);
-	      FREE(fstr);
+	      free(fstr);
 	      fstr = NULL;
 	      if (with_amps)
 		{
@@ -2086,7 +2086,7 @@ static void display_peaks(chan_info *cp, axis_info *fap, Float *data, int scaler
 	  fstr = prettyf(px * scaler, tens);
 	  draw_string(ax, frq_col, row, fstr, strlen(fstr));
 	  if (cp->printing) ps_draw_string(fap, frq_col, row, fstr);
-	  FREE(fstr);
+	  free(fstr);
 	  fstr = NULL;
 	  if (with_amps)
 	    {
@@ -2103,8 +2103,8 @@ static void display_peaks(chan_info *cp, axis_info *fap, Float *data, int scaler
 
   /* superimposed context reset takes place in make_fft_graph */
 
-  if (peak_freqs) FREE(peak_freqs); 
-  if (peak_amps) FREE(peak_amps);
+  if (peak_freqs) free(peak_freqs); 
+  if (peak_amps) free(peak_amps);
 }
 
 
@@ -2197,7 +2197,7 @@ static void make_fft_graph(chan_info *cp, axis_info *fap, axis_context *ax, with
 	    {
 	      int size;
 	      size = hisamp - losamp + 1;
-	      fft_phases = (Float *)MALLOC(size * sizeof(Float));
+	      fft_phases = (Float *)malloc(size * sizeof(Float));
 	      memcpy((void *)fft_phases, (void *)(&(fp->phases[losamp])), size * sizeof(Float));
 	      free_phases = true;
 	    
@@ -2274,7 +2274,7 @@ static void make_fft_graph(chan_info *cp, axis_info *fap, axis_context *ax, with
 	  (fp->phases) &&
 	  (cp->transform_type == FOURIER))
 	{
-	  fft_phases = (Float *)MALLOC(POINT_BUFFER_SIZE * sizeof(Float));
+	  fft_phases = (Float *)malloc(POINT_BUFFER_SIZE * sizeof(Float));
 	  free_phases = true;
 	}
 
@@ -2383,7 +2383,7 @@ static void make_fft_graph(chan_info *cp, axis_info *fap, axis_context *ax, with
       
       /* if value is close to 0, use [selected-]data-color, else use fft_phases[i] */
       allocate_color_map(PHASES_COLORMAP);
-      colors = (int *)MALLOC(lines_to_draw * sizeof(int));
+      colors = (int *)malloc(lines_to_draw * sizeof(int));
       
       for (k = 0; k < lines_to_draw; k++)
 	{
@@ -2393,9 +2393,9 @@ static void make_fft_graph(chan_info *cp, axis_info *fap, axis_context *ax, with
       
       draw_colored_lines(cp, ax, get_grf_points(), lines_to_draw, colors, fap->y_axis_y0, default_color);
       
-      FREE(colors);
+      free(colors);
       if (free_phases)
-	FREE(fft_phases);
+	free(fft_phases);
     }
   else draw_grf_points(cp->dot_size, ax, lines_to_draw, fap, 0.0, cp->transform_graph_style);
   
@@ -2500,9 +2500,9 @@ static void make_sonogram(chan_info *cp)
 
       if (sono_js_size != color_map_size(ss))
 	{
-	  if (sono_js) FREE(sono_js);
+	  if (sono_js) free(sono_js);
 	  sono_js_size = color_map_size(ss);
-	  sono_js = (int *)CALLOC(sono_js_size, sizeof(int));
+	  sono_js = (int *)calloc(sono_js_size, sizeof(int));
 	}
       if (cp->printing) ps_allocate_grf_points();
       allocate_sono_rects(si->total_bins);
@@ -2517,8 +2517,8 @@ static void make_sonogram(chan_info *cp)
       if (rectw == 0) rectw = 1;
       if (recth == 0) recth = 1;
 
-      hfdata = (Float *)MALLOC((bins + 1) * sizeof(Float));
-      hidata = (int *)MALLOC((bins + 1) * sizeof(int));
+      hfdata = (Float *)malloc((bins + 1) * sizeof(Float));
+      hidata = (int *)malloc((bins + 1) * sizeof(int));
       if (cp->transform_type == FOURIER)
 	{
 	  if (cp->fft_log_frequency)
@@ -2602,8 +2602,8 @@ static void make_sonogram(chan_info *cp)
 	save_fft_pix(cp, ax, fwidth, fheight, fap->x_axis_x0, fap->y_axis_y1);
 
       if (cp->printing) ps_reset_color();
-      FREE(hfdata);
-      FREE(hidata);
+      free(hfdata);
+      free(hidata);
       if (cp->hookable == WITH_HOOK) after_transform(cp, 1.0 / scl);
     }
 }
@@ -2789,10 +2789,10 @@ static void gl_spectrogram(sono_info *si, int gl_fft_list, Float cutoff, bool us
   bins = (int)(si->target_bins * cutoff);
   if (bins <= 0) bins = 1;
 
-  js = (int **)CALLOC(si->active_slices, sizeof(int *));
+  js = (int **)calloc(si->active_slices, sizeof(int *));
   for (i = 0; i < si->active_slices; i++)
     {
-      js[i] = (int *)CALLOC(bins, sizeof(int));
+      js[i] = (int *)calloc(bins, sizeof(int));
       if (use_dB) 
 	{
 	  for (j = 0; j < bins; j++)
@@ -2871,8 +2871,8 @@ static void gl_spectrogram(sono_info *si, int gl_fft_list, Float cutoff, bool us
 	  glEnd();
 	}
     }
-  for (i = 0; i < si->active_slices; i++) FREE(js[i]);
-  FREE(js);
+  for (i = 0; i < si->active_slices; i++) free(js[i]);
+  free(js);
   js = NULL;
   glEndList();
 }
@@ -3227,9 +3227,9 @@ static int make_wavogram(chan_info *cp)
 	}
       else
 	{
-	  if (cp->last_wavogram) FREE(cp->last_wavogram);
+	  if (cp->last_wavogram) free(cp->last_wavogram);
 
-	  lw = (wavogram_state *)MALLOC(sizeof(wavogram_state));
+	  lw = (wavogram_state *)malloc(sizeof(wavogram_state));
 	  lw->hop = wavo_hop(ss);
 	  lw->trace = wavo_trace(ss);
 	  lw->losamp = ap->losamp;
@@ -3251,12 +3251,12 @@ static int make_wavogram(chan_info *cp)
 	  lines = (int)(ap->height / cp->wavo_hop);
 	  if (lines == 0) return(0);
 	  len = cp->wavo_trace;
-	  samps = (Float **)CALLOC(lines, sizeof(Float *));
-	  js = (int **)CALLOC(lines, sizeof(int *));
+	  samps = (Float **)calloc(lines, sizeof(Float *));
+	  js = (int **)calloc(lines, sizeof(int *));
 	  for (i = 0; i < lines; i++)
 	    {
-	      samps[i] = (Float *)CALLOC(len, sizeof(Float));
-	      js[i] = (int *)CALLOC(len, sizeof(int));
+	      samps[i] = (Float *)calloc(len, sizeof(Float));
+	      js[i] = (int *)calloc(len, sizeof(int));
 	      for (j = 0; j < len; j++)
 		{
 		  samps[i][j] = read_sample(sf);
@@ -3311,8 +3311,6 @@ static int make_wavogram(chan_info *cp)
 	{
 	  int len1, lines1;
 	  Float xf, yf;
-
-	  fprintf(stderr, "redraw ");
 
 	  gs = color_map_greens(color_map(ss));
 	  bs = color_map_blues(color_map(ss));
@@ -3398,11 +3396,11 @@ static int make_wavogram(chan_info *cp)
 
       for (i = 0; i < lines; i++) 
 	{
-	  FREE(samps[i]);
-	  FREE(js[i]);
+	  free(samps[i]);
+	  free(js[i]);
 	}
-      FREE(samps);
-      FREE(js);
+      free(samps);
+      free(js);
       return(j);
     }
 #endif
@@ -3508,12 +3506,12 @@ void free_lisp_info(chan_info *cp)
 	      int i;
 	      for (i = 0; i < lg->graphs; i++) 
 		if (lg->data[i]) 
-		  FREE(lg->data[i]);
-	      FREE(lg->data);
+		  free(lg->data[i]);
+	      free(lg->data);
 	    }
 	  if (lg->len) 
-	    FREE(lg->len);
-	  FREE(lg);
+	    free(lg->len);
+	  free(lg);
 	}
     }
 }
@@ -3762,7 +3760,7 @@ static void display_channel_data_with_size(chan_info *cp,
       if (up == NULL)
 	{
 	  /* this should only happen the first time such a graph is needed */
-	  cp->lisp_info = (lisp_grf *)CALLOC(1, sizeof(lisp_grf));
+	  cp->lisp_info = (lisp_grf *)calloc(1, sizeof(lisp_grf));
 	  up = cp->lisp_info;
 	  up->show_axes = cp->show_axes;
 	  up->axis = make_axis_info(cp, 0.0, 1.0, -1.0, 1.0, "dummy axis", 0.0, 1.0, -1.0, 1.0, NULL);
@@ -4424,7 +4422,7 @@ void show_cursor_info(chan_info *cp)
   else if (absy<.001) digits = 3;
   else digits = 2;
   len = PRINT_BUFFER_SIZE;
-  expr_str = (char *)CALLOC(len, sizeof(char));
+  expr_str = (char *)calloc(len, sizeof(char));
   if (sp->nchans == 1)
     mus_snprintf(expr_str, PRINT_BUFFER_SIZE, _("cursor at %s (sample " OFF_TD ") = %s"),
 		 s1 = x_axis_location_to_string(cp, (double)samp / (double)SND_SRATE(sp)),
@@ -4450,7 +4448,7 @@ void show_cursor_info(chan_info *cp)
 	    {
 	      chan_info *ncp;
 	      expr_str = mus_strcat(expr_str, ", ", &len);
-	      FREE(s2);
+	      free(s2);
 	      ncp = sp->chans[i];
 	      y = chn_sample(samp, ncp, ncp->edit_ctr);
 	      absy = fabs(y);
@@ -4468,9 +4466,9 @@ void show_cursor_info(chan_info *cp)
 	}
     }
   string_to_minibuffer(sp, expr_str);
-  FREE(expr_str);
-  FREE(s1);
-  FREE(s2);
+  free(expr_str);
+  free(s1);
+  free(s2);
 }
 
 
@@ -5056,7 +5054,7 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 		char *str;
 		str = describe_fft_point(cp, x, y);
 		string_to_minibuffer(sp, str);
-		if (str) FREE(str);
+		if (str) free(str);
 	      }
 	      break;
 
@@ -5281,7 +5279,7 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, oclock_t time)
 		  char *str;
 		  str = describe_fft_point(cp, x, y);
 		  string_to_minibuffer(cp->sound, str);
-		  if (str) FREE(str);
+		  if (str) free(str);
 		}
 	      break;
 
@@ -5812,7 +5810,7 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, cp_field_t fld, const char 
 	  else 
 	    {
 	      errstr = C_TO_XEN_STRING(error);
-	      FREE(error);
+	      free(error);
 	      return(snd_bad_arity_error(S_setB S_cursor_style, errstr, on));
 	    }
 	}
@@ -6317,7 +6315,7 @@ static XEN g_set_cursor_style(XEN on, XEN snd_n, XEN chn_n)
 	  else 
 	    {
 	      errstr = C_TO_XEN_STRING(error);
-	      FREE(error);
+	      free(error);
 	      return(snd_bad_arity_error(S_setB S_cursor_style, errstr, on));
 	    }
 	}
@@ -7630,7 +7628,7 @@ static void chans_x_axis_style(chan_info *cp, int value)
   cp->x_axis_style = new_style;
   if (ap)
     {
-      if (ap->xlabel) FREE(ap->xlabel);
+      if (ap->xlabel) free(ap->xlabel);
       /* if user set x-axis-label (snd-axis.c) ap->default_xlabel is not null, so use it rather than normal choices */
       if (ap->default_xlabel)
 	ap->xlabel = mus_strdup(ap->default_xlabel);
@@ -7838,8 +7836,8 @@ static void write_transform_peaks(FILE *fd, chan_info *ucp)
 	      if (ceil(log10(srate)) > 3.0)
 		digits = (int)ceil(log10(srate)) + 2;
 
-	      peak_freqs = (fft_peak *)CALLOC(cp->max_transform_peaks, sizeof(fft_peak));
-	      peak_amps = (fft_peak *)CALLOC(cp->max_transform_peaks, sizeof(fft_peak));
+	      peak_freqs = (fft_peak *)calloc(cp->max_transform_peaks, sizeof(fft_peak));
+	      peak_amps = (fft_peak *)calloc(cp->max_transform_peaks, sizeof(fft_peak));
 	      num_peaks = find_and_sort_transform_peaks(data, peak_freqs, cp->max_transform_peaks, samps, 1, samples_per_pixel, fp->scale);
 
 	      if ((num_peaks != 1) || 
@@ -7860,8 +7858,8 @@ static void write_transform_peaks(FILE *fd, chan_info *ucp)
 			    peak_freqs[i].amp); 
 		  fprintf(fd, "\n");
 		}
-	      if (peak_freqs) {FREE(peak_freqs); peak_freqs = NULL;}
-	      if (peak_amps) {FREE(peak_amps); peak_amps = NULL;}
+	      if (peak_freqs) {free(peak_freqs); peak_freqs = NULL;}
+	      if (peak_amps) {free(peak_amps); peak_amps = NULL;}
 	    }
 	}
     }
@@ -7915,11 +7913,11 @@ to the info dialog if filename is omitted"
       if (str)
 	{
 	  post_it("fft peaks", str);
-	  FREE(str);
+	  free(str);
 	}
       snd_remove(name, IGNORE_CACHE);
     }
-  FREE(name);
+  free(name);
   return(filename);
 }
 
@@ -8239,11 +8237,11 @@ If 'data' is a list of numbers, it is treated as an envelope."
 
   if (!(cp->lisp_info))
     {
-      lg = (lisp_grf *)CALLOC(graphs, sizeof(lisp_grf));
+      lg = (lisp_grf *)calloc(graphs, sizeof(lisp_grf));
       cp->lisp_info = lg;
-      lg->len = (int *)CALLOC(graphs, sizeof(int));
+      lg->len = (int *)calloc(graphs, sizeof(int));
       lg->graphs = graphs;
-      lg->data = (Float **)CALLOC(graphs, sizeof(Float *));
+      lg->data = (Float **)calloc(graphs, sizeof(Float *));
       need_update = true;
     }
   
@@ -8264,8 +8262,8 @@ If 'data' is a list of numbers, it is treated as an envelope."
       lg->env_data = 1;
       if (lg->len[0] != len)
 	{
-	  if (lg->data[0]) FREE(lg->data[0]);
-	  lg->data[0] = (Float *)CALLOC(len, sizeof(Float));
+	  if (lg->data[0]) free(lg->data[0]);
+	  lg->data[0] = (Float *)calloc(len, sizeof(Float));
 	  lg->len[0] = len;
 	}
       for (i = 0, lst = XEN_COPY_ARG(ldata); i < len; i++, lst = XEN_CDR(lst))
@@ -8296,8 +8294,8 @@ If 'data' is a list of numbers, it is treated as an envelope."
 	  len = v->length;
 	  if (lg->len[graph] != len)
 	    {
-	      if (lg->data[graph]) FREE(lg->data[graph]);
-	      lg->data[graph] = (Float *)CALLOC(len, sizeof(Float));
+	      if (lg->data[graph]) free(lg->data[graph]);
+	      lg->data[graph] = (Float *)calloc(len, sizeof(Float));
 	      lg->len[graph] = len;
 	    }
 	  memcpy((void *)(lg->data[graph]), (void *)(v->data), len * sizeof(Float));
@@ -8317,7 +8315,7 @@ If 'data' is a list of numbers, it is treated as an envelope."
   lg->axis = make_axis_info(cp, nominal_x0, nominal_x1, ymin, ymax, label, nominal_x0, nominal_x1, ymin, ymax, lg->axis);
   lg->axis->y_offset = old_y_offset;
 
-  if (label) FREE(label);
+  if (label) free(label);
   if (need_update)
     {
       axis_info *uap = NULL;
@@ -8363,9 +8361,9 @@ data and passes it to openGL.  See snd-gl.scm for an example."
   XEN_ASSERT_TYPE(XEN_NUMBER_P(bg), bg, XEN_ARG_8, S_glSpectrogram, "a number (green value)");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(bb), bb, XEN_ARG_9, S_glSpectrogram, "a number (blue value)");
 
-  si = (sono_info *)CALLOC(1, sizeof(sono_info));
+  si = (sono_info *)calloc(1, sizeof(sono_info));
   si->active_slices = XEN_VECTOR_LENGTH(data);
-  si->data = (Float **)CALLOC(si->active_slices, sizeof(Float *));
+  si->data = (Float **)calloc(si->active_slices, sizeof(Float *));
   v = xen_to_vct(XEN_VECTOR_REF(data, 0));
   si->target_bins = v->length;
   si->scale = XEN_TO_C_DOUBLE(scale);
@@ -8382,8 +8380,8 @@ data and passes it to openGL.  See snd-gl.scm for an example."
 		 FLOAT_TO_RGB(XEN_TO_C_DOUBLE(br)),
 		 FLOAT_TO_RGB(XEN_TO_C_DOUBLE(bg)),
 		 FLOAT_TO_RGB(XEN_TO_C_DOUBLE(bb)));
-  FREE(si->data);
-  FREE(si);
+  free(si->data);
+  free(si);
   return(XEN_FALSE);
 }
 #endif
@@ -8477,11 +8475,11 @@ to a standard Snd channel graph placed in the widget 'container'."
       sp->filename = mus_strdup(XEN_TO_C_STRING(name));
       sp->short_filename = mus_strdup(sp->filename);
       ap = cp->axis;
-      if (ap->xlabel) FREE(ap->xlabel);
+      if (ap->xlabel) free(ap->xlabel);
       ap->xlabel = mus_strdup(sp->filename);
-      if (ap->default_xlabel) FREE(ap->default_xlabel); 
+      if (ap->default_xlabel) free(ap->default_xlabel); 
       ap->default_xlabel = NULL;
-      if (ap->ylabel) FREE(ap->ylabel);
+      if (ap->ylabel) free(ap->ylabel);
       ap->ylabel = NULL;
     }
   else

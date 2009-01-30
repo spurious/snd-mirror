@@ -509,10 +509,6 @@
 (hey "#else~%")
 (hey "  #include \"xen.h\"~%")
 (hey "#endif~%")
-(hey "#ifndef CALLOC~%")
-(hey "  #define CALLOC(a, b)  calloc((size_t)(a), (size_t)(b))~%")
-(hey "  #define FREE(a)       free(a)~%")
-(hey "#endif~%~%")
 
 (hey "#ifndef unsigned_long~%")
 (hey "  /* for FreeBSD (thanks to Michael Scholz) (can't use ulong here due to collisions elsewhere) */~%")

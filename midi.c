@@ -36,10 +36,10 @@
   #if HAVE_EXTENSION_LANGUAGE
     void mus_midi_init(void);
   #endif
-  #define CALLOC(a, b)  calloc((size_t)(a), (size_t)(b))
-  #define MALLOC(a)     malloc((size_t)(a))
-  #define FREE(a)       free(a)
-  #define REALLOC(a, b) realloc(a, (size_t)(b))
+  #define calloc(a, b)  calloc((size_t)(a), (size_t)(b))
+  #define malloc(a)     malloc((size_t)(a))
+  #define free(a)       free(a)
+  #define realloc(a, b) realloc(a, (size_t)(b))
 #endif
 
 
@@ -78,10 +78,10 @@ static int new_midi_line(const char *name, snd_rawmidi_t *line, snd_rawmidi_para
   if (midis == 0)
     {
       midis = 4;
-      midi_lines = (snd_rawmidi_t **)CALLOC(midis, sizeof(snd_rawmidi_t *));
-      midi_params = (snd_rawmidi_params_t **)CALLOC(midis, sizeof(snd_rawmidi_params_t *));
-      midi_names = (char **)CALLOC(midis, sizeof(char *));
-      midi_directions = (int *)CALLOC(midis, sizeof(int));
+      midi_lines = (snd_rawmidi_t **)calloc(midis, sizeof(snd_rawmidi_t *));
+      midi_params = (snd_rawmidi_params_t **)calloc(midis, sizeof(snd_rawmidi_params_t *));
+      midi_names = (char **)calloc(midis, sizeof(char *));
+      midi_directions = (int *)calloc(midis, sizeof(int));
       loc = 0;
     }
   else
@@ -96,10 +96,10 @@ static int new_midi_line(const char *name, snd_rawmidi_t *line, snd_rawmidi_para
 	{
 	  loc = midis;
 	  midis += 4;
-	  midi_lines = (snd_rawmidi_t **)REALLOC(midi_lines, midis * sizeof(snd_rawmidi_t *));
-	  midi_params = (snd_rawmidi_params_t **)REALLOC(midi_params, midis * sizeof(snd_rawmidi_params_t *));
-	  midi_names = (char **)REALLOC(midi_names, midis * sizeof(char *));
-	  midi_directions = (int *)REALLOC(midi_directions, midis * sizeof(int));
+	  midi_lines = (snd_rawmidi_t **)realloc(midi_lines, midis * sizeof(snd_rawmidi_t *));
+	  midi_params = (snd_rawmidi_params_t **)realloc(midi_params, midis * sizeof(snd_rawmidi_params_t *));
+	  midi_names = (char **)realloc(midi_names, midis * sizeof(char *));
+	  midi_directions = (int *)realloc(midi_directions, midis * sizeof(int));
 	}
     }
   midi_lines[loc] = line;
@@ -224,7 +224,7 @@ char *mus_midi_describe(void)
   char *buf = NULL;
   char one[256];
   snd_rawmidi_info_malloc(&info);
-  buf = (char *)CALLOC(1024, sizeof(char));
+  buf = (char *)calloc(1024, sizeof(char));
   for (i = 0; i < 8; i++)
     {
       /* presumably this should use the card|device from the info struct, not a blind loop */
@@ -291,9 +291,9 @@ static int new_midi_line(const char *name, MDport line, int input)
   if (midis == 0)
     {
       midis = 4;
-      midi_lines = (MDport *)CALLOC(midis, sizeof(MDport));
-      midi_names = (char **)CALLOC(midis, sizeof(char *));
-      midi_directions = (int *)CALLOC(midis, sizeof(int));
+      midi_lines = (MDport *)calloc(midis, sizeof(MDport));
+      midi_names = (char **)calloc(midis, sizeof(char *));
+      midi_directions = (int *)calloc(midis, sizeof(int));
       loc = 0;
     }
   else
@@ -308,9 +308,9 @@ static int new_midi_line(const char *name, MDport line, int input)
 	{
 	  loc = midis;
 	  midis += 4;
-	  midi_lines = (MDport *)REALLOC(midi_lines, midis * sizeof(MDport));
-	  midi_names = (char **)REALLOC(midi_names, midis * sizeof(char *));
-	  midi_directions = (int *)REALLOC(midi_directions, midis * sizeof(int));
+	  midi_lines = (MDport *)realloc(midi_lines, midis * sizeof(MDport));
+	  midi_names = (char **)realloc(midi_names, midis * sizeof(char *));
+	  midi_directions = (int *)realloc(midi_directions, midis * sizeof(int));
 	}
     }
   midi_lines[loc] = line;
@@ -426,7 +426,7 @@ char *mus_midi_describe(void)
   mus_midi_initialize(); 
   if (midi_ports > 0)
     {
-      buf = (char *)CALLOC(midi_ports * 64, sizeof(char));
+      buf = (char *)calloc(midi_ports * 64, sizeof(char));
       for (i = 0; i < midi_ports; i++)
 	{
 	  sprintf(name, "%s\n", mdGetName(i));
@@ -504,13 +504,13 @@ char *mus_midi_describe(void)
 	  /* not strdup for memcheck consistency */
 	  char *newstr;
 	  close(fd);
-	  newstr = (char *)CALLOC(16, sizeof(char));
+	  newstr = (char *)calloc(16, sizeof(char));
 	  strcpy(newstr, "no midi");
 	  return(newstr);
 	}
       else
 	{
-	  buf = (char *)CALLOC(1024, sizeof(char));
+	  buf = (char *)calloc(1024, sizeof(char));
 	  sprintf(buf, "%d midi device%s installed\n", numdevs, (numdevs == 1) ? "" : "s"); 
 	  for (i = 0; i < numdevs; i++)
 	    {
@@ -549,8 +549,8 @@ char *mus_midi_describe(void)
   char *buf;
   n = MIDIGetNumberOfDevices();
   if (n <= 0)
-    buf = (char *)CALLOC(192, sizeof(char));
-  else buf = (char *)CALLOC(n * 192, sizeof(char));
+    buf = (char *)calloc(192, sizeof(char));
+  else buf = (char *)calloc(n * 192, sizeof(char));
   if (n <= 0)
     sprintf(buf, "no midi");
   else
@@ -585,7 +585,7 @@ static void init_midi(void)
 {
   if (buffer == NULL)
     {
-      buffer = (unsigned char *)CALLOC(BUFFER_SIZE, sizeof(unsigned char));
+      buffer = (unsigned char *)calloc(BUFFER_SIZE, sizeof(unsigned char));
       reader = 0;
       writer = 0;
     }
@@ -738,16 +738,16 @@ static XEN g_mus_midi_read(XEN line, XEN bytes) /* returns list of midi bytes */
   XEN_ASSERT_TYPE(XEN_INTEGER_P(line), line, XEN_ARG_1, S_mus_midi_read, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(bytes), bytes, XEN_ARG_2, S_mus_midi_read, "an integer");
   len = XEN_TO_C_INT(bytes);
-  buf = (unsigned char *)CALLOC(len, sizeof(unsigned char));
+  buf = (unsigned char *)calloc(len, sizeof(unsigned char));
   err = mus_midi_read(XEN_TO_C_INT(line), buf, len);
   if (err == -1)
     {
-      FREE(buf);
+      free(buf);
       return(XEN_FALSE);
     }
   for (i = err; i >= 0; i--)
     lst = XEN_CONS(C_TO_XEN_INT((int)buf[i]), lst);
-  FREE(buf);
+  free(buf);
   return(lst);
 }
 
@@ -761,11 +761,11 @@ static XEN g_mus_midi_write(XEN line, XEN buffer)
   XEN_ASSERT_TYPE(XEN_INTEGER_P(line), line, XEN_ARG_1, S_mus_midi_write, "an integer");
   XEN_ASSERT_TYPE(XEN_LIST_P(buffer), buffer, XEN_ARG_2, S_mus_midi_write, "a list");
   len = XEN_LIST_LENGTH(buffer);
-  buf = (unsigned char *)CALLOC(len, sizeof(unsigned char));
+  buf = (unsigned char *)calloc(len, sizeof(unsigned char));
   for (i = 0, lst = XEN_COPY_ARG(buffer); i < len; i++, lst = XEN_CDR(lst))
     buf[i] = (unsigned char)(XEN_TO_C_INT(XEN_CAR(lst)));
   err = mus_midi_write(XEN_TO_C_INT(line), buf, len);
-  FREE(buf);
+  free(buf);
   if (err == -1)
     return(XEN_FALSE);
   return(C_TO_XEN_INT(err));
@@ -790,7 +790,7 @@ static XEN g_mus_midi_describe(void)
   if (str)
     {
       res = C_TO_XEN_STRING(str);
-      FREE(str);
+      free(str);
     }
   return(res);
 }

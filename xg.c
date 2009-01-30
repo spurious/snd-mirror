@@ -135,11 +135,6 @@
   #include "xen.h"
   #define NOT_A_GC_LOC -1
 #endif
-#ifndef CALLOC
-  #define CALLOC(a, b)  calloc((size_t)(a), (size_t)(b))
-  #define FREE(a)       free(a)
-#endif
-
 /* -------------------------------- smob for GC -------------------------------- */
 static XEN_OBJECT_TYPE xm_obj_tag;
 #if HAVE_GUILE
@@ -147,7 +142,7 @@ static size_t xm_obj_free(XEN obj)
 {
   void *val;
   val = (void *)XEN_OBJECT_REF(obj);
-  FREE(val);
+  free(val);
   return(0);
 }
 #endif
@@ -156,7 +151,7 @@ static void *xm_obj_free(XEN obj)
 {
   void *xobj;
   xobj = (void *)obj;
-  FREE(xobj);
+  free(xobj);
   return(NULL);
 }
 #endif
@@ -165,13 +160,13 @@ static void xm_obj_free(XEN obj)
 {
   void *val;
   val = (void *)XEN_OBJECT_REF(obj);
-  FREE(val);
+  free(val);
 }
 #endif
 #if HAVE_S7
 static void xm_obj_free(void *val)
 {
-  FREE(val);
+  free(val);
 }
 static bool s7_equalp_xm(void *x1, void *x2)
 {
@@ -33760,7 +33755,7 @@ static XEN gxg_vector2GdkPoints(XEN arg1)
   XEN_ASSERT_TYPE(XEN_VECTOR_P(arg1), arg1, XEN_ONLY_ARG, "vector->GdkPoints", "vector of x,y values");
   len = XEN_VECTOR_LENGTH(arg1) / 2;
   if (len <= 0) XEN_ASSERT_TYPE(0, arg1, 1, "vector->GdkPoints", "positive integer");
-  pt = (GdkPoint *)CALLOC(len, sizeof(GdkPoint));
+  pt = (GdkPoint *)calloc(len, sizeof(GdkPoint));
   for (i = 0, j = 0; i < len; i++, j += 2)
     {
       pt[i].x = XEN_TO_C_INT(XEN_VECTOR_REF(arg1, j));
@@ -33775,7 +33770,7 @@ static XEN gxg_freeGdkPoints(XEN arg1)
   #define H_freeGdkPoints "(freeGdkPoints vect) frees an (opaque) GdkPoint array created by vector->Gdkpoints"
   XEN_ASSERT_TYPE(XEN_WRAPPED_C_POINTER_P(arg1), arg1, XEN_ONLY_ARG, "freeGdkPoints", "opaque GdkPoint array");
   pts = (void *)(XEN_UNWRAP_C_POINTER(arg1));
-  FREE(pts);
+  free(pts);
   return(XEN_FALSE);
 }
 
@@ -33788,7 +33783,7 @@ static XEN gxg_make_target_entry(XEN lst)
   XEN_ASSERT_TYPE(XEN_LIST_P(lst), lst, XEN_ONLY_ARG, "make-target-entry", "a list of lists describing each target");
   len = XEN_LIST_LENGTH(lst);
   if (len == 0) return(XEN_FALSE);
-  targets = (GtkTargetEntry *)CALLOC(len, sizeof(GtkTargetEntry));
+  targets = (GtkTargetEntry *)calloc(len, sizeof(GtkTargetEntry));
   for (i = 0; i < len; i++)
     {
       val = XEN_LIST_REF(lst, i);
@@ -33998,145 +33993,145 @@ static XEN xen_list_to_c_array(XEN val, XEN type)
   ctype = XEN_TO_C_STRING(type);
   if (strcmp(ctype, "gdouble*") == 0)
     {
-      gdouble* arr; arr = (gdouble*)CALLOC(len + 1, sizeof(gdouble));
+      gdouble* arr; arr = (gdouble*)calloc(len + 1, sizeof(gdouble));
       for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_gdouble(XEN_CAR(val));
       return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("gdouble_"), XEN_WRAP_C_POINTER(arr), make_xm_obj(arr)));
     }
   if (strcmp(ctype, "gint*") == 0)
     {
-      gint* arr; arr = (gint*)CALLOC(len + 1, sizeof(gint));
+      gint* arr; arr = (gint*)calloc(len + 1, sizeof(gint));
       for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_gint(XEN_CAR(val));
       return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("gint_"), XEN_WRAP_C_POINTER(arr), make_xm_obj(arr)));
     }
   if (strcmp(ctype, "gboolean*") == 0)
     {
-      gboolean* arr; arr = (gboolean*)CALLOC(len + 1, sizeof(gboolean));
+      gboolean* arr; arr = (gboolean*)calloc(len + 1, sizeof(gboolean));
       for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_gboolean(XEN_CAR(val));
       return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("gboolean_"), XEN_WRAP_C_POINTER(arr), make_xm_obj(arr)));
     }
   if (strcmp(ctype, "guint8*") == 0)
     {
-      guint8* arr; arr = (guint8*)CALLOC(len + 1, sizeof(guint8));
+      guint8* arr; arr = (guint8*)calloc(len + 1, sizeof(guint8));
       for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_guint8(XEN_CAR(val));
       return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("guint8_"), XEN_WRAP_C_POINTER(arr), make_xm_obj(arr)));
     }
   if (strcmp(ctype, "GType*") == 0)
     {
-      GType* arr; arr = (GType*)CALLOC(len + 1, sizeof(GType));
+      GType* arr; arr = (GType*)calloc(len + 1, sizeof(GType));
       for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_GType(XEN_CAR(val));
       return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("GType_"), XEN_WRAP_C_POINTER(arr), make_xm_obj(arr)));
     }
   if (strcmp(ctype, "guint*") == 0)
     {
-      guint* arr; arr = (guint*)CALLOC(len + 1, sizeof(guint));
+      guint* arr; arr = (guint*)calloc(len + 1, sizeof(guint));
       for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_guint(XEN_CAR(val));
       return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("guint_"), XEN_WRAP_C_POINTER(arr), make_xm_obj(arr)));
     }
   if (strcmp(ctype, "gint8*") == 0)
     {
-      gint8* arr; arr = (gint8*)CALLOC(len + 1, sizeof(gint8));
+      gint8* arr; arr = (gint8*)calloc(len + 1, sizeof(gint8));
       for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_gint8(XEN_CAR(val));
       return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("gint8_"), XEN_WRAP_C_POINTER(arr), make_xm_obj(arr)));
     }
   if (strcmp(ctype, "gchar**") == 0)
     {
-      gchar** arr; arr = (gchar**)CALLOC(len + 1, sizeof(gchar*));
+      gchar** arr; arr = (gchar**)calloc(len + 1, sizeof(gchar*));
       for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_gchar_(XEN_CAR(val));
       return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("gchar__"), XEN_WRAP_C_POINTER(arr), make_xm_obj(arr)));
     }
   if (strcmp(ctype, "guchar*") == 0)
     {
-      guchar* arr; arr = (guchar*)CALLOC(len + 1, sizeof(guchar));
+      guchar* arr; arr = (guchar*)calloc(len + 1, sizeof(guchar));
       for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_guchar(XEN_CAR(val));
       return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("guchar_"), XEN_WRAP_C_POINTER(arr), make_xm_obj(arr)));
     }
   if (strcmp(ctype, "guint32*") == 0)
     {
-      guint32* arr; arr = (guint32*)CALLOC(len + 1, sizeof(guint32));
+      guint32* arr; arr = (guint32*)calloc(len + 1, sizeof(guint32));
       for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_guint32(XEN_CAR(val));
       return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("guint32_"), XEN_WRAP_C_POINTER(arr), make_xm_obj(arr)));
     }
   if (strcmp(ctype, "GdkVisualType*") == 0)
     {
-      GdkVisualType* arr; arr = (GdkVisualType*)CALLOC(len + 1, sizeof(GdkVisualType));
+      GdkVisualType* arr; arr = (GdkVisualType*)calloc(len + 1, sizeof(GdkVisualType));
       for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_GdkVisualType(XEN_CAR(val));
       return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("GdkVisualType_"), XEN_WRAP_C_POINTER(arr), make_xm_obj(arr)));
     }
   if (strcmp(ctype, "char**") == 0)
     {
-      char** arr; arr = (char**)CALLOC(len + 1, sizeof(char*));
+      char** arr; arr = (char**)calloc(len + 1, sizeof(char*));
       for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_char_(XEN_CAR(val));
       return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("char__"), XEN_WRAP_C_POINTER(arr), make_xm_obj(arr)));
     }
   if (strcmp(ctype, "gfloat*") == 0)
     {
-      gfloat* arr; arr = (gfloat*)CALLOC(len + 1, sizeof(gfloat));
+      gfloat* arr; arr = (gfloat*)calloc(len + 1, sizeof(gfloat));
       for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_gfloat(XEN_CAR(val));
       return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("gfloat_"), XEN_WRAP_C_POINTER(arr), make_xm_obj(arr)));
     }
   if (strcmp(ctype, "GtkIconSize*") == 0)
     {
-      GtkIconSize* arr; arr = (GtkIconSize*)CALLOC(len + 1, sizeof(GtkIconSize));
+      GtkIconSize* arr; arr = (GtkIconSize*)calloc(len + 1, sizeof(GtkIconSize));
       for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_GtkIconSize(XEN_CAR(val));
       return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("GtkIconSize_"), XEN_WRAP_C_POINTER(arr), make_xm_obj(arr)));
     }
   if (strcmp(ctype, "guint16*") == 0)
     {
-      guint16* arr; arr = (guint16*)CALLOC(len + 1, sizeof(guint16));
+      guint16* arr; arr = (guint16*)calloc(len + 1, sizeof(guint16));
       for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_guint16(XEN_CAR(val));
       return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("guint16_"), XEN_WRAP_C_POINTER(arr), make_xm_obj(arr)));
     }
   if (strcmp(ctype, "gunichar*") == 0)
     {
-      gunichar* arr; arr = (gunichar*)CALLOC(len + 1, sizeof(gunichar));
+      gunichar* arr; arr = (gunichar*)calloc(len + 1, sizeof(gunichar));
       for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_gunichar(XEN_CAR(val));
       return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("gunichar_"), XEN_WRAP_C_POINTER(arr), make_xm_obj(arr)));
     }
   if (strcmp(ctype, "int*") == 0)
     {
-      int* arr; arr = (int*)CALLOC(len + 1, sizeof(int));
+      int* arr; arr = (int*)calloc(len + 1, sizeof(int));
       for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_int(XEN_CAR(val));
       return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("int_"), XEN_WRAP_C_POINTER(arr), make_xm_obj(arr)));
     }
   if (strcmp(ctype, "GdkPixmap**") == 0)
     {
-      GdkPixmap** arr; arr = (GdkPixmap**)CALLOC(len + 1, sizeof(GdkPixmap*));
+      GdkPixmap** arr; arr = (GdkPixmap**)calloc(len + 1, sizeof(GdkPixmap*));
       for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_GdkPixmap_(XEN_CAR(val));
       return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("GdkPixmap__"), XEN_WRAP_C_POINTER(arr), make_xm_obj(arr)));
     }
   if (strcmp(ctype, "GdkGC**") == 0)
     {
-      GdkGC** arr; arr = (GdkGC**)CALLOC(len + 1, sizeof(GdkGC*));
+      GdkGC** arr; arr = (GdkGC**)calloc(len + 1, sizeof(GdkGC*));
       for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_GdkGC_(XEN_CAR(val));
       return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("GdkGC__"), XEN_WRAP_C_POINTER(arr), make_xm_obj(arr)));
     }
   if (strcmp(ctype, "PangoFontFace**") == 0)
     {
-      PangoFontFace** arr; arr = (PangoFontFace**)CALLOC(len + 1, sizeof(PangoFontFace*));
+      PangoFontFace** arr; arr = (PangoFontFace**)calloc(len + 1, sizeof(PangoFontFace*));
       for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_PangoFontFace_(XEN_CAR(val));
       return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("PangoFontFace__"), XEN_WRAP_C_POINTER(arr), make_xm_obj(arr)));
     }
   if (strcmp(ctype, "PangoFontDescription**") == 0)
     {
-      PangoFontDescription** arr; arr = (PangoFontDescription**)CALLOC(len + 1, sizeof(PangoFontDescription*));
+      PangoFontDescription** arr; arr = (PangoFontDescription**)calloc(len + 1, sizeof(PangoFontDescription*));
       for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_PangoFontDescription_(XEN_CAR(val));
       return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("PangoFontDescription__"), XEN_WRAP_C_POINTER(arr), make_xm_obj(arr)));
     }
   if (strcmp(ctype, "PangoFontFamily**") == 0)
     {
-      PangoFontFamily** arr; arr = (PangoFontFamily**)CALLOC(len + 1, sizeof(PangoFontFamily*));
+      PangoFontFamily** arr; arr = (PangoFontFamily**)calloc(len + 1, sizeof(PangoFontFamily*));
       for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_PangoFontFamily_(XEN_CAR(val));
       return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("PangoFontFamily__"), XEN_WRAP_C_POINTER(arr), make_xm_obj(arr)));
     }
   if (strcmp(ctype, "PangoAttrList**") == 0)
     {
-      PangoAttrList** arr; arr = (PangoAttrList**)CALLOC(len + 1, sizeof(PangoAttrList*));
+      PangoAttrList** arr; arr = (PangoAttrList**)calloc(len + 1, sizeof(PangoAttrList*));
       for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_PangoAttrList_(XEN_CAR(val));
       return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("PangoAttrList__"), XEN_WRAP_C_POINTER(arr), make_xm_obj(arr)));
     }
   if (strcmp(ctype, "GtkTreeModel**") == 0)
     {
-      GtkTreeModel** arr; arr = (GtkTreeModel**)CALLOC(len + 1, sizeof(GtkTreeModel*));
+      GtkTreeModel** arr; arr = (GtkTreeModel**)calloc(len + 1, sizeof(GtkTreeModel*));
       for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_GtkTreeModel_(XEN_CAR(val));
       return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("GtkTreeModel__"), XEN_WRAP_C_POINTER(arr), make_xm_obj(arr)));
     }
@@ -34896,7 +34891,7 @@ static XEN gxg_make_GdkColor(XEN arglist)
 {
   GdkColor* result;
   int i, len;
-  result = (GdkColor*)CALLOC(1, sizeof(GdkColor));
+  result = (GdkColor*)calloc(1, sizeof(GdkColor));
   len = XEN_LIST_LENGTH(arglist);
   for (i = 0; i < len; i++)
     switch (i)
@@ -34913,7 +34908,7 @@ static XEN gxg_make_GdkCursor(XEN arglist)
 {
   GdkCursor* result;
   int i, len;
-  result = (GdkCursor*)CALLOC(1, sizeof(GdkCursor));
+  result = (GdkCursor*)calloc(1, sizeof(GdkCursor));
   len = XEN_LIST_LENGTH(arglist);
   for (i = 0; i < len; i++)
     switch (i)
@@ -34928,7 +34923,7 @@ static XEN gxg_make_GdkPoint(XEN arglist)
 {
   GdkPoint* result;
   int i, len;
-  result = (GdkPoint*)CALLOC(1, sizeof(GdkPoint));
+  result = (GdkPoint*)calloc(1, sizeof(GdkPoint));
   len = XEN_LIST_LENGTH(arglist);
   for (i = 0; i < len; i++)
     switch (i)
@@ -34943,7 +34938,7 @@ static XEN gxg_make_GdkRectangle(XEN arglist)
 {
   GdkRectangle* result;
   int i, len;
-  result = (GdkRectangle*)CALLOC(1, sizeof(GdkRectangle));
+  result = (GdkRectangle*)calloc(1, sizeof(GdkRectangle));
   len = XEN_LIST_LENGTH(arglist);
   for (i = 0; i < len; i++)
     switch (i)
@@ -34960,7 +34955,7 @@ static XEN gxg_make_GtkRequisition(XEN arglist)
 {
   GtkRequisition* result;
   int i, len;
-  result = (GtkRequisition*)CALLOC(1, sizeof(GtkRequisition));
+  result = (GtkRequisition*)calloc(1, sizeof(GtkRequisition));
   len = XEN_LIST_LENGTH(arglist);
   for (i = 0; i < len; i++)
     switch (i)
@@ -34974,42 +34969,42 @@ static XEN gxg_make_GtkRequisition(XEN arglist)
 static XEN gxg_make_GtkStockItem(void)
 {
   GtkStockItem* result;
-  result = (GtkStockItem*)CALLOC(1, sizeof(GtkStockItem));
+  result = (GtkStockItem*)calloc(1, sizeof(GtkStockItem));
   return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("GtkStockItem_"), C_TO_XEN_ULONG((unsigned long)result), make_xm_obj(result)));
 }
 
 static XEN gxg_make_GtkTextIter(void)
 {
   GtkTextIter* result;
-  result = (GtkTextIter*)CALLOC(1, sizeof(GtkTextIter));
+  result = (GtkTextIter*)calloc(1, sizeof(GtkTextIter));
   return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("GtkTextIter_"), C_TO_XEN_ULONG((unsigned long)result), make_xm_obj(result)));
 }
 
 static XEN gxg_make_GtkTreeIter(void)
 {
   GtkTreeIter* result;
-  result = (GtkTreeIter*)CALLOC(1, sizeof(GtkTreeIter));
+  result = (GtkTreeIter*)calloc(1, sizeof(GtkTreeIter));
   return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("GtkTreeIter_"), C_TO_XEN_ULONG((unsigned long)result), make_xm_obj(result)));
 }
 
 static XEN gxg_make_PangoColor(void)
 {
   PangoColor* result;
-  result = (PangoColor*)CALLOC(1, sizeof(PangoColor));
+  result = (PangoColor*)calloc(1, sizeof(PangoColor));
   return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("PangoColor_"), C_TO_XEN_ULONG((unsigned long)result), make_xm_obj(result)));
 }
 
 static XEN gxg_make_PangoRectangle(void)
 {
   PangoRectangle* result;
-  result = (PangoRectangle*)CALLOC(1, sizeof(PangoRectangle));
+  result = (PangoRectangle*)calloc(1, sizeof(PangoRectangle));
   return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("PangoRectangle_"), C_TO_XEN_ULONG((unsigned long)result), make_xm_obj(result)));
 }
 
 static XEN gxg_make_PangoLogAttr(void)
 {
   PangoLogAttr* result;
-  result = (PangoLogAttr*)CALLOC(1, sizeof(PangoLogAttr));
+  result = (PangoLogAttr*)calloc(1, sizeof(PangoLogAttr));
   return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("PangoLogAttr_"), C_TO_XEN_ULONG((unsigned long)result), make_xm_obj(result)));
 }
 
@@ -35017,7 +35012,7 @@ static XEN gxg_make_PangoLogAttr(void)
 static XEN gxg_make_cairo_matrix_t(void)
 {
   cairo_matrix_t* result;
-  result = (cairo_matrix_t*)CALLOC(1, sizeof(cairo_matrix_t));
+  result = (cairo_matrix_t*)calloc(1, sizeof(cairo_matrix_t));
   return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("cairo_matrix_t_"), C_TO_XEN_ULONG((unsigned long)result), make_xm_obj(result)));
 }
 
@@ -48703,7 +48698,7 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("29-Jan-09"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("30-Jan-09"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

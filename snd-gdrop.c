@@ -23,7 +23,7 @@ static int add_drop_watcher(GtkWidget *w,
     {
       loc = 0;
       drop_watchers_size = DROP_WATCHER_SIZE_INCREMENT;
-      drop_watchers = (drop_watcher_t **)CALLOC(drop_watchers_size, sizeof(drop_watcher_t *));
+      drop_watchers = (drop_watcher_t **)calloc(drop_watchers_size, sizeof(drop_watcher_t *));
     }
   else
     {
@@ -38,11 +38,11 @@ static int add_drop_watcher(GtkWidget *w,
 	{
 	  loc = drop_watchers_size;
 	  drop_watchers_size += DROP_WATCHER_SIZE_INCREMENT;
-	  drop_watchers = (drop_watcher_t **)REALLOC(drop_watchers, drop_watchers_size * sizeof(drop_watcher_t *));
+	  drop_watchers = (drop_watcher_t **)realloc(drop_watchers, drop_watchers_size * sizeof(drop_watcher_t *));
 	  for (i = loc; i < drop_watchers_size; i++) drop_watchers[i] = NULL;
 	}
     }
-  drop_watchers[loc] = (drop_watcher_t *)CALLOC(1, sizeof(drop_watcher_t));
+  drop_watchers[loc] = (drop_watcher_t *)calloc(1, sizeof(drop_watcher_t));
   drop_watchers[loc]->drop_watcher = drop_watcher;
   drop_watchers[loc]->drag_watcher = drag_watcher;
   drop_watchers[loc]->context = context;
@@ -113,7 +113,7 @@ static void drag_data_received(GtkWidget *caller, GdkDragContext *context, gint 
 	      char *filename;
 	      int len = 0, i, j = 0;
 	      len = mus_strlen(str);
-	      filename = (char *)CALLOC(len, sizeof(char));
+	      filename = (char *)calloc(len, sizeof(char));
 	      for (i = 0; i < len; i++)
 		{
 		  if (isspace(str[i]))
@@ -137,7 +137,7 @@ static void drag_data_received(GtkWidget *caller, GdkDragContext *context, gint 
 		      filename[j++] = str[i];
 		    }
 		}
-	      FREE(filename);
+	      free(filename);
 	    }
 	}
       gtk_drag_finish (context, true, false, time);

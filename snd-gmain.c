@@ -90,8 +90,8 @@ static gint window_iconify(GtkWidget *w, GdkEventWindowState *event, gpointer co
     {
       /* presumably we are now iconified */
 
-      if (iconify_active_dialogs) FREE(iconify_active_dialogs);
-      iconify_active_dialogs = (GtkWidget **)CALLOC(ss->sgx->num_dialogs, sizeof(GtkWidget *));
+      if (iconify_active_dialogs) free(iconify_active_dialogs);
+      iconify_active_dialogs = (GtkWidget **)calloc(ss->sgx->num_dialogs, sizeof(GtkWidget *));
 
       for (i = 0; i < ss->sgx->num_dialogs; i++)
 	if (ss->sgx->dialogs[i])
@@ -112,7 +112,7 @@ static gint window_iconify(GtkWidget *w, GdkEventWindowState *event, gpointer co
 		if (iconify_active_dialogs[i])
 		  gtk_widget_show(iconify_active_dialogs[i]);
 
-	      FREE(iconify_active_dialogs);
+	      free(iconify_active_dialogs);
 	      iconify_active_dialogs = NULL;
 	    }
 	}
@@ -223,7 +223,7 @@ static void get_stdin_string(gpointer context, gint fd, int condition)
 {
   int bytes, size;
   char *buf;
-  buf = (char *)CALLOC(1024, sizeof(char));
+  buf = (char *)calloc(1024, sizeof(char));
   size = 1024;
   bytes = read(fd, buf, 1024);
   if (bytes <= 0) 
@@ -237,12 +237,12 @@ static void get_stdin_string(gpointer context, gint fd, int condition)
       while (bytes == 1024)
 	{
 	  size += 1024;
-	  buf = (char *)REALLOC(buf, size);
+	  buf = (char *)realloc(buf, size);
 	  bytes = read(fd, (char *)(buf + size - 1024), 1024);
 	}
       snd_eval_stdin_str(buf);
     }
-  FREE(buf);
+  free(buf);
 }
 #endif
 
@@ -368,7 +368,7 @@ static void save_a_color(FILE *Fp, const char *def_name, color_info *current_col
 #endif /* ext lang */
 
 #if USE_CAIRO
-  FREE(default_color); /* macro has rgb_to_color which allocates */
+  free(default_color); /* macro has rgb_to_color which allocates */
 #endif
 }
 
@@ -505,7 +505,7 @@ static idle_func_t startup_funcs(gpointer context)
 	{
 	  handle_listener(true);
 	  listener_append(ss->startup_errors);
-	  FREE(ss->startup_errors);
+	  free(ss->startup_errors);
 	  ss->startup_errors = NULL;
 	}
       return(BACKGROUND_QUIT); 
@@ -531,7 +531,7 @@ color_t get_in_between_color(color_t fg, color_t bg)
 {
 #if USE_CAIRO
   color_info *new_color;
-  new_color = (color_info *)CALLOC(1, sizeof(color_info)); /* memleak here */
+  new_color = (color_info *)calloc(1, sizeof(color_info)); /* memleak here */
   new_color->red = (rgb_t)((fg->red + (2 * bg->red)) / 3);
   new_color->green = (rgb_t)((fg->green + (2 * bg->green)) / 3);
   new_color->blue = (rgb_t)((fg->blue + (2 * bg->blue)) / 3);
@@ -695,7 +695,7 @@ void snd_doit(int argc, char **argv)
   ss->sash_size = SASH_SIZE;
   ss->sash_indent = SASH_INDENT;
   ss->toggle_size = TOGGLE_SIZE;
-  ss->sgx = (state_context *)CALLOC(1, sizeof(state_context));
+  ss->sgx = (state_context *)calloc(1, sizeof(state_context));
   sx = ss->sgx;
   sx->graph_is_active = false;
   sx->bg_gradient = 0.0;
@@ -789,7 +789,7 @@ void snd_doit(int argc, char **argv)
 	    gtk_rc_parse("Snd.gtkrc");
 	  else
 	    {
-	      if (str) FREE(str);
+	      if (str) free(str);
 	      str = mus_expand_filename("~/Snd.gtkrc");
 	      if (mus_file_probe(str))
 		gtk_rc_parse(str);
@@ -1030,7 +1030,7 @@ class \"GtkTextView\" binding \"gtk-emacs-text-view\"\n			\
 #endif
 	    }
 	}
-      if (str) FREE(str);
+      if (str) free(str);
     } /* not nogtkrc */
   
   MAIN_PANE(ss) = gtk_vbox_new(false, 0); /* not homogenous, spacing 0 */

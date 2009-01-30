@@ -31,7 +31,7 @@ static void ps_write(const char *buf)
   int i, len;
   if (!nbuf)
     {
-      nbuf = (char *)CALLOC(NBUF_SIZE, sizeof(char));
+      nbuf = (char *)calloc(NBUF_SIZE, sizeof(char));
       nbuf_ctr = 0;
     }
   len = mus_strlen(buf);
@@ -50,7 +50,7 @@ static int start_ps_graph(const char *output, const char *title)
 { 
   ps_fd = CREAT(output, 0666);
   if (ps_fd == -1) return(-1);
-  if (!pbuf) pbuf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
+  if (!pbuf) pbuf = (char *)calloc(PRINT_BUFFER_SIZE, sizeof(char));
   bbx = 0;
   bby = 0;
 
@@ -105,12 +105,12 @@ static void end_ps_graph(void)
 #if HAVE_SETLOCALE
       setlocale(LC_NUMERIC, previous_locale);
 #endif
-      FREE(previous_locale);
+      free(previous_locale);
       previous_locale = NULL;
     }
   if (nbuf)
     {
-      FREE(nbuf);
+      free(nbuf);
       nbuf = NULL;
       nbuf_ctr = 0;
     }
@@ -137,9 +137,9 @@ static Float *ypts1 = NULL;
 
 void ps_allocate_grf_points(void)
 {
-  if (!xpts) xpts = (Float *)CALLOC(POINT_BUFFER_SIZE, sizeof(Float));
-  if (!ypts) ypts = (Float *)CALLOC(POINT_BUFFER_SIZE, sizeof(Float));
-  if (!ypts1) ypts1 = (Float *)CALLOC(POINT_BUFFER_SIZE, sizeof(Float));
+  if (!xpts) xpts = (Float *)calloc(POINT_BUFFER_SIZE, sizeof(Float));
+  if (!ypts) ypts = (Float *)calloc(POINT_BUFFER_SIZE, sizeof(Float));
+  if (!ypts1) ypts1 = (Float *)calloc(POINT_BUFFER_SIZE, sizeof(Float));
 }
 
 
@@ -539,7 +539,7 @@ static char *snd_print_or_error(const char *output)
       if (ccp == NULL) 
 	return(mus_strdup(_("nothing to print?")));
       si = sync_to_chan(ccp);
-      offsets = (int *)CALLOC(si->chans, sizeof(int));
+      offsets = (int *)calloc(si->chans, sizeof(int));
       for (j = 0, i = (si->chans - 1); i >= 0; i--)
 	{
 	  offsets[i] = j;
@@ -568,7 +568,7 @@ static char *snd_print_or_error(const char *output)
 	}
       else errstr = mus_format(_("print %s failed: %s"), output, snd_io_strerror());
       if (si) si = free_sync_info(si);
-      if (offsets) FREE(offsets);
+      if (offsets) free(offsets);
       return(errstr);
     }
   else return(mus_strdup(_("print sound: eps file name needed")));
@@ -582,7 +582,7 @@ bool snd_print(const char *output)
   if (error)
     {
       snd_error_without_format(error);
-      FREE(error);
+      free(error);
       return(false);
     }
   return(true);
@@ -642,7 +642,7 @@ static XEN g_graph_to_ps(XEN filename)
     {
       XEN result;
       result = C_TO_XEN_STRING(error);
-      FREE(error);
+      free(error);
       XEN_ERROR(XEN_ERROR_TYPE("cannot-print"),
 		XEN_LIST_3(C_TO_XEN_STRING(S_graph_to_ps),
 			   C_TO_XEN_STRING(file),
@@ -724,7 +724,7 @@ OpenGL graphics. type can be 0: eps, 1: ps, 2: pdf, 3: tex, 4: svg, 5: pgf."
   fclose(fp);
 #if HAVE_SETLOCALE
   setlocale(LC_NUMERIC, old_locale);
-  if (old_locale) FREE(old_locale);
+  if (old_locale) free(old_locale);
 #endif
   
   return(xen_return_first(C_TO_XEN_STRING(file), filename));
@@ -735,7 +735,7 @@ char *gl2ps_version(void);
 char *gl2ps_version(void)
 {
   char *buf;
-  buf = (char *)CALLOC(128, sizeof(char));
+  buf = (char *)calloc(128, sizeof(char));
   snprintf(buf, 128, "gl2ps %d.%d.%d", GL2PS_MAJOR_VERSION, GL2PS_MINOR_VERSION, GL2PS_PATCH_VERSION);
   return(buf);
 }
@@ -765,7 +765,7 @@ static XEN g_set_eps_file(XEN val)
 {
   #define H_eps_file "(" S_eps_file "): File:Print and " S_graph_to_ps " file name (snd.eps)"
   XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, S_setB S_eps_file, "a string"); 
-  if (eps_file(ss)) FREE(eps_file(ss));
+  if (eps_file(ss)) free(eps_file(ss));
   set_eps_file(mus_strdup(XEN_TO_C_STRING(val))); 
   return(C_TO_XEN_STRING(eps_file(ss)));
 }

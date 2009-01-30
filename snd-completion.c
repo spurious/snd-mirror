@@ -44,13 +44,13 @@ static int completions(const char *text)
 {
   match_info *m;
   int matches;
-  m = (match_info *)CALLOC(1, sizeof(match_info));
+  m = (match_info *)calloc(1, sizeof(match_info));
   m->text = text;
   m->len = strlen(text);
   m->matches = 0;
   s7_for_each_symbol_name(s7, compare_names, (void *)m);
   matches = m->matches;
-  FREE(m);
+  free(m);
   return(matches);
 }
 
@@ -312,10 +312,10 @@ char *command_completer(widget_t w, const char *original_text, void *data)
 	{
 	  char *text;
 	  len = mus_strlen(current_match) + beg + 2;
-	  text = (char *)CALLOC(len, sizeof(char));
+	  text = (char *)calloc(len, sizeof(char));
 	  strncpy(text, original_text, beg);
 	  strcat(text, current_match);
-	  FREE(current_match);
+	  free(current_match);
 	  return(text);
 	}
     }
@@ -371,7 +371,7 @@ void save_completion_choice(const char *selection)
 	break;
       cur = old;
     }
-  if (old) FREE(old);
+  if (old) free(old);
 }
 
 
@@ -407,16 +407,16 @@ int add_completer_func(char *(*func)(widget_t w, const char *text, void *context
       completer_funcs_size += 8;
       if (completer_funcs == NULL)
 	{
-	  completer_funcs = (completer_func *)CALLOC(completer_funcs_size, sizeof(completer_func));
-	  multicompleter_funcs = (multicompleter_func *)CALLOC(completer_funcs_size, sizeof(multicompleter_func));
-	  completer_data = (void **)CALLOC(completer_funcs_size, sizeof(void *));
+	  completer_funcs = (completer_func *)calloc(completer_funcs_size, sizeof(completer_func));
+	  multicompleter_funcs = (multicompleter_func *)calloc(completer_funcs_size, sizeof(multicompleter_func));
+	  completer_data = (void **)calloc(completer_funcs_size, sizeof(void *));
 	}
       else 
 	{
 	  int i;
-	  completer_funcs = (completer_func *)REALLOC(completer_funcs, completer_funcs_size * sizeof(completer_func));
-	  multicompleter_funcs = (multicompleter_func *)REALLOC(multicompleter_funcs, completer_funcs_size * sizeof(multicompleter_func));
-	  completer_data = (void **)REALLOC(completer_data, completer_funcs_size * sizeof(void *));
+	  completer_funcs = (completer_func *)realloc(completer_funcs, completer_funcs_size * sizeof(completer_func));
+	  multicompleter_funcs = (multicompleter_func *)realloc(multicompleter_funcs, completer_funcs_size * sizeof(multicompleter_func));
+	  completer_data = (void **)realloc(completer_data, completer_funcs_size * sizeof(void *));
 	  for (i = completer_funcs_end; i < completer_funcs_size; i++) completer_data[i] = NULL;
 	}
     }
@@ -456,15 +456,15 @@ void add_possible_completion(const char *text)
 	{
 	  possible_completions_size += 16;
 	  if (possible_completions == NULL)
-	    possible_completions = (char **)CALLOC(possible_completions_size, sizeof(char *));
+	    possible_completions = (char **)calloc(possible_completions_size, sizeof(char *));
 	  else
 	    {
 	      int i;
-	      possible_completions = (char **)REALLOC(possible_completions, possible_completions_size * sizeof(char *));
+	      possible_completions = (char **)realloc(possible_completions, possible_completions_size * sizeof(char *));
 	      for (i = possible_completions_ctr; i < possible_completions_size; i++) possible_completions[i] = NULL;
 	    }
 	}
-      if (possible_completions[possible_completions_ctr]) FREE(possible_completions[possible_completions_ctr]);
+      if (possible_completions[possible_completions_ctr]) free(possible_completions[possible_completions_ctr]);
       possible_completions[possible_completions_ctr] = mus_strdup(text);
       possible_completions_ctr++;
     }
@@ -510,7 +510,7 @@ void clear_possible_completions(void)
   for (i = 0; i < possible_completions_size; i++)
     if (possible_completions[i]) 
       {
-	FREE(possible_completions[i]);
+	free(possible_completions[i]);
 	possible_completions[i] = NULL;
       }
   possible_completions_ctr = 0;
@@ -524,10 +524,10 @@ static void init_srate_list(void)
   if (srate_info == NULL)
     {
       int loc = 0;
-      srate_info = (list_completer_info *)CALLOC(1, sizeof(list_completer_info));
+      srate_info = (list_completer_info *)calloc(1, sizeof(list_completer_info));
       srate_info->exact_match = true;
       srate_info->values_size = 16;
-      srate_info->values = (char **)CALLOC(srate_info->values_size, sizeof(char *));
+      srate_info->values = (char **)calloc(srate_info->values_size, sizeof(char *));
       srate_info->values[loc++] = mus_strdup("44100");
       srate_info->values[loc++] = mus_strdup("22050");
       srate_info->values[loc++] = mus_strdup("8000");
@@ -558,18 +558,18 @@ void add_srate_to_completion_list(int srate)
   char *str;
   int i;
   init_srate_list();
-  str = (char *)CALLOC(16, sizeof(char));
+  str = (char *)calloc(16, sizeof(char));
   mus_snprintf(str, 16, "%d", srate);
   for (i = 0; i < srate_info->num_values; i++)
     if (mus_strcmp(srate_info->values[i], str))
       {
-	FREE(str);
+	free(str);
 	return;
       }
   if (srate_info->num_values >= srate_info->values_size)
     {
       srate_info->values_size += 16;
-      srate_info->values = (char **)REALLOC(srate_info->values, srate_info->values_size * sizeof(char *));
+      srate_info->values = (char **)realloc(srate_info->values, srate_info->values_size * sizeof(char *));
       for (i = srate_info->num_values; i < srate_info->values_size; i++) srate_info->values[i] = NULL;
     }
   srate_info->values[srate_info->num_values++] = str;
@@ -608,14 +608,14 @@ static char *filename_completer_1(widget_t w, const char *text, int file_type)
   for (i = len - 1; i > 0; i--)
     if (full_name[i] == '/')
       break;
-  dir_name = (char *)CALLOC(i + 1, sizeof(char));
+  dir_name = (char *)calloc(i + 1, sizeof(char));
   strncpy(dir_name, full_name, i);
-  file_name = (char *)CALLOC(len - i + 2, sizeof(char));
+  file_name = (char *)calloc(len - i + 2, sizeof(char));
   for (j = 0, k = i + 1; k < len; j++, k++) 
     file_name[j] = full_name[k];
   if (full_name) 
     {
-      FREE(full_name); 
+      free(full_name); 
       full_name = NULL;
     }
   len = mus_strlen(file_name);
@@ -648,8 +648,8 @@ static char *filename_completer_1(widget_t w, const char *text, int file_type)
       if (closedir(dpos) != 0) 
 	snd_error("closedir %s failed (%s)!", dir_name, snd_io_strerror());
     }
-  if (dir_name) FREE(dir_name);
-  if (file_name) FREE(file_name);
+  if (dir_name) free(dir_name);
+  if (file_name) free(file_name);
   set_completion_matches(matches);
   if ((current_match) && 
       (*current_match))
@@ -661,12 +661,12 @@ static char *filename_completer_1(widget_t w, const char *text, int file_type)
 	  break;
       if (i < 0) return(current_match);
       curlen = strlen(current_match) + len + 3;
-      file_name = (char *)CALLOC(curlen, sizeof(char));
+      file_name = (char *)calloc(curlen, sizeof(char));
       strncpy(file_name, text, i + 1);
       strcat(file_name, current_match);
       if (directory_p(file_name)) 
 	strcat(file_name, "/");
-      FREE(current_match);
+      free(current_match);
       return(file_name);
     }
 #endif
@@ -724,13 +724,13 @@ char *info_completer(widget_t w, const char *text, void *data)
 	  if ((beg > 0) && (parens & 1))                 /* i.e. there is a string and we're in it */
 	    {
 	      char *new_file;
-	      if (new_text) FREE(new_text);
+	      if (new_text) free(new_text);
 	      new_file = filename_completer(w, (char *)(text + beg), NULL);
 	      len = beg + 2 + mus_strlen(new_file);
-	      new_text = (char *)CALLOC(len, sizeof(char));
+	      new_text = (char *)calloc(len, sizeof(char));
 	      strncpy(new_text, text, beg);
 	      strcat(new_text, new_file);
-	      if (new_file) FREE(new_file);
+	      if (new_file) free(new_file);
 	    }
 	}
       return(new_text);
@@ -780,12 +780,12 @@ char *complete_listener_text(char *old_text, int end, bool *try_completion, char
 	  spaces = find_indentation(old_text, i);
 	  if (spaces > 0)
 	    {
-	      file_text = (char *)CALLOC(spaces + 1, sizeof(char));
+	      file_text = (char *)calloc(spaces + 1, sizeof(char));
 	      for (k = 0; k < spaces; k++) 
 		file_text[k] = ' ';
 	      file_text[spaces] = 0;
 	      append_listener_text(end, file_text);
-	      FREE(file_text);
+	      free(file_text);
 	      file_text = NULL;
 	    }
 	  (*try_completion) = false;
@@ -810,13 +810,13 @@ char *complete_listener_text(char *old_text, int end, bool *try_completion, char
 	  if (cr_pos == 0) spaces--; 
 	  if (text_pos < spaces)
 	    {
-	      file_text = (char *)CALLOC(spaces + 2, sizeof(char));
+	      file_text = (char *)calloc(spaces + 2, sizeof(char));
 	      for (k = text_pos + 1; k < spaces; k++) 
 		file_text[k - text_pos - 1] = ' ';
 	      file_text[spaces] = ';';
 	      file_text[spaces + 1] = 0;
 	      append_listener_text(end - 1, file_text);
-	      FREE(file_text);
+	      free(file_text);
 	      file_text = NULL;
 	    }
 	  (*try_completion) = false;
@@ -830,10 +830,10 @@ char *complete_listener_text(char *old_text, int end, bool *try_completion, char
 	  if (len > 0)
 	    {
 	      len += i + 2;
-	      new_text = (char *)CALLOC(len, sizeof(char));
+	      new_text = (char *)calloc(len, sizeof(char));
 	      strncpy(new_text, old_text, i + 1);
 	      strcat(new_text, new_file);
-	      if (new_file) FREE(new_file);
+	      if (new_file) free(new_file);
 	    }
 	  break;
 	}
@@ -856,13 +856,13 @@ char *list_completer(widget_t w, const char *text, void *data)
   len = mus_strlen(text);
   if (len == 0) return(mus_strdup(text));
   /* strip away leading and trailing white space */
-  trimmed_text = (char *)CALLOC(len + 1, sizeof(char));
+  trimmed_text = (char *)calloc(len + 1, sizeof(char));
   for (i = 0; i < len; i++)
     if (!(isspace(text[i])))
       trimmed_text[j++] = text[i];
   if (j == 0)
     {
-      FREE(trimmed_text);
+      free(trimmed_text);
       return(mus_strdup(text));
     }
   /* check for match(es) against values */
@@ -886,7 +886,7 @@ char *list_completer(widget_t w, const char *text, void *data)
 	    current_match = i;
 	  }
     }
-  FREE(trimmed_text);
+  free(trimmed_text);
   if (matches != 1)
     return(mus_strdup(text));
   set_completion_matches(1);

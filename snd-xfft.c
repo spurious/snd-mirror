@@ -58,8 +58,8 @@ static void graph_redisplay(void)
   axis_context *ax;
   if (axis_ap == NULL) 
     {
-      axis_ap = (axis_info *)CALLOC(1, sizeof(axis_info));
-      ax = (axis_context *)CALLOC(1, sizeof(axis_context));
+      axis_ap = (axis_info *)calloc(1, sizeof(axis_info));
+      ax = (axis_context *)calloc(1, sizeof(axis_context));
       axis_ap->ax = ax;
       ax->dp = XtDisplay(graph_drawer);
       ax->wn = XtWindow(graph_drawer);
@@ -1200,10 +1200,10 @@ Widget fire_up_transform_dialog(bool managed)
       if (fft_window_alpha_in_use(fft_window(ss))) 
 	XtVaSetValues(window_alpha_scale, XmNbackground, ss->sgx->highlight_color, NULL);
 
-      FREE(n1);
-      FREE(n2);
-      FREE(n3);
-      FREE(n4);
+      free(n1);
+      free(n2);
+      free(n3);
+      free(n4);
       set_dialog_widget(TRANSFORM_DIALOG, transform_dialog);
 
       XtUnmanageChild(error_frame);
@@ -1433,7 +1433,7 @@ void make_transform_type_list(void)
     {
       XmString *types;
       int i, j;
-      types = (XmString *)CALLOC(num, sizeof(XmString));
+      types = (XmString *)calloc(num, sizeof(XmString));
       for (i = 0, j = 0; i < num; i++) 
 	if (transform_p(i))
 	  {
@@ -1447,7 +1447,7 @@ void make_transform_type_list(void)
 		    NULL);
       for (i = 0; i < j; i++) 
 	XmStringFree(types[i]);
-      FREE(types);
+      free(types);
     }
 }
 

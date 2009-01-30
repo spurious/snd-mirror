@@ -162,7 +162,7 @@ static void listener_completion(int end)
       goto_window(listener_text);
       if (new_text) 
 	{
-	  FREE(new_text); 
+	  free(new_text); 
 	  new_text = NULL;
 	}
 #if 0
@@ -175,7 +175,7 @@ static void listener_completion(int end)
 	  else new_text = command_completer(NULL, old_text, NULL);
 	  if (new_text) 
 	    {
-	      FREE(new_text); 
+	      free(new_text); 
 	      new_text = NULL;
 	    }
 
@@ -184,7 +184,7 @@ static void listener_completion(int end)
 	  set_save_completions(false);
 	}
 #endif
-      if (file_text) FREE(file_text);
+      if (file_text) free(file_text);
       if (old_text) g_free(old_text);
     }
 }

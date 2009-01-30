@@ -58,7 +58,7 @@
  *
  *  static char *local_mus_expand_filename(char *name)
  *  {
- *    if (tmpstr) {FREE(tmpstr); tmpstr = NULL;}
+ *    if (tmpstr) {free(tmpstr); tmpstr = NULL;}
  *       tmpstr = mus_expand_filename(name);
  *    return(tmpstr);
  *  }
@@ -75,13 +75,13 @@ end1 start2 end2 base-note base-detune mode1 mode2)"
   XEN_ASSERT_TYPE(XEN_STRING_P(gfilename), gfilename, XEN_ONLY_ARG, S_mus_sound_loop_info, "a string"); 
 
   res = mus_sound_loop_info(str = mus_expand_filename(XEN_TO_C_STRING(gfilename)));
-  if (str) FREE(str);
+  if (str) free(str);
   if (res)
     {
       sres = XEN_LIST_8(C_TO_XEN_INT(res[0]), C_TO_XEN_INT(res[1]), C_TO_XEN_INT(res[2]),
 			C_TO_XEN_INT(res[3]), C_TO_XEN_INT(res[4]), C_TO_XEN_INT(res[5]),
 			C_TO_XEN_INT(res[6]), C_TO_XEN_INT(res[7]));
-      FREE(res);
+      free(res);
     }
   return(sres);
 }
@@ -98,7 +98,7 @@ static XEN g_mus_sound_mark_info(XEN gfilename)
   XEN_ASSERT_TYPE(XEN_STRING_P(gfilename), gfilename, XEN_ONLY_ARG, S_mus_sound_mark_info, "a string"); 
 
   marks = mus_sound_mark_info(str = mus_expand_filename(XEN_TO_C_STRING(gfilename)), &mark_ids, &mark_positions);
-  if (str) FREE(str);
+  if (str) free(str);
   if (marks > 0)
     {
       int i;
@@ -119,7 +119,7 @@ static XEN gmus_sound(const char *caller, int (*func)(const char *file), XEN gfi
   XEN_ASSERT_TYPE(XEN_STRING_P(gfilename), gfilename, XEN_ONLY_ARG, caller, "a string"); 
   str = mus_expand_filename(XEN_TO_C_STRING(gfilename));
   result = C_TO_XEN_INT((*func)(str));
-  if (str) FREE(str);
+  if (str) free(str);
   return(result);
 }
 
@@ -133,7 +133,7 @@ static XEN gmus_sound_set(const char *caller, int (*func)(const char *file, int 
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ARG_2, caller, "an integer");
   str = mus_expand_filename(XEN_TO_C_STRING(gfilename));
   result = C_TO_XEN_INT((*func)(str, XEN_TO_C_INT(val)));
-  if (str) FREE(str);
+  if (str) free(str);
   return(result);
 }
 
@@ -146,7 +146,7 @@ static XEN glmus_sound(const char *caller, off_t (*func)(const char *file), XEN 
   XEN_ASSERT_TYPE(XEN_STRING_P(gfilename), gfilename, XEN_ONLY_ARG, caller, "a string"); 
   str = mus_expand_filename(XEN_TO_C_STRING(gfilename));
   result = C_TO_XEN_OFF_T((*func)(str));
-  if (str) FREE(str);
+  if (str) free(str);
   return(result);
 }
 
@@ -160,7 +160,7 @@ static XEN glmus_sound_set(const char *caller, int (*func)(const char *file, off
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, caller, "a number");
   str = mus_expand_filename(XEN_TO_C_STRING(gfilename));
   result = C_TO_XEN_OFF_T((*func)(str, XEN_TO_C_OFF_T(val)));
-  if (str) FREE(str);
+  if (str) free(str);
   return(result);
 }
 
@@ -295,9 +295,9 @@ static XEN g_mus_sound_comment(XEN gfilename)
   XEN_ASSERT_TYPE(XEN_STRING_P(gfilename), gfilename, XEN_ONLY_ARG, S_mus_sound_comment, "a string"); 
 
   res = mus_sound_comment(str = mus_expand_filename(XEN_TO_C_STRING(gfilename)));
-  if (str) FREE(str);
+  if (str) free(str);
   newstr = C_TO_XEN_STRING(res);
-  if (res) FREE(res);
+  if (res) free(res);
   return(newstr);
 }
 
@@ -311,7 +311,7 @@ static XEN g_mus_sound_write_date(XEN filename)
   XEN_ASSERT_TYPE(XEN_STRING_P(filename), filename, XEN_ONLY_ARG, S_mus_sound_write_date, "a string"); 
   str = mus_expand_filename(XEN_TO_C_STRING(filename));
   result = C_TO_XEN_ULONG((unsigned long)mus_sound_write_date(str));
-  if (str) FREE(str);
+  if (str) free(str);
   return(result);
 }
 
@@ -396,7 +396,7 @@ static XEN g_mus_sound_duration(XEN gfilename)
 
   XEN_ASSERT_TYPE(XEN_STRING_P(gfilename), gfilename, XEN_ONLY_ARG, S_mus_sound_duration, "a string"); 
   res = mus_sound_duration(str = mus_expand_filename(XEN_TO_C_STRING(gfilename)));
-  if (str) FREE(str);
+  if (str) free(str);
   return(C_TO_XEN_DOUBLE(res));
 
 }
@@ -579,7 +579,7 @@ in the sound cache; if it isn't, a call on " S_mus_sound_maxamp " has to open an
 
   XEN_ASSERT_TYPE(XEN_STRING_P(file), file, XEN_ONLY_ARG, S_mus_sound_maxamp_exists, "a string");
   val = mus_sound_maxamp_exists(str = mus_expand_filename(XEN_TO_C_STRING(file)));
-  if (str) FREE(str);
+  if (str) free(str);
   return(C_TO_XEN_BOOLEAN(val));
 }
 
@@ -602,21 +602,21 @@ static XEN g_mus_sound_maxamp(XEN file)
       mus_sample_t *vals;
       off_t *times;
 
-      vals = (mus_sample_t *)CALLOC(chans, sizeof(mus_sample_t));
-      times = (off_t *)CALLOC(chans, sizeof(off_t));
+      vals = (mus_sample_t *)calloc(chans, sizeof(mus_sample_t));
+      times = (off_t *)calloc(chans, sizeof(off_t));
 
       rtn = mus_sound_maxamps(filename, chans, vals, times);
       if (rtn != MUS_ERROR)
 	for (i = chans - 1; i >= 0; i--)
 	  res = XEN_CONS(C_TO_XEN_OFF_T(times[i]),
 		  XEN_CONS(C_TO_XEN_DOUBLE(MUS_SAMPLE_TO_FLOAT(vals[i])), res));
-      FREE(vals);
-      FREE(times);
-      if (filename) FREE(filename);
+      free(vals);
+      free(times);
+      if (filename) free(filename);
     }
   else 
     {
-      if (filename) FREE(filename);
+      if (filename) free(filename);
       XEN_ERROR(BAD_HEADER,
 		XEN_LIST_2(C_TO_XEN_STRING(S_mus_sound_maxamp),
 			   C_TO_XEN_STRING("chans <= 0")));
@@ -651,8 +651,8 @@ static XEN g_mus_sound_set_maxamp(XEN file, XEN vals)
 	XEN_WRONG_TYPE_ARG_ERROR(S_setB S_mus_sound_maxamp, 2, vals, "max amp list length must = 2 * chans");
       if (len > chans * 2) len = chans * 2;
 
-      mvals = (mus_sample_t *)CALLOC(chans, sizeof(mus_sample_t));
-      times = (off_t *)CALLOC(chans, sizeof(off_t));
+      mvals = (mus_sample_t *)calloc(chans, sizeof(mus_sample_t));
+      times = (off_t *)calloc(chans, sizeof(off_t));
 
       for (i = 0, j = 0, lst = XEN_COPY_ARG(vals); i < len; i += 2, j++, lst = XEN_CDDR(lst))
 	{
@@ -661,13 +661,13 @@ static XEN g_mus_sound_set_maxamp(XEN file, XEN vals)
 	}
 
       mus_sound_set_maxamps(filename, chans, mvals, times);
-      FREE(mvals);
-      FREE(times);
-      if (filename) FREE(filename);
+      free(mvals);
+      free(times);
+      if (filename) free(filename);
     }
   else 
     {
-      if (filename) FREE(filename);
+      if (filename) free(filename);
       XEN_ERROR(BAD_HEADER,
 		XEN_LIST_2(C_TO_XEN_STRING(S_setB S_mus_sound_maxamp),
 			   C_TO_XEN_STRING("chans <= 0")));
@@ -685,7 +685,7 @@ return file descriptor (an integer)"
 
   XEN_ASSERT_TYPE(XEN_STRING_P(file), file, XEN_ONLY_ARG, S_mus_sound_open_input, "a string");
   fd = mus_sound_open_input(str = mus_expand_filename(XEN_TO_C_STRING(file)));
-  if (str) FREE(str);
+  if (str) free(str);
   return(C_TO_XEN_INT(fd));
 }
 
@@ -773,7 +773,7 @@ header-type is a sndlib type indicator such as " S_mus_aiff "; sndlib currently 
 	      fd = mus_sound_open_output(str = mus_expand_filename(XEN_TO_C_STRING(file)),
 					 XEN_TO_C_INT_OR_ELSE(srate, 44100),  /* not DEFAULT_OUTPUT_SRATE here because that depends on Snd */
 					 chns, df, ht, com);
-	      if (str) FREE(str);
+	      if (str) free(str);
 	    }
 	  else XEN_OUT_OF_RANGE_ERROR(S_mus_sound_open_output, 3, chans, "chans ~A <= 0?");
 	}
@@ -850,7 +850,7 @@ data-location should be retrieved from a previous call to " S_mus_sound_data_loc
 		    dloc = 0;
 		}
 	      fd = mus_sound_reopen_output(filename, chns, df, ht, dloc);
-	      if (filename) FREE(filename);
+	      if (filename) free(filename);
 	    }
 	  else XEN_OUT_OF_RANGE_ERROR(S_mus_sound_reopen_output, 2, chans, "chans <= 0?");
 	}
@@ -920,15 +920,15 @@ filling sound-data sdata's buffers starting at beg (buffer location), going to e
     mus_sample_t **sdata;
     int i;
     off_t j, result;
-    sdata = (mus_sample_t **)CALLOC(sd->chans, sizeof(mus_sample_t *));
-    for (i = 0; i < sd->chans; i++) sdata[i] = (mus_sample_t *)CALLOC(sd->length, sizeof(mus_sample_t));
+    sdata = (mus_sample_t **)calloc(sd->chans, sizeof(mus_sample_t *));
+    for (i = 0; i < sd->chans; i++) sdata[i] = (mus_sample_t *)calloc(sd->length, sizeof(mus_sample_t));
     result = mus_file_read(XEN_TO_C_INT(fd), bg, nd, XEN_TO_C_INT(chans), sdata);
     for (i = 0; i < sd->chans; i++)
       for (j = 0; j < sd->length; j++)
 	sd->data[i][j] = MUS_SAMPLE_TO_DOUBLE(sdata[i][j]);
     for (i = 0; i < sd->chans; i++)
-      FREE(sdata[i]);
-    FREE(sdata);
+      free(sdata[i]);
+    free(sdata);
     return(C_TO_XEN_INT(result));
   }
 #endif
@@ -966,16 +966,16 @@ starting at beg (buffer location), going to end"
     mus_sample_t **sdata;
     int i;
     off_t j, result;
-    sdata = (mus_sample_t **)CALLOC(sd->chans, sizeof(mus_sample_t *));
+    sdata = (mus_sample_t **)calloc(sd->chans, sizeof(mus_sample_t *));
     for (i = 0; i < sd->chans; i++)
-      sdata[i] = (mus_sample_t *)CALLOC(sd->length, sizeof(mus_sample_t));
+      sdata[i] = (mus_sample_t *)calloc(sd->length, sizeof(mus_sample_t));
     for (i = 0; i < sd->chans; i++)
       for (j = 0; j < sd->length; j++)
 	sdata[i][j] = MUS_DOUBLE_TO_SAMPLE(sd->data[i][j]);
     result = mus_file_write(XEN_TO_C_INT(fd), bg, nd, XEN_TO_C_INT(chans), sdata);
     for (i = 0; i < sd->chans; i++)
-      FREE(sdata[i]);
-    FREE(sdata);
+      free(sdata[i]);
+    free(sdata);
     return(C_TO_XEN_INT(result));
   }
 #endif
@@ -1034,13 +1034,13 @@ static void audio_io_set_format(int line, int format)
   audio_io_size += 8;
   if (old_size == 0)
     {
-      audio_io_lines = (int *)MALLOC(audio_io_size * sizeof(int));
-      audio_io_formats = (int *)MALLOC(audio_io_size * sizeof(int));
+      audio_io_lines = (int *)malloc(audio_io_size * sizeof(int));
+      audio_io_formats = (int *)malloc(audio_io_size * sizeof(int));
     }
   else
     {
-      audio_io_lines = (int *)REALLOC(audio_io_lines, audio_io_size * sizeof(int));
-      audio_io_formats = (int *)REALLOC(audio_io_formats, audio_io_size * sizeof(int));
+      audio_io_lines = (int *)realloc(audio_io_lines, audio_io_size * sizeof(int));
+      audio_io_formats = (int *)realloc(audio_io_formats, audio_io_size * sizeof(int));
     }
   for (i = old_size + 1; i < audio_io_size; i++)
     {
@@ -1181,7 +1181,7 @@ to the audio line from sound-data sdata."
   fd = XEN_TO_C_INT(line);
   fmt = audio_io_write_format(fd);
   outbytes = frms * sd->chans * mus_bytes_per_sample(fmt);
-  obuf = (char *)CALLOC(outbytes, sizeof(char));
+  obuf = (char *)calloc(outbytes, sizeof(char));
 #if SNDLIB_USE_FLOATS
   mus_file_write_buffer(fmt, 0, frms - 1, sd->chans, sd->data, obuf, true); /* true -> clipped */
 #else
@@ -1189,20 +1189,20 @@ to the audio line from sound-data sdata."
     mus_sample_t **sdata;
     int i;
     off_t j;
-    sdata = (mus_sample_t **)CALLOC(sd->chans, sizeof(mus_sample_t *));
+    sdata = (mus_sample_t **)calloc(sd->chans, sizeof(mus_sample_t *));
     for (i = 0; i < sd->chans; i++) 
-      sdata[i] = (mus_sample_t *)CALLOC(sd->length, sizeof(mus_sample_t));
+      sdata[i] = (mus_sample_t *)calloc(sd->length, sizeof(mus_sample_t));
     for (i = 0; i < sd->chans; i++)
       for (j = 0; j < sd->length; j++)
 	sdata[i][j] = MUS_DOUBLE_TO_SAMPLE(sd->data[i][j]);
     mus_file_write_buffer(fmt, 0, frms - 1, sd->chans, sdata, obuf, true);
     for (i = 0; i < sd->chans; i++)
-      FREE(sdata[i]);
-    FREE(sdata);
+      free(sdata[i]);
+    free(sdata);
   }
 #endif
   val = mus_audio_write(fd, obuf, outbytes);
-  FREE(obuf);
+  free(obuf);
   return(xen_return_first(C_TO_XEN_INT(val), sdata));
 }
 
@@ -1226,7 +1226,7 @@ from the audio line into sound-data sdata."
   fd = XEN_TO_C_INT(line);
   fmt = audio_io_read_format(fd);
   inbytes = frms * sd->chans * mus_bytes_per_sample(fmt);
-  inbuf = (char *)CALLOC(inbytes, sizeof(char));
+  inbuf = (char *)calloc(inbytes, sizeof(char));
   val = mus_audio_read(fd, inbuf, inbytes);
 #if SNDLIB_USE_FLOATS
   mus_file_read_buffer(fmt, 0, sd->chans, frms, sd->data, inbuf); /* frms here because this is "nints" not "end"! */
@@ -1235,18 +1235,18 @@ from the audio line into sound-data sdata."
     mus_sample_t **sdata;
     int i;
     off_t j;
-    sdata = (mus_sample_t **)CALLOC(sd->chans, sizeof(mus_sample_t *));
-    for (i = 0; i < sd->chans; i++) sdata[i] = (mus_sample_t *)CALLOC(sd->length, sizeof(mus_sample_t));
+    sdata = (mus_sample_t **)calloc(sd->chans, sizeof(mus_sample_t *));
+    for (i = 0; i < sd->chans; i++) sdata[i] = (mus_sample_t *)calloc(sd->length, sizeof(mus_sample_t));
     mus_file_read_buffer(fmt, 0, sd->chans, frms, sdata, inbuf);
     for (i = 0; i < sd->chans; i++)
       for (j = 0; j < sd->length; j++)
 	sd->data[i][j] = MUS_SAMPLE_TO_DOUBLE(sdata[i][j]);
     for (i = 0; i < sd->chans; i++)
-      FREE(sdata[i]);
-    FREE(sdata);
+      free(sdata[i]);
+    free(sdata);
   }
 #endif
-  FREE(inbuf);
+  free(inbuf);
   return(xen_return_first(C_TO_XEN_INT(val), sdata));
 }
 
@@ -1289,14 +1289,14 @@ sets " mixer_read_vct_example " to the default device's desired audio sample dat
 
   v = XEN_TO_VCT(vals);
   len = v->length;
-  fvals = (float *)CALLOC(len, sizeof(float));
+  fvals = (float *)calloc(len, sizeof(float));
   val = mus_audio_mixer_read(XEN_TO_C_INT(dev),
 			     XEN_TO_C_INT(field),
 			     XEN_TO_C_INT(chan),
 			     fvals);
   for (i = 0; i < len; i++) 
     v->data[i] = fvals[i];
-  FREE(fvals);
+  free(fvals);
   return(xen_return_first(C_TO_XEN_INT(val), vals));
 }
 
@@ -1320,14 +1320,14 @@ static XEN g_mus_audio_mixer_write(XEN dev, XEN field, XEN chan, XEN vals)
 
   v = XEN_TO_VCT(vals);
   len = v->length;
-  fvals = (float *)CALLOC(len, sizeof(float));
+  fvals = (float *)calloc(len, sizeof(float));
   for (i = 0; i < len; i++) 
     fvals[i] = v->data[i];
   res = mus_audio_mixer_write(XEN_TO_C_INT(dev),
 			      XEN_TO_C_INT(field),
 			      XEN_TO_C_INT(chan),
 			      fvals);
-  FREE(fvals);
+  free(fvals);
   return(xen_return_first(C_TO_XEN_INT(res), vals));
 }
 
@@ -1406,7 +1406,7 @@ one in which all directories in the path are explicit."
   XEN_ASSERT_TYPE(XEN_STRING_P(file), file, XEN_ONLY_ARG, S_mus_expand_filename, "a string");
   str = mus_expand_filename(XEN_TO_C_STRING(file));
   result = C_TO_XEN_STRING(str);
-  if (str) FREE(str);
+  if (str) free(str);
   return(result);
 }
 
@@ -1426,7 +1426,7 @@ cache info to the file given or stdout"
       char *str = NULL;
       name = XEN_TO_C_STRING(file);
       fd = FOPEN(str = mus_expand_filename(name), "w");
-      if (str) FREE(str);
+      if (str) free(str);
       if (fd)
 	{
 	  mus_sound_report_cache(fd);
@@ -1601,12 +1601,12 @@ void sound_data_free(sound_data *sd)
       if ((sd->data) && (!(sd->wrapped)))
 	{
 	  int i;
-	  for (i = 0; i < sd->chans; i++) if (sd->data[i]) FREE(sd->data[i]);
-	  FREE(sd->data);
+	  for (i = 0; i < sd->chans; i++) if (sd->data[i]) free(sd->data[i]);
+	  free(sd->data);
 	}
       sd->data = NULL;
       sd->chans = 0;
-      FREE(sd);
+      free(sd);
     }
 }
 
@@ -1626,7 +1626,7 @@ char *sound_data_to_string(sound_data *sd)
   if (len > sd->length) len = sd->length;
 
   chans = sd->chans;
-  buf = (char *)CALLOC(64 + len * 24 * chans, sizeof(char));
+  buf = (char *)calloc(64 + len * 24 * chans, sizeof(char));
 
   sprintf(buf, "#<sound-data[chans=%d, length=" OFF_TD "]:", sd->chans, sd->length);
   if (len > 0)
@@ -1713,13 +1713,13 @@ sound_data *c_make_sound_data(int chans, off_t frames)
   int i;
   sound_data *sd;
 
-  sd = (sound_data *)MALLOC(sizeof(sound_data));
+  sd = (sound_data *)malloc(sizeof(sound_data));
   sd->length = frames;
   sd->chans = chans;
   sd->wrapped = false;
-  sd->data = (Float **)CALLOC(chans, sizeof(Float *));
+  sd->data = (Float **)calloc(chans, sizeof(Float *));
   for (i = 0; i < chans; i++)
-    sd->data[i] = (Float *)CALLOC(frames, sizeof(Float));
+    sd->data[i] = (Float *)calloc(frames, sizeof(Float));
   return(sd);
 }
 
@@ -1736,7 +1736,7 @@ XEN make_sound_data(int chans, off_t frames)
 XEN wrap_sound_data(int chans, off_t frames, Float **data)
 {
   sound_data *sd;
-  sd = (sound_data *)MALLOC(sizeof(sound_data));
+  sd = (sound_data *)malloc(sizeof(sound_data));
   sd->length = frames;
   sd->chans = chans;
   sd->wrapped = true;
@@ -2173,7 +2173,7 @@ static XEN g_sound_data_to_vct(XEN sdobj, XEN chan, XEN vobj)
 			 XEN_LIST_2(chan, C_TO_XEN_INT(sd->chans))));
 
   if (!(MUS_VCT_P(vobj))) 
-    vobj = xen_make_vct(sd->length, (Float *)CALLOC(sd->length, sizeof(Float)));
+    vobj = xen_make_vct(sd->length, (Float *)calloc(sd->length, sizeof(Float)));
   v = XEN_TO_VCT(vobj);
 
   if (sd->length < v->length) 

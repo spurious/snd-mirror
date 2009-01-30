@@ -80,7 +80,7 @@ int add_ss_watcher(ss_watcher_t type, void (*watcher)(ss_watcher_reason_t reason
     {
       loc = 0;
       ss->watchers_size = SS_WATCHER_SIZE_INCREMENT;
-      ss->watchers = (ss_watcher **)CALLOC(ss->watchers_size, sizeof(ss_watcher *));
+      ss->watchers = (ss_watcher **)calloc(ss->watchers_size, sizeof(ss_watcher *));
     }
   else
     {
@@ -95,11 +95,11 @@ int add_ss_watcher(ss_watcher_t type, void (*watcher)(ss_watcher_reason_t reason
 	{
 	  loc = ss->watchers_size;
 	  ss->watchers_size += SS_WATCHER_SIZE_INCREMENT;
-	  ss->watchers = (ss_watcher **)REALLOC(ss->watchers, ss->watchers_size * sizeof(ss_watcher *));
+	  ss->watchers = (ss_watcher **)realloc(ss->watchers, ss->watchers_size * sizeof(ss_watcher *));
 	  for (i = loc; i < ss->watchers_size; i++) ss->watchers[i] = NULL;
 	}
     }
-  ss->watchers[loc] = (ss_watcher *)CALLOC(1, sizeof(ss_watcher));
+  ss->watchers[loc] = (ss_watcher *)calloc(1, sizeof(ss_watcher));
   ss->watchers[loc]->watcher = watcher;
   ss->watchers[loc]->context = context;
   ss->watchers[loc]->loc = loc;
@@ -142,7 +142,7 @@ static void save_loaded_files_list(FILE *fd, const char *current_filename)
       int i, gc_loc, new_files = 0;
       full_name = mus_expand_filename(current_filename);
       gc_loc = snd_protect(old_list);
-      files = (char **)CALLOC(len, sizeof(char *));
+      files = (char **)calloc(len, sizeof(char *));
       for (i = len - 1; i >= 0; i--)
 	{
 	  char *curfile;
@@ -153,7 +153,7 @@ static void save_loaded_files_list(FILE *fd, const char *current_filename)
 	    files[new_files++] = mus_strdup(curfile);
 	}
       snd_unprotect_at(gc_loc);
-      FREE(full_name);
+      free(full_name);
       if (new_files > 0)
 	{
 	  fprintf(fd, ";;; reload any missing files\n");
@@ -164,8 +164,8 @@ static void save_loaded_files_list(FILE *fd, const char *current_filename)
 	    fprintf(fd, "\"%s\" ", files[i]);
 	  fprintf(fd, "))\n\n");
 	}
-      for (i = 0; i < new_files; i++) FREE(files[i]);
-      FREE(files);
+      for (i = 0; i < new_files; i++) free(files[i]);
+      free(files);
     }
 }
 #endif
@@ -698,7 +698,7 @@ static void save_options(FILE *fd)
 #if HAVE_SETLOCALE
       setlocale(LC_NUMERIC, locale);
 #endif
-      FREE(locale);
+      free(locale);
     }
 }
 
@@ -709,7 +709,7 @@ void global_control_panel_state(void)
 {
   char *buf;
   snd_help_append("\n\nCurrent control panel defaults:\n\n");
-  buf = (char *)CALLOC(1024, sizeof(char));
+  buf = (char *)calloc(1024, sizeof(char));
   mus_snprintf(buf, 1024, "amp bounds: %.3f to %.3f\n", 
 	       amp_control_min(ss), amp_control_max(ss));
   snd_help_append(buf);
@@ -737,7 +737,7 @@ void global_control_panel_state(void)
 	       b2s(filter_control_in_hz(ss)));
   snd_help_append(buf);
   snd_help_back_to_top();
-  FREE(buf);
+  free(buf);
 }
 
 
@@ -745,7 +745,7 @@ void global_fft_state(void)
 {
   char *buf;
   snd_help_append("\n\nCurrent FFT defaults:\n\n");
-  buf = (char *)CALLOC(1024, sizeof(char));
+  buf = (char *)calloc(1024, sizeof(char));
   mus_snprintf(buf, 1024, "fft size: " OFF_TD "\n    type: %s\n    window: %s (alpha: %.3f, beta: %.3f)\n",
 	       transform_size(ss), 
 	       TO_VAR_NAME(transform_program_name(transform_type(ss))),
@@ -767,7 +767,7 @@ void global_fft_state(void)
 	       transform_normalization_name(transform_normalization(ss)));
   snd_help_append(buf);
   snd_help_back_to_top();
-  FREE(buf);
+  free(buf);
 }
 
 
@@ -1104,7 +1104,7 @@ static void save_sound_state(snd_info *sp, void *ptr)
   if ((sp->filter_control_envelope) && (!(default_envelope_p(sp->filter_control_envelope))))
     {
       psp_ss(fd, S_filter_control_envelope, tmpstr = env_to_string(sp->filter_control_envelope));
-      if (tmpstr) FREE(tmpstr);
+      if (tmpstr) free(tmpstr);
     }
   if (sp->with_tracking_cursor != DONT_TRACK) 
     psp_ss(fd, S_with_tracking_cursor, b2s((bool)(sp->with_tracking_cursor))); /* a boolean from the user's point of view */
@@ -1262,7 +1262,7 @@ void save_state(const char *save_state_name)
   if (append_new_state)
     save_fd = FOPEN(fullname, "a");
   else save_fd = FOPEN(fullname, "w");
-  if (fullname) {FREE(fullname); fullname = NULL;}
+  if (fullname) {free(fullname); fullname = NULL;}
   if (save_fd == NULL)
     {
       snd_error(_("can't write %s: %s"), save_state_name, snd_io_strerror());
@@ -1391,7 +1391,7 @@ void save_state(const char *save_state_name)
 #if HAVE_SETLOCALE
       setlocale(LC_NUMERIC, locale);
 #endif
-      FREE(locale);
+      free(locale);
     }
   snd_fclose(save_fd, save_state_name);
   if (XEN_HOOKED(after_save_state_hook))
@@ -1429,7 +1429,7 @@ const char *save_options_in_prefs(void)
     }
   save_options(fd);
   snd_fclose(fd, SND_PREFS);
-  FREE(fullname);
+  free(fullname);
   return(SND_PREFS);
 #else
   return(NULL);
@@ -1641,7 +1641,7 @@ static void save_state_error_handler(const char *msg, void *data)
   if (filename)
     {
       fname = C_TO_XEN_STRING(filename);
-      FREE(filename); /* this is "name" below */
+      free(filename); /* this is "name" below */
     }
   else fname = C_TO_XEN_STRING(save_state_file(ss));
   redirect_snd_error_to(NULL, NULL);
@@ -1669,7 +1669,7 @@ default " S_save_state " filename is " DEFAULT_SAVE_STATE_FILE ". It can be chan
   redirect_snd_error_to(NULL, NULL);
 
   res = C_TO_XEN_STRING(name);
-  FREE(name);
+  free(name);
   return(res);
 }
 
@@ -1692,16 +1692,16 @@ static int snd_access(const char *dir, const char *caller)
   if (err == -1)
     {
       XEN res;
-      FREE(temp);
+      free(temp);
       temp = mus_format(_("%s: directory %s is not writable: %s"), caller, dir, snd_open_strerror());
       res = C_TO_XEN_STRING(temp);
-      FREE(temp);
+      free(temp);
       XEN_ERROR(NO_SUCH_FILE,
 		XEN_LIST_1(res));
     }
   else snd_close(err, temp);
   snd_remove(temp, IGNORE_CACHE);
-  FREE(temp);
+  free(temp);
   return(1);
 }
 
@@ -1716,7 +1716,7 @@ static XEN g_set_temp_dir(XEN val)
   if (XEN_STRING_P(val)) dir = XEN_TO_C_STRING(val);
   if (snd_access(dir, S_temp_dir))
     {
-      if (temp_dir(ss)) FREE(temp_dir(ss));
+      if (temp_dir(ss)) free(temp_dir(ss));
       set_temp_dir(mus_strdup(dir));
     }
   return(C_TO_XEN_STRING(temp_dir(ss)));
@@ -1729,7 +1729,7 @@ static XEN g_set_ladspa_dir(XEN val)
 {
   #define H_ladspa_dir "(" S_ladspa_dir "): name of directory for ladspa plugin libraries"
   XEN_ASSERT_TYPE(XEN_STRING_P(val) || XEN_FALSE_P(val), val, XEN_ONLY_ARG, S_setB S_ladspa_dir, "a string or " PROC_FALSE "=default (null)"); 
-  if (ladspa_dir(ss)) FREE(ladspa_dir(ss));
+  if (ladspa_dir(ss)) free(ladspa_dir(ss));
   if (XEN_FALSE_P(val))
     set_ladspa_dir(mus_strdup(DEFAULT_LADSPA_DIR));
   else set_ladspa_dir(mus_strdup(XEN_TO_C_STRING(val)));
@@ -1745,7 +1745,7 @@ static XEN g_set_save_state_file(XEN val)
   #define H_save_state_file "(" S_save_state_file "): the name of the saved state file (\"saved-snd." XEN_FILE_EXTENSION "\")"
   XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, S_setB S_save_state_file, "a string"); 
   filename = XEN_TO_C_STRING(val);
-  if (save_state_file(ss)) FREE(save_state_file(ss));
+  if (save_state_file(ss)) free(save_state_file(ss));
   in_set_save_state_file(mus_strdup(filename));
   return(C_TO_XEN_STRING(save_state_file(ss)));
 }
@@ -1761,7 +1761,7 @@ static XEN g_set_save_dir(XEN val)
   if (XEN_STRING_P(val)) dir = XEN_TO_C_STRING(val);
   if (snd_access(dir, S_save_dir))
     {
-      if (save_dir(ss)) FREE(save_dir(ss));
+      if (save_dir(ss)) free(save_dir(ss));
       set_save_dir(mus_strdup(dir));
     }
   return(C_TO_XEN_STRING(save_dir(ss)));
@@ -1778,7 +1778,7 @@ static XEN g_set_open_file_dialog_directory(XEN val)
   dir = XEN_TO_C_STRING(val);
   if (snd_access(dir, S_open_file_dialog_directory))
     {
-      if (open_file_dialog_directory(ss)) FREE(open_file_dialog_directory(ss));
+      if (open_file_dialog_directory(ss)) free(open_file_dialog_directory(ss));
       set_open_file_dialog_directory(mus_strdup(dir));
     }
   return(C_TO_XEN_STRING(open_file_dialog_directory(ss)));

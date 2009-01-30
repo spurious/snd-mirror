@@ -111,7 +111,7 @@ static void make_region_labels(file_info *hdr)
 {
   char *str;
   if (hdr == NULL) return;
-  str = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
+  str = (char *)calloc(PRINT_BUFFER_SIZE, sizeof(char));
   mus_snprintf(str, PRINT_BUFFER_SIZE, _("srate: %d"), hdr->srate);
   set_label(reg_srtxt, str);
   mus_snprintf(str, PRINT_BUFFER_SIZE, _("chans: %d"), hdr->chans);
@@ -120,7 +120,7 @@ static void make_region_labels(file_info *hdr)
   set_label(reg_lentxt, str);
   mus_snprintf(str, PRINT_BUFFER_SIZE, _("maxamp: %.3f"), region_maxamp(region_list_position_to_id(current_region)));
   set_label(reg_maxtxt, str);
-  FREE(str);
+  free(str);
 }
 
 
@@ -374,7 +374,7 @@ static regrow *make_regrow(Widget ww, Widget last_row, XtCallbackProc play_callb
   XtCallbackList n1, n3;
 
   s1 = XmStringCreateLocalized((char *)"");
-  r = (regrow *)CALLOC(1, sizeof(regrow));
+  r = (regrow *)calloc(1, sizeof(regrow));
 
   n = 0;
   XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
@@ -419,8 +419,8 @@ static regrow *make_regrow(Widget ww, Widget last_row, XtCallbackProc play_callb
   XtAddEventHandler(r->nm, EnterWindowMask, false, regrow_mouse_enter_label, (XtPointer)r);
   XtAddEventHandler(r->nm, LeaveWindowMask, false, regrow_mouse_leave_label, (XtPointer)r);
 
-  FREE(n1);
-  FREE(n3);
+  free(n1);
+  free(n3);
   return(r);
 }
 
@@ -536,7 +536,7 @@ static void make_region_dialog(void)
   map_over_children(region_list, set_main_color_of_widget);
   last_row = NULL;
   
-  region_rows = (regrow **)CALLOC(max_regions(ss), sizeof(regrow *));
+  region_rows = (regrow **)calloc(max_regions(ss), sizeof(regrow *));
   region_rows_size = max_regions(ss);
   for (i = 0; i < max_regions(ss); i++)
     {
@@ -706,7 +706,7 @@ void allocate_region_rows(int n)
       (n > region_rows_size))
     {
       int i;
-      region_rows = (regrow **)REALLOC(region_rows, n * sizeof(regrow *));
+      region_rows = (regrow **)realloc(region_rows, n * sizeof(regrow *));
       for (i = region_rows_size; i < n; i++) region_rows[i] = NULL;
       region_rows_size = n;
     }

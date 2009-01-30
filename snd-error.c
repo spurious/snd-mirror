@@ -175,7 +175,7 @@ void snd_warning(const char *format, ...)
   int bytes_needed = 0;
   va_list ap;
   if (snd_error_buffer == NULL) 
-    snd_error_buffer = (char *)CALLOC(snd_error_buffer_size, sizeof(char));
+    snd_error_buffer = (char *)calloc(snd_error_buffer_size, sizeof(char));
   va_start(ap, format);
 #if HAVE_VSNPRINTF
   bytes_needed = vsnprintf(snd_error_buffer, snd_error_buffer_size, format, ap);
@@ -186,8 +186,8 @@ void snd_warning(const char *format, ...)
   if (bytes_needed > snd_error_buffer_size)
     {
       snd_error_buffer_size = bytes_needed * 2;
-      FREE(snd_error_buffer);
-      snd_error_buffer = (char *)CALLOC(snd_error_buffer_size, sizeof(char));
+      free(snd_error_buffer);
+      snd_error_buffer = (char *)calloc(snd_error_buffer_size, sizeof(char));
       va_start(ap, format);
 #if HAVE_VSNPRINTF
       vsnprintf(snd_error_buffer, snd_error_buffer_size, format, ap);
@@ -211,7 +211,7 @@ void snd_error(const char *format, ...)
   int bytes_needed = 0;
   va_list ap;
   if (snd_error_buffer == NULL) 
-    snd_error_buffer = (char *)CALLOC(snd_error_buffer_size, sizeof(char));
+    snd_error_buffer = (char *)calloc(snd_error_buffer_size, sizeof(char));
   va_start(ap, format);
 #if HAVE_VSNPRINTF
   bytes_needed = vsnprintf(snd_error_buffer, snd_error_buffer_size, format, ap);
@@ -222,8 +222,8 @@ void snd_error(const char *format, ...)
   if (bytes_needed > snd_error_buffer_size)
     {
       snd_error_buffer_size = bytes_needed * 2;
-      FREE(snd_error_buffer);
-      snd_error_buffer = (char *)CALLOC(snd_error_buffer_size, sizeof(char));
+      free(snd_error_buffer);
+      snd_error_buffer = (char *)calloc(snd_error_buffer_size, sizeof(char));
       va_start(ap, format);
 #if HAVE_VSNPRINTF
       vsnprintf(snd_error_buffer, snd_error_buffer_size, format, ap);

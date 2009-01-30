@@ -48,8 +48,8 @@ static void graph_redisplay(void)
   if (wn == NULL) return;
   if (!axis_ap)
     {
-      axis_ap = (axis_info *)CALLOC(1, sizeof(axis_info));
-      ax = (axis_context *)CALLOC(1, sizeof(axis_context));
+      axis_ap = (axis_info *)calloc(1, sizeof(axis_info));
+      ax = (axis_context *)calloc(1, sizeof(axis_context));
       axis_ap->ax = ax;
     }
   else
@@ -989,7 +989,7 @@ void make_transform_type_list(void)
       int i, j, num;
       const char **transform_names;
       num = max_transform_type();
-      transform_names = (const char **)CALLOC(num, sizeof(char *));
+      transform_names = (const char **)calloc(num, sizeof(char *));
       for (i = 0, j = 0; i < num; i++) 
 	if (transform_p(i))
 	  {
@@ -1008,6 +1008,6 @@ void make_transform_type_list(void)
 	    slist_append(transform_list, transform_names[i]);
 	  slist_select(transform_list, transform_type_to_position(transform_type(ss)));
 	}
-      FREE(transform_names);
+      free(transform_names);
     }
 }

@@ -51,14 +51,14 @@ axis_info *enved_make_axis(const char *name, axis_context *ax,
   /* conjure up minimal context for axis drawer in snd-axis.c */
   if (!axis) 
     {
-      axis = (axis_info *)CALLOC(1, sizeof(axis_info));
-      axis->ax = (axis_context *)CALLOC(1, sizeof(axis_context));
+      axis = (axis_info *)calloc(1, sizeof(axis_info));
+      axis->ax = (axis_context *)calloc(1, sizeof(axis_context));
       fixup_axis_context(axis->ax, drawer, ax->gc);
     }
   if (!gray_ap) 
     {
-      gray_ap = (axis_info *)CALLOC(1, sizeof(axis_info));
-      gray_ap->ax = (axis_context *)CALLOC(1, sizeof(axis_context));
+      gray_ap = (axis_info *)calloc(1, sizeof(axis_info));
+      gray_ap->ax = (axis_context *)calloc(1, sizeof(axis_context));
       gray_ap->graph_active = true;
       fixup_axis_context(gray_ap->ax, drawer, ggc);
     }
@@ -76,7 +76,7 @@ axis_info *enved_make_axis(const char *name, axis_context *ax,
 static void display_env(env *e, const char *name, gc_t *cur_gc, int x0, int y0, int width, int height, bool dots, printing_t printing)
 {
   axis_context *ax = NULL;  
-  ax = (axis_context *)CALLOC(1, sizeof(axis_context));
+  ax = (axis_context *)calloc(1, sizeof(axis_context));
   ax->wn = WIDGET_TO_WINDOW(drawer);
   ax->w = drawer;
   ax->gc = cur_gc;
@@ -88,7 +88,7 @@ static void display_env(env *e, const char *name, gc_t *cur_gc, int x0, int y0, 
 #if USE_CAIRO
   cairo_destroy(ax->cr);
 #endif
-  FREE(ax);
+  free(ax);
 }
 
 
@@ -207,8 +207,8 @@ static void apply_enved(void)
 			C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 0);
 	      /* calls update_graph, I think, but in short files that doesn't update the amp-env */
 	      if (enved_wave_p(ss)) env_redisplay();
-	      if (estr) FREE(estr);
-	      if (origin) FREE(origin);
+	      if (estr) free(estr);
+	      if (origin) free(origin);
 	      break;
 	    case ENVED_SPECTRUM: 
 #if HAVE_FORTH
@@ -230,8 +230,8 @@ static void apply_enved(void)
 			   origin, NULL,
 			   apply_to_selection, NULL, NULL,
 			   C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 0, false);
-	      if (estr) FREE(estr);
-	      if (origin) FREE(origin);
+	      if (estr) free(estr);
+	      if (origin) free(origin);
 	      break;
 	    case ENVED_SRATE:
 	      {
@@ -793,15 +793,15 @@ static void make_base_label(Float bval)
   int i, len, scale_len;
   len = (int)(enved_power(ss) * 4);
   if (len < 32) len = 32;
-  sfs = (char *)CALLOC(len, sizeof(char));
+  sfs = (char *)calloc(len, sizeof(char));
   mus_snprintf(sfs, len, "%.3f", bval);
   scale_len = (int)(enved_power(ss) + 3);
   if (scale_len < 32) scale_len = 32;
-  buf = (char *)CALLOC(scale_len, sizeof(char));
+  buf = (char *)calloc(scale_len, sizeof(char));
   for (i = 0; i < scale_len - 1; i++) buf[i] = sfs[i];
   gtk_label_set_text(GTK_LABEL(baseValue), buf);
-  FREE(sfs);
-  FREE(buf);
+  free(sfs);
+  free(buf);
   in_set_enved_base(bval);
   if ((active_env) && (!(showing_all_envs))) 
     {
@@ -1161,7 +1161,7 @@ GtkWidget *create_envelope_editor(void)
       gtk_widget_show(mainform);
       gtk_widget_show(enved_dialog);
 
-      pix_ax = (axis_context *)CALLOC(1, sizeof(axis_context));
+      pix_ax = (axis_context *)calloc(1, sizeof(axis_context));
       pix_ax->wn = GDK_DRAWABLE(WIDGET_TO_WINDOW(brkpixL));
       pix_ax->gc = hgc;
 #if USE_CAIRO

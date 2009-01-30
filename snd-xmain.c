@@ -242,8 +242,8 @@ static void minify_maxify_window(Widget w, XtPointer context, XEvent *event, Boo
    */
   if (ev->type == UnmapNotify) 
     {
-      if (iconify_active_dialogs) FREE(iconify_active_dialogs);
-      iconify_active_dialogs = (Widget *)CALLOC(ss->sgx->num_dialogs, sizeof(Widget));
+      if (iconify_active_dialogs) free(iconify_active_dialogs);
+      iconify_active_dialogs = (Widget *)calloc(ss->sgx->num_dialogs, sizeof(Widget));
 
       for (i = 0; i < ss->sgx->num_dialogs; i++)
 	if (ss->sgx->dialogs[i])
@@ -263,7 +263,7 @@ static void minify_maxify_window(Widget w, XtPointer context, XEvent *event, Boo
 		if (iconify_active_dialogs[i])
 		  XtManageChild(iconify_active_dialogs[i]);
 
-	      FREE(iconify_active_dialogs);
+	      free(iconify_active_dialogs);
 	      iconify_active_dialogs = NULL;
 	    }
 	}
@@ -362,7 +362,7 @@ static void get_stdin_string(XtPointer context, int *fd, XtInputId *id)
   int size;
   ssize_t bytes;
   char *buf;
-  buf = (char *)CALLOC(1024, sizeof(char));
+  buf = (char *)calloc(1024, sizeof(char));
   size = 1024;
   bytes = read(*fd, buf, 1024);
   if (bytes <= 0) 
@@ -376,12 +376,12 @@ static void get_stdin_string(XtPointer context, int *fd, XtInputId *id)
       while (bytes == 1024)
 	{
 	  size += 1024;
-	  buf = (char *)REALLOC(buf, size);
+	  buf = (char *)realloc(buf, size);
 	  bytes = read(*fd, (char *)(buf + size - 1024), 1024);
 	}
       snd_eval_stdin_str(buf);
     }
-  FREE(buf);
+  free(buf);
 }
 #endif
 
@@ -487,7 +487,7 @@ static idle_func_t startup_funcs(XtPointer context)
 	{
 	  handle_listener(true); /* create it, if necessary */
 	  listener_append(ss->startup_errors);
-	  FREE(ss->startup_errors);
+	  free(ss->startup_errors);
 	  ss->startup_errors = NULL;
 	}
       return(BACKGROUND_QUIT); 
@@ -848,7 +848,7 @@ void snd_doit(int argc, char **argv)
 #else
   ss->click_time = (oclock_t)(0.5 * XtGetMultiClickTime(dpy));
 #endif
-  ss->sgx = (state_context *)CALLOC(1, sizeof(state_context));
+  ss->sgx = (state_context *)calloc(1, sizeof(state_context));
   sx = ss->sgx;
 
 #if (HAVE_GL) && (!SND_AS_WIDGET)

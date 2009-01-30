@@ -285,7 +285,7 @@ static void draw_polygon_va(axis_context *ax, bool filled, int points, va_list a
 #else
   {
     GdkPoint *pts;
-    pts = (GdkPoint *)CALLOC(points, sizeof(GdkPoint));
+    pts = (GdkPoint *)calloc(points, sizeof(GdkPoint));
     for (i = 0; i < points; i++)
       {
 	pts[i].x = va_arg(ap, int);
@@ -294,7 +294,7 @@ static void draw_polygon_va(axis_context *ax, bool filled, int points, va_list a
     if (filled)
       gdk_draw_polygon(ax->wn, ax->gc, true, pts, points);
     else gdk_draw_lines(ax->wn, ax->gc, pts, points);
-    FREE(pts);
+    free(pts);
   }
 #endif
 }
@@ -420,16 +420,16 @@ void check_colormap_sizes(int size)
 		}
 	      current_colormap = BLACK_AND_WHITE_COLORMAP;
 	    }
-	  FREE(current_colors);
-	  current_colors = (GdkColor **)CALLOC(current_colors_size, sizeof(GdkColor *));
+	  free(current_colors);
+	  current_colors = (GdkColor **)calloc(current_colors_size, sizeof(GdkColor *));
 	}
     }
   if ((sono_data) && (sono_colors < size) && (sono_bins > 0))
     {
       old_size = sono_colors;
       sono_colors = size;
-      sono_data = (GdkRectangle **)REALLOC(sono_data, sono_colors * sizeof(GdkRectangle *));
-      for (i = old_size; i < sono_colors; i++) sono_data[i] = (GdkRectangle *)CALLOC(sono_bins, sizeof(GdkRectangle));
+      sono_data = (GdkRectangle **)realloc(sono_data, sono_colors * sizeof(GdkRectangle *));
+      for (i = old_size; i < sono_colors; i++) sono_data[i] = (GdkRectangle *)calloc(sono_bins, sizeof(GdkRectangle));
     }
 }
 
@@ -442,9 +442,9 @@ void initialize_colormap(void)
   gc_set_background(sx->basic_gc, sx->graph_color);
   gc_set_foreground(sx->basic_gc, sx->data_color);
   sono_colors = color_map_size(ss);
-  sono_data = (GdkRectangle **)CALLOC(sono_colors, sizeof(GdkRectangle *));
+  sono_data = (GdkRectangle **)calloc(sono_colors, sizeof(GdkRectangle *));
   current_colors_size = color_map_size(ss);
-  current_colors = (GdkColor **)CALLOC(current_colors_size, sizeof(GdkColor *));
+  current_colors = (GdkColor **)calloc(current_colors_size, sizeof(GdkColor *));
 }
 
 
@@ -488,8 +488,8 @@ void allocate_sono_rects(int size)
       for (i = 0; i < sono_colors; i++)
 	{
 	  if ((sono_bins > 0) && (sono_data[i])) 
-	    FREE(sono_data[i]); 
-	  sono_data[i] = (GdkRectangle *)CALLOC(size, sizeof(GdkRectangle));
+	    free(sono_data[i]); 
+	  sono_data[i] = (GdkRectangle *)calloc(size, sizeof(GdkRectangle));
 	}
       sono_bins = size;
     }
@@ -580,8 +580,8 @@ void check_colormap_sizes(int size)
     {
       old_size = sono_colors;
       sono_colors = size;
-      sono_data = (GdkRectangle **)REALLOC(sono_data, sono_colors * sizeof(GdkRectangle *));
-      for (i = old_size; i < sono_colors; i++) sono_data[i] = (GdkRectangle *)CALLOC(sono_bins, sizeof(GdkRectangle));
+      sono_data = (GdkRectangle **)realloc(sono_data, sono_colors * sizeof(GdkRectangle *));
+      for (i = old_size; i < sono_colors; i++) sono_data[i] = (GdkRectangle *)calloc(sono_bins, sizeof(GdkRectangle));
     }
 }
 
@@ -589,7 +589,7 @@ void check_colormap_sizes(int size)
 void initialize_colormap(void)
 {
   sono_colors = color_map_size(ss);
-  sono_data = (GdkRectangle **)CALLOC(sono_colors, sizeof(GdkRectangle *));
+  sono_data = (GdkRectangle **)calloc(sono_colors, sizeof(GdkRectangle *));
 }
 
 
@@ -644,8 +644,8 @@ void allocate_sono_rects(int size)
       for (i = 0; i < sono_colors; i++)
 	{
 	  if ((sono_bins > 0) && (sono_data[i])) 
-	    FREE(sono_data[i]); 
-	  sono_data[i] = (GdkRectangle *)CALLOC(size, sizeof(GdkRectangle));
+	    free(sono_data[i]); 
+	  sono_data[i] = (GdkRectangle *)calloc(size, sizeof(GdkRectangle));
 	}
       sono_bins = size;
     }
@@ -897,7 +897,7 @@ static void start_view_color_dialog(bool managed)
       GtkWidget *outer_table, *scale_box, *cutoff_box, *cutoff_label;
 
       /* create color chooser dialog window */
-      ccd = (color_chooser_info *)CALLOC(1, sizeof(color_chooser_info));
+      ccd = (color_chooser_info *)calloc(1, sizeof(color_chooser_info));
       ccd->dialog = snd_gtk_dialog_new();
       SG_SIGNAL_CONNECT(ccd->dialog, "delete_event", delete_color_dialog, NULL);
       gtk_window_set_title(GTK_WINDOW(ccd->dialog), _("Color"));
@@ -1000,12 +1000,12 @@ static void start_view_color_dialog(bool managed)
 	gtk_widget_show(frame);
 
 	size = num_colormaps();
-	names = (char **)CALLOC(size, sizeof(char *));
+	names = (char **)calloc(size, sizeof(char *));
 	for (i = 0; i < size; i++) names[i] = colormap_name(i);
 	ccd->list = slist_new_with_title(S_colormap, frame, (const char**)names, size, CONTAINER_ADD);
 	ccd->list->select_callback = list_color_callback;
 	ccd->list->select_callback_data = (void *)ccd;
-	FREE(names);
+	free(names);
       }
 
       gtk_widget_show(outer_table);
@@ -1314,7 +1314,7 @@ static void start_view_orientation_dialog(bool managed)
       GtkWidget *ax_label, *ay_label, *az_label, *sx_label, *sy_label, *sz_label, *hop_label, *cut_label;
 
       /* create orientation window */
-      oid = (orientation_info *)CALLOC(1, sizeof(orientation_info));
+      oid = (orientation_info *)calloc(1, sizeof(orientation_info));
       oid->dialog = snd_gtk_dialog_new();
       SG_SIGNAL_CONNECT(oid->dialog, "delete_event", delete_orientation_dialog, NULL);
       gtk_window_set_title(GTK_WINDOW(oid->dialog), _("Spectrogram Orientation"));

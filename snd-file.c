@@ -175,7 +175,7 @@ static void forget_filename(const char *filename, char **names)
     if ((names[i]) &&
 	(strcmp(names[i], filename) == 0))
       {
-	FREE(names[i]);
+	free(names[i]);
 	names[i] = NULL;
       }
   for (i = 0; i < FILENAME_LIST_SIZE; i++)
@@ -195,7 +195,7 @@ void remember_filename(const char *filename, char **names)
 {
   int i;
   forget_filename(filename, names); /* clear out old copy, if any, then compact the list */
-  if (names[FILENAME_LIST_SIZE - 1]) FREE(names[FILENAME_LIST_SIZE - 1]);
+  if (names[FILENAME_LIST_SIZE - 1]) free(names[FILENAME_LIST_SIZE - 1]);
   for (i = FILENAME_LIST_SIZE - 1; i > 0; i--) 
     names[i] = names[i - 1];
   names[0] = mus_strdup(filename);
@@ -204,7 +204,7 @@ void remember_filename(const char *filename, char **names)
 
 char **make_filename_list(void)
 {
-  return((char **)CALLOC(FILENAME_LIST_SIZE, sizeof(char *)));
+  return((char **)calloc(FILENAME_LIST_SIZE, sizeof(char *)));
 }
 
 
@@ -249,7 +249,7 @@ char **recent_files(void)
 static dirpos_info *make_dirpos_info(const char *dir, position_t pos)
 {
   dirpos_info *dp;
-  dp = (dirpos_info *)CALLOC(1, sizeof(dirpos_info));
+  dp = (dirpos_info *)calloc(1, sizeof(dirpos_info));
   dp->directory_name = mus_strdup(dir);
   dp->list_top = pos;
   return(dp);
@@ -259,10 +259,10 @@ static dirpos_info *make_dirpos_info(const char *dir, position_t pos)
 dirpos_list *make_dirpos_list(void)
 {
   dirpos_list *dl;
-  dl = (dirpos_list *)CALLOC(1, sizeof(dirpos_list));
+  dl = (dirpos_list *)calloc(1, sizeof(dirpos_list));
   dl->size = 8;
   dl->top = 0;
-  dl->dirs = (dirpos_info **)CALLOC(dl->size, sizeof(dirpos_info *));
+  dl->dirs = (dirpos_info **)calloc(dl->size, sizeof(dirpos_info *));
   return(dl);
 }
 
@@ -287,7 +287,7 @@ void dirpos_update(dirpos_list *dl, const char *dir, position_t pos)
       int old_size;
       old_size = dl->size;
       dl->size += 8;
-      dl->dirs = (dirpos_info **)REALLOC(dl->dirs, dl->size * sizeof(dirpos_info *));
+      dl->dirs = (dirpos_info **)realloc(dl->dirs, dl->size * sizeof(dirpos_info *));
       for (i = old_size; i < dl->size; i++) dl->dirs[i] = NULL;
     }
   dl->dirs[dl->top++] = make_dirpos_info(dir, pos);
@@ -314,7 +314,7 @@ static sort_info *free_sort_info(sort_info *ptr)
     {
       if (ptr->filename) free(ptr->filename);
       if (ptr->full_filename) free(ptr->full_filename);
-      FREE(ptr);
+      free(ptr);
     }
   return(NULL);
 }
@@ -323,7 +323,7 @@ static sort_info *free_sort_info(sort_info *ptr)
 static sort_info *make_sort_info(const char *filename, const char *full_filename)
 {
   sort_info *ptr;
-  ptr = (sort_info *)CALLOC(1, sizeof(sort_info));
+  ptr = (sort_info *)calloc(1, sizeof(sort_info));
   ptr->filename = mus_strdup(filename); /* not mus_strdup -> these are glomming up memlog */
   ptr->full_filename = mus_strdup(full_filename);
   return(ptr);
@@ -462,8 +462,8 @@ void snd_sort(int sorter, sort_info **data, int len)
 static dir_info *make_dir_info(const char *name)
 {
   dir_info *dp;
-  dp = (dir_info *)CALLOC(1, sizeof(dir_info));
-  dp->files = (sort_info **)CALLOC(32, sizeof(sort_info *));
+  dp = (dir_info *)calloc(1, sizeof(dir_info));
+  dp->files = (sort_info **)calloc(32, sizeof(sort_info *));
   dp->dir_name = mus_strdup(name);
   dp->len = 0;
   dp->size = 32;
@@ -473,16 +473,16 @@ static dir_info *make_dir_info(const char *name)
 
 dir_info *free_dir_info(dir_info *dp)
 {
-  if (dp->dir_name) FREE(dp->dir_name);
+  if (dp->dir_name) free(dp->dir_name);
   if (dp->files)
     {
       int i;
       for (i = 0; i < dp->len; i++) 
 	if (dp->files[i]) 
 	  dp->files[i] = free_sort_info(dp->files[i]);
-      FREE(dp->files);
+      free(dp->files);
     }
-  FREE(dp);
+  free(dp);
   return(NULL);
 }
   
@@ -495,7 +495,7 @@ static void add_filename_to_dir_info(dir_info *dp, const char *name, const char 
     {
       int i;
       dp->size += 32;
-      dp->files = (sort_info **)REALLOC(dp->files, dp->size * sizeof(sort_info *));
+      dp->files = (sort_info **)realloc(dp->files, dp->size * sizeof(sort_info *));
       for (i = dp->size - 32; i < dp->size; i++) dp->files[i] = NULL;
     }
 }
@@ -519,7 +519,7 @@ static void load_dir(DIR *dpos, dir_info *dp, bool (*filter)(const char *filenam
 	path_max = 1024;
     }
 
-  fullname = (char *)CALLOC(path_max, sizeof(char));
+  fullname = (char *)calloc(path_max, sizeof(char));
   strcpy(fullname, dp->dir_name);
   fullname_start = strlen(dp->dir_name);
   while ((dirp = readdir(dpos)) != NULL)
@@ -530,7 +530,7 @@ static void load_dir(DIR *dpos, dir_info *dp, bool (*filter)(const char *filenam
 	  add_filename_to_dir_info(dp, dirp->d_name, fullname);
 	fullname[fullname_start] = '\0';
       }
-  FREE(fullname);
+  free(fullname);
 }
 
 
@@ -578,11 +578,11 @@ dir_info *find_directories_in_dir(const char *name)
 	  char *fullname;
 	  int len;
 	  len = mus_strlen(name) + mus_strlen(PARENT_DIRECTORY) + 2;  /* PARENT_DIRECTORY = ".." (snd-file.h) */
-	  fullname = (char *)CALLOC(len, sizeof(char));
+	  fullname = (char *)calloc(len, sizeof(char));
 	  strcpy(fullname, name);
 	  strcat(fullname, PARENT_DIRECTORY);
 	  add_filename_to_dir_info(dp, PARENT_DIRECTORY, fullname); /* always back pointer */
-	  FREE(fullname);
+	  free(fullname);
 	}
       load_dir(dpos, dp, directory_p);
       if (closedir(dpos) != 0) 
@@ -673,8 +673,8 @@ static void add_sound_file_extension(const char *ext)
     {
       sound_file_extensions_size += 8;
       if (sound_file_extensions == NULL)
-	sound_file_extensions = (char **)CALLOC(sound_file_extensions_size, sizeof(char *));
-      else sound_file_extensions = (char **)REALLOC(sound_file_extensions, sound_file_extensions_size * sizeof(char *));
+	sound_file_extensions = (char **)calloc(sound_file_extensions_size, sizeof(char *));
+      else sound_file_extensions = (char **)realloc(sound_file_extensions, sound_file_extensions_size * sizeof(char *));
     }
   sound_file_extensions[sound_file_extensions_end] = mus_strdup(ext);
   sound_file_extensions_end++;
@@ -868,9 +868,9 @@ void reflect_file_change_in_title(void)
   active_sound_list *alist;
   int i, j, len;
 
-  alist = (active_sound_list *)CALLOC(1, sizeof(active_sound_list));
-  alist->sounds = (int *)CALLOC(ss->max_sounds, sizeof(int));
-  alist->names = (char **)CALLOC(ss->max_sounds, sizeof(char *));
+  alist = (active_sound_list *)calloc(1, sizeof(active_sound_list));
+  alist->sounds = (int *)calloc(ss->max_sounds, sizeof(int));
+  alist->names = (char **)calloc(ss->max_sounds, sizeof(char *));
   for_each_sound_with_void(add_sound_to_active_list, (void *)alist);
 
   len = mus_strlen(ss->startup_title) + 32;
@@ -883,7 +883,7 @@ void reflect_file_change_in_title(void)
 	len += mus_strlen(filename_without_directory(alist->names[i]));
     }
 
-  title_buffer = (char *)CALLOC(len, sizeof(char));
+  title_buffer = (char *)calloc(len, sizeof(char));
   mus_snprintf(title_buffer, len, "%s%s", 
 	       ss->startup_title, 
 	       ((alist->active_sounds > 0) ? ": " : ""));
@@ -904,10 +904,10 @@ void reflect_file_change_in_title(void)
     }
 
   set_title(title_buffer);
-  FREE(title_buffer);
-  FREE(alist->sounds);
-  FREE(alist->names);
-  FREE(alist);
+  free(title_buffer);
+  free(alist->sounds);
+  free(alist->names);
+  free(alist);
 }
 
 
@@ -925,7 +925,7 @@ void set_fallback_format(int fr) {fallback_format = fr;}
 static file_info *make_file_info_1(const char *fullname)
 {
   file_info *hdr;
-  hdr = (file_info *)CALLOC(1, sizeof(file_info));
+  hdr = (file_info *)calloc(1, sizeof(file_info));
   hdr->name = mus_strdup(fullname);
   hdr->type = mus_sound_header_type(fullname);
   if (hdr->type == MUS_RAW)
@@ -954,7 +954,7 @@ file_info *copy_header(const char *fullname, file_info *ohdr)
 {
   file_info *hdr;
   int i;
-  hdr = (file_info *)CALLOC(1, sizeof(file_info));
+  hdr = (file_info *)calloc(1, sizeof(file_info));
   hdr->name = mus_strdup(fullname);
   hdr->comment = NULL;
   hdr->samples = ohdr->samples;
@@ -967,7 +967,7 @@ file_info *copy_header(const char *fullname, file_info *ohdr)
       hdr->type = ohdr->type;
       if (ohdr->loops)
 	{
-	  hdr->loops = (int *)CALLOC(MUS_LOOP_INFO_SIZE, sizeof(int));
+	  hdr->loops = (int *)calloc(MUS_LOOP_INFO_SIZE, sizeof(int));
 	  for (i = 0; i < MUS_LOOP_INFO_SIZE; i++) 
 	    hdr->loops[i] = ohdr->loops[i];
 	}
@@ -985,7 +985,7 @@ static file_info *translate_file(const char *filename, int type)
 
   len = strlen(filename);
   loops = mus_sound_loop_info(filename); /* allocated anew */
-  newname = (char *)CALLOC(len + 5, sizeof(char));
+  newname = (char *)calloc(len + 5, sizeof(char));
   mus_snprintf(newname, len + 5, "%s.snd", filename);
 
   /* too many special cases to do anything smart here -- I'll just tack on '.snd' */
@@ -1002,15 +1002,15 @@ static file_info *translate_file(const char *filename, int type)
       fd = CREAT(tempname, 0666);
       if (fd == -1)
 	{
-	  if (loops) FREE(loops);
-	  FREE(newname);
-	  FREE(tempname);
+	  if (loops) free(loops);
+	  free(newname);
+	  free(tempname);
 	  snd_error(_("can't write translation temp file! (%s)"), snd_open_strerror());
 	  return(NULL);
 	}
-      FREE(newname);
+      free(newname);
       newname = mus_strdup(tempname);
-      FREE(tempname);
+      free(tempname);
     }
   snd_close(fd, newname);
   err = snd_translate(filename, newname, type);
@@ -1023,14 +1023,14 @@ static file_info *translate_file(const char *filename, int type)
 	  if (hdr->loops == NULL) 
 	    hdr->loops = loops;
 	  else 
-	    if (loops) FREE(loops);
+	    if (loops) free(loops);
 	  loops = NULL;
 	  ss->translated_filename = mus_strdup(newname);
 	}
     }
   else snd_remove(newname, REMOVE_FROM_CACHE);
-  if (newname) FREE(newname);
-  if (loops) FREE(loops);
+  if (newname) free(newname);
+  if (loops) free(loops);
   return(hdr);
 }
 
@@ -1093,7 +1093,7 @@ static file_info *open_raw_sound(const char *fullname, read_only_t read_only, bo
 				mus_bytes_to_samples(data_format, bytes));
 
       if (res_loc != NOT_A_GC_LOC) snd_unprotect_at(res_loc);	      
-      hdr = (file_info *)CALLOC(1, sizeof(file_info));
+      hdr = (file_info *)calloc(1, sizeof(file_info));
       hdr->name = mus_strdup(fullname);
       hdr->type = MUS_RAW;
       hdr->srate = mus_sound_srate(fullname);
@@ -1121,7 +1121,7 @@ static file_info *open_raw_sound(const char *fullname, read_only_t read_only, bo
 #if (!USE_NO_GUI)
       {
 	char *str;
-	str = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
+	str = (char *)calloc(PRINT_BUFFER_SIZE, sizeof(char));
 	mus_snprintf(str, PRINT_BUFFER_SIZE, _("No header found for %s"), filename_without_directory(fullname));
 	raw_data_dialog_to_file_info(fullname, str, NULL, read_only, selected); /* dialog frees str */
       }
@@ -1241,7 +1241,7 @@ file_info *make_file_info(const char *fullname, read_only_t read_only, bool sele
 file_info *make_temp_header(const char *fullname, int srate, int chans, off_t samples, const char *caller)
 {
   file_info *hdr;
-  hdr = (file_info *)CALLOC(1, sizeof(file_info));
+  hdr = (file_info *)calloc(1, sizeof(file_info));
   hdr->name = mus_strdup(fullname);
   hdr->samples = samples;
   hdr->data_location = 28;
@@ -1259,10 +1259,10 @@ file_info *free_file_info(file_info *hdr)
 {
   if (hdr)
     {
-      if (hdr->name) FREE(hdr->name);
-      if (hdr->comment) FREE(hdr->comment);
-      if (hdr->loops) FREE(hdr->loops);
-      FREE(hdr);
+      if (hdr->name) free(hdr->name);
+      if (hdr->comment) free(hdr->comment);
+      if (hdr->loops) free(hdr->loops);
+      free(hdr);
     }
   return(NULL);
 }
@@ -1296,7 +1296,7 @@ static void fam_sp_action(struct fam_info *fp, FAMEvent *fe)
 	      char *msg;
 	      msg = mus_format(_("%s is read-protected!"), sp->short_filename);
 	      display_minibuffer_error(sp, msg);
-	      FREE(msg);
+	      free(msg);
 	      sp->file_unreadable = true;
 	      start_bomb(sp);
 	    }
@@ -1355,7 +1355,7 @@ static char *snd_opened_sound_file_name(snd_info *sp)
   char *newname;
   int len;
   len = strlen(sp->filename);
-  newname = (char *)CALLOC(len + 5, sizeof(char));
+  newname = (char *)calloc(len + 5, sizeof(char));
   mus_snprintf(newname, len + 5, "%s.%s", sp->filename, XEN_FILE_EXTENSION);
   return(newname);
 }
@@ -1383,7 +1383,7 @@ static void read_snd_opened_sound_file(snd_info *sp)
       snd_load_file(newname);
 #endif
     }
-  FREE(newname);
+  free(newname);
 }
 
 
@@ -1463,7 +1463,7 @@ static XEN open_file_body(void *context)
 static void after_open_file(void *context)
 {
   open_file_context *sc = (open_file_context *)context;
-  FREE(sc);
+  free(sc);
 }
 #endif
 
@@ -1519,7 +1519,7 @@ snd_info *snd_open_file(const char *filename, read_only_t read_only)
   file_info *hdr;
   snd_info *sp;
   static char *mcf = NULL;
-  if (mcf) FREE(mcf);
+  if (mcf) free(mcf);
   mcf = mus_expand_filename(filename);
   if (XEN_HOOKED(open_hook))
     {
@@ -1531,14 +1531,14 @@ snd_info *snd_open_file(const char *filename, read_only_t read_only)
 			S_open_hook);
       if (XEN_TRUE_P(res))
 	{
-	  if (mcf) {FREE(mcf); mcf = NULL;}
+	  if (mcf) {free(mcf); mcf = NULL;}
 	  return(NULL);
 	}
       else
 	{
 	  if (XEN_STRING_P(res))  /* added 14-Aug-01 for user-supplied auto-translations */
 	    {
-	      if (mcf) FREE(mcf);
+	      if (mcf) free(mcf);
 	      mcf = mus_expand_filename(XEN_TO_C_STRING(res));
 	    }
 	}
@@ -1546,14 +1546,14 @@ snd_info *snd_open_file(const char *filename, read_only_t read_only)
   hdr = make_file_info(mcf, read_only, FILE_SELECTED);
   if (!hdr) 
     {
-      if (mcf) {FREE(mcf); mcf = NULL;}
+      if (mcf) {free(mcf); mcf = NULL;}
       return(NULL);
     }
 
 #if HAVE_GUILE_DYNAMIC_WIND
   {
     open_file_context *ofc;
-    ofc = (open_file_context *)CALLOC(1, sizeof(open_file_context));
+    ofc = (open_file_context *)calloc(1, sizeof(open_file_context));
     ofc->filename = mcf;
     ofc->read_only = read_only;
     ofc->hdr = hdr;
@@ -1567,7 +1567,7 @@ snd_info *snd_open_file(const char *filename, read_only_t read_only)
 #else
   sp = add_sound_window(mcf, read_only, hdr);
 #endif
-  if (mcf) {FREE(mcf); mcf = NULL;}
+  if (mcf) {free(mcf); mcf = NULL;}
   return(finish_opening_sound(sp, FILE_SELECTED));
 }
 
@@ -1696,8 +1696,8 @@ snd_info *make_sound_readable(const char *filename, bool post_close)
     {
       cp = make_chan_info(NULL, i, sp);
       cp->editable = false;
-      FREE(cp->cgx->ax);
-      FREE(cp->cgx);
+      free(cp->cgx->ax);
+      free(cp->cgx);
       cp->cgx = NULL;
       sp->chans[i] = cp;
       add_channel_data_1(cp, hdr->srate, len, WITHOUT_GRAPH);
@@ -1747,10 +1747,10 @@ void *free_axes_data(void *usa)
   axes_data *sa = (axes_data *)usa;
   if (sa)
     {
-      if (sa->axis_data) {FREE(sa->axis_data); sa->axis_data = NULL;}
-      if (sa->fftp) {FREE(sa->fftp); sa->fftp = NULL;}
-      if (sa->wavep) {FREE(sa->wavep); sa->wavep = NULL;}
-      FREE(sa);
+      if (sa->axis_data) {free(sa->axis_data); sa->axis_data = NULL;}
+      if (sa->fftp) {free(sa->fftp); sa->fftp = NULL;}
+      if (sa->wavep) {free(sa->wavep); sa->wavep = NULL;}
+      free(sa);
     }
   return(NULL);
 }
@@ -1763,12 +1763,12 @@ void *make_axes_data(snd_info *sp)
 {
   axes_data *sa;
   int i;
-  sa = (axes_data *)CALLOC(1, sizeof(axes_data));
+  sa = (axes_data *)calloc(1, sizeof(axes_data));
   sa->chans = sp->nchans;
   sa->fields = SA_FIELDS;
-  sa->axis_data = (double *)CALLOC(sa->fields * sa->chans, sizeof(double));
-  sa->fftp = (bool *)CALLOC(sa->chans, sizeof(bool));
-  sa->wavep = (bool *)CALLOC(sa->chans, sizeof(bool));
+  sa->axis_data = (double *)calloc(sa->fields * sa->chans, sizeof(double));
+  sa->fftp = (bool *)calloc(sa->chans, sizeof(bool));
+  sa->wavep = (bool *)calloc(sa->chans, sizeof(bool));
   for (i = 0; i < sa->chans; i++)
     {
       chan_info *cp;
@@ -1960,14 +1960,14 @@ static snd_info *sound_store_chan_info(snd_info *sp)
   snd_info *nsp;
   int i;
 
-  nsp = (snd_info *)CALLOC(1, sizeof(snd_info));
-  cps = (chan_info **)CALLOC(sp->nchans, sizeof(chan_info *));
+  nsp = (snd_info *)calloc(1, sizeof(snd_info));
+  cps = (chan_info **)calloc(sp->nchans, sizeof(chan_info *));
   nsp->chans = cps;
   nsp->nchans = sp->nchans;
   copy_snd_info(nsp, sp);
   for (i = 0; i < sp->nchans; i++)
     {
-      cps[i] = (chan_info *)CALLOC(1, sizeof(chan_info));
+      cps[i] = (chan_info *)calloc(1, sizeof(chan_info));
       copy_chan_info(cps[i], sp->chans[i]);
     }
   return(nsp);
@@ -2084,7 +2084,7 @@ snd_info *snd_update(snd_info *sp)
   saved_controls = sp->saved_controls;
   sp->saved_controls = NULL;
   saved_sp = sound_store_chan_info(sp);
-  old_cursors = (off_t *)CALLOC(sp_chans, sizeof(off_t));
+  old_cursors = (off_t *)calloc(sp_chans, sizeof(off_t));
 
   /* peak-env code saves the current peak-envs on exit (snd_close), but in this case, that
    *   data is known to be out-of-date.  Since we'll be freeing it eventually anyway, we
@@ -2171,7 +2171,7 @@ snd_info *snd_update(snd_info *sp)
 	set_sound_channel_style(nsp, old_channel_style);
     }
 
-  FREE(old_cursors);
+  free(old_cursors);
 
   if (XEN_PROCEDURE_P(update_hook_result))
     {
@@ -2185,12 +2185,12 @@ snd_info *snd_update(snd_info *sp)
   if (saved_sp)
     {
       for (i = 0; i < saved_sp->nchans; i++)
-	if (saved_sp->chans[i]) FREE(saved_sp->chans[i]);
-      FREE(saved_sp->chans);
-      FREE(saved_sp);
+	if (saved_sp->chans[i]) free(saved_sp->chans[i]);
+      free(saved_sp->chans);
+      free(saved_sp);
     }
   sa = free_axes_data(sa);
-  FREE(filename);
+  free(filename);
 
 #if USE_MOTIF
   XtVaSetValues(w_snd_pane(sp),
@@ -2245,7 +2245,7 @@ void run_after_save_as_hook(snd_info *sp, const char *already_saved_as_name, boo
 				C_TO_XEN_STRING(fullname),
 				C_TO_XEN_BOOLEAN(from_save_as_dialog)),
 		     S_after_save_as_hook);
-      FREE(fullname);
+      free(fullname);
     }
 }
 
@@ -2622,7 +2622,7 @@ void snd_encode(int type, const char *input_filename, const char *output_filenam
     {
       int err;
       err = system(command);
-      FREE(command);
+      free(command);
       if (err == -1)
 	fprintf(stderr, "%s failed?", command);
     }
@@ -2691,7 +2691,7 @@ int snd_decode(int type, const char *input_filename, const char *output_filename
     {
       int err;
       err = system(command);
-      FREE(command);
+      free(command);
       if (err == -1)
 	fprintf(stderr, "%s failed?", command);
     }
@@ -2742,13 +2742,13 @@ snd_info *file_is_open_elsewhere_and_has_unsaved_edits(snd_info *sp, const char 
 {
   same_name_info *collision;
   snd_info *result;
-  collision = (same_name_info *)CALLOC(1, sizeof(same_name_info));
+  collision = (same_name_info *)calloc(1, sizeof(same_name_info));
   collision->filename = (char *)fullname;
   collision->parlous_sp = NULL;
   collision->current_sp = sp;
   map_over_sounds_with_collision(check_for_same_name, collision);
   result = collision->parlous_sp;
-  FREE(collision);
+  free(collision);
   return(result);
 }
 
@@ -2816,8 +2816,8 @@ bool edit_header_callback(snd_info *sp, file_data *edit_header_data,
     mus_header_change_location(sp->filename, MUS_NEXT, loc);
   if (!(mus_strcmp(comment, original_comment)))
     mus_header_change_comment(sp->filename, type, comment);
-  if (comment) FREE(comment);
-  if (original_comment) FREE(original_comment);
+  if (comment) free(comment);
+  if (original_comment) free(original_comment);
   snd_update(sp);
   return(true);
 }
@@ -2876,8 +2876,8 @@ static char *raw_data_explanation(const char *filename, file_info *hdr, char **i
   off_t nsamp;
   bool ok;
   int ns, better_srate = 0, better_chans = 0, len;
-  reason_str = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
-  tmp_str = (char *)CALLOC(LABEL_BUFFER_SIZE, sizeof(char));
+  reason_str = (char *)calloc(PRINT_BUFFER_SIZE, sizeof(char));
+  tmp_str = (char *)calloc(LABEL_BUFFER_SIZE, sizeof(char));
   /* try to provide some notion of what might be the intended header (currently limited to byte-order mistakes) */
   len = PRINT_BUFFER_SIZE;
 
@@ -2965,11 +2965,11 @@ static char *raw_data_explanation(const char *filename, file_info *hdr, char **i
       reason_str = mus_strcat(reason_str, tmp_str, &len);
     }
   (*info) = reason_str;
-  file_string = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
+  file_string = (char *)calloc(PRINT_BUFFER_SIZE, sizeof(char));
   mus_snprintf(file_string, PRINT_BUFFER_SIZE,
 	       "Bad header found on %s", 
 	       filename_without_directory(filename));
-  FREE(tmp_str);
+  free(tmp_str);
   free_file_info(hdr);
   return(file_string);
 }
@@ -3021,7 +3021,7 @@ char **view_files_dialog_titles(void)
     {
       char **titles;
       int i, j = 0;
-      titles = (char **)CALLOC(n + 1, sizeof(char *));
+      titles = (char **)calloc(n + 1, sizeof(char *));
       for (i = 0; i < view_files_info_size; i++)
 	if ((view_files_infos[i]) &&
 	    (view_files_infos[i]->dialog))
@@ -3043,11 +3043,11 @@ void view_files_start_dialog_with_title(const char *title)
 	dialog_title = dialog_get_title(view_files_infos[i]->dialog);
 	if (mus_strcmp(title, dialog_title)) /* this includes NULL == NULL */
 	  {
-	    if (dialog_title) FREE(dialog_title);
+	    if (dialog_title) free(dialog_title);
 	    start_view_files_dialog_1(view_files_infos[i], true);
 	    return;
 	  }
-	if (dialog_title) FREE(dialog_title);
+	if (dialog_title) free(dialog_title);
       }
 }
 
@@ -3062,7 +3062,7 @@ view_files_info *new_view_files_dialog(void)
     {
       loc = 0;
       view_files_info_size = 4;
-      view_files_infos = (view_files_info **)CALLOC(view_files_info_size, sizeof(view_files_info *));
+      view_files_infos = (view_files_info **)calloc(view_files_info_size, sizeof(view_files_info *));
     }
   else
     {
@@ -3077,12 +3077,12 @@ view_files_info *new_view_files_dialog(void)
 	{
 	  loc = view_files_info_size;
 	  view_files_info_size += 4;
-	  view_files_infos = (view_files_info **)REALLOC(view_files_infos, view_files_info_size * sizeof(view_files_info *));
+	  view_files_infos = (view_files_info **)realloc(view_files_infos, view_files_info_size * sizeof(view_files_info *));
 	  for (i = loc; i < view_files_info_size; i++) view_files_infos[i] = NULL;
 	}
     }
 
-  view_files_infos[loc] = (view_files_info *)CALLOC(1, sizeof(view_files_info));
+  view_files_infos[loc] = (view_files_info *)calloc(1, sizeof(view_files_info));
   vdat = view_files_infos[loc];
   vdat->index = loc;
   vdat->dialog = NULL_WIDGET;
@@ -3157,7 +3157,7 @@ static char **vf_selected_files(view_files_info *vdat)
   if (len > 0)
     {
       int i;
-      files = (char **)CALLOC(len, sizeof(char *));
+      files = (char **)calloc(len, sizeof(char *));
       for (i = 0; i < len; i++) 
 	files[i] = mus_strdup(vdat->full_names[vdat->selected_files[i]]);
     }
@@ -3326,7 +3326,7 @@ static int view_files_add_selected_file(view_files_info *vdat, vf_row *r)
   if (vdat->selected_files_size == 0)
     {
       vdat->selected_files_size = 4;
-      vdat->selected_files = (int *)CALLOC(vdat->selected_files_size, sizeof(int));
+      vdat->selected_files = (int *)calloc(vdat->selected_files_size, sizeof(int));
       vdat->selected_files[0] = r->pos;
       vdat->currently_selected_files = 1;
     }
@@ -3335,7 +3335,7 @@ static int view_files_add_selected_file(view_files_info *vdat, vf_row *r)
       if (vdat->currently_selected_files >= vdat->selected_files_size)
 	{
 	  vdat->selected_files_size += 4;
-	  vdat->selected_files = (int *)REALLOC(vdat->selected_files, vdat->selected_files_size * sizeof(int));
+	  vdat->selected_files = (int *)realloc(vdat->selected_files, vdat->selected_files_size * sizeof(int));
 	  vdat->selected_files[vdat->currently_selected_files++] = r->pos;
 	}
       else 
@@ -3535,7 +3535,7 @@ void view_files_reflect_sort_items(void)
 		    old_size = vdat->sort_items_size;
 		    XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
 		    vdat->sort_items_size += 4;
-		    vdat->sort_items = (Widget *)REALLOC(vdat->sort_items, vdat->sort_items_size * sizeof(Widget));
+		    vdat->sort_items = (Widget *)realloc(vdat->sort_items, vdat->sort_items_size * sizeof(Widget));
 		    for (k = old_size; k < vdat->sort_items_size; k++)
 		      vdat->sort_items[k] = XtCreateWidget("unused", xmPushButtonWidgetClass, vdat->smenu, args, n);
 		  }
@@ -3559,7 +3559,7 @@ void view_files_reflect_sort_items(void)
 		    int k, old_size;
 		    old_size = vdat->sort_items_size;
 		    vdat->sort_items_size += 4;
-		    vdat->sort_items = (GtkWidget **)REALLOC(vdat->sort_items, vdat->sort_items_size * sizeof(GtkWidget *));
+		    vdat->sort_items = (GtkWidget **)realloc(vdat->sort_items, vdat->sort_items_size * sizeof(GtkWidget *));
 		    for (k = old_size; k < vdat->sort_items_size; k++)
 		      {
 			vdat->sort_items[k] = gtk_menu_item_new_with_label("unused");
@@ -3606,14 +3606,14 @@ static void vf_add_file(view_files_info *vdat, const char *filename, const char 
       new_size = vdat->size + 32;
       if (vdat->size == 0)
 	{
-	  vdat->names = (char **)CALLOC(new_size, sizeof(char *));
-	  vdat->full_names = (char **)CALLOC(new_size, sizeof(char *));
+	  vdat->names = (char **)calloc(new_size, sizeof(char *));
+	  vdat->full_names = (char **)calloc(new_size, sizeof(char *));
 	}
       else
 	{
 	  int i;
-	  vdat->names = (char **)REALLOC(vdat->names, new_size * sizeof(char *));
-	  vdat->full_names = (char **)REALLOC(vdat->full_names, new_size * sizeof(char *));
+	  vdat->names = (char **)realloc(vdat->names, new_size * sizeof(char *));
+	  vdat->full_names = (char **)realloc(vdat->full_names, new_size * sizeof(char *));
 	  for (i = vdat->size; i < new_size; i++) 
 	    {
 	      vdat->names[i] = NULL; 
@@ -3621,11 +3621,11 @@ static void vf_add_file(view_files_info *vdat, const char *filename, const char 
 	    }
 	}
       if (vdat->file_list_entries == NULL)
-	vdat->file_list_entries = (vf_row **)CALLOC(new_size, sizeof(vf_row *));
+	vdat->file_list_entries = (vf_row **)calloc(new_size, sizeof(vf_row *));
       else 
 	{
 	  int i;
-	  vdat->file_list_entries = (vf_row **)REALLOC(vdat->file_list_entries, new_size * sizeof(vf_row *));
+	  vdat->file_list_entries = (vf_row **)realloc(vdat->file_list_entries, new_size * sizeof(vf_row *));
 	  for (i = vdat->size; i < new_size; i++) vdat->file_list_entries[i] = NULL;
 	}
       vdat->size = new_size;
@@ -3663,7 +3663,7 @@ void add_file_to_view_files_list(view_files_info *vdat, const char *filename, co
 	    msg = mus_format("%s: %s", filename, strerror(errno));
 	  else msg = mus_format("%s does not exist", filename);
 	  vf_post_add_error(msg, vdat);
-	  FREE(msg);
+	  free(msg);
 	}
       return;
     }
@@ -3686,12 +3686,12 @@ static void view_files_unmonitor_directories(view_files_info *vdat)
 	if (vdat->dirs[i])
 	  {
 	    vdat->dirs[i] = fam_unmonitor_directory(vdat->dir_names[i], vdat->dirs[i]);
-	    FREE(vdat->dir_names[i]);
+	    free(vdat->dir_names[i]);
 	    vdat->dir_names[i] = NULL;
 	  }
-      FREE(vdat->dirs);
+      free(vdat->dirs);
       vdat->dirs = NULL;
-      FREE(vdat->dir_names);
+      free(vdat->dir_names);
       vdat->dir_names = NULL;
       vdat->dirs_size = 0;
     }
@@ -3789,8 +3789,8 @@ static void view_files_monitor_directory(view_files_info *vdat, const char *dirn
 	{
 	  loc = vdat->dirs_size;
 	  vdat->dirs_size += 4;
-	  vdat->dirs = (fam_info **)REALLOC(vdat->dirs, vdat->dirs_size * sizeof(fam_info *));
-	  vdat->dir_names = (char **)REALLOC(vdat->dir_names, vdat->dirs_size * sizeof(char *));
+	  vdat->dirs = (fam_info **)realloc(vdat->dirs, vdat->dirs_size * sizeof(fam_info *));
+	  vdat->dir_names = (char **)realloc(vdat->dir_names, vdat->dirs_size * sizeof(char *));
 	  for (i = loc; i < vdat->dirs_size; i++)
 	    {
 	      vdat->dirs[i] = NULL;
@@ -3802,8 +3802,8 @@ static void view_files_monitor_directory(view_files_info *vdat, const char *dirn
     {
       vdat->dirs_size = 4;
       loc = 0;
-      vdat->dirs = (fam_info **)CALLOC(vdat->dirs_size, sizeof(fam_info *));
-      vdat->dir_names = (char **)CALLOC(vdat->dirs_size, sizeof(char *));
+      vdat->dirs = (fam_info **)calloc(vdat->dirs_size, sizeof(fam_info *));
+      vdat->dir_names = (char **)calloc(vdat->dirs_size, sizeof(char *));
     }
   redirect_snd_error_to(redirect_vf_post_error, (void *)vdat);
   vdat->dirs[loc] = fam_monitor_directory(dirname, (void *)vdat, vf_watch_directory);
@@ -3864,7 +3864,7 @@ void add_directory_to_view_files_list(view_files_info *vdat, const char *dirname
       char *add_slash;
       add_slash = mus_format("%s/", dirname);
       add_directory_to_view_files_list(vdat, add_slash);
-      FREE(add_slash);
+      free(add_slash);
     }
   else
     {
@@ -3890,20 +3890,20 @@ void add_directory_to_view_files_list(view_files_info *vdat, const char *dirname
 	    {
 	      int cur_dir = 0;
 	      char *titlestr = NULL, *dirstr;
-	      titlestr = (char *)CALLOC(len + dirs * 8, sizeof(char));
+	      titlestr = (char *)calloc(len + dirs * 8, sizeof(char));
 	      strcat(titlestr, "Files: ");
 	      for (i = 0; i < vdat->dirs_size; i++)
 		if (vdat->dir_names[i])
 		  {
 		    dirstr = just_filename(vdat->dir_names[i]);
 		    strcat(titlestr, dirstr);
-		    FREE(dirstr);
+		    free(dirstr);
 		    cur_dir++;
 		    if (cur_dir < dirs)
 		      strcat(titlestr, ", ");
 		  }
 	      dialog_set_title(vdat->dialog, titlestr);
-	      FREE(titlestr);
+	      free(titlestr);
 	    }
 	}
     }
@@ -3918,11 +3918,11 @@ static void view_files_sort_list(view_files_info *vdat)
       int i, len;
 
       len = vdat->end + 1;
-      data = (sort_info **)CALLOC(len, sizeof(sort_info *));
+      data = (sort_info **)calloc(len, sizeof(sort_info *));
 
       for (i = 0; i < len; i++)
 	{
-	  data[i] = (sort_info *)CALLOC(1, sizeof(sort_info));
+	  data[i] = (sort_info *)calloc(1, sizeof(sort_info));
 	  data[i]->filename = vdat->names[i];
 	  data[i]->full_filename = vdat->full_names[i];
 	}
@@ -3933,9 +3933,9 @@ static void view_files_sort_list(view_files_info *vdat)
 	{
 	  vdat->names[i] = data[i]->filename;
 	  vdat->full_names[i] = data[i]->full_filename;
-	  FREE(data[i]);
+	  free(data[i]);
 	}
-      FREE(data);
+      free(data);
     }
 }
 
@@ -3972,8 +3972,8 @@ void view_files_display_list(view_files_info *vdat)
       if (old_names)
 	{
 	  vf_fixup_selected_files(vdat, old_names, old_len);
-	  for (i = 0; i < old_len; i++) FREE(old_names[i]);
-	  FREE(old_names);
+	  for (i = 0; i < old_len; i++) free(old_names[i]);
+	  free(old_names);
 	}
     }
   for (i = vdat->end + 1; i < vdat->size; i++)
@@ -3999,9 +3999,9 @@ void view_files_clear_list(view_files_info *vdat)
       for (i = 0; i < vdat->size; i++)
 	if (vdat->names[i]) 
 	  {
-	    FREE(vdat->names[i]); 
+	    free(vdat->names[i]); 
 	    vdat->names[i] = NULL;
-	    FREE(vdat->full_names[i]); 
+	    free(vdat->full_names[i]); 
 	    vdat->full_names[i] = NULL;
 	  }
       vdat->end = -1;
@@ -4029,9 +4029,9 @@ void view_files_update_list(view_files_info *vdat)
 	  {
 	    if (!(mus_file_probe(vdat->full_names[i])))
 	      {
-		FREE(vdat->names[i]); 
+		free(vdat->names[i]); 
 		vdat->names[i] = NULL;
-		FREE(vdat->full_names[i]); 
+		free(vdat->full_names[i]); 
 		vdat->full_names[i] = NULL;
 	      }
 	  }
@@ -4055,8 +4055,8 @@ void view_files_update_list(view_files_info *vdat)
   if (old_names)
     {
       vf_fixup_selected_files(vdat, old_names, old_len);
-      for (i = 0; i < old_len; i++) FREE(old_names[i]);
-      FREE(old_names);
+      for (i = 0; i < old_len; i++) free(old_names[i]);
+      free(old_names);
     }
 }
 
@@ -4113,10 +4113,10 @@ int vf_mix(view_files_info *vdat)
 					  (sp->nchans > 1) ? MULTICHANNEL_DELETION : DELETE_ME,
 					  MIX_SETS_SYNC_LOCALLY);
 	}
-      FREE(tempfile);
+      free(tempfile);
       for (i = 0; i < len; i++)
-	FREE(selected_files[i]);
-      FREE(selected_files);
+	free(selected_files[i]);
+      free(selected_files);
     }
   return(id_or_error);
 }
@@ -4150,7 +4150,7 @@ void view_files_mix_selected_files(widget_t w, view_files_info *vdat)
 	  else msg = mus_format(_("selected files mixed in at " OFF_TD), vdat->beg);
 	  vf_post_error(msg, vdat);
 	  vdat->error_p = false;
-	  FREE(msg);
+	  free(msg);
 	}
     }
 }
@@ -4195,10 +4195,10 @@ bool vf_insert(view_files_info *vdat)
 				    vdat->beg,
 				    (sp->nchans > 1) ? MULTICHANNEL_DELETION : DELETE_ME);
 	}
-      FREE(tempfile);
+      free(tempfile);
       for (i = 0; i < len; i++)
-	FREE(selected_files[i]);
-      FREE(selected_files);
+	free(selected_files[i]);
+      free(selected_files);
     }
   return(ok);
 }
@@ -4229,7 +4229,7 @@ void view_files_insert_selected_files(widget_t w, view_files_info *vdat)
 	  else msg = mus_format(_("selected files inserted at " OFF_TD), vdat->beg);
 	  vf_post_error(msg, vdat);
 	  vdat->error_p = false;
-	  FREE(msg);
+	  free(msg);
 	}
       /* else we've already posted whatever went wrong (make_file_info etc) */
     }
@@ -4514,14 +4514,14 @@ void view_files_add_directory(widget_t dialog, const char *dirname)
 		msg = mus_format("%s: %s", full_filename, strerror(errno));
 	      else msg = mus_format("%s does not exist", full_filename);
 	      vf_post_add_error(msg, vdat);
-	      FREE(msg);
+	      free(msg);
 	    }
 	}
       else
 	{
 	  add_directory_to_view_files_list(vdat, full_filename);
 	}
-      FREE(full_filename);
+      free(full_filename);
     }
 }
 
@@ -4546,7 +4546,7 @@ static void view_files_add_file(widget_t dialog, const char *filename)
     {
       full_filename = mus_expand_filename((const char *)filename);
       add_file_to_view_files_list(vdat, filename, full_filename);
-      FREE(full_filename);
+      free(full_filename);
     }
 }
 
@@ -4573,9 +4573,9 @@ void view_files_remove_selected_files(view_files_info *vdat)
       loc = vdat->selected_files[i];
       if (vdat->names[loc])
 	{
-	  FREE(vdat->names[loc]); 
+	  free(vdat->names[loc]); 
 	  vdat->names[loc] = NULL;
-	  FREE(vdat->full_names[loc]); 
+	  free(vdat->full_names[loc]); 
 	  vdat->full_names[loc] = NULL;
 	}
     }
@@ -4658,7 +4658,7 @@ static XEN g_add_file_to_view_files_list(XEN file, XEN dialog)
 	  view_files_add_file((widget_t)(XEN_UNWRAP_WIDGET(dialog)), name);
 	}
     }
-  if (name) FREE(name);
+  if (name) free(name);
   return(file);
 }
 
@@ -4782,9 +4782,9 @@ static XEN g_view_files_selected_files(XEN dialog)
       for (i = 0; i < len; i++)
 	{
 	  result = XEN_CONS(C_TO_XEN_STRING(selected_files[i]), result);
-	  FREE(selected_files[i]);
+	  free(selected_files[i]);
 	}
-      FREE(selected_files);
+      free(selected_files);
     }
   return(result);
 }
@@ -4805,11 +4805,11 @@ static XEN g_view_files_set_selected_files(XEN dialog, XEN files)
 	    XEN_ASSERT_TYPE(0, XEN_LIST_REF(files, i), i, S_setB S_view_files_selected_files, "a filename (string)");
 	    return(XEN_FALSE);
 	  }
-      cfiles = (char **)CALLOC(len, sizeof(char *));
+      cfiles = (char **)calloc(len, sizeof(char *));
       for (i = 0; i < len; i++)
 	cfiles[i] = (char *)XEN_TO_C_STRING(XEN_LIST_REF(files, i));
       view_files_set_selected_files((widget_t)(XEN_UNWRAP_WIDGET(dialog)), cfiles, len);
-      FREE(cfiles);
+      free(cfiles);
     }
   return(files);
 }
@@ -4845,12 +4845,12 @@ static XEN g_view_files_set_files(XEN dialog, XEN files)
 	    XEN_ASSERT_TYPE(0, XEN_LIST_REF(files, i), i, S_setB S_view_files_files, "a filename (string)");
 	    return(XEN_FALSE);
 	  }
-      cfiles = (char **)CALLOC(len, sizeof(char *));
+      cfiles = (char **)calloc(len, sizeof(char *));
       for (i = 0; i < len; i++)
 	cfiles[i] = (char *)XEN_TO_C_STRING(XEN_LIST_REF(files, i));
     }
   view_files_set_files((widget_t)(XEN_UNWRAP_WIDGET(dialog)), cfiles, len);
-  if (cfiles) FREE(cfiles);
+  if (cfiles) free(cfiles);
   return(files);
 }
 
@@ -4896,7 +4896,7 @@ static XEN g_set_sound_file_extensions(XEN lst)
   for (i = 0; i < sound_file_extensions_end; i++)
     if (sound_file_extensions[i])
       {
-	FREE(sound_file_extensions[i]);
+	free(sound_file_extensions[i]);
 	sound_file_extensions[i] = NULL;
       }
   sound_file_extensions_end = 0;
@@ -5022,7 +5022,7 @@ static XEN g_set_sound_loop_info(XEN snd, XEN vals)
 				mode1 = XEN_LIST_REF(vals, 7);
 			    }}}}}}}
   if (hdr->loops == NULL)
-    hdr->loops = (int *)CALLOC(MUS_LOOP_INFO_SIZE, sizeof(int));
+    hdr->loops = (int *)calloc(MUS_LOOP_INFO_SIZE, sizeof(int));
   else memset((void *)(hdr->loops), 0, MUS_LOOP_INFO_SIZE * sizeof(int));
   hdr->loops[0] = XEN_TO_C_INT_OR_ELSE(start0, 0);
   hdr->loops[1] = XEN_TO_C_INT_OR_ELSE(end0, 0);
@@ -5083,7 +5083,7 @@ static XEN g_set_sound_loop_info(XEN snd, XEN vals)
 	err = move_file(tmp_file, sp->filename);
 	if (SERIOUS_IO_ERROR(err))
 	  {
-	    FREE(tmp_file);
+	    free(tmp_file);
 	    sp->writing = false;
 	    XEN_ERROR(CANT_UPDATE_FILE,
 		      XEN_LIST_4(C_TO_XEN_STRING(S_setB S_sound_loop_info),
@@ -5096,7 +5096,7 @@ static XEN g_set_sound_loop_info(XEN snd, XEN vals)
     sp->writing = false;
     if (err != IO_SAVE_HOOK_CANCELLATION) 
       snd_update(sp);
-    FREE(tmp_file);
+    free(tmp_file);
     return(xen_return_first((err == IO_NO_ERROR) ? XEN_TRUE : C_TO_XEN_INT((int)err), snd, vals));
   }
 }
@@ -5153,7 +5153,7 @@ static XEN g_sound_files_in_directory(XEN dirname)
 	    res = XEN_CONS(C_TO_XEN_STRING(dp->files[i]->filename), res);
 	  dp = free_dir_info(dp);
 	}
-      FREE(name);
+      free(name);
     }
   return(xen_return_first(res, dirname));
 }
@@ -5297,7 +5297,7 @@ static bool file_filter_ok(XEN name, XEN proc, const char *caller)
   if (errmsg)
     {
       errstr = C_TO_XEN_STRING(errmsg);
-      FREE(errmsg);
+      free(errmsg);
       snd_bad_arity_error(caller, errstr, proc);
       return(false);
     }
@@ -5352,7 +5352,7 @@ static bool file_sorter_ok(XEN name, XEN proc, const char *caller)
   if (errmsg)
     {
       errstr = C_TO_XEN_STRING(errmsg);
-      FREE(errmsg);
+      free(errmsg);
       snd_bad_arity_error(caller, errstr, proc);
       return(false);
     }
@@ -5422,7 +5422,7 @@ static XEN g_snd_tempnam(void)
   XEN res;
   tmp = snd_tempnam();
   res = C_TO_XEN_STRING(tmp);
-  FREE(tmp);
+  free(tmp);
   return(res);
 }
 

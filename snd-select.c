@@ -22,7 +22,7 @@ int add_selection_watcher(void (*watcher)(selection_watcher_reason_t reason, voi
     {
       loc = 0;
       selection_watchers_size = SELECTION_WATCHER_SIZE_INCREMENT;
-      selection_watchers = (selection_watcher **)CALLOC(selection_watchers_size, sizeof(selection_watcher *));
+      selection_watchers = (selection_watcher **)calloc(selection_watchers_size, sizeof(selection_watcher *));
     }
   else
     {
@@ -37,11 +37,11 @@ int add_selection_watcher(void (*watcher)(selection_watcher_reason_t reason, voi
 	{
 	  loc = selection_watchers_size;
 	  selection_watchers_size += SELECTION_WATCHER_SIZE_INCREMENT;
-	  selection_watchers = (selection_watcher **)REALLOC(selection_watchers, selection_watchers_size * sizeof(selection_watcher *));
+	  selection_watchers = (selection_watcher **)realloc(selection_watchers, selection_watchers_size * sizeof(selection_watcher *));
 	  for (i = loc; i < selection_watchers_size; i++) selection_watchers[i] = NULL;
 	}
     }
-  selection_watchers[loc] = (selection_watcher *)CALLOC(1, sizeof(selection_watcher));
+  selection_watchers[loc] = (selection_watcher *)calloc(1, sizeof(selection_watcher));
   selection_watchers[loc]->watcher = watcher;
   selection_watchers[loc]->context = context;
   return(loc);
@@ -55,7 +55,7 @@ void remove_selection_watcher(int loc)
       (loc >= 0) &&
       (selection_watchers[loc]))
     {
-      FREE(selection_watchers[loc]);
+      free(selection_watchers[loc]);
       selection_watchers[loc] = NULL;
     }
 }
@@ -411,10 +411,10 @@ sync_info *selection_sync(void)
 {
   sync_info *si;
   if (!(selection_is_active())) return(NULL);
-  si = (sync_info *)CALLOC(1, sizeof(sync_info));
+  si = (sync_info *)calloc(1, sizeof(sync_info));
   si->chans = selection_chans();
-  si->cps = (chan_info **)CALLOC(si->chans, sizeof(chan_info *));
-  si->begs = (off_t *)CALLOC(si->chans, sizeof(off_t));
+  si->cps = (chan_info **)calloc(si->chans, sizeof(chan_info *));
+  si->begs = (off_t *)calloc(si->chans, sizeof(off_t));
   si->chans = 0;
   for_each_normal_chan_with_void(next_selection_chan, (void *)si);
   return(si);
@@ -443,9 +443,9 @@ static int mix_selection(chan_info *cp, sync_info *si_out, off_t beg, io_error_t
 		    (si_out->chans > 1) ? MULTICHANNEL_DELETION : DELETE_ME, 
 		    origin, with_mix_tags(ss), 
 		    start_chan);
-      FREE(origin);
+      free(origin);
     }
-  if (tempfile) FREE(tempfile);
+  if (tempfile) free(tempfile);
   (*err) = io_err;
   return(id);
 }
@@ -515,12 +515,12 @@ static io_error_t insert_selection(chan_info *cp, sync_info *si_out, off_t beg)
 				      (si_in->chans > 1) ? MULTICHANNEL_DELETION : DELETE_ME,
 				      origin, cp_out->edit_ctr))
 		update_graph(cp_out);
-	      FREE(origin);
+	      free(origin);
 	    }
 	  free_sync_info(si_in);
 	}
     }
-  if (tempfile) FREE(tempfile);
+  if (tempfile) free(tempfile);
   return(io_err);
 }
 
@@ -718,7 +718,7 @@ int make_region_from_selection(void)
   if (!(selection_is_active())) return(-1);
   if (max_regions(ss) == 0) return(-1);
   si = selection_sync();
-  ends = (off_t *)CALLOC(si->chans, sizeof(off_t));
+  ends = (off_t *)calloc(si->chans, sizeof(off_t));
   for (i = 0; i < si->chans; i++) 
     {
       ends[i] = selection_end(si->cps[i]);
@@ -727,7 +727,7 @@ int make_region_from_selection(void)
     }
   if (happy) id = define_region(si, ends);
   si = free_sync_info(si);
-  if (ends) FREE(ends);
+  if (ends) free(ends);
   return(id);
 }
 
@@ -915,7 +915,7 @@ io_error_t save_selection(const char *ofile, int type, int format, int srate, co
 	    {
 	      iloc = mus_sound_data_location(sp->filename);
 	      lseek(fdi, iloc + chans * bps * si->begs[0], SEEK_SET);
-	      buffer = (char *)CALLOC(MAX_BUFFER_SIZE, sizeof(char));
+	      buffer = (char *)calloc(MAX_BUFFER_SIZE, sizeof(char));
 	      for (j = 0; j < num; j += MAX_BUFFER_SIZE)
 		{
 		  ssize_t n;
@@ -927,7 +927,7 @@ io_error_t save_selection(const char *ofile, int type, int format, int srate, co
 		  if (n == 0)
 		    fprintf(stderr, "IO error while saving selection");
 		}
-	      FREE(buffer);
+	      free(buffer);
 	      snd_close(fdi, sp->filename);
 	    }
 	  snd_close(ofd, ofile);
@@ -938,8 +938,8 @@ io_error_t save_selection(const char *ofile, int type, int format, int srate, co
 	}
     }
 
-  ends = (off_t *)CALLOC(chans, sizeof(off_t));
-  sfs = (snd_fd **)CALLOC(chans, sizeof(snd_fd *));
+  ends = (off_t *)calloc(chans, sizeof(off_t));
+  sfs = (snd_fd **)calloc(chans, sizeof(snd_fd *));
   if (chan == SAVE_ALL_CHANS)
     for (i = 0; i < chans; i++) 
       {
@@ -955,9 +955,9 @@ io_error_t save_selection(const char *ofile, int type, int format, int srate, co
   snd_file_open_descriptors(ofd, ofile, format, oloc, chans, type);
   mus_file_set_clipping(ofd, clipping(ss));
   lseek(ofd, oloc, SEEK_SET);
-  data = (mus_sample_t **)CALLOC(chans, sizeof(mus_sample_t *));
+  data = (mus_sample_t **)calloc(chans, sizeof(mus_sample_t *));
   for (i = 0; i < chans; i++) 
-    data[i] = (mus_sample_t *)CALLOC(FILE_BUFFER_SIZE, sizeof(mus_sample_t)); 
+    data[i] = (mus_sample_t *)calloc(FILE_BUFFER_SIZE, sizeof(mus_sample_t)); 
 
   j = 0;
   ss->stopped_explicitly = false;
@@ -996,12 +996,12 @@ io_error_t save_selection(const char *ofile, int type, int format, int srate, co
   for (i = 0; i < chans; i++)
     {
       free_snd_fd(sfs[i]);
-      FREE(data[i]);
+      free(data[i]);
     }
-  FREE(sfs);
-  FREE(data);
+  free(sfs);
+  free(data);
   si = free_sync_info(si);
-  FREE(ends);
+  free(ends);
   if (mus_file_close(ofd) != 0)
     return(IO_CANT_CLOSE_FILE);
   if (!(ss->fam_ok))
@@ -1356,7 +1356,7 @@ save the current selection in file using the indicated file attributes.  If chan
 			 C_TO_XEN_INT(sr)));
   fname = mus_expand_filename(file);
   io_err = save_selection(fname, type, format, sr, com, chn);
-  if (fname) FREE(fname);
+  if (fname) free(fname);
   if ((io_err != IO_NO_ERROR) &&
       (io_err != IO_INTERRUPTED) &&
       (io_err != IO_SAVE_HOOK_CANCELLATION))

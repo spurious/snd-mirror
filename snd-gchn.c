@@ -490,7 +490,7 @@ static void remake_edit_history(chan_info *cp)
       char *title;
       chan_info *ncp;
       filelen = 16 + strlen(sp->filename);
-      title = (char *)CALLOC(filelen, sizeof(char));
+      title = (char *)calloc(filelen, sizeof(char));
       for (k = 0, ed = 0; k < sp->nchans; k++)
 	{
 	  ncp = sp->chans[k];
@@ -506,7 +506,7 @@ static void remake_edit_history(chan_info *cp)
 		  char *str;
 		  str = edit_to_string(ncp, i);
 		  slist_append(lst, str);
-		  FREE(str);
+		  free(str);
 		}
 	      if (k < sp->nchans - 1)
 		{
@@ -518,7 +518,7 @@ static void remake_edit_history(chan_info *cp)
       if (sp->selected_channel == NO_SELECTION)
 	slist_select(lst, cp->edhist_base + cp->edit_ctr);
       else slist_select(lst, sp->chans[sp->selected_channel]->edhist_base + sp->chans[sp->selected_channel]->edit_ctr);
-      FREE(title);
+      free(title);
     }
   else
     {
@@ -532,7 +532,7 @@ static void remake_edit_history(chan_info *cp)
 	      char *str;
 	      str = edit_to_string(cp, i);
 	      slist_append(lst, str);
-	      FREE(str);
+	      free(str);
 	    }
 	}
       slist_select(lst, cp->edit_ctr);
@@ -748,8 +748,8 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Gtk
   cx->current_hourglass = -1;
   if (cx->chan_widgets == NULL) 
     {
-      cw = (GtkWidget **)CALLOC(NUM_CHAN_WIDGETS, sizeof(GtkWidget *));
-      adjs = (GtkObject **)CALLOC(NUM_CHAN_ADJS, sizeof(GtkObject *));
+      cw = (GtkWidget **)calloc(NUM_CHAN_WIDGETS, sizeof(GtkWidget *));
+      adjs = (GtkObject **)calloc(NUM_CHAN_ADJS, sizeof(GtkObject *));
       cp->cgx->chan_widgets = cw;
       cp->cgx->chan_adjs = adjs;
     }

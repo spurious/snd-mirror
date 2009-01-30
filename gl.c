@@ -42,11 +42,6 @@
 #else
   #include "xen.h"
 #endif
-#ifndef CALLOC
-  #define CALLOC(a, b)  calloc((size_t)(a), (size_t)(b))
-  #define FREE(a)       free(a)
-#endif
-
 #ifndef unsigned_long
   /* for FreeBSD (thanks to Michael Scholz) (can't use ulong here due to collisions elsewhere) */
   typedef unsigned long unsigned_long;
@@ -5289,7 +5284,7 @@ void Init_libgl(void)
       define_integers();
       define_functions();
       XEN_YES_WE_HAVE("gl");
-      XEN_DEFINE("gl-version", C_TO_XEN_STRING("16-Jan-09"));
+      XEN_DEFINE("gl-version", C_TO_XEN_STRING("30-Jan-09"));
       gl_already_inited = true;
     }
 }

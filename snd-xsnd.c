@@ -844,7 +844,7 @@ void display_filter_env(snd_info *sp)
   if (height < MIN_FILTER_GRAPH_HEIGHT) return;
 
   width = widget_width(drawer);
-  ax = (axis_context *)CALLOC(1, sizeof(axis_context));
+  ax = (axis_context *)calloc(1, sizeof(axis_context));
   ax->gc = ss->sgx->fltenv_basic_gc;
   ax->wn = XtWindow(drawer);
   ax->dp = XtDisplay(drawer);
@@ -869,7 +869,7 @@ void display_filter_env(snd_info *sp)
 				 sp->filter_control_order, 
 				 sp->filter_control_in_dB);
     }
-  FREE(ax);
+  free(ax);
 }
 
 
@@ -924,7 +924,7 @@ static void filter_drawer_button_release(Widget w, XtPointer context, XEvent *ev
   env_editor_button_release(SOUND_ENV_EDITOR(sp), sp->filter_control_envelope);
   display_filter_env(sp);
   set_filter_text(sp, tmpstr = env_to_string(sp->filter_control_envelope));
-  if (tmpstr) FREE(tmpstr);
+  if (tmpstr) free(tmpstr);
   sp->filter_control_changed = true;
 }
 
@@ -1094,7 +1094,7 @@ void filter_env_changed(snd_info *sp, env *e)
     {
       char *tmpstr = NULL;
       XmTextSetString(FILTER_COEFFS_TEXT(sp), tmpstr = env_to_string(e));
-      if (tmpstr) FREE(tmpstr);
+      if (tmpstr) free(tmpstr);
       (SOUND_ENV_EDITOR(sp))->edited = true;
       display_filter_env(sp);
     }
@@ -1159,10 +1159,10 @@ static void set_play_button_pause(snd_info *sp, void *ptr)
 void play_button_pause(bool pausing)
 {
   pause_data *pd;
-  pd = (pause_data *)CALLOC(1, sizeof(pause_data));
+  pd = (pause_data *)calloc(1, sizeof(pause_data));
   pd->pausing = pausing;
   for_each_sound_with_void(set_play_button_pause, (void *)pd);
-  FREE(pd);
+  free(pd);
 }
 
 
@@ -1374,9 +1374,9 @@ static void watch_sash(Widget w, XtPointer closure, XtPointer info)
 
 	  if (outer_panes > 0)
 	    {
-	      inner_panes = (int *)CALLOC(outer_panes, sizeof(int));
-	      outer_sizes = (Dimension *)CALLOC(outer_panes, sizeof(Dimension));
-	      inner_sizes = (Dimension **)CALLOC(outer_panes, sizeof(Dimension *));
+	      inner_panes = (int *)calloc(outer_panes, sizeof(int));
+	      outer_sizes = (Dimension *)calloc(outer_panes, sizeof(Dimension));
+	      inner_sizes = (Dimension **)calloc(outer_panes, sizeof(Dimension *));
 	      outer_ctr = 0;
 
 	      for (i = 0; i < ss->max_sounds; i++)
@@ -1390,7 +1390,7 @@ static void watch_sash(Widget w, XtPointer closure, XtPointer info)
 		      Widget child;
 		      child = SND_PANE(sp);
 		      inner_panes[outer_ctr] = sp->nchans;
-		      inner_sizes[outer_ctr] = (Dimension *)CALLOC(sp->nchans, sizeof(Dimension));
+		      inner_sizes[outer_ctr] = (Dimension *)calloc(sp->nchans, sizeof(Dimension));
 		      XtVaGetValues(child, XmNheight, &(outer_sizes[outer_ctr]), NULL);
 
 		      for (k = 0; k < sp->nchans; k++)
@@ -1462,10 +1462,10 @@ static void watch_sash(Widget w, XtPointer closure, XtPointer info)
 
 		  for (i = 0; i < outer_panes; i++)
 		    if (inner_sizes[i])
-		      FREE(inner_sizes[i]);
-		  FREE(inner_panes);
-		  FREE(inner_sizes);
-		  FREE(outer_sizes);
+		      free(inner_sizes[i]);
+		  free(inner_panes);
+		  free(inner_sizes);
+		  free(outer_sizes);
 		  outer_panes = 0;
 		}
 
@@ -1484,7 +1484,7 @@ static void remember_sash(Widget w)
   int loc = -1;
   if (sashes_size == 0)
     {
-      sashes = (Widget *)CALLOC(16, sizeof(Widget));
+      sashes = (Widget *)calloc(16, sizeof(Widget));
       sashes_size = 16;
       loc = 0;
     }
@@ -1502,7 +1502,7 @@ static void remember_sash(Widget w)
 	}
       if (loc == -1)
 	{
-	  sashes = (Widget *)REALLOC(sashes, sashes_size * 2 * sizeof(Widget));
+	  sashes = (Widget *)realloc(sashes, sashes_size * 2 * sizeof(Widget));
 	  for (i = sashes_size; i < sashes_size * 2; i++) sashes[i] = NULL;
 	  loc = sashes_size;
 	  sashes_size *= 2;
@@ -1690,7 +1690,7 @@ static char *bits_to_string(const char **icon)
 {
   /* show first few lines */
   char *buf;
-  buf = (char *)CALLOC(128, sizeof(char));
+  buf = (char *)calloc(128, sizeof(char));
   mus_snprintf(buf, 128, "\n%s\n%s\n%s...", icon[0], icon[1], icon[2]);
   return(buf);
 }
@@ -1772,7 +1772,7 @@ static void change_pixmap_background(Widget w, Pixmap orig, Pixel old_color, Pix
   XtVaGetValues(w, XmNdepth, &depth, NULL);
   depth_bytes = (depth >> 3);
 
-  data = (char *)calloc((width + 1) * (height + 1) * depth_bytes, sizeof(char)); /* not CALLOC since X will free this */
+  data = (char *)calloc((width + 1) * (height + 1) * depth_bytes, sizeof(char)); /* not calloc since X will free this */
   /* there's overflow in X here, apparently -- the +1's fix it according to valgrind */
   /*   perhaps this is supposed to be rounded up to byte boundaries? */
 
@@ -1899,7 +1899,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
   sx = sp->sgx;
   sp->bomb_ctr = 0;
   if (sx->snd_widgets == NULL) 
-    sx->snd_widgets = (Widget *)CALLOC(NUM_SND_WIDGETS, sizeof(Widget));
+    sx->snd_widgets = (Widget *)calloc(NUM_SND_WIDGETS, sizeof(Widget));
   sw = sx->snd_widgets;
   if ((!make_widgets) && (old_chans < nchans))
     {
@@ -1911,7 +1911,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
     {
       if ((sound_style(ss) == SOUNDS_IN_SEPARATE_WINDOWS))
 	{
-	  title = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
+	  title = (char *)calloc(PRINT_BUFFER_SIZE, sizeof(char));
 	  mus_snprintf(title, PRINT_BUFFER_SIZE, "%d: %s", snd_slot, sp->short_filename);
 	  if (sx->dialog == NULL)
 	    {
@@ -1930,7 +1930,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
 	      XmAddWMProtocolCallback(sx->dialog, sound_delete, close_sound_dialog, (XtPointer)sp);
 	    }
 	  else XtVaSetValues(sx->dialog, XmNtitle, title, NULL);
-	  FREE(title);
+	  free(title);
 	  if (!XtIsManaged(sx->dialog)) XtManageChild(sx->dialog);
 	}
 
@@ -2024,7 +2024,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
 	Widget left_widget;
 
 	left_widget = LOCK_OR_BOMB(sp);
-	sp->sgx->progress_widgets = (Widget *)CALLOC(sp->nchans, sizeof(Widget));
+	sp->sgx->progress_widgets = (Widget *)calloc(sp->nchans, sizeof(Widget));
 	sp->sgx->num_progress_widgets = sp->nchans;
 	/* when an unused sound is reopened in snd-data.c, it's possible for its channel number
 	 *   to be increased.  If we then try to draw the clock icon in the new channel, its
@@ -2804,8 +2804,8 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       XtAddEventHandler(FILTER_GRAPH(sp), ButtonReleaseMask, false, filter_drawer_button_release, sp);
       XtAddEventHandler(FILTER_GRAPH(sp), KeyPressMask, false, graph_key_press, (XtPointer)sp);
 
-      FREE(n1); FREE(n2); FREE(n3); FREE(n4); FREE(n5); FREE(n6);
-      FREE(n7); FREE(n8); FREE(n9); FREE(n10); FREE(n11); FREE(n12);
+      free(n1); free(n2); free(n3); free(n4); free(n5); free(n6);
+      free(n7); free(n8); free(n9); free(n10); free(n11); free(n12);
       /* end if control-panel */
       if (sound_style(ss) == SOUNDS_IN_NOTEBOOK)
 	{
@@ -2817,7 +2817,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
 	  XtSetArg(args[n], XmNnotebookChildType, XmMAJOR_TAB); n++;
 	  XtSetArg(args[n], XmNuserData, sp->index); n++;
 	  sx->tab = XtCreateManagedWidget(name, xmPushButtonWidgetClass, SOUND_PANE(ss), args, n);
-	  FREE(name);
+	  free(name);
 	}
 
 
@@ -2835,10 +2835,10 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
     { /* re-manage currently inactive chan */
       if (sound_style(ss) == SOUNDS_IN_SEPARATE_WINDOWS)
 	{
-	  title = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
+	  title = (char *)calloc(PRINT_BUFFER_SIZE, sizeof(char));
 	  mus_snprintf(title, PRINT_BUFFER_SIZE, "%d: %s", snd_slot, sp->short_filename);
 	  XtVaSetValues(sx->dialog, XmNtitle, title, NULL);
-	  FREE(title);
+	  free(title);
 	  if (!XtIsManaged(sx->dialog)) XtManageChild(sx->dialog);
 	}
 
@@ -2859,7 +2859,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
 	  char *name;
 	  name = just_filename(sp->short_filename);
 	  set_label(sx->tab, name);
-	  FREE(name);
+	  free(name);
 	}
     }
 
@@ -2906,7 +2906,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
     }
 
   after_open(sp->index);
-  if (free_filename) FREE(filename);
+  if (free_filename) free(filename);
   return(sp);
 }
 
@@ -2948,7 +2948,7 @@ void set_sound_pane_file_label(snd_info *sp, char *str)
     {
       if (!(mus_strcmp(sp->name_string, str)))
 	{
-	  if (sp->name_string) FREE(sp->name_string);
+	  if (sp->name_string) free(sp->name_string);
 	  sp->name_string = mus_strdup(str);
 	  set_button_label(SND_NAME(sp), str); /* this causes an expose event, so it's worth minimizing */
 	}
@@ -3195,15 +3195,15 @@ static XEN g_watch_sash(void)
 {
   /* for autotests -- no way to do this via event.scm etc */
   SashCallDataRec *call_data;
-  call_data = (SashCallDataRec *)CALLOC(1, sizeof(SashCallDataRec));
+  call_data = (SashCallDataRec *)calloc(1, sizeof(SashCallDataRec));
   call_data->num_params = 1;
-  call_data->params = (String *)CALLOC(1, sizeof(String));
+  call_data->params = (String *)calloc(1, sizeof(String));
   call_data->params[0] = (String)"Start";
   watch_sash(NULL, NULL, (XtPointer)call_data);
   call_data->params[0] = (String)"Commit";
   watch_sash(NULL, NULL, (XtPointer)call_data);
-  FREE(call_data->params);
-  FREE(call_data);
+  free(call_data->params);
+  free(call_data);
   return(XEN_FALSE);
 }
 #endif

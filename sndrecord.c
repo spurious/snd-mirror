@@ -58,7 +58,7 @@ int main(int argc, char *argv[])
   if (fd != -1)
     {
       /* prepare and open the microphone input line */
-      ibuf = (indata *)CALLOC(BUFFER_SIZE, sizeof(indata));
+      ibuf = (indata *)calloc(BUFFER_SIZE, sizeof(indata));
       afd = mus_audio_open_input(MUS_AUDIO_MICROPHONE, SAMPLING_RATE, CHANNELS, DATA_TYPE, bytes_per_read);
       if (afd != -1)
 	{
@@ -70,7 +70,7 @@ int main(int argc, char *argv[])
 	  mus_audio_close(afd);
 	}
       mus_sound_close_output(fd, bytes_per_read * READS);
-      FREE(ibuf);
+      free(ibuf);
     }
   return(0);
 }

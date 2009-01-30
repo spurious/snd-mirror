@@ -539,7 +539,7 @@
     char *str; \
     str = Original_Print((Type *)XEN_OBJECT_REF(obj)); \
     scm_puts(str, port); \
-    FREE(str); \
+    free(str); \
     return(1); \
   }
 
@@ -1001,7 +1001,7 @@ char *xen_guile_to_c_string_with_eventual_free(XEN str);
     char *str; \
     str = Original_Print((Type *)XEN_OBJECT_REF(obj)); \
     val = C_TO_XEN_STRING(str); \
-    FREE(str); \
+    free(str); \
     return(val); \
   }
 
@@ -1559,7 +1559,7 @@ XEN xen_rb_add_to_load_path(char *path);
   { \
     char * str = Original_Print((Type *)XEN_OBJECT_REF(obj)); \
     XEN val = C_TO_XEN_STRING(str); \
-    FREE(str); \
+    free(str); \
     return val; \
   }
 

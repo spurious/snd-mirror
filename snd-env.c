@@ -13,8 +13,8 @@ env *free_env(env *e)
 {
   if (e)
     {
-      if (e->data) {FREE(e->data); e->data = NULL;}
-      FREE(e);
+      if (e->data) {free(e->data); e->data = NULL;}
+      free(e);
     }
   return(NULL);
 }
@@ -25,10 +25,10 @@ env *copy_env(env *e)
   if (e)
     {
       env *ne;
-      ne = (env *)CALLOC(1, sizeof(env));
+      ne = (env *)calloc(1, sizeof(env));
       ne->pts = e->pts;
       ne->data_size = e->pts * 2;
-      ne->data = (Float *)MALLOC(ne->data_size * sizeof(Float));
+      ne->data = (Float *)malloc(ne->data_size * sizeof(Float));
       memcpy((void *)(ne->data), (void *)(e->data), ne->data_size * sizeof(Float));
       ne->base = e->base;
       return(ne);
@@ -61,7 +61,7 @@ char *env_to_string(env *e)
       bool first = true;
       char *expr_buf;
       len = 4 + (e->pts * 2 * 16);
-      news = (char *)CALLOC(len, sizeof(char));
+      news = (char *)calloc(len, sizeof(char));
 #if HAVE_RUBY
       news[0] = '[';
 #endif
@@ -74,7 +74,7 @@ char *env_to_string(env *e)
       news[1] = '(';
       news[2] = ' ';
 #endif
-      expr_buf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
+      expr_buf = (char *)calloc(PRINT_BUFFER_SIZE, sizeof(char));
       for (i = 0, j = 0; i < e->pts; i++, j += 2)
 	{
 	  if (fabs(e->data[j + 1]) < .0000001) e->data[j + 1] = 0.0; /* try to get rid of -0.000 */
@@ -87,7 +87,7 @@ char *env_to_string(env *e)
 	  news = mus_strcat(news, expr_buf, &len);
 	  first = false;
 	}
-      FREE(expr_buf);
+      free(expr_buf);
 #if HAVE_RUBY
       news = mus_strcat(news, "]", &len);
 #endif
@@ -109,8 +109,8 @@ env *make_envelope_with_offset_and_scaler(Float *env_buffer, int len, Float offs
   int i, flen;
   if (len < 4) flen = 4; else flen = len;
   if (flen & 1) flen++;
-  e = (env *)CALLOC(1, sizeof(env));
-  e->data = (Float *)CALLOC(flen, sizeof(Float));
+  e = (env *)calloc(1, sizeof(env));
+  e->data = (Float *)calloc(flen, sizeof(Float));
   e->data_size = flen;
   e->pts = flen / 2;
   for (i = 0; i < len; i += 2) 
@@ -140,7 +140,7 @@ static void add_point(env *e, int pos, Float x, Float y)
   if (e->pts * 2 == e->data_size)
     {
       e->data_size += 16;
-      e->data = (Float *)REALLOC(e->data, (e->data_size) * sizeof(Float));
+      e->data = (Float *)realloc(e->data, (e->data_size) * sizeof(Float));
     }
   for (i = e->pts - 1, j = (e->pts - 1) * 2; i >= pos; i--, j -= 2)
     {
@@ -224,8 +224,8 @@ static int hit_point(int *cxs, int *cys, int points, int x, int y)
 env *default_env(Float x1, Float y)
 {
   env *e;
-  e = (env *)CALLOC(1, sizeof(env));
-  e->data = (Float *)CALLOC(4, sizeof(Float));
+  e = (env *)calloc(1, sizeof(env));
+  e->data = (Float *)calloc(4, sizeof(Float));
   e->data_size = 4;
   e->pts = 2;
   e->data[0] = 0.0; 
@@ -251,10 +251,10 @@ bool default_env_p(env *e)
 env_editor *new_env_editor(void)
 {
   env_editor *edp;
-  edp = (env_editor *)CALLOC(1, sizeof(env_editor));
-  edp->current_xs = (int *)CALLOC(8, sizeof(int));
-  edp->current_ys = (int *)CALLOC(8, sizeof(int));
-  edp->axis = (axis_info *)CALLOC(1, sizeof(axis_info));
+  edp = (env_editor *)calloc(1, sizeof(env_editor));
+  edp->current_xs = (int *)calloc(8, sizeof(int));
+  edp->current_ys = (int *)calloc(8, sizeof(int));
+  edp->axis = (axis_info *)calloc(1, sizeof(axis_info));
   edp->current_size = 8;
   edp->env_dragged = false;
   edp->env_pos = 0;
@@ -271,8 +271,8 @@ static void env_editor_set_current_point(env_editor *edp, int pos, int x, int y)
   if (pos == edp->current_size)
     {
       edp->current_size += 8;
-      edp->current_xs = (int *)REALLOC(edp->current_xs, edp->current_size * sizeof(int));
-      edp->current_ys = (int *)REALLOC(edp->current_ys, edp->current_size * sizeof(int));
+      edp->current_xs = (int *)realloc(edp->current_xs, edp->current_size * sizeof(int));
+      edp->current_ys = (int *)realloc(edp->current_ys, edp->current_size * sizeof(int));
     }
   edp->current_xs[pos] = x;
   edp->current_ys[pos] = y;
@@ -653,7 +653,7 @@ static int all_envs_top = 0;     /* one past pointer to last entry in this array
 void init_env_axes(axis_info *ap, const char *name, int x_offset, int ey0, int width, int height, 
 		   Float xmin, Float xmax, Float ymin, Float ymax, printing_t printing)
 {
-  if (ap->xlabel) FREE(ap->xlabel);
+  if (ap->xlabel) free(ap->xlabel);
   ap->xmin = xmin;
   ap->xmax = xmax;
   ap->ymin = ymin;
@@ -743,10 +743,10 @@ void prepare_enved_edit(env *new_env)
       env_list_size += 16;
       if (env_list)
 	{
-	  env_list = (env **)REALLOC(env_list, env_list_size * sizeof(env *));
+	  env_list = (env **)realloc(env_list, env_list_size * sizeof(env *));
 	  for (i = env_list_top; i < env_list_size; i++) env_list[i] = NULL;
 	}
-      else env_list = (env **)CALLOC(env_list_size, sizeof(env *));
+      else env_list = (env **)calloc(env_list_size, sizeof(env *));
     }
   /* clear out current edit list above this edit */
   for (i = env_list_top; i < env_list_size; i++)
@@ -839,18 +839,18 @@ static void add_envelope(const char *name, env *val)
       if (all_envs)
 	{
 	  int i;
-	  all_envs = (env **)REALLOC(all_envs, all_envs_size * sizeof(env *));
-	  all_names = (char **)REALLOC(all_names, all_envs_size * sizeof(char *));
+	  all_envs = (env **)realloc(all_envs, all_envs_size * sizeof(env *));
+	  all_names = (char **)realloc(all_names, all_envs_size * sizeof(char *));
 	  for (i = all_envs_size - 16; i < all_envs_size; i++) {all_names[i] = NULL; all_envs[i] = NULL;}
 	}
       else
 	{
-	  all_envs = (env **)CALLOC(all_envs_size, sizeof(env *));
-	  all_names = (char **)CALLOC(all_envs_size, sizeof(char *));
+	  all_envs = (env **)calloc(all_envs_size, sizeof(env *));
+	  all_names = (char **)calloc(all_envs_size, sizeof(char *));
 	}
     }
   all_envs[all_envs_top] = val;
-  if (all_names[all_envs_top]) FREE(all_names[all_envs_top]);
+  if (all_names[all_envs_top]) free(all_names[all_envs_top]);
   all_names[all_envs_top] = mus_strdup(name);
   all_envs_top++;
   if (enved_dialog_is_active())
@@ -868,7 +868,7 @@ void delete_envelope(const char *name)
   if (pos != -1)
     {
       int i;
-      if (all_names[pos]) FREE(all_names[pos]);
+      if (all_names[pos]) free(all_names[pos]);
       for (i = pos; i < all_envs_size - 1; i++)
 	{
 	  all_envs[i] = all_envs[i + 1]; 
@@ -906,9 +906,9 @@ enved_fft *free_enved_fft(enved_fft *ef)
 {
   if (ef)
     {
-      if (ef->data) FREE(ef->data);
+      if (ef->data) free(ef->data);
       ef->data = NULL;
-      FREE(ef);
+      free(ef);
     }
   return(NULL);
 }
@@ -933,7 +933,7 @@ static enved_fft *make_enved_spectrum(chan_info *cp)
   enved_fft *ef;
 
   if (cp->edits[cp->edit_ctr]->fft == NULL)
-    cp->edits[cp->edit_ctr]->fft = (enved_fft *)CALLOC(1, sizeof(enved_fft));
+    cp->edits[cp->edit_ctr]->fft = (enved_fft *)calloc(1, sizeof(enved_fft));
   ef = cp->edits[cp->edit_ctr]->fft;
 
   if ((ef) && 
@@ -952,7 +952,7 @@ static enved_fft *make_enved_spectrum(chan_info *cp)
       if (sf == NULL) return(NULL);
 
       ef->size = snd_to_int_pow2(data_len);
-      ef->data = (Float *)MALLOC(ef->size * sizeof(Float));
+      ef->data = (Float *)malloc(ef->size * sizeof(Float));
       if (ef->data == NULL) return(NULL);
 
       fourier_spectrum(sf, ef->data, ef->size, data_len, NULL, NULL);
@@ -1186,7 +1186,7 @@ void save_envelope_editor_state(FILE *fd)
 #if HAVE_FORTH
 	  fprintf(fd, "\"%s\" %s %.4f %s drop\n", all_names[i], estr, all_envs[i]->base, S_define_envelope);
 #endif
-	  FREE(estr);
+	  free(estr);
 	}
     }
 }
@@ -1207,7 +1207,7 @@ env *xen_to_env(XEN res)
 	  
 	  if (XEN_NUMBER_P(XEN_CAR(res)))
 	    {
-	      data = (Float *)CALLOC(len, sizeof(Float));
+	      data = (Float *)calloc(len, sizeof(Float));
 	      for (i = 0, lst = XEN_COPY_ARG(res); i < len; i++, lst = XEN_CDR(lst))
 		{
 		  XEN el;
@@ -1221,7 +1221,7 @@ env *xen_to_env(XEN res)
 	      if (XEN_LIST_P(XEN_CAR(res)))
 		{
 		  len *= 2;
-		  data = (Float *)CALLOC(len, sizeof(Float));
+		  data = (Float *)calloc(len, sizeof(Float));
 		  for (i = 0, lst = XEN_COPY_ARG(res); i < len; i += 2, lst = XEN_CDR(lst))
 		    {
 		      XEN el;
@@ -1234,7 +1234,7 @@ env *xen_to_env(XEN res)
 	  if (data)
 	    {
 	      rtn = make_envelope(data, len);
-	      FREE(data);
+	      free(data);
 	    }
 	}
     }
@@ -1299,7 +1299,7 @@ env *string_to_env(const char *str)
       if (env_buffer_size == 0)
 	{
 	  env_buffer_size = ENV_BUFFER_SIZE;
-	  env_buffer = (Float *)CALLOC(ENV_BUFFER_SIZE, sizeof(Float));
+	  env_buffer = (Float *)calloc(ENV_BUFFER_SIZE, sizeof(Float));
 	}
       if ((*tmp) == '\'') tmp++;
       if ((*tmp) == '(') tmp++;
@@ -1316,13 +1316,13 @@ env *string_to_env(const char *str)
 	  if (i == env_buffer_size)
 	    {
 	      env_buffer_size *= 2;
-	      env_buffer = (Float *)REALLOC(env_buffer, env_buffer_size * sizeof(Float));
+	      env_buffer = (Float *)realloc(env_buffer, env_buffer_size * sizeof(Float));
 	    }
 	  tok = strtok(NULL, env_white_space);
 	}
       if ((i == 0) || (i & 1)) 
 	snd_error(_("odd length envelope? %s"), str);
-      FREE(old_tmp);
+      free(old_tmp);
       return(make_envelope(env_buffer, i));
     }
   return(NULL);
@@ -1424,13 +1424,13 @@ void add_or_edit_symbol(const char *name, env *val)
   if (!val) return;
   tmpstr = env_to_string(val);
   len = mus_strlen(tmpstr) + mus_strlen(name) + 32;
-  buf = (char *)CALLOC(len, sizeof(char));
+  buf = (char *)calloc(len, sizeof(char));
   mus_snprintf(buf, len, "%s = %s", name, tmpstr);
-  if (tmpstr) FREE(tmpstr);
+  if (tmpstr) free(tmpstr);
 
   snd_catch_any(eval_str_wrapper, buf, buf);
 
-  FREE(buf);
+  free(buf);
 #endif
 
 #if HAVE_GUILE || HAVE_S7
@@ -1473,10 +1473,10 @@ env *get_env(XEN e, const char *origin) /* list in e */
       {
 	XEN msg;
 	char *buf;
-	buf = (char *)CALLOC(1024, sizeof(char));
+	buf = (char *)calloc(1024, sizeof(char));
 	mus_snprintf(buf, 1024, "%s: env at breakpoint %d: x axis value %f > %f", origin, i / 2, new_env->data[i - 2], new_env->data[i]);
 	msg = C_TO_XEN_STRING(buf);
-	FREE(buf);
+	free(buf);
 	free_env(new_env);
 	XEN_ERROR(XEN_ERROR_TYPE("env-error"),
 		  XEN_LIST_3(C_TO_XEN_STRING(S_filter_channel),
@@ -1505,7 +1505,7 @@ static XEN g_save_envelopes(XEN filename)
       save_envelope_editor_state(fd);
       snd_fclose(fd, name);
     }
-  if (name) FREE(name);
+  if (name) free(name);
   if (!fd)
     {
       XEN_ERROR(CANNOT_SAVE,
@@ -1554,8 +1554,8 @@ static bool check_enved_hook(env *e, int pos, Float x, Float y, enved_point_t re
 	      XEN lst;
 	      if (len > e->data_size)
 		{
-		  FREE(e->data);
-		  e->data = (Float *)CALLOC(len, sizeof(Float));
+		  free(e->data);
+		  e->data = (Float *)calloc(len, sizeof(Float));
 		  e->data_size = len;
 		}
 	      e->pts = len / 2;
@@ -1829,7 +1829,7 @@ stretch-envelope from env.fth: \n\
   enved_hook = XEN_DEFINE_HOOK(S_enved_hook, 5, H_enved_hook);
 
   ss->enved = new_env_editor();
-  FREE(ss->enved->axis);
+  free(ss->enved->axis);
   ss->enved->axis = NULL;
   ss->enved->in_dB = DEFAULT_ENVED_IN_DB;
   ss->enved->clip_p = DEFAULT_ENVED_CLIP_P;

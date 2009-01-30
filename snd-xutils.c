@@ -38,7 +38,7 @@ bool set_tiny_font(const char *font)
     {
       /* it's not clear to me whether this is safe -- what if two fontstructs are pointing to the same font? */
       if (TINY_FONT(ss)) XFreeFont(MAIN_DISPLAY(ss), TINY_FONT(ss));
-      if (tiny_font(ss)) FREE(tiny_font(ss));
+      if (tiny_font(ss)) free(tiny_font(ss));
       in_set_tiny_font(mus_strdup(font));
       TINY_FONT(ss) = fs;
       if (ss->sgx->tiny_fontlist) XM_FONT_FREE(ss->sgx->tiny_fontlist);
@@ -56,7 +56,7 @@ bool set_listener_font(const char *font)
   if (fs)
     {
       if (LISTENER_FONT(ss)) XFreeFont(MAIN_DISPLAY(ss), LISTENER_FONT(ss));
-      if (listener_font(ss)) FREE(listener_font(ss));
+      if (listener_font(ss)) free(listener_font(ss));
       in_set_listener_font(mus_strdup(font));
       LISTENER_FONT(ss) = fs;
       if (ss->sgx->listener_fontlist) XM_FONT_FREE(ss->sgx->listener_fontlist);
@@ -75,7 +75,7 @@ bool set_peaks_font(const char *font)
   if (fs)
     {
       if (PEAKS_FONT(ss)) XFreeFont(MAIN_DISPLAY(ss), PEAKS_FONT(ss));
-      if (peaks_font(ss)) FREE(peaks_font(ss));
+      if (peaks_font(ss)) free(peaks_font(ss));
       in_set_peaks_font(mus_strdup(font));
       PEAKS_FONT(ss) = fs;
       if (ss->sgx->peaks_fontlist) XM_FONT_FREE(ss->sgx->peaks_fontlist);
@@ -93,7 +93,7 @@ bool set_bold_peaks_font(const char *font)
   if (fs)
     {
       if (BOLD_PEAKS_FONT(ss)) XFreeFont(MAIN_DISPLAY(ss), BOLD_PEAKS_FONT(ss));
-      if (bold_peaks_font(ss)) FREE(bold_peaks_font(ss));
+      if (bold_peaks_font(ss)) free(bold_peaks_font(ss));
       in_set_bold_peaks_font(mus_strdup(font));
       BOLD_PEAKS_FONT(ss) = fs;
       if (ss->sgx->bold_peaks_fontlist) XM_FONT_FREE(ss->sgx->bold_peaks_fontlist);
@@ -111,7 +111,7 @@ bool set_axis_label_font(const char *font)
   if (fs)
     {
       if (AXIS_LABEL_FONT(ss)) XFreeFont(MAIN_DISPLAY(ss), AXIS_LABEL_FONT(ss));
-      if (axis_label_font(ss)) FREE(axis_label_font(ss));
+      if (axis_label_font(ss)) free(axis_label_font(ss));
       in_set_axis_label_font(mus_strdup(font));
       AXIS_LABEL_FONT(ss) = fs;
 #if HAVE_GL
@@ -130,7 +130,7 @@ bool set_axis_numbers_font(const char *font)
   if (fs)
     {
       if (AXIS_NUMBERS_FONT(ss)) XFreeFont(MAIN_DISPLAY(ss), AXIS_NUMBERS_FONT(ss));
-      if (axis_numbers_font(ss)) FREE(axis_numbers_font(ss));
+      if (axis_numbers_font(ss)) free(axis_numbers_font(ss));
       in_set_axis_numbers_font(mus_strdup(font));
       AXIS_NUMBERS_FONT(ss) = fs;
 #if HAVE_GL
@@ -322,7 +322,7 @@ void goto_window(Widget text)
 XtCallbackList make_callback_list(XtCallbackProc callback, XtPointer closure)
 {
   XtCallbackList nlist;
-  nlist = (XtCallbackList)CALLOC(2, sizeof(XtCallbackRec));
+  nlist = (XtCallbackList)calloc(2, sizeof(XtCallbackRec));
   nlist[0].callback = callback;
   nlist[0].closure = closure;
   nlist[1].callback = NULL;
@@ -581,30 +581,30 @@ int attach_all_sides(Arg *args, int n)
 void widget_int_to_text(Widget w, int val)
 {
   char *str;
-  str = (char *)CALLOC(8, sizeof(char));
+  str = (char *)calloc(8, sizeof(char));
   mus_snprintf(str, 8, "%d", val);
   XmTextFieldSetString(w, str);
-  FREE(str);
+  free(str);
 }
 
 
 void widget_float_to_text(Widget w, Float val)
 {
   char *str;
-  str = (char *)CALLOC(16, sizeof(char));
+  str = (char *)calloc(16, sizeof(char));
   mus_snprintf(str, 16, "%.2f", val);
   XmTextFieldSetString(w, str);
-  FREE(str);
+  free(str);
 }
 
 
 void widget_off_t_to_text(Widget w, off_t val)
 {
   char *str;
-  str = (char *)CALLOC(32, sizeof(char));
+  str = (char *)calloc(32, sizeof(char));
   mus_snprintf(str, 32, OFF_TD, val);
   XmTextFieldSetString(w, str);
-  FREE(str);
+  free(str);
 }
 
 
@@ -686,7 +686,7 @@ static Pixmap rotate_text(Widget w, const char *str, XFontStruct *font, Float an
   XDrawImageString(dp, pix, d_gc, 4, height - 4, str, strlen(str));
 
   /* dump pixmap bits into an image; image data will be freed automatically later */
-  data = (char *)calloc((width + 1) * (height + 1) * depth_bytes, sizeof(char)); /* not CALLOC since X will free this */
+  data = (char *)calloc((width + 1) * (height + 1) * depth_bytes, sizeof(char)); /* not calloc since X will free this */
   before = XCreateImage(dp, vis, depth, XYPixmap, 0, data, width, height, 8, 0);
   XGetSubImage(dp, pix, 0, 0, width, height, AllPlanes, XYPixmap, before, 0, 0);
   data = (char *)calloc((nwidth + 1) * (nheight + 1) * depth_bytes, sizeof(char));
@@ -815,7 +815,7 @@ XmString multi_line_label(const char *s, int *lines)
       p = strtok(NULL, "\n");
     }
   XmStringFree(separator);
-  FREE(tmp);
+  free(tmp);
   return(xms1);
 }
 

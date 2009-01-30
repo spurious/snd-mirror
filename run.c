@@ -473,7 +473,7 @@ static const char *basic_type_names[BUILT_IN_TYPES] = {"unspecified", "int", "fl
 static void init_type_names(void)
 {
   int i;
-  type_names = (const char **)CALLOC(BUILT_IN_TYPES, sizeof(char *));
+  type_names = (const char **)calloc(BUILT_IN_TYPES, sizeof(char *));
   for (i = 0; i < BUILT_IN_TYPES; i++)
     type_names[i] = basic_type_names[i];
 }
@@ -497,7 +497,7 @@ static int add_new_type(const char *new_type)
     {
       int i;
       type_names_size += 8;
-      type_names = (const char **)REALLOC(type_names, type_names_size * sizeof(char *));
+      type_names = (const char **)realloc(type_names, type_names_size * sizeof(char *));
       for (i = last_type + 1; i < type_names_size; i++) type_names[i] = NULL;
     }
   last_type++;
@@ -649,31 +649,31 @@ static int allocate_xen_vars(ptree *pt, int size)
       if (pt->xen_vars)
 	{
 	  int i;
-	  pt->xen_vars = (xen_value ***)REALLOC(pt->xen_vars, pt->xen_vars_size * sizeof(xen_value **));
+	  pt->xen_vars = (xen_value ***)realloc(pt->xen_vars, pt->xen_vars_size * sizeof(xen_value **));
 	  for (i = cur; i < pt->xen_vars_size; i++)
 	    pt->xen_vars[i] = NULL;
 	}
-      else pt->xen_vars = (xen_value ***)CALLOC(pt->xen_vars_size, sizeof(xen_value **));
+      else pt->xen_vars = (xen_value ***)calloc(pt->xen_vars_size, sizeof(xen_value **));
     }
-  pt->xen_vars[pt->xen_var_ctr++] = (xen_value **)CALLOC(size, sizeof(xen_value *));
+  pt->xen_vars[pt->xen_var_ctr++] = (xen_value **)calloc(size, sizeof(xen_value *));
   return(cur);
 }
 
 
 static triple *free_triple(triple *trp)
 {
-  if (trp->args) FREE(trp->args);
+  if (trp->args) free(trp->args);
   trp->args = NULL;
-  if (trp->types) FREE(trp->types);
+  if (trp->types) free(trp->types);
   trp->types = NULL;
-  FREE(trp);
+  free(trp);
   return(NULL);
 }
 
 static xen_value *make_xen_value(int typ, int address, xen_value_constant_t constant)
 {
   xen_value *v;
-  v = (xen_value *)CALLOC(1, sizeof(xen_value));
+  v = (xen_value *)calloc(1, sizeof(xen_value));
   v->type = typ;
   v->addr = address;
   v->constant = constant;
@@ -693,7 +693,7 @@ static xen_value *run_warn(const char *format, ...)
 {
   va_list ap;
   if (!optimizer_warning_buffer)
-    optimizer_warning_buffer = (char *)CALLOC(OPTIMIZER_WARNING_BUFFER_SIZE, sizeof(char));
+    optimizer_warning_buffer = (char *)calloc(OPTIMIZER_WARNING_BUFFER_SIZE, sizeof(char));
   run_warned = true;
   va_start(ap, format);
 #if HAVE_VSNPRINTF
@@ -717,7 +717,7 @@ static xen_value *run_warn_with_free(char *str)
   XEN msg;
   run_warned = true;
   msg = C_TO_XEN_STRING(str);
-  FREE(str);
+  free(str);
 #if USE_SND
   if (XEN_HOOKED(optimization_hook))
     run_hook(optimization_hook, 
@@ -743,13 +743,13 @@ static char *describe_xen_var(xen_var *var, ptree *pt)
   temp = describe_xen_value(var->v, pt);
   if (temp)
     {
-      buf = (char *)CALLOC(strlen(var->name) + strlen(temp) + 32, sizeof(char));
+      buf = (char *)calloc(strlen(var->name) + strlen(temp) + 32, sizeof(char));
       sprintf(buf, "%s: %s (%s%s%s)", 
 	      var->name, temp,
 	      (var->global) ? "global" : "local",
 	      (var->unclean) ? " set" : "",
 	      (var->unsettable) ? " unsettable" : "");
-      FREE(temp);
+      free(temp);
     }
   else buf = mus_strdup(var->name);
   return(buf);
@@ -760,10 +760,10 @@ static continuation *free_goto(continuation *c)
 {
   if (c)
     {
-      if (c->name) FREE(c->name);
-      if (c->result) FREE(c->result);
-      if (c->jump) FREE(c->jump);
-      FREE(c);
+      if (c->name) free(c->name);
+      if (c->result) free(c->result);
+      if (c->jump) free(c->jump);
+      free(c);
     }
   return(NULL);
 }
@@ -808,7 +808,7 @@ static xen_var *find_var_in_ptree_via_addr(ptree *pt, int type, int addr)
 static char *str_append(char *oldstr, int *oldsize, char *newstr)
 {
   oldstr = mus_strcat(oldstr, newstr, oldsize);
-  FREE(newstr);
+  free(newstr);
   return(oldstr);
 }
 
@@ -841,13 +841,13 @@ static char *describe_triple(triple *trp, ptree *pt)
 	{
 	  int i, size = 0;
 	  char **descrs;
-	  descrs = (char **)CALLOC(trp->num_args, sizeof(char *));
+	  descrs = (char **)calloc(trp->num_args, sizeof(char *));
 	  for (i = 0; i < trp->num_args; i++)
 	    {
 	      descrs[i] = describe_xen_value_1(trp->types[i], trp->args[i], pt);
 	      size += (mus_strlen(descrs[i]) + 2);
 	    }
-	  str = (char *)CALLOC(size + mus_strlen(trp->op_name) + 8, sizeof(char));
+	  str = (char *)calloc(size + mus_strlen(trp->op_name) + 8, sizeof(char));
 	  str = strcat(str, descrs[0]);
 	  str = strcat(str, " = ");
 	  str = strcat(str, trp->op_name);
@@ -861,8 +861,8 @@ static char *describe_triple(triple *trp, ptree *pt)
 	    str = strcat(str, descrs[trp->num_args - 1]);
 	  str = strcat(str, ")");
 	  for (i = 0; i < trp->num_args; i++)
-	    FREE(descrs[i]);
-	  FREE(descrs);
+	    free(descrs[i]);
+	  free(descrs);
 	}
       else
 	{
@@ -896,7 +896,7 @@ static char *describe_ptree(ptree *pt, const char *space)
   xen_value ***inner_xen_vars;
 
   size = 1024;
-  buf = (char *)CALLOC(size, sizeof(char));
+  buf = (char *)calloc(size, sizeof(char));
 
   inner_ints = pt->ints;
   inner_dbls = pt->dbls;
@@ -953,11 +953,11 @@ static char *describe_ptree(ptree *pt, const char *space)
     {
       for (i = 0; i < pt->int_ctr - 1; i++)
 	{
-	  temp = (char *)CALLOC(INT_STR_SIZE, sizeof(char));
+	  temp = (char *)calloc(INT_STR_SIZE, sizeof(char));
 	  mus_snprintf(temp, INT_STR_SIZE, INT_STR ", ", pt->ints[i]);
 	  buf = str_append(buf, &size, temp);
 	}
-      temp = (char *)CALLOC(INT_STR_SIZE, sizeof(char));
+      temp = (char *)calloc(INT_STR_SIZE, sizeof(char));
       mus_snprintf(temp, INT_STR_SIZE, INT_STR "]%s", 
 		   pt->ints[pt->int_ctr - 1],
 		   (pt->dbl_ctr > 0) ? ", [" : "\n");
@@ -968,11 +968,11 @@ static char *describe_ptree(ptree *pt, const char *space)
     {
       for (i = 0; i < pt->dbl_ctr - 1; i++)
 	{
-	  temp = (char *)CALLOC(INT_STR_SIZE, sizeof(char));
+	  temp = (char *)calloc(INT_STR_SIZE, sizeof(char));
 	  mus_snprintf(temp, INT_STR_SIZE, "%.4f, ", pt->dbls[i]);
 	  buf = str_append(buf, &size, temp);
 	}
-      temp = (char *)CALLOC(INT_STR_SIZE, sizeof(char));
+      temp = (char *)calloc(INT_STR_SIZE, sizeof(char));
       mus_snprintf(temp, INT_STR_SIZE, "%.4f]\n", pt->dbls[pt->dbl_ctr - 1]);
       buf = str_append(buf, &size, temp);
     }
@@ -983,7 +983,7 @@ static char *describe_ptree(ptree *pt, const char *space)
       if (temp)
 	{
 	  buf = str_append(buf, &size, mus_format("%s%d: %s\n", space, i, temp));
-	  FREE(temp);
+	  free(temp);
 	}
     }
   buf = str_append(buf, &size, mus_strdup("\n"));
@@ -992,14 +992,14 @@ static char *describe_ptree(ptree *pt, const char *space)
     {
       temp = describe_xen_var(pt->vars[i], pt);
       buf = str_append(buf, &size, mus_format("%s[var %d]: %s\n", space, i, temp));
-      FREE(temp);
+      free(temp);
     }
 
   for (i = 0; i < pt->global_var_ctr; i++)
     {
       temp = describe_xen_var(pt->global_vars[i], pt);
       buf = str_append(buf, &size, mus_format("%s[global_var %d]: %s\n", space, i, temp));
-      FREE(temp);
+      free(temp);
     }
 
   if (pt->result)
@@ -1008,7 +1008,7 @@ static char *describe_ptree(ptree *pt, const char *space)
       if (temp)
 	{
 	  buf = str_append(buf, &size, mus_format("%sresult: %s\n", space, temp));
-	  FREE(temp);
+	  free(temp);
 	}
     }
   buf = str_append(buf, &size, mus_format("%sPC: " INT_STR " (%d)\n", space, pt->ints[0], pt->initial_pc));
@@ -1070,7 +1070,7 @@ static char *describe_xen_value_1(int type, int addr, ptree *pt)
 	  char *buf = NULL, *vstr = NULL;
 	  vstr = mus_vct_to_string(pt->vcts[addr]);
 	  buf = mus_format("vct%d(%p)", addr, vstr);
-	  if (vstr) FREE(vstr);
+	  if (vstr) free(vstr);
 	  return(buf);
 	}
       else return(mus_format("vct%d(null)", addr));
@@ -1082,7 +1082,7 @@ static char *describe_xen_value_1(int type, int addr, ptree *pt)
 	  char *buf = NULL, *vstr = NULL;
 	  vstr = sound_data_to_string(pt->sds[addr]);
 	  buf = mus_format("sd%d(%p)", addr, vstr);
-	  if (vstr) FREE(vstr);
+	  if (vstr) free(vstr);
 	  return(buf);
 	}
       else return(mus_format("sd%d(null)", addr));
@@ -1095,7 +1095,7 @@ static char *describe_xen_value_1(int type, int addr, ptree *pt)
 	  char *buf = NULL, *vstr = NULL;
 	  vstr = sample_reader_to_string(pt->readers[addr]);
 	  buf = mus_format("rd%d(%s)", addr, vstr);
-	  if (vstr) FREE(vstr);
+	  if (vstr) free(vstr);
 	  return(buf);
 	}
       else return(mus_strdup("null"));
@@ -1107,7 +1107,7 @@ static char *describe_xen_value_1(int type, int addr, ptree *pt)
 	  char *buf = NULL, *vstr = NULL;
 	  vstr = run_mix_sample_reader_to_string(pt->mix_readers[addr]);
 	  buf = mus_format("mf%d(%s)", addr, vstr);
-	  if (vstr) FREE(vstr);
+	  if (vstr) free(vstr);
 	  return(buf);
 	}
       else return(mus_strdup("null"));
@@ -1157,12 +1157,12 @@ static char *describe_xen_value(xen_value *v, ptree *pt)
 static ptree *make_ptree(int initial_data_size)
 {
   ptree *pt;
-  pt = (ptree *)CALLOC(1, sizeof(ptree));
+  pt = (ptree *)calloc(1, sizeof(ptree));
   pt->got_lambda = false;
   if (initial_data_size > 0)
     {
-      pt->ints = (Int *)CALLOC(initial_data_size, sizeof(Int));
-      pt->dbls = (Double *)CALLOC(initial_data_size, sizeof(Double));
+      pt->ints = (Int *)calloc(initial_data_size, sizeof(Int));
+      pt->dbls = (Double *)calloc(initial_data_size, sizeof(Double));
     }
   pt->ints_size = initial_data_size;
   pt->dbls_size = initial_data_size;
@@ -1178,7 +1178,7 @@ static ptree *attach_to_ptree(ptree *pt)
 {
   /* share all environment tables -- memcpy? */
   ptree *new_tree;
-  new_tree = (ptree *)CALLOC(1, sizeof(ptree));
+  new_tree = (ptree *)calloc(1, sizeof(ptree));
   memcpy((void *)new_tree, (void *)pt, sizeof(ptree));
   new_tree->program_size = 0;
   new_tree->triple_ctr = 0;
@@ -1354,13 +1354,13 @@ static void free_list(list *xl)
 	{
 	  for (i = 0; i < xl->len; i++)
 	    if (xl->vals[i]) 
-	      FREE(xl->vals[i]);
-	  FREE(xl->vals);
+	      free(xl->vals[i]);
+	  free(xl->vals);
 	  xl->vals = NULL;
 	}
     }
   xl->len = 0;
-  FREE(xl);
+  free(xl);
 }
 
 static list *xen_to_list_with_type(ptree *pt, XEN lst, int type) /* list element type or clm-struct */
@@ -1369,14 +1369,14 @@ static list *xen_to_list_with_type(ptree *pt, XEN lst, int type) /* list element
 
   /* fprintf(stderr,"type: %s\n", type_name(type)); */
 
-  xl = (list *)CALLOC(1, sizeof(list));
+  xl = (list *)calloc(1, sizeof(list));
   xl->len = XEN_LIST_LENGTH(lst);
   xl->type = type;
 
   if (xl->len > 0)
     {
       int i;
-      xl->vals = (xen_value **)CALLOC(xl->len, sizeof(xen_value *));
+      xl->vals = (xen_value **)calloc(xl->len, sizeof(xen_value *));
       for (i = 0; i < xl->len; i++)
 	{
 	  XEN val;
@@ -1486,12 +1486,12 @@ static void free_vect(vect *v, int type)
     {
       switch (type)
 	{
-	case R_INT_VECTOR:        if (v->data.ints) FREE(v->data.ints); break;
-	case R_CLM_VECTOR:        if (v->data.gens) FREE(v->data.gens); break;
-	case R_VCT_VECTOR:        if (v->data.vcts) FREE(v->data.vcts); break;
-	case R_LIST_VECTOR:       if (v->data.lists) FREE(v->data.lists); break;
+	case R_INT_VECTOR:        if (v->data.ints) free(v->data.ints); break;
+	case R_CLM_VECTOR:        if (v->data.gens) free(v->data.gens); break;
+	case R_VCT_VECTOR:        if (v->data.vcts) free(v->data.vcts); break;
+	case R_LIST_VECTOR:       if (v->data.lists) free(v->data.lists); break;
 	}
-      FREE(v);
+      free(v);
     }
 }
 
@@ -1609,9 +1609,9 @@ static xen_var *free_xen_var(ptree *prog, xen_var *var)
 		}
 	    }
 	}
-      if (var->name) FREE(var->name);
-      if (var->v) FREE(var->v);
-      FREE(var);
+      if (var->name) free(var->name);
+      if (var->v) free(var->v);
+      free(var);
     }
   return(NULL);
 }
@@ -1627,13 +1627,13 @@ static ptree *free_embedded_ptree(ptree *pt)
 	  for (i = 0; i < pt->program_size; i++)
 	    if (pt->program[i])
 	      ((triple **)(pt->program))[i] = free_triple(((triple **)(pt->program))[i]);
-	  FREE(pt->program);
+	  free(pt->program);
 	}
-      if (pt->args) FREE(pt->args);
-      if (pt->default_args) FREE(pt->default_args);
-      if (pt->arg_types) FREE(pt->arg_types);
-      if (pt->result) FREE(pt->result);
-      FREE(pt);
+      if (pt->args) free(pt->args);
+      if (pt->default_args) free(pt->default_args);
+      if (pt->arg_types) free(pt->arg_types);
+      if (pt->result) free(pt->result);
+      free(pt);
     }
   return(NULL);
 }
@@ -1651,13 +1651,13 @@ void mus_run_free_ptree(struct ptree *pt)
 	{
 	  for (i = 0; i < pt->var_ctr; i++)
 	    free_xen_var(pt, pt->vars[i]);
-	  FREE(pt->vars);
+	  free(pt->vars);
 	}
       if (pt->global_vars)
 	{
 	  for (i = 0; i < pt->global_var_ctr; i++)
 	    free_xen_var(pt, pt->global_vars[i]);
-	  FREE(pt->global_vars);
+	  free(pt->global_vars);
 	}
       /* now it's safe to free stuff */
       if (pt->gc_ctr > 0)
@@ -1795,7 +1795,7 @@ void mus_run_free_ptree(struct ptree *pt)
 			  /* I don' think this currently can happen */
 			  if (pt->strs[v->addr]) 
 			    {
-			      FREE(pt->strs[v->addr]);
+			      free(pt->strs[v->addr]);
 			      pt->strs[v->addr] = NULL;
 			    }
 			  break;
@@ -1818,7 +1818,7 @@ void mus_run_free_ptree(struct ptree *pt)
 			}
 		      v->gc = false;
 		    }
-		  FREE(v);
+		  free(v);
 		  pt->gcs[i] = NULL;
 		}
 	    }
@@ -1828,10 +1828,10 @@ void mus_run_free_ptree(struct ptree *pt)
 	  for (i = 0; i < pt->str_ctr; i++)
 	    if (pt->strs[i])
 	      {
-		FREE(pt->strs[i]);
+		free(pt->strs[i]);
 		pt->strs[i] = NULL;
 	      }
-	  FREE(pt->strs);
+	  free(pt->strs);
 	  pt->strs = NULL;
 	}
       if (pt->xen_vars)
@@ -1839,60 +1839,60 @@ void mus_run_free_ptree(struct ptree *pt)
 	  for (i = 0; i < pt->xen_var_ctr; i++)
 	    if (pt->xen_vars[i])
 	      {
-		FREE(pt->xen_vars[i]); /* free the containing array */
+		free(pt->xen_vars[i]); /* free the containing array */
 		pt->xen_vars[i] = NULL;
 	      }
-	  FREE(pt->xen_vars);
+	  free(pt->xen_vars);
 	}
       if (pt->vcts) 
 	{
-	  FREE(pt->vcts);
+	  free(pt->vcts);
 	  pt->vcts = NULL;
 	}
       if (pt->sds) 
 	{
-	  FREE(pt->sds);
+	  free(pt->sds);
 	  pt->sds = NULL;
 	}
       if (pt->clms) 
 	{
-	  FREE(pt->clms);
+	  free(pt->clms);
 	  pt->clms = NULL;
 	}
       if (pt->clm_locs)
 	{
-	  FREE(pt->clm_locs);
+	  free(pt->clm_locs);
 	  pt->clm_locs = NULL;
 	}
       if (pt->vects) 
 	{
-	  FREE(pt->vects);
+	  free(pt->vects);
 	  pt->vects = NULL;
 	}
       if (pt->lists) 
 	{
-	  FREE(pt->lists);
+	  free(pt->lists);
 	  pt->lists = NULL;
 	}
       if (pt->fncs) 
 	{
-	  FREE(pt->fncs);
+	  free(pt->fncs);
 	  pt->fncs = NULL;
 	}
       if (pt->xens) 
 	{
-	  FREE(pt->xens);
+	  free(pt->xens);
 	  pt->xens = NULL;
 	}
 #if USE_SND
       if (pt->readers) 
 	{
-	  FREE(pt->readers);
+	  free(pt->readers);
 	  pt->readers = NULL;
 	}
       if (pt->mix_readers) 
 	{
-	  FREE(pt->mix_readers);
+	  free(pt->mix_readers);
 	  pt->mix_readers = NULL;
 	}
 #endif
@@ -1900,7 +1900,7 @@ void mus_run_free_ptree(struct ptree *pt)
 	{
 	  for (i = 0; i < pt->gc_protected_ctr; i++)
 	    UNPROTECT_AT(pt->gc_protected[i]);
-	  FREE(pt->gc_protected);
+	  free(pt->gc_protected);
 	  pt->gc_protected = NULL;
 	}
       if (pt->program)
@@ -1908,23 +1908,23 @@ void mus_run_free_ptree(struct ptree *pt)
 	  for (i = 0; i < pt->program_size; i++)
 	    if (pt->program[i])
 	      ((triple **)(pt->program))[i] = free_triple(((triple **)(pt->program))[i]);
-	  FREE(pt->program);
+	  free(pt->program);
 	}
-      if (pt->gcs) FREE(pt->gcs);
-      if (pt->args) FREE(pt->args);
-      if (pt->default_args) FREE(pt->default_args);
-      if (pt->arg_types) FREE(pt->arg_types);
+      if (pt->gcs) free(pt->gcs);
+      if (pt->args) free(pt->args);
+      if (pt->default_args) free(pt->default_args);
+      if (pt->arg_types) free(pt->arg_types);
       if (pt->gotos) 
 	{
 	  for (i = 0; i < pt->gotos_size; i++)
 	    if (pt->gotos[i])
 	      free_goto(pt->gotos[i]);
-	  FREE(pt->gotos);
+	  free(pt->gotos);
 	}
-      if (pt->result) FREE(pt->result);
-      if (pt->ints) FREE(pt->ints);
-      if (pt->dbls) FREE(pt->dbls);
-      FREE(pt);
+      if (pt->result) free(pt->result);
+      if (pt->ints) free(pt->ints);
+      if (pt->dbls) free(pt->dbls);
+      free(pt);
     }
 }
 
@@ -1937,7 +1937,7 @@ static triple *add_triple_to_ptree(ptree *pt, triple *trp)
     {
       if (pt->program_size == 0)
 	{
-	  pt->program = (triple **)CALLOC(8, sizeof(triple *));
+	  pt->program = (triple **)calloc(8, sizeof(triple *));
 	  pt->program_size = 8;
 	}
       else
@@ -1945,7 +1945,7 @@ static triple *add_triple_to_ptree(ptree *pt, triple *trp)
 	  int i, old_size;
 	  old_size = pt->program_size;
 	  pt->program_size += 8;
-	  pt->program = (triple **)REALLOC(pt->program, pt->program_size * sizeof(triple *));
+	  pt->program = (triple **)realloc(pt->program, pt->program_size * sizeof(triple *));
 	  for (i = old_size; i < pt->program_size; i++) pt->program[i] = NULL;
 	}
     }
@@ -1961,7 +1961,7 @@ static int add_int_to_ptree(ptree *pt, Int value)
   if (cur >= pt->ints_size)
     {
       pt->ints_size += 8;
-      pt->ints = (Int *)REALLOC(pt->ints, pt->ints_size * sizeof(Int));
+      pt->ints = (Int *)realloc(pt->ints, pt->ints_size * sizeof(Int));
     }
   pt->ints[cur] = value;
   return(cur);
@@ -1975,7 +1975,7 @@ static int add_dbl_to_ptree(ptree *pt, Double value)
   if (cur >= pt->dbls_size)
     {
       pt->dbls_size += 8;
-      pt->dbls = (Double *)REALLOC(pt->dbls, pt->dbls_size * sizeof(Double));
+      pt->dbls = (Double *)realloc(pt->dbls, pt->dbls_size * sizeof(Double));
     }
   pt->dbls[cur] = value;
   return(cur);
@@ -1992,10 +1992,10 @@ static int add_vct_to_ptree(ptree *pt, vct *value)
       if (pt->vcts)
 	{
 	  int i;
-	  pt->vcts = (vct **)REALLOC(pt->vcts, pt->vcts_size * sizeof(vct *));
+	  pt->vcts = (vct **)realloc(pt->vcts, pt->vcts_size * sizeof(vct *));
 	  for (i = cur; i < pt->vcts_size; i++) pt->vcts[i] = NULL;
 	}
-      else pt->vcts = (vct **)CALLOC(pt->vcts_size, sizeof(vct *));
+      else pt->vcts = (vct **)calloc(pt->vcts_size, sizeof(vct *));
     }
   pt->vcts[cur] = value;
   return(cur);
@@ -2012,10 +2012,10 @@ static int add_sound_data_to_ptree(ptree *pt, sound_data *value)
       if (pt->sds)
 	{
 	  int i;
-	  pt->sds = (sound_data **)REALLOC(pt->sds, pt->sds_size * sizeof(sound_data *));
+	  pt->sds = (sound_data **)realloc(pt->sds, pt->sds_size * sizeof(sound_data *));
 	  for (i = cur; i < pt->sds_size; i++) pt->sds[i] = NULL;
 	}
-      else pt->sds = (sound_data **)CALLOC(pt->sds_size, sizeof(sound_data *));
+      else pt->sds = (sound_data **)calloc(pt->sds_size, sizeof(sound_data *));
     }
   pt->sds[cur] = value;
   return(cur);
@@ -2034,14 +2034,14 @@ static int add_clm_to_ptree(ptree *pt, mus_any *value, XEN orig)
       pt->clms_size += 8;
       if (pt->clms)
 	{
-	  pt->clms = (mus_any **)REALLOC(pt->clms, pt->clms_size * sizeof(mus_any *));
-	  pt->clm_locs = (int *)REALLOC(pt->clm_locs, pt->clms_size * sizeof(int));
+	  pt->clms = (mus_any **)realloc(pt->clms, pt->clms_size * sizeof(mus_any *));
+	  pt->clm_locs = (int *)realloc(pt->clm_locs, pt->clms_size * sizeof(int));
 	  for (i = cur; i < pt->clms_size; i++) {pt->clms[i] = NULL; pt->clm_locs[i] = -1;}
 	}
       else 
 	{
-	  pt->clms = (mus_any **)CALLOC(pt->clms_size, sizeof(mus_any *));
-	  pt->clm_locs = (int *)CALLOC(pt->clms_size, sizeof(int));
+	  pt->clms = (mus_any **)calloc(pt->clms_size, sizeof(mus_any *));
+	  pt->clm_locs = (int *)calloc(pt->clms_size, sizeof(int));
 	  for (i = 0; i < pt->clms_size; i++) pt->clm_locs[i] = -1;
 	}
     }
@@ -2069,10 +2069,10 @@ static int add_list_to_ptree(ptree *pt, list *value)
       if (pt->lists)
 	{
 	  int i;
-	  pt->lists = (list **)REALLOC(pt->lists, pt->lists_size * sizeof(list *));
+	  pt->lists = (list **)realloc(pt->lists, pt->lists_size * sizeof(list *));
 	  for (i = cur; i < pt->lists_size; i++) pt->lists[i] = NULL;
 	}
-      else pt->lists = (list **)CALLOC(pt->lists_size, sizeof(list *));
+      else pt->lists = (list **)calloc(pt->lists_size, sizeof(list *));
     }
   pt->lists[cur] = value;
   return(cur);
@@ -2089,10 +2089,10 @@ static int add_vect_to_ptree(ptree *pt, vect *value)
       if (pt->vects)
 	{
 	  int i;
-	  pt->vects = (vect **)REALLOC(pt->vects, pt->vects_size * sizeof(vect *));
+	  pt->vects = (vect **)realloc(pt->vects, pt->vects_size * sizeof(vect *));
 	  for (i = cur; i < pt->vects_size; i++) pt->vects[i] = NULL;
 	}
-      else pt->vects = (vect **)CALLOC(pt->vects_size, sizeof(vect *));
+      else pt->vects = (vect **)calloc(pt->vects_size, sizeof(vect *));
     }
   pt->vects[cur] = value;
   return(cur);
@@ -2109,10 +2109,10 @@ static int add_fnc_to_ptree(ptree *pt, ptree *value)
       if (pt->fncs)
 	{
 	  int i;
-	  pt->fncs = (struct ptree **)REALLOC(pt->fncs, pt->fncs_size * sizeof(ptree *));
+	  pt->fncs = (struct ptree **)realloc(pt->fncs, pt->fncs_size * sizeof(ptree *));
 	  for (i = cur; i < pt->fncs_size; i++) pt->fncs[i] = NULL;
 	}
-      else pt->fncs = (struct ptree **)CALLOC(pt->fncs_size, sizeof(ptree *));
+      else pt->fncs = (struct ptree **)calloc(pt->fncs_size, sizeof(ptree *));
     }
   ((ptree **)(pt->fncs))[cur] = value;
   return(cur);
@@ -2128,8 +2128,8 @@ static int add_xen_to_ptree(ptree *pt, XEN value)
       int i;
       pt->xens_size += 8;
       if (pt->xens)
-	pt->xens = (XEN *)REALLOC(pt->xens, pt->xens_size * sizeof(XEN));
-      else pt->xens = (XEN *)CALLOC(pt->xens_size, sizeof(XEN));
+	pt->xens = (XEN *)realloc(pt->xens, pt->xens_size * sizeof(XEN));
+      else pt->xens = (XEN *)calloc(pt->xens_size, sizeof(XEN));
       for (i = cur; i < pt->xens_size; i++) pt->xens[i] = XEN_UNDEFINED;
     }
   pt->xens[cur] = value;
@@ -2147,10 +2147,10 @@ static int add_reader_to_ptree(ptree *pt, snd_fd *value)
       if (pt->readers)
 	{
 	  int i;
-	  pt->readers = (snd_fd **)REALLOC(pt->readers, pt->readers_size * sizeof(snd_fd *));
+	  pt->readers = (snd_fd **)realloc(pt->readers, pt->readers_size * sizeof(snd_fd *));
 	  for (i = cur; i < pt->readers_size; i++) pt->readers[i] = NULL;
 	}
-      else pt->readers = (snd_fd **)CALLOC(pt->readers_size, sizeof(snd_fd *));
+      else pt->readers = (snd_fd **)calloc(pt->readers_size, sizeof(snd_fd *));
     }
   pt->readers[cur] = value;
   return(cur);
@@ -2167,10 +2167,10 @@ static int add_mix_reader_to_ptree(ptree *pt, struct mix_fd *value)
       if (pt->mix_readers)
 	{
 	  int i;
-	  pt->mix_readers = (struct mix_fd **)REALLOC(pt->mix_readers, pt->mix_readers_size * sizeof(struct mix_fd *));
+	  pt->mix_readers = (struct mix_fd **)realloc(pt->mix_readers, pt->mix_readers_size * sizeof(struct mix_fd *));
 	  for (i = cur; i < pt->mix_readers_size; i++) pt->mix_readers[i] = NULL;
 	}
-      else pt->mix_readers = (struct mix_fd **)CALLOC(pt->mix_readers_size, sizeof(struct mix_fd *));
+      else pt->mix_readers = (struct mix_fd **)calloc(pt->mix_readers_size, sizeof(struct mix_fd *));
     }
   pt->mix_readers[cur] = value;
   return(cur);
@@ -2181,7 +2181,7 @@ static int add_mix_reader_to_ptree(ptree *pt, struct mix_fd *value)
 static xen_var *new_xen_var(const char *name, xen_value *v)
 {
   xen_var *var;
-  var = (xen_var *)CALLOC(1, sizeof(xen_var));
+  var = (xen_var *)calloc(1, sizeof(xen_var));
   var->name = mus_strdup(name);
   var->v = copy_xen_value(v);
   var->unclean = false;
@@ -2201,10 +2201,10 @@ static void add_var_to_ptree(ptree *pt, const char *name, xen_value *v)
       if (pt->vars)
 	{
 	  int i;
-	  pt->vars = (xen_var **)REALLOC(pt->vars, pt->vars_size * sizeof(xen_var *));
+	  pt->vars = (xen_var **)realloc(pt->vars, pt->vars_size * sizeof(xen_var *));
 	  for (i = cur; i < pt->vars_size; i++) pt->vars[i] = NULL;
 	}
-      else pt->vars = (xen_var **)CALLOC(pt->vars_size, sizeof(xen_var *));
+      else pt->vars = (xen_var **)calloc(pt->vars_size, sizeof(xen_var *));
     }
   pt->vars[pt->var_ctr++] = new_xen_var(name, v);
 }
@@ -2221,10 +2221,10 @@ static int add_outer_var_to_ptree(ptree *pt, const char *name, xen_value *v)
       if (pt->global_vars)
 	{
 	  int i;
-	  pt->global_vars = (xen_var **)REALLOC(pt->global_vars, pt->global_vars_size * sizeof(xen_var *));
+	  pt->global_vars = (xen_var **)realloc(pt->global_vars, pt->global_vars_size * sizeof(xen_var *));
 	  for (i = cur; i < pt->global_vars_size; i++) pt->global_vars[i] = NULL;
 	}
-      else pt->global_vars = (xen_var **)CALLOC(pt->global_vars_size, sizeof(xen_var *));
+      else pt->global_vars = (xen_var **)calloc(pt->global_vars_size, sizeof(xen_var *));
     }
   var = new_xen_var(name, v);
   var->global = true;
@@ -2243,11 +2243,11 @@ static int add_string_to_ptree(ptree *pt, char *str)
       if (pt->strs)
 	{
 	  int i;
-	  pt->strs = (char **)REALLOC(pt->strs, pt->strs_size * sizeof(char *));
+	  pt->strs = (char **)realloc(pt->strs, pt->strs_size * sizeof(char *));
 	  for (i = cur; i < pt->strs_size; i++)
 	    pt->strs[i] = NULL;
 	}
-      else pt->strs = (char **)CALLOC(pt->strs_size, sizeof(char *));
+      else pt->strs = (char **)calloc(pt->strs_size, sizeof(char *));
     }
   pt->strs[cur] = str;
   return(cur);
@@ -2320,11 +2320,11 @@ static void add_xen_value_to_gcs(ptree *pt, xen_value *v)
       old_size = pt->gcs_size;
       pt->gcs_size += 4;
       if (old_size == 0)
-	pt->gcs = (xen_value **)CALLOC(pt->gcs_size, sizeof(xen_value *));
+	pt->gcs = (xen_value **)calloc(pt->gcs_size, sizeof(xen_value *));
       else
 	{
 	  int i;
-	  pt->gcs = (xen_value **)REALLOC(pt->gcs, pt->gcs_size * sizeof(xen_value *));
+	  pt->gcs = (xen_value **)realloc(pt->gcs, pt->gcs_size * sizeof(xen_value *));
 	  for (i = old_size; i < pt->gcs_size; i++) pt->gcs[i] = NULL;
 	}
     }
@@ -2356,8 +2356,8 @@ static int add_loc_to_protected_list(ptree *pt, int loc)
       old_size = pt->gc_protected_size;
       pt->gc_protected_size += 8;
       if (old_size == 0)
-	pt->gc_protected = (int *)CALLOC(pt->gc_protected_size, sizeof(int));
-      else pt->gc_protected = (int *)REALLOC(pt->gc_protected, pt->gc_protected_size * sizeof(int));
+	pt->gc_protected = (int *)calloc(pt->gc_protected_size, sizeof(int));
+      else pt->gc_protected = (int *)realloc(pt->gc_protected, pt->gc_protected_size * sizeof(int));
       for (i = old_size; i < pt->gc_protected_size; i++) pt->gc_protected[i] = NOT_A_GC_LOC;
     }
   pt->gc_protected[pt->gc_protected_ctr++] = loc;
@@ -2371,9 +2371,9 @@ static vect *read_int_vector(XEN vectr)
   vect *v;
   len = XEN_VECTOR_LENGTH(vectr);
   if (len == 0) return(NULL);
-  v = (vect *)CALLOC(1, sizeof(vect));
+  v = (vect *)calloc(1, sizeof(vect));
   v->length = len;
-  v->data.ints = (Int *)CALLOC(len, sizeof(Int));
+  v->data.ints = (Int *)calloc(len, sizeof(Int));
   for (i = 0; i < len; i++) 
     {
       XEN datum;
@@ -2387,8 +2387,8 @@ static vect *read_int_vector(XEN vectr)
 #if HAVE_S7
 	  if (temp) free(temp);
 #endif
-	  FREE(v->data.ints);
-	  FREE(v);
+	  free(v->data.ints);
+	  free(v);
 	  return(NULL);
 	}
     }
@@ -2402,9 +2402,9 @@ static vect *read_vct_vector(XEN vectr)
   vect *v;
   len = XEN_VECTOR_LENGTH(vectr);
   if (len == 0) return(NULL);
-  v = (vect *)CALLOC(1, sizeof(vect));
+  v = (vect *)calloc(1, sizeof(vect));
   v->length = len;
-  v->data.vcts = (vct **)CALLOC(len, sizeof(vct *));
+  v->data.vcts = (vct **)calloc(len, sizeof(vct *));
   for (i = 0; i < len; i++) 
     {
       XEN datum;
@@ -2418,8 +2418,8 @@ static vect *read_vct_vector(XEN vectr)
 #if HAVE_S7
 	  if (temp) free(temp);
 #endif
-	  FREE(v->data.vcts);
-	  FREE(v);
+	  free(v->data.vcts);
+	  free(v);
 	  return(NULL);
 	}
     }
@@ -2433,9 +2433,9 @@ static vect *read_clm_vector(XEN vectr)
   vect *v;
   len = XEN_VECTOR_LENGTH(vectr);
   if (len == 0) return(NULL);
-  v = (vect *)CALLOC(1, sizeof(vect));
+  v = (vect *)calloc(1, sizeof(vect));
   v->length = len;
-  v->data.gens = (mus_any **)CALLOC(len, sizeof(mus_any *));
+  v->data.gens = (mus_any **)calloc(len, sizeof(mus_any *));
   for (i = 0; i < len; i++) 
     {
       XEN datum;
@@ -2451,8 +2451,8 @@ static vect *read_clm_vector(XEN vectr)
 #if HAVE_S7
 	      if (temp) free(temp);
 #endif
-	      FREE(v->data.gens);
-	      FREE(v);
+	      free(v->data.gens);
+	      free(v);
 	      return(NULL);
 	    }
 	}
@@ -2467,9 +2467,9 @@ static vect *read_list_vector(ptree *pt, XEN vectr)
   vect *v;
   len = XEN_VECTOR_LENGTH(vectr);
   if (len == 0) return(NULL);
-  v = (vect *)CALLOC(1, sizeof(vect));
+  v = (vect *)calloc(1, sizeof(vect));
   v->length = len;
-  v->data.lists = (list **)CALLOC(len, sizeof(list *));
+  v->data.lists = (list **)calloc(len, sizeof(list *));
   for (i = 0; i < len; i++) 
     {
       XEN datum;
@@ -2486,8 +2486,8 @@ static vect *read_list_vector(ptree *pt, XEN vectr)
 #if HAVE_S7
 	  if (temp) free(temp);
 #endif
-	  FREE(v->data.lists);
-	  FREE(v);
+	  free(v->data.lists);
+	  free(v);
 	  return(NULL);
 	}
     }
@@ -2607,7 +2607,7 @@ static xen_value *add_value_to_ptree(ptree *prog, XEN val, int type)
 	    xen_value *v1;
 	    v1 = add_empty_var_to_ptree(prog, R_LIST);
 	    v = make_xen_value(R_LIST, v1->addr, R_VARIABLE);
-	    FREE(v1);
+	    free(v1);
 	  }
 	else v = make_xen_value(R_LIST, add_list_to_ptree(prog, lst), R_VARIABLE);
 	if (v) add_obj_to_gcs(prog, R_LIST, v->addr);
@@ -2708,8 +2708,8 @@ static xen_value *add_global_var_to_ptree(ptree *prog, XEN form, XEN *rtn)
 static continuation *add_goto_to_ptree(ptree *pt, const char *name)
 {
   continuation *c;
-  c = (continuation *)CALLOC(1, sizeof(continuation));
-  c->name = (char *)CALLOC(256, sizeof(char));                      /* c->name is used within the call/cc to identify the continuation */
+  c = (continuation *)calloc(1, sizeof(continuation));
+  c->name = (char *)calloc(256, sizeof(char));                      /* c->name is used within the call/cc to identify the continuation */
   mus_snprintf(c->name, 256, "%s", name);
   c->jump = make_xen_value(R_GOTO, add_int_to_ptree(pt, 0), R_VARIABLE); /* c->jump->addr will be the continuation PC */
   c->result = NULL;                                                 /* c->result is the returned value address */
@@ -2719,11 +2719,11 @@ static continuation *add_goto_to_ptree(ptree *pt, const char *name)
       old_size = pt->gotos_size;
       pt->gotos_size += 4;
       if (old_size == 0)
-	pt->gotos = (continuation **)CALLOC(pt->gotos_size, sizeof(continuation *));
+	pt->gotos = (continuation **)calloc(pt->gotos_size, sizeof(continuation *));
       else
 	{
 	  int i;
-	  pt->gotos = (continuation **)REALLOC(pt->gotos, pt->gotos_size * sizeof(continuation *));
+	  pt->gotos = (continuation **)realloc(pt->gotos, pt->gotos_size * sizeof(continuation *));
 	  for (i = old_size; i < pt->gotos_size; i++) pt->gotos[i] = NULL;
 	}
     }
@@ -2744,7 +2744,7 @@ static void erase_goto(ptree *prog, const char *name)
       if ((c) && 
 	  (mus_strcmp(c->name, name)))
 	{
-	  FREE(c->name);
+	  free(c->name);
 	  c->name = NULL;
 	  break;
 	}
@@ -2824,15 +2824,15 @@ static triple *make_triple(void (*function)(int *arg_addrs, ptree *pt),
   if (args > 0)
     {
       int i;
-      addrs = (int *)CALLOC(args, sizeof(int));
-      types = (int *)CALLOC(args, sizeof(int));
+      addrs = (int *)calloc(args, sizeof(int));
+      types = (int *)calloc(args, sizeof(int));
       for (i = 0; i < args; i++) 
 	{
 	  addrs[i] = typed_args[i]->addr;
 	  types[i] = typed_args[i]->type;
 	}
     }
-  trp = (triple *)CALLOC(1, sizeof(triple));
+  trp = (triple *)calloc(1, sizeof(triple));
   trp->function = function;
   trp->args = addrs;
   trp->types = types;
@@ -2853,8 +2853,8 @@ static triple *va_make_triple(void (*function)(int *arg_addrs, ptree *pt),
       va_list ap;
       int i;
       va_start(ap, args);
-      addrs = (int *)CALLOC(args, sizeof(int));
-      types = (int *)CALLOC(args, sizeof(int));
+      addrs = (int *)calloc(args, sizeof(int));
+      types = (int *)calloc(args, sizeof(int));
       for (i = 0; i < args; i++) 
 	{
 	  xen_value *v;
@@ -2867,7 +2867,7 @@ static triple *va_make_triple(void (*function)(int *arg_addrs, ptree *pt),
 	}
       va_end(ap);
     }
-  trp = (triple *)CALLOC(1, sizeof(triple));
+  trp = (triple *)calloc(1, sizeof(triple));
   trp->function = function;
   trp->args = addrs;
   trp->types = types;
@@ -3041,7 +3041,7 @@ static void store_x(int *args, ptree *pt) {XEN_RESULT = RXEN_ARG_1;}
 
 static void store_s(int *args, ptree *pt) 
 {
-  if (STRING_RESULT) FREE(STRING_RESULT);
+  if (STRING_RESULT) free(STRING_RESULT);
   STRING_RESULT = mus_strdup(STRING_ARG_1);
 }
 
@@ -3109,7 +3109,7 @@ static triple *set_var(ptree *pt, xen_value *var, xen_value *init_val)
 	      temp_v = make_xen_value(R_BOOL, add_int_to_ptree(pt, (Int)true), R_CONSTANT); 
 	      trp = add_triple_to_ptree(pt, va_make_triple(store_b_b, "set_b", 2, var, temp_v));
 	      /* temp_v is used only as a way to pass in an address, so it should be freed */
-	      if (temp_v) FREE(temp_v);
+	      if (temp_v) free(temp_v);
 	      return(trp);
 	    }
 	    break;
@@ -3164,7 +3164,7 @@ static xen_value *walk_sequence(ptree *prog, XEN body, walk_result_t need_result
   lbody = body;
   for (i = 0; i < body_forms; i++, lbody = XEN_CDR(lbody))
     {
-      if (v) FREE(v);
+      if (v) free(v);
       v = walk(prog, 
 	       XEN_CAR(lbody), 
 	       ((need_result != DONT_NEED_RESULT) && 
@@ -3212,7 +3212,7 @@ static char *define_form(ptree *prog, XEN form)
 	      return(str);
 	    }
 	  add_var_to_ptree(prog, XEN_SYMBOL_TO_C_STRING(XEN_CAR(var)), v);
-	  FREE(v);
+	  free(v);
 	  return(NULL);
 	}
       else 
@@ -3241,8 +3241,8 @@ static char *define_form(ptree *prog, XEN form)
   add_var_to_ptree(prog, XEN_SYMBOL_TO_C_STRING(var), vs);
   set_var(prog, vs, v);
 
-  FREE(vs);
-  FREE(v);
+  free(vs);
+  free(v);
   return(NULL);
 }
 
@@ -3267,7 +3267,7 @@ static XEN handle_defines(ptree *prog, XEN forms)
 	  if (err != NULL) 
 	    {
 	      run_warn(err);
-	      FREE(err);
+	      free(err);
 	      return(XEN_UNDEFINED);
 	    }
 	  forms = XEN_CDR(forms);
@@ -3298,8 +3298,8 @@ static char *parallel_binds(ptree *prog, XEN old_lets, const char *name)
       xen_value **vs, **old_vs;
       int i;
 
-      vs = (xen_value **)CALLOC(vars, sizeof(xen_value *));
-      old_vs = (xen_value **)CALLOC(vars, sizeof(xen_value *));
+      vs = (xen_value **)calloc(vars, sizeof(xen_value *));
+      old_vs = (xen_value **)calloc(vars, sizeof(xen_value *));
 
       for (i = 0; i < vars; i++, lets = XEN_CDR(lets))
 	{
@@ -3311,11 +3311,11 @@ static char *parallel_binds(ptree *prog, XEN old_lets, const char *name)
 	      char *temp = NULL, *str;
 	      for (j = 0; j < i; j++)
 		{
-		  if (old_vs[j]) FREE(old_vs[j]);
-		  if (vs[j]) FREE(vs[j]);
+		  if (old_vs[j]) free(old_vs[j]);
+		  if (vs[j]) free(vs[j]);
 		}
-	      FREE(vs);
-	      FREE(old_vs);
+	      free(vs);
+	      free(old_vs);
 	      str = mus_format("can't handle %s var: %s", name, temp = XEN_AS_STRING(lets));
 #if HAVE_S7
 	      if (temp) free(temp);
@@ -3333,11 +3333,11 @@ static char *parallel_binds(ptree *prog, XEN old_lets, const char *name)
 	  add_var_to_ptree(prog, XEN_SYMBOL_TO_C_STRING(XEN_CAR(var)), vs[i]);
 	  set_var(prog, vs[i], old_vs[i]); /* establish let binding */
 	  /* (run-eval '(do ((i 0 (1+ i))) ((= i 3)) (let ((a 1)) (set! a (+ a 1)) (display a)))) */
-	  FREE(vs[i]);
-	  FREE(old_vs[i]);
+	  free(vs[i]);
+	  free(old_vs[i]);
 	}
-      FREE(old_vs);
-      FREE(vs);
+      free(old_vs);
+      free(vs);
     }
   return(NULL);
 }
@@ -3371,8 +3371,8 @@ static char *sequential_binds(ptree *prog, XEN old_lets, const char *name)
 	  vs = transfer_value(prog, v);
 	  add_var_to_ptree(prog, XEN_SYMBOL_TO_C_STRING(XEN_CAR(var)), vs);
 	  set_var(prog, vs, v);
-	  FREE(vs);
-	  FREE(v);
+	  free(vs);
+	  free(v);
 	}
     }
   return(NULL);
@@ -3460,9 +3460,9 @@ static char *declare_args(ptree *prog, XEN form, int default_arg_type, bool sepa
   /* fprintf(stderr, "num_args: %d, template_args: %s, declarations: %s\n", num_template_args, XEN_AS_STRING(template_args), XEN_AS_STRING(declarations)); */
 
   /* prepare the prog's local arg list */
-  prog->args = (int *)CALLOC(num_template_args, sizeof(int));             /* value address */
-  prog->default_args = (int *)CALLOC(num_template_args, sizeof(int));     /* default value address */
-  prog->arg_types = (int *)CALLOC(num_template_args, sizeof(int));        /* value type */
+  prog->args = (int *)calloc(num_template_args, sizeof(int));             /* value address */
+  prog->default_args = (int *)calloc(num_template_args, sizeof(int));     /* default value address */
+  prog->arg_types = (int *)calloc(num_template_args, sizeof(int));        /* value type */
 
   for (i = 0; i < num_template_args; i++, template_args = XEN_CDR(template_args))
     {
@@ -3600,7 +3600,7 @@ static char *declare_args(ptree *prog, XEN form, int default_arg_type, bool sepa
 
 	  /* fprintf(stderr, "add default arg %d: %s\n", i, describe_xen_value(v, prog)); */
 	  prog->default_args[i] = v->addr;
-	  FREE(v);
+	  free(v);
 	  v = NULL;
 	}
       
@@ -3609,7 +3609,7 @@ static char *declare_args(ptree *prog, XEN form, int default_arg_type, bool sepa
 		       v = add_empty_var_to_ptree(prog, arg_type));
       prog->args[i] = v->addr;
       prog->arg_types[i] = v->type;
-      FREE(v);
+      free(v);
     }
 
   return(NULL);
@@ -3737,7 +3737,7 @@ static xen_value *coerce_to_boolean(ptree *prog, xen_value *v)
   xen_value *temp;
   temp = add_empty_var_to_ptree(prog, R_BOOL);
   set_var_no_opt(prog, temp, v);
-  FREE(v);
+  free(v);
   return(temp);
 }
 
@@ -3770,12 +3770,12 @@ static xen_value *if_form(ptree *prog, XEN form, walk_result_t need_result)
       /* just ignore branch that can't be evaluated anyway */
       if (prog->ints[if_value->addr])
 	{
-	  FREE(if_value);
+	  free(if_value);
 	  return(walk(prog, XEN_CADDR(form), need_result));
 	}
       if (has_false)
 	{
-	  FREE(if_value);
+	  free(if_value);
 	  return(walk(prog, XEN_CADDDR(form), need_result));
 	}
       return(if_value);
@@ -3784,14 +3784,14 @@ static xen_value *if_form(ptree *prog, XEN form, walk_result_t need_result)
   current_pc = prog->triple_ctr;
   jump_to_false = make_xen_value(R_INT, add_int_to_ptree(prog, 0), R_VARIABLE);
   add_triple_to_ptree(prog, va_make_triple(jump_if_not, "jump_if_not", 2, jump_to_false, if_value));
-  FREE(if_value);
+  free(if_value);
 
   true_result = walk(prog, XEN_CADDR(form), need_result);                           /* walk true branch */
   if (true_result == NULL) 
     {
       xen_value *rv;
       char *temp = NULL;
-      FREE(jump_to_false);
+      free(jump_to_false);
       rv = run_warn("if: can't handle true branch %s", temp = XEN_AS_STRING(XEN_CADDR(form)));
 #if HAVE_S7
       if (temp) free(temp);
@@ -3810,7 +3810,7 @@ static xen_value *if_form(ptree *prog, XEN form, walk_result_t need_result)
       add_triple_to_ptree(prog, va_make_triple(jump, "jump", 1, jump_to_end));  /* jump to end (past false) */
     }
   prog->ints[jump_to_false->addr] = prog->triple_ctr - current_pc - 1;              /* fixup jump-to-false addr */
-  FREE(jump_to_false);
+  free(jump_to_false);
 
   if (has_false)
     {
@@ -3823,9 +3823,9 @@ static xen_value *if_form(ptree *prog, XEN form, walk_result_t need_result)
 #if HAVE_S7
 	  if (temp) free(temp);
 #endif
-	  if (result) FREE(result);
-	  if (jump_to_end) FREE(jump_to_end);
-	  if (true_result) FREE(true_result);
+	  if (result) free(result);
+	  if (jump_to_end) free(jump_to_end);
+	  if (true_result) free(true_result);
 	  return(NULL);
 	}
 
@@ -3860,26 +3860,26 @@ static xen_value *if_form(ptree *prog, XEN form, walk_result_t need_result)
 	  if (false_result->type != true_result->type)
 	    {
 	      run_warn("if branch types differ incompatibly: %s and %s", type_name(true_result->type), type_name(false_result->type));
-	      if (result) FREE(result);
-	      if (false_result) FREE(false_result);
-	      if (jump_to_end) FREE(jump_to_end);
-	      if (true_result) FREE(true_result);
+	      if (result) free(result);
+	      if (false_result) free(false_result);
+	      if (jump_to_end) free(jump_to_end);
+	      if (true_result) free(true_result);
 	      return(NULL);
 	    }
 	  if (result) set_var_no_opt(prog, result, false_result);
 	}
 
       prog->ints[jump_to_end->addr] = prog->triple_ctr - false_pc - 1;              /* fixup jump-past-false addr */
-      FREE(jump_to_end);
+      free(jump_to_end);
     }
   else 
     {
-      if (jump_to_end) FREE(jump_to_end);
-      if (result) FREE(result);
+      if (jump_to_end) free(jump_to_end);
+      if (result) free(result);
       return(true_result);
     }
-  if (true_result) FREE(true_result);
-  if (false_result) FREE(false_result);
+  if (true_result) free(true_result);
+  if (false_result) free(false_result);
   if (result)
     return(result);
   return(make_xen_value(R_UNSPECIFIED, -1, R_CONSTANT));
@@ -3896,7 +3896,7 @@ static xen_value *cond_form(ptree *prog, XEN form, walk_result_t need_result)
   clauses = XEN_CDR(form);
   len = XEN_LIST_LENGTH(clauses);
   if (len == 0) return(run_warn("empty cond?"));
-  fixups = (xen_value **)CALLOC(len, sizeof(xen_value *));
+  fixups = (xen_value **)calloc(len, sizeof(xen_value *));
 
   for (clause_ctr = 0; clause_ctr < len; clause_ctr++, clauses = XEN_CDR(clauses))
     {
@@ -3911,8 +3911,8 @@ static xen_value *cond_form(ptree *prog, XEN form, walk_result_t need_result)
 	  xen_value *rv;
 	  char *temp = NULL;
 	  for (i = 0; i < clause_ctr; i++) 
-	    if (fixups[i]) FREE(fixups[i]);
-	  FREE(fixups);
+	    if (fixups[i]) free(fixups[i]);
+	  free(fixups);
 	  rv = run_warn("cond test: %s", temp = XEN_AS_STRING(XEN_CAR(clause)));
 #if HAVE_S7
 	  if (temp) free(temp);
@@ -3932,11 +3932,11 @@ static xen_value *cond_form(ptree *prog, XEN form, walk_result_t need_result)
 	  clause_value = walk_sequence(prog, local_clauses, need_result, "cond");
 	  if (clause_value == NULL)
 	    {
-	      FREE(test_value);
-	      FREE(jump_to_next_clause);
+	      free(test_value);
+	      free(jump_to_next_clause);
 	      for (i = 0; i < clause_ctr; i++) 
-		if (fixups[i]) FREE(fixups[i]);
-	      FREE(fixups);
+		if (fixups[i]) free(fixups[i]);
+	      free(fixups);
 	      return(NULL);
 	    }
 	}
@@ -3951,12 +3951,12 @@ static xen_value *cond_form(ptree *prog, XEN form, walk_result_t need_result)
 	      if (result->type != clause_value->type)
 		{
 		  run_warn("cond clause types differ: %s %s", type_name(clause_value->type), type_name(result->type));
-		  FREE(clause_value);
-		  FREE(result);
-		  if (jump_to_next_clause) FREE(jump_to_next_clause);
+		  free(clause_value);
+		  free(result);
+		  if (jump_to_next_clause) free(jump_to_next_clause);
 		  for (i = 0; i < clause_ctr; i++) 
-		    if (fixups[i]) FREE(fixups[i]);
-		  FREE(fixups);
+		    if (fixups[i]) free(fixups[i]);
+		  free(fixups);
 		  return(NULL);
 		}
 	    }
@@ -3968,12 +3968,12 @@ static xen_value *cond_form(ptree *prog, XEN form, walk_result_t need_result)
       if (jump_to_next_clause)
 	{
 	  prog->ints[jump_to_next_clause->addr] = prog->triple_ctr - current_pc - 1;
-	  FREE(jump_to_next_clause);
+	  free(jump_to_next_clause);
 	  jump_to_next_clause = NULL;
 	}
-      FREE(clause_value);
+      free(clause_value);
       clause_value = NULL;
-      FREE(test_value);
+      free(test_value);
       test_value = NULL;
     }
 
@@ -3982,12 +3982,12 @@ static xen_value *cond_form(ptree *prog, XEN form, walk_result_t need_result)
     if (fixups[i])
       {
 	prog->ints[fixups[i]->addr] = prog->triple_ctr;
-	FREE(fixups[i]);
+	free(fixups[i]);
       }
-  if (fixups) FREE(fixups);
+  if (fixups) free(fixups);
   if (need_result != DONT_NEED_RESULT)
     return(result);
-  if (result) FREE(result);
+  if (result) free(result);
   return(make_xen_value(R_UNSPECIFIED, -1, R_CONSTANT));
 }
 
@@ -4031,8 +4031,8 @@ static xen_value *case_form(ptree *prog, XEN form, walk_result_t need_result)
   add_triple_to_ptree(prog, va_make_triple(jump_abs, "jump_abs", 1, jump_to_selection));
   body = XEN_CDDR(form);
   body_len = XEN_LIST_LENGTH(body);
-  fixups = (xen_value **)CALLOC(body_len, sizeof(xen_value *));
-  locations = (int *)CALLOC(body_len, sizeof(int));
+  fixups = (xen_value **)calloc(body_len, sizeof(xen_value *));
+  locations = (int *)calloc(body_len, sizeof(int));
 
   for (i = 0; i < body_len; i++, body = XEN_CDR(body))
     {
@@ -4048,19 +4048,19 @@ static xen_value *case_form(ptree *prog, XEN form, walk_result_t need_result)
 	    if (result->type != v->type)
 	      {
 		run_warn("case clause types differ: %s %s", type_name(v->type), type_name(result->type));
-		FREE(v); v = NULL;
+		free(v); v = NULL;
 	      }
 	  if (v) set_var(prog, result, v);
 	}
       if (v == NULL) goto CASE_ERROR;
-      FREE(v); v = NULL;
+      free(v); v = NULL;
       fixups[i] = make_xen_value(R_INT, add_int_to_ptree(prog, 0), R_VARIABLE);
       add_triple_to_ptree(prog, va_make_triple(jump_abs, "jump_abs", 1, fixups[i])); 
     }
 
   /* fixup jump from selector to table of keys (here) */
   prog->ints[jump_to_selection->addr] = prog->triple_ctr;
-  FREE(jump_to_selection); jump_to_selection = NULL;
+  free(jump_to_selection); jump_to_selection = NULL;
   /* now make the selection */
   body = XEN_CDDR(form);
   for (i = 0; i < body_len; i++, body = XEN_CDR(body))
@@ -4100,8 +4100,8 @@ static xen_value *case_form(ptree *prog, XEN form, walk_result_t need_result)
 	      keyval = make_xen_value(R_INT, add_int_to_ptree(prog, cur_key), R_CONSTANT);
 	      locval = make_xen_value(R_INT, add_int_to_ptree(prog, locations[i]), R_CONSTANT);
 	      add_triple_to_ptree(prog, va_make_triple(jump_if_equal, "jump_if_equal", 3, locval, selval, keyval));
-	      FREE(keyval); keyval = NULL;
-	      FREE(locval); locval = NULL;
+	      free(keyval); keyval = NULL;
+	      free(locval); locval = NULL;
 	    }
 	}
     }
@@ -4111,38 +4111,38 @@ static xen_value *case_form(ptree *prog, XEN form, walk_result_t need_result)
     {
       locval = make_xen_value(R_INT, add_int_to_ptree(prog, locations[elseval->addr]), R_CONSTANT);
       add_triple_to_ptree(prog, va_make_triple(jump_abs, "jump_abs", 1, locval));
-      FREE(locval);
-      FREE(elseval);
+      free(locval);
+      free(elseval);
     }
-  FREE(locations);
+  free(locations);
   if (fixups)
     {
       for (i = 0; i < body_len; i++)
 	if (fixups[i])
 	  {
 	    prog->ints[fixups[i]->addr] = prog->triple_ctr;
-	    FREE(fixups[i]);
+	    free(fixups[i]);
 	  }
-      FREE(fixups);
+      free(fixups);
     }
-  if (selval) FREE(selval);
+  if (selval) free(selval);
   if (need_result != DONT_NEED_RESULT)
     return(result);
   return(make_xen_value(R_UNSPECIFIED, -1, R_CONSTANT));
 
  CASE_ERROR:
   /* try to avoid endless repetition of cleanup code */
-  if (selval) FREE(selval);
+  if (selval) free(selval);
   if (fixups)
     {
       for (j = 0; j < body_len; j++) 
 	if (fixups[j])
-	  FREE(fixups[j]);
-      FREE(fixups);
+	  free(fixups[j]);
+      free(fixups);
     }
-  if (locations) FREE(locations);
-  if (result) FREE(result);
-  if (jump_to_selection) FREE(jump_to_selection);
+  if (locations) free(locations);
+  if (result) free(result);
+  if (jump_to_selection) free(jump_to_selection);
   return(NULL);
 }
 
@@ -4232,7 +4232,7 @@ static xen_value *do_form(ptree *prog, XEN form, walk_result_t need_result)
     {
       xen_value *rv;
       char *temp = NULL;
-      FREE(test);
+      free(test);
       rv = run_warn("do test must be boolean: %s", temp = XEN_AS_STRING(test_form));
 #if HAVE_S7
       if (temp) free(temp);
@@ -4244,16 +4244,16 @@ static xen_value *do_form(ptree *prog, XEN form, walk_result_t need_result)
   jump_loc = prog->triple_ctr;
   jump_to_result = make_xen_value(R_INT, add_int_to_ptree(prog, 0), R_VARIABLE);
   add_triple_to_ptree(prog, va_make_triple(jump_if, "jump_if", 2, jump_to_result, test));
-  FREE(test);
+  free(test);
 
   /* now walk the do body */
   expr = walk_sequence(prog, body, DONT_NEED_RESULT, "do");
   if (expr == NULL)
     {
-      FREE(jump_to_result);
+      free(jump_to_result);
       return(NULL);
     }
-  FREE(expr);
+  free(expr);
   expr = NULL;
 
   /* now increment the vars (if step-val exists) -- increments are done first (the norm in Scheme) */
@@ -4290,14 +4290,14 @@ static xen_value *do_form(ptree *prog, XEN form, walk_result_t need_result)
 	    }
 	  UNPROTECT_AT(loc);
 	  if (!sequential)
-	    exprs = (xen_value **)CALLOC(varlen, sizeof(xen_value *));
+	    exprs = (xen_value **)calloc(varlen, sizeof(xen_value *));
 	}
       for (vars = XEN_CADR(form), i = 0; i < varlen; i++, vars = XEN_CDR(vars))
 	{
 	  var = XEN_CAR(vars);
 	  if ((XEN_NOT_NULL_P(XEN_CDDR(var))) && (XEN_NOT_NULL_P(XEN_CADDR(var))))
 	    {
-	      if ((sequential) && (expr)) FREE(expr);
+	      if ((sequential) && (expr)) free(expr);
 	      expr = walk(prog, XEN_CADDR(var), NEED_ANY_RESULT);
 	      /* (run-eval '(do ((i 0 (1+ i)) (j 0 (1+ i)) (k 0 (hiho k))) ((= i 3)) 0)) */
 	      if (expr == NULL)
@@ -4305,10 +4305,10 @@ static xen_value *do_form(ptree *prog, XEN form, walk_result_t need_result)
 		  if (exprs) 
 		    {
 		      int k;
-		      for (k = 0; k < i; k++) if (exprs[k]) FREE(exprs[k]);
-		      FREE(exprs);
+		      for (k = 0; k < i; k++) if (exprs[k]) free(exprs[k]);
+		      free(exprs);
 		    }
-		  FREE(jump_to_result);
+		  free(jump_to_result);
 		  return(NULL);
 		}
 
@@ -4321,10 +4321,10 @@ static xen_value *do_form(ptree *prog, XEN form, walk_result_t need_result)
 		      if (exprs) 
 			{
 			  int k;
-			  for (k = 0; k < i; k++) if (exprs[k]) FREE(exprs[k]);
-			  FREE(exprs);
+			  for (k = 0; k < i; k++) if (exprs[k]) free(exprs[k]);
+			  free(exprs);
 			}
-		      FREE(jump_to_result);
+		      free(jump_to_result);
 		      return(do_warn_of_type_trouble(vr->v->type, expr->type, var));
 		    }
 
@@ -4357,7 +4357,7 @@ static xen_value *do_form(ptree *prog, XEN form, walk_result_t need_result)
 			return(do_warn_of_type_trouble(temp->type, expr->type, var));
 
 		      set_var(prog, temp, expr);
-		      FREE(expr);
+		      free(expr);
 		      expr = NULL;
 		      exprs[i] = temp;
 		    }
@@ -4365,7 +4365,7 @@ static xen_value *do_form(ptree *prog, XEN form, walk_result_t need_result)
 		}
 	    }
 	}
-      if ((sequential) && (expr)) FREE(expr);
+      if ((sequential) && (expr)) free(expr);
       if (!sequential)
 	{
 	  for (vars = XEN_CADR(form), i = 0; i < varlen; i++, vars = XEN_CDR(vars))
@@ -4378,9 +4378,9 @@ static xen_value *do_form(ptree *prog, XEN form, walk_result_t need_result)
 		  return(do_warn_of_type_trouble(vr->v->type, exprs[i]->type, var));
 
 		set_var(prog, vr->v, exprs[i]);
-		FREE(exprs[i]);
+		free(exprs[i]);
 	      }
-	  FREE(exprs);
+	  free(exprs);
 	}
     }
 
@@ -4388,11 +4388,11 @@ static xen_value *do_form(ptree *prog, XEN form, walk_result_t need_result)
   jump_to_test = make_xen_value(R_INT, add_int_to_ptree(prog, 0), R_VARIABLE);
   add_triple_to_ptree(prog, va_make_triple(jump_abs, "jump_abs", 1, jump_to_test));
   prog->ints[jump_to_test->addr] = test_loc;
-  FREE(jump_to_test);
+  free(jump_to_test);
 
   /* fixup jump from true test above */
   prog->ints[jump_to_result->addr] = prog->triple_ctr - jump_loc - 1;
-  FREE(jump_to_result);
+  free(jump_to_result);
 
   /* now the result block */
   if (XEN_NOT_NULL_P(results))
@@ -4420,13 +4420,13 @@ static xen_value *callcc_form(ptree *prog, XEN form, walk_result_t need_result)
     {
       if (v->type != c->result->type)
 	{
-	  FREE(v);
+	  free(v);
 	  return(run_warn("call/cc: types differ"));
 	}
       if (need_result != DONT_NEED_RESULT)
 	set_var(prog, c->result, v);
     }
-  if (v) FREE(v);
+  if (v) free(v);
 
   /* fixup the continuation jump, etc */
   prog->ints[c->jump->addr] = prog->triple_ctr;
@@ -4450,7 +4450,7 @@ static xen_value *or_form(ptree *prog, XEN form, walk_result_t ignored)
   body_forms = XEN_LIST_LENGTH(body);
   if (body_forms == 0)                  /* (or) -> #f */
     return(make_xen_value(R_BOOL, add_int_to_ptree(prog, 0), R_CONSTANT));
-  fixups = (xen_value **)CALLOC(body_forms, sizeof(xen_value *));
+  fixups = (xen_value **)calloc(body_forms, sizeof(xen_value *));
 
   for (i = 0; i < body_forms; i++, body = XEN_CDR(body))
     {
@@ -4460,8 +4460,8 @@ static xen_value *or_form(ptree *prog, XEN form, walk_result_t ignored)
 	  xen_value *rv;
 	  char *temp = NULL;
 	  for (j = 0; j < i; j++)
-	    if (fixups[j]) FREE(fixups[j]);
-	  FREE(fixups);
+	    if (fixups[j]) free(fixups[j]);
+	  free(fixups);
 	  rv = run_warn("or: can't handle %s", temp = XEN_AS_STRING(XEN_CAR(body)));
 #if HAVE_S7
 	  if (temp) free(temp);
@@ -4473,7 +4473,7 @@ static xen_value *or_form(ptree *prog, XEN form, walk_result_t ignored)
 	  (v->constant == R_CONSTANT) &&
 	  ((v->type != R_BOOL) || (prog->ints[v->addr] != 0)))
 	{
-	  FREE(fixups);
+	  free(fixups);
 	  return(v);
 	}
 
@@ -4481,7 +4481,7 @@ static xen_value *or_form(ptree *prog, XEN form, walk_result_t ignored)
 	v = coerce_to_boolean(prog, v);
       fixups[i] = make_xen_value(R_INT, add_int_to_ptree(prog, prog->triple_ctr), R_VARIABLE);
       add_triple_to_ptree(prog, va_make_triple(jump_if, "jump_if", 2, fixups[i], v));
-      FREE(v);
+      free(v);
     }
 
   /* if we fall through, return #f */
@@ -4494,13 +4494,13 @@ static xen_value *or_form(ptree *prog, XEN form, walk_result_t ignored)
   for (i = 0; i < body_forms; i++)
     {
       prog->ints[fixups[i]->addr] = prog->triple_ctr - prog->ints[fixups[i]->addr] - 1;
-      FREE(fixups[i]);
+      free(fixups[i]);
     }
 
   add_triple_to_ptree(prog, va_make_triple(store_true, "store_true", 1, result));
   prog->ints[jump_to_end->addr] = prog->triple_ctr - prog->ints[jump_to_end->addr] - 1;
-  FREE(jump_to_end);
-  FREE(fixups);
+  free(jump_to_end);
+  free(fixups);
   return(result);
 }
 
@@ -4517,7 +4517,7 @@ static xen_value *and_form(ptree *prog, XEN form, walk_result_t ignored)
   body_forms = XEN_LIST_LENGTH(body);
   if (body_forms == 0)                  /* (and) -> #t */
     return(make_xen_value(R_BOOL, add_int_to_ptree(prog, 1), R_CONSTANT));
-  fixups = (xen_value **)CALLOC(body_forms, sizeof(xen_value *));
+  fixups = (xen_value **)calloc(body_forms, sizeof(xen_value *));
 
   for (i = 0; i < body_forms; i++, body = XEN_CDR(body))
     {
@@ -4527,8 +4527,8 @@ static xen_value *and_form(ptree *prog, XEN form, walk_result_t ignored)
 	  xen_value *rv;
 	  char *temp = NULL;
 	  for (j = 0; j < i; j++)
-	    if (fixups[j]) FREE(fixups[j]);
-	  FREE(fixups);
+	    if (fixups[j]) free(fixups[j]);
+	  free(fixups);
 	  rv = run_warn("and: can't handle %s", temp = XEN_AS_STRING(XEN_CAR(body)));
 #if HAVE_S7
 	  if (temp) free(temp);
@@ -4541,7 +4541,7 @@ static xen_value *and_form(ptree *prog, XEN form, walk_result_t ignored)
 	  (v->type == R_BOOL) && 
 	  (prog->ints[v->addr] == 0))
 	{
-	  FREE(fixups);
+	  free(fixups);
 	  return(v);
 	}
 
@@ -4549,7 +4549,7 @@ static xen_value *and_form(ptree *prog, XEN form, walk_result_t ignored)
 	v = coerce_to_boolean(prog, v);
       fixups[i] = make_xen_value(R_INT, add_int_to_ptree(prog, prog->triple_ctr), R_VARIABLE);
       add_triple_to_ptree(prog, va_make_triple(jump_if_not, "jump_if_not", 2, fixups[i], v));
-      FREE(v);
+      free(v);
     }
 
   /* if we fall through, return #t */
@@ -4562,13 +4562,13 @@ static xen_value *and_form(ptree *prog, XEN form, walk_result_t ignored)
   for (i = 0; i < body_forms; i++)
     {
       prog->ints[fixups[i]->addr] = prog->triple_ctr - prog->ints[fixups[i]->addr] - 1;
-      FREE(fixups[i]);
+      free(fixups[i]);
     }
 
   add_triple_to_ptree(prog, va_make_triple(store_false, "store_false", 1, result));
   prog->ints[jump_to_end->addr] = prog->triple_ctr - prog->ints[jump_to_end->addr] - 1;
-  FREE(jump_to_end);
-  FREE(fixups);
+  free(jump_to_end);
+  free(fixups);
   return(result);
 }
 
@@ -4630,10 +4630,10 @@ static xen_value *generalized_set_form(ptree *prog, XEN form)
 	}
       else return(lookup_generalized_set(prog, in_settee, NULL, NULL, NULL, v));
 
-      if (v) FREE(v);
-      if (in_v0) FREE(in_v0);
-      if (in_v1) FREE(in_v1);
-      if (in_v2) FREE(in_v2);
+      if (v) free(v);
+      if (in_v0) free(in_v0);
+      if (in_v1) free(in_v1);
+      if (in_v2) free(in_v2);
     }
 
   {
@@ -4668,7 +4668,7 @@ static xen_value *set_form(ptree *prog, XEN form, walk_result_t ignore)
       if (v) 
 	{
 	  var = find_var_in_ptree(prog, varname);
-	  FREE(v);
+	  free(v);
 	  v = NULL;
 	}
     }
@@ -4697,7 +4697,7 @@ static xen_value *set_form(ptree *prog, XEN form, walk_result_t ignore)
       /* two problematic cases: types differ and aren't compatible, or pointer aliasing */
       if (POINTER_P(val_type))
 	{
-	  FREE(v);
+	  free(v);
 	  return(run_warn("can't set pointer var (%s) to alias other such var", varname));
 	}
       if (val_type != var_type)
@@ -4726,11 +4726,11 @@ static xen_value *set_form(ptree *prog, XEN form, walk_result_t ignore)
 		   str = describe_xen_value(v, prog), 
 		   type_name(v->type), 
 		   temp = XEN_AS_STRING(form));
-	  if (str) FREE(str);
+	  if (str) free(str);
 #if HAVE_S7
 	  if (temp) free(temp);
 #endif
-	  FREE(v);
+	  free(v);
 	  return(NULL);
 	  /* this limitation could be removed, but is it worth the bother? */
 	}
@@ -4753,7 +4753,7 @@ static xen_value *set_form(ptree *prog, XEN form, walk_result_t ignore)
 	    {
 	      addrs[0] = var->v->addr; /* redirect the store to us */
 	      var->unclean = true;
-	      FREE(v);
+	      free(v);
 	      return(copy_xen_value(var->v));
 	    }
 	}
@@ -4801,7 +4801,7 @@ static xen_value *temp_package(ptree *prog,
   temp = args[0];
   args[0] = add_empty_var_to_ptree(prog, type);
   add_triple_to_ptree(prog, make_triple(function, descr, args, num_args + 1));
-  FREE(args[0]);
+  free(args[0]);
   args[0] = temp;
   return(args[0]);
 }
@@ -4872,15 +4872,15 @@ static xen_value *package_n(ptree *prog,
 {
   int i;
   xen_value **new_args;
-  new_args = (xen_value **)CALLOC(num_args + 2, sizeof(xen_value *));
+  new_args = (xen_value **)calloc(num_args + 2, sizeof(xen_value *));
   for (i = 1; i <= num_args; i++)
     new_args[i + 1] = args[i];
   new_args[1] = make_xen_value(R_INT, add_int_to_ptree(prog, num_args), R_CONSTANT);
   new_args[0] = add_empty_var_to_ptree(prog, type);
   args[0] = new_args[0];
   add_triple_to_ptree(prog, make_triple(function, descr, new_args, num_args + 2));
-  FREE(new_args[1]);
-  FREE(new_args);
+  free(new_args[1]);
+  free(new_args);
   return(args[0]);
 }
 
@@ -4898,7 +4898,7 @@ static int float_all_args(ptree *prog, int num_args, xen_value **args, bool floa
 	    args[i] = NULL;
 	    args[j] = make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, 0.0), R_VARIABLE);
 	    add_triple_to_ptree(prog, va_make_triple(store_i_f, "store_i_f", 2, args[j], old_loc));
-	    FREE(old_loc);
+	    free(old_loc);
 	    j++;
 	  }
 	else 
@@ -4968,7 +4968,7 @@ static xen_value *multiply(ptree *prog, xen_value **args, int num_args)
 	    if (args[i]->type == R_INT)
 	      iscl *= prog->ints[args[i]->addr];
 	    else fscl *= prog->dbls[args[i]->addr];
-	    FREE(args[i]);
+	    free(args[i]);
 	    args[i] = NULL;
 	  }
 
@@ -5066,7 +5066,7 @@ static xen_value *add(ptree *prog, xen_value **args, int num_args)
 	    if (args[i]->type == R_INT)
 	      iscl += prog->ints[args[i]->addr];
 	    else fscl += prog->dbls[args[i]->addr];
-	    FREE(args[i]);
+	    free(args[i]);
 	    args[i] = NULL;
 	  }
 
@@ -5164,7 +5164,7 @@ static xen_value *subtract(ptree *prog, xen_value **args, int num_args)
 	    if (args[i]->type == R_INT)
 	      iscl += prog->ints[args[i]->addr];
 	    else fscl += prog->dbls[args[i]->addr];
-	    FREE(args[i]);
+	    free(args[i]);
 	    args[i] = NULL;
 	  }
 
@@ -5307,7 +5307,7 @@ static xen_value *divide(ptree *prog, xen_value **args, int num_args)
 	    if (args[i]->type == R_INT)
 	      fscl *= (Double)(prog->ints[args[i]->addr]);
 	    else fscl *= prog->dbls[args[i]->addr];
-	    FREE(args[i]);
+	    free(args[i]);
 	    args[i] = NULL;
 	  }
 
@@ -5337,7 +5337,7 @@ static xen_value *divide(ptree *prog, xen_value **args, int num_args)
 	  if (prog->walk_result == NEED_ANY_RESULT)
 	    {
 	      /* invert here and use multiply */
-	      if (args[cons_loc]) FREE(args[cons_loc]);
+	      if (args[cons_loc]) free(args[cons_loc]);
 	      args[2] = make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, (Double)(1.0 / fscl)), R_CONSTANT);
 	      if (args[1]->type == R_INT) float_all_args(prog, num_args, args, true);
 	      return(package(prog, R_FLOAT, multiply_f2, "multiply_f2", args, 2));
@@ -5374,7 +5374,7 @@ static void float_rel_constant_args(ptree *prog, int num_args, xen_value **args)
 	xen_value *old_loc;
 	old_loc = args[i];
 	args[i] = make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, (Double)(prog->ints[args[i]->addr])), R_CONSTANT);
-	FREE(old_loc);
+	free(old_loc);
       }
 }
 
@@ -5389,7 +5389,7 @@ static void float_rel_args(ptree *prog, int num_args, xen_value **args)
 	old_loc = args[i];
 	args[i] = make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, 0.0), R_VARIABLE);
 	add_triple_to_ptree(prog, va_make_triple(store_i_f, "store_i_f", 2, args[i], old_loc));
-	FREE(old_loc);
+	free(old_loc);
       }
 }
 
@@ -5814,7 +5814,7 @@ static xen_value *convert_to_int(ptree *pt, xen_value *v)
   if (v->type == R_FLOAT) 
     {
       newv = convert_dbl_to_int(pt, v, true);
-      FREE(v);
+      free(v);
       return(newv);
     }
   return(v);
@@ -5877,7 +5877,7 @@ static void single_to_float(ptree *prog, xen_value **args, int num)
   old_loc = args[num];
   args[num] = make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, 0.0), R_VARIABLE);
   add_triple_to_ptree(prog, va_make_triple(store_i_f, "store_i_f", 2, args[num], old_loc));
-  FREE(old_loc);
+  free(old_loc);
 }
 
 
@@ -5943,13 +5943,13 @@ static xen_value *atan2_1(ptree *prog, xen_value **args, int num_args)
     {
       temp = args[1];
       args[1] = convert_int_to_dbl(prog, args[1]);
-      FREE(temp);
+      free(temp);
     }
   if (args[2]->type == R_INT)
     {
       temp = args[2];
       args[2] = convert_int_to_dbl(prog, args[2]);
-      FREE(temp);
+      free(temp);
     }
   if (prog->constants == 2)
     return(make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, atan2(prog->dbls[args[1]->addr], prog->dbls[args[2]->addr])), R_CONSTANT));
@@ -5973,13 +5973,13 @@ static xen_value *fmod_1(ptree *prog, xen_value **args, int num_args)
     {
       temp = args[1];
       args[1] = convert_int_to_dbl(prog, args[1]);
-      FREE(temp);
+      free(temp);
     }
   if (args[2]->type == R_INT)
     {
       temp = args[2];
       args[2] = convert_int_to_dbl(prog, args[2]);
-      FREE(temp);
+      free(temp);
     }
   if (prog->constants == 2)
     {
@@ -6007,7 +6007,7 @@ static xen_value *jn_1(ptree *prog, xen_value **args, int num_args)
     {
       temp = args[2];
       args[2] = convert_int_to_dbl(prog, args[2]);
-      FREE(temp);
+      free(temp);
     }
   if (prog->constants == 2)
     return(make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, jn(prog->ints[args[1]->addr], prog->dbls[args[2]->addr])), R_CONSTANT));
@@ -6025,7 +6025,7 @@ static xen_value *yn_1(ptree *prog, xen_value **args, int num_args)
     {
       temp = args[2];
       args[2] = convert_int_to_dbl(prog, args[2]);
-      FREE(temp);
+      free(temp);
     }
   if (prog->constants == 2)
     return(make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, yn(prog->ints[args[1]->addr], prog->dbls[args[2]->addr])), R_CONSTANT));
@@ -6045,7 +6045,7 @@ static xen_value *seconds_to_samples_1(ptree *prog, xen_value **args, int num_ar
     {
       temp = args[1];
       args[1] = convert_int_to_dbl(prog, args[1]);
-      FREE(temp);
+      free(temp);
     }
   return(package(prog, R_INT, seconds_to_samples_f, "seconds_to_samples_f", args, 1));
 }
@@ -6608,7 +6608,7 @@ static xen_value **upcase_args(ptree *pt, xen_value **args, int num_args)
 	    args[i] = make_xen_value(R_CHAR, add_int_to_ptree(pt, 0), R_VARIABLE);
 	    add_triple_to_ptree(pt, va_make_triple(char_toupper_c, "toupper_c", 2, args[i], old_loc));
 	  }
-	FREE(old_loc);
+	free(old_loc);
       }
   return(args);
 }
@@ -6620,8 +6620,8 @@ static void string_n(int *args, ptree *pt)
 {
   int i, n;
   n = pt->ints[args[1]];
-  if (STRING_RESULT) FREE(STRING_RESULT);
-  STRING_RESULT = (char *)CALLOC(n + 1, sizeof(char));
+  if (STRING_RESULT) free(STRING_RESULT);
+  STRING_RESULT = (char *)calloc(n + 1, sizeof(char));
   for (i = 1; i <= n; i++) STRING_RESULT[i - 1] = (char)(pt->ints[args[i + 1]]);
 }
 
@@ -6631,7 +6631,7 @@ static xen_value *string_1(ptree *pt, xen_value **args, int num_args)
     {
       int i;
       char *str;
-      str = (char *)CALLOC(num_args + 1, sizeof(char));
+      str = (char *)calloc(num_args + 1, sizeof(char));
       for (i = 1; i <= num_args; i++)
 	str[i - 1] = (char)(pt->ints[args[i]->addr]);
       return(make_xen_value(R_STRING, add_string_to_ptree(pt, str), R_CONSTANT));
@@ -6653,7 +6653,7 @@ static xen_value *string_length_1(ptree *pt, xen_value **args, int num_args)
 
 static void strcpy_1(int *args, ptree *pt) 
 {
-  if (STRING_RESULT) FREE(STRING_RESULT);
+  if (STRING_RESULT) free(STRING_RESULT);
   STRING_RESULT = mus_strdup(STRING_ARG_1);
 }
 
@@ -6719,7 +6719,7 @@ static char *vect_to_string(vect *v, int type)
   len = 8;
   if (len > v->length) len = v->length;
   slen = 64 + len * VECT_STRING_SIZE;
-  buf = (char *)CALLOC(slen, sizeof(char));
+  buf = (char *)calloc(slen, sizeof(char));
   sprintf(buf, "#<vect[len=%d]:", v->length);
 
   if (len > 0)
@@ -6820,7 +6820,7 @@ static void display_vct(int *args, ptree *pt)
   if (v)
     {
       fprintf(stdout, "%s", v);
-      FREE(v);
+      free(v);
     }
 }
 
@@ -6830,7 +6830,7 @@ static void display_int_vect(int *args, ptree *pt)
 {
   char *buf = NULL;
   buf = int_vect_to_string(VECT_ARG_1);
-  if (buf) {fprintf(stdout, "%s", buf); FREE(buf); }
+  if (buf) {fprintf(stdout, "%s", buf); free(buf); }
 }
 
 
@@ -6839,7 +6839,7 @@ static void display_clm_vect(int *args, ptree *pt)
 {
   char *buf = NULL;
   buf = clm_vect_to_string(VECT_ARG_1);
-  if (buf) {fprintf(stdout, "%s", buf); FREE(buf); }
+  if (buf) {fprintf(stdout, "%s", buf); free(buf); }
 }
 
 
@@ -6847,7 +6847,7 @@ static void display_list_vect(int *args, ptree *pt)
 {
   char *buf = NULL;
   buf = list_vect_to_string(VECT_ARG_1);
-  if (buf) {fprintf(stdout, "%s", buf); FREE(buf); }
+  if (buf) {fprintf(stdout, "%s", buf); free(buf); }
 }
 
 
@@ -6855,18 +6855,18 @@ static void display_vct_vect(int *args, ptree *pt)
 {
   char *buf = NULL;
   buf = vct_vect_to_string(VECT_ARG_1);
-  if (buf) {fprintf(stdout, "%s", buf); FREE(buf); }
+  if (buf) {fprintf(stdout, "%s", buf); free(buf); }
 }
 
 
 #if USE_SND
-static void display_rd(int *args, ptree *pt) {char *buf = NULL; fprintf(stdout, "%s", buf = sample_reader_to_string(READER_ARG_1)); FREE(buf);}
+static void display_rd(int *args, ptree *pt) {char *buf = NULL; fprintf(stdout, "%s", buf = sample_reader_to_string(READER_ARG_1)); free(buf);}
 
 
-static void display_mf(int *args, ptree *pt) {char *buf = NULL; fprintf(stdout, "%s", buf = run_mix_sample_reader_to_string(MIX_READER_ARG_1)); FREE(buf);}
+static void display_mf(int *args, ptree *pt) {char *buf = NULL; fprintf(stdout, "%s", buf = run_mix_sample_reader_to_string(MIX_READER_ARG_1)); free(buf);}
 #endif
 
-static void display_sd(int *args, ptree *pt) {char *buf = NULL; fprintf(stdout, "%s", buf = sound_data_to_string(SOUND_DATA_ARG_1)); FREE(buf);}
+static void display_sd(int *args, ptree *pt) {char *buf = NULL; fprintf(stdout, "%s", buf = sound_data_to_string(SOUND_DATA_ARG_1)); free(buf);}
 
 
 static void display_chr(int *args, ptree *pt) {fprintf(stdout, "%c", (char)(INT_ARG_1));}
@@ -6885,7 +6885,7 @@ static void display_func(int *args, ptree *pt)
   if (p)
     {
       fprintf(stdout, "%s", p);
-      FREE(p);
+      free(p);
     }
 }
 
@@ -6944,9 +6944,9 @@ static void strmake_c(int *args, ptree *pt, char c)
 {
   int i, n;
   n = INT_ARG_1;
-  if (STRING_RESULT) FREE(STRING_RESULT);
+  if (STRING_RESULT) free(STRING_RESULT);
   /* this should be safe because we don't allow (set! str str1) aliasing */
-  STRING_RESULT = (char *)CALLOC(n + 1, sizeof(char));
+  STRING_RESULT = (char *)calloc(n + 1, sizeof(char));
   for (i = 1; i <= n; i++) STRING_RESULT[i - 1] = c;
 }
 
@@ -6970,8 +6970,8 @@ static char *substring(const char *str, int start, int end)
   int i, len;
   char *newstr;
   len = end - start;
-  if (len <= 0) return((char *)CALLOC(1, sizeof(char)));
-  newstr = (char *)CALLOC(len + 1, sizeof(char));
+  if (len <= 0) return((char *)calloc(1, sizeof(char)));
+  newstr = (char *)calloc(len + 1, sizeof(char));
   for (i = 0; i < len; i++) newstr[i] = str[i + start];
   return(newstr);
 }
@@ -6984,13 +6984,13 @@ static void substr_1(int *args, ptree *pt)
   arg_len = mus_strlen(STRING_ARG_1);
   if (arg_len < end) end = arg_len; /* should throw run-time error technically */
   len = end - start;
-  if (STRING_RESULT) FREE(STRING_RESULT);
+  if (STRING_RESULT) free(STRING_RESULT);
   if (len <= 0) 
-    STRING_RESULT = (char *)CALLOC(1, sizeof(char));
+    STRING_RESULT = (char *)calloc(1, sizeof(char));
   else
     {
       int i;
-      STRING_RESULT = (char *)CALLOC(len + 1, sizeof(char));
+      STRING_RESULT = (char *)calloc(len + 1, sizeof(char));
       for (i = 0; i < len; i++)
 	STRING_RESULT[i] = STRING_ARG_1[i + start];
     }
@@ -7022,7 +7022,7 @@ static char *string_append(ptree *pt, xen_value **args, int num_args)
   char *str;
   for (i = 0; i < num_args; i++)
     len += mus_strlen(pt->strs[args[i + 1]->addr]);
-  str = (char *)CALLOC(len + 1, sizeof(char));
+  str = (char *)calloc(len + 1, sizeof(char));
   for (i = 0; i < num_args; i++)
     if (pt->strs[args[i + 1]->addr])
       strcat(str, pt->strs[args[i + 1]->addr]);
@@ -7032,10 +7032,10 @@ static char *string_append(ptree *pt, xen_value **args, int num_args)
 static void appendstr_n(int *args, ptree *pt) 
 {
   int i, n, len = 0;
-  if (STRING_RESULT) FREE(STRING_RESULT);
+  if (STRING_RESULT) free(STRING_RESULT);
   n = pt->ints[args[1]];
   for (i = 1; i <= n; i++) len += mus_strlen(pt->strs[args[i + 1]]);
-  STRING_RESULT = (char *)CALLOC(len + 1, sizeof(char));
+  STRING_RESULT = (char *)calloc(len + 1, sizeof(char));
   for (i = 1; i <= n; i++) 
     if (pt->strs[args[i + 1]])
       strcat(STRING_RESULT, pt->strs[args[i + 1]]);
@@ -7045,7 +7045,7 @@ static void appendstr_n(int *args, ptree *pt)
 static xen_value *string_append_1(ptree *pt, xen_value **args, int num_args)
 {
   if (num_args == 0)
-    return(make_xen_value(R_STRING, add_string_to_ptree(pt, (char *)CALLOC(1, sizeof(char))), R_CONSTANT));
+    return(make_xen_value(R_STRING, add_string_to_ptree(pt, (char *)calloc(1, sizeof(char))), R_CONSTANT));
   if (num_args == pt->constants)
     return(make_xen_value(R_STRING, add_string_to_ptree(pt, string_append(pt, args, num_args)), R_CONSTANT));
   if (num_args == 1)
@@ -7148,13 +7148,13 @@ STR_CI_REL_OP(lt, string<?, >=)
   static char *i2s_2(Int n, int rad) {return(mus_strdup(INTEGER_TO_STRING_WITH_RADIX(n, rad)));}
 #endif
 
-static void number2string_f1(int *args, ptree *pt) {if (STRING_RESULT) FREE(STRING_RESULT); STRING_RESULT = f2s_1(FLOAT_ARG_1);}
+static void number2string_f1(int *args, ptree *pt) {if (STRING_RESULT) free(STRING_RESULT); STRING_RESULT = f2s_1(FLOAT_ARG_1);}
 
-static void number2string_f2(int *args, ptree *pt) {if (STRING_RESULT) FREE(STRING_RESULT); STRING_RESULT = f2s_2(FLOAT_ARG_1, INT_ARG_2);}
+static void number2string_f2(int *args, ptree *pt) {if (STRING_RESULT) free(STRING_RESULT); STRING_RESULT = f2s_2(FLOAT_ARG_1, INT_ARG_2);}
 
-static void number2string_i1(int *args, ptree *pt) {if (STRING_RESULT) FREE(STRING_RESULT); STRING_RESULT = i2s_1(INT_ARG_1);}
+static void number2string_i1(int *args, ptree *pt) {if (STRING_RESULT) free(STRING_RESULT); STRING_RESULT = i2s_1(INT_ARG_1);}
 
-static void number2string_i2(int *args, ptree *pt) {if (STRING_RESULT) FREE(STRING_RESULT); STRING_RESULT = i2s_2(INT_ARG_1, INT_ARG_2);}
+static void number2string_i2(int *args, ptree *pt) {if (STRING_RESULT) free(STRING_RESULT); STRING_RESULT = i2s_2(INT_ARG_1, INT_ARG_2);}
 
 static xen_value *number2string_1(ptree *prog, xen_value **args, int num_args)
 {
@@ -7220,7 +7220,7 @@ static void funcall_nf(int *args, ptree *pt)
 	break;
 
       case R_STRING: 
-	if (pt->strs[func->args[i]]) FREE(pt->strs[func->args[i]]);
+	if (pt->strs[func->args[i]]) free(pt->strs[func->args[i]]);
 	pt->strs[func->args[i]] = mus_strdup(pt->strs[args[i + 2]]); 
 	break;
 
@@ -7295,7 +7295,7 @@ static void funcall_nf(int *args, ptree *pt)
       break;
 
     case R_STRING: 
-      if (STRING_RESULT) FREE(STRING_RESULT);
+      if (STRING_RESULT) free(STRING_RESULT);
       STRING_RESULT = pt->strs[fres->addr];
       pt->strs[fres->addr] = NULL;
       break; 
@@ -7372,7 +7372,7 @@ static xen_value *funcall_n(ptree *prog, xen_value **args, int num_args, xen_val
   else total_args = num_args;
 
   fres = func->result;
-  new_args = (xen_value **)CALLOC(total_args + 2, sizeof(xen_value *));
+  new_args = (xen_value **)calloc(total_args + 2, sizeof(xen_value *));
   for (i = 1; i <= num_args; i++)
     new_args[i + 1] = args[i];
 
@@ -7410,7 +7410,7 @@ static xen_value *funcall_n(ptree *prog, xen_value **args, int num_args, xen_val
   args[0] = new_args[0];
   add_triple_to_ptree(prog, make_triple(funcall_nf, "funcall_nf", new_args, total_args + 2));
 
-  FREE(new_args);
+  free(new_args);
   return(args[0]);
 }
 
@@ -7419,7 +7419,7 @@ static xen_value *funcall_n(ptree *prog, xen_value **args, int num_args, xen_val
 
 static xen_value *goto_0(ptree *prog, xen_value **args, xen_value *sf)
 {
-  if (args[0]) FREE(args[0]);
+  if (args[0]) free(args[0]);
   args[0] = make_xen_value(R_BOOL, add_int_to_ptree(prog, sf->addr), R_VARIABLE);
   add_triple_to_ptree(prog, va_make_triple(jump_indirect, "jump_indirect", 1, args[0]));
   return(args[0]);
@@ -7454,7 +7454,7 @@ static xen_value * CName ## _1(ptree *prog, xen_value **args, int num_args) {ret
 
 /* must copy string here because mus_run_free_ptree will free all temp strings */
 #define STR_VOID_OP(CName) \
-static void CName ## _i(int *args, ptree *pt) {if (STRING_RESULT) FREE(STRING_RESULT); STRING_RESULT = mus_strdup(CName());} \
+static void CName ## _i(int *args, ptree *pt) {if (STRING_RESULT) free(STRING_RESULT); STRING_RESULT = mus_strdup(CName());} \
 static xen_value * CName ## _1(ptree *prog, xen_value **args, int num_args) {return(package(prog, R_STRING, CName ## _i, #CName "_i", args, 0));}
 
 
@@ -7554,7 +7554,7 @@ static xen_value *edit_position_1(ptree *pt, xen_value **args, int num_args)
   run_opt_arg(pt, args, num_args, 2, true_args);
   true_args[0] = args[0];
   rtn = package(pt, R_INT, edit_position_i, "edit_position_i", true_args, 2);
-  for (k = num_args + 1; k <= 2; k++) FREE(true_args[k]);
+  for (k = num_args + 1; k <= 2; k++) free(true_args[k]);
   return(rtn);
 }
 
@@ -7578,7 +7578,7 @@ static xen_value *cursor_1(ptree *pt, xen_value **args, int num_args)
   run_opt_arg(pt, args, num_args, 2, true_args);
   true_args[0] = args[0];
   rtn = package(pt, R_INT, cursor_i, "cursor_i", true_args, 2);
-  for (k = num_args + 1; k <= 2; k++) FREE(true_args[k]);
+  for (k = num_args + 1; k <= 2; k++) free(true_args[k]);
   return(rtn);
 }
 
@@ -7613,7 +7613,7 @@ static xen_value *add_mark_1(ptree *pt, xen_value **args, int num_args)
   true_args[0] = args[0];
   true_args[1] = args[1];
   rtn = package(pt, R_INT, add_mark_i, "add_mark_i", true_args, 3);
-  for (k = num_args + 1; k <= 3; k++) FREE(true_args[k]);
+  for (k = num_args + 1; k <= 3; k++) free(true_args[k]);
   return(rtn);
 }
 
@@ -7638,7 +7638,7 @@ static xen_value *maxamp_1(ptree *pt, xen_value **args, int num_args)
   run_opt_arg(pt, args, num_args, 3, true_args);
   true_args[0] = args[0];
   rtn = package(pt, R_FLOAT, maxamp_f, "maxamp_f", true_args, 3);
-  for (k = num_args + 1; k <= 3; k++) FREE(true_args[k]);
+  for (k = num_args + 1; k <= 3; k++) free(true_args[k]);
   return(rtn);
 }
 
@@ -7665,7 +7665,7 @@ static xen_value *sample_1(ptree *pt, xen_value **args, int num_args)
   true_args[0] = args[0];
   true_args[1] = args[1];
   rtn = package(pt, R_FLOAT, sample_f, "sample_f", true_args, 4);
-  for (k = num_args + 1; k <= 4; k++) FREE(true_args[k]);
+  for (k = num_args + 1; k <= 4; k++) free(true_args[k]);
   return(rtn);
 }
 
@@ -7688,7 +7688,7 @@ static xen_value *srate_1(ptree *pt, xen_value **args, int num_args)
   run_opt_arg(pt, args, num_args, 1, true_args);
   true_args[0] = args[0];
   rtn = package(pt, R_INT, srate_i, "srate_i", true_args, 1);
-  for (k = num_args + 1; k <= 1; k++) FREE(true_args[k]);
+  for (k = num_args + 1; k <= 1; k++) free(true_args[k]);
   return(rtn);
 }
 
@@ -7711,7 +7711,7 @@ static xen_value *channels_1(ptree *pt, xen_value **args, int num_args)
   run_opt_arg(pt, args, num_args, 1, true_args);
   true_args[0] = args[0];
   rtn = package(pt, R_INT, channels_i, "channels_i", true_args, 1);
-  for (k = num_args + 1; k <= 1; k++) FREE(true_args[k]);
+  for (k = num_args + 1; k <= 1; k++) free(true_args[k]);
   return(rtn);
 }
 
@@ -7766,7 +7766,7 @@ static xen_value *frames_1(ptree *pt, xen_value **args, int num_args)
   run_opt_arg(pt, args, num_args, 2, true_args);
   true_args[0] = args[0];
   rtn = package(pt, R_INT, frames_i, "frames_i", true_args, 3);
-  for (k = num_args + 1; k <= 3; k++) FREE(true_args[k]);
+  for (k = num_args + 1; k <= 3; k++) free(true_args[k]);
   return(rtn);
 }
 
@@ -7791,7 +7791,7 @@ static xen_value *report_in_minibuffer_1(ptree *pt, xen_value **args, int num_ar
   true_args[1] = args[1];
   true_args[0] = args[0];
   rtn = package(pt, R_BOOL, report_in_minibuffer_s, "report_in_minibuffer_s", true_args, 2);
-  for (k = num_args + 1; k <= 2; k++) FREE(true_args[k]);
+  for (k = num_args + 1; k <= 2; k++) free(true_args[k]);
   return(rtn);
 }
 
@@ -7803,7 +7803,7 @@ static void reader_f(int *args, ptree *pt) {FLOAT_RESULT = read_sample(READER_AR
 
 static xen_value *reader_0(ptree *prog, xen_value **args, xen_value *sf)
 {
-  if (args[0]) FREE(args[0]);
+  if (args[0]) free(args[0]);
   args[0] = make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, 0.0), R_VARIABLE);
   add_triple_to_ptree(prog, va_make_triple(reader_f, "reader_f", 2, args[0], sf));
   return(args[0]);
@@ -7882,8 +7882,8 @@ static xen_value *make_sample_reader_1(ptree *pt, xen_value **args, int num_args
   true_args[0] = args[0];
   rtn = package(pt, R_READER, make_sample_reader_r, "make_sample_reader_r", true_args, 5);
   add_obj_to_gcs(pt, R_READER, rtn->addr);
-  for (k = num_args + 1; k <= 5; k++) FREE(true_args[k]);
-  if (free_true_args_1) FREE(true_args[1]);
+  for (k = num_args + 1; k <= 5; k++) free(true_args[k]);
+  if (free_true_args_1) free(true_args[1]);
   return(rtn);
 }
 
@@ -7911,7 +7911,7 @@ static void mix_reader_f(int *args, ptree *pt) {FLOAT_RESULT = run_read_mix_samp
 
 static xen_value *mix_reader_0(ptree *prog, xen_value **args, xen_value *sf)
 {
-  if (args[0]) FREE(args[0]);
+  if (args[0]) free(args[0]);
   args[0] = make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, 0.0), R_VARIABLE);
   add_triple_to_ptree(prog, va_make_triple(mix_reader_f, "mix_reader_f", 2, args[0], sf));
   return(args[0]);
@@ -8028,9 +8028,9 @@ static void mus_audio_write_0(int *args, ptree *pt)
 
   if (outbytes > audio_write_obuf_size)
     {
-      if (audio_write_obuf) FREE(audio_write_obuf);
+      if (audio_write_obuf) free(audio_write_obuf);
       audio_write_obuf_size = outbytes;
-      audio_write_obuf = (char *)CALLOC(outbytes, sizeof(char));
+      audio_write_obuf = (char *)calloc(outbytes, sizeof(char));
     }
 
 #if SNDLIB_USE_FLOATS
@@ -8040,16 +8040,16 @@ static void mus_audio_write_0(int *args, ptree *pt)
     mus_sample_t **sdata;
     int i;
     off_t j;
-    sdata = (mus_sample_t **)CALLOC(sd->chans, sizeof(mus_sample_t *));
+    sdata = (mus_sample_t **)calloc(sd->chans, sizeof(mus_sample_t *));
     for (i = 0; i < sd->chans; i++) 
-      sdata[i] = (mus_sample_t *)CALLOC(sd->length, sizeof(mus_sample_t));
+      sdata[i] = (mus_sample_t *)calloc(sd->length, sizeof(mus_sample_t));
     for (i = 0; i < sd->chans; i++)
       for (j = 0; j < sd->length; j++)
 	sdata[i][j] = MUS_DOUBLE_TO_SAMPLE(sd->data[i][j]);
     mus_file_write_buffer(fmt, 0, frms - 1, sd->chans, sdata, audio_write_obuf, true);
     for (i = 0; i < sd->chans; i++)
-      FREE(sdata[i]);
-    FREE(sdata);
+      free(sdata[i]);
+    free(sdata);
   }
 #endif
   INT_RESULT = mus_audio_write(fd, audio_write_obuf, outbytes);
@@ -8091,7 +8091,7 @@ static void list_ref(int *args, ptree *pt)
       break;
 
     case R_STRING:
-      if (STRING_RESULT) FREE(STRING_RESULT);
+      if (STRING_RESULT) free(STRING_RESULT);
       /* (let ((val (list "l1" "l2" "l3"))) (run (lambda () (let ((str (list-ref val 1))) (do ((i 0 (1+ i))) ((= i 2)) (set! str (list-ref val i))))))) */
       STRING_RESULT = mus_strdup(pt->strs[v->addr]);
       break; 
@@ -8184,7 +8184,7 @@ static xen_value *cxr_1(ptree *prog, xen_value **args, int num_args, int loc)
   true_args[1] = args[1];
   true_args[2] = make_xen_value(R_INT, add_int_to_ptree(prog, loc), R_CONSTANT);
   rtn = list_ref_1(prog, true_args, 2);
-  FREE(true_args[2]);
+  free(true_args[2]);
   return(rtn);
 }
 
@@ -8263,7 +8263,7 @@ static xen_value *set_car_1(ptree *prog, xen_value **args, int num_args)
   true_args[2] = make_xen_value(R_INT, add_int_to_ptree(prog, 0), R_CONSTANT);
   true_args[3] = args[2];
   rtn = list_set_1(prog, true_args, 3);
-  FREE(true_args[2]);
+  free(true_args[2]);
   return(rtn);
 }
 
@@ -8307,7 +8307,7 @@ static void clm_struct_field_set_1(ptree *prog, xen_value *in_v, xen_value *in_v
 
   new_v = make_xen_value(R_INT, add_int_to_ptree(prog, in_v2->addr), R_CONSTANT);
   add_triple_to_ptree(prog, va_make_triple(list_set, "clm_struct_set", 4, NULL, in_v, new_v, v));
-  FREE(new_v);
+  free(new_v);
 }
 
 
@@ -8656,9 +8656,9 @@ static void make_int_vector(int *args, ptree *pt)
   if (INT_ARG_1 > 0)
     {
       off_t i;
-      v = (vect *)CALLOC(1, sizeof(vect));
+      v = (vect *)calloc(1, sizeof(vect));
       v->length = INT_ARG_1;
-      v->data.ints = (Int *)CALLOC(v->length, sizeof(Int));
+      v->data.ints = (Int *)calloc(v->length, sizeof(Int));
       for (i = 0; i < v->length; i++) v->data.ints[i] = INT_ARG_2;
     }
   VECT_RESULT = v;
@@ -8751,7 +8751,7 @@ static xen_value *vct_ ## CName ## _1(ptree *prog, xen_value **args, int num_arg
     { \
       temp = args[2]; \
       args[2] = convert_int_to_dbl(prog, args[2]); \
-      FREE(temp); \
+      free(temp); \
     } \
   if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, vct_check_1, "vct_check_1", args, 1); \
   return(package(prog, R_VCT, vct_ ## CName ## _f, "vct_" #CName "_f", args, 2)); \
@@ -8925,10 +8925,10 @@ static void vct_to_channel_v(int *args, ptree *pt)
       {
 	off_t i;
 	mus_sample_t *data;
-	data = (mus_sample_t *)CALLOC(dur, sizeof(mus_sample_t));
+	data = (mus_sample_t *)calloc(dur, sizeof(mus_sample_t));
 	for (i = 0; i < dur; i++) data[i] = MUS_FLOAT_TO_SAMPLE(v->data[i]);
 	change_samples(beg, dur, data, cp, S_vct_to_channel, cp->edit_ctr);
-	FREE(data);
+	free(data);
       }
 #endif
     }
@@ -8946,7 +8946,7 @@ static xen_value *vct_to_channel_1(ptree *pt, xen_value **args, int num_args)
   run_opt_arg(pt, args, num_args, 4, true_args);
   run_opt_arg(pt, args, num_args, 5, true_args);
   rtn = package(pt, R_BOOL, vct_to_channel_v, "vct_to_channel_v", true_args, 5);
-  for (k = num_args + 1; k <= 5; k++) FREE(true_args[k]);
+  for (k = num_args + 1; k <= 5; k++) free(true_args[k]);
   return(rtn);
 }
 #endif
@@ -9114,7 +9114,7 @@ static xen_value *sound_data_scale_1(ptree *prog, xen_value **args, int num_args
     {
       temp = args[2];
       args[2] = convert_int_to_dbl(prog, args[2]);
-      FREE(temp);
+      free(temp);
     }
   if (run_safety == RUN_SAFE) 
     temp_package(prog, R_BOOL, sound_data_check_1, "sound_data_check_1", args, 1);
@@ -9132,7 +9132,7 @@ static xen_value *sound_data_offset_1(ptree *prog, xen_value **args, int num_arg
     {
       temp = args[2];
       args[2] = convert_int_to_dbl(prog, args[2]);
-      FREE(temp);
+      free(temp);
     }
   if (run_safety == RUN_SAFE) 
     temp_package(prog, R_BOOL, sound_data_check_1, "sound_data_check_1", args, 1);
@@ -9150,7 +9150,7 @@ static xen_value *sound_data_fill_1(ptree *prog, xen_value **args, int num_args)
     {
       temp = args[2];
       args[2] = convert_int_to_dbl(prog, args[2]);
-      FREE(temp);
+      free(temp);
     }
   if (run_safety == RUN_SAFE) 
     temp_package(prog, R_BOOL, sound_data_check_1, "sound_data_check_1", args, 1);
@@ -9672,7 +9672,7 @@ static xen_value *splice_in_function_body(ptree *prog, XEN proc, xen_value **arg
 	  xen_value *result;
 	  if (funcname) add_var_to_ptree(prog, funcname, v);
 	  result = funcall_n(prog, args, num_args, v);
-	  FREE(v);
+	  free(v);
 	  /* return(clean_up(result, args, num_args)); */
 	  return(result);
 	}
@@ -9693,7 +9693,7 @@ static xen_value *splice_in_method(ptree *prog, xen_value **args, int num_args, 
   method_str = mus_format("(%s-methods)", type_name(args[1]->type));
   methods = XEN_EVAL_C_STRING(method_str);
   methods_loc = PROTECT(methods);
-  FREE(method_str);
+  free(method_str);
 
   if (XEN_LIST_P(methods))
     {
@@ -9739,7 +9739,7 @@ static void splice_in_set_method(ptree *prog, xen_value *in_v, xen_value *in_v1,
   args[1] = in_v;
   args[2] = v;
   tmp = splice_in_method(prog, args, 2, method_name, USE_SET_METHOD);
-  if (tmp) FREE(tmp);
+  if (tmp) free(tmp);
 }
 
 
@@ -9828,7 +9828,7 @@ SET_DBL_GEN0(frequency)
 #define STR_GEN0(Name) \
   static void Name ## _0s(int *args, ptree *pt) \
     { \
-      if (STRING_RESULT) FREE(STRING_RESULT); \
+      if (STRING_RESULT) free(STRING_RESULT); \
       STRING_RESULT = mus_strdup(mus_ ## Name (CLM_ARG_1)); \
     } \
   static xen_value * mus_ ## Name ## _0(ptree *prog, xen_value **args, int num_args) \
@@ -10264,8 +10264,8 @@ static void CName ## _3fc(int *args, ptree *pt) {CLM_RESULT = cfName(CLM_ARG_2, 
 static xen_value * CName ## _1(ptree *prog, xen_value **args, int num_args) \
 { \
   xen_value *temp; \
-  if (args[1]->type == R_INT) {temp = args[1]; args[1] = convert_int_to_dbl(prog, args[1]); FREE(temp);} \
-  if (args[2]->type == R_INT) {temp = args[2]; args[2] = convert_int_to_dbl(prog, args[2]); FREE(temp);} \
+  if (args[1]->type == R_INT) {temp = args[1]; args[1] = convert_int_to_dbl(prog, args[1]); free(temp);} \
+  if (args[2]->type == R_INT) {temp = args[2]; args[2] = convert_int_to_dbl(prog, args[2]); free(temp);} \
   if (args[1]->type == R_FLOAT) \
     { \
       if (args[2]->type == R_FLOAT) return(run_warn("no mixer or frame passed to " #SName)); \
@@ -10594,7 +10594,7 @@ static xen_value *out_any_function_body(ptree *prog, XEN proc, xen_value **args,
 	  xen_value *result;
 	  if (funcname) add_var_to_ptree(prog, funcname, v);
 	  result = funcall_n(prog, args, num_args, v);
-	  FREE(v);
+	  free(v);
 	  return(result);
 	}
     }
@@ -10634,7 +10634,7 @@ static xen_value *outn_1(ptree *prog, int chan, xen_value **args, int num_args, 
 		      func_args[3] = make_xen_value(R_INT, add_int_to_ptree(prog, chan), R_VARIABLE);
 		      true_args[3] = out_any_function_body(prog, output, func_args, 3, NULL);
 		      protect_ptree = true;
-		      FREE(func_args[3]);
+		      free(func_args[3]);
 		    }
 		  else true_args[3] = make_xen_value(R_XEN, add_xen_to_ptree(prog, output), R_VARIABLE);
 		}
@@ -10642,7 +10642,7 @@ static xen_value *outn_1(ptree *prog, int chan, xen_value **args, int num_args, 
 	}
       for (k = 0; k < 3; k++) true_args[k] = args[k];
       rtn = out_func(prog, true_args, 3);
-      if (!protect_ptree) FREE(true_args[3]); /* otherwise the embedded ptree is gc'd twice */
+      if (!protect_ptree) free(true_args[3]); /* otherwise the embedded ptree is gc'd twice */
       return(rtn);
     }
   return(out_func(prog, args, num_args));
@@ -10703,7 +10703,7 @@ static xen_value *out_any_1(ptree *prog, xen_value **args, int num_args)
 	}
       for (k = 0; k < 4; k++) true_args[k] = args[k];
       rtn = out_any_2(prog, true_args, 4);
-      if (!protect_ptree) FREE(true_args[4]);
+      if (!protect_ptree) free(true_args[4]);
       return(rtn);
     }
   return(out_any_2(prog, args, num_args));
@@ -10944,26 +10944,26 @@ static xen_value *clm_n(ptree *prog, xen_value **args, int num_args, xen_value *
 {
   /* this is handling the gen-as-applicable-func stuff (gen fm) = (oscil gen fm) etc */
   xen_value *temp;
-  if (args[0]) FREE(args[0]);
+  if (args[0]) free(args[0]);
   args[0] = make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, 0.0), R_VARIABLE);
   if ((num_args > 0) && (args[1]->type == R_INT))
     {
       temp = args[1];
       args[1] = convert_int_to_dbl(prog, args[1]);
-      FREE(temp);
+      free(temp);
     }
   if ((num_args > 1) && (args[2]->type == R_INT))
     {
       temp = args[2];
       args[2] = convert_int_to_dbl(prog, args[2]);
-      FREE(temp);
+      free(temp);
     }
   switch (num_args)
     {
     case 0: add_triple_to_ptree(prog, va_make_triple(clm_0f, "clm_0f", 2, args[0], sf)); break;
     case 1: add_triple_to_ptree(prog, va_make_triple(clm_1f, "clm_1f", 3, args[0], sf, args[1])); break;
     case 2: add_triple_to_ptree(prog, va_make_triple(clm_2f, "clm_2f", 4, args[0], sf, args[1], args[2])); break;
-    default: if (sf) FREE(sf); return(NULL); break;
+    default: if (sf) free(sf); return(NULL); break;
     }
   return(args[0]);
 }
@@ -11031,7 +11031,7 @@ static void partials_to_polynomial_n(int *args, ptree *pt, mus_polynomial_t kind
   if (VCT_RESULT) mus_vct_free(VCT_RESULT);
   partials = mus_vct_to_partials(VCT_ARG_1, &npartials, &error);
   mus_partials_to_polynomial(npartials, partials, kind);
-  v = (vct *)MALLOC(sizeof(vct));
+  v = (vct *)malloc(sizeof(vct));
   v->length = npartials;
   v->data = partials;
   v->dont_free = false;
@@ -11420,7 +11420,7 @@ static xen_value *phase_vocoder_1(ptree *prog, xen_value **args, int num_args)
   {
     int i;
     xen_value **new_args;
-    new_args = (xen_value **)CALLOC(num_args + 2, sizeof(xen_value *));
+    new_args = (xen_value **)calloc(num_args + 2, sizeof(xen_value *));
     for (i = 1; i <= num_args; i++)
       new_args[i + 1] = args[i];
     new_args[1] = make_xen_value(R_INT, 
@@ -11433,8 +11433,8 @@ static xen_value *phase_vocoder_1(ptree *prog, xen_value **args, int num_args)
     new_args[0] = add_empty_var_to_ptree(prog, R_FLOAT);
     args[0] = new_args[0];
     add_triple_to_ptree(prog, make_triple(phase_vocoder_5f, "phase_vocoder_5f", new_args, num_args + 2));
-    FREE(new_args[1]);
-    FREE(new_args);
+    free(new_args[1]);
+    free(new_args);
     return(args[0]);
   }
 }
@@ -11540,7 +11540,7 @@ static xen_value *mus_sound_duration_1(ptree *prog, xen_value **args, int num_ar
 
 static void mus_sound_comment_f(int *args, ptree *pt) 
 {
-  if (STRING_RESULT) FREE(STRING_RESULT);
+  if (STRING_RESULT) free(STRING_RESULT);
   STRING_RESULT = mus_sound_comment(STRING_ARG_1);
 }
 
@@ -11553,7 +11553,7 @@ static xen_value *mus_sound_comment_1(ptree *prog, xen_value **args, int num_arg
 
 static void mus_header_type_name_f(int *args, ptree *pt) 
 {
-  if (STRING_RESULT) FREE(STRING_RESULT);
+  if (STRING_RESULT) free(STRING_RESULT);
   STRING_RESULT = mus_strdup(mus_header_type_name(INT_ARG_1));
 }
 
@@ -11566,7 +11566,7 @@ static xen_value *mus_header_type_name_1(ptree *prog, xen_value **args, int num_
 
 static void mus_data_format_name_f(int *args, ptree *pt) 
 {
-  if (STRING_RESULT) FREE(STRING_RESULT);
+  if (STRING_RESULT) free(STRING_RESULT);
   STRING_RESULT = mus_strdup(mus_data_format_name(INT_ARG_1));
 }
 
@@ -11579,7 +11579,7 @@ static xen_value *mus_data_format_name_1(ptree *prog, xen_value **args, int num_
 
 static void mus_header_type_to_string_f(int *args, ptree *pt) 
 {
-  if (STRING_RESULT) FREE(STRING_RESULT);
+  if (STRING_RESULT) free(STRING_RESULT);
   STRING_RESULT = mus_strdup(mus_header_type_to_string(INT_ARG_1));
 }
 
@@ -11592,7 +11592,7 @@ static xen_value *mus_header_type_to_string_1(ptree *prog, xen_value **args, int
 
 static void mus_data_format_to_string_f(int *args, ptree *pt) 
 {
-  if (STRING_RESULT) FREE(STRING_RESULT);
+  if (STRING_RESULT) free(STRING_RESULT);
   STRING_RESULT = mus_strdup(mus_data_format_to_string(INT_ARG_1));
 }
 
@@ -11939,7 +11939,7 @@ static XEN xen_value_to_xen(ptree *pt, xen_value *v)
 	   */
 	  vtemp = mus_vct_copy(pt->vcts[v->addr]);
 	  val = xen_make_vct(vtemp->length, vtemp->data);
-	  FREE(vtemp);
+	  free(vtemp);
 	}
       break;
 
@@ -11962,7 +11962,7 @@ static XEN xen_value_to_xen(ptree *pt, xen_value *v)
 	  sound_data *sd;
 	  sd = sound_data_copy(pt->sds[v->addr]);
 	  val = wrap_sound_data(sd->chans, sd->length, sd->data);
-	  FREE(sd);
+	  free(sd);
 	  sd = XEN_TO_SOUND_DATA(val);
 	  sd->wrapped = false;
 	}
@@ -12001,8 +12001,8 @@ static triple *make_xen_arg_triple(ptree *pt,
 {
   triple *trp;
   int *addrs = NULL, *types = NULL;
-  addrs = (int *)CALLOC((args > 3) ? args : 3, sizeof(int));
-  types = (int *)CALLOC((args > 3) ? args : 3, sizeof(int));
+  addrs = (int *)calloc((args > 3) ? args : 3, sizeof(int));
+  types = (int *)calloc((args > 3) ? args : 3, sizeof(int));
   if (args > 0)
     {
       xen_value **xaddrs = NULL;
@@ -12023,7 +12023,7 @@ static triple *make_xen_arg_triple(ptree *pt,
 	}
     }
   else addrs[2] = -1;
-  trp = (triple *)CALLOC(1, sizeof(triple));
+  trp = (triple *)calloc(1, sizeof(triple));
   trp->function = function;
   trp->args = addrs;
   trp->types = types;
@@ -12043,7 +12043,7 @@ static xen_value *package_n_xen_args(ptree *prog,
   int i;
   xen_value **new_args;
   xen_value *rtn;
-  new_args = (xen_value **)CALLOC(num_args + 2, sizeof(xen_value *));
+  new_args = (xen_value **)calloc(num_args + 2, sizeof(xen_value *));
   for (i = 1; i <= num_args; i++)
     {
       new_args[i + 1] = copy_xen_value(args[i]); /* copy so that w->walker can be used (and cleanup args) */
@@ -12053,8 +12053,8 @@ static xen_value *package_n_xen_args(ptree *prog,
   new_args[0] = add_empty_var_to_ptree(prog, type);
   add_triple_to_ptree(prog, make_xen_arg_triple(prog, function, descr, new_args, num_args + 2));
   rtn = new_args[0];
-  FREE(new_args[1]);
-  FREE(new_args);
+  free(new_args[1]);
+  free(new_args);
   return(rtn);
 }
 
@@ -12079,7 +12079,7 @@ static XEN format_func;
 
 static void format_s(int *args, ptree *pt) 
 {
-  if (STRING_RESULT) FREE(STRING_RESULT);
+  if (STRING_RESULT) free(STRING_RESULT);
   /* fprintf(stderr, "apply: %s\n", XEN_AS_STRING(xen_values_to_list(pt, args))); */
   STRING_RESULT = mus_strdup(XEN_TO_C_STRING(XEN_APPLY(format_func, xen_values_to_list(pt, args), "format")));
 }
@@ -12090,7 +12090,7 @@ const char *s7_format(s7_scheme *sc, s7_pointer args);
 
 static void format_s(int *args, ptree *pt) 
 {
-  if (STRING_RESULT) FREE(STRING_RESULT);
+  if (STRING_RESULT) free(STRING_RESULT);
   STRING_RESULT = mus_strdup(s7_format(s7, xen_values_to_list(pt, args)));
 }
 
@@ -12219,7 +12219,7 @@ static walk_info *walker_with_declare(walk_info *w, int arg, int args, ...)
 
 static void clm_print_s(int *args, ptree *pt) 
 {
-  if (STRING_RESULT) FREE(STRING_RESULT);
+  if (STRING_RESULT) free(STRING_RESULT);
   STRING_RESULT = mus_strdup(XEN_TO_C_STRING(XEN_APPLY(format_func, xen_values_to_list(pt, args), "clm-print")));
 #if USE_SND
   listener_append(STRING_RESULT);
@@ -12267,7 +12267,7 @@ static xen_value *set_up_format(ptree *prog, xen_value **args, int num_args, boo
 	    char *xv;
 	    xv = describe_xen_value(args[i], prog);
 	    run_warn("can't handle %s as arg %d to %s", xv, i, (is_format) ? "format" : "clm-print");
-	    if (xv) FREE(xv);
+	    if (xv) free(xv);
 	    return(NULL);
 	  }
       /* no cleanup because it is handled in walk */
@@ -12505,7 +12505,7 @@ static int add_clm_type(XEN name)
   walk_info *w;
 
   run_type = add_new_type(XEN_TO_C_STRING(name));
-  type_predicate_name = (char *)CALLOC(strlen(type_name(run_type)) + 2, sizeof(char));
+  type_predicate_name = (char *)calloc(strlen(type_name(run_type)) + 2, sizeof(char));
   sprintf(type_predicate_name, "%s?", type_name(run_type));
 
   w = make_walker(clm_struct_p_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY);
@@ -12556,9 +12556,9 @@ static XEN g_add_clm_field(XEN struct_name, XEN name, XEN offset, XEN type)
     {
       def_clm_structs_size = clm_struct_type + 1;
       if (!def_clm_structs)
-	def_clm_structs = (dcs **)CALLOC(def_clm_structs_size, sizeof(dcs *));
-      else def_clm_structs = (dcs **)REALLOC(def_clm_structs, def_clm_structs_size * sizeof(dcs *));
-      def_clm_structs[clm_struct_type] = (dcs *)CALLOC(1, sizeof(dcs));
+	def_clm_structs = (dcs **)calloc(def_clm_structs_size, sizeof(dcs *));
+      else def_clm_structs = (dcs **)realloc(def_clm_structs, def_clm_structs_size * sizeof(dcs *));
+      def_clm_structs[clm_struct_type] = (dcs *)calloc(1, sizeof(dcs));
     }
 
   d = def_clm_structs[clm_struct_type];
@@ -12567,12 +12567,12 @@ static XEN g_add_clm_field(XEN struct_name, XEN name, XEN offset, XEN type)
       if (d->fields == 0)
 	{
 	  d->fields = 8;
-	  d->field_types = (int *)CALLOC(d->fields, sizeof(int));
+	  d->field_types = (int *)calloc(d->fields, sizeof(int));
 	}
       else
 	{
 	  d->fields *= 2;
-	  d->field_types = (int *)REALLOC(d->field_types, d->fields * sizeof(int));
+	  d->field_types = (int *)realloc(d->field_types, d->fields * sizeof(int));
 	}
     }
   d->field_types[field_offset] = field_type;
@@ -12611,14 +12611,14 @@ static xen_value *clean_up(xen_value *result, xen_value **args, int args_size)
 {
   int i;
   /* args[0] is special */
-  if ((args[0]) && (args[0] != result)) FREE(args[0]);
+  if ((args[0]) && (args[0] != result)) free(args[0]);
   for (i = 1; i <= args_size; i++)
     if (args[i]) 
       {
-	FREE(args[i]);
+	free(args[i]);
 	args[i] = NULL;
       }
-  FREE(args);
+  free(args);
   return(result);
 }
 
@@ -12641,7 +12641,7 @@ static xen_value *arg_warn(ptree *prog, const char *funcname, int arg_num, xen_v
 	       funcname, arg_num, xb, 
 	       (vowel_p(tb[0])) ? "n" : "", tb,
 	       (vowel_p(correct_type[0])) ? "n" : "", correct_type);
-      FREE(xb);
+      free(xb);
     }
   else 
     run_warn("%s argument %d is a%s %s, not a%s %s?", 
@@ -12734,7 +12734,7 @@ static xen_value *walk(ptree *prog, XEN form, walk_result_t walk_result)
 	    }
 	}
 
-      args = (xen_value **)CALLOC(num_args + 1, sizeof(xen_value *));
+      args = (xen_value **)calloc(num_args + 1, sizeof(xen_value *));
       if (num_args > 0)
 	{
 	  walk_result_t arg_result = NEED_ANY_RESULT;
@@ -12834,7 +12834,7 @@ static xen_value *walk(ptree *prog, XEN form, walk_result_t walk_result)
 
 		  /* fall through here if unknown function encountered (will give up later) */
 		}
-	      if (var == NULL) {FREE(v); v = NULL;}
+	      if (var == NULL) {free(v); v = NULL;}
 	      if (res) return(clean_up(res, args, num_args)); 
 	    }
 
@@ -12986,7 +12986,7 @@ static xen_value *walk(ptree *prog, XEN form, walk_result_t walk_result)
 	      prog->walk_result = walk_result;
 	      if (w->data != 0)
 		{
-		  args = (xen_value **)REALLOC(args, (num_args + 2) * sizeof(xen_value *));
+		  args = (xen_value **)realloc(args, (num_args + 2) * sizeof(xen_value *));
 		  args[num_args + 1] = make_xen_value(R_INT, add_int_to_ptree(prog, w->data), R_CONSTANT);
 		  num_args++;
 		}
@@ -13100,17 +13100,17 @@ static xen_value *lookup_generalized_set(ptree *prog, XEN acc_form, xen_value *i
 		       (vowel_p(tb[0])) ? "n" : "", tb,
 		       xb,
 		       (vowel_p(vb[0])) ? "n" : "", vb);
-	      if (xb) FREE(xb);
+	      if (xb) free(xb);
 	      happy = 2;
 	    }
 	}
     }
 
-  if (in_v) FREE(in_v);
-  if (in_v1) FREE(in_v1);
-  if (in_v2) FREE(in_v2);
+  if (in_v) free(in_v);
+  if (in_v1) free(in_v1);
+  if (in_v2) free(in_v2);
   if (happy == 1) return(v);
-  if (v) FREE(v);
+  if (v) free(v);
   if (happy == 0) run_warn("can't set %s", XEN_SYMBOL_TO_C_STRING(acc_form));
 
   return(NULL);
@@ -13188,7 +13188,7 @@ static struct ptree *form_to_ptree_1(XEN code, int decls, int *types)
 #if USE_SND
 	  else if (ptree_on == LISTENER_PTREE_DISPLAY) listener_append(msg);
 #endif
-	  FREE(msg);
+	  free(msg);
 	}
 
       prog->form = form;
@@ -13225,7 +13225,7 @@ static struct ptree *form_to_ptree_with_predeclarations(XEN code, int decls, ...
       int i;
       va_list ap;
 
-      types = (int *)CALLOC(decls, sizeof(int));
+      types = (int *)calloc(decls, sizeof(int));
       va_start(ap, decls);
       for (i = 0; i < decls; i++)
 	types[i] = va_arg(ap, int);
@@ -13233,7 +13233,7 @@ static struct ptree *form_to_ptree_with_predeclarations(XEN code, int decls, ...
     }
 
   result = form_to_ptree_1(code, decls, types);
-  FREE(types);
+  free(types);
   return(result);
 }
 
@@ -13385,7 +13385,7 @@ Float mus_run_evaluate_ptreec(struct ptree *pt, Float arg, XEN object, bool dir,
 	case R_STRING:       
 	  if (pt->strs)
 	    {
-	      if (pt->strs[addr]) FREE(pt->strs[addr]);
+	      if (pt->strs[addr]) free(pt->strs[addr]);
 	      pt->strs[addr] = mus_strdup(XEN_TO_C_STRING(object));
 	    }
 	  break; 
@@ -14073,7 +14073,7 @@ static XEN g_run_eval(XEN code, XEN arg, XEN arg1, XEN arg2)
 #if USE_SND
 	  else if (ptree_on == LISTENER_PTREE_DISPLAY) listener_append(msg);
 #endif
-	  FREE(msg);
+	  free(msg);
 	  fprintf(stderr,"--------\n");
 	}
 

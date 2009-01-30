@@ -45,12 +45,12 @@ void mus_fftw(Float *rl, int n, int dir)
   int i;
   if (n != last_fft_size)
     {
-      if (rdata) {FREE(rdata); FREE(idata); rfftw_destroy_plan(rplan); rfftw_destroy_plan(iplan);}
+      if (rdata) {free(rdata); free(idata); rfftw_destroy_plan(rplan); rfftw_destroy_plan(iplan);}
       rplan = rfftw_create_plan(n, FFTW_REAL_TO_COMPLEX, FFTW_ESTIMATE); /* I didn't see any improvement here from using FFTW_MEASURE */
       iplan = rfftw_create_plan(n, FFTW_COMPLEX_TO_REAL, FFTW_ESTIMATE);
       last_fft_size = n;
-      rdata = (fftw_real *)CALLOC(n, sizeof(fftw_real));
-      idata = (fftw_real *)CALLOC(n, sizeof(fftw_real));
+      rdata = (fftw_real *)calloc(n, sizeof(fftw_real));
+      idata = (fftw_real *)calloc(n, sizeof(fftw_real));
     }
   memset((void *)idata, 0, n * sizeof(fftw_real));
   /* if Float (default float) == fftw_real (default double) we could forego the data copy */
@@ -80,7 +80,7 @@ static void wavelet_transform(Float *data, int num, Float *cc, int cc_size)
   Float sig = -1.0;
   Float *cr = NULL;
   int i, j, n, n1, nmod, nh, joff, ii, ni, k, jf;
-  cr = (Float *)CALLOC(cc_size, sizeof(Float));
+  cr = (Float *)calloc(cc_size, sizeof(Float));
   for (i = 0, j = cc_size - 1; i < cc_size; i++, j--)
     {
       cr[j] = sig * cc[i];
@@ -88,8 +88,8 @@ static void wavelet_transform(Float *data, int num, Float *cc, int cc_size)
     }
   for (n = num; n >= 4; n /= 2)
     {
-      if (data1) FREE(data1);
-      data1 = (Float *)CALLOC(n, sizeof(Float));
+      if (data1) free(data1);
+      data1 = (Float *)calloc(n, sizeof(Float));
       n1 = n - 1;
       nmod = cc_size * n;
       nh = n >> 1;
@@ -107,8 +107,8 @@ static void wavelet_transform(Float *data, int num, Float *cc, int cc_size)
       memcpy((void *)data, (void *)data1, n * sizeof(Float));
       /* for (i = 0; i < n; i++) data[i] = data1[i]; */
     }
-  if (data1) FREE(data1);
-  if (cr) FREE(cr);
+  if (data1) free(data1);
+  if (cr) free(cr);
 }
 
 
@@ -215,7 +215,7 @@ static void haar_transform(Float *f, int n)
   Float x, y;
   Float *g;
   s2 = sqrt(0.5);
-  g = (Float *)CALLOC(n, sizeof(Float));
+  g = (Float *)calloc(n, sizeof(Float));
   for (m = n; m > 1; m >>= 1)
     {
       v *= s2;
@@ -230,7 +230,7 @@ static void haar_transform(Float *f, int n)
       for (i = m - 1; i >= 0; i--) f[i] = g[i];
     }
   f[0] *= v;
-  FREE(g);
+  free(g);
 }
 
 
@@ -282,8 +282,8 @@ static void cepstrum(Float *data, int n)
   int i;
   lowest = 0.00000001;
   fscl = 2.0 / (Float)n;
-  rl = (Float *)MALLOC(n * sizeof(Float));
-  im = (Float *)CALLOC(n, sizeof(Float));
+  rl = (Float *)malloc(n * sizeof(Float));
+  im = (Float *)calloc(n, sizeof(Float));
   memcpy((void *)rl, (void *)data, n * sizeof(Float));
   mus_fft(rl, im, n, 1);
   for (i = 0; i < n; i++)
@@ -301,8 +301,8 @@ static void cepstrum(Float *data, int n)
   if (fscl > 0.0)
     for (i = 0; i < n; i++) 
       data[i] = rl[i] / fscl;
-  FREE(rl);
-  FREE(im);
+  free(rl);
+  free(im);
 }
 
 
@@ -324,8 +324,8 @@ int find_and_sort_peaks(Float *buf, fft_peak *found, int num_peaks, int size)
   int *inds;
 
   if (num_peaks <= 0) return(0);
-  peaks = (Float *)CALLOC(num_peaks, sizeof(Float));
-  inds = (int *)CALLOC(num_peaks, sizeof(int));
+  peaks = (Float *)calloc(num_peaks, sizeof(Float));
+  inds = (int *)calloc(num_peaks, sizeof(int));
   pks = 0;
   la = 0.0;
   ca = 0.0;
@@ -369,8 +369,8 @@ int find_and_sort_peaks(Float *buf, fft_peak *found, int num_peaks, int size)
       found[i].freq = (Float)j;
     }
   if (pks > 0) qsort((void *)found, pks, sizeof(fft_peak), compare_peaks);
-  FREE(peaks);
-  FREE(inds);
+  free(peaks);
+  free(inds);
   return(pks);
 }
 
@@ -387,8 +387,8 @@ int find_and_sort_transform_peaks(Float *buf, fft_peak *found, int num_peaks, in
   Float *peaks;
   int *inds;
 
-  peaks = (Float *)CALLOC(num_peaks, sizeof(Float));
-  inds = (int *)CALLOC(num_peaks, sizeof(int));
+  peaks = (Float *)calloc(num_peaks, sizeof(Float));
+  inds = (int *)calloc(num_peaks, sizeof(int));
   fscl = (Float)srate / (Float)fftsize2;
   hop = (int)(samps_per_pixel + 0.5);
   if (hop < 1) hop = 1;
@@ -482,8 +482,8 @@ int find_and_sort_transform_peaks(Float *buf, fft_peak *found, int num_peaks, in
 
   for (i = k; i < num_peaks; i++) found[i].freq = 1.0; /* move blank case to end of sorted list */
   qsort((void *)found, pks, sizeof(fft_peak), compare_peaks);
-  FREE(peaks);
-  FREE(inds);
+  free(peaks);
+  free(inds);
   return(k);
 }
 
@@ -519,7 +519,7 @@ static added_transform *new_transform(void)
     {
       loc = 0;
       added_transforms_size = 4;
-      added_transforms = (added_transform **)CALLOC(added_transforms_size, sizeof(added_transform *));
+      added_transforms = (added_transform **)calloc(added_transforms_size, sizeof(added_transform *));
     }
   else
     {
@@ -535,11 +535,11 @@ static added_transform *new_transform(void)
 	  int i;
 	  loc = added_transforms_size;
 	  added_transforms_size += 4;
-	  added_transforms = (added_transform **)REALLOC(added_transforms, added_transforms_size * sizeof(added_transform *));
+	  added_transforms = (added_transform **)realloc(added_transforms, added_transforms_size * sizeof(added_transform *));
 	  for (i = loc; i < added_transforms_size; i++) added_transforms[i] = NULL;
 	}
     }
-  added_transforms[loc] = (added_transform *)CALLOC(1, sizeof(added_transform));
+  added_transforms[loc] = (added_transform *)calloc(1, sizeof(added_transform));
   added_transforms[loc]->type = loc + NUM_BUILTIN_TRANSFORM_TYPES;
   return(added_transforms[loc]);
 }
@@ -857,7 +857,7 @@ void fourier_spectrum(snd_fd *sf, Float *fft_data, off_t fft_size_1, off_t data_
 #else
   {
     Float *idata;
-    idata = (Float *)CALLOC(fft_size, sizeof(Float));
+    idata = (Float *)calloc(fft_size, sizeof(Float));
 
     mus_fft(fft_data, idata, fft_size, 1);
 
@@ -874,7 +874,7 @@ void fourier_spectrum(snd_fd *sf, Float *fft_data, off_t fft_size_1, off_t data_
 	for (i = 0; i < fft_size; i++) 
 	  fft_data[i] = hypot(fft_data[i], idata[i]);
       }
-    FREE(idata);
+    free(idata);
   }
 #endif
 }
@@ -1172,8 +1172,8 @@ static fft_state *free_fft_state(fft_state *fs)
 {
   if (fs) 
     {
-      if (fs->window) {FREE(fs->window); fs->window = NULL;}
-      FREE(fs); 
+      if (fs->window) {free(fs->window); fs->window = NULL;}
+      free(fs); 
     }
   return(NULL);
 }
@@ -1262,7 +1262,7 @@ static fft_state *make_fft_state(chan_info *cp, bool force_recalc)
   if (!reuse_old)
     {
       cp_free_fft_state(cp);
-      fs = (fft_state *)CALLOC(1, sizeof(fft_state));
+      fs = (fft_state *)calloc(1, sizeof(fft_state));
       fs->cp = cp;
       fs->cutoff = cp->spectro_cutoff;
       fs->size = fftsize;
@@ -1292,13 +1292,13 @@ static fft_state *make_fft_state(chan_info *cp, bool force_recalc)
 static fft_info *make_fft_info(off_t size, mus_fft_window_t window, Float alpha, Float beta)
 {
   fft_info *fp;
-  fp = (fft_info *)CALLOC(1, sizeof(fft_info));
+  fp = (fft_info *)calloc(1, sizeof(fft_info));
   fp->size = size;
   fp->window = window;
   fp->alpha = alpha;
   fp->beta = beta;
   fp->xlabel = NULL;
-  fp->data = (Float *)CALLOC(size + 1, sizeof(Float)); /*  + 1 for complex storage or starts at 1 or something */
+  fp->data = (Float *)calloc(size + 1, sizeof(Float)); /*  + 1 for complex storage or starts at 1 or something */
   fp->phases = NULL;
   return(fp);
 }
@@ -1308,7 +1308,7 @@ void set_fft_info_xlabel(chan_info *cp, const char *new_label)
 {
   if ((cp) && (cp->fft))
     {
-      if (cp->fft->xlabel) FREE(cp->fft->xlabel);
+      if (cp->fft->xlabel) free(cp->fft->xlabel);
       if (new_label) 
 	cp->fft->xlabel = mus_strdup(new_label); 
       else cp->fft->xlabel = NULL;
@@ -1319,11 +1319,11 @@ void set_fft_info_xlabel(chan_info *cp, const char *new_label)
 fft_info *free_fft_info(fft_info *fp)
 {
   fp->chan = NULL;
-  if (fp->data) FREE(fp->data);
-  if (fp->phases) FREE(fp->phases);
+  if (fp->data) free(fp->data);
+  if (fp->phases) free(fp->phases);
   if (fp->axis) free_axis_info(fp->axis);
-  if (fp->xlabel) FREE(fp->xlabel);
-  FREE(fp);
+  if (fp->xlabel) free(fp->xlabel);
+  free(fp);
   return(NULL);
 }
 
@@ -1348,16 +1348,16 @@ static void one_fft(fft_state *fs)
 	      (fs->size > fp->size))
 	    {
 	      fp->size = fs->size;
-	      if (fp->data) FREE(fp->data);
-	      fp->data = (Float *)CALLOC(fp->size + 1, sizeof(Float));
-	      if (fp->phases) FREE(fp->phases);
+	      if (fp->data) free(fp->data);
+	      fp->data = (Float *)calloc(fp->size + 1, sizeof(Float));
+	      if (fp->phases) free(fp->phases);
 	      fp->phases = NULL;
 	    }
 	}
 
       if ((cp->fft_with_phases) &&
 	  (!(fp->phases)))
-	fp->phases = (Float *)CALLOC(fp->size + 1, sizeof(Float));
+	fp->phases = (Float *)calloc(fp->size + 1, sizeof(Float));
 
       fp->current_size = fs->size; /* protect against parallel size change via fft size menu */
       fs->data = fp->data;
@@ -1370,7 +1370,7 @@ static void one_fft(fft_state *fs)
 	  static Float last_alpha = 0.0;
 	  static Float *last_window = NULL;
 
-	  fs->window = (Float *)CALLOC(fs->size, sizeof(Float));
+	  fs->window = (Float *)calloc(fs->size, sizeof(Float));
 
 	  if ((fs->wintype != last_wintype) ||
 	      (fs->size != last_size) ||
@@ -1378,8 +1378,8 @@ static void one_fft(fft_state *fs)
 	      (fs->alpha != last_alpha) ||
 	      (fs->pad_zero != last_zero))
 	    {
-	      if (last_window) FREE(last_window);
-	      last_window = (Float *)CALLOC(fs->size, sizeof(Float));
+	      if (last_window) free(last_window);
+	      last_window = (Float *)calloc(fs->size, sizeof(Float));
 	      if (cp->selection_transform_size > 0)
 		mus_make_fft_window_with_window(fs->wintype, cp->selection_transform_size, 
 						fs->beta * beta_maxes[fs->wintype], 
@@ -1471,7 +1471,7 @@ void *make_sonogram_state(chan_info *cp, bool force_recalc)
 {
   sonogram_state *sg;
   fft_state *fs;
-  sg = (sonogram_state *)CALLOC(1, sizeof(sonogram_state));
+  sg = (sonogram_state *)calloc(1, sizeof(sonogram_state));
   sg->cp = cp;
   sg->done = false;
   sg->force_recalc = force_recalc;
@@ -1488,7 +1488,7 @@ void *make_sonogram_state(chan_info *cp, bool force_recalc)
       /* we must have restarted fft process without letting the previous run at all */
       temp_sg = (sonogram_state *)(cp->temp_sonogram);
       if (temp_sg->fs) temp_sg->fs = free_fft_state(temp_sg->fs);
-      FREE(temp_sg);
+      free(temp_sg);
       /* cp->last_sonogram = NULL; */
     }
   cp->temp_sonogram = sg; /* background process may never run, so we need a way to find this pointer at cleanup time */
@@ -1510,16 +1510,16 @@ void free_sono_info(chan_info *cp)
   si = cp->sonogram_data;
   if (si)
     {
-      if (si->begs) FREE(si->begs);
+      if (si->begs) free(si->begs);
       if (si->data)
 	{
 	  int i;
 	  for (i = 0; i < si->total_slices; i++)
 	    if (si->data[i]) 
-	      FREE(si->data[i]);
-	  FREE(si->data);
+	      free(si->data[i]);
+	  free(si->data);
 	}
-      FREE(si);
+      free(si);
       cp->sonogram_data = NULL;
     }
 }
@@ -1617,20 +1617,20 @@ static sono_slice_t set_up_sonogram(sonogram_state *sg)
 
   if (!si)
     {
-      si = (sono_info *)CALLOC(1, sizeof(sono_info));
+      si = (sono_info *)calloc(1, sizeof(sono_info));
       si->total_bins = sg->spectrum_size; 
       si->total_slices = snd_to_int_pow2(sg->outlim);
 
       if (!memory_available_p((off_t)(si->total_slices), (off_t)(si->total_bins)))
 	{
-	  FREE(si);
+	  free(si);
 	  return(SONO_QUIT);
 	}
 
       cp->sonogram_data = si;
-      si->begs = (off_t *)CALLOC(si->total_slices, sizeof(off_t));
-      si->data = (Float **)CALLOC(si->total_slices, sizeof(Float *));
-      for (i = 0; i < si->total_slices; i++) si->data[i] = (Float *)CALLOC(si->total_bins, sizeof(Float));
+      si->begs = (off_t *)calloc(si->total_slices, sizeof(off_t));
+      si->data = (Float **)calloc(si->total_slices, sizeof(Float *));
+      for (i = 0; i < si->total_slices; i++) si->data[i] = (Float *)calloc(si->total_bins, sizeof(Float));
     }
   else
     if ((si->total_slices < sg->outlim) || 
@@ -1645,20 +1645,20 @@ static sono_slice_t set_up_sonogram(sonogram_state *sg)
 	for (i = 0; i < si->total_slices; i++) 
 	  if (si->data[i]) 
 	    {
-	      FREE(si->data[i]); 
+	      free(si->data[i]); 
 	      si->data[i] = NULL;
 	    }
 
 	if (si->total_slices < tempsize) 
 	  {
 	    si->total_slices = tempsize;
-	    FREE(si->data);
-	    si->begs = (off_t *)REALLOC(si->begs, si->total_slices * sizeof(off_t));
-	    si->data = (Float **)CALLOC(si->total_slices, sizeof(Float *));
+	    free(si->data);
+	    si->begs = (off_t *)realloc(si->begs, si->total_slices * sizeof(off_t));
+	    si->data = (Float **)calloc(si->total_slices, sizeof(Float *));
 	  }
 
 	if (si->total_bins < sg->spectrum_size) si->total_bins = sg->spectrum_size;
-	for (i = 0; i < si->total_slices; i++) si->data[i] = (Float *)CALLOC(si->total_bins, sizeof(Float));
+	for (i = 0; i < si->total_slices; i++) si->data[i] = (Float *)calloc(si->total_bins, sizeof(Float));
       }
   sg->scp = si;
   si->target_bins = sg->spectrum_size;
@@ -1794,7 +1794,7 @@ static void finish_sonogram(sonogram_state *sg)
 	    }
 	  else sg->done = true;
 	  if ((cp->last_sonogram) && (cp->last_sonogram != sg)) 
-	    FREE(cp->last_sonogram);
+	    free(cp->last_sonogram);
 	  cp->last_sonogram = sg;
 	  if (sg->minibuffer_needs_to_be_cleared)
 	    {
@@ -1896,12 +1896,12 @@ void c_convolve(const char *fname, Float amp, int filec, off_t filehdr, int filt
       /* get to start point in the two sound files and allocate space */
       lseek(filec, filehdr, SEEK_SET);
       lseek(filterc, filterhdr, SEEK_SET);
-      rl0 = (Float *)CALLOC(fftsize, sizeof(Float));
-      if (rl0) rl1 = (Float *)CALLOC(fftsize, sizeof(Float));
-      if (rl1) pbuffer = (mus_sample_t **)CALLOC(1, sizeof(mus_sample_t *));
-      if (pbuffer) pbuffer[0] = (mus_sample_t *)CALLOC(data_size, sizeof(mus_sample_t));
-      fbuffer = (mus_sample_t **)CALLOC(filter_chans, sizeof(mus_sample_t *));
-      if (fbuffer) fbuffer[filter_chan] = (mus_sample_t *)CALLOC(filtersize, sizeof(mus_sample_t));
+      rl0 = (Float *)calloc(fftsize, sizeof(Float));
+      if (rl0) rl1 = (Float *)calloc(fftsize, sizeof(Float));
+      if (rl1) pbuffer = (mus_sample_t **)calloc(1, sizeof(mus_sample_t *));
+      if (pbuffer) pbuffer[0] = (mus_sample_t *)calloc(data_size, sizeof(mus_sample_t));
+      fbuffer = (mus_sample_t **)calloc(filter_chans, sizeof(mus_sample_t *));
+      if (fbuffer) fbuffer[filter_chan] = (mus_sample_t *)calloc(filtersize, sizeof(mus_sample_t));
       if ((rl0 == NULL) || (rl1 == NULL) || 
 	  (pbuffer == NULL) || (pbuffer[0] == NULL) ||
 	  (fbuffer == NULL) || (fbuffer[filter_chan] == NULL))
@@ -1975,18 +1975,18 @@ void c_convolve(const char *fname, Float amp, int filec, off_t filehdr, int filt
 	  if (mus_file_close(tempfile) != 0)
 	    snd_error(_("convolve: can't close temp file %s!"), fname);
 	}
-      if (rl0) FREE(rl0);
-      if (rl1) FREE(rl1);
-      if (rl2) FREE(rl2);
+      if (rl0) free(rl0);
+      if (rl1) free(rl1);
+      if (rl2) free(rl2);
       if (pbuffer) 
 	{
-	  if (pbuffer[0]) FREE(pbuffer[0]);
-	  FREE(pbuffer);
+	  if (pbuffer[0]) free(pbuffer[0]);
+	  free(pbuffer);
 	}
       if (fbuffer) 
 	{
-	  if (fbuffer[filter_chan]) FREE(fbuffer[filter_chan]);
-	  FREE(fbuffer);
+	  if (fbuffer[filter_chan]) free(fbuffer[filter_chan]);
+	  free(fbuffer);
 	}
     }
 }
@@ -2006,7 +2006,7 @@ to be displayed goes from low to high (normally 0.0 to 1.0)"
     {
       XEN errstr;
       errstr = C_TO_XEN_STRING(errmsg);
-      FREE(errmsg);
+      free(errmsg);
       return(snd_bad_arity_error(S_add_transform, errstr, proc));
     }
 #if HAVE_SCHEME
@@ -2130,7 +2130,7 @@ return a vct (obj if it's passed), with the current transform data from snd's ch
 	  len = fp->current_size;
 	  if (v1)
 	    fvals = v1->data;
-	  else fvals = (Float *)MALLOC(len * sizeof(Float));
+	  else fvals = (Float *)malloc(len * sizeof(Float));
 	  memcpy((void *)fvals, (void *)(fp->data), len * sizeof(Float));
 	  if (v1)
 	    return(v);
@@ -2148,7 +2148,7 @@ return a vct (obj if it's passed), with the current transform data from snd's ch
 	      len = bins * slices;
 	      if (v1)
 		fvals = v1->data;
-	      else fvals = (Float *)CALLOC(len, sizeof(Float));
+	      else fvals = (Float *)calloc(len, sizeof(Float));
 	      for (i = 0, k = 0; i < slices; i++)
 		for (j = 0; j < bins; j++, k++)
 		  fvals[k] = si->data[i][j];
@@ -2189,7 +2189,7 @@ static XEN g_snd_transform(XEN type, XEN data, XEN hint)
       else
 	{
 #endif
-	  dat = (Float *)CALLOC(v->length, sizeof(Float));
+	  dat = (Float *)calloc(v->length, sizeof(Float));
 	  mus_fft(v->data, dat, v->length, 1);
 	  v->data[0] *= v->data[0];
 	  v->data[n2] *= v->data[n2];
@@ -2198,7 +2198,7 @@ static XEN g_snd_transform(XEN type, XEN data, XEN hint)
 	      v->data[i] = v->data[i] * v->data[i] + dat[i] * dat[i];
 	      v->data[j] = v->data[i];
 	    }
-	  FREE(dat);
+	  free(dat);
 #if HAVE_FFTW || HAVE_FFTW3
 	}
 #endif
@@ -2254,11 +2254,11 @@ static XEN g_delete_transform(XEN type)
   if (af)
     {
       added_transforms[af->type - NUM_BUILTIN_TRANSFORM_TYPES] = NULL;
-      FREE(af->xlabel);
-      FREE(af->name);
+      free(af->xlabel);
+      free(af->name);
       snd_unprotect_at(af->gc_loc);
       af->proc = XEN_FALSE;
-      FREE(af);
+      free(af);
       /* now make sure nobody expects to use that transform */
       if (transform_type(ss) == typ) set_transform_type(DEFAULT_TRANSFORM_TYPE);
       deleted_type = typ;

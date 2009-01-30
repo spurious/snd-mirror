@@ -30,7 +30,7 @@ static int add_drop_watcher(Widget w,
     {
       loc = 0;
       drop_watchers_size = DROP_WATCHER_SIZE_INCREMENT;
-      drop_watchers = (drop_watcher_t **)CALLOC(drop_watchers_size, sizeof(drop_watcher_t *));
+      drop_watchers = (drop_watcher_t **)calloc(drop_watchers_size, sizeof(drop_watcher_t *));
     }
   else
     {
@@ -45,11 +45,11 @@ static int add_drop_watcher(Widget w,
 	{
 	  loc = drop_watchers_size;
 	  drop_watchers_size += DROP_WATCHER_SIZE_INCREMENT;
-	  drop_watchers = (drop_watcher_t **)REALLOC(drop_watchers, drop_watchers_size * sizeof(drop_watcher_t *));
+	  drop_watchers = (drop_watcher_t **)realloc(drop_watchers, drop_watchers_size * sizeof(drop_watcher_t *));
 	  for (i = loc; i < drop_watchers_size; i++) drop_watchers[i] = NULL;
 	}
     }
-  drop_watchers[loc] = (drop_watcher_t *)CALLOC(1, sizeof(drop_watcher_t));
+  drop_watchers[loc] = (drop_watcher_t *)calloc(1, sizeof(drop_watcher_t));
   drop_watchers[loc]->drop_watcher = drop_watcher;
   drop_watchers[loc]->drag_watcher = drag_watcher;
   drop_watchers[loc]->context = context;
@@ -66,7 +66,7 @@ static bool remove_drop_watcher(int loc)
       (loc >= 0) &&
       (drop_watchers[loc]))
     {
-      FREE(drop_watchers[loc]);
+      free(drop_watchers[loc]);
       drop_watchers[loc] = NULL;
       return(true);
     }
@@ -114,7 +114,7 @@ static char *atom_to_string(Atom type, XtPointer value, unsigned long length)
   char *str = NULL;
   if ((type == XA_STRING) || (type == FILE_NAME) || (type == text_plain) || (type == uri_list) || (type == TEXT))
     {
-      str = (char *)CALLOC(length + 1, sizeof(char));
+      str = (char *)calloc(length + 1, sizeof(char));
       for (i = 0; i < length; i++)
 	str[i] = ((char *)value)[i];
     }
@@ -176,7 +176,7 @@ static void massage_selection(Widget w, XtPointer context, Atom *selection, Atom
 	      char *filename;
 	      int len = 0, i, j = 0;
 	      len = mus_strlen(str);
-	      filename = (char *)CALLOC(len, sizeof(char));
+	      filename = (char *)calloc(len, sizeof(char));
 	      for (i = 0; i < len; i++)
 		{
 		  if ((str[i] == '\n') || (str[i] == '\r')) /* apparently the only space chars here are \n and \r? */
@@ -200,10 +200,10 @@ static void massage_selection(Widget w, XtPointer context, Atom *selection, Atom
 		      filename[j++] = str[i];
 		    }
 		}
-	      FREE(filename);
+	      free(filename);
 	    }
 	}
-      FREE(str);
+      free(str);
     }
 }
 

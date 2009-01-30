@@ -259,7 +259,7 @@ static XEN snd_format_if_needed(XEN args)
     format_args = XEN_COPY_ARG(XEN_CADR(args)); /* protect Ruby case, a no-op in Guile */
   else format_args = XEN_CADR(args);
 
-  errmsg = (char *)CALLOC(err_size, sizeof(char));
+  errmsg = (char *)calloc(err_size, sizeof(char));
 
   for (i = 0; i < format_info_len; i++)
     {
@@ -290,7 +290,7 @@ static XEN snd_format_if_needed(XEN args)
 			  char *vstr;
 			  vstr = gl_print(cur_arg);
 			  errmsg = mus_strcat(errmsg, vstr, &err_size);
-			  FREE(vstr);
+			  free(vstr);
 			}
 		      else
 			{
@@ -322,7 +322,7 @@ static XEN snd_format_if_needed(XEN args)
     }
   if (i > start)
     strncat(errmsg, (char *)(format_info + start), i - start);
-  if (format_info) FREE(format_info);
+  if (format_info) free(format_info);
   if (!was_formatted)
     {
       char *temp = NULL;
@@ -346,7 +346,7 @@ static XEN snd_format_if_needed(XEN args)
 	}
     }
   result = C_TO_XEN_STRING(errmsg);
-  FREE(errmsg);
+  free(errmsg);
   return(xen_return_first(result, args));
 }
 #endif
@@ -446,7 +446,7 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
 		      }
 		  XEN_PUTS("\n    ", port);
 		  XEN_DISPLAY(C_TO_XEN_STRING(help), port);
-		  FREE(help);
+		  free(help);
 		}
 	    }
 	}
@@ -533,7 +533,7 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
 		/* we're in xen_error from the redirection point of view and we already checked snd-error-hook */
 	      }
 	  }
-	FREE(name_buf);
+	free(name_buf);
       }
   }
   snd_unprotect_at(port_gc_loc);
@@ -554,8 +554,8 @@ void snd_rb_raise(XEN tag, XEN throw_args)
   bool need_comma = false;
   int size = 2048;
   if (strcmp(rb_id2name(tag), "Out_of_range") == 0) err = rb_eRangeError;
-  if (msg) FREE(msg);
-  msg = (char *)CALLOC(size, sizeof(char));
+  if (msg) free(msg);
+  msg = (char *)calloc(size, sizeof(char));
   if ((XEN_LIST_P(throw_args)) && 
       (XEN_LIST_LENGTH(throw_args) > 0))
     {
@@ -1019,7 +1019,7 @@ static char *gl_print(XEN result)
     return(g_print_1(result));
 
   ilen = print_length(ss); 
-  newbuf = (char *)CALLOC(128, sizeof(char));
+  newbuf = (char *)calloc(128, sizeof(char));
   savelen = 128;
 
 #if HAVE_SCHEME || HAVE_FORTH
@@ -1042,7 +1042,7 @@ static char *gl_print(XEN result)
 	      newbuf = mus_strcat(newbuf, " ", &savelen); 
 	    }
 	  newbuf = mus_strcat(newbuf, str, &savelen);
-	  FREE(str);
+	  free(str);
 	}
     }
 
@@ -1085,7 +1085,7 @@ void snd_report_result(XEN result, const char *buf)
   char *str = NULL;
   str = gl_print(result);
   snd_display_result(str, buf);
-  if (str) FREE(str);
+  if (str) free(str);
 }
 
 
@@ -1104,7 +1104,7 @@ static char *stdin_str = NULL;
 
 void clear_stdin(void)
 {
-  if (stdin_str) FREE(stdin_str);
+  if (stdin_str) free(stdin_str);
   stdin_str = NULL;
 }
 
@@ -1118,10 +1118,10 @@ static char *stdin_check_for_full_expression(char *newstr)
     {
       char *str;
       str = stdin_str;
-      stdin_str = (char *)CALLOC(mus_strlen(str) + mus_strlen(newstr) + 2, sizeof(char));
+      stdin_str = (char *)calloc(mus_strlen(str) + mus_strlen(newstr) + 2, sizeof(char));
       strcat(stdin_str, str);
       strcat(stdin_str, newstr);
-      FREE(str);
+      free(str);
     }
   else stdin_str = mus_strdup(newstr);
 #if HAVE_SCHEME
@@ -1159,12 +1159,12 @@ void snd_eval_stdin_str(char *buf)
       result = snd_catch_any(eval_str_wrapper, (void *)str, str);
       redirect_everything_to(NULL, NULL);
       loc = snd_protect(result);
-      if (stdin_str) FREE(stdin_str);
+      if (stdin_str) free(stdin_str);
       /* same as str here; if c-g! evaluated from stdin, clear_listener is called which frees/nullifies stdin_str */
       stdin_str = NULL;
       str = gl_print(result);
       string_to_stdout(str, NULL);
-      if (str) FREE(str);
+      if (str) free(str);
       snd_unprotect_at(loc);
     }
 }
@@ -1185,7 +1185,7 @@ static void string_to_stderr_and_listener(const char *msg, void *ignore)
 	  char *temp;
 	  temp = ss->startup_errors;
 	  ss->startup_errors = mus_format("%s\n%s %s\n", ss->startup_errors, listener_prompt(ss), msg);
-	  FREE(temp);
+	  free(temp);
 	}
       else ss->startup_errors = mus_strdup(msg); /* initial prompt is already there */
     }
@@ -1208,7 +1208,7 @@ static bool snd_load_init_file_1(const char *filename)
       expr = mus_format("load(%s)", fullname);
 #endif
       result = snd_catch_any(eval_file_wrapper, (void *)fullname, expr);
-      FREE(expr);
+      free(expr);
 
 #if HAVE_RUBY || HAVE_FORTH
       if (!(XEN_TRUE_P(result)))
@@ -1221,14 +1221,14 @@ static bool snd_load_init_file_1(const char *filename)
 	    {
 	      expr = mus_format("%s: %s\n", filename, str);
 	      snd_error_without_format(expr);
-	      FREE(str);
-	      FREE(expr);
+	      free(str);
+	      free(expr);
 	    }
 	  snd_unprotect_at(loc);
 	}
 #endif
     }
-  if (fullname) FREE(fullname);
+  if (fullname) free(fullname);
   return(happy);
 }
 
@@ -1325,8 +1325,8 @@ void snd_load_file(char *filename)
 
   str2 = mus_format("(load \"%s\")", filename);   /* currently unused in Forth and Ruby */
   result = snd_catch_any(eval_file_wrapper, (void *)str, str2);
-  if (str) FREE(str);
-  if (str2) FREE(str2);
+  if (str) free(str);
+  if (str2) free(str2);
 
 #if HAVE_RUBY || HAVE_FORTH
   if (!(XEN_TRUE_P(result)))
@@ -1337,7 +1337,7 @@ void snd_load_file(char *filename)
       if (str)
 	{
 	  snd_error_without_format(str);
-	  FREE(str);
+	  free(str);
 	}
       snd_unprotect_at(loc);
     }
@@ -1355,13 +1355,13 @@ static XEN g_snd_print(XEN msg)
     {
       if (XEN_CHAR_P(msg))
 	{
-	  str = (char *)CALLOC(2, sizeof(char));
+	  str = (char *)calloc(2, sizeof(char));
 	  str[0] = XEN_TO_C_CHAR(msg);
 	}
       else str = gl_print(msg);
     }
   listener_append(str);
-  if (str) FREE(str);
+  if (str) free(str);
   /* used to check for event in Motif case, but that is very dangerous -- check for infinite loop C-c needs to be somewhere else */
   /*   now I think you can use SIGUSR1 (kill -10) instead */
   return(msg);
@@ -1620,7 +1620,7 @@ static XEN g_dlopen(XEN name)
 	  char *longname;
 	  longname = mus_expand_filename(cname);
 	  handle = dlopen(longname, RTLD_LAZY);
-	  FREE(longname);
+	  free(longname);
 	  if (handle == NULL)
 	    {
 	      char *err;
@@ -1697,10 +1697,10 @@ static XEN g_c_load(XEN library_filename)
 	{
 	  handles_size += 8;
 	  if (handles)
-	    handles = (void **)REALLOC(handles, handles_size * sizeof(void *));
+	    handles = (void **)realloc(handles, handles_size * sizeof(void *));
 	  else 
 	    {
-	      handles = (void **)MALLOC(handles_size * sizeof(void *));
+	      handles = (void **)malloc(handles_size * sizeof(void *));
 	      handles[handles_top++] = dlopen(NULL, RTLD_LAZY);
 	    }
 	}
@@ -3030,8 +3030,8 @@ static XEN g_gsl_dht(XEN size, XEN data, XEN nu, XEN xmax)
 
       gsl_dht *t = gsl_dht_new(n, XEN_TO_C_DOUBLE(nu), XEN_TO_C_DOUBLE(xmax));
 
-      indata = (double *)CALLOC(n, sizeof(double));
-      outdata = (double *)CALLOC(n, sizeof(double));
+      indata = (double *)calloc(n, sizeof(double));
+      outdata = (double *)calloc(n, sizeof(double));
 
       v = XEN_TO_VCT(data);
       for (i = 0; i < n; i++)
@@ -3044,8 +3044,8 @@ static XEN g_gsl_dht(XEN size, XEN data, XEN nu, XEN xmax)
 
       gsl_dht_free(t);
 
-      FREE(indata);
-      FREE(outdata);
+      free(indata);
+      free(outdata);
     }
   return(data);
 }
@@ -3070,7 +3070,7 @@ static XEN g_gsl_eigenvectors(XEN matrix)
   if (!mus_mixer_p(u1)) return(XEN_FALSE);
   vals = mus_data(u1);
   len = mus_length(u1);
-  data = (double *)CALLOC(len * len, sizeof(double));
+  data = (double *)calloc(len * len, sizeof(double));
   for (i = 0; i < len; i++)
     for (j = 0; j < len; j++)
       data[i * len + j] = mus_mixer_ref(u1, i, j);
@@ -3116,7 +3116,7 @@ static XEN g_gsl_eigenvectors(XEN matrix)
     gsl_matrix_complex_free(evec);
   }
 
-  FREE(data);
+  free(data);
   return(XEN_LIST_2(values, vectors));
 }
 #endif
@@ -3266,7 +3266,7 @@ returns its id (an integer, used by " S_delete_watcher "). "
   if (watchers_size == 0)
     {
       watchers_size = INITIAL_WATCHERS_SIZE;
-      watchers = (int *)CALLOC(watchers_size, sizeof(int));
+      watchers = (int *)calloc(watchers_size, sizeof(int));
       for (i = 0; i < watchers_size; i++) watchers[i] = NOT_A_WATCHER;
     }
   else
@@ -3282,7 +3282,7 @@ returns its id (an integer, used by " S_delete_watcher "). "
 	{
 	  floc = watchers_size;
 	  watchers_size += WATCHERS_SIZE_INCREMENT;
-	  watchers = (int *)REALLOC(watchers, watchers_size * sizeof(int));
+	  watchers = (int *)realloc(watchers, watchers_size * sizeof(int));
 	  for (i = floc; i < watchers_size; i++) watchers[i] = NOT_A_WATCHER;
 	}
     }
@@ -3311,8 +3311,8 @@ static void add_source_file_extension(const char *ext)
     {
       source_file_extensions_size += 8;
       if (source_file_extensions == NULL)
-	source_file_extensions = (char **)CALLOC(source_file_extensions_size, sizeof(char *));
-      else source_file_extensions = (char **)REALLOC(source_file_extensions, source_file_extensions_size * sizeof(char *));
+	source_file_extensions = (char **)calloc(source_file_extensions_size, sizeof(char *));
+      else source_file_extensions = (char **)realloc(source_file_extensions, source_file_extensions_size * sizeof(char *));
     }
   source_file_extensions[source_file_extensions_end] = mus_strdup(ext);
   source_file_extensions_end++;
@@ -3382,11 +3382,11 @@ static char *find_source_file(char *orig)
       str = mus_format("%s.%s", orig, source_file_extensions[i]);
       if (mus_file_probe(str))
 	{
-	  if (orig) FREE(orig);
+	  if (orig) free(orig);
 	  return(str);
 	}
     }
-  if (orig) FREE(orig);
+  if (orig) free(orig);
   return(NULL);
 }
 
@@ -3564,7 +3564,7 @@ static char *legalize_path(const char *in_str)
   int inpos, outpos = 0; 
 
   inlen = mus_strlen(in_str); 
-  out_str = (char *)CALLOC(inlen * 2, sizeof(char)); 
+  out_str = (char *)calloc(inlen * 2, sizeof(char)); 
 
   for (inpos = 0; inpos < inlen; inpos++)
     { 
@@ -3617,10 +3617,10 @@ static XEN g_getcwd(void)
   #define H_getcwd "(getcwd) returns the name of the current working directory"
   char *buf;
   XEN result = XEN_FALSE;
-  buf = (char *)CALLOC(1024, sizeof(char));
+  buf = (char *)calloc(1024, sizeof(char));
   if (getcwd(buf, 1024) != NULL)
     result = C_TO_XEN_STRING(buf);
-  FREE(buf);
+  free(buf);
   return(result);
 }
 
@@ -3634,10 +3634,10 @@ static XEN g_strftime(XEN format, XEN tm)
   char *buf;
   XEN result;
   XEN_ASSERT_TYPE(XEN_STRING_P(format), format, XEN_ARG_1, "strftime", "a string");
-  buf = (char *)CALLOC(1024, sizeof(char));
+  buf = (char *)calloc(1024, sizeof(char));
   strftime(buf, 1024, XEN_TO_C_STRING(format), (const struct tm *)XEN_UNWRAP_C_POINTER(tm));
   result = C_TO_XEN_STRING(buf);
-  FREE(buf);
+  free(buf);
   return(result);
 }
 
@@ -3666,7 +3666,7 @@ static XEN g_tmpnam(void)
   char *result;
   result = snd_tempnam();
   str = C_TO_XEN_STRING(result);
-  FREE(result);
+  free(result);
   return(str);
 }
 
@@ -3905,8 +3905,8 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
     pwd = mus_getcwd(); 
     legal_pwd = legalize_path(pwd);
     XEN_ADD_TO_LOAD_PATH(legal_pwd); 
-    FREE(pwd); 
-    FREE(legal_pwd); 
+    free(pwd); 
+    free(legal_pwd); 
   } 
 
 #if HAVE_GUILE
@@ -4137,7 +4137,7 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
       int i, j = 0, len;
       str = (char *)(RUBY_SEARCH_PATH);
       len = mus_strlen(str);
-      buf = (char *)CALLOC(len + 1, sizeof(char));
+      buf = (char *)calloc(len + 1, sizeof(char));
       for (i = 0; i < len; i++)
 	if (str[i] == ':')
 	  {
@@ -4154,7 +4154,7 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
 	  buf[j] = 0;
 	  XEN_ADD_TO_LOAD_PATH(buf);
 	}
-      FREE(buf);
+      free(buf);
     }
   #endif
 #endif

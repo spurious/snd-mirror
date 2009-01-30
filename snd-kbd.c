@@ -25,10 +25,10 @@ static void allocate_macro_cmds(void)
   old_size = macro_cmd_size;
   macro_cmd_size += 16;
   if (!macro_cmds)
-    macro_cmds = (macro_cmd **)CALLOC(macro_cmd_size, sizeof(macro_cmd *));
+    macro_cmds = (macro_cmd **)calloc(macro_cmd_size, sizeof(macro_cmd *));
   else 
     {
-      macro_cmds = (macro_cmd **)REALLOC(macro_cmds, macro_cmd_size * sizeof(macro_cmd *));
+      macro_cmds = (macro_cmd **)realloc(macro_cmds, macro_cmd_size * sizeof(macro_cmd *));
       for (i = old_size; i < macro_cmd_size; i++) macro_cmds[i] = NULL;
     }
 }
@@ -64,7 +64,7 @@ static void execute_last_macro(chan_info *cp, int count)
 
 static void continue_macro(int keysym, int state)
 {
-  if (!(macro_cmds[macro_size])) macro_cmds[macro_size] = (macro_cmd *)CALLOC(1, sizeof(macro_cmd));
+  if (!(macro_cmds[macro_size])) macro_cmds[macro_size] = (macro_cmd *)calloc(1, sizeof(macro_cmd));
   macro_cmds[macro_size]->keysym = keysym;
   macro_cmds[macro_size]->state = state;
   macro_size++;
@@ -81,16 +81,16 @@ static named_macro *name_macro(char *name)
       int old_size;
       old_size = named_macro_size;
       named_macro_size += 16;
-      if (!named_macros) named_macros = (named_macro **)CALLOC(named_macro_size, sizeof(named_macro *));
+      if (!named_macros) named_macros = (named_macro **)calloc(named_macro_size, sizeof(named_macro *));
       else 
 	{
 	  int i;
-	  named_macros = (named_macro **)REALLOC(named_macros, named_macro_size * sizeof(named_macro *));
+	  named_macros = (named_macro **)realloc(named_macros, named_macro_size * sizeof(named_macro *));
 	  for (i = old_size; i < named_macro_size; i++) named_macros[i] = NULL;
 	}
     }
   if (!(named_macros[named_macro_ctr])) 
-    named_macros[named_macro_ctr] = (named_macro *)CALLOC(1, sizeof(named_macro));
+    named_macros[named_macro_ctr] = (named_macro *)calloc(1, sizeof(named_macro));
   nm = named_macros[named_macro_ctr];
   nm->name = mus_strdup(name);
   named_macro_ctr++;
@@ -104,11 +104,11 @@ static void name_last_macro (char *name)
   int i;
   nm = name_macro(name);
   nm->macro_size = macro_size;
-  nm->cmds = (macro_cmd **)CALLOC(macro_size, sizeof(macro_cmd *));
+  nm->cmds = (macro_cmd **)calloc(macro_size, sizeof(macro_cmd *));
   for (i = 0; i < macro_size; i++)
     {
       macro_cmd *mc;
-      nm->cmds[i] = (macro_cmd *)CALLOC(1, sizeof(macro_cmd));
+      nm->cmds[i] = (macro_cmd *)calloc(1, sizeof(macro_cmd));
       mc = nm->cmds[i];
       mc->keysym = macro_cmds[i]->keysym;
       mc->state = macro_cmds[i]->state;
@@ -376,7 +376,7 @@ void map_over_key_bindings(bool (*func)(int key, int state, bool cx, XEN xf))
 static key_info *make_key_info(key_entry k)
 {
   key_info *ki;
-  ki = (key_info *)CALLOC(1, sizeof(key_info));
+  ki = (key_info *)calloc(1, sizeof(key_info));
 #if USE_MOTIF
   ki->key = XKeysymToString(k.key); /* no free! */
 #else
@@ -404,7 +404,7 @@ key_info *find_prefs_key_binding(const char *prefs_name)
     if (mus_strcmp(built_in_key_bindings[i].prefs_info, prefs_name))
       return(make_key_info(built_in_key_bindings[i]));
 
-  ki = (key_info *)CALLOC(1, sizeof(key_info));
+  ki = (key_info *)calloc(1, sizeof(key_info));
   ki->key = NULL;
   ki->c = false;
   ki->m = false;
@@ -464,13 +464,13 @@ void set_keymap_entry(int key, int state, int args, XEN func, bool cx_extended, 
 	  keymap_size += 16;
 	  if (keymap_top == 0)
 	    {
-	      user_keymap = (key_entry *)CALLOC(keymap_size, sizeof(key_entry));
+	      user_keymap = (key_entry *)calloc(keymap_size, sizeof(key_entry));
 	      for (i = 0; i < keymap_size; i++) 
 		user_keymap[i].func = XEN_UNDEFINED;
 	    }
 	  else 
 	    {
-	      user_keymap = (key_entry *)REALLOC(user_keymap, keymap_size * sizeof(key_entry));
+	      user_keymap = (key_entry *)realloc(user_keymap, keymap_size * sizeof(key_entry));
 	      for (i = keymap_top; i < keymap_size; i++) 
 		{
 		  user_keymap[i].key = 0; 
@@ -504,14 +504,14 @@ void set_keymap_entry(int key, int state, int args, XEN func, bool cx_extended, 
 	  char *tmp;
 	  tmp = (char *)user_keymap[i].origin;
 	  user_keymap[i].origin = NULL;
-	  FREE(tmp);
+	  free(tmp);
 	}
       if (user_keymap[i].prefs_info)
 	{
 	  char *tmp;
 	  tmp = (char *)user_keymap[i].prefs_info;
 	  user_keymap[i].prefs_info = NULL;
-	  FREE(tmp);
+	  free(tmp);
 	}
     }
   user_keymap[i].origin = mus_strdup(origin);
@@ -569,7 +569,7 @@ void report_in_minibuffer(snd_info *sp, const char *format, ...)
   buf = vstr(format, ap);
   va_end(ap);
   string_to_minibuffer(sp, buf);
-  FREE(buf);
+  free(buf);
 }
 
 
@@ -656,7 +656,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
       XtFree(str);
 #else
 #if USE_GTK
-      FREE(str);
+      free(str);
 #endif
 #endif
       str = NULL;
@@ -712,7 +712,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 		  if (errmsg)
 		    {
 		      snd_error_without_format(errmsg);
-		      FREE(errmsg);
+		      free(errmsg);
 		    }
 		  else
 		    {
@@ -801,7 +801,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 					 NULL, 1); /* at least 1 sample needed for new sound data buffer creation */
 		      /* now should this file be deleted upon exit?? */
 		    }
-		  FREE(filename);
+		  free(filename);
 		  if (nsp) 
 		    {
 		      select_channel(nsp, 0);
@@ -822,7 +822,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 		{
 		  if (sp->filing_filename)
 		    {
-		      FREE(sp->filing_filename);
+		      free(sp->filing_filename);
 		      sp->filing_filename = NULL;
 		    }
 		  string_to_minibuffer(sp, _("selection not saved"));
@@ -848,7 +848,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 			  char *ques;
 			  ques = mus_format(_("%s exists: overwrite?"), str);
 			  prompt(sp, ques, NULL);
-			  FREE(ques);
+			  free(ques);
 			  sp->filing_filename = filename;
 			  sp->filing = DOIT_SELECTION_FILING;
 			  return;
@@ -868,7 +868,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 		  else report_in_minibuffer(sp, "selection not saved: %s %s", 
 					    io_error_name(io_err), 
 					    filename);
-		  FREE(filename);
+		  free(filename);
 		}
 	      else string_to_minibuffer(sp, _("no selection to save"));
 	      sp->filing = NOT_FILING;
@@ -883,7 +883,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 		{
 		  if (sp->filing_filename)
 		    {
-		      FREE(sp->filing_filename);
+		      free(sp->filing_filename);
 		      sp->filing_filename = NULL;
 		    }
 		  string_to_minibuffer(sp, _("channel not saved"));
@@ -908,7 +908,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 			char *ques;
 			ques = mus_format(_("%s exists: overwrite?"), str);
 			prompt(sp, ques, NULL);
-			FREE(ques);
+			free(ques);
 			sp->filing_filename = filename;
 			sp->filing = DOIT_CHANNEL_FILING;
 			return;
@@ -925,7 +925,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 				       active_chan->chan,
 				       filename);
 		else string_to_minibuffer(sp, _("channel not saved"));
-		if (filename) FREE(filename);
+		if (filename) free(filename);
 		sp->filing = NOT_FILING;
 	      }
 	      break;
@@ -942,7 +942,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 		if (dp) 
 		  {
 		    closedir(dp);
-		    if (temp_dir(ss)) FREE(temp_dir(ss));
+		    if (temp_dir(ss)) free(temp_dir(ss));
 		    set_temp_dir(newdir);
 		  }
 		else 
@@ -950,8 +950,8 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 		    char *msg;
 		    msg = mus_format(_("can't access %s! temp dir is unchanged"), newdir);
 		    display_minibuffer_error(sp, msg);
-		    FREE(msg);
-		    if (newdir) FREE(newdir);
+		    free(msg);
+		    if (newdir) free(newdir);
 		  }
 	      }
 	      break;
@@ -2415,7 +2415,7 @@ static XEN g_bind_key_1(XEN key, XEN state, XEN code, XEN cx_extended, XEN origi
 	  errstr = mus_format(_(S_bind_key " function arg should take either zero or one args, not %d"), args);
 	  errmsg = C_TO_XEN_STRING(errstr);
 
-	  FREE(errstr);
+	  free(errstr);
 	  return(snd_bad_arity_error(caller, errmsg, code));
 	}
       if (XEN_STRING_P(origin)) comment = XEN_TO_C_STRING(origin); else comment = make_key_name(buf, 256, k, s, e);
@@ -2533,7 +2533,7 @@ passed as a string to the prompt callback function; otherwise it is evaluated fi
       if (errstr)
 	{
 	  errmsg = C_TO_XEN_STRING(errstr);
-	  FREE(errstr);
+	  free(errstr);
 	  return(snd_bad_arity_error(S_prompt_in_minibuffer, 
 				     errmsg,
 				     callback));

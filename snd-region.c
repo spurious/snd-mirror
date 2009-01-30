@@ -30,9 +30,9 @@ static deferred_region *free_deferred_region(deferred_region *dr)
 {
   if (dr)
     {
-      if (dr->cps) FREE(dr->cps);
-      if (dr->edpos) FREE(dr->edpos);
-      FREE(dr);
+      if (dr->cps) free(dr->cps);
+      if (dr->edpos) free(dr->edpos);
+      free(dr);
     }
   return(NULL);
 }
@@ -74,18 +74,18 @@ static void free_region(region *r, int complete)
 	      sp->edited_region = NULL;
 	      r->editor_copy = NULL;
 	    }
-	  if (r->name) FREE(r->name);
-	  if (r->start) FREE(r->start);
-	  if (r->end) FREE(r->end);
-	  if (r->begs) FREE(r->begs);
-	  if (r->lens) FREE(r->lens);
+	  if (r->name) free(r->name);
+	  if (r->start) free(r->start);
+	  if (r->end) free(r->end);
+	  if (r->begs) free(r->begs);
+	  if (r->lens) free(r->lens);
 	  if (r->peak_envs)
 	    {
 	      int i;
 	      for (i = 0; i < r->chans; i++)
 		if (r->peak_envs[i]) 
 		  r->peak_envs[i] = free_peak_env_info(r->peak_envs[i]);
-	      FREE(r->peak_envs);
+	      free(r->peak_envs);
 	      r->peak_envs = NULL;
 	    }
 	}
@@ -94,7 +94,7 @@ static void free_region(region *r, int complete)
 	  if (r->filename)
 	    {
 	      snd_remove(r->filename, REMOVE_FROM_CACHE);
-	      FREE(r->filename);
+	      free(r->filename);
 	    }
 	  r->filename = NULL;
 	}
@@ -102,7 +102,7 @@ static void free_region(region *r, int complete)
 	r->dr = free_deferred_region(r->dr);
       if (r->rsp) 
 	r->rsp = completely_free_snd_info(r->rsp);
-      if (complete == COMPLETE_DELETION) FREE(r);
+      if (complete == COMPLETE_DELETION) free(r);
     }
 }
 
@@ -117,10 +117,10 @@ void allocate_regions(int numreg)
     {
       if (regions)
 	{
-	  regions = (region **)REALLOC(regions, numreg * sizeof(region *));
+	  regions = (region **)realloc(regions, numreg * sizeof(region *));
 	  for (i = regions_allocated_size; i < numreg; i++) regions[i] = NULL;
 	}
-      else regions = (region **)CALLOC(numreg, sizeof(region *)); 
+      else regions = (region **)calloc(numreg, sizeof(region *)); 
       regions_allocated_size = numreg;
     }
   if (regions_size > numreg)
@@ -248,8 +248,8 @@ static off_t region_maxamp_position(int n)
 	  int i;
 	  off_t maxpos;
 	  mus_sample_t maxsamp;
-	  vals = (mus_sample_t *)CALLOC(r->chans, sizeof(mus_sample_t));
-	  times = (off_t *)CALLOC(r->chans, sizeof(off_t));
+	  vals = (mus_sample_t *)calloc(r->chans, sizeof(mus_sample_t));
+	  times = (off_t *)calloc(r->chans, sizeof(off_t));
 	  mus_sound_maxamps(r->filename, r->chans, vals, times);
 	  maxpos = times[0];
 	  maxsamp = vals[0];
@@ -259,8 +259,8 @@ static off_t region_maxamp_position(int n)
 		maxsamp = vals[i];
 		maxpos = times[i];
 	      }
-	  FREE(vals);
-	  FREE(times);
+	  free(vals);
+	  free(times);
 	  r->maxamp_position = maxpos;
 	}
       return(r->maxamp_position);
@@ -385,7 +385,7 @@ static void make_region_readable(region *r)
 
   regsp = make_basic_snd_info(r->chans);
   regsp->nchans = r->chans;
-  regsp->hdr = (file_info *)CALLOC(1, sizeof(file_info));
+  regsp->hdr = (file_info *)calloc(1, sizeof(file_info));
   regsp->search_proc = XEN_UNDEFINED;
   regsp->prompt_callback = XEN_UNDEFINED;
   regsp->inuse = SOUND_READER;
@@ -498,7 +498,7 @@ region_state *region_report(void)
 {
   region_state *rs;
   int i, len;
-  rs = (region_state *)CALLOC(1, sizeof(region_state));
+  rs = (region_state *)calloc(1, sizeof(region_state));
   len = regions_size;
   for (i = 0; i < regions_size; i++) 
     if (!(regions[i])) 
@@ -508,13 +508,13 @@ region_state *region_report(void)
       }
   rs->len = len;
   if (len == 0) return(rs);
-  rs->name = (char **)CALLOC(len, sizeof(char *));
+  rs->name = (char **)calloc(len, sizeof(char *));
   for (i = 0; i < len; i++)
     {
       region *r;
       char *reg_buf;
       r = regions[i];
-      reg_buf = (char *)CALLOC(LABEL_BUFFER_SIZE, sizeof(char));
+      reg_buf = (char *)calloc(LABEL_BUFFER_SIZE, sizeof(char));
       mus_snprintf(reg_buf, LABEL_BUFFER_SIZE, "%d: %s (%s:%s)", r->id, r->name, r->start, r->end);
       rs->name[i] = reg_buf;
     }
@@ -539,9 +539,9 @@ void free_region_state(region_state *r)
       int i;
       for (i = 0; i < r->len; i++)
 	if (r->name[i]) 
-	  FREE(r->name[i]);
-      if (r->name) FREE(r->name);
-      FREE(r);
+	  free(r->name[i]);
+      if (r->name) free(r->name);
+      free(r);
     }
 }
 
@@ -634,9 +634,9 @@ static int paste_region_1(int n, chan_info *cp, bool add, off_t beg, io_error_t 
 	  id = mix_file(beg, r->frames, si->chans, si->cps, newname, 
 			(si->chans > 1) ? MULTICHANNEL_DELETION : DELETE_ME,
 			origin, with_mix_tags(ss), start_chan);
-	  FREE(origin);
+	  free(origin);
 	}
-      if (newname) FREE(newname);
+      if (newname) free(newname);
     }
   else
     {
@@ -669,8 +669,8 @@ static int paste_region_1(int n, chan_info *cp, bool add, off_t beg, io_error_t 
 				  origin, ncp->edit_ctr))
 	    update_graph(si->cps[i]);
 	}
-      FREE(origin);
-      if ((r->use_temp_file == REGION_FILE) && (tempfile)) FREE(tempfile);
+      free(origin);
+      if ((r->use_temp_file == REGION_FILE) && (tempfile)) free(tempfile);
     }
   if (si) si = free_sync_info(si);
   return(id);
@@ -719,7 +719,7 @@ int define_region(sync_info *si, off_t *ends)
   cp0 = si->cps[0];
   sp0 = cp0->sound;
 
-  r = (region *)CALLOC(1, sizeof(region));
+  r = (region *)calloc(1, sizeof(region));
   r->id = region_id_ctr++;
 
   if (regions[0]) 
@@ -737,15 +737,15 @@ int define_region(sync_info *si, off_t *ends)
   r->start = prettyf((double)(si->begs[0]) / (double)(r->srate), 2);
   r->end = prettyf((double)(ends[0]) / (double)(r->srate), 2);
   r->use_temp_file = REGION_DEFERRED;
-  r->begs = (off_t *)CALLOC(r->chans, sizeof(off_t));
-  r->lens = (off_t *)CALLOC(r->chans, sizeof(off_t));
+  r->begs = (off_t *)calloc(r->chans, sizeof(off_t));
+  r->lens = (off_t *)calloc(r->chans, sizeof(off_t));
 
   ss->deferred_regions++;
-  r->dr = (deferred_region *)CALLOC(1, sizeof(deferred_region));
+  r->dr = (deferred_region *)calloc(1, sizeof(deferred_region));
   drp = r->dr;
   drp->chans = si->chans;
-  drp->cps = (chan_info **)CALLOC(drp->chans, sizeof(chan_info *));
-  drp->edpos = (int *)CALLOC(drp->chans, sizeof(int));
+  drp->cps = (chan_info **)calloc(drp->chans, sizeof(chan_info *));
+  drp->edpos = (int *)calloc(drp->chans, sizeof(int));
   drp->len = len;
 
   for (i = 0; i < drp->chans; i++)
@@ -761,7 +761,7 @@ int define_region(sync_info *si, off_t *ends)
 	  if ((ep) && (ep->completed))
 	    {
 	      if (r->peak_envs == NULL)
-		r->peak_envs = (peak_env_info **)CALLOC(r->chans, sizeof(peak_env_info *));
+		r->peak_envs = (peak_env_info **)calloc(r->chans, sizeof(peak_env_info *));
 	      r->peak_envs[i] = peak_env_section(drp->cps[i], r->begs[i], r->lens[i], drp->edpos[i]);
 	    }
 	}
@@ -840,7 +840,7 @@ static void deferred_region_to_temp_file(region *r)
 	    {
 	      off_t data_size;
 	      lseek(fdi, sp0->hdr->data_location + r->chans * datumb * r->begs[0], SEEK_SET);
-	      buffer = (char *)CALLOC(MAX_BUFFER_SIZE, sizeof(char));
+	      buffer = (char *)calloc(MAX_BUFFER_SIZE, sizeof(char));
 	      data_size = drp->len * r->chans * datumb;
 	      for (j = 0; j < data_size; j += MAX_BUFFER_SIZE)
 		{
@@ -862,7 +862,7 @@ static void deferred_region_to_temp_file(region *r)
 			}
 		    }
 		}
-	      FREE(buffer);
+	      free(buffer);
 	      snd_close(fdi, sp0->filename);
 	      for (i = 0; i < r->chans; i++)
 		{
@@ -889,7 +889,7 @@ static void deferred_region_to_temp_file(region *r)
 			  (r->rsp) ? (r->rsp->filename) : "unknown sound",
 			  (r->rsp) ? (r->rsp->index) : 0);
       hdr = make_temp_header(r->filename, r->srate, r->chans, 0, regstr);
-      FREE(regstr);
+      free(regstr);
 #else
       hdr = make_temp_header(r->filename, r->srate, r->chans, 0, (char *)c__FUNCTION__);
 #endif
@@ -901,14 +901,14 @@ static void deferred_region_to_temp_file(region *r)
 		  snd_open_strerror());
       else
 	{
-	  sfs = (snd_fd **)CALLOC(r->chans, sizeof(snd_fd *));
-	  data = (mus_sample_t **)CALLOC(r->chans, sizeof(mus_sample_t *));
+	  sfs = (snd_fd **)calloc(r->chans, sizeof(snd_fd *));
+	  data = (mus_sample_t **)calloc(r->chans, sizeof(mus_sample_t *));
 	  datumb = mus_bytes_per_sample(hdr->format);
 	  /* here if peak_envs, maxamp exists */
 	  for (i = 0; i < r->chans; i++)
 	    {
 	      sfs[i] = init_sample_read_any(r->begs[i], drp->cps[i], READ_FORWARD, drp->edpos[i]);
-	      data[i] = (mus_sample_t *)CALLOC(MAX_BUFFER_SIZE, sizeof(mus_sample_t));
+	      data[i] = (mus_sample_t *)calloc(MAX_BUFFER_SIZE, sizeof(mus_sample_t));
 	    }
 	  for (j = 0, k = 0; j < len; j++, k++) 
 	    {
@@ -939,10 +939,10 @@ static void deferred_region_to_temp_file(region *r)
 	  close_temp_file(r->filename, ofd, hdr->type, len * r->chans * datumb);
 	  r->maxamp = MUS_SAMPLE_TO_FLOAT(val);
 	  r->maxamp_position = max_position;
-	  for (i = 0; i < r->chans; i++) FREE(data[i]);
+	  for (i = 0; i < r->chans; i++) free(data[i]);
 	  for (i = 0; i < r->chans; i++) free_snd_fd(sfs[i]);
-	  FREE(sfs);
-	  FREE(data);
+	  free(sfs);
+	  free(data);
 	  data = NULL;
 	}
       hdr = free_file_info(hdr);
@@ -1017,7 +1017,7 @@ void cleanup_region_temp_files(void)
 	  (r->filename))
 	{
 	  snd_remove(r->filename, REMOVE_FROM_CACHE);
-	  FREE(r->filename);
+	  free(r->filename);
 	  r->filename = NULL;
 	}
     }
@@ -1054,7 +1054,7 @@ void save_regions(FILE *fd)
 	    deferred_region_to_temp_file(r);
 	  ofile = shorter_tempnam(save_dir(ss), "snd_save_");
 	  newname = run_save_state_hook(ofile);
-	  FREE(ofile);
+	  free(ofile);
 
 	  io_err = copy_file(r->filename, newname);
 	  if (io_err != IO_NO_ERROR)
@@ -1089,7 +1089,7 @@ void save_regions(FILE *fd)
 		  S_restore_region);
 #endif
 	    }
-	  FREE(newname);
+	  free(newname);
 	}
     }
 }
@@ -1138,7 +1138,7 @@ void region_edit(int pos)
 	  else 
 	    snd_error(_("edit region: can't save region %d in temp file (%s: %s)"),
 		      r->id, temp_region_name, snd_io_strerror());
-	  FREE(temp_region_name);
+	  free(temp_region_name);
 	}
     }
   else snd_error(_("edit region: no region at position %d!"), pos);
@@ -1154,7 +1154,7 @@ void clear_region_backpointer(snd_info *sp)
       if (r)
 	{
 	  snd_remove(r->editor_name, REMOVE_FROM_CACHE);
-	  FREE(r->editor_name);
+	  free(r->editor_name);
 	  r->editor_name = NULL;
 	  r->editor_copy = NULL;
 	}
@@ -1250,8 +1250,8 @@ io_error_t save_region(int rg, const char *name, int type, int format, const cha
 					mus_sound_header_type(r->filename));
 	      lseek(ifd, iloc, SEEK_SET);
 
-	      bufs = (mus_sample_t **)CALLOC(chans, sizeof(mus_sample_t *));
-	      for (i = 0; i < chans; i++) bufs[i] = (mus_sample_t *)CALLOC(FILE_BUFFER_SIZE, sizeof(mus_sample_t));
+	      bufs = (mus_sample_t **)calloc(chans, sizeof(mus_sample_t *));
+	      for (i = 0; i < chans; i++) bufs[i] = (mus_sample_t *)calloc(FILE_BUFFER_SIZE, sizeof(mus_sample_t));
 
 	      if (((frames * chans * mus_sound_datum_size(r->filename)) >> 10) > disk_kspace(name))
 		snd_warning(_("not enough space to save region? -- need " OFF_TD " bytes"),
@@ -1272,8 +1272,8 @@ io_error_t save_region(int rg, const char *name, int type, int format, const cha
 		    }
 		}
 	      err = mus_file_close(ifd);
-	      for (i = 0; i < chans; i++) FREE(bufs[i]);
-	      FREE(bufs);
+	      for (i = 0; i < chans; i++) free(bufs[i]);
+	      free(bufs);
 
 	      if (err != 0)
 		snd_warning("can't close %s input!", S_save_region);
@@ -1332,7 +1332,7 @@ static XEN g_restore_region(XEN pos, XEN chans, XEN len, XEN srate, XEN maxamp, 
 
   check_saved_temp_file("region", filename, date);
 
-  r = (region *)CALLOC(1, sizeof(region));
+  r = (region *)calloc(1, sizeof(region));
   regn = XEN_TO_C_INT(pos);
   if (regions[regn]) free_region(regions[regn], COMPLETE_DELETION);
   regions[regn] = r;
@@ -1634,7 +1634,7 @@ selection is used."
 	  si = make_simple_sync(cp, ibeg);
 	}
 
-      ends = (off_t *)CALLOC(si->chans, sizeof(off_t));
+      ends = (off_t *)calloc(si->chans, sizeof(off_t));
       for (i = 0; i < si->chans; i++)
 	{
 	  if (CURRENT_SAMPLES(si->cps[i]) - 1 < iend)
@@ -1643,7 +1643,7 @@ selection is used."
 	  si->begs[i] = ibeg;
 	  if (ends[i] < ibeg) 
 	    {
-	      FREE(ends);
+	      free(ends);
 	      ends = NULL;
 	      si = free_sync_info(si);
 	      XEN_OUT_OF_RANGE_ERROR(S_make_region, 1, end, "end ~A < beg?");
@@ -1655,7 +1655,7 @@ selection is used."
 	  if (selection_creates_region(ss))
 	    reactivate_selection(si->cps[0], si->begs[0], ends[0]);
 	  si = free_sync_info(si);
-	  FREE(ends);
+	  free(ends);
 	}
     }
   return(C_INT_TO_XEN_REGION(id));
@@ -1739,7 +1739,7 @@ using data format (default depends on machine byte order), header type (" S_mus_
   save_region(rg, name, header_type, data_format, com);
   redirect_snd_error_to(NULL, NULL);
 
-  if (name) FREE(name);
+  if (name) free(name);
   return(args[orig_arg[0] - 1]); /* -> filename, parallel save-selection */
 }
 
@@ -1851,7 +1851,7 @@ write region's samples starting at beg for samps in channel chan to vct v; retur
 	{
 	  if ((beg + len) > region_len(reg))
 	    len = region_len(reg) - beg;
-	  data = (Float *)CALLOC(len, sizeof(Float));
+	  data = (Float *)calloc(len, sizeof(Float));
 	}
       region_samples(reg, chn, beg, len, data);
       if (v1)

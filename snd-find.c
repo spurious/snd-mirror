@@ -162,14 +162,14 @@ char *global_search(read_direction_t direction)
   search_message[0] = '\0';
   if (chans > 0)
     {
-      fd = (gfd *)CALLOC(1, sizeof(gfd));
+      fd = (gfd *)calloc(1, sizeof(gfd));
       fd->n = 0;
       fd->inc = 1;
       fd->direction = direction;
       fd->dur = 0;
       fd->chans = chans;
-      fd->fds = (snd_fd **)CALLOC(chans, sizeof(snd_fd *));
-      fd->cps = (chan_info **)CALLOC(chans, sizeof(chan_info *));
+      fd->fds = (snd_fd **)calloc(chans, sizeof(snd_fd *));
+      fd->cps = (chan_info **)calloc(chans, sizeof(chan_info *));
       for_each_normal_chan_with_void(prepare_global_search, (void *)fd);
       fd->n = -1;
       ss->stopped_explicitly = false;
@@ -220,9 +220,9 @@ char *global_search(read_direction_t direction)
       ss->stopped_explicitly = false;
       for (i = 0; i < chans; i++) 
 	free_snd_fd(fd->fds[i]);
-      FREE(fd->fds);
-      FREE(fd->cps);
-      FREE(fd);
+      free(fd->fds);
+      free(fd->cps);
+      free(fd);
     }
   search_in_progress = false;
   return(search_message);
@@ -286,7 +286,7 @@ static off_t cursor_find_forward(snd_info *sp, chan_info *cp, int count)
 		  tick = 0;
 		  msg = mus_format("search at minute %d", (int)floor(i / (SND_SRATE(sp) * 60)));
 		  display_minibuffer_error(sp, msg);
-		  FREE(msg);
+		  free(msg);
 		  progress_displayed = true;
 		}
 	    }
@@ -314,7 +314,7 @@ static off_t cursor_find_forward(snd_info *sp, chan_info *cp, int count)
 		  tick = 0;
 		  msg = mus_format("search at minute %d", (int)floor(i / (SND_SRATE(sp) * 60)));
 		  display_minibuffer_error(sp, msg);
-		  FREE(msg);
+		  free(msg);
 		  progress_displayed = true;
 		}
 	      /* if user types C-s during an active search, we risk stomping on our current pointers */
@@ -379,7 +379,7 @@ static off_t cursor_find_backward(snd_info *sp, chan_info *cp, int count)
 		  tick = 0;
 		  msg = mus_format("search at minute %d", (int)floor(i / (SND_SRATE(sp) * 60)));
 		  display_minibuffer_error(sp, msg);
-		  FREE(msg);
+		  free(msg);
 		  progress_displayed = true;
 		}
 	    }
@@ -409,7 +409,7 @@ static off_t cursor_find_backward(snd_info *sp, chan_info *cp, int count)
 		  tick = 0;
 		  msg = mus_format("search at minute %d", (int)floor(i / (SND_SRATE(sp) * 60)));
 		  display_minibuffer_error(sp, msg);
-		  FREE(msg);
+		  free(msg);
 		  progress_displayed = true;
 		}
 	      if (!(sp->active)) break;
@@ -504,7 +504,7 @@ void cursor_search(chan_info *cp, int count)
 		  msg = mus_format("not found%s", 
 				   (cp->last_search_result == SEARCH_FAILED) ? " (wrapped)" : "");
 		  display_minibuffer_error(sp, msg);
-		  FREE(msg);
+		  free(msg);
 		  cp->last_search_result = SEARCH_FAILED;
 		}
 	      else
@@ -514,9 +514,9 @@ void cursor_search(chan_info *cp, int count)
 		  s2 = x_axis_location_to_string(cp, (double)samp / (double)SND_SRATE(sp));
 		  msg = mus_format("%s at %s (" OFF_TD ")", s1, s2, samp);
 		  display_minibuffer_error(sp, msg);
-		  FREE(s1);
-		  FREE(s2);
-		  FREE(msg);
+		  free(s1);
+		  free(s2);
+		  free(msg);
 		  cp->last_search_result = SEARCH_OK;
 		  cursor_moveto_without_verbosity(cp, samp);
 		}
@@ -537,7 +537,7 @@ void clear_sound_search_procedure(snd_info *sp, bool clear_expr_too)
   sp->search_proc = XEN_UNDEFINED;
   if (clear_expr_too)
     {
-      if (sp->search_expr) FREE(sp->search_expr);
+      if (sp->search_expr) free(sp->search_expr);
       sp->search_expr = NULL;
     }
   if (sp->search_tree)
@@ -558,7 +558,7 @@ void clear_global_search_procedure(bool clear_expr_too)
   ss->search_proc = XEN_UNDEFINED;
   if (clear_expr_too)
     {
-      if (ss->search_expr) FREE(ss->search_expr);
+      if (ss->search_expr) free(ss->search_expr);
       ss->search_expr = NULL;
     }
   if (ss->search_tree) 
@@ -622,7 +622,7 @@ static XEN g_set_search_procedure(XEN snd, XEN proc)
 	  else 
 	    {
 	      errstr = C_TO_XEN_STRING(error);
-	      FREE(error);
+	      free(error);
 	      return(snd_bad_arity_error(S_setB S_search_procedure, errstr, proc));
 	    }
 	}
@@ -653,7 +653,7 @@ static XEN g_set_search_procedure(XEN snd, XEN proc)
       else 
 	{
 	  errstr = C_TO_XEN_STRING(error);
-	  FREE(error);
+	  free(error);
 	  return(snd_bad_arity_error(S_setB S_search_procedure, errstr, snd));
 	}
     }

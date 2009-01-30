@@ -44,10 +44,10 @@ int help_text_width(const char *txt, int start, int end)
 #if 0
   char *buf;
   int len;
-  buf = (char *)CALLOC(end - start + 2, sizeof(char));
+  buf = (char *)calloc(end - start + 2, sizeof(char));
   strncpy(buf, txt, end - start);
   len = sg_text_width(buf, LISTENER_FONT(ss));
-  FREE(buf);
+  free(buf);
   if (len > 0) return(len);
 #endif
   return((end - start) * 8);
@@ -73,7 +73,7 @@ static gboolean help_expose_callback(GtkWidget *w, GdkEventExpose *ev, gpointer 
 	  new_help_str = word_wrap(original_help_text, curwid);
 	  gtk_text_buffer_set_text(gtk_text_view_get_buffer(GTK_TEXT_VIEW(help_text)), "", 0);
 	  sg_text_insert(help_text, new_help_str);
-	  if (new_help_str) FREE(new_help_str);
+	  if (new_help_str) free(new_help_str);
 	  if (cur_help_str) g_free(cur_help_str);
 	  old_help_text_width = curwid;
 	}
@@ -99,7 +99,7 @@ static bool new_help(const char *pattern, bool complain)
 	  xrefs = help_name_to_xrefs(pattern);
 	  snd_help_with_xrefs(pattern, XEN_TO_C_STRING(xstr), WITH_WORD_WRAP, xrefs, NULL);
 	  snd_unprotect_at(gc_loc);
-	  if (xrefs) FREE(xrefs);
+	  if (xrefs) free(xrefs);
 	  return(true);
 	}
       url_to_html_viewer(url);
@@ -111,7 +111,7 @@ static bool new_help(const char *pattern, bool complain)
       if (xrefs)
 	{
 	  snd_help_with_xrefs(pattern, "(no help found)", WITH_WORD_WRAP, xrefs, NULL);
-	  FREE(xrefs);
+	  free(xrefs);
 	  return(true);
 	}
       else snd_help_with_xrefs(pattern, "(no help found)", WITH_WORD_WRAP, NULL, NULL);
@@ -131,7 +131,7 @@ static void add_pattern_to_help_history(const char *pattern)
   if (help_history_size == 0)
     {
       help_history_size = 16; /* not 8! -- need room for cycle below */
-      help_history = (char **)CALLOC(help_history_size, sizeof(char *));
+      help_history = (char **)calloc(help_history_size, sizeof(char *));
     }
   else
     {
@@ -140,14 +140,14 @@ static void add_pattern_to_help_history(const char *pattern)
 	  int i;
 	  for (i = 0; i < 8; i++) 
 	    {
-	      if (help_history[i]) FREE(help_history[i]);
+	      if (help_history[i]) free(help_history[i]);
 	      help_history[i] = help_history[i + 8];
 	      help_history[i + 8] = NULL;
 	    }
 	  help_history_pos = 8;
 	}
     }
-  if (help_history[help_history_pos]) FREE(help_history[help_history_pos]);
+  if (help_history[help_history_pos]) free(help_history[help_history_pos]);
   help_history[help_history_pos++] = mus_strdup(pattern);
 }
 
@@ -195,7 +195,7 @@ static char *find_highlighted_text(const char *value)
 	      {
 		int k;
 		char *topic;
-		topic = (char *)CALLOC(end - start + 1, sizeof(char));
+		topic = (char *)calloc(end - start + 1, sizeof(char));
 		for (i = start, k = 0; i < end; i++, k++)
 		  topic[k] = value[i];
 		return(topic);
@@ -217,7 +217,7 @@ static void help_browse_callback(const char *name, int row, void *data)
       if (topic)
 	{
 	  name_to_html_viewer(topic);
-	  FREE(topic);
+	  free(topic);
 	}
       else
 	{
@@ -342,7 +342,7 @@ GtkWidget *snd_help(const char *subject, const char *helpstr, with_word_wrap_t w
       char *new_help = NULL;
       new_help = word_wrap(helpstr, (int)(widget_width(help_text) * 1.3));
       add_help_text(help_text, new_help);
-      if (new_help) FREE(new_help);
+      if (new_help) free(new_help);
     }
   else add_help_text(help_text, helpstr);
   if (help_needed) add_pattern_to_help_history(subject);

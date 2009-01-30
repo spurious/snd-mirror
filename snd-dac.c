@@ -77,7 +77,7 @@ static mus_any *make_flt(dac_info *dp, int order, Float *env)
 {
   if (order <= 0) return(NULL);
   dp->a_size = order;
-  dp->a = (Float *)CALLOC(order, sizeof(Float));
+  dp->a = (Float *)calloc(order, sizeof(Float));
   if (env) mus_make_fir_coeffs(order, env, dp->a);
   return(mus_make_fir_filter(order, dp->a, NULL));
 }
@@ -133,7 +133,7 @@ static int max_expand_control_len(snd_info *sp)
 static void *make_expand(snd_info *sp, Float initial_ex, dac_info *dp)
 {
   spd_info *spd;
-  spd = (spd_info *)CALLOC(1, sizeof(spd_info));
+  spd = (spd_info *)calloc(1, sizeof(spd_info));
   spd->gen = mus_make_granulate(&expand_input_as_needed,
 				initial_ex, sp->expand_control_length,
 				.6, /* expand scaler, not currently settable -- dac_set_expand_scaler below */
@@ -153,7 +153,7 @@ static void free_expand(void *ur_spd)
   if (ur_spd)
     {
       mus_free(spd->gen);
-      FREE(spd);
+      free(spd);
     }
 }
 
@@ -269,7 +269,7 @@ static void free_reverb(void)
 	  for (i = 0; i < r->num_combs; i++) 
 	    if (r->combs[i]) 
 	      mus_free(r->combs[i]);
-	  FREE(r->combs);
+	  free(r->combs);
 	}
       if (r->onep) mus_free(r->onep);
       if (r->allpasses)
@@ -277,9 +277,9 @@ static void free_reverb(void)
 	  for (i = 0; i < r->num_allpasses; i++) 
 	    if (r->allpasses[i]) 
 	      mus_free(r->allpasses[i]);
-	  FREE(r->allpasses);
+	  free(r->allpasses);
 	}
-      FREE(r);
+      free(r);
     }
   global_rev = NULL;
 }
@@ -302,13 +302,13 @@ static rev_info *make_nrev(snd_info *sp, int chans)
   srscale = sp->reverb_control_length * SND_SRATE(sp) / 25641.0;
   for (i = 0; i < BASE_DLY_LEN; i++) 
     dly_len[i] = get_prime((int)(srscale * base_dly_len[i]));
-  r = (rev_info *)CALLOC(1, sizeof(rev_info));
+  r = (rev_info *)calloc(1, sizeof(rev_info));
   r->num_combs = NREV_COMBS;
-  r->combs = (mus_any **)CALLOC(r->num_combs, sizeof(mus_any *));
+  r->combs = (mus_any **)calloc(r->num_combs, sizeof(mus_any *));
   r->num_allpasses = 4 + chans;
-  r->allpasses = (mus_any **)CALLOC(r->num_allpasses, sizeof(mus_any *));
-  if (comb_factors) FREE(comb_factors);
-  comb_factors = (Float *)CALLOC(r->num_combs, sizeof(Float));
+  r->allpasses = (mus_any **)calloc(r->num_allpasses, sizeof(mus_any *));
+  if (comb_factors) free(comb_factors);
+  comb_factors = (Float *)calloc(r->num_combs, sizeof(Float));
   for (i = 0; i < r->num_combs; i++) 
     {
       comb_factors[i] = nrev_comb_factors[i];
@@ -391,7 +391,7 @@ Float *sample_linear_env(env *e, int order)
   if (!got_local_error)
     {
       int i, j;
-      data = (Float *)CALLOC(order, sizeof(Float));
+      data = (Float *)calloc(order, sizeof(Float));
       for (i = 0, x = 0.0; i < order / 2; i++, x += step) 
 	data[i] = mus_env_interp(x, ge);
       for (j = order / 2 - 1, i = order / 2; (i < order) && (j >= 0); i++, j--) 
@@ -419,7 +419,7 @@ static void free_dac_info(dac_info *dp, play_stop_t reason)
       dp->func = XEN_FALSE;
       dp->func_gc_loc = NOT_A_GC_LOC;
     }
-  if (dp->a) {FREE(dp->a); dp->a = NULL; dp->a_size = 0;}
+  if (dp->a) {free(dp->a); dp->a = NULL; dp->a_size = 0;}
   dp->chn_fd = free_snd_fd(dp->chn_fd);
   if (dp->spd) free_expand(dp->spd);
   if (dp->src) mus_free(dp->src);
@@ -427,7 +427,7 @@ static void free_dac_info(dac_info *dp, play_stop_t reason)
   dp->sp = NULL;
   dp->cp = NULL;
   dp->type = DAC_NOTHING;
-  FREE(dp);
+  free(dp);
 }
 
 
@@ -548,8 +548,8 @@ static void free_dac_state(void)
 {
   if (snd_dacp)
     {
-      if (snd_dacp->chans_per_device) FREE(snd_dacp->chans_per_device);
-      FREE(snd_dacp);
+      if (snd_dacp->chans_per_device) free(snd_dacp->chans_per_device);
+      free(snd_dacp);
       snd_dacp = NULL;
     }
 }
@@ -856,14 +856,14 @@ static int find_slot_to_play(void)
   if (play_list == NULL)
     {
       dac_max_sounds = INITIAL_MAX_SOUNDS;
-      play_list = (dac_info **)CALLOC(dac_max_sounds, sizeof(dac_info *));
+      play_list = (dac_info **)calloc(dac_max_sounds, sizeof(dac_info *));
     }
   for (i = 0; i < dac_max_sounds; i++) 
     if (!play_list[i]) 
       return(i);
   old_size = dac_max_sounds;
   dac_max_sounds += INITIAL_MAX_SOUNDS;
-  play_list = (dac_info **)REALLOC(play_list, dac_max_sounds * sizeof(dac_info *));
+  play_list = (dac_info **)realloc(play_list, dac_max_sounds * sizeof(dac_info *));
   for (i = old_size; i < dac_max_sounds; i++) play_list[i] = NULL;
   return(old_size);
 }
@@ -873,7 +873,7 @@ static dac_info *make_dac_info(int slot, chan_info *cp, snd_info *sp, snd_fd *fd
 {
   dac_info *dp;
 
-  dp = (dac_info *)CALLOC(1, sizeof(dac_info)); /* only place dac_info is created */
+  dp = (dac_info *)calloc(1, sizeof(dac_info)); /* only place dac_info is created */
   dp->stop_procedure = XEN_FALSE;
   dp->stop_procedure_gc_loc = NOT_A_GC_LOC;
   dp->region = INVALID_REGION;
@@ -933,7 +933,7 @@ static dac_info *make_dac_info(int slot, chan_info *cp, snd_info *sp, snd_fd *fd
 	      if (data)
 		{
 		  dp->flt = make_flt(dp, sp->filter_control_order, data);
-		  FREE(data);
+		  free(data);
 		}
 	      else dp->filtering = false;
 	    }
@@ -989,7 +989,7 @@ static void start_dac(int srate, int channels, play_process_t background, Float 
   if (!dac_running)
     {
       if (snd_dacp) free_dac_state();
-      snd_dacp = (dac_state *)CALLOC(1, sizeof(dac_state));
+      snd_dacp = (dac_state *)calloc(1, sizeof(dac_state));
       snd_dacp->slice = 0;
       snd_dacp->srate = srate;
       snd_dacp->out_format = MUS_AUDIO_COMPATIBLE_FORMAT;
@@ -1291,7 +1291,7 @@ static dac_info *play_channels_1(chan_info **cps, int chans, off_t *starts, off_
     ends = ur_ends;
   else
     {
-      ends = (off_t *)CALLOC(chans, sizeof(off_t));
+      ends = (off_t *)calloc(chans, sizeof(off_t));
       for (i = 0; i < chans; i++) 
 	ends[i] = NO_END_SPECIFIED;
     }
@@ -1306,7 +1306,7 @@ static dac_info *play_channels_1(chan_info **cps, int chans, off_t *starts, off_
 	  if (selection) dp->selection = true;
 	}
     }
-  if (ur_ends == NULL) FREE(ends);
+  if (ur_ends == NULL) free(ends);
   if ((sp) && (rtn_dp)) 
     {
       rtn_dp->stop_procedure = stop_proc;
@@ -1338,7 +1338,7 @@ static dac_info *play_selection_1(play_process_t background, XEN stop_proc)
 	{
 	  int i;
 	  off_t *ends;
-	  ends = (off_t *)CALLOC(si->chans, sizeof(off_t));
+	  ends = (off_t *)calloc(si->chans, sizeof(off_t));
 	  for (i = 0; i < si->chans; i++) 
 	    {
 	      snd_info *sp;
@@ -1347,7 +1347,7 @@ static dac_info *play_selection_1(play_process_t background, XEN stop_proc)
 	    }
 	  dp = play_channels_1(si->cps, si->chans, si->begs, ends, background, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), true, stop_proc, NULL, 0);
 	  si = free_sync_info(si); /* does not free sample readers */
-	  FREE(ends);
+	  free(ends);
 	}
     }
   return(dp);
@@ -1572,9 +1572,9 @@ static int fill_dac_buffers(int write_ok)
 				{
 				  if (sp->filter_control_order > ndp->a_size) /* need more room in dp->a == flt->xcoeffs and flt->state */
 				    {
-				      FREE(ndp->a);
+				      free(ndp->a);
 				      ndp->a_size = sp->filter_control_order;
-				      ndp->a = (Float *)CALLOC(ndp->a_size, sizeof(Float));
+				      ndp->a = (Float *)calloc(ndp->a_size, sizeof(Float));
 				    }
 				  mus_make_fir_coeffs(sp->filter_control_order, data, ndp->a);      /* fill dp->a with new coeffs */
 				  mus_filter_set_xcoeffs(ndp->flt, ndp->a);                         /* tell gen about them */
@@ -1582,7 +1582,7 @@ static int fill_dac_buffers(int write_ok)
 				    snd_warning("trouble in filter (order not changed?)");
 				}
 			    }
-			  FREE(data);
+			  free(data);
 			}
 		      sp->filter_control_changed = false;
 		    }
@@ -1792,7 +1792,7 @@ static char *last_print = NULL;
 
 static void dac_mus_print(char *msg)
 {
-  if (last_print) FREE(last_print);
+  if (last_print) free(last_print);
   last_print = mus_strdup(msg);
   (*old_dac_printer)(msg);
 }
@@ -1800,7 +1800,7 @@ static void dac_mus_print(char *msg)
 
 static void set_dac_print(void)
 {
-  if (last_print) FREE(last_print);
+  if (last_print) free(last_print);
   last_print = NULL;
   if (old_dac_printer != dac_mus_print)
     old_dac_printer = mus_print_set_handler(dac_mus_print);
@@ -1855,27 +1855,27 @@ static void make_dac_buffers(void)
     {
       if (dac_buffers)
 	{
-	  for (i = 0; i < dac_buffer_chans; i++) FREE(dac_buffers[i]);
-	  FREE(dac_buffers);
+	  for (i = 0; i < dac_buffer_chans; i++) free(dac_buffers[i]);
+	  free(dac_buffers);
 	}
       if (rev_ins)
 	{
-	  for (i = 0; i < dac_buffer_chans; i++) FREE(rev_ins[i]);
-	  FREE(rev_ins);
+	  for (i = 0; i < dac_buffer_chans; i++) free(rev_ins[i]);
+	  free(rev_ins);
 	}
-      dac_buffers = (mus_sample_t **)CALLOC(snd_dacp->channels, sizeof(mus_sample_t *));
-      rev_ins = (Float **)CALLOC(snd_dacp->channels, sizeof(Float *));
+      dac_buffers = (mus_sample_t **)calloc(snd_dacp->channels, sizeof(mus_sample_t *));
+      rev_ins = (Float **)calloc(snd_dacp->channels, sizeof(Float *));
       for (i = 0; i < snd_dacp->channels; i++) 
 	{
-	  dac_buffers[i] = (mus_sample_t *)CALLOC(snd_dacp->frames, sizeof(mus_sample_t));
-	  rev_ins[i] = (Float *)CALLOC(snd_dacp->frames, sizeof(Float));
+	  dac_buffers[i] = (mus_sample_t *)calloc(snd_dacp->frames, sizeof(mus_sample_t));
+	  rev_ins[i] = (Float *)calloc(snd_dacp->frames, sizeof(Float));
 	}
       dac_buffer_chans = snd_dacp->channels;
       dac_buffer_size = snd_dacp->frames;
-      if (r_outs) FREE(r_outs);
-      if (r_ins) FREE(r_ins);
-      r_outs = (Float *)CALLOC(snd_dacp->channels, sizeof(Float));
-      r_ins = (Float *)CALLOC(snd_dacp->channels, sizeof(Float));
+      if (r_outs) free(r_outs);
+      if (r_ins) free(r_ins);
+      r_outs = (Float *)calloc(snd_dacp->channels, sizeof(Float));
+      r_ins = (Float *)calloc(snd_dacp->channels, sizeof(Float));
     }
   bytes = snd_dacp->channels * dac_buffer_size * mus_bytes_per_sample(snd_dacp->out_format);
   if ((audio_bytes_size < bytes) || 
@@ -1883,12 +1883,12 @@ static void make_dac_buffers(void)
     {
       if (audio_bytes)
 	{
-	  for (i = 0; i < audio_bytes_devices; i++) FREE(audio_bytes[i]);
-	  FREE(audio_bytes);
+	  for (i = 0; i < audio_bytes_devices; i++) free(audio_bytes[i]);
+	  free(audio_bytes);
 	}
-      audio_bytes = (unsigned char **)CALLOC(snd_dacp->devices, sizeof(unsigned char *));
+      audio_bytes = (unsigned char **)calloc(snd_dacp->devices, sizeof(unsigned char *));
       for (i = 0; i < snd_dacp->devices; i++) 
-	audio_bytes[i] = (unsigned char *)CALLOC(bytes, sizeof(unsigned char));
+	audio_bytes[i] = (unsigned char *)calloc(bytes, sizeof(unsigned char));
       audio_bytes_size = bytes;
       audio_bytes_devices = snd_dacp->devices;
     }
@@ -2141,7 +2141,7 @@ static bool start_audio_output_1(void)
 	}
       snd_dacp->devices = alloc_devs;
       /* for now assume all are same number of chans */
-      snd_dacp->chans_per_device = (int *)CALLOC(snd_dacp->devices, sizeof(int));
+      snd_dacp->chans_per_device = (int *)calloc(snd_dacp->devices, sizeof(int));
       for (i = 0; i < snd_dacp->devices; i++) 
 	snd_dacp->chans_per_device[i] = snd_dacp->channels / snd_dacp->devices;
       make_dac_buffers();
@@ -2232,7 +2232,7 @@ static bool start_audio_output_1(void)
 	  return(false);
 	}
       snd_dacp->devices = (dev_fd[1] != -1) ? 2 : 1;
-      snd_dacp->chans_per_device = (int *)CALLOC(snd_dacp->devices, sizeof(int));
+      snd_dacp->chans_per_device = (int *)calloc(snd_dacp->devices, sizeof(int));
       for (i = 0; i < snd_dacp->devices; i++) 
 	snd_dacp->chans_per_device[i] = snd_dacp->channels / snd_dacp->devices;
       make_dac_buffers();
@@ -2321,7 +2321,7 @@ static bool start_audio_output_1(void)
       return(false);
     }
   snd_dacp->devices = 1;
-  snd_dacp->chans_per_device = (int *)CALLOC(snd_dacp->devices, sizeof(int));
+  snd_dacp->chans_per_device = (int *)calloc(snd_dacp->devices, sizeof(int));
   for (i = 0; i < snd_dacp->devices; i++) 
     snd_dacp->chans_per_device[i] = available_chans / snd_dacp->devices;
   make_dac_buffers();
@@ -2456,7 +2456,7 @@ void initialize_apply(snd_info *sp, int chans, off_t beg, off_t dur)
   play_list_members = 0;
   dac_running = true; /* this keeps start_dac from actually starting the dac */
   if (snd_dacp) free_dac_state();
-  snd_dacp = (dac_state *)CALLOC(1, sizeof(dac_state));
+  snd_dacp = (dac_state *)calloc(1, sizeof(dac_state));
   snd_dacp->slice = 0;
   snd_dacp->srate = SND_SRATE(sp);
   snd_dacp->out_format = MUS_AUDIO_COMPATIBLE_FORMAT;
@@ -2464,7 +2464,7 @@ void initialize_apply(snd_info *sp, int chans, off_t beg, off_t dur)
   snd_dacp->channels = chans;
   snd_dacp->frames = 8192;
   snd_dacp->devices = 1;
-  snd_dacp->chans_per_device = (int *)CALLOC(1, sizeof(int));
+  snd_dacp->chans_per_device = (int *)calloc(1, sizeof(int));
   snd_dacp->chans_per_device[0] = chans;
   snd_dacp->reverb_ring_frames = (off_t)(snd_dacp->srate * sp->reverb_control_decay);
   make_dac_buffers();
@@ -2540,7 +2540,7 @@ static XEN g_play_1(XEN samp_n, XEN snd_n, XEN chn_n, bool back, bool syncd, XEN
 		  (XEN_NOT_BOUND_P(stop_proc)) || 
 		  (XEN_FALSE_P(stop_proc)), 
 		  stop_proc, arg_pos + 1, caller, "a procedure of 1 arg");
-  if (play_name) {FREE(play_name); play_name = NULL;}
+  if (play_name) {free(play_name); play_name = NULL;}
 
   /* if even samp_n is XEN_UNDEFINED, start_dac? */
 
@@ -2592,13 +2592,13 @@ static XEN g_play_1(XEN samp_n, XEN snd_n, XEN chn_n, bool back, bool syncd, XEN
 	  si = snd_sync(sp->sync);
 	  if (end != NO_END_SPECIFIED)
 	    {
-	      ends = (off_t *)CALLOC(si->chans, sizeof(off_t));
+	      ends = (off_t *)calloc(si->chans, sizeof(off_t));
 	      for (i = 0; i < si->chans; i++) ends[i] = end;
 	    }
 	  for (i = 0; i < si->chans; i++) si->begs[i] = samp;
 	  play_channels_1(si->cps, si->chans, si->begs, ends, background, edpos, false, stop_proc, caller, arg_pos);
 	  si = free_sync_info(si);
-	  if (ends) FREE(ends);
+	  if (ends) free(ends);
 	}
       else
 	{
@@ -2748,8 +2748,8 @@ static int new_player_index(void)
   if (players_size == 0)
     {
       players_size = 8;
-      players = (snd_info **)CALLOC(players_size, sizeof(snd_info *));
-      player_chans = (int *)CALLOC(players_size, sizeof(int));
+      players = (snd_info **)calloc(players_size, sizeof(snd_info *));
+      player_chans = (int *)calloc(players_size, sizeof(int));
       return(-1);
     }
   for (i = 1; i < players_size; i++)
@@ -2757,8 +2757,8 @@ static int new_player_index(void)
       return(-i);
   old_size = players_size;
   players_size += 8;
-  players = (snd_info **)REALLOC(players, players_size * sizeof(snd_info *));
-  player_chans = (int *)REALLOC(player_chans, players_size * sizeof(int));
+  players = (snd_info **)realloc(players, players_size * sizeof(snd_info *));
+  player_chans = (int *)realloc(player_chans, players_size * sizeof(int));
   for (i = old_size; i < players_size; i++)
     {
       players[i] = NULL;
@@ -2792,13 +2792,13 @@ static void free_player(snd_info *sp)
       players[PLAYER(sp)] = NULL;
       player_chans[PLAYER(sp)] = 0;
     }
-  FREE(sp->filename);
+  free(sp->filename);
   sp->filename = NULL;
-  FREE(sp->chans);
+  free(sp->chans);
   sp->chans = NULL;
   if (sp->filter_control_envelope) sp->filter_control_envelope = free_env(sp->filter_control_envelope);
   sp->inuse = SOUND_IDLE;
-  FREE(sp);
+  free(sp);
 }
 
 
@@ -2866,7 +2866,7 @@ to be played (via " S_start_playing ")."
   cp = get_cp(snd, chn, S_make_player);
   if (cp == NULL) return(XEN_FALSE); /* won't happen */
   new_sp = make_snd_info(NULL, "make_player:wrapper", true_sp->hdr, new_player_index(), FILE_READ_ONLY);
-  FREE(new_sp->sgx); /* no built-in GUI */
+  free(new_sp->sgx); /* no built-in GUI */
   new_sp->sgx = NULL;
   new_sp->chans[cp->chan] = cp;
   return(C_TO_XEN_INT(make_player(new_sp, cp)));

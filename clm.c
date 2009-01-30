@@ -35,12 +35,12 @@
   #include "rt-various.h"
   #define mus_error(...) rt_mus_error(__VA_ARGS__)
 #else
-  #define clm_malloc(Num, What) MALLOC(Num)
-  #define clm_malloc_atomic(Num, What) MALLOC(Num)
-  #define clm_calloc(Num, Size, What) CALLOC(Num, Size)
-  #define clm_calloc_atomic(Num, Size, What) CALLOC(Num, Size)
-  #define clm_realloc(Old, NewSize) REALLOC(Old, NewSize)
-  #define clm_free(Ptr) FREE(Ptr)
+  #define clm_malloc(Num, What) malloc(Num)
+  #define clm_malloc_atomic(Num, What) malloc(Num)
+  #define clm_calloc(Num, Size, What) calloc(Num, Size)
+  #define clm_calloc_atomic(Num, Size, What) calloc(Num, Size)
+  #define clm_realloc(Old, NewSize) realloc(Old, NewSize)
+  #define clm_free(Ptr) free(Ptr)
 #endif
 
 #if HAVE_GSL

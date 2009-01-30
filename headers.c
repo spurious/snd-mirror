@@ -201,12 +201,12 @@ int mus_header_initialize(void)
   if (!hdrbuf_is_inited)
     {
       hdrbuf_is_inited = true;
-      hdrbuf = (unsigned char *)CALLOC(HDRBUFSIZ, sizeof(unsigned char));
-      aux_comment_start = (off_t *)CALLOC(AUX_COMMENTS, sizeof(off_t));
-      aux_comment_end = (off_t *)CALLOC(AUX_COMMENTS, sizeof(off_t));
-      loop_modes = (int *)CALLOC(LOOPS, sizeof(int));
-      loop_starts = (int *)CALLOC(LOOPS, sizeof(int));
-      loop_ends = (int *)CALLOC(LOOPS, sizeof(int));
+      hdrbuf = (unsigned char *)calloc(HDRBUFSIZ, sizeof(unsigned char));
+      aux_comment_start = (off_t *)calloc(AUX_COMMENTS, sizeof(off_t));
+      aux_comment_end = (off_t *)calloc(AUX_COMMENTS, sizeof(off_t));
+      loop_modes = (int *)calloc(LOOPS, sizeof(int));
+      loop_starts = (int *)calloc(LOOPS, sizeof(int));
+      loop_ends = (int *)calloc(LOOPS, sizeof(int));
       if ((hdrbuf == NULL) || (aux_comment_start == NULL) || (aux_comment_end == NULL) ||
 	  (loop_modes == NULL) || (loop_starts == NULL) || (loop_ends == NULL))
 	return(mus_error(MUS_MEMORY_ALLOCATION_FAILED, "mus_header_initialize: buffer allocation failed"));
@@ -753,9 +753,9 @@ static void write_next_comment(int fd, const char *comment, int len, int loc)
   if (len > 0)
     {
       unsigned char *combuf;
-      combuf = (unsigned char *)CALLOC(len, sizeof(char));
+      combuf = (unsigned char *)calloc(len, sizeof(char));
       header_write(fd, combuf, len);
-      FREE(combuf);
+      free(combuf);
     }
 }
 
@@ -930,12 +930,12 @@ static void read_aif_mark_chunk(int fd, unsigned char *buf, off_t offset)
     {
       if (markers > 0)
 	{
-	  if (marker_ids) FREE(marker_ids); 
-	  if (marker_positions) FREE(marker_positions);
+	  if (marker_ids) free(marker_ids); 
+	  if (marker_positions) free(marker_positions);
 	}
       markers = num_marks;
-      marker_ids = (int *)CALLOC(markers, sizeof(int));
-      marker_positions = (int *)CALLOC(markers, sizeof(int));
+      marker_ids = (int *)calloc(markers, sizeof(int));
+      marker_positions = (int *)calloc(markers, sizeof(int));
     }
   moff = 10;
   for (m = 0; m < num_marks; m++)
@@ -1027,8 +1027,8 @@ static int read_aiff_header(const char *filename, int fd, int overall_offset)
   srate = 0;
   chans = 0;
   markers = 0;
-  if (marker_ids) FREE(marker_ids); 
-  if (marker_positions) FREE(marker_positions);
+  if (marker_ids) free(marker_ids); 
+  if (marker_positions) free(marker_positions);
   marker_ids = NULL;
   marker_positions = NULL;
   happy = true;
@@ -1449,7 +1449,7 @@ char *mus_header_aiff_aux_comment(const char *name, off_t *starts, off_t *ends)
       if (full_len > 0)
 	{
 	  off_t sc_len;
-	  sc = (char *)CALLOC(full_len, sizeof(char));
+	  sc = (char *)calloc(full_len, sizeof(char));
 	  sc_len = 0;
 	  for (i = 0; i < AUX_COMMENTS; i++) 
 	    {
@@ -2119,11 +2119,11 @@ char *mus_header_riff_aux_comment(const char *name, off_t *starts, off_t *ends)
       if (fd == -1) return(NULL);
       i = starts[0];
       end = ends[0];
-      sc = (char *)CALLOC(end - i + 2, sizeof(char));
+      sc = (char *)calloc(end - i + 2, sizeof(char));
       j = 0;
       k = 4;
       lseek(fd, i, SEEK_SET);
-      auxcom = (char *)CALLOC(end - i + 2, sizeof(char));
+      auxcom = (char *)calloc(end - i + 2, sizeof(char));
       header_read(fd, (unsigned char *)auxcom, end - i + 1);
       CLOSE(fd, name);
       i += 4;
@@ -2147,7 +2147,7 @@ char *mus_header_riff_aux_comment(const char *name, off_t *starts, off_t *ends)
 	    }
 	  i += (len + 8);
 	}
-      FREE(auxcom);
+      free(auxcom);
     }
   return(sc);
 }
@@ -2577,24 +2577,24 @@ static void soundfont_entry(const char *name, int start, int end, int loop_start
       if (soundfont_size == 0)
 	{
 	  soundfont_size = 8;
-	  soundfont_starts = (int *)CALLOC(soundfont_size, sizeof(int));
-	  soundfont_ends = (int *)CALLOC(soundfont_size, sizeof(int));
-	  soundfont_loop_starts = (int *)CALLOC(soundfont_size, sizeof(int));
-	  soundfont_loop_ends = (int *)CALLOC(soundfont_size, sizeof(int));
-	  soundfont_names = (char **)CALLOC(soundfont_size, sizeof(char *));
+	  soundfont_starts = (int *)calloc(soundfont_size, sizeof(int));
+	  soundfont_ends = (int *)calloc(soundfont_size, sizeof(int));
+	  soundfont_loop_starts = (int *)calloc(soundfont_size, sizeof(int));
+	  soundfont_loop_ends = (int *)calloc(soundfont_size, sizeof(int));
+	  soundfont_names = (char **)calloc(soundfont_size, sizeof(char *));
 	}
       else
 	{
 	  soundfont_size += 8;
-	  soundfont_starts = (int *)REALLOC(soundfont_starts, soundfont_size * sizeof(int));
-	  soundfont_ends = (int *)REALLOC(soundfont_ends, soundfont_size * sizeof(int));
-	  soundfont_loop_starts = (int *)REALLOC(soundfont_loop_starts, soundfont_size * sizeof(int));
-	  soundfont_loop_ends = (int *)REALLOC(soundfont_loop_ends, soundfont_size * sizeof(int));
-	  soundfont_names = (char **)REALLOC(soundfont_names, soundfont_size * sizeof(char *));
+	  soundfont_starts = (int *)realloc(soundfont_starts, soundfont_size * sizeof(int));
+	  soundfont_ends = (int *)realloc(soundfont_ends, soundfont_size * sizeof(int));
+	  soundfont_loop_starts = (int *)realloc(soundfont_loop_starts, soundfont_size * sizeof(int));
+	  soundfont_loop_ends = (int *)realloc(soundfont_loop_ends, soundfont_size * sizeof(int));
+	  soundfont_names = (char **)realloc(soundfont_names, soundfont_size * sizeof(char *));
 	}
       for (i = soundfont_entries; i < soundfont_size; i++) soundfont_names[i] = NULL;
     }
-  if (soundfont_names[soundfont_entries] == NULL) soundfont_names[soundfont_entries] = (char *)CALLOC(20, sizeof(char));
+  if (soundfont_names[soundfont_entries] == NULL) soundfont_names[soundfont_entries] = (char *)calloc(20, sizeof(char));
   strcpy(soundfont_names[soundfont_entries], name);
   soundfont_starts[soundfont_entries] = start;
   soundfont_ends[soundfont_entries] = end;
@@ -2915,7 +2915,7 @@ static int write_nist_header(int fd, int wsrate, int wchans, off_t size, int for
   char *header;
   int datum;
   datum = mus_bytes_per_sample(format);
-  header = (char *)CALLOC(1024, sizeof(char));
+  header = (char *)calloc(1024, sizeof(char));
   sprintf(header, "NIST_1A\n   1024\nchannel_count -i %d\nsample_rate -i %d\nsample_n_bytes -i %d\nsample_byte_format -s2 %s\nsample_sig_bits -i %d\nsample_count -i " OFF_TD "\nend_head\n",
 	  wchans, wsrate, datum,
 	  ((format == MUS_BSHORT) || (format == MUS_B24INT) || (format == MUS_BINT)) ? "10" : "01",
@@ -2923,7 +2923,7 @@ static int write_nist_header(int fd, int wsrate, int wchans, off_t size, int for
 	  size / datum);
   header_write(fd, (unsigned char *)header, 1024);
   data_location = 1024;
-  FREE(header);
+  free(header);
   return(MUS_NO_ERROR);
 }
 
@@ -3136,9 +3136,9 @@ static void write_ircam_comment(int fd, const char *comment, int len)
   if (len > 0)
     {
       unsigned char *combuf;
-      combuf = (unsigned char *)CALLOC(len, sizeof(char));
+      combuf = (unsigned char *)calloc(len, sizeof(char));
       header_write(fd, combuf, len);
-      FREE(combuf);
+      free(combuf);
     }
 }
 
@@ -4145,7 +4145,7 @@ static int read_file_samp_header(const char *filename, int fd)
   srate = 8000;
   data_format = MUS_LSHORT;
   lseek(fd, 10, SEEK_SET);
-  locbuf = (unsigned char *)CALLOC(1024, sizeof(unsigned char));
+  locbuf = (unsigned char *)calloc(1024, sizeof(unsigned char));
   header_read(fd, locbuf, 1024);
   while (i < 1024)
     {
@@ -4159,7 +4159,7 @@ static int read_file_samp_header(const char *filename, int fd)
       while ((i < 1024) && (locbuf[i] != 10) && (locbuf[i] != 0)) i++;
       i++;
     }
-  FREE(locbuf);
+  free(locbuf);
   true_file_length = SEEK_FILE_LENGTH(fd);
   if (true_file_length < data_location)
     return(mus_error(MUS_HEADER_READ_FAILED, "%s: data_location " OFF_TD " > file length: " OFF_TD, filename, data_location, true_file_length));
@@ -5118,7 +5118,7 @@ static int read_comdisco_header(const char *filename, int fd)
   int i, j, k, m, n, curend, offset, len, type, d_size = 0;
   bool happy = true, little, commenting;
   k = 15;
-  line = (char *)CALLOC(256, sizeof(char));
+  line = (char *)calloc(256, sizeof(char));
   little = false;
   offset = 0;
   type = 0;
@@ -5134,7 +5134,7 @@ static int read_comdisco_header(const char *filename, int fd)
 	      offset += curend;
 	      if (read(fd, hdrbuf, HDRBUFSIZ) != HDRBUFSIZ) 
 		{
-		  FREE(line);
+		  free(line);
 		  return(mus_error(MUS_HEADER_READ_FAILED, "%s comdisco header truncated?", filename));
 		}
 	      k = 0;
@@ -5206,7 +5206,7 @@ static int read_comdisco_header(const char *filename, int fd)
   true_file_length = SEEK_FILE_LENGTH(fd);
   if (data_size > mus_bytes_to_samples(data_format, true_file_length - data_location))
     data_size = mus_bytes_to_samples(data_format, true_file_length - data_location);
-  FREE(line);
+  free(line);
   return(MUS_NO_ERROR);
 }
 
@@ -6260,7 +6260,7 @@ int mus_header_change_type(const char *filename, int new_type, int new_format)
 	      (new_type == MUS_RF64))
 	    return(mus_header_convert_riff_to_rf64(filename, data_size));
 
-	  new_file = (char *)CALLOC(strlen(filename) + 5, sizeof(char));
+	  new_file = (char *)calloc(strlen(filename) + 5, sizeof(char));
 	  sprintf(new_file, "%s.tmp", filename);
 	  loc = mus_header_data_location();
 	  if (new_type != MUS_RAW)
@@ -6268,7 +6268,7 @@ int mus_header_change_type(const char *filename, int new_type, int new_format)
 	      if (comment_end > comment_start)
 		{
 		  len = comment_end - comment_start + 1;
-		  comment = (char *)CALLOC(len + 1, sizeof(char));
+		  comment = (char *)calloc(len + 1, sizeof(char));
 		  ifd = mus_file_open_read(filename);
 		  lseek(ifd, comment_start, SEEK_SET);
 		  header_read(ifd, (unsigned char *)comment, len);
@@ -6282,14 +6282,14 @@ int mus_header_change_type(const char *filename, int new_type, int new_format)
 	  lseek(ifd, loc, SEEK_SET);
 	  ofd = mus_file_reopen_write(new_file);
 	  lseek(ofd, 0L, SEEK_END);
-	  buf = (unsigned char *)CALLOC(8192, sizeof(unsigned char));
+	  buf = (unsigned char *)calloc(8192, sizeof(unsigned char));
 	  while ((nbytes = read(ifd, buf, 8192))) header_write(ofd, buf, (int)nbytes);
 	  CLOSE(ifd, filename);
 	  CLOSE(ofd, new_file);
-	  FREE(buf);
-	  if (comment) FREE(comment);
+	  free(buf);
+	  if (comment) free(comment);
 	  rename(new_file, filename);
-	  FREE(new_file);
+	  free(new_file);
 	}
     }
   return(err);
@@ -6448,7 +6448,7 @@ int mus_header_change_comment(const char *filename, int type, const char *new_co
 	  off_t loc;
 	  ssize_t nbytes;
 	  unsigned char *buf = NULL;
-	  new_file = (char *)CALLOC(strlen(filename) + 5, sizeof(char));
+	  new_file = (char *)calloc(strlen(filename) + 5, sizeof(char));
 	  sprintf(new_file, "%s.tmp", filename);
 	  loc = mus_header_data_location();
 	  mus_write_header(new_file, header_type, srate, chans, data_size, data_format, new_comment);
@@ -6456,13 +6456,13 @@ int mus_header_change_comment(const char *filename, int type, const char *new_co
 	  lseek(ifd, loc, SEEK_SET);
 	  ofd = mus_file_reopen_write(new_file);
 	  lseek(ofd, 0L, SEEK_END);
-	  buf = (unsigned char *)CALLOC(8192, sizeof(unsigned char));
+	  buf = (unsigned char *)calloc(8192, sizeof(unsigned char));
 	  while ((nbytes = read(ifd, buf, 8192))) header_write(ofd, buf, (int)nbytes);
 	  CLOSE(ifd, filename);
 	  CLOSE(ofd, new_file);
-	  FREE(buf);
+	  free(buf);
 	  rename(new_file, filename);
-	  FREE(new_file);
+	  free(new_file);
 	}
     }
   return(err);

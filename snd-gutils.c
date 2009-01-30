@@ -9,7 +9,7 @@ bool set_tiny_font(const char *font)
   fs = pango_font_description_from_string(font);
   if (fs)
     {
-      if (tiny_font(ss)) FREE(tiny_font(ss));
+      if (tiny_font(ss)) free(tiny_font(ss));
       in_set_tiny_font(mus_strdup(font));
       if (TINY_FONT(ss)) pango_font_description_free(TINY_FONT(ss));
       TINY_FONT(ss) = fs;
@@ -26,7 +26,7 @@ bool set_listener_font(const char *font)
   fs = pango_font_description_from_string(font);
   if (fs)
     {
-      if (listener_font(ss)) FREE(listener_font(ss));
+      if (listener_font(ss)) free(listener_font(ss));
       in_set_listener_font(mus_strdup(font));
       if (LISTENER_FONT(ss)) pango_font_description_free(LISTENER_FONT(ss));
       LISTENER_FONT(ss) = fs;
@@ -44,7 +44,7 @@ bool set_peaks_font(const char *font)
   fs = pango_font_description_from_string(font);
   if (fs)
     {
-      if (peaks_font(ss)) FREE(peaks_font(ss));
+      if (peaks_font(ss)) free(peaks_font(ss));
       in_set_peaks_font(mus_strdup(font));
       if (PEAKS_FONT(ss)) pango_font_description_free(PEAKS_FONT(ss));
       PEAKS_FONT(ss) = fs;
@@ -61,7 +61,7 @@ bool set_bold_peaks_font(const char *font)
   fs = pango_font_description_from_string(font);
   if (fs)
     {
-      if (bold_peaks_font(ss)) FREE(bold_peaks_font(ss));
+      if (bold_peaks_font(ss)) free(bold_peaks_font(ss));
       in_set_bold_peaks_font(mus_strdup(font));
       if (BOLD_PEAKS_FONT(ss)) pango_font_description_free(BOLD_PEAKS_FONT(ss));
       BOLD_PEAKS_FONT(ss) = fs;
@@ -78,7 +78,7 @@ bool set_axis_label_font(const char *font)
   fs = pango_font_description_from_string(font);
   if (fs)
     {
-      if (axis_label_font(ss)) FREE(axis_label_font(ss));
+      if (axis_label_font(ss)) free(axis_label_font(ss));
       in_set_axis_label_font(mus_strdup(font));
       if (AXIS_LABEL_FONT(ss)) pango_font_description_free(AXIS_LABEL_FONT(ss));
       AXIS_LABEL_FONT(ss) = fs;
@@ -98,7 +98,7 @@ bool set_axis_numbers_font(const char *font)
   fs = pango_font_description_from_string(font);
   if (fs)
     {
-      if (axis_numbers_font(ss)) FREE(axis_numbers_font(ss));
+      if (axis_numbers_font(ss)) free(axis_numbers_font(ss));
       in_set_axis_numbers_font(mus_strdup(font));
       if (AXIS_NUMBERS_FONT(ss)) pango_font_description_free(AXIS_NUMBERS_FONT(ss));
       AXIS_NUMBERS_FONT(ss) = fs;
@@ -432,7 +432,7 @@ gc_t *gc_new(GdkDrawable *wn)
 {
   gc_t *gp;
 #if USE_CAIRO
-  gp = (gc_t *)CALLOC(1, sizeof(gc_t));
+  gp = (gc_t *)calloc(1, sizeof(gc_t));
 #else
   gp = gdk_gc_new(wn);
 #endif
@@ -529,7 +529,7 @@ color_t rgb_to_color(Float r, Float g, Float b)
 {
   color_info *ccolor;
 #if USE_CAIRO
-  ccolor = (color_info *)MALLOC(sizeof(color_info));
+  ccolor = (color_info *)malloc(sizeof(color_info));
   ccolor->red = r;
   ccolor->green = g;
   ccolor->blue = b;
@@ -721,7 +721,7 @@ gpointer get_user_data(GObject *obj)
 void set_user_int_data(GObject *obj, int data)
 {
   int *gdata;
-  gdata = (int *)MALLOC(sizeof(int));
+  gdata = (int *)malloc(sizeof(int));
   gdata[0] = data;
   g_object_set_data(obj, "snd-data", (gpointer)gdata);
 }
@@ -919,30 +919,30 @@ void info_widget_set_size(GtkWidget *w, int size)
 void widget_int_to_text(GtkWidget *w, int val)
 {
   char *str;
-  str = (char *)CALLOC(8, sizeof(char));
+  str = (char *)calloc(8, sizeof(char));
   mus_snprintf(str, 8, "%d", val);
   gtk_entry_set_text(GTK_ENTRY(w), str);
-  FREE(str);
+  free(str);
 }
 
 
 void widget_float_to_text(GtkWidget *w, Float val)
 {
   char *str;
-  str = (char *)CALLOC(8, sizeof(char));
+  str = (char *)calloc(8, sizeof(char));
   mus_snprintf(str, 8, "%.2f", val);
   gtk_entry_set_text(GTK_ENTRY(w), str);
-  FREE(str);
+  free(str);
 }
 
 
 void widget_off_t_to_text(GtkWidget *w, off_t val)
 {
   char *str;
-  str = (char *)CALLOC(8, sizeof(char));
+  str = (char *)calloc(8, sizeof(char));
   mus_snprintf(str, 8, OFF_TD, val);
   gtk_entry_set_text(GTK_ENTRY(w), str);
-  FREE(str);
+  free(str);
 }
 
 
@@ -1057,7 +1057,7 @@ slist *slist_new_with_title_and_table_data(const char *title,
   slist *lst;
   GtkWidget *topw = NULL;
   int i;
-  lst = (slist *)CALLOC(1, sizeof(slist));
+  lst = (slist *)calloc(1, sizeof(slist));
   lst->selected_item = SLIST_NO_ITEM_SELECTED;
 
   if (title)
@@ -1113,7 +1113,7 @@ slist *slist_new_with_title_and_table_data(const char *title,
 
   if (num_items > 0)
     {
-      lst->items = (GtkWidget **)CALLOC(num_items, sizeof(GtkWidget *));
+      lst->items = (GtkWidget **)calloc(num_items, sizeof(GtkWidget *));
       lst->items_size = num_items;
       lst->num_items = num_items;
       for (i = 0; i < num_items; i++)
@@ -1162,7 +1162,7 @@ static int slist_row(GtkWidget *item)
 static void slist_set_row(GtkWidget *item, int row)
 {
   int *gdata;
-  gdata = (int *)MALLOC(sizeof(int));
+  gdata = (int *)malloc(sizeof(int));
   gdata[0] = row;
   g_object_set_data(G_OBJECT(item), "slist-row", (gpointer)gdata);
 }
@@ -1175,7 +1175,7 @@ void slist_append(slist *lst, const char *name)
   int loc = 0;
   if (lst->items_size == 0)
     {
-      lst->items = (GtkWidget **)CALLOC(INITIAL_SLIST_LENGTH, sizeof(GtkWidget *));
+      lst->items = (GtkWidget **)calloc(INITIAL_SLIST_LENGTH, sizeof(GtkWidget *));
       lst->items_size = INITIAL_SLIST_LENGTH;
       lst->num_items = 0;
     }
@@ -1183,7 +1183,7 @@ void slist_append(slist *lst, const char *name)
     {
       int i;
       lst->items_size += INITIAL_SLIST_LENGTH;
-      lst->items = (GtkWidget **)REALLOC(lst->items, lst->items_size * sizeof(GtkWidget *));
+      lst->items = (GtkWidget **)realloc(lst->items, lst->items_size * sizeof(GtkWidget *));
       for (i = lst->num_items; i < lst->items_size; i++) lst->items[i] = NULL;
     }
   loc = lst->num_items++;

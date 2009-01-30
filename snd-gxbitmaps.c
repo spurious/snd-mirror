@@ -460,7 +460,7 @@ void make_icons_transparent(const char *color)
   static char *bg_line = NULL;
   int i;
   const char **tmp;
-  if (bg_line) FREE(bg_line);
+  if (bg_line) free(bg_line);
   bg_line = mus_format("-      c %s s %s", color, color); /* the background color isn't known at compile time */
   mini_lock_xpm[1] = bg_line;
   blank_xpm[1] = bg_line;

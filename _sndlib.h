@@ -276,12 +276,6 @@ enum {MUS_NO_ERROR, MUS_NO_FREQUENCY, MUS_NO_PHASE, MUS_NO_GEN, MUS_NO_LENGTH,
 /* keep this list in sync with mus_error_names in sound.c and snd-test.scm|rb */
 
 
-#define CALLOC(a, b)  calloc((size_t)(a), (size_t)(b))
-#define MALLOC(a)     malloc((size_t)(a))
-#define FREE(a)       free(a)
-#define REALLOC(a, b) realloc(a, (size_t)(b))
-
-
 #if MUS_WINDOZE
   #ifdef FOPEN
     #undef FOPEN

@@ -27,7 +27,7 @@ static void help_expose(Widget w, XtPointer context, XEvent *event, Boolean *con
 	  cur_help_str = XmTextGetString(help_text);
 	  new_help_str = word_wrap(original_help_text, curwid);
 	  XmTextSetString(help_text, new_help_str);
-	  if (new_help_str) FREE(new_help_str);
+	  if (new_help_str) free(new_help_str);
 	  if (cur_help_str) XtFree(cur_help_str);
 	  old_help_text_width = curwid;
 	}
@@ -48,10 +48,10 @@ static XmString parse_crossref(const char *xref)
 	{
 	  if (i > 0)
 	    {
-	      str = (char *)CALLOC(i - start + 1, sizeof(char));
+	      str = (char *)calloc(i - start + 1, sizeof(char));
 	      for (k = 0, j = start; j < i; k++, j++) str[k] = xref[j];
 	      tmp = XmStringGenerate(str, NULL, XmCHARSET_TEXT, (char *)"normal_text");
-	      FREE(str);
+	      free(str);
 	      if (xs) 
 		xs = XmStringConcatAndFree(xs, tmp);
 	      else xs = tmp;
@@ -62,24 +62,24 @@ static XmString parse_crossref(const char *xref)
 	{
 	  if (xref[i] == '}')
 	    {
-	      str = (char *)CALLOC(i - start + 1, sizeof(char));
+	      str = (char *)calloc(i - start + 1, sizeof(char));
 	      for (k = 0, j = start; j < i; k++, j++) str[k] = xref[j];
 	      if (xs)
 		xs = XmStringConcatAndFree(xs, XmStringGenerate(str, NULL, XmCHARSET_TEXT, (char *)"url_text"));
 	      else xs = XmStringGenerate(str, NULL, XmCHARSET_TEXT, (char *)"url_text");
-	      FREE(str);
+	      free(str);
 	      start = i + 1;
 	    }
 	}
     }
   if (start < len)
     {
-      str = (char *)CALLOC(len - start + 1, sizeof(char));
+      str = (char *)calloc(len - start + 1, sizeof(char));
       for (k = 0, j = start; j < len; k++, j++) str[k] = xref[j];
       if (xs)
 	xs = XmStringConcatAndFree(xs, XmStringGenerate(str, NULL, XmCHARSET_TEXT, (char *)"normal_text"));
       else xs = XmStringGenerate(str, NULL, XmCHARSET_TEXT, (char *)"normal_text");
-      FREE(str);
+      free(str);
     }
   return(xs);
 }
@@ -149,7 +149,7 @@ static bool new_help(const char *pattern, bool complain)
 	  xrefs = help_name_to_xrefs(pattern);
 	  snd_help_with_xrefs(pattern, XEN_TO_C_STRING(xstr), WITH_WORD_WRAP, xrefs, NULL);
 	  snd_unprotect_at(gc_loc);
-	  if (xrefs) FREE(xrefs);
+	  if (xrefs) free(xrefs);
 	  return(true);
 	}
       url_to_html_viewer(url);
@@ -161,7 +161,7 @@ static bool new_help(const char *pattern, bool complain)
       if (xrefs)
 	{
 	  snd_help_with_xrefs(pattern, "(no help found)", WITH_WORD_WRAP, xrefs, NULL);
-	  FREE(xrefs);
+	  free(xrefs);
 	  return(true);
 	}
       else snd_help_with_xrefs(pattern, "(no help found)", WITH_WORD_WRAP, NULL, NULL);
@@ -181,7 +181,7 @@ static void add_pattern_to_help_history(const char *pattern)
   if (help_history_size == 0)
     {
       help_history_size = 16;
-      help_history = (char **)CALLOC(help_history_size, sizeof(char *));
+      help_history = (char **)calloc(help_history_size, sizeof(char *));
     }
   else
     {
@@ -190,14 +190,14 @@ static void add_pattern_to_help_history(const char *pattern)
 	  int i;
 	  for (i = 0; i < 8; i++) 
 	    {
-	      if (help_history[i]) FREE(help_history[i]);
+	      if (help_history[i]) free(help_history[i]);
 	      help_history[i] = help_history[i + 8];
 	      help_history[i + 8] = NULL;
 	    }
 	  help_history_pos = 8;
 	}
     }
-  if (help_history[help_history_pos]) FREE(help_history[help_history_pos]);
+  if (help_history[help_history_pos]) free(help_history[help_history_pos]);
   help_history[help_history_pos++] = mus_strdup(pattern);
 }
 
@@ -242,7 +242,7 @@ static void help_browse_callback(Widget w, XtPointer context, XtPointer info)
       if (red_text)
 	{
 	  name_to_html_viewer(red_text);
-	  FREE(red_text);
+	  free(red_text);
 	}
       else
 	{
@@ -271,7 +271,7 @@ static void help_double_click_callback(Widget w, XtPointer context, XtPointer in
       if (red_text)
 	{
 	  name_to_html_viewer(red_text);
-	  FREE(red_text);
+	  free(red_text);
 	}
       else
 	{
@@ -524,12 +524,12 @@ int help_text_width(const char *txt, int start, int end)
       Dimension text_wid = 0;
       XmFontList fonts;
       XtVaGetValues(help_text, XmNfontList, &fonts, NULL);
-      msg = (char *)CALLOC(end - start + 1, sizeof(char));
+      msg = (char *)calloc(end - start + 1, sizeof(char));
       for (i = start, j = 0; i < end; i++, j++) msg[j] = txt[i];
       s1 = XmStringCreateLocalized(msg);
       text_wid = XmStringWidth(fonts, s1);
       XmStringFree(s1);
-      FREE(msg);
+      free(msg);
       return((int)text_wid);
     }
 #endif
@@ -554,7 +554,7 @@ Widget snd_help(const char *subject, const char *helpstr, with_word_wrap_t with_
       char *new_help_str = NULL;
       new_help_str = word_wrap(helpstr, widget_width(help_text));
       XmTextSetString(help_text, new_help_str);
-      if (new_help_str) FREE(new_help_str);
+      if (new_help_str) free(new_help_str);
     }
   else XmTextSetString(help_text, (char *)helpstr);
   if (!XtIsManaged(help_dialog)) 
@@ -577,14 +577,14 @@ Widget snd_help_with_xrefs(const char *subject, const char *helpstr, with_word_w
     {
       XmString *strs;
       int i = 0, len = 0, strs_size = 32;
-      strs = (XmString *)CALLOC(strs_size, sizeof(XmString));	  
+      strs = (XmString *)calloc(strs_size, sizeof(XmString));	  
       while (true)
 	{
 	  if (i >= strs_size)
 	    {
 	      int k;
 	      strs_size *= 2;
-	      strs = (XmString *)REALLOC(strs, strs_size * sizeof(XmString));
+	      strs = (XmString *)realloc(strs, strs_size * sizeof(XmString));
 	      for (k = i; k < strs_size; k++) strs[k] = NULL;
 	    }
 	  if (xrefs[i])
@@ -601,7 +601,7 @@ Widget snd_help_with_xrefs(const char *subject, const char *helpstr, with_word_w
       XtVaSetValues(related_items, XmNitems, strs, XmNitemCount, len, NULL);
       for (i = 0; i < len; i++)
 	XmStringFree(strs[i]);
-      FREE(strs);
+      free(strs);
     }
   return(w);
 }

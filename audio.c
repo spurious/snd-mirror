@@ -108,7 +108,7 @@
 char *strerror(int errnum)
 {
   char *strerrbuf;
-  strerrbuf = (char *)CALLOC(LABEL_BUFFER_SIZE, sizeof(char));
+  strerrbuf = (char *)calloc(LABEL_BUFFER_SIZE, sizeof(char));
   mus_snprintf(strerrbuf, LABEL_BUFFER_SIZE, "io err %d", errnum);
   return(strerrbuf);
 }
@@ -286,7 +286,7 @@ static void sgi_mus_print(char *msg)
   int oserr = oserror();
   if (oserr)
     {
-      if (sgi_err_buf == NULL) sgi_err_buf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
+      if (sgi_err_buf == NULL) sgi_err_buf = (char *)calloc(PRINT_BUFFER_SIZE, sizeof(char));
       mus_snprintf(sgi_err_buf, PRINT_BUFFER_SIZE, "%s [%s]", msg, alGetErrorString(oserr));
       (*old_handler)(sgi_err_buf);
     }
@@ -338,7 +338,7 @@ static void end_sgi_print(void)
       if (Audio_Line != -1) al_free(Audio_Line); \
       if (Error_Message) \
         { \
-          MUS_STANDARD_ERROR(Error_Type, Error_Message); FREE(Error_Message); \
+          MUS_STANDARD_ERROR(Error_Type, Error_Message); free(Error_Message); \
         } \
       else MUS_STANDARD_ERROR(Error_Type, mus_error_type_to_string(Error_Type)); \
       end_sgi_print(); \
@@ -414,13 +414,13 @@ int mus_audio_initialize(void)
   if (!audio_initialized)
     {
       audio_initialized = true;
-      config = (ALconfig *)CALLOC(IO_LINES, sizeof(ALconfig));
-      port = (ALport *)CALLOC(IO_LINES, sizeof(ALport));
-      line_in_use = (int *)CALLOC(IO_LINES, sizeof(int));
-      channels = (int *)CALLOC(IO_LINES, sizeof(int));
-      device = (long *)CALLOC(IO_LINES, sizeof(long));
-      datum_size = (int *)CALLOC(IO_LINES, sizeof(int));
-      line_out = (int *)CALLOC(IO_LINES, sizeof(int));
+      config = (ALconfig *)calloc(IO_LINES, sizeof(ALconfig));
+      port = (ALport *)calloc(IO_LINES, sizeof(ALport));
+      line_in_use = (int *)calloc(IO_LINES, sizeof(int));
+      channels = (int *)calloc(IO_LINES, sizeof(int));
+      device = (long *)calloc(IO_LINES, sizeof(long));
+      datum_size = (int *)calloc(IO_LINES, sizeof(int));
+      line_out = (int *)calloc(IO_LINES, sizeof(int));
     }
   return(MUS_NO_ERROR);
 }
@@ -1394,7 +1394,7 @@ static void describe_audio_state_1(void)
            mus_print("%s\n  [%s[%d] %s]", \
                      Message, \
                      __FILE__, __LINE__, c__FUNCTION__); \
-           FREE(Message); \
+           free(Message); \
          } \
        else mus_print("%s\n  [%s[%d] %s]", \
                       mus_error_type_to_string(Message_Type), \
@@ -1514,7 +1514,7 @@ static char *oss_mus_audio_moniker(void) {return("Sam 9407");}
 static char *oss_mus_audio_moniker(void)
 {
   char version[LABEL_BUFFER_SIZE];
-  if (version_name == NULL) version_name = (char *)CALLOC(LABEL_BUFFER_SIZE, sizeof(char));
+  if (version_name == NULL) version_name = (char *)calloc(LABEL_BUFFER_SIZE, sizeof(char));
   if (SOUND_VERSION < 361)
     {
       mus_snprintf(version, LABEL_BUFFER_SIZE, "%d", SOUND_VERSION);
@@ -1569,18 +1569,18 @@ static int oss_mus_audio_initialize(void)
   if (!audio_initialized)
     {
       audio_initialized = true;
-      audio_fd = (int *)CALLOC(MAX_SOUNDCARDS, sizeof(int));
-      audio_open_ctr = (int *)CALLOC(MAX_SOUNDCARDS, sizeof(int));
-      audio_dsp = (int *)CALLOC(MAX_SOUNDCARDS, sizeof(int));
-      audio_mixer = (int *)CALLOC(MAX_SOUNDCARDS, sizeof(int));
-      audio_type = (audio_card_t *)CALLOC(MAX_SOUNDCARDS, sizeof(audio_card_t));
-      audio_mode = (int *)CALLOC(MAX_SOUNDCARDS, sizeof(int));
-      dev_name = (char *)CALLOC(LABEL_BUFFER_SIZE, sizeof(char));
-      init_srate = (int *)CALLOC(MAX_SOUNDCARDS, sizeof(int));
-      init_chans = (int *)CALLOC(MAX_SOUNDCARDS, sizeof(int));
-      init_format = (int *)CALLOC(MAX_SOUNDCARDS, sizeof(int));
-      mixer_state = (int **)CALLOC(MAX_SOUNDCARDS, sizeof(int *));
-      for (i = 0; i < MAX_SOUNDCARDS; i++) mixer_state[i] = (int *)CALLOC(MIXER_SIZE, sizeof(int));
+      audio_fd = (int *)calloc(MAX_SOUNDCARDS, sizeof(int));
+      audio_open_ctr = (int *)calloc(MAX_SOUNDCARDS, sizeof(int));
+      audio_dsp = (int *)calloc(MAX_SOUNDCARDS, sizeof(int));
+      audio_mixer = (int *)calloc(MAX_SOUNDCARDS, sizeof(int));
+      audio_type = (audio_card_t *)calloc(MAX_SOUNDCARDS, sizeof(audio_card_t));
+      audio_mode = (int *)calloc(MAX_SOUNDCARDS, sizeof(int));
+      dev_name = (char *)calloc(LABEL_BUFFER_SIZE, sizeof(char));
+      init_srate = (int *)calloc(MAX_SOUNDCARDS, sizeof(int));
+      init_chans = (int *)calloc(MAX_SOUNDCARDS, sizeof(int));
+      init_format = (int *)calloc(MAX_SOUNDCARDS, sizeof(int));
+      mixer_state = (int **)calloc(MAX_SOUNDCARDS, sizeof(int *));
+      for (i = 0; i < MAX_SOUNDCARDS; i++) mixer_state[i] = (int *)calloc(MIXER_SIZE, sizeof(int));
       for (i = 0; i < MAX_SOUNDCARDS; i++)
 	{
 	  audio_fd[i] = -1;
@@ -2062,7 +2062,7 @@ static int oss_mus_audio_open_output(int ur_dev, int srate, int chans, int forma
 			       dev_name, FRAGMENTS, FRAGMENT_SIZE); /* not an error if ALSA OSS-emulation */
 	      fprintf(stderr, "%s\n", tmp);
 	      fragment_set_failed = true;
-	      FREE(tmp);
+	      free(tmp);
 	    }
         }
     }
@@ -2141,7 +2141,7 @@ static char *oss_unsrc(int srcbit)
     {
       bool need_and = false;
       char *buf;
-      buf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
+      buf = (char *)calloc(PRINT_BUFFER_SIZE, sizeof(char));
       if (srcbit & SOUND_MASK_MIC) {need_and = true; strcat(buf, "mic");}
       if (srcbit & SOUND_MASK_LINE) {if (need_and) strcat(buf, " and "); need_and = true; strcat(buf, "line in");}
       if (srcbit & SOUND_MASK_LINE1) {if (need_and) strcat(buf, " and "); need_and = true; strcat(buf, "line1");}
@@ -2299,8 +2299,8 @@ static int oss_mus_audio_open_input(int ur_dev, int srate, int chans, int format
       str1 = oss_unsrc(srcbit);
       str2 = oss_unsrc(cursrc);
       mus_print("weird: tried to set recorder source to %s, but got %s?", str1, str2);
-      FREE(str1);
-      FREE(str2);
+      free(str1);
+      free(str2);
     }
   if ((fragments_locked) && (requested_size != 0))
     {
@@ -3356,7 +3356,7 @@ char* mus_audio_moniker(void)
 {
 #if (HAVE_OSS && HAVE_ALSA)
   char *both_names;
-  both_names = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
+  both_names = (char *)calloc(PRINT_BUFFER_SIZE, sizeof(char));
   /* need to be careful here since these use the same constant buffer */
   strcpy(both_names, oss_mus_audio_moniker());
   strcat(both_names, ", ");
@@ -3789,7 +3789,7 @@ static int alsa_mus_error(int type, char *message)
   if (message)
     {
       mus_print(message);
-      FREE(message);
+      free(message);
     }
   return(MUS_ERROR);
 }
@@ -4021,7 +4021,7 @@ static int alsa_mus_audio_systems(void)
 
 static char *alsa_mus_audio_moniker(void)
 {
-  if (version_name == NULL) version_name = (char *)CALLOC(LABEL_BUFFER_SIZE, sizeof(char));
+  if (version_name == NULL) version_name = (char *)calloc(LABEL_BUFFER_SIZE, sizeof(char));
   mus_snprintf(version_name, LABEL_BUFFER_SIZE, "ALSA %s", SND_LIB_VERSION_STR);
   return(version_name);
 }
@@ -5144,7 +5144,7 @@ void mus_sun_set_outputs(int speakers, int headphones, int line_out)
   do { char *Error_Message; Error_Message = Ur_Error_Message; \
     if (Audio_Line != -1) close(Audio_Line); \
     if (Error_Message) \
-      {MUS_STANDARD_ERROR(Error_Type, Error_Message); FREE(Error_Message);} \
+      {MUS_STANDARD_ERROR(Error_Type, Error_Message); free(Error_Message);} \
     else MUS_STANDARD_ERROR(Error_Type, mus_error_type_to_string(Error_Type)); \
     return(MUS_ERROR); \
   } while (false)
@@ -5175,9 +5175,9 @@ char *mus_audio_moniker(void)
     }
   mus_audio_close(audio_fd);
 #if HAVE_SYS_MIXER_H
-  if (version_name == NULL) version_name = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
+  if (version_name == NULL) version_name = (char *)calloc(PRINT_BUFFER_SIZE, sizeof(char));
 #else
-  if (version_name == NULL) version_name = (char *)CALLOC(LABEL_BUFFER_SIZE, sizeof(char));
+  if (version_name == NULL) version_name = (char *)calloc(LABEL_BUFFER_SIZE, sizeof(char));
 #endif
 #ifndef AUDIO_DEV_AMD
   #if HAVE_SYS_MIXER_H
@@ -5920,7 +5920,7 @@ static char *sun_out_device_name(int dev)
 static char *sun_vol_name = NULL;
 static char *sun_volume_name(float vol, int balance, int chans)
 {
-  if (sun_vol_name == NULL) sun_vol_name = (char *)CALLOC(LABEL_BUFFER_SIZE, sizeof(char));
+  if (sun_vol_name == NULL) sun_vol_name = (char *)calloc(LABEL_BUFFER_SIZE, sizeof(char));
   if (chans != 2)
     mus_snprintf(sun_vol_name, LABEL_BUFFER_SIZE, "%.3f", vol);
   else 
@@ -6096,7 +6096,7 @@ static void end_win_print(void)
 #define RETURN_ERROR_EXIT(Error_Type, Ur_Error_Message) \
   do { char *Error_Message; Error_Message = Ur_Error_Message; \
     if (Error_Message) \
-      {MUS_STANDARD_ERROR(Error_Type, Error_Message); FREE(Error_Message);} \
+      {MUS_STANDARD_ERROR(Error_Type, Error_Message); free(Error_Message);} \
     else MUS_STANDARD_ERROR(Error_Type, mus_error_type_to_string(Error_Type)); \
     end_win_print(); \
     return(MUS_ERROR); \
@@ -6155,7 +6155,7 @@ int mus_audio_open_output(int ur_dev, int srate, int chans, int format, int size
   wh[0].dwBufferLength = buffer_size * current_datum_size;
   wh[0].dwFlags = 0;
   wh[0].dwLoops = 0;
-  wh[0].lpData = (char *)CALLOC(wh[0].dwBufferLength, sizeof(char));
+  wh[0].lpData = (char *)calloc(wh[0].dwBufferLength, sizeof(char));
   if ((wh[0].lpData) == 0) 
     {
       waveOutClose(fd); 
@@ -6167,7 +6167,7 @@ int mus_audio_open_output(int ur_dev, int srate, int chans, int format, int size
   win_out_err = waveOutPrepareHeader(fd, &(wh[0]), sizeof(WAVEHDR));
   if (win_out_err) 
     {
-      FREE(wh[0].lpData); 
+      free(wh[0].lpData); 
       waveOutClose(fd);  
       RETURN_ERROR_EXIT(MUS_AUDIO_CONFIGURATION_NOT_AVAILABLE,
 			mus_format("can't setup output 'header' for %d (%s)",
@@ -6178,10 +6178,10 @@ int mus_audio_open_output(int ur_dev, int srate, int chans, int format, int size
   wh[1].dwBufferLength = buffer_size * current_datum_size;
   wh[1].dwFlags = 0;
   wh[1].dwLoops = 0;
-  wh[1].lpData = (char *)CALLOC(wh[0].dwBufferLength, sizeof(char));
+  wh[1].lpData = (char *)calloc(wh[0].dwBufferLength, sizeof(char));
   if ((wh[1].lpData) == 0) 
     {
-      FREE(wh[0].lpData); 
+      free(wh[0].lpData); 
       waveOutClose(fd); 
       RETURN_ERROR_EXIT(MUS_AUDIO_SIZE_NOT_AVAILABLE,
 			mus_format("can't allocate buffer size %d for output %d (%s)",
@@ -6192,8 +6192,8 @@ int mus_audio_open_output(int ur_dev, int srate, int chans, int format, int size
   if (win_out_err) 
     {
       waveOutUnprepareHeader(fd, &(wh[0]), sizeof(WAVEHDR)); 
-      FREE(wh[0].lpData); 
-      FREE(wh[1].lpData); 
+      free(wh[0].lpData); 
+      free(wh[1].lpData); 
       waveOutClose(fd);  
       RETURN_ERROR_EXIT(MUS_AUDIO_CONFIGURATION_NOT_AVAILABLE,
 			mus_format("can't setup output 'header' for %d (%s)",
@@ -6754,8 +6754,8 @@ int mus_audio_close(int line)
           sound_state = SOUND_UNREADY;
           waveOutUnprepareHeader(fd, &(wh[0]), sizeof(WAVEHDR));
           waveOutUnprepareHeader(fd, &(wh[1]), sizeof(WAVEHDR));
-          FREE(wh[0].lpData);
-          FREE(wh[1].lpData);
+          free(wh[0].lpData);
+          free(wh[1].lpData);
           if (win_out_err) 
 	    RETURN_ERROR_EXIT(MUS_AUDIO_CANT_CLOSE,
 			      mus_format("close failed on %d",
@@ -6773,7 +6773,7 @@ int mus_audio_close(int line)
               waveInUnprepareHeader(record_fd, &rec_wh, sizeof(WAVEHDR));
               if (rec_wh.lpData) 
 		{
-		  FREE(rec_wh.lpData);
+		  free(rec_wh.lpData);
 		  rec_wh.lpData = NULL;
 		}
               rec_state = SOUND_UNREADY;
@@ -6832,7 +6832,7 @@ int mus_audio_open_input(int ur_dev, int srate, int chans, int format, int size)
   rec_wh.dwBufferLength = size * current_record_datum_size;
   rec_wh.dwFlags = 0;
   rec_wh.dwLoops = 0;
-  rec_wh.lpData = (char *)CALLOC(rec_wh.dwBufferLength, sizeof(char));
+  rec_wh.lpData = (char *)calloc(rec_wh.dwBufferLength, sizeof(char));
   if ((rec_wh.lpData) == 0) 
     RETURN_ERROR_EXIT(MUS_AUDIO_SIZE_NOT_AVAILABLE,
 		      mus_format("can't allocated %d bytes for input buffer of %d (%s)",
@@ -6840,7 +6840,7 @@ int mus_audio_open_input(int ur_dev, int srate, int chans, int format, int size)
   win_in_err = waveInOpen(&record_fd, WAVE_MAPPER, &wf, (DWORD (*)(HWAVEIN,UINT,DWORD,DWORD,DWORD))next_input_buffer, 0, CALLBACK_FUNCTION);
   if (win_in_err) 
     {
-      FREE(rec_wh.lpData);
+      free(rec_wh.lpData);
       RETURN_ERROR_EXIT(MUS_AUDIO_DEVICE_NOT_AVAILABLE,
 			mus_format("can't open input device %d (%s)",
 				   dev, mus_audio_device_name(dev)));
@@ -6848,7 +6848,7 @@ int mus_audio_open_input(int ur_dev, int srate, int chans, int format, int size)
   win_in_err = waveInPrepareHeader(record_fd, &(rec_wh), sizeof(WAVEHDR));
   if (win_in_err) 
     {
-      FREE(rec_wh.lpData);
+      free(rec_wh.lpData);
       waveInClose(record_fd);
       RETURN_ERROR_EXIT(MUS_AUDIO_CONFIGURATION_NOT_AVAILABLE,
 			mus_format("can't prepare input 'header' for %d (%s)",
@@ -6959,11 +6959,11 @@ char *device_name(AudioDeviceID deviceID, int input_case)
   if (err == noErr) err =  AudioDeviceGetPropertyInfo(deviceID, 0, false, kAudioDevicePropertyDeviceManufacturer, &msize, NULL);
   if (err == noErr)
     {
-      name = (char *)MALLOC(size + 2);
+      name = (char *)malloc(size + 2);
       err = AudioDeviceGetProperty(deviceID, 0, input_case, kAudioDevicePropertyDeviceName, &size, name);
-      mfg = (char *)MALLOC(msize + 2);
+      mfg = (char *)malloc(msize + 2);
       err = AudioDeviceGetProperty(deviceID, 0, input_case, kAudioDevicePropertyDeviceManufacturer, &msize, mfg);
-      full_name = (char *)MALLOC(size + msize + 4);
+      full_name = (char *)malloc(size + msize + 4);
 #if HAVE_KAUDIODEVICEPROPERTYTRANSPORTTYPE
       trans_size = sizeof(UInt32);
       err = AudioDeviceGetProperty(deviceID, 0, input_case, kAudioDevicePropertyTransportType, &trans_size, &trans);
@@ -6975,8 +6975,8 @@ char *device_name(AudioDeviceID deviceID, int input_case)
       else mus_snprintf(full_name, size + msize + 4, "\n  %s: %s ('%c%c%c%c')", 
 			mfg, name,
 			(char)((trans >> 24) & 0xff), (char)((trans >> 16) & 0xff), (char)((trans >> 8) & 0xff), (char)(trans & 0xff));
-      FREE(name);
-      FREE(mfg);
+      free(name);
+      free(mfg);
     }
   return(full_name);
 }	
@@ -7031,7 +7031,7 @@ static void describe_audio_state_1(void)
       pprint("no audio devices found");
       return;
     }
-  devices = (AudioDeviceID *)MALLOC(msize);
+  devices = (AudioDeviceID *)malloc(msize);
   size = sizeof(AudioDeviceID);
   err = AudioHardwareGetProperty(kAudioHardwarePropertyDefaultInputDevice, &size, &default_input);
   if (err != noErr) default_input = 55555555; /* unsigned int -- I want some value that won't happen! */
@@ -7153,7 +7153,7 @@ static void describe_audio_state_1(void)
 	  formats = size / sizeof(AudioStreamBasicDescription);
 	  if (formats > 1)
 	    {
-	      descs = (AudioStreamBasicDescription *)CALLOC(formats, sizeof(AudioStreamBasicDescription));
+	      descs = (AudioStreamBasicDescription *)calloc(formats, sizeof(AudioStreamBasicDescription));
 	      size = formats * sizeof(AudioStreamBasicDescription);
 	      err = AudioDeviceGetProperty(device, 0, input_case, kAudioDevicePropertyStreamFormats, &size, descs);
 	      if (err == noErr) 
@@ -7172,13 +7172,13 @@ static void describe_audio_state_1(void)
 		      pprint(audio_strbuf);
 		    }
 		}
-	      FREE(descs);
+	      free(descs);
 	    }
 	  pprint("\n");
 	}
       input_case = true;
     }
-  if (devices) FREE(devices);
+  if (devices) free(devices);
 }
 
 #define MAX_BUFS 4
@@ -7413,12 +7413,12 @@ int mus_audio_open_output(int dev, int srate, int chans, int format, int size)
       int i;
       if (bufs)
 	{
-	  for (i = 0; i < MAX_BUFS; i++) FREE(bufs[i]);
-	  FREE(bufs);
+	  for (i = 0; i < MAX_BUFS; i++) free(bufs[i]);
+	  free(bufs);
 	}
-      bufs = (char **)CALLOC(MAX_BUFS, sizeof(char *));
+      bufs = (char **)calloc(MAX_BUFS, sizeof(char *));
       for (i = 0; i < MAX_BUFS; i++)
-	bufs[i] = (char *)CALLOC(bufsize, sizeof(char));
+	bufs[i] = (char *)calloc(bufsize, sizeof(char));
       current_bufsize = bufsize;
     }
 
@@ -7648,12 +7648,12 @@ int mus_audio_open_input(int dev, int srate, int chans, int format, int size)
       int i;
       if (bufs)
 	{
-	  for (i = 0; i < MAX_BUFS; i++) FREE(bufs[i]);
-	  FREE(bufs);
+	  for (i = 0; i < MAX_BUFS; i++) free(bufs[i]);
+	  free(bufs);
 	}
-      bufs = (char **)CALLOC(MAX_BUFS, sizeof(char *));
+      bufs = (char **)calloc(MAX_BUFS, sizeof(char *));
       for (i = 0; i < MAX_BUFS; i++)
-	bufs[i] = (char *)CALLOC(bufsize, sizeof(char));
+	bufs[i] = (char *)calloc(bufsize, sizeof(char));
       current_bufsize = bufsize;
     }
   in_buf = 0;
@@ -7722,13 +7722,13 @@ static int max_chans(AudioDeviceID device, int input)
       formats = size / sizeof(AudioStreamBasicDescription);
       if (formats > 1)
 	{
-	  descs = (AudioStreamBasicDescription *)CALLOC(formats, sizeof(AudioStreamBasicDescription));
+	  descs = (AudioStreamBasicDescription *)calloc(formats, sizeof(AudioStreamBasicDescription));
 	  size = formats * sizeof(AudioStreamBasicDescription);
 	  err = AudioDeviceGetProperty(device, 0, input, kAudioDevicePropertyStreamFormats, &size, descs);
 	  if (err == noErr) 
 	    for (k = 0; k < formats; k++)
 	      if ((int)(descs[k].mChannelsPerFrame) > maxc) maxc = (int)(descs[k].mChannelsPerFrame);
-	  FREE(descs);
+	  free(descs);
 	}
     }
   else fprintf(stderr, "read chans hit: %s\n", osx_error(err));
@@ -7895,7 +7895,7 @@ int mus_audio_api(void) {return(0);}
     if (esd_play_sock != -1) close(esd_play_sock); \
     if (esd_rec_sock != -1) close(esd_rec_sock); \
     if (Error_Message) \
-      {MUS_STANDARD_ERROR(Error_Type, Error_Message); FREE(Error_Message);} \
+      {MUS_STANDARD_ERROR(Error_Type, Error_Message); free(Error_Message);} \
     else MUS_STANDARD_ERROR(Error_Type, mus_error_type_to_string(Error_Type)); \
     return(MUS_ERROR); \
   } while (false)
@@ -9101,7 +9101,7 @@ char *jack_mus_audio_moniker(void) {return((char *)"jack");}
   do { char *Error_Message; Error_Message = Ur_Error_Message; \
     if (Audio_Line != -1) close(Audio_Line); \
     if (Error_Message) \
-      {MUS_STANDARD_ERROR(Error_Type, Error_Message); FREE(Error_Message);} \
+      {MUS_STANDARD_ERROR(Error_Type, Error_Message); free(Error_Message);} \
     else MUS_STANDARD_ERROR(Error_Type, mus_error_type_to_string(Error_Type)); \
     return(MUS_ERROR); \
   } while (false)
@@ -9471,7 +9471,7 @@ int mus_audio_read(int line, char *buf, int bytes)
   do { char *Error_Message; Error_Message = Ur_Error_Message; \
     if (Audio_Line != -1) close(Audio_Line); \
     if (Error_Message) \
-      {MUS_STANDARD_ERROR(Error_Type, Error_Message); FREE(Error_Message);} \
+      {MUS_STANDARD_ERROR(Error_Type, Error_Message); free(Error_Message);} \
     else MUS_STANDARD_ERROR(Error_Type, mus_error_type_to_string(Error_Type)); \
     return(MUS_ERROR); \
   } while (false)
@@ -10063,7 +10063,7 @@ static void pprint(const char *str)
 	  if ((len + save_it_loc + 2) >= save_it_len)
 	    {
 	      save_it_len = (len + save_it_loc + 1024);
-	      save_it = (char *)REALLOC(save_it, save_it_len * sizeof(char));
+	      save_it = (char *)realloc(save_it, save_it_len * sizeof(char));
 	    }
 	  for (i = 0; i < len; i++)
 	    save_it[save_it_loc++] = str[i];
@@ -10079,11 +10079,11 @@ char *mus_audio_report(void)
   if (!(save_it)) 
     {
       save_it_len = 1024;
-      save_it = (char *)CALLOC(save_it_len, sizeof(char));
+      save_it = (char *)calloc(save_it_len, sizeof(char));
     }
   save_it_loc = 0;
   print_it = 0;
-  if (!audio_strbuf) audio_strbuf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
+  if (!audio_strbuf) audio_strbuf = (char *)calloc(PRINT_BUFFER_SIZE, sizeof(char));
   describe_audio_state_1();
   return(save_it);
 }
@@ -10093,7 +10093,7 @@ void mus_audio_describe(void)
 {
   mus_audio_initialize();
   print_it = 1;
-  if (!audio_strbuf) audio_strbuf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
+  if (!audio_strbuf) audio_strbuf = (char *)calloc(PRINT_BUFFER_SIZE, sizeof(char));
   describe_audio_state_1();
 }
 

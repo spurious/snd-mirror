@@ -52,11 +52,11 @@ snd_info *snd_new_file(const char *newname, int header_type, int data_format, in
 	    {
 	      ssize_t bytes;
 	      unsigned char *buf = NULL;
-	      buf = (unsigned char *)CALLOC(size, sizeof(unsigned char));
+	      buf = (unsigned char *)calloc(size, sizeof(unsigned char));
 	      bytes = write(chan, buf, size);
 	      if (bytes == 0)
 		fprintf(stderr, "%s: write error", newname);
-	      FREE(buf);
+	      free(buf);
 	    }
 	  snd_close(chan, newname);
 	  ss->open_requestor = FROM_NEW_FILE_DIALOG;
@@ -99,10 +99,10 @@ static env_state *free_env_state(env_state *es)
 	}
       if (es->direct_data)
 	{
-	  FREE(es->direct_data);
+	  free(es->direct_data);
 	  es->direct_data = NULL;
 	}
-      FREE(es);
+      free(es);
     }
   return(NULL);
 }
@@ -112,9 +112,9 @@ peak_env_info *free_peak_env_info(peak_env_info *ep)
 {
   if (ep)
     {
-      if (ep->data_max) {FREE(ep->data_max); ep->data_max = NULL;}
-      if (ep->data_min) {FREE(ep->data_min); ep->data_min = NULL;}
-      FREE(ep);
+      if (ep->data_max) {free(ep->data_max); ep->data_max = NULL;}
+      if (ep->data_min) {free(ep->data_min); ep->data_min = NULL;}
+      free(ep);
     }
   return(NULL);
 }
@@ -167,7 +167,7 @@ static env_state *make_env_state(chan_info *cp, off_t samples)
   if (samples <= 0) return(NULL);
   stop_peak_env(cp);
   pos = cp->edit_ctr;
-  es = (env_state *)CALLOC(1, sizeof(env_state)); /* only creation point */
+  es = (env_state *)calloc(1, sizeof(env_state)); /* only creation point */
   es->file_open = false;
   es->samples = samples;
   es->slice = 0;
@@ -184,7 +184,7 @@ static env_state *make_env_state(chan_info *cp, off_t samples)
   else 
     {
       bool happy = false;
-      es->ep = (peak_env_info *)CALLOC(1, sizeof(peak_env_info));
+      es->ep = (peak_env_info *)calloc(1, sizeof(peak_env_info));
       ep = es->ep;
       if (pos > 0)
 	{
@@ -220,8 +220,8 @@ static env_state *make_env_state(chan_info *cp, off_t samples)
 		      old_ep = cp->edits[pos - 1]->peak_env;
 		      ep->samps_per_bin = old_ep->samps_per_bin;
 		      ep->peak_env_size = (int)(ceil((double)(es->samples) / (double)(ep->samps_per_bin)));
-		      ep->data_max = (Float *)CALLOC(ep->peak_env_size, sizeof(Float));
-		      ep->data_min = (Float *)CALLOC(ep->peak_env_size, sizeof(Float));
+		      ep->data_max = (Float *)calloc(ep->peak_env_size, sizeof(Float));
+		      ep->data_min = (Float *)calloc(ep->peak_env_size, sizeof(Float));
 		      start_bin = (int)(start / ep->samps_per_bin);
 		      ep->fmin = old_ep->data_min[0];
 		      ep->fmax = old_ep->data_max[0];
@@ -269,8 +269,8 @@ static env_state *make_env_state(chan_info *cp, off_t samples)
 	  if (val > 20) val = 20;
 	  ep->peak_env_size = snd_int_pow2(val);
 	  ep->samps_per_bin = (int)(ceil((double)(es->samples) / (double)(ep->peak_env_size)));
-	  ep->data_max = (Float *)CALLOC(ep->peak_env_size, sizeof(Float));
-	  ep->data_min = (Float *)CALLOC(ep->peak_env_size, sizeof(Float));
+	  ep->data_max = (Float *)calloc(ep->peak_env_size, sizeof(Float));
+	  ep->data_min = (Float *)calloc(ep->peak_env_size, sizeof(Float));
 	  ep->bin = 0;
 	  ep->top_bin = 0;
 	  ep->fmin = 10000000.0;
@@ -324,7 +324,7 @@ static bool tick_peak_env(chan_info *cp, env_state *es)
 	    es->sf = free_snd_fd(es->sf);
 	  if (es->direct_data)
 	    {
-	      FREE(es->direct_data);
+	      free(es->direct_data);
 	      es->direct_data = NULL;
 	    }
 	  ep->completed = true;
@@ -354,7 +354,7 @@ static bool tick_peak_env(chan_info *cp, env_state *es)
 	      es->format = cp->sound->hdr->format;
 	      es->chans = cp->sound->nchans;
 	      es->bytes = ep->samps_per_bin * mus_bytes_per_sample(es->format) * es->chans;
-	      es->direct_data = (unsigned char *)MALLOC(es->bytes * lm);
+	      es->direct_data = (unsigned char *)malloc(es->bytes * lm);
 	    }
 	  else es->sf = init_sample_read_any(ep->bin * ep->samps_per_bin, cp, READ_FORWARD, es->edpos);
 	}
@@ -440,7 +440,7 @@ static bool tick_peak_env(chan_info *cp, env_state *es)
 
 	  if (es->direct_data)
 	    {
-	      FREE(es->direct_data);
+	      free(es->direct_data);
 	      es->direct_data = NULL;
 	    }
 	  ep->completed = true;
@@ -722,9 +722,9 @@ void peak_env_scale_by(chan_info *cp, Float scl, int pos)
 	new_ep = free_peak_env(cp, cp->edit_ctr);
       if (new_ep == NULL)
 	{
-	  new_ep = (peak_env_info *)CALLOC(1, sizeof(peak_env_info));
-	  new_ep->data_max = (Float *)MALLOC(old_ep->peak_env_size * sizeof(Float));
-	  new_ep->data_min = (Float *)MALLOC(old_ep->peak_env_size * sizeof(Float));
+	  new_ep = (peak_env_info *)calloc(1, sizeof(peak_env_info));
+	  new_ep->data_max = (Float *)malloc(old_ep->peak_env_size * sizeof(Float));
+	  new_ep->data_min = (Float *)malloc(old_ep->peak_env_size * sizeof(Float));
 	}
       new_ep->peak_env_size = old_ep->peak_env_size;
       new_ep->samps_per_bin = old_ep->samps_per_bin;
@@ -802,9 +802,9 @@ void peak_env_scale_selection_by(chan_info *cp, Float scl, off_t beg, off_t num,
 
       if (new_ep == NULL)
 	{
-	  new_ep = (peak_env_info *)CALLOC(1, sizeof(peak_env_info));
-	  new_ep->data_max = (Float *)MALLOC(old_ep->peak_env_size * sizeof(Float));
-	  new_ep->data_min = (Float *)MALLOC(old_ep->peak_env_size * sizeof(Float));
+	  new_ep = (peak_env_info *)calloc(1, sizeof(peak_env_info));
+	  new_ep->data_max = (Float *)malloc(old_ep->peak_env_size * sizeof(Float));
+	  new_ep->data_min = (Float *)malloc(old_ep->peak_env_size * sizeof(Float));
 	}
 
       new_ep->peak_env_size = old_ep->peak_env_size;
@@ -862,9 +862,9 @@ peak_env_info *peak_env_section(chan_info *cp, off_t beg, off_t num, int edpos)
   old_ep = cp->edits[edpos]->peak_env;
   if (old_ep == NULL) return(NULL);
 
-  new_ep = (peak_env_info *)CALLOC(1, sizeof(peak_env_info));
-  new_ep->data_max = (Float *)MALLOC(old_ep->peak_env_size * sizeof(Float));
-  new_ep->data_min = (Float *)MALLOC(old_ep->peak_env_size * sizeof(Float));
+  new_ep = (peak_env_info *)calloc(1, sizeof(peak_env_info));
+  new_ep->data_max = (Float *)malloc(old_ep->peak_env_size * sizeof(Float));
+  new_ep->data_min = (Float *)malloc(old_ep->peak_env_size * sizeof(Float));
   new_ep->peak_env_size = old_ep->peak_env_size;
   new_ep->samps_per_bin = old_ep->samps_per_bin;
 
@@ -903,9 +903,9 @@ peak_env_info *copy_peak_env_info(peak_env_info *old_ep, bool reversed)
     {
       int i, j;
 
-      new_ep = (peak_env_info *)CALLOC(1, sizeof(peak_env_info));
-      new_ep->data_max = (Float *)MALLOC(old_ep->peak_env_size * sizeof(Float));
-      new_ep->data_min = (Float *)MALLOC(old_ep->peak_env_size * sizeof(Float));
+      new_ep = (peak_env_info *)calloc(1, sizeof(peak_env_info));
+      new_ep->data_max = (Float *)malloc(old_ep->peak_env_size * sizeof(Float));
+      new_ep->data_min = (Float *)malloc(old_ep->peak_env_size * sizeof(Float));
       new_ep->peak_env_size = old_ep->peak_env_size;
       new_ep->samps_per_bin = old_ep->samps_per_bin;
       new_ep->fmin = old_ep->fmin;
@@ -957,9 +957,9 @@ void amp_env_env(chan_info *cp, Float *brkpts, int npts, int pos, Float base, Fl
 
       if (new_ep == NULL)
 	{
-	  new_ep = (peak_env_info *)CALLOC(1, sizeof(peak_env_info));
-	  new_ep->data_max = (Float *)MALLOC(old_ep->peak_env_size * sizeof(Float));
-	  new_ep->data_min = (Float *)MALLOC(old_ep->peak_env_size * sizeof(Float));
+	  new_ep = (peak_env_info *)calloc(1, sizeof(peak_env_info));
+	  new_ep->data_max = (Float *)malloc(old_ep->peak_env_size * sizeof(Float));
+	  new_ep->data_min = (Float *)malloc(old_ep->peak_env_size * sizeof(Float));
 	}
 
       new_ep->peak_env_size = old_ep->peak_env_size;
@@ -1018,9 +1018,9 @@ void amp_env_env_selection_by(chan_info *cp, mus_any *e, off_t beg, off_t num, i
 
       if (new_ep == NULL)
 	{
-	  new_ep = (peak_env_info *)CALLOC(1, sizeof(peak_env_info));
-	  new_ep->data_max = (Float *)MALLOC(old_ep->peak_env_size * sizeof(Float));
-	  new_ep->data_min = (Float *)MALLOC(old_ep->peak_env_size * sizeof(Float));
+	  new_ep = (peak_env_info *)calloc(1, sizeof(peak_env_info));
+	  new_ep->data_max = (Float *)malloc(old_ep->peak_env_size * sizeof(Float));
+	  new_ep->data_min = (Float *)malloc(old_ep->peak_env_size * sizeof(Float));
 	}
 
       new_ep->peak_env_size = old_ep->peak_env_size;
@@ -1090,9 +1090,9 @@ void peak_env_ptree(chan_info *cp, struct ptree *pt, int pos, XEN init_func)
 
       if (new_ep == NULL)
 	{
-	  new_ep = (peak_env_info *)CALLOC(1, sizeof(peak_env_info));
-	  new_ep->data_max = (Float *)MALLOC(old_ep->peak_env_size * sizeof(Float));
-	  new_ep->data_min = (Float *)MALLOC(old_ep->peak_env_size * sizeof(Float));
+	  new_ep = (peak_env_info *)calloc(1, sizeof(peak_env_info));
+	  new_ep->data_max = (Float *)malloc(old_ep->peak_env_size * sizeof(Float));
+	  new_ep->data_min = (Float *)malloc(old_ep->peak_env_size * sizeof(Float));
 	}
 
       new_ep->peak_env_size = old_ep->peak_env_size;
@@ -1168,9 +1168,9 @@ void peak_env_ptree_selection(chan_info *cp, struct ptree *pt, off_t beg, off_t 
 
       if (new_ep == NULL)
 	{
-	  new_ep = (peak_env_info *)CALLOC(1, sizeof(peak_env_info));
-	  new_ep->data_max = (Float *)MALLOC(old_ep->peak_env_size * sizeof(Float));
-	  new_ep->data_min = (Float *)MALLOC(old_ep->peak_env_size * sizeof(Float));
+	  new_ep = (peak_env_info *)calloc(1, sizeof(peak_env_info));
+	  new_ep->data_max = (Float *)malloc(old_ep->peak_env_size * sizeof(Float));
+	  new_ep->data_min = (Float *)malloc(old_ep->peak_env_size * sizeof(Float));
 	}
 
       new_ep->peak_env_size = old_ep->peak_env_size;
@@ -1259,15 +1259,15 @@ void peak_env_insert_zeros(chan_info *cp, off_t beg, off_t num, int pos)
       subsamp = val / old_ep->peak_env_size;
       if (subsamp != 1) return;
 
-      new_ep = (peak_env_info *)CALLOC(1, sizeof(peak_env_info));
+      new_ep = (peak_env_info *)calloc(1, sizeof(peak_env_info));
       new_ep->samps_per_bin = old_ep->samps_per_bin;
       new_ep->peak_env_size = (int)(ceil(cur_samps / new_ep->samps_per_bin));
       new_ep->completed = true;
       cp->edits[cp->edit_ctr]->peak_env = new_ep;
       new_ep->bin = new_ep->peak_env_size;
       new_ep->top_bin = new_ep->peak_env_size;
-      new_ep->data_max = (Float *)CALLOC(new_ep->peak_env_size, sizeof(Float));
-      new_ep->data_min = (Float *)CALLOC(new_ep->peak_env_size, sizeof(Float));
+      new_ep->data_max = (Float *)calloc(new_ep->peak_env_size, sizeof(Float));
+      new_ep->data_min = (Float *)calloc(new_ep->peak_env_size, sizeof(Float));
       new_ep->fmin = old_ep->fmin;
       if (new_ep->fmin > 0.0) new_ep->fmin = 0.0;
       new_ep->fmax = old_ep->fmax;
@@ -1446,7 +1446,7 @@ static char *linked_file(const char *link_name)
   char *link_file;
   ssize_t bytes;
   #define READLINK_FILE_SIZE 256
-  link_file = (char *)CALLOC(READLINK_FILE_SIZE, sizeof(char));
+  link_file = (char *)calloc(READLINK_FILE_SIZE, sizeof(char));
   bytes = readlink(link_name, link_file, READLINK_FILE_SIZE);
   link_file[bytes] = 0;
   return(link_file);
@@ -1492,7 +1492,7 @@ void sp_name_click(snd_info *sp)
 			       (linked) ? "?" : "",
 #endif
 			       (linked) ? ")" : "");
-	  if (str) FREE(str);
+	  if (str) free(str);
 	}
     }
 }
@@ -1520,7 +1520,7 @@ static ctrl_state *free_control_settings(ctrl_state *cs)
   if (cs)
     {
       if (cs->filter_env) free_env(cs->filter_env);
-      FREE(cs);
+      free(cs);
     }
   return(NULL);
 }
@@ -1534,7 +1534,7 @@ void free_controls(snd_info *sp)
 
 static ctrl_state *current_control_settings(snd_info *sp, ctrl_state *cs)
 {
-  if (!cs) cs = (ctrl_state *)CALLOC(1, sizeof(ctrl_state));
+  if (!cs) cs = (ctrl_state *)calloc(1, sizeof(ctrl_state));
   cs->amp = sp->amp_control;
   cs->speed = sp->speed_control;
   cs->expand = sp->expand_control;
@@ -1617,7 +1617,7 @@ void restore_controls(snd_info *sp)
   cs = sp->saved_controls;
   if (!cs) 
     {
-      sp->saved_controls = (ctrl_state *)CALLOC(1, sizeof(ctrl_state));
+      sp->saved_controls = (ctrl_state *)calloc(1, sizeof(ctrl_state));
       cs = sp->saved_controls;
       cs->amp = DEFAULT_AMP_CONTROL;
       cs->speed = DEFAULT_SPEED_CONTROL;
@@ -1651,7 +1651,7 @@ void restore_controls(snd_info *sp)
   set_filter_order(sp, cs->filter_order); /* causes redisplay */
   tmpstr = env_to_string(sp->filter_control_envelope);
   set_filter_text(sp, tmpstr);
-  if (tmpstr) FREE(tmpstr);
+  if (tmpstr) free(tmpstr);
 }
 
 
@@ -1675,7 +1675,7 @@ void reset_controls(snd_info *sp)
   tmpstr = env_to_string(sp->filter_control_envelope);
   set_filter_text(sp, tmpstr);
   display_filter_env(sp);
-  if (tmpstr) FREE(tmpstr);
+  if (tmpstr) free(tmpstr);
 
 }
 
@@ -1724,9 +1724,9 @@ static void remember_string(snd_info *sp, const char *str, mini_history_t which)
 
   if (mh == NULL)
     {
-      mh = (mini_history *)CALLOC(1, sizeof(mini_history));
+      mh = (mini_history *)calloc(1, sizeof(mini_history));
       mh->strings_size = minibuffer_history_length(ss);
-      mh->strings = (char **)CALLOC(mh->strings_size, sizeof(char *));
+      mh->strings = (char **)calloc(mh->strings_size, sizeof(char *));
       switch (which)
 	{
 	case MINIBUFFER:    sp->minibuffer_history = mh; break;
@@ -1744,7 +1744,7 @@ static void remember_string(snd_info *sp, const char *str, mini_history_t which)
     return;
 
   top = mh->strings_size - 1;
-  if (mh->strings[top]) FREE(mh->strings[top]);
+  if (mh->strings[top]) free(mh->strings[top]);
   for (i = top; i > 0; i--) mh->strings[i] = mh->strings[i - 1];
 
   mh->strings[0] = mus_strdup(str);
@@ -1833,9 +1833,9 @@ static void clear_strings(snd_info *sp, mini_history_t which)
 	}
       for (i = 0; i < mh->strings_size; i++) 
 	if (mh->strings[i])
-	  FREE(mh->strings[i]);
-      FREE(mh->strings);
-      FREE(mh);
+	  free(mh->strings[i]);
+      free(mh->strings);
+      free(mh);
     }
 }
 
@@ -1871,7 +1871,7 @@ static void *make_apply_state(snd_info *sp)
 {
   /* set up initial state for apply_controls */
   apply_state *ap = NULL;
-  ap = (apply_state *)CALLOC(1, sizeof(apply_state));
+  ap = (apply_state *)calloc(1, sizeof(apply_state));
   ap->slice = 0;
   ap->hdr = NULL;
   ap->sp = sp;
@@ -1883,10 +1883,10 @@ static apply_state *free_apply_state(apply_state *ap)
 {
   if (ap)
     {
-      if (ap->ofile) {FREE(ap->ofile); ap->ofile = NULL;}
-      if (ap->origin) {FREE(ap->origin); ap->origin = NULL;}
+      if (ap->ofile) {free(ap->ofile); ap->ofile = NULL;}
+      if (ap->origin) {free(ap->origin); ap->origin = NULL;}
       ap->hdr = free_file_info(ap->hdr);
-      FREE(ap);
+      free(ap);
     }
   return(NULL);
 }
@@ -1944,7 +1944,7 @@ static bool apply_controls(apply_state *ap)
 	  return(false);
 	}
 
-      scalers = (Float *)CALLOC(si->chans, sizeof(Float));
+      scalers = (Float *)calloc(si->chans, sizeof(Float));
       for (i = 0; i < si->chans; i++)
 	{
 	  chan_info *ncp;
@@ -1960,7 +1960,7 @@ static bool apply_controls(apply_state *ap)
       else snd_warning_without_format(_("apply controls: no changes to apply!"));
 
       sp->sync = old_sync;
-      FREE(scalers);
+      free(scalers);
       si = free_sync_info(si);
     }
   else
@@ -2038,7 +2038,7 @@ static bool apply_controls(apply_state *ap)
 		  envstr = env_to_string(sp->filter_control_envelope);
 		  filterstr = mus_format(LIST_OPEN "%d" PROC_SEP "%s" LIST_CLOSE, 
 					 sp->filter_control_order, envstr);
-		  FREE(envstr);
+		  free(envstr);
 		}
 	      else filterstr = mus_strdup(PROC_FALSE);
 #if HAVE_FORTH
@@ -2060,12 +2060,12 @@ static bool apply_controls(apply_state *ap)
 					   ampstr, speedstr, contraststr, expandstr, reverbstr, filterstr,
 					   apply_beg, apply_dur);
 #endif
-	      FREE(ampstr);
-	      FREE(speedstr);
-	      FREE(contraststr);
-	      FREE(expandstr);
-	      FREE(reverbstr);
-	      FREE(filterstr);
+	      free(ampstr);
+	      free(speedstr);
+	      free(contraststr);
+	      free(expandstr);
+	      free(reverbstr);
+	      free(filterstr);
 	    }
 
 	  orig_dur = apply_dur;
@@ -2277,7 +2277,7 @@ int add_sp_watcher(snd_info *sp, sp_watcher_t type, void (*watcher)(struct snd_i
     {
       loc = 0;
       sp->watchers_size = SP_WATCHER_SIZE_INCREMENT;
-      sp->watchers = (sp_watcher **)CALLOC(sp->watchers_size, sizeof(sp_watcher *));
+      sp->watchers = (sp_watcher **)calloc(sp->watchers_size, sizeof(sp_watcher *));
     }
   else
     {
@@ -2292,11 +2292,11 @@ int add_sp_watcher(snd_info *sp, sp_watcher_t type, void (*watcher)(struct snd_i
 	{
 	  loc = sp->watchers_size;
 	  sp->watchers_size += SP_WATCHER_SIZE_INCREMENT;
-	  sp->watchers = (sp_watcher **)REALLOC(sp->watchers, sp->watchers_size * sizeof(sp_watcher *));
+	  sp->watchers = (sp_watcher **)realloc(sp->watchers, sp->watchers_size * sizeof(sp_watcher *));
 	  for (i = loc; i < sp->watchers_size; i++) sp->watchers[i] = NULL;
 	}
     }
-  sp->watchers[loc] = (sp_watcher *)CALLOC(1, sizeof(sp_watcher));
+  sp->watchers[loc] = (sp_watcher *)calloc(1, sizeof(sp_watcher));
   sp->watchers[loc]->watcher = watcher;
   sp->watchers[loc]->context = context;
   sp->watchers[loc]->loc = loc;
@@ -2313,7 +2313,7 @@ void remove_sp_watcher(snd_info *sp, int loc)
       (loc >= 0) &&
       (sp->watchers[loc]))
     {
-      FREE(sp->watchers[loc]);
+      free(sp->watchers[loc]);
       sp->watchers[loc] = NULL;
     }
 }
@@ -2561,10 +2561,10 @@ static XEN sound_get(XEN snd_n, sp_field_t fld, const char *caller)
 	  int len;
 	  Float *coeffs, *data;
 	  len = sp->filter_control_order;
-	  coeffs = (Float *)CALLOC(len, len * sizeof(Float));
+	  coeffs = (Float *)calloc(len, len * sizeof(Float));
 	  data = sample_linear_env(sp->filter_control_envelope, len);
 	  mus_make_fir_coeffs(len, data, coeffs);
-	  FREE(data);
+	  free(data);
 	  return(xen_make_vct(len, coeffs));
 	}
       break;
@@ -2814,7 +2814,7 @@ static XEN sound_set(XEN snd_n, XEN val, sp_field_t fld, const char *caller)
     case SP_COMMENT:
       if (!(IS_PLAYER(sp))) 
 	{
-	  if (sp->hdr->comment) FREE(sp->hdr->comment);
+	  if (sp->hdr->comment) free(sp->hdr->comment);
 	  if (XEN_FALSE_P(val))
 	    sp->hdr->comment = NULL;
 	  else sp->hdr->comment = mus_strdup(XEN_TO_C_STRING(val));
@@ -3693,7 +3693,7 @@ static XEN g_save_sound(XEN index)
 		       sp->short_filename, 
 		       sp->index);
       str = C_TO_XEN_STRING(msg);
-      FREE(msg);
+      free(msg);
       XEN_ERROR(CANNOT_SAVE,
 		XEN_LIST_2(C_TO_XEN_STRING(S_save_sound),
 			   str));
@@ -3772,7 +3772,7 @@ open filename (as if opened from File:Open menu option), and return the new soun
     /* before probing, need to undo all the Unix-isms */
     fullname = mus_expand_filename(fname);
     file_exists = mus_file_probe(fullname);
-    FREE(fullname);
+    free(fullname);
   }
 
   if (!file_exists)
@@ -3846,7 +3846,7 @@ open file assuming the data matches the attributes indicated unless the file act
     char *fullname;
     fullname = mus_expand_filename(file);
     file_exists = mus_file_probe(fullname);
-    FREE(fullname);
+    free(fullname);
   }
   if (!file_exists)
     return(snd_no_such_file_error(S_open_raw_sound, keys[0]));
@@ -3888,7 +3888,7 @@ static XEN g_view_sound(XEN filename)
     char *fullname;
     fullname = mus_expand_filename(fname);
     file_exists = mus_file_probe(fullname);
-    FREE(fullname);
+    free(fullname);
   }
   if (!file_exists)
     return(snd_no_such_file_error(S_view_sound, filename));
@@ -4053,7 +4053,7 @@ Omitted arguments take their value from the sound being saved.\n  " save_as_exam
     }
   if (free_outcom) 
     {
-      FREE((char *)outcom); 
+      free((char *)outcom); 
       outcom = NULL;
     }
   if (io_err == IO_NO_ERROR) 
@@ -4064,7 +4064,7 @@ Omitted arguments take their value from the sound being saved.\n  " save_as_exam
 	{
 	  XEN errstr;
 	  errstr = C_TO_XEN_STRING(fname);
-	  if (fname) {FREE(fname); fname = NULL;}
+	  if (fname) {free(fname); fname = NULL;}
 	  XEN_ERROR(CANNOT_SAVE,
 		    XEN_LIST_4(C_TO_XEN_STRING(S_save_sound_as),
 			       errstr,
@@ -4072,7 +4072,7 @@ Omitted arguments take their value from the sound being saved.\n  " save_as_exam
 			       C_TO_XEN_STRING(snd_open_strerror())));
 	}
     }
-  if (fname) FREE(fname);
+  if (fname) free(fname);
   return(args[orig_arg[0] - 1]);
 }
 
@@ -4157,7 +4157,7 @@ The 'size' argument sets the number of samples (zeros) in the newly created soun
   err = snd_write_header(str, ht, sr, ch, len * ch, df, com, NULL); /* last arg is loop info */
   if (err == -1)
     {
-      if (str) {FREE(str); str = NULL;}
+      if (str) {free(str); str = NULL;}
       XEN_ERROR(XEN_ERROR_TYPE("IO-error"),
 		XEN_LIST_3(C_TO_XEN_STRING(S_new_sound), 
 			   C_TO_XEN_STRING(snd_io_strerror()), 
@@ -4169,14 +4169,14 @@ The 'size' argument sets the number of samples (zeros) in the newly created soun
   if (size > 0)
     {
       unsigned char *buf;
-      buf = (unsigned char *)CALLOC(size, sizeof(unsigned char));
+      buf = (unsigned char *)calloc(size, sizeof(unsigned char));
       if (write(chan, buf, size) != size) fprintf(stderr, "new-sound %s write error", str);
-      FREE(buf);
+      free(buf);
     }
   snd_close(chan, str);
   ss->open_requestor = FROM_NEW_SOUND;
   sp = sound_is_silence(snd_open_file(str, FILE_READ_WRITE));
-  if (str) FREE(str);
+  if (str) free(str);
   if (sp) return(C_TO_XEN_INT(sp->index));
   return(XEN_FALSE);
 }
@@ -4251,7 +4251,7 @@ static XEN g_set_amp_control(XEN on, XEN snd_n, XEN chn_n)
       cp = get_cp(snd_n, chn_n, S_amp_control);
       if (!cp) return(XEN_FALSE);
       if (cp->amp_control == NULL)
-	cp->amp_control = (Float *)CALLOC(1, sizeof(Float));
+	cp->amp_control = (Float *)calloc(1, sizeof(Float));
       cp->amp_control[0] = (Float)XEN_TO_C_DOUBLE(on);
       return(on);
     }
@@ -4967,7 +4967,7 @@ static XEN g_write_peak_env_info_file(XEN snd, XEN chn, XEN name)
     {
       XEN errstr;
       errstr = C_TO_XEN_STRING(fullname);
-      if (fullname) FREE(fullname);
+      if (fullname) free(fullname);
       XEN_ERROR(CANNOT_SAVE,
 		XEN_LIST_3(C_TO_XEN_STRING(S_write_peak_env_info_file),
 			   errstr,
@@ -4990,7 +4990,7 @@ static XEN g_write_peak_env_info_file(XEN snd, XEN chn, XEN name)
     if (bytes == 0) fprintf(stderr, "write error in " S_write_peak_env_info_file);
   }
   snd_close(fd, fullname);
-  if (fullname) FREE(fullname);
+  if (fullname) free(fullname);
   return(name);
 }
 
@@ -5050,7 +5050,7 @@ static peak_env_info *get_peak_env_info(const char *fullname, peak_env_error_t *
       snd_close(fd, fullname);
       return(NULL);
     }
-  ep = (peak_env_info *)CALLOC(1, sizeof(peak_env_info));
+  ep = (peak_env_info *)calloc(1, sizeof(peak_env_info));
   ep->completed = (bool)(hdr & 0xf); /* version number in higher bits */
   ep->peak_env_size = ibuf[1];
   ep->samps_per_bin = ibuf[2];
@@ -5059,8 +5059,8 @@ static peak_env_info *get_peak_env_info(const char *fullname, peak_env_error_t *
   if (read(fd, (char *)mbuf, (PEAK_ENV_SAMPS * sizeof(Float))) == 0) fprintf(stderr, "%s: read error", fullname);
   ep->fmin = mbuf[0];
   ep->fmax = mbuf[1];
-  ep->data_min = (Float *)MALLOC(ep->peak_env_size * sizeof(Float));
-  ep->data_max = (Float *)MALLOC(ep->peak_env_size * sizeof(Float));
+  ep->data_min = (Float *)malloc(ep->peak_env_size * sizeof(Float));
+  ep->data_max = (Float *)malloc(ep->peak_env_size * sizeof(Float));
   if (read(fd, (char *)(ep->data_min), (ep->peak_env_size * sizeof(Float))) == 0) fprintf(stderr, "%s: read error", fullname);
   if (read(fd, (char *)(ep->data_max), (ep->peak_env_size * sizeof(Float))) == 0) fprintf(stderr, "%s: read error", fullname);
   snd_close(fd, fullname);
@@ -5083,7 +5083,7 @@ static XEN g_read_peak_env_info_file(XEN snd, XEN chn, XEN name)
 
   fullname = mus_expand_filename(XEN_TO_C_STRING(name));
   cp->edits[0]->peak_env = get_peak_env_info(fullname, &err);
-  if (fullname) FREE(fullname);
+  if (fullname) free(fullname);
   if (cp->edits[0]->peak_env == NULL)
     {
       XEN error_type;
@@ -5134,8 +5134,8 @@ static XEN g_env_info_to_vcts(peak_env_info *ep, int len)
   if ((len == 0) || (len > ep->peak_env_size))
     lim = ep->peak_env_size;
   else lim = len;
-  res = XEN_LIST_2(xen_make_vct(lim, (Float *)CALLOC(lim, sizeof(Float))),
-		   xen_make_vct(lim, (Float *)CALLOC(lim, sizeof(Float))));
+  res = XEN_LIST_2(xen_make_vct(lim, (Float *)calloc(lim, sizeof(Float))),
+		   xen_make_vct(lim, (Float *)calloc(lim, sizeof(Float))));
   loc = snd_protect(res);
   vmin = xen_to_vct(XEN_CAR(res));
   vmax = xen_to_vct(XEN_CADR(res));
@@ -5214,7 +5214,7 @@ static idle_func_t tick_it(any_pointer_t pet)
 	  snd_unprotect_at(loc);
 	}
       completely_free_snd_info(cp->sound);
-      FREE(et);
+      free(et);
       return(BACKGROUND_QUIT);
     }
   return(BACKGROUND_CONTINUE);
@@ -5305,13 +5305,13 @@ If 'filename' is a sound index (an integer), 'size' is interpreted as an edit-po
 	  cp = sp->chans[chn];
 	  if (cp->edits[0]->peak_env)
 	    {
-	      if (fullname) FREE(fullname);
+	      if (fullname) free(fullname);
 	      return(g_env_info_to_vcts(cp->edits[0]->peak_env, len));
 	    }
 	}
       else
 	{
-	  if (fullname) FREE(fullname);
+	  if (fullname) free(fullname);
 	  XEN_ERROR(NO_SUCH_CHANNEL, XEN_LIST_3(C_TO_XEN_STRING(S_channel_amp_envs), filename, chan));
 	  return(XEN_FALSE);
 	}
@@ -5319,13 +5319,13 @@ If 'filename' is a sound index (an integer), 'size' is interpreted as an edit-po
 
   if (!(mus_file_probe(fullname)))
     {
-      if (fullname) FREE(fullname);
+      if (fullname) free(fullname);
       XEN_ERROR(NO_SUCH_FILE, XEN_LIST_2(C_TO_XEN_STRING(S_channel_amp_envs), filename));
       return(XEN_FALSE);
     }
   if (mus_sound_chans(fullname) < chn)
     {
-      if (fullname) FREE(fullname);
+      if (fullname) free(fullname);
       XEN_ERROR(NO_SUCH_CHANNEL, XEN_LIST_3(C_TO_XEN_STRING(S_channel_amp_envs), filename, chan));
       return(XEN_FALSE);
     }
@@ -5350,19 +5350,19 @@ If 'filename' is a sound index (an integer), 'size' is interpreted as an edit-po
 		  XEN vcts;
 		  vcts = g_env_info_to_vcts(ep, len);
 		  ep = free_peak_env_info(ep);
-		  if (peakname) FREE(peakname);
-		  if (fullname) FREE(fullname);
+		  if (peakname) free(peakname);
+		  if (fullname) free(fullname);
 		  return(vcts);
 		}
 	    }
 	  /* the else side (no such file) could be considered a request to make the peak env file (i.e. not necessarily an error) */
-	  if (peakname) {FREE(peakname); peakname = NULL;}
+	  if (peakname) {free(peakname); peakname = NULL;}
 	}
     }
 
   /* now set up to read direct... */
   sp = make_sound_readable(fullname, false);
-  if (fullname) FREE(fullname);
+  if (fullname) free(fullname);
   fullname = NULL;
   if (sp)
     {
@@ -5389,7 +5389,7 @@ If 'filename' is a sound index (an integer), 'size' is interpreted as an edit-po
 	    {
 	      int id;
 	      env_tick *et;
-	      et = (env_tick *)CALLOC(1, sizeof(env_tick));
+	      et = (env_tick *)calloc(1, sizeof(env_tick));
 	      et->cp = cp;
 	      et->es = es;
 	      et->func = done_func;

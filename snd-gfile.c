@@ -69,10 +69,10 @@ static void fsb_filter_set_text_with_directory(fsb *fs, const char *filter)
   char *name;
   int cur_dir_len;
   cur_dir_len = mus_strlen(fs->directory_name);
-  name = (char *)CALLOC(cur_dir_len + 3, sizeof(char));
+  name = (char *)calloc(cur_dir_len + 3, sizeof(char));
   mus_snprintf(name, cur_dir_len + 3, "%s%s", fs->directory_name, filter);
   gtk_entry_set_text(GTK_ENTRY(fs->filter_text), name);
-  FREE(name);
+  free(name);
 }
 
 
@@ -84,7 +84,7 @@ static char *fsb_file_text(fsb *fs)
 
 static void fsb_file_set_text(fsb *fs, const char *file)
 {
-  if (fs->file_name) FREE(fs->file_name);
+  if (fs->file_name) free(fs->file_name);
   fs->file_name = mus_strdup(file);
   gtk_entry_set_text(GTK_ENTRY(fs->file_text), fs->file_name);
 }
@@ -153,7 +153,7 @@ static void fsb_update_lists(fsb *fs)
 	ADJUSTMENT_SET_VALUE(gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(fs->directory_list->scroller)), list_top);
       }
     else slist_moveto(fs->directory_list, 0);
-    FREE(dir_case);
+    free(dir_case);
   }
 
   /* reload file list */
@@ -214,7 +214,7 @@ static void fsb_update_lists(fsb *fs)
 
       fs->directory_watcher = fam_monitor_directory(fs->directory_name, (void *)fs, watch_current_directory_contents);
 
-      if (fs->last_dir) FREE(fs->last_dir);
+      if (fs->last_dir) free(fs->last_dir);
       fs->last_dir = mus_strdup(fs->directory_name);
       fs->reread_directory = false;
     }
@@ -247,16 +247,16 @@ static void fsb_directory_select_callback(const char *dir_name, int row, void *d
 	  dir_case = mus_format("dir:%s", fs->directory_name);
 	  position = ADJUSTMENT_VALUE(gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(fs->directory_list->scroller)));
 	  dirpos_update(fs->dir_list, dir_case, position);
-	  FREE(dir_case);
+	  free(dir_case);
 	}
 
       old_name = fs->directory_name;
-      fs->directory_name = (char *)CALLOC(strlen(old_name) + strlen(dir_name) + 3, sizeof(char));
+      fs->directory_name = (char *)calloc(strlen(old_name) + strlen(dir_name) + 3, sizeof(char));
       strcpy(fs->directory_name, old_name);
       strcat(fs->directory_name, dir_name);
       strcat(fs->directory_name, "/");
 
-      FREE(old_name);
+      free(old_name);
     }
 
   fsb_filter_set_text_with_directory(fs, "*");
@@ -273,7 +273,7 @@ static char *fsb_fullname(fsb *fs, const char *filename)
   if (filename)
     {
       char *fullname;
-      fullname = (char *)CALLOC(strlen(fs->directory_name) + strlen(filename) + 2, sizeof(char));
+      fullname = (char *)calloc(strlen(fs->directory_name) + strlen(filename) + 2, sizeof(char));
       strcpy(fullname, fs->directory_name);
       strcat(fullname, filename);
       return(fullname);
@@ -300,7 +300,7 @@ static void fsb_file_select_callback(const char *file_name, int row, void *data)
 	dirpos_update(fs->dir_list, fs->directory_name, position);
       }
 
-      FREE(fullname);
+      free(fullname);
     }
 }
 
@@ -318,7 +318,7 @@ static void fsb_filter_activate(GtkWidget *w, gpointer context)
   filter = fsb_filter_text(fs);
   if (filter)
     {
-      if (fs->directory_name) FREE(fs->directory_name);
+      if (fs->directory_name) free(fs->directory_name);
       fs->directory_name = just_directory(filter); /* this allocates */
       fsb_update_lists(fs);
       remember_filename(filter, fs->file_filter_names);
@@ -366,7 +366,7 @@ static fsb *make_fsb(const char *title, const char *file_lab, const char *ok_lab
   fsb *fs;
   char *cur_dir = NULL, *pwd = NULL;
   
-  fs = (fsb *)CALLOC(1, sizeof(fsb));
+  fs = (fsb *)calloc(1, sizeof(fsb));
   if (just_sounds(ss))
     fs->filter_choice = JUST_SOUNDS_FILTER;
   else fs->filter_choice = NO_FILE_FILTER;
@@ -377,9 +377,9 @@ static fsb *make_fsb(const char *title, const char *file_lab, const char *ok_lab
   if (open_file_dialog_directory(ss))
     pwd = mus_strdup(open_file_dialog_directory(ss));
   else pwd = mus_getcwd();
-  cur_dir = (char *)CALLOC(strlen(pwd) + 2, sizeof(char));
+  cur_dir = (char *)calloc(strlen(pwd) + 2, sizeof(char));
   strcpy(cur_dir, pwd);
-  FREE(pwd);
+  free(pwd);
   if ((cur_dir) && (cur_dir[strlen(cur_dir) - 1] != '/'))
     strcat(cur_dir, "/");
   fs->directory_name = cur_dir;
@@ -565,9 +565,9 @@ static void force_directory_reread(fsb *fs)
 	    slist_select(fs->file_list, i); /* doesn't call select callback */
 	    break;
 	  }
-      FREE(selected);
+      free(selected);
     }
-  if (filename) FREE(filename);
+  if (filename) free(filename);
   ADJUSTMENT_SET_VALUE(gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(fs->file_list->scroller)), scroller_position);
 }
 
@@ -587,7 +587,7 @@ static void file_text_item_activate_callback(GtkWidget *w, gpointer context)
   if ((!(fs->directory_name)) || 
       (strcmp(current_directory, fs->directory_name) != 0))
     {
-      if (fs->directory_name) FREE(fs->directory_name);
+      if (fs->directory_name) free(fs->directory_name);
       fs->directory_name = current_directory;
       fsb_filter_set_text_with_directory(fs, "*");
       fsb_update_lists(fs);
@@ -606,7 +606,7 @@ static void file_text_item_activate_callback(GtkWidget *w, gpointer context)
 	if (sp) select_channel(sp, 0);
 	break;
       }
-  FREE(current_filename);
+  free(current_filename);
 }
 
 
@@ -617,7 +617,7 @@ static void reflect_file_in_popup(fsb *fs)
   
   if (fs->file_text_items == NULL)
     {
-      fs->file_text_items = (GtkWidget **)CALLOC(FILENAME_LIST_SIZE, sizeof(GtkWidget *));
+      fs->file_text_items = (GtkWidget **)calloc(FILENAME_LIST_SIZE, sizeof(GtkWidget *));
       for (i = 0; i < FILENAME_LIST_SIZE; i++)
 	{
 	  fs->file_text_items[i] = gtk_menu_item_new_with_label("oops");
@@ -657,7 +657,7 @@ static void file_filter_item_activate_callback(GtkWidget *w, gpointer context)
   char *filter;
   filter = fs->file_filter_names[get_user_int_data(G_OBJECT(w))];
   fsb_filter_set_text(fs, (const char *)filter);
-  if (fs->directory_name) FREE(fs->directory_name);
+  if (fs->directory_name) free(fs->directory_name);
   fs->directory_name = just_directory(filter); /* this allocates */
   fsb_file_set_text(fs, fs->directory_name);
   fsb_update_lists(fs);
@@ -671,7 +671,7 @@ static void reflect_filter_in_popup(fsb *fs)
 
   if (fs->file_filter_items == NULL)
     {
-      fs->file_filter_items = (GtkWidget **)CALLOC(FILENAME_LIST_SIZE, sizeof(GtkWidget *));
+      fs->file_filter_items = (GtkWidget **)calloc(FILENAME_LIST_SIZE, sizeof(GtkWidget *));
       for (i = 0; i < FILENAME_LIST_SIZE; i++)
 	{
 	  fs->file_filter_items[i] = gtk_menu_item_new_with_label("oops");
@@ -708,7 +708,7 @@ static void file_dir_item_activate_callback(GtkWidget *w, gpointer context)
 {
   /* set fs->directory_name, and filter text ("*", then fsb_update_lists */
   fsb *fs = (fsb *)context;
-  if (fs->directory_name) FREE(fs->directory_name);
+  if (fs->directory_name) free(fs->directory_name);
   fs->directory_name = mus_format("%s/", gtk_label_get_text(GTK_LABEL(gtk_bin_get_child(GTK_BIN(w)))));
   fsb_filter_set_text_with_directory(fs, "*");
   fsb_update_lists(fs);
@@ -729,7 +729,7 @@ static bool fsb_directory_button_press_callback(GdkEventButton *ev, void *data)
       if (fs->file_dir_items == NULL)
 	{
 	  fs->dirs_menu = gtk_menu_new();
-	  fs->file_dir_items = (GtkWidget **)CALLOC(FILENAME_LIST_SIZE, sizeof(GtkWidget *));
+	  fs->file_dir_items = (GtkWidget **)calloc(FILENAME_LIST_SIZE, sizeof(GtkWidget *));
 	  for (i = 0; i < FILENAME_LIST_SIZE; i++)
 	    {
 	      fs->file_dir_items[i] = gtk_menu_item_new_with_label("oops");
@@ -752,7 +752,7 @@ static bool fsb_directory_button_press_callback(GdkEventButton *ev, void *data)
 	{
 	  char **dirs;
 	  int j = 1;
-	  dirs = (char **)CALLOC(dirs_to_display, sizeof(char *));
+	  dirs = (char **)calloc(dirs_to_display, sizeof(char *));
 	  dirs[0] = mus_strdup("/");
 	  for (i = 1; i < len; i++)
 	    if (current_filename[i] == '/')
@@ -768,7 +768,7 @@ static bool fsb_directory_button_press_callback(GdkEventButton *ev, void *data)
 	      gtk_widget_show(fs->file_dir_items[i]);
 	      free(dirs[i]);
 	    }
-	  FREE(dirs);
+	  free(dirs);
 	}
 
       for (i = dirs_to_display; i < FILENAME_LIST_SIZE; i++)
@@ -834,7 +834,7 @@ static bool fsb_files_button_press_callback(GdkEventButton *ev, void *data)
 	{
 	  /* set up the default menu items */
 	  fs->files_menu = gtk_menu_new();
-	  fs->file_list_items = (GtkWidget **)CALLOC(SORT_XEN, sizeof(GtkWidget *));
+	  fs->file_list_items = (GtkWidget **)calloc(SORT_XEN, sizeof(GtkWidget *));
 	  fs->file_list_items_size = SORT_XEN;
 	  for (i = 0; i < SORT_XEN; i++)
 	    fs->file_list_items[i] = make_file_list_item(fs, i);
@@ -860,7 +860,7 @@ static bool fsb_files_button_press_callback(GdkEventButton *ev, void *data)
 
 	if (items_len > fs->file_list_items_size)
 	  {
-	    fs->file_list_items = (GtkWidget **)REALLOC(fs->file_list_items, items_len * sizeof(GtkWidget *));
+	    fs->file_list_items = (GtkWidget **)realloc(fs->file_list_items, items_len * sizeof(GtkWidget *));
 	    for (i = fs->file_list_items_size; i < items_len; i++)
 	      fs->file_list_items[i] = make_file_list_item(fs, i);
 	    fs->file_list_items_size = items_len;
@@ -949,7 +949,7 @@ static void sort_files_and_redisplay(fsb *fs)
 	    scroller_position = i * 16;
 	    break;
 	  }
-      FREE(selected);
+      free(selected);
     }
   ADJUSTMENT_SET_VALUE(gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(fs->file_list->scroller)), scroller_position);
 }
@@ -1010,7 +1010,7 @@ static void play_selected_callback(GtkWidget *w, gpointer data)
 	      if (dp->player)
 		play_sound(dp->player, 0, NO_END_SPECIFIED);
 	    }
-	  FREE(filename);
+	  free(filename);
 	}
     }
   else file_dialog_stop_playing(dp);
@@ -1043,12 +1043,12 @@ static bool file_is_nonexistent_directory(fsb *fs)
 		bool result;
 		filename[i] = '\0';
 		result = directory_p(filename);
-		FREE(filename);
+		free(filename);
 		return(result);
 	      }
 	}
     }
-  FREE(filename);
+  free(filename);
   return(false);
 }
 
@@ -1058,7 +1058,7 @@ static void post_sound_info(GtkWidget *info1, GtkWidget *info2, const char *file
   /* filename is known[strongly believed] to be a sound file, etc */
   char *buf;
 
-  buf = (char *)CALLOC(LABEL_BUFFER_SIZE, sizeof(char));
+  buf = (char *)calloc(LABEL_BUFFER_SIZE, sizeof(char));
   mus_snprintf(buf, LABEL_BUFFER_SIZE, "%s%s%d chan%s, %d Hz, %.3f secs",
 	       (with_filename) ? filename_without_directory(filename) : "",
 	       (with_filename) ? ": " : "",
@@ -1075,7 +1075,7 @@ static void post_sound_info(GtkWidget *info1, GtkWidget *info2, const char *file
   info_widget_display(info2, buf);
   info_widget_set_size(info2, 1 + strlen(buf));
 
-  FREE(buf);
+  free(buf);
 }
 
 
@@ -1103,7 +1103,7 @@ static void unpost_file_info(file_dialog_info *fd)
   if (fd->info_filename_watcher)
     {
       fd->info_filename_watcher = fam_unmonitor_file(fd->info_filename, fd->info_filename_watcher);
-      if (fd->info_filename) {FREE(fd->info_filename); fd->info_filename = NULL;}
+      if (fd->info_filename) {free(fd->info_filename); fd->info_filename = NULL;}
     }
 #endif
 }
@@ -1328,9 +1328,9 @@ static file_dialog_info *make_file_dialog(read_only_t read_only, const char *tit
   file_dialog_info *fd;
   fsb *fs;
 
-  fd = (file_dialog_info *)CALLOC(1, sizeof(file_dialog_info));
+  fd = (file_dialog_info *)calloc(1, sizeof(file_dialog_info));
   fd->file_dialog_read_only = read_only;
-  fd->dp = (dialog_play_info *)CALLOC(1, sizeof(dialog_play_info));
+  fd->dp = (dialog_play_info *)calloc(1, sizeof(dialog_play_info));
 
   fd->fs = make_fsb(title, file_title, ok_title, open_innards, (void *)fd, stock, false);
   fs = fd->fs;
@@ -1417,8 +1417,8 @@ static void clear_file_error_label(file_dialog_info *fd)
   if (fd->unsound_directory_watcher)
     {
       fd->unsound_directory_watcher = fam_unmonitor_file(fd->unsound_dirname, fd->unsound_directory_watcher);
-      if (fd->unsound_dirname) {FREE(fd->unsound_dirname); fd->unsound_dirname = NULL;}
-      if (fd->unsound_filename) {FREE(fd->unsound_filename); fd->unsound_filename = NULL;}
+      if (fd->unsound_dirname) {free(fd->unsound_dirname); fd->unsound_dirname = NULL;}
+      if (fd->unsound_filename) {free(fd->unsound_filename); fd->unsound_filename = NULL;}
     }
 #endif
 }
@@ -1481,8 +1481,8 @@ static void start_unsound_watcher(file_dialog_info *fd, const char *filename)
   if (fd->unsound_directory_watcher)
     {
       fd->unsound_directory_watcher = fam_unmonitor_file(fd->unsound_dirname, fd->unsound_directory_watcher);
-      if (fd->unsound_dirname) FREE(fd->unsound_dirname);
-      if (fd->unsound_filename) FREE(fd->unsound_filename);
+      if (fd->unsound_dirname) free(fd->unsound_dirname);
+      if (fd->unsound_filename) free(fd->unsound_filename);
     }
   fd->unsound_filename = mus_expand_filename(filename);
   fd->unsound_dirname = just_directory(fd->unsound_filename);
@@ -1538,7 +1538,7 @@ static void file_open_dialog_ok(GtkWidget *w, gpointer data)
 	  str = mus_format(_("%s is a directory"), filename);
 	  file_open_error(str, fd);
 	  clear_error_if_open_changes(fd->fs, fd);
-	  FREE(str);
+	  free(str);
 	}
     }
 }
@@ -1582,12 +1582,12 @@ static void file_open_dialog_mkdir(GtkWidget *w, gpointer context)
       str = mus_format(_("can't make %s: %s"), filename, strerror(errno));
       file_open_error(str, fd);
       clear_error_if_open_changes(fs, fd);
-      FREE(str);
+      free(str);
     }
   else
     {
       /* set FSB to new dir and force update */
-      if (fs->directory_name) FREE(fs->directory_name);
+      if (fs->directory_name) free(fs->directory_name);
       fs->directory_name = mus_strdup(filename);
       fsb_filter_set_text_with_directory(fs, "*");
       fsb_update_lists(fs);
@@ -1698,7 +1698,7 @@ static void file_mix_ok_callback(GtkWidget *w, gpointer context)
 	  str = mus_format(_("%s is a directory"), filename);
 	  file_open_error(str, mdat);
 	  clear_error_if_open_changes(mdat->fs, mdat);
-	  FREE(str);
+	  free(str);
 	}
     }
 }
@@ -1784,7 +1784,7 @@ static void file_insert_ok_callback(GtkWidget *w, gpointer context)
 		  fullname = mus_expand_filename(filename);
 		  if (!(mus_file_probe(fullname)))
 		    start_unsound_watcher(fd, filename);
-		  FREE(fullname);
+		  free(fullname);
 		}
 	    }
 	  else 
@@ -1799,7 +1799,7 @@ static void file_insert_ok_callback(GtkWidget *w, gpointer context)
 	  str = mus_format(_("%s is a directory"), filename);
 	  file_open_error(str, fd);
 	  clear_error_if_open_changes(fd->fs, fd);
-	  FREE(str);
+	  free(str);
 	}
     }
 }
@@ -2006,7 +2006,7 @@ enum {REFLECT_SRATE_ID, REFLECT_CHANS_ID, REFLECT_SAMPLES_ID, REFLECT_LOCATION_I
 static void reflect_file_data_panel_change(file_data *fd, void *data, void (*change_action)(GtkWidget *w, gpointer context))
 {
   if (!(fd->reflection_ids))
-    fd->reflection_ids = (gulong *)CALLOC(NUM_REFLECTION_IDS, sizeof(gulong));
+    fd->reflection_ids = (gulong *)calloc(NUM_REFLECTION_IDS, sizeof(gulong));
   if (fd->srate_text)
     fd->reflection_ids[REFLECT_SRATE_ID] = SG_SIGNAL_CONNECT(fd->srate_text, "changed", change_action, (gpointer)data);
   if (fd->chans_text)
@@ -2231,14 +2231,14 @@ static void add_srate_menu(file_data *fd, char *srate_name)
   if (fd->srates_size == 0)
     {
       fd->srates_size = 8;
-      fd->srates = (GtkWidget **)CALLOC(fd->srates_size, sizeof(GtkWidget *));
+      fd->srates = (GtkWidget **)calloc(fd->srates_size, sizeof(GtkWidget *));
     }
   else
     {
       if (fd->srates_size == fd->num_srates)
 	{
 	  fd->srates_size += 8;
-	  fd->srates = (GtkWidget **)REALLOC(fd->srates, fd->srates_size * sizeof(GtkWidget *));
+	  fd->srates = (GtkWidget **)realloc(fd->srates, fd->srates_size * sizeof(GtkWidget *));
 	}
     }
   sr = gtk_menu_item_new_with_label(srate_name);
@@ -2287,7 +2287,7 @@ static file_data *make_file_data_panel(GtkWidget *parent, const char *name,
     case WITH_BUILTIN_HEADERS:  headers = short_builtin_headers(&nheaders);  break;
     }
 
-  fdat = (file_data *)CALLOC(1, sizeof(file_data));
+  fdat = (file_data *)calloc(1, sizeof(file_data));
   fdat->current_type = header_type;
   fdat->current_format = data_format;
   formats = type_and_format_to_position(fdat, header_type, data_format);
@@ -2480,7 +2480,7 @@ static void clear_error_if_filename_changes(fsb *fs, save_as_dialog_info *sd)
 static save_as_dialog_info *new_save_as_dialog_info(save_dialog_t type)
 {
   save_as_dialog_info *sd;
-  sd = (save_as_dialog_info *)CALLOC(1, sizeof(save_as_dialog_info));
+  sd = (save_as_dialog_info *)calloc(1, sizeof(save_as_dialog_info));
   sd->type = type;
   sd->selection_watcher_loc = -1;
   sd->filename_watcher_id = 0;
@@ -2633,7 +2633,7 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
   if (sd->panel_data->error_widget != NOT_A_SCANF_WIDGET)
     {
       clear_error_if_panel_changes(sd->fs->dialog, sd->panel_data);
-      if (comment) FREE(comment);
+      if (comment) free(comment);
       return;
     }
 
@@ -2667,8 +2667,8 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
 	  else msg = mus_format("can't extract chan %d (first chan is numbered 0)", chan);
 	  post_file_dialog_error((const char *)msg, sd->panel_data);
 	  clear_error_if_chans_changes(sd->fs->dialog, (void *)(sd->panel_data));
-	  FREE(msg);
-	  if (comment) FREE(comment);
+	  free(msg);
+	  if (comment) free(comment);
 	  return;
 	}
     }
@@ -2679,9 +2679,9 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
       msg = mus_format(_("%s cancelled by %s"), (saving) ? "save" : "extract", S_before_save_as_hook);
       post_file_dialog_error((const char *)msg, sd->panel_data);
       clear_error_if_filename_changes(sd->fs, sd);      
-      FREE(msg);
-      FREE(fullname);
-      if (comment) FREE(comment);
+      free(msg);
+      free(fullname);
+      if (comment) free(comment);
       return;
     }
 
@@ -2698,9 +2698,9 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
 	  clear_error_if_filename_changes(sd->fs, sd); 
 	  if (sp->user_read_only == FILE_READ_ONLY)
 	    add_sp_watcher(sp, SP_READ_ONLY_WATCHER, save_as_watch_user_read_only, (void *)sd);
-	  FREE(msg);
-	  FREE(fullname);
-	  if (comment) FREE(comment);
+	  free(msg);
+	  free(fullname);
+	  if (comment) free(comment);
 	  return;
 	}
     }
@@ -2724,9 +2724,9 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
 	      post_file_dialog_error((const char *)msg, sd->panel_data);
 	      clear_error_if_save_as_filename_changes(sd->fs->dialog, (void *)sd);
 	      set_stock_button_label(sd->fs->ok_button, _("DoIt"));
-	      FREE(msg);
-	      FREE(fullname);
-	      if (comment) FREE(comment);
+	      free(msg);
+	      free(fullname);
+	      if (comment) free(comment);
 	      return;
 	    }
 	}
@@ -2766,7 +2766,7 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
 	io_err = save_selection(ofile, type, format, srate, comment, (saving) ? SAVE_ALL_CHANS : chan);
 	if (io_err == IO_NO_ERROR)
 	  io_err = move_file(ofile, fullname);
-	FREE(ofile);
+	free(ofile);
 	break;
       }
     case REGION_SAVE_AS:
@@ -2780,7 +2780,7 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
 	    io_err = save_region(region_dialog_region(), ofile, type, format, comment);
 	    if (io_err == IO_NO_ERROR)
 	      io_err = move_file(ofile, fullname);
-	    FREE(ofile);
+	    free(ofile);
 	  }
 	break;
       default:
@@ -2796,7 +2796,7 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
 	{
 	  snd_encode(output_type, tmpfile, fullname);
 	  snd_remove(tmpfile, REMOVE_FROM_CACHE);
-	  FREE(tmpfile);
+	  free(tmpfile);
 	}
 
       remember_filename(fullname, sd->fs->file_text_names);
@@ -2821,10 +2821,10 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
       msg = mus_format("%s as %s: %s (%s)", (saving) ? "save" : "extract chan", str, io_error_name(io_err), snd_io_strerror());
       post_file_dialog_error((const char *)msg, sd->panel_data);
       clear_error_if_filename_changes(sd->fs, sd);
-      FREE(msg);
+      free(msg);
     }
-  FREE(fullname);
-  if (comment) FREE(comment);
+  free(fullname);
+  if (comment) free(comment);
 }
 
 
@@ -2884,11 +2884,11 @@ static void save_as_mkdir_callback(GtkWidget *w, gpointer context)
       str = mus_format(_("can't make %s: %s"), filename, strerror(errno));
       post_file_dialog_error((const char *)str, sd->panel_data);
       clear_error_if_filename_changes(fs, sd);
-      FREE(str);
+      free(str);
     }
   else
     {
-      if (fs->directory_name) FREE(fs->directory_name);
+      if (fs->directory_name) free(fs->directory_name);
       fs->directory_name = mus_strdup(filename);
       fsb_filter_set_text_with_directory(fs, "*");
       fsb_update_lists(fs);
@@ -3021,7 +3021,7 @@ static void make_save_as_dialog(save_as_dialog_info *sd, char *sound_name, int h
     }
 
   /* gtk_label_set_text(GTK_LABEL(sd->fs->file_label), file_string); */
-  FREE(file_string);
+  free(file_string);
 }
 
 
@@ -3048,7 +3048,7 @@ widget_t make_sound_save_as_dialog(bool managed)
 				   (hdr) ? hdr->srate : selection_srate(), 
 				   IGNORE_CHANS, IGNORE_DATA_LOCATION, IGNORE_SAMPLES,
 				   com = output_comment(hdr));
-  if (com) FREE(com);
+  if (com) free(com);
   if (sd->fs->reread_directory) 
     {
       force_directory_reread(sd->fs);
@@ -3107,7 +3107,7 @@ widget_t make_region_save_as_dialog(bool managed)
 				   region_srate(region_dialog_region()), 
 				   IGNORE_CHANS, IGNORE_DATA_LOCATION, IGNORE_SAMPLES, 
 				   comment);
-  if (comment) FREE(comment);
+  if (comment) free(comment);
   if (sd->fs->reread_directory) 
     {
       force_directory_reread(sd->fs);
@@ -3220,7 +3220,7 @@ static raw_info *new_raw_dialog(void)
     {
       loc = 0;
       raw_info_size = 4;
-      raw_infos = (raw_info **)CALLOC(raw_info_size, sizeof(raw_info *));
+      raw_infos = (raw_info **)calloc(raw_info_size, sizeof(raw_info *));
     }
   else
     {
@@ -3236,13 +3236,13 @@ static raw_info *new_raw_dialog(void)
 	{
 	  loc = raw_info_size;
 	  raw_info_size += 4;
-	  raw_infos = (raw_info **)REALLOC(raw_infos, raw_info_size * sizeof(raw_info *));
+	  raw_infos = (raw_info **)realloc(raw_infos, raw_info_size * sizeof(raw_info *));
 	  for (i = loc; i < raw_info_size; i++) raw_infos[i] = NULL;
 	}
     }
   if (!raw_infos[loc])
     {
-      raw_infos[loc] = (raw_info *)CALLOC(1, sizeof(raw_info));
+      raw_infos[loc] = (raw_info *)calloc(1, sizeof(raw_info));
       raw_infos[loc]->dialog = NULL;
       raw_infos[loc]->filename = NULL;
       raw_infos[loc]->help = NULL;
@@ -3317,7 +3317,7 @@ static void raw_data_ok_callback(GtkWidget *w, gpointer context)
       else
 	{
 	  file_info *hdr;
-	  hdr = (file_info *)CALLOC(1, sizeof(file_info));
+	  hdr = (file_info *)calloc(1, sizeof(file_info));
 	  hdr->name = mus_strdup(rp->filename);
 	  hdr->type = MUS_RAW;
 	  hdr->srate = raw_srate;
@@ -3452,7 +3452,7 @@ void raw_data_dialog_to_file_info(const char *filename, char *title, char *info,
   rp = new_raw_dialog();
   rp->read_only = read_only;
   rp->selected = selected;
-  if (rp->filename) FREE(rp->filename);
+  if (rp->filename) free(rp->filename);
   rp->filename = mus_strdup(filename);
   rp->requestor = ss->open_requestor;
   rp->requestor_dialog = ss->sgx->requestor_dialog;
@@ -3467,12 +3467,12 @@ void raw_data_dialog_to_file_info(const char *filename, char *title, char *info,
   if (!rp->dialog) 
     make_raw_data_dialog(rp, filename, title);
   else gtk_window_set_title(GTK_WINDOW(rp->dialog), title);
-  FREE(title);
-  if (rp->help) FREE(rp->help);
+  free(title);
+  if (rp->help) free(rp->help);
   if (info)
     {
       rp->help = mus_strdup(info);
-      FREE(info);
+      free(info);
     }
   else rp->help = NULL;
   raise_dialog(rp->dialog);
@@ -3573,7 +3573,7 @@ static void new_file_ok_callback(GtkWidget *w, gpointer context)
 	{
 	  snd_info *sp;
 	  /* handle the overwrite hook directly */
-	  if (new_file_filename) FREE(new_file_filename);
+	  if (new_file_filename) free(new_file_filename);
 	  new_file_filename = mus_expand_filename(newer_name); /* need full filename for fam */
 	  if ((!new_file_watcher) &&
 	      (ask_before_overwrite(ss)) && 
@@ -3584,7 +3584,7 @@ static void new_file_ok_callback(GtkWidget *w, gpointer context)
 	      set_stock_button_label(new_file_ok_button, _("DoIt"));
 	      post_file_dialog_error((const char *)msg, ndat);
 	      clear_error_if_new_filename_changes(new_file_dialog);
-	      FREE(msg);
+	      free(msg);
 	    }
 	  else
 	    {
@@ -3607,7 +3607,7 @@ static void new_file_ok_callback(GtkWidget *w, gpointer context)
 		}
 	    }
 	}
-      if (comment) FREE(comment);
+      if (comment) free(comment);
     }
 }
 
@@ -3618,7 +3618,7 @@ static char *new_file_dialog_filename(int header_type)
   char *filename = NULL;
   const char *extensions[6] = {"aiff", "aiff", "wav", "wav", "caf", "snd"};
   int extension = 0;
-  filename = (char *)CALLOC(64, sizeof(char));
+  filename = (char *)calloc(64, sizeof(char));
   switch (header_type)
     {
     case MUS_AIFC: extension = 0; break;
@@ -3653,8 +3653,8 @@ static void load_new_file_defaults(char *newname)
 
   set_file_dialog_sound_attributes(ndat, header_type, data_format, srate, chans, IGNORE_DATA_LOCATION, initial_samples, new_comment);
 
-  if (new_comment) FREE(new_comment);
-  if (filename) FREE(filename);
+  if (new_comment) free(new_comment);
+  if (filename) free(filename);
 }
 
 
@@ -3782,7 +3782,7 @@ widget_t make_new_file_dialog(bool managed)
 	      filename = new_file_dialog_filename(default_output_header_type(ss));
 	      gtk_entry_set_text(GTK_ENTRY(new_file_text), filename);  
 	      mus_sound_forget(filename);
-	      FREE(filename);
+	      free(filename);
 	    }
 	}
     }
@@ -3814,7 +3814,7 @@ static edhead_info *new_edhead_dialog(void)
     {
       loc = 0;
       edhead_info_size = 4;
-      edhead_infos = (edhead_info **)CALLOC(edhead_info_size, sizeof(edhead_info *));
+      edhead_infos = (edhead_info **)calloc(edhead_info_size, sizeof(edhead_info *));
     }
   else
     {
@@ -3830,13 +3830,13 @@ static edhead_info *new_edhead_dialog(void)
 	{
 	  loc = edhead_info_size;
 	  edhead_info_size += 4;
-	  edhead_infos = (edhead_info **)REALLOC(edhead_infos, edhead_info_size * sizeof(edhead_info *));
+	  edhead_infos = (edhead_info **)realloc(edhead_infos, edhead_info_size * sizeof(edhead_info *));
 	  for (i = loc; i < edhead_info_size; i++) edhead_infos[i] = NULL;
 	}
     }
   if (!edhead_infos[loc])
     {
-      edhead_infos[loc] = (edhead_info *)CALLOC(1, sizeof(edhead_info));
+      edhead_infos[loc] = (edhead_info *)calloc(1, sizeof(edhead_info));
       edhead_infos[loc]->dialog = NULL;
       edhead_infos[loc]->panel_changed = false;
     }
@@ -3864,7 +3864,7 @@ static char *make_header_dialog_title(edhead_info *ep, snd_info *sp)
 {
   /* dialog may not yet exist */
   char *str;
-  str = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
+  str = (char *)calloc(PRINT_BUFFER_SIZE, sizeof(char));
   if ((sp->user_read_only == FILE_READ_ONLY) || 
       (sp->file_read_only == FILE_READ_ONLY))
     {
@@ -3940,7 +3940,7 @@ static void edit_header_watch_user_read_only(struct snd_info *sp, sp_watcher_rea
 	    clear_dialog_error(ep->edat);
 	  title = make_header_dialog_title(ep, sp);
 	  gtk_window_set_title(GTK_WINDOW(ep->dialog), title);
-	  FREE(title);
+	  free(title);
 	}
       else /* sound closing, so we shouldn't sit around offering to edit its header */
 	{
@@ -3981,7 +3981,7 @@ static void watch_file_read_only(struct fam_info *fp, FAMEvent *fe)
 	      clear_dialog_error(ep->edat);
 	    title = make_header_dialog_title(ep, sp);
 	    gtk_window_set_title(GTK_WINDOW(ep->dialog), title);
-	    FREE(title);
+	    free(title);
 	    return;
 	  }
       }
@@ -4117,7 +4117,7 @@ GtkWidget *edit_header(snd_info *sp)
 
   str = make_header_dialog_title(ep, sp);
   gtk_window_set_title(GTK_WINDOW(ep->dialog), str);
-  FREE(str);
+  free(str);
 
   gtk_widget_set_sensitive(ep->save_button, (hdr->type == MUS_RAW));
 
@@ -4237,7 +4237,7 @@ void save_post_it_dialog_state(FILE *fd)
       fprintf(fd, "\"%s\" \"%s\" %s drop\n", subject, text, S_info_dialog);
 #endif
       if (text) g_free(text);
-      if (subject) FREE(subject);
+      if (subject) free(subject);
     }
 }
 
@@ -4318,7 +4318,7 @@ static gboolean select_event_callback(GtkWidget *w, GdkEventButton *ev, gpointer
 static vf_row *make_vf_row(view_files_info *vdat, GCallback play_callback, GCallback name_callback)
 {
   vf_row *r;
-  r = (vf_row *)CALLOC(1, sizeof(vf_row));
+  r = (vf_row *)calloc(1, sizeof(vf_row));
   r->vdat = (void *)vdat;
 
   r->rw = gtk_hbox_new(false, 0);
@@ -4397,7 +4397,7 @@ void vf_post_info(view_files_info *vdat, int pos)
   char *title;
   title = mus_format("%s:", vdat->names[pos]);
   info_widget_display(vdat->left_title, title);
-  FREE(title);
+  free(title);
   post_sound_info(vdat->info1, vdat->info2, vdat->full_names[pos], false);
 }
 
@@ -4410,7 +4410,7 @@ void vf_post_selected_files_list(view_files_info *vdat)
 
   title = mus_strdup("selected files:");
   info_widget_display(vdat->left_title, title);
-  FREE(title);
+  free(title);
 
   if (len == 2)
     {
@@ -4435,8 +4435,8 @@ void vf_post_selected_files_list(view_files_info *vdat)
   info_widget_display(vdat->info1, msg1);
   info_widget_display(vdat->info2, msg2);
 
-  FREE(msg1);
-  FREE(msg2);
+  free(msg1);
+  free(msg2);
 
   set_sensitive(vdat->openB, true);
   set_sensitive(vdat->removeB, true);
@@ -4451,7 +4451,7 @@ void vf_unpost_info(view_files_info *vdat)
 
   title = mus_strdup("(no files selected)");
   info_widget_display(vdat->left_title, title);
-  FREE(title);
+  free(title);
 
   info_widget_display(vdat->info1, "");
   info_widget_display(vdat->info2, "");
@@ -4605,7 +4605,7 @@ void view_files_add_file_or_directory(view_files_info *vdat, const char *file_or
   if (directory_p(filename))
     add_directory_to_view_files_list(vdat, (const char *)filename);
   else add_file_to_view_files_list(vdat, file_or_dir, filename);
-  FREE(filename);
+  free(filename);
 }
 
 
@@ -4628,7 +4628,7 @@ static void view_files_drop_watcher(GtkWidget *w, const char *str, int x, int y,
   char *filename;
   filename = mus_expand_filename(str);
   add_file_to_view_files_list(vdat, str, filename);
-  FREE(filename);
+  free(filename);
   view_files_display_list(vdat);
 }
 
@@ -5068,7 +5068,7 @@ static void vf_amp_env_resize(view_files_info *vdat, GtkWidget *w)
       gc_set_background(vdat->env_gc, ss->sgx->graph_color);
       gc_set_foreground(vdat->env_gc, ss->sgx->data_color);
       gc_set_function(vdat->env_gc, GDK_COPY);
-      vdat->env_ax = (axis_context *)CALLOC(1, sizeof(axis_context));
+      vdat->env_ax = (axis_context *)calloc(1, sizeof(axis_context));
       vdat->env_ax->wn = WIDGET_TO_WINDOW(w);
       vdat->env_ax->w = w;
       vdat->env_ax->gc = vdat->env_gc;
@@ -5183,7 +5183,7 @@ GtkWidget *start_view_files_dialog_1(view_files_info *vdat, bool managed)
 	char *filestr = NULL;
 	filestr = mus_format("%s %d", _("Files"), vdat->index + 1);
 	gtk_window_set_title(GTK_WINDOW(vdat->dialog), filestr);
-	FREE(filestr);
+	free(filestr);
       }
 
       sg_make_resizable(vdat->dialog);
@@ -5285,7 +5285,7 @@ GtkWidget *start_view_files_dialog_1(view_files_info *vdat, bool managed)
       gtk_menu_shell_append(GTK_MENU_SHELL(vdat->smenu), vdat->big_to_small);
 
       vdat->sort_items_size = 4;
-      vdat->sort_items = (GtkWidget **)CALLOC(vdat->sort_items_size, sizeof(GtkWidget *));
+      vdat->sort_items = (GtkWidget **)calloc(vdat->sort_items_size, sizeof(GtkWidget *));
       for (i = 0; i < vdat->sort_items_size; i++)
 	{
 	  vdat->sort_items[i] = gtk_menu_item_new_with_label("unused");

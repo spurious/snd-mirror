@@ -6,9 +6,9 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound)
   chan_info *cp; /* may be re-used */
   if (!cip)
     {
-      cp = (chan_info *)CALLOC(1, sizeof(chan_info)); 
-      cp->cgx = (chan_context *)CALLOC(1, sizeof(chan_context));
-      cp->cgx->ax = (axis_context *)CALLOC(1, sizeof(axis_context));
+      cp = (chan_info *)calloc(1, sizeof(chan_info)); 
+      cp->cgx = (chan_context *)calloc(1, sizeof(chan_context));
+      cp->cgx->ax = (axis_context *)calloc(1, sizeof(axis_context));
 #if USE_GTK && USE_CAIRO
       cp->cgx->progress_pct = -1.0;
 #endif
@@ -113,12 +113,12 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound)
   cp->last_search_result = SEARCH_OK;
   if (cp->last_sonogram) 
     {
-      FREE(cp->last_sonogram); 
+      free(cp->last_sonogram); 
       cp->last_sonogram = NULL;
     }
   if (cp->last_wavogram) 
     {
-      FREE(cp->last_wavogram); 
+      free(cp->last_wavogram); 
       cp->last_wavogram = NULL;
     }
   cp->active = CHANNEL_INITIALIZED;
@@ -159,7 +159,7 @@ static chan_info *free_chan_info(chan_info *cp)
   if (cp->amp_control)
     {
       /* not sure this is the right thing */
-      FREE(cp->amp_control);
+      free(cp->amp_control);
       cp->amp_control = NULL;
     }
   if (XEN_PROCEDURE_P(cp->cursor_proc))
@@ -177,18 +177,18 @@ static chan_info *free_chan_info(chan_info *cp)
       /* special case -- background fft process never got a chance to run */
       if (cp->temp_sonogram == cp->last_sonogram) cp->last_sonogram = NULL;
       free_sonogram_fft_state(cp->temp_sonogram);
-      FREE(cp->temp_sonogram); 
+      free(cp->temp_sonogram); 
       cp->temp_sonogram = NULL;
     } 
   if (cp->last_sonogram) 
     {
       free_sonogram_fft_state(cp->last_sonogram);
-      FREE(cp->last_sonogram); 
+      free(cp->last_sonogram); 
       cp->last_sonogram = NULL;
     }
   if (cp->last_wavogram) 
     {
-      FREE(cp->last_wavogram); 
+      free(cp->last_wavogram); 
       cp->last_wavogram = NULL;
     }
   if (cp->lisp_info) 
@@ -201,7 +201,7 @@ static chan_info *free_chan_info(chan_info *cp)
 
   if (cp->as_one_edit_positions)
     {
-      FREE(cp->as_one_edit_positions);
+      free(cp->as_one_edit_positions);
       cp->as_one_edit_positions = NULL;
       cp->as_one_edit_positions_size = 0;
     }
@@ -234,8 +234,8 @@ static chan_info *free_chan_info(chan_info *cp)
 snd_info *make_basic_snd_info(int chans)
 {
   snd_info *sp = NULL;
-  sp = (snd_info *)CALLOC(1, sizeof(snd_info));
-  sp->chans = (chan_info **)CALLOC(chans, sizeof(chan_info *));
+  sp = (snd_info *)calloc(1, sizeof(snd_info));
+  sp->chans = (chan_info **)calloc(chans, sizeof(chan_info *));
   sp->allocated_chans = chans;
   sp->properties = XEN_FALSE; /* will be a vector of 1 element if it's ever used */
   sp->properties_loc = NOT_A_GC_LOC;
@@ -321,14 +321,14 @@ snd_info *make_snd_info(snd_info *sip, const char *filename, file_info *hdr, int
   if (!sip)
     {
       sp = make_basic_snd_info(chans);
-      sp->sgx = (snd_context *)CALLOC(1, sizeof(snd_context));
+      sp->sgx = (snd_context *)calloc(1, sizeof(snd_context));
     }
   else 
     {
       sp = sip;
       if (sp->allocated_chans < chans) 
 	{
-	  sp->chans = (chan_info **)REALLOC(sp->chans, chans * sizeof(chan_info *));
+	  sp->chans = (chan_info **)realloc(sp->chans, chans * sizeof(chan_info *));
 	  for (i = sp->allocated_chans; i < chans; i++) sp->chans[i] = NULL;
 	  sp->allocated_chans = chans;
 	}
@@ -391,8 +391,8 @@ void free_snd_info(snd_info *sp)
       call_sp_watchers(sp, SP_ANY_WATCHER, SP_IS_CLOSING);
       for (i = 0; i < sp->watchers_size; i++)
 	if (sp->watchers[i])
-	  FREE(sp->watchers[i]); /* normally watcher will do this, I assume */
-      FREE(sp->watchers);
+	  free(sp->watchers[i]); /* normally watcher will do this, I assume */
+      free(sp->watchers);
       sp->watchers = NULL;
       sp->watchers_size = 0;
     }
@@ -454,12 +454,12 @@ void free_snd_info(snd_info *sp)
     XEN_VECTOR_SET(sp->properties, 0, XEN_EMPTY_LIST);
   sp->selected_channel = NO_SELECTION;
   sp->short_filename = NULL;                      /* was a pointer into filename */
-  if (sp->filename) FREE(sp->filename);
+  if (sp->filename) free(sp->filename);
   sp->filename = NULL;
   if (sp->filter_control_envelope) sp->filter_control_envelope = free_env(sp->filter_control_envelope);
   if (sp->saved_controls) free_controls(sp);
   sp->delete_me = NULL;
-  if (sp->name_string) FREE(sp->name_string);
+  if (sp->name_string) free(sp->name_string);
   sp->name_string = NULL;
   sp->lacp = NULL;
   sp->hdr = free_file_info(sp->hdr);
@@ -476,7 +476,7 @@ snd_info *completely_free_snd_info(snd_info *sp)
   int i;
   chan_info *cp;
   free_snd_info(sp);
-  if (sp->sgx) FREE(sp->sgx);
+  if (sp->sgx) free(sp->sgx);
   for (i = 0; i < sp->allocated_chans; i++) 
     {
       cp = sp->chans[i];
@@ -485,8 +485,8 @@ snd_info *completely_free_snd_info(snd_info *sp)
 	  if (cp->cgx) 
 	    {
 	      if (cp->cgx->ax) 
-		FREE(cp->cgx->ax);
-	      FREE(cp->cgx);
+		free(cp->cgx->ax);
+	      free(cp->cgx);
 	    }
 	  if (XEN_VECTOR_P(cp->properties))
 	    {
@@ -494,17 +494,17 @@ snd_info *completely_free_snd_info(snd_info *sp)
 	      cp->properties_loc = NOT_A_GC_LOC;
 	    }
 	  cp->active = CHANNEL_FREED;
-	  FREE(cp);
+	  free(cp);
 	  /* it's possible to have dangling readers (snd_fd) with pointers to this channel (see note in snd-edits.c under unlist_reader) */
 	}
     }
-  FREE(sp->chans);
+  free(sp->chans);
   if (XEN_VECTOR_P(sp->properties))
     {
       snd_unprotect_at(sp->properties_loc);
       sp->properties_loc = NOT_A_GC_LOC;
     }
-  FREE(sp);
+  free(sp);
   return(NULL);
 }
 
@@ -793,7 +793,7 @@ int find_free_sound_slot(int desired_chans)
     }
   j = ss->max_sounds;
   ss->max_sounds += SOUNDS_ALLOC_SIZE;
-  ss->sounds = (snd_info **)REALLOC(ss->sounds, ss->max_sounds * sizeof(snd_info *));
+  ss->sounds = (snd_info **)realloc(ss->sounds, ss->max_sounds * sizeof(snd_info *));
   for (i = j; i < ss->max_sounds; i++) ss->sounds[i] = NULL;
   return(j);
 }
@@ -806,7 +806,7 @@ int find_free_sound_slot_for_channel_display(void)
     if (ss->sounds[i] == NULL) return(i);
   j = ss->max_sounds;
   ss->max_sounds += SOUNDS_ALLOC_SIZE;
-  ss->sounds = (snd_info **)REALLOC(ss->sounds, ss->max_sounds * sizeof(snd_info *));
+  ss->sounds = (snd_info **)realloc(ss->sounds, ss->max_sounds * sizeof(snd_info *));
   for (i = j; i < ss->max_sounds; i++) ss->sounds[i] = NULL;
   return(j);
 }
@@ -948,11 +948,11 @@ sync_info *free_sync_info(sync_info *si)
 {
   if (si)
     {
-      if (si->begs) FREE(si->begs);
+      if (si->begs) free(si->begs);
       si->begs = NULL;
-      if (si->cps) FREE(si->cps);
+      if (si->cps) free(si->cps);
       si->cps = NULL;
-      FREE(si);
+      free(si);
     }
   return(NULL);
 }
@@ -984,9 +984,9 @@ sync_info *snd_sync(int sync)
   if (chans > 0)
     {
       sync_info *si;
-      si = (sync_info *)CALLOC(1, sizeof(sync_info));
-      si->begs = (off_t *)CALLOC(chans, sizeof(off_t));
-      si->cps = (chan_info **)CALLOC(chans, sizeof(chan_info *));
+      si = (sync_info *)calloc(1, sizeof(sync_info));
+      si->begs = (off_t *)calloc(chans, sizeof(off_t));
+      si->cps = (chan_info **)calloc(chans, sizeof(chan_info *));
       si->chans = chans;
       j = 0;
       for (i = 0; i < ss->max_sounds; i++)
@@ -1005,11 +1005,11 @@ sync_info *snd_sync(int sync)
 sync_info *make_simple_sync(chan_info *cp, off_t beg)
 {
   sync_info *si;
-  si = (sync_info *)CALLOC(1, sizeof(sync_info));
+  si = (sync_info *)calloc(1, sizeof(sync_info));
   si->chans = 1;
-  si->cps = (chan_info **)CALLOC(1, sizeof(chan_info *));
+  si->cps = (chan_info **)calloc(1, sizeof(chan_info *));
   si->cps[0] = cp;
-  si->begs = (off_t *)CALLOC(1, sizeof(off_t));
+  si->begs = (off_t *)calloc(1, sizeof(off_t));
   si->begs[0] = beg;
   return(si);
 }
@@ -1055,9 +1055,9 @@ static char *display_maxamps(const char *filename, int chans)
   mus_sample_t *vals;
   off_t *times;
   len = chans * 32;
-  ampstr = (char *)CALLOC(len, sizeof(char));
-  vals = (mus_sample_t *)CALLOC(chans, sizeof(mus_sample_t));
-  times = (off_t *)CALLOC(chans, sizeof(off_t));
+  ampstr = (char *)calloc(len, sizeof(char));
+  vals = (mus_sample_t *)calloc(chans, sizeof(mus_sample_t));
+  times = (off_t *)calloc(chans, sizeof(off_t));
   mus_snprintf(ampstr, len, _("\nmax amp: "));
   mus_sound_maxamps(filename, chans, vals, times);
   for (i = 0; i < chans; i++)
@@ -1065,8 +1065,8 @@ static char *display_maxamps(const char *filename, int chans)
       ampstr = mus_strcat(ampstr, prettyf(MUS_SAMPLE_TO_DOUBLE(vals[i]), 3), &len);
       ampstr = mus_strcat(ampstr, " ", &len);
     }
-  FREE(vals);
-  FREE(times);
+  free(vals);
+  free(times);
   return(ampstr);
 }
 
@@ -1093,7 +1093,7 @@ void display_info(snd_info *sp)
 	    quoted_comment = mus_format("\"%s\"", comment);
 	  if (mus_sound_maxamp_exists(sp->filename))
 	    ampstr = display_maxamps(sp->filename, sp->nchans);
-	  buffer = (char *)CALLOC(INFO_BUFFER_SIZE, sizeof(char));
+	  buffer = (char *)calloc(INFO_BUFFER_SIZE, sizeof(char));
 	  mus_snprintf(buffer, INFO_BUFFER_SIZE, 
 		       _("srate: %d\nchans: %d\nlength: %.3f (" OFF_TD " %s)\ntype: %s\nformat: %s\nwritten: %s%s%s%s\n"),
 		       hdr->srate,
@@ -1108,9 +1108,9 @@ void display_info(snd_info *sp)
 		       (quoted_comment) ? _("\ncomment: ") : "",
 		       (quoted_comment) ? quoted_comment : "");
 	  post_it(sp->short_filename, buffer);
-	  if (ampstr) FREE(ampstr);
-	  if (quoted_comment) FREE(quoted_comment);
-	  FREE(buffer);
+	  if (ampstr) free(ampstr);
+	  if (quoted_comment) free(quoted_comment);
+	  free(buffer);
 	}
     }
 }

@@ -48,13 +48,13 @@ static cmap *delete_cmap(int index)
     {
       cmap *c;
       c = cmaps[index];
-      if (c->r) FREE(c->r);
-      if (c->g) FREE(c->g);
-      if (c->b) FREE(c->b);
-      if (c->name) FREE(c->name);
+      if (c->r) free(c->r);
+      if (c->g) free(c->g);
+      if (c->b) free(c->b);
+      if (c->name) free(c->name);
       if (XEN_PROCEDURE_P(c->lambda))
 	snd_unprotect_at(c->gc_loc);
-      FREE(c);
+      free(c);
       cmaps[index] = NULL;
     }
   return(NULL);
@@ -65,7 +65,7 @@ static rgb_t *Floats_to_rgb_t(int size, Float *data)
 {
   int i;
   rgb_t *new_data;
-  new_data = (rgb_t *)CALLOC(size, sizeof(rgb_t));
+  new_data = (rgb_t *)calloc(size, sizeof(rgb_t));
   for (i = 0; i < size; i++)
     new_data[i] = FLOAT_TO_RGB(data[i]);
   return(new_data);
@@ -77,17 +77,17 @@ static void rebuild_colormap(cmap *c)
   Float **rgb;
   int i;
   /* release old colormap data */
-  if (c->r) FREE(c->r);
-  if (c->g) FREE(c->g);
-  if (c->b) FREE(c->b);
+  if (c->r) free(c->r);
+  if (c->g) free(c->g);
+  if (c->b) free(c->b);
   c->size = color_map_size(ss);
   /* make new data */
   rgb = (*(c->make_rgb))(c->size, c->lambda);
   c->r = Floats_to_rgb_t(c->size, rgb[0]);
   c->g = Floats_to_rgb_t(c->size, rgb[1]);
   c->b = Floats_to_rgb_t(c->size, rgb[2]);
-  for (i = 0; i < 3; i++) FREE(rgb[i]);
-  FREE(rgb);
+  for (i = 0; i < 3; i++) free(rgb[i]);
+  free(rgb);
 }
 
 
@@ -163,7 +163,7 @@ rgb_t *color_map_blues(int index)
 static cmap *new_cmap(const char *name, int size, Float **rgb)
 {
   cmap *c = NULL;
-  c = (cmap *)CALLOC(1, sizeof(cmap));
+  c = (cmap *)calloc(1, sizeof(cmap));
   c->name = mus_strdup(name);
   c->size = size;
   if (rgb)
@@ -192,8 +192,8 @@ static cmap *make_builtin_cmap(int size, const char *name,
   if (rgb)
     {
       int i;
-      for (i = 0; i < 3; i++) FREE(rgb[i]);
-      FREE(rgb);
+      for (i = 0; i < 3; i++) free(rgb[i]);
+      free(rgb);
     }
   return(c);
 }
@@ -203,8 +203,8 @@ static Float **make_base_rgb(int size)
 {
   Float **rgb;
   int i;
-  rgb = (Float **)CALLOC(3, sizeof(Float *));
-  for (i = 0; i < 3; i++) rgb[i] = (Float *)CALLOC(size, sizeof(Float));
+  rgb = (Float **)calloc(3, sizeof(Float *));
+  for (i = 0; i < 3; i++) rgb[i] = (Float *)calloc(size, sizeof(Float));
   return(rgb);
 }
 
@@ -235,7 +235,7 @@ static Float **make_xen_colormap(int size, XEN lambda)
       if (add_colormap_func_error_msg)
 	{
 	  str = C_TO_XEN_STRING(add_colormap_func_error_msg);
-	  FREE(add_colormap_func_error_msg);
+	  free(add_colormap_func_error_msg);
 	  add_colormap_func_error_msg = NULL;
 	}
       else str = XEN_FALSE;
@@ -295,7 +295,7 @@ static int add_colormap(const char *name, XEN func)
     {
       index = cmaps_size;
       cmaps_size += 8;
-      cmaps = (cmap **)REALLOC(cmaps, cmaps_size * sizeof(cmap *));
+      cmaps = (cmap **)realloc(cmaps, cmaps_size * sizeof(cmap *));
       for (i = index; i < cmaps_size; i++) cmaps[i] = NULL;
     }
   loc = snd_protect(func);
@@ -304,8 +304,8 @@ static int add_colormap(const char *name, XEN func)
   c->make_rgb = make_xen_colormap;
   c->lambda = func;
   c->gc_loc = loc;
-  for (i = 0; i < 3; i++) FREE(rgb[i]);
-  FREE(rgb);
+  for (i = 0; i < 3; i++) free(rgb[i]);
+  free(rgb);
   cmaps[index] = c;
   return(index);
 }
@@ -1019,7 +1019,7 @@ XEN_NARGIFY_2(g_add_colormap_w, g_add_colormap)
 void g_init_gxcolormaps(void)
 {
   cmaps_size = NUM_BUILTIN_COLORMAPS;
-  cmaps = (cmap **)CALLOC(cmaps_size, sizeof(cmap *));
+  cmaps = (cmap **)calloc(cmaps_size, sizeof(cmap *));
   /* these are just place-holders */
   cmaps[BLACK_AND_WHITE_COLORMAP] = make_builtin_cmap(1, _("black-and-white"), make_black_and_white_colormap, black_and_white_rgb); 
   cmaps[GRAY_COLORMAP] =    make_builtin_cmap(1, _("gray"),    make_gray_colormap,    gray_rgb); 

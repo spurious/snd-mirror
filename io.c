@@ -559,7 +559,7 @@ int mus_file_open_descriptors(int tfd, const char *name, int format, int size /*
   if (io_fd_size == 0)
     {
       io_fd_size = tfd + IO_FD_ALLOC_SIZE;
-      io_fds = (io_fd **)CALLOC(io_fd_size, sizeof(io_fd *));
+      io_fds = (io_fd **)calloc(io_fd_size, sizeof(io_fd *));
     }
 
   if (io_fds)
@@ -569,12 +569,12 @@ int mus_file_open_descriptors(int tfd, const char *name, int format, int size /*
 	  int i, lim;
 	  lim = io_fd_size;
 	  io_fd_size = tfd + IO_FD_ALLOC_SIZE;
-	  io_fds = (io_fd **)REALLOC(io_fds, io_fd_size * sizeof(io_fd *));
+	  io_fds = (io_fd **)realloc(io_fds, io_fd_size * sizeof(io_fd *));
 	  for (i = lim; i < io_fd_size; i++) io_fds[i] = NULL;
 	}
 
       if (io_fds[tfd] == NULL)
-	io_fds[tfd] = (io_fd *)CALLOC(1, sizeof(io_fd));
+	io_fds[tfd] = (io_fd *)calloc(1, sizeof(io_fd));
 
       if (io_fds[tfd])
 	{
@@ -589,7 +589,7 @@ int mus_file_open_descriptors(int tfd, const char *name, int format, int size /*
 	  fd->chans = chans;
 	  if (name)
 	    {
-	      fd->name = (char *)CALLOC(strlen(name) + 1, sizeof(char));
+	      fd->name = (char *)calloc(strlen(name) + 1, sizeof(char));
 	      strcpy(fd->name, name);
 	    }
 	}
@@ -760,8 +760,8 @@ int mus_file_close(int fd)
   close_result = close(fd);
 #endif
 
-  if (fdp->name) {FREE(fdp->name); fdp->name = NULL;}
-  FREE(fdp);
+  if (fdp->name) {free(fdp->name); fdp->name = NULL;}
+  free(fdp);
   io_fds[fd] = NULL;
 
   MUS_UNLOCK(&io_table_lock);
@@ -958,7 +958,7 @@ static off_t mus_read_any_1(int tfd, off_t beg, int chans, off_t nints, mus_samp
       prescaling = (float)(fd->prescaler * MUS_FLOAT_TO_SAMPLE(1.0));
       /* not MUS_FLOAT_TO_SAMPLE(fd->prescaler) here because there's a possible cast to int which can overflow */
 
-      charbuf = (char *)CALLOC(BUFLIM, sizeof(char)); 
+      charbuf = (char *)calloc(BUFLIM, sizeof(char)); 
       if (charbuf == NULL) 
 	return(mus_error(MUS_MEMORY_ALLOCATION_FAILED, "mus_read: IO buffer allocation failed"));
     }
@@ -1008,7 +1008,7 @@ static off_t mus_read_any_1(int tfd, off_t beg, int chans, off_t nints, mus_samp
 			for (j = loc; j < lim; j++) 
 			  bufs[k][j] = MUS_SAMPLE_0;
 		    }
-	      FREE(charbuf);
+	      free(charbuf);
 	      return(total_read);
 	    }
 	  lim = (int) (total / siz_chans);  /* this divide must be exact (hence the buflim calc above) */
@@ -1170,7 +1170,7 @@ static off_t mus_read_any_1(int tfd, off_t beg, int chans, off_t nints, mus_samp
 	    }
 	}
     }
-  if (!inbuf) FREE(charbuf);
+  if (!inbuf) free(charbuf);
   return(total_read);
 }
 
@@ -1305,7 +1305,7 @@ static int mus_write_1(int tfd, off_t beg, off_t end, int chans, mus_sample_t **
 	  bytes = (end + 1) * siz;
 	  return(checked_write(tfd, (char *)(bufs[0]), bytes));
 	}
-      charbuf = (char *)CALLOC(BUFLIM, sizeof(char)); 
+      charbuf = (char *)calloc(BUFLIM, sizeof(char)); 
       if (charbuf == NULL) 
 	return(mus_error(MUS_MEMORY_ALLOCATION_FAILED, "mus_write: IO buffer allocation failed"));
     }
@@ -1506,12 +1506,12 @@ static int mus_write_1(int tfd, off_t beg, off_t end, int chans, mus_sample_t **
 	  err = checked_write(tfd, charbuf, bytes);
 	  if (err == MUS_ERROR) 
 	    {
-	      FREE(charbuf); 
+	      free(charbuf); 
 	      return(MUS_ERROR);
 	    }
 	}
     }
-  if (!inbuf) FREE(charbuf);
+  if (!inbuf) free(charbuf);
   return(MUS_NO_ERROR);
 }
 
@@ -1589,14 +1589,14 @@ char *mus_getcwd(void)
 #if HAVE_GETCWD
   for (i = path_max;; i *= 2)
     {
-      if (pwd) FREE(pwd);
-      pwd = (char *)CALLOC(i, sizeof(char));
+      if (pwd) free(pwd);
+      pwd = (char *)calloc(i, sizeof(char));
       res = getcwd(pwd, i);
       if (res) break;    /* NULL is returned if failure, but what about success? should I check errno=ERANGE? */
     }
 #else
 #if HAVE_GETWD
-  pwd = (char *)CALLOC(path_max, sizeof(char));
+  pwd = (char *)calloc(path_max, sizeof(char));
   getwd(pwd);
 #endif
 #endif
@@ -1640,7 +1640,7 @@ char *mus_expand_filename(const char *filename)
       char *home = NULL;
       if ((tok[0] == '~') && (home = getenv("HOME")))
 	{
-	  file_name_buf = (char *)CALLOC(len + sndlib_strlen(home) + 8, sizeof(char));
+	  file_name_buf = (char *)calloc(len + sndlib_strlen(home) + 8, sizeof(char));
 	  strcpy(file_name_buf, home);
 	  strcat(file_name_buf, ++tok);
 	}
@@ -1648,9 +1648,9 @@ char *mus_expand_filename(const char *filename)
 	{
 	  char *pwd;
 	  pwd = mus_getcwd();
-	  file_name_buf = (char *)CALLOC(len + sndlib_strlen(pwd) + 8, sizeof(char));
+	  file_name_buf = (char *)calloc(len + sndlib_strlen(pwd) + 8, sizeof(char));
 	  strcpy(file_name_buf, pwd);
-	  FREE(pwd);
+	  free(pwd);
 	  strcat(file_name_buf, "/");
 	  if (tok[0])
 	    strcat(file_name_buf, tok);
@@ -1658,7 +1658,7 @@ char *mus_expand_filename(const char *filename)
     }
   else 
     {
-      file_name_buf = (char *)CALLOC(len + 8, sizeof(char));
+      file_name_buf = (char *)calloc(len + 8, sizeof(char));
       strcpy(file_name_buf, tok);
     }
   /* get rid of "/../" and "/./" also "/." at end */
@@ -1732,7 +1732,7 @@ char *mus_format(const char *format, ...)
   char *buf = NULL, *rtn = NULL;
   int needed_bytes = 0;
   va_list ap;
-  buf = (char *)CALLOC(MUS_FORMAT_STRING_MAX, sizeof(char));
+  buf = (char *)calloc(MUS_FORMAT_STRING_MAX, sizeof(char));
   va_start(ap, format);
 #if HAVE_VSNPRINTF
   needed_bytes = vsnprintf(buf, MUS_FORMAT_STRING_MAX, format, ap);
@@ -1742,8 +1742,8 @@ char *mus_format(const char *format, ...)
   va_end(ap);
   if (needed_bytes > MUS_FORMAT_STRING_MAX)
     {
-      FREE(buf);
-      buf = (char *)CALLOC(needed_bytes + 1, sizeof(char));
+      free(buf);
+      buf = (char *)calloc(needed_bytes + 1, sizeof(char));
       va_start(ap, format);
 #if HAVE_VSNPRINTF
       vsnprintf(buf, needed_bytes + 1, format, ap);
@@ -1753,7 +1753,7 @@ char *mus_format(const char *format, ...)
       va_end(ap);
     }
   rtn = mus_strdup(buf);
-  FREE(buf);
+  free(buf);
   return(rtn);
 }
 
@@ -2438,7 +2438,7 @@ char *mus_strcat(char *errmsg, const char *str, int *size)
       if ((err_size * 2) > new_len)
 	err_size = err_size * 2;
       else err_size = new_len * 2;
-      errmsg = (char *)REALLOC(errmsg, err_size * sizeof(char));
+      errmsg = (char *)realloc(errmsg, err_size * sizeof(char));
       size[0] = err_size;
     }
   strcat(errmsg, str);

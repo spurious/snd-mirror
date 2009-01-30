@@ -69,7 +69,7 @@ static XEN g_make_color(XEN r, XEN g, XEN b)
   gf = check_color_range(S_make_color, g);
   bf = check_color_range(S_make_color, b);
 #if USE_CAIRO
-  ccolor = (color_info *)CALLOC(1, sizeof(color_info)); /* memleak here -- need color smob + free to deal with this */
+  ccolor = (color_info *)calloc(1, sizeof(color_info)); /* memleak here -- need color smob + free to deal with this */
   ccolor->red = rf;
   ccolor->green = gf;
   ccolor->blue = bf;

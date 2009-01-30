@@ -55,7 +55,7 @@ static void Tab_completion(Widget w, XEvent *event, char **str, Cardinal *num)
 	}
 
       if (old_text) XtFree(old_text);
-      if (new_text) FREE(new_text);
+      if (new_text) free(new_text);
     }
 }
 
@@ -154,7 +154,7 @@ static void Listener_completion(Widget w, XEvent *event, char **str, Cardinal *n
   beg = find_prompt(w, (XmTextPosition)end);
   len = end - beg + 1;
 
-  old_text = (char *)CALLOC(len + 1, sizeof(char));
+  old_text = (char *)calloc(len + 1, sizeof(char));
   XmTextGetSubstring(w, beg, len, len + 1, old_text);
   /* now old_text is the stuff typed since the last prompt */
 
@@ -172,7 +172,7 @@ static void Listener_completion(Widget w, XEvent *event, char **str, Cardinal *n
 
       if (!try_completion)
 	{
-	  FREE(old_text);
+	  free(old_text);
 	  return;
 	}
 
@@ -182,7 +182,7 @@ static void Listener_completion(Widget w, XEvent *event, char **str, Cardinal *n
 
       if (new_text) 
 	{
-	  FREE(new_text); 
+	  free(new_text); 
 	  new_text = NULL;
 	}
 
@@ -197,7 +197,7 @@ static void Listener_completion(Widget w, XEvent *event, char **str, Cardinal *n
 	  else new_text = command_completer(w, old_text, NULL);
 	  if (new_text) 
 	    {
-	      FREE(new_text); 
+	      free(new_text); 
 	      new_text = NULL;
 	    }
 	  num = get_possible_completions_size();
@@ -230,7 +230,7 @@ static void Listener_completion(Widget w, XEvent *event, char **str, Cardinal *n
 	      buffer = get_possible_completions();
 	      qsort((void *)buffer, num, sizeof(char *), alphabetize);
 
-	      match = (XmString *)CALLOC(num, sizeof(XmString));
+	      match = (XmString *)calloc(num, sizeof(XmString));
 	      for (i = 0; i < num; i++) 
 		match[i] = XmStringCreateLocalized(buffer[i]);
 
@@ -255,13 +255,13 @@ static void Listener_completion(Widget w, XEvent *event, char **str, Cardinal *n
 
 	      for (i = 0; i < num; i++) 
 		XmStringFree(match[i]);
-	      FREE(match);
+	      free(match);
 	    }
 	  set_save_completions(false);
 	}
 
-      if (file_text) FREE(file_text);
-      if (old_text) FREE(old_text);
+      if (file_text) free(file_text);
+      if (old_text) free(old_text);
     }
 }
 
@@ -369,12 +369,12 @@ static void Begin_of_line(Widget w, XEvent *ev, char **ustr, Cardinal *num)
   if (found) 
     {
       char *str = NULL;
-      str = (char *)CALLOC(ss->listener_prompt_length + 3, sizeof(char));
+      str = (char *)calloc(ss->listener_prompt_length + 3, sizeof(char));
       XmTextGetSubstring(w, loc + 1, ss->listener_prompt_length, ss->listener_prompt_length + 2, str);
       if (strncmp(listener_prompt(ss), str, ss->listener_prompt_length) == 0)
 	XmTextSetCursorPosition(w, loc + ss->listener_prompt_length + 1);
       else XmTextSetCursorPosition(w, loc + 1);
-      FREE(str);
+      free(str);
     }
   else XmTextSetCursorPosition(w, 1);
 }
@@ -469,12 +469,12 @@ static void Complain(Widget w, XEvent *event, char **str, Cardinal *num)
   XmTextPosition curpos;
   curpos = XmTextGetCursorPosition(w);
   old_text = XmTextGetString(w);
-  new_text = (char *)CALLOC(mus_strlen(old_text) + 5, sizeof(char));
+  new_text = (char *)calloc(mus_strlen(old_text) + 5, sizeof(char));
   sprintf(new_text, "%s C-%c", (old_text) ? old_text : "", str[0][0]);
   XmTextSetString(w, new_text);
   XmTextSetCursorPosition(w, curpos);
   if (old_text) XtFree(old_text);
-  FREE(new_text);
+  free(new_text);
 }
 
 
@@ -491,7 +491,7 @@ static void Word_upper(Widget w, XEvent *event, char **str, Cardinal *num)
       int i, length, wstart, wend;
       char *buf = NULL;
       length = endpos - curpos;
-      buf = (char *)CALLOC(length + 1, sizeof(char));
+      buf = (char *)calloc(length + 1, sizeof(char));
       XmTextGetSubstring(w, curpos, length, length + 1, buf);
       wstart = 0;
       wend = length;
@@ -524,7 +524,7 @@ static void Word_upper(Widget w, XEvent *event, char **str, Cardinal *num)
 	  XmTextReplace(w, curpos + wstart, curpos + wend, buf);
 	}
       XmTextSetCursorPosition(w, curpos + wend);
-      if (buf) FREE(buf);
+      if (buf) free(buf);
     }
 }
 
@@ -598,10 +598,10 @@ static void Listener_help(Widget w, XEvent *event, char **str, Cardinal *num)
   if (beg < 0) beg = 0;
   if (beg >= end) return;
   len = end - beg + 1;
-  source = (char *)CALLOC(len + 1, sizeof(char));
+  source = (char *)calloc(len + 1, sizeof(char));
   XmTextGetSubstring(w, beg, len, len + 1, source);
   provide_listener_help(source);
-  FREE(source);
+  free(source);
 }
 
 

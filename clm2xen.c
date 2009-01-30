@@ -618,7 +618,7 @@ static XEN g_edot_product(XEN val1, XEN val2)
     {
       len = XEN_VECTOR_LENGTH(val2);
     }
-  vals = (complex double *)CALLOC(len, sizeof(complex double));
+  vals = (complex double *)calloc(len, sizeof(complex double));
   if (MUS_VCT_P(val2))
     {
       for (i = 0; i < len; i++)
@@ -630,7 +630,7 @@ static XEN g_edot_product(XEN val1, XEN val2)
 	vals[i] = XEN_TO_C_COMPLEX(XEN_VECTOR_REF(val2, i));
     }
   result = C_TO_XEN_COMPLEX(mus_edot_product(freq, vals, len));
-  FREE(vals);
+  free(vals);
   return(xen_return_first(result,
 			  val2));
 }
@@ -783,7 +783,7 @@ is the window family parameter, if any:\n  " make_window_example
   if (!(mus_fft_window_p(fft_window)))
     XEN_OUT_OF_RANGE_ERROR(S_make_fft_window, 1, type, "~A: unknown fft window");
 
-  data = (Float *)CALLOC(n, sizeof(Float));
+  data = (Float *)calloc(n, sizeof(Float));
   mus_make_fft_window_with_window((mus_fft_window_t)fft_window, n, beta, alpha, data);
   return(xen_make_vct(n, data));
 }
@@ -1039,7 +1039,7 @@ static XEN *make_vcts(int size)
 {
   int i;
   XEN *vcts;
-  vcts = (XEN *)MALLOC(size * sizeof(XEN));
+  vcts = (XEN *)malloc(size * sizeof(XEN));
   for (i = 0; i < size; i++)
     vcts[i] = XEN_UNDEFINED;
   return(vcts);
@@ -1083,9 +1083,9 @@ static void mus_xen_free(mus_xen *ms)
 {
   if (!(ms->dont_free_gen)) mus_free(ms->gen);
   ms->gen = NULL;
-  if (ms->vcts) FREE(ms->vcts);
+  if (ms->vcts) free(ms->vcts);
   ms->vcts = NULL;
-  FREE(ms);
+  free(ms);
 }
 
 XEN_MAKE_OBJECT_FREE_PROCEDURE(mus_xen, free_mus_xen, mus_xen_free)
@@ -1238,7 +1238,7 @@ static XEN mus_optkey_to_input_procedure(XEN key, const char *caller, int n, XEN
 mus_xen *mus_any_to_mus_xen(mus_any *ge)
 {
   mus_xen *gn;
-  gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
+  gn = (mus_xen *)calloc(1, sizeof(mus_xen));
   gn->gen = ge;
   gn->nvcts = 0;
   gn->vcts = NULL;
@@ -1249,7 +1249,7 @@ mus_xen *mus_any_to_mus_xen(mus_any *ge)
 static mus_xen *mus_any_to_mus_xen_with_vct(mus_any *ge, XEN v)
 {
   mus_xen *gn;
-  gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
+  gn = (mus_xen *)calloc(1, sizeof(mus_xen));
   gn->gen = ge;
   gn->nvcts = 1;
   gn->vcts = make_vcts(gn->nvcts);
@@ -1261,7 +1261,7 @@ static mus_xen *mus_any_to_mus_xen_with_vct(mus_any *ge, XEN v)
 static mus_xen *mus_any_to_mus_xen_with_two_vcts(mus_any *ge, XEN v1, XEN v2)
 {
   mus_xen *gn;
-  gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
+  gn = (mus_xen *)calloc(1, sizeof(mus_xen));
   gn->gen = ge;
   gn->nvcts = 2;
   gn->vcts = make_vcts(gn->nvcts);
@@ -2036,7 +2036,7 @@ static XEN g_make_delay_1(xclm_delay_t choice, XEN arglist)
 
   if (initial_contents == NULL)
     {
-      line = (Float *)CALLOC(max_size, sizeof(Float));
+      line = (Float *)calloc(max_size, sizeof(Float));
       if (line == NULL)
 	return(clm_mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate delay line"));
       orig_v = xen_make_vct(max_size, line);
@@ -2541,7 +2541,7 @@ static Float *inverse_integrate(XEN dist, int data_size)
   Float x, x0, x1, xincr, y0, y1, sum = 0.0, first_sum = 0.0, last_sum = 0.0;
 
   lim = (e_size + 1) * 2;
-  e = (Float *)CALLOC(lim, sizeof(Float));
+  e = (Float *)calloc(lim, sizeof(Float));
 
   e_len = XEN_LIST_LENGTH(dist);
   ex0 = XEN_LIST_REF(dist, 0);
@@ -2581,7 +2581,7 @@ static Float *inverse_integrate(XEN dist, int data_size)
     }
 
   xincr = (last_sum - first_sum) / (Float)(data_size - 1);
-  data = (Float *)CALLOC(data_size, sizeof(Float));
+  data = (Float *)calloc(data_size, sizeof(Float));
   x0 = e[0];
   x1 = e[2];
   y0 = e[1];
@@ -2603,7 +2603,7 @@ static Float *inverse_integrate(XEN dist, int data_size)
 	data[i] = y0;
       else data[i] = (y0 + (y1 - y0) * (x - x0) / (x1 - x0));
     }
-  FREE(e);
+  free(e);
   return(data);
 }
 
@@ -2845,7 +2845,7 @@ a new one is created.  If normalize is " PROC_TRUE ", the resulting waveform goe
   if ((XEN_NOT_BOUND_P(utable)) || (!(MUS_VCT_P(utable))))
     {
       Float *wave;
-      wave = (Float *)CALLOC(clm_table_size, sizeof(Float));
+      wave = (Float *)calloc(clm_table_size, sizeof(Float));
       if (wave == NULL)
 	return(clm_mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate wave table"));
       table = xen_make_vct(clm_table_size, wave);
@@ -2857,7 +2857,7 @@ a new one is created.  If normalize is " PROC_TRUE ", the resulting waveform goe
 
   if (!partial_data)
     {
-      partial_data = (Float *)CALLOC(len, sizeof(Float));
+      partial_data = (Float *)calloc(len, sizeof(Float));
       if (partial_data == NULL)
 	return(clm_mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate partials table"));
       for (i = 0, lst = XEN_COPY_ARG(partials); i < len; i++, lst = XEN_CDR(lst)) 
@@ -2867,7 +2867,7 @@ a new one is created.  If normalize is " PROC_TRUE ", the resulting waveform goe
   mus_partials_to_wave(partial_data, len / 2, f->data, f->length, (XEN_TRUE_P(normalize)));
 
   if (partials_allocated)
-    FREE(partial_data);
+    free(partial_data);
   XEN_LOCAL_GC_UNPROTECT(table);
   return(xen_return_first(table, partials, utable));
 }
@@ -2927,7 +2927,7 @@ a new one is created.  If normalize is " PROC_TRUE ", the resulting waveform goe
 
   if ((XEN_NOT_BOUND_P(utable)) || (!(MUS_VCT_P(utable))))
     {
-      wave = (Float *)CALLOC(clm_table_size, sizeof(Float));
+      wave = (Float *)calloc(clm_table_size, sizeof(Float));
       if (wave == NULL)
 	return(clm_mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate wave table"));
       table = xen_make_vct(clm_table_size, wave);
@@ -2939,7 +2939,7 @@ a new one is created.  If normalize is " PROC_TRUE ", the resulting waveform goe
 
   if (!partial_data)
     {
-      partial_data = (Float *)CALLOC(len, sizeof(Float));
+      partial_data = (Float *)calloc(len, sizeof(Float));
       if (partial_data == NULL)
 	return(clm_mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate partials table"));
       for (i = 0, lst = XEN_COPY_ARG(partials); i < len; i++, lst = XEN_CDR(lst)) 
@@ -2949,7 +2949,7 @@ a new one is created.  If normalize is " PROC_TRUE ", the resulting waveform goe
   mus_phase_partials_to_wave(partial_data, len / 3, f->data, f->length, (XEN_TRUE_P(normalize)));
 
   if (partials_allocated)
-    FREE(partial_data);
+    free(partial_data);
   XEN_LOCAL_GC_UNPROTECT(table);
   return(xen_return_first(table, partials, utable));
 }
@@ -3025,7 +3025,7 @@ is the same in effect as " S_make_oscil ".  'type' sets the interpolation choice
 
   if (!(MUS_VCT_P(orig_v)))
     {
-      table = (Float *)CALLOC(table_size, sizeof(Float));
+      table = (Float *)calloc(table_size, sizeof(Float));
       if (table == NULL)
 	return(clm_mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate table-lookup table"));
       orig_v = xen_make_vct(table_size, table);
@@ -3560,7 +3560,7 @@ static XEN g_formant_bank(XEN amps, XEN gens, XEN inp)
   size = XEN_VECTOR_LENGTH(gens);
   if (size == 0) return(XEN_ZERO);
 
-  gs = (mus_any **)CALLOC(size, sizeof(mus_any *));
+  gs = (mus_any **)calloc(size, sizeof(mus_any *));
   for (i = 0; i < size; i++)
     {
       XEN datum;
@@ -3569,7 +3569,7 @@ static XEN g_formant_bank(XEN amps, XEN gens, XEN inp)
 	gs[i] = XEN_TO_MUS_ANY(datum);
       else 
 	{
-	  if (gs) FREE(gs);
+	  if (gs) free(gs);
 	  XEN_WRONG_TYPE_ARG_ERROR(S_formant_bank, i, datum, "a formant generator");
 	}
     }
@@ -3578,7 +3578,7 @@ static XEN g_formant_bank(XEN amps, XEN gens, XEN inp)
   scls = scl_1->data;
   inval = XEN_TO_C_DOUBLE(inp);
   outval = mus_formant_bank(scls, gs, inval, size);
-  if (gs) FREE(gs);
+  if (gs) free(gs);
   return(xen_return_first(C_TO_XEN_DOUBLE(outval), gens));
 }
 
@@ -4215,7 +4215,7 @@ the repetition rate of the wave found in wave. Successive waves can overlap."
 
   if (wave == NULL) 
     {
-      wave = (Float *)CALLOC(wsize, sizeof(Float));
+      wave = (Float *)calloc(wsize, sizeof(Float));
       if (wave == NULL)
 	return(clm_mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate wave-train table"));
       orig_v = xen_make_vct(wsize, wave);
@@ -4306,7 +4306,7 @@ static Float *list_to_partials(XEN harms, int *npartials, int *error_code)
 	maxpartial = curpartial;
     }
 
-  partials = (Float *)CALLOC(maxpartial + 1, sizeof(Float));
+  partials = (Float *)calloc(maxpartial + 1, sizeof(Float));
   if (partials == NULL)
     mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate waveshaping partials list");
   (*npartials) = maxpartial + 1;
@@ -4350,7 +4350,7 @@ Float *mus_vct_to_partials(vct *v, int *npartials, int *error_code)
   if ((*error_code) != NO_PROBLEM_IN_LIST)
     return(NULL);
 
-  partials = (Float *)CALLOC(maxpartial + 1, sizeof(Float));
+  partials = (Float *)calloc(maxpartial + 1, sizeof(Float));
   if (partials == NULL)
     mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate waveshaping partials list");
   (*npartials) = maxpartial + 1;
@@ -4605,7 +4605,7 @@ is the same in effect as " S_make_oscil
     {
       /* clm.html says '(1 1) is the default */
       Float *data;
-      data = (Float *)CALLOC(2, sizeof(Float));
+      data = (Float *)calloc(2, sizeof(Float));
       data[0] = 0.0;
       data[1] = 1.0;
       coeffs = mus_partials_to_polynomial(2, data, kind);
@@ -4716,7 +4716,7 @@ return a new polynomial-based waveshaping generator.  (" S_make_polywave " :part
     {
       /* clm.html says '(1 1) is the default but table-lookup is 0? */
       Float *data;
-      data = (Float *)CALLOC(2, sizeof(Float));
+      data = (Float *)calloc(2, sizeof(Float));
       data[0] = 0.0;
       data[1] = 1.0;
       coeffs = data;
@@ -5117,7 +5117,7 @@ static XEN g_make_filter_1(xclm_fir_t choice, XEN arg1, XEN arg2, XEN arg3, XEN 
     }
   if (fgen)
     {
-      gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
+      gn = (mus_xen *)calloc(1, sizeof(mus_xen));
       gn->gen = fgen;                                    /* delay gn allocation since make_filter can throw an error */
       gn->nvcts = 3;
       gn->vcts = make_vcts(gn->nvcts);
@@ -5263,10 +5263,10 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
 	    }
 
 	  npts = len / 2;
-	  brkpts = (Float *)CALLOC(len, sizeof(Float));
+	  brkpts = (Float *)calloc(len, sizeof(Float));
 	  if (brkpts == NULL)
 	    return(clm_mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate env list"));
-	  odata = (Float *)CALLOC(len, sizeof(Float));
+	  odata = (Float *)calloc(len, sizeof(Float));
 	  if (odata == NULL)
 	    return(clm_mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate env copy"));
 
@@ -5302,8 +5302,8 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
     {
       if ((end > 0) && ((end + 1) != dur))
 	{
-	  if (brkpts) FREE(brkpts);
-	  if (odata) FREE(odata);
+	  if (brkpts) free(brkpts);
+	  if (odata) free(odata);
 	  XEN_ERROR(CLM_ERROR,
 		    XEN_LIST_3(C_TO_XEN_STRING(S_make_env), 
 			       C_TO_XEN_STRING("end (~A) and dur (~A) specified, but dur != end+1"),
@@ -5319,9 +5319,9 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
     mus_error_set_handler(old_error_handler);
   }
 
-  FREE(brkpts);
+  free(brkpts);
   if (ge) return(mus_xen_to_object(mus_any_to_mus_xen_with_vct(ge, xen_make_vct(mus_env_breakpoints(ge) * 2, odata))));
-  FREE(odata);
+  free(odata);
   return(clm_mus_error(local_error_type, local_error_msg));
 }
 
@@ -6510,7 +6510,7 @@ return a new generator for signal placement in n channels.  Channel 0 correspond
 
   if (ge)
     {
-      gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
+      gn = (mus_xen *)calloc(1, sizeof(mus_xen));
 
       if ((XEN_BOUND_P(ov)) || (XEN_BOUND_P(rv)))
 	gn->nvcts = 4;
@@ -6618,7 +6618,7 @@ static mus_any **xen_vector_to_mus_any_array(XEN vect)
   int i, len;
   if (!(XEN_VECTOR_P(vect))) return(NULL);
   len = XEN_VECTOR_LENGTH(vect);
-  gens = (mus_any **)CALLOC(len, sizeof(mus_any *));
+  gens = (mus_any **)calloc(len, sizeof(mus_any *));
   for (i = 0; i < len; i++)
     if (MUS_XEN_P(XEN_VECTOR_REF(vect, i)))
       gens[i] = XEN_TO_MUS_ANY(XEN_VECTOR_REF(vect, i));
@@ -6631,7 +6631,7 @@ static int *xen_vector_to_int_array(XEN vect)
   int *vals;
   int i, len;
   len = XEN_VECTOR_LENGTH(vect);
-  vals = (int *)CALLOC(len, sizeof(int));
+  vals = (int *)calloc(len, sizeof(int));
   for (i = 0; i < len; i++)
     vals[i] = XEN_TO_C_INT(XEN_VECTOR_REF(vect, i));
   return(vals);
@@ -6758,7 +6758,7 @@ static XEN g_make_move_sound(XEN dloc_list, XEN outp, XEN revp)
 			   true, false);                  /* free outer arrays but not gens */
   if (ge)
     {
-      gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
+      gn = (mus_xen *)calloc(1, sizeof(mus_xen));
       if ((XEN_BOUND_P(ov)) || (XEN_BOUND_P(rv)))
 	gn->nvcts = 4;
       else gn->nvcts = 1;
@@ -6897,7 +6897,7 @@ width (effectively the steepness of the low-pass filter), normally between 10 an
 	XEN_OUT_OF_RANGE_ERROR(S_make_src, orig_arg[2], keys[2], "width ~A?");
     }
 
-  gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
+  gn = (mus_xen *)calloc(1, sizeof(mus_xen));
   /* mus_make_src assumes it can invoke the input function! */
   gn->nvcts = MUS_MAX_VCTS;
   gn->vcts = make_vcts(gn->nvcts);
@@ -6913,8 +6913,8 @@ width (effectively the steepness of the low-pass filter), normally between 10 an
       gn->gen = ge;
       return(mus_xen_to_object(gn));
     }
-  FREE(gn->vcts);
-  FREE(gn);
+  free(gn->vcts);
+  free(gn);
   return(clm_mus_error(local_error_type, local_error_msg));
 }
 
@@ -7070,7 +7070,7 @@ The edit function, if any, should return the length in samples of the grain, or 
       edit_obj = mus_optkey_to_procedure(keys[8], S_make_granulate, orig_arg[8], XEN_UNDEFINED, 1, "granulate edit procedure takes 1 arg");
     }
 
-  gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
+  gn = (mus_xen *)calloc(1, sizeof(mus_xen));
   {
     mus_error_handler_t *old_error_handler;
     old_error_handler = mus_error_set_handler(local_mus_error);
@@ -7092,7 +7092,7 @@ The edit function, if any, should return the length in samples of the grain, or 
       gn->vcts[MUS_SELF_WRAPPER] = grn_obj;
       return(grn_obj);
     }
-  FREE(gn);
+  free(gn);
   return(clm_mus_error(local_error_type, local_error_msg));
 }
 
@@ -7181,7 +7181,7 @@ return a new convolution generator which convolves its input with the impulse re
   else fftlen = (int)pow(2.0, 1 + (int)(log((Float)(filter->length + 1)) / log(2.0)));
   if (fft_size < fftlen) fft_size = fftlen;
 
-  gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
+  gn = (mus_xen *)calloc(1, sizeof(mus_xen));
   {
     mus_error_handler_t *old_error_handler;
     old_error_handler = mus_error_set_handler(local_mus_error);
@@ -7197,7 +7197,7 @@ return a new convolution generator which convolves its input with the impulse re
       gn->gen = ge;
       return(mus_xen_to_object(gn));
     }
-  FREE(gn);
+  free(gn);
   return(clm_mus_error(local_error_type, local_error_msg));
 }
 
@@ -7425,7 +7425,7 @@ output. \n\n  " pv_example "\n\n  " pv_edit_example
       synthesize_obj = mus_optkey_to_procedure(keys[7], S_make_phase_vocoder, orig_arg[7], XEN_UNDEFINED, 1, S_phase_vocoder " synthesize procedure takes 1 arg");
     }
 
-  gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
+  gn = (mus_xen *)calloc(1, sizeof(mus_xen));
   {
     mus_error_handler_t *old_error_handler;
     old_error_handler = mus_error_set_handler(local_mus_error);
@@ -7451,7 +7451,7 @@ output. \n\n  " pv_example "\n\n  " pv_edit_example
       gn->vcts[MUS_SELF_WRAPPER] = pv_obj;
       return(pv_obj);
     }
-  FREE(gn);
+  free(gn);
   return(clm_mus_error(local_error_type, local_error_msg));
 }
 
@@ -7670,8 +7670,8 @@ it in conjunction with mixer to scale/envelope all the various ins and outs. \
       out_len = XEN_VECTOR_LENGTH(XEN_VECTOR_REF(envs, 0));
       if (in_len < in_chans) in_size = in_chans; else in_size = in_len;
       if (out_len < out_chans) out_size = out_chans; else out_size = out_len;
-      envs1 = (mus_any ***)CALLOC(in_size, sizeof(mus_any **));
-      for (i = 0; i < in_size; i++) envs1[i] = (mus_any **)CALLOC(out_size, sizeof(mus_any *));
+      envs1 = (mus_any ***)calloc(in_size, sizeof(mus_any **));
+      for (i = 0; i < in_size; i++) envs1[i] = (mus_any **)calloc(out_size, sizeof(mus_any *));
       for (i = 0; i < in_len; i++)
 	{
 	  for (j = 0; j < out_len; j++) 
@@ -7684,8 +7684,8 @@ it in conjunction with mixer to scale/envelope all the various ins and outs. \
 		    envs1[i][j] = XEN_TO_MUS_ANY(datum1);
 		  else 
 		    {
-		      for (i = 0; i < in_size; i++) if (envs1[i]) FREE(envs1[i]);
-		      FREE(envs1);
+		      for (i = 0; i < in_size; i++) if (envs1[i]) free(envs1[i]);
+		      free(envs1);
 		      XEN_ERROR(BAD_TYPE,
 				XEN_LIST_5(C_TO_XEN_STRING(S_mus_mix),
 					   datum1,
@@ -7718,8 +7718,8 @@ it in conjunction with mixer to scale/envelope all the various ins and outs. \
       }
     if (envs1) 
       {
-	for (i = 0; i < in_size; i++) if (envs1[i]) FREE(envs1[i]);
-	FREE(envs1);
+	for (i = 0; i < in_size; i++) if (envs1[i]) free(envs1[i]);
+	free(envs1);
       }
     if (infile) free(infile);
     if (outfile) free(outfile);
@@ -9000,7 +9000,7 @@ void mus_xen_init(void)
     char *clm_version;
     clm_version = mus_format("clm%d", MUS_VERSION);
     XEN_YES_WE_HAVE(clm_version);
-    FREE(clm_version);
+    free(clm_version);
   }
 
 #if HAVE_S7

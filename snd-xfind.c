@@ -90,11 +90,11 @@ static void edit_find_ok_callback(read_direction_t direction, Widget w, XtPointe
 	    ss->search_tree = mus_run_form_to_ptree_1_b_without_env(C_STRING_TO_XEN_FORM(str));
 #endif
 #endif
-	  buf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
+	  buf = (char *)calloc(PRINT_BUFFER_SIZE, sizeof(char));
 	  mus_snprintf(buf, PRINT_BUFFER_SIZE, _("find: %s"), str);
 	  set_label(edit_find_label, buf);
 	  /* XmTextSetString(edit_find_text, NULL); */
-	  FREE(buf);
+	  free(buf);
 	}
     }
   else
@@ -103,14 +103,14 @@ static void edit_find_ok_callback(read_direction_t direction, Widget w, XtPointe
 	{
 	  char *temp = NULL;
 	  /* using global search_proc set by user */
-	  buf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
+	  buf = (char *)calloc(PRINT_BUFFER_SIZE, sizeof(char));
 	  mus_snprintf(buf, PRINT_BUFFER_SIZE, _("find: %s"), temp = (char *)XEN_AS_STRING(ss->search_proc));
 #if HAVE_S7
 	  if (temp) free(temp);
 #endif
 	  set_label(edit_find_label, buf);
 	  /* XmTextSetString(edit_find_text, NULL); */
-	  FREE(buf);
+	  free(buf);
 	}
     }
   if (str) XtFree(str);

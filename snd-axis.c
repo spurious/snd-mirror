@@ -43,9 +43,9 @@ static tick_descriptor *free_tick_descriptor(tick_descriptor *td)
 {
   if (td)
     {
-      if (td->min_label) {FREE(td->min_label); td->min_label = NULL;}
-      if (td->max_label) {FREE(td->max_label); td->max_label = NULL;}
-      FREE(td);
+      if (td->min_label) {free(td->min_label); td->min_label = NULL;}
+      if (td->max_label) {free(td->max_label); td->max_label = NULL;}
+      free(td);
     }
   return(NULL);
 }
@@ -64,7 +64,7 @@ static tick_descriptor *describe_ticks(tick_descriptor *gd_td, double lo, double
   int mticks, mdiv;
 
   if (!gd_td)
-    td = (tick_descriptor *)CALLOC(1, sizeof(tick_descriptor));
+    td = (tick_descriptor *)calloc(1, sizeof(tick_descriptor));
   else 
     {
       td = gd_td;
@@ -177,17 +177,17 @@ static char *measure_number(int bpm, double val)
   beat_frac = val - beat;
   measure = (int)(beat / bpm);
   beat = beat - measure * bpm;
-  buf = (char *)CALLOC(64, sizeof(char));
+  buf = (char *)calloc(64, sizeof(char));
   if (beat_frac > .001)
     {
       char *frac_buf, *tmp; /* according to the C spec, there's no way to get %f to omit the leading "0" */
-      frac_buf = (char *)CALLOC(32, sizeof(char));
+      frac_buf = (char *)calloc(32, sizeof(char));
       snprintf(frac_buf, 32, "%.3f", beat_frac);
       if (frac_buf[0] == '0')
 	tmp = (frac_buf + 1);  /* omit the leading "0" */
       else tmp = frac_buf;
       snprintf(buf, 64, "%d(%d)%s", 1 + measure, 1 + beat, tmp);
-      FREE(frac_buf);
+      free(frac_buf);
     }
   else snprintf(buf, 64, "%d(%d)", 1 + measure, 1 + beat);
   return(buf);
@@ -208,7 +208,7 @@ static char *clock_number(double loc, int tens)
   second %= 60;
   minute %= 60;
   hour %= 24;
-  buf = (char *)CALLOC(64, sizeof(char));
+  buf = (char *)calloc(64, sizeof(char));
   if (day > 0)
     sprintf(buf, "%02d:%02d:%02d:%02d.%0*d", day, hour, minute, second, tens, (int)(frac_second * pow(10.0, tens)));
   else
@@ -283,20 +283,20 @@ axis_info *free_axis_info(axis_info *ap)
   /* leave ap->ax alone -- it actually belongs to cp->cgx */
   if (ap->xlabel) 
     {
-      FREE(ap->xlabel); 
+      free(ap->xlabel); 
       ap->xlabel = NULL;
     }
   if (ap->default_xlabel) 
     {
-      FREE(ap->default_xlabel); 
+      free(ap->default_xlabel); 
       ap->default_xlabel = NULL;
     }
   if (ap->ylabel) 
     {
-      FREE(ap->ylabel); 
+      free(ap->ylabel); 
       ap->ylabel = NULL;
     }
-  FREE(ap);
+  free(ap);
   return(NULL);
 }
 
@@ -773,7 +773,7 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 	      int tick_label_width;
 	      if (tdy->min_label) 
 		{
-		  FREE(tdy->min_label); 
+		  free(tdy->min_label); 
 		  tdy->min_label = NULL;
 		}
 	      tdy->min_label = prettyf(tdy->mlo, tdy->tens);
@@ -781,7 +781,7 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 	      
 	      if (tdy->max_label) 
 		{
-		  FREE(tdy->max_label); 
+		  free(tdy->max_label); 
 		  tdy->max_label = NULL;
 		}
 	      tdy->max_label = prettyf(tdy->mhi, tdy->tens);
@@ -870,14 +870,14 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 	  int tick_label_width;
 	  if (tdx->min_label) 
 	    {
-	      FREE(tdx->min_label); 
+	      free(tdx->min_label); 
 	      tdx->min_label = NULL;
 	    }
 	  tdx->min_label = location_to_string(tdx->mlo, x_style, (ap->cp) ? (ap->cp->beats_per_measure) : 1, tdx->tens);
 	  tdx->min_label_width = number_width(tdx->min_label, use_tiny_font);
 	  if (tdx->max_label) 
 	    {
-	      FREE(tdx->max_label); 
+	      free(tdx->max_label); 
 	      tdx->max_label = NULL;
 	    }
 	  tdx->max_label = location_to_string(tdx->mhi, x_style, (ap->cp) ? (ap->cp->beats_per_measure) : 1, tdx->tens);
@@ -1450,7 +1450,7 @@ axis_info *make_axis_info (chan_info *cp, double xmin, double xmax, Float ymin, 
     ap = old_ap;
   else
     {
-      ap = (axis_info *)CALLOC(1, sizeof(axis_info));
+      ap = (axis_info *)calloc(1, sizeof(axis_info));
       ap->cp = cp;
     }
   ap->xmin = xmin;
@@ -1462,7 +1462,7 @@ axis_info *make_axis_info (chan_info *cp, double xmin, double xmax, Float ymin, 
       (!(mus_strcmp(xlabel, ap->xlabel))))
     {
       /* this apparently should leave the default_xlabel and ylabels alone */
-      if (ap->xlabel) FREE(ap->xlabel);
+      if (ap->xlabel) free(ap->xlabel);
       ap->xlabel = mus_strdup(xlabel);
     }
   ap->x0 = x0;
@@ -1672,8 +1672,8 @@ Returns actual (pixel) axis bounds -- a list (x0 y0 x1 y1)."
 			  axes = (show_axes_t)XEN_TO_C_INT(xaxes);
 			}}}}}}
 
-  ap = (axis_info *)CALLOC(1, sizeof(axis_info));
-  ax = (axis_context *)CALLOC(1, sizeof(axis_context));
+  ap = (axis_info *)calloc(1, sizeof(axis_info));
+  ax = (axis_context *)calloc(1, sizeof(axis_context));
   ap->ax = ax;
 #if USE_MOTIF
   ax->dp = XtDisplay(w);
@@ -1742,8 +1742,8 @@ static XEN g_set_x_axis_label(XEN label, XEN snd, XEN chn, XEN ax)
   XEN_ASSERT_TYPE(XEN_STRING_P(label) || XEN_FALSE_P(label), label, XEN_ARG_1, S_setB S_x_axis_label, "a string");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax), ax, XEN_ARG_4, S_setB S_x_axis_label, S_time_graph ", " S_transform_graph ", or " S_lisp_graph);
   ap = TO_C_AXIS_INFO(snd, chn, ax, S_x_axis_label);
-  if (ap->xlabel) FREE(ap->xlabel);
-  if (ap->default_xlabel) FREE(ap->default_xlabel);
+  if (ap->xlabel) free(ap->xlabel);
+  if (ap->default_xlabel) free(ap->default_xlabel);
   if (XEN_FALSE_P(label))
     {
       ap->xlabel = NULL;
@@ -1780,7 +1780,7 @@ static XEN g_set_y_axis_label(XEN label, XEN snd, XEN chn, XEN ax)
   XEN_ASSERT_TYPE(XEN_STRING_P(label) || XEN_FALSE_P(label), label, XEN_ARG_1, S_setB S_y_axis_label, "a string");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax), ax, XEN_ARG_4, S_setB S_y_axis_label, S_time_graph ", " S_transform_graph ", or " S_lisp_graph);
   ap = TO_C_AXIS_INFO(snd, chn, ax, S_y_axis_label);
-  if (ap->ylabel) FREE(ap->ylabel);
+  if (ap->ylabel) free(ap->ylabel);
   if (XEN_FALSE_P(label))
     ap->ylabel = NULL;
   else ap->ylabel = mus_strdup(XEN_TO_C_STRING(label));

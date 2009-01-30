@@ -248,7 +248,7 @@ static void mix_amp_env_resize(Widget w, XtPointer context, XtPointer info)
       gv.function = GXcopy;
       XtVaGetValues(w_env, XmNbackground, &gv.background, XmNforeground, &gv.foreground, NULL);
       cur_gc = XtGetGC(w_env, GCForeground | GCFunction, &gv);
-      ax = (axis_context *)CALLOC(1, sizeof(axis_context));
+      ax = (axis_context *)calloc(1, sizeof(axis_context));
       ax->wn = XtWindow(w_env);
       ax->dp = XtDisplay(w_env);
       ax->gc = cur_gc;
@@ -404,7 +404,7 @@ static void beg_activated(void)
       if (beg >= 0.0)
 	mix_set_position_edit(mix_dialog_id, (off_t)(beg * SND_SRATE(cp->sound)));
       after_mix_edit(mix_dialog_id);
-      FREE(up_to_colon);
+      free(up_to_colon);
       XtFree(val);
     }
 }
@@ -764,8 +764,8 @@ Widget make_mix_dialog(void)
       XtSetArg(args[n], XmNvalueChangedCallback, n2 = make_callback_list(speed_valuechanged_callback, NULL)); n++;
       w_speed = XtCreateManagedWidget("mix-speed", xmScrollBarWidgetClass, mainform, args, n);
   
-      FREE(n1);
-      FREE(n2);
+      free(n1);
+      free(n2);
 
       n = 0;
       mus_snprintf(amplab, LABEL_BUFFER_SIZE, _("amp:"));
@@ -815,8 +815,8 @@ Widget make_mix_dialog(void)
       XtSetArg(args[n], XmNdragCallback, n1 = make_callback_list(amp_drag_callback, NULL)); n++;
       XtSetArg(args[n], XmNvalueChangedCallback, n2 = make_callback_list(amp_valuechanged_callback, NULL)); n++;
       w_amp = XtCreateManagedWidget("mix-amp", xmScrollBarWidgetClass, mainform, args, n);
-      FREE(n1);
-      FREE(n2);
+      free(n1);
+      free(n2);
 
       /* separator before envelopes */
       n = 0;

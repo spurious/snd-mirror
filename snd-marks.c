@@ -19,7 +19,7 @@ void set_mark_sync(mark *m, int val)
 static mark *make_mark_1(off_t samp, const char *name, int id, int sc)
 {
   mark *mp;
-  mp = (mark *)CALLOC(1, sizeof(mark));
+  mp = (mark *)calloc(1, sizeof(mark));
   if (name) mp->name = mus_strdup(name); else mp->name = NULL;
   mp->samp = samp;
   mp->id = id;
@@ -42,8 +42,8 @@ static mark *free_mark(mark *mp)
 {
   if (mp)
     {
-      if (mp->name) FREE(mp->name);
-      FREE(mp);
+      if (mp->name) free(mp->name);
+      free(mp);
     }
   return(NULL);
 }
@@ -320,13 +320,13 @@ mark *hit_triangle(chan_info *cp, int x, int y)
 	{
 	  mark *mp;
 	  mdata *md;
-	  md = (mdata *)CALLOC(2, sizeof(mdata));
+	  md = (mdata *)calloc(2, sizeof(mdata));
 	  md->x = x;
 	  md->y = y;
 	  md->all_done = (mark *)1;
 	  mp = map_over_marks(cp, hit_triangle_1, (void *)md, READ_FORWARD);
 	  if (mp == (mark *)1) mp = NULL;
-	  FREE(md);
+	  free(md);
 	  return(mp);
 	}
     }
@@ -490,13 +490,13 @@ mark *add_mark(off_t samp, const char *name, chan_info *cp)
     {
       ed->mark_size = MARKS_ALLOC_SIZE;
       ed->mark_ctr = -1;
-      ed->marks = (mark **)CALLOC(MARKS_ALLOC_SIZE, sizeof(mark *));
+      ed->marks = (mark **)calloc(MARKS_ALLOC_SIZE, sizeof(mark *));
     }
   ed->mark_ctr++;
   if (ed->mark_ctr >= ed->mark_size)
     {
       ed->mark_size += MARKS_ALLOC_SIZE;
-      ed->marks = (mark **)REALLOC(ed->marks, ed->mark_size * sizeof(mark *));
+      ed->marks = (mark **)realloc(ed->marks, ed->mark_size * sizeof(mark *));
       for (i = ed->mark_size - MARKS_ALLOC_SIZE; i < ed->mark_size; i++) ed->marks[i] = NULL;
     }
   mps = ed->marks;
@@ -669,7 +669,7 @@ void free_mark_list(ed_list *ed)
 	  if (mp) free_mark(mp);
 	  ed->marks[j] = NULL;
 	}
-      FREE(ed->marks);
+      free(ed->marks);
       ed->marks = NULL;
       ed->mark_size = 0;
     }
@@ -694,8 +694,8 @@ void *sound_store_marks(snd_info *sp)
   int i;
   mark_info **res = NULL;
   marks_info *rtn = NULL;
-  res = (mark_info **)CALLOC(sp->nchans, sizeof(mark_info *));
-  rtn = (marks_info *)CALLOC(1, sizeof(marks_info));
+  res = (mark_info **)calloc(sp->nchans, sizeof(mark_info *));
+  rtn = (marks_info *)calloc(1, sizeof(marks_info));
   rtn->ms = res;
   rtn->size = sp->nchans;
   for (i = 0; i < sp->nchans; i++)
@@ -708,7 +708,7 @@ void *sound_store_marks(snd_info *sp)
 	  ed = cp->edits[cp->edit_ctr];
 	  if (ed)
 	    {
-	      res[i] = (mark_info *)CALLOC(1, sizeof(mark_info));
+	      res[i] = (mark_info *)calloc(1, sizeof(mark_info));
 	      res[i]->marks = ed->marks;
 	      res[i]->ctr = ed->mark_ctr;
 	      res[i]->size = ed->mark_size;
@@ -749,10 +749,10 @@ void sound_restore_marks(snd_info *sp, void *mrk)
 	    }
 	}
       for (i = 0; i < mrks->size; i++)
-	if (marks[i]) FREE(marks[i]);
+	if (marks[i]) free(marks[i]);
       /* possible memleak here if chan num has lessened */
-      FREE(marks);
-      FREE(mrks);
+      free(marks);
+      free(mrks);
     }
 }
 
@@ -874,7 +874,7 @@ void ripple_marks(chan_info *cp, off_t beg, off_t change)
       new_ed->mark_size = old_ed->mark_size;
       if (new_ed->mark_size > 0)
 	{
-	  new_ed->marks = (mark **)CALLOC(new_ed->mark_size, sizeof(mark *));
+	  new_ed->marks = (mark **)calloc(new_ed->mark_size, sizeof(mark *));
 	  if (new_ed->mark_ctr >= 0)
 	    {
 	      int i;
@@ -1145,13 +1145,13 @@ typedef struct {
 static syncdata *make_syncdata(int sync)
 {
   syncdata *sd;
-  sd = (syncdata *)CALLOC(1, sizeof(syncdata));
+  sd = (syncdata *)calloc(1, sizeof(syncdata));
   sd->sync = sync;
   sd->mark_ctr = 0;
   sd->marks_size = 8;
-  sd->marks = (mark **)CALLOC(sd->marks_size, sizeof(mark *));
-  sd->chans = (chan_info **)CALLOC(sd->marks_size, sizeof(chan_info *));
-  sd->initial_samples = (off_t *)CALLOC(sd->marks_size, sizeof(off_t));
+  sd->marks = (mark **)calloc(sd->marks_size, sizeof(mark *));
+  sd->chans = (chan_info **)calloc(sd->marks_size, sizeof(chan_info *));
+  sd->initial_samples = (off_t *)calloc(sd->marks_size, sizeof(off_t));
   return(sd);
 }
 
@@ -1164,10 +1164,10 @@ static void add_syncd_mark(syncdata *sd, mark *mp, chan_info *cp)
   if (sd->mark_ctr == sd->marks_size)
     {
       int i;
-      sd->marks = (mark **)REALLOC(sd->marks, sd->marks_size * 2 * sizeof(mark *));
-      sd->chans = (chan_info **)REALLOC(sd->chans, sd->marks_size * 2 * sizeof(chan_info *));
+      sd->marks = (mark **)realloc(sd->marks, sd->marks_size * 2 * sizeof(mark *));
+      sd->chans = (chan_info **)realloc(sd->chans, sd->marks_size * 2 * sizeof(chan_info *));
       /* why was initial_samples missing? 2-May-02 */
-      sd->initial_samples = (off_t *)REALLOC(sd->initial_samples, sd->marks_size * 2 * sizeof(off_t));
+      sd->initial_samples = (off_t *)realloc(sd->initial_samples, sd->marks_size * 2 * sizeof(off_t));
       for (i = sd->marks_size; i < sd->marks_size * 2; i++) {sd->marks[i] = NULL; sd->chans[i] = NULL;}
       sd->marks_size *= 2;
     }
@@ -1202,10 +1202,10 @@ static syncdata *free_syncdata(syncdata *sd)
 {
   if (sd)
     {
-      if (sd->marks) FREE(sd->marks);
-      if (sd->initial_samples) FREE(sd->initial_samples);
-      if (sd->chans) FREE(sd->chans);
-      FREE(sd);
+      if (sd->marks) free(sd->marks);
+      if (sd->initial_samples) free(sd->initial_samples);
+      if (sd->chans) free(sd->chans);
+      free(sd);
     }
   return(NULL);
 }
@@ -1227,7 +1227,7 @@ static mark_context **mark_movers = NULL;
 static mark_context *make_mark_context(chan_info *cp)
 {
   mark_context *g;
-  g = (mark_context *)CALLOC(1, sizeof(mark_context));
+  g = (mark_context *)calloc(1, sizeof(mark_context));
   g->graph = channel_graph(cp);
   g->color = ss->sgx->mark_color;
   return(g);
@@ -1236,9 +1236,9 @@ static mark_context *make_mark_context(chan_info *cp)
 
 static mark_context *free_mark_context(mark_context *ms)
 {
-  if (ms->p0) {FREE(ms->p0); ms->p0 = NULL;}
-  if (ms->p1) {FREE(ms->p1); ms->p1 = NULL;}
-  FREE(ms);
+  if (ms->p0) {free(ms->p0); ms->p0 = NULL;}
+  if (ms->p1) {free(ms->p1); ms->p1 = NULL;}
+  free(ms);
   return(NULL);
 }
 
@@ -1249,7 +1249,7 @@ static void make_mark_graph(chan_info *cp, off_t initial_sample, off_t current_s
 static void initialize_md_context(int size, chan_info **cps)
 {
   int i;
-  mark_movers = (mark_context **)CALLOC(size, sizeof(mark_context *));
+  mark_movers = (mark_context **)calloc(size, sizeof(mark_context *));
   for (i = 0; i < size; i++)
     {
       mark_context *ms;
@@ -1269,7 +1269,7 @@ static void finalize_md_context(int size)
       for (i = 0; i < size; i++) 
 	if (mark_movers[i]) 
 	  free_mark_context(mark_movers[i]);
-      FREE(mark_movers);
+      free(mark_movers);
       mark_movers = NULL;
     }
 }
@@ -1289,13 +1289,13 @@ mark *hit_mark(chan_info *cp, int x, int y, int key_state)
 	{
 	  mark *mp;
 	  mdata *md;
-	  md = (mdata *)CALLOC(1, sizeof(mdata));
+	  md = (mdata *)calloc(1, sizeof(mdata));
 	  md->x = x;
 	  md->y = y;
 	  md->all_done = (mark *)1;
 	  mp = map_over_marks(cp, hit_mark_1, (void *)md, READ_FORWARD);
 	  if (mp == (mark *)1) mp = NULL;
-	  FREE(md);
+	  free(md);
 	  if (mp)
 	    {
 	      mark_control_clicked = (key_state & snd_ControlMask);
@@ -1349,8 +1349,8 @@ static void allocate_erase_grf_points(mark_context *ms)
 {
   if (ms->p0 == NULL)
     {
-      ms->p0 = (point_t *)CALLOC(POINT_BUFFER_SIZE, sizeof(point_t));
-      ms->p1 = (point_t *)CALLOC(POINT_BUFFER_SIZE, sizeof(point_t));
+      ms->p0 = (point_t *)calloc(POINT_BUFFER_SIZE, sizeof(point_t));
+      ms->p1 = (point_t *)calloc(POINT_BUFFER_SIZE, sizeof(point_t));
     }
 }
 
@@ -1904,7 +1904,7 @@ static XEN mark_set(XEN mark_n, XEN val, mark_field_t fld, const char *caller)
       else set_mark_sync(m, (int)XEN_TO_C_BOOLEAN(val));
       break;
     case MARK_NAME:
-      if (m->name) FREE(m->name);
+      if (m->name) free(m->name);
       if (XEN_FALSE_P(val))
 	m->name = NULL;
       else m->name = mus_strdup(XEN_TO_C_STRING(val));
@@ -2164,7 +2164,7 @@ static int *syncd_marks(int sync)
   int i;
   sd = make_syncdata(sync);
   for_each_normal_chan_with_void(gather_chan_syncd_marks, (void *)sd);
-  ids = (int *)CALLOC(1 + sd->mark_ctr, sizeof(int));
+  ids = (int *)calloc(1 + sd->mark_ctr, sizeof(int));
   ids[0] = sd->mark_ctr;
   for (i = 0; i < sd->mark_ctr; i++) ids[i + 1] = sd->marks[i]->id;
   free_syncdata(sd);
@@ -2180,9 +2180,9 @@ static XEN g_syncd_marks(XEN sync)
   XEN_ASSERT_TYPE(XEN_INTEGER_P(sync), sync, XEN_ONLY_ARG, S_syncd_marks, "an integer");
   ids = syncd_marks(XEN_TO_C_INT(sync));
   if (ids == NULL) return(XEN_EMPTY_LIST);
-  if (ids[0] == 0) {FREE(ids); return(XEN_EMPTY_LIST);}
+  if (ids[0] == 0) {free(ids); return(XEN_EMPTY_LIST);}
   res = int_array_to_list(ids, 1, ids[0]);
-  FREE(ids);
+  free(ids);
   return(res);
 }
 
@@ -2227,7 +2227,7 @@ static int *channel_marks(chan_info *cp, int pos)
       if (mps)
 	{
 	  int i;
-	  ids = (int *)CALLOC(marks + 2, sizeof(int)); /* 1 for size, 1 because mark_ctr is current count */
+	  ids = (int *)calloc(marks + 2, sizeof(int)); /* 1 for size, 1 because mark_ctr is current count */
 	  ids[0] = marks + 1;
 	  for (i = 0; i <= marks; i++) 
 	    ids[i + 1] = mps[i]->id;
@@ -2268,11 +2268,11 @@ mark list is: channel given: (id id ...), snd given: ((id id) (id id ...)), neit
 	    if (ids == NULL) return(XEN_EMPTY_LIST);
 	    if (ids[0] == 0) 
 	      {
-		FREE(ids); 
+		free(ids); 
 		return(XEN_EMPTY_LIST);
 	      }
 	    res = int_array_to_list(ids, 1, ids[0]);
-	    FREE(ids);
+	    free(ids);
 	    return(res);
 	  }
 	else
@@ -2288,7 +2288,7 @@ mark list is: channel given: (id id ...), snd given: ((id id) (id id ...)), neit
 		  res1 = XEN_CONS(XEN_EMPTY_LIST, res1);
 		else res1 = XEN_CONS(int_array_to_list(ids, 1, ids[0]), 
 				     res1);
-		if (ids) FREE(ids);
+		if (ids) free(ids);
 	      }
 	  }
       }
@@ -2338,7 +2338,7 @@ typedef struct {
 static char *mark_sync_name(int cur_sync)
 {
   char *result;
-  result = (char *)CALLOC(SYNC_NAME_SIZE, sizeof(char));
+  result = (char *)calloc(SYNC_NAME_SIZE, sizeof(char));
   mus_snprintf(result, SYNC_NAME_SIZE, "%s%d", SYNC_BASE, cur_sync);
   return(result);
 }
@@ -2363,8 +2363,8 @@ static char *map_mark_sync(chan_info *cp, mark *m, save_mark_info *sv)
 
   /* add sync to current set (protect against later collisions, take current shared-syncs into account) */
   if (sv->size == 0)
-    sv->syncs = (int *)CALLOC(1, sizeof(int));
-  else sv->syncs = (int *)REALLOC(sv->syncs, (sv->size + 1) * sizeof(int));
+    sv->syncs = (int *)calloc(1, sizeof(int));
+  else sv->syncs = (int *)realloc(sv->syncs, (sv->size + 1) * sizeof(int));
   sv->syncs[sv->size++] = cur_sync;
 
 #if (!HAVE_FORTH)
@@ -2425,7 +2425,7 @@ static mark *save_mark(chan_info *cp, mark *m, void *info)
   else fprintf(sv->fd, OFF_TD " sfile %d #f %s add-mark! drop\n", m->samp, cp->chan, mapped_sync);
 #endif
 
-  FREE(mapped_sync);
+  free(mapped_sync);
   return(NULL); /* returning a mark here breaks out of the map mark loop */
 }
 
@@ -2438,7 +2438,7 @@ void save_mark_list(FILE *fd, chan_info *cp, bool all_chans)
 
   save_mark_info *sv;
   if ((!all_chans) && (!(find_any_marks(cp)))) return; /* in the sound (all_chans) case, this has been checked already */
-  sv = (save_mark_info *)CALLOC(1, sizeof(save_mark_info));
+  sv = (save_mark_info *)calloc(1, sizeof(save_mark_info));
   sv->fd = fd;
   sv->size = 0;
   sv->syncs = NULL;
@@ -2468,8 +2468,8 @@ void save_mark_list(FILE *fd, chan_info *cp, bool all_chans)
 
       fprintf(fd, "\n");
     }
-  if (sv->syncs) FREE(sv->syncs);
-  FREE(sv);
+  if (sv->syncs) free(sv->syncs);
+  free(sv);
 }  
 
 
@@ -2494,7 +2494,7 @@ The saved file is " XEN_LANGUAGE_NAME " code, so to restore the marks, load that
       else
 	{
 	  len = strlen(sp->filename);
-	  newname = (char *)CALLOC(len + 7, sizeof(char));
+	  newname = (char *)calloc(len + 7, sizeof(char));
 	  strcpy(newname, sp->filename);
 	  for (i = len - 1; i > 0; i--) 
 	    if (newname[i] == '.') 
@@ -2508,7 +2508,7 @@ The saved file is " XEN_LANGUAGE_NAME " code, so to restore the marks, load that
 	{
 	  XEN lname;
 	  lname = C_TO_XEN_STRING(newname);
-	  FREE(newname);
+	  free(newname);
 	  XEN_ERROR(CANNOT_SAVE,
 		    XEN_LIST_3(C_TO_XEN_STRING(S_save_marks),
 			       C_TO_XEN_STRING("open ~A: ~A"),
@@ -2526,7 +2526,7 @@ The saved file is " XEN_LANGUAGE_NAME " code, so to restore the marks, load that
 	  snd_fclose(fd, newname);
 	  res = C_TO_XEN_STRING(newname);
 	}
-      FREE(newname);
+      free(newname);
     }
   return(res);
 }

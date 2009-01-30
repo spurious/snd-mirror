@@ -149,7 +149,7 @@ void display_minibuffer_error(snd_info *sp, const char *str)
   gtk_widget_show(ERROR_INFO_FRAME(sp));
   if (!(sp->sgx->minibuffer_watcher))
     sp->sgx->minibuffer_watcher = SG_SIGNAL_CONNECT(MINIBUFFER_TEXT(sp), "changed", watch_minibuffer, (gpointer)sp);
-  if (s1) FREE(s1);
+  if (s1) free(s1);
 }
 
 
@@ -638,10 +638,10 @@ static void set_play_button_pause(snd_info *sp, void *ptr)
 void play_button_pause(bool pausing)
 {
   pause_data *pd;
-  pd = (pause_data *)CALLOC(1, sizeof(pause_data));
+  pd = (pause_data *)calloc(1, sizeof(pause_data));
   pd->pausing = pausing;
   for_each_sound_with_void(set_play_button_pause, (void *)pd);
-  FREE(pd);
+  free(pd);
 }
 
 
@@ -1287,7 +1287,7 @@ void display_filter_env(snd_info *sp)
   height = widget_height(drawer);
   if (height < MIN_FILTER_GRAPH_HEIGHT) return;
   width = widget_width(drawer);
-  ax = (axis_context *)CALLOC(1, sizeof(axis_context));
+  ax = (axis_context *)calloc(1, sizeof(axis_context));
   ax->gc = ss->sgx->fltenv_basic_gc;
   ax->wn = WIDGET_TO_WINDOW(drawer);
   ax->w = drawer;
@@ -1310,7 +1310,7 @@ void display_filter_env(snd_info *sp)
 #if USE_CAIRO
   cairo_destroy(ax->cr);
 #endif
-  FREE(ax);
+  free(ax);
 }
 
 
@@ -1358,7 +1358,7 @@ static gboolean filter_drawer_button_release(GtkWidget *w, GdkEventButton *ev, g
   env_editor_button_release(SOUND_ENV_EDITOR(sp), sp->filter_control_envelope);
   display_filter_env(sp);
   set_filter_text(sp, tmpstr = env_to_string(sp->filter_control_envelope));
-  if (tmpstr) FREE(tmpstr);
+  if (tmpstr) free(tmpstr);
   sp->filter_control_changed = true;
   return(false);
 }
@@ -1513,7 +1513,7 @@ void filter_env_changed(snd_info *sp, env *e)
       if (tmpstr)
 	{
 	  gtk_entry_set_text(GTK_ENTRY(FILTER_COEFFS_TEXT(sp)), tmpstr);
-	  FREE(tmpstr);
+	  free(tmpstr);
 	}
       else gtk_entry_set_text(GTK_ENTRY(FILTER_COEFFS_TEXT(sp)), stupid);
       (SOUND_ENV_EDITOR(sp))->edited = true;
@@ -1630,8 +1630,8 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
   make_pixmaps();
   if (sx->snd_widgets == NULL)
     {
-      sw = (GtkWidget **)CALLOC(NUM_SND_WIDGETS, sizeof(GtkWidget *));
-      adjs = (GtkObject **)CALLOC(NUM_SND_ADJS, sizeof(GtkObject *));
+      sw = (GtkWidget **)calloc(NUM_SND_WIDGETS, sizeof(GtkWidget *));
+      adjs = (GtkObject **)calloc(NUM_SND_ADJS, sizeof(GtkObject *));
       sx->snd_widgets = sw; 
       sx->snd_adjs = adjs;
     }
@@ -1706,7 +1706,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       gtk_widget_set_size_request(NAME_PIX(sp), 16, 16);
       gtk_box_pack_start(GTK_BOX(NAME_HBOX(sp)), NAME_PIX(sp), false, false, 2);
       gtk_widget_show(NAME_PIX(sp));
-      sp->sgx->name_pix_ax = (axis_context *)CALLOC(1, sizeof(axis_context));
+      sp->sgx->name_pix_ax = (axis_context *)calloc(1, sizeof(axis_context));
       sp->sgx->name_pix_ax->wn = WIDGET_TO_WINDOW(NAME_PIX(sp));
       sp->sgx->name_pix_ax->gc = ss->sgx->basic_gc;
       SG_SIGNAL_CONNECT(NAME_PIX(sp), "expose_event", name_pix_expose, sp);
@@ -1716,7 +1716,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       gtk_widget_set_size_request(STOP_PIX(sp), 18, 16);
       gtk_box_pack_start(GTK_BOX(NAME_HBOX(sp)), STOP_PIX(sp), false, false, 2);
       gtk_widget_show(STOP_PIX(sp));
-      sp->sgx->stop_pix_ax = (axis_context *)CALLOC(1, sizeof(axis_context));
+      sp->sgx->stop_pix_ax = (axis_context *)calloc(1, sizeof(axis_context));
       sp->sgx->stop_pix_ax->wn = WIDGET_TO_WINDOW(STOP_PIX(sp));
       sp->sgx->stop_pix_ax->gc = ss->sgx->basic_gc;
       SG_SIGNAL_CONNECT(STOP_PIX(sp), "button_press_event", stop_sign_press, sp);
@@ -1724,8 +1724,8 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       {
 	int i;
 
-	sp->sgx->clock_widgets = (GtkWidget **)CALLOC(sp->nchans, sizeof(GtkWidget *));
-	sp->sgx->clock_pix_ax = (axis_context **)CALLOC(sp->nchans, sizeof(axis_context *));
+	sp->sgx->clock_widgets = (GtkWidget **)calloc(sp->nchans, sizeof(GtkWidget *));
+	sp->sgx->clock_pix_ax = (axis_context **)calloc(sp->nchans, sizeof(axis_context *));
 	sp->sgx->num_clock_widgets = sp->nchans;
 
 	for (i = 0; i < sp->nchans; i++)
@@ -1734,7 +1734,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
 	    gtk_widget_set_size_request(CLOCK_PIX(sp, i), 16, 16);
 	    gtk_box_pack_start(GTK_BOX(NAME_HBOX(sp)), CLOCK_PIX(sp, i), false, false, 2);
 	    gtk_widget_show(CLOCK_PIX(sp, i));
-	    sp->sgx->clock_pix_ax[i] = (axis_context *)CALLOC(1, sizeof(axis_context));
+	    sp->sgx->clock_pix_ax[i] = (axis_context *)calloc(1, sizeof(axis_context));
 	    sp->sgx->clock_pix_ax[i]->wn = WIDGET_TO_WINDOW(CLOCK_PIX(sp, i));
 	    sp->sgx->clock_pix_ax[i]->gc = ss->sgx->basic_gc;
 	    SG_SIGNAL_CONNECT(CLOCK_PIX(sp, i), "expose_event", clock_pix_expose, sp->chans[i]);
@@ -1853,7 +1853,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       gtk_box_pack_start(GTK_BOX(SPEED_HBOX(sp)), SPEED_ARROW(sp), false, false, 2);
       gtk_widget_set_size_request(SPEED_ARROW(sp), 18, 16);
       gtk_widget_show(SPEED_ARROW(sp));
-      sp->sgx->speed_arrow_ax = (axis_context *)CALLOC(1, sizeof(axis_context));
+      sp->sgx->speed_arrow_ax = (axis_context *)calloc(1, sizeof(axis_context));
       sp->sgx->speed_arrow_ax->wn = WIDGET_TO_WINDOW(SPEED_ARROW(sp));
       sp->sgx->speed_arrow_ax->gc = ss->sgx->basic_gc;
       SG_SIGNAL_CONNECT(SPEED_ARROW(sp), "expose_event", speed_arrow_expose, sp);
@@ -2071,10 +2071,10 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
 
   if (sound_style(ss) == SOUNDS_IN_SEPARATE_WINDOWS)
     {
-      title = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
+      title = (char *)calloc(PRINT_BUFFER_SIZE, sizeof(char));
       mus_snprintf(title, PRINT_BUFFER_SIZE, "%d: %s", snd_slot, sp->short_filename);
       gtk_window_set_title(GTK_WINDOW(sx->dialog), title);
-      FREE(title);
+      free(title);
     }
 
   if (sp->nchans == 1) 
@@ -2096,7 +2096,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       sx->page = gtk_notebook_page_num(GTK_NOTEBOOK(SOUND_PANE_BOX(ss)), SND_PANE(sp));
       reset_controls(sp);
     }
-  if (free_filename) FREE(filename);
+  if (free_filename) free(filename);
   return(sp);
 }
 
@@ -2108,7 +2108,7 @@ void set_sound_pane_file_label(snd_info *sp, char *str)
       if ((sp->name_string == NULL) || 
 	  (strcmp(sp->name_string, str) != 0))
 	{
-	  if (sp->name_string) FREE(sp->name_string);
+	  if (sp->name_string) free(sp->name_string);
 	  sp->name_string = mus_strdup(str);
 	  set_label(NAME_BUTTON(sp), str);
 	}

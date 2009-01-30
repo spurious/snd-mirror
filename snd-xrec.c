@@ -39,7 +39,7 @@ static void clear_record_error(void)
   XtVaSetValues(error_info, XmNbackground, ss->sgx->basic_color, NULL);
   bmsg = base_message();
   s1 = XmStringCreateLocalized(bmsg);
-  FREE(bmsg);
+  free(bmsg);
   XtVaSetValues(error_info, XmNlabelString, s1, NULL);
   XmStringFree(s1);
   if (record_error_watching)
@@ -151,7 +151,7 @@ static void start_recording(void)
 {
   char *str;
   clear_record_error();
-  if (recorder_filename) FREE(recorder_filename);
+  if (recorder_filename) free(recorder_filename);
   str = XmTextGetString(recorder_output);
   if (!str)
     recorder_filename = mus_strdup("test.snd");
@@ -209,7 +209,7 @@ static void start_reading(void)
       char *msg;
       msg = mus_format("chans: %d?\n", recorder_chans);
       report_in_error_info(msg, NULL);
-      FREE(msg);
+      free(msg);
       reading = false;
       return;
     }
@@ -248,13 +248,13 @@ static void start_reading(void)
       msg = mus_format("open input failed: chans: %d, srate: %d, format: %s, size: %d -> %d\n", 
 		       recorder_chans, recorder_srate, mus_data_format_short_name(recorder_format), buffer_size, input_device);
       report_in_error_info(msg, NULL);
-      FREE(msg);
+      free(msg);
       reading = false;
       return;
     }
 
-  maxes = (Float *)CALLOC(recorder_chans, sizeof(Float));
-  inbuf = (unsigned char *)CALLOC(buffer_size, sizeof(unsigned char));
+  maxes = (Float *)calloc(recorder_chans, sizeof(Float));
+  inbuf = (unsigned char *)calloc(buffer_size, sizeof(unsigned char));
 
   reading = true;
   while (true)
@@ -270,7 +270,7 @@ static void start_reading(void)
 	      char *msg;
 	      msg = mus_format("recorder wrote " SSIZE_TD " bytes of %d requested?", bytes, buffer_size);
 	      report_in_error_info(msg, NULL);
-	      FREE(msg);
+	      free(msg);
 	    }
 	  recorder_total_bytes += buffer_size;
 	}
@@ -284,7 +284,7 @@ static void start_reading(void)
 	  char *msg;
 	  msg = mus_format("data conversion problem; format is %s\n", mus_data_format_name(recorder_format));
 	  report_in_error_info(msg, NULL);
-	  FREE(msg);
+	  free(msg);
 	  err = MUS_NO_ERROR;
 	  break;
 	}
@@ -295,12 +295,12 @@ static void start_reading(void)
       char *msg;
       msg = mus_format("error: %s\n", mus_error_type_to_string(err));
       report_in_error_info(msg, NULL);
-      FREE(msg);
+      free(msg);
     }
 
   mus_audio_close(input_device);
-  FREE(inbuf);
-  FREE(maxes);
+  free(inbuf);
+  free(maxes);
 }
 
 
@@ -474,7 +474,7 @@ widget_t record_file(void)
 	XtAddCallback(db_button, XmNvalueChangedCallback, db_callback, NULL);
       }
 
-      recorder_ax = (axis_context *)CALLOC(1, sizeof(axis_context));
+      recorder_ax = (axis_context *)calloc(1, sizeof(axis_context));
       {
 	XGCValues gv;
 	gv.function = GXcopy;

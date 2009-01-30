@@ -278,7 +278,7 @@ static void mix_amp_env_resize(GtkWidget *w)
       gc_set_background(cur_gc, ss->sgx->graph_color);
       gc_set_foreground(cur_gc, ss->sgx->data_color);
       gc_set_function(cur_gc, GDK_COPY);
-      ax = (axis_context *)CALLOC(1, sizeof(axis_context));
+      ax = (axis_context *)calloc(1, sizeof(axis_context));
       ax->wn = WIDGET_TO_WINDOW(w_env);
       ax->w = w_env;
       ax->gc = cur_gc;
@@ -439,7 +439,7 @@ static void beg_activated(GtkWidget *w, gpointer context)
       if (beg >= 0.0)
 	mix_set_position_edit(mix_dialog_id, (off_t)(beg * SND_SRATE(cp->sound)));
       after_mix_edit(mix_dialog_id);
-      FREE(up_to_colon);
+      free(up_to_colon);
     }
 }
 
@@ -806,7 +806,7 @@ GtkWidget *make_mix_dialog(void)
       set_dialog_widget(MIX_DIALOG, mix_dialog);
       gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w_clip), true);
 
-      mix_play_ax = (axis_context *)CALLOC(1, sizeof(axis_context));
+      mix_play_ax = (axis_context *)calloc(1, sizeof(axis_context));
       mix_play_ax->wn = WIDGET_TO_WINDOW(mix_play_pix);
       mix_play_ax->gc = ss->sgx->basic_gc;
 

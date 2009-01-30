@@ -48,10 +48,10 @@ static void file_open_recent_callback(GtkWidget *w, gpointer info)
       if (size > recent_file_items_size)
 	{
 	  if (recent_file_items_size == 0)
-	    recent_file_items = (GtkWidget **)CALLOC(size, sizeof(GtkWidget *));
+	    recent_file_items = (GtkWidget **)calloc(size, sizeof(GtkWidget *));
 	  else
 	    {
-	      recent_file_items = (GtkWidget **)REALLOC(recent_file_items, size * sizeof(GtkWidget *));
+	      recent_file_items = (GtkWidget **)realloc(recent_file_items, size * sizeof(GtkWidget *));
 	      for (i = recent_file_items_size; i < size; i++)
 		recent_file_items[i] = NULL;
 	    }
@@ -197,10 +197,10 @@ static void view_files_callback(GtkWidget *w, gpointer info)
       if (size > view_files_items_size)
 	{
 	  if (view_files_items_size == 0)
-	    view_files_items = (GtkWidget **)CALLOC(size, sizeof(GtkWidget *));
+	    view_files_items = (GtkWidget **)calloc(size, sizeof(GtkWidget *));
 	  else
 	    {
-	      view_files_items = (GtkWidget **)REALLOC(view_files_items, size * sizeof(GtkWidget *));
+	      view_files_items = (GtkWidget **)realloc(view_files_items, size * sizeof(GtkWidget *));
 	      for (i = view_files_items_size; i < size; i++)
 		view_files_items[i] = NULL;
 	    }
@@ -221,9 +221,9 @@ static void view_files_callback(GtkWidget *w, gpointer info)
 	      set_item_label(view_files_items[i], view_files_names[i]);
 	      gtk_widget_show(view_files_items[i]);
 	    }
-	  FREE(view_files_names[i]);
+	  free(view_files_names[i]);
 	}
-      FREE(view_files_names);
+      free(view_files_names);
     }
 }
 
@@ -359,7 +359,7 @@ static void menu_drag_watcher(GtkWidget *w, const char *str, int x, int y, drag_
 	  new_title = mus_format("%s: drop to open file", ss->startup_title);
 	  gtk_window_set_title(GTK_WINDOW(MAIN_SHELL(ss)), new_title);
 	  have_drag_title = true;
-	  FREE(new_title);
+	  free(new_title);
 	}
       break;
     case DRAG_LEAVE:
@@ -1392,18 +1392,18 @@ static void add_option(GtkWidget *w, int which_menu, const char *label, int call
       added_options_size += 8;
       if (added_options_pos == 0)
 	{
-	  added_options = (GtkWidget **)CALLOC(added_options_size, sizeof(GtkWidget *));
-	  added_options_names = (char **)CALLOC(added_options_size, sizeof(char *));
-	  added_options_menus = (int *)CALLOC(added_options_size, sizeof(int));
-	  added_options_callb = (int *)CALLOC(added_options_size, sizeof(int));
+	  added_options = (GtkWidget **)calloc(added_options_size, sizeof(GtkWidget *));
+	  added_options_names = (char **)calloc(added_options_size, sizeof(char *));
+	  added_options_menus = (int *)calloc(added_options_size, sizeof(int));
+	  added_options_callb = (int *)calloc(added_options_size, sizeof(int));
 	}
       else
 	{
 	  int i;
-	  added_options = (GtkWidget **)REALLOC(added_options, added_options_size * sizeof(GtkWidget *));
-	  added_options_names = (char **)REALLOC(added_options_names, added_options_size * sizeof(char *));
-	  added_options_menus = (int *)REALLOC(added_options_menus, added_options_size * sizeof(int));
-	  added_options_callb = (int *)REALLOC(added_options_callb, added_options_size * sizeof(int));
+	  added_options = (GtkWidget **)realloc(added_options, added_options_size * sizeof(GtkWidget *));
+	  added_options_names = (char **)realloc(added_options_names, added_options_size * sizeof(char *));
+	  added_options_menus = (int *)realloc(added_options_menus, added_options_size * sizeof(int));
+	  added_options_callb = (int *)realloc(added_options_callb, added_options_size * sizeof(int));
 	  for (i = added_options_pos; i < added_options_size; i++) 
 	    {
 	      added_options[i] = NULL;
@@ -1431,7 +1431,7 @@ static int remove_option(int which_menu, const char *label)
 	gtk_widget_hide(added_options[i]); /* destroy here causes segfault in gtk2? */
 	added_options[i] = NULL;
 	added_options_menus[i] = -1;
-	FREE(added_options_names[i]);
+	free(added_options_names[i]);
 	added_options_names[i] = NULL;
 	return(0);
       }

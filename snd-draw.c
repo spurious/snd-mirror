@@ -522,7 +522,7 @@ static point_t *vector_to_points(XEN pts, const char *caller, int *vector_len)
 			 pts));
   len = vlen / 2;
   (*vector_len) = len;
-  pack_pts = (point_t *)CALLOC(len, sizeof(point_t));
+  pack_pts = (point_t *)calloc(len, sizeof(point_t));
   for (i = 0, j = 0; i < len; i++, j += 2)
     {
       pack_pts[i].x = XEN_TO_C_INT_OR_ELSE(XEN_VECTOR_REF(pts, j), 0);
@@ -546,7 +546,7 @@ static XEN g_draw_lines(XEN pts, XEN snd, XEN chn, XEN ax)
   ax1 = TO_C_AXIS_CONTEXT(snd, chn, ax, S_draw_lines);
   pack_pts = vector_to_points(pts, S_draw_lines, &vlen);
   draw_lines(ax1, pack_pts, vlen);
-  FREE(pack_pts);
+  free(pack_pts);
   return(pts);
 }
 
@@ -568,7 +568,7 @@ static XEN g_draw_dots(XEN pts, XEN size, XEN snd, XEN chn, XEN ax)
 	      pack_pts, 
 	      vlen,
 	      XEN_TO_C_INT_OR_ELSE(size, 1));
-  FREE(pack_pts);
+  free(pack_pts);
   return(pts);
 }
 
@@ -590,7 +590,7 @@ static XEN g_fill_polygon(XEN pts, XEN snd, XEN chn, XEN ax_id)
 #else
   fill_polygon_from_array(ax, pack_pts, vlen);
 #endif
-  FREE(pack_pts);
+  free(pack_pts);
   return(pts);
 }
 
@@ -875,7 +875,7 @@ void set_dialog_widget(snd_dialog_t which, widget_t wid)
     {
       sx->dialogs_size = 8;
       sx->num_dialogs = 0;
-      sx->dialogs = (widget_t *)CALLOC(sx->dialogs_size, sizeof(widget_t));
+      sx->dialogs = (widget_t *)calloc(sx->dialogs_size, sizeof(widget_t));
     }
   else
     {
@@ -883,7 +883,7 @@ void set_dialog_widget(snd_dialog_t which, widget_t wid)
 	{
 	  int i;
 	  sx->dialogs_size += 8;
-	  sx->dialogs = (widget_t *)REALLOC(sx->dialogs, sx->dialogs_size * sizeof(widget_t));
+	  sx->dialogs = (widget_t *)realloc(sx->dialogs, sx->dialogs_size * sizeof(widget_t));
 	  for (i = sx->num_dialogs; i < sx->dialogs_size; i++) sx->dialogs[i] = NULL;
 	}
     }

@@ -64,11 +64,11 @@
 #include "sndlib2xen.h"
 #include "vct.h"
 
-#ifndef CALLOC
-  #define CALLOC(a, b)  calloc(a, b)
-  #define MALLOC(a)     malloc(a)
-  #define FREE(a)       free(a)
-  #define REALLOC(a, b) realloc(a, b)
+#ifndef calloc
+  #define calloc(a, b)  calloc(a, b)
+  #define malloc(a)     malloc(a)
+  #define free(a)       free(a)
+  #define realloc(a, b) realloc(a, b)
 #endif
 
 #ifndef PROC_FALSE
@@ -132,9 +132,9 @@ static void vct_free(vct *v)
     {
       if ((!(v->dont_free)) && 
 	  (v->data)) 
-	FREE(v->data);
+	free(v->data);
       v->data = NULL;
-      FREE(v);
+      free(v);
     }
 }
 
@@ -152,7 +152,7 @@ char *mus_vct_to_string(vct *v)
   len = vct_print_length;
   if (len > v->length) len = v->length;
 
-  buf = (char *)CALLOC((len + 1) * VCT_PRINT_BUFFER_SIZE, sizeof(char));
+  buf = (char *)calloc((len + 1) * VCT_PRINT_BUFFER_SIZE, sizeof(char));
   sprintf(buf, "#<vct[len=" OFF_TD "]:", v->length);
   if (len > 0)
     {
@@ -178,7 +178,7 @@ char *mus_vct_to_readable_string(vct *v)
 
   if (v == NULL) return(NULL);
   len = (int)(v->length);
-  buf = (char *)CALLOC((len + 1) * VCT_PRINT_BUFFER_SIZE, sizeof(char));
+  buf = (char *)calloc((len + 1) * VCT_PRINT_BUFFER_SIZE, sizeof(char));
 
 #if HAVE_SCHEME
   sprintf(buf, "(vct");
@@ -217,7 +217,7 @@ static XEN g_vct_to_readable_string(XEN obj)
 
   vstr = mus_vct_to_readable_string(XEN_TO_VCT(obj));
   result = C_TO_XEN_STRING(vstr);
-  FREE(vstr);
+  free(vstr);
   return(result);
 }
 
@@ -266,9 +266,9 @@ static XEN equalp_vct(XEN obj1, XEN obj2)
 vct *mus_vct_make(off_t len)
 {
   vct *new_vct;
-  new_vct = (vct *)MALLOC(sizeof(vct));
+  new_vct = (vct *)malloc(sizeof(vct));
   new_vct->length = len;
-  new_vct->data = (Float *)CALLOC(len, sizeof(Float));
+  new_vct->data = (Float *)calloc(len, sizeof(Float));
   new_vct->dont_free = false;
   return(new_vct);
 }
@@ -306,7 +306,7 @@ XEN xen_make_vct(off_t len, Float *data)
 	      XEN_LIST_2(C_TO_XEN_STRING(S_make_vct),
 			 C_TO_XEN_INT(len)));
 
-  new_vct = (vct *)MALLOC(sizeof(vct));
+  new_vct = (vct *)malloc(sizeof(vct));
   new_vct->length = len;
   new_vct->data = data;
   new_vct->dont_free = false;
@@ -317,7 +317,7 @@ XEN xen_make_vct(off_t len, Float *data)
 XEN xen_make_vct_wrapper(off_t len, Float *data)
 {
   vct *new_vct;
-  new_vct = (vct *)MALLOC(sizeof(vct));
+  new_vct = (vct *)malloc(sizeof(vct));
   new_vct->length = len;
   new_vct->data = data;
   new_vct->dont_free = true;
@@ -354,9 +354,9 @@ initial-element: \n  " vct_make_example
     XEN_OUT_OF_RANGE_ERROR(S_make_vct, 1, len, "len ~A too large (see mus-max-malloc)");
 
   if (XEN_NUMBER_P(filler))
-    return(g_vct_fill(xen_make_vct(size, (Float *)CALLOC(size, sizeof(Float))), filler));
+    return(g_vct_fill(xen_make_vct(size, (Float *)calloc(size, sizeof(Float))), filler));
 
-  return(xen_make_vct(size, (Float *)CALLOC(size, sizeof(Float))));
+  return(xen_make_vct(size, (Float *)calloc(size, sizeof(Float))));
 }
 
 
@@ -371,7 +371,7 @@ static XEN g_vct_copy(XEN obj)
 
   v = XEN_TO_VCT(obj);
   len = v->length;
-  copied_data = (Float *)MALLOC(len * sizeof(Float));
+  copied_data = (Float *)malloc(len * sizeof(Float));
   memcpy((void *)copied_data, (void *)(v->data), (len * sizeof(Float)));
   return(xen_make_vct(len, copied_data));
 }
@@ -708,7 +708,7 @@ static XEN g_vct_subseq(XEN vobj, XEN start, XEN end, XEN newv)
 
   if (MUS_VCT_P(newv))
     res = newv;
-  else res = xen_make_vct(new_len, (Float *)CALLOC(new_len, sizeof(Float)));
+  else res = xen_make_vct(new_len, (Float *)calloc(new_len, sizeof(Float)));
   vnew = XEN_TO_VCT(res);
   if (new_len > vnew->length) 
     new_len = vnew->length;
@@ -730,7 +730,7 @@ XEN xen_list_to_vct(XEN lst)
 
   if (len == 0) 
     return(XEN_FALSE);
-  scv = xen_make_vct(len, (Float *)CALLOC(len, sizeof(Float)));
+  scv = xen_make_vct(len, (Float *)calloc(len, sizeof(Float)));
   v = XEN_TO_VCT(scv);
   for (i = 0, lst1 = XEN_COPY_ARG(lst); i < len; i++, lst1 = XEN_CDR(lst1)) 
     v->data[i] = (Float)XEN_TO_C_DOUBLE_OR_ELSE(XEN_CAR(lst1), 0.0);
@@ -777,7 +777,7 @@ static XEN g_vector_to_vct(XEN vect)
 
   len = (off_t)XEN_VECTOR_LENGTH(vect);
   if (len == 0) return(XEN_FALSE);
-  scv = xen_make_vct(len, (Float *)CALLOC(len, sizeof(Float)));
+  scv = xen_make_vct(len, (Float *)calloc(len, sizeof(Float)));
   v = XEN_TO_VCT(scv);
   for (i = 0; i < len; i++) 
     v->data[i] = (Float)XEN_TO_C_DOUBLE(XEN_VECTOR_REF(vect, i));
@@ -972,16 +972,16 @@ static XEN g_rb_make_vct(int argc, XEN *argv, XEN self)
   if (size <= 0) 
     XEN_OUT_OF_RANGE_ERROR("Vct.new", 1, len, "len <= 0?");
   if (XEN_NUMBER_P(filler))
-    return(g_vct_fill(xen_make_vct(size, (Float *)CALLOC(size, sizeof(Float))), filler));
+    return(g_vct_fill(xen_make_vct(size, (Float *)calloc(size, sizeof(Float))), filler));
   if (rb_block_given_p()) {
     off_t i;
-    Float *buffer = (Float *)CALLOC(size, sizeof(Float));
+    Float *buffer = (Float *)calloc(size, sizeof(Float));
     for(i = 0; i < size; i++) {
       buffer[i] = XEN_TO_C_DOUBLE(rb_yield(C_TO_XEN_INT(i)));
     }
     return xen_make_vct(size, buffer);
   }
-  return(xen_make_vct(size, (Float *)CALLOC(size, sizeof(Float))));
+  return(xen_make_vct(size, (Float *)calloc(size, sizeof(Float))));
 }
 
 
@@ -990,7 +990,7 @@ static XEN g_vct_map(XEN obj)
   if (rb_block_given_p()) {
     off_t i;
     vct *v = XEN_TO_VCT(obj);
-    Float *buffer = (Float *)CALLOC(v->length, sizeof(Float));
+    Float *buffer = (Float *)calloc(v->length, sizeof(Float));
     for(i = 0; i < v->length; i++)
       buffer[i] = XEN_TO_C_DOUBLE(rb_yield(C_TO_XEN_DOUBLE(v->data[i])));
     return xen_make_vct(v->length, buffer);

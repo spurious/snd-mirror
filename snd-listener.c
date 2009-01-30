@@ -249,10 +249,10 @@ static void provide_listener_help_1(char *source, int start, int end)
 {
   XEN result = XEN_FALSE;
   char *name;
-  name = (char *)CALLOC(end - start + 1, sizeof(char));
+  name = (char *)calloc(end - start + 1, sizeof(char));
   strncpy(name, (char *)(source + start), end - start);
   result = g_snd_help(C_TO_XEN_STRING(name), listener_width());
-  FREE(name);
+  free(name);
   if (XEN_STRING_P(result))
     {
       listener_append("\n;");
@@ -338,7 +338,7 @@ static void add_listener_position(int pos)
   if (listener_positions_size == 0)
     {
       listener_positions_size = 32;
-      listener_positions = (int *)CALLOC(listener_positions_size, sizeof(int));
+      listener_positions = (int *)calloc(listener_positions_size, sizeof(int));
       current_listener_position = 0;
     }
   else
@@ -350,7 +350,7 @@ static void add_listener_position(int pos)
 	  if (current_listener_position >= listener_positions_size)
 	    {
 	      listener_positions_size += 32;
-	      listener_positions = (int *)REALLOC(listener_positions, listener_positions_size * sizeof(int));
+	      listener_positions = (int *)realloc(listener_positions, listener_positions_size * sizeof(int));
 	      for (i = current_listener_position + 1; i < listener_positions_size; i++) listener_positions[i] = 0;
 	    }
 	}
@@ -404,12 +404,12 @@ void command_return(widget_t w, int last_prompt)
       len = last_position - last_prompt + 1;
       if (len > 0)
 	{
-	  str = (char *)CALLOC(len, sizeof(char));
+	  str = (char *)calloc(len, sizeof(char));
 	  for (i = last_prompt + 1, j = 0; i < last_position; i++, j++) str[j] = full_str[i];
 	  result = run_or_hook(read_hook, 
 			       XEN_LIST_1(C_TO_XEN_STRING(str)),
 			       S_read_hook);
-	  FREE(str);
+	  free(str);
 	  if (XEN_TRUE_P(result)) 
 	    {
 	      if (full_str) GUI_FREE(full_str);
@@ -437,7 +437,7 @@ void command_return(widget_t w, int last_prompt)
 	      break;
 	  start = i + 1;
 	  len = (k - start + 1);
-	  str = (char *)CALLOC(len, sizeof(char));
+	  str = (char *)calloc(len, sizeof(char));
 	  for (k = 0; k < len - 1; k++)
 	    str[k] = full_str[k + start];
           break; 
@@ -469,7 +469,7 @@ void command_return(widget_t w, int last_prompt)
 		}
 	  if ((parens == 0) && (end_of_text != -1))
 	    {
-	      str = (char *)CALLOC(end_of_text - start_of_text + 2, sizeof(char));
+	      str = (char *)calloc(end_of_text - start_of_text + 2, sizeof(char));
 	      for (i = start_of_text, j = 0; i <= end_of_text; j++, i++) 
 		str[j] = full_str[i]; 
 	    }
@@ -506,7 +506,7 @@ void command_return(widget_t w, int last_prompt)
 	  int slen;
 	  parens = 0;
 	  slen = end_of_text - start_of_text + 2;
-	  str = (char *)CALLOC(slen, sizeof(char));
+	  str = (char *)calloc(slen, sizeof(char));
 	  for (i = start_of_text, j = 0; i <= end_of_text; j++, i++) 
 	    {
 	      str[j] = full_str[i]; 
@@ -528,7 +528,7 @@ void command_return(widget_t w, int last_prompt)
 		}
 	      else
 		{
-		  FREE(str);
+		  free(str);
 		  str = NULL;
 		  new_eot = GUI_TEXT_END(w);
 		  if (end_of_text < 0)
@@ -548,7 +548,7 @@ void command_return(widget_t w, int last_prompt)
 		if ((str[i] == '\n') || (i == 0))
 		  {
 		    len = mus_strlen(str);
-		    tmp = (char *)CALLOC(len + 1, sizeof(char));
+		    tmp = (char *)calloc(len + 1, sizeof(char));
 		    if (i != 0) i++;
 		    for (k = 0; i < len; i++, k++) 
 		      if ((i > loc) &&
@@ -556,7 +556,7 @@ void command_return(widget_t w, int last_prompt)
 			   (str[i] == ' ')))
 			break;
 		      else tmp[k] = str[i];
-		    FREE(str);
+		    free(str);
 		    str = tmp;
 		    break;
 		  }
@@ -621,12 +621,12 @@ void command_return(widget_t w, int last_prompt)
 	    {
 	      if (*errmsg)
 		snd_display_result(errmsg, NULL);
-	      FREE(errmsg);
+	      free(errmsg);
 	    }
 	}
 #endif
 
-      FREE(str);
+      free(str);
       str = NULL;
       snd_report_listener_result(form); /* used to check for unbound form here, but that's no good in Ruby,
 					 *   and doesn't seem sensible in Guile
@@ -707,14 +707,14 @@ void set_listener_prompt(const char *new_prompt)
     XEN_EVAL_C_STRING("before-prompt-hook reset-hook!\n");
     str = mus_format("before-prompt-hook lambda: <{ prompt pos }> \"%s\" ; add-hook!", listener_prompt(ss));
     XEN_EVAL_C_STRING(str);
-    FREE(str);
+    free(str);
 #endif
 
 #if HAVE_GUILE
     char *str;
     str = mus_format("(set! scm-repl-prompt \"%s\")", listener_prompt(ss)); /* defined in ice-9/boot9.scm */
     XEN_EVAL_C_STRING(str);
-    FREE(str);
+    free(str);
 #endif
 
 #if HAVE_RUBY
@@ -746,7 +746,7 @@ static XEN g_set_listener_prompt(XEN val)
 {
   #define H_listener_prompt "(" S_listener_prompt "): the current lisp listener prompt character ('>') "
   XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, S_setB S_listener_prompt, "a string"); 
-  if (listener_prompt(ss)) FREE(listener_prompt(ss));
+  if (listener_prompt(ss)) free(listener_prompt(ss));
   set_listener_prompt(mus_strdup(XEN_TO_C_STRING(val)));
   return(C_TO_XEN_STRING(listener_prompt(ss)));
 }
@@ -760,8 +760,8 @@ static XEN g_snd_completion(XEN text)
   temp = mus_strdup(XEN_TO_C_STRING(text));
   str = command_completer(NULL_WIDGET, temp, NULL);
   res = C_TO_XEN_STRING(str);
-  FREE(str);
-  FREE(temp);
+  free(str);
+  free(temp);
   return(res);
 }
 

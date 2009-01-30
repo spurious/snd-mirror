@@ -20,7 +20,7 @@
  *           added code to handle 0-input plugins ("analog osc" in swh for example).
  * 21-Sep-03 added plugin help menu item.
  * 1-Aug-03  added direct struct readers for LADSPA_Descriptor
- * 6-Jan-03  use FREE, not free.
+ * 6-Jan-03  use free, not free.
  * 21-Nov-02 better checks for C-g interrupt.
  * 2-May-02  use off_t for sample number.
  * 14-Dec-01 various C++ cleanups.
@@ -108,7 +108,7 @@ static char *packLADSPAFilename(const char * pcFilename) {
     if (strcmp(".so", pcEnd - 3) == 0)
       pcEnd -= 3;
 
-  pcPackedFilename = (char *)MALLOC(pcEnd - pcStart + 1);
+  pcPackedFilename = (char *)malloc(pcEnd - pcStart + 1);
   memcpy(pcPackedFilename, pcStart, pcEnd - pcStart);
   pcPackedFilename[pcEnd - pcStart] = '\0';
 
@@ -129,17 +129,17 @@ static void unloadLADSPA() {
   pvPluginHandle++;
   for (lIndex = 0; lIndex < g_lLADSPARepositoryCount; lIndex++) {
     psInfo = g_psLADSPARepository[lIndex];
-    FREE(psInfo->m_pcPackedFilename);
+    free(psInfo->m_pcPackedFilename);
     /* Don't free Label or Descriptor - this memory is owned by the
        relevant plugin library. */
     if (pvPluginHandle != psInfo->m_pvPluginHandle) {
       pvPluginHandle = (LADSPAPluginInfo *)(psInfo->m_pvPluginHandle);
       dlclose(pvPluginHandle);
     }
-    FREE(psInfo);
+    free(psInfo);
   }
 
-  FREE(g_psLADSPARepository);
+  free(g_psLADSPARepository);
   g_bLADSPAInitialised = 0;
 }
 
@@ -165,16 +165,16 @@ static void loadLADSPALibrary(void *pvPluginHandle,
 	psOldRepository = g_psLADSPARepository;
 	lNewCapacity = (g_lLADSPARepositoryCapacity
 			+ LADSPA_REPOSITORY_CAPACITY_STEP);
-	g_psLADSPARepository = (LADSPAPluginInfo **)MALLOC(lNewCapacity * sizeof(LADSPAPluginInfo *));
+	g_psLADSPARepository = (LADSPAPluginInfo **)malloc(lNewCapacity * sizeof(LADSPAPluginInfo *));
 	memcpy(g_psLADSPARepository,
 	       psOldRepository,
 	       sizeof(LADSPAPluginInfo *) * g_lLADSPARepositoryCount);
 	g_lLADSPARepositoryCapacity = lNewCapacity;
-	FREE(psOldRepository);
+	free(psOldRepository);
       }
       psInfo
 	= g_psLADSPARepository[g_lLADSPARepositoryCount++]
-	= (LADSPAPluginInfo *)MALLOC(sizeof(LADSPAPluginInfo));
+	= (LADSPAPluginInfo *)malloc(sizeof(LADSPAPluginInfo));
       psInfo->m_pcPackedFilename = packLADSPAFilename(pcFilename);
       psInfo->m_pcLabel = psDescriptor->Label;
       psInfo->m_psDescriptor = psDescriptor;
@@ -219,7 +219,7 @@ static void loadLADSPADirectory(const char *pcDirectory) {
       return;
     }
 
-    pcFilename = (char *)MALLOC(lDirLength
+    pcFilename = (char *)malloc(lDirLength
 				+ strlen(psDirectoryEntry->d_name)
 				+ 1 + iNeedSlash);
     strcpy(pcFilename, pcDirectory);
@@ -244,7 +244,7 @@ static void loadLADSPADirectory(const char *pcDirectory) {
 	/* dlclose(pcFilename); */
       }
     }
-    if (pcFilename) FREE(pcFilename);
+    if (pcFilename) free(pcFilename);
     pcFilename = NULL;
   }
 }
@@ -261,7 +261,7 @@ static void loadLADSPA() {
   const char *pcStart;
 
   g_bLADSPAInitialised = 1;
-  g_psLADSPARepository = (LADSPAPluginInfo **)MALLOC(sizeof(LADSPAPluginInfo *)
+  g_psLADSPARepository = (LADSPAPluginInfo **)malloc(sizeof(LADSPAPluginInfo *)
 				* LADSPA_REPOSITORY_CAPACITY_STEP);
   g_lLADSPARepositoryCapacity = LADSPA_REPOSITORY_CAPACITY_STEP;
   g_lLADSPARepositoryCount = 0;
@@ -282,7 +282,7 @@ static void loadLADSPA() {
     while (*pcEnd != ':' && *pcEnd != '\0')
       pcEnd++;
 
-    pcBuffer = (char *)MALLOC(1 + pcEnd - pcStart);
+    pcBuffer = (char *)malloc(1 + pcEnd - pcStart);
     if (pcEnd > pcStart)
       strncpy(pcBuffer, pcStart, pcEnd - pcStart);
     pcBuffer[pcEnd - pcStart] = '\0';
@@ -293,7 +293,7 @@ static void loadLADSPA() {
     if (*pcStart == ':')
       pcStart++;
 
-    if (pcBuffer) FREE(pcBuffer);
+    if (pcBuffer) free(pcBuffer);
     pcBuffer = NULL;
   }
 }
@@ -334,18 +334,18 @@ static void ladspa_help_callback(GtkWidget *w, gpointer info)
       len += mus_strlen((char *)(psInfo->m_pcLabel));
       pcFilename = packLADSPAFilename(psInfo->m_pcPackedFilename);
       psDescriptor = findLADSPADescriptor(pcFilename, (char *)(psInfo->m_pcLabel));
-      FREE(pcFilename);
+      free(pcFilename);
       len += mus_strlen(psDescriptor->Name);
     }
   if (len > 0)
     {
-      desc = (char *)CALLOC(len, sizeof(char));
+      desc = (char *)calloc(len, sizeof(char));
       for (lIndex = g_lLADSPARepositoryCount - 1; lIndex >= 0; lIndex--) 
 	{
 	  psInfo = g_psLADSPARepository[lIndex];
 	  pcFilename = packLADSPAFilename(psInfo->m_pcPackedFilename);
 	  psDescriptor = findLADSPADescriptor(pcFilename, (char *)(psInfo->m_pcLabel));
-	  FREE(pcFilename);
+	  free(pcFilename);
 	  strcat(desc, psInfo->m_pcPackedFilename);
 	  strcat(desc, ":");
 	  strcat(desc, (char *)(psInfo->m_pcLabel));
@@ -364,7 +364,7 @@ static void ladspa_help_callback(GtkWidget *w, gpointer info)
 	  strcat(desc, "\n");
 	}
       snd_help_with_xrefs("Available plugins", desc, WITHOUT_WORD_WRAP, ladspa_xrefs, NULL);
-      FREE(desc);
+      free(desc);
     }
 }
 #endif
@@ -480,7 +480,7 @@ a user interface edit the parameter in a useful way."
   pcLabel = XEN_TO_C_STRING(ladspa_plugin_label);
   pcFilename = packLADSPAFilename(pcTmp);
   psDescriptor = findLADSPADescriptor(pcFilename, pcLabel);
-  FREE(pcFilename);
+  free(pcFilename);
 
   if (!psDescriptor) {
     XEN_ERROR(XEN_ERROR_TYPE("no-such-plugin"),
@@ -625,7 +625,7 @@ Information about parameters can be acquired using " S_analyse_ladspa "."
   pcLabel = XEN_TO_C_STRING(XEN_CADR(ladspa_plugin_configuration));
   pcFilename = packLADSPAFilename(pcTmp);
   psDescriptor = findLADSPADescriptor(pcFilename, pcLabel);
-  FREE(pcFilename);
+  free(pcFilename);
 
   if (!psDescriptor)
     XEN_ERROR(XEN_ERROR_TYPE("no-such-plugin"),
@@ -645,7 +645,7 @@ Information about parameters can be acquired using " S_analyse_ladspa "."
     {
       msg = mus_format(_("Ladspa %s required inputs (%d) != sample-readers (%d)"), pcLabel, inchans, readers);
       errmsg = C_TO_XEN_STRING(msg);
-      FREE(msg);
+      free(msg);
       XEN_ERROR(XEN_ERROR_TYPE("plugin-error"),
 		XEN_LIST_3(C_TO_XEN_STRING(S_apply_ladspa),
 			   ladspa_plugin_configuration,
@@ -663,8 +663,8 @@ Information about parameters can be acquired using " S_analyse_ladspa "."
 		  XEN_ARG_2,
 		  S_apply_ladspa, 
 		  msg);
-  FREE(msg);
-  pfControls = (LADSPA_Data *)MALLOC(psDescriptor->PortCount * sizeof(LADSPA_Data));
+  free(msg);
+  pfControls = (LADSPA_Data *)malloc(psDescriptor->PortCount * sizeof(LADSPA_Data));
 
   if (XEN_BOUND_P(snd))
     cp = get_cp(snd, chn, S_apply_ladspa);
@@ -723,7 +723,7 @@ Information about parameters can be acquired using " S_analyse_ladspa "."
       if (ofd == -1)
 	{
 	  free_file_info(hdr);
-	  if (pfControls) FREE(pfControls);
+	  if (pfControls) free(pfControls);
 	  psDescriptor->cleanup(psHandle);
 	  XEN_ERROR(CANNOT_SAVE,
 		    XEN_LIST_3(C_TO_XEN_STRING(S_apply_ladspa),
@@ -738,7 +738,7 @@ Information about parameters can be acquired using " S_analyse_ladspa "."
 
   if (readers > 0)
     {
-      sf = (snd_fd **)CALLOC(readers, sizeof(snd_fd *));
+      sf = (snd_fd **)calloc(readers, sizeof(snd_fd *));
 
       /* Local version of sound descriptor. */
       if (XEN_LIST_P(reader))
@@ -752,17 +752,17 @@ Information about parameters can be acquired using " S_analyse_ladspa "."
   /* this code added 20-Sep-01 */
   if (inchans > 0)
     {
-      pfInputBuffer = (LADSPA_Data **)CALLOC(inchans, sizeof(LADSPA_Data *));
+      pfInputBuffer = (LADSPA_Data **)calloc(inchans, sizeof(LADSPA_Data *));
       for (i = 0; i < inchans; i++)
-	pfInputBuffer[i] = (LADSPA_Data *)CALLOC(MAX_BUFFER_SIZE, sizeof(LADSPA_Data));
+	pfInputBuffer[i] = (LADSPA_Data *)calloc(MAX_BUFFER_SIZE, sizeof(LADSPA_Data));
     }
-  pfOutputBuffer = (LADSPA_Data **)CALLOC(outchans, sizeof(LADSPA_Data *));
+  pfOutputBuffer = (LADSPA_Data **)calloc(outchans, sizeof(LADSPA_Data *));
   for (i = 0; i < outchans; i++)
-    pfOutputBuffer[i] = (LADSPA_Data *)CALLOC(MAX_BUFFER_SIZE, sizeof(LADSPA_Data));
+    pfOutputBuffer[i] = (LADSPA_Data *)calloc(MAX_BUFFER_SIZE, sizeof(LADSPA_Data));
 
-  data = (mus_sample_t **)CALLOC(outchans, sizeof(mus_sample_t *));
+  data = (mus_sample_t **)calloc(outchans, sizeof(mus_sample_t *));
   for (i = 0; i < outchans; i++)
-    data[i] = (mus_sample_t *)CALLOC(MAX_BUFFER_SIZE, sizeof(mus_sample_t));
+    data[i] = (mus_sample_t *)calloc(MAX_BUFFER_SIZE, sizeof(mus_sample_t));
 
   /* Connect input and output control ports. */
   {
@@ -886,23 +886,23 @@ Information about parameters can be acquired using " S_analyse_ladspa "."
       report_in_minibuffer(sp, _(S_apply_ladspa " interrupted"));
       ss->stopped_explicitly = false;
     }
-  if (ofile) FREE(ofile);
+  if (ofile) free(ofile);
   if (inchans > 0)
     {
       for (i = 0; i < inchans; i++)
-	FREE(pfInputBuffer[i]);
-      FREE(pfInputBuffer);
+	free(pfInputBuffer[i]);
+      free(pfInputBuffer);
     }
   /* sf[i] is directly from scheme, so it will presumably handle reader gc */
   for (i = 0; i < outchans; i++)
     {
-      FREE(pfOutputBuffer[i]);
-      FREE(data[i]);
+      free(pfOutputBuffer[i]);
+      free(data[i]);
     }
-  FREE(pfOutputBuffer);
-  if (sf) FREE(sf);
-  if (pfControls) FREE(pfControls);
-  FREE(data);
+  free(pfOutputBuffer);
+  if (sf) free(sf);
+  if (pfControls) free(pfControls);
+  free(data);
   return(xen_return_first(XEN_FALSE, ladspa_plugin_configuration, origin));
 }
 
@@ -955,7 +955,7 @@ associated with the given plugin."
   pcLabel = XEN_TO_C_STRING(ladspa_plugin_label);
   pcFilename = packLADSPAFilename(pcTmp);
   psDescriptor = findLADSPADescriptor(pcFilename, pcLabel);
-  FREE(pcFilename);
+  free(pcFilename);
   if (!psDescriptor) return(XEN_FALSE);
   return(C_TO_XEN_Ladspa_Descriptor(psDescriptor));
 }
@@ -1172,7 +1172,7 @@ static float *double_to_float(Float *data, int data_size)
 {
   float *ldata;
   int i;
-  ldata = (float *)CALLOC(data_size, sizeof(float));
+  ldata = (float *)calloc(data_size, sizeof(float));
   for (i = 0; i < data_size; i++)
     ldata[i] = (float)(data[i]);
   return(ldata);

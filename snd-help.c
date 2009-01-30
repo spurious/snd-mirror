@@ -14,7 +14,7 @@ static char *snd_itoa(int n)
   if (snd_itoa_strs == NULL)
     {
       snd_itoa_size = 32;
-      snd_itoa_strs = (char **)CALLOC(snd_itoa_size, sizeof(char *));
+      snd_itoa_strs = (char **)calloc(snd_itoa_size, sizeof(char *));
     }
   else
     {
@@ -22,11 +22,11 @@ static char *snd_itoa(int n)
 	{
 	  int i;
 	  snd_itoa_size += 32;
-	  snd_itoa_strs = (char **)REALLOC(snd_itoa_strs, snd_itoa_size * sizeof(char *));
+	  snd_itoa_strs = (char **)realloc(snd_itoa_strs, snd_itoa_size * sizeof(char *));
 	  for (i = snd_itoa_ctr; i < snd_itoa_size; i++) snd_itoa_strs[i] = NULL;
 	}
     }
-  str = (char *)CALLOC(LABEL_BUFFER_SIZE, sizeof(char));
+  str = (char *)calloc(LABEL_BUFFER_SIZE, sizeof(char));
   mus_snprintf(str, LABEL_BUFFER_SIZE, "%d", n);
   snd_itoa_strs[snd_itoa_ctr++] = str;
   return(str);
@@ -39,7 +39,7 @@ static void free_snd_itoa(void)
   for (i = 0; i < snd_itoa_ctr; i++)
     if (snd_itoa_strs[i]) 
       {
-	FREE(snd_itoa_strs[i]);
+	free(snd_itoa_strs[i]);
 	snd_itoa_strs[i] = NULL;
       }
   snd_itoa_ctr = 0;
@@ -72,8 +72,8 @@ static char *sndlib_consistency_check(void)
       snd_name = format_to_name(snd_bits);
       sndlib_name = format_to_name(sndlib_bits);
       val = mus_format(" Snd expects %s samples, but sndlib uses %s!", snd_name, sndlib_name);
-      FREE(snd_name);
-      FREE(sndlib_name);
+      free(snd_name);
+      free(sndlib_name);
       return(val);
     }
   return(NULL);
@@ -91,7 +91,7 @@ static char *vstrcat(char *arg1, ...)
   while ((str = va_arg(ap, char *)))
     len += strlen(str);
   va_end(ap);
-  buf = (char *)CALLOC(len + 32, sizeof(char));
+  buf = (char *)calloc(len + 32, sizeof(char));
   strcat(buf, arg1);
   va_start(ap, arg1);
   while ((str = va_arg(ap, char *)))
@@ -216,7 +216,7 @@ static char *xm_version(void)
   if (XEN_STRING_P(xm_val))
     {
       char *version = NULL;
-      version = (char *)CALLOC(32, sizeof(char));
+      version = (char *)calloc(32, sizeof(char));
       mus_snprintf(version, 32, "\n    %s: %s", 
 #if USE_MOTIF
 		   "xm",
@@ -255,7 +255,7 @@ static char *gl_version(void)
   if (XEN_STRING_P(gl_val))
     {
       char *version = NULL;
-      version = (char *)CALLOC(32, sizeof(char));
+      version = (char *)calloc(32, sizeof(char));
       mus_snprintf(version, 32, " (snd gl: %s)", XEN_TO_C_STRING(gl_val));
       if (snd_itoa_ctr < snd_itoa_size) snd_itoa_strs[snd_itoa_ctr++] = version;
       return(version);
@@ -280,7 +280,7 @@ static char *glx_version(void)
   #define VERSION_SIZE 128
   int major = 0, minor = 0;
   char *version;
-  version = (char *)CALLOC(VERSION_SIZE, sizeof(char));
+  version = (char *)calloc(VERSION_SIZE, sizeof(char));
   if (ss->sgx == NULL) /* snd --help for example */
     {
 #if HAVE_X
@@ -489,9 +489,9 @@ char *version_info(void)
 	  NULL);
   free_snd_itoa();
   if (xversion) free(xversion); /* calloc in xen.c */
-  if (consistent) FREE(consistent);
+  if (consistent) free(consistent);
 #if HAVE_GL && MUS_WITH_GL2PS
-  if (gl2ps_name) FREE(gl2ps_name);
+  if (gl2ps_name) free(gl2ps_name);
 #endif
   return(result);
 }
@@ -558,10 +558,10 @@ void about_snd_help(void)
 	    "Please send bug reports or suggestions to bil@ccrma.stanford.edu.",
 NULL);
 
-  if (info) FREE(info);
-  if (features) FREE(features);
+  if (info) free(info);
+  if (features) free(features);
 #if HAVE_GUILE || HAVE_FORTH
-  if (files) FREE(files);
+  if (files) free(files);
 #endif
 }
 
@@ -580,8 +580,8 @@ static bool append_key_help(const char *name, int key, int state, bool cx_extend
 		       name,
 		       tmp = key_binding_description(key, state, cx_extended));
       snd_help_append(msg);
-      FREE(msg);
-      if (tmp) FREE(tmp);
+      free(msg);
+      if (tmp) free(tmp);
       return(false);
     }
   return(first_time);
@@ -1601,7 +1601,7 @@ static void show_key_help(int key, int state, bool cx, char *help)
       make_key_name(cbuf, 256, key, state, cx);
       mus_snprintf(buf, 1024, "\n%s: %s", cbuf, help);
       snd_help_append(buf);
-      FREE(help);
+      free(help);
     }
 }
 
@@ -3211,8 +3211,8 @@ static int levenstein(const char *s1, const char *s2)
   l1 = mus_strlen(s1);
   l2 = mus_strlen(s2);
   if ((l1 == 0) || (l2 == 0)) return(1000);
-  distance = (int **)CALLOC(l2 + 1, sizeof(int *));
-  for (i = 0; i <= l2; i++) distance[i] = (int *)CALLOC(l1 + 1, sizeof(int));
+  distance = (int **)calloc(l2 + 1, sizeof(int *));
+  for (i = 0; i <= l2; i++) distance[i] = (int *)calloc(l1 + 1, sizeof(int));
   for (j = 0; j <= l1; j++) distance[0][j] = j * insert_cost;
   for (i = 0; i <= l2; i++) distance[i][0] = i * delete_cost;
   for (i = 1; i <= l2; i++)
@@ -3227,8 +3227,8 @@ static int levenstein(const char *s1, const char *s2)
 	distance[i][j] = c1;
       }
   val = distance[l2][l1];
-  for (i = 0; i <= l2; i++) FREE(distance[i]);
-  FREE(distance);
+  for (i = 0; i <= l2; i++) free(distance[i]);
+  free(distance);
   return(val);
 }
 
@@ -3276,7 +3276,7 @@ static char *call_grep(const char *defstr, const char *name, const char *endstr,
   command = mus_format(FGREP_PROG " \"%s%s%s\" %s/*." XEN_FILE_EXTENSION " > %s", defstr, name, endstr, path, tempfile);
 #endif
   err = system(command);
-  FREE(command);
+  free(command);
   if (err != -1)                      /* no error, so I guess tempfile exists, but might be empty */
     return(file_to_string(tempfile)); /* NULL if nothing found */
   return(NULL);
@@ -3337,7 +3337,7 @@ static char *snd_finder(const char *name, bool got_help)
 #endif
     }
   snd_remove(tempfile, IGNORE_CACHE);
-  FREE(tempfile);
+  free(tempfile);
 
   if (url)
     {
@@ -3364,7 +3364,7 @@ static char *snd_finder(const char *name, bool got_help)
 			     fgrep);
       else command = NULL;
     }
-  if (fgrep) FREE(fgrep); /* don't free url! */
+  if (fgrep) free(fgrep); /* don't free url! */
   return(command);
 }
 
@@ -3438,7 +3438,7 @@ bool snd_topic_help(const char *topic)
     if (str)
       {
 	snd_help(topic, str, WITH_WORD_WRAP);
-	FREE(str);
+	free(str);
 	return(true);
       }
   }
@@ -3483,11 +3483,11 @@ const char **help_name_to_xrefs(const char *name)
 	      {
 		xrefs_size += 8;
 		if (xref_ctr == 0)
-		  xrefs = (const char **)CALLOC(xrefs_size, sizeof(char *));
+		  xrefs = (const char **)calloc(xrefs_size, sizeof(char *));
 		else
 		  {
 		    int k;
-		    xrefs = (const char **)REALLOC(xrefs, xrefs_size * sizeof(char *));
+		    xrefs = (const char **)realloc(xrefs, xrefs_size * sizeof(char *));
 		    for (k = xref_ctr; k < xrefs_size; k++) xrefs[k] = NULL;
 		  }
 	      }
@@ -3509,7 +3509,7 @@ char *word_wrap(const char *text, int widget_len)
   old_len = mus_strlen(text);
   new_len = old_len + 64;
   desired_len = (int)(widget_len * .8);
-  new_text = (char *)CALLOC(new_len, sizeof(char));
+  new_text = (char *)calloc(new_len, sizeof(char));
   for (i = 0, j = 0; i < old_len; i++)
     if (text[i] == '\n')
       {
@@ -3655,10 +3655,10 @@ static char *html_directory(void)
     {
       bool happy;
       char *hd = NULL;
-      hd = (char *)CALLOC(mus_strlen(html_dir(ss)) + 16, sizeof(char));
+      hd = (char *)calloc(mus_strlen(html_dir(ss)) + 16, sizeof(char));
       sprintf(hd, "%s/snd.html", html_dir(ss));
       happy = mus_file_probe(hd);
-      FREE(hd);
+      free(hd);
       if (happy) return(mus_strdup(html_dir(ss)));
     }
 
@@ -3686,7 +3686,7 @@ void url_to_html_viewer(const char *url)
       if (program)
 	{
 	  char *path;
-	  path = (char *)CALLOC(strlen(dir_path) + strlen(url) + 256, sizeof(char));
+	  path = (char *)calloc(strlen(dir_path) + strlen(url) + 256, sizeof(char));
 	  if ((strcmp(program, "netscape") == 0) ||
 	      (strcmp(program, "mozilla") == 0) ||
 	      (strcmp(program, "firefox") == 0))
@@ -3702,9 +3702,9 @@ void url_to_html_viewer(const char *url)
 	      if (err == -1)
 		fprintf(stderr, "can't start %s?", program);
 	    }
-	  FREE(path);
+	  free(path);
 	}
-      FREE(dir_path);
+      free(dir_path);
     }
 }
 
@@ -3989,7 +3989,7 @@ and its value is returned."
 		{
 		  str = mus_format("%s\nOther possibilities:\n%s", str, more_str);
 		  need_free = true;
-		  FREE(more_str);
+		  free(more_str);
 		}
 	    }
 	}
@@ -4002,17 +4002,17 @@ and its value is returned."
 	  else new_str = mus_strdup(str);
 	  if (need_free)
 	    {
-	      FREE(str);
+	      free(str);
 	      str = NULL;
 	    }
 	  if (widget_wid > 0)
 	    {
 	      str = word_wrap(new_str, widget_wid);
-	      if (new_str) FREE(new_str);
+	      if (new_str) free(new_str);
 	    }
 	  else str = new_str;
 	  help_text = C_TO_XEN_STRING(str);
-	  if (str) FREE(str);
+	  if (str) free(str);
 	  return(xen_return_first(help_text, text));
 	}
     }
@@ -4040,7 +4040,7 @@ static XEN g_listener_help(XEN arg, XEN formatted)
 
 void set_html_dir(char *new_dir)
 {
-  if (html_dir(ss)) FREE(html_dir(ss));
+  if (html_dir(ss)) free(html_dir(ss));
   set_html_dir_1(new_dir);
 }
 
@@ -4070,7 +4070,7 @@ static XEN g_html_program(void)
 static XEN g_set_html_program(XEN val) 
 {
   XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, S_setB S_html_program, "a string");
-  if (html_program(ss)) FREE(html_program(ss));
+  if (html_program(ss)) free(html_program(ss));
   set_html_program(mus_strdup(XEN_TO_C_STRING(val))); 
   return(val);
 }
@@ -4112,13 +4112,13 @@ static XEN g_help_dialog(XEN subject, XEN msg, XEN xrefs, XEN xurls)
   XEN_ASSERT_TYPE(XEN_STRING_P(msg), msg, XEN_ARG_2, S_help_dialog, "a string");
   XEN_ASSERT_TYPE(XEN_LIST_P(xrefs) || XEN_NOT_BOUND_P(xrefs), xrefs, XEN_ARG_3, S_help_dialog, "a list of related references");
   XEN_ASSERT_TYPE(XEN_LIST_P(xurls) || XEN_NOT_BOUND_P(xurls), xurls, XEN_ARG_4, S_help_dialog, "a list of urls");
-  if (refs) {FREE(refs); refs = NULL;}
-  if (urls) {FREE(urls); urls = NULL;}
+  if (refs) {free(refs); refs = NULL;}
+  if (urls) {free(urls); urls = NULL;}
   if (XEN_LIST_P(xrefs))
     {
       int i, len;
       len = XEN_LIST_LENGTH(xrefs);
-      refs = (const char **)CALLOC(len + 1, sizeof(char *));
+      refs = (const char **)calloc(len + 1, sizeof(char *));
       for (i = 0; i < len; i++)
 	if (XEN_STRING_P(XEN_LIST_REF(xrefs, i)))
 	  refs[i] = XEN_TO_C_STRING(XEN_LIST_REF(xrefs, i));
@@ -4127,7 +4127,7 @@ static XEN g_help_dialog(XEN subject, XEN msg, XEN xrefs, XEN xurls)
 	  int ulen;
 	  ulen = XEN_LIST_LENGTH(xurls);
 	  if (ulen > len) ulen = len;
-	  urls = (const char **)CALLOC(ulen + 1, sizeof(char *));
+	  urls = (const char **)calloc(ulen + 1, sizeof(char *));
 	  for (i = 0; i < ulen; i++)
 	    if (XEN_STRING_P(XEN_LIST_REF(xurls, i)))
 	      urls[i] = XEN_TO_C_STRING(XEN_LIST_REF(xurls, i));

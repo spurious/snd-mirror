@@ -149,7 +149,7 @@ char *string_to_colon(char *val)
 {
   char *up_to_colon;
   int i, len;
-  up_to_colon = (char *)CALLOC(strlen(val) + 1, sizeof(char));
+  up_to_colon = (char *)calloc(strlen(val) + 1, sizeof(char));
   len = strlen(val);
   for (i = 0; i < len; i++)
     {
@@ -198,7 +198,7 @@ char *just_directory(const char *name)
   int i, len, last_slash = 0;
   char *dirname = NULL;
   len = strlen(name);
-  dirname = (char *)CALLOC(len + 1, sizeof(char));
+  dirname = (char *)calloc(len + 1, sizeof(char));
   for (i = 0; i < len - 1; i++) 
     if (name[i] == '/') 
       last_slash = i + 1;
@@ -221,7 +221,7 @@ char *file_to_string(const char *filename)
     {
       size_t bytes;
       rewind(file);
-      content = (char *)CALLOC(size + 1, sizeof(char));
+      content = (char *)calloc(size + 1, sizeof(char));
       bytes = fread(content, sizeof(char), size, file);
       if (bytes == 0)
 	fprintf(stderr, "file->string read error");
@@ -236,7 +236,7 @@ char *vstr(const char *format, va_list ap)
   char *buf;
   int len;
   len = mus_strlen(format) + PRINT_BUFFER_SIZE;
-  buf = (char *)CALLOC(len, sizeof(char));
+  buf = (char *)calloc(len, sizeof(char));
  #if HAVE_VSNPRINTF
   vsnprintf(buf, len, format, ap);
  #else
@@ -266,15 +266,7 @@ disk_space_t disk_space_p(off_t bytes, const char *filename)
 
 
 #if HAVE_LANGINFO_DECIMAL_POINT || HAVE_LANGINFO_RADIXCHAR
-#if NL_TYPES_H_DEFINES_MALLOC
-  /* SGI complication */
-  #undef MALLOC
   #include <langinfo.h>
-  #undef MALLOC
-  #define MALLOC malloc
-#else
-  #include <langinfo.h>
-#endif
 #endif
 
 static char decimal_pt;
@@ -335,14 +327,14 @@ char *shorter_tempnam(const char *udir, const char *prefix)
 {
   /* tempnam turns out names that are inconveniently long (in this case the filename is user-visible) */
   char *str, *tmpdir = NULL;
-  str = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
+  str = (char *)calloc(PRINT_BUFFER_SIZE, sizeof(char));
   if ((udir == NULL) || (mus_strlen(udir) == 0)) 
     tmpdir = get_tmpdir(); /* incoming dir could be "" */
   else tmpdir = mus_strdup(udir);
   mus_snprintf(str, PRINT_BUFFER_SIZE, "%s/%s%d_%d.snd", tmpdir, (prefix) ? prefix : "snd_", (int)getpid(), sect_ctr++);
-  if (tmpdir) FREE(tmpdir);
+  if (tmpdir) free(tmpdir);
   tmpdir = mus_strdup(str);
-  FREE(str);
+  free(str);
   return(tmpdir);
 }
 
@@ -468,7 +460,7 @@ static gboolean fam_reader(GIOChannel *source, GIOCondition condition, gpointer 
 static fam_info *make_fam_info(FAMRequest *rp, void *data, void (*action)(struct fam_info *fp, FAMEvent *fe))
 {
   fam_info *fp;
-  fp = (fam_info *)CALLOC(1, sizeof(fam_info));
+  fp = (fam_info *)calloc(1, sizeof(fam_info));
   fp->data = data;
   fp->action = action;
   fp->rp = rp;
@@ -483,7 +475,7 @@ static FAMRequest *fam_monitor(void)
       if (!(ss->fam_connection))
 	{
 	  int err;
-	  ss->fam_connection = (FAMConnection *)CALLOC(1, sizeof(FAMConnection));
+	  ss->fam_connection = (FAMConnection *)calloc(1, sizeof(FAMConnection));
 	  err = FAMOpen(ss->fam_connection);
 	  if (err < 0)
 	    {
@@ -517,7 +509,7 @@ static FAMRequest *fam_monitor(void)
 #endif
 	    }
 	}
-      return((FAMRequest *)CALLOC(1, sizeof(FAMRequest)));
+      return((FAMRequest *)calloc(1, sizeof(FAMRequest)));
     }
   return(NULL);
 }
@@ -543,9 +535,9 @@ fam_info *fam_monitor_file(const char *filename, void *data, void (*action)(stru
       if (err < 0)
 	{
 	  snd_warning("can't monitor %s: %s (free %p %p)\n", filename, fam_error_to_string(FAMErrno), fp, rp);
-	  FREE(rp);
+	  free(rp);
 	  rp = NULL;
-	  FREE(fp);
+	  free(fp);
 	  fp = NULL;
 	}
       else return(fp);
@@ -576,9 +568,9 @@ fam_info *fam_monitor_directory(const char *dir_name, void *data, void (*action)
       if (err < 0)
 	{
 	  snd_warning("can't monitor %s: %s\n", dir_name, fam_error_to_string(FAMErrno));
-	  FREE(rp);
+	  free(rp);
 	  rp = NULL;
-	  FREE(fp);
+	  free(fp);
 	  fp = NULL;
 	}
       else return(fp);
@@ -601,23 +593,23 @@ fam_info *fam_unmonitor_file(const char *filename, fam_info *fp)
       fprintf(stderr, "unmonitor %s: %p %p\n", filename, fp, fp->rp);
 #endif
 #if MUS_DEBUGGING
-      if (fp->filename) {FREE(fp->filename); fp->filename = NULL;}
+      if (fp->filename) {free(fp->filename); fp->filename = NULL;}
 #endif
       if (fp->rp)
 	{
 	  err = FAMCancelMonitor(ss->fam_connection, fp->rp);
 	  if (err < 0)
 	    snd_warning("can't unmonitor %s: %s\n", filename, fam_error_to_string(FAMErrno));
-	  FREE(fp->rp);
+	  free(fp->rp);
 	  /* /usr/include/fam.h implies that cancel frees this, but valgrind seems to disagree */
 	  /* as far as I can see, gamin (libgamin/gam_api.c) does not free it */
 	  /*   nor does fam (fam/fam.c++ in 2.6.10 does not, and their test case assumes it won't) */
 	  fp->rp = NULL;
-	  /* FREE(fp) below in debugging case will fill this with 'X', 0x858585... */
+	  /* free(fp) below in debugging case will fill this with 'X', 0x858585... */
 	}
       fp->action = NULL;
       fp->data = NULL;
-      FREE(fp);
+      free(fp);
     }
   return(NULL);
 }
@@ -668,7 +660,7 @@ static XEN g_file_to_string(XEN name)
   XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ONLY_ARG, S_file_to_string, "a string");
   contents = file_to_string(XEN_TO_C_STRING(name));
   val = C_TO_XEN_STRING(contents);
-  FREE(contents);
+  free(contents);
   return(val);
 }
 #endif

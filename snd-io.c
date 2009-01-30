@@ -135,7 +135,7 @@ io_error_t copy_file(const char *oldname, const char *newname)
       snd_close(ifd, oldname);
       return(IO_CANT_CREATE_FILE);
     }
-  buf = (char *)CALLOC(8192, sizeof(char));
+  buf = (char *)calloc(8192, sizeof(char));
   while ((bytes = read(ifd, buf, 8192)))
     {
       total += bytes;
@@ -144,14 +144,14 @@ io_error_t copy_file(const char *oldname, const char *newname)
 	{
 	  snd_close(ofd, newname);
 	  snd_close(ifd, oldname);
-	  FREE(buf); 
+	  free(buf); 
 	  return(IO_WRITE_ERROR);
 	}
     }
   snd_close(ifd, oldname);
   wb = disk_kspace(newname);
   snd_close(ofd, newname);
-  FREE(buf);
+  free(buf);
   if (wb < 0)
     return(IO_DISK_FULL);
   return(IO_NO_ERROR);
@@ -255,7 +255,7 @@ static void add_io(snd_io *p)
   if (ios_size == 0)
     {
       ios_size = 256;
-      ios = (snd_io **)CALLOC(ios_size, sizeof(snd_io *));
+      ios = (snd_io **)calloc(ios_size, sizeof(snd_io *));
       loc = 0;
     }
   else
@@ -271,7 +271,7 @@ static void add_io(snd_io *p)
 	{
 	  loc = ios_size;
 	  ios_size += 256;
-	  ios = (snd_io **)REALLOC(ios, ios_size * sizeof(snd_io *));
+	  ios = (snd_io **)realloc(ios, ios_size * sizeof(snd_io *));
 	  for (i = loc; i < ios_size; i++) ios[i] = NULL;
 	}
     }
@@ -324,18 +324,18 @@ snd_io *make_file_state(int fd, file_info *hdr, int chan, off_t beg, int suggest
   if ((chansize > 0) && 
       (bufsize > chansize)) 
     bufsize = chansize + 1;
-  io = (snd_io *)CALLOC(1, sizeof(snd_io)); /* only creation point */
+  io = (snd_io *)calloc(1, sizeof(snd_io)); /* only creation point */
 #if MUS_DEBUGGING
   add_io(io);
 #endif
-  io->arrays = (mus_sample_t **)CALLOC(hdr->chans, sizeof(mus_sample_t *));
+  io->arrays = (mus_sample_t **)calloc(hdr->chans, sizeof(mus_sample_t *));
   io->fd = fd;
   io->chans = hdr->chans;
   io->frames = chansize;
   io->beg = 0;
   io->end = bufsize - 1;
   io->bufsize = bufsize;
-  io->arrays[chan] = (mus_sample_t *)CALLOC(bufsize, sizeof(mus_sample_t));
+  io->arrays[chan] = (mus_sample_t *)calloc(bufsize, sizeof(mus_sample_t));
   reposition_file_buffers_1(beg, io); /* get ready to read -- we're assuming mus_file_read_chans here */
   return(io);
 }
@@ -415,7 +415,7 @@ static int too_many_files_cleanup(void)
   int *closed;
   int rtn;
   rtn = -1;
-  closed = (int *)MALLOC(sizeof(int));
+  closed = (int *)malloc(sizeof(int));
   (*closed) = 0;
   for_each_normal_chan_with_refint(close_temp_files, closed);
   if ((*closed) == 0) 
@@ -423,7 +423,7 @@ static int too_many_files_cleanup(void)
   if ((*closed) == 0)
     rtn = -1;
   else rtn = (*closed);
-  FREE(closed);
+  free(closed);
 #if MUS_DEBUGGING
   fprintf(stderr, "too many files open, recovered %d\n", (rtn < 0) ? 0 : rtn);
 #endif
@@ -469,7 +469,7 @@ static mus_error_handler_t *old_error_handler;
 static void local_mus_error_to_snd(int type, char *msg) 
 {
   local_mus_error = type;
-  if (ss->io_error_info) FREE(ss->io_error_info);
+  if (ss->io_error_info) free(ss->io_error_info);
   ss->io_error_info = mus_strdup(msg);
 }
 
@@ -574,7 +574,7 @@ void remember_temp(const char *filename, int chans)
   if (tempfiles_size == 0)
     {
       tempfiles_size = 8;
-      tempfiles = (tempfile_ctr **)CALLOC(tempfiles_size, sizeof(tempfile_ctr *));
+      tempfiles = (tempfile_ctr **)calloc(tempfiles_size, sizeof(tempfile_ctr *));
       i = 0;
     }
   else
@@ -595,17 +595,17 @@ void remember_temp(const char *filename, int chans)
 	{
 	  old_size = tempfiles_size;
 	  tempfiles_size += 8;
-	  tempfiles = (tempfile_ctr **)REALLOC(tempfiles, tempfiles_size * sizeof(tempfile_ctr *));
+	  tempfiles = (tempfile_ctr **)realloc(tempfiles, tempfiles_size * sizeof(tempfile_ctr *));
 	  for (i = old_size; i < tempfiles_size; i++) tempfiles[i] = NULL;
 	  i = old_size;
 	}
     }
 
-  tmp = (tempfile_ctr *)CALLOC(1, sizeof(tempfile_ctr));
+  tmp = (tempfile_ctr *)calloc(1, sizeof(tempfile_ctr));
   tempfiles[i] = tmp;
   tmp->name = mus_strdup(filename);
   tmp->chans = chans;
-  tmp->ticks = (int *)CALLOC(chans, sizeof(int));
+  tmp->ticks = (int *)calloc(chans, sizeof(int));
 
   MUS_UNLOCK(&temp_file_lock);
 }
@@ -626,9 +626,9 @@ void forget_temp(const char *filename, int chan)
 	    if (tmp->ticks[j] > 0) 
 	      return;
 	  snd_remove(tmp->name, REMOVE_FROM_CACHE);
-	  FREE(tmp->name);
-	  FREE(tmp->ticks);
-	  FREE(tmp);
+	  free(tmp->name);
+	  free(tmp->ticks);
+	  free(tmp);
 	  tempfiles[i] = NULL;
 	  return;
 	}
@@ -671,7 +671,7 @@ void forget_temps(void)
 snd_data *make_snd_data_file(const char *name, snd_io *io, file_info *hdr, file_delete_t temp, int ctr, int temp_chan)
 {
   snd_data *sd;
-  sd = (snd_data *)CALLOC(1, sizeof(snd_data));
+  sd = (snd_data *)calloc(1, sizeof(snd_data));
   sd->type = SND_DATA_FILE;
   sd->buffered_data = io->arrays[temp_chan];
   sd->io = io;
@@ -707,7 +707,7 @@ snd_data *copy_snd_data(snd_data *sd, off_t beg, int bufsize)
 			    hdr->type);
   during_open(fd, sd->filename, SND_COPY_READER);
   io = make_file_state(fd, hdr, sd->chan, beg, bufsize);
-  sf = (snd_data *)CALLOC(1, sizeof(snd_data));
+  sf = (snd_data *)calloc(1, sizeof(snd_data));
   sf->type = sd->type;
   sf->buffered_data = io->arrays[sd->chan];
   sf->io = io;
@@ -725,9 +725,9 @@ snd_data *copy_snd_data(snd_data *sd, off_t beg, int bufsize)
 snd_data *make_snd_data_buffer(mus_sample_t *data, int len, int ctr)
 {
   snd_data *sf;
-  sf = (snd_data *)CALLOC(1, sizeof(snd_data));
+  sf = (snd_data *)calloc(1, sizeof(snd_data));
   sf->type = SND_DATA_BUFFER;
-  sf->buffered_data = (mus_sample_t *)MALLOC((len + 1) * sizeof(mus_sample_t));
+  sf->buffered_data = (mus_sample_t *)malloc((len + 1) * sizeof(mus_sample_t));
   /* sigh... using len + 1 rather than len to protect against access to inserted buffer at end mixups (final fragment uses end + 1) */
   /*   the real problem here is that I never decided whether insert starts at the cursor or just past it */
   /*   when the cursor is on the final sample, this causes cross-fragment ambiguity as to the length of a trailing insertion */
@@ -745,9 +745,9 @@ snd_data *make_snd_data_buffer(mus_sample_t *data, int len, int ctr)
 snd_data *make_snd_data_buffer_for_simple_channel(int len)
 {
   snd_data *sf;
-  sf = (snd_data *)CALLOC(1, sizeof(snd_data));
+  sf = (snd_data *)calloc(1, sizeof(snd_data));
   sf->type = SND_DATA_BUFFER;
-  sf->buffered_data = (mus_sample_t *)CALLOC(len, sizeof(mus_sample_t));
+  sf->buffered_data = (mus_sample_t *)calloc(len, sizeof(mus_sample_t));
   sf->edit_ctr = 0;
   sf->copy = false;
   sf->inuse = false;
@@ -775,7 +775,7 @@ snd_data *free_snd_data(snd_data *sd)
 	    forget_temp(sd->filename, sd->chan);
 	  if ((sd->type == SND_DATA_BUFFER) && 
 	      (sd->buffered_data)) 
-	    FREE(sd->buffered_data);
+	    free(sd->buffered_data);
 	  sd->buffered_data = NULL;
 	  if ((!(sd->copy)) && 
 	      (sd->hdr)) 
@@ -799,22 +799,22 @@ snd_data *free_snd_data(snd_data *sd)
 	      chans = sd->io->chans;
 	      for (i = 0; i < chans; i++)
 		if (sd->io->arrays[i]) 
-		  FREE(sd->io->arrays[i]);
-	      FREE(sd->io->arrays);
+		  free(sd->io->arrays[i]);
+	      free(sd->io->arrays);
 #if MUS_DEBUGGING
 	      remove_io(sd->io);
 #endif
-	      FREE(sd->io);
+	      free(sd->io);
 	      sd->io = NULL;
 	      if (sd->temporary == DELETE_ME)
 		snd_remove(sd->filename, REMOVE_FROM_CACHE);
 	    }
-	  if (sd->filename) FREE(sd->filename);
+	  if (sd->filename) free(sd->filename);
 	  sd->filename = NULL;
 	  sd->temporary = ALREADY_DELETED;
 	  sd->copy = false;
 	  sd->type = SND_DATA_NO_DATA;
-	  FREE(sd);
+	  free(sd);
 	}
       else 
 	{

@@ -8,7 +8,7 @@ static bool mix_vct_untagged(vct *v, chan_info *cp, off_t beg, const char *origi
   bool result = false;
 
   len = v->length;
-  data = (mus_sample_t *)CALLOC(len, sizeof(mus_sample_t)); /* don't add into v->data! */
+  data = (mus_sample_t *)calloc(len, sizeof(mus_sample_t)); /* don't add into v->data! */
 
   sf = init_sample_read(beg, cp, READ_FORWARD);
   for (i = 0; i < len; i++)
@@ -18,7 +18,7 @@ static bool mix_vct_untagged(vct *v, chan_info *cp, off_t beg, const char *origi
   result = change_samples(beg, len, data, cp, origin, cp->edit_ctr); /* cp->edit_ctr since mix-vct has no edpos arg, similarly mix */
   if (result) update_graph(cp);
 
-  FREE(data);
+  free(data);
   return(result);
 }
 
@@ -64,7 +64,7 @@ static bool mix_file_untagged(const char *filename, int in_chan, chan_info *cp, 
 		      free_file_info(ohdr);
 		      mus_file_close(ofd);
 		      snd_remove(ofile, REMOVE_FROM_CACHE);
-		      FREE(ofile);
+		      free(ofile);
 		    }
 		  else
 		    {
@@ -83,8 +83,8 @@ static bool mix_file_untagged(const char *filename, int in_chan, chan_info *cp, 
 		      during_open(ifd, filename, SND_MIX_FILE);
 		      if (num < MAX_BUFFER_SIZE) size = num; else size = MAX_BUFFER_SIZE;
 
-		      data = (mus_sample_t **)CALLOC(in_chans, sizeof(mus_sample_t *));
-		      data[in_chan] = (mus_sample_t *)CALLOC(size, sizeof(mus_sample_t));
+		      data = (mus_sample_t **)calloc(in_chans, sizeof(mus_sample_t *));
+		      data[in_chan] = (mus_sample_t *)calloc(size, sizeof(mus_sample_t));
 		      chandata = data[in_chan];
 
 		      lseek(ofd, ohdr->data_location, SEEK_SET);
@@ -107,12 +107,12 @@ static bool mix_file_untagged(const char *filename, int in_chan, chan_info *cp, 
 		      close_temp_file(ofile, ofd, ohdr->type, num * mus_bytes_per_sample(ohdr->format));
 		      mus_file_close(ifd);
 		      sf = free_snd_fd(sf);
-		      FREE(data[in_chan]);
-		      FREE(data);
+		      free(data[in_chan]);
+		      free(data);
 		      free_file_info(ihdr);
 		      free_file_info(ohdr);
 		      file_change_samples(beg, num, ofile, cp, 0, DELETE_ME, origin, cp->edit_ctr);
-		      if (ofile) FREE(ofile);
+		      if (ofile) free(ofile);
 
 		      if (auto_delete == DELETE_ME)
 			snd_remove(filename, REMOVE_FROM_CACHE);
@@ -145,7 +145,7 @@ int mix_complete_file_at_cursor(snd_info *sp, const char *filename)
 	  if (err == MIX_FILE_NO_MIX) 
 	    snd_error("no data to mix in %s", filename);
 	}
-      if (fullname) FREE(fullname);
+      if (fullname) free(fullname);
       return(err);
     }
   return(MIX_FILE_NO_SP);
@@ -181,7 +181,7 @@ void drag_and_drop_mix_at_x_y(int data, const char *filename, int x, int y)
       if (sample < 0) sample = 0;
       fullname = mus_expand_filename(filename);
       mix_complete_file(sp, sample, fullname, with_mix_tags(ss), DONT_DELETE_ME, MIX_FOLLOWS_SYNC);
-      if (fullname) FREE(fullname);
+      if (fullname) free(fullname);
     }
 }
 
@@ -219,10 +219,10 @@ static void after_mix_file(void *context)
   else 
     {
       if (mx->cps) 
-	FREE(mx->cps);
+	free(mx->cps);
     }
   mx->sp->sync = mx->old_sync;
-  FREE(mx);
+  free(mx);
 }
 #endif
 
@@ -255,7 +255,7 @@ int mix_complete_file(snd_info *sp, off_t beg, const char *fullname, bool with_t
     }
   else
     {
-      cps = (chan_info **)CALLOC(1, sizeof(chan_info *));
+      cps = (chan_info **)calloc(1, sizeof(chan_info *));
       cps[0] = cp;
       chans = 1;
     }
@@ -264,7 +264,7 @@ int mix_complete_file(snd_info *sp, off_t beg, const char *fullname, bool with_t
   {
     mix_file_context *mx;
     XEN result;
-    mx = (mix_file_context *)CALLOC(1, sizeof(mix_file_context));
+    mx = (mix_file_context *)calloc(1, sizeof(mix_file_context));
     mx->beg = beg;
     mx->len = len;
     mx->chans = chans;
@@ -289,7 +289,7 @@ int mix_complete_file(snd_info *sp, off_t beg, const char *fullname, bool with_t
   else 
     {
       if (cps) 
-	FREE(cps);
+	free(cps);
     }
   sp->sync = old_sync;
 #endif
@@ -379,7 +379,7 @@ int mix_file(off_t beg, off_t num, int chans, chan_info **cps, const char *mixin
 
       if (new_origin) 
 	{
-	  FREE(new_origin); 
+	  free(new_origin); 
 	  new_origin = NULL;
 	}
     }
@@ -397,7 +397,7 @@ static mix_state *free_mix_state(mix_state *ms)
     {
       if (ms->amp_env) 
 	ms->amp_env = free_env(ms->amp_env);
-      FREE(ms);
+      free(ms);
     }
   return(NULL);
 }
@@ -406,7 +406,7 @@ static mix_state *free_mix_state(mix_state *ms)
 static mix_state *make_mix_state(int id, int index, off_t beg, off_t len)
 {
   mix_state *ms;
-  ms = (mix_state *)CALLOC(1, sizeof(mix_state));
+  ms = (mix_state *)calloc(1, sizeof(mix_state));
   ms->mix_id = id;
   ms->scaler = 1.0;
   ms->speed = 1.0;
@@ -421,7 +421,7 @@ static mix_state *make_mix_state(int id, int index, off_t beg, off_t len)
 mix_state *copy_mix_state(mix_state *old_ms)
 {
   mix_state *ms;
-  ms = (mix_state *)CALLOC(1, sizeof(mix_state));
+  ms = (mix_state *)calloc(1, sizeof(mix_state));
   ms->mix_id = old_ms->mix_id;
   ms->scaler = old_ms->scaler;
   ms->speed = old_ms->speed;
@@ -448,8 +448,8 @@ void free_ed_mixes(void *ptr)
       for (i = 0; i < mxl->size; i++)
 	if (mxl->list[i])
 	  mxl->list[i] = free_mix_state(mxl->list[i]);
-      FREE(mxl->list);
-      FREE(mxl);
+      free(mxl->list);
+      free(mxl);
     }
 }
 
@@ -460,10 +460,10 @@ void add_ed_mix(ed_list *ed, mix_state *ms)
   int loc = -1;
   if (!(ed->mixes))
     {
-      ed->mixes = (mix_list *)CALLOC(1, sizeof(mix_list));
+      ed->mixes = (mix_list *)calloc(1, sizeof(mix_list));
       mxl = (mix_list *)(ed->mixes);
       mxl->size = 2;
-      mxl->list = (mix_state **)CALLOC(mxl->size, sizeof(mix_state *));
+      mxl->list = (mix_state **)calloc(mxl->size, sizeof(mix_state *));
       loc = 0;
     }
   else
@@ -480,7 +480,7 @@ void add_ed_mix(ed_list *ed, mix_state *ms)
 	{
 	  loc = mxl->size;
 	  mxl->size *= 2;
-	  mxl->list = (mix_state **)REALLOC(mxl->list, mxl->size * sizeof(mix_state *));
+	  mxl->list = (mix_state **)realloc(mxl->list, mxl->size * sizeof(mix_state *));
 	  for (i = loc; i < mxl->size; i++) mxl->list[i] = NULL;
 	}
     }
@@ -661,14 +661,14 @@ static mix_info *free_mix_info(mix_info *md)
 {
   if (md)
     {
-      if (md->name) {FREE(md->name); md->name = NULL;}
+      if (md->name) {free(md->name); md->name = NULL;}
       mix_infos[md->id] = NULL;
       if (md->temporary == DELETE_ME)
 	{
 	  if (mus_file_probe(md->in_filename))
 	    snd_remove(md->in_filename, REMOVE_FROM_CACHE);
 	}
-      if (md->in_filename) {FREE(md->in_filename); md->in_filename = NULL;}
+      if (md->in_filename) {free(md->in_filename); md->in_filename = NULL;}
       if (md->properties_gc_loc != NOT_A_GC_LOC)
 	{
 	  snd_unprotect_at(md->properties_gc_loc);
@@ -677,7 +677,7 @@ static mix_info *free_mix_info(mix_info *md)
 	}
       if (md->peak_env)
 	md->peak_env = free_peak_env_info(md->peak_env);
-      FREE(md);
+      free(md);
     }
   return(NULL);
 }
@@ -736,7 +736,7 @@ static mix_info *make_mix_info(chan_info *cp)
   if (mix_infos == NULL)
     {
       mix_infos_size = MIX_INFO_INCREMENT;
-      mix_infos = (mix_info **)CALLOC(mix_infos_size, sizeof(mix_info *));
+      mix_infos = (mix_info **)calloc(mix_infos_size, sizeof(mix_info *));
     }
   else
     {
@@ -744,12 +744,12 @@ static mix_info *make_mix_info(chan_info *cp)
 	{
 	  int i;
 	  mix_infos_size += MIX_INFO_INCREMENT;
-	  mix_infos = (mix_info **)REALLOC(mix_infos, mix_infos_size * sizeof(mix_info *));
+	  mix_infos = (mix_info **)realloc(mix_infos, mix_infos_size * sizeof(mix_info *));
 	  for (i = mix_infos_size - MIX_INFO_INCREMENT; i < mix_infos_size; i++) 
 	    mix_infos[i] = NULL;
 	}
     }
-  md = (mix_info *)CALLOC(1, sizeof(mix_info));
+  md = (mix_info *)calloc(1, sizeof(mix_info));
 #if MUS_DEBUGGING
   if (mix_infos[mix_infos_ctr])
     fprintf(stderr, "mix[%d] still exists! %p\n", mix_infos_ctr, mix_infos[mix_infos_ctr]);
@@ -856,7 +856,7 @@ void goto_mix(chan_info *cp, int count)
 	{
 	  int j = 0;
 	  off_t *begs;
-	  begs = (off_t *)CALLOC(k, sizeof(off_t));
+	  begs = (off_t *)calloc(k, sizeof(off_t));
 	  for (i = 0; i < mxl->size; i++)
 	    if (mxl->list[i])
 	      begs[j++] = mxl->list[i]->beg;
@@ -897,7 +897,7 @@ void goto_mix(chan_info *cp, int count)
 		    cursor_moveto(cp, begs[0]);
 		}
 	    }
-	  FREE(begs);
+	  free(begs);
 	}
     }
 }
@@ -1023,7 +1023,7 @@ static char *mix_set_name_from_id(int id, const char *new_name)
   md = md_from_id(id);
   if (md)
     {
-      if (md->name) FREE(md->name);
+      if (md->name) free(md->name);
       md->name = mus_strdup(new_name);
     }
   return(0);
@@ -1095,7 +1095,7 @@ bool mix_set_amp_edit(int id, Float amp)
 	  origin = mus_format("set_mix_amp(_mix_%d, %.4f)", id, amp);
 #endif
 	  edited = begin_mix_op(md->cp, old_ms->beg, old_ms->len, old_ms->beg, old_ms->len, md->cp->edit_ctr, origin);
-	  FREE(origin);
+	  free(origin);
 	  if (edited)
 	    {
 	      ms = current_mix_state(md);         /* this is the new copy reflecting this edit */
@@ -1141,7 +1141,7 @@ static int remake_mix_data(mix_state *ms, mix_info *md)
     {
       int i;
       mus_sample_t *new_buffer;
-      new_buffer = (mus_sample_t *)MALLOC(len * sizeof(mus_sample_t));
+      new_buffer = (mus_sample_t *)malloc(len * sizeof(mus_sample_t));
       if (!src_gen)
 	{
 	  for (i = 0; i < len; i++)
@@ -1161,7 +1161,7 @@ static int remake_mix_data(mix_state *ms, mix_info *md)
 	    }
 	}
       cp->sounds[cp->sound_ctr] = make_snd_data_buffer(new_buffer, (int)len, cp->edit_ctr);
-      FREE(new_buffer);
+      free(new_buffer);
     }
   else
     {
@@ -1177,8 +1177,8 @@ static int remake_mix_data(mix_state *ms, mix_info *md)
       temp_file = snd_tempnam();
       hdr = make_temp_header(temp_file, SND_SRATE(cp->sound), 1, len, S_setB S_mix_amp_env);
       fd = open_temp_file(temp_file, 1, hdr, &io_err);
-      data = (mus_sample_t **)MALLOC(sizeof(mus_sample_t *));
-      new_buffer = (mus_sample_t *)MALLOC(MAX_BUFFER_SIZE * sizeof(mus_sample_t));
+      data = (mus_sample_t **)malloc(sizeof(mus_sample_t *));
+      new_buffer = (mus_sample_t *)malloc(MAX_BUFFER_SIZE * sizeof(mus_sample_t));
       data[0] = new_buffer;
 
       if (!src_gen)
@@ -1238,8 +1238,8 @@ static int remake_mix_data(mix_state *ms, mix_info *md)
       cp->sounds[cp->sound_ctr] = make_snd_data_file(temp_file, 
 						     make_file_state(fd, hdr, 0, 0, FILE_BUFFER_SIZE),
 						     hdr, DELETE_ME, cp->edit_ctr, 0);
-      FREE(new_buffer);
-      FREE(data);
+      free(new_buffer);
+      free(data);
     }
   
   free_snd_fd(mix_reader);
@@ -1276,11 +1276,11 @@ bool mix_set_amp_env_edit(int id, env *e)
 #if HAVE_RUBY
 	  origin = mus_format("set_mix_amp_env(_mix_%d, %s)", id, envstr);
 #endif
-	  FREE(envstr);
+	  free(envstr);
 
 	  cp = md->cp;
 	  edited = begin_mix_op(cp, old_ms->beg, old_ms->len, old_ms->beg, old_ms->len, cp->edit_ctr, origin); /* this does not change beg or len */
-	  FREE(origin);
+	  free(origin);
 	  if (edited)
 	    {
 	      ms = current_mix_state(md);         /* this is the new copy reflecting this edit */
@@ -1325,7 +1325,7 @@ bool mix_set_position_edit(int id, off_t pos)
 #endif
 	  edited = begin_mix_op(md->cp, old_ms->beg, old_ms->len, pos, old_ms->len, md->cp->edit_ctr, origin); /* this does not change beg or len */
 
-	  FREE(origin);
+	  free(origin);
 	  if (edited)
 	    {
 	      ms = current_mix_state(md);         /* this is the new copy reflecting this edit */
@@ -1368,7 +1368,7 @@ bool mix_set_speed_edit(int id, Float spd)
 	  len = snd_round_off_t((double)(md->in_samps) / (double)spd);
 	  edited = begin_mix_op(cp, old_ms->beg, old_ms->len, old_ms->beg, len, cp->edit_ctr, origin);
 	  
-	  FREE(origin);
+	  free(origin);
 	  if (edited)
 	    {
 	      ms = current_mix_state(md);         /* this is the new copy reflecting this edit */
@@ -1434,7 +1434,7 @@ char *edit_list_mix_init(chan_info *cp)
 				  (old_list) ? " " : "",   /* strcat of previous + possible space */
 				  id, id);                  
 #endif
-	    if (old_list) FREE(old_list);
+	    if (old_list) free(old_list);
 	  }
     }
   return(new_list);
@@ -1566,14 +1566,14 @@ static void draw_mix_tag(mix_info *md, int x, int y)
     lab = mus_strdup(md->name);
   else
     {
-      lab = (char *)CALLOC(16, sizeof(char));
+      lab = (char *)calloc(16, sizeof(char));
       mus_snprintf(lab, 16, "%d", md->id);
     }
   ax = copy_context(cp);
   draw_string(ax, x - width / 2, y + height / 2 + STRING_Y_OFFSET, lab, strlen(lab));
   if (cp->printing) ps_draw_string(cp->axis, x - width / 2, y + height / 2 + STRING_Y_OFFSET, lab);
 
-  if (lab) {FREE(lab); lab = NULL;}
+  if (lab) {free(lab); lab = NULL;}
 }
 
 
@@ -1598,13 +1598,13 @@ static peak_env_info *make_mix_input_peak_env(mix_info *md)
       int val, sb = 0;
       off_t n;
 
-      ep = (peak_env_info *)CALLOC(1, sizeof(peak_env_info));
+      ep = (peak_env_info *)calloc(1, sizeof(peak_env_info));
       val = (int)(log((double)(ms->len)));
       if (val > 20) val = 20;
       ep->peak_env_size = snd_int_pow2(val);
       ep->samps_per_bin = (int)(ceil((double)(ms->len) / (double)(ep->peak_env_size)));
-      ep->data_max = (Float *)CALLOC(ep->peak_env_size, sizeof(Float));
-      ep->data_min = (Float *)CALLOC(ep->peak_env_size, sizeof(Float));
+      ep->data_max = (Float *)calloc(ep->peak_env_size, sizeof(Float));
+      ep->data_min = (Float *)calloc(ep->peak_env_size, sizeof(Float));
       ep->fmin = MIN_INIT;
       ep->fmax = MAX_INIT;
 
@@ -2738,7 +2738,7 @@ mix data (a vct) into snd's channel chn starting at beg; return the new mix id, 
 #else
   {
     int i;
-    data = (mus_sample_t *)CALLOC(len, sizeof(mus_sample_t));
+    data = (mus_sample_t *)calloc(len, sizeof(mus_sample_t));
     for (i = 0; i < len; i++)
       data[i] = MUS_FLOAT_TO_SAMPLE(v->data[i]);
   }
@@ -2776,11 +2776,11 @@ mix data (a vct) into snd's channel chn starting at beg; return the new mix id, 
 #endif
 
     mix_id = mix_buffer_with_tag(cp, data, bg, len, new_origin); 
-    FREE(new_origin);
+    free(new_origin);
   }
 
 #if (!SNDLIB_USE_FLOATS)
-  FREE(data);
+  free(data);
 #endif
   update_graph(cp);
 
@@ -2808,7 +2808,7 @@ auto-delete is " PROC_TRUE ", the input file is deleted when it is no longer nee
   ASSERT_CHANNEL(S_mix, snd_n, chn_n, 4);
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(tag), tag, XEN_ARG_6, S_mix, "a boolean");
   XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(auto_delete), auto_delete, XEN_ARG_7, S_mix, "a boolean or an integer");
-  if (name) FREE(name);
+  if (name) free(name);
 
   name = mus_expand_filename(XEN_TO_C_STRING(file));
 
@@ -2897,7 +2897,7 @@ auto-delete is " PROC_TRUE ", the input file is deleted when it is no longer nee
 	char *origin;
 	origin = untagged_mix_to_string(name, beg, file_channel, delete_file == DELETE_ME);
 	mix_file_untagged(name, file_channel, cp, beg, len, delete_file, origin);
-	FREE(origin);
+	free(origin);
       }
     else 
       {
@@ -2907,10 +2907,10 @@ auto-delete is " PROC_TRUE ", the input file is deleted when it is no longer nee
 	if (len < FILE_BUFFER_SIZE)
 	  {
 	    mus_sample_t *data;
-	    data = (mus_sample_t *)MALLOC(len * sizeof(mus_sample_t));
+	    data = (mus_sample_t *)malloc(len * sizeof(mus_sample_t));
 	    len = mus_file_to_array(name, file_channel, 0, len, data); 
 	    id = mix_buffer_with_tag(cp, data, beg, len, origin);
-	    FREE(data);
+	    free(data);
 	    if (delete_file == DELETE_ME)
 	      snd_remove(name, REMOVE_FROM_CACHE);
 	    else
@@ -2930,7 +2930,7 @@ auto-delete is " PROC_TRUE ", the input file is deleted when it is no longer nee
 		  md->in_filename = mus_strdup(name);
 	      }
 	  }
-	FREE(origin);
+	free(origin);
       }
   }
   update_graph(cp);
@@ -2975,7 +2975,7 @@ static XEN g_mix_sample_reader_p(XEN obj)
 static char *mix_sample_reader_to_string(mix_fd *fd) 
 {
   char *desc;
-  desc = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
+  desc = (char *)calloc(PRINT_BUFFER_SIZE, sizeof(char));
   if ((fd == NULL) || (fd->sf == NULL))
     sprintf(desc, "#<mix-sample-reader: null>");
   else
@@ -3009,7 +3009,7 @@ static void mf_free(mix_fd *fd)
 	free_snd_fd(fd->sf);
       fd->sf = NULL;
       fd->md = NULL;
-      FREE(fd);
+      free(fd);
     }
 }
 
@@ -3039,7 +3039,7 @@ static XEN g_make_mix_sample_reader(XEN mix_id, XEN ubeg)
   if (ms)
     {
       mix_fd *mf = NULL;
-      mf = (mix_fd *)CALLOC(1, sizeof(mix_fd));
+      mf = (mix_fd *)calloc(1, sizeof(mix_fd));
       mf->md = md;
       mf->sf = make_virtual_mix_reader(md->cp, beg, ms->len, ms->index, ms->scaler, READ_FORWARD);
       if (mf->sf)
@@ -3154,7 +3154,7 @@ void *run_make_mix_sample_reader(int id, off_t beg)
       if (ms)
 	{
 	  mix_fd *mf;
-	  mf = (mix_fd *)CALLOC(1, sizeof(mix_fd));
+	  mf = (mix_fd *)calloc(1, sizeof(mix_fd));
 	  mf->md = md;
 	  mf->sf = make_virtual_mix_reader(md->cp, beg, ms->len, ms->index, ms->scaler, READ_FORWARD);
 	  return((void *)mf);

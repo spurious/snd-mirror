@@ -176,7 +176,7 @@ static void file_text_popup_callback(Widget w, XtPointer context, XtPointer info
 	{
 	  int n = 0;
 	  Arg args[12];
-	  fd->file_text_items = (Widget *)CALLOC(FILENAME_LIST_SIZE, sizeof(Widget));
+	  fd->file_text_items = (Widget *)calloc(FILENAME_LIST_SIZE, sizeof(Widget));
 	  XtSetArg(args[n], XmNbackground, ss->sgx->lighter_blue); n++;
 	  for (i = 0; i < FILENAME_LIST_SIZE; i++)
 	    {
@@ -259,7 +259,7 @@ static void file_filter_popup_callback(Widget w, XtPointer context, XtPointer in
 	{
 	  int n = 0;
 	  Arg args[12];
-	  fd->file_filter_items = (Widget *)CALLOC(FILENAME_LIST_SIZE, sizeof(Widget));
+	  fd->file_filter_items = (Widget *)calloc(FILENAME_LIST_SIZE, sizeof(Widget));
 	  XtSetArg(args[n], XmNbackground, ss->sgx->lighter_blue); n++;
 	  for (i = 0; i < FILENAME_LIST_SIZE; i++)
 	    {
@@ -313,7 +313,7 @@ static void file_dir_item_activate_callback(Widget w, XtPointer context, XtPoint
   filter = mus_format("%s/*", name);
   update_dir_list(fd->dialog, filter);
   if (name) XtFree(name);
-  FREE(filter);
+  free(filter);
 }
 
 
@@ -336,7 +336,7 @@ static void file_dir_popup_callback(Widget w, XtPointer context, XtPointer info)
 	{
 	  int n = 0;
 	  Arg args[12];
-	  fd->file_dir_items = (Widget *)CALLOC(FILENAME_LIST_SIZE, sizeof(Widget));
+	  fd->file_dir_items = (Widget *)calloc(FILENAME_LIST_SIZE, sizeof(Widget));
 	  XtSetArg(args[n], XmNbackground, ss->sgx->lighter_blue); n++;
 	  for (i = 0; i < FILENAME_LIST_SIZE; i++)
 	    {
@@ -373,7 +373,7 @@ static void file_dir_popup_callback(Widget w, XtPointer context, XtPointer info)
 	    {
 	      char **dirs;
 	      int j = 1;
-	      dirs = (char **)CALLOC(dirs_to_display, sizeof(char *));
+	      dirs = (char **)calloc(dirs_to_display, sizeof(char *));
 	      dirs[0] = mus_strdup("/");
 	      for (i = 1; i < len; i++)
 		if (current_filename[i] == '/')
@@ -389,7 +389,7 @@ static void file_dir_popup_callback(Widget w, XtPointer context, XtPointer info)
 		  XtManageChild(fd->file_dir_items[i]);
 		  free(dirs[i]);
 		}
-	      FREE(dirs);
+	      free(dirs);
 	    }
 	}
 
@@ -477,7 +477,7 @@ static void file_list_popup_callback(Widget w, XtPointer context, XtPointer info
 	{
 	  /* set up the default menu items */
 
-	  fd->file_list_items = (Widget *)CALLOC(SORT_XEN, sizeof(Widget));
+	  fd->file_list_items = (Widget *)calloc(SORT_XEN, sizeof(Widget));
 	  fd->file_list_items_size = SORT_XEN;
 
 	  for (i = 0; i < SORT_XEN; i++)
@@ -504,7 +504,7 @@ static void file_list_popup_callback(Widget w, XtPointer context, XtPointer info
 
 	if (items_len > fd->file_list_items_size)
 	  {
-	    fd->file_list_items = (Widget *)REALLOC(fd->file_list_items, items_len * sizeof(Widget));
+	    fd->file_list_items = (Widget *)realloc(fd->file_list_items, items_len * sizeof(Widget));
 	    for (i = fd->file_list_items_size; i < items_len; i++)
 	      fd->file_list_items[i] = make_file_list_item(fd, i);
 	    fd->file_list_items_size = items_len;
@@ -683,7 +683,7 @@ static void file_change_directory_callback(Widget w, XtPointer context, XtPointe
       pos = dirpos_list_top(fp->dir_list, leaving_dir);
       if (pos != POSITION_UNKNOWN)
 	XmListSetPos(w, pos);
-      FREE(leaving_dir);
+      free(leaving_dir);
     }
 }
 
@@ -753,7 +753,7 @@ static void sort_files_and_redisplay(file_pattern_info *fp)
        *   is done by hand.
        */
 
-      names = (XmString *)CALLOC(cur_dir->len, sizeof(XmString));
+      names = (XmString *)calloc(cur_dir->len, sizeof(XmString));
       for (i = 0; i < cur_dir->len; i++)
 	{
 	  names[i] = XmStringCreateLocalized(cur_dir->files[i]->full_filename);
@@ -774,7 +774,7 @@ static void sort_files_and_redisplay(file_pattern_info *fp)
       for (i = 0; i < cur_dir->len; i++) 
 	if (names[i]) 
 	  XmStringFree(names[i]);
-      FREE(names);
+      free(names);
     }
   else
     {
@@ -839,7 +839,7 @@ static void snd_directory_reader(Widget dialog, XmFileSelectionBoxCallbackStruct
 
       fp->directory_watcher = fam_monitor_directory(our_dir, (void *)fp, watch_current_directory_contents);
 
-      if (fp->last_dir) FREE(fp->last_dir);
+      if (fp->last_dir) free(fp->last_dir);
       fp->last_dir = mus_strdup(our_dir);
       fp->reread_directory = false;
     }
@@ -984,7 +984,7 @@ static void post_sound_info(Widget info1, Widget info2, const char *filename, bo
   /* filename is known[strongly believed] to be a sound file, etc */
   XmString label;
   char *buf;
-  buf = (char *)CALLOC(LABEL_BUFFER_SIZE, sizeof(char));
+  buf = (char *)calloc(LABEL_BUFFER_SIZE, sizeof(char));
   mus_snprintf(buf, LABEL_BUFFER_SIZE, "%s%s%d chan%s, %d Hz, %.3f secs",
 	       (with_filename) ? filename_without_directory(filename) : "",
 	       (with_filename) ? ": " : "",
@@ -1004,7 +1004,7 @@ static void post_sound_info(Widget info1, Widget info2, const char *filename, bo
   label = XmStringCreateLocalized(buf);
   XtVaSetValues(info2, XmNlabelString, label, NULL);
   XmStringFree(label);
-  FREE(buf);
+  free(buf);
 }
 
 
@@ -1052,7 +1052,7 @@ static void post_file_info(file_dialog_info *fd, const char *filename)
   if (fd->info_filename_watcher)
     {
       fd->info_filename_watcher = fam_unmonitor_file(fd->info_filename, fd->info_filename_watcher);
-      if (fd->info_filename) {FREE(fd->info_filename); fd->info_filename = NULL;}
+      if (fd->info_filename) {free(fd->info_filename); fd->info_filename = NULL;}
     }
   fd->info_filename = mus_strdup(filename);
   fd->info_filename_watcher = fam_monitor_file(fd->info_filename, (void *)fd, watch_info_file);
@@ -1070,7 +1070,7 @@ static void unpost_file_info(file_dialog_info *fd)
   if (fd->info_filename_watcher)
     {
       fd->info_filename_watcher = fam_unmonitor_file(fd->info_filename, fd->info_filename_watcher);
-      if (fd->info_filename) {FREE(fd->info_filename); fd->info_filename = NULL;}
+      if (fd->info_filename) {free(fd->info_filename); fd->info_filename = NULL;}
     }
 #endif
 }
@@ -1244,16 +1244,16 @@ static file_dialog_info *make_file_dialog(read_only_t read_only, char *title, ch
   XmString s1, s2, ok_label, filter_list_label, cancel_label;
   Widget wtmp = NULL, rc1, rc2;
 
-  fd = (file_dialog_info *)CALLOC(1, sizeof(file_dialog_info));
-  fd->fp = (file_pattern_info *)CALLOC(1, sizeof(file_pattern_info));
+  fd = (file_dialog_info *)calloc(1, sizeof(file_dialog_info));
+  fd->fp = (file_pattern_info *)calloc(1, sizeof(file_pattern_info));
   fd->fp->in_just_sounds_update = false;
   if (just_sounds(ss))
     fd->fp->filter_choice = JUST_SOUNDS_FILTER;
   else fd->fp->filter_choice = NO_FILE_FILTER;
 
-  fd->dp = (dialog_play_info *)CALLOC(1, sizeof(dialog_play_info));
+  fd->dp = (dialog_play_info *)calloc(1, sizeof(dialog_play_info));
   fd->file_dialog_read_only = read_only;
-  fd->fpop = (file_popup_info *)CALLOC(1, sizeof(file_popup_info));
+  fd->fpop = (file_popup_info *)calloc(1, sizeof(file_popup_info));
   fd->fpop->fp = fd->fp;
 
   fd->fp->dir_list = make_dirpos_list();
@@ -1413,8 +1413,8 @@ static void unpost_open_modify_error(file_dialog_info *fd)
   if (fd->unsound_directory_watcher)
     {
       fd->unsound_directory_watcher = fam_unmonitor_file(fd->unsound_dirname, fd->unsound_directory_watcher);
-      if (fd->unsound_dirname) {FREE(fd->unsound_dirname); fd->unsound_dirname = NULL;}
-      if (fd->unsound_filename) {FREE(fd->unsound_filename); fd->unsound_filename = NULL;}
+      if (fd->unsound_dirname) {free(fd->unsound_dirname); fd->unsound_dirname = NULL;}
+      if (fd->unsound_filename) {free(fd->unsound_filename); fd->unsound_filename = NULL;}
     }
 #endif
 }
@@ -1465,8 +1465,8 @@ static void start_unsound_watcher(file_dialog_info *fd, const char *filename)
   if (fd->unsound_directory_watcher)
     {
       fd->unsound_directory_watcher = fam_unmonitor_file(fd->unsound_dirname, fd->unsound_directory_watcher);
-      if (fd->unsound_dirname) FREE(fd->unsound_dirname);
-      if (fd->unsound_filename) FREE(fd->unsound_filename);
+      if (fd->unsound_dirname) free(fd->unsound_dirname);
+      if (fd->unsound_filename) free(fd->unsound_filename);
     }
   fd->unsound_filename = mus_expand_filename(filename);
   fd->unsound_dirname = just_directory(fd->unsound_filename);
@@ -1528,7 +1528,7 @@ static void file_open_ok_callback(Widget w, XtPointer context, XtPointer info)
 	  str = mus_format(_("%s is a directory"), filename);
 	  file_open_error(str, fd);
 	  clear_error_if_open_changes(fd->dialog, fd);
-	  FREE(str);
+	  free(str);
 	}
     }
 }
@@ -1546,7 +1546,7 @@ static void file_mkdir_callback(Widget w, XtPointer context, XtPointer info)
       str = mus_format(_("can't make %s: %s"), filename, strerror(errno));
       file_open_error(str, fd);
       clear_error_if_open_changes(fd->dialog, fd);
-      FREE(str);
+      free(str);
     }
   else
     {
@@ -1554,7 +1554,7 @@ static void file_mkdir_callback(Widget w, XtPointer context, XtPointer info)
       char *filter;
       filter = mus_format("%s*", filename); /* already has the "/" at the end */
       update_dir_list(fd->dialog, filter);
-      FREE(filter);
+      free(filter);
       XtSetSensitive(w, false);
     }
   XtFree(filename);
@@ -1683,7 +1683,7 @@ static void file_mix_ok_callback(Widget w, XtPointer context, XtPointer info)
 	  str = mus_format(_("%s is a directory"), filename);
 	  file_open_error(str, fd);
 	  clear_error_if_open_changes(fd->dialog, fd);
-	  FREE(str);
+	  free(str);
 	}
     }
 }
@@ -1768,7 +1768,7 @@ static void file_insert_ok_callback(Widget w, XtPointer context, XtPointer info)
 		  fullname = mus_expand_filename(filename);
 		  if (!(mus_file_probe(fullname)))
 		    start_unsound_watcher(fd, filename);
-		  FREE(fullname);
+		  free(fullname);
 		}
 	    }
 	  else 
@@ -1784,7 +1784,7 @@ static void file_insert_ok_callback(Widget w, XtPointer context, XtPointer info)
 	  str = mus_format(_("%s is a directory"), filename);
 	  file_open_error(str, fd);
 	  clear_error_if_open_changes(fd->dialog, fd);
-	  FREE(str);
+	  free(str);
 	}
     }
 }
@@ -2014,7 +2014,7 @@ static void set_file_dialog_sound_attributes(file_data *fdat,
       ensure_list_row_visible(fdat->header_list, fdat->header_pos + 1);
     }
 
-  strs = (XmString *)MALLOC(fdat->formats * sizeof(XmString)); 
+  strs = (XmString *)malloc(fdat->formats * sizeof(XmString)); 
   for (i = 0; i < fdat->formats; i++) 
     strs[i] = XmStringCreateLocalized((char *)fl[i]);
   XtVaSetValues(fdat->format_list, 
@@ -2023,7 +2023,7 @@ static void set_file_dialog_sound_attributes(file_data *fdat,
 		NULL);
   for (i = 0; i < fdat->formats; i++)
     XmStringFree(strs[i]);
-  FREE(strs); 
+  free(strs); 
   XmListSelectPos(fdat->format_list, fdat->format_pos + 1, false);
   ensure_list_row_visible(fdat->format_list, fdat->format_pos + 1);
 
@@ -2223,14 +2223,14 @@ static void add_srate_menu(file_data *fd, const char *srate_name)
   if (fd->srates_size == 0)
     {
       fd->srates_size = 8;
-      fd->srates = (Widget *)CALLOC(fd->srates_size, sizeof(Widget));
+      fd->srates = (Widget *)calloc(fd->srates_size, sizeof(Widget));
     }
   else
     {
       if (fd->srates_size == fd->num_srates)
 	{
 	  fd->srates_size += 8;
-	  fd->srates = (Widget *)REALLOC(fd->srates, fd->srates_size * sizeof(Widget));
+	  fd->srates = (Widget *)realloc(fd->srates, fd->srates_size * sizeof(Widget));
 	}
     }
   n = 0;
@@ -2291,7 +2291,7 @@ static file_data *make_file_data_panel(Widget parent, const char *name, Arg *in_
     case WITH_BUILTIN_HEADERS:  headers = short_builtin_headers(&nheaders);  break;
     }
 
-  fdat = (file_data *)CALLOC(1, sizeof(file_data));
+  fdat = (file_data *)calloc(1, sizeof(file_data));
   fdat->current_type = header_type;
   fdat->current_format = data_format;
   formats = type_and_format_to_position(fdat, header_type, data_format);
@@ -2322,7 +2322,7 @@ static file_data *make_file_data_panel(Widget parent, const char *name, Arg *in_
       header_label = XtCreateManagedWidget(_("header"), xmLabelWidgetClass, form, args, n);
       
       /* what is selected depends on current type */
-      strs = (XmString *)CALLOC(nheaders, sizeof(XmString)); 
+      strs = (XmString *)calloc(nheaders, sizeof(XmString)); 
       for (i = 0; i < nheaders; i++) 
 	strs[i] = XmStringCreateLocalized((char *)headers[i]);
 
@@ -2343,7 +2343,7 @@ static file_data *make_file_data_panel(Widget parent, const char *name, Arg *in_
 
       for (i = 0; i < nheaders; i++) 
 	XmStringFree(strs[i]);
-      FREE(strs);
+      free(strs);
       XmListSelectPos(fdat->header_list, fdat->header_pos + 1, false);
       XtAddCallback(fdat->header_list, XmNbrowseSelectionCallback, file_data_type_callback, NULL);
       
@@ -2392,7 +2392,7 @@ static file_data *make_file_data_panel(Widget parent, const char *name, Arg *in_
   XtSetArg(args[n], XmNuserData, (XtPointer)fdat); n++;
   fdat->format_list = XmCreateScrolledList(form, (char *)"data-format", args, n);
 
-  strs = (XmString *)CALLOC(nformats, sizeof(XmString)); 
+  strs = (XmString *)calloc(nformats, sizeof(XmString)); 
   for (i = 0; i < nformats; i++) 
     strs[i] = XmStringCreateLocalized((char *)formats[i]);
   XtVaSetValues(fdat->format_list, 
@@ -2401,7 +2401,7 @@ static file_data *make_file_data_panel(Widget parent, const char *name, Arg *in_
 		NULL);
   for (i = 0; i < nformats; i++) 
     XmStringFree(strs[i]);
-  FREE(strs);
+  free(strs);
 
   XmListSelectPos(fdat->format_list, fdat->format_pos + 1, false);
   XtManageChild(fdat->format_list);
@@ -2691,7 +2691,7 @@ static save_as_dialog_info *save_sound_as = NULL, *save_selection_as = NULL, *sa
 static save_as_dialog_info *new_save_as_dialog_info(save_dialog_t type)
 {
   save_as_dialog_info *sd;
-  sd = (save_as_dialog_info *)CALLOC(1, sizeof(save_as_dialog_info));
+  sd = (save_as_dialog_info *)calloc(1, sizeof(save_as_dialog_info));
   sd->type = type;
   sd->selection_watcher_loc = -1;
   return(sd);
@@ -2848,7 +2848,7 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
   if (sd->panel_data->error_widget != NOT_A_SCANF_WIDGET)
     {
       clear_error_if_panel_changes(sd->dialog, sd->panel_data);
-      if (comment) FREE(comment);
+      if (comment) free(comment);
       XtFree(str);
       return;
     }
@@ -2883,8 +2883,8 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
 	  else msg = mus_format("can't extract chan %d (first chan is numbered 0)", chan);
 	  post_file_dialog_error((const char *)msg, sd->panel_data);
 	  clear_error_if_chans_changes(sd->dialog, sd->panel_data);
-	  FREE(msg);
-	  if (comment) FREE(comment);
+	  free(msg);
+	  if (comment) free(comment);
 	  XtFree(str);
 	  return;
 	}
@@ -2896,9 +2896,9 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
       msg = mus_format(_("%s cancelled by %s"), (saving) ? "save" : "extract", S_before_save_as_hook);
       post_file_dialog_error((const char *)msg, sd->panel_data);
       clear_error_if_filename_changes(sd->dialog, sd->panel_data);      
-      FREE(msg);
-      FREE(fullname);
-      if (comment) FREE(comment);
+      free(msg);
+      free(fullname);
+      if (comment) free(comment);
       XtFree(str);
       return;
     }
@@ -2916,9 +2916,9 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
 	  clear_error_if_filename_changes(sd->dialog, sd->panel_data); 
 	  if (sp->user_read_only == FILE_READ_ONLY)
 	    add_sp_watcher(sp, SP_READ_ONLY_WATCHER, save_as_watch_user_read_only, (void *)(sd->panel_data));
-	  FREE(msg);
-	  FREE(fullname);
-	  if (comment) FREE(comment);
+	  free(msg);
+	  free(fullname);
+	  if (comment) free(comment);
 	  XtFree(str);
 	  return;
 	}
@@ -2947,9 +2947,9 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
 			    NULL);
 	      XmUpdateDisplay(FSB_BOX(sd->dialog, XmDIALOG_OK_BUTTON));
 	      XmStringFree(ok_label);
-	      FREE(msg);
-	      FREE(fullname);
-	      if (comment) FREE(comment);
+	      free(msg);
+	      free(fullname);
+	      if (comment) free(comment);
 	      XtFree(str);
 	      return;
 	    }
@@ -2990,7 +2990,7 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
 	io_err = save_selection(ofile, type, format, srate, comment, (saving) ? SAVE_ALL_CHANS : chan);
 	if (io_err == IO_NO_ERROR)
 	  io_err = move_file(ofile, fullname);
-	FREE(ofile);
+	free(ofile);
 	break;
       }
     case REGION_SAVE_AS:
@@ -3004,7 +3004,7 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
 	    io_err = save_region(region_dialog_region(), ofile, type, format, comment);
 	    if (io_err == IO_NO_ERROR)
 	      io_err = move_file(ofile, fullname);
-	    FREE(ofile);
+	    free(ofile);
 	  }
 	break;
       default:
@@ -3020,7 +3020,7 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
 	{
 	  snd_encode(output_type, tmpfile, fullname);
 	  snd_remove(tmpfile, REMOVE_FROM_CACHE);
-	  FREE(tmpfile);
+	  free(tmpfile);
 	}
       remember_filename(fullname, sd->fpop->file_text_names);
 
@@ -3046,12 +3046,12 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
       msg = mus_format("%s as %s: %s (%s)", (saving) ? "save" : "extract chan", str, io_error_name(io_err), snd_io_strerror());
       post_file_dialog_error((const char *)msg, sd->panel_data);
       clear_error_if_filename_changes(sd->dialog, sd->panel_data);
-      FREE(msg);
+      free(msg);
     }
 
-  FREE(fullname);
+  free(fullname);
   XtFree(str);
-  if (comment) FREE(comment);
+  if (comment) free(comment);
 }
 
 
@@ -3144,7 +3144,7 @@ static void save_as_mkdir_callback(Widget w, XtPointer context, XtPointer info)
       str = mus_format(_("can't make %s: %s"), filename, strerror(errno));
       post_file_dialog_error((const char *)str, sd->panel_data);
       clear_error_if_filename_changes(sd->dialog, sd->panel_data); 
-      FREE(str);
+      free(str);
     }
   else
     {
@@ -3152,7 +3152,7 @@ static void save_as_mkdir_callback(Widget w, XtPointer context, XtPointer info)
       char *filter;
       filter = mus_format("%s*", filename); /* already has the "/" at the end */
       update_dir_list(sd->dialog, filter);
-      FREE(filter);
+      free(filter);
       XtSetSensitive(w, false);
     }
   XtFree(filename);
@@ -3203,7 +3203,7 @@ static void make_save_as_dialog(save_as_dialog_info *sd, char *sound_name, int h
       xmstr1 = XmStringCreateLocalized(_("Save"));
       XtSetArg(args[n], XmNokLabelString, xmstr1); n++;
 
-      file_string = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
+      file_string = (char *)calloc(PRINT_BUFFER_SIZE, sizeof(char));
       mus_snprintf(file_string, PRINT_BUFFER_SIZE, _("save %s"), sound_name);
 
       xmstr2 = XmStringCreateLocalized(file_string);
@@ -3215,14 +3215,14 @@ static void make_save_as_dialog(save_as_dialog_info *sd, char *sound_name, int h
       cancel_label = XmStringCreateLocalized(_("Go Away"));
       XtSetArg(args[n], XmNcancelLabelString, cancel_label); n++;
 
-      sd->fp = (file_pattern_info *)CALLOC(1, sizeof(file_pattern_info));
+      sd->fp = (file_pattern_info *)calloc(1, sizeof(file_pattern_info));
       sd->fp->in_just_sounds_update = false;
       if (just_sounds(ss))
 	sd->fp->filter_choice = JUST_SOUNDS_FILTER;
       else sd->fp->filter_choice = NO_FILE_FILTER;
 
-      sd->dp = (dialog_play_info *)CALLOC(1, sizeof(dialog_play_info));
-      sd->fpop = (file_popup_info *)CALLOC(1, sizeof(file_popup_info));
+      sd->dp = (dialog_play_info *)calloc(1, sizeof(dialog_play_info));
+      sd->fpop = (file_popup_info *)calloc(1, sizeof(file_popup_info));
       sd->fpop->fp = sd->fp;
 
       XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
@@ -3240,7 +3240,7 @@ static void make_save_as_dialog(save_as_dialog_info *sd, char *sound_name, int h
       sd->dp->dialog = sd->dialog;
       sd->fpop->dialog = sd->dialog;
 
-      FREE(file_string);
+      free(file_string);
 
       XtUnmanageChild(FSB_BOX(sd->dialog, XmDIALOG_DIR_LIST_LABEL));
       XtUnmanageChild(FSB_BOX(sd->dialog, XmDIALOG_LIST_LABEL));
@@ -3354,14 +3354,14 @@ static void make_save_as_dialog(save_as_dialog_info *sd, char *sound_name, int h
   else
     {
       XmString xmstr2;
-      file_string = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
+      file_string = (char *)calloc(PRINT_BUFFER_SIZE, sizeof(char));
       mus_snprintf(file_string, PRINT_BUFFER_SIZE, _("save %s"), sound_name);
       xmstr2 = XmStringCreateLocalized(file_string);
       XtVaSetValues(sd->dialog, 
 		    XmNdialogTitle, xmstr2, 
 		    NULL);
       XmStringFree(xmstr2);
-      FREE(file_string);
+      free(file_string);
     }
 }
 
@@ -3395,7 +3395,7 @@ widget_t make_sound_save_as_dialog(bool managed)
 				   (hdr) ? hdr->srate : selection_srate(), 
 				   IGNORE_CHANS, IGNORE_DATA_LOCATION, IGNORE_SAMPLES,
 				   com = output_comment(hdr));
-  if (com) FREE(com);
+  if (com) free(com);
   if (sd->fp->reread_directory) 
     {
       force_directory_reread(sd->dialog);
@@ -3465,7 +3465,7 @@ widget_t make_region_save_as_dialog(bool managed)
     }
   if ((managed) && (!XtIsManaged(sd->dialog))) 
     XtManageChild(sd->dialog);
-  if (comment) FREE(comment);
+  if (comment) free(comment);
   return(sd->dialog);
 }
 
@@ -3645,7 +3645,7 @@ static void new_file_ok_callback(Widget w, XtPointer context, XtPointer info)
 	{
 	  snd_info *sp;
 	  /* handle the overwrite hook directly */
-	  if (new_file_filename) FREE(new_file_filename);
+	  if (new_file_filename) free(new_file_filename);
 	  new_file_filename = mus_expand_filename(newer_name); /* need full filename for fam */
 	  if ((!new_file_watcher) &&
 	      (ask_before_overwrite(ss)) && 
@@ -3662,7 +3662,7 @@ static void new_file_ok_callback(Widget w, XtPointer context, XtPointer info)
 			    NULL);
 	      XmUpdateDisplay(MSG_BOX(new_file_dialog, XmDIALOG_OK_BUTTON));
 	      XmStringFree(ok_label);
-	      FREE(msg);
+	      free(msg);
 	    }
 	  else
 	    {
@@ -3695,7 +3695,7 @@ static void new_file_ok_callback(Widget w, XtPointer context, XtPointer info)
 	    }
 	}
       XtFree(newer_name);
-      if (comment) FREE(comment);
+      if (comment) free(comment);
     }
 }
 
@@ -3705,7 +3705,7 @@ static char *new_file_dialog_filename(int header_type)
   static int new_file_dialog_file_ctr = 1;
   char *filename = NULL;
   const char *extension = NULL;
-  filename = (char *)CALLOC(64, sizeof(char));
+  filename = (char *)calloc(64, sizeof(char));
   switch (header_type)
     {
     case MUS_AIFC: extension = "aiff"; break;
@@ -3740,8 +3740,8 @@ static void load_new_file_defaults(char *newname)
 
   set_file_dialog_sound_attributes(ndat, header_type, data_format, srate, chans, IGNORE_DATA_LOCATION, initial_samples, new_comment);
 
-  if (new_comment) FREE(new_comment);
-  if (filename) FREE(filename);
+  if (new_comment) free(new_comment);
+  if (filename) free(filename);
 }
 
 
@@ -3900,7 +3900,7 @@ widget_t make_new_file_dialog(bool managed)
 	      filename = new_file_dialog_filename(default_output_header_type(ss));
 	      XmTextSetString(new_file_text, filename);  
 	      mus_sound_forget(filename);
-	      FREE(filename);
+	      free(filename);
 	    }
 	}
       if (new_name) XtFree(new_name);
@@ -3935,7 +3935,7 @@ static edhead_info *new_edhead_dialog(void)
     {
       loc = 0;
       edhead_info_size = 4;
-      edhead_infos = (edhead_info **)CALLOC(edhead_info_size, sizeof(edhead_info *));
+      edhead_infos = (edhead_info **)calloc(edhead_info_size, sizeof(edhead_info *));
     }
   else
     {
@@ -3951,13 +3951,13 @@ static edhead_info *new_edhead_dialog(void)
 	{
 	  loc = edhead_info_size;
 	  edhead_info_size += 4;
-	  edhead_infos = (edhead_info **)REALLOC(edhead_infos, edhead_info_size * sizeof(edhead_info *));
+	  edhead_infos = (edhead_info **)realloc(edhead_infos, edhead_info_size * sizeof(edhead_info *));
 	  for (i = loc; i < edhead_info_size; i++) edhead_infos[i] = NULL;
 	}
     }
   if (!edhead_infos[loc])
     {
-      edhead_infos[loc] = (edhead_info *)CALLOC(1, sizeof(edhead_info));
+      edhead_infos[loc] = (edhead_info *)calloc(1, sizeof(edhead_info));
       edhead_infos[loc]->dialog = NULL;
       edhead_infos[loc]->panel_changed = false;
     }
@@ -3986,7 +3986,7 @@ static XmString make_header_dialog_title(edhead_info *ep, snd_info *sp)
   /* dialog may not yet exist */
   char *str;
   XmString xstr;
-  str = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
+  str = (char *)calloc(PRINT_BUFFER_SIZE, sizeof(char));
   if ((sp->user_read_only == FILE_READ_ONLY) || 
       (sp->file_read_only == FILE_READ_ONLY))
     {
@@ -4005,7 +4005,7 @@ static XmString make_header_dialog_title(edhead_info *ep, snd_info *sp)
 	set_sensitive(MSG_BOX(ep->dialog, XmDIALOG_OK_BUTTON), ep->panel_changed);
     }
   xstr = XmStringCreateLocalized(str);
-  FREE(str);
+  free(str);
   return(xstr);
 }
 
@@ -4376,7 +4376,7 @@ static raw_info *new_raw_dialog(void)
     {
       loc = 0;
       raw_info_size = 4;
-      raw_infos = (raw_info **)CALLOC(raw_info_size, sizeof(raw_info *));
+      raw_infos = (raw_info **)calloc(raw_info_size, sizeof(raw_info *));
     }
   else
     {
@@ -4392,13 +4392,13 @@ static raw_info *new_raw_dialog(void)
 	{
 	  loc = raw_info_size;
 	  raw_info_size += 4;
-	  raw_infos = (raw_info **)REALLOC(raw_infos, raw_info_size * sizeof(raw_info *));
+	  raw_infos = (raw_info **)realloc(raw_infos, raw_info_size * sizeof(raw_info *));
 	  for (i = loc; i < raw_info_size; i++) raw_infos[i] = NULL;
 	}
     }
   if (!raw_infos[loc])
     {
-      raw_infos[loc] = (raw_info *)CALLOC(1, sizeof(raw_info));
+      raw_infos[loc] = (raw_info *)calloc(1, sizeof(raw_info));
       raw_infos[loc]->dialog = NULL;
       raw_infos[loc]->filename = NULL;
       raw_infos[loc]->help = NULL;
@@ -4479,7 +4479,7 @@ static void raw_data_ok_callback(Widget w, XtPointer context, XtPointer info)
 	   * FROM_VIEW_FILES_MIX_DIALOG or INSERT -- requestor_data contains needed info to complete the action
 	   */
 	  file_info *hdr;
-	  hdr = (file_info *)CALLOC(1, sizeof(file_info));
+	  hdr = (file_info *)calloc(1, sizeof(file_info));
 	  hdr->name = mus_strdup(rp->filename);
 	  hdr->type = MUS_RAW;
 	  hdr->srate = raw_srate;
@@ -4631,7 +4631,7 @@ void raw_data_dialog_to_file_info(const char *filename, char *title, char *info,
   rp = new_raw_dialog();
   rp->read_only = read_only;
   rp->selected = selected;
-  if (rp->filename) FREE(rp->filename);
+  if (rp->filename) free(rp->filename);
   rp->filename = mus_strdup(filename);
   rp->requestor = ss->open_requestor;
   rp->requestor_data = ss->open_requestor_data;
@@ -4656,15 +4656,15 @@ void raw_data_dialog_to_file_info(const char *filename, char *title, char *info,
 		    NULL);
       XmStringFree(xstr4);
     }
-  FREE(title);
-  if (rp->help) FREE(rp->help);
+  free(title);
+  if (rp->help) free(rp->help);
   if (info)
     {
       XtVaSetValues(MSG_BOX(rp->dialog, XmDIALOG_HELP_BUTTON), 
 		    XmNbackground, ss->sgx->green, 
 		    NULL);
       rp->help = mus_strdup(info);
-      FREE(info);
+      free(info);
     }
   else
     {
@@ -4767,7 +4767,7 @@ void save_post_it_dialog_state(FILE *fd)
 #if HAVE_FORTH
       fprintf(fd, "\"%s\" \"%s\" %s drop\n", subject, text, S_info_dialog);
 #endif
-      if (subject) FREE(subject);
+      if (subject) free(subject);
       if (text) XtFree(text);
     }
 }
@@ -4853,7 +4853,7 @@ static vf_row *make_vf_row(view_files_info *vdat,
   XtCallbackList n1, n3;
 
   s1 = XmStringCreateLocalized((char *)"");
-  r = (vf_row *)CALLOC(1, sizeof(vf_row));
+  r = (vf_row *)calloc(1, sizeof(vf_row));
   r->vdat = (void *)vdat;
 
   n = 0;
@@ -4899,8 +4899,8 @@ static vf_row *make_vf_row(view_files_info *vdat,
   XtAddEventHandler(r->nm, EnterWindowMask, false, vf_mouse_enter_label, (XtPointer)r);
   XtAddEventHandler(r->nm, LeaveWindowMask, false, vf_mouse_leave_label, (XtPointer)r);
 
-  FREE(n1);
-  FREE(n3);
+  free(n1);
+  free(n3);
   return(r);
 }
 
@@ -4930,14 +4930,14 @@ static void vf_unflash_row(XtPointer data, XtIntervalId *id)
   vf_flash_data *v = (vf_flash_data *)data;
   XtVaSetValues(v->r->rw, XmNbackground, v->old_color, NULL);
   XtVaSetValues(v->r->nm, XmNbackground, v->old_color, NULL);
-  FREE(v);
+  free(v);
 }
 
 
 void vf_flash_row(vf_row *r)
 {
   vf_flash_data *v;
-  v = (vf_flash_data *)CALLOC(1, sizeof(vf_flash_data));
+  v = (vf_flash_data *)calloc(1, sizeof(vf_flash_data));
   v->r = r;
   XtVaGetValues(r->rw, XmNbackground, &(v->old_color), NULL);
   XtVaSetValues(r->rw, XmNbackground, ss->sgx->light_blue, NULL);
@@ -4959,7 +4959,7 @@ void vf_post_info(view_files_info *vdat, int pos)
 		XmNlabelString, s3,
 		NULL);
   XmStringFree(s3);
-  FREE(title);
+  free(title);
   post_sound_info(vdat->info1, vdat->info2, vdat->full_names[pos], false);
 }
 
@@ -4977,7 +4977,7 @@ void vf_post_selected_files_list(view_files_info *vdat)
 		XmNlabelString, s3,
 		NULL);
   XmStringFree(s3);
-  FREE(title);
+  free(title);
 
   if (len == 2)
     {
@@ -5005,8 +5005,8 @@ void vf_post_selected_files_list(view_files_info *vdat)
   XtVaSetValues(vdat->info2, XmNlabelString, s2, NULL);
   XmStringFree(s1);
   XmStringFree(s2);
-  FREE(msg1);
-  FREE(msg2);
+  free(msg1);
+  free(msg2);
 }
 
 
@@ -5021,7 +5021,7 @@ void vf_unpost_info(view_files_info *vdat)
 		XmNlabelString, s3,
 		NULL);
   XmStringFree(s3);
-  FREE(title);
+  free(title);
 
   s1 = XmStringCreateLocalized((char *)"|");
   s2 = XmStringCreateLocalized((char *)"|");
@@ -5191,7 +5191,7 @@ void view_files_add_file_or_directory(view_files_info *vdat, const char *file_or
   if (directory_p(filename))
     add_directory_to_view_files_list(vdat, (const char *)filename);
   else add_file_to_view_files_list(vdat, file_or_dir, filename);
-  FREE(filename);
+  free(filename);
 }
 
 
@@ -5662,7 +5662,7 @@ static void vf_amp_env_resize(Widget w, XtPointer context, XtPointer info)
       gv.function = GXcopy;
       XtVaGetValues(vdat->env_drawer, XmNbackground, &gv.background, XmNforeground, &gv.foreground, NULL);
       vdat->env_gc = XtGetGC(vdat->env_drawer, GCForeground | GCFunction, &gv);
-      vdat->env_ax = (axis_context *)CALLOC(1, sizeof(axis_context));
+      vdat->env_ax = (axis_context *)calloc(1, sizeof(axis_context));
       vdat->env_ax->wn = XtWindow(vdat->env_drawer);
       vdat->env_ax->dp = XtDisplay(vdat->env_drawer);
       vdat->env_ax->gc = vdat->env_gc;
@@ -5816,7 +5816,7 @@ widget_t start_view_files_dialog_1(view_files_info *vdat, bool managed)
 	char *filestr = NULL;
 	filestr = mus_format("%s %d", _("Files"), vdat->index + 1);
 	titlestr = XmStringCreateLocalized(filestr);
-	FREE(filestr);
+	free(filestr);
       }
 
       n = 0;
@@ -6455,7 +6455,7 @@ widget_t start_view_files_dialog_1(view_files_info *vdat, bool managed)
       vdat->big_to_small =  XtCreateManagedWidget(_("big..small"), xmPushButtonWidgetClass, vdat->smenu, args, n);
 
       vdat->sort_items_size = 4;
-      vdat->sort_items = (Widget *)CALLOC(vdat->sort_items_size, sizeof(Widget));
+      vdat->sort_items = (Widget *)calloc(vdat->sort_items_size, sizeof(Widget));
       for (i = 0; i < vdat->sort_items_size; i++)
 	vdat->sort_items[i] = XtCreateWidget("unused", xmPushButtonWidgetClass, vdat->smenu, args, n);
 
@@ -6513,10 +6513,10 @@ widget_t start_view_files_dialog_1(view_files_info *vdat, bool managed)
       XtAddEventHandler(vdat->env_drawer, ButtonMotionMask, false, vf_drawer_button_motion, (XtPointer)vdat);
       XtAddEventHandler(vdat->env_drawer, ButtonReleaseMask, false, vf_drawer_button_release, (XtPointer)vdat);
 
-      FREE(n1);
-      FREE(n2);
-      FREE(n3);
-      FREE(n4);
+      free(n1);
+      free(n2);
+      free(n3);
+      free(n4);
 
       vf_mix_insert_buttons_set_sensitive(vdat, false);
       vf_open_remove_buttons_set_sensitive(vdat, false); /* need selection */

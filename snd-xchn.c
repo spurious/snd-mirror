@@ -622,9 +622,9 @@ static void remake_edit_history(Widget lst, chan_info *cp, int from_graph)
 	  all_eds += eds;
 	}
       all_eds += 3 * sp->nchans;
-      edits = (XmString *)CALLOC(all_eds, sizeof(XmString));
+      edits = (XmString *)calloc(all_eds, sizeof(XmString));
       filelen = 16 + strlen(sp->filename);
-      title = (char *)CALLOC(filelen, sizeof(char));
+      title = (char *)calloc(filelen, sizeof(char));
       for (k = 0, ed = 0; k < sp->nchans; k++)
 	{
 	  ncp = sp->chans[k];
@@ -638,19 +638,19 @@ static void remake_edit_history(Widget lst, chan_info *cp, int from_graph)
 	      char *temp;
 	      temp = edit_to_string(ncp, i);
 	      edits[ed++] = XmStringCreateLocalized(temp);
-	      FREE(temp);
+	      free(temp);
 	    }
 	  if (k < sp->nchans - 1)
 	    edits[ed++] = XmStringCreateLocalized((char *)"______________________________");
 	}
-      FREE(title);
+      free(title);
       XtVaSetValues(lst, 
 		    XmNitems, edits, 
 		    XmNitemCount, ed, 
 		    NULL);
       for (i = 0; i < ed; i++) 
 	XmStringFree(edits[i]);
-      FREE(edits);
+      free(edits);
       XmListSelectPos(lst, cp->edhist_base + cp->edit_ctr + 1, false);
       if (from_graph) goto_graph(cp);
     }
@@ -659,14 +659,14 @@ static void remake_edit_history(Widget lst, chan_info *cp, int from_graph)
       int items = 0;
       eds = cp->edit_ctr;
       while ((eds < (cp->edit_size - 1)) && (cp->edits[eds + 1])) eds++;
-      edits = (XmString *)CALLOC(eds + 1, sizeof(XmString));
+      edits = (XmString *)calloc(eds + 1, sizeof(XmString));
       edits[0] = XmStringCreateLocalized(sp->filename);
       for (i = 1; i <= eds; i++)
 	{
 	  char *temp;
 	  temp = edit_to_string(cp, i);
 	  edits[i] = XmStringCreateLocalized(temp);
-	  FREE(temp);
+	  free(temp);
 	}
       XtVaSetValues(lst, 
 		    XmNitems, edits, 
@@ -674,7 +674,7 @@ static void remake_edit_history(Widget lst, chan_info *cp, int from_graph)
 		    NULL);
       for (i = 0; i <= eds; i++) 
 	XmStringFree(edits[i]);
-      FREE(edits);
+      free(edits);
       XmListSelectPos(lst, cp->edit_ctr + 1, false);
       XtVaGetValues(lst, XmNvisibleItemCount, &items, NULL);
       if (items <= eds)
@@ -748,21 +748,21 @@ void reflect_edit_history_change(chan_info *cp)
 		char *temp;
 		temp = edit_to_string(cp, eds);
 		edit = XmStringCreateLocalized(temp);
-		FREE(temp);
+		free(temp);
 	      }
 	      XmListAddItemUnselected(lst, edit, eds + 1);
 	      XmStringFree(edit);
 	    }
 	  else
 	    {
-	      edits = (XmString *)CALLOC(eds + 1, sizeof(XmString));
+	      edits = (XmString *)calloc(eds + 1, sizeof(XmString));
 	      edits[0] = XmStringCreateLocalized(sp->filename);
 	      for (i = 1; i <= eds; i++) 
 		{
 		  char *temp;
 		  temp = edit_to_string(cp, i);
 		  edits[i] = XmStringCreateLocalized(temp);
-		  FREE(temp);
+		  free(temp);
 		}
 	      XtVaSetValues(lst, 
 			    XmNitems, edits, 
@@ -770,7 +770,7 @@ void reflect_edit_history_change(chan_info *cp)
 			    NULL);
 	      for (i = 0; i <= eds; i++) 
 		XmStringFree(edits[i]);
-	      FREE(edits);
+	      free(edits);
 	    }
 	  XmListSelectPos(lst, cp->edit_ctr + 1, false);
 	  XtVaGetValues(lst, XmNvisibleItemCount, &items, NULL);
@@ -912,7 +912,7 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Wid
   cp = sp->chans[channel];
   cx = cp->cgx;
   if (cx->chan_widgets == NULL) 
-    cx->chan_widgets = (Widget *)CALLOC(NUM_CHAN_WIDGETS, sizeof(Widget));
+    cx->chan_widgets = (Widget *)calloc(NUM_CHAN_WIDGETS, sizeof(Widget));
   cw = cx->chan_widgets;
   sx = ss->sgx;
   need_extra_scrollbars = ((!main) && (channel == 0));
@@ -1162,21 +1162,21 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Wid
 	  add_drag_and_drop(cw[W_graph], channel_drop_watcher, channel_drag_watcher, (void *)data);
 	}
 
-      FREE(n1);
-      FREE(n2);
-      FREE(n3);
-      FREE(n4);
-      FREE(n5);
-      FREE(n6);
-      FREE(n7);
-      FREE(n8);
-      FREE(n9);
-      FREE(n10);
-      FREE(n11);
-      FREE(n12);
-      FREE(n13);
-      FREE(n14);
-      FREE(n15);
+      free(n1);
+      free(n2);
+      free(n3);
+      free(n4);
+      free(n5);
+      free(n6);
+      free(n7);
+      free(n8);
+      free(n9);
+      free(n10);
+      free(n11);
+      free(n12);
+      free(n13);
+      free(n14);
+      free(n15);
 
       if (need_extra_scrollbars)
 	{
@@ -1225,16 +1225,16 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Wid
 	  cw[W_gsy] = XtCreateManagedWidget("chn-gsy", xmScrollBarWidgetClass, cw[W_main_window], args, n);
 	  XtAddEventHandler(cw[W_gsy], KeyPressMask, false, graph_key_press, (XtPointer)sp);
 	  
-	  FREE(n1);
-	  FREE(n2);
-	  FREE(n3);
-	  FREE(n4);
-	  FREE(n5);
-	  FREE(n6);
-	  FREE(n7);
+	  free(n1);
+	  free(n2);
+	  free(n3);
+	  free(n4);
+	  free(n5);
+	  free(n6);
+	  free(n7);
 
-	  FREE(n8);
-	  FREE(n9);
+	  free(n8);
+	  free(n9);
 	}
       else
 	{

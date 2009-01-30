@@ -97,7 +97,7 @@ static void initialize_load_path(void)
       for (i = 0; i < len; i++)
 	if (path[i] == ':')
 	  dirs++;
-      dirnames = (char **)CALLOC(dirs, sizeof(char *));
+      dirnames = (char **)calloc(dirs, sizeof(char *));
       for (i = 0; i < len; i++)
 	{
 	  if ((path[i] == ':') ||
@@ -110,21 +110,21 @@ static void initialize_load_path(void)
 		  if (i == (len - 1))
 		    lim = i + 1;
 		  else lim = i;
-		  tmp = (char *)CALLOC(lim - start + 1, sizeof(char));
+		  tmp = (char *)calloc(lim - start + 1, sizeof(char));
 		  for (j = start; j < lim; j++)
 		    tmp[j - start] = path[j];
 		  dirnames[curdir++] = mus_expand_filename(tmp);
 		  start = i + 1;
-		  FREE(tmp);
+		  free(tmp);
 		}
 	    }
 	}
       for (i = curdir - 1; i >= 0; i--)
 	{
 	  XEN_ADD_TO_LOAD_PATH(dirnames[i]);
-	  FREE(dirnames[i]);
+	  free(dirnames[i]);
 	}
-      FREE(dirnames);
+      free(dirnames);
     }
 }
 
@@ -133,15 +133,15 @@ void snd_set_global_defaults(bool need_cleanup)
 {
   if (need_cleanup)
     {
-      if (ss->HTML_Program) {FREE(ss->HTML_Program); ss->HTML_Program = NULL;}
-      if (ss->HTML_Dir) {FREE(ss->HTML_Dir); ss->HTML_Dir = NULL;}
-      if (ss->Temp_Dir) {FREE(ss->Temp_Dir); ss->Temp_Dir = NULL;}
-      if (ss->Save_Dir) {FREE(ss->Save_Dir); ss->Save_Dir = NULL;}
-      if (ss->Ladspa_Dir) {FREE(ss->Ladspa_Dir); ss->Ladspa_Dir = NULL;}
-      if (ss->Save_State_File) {FREE(ss->Save_State_File); ss->Save_State_File = NULL;}
-      if (ss->Eps_File) {FREE(ss->Eps_File); ss->Eps_File = NULL;}
-      if (ss->Listener_Prompt) {FREE(ss->Listener_Prompt); ss->Listener_Prompt = NULL;}
-      if (ss->Open_File_Dialog_Directory) {FREE(ss->Open_File_Dialog_Directory); ss->Open_File_Dialog_Directory = NULL;}
+      if (ss->HTML_Program) {free(ss->HTML_Program); ss->HTML_Program = NULL;}
+      if (ss->HTML_Dir) {free(ss->HTML_Dir); ss->HTML_Dir = NULL;}
+      if (ss->Temp_Dir) {free(ss->Temp_Dir); ss->Temp_Dir = NULL;}
+      if (ss->Save_Dir) {free(ss->Save_Dir); ss->Save_Dir = NULL;}
+      if (ss->Ladspa_Dir) {free(ss->Ladspa_Dir); ss->Ladspa_Dir = NULL;}
+      if (ss->Save_State_File) {free(ss->Save_State_File); ss->Save_State_File = NULL;}
+      if (ss->Eps_File) {free(ss->Eps_File); ss->Eps_File = NULL;}
+      if (ss->Listener_Prompt) {free(ss->Listener_Prompt); ss->Listener_Prompt = NULL;}
+      if (ss->Open_File_Dialog_Directory) {free(ss->Open_File_Dialog_Directory); ss->Open_File_Dialog_Directory = NULL;}
       
       /* not sure about the next two... */
       if ((cursor_style(ss) == CURSOR_PROC) && (XEN_PROCEDURE_P(ss->cursor_proc)))
@@ -406,7 +406,7 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
   */
 #endif
 
-  ss = (snd_state *)calloc(1, sizeof(snd_state)); /* not CALLOC! */
+  ss = (snd_state *)calloc(1, sizeof(snd_state)); /* not calloc! */
   ss->fam_ok = false;
   ss->cg_seen = false;
   ss->startup_errors = NULL;
@@ -460,7 +460,7 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
   ss->checking_explicitly = false;
   ss->reloading_updated_file = 0;
   ss->selected_sound = NO_SELECTION;
-  ss->sounds = (snd_info **)CALLOC(ss->max_sounds, sizeof(snd_info *));
+  ss->sounds = (snd_info **)calloc(ss->max_sounds, sizeof(snd_info *));
   ss->print_choice = PRINT_SND;
   ss->graph_hook_active = false;
   ss->lisp_graph_hook_active = false;
