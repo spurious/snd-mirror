@@ -529,6 +529,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+30-Jan:  big-gens.scm (scheme-only versions of the built-in generators).\n\
 15-Jan:  Snd 10.3.\n\
 8-Jan:   multiprecision math support for all scheme (s7) numeric\n\
            types and functions via gmp, mpfr, and mpc.  In configure,\n\
@@ -536,7 +537,6 @@ void about_snd_help(void)
 29-Dec:  jcvoi.scm.\n\
 11-Dec:  snd10.scm for sum-of-sines and friends.\n\
 5-Dec:   mus-sox headers.\n\
-28-Nov:  Snd 10.2.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*:\n    '", features, "\n\n",

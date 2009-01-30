@@ -2648,10 +2648,42 @@ you can get confusing results:
     :(rationalize 385817946978768113605842402465609185854927496022065152.5)
     771635893957536227211684804931218371709854992044130305/2
 </pre>
+<p>Yet another source of confusion involves the conversion of the string representation
+of a bigfloat:
+</p>
+<pre>
+    :(bignum "0.1")
+    1.000000000000000055511151231257827021182E-1
+    :(/ (bignum "1.0") 10)
+    1.000000000000000000000000000000000000001E-1
+</pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 </table>
 
+<p>I think I'll eventually add bignum versions of all the CLM generators.  Here, for example,
+is a bigfloat oscil:
+</p>
+
+<table border=0 hspace=40><tr><td>
+<pre>
+(defgenerator (big-oscil 
+  :make-wrapper 
+    (lambda (g)
+      (set! (big-oscil-frequency g) (/ (* (big-oscil-frequency g) 2.0 pi) (mus-srate)))
+      g))
+  (frequency *clm-default-frequency*) (angle 0.0))
+
+(define* (big-oscil gen :optional (fm 0.0) (pm 0.0))
+  (let ((x (big-oscil-angle gen)))
+    (set! (big-oscil-angle gen) (+ fm x (big-oscil-frequency gen)))
+    (sin (+ x pm))))
+</pre>
+</td></tr></table>
+
+<p>Ideally, the run macro would know how to handle bignums (and complex numbers).
+But, one thing at a time...
+</p>
 
 <br><br>
 

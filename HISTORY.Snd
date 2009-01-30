@@ -1,5 +1,6 @@
 Snd change log
 
+ 30-Jan:    big-gens.scm (scheme-only versions of the built-in generators).
  15-Jan:    Snd 10.3.
  8-Jan:     multiprecision math support for all scheme (s7) numeric
               types and functions via gmp, mpfr, and mpc.  In configure,

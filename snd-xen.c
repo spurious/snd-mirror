@@ -2422,6 +2422,83 @@ static XEN big_jn(XEN n, XEN x) {return(big_math_2(n, x, mpfr_jn));}
 static XEN big_yn(XEN n, XEN x) {return(big_math_2(n, x, mpfr_yn));}
 
 
+/* bes-i0 from G&R 8.447, 8.451, A&S 9.6.12, 9.7.1, arprec bessel.cpp */
+
+static XEN big_i0(XEN ux)
+{
+  int k;
+  mpfr_t sum, x, x1, x2, eps;
+  mpfr_init_set_ui(sum, 0, GMP_RNDN);
+  mpfr_init_set(x, *s7_big_real(ux), GMP_RNDN);
+  mpfr_init_set_ui(sum, 1, GMP_RNDN);
+  mpfr_init_set_ui(x1, 1, GMP_RNDN);
+  mpfr_init_set_ui(eps, 2, GMP_RNDN);
+  mpfr_pow_si(eps, eps, -mpfr_get_default_prec(), GMP_RNDN);
+  mpfr_init_set_ui(x2, mpfr_get_default_prec(), GMP_RNDN);
+  mpfr_div_ui(x2, x2, 2, GMP_RNDN);
+  if (mpfr_cmpabs(x, x2) < 0)
+    {
+      mpfr_mul(x, x, x, GMP_RNDN);           /* x = ux^2 */
+      for (k = 1; k < 10000; k++)
+	{
+	  mpfr_set_ui(x2, k, GMP_RNDN);      /* x2 = k */
+	  mpfr_mul(x2, x2, x2, GMP_RNDN);    /* x2 = k^2 */
+	  mpfr_div(x1, x1, x2, GMP_RNDN);    /* x1 = x1/x2 */
+	  mpfr_mul(x1, x1, x, GMP_RNDN);     /* x1 = x1*x */
+	  mpfr_div_ui(x1, x1, 4, GMP_RNDN);  /* x1 = x1/4 */
+	  if (mpfr_cmp(x1, eps) < 0)
+	    break;
+	  mpfr_add(sum, sum, x1, GMP_RNDN);  /* sum += x1 */
+	}
+      /* takes usually ca 10 to 40 iterations */
+    }
+  else
+    {
+      mpfr_t den, num;
+      mpfr_init(den);
+      mpfr_init(num);
+      mpfr_abs(x, x, GMP_RNDN);
+      for (k = 1; k < 10000; k++)
+	{
+	  mpfr_set(x2, x1, GMP_RNDN);
+	  mpfr_set_ui(den, k, GMP_RNDN);
+	  mpfr_mul_ui(den, den, 8, GMP_RNDN);
+	  mpfr_mul(den, den, x, GMP_RNDN);
+	  mpfr_set_ui(num, k, GMP_RNDN);
+	  mpfr_mul_ui(num, num, 2, GMP_RNDN);
+	  mpfr_sub_ui(num, num, 1, GMP_RNDN);
+	  mpfr_mul(num, num, num, GMP_RNDN);
+	  mpfr_div(num, num, den, GMP_RNDN);
+	  mpfr_mul(x1, x1, num, GMP_RNDN);
+	  mpfr_add(sum, sum, x1, GMP_RNDN);  
+	  if (mpfr_cmp(x1, eps) < 0)
+	    {
+	      mpfr_const_pi(x2, GMP_RNDN);
+	      mpfr_mul_ui(x2, x2, 2, GMP_RNDN);
+	      mpfr_mul(x2, x2, x, GMP_RNDN);
+	      mpfr_sqrt(x2, x2, GMP_RNDN);           /* sqrt(2*pi*x) */
+	      mpfr_div(sum, sum, x2, GMP_RNDN);
+	      mpfr_exp(x1, x, GMP_RNDN);
+	      mpfr_mul(sum, sum, x1, GMP_RNDN);      /* sum * e^x / sqrt(2*pi*x) */
+	      break;
+	    }
+	  if (mpfr_cmp(x1, x2) > 0)
+	    {
+	      fprintf(stderr, "bes-i0 has screwed up");
+	      break;
+	    }
+	}
+      mpfr_clear(den);
+      mpfr_clear(num);
+    }
+  mpfr_clear(x1);
+  mpfr_clear(x2);
+  mpfr_clear(x);
+  mpfr_clear(eps);
+  return(s7_make_big_real(s7, &sum));
+}
+
+
 /* fft
  *     (define hi (make-vector 8))
  *     (define ho (make-vector 8))
@@ -2693,6 +2770,12 @@ static XEN g_i0(XEN x)
 {
   #define H_i0 "(" S_bes_i0 " x): returns the modified cylindrical bessel function I0(x)"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ONLY_ARG, S_bes_i0, " a number");
+#if HAVE_S7 && WITH_GMP
+  if ((s7_is_bignum(x)) &&
+      (s7_is_real(x)) &&
+      (!(s7_is_rational(x))))
+    return(big_i0(x));
+#endif
   return(C_TO_XEN_DOUBLE(mus_bessi0(XEN_TO_C_DOUBLE(x)))); /* uses GSL if possible */
 }
 
