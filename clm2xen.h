@@ -27,7 +27,6 @@ MUS_EXPORT off_t clm_default_table_size_c(void);
 MUS_EXPORT double clm_default_frequency_c(void);
 
 MUS_EXPORT bool mus_xen_p(XEN obj);
-MUS_EXPORT void mus_xen_init(void);
 MUS_EXPORT const char *mus_fft_window_xen_name(mus_fft_window_t i);
 MUS_EXPORT XEN mus_xen_to_object(mus_xen *gn);
 MUS_EXPORT XEN mus_xen_to_object_with_vct(mus_xen *gn, XEN v);

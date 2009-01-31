@@ -85,7 +85,7 @@
 
 /* 
  * Your config file goes here, or just replace that #include line with the defines you need.
- * The only compile-time switches involve booleans, threads, and complex numbers.
+ * The only compile-time switches involve booleans, threads, complex numbers, and multiprecision arithmetic.
  * Currently we assume we have setjmp.h (used by the error handlers).
  *
  * If pthreads are available:
@@ -530,7 +530,6 @@ struct s7_scheme {
 #define T_CATCH        18
 #define T_DYNAMIC_WIND 19
 #define T_HASH_TABLE   20
-#define T_LAST_TYPE    20
 
 #define TYPE_BITS                     16
 #define T_MASKTYPE                    0xffff
@@ -578,7 +577,7 @@ struct s7_scheme {
 #define T_ETERNAL                     (1 << (TYPE_BITS + 11))
 #define is_eternal(p)                 ((typeflag(p) & T_ETERNAL) != 0)
 
-#define T_UNUSED_BITS                 0xf0000000
+/* unused type bits: 0xf0000000 */
 
 #if HAVE_PTHREADS
 #define set_type(p, f)                typeflag(p) = ((typeflag(p) & T_GC_MARK) | (f) | T_OBJECT)
@@ -15224,13 +15223,6 @@ static s7_pointer make_either_complex(s7_scheme *sc,
   p_rl = make_either_complex_1(sc, q, slash1, ex1, has_dec_point1, radix, &d_rl);
   p_im = make_either_complex_1(sc, plus, slash2, ex2, has_dec_point2, radix, &d_im);
   
-  /*
-  fprintf(stderr, "make_either_complex: %s %s %lf %lf\n", 
-	  (p_rl) ? s7_object_to_c_string(sc, p_rl) : "null",
-	  (p_im) ? s7_object_to_c_string(sc, p_im) : "null",
-	  d_rl, d_im);
-  */
-
   if ((!p_rl) && (!p_im))
     return(s7_make_complex(sc, d_rl, (has_plus_or_minus == -1) ? (-d_im) : d_im));
 
@@ -15258,8 +15250,6 @@ static s7_pointer make_either_complex(s7_scheme *sc,
 
 static int canonicalize_result_type(int type)
 {
-  /* fprintf(stderr, "type %d (%d %d %d %d)\n", type, 1 << (big_complex_tag * 4), 1 << (big_real_tag * 4), 1 << (big_ratio_tag * 4), 1 << (big_integer_tag * 4)); */
-
   if (type >= (1<< (big_complex_tag * 4))) 
     return(T_BIG_COMPLEX);
 
@@ -15819,9 +15809,6 @@ static s7_pointer big_divide(s7_scheme *sc, s7_pointer args)
     }
     
   result = copy_and_promote_number(sc, result_type, car(args));
-  /*
-  fprintf(stderr, "type %d: divide %s / %s\n", result_type, s7_object_to_c_string(sc, result), s7_object_to_c_string(sc, divisor));
-  */
   switch (result_type)
     {
     case T_BIG_INTEGER:
@@ -17284,12 +17271,7 @@ static s7_pointer big_rationalize(s7_scheme *sc, s7_pointer args)
       mpz_init_set_ui(a, 0);
       mpz_init_set_ui(b, 0);
 
-      /* fprintf(stderr, "x: %s, error: %s\n", mpfr_to_string(sc, x, 10), mpfr_to_string(sc, error, 10)); */
-
       mpfr_ui_div(x, 1, x, GMP_RNDN);
-
-      /* fprintf(stderr, "1/x: %s\n", mpfr_to_string(sc, x, 10)); */
-
       {
 	mpz_t temp;
 	mpfr_t xerr;
@@ -17297,18 +17279,14 @@ static s7_pointer big_rationalize(s7_scheme *sc, s7_pointer args)
 	mpfr_init(xerr);
 	for (ctr = 0; ctr < 1000; ctr++)
 	  {
-
 	    mpz_mul(temp, a1, tt);
 	    mpz_add(a, a2, temp);
 	    mpz_mul(temp, b1, tt);
 	    mpz_add(b, b2, temp);
-	    
 	    mpfr_set_z(xerr, a, GMP_RNDN);
 	    mpfr_div_z(xerr, xerr, b, GMP_RNDN);
 	    mpfr_sub(xerr, ux, xerr, GMP_RNDN);
 	    mpfr_abs(xerr, xerr, GMP_RNDN);
-
-	    /* fprintf(stderr, "a/b: %s/%s, xerr: %s\n", mpz_get_str(NULL, 10, a), mpz_get_str(NULL, 10, b), mpfr_to_string(sc, xerr, 10)); */
 
 	    if (mpfr_lessequal_p(xerr, error))
 	      {

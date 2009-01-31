@@ -246,7 +246,7 @@ Plus many other contributions from
 
 In terms of number of lines, the languages used in Snd/Sndlib are:
 C, Scheme, Ruby, Forth, m4, Common Lisp, Emacs Lisp, javascript,
-Fortran, expect, and postscript (altogether more than 660,000 lines).
+Fortran, expect, and postscript (altogether nearly 700,000 lines).
 
 
 To get the German version at run-time, (setlocale LC_ALL "de_DE").
@@ -328,6 +328,7 @@ Forth:
 
 Motif:
   http://www.motifzone.net
+  there's also a soundforge project for Motif
 
 Gtk+:
   http://www.gtk.org
@@ -693,7 +694,7 @@ checks for NaN's causing various math functions to fail.
 
 The Gtk/GL version of Snd can kill the X server!  I don't know why, and
 others out in webland are equally bewildered.  I believe that gtkglext 
-has been resurrected -- it went officially unmaintained for awhile.
+is officially unmaintained, and Gtk has decided to go with cairo instead.
 Ideally, Gtk would flush cairo which is a total loss, and use openGL
 directly, but I guess technical criteria are not driving this process.
 

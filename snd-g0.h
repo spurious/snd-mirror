@@ -108,8 +108,8 @@ typedef enum {WITH_DEFAULT_BACKGROUND, WITH_WHITE_BACKGROUND} snd_entry_bg_t;
 
   #define picture_t GdkPixmap
 
-  #define XEN_WRAP_PIXEL(Value)    XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("color_t"), C_TO_XEN_INT((int)Value))
-  #define XEN_UNWRAP_PIXEL(Value)  (color_t)(XEN_TO_C_INT(XEN_CADR(Value)))
+  #define XEN_WRAP_PIXEL(Value)    XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("color_t"), C_TO_XEN_ULONG((unsigned long)Value))
+  #define XEN_UNWRAP_PIXEL(Value)  (color_t)(XEN_TO_C_ULONG(XEN_CADR(Value)))
   #define XEN_PIXEL_P(Value)       (XEN_LIST_P(Value) && (XEN_LIST_LENGTH(Value) >= 2) && (XEN_SYMBOL_P(XEN_CAR(Value))) && \
                                     (strcmp("color_t", XEN_SYMBOL_TO_C_STRING(XEN_CAR(Value))) == 0))
 

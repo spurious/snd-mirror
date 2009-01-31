@@ -8476,7 +8476,7 @@ XEN_NARGIFY_1(g_mus_irandom_w, g_mus_irandom)
 #if WITH_MODULES
 static void clm_init(void *ignore)
 #else
-void mus_xen_init(void)
+static void mus_xen_init(void)
 #endif
 {
   mus_initialize();
@@ -9344,7 +9344,7 @@ void mus_xen_init(void)
 
 
 #if WITH_MODULES
-void mus_xen_init(void)
+static void mus_xen_init(void)
 {
   scm_c_define_module("snd clm", clm_init, NULL);
 }

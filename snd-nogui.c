@@ -264,6 +264,10 @@ widget_t start_preferences_dialog(void) {return(NULL_WIDGET);}
 
 void auto_update_restart(void) {}
 
+int mus_char_to_bint(const unsigned char *inp);
+int mus_char_to_lint(const unsigned char *inp);
+
+
 snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr)
 {
   snd_info *sp;
