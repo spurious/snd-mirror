@@ -4924,15 +4924,20 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
 	}
     }
 
-  if ((object_number_type(sc->y) == NUM_RATIO) &&
-      (denominator(sc->y->object.number) == 2) &&
-      (numerator(sc->y->object.number) == 1))
-    return(g_sqrt(sc, args));
-
   if ((s7_is_real(sc->x)) &&
       (s7_is_real(sc->y)))
     {
       s7_Double x, y;
+
+      if ((object_number_type(sc->y) == NUM_RATIO) &&
+	  (numerator(sc->y->object.number) == 1))
+	{
+	  if (denominator(sc->y->object.number) == 2)
+	    return(g_sqrt(sc, args));
+	  if (denominator(sc->y->object.number) == 3)
+	    return(s7_make_real(sc, cbrt(num_to_real(sc->x->object.number))));
+	}
+
       x = num_to_real(sc->x->object.number);
       if (x == 0.0)
 	return(s7_make_real(sc, 0.0));
@@ -14921,6 +14926,7 @@ static mpq_t *ratio_from_s7_Ints(s7_Int num, s7_Int den)
       mpz_init_set_s7_Int(d1, den);
       mpq_set_num(*n, n1);
       mpq_set_den(*n, d1);
+      mpq_canonicalize(*n);
       mpz_clear(n1);
       mpz_clear(d1);
     }
@@ -16294,6 +16300,7 @@ static s7_pointer big_sqrt(s7_scheme *sc, s7_pointer args)
 		      mpq_init(*n);
 		      mpq_set_num(*n, n1);
 		      mpq_set_den(*n, d1);
+		      mpq_canonicalize(*n);
 		      mpz_clear(n1);
 		      mpz_clear(d1);
 		      mpz_clear(rem);
@@ -16535,6 +16542,7 @@ static s7_pointer big_expt(s7_scheme *sc, s7_pointer args)
 	      mpz_pow_ui(d, d, (unsigned int)yval);
 	      mpq_set_num(*r, d);
 	      mpq_set_den(*r, n);	      
+	      mpq_canonicalize(*r);
 	    }
 	  mpz_clear(n);
 	  mpz_clear(d);
@@ -16558,6 +16566,38 @@ static s7_pointer big_expt(s7_scheme *sc, s7_pointer args)
 	  mpfr_pow_si(*z, *z, yval, GMP_RNDN);
 	  return(s7_make_object(sc, big_real_tag, (void *)z));
 	}
+    }
+
+  if ((s7_is_ratio(y)) &&
+      (numerator(y->object.number) == 1))
+    {
+      if (denominator(y->object.number) == 2)
+	return(big_sqrt(sc, args));
+
+      if ((s7_is_real(x)) &&
+	  (denominator(y->object.number) == 3))
+	{
+	  if (IS_BIG(x))
+	    {
+	      mpfr_t *z;
+	      z = (mpfr_t *)malloc(sizeof(mpfr_t));
+	      mpfr_init_set(*z, S7_BIG_REAL(promote_number(sc, T_BIG_REAL, x)), GMP_RNDN);
+	      mpfr_cbrt(*z, *z, GMP_RNDN);
+	      return(s7_make_object(sc, big_real_tag, (void *)z));
+	    }
+	  else return(s7_make_real(sc, cbrt(num_to_real(x->object.number))));
+	}
+    }
+
+  if ((s7_is_real(x)) &&
+      (s7_is_real(y)) &&
+      (s7_is_positive(x)))
+    {
+      mpfr_t *z;
+      z = (mpfr_t *)malloc(sizeof(mpfr_t));
+      mpfr_init_set(*z, S7_BIG_REAL(promote_number(sc, T_BIG_REAL, x)), GMP_RNDN);
+      mpfr_pow(*z, *z, S7_BIG_REAL(promote_number(sc, T_BIG_REAL, y)), GMP_RNDN);
+      return(s7_make_object(sc, big_real_tag, (void *)z));
     }
 
   if ((s7_is_number(x)) &&

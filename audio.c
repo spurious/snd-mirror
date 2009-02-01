@@ -6141,7 +6141,11 @@ int mus_audio_open_output(int ur_dev, int srate, int chans, int format, int size
   wf.nSamplesPerSec = srate;
   wf.nBlockAlign = chans * current_datum_size;
   wf.nAvgBytesPerSec = wf.nBlockAlign * wf.nSamplesPerSec;
+#if _MSC_VER
   win_out_err = waveOutOpen(&fd, WAVE_MAPPER, &wf, (DWORD (*)(HWAVEOUT,UINT,DWORD,DWORD,DWORD))next_buffer, 0, CALLBACK_FUNCTION); 
+#else
+  win_out_err = waveOutOpen(&fd, WAVE_MAPPER, &wf, (DWORD)next_buffer, 0, CALLBACK_FUNCTION); 
+#endif
   /* 0 here = user_data above, other case = WAVE_FORMAT_QUERY */
   if (win_out_err) 
     RETURN_ERROR_EXIT(MUS_AUDIO_DEVICE_NOT_AVAILABLE,
@@ -6837,7 +6841,11 @@ int mus_audio_open_input(int ur_dev, int srate, int chans, int format, int size)
     RETURN_ERROR_EXIT(MUS_AUDIO_SIZE_NOT_AVAILABLE,
 		      mus_format("can't allocated %d bytes for input buffer of %d (%s)",
 				 size, dev, mus_audio_device_name(dev)));
+#if _MSC_VER
   win_in_err = waveInOpen(&record_fd, WAVE_MAPPER, &wf, (DWORD (*)(HWAVEIN,UINT,DWORD,DWORD,DWORD))next_input_buffer, 0, CALLBACK_FUNCTION);
+#else
+  win_in_err = waveInOpen(&record_fd, WAVE_MAPPER, &wf, (DWORD)next_input_buffer, 0, CALLBACK_FUNCTION);
+#endif
   if (win_in_err) 
     {
       free(rec_wh.lpData);

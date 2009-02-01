@@ -111,7 +111,7 @@
 	(newline) (newline)
 	)))
 
-(defmacro test (tst expected)
+(defmacro test (tst expected) ;(display tst) (newline)
   `(let ((result (catch #t (lambda () ,tst) (lambda args 'error))))
      (ok? ',tst result ,expected)))
 
@@ -318,7 +318,7 @@
 							    (+ (real-part n) (* 0+i (imag-part n)))))))))))))))
 	    (newline) (newline)))))
 
-(defmacro num-test (tst expected) 
+(defmacro num-test (tst expected) ;(display tst) (newline)
   `(let ((result (catch #t (lambda () ,tst) (lambda args 'error))))
      (number-ok? ',tst result ,expected)
      (if with-bignum-function
@@ -329,11 +329,11 @@
 					  (bigify (car lst)))
 				      (bigify (cdr lst)))
 				lst))))
+
 	   (let* ((big-test (bigify ',tst)))
-	     ;(begin (display big-test) (newline))
 	     (let ((big-result (catch #t (lambda () (eval big-test)) (lambda args 'error))))
-	       (number-ok? big-test big-result ,expected)
-	       ))))))
+	       (number-ok? big-test big-result ,expected)))
+	   ))))
 
 
 
@@ -7708,6 +7708,80 @@
 (num-test (expt 2.0 -1.0220000e+03) 2.225073858507201383090232717332404063624E-308)
 (num-test (expt 2.0 1.0230000e+03) 8.98846567431157953864652595394512365232E307)
 
+(num-test (expt 0+i 1/2) (make-rectangular (/ (sqrt 2)) (/ (sqrt 2))))
+(num-test (expt (expt 0+i 1/3) 3) 0+i)
+(num-test (expt (expt 0+i 1/4) 4) 0+i)
+(num-test (expt (expt 1+i 1/2) 2) 1+i)
+(num-test (expt (expt 1+i 1/3) 3) 1+i)
+(num-test (expt (expt 1+i 1/4) 4) 1+i)
+(num-test (expt (expt 1-i 1/2) 2) 1-i)
+(num-test (expt (expt 1-i 1/3) 3) 1-i)
+(num-test (expt (expt 1-i 1/4) 4) 1-i)
+(num-test (expt (expt 0+i 1/10) 10) 0+i)
+(num-test (expt (expt 0+i -1/2) -2) 0+i)
+(num-test (expt (expt 0+i -1/3) -3) 0+i)
+(num-test (expt (expt 0+i -1/4) -4) 0+i)
+(num-test (expt 0+i 2) -1)
+(num-test (expt 0-i 2) -1)
+(num-test (expt (expt 2 0+i) (/ 0+i)) 2)
+(num-test (expt -1 1/2) 0+i)
+(num-test (expt -1.0 1/2) 0+i)
+(num-test (expt (expt -1/2 1/2) 2) -1/2)
+(num-test (expt (expt -1/2 -1/2) -2) -1/2)
+(num-test (expt (expt 1/2 -1/2) -2) 1/2)
+(num-test (expt (expt -1/3 1/3) 3) -1/3)
+(num-test (expt (expt -1/3 1/2) 2) -1/3)
+(num-test (expt (expt -1/3 -1/2) -2) -1/3)
+(num-test (expt (expt -2 1/2) 2) -2)
+(num-test (expt (expt -2 -1/2) -2) -2)
+(num-test (expt (expt -1 -1/2) -2) -1)
+(num-test (expt (expt 1 -1/2) -2) 1)
+(num-test (expt (expt 1 1/123) 123) 1)
+(num-test (expt (expt -1 1/123) 123) -1)
+
+(num-test (expt -1/8 -3) -512)
+
+(let ((xs (list 2 3 4 1/2 1/3 1/4 2.5 1+i 2.5+1.5i 2.5-.5i))
+      (ys  (list 2 3 4 -2 -3 -4 1/2 1/3 1/4 -1/2 -1/3 -1/4 2.5 -3.5 1+i -1+2i 2.5+1.5i 2.5-.5i)))
+  (for-each
+   (lambda (x)
+     (for-each 
+      (lambda (y)
+	(num-test (expt (expt x y) (/ y)) x)
+;	(if (> (magnitude (- (expt (expt x y) (/ y)) x)) 1e-6)
+;	    (format #t "(expt (expt ~A ~A) (/ ~A)) -> ~A (~A)~%" x y y (expt (expt x y) (/ y)) (magnitude (- (expt (expt x y) (/ y)) x))))
+	)
+      ys))
+   xs))
+
+(num-test (numerator 12/6000996) 1)
+(num-test (denominator 12/6000996) 500083)
+
+(if with-bignums
+    (begin
+      (num-test (expt 4722366482869645213696 1/2) 68719476736)
+      (num-test (expt 324518553658426726783156020576256 1/3) 68719476736)
+      (num-test (expt 4722366482869645213696/6561 1/2) 68719476736/81)
+      (num-test (expt 324518553658426726783156020576256/19683 1/3) 68719476736/27)
+
+      (num-test (expt 4722366482869645213696/6561 -1/2) (/ 68719476736/81))
+      (num-test (expt (expt -4722366482869645213696/6561 1/2) 2) -4722366482869645213696/6561)
+
+      (num-test (numerator 1195068768795265792518361315725116351898245581/48889032896862784894921) 24444516448431392447461)
+      (num-test (denominator 1195068768795265792518361315725116351898245581/48889032896862784894921) 1)
+      (num-test (numerator 24444516448431392447461/1195068768795265792518361315725116351898245581) 1)
+      (num-test (denominator 24444516448431392447461/1195068768795265792518361315725116351898245581) 48889032896862784894921)
+
+      (if with-bigfloats
+	  (begin
+	    (num-test (expt 4722366482869645213696.0 1/2) 68719476736.0)
+	    (num-test (expt 324518553658426726783156020576256.0 1/3) 68719476736.0)
+	    (num-test (+ 12345678901234567890+12345678901234567890i 12345678901234567890-12345678901234567890i) 2.469135780246913578E19)
+	    (num-test (* 2 12345678901234567890+12345678901234567890i) 2.469135780246913578E19+2.469135780246913578E19i)
+	    (num-test (- 2 12345678901234567890+12345678901234567890i) -12345678901234567890-12345678901234567890i)
+	    ))
+      ))
+
 (if with-large-powers (begin
 (num-test (expt 3 10) 59049)
 (num-test (expt -3 10) 59049)
@@ -7792,7 +7866,9 @@
 (num-test (expt 2/500029 0/10) 1)
 (num-test (expt -2/500029 0/10) 1)
 (num-test (expt 2/362880 1/3) 0.01766399721581)
-(num-test (expt -2/362880 1/3) 0.00883199860790+0.01529747032127i)
+(test (or (< (magnitude (- (expt -2/362880 1/3) 0.00883199860790+0.01529747032127i)) 1e-6)
+	  (< (magnitude (- (expt -2/362880 1/3) 0.00883199860790-0.01529747032127i)) 1e-6)
+	  (< (magnitude (- (expt -2/362880 1/3) -0.017663997215805)) 1e-6)) #t)
 (num-test (expt 3/1 10/2) 243)
 (num-test (expt -3/1 10/2) -243)
 (num-test (expt 3/10 500029/362880) 0.19032743228093)
@@ -9537,6 +9613,10 @@
 
 (num-test (numerator 1) 1)
 (num-test (numerator 2/3) 2)
+(num-test (numerator 2/4) 1)
+(num-test (denominator 2/4) 2)
+(num-test (numerator -2/6) -1)
+(num-test (denominator -2/6) 3)
 (num-test (numerator -2/3) -2)
 (num-test (denominator -2/3) 3)
 (num-test (denominator 1) 1)
@@ -27283,6 +27363,12 @@
       (num-test (> 1/123400000000 .000000000001) #t)))
 
 (num-test (exp (* our-pi (sqrt 163))) 262537412640768743.999999999999)
+(if with-bigfloats
+    (begin
+      (num-test (exp (* pi (sqrt (bignum "163")))) 2.625374126407687439999999999992500725895E17)
+      ;; H Cohen p 383
+      (test (< (abs (- (expt (- (exp (* pi (sqrt (bignum "163")))) 744) 1/3) 6.4031999999999999999999999999939031735E5)) 1e-32) #t)
+      ))
 
 (num-test (acos 1.5) 0.0+0.9624236501192069i)
 (num-test (acos -1.5) 3.141592653589793-0.9624236501192069i)
@@ -27345,11 +27431,12 @@
 (num-test (min 5.0 2) 2.0)  ; why not 2?
 (num-test (max 3.0 7 1) 7.0)
 (num-test (min 3.0 7 1) 1.0)
-(num-test (number? 12) #t)
-(num-test (number? (expt 2 130)) #t)
-(num-test (number? 5/3+7.2i) #t)
-(num-test (number? #f) #f)
-(num-test (number? (cons 1 2)) #f)
+(test (number? 12) #t)
+(test (number? (expt 2 130)) #t)
+(test (number? 5/3+7.2i) #t)
+(test (number? #f) #f)
+(test (number? (cons 1 2)) #f)
+(test (number? 2.5-.5i) #t)
 
 
 (num-test (= 5/2 2.5) #t)
@@ -31695,6 +31782,26 @@
 (test (let ((i 10) (j 11) (k 12)) (do ((i i j) (j j k) (k k m) (m (+ i j k) (+ i j k))) ((> m 100) (list i j k m)))) (list 33 56 78 122))
 (test (do ((i 0 (let () (set! j 3) (+ i 1))) (j 0 (+ j 1))) ((= i 3) j)) 4)
 (test (let ((i 0)) (do () ((= i 3) (* i 2)) (set! i (+ i 1)))) 6)
+(num-test (do ((i 0 (- i 1))) ((= i -3) i)) -3)
+(num-test (do ((i 1/2 (+ i 1/2))) ((> i 2) i)) 5/2)
+(num-test (do ((i 0.0 (+ i 0.1))) ((>= i 0.9999) i)) 1.0)
+(num-test (do ((i 0 (- i 1/2))) ((< i -2) i)) -5/2)
+(num-test (do ((i 0+i (+ i 0+i))) ((> (magnitude i) 2) i)) 0+3i)
+
+(if with-bignums
+    (begin
+      (num-test (do ((i 24444516448431392447461 (+ i 1))
+		     (j 0 (+ j 1)))
+		    ((>= i 24444516448431392447471) j))
+		10)
+      (num-test (do ((i 0 (+ i 24444516448431392447461))
+		     (j 0 (+ j 1)))
+		    ((>= i 244445164484313924474610) j))
+		10)
+      (num-test (do ((i 4096 (* i 2))
+		     (j 0 (+ j 1)))
+		    ((= i 4722366482869645213696) j))
+		60)))
 
 (test (let ((x 0)) 
 	(do ((i 0 (+ i 1)))
@@ -36392,7 +36499,8 @@ expt error > 1e-6 around 2^-46.506993328423
 (if with-the-bug-finding-machine
     (let ((tries (if (integer? with-the-bug-finding-machine) with-the-bug-finding-machine 10000))
 	  (err-max 1e-12)
-	  (err-max-12 1e-15))
+	  (err-max-12 1e-15)
+	  (expt-max 31))
 
 
       ;;; --------------------------------------------------------------------------------
@@ -36559,8 +36667,8 @@ expt error > 1e-6 around 2^-46.506993328423
 	       
 	       (choose-number (lambda ()
 				(let ((choice (random 4))
-				      (num1 (random (inexact->exact (floor (expt 2 31)))))
-				      (num2 (random (inexact->exact (floor (expt 2 31))))))
+				      (num1 (random (inexact->exact (floor (expt 2 expt-max)))))
+				      (num2 (random (inexact->exact (floor (expt 2 expt-max))))))
 				  (if (> (random 1.0) 0.5) (set! num1 (- num1)))
 				  (if (> (random 1.0) 0.5) (set! num2 (- num2)))
 				  (list 
@@ -36572,8 +36680,8 @@ expt error > 1e-6 around 2^-46.506993328423
 	       
 	       (choose-real (lambda ()
 			      (let ((choice (random 3))
-				    (num1 (random (expt 2 31)))
-				    (num2 (random (expt 2 31))))
+				    (num1 (random (expt 2 expt-max)))
+				    (num2 (random (expt 2 expt-max))))
 				(if (> (random 1.0) 0.5) (set! num1 (- num1)))
 				(if (> (random 1.0) 0.5) (set! num2 (- num2)))
 				(list 
@@ -36584,8 +36692,8 @@ expt error > 1e-6 around 2^-46.506993328423
 	       
 	       (choose-rational (lambda ()
 				  (let ((choice (random 2))
-					(num1 (random (inexact->exact (floor (expt 2 31)))))
-					(num2 (inexact->exact (floor (random (expt 2 31))))))
+					(num1 (random (inexact->exact (floor (expt 2 expt-max)))))
+					(num2 (inexact->exact (floor (random (expt 2 expt-max))))))
 				    (if (> (random 1.0) 0.5) (set! num1 (- num1)))
 				    (if (> (random 1.0) 0.5) (set! num2 (- num2)))
 				    (list 
@@ -37302,14 +37410,19 @@ expt error > 1e-6 around 2^-46.506993328423
 		      (lambda (nlst v)
 			(ok-two-numbers 'make-polar nlst v 
 					(lambda (n1 n2 v)
-					  (< (/ (distance (* n1 (exp (* 0.0+1.0i n2))) v) (magnitude n1)) err-max))))
+					  (if (>= (/ (distance (* n1 (exp (* 0.0+1.0i n2))) v) (max .001 (magnitude n1))) err-max)
+					      (format #t "(make-polar ~A ~A) -> ~A (~A, ~A)~%"
+						      n1 n2 v  
+						      (* n1 (exp (* 0.0+1.0i n2)))
+						      (/ (distance (* n1 (exp (* 0.0+1.0i n2))) v) (max .001 (magnitude n1)))))
+					  (< (/ (distance (* n1 (exp (* 0.0+1.0i n2))) v) (max .001 (magnitude n1))) err-max))))
 		      (lambda () (list (car (choose-real)) (car (choose-real)))))
 		
 		(list make-rectangular
 		      (lambda (nlst v)
 			(ok-two-numbers 'make-rectangular nlst v 
 					(lambda (n1 n2 v)
-					  (< (/ (distance (+ n1 (* 0.0+1.0i n2)) v) (magnitude n1)) err-max))))
+					  (< (/ (distance (+ n1 (* 0.0+1.0i n2)) v) (max .001 (magnitude n1))) err-max))))
 		      (lambda () (list (car (choose-real)) (car (choose-real)))))
 		
 		(list modulo 
@@ -37363,8 +37476,8 @@ expt error > 1e-6 around 2^-46.506993328423
 		      (lambda (nlst v)
 			(ok-number 'exact->inexact nlst v
 				   (lambda (n v)
-				     (and (< (abs (- n v)) err-max-12)
-					  (not (exact? v))))))
+				     (and (< (abs (- n v)) 1e-11)
+					  (inexact? v)))))
 		      choose-rational)
 		
 		(list inexact->exact 
@@ -37372,7 +37485,7 @@ expt error > 1e-6 around 2^-46.506993328423
 			(ok-number 'inexact->exact nlst v
 				   (lambda (n v)
 				     (and (< (abs (- n v)) 1e-11)
-					  (rational? v)))))
+					  (exact? v)))))
 		      choose-real)
 		
 		(list gcd 
@@ -37404,10 +37517,15 @@ expt error > 1e-6 around 2^-46.506993328423
 		      (lambda (nlst v)
 			(ok-two-numbers 'expt nlst v 
 					(lambda (n1 n2 v)
-					  (let ((a (if (zero? n1) 0 (exp (* n2 (log n1))))))
-					    (if (> (/ (distance a v) (magnitude v)) err-max)
-						(format #t "[expt ~A ~A -> ~A, ~A -> ~A]~%" n1 n2 v a (distance a v)))
-					    (< (/ (distance a v) (magnitude v)) err-max)))))
+
+					  (let ((a1 (if (zero? n1) 0 (exp (* n2 (log n1)))))
+						(a2 (if (zero? n1) 0 (exp (* n2 (+ (* 2 pi 0+i) (log n1)))))))
+					    (if (and (> (/ (distance a1 v) (magnitude v)) err-max)
+						     (> (/ (distance a2 v) (magnitude v)) err-max))
+						(format #t "[expt ~A ~A -> ~A, ~A -> ~A]~%" n1 n2 v a1 (distance a1 v)))
+					    (or (< (/ (distance a1 v) (magnitude v)) err-max)
+						(< (/ (distance a2 v) (magnitude v)) err-max))))))
+
 		      (lambda () (list (let ((val (car (choose-small-number))))
 					 (if (zero? val) 1 (/ val 2.0)))
 				       (car (choose-small-number)))))
@@ -37425,7 +37543,8 @@ expt error > 1e-6 around 2^-46.506993328423
 					   (set! mx (max mx (magnitude arg)))))
 				       (< (magnitude (/ v (max 0.001 mx))) err-max)))))
 			  (if (not (tst nlst v))
-			      (format #t "(+ ~{~A~^ ~}) -> ~A~%" nlst v))))
+			      (format #t "(+ ~{~A~^ ~}) -> ~A~%" nlst v)
+			      #t)))
 		      choose-n-numbers)
 		
 		(list - 
@@ -37444,7 +37563,8 @@ expt error > 1e-6 around 2^-46.506993328423
 						 (set! mx (max mx (magnitude arg)))))
 					     (< (magnitude (/ (- v ans) (max 0.001 mx))) err-max)))))))
 			  (if (not (tst nlst v))
-			      (format #t "(- ~{~A~^ ~}) -> ~A~%" nlst v))))
+			      (format #t "(- ~{~A~^ ~}) -> ~A~%" nlst v)
+			      #t)))
 		      choose-n-numbers)
 		
 		(list * 
@@ -37459,7 +37579,8 @@ expt error > 1e-6 around 2^-46.506993328423
 					   (set! mx (max mx (magnitude arg)))))
 				       (< (magnitude (/ (- v 1) (max 0.001 mx))) err-max)))))
 			  (if (not (tst nlst v))
-			      (format #t "(* ~{~A~^ ~}) -> ~A~%" nlst v))))
+			      (format #t "(* ~{~A~^ ~}) -> ~A~%" nlst v)
+			      #t)))
 		      (lambda () (map (lambda (n) (if (zero? n) 1 n)) (choose-n-small-numbers))))
 		
 		(list / 
@@ -37478,7 +37599,8 @@ expt error > 1e-6 around 2^-46.506993328423
 						 (set! mx (max mx (magnitude arg)))))
 					     (< (magnitude (/ (- v ans) (max 0.001 mx))) err-max)))))))
 			  (if (not (tst nlst v))
-			      (format #t "(/ ~{~A~^ ~}) -> ~A~%" nlst v))))
+			      (format #t "(/ ~{~A~^ ~}) -> ~A~%" nlst v)
+			      #t)))
 		      (lambda () (map (lambda (n) (if (zero? n) 1 n)) (choose-n-small-numbers))))
 		
 		(list max 
@@ -37493,7 +37615,8 @@ expt error > 1e-6 around 2^-46.506993328423
 					 (let ((arg (list-ref nlst i)))
 					   (set! happy (> (- v arg) (- err-max)))))))))
 			  (if (not (tst nlst v))
-			      (format #t "(max ~{~A~^ ~}) -> ~A~%" nlst v))))
+			      (format #t "(max ~{~A~^ ~}) -> ~A~%" nlst v)
+			      #t)))
 		      choose-n-real-numbers)
 		
 		(list min
@@ -37508,7 +37631,8 @@ expt error > 1e-6 around 2^-46.506993328423
 					 (let ((arg (list-ref nlst i)))
 					   (set! happy (> (- arg v) (- err-max)))))))))
 			  (if (not (tst nlst v))
-			      (format #t "(min ~{~A~^ ~}) -> ~A~%" nlst v))))
+			      (format #t "(min ~{~A~^ ~}) -> ~A~%" nlst v)
+			      #t)))
 		      choose-n-real-numbers)
 		
 		(list <
@@ -37525,7 +37649,8 @@ expt error > 1e-6 around 2^-46.506993328423
 					   (set! happy (> (- arg last-arg) (- err-max-12)))
 					   (set! last-arg arg)))))))
 			  (if (not (tst nlst v))
-			      (format #t "(< ~{~A~^ ~}) -> ~A~%" nlst v))))
+			      (format #t "(< ~{~A~^ ~}) -> ~A~%" nlst v)
+			      #t)))
 		      choose-2-or-more-real-numbers)
 		
 		(list <=
@@ -37542,7 +37667,8 @@ expt error > 1e-6 around 2^-46.506993328423
 					   (set! happy (> (- arg last-arg) (- err-max-12)))
 					   (set! last-arg arg)))))))
 			  (if (not (tst nlst v))
-			      (format #t "(<= ~{~A~^ ~}) -> ~A~%" nlst v))))
+			      (format #t "(<= ~{~A~^ ~}) -> ~A~%" nlst v)
+			      #t)))
 		      choose-2-or-more-real-numbers)
 		
 		(list >
@@ -37559,7 +37685,8 @@ expt error > 1e-6 around 2^-46.506993328423
 					   (set! happy (> (- last-arg arg) (- err-max-12)))
 					   (set! last-arg arg)))))))
 			  (if (not (tst nlst v))
-			      (format #t "(> ~{~A~^ ~}) -> ~A~%" nlst v))))
+			      (format #t "(> ~{~A~^ ~}) -> ~A~%" nlst v)
+			      #t)))
 		      choose-2-or-more-real-numbers)
 		
 		(list >=
@@ -37576,7 +37703,8 @@ expt error > 1e-6 around 2^-46.506993328423
 					   (set! happy (> (- last-arg arg) (- err-max-12)))
 					   (set! last-arg arg)))))))
 			  (if (not (tst nlst v))
-			      (format #t "(>= ~{~A~^ ~}) -> ~A~%" nlst v))))
+			      (format #t "(>= ~{~A~^ ~}) -> ~A~%" nlst v)
+			      #t)))
 		      choose-2-or-more-real-numbers)
 		
 		(list =
@@ -37593,7 +37721,8 @@ expt error > 1e-6 around 2^-46.506993328423
 					   (set! happy (< (abs (- last-arg arg)) err-max-12))
 					   (set! last-arg arg)))))))
 			  (if (not (tst nlst v))
-			      (format #t "(= ~{~A~^ ~}) -> ~A~%" nlst v))))
+			      (format #t "(= ~{~A~^ ~}) -> ~A~%" nlst v)
+			      #t)))
 		      choose-2-or-more-real-numbers)
 
 

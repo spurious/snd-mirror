@@ -11,6 +11,23 @@
   (/ (* rad (mus-srate))
      (* 2 pi)))
 
+(define (big-db->linear x)
+  (expt 10.0 (/ x 20.0)))
+
+(define (big-linear->db x)
+  (if (> x 0.0)
+      (* 20.0 (log x 10))
+      -100.0))
+
+(define (big-polynomial coeffs x)
+  (let* ((top (- (vector-length coeffs) 1))
+	 (sum (vector-ref coeffs top)))
+    (do ((i (- top 1) (- i 1)))
+	((< i 0) sum)
+      (set! sum (+ (* x sum)
+		   (vector-ref coeffs i))))))
+
+
 
 (defgenerator (big-oscil 
   :make-wrapper 
