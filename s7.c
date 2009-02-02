@@ -18162,6 +18162,8 @@ static s7_pointer make_big_random_state(s7_scheme *sc, s7_pointer args)
 }
 
 
+/* SOMEDAY: there's still one bad case in random -- (random <bignum>) with no state arg -- returns 0 */
+
 static s7_pointer big_random(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer num, state;

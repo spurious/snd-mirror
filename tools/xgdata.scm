@@ -6905,3 +6905,9 @@
 (CFNC-2150 "void gtk_scale_add_mark GtkScale* scale gdouble value GtkPositionType position gchar* markup")
 (CFNC-2150 "void gtk_scale_clear_marks GtkScale* scale")
 
+
+#|
+;;; 2.15.2
+(CFNC-2150 "void gtk_image_menu_item_set_always_show_image GtkImageMenuItem* image_menu_item gboolean always_show")
+(CFNC-2150 "gboolean gtk_image_menu_item_get_always_show_image GtkImageMenuItem* image_menu_item")
+|#
