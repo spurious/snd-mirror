@@ -1129,6 +1129,17 @@ static void with_gl_callback(Widget w, XtPointer context, XtPointer info)
   sgl_save_currents();
   in_set_with_gl(cb->set);
   sgl_set_currents(true);
+  /* this only sets the slider positions -- it doesn't update the labels! */
+  /*   and  reflect_spectro() doesn't help! */
+  if (oid)
+    {
+      scale_set_label("x angle", oid->ax, spectro_x_angle(ss), false);
+      scale_set_label("y angle", oid->ay, spectro_y_angle(ss), false);
+      scale_set_label("z angle", oid->az, spectro_z_angle(ss), false);
+      scale_set_label("x scale", oid->sx, spectro_x_scale(ss), false);
+      scale_set_label("y scale", oid->sy, spectro_y_scale(ss), false);
+      scale_set_label("z scale", oid->sz, spectro_z_scale(ss), false);
+    }
   for_each_chan(update_graph);
 }
 #endif

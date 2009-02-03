@@ -3172,6 +3172,7 @@ typedef struct wavogram_state {
   bool inverted;
   Float scale, cutoff;
   off_t losamp;
+  Float x_scale, y_scale, z_scale, z_angle, x_angle, y_angle; /* only used in non-GL case */
 } wavogram_state;
 
    
@@ -3186,6 +3187,8 @@ static int make_wavogram(chan_info *cp)
   axis_info *ap;
   axis_context *ax;
   snd_fd *sf = NULL;
+  wavogram_state *lw;
+  bool need_new_list = true, use_gl = false, need_redraw = true;
 
   sp = cp->sound;
   ap = cp->axis;
@@ -3195,56 +3198,80 @@ static int make_wavogram(chan_info *cp)
   if (((sp->nchans == 1) || (sp->channel_style == CHANNELS_SEPARATE)) &&
       (color_map(ss) != BLACK_AND_WHITE_COLORMAP) &&
       (with_gl(ss)))
+    use_gl = true;
+#endif
+
+  lw = cp->last_wavogram;
+  if (lw)
     {
-      Float **samps;
-      int **js;
+      need_new_list = (!((lw->hop == wavo_hop(ss)) &&
+			 (lw->trace == wavo_trace(ss)) &&
+			 (lw->losamp == ap->losamp) &&
+			 (lw->width == ap->width) &&
+			 (lw->height == ap->height) &&
+			 (lw->graph_x0 == ap->graph_x0) && 
+			 (lw->cmap == color_map(ss)) &&
+			 (lw->cmap_size == color_map_size(ss)) &&
+			 (lw->edit_ctr == cp->edit_ctr) &&
+			 (lw->inverted == color_inverted(ss)) &&
+			 (lw->scale == color_scale(ss)) &&
+			 (lw->cutoff == color_cutoff(ss))));
+#if HAVE_GL
+      if (use_gl)
+	{
+	  if (cp->gl_wavo_list == NO_LIST)
+	    need_new_list = true;
+	}
+#endif
+      need_redraw = (!((lw->x_scale == spectro_x_scale(ss)) &&
+		       (lw->y_scale == spectro_y_scale(ss)) &&
+		       (lw->z_scale == spectro_z_scale(ss)) &&
+		       (lw->x_angle == spectro_x_angle(ss)) &&
+		       (lw->y_angle == spectro_y_angle(ss)) &&
+		       (lw->z_angle == spectro_z_angle(ss))));
+    }
+
+  if ((!use_gl) && (!need_redraw) && (!need_new_list))
+    return(-1); /* not 0 here because I think that would cancel fft graph */
+
+  if (cp->last_wavogram) free(cp->last_wavogram);
+
+  lw = (wavogram_state *)malloc(sizeof(wavogram_state));
+  lw->hop = wavo_hop(ss);
+  lw->trace = wavo_trace(ss);
+  lw->losamp = ap->losamp;
+  lw->width = ap->width;
+  lw->height = ap->height;
+  lw->graph_x0 = ap->graph_x0;
+  lw->cmap = color_map(ss);
+  lw->cmap_size = color_map_size(ss);
+  lw->edit_ctr = cp->edit_ctr;
+  lw->inverted = color_inverted(ss);
+  lw->scale = color_scale(ss);
+  lw->cutoff = color_cutoff(ss);
+
+  lw->x_scale = spectro_x_scale(ss);
+  lw->y_scale = spectro_y_scale(ss);
+  lw->z_scale = spectro_z_scale(ss);
+  lw->x_angle = spectro_x_angle(ss);
+  lw->y_angle = spectro_y_angle(ss);
+  lw->z_angle = spectro_z_angle(ss);
+
+  cp->last_wavogram = lw;
+
+#if HAVE_GL
+  if (use_gl)
+    {
+      Float **samps = NULL;
+      int **js = NULL;
       float x0, x1, y0, y1, x5inc, y5inc;
       Float xinc, yinc;
       rgb_t *rs = NULL, *gs = NULL, *bs = NULL;
-      wavogram_state *lw;
       /* each line is wavo_trace samps, there are (height / wave_hop) of these? */
-      int lines, len;
-      bool need_new_list = true;
-
-      lw = cp->last_wavogram;
-      if ((lw) &&
-	  (cp->gl_wavo_list != NO_LIST) &&
-	  (lw->hop == wavo_hop(ss)) &&
-	  (lw->trace == wavo_trace(ss)) &&
-	  (lw->losamp == ap->losamp) &&
-	  (lw->width == ap->width) &&
-	  (lw->height == ap->height) &&
-	  (lw->graph_x0 == ap->graph_x0) && 
-	  (lw->cmap == color_map(ss)) &&
-	  (lw->cmap_size == color_map_size(ss)) &&
-	  (lw->edit_ctr == cp->edit_ctr) &&
-	  (lw->inverted == color_inverted(ss)) &&
-	  (lw->scale == color_scale(ss)) &&
-	  (lw->cutoff == color_cutoff(ss)))
+      int lines = 0, len = 0;
+      
+      if (need_new_list)
 	{
-	  /* use previous display list */
-	  need_new_list = false;
-	}
-      else
-	{
-	  if (cp->last_wavogram) free(cp->last_wavogram);
-
-	  lw = (wavogram_state *)malloc(sizeof(wavogram_state));
-	  lw->hop = wavo_hop(ss);
-	  lw->trace = wavo_trace(ss);
-	  lw->losamp = ap->losamp;
-	  lw->width = ap->width;
-	  lw->height = ap->height;
-	  lw->graph_x0 = ap->graph_x0;
-	  lw->cmap = color_map(ss);
-	  lw->cmap_size = color_map_size(ss);
-	  lw->edit_ctr = cp->edit_ctr;
-	  lw->inverted = color_inverted(ss);
-	  lw->scale = color_scale(ss);
-	  lw->cutoff = color_cutoff(ss);
-
-	  cp->last_wavogram = lw;
-
 	  sf = init_sample_read(ap->losamp, cp, READ_FORWARD);
 	  if (sf == NULL) return(0);
 
@@ -3407,22 +3434,33 @@ static int make_wavogram(chan_info *cp)
 
   sf = init_sample_read(ap->losamp, cp, READ_FORWARD);
   if (sf == NULL) return(0);
+
+  /* set up the graph width and so on */
+  make_axes_1(ap, cp->x_axis_style, SND_SRATE(sp), SHOW_NO_AXES, NOT_PRINTING, NO_X_AXIS, NO_GRID, WITH_LINEAR_AXES, 1.0);
+  erase_rectangle(cp, ap->ax, ap->graph_x0, ap->y_offset, ap->width, ap->height); 
+
   if (cp->printing) ps_allocate_grf_points();
+
   width = (ap->x_axis_x1 - ap->x_axis_x0);
   height = (ap->y_axis_y1 - ap->y_axis_y0); /* negative! */
+
   xincr = width / (Float)(cp->wavo_trace);
   yincr = -(cp->wavo_hop);
   if (yincr > 0) yincr = -yincr;
   if (yincr == 0) yincr = -1;
+
   x0 = (ap->x_axis_x0 + ap->x_axis_x1) * 0.5;
   y0 = (ap->y_axis_y0 + ap->y_axis_y1) * 0.5;
+
   zscl = -(cp->spectro_z_scale * height);
   rotate_matrix(cp->spectro_x_angle, cp->spectro_y_angle, cp->spectro_z_angle,
 		cp->spectro_x_scale, cp->spectro_y_scale, zscl,
 		matrix);
+
   ax = copy_context(cp);
   if (color_map(ss) != BLACK_AND_WHITE_COLORMAP)
     allocate_color_map(color_map(ss));
+
   for (xoff = ap->x_axis_x0, yoff = ap->y_axis_y0; 
        yoff > ap->y_axis_y1; 
        yoff += yincr)
@@ -3670,7 +3708,8 @@ static void make_axes(chan_info *cp, axis_info *ap, x_axis_style_t x_style, bool
     ap->ax = cp->cgx->ax;
   sp = cp->sound;
   setup_axis_context(cp, ap->ax);
-  /* here is where the graph is cleared(!) -- only use of erase_rectangle (see also make_partial_graph) */
+
+  /* here is where the graph is cleared (see also make_partial_graph and make_wavogram) */
   if (erase_first == CLEAR_GRAPH)
     erase_rectangle(cp, ap->ax, ap->graph_x0, ap->y_offset, ap->width, ap->height); 
 
@@ -3865,26 +3904,26 @@ static void display_channel_data_with_size(chan_info *cp,
 	      ap->y0 = ap->x0;
 	      ap->y1 = ap->y0 + (Float)(cp->wavo_trace * (ap->y_axis_y0 - ap->y_axis_y1)) / ((Float)(cp->wavo_hop) * SND_SRATE(sp));
 	      ap->x1 = ap->x0 + (double)(cp->wavo_trace) / (double)SND_SRATE(sp);
+	      points = make_wavogram(cp);
 	    }
-	  if ((!(with_gl(ss))) || 
-	      (cp->time_graph_type != GRAPH_AS_WAVOGRAM) ||
-	      (color_map(ss) == BLACK_AND_WHITE_COLORMAP) ||
-	      ((sp->nchans > 1) && (sp->channel_style != CHANNELS_SEPARATE)))
-	    make_axes(cp, ap,
-		      cp->x_axis_style,
-		      (((cp->chan == 0) || (sp->channel_style != CHANNELS_SUPERIMPOSED)) ? CLEAR_GRAPH : DONT_CLEAR_GRAPH),
-		      cp->show_grid,
-		      WITH_LINEAR_AXES,
-		      cp->show_axes);
-	  cp->cursor_visible = false;
-	  cp->selection_visible = false;
+	  else
+	    {
+	      make_axes(cp, ap,
+			cp->x_axis_style,
+			(((cp->chan == 0) || (sp->channel_style != CHANNELS_SUPERIMPOSED)) ? CLEAR_GRAPH : DONT_CLEAR_GRAPH),
+			cp->show_grid,
+			WITH_LINEAR_AXES,
+			cp->show_axes);
+	      cp->cursor_visible = false;
+	      cp->selection_visible = false;
 
 #if USE_CAIRO
-	  if ((cp->chan == 0) || (sp->channel_style != CHANNELS_SUPERIMPOSED)) 
-	    display_selection(cp);
+	      if ((cp->chan == 0) || (sp->channel_style != CHANNELS_SUPERIMPOSED)) 
+		display_selection(cp);
 #endif
 
-	  points = make_graph(cp);
+	      points = make_graph(cp);
+	    }
 	  if (points == 0) return;
 	  if (cp->cursor_on) draw_graph_cursor(cp);
 	}

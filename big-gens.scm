@@ -19,7 +19,16 @@
       (* 20.0 (log x 10))
       -100.0))
 
+(define (big-degrees->radians deg)
+  (* (/ pi 180) deg))
+
+(define (big-radians->degrees rad)
+  (/ (* rad 180) pi))
+
+
+
 ;;; -------- polynomial --------
+
 (define (big-polynomial coeffs x)
   (let* ((top (- (vector-length coeffs) 1))
 	 (sum (vector-ref coeffs top)))
@@ -29,7 +38,20 @@
 		   (vector-ref coeffs i))))))
 
 
+;;; -------- dot-product --------
+
+(define (big-dot-product v1 v2)
+  (let ((sum 0.0)
+	(len (min (vector-length v1) (vector-length v2))))
+    (do ((sum 0.0)
+	 (i 0 (+ i 1)))
+	((= i len) sum)
+      (set! sum (+ sum (* (vector-ref v1 i) (vector-ref v2 i)))))))
+
+
+
 ;;; -------- oscil --------
+
 (defgenerator (big-oscil 
   :make-wrapper 
     (lambda (g)
@@ -38,13 +60,14 @@
   (frequency *clm-default-frequency*) (angle 0.0))
 
 (define* (big-oscil gen :optional (fm 0.0) (pm 0.0))
-  (declare (gen big-oscil) (fm float))
+  (declare (gen big-oscil) (fm float) (pm float))
   (let ((x (big-oscil-angle gen)))
     (set! (big-oscil-angle gen) (+ fm x (big-oscil-frequency gen)))
     (sin (+ x pm))))
 
 
 ;;; -------- ncos --------
+
 (defgenerator (big-ncos
   :make-wrapper
    (lambda (g)
@@ -67,6 +90,107 @@
 	(min 1.0 (* scl (- (/ (sin (* (+ n 1/2) x)) den) 1/2))))))
 
 
+;;; -------- nsin --------
+
+(defgenerator (big-nsin
+  :make-wrapper
+   (lambda (g)
+     (letrec ((nsin-ns (lambda (x n)
+			 (let* ((a2 (/ x 2))
+				(den (sin a2)))
+			   (if (= den 0.0)
+			       0.0
+			       (/ (* (sin (* n a2))
+				     (sin (* (+ n 1) a2)))
+				  den)))))
+	      (find-nsin-scaler (lambda (n lo hi)
+				  (let* ((mid (/ (+ lo hi) 2))
+					 (ylo (nsin-ns lo n))
+					 (yhi (nsin-ns hi n)))
+				    (if (< (abs (- yhi ylo)) 1e-12)
+					(nsin-ns mid n)
+					(if (> ylo yhi)
+					    (find-nsin-scaler n lo mid)
+					    (find-nsin-scaler n mid hi)))))))
+     (if (<= (big-nsin-n g) 0)
+	 (set! (big-nsin-n g) 1))
+     (set! (big-nsin-r g) (/ 1.0 (find-nsin-scaler (big-nsin-n g) 0.0 (/ pi (+ (big-nsin-n g) 1/2)))))
+     (set! (big-nsin-frequency g) (big-hz->radians (big-nsin-frequency g)))
+     g)))
+   (frequency *clm-default-frequency*) (n 1 :type int) (angle 0.0) (r 1.0))
+
+(define* (big-nsin gen :optional (fm 0.0))
+  (declare (gen big-nsin) (fm float))
+  (let* ((n (big-nsin-n gen))
+	 (x (big-nsin-angle gen))
+	 (a2 (/ x 2))
+	 (scl (big-nsin-r gen))
+	 (den (sin a2)))
+    (set! (big-nsin-angle gen) (+ fm x (big-nsin-frequency gen)))
+    (if (= den 0.0)
+	0.0
+	(/ (* scl (sin (* n a2)) (sin (* (+ n 1) a2))) den))))
+
+#|
+(with-sound (:statistics #t :clipped #f) 
+  (let ((g (make-big-nsin 100.0 10)))
+    (do ((i 0 (+ i 1))) 
+	((= i 22050))
+      (outa i (* .5 (big-nsin g))))))
+|#
+
+
+;;; -------- table-lookup --------
+
+(define (big-vector-interp wave x n)
+  (let* ((xx (modulo x n))
+	 (ipart (floor xx))
+	 (fpart (- xx ipart)))
+    (if (zero? fpart)
+	(vector-ref wave ipart)
+	(+ (vector-ref wave ipart)
+	   (* fpart (- (vector-ref wave (modulo (+ ipart 1) n)) 
+		       (vector-ref wave ipart)))))))
+
+(defgenerator (big-table-lookup
+  :make-wrapper
+    (lambda (g)
+      (if (not (big-table-lookup-wave g))
+	  (set! (big-table-lookup-wave g) (make-vector (big-table-lookup-size g) 0.0))
+	  (set! (big-table-lookup-size g) (vector-length (big-table-lookup-wave g))))
+      (set! (big-table-lookup-frequency g) (/ (* (big-table-lookup-frequency g) (big-table-lookup-size g)) (mus-srate)))
+      (set! (big-table-lookup-angle g) (/ (* (big-table-lookup-angle g) (big-table-lookup-size g)) (* 2 pi)))
+      g))
+  (frequency *clm-default-frequency*) (angle 0.0) (wave #f :type vector) (size *clm-table-size*))
+
+(define* (big-table-lookup gen :optional (fm 0.0))
+  (declare (gen big-table-lookup) (fm float))
+  (let ((x (big-table-lookup-angle gen))
+	(w (big-table-lookup-wave gen))
+	(n (big-table-lookup-size gen)))
+    (set! (big-table-lookup-angle gen) (+ x (big-table-lookup-frequency gen) (/ (* fm n) (* 2 pi))))
+    (big-vector-interp w x n)))
+      
+
+#|
+(with-sound (:statistics #t :clipped #f) 
+  (let ((g (make-big-table-lookup 100.0 0.0 (let ((w (make-vector 32)))
+					      (do ((i 0 (+ i 1)))
+						  ((= i 32) w)
+						(vector-set! w i (sin (/ (* i pi) 16))))))))
+    (do ((i 0 (+ i 1))) 
+	((= i 22050))
+      (outa i (* .5 (big-table-lookup g))))))
+|#
+
+
+
+
+
+
+
+
 
 ;;; TODO: rest of big-gens?
+
 

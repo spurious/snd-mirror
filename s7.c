@@ -507,6 +507,9 @@ struct s7_scheme {
 #endif
 
   void *default_rng;
+#if WITH_GMP
+  void *default_big_rng;
+#endif
 };
 
 
@@ -14211,7 +14214,9 @@ static s7_scheme *clone_s7(s7_scheme *sc, s7_pointer vect)
   new_sc->backtrace_args = NULL;
   new_sc->backtrace_thread_ids = NULL;
   new_sc->default_rng = NULL;
-
+#if WITH_GMP
+  new_sc->default_big_rng = NULL;
+#endif
   return(new_sc);
 }
 
@@ -14224,6 +14229,9 @@ static s7_scheme *close_s7(s7_scheme *sc)
   if (sc->read_line_buf) free(sc->read_line_buf);
 #endif
   if (sc->default_rng) free(sc->default_rng);
+#if WITH_GMP
+  if (sc->default_big_rng) free(sc->default_big_rng);
+#endif
   free(sc);
   return(NULL);
 }
@@ -18115,7 +18123,6 @@ typedef struct {
 } big_rng;
 
 
-
 static char *print_big_rng(s7_scheme *sc, void *val)
 {
   char *buf;
@@ -18162,8 +18169,6 @@ static s7_pointer make_big_random_state(s7_scheme *sc, s7_pointer args)
 }
 
 
-/* SOMEDAY: there's still one bad case in random -- (random <bignum>) with no state arg -- returns 0 */
-
 static s7_pointer big_random(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer num, state;
@@ -18173,106 +18178,135 @@ static s7_pointer big_random(s7_scheme *sc, s7_pointer args)
   if (!s7_is_number(num))
     return(s7_wrong_type_arg_error(sc, "random", 1, num, "a number"));
 
+  if (big_is_zero(sc, args) == sc->T)
+    return(num);
+
   if (cdr(args) != sc->NIL)
+    state = cadr(args);
+
+  if ((is_object(num)) ||
+      ((is_object(state)) &&
+       (object_type(state) == big_rng_tag)))
     {
-      state = cadr(args);
-      if ((is_object(state)) &&
-	  (object_type(state) == big_rng_tag))
+      /* bignum case -- provide a state if none was passed,
+       *   promote num if bignum state was passed but num is not a bignum
+       *   if num==0, just return 0 (above) since gmp otherwise throws an srithmetic exception
+       */
+      big_rng *r = NULL;
+
+      if (state == sc->NIL)
 	{
-	  big_rng *r;
-	  r = (big_rng *)s7_object_value(state);
-	  if (!is_object(num))
+	  /* no state passed, so make one */
+
+	  if (!sc->default_big_rng)
 	    {
-	      switch (object_number_type(num))
-		{
-		case NUM_INT:
-		  num = promote_number(sc, T_BIG_INTEGER, num);
-		  break;
-
-		case NUM_RATIO:
-		  num = promote_number(sc, T_BIG_RATIO, num);
-		  break;
-
-		case NUM_REAL:
-		case NUM_REAL2:
-		  num = promote_number(sc, T_BIG_REAL, num);
-		  break;
-
-		default:
-		  num = promote_number(sc, T_BIG_COMPLEX, num);
-		  break;
-		}
+	      mpz_t seed;
+	      r = (big_rng *)calloc(1, sizeof(big_rng));
+	      mpz_init_set_ui(seed, (unsigned int)time(NULL));
+	      gmp_randinit_default(r->state);
+	      gmp_randseed(r->state, seed);
+	      mpz_clear(seed);
+	      sc->default_big_rng = (void *)r;
 	    }
-	    
-	  if (object_type(num) == big_integer_tag)
-	    {
-	      mpz_t *n;
-	      n = (mpz_t *)malloc(sizeof(mpz_t));
-	      mpz_init(*n);
-	      mpz_urandomm(*n, r->state, S7_BIG_INTEGER(num));
-	      return(s7_make_object(sc, big_integer_tag, (void *)n));
-	    }
-
-	  if (object_type(num) == big_ratio_tag)
-	    {
-	      mpfr_t *n;
-	      mpfr_t rat;
-	      n = (mpfr_t *)malloc(sizeof(mpfr_t));
-	      mpfr_init_set_ui(*n, 1, GMP_RNDN);
-	      mpfr_urandomb(*n, r->state);
-	      mpfr_init_set_q(rat, S7_BIG_RATIO(num), GMP_RNDN);
-	      mpfr_mul(*n, *n, rat, GMP_RNDN);
-	      mpfr_clear(rat);
-	      return(big_rationalize(sc, make_list_1(sc, s7_make_object(sc, big_real_tag, (void *)n))));
-	    }
-
-	  if (object_type(num) == big_real_tag)
-	    {
-	      mpfr_t *n;
-	      n = (mpfr_t *)malloc(sizeof(mpfr_t));
-	      mpfr_init_set_ui(*n, 1, GMP_RNDN);
-	      mpfr_urandomb(*n, r->state);
-	      mpfr_mul(*n, *n, S7_BIG_REAL(num), GMP_RNDN);
-	      return(s7_make_object(sc, big_real_tag, (void *)n));
-	    }
-
-	  if (object_type(num) == big_complex_tag)
-	    {
-	      mpc_t *n;
-	      n = (mpc_t *)malloc(sizeof(mpc_t));
-	      mpc_init(*n);
-	      mpc_urandom(*n, r->state);
-	      mpfr_mul(MPC_RE(*n), MPC_RE(*n), MPC_RE(S7_BIG_COMPLEX(num)), GMP_RNDN);
-	      mpfr_mul(MPC_IM(*n), MPC_IM(*n), MPC_IM(S7_BIG_COMPLEX(num)), GMP_RNDN);
-	      return(s7_make_object(sc, big_complex_tag, (void *)n));
-	    }
+	  else r = (big_rng *)(sc->default_big_rng);
 	}
-    }
-
-  if (is_object(num))
-    {
-      if (object_type(num) == big_real_tag)
-	num = s7_make_real(sc, (s7_Double)mpfr_get_d(S7_BIG_REAL(num), GMP_RNDN));
       else
 	{
-	  if (object_type(num) == big_integer_tag)
-	    num = s7_make_integer(sc, big_integer_to_s7_Int(S7_BIG_INTEGER(num)));
-	  else
+	  /* state was passed, check its type */
+
+	  if (object_type(state) == rng_tag)
 	    {
-	      if (object_type(num) == big_ratio_tag)
-		num = s7_make_ratio(sc, 
-				    big_integer_to_s7_Int(mpq_numref(S7_BIG_RATIO(num))), 
-				    big_integer_to_s7_Int(mpq_denref(S7_BIG_RATIO(num))));
+	      /* here "num" is a bignum, the state was passed, but it is intended for non-bignums */
+	      if (object_type(num) == big_real_tag)
+		num = s7_make_real(sc, (s7_Double)mpfr_get_d(S7_BIG_REAL(num), GMP_RNDN));
+	      else
+		{
+		  if (object_type(num) == big_integer_tag)
+		    num = s7_make_integer(sc, big_integer_to_s7_Int(S7_BIG_INTEGER(num)));
+		  else
+		    {
+		      if (object_type(num) == big_ratio_tag)
+			num = s7_make_ratio(sc, 
+					    big_integer_to_s7_Int(mpq_numref(S7_BIG_RATIO(num))), 
+					    big_integer_to_s7_Int(mpq_denref(S7_BIG_RATIO(num))));
+		    }
+		}
+	      return(g_random(sc, make_list_2(sc, num, state)));
+	    }
+	  r = (big_rng *)s7_object_value(state);
+	}
+
+      if (!is_object(num))
+	{
+	  switch (object_number_type(num))
+	    {
+	    case NUM_INT:
+	      num = promote_number(sc, T_BIG_INTEGER, num);
+	      break;
+
+	    case NUM_RATIO:
+	      num = promote_number(sc, T_BIG_RATIO, num);
+	      break;
+
+	    case NUM_REAL:
+	    case NUM_REAL2:
+	      num = promote_number(sc, T_BIG_REAL, num);
+	      break;
+
+	    default:
+	      num = promote_number(sc, T_BIG_COMPLEX, num);
+	      break;
 	    }
 	}
-      if (is_object(state))
-	return(g_random(sc, make_list_2(sc, num, state)));
 
-      return(g_random(sc, make_list_1(sc, num)));
+      /* finally both the state and the number are big */
+	    
+      if (object_type(num) == big_integer_tag)
+	{
+	  mpz_t *n;
+	  n = (mpz_t *)malloc(sizeof(mpz_t));
+	  mpz_init(*n);
+	  mpz_urandomm(*n, r->state, S7_BIG_INTEGER(num));
+	  return(s7_make_object(sc, big_integer_tag, (void *)n));
+	}
+      
+      if (object_type(num) == big_ratio_tag)
+	{
+	  mpfr_t *n;
+	  mpfr_t rat;
+	  n = (mpfr_t *)malloc(sizeof(mpfr_t));
+	  mpfr_init_set_ui(*n, 1, GMP_RNDN);
+	  mpfr_urandomb(*n, r->state);
+	  mpfr_init_set_q(rat, S7_BIG_RATIO(num), GMP_RNDN);
+	  mpfr_mul(*n, *n, rat, GMP_RNDN);
+	  mpfr_clear(rat);
+	  return(big_rationalize(sc, make_list_1(sc, s7_make_object(sc, big_real_tag, (void *)n))));
+	}
+      
+      if (object_type(num) == big_real_tag)
+	{
+	  mpfr_t *n;
+	  n = (mpfr_t *)malloc(sizeof(mpfr_t));
+	  mpfr_init_set_ui(*n, 1, GMP_RNDN);
+	  mpfr_urandomb(*n, r->state);
+	  mpfr_mul(*n, *n, S7_BIG_REAL(num), GMP_RNDN);
+	  return(s7_make_object(sc, big_real_tag, (void *)n));
+	}
+      
+      if (object_type(num) == big_complex_tag)
+	{
+	  mpc_t *n;
+	  n = (mpc_t *)malloc(sizeof(mpc_t));
+	  mpc_init(*n);
+	  mpc_urandom(*n, r->state);
+	  mpfr_mul(MPC_RE(*n), MPC_RE(*n), MPC_RE(S7_BIG_COMPLEX(num)), GMP_RNDN);
+	  mpfr_mul(MPC_IM(*n), MPC_IM(*n), MPC_IM(S7_BIG_COMPLEX(num)), GMP_RNDN);
+	  return(s7_make_object(sc, big_complex_tag, (void *)n));
+	}
     }
+
   return(g_random(sc, args));
 }
-
 
 
 

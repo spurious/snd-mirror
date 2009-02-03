@@ -903,6 +903,7 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
       if (axes == SHOW_BARE_X_AXIS)
 	cury -= (label_height(false) + inner_border_width);
     }
+
   ap->y_axis_y0 = cury;
   ap->y_axis_x0 = curx;
   ap->y_axis_x0 += ap->graph_x0;
@@ -915,7 +916,9 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
   ap->y_axis_y0 += ap->y_offset;
   ap->y_axis_y1 += ap->y_offset;
   ap->x_label_y += ap->y_offset;
+
   init_axis_scales(ap);
+
   if ((printing) && (ap->cp) &&
       ((ap->cp->chan == 0) || (ap->cp->sound->channel_style != CHANNELS_SUPERIMPOSED)))
     ps_bg(ap, ax);
