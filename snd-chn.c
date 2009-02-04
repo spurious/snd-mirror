@@ -3231,8 +3231,10 @@ static int make_wavogram(chan_info *cp)
 		       (lw->z_angle == spectro_z_angle(ss))));
     }
 
+#if USE_MOTIF
   if ((!use_gl) && (!need_redraw) && (!need_new_list))
     return(-1); /* not 0 here because I think that would cancel fft graph */
+#endif
 
   if (cp->last_wavogram) free(cp->last_wavogram);
 

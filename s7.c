@@ -31,6 +31,7 @@
  *        no invidious distinction between built-in and "foreign"
  *          (this makes it easy to extend built-in operators like "+" -- see s7.h for a simple example)
  *        threads (optional)
+ *          currently threads and gmp are not compatible
  *
  *   many minor changes!
  *
@@ -18115,7 +18116,14 @@ static s7_pointer g_set_precision(s7_scheme *sc, s7_pointer args)
 }
 
 /*
- * TODO: check bignums and threads
+ * bignums and threads
+   gmp.info:
+   " It's safe for two threads to read from the same GMP variable
+     simultaneously, but it's not safe for one to read while the
+     another might be writing, nor for two threads to write
+     simultaneously.  It's not safe for two threads to generate a
+     random number from the same `gmp_randstate_t' simultaneously,
+     since this involves an update of that variable."
  */
 
 typedef struct {
@@ -18307,7 +18315,6 @@ static s7_pointer big_random(s7_scheme *sc, s7_pointer args)
 
   return(g_random(sc, args));
 }
-
 
 
 static void s7_gmp_init(s7_scheme *sc)

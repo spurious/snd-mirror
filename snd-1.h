@@ -447,7 +447,7 @@ typedef struct snd_info {
   sp_watcher **watchers;
   int watchers_size;
 #if HAVE_PTHREADS
-  mus_lock_t *starred_name_lock, *stop_sign_lock;
+  mus_lock_t *starred_name_lock, *stop_sign_lock, *edit_history_lock;
 #endif
 } snd_info;
 

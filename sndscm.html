@@ -5377,19 +5377,6 @@ undo-channel is a "regularized" version of <a href="extsnd.html#undo">undo</a>.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
-<!-- with-threaded-channels -->
-<tr><td colspan=2 bgcolor="#f2f4ff">
-<em class=emdef>with-threaded-channels</em> <code>(func)</code>
-</td></tr><tr><td></td><td>
-with-threaded-channels is an experiment in multithreading.  It applies 'func', a function
-of one argument (the current channel number), to each channel in the current sound,
-using a separate thread for each call.  
-<pre>
-    (with-threaded-channels (lambda (chn) (src-channel 2.0 0 #f #f chn)))
-</pre>
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
 <!-- with-reopen-menu -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
 <a class=def name="withreopenmenu">with-reopen-menu</a> <code>()</code>
@@ -7999,7 +7986,11 @@ and the color for the height of the corresponding peak:
 
 <p>
 Surprisingly reminiscent of sin(x)*sin(x-y)!
-I tilted the graph slightly to try to show how the colors match the peaks.  The graph on the right is
+I tilted the graph slightly to try to show how the colors match the peaks.  
+If we set the 2nd component's phase to (a+pi)/2 where "a" is the 3rd one's initial phase,
+we travel along the minimum going diagonally through the middle of the graph (I think the
+graph got truncated slightly: the top should match the bottom).
+The graph on the right is
 an attempt to show the 4-dimensional 4-harmonic case by stacking 3-D slices.
 A different way to view these graphs that 
 that can be applied to any number
@@ -11565,6 +11556,13 @@ not in the run macro), there's little gained by using threads; since the threads
 cell allocations become a bottleneck.  I have used with-threaded-sound on 2, 8, and 16 core machines.
 In the best cases, I see speed up factors of more or less n - 1 (14.8 times faster in the 16-core case, for example,
 where the process monitor program shows all 16 cores running at better than 95%).  Now for 32...
+</p>
+
+<p>Snd in general does not yet handle s7 threads with aplomb.  The primary problems currently
+involve user-interface issues (Motif is not thread safe, for example).  sndlib and s7 itself 
+are thread safe, so I believe with-threaded-sound works with any CLM instrument, but I don't
+expect Snd editing functions such as filter-channel to work correctly.  Perhaps the no-gui version
+is usable?
 </p>
 
 

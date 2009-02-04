@@ -319,7 +319,7 @@
 						    (format #t ", ~A real but rational: ~A, imag: ~A, real: ~A"
 							    n (rational? n) (imag-part n) (real-part n))
 						    (format #t ", ~A complex but real? ~A, imag: ~A, ~A+~A=~A"
-							    ~A (real? ~A) (imag-part ~A) (real-part ~A) (imag-part ~A)
+							    n (real? n) (imag-part n) (real-part n) (imag-part n)
 							    (+ (real-part n) (* 0+i (imag-part n)))))))))))))))
 	    (newline) (newline)))))
 

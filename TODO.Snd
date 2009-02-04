@@ -15,21 +15,6 @@ A graphic-EQ effect (effects.scm) -- this could use the CLM formant generator.
 
 Physical model of a thunder machine.
 
-Should the Scheme/Ruby files be gettext-ized?  Here's a Guile example:
-
-    (use-modules (ice-9 format))
-    (catch #t (lambda () (setlocale LC_ALL "")) (lambda args #f))
-    (textdomain "hello-guile")
-    (bindtextdomain "hello-guile" "@localedir@") ; presumably set by automake?
-    (define _ gettext)
-    (display (_ "Hello, world!"))
-    (newline)
-    (format #t (_ "This program is running as process number ~D.") (getpid))
-    (newline)
-
-lua, octave, python, stklos, elk, haskell support!
-    (see brief comments in snd-xen.c).
-
 The move-sound generator is a temporary kludge that fossilized.
 
 A new paned window widget for gtk.
