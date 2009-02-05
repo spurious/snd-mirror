@@ -2569,8 +2569,8 @@ extremely slow.
 
 <!-- goertzel and find-sine -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
-<a class=def name="goertzel">goertzel</a> <code>(freq :optional beg dur)</code><br>
-<em class=emdef>find-sine</em> <code>(freq beg dur)</code>
+<a class=def name="goertzel">goertzel</a> <code>(freq :optional beg dur snd)</code><br>
+<em class=emdef>find-sine</em> <code>(freq beg dur :optional snd)</code>
 </td></tr><tr><td></td><td>
 goertzel and find-sine find the amplitude of a single component of a spectrum ('freq').
 <pre>
@@ -8154,7 +8154,7 @@ through the 5-D landscape, each 4-D case being 8 3-D slices as before:
 -->
 
 <p>In general, the minimum peak amplitude appears to be
-slightly less than (expt n .6).  Here is a graph of the values I've found so far.
+about (expt n .59).  Here is a graph of the values I've found so far.
 If plotted as a log-log graph, it is
 a straight line with a slope just less than 0.6. I've included the n odd, even, and prime-numbered components min peak amps
 as well.

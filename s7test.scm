@@ -116,6 +116,7 @@
 	(newline) (newline)
 	)))
 
+
 (defmacro test (tst expected) ;(display tst) (newline)
   `(let ((result (catch #t (lambda () ,tst) (lambda args 'error))))
      (ok? ',tst result ,expected)))
@@ -128,7 +129,10 @@
 (define error-data '())
 
 (define (op-error op result expected)
-  (define (conjugate n) (make-rectangular (real-part n) (- (imag-part n))))
+
+  (define (conjugate n) 
+    (make-rectangular (real-part n) (- (imag-part n))))
+
   (if (and (real? result)
 	   (real? expected))
       (/ (abs (- result expected)) (max 1.0 (abs expected)))
@@ -161,6 +165,7 @@
 	    (max 0.001 (magnitude expected))))
 	(else (/ (magnitude (- result expected)) (max 0.001 (magnitude expected)))))))
 
+
 (define (check-error tst result expected)
   (if (and (number? result)
 	   (number? expected))
@@ -180,6 +185,7 @@
 			  (vector-set! err-op 3 result)
 			  (vector-set! err-op 4 expected)))
 		    (set! error-data (cons (vector op err tst result expected) error-data)))))))))
+
 
 (define (types-consistent? n)
   (not (or (and (integer? n) 
@@ -203,6 +209,7 @@
 	       (not (real? n))
 	       (or (= (imag-part n) 0)
 		   (not (= n (+ (real-part n) (* 0+i (imag-part n))))))))))
+
 
 (define (our-nan? x)
   (or (and (real? x)
@@ -274,7 +281,10 @@
 		      (if (and (number? expected)
 			       (or (not (number? result))
 				   (our-nan? result)))
-			  (format #t ", (number? ~A) but not ~A" expected result)
+			  (begin
+			    (if (not (number? result))
+				(format #t ", (number? ~A) but not (number? ~A)" expected result)
+				(format #t ", (number? ~A) but (nan? ~A)" expected result)))
 			  (if (and (rational? expected)
 				   (exact? expected)
 				   (rational? result)

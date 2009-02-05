@@ -1005,7 +1005,7 @@ static XEN g_ladspa_UniqueID(XEN ptr)
 {
   #define H_ladspa_UniqueID "(" FIELD_PREFIX "UniqueID descriptor): plugin ID number"
   XEN_ASSERT_TYPE(XEN_Ladspa_Descriptor_P(ptr), ptr, XEN_ONLY_ARG, FIELD_PREFIX "UniqueID", "Ladspa descriptor");
-  return(C_TO_XEN_ULONG((XEN_TO_C_Ladspa_Descriptor(ptr))->UniqueID));
+  return(C_TO_XEN_INT((XEN_TO_C_Ladspa_Descriptor(ptr))->UniqueID));
 }
 
 
@@ -1013,7 +1013,7 @@ static XEN g_ladspa_PortCount(XEN ptr)
 {
   #define H_ladspa_PortCount "(" FIELD_PREFIX "PortCount descriptor): plugin input and output port count"
   XEN_ASSERT_TYPE(XEN_Ladspa_Descriptor_P(ptr), ptr, XEN_ONLY_ARG, FIELD_PREFIX "PortCount", "Ladspa descriptor");
-  return(C_TO_XEN_ULONG((XEN_TO_C_Ladspa_Descriptor(ptr))->PortCount));
+  return(C_TO_XEN_INT((XEN_TO_C_Ladspa_Descriptor(ptr))->PortCount));
 }
 
 

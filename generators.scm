@@ -589,7 +589,7 @@
 	 (outa i (nxy1sin gen)))))))
 |#
 
-;;; TODO: test x86 gtk/motif pointer handling
+;;; TODO: test x86_64 gtk/motif pointer handling
 
 ;;;   we can get the sinusoidally varying maxamp by using e.g. (make-nxy1sin 1 1000 3)
 ;;;   the peak starts at ca .72 and goes to 1 etc
@@ -6246,6 +6246,7 @@ index 10 (so 10/2 is the bes-jn arg):
   (if (not wave)
       (make-polyshape frequency :partials partials)
       (make-polyshape frequency :coeffs wave)))
+
 (def-optkey-fun (partials->waveshape partials 
 				     (size *clm-table-size*))
   (partials->polynomial partials))
@@ -6468,7 +6469,7 @@ index 10 (so 10/2 is the bes-jn arg):
 (circler gen (fm 0.0)) produces a waveform made up of half circles"
   (declare (gen circler) (fm float))
   (let* ((x (fmod (circler-angle gen) (* 2 pi)))
-	 ;; not modulo here because the run macro assumes mod handles only ints
+         ;; modulo will also work
 	 (xx (/ (* 4 x) (* 2 pi)))
 	 (y (if (< xx 2)
 		(sqrt (- 1 (* (- 1 xx) (- 1 xx))))
@@ -6476,7 +6477,7 @@ index 10 (so 10/2 is the bes-jn arg):
     (set! (circler-angle gen) (+ (circler-angle gen) fm (circler-frequency gen)))
     y))
 
-(with-sound (:clipped #f :statistics #t :play #t)
+(with-sound (:clipped #f :statistics #t)
   (let ((gen (make-circler 10.0)))
     (run 
      (lambda ()

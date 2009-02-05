@@ -1805,6 +1805,7 @@ XEN make_graph_data(chan_info *cp, int edit_pos, off_t losamp, off_t hisamp)
 	  Float ymin, ymax;
 	  int k, kk;
 	  peak_env_info *ep;
+
 	  data_size = pixels + 1;
 	  data = (Float *)calloc(data_size, sizeof(Float));
 	  data1 = (Float *)calloc(data_size, sizeof(Float));
@@ -1816,6 +1817,7 @@ XEN make_graph_data(chan_info *cp, int edit_pos, off_t losamp, off_t hisamp)
 	  xk = (double)ioff;
 	  ymin = ep->fmax;
 	  ymax = ep->fmin;
+
 	  while (ioff <= hisamp)
 	    {
 	      k = (int)xf;
@@ -1840,6 +1842,7 @@ XEN make_graph_data(chan_info *cp, int edit_pos, off_t losamp, off_t hisamp)
       else
 	{
 	  Float ymin, ymax, samp;
+
 	  data_size = pixels + 1;
 	  sf = init_sample_read_any(losamp, cp, READ_FORWARD, edit_pos);
 	  if (sf == NULL) return(XEN_FALSE);
@@ -1849,6 +1852,7 @@ XEN make_graph_data(chan_info *cp, int edit_pos, off_t losamp, off_t hisamp)
 	  ymin = 100.0;
 	  ymax = -100.0;
 	  ss->stopped_explicitly = false;
+
 	  for (ioff = losamp, xf = 0.0; ioff <= hisamp; ioff++)
 	    {
 	      samp = read_sample(sf);
@@ -1876,6 +1880,7 @@ XEN make_graph_data(chan_info *cp, int edit_pos, off_t losamp, off_t hisamp)
 	    }
 	}
     }
+
   sf = free_snd_fd(sf); 
   if (data1)
     return(XEN_LIST_2(xen_make_vct(data_size, data),
@@ -1897,6 +1902,7 @@ void draw_graph_data(chan_info *cp, off_t losamp, off_t hisamp, int data_size, F
   if (data1 == NULL)
     {
       double start_time = 0.0, cur_srate = 1.0;
+
       cur_srate = (double)SND_SRATE(sp);
       if (losamp == -1)
 	losamp = snd_round_off_t(ap->x0 * cur_srate);
@@ -1907,6 +1913,7 @@ void draw_graph_data(chan_info *cp, off_t losamp, off_t hisamp, int data_size, F
       if (samps <= 0) return;
       if (samps > data_size) samps = data_size;
       incr = (double)1.0 / cur_srate;
+
       for (i = 0, x = start_time; i < samps; i++, x += incr)
 	set_grf_point(local_grf_x(x, ap), 
 		      i, 
@@ -2044,12 +2051,14 @@ static void display_peaks(chan_info *cp, axis_info *fap, Float *data, int scaler
 	    {
 	      char *fstr;
 	      Float px;
+
 	      px = peak_freqs[i].freq;
 	      fstr = prettyf(px * scaler, tens);
 	      draw_string(ax, frq_col, row, fstr, strlen(fstr));
 	      if (cp->printing) ps_draw_string(fap, frq_col, row, fstr);
 	      free(fstr);
 	      fstr = NULL;
+
 	      if (with_amps)
 		{
 		  if ((fft_data) && (cp->fft_log_magnitude))
@@ -2082,12 +2091,14 @@ static void display_peaks(chan_info *cp, axis_info *fap, Float *data, int scaler
 	{
 	  Float px;
 	  char *fstr;
+
 	  px = peak_freqs[i].freq;
 	  fstr = prettyf(px * scaler, tens);
 	  draw_string(ax, frq_col, row, fstr, strlen(fstr));
 	  if (cp->printing) ps_draw_string(fap, frq_col, row, fstr);
 	  free(fstr);
 	  fstr = NULL;
+
 	  if (with_amps)
 	    {
 	      if ((fft_data) && (cp->fft_log_magnitude))
@@ -4066,12 +4077,14 @@ static void display_channel_data_1(chan_info *cp, bool just_fft, bool just_lisp,
 {
   snd_info *sp;
   int width, height;
+
   sp = cp->sound;
   if ((sp->inuse == SOUND_IDLE) ||
       (cp->active < CHANNEL_HAS_AXES) ||
       (!(sp->active)) ||
       (!(channel_graph_is_visible(cp))))
     return;
+
   if ((sp->channel_style == CHANNELS_SEPARATE) || 
       (sp->nchans == 1))
     {
@@ -4101,6 +4114,7 @@ static void display_channel_data_1(chan_info *cp, bool just_fft, bool just_lisp,
 	  int offset, full_height, y0, y1, bottom, top;
 	  Float val, size, chan_height;
 	  axis_info *ap;
+
 	  /* CHANNELS_COMBINED case */
 	  val = gsy_value(sp->chans[0]);
 	  size = gsy_size(sp->chans[0]);
@@ -4111,6 +4125,7 @@ static void display_channel_data_1(chan_info *cp, bool just_fft, bool just_lisp,
 	  y1 = (int)((sp->nchans - cp->chan) * chan_height);
 	  y0 = y1 - (int)chan_height;
 	  offset = top - y1;
+
 	  if ((cp->chan == 0) && 
 	      (offset > 0))
 	    {
@@ -4125,6 +4140,7 @@ static void display_channel_data_1(chan_info *cp, bool just_fft, bool just_lisp,
 	      (cp->axis->height != height)) 
 	    channel_set_mix_tags_erased(cp);
 #endif
+
 	  if ((cp->chan == (sp->nchans - 1)) && 
 	      ((offset + chan_height) < height))
 	    chan_height = height - offset;
@@ -4201,8 +4217,10 @@ static void draw_sonogram_cursor_1(chan_info *cp)
 {
   axis_info *fap;
   axis_context *fax;
+
   fap = cp->fft->axis;
   fax = cursor_context(cp);
+
   if ((fap) && (fax)) 
 #if (!USE_CAIRO)
     draw_line(fax, cp->fft_cx, fap->y_axis_y0, cp->fft_cx, fap->y_axis_y1);
@@ -4454,8 +4472,10 @@ void show_cursor_info(chan_info *cp)
   int digits, i, len;
   off_t samp;
   char *s1, *s2;
+
   sp = cp->sound;
   if ((sp->sync != 0) && (cp->chan != 0)) return;
+
   samp = CURSOR(cp);
   y = chn_sample(samp, cp, cp->edit_ctr);
   absy = fabs(y);
@@ -4464,6 +4484,7 @@ void show_cursor_info(chan_info *cp)
   else digits = 2;
   len = PRINT_BUFFER_SIZE;
   expr_str = (char *)calloc(len, sizeof(char));
+
   if (sp->nchans == 1)
     mus_snprintf(expr_str, PRINT_BUFFER_SIZE, _("cursor at %s (sample " OFF_TD ") = %s"),
 		 s1 = x_axis_location_to_string(cp, (double)samp / (double)SND_SRATE(sp)),
@@ -4488,6 +4509,7 @@ void show_cursor_info(chan_info *cp)
 	  for (i = 1; i < sp->nchans; i++)
 	    {
 	      chan_info *ncp;
+
 	      expr_str = mus_strcat(expr_str, ", ", &len);
 	      free(s2);
 	      ncp = sp->chans[i];
@@ -4799,10 +4821,12 @@ bool key_press_callback(chan_info *ncp, int x, int y, int key_state, int keysym)
   /* called by every key-intercepting widget in the entire sound pane */
   chan_info *cp;
   snd_info *sp;
+
   if (!ncp) return(false);
   cp = virtual_selected_channel(ncp);
   sp = cp->sound;
   select_channel(sp, cp->chan);
+
   if (((cp->graph_lisp_p) || (XEN_HOOKED(lisp_graph_hook))) &&
       (within_graph(cp, x, y) == CLICK_LISP) &&
       (XEN_HOOKED(key_press_hook)))
@@ -8145,16 +8169,20 @@ static XEN g_set_y_bounds(XEN bounds, XEN snd_n, XEN chn_n)
   Float low, hi;
   int len = 0;
   XEN y0 = XEN_UNDEFINED, y1 = XEN_UNDEFINED;
+
   ASSERT_CHANNEL(S_setB S_y_bounds, snd_n, chn_n, 2);
   XEN_ASSERT_TYPE(XEN_LIST_P_WITH_LENGTH(bounds, len), bounds, XEN_ARG_1, S_setB S_y_bounds, "a list");
+
   cp = get_cp(snd_n, chn_n, S_setB S_y_bounds);
   if (!cp) return(XEN_FALSE);
+
   if (len > 0)
     {
       y0 = XEN_CAR(bounds);
       if (len > 1)
 	y1 = XEN_CADR(bounds);
     }
+
   if (XEN_NUMBER_P(y0))
     {
       low = XEN_TO_C_DOUBLE(y0);
@@ -8179,6 +8207,7 @@ static XEN g_set_y_bounds(XEN bounds, XEN snd_n, XEN chn_n)
       if (hi == 0.0) hi = .001;
       low = -hi;
     }
+
   if (hi > low)
     {
       axis_info *ap;
@@ -8194,6 +8223,7 @@ static XEN g_set_y_bounds(XEN bounds, XEN snd_n, XEN chn_n)
       apply_y_axis_change(ap, cp);
     }
   else XEN_OUT_OF_RANGE_ERROR(S_setB S_y_bounds, 1, bounds, "~A: y1 < y0?");
+
   return(bounds);
 }
 

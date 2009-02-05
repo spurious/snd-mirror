@@ -1138,12 +1138,12 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 				 (sin (* i j w))))))))
     arr))
 
-(define (find-sine freq beg dur)
-  "(find-sine freq beg dur) returns the amplitude and initial-phase (for sin) at freq"
-  (let ((incr (hz->radians freq))
+(define* (find-sine freq beg dur :optional snd)
+  "(find-sine freq beg dur :optional snd) returns the amplitude and initial-phase (for sin) at freq"
+  (let ((incr (/ (* freq 2 pi) (srate snd)))
 	(sw 0.0)
 	(cw 0.0)
-	(reader (make-sample-reader beg)))
+	(reader (make-sample-reader beg snd)))
     (do ((i 0 (+ i 1))) ; this could also use edot-product
 	((= i dur))
       (let ((samp (next-sample reader)))
@@ -1155,9 +1155,9 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 ;;; this is a faster version of find-sine using the "Goertzel algorithm" taken from R Lyons "Understanding DSP" p 529
 ;;; it returns the same result as find-sine above if you take (* 2 (/ (goertzel...) dur)) -- see snd-test.scm examples
 
-(define* (goertzel freq :optional beg dur)
-  "(goertzel freq :optional beg dur) returns the amplitude of the 'freq' spectral component"
-  (let* ((sr (srate))
+(define* (goertzel freq :optional beg dur snd)
+  "(goertzel freq :optional beg dur snd) returns the amplitude of the 'freq' spectral component"
+  (let* ((sr (srate snd))
 	 (y2 0.0)
 	 (y1 0.0)
 	 (y0 0.0)
@@ -1168,7 +1168,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 		   (set! y1 y0)
 		   (set! y0 (+ (- (* y1 cs) y2) y))
 		   #f)
-		  (or beg 0) (or dur (frames)))
+		  (or beg 0) (or dur (frames snd)) snd)
     (magnitude (- y0 (* y1 (exp (make-rectangular 0.0 (- rfreq))))))))
 
 
