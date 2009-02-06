@@ -3263,7 +3263,9 @@ on both the frequency and the "B" factor (which sets how close we get to a trian
 (set! (x-axis-label 0 0 0) "integration of tanh(B*sin), B from .1 to 10")
 -->
 
-<p>The amplitude scaling is obviously not right.
+<p>The amplitude scaling is obviously not right (if "B" &gt; 3, it works to use (* (/ scl 1.6) (tanh (* B (oscil gen))))
+and (outa i (- sum .83)), but if "B" is following an envelope, the integration makes it hard to keep everything
+centered and normalized).
 For sawtooth output, see also <a href="#rksin">rksin</a>.
 In these generators, the "fm" argument is useful mainly for various sci-fi sound effects:
 </p>
@@ -7180,7 +7182,7 @@ In the next example we use all these special functions to resynthesize down an o
 <p>but, sadly, this code crawls.  It won't actually be useful until I optimize
 handling of the caller's resynthesis function, but I am dragging my feet because I've never felt
 that this phase-vocoder (as a generator) was the "right thing".  The first step toward something less stupid is
-<a href="#movingspectrum">moving-spectrum</a> in generators.scm.
+moving-spectrum in generators.scm.
 </p>
 
 <br><br>

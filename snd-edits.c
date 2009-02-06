@@ -7952,6 +7952,9 @@ if 'obj' is a mix-sample-reader, the id of underlying mix"
 }
 
 
+/* sample readers should be called channel readers, sample should be channel-ref and channel-set!
+ */
+
 XEN g_c_make_sample_reader(snd_fd *fd)
 {
   XEN_MAKE_AND_RETURN_OBJECT(sf_tag, fd, 0, free_sf);

@@ -5575,7 +5575,7 @@
 		   (continuation? cont)))
 	    #t)
 
-      (test (string? (scheme-implementation)) #t)
+      (test (string? (s7-version)) #t)
       (test (eval-string "(+ 1 2)") 3)
       (test (eval '(+ 1 2)) 3)
 
@@ -5606,6 +5606,17 @@
       (test (let () (define-macro (hiho) `(+ 3 1)) (hiho)) 4)
       (test (let () (define-macro (hiho) `(+ 3 1)) (hiho 1)) 'error)
       (test (let () (define-macro (hi a) `(+ ,@a)) (hi (1 2 3))) 6)
+
+      (test (string=? (let ((hi (lambda (b) (+ b 1)))) (object->string hi)) "hi") #t)
+      (test (string=? (object->string 32) "32") #t)
+      (test (string=? (object->string 32.5) "32.5") #t)
+      (test (string=? (object->string 32/5) "32/5") #t)
+      (test (string=? (object->string "hiho") "\"hiho\"") #t)
+      (test (string=? (object->string 'symb) "symb") #t)
+      (test (string=? (object->string (list 1 2 3)) "(1 2 3)") #t)
+      (test (string=? (object->string (cons 1 2)) "(1 . 2)") #t)
+      (test (string=? (object->string '#(1 2 3)) "#(1 2 3)") #t)
+      (test (string=? (object->string +) "+") #t)
 
       (if (and (defined? 'provided?)
 	       (provided? 'threads))
@@ -32919,8 +32930,9 @@
 	   (do ((i 1 (+ i 1))
 		(k 1.0 (/ k 2.0)))
 	       ((= i 100) #f)
-	     (if (and (eqv? k (string->number (number->string k)))
-		      (eqv? (- k) (string->number (number->string (- k)))))
+	     (if (and (< (abs (- k (string->number (number->string k)))) (/ k 1e14)) ; 1e18 is ok too
+		      (< (abs (- (- k) (string->number (number->string (- k))))) (/ k 1e14)))
+		 ;; this gets confused (in eqv?) by .999.... -> 1 
 		 (set! last-good k)
 		 (letrec ((search 
 			   (lambda (lo hi)

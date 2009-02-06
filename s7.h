@@ -62,7 +62,7 @@ typedef double s7_Double;
    *
    * and various others mentioned at the start of s7.c -- nearly every Scheme implementation includes
    * stuff like logior, sinh, read-line, format, define*, etc.  See also the start of s7.c for choices
-   * such as case-sensitive symbol names, initial heap and stack size, etc.
+   * such as case-insensitive symbol names, multiprecision arithmetic, initial heap and stack size, etc.
    */
 
 
@@ -567,8 +567,8 @@ void s7_mark_object(s7_pointer p);
 
 
 #if HAVE_PTHREADS
-bool s7_is_thread_variable(s7_pointer obj);
-s7_pointer s7_thread_variable_value(s7_scheme *sc, s7_pointer obj);
+  bool s7_is_thread_variable(s7_pointer obj);
+  s7_pointer s7_thread_variable_value(s7_scheme *sc, s7_pointer obj);
 #endif
 
 /* Threads in s7 share the heap and symbol table, but have their own local environment, stack,
@@ -1279,14 +1279,14 @@ int main(int argc, char **argv)
  * 29-Jan:    s7_is_bignum and friends.
  * 26-Jan:    added s7_scheme arg to s7_vector_fill.
  * 16-Jan:    s7_is_ulong_long and friends for C pointers in 64-bit situations.
- * 9-Jan-09   added multiprecision arithmetic (gmp, mpfr, mpc) on the WITH_GMP switch
+ * 9-Jan-09   multiprecision arithmetic (gmp, mpfr, mpc) on the WITH_GMP switch
  * --------
- * 29-Dec:    added "+" specialization example, s7_apply_function.
- * 3-Dec:     added s7_open_output_function.
- * 30-Nov:    added s7_wrong_number_of_args_error.
+ * 29-Dec:    "+" specialization example, s7_apply_function.
+ * 3-Dec:     s7_open_output_function.
+ * 30-Nov:    s7_wrong_number_of_args_error.
  * 24-Nov:    changed s7_make_counted_string to s7_make_string_with_length.
  *              also added built-in format and define*
- * 10-Nov:    added s7_define_constant,
+ * 10-Nov:    s7_define_constant,
  *              built-in (scheme-side) pi, most-positive-fixnum, most-negative-fixnum
  * 7-Nov:     removed s7_is_immutable and friends, s7_reverse_in_place.
  *              removed the s7_pointer arg to s7_gc_on.

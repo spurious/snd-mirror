@@ -3423,12 +3423,22 @@ static char *declare_args(ptree *prog, XEN form, int default_arg_type, bool sepa
   if (num_passed_args > num_template_args)
     {
       /* in this context, we're not trying to handle :rest args */
-      char *temp = NULL, *str;
-      str = mus_format("got too many args: %d passed, but %s declared", num_passed_args, temp = XEN_AS_STRING(template_args));
+      bool got_keyword = false;
+      for (i = 1; i <= num_passed_args; i++)
+	if (cur_args[i]->type == R_KEYWORD)
+	  {
+	    got_keyword = true;
+	    break;
+	  }
+      if (!got_keyword)
+	{
+	  char *temp = NULL, *str;
+	  str = mus_format("got too many args: %d passed, but %s declared", num_passed_args, temp = XEN_AS_STRING(template_args));
 #if HAVE_S7
-      if (temp) free(temp);
+	  if (temp) free(temp);
 #endif
-      return(str);
+	  return(str);
+	}
     }
 
   prog->arity = num_template_args;
@@ -3454,8 +3464,6 @@ static char *declare_args(ptree *prog, XEN form, int default_arg_type, bool sepa
 	}
       else declarations = XEN_FALSE;                      /* not a "declare" form after all */
     }
-
-  /* TODO: got too many args wrong if keys used */
 
   /* fprintf(stderr, "num_args: %d, template_args: %s, declarations: %s\n", num_template_args, XEN_AS_STRING(template_args), XEN_AS_STRING(declarations)); */
 
