@@ -2277,8 +2277,6 @@ static XEN g_moving_average_p(XEN obj)
 #ifndef CLM_DISABLE_DEPRECATED
 /* -------- sum-of-cosines -------- */
 
-#define MUS_MAX_SINUSOIDS 65536
-
 static XEN g_sum_of_cosines_p(XEN obj) 
 {
   #define H_sum_of_cosines_p "(" S_sum_of_cosines_p " gen): " PROC_TRUE " if gen is a " S_sum_of_cosines
@@ -2310,7 +2308,7 @@ return a new " S_sum_of_cosines " generator, producing a band-limited pulse trai
   if (vals > 0)
     {
       cosines = mus_optkey_to_int(keys[0], S_make_sum_of_cosines, orig_arg[0], cosines);
-      if ((cosines <= 0) || (cosines > MUS_MAX_SINUSOIDS))
+      if (cosines <= 0)
 	XEN_OUT_OF_RANGE_ERROR(S_make_sum_of_cosines, orig_arg[0], keys[0], "cosines: ~A?");
 
       freq = mus_optkey_to_float(keys[1], S_make_sum_of_cosines, orig_arg[1], freq);
@@ -2372,7 +2370,7 @@ return a new " S_sum_of_sines " generator."
   if (vals > 0)
     {
       sines = mus_optkey_to_int(keys[0], S_make_sum_of_sines, orig_arg[0], sines);
-      if ((sines <= 0) || (sines > MUS_MAX_SINUSOIDS))
+      if (sines <= 0)
 	XEN_OUT_OF_RANGE_ERROR(S_make_sum_of_sines, orig_arg[0], keys[0], "cosines: ~A?");
 
       freq = mus_optkey_to_float(keys[1], S_make_sum_of_sines, orig_arg[1], freq);
@@ -2405,8 +2403,6 @@ static XEN g_sum_of_sines(XEN obj, XEN fm)
  */
 
 /* -------- ncos -------- */
-
-#define MUS_MAX_SINUSOIDS 65536
 
 static XEN g_ncos_p(XEN obj) 
 {
@@ -2442,7 +2438,7 @@ return a new " S_ncos " generator, producing a sum of 'n' equal amplitude cosine
 	XEN_OUT_OF_RANGE_ERROR(S_make_ncos, orig_arg[0], keys[0], "freq ~A > srate/2?");
 
       n = mus_optkey_to_int(keys[1], S_make_ncos, orig_arg[1], n);
-      if ((n <= 0) || (n > MUS_MAX_SINUSOIDS))
+      if (n <= 0)
 	XEN_OUT_OF_RANGE_ERROR(S_make_ncos, orig_arg[1], keys[1], "n: ~A?");
     }
 
@@ -2502,7 +2498,7 @@ return a new " S_nsin " generator, producing a sum of 'n' equal amplitude sines"
 	XEN_OUT_OF_RANGE_ERROR(S_make_nsin, orig_arg[0], keys[0], "freq ~A > srate/2?");
 
       n = mus_optkey_to_int(keys[1], S_make_nsin, orig_arg[1], n);
-      if ((n <= 0) || (n > MUS_MAX_SINUSOIDS))
+      if (n <= 0)
 	XEN_OUT_OF_RANGE_ERROR(S_make_nsin, orig_arg[1], keys[1], "n: ~A?");
     }
 
@@ -4792,7 +4788,7 @@ return a new sine summation synthesis generator."
       phase = mus_optkey_to_float(keys[1], S_make_sine_summation, orig_arg[1], phase);
 
       n = mus_optkey_to_int(keys[2], S_make_sine_summation, orig_arg[2], n);
-      if ((n < 0) || (n > MUS_MAX_SINUSOIDS))
+      if (n < 0)
 	XEN_OUT_OF_RANGE_ERROR(S_make_sine_summation, orig_arg[2], keys[2], "n (sidebands): ~A?");
 
       a = mus_optkey_to_float(keys[3], S_make_sine_summation, orig_arg[3], a);
@@ -4889,7 +4885,7 @@ static XEN g_make_nrxy(bool sin_case, const char *caller, XEN arglist)
       ratio = mus_optkey_to_float(keys[1], caller, orig_arg[1], ratio);
 
       n = mus_optkey_to_int(keys[2], caller, orig_arg[2], n);
-      if ((n < 0) || (n > MUS_MAX_SINUSOIDS))
+      if (n < 0)
 	XEN_OUT_OF_RANGE_ERROR(caller, orig_arg[2], keys[2], "n (sidebands): ~A?");
 
       r = mus_optkey_to_float(keys[3], caller, orig_arg[3], r);

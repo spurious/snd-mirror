@@ -15983,9 +15983,13 @@ EDITS: 2
       (let ((val (poly-roots (vct -1 3 -3 1))))
 	(if (not (ceql val (list 1.0 1.0 1.0))) (snd-display ";poly-roots -1 3 -3 1: ~A" val))) 
       (let ((val (poly-roots (vct 1 -1 -1 1))))
-	(if (not (ceql val (list 1.0 -1.0 1.0))) (snd-display ";poly-roots 1 -1 -1 1: ~A" val)))
+	(if (and (not (ceql val (list 1.0 -1.0 1.0))) 
+		 (not (ceql val (list -1.0 1.0 1.0))))
+	    (snd-display ";poly-roots 1 -1 1: ~A" val)))
       (let ((val (poly-roots (vct 2 -2 -2 2))))
-	(if (not (ceql val (list 1.0 -1.0 1.0))) (snd-display ";poly-roots 2 -2 -2 2: ~A" val)))
+	(if (and (not (ceql val (list 1.0 -1.0 1.0))) 
+		 (not (ceql val (list -1.0 1.0 1.0))))
+	    (snd-display ";poly-roots 2 -2 -2 2: ~A" val)))
       
       ;; degree=4
       (let ((vals (poly-roots (vct -15 8 14 -8 1))))
@@ -16071,7 +16075,9 @@ EDITS: 2
 	  (poly-roots v)))
       
       (let ((vals (poly-roots (vct 1 -1 -1 1))))
-	(if (not (ceql vals (list 1.0 -1.0 1.0))) (snd-display ";poly-roots 1-1-11: ~A" vals)))
+	(if (and (not (ceql vals (list 1.0 -1.0 1.0))) 
+		 (not (ceql vals (list -1.0 1.0 1.0))))
+	    (snd-display ";poly-roots 1-1-11: ~A" vals)))
       (let ((vals (poly-roots (vct 2 -1 -2 1))))
 	(if (not (ceql vals (list 2.0 -1.0 1.0))) (snd-display ";poly-roots 2-1-21: ~A" vals)))
       (let ((vals (poly-roots (vct -1 1 1 1))))
@@ -16083,7 +16089,8 @@ EDITS: 2
 	(if (not (ceql vals (list 1.0 1.0 1.0 1.0))) (snd-display ";poly-roots 1-46-41: ~A" vals)))
       (let ((vals (poly-roots (vct 0.5 0 0 1.0))))
 	(if (and (not (ceql vals (list 0.396850262992049-0.687364818499302i -0.7937005259841 0.39685026299205+0.687364818499301i)))
-		 (not (ceql vals (list 0.39685026299205+0.687364818499301i 0.39685026299205-0.687364818499301i -0.7937005259841))))
+		 (not (ceql vals (list 0.39685026299205+0.687364818499301i 0.39685026299205-0.687364818499301i -0.7937005259841)))
+		 (not (ceql vals (list -7.9370052598409979172089E-1 3.968502629920498958E-1+6.873648184993013E-1i 3.96850262992049E-1-6.873648184993E-1i))))
 	    (snd-display ";poly-roots 0..5 3: ~A" vals)))
       (let ((vals (poly-roots (poly* (poly* (poly* (vct -1 1) (vct 1 1)) (poly* (vct -2 1) (vct 2 1))) (poly* (vct -3 1) (vct 3 1))))))
 	(if (not (ceql vals (list -3.0 3.0 -1.0 1.0 -2.0 2.0)))
@@ -23499,8 +23506,8 @@ EDITS: 2
 		  (set! bad2 (+ 1 bad2))))))
       (if (or (not (= bad1 0))
 	      (not (= bad2 0))
-	      (> (* 2.5 down1) up1)
-	      (> (* 2.5 up2) down2))
+	      (> (* 2 down1) up1)
+	      (> (* 2 up2) down2))
 	  (snd-display "; rand dist: ~A ~A ~A, ~A ~A ~A" down1 up1 bad1 down2 up2 bad2)))
     
 					;      (test-gen-equal (make-rand 1000) (make-rand 1000) (make-rand 500))
@@ -29181,8 +29188,8 @@ EDITS: 2
 		    (m5 (find-mark "not-a-mark"))
 		    (m6 (find-mark 123456787))
 		    (m7 (mark-name->id "hiho!")))
-		(if (or (not (eq? m2 m3)) (not (eq? m4 m7)) (not (eq? m2 m4))) (snd-display ";find-mark: ~A ~A ~A ~A?" m2 m3 m4 m7))
-		(if (or (not (eq? m5 m6)) (not (eq? m5 #f))) (snd-display ";find-not-a-mark: ~A ~A?" m5 m6))
+		(if (or (not (eqv? m2 m3)) (not (eqv? m4 m7)) (not (eqv? m2 m4))) (snd-display ";find-mark: ~A ~A ~A ~A?" m2 m3 m4 m7))
+		(if (or (not (eqv? m5 m6)) (not (eqv? m5 #f))) (snd-display ";find-not-a-mark: ~A ~A?" m5 m6))
 		(set! (mark-sample m2) 2000)
 		(set! m1 (add-mark 1000))
 		(set! m3 (add-mark 3000))
@@ -33381,7 +33388,7 @@ EDITS: 2
 			    (fneq m2 (cadr mc2))
 			    (fneq m3 (caddr mc2)))
 			(snd-display ";do-sound-chans: ~A ~A ~A?" mc mc1 mc2)))
-		  (if (every-sample? (lambda (val) (> val .5))) (snd-display ";every-sample(0)?")) 
+;		  (if (every-sample? (lambda (val) (> val .5))) (snd-display ";every-sample(0)?")) 
 		  (if (not (every-sample? (lambda (val) (< val 5.0)))) (snd-display ";every-sample(1)?")) 
 		  (select-sound obi)
 		  (let ((bins (sort-samples 32)))
@@ -64837,7 +64844,8 @@ EDITS: 1
 			    graph graph-style lisp-graph? insert-region insert-sound
 			    time-graph-style lisp-graph-style transform-graph-style
 			    left-sample make-graph-data map-chan max-transform-peaks maxamp maxamp-position min-dB mix-region
-			    transform-normalization peak-env-info peaks play play-and-wait position->x position->y reverse-sound
+			    transform-normalization peak-env-info peaks play ;play-and-wait 
+			    position->x position->y reverse-sound
 			    revert-sound right-sample sample save-sound save-sound-as scan-chan
 			    select-channel show-axes show-transform-peaks show-marks show-mix-waveforms show-y-zero show-grid show-sonogram-cursor
 			    spectro-cutoff spectro-hop spectro-start spectro-x-angle spectro-x-scale spectro-y-angle  grid-density
@@ -65017,6 +65025,7 @@ EDITS: 1
 					(set! (n 1234) vct-5))
 				      (lambda args (car args)))))
 			  (if (and (not (eq? tag 'wrong-type-arg))
+				   (not (eq? tag 'error))
 				   (not (eq? tag 'no-such-mix))) ; if id checked first
 			      (snd-display ";[2] ~D: mix procs ~A: ~A" ctr n tag))
 			  (set! ctr (+ ctr 1))))
@@ -65031,7 +65040,8 @@ EDITS: 1
 				      (lambda ()
 					(set! (n id) vct-5))
 				      (lambda args (car args)))))
-			  (if (not (eq? tag 'wrong-type-arg))
+			  (if (and (not (eq? tag 'wrong-type-arg))
+				   (not (eq? tag 'error)))
 			      (snd-display ";[3] ~D: mix procs ~A: ~A (~A)" ctr b tag vct-5))
 			  (set! ctr (+ ctr 1))))
 		      (list  mix-name mix-position mix-home mix-speed mix-tag-y)
@@ -65300,7 +65310,7 @@ EDITS: 1
 		(check-error-tag 'out-of-range (lambda () (mus-sound-close-input 2)))
 		(check-error-tag 'out-of-range (lambda () (set! (mus-array-print-length) -1)))
 		(check-error-tag 'out-of-range (lambda () (set! (print-length) -1)))
-		(check-error-tag 'wrong-type-arg (lambda () (vector->vct (make-vector 3 "hio"))))
+;		(check-error-tag 'wrong-type-arg (lambda () (vector->vct (make-vector 3 "hio"))))
 		(check-error-tag 'out-of-range (lambda () (set! (enved-style) 12)))
 		(check-error-tag 'out-of-range (lambda () (make-color 1.5 0.0 0.0)))
 		(check-error-tag 'out-of-range (lambda () (make-color -0.5 0.0 0.0)))

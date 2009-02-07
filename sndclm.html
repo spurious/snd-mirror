@@ -3370,12 +3370,14 @@ with_sound(:play, true) do
 </table>
 
 
-<p>ncos is the new form of sum-of-cosines, and nsin is the new form of sum-of sines.
+<p>ncos is the new form of sum-of-cosines, and nsin is the new form of sum-of-sines.
 </p>
 
 <p>ncos produces a band-limited pulse train containing
 "n" cosines.  I think this was originally viewed as a way to get a speech-oriented
-pulse train that would then be passed through formant filters (see pulse-voice in examp.scm).  There are many similar formulas:
+pulse train that would then be passed through formant filters (see pulse-voice in examp.scm).  
+Set "n" to srate/2 to get a pulse-train (a single non-zero sample).
+There are many similar formulas:
 see <a href="#ncos2">ncos2</a> and friends in <a href="#othergenerators">generators.scm</a>. "Trigonometric Delights" by Eli Maor has
 a derivation of the nsin formula and a neat
 geometric explanation.  For a derivation of the ncos formula, see "Fourier

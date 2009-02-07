@@ -733,6 +733,7 @@
   (test (char-upcase #\)) #\))
   (test (char-upcase #\%) #\%)
   (test (char-upcase #\0) #\0)
+  (test (char-upcase #\_) #\_)
   (test (char-upcase #\space) #\space)
   (test (char-upcase #\newline) #\newline)
 
@@ -744,12 +745,21 @@
    a-to-z
    cap-a-to-z)
 
+  (do ((i 1 (+ i 1)))
+      ((= i 128))
+    (if (and (not (char=? (integer->char i) (char-upcase (integer->char i))))
+	     (not (char-alphabetic? (integer->char i))))
+	(begin 
+	  (display "(char-upcase ") (display (integer->char i)) (display ") -> ")
+	  (display (integer->char i)) (display ", but not alphabetic?")
+	  (newline))))
 
   (test (char-downcase #\A) #\a)
   (test (char-downcase #\a) #\a)
   (test (char-downcase #\?) #\?)
   (test (char-downcase #\$) #\$)
   (test (char-downcase #\.) #\.)
+  (test (char-downcase #\_) #\_)
   (test (char-downcase #\\) #\\)
   (test (char-downcase #\5) #\5)
   (test (char-downcase #\)) #\))
@@ -829,6 +839,9 @@
   (test (char-alphabetic? #\;) #f)
   (test (char-alphabetic? #\.) #f)
   (test (char-alphabetic? #\-) #f)
+  (test (char-alphabetic? #\_) #f)
+  (test (char-alphabetic? #\^) #f)
+  (test (char-alphabetic? #\[) #f)
 
   (for-each
    (lambda (arg)
@@ -5617,6 +5630,8 @@
       (test (string=? (object->string (cons 1 2)) "(1 . 2)") #t)
       (test (string=? (object->string '#(1 2 3)) "#(1 2 3)") #t)
       (test (string=? (object->string +) "+") #t)
+
+      (test (call-with-input-file "tmp1.r5rs" (lambda (p) (integer->char (read-byte p)))) #\t)
 
       (if (and (defined? 'provided?)
 	       (provided? 'threads))
@@ -30401,7 +30416,9 @@
 	(num-test (* (factorial 3 1) (factorial 5 1) (factorial 7 1)) (factorial 10 1)))
       
       (num-test (modulo (+ 2 (* 3 499127 495037 490459 468803)) (* 499127 495037 490459 468803)) 2)
-      
+      (num-test (let ((n 1)) (do ((i 2 (+ i 1))) ((= i 100)) (set! n (lcm n i))) n) 69720375229712477164533808935312303556800)
+      (num-test (log 69720375229712477164533808935312303556800) 9.40453112293573922460049312446069272415E1)
+
       ))
 
 
@@ -30711,6 +30728,7 @@
 (if (or with-bignums with-64-bit-ints) (num-test (+ (expt 415280564497/348671682660 3) (expt 676702467503/348671682660 3)) 9))
 (num-test (expt 25 6) (+ (expt 1 6) (expt 2 6) (expt 3 6) (expt 5 6) (expt 6 6) (expt 7 6) (expt 8 6) (expt 9 6) 
 			 (expt 10 6) (expt 12 6) (expt 13 6) (expt 15 6) (expt 16 6) (expt 17 6) (expt 18 6) (expt 23 6)))
+(num-test (/ (- (sqrt 5) 1) 2) (/ (sin (* pi 1/5)) (sin (* pi 2/5))))
 (num-test (let* ((N 3502)
 		 (D (* 1/2 (+ 1071 (* 184 (sqrt 34)))))
 		 (E (* 1/2 (+ 1553 (* 266 (sqrt 34)))))
@@ -33981,7 +33999,7 @@
        '-1.1e1-e1i '-1.e1-e-1i '.1e1-e-11i 
        '3.-3. '1'2 '+-2 '1?
        '1a '1.a '-a '+a '1.. '..1 '-..1 '1ee1 '1ef2 '1+ief2 '1.+ '1.0- '1/2+/3
-       '1'2 '1-#i '1-i. '1-ie
+       '1'2 '1-#i '1-i. '1-ie '1... '1//1...
        )
  (list "1e" "--1" "++1" "+." "+.+" ".." ".-" "1e-" "+" "-" "-e1"
        "1/2/3" "1/2+/2" "/2" "2/" "1+2" "1/+i" "1/2e1" "1/2."
@@ -34004,7 +34022,7 @@
        "-1.1e1-e1i" "-1.e1-e-1i" ".1e1-e-11i" 
        "3.-3." "'1'2" "'+-2" "'1?"
        "1a" "1.a" "-a" "+a" "1.." "..1" "-..1" "1ee1" "1ef2" "1+ief2" "1.+" "1.0-" "1/2+/3"
-       "'1'2" "1-#i" "1-i." "1-ie"
+       "'1'2" "1-#i" "1-i." "1-ie" "1..." "1/1/1/1"
        ))
 
 (test (number? ''1) #f)
@@ -36551,7 +36569,7 @@ expt error > 1e-6 around 2^-46.506993328423
     (let ((tries (if (integer? with-the-bug-finding-machine) with-the-bug-finding-machine 10000))
 	  (err-max 1e-12)
 	  (err-max-12 1e-15)
-	  (expt-max 31))
+	  (expt-max (if with-bignums 100 31))) ; 63 is fine
 
 
       ;;; --------------------------------------------------------------------------------
