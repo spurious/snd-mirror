@@ -575,12 +575,14 @@ static void update_graph_1(chan_info *cp, bool warn)
   double cur_srate;
   snd_info *sp;
   axis_info *ap;
+
   if ((updating) || 
       (cp->active != CHANNEL_HAS_AXES) ||
       (cp->cgx == NULL) || 
       (cp->sounds == NULL) || 
       (cp->sounds[cp->sound_ctr] == NULL)) 
     return;
+
   sp = cp->sound;
   if (cp->squelch_update)
     {
@@ -590,6 +592,7 @@ static void update_graph_1(chan_info *cp, bool warn)
 #endif
       return;
     }
+
   updating = true;
   /* next two are needed by fft and lisp displays, but if put off until make_graph cause
    * the display to happen twice in some cases 
@@ -602,6 +605,7 @@ static void update_graph_1(chan_info *cp, bool warn)
       if (ap->losamp < 0) ap->losamp = 0;
       ap->hisamp = (off_t)(ap->x1 * cur_srate);
     }
+
   if (!(cp->cgx->ax->wn)) 
     if (!(fixup_cp_cgx_ax_wn(cp))) 
       {
@@ -609,6 +613,7 @@ static void update_graph_1(chan_info *cp, bool warn)
 	updating = false;
 	return;
       }
+
 #if HAVE_GUILE_DYNAMIC_WIND
   scm_internal_dynamic_wind((scm_t_guard)before_dpy, 
 			    (scm_t_inner)dpy_body, 
@@ -921,6 +926,7 @@ void set_x_axis_x0x1(chan_info *cp, double x0, double x1)
 {
   /* all callers are explicit (non-gui), so it should be safe to reset the z scroller here as well */
   axis_info *ap;
+
   ap = cp->axis;
   if (x0 >= 0.0) ap->x0 = x0; else ap->x0 = 0.0;
   ap->x1 = x1;
@@ -979,6 +985,7 @@ void reset_x_display(chan_info *cp, double sx, double zx)
 {
   axis_info *ap;
   bool reset_zx = false;
+
   ap = cp->axis;
   ap->sx = sx;
   reset_zx = (zx != ap->zx);
@@ -1365,6 +1372,7 @@ snd_info *make_simple_channel_display(int srate, int initial_length, fw_button_t
   chan_info *cp;
   file_info *hdr;
   int err;
+
   sp = make_basic_snd_info(1); /* 1 chan */
   sp->nchans = 1;
   sp->inuse = SOUND_WRAPPER;
@@ -2530,6 +2538,7 @@ static void make_sonogram(chan_info *cp)
 
       hfdata = (Float *)malloc((bins + 1) * sizeof(Float));
       hidata = (int *)malloc((bins + 1) * sizeof(int));
+
       if (cp->transform_type == FOURIER)
 	{
 	  if (cp->fft_log_frequency)
@@ -2544,6 +2553,7 @@ static void make_sonogram(chan_info *cp)
 	  yfincr = cp->spectro_cutoff * (Float)SND_SRATE(cp->sound) * 0.5 / (Float)bins;
 	}
       else yfincr = 1.0;
+
       if (cp->fft_log_frequency)
 	{
 	  for (yf = 0.0, i = 0; i <= bins; i++, yf += yfincr)
@@ -2561,14 +2571,18 @@ static void make_sonogram(chan_info *cp)
 	      hidata[i] = local_grf_y(yf, fap);
 	    }
 	}
+
       xfincr = ((Float)fwidth / (Float)(si->target_slices));
       xf = 2 + fap->x_axis_x0;
       ss->stopped_explicitly = false;
+
       for (slice = 0; slice < si->active_slices; slice++, xf += xfincr)
 	{
 	  Float *fdata;
+
 	  memset((void *)sono_js, 0, color_map_size(ss) * sizeof(int));
 	  fdata = si->data[slice];
+
 	  for (i = 0; i < bins; i++)
 	    {
 	      Float binval;
@@ -2590,9 +2604,11 @@ static void make_sonogram(chan_info *cp)
 		  sono_js[j]++;
 		}
 	    }
+
 	  for (i = 0; i < color_map_size(ss); i++)
 	    if (sono_js[i] > 0) 
 	      draw_sono_rectangles(ax, i, sono_js[i]);
+
 	  if (cp->printing)
 	    {
 	      check_for_event();
@@ -3597,6 +3613,7 @@ static void make_lisp_graph(chan_info *cp, XEN pixel_list)
       y0 = local_grf_y(up->data[0][1], uap);
       if (cp->dot_size > 0) 
 	draw_dot(ax, x0, y0, cp->dot_size);
+
       for (i = 2; i < grf_len; i += 2)
 	{
 	  x1 = local_grf_x(up->data[0][i], uap);
@@ -3617,6 +3634,7 @@ static void make_lisp_graph(chan_info *cp, XEN pixel_list)
 	pixel_len = XEN_LIST_LENGTH(pixel_list);
       if (up->graphs > 1) 
 	old_color = get_foreground_color(ax);
+
       for (graph = 0; graph < up->graphs; graph++)
 	{
 	  if ((pixel_len > graph) &&
@@ -4423,6 +4441,7 @@ void cursor_moveto_with_window(chan_info *cp, off_t samp, off_t left_samp, off_t
   snd_info *sp;
   off_t current_window_size;
   axis_info *ap;
+
   sp = cp->sound;
   ap = cp->axis;
   if (cp->cursor_visible)
@@ -4435,6 +4454,7 @@ void cursor_moveto_with_window(chan_info *cp, off_t samp, off_t left_samp, off_t
       if ((cp->fft) && (cp->graph_transform_p)) draw_sonogram_cursor_1(cp);
       cp->fft_cursor_visible = false; /* don't redraw at old location */
     }
+
   CURSOR(cp) = samp;
   current_window_size = ap->hisamp - ap->losamp;
   if (snd_abs_off_t(current_window_size - window_size) < (off_t)(0.1 * (double)window_size))
@@ -4733,9 +4753,11 @@ static void propagate_wf_state(snd_info *sp)
   int i;
   bool w, f;
   chan_info *cp;
+
   cp = sp->chans[0];
   w = cp->graph_time_p;
   f = cp->graph_transform_p;
+
   for (i = 1; i < sp->nchans; i++) 
     {
       cp = sp->chans[i];

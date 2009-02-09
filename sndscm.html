@@ -8153,8 +8153,10 @@ through the 5-D landscape, each 4-D case being 8 3-D slices as before:
   (set! (time-graph-type) graph-as-wavogram))
 -->
 
-<p>In general, the minimum peak amplitude appears to be
-about (expt n .59).  Here is a graph of the values I've found so far.
+<p>My initial guess was that the minimum peak amplitude would be around the square root of n, but
+instead it appears to be
+closer to (expt n .59).  
+Here is a graph of the values I've found so far.
 If plotted as a log-log graph, it is
 a straight line with a slope just less than 0.6. I've included the n odd, even, and prime-numbered components min peak amps
 as well.
@@ -8351,11 +8353,14 @@ as well.
 
 <p>Now the resultant waveform is displayed as you drag any of the mix tags (which corresponds to
 changing the initial phase).  
-And on a really random note, if the component amplitudes are scaled by (say) 0.5^k,
-or if we substitute triangle waves for the sinusoids,
-the minima are different and fall at different locations.
-So the "obvious" simplifications fail.
+As you increase "n", the minimum peak amplitude waveform approaches
+white noise (in sound as well as appearance); here is a small portion of one period when n=65536 (the prescaling peak was 704):
 </p>
+
+<table hspace=40 border=0><tr><td>
+<img src="pix/s65536.png" alt="65536 harmonics">
+</td></tr></table>
+<br>
 
 <br><br>
 

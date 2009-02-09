@@ -6910,4 +6910,8 @@
 ;;; 2.15.2
 (CFNC-2150 "void gtk_image_menu_item_set_always_show_image GtkImageMenuItem* image_menu_item gboolean always_show")
 (CFNC-2150 "gboolean gtk_image_menu_item_get_always_show_image GtkImageMenuItem* image_menu_item")
+
+(CINT-2150 "PANGO_WEIGHT_THIN" "PangoWeight")
+(CINT-2150 "PANGO_WEIGHT_BOOK" "PangoWeight")
+(CINT-2150 "PANGO_WEIGHT_MEDIUM" "PangoWeight")
 |#
