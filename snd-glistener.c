@@ -1,7 +1,7 @@
 #include "snd.h"
 
-/* TODO: where to post the completions list? 
- *       I'd like a drop-down scrolled list as in Motif, but I can't figure out any way to do it
+/* where to post the completions list? 
+ *   I'd like a drop-down scrolled list as in Motif, but I can't figure out any way to do it
  */
 
 static GtkWidget *listener_text = NULL;

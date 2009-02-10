@@ -6388,7 +6388,11 @@ static s7_pointer g_string_set(s7_scheme *sc, s7_pointer args)
   if (s7_is_immutable(car(args)))
     return(s7_wrong_type_arg_error(sc, "string-set!", 1, car(args), "a mutable string"));
   
-  /* PERHAPS: does this need a lock? would it lock out all string-ops? what about vector-set!? etc */
+  /* I believe this does not need a lock in the multithread case -- local vars are specific
+   *   to each thread, and it should be obvious to anyone writing such code that a global
+   *   variable needs its lock (caller-supplied) -- it's not s7's job to protect even the
+   *   caller's (scheme) variables.
+   */
   str = string_value(car(args));
   str[s7_integer(index)] = (char)s7_character(caddr(args));
   return(car(args));
@@ -19158,5 +19162,4 @@ s7_scheme *s7_init(void)
 }
 
 /* unicode is probably do-able if it is sequestered in the s7 strings 
- * SOMEDAY: slib support
  */

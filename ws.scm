@@ -811,10 +811,6 @@ returning you to the true top-level."
 	  (close-output-port oput)))))
 
 
-;;; TODO: the mix tags need to be placed according to frequency in with-mixed-sound [amp/freq/dur/env change -> notelist?]
-;;; TODO: it might be nice to notice interrupted with-temp-sounds here and exit the mixing loop
-;;; SOMEDAY: what happens to an expression that isn't a note?  How to handle notes that don't put begin time 1st? (and other such changes)
-
 
 ;;; -------- with-marked-sound --------
 

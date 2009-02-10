@@ -12,9 +12,6 @@
    View:Files
 */
 
-/* SOMEDAY: the open file dialog is screwed up in OSX -- ".." ignored and so on
- */
-
 #define FSB_BOX(Dialog, Child) XmFileSelectionBoxGetChild(Dialog, Child)
 #define MSG_BOX(Dialog, Child) XmMessageBoxGetChild(Dialog, Child)
 

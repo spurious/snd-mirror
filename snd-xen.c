@@ -3322,18 +3322,23 @@ static void add_source_file_extension(const char *ext)
 bool source_file_p(const char *name)
 {
   int i, dot_loc = -1, len;
+
   if (!name) return(false);
+
   if (source_file_extensions)
     {
       len = strlen(name);
+
       for (i = 0; i < len; i++)
 	if (name[i] == '.')
 	  dot_loc = i;
       /* dot_loc is last dot in the name */
+
       if ((dot_loc > 0) &&
 	  (dot_loc < len - 1))
 	{
 	  const char *ext;
+
 	  ext = (const char *)(name + dot_loc + 1);
 	  for (i = 0; i < source_file_extensions_end; i++)
 	    if (mus_strcmp(ext, source_file_extensions[i]))
@@ -3347,6 +3352,7 @@ bool source_file_p(const char *name)
 void save_added_source_file_extensions(FILE *fd)
 {
   int i;
+
   if (source_file_extensions_end > default_source_file_extensions)
     for (i = default_source_file_extensions; i < source_file_extensions_end; i++)
       {
@@ -3377,6 +3383,7 @@ static char *find_source_file(char *orig)
   int i;
   char *str;
   /* orig is a full filename that should be freed before returning */
+
   for (i = 0; i < source_file_extensions_end; i++)
     {
       str = mus_format("%s.%s", orig, source_file_extensions[i]);

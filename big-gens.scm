@@ -3,27 +3,49 @@
 (if (not (provided? 'snd-generators.scm)) (load "generators.scm"))
 
 
+;;; -------- conversions --------
+
 (define (big-hz->radians hz)
-  (/ (* hz 2 pi)
-     (mus-srate)))
+  (/ (* hz 2 pi) (mus-srate)))
 
 (define (big-radians->hz rad)
-  (/ (* rad (mus-srate))
-     (* 2 pi)))
+  (/ (* rad (mus-srate)) (* 2 pi)))
 
 (define (big-db->linear x)
   (expt 10.0 (/ x 20.0)))
 
 (define (big-linear->db x)
-  (if (> x 0.0)
-      (* 20.0 (log x 10))
-      -100.0))
+  (if (> x 0.0) (* 20.0 (log x 10)) -100.0))
 
 (define (big-degrees->radians deg)
   (* (/ pi 180) deg))
 
 (define (big-radians->degrees rad)
   (/ (* rad 180) pi))
+
+(define (big-seconds->samples secs)
+  (round (* secs (mus-srate))))
+
+(define (big-samples->seconds samps)
+  (/ samps (mus-srate)))
+
+(define (big-rectangular->polar rl im)
+  (let ((len (vector-length rl)))
+    (do ((i 0 (+ i 1)))
+	((= i len))
+      (let* ((rl1 (vector-ref rl i))
+	     (im1 (vector-ref im i)))
+	(vector-set! rl i (sqrt (+ (* rl1 rl1) (* im1 im1))))
+	(vector-set! im i (- (atan im1 rl1)))))))
+
+(define (big-polar->rectangular mag ang)
+  (let ((len (vector-length mag)))
+    (do ((i 0 (+ i 1)))
+	((= i len))
+      (let* ((mag1 (vector-ref mag i))
+	     (ang1 (- (vector-ref ang i))))
+	(vector-set! mag i (* mag1 (cos ang1)))
+	(vector-set! ang i (* mag1 (sin ang1)))))))
 
 
 
@@ -41,22 +63,37 @@
 ;;; -------- dot-product --------
 
 (define (big-dot-product v1 v2)
-  (let ((sum 0.0)
-	(len (min (vector-length v1) (vector-length v2))))
+  (let ((len (min (vector-length v1) (vector-length v2))))
     (do ((sum 0.0)
 	 (i 0 (+ i 1)))
 	((= i len) sum)
       (set! sum (+ sum (* (vector-ref v1 i) (vector-ref v2 i)))))))
 
 
+;;; -------- ring-modulate --------
+
+(define (big-ring-modulate in1 in2)
+  (* in1 in2))
+
+
+;;; -------- amplitude-modulate --------
+
+(define (big-amplitude-modulate carrier in1 in2)
+  (* in1 (+ carrier in2)))
+
+
+;;; -------- contrast-enhancement --------
+
+(define* (big-contrast-enhancement in1 (index 1.0))
+  (sin (+ (* in1 (/ pi 2))
+	  (* index (sin (* 2 pi in1))))))
+
 
 ;;; -------- oscil --------
 
 (defgenerator (big-oscil 
   :make-wrapper 
-    (lambda (g)
-      (set! (big-oscil-frequency g) (big-hz->radians (big-oscil-frequency g)))
-      g))
+    (lambda (g) (set! (big-oscil-frequency g) (big-hz->radians (big-oscil-frequency g))) g))
   (frequency *clm-default-frequency*) (angle 0.0))
 
 (define* (big-oscil gen :optional (fm 0.0) (pm 0.0))
@@ -191,6 +228,6 @@
 
 
 
-;;; TODO: rest of big-gens?
+;;; TODO: rest of big-gens and big gen tests/doc etc
 
 

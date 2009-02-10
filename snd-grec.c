@@ -259,7 +259,6 @@ static void start_reading(void)
     }
 #endif
 
-  /* TODO: buffer size */
   buffer_size = 4096;
   
   input_device = mus_audio_open_input(MUS_AUDIO_DEFAULT, recorder_srate, recorder_chans, recorder_format, buffer_size);
@@ -271,8 +270,6 @@ static void start_reading(void)
       report_in_error_info(msg, NULL);
       free(msg);
 
-      /* TODO: try some fallbacks -- different srate/chans etc */
-      
       reading = false;
       return;
     }

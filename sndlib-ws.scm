@@ -254,7 +254,7 @@
 
 	   (if (or scaled-to scaled-by)
 	       (if output-to-file
-		   ;; TODO scale the output
+		   ;; someday scale the output
 		   (display "can't scale output yet")
 		   (if (vct? output-1)
 		       (if scaled-to

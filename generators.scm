@@ -6408,13 +6408,6 @@ index 10 (so 10/2 is the bes-jn arg):
 
 
 
-;;; TODO:   how to change time arbitrarily? via env?
-;;; TODO: amp>n sin^2
-;;; PERHAPS:  moving-spectrum could replace all the formant bank stuff eventually
-;;; TODO:   moving-window (delay data) (two delays + pulse = gran), would need an open-ended delay [outa?], window-ref, array of frames?
-;;; TODO:   moving-lpc? (dsp.scm has lpc-coeffs which is optimizable) [moving-poly?] [cheb approx?]
-
-
 #|
 (define (abel k)
   ;; sum i from 1 to k (-1)^(i + 1) * (sin i) / i
