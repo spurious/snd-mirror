@@ -129,8 +129,10 @@ void update_region_browser(bool grf_too)
   int i, len;
   region_state *rs;
   chan_info *cp;
+
   rs = region_report();
   len = rs->len;
+
   for (i = 0; i < len; i++)
     {
       regrow *r;
@@ -140,11 +142,14 @@ void update_region_browser(bool grf_too)
       XmToggleButtonSetState(r->pl, false, false);
       XtManageChild(r->rw);
     }
+
   for (i = len; i < max_regions(ss); i++) 
     if (region_rows[i])
       XtUnmanageChild(region_rows[i]->rw);
+
   free_region_state(rs);
   if (len == 0) return;
+
   XtManageChild(region_list);
   if (grf_too)
     {
@@ -277,6 +282,7 @@ static void region_focus_callback(Widget w, XtPointer context, XtPointer info)
 {
   chan_info *cp;
   regrow *r = (regrow *)context;
+
   unhighlight_region();
   if (region_list_position_to_id(r->pos) == INVALID_REGION) return; /* needed by auto-tester */
   set_current_region(r->pos);

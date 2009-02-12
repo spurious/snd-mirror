@@ -19162,4 +19162,5 @@ s7_scheme *s7_init(void)
 }
 
 /* unicode is probably do-able if it is sequestered in the s7 strings 
+ * TODO: s7test make-random-state (or some other such object) passed to all (esp big_*)
  */

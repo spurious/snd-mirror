@@ -10726,11 +10726,30 @@ a subsequent add-transform.
 <tr><td colspan=2 bgcolor="#f2f4ff">
 <code><a class=def name="fft">fft</a> (rl im :optional sgn)</code>
 </td></tr><tr><td></td><td>
+<p>
 This performs an FFT on vcts 'rl' and 'im' (the real and imaginary parts of the
 input data). 'sgn' is 1 for an FFT, -1 for an inverse FFT; (the default is 1).
 The CLM <a href="sndclm.html#fft">fft</a> function is called <a name="musfft">mus-fft</a> in Snd.
 The only difference between the two is that Snd's fft determines the fft size from 
 the size of the vcts passed to it, whereas CLM's takes the size as an argument.
+Here's an example that uses the fft to produce a sum of sinusoids each with arbitrary amplitude
+and initial-phase:
+</p>
+<pre>
+(define (fft-&gt;sines amps phases)
+  (let* ((len (vct-length phases))
+	 (fft-size (expt 2 (+ 10 (ceiling (log len 2)))))
+	 (rl (make-vct fft-size))
+	 (im (make-vct fft-size)))
+    (do ((i 0 (+ i 1)))
+	((= i len))
+      (let ((amp (vct-ref amps i))
+	    (phase (vct-ref phases i)))
+	(vct-set! rl (+ i 1) (* amp (sin phase)))
+	(vct-set! im (+ i 1) (* amp (cos phase)))))
+    (<em class=red>fft</em> rl im -1)
+    rl))
+</pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 

@@ -2075,16 +2075,6 @@
     (close-sound ind) 
     (dismiss-all-dialogs)
     
-    ;; this prints "12" and "10" to stdout because it thinks it is responding to stdin input
-    (if (and (provided? 'snd-debug)
-	     (provided? 'snd-guile))
-	(begin
-	  (snd-stdin-test "(set! (enved-filter-order) 12)")
-	  (if (not (= (enved-filter-order) 12)) (snd-display ";set enved-filter-order 12 via stdin: ~A" (enved-filter-order)))
-	  (snd-stdin-test "(set! (enved-filter")
-	  (snd-stdin-test "-order) 10)")
-	  (if (not (= (enved-filter-order) 10)) (snd-display ";set enved-filter-order 12 via 2 stdin: ~A" (enved-filter-order)))))
-    
     (let ((undef '())
 	  (names (list '*snd-opened-sound* 'abort 'add-clm-field 'add-clm-type 'add-colormap 
 		       'add-directory-to-view-files-list 'add-file-filter 'add-file-sorter 'add-file-to-view-files-list 'add-mark
@@ -64157,7 +64147,7 @@ EDITS: 1
   
   (if with-gui
       
-      (let* ((delay-32 (if (defined? 'make-poison-pill) (make-poison-pill) (make-delay 32)))
+      (let* ((delay-32 (make-delay 32))
 	     (color-95 (make-color-with-catch .95 .95 .95))
 	     (vector-0 (make-vector 0))
 	     (vct-3 (make-vct 3))

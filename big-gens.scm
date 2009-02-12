@@ -1,4 +1,3 @@
-
 (provide 'snd-big-gens.scm)
 
 (if (not (provided? 'snd-generators.scm)) (load "generators.scm"))
@@ -180,7 +179,7 @@
 
 ;;; -------- table-lookup --------
 
-(define (big-vector-interp wave x n)
+(define (big-array-interp wave x n)
   (let* ((xx (modulo x n))
 	 (ipart (floor xx))
 	 (fpart (- xx ipart)))
@@ -207,8 +206,26 @@
 	(w (big-table-lookup-wave gen))
 	(n (big-table-lookup-size gen)))
     (set! (big-table-lookup-angle gen) (+ x (big-table-lookup-frequency gen) (/ (* fm n) (* 2 pi))))
-    (big-vector-interp w x n)))
+    (big-array-interp w x n)))
       
+(define (big-array-clear v)
+  (let ((len (vector-length v)))
+    (do ((i 0 (+ i 1)))
+	((= i len) v)
+      (vector-set! v i 0.0))))
+
+(define (big-array-normalize v)
+  (let* ((len (vector-length v))
+	 (pk 0.0))
+    (do ((i 0 (+ i 1)))
+	((= i len))
+      (set! pk (max pk (abs (vector-ref v i)))))
+    (if (and (not (= pk 0.0))
+	     (not (= pk 1.0)))
+	(do ((i 0 (+ i 1)))
+	    ((= i len))
+	  (vector-set! v i (/ (vector-ref v i) pk))))
+    v))
 
 #|
 (with-sound (:statistics #t :clipped #f) 
