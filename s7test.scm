@@ -34951,6 +34951,8 @@
       (test (assoc 1 '(1 2 . 3)) 'error)
       (test (assoc 1 '((1 2) . 3)) 'error) ; an a-list is a proper list sez kd
       
+      ;(test (let ((lst '((1 2)))) (assq #t (reverse! lst lst))) #f) ; this will hang Guile
+
       
       (test (append 'a 'b) 'error)
       (test (append 'a '()) 'error)

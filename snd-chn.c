@@ -2495,8 +2495,6 @@ static void make_sonogram(chan_info *cp)
       bins = (int)(si->target_bins * cp->spectro_cutoff);
       if (bins == 0) return;
 
-      /* TODO: if saved case was partially obscured, restoration here gets the previous display (colors/sizes etc)! */
-
       if (cp->cgx->fft_pix)                            /* Motif None = 0 */
 	{
 	  if ((cp->fft_changed == FFT_UNCHANGED) &&

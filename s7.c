@@ -1558,7 +1558,7 @@ s7_pointer s7_gensym(s7_scheme *sc, const char *prefix)
 static s7_pointer g_gensym(s7_scheme *sc, s7_pointer args) 
 {
   #define H_gensym "(gensym :optional prefix) returns a new (or at least an un-used) symbol"
-  if (is_pair(args))
+  if (args != sc->NIL)
     {
       if (!s7_is_string(car(args)))
 	return(s7_wrong_type_arg_error(sc, "gensym", 0, car(args), "a string"));
@@ -6954,7 +6954,7 @@ static s7_pointer g_set_current_error_port(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_is_char_ready(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_char_ready "(char-ready? :optional port) returns #t if a character is ready for input on the given port"
-  if (is_pair(args))
+  if (args != sc->NIL)
     {
       s7_pointer pt = car(args);
       if (!s7_is_input_port(sc, pt))
@@ -7310,11 +7310,18 @@ char s7_peek_char(s7_scheme *sc, s7_pointer port)
 static s7_pointer g_read_char_1(s7_scheme *sc, s7_pointer args, bool peek)
 {
   char c;
-  if (is_pair(args))
-    c = s7_read_char_1(sc, car(args), peek);
-  else c = s7_read_char_1(sc, sc->input_port, peek);
+  s7_pointer port;
+
+  if (args != sc->NIL)
+    port = car(args);
+  else port = sc->input_port;
+  if (!s7_is_input_port(sc, port))
+    return(s7_wrong_type_arg_error(sc, (peek) ? "peek-char" : "read-char", 0, port, "an input port"));
+      
+  c = s7_read_char_1(sc, port, peek);
   if (c == EOF)
     return(sc->EOF_OBJECT); 
+
   return(s7_make_character(sc, c));
 }
 
@@ -7414,11 +7421,14 @@ static s7_pointer g_read(s7_scheme *sc, s7_pointer args)
   #define H_read "(read :optional port) returns the next object in the input port"
   s7_pointer port;
   
-  if (is_pair(args))
+  if (args != sc->NIL)
     port = car(args);
   else port = sc->input_port;
   
-  if (!s7_is_input_port(sc, port))
+  if (!is_input_port(port)) 
+    /* s7_is_input_port here lets NIL through as stdin, but that segfaults in token
+     *    should stdin work in that case?
+     */
     return(s7_wrong_type_arg_error(sc, "read", 0, car(args), "an input port"));
   
   push_input_port(sc, port);
@@ -8028,8 +8038,9 @@ static char *s7_vector_to_c_string(s7_scheme *sc, s7_pointer vect)
   elements = (char **)malloc(len * sizeof(char *));
   for (i = 0; i < len; i++)
     {
-      
-      elements[i] = s7_object_to_c_string(sc, vector_element(vect, i));
+      if (s7_is_eq(vector_element(vect, i), vect)) /* TODO: vect and lst self elements need a stack (and s7test coverage for vects) */
+	elements[i] = s7_strdup("[circular vector]");
+      else elements[i] = s7_object_to_c_string(sc, vector_element(vect, i));
       bufsize += safe_strlen(elements[i]);
     }
   bufsize += (len * 2 + 256);
@@ -8092,11 +8103,15 @@ static char *s7_list_to_c_string(s7_scheme *sc, s7_pointer lst)
   elements = (char **)malloc(len * sizeof(char *));
   for (x = lst, i = 0; is_pair(x) && (i < len); i++, x = cdr(x))
     {
-      elements[i] = s7_object_to_c_string(sc, car(x));
+      if (s7_is_eq(car(x), lst))                                /* (let ((l (list 1 2))) (list-set! l 0 l) l) */
+	elements[i] = s7_strdup("[circular list]");
+      else elements[i] = s7_object_to_c_string(sc, car(x));
       bufsize += safe_strlen(elements[i]);
     }
   if (dotted)
     {
+      if (s7_is_eq(x, lst))
+	elements[i] = s7_strdup("[circular list]");
       elements[i] = s7_object_to_c_string(sc, x);
       bufsize += safe_strlen(elements[i]);
     }
@@ -8181,7 +8196,7 @@ static s7_pointer g_newline(s7_scheme *sc, s7_pointer args)
   #define H_newline "(newline :optional port) writes a carriage return to the port"
   s7_pointer port;
   
-  if (is_pair(args))
+  if (args != sc->NIL)
     {
       port = car(args);
       if (!s7_is_output_port(sc, port))
@@ -8280,14 +8295,12 @@ static s7_pointer g_read_byte(s7_scheme *sc, s7_pointer args)
   #define H_read_byte "(read-byte :optional port): reads a byte from the input port"
   s7_pointer port;
   
-  if (is_pair(args))
-    {
-      port = car(args);
-      if ((!s7_is_input_port(sc, port)) ||
-	  (!is_file_port(port)))
-	return(s7_wrong_type_arg_error(sc, "read-byte", 0, car(args), "an input file port"));
-    }
+  if (args != sc->NIL)
+    port = car(args);
   else port = sc->input_port;
+  if ((!is_input_port(port)) ||
+      (!is_file_port(port)))
+    return(s7_wrong_type_arg_error(sc, "read-byte", 0, car(args), "an input file port"));
   return(s7_make_integer(sc, fgetc(port_file(port))));
 }
 
@@ -8301,13 +8314,11 @@ static s7_pointer g_write_byte(s7_scheme *sc, s7_pointer args)
     return(s7_wrong_type_arg_error(sc, "write-byte", 1, car(args), "an integer"));
   
   if (is_pair(cdr(args)))
-    {
-      port = cadr(args);
-      if ((!s7_is_output_port(sc, port)) ||
-	  (is_string_port(port)))
-	return(s7_wrong_type_arg_error(sc, "write-byte", 2, port, "an output file or function port"));
-    }
+    port = cadr(args);
   else port = sc->output_port;
+  if ((!is_output_port(port)) ||
+      (is_string_port(port)))
+    return(s7_wrong_type_arg_error(sc, "write-byte", 2, port, "an output file or function port"));
   
   if (is_file_port(port))
     fputc((unsigned char)s7_integer(car(args)), port_file(port));
@@ -9206,7 +9217,7 @@ static s7_pointer g_assq_1(s7_scheme *sc, s7_pointer args, const char *name, boo
     return(s7_wrong_type_arg_error(sc, name, 2, cadr(args), "a proper list"));
   
   x = car(args);
-  for (y = cadr(args); is_pair(y); y = cdr(y)) 
+  for (y = cadr(args); is_pair(y) && is_pair(car(y)); y = cdr(y)) 
     if (eq_func(x, caar(y)))
       return(car(y));
   
@@ -9381,6 +9392,11 @@ s7_pointer s7_vector_ref(s7_scheme *sc, s7_pointer vec, int index)
 
 s7_pointer s7_vector_set(s7_scheme *sc, s7_pointer vec, int index, s7_pointer a) 
 {
+  /* it's possible to have a vector that points to itself:
+   *   (let ((v (make-vector 2))) (vector-set! v 0 v) v) ; or (vector->list v)!
+   * and now the repl gets into an infinite loop -- we should catch this like a circular list
+   * what about list has vect and vect has that list?
+   */
   if (index >= vector_length(vec))
     return(s7_out_of_range_error(sc, "vector-set!", 2, s7_make_integer(sc, index), "index is too high"));
 
@@ -10079,20 +10095,33 @@ static s7_pointer pws_set(s7_scheme *sc, s7_pointer obj, s7_pointer args)
 
 static s7_pointer g_make_procedure_with_setter(s7_scheme *sc, s7_pointer args)
 {
-  s7_pointer p;
+  #define H_make_procedure_with_setter "(make-procedure-with-setter getter setter) combines its \
+two function arguments as a procedure-with-setter.  The 'getter' is called unless the procedure \
+occurs as the object of set!."
+
+  s7_pointer p, getter, setter;
   pws *f;
+  /* the two args should be functions, the setter taking one more arg than the getter */
+
+  getter = car(args);
+  if (!is_procedure(getter))
+    return(s7_wrong_type_arg_error(sc, "make-procedure-with-setter", 1, getter, "a procedure"));
+  setter = cadr(args);
+  if (!is_procedure(setter))
+    return(s7_wrong_type_arg_error(sc, "make-procedure-with-setter", 2, setter, "a procedure"));
+
   p = s7_make_procedure_with_setter(sc, NULL, NULL, -1, 0, NULL, -1, 0, NULL);
-  
   f = (pws *)s7_object_value(p);
-  f->scheme_getter = car(args);
-  if ((is_closure(car(args))) ||
-      (is_closure_star(car(args))))
+
+  f->scheme_getter = getter;
+  if ((is_closure(getter)) ||
+      (is_closure_star(getter)))
     f->get_req_args = s7_list_length(sc, caaar(args));
   else f->get_req_args = s7_list_length(sc, caar(args));
   
-  f->scheme_setter = cadr(args);
-  if ((is_closure(cadr(args))) ||
-      (is_closure_star(cadr(args))))
+  f->scheme_setter = setter;
+  if ((is_closure(setter)) ||
+      (is_closure_star(setter)))
     f->set_req_args = s7_list_length(sc, caaadr(args));
   else f->set_req_args = s7_list_length(sc, caadr(args));
   
@@ -10160,7 +10189,11 @@ static int pws_get_opt_args(s7_pointer x)
 
 static s7_pointer g_procedure_with_setter_setter_arity(s7_scheme *sc, s7_pointer args)
 {
-  pws *f = (pws *)s7_object_value(car(args));
+  pws *f;
+  if (!s7_is_procedure_with_setter(car(args)))
+    return(s7_wrong_type_arg_error(sc, "procedure-with-setter-setter-arity", 0, car(args), "a procedure-with-setter"));
+
+  f = (pws *)s7_object_value(car(args));
   return(make_list_3(sc,
 		     s7_make_integer(sc, f->set_req_args),
 		     s7_make_integer(sc, f->set_opt_args),
@@ -10170,7 +10203,8 @@ static s7_pointer g_procedure_with_setter_setter_arity(s7_scheme *sc, s7_pointer
 
 static s7_pointer pws_source(s7_scheme *sc, s7_pointer x)
 {
-  pws *f = (pws *)s7_object_value(x);
+  pws *f;
+  f = (pws *)s7_object_value(x);
   if ((is_closure(f->scheme_getter)) ||
       (is_closure_star(f->scheme_getter)))
     return(s7_append(sc, 
@@ -11339,9 +11373,17 @@ void s7_set_error_exiter(s7_scheme *sc, void (*error_exiter)(void))
 
 static s7_pointer g_dynamic_wind(s7_scheme *sc, s7_pointer args)
 {
-  #define H_dynamic_wind "(dynamic-wind init body finish) calls init, then body, then finish, guaranteeing that finish is called even if body is exited"
+  #define H_dynamic_wind "(dynamic-wind init body finish) calls init, then body, then finish, \
+each a function of no arguments, guaranteeing that finish is called even if body is exited"
   s7_pointer p;
   dwind *dw;
+
+  if (!is_procedure(car(args)))
+    return(s7_wrong_type_arg_error(sc, "dynamic-wind", 1, car(args), "a procedure"));
+  if (!is_procedure(cadr(args)))
+    return(s7_wrong_type_arg_error(sc, "dynamic-wind", 2, cadr(args), "a procedure"));
+  if (!is_procedure(caddr(args)))
+    return(s7_wrong_type_arg_error(sc, "dynamic-wind", 3, caddr(args), "a procedure"));
   
   dw = (dwind *)calloc(1, sizeof(dwind));
   dw->in = car(args);
@@ -11366,6 +11408,11 @@ static s7_pointer g_catch(s7_scheme *sc, s7_pointer args)
   #define H_catch "(catch tag thunk handler) evaluates thunk; if an error occurs that matches tag (#t matches all), the handler is called"
   s7_pointer p;
   rcatch *c;
+
+  if (!is_procedure(cadr(args)))
+    return(s7_wrong_type_arg_error(sc, "catch", 2, cadr(args), "a procedure"));
+  if (!is_procedure(caddr(args)))
+    return(s7_wrong_type_arg_error(sc, "catch", 3, caddr(args), "a procedure"));
   
   c = (rcatch *)calloc(1, sizeof(rcatch));
   c->tag = car(args);
@@ -11619,7 +11666,7 @@ static s7_pointer read_error(s7_scheme *sc, const char *errmsg)
 static s7_pointer g_error(s7_scheme *sc, s7_pointer args)
 {
   #define H_error "(error type ...) signals an error"
-  if (is_pair(args))
+  if (args != sc->NIL)
     return(s7_error(sc, car(args), cdr(args)));
   return(s7_error(sc, sc->NIL, sc->NIL));
 }
@@ -19091,7 +19138,7 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "procedure-arity",         g_procedure_arity,         1, 0, false, H_procedure_arity);
   s7_define_function(sc, "procedure-source",        g_procedure_source,        1, 0, false, H_procedure_source);
   
-  s7_define_function(sc, "make-procedure-with-setter",         g_make_procedure_with_setter,         2, 0, false, "...");
+  s7_define_function(sc, "make-procedure-with-setter",         g_make_procedure_with_setter,         2, 0, false, H_make_procedure_with_setter);
   s7_define_function(sc, "procedure-with-setter?",             g_is_procedure_with_setter,           1, 0, false, H_is_procedure_with_setter);
   s7_define_function(sc, "procedure-with-setter-setter-arity", g_procedure_with_setter_setter_arity, 1, 0, false, "kludge to get setter's arity");
   pws_tag = s7_new_type("<procedure-with-setter>", pws_print, pws_free,	pws_equal, pws_mark, pws_apply,	pws_set);

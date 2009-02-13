@@ -203,14 +203,10 @@ void map_over_children(Widget w, void (*func)(Widget uw))
 	  for (i = 0; i < cw->composite.num_children; i++)
 	    map_over_children(cw->composite.children[i], func);
 	}
+
       if (XtIsWidget(w))
-	{
-	  for (i = 0; i < w->core.num_popups; i++)
-	    {
-	      Widget child = w->core.popup_list[i];
-	      map_over_children(child, func);
-	    }
-	}
+	for (i = 0; i < w->core.num_popups; i++)
+	  map_over_children(w->core.popup_list[i], func);
     }
 }
 
@@ -227,14 +223,10 @@ void map_over_children_with_color(Widget w, void (*func)(Widget uw, color_t colo
 	  for (i = 0; i < cw->composite.num_children; i++)
 	    map_over_children_with_color(cw->composite.children[i], func, color);
 	}
+
       if (XtIsWidget(w))
-	{
-	  for (i = 0; i < w->core.num_popups; i++)
-	    {
-	      Widget child = w->core.popup_list[i];
-	      map_over_children_with_color(child, func, color);
-	    }
-	}
+	for (i = 0; i < w->core.num_popups; i++)
+	  map_over_children_with_color(w->core.popup_list[i], func, color);
     }
 }
 
@@ -727,12 +719,15 @@ void draw_rotated_axis_label(chan_info *cp, axis_context *ax, const char *text, 
   XGCValues gv;
   Display *dp;
   Widget widget;
+
   if ((cp->chan > 0) && (cp->sound->channel_style == CHANNELS_COMBINED))
     widget = channel_graph(cp->sound->chans[0]);
   else widget = channel_graph(cp);
   dp = XtDisplay(widget);
   XGetGCValues(MAIN_DISPLAY(ss), ax->gc, GCForeground | GCBackground, &gv);
+
   pix = rotate_text(widget, text, AXIS_LABEL_FONT(ss), -90.0, &w, &h, gv.background, gv.foreground, ax->gc);
+
   XCopyArea(dp, pix, XtWindow(widget), ax->gc, 0, 0, w, h, x0, y0); /* XtWindow?? */
   XFreePixmap(dp, pix);  
 }
@@ -740,9 +735,9 @@ void draw_rotated_axis_label(chan_info *cp, axis_context *ax, const char *text, 
 
 void ensure_list_row_visible(widget_t list, int pos)
 {
-  int top, visible, num_rows;
   if (pos >= 0)
     {
+      int top, visible, num_rows;
       XtVaGetValues(list,
 		    XmNtopItemPosition, &top,
 		    XmNvisibleItemCount, &visible,
