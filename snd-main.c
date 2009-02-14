@@ -266,7 +266,7 @@ static const char *time_graph_type_name(graph_type_t choice)
 
 static const char *x_axis_style_name(x_axis_style_t choice)
 {
-  switch(choice)
+  switch (choice)
     {
     case X_AXIS_AS_CLOCK:      return(TO_VAR_NAME(S_x_axis_as_clock));      break;
     case X_AXIS_IN_SAMPLES:    return(TO_VAR_NAME(S_x_axis_in_samples));    break;

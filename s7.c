@@ -467,7 +467,6 @@ struct s7_scheme {
   bool *backtracing;                  /* if backtracing, errors print a backtrace */
   long *gensym_counter;
   
-  /* these are locals in eval, but we want that code to be context-free */
   #define INITIAL_STRBUF_SIZE 1024
   int strbuf_size;
   char *strbuf;
@@ -480,10 +479,14 @@ struct s7_scheme {
   token_t tok;
   s7_pointer value;
   opcode_t op;
-  s7_pointer x, y, z; /* evaluator local vars */
-  s7_pointer *temps;
-  int temps_ctr, temps_size;
+  s7_pointer x, y, z;            /* evaluator local vars */
   num v;
+
+  s7_pointer *temps;             /* short-term gc protection */
+  int temps_ctr, temps_size;
+
+  #define CIRCULAR_REFS_SIZE 8
+  s7_pointer *circular_refs;     /* printer circular list/vector checks */
   
   jmp_buf goto_start;
   bool longjmp_ok;
@@ -1076,7 +1079,7 @@ static void mark_vector(s7_pointer p, int top)
   s7_pointer *tp;
   set_mark(p);
   tp = (s7_pointer *)(p->object.vector.elements);
-  for(i = 0; i < top; i++) 
+  for (i = 0; i < top; i++) 
     S7_MARK(tp[i]);
 }
 
@@ -1533,7 +1536,7 @@ s7_pointer s7_gensym(s7_scheme *sc, const char *prefix)
   len = safe_strlen(prefix) + 32;
   name = (char *)calloc(len, sizeof(char));
   
-  for(; (*(sc->gensym_counter)) < LONG_MAX; ) 
+  for (; (*(sc->gensym_counter)) < LONG_MAX; ) 
     { 
       snprintf(name, len, "%s-%ld", prefix, (*(sc->gensym_counter))++); 
       location = hash_fn(name, vector_length(sc->symbol_table)); 
@@ -7815,12 +7818,12 @@ static void write_string(s7_scheme *sc, const char *s, s7_pointer pt)
 	{
 	  if (is_string_port(pt))
 	    {
-	      for(; *s; s++)
+	      for (; *s; s++)
 		char_to_string_port(*s, pt);
 	    }
 	  else 
 	    {
-	      for(; *s; s++)
+	      for (; *s; s++)
 		(*(port_function(pt)))(sc, *s, pt);
 	    }
 	}
@@ -7841,7 +7844,7 @@ static char *slashify_string(const char *p)
       if (slashify_table[(int)p[i]])
 	{
 	  s[j++] = '\\';
-	  switch(p[i]) 
+	  switch (p[i]) 
 	    {
 	    case '"':
 	      s[j++] = '"';
@@ -7889,7 +7892,7 @@ static char *slashify_string(const char *p)
 
 static char *s7_atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
 {
-  switch(type(obj))
+  switch (type(obj))
     {
     case T_NIL_TYPE:
       if (obj == sc->NIL) 
@@ -7944,7 +7947,7 @@ static char *s7_atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
 	  } 
 	else 
 	  {
-	    switch(c) 
+	    switch (c) 
 	      {
 	      case ' ':
 		snprintf(p, P_SIZE, "#\\space"); 
@@ -8018,7 +8021,42 @@ static char *s7_atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
 }
 
 
-static char *s7_vector_to_c_string(s7_scheme *sc, s7_pointer vect)
+static char *s7_vector_to_c_string(s7_scheme *sc, s7_pointer vect, int depth);
+static char *s7_list_to_c_string(s7_scheme *sc, s7_pointer lst, int depth);
+
+static char *s7_object_to_c_string_1(s7_scheme *sc, s7_pointer obj, bool use_write, int depth)
+{
+  if ((s7_is_vector(obj)) ||
+      (s7_is_hash_table(obj)))
+    return(s7_vector_to_c_string(sc, obj, depth));
+
+  if (is_pair(obj))
+    return(s7_list_to_c_string(sc, obj, depth));
+
+  return(s7_atom_to_c_string(sc, obj, use_write));
+}
+
+
+static char *object_to_c_string_with_circle_check(s7_scheme *sc, s7_pointer vr, int depth)
+{
+  int k, lim;
+
+  lim = depth;
+  if (lim >= CIRCULAR_REFS_SIZE) lim = CIRCULAR_REFS_SIZE - 1;
+
+  for (k = 0; k <= lim; k++)
+    if (s7_is_eq(vr, sc->circular_refs[k]))
+      {
+	if (s7_is_vector(vr))
+	  return(s7_strdup("[circular vector]"));
+	return(s7_strdup("[circular list]"));
+      }
+
+  return(s7_object_to_c_string_1(sc, vr, true, depth + 1));
+}
+
+
+static char *s7_vector_to_c_string(s7_scheme *sc, s7_pointer vect, int depth)
 {
   int i, len, plen, bufsize = 0;
   bool too_long = false;
@@ -8035,17 +8073,21 @@ static char *s7_vector_to_c_string(s7_scheme *sc, s7_pointer vect)
       too_long = true;
       len = plen;
     }
+
+  if (depth < CIRCULAR_REFS_SIZE)
+    sc->circular_refs[depth] = vect;             /* (let ((v (vector 1 2))) (vector-set! v 0 v) v) */
+
   elements = (char **)malloc(len * sizeof(char *));
   for (i = 0; i < len; i++)
     {
-      if (s7_is_eq(vector_element(vect, i), vect)) /* TODO: vect and lst self elements need a stack (and s7test coverage for vects) */
-	elements[i] = s7_strdup("[circular vector]");
-      else elements[i] = s7_object_to_c_string(sc, vector_element(vect, i));
+      elements[i] = object_to_c_string_with_circle_check(sc, vector_element(vect, i), depth);
       bufsize += safe_strlen(elements[i]);
     }
+
   bufsize += (len * 2 + 256);
   buf = (char *)malloc(bufsize * sizeof(char));
   sprintf(buf, "#(");
+
   for (i = 0; i < len - 1; i++)
     {
       if (elements[i])
@@ -8072,20 +8114,21 @@ static s7_pointer s7_vector_to_string(s7_scheme *sc, s7_pointer vect)
 {
   char *buf;
   s7_pointer result;
-  buf = s7_vector_to_c_string(sc, vect);
+  buf = s7_vector_to_c_string(sc, vect, 0);
   result = s7_make_string(sc, buf);
   free(buf);
   return(result);
 }
 
 
-static char *s7_list_to_c_string(s7_scheme *sc, s7_pointer lst)
+static char *s7_list_to_c_string(s7_scheme *sc, s7_pointer lst, int depth)
 {
   bool dotted = false;
   s7_pointer x;
   int i, len, bufsize = 0;
   char **elements = NULL;
   char *buf;
+
   len = s7_list_length(sc, lst);
   if (len < 0)                    /* a dotted list -- handle cars, then final cdr */
     {
@@ -8096,18 +8139,20 @@ static char *s7_list_to_c_string(s7_scheme *sc, s7_pointer lst)
   if (len == 0)                   /* either '() or a circular list */
     {
       if (lst != sc->NIL)
-	return(s7_strdup("[circular list!]"));
+	return(s7_strdup("[circular list]"));
       return(s7_strdup("()"));
     }
   
+  if (depth < CIRCULAR_REFS_SIZE)
+    sc->circular_refs[depth] = lst;            /* (let ((l (list 1 2))) (list-set! l 0 l) l) */
+
   elements = (char **)malloc(len * sizeof(char *));
   for (x = lst, i = 0; is_pair(x) && (i < len); i++, x = cdr(x))
     {
-      if (s7_is_eq(car(x), lst))                                /* (let ((l (list 1 2))) (list-set! l 0 l) l) */
-	elements[i] = s7_strdup("[circular list]");
-      else elements[i] = s7_object_to_c_string(sc, car(x));
+      elements[i] = object_to_c_string_with_circle_check(sc, car(x), depth);
       bufsize += safe_strlen(elements[i]);
     }
+
   if (dotted)
     {
       if (s7_is_eq(x, lst))
@@ -8146,27 +8191,16 @@ static s7_pointer s7_list_to_string(s7_scheme *sc, s7_pointer lst)
 {
   s7_pointer result;
   char *buf;
-  buf = s7_list_to_c_string(sc, lst);
+  buf = s7_list_to_c_string(sc, lst, 0);
   result = s7_make_string(sc, buf);
   free(buf);
   return(result);
 }
 
 
-static char *s7_object_to_c_string_1(s7_scheme *sc, s7_pointer obj, bool use_write)
-{
-  if ((s7_is_vector(obj)) ||
-      (s7_is_hash_table(obj)))
-    return(s7_vector_to_c_string(sc, obj));
-  if (is_pair(obj))
-    return(s7_list_to_c_string(sc, obj));
-  return(s7_atom_to_c_string(sc, obj, use_write));
-}
-
-
 char *s7_object_to_c_string(s7_scheme *sc, s7_pointer obj)
 {
-  return(s7_object_to_c_string_1(sc, obj, true));
+  return(s7_object_to_c_string_1(sc, obj, true, 0));
 }
 
 
@@ -8177,8 +8211,10 @@ s7_pointer s7_object_to_string(s7_scheme *sc, s7_pointer obj)
   if ((s7_is_vector(obj)) ||
       (s7_is_hash_table(obj)))
     return(s7_vector_to_string(sc, obj));
+
   if (is_pair(obj))
     return(s7_list_to_string(sc, obj));
+
   x = s7_make_string(sc, str = s7_atom_to_c_string(sc, obj, true));
   if (str) free(str);
   return(x);
@@ -8238,7 +8274,7 @@ static s7_pointer g_write_char(s7_scheme *sc, s7_pointer args)
 static void write_or_display(s7_scheme *sc, s7_pointer obj, s7_pointer port, bool use_write)
 {
   char *val;
-  val = s7_object_to_c_string_1(sc, obj, use_write);
+  val = s7_object_to_c_string_1(sc, obj, use_write, 0);
   write_string(sc, val, port);
   if (val) free(val);
 }
@@ -9365,7 +9401,7 @@ void s7_vector_fill(s7_scheme *sc, s7_pointer vec, s7_pointer obj)
   s7_pointer *tp;
   len = vector_length(vec);
   tp = (s7_pointer *)(vec->object.vector.elements);
-  for(i = 0; i < len; i++) 
+  for (i = 0; i < len; i++) 
     tp[i] = obj;
 }
 #endif
@@ -9393,9 +9429,7 @@ s7_pointer s7_vector_ref(s7_scheme *sc, s7_pointer vec, int index)
 s7_pointer s7_vector_set(s7_scheme *sc, s7_pointer vec, int index, s7_pointer a) 
 {
   /* it's possible to have a vector that points to itself:
-   *   (let ((v (make-vector 2))) (vector-set! v 0 v) v) ; or (vector->list v)!
-   * and now the repl gets into an infinite loop -- we should catch this like a circular list
-   * what about list has vect and vect has that list?
+   *   (let ((v (make-vector 2))) (vector-set! v 0 v) v)
    */
   if (index >= vector_length(vec))
     return(s7_out_of_range_error(sc, "vector-set!", 2, s7_make_integer(sc, index), "index is too high"));
@@ -10071,9 +10105,9 @@ static bool pws_equal(void *obj1, void *obj2)
 }
 
 
-/* this is called as the pws object apply method, not as the actual getter */
 static s7_pointer pws_apply(s7_scheme *sc, s7_pointer obj, s7_pointer args)
 {
+  /* this is called as the pws object apply method, not as the actual getter */
   pws *f;
   f = (pws *)s7_object_value(obj);
   if (f->getter != NULL)
@@ -10082,9 +10116,9 @@ static s7_pointer pws_apply(s7_scheme *sc, s7_pointer obj, s7_pointer args)
 }
 
 
-/* this is the pws set method, not the actual setter */
 static s7_pointer pws_set(s7_scheme *sc, s7_pointer obj, s7_pointer args)
 {
+  /* this is the pws set method, not the actual setter */
   pws *f;
   f = (pws *)s7_object_value(obj);
   if (f->setter != NULL)
@@ -10731,7 +10765,7 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
 		      (!s7_is_character(car(fdat->args))))
 		    return(s7_format_error(sc, "~C directive requires a character argument", str, args, fdat));
 
-		  tmp = s7_object_to_c_string_1(sc, car(fdat->args), (str[i] == 'S') || (str[i] == 's'));
+		  tmp = s7_object_to_c_string_1(sc, car(fdat->args), (str[i] == 'S') || (str[i] == 's'), 0);
 		  format_append_string(fdat, tmp);
 		  if (tmp) free(tmp);
 		  fdat->args = cdr(fdat->args);
@@ -11736,7 +11770,7 @@ static s7_pointer apply_list_star(s7_scheme *sc, s7_pointer d)
   
   p = s7_cons(sc, car(d), cdr(d));
   q = p;
-  while(cdr(cdr(p)) != sc->NIL) 
+  while (cdr(cdr(p)) != sc->NIL) 
     {
       d = s7_cons(sc, car(p), cdr(p));
       if (cdr(cdr(p)) != sc->NIL) 
@@ -12897,11 +12931,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		      (car(sc->z) == sc->KEY_OPTIONAL) ||
 		      (car(sc->z) == sc->KEY_REST)))                  /* :optional and :key always ignored, :rest dealt with later */
 		  {
-		    if (is_pair(car(sc->z)))                       /* (define* (hi (a mus-next)) a) */
+		    if (is_pair(car(sc->z)))                          /* (define* (hi (a mus-next)) a) */
 		      add_to_current_environment(sc,                  /* or (define* (hi (a 'hi)) (list a (eq? a 'hi))) */
 						 caar(sc->z), 
 						 lambda_star_argument_default_value(sc, cadar(sc->z)));
-		                                                  /* mus-next, for example, needs to be evaluated before binding */
+		                                                      /* mus-next, for example, needs to be evaluated before binding */
 		    else add_to_current_environment(sc, car(sc->z), sc->F);
 		  }
 	      }
@@ -14333,10 +14367,11 @@ static s7_scheme *clone_s7(s7_scheme *sc, s7_pointer vect)
   
   new_sc->temps_size = GC_TEMPS_SIZE;
   new_sc->temps_ctr = 0;
-  new_sc->temps = (s7_pointer *)calloc(new_sc->temps_size, sizeof(s7_pointer));
+  new_sc->temps = (s7_pointer *)malloc(new_sc->temps_size * sizeof(s7_pointer));
   for (i = 0; i < new_sc->temps_size; i++)
     new_sc->temps[i] = new_sc->NIL;
 
+  new_sc->circular_refs = (s7_pointer *)calloc(CIRCULAR_REFS_SIZE, sizeof(s7_pointer));
   new_sc->key_values = sc->NIL;
 
   pthread_mutex_lock(&backtrace_lock);     /* probably unnecessary... */
@@ -15550,7 +15585,7 @@ void s7_vector_fill(s7_scheme *sc, s7_pointer vec, s7_pointer obj)
     {
       int type;
       type = object_type(obj);
-      for(i = 0; i < len; i++) 
+      for (i = 0; i < len; i++) 
 	{
 	  if (type == big_real_tag)
 	    tp[i] = mpfr_to_big_real(sc, S7_BIG_REAL(obj));
@@ -15569,7 +15604,7 @@ void s7_vector_fill(s7_scheme *sc, s7_pointer vec, s7_pointer obj)
     }
   else
     {
-      for(i = 0; i < len; i++) 
+      for (i = 0; i < len; i++) 
 	tp[i] = obj;
     }
 }
@@ -18609,7 +18644,6 @@ static void s7_gmp_init(s7_scheme *sc)
 s7_scheme *s7_init(void) 
 {
   int i;
-  s7_pointer x;
   s7_scheme *sc;
   
   init_ctables();
@@ -18690,6 +18724,8 @@ s7_scheme *s7_init(void)
   sc->temps = (s7_pointer *)malloc(sc->temps_size * sizeof(s7_pointer));
   for (i = 0; i < sc->temps_size; i++)
     sc->temps[i] = sc->NIL;
+
+  sc->circular_refs = (s7_pointer *)calloc(CIRCULAR_REFS_SIZE, sizeof(s7_pointer));
   
   sc->protected_objects_size = (int *)malloc(sizeof(int));
   (*(sc->protected_objects_size)) = INITIAL_PROTECTED_OBJECTS_SIZE;
@@ -18725,11 +18761,14 @@ s7_scheme *s7_init(void)
   sc->global_env = s7_immutable_cons(sc, s7_make_vector(sc, SYMBOL_TABLE_SIZE), sc->NIL);
   sc->envir = sc->global_env;
   
-  x = s7_make_vector(sc, OP_MAX_DEFINED + 1);
-  typeflag(x) |= (T_CONSTANT | T_DONT_COPY);
-  sc->small_ints = x->object.vector.elements;
-  
-  for(i = 0; i < OP_MAX_DEFINED; i++) 
+  {
+    s7_pointer x;
+    x = s7_make_vector(sc, OP_MAX_DEFINED + 1);
+    typeflag(x) |= (T_CONSTANT | T_DONT_COPY);
+    sc->small_ints = x->object.vector.elements;
+  }
+
+  for (i = 0; i < OP_MAX_DEFINED; i++) 
     {
       s7_pointer p;
       p = (s7_cell *)calloc(1, sizeof(s7_cell));
@@ -19209,5 +19248,4 @@ s7_scheme *s7_init(void)
 }
 
 /* unicode is probably do-able if it is sequestered in the s7 strings 
- * TODO: s7test make-random-state (or some other such object) passed to all (esp big_*)
  */

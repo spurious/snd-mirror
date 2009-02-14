@@ -5557,7 +5557,7 @@ static XEN channel_get(XEN snd_n, XEN chn_n, cp_field_t fld, const char *caller)
 	  ASSERT_CHANNEL(caller, snd_n, chn_n, 1);
 	  cp = get_cp(snd_n, chn_n, caller);
 	  if (!cp) return(XEN_FALSE); /* perhaps snd-error-hook cancelled the error? */
-	  switch(fld)
+	  switch (fld)
 	    {
 	    case CP_EDIT_CTR:                return(C_TO_XEN_INT(cp->edit_ctr));                               break;
 	    case CP_GRAPH_TRANSFORM_P:       return(C_TO_XEN_BOOLEAN(cp->graph_transform_p));                  break;

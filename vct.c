@@ -976,7 +976,7 @@ static XEN g_rb_make_vct(int argc, XEN *argv, XEN self)
   if (rb_block_given_p()) {
     off_t i;
     Float *buffer = (Float *)calloc(size, sizeof(Float));
-    for(i = 0; i < size; i++) {
+    for (i = 0; i < size; i++) {
       buffer[i] = XEN_TO_C_DOUBLE(rb_yield(C_TO_XEN_INT(i)));
     }
     return xen_make_vct(size, buffer);
@@ -991,7 +991,7 @@ static XEN g_vct_map(XEN obj)
     off_t i;
     vct *v = XEN_TO_VCT(obj);
     Float *buffer = (Float *)calloc(v->length, sizeof(Float));
-    for(i = 0; i < v->length; i++)
+    for (i = 0; i < v->length; i++)
       buffer[i] = XEN_TO_C_DOUBLE(rb_yield(C_TO_XEN_DOUBLE(v->data[i])));
     return xen_make_vct(v->length, buffer);
   }
@@ -1004,7 +1004,7 @@ static XEN g_vct_map_store(XEN obj)
   if (rb_block_given_p()) {
     off_t i;
     vct *v = XEN_TO_VCT(obj);
-    for(i = 0; i < v->length; i++)
+    for (i = 0; i < v->length; i++)
       v->data[i] = XEN_TO_C_DOUBLE(rb_yield(C_TO_XEN_DOUBLE(v->data[i])));
   }
   return obj;

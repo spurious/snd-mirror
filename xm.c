@@ -15370,7 +15370,7 @@ static XEN wrap_callback_struct(int type, XtPointer info)
 static int callback_struct_type(Widget w, const char *name)
 {
   if (strcmp(name, XmNdestinationCallback) == 0) return(GXM_Destination);
-  if (strcmp(name, XmNpopupHandlerCallback) == 0) return (GXM_Popup);
+  if (strcmp(name, XmNpopupHandlerCallback) == 0) return(GXM_Popup);
   if (strcmp(name, XmNconvertCallback) == 0) return(GXM_Convert);
   if (strcmp(name, XmNdragStartCallback) == 0) return(GXM_Drag_Start);
   if (strcmp(name, XmNdropProc) == 0) return(GXM_Drop_Proc);      

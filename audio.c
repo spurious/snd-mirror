@@ -1440,7 +1440,7 @@ static int oss_mus_audio_systems(void)
 static char *mixer_name(int sys)
 {
 #if HAVE_SAM_9407
-  if((sys < sound_cards) && (audio_type[sys] == SAM9407_DSP))
+  if ((sys < sound_cards) && (audio_type[sys] == SAM9407_DSP))
     {
       mus_snprintf(dev_name, LABEL_BUFFER_SIZE, "/dev/sam%d_mixer", audio_mixer[sys]);
       return(dev_name);
@@ -1469,14 +1469,14 @@ static char *mixer_name(int sys)
 static char *oss_mus_audio_system_name(int system) 
 {
 #if HAVE_SAM_9407
-  if((system < sound_cards) && (audio_type[system] == SAM9407_DSP))
+  if ((system < sound_cards) && (audio_type[system] == SAM9407_DSP))
     {
       int fd;
       fd = open(mixer_name(system), O_RDONLY, 0);
-      if(fd != -1) 
+      if (fd != -1) 
 	{
 	  static SamDriverInfo driverInfo;
-	  if(ioctl(fd, SAM_IOC_DRIVER_INFO, &driverInfo) >= 0) 
+	  if (ioctl(fd, SAM_IOC_DRIVER_INFO, &driverInfo) >= 0) 
 	    {
 	      close(fd);
 	      return(driverInfo.hardware);
@@ -1613,7 +1613,7 @@ static int oss_mus_audio_initialize(void)
 	    sound_cards++;
 	    close(fd);
 	  }
-	if(sound_cards > 0)
+	if (sound_cards > 0)
 	  return(0);
       }
 #endif
@@ -2004,7 +2004,7 @@ static int oss_mus_audio_open_output(int ur_dev, int srate, int chans, int forma
       char dname[LABEL_BUFFER_SIZE];
       mus_snprintf(dname, LABEL_BUFFER_SIZE, "/dev/sam%d_dsp", audio_dsp[sys]);
       audio_out = open(dname, O_WRONLY);
-      if(audio_out == -1)
+      if (audio_out == -1)
 	RETURN_ERROR_EXIT(MUS_AUDIO_CANT_OPEN, audio_out,
 			  mus_format("can't open %s: %s",
 				     dname, 
@@ -2216,7 +2216,7 @@ static int oss_mus_audio_open_input(int ur_dev, int srate, int chans, int format
       char dname[LABEL_BUFFER_SIZE];
       mus_snprintf(dname, LABEL_BUFFER_SIZE, "/dev/sam%d_dsp", audio_dsp[sys]);
       audio_fd = open(dname, O_RDONLY);
-      if(audio_fd == -1)
+      if (audio_fd == -1)
 	RETURN_ERROR_EXIT(MUS_AUDIO_CANT_OPEN, audio_fd,
 			  mus_format("can't open input %s: %s",
 				     dname, 
@@ -2420,7 +2420,7 @@ static int oss_mus_audio_mixer_read(int ur_dev, int field, int chan, float *val)
 #if HAVE_SAM_9407
   if (audio_type[sys] == SAM9407_DSP)
     {
-      switch(field) 
+      switch (field) 
 	{
 	case MUS_AUDIO_PORT:
 	  val[0] = 2;
@@ -3686,7 +3686,7 @@ static int to_mus_format(int alsa_format)
 
 static int to_alsa_device(int dev, int *adev, snd_pcm_stream_t *achan)
 {
-  switch(dev) 
+  switch (dev) 
     {
       /* default values are a problem because the concept does
        * not imply a direction (playback or capture). This works
@@ -8258,22 +8258,22 @@ static void sndjack_read_process(jack_nframes_t nframes){
   int i,ch;
   sample_t *out[sndjack_num_channels_allocated];
 
-  if(sndjack_num_read_channels_inuse==0) return;
+  if (sndjack_num_read_channels_inuse==0) return;
 
-  for(ch=0;ch<sndjack_num_read_channels_allocated;ch++){
+  for (ch=0;ch<sndjack_num_read_channels_allocated;ch++){
     out[ch]=(sample_t*)jack_port_get_buffer(sndjack_read_channels[ch].port,nframes);
   }
 
-  for(i=0;i<nframes;i++){
-    if(sj_r_unread==sj_buffersize){
+  for (i=0;i<nframes;i++){
+    if (sj_r_unread==sj_buffersize){
       sj_r_xrun+=nframes-i;
       goto exit;
     }
-    for(ch=0;ch<sndjack_num_read_channels_inuse;ch++)
+    for (ch=0;ch<sndjack_num_read_channels_inuse;ch++)
       sndjack_read_channels[ch].buffer[sj_r_writeplace]=out[ch][i];
     atomic_add(&sj_r_unread,1);
     sj_r_writeplace++;
-    if(sj_r_writeplace==sj_r_buffersize)
+    if (sj_r_writeplace==sj_r_buffersize)
       sj_r_writeplace=0;
   }
  exit:
@@ -8285,57 +8285,57 @@ static void sndjack_write_process(jack_nframes_t nframes){
   int ch,i;
   sample_t *out[sndjack_num_channels_allocated];
 
-  for(ch=0;ch<sndjack_num_channels_allocated;ch++){
+  for (ch=0;ch<sndjack_num_channels_allocated;ch++){
     out[ch]=(sample_t*)jack_port_get_buffer(sndjack_channels[ch].port,nframes);
   }
 
-  if(sj_status==SJ_STOPPED){
-    for(ch=0;ch<sndjack_num_channels_allocated;ch++){
+  if (sj_status==SJ_STOPPED){
+    for (ch=0;ch<sndjack_num_channels_allocated;ch++){
       memset(out[ch],0,nframes*sizeof(sample_t));
     }
   }else{
 
     // First null out unused channels, if any.
-    if(sndjack_num_channels_inuse==1 && sndjack_num_channels_allocated>=2){
-      for(ch=2;ch<sndjack_num_channels_allocated;ch++){
+    if (sndjack_num_channels_inuse==1 && sndjack_num_channels_allocated>=2){
+      for (ch=2;ch<sndjack_num_channels_allocated;ch++){
 	memset(out[ch],0,nframes*sizeof(sample_t));
       }
     }else{
-      for(ch=sndjack_num_channels_inuse;ch<sndjack_num_channels_allocated;ch++){
+      for (ch=sndjack_num_channels_inuse;ch<sndjack_num_channels_allocated;ch++){
 	memset(out[ch],0,nframes*sizeof(sample_t));
       }
     }
 
-    for(i=0;i<nframes;i++){
-      if(sj_unread==0){	
-	if(sj_status==SJ_RUNNING)
+    for (i=0;i<nframes;i++){
+      if (sj_unread==0){	
+	if (sj_status==SJ_RUNNING)
 	  sj_xrun+=nframes-i;
-	for(;i<nframes;i++){
-	  for(ch=0;ch<sndjack_num_channels_inuse;ch++){
+	for (;i<nframes;i++){
+	  for (ch=0;ch<sndjack_num_channels_inuse;ch++){
 	    out[ch][i]=0.0f;
 	  }
 	}
 	break;
       }
 
-      if(sndjack_num_channels_inuse==1 && sndjack_num_channels_allocated>=2){
-	for(ch=0;ch<2;ch++){
+      if (sndjack_num_channels_inuse==1 && sndjack_num_channels_allocated>=2){
+	for (ch=0;ch<2;ch++){
 	  out[ch][i]=sndjack_channels[0].buffer[sj_readplace];
 	}
       }else{
-	for(ch=0;ch<sndjack_num_channels_inuse;ch++){
+	for (ch=0;ch<sndjack_num_channels_inuse;ch++){
 	  out[ch][i]=sndjack_channels[ch].buffer[sj_readplace];
 	}
       }
       atomic_add(&sj_unread,-1);
       sj_readplace++;
-      if(sj_readplace==sj_buffersize)
+      if (sj_readplace==sj_buffersize)
 	sj_readplace=0;
     }
     
     pthread_cond_broadcast(&sndjack_cond);
 
-    if(sj_status==SJ_ABOUTTOSTOP && sj_unread==0)
+    if (sj_status==SJ_ABOUTTOSTOP && sj_unread==0)
       sj_status=SJ_STOPPED;
   }
 
@@ -8360,19 +8360,19 @@ static int sndjack_read(void *buf,int bytes,int chs){
   short *buf_s=(short *)buf;
   char *buf_c=(char *)buf;
 
-  for(i=0;i<nframes;i++){
+  for (i=0;i<nframes;i++){
     while(sj_r_unread==0){
       pthread_cond_wait(&sndjack_read_cond,&sndjack_read_mutex);
       jack_mus_watchdog_counter++;
     }
 
-    if(sj_r_xrun>0){
+    if (sj_r_xrun>0){
       sj_r_totalxrun+=sj_r_xrun;
       sj_r_xrun=0;
       return -1;
     }
-    for(ch=0;ch<chs;ch++){
-      switch(sndjack_read_format){
+    for (ch=0;ch<chs;ch++){
+      switch (sndjack_read_format){
       case MUS_BYTE:
 	buf_c[i*chs+ch]=sndjack_read_channels[ch].buffer[sj_r_readplace] * 127.9f;
 	break;
@@ -8385,7 +8385,7 @@ static int sndjack_read(void *buf,int bytes,int chs){
       }}
     atomic_add(&sj_r_unread,-1);
     sj_r_readplace++;
-    if(sj_r_readplace==sj_r_buffersize)
+    if (sj_r_readplace==sj_r_buffersize)
       sj_r_readplace=0;
   }
   return 0;
@@ -8395,15 +8395,15 @@ static void sndjack_write(sample_t **buf,int nframes,int latencyframes,int chs){
   int ch;
   int i;
 
-  if(sj_xrun>0){
-    if(sj_status==SJ_RUNNING){
+  if (sj_xrun>0){
+    if (sj_status==SJ_RUNNING){
       printf("Warning. %d frames delayed.\n",sj_xrun);
       sj_totalxrun+=sj_xrun;
     }
     sj_xrun=0;
   }
 
-  for(i=0;i<nframes;i++){
+  for (i=0;i<nframes;i++){
     while(
 	  sj_status==SJ_RUNNING
 	  && (sj_unread==sj_buffersize
@@ -8414,17 +8414,17 @@ static void sndjack_write(sample_t **buf,int nframes,int latencyframes,int chs){
 	pthread_cond_wait(&sndjack_cond,&sndjack_mutex);
       }
 
-    for(ch=0;ch<chs;ch++)
+    for (ch=0;ch<chs;ch++)
       sndjack_channels[ch].buffer[sj_writeplace]=buf[ch][i];
 
     atomic_add(&sj_unread,1);
     sj_writeplace++;
-    if(sj_writeplace==sj_buffersize)
+    if (sj_writeplace==sj_buffersize)
       sj_writeplace=0;
   }
 
-  if(sj_status==SJ_STOPPED)
-    if(sj_unread>=sj_jackbuffersize)
+  if (sj_status==SJ_STOPPED)
+    if (sj_unread>=sj_jackbuffersize)
       sj_status=SJ_RUNNING;
 }
  
@@ -8435,7 +8435,7 @@ static int sndjack_buffersizecallback(jack_nframes_t nframes, void *arg){
 
 static int sndjack_getnumoutchannels(void){
   char *a=getenv("SNDLIB_NUM_JACK_CHANNELS");
-  if(a!=NULL){
+  if (a!=NULL){
     int num_ch=atoi(a);
     return
       (num_ch<=0 || num_ch > 100000)
@@ -8448,14 +8448,14 @@ static int sndjack_getnumoutchannels(void){
       lokke++;
     }
     
-    if(lokke<2) return 2;
+    if (lokke<2) return 2;
     return lokke;
   }
 }
 
 static int sndjack_getnuminchannels(void){
   char *a=getenv("SNDLIB_NUM_JACK_CHANNELS");
-  if(a!=NULL){
+  if (a!=NULL){
     int num_ch=atoi(a);
     return
       (num_ch<=0 || num_ch > 100000)
@@ -8467,7 +8467,7 @@ static int sndjack_getnuminchannels(void){
     while(ports!=NULL && ports[lokke]!=NULL){
       lokke++;
     }
-    if(lokke<2) return 2;
+    if (lokke<2) return 2;
     return lokke;
   }
 }
@@ -8506,18 +8506,18 @@ static int sndjack_init(void){
   sndjack_channels=(struct SndjackChannel *)calloc(sizeof(struct SndjackChannel),numch);
   sndjack_read_channels=(struct SndjackChannel *)calloc(sizeof(struct SndjackChannel),sndjack_num_read_channels_allocated);
 
-  for(ch=0;ch<numch;ch++){
+  for (ch=0;ch<numch;ch++){
     sndjack_channels[ch].buffer=(sample_t *)calloc(sizeof(sample_t),SNDJACK_BUFFERSIZE);
   }
-  for(ch=0;ch<sndjack_num_read_channels_allocated;ch++){
+  for (ch=0;ch<sndjack_num_read_channels_allocated;ch++){
     sndjack_read_channels[ch].buffer=(sample_t *)calloc(sizeof(sample_t),SNDJACK_BUFFERSIZE);
   }
   sj_buffersize=SNDJACK_BUFFERSIZE;
 
-  for(ch=0;ch<numch;ch++){
+  for (ch=0;ch<numch;ch++){
     char temp[500];
     sprintf(temp, "out_%d",ch+1);
-    if((sndjack_channels[ch].port=jack_port_register(
+    if ((sndjack_channels[ch].port=jack_port_register(
 						     sndjack_client,
 						     mus_strdup(temp),
 						     JACK_DEFAULT_AUDIO_TYPE,
@@ -8530,10 +8530,10 @@ static int sndjack_init(void){
       }
   }
 
-  for(ch=0;ch<sndjack_num_read_channels_allocated;ch++){
+  for (ch=0;ch<sndjack_num_read_channels_allocated;ch++){
     char temp[500];
     sprintf(temp, "in_%d",ch+1);
-    if((sndjack_read_channels[ch].port=jack_port_register(
+    if ((sndjack_read_channels[ch].port=jack_port_register(
 							  sndjack_client,
 							  mus_strdup(temp),
 							  JACK_DEFAULT_AUDIO_TYPE,
@@ -8557,10 +8557,10 @@ static int sndjack_init(void){
     goto failed_activate;
   }
 
-  if(getenv("SNDLIB_JACK_DONT_AUTOCONNECT")==NULL){
+  if (getenv("SNDLIB_JACK_DONT_AUTOCONNECT")==NULL){
 
     const char **outportnames=jack_get_ports(sndjack_client,NULL,NULL,JackPortIsPhysical|JackPortIsInput);
-    for(ch=0;outportnames && outportnames[ch]!=NULL && ch<numch;ch++){
+    for (ch=0;outportnames && outportnames[ch]!=NULL && ch<numch;ch++){
       if (
 	  jack_connect(
 		       sndjack_client,
@@ -8574,7 +8574,7 @@ static int sndjack_init(void){
     }
 
     const char **inportnames=jack_get_ports(sndjack_client,NULL,NULL,JackPortIsPhysical|JackPortIsOutput);
-    for(ch=0;inportnames && inportnames[ch]!=NULL && ch<numch;ch++){
+    for (ch=0;inportnames && inportnames[ch]!=NULL && ch<numch;ch++){
     if (
 	jack_connect(
 		     sndjack_client,
@@ -8602,7 +8602,7 @@ static int sndjack_init(void){
 }
 static void sndjack_cleanup(void){
   int ch;
-  for(ch=0;ch<sndjack_num_channels_allocated;ch++){
+  for (ch=0;ch<sndjack_num_channels_allocated;ch++){
     src_delete(sndjack_srcstates[ch]);
   }
   jack_deactivate(sndjack_client);
@@ -8702,20 +8702,20 @@ char* mus_audio_moniker(void)
 static int jack_mus_audio_initialize(void) {
   int ch;
 
-  if(audio_initialized){
+  if (audio_initialized){
     return MUS_NO_ERROR;
   }
 
-  if(sndjack_init()!=0)
+  if (sndjack_init()!=0)
     return MUS_ERROR;
 
   sndjack_buffer=(sample_t **)calloc(sizeof(sample_t*),sndjack_num_channels_allocated);
-  for(ch=0;ch<sndjack_num_channels_allocated;ch++)
+  for (ch=0;ch<sndjack_num_channels_allocated;ch++)
     sndjack_buffer[ch]=(sample_t *)calloc(sizeof(sample_t),SNDJACK_BUFFERSIZE);
   sndjack_srcbuffer=(sample_t *)calloc(sizeof(sample_t),SNDJACK_BUFFERSIZE);
 
   sndjack_srcstates=(SRC_STATE **)calloc(sizeof(SRC_STATE*),sndjack_num_channels_allocated);
-  for(ch=0;ch<sndjack_num_channels_allocated;ch++){
+  for (ch=0;ch<sndjack_num_channels_allocated;ch++){
     sndjack_srcstates[ch]=src_new(SRC_QUALITY,1,NULL);
   }
 
@@ -8750,10 +8750,10 @@ static int jack_mus_audio_initialize(void) {
     mlock(sndjack_channels,sizeof(struct SndjackChannel)*sndjack_num_channels_allocated);
     mlock(sndjack_read_channels,sizeof(struct SndjackChannel)*sndjack_num_read_channels_allocated);
 
-    for(ch=0;ch<numch;ch++){
+    for (ch=0;ch<numch;ch++){
       mlock(sndjack_channels[ch].buffer,sizeof(sample_t)*SNDJACK_BUFFERSIZE);
     }
-    for(ch=0;ch<sndjack_num_read_channels_allocated;ch++){
+    for (ch=0;ch<sndjack_num_read_channels_allocated;ch++){
       mlock(sndjack_read_channels[ch].buffer,sizeof(sample_t)*SNDJACK_BUFFERSIZE);
     }
   }
@@ -8775,21 +8775,21 @@ static void *jack_mus_audio_watchdog(void *arg){
   struct sched_param par;
 
   par.sched_priority = sched_get_priority_max(SCHED_RR);
-  if(sched_setscheduler(0,SCHED_RR,&par)==-1){
+  if (sched_setscheduler(0,SCHED_RR,&par)==-1){
     fprintf(stderr, "SNDLIB: Unable to set SCHED_RR realtime priority for the watchdog thread. No watchdog.\n");
     goto exit;
   }
 
-  for(;;){
+  for (;;){
     int last=jack_mus_watchdog_counter;
     sleep(1);
 
-    if(jack_mus_isrunning && jack_mus_watchdog_counter<last+10){
+    if (jack_mus_isrunning && jack_mus_watchdog_counter<last+10){
       struct sched_param par;
       fprintf(stderr, "SNDLIB: Setting player to non-realtime for 2 seconds.\n");
 
       par.sched_priority = 0;
-      if(sched_setscheduler(jack_mus_player_pid,SCHED_OTHER,&par)==-1){
+      if (sched_setscheduler(jack_mus_player_pid,SCHED_OTHER,&par)==-1){
 	fprintf(stderr, "SNDLIB: Unable to set non-realtime priority. Must kill player thread. Sorry!\n");
 	while(1){
 	  kill(jack_mus_player_pid,SIGKILL);
@@ -8799,9 +8799,9 @@ static void *jack_mus_audio_watchdog(void *arg){
 
       sleep(2);
 
-      if(jack_mus_isrunning){
+      if (jack_mus_isrunning){
 	par.sched_priority = sched_get_priority_min(SCHED_RR)+1;
-	if(sched_setscheduler(jack_mus_player_pid,SCHED_RR,&par)==-1){
+	if (sched_setscheduler(jack_mus_player_pid,SCHED_RR,&par)==-1){
 	  fprintf(stderr, "SNDLIB: Could not set back to realtime priority...\n");
 	}else
 	  fprintf(stderr, "SNDLIB: Play thread set back to realtime priority.\n");
@@ -8824,8 +8824,8 @@ static void jack_mus_audio_set_realtime(void){
 
   jack_mus_player_pid=getpid();
 
-  if(watchdog_started==0){
-    if(pthread_create(&jack_mus_watchdog_thread,NULL,jack_mus_audio_watchdog,NULL)!=0){
+  if (watchdog_started==0){
+    if (pthread_create(&jack_mus_watchdog_thread,NULL,jack_mus_audio_watchdog,NULL)!=0){
       fprintf(stderr, "Could not create watchdog. Not running realtime\n");
       return;
     }
@@ -8835,7 +8835,7 @@ static void jack_mus_audio_set_realtime(void){
   jack_mus_isrunning=1;
 
   par.sched_priority = sched_get_priority_min(SCHED_RR)+1;
-  if(sched_setscheduler(0,SCHED_RR,&par)==-1){
+  if (sched_setscheduler(0,SCHED_RR,&par)==-1){
     fprintf(stderr, "SNDLIB: Unable to set SCHED_RR realtime priority for the player thread.\n");
   }{
     //fprintf(stderr, "Set realtime priority\n");
@@ -8854,17 +8854,17 @@ static void jack_mus_audio_set_non_realtime(void){
 }
 
 int jack_mus_audio_open_output(int dev, int srate, int chans, int format, int size){
-  if(sndjack_client==NULL){
-    if(jack_mus_audio_initialize()==MUS_ERROR)
+  if (sndjack_client==NULL){
+    if (jack_mus_audio_initialize()==MUS_ERROR)
       return MUS_ERROR;
   }
   
-  if(sndjack_num_channels_allocated<chans){
+  if (sndjack_num_channels_allocated<chans){
     printf("Error. Can not play back %d channels. (Only %d)\n",chans,sndjack_num_channels_allocated);
     return MUS_ERROR;
   }
 
-  if(format!=MUS_BYTE && format!=MUS_COMP_SHORT && format!=MUS_COMP_FLOAT){
+  if (format!=MUS_BYTE && format!=MUS_COMP_SHORT && format!=MUS_COMP_FLOAT){
     printf("Error, unable to handle format %s.\n",mus_data_format_to_string(format));
     return MUS_ERROR;
   }
@@ -8876,11 +8876,11 @@ int jack_mus_audio_open_output(int dev, int srate, int chans, int format, int si
   sj_readplace=0;
 
 
-  if(srate!=jack_get_sample_rate(sndjack_client)){
+  if (srate!=jack_get_sample_rate(sndjack_client)){
     int lokke;
     //printf("Warning, sample-rate differs between snd and jack. Sound will not be played correctly! %d/%d\n",srate,jack_get_sample_rate(sndjack_client));
     sndjack_srcratio=(double)jack_get_sample_rate(sndjack_client)/(double)srate;
-    for(lokke=0;lokke<chans;lokke++){
+    for (lokke=0;lokke<chans;lokke++){
       src_reset(sndjack_srcstates[lokke]);
     }
   }else{
@@ -8899,9 +8899,9 @@ int jack_mus_audio_open_output(int dev, int srate, int chans, int format, int si
 static int sndjack_from_byte(int ch,int chs,char *buf,float *out,int bytes){
   int i;
   int len=bytes/chs;
-  if(len>SNDJACK_BUFFERSIZE) return -1;
+  if (len>SNDJACK_BUFFERSIZE) return -1;
 
-  for(i=0;i<len;i++){
+  for (i=0;i<len;i++){
     out[i]=MUS_BYTE_TO_SAMPLE(buf[i*chs+ch]);
   }
   return len;
@@ -8910,9 +8910,9 @@ static int sndjack_from_byte(int ch,int chs,char *buf,float *out,int bytes){
 static int sndjack_from_short(int ch,int chs,short *buf,float *out,int bytes){
   int i;
   int len=bytes/(sizeof(short)*chs);
-  if(len>SNDJACK_BUFFERSIZE) return -1;
+  if (len>SNDJACK_BUFFERSIZE) return -1;
 
-  for(i=0;i<len;i++){
+  for (i=0;i<len;i++){
     out[i]=(float)buf[i*chs+ch]/32768.1f;
   }
   return len;
@@ -8921,9 +8921,9 @@ static int sndjack_from_short(int ch,int chs,short *buf,float *out,int bytes){
 static int sndjack_from_float(int ch,int chs,float *buf,float *out,int bytes){
   int i;
   int len=bytes/(sizeof(float)*chs);
-  if(len>SNDJACK_BUFFERSIZE) return -1;
+  if (len>SNDJACK_BUFFERSIZE) return -1;
 
-  for(i=0;i<len;i++){
+  for (i=0;i<len;i++){
     out[i]=buf[i*chs+ch];
   }
   return len;
@@ -8935,11 +8935,11 @@ int jack_mus_audio_write(int line, char *buf, int bytes){
   int ch;
   int outlen=0;
 
-  for(ch=0;ch<sndjack_num_channels_inuse;ch++){
+  for (ch=0;ch<sndjack_num_channels_inuse;ch++){
     int len = 0;
     float *buf2=sndjack_srcratio==1.0?sndjack_buffer[ch]:sndjack_srcbuffer;
 
-    switch(sndjack_format){
+    switch (sndjack_format){
     case MUS_BYTE:
       len=sndjack_from_byte(ch,sndjack_num_channels_inuse,buf,buf2,bytes);
       break;
@@ -8950,12 +8950,12 @@ int jack_mus_audio_write(int line, char *buf, int bytes){
       len=sndjack_from_float(ch,sndjack_num_channels_inuse,(float *)buf,buf2,bytes);
       break;
     }
-    if(len<0){
+    if (len<0){
       printf("Errur. Input buffer to large for mus_audio_write.\n");
       return MUS_ERROR;
     }
 
-    if(sndjack_srcratio!=1.0){
+    if (sndjack_srcratio!=1.0){
       SRC_DATA src_data={
 	buf2,sndjack_buffer[ch],
 	len,SNDJACK_BUFFERSIZE,
@@ -8964,15 +8964,15 @@ int jack_mus_audio_write(int line, char *buf, int bytes){
 	sndjack_srcratio
       };
       int res=src_process(sndjack_srcstates[ch],&src_data);
-      if(res!=0){
+      if (res!=0){
 	printf("Error while resampling. (%s)\n",src_strerror(res));
 	return MUS_ERROR;
       }
-      if(src_data.input_frames!=len){
+      if (src_data.input_frames!=len){
 	printf("Unsuccessfull resampling: Should have used %d bytes, used %d.",len,src_data.input_frames);
 	return MUS_ERROR;
       }
-      if(ch>0 && src_data.output_frames_gen!=outlen){
+      if (ch>0 && src_data.output_frames_gen!=outlen){
 	printf("Error, src_process did not output the same number of frames as previous resampled channel (%d/%d).\n"
 	       "Please report this problem to k.s.matheussen@notam02.no. Thanks!\n",src_data.output_frames_gen,outlen);
 	return MUS_ERROR;
@@ -8992,7 +8992,7 @@ int jack_mus_audio_write(int line, char *buf, int bytes){
 int jack_mus_audio_close(int line) 
 {
   jack_mus_audio_set_non_realtime();
-  if(line==sndjack_dev){
+  if (line==sndjack_dev){
     sj_status=SJ_ABOUTTOSTOP;
     sndjack_num_channels_inuse=0;
   }
@@ -9003,7 +9003,7 @@ int jack_mus_audio_mixer_read(int dev, int field, int chan, float *val)
 {
   //printf("dev: %d, field: %d, chan: %d\n",dev,field,chan);
 
-  switch(field){
+  switch (field){
   case MUS_AUDIO_FORMAT:
     val[1]=MUS_COMP_FLOAT;
     val[0]=1;
@@ -9031,23 +9031,23 @@ int jack_mus_audio_mixer_write(int dev, int field, int chan, float *val){
 }
 
 int jack_mus_audio_open_input(int dev, int srate, int chans, int format, int size){
-  if(sndjack_client==NULL){
-    if(jack_mus_audio_initialize()==MUS_ERROR)
+  if (sndjack_client==NULL){
+    if (jack_mus_audio_initialize()==MUS_ERROR)
       return MUS_ERROR;
   }
   
-  if(sndjack_num_read_channels_allocated<chans){
+  if (sndjack_num_read_channels_allocated<chans){
     printf("Error. Can not record %d channels. (Only %d)\n",chans,sndjack_num_read_channels_allocated);
     return MUS_ERROR;
   }
 
   printf("dev: %d\n" ,dev);
-  if(format!=MUS_BYTE && format!=MUS_COMP_SHORT && format!=MUS_COMP_FLOAT){
+  if (format!=MUS_BYTE && format!=MUS_COMP_SHORT && format!=MUS_COMP_FLOAT){
     printf("Error, unable to handle format %s.\n",mus_data_format_to_string(format));
     return MUS_ERROR;
   }
 
-  if(srate!=jack_get_sample_rate(sndjack_client)){
+  if (srate!=jack_get_sample_rate(sndjack_client)){
     printf("Warning, jacks samplerate is %d (and not %d), and the recording will use this samplerate too.\n",jack_get_sample_rate(sndjack_client),srate);
   }
 
@@ -9059,7 +9059,7 @@ int jack_mus_audio_open_input(int dev, int srate, int chans, int format, int siz
 }
 
 int jack_mus_audio_read(int line, char *buf, int bytes){
-  if(sndjack_read(buf,bytes,sndjack_num_read_channels_inuse)==-1)
+  if (sndjack_read(buf,bytes,sndjack_num_read_channels_inuse)==-1)
     return(MUS_ERROR);
   return MUS_NO_ERROR;
 }
@@ -9148,8 +9148,8 @@ int mus_audio_open_output(int ur_dev, int srate, int chans, int format, int size
 				   dev, 
 				   mus_audio_device_name(dev)));
   ioctl(fd, AUDIO_DESCRIBE, &desc);
-  for(i = 0; i < desc.nrates; i++) 
-    if(srate == desc.sample_rate[i]) 
+  for (i = 0; i < desc.nrates; i++) 
+    if (srate == desc.sample_rate[i]) 
       break;
   if (i == desc.nrates) 
     RETURN_ERROR_EXIT(SRATE_NOT_AVAILABLE, fd,
@@ -9442,8 +9442,8 @@ int mus_audio_open_input(int ur_dev, int srate, int chans, int format, int size)
 				   dev, 
 				   mus_audio_device_name(dev)));
   ioctl(fd, AUDIO_DESCRIBE, &desc);
-  for(i = 0; i < desc.nrates; i++) 
-    if(srate == desc.sample_rate[i]) 
+  for (i = 0; i < desc.nrates; i++) 
+    if (srate == desc.sample_rate[i]) 
       break;
   if (i == desc.nrates) 
     RETURN_ERROR_EXIT(MUS_AUDIO_SRATE_NOT_AVAILABLE, fd,

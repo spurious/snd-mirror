@@ -841,7 +841,7 @@ static int mus_header_write_next_header(int fd, int wsrate, int wchans, int loc,
 static double myUlongToDouble(unsigned int ul)
 {
   double val;
-  if(ul & ULPOW2TO31) val = DPOW2TO31 + (ul & (~ULPOW2TO31));
+  if (ul & ULPOW2TO31) val = DPOW2TO31 + (ul & (~ULPOW2TO31));
   else val = ul;
   return val;
 }
@@ -850,7 +850,7 @@ static double myUlongToDouble(unsigned int ul)
 static unsigned int myDoubleToUlong(double val)
 {
   unsigned int ul;
-  if(val < DPOW2TO31) ul = (unsigned int)val;
+  if (val < DPOW2TO31) ul = (unsigned int)val;
   else ul = ULPOW2TO31 | (unsigned int)(val-DPOW2TO31);
   return ul;
 }
@@ -865,7 +865,7 @@ static double ieee_80_to_double(unsigned char *p)
   lexp = *p++;  lexp <<= 8;  lexp |= *p++;  sign = (lexp & 0x8000) ? 1 : 0;  lexp &= 0x7FFF;
   mant1 = *p++;  mant1 <<= 8;  mant1 |= *p++;  mant1 <<= 8;  mant1 |= *p++;  mant1 <<= 8;  mant1 |= *p++;
   mant0 = *p++;  mant0 <<= 8;  mant0 |= *p++;  mant0 <<= 8;  mant0 |= *p++;  mant0 <<= 8;  mant0 |= *p++;
-  if(mant1 == 0 && mant0 == 0 && lexp == 0 && sign == 0)
+  if (mant1 == 0 && mant0 == 0 && lexp == 0 && sign == 0)
     return 0.0;
   else
     {
@@ -884,8 +884,12 @@ static void double_to_ieee_80(double val, unsigned char *p)
   unsigned char sign = 0;
   unsigned int mant1 = 0;
   unsigned int mant0 = 0;
-  if(val < 0.0)	{  sign = 1;  val = -val; }
-  if(val != 0.0)	/* val identically zero -> all elements zero */
+  if (val < 0.0)
+    {  
+      sign = 1;  
+      val = -val; 
+    }
+  if (val != 0.0)	/* val identically zero -> all elements zero */
     {
       lexp = (short)(log(val) / log(2.0) + 16383.0);
       val *= pow(2.0, 31.0 + 16383.0 - (double)lexp);

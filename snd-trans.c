@@ -593,7 +593,7 @@ static int read_hcom(const char *oldname, const char *newname, char *hdr)
 	  if (curval & 0x80000000) di = d[di][1]; else di = d[di][0];
 	  curval = curval << 1;
 	  bits--;
-	  if(d[di][0] < 0) 
+	  if (d[di][0] < 0) 
 	    {
 	      datum = d[di][1];
 	      if (!dc) sample = 0;
@@ -1085,7 +1085,7 @@ static int quan(int val, short *table, int size)
   int i;
   for (i = 0; i < size; i++)
     if (val < *table++) break;
-  return (i);
+  return(i);
 }
 
 
@@ -1100,7 +1100,7 @@ static int fmult(int an, int srn)
   wanexp = anexp + ((srn >> 6) & 0xF) - 13;
   wanmant = (anmant * (srn & 077) + 0x30) >> 4;
   retval = (wanexp >= 0) ? ((wanmant << wanexp) & 0x7FFF) : (wanmant >> -wanexp);
-  return (((an ^ srn) < 0) ? -retval : retval);
+  return(((an ^ srn) < 0) ? -retval : retval);
 }
 
 
@@ -1132,20 +1132,20 @@ static int predictor_zero(struct g72x_state *state_ptr)
   int i, sezi;
   sezi = fmult(state_ptr->b[0] >> 2, state_ptr->dq[0]);
   for (i = 1; i < 6; i++) sezi += fmult(state_ptr->b[i] >> 2, state_ptr->dq[i]);
-  return (sezi);
+  return(sezi);
 }
 
 
 static int predictor_pole(struct g72x_state *state_ptr)
 {
-  return (fmult(state_ptr->a[1] >> 2, state_ptr->sr[1]) + fmult(state_ptr->a[0] >> 2, state_ptr->sr[0]));
+  return(fmult(state_ptr->a[1] >> 2, state_ptr->sr[1]) + fmult(state_ptr->a[0] >> 2, state_ptr->sr[0]));
 }
 
 
 static int step_size(struct g72x_state *state_ptr)
 {
   int y, dif, al;
-  if (state_ptr->ap >= 256)  return (state_ptr->yu);
+  if (state_ptr->ap >= 256)  return(state_ptr->yu);
   else 
     {
       y = state_ptr->yl >> 6;
@@ -1153,7 +1153,7 @@ static int step_size(struct g72x_state *state_ptr)
       al = state_ptr->ap >> 2;
       if (dif > 0) y += (dif * al) >> 6;
       else if (dif < 0) y += (dif * al + 0x3F) >> 6;
-      return (y);
+      return(y);
     }
 }
 
@@ -1162,12 +1162,12 @@ static int reconstruct(int sign, int dqln, int y)
 {
   short	dql, dex, dqt, dq;
   dql = dqln + (y >> 2);
-  if (dql < 0) {return ((sign) ? -0x8000 : 0);} 
+  if (dql < 0) {return((sign) ? -0x8000 : 0);} 
   else {
     dex = (dql >> 7) & 15;
     dqt = 128 + (dql & 127);
     dq = (dqt << 7) >> (14 - dex);
-    return ((sign) ? (dq - 0x8000) : dq);
+    return((sign) ? (dq - 0x8000) : dq);
   }
 }
 
@@ -1285,7 +1285,7 @@ static int g721_decoder(int i, struct g72x_state *state_ptr)
   sr = (dq < 0) ? (se - (dq & 0x3FFF)) : se + dq;
   dqsez = sr - se + sez;
   update(4, y, witab[i] << 5, fitab[i], dq, sr, dqsez, state_ptr);
-  return (sr << 2);
+  return(sr << 2);
 }
 
 
@@ -1305,7 +1305,7 @@ static int g723_24_decoder(int	i, struct g72x_state *state_ptr)
   sr = (dq < 0) ? (se - (dq & 0x3FFF)) : (se + dq);
   dqsez = sr - se + sez;
   update(3, y, witab[i], fitab[i], dq, sr, dqsez, state_ptr);
-  return (sr << 2);
+  return(sr << 2);
 }
 
 
@@ -1328,7 +1328,7 @@ static int g723_40_decoder(int i, struct g72x_state *state_ptr)
   sr = (dq < 0) ? (se - (dq & 0x7FFF)) : (se + dq);
   dqsez = sr - se + sez;
   update(5, y, witab[i], fitab[i], dq, sr, dqsez, state_ptr);
-  return (sr << 2);
+  return(sr << 2);
 }
 
 

@@ -89,7 +89,7 @@ static void *memmove (char *dest, const char *source, unsigned int length)
 	for (; length; --length)
 	  *dest++ = *source++;
       }
-  return (void *) d0;
+  return((void *)d0);
 }
 #endif
 
@@ -7061,15 +7061,15 @@ static bool rdin_equalp(mus_any *p1, mus_any *p2)
 {
   rdin *r1 = (rdin *)p1;
   rdin *r2 = (rdin *)p2;
-  return ((p1 == p2) ||
-	  ((r1) && (r2) &&
-	   (r1->core->type == r2->core->type) &&
-	   (r1->chan == r2->chan) &&
-	   (r1->loc == r2->loc) &&
-	   (r1->dir == r2->dir) &&
-	   (r1->file_name) &&
-	   (r2->file_name) &&
-	   (strcmp(r1->file_name, r2->file_name) == 0)));
+  return((p1 == p2) ||
+	 ((r1) && (r2) &&
+	  (r1->core->type == r2->core->type) &&
+	  (r1->chan == r2->chan) &&
+	  (r1->loc == r2->loc) &&
+	  (r1->dir == r2->dir) &&
+	  (r1->file_name) &&
+	  (r2->file_name) &&
+	  (strcmp(r1->file_name, r2->file_name) == 0)));
 }
 
 

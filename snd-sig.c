@@ -2677,7 +2677,8 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool over_selection,
 		}
 
 	      as_one_edit(si->cps[i], local_edpos + 1);
-	      if(si->cps[i]->edits[si->cps[i]->edit_ctr]->origin) free(si->cps[i]->edits[si->cps[i]->edit_ctr]->origin);
+	      if (si->cps[i]->edits[si->cps[i]->edit_ctr]->origin) 
+		free(si->cps[i]->edits[si->cps[i]->edit_ctr]->origin);
 	      si->cps[i]->edits[si->cps[i]->edit_ctr]->origin = edit_list_envelope(egen, 
 										   si->begs[i], (len > 1) ? (passes[len - 2]) : dur, 
 										   dur, 

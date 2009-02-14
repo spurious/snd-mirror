@@ -1057,7 +1057,7 @@ static file_info *open_raw_sound(const char *fullname, read_only_t read_only, bo
       procs = XEN_HOOK_PROCEDURES(open_raw_sound_hook);
       arg1 = C_TO_XEN_STRING(fullname);
       XEN_LOCAL_GC_PROTECT(arg1);
-      while(XEN_NOT_NULL_P(procs))
+      while (XEN_NOT_NULL_P(procs))
 	{
 	  res = XEN_CALL_2(XEN_CAR(procs), 
 			   arg1, 

@@ -228,7 +228,7 @@ static bool local_arity_ok(XEN proc, int args) /* from snd-xen.c minus (inconven
 
 #if HAVE_FORTH
   rargs = XEN_TO_C_INT(arity);
-  return (rargs == args);
+  return(rargs == args);
 #endif
 
 #if HAVE_GUILE || HAVE_S7

@@ -281,7 +281,7 @@ static void handle_drag(Widget w, XtPointer context, XtPointer info)
   d = find_drop_watcher(w);
   if ((d) && (d->drag_watcher))
     {
-      switch(cb->reason)
+      switch (cb->reason)
 	{ 
 	case XmCR_DROP_SITE_MOTION_MESSAGE:
 	  (*(d->drag_watcher))(w, NULL, cb->x, cb->y, DRAG_MOTION, d->context);
