@@ -35,6 +35,7 @@
  *   many minor changes!
  *
  *   deliberate omission from r5rs: 
+ *        no syntax-rules or any of its friends
  *        no inexact integer or ratio (so, for example, truncate returns an exact integer), no exact complex or exact real
  *           (exact? has no obvious meaning in regard to complex numbers anyway -- are we referring to the polar or
  *            the rectangular form, and are both real and imaginary parts included? -- why can't they be separate?)
@@ -50,7 +51,6 @@
  *        delay is renamed make-promise to avoid collisions in CLM
  *        continuation? function to distinguish a continuation from a procedure
  *        log takes an optional 2nd arg (base)
- *        no syntax-rules or any of its friends
  *        '.' and an exponent can occur in a number in any base -- they do not mean "base 10"!  
  *           However, the exponent itself is always in base 10 (this follows gmp usage).
  *
@@ -10506,7 +10506,7 @@ s7_pointer s7_hash_table_set(s7_scheme *sc, s7_pointer table, const char *name, 
 
 #define HASHED_INTEGER_BUFFER_SIZE 32
 
-static char *s7_hashed_integer_name(s7_Int key, char *intbuf)
+static char *s7_hashed_integer_name(s7_Int key, char *intbuf) /* not const here because snprintf is declared char* */
 {
   snprintf(intbuf, HASHED_INTEGER_BUFFER_SIZE, "\b%lld\b", (long long int)key);
   return(intbuf);
@@ -10644,7 +10644,7 @@ static void format_append_char(format_data *dat, char c)
 }
 
 
-static void format_append_string(format_data *dat, char *str)
+static void format_append_string(format_data *dat, const char *str)
 {
   int i, len;
   len = safe_strlen(str);
@@ -12112,6 +12112,25 @@ static token_t token(s7_scheme *sc, s7_pointer pt)
       return(TOKEN_BACK_QUOTE);
       
     case ',':
+
+      /* here we probably should check for symbol names that start with "@":
+
+	 :(defmacro hi (@foo) `(+ ,@foo 1))
+	 hi
+	 :(hi 2)
+	 ;foo: unbound variable
+	 
+	 but
+
+	 :(defmacro hi (.foo) `(+ ,.foo 1))
+	 hi
+	 :(hi 2)
+	 3
+
+	 and ambiguous:
+	 :(defmacro hi (@foo foo) `(+ ,@foo 1))
+      */
+
       if ((c = inchar(sc, pt)) == '@') 
 	return(TOKEN_AT_MARK);
       
@@ -12128,6 +12147,11 @@ static token_t token(s7_scheme *sc, s7_pointer pt)
 	  sc->strbuf[0] = ':';
 	  return(TOKEN_ATOM);
 	}
+
+      /* :(keyword->symbol hi#:)
+	 i#:
+	 TODO: #: is not always : 
+      */
       
       /* block comments in either #! ... !# */
       if (c == '!') 
@@ -19249,3 +19273,4 @@ s7_scheme *s7_init(void)
 
 /* unicode is probably do-able if it is sequestered in the s7 strings 
  */
+

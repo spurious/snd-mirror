@@ -1453,7 +1453,7 @@ static int remove_option(int which_menu, const char *label)
 }
 
 
-int g_add_to_main_menu(char *label, int slot)
+int g_add_to_main_menu(const char *label, int slot)
 {
   GtkWidget *m, *mc;
   if (new_menu >= MAX_MAIN_MENUS) return(INVALID_MENU);

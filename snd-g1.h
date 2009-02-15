@@ -409,7 +409,7 @@ void set_filter_in_hz(snd_info *sp, bool val);
 void filter_env_changed(snd_info *sp, env *e);
 void color_filter_waveform(color_info *color);
 snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr);
-void set_sound_pane_file_label(snd_info *sp, char *str);
+void set_sound_pane_file_label(snd_info *sp, const char *str);
 void snd_info_cleanup(snd_info *sp);
 void show_controls(snd_info *sp);
 void hide_controls(snd_info *sp);

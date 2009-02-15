@@ -3699,7 +3699,7 @@ static void view_files_unmonitor_directories(view_files_info *vdat)
 
 
 #if HAVE_FAM
-static void vf_add_file_if_absent(view_files_info *vdat, char *filename)
+static void vf_add_file_if_absent(view_files_info *vdat, const char *filename)
 {
   int row;
   row = view_files_find_row(vdat, filename);
@@ -3711,7 +3711,7 @@ static void vf_add_file_if_absent(view_files_info *vdat, char *filename)
 }
 
 
-static void vf_remove_file_if_present(view_files_info *vdat, char *filename)
+static void vf_remove_file_if_present(view_files_info *vdat, const char *filename)
 {
   int i, row;
   row = view_files_find_row(vdat, filename);
@@ -3742,11 +3742,13 @@ static void vf_watch_directory(struct fam_info *fp, FAMEvent *fe)
 	vf_add_file_if_absent(vdat, fe->filename);
       else vf_remove_file_if_present(vdat, fe->filename);
       break;
+
     case FAMDeleted:
     case FAMMoved:
       /* it's an existing file that is moved? -- I see the old name?? */
       vf_remove_file_if_present(vdat, fe->filename);
       break;
+
     case FAMCreated:
       vf_add_file_if_absent(vdat, fe->filename);
       break;

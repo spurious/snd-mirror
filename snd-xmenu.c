@@ -1143,17 +1143,19 @@ static void set_widget_name(Widget w, const char *new_name)
 
 static int new_menu = 5;
 
-int g_add_to_main_menu(char *label, int slot)
+int g_add_to_main_menu(const char *label, int slot)
 {
   static Arg args[12];
   Widget m, cas;
   int n;
+
   if (auto_resize(ss)) XtVaSetValues(MAIN_SHELL(ss), XmNallowShellResize, false, NULL);
   new_menu++;
+
   n = 0;
   XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
   XtSetArg(args[n], XmNuserData, PACK_MENU_DATA(slot, new_menu)); n++;
-  m = XmCreatePulldownMenu(main_menu, label, args, n);
+  m = XmCreatePulldownMenu(main_menu, (char *)label, args, n);
 
   n = 0;
   XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;

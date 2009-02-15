@@ -68,7 +68,7 @@ int listener_height(void) {return(0);}
 int listener_width(void) {return(0);}
 bool highlight_unbalanced_paren(void) {return(true);}
 void set_button_label(int label, const char *str) {}
-int g_add_to_main_menu(char *label, int slot) {return(0);}
+int g_add_to_main_menu(const char *label, int slot) {return(0);}
 widget_t g_add_to_menu(int which_menu, const char *label, int callb, int position) {return(0);}
 int g_remove_from_menu(int which_menu, const char *label) {return(0);}
 void reflect_play_stop_in_popup_menu(void) {}
@@ -165,7 +165,7 @@ void show_bomb(snd_info *sp) {}
 void hide_bomb(snd_info *sp) {}
 void start_bomb(snd_info *sp) {}
 void stop_bomb(snd_info *sp) {}
-void set_sound_pane_file_label(snd_info *sp, char *str) {}
+void set_sound_pane_file_label(snd_info *sp, const char *str) {}
 void reflect_sound_selection(snd_info *sp) {}
 void show_controls(snd_info *sp) {}
 void hide_controls(snd_info *sp) {}

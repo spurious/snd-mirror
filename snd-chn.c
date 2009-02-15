@@ -3213,7 +3213,10 @@ static int make_wavogram(chan_info *cp)
   axis_context *ax;
   snd_fd *sf = NULL;
   wavogram_state *lw;
-  bool need_new_list = true, use_gl = false, need_redraw = true;
+  bool need_new_list = true, need_redraw = true;
+#if HAVE_GL || USE_MOTIF
+  bool use_gl = false;
+#endif
 
   sp = cp->sound;
   ap = cp->axis;

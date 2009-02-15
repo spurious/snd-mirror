@@ -6019,7 +6019,7 @@ int mus_header_change_data_size(const char *filename, int type, off_t size) /* i
   switch (type)
     {
     case MUS_NEXT: 
-      if (size > BIGGEST_4_BYTE_UNSIGNED_INT)
+      if (size > (off_t)(BIGGEST_4_BYTE_UNSIGNED_INT))
 	{
 	  err = MUS_BAD_SIZE;
 	  size = BIGGEST_4_BYTE_UNSIGNED_INT;

@@ -2101,7 +2101,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
 }
 
 
-void set_sound_pane_file_label(snd_info *sp, char *str)
+void set_sound_pane_file_label(snd_info *sp, const char *str)
 {
   if (MUS_TRY_LOCK(sp->starred_name_lock) != MUS_ALREADY_LOCKED)
     {

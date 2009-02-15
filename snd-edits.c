@@ -304,7 +304,7 @@ static void check_for_first_edit(chan_info *cp)
 
 static XEN save_state_hook;
 
-char *run_save_state_hook(char *file)
+char *run_save_state_hook(const char *file)
 {
   char *filename;
   filename = mus_strdup(file);

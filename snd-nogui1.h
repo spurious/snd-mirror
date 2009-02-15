@@ -223,7 +223,7 @@ void stop_bomb(snd_info *sp);
 void show_bomb(snd_info *sp);
 void hide_bomb(snd_info *sp);
 snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr);
-void set_sound_pane_file_label(snd_info *sp, char *str);
+void set_sound_pane_file_label(snd_info *sp, const char *str);
 void show_controls(snd_info *sp);
 void hide_controls(snd_info *sp);
 bool showing_controls(snd_info *sp);

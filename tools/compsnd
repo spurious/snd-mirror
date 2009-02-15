@@ -227,12 +227,12 @@ make allclean
 echo ' '
 echo ' '
 echo ' -------------------------------------------------------------------------------- '
-echo ' -----                g++ --with-gtk --with-gmp --with-gsl                   ---  '
+echo ' -----                g++ --with-gtk --with-gsl                   ---  '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet CC=g++ --with-gtk --with-gmp --with-gsl CFLAGS="-Wall -I/usr/X11R6/include"
+./configure --quiet CC=g++ --with-gtk --with-gsl CFLAGS="-Wall -I/usr/X11R6/include"
 make
 ./snd --version
-./snd -noinit --features "'clm 'snd-gtk 'gmp 'gsl"
+./snd -noinit --features "'clm 'snd-gtk 'gsl"
 make allclean
 
 echo ' '

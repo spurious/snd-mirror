@@ -2942,7 +2942,7 @@ void snd_info_cleanup(snd_info *sp)
 }
 
 
-void set_sound_pane_file_label(snd_info *sp, char *str)
+void set_sound_pane_file_label(snd_info *sp, const char *str)
 {
   if (MUS_TRY_LOCK(sp->starred_name_lock) != MUS_ALREADY_LOCKED)
     {

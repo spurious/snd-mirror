@@ -964,9 +964,9 @@ static XEN string_to_form_1(void *data)
 }
 
 
-XEN string_to_form(char *str)
+XEN string_to_form(const char *str)
 {
-  return(snd_catch_any(string_to_form_1, (void *)str, (const char *)str));  /* catch needed else #< in input (or incomplete form) exits Snd! */
+  return(snd_catch_any(string_to_form_1, (void *)str, str));  /* catch needed else #< in input (or incomplete form) exits Snd! */
 }
 
 
@@ -1109,7 +1109,7 @@ void clear_stdin(void)
 }
 
 
-static char *stdin_check_for_full_expression(char *newstr)
+static char *stdin_check_for_full_expression(const char *newstr)
 {
 #if HAVE_SCHEME
   int end_of_text;
@@ -1144,7 +1144,7 @@ static void string_to_stdout(const char *msg, void *ignored)
 }
 
 
-void snd_eval_stdin_str(char *buf)
+void snd_eval_stdin_str(const char *buf)
 {
   /* we may get incomplete expressions here */
   /*   (Ilisp always sends a complete expression, but it may be broken into two or more pieces from read's point of view) */
@@ -1307,16 +1307,21 @@ void snd_load_init_file(bool no_global, bool no_init)
 }
 
 
-static char *find_source_file(char *orig);
+static char *find_source_file(const char *orig);
 
-void snd_load_file(char *filename)
+void snd_load_file(const char *filename)
 {
   char *str = NULL, *str2 = NULL;
   XEN result = XEN_TRUE;
 
   str = mus_expand_filename(filename);
   if (!(mus_file_probe(str)))
-    str = find_source_file(str); /* this frees original str, returns either NULL or a new (needs-to-be-freed) filename */
+    {
+      char *temp;
+      temp = find_source_file(str); 
+      free(str);
+      str = temp;
+    }
   if (!str)
     {
       snd_error(_("can't load %s: %s"), filename, snd_open_strerror());
@@ -1386,7 +1391,7 @@ bool listener_print_p(const char *msg)
 }
 
 
-void check_features_list(char *features)
+void check_features_list(const char *features)
 {
   /* check for list of features, report any missing, exit (for compsnd) */
   /*  this can't be in snd.c because we haven't fully initialized the extension language and so on at that point */
@@ -1423,7 +1428,7 @@ void check_features_list(char *features)
 }
 
 
-Float string_to_Float(char *str, Float lo, const char *field_name)
+Float string_to_Float(const char *str, Float lo, const char *field_name)
 {
 #if HAVE_EXTENSION_LANGUAGE
   XEN res;
@@ -1455,7 +1460,7 @@ Float string_to_Float(char *str, Float lo, const char *field_name)
 }
 
 
-int string_to_int(char *str, int lo, const char *field_name) 
+int string_to_int(const char *str, int lo, const char *field_name) 
 {
 #if HAVE_EXTENSION_LANGUAGE
   XEN res;
@@ -1487,7 +1492,7 @@ int string_to_int(char *str, int lo, const char *field_name)
 }
 
 
-off_t string_to_off_t(char *str, off_t lo, const char *field_name)
+off_t string_to_off_t(const char *str, off_t lo, const char *field_name)
 {
 #if HAVE_EXTENSION_LANGUAGE
   XEN res;
@@ -2785,22 +2790,17 @@ static XEN g_add_source_file_extension(XEN ext)
 }
 
 
-static char *find_source_file(char *orig)
+static char *find_source_file(const char *orig)
 {
   int i;
   char *str;
-  /* orig is a full filename that should be freed before returning */
-
   for (i = 0; i < source_file_extensions_end; i++)
     {
       str = mus_format("%s.%s", orig, source_file_extensions[i]);
       if (mus_file_probe(str))
-	{
-	  if (orig) free(orig);
-	  return(str);
-	}
+	return(str);
+      free(str);
     }
-  if (orig) free(orig);
   return(NULL);
 }
 
@@ -2811,11 +2811,6 @@ static char *find_source_file(char *orig)
   XEN_NARGIFY_1(g_dlclose_w, g_dlclose)
   XEN_NARGIFY_0(g_dlerror_w, g_dlerror)
   XEN_NARGIFY_2(g_dlinit_w, g_dlinit)
-#endif
-
-#if MUS_DEBUGGING && HAVE_S7
-  XEN_NARGIFY_1(g_c_load_w, g_c_load)
-  XEN_VARGIFY(g_c_call_w, g_c_call)
 #endif
 
 #if HAVE_GUILE && (!HAVE_SCM_CONTINUATION_P)
@@ -2883,11 +2878,6 @@ XEN_NARGIFY_1(g_add_watcher_w, g_add_watcher)
   #define g_dlclose_w g_dlclose
   #define g_dlerror_w g_dlerror
   #define g_dlinit_w g_dlinit
-#endif
-
-#if MUS_DEBUGGING && HAVE_S7
-  #define g_c_load_w g_c_load
-  #define g_c_call_w g_c_call
 #endif
 
 #if HAVE_GUILE && (!HAVE_SCM_CONTINUATION_P)
@@ -3286,15 +3276,6 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   XEN_DEFINE_PROCEDURE("dlclose", g_dlclose_w, 1, 0 ,0, "");
   XEN_DEFINE_PROCEDURE("dlerror", g_dlerror_w, 0, 0 ,0, "");
   XEN_DEFINE_PROCEDURE("dlinit",  g_dlinit_w,  2, 0 ,0, "");
-#endif
-#if MUS_DEBUGGING && HAVE_S7
-  XEN_DEFINE_PROCEDURE("c-load",  g_c_load_w,  1, 0 ,0, "");
-  XEN_DEFINE_PROCEDURE("c-call",  g_c_call_w,  0, 0 ,1, "");
-  XEN_EVAL_C_STRING("(defmacro c->unspecified (arg) `(c-call 0 (symbol->string ',(car arg)) ,(cadr arg)))");
-  XEN_EVAL_C_STRING("(defmacro c->double (arg) `(c-call 1 (symbol->string ',(car arg)) ,(cadr arg)))");
-  XEN_EVAL_C_STRING("(defmacro c->int (arg) `(c-call 2 (symbol->string ',(car arg)) ,(cadr arg)))");
-  XEN_EVAL_C_STRING("(defmacro c->string (arg) `(c-call 3 (symbol->string ',(car arg)) ,(cadr arg)))");
-  XEN_EVAL_C_STRING("(defmacro c->pointer (arg) `(c-call 4 (symbol->string ',(car arg)) ,(cadr arg)))");
 #endif
 
 #if HAVE_LADSPA && HAVE_EXTENSION_LANGUAGE && HAVE_DLFCN_H && HAVE_DIRENT_H

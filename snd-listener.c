@@ -1,24 +1,5 @@
 #include "snd.h"
 
-/* check_balance originally from scwm-0.9/utilities/scwmrepl/scwmrepl.c, 
- *   revised by bil 9-Oct-02:
- *   original did not handle #\) (and many others) correctly or #()
- *            had support for #{} which is (apparently) a Guile documentation kludge
- *            mishandled \" in a quoted string
- *            and more changes followed
- */
-
-/*
-(+ 1 ;a comment
-   (char->integer #\a) 
-   (char->integer (string-ref "01\"" 2)) 
-   (char->integer (string-ref "01\";#" 2)) 
-   (vector-ref #(1 2) 0)
-  (char->integer #\))
-  )
-*/
-
-
 bool is_prompt(const char *str, int beg)
 {
   int i, j;
@@ -52,7 +33,7 @@ bool within_prompt(const char *str, int beg, int end)
 }
 
 
-int find_matching_paren(char *str, int parens, int pos, int *highlight_pos)
+int find_matching_paren(const char *str, int parens, int pos, int *highlight_pos)
 {
   int i, j;
   bool quoting = false;
@@ -111,13 +92,14 @@ int find_matching_paren(char *str, int parens, int pos, int *highlight_pos)
 }
 
 
-int check_balance(char *expr, int start, int end, bool in_listener) 
+int check_balance(const char *expr, int start, int end, bool in_listener) 
 {
   int i;
   bool non_whitespace_p = false;
   int paren_count = 0;
   bool prev_separator = true;
   bool quote_wait = false;
+
   i = start;
   while (i < end) 
     {
@@ -129,6 +111,7 @@ int check_balance(char *expr, int start, int end, bool in_listener)
 	    i++;
 	  } while ((expr[i] != '\n') && (i < end));
 	  break;
+
 	case ' ':
 	case '\n':
 	case '\t':
@@ -141,6 +124,7 @@ int check_balance(char *expr, int start, int end, bool in_listener)
 	      i++;
 	    }
 	  break;
+
 	case '\"' :
 	  if ((non_whitespace_p) && (paren_count == 0) && (!quote_wait))
 	    return(i);
@@ -167,10 +151,12 @@ int check_balance(char *expr, int start, int end, bool in_listener)
 		}
 	    }
 	  break;
+
 	case '\\': 
 	  /* this is an error of some sort */
 	  i += 2; 
 	  break;
+
 	case '#' :
 	  if ((non_whitespace_p) && (paren_count == 0) && (!quote_wait))
 	    return(i);
@@ -193,6 +179,7 @@ int check_balance(char *expr, int start, int end, bool in_listener)
 		}
 	    }
 	  break;
+
 	case '(' :
 	  if ((non_whitespace_p) && (paren_count == 0) && (!quote_wait))
 	    return(i);
@@ -205,6 +192,7 @@ int check_balance(char *expr, int start, int end, bool in_listener)
 	      quote_wait = false;
 	    }
 	  break;
+
 	case ')' :
 	  paren_count--;
 	  if ((non_whitespace_p) && (paren_count == 0))
@@ -217,12 +205,14 @@ int check_balance(char *expr, int start, int end, bool in_listener)
 	      quote_wait = false;
 	    }
 	  break;
+
 	case '\'' :
 	  if (prev_separator) 
 	    quote_wait = true;
 	  non_whitespace_p = true;
 	  i++;
 	  break;
+
 	default:
 	  prev_separator = false;
 	  quote_wait = false;
@@ -231,7 +221,9 @@ int check_balance(char *expr, int start, int end, bool in_listener)
 	  break;
 	}
     }
-  if ((in_listener) && (!(highlight_unbalanced_paren()))) return(-1);
+
+  if ((in_listener) && (!(highlight_unbalanced_paren()))) 
+    return(-1);
   return(0);
 }
 
@@ -245,7 +237,7 @@ char *listener_prompt_with_cr(void)
 }
 
 
-static void provide_listener_help_1(char *source, int start, int end)
+static void provide_listener_help_1(const char *source, int start, int end)
 {
   XEN result = XEN_FALSE;
   char *name;
@@ -261,7 +253,7 @@ static void provide_listener_help_1(char *source, int start, int end)
 }
 
 
-void provide_listener_help(char *source)
+void provide_listener_help(const char *source)
 {
   if (source)
     {
