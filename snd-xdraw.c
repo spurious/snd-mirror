@@ -1043,7 +1043,7 @@ void set_spectro_hop(int val)
 }
 
 
-static void chans_spectro_cut(chan_info *cp) {cp->fft_changed = FFT_CHANGE_LOCKED;}
+static void chans_spectrum_end(chan_info *cp) {cp->fft_changed = FFT_CHANGE_LOCKED;}
 
 static void cut_orientation_callback(Widget w, XtPointer context, XtPointer info) 
 {
@@ -1052,15 +1052,15 @@ static void cut_orientation_callback(Widget w, XtPointer context, XtPointer info
   ASSERT_WIDGET_TYPE(XmIsScale(w), w);
   scale_set_label("% of spectrum", w, cbs->value, true);
   chans_field(FCP_CUTOFF, (Float)(cbs->value) * 0.01);
-  for_each_chan(chans_spectro_cut);
+  for_each_chan(chans_spectrum_end);
   check_orientation_hook();
-  set_spectro_cutoff_and_redisplay((Float)(cbs->value) * 0.01); /* calls in_set... */
+  set_spectrum_end_and_redisplay((Float)(cbs->value) * 0.01); /* calls in_set... */
 } 
 
 
-void set_spectro_cutoff(Float val)
+void set_spectrum_end(Float val)
 {
-  in_set_spectro_cutoff(val);
+  in_set_spectrum_end(val);
   if (oid) 
     {
       XmScaleSetValue(oid->cut, (int)(val * 100));
@@ -1101,7 +1101,7 @@ void reflect_spectro(void)
       XtVaSetValues(oid->sy, XmNvalue, mus_iclamp(0, (int)(spectro_y_scale(ss) * 100), 100), NULL);
       XtVaSetValues(oid->sz, XmNvalue, mus_iclamp(0, (int)(spectro_z_scale(ss) * 100), 100), NULL);
       XtVaSetValues(oid->hop, XmNvalue, mus_iclamp(1, spectro_hop(ss), HOP_MAX), NULL);
-      XtVaSetValues(oid->cut, XmNvalue, mus_iclamp(0, (int)(spectro_cutoff(ss) * 100), 100), NULL);
+      XtVaSetValues(oid->cut, XmNvalue, mus_iclamp(0, (int)(spectrum_end(ss) * 100), 100), NULL);
       check_orientation_hook();
     }
 }
@@ -1390,7 +1390,7 @@ static void start_view_orientation_dialog(bool managed)
 
 
       n = 0;
-      initial_value = (int)(spectro_cutoff(ss) * 100);
+      initial_value = (int)(spectrum_end(ss) * 100);
       xstr = scale_label("% of spectrum", initial_value, true);
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;

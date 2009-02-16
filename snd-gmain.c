@@ -456,7 +456,7 @@ static idle_func_t startup_funcs(gpointer context)
 	   * but try to read stdin (needed to support the emacs subjob connection).  If
 	   * we don't do this, the background job is suspended when the shell sends SIGTTIN.
 	   */
-	  channel = g_io_channel_unix_new(fileno(stdin));
+	  channel = g_io_channel_unix_new(STDIN_FILENO);
 	  stdin_id = g_io_add_watch_full(channel, 
 					 G_PRIORITY_DEFAULT, 
 					 (GIOCondition)(G_IO_IN | G_IO_HUP | G_IO_ERR), 

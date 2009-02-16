@@ -264,8 +264,8 @@ void snd_set_global_defaults(bool need_cleanup)
   ss->Spectro_Z_Angle = DEFAULT_SPECTRO_Z_ANGLE;
   ss->Spectro_X_Angle = DEFAULT_SPECTRO_X_ANGLE;
   ss->Spectro_Y_Angle = DEFAULT_SPECTRO_Y_ANGLE;
-  ss->Spectro_Cutoff = DEFAULT_SPECTRO_CUTOFF;
-  ss->Spectro_Start = DEFAULT_SPECTRO_START;
+  ss->Spectrum_End = DEFAULT_SPECTRUM_END;
+  ss->Spectrum_Start = DEFAULT_SPECTRUM_START;
 
   if (MUS_DEFAULT_TEMP_DIR != (char *)NULL) 
     ss->Temp_Dir = mus_strdup(MUS_DEFAULT_TEMP_DIR); 

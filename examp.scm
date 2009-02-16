@@ -303,7 +303,7 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 		       (ceiling 
 			(/ (log (- (right-sample snd chn) (left-sample snd chn))) 
 			   (log 2.0))))))
-	(set! (spectro-cutoff snd chn) (y-zoom-slider snd chn))))
+	(set! (spectrum-end snd chn) (y-zoom-slider snd chn))))
   #f)
 
 ;(add-hook! graph-hook zoom-spectrum)

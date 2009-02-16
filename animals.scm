@@ -249,7 +249,7 @@
 	(selection-maxamp)))
 
 (define (sp) 
-  (* 22050 (spectro-cutoff 0 0)))
+  (* 22050 (spectrum-end 0 0)))
 
 
 ;;; save us some dialog setup

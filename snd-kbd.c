@@ -2040,13 +2040,13 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 	      break;
 
 	    case snd_keypad_PageDown:
-	      set_spectro_cutoff(spectro_cutoff(ss) * .95); 
+	      set_spectrum_end(spectrum_end(ss) * .95); 
 	      reflect_spectro(); 
 	      break;
 
 	    case snd_keypad_PageUp:
-	      if (spectro_cutoff(ss) < 1.0) 
-		set_spectro_cutoff(spectro_cutoff(ss) / .95); 
+	      if (spectrum_end(ss) < 1.0) 
+		set_spectrum_end(spectrum_end(ss) / .95); 
 	      reflect_spectro(); 
 	      break;
 

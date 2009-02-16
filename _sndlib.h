@@ -646,11 +646,6 @@ MUS_EXPORT char *mus_midi_describe(void);
 #endif
 
 
-#if (!HAVE_FILENO)
-  MUS_EXPORT int fileno(FILE *fp);
-#endif
-
-
 #if HAVE_PTHREADS
   MUS_EXPORT void mus_thread_restore_error_handler(void);
   MUS_EXPORT mus_error_handler_t *mus_thread_get_previous_error_handler(void);

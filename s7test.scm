@@ -39060,7 +39060,7 @@ expt error > 1e-6 around 2^-46.506993328423
 
 ;;; --------------------------------------------------------------------------------
 
-(define (test-at-random)
+(define (s7-test-at-random)
   (let ((ops (list gensym symbol-table symbol? symbol->string string->symbol symbol->value
 		   global-environment current-environment provided? provide defined? keyword?
 		   make-keyword symbol->keyword keyword->symbol hash-table? make-hash-table

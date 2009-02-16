@@ -124,6 +124,7 @@
   <li><a href="grfsnd.html#sndandruby" onmouseout="UnTip()" onmouseover="Tip('Ruby is a scripting/extension language somewhat like Python')">Snd with Ruby</a>
   <li><a href="grfsnd.html#sndandforth" onmouseout="UnTip()" onmouseover="Tip('Forth is a postfix extension language')">Snd with Forth</a>
   <li><a href="grfsnd.html#sndands7" onmouseout="UnTip()" onmouseover="Tip('s7 is yet-another Scheme extension language')">Snd with s7</a>
+  <li><a href="grfsnd.html#sndandguile" onmouseout="UnTip()" onmouseover="Tip('Guile is yet-another Scheme extension language')">Snd with Guile</a>
   <li><a href="grfsnd.html#sndandladspa" onmouseout="UnTip()" onmouseover="Tip('This is a Linux-based sound-effects plugin system')">Snd and LADSPA plugins</a>
   <li><a href="grfsnd.html#sndandalsa" onmouseout="UnTip()" onmouseover="Tip('This is the no-longer-very-new Linux audio library')">Snd and ALSA</a>
   <li><a href="grfsnd.html#sndandjack" onmouseout="UnTip()" onmouseover="Tip('This is the Jack audio library')">Snd and Jack</a>
@@ -952,7 +953,7 @@ log-freq-start is the start (lowest) frequency used in the log freq display (fft
 frequencies, but the lowest are all inaudible, it seemed more informative to squash the lowest 30Hz or so
 into a single point (0 Hz) on the log freq graphs; otherwise the audible data starts about 1/4 of the way 
 down the x axis, wasting valuable screen space!  But it also seemed a bother to have to set/reset the
-<a href="#spectrostart">spectro-start</a> variable every time you wanted to flip between log and linear
+<a href="#spectrumstart">spectrum-start</a> variable every time you wanted to flip between log and linear
 displays.  log-freq-start to the rescue?  For other ideas along these lines, see <a href="sndscm.html#displaybarkfft">display-bark-fft</a>.
 </td></tr><tr><td colspan=3 height=16></td></tr>
 
@@ -7072,8 +7073,8 @@ Window left edge: <a href="#leftsample">left-sample</a><br>
 Window right edge: <a href="#rightsample">right-sample</a><br>
 <br>
 fft window:<br>
-window size: drag x axis, <a href="#spectrocutoff">spectro-cutoff</a><br>
-window start: <a href="#spectrostart">spectro-start</a><br>
+window size: drag x axis, <a href="#spectrumend">spectrum-end</a><br>
+window start: <a href="#spectrumstart">spectrum-start</a><br>
 relation to time domain: <a href="#beforetransformhook">before-transform-hook</a><br>
 selection fft: <a href="#showselectiontransform">show-selection-transform</a><br>
 <br>
@@ -9011,13 +9012,13 @@ take the "snd chn" arguments):
 </td></tr><tr><td colspan=2 height=18></td></tr>
 
 
-<!-- spectro-cutoff -->
+<!-- spectrum-end -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
-<code><a class=def name="spectrocutoff">spectro-cutoff</a> (:optional <em class=narg>snd chn</em>)</code>
+<code><a class=def name="spectrumend">spectrum-end</a> (:optional <em class=narg>snd chn</em>)</code>
 </td></tr><tr><td></td><td>
 This is the amount of the frequency domain to include in the spectrum 
 display (the default is 1.0 = all of it). 
-spectro-cutoff the slider labelled '% of spectrum' in the View 
+spectrum-end the slider labelled '% of spectrum' in the View 
 Orientation dialog. See zoom-fft in examp.scm.
 </td></tr><tr><td colspan=2 height=18></td></tr>
 
@@ -9031,9 +9032,9 @@ This is the distance (in pixels) moved between successive spectrogram traces
 </td></tr><tr><td colspan=2 height=18></td></tr>
 
 
-<!-- spectro-start -->
+<!-- spectrum-start -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
-<code><a class=def name="spectrostart">spectro-start</a> (:optional <em class=narg>snd chn</em>)</code>
+<code><a class=def name="spectrumstart">spectrum-start</a> (:optional <em class=narg>snd chn</em>)</code>
 </td></tr><tr><td></td><td>
 This is the start point of the frequency domain in the spectrum
 display (default is 0.0).  See zoom-fft in examp.scm.
@@ -9402,7 +9403,7 @@ use the function choice for cursor-style (that function's third argument can tel
 </td></tr><tr><td></td><td>
 This returns either 0 if there is no transform, <a href="#transformsize">transform-size</a> if 
 <a href="#transformgraphtype">transform-graph-type</a> is <code>graph-once</code>,
-or (list spectro-cutoff time-slices fft-bins) if either a sonogram or a spectrogram is being displayed.
+or (list spectrum-end time-slices fft-bins) if either a sonogram or a spectrogram is being displayed.
 
 <pre>
     <em class=listener>:</em><em class=typing>(set! (transform-graph?) #t)</em> ; turn on fft display
@@ -10783,9 +10784,9 @@ This returns #t if 'type' refers to an active transform type.
 <table cellpadding=0 cellspacing=1 border=0 hspace=20>
 <tr><td width=200><a href="#transformgraphp"><small>transform-graph?</small></a></td><td width=200><a href="#showtransformpeaks"><small>show-transform-peaks</small></a></td><td><a href="#transformsample"><small>transform-sample</small></a></td></tr>
 <tr><td><a href="#fftbeta"><small>fft-window-beta</small></a></td><td><a href="#showselectiontransform"><small>show-selection-transform</small></a></td><td><a href="#transformtovct"><small>transform-&gt;vct</small></a></td></tr>
-<tr><td><a href="#aftertransformhook"><small>after-transform-hook</small></a></td><td><a href="#spectrocutoff"><small>spectro-cutoff</small></a></td><td><a href="#transformframes"><small>transform-frames</small></a></td></tr>
+<tr><td><a href="#aftertransformhook"><small>after-transform-hook</small></a></td><td><a href="#spectrumend"><small>spectrum-end</small></a></td><td><a href="#transformframes"><small>transform-frames</small></a></td></tr>
 <tr><td><a href="#fftlogfrequency"><small>fft-log-frequency</small></a></td><td><a href="#spectrohop"><small>spectro-hop</small></a></td><td><a href="#transformtype"><small>transform-type</small></a></td></tr>
-<tr><td><a href="#fftlogmagnitude"><small>fft-log-magnitude</small></a></td><td><a href="#spectrostart"><small>spectro-start</small></a></td><td><a href="#updatetransformgraph"><small>update-transform-graph</small></a></td></tr>
+<tr><td><a href="#fftlogmagnitude"><small>fft-log-magnitude</small></a></td><td><a href="#spectrumstart"><small>spectrum-start</small></a></td><td><a href="#updatetransformgraph"><small>update-transform-graph</small></a></td></tr>
 <tr><td><a href="#transformsize"><small>transform-size</small></a></td><td><a href="#spectroxangle"><small>spectro-x-angle</small></a></td><td><a href="#normalizefft"><small>transform-normalization</small></a></td></tr>
 <tr><td><a href="#transformgraphtype"><small>transform-graph-type</small></a></td><td><a href="#spectroxscale"><small>spectro-x-scale</small></a></td><td><a href="#zeropad"><small>zero-pad</small></a></td></tr>
 <tr><td><a href="#fftwindow"><small>fft-window</small></a></td><td><a href="#spectroyangle"><small>spectro-y-angle</small></a></td><td><a href="#wavelettype"><small>wavelet-type</small></a></td></tr>

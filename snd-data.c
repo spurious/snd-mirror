@@ -76,8 +76,8 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound)
   cp->spectro_x_scale = spectro_x_scale(ss);
   cp->spectro_y_scale = spectro_y_scale(ss);
   cp->spectro_z_scale = spectro_z_scale(ss);
-  cp->spectro_cutoff = spectro_cutoff(ss);
-  cp->spectro_start = spectro_start(ss);
+  cp->spectrum_end = spectrum_end(ss);
+  cp->spectrum_start = spectrum_start(ss);
   cp->spectro_hop = spectro_hop(ss);
   cp->fft_window_alpha = fft_window_alpha(ss);
   cp->fft_window_beta = fft_window_beta(ss);

@@ -1885,8 +1885,8 @@ static void copy_chan_info(chan_info *ncp, chan_info *ocp)
   ncp->spectro_z_angle = ocp->spectro_z_angle;
   ncp->spectro_x_angle = ocp->spectro_x_angle;
   ncp->spectro_y_angle = ocp->spectro_y_angle;
-  ncp->spectro_cutoff = ocp->spectro_cutoff;
-  ncp->spectro_start = ocp->spectro_start;
+  ncp->spectrum_end = ocp->spectrum_end;
+  ncp->spectrum_start = ocp->spectrum_start;
   ncp->lin_dB = ocp->lin_dB;
   ncp->min_dB = ocp->min_dB;
   ncp->fft_window_alpha = ocp->fft_window_alpha;

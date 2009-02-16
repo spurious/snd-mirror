@@ -1203,21 +1203,21 @@ void set_spectro_hop(int val)
 }
 
 
-static void chans_spectro_cut(chan_info *cp) {cp->fft_changed = FFT_CHANGE_LOCKED;}
+static void chans_spectrum_end(chan_info *cp) {cp->fft_changed = FFT_CHANGE_LOCKED;}
 
 static void cut_orientation_callback(GtkAdjustment *adj, gpointer context) 
 {
   /* y axis limit */
   chans_field(FCP_CUTOFF, (Float)(ADJUSTMENT_VALUE(adj)));
-  for_each_chan(chans_spectro_cut);
+  for_each_chan(chans_spectrum_end);
   check_orientation_hook();
-  set_spectro_cutoff_and_redisplay((Float)(ADJUSTMENT_VALUE(adj))); /* calls in_set... */
+  set_spectrum_end_and_redisplay((Float)(ADJUSTMENT_VALUE(adj))); /* calls in_set... */
 } 
 
 
-void set_spectro_cutoff(Float val)
+void set_spectrum_end(Float val)
 {
-  in_set_spectro_cutoff(val);
+  in_set_spectrum_end(val);
   if (oid) ADJUSTMENT_SET_VALUE(oid->cut_adj, val);
   chans_field(FCP_CUTOFF, val);
   check_orientation_hook();
@@ -1273,7 +1273,7 @@ void reflect_spectro(void)
       ADJUSTMENT_SET_VALUE(oid->sy_adj, spectro_y_scale(ss));
       ADJUSTMENT_SET_VALUE(oid->sz_adj, spectro_z_scale(ss));
       ADJUSTMENT_SET_VALUE(oid->hop_adj, (spectro_hop(ss) > 100) ? 100 : (spectro_hop(ss)));
-      ADJUSTMENT_SET_VALUE(oid->cut_adj, (spectro_cutoff(ss)));
+      ADJUSTMENT_SET_VALUE(oid->cut_adj, (spectrum_end(ss)));
       check_orientation_hook();
     }
 }
@@ -1530,7 +1530,7 @@ static void start_view_orientation_dialog(bool managed)
       gtk_table_attach(GTK_TABLE(outer_table), cut_box, 1, 2, 3, 4,
 		       (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), X_PAD, Y_PAD);
 
-      oid->cut_adj = gtk_adjustment_new(spectro_cutoff(ss), 0.0, 1.01, .01, .1, .01);
+      oid->cut_adj = gtk_adjustment_new(spectrum_end(ss), 0.0, 1.01, .01, .1, .01);
       oid->cut = gtk_hscale_new(GTK_ADJUSTMENT(oid->cut_adj));
       GTK_WIDGET_UNSET_FLAGS(oid->cut, GTK_CAN_FOCUS);
       gtk_range_set_update_policy(GTK_RANGE(GTK_SCALE(oid->cut)), GTK_UPDATE_CONTINUOUS);

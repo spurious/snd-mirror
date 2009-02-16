@@ -571,13 +571,13 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 #define set_ask_before_overwrite(a) ss->Ask_Before_Overwrite = a
 #define DEFAULT_ASK_BEFORE_OVERWRITE false
 
-#define spectro_cutoff(ss) ss->Spectro_Cutoff
-#define in_set_spectro_cutoff(a) ss->Spectro_Cutoff = a
-#define DEFAULT_SPECTRO_CUTOFF 1.0
+#define spectrum_end(ss) ss->Spectrum_End
+#define in_set_spectrum_end(a) ss->Spectrum_End = a
+#define DEFAULT_SPECTRUM_END 1.0
 
-#define spectro_start(ss) ss->Spectro_Start
-#define in_set_spectro_start(a) ss->Spectro_Start = a
-#define DEFAULT_SPECTRO_START 0.0
+#define spectrum_start(ss) ss->Spectrum_Start
+#define in_set_spectrum_start(a) ss->Spectrum_Start = a
+#define DEFAULT_SPECTRUM_START 0.0
 
 #define spectro_x_angle(ss) ss->Spectro_X_Angle
 #define in_set_spectro_x_angle(a) ss->Spectro_X_Angle = a

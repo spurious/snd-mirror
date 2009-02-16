@@ -1545,22 +1545,6 @@ void mus_reset_io_c(void)
 }
 
 
-#if (!HAVE_FILENO)
-/* this is needed by XtAppAddInput */
-int fileno(FILE *fp)
-{
-  if (fp == stdout)
-    return(0);
-  else
-    {
-      if (fp == stdin)
-	return(1);
-    }
-  return(2);
-}
-#endif
-
-
 #if !(defined(MUS_WINDOZE) && (!(defined(__CYGWIN__))))
 static int sndlib_strlen(const char *str)
 {

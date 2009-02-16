@@ -725,22 +725,22 @@ static void make_sonogram_axes(chan_info *cp)
       ap = cp->axis;
       if (cp->transform_type == FOURIER)
 	{
-	  max_freq = cp->spectro_cutoff * (Float)SND_SRATE(cp->sound) * 0.5;
-	  if ((cp->fft_log_frequency) && ((SND_SRATE(cp->sound) * 0.5 * cp->spectro_start) < log_freq_start(ss)))
+	  max_freq = cp->spectrum_end * (Float)SND_SRATE(cp->sound) * 0.5;
+	  if ((cp->fft_log_frequency) && ((SND_SRATE(cp->sound) * 0.5 * cp->spectrum_start) < log_freq_start(ss)))
 	    min_freq = log_freq_start(ss);
-	  else min_freq = cp->spectro_start * (Float)SND_SRATE(cp->sound) * 0.5;
+	  else min_freq = cp->spectrum_start * (Float)SND_SRATE(cp->sound) * 0.5;
 	}
       else 
 	{
 	  if (cp->transform_type == AUTOCORRELATION)
 	    {
-	      max_freq = fp->current_size * cp->spectro_cutoff / 2;
-	      min_freq = fp->current_size * cp->spectro_start / 2;
+	      max_freq = fp->current_size * cp->spectrum_end / 2;
+	      min_freq = fp->current_size * cp->spectrum_start / 2;
 	    }
 	  else 
 	    {
-	      max_freq = fp->current_size * cp->spectro_cutoff;
-	      min_freq = fp->current_size * cp->spectro_start;
+	      max_freq = fp->current_size * cp->spectrum_end;
+	      min_freq = fp->current_size * cp->spectrum_start;
 	    }
 	}
       yang = fmod(cp->spectro_y_angle, 360.0);
@@ -1025,25 +1025,25 @@ static void display_fft(fft_state *fs)
   switch (cp->transform_type)
     {
     case FOURIER: 
-      max_freq = ((Float)(SND_SRATE(sp)) * 0.5 * cp->spectro_cutoff);
-      if ((cp->fft_log_frequency) && ((SND_SRATE(sp) * 0.5 * cp->spectro_start) < log_freq_start(ss)))
+      max_freq = ((Float)(SND_SRATE(sp)) * 0.5 * cp->spectrum_end);
+      if ((cp->fft_log_frequency) && ((SND_SRATE(sp) * 0.5 * cp->spectrum_start) < log_freq_start(ss)))
 	min_freq = log_freq_start(ss);
-      else min_freq = ((Float)(SND_SRATE(sp)) * 0.5 * cp->spectro_start);
+      else min_freq = ((Float)(SND_SRATE(sp)) * 0.5 * cp->spectrum_start);
       break;
       
     case WAVELET: case WALSH: case HAAR:
-      max_freq = fs->size * cp->spectro_cutoff; 
-      min_freq = fs->size * cp->spectro_start; 
+      max_freq = fs->size * cp->spectrum_end; 
+      min_freq = fs->size * cp->spectrum_start; 
       break;
       
     case AUTOCORRELATION: case CEPSTRUM:
-      max_freq = fs->size * cp->spectro_cutoff / 2; 
-      min_freq = fs->size * cp->spectro_start / 2; 
+      max_freq = fs->size * cp->spectrum_end / 2; 
+      min_freq = fs->size * cp->spectrum_start / 2; 
       break;
       
     default:
-      min_freq = added_transform_lo(cp->transform_type) * fs->size * cp->spectro_cutoff; 
-      max_freq = added_transform_hi(cp->transform_type) * fs->size * cp->spectro_cutoff; 
+      min_freq = added_transform_lo(cp->transform_type) * fs->size * cp->spectrum_end; 
+      max_freq = added_transform_hi(cp->transform_type) * fs->size * cp->spectrum_end; 
       break;
     }
   
@@ -1056,13 +1056,13 @@ static void display_fft(fft_state *fs)
     {
       if (cp->transform_type == FOURIER)
 	{
-	  hi = (int)(fs->size * cp->spectro_cutoff / 2);
-	  lo = (int)(fs->size * cp->spectro_start / 2);
+	  hi = (int)(fs->size * cp->spectrum_end / 2);
+	  lo = (int)(fs->size * cp->spectrum_start / 2);
 	}
       else
 	{
-	  hi = (int)(fs->size * cp->spectro_cutoff);
-	  lo = (int)(fs->size * cp->spectro_start);
+	  hi = (int)(fs->size * cp->spectrum_end);
+	  lo = (int)(fs->size * cp->spectrum_start);
 	}
     }
   
@@ -1252,7 +1252,7 @@ static fft_state *make_fft_state(chan_info *cp, bool force_recalc)
 	  (fs->lfreq == cp->fft_log_frequency) &&
 	  (fs->with_phases == cp->fft_with_phases) &&
 	  (fs->pad_zero == cp->zero_pad) &&
-	  (fs->cutoff == cp->spectro_cutoff) &&
+	  (fs->cutoff == cp->spectrum_end) &&
 	  (fs->graph_type == cp->transform_graph_type) &&
 	  (fs->wavelet_choice == cp->wavelet_type) &&
 	  (fs->edit_ctr == cp->edit_ctr))
@@ -1264,7 +1264,7 @@ static fft_state *make_fft_state(chan_info *cp, bool force_recalc)
       cp_free_fft_state(cp);
       fs = (fft_state *)calloc(1, sizeof(fft_state));
       fs->cp = cp;
-      fs->cutoff = cp->spectro_cutoff;
+      fs->cutoff = cp->spectrum_end;
       fs->size = fftsize;
       fs->pad_zero = cp->zero_pad;
       fs->wintype = cp->fft_window;
@@ -1845,9 +1845,9 @@ void sono_update(chan_info *cp)
 }
 
 
-void set_spectro_cutoff_and_redisplay(Float val)
+void set_spectrum_end_and_redisplay(Float val)
 {
-  in_set_spectro_cutoff(val); 
+  in_set_spectrum_end(val); 
   for_each_chan(sono_update);
 }
 
@@ -2043,7 +2043,7 @@ and otherwise return a list (spectro-cutoff time-slices fft-bins)"
   if (cp->transform_graph_type == GRAPH_ONCE)
     return(C_TO_XEN_INT(cp->transform_size));
   si = cp->sonogram_data;
-  if (si) return(XEN_LIST_3(C_TO_XEN_DOUBLE(cp->spectro_cutoff),
+  if (si) return(XEN_LIST_3(C_TO_XEN_DOUBLE(cp->spectrum_end),
 			    C_TO_XEN_INT(si->active_slices),
 			    C_TO_XEN_INT(si->target_bins)));
   return(XEN_ZERO);

@@ -868,7 +868,7 @@ by " S_mus_sound_open_input "."
   int nfd;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(fd), fd, XEN_ONLY_ARG, S_mus_sound_close_input, "an integer");
   nfd = XEN_TO_C_INT(fd);
-  if ((nfd < 0) || (nfd == fileno(stdin)) || (nfd == fileno(stdout)) || (nfd == fileno(stderr)))
+  if ((nfd < 0) || (nfd == STDIN_FILENO) || (nfd == STDOUT_FILENO) || (nfd == STDERR_FILENO))
     XEN_OUT_OF_RANGE_ERROR(S_mus_sound_close_input, 1, fd, "~A: invalid file number");
   return(C_TO_XEN_INT(mus_sound_close_input(XEN_TO_C_INT(fd))));
 }
@@ -883,7 +883,7 @@ that was opened by " S_mus_sound_open_output " after updating its header (if any
   XEN_ASSERT_TYPE(XEN_INTEGER_P(fd), fd, XEN_ARG_1, S_mus_sound_close_output, "an integer");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(bytes), bytes, XEN_ARG_2, S_mus_sound_close_output, "a number");
   nfd = XEN_TO_C_INT(fd);
-  if ((nfd < 0) || (nfd == fileno(stdin)) || (nfd == fileno(stdout)) || (nfd == fileno(stderr)))
+  if ((nfd < 0) || (nfd == STDIN_FILENO) || (nfd == STDOUT_FILENO) || (nfd == STDERR_FILENO))
     XEN_OUT_OF_RANGE_ERROR(S_mus_sound_close_output, 1, fd, "~A: invalid file number");
   return(C_TO_XEN_INT(mus_sound_close_output(XEN_TO_C_INT(fd),
 					     XEN_TO_C_OFF_T_OR_ELSE(bytes, 0))));

@@ -213,11 +213,14 @@ is included in the <a href="http://ccrma.stanford.edu/planetccrma/software/">Pla
     <li><a href="grfsnd.html#sndandruby" onmouseout="UnTip()" onmouseover="Tip('Ruby is a scripting/extension language somewhat like Python')">Snd with Ruby</a>
     <li><a href="grfsnd.html#sndandforth" onmouseout="UnTip()" onmouseover="Tip('Forth is a postfix extension language')">Snd with Forth</a>
     <li><a href="grfsnd.html#sndands7" onmouseout="UnTip()" onmouseover="Tip('s7 is yet another Scheme extension language')">Snd with s7</a>
+    <li><a href="grfsnd.html#sndandguile" onmouseout="UnTip()" onmouseover="Tip('Guile is yet another Scheme extension language')">Snd with Guile</a>
     <li><a href="grfsnd.html#sndandladspa" onmouseout="UnTip()" onmouseover="Tip('This is a Linux-based sound-effects plugin system')">Snd and LADSPA plugins</a>
     <li><a href="grfsnd.html#sndandjack" onmouseout="UnTip()" onmouseover="Tip('This is the Jack audio library')">Snd and Jack</a>
     <li><a href="grfsnd.html#sndandalsa" onmouseout="UnTip()" onmouseover="Tip('This is the new Linux audio library')">Snd and ALSA</a>
     <li><a href="grfsnd.html#sndandx" onmouseout="UnTip()" onmouseover="Tip('other programs can control Snd through window properties')">Driving Snd remotely</a>
     <li><a href="grfsnd.html#sndandgl" onmouseout="UnTip()" onmouseover="Tip('OpenGL (Mesa) extensions via gl.c')">Snd and OpenGL</a>
+    <li><a href="grfsnd.html#sndandgsl" onmouseout="UnTip()" onmouseover="Tip('include some special functions from GSL')">Snd and GSL</a>
+    <li><a href="grfsnd.html#sndandgmp" onmouseout="UnTip()" onmouseover="Tip('include multiprecision arithmetic')">Snd and multiprecision arithmetic (gmp, mpfr, mpc)</a>
     </ul>
 
   <li><a href="sndscm.html#introduction">Scheme, Ruby, and Forth</a>
@@ -889,7 +892,7 @@ about each file as the mouse passes over it.
         <!-- I(fft log freq):A(logfreq) --><!-- I(fft in dB):M(Options: Transform)(fftindb) -->
         <!-- I(fft in dB):A(fftindb) --><!-- I(fft/sono/spectrogram):M(Options: Transform)(transformgraphtype) -->
         <!-- I(sonogram):M(Options: Transform)(fftstyle) --><!-- I(sonogram):O(colormap)(colormap) -->
-        <!-- I(spectrogram):M(Options: Transform)(fftstyle) --><!-- I(spectrogram):O(orientation, scaling)(spectrocutoff) -->
+        <!-- I(spectrogram):M(Options: Transform)(fftstyle) --><!-- I(spectrogram):O(orientation, scaling)(spectrumend) -->
         <!-- I(fft/sono/spectrogram):A(fftstyle) --><!-- I(sonogram):A(fftstyle) -->
         <!-- I(spectrogram):A(fftstyle) --><!-- I(fft window):M(Options: Transform)(menufftwindow) -->
         <!-- I(fft window):A(menufftwindow) --><!-- I(fft window parameter):M(Options: Transform)(Xfftbeta) -->
@@ -942,7 +945,7 @@ transform normalization is off.
 The full frequency axis is normally displayed, but the
 axis is draggable &mdash; put the mouse on the axis and
 drag it either way to change the range (this is equivalent
-to changing the variable <a href="extsnd.html#spectrocutoff">spectro-cutoff</a>).  You can also click
+to changing the variable <a href="extsnd.html#spectrumend">spectrum-end</a>).  You can also click
 on any point in the fft to get the associated fft value at that point
 displayed; if with-verbose-cursor is on, you can
 drag the mouse through the fft display and the
@@ -971,7 +974,7 @@ The keypad keys are mapped to various variables as follows:</p>
 
 <table border=0 hspace=20>
 <tr><th align=left><small>variable</small></th><th align=left><small>increase</small></th><th align=left><small>decrease</small></th></tr>
-<tr><td width = 130><a href="extsnd.html#spectrocutoff"><small>spectro-cutoff</small></a></td><td width=150><small>PageUp</small></td><td width=180><small>PageDown</small></td></tr>
+<tr><td width = 130><a href="extsnd.html#spectrumend"><small>spectrum-end</small></a></td><td width=150><small>PageUp</small></td><td width=180><small>PageDown</small></td></tr>
 <tr><td><a href="extsnd.html#spectrohop"><small>spectro-hop</small></a></td><td><small>Add (+)</small></td><td><small>Subtract (-)</small></td></tr>
 <tr><td><a href="extsnd.html#spectrozangle"><small>spectro-z-angle</small></a></td><td><small>RightArrow</small></td><td><small>LeftArrow</small></td></tr>
 <tr><td><a href="extsnd.html#spectroxangle"><small>spectro-x-angle</small></a></td><td><small>Ctrl-UpArrow</small></td><td><small>Ctrl-DownArrow</small></td></tr>
@@ -2432,7 +2435,7 @@ For information on initialization, configuration, and connections to other progr
   <tr><td><a href="#cxcz">smooth samples</a></td><td><br></td><td><a href="#cxcz"><small>Cx Cz</small></a></td><td><a href="extsnd.html#smoothchannel"><small>smooth-channel</small></a></td><td><a href="extsnd.html#smoothsound"><small>smooth-sound</small></a></td></tr>
   <tr><td><a href="#cxz">smooth selection</a></td><td><br></td><td><a href="#cxz"><small>Cx z</small></a></td><td><a href="extsnd.html#smoothselection"><small>smooth-selection</small></a></td><td><br></td></tr>
   <tr><td><a href="#fftstyle">sonogram</a></td><td><small>Options: <a href="#fftstyle">Transform</a></small></td><td><br></td><td><a href="extsnd.html#transformgraphtype"><small>transform-graph-type</small></a></td><td><a href="extsnd.html#colormap"><small>colormap</small></a></td></tr>
-  <tr><td><a href="#fftstyle">spectrogram</a></td><td><small>Options: <a href="#fftstyle">Transform</a></small></td><td><br></td><td><a href="extsnd.html#transformgraphtype"><small>transform-graph-type</small></a></td><td><a href="extsnd.html#spectrocutoff"><small>orientation, scaling</small></a></td></tr>
+  <tr><td><a href="#fftstyle">spectrogram</a></td><td><small>Options: <a href="#fftstyle">Transform</a></small></td><td><br></td><td><a href="extsnd.html#transformgraphtype"><small>transform-graph-type</small></a></td><td><a href="extsnd.html#spectrumend"><small>orientation, scaling</small></a></td></tr>
   <tr><td><a href="extsnd.html#speedstyle">speed units</a></td><td><br></td><td><br></td><td><a href="extsnd.html#speedstyle"><small>speed-control-style</small></a></td><td><a href="extsnd.html#speedtones"><small>speed-control-tones</small></a></td></tr>
   <tr><td><a href="extsnd.html#srcsound">srate conversion</a></td><td><small>Edit: <a href="#editenvelope">Edit Env</a></small></td><td><br></td><td><a href="extsnd.html#srcsound"><small>src-sound</small></a></td><td><a href="extsnd.html#srcsoundselection"><small>src-selection</small></a></td></tr>
   <tr><td><a href="extsnd.html#swapchannels">swap channels</a></td><td><br></td><td><br></td><td><a href="extsnd.html#swapchannels"><small>swap-channels</small></a></td><td><br></td></tr>

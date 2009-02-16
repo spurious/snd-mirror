@@ -440,7 +440,7 @@ static idle_func_t startup_funcs(XtPointer context)
 	   * we don't do this, the background job is suspended when the shell sends SIGTTIN.
 	   */
 	  stdin_id = XtAppAddInput(MAIN_APP(ss), 
-				   fileno(stdin), 
+				   STDIN_FILENO, 
 				   (XtPointer)XtInputReadMask, 
 				   get_stdin_string, 
 				   NULL);

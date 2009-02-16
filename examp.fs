@@ -418,7 +418,7 @@ y0 and y1 are ignored."
   snd chn transform-graph-type graph-once = && if
     2.0 snd chn right-sample snd chn left-sample f- flog 2.0 flog f/ fceil f** fround->s
     snd chn set-transform-size drop
-    snd chn y-zoom-slider snd chn set-spectro-cutoff drop
+    snd chn y-zoom-slider snd chn set-spectrum-end drop
   then
   #f
 ;

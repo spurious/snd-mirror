@@ -101,13 +101,14 @@ static char *vstrcat(char *arg1, ...)
 }
 
 
-static const char *main_snd_xrefs[14] = {
+static const char *main_snd_xrefs[16] = {
   "{CLM}: sound synthesis",
   "{CM}: algorithmic composition",
   "{CMN}: music notation",
   "{Ruby}: extension language",
   "{Forth}: extension language",
   "{s7}: extension language",
+  "{Guile}: extension language",
   "{Emacs}: Snd as Emacs subjob",
   "{Libxm}: graphics module",
   "{Sndlib}: underlying sound support library",
@@ -115,16 +116,18 @@ static const char *main_snd_xrefs[14] = {
   "{Motif}: Motif extensions via Libxm",
   "{Gtk}: Gtk extensions via Libxm",
   "{Ladspa}: plugins",
+  "{Multiprecision arithmetic}: libgmp and friends",
   NULL
 };
 
-static const char *main_snd_xref_urls[14] = {
+static const char *main_snd_xref_urls[16] = {
   "grfsnd.html#sndwithclm",
   "grfsnd.html#sndwithcm",
   "sndscm.html#musglyphs",
   "grfsnd.html#sndandruby",
   "grfsnd.html#sndandforth",
   "grfsnd.html#sndands7",
+  "grfsnd.html#sndandguile",
   "grfsnd.html#emacssnd",
   "libxm.html#xm",
   "sndlib.html#introduction",
@@ -132,6 +135,7 @@ static const char *main_snd_xref_urls[14] = {
   "grfsnd.html#sndwithmotif",
   "grfsnd.html#sndwithgtk",  
   "grfsnd.html#sndandladspa",
+  "grfsnd.html#sndandgmp",
   NULL,
 };
 
@@ -1031,7 +1035,7 @@ itself each time the time domain waveform moves or changes.  \
 The FFT is taken from the start (the left edge) of the current window and is updated as the window bounds change. \
 The data is scaled to fit between 0.0 and 1.0 unless transform normalization is off. \
 The full frequency axis is normally displayed, but the axis is draggable -- put the mouse on the axis \
-and drag it either way to change the range (this is equivalent to changing the variable " S_spectro_cutoff "). \
+and drag it either way to change the range (this is equivalent to changing the variable " S_spectrum_end "). \
 You can also click on any point in the fft to get the associated fft value at that point displayed; \
 if " S_with_verbose_cursor " is " PROC_TRUE ", you can drag the mouse through the fft display and \
 the description in the minibuffer will be constantly updated.  To change the fft size by powers of two, \
@@ -2514,7 +2518,7 @@ current window and is updated as the window bounds change; otherwise the FFT is 
 of the selection, if any is active in the current channel.  The fft data is scaled to fit \
 between 0.0 and 1.0 unless the fft normalization is off. The full frequency axis is normally \
 displayed, but the axis is 'draggable' -- put the mouse on the axis and drag it either way to change \
-the range (this is equivalent to changing the variable " S_spectro_cutoff "). You can also click on \
+the range (this is equivalent to changing the variable " S_spectrum_end "). You can also click on \
 any point in the fft to get the associated fft data displayed; if " S_with_verbose_cursor " is on, you can \
 drag the mouse through the fft display and the description in the minibuffer will be constantly updated. \
 \n\n\

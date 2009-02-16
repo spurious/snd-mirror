@@ -1770,8 +1770,8 @@ include bird.fsm
      <'> show-sonogram-cursor <'> grid-density <'> smooth-sound <'> smooth-selection
      <'> snd-print <'> snd-spectrum <'> snd-tempnam <'> snd-version
      <'> sound-files-in-directory <'> sound-loop-info <'> sound-widgets <'> soundfont-info
-     <'> sound? <'> sounds <'> spectro-cutoff <'> spectro-hop
-     <'> spectro-start <'> spectro-x-angle <'> spectro-x-scale <'> spectro-y-angle
+     <'> sound? <'> sounds <'> spectrum-end <'> spectro-hop
+     <'> spectrum-start <'> spectro-x-angle <'> spectro-x-scale <'> spectro-y-angle
      <'> spectro-y-scale <'> spectro-z-angle <'> spectro-z-scale <'> speed-control
      <'> speed-control-style <'> speed-control-tones <'> squelch-update <'> srate
      <'> src-sound <'> src-selection <'> start-progress-report <'> stop-player
@@ -1933,8 +1933,8 @@ include bird.fsm
      <'> selection-color <'> selection-creates-region <'> show-axes <'> show-backtrace
      <'> show-controls <'> show-transform-peaks <'> show-indices <'> show-marks
      <'> show-mix-waveforms <'> show-selection-transform <'> show-listener <'> show-y-zero
-     <'> show-grid <'> show-sonogram-cursor <'> sinc-width <'> spectro-cutoff
-     <'> spectro-hop <'> spectro-start <'> spectro-x-angle <'>  grid-density
+     <'> show-grid <'> show-sonogram-cursor <'> sinc-width <'> spectrum-end
+     <'> spectro-hop <'> spectrum-start <'> spectro-x-angle <'>  grid-density
      <'> spectro-x-scale <'> spectro-y-angle <'> spectro-y-scale <'> spectro-z-angle
      <'> spectro-z-scale <'> speed-control <'> speed-control-style <'> speed-control-tones
      <'> squelch-update <'> sync <'> sound-properties <'> temp-dir
@@ -2393,7 +2393,7 @@ include bird.fsm
        <'> right-sample <'> sample <'> save-sound <'> save-sound-as
        <'> scan-chan <'> select-channel <'> show-axes <'> show-transform-peaks
        <'> show-marks <'> show-mix-waveforms <'> show-y-zero <'> show-grid
-       <'> show-sonogram-cursor <'> spectro-cutoff <'> spectro-hop <'> spectro-start
+       <'> show-sonogram-cursor <'> spectrum-end <'> spectro-hop <'> spectrum-start
        <'> spectro-x-angle <'> spectro-x-scale <'> spectro-y-angle <'>  grid-density
        <'> spectro-y-scale <'> spectro-z-angle <'> spectro-z-scale <'> squelch-update
        <'> transform-sample <'> transform->vct <'> transform-frames <'> transform-type
@@ -2435,8 +2435,8 @@ include bird.fsm
        <'> redo <'> reverse-sound <'> revert-sound <'> right-sample
        <'> sample <'> save-sound <'> scale-by <'> scale-to
        <'> show-axes <'> show-transform-peaks <'> show-marks <'> show-mix-waveforms
-       <'> show-y-zero <'> show-grid <'> show-sonogram-cursor <'> spectro-cutoff
-       <'> spectro-hop <'> spectro-start <'> spectro-x-angle <'> spectro-x-scale
+       <'> show-y-zero <'> show-grid <'> show-sonogram-cursor <'> spectrum-end
+       <'> spectro-hop <'> spectrum-start <'> spectro-x-angle <'> spectro-x-scale
        <'> spectro-y-angle <'> spectro-y-scale <'> spectro-z-angle <'> spectro-z-scale
        <'> squelch-update <'>  grid-density <'> src-sound <'> transform-sample
        <'> transform->vct <'> transform-frames <'> transform-type <'> undo
@@ -2492,8 +2492,8 @@ include bird.fsm
        <'> maxamp-position <'> min-dB <'> transform-normalization <'> peak-env-info
        <'> reverse-sound <'> right-sample <'> show-axes <'> show-transform-peaks
        <'> show-marks <'> show-mix-waveforms <'> show-y-zero <'> show-grid
-       <'> show-sonogram-cursor <'>  grid-density <'> spectro-cutoff <'> spectro-hop
-       <'> spectro-start <'> spectro-x-angle <'> spectro-x-scale <'> spectro-y-angle
+       <'> show-sonogram-cursor <'>  grid-density <'> spectrum-end <'> spectro-hop
+       <'> spectrum-start <'> spectro-x-angle <'> spectro-x-scale <'> spectro-y-angle
        <'> spectro-y-scale <'> spectro-z-angle <'> spectro-z-scale <'> squelch-update
        <'> transform->vct <'> transform-frames <'> transform-type <'> update-transform-graph
        <'> update-time-graph <'> update-lisp-graph <'> wavelet-type <'> time-graph?

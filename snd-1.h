@@ -334,7 +334,8 @@ typedef struct chan_info {
   int in_as_one_edit, as_one_edit_positions_size;
   int *as_one_edit_positions;
   /* moved from global to channel-local 4-Aug-00 */
-  Float spectro_x_scale, spectro_y_scale, spectro_z_scale, spectro_z_angle, spectro_x_angle, spectro_y_angle, spectro_cutoff, spectro_start;
+  Float spectro_x_scale, spectro_y_scale, spectro_z_scale, spectro_z_angle, spectro_x_angle, spectro_y_angle;
+  Float spectrum_end, spectrum_start;
   Float lin_dB, min_dB, fft_window_alpha, fft_window_beta, beats_per_minute, grid_density;
   bool show_y_zero, show_marks, verbose_cursor;
   with_grid_t show_grid;
@@ -495,7 +496,8 @@ typedef struct snd_state {
   bool Verbose_Cursor, Trap_Segfault;
   int Enved_Filter_Order;
   Float Eps_Left_Margin, Eps_Bottom_Margin, Eps_Size, Log_Freq_Start;
-  Float Spectro_X_Scale, Spectro_Y_Scale, Spectro_Z_Scale, Spectro_Z_Angle, Spectro_X_Angle, Spectro_Y_Angle, Spectro_Cutoff, Spectro_Start;
+  Float Spectro_X_Scale, Spectro_Y_Scale, Spectro_Z_Scale, Spectro_Z_Angle, Spectro_X_Angle, Spectro_Y_Angle;
+  Float Spectrum_End, Spectrum_Start;
   int Default_Output_Header_Type, Default_Output_Data_Format, Default_Output_Chans, Default_Output_Srate;
   int Spectro_Hop, Color_Map, Color_Map_Size, Wavelet_Type, Transform_Type, Optimization;
   int Dot_Size;
@@ -973,7 +975,7 @@ bool fft_window_beta_in_use(mus_fft_window_t win);
 bool fft_window_alpha_in_use(mus_fft_window_t win);
 void free_sono_info(chan_info *cp);
 void sono_update(chan_info *cp);
-void set_spectro_cutoff_and_redisplay(Float val);
+void set_spectrum_end_and_redisplay(Float val);
 void c_convolve(const char *fname, Float amp, int filec, off_t filehdr, int filterc, off_t filterhdr, int filtersize,
 		int fftsize, int filter_chans, int filter_chan, int data_size, snd_info *gsp);
 void *make_sonogram_state(chan_info *cp, bool force_recalc);

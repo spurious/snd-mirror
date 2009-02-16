@@ -1029,15 +1029,15 @@
     (set! (sinc-width) (sinc-width))
     (if (not (equal? (sinc-width)  10 )) 
 	(snd-display ";sinc-width set def: ~A" (sinc-width)))
-    (set! (spectro-cutoff) (spectro-cutoff))
-    (if (fneq (spectro-cutoff)  1.0)
-	(snd-display ";spectro-cutoff set def: ~A" (spectro-cutoff)))
+    (set! (spectrum-end) (spectrum-end))
+    (if (fneq (spectrum-end)  1.0)
+	(snd-display ";spectrum-end set def: ~A" (spectrum-end)))
     (set! (spectro-hop) (spectro-hop))
     (if (not (equal? (spectro-hop)  4 )) 
 	(snd-display ";spectro-hop set def: ~A" (spectro-hop)))
-    (set! (spectro-start) (spectro-start))
-    (if (fneq (spectro-start)  0.0 )
-	(snd-display ";spectro-start set def: ~A" (spectro-start)))
+    (set! (spectrum-start) (spectrum-start))
+    (if (fneq (spectrum-start)  0.0 )
+	(snd-display ";spectrum-start set def: ~A" (spectrum-start)))
     (set! (spectro-x-angle) (spectro-x-angle))
     (if (fneq (spectro-x-angle)  (if (provided? 'gl) 300.0 90.0))
 	(snd-display ";spectro-x-angle set def: ~A" (spectro-x-angle)))
@@ -1329,9 +1329,9 @@
       'show-transform-peaks (show-transform-peaks) #f 
       'show-y-zero (show-y-zero) #f 
       'sinc-width (sinc-width) 10 
-      'spectro-cutoff (spectro-cutoff) 1.0
+      'spectrum-end (spectrum-end) 1.0
       'spectro-hop (spectro-hop) 4 
-      'spectro-start (spectro-start) 0.0 
+      'spectrum-start (spectrum-start) 0.0 
       'spectro-x-angle (spectro-x-angle) (if (provided? 'gl) 300.0 90.0)
       'spectro-x-scale (spectro-x-scale) (if (provided? 'gl) 1.5 1.0)
       'spectro-y-angle (spectro-y-angle) (if (provided? 'gl) 320.0 0.0)
@@ -1927,9 +1927,9 @@
 	(list 'grid-density grid-density 1.0 0.5)
 	(list 'show-sonogram-cursor show-sonogram-cursor #f #t)
 	(list 'sinc-width sinc-width 10 40)
-	(list 'spectro-cutoff spectro-cutoff 1.0 0.7)
+	(list 'spectrum-end spectrum-end 1.0 0.7)
 	(list 'spectro-hop spectro-hop 4 10)
-	(list 'spectro-start spectro-start 0.0 0.1)
+	(list 'spectrum-start spectrum-start 0.0 0.1)
 	(list 'spectro-x-angle spectro-x-angle (if (provided? 'gl) 300.0 90.0) 60.0)
 	(list 'spectro-x-scale spectro-x-scale (if (provided? 'gl) 1.5 1.0) 2.0)
 	(list 'spectro-y-angle spectro-y-angle (if (provided? 'gl) 320.0 0.0) 60.0)
@@ -2015,9 +2015,9 @@
 	(list 'reverb-control-length reverb-control-length 1.0 '(-1.0))
 	(list 'show-axes show-axes 1 '(-1 123))
 	(list 'sinc-width sinc-width 10 '(-10))
-	(list 'spectro-cutoff spectro-cutoff 1.0 '(-1.0))
+	(list 'spectrum-end spectrum-end 1.0 '(-1.0))
 	(list 'spectro-hop spectro-hop 4 '(-10 -1 0))
-	(list 'spectro-start spectro-start 0.0 '(-1.0))
+	(list 'spectrum-start spectrum-start 0.0 '(-1.0))
 	(list 'speed-control speed-control 1.0 '(0.0))
 	(list 'speed-control-bounds speed-control-bounds (list 0.05 20.0) (list #f (list 0.0) (list 1.0 0.0) 2.0))
 	(list 'speed-control-style speed-control-style 0 '(-1 10))
@@ -2283,7 +2283,7 @@
 		       'sound-data-multiply! 'sound-data-add! 'sound-data-offset! 'sound-data* 'sound-data+ 'sound-data-copy 'sound-data-reverse!
 		       'sound-file-extensions 'sound-file? 'sound-files-in-directory
 		       'sound-loop-info 'sound-properties 'sound-widgets 'sound? 'soundfont-info
-		       'sounds 'spectro-cutoff 'spectro-hop 'spectro-start 'spectro-x-angle
+		       'sounds 'spectrum-end 'spectro-hop 'spectrum-start 'spectro-x-angle
 		       'spectro-x-scale 'spectro-y-angle 'spectro-y-scale 'spectro-z-angle 'spectro-z-scale
 		       'spectrum 'speed-control 'speed-control-as-float 'speed-control-as-ratio 'speed-control-as-semitone
 		       'speed-control-bounds 'speed-control-style 'speed-control-tones 'square-wave 'square-wave?
@@ -33006,9 +33006,9 @@ EDITS: 2
 	      (list 'grid-density grid-density 1.0 0.1 4.0)
 	      (list 'show-sonogram-cursor show-sonogram-cursor #f #f #t)
 	      (list 'sinc-width sinc-width #f 4 100)
-	      (list 'spectro-cutoff spectro-cutoff #f 0.5 0.8)
+	      (list 'spectrum-end spectrum-end #f 0.5 0.8)
 	      (list 'spectro-hop spectro-hop #f 2 20)
-	      (list 'spectro-start spectro-start #f 0.0 0.1)
+	      (list 'spectrum-start spectrum-start #f 0.0 0.1)
 	      (list 'spectro-x-angle spectro-x-angle #f 0.0 90.0)
 	      (list 'spectro-x-scale spectro-x-scale #f 0.1 2.0)
 	      (list 'spectro-y-angle spectro-y-angle #f 0.0 90.0)
@@ -33099,7 +33099,7 @@ EDITS: 2
 		      wavelet-type transform-size fft-window-alpha fft-window-beta transform-type 
 		      transform-normalization show-mix-waveforms graph-style dot-size show-axes show-y-zero show-grid show-marks grid-density
 		      spectro-x-angle spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle spectro-z-scale
-		      spectro-hop spectro-cutoff spectro-start graphs-horizontal x-axis-style beats-per-minute beats-per-measure
+		      spectro-hop spectrum-end spectrum-start graphs-horizontal x-axis-style beats-per-minute beats-per-measure
 		      cursor-size cursor-style tracking-cursor-style show-sonogram-cursor
 		      ))
   (define func-names (list 'time-graph-type 'wavo-hop 'wavo-trace 'max-transform-peaks 'show-transform-peaks 'zero-pad 'transform-graph-type 'fft-window
@@ -33107,7 +33107,7 @@ EDITS: 2
 			   'wavelet-type 'transform-size 'fft-window-alpha 'fft-window-beta 'transform-type
 			   'transform-normalization 'show-mix-waveforms 'graph-style 'dot-size 'show-axes 'show-y-zero 'show-grid 'show-marks 'grid-density
 			   'spectro-x-angle 'spectro-x-scale 'spectro-y-angle 'spectro-y-scale 'spectro-z-angle 'spectro-z-scale
-			   'spectro-hop 'spectro-cutoff 'spectro-start 'graphs-horizontal 'x-axis-style 'beats-per-minute 'beats-per-measure
+			   'spectro-hop 'spectrum-end 'spectrum-start 'graphs-horizontal 'x-axis-style 'beats-per-minute 'beats-per-measure
 			   'cursor-size 'cursor-style 'tracking-cursor-style 'show-sonogram-cursor
 			   ))
   (define new-values (list graph-as-wavogram 12 512 3 #t 32 graph-as-sonogram cauchy-window
@@ -40365,11 +40365,11 @@ EDITS: 1
     (let* ((ind (open-sound "oboe.snd"))
 	   (funcs (list transform-graph-type time-graph-type show-axes transform-normalization
 			graph-style x-axis-style spectro-x-scale transform-size fft-window
-			dot-size max-transform-peaks with-verbose-cursor zero-pad min-dB spectro-hop spectro-cutoff
+			dot-size max-transform-peaks with-verbose-cursor zero-pad min-dB spectro-hop spectrum-end
 			cursor-size cursor-style))
 	   (func-names (list 'transform-graph-type 'time-graph-type 'show-axes 'transform-normalization
 			     'graph-style 'x-axis-style 'spectro-x-scale 'transform-size 'fft-window
-			     'dot-size 'max-transform-peaks 'with-verbose-cursor 'zero-pad 'min-dB 'spectro-hop 'spectro-cutoff
+			     'dot-size 'max-transform-peaks 'with-verbose-cursor 'zero-pad 'min-dB 'spectro-hop 'spectrum-end
 			     'cursor-size 'cursor-style))
 	   (old-globals (map (lambda (func) (func)) funcs))
 	   (new-globals (list graph-as-sonogram graph-as-wavogram show-all-axes normalize-by-sound
@@ -43486,7 +43486,7 @@ EDITS: 1
 	  (update-transform-graph)
 	  (graph->ps "aaa.eps")
 	  (set! (with-gl) #f)
-	  (set! (spectro-cutoff ind 0) .2)
+	  (set! (spectrum-end ind 0) .2)
 	  (set! (transform-graph-type ind 0) graph-as-spectrogram)
 	  (update-transform-graph)
 	  (update-lisp-graph)
@@ -44162,7 +44162,7 @@ EDITS: 1
       (set! (show-controls) #f)
       (set! (speed-control-tones) 12)
       (set! (wavelet-type) 0)
-      (set! (spectro-start) 0.0)
+      (set! (spectrum-start) 0.0)
       (set! (spectro-hop) 4)
       (set! (fft-window-alpha) 0.0)
       (set! (fft-window-beta) 0.0)
@@ -44323,8 +44323,8 @@ EDITS: 1
 		(list y-zoom-slider 'y-zoom-slider ind-1 ind-2 0.2 (lambda (a b) (< (abs (- a b)) .01)) feql #t #f)
 		(list fft-window-alpha 'fft-window-alpha ind-1 ind-2 0.5 (lambda (a b) (< (abs (- a b)) .02)) feql #t #t)
 		(list fft-window-beta 'fft-window-beta ind-1 ind-2 0.5 (lambda (a b) (< (abs (- a b)) .02)) feql #t #t)
-		(list spectro-cutoff 'spectro-cutoff ind-1 ind-2 0.2 (lambda (a b) (< (abs (- a b)) .01)) feql #t #t)
-		(list spectro-start 'spectro-start ind-1 ind-2 0.1 (lambda (a b) (< (abs (- a b)) .01)) feql #t #t)
+		(list spectrum-end 'spectrum-end ind-1 ind-2 0.2 (lambda (a b) (< (abs (- a b)) .01)) feql #t #t)
+		(list spectrum-start 'spectrum-start ind-1 ind-2 0.1 (lambda (a b) (< (abs (- a b)) .01)) feql #t #t)
 		(list spectro-x-angle 'spectro-x-angle ind-1 ind-2 10.0 (lambda (a b) (< (abs (- a b)) .01)) feql #t #t)
 		(list spectro-x-scale 'spectro-x-scale ind-1 ind-2 0.2 (lambda (a b) (< (abs (- a b)) .01)) feql #t #t)
 		(list spectro-y-angle 'spectro-y-angle ind-1 ind-2 10.0 (lambda (a b) (< (abs (- a b)) .01)) feql #t #t)
@@ -64222,7 +64222,7 @@ EDITS: 1
 		     short-file-name show-axes show-backtrace show-controls show-transform-peaks show-indices show-listener
 		     show-marks show-mix-waveforms show-selection-transform show-y-zero sinc-width show-grid show-sonogram-cursor grid-density
 		     smooth-sound smooth-selection snd-print snd-spectrum snd-tempnam snd-version sound-files-in-directory
-		     sound-loop-info sound-widgets soundfont-info sound? sounds spectro-cutoff spectro-hop spectro-start
+		     sound-loop-info sound-widgets soundfont-info sound? sounds spectrum-end spectro-hop spectrum-start
 		     spectro-x-angle spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle spectro-z-scale
 		     speed-control speed-control-style speed-control-tones squelch-update srate src-sound src-selection
 					;start-playing 
@@ -64336,7 +64336,7 @@ EDITS: 1
 			 reverb-control? sash-color ladspa-dir save-dir save-state-file selected-data-color selected-graph-color
 			 selection-color selection-creates-region show-axes show-backtrace show-controls
 			 show-transform-peaks show-indices show-marks show-mix-waveforms show-selection-transform show-listener
-			 show-y-zero show-grid show-sonogram-cursor sinc-width spectro-cutoff spectro-hop spectro-start spectro-x-angle  grid-density
+			 show-y-zero show-grid show-sonogram-cursor sinc-width spectrum-end spectro-hop spectrum-start spectro-x-angle  grid-density
 			 spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle spectro-z-scale speed-control
 			 speed-control-style speed-control-tones squelch-update sync sound-properties temp-dir text-focus-color tiny-font y-bounds
 			 transform-type trap-segfault with-file-monitor optimization with-verbose-cursor wavelet-type x-bounds
@@ -64838,7 +64838,7 @@ EDITS: 1
 			    position->x position->y reverse-sound
 			    revert-sound right-sample sample save-sound save-sound-as scan-chan
 			    select-channel show-axes show-transform-peaks show-marks show-mix-waveforms show-y-zero show-grid show-sonogram-cursor
-			    spectro-cutoff spectro-hop spectro-start spectro-x-angle spectro-x-scale spectro-y-angle  grid-density
+			    spectrum-end spectro-hop spectrum-start spectro-x-angle spectro-x-scale spectro-y-angle  grid-density
 			    spectro-y-scale spectro-z-angle spectro-z-scale squelch-update transform-sample
 			    transform->vct transform-frames transform-type update-transform-graph update-time-graph
 			    update-lisp-graph update-sound wavelet-type time-graph? time-graph-type wavo-hop wavo-trace x-bounds
@@ -64865,7 +64865,7 @@ EDITS: 1
 			    peak-env-info peaks play play-and-wait position->x position->y reverse-sound right-sample sample
 			    save-sound-as scan-chan show-axes show-transform-peaks show-marks
 			    show-mix-waveforms show-y-zero show-grid show-sonogram-cursor 
-			    spectro-cutoff spectro-hop spectro-start spectro-x-angle
+			    spectrum-end spectro-hop spectrum-start spectro-x-angle
 			    spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle spectro-z-scale squelch-update  grid-density
 			    transform-sample transform->vct transform-frames transform-type
 			    update-transform-graph update-time-graph update-lisp-graph wavelet-type time-graph? time-graph-type
@@ -64892,7 +64892,7 @@ EDITS: 1
 			    play-and-wait position->x position->y redo reverse-sound revert-sound right-sample sample
 			    save-sound scale-by scale-to show-axes show-transform-peaks
 			    show-marks show-mix-waveforms show-y-zero show-grid show-sonogram-cursor 
-			    spectro-cutoff spectro-hop spectro-start spectro-x-angle
+			    spectrum-end spectro-hop spectrum-start spectro-x-angle
 			    spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle spectro-z-scale squelch-update  grid-density
 			    src-sound transform-sample transform->vct
 			    transform-frames transform-type undo update-transform-graph update-time-graph update-lisp-graph
@@ -64947,7 +64947,7 @@ EDITS: 1
 			    make-graph-data max-transform-peaks maxamp maxamp-position min-dB transform-normalization peak-env-info
 			    reverse-sound right-sample show-axes show-transform-peaks show-marks 
 			    show-mix-waveforms show-y-zero show-grid show-sonogram-cursor  grid-density
-			    spectro-cutoff spectro-hop spectro-start spectro-x-angle spectro-x-scale spectro-y-angle
+			    spectrum-end spectro-hop spectrum-start spectro-x-angle spectro-x-scale spectro-y-angle
 			    spectro-y-scale spectro-z-angle spectro-z-scale squelch-update transform->vct
 			    transform-frames transform-type update-transform-graph update-time-graph update-lisp-graph
 			    wavelet-type time-graph?  time-graph-type wavo-hop wavo-trace x-bounds x-position-slider x-axis-label
@@ -64971,8 +64971,8 @@ EDITS: 1
 			    transform-graph? graph-style lisp-graph? left-sample make-graph-data max-transform-peaks maxamp maxamp-position
 			    time-graph-style lisp-graph-style transform-graph-style
 			    min-dB transform-normalization peak-env-info reverse-sound right-sample show-axes  grid-density
-			    show-transform-peaks show-marks show-mix-waveforms show-y-zero show-grid show-sonogram-cursor spectro-cutoff spectro-hop
-			    spectro-start spectro-x-angle spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle
+			    show-transform-peaks show-marks show-mix-waveforms show-y-zero show-grid show-sonogram-cursor spectrum-end spectro-hop
+			    spectrum-start spectro-x-angle spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle
 			    spectro-z-scale squelch-update transform->vct transform-frames transform-type
 			    update-transform-graph update-time-graph update-lisp-graph wavelet-type time-graph? time-graph-type
 			    wavo-hop wavo-trace x-bounds x-position-slider x-zoom-slider y-bounds y-position-slider

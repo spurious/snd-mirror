@@ -75,6 +75,7 @@
   <li><a href="#sndandruby" onmouseout="UnTip()" onmouseover="Tip('Ruby is a scripting/extension language somewhat like Python')">Snd with Ruby</a>
   <li><a href="#sndandforth" onmouseout="UnTip()" onmouseover="Tip('Forth is a postfix extension language')">Snd with Forth</a>
   <li><a href="#sndands7" onmouseout="UnTip()" onmouseover="Tip('s7 is yet another Scheme extension language')">Snd with s7</a>
+  <li><a href="#sndandguile" onmouseout="UnTip()" onmouseover="Tip('Guile is yet another Scheme extension language')">Snd with Guile</a>
   <li><a href="#sndandladspa" onmouseout="UnTip()" onmouseover="Tip('This is a Linux-based sound-effects plugin system')">Snd and LADSPA plugins</a>
   <li><a href="#sndandalsa" onmouseout="UnTip()" onmouseover="Tip('This is the no-longer-very-new Linux audio library')">Snd and ALSA</a>
   <li><a href="#sndandjack" onmouseout="UnTip()" onmouseover="Tip('This is the Jack audio library')">Snd and Jack</a>
@@ -2102,6 +2103,23 @@ s7 is still brand-new (written in August-08), so there are rough edges, but I th
 
 <p>
 The s7 initialization file is ~/.snd_s7.
+</p>
+
+
+<br><br>
+
+
+<table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndandguile">Snd with Guile</a></h3></td></tr></table>
+
+<p>
+Guile was Snd's original extension language.  Like s7, it implements Scheme.  It has trouble, however,
+with threads.  Over the years, I became increasingly unhappy with it, and finally decided in 2008 to move to s7.
+The Guile support still works, but I'm not really paying any attention to it.  For a couple
+years, Snd also supported Gauche (another Scheme), but that fell apart in 2008.
+</p>
+
+<p>
+The Snd/Guile initialization file is ~/.snd_guile.
 </p>
 
 

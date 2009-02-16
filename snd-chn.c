@@ -3,10 +3,11 @@
 #include "clm-strings.h"
 
 /* SOMEDAY: fft side needs a zoom capability, not just the drag now 
- *   this can probably be done with spectro_start and spectro_cutoff (=end)
+ *   this can probably be done with spectrum_start and spectrum_end (=end): spectrum-start and spectrum-end; ("o" refers to spectrograph)
  *   rename cutoff to end, add arrows or something to fft graph
  *   peak reporting appears to get confused -- maxes current, but shows others pinned
  * also the alpha/beta sliders need labels, and aren't logically a part of the wavelet box
+ *    and they should be grayed out when not relevant
  * also the "orientation" dialog should have start/end sliders if it has the end slider (not really the right place for it)
  * also if click in fft (or only fft) then arrow keys, shouldn't these affect the fft?
  *    maybe change label color to show it's active?
@@ -14,8 +15,6 @@
  * maybe all 4 sliders at bottom + add "hop" to the right box (and remove from orientation dialog)
  *
  * in gtk, are the default graph fonts reasonable??
- *
- * in help why is there an s7 topic but not guile?
  * gtk "back" button is active at start, but doesn't work
  * also transform options needs a revert button
  */
@@ -354,8 +353,8 @@ void chans_field(fcp_t field, Float val)
 	    case FCP_Y_SCALE: sp->chans[j]->spectro_y_scale = val;                       break;
 	    case FCP_Z_ANGLE: sp->chans[j]->spectro_z_angle = val;                       break;
 	    case FCP_Z_SCALE: sp->chans[j]->spectro_z_scale = val;                       break;
-	    case FCP_START:   sp->chans[j]->spectro_start = mus_fclamp(0.0, val, 1.0);   break; 
-	    case FCP_CUTOFF:  sp->chans[j]->spectro_cutoff = mus_fclamp(0.0, val, 1.0);  break;
+	    case FCP_START:   sp->chans[j]->spectrum_start = mus_fclamp(0.0, val, 1.0);   break; 
+	    case FCP_CUTOFF:  sp->chans[j]->spectrum_end = mus_fclamp(0.0, val, 1.0);  break;
 	    case FCP_ALPHA:   sp->chans[j]->fft_window_alpha = mus_fclamp(0.0, val, 10.0); break;
 	    case FCP_BETA:    sp->chans[j]->fft_window_beta = mus_fclamp(0.0, val, 1.0); break;
 	    case FCP_BEATS:   if (val > 0.0) sp->chans[j]->beats_per_minute = val;       break;
@@ -455,9 +454,9 @@ void chan_info_cleanup(chan_info *cp)
 }
 
 
-static void set_spectro_start(Float val) 
+static void set_spectrum_start(Float val) 
 {
-  in_set_spectro_start(val);
+  in_set_spectrum_start(val);
   chans_field(FCP_START, val);
   if (!(ss->graph_hook_active)) 
     for_each_chan(update_graph);
@@ -2169,18 +2168,18 @@ static void make_fft_graph(chan_info *cp, axis_info *fap, axis_context *ax, with
 
   if (cp->transform_type == FOURIER)
     {
-      hisamp = (int)(fp->current_size * cp->spectro_cutoff / 2);
+      hisamp = (int)(fp->current_size * cp->spectrum_end / 2);
       if ((cp->fft_log_frequency) && 
-	  ((SND_SRATE(sp) * 0.5 * cp->spectro_start) < log_freq_start(ss)))
+	  ((SND_SRATE(sp) * 0.5 * cp->spectrum_start) < log_freq_start(ss)))
 	losamp = (int)(ceil(fp->current_size * log_freq_start(ss) / (Float)SND_SRATE(sp)));
-      else losamp = (int)(fp->current_size * cp->spectro_start / 2);
+      else losamp = (int)(fp->current_size * cp->spectrum_start / 2);
       incr = (Float)SND_SRATE(sp) / (Float)(fp->current_size);
     }
   else
     {
       /* hisamp here is in terms of transform values, not original sampled data values */
-      hisamp = (int)(fp->current_size * cp->spectro_cutoff);
-      losamp = (int)(fp->current_size * cp->spectro_start);
+      hisamp = (int)(fp->current_size * cp->spectrum_end);
+      losamp = (int)(fp->current_size * cp->spectrum_start);
       incr = 1.0;
     }
   if ((losamp < 0) || (losamp >= hisamp)) return;
@@ -2202,7 +2201,7 @@ static void make_fft_graph(chan_info *cp, axis_info *fap, axis_context *ax, with
 
       /* I think this block is getting the max of all the DC to losamp freqs to represent the 0th point of the graph?? */
       max_data = data[0];
-      if ((spectro_start(ss) == 0.0) && (losamp > 0))
+      if ((spectrum_start(ss) == 0.0) && (losamp > 0))
 	{
 	  for (i = 1; i <= losamp; i++)
 	    if (data[i] > max_data)
@@ -2444,10 +2443,10 @@ static void make_fft_graph(chan_info *cp, axis_info *fap, axis_context *ax, with
     {
       if (cp->transform_type == FOURIER)
 	display_peaks(cp, fap, data, 
-		      (int)(SND_SRATE(sp) * cp->spectro_cutoff / 2), 
+		      (int)(SND_SRATE(sp) * cp->spectrum_end / 2), 
 		      hisamp, samples_per_pixel, true, scale);
       else display_peaks(cp, fap, data, 
-			 (int)(fp->current_size * cp->spectro_cutoff), 
+			 (int)(fp->current_size * cp->spectrum_end), 
 			 hisamp, samples_per_pixel, true, 0.0);
     }
 
@@ -2508,14 +2507,14 @@ static void make_sonogram(chan_info *cp)
       fheight = fap->y_axis_y0 - fap->y_axis_y1;
       if ((fwidth == 0) || (fheight == 0)) return;
 
-      bins = (int)(si->target_bins * cp->spectro_cutoff);
+      bins = (int)(si->target_bins * cp->spectrum_end);
       if (bins == 0) return;
 
       if (cp->cgx->fft_pix)                            /* Motif None = 0 */
 	{
 	  if ((cp->fft_changed == FFT_UNCHANGED) &&
 	      (cp->cgx->fft_pix_ready) &&
-	      (cp->cgx->fft_pix_cutoff == cp->spectro_cutoff) &&
+	      (cp->cgx->fft_pix_cutoff == cp->spectrum_end) &&
 	      ((int)(cp->cgx->fft_pix_width) == fwidth) &&
 	      ((int)(cp->cgx->fft_pix_height) == fheight) &&
 	      (cp->cgx->fft_pix_x0 == fap->x_axis_x0) &&
@@ -2564,7 +2563,7 @@ static void make_sonogram(chan_info *cp)
 	      log_range = (maxlx - minlx);
 	      lscale = fap_range / log_range;
 	    }
-	  yfincr = cp->spectro_cutoff * (Float)SND_SRATE(cp->sound) * 0.5 / (Float)bins;
+	  yfincr = cp->spectrum_end * (Float)SND_SRATE(cp->sound) * 0.5 / (Float)bins;
 	}
       else yfincr = 1.0;
 
@@ -2694,7 +2693,7 @@ static void rotate(Float *xyz, Float *mat)
 void reset_spectro(void)
 {
   /* only used in orientation dialog button and Enter key binding */
-  set_spectro_cutoff(DEFAULT_SPECTRO_CUTOFF);
+  set_spectrum_end(DEFAULT_SPECTRUM_END);
   set_spectro_hop(DEFAULT_SPECTRO_HOP);
   set_spectro_x_angle((with_gl(ss)) ? DEFAULT_SPECTRO_X_ANGLE : 90.0);
   set_spectro_y_angle((with_gl(ss)) ? DEFAULT_SPECTRO_Y_ANGLE : 0.0);
@@ -2753,7 +2752,7 @@ static GLdouble unproject_to_y(int x, int y)
 void reset_spectro(void)
 {
   /* only used in orientation dialog button and Enter key binding */
-  set_spectro_cutoff(DEFAULT_SPECTRO_CUTOFF);
+  set_spectrum_end(DEFAULT_SPECTRUM_END);
   set_spectro_hop(DEFAULT_SPECTRO_HOP);
   set_spectro_x_angle(DEFAULT_SPECTRO_X_ANGLE);
   set_spectro_y_angle(DEFAULT_SPECTRO_Y_ANGLE);
@@ -3001,7 +3000,7 @@ static bool make_gl_spectrogram(chan_info *cp)
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   if (need_relist)
-    gl_spectrogram(si, cp->gl_fft_list, cp->spectro_cutoff, cp->fft_log_magnitude, cp->min_dB, br, bg, bb);
+    gl_spectrogram(si, cp->gl_fft_list, cp->spectrum_end, cp->fft_log_magnitude, cp->min_dB, br, bg, bb);
 
   glViewport(fap->graph_x0, 0, fap->width, fap->height);
   glMatrixMode(GL_PROJECTION);
@@ -3018,8 +3017,8 @@ static bool make_gl_spectrogram(chan_info *cp)
 
   {
     double frq0, frq1;
-    frq0 = SND_SRATE(sp) * cp->spectro_start / 2.0;
-    frq1 = SND_SRATE(sp) * cp->spectro_cutoff / 2.0;
+    frq0 = SND_SRATE(sp) * cp->spectrum_start / 2.0;
+    frq1 = SND_SRATE(sp) * cp->spectrum_end / 2.0;
     make_axis_info(cp,
 		   cp->axis->x0, cp->axis->x1,
 		   frq0, frq1,
@@ -3031,7 +3030,7 @@ static bool make_gl_spectrogram(chan_info *cp)
 
   make_axes(cp, fap, X_AXIS_IN_SECONDS, DONT_CLEAR_GRAPH, NO_GRID, WITH_LINEAR_AXES, cp->show_axes);
   /* there's no support for GL log y axis labelling in snd-axis.c (line 1244), or in the axis bounds
-   *   choice here (see snd-fft.c -- need to check spectro_start etc), or in gl_spectrogram above, 
+   *   choice here (see snd-fft.c -- need to check spectrum_start etc), or in gl_spectrogram above, 
    *   so ignore the log_freq setting -- since log freq really doesn't add much (unlike dB for example),
    *   the extra work seems wasted.
    */
@@ -3089,7 +3088,7 @@ static bool make_spectrogram(chan_info *cp)
 
   scl = si->scale;                     /* unnormalized fft doesn't make much sense here (just washes out the graph) */
   fap = cp->fft->axis;
-  bins = (int)(si->target_bins * cp->spectro_cutoff);
+  bins = (int)(si->target_bins * cp->spectrum_end);
   fwidth = (fap->x_axis_x1 - fap->x_axis_x0);
   fheight = (fap->y_axis_y1 - fap->y_axis_y0); /* negative! */
   xincr = fwidth / (Float)bins;
@@ -5313,10 +5312,10 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, oclock_t time)
 
 	    case CLICK_FFT_AXIS:
 	      {
-		/* change spectro_cutoff(ss) and redisplay fft */
+		/* change spectrum_end(ss) and redisplay fft */
 		/*   changed 25-Oct-07 -- follow sync and separate chan */
 		Float new_cutoff;
-		old_cutoff = cp->spectro_cutoff;
+		old_cutoff = cp->spectrum_end;
 		if (cp->transform_graph_type != GRAPH_AS_SONOGRAM)
 		  {
 #if HAVE_GL
@@ -5325,17 +5324,17 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, oclock_t time)
 		      {
 			Float ny;
 			ny = unproject_to_y(x, y);
-			new_cutoff = cp->spectro_cutoff + (fft_faxis_start - ny);
+			new_cutoff = cp->spectrum_end + (fft_faxis_start - ny);
 			fft_faxis_start = ny;
 		      }
 		    else
 #endif 
-		      new_cutoff = cp->spectro_cutoff + ((Float)(fft_axis_start - x) / fft_axis_extent(cp));
+		      new_cutoff = cp->spectrum_end + ((Float)(fft_axis_start - x) / fft_axis_extent(cp));
 		    fft_axis_start = x;
 		  }
 		else 
 		  {
-		    new_cutoff = cp->spectro_cutoff + ((Float)(y - fft_axis_start) / fft_axis_extent(cp));
+		    new_cutoff = cp->spectrum_end + ((Float)(y - fft_axis_start) / fft_axis_extent(cp));
 		    fft_axis_start = y;
 		  }
 		if (new_cutoff > 1.0) new_cutoff = 1.0;
@@ -5347,7 +5346,7 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, oclock_t time)
 		    si = snd_sync(sp->sync);
 		    for (i = 0; i < si->chans; i++) 
 		      {
-			si->cps[i]->spectro_cutoff = new_cutoff;
+			si->cps[i]->spectrum_end = new_cutoff;
 			if (cp->transform_graph_type != GRAPH_ONCE)
 			  sono_update(si->cps[i]);
 			else update_graph(si->cps[i]);
@@ -5357,7 +5356,7 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, oclock_t time)
 		else
 		  {
 		    /* fprintf(stderr,"cp: %d %f\n", cp->chan, new_cutoff); */
-		    cp->spectro_cutoff = new_cutoff;
+		    cp->spectrum_end = new_cutoff;
 		    if (cp->transform_graph_type != GRAPH_ONCE)
 		      sono_update(cp);
 		    else update_graph(cp);
@@ -5531,7 +5530,7 @@ typedef enum {CP_GRAPH_TRANSFORM_P, CP_GRAPH_TIME_P, CP_FRAMES, CP_CURSOR, CP_GR
 	      CP_SHOW_AXES, CP_GRAPHS_HORIZONTAL, CP_CURSOR_SIZE, CP_CURSOR_POSITION,
 	      CP_EDPOS_FRAMES, CP_X_AXIS_STYLE, CP_UPDATE_TIME, CP_UPDATE_TRANSFORM_GRAPH, CP_UPDATE_LISP, CP_PROPERTIES,
 	      CP_MIN_DB, CP_SPECTRO_X_ANGLE, CP_SPECTRO_Y_ANGLE, CP_SPECTRO_Z_ANGLE, CP_SPECTRO_X_SCALE, CP_SPECTRO_Y_SCALE, CP_SPECTRO_Z_SCALE,
-	      CP_SPECTRO_CUTOFF, CP_SPECTRO_START, CP_FFT_WINDOW_BETA, CP_AP_SX, CP_AP_SY, CP_AP_ZX, CP_AP_ZY, CP_MAXAMP, CP_EDPOS_MAXAMP,
+	      CP_SPECTRUM_END, CP_SPECTRUM_START, CP_FFT_WINDOW_BETA, CP_AP_SX, CP_AP_SY, CP_AP_ZX, CP_AP_ZY, CP_MAXAMP, CP_EDPOS_MAXAMP,
 	      CP_BEATS_PER_MINUTE, CP_EDPOS_CURSOR, CP_SHOW_GRID, CP_SHOW_SONOGRAM_CURSOR, CP_GRID_DENSITY, CP_MAXAMP_POSITION,
 	      CP_EDPOS_MAXAMP_POSITION, CP_BEATS_PER_MEASURE, CP_FFT_WINDOW_ALPHA, CP_TRACKING_CURSOR_STYLE, CP_FFT_WITH_PHASES
 } cp_field_t;
@@ -5717,8 +5716,8 @@ static XEN channel_get(XEN snd_n, XEN chn_n, cp_field_t fld, const char *caller)
 	    case CP_SPECTRO_X_SCALE:  return(C_TO_XEN_DOUBLE(cp->spectro_x_scale));        break;
 	    case CP_SPECTRO_Y_SCALE:  return(C_TO_XEN_DOUBLE(cp->spectro_y_scale));        break;
 	    case CP_SPECTRO_Z_SCALE:  return(C_TO_XEN_DOUBLE(cp->spectro_z_scale));        break;
-	    case CP_SPECTRO_CUTOFF:   return(C_TO_XEN_DOUBLE(cp->spectro_cutoff));         break;
-	    case CP_SPECTRO_START:    return(C_TO_XEN_DOUBLE(cp->spectro_start));          break;
+	    case CP_SPECTRUM_END:   return(C_TO_XEN_DOUBLE(cp->spectrum_end));         break;
+	    case CP_SPECTRUM_START:    return(C_TO_XEN_DOUBLE(cp->spectrum_start));          break;
 	    case CP_FFT_WINDOW_ALPHA: return(C_TO_XEN_DOUBLE(cp->fft_window_alpha));       break;
 	    case CP_FFT_WINDOW_BETA:  return(C_TO_XEN_DOUBLE(cp->fft_window_beta));        break;
 	    case CP_BEATS_PER_MINUTE: return(C_TO_XEN_DOUBLE(cp->beats_per_minute));       break;
@@ -6188,16 +6187,16 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, cp_field_t fld, const char 
     case CP_SPECTRO_Y_SCALE: cp->spectro_y_scale = mus_fclamp(0.0, XEN_TO_C_DOUBLE(on), MAX_SPECTRO_SCALE); calculate_fft(cp); break;
     case CP_SPECTRO_Z_SCALE: cp->spectro_z_scale = mus_fclamp(0.0, XEN_TO_C_DOUBLE(on), MAX_SPECTRO_SCALE); calculate_fft(cp); break;
 
-    case CP_SPECTRO_CUTOFF:  
-      cp->spectro_cutoff = XEN_TO_C_DOUBLE(on); /* range checked already */
+    case CP_SPECTRUM_END:  
+      cp->spectrum_end = XEN_TO_C_DOUBLE(on); /* range checked already */
       calculate_fft(cp); 
-      return(C_TO_XEN_DOUBLE(cp->spectro_cutoff)); 
+      return(C_TO_XEN_DOUBLE(cp->spectrum_end)); 
       break;
 
-    case CP_SPECTRO_START:   
-      cp->spectro_start = XEN_TO_C_DOUBLE(on); /* range checked already */
+    case CP_SPECTRUM_START:   
+      cp->spectrum_start = XEN_TO_C_DOUBLE(on); /* range checked already */
       calculate_fft(cp); 
-      return(C_TO_XEN_DOUBLE(cp->spectro_start));   
+      return(C_TO_XEN_DOUBLE(cp->spectrum_start));   
       break;
 
     case CP_FFT_WINDOW_ALPHA:        
@@ -6896,53 +6895,53 @@ WITH_THREE_SETTER_ARGS(g_set_fft_window_alpha_reversed, g_set_fft_window_alpha)
 
 
 
-static XEN g_spectro_cutoff(XEN snd, XEN chn) 
+static XEN g_spectrum_end(XEN snd, XEN chn) 
 {
-  #define H_spectro_cutoff "(" S_spectro_cutoff " :optional snd chn): max frequency shown in spectra (1.0 = srate/2)"
+  #define H_spectrum_end "(" S_spectrum_end " :optional snd chn): max frequency shown in spectra (1.0 = srate/2)"
   if (XEN_BOUND_P(snd))
-    return(channel_get(snd, chn, CP_SPECTRO_CUTOFF, S_spectro_cutoff));
-  return(C_TO_XEN_DOUBLE(spectro_cutoff(ss)));
+    return(channel_get(snd, chn, CP_SPECTRUM_END, S_spectrum_end));
+  return(C_TO_XEN_DOUBLE(spectrum_end(ss)));
 }
 
-static XEN g_set_spectro_cutoff(XEN val, XEN snd, XEN chn) 
+static XEN g_set_spectrum_end(XEN val, XEN snd, XEN chn) 
 {
   Float cutoff;
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_1, S_setB S_spectro_cutoff, "a number"); 
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_1, S_setB S_spectrum_end, "a number"); 
   cutoff = XEN_TO_C_DOUBLE(val);
   if ((cutoff < 0.0) || (cutoff > 1.0))
-    XEN_OUT_OF_RANGE_ERROR(S_setB S_spectro_cutoff, 1, val, "~A, must be between 0.0 and 1.0");
+    XEN_OUT_OF_RANGE_ERROR(S_setB S_spectrum_end, 1, val, "~A, must be between 0.0 and 1.0");
   if (XEN_BOUND_P(snd))
-    return(channel_set(snd, chn, val, CP_SPECTRO_CUTOFF, S_setB S_spectro_cutoff));
-  set_spectro_cutoff(cutoff);
-  return(C_TO_XEN_DOUBLE(spectro_cutoff(ss)));
+    return(channel_set(snd, chn, val, CP_SPECTRUM_END, S_setB S_spectrum_end));
+  set_spectrum_end(cutoff);
+  return(C_TO_XEN_DOUBLE(spectrum_end(ss)));
 }
 
-WITH_THREE_SETTER_ARGS(g_set_spectro_cutoff_reversed, g_set_spectro_cutoff)
+WITH_THREE_SETTER_ARGS(g_set_spectrum_end_reversed, g_set_spectrum_end)
 
 
 
-static XEN g_spectro_start(XEN snd, XEN chn) 
+static XEN g_spectrum_start(XEN snd, XEN chn) 
 {
-  #define H_spectro_start "(" S_spectro_start " :optional snd chn): lower bound of frequency in spectral displays (0.0)"
+  #define H_spectrum_start "(" S_spectrum_start " :optional snd chn): lower bound of frequency in spectral displays (0.0)"
   if (XEN_BOUND_P(snd))
-    return(channel_get(snd, chn, CP_SPECTRO_START, S_spectro_start));
-  return(C_TO_XEN_DOUBLE(spectro_start(ss)));
+    return(channel_get(snd, chn, CP_SPECTRUM_START, S_spectrum_start));
+  return(C_TO_XEN_DOUBLE(spectrum_start(ss)));
 }
 
-static XEN g_set_spectro_start(XEN val, XEN snd, XEN chn) 
+static XEN g_set_spectrum_start(XEN val, XEN snd, XEN chn) 
 {
   Float start;
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_1, S_setB S_spectro_start, "a number"); 
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_1, S_setB S_spectrum_start, "a number"); 
   start = XEN_TO_C_DOUBLE(val);
   if ((start < 0.0) || (start > 1.0))
-    XEN_OUT_OF_RANGE_ERROR(S_setB S_spectro_start, 1, val, "~A, must be between 0.0 and 1.0");
+    XEN_OUT_OF_RANGE_ERROR(S_setB S_spectrum_start, 1, val, "~A, must be between 0.0 and 1.0");
   if (XEN_BOUND_P(snd))
-    return(channel_set(snd, chn, val, CP_SPECTRO_START, S_setB S_spectro_start));
-  set_spectro_start(start);
-  return(C_TO_XEN_DOUBLE(spectro_start(ss)));
+    return(channel_set(snd, chn, val, CP_SPECTRUM_START, S_setB S_spectrum_start));
+  set_spectrum_start(start);
+  return(C_TO_XEN_DOUBLE(spectrum_start(ss)));
 }
 
-WITH_THREE_SETTER_ARGS(g_set_spectro_start_reversed, g_set_spectro_start)
+WITH_THREE_SETTER_ARGS(g_set_spectrum_start_reversed, g_set_spectrum_start)
 
 
 
@@ -7920,7 +7919,7 @@ static void write_transform_peaks(FILE *fd, chan_info *ucp)
 	      ap = cp->axis;
 	      sp = cp->sound;
 	      data = fp->data;
-	      cutoff = cp->spectro_cutoff;
+	      cutoff = cp->spectrum_end;
 	      samps = (int)(fp->current_size * 0.5);
 	      cutoff_samps = (int)(samps * cutoff);
 	      samples_per_pixel = (Float)cutoff_samps / (Float)(fap->x_axis_x1 - fap->x_axis_x0);
@@ -8749,10 +8748,10 @@ XEN_ARGIFY_2(g_min_dB_w, g_min_dB)
 XEN_ARGIFY_3(g_set_min_dB_w, g_set_min_dB)
 XEN_ARGIFY_2(g_wavelet_type_w, g_wavelet_type)
 XEN_ARGIFY_3(g_set_wavelet_type_w, g_set_wavelet_type)
-XEN_ARGIFY_2(g_spectro_cutoff_w, g_spectro_cutoff)
-XEN_ARGIFY_3(g_set_spectro_cutoff_w, g_set_spectro_cutoff)
-XEN_ARGIFY_2(g_spectro_start_w, g_spectro_start)
-XEN_ARGIFY_3(g_set_spectro_start_w, g_set_spectro_start)
+XEN_ARGIFY_2(g_spectrum_end_w, g_spectrum_end)
+XEN_ARGIFY_3(g_set_spectrum_end_w, g_set_spectrum_end)
+XEN_ARGIFY_2(g_spectrum_start_w, g_spectrum_start)
+XEN_ARGIFY_3(g_set_spectrum_start_w, g_set_spectrum_start)
 XEN_ARGIFY_2(g_spectro_x_angle_w, g_spectro_x_angle)
 XEN_ARGIFY_3(g_set_spectro_x_angle_w, g_set_spectro_x_angle)
 XEN_ARGIFY_2(g_spectro_x_scale_w, g_spectro_x_scale)
@@ -8902,10 +8901,10 @@ XEN_NARGIFY_1(g_set_with_gl_w, g_set_with_gl)
 #define g_set_min_dB_w g_set_min_dB
 #define g_wavelet_type_w g_wavelet_type
 #define g_set_wavelet_type_w g_set_wavelet_type
-#define g_spectro_cutoff_w g_spectro_cutoff
-#define g_set_spectro_cutoff_w g_set_spectro_cutoff
-#define g_spectro_start_w g_spectro_start
-#define g_set_spectro_start_w g_set_spectro_start
+#define g_spectrum_end_w g_spectrum_end
+#define g_set_spectrum_end_w g_set_spectrum_end
+#define g_spectrum_start_w g_spectrum_start
+#define g_set_spectrum_start_w g_set_spectrum_start
 #define g_spectro_x_angle_w g_spectro_x_angle
 #define g_set_spectro_x_angle_w g_set_spectro_x_angle
 #define g_spectro_x_scale_w g_spectro_x_scale
@@ -9126,12 +9125,20 @@ void g_init_chn(void)
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_wavelet_type, g_wavelet_type_w, H_wavelet_type,
 					    S_setB S_wavelet_type, g_set_wavelet_type_w, g_set_wavelet_type_reversed, 0, 2, 1, 2);
   
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_spectro_cutoff, g_spectro_cutoff_w, H_spectro_cutoff,
-					    S_setB S_spectro_cutoff, g_set_spectro_cutoff_w, g_set_spectro_cutoff_reversed, 0, 2, 1, 2);
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_spectrum_end, g_spectrum_end_w, H_spectrum_end,
+					    S_setB S_spectrum_end, g_set_spectrum_end_w, g_set_spectrum_end_reversed, 0, 2, 1, 2);
   
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_spectro_start, g_spectro_start_w, H_spectro_start,
-					    S_setB S_spectro_start, g_set_spectro_start_w, g_set_spectro_start_reversed, 0, 2, 1, 2);
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_spectrum_start, g_spectrum_start_w, H_spectrum_start,
+					    S_setB S_spectrum_start, g_set_spectrum_start_w, g_set_spectrum_start_reversed, 0, 2, 1, 2);
   
+  /* for backwards compatibility */
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER("spectro-cutoff", g_spectrum_end_w, H_spectrum_end,
+					    S_setB "spectro-cutoff", g_set_spectrum_end_w, g_set_spectrum_end_reversed, 0, 2, 1, 2);
+  /* for backwards compatibility */  
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER("spectro-start", g_spectrum_start_w, H_spectrum_start,
+					    S_setB "spectro-start", g_set_spectrum_start_w, g_set_spectrum_start_reversed, 0, 2, 1, 2);
+  
+
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_spectro_x_angle, g_spectro_x_angle_w, H_spectro_x_angle,
 					    S_setB S_spectro_x_angle, g_set_spectro_x_angle_w, g_set_spectro_x_angle_reversed, 0, 2, 1, 2);
   

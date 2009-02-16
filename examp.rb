@@ -3222,7 +3222,7 @@ end")
     if transform_graph?(snd, chn) and transform_graph_type(snd, chn) == Graph_once
       set_transform_size((2 ** (log(right_sample(snd, chn)-left_sample(snd, chn))/log(2.0))).to_i,
                          snd, chn)
-      set_spectro_cutoff(y_zoom_slider(snd, chn), snd, chn)
+      set_spectrum_end(y_zoom_slider(snd, chn), snd, chn)
     end
     false
   end
@@ -3241,8 +3241,8 @@ end")
         transform_graph_type(snd, chn) == Graph_once
       set_transform_size(2 ** (log(right_sample(snd, chn) - left_sample(snd, chn)) / log(2.0)).ceil,
                          snd, chn)
-      set_spectro_start(x_position_slider(snd, chn), snd, chn)
-      set_spectro_cutoff(y_zoom_slider(snd, chn), snd, chn)
+      set_spectrum_start(x_position_slider(snd, chn), snd, chn)
+      set_spectrum_end(y_zoom_slider(snd, chn), snd, chn)
     end
     false
   end

@@ -50,7 +50,7 @@ void set_spectro_z_angle(Float val);
 void set_spectro_x_scale(Float val);
 void set_spectro_y_scale(Float val);
 void set_spectro_z_scale(Float val);
-void set_spectro_cutoff(Float val);
+void set_spectrum_end(Float val);
 void view_orientation_callback(Widget w, XtPointer context, XtPointer info);
 void view_color_callback(Widget w, XtPointer context, XtPointer info);
 bool color_dialog_is_active(void);

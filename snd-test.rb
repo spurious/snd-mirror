@@ -1325,9 +1325,9 @@ def test00
             [:show_transform_peaks, false],
             [:show_y_zero, false],
             [:sinc_width, 10],
-            [:spectro_cutoff, 1.0],
+            [:spectrum_end, 1.0],
             [:spectro_hop, 4],
-            [:spectro_start, 0.0],
+            [:spectrum_start, 0.0],
             [:spectro_x_angle, (provided?(:gl) ? 300.0 : 90.0)],
             [:spectro_x_scale, (provided?(:gl) ? 1.5 : 1.0)],
             [:spectro_y_angle, (provided?(:gl) ? 320.0 : 0.0)],
@@ -1523,9 +1523,9 @@ def test01
                 [:show_transform_peaks, false],
                 [:show_y_zero, false],
                 [:sinc_width, 10],
-                [:spectro_cutoff, 1.0],
+                [:spectrum_end, 1.0],
                 [:spectro_hop, 4],
-                [:spectro_start, 0.0],
+                [:spectrum_start, 0.0],
                 [:spectro_x_angle, (provided?(:gl) ? 300.0 : 90.0)],
                 [:spectro_x_scale, (provided?(:gl) ? 1.5 : 1.0)],
                 [:spectro_y_angle, (provided?(:gl) ? 320.0 : 0.0)],
@@ -2053,9 +2053,9 @@ def test03
       [:grid_density, 1.0, 0.5],
       [:show_sonogram_cursor, false, true],
       [:sinc_width, 10, 40],
-      [:spectro_cutoff, 1.0, 0.7],
+      [:spectrum_end, 1.0, 0.7],
       [:spectro_hop, 4, 10],
-      [:spectro_start, 0.0, 0.1],
+      [:spectrum_start, 0.0, 0.1],
       [:spectro_x_angle, (provided?(:gl) ? 300.0 : 90.0), 60.0],
       [:spectro_x_scale, (provided?(:gl) ? 1.5 : 1.0), 2.0],
       [:spectro_y_angle, (provided?(:gl) ? 320.0 : 0.0), 60.0],
@@ -2127,9 +2127,9 @@ def test03
       [:reverb_control_length, 1.0, [-1.0]],
       [:show_axes, 1, [-1, 123]],
       [:sinc_width, 10, [-10]],
-      [:spectro_cutoff, 1.0, [-1.0]],
+      [:spectrum_end, 1.0, [-1.0]],
       [:spectro_hop, 4, [-10, -1, 0]],
-      [:spectro_start, 0.0, [-1.0]],
+      [:spectrum_start, 0.0, [-1.0]],
       [:speed_control, 1.0, [0.0]],
       [:speed_control_bounds, [0.05, 20.0], [false, [0.0], [1.0, 0.0], 2.0]],
       [:speed_control_style, 0, [-1, 10]],
@@ -24756,9 +24756,9 @@ def test14
      [:grid_density, true, 0.1, 4.0],
      [:show_sonogram_cursor, false, false, true],
      [:sinc_width, false, 4, 100],
-     [:spectro_cutoff, false, 0.5, 0.8],
+     [:spectrum_end, false, 0.5, 0.8],
      [:spectro_hop, false, 2, 20],
-     [:spectro_start, false, 0.0, 0.1],
+     [:spectrum_start, false, 0.0, 0.1],
      [:spectro_x_angle, false, 0.0, 90.0],
      [:spectro_x_scale, false, 0.1, 2.0],
      [:spectro_y_angle, false, 0.0, 90.0],
@@ -25540,8 +25540,8 @@ def test0215
    [:spectro_z_angle, 32.0],
    [:spectro_z_scale, 0.5],
    [:spectro_hop, 14],
-   [:spectro_cutoff, 0.3],
-   [:spectro_start, 0.1],
+   [:spectrum_end, 0.3],
+   [:spectrum_start, 0.1],
    [:graphs_horizontal, false],
    [:x_axis_style, X_axis_in_samples],
    [:beats_per_minute, 120.0],
@@ -29397,7 +29397,7 @@ def test0119
            [:zero_pad,                1,                  0],
            [:min_dB,                  -90,                -60],
            [:spectro_hop,             12,                 4],
-           [:spectro_cutoff,          0.1,                1.0],
+           [:spectrum_end,          0.1,                1.0],
            [:cursor_size,             15,                 25],
            [:cursor_style,            Cursor_cross,       Cursor_line]]
   old_globals = funcs.map do |func, global, local| snd_func(func) end
@@ -32151,7 +32151,7 @@ def test0120
   update_transform_graph
   graph2ps("aaa.eps")
   set_with_gl(false)
-  set_spectro_cutoff(0.2, ind, 0)
+  set_spectrum_end(0.2, ind, 0)
   set_transform_graph_type(Graph_as_spectrogram, ind, 0)
   update_transform_graph
   update_lisp_graph
@@ -32756,7 +32756,7 @@ def test0021
   set_show_controls(false)
   set_speed_control_tones(12)
   set_wavelet_type(0)
-  set_spectro_start(0.0)
+  set_spectrum_start(0.0)
   set_spectro_hop(4)
   set_fft_window_alpha(0.0)
   set_fft_window_beta(0.0)
@@ -32969,8 +32969,8 @@ def test0021
    [:y_zoom_slider, 0.2, ffeqlp, veqlp, true, false],
    [:fft_window_alpha, 0.5, ffeqlp, veqlp, true, true],
    [:fft_window_beta, 0.5, ffeqlp, veqlp, true, true],
-   [:spectro_cutoff, 0.2, ffeqlp, veqlp, true, true],
-   [:spectro_start, 0.1, ffeqlp, veqlp, true, true],
+   [:spectrum_end, 0.2, ffeqlp, veqlp, true, true],
+   [:spectrum_start, 0.1, ffeqlp, veqlp, true, true],
    [:spectro_x_angle, 10.0, ffeqlp, veqlp, true, true],
    [:spectro_x_scale, 0.2, ffeqlp, veqlp, true, true],
    [:spectro_y_angle, 10.0, ffeqlp, veqlp, true, true],
@@ -35162,16 +35162,16 @@ def test0024
     snd_display("keypad-subtract: %s %s?", hop, spectro_hop)
   end
   #
-  set_spectro_cutoff(0.5)
+  set_spectrum_end(0.5)
   key_event(cwid, Snd_kp_pageup_key, 0)
   force_event
-  if (spectro_cutoff - 0.5 / 0.95).abs > 0.05
-    snd_display("keypad-pageup: 0.5 %s?", spectro_cutoff)
+  if (spectrum_end - 0.5 / 0.95).abs > 0.05
+    snd_display("keypad-pageup: 0.5 %s?", spectrum_end)
   end
   key_event(cwid, Snd_kp_pagedown_key, 0)
   force_event
-  if fneq(spectro_cutoff, 0.5)
-    snd_display("keypad-pagedown: 0.5 %s?", spectro_cutoff)
+  if fneq(spectrum_end, 0.5)
+    snd_display("keypad-pagedown: 0.5 %s?", spectrum_end)
   end
   #
   za = spectro_z_angle
@@ -36950,8 +36950,8 @@ def test0224
     snd_display("orientation reset: %s?", res)
   end
   move_scale(cut, 32)
-  if fneq(res = spectro_cutoff, 0.32)
-    snd_display("moved spectro_cutoff: %s %s?", res, RXmScaleGetValue(cut))
+  if fneq(res = spectrum_end, 0.32)
+    snd_display("moved spectrum_end: %s %s?", res, RXmScaleGetValue(cut))
   end
   move_scale(ax, 32)
   if fneq(res = spectro_x_angle, 32)
@@ -38378,7 +38378,7 @@ Procs =
    :show_selection_transform, :show_y_zero, :sinc_width, :show_grid, :show_sonogram_cursor,
    :grid_density, :smooth_sound, :smooth_selection, :snd_print, :snd_spectrum, :snd_tempnam,
    :snd_version, :sound_files_in_directory, :sound_loop_info, :sound_widgets, :soundfont_info,
-   :sound?, :sounds, :spectro_cutoff, :spectro_hop, :spectro_start, :spectro_x_angle,
+   :sound?, :sounds, :spectrum_end, :spectro_hop, :spectrum_start, :spectro_x_angle,
    :spectro_x_scale, :spectro_y_angle, :spectro_y_scale, :spectro_z_angle, :spectro_z_scale,
    :speed_control, :speed_control_style, :speed_control_tones, :squelch_update, :srate,
    :src_sound, :src_selection, :start_progress_report, :stop_player, :stop_playing,
@@ -38514,7 +38514,7 @@ Set_procs =
    :selected_graph_color, :selection_color, :selection_creates_region, :show_axes,
    :show_backtrace, :show_controls, :show_transform_peaks, :show_indices, :show_marks,
    :show_mix_waveforms, :show_selection_transform, :show_listener, :show_y_zero, :show_grid,
-   :show_sonogram_cursor, :sinc_width, :spectro_cutoff, :spectro_hop, :spectro_start,
+   :show_sonogram_cursor, :sinc_width, :spectrum_end, :spectro_hop, :spectrum_start,
    :spectro_x_angle, :grid_density, :spectro_x_scale, :spectro_y_angle, :spectro_y_scale,
    :spectro_z_angle, :spectro_z_scale, :speed_control, :speed_control_style, :speed_control_tones,
    :squelch_update, :sync, :sound_properties, :temp_dir, :text_focus_color, :tiny_font, :y_bounds,
@@ -38875,8 +38875,8 @@ def test0128
    :peak_env_info, :peaks, :play, :play_and_wait, :position2x, :position2y, :reverse_sound,
    :revert_sound, :right_sample, :sample, :save_sound, :save_sound_as,
    :scan_chan, :select_channel, :show_axes, :show_transform_peaks, :show_marks,
-   :show_mix_waveforms, :show_y_zero, :show_grid, :show_sonogram_cursor, :spectro_cutoff,
-   :spectro_hop, :spectro_start, :spectro_x_angle, :spectro_x_scale, :spectro_y_angle,
+   :show_mix_waveforms, :show_y_zero, :show_grid, :show_sonogram_cursor, :spectrum_end,
+   :spectro_hop, :spectrum_start, :spectro_x_angle, :spectro_x_scale, :spectro_y_angle,
    :grid_density, :spectro_y_scale, :spectro_z_angle, :spectro_z_scale, :squelch_update,
    :transform_sample, :transform2vct, :transform_frames, :transform_type,
    :update_transform_graph, :update_time_graph, :update_lisp_graph, :update_sound,
@@ -38902,8 +38902,8 @@ def test0128
    :mix_region, :transform_normalization, :peak_env_info, :peaks, :play, :play_and_wait,
    :position2x, :position2y, :reverse_sound, :right_sample, :sample,
    :save_sound_as, :scan_chan, :show_axes, :show_transform_peaks, :show_marks,
-   :show_mix_waveforms, :show_y_zero, :show_grid, :show_sonogram_cursor, :spectro_cutoff,
-   :spectro_hop, :spectro_start, :spectro_x_angle, :spectro_x_scale, :spectro_y_angle,
+   :show_mix_waveforms, :show_y_zero, :show_grid, :show_sonogram_cursor, :spectrum_end,
+   :spectro_hop, :spectrum_start, :spectro_x_angle, :spectro_x_scale, :spectro_y_angle,
    :spectro_y_scale, :spectro_z_angle, :spectro_z_scale, :squelch_update, :grid_density,
    :transform_sample, :transform2vct, :transform_frames, :transform_type,
    :update_transform_graph, :update_time_graph, :update_lisp_graph, :wavelet_type,
@@ -38925,8 +38925,8 @@ def test0128
    :peak_env_info, :play, :play_and_wait, :position2x, :position2y, :redo_edit, :reverse_sound,
    :revert_sound, :right_sample, :sample, :save_sound, :scale_by,
    :scale_to, :show_axes, :show_transform_peaks, :show_marks, :show_mix_waveforms,
-   :show_y_zero, :show_grid, :show_sonogram_cursor, :spectro_cutoff, :spectro_hop,
-   :spectro_start, :spectro_x_angle, :spectro_x_scale, :spectro_y_angle, :spectro_y_scale,
+   :show_y_zero, :show_grid, :show_sonogram_cursor, :spectrum_end, :spectro_hop,
+   :spectrum_start, :spectro_x_angle, :spectro_x_scale, :spectro_y_angle, :spectro_y_scale,
    :spectro_z_angle, :spectro_z_scale, :squelch_update, :grid_density, :src_sound,
    :transform_sample, :transform2vct, :transform_frames, :transform_type, :undo_edit,
    :update_transform_graph, :update_time_graph, :update_lisp_graph, :update_sound,
@@ -38963,7 +38963,7 @@ def test0128
    :max_transform_peaks, :maxamp, :maxamp_position, :min_dB, :transform_normalization,
    :peak_env_info, :reverse_sound, :right_sample, :show_axes, :show_transform_peaks,
    :show_marks, :show_mix_waveforms, :show_y_zero, :show_grid, :show_sonogram_cursor,
-   :grid_density, :spectro_cutoff, :spectro_hop, :spectro_start, :spectro_x_angle,
+   :grid_density, :spectrum_end, :spectro_hop, :spectrum_start, :spectro_x_angle,
    :spectro_x_scale, :spectro_y_angle, :spectro_y_scale, :spectro_z_angle,
    :spectro_z_scale, :squelch_update, :transform2vct, :transform_frames,
    :transform_type, :update_transform_graph, :update_time_graph, :update_lisp_graph,
@@ -38984,7 +38984,7 @@ def test0128
    :lisp_graph_style, :transform_graph_style, :min_dB, :transform_normalization,
    :peak_env_info, :reverse_sound, :right_sample, :show_axes, :grid_density,
    :show_transform_peaks, :show_marks, :show_mix_waveforms, :show_y_zero,
-   :show_grid, :show_sonogram_cursor, :spectro_cutoff, :spectro_hop, :spectro_start,
+   :show_grid, :show_sonogram_cursor, :spectrum_end, :spectro_hop, :spectrum_start,
    :spectro_x_angle, :spectro_x_scale, :spectro_y_angle, :spectro_y_scale,
    :spectro_z_angle, :spectro_z_scale, :squelch_update, :transform2vct,
    :transform_frames, :transform_type, :update_transform_graph, :update_time_graph,
