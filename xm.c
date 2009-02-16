@@ -478,6 +478,13 @@ static void define_xm_obj(void)
   static bool XEN_ ## Name ## _P(XEN val) {return(WRAP_P(#Name, val));} \
   static XEN XEN_ ## Name ## _p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P(#Name, val)));}
 
+#define XM_TYPE_INT(Name, XType) \
+  static XEN C_TO_XEN_ ## Name (XType val) {return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL(#Name), C_TO_XEN_INT(val)));} \
+  static XType XEN_TO_C_ ## Name (XEN val) {return((XType)XEN_TO_C_INT(XEN_CADR(val)));} \
+  static bool XEN_ ## Name ## _P(XEN val) {return(WRAP_P(#Name, val));} \
+  static XEN XEN_ ## Name ## _p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P(#Name, val)));}
+
+
 
 #define XEN_TO_C_Dimension(Arg)  (Dimension)(XEN_TO_C_INT(Arg))
 #define C_TO_XEN_Dimension(Arg)  (C_TO_XEN_INT((Dimension)Arg))
@@ -561,8 +568,8 @@ XM_TYPE_PTR_NO_C2X_NO_p(XSizeHints, XSizeHints *)
 XM_TYPE_PTR(XWindowAttributes, XWindowAttributes *)
 XM_TYPE_PTR_OBJ(XWindowChanges, XWindowChanges *)
 XM_TYPE_PTR(XStandardColormap, XStandardColormap *)
-XM_TYPE(KeyCode, KeyCode)
-XM_TYPE(XContext, XContext)
+XM_TYPE_INT(KeyCode, KeyCode)
+XM_TYPE_INT(XContext, XContext)
 XM_TYPE_PTR(XIconSize, XIconSize *)
 
 #if HAVE_XM_XP

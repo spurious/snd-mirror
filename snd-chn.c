@@ -2,7 +2,23 @@
 #include "clm2xen.h"
 #include "clm-strings.h"
 
-/* SOMEDAY: fft side needs a zoom capability, not just the drag now */
+/* SOMEDAY: fft side needs a zoom capability, not just the drag now 
+ *   this can probably be done with spectro_start and spectro_cutoff (=end)
+ *   rename cutoff to end, add arrows or something to fft graph
+ *   peak reporting appears to get confused -- maxes current, but shows others pinned
+ * also the alpha/beta sliders need labels, and aren't logically a part of the wavelet box
+ * also the "orientation" dialog should have start/end sliders if it has the end slider (not really the right place for it)
+ * also if click in fft (or only fft) then arrow keys, shouldn't these affect the fft?
+ *    maybe change label color to show it's active?
+ *    and center around the clicked point, and maybe report action in minibuffer (similarly for time)
+ * maybe all 4 sliders at bottom + add "hop" to the right box (and remove from orientation dialog)
+ *
+ * in gtk, are the default graph fonts reasonable??
+ *
+ * in help why is there an s7 topic but not guile?
+ * gtk "back" button is active at start, but doesn't work
+ * also transform options needs a revert button
+ */
 
 /* it would be neat I think to change label font sizes/button sizes etc when dialog changes size
  *   but there's no way to trap the outer resizing event and

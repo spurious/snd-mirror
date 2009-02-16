@@ -190,7 +190,7 @@ note lists and instruments are described in <a href="sndscm.html">sndscm.html</a
 </table>
 </td></tr>
 
-<tr><td colspan=3><center><a href="sndclm.html#instruments">Instruments</a></center></td></tr>
+<tr><td colspan=3><center><a href="#instruments">Instruments</a></center></td></tr>
 </table>
 
 
@@ -3019,14 +3019,14 @@ We could also use <a href="sndscm.html#withmixedsound">with-mixed-sound</a> and 
 <table hspace=40 border=0><tr><td>
 <pre>
 (definstrument (sine-wave start dur freq amp)
-  (let* ((beg (<a class=quiet href="sndclm.html#secondstosamples" onmouseout="UnTip()" onmouseover="Tip(sndclm_secondstosamples_tip)">seconds-&gt;samples</a> start))
-	 (end (+ beg (<a class=quiet href="sndclm.html#secondstosamples" onmouseout="UnTip()" onmouseover="Tip(sndclm_secondstosamples_tip)">seconds-&gt;samples</a> dur)))
-	 (osc (<a class=quiet href="sndclm.html#make-oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_oscil_tip)">make-oscil</a> freq)))
+  (let* ((beg (<a class=quiet href="#secondstosamples" onmouseout="UnTip()" onmouseover="Tip(sndclm_secondstosamples_tip)">seconds-&gt;samples</a> start))
+	 (end (+ beg (<a class=quiet href="#secondstosamples" onmouseout="UnTip()" onmouseover="Tip(sndclm_secondstosamples_tip)">seconds-&gt;samples</a> dur)))
+	 (osc (<a class=quiet href="#make-oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_oscil_tip)">make-oscil</a> freq)))
     (run 
      (lambda ()
        (do ((i beg (+ 1 i))) 
 	   ((= i end))
-	 (<a class=quiet href="sndclm.html#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i (* amp (<a class=quiet href="sndclm.html#oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_oscil_tip)">oscil</a> osc))))))))
+	 (<a class=quiet href="#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i (* amp (<a class=quiet href="#oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_oscil_tip)">oscil</a> osc))))))))
 
 (<em class=red>with-mixed-sound</em> ()
   (sine-wave 0 1 10.0 1.0)
@@ -4098,38 +4098,38 @@ another kernel set: binomial coeffs G&R 1.320 etc -- not different enough
 <tr>
 <td><img src="pix/sceq14.png" alt="many sums" usemap="#GR1" border=0>
 <map name="GR1">
-  <area shape=rect coords="0,0,300,60" href="sndclm.html#nxysin" alt="nxysin">
-  <area shape=rect coords="0,61,300,100" href="sndclm.html#nxycos" alt="nxycos">
-  <area shape=rect coords="0,101,300,150" href="sndclm.html#nxy1cos" alt="nxy1cos">
-  <area shape=rect coords="0,151,300,200" href="sndclm.html#nxy1sin" alt="nxy1sin">
-  <area shape=rect coords="0,201,300,240" href="sndclm.html#noddsin" alt="noddsin">
-  <area shape=rect coords="0,241,300,280" href="sndclm.html#noddcos" alt="noddcos">
+  <area shape=rect coords="0,0,300,60" href="#nxysin" alt="nxysin">
+  <area shape=rect coords="0,61,300,100" href="#nxycos" alt="nxycos">
+  <area shape=rect coords="0,101,300,150" href="#nxy1cos" alt="nxy1cos">
+  <area shape=rect coords="0,151,300,200" href="#nxy1sin" alt="nxy1sin">
+  <area shape=rect coords="0,201,300,240" href="#noddsin" alt="noddsin">
+  <area shape=rect coords="0,241,300,280" href="#noddcos" alt="noddcos">
   <area shape=rect coords="0,281,300,320">
   <area shape=rect coords="0,321,300,360">
-  <area shape=rect coords="0,361,300,410" href="sndclm.html#nkssb" alt="nkssb">
-  <area shape=rect coords="0,411,300,450" href="sndclm.html#nkssb" alt="nkssb">
-  <area shape=rect coords="0,450,300,485" href="sndclm.html#nchoosekcos" alt="nchoosekcos">
+  <area shape=rect coords="0,361,300,410" href="#nkssb" alt="nkssb">
+  <area shape=rect coords="0,411,300,450" href="#nkssb" alt="nkssb">
+  <area shape=rect coords="0,450,300,485" href="#nchoosekcos" alt="nchoosekcos">
 </map>
 </td>
 <td width=40></td>
 <td><img src="pix/sceq15.png" alt="many more sums" usemap="#GR2" border=0>
 <map name="GR2">
-  <area shape=rect coords="0,0,300,40" href="sndclm.html#nrsin" alt="nrsin">
-  <area shape=rect coords="0,41,300,90" href="sndclm.html#nrcos" alt="nrcos">
-  <area shape=rect coords="0,91,300,140" href="sndclm.html#rssb" alt="rssb">
-  <area shape=rect coords="0,141,300,180" href="sndclm.html#rcos" alt="rcos">
-  <area shape=rect coords="0,181,300,220" href="sndclm.html#rksin" alt="rksin">
-  <area shape=rect coords="0,221,300,250" href="sndclm.html#rkcos" alt="rkcos">
-  <area shape=rect coords="0,251,300,300" href="sndclm.html#rkoddssb" alt="rkoddssb">
-  <area shape=rect coords="0,301,300,340" href="sndclm.html#rkoddssb" alt="rkoddssb">
-  <area shape=rect coords="0,341,300,380" href="sndclm.html#erssb" alt="erssb">
-  <area shape=rect coords="0,381,300,420" href="sndclm.html#ercos" alt="ercos">
-  <area shape=rect coords="0,465,300,490" href="sndclm.html#j0evencos" alt="j0evencos">
+  <area shape=rect coords="0,0,300,40" href="#nrsin" alt="nrsin">
+  <area shape=rect coords="0,41,300,90" href="#nrcos" alt="nrcos">
+  <area shape=rect coords="0,91,300,140" href="#rssb" alt="rssb">
+  <area shape=rect coords="0,141,300,180" href="#rcos" alt="rcos">
+  <area shape=rect coords="0,181,300,220" href="#rksin" alt="rksin">
+  <area shape=rect coords="0,221,300,250" href="#rkcos" alt="rkcos">
+  <area shape=rect coords="0,251,300,300" href="#rkoddssb" alt="rkoddssb">
+  <area shape=rect coords="0,301,300,340" href="#rkoddssb" alt="rkoddssb">
+  <area shape=rect coords="0,341,300,380" href="#erssb" alt="erssb">
+  <area shape=rect coords="0,381,300,420" href="#ercos" alt="ercos">
+  <area shape=rect coords="0,465,300,490" href="#j0evencos" alt="j0evencos">
 </map>
 </td>
 </tr>
 
-<!--  <area shape=rect coords="0,421,300,500" href="sndclm.html#sin2n" alt="sin2n"> -->
+<!--  <area shape=rect coords="0,421,300,500" href="#sin2n" alt="sin2n"> -->
 
 
 <tr><td colspan=3 bgcolor="#eefdee"><center>Gradshteyn and Ryzhik, "Table of Integrals, Series, and Products", 1.341.., 1.352.., 1.447.., 1.461, 1.518, 8.516, 8.531</center></td></tr>
@@ -4138,17 +4138,17 @@ another kernel set: binomial coeffs G&R 1.320 etc -- not different enough
 
 <tr><td><img src="pix/sceq20.png" alt="more sums" usemap="#J1" border=0>
 <map name="J1">
-    <area shape=rect coords="0,0,300,30" href="sndclm.html#rxycos" alt="rxycos">
-    <area shape=rect coords="0,31,300,60" href="sndclm.html#rxysin" alt="rxysin">
-    <area shape=rect coords="0,61,300,100" href="sndclm.html#k2sin" alt="k2sin">
-    <area shape=rect coords="0,101,300,140" href="sndclm.html#eoddcos" alt="eoddcos">
-    <area shape=rect coords="0,141,300,180" href="sndclm.html#k32sin" alt="k32sin">
+    <area shape=rect coords="0,0,300,30" href="#rxycos" alt="rxycos">
+    <area shape=rect coords="0,31,300,60" href="#rxysin" alt="rxysin">
+    <area shape=rect coords="0,61,300,100" href="#k2sin" alt="k2sin">
+    <area shape=rect coords="0,101,300,140" href="#eoddcos" alt="eoddcos">
+    <area shape=rect coords="0,141,300,180" href="#k32sin" alt="k32sin">
 </map>
 </td><td></td>
 <td><img src="pix/sceq21.png" alt="more sums" usemap="#J2" border=0>
 <map name="J2">
-    <area shape=rect coords="0,0,300,30" href="sndclm.html#rxyk!cos" alt="rxyk!cos">
-    <area shape=rect coords="0,31,300,60" href="sndclm.html#rxyk!cos" alt="rxyk!sin">
+    <area shape=rect coords="0,0,300,30" href="#rxyk!cos" alt="rxyk!cos">
+    <area shape=rect coords="0,31,300,60" href="#rxyk!cos" alt="rxyk!sin">
     <area shape=rect coords="0,61,300,100" alt="r2cos">
     <area shape=rect coords="0,101,300,140" alt="r2sin">
     <area shape=rect coords="0,141,300,180">
@@ -4178,13 +4178,13 @@ another kernel set: binomial coeffs G&R 1.320 etc -- not different enough
 
 <tr><td><img src="pix/sceq36.png" alt="more sums" usemap="#GM1" border=0>
 <map name="GM1">
-    <area shape=rect coords="0,0,300,50" href="sndclm.html#j0j1cos" alt="j0j1cos">
-    <area shape=rect coords="0,51,300,80" href="sndclm.html#j0j1cos" alt="j0j1cos">
+    <area shape=rect coords="0,0,300,50" href="#j0j1cos" alt="j0j1cos">
+    <area shape=rect coords="0,51,300,80" href="#j0j1cos" alt="j0j1cos">
 </map>
 </td><td></td>
 <td><img src="pix/sceq37.png" alt="more sums" usemap="#GM2" border=0>
 <map name="GM2">
-    <area shape=rect coords="0,0,300,50" href="sndclm.html#jycos" alt="jycos">
+    <area shape=rect coords="0,0,300,50" href="#jycos" alt="jycos">
     <area shape=rect coords="0,51,300,100" alt="jjesin">
 </map>
 </td></tr>
@@ -5440,7 +5440,7 @@ so it should be between 0.0 and (less than) 1.0.
     (make-one-pole (/ 1.0 order) (/ (- order) (+ 1.0 order)))
 </pre>
 <p>where "order" is more or less how long an input affects the output.
-The <a href="sndclm.html#mus-xcoeff">mus-xcoeff</a> and <a href="sndclm.html#mus-ycoeff">mus-ycoeff</a> functions give access to the filter coefficients.
+The <a href="#mus-xcoeff">mus-xcoeff</a> and <a href="#mus-ycoeff">mus-ycoeff</a> functions give access to the filter coefficients.
 <a href="sndscm.html#prc95doc">prc95.scm</a> uses them to make "run time"
 alterations to the filters:
 </p>
@@ -5450,7 +5450,7 @@ alterations to the filters:
     (set! (mus-xcoeff p 0) (- 1.0 val)) ; this is setting "a0"
 </pre>
 
-<p>We can also use <a href="sndclm.html#mus-frequency">mus-frequency</a> and <a href="sndclm.html#mus-scaler">mus-scaler</a> (the pole "radius") as a more intuitive handle on these coefficients:
+<p>We can also use <a href="#mus-frequency">mus-frequency</a> and <a href="#mus-scaler">mus-scaler</a> (the pole "radius") as a more intuitive handle on these coefficients:
 </p>
 
 <pre>
@@ -5613,7 +5613,7 @@ Constant-Gain Digital Resonators" by Ken Steiglitz, CMJ vol 18 No. 4 pp.8-10
 The formant bandwidth is a function of the "radius", and its center frequency is set by "frequency".
 As the radius approaches 1.0 (the unit circle), the
 resonance gets narrower.
-Use <a href="sndclm.html#mus-frequency">mus-frequency</a> to change the center frequency, and <a href="sndclm.html#mus-scaler">mus-scaler</a> to change the radius.
+Use <a href="#mus-frequency">mus-frequency</a> to change the center frequency, and <a href="#mus-scaler">mus-scaler</a> to change the radius.
 The radius can be set in terms of desired bandwidth in Hz via:
 </p>
 <pre>
@@ -6063,7 +6063,7 @@ See prc95.scm for examples of both of these functions.
 </pre>
 </td></tr></table>
 
-<p>The <a href="sndclm.html#mus-scaler">mus-scaler</a> field is available for simple extensions of the delay.  For example,
+<p>The <a href="#mus-scaler">mus-scaler</a> field is available for simple extensions of the delay.  For example,
 the <a href="#moving-max">moving-max</a> generator uses mus-scaler to track the current maximum sample value
 in the delay line; the result is an envelope that tracks the peak amplitude in the
 last "size" samples.
@@ -8315,7 +8315,7 @@ version usually sounds raspier, and in the limit it sounds like white noise!
 	(gen (<em class=red>make-noid</em> 10.0 1024 'min-peak)))
     (do ((i 0 (+ 1 i)))
 	((= i samps))
-      (<a class=quiet href="sndclm.html#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i (* 0.5 (<em class=red>noid</em> gen 0.0))))))
+      (<a class=quiet href="#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i (* 0.5 (<em class=red>noid</em> gen 0.0))))))
 </pre></td></tr></table>
 
 <br>
@@ -8424,7 +8424,7 @@ This produces (unbounded) brownian noise.  'amplitude' sets the maximum size of 
 </pre>
 
 <p>These two generators produce bounded brownian noise; "green-noise" was Michael McNabb's name for it.
-Unlike CLM's <a href="sndclm.html#rand">rand</a> or <a href="sndclm.html#rand-interp">rand-interp</a> which
+Unlike CLM's <a href="#rand">rand</a> or <a href="#rand-interp">rand-interp</a> which
 produce white noise centered around 0.0, green-noise wanders around, bouncing off its bounds
 every now and then.  This produces a noise that can be similar to pink noise (see some graphs under <a href="#rand">rand</a>).
 My informal explanation is that each time we bounce off an edge, we're transferring energy
@@ -8440,17 +8440,17 @@ Here's an instrument that fuzzes up its amplitude envelope a bit using green noi
   (let* ((grn (<em class=red>make-green-noise-interp</em> :frequency noise-freq 
                                        :amplitude noise-max-step 
                                        :high (* 0.5 noise-width) :low (* -0.5 noise-width)))
-	 (osc (<a class=quiet href="sndclm.html#make-oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_oscil_tip)">make-oscil</a> freq))
-	 (e (<a class=quiet href="sndclm.html#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> amp-env :scaler amp :duration dur))
-	 (beg (<a class=quiet href="sndclm.html#secondstosamples" onmouseout="UnTip()" onmouseover="Tip(sndclm_secondstosamples_tip)">seconds-&gt;samples</a> start))
-	 (end (+ beg (<a class=quiet href="sndclm.html#secondstosamples" onmouseout="UnTip()" onmouseover="Tip(sndclm_secondstosamples_tip)">seconds-&gt;samples</a> dur))))
+	 (osc (<a class=quiet href="#make-oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_oscil_tip)">make-oscil</a> freq))
+	 (e (<a class=quiet href="#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> amp-env :scaler amp :duration dur))
+	 (beg (<a class=quiet href="#secondstosamples" onmouseout="UnTip()" onmouseover="Tip(sndclm_secondstosamples_tip)">seconds-&gt;samples</a> start))
+	 (end (+ beg (<a class=quiet href="#secondstosamples" onmouseout="UnTip()" onmouseover="Tip(sndclm_secondstosamples_tip)">seconds-&gt;samples</a> dur))))
     (run
      (lambda ()
        (do ((i beg (+ 1 i)))
 	   ((= i end))
-	 (<a class=quiet href="sndclm.html#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i (* (<a class=quiet href="sndclm.html#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> e) 
+	 (<a class=quiet href="#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i (* (<a class=quiet href="#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> e) 
 		    (+ 1.0 (<em class=red>green-noise-interp</em> grn))
-		    (<a class=quiet href="sndclm.html#oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_oscil_tip)">oscil</a> osc))))))))
+		    (<a class=quiet href="#oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_oscil_tip)">oscil</a> osc))))))))
 
 (<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> () 
   (green3 0 2.0 440 .5 '(0 0 1 1 2 1 3 0) 100 .2 .02))
@@ -8608,13 +8608,13 @@ the higher "n", the more low-passed the output.
 
 <p>
 moving-max is a specialization
-of the <a href="sndclm.html#delay">delay</a> generator; it produces an envelope that tracks the peak amplitude of the last 'n' samples.
+of the <a href="#delay">delay</a> generator; it produces an envelope that tracks the peak amplitude of the last 'n' samples.
 <code>(make-moving-max 256)</code> returns the generator (this one's window size is 256),
 and <code>(moving-max gen y)</code> then returns the envelope traced out by the signal 'y'.
 The <a href="sndscm.html#harmonicizer">harmonicizer</a> uses this generator to normalize an in-coming signal to 1.0
 so that the Chebyshev polynomials it is driving will produce a full spectrum at all times.
 Here is a similar, but simpler, example; we use the moving-max generator to track the
-current peak amplitude over a small window, use that value to drive a <a href="sndclm.html#contrast-enhancement">contrast-enhancement</a>
+current peak amplitude over a small window, use that value to drive a <a href="#contrast-enhancement">contrast-enhancement</a>
 generator (so that its output is always fully modulated), and rescale by the same value
 upon output (to track the original sound's amplitude envelope):
 </p>
@@ -8624,13 +8624,13 @@ upon output (to track the original sound's amplitude envelope):
       (let* ((mx (make-moving-max))
 	     (flt (<a class=quiet href="sndscm.html#makelowpass" onmouseout="UnTip()" onmouseover="Tip(sndscm_makelowpass_tip)">make-lowpass</a> (* pi .1) 8))) ; smooth the maxamp signal
         (<a class=quiet href="extsnd.html#mapchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_mapchannel_tip)">map-channel</a> (lambda (y)
-		       (let ((amp (max .1 (<a class=quiet href="sndclm.html#fir-filter" onmouseout="UnTip()" onmouseover="Tip(sndclm_fir_filter_tip)">fir-filter</a> flt (moving-max mx y)))))
-		         (* amp (<a class=quiet href="sndclm.html#contrast-enhancement" onmouseout="UnTip()" onmouseover="Tip(sndclm_contrast_enhancement_tip)">contrast-enhancement</a> (/ y amp) index)))))))
+		       (let ((amp (max .1 (<a class=quiet href="#fir-filter" onmouseout="UnTip()" onmouseover="Tip(sndclm_fir_filter_tip)">fir-filter</a> flt (moving-max mx y)))))
+		         (* amp (<a class=quiet href="#contrast-enhancement" onmouseout="UnTip()" onmouseover="Tip(sndclm_contrast_enhancement_tip)">contrast-enhancement</a> (/ y amp) index)))))))
 </pre>
 
 <p>
 This can also be used for automatic gain control &mdash; see generators.scm for the agc function.
-The other "moving" generators are specializations of the <a href="sndclm.html#moving-average">moving-average</a>
+The other "moving" generators are specializations of the <a href="#moving-average">moving-average</a>
 generator.  moving-sum keeps the ongoing sum of absolute values, moving-length the square root of the sum
 of squares, and moving-rms the square root of the sum of squares divided by the size.
 moving-rms is used in <a href="sndscm.html#overlayrmsenv">overlay-rms-env</a> in draw.scm.
@@ -10260,7 +10260,7 @@ correlate performs an in-place cross-correlation of data1 and data2 (see, for ex
 Hartley transform in Scheme: <a href="sndscm.html#dht">dht</a><br>
 Spectral edit dialog: <a href="snd.html#editenvelope">Envelope Editor</a><br>
 fft-based filter: <a href="sndscm.html#fftedit">fft-edit</a>, <a href="sndscm.html#fftenvedit">fft-env-edit</a>, <a href="sndscm.html#fftenvinterp">fft-env-interp</a>, <a href="sndscm.html#fftsquelch">fft-squelch</a>, <a href="sndscm.html#fftcancel">fft-cancel</a><br>
-phase-vocoder: <a href="sndclm.html#phase-vocoder">phase-vocoder</a>. <a href="sndscm.html#pvocdoc">pvoc</a><br>
+phase-vocoder: <a href="#phase-vocoder">phase-vocoder</a>. <a href="sndscm.html#pvocdoc">pvoc</a><br>
 transposition via fft: <a href="sndscm.html#downoct">down-oct</a><br>
 phase rotation via fft: <a href="sndscm.html#zerophase">zero-phase, rotate-phase</a><br>
 duration change via autocorrelation: <a href="sndscm.html#rubberdoc">rubber-sound</a><br>

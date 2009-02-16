@@ -10399,10 +10399,24 @@ static s7_pointer g_keyword_to_symbol(s7_scheme *sc, s7_pointer args)
 {
   #define H_keyword_to_symbol "(keyword->symbol key) returns a symbol with the same name as key but no prepended colon"
   const char *name;
+
   if (!s7_is_keyword(car(args)))
     return(s7_wrong_type_arg_error(sc, "keyword->symbol", 0, car(args), "a keyword"));
+
   name = s7_symbol_name(car(args));
-  return(s7_make_symbol(sc, (const char *)(name + 1)));
+  if (name[0] == ':')
+    return(s7_make_symbol(sc, (const char *)(name + 1)));
+
+  /* else it ends in ":", (keyword->symbol foo:) */
+  {
+    char *temp;
+    s7_pointer res;
+    temp = s7_strdup(name);
+    temp[strlen(temp) - 1] = '\0';
+    res = s7_make_symbol(sc, (const char *)temp);
+    free(temp);
+    return(res);
+  }
 }
 
 
@@ -11470,7 +11484,6 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
   int i;
   s7_pointer catcher;
   catcher = sc->F;
-  /* fprintf(stderr, "%p s7_error: %s %s\n", sc, s7_object_to_c_string(sc, type), s7_object_to_c_string(sc, info)); */
 
   /* top is 1 past actual top, top - 1 is op, if op = OP_CATCH, top - 4 is the cell containing the catch struct */
   for (i = sc->stack_top - 1; i >= 3; i -= 4)
@@ -12148,11 +12161,6 @@ static token_t token(s7_scheme *sc, s7_pointer pt)
 	  return(TOKEN_ATOM);
 	}
 
-      /* :(keyword->symbol hi#:)
-	 i#:
-	 TODO: #: is not always : 
-      */
-      
       /* block comments in either #! ... !# */
       if (c == '!') 
 	{

@@ -5159,6 +5159,8 @@
 	(test (keyword? :3) #t)
 	(test (keyword? ':3) #t)
 	(test (keyword? '3) #f)
+	(test (symbol->string (keyword->symbol hi:)) "hi")
+	(test (symbol->string (keyword->symbol :hi)) "hi")
 	(test (make-keyword ":") ::))
       
       ))
