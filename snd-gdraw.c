@@ -1050,7 +1050,7 @@ static void check_orientation_hook(void)
 typedef struct {
   GtkWidget *dialog;
   GtkWidget *ax, *ay, *az, *sx, *sy, *sz, *hop, *cut; 
-  GtkObject *ax_adj, *az_adj, *ay_adj, *sx_adj, *sz_adj, *sy_adj, *hop_adj, *cut_adj;
+  GtkObject *ax_adj, *az_adj, *ay_adj, *sx_adj, *sz_adj, *sy_adj, *hop_adj;
 #if HAVE_GL
   GtkWidget *glbutton;
 #endif
@@ -1203,28 +1203,6 @@ void set_spectro_hop(int val)
 }
 
 
-static void chans_spectrum_end(chan_info *cp) {cp->fft_changed = FFT_CHANGE_LOCKED;}
-
-static void cut_orientation_callback(GtkAdjustment *adj, gpointer context) 
-{
-  /* y axis limit */
-  chans_field(FCP_CUTOFF, (Float)(ADJUSTMENT_VALUE(adj)));
-  for_each_chan(chans_spectrum_end);
-  check_orientation_hook();
-  set_spectrum_end_and_redisplay((Float)(ADJUSTMENT_VALUE(adj))); /* calls in_set... */
-} 
-
-
-void set_spectrum_end(Float val)
-{
-  in_set_spectrum_end(val);
-  if (oid) ADJUSTMENT_SET_VALUE(oid->cut_adj, val);
-  chans_field(FCP_CUTOFF, val);
-  check_orientation_hook();
-  if (!(ss->graph_hook_active)) for_each_chan(update_graph_setting_fft_changed);
-}
-
-
 static void help_orientation_callback(GtkWidget *w, gpointer context)
 {
   orientation_dialog_help();
@@ -1273,7 +1251,6 @@ void reflect_spectro(void)
       ADJUSTMENT_SET_VALUE(oid->sy_adj, spectro_y_scale(ss));
       ADJUSTMENT_SET_VALUE(oid->sz_adj, spectro_z_scale(ss));
       ADJUSTMENT_SET_VALUE(oid->hop_adj, (spectro_hop(ss) > 100) ? 100 : (spectro_hop(ss)));
-      ADJUSTMENT_SET_VALUE(oid->cut_adj, (spectrum_end(ss)));
       check_orientation_hook();
     }
 }
@@ -1310,8 +1287,8 @@ static void start_view_orientation_dialog(bool managed)
   if (!oid)
     {
       GtkWidget *outer_table, *dismiss_button, *help_button, *reset_button;
-      GtkWidget *ax_box, *ay_box, *az_box, *sx_box, *sy_box, *sz_box, *hop_box, *cut_box;
-      GtkWidget *ax_label, *ay_label, *az_label, *sx_label, *sy_label, *sz_label, *hop_label, *cut_label;
+      GtkWidget *ax_box, *ay_box, *az_box, *sx_box, *sy_box, *sz_box, *hop_box;
+      GtkWidget *ax_label, *ay_label, *az_label, *sx_label, *sy_label, *sz_label, *hop_label;
 
       /* create orientation window */
       oid = (orientation_info *)calloc(1, sizeof(orientation_info));
@@ -1524,31 +1501,6 @@ static void start_view_orientation_dialog(bool managed)
       gtk_widget_show(oid->sz);
       gtk_widget_show(sz_label);
       gtk_widget_show(sz_box);
-
-      /* CUT */
-      cut_box = gtk_table_new(2, 1, false);
-      gtk_table_attach(GTK_TABLE(outer_table), cut_box, 1, 2, 3, 4,
-		       (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), X_PAD, Y_PAD);
-
-      oid->cut_adj = gtk_adjustment_new(spectrum_end(ss), 0.0, 1.01, .01, .1, .01);
-      oid->cut = gtk_hscale_new(GTK_ADJUSTMENT(oid->cut_adj));
-      GTK_WIDGET_UNSET_FLAGS(oid->cut, GTK_CAN_FOCUS);
-      gtk_range_set_update_policy(GTK_RANGE(GTK_SCALE(oid->cut)), GTK_UPDATE_CONTINUOUS);
-      gtk_scale_set_digits(GTK_SCALE(oid->cut), 2);
-      gtk_scale_set_value_pos(GTK_SCALE(oid->cut), GTK_POS_TOP);
-      gtk_scale_set_draw_value(GTK_SCALE(oid->cut), true);
-      gtk_table_attach(GTK_TABLE(cut_box), oid->cut, 0, 1, 0, 1,
-		       (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), XX_PAD, YY_PAD);
-      SG_SIGNAL_CONNECT(oid->cut_adj, "value_changed", cut_orientation_callback, oid);
-
-      cut_label = gtk_label_new(_("portion of spectrum"));
-      gtk_misc_set_alignment(GTK_MISC (cut_label), 0.1, 0.0);
-      gtk_table_attach(GTK_TABLE(cut_box), cut_label, 0, 1, 1, 2,
-		       (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), XX_PAD, YY_PAD);
-
-      gtk_widget_show(oid->cut);
-      gtk_widget_show(cut_label);
-      gtk_widget_show(cut_box);
 
 #if HAVE_GL
       oid->glbutton = gtk_check_button_new_with_label(_("use OpenGL"));

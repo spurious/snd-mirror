@@ -3,25 +3,13 @@
 #include "clm-strings.h"
 
 /* SOMEDAY: fft side needs a zoom capability, not just the drag now 
- *   this can probably be done with spectrum_start and spectrum_end (=end): spectrum-start and spectrum-end; ("o" refers to spectrograph)
- *   rename cutoff to end, add arrows or something to fft graph
- *   peak reporting appears to get confused -- maxes current, but shows others pinned
- * also the alpha/beta sliders need labels, and aren't logically a part of the wavelet box
- *    and they should be grayed out when not relevant
- * also the "orientation" dialog should have start/end sliders if it has the end slider (not really the right place for it)
+ *   add arrows or something to fft graph
  * also if click in fft (or only fft) then arrow keys, shouldn't these affect the fft?
  *    maybe change label color to show it's active?
  *    and center around the clicked point, and maybe report action in minibuffer (similarly for time)
- * maybe all 4 sliders at bottom + add "hop" to the right box (and remove from orientation dialog)
- *
  * in gtk, are the default graph fonts reasonable??
  * gtk "back" button is active at start, but doesn't work
  * also transform options needs a revert button
- */
-
-/* it would be neat I think to change label font sizes/button sizes etc when dialog changes size
- *   but there's no way to trap the outer resizing event and
- *   in Gtk, the size is not (currently) allowed to go below the main buttons (as set by font/stock-labelling)
  */
 
 
@@ -347,17 +335,17 @@ void chans_field(fcp_t field, Float val)
 	for (j = 0; j < sp->nchans; j++)
 	  switch (field)
 	    {
-	    case FCP_X_ANGLE: sp->chans[j]->spectro_x_angle = val;                       break; /* these are in-coming from user interface */
-	    case FCP_X_SCALE: sp->chans[j]->spectro_x_scale = val;                       break;
-	    case FCP_Y_ANGLE: sp->chans[j]->spectro_y_angle = val;                       break;
-	    case FCP_Y_SCALE: sp->chans[j]->spectro_y_scale = val;                       break;
-	    case FCP_Z_ANGLE: sp->chans[j]->spectro_z_angle = val;                       break;
-	    case FCP_Z_SCALE: sp->chans[j]->spectro_z_scale = val;                       break;
-	    case FCP_START:   sp->chans[j]->spectrum_start = mus_fclamp(0.0, val, 1.0);   break; 
-	    case FCP_CUTOFF:  sp->chans[j]->spectrum_end = mus_fclamp(0.0, val, 1.0);  break;
-	    case FCP_ALPHA:   sp->chans[j]->fft_window_alpha = mus_fclamp(0.0, val, 10.0); break;
-	    case FCP_BETA:    sp->chans[j]->fft_window_beta = mus_fclamp(0.0, val, 1.0); break;
-	    case FCP_BEATS:   if (val > 0.0) sp->chans[j]->beats_per_minute = val;       break;
+	    case FCP_X_ANGLE:        sp->chans[j]->spectro_x_angle = val;                         break; /* these are in-coming from user interface */
+	    case FCP_X_SCALE:        sp->chans[j]->spectro_x_scale = val;                         break;
+	    case FCP_Y_ANGLE:        sp->chans[j]->spectro_y_angle = val;                         break;
+	    case FCP_Y_SCALE:        sp->chans[j]->spectro_y_scale = val;                         break;
+	    case FCP_Z_ANGLE:        sp->chans[j]->spectro_z_angle = val;                         break;
+	    case FCP_Z_SCALE:        sp->chans[j]->spectro_z_scale = val;                         break;
+	    case FCP_SPECTRUM_START: sp->chans[j]->spectrum_start = mus_fclamp(0.0, val, 1.0);    break; 
+	    case FCP_SPECTRUM_END:   sp->chans[j]->spectrum_end = mus_fclamp(0.0, val, 1.0);      break;
+	    case FCP_ALPHA:          sp->chans[j]->fft_window_alpha = mus_fclamp(0.0, val, 10.0); break;
+	    case FCP_BETA:           sp->chans[j]->fft_window_beta = mus_fclamp(0.0, val, 1.0);   break;
+	    case FCP_BEATS:          if (val > 0.0) sp->chans[j]->beats_per_minute = val;         break;
 	    }
     }
 }
@@ -451,15 +439,6 @@ void chan_info_cleanup(chan_info *cp)
       stop_peak_env(cp);
       cleanup_cw(cp);
     }
-}
-
-
-static void set_spectrum_start(Float val) 
-{
-  in_set_spectrum_start(val);
-  chans_field(FCP_START, val);
-  if (!(ss->graph_hook_active)) 
-    for_each_chan(update_graph);
 }
 
 
@@ -1973,27 +1952,31 @@ static char ampstr[LABEL_BUFFER_SIZE];
 #define AMP_ROOM 45
 #define AMP_ROOM_CUTOFF 3.0
 
-static void display_peaks(chan_info *cp, axis_info *fap, Float *data, int scaler, off_t samps, Float samps_per_pixel, bool fft_data, Float fft_scale)
+static void display_peaks(chan_info *cp, axis_info *fap, Float *data, 
+			  int start, int end, 
+			  int losamp, int hisamp, 
+			  Float samps_per_pixel, bool fft_data, Float fft_scale /* fourier scale factor or 0.0 */)
 {
-  int num_peaks, row, frq_col, frq_strlen, tens, i, amp_col, amp_strlen, row_height = 15;
+  int num_peaks, row, frq_col, frq_strlen, tens, i, amp_col, amp_strlen, row_height = 15, samps;
   bool with_amps;
   Float amp0;
   axis_context *ax;
   fft_peak *peak_freqs = NULL;
   fft_peak *peak_amps = NULL;
 
-  /* "scaler" is the top displayed frequency in the FFT frequency axis 
-   * "samps" is how many samples of data we have
+  /* "end" is the top displayed frequency in the FFT frequency axis 
+   * "hisamp - losamp" is how many samples of data we have
    */
 
   /* "tens" is for prettyf in snd-utils, if -1 -> print int else sets decimals */
-  if (samps > (scaler * 10)) 
+  samps = hisamp - losamp;
+  if (samps > (end * 10)) 
     tens = 2; 
   else 
-    if (samps > scaler) 
+    if (samps > end) 
       tens = 1; 
     else
-      if (samps > (scaler / 10)) 
+      if (samps > (end / 10)) 
 	tens = 0; 
       else tens = -1;
 
@@ -2014,8 +1997,8 @@ static void display_peaks(chan_info *cp, axis_info *fap, Float *data, int scaler
   peak_amps = (fft_peak *)calloc(cp->max_transform_peaks, sizeof(fft_peak));
 
   if (fft_data)
-    num_peaks = find_and_sort_transform_peaks(data, peak_freqs, num_peaks, samps, 1, samps_per_pixel, fft_scale); /* srate 1.0=>freqs between 0 and 1.0 */
-  else num_peaks = find_and_sort_peaks(data, peak_freqs, num_peaks, samps);
+    num_peaks = find_and_sort_transform_peaks(data, peak_freqs, num_peaks, losamp, hisamp /* "fft size" */, samps_per_pixel, fft_scale); /* srate 1.0=>freqs between 0 and 1.0 */
+  else num_peaks = find_and_sort_peaks(data, peak_freqs, num_peaks, losamp, hisamp);
 
   if ((num_peaks == 0) || 
       ((num_peaks == 1) && 
@@ -2026,7 +2009,7 @@ static void display_peaks(chan_info *cp, axis_info *fap, Float *data, int scaler
       return;
     }
 
-  frq_strlen = (int)ceil(log10(peak_freqs[num_peaks - 1].freq * scaler)) + ((tens <= 0) ? 0 : (tens + 1)) + 1;
+  frq_strlen = (int)ceil(log10(peak_freqs[num_peaks - 1].freq * end)) + ((tens <= 0) ? 0 : (tens + 1)) + 1;
   if (frq_strlen < 1) frq_strlen = 1;
 
   with_amps = (fap->width > ((30 + 5 * frq_strlen + AMP_ROOM) * AMP_ROOM_CUTOFF));
@@ -2076,7 +2059,7 @@ static void display_peaks(chan_info *cp, axis_info *fap, Float *data, int scaler
 	      Float px;
 
 	      px = peak_freqs[i].freq;
-	      fstr = prettyf(px * scaler, tens);
+	      fstr = prettyf(px * end, tens);
 	      draw_string(ax, frq_col, row, fstr, strlen(fstr));
 	      if (cp->printing) ps_draw_string(fap, frq_col, row, fstr);
 	      free(fstr);
@@ -2116,7 +2099,7 @@ static void display_peaks(chan_info *cp, axis_info *fap, Float *data, int scaler
 	  char *fstr;
 
 	  px = peak_freqs[i].freq;
-	  fstr = prettyf(px * scaler, tens);
+	  fstr = prettyf(px * end, tens);
 	  draw_string(ax, frq_col, row, fstr, strlen(fstr));
 	  if (cp->printing) ps_draw_string(fap, frq_col, row, fstr);
 	  free(fstr);
@@ -2443,11 +2426,15 @@ static void make_fft_graph(chan_info *cp, axis_info *fap, axis_context *ax, with
     {
       if (cp->transform_type == FOURIER)
 	display_peaks(cp, fap, data, 
+		      (int)(SND_SRATE(sp) * cp->spectrum_start / 2), 
 		      (int)(SND_SRATE(sp) * cp->spectrum_end / 2), 
-		      hisamp, samples_per_pixel, true, scale);
+		      losamp, hisamp, 
+		      samples_per_pixel, true, scale);
       else display_peaks(cp, fap, data, 
+			 (int)(fp->current_size * cp->spectrum_start), 
 			 (int)(fp->current_size * cp->spectrum_end), 
-			 hisamp, samples_per_pixel, true, 0.0);
+			 losamp, hisamp, 
+			 samples_per_pixel, true, 0.0);
     }
 
   if (cp->selection_transform_size != 0) 
@@ -2694,6 +2681,7 @@ void reset_spectro(void)
 {
   /* only used in orientation dialog button and Enter key binding */
   set_spectrum_end(DEFAULT_SPECTRUM_END);
+  set_spectrum_start(DEFAULT_SPECTRUM_START);
   set_spectro_hop(DEFAULT_SPECTRO_HOP);
   set_spectro_x_angle((with_gl(ss)) ? DEFAULT_SPECTRO_X_ANGLE : 90.0);
   set_spectro_y_angle((with_gl(ss)) ? DEFAULT_SPECTRO_Y_ANGLE : 0.0);
@@ -2753,6 +2741,7 @@ void reset_spectro(void)
 {
   /* only used in orientation dialog button and Enter key binding */
   set_spectrum_end(DEFAULT_SPECTRUM_END);
+  set_spectrum_start(DEFAULT_SPECTRUM_START);
   set_spectro_hop(DEFAULT_SPECTRO_HOP);
   set_spectro_x_angle(DEFAULT_SPECTRO_X_ANGLE);
   set_spectro_y_angle(DEFAULT_SPECTRO_Y_ANGLE);
@@ -3738,10 +3727,6 @@ static void make_lisp_graph(chan_info *cp, XEN pixel_list)
 	  copy_context(cp); /* reset for axes etc */
 	  if (cp->printing) ps_reset_color();
 	}
-      /* I think this is a bad idea after all...
-      if (cp->show_transform_peaks) 
-	display_peaks(cp, uap, up->data[0], 1, up->len[0] - 1, samples_per_pixel, false, 0.0);
-      */
     }
 }
 
@@ -5716,8 +5701,8 @@ static XEN channel_get(XEN snd_n, XEN chn_n, cp_field_t fld, const char *caller)
 	    case CP_SPECTRO_X_SCALE:  return(C_TO_XEN_DOUBLE(cp->spectro_x_scale));        break;
 	    case CP_SPECTRO_Y_SCALE:  return(C_TO_XEN_DOUBLE(cp->spectro_y_scale));        break;
 	    case CP_SPECTRO_Z_SCALE:  return(C_TO_XEN_DOUBLE(cp->spectro_z_scale));        break;
-	    case CP_SPECTRUM_END:   return(C_TO_XEN_DOUBLE(cp->spectrum_end));         break;
-	    case CP_SPECTRUM_START:    return(C_TO_XEN_DOUBLE(cp->spectrum_start));          break;
+	    case CP_SPECTRUM_END:     return(C_TO_XEN_DOUBLE(cp->spectrum_end));           break;
+	    case CP_SPECTRUM_START:   return(C_TO_XEN_DOUBLE(cp->spectrum_start));         break;
 	    case CP_FFT_WINDOW_ALPHA: return(C_TO_XEN_DOUBLE(cp->fft_window_alpha));       break;
 	    case CP_FFT_WINDOW_BETA:  return(C_TO_XEN_DOUBLE(cp->fft_window_beta));        break;
 	    case CP_BEATS_PER_MINUTE: return(C_TO_XEN_DOUBLE(cp->beats_per_minute));       break;
@@ -7941,7 +7926,7 @@ static void write_transform_peaks(FILE *fd, chan_info *ucp)
 
 	      peak_freqs = (fft_peak *)calloc(cp->max_transform_peaks, sizeof(fft_peak));
 	      peak_amps = (fft_peak *)calloc(cp->max_transform_peaks, sizeof(fft_peak));
-	      num_peaks = find_and_sort_transform_peaks(data, peak_freqs, cp->max_transform_peaks, samps, 1, samples_per_pixel, fp->scale);
+	      num_peaks = find_and_sort_transform_peaks(data, peak_freqs, cp->max_transform_peaks, 0, samps, samples_per_pixel, fp->scale);
 
 	      if ((num_peaks != 1) || 
 		  (peak_freqs[0].freq != 0.0))

@@ -1739,26 +1739,6 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 	      undo_edit_with_sync(cp, count); 
 	      break;
 
-	    case snd_keypad_Left: 
-	      set_spectro_y_angle(spectro_y_angle(ss) - 1.0);
-	      reflect_spectro(); 
-	      break;
-
-	    case snd_keypad_Right: 
-	      set_spectro_y_angle(spectro_y_angle(ss) + 1.0);
-	      reflect_spectro(); 
-	      break;
-
-	    case snd_keypad_Down: 
-	      set_spectro_x_angle(spectro_x_angle(ss) - 1.0);
-	      reflect_spectro(); 
-	      break;
-
-	    case snd_keypad_Up: 
-	      set_spectro_x_angle(spectro_x_angle(ss) + 1.0);
-	      reflect_spectro(); 
-	      break;
-
 	    default:
 	      report_in_minibuffer(sp, _("C-%s undefined"), key_to_name(keysym));
 	      break;
@@ -1980,26 +1960,6 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 	      else deactivate_selection();
 	      break;
 
-	    case snd_keypad_Up:
-	      set_spectro_z_scale(spectro_z_scale(ss) + .01);
-	      reflect_spectro();
-	      break;
-
-	    case snd_keypad_Down:
-	      set_spectro_z_scale(spectro_z_scale(ss) - .01);
-	      reflect_spectro();
-	      break;
-
-	    case snd_keypad_Left:
-	      set_spectro_z_angle(spectro_z_angle(ss) - 1.0);
-	      reflect_spectro();
-	      break;
-
-	    case snd_keypad_Right:
-	      set_spectro_z_angle(spectro_z_angle(ss) + 1.0);
-	      reflect_spectro(); 
-	      break;
-
 	    case snd_keypad_Add:
 	      if (time_graph_type(ss) == GRAPH_AS_WAVOGRAM) 
 		set_wavo_trace(wavo_trace(ss) + 1); 
@@ -2037,17 +1997,6 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 	    case snd_keypad_Insert:
 	      if (dot_size(ss) > 1) 
 		set_dot_size(dot_size(ss) - 1); 
-	      break;
-
-	    case snd_keypad_PageDown:
-	      set_spectrum_end(spectrum_end(ss) * .95); 
-	      reflect_spectro(); 
-	      break;
-
-	    case snd_keypad_PageUp:
-	      if (spectrum_end(ss) < 1.0) 
-		set_spectrum_end(spectrum_end(ss) / .95); 
-	      reflect_spectro(); 
 	      break;
 
 	    case snd_keypad_Enter: 

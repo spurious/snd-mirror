@@ -40,7 +40,6 @@ void set_spectro_z_angle(Float val);
 void set_spectro_x_scale(Float val);
 void set_spectro_y_scale(Float val);
 void set_spectro_z_scale(Float val);
-void set_spectrum_end(Float val);
 bool color_dialog_is_active(void);
 bool orientation_dialog_is_active(void);
 void reflect_spectro(void);
@@ -104,6 +103,9 @@ void set_fft_log_frequency(bool val);
 void set_transform_normalization(fft_normalize_t val);
 void set_show_selection_transform(bool show);
 void set_transform_graph_type(graph_type_t val);
+
+void set_spectrum_start(Float val);
+void set_spectrum_end(Float val);
 
 void reflect_peaks_in_transform_dialog(void);
 void reflect_log_freq_start_in_transform_dialog(void);

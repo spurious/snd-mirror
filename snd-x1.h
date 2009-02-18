@@ -50,7 +50,6 @@ void set_spectro_z_angle(Float val);
 void set_spectro_x_scale(Float val);
 void set_spectro_y_scale(Float val);
 void set_spectro_z_scale(Float val);
-void set_spectrum_end(Float val);
 void view_orientation_callback(Widget w, XtPointer context, XtPointer info);
 void view_color_callback(Widget w, XtPointer context, XtPointer info);
 bool color_dialog_is_active(void);
@@ -129,6 +128,8 @@ void set_wavelet_type(int val);
 Widget fire_up_transform_dialog(bool managed);
 bool transform_dialog_is_active(void);
 
+void set_spectrum_start(Float val);
+void set_spectrum_end(Float val);
 void set_transform_type(int val);
 void make_transform_type_list(void);
 

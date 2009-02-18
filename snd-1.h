@@ -967,8 +967,8 @@ void prepare_sound_list(chan_info *cp);
 
 /* -------- snd-fft.c -------- */
 
-int find_and_sort_transform_peaks(Float *buf, fft_peak *found, int num_peaks, int fftsize, int srate, Float samps_per_pixel, Float fft_scale);
-int find_and_sort_peaks(Float *buf, fft_peak *found, int num_peaks, int size);
+int find_and_sort_transform_peaks(Float *buf, fft_peak *found, int num_peaks, int losamp, int hisamp, Float samps_per_pixel, Float fft_scale);
+int find_and_sort_peaks(Float *buf, fft_peak *found, int num_peaks, int losamp, int hisamp);
 fft_info *free_fft_info(fft_info *fp);
 void free_sonogram_fft_state(void *ptr);
 bool fft_window_beta_in_use(mus_fft_window_t win);

@@ -791,13 +791,12 @@ static void check_orientation_hook(void)
 
 typedef struct {
   Widget dialog;
-  Widget ax, ay, az, sx, sy, sz, hop, cut, glbutton; 
+  Widget ax, ay, az, sx, sy, sz, hop, glbutton; 
 } orientation_info;
 
 #define HOP_MAX 20
 
 static orientation_info *oid = NULL;
-
 
 static XmString scale_label(const char *orig_label, int value, bool dec)
 {
@@ -1043,36 +1042,6 @@ void set_spectro_hop(int val)
 }
 
 
-static void chans_spectrum_end(chan_info *cp) {cp->fft_changed = FFT_CHANGE_LOCKED;}
-
-static void cut_orientation_callback(Widget w, XtPointer context, XtPointer info) 
-{
-  /* y axis limit */
-  XmScaleCallbackStruct *cbs = (XmScaleCallbackStruct *)info;
-  ASSERT_WIDGET_TYPE(XmIsScale(w), w);
-  scale_set_label("% of spectrum", w, cbs->value, true);
-  chans_field(FCP_CUTOFF, (Float)(cbs->value) * 0.01);
-  for_each_chan(chans_spectrum_end);
-  check_orientation_hook();
-  set_spectrum_end_and_redisplay((Float)(cbs->value) * 0.01); /* calls in_set... */
-} 
-
-
-void set_spectrum_end(Float val)
-{
-  in_set_spectrum_end(val);
-  if (oid) 
-    {
-      XmScaleSetValue(oid->cut, (int)(val * 100));
-      scale_set_label("% of spectrum", oid->cut, (int)(val * 100), true);
-    }
-  chans_field(FCP_CUTOFF, val);
-  check_orientation_hook();
-  if (!(ss->graph_hook_active)) 
-    for_each_chan(update_graph_setting_fft_changed);
-}
-
-
 static int fixup_angle(Float ang)
 {
   int na;
@@ -1101,7 +1070,6 @@ void reflect_spectro(void)
       XtVaSetValues(oid->sy, XmNvalue, mus_iclamp(0, (int)(spectro_y_scale(ss) * 100), 100), NULL);
       XtVaSetValues(oid->sz, XmNvalue, mus_iclamp(0, (int)(spectro_z_scale(ss) * 100), 100), NULL);
       XtVaSetValues(oid->hop, XmNvalue, mus_iclamp(1, spectro_hop(ss), HOP_MAX), NULL);
-      XtVaSetValues(oid->cut, XmNvalue, mus_iclamp(0, (int)(spectrum_end(ss) * 100), 100), NULL);
       check_orientation_hook();
     }
 }
@@ -1387,33 +1355,6 @@ static void start_view_orientation_dialog(bool managed)
       XtAddCallback(oid->hop, XmNvalueChangedCallback, hop_orientation_callback, NULL);
       XtAddCallback(oid->hop, XmNdragCallback, hop_orientation_callback, NULL);
       XmStringFree(xstr);
-
-
-      n = 0;
-      initial_value = (int)(spectrum_end(ss) * 100);
-      xstr = scale_label("% of spectrum", initial_value, true);
-      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
-      XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
-      XtSetArg(args[n], XmNshowValue, XmNONE); n++;
-      XtSetArg(args[n], XmNvalue, initial_value); n++;
-      XtSetArg(args[n], XmNtitleString, xstr); n++;
-      XtSetArg(args[n], XmNleftAttachment, XmATTACH_POSITION); n++;
-      XtSetArg(args[n], XmNleftPosition, 52); n++;
-      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNtopAttachment, XmATTACH_POSITION); n++;
-      XtSetArg(args[n], XmNtopPosition, 75); n++;
-#if HAVE_GL
-      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
-#else
-      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
-#endif
-      XtSetArg(args[n], XmNborderWidth, 10); n++;
-      XtSetArg(args[n], XmNborderColor, ss->sgx->basic_color); n++;
-      oid->cut = XtCreateManagedWidget("cut", xmScaleWidgetClass, mainform, args, n);
-      XtAddCallback(oid->cut, XmNvalueChangedCallback, cut_orientation_callback, NULL);
-      XtAddCallback(oid->cut, XmNdragCallback, cut_orientation_callback, NULL);
-      XmStringFree(xstr);
-
 
 #if HAVE_GL
       n = 0;

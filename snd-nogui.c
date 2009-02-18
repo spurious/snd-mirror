@@ -50,6 +50,7 @@ void set_spectro_x_scale(Float val) {}
 void set_spectro_y_scale(Float val) {}
 void set_spectro_z_scale(Float val) {}
 void set_spectrum_end(Float val) {}
+void set_spectrum_start(Float val) {}
 bool color_dialog_is_active(void) {return(false);}
 bool orientation_dialog_is_active(void) {return(false);}
 void reflect_spectro(void) {}

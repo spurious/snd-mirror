@@ -1039,8 +1039,7 @@ and drag it either way to change the range (this is equivalent to changing the v
 You can also click on any point in the fft to get the associated fft value at that point displayed; \
 if " S_with_verbose_cursor " is " PROC_TRUE ", you can drag the mouse through the fft display and \
 the description in the minibuffer will be constantly updated.  To change the fft size by powers of two, \
-you can use the keypad keys '*' and '/'.  There are also various keys bindings for the spectrogram \
-viewing angles and so on, but it's always easier to use the View:Orientation dialog's sliders. \
+you can use the keypad keys '*' and '/'.  \
 \n\n\
 The main FFT-related functions are:\
 \n\n\
@@ -1097,8 +1096,7 @@ The full frequency axis is normally displayed, but the axis is draggable -- put 
 and drag it either way to change the range. \
 You can also click on any point in the fft to get the associated fft value at that point displayed. \
 To change the fft size by powers of two, \
-you can use the keypad keys '*' and '/'.  There are also various keys bindings for the spectrogram \
-viewing angles and so on, but it's always easier to use the View:Orientation dialog's sliders.",
+you can use the keypad keys '*' and '/'.",
 #endif
 
 		      WITH_WORD_WRAP,

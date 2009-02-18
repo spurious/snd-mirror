@@ -313,7 +313,7 @@ static int compare_peaks(const void *pk1, const void *pk2)
   return(-1);
 }
 
-int find_and_sort_peaks(Float *buf, fft_peak *found, int num_peaks, int size)
+int find_and_sort_peaks(Float *buf, fft_peak *found, int num_peaks, int losamp, int hisamp)
 { 
   /* in the fft peak finder below we assume data between 0 and 1 */
   /* this procedure is for the list graph -- see below for fft */
@@ -331,7 +331,7 @@ int find_and_sort_peaks(Float *buf, fft_peak *found, int num_peaks, int size)
   ca = 0.0;
   ra = 0.0;
   minval = 0.00001;
-  for (i = 0; i < size; i++)
+  for (i = losamp; i < hisamp; i++)
     {
       la = ca;
       ca = ra;
@@ -379,28 +379,30 @@ int find_and_sort_peaks(Float *buf, fft_peak *found, int num_peaks, int size)
 
 /* somday: still more ints -> off_ts */
 
-int find_and_sort_transform_peaks(Float *buf, fft_peak *found, int num_peaks, int fftsize2, int srate, Float samps_per_pixel, Float fft_scale)
+
+int find_and_sort_transform_peaks(Float *buf, fft_peak *found, int num_peaks, int losamp, int hisamp, Float samps_per_pixel, Float fft_scale)
 {
   /* we want to reflect the graph as displayed, so each "bin" is samps_per_pixel wide */
   int i, j, k, pks, minpk, hop, pkj, oldpkj;
-  Float minval, la, ra, ca, logca, logra, logla, offset, fscl, ascl, bscl;
+  Float minval, la, ra, ca, logca, logra, logla, offset, fscl, ascl, bscl, fftsize2;
   Float *peaks;
   int *inds;
 
+  fftsize2 = (Float)hisamp;
   peaks = (Float *)calloc(num_peaks, sizeof(Float));
   inds = (int *)calloc(num_peaks, sizeof(int));
-  fscl = (Float)srate / (Float)fftsize2;
+  fscl = 1.0 / fftsize2;
   hop = (int)(samps_per_pixel + 0.5);
   if (hop < 1) hop = 1;
   pks = 0;
   la = 0.0;
   ca = 0.0;
   ra = 0.0;
-  minval = 0.0; /* (Float)fftsize2/100000.0; */
+  minval = 0.0; 
   ascl = 0.0;
   pkj = 0;
 
-  for (i = 0; i < fftsize2 - hop; i += hop)
+  for (i = losamp; i < hisamp - hop; i += hop)
     {
       la = ca;
       ca = ra;

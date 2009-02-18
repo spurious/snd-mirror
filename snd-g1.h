@@ -44,7 +44,6 @@ void set_spectro_z_angle(Float val);
 void set_spectro_x_scale(Float val);
 void set_spectro_y_scale(Float val);
 void set_spectro_z_scale(Float val);
-void set_spectrum_end(Float val);
 void view_orientation_callback(GtkWidget *w, gpointer info);
 void view_color_callback(GtkWidget * w, gpointer info);
 bool color_dialog_is_active(void);
@@ -125,6 +124,8 @@ bool transform_dialog_is_active(void);
 
 void set_transform_type(int val);
 void make_transform_type_list(void);
+void set_spectrum_start(Float val);
+void set_spectrum_end(Float val);
 
 void set_show_transform_peaks(bool val);
 void set_fft_log_magnitude(bool val);
