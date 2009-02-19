@@ -2,14 +2,10 @@
 #include "clm2xen.h"
 #include "clm-strings.h"
 
-/* SOMEDAY: fft side needs a zoom capability, not just the drag now 
- *   add arrows or something to fft graph
- * also if click in fft (or only fft) then arrow keys, shouldn't these affect the fft?
- *    maybe change label color to show it's active?
- *    and center around the clicked point, and maybe report action in minibuffer (similarly for time)
+/* 
  * in gtk, are the default graph fonts reasonable??
  * gtk "back" button is active at start, but doesn't work
- * also transform options needs a revert button
+ * orientation dialog could use a lot of work in gtk (and all the others...)
  */
 
 

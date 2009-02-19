@@ -1337,7 +1337,7 @@ static void start_view_orientation_dialog(bool managed)
       GTK_WIDGET_UNSET_FLAGS(oid->ax, GTK_CAN_FOCUS);
       gtk_range_set_update_policy(GTK_RANGE(GTK_SCALE(oid->ax)), GTK_UPDATE_CONTINUOUS);
       gtk_scale_set_digits(GTK_SCALE(oid->ax), 0);
-      gtk_scale_set_value_pos(GTK_SCALE(oid->ax), GTK_POS_TOP);
+      gtk_scale_set_value_pos(GTK_SCALE(oid->ax), GTK_POS_LEFT);
       gtk_scale_set_draw_value(GTK_SCALE(oid->ax), true);
       gtk_table_attach(GTK_TABLE(ax_box), oid->ax, 0, 1, 0, 1,
 		       (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), XX_PAD, YY_PAD);
@@ -1363,7 +1363,7 @@ static void start_view_orientation_dialog(bool managed)
       GTK_WIDGET_UNSET_FLAGS(oid->ay, GTK_CAN_FOCUS);
       gtk_range_set_update_policy(GTK_RANGE(GTK_SCALE(oid->ay)), GTK_UPDATE_CONTINUOUS);
       gtk_scale_set_digits(GTK_SCALE(oid->ay), 0);
-      gtk_scale_set_value_pos(GTK_SCALE(oid->ay), GTK_POS_TOP);
+      gtk_scale_set_value_pos(GTK_SCALE(oid->ay), GTK_POS_LEFT);
       gtk_scale_set_draw_value(GTK_SCALE(oid->ay), true);
       gtk_table_attach(GTK_TABLE(ay_box), oid->ay, 0, 1, 0, 1,
 		       (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), XX_PAD, YY_PAD);
@@ -1388,7 +1388,7 @@ static void start_view_orientation_dialog(bool managed)
       GTK_WIDGET_UNSET_FLAGS(oid->az, GTK_CAN_FOCUS);
       gtk_range_set_update_policy(GTK_RANGE(GTK_SCALE(oid->az)), GTK_UPDATE_CONTINUOUS);
       gtk_scale_set_digits(GTK_SCALE(oid->az), 0);
-      gtk_scale_set_value_pos(GTK_SCALE(oid->az), GTK_POS_TOP);
+      gtk_scale_set_value_pos(GTK_SCALE(oid->az), GTK_POS_LEFT);
       gtk_scale_set_draw_value(GTK_SCALE(oid->az), true);
       gtk_table_attach(GTK_TABLE(az_box), oid->az, 0, 1, 0, 1,
 		       (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), XX_PAD, YY_PAD);
@@ -1413,7 +1413,7 @@ static void start_view_orientation_dialog(bool managed)
       GTK_WIDGET_UNSET_FLAGS(oid->hop, GTK_CAN_FOCUS);
       gtk_range_set_update_policy(GTK_RANGE(GTK_SCALE(oid->hop)), GTK_UPDATE_CONTINUOUS);
       gtk_scale_set_digits(GTK_SCALE(oid->hop), 0);
-      gtk_scale_set_value_pos(GTK_SCALE(oid->hop), GTK_POS_TOP);
+      gtk_scale_set_value_pos(GTK_SCALE(oid->hop), GTK_POS_LEFT);
       gtk_scale_set_draw_value(GTK_SCALE(oid->hop), true);
       gtk_table_attach(GTK_TABLE(hop_box), oid->hop, 0, 1, 0, 1,
 		       (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), XX_PAD, YY_PAD);
@@ -1438,7 +1438,7 @@ static void start_view_orientation_dialog(bool managed)
       GTK_WIDGET_UNSET_FLAGS(oid->sx, GTK_CAN_FOCUS);
       gtk_range_set_update_policy(GTK_RANGE(GTK_SCALE(oid->sx)), GTK_UPDATE_CONTINUOUS);
       gtk_scale_set_digits(GTK_SCALE(oid->sx), 2);
-      gtk_scale_set_value_pos(GTK_SCALE(oid->sx), GTK_POS_TOP);
+      gtk_scale_set_value_pos(GTK_SCALE(oid->sx), GTK_POS_LEFT);
       gtk_scale_set_draw_value(GTK_SCALE(oid->sx), true);
       gtk_table_attach(GTK_TABLE(sx_box), oid->sx, 0, 1, 0, 1,
 		       (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), XX_PAD, YY_PAD);
@@ -1463,7 +1463,7 @@ static void start_view_orientation_dialog(bool managed)
       GTK_WIDGET_UNSET_FLAGS(oid->sy, GTK_CAN_FOCUS);
       gtk_range_set_update_policy(GTK_RANGE(GTK_SCALE(oid->sy)), GTK_UPDATE_CONTINUOUS);
       gtk_scale_set_digits(GTK_SCALE(oid->sy), 2);
-      gtk_scale_set_value_pos(GTK_SCALE(oid->sy), GTK_POS_TOP);
+      gtk_scale_set_value_pos(GTK_SCALE(oid->sy), GTK_POS_LEFT);
       gtk_scale_set_draw_value(GTK_SCALE(oid->sy), true);
       gtk_table_attach(GTK_TABLE(sy_box), oid->sy, 0, 1, 0, 1,
 		       (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), XX_PAD, YY_PAD);
@@ -1488,7 +1488,7 @@ static void start_view_orientation_dialog(bool managed)
       GTK_WIDGET_UNSET_FLAGS(oid->sz, GTK_CAN_FOCUS);
       gtk_range_set_update_policy(GTK_RANGE(GTK_SCALE(oid->sz)), GTK_UPDATE_CONTINUOUS);
       gtk_scale_set_digits(GTK_SCALE(oid->sz), 3);
-      gtk_scale_set_value_pos(GTK_SCALE(oid->sz), GTK_POS_TOP);
+      gtk_scale_set_value_pos(GTK_SCALE(oid->sz), GTK_POS_LEFT);
       gtk_scale_set_draw_value(GTK_SCALE(oid->sz), true);
       gtk_table_attach(GTK_TABLE(sz_box), oid->sz, 0, 1, 0, 1,
 		       (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), XX_PAD, YY_PAD);

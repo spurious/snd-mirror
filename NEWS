@@ -1,37 +1,20 @@
-Snd 10.3
+Snd 10.4
 
-Kjetil made improvements to the rt stuff.
-
-Michael Gogins, William Andrew Burnson, and Rick figured out how to 
-  build sndlib in windows -- I hope I correctly incorporated their 
-  changes in the configure script and various sources.
+(this is mostly a "clean up loose ends" version)
 
 
-added multiprecision math support for all scheme (s7) numeric
-  types and functions via gmp, mpfr, and mpc.  In configure,
-  use the --with-gmp switch.  bignum-precision can set the
-  float precision (default is 128 bits).  If this all works
-  out, I'll add this support to clm as well.  You'll need
-  mpc 0.5.2 (the latest version).
+Kjetil made improvements to the pd external support, and made
+       a port of CMN to ABCL.
 
-sox header support.
+big-gens.scm (scheme-only versions of some of the built-in generators)
 
-jcvoi.scm (translated from jcvoi.ins) for the immortal Old Macdonald.
-
-the sine-summation, sum-of-cosines, and sum-of-sines generators are deprecated.
-  Their replacements are nrxysin (or nrsin), ncos, and nsin.
-  snd10.scm has backwards-compatible definitions of these generators.
-
-removed event.scm and all the xm.c stuff that was deprecated in 2002.
-
-sin-m*pi/n and show-digits-of-pi-starting-from functions in numerics.scm
-
-rpmbuild changed since I last used it, so it's not impossible the
-  rpm files are confused.  Does anyone use the rpm files that I
-  build? 
+changed spectro-cutoff to spectrum-end and spectro-start to spectrum-start
+  moved the 10 spectro-* keypad key bindings to snd10.scm (keypad-spectro-bindings)
+  moved the spectrum end slider to the transform dialog and added spectrum start slider
+    (this should make it easier to zoom into an arbitrary portion of the spectrum)
 
 
-checked: Gamin 0.1.10, sbcl 1.0.23|24, Guile 1.8.6, gtk 2.14.6|2.15.0
+checked: gsl 1.12, gtk 2.15.1|2|3, sbcl 1.0.25, cmucl 19f
 
-Thanks!: Rick, Fernando, Esben Stien, Kjetil, Carlos Pita, Stanko Juzbasic,
-         Oded Ben-Tal, Michael Gogins, William Andrew Burnson
+Thanks!: Kjetil, Pavel Penev, Rick Taube, Michael Edwards
+

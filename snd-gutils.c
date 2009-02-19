@@ -1069,7 +1069,7 @@ slist *slist_new_with_title_and_table_data(const char *title,
       topw = lst->box;
     }
 
-  lst->topics = gtk_vbox_new(false, 0);
+  lst->topics = gtk_vbox_new(false, 2); /* sets list item vertical spacing */
   lst->scroller = gtk_scrolled_window_new(NULL, NULL);
   if (!title) 
     topw = lst->scroller;

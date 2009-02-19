@@ -6720,18 +6720,18 @@
 
 
 ;;; unused?
-(STRUCT "GdkEventFocus GdkEventType type GdkWindow* window gint8 send_event gint16 in")
-(STRUCT "GdkEventExpose GdkEventType type GdkWindow* window gint8 send_event GdkRegion* region gint count")
-(STRUCT "GdkEventNoExpose GdkEventType type GdkWindow* window gint8 send_event")
-(STRUCT "GdkEventVisibility GdkEventType type GdkWindow* window gint8 send_event GdkVisibilityState state")
-(STRUCT "GdkEventCrossing GdkEventType type GdkWindow* window gint8 send_event GdkWindow* subwindow guint32 time gdouble x gdouble y gdouble x_root gdouble y_root GdkCrossingMode mode GdkNotifyType detail gboolean focus guint state")
-(STRUCT "GdkEventConfigure GdkEventType type GdkWindow* window gint8 send_event gint x gint y gint width gint height")
-(STRUCT "GdkEventProperty GdkEventType type GdkWindow* window gint8 send_event GdkAtom atom guint32 time guint state")
-(STRUCT "GdkEventSelection GdkEventType type GdkWindow* window gint8 send_event GdkAtom selection GdkAtom target GdkAtom property guint32 time GdkNativeWindow requestor")
-(STRUCT "GdkEventProximity GdkEventType type GdkWindow* window gint8 send_event guint32 time GdkDevice* device")
-(STRUCT "GdkEventSetting GdkEventType type GdkWindow* window gint8 send_event GdkSettingAction action char* name")
-(STRUCT "GdkEventWindowState GdkEventType type GdkWindow* window gint8 send_event GdkWindowState changed_mask GdkWindowState new_window_state")
-(STRUCT "GdkEventDND GdkEventType type GdkWindow* window gint8 send_event GdkDragContext* context guint32 time gshort x_root gshort y_root")
+;(STRUCT "GdkEventFocus GdkEventType type GdkWindow* window gint8 send_event gint16 in")
+;(STRUCT "GdkEventExpose GdkEventType type GdkWindow* window gint8 send_event GdkRegion* region gint count")
+;(STRUCT "GdkEventNoExpose GdkEventType type GdkWindow* window gint8 send_event")
+;(STRUCT "GdkEventVisibility GdkEventType type GdkWindow* window gint8 send_event GdkVisibilityState state")
+;(STRUCT "GdkEventCrossing GdkEventType type GdkWindow* window gint8 send_event GdkWindow* subwindow guint32 time gdouble x gdouble y gdouble x_root gdouble y_root GdkCrossingMode mode GdkNotifyType detail gboolean focus guint state")
+;(STRUCT "GdkEventConfigure GdkEventType type GdkWindow* window gint8 send_event gint x gint y gint width gint height")
+;(STRUCT "GdkEventProperty GdkEventType type GdkWindow* window gint8 send_event GdkAtom atom guint32 time guint state")
+;(STRUCT "GdkEventSelection GdkEventType type GdkWindow* window gint8 send_event GdkAtom selection GdkAtom target GdkAtom property guint32 time GdkNativeWindow requestor")
+;(STRUCT "GdkEventProximity GdkEventType type GdkWindow* window gint8 send_event guint32 time GdkDevice* device")
+;(STRUCT "GdkEventSetting GdkEventType type GdkWindow* window gint8 send_event GdkSettingAction action char* name")
+;(STRUCT "GdkEventWindowState GdkEventType type GdkWindow* window gint8 send_event GdkWindowState changed_mask GdkWindowState new_window_state")
+;(STRUCT "GdkEventDND GdkEventType type GdkWindow* window gint8 send_event GdkDragContext* context guint32 time gshort x_root gshort y_root")
 
 
 (STRUCT "GdkGCValues GdkFunction function GdkFill fill GdkPixmap* tile GdkPixmap* stipple GdkPixmap* clip_mask GdkSubwindowMode subwindow_mode gint ts_x_origin gint ts_y_origin gint clip_x_origin gint clip_y_origin gint graphics_exposures gint line_width GdkLineStyle line_style GdkCapStyle cap_style GdkJoinStyle join_style")

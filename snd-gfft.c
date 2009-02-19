@@ -11,7 +11,8 @@ slist *transform_list = NULL, *size_list = NULL, *window_list = NULL, *wavelet_l
 static GtkWidget *transform_dialog = NULL; /* main dialog shell */
 static GtkWidget *outer_table, *db_button, *peaks_button, *logfreq_button, *sono_button, *spectro_button, *normal_fft_button, *phases_button;
 static GtkWidget *normalize_button, *selection_button, *window_beta_scale, *window_alpha_scale, *graph_drawer = NULL, *graph_frame = NULL;
-static GtkObject *beta_adj, *alpha_adj;
+static GtkObject *beta_adj, *alpha_adj, *spectrum_start_adj, *spectrum_end_adj;
+static GtkWidget *spectrum_start_scale, *spectrum_end_scale;
 static GtkWidget *db_txt, *peaks_txt, *lf_txt;
 static gc_t *gc = NULL, *fgc = NULL;
 static bool ignore_callbacks;
@@ -304,7 +305,7 @@ void make_transform_type_list(void)
 	  }
       if (!transform_list)
 	{
-	  transform_list = slist_new_with_title_and_table_data(_("type"), outer_table, transform_names, j, TABLE_ATTACH, 0, 1, 0, 1);
+	  transform_list = slist_new_with_title_and_table_data(_("type"), outer_table, transform_names, j, TABLE_ATTACH, 0, 3, 0, 3);
 	  transform_list->select_callback = transform_browse_callback;
 	}
       else
@@ -691,36 +692,93 @@ void set_fft_window_alpha(Float val)
 
 /* ---------------- spectrum start/end ---------------- */
 
+static void chans_spectrum_changed(chan_info *cp) 
+{
+  cp->fft_changed = FFT_CHANGE_LOCKED;
+  update_graph(cp);
+}
+
+
+static void set_spectrum_start_scale(Float val)
+{
+  ADJUSTMENT_SET_VALUE(spectrum_start_adj, val);
+}
+
+
+static void set_spectrum_end_scale(Float val)
+{
+  ADJUSTMENT_SET_VALUE(spectrum_end_adj, val);
+}
+
+
+static void check_spectrum_start(Float end)
+{
+  /* don't display chans, but do reset if necessary */
+  if (spectrum_start(ss) > end)
+    {
+      in_set_spectrum_start(end);
+      if (transform_dialog)
+	set_spectrum_start_scale(end);
+      chans_field(FCP_SPECTRUM_START, end);
+    }
+}
+
+
+static void check_spectrum_end(Float start)
+{
+  /* don't display chans, but do reset if necessary */
+  if (spectrum_end(ss) < start)
+    {
+      in_set_spectrum_end(start);
+      if (transform_dialog)
+	set_spectrum_end_scale(start);
+      chans_field(FCP_SPECTRUM_END, start);
+    }
+}
+
+
 void set_spectrum_start(Float val) 
 {
-  /*
   if (transform_dialog)
     set_spectrum_start_scale(val);
-  */
   in_set_spectrum_start(val);
-  /*
   check_spectrum_end(val);
-  */
   chans_field(FCP_SPECTRUM_START, val);
-  /*
   for_each_chan(chans_spectrum_changed);
-  */
 }
+
 
 void set_spectrum_end(Float val)
 {
-  /*
   if (transform_dialog)
     set_spectrum_end_scale(val);
-  */
   in_set_spectrum_end(val);
-  /*
   check_spectrum_start(val);
-  */
   chans_field(FCP_SPECTRUM_END, val);
-  /*
   for_each_chan(chans_spectrum_changed);
-  */
+}
+
+
+static void spectrum_start_callback(GtkAdjustment *adj, gpointer context)
+{
+  Float start;
+  start = ADJUSTMENT_VALUE(adj);
+  in_set_spectrum_start(start);
+  check_spectrum_end(start);
+  chans_field(FCP_SPECTRUM_START, start);
+  for_each_chan(chans_spectrum_changed);
+
+}
+
+
+static void spectrum_end_callback(GtkAdjustment *adj, gpointer context)
+{
+  Float end;
+  end = ADJUSTMENT_VALUE(adj);
+  in_set_spectrum_end(end);
+  check_spectrum_start(end);
+  chans_field(FCP_SPECTRUM_END, end);
+  for_each_chan(chans_spectrum_changed);
 }
 
 
@@ -787,6 +845,8 @@ gboolean spin_button_unfocus_callback(GtkWidget *w, GdkEventCrossing *ev, gpoint
   return(false);
 }
 
+#define RIGHT_SEP_SIZE 10
+
 
 GtkWidget *fire_up_transform_dialog(bool managed)
 {
@@ -795,7 +855,10 @@ GtkWidget *fire_up_transform_dialog(bool managed)
     {
       GtkWidget *buttons;
       GtkWidget *display_frame, *help_button, *dismiss_button;
-      GtkWidget *wavelet_box, *orient_button, *color_button;
+      GtkWidget *ab_box, *ab_frame, *ab_label, *orient_button, *color_button;
+      GtkWidget *se_box, *se_frame, *se_label;
+      GtkWidget *alpha_box, *alpha_label, *beta_box, *beta_label;
+      GtkWidget *end_box, *end_label, *start_box, *start_label;
 
       transform_dialog = snd_gtk_dialog_new();
       SG_SIGNAL_CONNECT(transform_dialog, "delete_event", delete_transform_dialog, NULL);
@@ -803,7 +866,7 @@ GtkWidget *fire_up_transform_dialog(bool managed)
       sg_make_resizable(transform_dialog);
       gtk_container_set_border_width(GTK_CONTAINER(transform_dialog), 4);
       gtk_widget_realize(transform_dialog);
-      gtk_window_resize(GTK_WINDOW(transform_dialog), 400, 500);
+      /* gtk_window_resize(GTK_WINDOW(transform_dialog), 400, 500); */
 
       help_button = gtk_button_new_from_stock(GTK_STOCK_HELP);
       gtk_widget_set_name(help_button, "help_button");
@@ -833,27 +896,29 @@ GtkWidget *fire_up_transform_dialog(bool managed)
       gtk_widget_show(orient_button);
       gtk_widget_show(help_button);
 
-      outer_table = gtk_table_new(2, 4, false); /* rows cols */
+      outer_table = gtk_table_new(8, 11, false); /* rows cols */
       gtk_container_add(GTK_CONTAINER(DIALOG_CONTENT_AREA(transform_dialog)), outer_table);
-      gtk_table_set_row_spacings(GTK_TABLE(outer_table), 16);
-      gtk_table_set_col_spacings(GTK_TABLE(outer_table), 16);
+      gtk_table_set_row_spacings(GTK_TABLE(outer_table), 8);
+      gtk_table_set_col_spacings(GTK_TABLE(outer_table), 8);
       gtk_table_set_homogeneous(GTK_TABLE(outer_table), true);
 
-      /* now 6 boxes within the main box:
+      /* now 8 boxes within the main box:
 	 type (list)    |  size (list)        |  display (button column)
-	 wavelet (list) |  window (list+beta) |  graph (fft?) of current window
+	 wavelet (list) |  window (list)      |  graph (fft?) of current window
+         alpha/beta ==========================
+	 spectrum start/end ==================
       */
 
       /* TYPE */
       make_transform_type_list();
 
       /* SIZE */
-      size_list = slist_new_with_title_and_table_data(_("size"), outer_table, transform_size_names, NUM_TRANSFORM_SIZES, TABLE_ATTACH, 1, 2, 0, 1);
+      size_list = slist_new_with_title_and_table_data(_("size"), outer_table, transform_size_names, NUM_TRANSFORM_SIZES, TABLE_ATTACH, 3, 6, 0, 3);
       size_list->select_callback = size_browse_callback;
 
       /* DISPLAY */
       display_frame = gtk_frame_new(NULL);
-      gtk_table_attach_defaults(GTK_TABLE(outer_table), display_frame, 2, 4, 0, 1);
+      gtk_table_attach_defaults(GTK_TABLE(outer_table), display_frame, 6, 11, 0, 4);
       gtk_frame_set_shadow_type(GTK_FRAME(display_frame), GTK_SHADOW_ETCHED_IN);
 
       {
@@ -918,10 +983,9 @@ GtkWidget *fire_up_transform_dialog(bool managed)
 	SG_SIGNAL_CONNECT(selection_button, "toggled", selection_callback, NULL);
 
 	phases_button = gtk_check_button_new_with_label(_("with phases"));
-	gtk_box_pack_start(GTK_BOX(buttons), phases_button, false, false, 2);
+	gtk_box_pack_end(GTK_BOX(buttons), phases_button, false, false, 2);
 	gtk_widget_show(phases_button);
 	SG_SIGNAL_CONNECT(phases_button, "toggled", phases_callback, NULL);
-	
 	
 	
 	vb = gtk_vbox_new(false, 0);
@@ -941,7 +1005,7 @@ GtkWidget *fire_up_transform_dialog(bool managed)
 	gtk_widget_show(peaks_txt);
 
 	sep1 = gtk_vseparator_new();
-	gtk_box_pack_start(GTK_BOX(vb), sep1, false, false, 10);
+	gtk_box_pack_start(GTK_BOX(vb), sep1, false, false, RIGHT_SEP_SIZE);
 	gtk_widget_show(sep1);
 
 	db_lab = snd_gtk_highlight_label_new(_("min dB:"));
@@ -958,7 +1022,7 @@ GtkWidget *fire_up_transform_dialog(bool managed)
 	gtk_widget_show(db_txt);
 
 	sep2 = gtk_vseparator_new();
-	gtk_box_pack_start(GTK_BOX(vb), sep2, false, false, 10);
+	gtk_box_pack_start(GTK_BOX(vb), sep2, false, false, RIGHT_SEP_SIZE);
 	gtk_widget_show(sep2);
 
 	lf_lab = snd_gtk_highlight_label_new(_("log freq start:"));
@@ -982,45 +1046,133 @@ GtkWidget *fire_up_transform_dialog(bool managed)
 
 
       /* WINDOWS */
-      window_list = slist_new_with_title_and_table_data(_("window"), outer_table, (const char **)mus_fft_window_names(), MUS_NUM_FFT_WINDOWS, TABLE_ATTACH, 0, 1, 1, 2);
+      window_list = slist_new_with_title_and_table_data(_("window"), outer_table, (const char **)mus_fft_window_names(), MUS_NUM_FFT_WINDOWS, TABLE_ATTACH, 0, 3, 3, 6);
       window_list->select_callback = window_browse_callback;
 
       
       /* WAVELETS */
-      wavelet_box = gtk_table_new(2, 3, false);
-      gtk_table_attach_defaults(GTK_TABLE(outer_table), wavelet_box, 1, 2, 1, 2);
-      wavelet_list = slist_new_with_title_and_table_data(_("wavelet"), wavelet_box, (const char **)wavelet_names(), NUM_WAVELETS, TABLE_ATTACH, 0, 1, 0, 1);
+      wavelet_list = slist_new_with_title_and_table_data(_("wavelet"), outer_table, (const char **)wavelet_names(), NUM_WAVELETS, TABLE_ATTACH, 3, 6, 3, 6);
       wavelet_list->select_callback = wavelet_browse_callback;
 
-      beta_adj = gtk_adjustment_new(0.0, 0.0, 1.01, 0.001, 0.01, .01);
-      window_beta_scale = gtk_hscale_new(GTK_ADJUSTMENT(beta_adj));
-      GTK_WIDGET_UNSET_FLAGS(window_beta_scale, GTK_CAN_FOCUS);
-      gtk_range_set_update_policy(GTK_RANGE(GTK_SCALE(window_beta_scale)), GTK_UPDATE_CONTINUOUS);
-      gtk_scale_set_digits(GTK_SCALE(window_beta_scale), 2);
-      gtk_scale_set_value_pos(GTK_SCALE(window_beta_scale), GTK_POS_TOP);
-      gtk_scale_set_draw_value(GTK_SCALE(window_beta_scale), true);
-      SG_SIGNAL_CONNECT(beta_adj, "value_changed", beta_callback, NULL);
-      gtk_table_attach(GTK_TABLE(wavelet_box), window_beta_scale, 0, 1, 1, 2,
-		       (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), 
-		       (GtkAttachOptions)(GTK_FILL), 
-		       0, 0);
+      
+      /* ALPHA/BETA */
+
+      ab_frame = gtk_frame_new(NULL);
+      gtk_table_attach_defaults(GTK_TABLE(outer_table), ab_frame, 0, 6, 6, 7);
+      gtk_frame_set_shadow_type(GTK_FRAME(ab_frame), GTK_SHADOW_ETCHED_IN);
+
+      ab_box = gtk_vbox_new(false, 0);
+      gtk_container_add(GTK_CONTAINER(ab_frame), ab_box);	
+
+      ab_label = snd_gtk_highlight_label_new("window parameter");
+      gtk_box_pack_start(GTK_BOX(ab_box), ab_label, false, false, 0);
+      gtk_widget_show(ab_label);
+
+      
+      alpha_box = gtk_hbox_new(false, 0);
+      gtk_box_pack_start(GTK_BOX(ab_box), alpha_box, false, false, 0);      
+      gtk_widget_show(alpha_box);
+
+      alpha_label = gtk_label_new("alpha: ");
+      gtk_box_pack_start(GTK_BOX(alpha_box), alpha_label, false, false, 0);
+      gtk_widget_show(alpha_label);      
 
       alpha_adj = gtk_adjustment_new(0.0, 0.0, 1.01, 0.001, 0.01, .01);
       window_alpha_scale = gtk_hscale_new(GTK_ADJUSTMENT(alpha_adj));
       GTK_WIDGET_UNSET_FLAGS(window_alpha_scale, GTK_CAN_FOCUS);
       gtk_range_set_update_policy(GTK_RANGE(GTK_SCALE(window_alpha_scale)), GTK_UPDATE_CONTINUOUS);
       gtk_scale_set_digits(GTK_SCALE(window_alpha_scale), 2);
-      gtk_scale_set_value_pos(GTK_SCALE(window_alpha_scale), GTK_POS_TOP);
+      gtk_scale_set_value_pos(GTK_SCALE(window_alpha_scale), GTK_POS_LEFT);
       gtk_scale_set_draw_value(GTK_SCALE(window_alpha_scale), true);
       SG_SIGNAL_CONNECT(alpha_adj, "value_changed", alpha_callback, NULL);
-      gtk_table_attach(GTK_TABLE(wavelet_box), window_alpha_scale, 0, 1, 2, 3,
-		       (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), 
-		       (GtkAttachOptions)(GTK_FILL), 
-		       0, 0);
+
+      gtk_box_pack_start(GTK_BOX(alpha_box), window_alpha_scale, true, true, 0);      
+
+
+      beta_box = gtk_hbox_new(false, 0);
+      gtk_box_pack_start(GTK_BOX(ab_box), beta_box, false, false, 0);      
+      gtk_widget_show(beta_box);
+
+      beta_label = gtk_label_new("beta:  ");
+      gtk_box_pack_start(GTK_BOX(beta_box), beta_label, false, false, 0);
+      gtk_widget_show(beta_label);      
+
+      beta_adj = gtk_adjustment_new(0.0, 0.0, 1.01, 0.001, 0.01, .01);
+      window_beta_scale = gtk_hscale_new(GTK_ADJUSTMENT(beta_adj));
+      GTK_WIDGET_UNSET_FLAGS(window_beta_scale, GTK_CAN_FOCUS);
+      gtk_range_set_update_policy(GTK_RANGE(GTK_SCALE(window_beta_scale)), GTK_UPDATE_CONTINUOUS);
+      gtk_scale_set_digits(GTK_SCALE(window_beta_scale), 2);
+      gtk_scale_set_value_pos(GTK_SCALE(window_beta_scale), GTK_POS_LEFT);
+      gtk_scale_set_draw_value(GTK_SCALE(window_beta_scale), true);
+      SG_SIGNAL_CONNECT(beta_adj, "value_changed", beta_callback, NULL);
+
+      gtk_box_pack_start(GTK_BOX(beta_box), window_beta_scale, true, true, 0);      
+
 
       gtk_widget_show(window_alpha_scale);
       gtk_widget_show(window_beta_scale);
-      gtk_widget_show(wavelet_box);
+      gtk_widget_show(ab_box);
+      gtk_widget_show(ab_frame);
+
+
+
+      /* SPECTRUM_START/END */
+
+      se_frame = gtk_frame_new(NULL);
+      gtk_table_attach_defaults(GTK_TABLE(outer_table), se_frame, 0, 6, 7, 8);
+      gtk_frame_set_shadow_type(GTK_FRAME(se_frame), GTK_SHADOW_ETCHED_IN);
+
+      se_box = gtk_vbox_new(false, 0);
+      gtk_container_add(GTK_CONTAINER(se_frame), se_box);	
+
+      se_label = snd_gtk_highlight_label_new("spectrum start/end");
+      gtk_box_pack_start(GTK_BOX(se_box), se_label, false, false, 0);
+      gtk_widget_show(se_label);
+
+      start_box = gtk_hbox_new(false, 0);
+      gtk_box_pack_start(GTK_BOX(se_box), start_box, false, false, 0);      
+      gtk_widget_show(start_box);
+
+      start_label = gtk_label_new("start: ");
+      gtk_box_pack_start(GTK_BOX(start_box), start_label, false, false, 0);
+      gtk_widget_show(start_label);      
+
+      spectrum_start_adj = gtk_adjustment_new(0.0, 0.0, 1.01, 0.001, 0.01, .01);
+      spectrum_start_scale = gtk_hscale_new(GTK_ADJUSTMENT(spectrum_start_adj));
+      GTK_WIDGET_UNSET_FLAGS(spectrum_start_scale, GTK_CAN_FOCUS);
+      gtk_range_set_update_policy(GTK_RANGE(GTK_SCALE(spectrum_start_scale)), GTK_UPDATE_CONTINUOUS);
+      gtk_scale_set_digits(GTK_SCALE(spectrum_start_scale), 2);
+      gtk_scale_set_value_pos(GTK_SCALE(spectrum_start_scale), GTK_POS_LEFT);
+      gtk_scale_set_draw_value(GTK_SCALE(spectrum_start_scale), true);
+      SG_SIGNAL_CONNECT(spectrum_start_adj, "value_changed", spectrum_start_callback, NULL);
+
+      gtk_box_pack_start(GTK_BOX(start_box), spectrum_start_scale, true, true, 0);      
+
+
+      end_box = gtk_hbox_new(false, 0);
+      gtk_box_pack_start(GTK_BOX(se_box), end_box, false, false, 0);      
+      gtk_widget_show(end_box);
+
+      end_label = gtk_label_new("end:  ");
+      gtk_box_pack_start(GTK_BOX(end_box), end_label, false, false, 0);
+      gtk_widget_show(end_label);      
+
+      spectrum_end_adj = gtk_adjustment_new(0.0, 0.0, 1.01, 0.001, 0.01, .01);
+      spectrum_end_scale = gtk_hscale_new(GTK_ADJUSTMENT(spectrum_end_adj));
+      GTK_WIDGET_UNSET_FLAGS(spectrum_end_scale, GTK_CAN_FOCUS);
+      gtk_range_set_update_policy(GTK_RANGE(GTK_SCALE(spectrum_end_scale)), GTK_UPDATE_CONTINUOUS);
+      gtk_scale_set_digits(GTK_SCALE(spectrum_end_scale), 2);
+      gtk_scale_set_value_pos(GTK_SCALE(spectrum_end_scale), GTK_POS_LEFT);
+      gtk_scale_set_draw_value(GTK_SCALE(spectrum_end_scale), true);
+      SG_SIGNAL_CONNECT(spectrum_end_adj, "value_changed", spectrum_end_callback, NULL);
+
+      gtk_box_pack_start(GTK_BOX(end_box), spectrum_end_scale, true, true, 0);      
+
+      gtk_widget_show(spectrum_start_scale);
+      gtk_widget_show(spectrum_end_scale);
+      gtk_widget_show(se_box);
+      gtk_widget_show(se_frame);
+
 
 
       /* GRAPH */
@@ -1029,7 +1181,7 @@ GtkWidget *fire_up_transform_dialog(bool managed)
 	label = snd_gtk_highlight_label_new(mus_fft_window_name(fft_window(ss)));
 
 	graph_frame = gtk_frame_new(NULL);
-	gtk_table_attach_defaults(GTK_TABLE(outer_table), graph_frame, 2, 4, 1, 2);
+	gtk_table_attach_defaults(GTK_TABLE(outer_table), graph_frame, 6, 11, 4, 8);
 	gtk_frame_set_label_align(GTK_FRAME(graph_frame), 0.5, 0.0);
 	gtk_frame_set_shadow_type(GTK_FRAME(graph_frame), GTK_SHADOW_ETCHED_IN);
 
@@ -1065,6 +1217,12 @@ GtkWidget *fire_up_transform_dialog(bool managed)
       set_toggle_button(selection_button, show_selection_transform(ss), false, NULL);
       set_toggle_button(phases_button, fft_with_phases(ss), false, NULL);
 
+      if (spectrum_start(ss) != 0.0) set_spectrum_start_scale(spectrum_start(ss));
+      if (spectrum_end(ss) != 0.0) set_spectrum_end_scale(spectrum_end(ss));
+      if (fft_window_alpha(ss) != 0.0) ADJUSTMENT_SET_VALUE(alpha_adj, fft_window_alpha(ss));
+      if (fft_window_beta(ss) != 0.0) ADJUSTMENT_SET_VALUE(beta_adj, fft_window_beta(ss));
+
+      /* highlight_alpha_beta_scales(fft_window(ss)); */
       need_callback = true;
       gtk_widget_show(outer_table);
       set_dialog_widget(TRANSFORM_DIALOG, transform_dialog);

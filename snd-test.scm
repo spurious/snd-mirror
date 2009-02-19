@@ -60277,7 +60277,6 @@ EDITS: 1
 	  (if (gtk_false) (snd-display ";gtk_false: ~A" (gtk_false)))
 	  (if (gdk_pointer_is_grabbed) (snd-display ";gdk_pointer_is_grabbed?"))
 	  (if (not (gdk_list_visuals)) (snd-display ";gdk_list_visuals?"))
-	  (if (not (gdk_window_get_toplevels)) (snd-display ";gdk_window_get_toplevels?"))
 	  (if (not (gtk_window_list_toplevels)) (snd-display ";gtk_window_list_toplevels?"))
 	  (gtk_window_set_default_icon_list (gtk_window_get_default_icon_list))
 	  (if (gdk_rgb_ditherable) (snd-display ";rgb ditherable?"))
@@ -61005,7 +61004,7 @@ EDITS: 1
 		 (_GtkSeparatorToolItem_ (GTK_SEPARATOR_TOOL_ITEM (gtk_separator_tool_item_new)))
 		 (_GtkToggleToolButton_ (GTK_TOGGLE_TOOL_BUTTON (gtk_toggle_tool_button_new)))
 		 (_GtkToolItem8_ (gtk_toggle_tool_button_new_from_stock GTK_STOCK_CANCEL))
-		 (_GtkOrientation (gtk_toolbar_get_orientation _GtkToolbar_))
+;		 (_GtkOrientation (gtk_toolbar_get_orientation _GtkToolbar_))
 		 (_GtkToolbarStyle (gtk_toolbar_get_style _GtkToolbar_))
 		 (_GtkIconSize (gtk_toolbar_get_icon_size _GtkToolbar_))
 		 (_gint (gtk_toolbar_get_n_items _GtkToolbar_))
@@ -61058,7 +61057,7 @@ EDITS: 1
 	    (gtk_radio_tool_button_set_group _GtkRadioToolButton_ #f)
 	    (gtk_toggle_tool_button_set_active _GtkToggleToolButton_ #t)
 	    (gtk_toolbar_unset_style _GtkToolbar_)
-	    (gtk_toolbar_set_orientation _GtkToolbar_ GTK_ORIENTATION_HORIZONTAL)
+;	    (gtk_toolbar_set_orientation _GtkToolbar_ GTK_ORIENTATION_HORIZONTAL)
 	    (gtk_toolbar_set_style _GtkToolbar_ GTK_TOOLBAR_TEXT)
 	    (gtk_toolbar_set_show_arrow _GtkToolbar_ #f)
 	    (gtk_tool_button_set_label _GtkToolButton_ "hi")
@@ -62851,7 +62850,7 @@ EDITS: 1
 		   GTK_IS_IMAGE_MENU_ITEM GTK_IS_IM_CONTEXT GTK_IS_IM_CONTEXT_SIMPLE GTK_IS_IM_MULTICONTEXT GTK_IS_INPUT_DIALOG
 		   GTK_IS_INVISIBLE GTK_IS_ITEM GTK_IS_LABEL GTK_IS_LAYOUT GTK_IS_LIST_STORE
 		   GTK_IS_MENU GTK_IS_MENU_BAR GTK_IS_MENU_ITEM GTK_IS_MENU_SHELL GTK_IS_MENU_TOOL_BUTTON
-		   GTK_IS_MESSAGE_DIALOG GTK_IS_MISC GTK_IS_NOTEBOOK GTK_IS_OBJECT GTK_IS_PANED
+		   GTK_IS_MISC GTK_IS_NOTEBOOK GTK_IS_OBJECT GTK_IS_PANED
 		   GTK_IS_PLUG GTK_IS_PROGRESS_BAR GTK_IS_RADIO_ACTION GTK_IS_RADIO_BUTTON GTK_IS_RADIO_MENU_ITEM
 		   GTK_IS_RADIO_TOOL_BUTTON GTK_IS_RANGE GTK_IS_RC_STYLE GTK_IS_RESIZE_CONTAINER GTK_IS_RULER
 		   GTK_IS_SCALE GTK_IS_SCROLLBAR GTK_IS_SCROLLED_WINDOW GTK_IS_SEPARATOR GTK_IS_SEPARATOR_MENU_ITEM
@@ -62865,7 +62864,7 @@ EDITS: 1
 		   GTK_IS_VPANED GTK_IS_VRULER GTK_IS_VSCALE GTK_IS_VSCROLLBAR GTK_IS_VSEPARATOR
 		   GTK_IS_WIDGET GTK_IS_WINDOW GTK_ITEM GTK_LABEL GTK_LAYOUT
 		   GTK_LIST_STORE GTK_MENU GTK_MENU_BAR GTK_MENU_ITEM GTK_MENU_SHELL
-		   GTK_MENU_TOOL_BUTTON GTK_MESSAGE_DIALOG GTK_MISC GTK_NOTEBOOK GTK_OBJECT
+		   GTK_MENU_TOOL_BUTTON GTK_MISC GTK_NOTEBOOK GTK_OBJECT
 		   GTK_OBJECT_FLAGS GTK_OBJECT_SET_FLAGS GTK_OBJECT_TYPE_NAME GTK_OBJECT_UNSET_FLAGS
 		   GTK_PANED GTK_PLUG GTK_PROGRESS_BAR GTK_RADIO_ACTION GTK_RADIO_BUTTON
 		   GTK_RADIO_MENU_ITEM GTK_RADIO_TOOL_BUTTON GTK_RANGE GTK_RULER GTK_SCALE
@@ -62976,7 +62975,7 @@ EDITS: 1
 		   gdk_window_end_paint gdk_window_focus gdk_window_foreign_new gdk_window_freeze_updates gdk_window_get_children
 		   gdk_window_get_decorations gdk_window_get_events gdk_window_get_frame_extents gdk_window_get_geometry gdk_window_get_group
 		   gdk_window_get_internal_paint_info gdk_window_get_origin gdk_window_get_parent gdk_window_get_pointer gdk_window_get_position
-		   gdk_window_get_root_origin gdk_window_get_state gdk_window_get_toplevel gdk_window_get_toplevels gdk_window_get_update_area
+		   gdk_window_get_root_origin gdk_window_get_state gdk_window_get_toplevel gdk_window_get_update_area
 		   gdk_window_get_user_data gdk_window_get_window_type gdk_window_hide gdk_window_iconify
 		   gdk_window_invalidate_maybe_recurse gdk_window_invalidate_rect gdk_window_invalidate_region gdk_window_is_viewable gdk_window_is_visible
 		   gdk_window_lookup gdk_window_lower gdk_window_maximize gdk_window_merge_child_shapes gdk_window_move
@@ -63006,8 +63005,8 @@ EDITS: 1
 		   gtk_accel_map_add_filter gtk_accel_map_change_entry gtk_accel_map_foreach gtk_accel_map_foreach_unfiltered gtk_accel_map_get
 		   gtk_accelerator_get_default_mod_mask gtk_accelerator_get_label gtk_accelerator_name gtk_accelerator_parse
 		   gtk_accelerator_set_default_mod_mask gtk_accelerator_valid gtk_accessible_connect_widget_destroyed gtk_action_activate
-		   gtk_action_connect_accelerator gtk_action_connect_proxy gtk_action_create_icon gtk_action_create_menu_item gtk_action_create_tool_item
-		   gtk_action_disconnect_accelerator gtk_action_disconnect_proxy gtk_action_get_name gtk_action_get_proxies gtk_action_get_sensitive
+		   gtk_action_connect_accelerator gtk_action_create_icon gtk_action_create_menu_item gtk_action_create_tool_item
+		   gtk_action_disconnect_accelerator gtk_action_get_name gtk_action_get_proxies gtk_action_get_sensitive
 		   gtk_action_get_visible gtk_action_group_add_action gtk_action_group_add_action_with_accel gtk_action_group_add_actions
 		   gtk_action_group_add_toggle_actions gtk_action_group_add_toggle_actions_full gtk_action_group_get_action 
 		   gtk_action_group_get_name gtk_action_group_get_sensitive
@@ -63381,9 +63380,9 @@ EDITS: 1
 		   gtk_tool_item_set_proxy_menu_item; gtk_tool_item_set_tooltip gtk_tool_item_set_use_drag_window
 		   gtk_tool_item_set_visible_horizontal gtk_tool_item_set_visible_vertical 
 		   gtk_toolbar_get_drop_index gtk_toolbar_get_icon_size gtk_toolbar_get_item_index
-		   gtk_toolbar_get_n_items gtk_toolbar_get_nth_item gtk_toolbar_get_orientation gtk_toolbar_get_relief_style gtk_toolbar_get_show_arrow
+		   gtk_toolbar_get_n_items gtk_toolbar_get_nth_item gtk_toolbar_get_relief_style gtk_toolbar_get_show_arrow
 		   gtk_toolbar_get_style gtk_toolbar_insert gtk_toolbar_new
-		   gtk_toolbar_set_orientation gtk_toolbar_set_show_arrow gtk_toolbar_set_style gtk_toolbar_unset_style
+		   gtk_toolbar_set_show_arrow gtk_toolbar_set_style gtk_toolbar_unset_style
 		   gtk_tree_drag_dest_drag_data_received   gtk_tree_drag_dest_row_drop_possible gtk_tree_drag_source_drag_data_delete 
 		   gtk_tree_drag_source_drag_data_get gtk_tree_drag_source_row_draggable
 		   gtk_tree_get_row_drag_data gtk_tree_iter_copy gtk_tree_iter_free gtk_tree_model_filter_clear_cache
