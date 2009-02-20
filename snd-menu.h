@@ -27,7 +27,7 @@ enum {m_menu,
           v_region_menu,
           v_combine_menu, v_combine_cascade_menu,
             v_combine_separate_menu, v_combine_combined_menu, v_combine_superimposed_menu,
-          v_color_menu, v_orientation_menu, 
+          v_color_orientation_menu, 
           v_files_menu, v_mix_dialog_menu, 
           v_x_axis_menu, v_x_axis_cascade_menu,
             v_x_axis_seconds_menu, v_x_axis_samples_menu, v_x_axis_percentage_menu, v_x_axis_beats_menu, v_x_axis_measures_menu, v_x_axis_clock_menu,
@@ -135,8 +135,7 @@ enum {m_menu,
 #define view_combine_separate_menu (ss->sgx->mw[v_combine_separate_menu])
 #define view_combine_combined_menu (ss->sgx->mw[v_combine_combined_menu])
 #define view_combine_superimposed_menu (ss->sgx->mw[v_combine_superimposed_menu])
-#define view_color_menu (ss->sgx->mw[v_color_menu])
-#define view_orientation_menu (ss->sgx->mw[v_orientation_menu])
+#define view_color_orientation_menu (ss->sgx->mw[v_color_orientation_menu])
 #define view_files_menu (ss->sgx->mw[v_files_menu])
 #define view_mix_dialog_menu (ss->sgx->mw[v_mix_dialog_menu])
 #define view_x_axis_menu (ss->sgx->mw[v_x_axis_menu])

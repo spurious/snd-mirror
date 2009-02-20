@@ -23,18 +23,18 @@ make sndplay
 ./sndplay oboe.snd
 make sndrecord
 
-# GUILE_CONFIG_path=/home/bil/test/bin 
-echo ' -------------------------------- basic configure test/bin -------------------------------- '
+
+echo ' -------------------------------- basic configure guile -------------------------------- '
 make allclean
-echo ' CFLAGS="-Wall -I/usr/X11R6/include" GUILE_CONFIG_path=/home/bil/test/bin '
-./configure --quiet CFLAGS="-Wall -I/usr/X11R6/include" GUILE_CONFIG_path=/home/bil/test/bin LDFLAGS="-L/usr/X11R6/lib"
+echo ' CFLAGS="-Wall -I/usr/X11R6/include" --with-guile '
+./configure --quiet CFLAGS="-Wall -I/usr/X11R6/include" --with-guile LDFLAGS="-L/usr/X11R6/lib"
 make
 make xm
 ./snd --version
 ./snd -l snd-test 0
 make allclean
-echo ' CC=g++ CFLAGS="-Wall -I/usr/X11R6/include" GUILE_CONFIG_path=/home/bil/test/bin '
-./configure --quiet CC=g++ CFLAGS="-Wall -I/usr/X11R6/include" GUILE_CONFIG_path=/home/bil/test/bin LDFLAGS="-L/usr/X11R6/lib"
+echo ' CC=g++ CFLAGS="-Wall -I/usr/X11R6/include" --with-guile '
+./configure --quiet CC=g++ CFLAGS="-Wall -I/usr/X11R6/include" --with-guile LDFLAGS="-L/usr/X11R6/lib"
 make
 make xm
 ./snd --version
@@ -582,5 +582,3 @@ echo ' --with-static-xm --with-ruby CFLAGS="-DXM_DISABLE_DEPRECATED -Wall -I/usr
 make
 make allclean
 
-
-# ./configure --enable-snd-debug CFLAGS=-DWITH_EFENCE SNDLIB_LIB=/home/bil/test/ElectricFence-2.2.2/libefence.a

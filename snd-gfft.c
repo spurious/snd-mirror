@@ -807,15 +807,9 @@ static void dismiss_transform_callback(GtkWidget *w, gpointer context)
 }
 
 
-static void orient_transform_callback(GtkWidget *w, gpointer context)
+static void color_orientation_transform_callback(GtkWidget *w, gpointer context)
 {
-  start_orientation_dialog(true);
-}
-
-
-static void color_transform_callback(GtkWidget *w, gpointer context)
-{
-  start_color_dialog(true);
+  start_color_orientation_dialog(true);
 }
 
 
@@ -855,7 +849,7 @@ GtkWidget *fire_up_transform_dialog(bool managed)
     {
       GtkWidget *buttons;
       GtkWidget *display_frame, *help_button, *dismiss_button;
-      GtkWidget *ab_box, *ab_frame, *ab_label, *orient_button, *color_button;
+      GtkWidget *ab_box, *ab_frame, *ab_label, *color_button;
       GtkWidget *se_box, *se_frame, *se_label;
       GtkWidget *alpha_box, *alpha_label, *beta_box, *beta_label;
       GtkWidget *end_box, *end_label, *start_box, *start_label;
@@ -875,25 +869,19 @@ GtkWidget *fire_up_transform_dialog(bool managed)
       gtk_widget_set_name(dismiss_button, "quit_button");
       set_stock_button_label(dismiss_button, _("Go Away"));
 
-      color_button = sg_button_new_from_stock_with_label(_("Color"), GTK_STOCK_SELECT_COLOR);
+      color_button = sg_button_new_from_stock_with_label(_("Color/Orientation"), GTK_STOCK_SELECT_COLOR);
       gtk_widget_set_name(color_button, "doit_button");
 
-      orient_button = sg_button_new_from_stock_with_label(_("Orientation"), GTK_STOCK_PROPERTIES);
-      gtk_widget_set_name(orient_button, "doit_again_button");
-
       gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(transform_dialog)), color_button, false, true, 10);
-      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(transform_dialog)), orient_button, false, true, 10);
       gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(transform_dialog)), dismiss_button, false, true, 10);
       gtk_box_pack_end(GTK_BOX(DIALOG_ACTION_AREA(transform_dialog)), help_button, false, true, 10);
 
       SG_SIGNAL_CONNECT(dismiss_button, "clicked", dismiss_transform_callback, NULL);
-      SG_SIGNAL_CONNECT(color_button, "clicked", color_transform_callback, NULL);
-      SG_SIGNAL_CONNECT(orient_button, "clicked", orient_transform_callback, NULL);
+      SG_SIGNAL_CONNECT(color_button, "clicked", color_orientation_transform_callback, NULL);
       SG_SIGNAL_CONNECT(help_button, "clicked", help_transform_callback, NULL);
 
       gtk_widget_show(dismiss_button);
       gtk_widget_show(color_button);
-      gtk_widget_show(orient_button);
       gtk_widget_show(help_button);
 
       outer_table = gtk_table_new(8, 11, false); /* rows cols */

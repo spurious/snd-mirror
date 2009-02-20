@@ -1677,7 +1677,7 @@ include bird.fsm
      <'> bind-key <'> bomb <'> c-g? <'> apply-controls
      <'> change-samples-with-origin <'> channel-style <'> channel-widgets <'> channels
      <'> chans <'> peaks-font <'> bold-peaks-font <'> close-sound
-     <'> color-cutoff <'> color-dialog <'> colormap-ref <'> add-colormap
+     <'> color-cutoff <'> color-orientation-dialog <'> colormap-ref <'> add-colormap
      <'> delete-colormap <'> colormap-size <'> colormap-name <'> color-inverted
      <'> color-scale <'> color->list <'> colormap <'> color?
      <'> comment <'> contrast-control <'> contrast-control-amp <'> contrast-control?
@@ -1735,7 +1735,7 @@ include bird.fsm
      <'> mix-tag-y <'> mix-vct <'> mix-waveform-height <'> time-graph-style
      <'> lisp-graph-style <'> transform-graph-style <'> read-mix-sample
      <'> next-sample <'> transform-normalization <'> open-raw-sound
-     <'> open-sound <'> orientation-dialog <'> previous-sample <'> peak-env-info
+     <'> open-sound <'> previous-sample <'> peak-env-info
      <'> peaks <'> player? <'> players <'> position-color
      <'> position->x <'> position->y <'> add-directory-to-view-files-list
      <'> add-file-to-view-files-list
@@ -2622,7 +2622,7 @@ include bird.fsm
        <'> ask-before-overwrite
        <'> auto-resize <'> auto-update <'> axis-label-font <'> axis-numbers-font
        <'> basic-color <'> bind-key <'> channel-style <'> color-cutoff
-       <'> color-dialog <'> color-inverted <'> color-scale <'> cursor-color
+       <'> color-orientation-dialog <'> color-inverted <'> color-scale <'> cursor-color
        <'> dac-combines-channels <'> dac-size <'> clipping <'> data-color
        <'> default-output-chans <'> default-output-data-format <'> default-output-srate
        <'> default-output-header-type

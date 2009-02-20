@@ -1783,11 +1783,7 @@
 	      (snd-display ";set enved-envelope: ~A?" (enved-envelope)))
 	  (set! (enved-envelope) (enved-envelope))
 	  (if (not (equal? (enved-envelope) (list 0.0 0.0 1.0 1.0 2.0 0.0)))
-	      (snd-display ";set enved-envelope to self: ~A?" (enved-envelope)))
-	  (let ((wid (orientation-dialog)))
-	    (if (not (list-ref (dialog-widgets) 1)) (snd-display ";orientation-dialog?"))
-	    (if (not (equal? wid (list-ref (dialog-widgets) 1)))
-		(snd-display ";orientation-dialog -> ~A ~A" wid (list-ref (dialog-widgets) 1))))))
+	      (snd-display ";set enved-envelope to self: ~A?" (enved-envelope)))))
     
     (letrec ((test-vars
 	      (lambda (lst)
@@ -2096,7 +2092,7 @@
 		       'channels-separate 'channels-superimposed 'chans 'clear-array 'clear-listener
 		       'clear-minibuffer 'clear-sincs 'clip-hook 'clipping 'clm-channel 'clm-print
 		       'clm-table-size 'clm-default-frequency 'close-hook 'close-sound 'color->list
-		       'color-cutoff 'color-dialog 'color-hook 'color-inverted 'color-scale
+		       'color-cutoff 'color-orientation-dialog 'color-hook 'color-inverted 'color-scale
 		       'color? 'colormap 'colormap-name 'colormap-ref 'colormap-size
 		       'colormap? 'comb 'comb? 'comment 'connes-window
 		       'continue-frame->file 'continue-sample->file 'contrast-control 'contrast-control-amp 'contrast-control-bounds
@@ -2229,7 +2225,7 @@
 		       'next-sample 'normalize-by-channel 'normalize-by-sound 'normalize-channel 'normalize-globally
 		       'notch 'notch? 'one-pole 'one-pole? 'one-zero
 		       'one-zero? 'open-file-dialog 'open-file-dialog-directory 'open-hook 'open-raw-sound 'open-raw-sound-hook
-		       'open-sound 'optimization 'optimization-hook 'orientation-dialog
+		       'open-sound 'optimization 'optimization-hook 
 		       'orientation-hook 'oscil 'oscil? 'out-any 'outa
 		       'outb 'outc 'outd 'output-comment-hook 'output-name-hook 
 		       'override-samples-with-origin 'pad-channel 'partials->polynomial 'partials->wave
@@ -29850,15 +29846,14 @@ EDITS: 2
 	(without-errors (peaks))
 	(mus-audio-describe) 
 	(let ((envd (enved-dialog) ))
-	  (let ((cold (color-dialog))
-		(ord (orientation-dialog))
+	  (let ((cold (color-orientation-dialog))
 		(trd (transform-dialog))
 		(fild (view-files-dialog))
 		(regd (view-regions-dialog))
 		(pd (and (not (provided? 'cairo)) (print-dialog)))
 		(ehd (without-errors (edit-header-dialog))))
 	    (if (not (equal? cold (list-ref (dialog-widgets) 0)))
-		(snd-display ";color-dialog -> ~A ~A" cold (list-ref (dialog-widgets) 0)))
+		(snd-display ";color-orientation-dialog -> ~A ~A" cold (list-ref (dialog-orientation-widgets) 0)))
 	    (if (and (not (provided? 'cairo)) 
 		     (not (equal? pd (list-ref (dialog-widgets) 17))))
 		(snd-display ";print-dialog -> ~A ~A" pd (list-ref (dialog-widgets) 17)))
@@ -64165,7 +64160,7 @@ EDITS: 1
 		     auto-resize auto-update autocorrelate axis-color axis-info axis-label-font axis-numbers-font
 		     basic-color bind-key bomb c-g? apply-controls change-samples-with-origin channel-style
 		     channel-widgets channels chans peaks-font bold-peaks-font close-sound
-		     color-cutoff color-dialog colormap-ref add-colormap delete-colormap colormap-size colormap-name colormap?
+		     color-cutoff color-orientation-dialog colormap-ref add-colormap delete-colormap colormap-size colormap-name colormap?
 		     color-inverted color-scale color->list colormap color?  comment contrast-control contrast-control-amp
 		     contrast-control? convolve-selection-with convolve-with channel-properties controls->channel
 		     amp-control-bounds speed-control-bounds expand-control-bounds contrast-control-bounds
@@ -64199,7 +64194,7 @@ EDITS: 1
 		     mix-tag-y mix-vct mix-waveform-height time-graph-style lisp-graph-style transform-graph-style
 					;new-sound in add-watcher
 		     read-mix-sample next-sample read-region-sample
-		     transform-normalization open-file-dialog-directory open-raw-sound open-sound orientation-dialog previous-sample
+		     transform-normalization open-file-dialog-directory open-raw-sound open-sound previous-sample
 		     peak-env-info peaks ;play play-and-wait play-mix play-region play-selection
 		     player? players
 		     position-color position->x position->y add-directory-to-view-files-list add-file-to-view-files-list view-files-sort 
@@ -65119,7 +65114,7 @@ EDITS: 1
 			  (set! ctr (+ ctr 1))))
 		      (list axis-color enved-filter-order enved-filter filter-control-waveform-color ask-before-overwrite
 			    auto-resize auto-update axis-label-font axis-numbers-font basic-color bind-key
-			    channel-style color-cutoff color-dialog color-inverted color-scale
+			    channel-style color-cutoff color-orientation-dialog color-inverted color-scale
 			    cursor-color dac-combines-channels dac-size clipping data-color default-output-chans 
 			    default-output-data-format default-output-srate default-output-header-type enved-envelope enved-base
 			    enved-clip? enved-in-dB enved-dialog enved-style  enved-power enved-target

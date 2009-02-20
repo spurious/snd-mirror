@@ -2,7 +2,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Dec 30 04:52:13 CET 2005
-\ Changed: Tue Jan 29 01:59:19 CET 2008
+\ Changed: Thu Dec 18 22:56:44 CET 2008
 
 \ src-duration             ( en -- dur )
 \ src-fit-envelope         ( e1 target-dur -- e2 )
@@ -244,7 +244,7 @@ for time-varying sampling-rate conversion."
     kdx 1- to kdx
   loop
   rl2 im2 -1 fft
-  rl2 0 n len * snd chn #f $" %s %s" '( n get-func-name ) string-format vct->channel
+  rl2 0 n len * snd chn #f $" %s %s" #( n get-func-name ) string-format vct->channel
 ;
 
 : stretch-sound-via-dft <{ factor :optional snd #f chn #f -- }>
@@ -265,7 +265,7 @@ by squeezing in the frequency domain, then using the inverse DFT to get the time
   loop
   two-pi out-n f/ { freq }
   out-n 0.0 make-vct map! freq 0.0+1.0i c* i c* fr edot-product n c/ real-ref end-map ( out-data )
-  0 out-n snd chn #f $" %s %s" '( factor get-func-name ) string-format vct->channel drop
+  0 out-n snd chn #f $" %s %s" #( factor get-func-name ) string-format vct->channel drop
 ;
 
 \ ;;; -------- compute-uniform-circular-string
@@ -333,7 +333,7 @@ hide
 set-current
 : freqdiv   <{ n :optional snd #f chn #f -- val }>
   doc" Repeats each nth sample N times (clobbering the intermediate samples): 8 freqdiv"
-  0 n 0.0 freqdiv-cb 0 #f snd chn #f $" %s %s" '( n get-func-name ) format map-channel
+  0 n 0.0 freqdiv-cb 0 #f snd chn #f $" %s %s" #( n get-func-name ) format map-channel
 ;
 previous
 
@@ -367,7 +367,7 @@ hide
 set-current
 : adsat <{ size :optional beg 0 dur #f snd #f chn #f -- val }>
   doc" An 'adaptive saturation' sound effect."
-  $" %s %s %s %s" '( size beg dur get-func-name ) string-format { origin }
+  $" %s %s %s %s" #( size beg dur get-func-name ) string-format { origin }
   0.0 0.0 0 size 0.0 make-vct adsat-cb beg dur snd chn #f origin map-channel
 ;
 previous
@@ -403,7 +403,7 @@ previous
 : spot-freq <{ samp :optional snd #f chn #f -- }>
   doc" Tries to determine the current pitch: left-sample spot-freq"
   snd srate s>f { sr }
-  2.0   sr 20.0 f/ flog  2.0 flog  f/  fceil  f** f>s { fftlen }
+  2.0   sr 20.0 f/ flog  2.0 flog  f/  fceil  f** fround->s { fftlen }
   samp fftlen snd chn #f channel->vct autocorrelate { data }
   data vct-peak { cor-peak }
   cor-peak f2*  { cor-peak2 }
@@ -423,15 +423,15 @@ previous
 ;
 0 [if]
 \ Left sample:
-graph-hook lambda: <{ snd chn y0 y1 -- }>
-  $" freq: %.3f" '( snd chn LEFT-SAMPLE  snd chn spot-freq ) string-format
+graph-hook lambda: <{ snd chn y0 y1 -- f }>
+  $" freq: %.3f" #( snd chn LEFT-SAMPLE  snd chn spot-freq ) string-format
   snd #f report-in-minibuffer drop
   #f
 ; add-hook!
 \ At cursor position:
 mouse-click-hook lambda: <{ snd chn button state x y axis -- }>
   axis time-graph = if
-    $" freq: %.3f" '( snd chn #f CURSOR  snd chn spot-freq ) string-format
+    $" freq: %.3f" #( snd chn #f CURSOR  snd chn spot-freq ) string-format
     snd #f report-in-minibuffer
   else
     #f
@@ -473,11 +473,11 @@ previous
 
 0.95           value chordalize-amount
 100            value chordalize-base
-'( 1 3/4 5/4 ) value chordalize-chord
+#( 1 3/4 5/4 ) value chordalize-chord
 
 : chordalize ( -- proc; x self -- val )
   doc" Uses harmonically-related comb-filters to bring out a chord in a sound.  \
-Global variable CHORDALIZE-CHORD is a list of members of chord such as '( 1 5/4 3/2 )."
+Global variable CHORDALIZE-CHORD is an array of members of chord such as #( 1 5/4 3/2 )."
   chordalize-chord map
     :scaler chordalize-amount :size chordalize-base *key* r* r>s make-comb
   end-map { combs }
@@ -526,12 +526,12 @@ Global variable CHORDALIZE-CHORD is a list of members of chord such as '( 1 5/4 
   im 0 0.0 vct-set! drop
   func xt? if func 1 make-proc to func then
   fftlen2 1 ?do
-    im i  func  '( im i  object-ref )  run-proc  object-set!
+    im i  func  #( im i  object-ref )  run-proc  object-set!
     im i negate im i negate object-ref fnegate   object-set!	\ handles negative index
   loop
   rl im -1 fft drop
   rl vct-peak { pk }
-  $" <'> %s %s" '( func proc-name get-func-name ) string-format { origin }
+  $" <'> %s %s" #( func proc-name get-func-name ) string-format { origin }
   rl old-pk pk f/ vct-scale! 0 len snd chn #f origin vct->channel
 ;
 \ See note above for a good origin for reuse.
@@ -730,7 +730,7 @@ set-current
   doc" It's a form of contrast-enhancement (AMOUNT between ca 0.1 and 1)."
   snd chn #f maxamp { mx }
   two-pi amount f*  mx f/ { brt }
-  brt mx bs-cb 0 #f snd chn #f $" %s %s" '( amount get-func-name ) string-format map-channel
+  brt mx bs-cb 0 #f snd chn #f $" %s %s" #( amount get-func-name ) string-format map-channel
 ;
 previous
 
@@ -748,9 +748,9 @@ set-current
   snd chn #f maxamp { mx }
   coeffs mus-chebyshev-first-kind partials->polynomial { pcoeffs }
   pcoeffs mx brighten-slightly-1-cb 0 #f snd chn #f
-  $" %s %s" '( coeffs get-func-name ) string-format map-channel drop
+  $" %s %s" #( coeffs get-func-name ) string-format map-channel drop
 ;
-\ '( 1 0.5 3 1 ) brighten-slightly-1
+\ #( 1 0.5 3 1 ) brighten-slightly-1
 previous
 
 \ ;;; -------- FIR filters
@@ -1013,7 +1013,7 @@ The generator side for the various make-butter procedures." help-set!
   3 vct( a0 a1 a2 ) vct( 0.0 b1 b2 ) make-filter
 ;
 : make-iir-low-pass-2 ( fc :optional d -- gen )
-  '( 2.0 fsqrt ) 1 get-optargs { fc d }
+  #( 2.0 fsqrt ) 1 get-optargs { fc d }
   two-pi fc f* mus-srate f/ { theta }
   1.0 d f2/ theta fsin f* f-  1.0 d f2/ theta fsin f* f+  f/ f2/ { beta }
   beta 0.5 f+ theta fcos f* { gamma }
@@ -1021,7 +1021,7 @@ The generator side for the various make-butter procedures." help-set!
   3 vct( alpha  alpha f2*  alpha ) vct( 0.0  gamma -2.0 f*  beta f2* ) make-filter
 ;
 : make-iir-high-pass-2 ( fc :optional d -- gen )
-  '( 2.0 fsqrt ) 1 get-optargs { fc d }
+  #( 2.0 fsqrt ) 1 get-optargs { fc d }
   two-pi fc f* mus-srate f/ { theta }
   1.0 d f2/ theta fsin f* f-  1.0 d f2/ theta fsin f* f+  f/ f2/ { beta }
   beta 0.5 f+ theta fcos f* { gamma }
@@ -1082,7 +1082,7 @@ The generator side for the various make-butter procedures." help-set!
 ;
 
 : cascade->canonical ( A -- A' )
-  doc" Converts a list of cascade coeffs (vcts with 3 entries) to canonical form."
+  doc" Converts an array of cascade coeffs (vcts with 3 entries) to canonical form."
   { A }
   A length { K }
   K 2* 1+ 0.0 make-vct { d }
@@ -1224,18 +1224,18 @@ its order is M * 2, F1 and F2 are the band edge frequencies in Hz."
 \ ;;; -------- notch filters
 
 : make-notch-frequency-response <{ cur-srate freqs :optional notch-width 2 -- fresp }>
-  '( 1.0 0.0 ) { freq-response }
+  #( 0.0 1.0 ) ( freq-response )
   freqs each { f }
-    f notch-width f- f2* cur-srate f/ freq-response cons to freq-response \ ; left upper y hz
-    1.0 freq-response cons to freq-response \ ; left upper y resp
-    f notch-width f2/ f- f2* cur-srate f/ freq-response cons to freq-response \ ; left bottom y hz
-    0.0 freq-response cons to freq-response \ ; left bottom y resp
-    f notch-width f2/ f+ f2* cur-srate f/ freq-response cons to freq-response \ ; right bottom y hz
-    0.0 freq-response cons to freq-response \ ; right bottom y resp
-    f notch-width f+ f2* cur-srate f/ freq-response cons to freq-response \ ; right upper y hz
-    1.0 freq-response cons to freq-response \ ; right upper y resp
+    f notch-width f- f2* cur-srate f/ array-push     \ ; left  upper y hz
+    1.0 array-push                                   \ ; left  upper y resp
+    f notch-width f2/ f- f2* cur-srate f/ array-push \ ; left  bottom y hz
+    0.0 array-push                                   \ ; left  bottom y resp
+    f notch-width f2/ f+ f2* cur-srate f/ array-push \ ; right bottom y hz
+    0.0 array-push                                   \ ; right bottom y resp
+    f notch-width f+ f2* cur-srate f/ array-push     \ ; right upper y hz
+    1.0 array-push                                   \ ; right upper y resp
   end-each
-  1.0 1.0 freq-response cons cons list-reverse
+  #( 1.0 1.0 ) array-append ( freq-response )
 ;
 
 : notch-channel <{ freqs
@@ -1243,7 +1243,7 @@ its order is M * 2, F1 and F2 are the band edge frequencies in Hz."
   doc" Returns a notch filter removing freqs."
   snd srate s>f freqs notch-width make-notch-frequency-response { nf }
   filter-order 2.0 snd srate notch-width f/ flog 2.0 flog f/ fceil f** fround->s || { order }
-  $" %s %s %s %s %s" '( freqs filter-order beg dur get-func-name ) string-format { origin }
+  $" %s %s %s %s %s" #( freqs filter-order beg dur get-func-name ) string-format { origin }
   nf order beg dur snd chn edpos truncate origin filter-channel
 ;
 
@@ -1251,7 +1251,7 @@ its order is M * 2, F1 and F2 are the band edge frequencies in Hz."
   doc" Returns a notch filter removing freqs."
   snd srate s>f freqs notch-width make-notch-frequency-response { nf }
   filter-order 2.0 snd srate notch-width f/ flog 2.0 flog f/ fceil f** fround->s || { order }
-  $" %s %s 0 #f notch-channel " '( freqs filter-order ) string-format { origin }
+  $" %s %s 0 #f notch-channel " #( freqs filter-order ) string-format { origin }
   nf order snd chn #f origin filter-sound
 ;
 
@@ -1399,32 +1399,32 @@ it returns one of the standard smoothing filters from the era when computers wer
 ;
 : gaussian-distribution ( s -- en )
   { s }
-  '() { en }
+  #() { en }
   2.0 s s f* f* { den }
   0.0 -4.0 { x y }
   21 0 do
-    x en cons to en
-    y y f* den f/ fexp en cons to en
+    en x array-push
+    y y f* den f/ fexp array-push to en
     x 0.05 f+ to x
     y 0.40 f* to y
   loop
-  en list-reverse
+  en
 ;
 : pareto-distribution ( a -- en )
   { a }
-  '() { en }
+  #() { en }
   1.0 a 1.0 f+ f** a f/ { scl }
   0.0 1.0 { x y }
   21 0 do
-    x en cons to en
-    a  y a 1.0 f+ f**  f/ scl f* en cons to en
+    en x array-push
+    a  y a 1.0 f+ f**  f/ scl f* array-push to en
     x 0.05 f+ to x
     y 0.20 f* to y
   loop
-  en list-reverse
+  en
 ;
-\ lambda: <{ y -- val }> 1.0 '( 0 1 1 1 )          any-random ; map-channel \ uniform distribution
-\ lambda: <{ y -- val }> 1.0 '( 0 0 0.95 0.1 1 1 ) any-random ; map-channel \ mostly toward 1.0
+\ lambda: <{ y -- val }> 1.0 #( 0 1 1 1 )          any-random ; map-channel \ uniform distribution
+\ lambda: <{ y -- val }> 1.0 #( 0 0 0.95 0.1 1 1 ) any-random ; map-channel \ mostly toward 1.0
 \ 1.0 gaussian-distribution value g lambda: <{ y -- val }> 1.0 g any-random ; map-channel
 \ 1.0 pareto-distribution   value g lambda: <{ y -- val }> 1.0 g any-random ; map-channel
 
@@ -1432,20 +1432,19 @@ it returns one of the standard smoothing filters from the era when computers wer
 \ ;;; distribution function into a weighting function
 
 : inverse-integrate <{ dist :optional data-size 512 e-size 50 -- vct }>
-  '() { en }
-  dist cadr exact->inexact dup { sum first-sum }
-  dist car { x0 }
+  #() { en }
+  dist 1 array-ref exact->inexact dup { sum first-sum }
+  dist 0 array-ref { x0 }
   dist envelope-last-x { x1 }
   x1 x0 f- e-size f/ { xincr }
   x0 { x }
   e-size 0 ?do
-    sum en cons to en
-    x en cons to en
+    en sum array-push
+    x array-push to en
     x dist 1.0 envelope-interp sum f+ to sum
     x xincr f+ to x
   loop
-  en cadr first-sum f- data-size 1- f/ { incr }
-  en list-reverse to en
+  en -2 array-ref first-sum f- data-size 1- f/ { incr }
   first-sum to x
   data-size 0.0 make-vct map!
     x en 1.0 envelope-interp
@@ -1454,16 +1453,16 @@ it returns one of the standard smoothing filters from the era when computers wer
 ;
 : gaussian-envelope ( s -- en )
   { s }
-  '() { en }
+  #() { en }
   2.0 s s f* f* { den }
   -1.0 -4.0 { x y }
   21 0 do
-    x en cons to en
-    y y f* den f/ fexp en cons to en
+    en x array-push
+    y y f* den f/ fexp array-push to en
     x 0.1 f+ to x
     y 0.4 f* to y
   loop
-  en list-reverse
+  en
 ;
 \ :envelope 1.0 gaussian-envelope make-rand
 
@@ -1629,7 +1628,7 @@ hide
 set-current
 : shift-channel-pitch <{ freq :optional order 40 beg 0 dur #f snd #f chn #f edpos #f -- val }>
   :frequency freq :order order make-ssb-am { gen }
-  $" %s %s %s %s %s" '( freq order beg dur get-func-name ) string-format { origin }
+  $" %s %s %s %s %s" #( freq order beg dur get-func-name ) string-format { origin }
   gen scp-cb beg dur snd chn edpos origin map-channel
 ;
 previous
@@ -1677,7 +1676,7 @@ set-current
     bands i  aff bwf f- hz->2pi  aff bwf f+ hz->2pi  order make-bandpass  array-set!
   loop
   $" %s %s %s %s %s %s %s %s"
-  '( old-freq new-freq pairs order bw beg dur get-func-name ) string-format { origin }
+  #( old-freq new-freq pairs order bw beg dur get-func-name ) string-format { origin }
   mx ssbs bands beg dur snd chn edpos ssbaoe-cb  origin  as-one-edit
 ;
 previous
@@ -1730,7 +1729,7 @@ set-current
     frenvs i  rot array-set!
   loop
   $" %s %s %s %s %s %s %s %s %s"
-  '( old-freq new-freq freq-env pairs order bw beg dur get-func-name ) string-format { origin }
+  #( old-freq new-freq freq-env pairs order bw beg dur get-func-name ) string-format { origin }
   mx ssbs bands frenvs beg dur snd chn edpos ssbeaoe-cb  origin  as-one-edit
 ;
 previous
@@ -1746,12 +1745,12 @@ previous
     idx pairs f2* f/ 1.0 f+ bw f* { bwf }
     aff bwf f- hz->radians  aff bwf f+ hz->radians  order  make-bandpass
   end-map { bands }
-  '( ssbs bands )
+  #( ssbs bands )
 ;
 : transpose ( gen input -- val )
   { gen input }
-  gen car  { ssbs }
-  gen cadr { bands }
+  gen 0 array-ref { ssbs }
+  gen 1 array-ref { bands }
   0.0 ( sum )
   ssbs each { g }
     g  bands i array-ref input bandpass  0.0 ssb-am f+ ( sum += )
@@ -1772,7 +1771,7 @@ previous
 ;
 : fdelay ( gen input -- val )
   { gen input }
-  gen '( input ) run-proc
+  gen #( input ) run-proc
 ;
 : transposed-echo ( pitch scaler secs -- val )
   { pitch scaler secs }
@@ -1791,7 +1790,7 @@ previous
 ;
 : channel-polynomial <{ coeffs :optional snd #f chn #f -- vct }>
   snd chn #f frames { len }
-  $" %S %s" '( coeffs get-func-name ) string-format { origin }
+  $" %S %s" #( coeffs get-func-name ) string-format { origin }
   0 len snd chn #f channel->vct coeffs vct-polynomial 0 len snd chn #f origin vct->channel
 ;
 \ vct( 0.0 0.5 )         channel-polynomial == x*0.5
@@ -1830,7 +1829,7 @@ previous
       new-sound peak pk f/ vct-scale! drop
     then
   then
-  $" %S %s" '( coeffs get-func-name ) string-format { origin }
+  $" %S %s" #( coeffs get-func-name ) string-format { origin }
   new-sound 0  num-coeffs 1- len * len max  snd chn #f origin vct->channel
 ;
 
@@ -1870,7 +1869,7 @@ previous
 RFREQ is the rendering frequency, the number of measurements per second; \
 DB-FLOOR is the level below which data will be ignored."
   file find-file to file
-  file false? if 'no-such-file '( get-func-name file ) fth-throw then
+  file false? if 'no-such-file #( get-func-name file ) fth-throw then
   file mus-sound-srate { fsr }
   fsr rfreq f/ fround->s { incrsamps }
   beg fsr f* fround->s { start }
@@ -1950,20 +1949,20 @@ DB-FLOOR is the level below which data will be ignored."
 \ ;;;   it is a slight specialization of the form mentioned by J O Smith and others
 
 : make-volterra-filter ( acoeffs bcoeffs -- gen )
-  doc" Returns a list for use with volterra-filter, \
+  doc" Returns an array for use with volterra-filter, \
 producing one of the standard non-linear filters."
   { acoeffs bcoeffs }
-  '( acoeffs
+  #( acoeffs
      bcoeffs
      acoeffs length bcoeffs length max 0.0 make-vct )
 ;
 : volterra-filter ( flt x -- val )
-  doc" Takes FLT, a list returned by make-volterra-filter, \
+  doc" Takes FLT, an array returned by make-volterra-filter, \
 and an input X, and returns the (non-linear filtered) result."
   { flt x }
-  flt car   { as }
-  flt cadr  { bs }
-  flt caddr { xs }
+  flt 0 array-ref { as }
+  flt 1 array-ref { bs }
+  flt 2 array-ref { xs }
   as length { x1len }
   bs length { x2len }
   xs length { xlen }
@@ -2242,7 +2241,7 @@ previous
 : m-ws-cb ( file -- prc; self -- )
   { file }
   file find-file to file
-  file false? if 'no-such-file '( get-func-name file ) fth-throw then
+  file false? if 'no-such-file #( get-func-name file ) fth-throw then
   0 file 0 1 #f make-sample-reader { rd }
   make-mfilter { m }
   0 proc-create rd , m , ( prc )
@@ -2326,7 +2325,7 @@ previous
 	    mx mmx f- fabs 0.01 f> if mel-data  mx mmx f/ vct-scale! drop then
 	    mx emx f- fabs 0.01 f> if erb-data  mx emx f/ vct-scale! drop then
 	  then
-	  '( bark-data mel-data erb-data )
+	  #( bark-data mel-data erb-data )
 	  "ignored"
 	  20.0 sr f2/
 	  0.0 normalized if 1.0 else data-len snd chn y-zoom-slider * then
@@ -2352,7 +2351,7 @@ previous
     "20"    axis-x0     major-y0 snd chn copy-context draw-string drop
     "1000"  i1000  12 - major-y0 snd chn copy-context draw-string drop
     "10000" i10000 24 - major-y0 snd chn copy-context draw-string drop
-    $" fft size: %d" '( bark-fft-size ) string-format
+    $" fft size: %d" #( bark-fft-size ) string-format
     axis-x0 10 + axis-y0 snd chn copy-context draw-string drop
     1000 100 do
       axis-x0 axis-x1 sr2 i bark-function scale-pos { i100 }
@@ -2366,10 +2365,10 @@ previous
   : make-bark-labels <{ snd chn -- f }>
     snd chn copy-context foreground-color { old-foreground-color }
     snd chn lisp-graph axis-info { axinfo }
-    axinfo 10 list-ref { axis-x0 }
-    axinfo 12 list-ref { axis-x1 }
-    axinfo 13 list-ref { axis-y0 }
-    axinfo 11 list-ref { axis-y1 }
+    axinfo 10 array-ref { axis-x0 }
+    axinfo 12 array-ref { axis-x1 }
+    axinfo 13 array-ref { axis-y0 }
+    axinfo 11 array-ref { axis-y1 }
     15 { label-height }
     8 { char-width }
     snd srate 2/ { sr2 }
@@ -2517,7 +2516,7 @@ hide
     absy unclipped-max fmax self 2 cells + ! ( to unclipped-max )
     in-clip if
       #f self 4 cells + ! ( in-clip = #f )
-      clip-data '( clip-beg samp 1- ) array-push to clip-data
+      clip-data #( clip-beg samp 1- ) array-push to clip-data
     then
   then
   1 self 3 cells + +! ( samp++ )
@@ -2533,15 +2532,15 @@ hide
   self 4 cells + @ { len }
   32 { min-data-len }
   clip-data each { lst }
-    lst car  { clip-beg }
-    lst cadr { clip-end }
+    lst 0 array-ref { clip-beg }
+    lst 1 array-ref { clip-end }
     clip-end clip-beg = 1+ { clip-len }
     min-data-len clip-len 4 * max { data-len }
     clip-len max-len > if clip-len to max-len then
     data-len { forward-data-len }
     data-len { backward-data-len }
-    i 0= if 0 else clip-data i 1- array-ref cadr then { previous-end }
-    i clip-data length 3 - < if clip-data i 1+ array-ref car else len then { next-beg }
+    i 0= if 0 else clip-data i 1- array-ref 1 array-ref then { previous-end }
+    i clip-data length 3 - < if clip-data i 1+ array-ref 0 array-ref else len then { next-beg }
     clip-beg data-len - previous-end < if clip-beg previous-end - 4 max to forward-data-len then
     clip-len data-len + next-beg > if next-beg clip-end - 4 max to backward-data-len then
     clip-len forward-data-len f2/ fround->s max { forward-predict-len }
@@ -2575,7 +2574,7 @@ hide
 set-current
 : unclip-channel <{ :optional snd #f chn #f -- hash }>
   doc" Looks for clipped portions and tries to reconstruct the original using LPC."
-  #() { clip-data }			\ #( '( beg end ) '( ... ) ... )
+  #() { clip-data }			\ #( #( beg end ) #( ... ) ... )
   0.0 { unclipped-max }
   snd chn #f frames { len }
   clip-data unclipped-max uncchn-sc-cb  0 len snd chn #f scan-channel drop
@@ -2596,7 +2595,7 @@ previous
   snd sound? if
     snd channels make-array map! snd i unclip-channel end-map ( res )
   else
-    'no-such-sound '( get-func-name snd ) fth-throw
+    'no-such-sound #( get-func-name snd ) fth-throw
   then
 ;
 

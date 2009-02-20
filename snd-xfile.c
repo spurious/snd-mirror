@@ -1272,7 +1272,7 @@ static file_dialog_info *make_file_dialog(read_only_t read_only, char *title, ch
     }
   XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
   XtSetArg(args[n], XmNokLabelString, ok_label); n++;
-  XtSetArg(args[n], XmNselectionLabelString, s1); n++;                    /* "open", "mix", "insert" */
+  XtSetArg(args[n], XmNselectionLabelString, s1); n++;                    /* "open", "mix", "insert", "open read-only:" */
   XtSetArg(args[n], XmNdialogTitle, s2); n++;
   XtSetArg(args[n], XmNfilterLabelString, filter_list_label); n++;        /* default label 'Filter' is confusing in this context */
   XtSetArg(args[n], XmNfileFilterStyle, XmFILTER_HIDDEN_FILES); n++;      /* the dot files mostly just get in the way */
@@ -1288,6 +1288,9 @@ static file_dialog_info *make_file_dialog(read_only_t read_only, char *title, ch
   XtUnmanageChild(FSB_BOX(fd->dialog, XmDIALOG_DIR_LIST_LABEL)); /* these are obvious */
   XtUnmanageChild(FSB_BOX(fd->dialog, XmDIALOG_LIST_LABEL));
   XtUnmanageChild(FSB_BOX(fd->dialog, XmDIALOG_APPLY_BUTTON));   /* "Filter" button is useless */
+
+  XtVaSetValues(FSB_BOX(fd->dialog, XmDIALOG_FILTER_LABEL), XmNbackground, ss->sgx->basic_color, NULL);
+  XtVaSetValues(FSB_BOX(fd->dialog, XmDIALOG_SELECTION_LABEL), XmNbackground, ss->sgx->basic_color, NULL);
 
   XmStringFree(s1);
   XmStringFree(s2);
@@ -3243,6 +3246,9 @@ static void make_save_as_dialog(save_as_dialog_info *sd, char *sound_name, int h
       XtUnmanageChild(FSB_BOX(sd->dialog, XmDIALOG_LIST_LABEL));
       XtUnmanageChild(FSB_BOX(sd->dialog, XmDIALOG_APPLY_BUTTON));
 
+      XtVaSetValues(FSB_BOX(sd->dialog, XmDIALOG_FILTER_LABEL), XmNbackground, ss->sgx->basic_color, NULL);
+      XtVaSetValues(FSB_BOX(sd->dialog, XmDIALOG_SELECTION_LABEL), XmNbackground, ss->sgx->basic_color, NULL);
+
       XmStringFree(s1);
       XmStringFree(xmstr1);
       XmStringFree(xmstr2);
@@ -4279,6 +4285,8 @@ Widget edit_header(snd_info *sp)
       XtVaSetValues(MSG_BOX(ep->dialog, XmDIALOG_HELP_BUTTON),   XmNbackground, ss->sgx->help_button_color,   NULL);
       XtVaSetValues(ep->edat->header_list, XmNbackground, ss->sgx->white, XmNforeground, ss->sgx->black, NULL);
       XtVaSetValues(ep->edat->format_list, XmNbackground, ss->sgx->white, XmNforeground, ss->sgx->black, NULL);
+
+      XtVaSetValues(MSG_BOX(ep->dialog, XmDIALOG_MESSAGE_LABEL), XmNbackground, ss->sgx->basic_color, NULL);
 
       set_dialog_widget(EDIT_HEADER_DIALOG, ep->dialog);
 

@@ -100,9 +100,9 @@ make allclean
 echo ' '
 echo ' '
 echo ' -------------------------------------------------------------------------------- '
-echo ' -----                   GUILE_CONFIG_path=/home/bil/test/bin -Wdeclaration-after-statement -Wmissing-field-initializer ---- '
+echo ' -----                   -Wdeclaration-after-statement -Wmissing-field-initializer ---- '
 echo ' -------------------------------------------------------------------------------- '
-./configure --with-guile --quiet CFLAGS="-Wall -I/usr/X11R6/include -D_FORTIFY_SOURCE" LDFLAGS="-L/usr/X11R6/lib" GUILE_CONFIG_path=/home/bil/test/bin
+./configure --with-guile --quiet CFLAGS="-Wall -I/usr/X11R6/include -D_FORTIFY_SOURCE" LDFLAGS="-L/usr/X11R6/lib"
 make
 make xm
 ./snd --version
@@ -1124,83 +1124,6 @@ echo ' -------------------------------------------------------------------------
 make
 ./snd --version
 ./snd -noinit --features ":clm, :snd-gtk, :snd_ruby"
-make allclean
-
-echo ' '
-echo ' '
-echo ' -------------------------------------------------------------------------------- '
-echo ' ----                 --with-jack GUILE_CONFIG_path=/home/bil/test/bin       ---- '
-echo ' -------------------------------------------------------------------------------- '
-./configure --quiet --with-jack CFLAGS="-I/home/bil/test/include -I/usr/X11R6/include" LDFLAGS="-L/home/bil/test/lib -L/usr/X11R6/lib" GUILE_CONFIG_path=/home/bil/test/bin
-make
-./snd --version
-./snd -noinit --features "'clm 'snd-s7"
-make allclean
-
-echo ' '
-echo ' '
-echo ' -------------------------------------------------------------------------------- '
-echo ' ----                --with-gtk --with-static-xg --with-jack GUILE_CONFIG_path=/home/bil/test/bin '
-echo ' -------------------------------------------------------------------------------- '
-./configure --quiet --with-guile --with-gtk --with-static-xg --with-jack CFLAGS="-I/home/bil/test/include -I/usr/X11R6/include" LDFLAGS="-L/home/bil/test/lib -L/usr/X11R6/lib" GUILE_CONFIG_path=/home/bil/test/bin
-make
-./snd --version
-./snd -noinit --features "'clm 'xg 'snd-gtk 'snd-guile"
-make allclean
-
-echo ' '
-echo ' '
-echo ' -------------------------------------------------------------------------------- '
-echo ' ------                --with-snd-as-pd-external --with-no-gui GUILE_CONFIG_path=/home/bil/test/bin '
-echo ' -------------------------------------------------------------------------------- '
-./configure --quiet --with-guile --with-snd-as-pd-external --with-no-gui CFLAGS="-I/home/bil/test/include -I/usr/X11R6/include" LDFLAGS="-L/home/bil/test/lib" GUILE_CONFIG_path=/home/bil/test/bin
-make external
-./snd --version
-./snd -noinit --features "'clm 'snd-nogui 'snd-pd-external 'snd-guile"
-make allclean
-
-echo ' '
-echo ' '
-echo ' -------------------------------------------------------------------------------- '
-echo ' -----                GUILE_CONFIG_path=/home/bil/test/g13/bin               ---- '
-echo ' -------------------------------------------------------------------------------- '
-./configure --quiet --with-guile CFLAGS="-I/home/bil/test/g13/include -I/usr/X11R6/include" LDFLAGS="-L/home/bil/test/g13/lib -L/usr/X11R6/lib" GUILE_CONFIG_path=/home/bil/test/g13/bin
-make
-./snd --version
-./snd -noinit --features "'clm 'snd-guile"
-make allclean
-
-echo ' '
-echo ' '
-echo ' -------------------------------------------------------------------------------- '
-echo ' -----                GUILE_CONFIG_path=/home/bil/test/g14/bin               ---- '
-echo ' -------------------------------------------------------------------------------- '
-./configure --quiet --with-guile CFLAGS="-I/home/bil/test/g14/include -I/usr/X11R6/include" LDFLAGS="-L/home/bil/test/g14/lib -L/usr/X11R6/lib" GUILE_CONFIG_path=/home/bil/test/g14/bin
-make
-./snd --version
-./snd -noinit --features "'clm 'snd-guile"
-make allclean
-
-echo ' '
-echo ' '
-echo ' -------------------------------------------------------------------------------- '
-echo ' ----                GUILE_CONFIG_path=/home/bil/test/g13/bin --with-static-xm -- '
-echo ' -------------------------------------------------------------------------------- '
-./configure --quiet --with-guile CFLAGS="-I/home/bil/test/g13/include -I/usr/X11R6/include" LDFLAGS="-L/home/bil/test/g13/lib -L/usr/X11R6/lib" GUILE_CONFIG_path=/home/bil/test/g13/bin --with-static-xm
-make
-./snd --version
-./snd -noinit --features "'clm 'snd-guile"
-make allclean
-
-echo ' '
-echo ' '
-echo ' -------------------------------------------------------------------------------- '
-echo ' ------                GUILE_CONFIG_path=/home/bil/test/g14/bin --with-static-xm  '
-echo ' -------------------------------------------------------------------------------- '
-./configure --quiet --with-guile CFLAGS="-I/home/bil/test/g14/include -I/usr/X11R6/include" LDFLAGS="-L/home/bil/test/g14/lib -L/usr/X11R6/lib" GUILE_CONFIG_path=/home/bil/test/g14/bin --with-static-xm
-make
-./snd --version
-./snd -noinit --features "'clm 'snd-guile"
 make allclean
 
 

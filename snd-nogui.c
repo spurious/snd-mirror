@@ -37,8 +37,7 @@ void set_with_gl(bool val, bool dpys) {}
 void set_sono_rectangle(int j, int color, int x, int y, int width, int height) {}
 void draw_sono_rectangles(axis_context *ax, int color, int jmax) {}
 void draw_colored_lines(chan_info *cp, axis_context *ax, point_t *points, int num, int *colors, int axis_y0, color_t default_color) {}
-widget_t start_color_dialog(bool managed) {return(0);}
-widget_t start_orientation_dialog(bool managed) {return(0);}
+widget_t start_color_orientation_dialog(bool managed) {return(0);}
 void set_color_scale(Float val) {}
 void set_color_inverted(bool val) {}
 void set_color_cutoff(Float val) {}
@@ -51,8 +50,7 @@ void set_spectro_y_scale(Float val) {}
 void set_spectro_z_scale(Float val) {}
 void set_spectrum_end(Float val) {}
 void set_spectrum_start(Float val) {}
-bool color_dialog_is_active(void) {return(false);}
-bool orientation_dialog_is_active(void) {return(false);}
+bool color_orientation_dialog_is_active(void) {return(false);}
 void reflect_spectro(void) {}
 void reflect_peaks_in_transform_dialog(void) {}
 void reflect_log_freq_start_in_transform_dialog(void) {}

@@ -311,8 +311,7 @@ static void view_controls_callback(Widget w, XtPointer info, XtPointer context)
 }
 
 static void view_region_callback_1(Widget w, XtPointer info, XtPointer context) {view_region_callback(w, info, context);}
-static void view_orientation_callback_1(Widget w, XtPointer info, XtPointer context) {view_orientation_callback(w, info, context);}
-static void view_color_callback_1(Widget w, XtPointer info, XtPointer context) {view_color_callback(w, info, context);}
+static void view_color_orientation_callback_1(Widget w, XtPointer info, XtPointer context) {view_color_orientation_callback(w, info, context);}
 
 static void view_x_axis_seconds_callback(Widget w, XtPointer info, XtPointer context) {set_x_axis_style(X_AXIS_IN_SECONDS);}
 static void view_x_axis_clock_callback(Widget w, XtPointer info, XtPointer context) {set_x_axis_style(X_AXIS_AS_CLOCK);}
@@ -636,12 +635,8 @@ Widget add_menu(void)
   XtAddCallback(view_region_menu, XmNactivateCallback, view_region_callback_1, NULL);
   XtVaSetValues(view_region_menu, XmNmnemonic, 'R', NULL);
 
-  view_color_menu = XtCreateManagedWidget(_("Color"), xmPushButtonWidgetClass, view_menu, main_args, main_n);
-  XtAddCallback(view_color_menu, XmNactivateCallback, view_color_callback_1, NULL);
-
-  view_orientation_menu = XtCreateManagedWidget(_("Orientation"), xmPushButtonWidgetClass, view_menu, main_args, main_n);
-  XtAddCallback(view_orientation_menu, XmNactivateCallback, view_orientation_callback_1, NULL);
-  XtVaSetValues(view_orientation_menu, XmNmnemonic, 'O', NULL);
+  view_color_orientation_menu = XtCreateManagedWidget(_("Color/Orientation"), xmPushButtonWidgetClass, view_menu, main_args, main_n);
+  XtAddCallback(view_color_orientation_menu, XmNactivateCallback, view_color_orientation_callback_1, NULL);
 
   view_sep2_menu = XtCreateManagedWidget("", xmSeparatorWidgetClass, view_menu, sep_args, j);
 

@@ -2168,11 +2168,6 @@ def test03
       if enved_envelope != [0.0, 0.0, 1.0, 1.0, 2.0, 0.0]
         snd_display("set_enved_envelope to self: %s?", enved_envelope)
       end
-      wid = orientation_dialog
-      snd_display("orientation_dialog?") unless dialog_widgets[1]
-      if dialog_widgets[1] != wid
-        snd_display("orientation_dialog -> %s %s?", wid, dialog_widgets[1])
-      end
       test003(vars, :normal)
       test003(bad_args, :bad_args)
       set_enved_filter_order(5)
@@ -22034,8 +22029,7 @@ def test11
     Snd.catch do peaks end
     mus_audio_describe
     envd = enved_dialog
-    cold = color_dialog
-    ord  = orientation_dialog
+    cold = color_orientation_dialog
     trd  = transform_dialog
     fild = view_files_dialog
     regd = view_regions_dialog
@@ -22046,7 +22040,7 @@ def test11
          end
     ehd  = Snd.catch do edit_header_dialog end.first
     if (res = dialog_widgets[0]) != cold
-      snd_display("color_dialog -> %s %s?", cold, res)
+      snd_display("color_orientation_dialog -> %s %s?", cold, res)
     end
     unless provided? :cairo
       if (res = dialog_widgets[17]) != pd
@@ -36894,7 +36888,7 @@ def test0224
   #
   # color dialog
   #
-  color_dialog
+  color_orientation_dialog
   colord = dialog_widgets.car
   inv = find_child(colord, "invert")
   cut = find_child(colord, "cutoff")
@@ -36930,78 +36924,6 @@ def test0224
   close_sound(ind)
   click_button(RXmMessageBoxGetChild(colord, RXmDIALOG_CANCEL_BUTTON))
   force_event
-  #
-  # orientation dialog
-  #
-  orientation_dialog
-  orientd = dialog_widgets.cadr
-  cut = find_child(orientd, "cut")
-  ax = find_child(orientd, "ax")
-  ay = find_child(orientd, "ay")
-  az = find_child(orientd, "az")
-  sx = find_child(orientd, "xs")
-  sy = find_child(orientd, "ys")
-  sz = find_child(orientd, "zs")
-  hop = find_child(orientd, "hop")
-  set_spectro_x_scale(2.0)
-  click_button(RXmMessageBoxGetChild(orientd, RXmDIALOG_OK_BUTTON))
-  force_event
-  if fneq(res = spectro_x_scale, 1.0) and fneq(res, 1.5)
-    snd_display("orientation reset: %s?", res)
-  end
-  move_scale(cut, 32)
-  if fneq(res = spectrum_end, 0.32)
-    snd_display("moved spectrum_end: %s %s?", res, RXmScaleGetValue(cut))
-  end
-  move_scale(ax, 32)
-  if fneq(res = spectro_x_angle, 32)
-    snd_display("moved spectro_x_angle: %s %s?", res, RXmScaleGetValue(ax))
-  end
-  move_scale(ay, 32)
-  if fneq(res = spectro_y_angle, 32)
-    snd_display("moved spectro_y_angle: %s %s?", res, RXmScaleGetValue(ay))
-  end
-  move_scale(az, 32)
-  if fneq(res = spectro_z_angle, 32)
-    snd_display("moved spectro_z_angle: %s %s?", res, RXmScaleGetValue(az))
-  end
-  move_scale(sx, 32)
-  if fneq(res = spectro_x_scale, 0.32)
-    snd_display("moved spectro_x_scale: %s %s?", res, RXmScaleGetValue(sx))
-  end
-  move_scale(sy, 32)
-  if fneq(res = spectro_y_scale, 0.32)
-    snd_display("moved spectro_y_scale: %s %s?", res, RXmScaleGetValue(sy))
-  end
-  move_scale(sz, 32)
-  if fneq(res = spectro_z_scale, 0.32)
-    snd_display("moved spectro_z_scale: %s %s?", res, RXmScaleGetValue(sz))
-  end
-  move_scale(hop, 12)
-  if fneq(res = spectro_hop, 12)
-    snd_display("moved spectro_hop: %s %s?", res, RXmScaleGetValue(hop))
-  end
-  click_button(RXmMessageBoxGetChild(orientd, RXmDIALOG_OK_BUTTON))
-  force_event
-  if fneq(res = spectro_x_scale, 1.0) and fneq(res, 1.5)
-    snd_display("orientation reset: %s?", res)
-  end
-  set_widget_position(orientd, [200, 300])
-  set_spectro_x_scale(3.0)
-  if fneq(res = RXmScaleGetValue(sx), 200) # snd-test.scm 300
-    snd_display("orientation x scale: %s %s?", spectro_x_scale, res)
-  end
-  set_spectro_y_scale(0.5)
-  if fneq(res = RXmScaleGetValue(sy), 50)
-    snd_display("orientation y scale: %s %s?", spectro_y_scale, res)
-  end
-  set_spectro_z_scale(2.0)
-  if fneq(res = RXmScaleGetValue(sz), 100) # snd-test.scm 200
-    snd_display("orientation z scale: %s %s?", spectro_z_scale, res)
-  end
-  click_button(RXmMessageBoxGetChild(orientd, RXmDIALOG_CANCEL_BUTTON))
-  force_event
-  if RXtIsManaged(orientd) then snd_display("orientation still active?") end
   #
   # transform dialog
   #
@@ -38302,7 +38224,7 @@ Procs =
    :audio_output_device, :auto_resize, :auto_update, :autocorrelate, :axis_color, :axis_info,
    :axis_label_font, :axis_numbers_font, :basic_color, :bind_key, :bomb, :c_g?, :apply_controls,
    :change_samples_with_origin, :channel_style, :channel_widgets, :channels, :chans, :peaks_font,
-   :bold_peaks_font, :close_sound, :color_cutoff, :color_dialog, :colormap_ref, :add_colormap,
+   :bold_peaks_font, :close_sound, :color_cutoff, :color_orientation_dialog, :colormap_ref, :add_colormap,
    :delete_colormap, :colormap_size, :colormap_name, :color_inverted, :color_scale, :color2list,
    :colormap, :color?, :comment, :contrast_control, :contrast_control_amp, :contrast_control?,
    :convolve_selection_with, :convolve_with, :channel_properties, :amp_control_bounds,
@@ -38351,7 +38273,7 @@ Procs =
    :mix_tag_y, :mix_vct, :mix_waveform_height, :time_graph_style, :lisp_graph_style,
    :transform_graph_style, :read_mix_sample, :next_sample, :read_region_sample,
    :transform_normalization, :open_file_dialog_directory,
-   :open_raw_sound, :open_sound, :orientation_dialog, :previous_sample, :peak_env_info, :peaks,
+   :open_raw_sound, :open_sound, :previous_sample, :peak_env_info, :peaks,
    :position_color, :position2x, :position2y,
    :add_directory_to_view_files_list, :add_file_to_view_files_list,
    :view_files_amp, :view_files_speed, :view_files_files, :view_files_selected_files,
@@ -39065,7 +38987,7 @@ def test0128
   [:enved_filter_order, :enved_filter, :filter_control_waveform_color,
    :ask_before_overwrite, :auto_resize, :auto_update, :axis_label_font,
    :axis_numbers_font, :basic_color, :bind_key, :channel_style, :color_cutoff,
-   :color_dialog, :color_inverted, :color_scale, :cursor_color,
+   :color_orientation_dialog, :color_inverted, :color_scale, :cursor_color,
    :dac_combines_channels, :dac_size, :clipping, :data_color,
    :default_output_chans, :default_output_data_format, :default_output_srate,
    :default_output_header_type, :enved_envelope, :enved_base, :enved_clip?,
@@ -39090,7 +39012,7 @@ def test0128
    :mark_tag_width, :mark_tag_height, :quit_button_color, :help_button_color,
    :reset_button_color, :doit_button_color, :doit_again_button_color].each_with_index do |n, i|
     case n
-    when :bind_key, :color_dialog, :enved_dialog, :key_binding, :unbind_key
+    when :bind_key, :color_orientation_dialog, :enved_dialog, :key_binding, :unbind_key
       next
     end
     if (tag = Snd.catch do set_snd_func(n, $vct_3) end).first != :wrong_type_arg

@@ -541,10 +541,8 @@
 				(list "daub4" "daub6" "daub8" "daub10" "daub12" "daub14" "daub16" "daub18" "daub20" "battle_lemarie" 
 				      "burt_adelson" "beylkin" "coif2" "coif4" "coif6" "sym2" "sym3" "sym4" "sym5" "sym6")))
 			 'wavelet-types)))
-		(list "Color" every-menu
-		      (lambda (w data) (color-dialog)))
-		(list "Orientation" every-menu
-		      (lambda (w data) (orientation-dialog))))))))
+		(list "Color/Orientation" every-menu
+		      (lambda (w data) (color-orientation-dialog))))))))
       (set! fft-types (reverse fft-types))
       (set! fft-windows (reverse fft-windows))
       (set! fft-norms (reverse fft-norms))

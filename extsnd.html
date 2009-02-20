@@ -10844,8 +10844,8 @@ In addition, many other dialogs are implemented in various Scheme/Ruby/Forth fil
 The following
 functions refer to the built-in dialogs.  They were aimed originally at semi-internal needs like
 saving the current Snd state, but might be useful elsewhere.
-Functions such as color-dialog normally create and start the dialog in question; that is,
-<code>(color-dialog)</code> puts the color dialog on the screen.  If you're trying instead to
+Functions such as color-orientation-dialog normally create and start the dialog in question; that is,
+<code>(color-orientation-dialog)</code> puts the color/orientation dialog on the screen.  If you're trying instead to
 customize the dialog in some way (in your initialization file, for example), you want the
 dialog to be created (so that the various widget children exist), but don't want it to pop
 up on the screen ('managed' in X jargon). So, most of the dialog functions have a 'managed' argument
@@ -11014,10 +11014,10 @@ This deletes all listener text from the beginning to the cursor position (C-M-g 
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
-<!-- color-dialog -->
-<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="colordialog">color-dialog</a> (:optional managed)</code>
+<!-- color-orientation-dialog -->
+<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="colororientationdialog">color-orientation-dialog</a> (:optional managed)</code>
 </td></tr><tr><td width=30></td><td>
-This creates and (if 'managed' which defaults to #t) activates the Color dialog; it returns the dialog widget.
+This creates and (if 'managed' which defaults to #t) activates the Color/Orientation dialog; it returns the dialog widget.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -11466,14 +11466,6 @@ If the xm module is loaded, we could add our own info via:
 		   #f))
 </pre></td></tr></table></td></tr>
 <tr><td colspan=2 height=16></td></tr>
-
-
-<!-- orientation-dialog -->
-<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="orientationdialog">orientation-dialog</a> (:optional managed)</code>
-</td></tr><tr><td></td><td>
-This creates and (if 'managed' which defaults to #t) activates the <a href="snd.html#orientationbrowser">View:Orientation</a> dialog,
-returning the dialog widget.
-</td></tr><tr><td colspan=2 height=16></td></tr>
 
 
 <!-- preferences-dialog -->
@@ -12973,7 +12965,7 @@ Other color-related stuff:<br>
 X/Motif color resources: <a href="grfsnd.html#sndresources">Snd Resources</a><br>
 Color names: <a href="sndscm.html#rgbdoc">rgb.scm, rgb.rb</a><br>
 colors in the file dialogs: install-searcher-with-colors in snd-motif.scm<br>
-color-dialog: <a href="#colordialog">color-dialog</a><br>
+color-orientation-dialog: <a href="#colororientationdialog">color-orientation-dialog</a><br>
 colored samples: <a href="sndscm.html#drawdoc">display-colored-samples</a> and others in draw.scm<br>
 colored edits: <a href="sndscm.html#drawdoc">display-previous-edits</a> in draw.scm<br>
 colored marks: mark-sync-color in snd-motif.scm<br>
@@ -13684,9 +13676,8 @@ You can find out at run-time whether GL is loaded via <code>(provided? 'gl)</cod
 	<!-- I(max amp):L(maxamp)(maxamp) -->
 	<!-- I(max amp):A(maxamp) -->
         <!-- I(define mark):L(add-mark)(addmark) -->
-        <!-- I(color):L(color-dialog)(colordialog) -->
+        <!-- I(color):L(color-orientation-dialog)(colororientationdialog) -->
 	<!-- I(color):O(color-scale,color-cutoff)(colorscale) -->
-        <!-- I(orientation):L(orientation-dialog)(orientationdialog) -->
         <!-- I(orientation):O(spectro-x-angle etc)(spectroxangle) -->
 	<!-- I(file lists):L(view-files-dialog)(viewfilesdialog) -->
         <!-- I(define selection):L(make-region)(makeregion) -->

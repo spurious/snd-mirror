@@ -2,13 +2,6 @@
 #include "clm2xen.h"
 #include "clm-strings.h"
 
-/* 
- * in gtk, are the default graph fonts reasonable??
- * gtk "back" button is active at start, but doesn't work
- * orientation dialog could use a lot of work in gtk (and all the others...)
- */
-
-
 bool graph_style_p(int grf)
 {
   switch (grf)

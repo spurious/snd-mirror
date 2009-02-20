@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sun Dec 18 23:36:09 CET 2005
-\ Changed: Thu May 17 13:14:18 CEST 2007
+\ Changed: Mon Dec 15 00:52:20 CET 2008
 
 \ Commentary:
 
@@ -19,7 +19,6 @@ require extensions
 #f value current-window-display-is-running \ for prefs
 
 hide
-
 0.20 constant inset-width
 0.25 constant inset-height
 
@@ -27,39 +26,38 @@ hide
   current-window-display-is-running if
     snd channels 0 ?do
       'inset-envelope snd i channel-property { vals }
-      \ set edit-position to impossible value to force a re-read
+      \ set edit-position to impossible value
       vals if vals 'edit-position -2 hash-set! then
     loop
   then
   #f
 ;
-
 : display-current-window-location <{ snd chn -- }>
   current-window-display-is-running
   snd chn time-graph? && if
-    snd chn undef axis-info               { axinf }
-    axinf 12 list-ref                     { grf-width }
-    inset-width grf-width f* fround->s    { width }
-    grf-width width -                     { x-offset }
-    axinf 11 list-ref axinf 13 list-ref - { grf-height }
-    inset-height grf-height f* fround->s  { height }
-    axinf 13 list-ref 10 -                { chan-offset }
-    chan-offset height 2/ +               { y-offset }
+    snd chn undef axis-info                 { axinf }
+    axinf 12 array-ref                      { grf-width }
+    inset-width grf-width f* fround->s      { width }
+    grf-width width -                       { x-offset }
+    axinf 11 array-ref axinf 13 array-ref - { grf-height }
+    inset-height grf-height f* fround->s    { height }
+    axinf 13 array-ref 10 -                 { chan-offset }
+    chan-offset height 2/ +                 { y-offset }
     snd channel-style channels-separate = if chn else 0 then { grf-chn }
-    axinf 19 list-ref                     { new-peaks }
-    snd chn #f frames                     { frms }
+    axinf 19 array-ref                      { new-peaks }
+    snd chn #f frames                       { frms }
     #f { data0 }
     #f { data1 }
     width  10 >
     height 10 > &&
     frms   0>   &&
     chn 0= snd channel-style channels-superimposed <> || && if
-      x-offset chan-offset height + width 2      snd grf-chn undef fill-rectangle drop
-      x-offset chan-offset          2     height snd grf-chn undef fill-rectangle drop
+      x-offset chan-offset height + width 2      snd grf-chn undef #f fill-rectangle drop
+      x-offset chan-offset          2     height snd grf-chn undef #f fill-rectangle drop
       snd chn right-sample frms f/ width f* fround->s { rx }
       snd chn left-sample  frms f/ width f* fround->s { lx }
-      x-offset lx + chan-offset rx lx - 1 max height snd grf-chn selection-context fill-rectangle
-      drop
+      x-offset lx + chan-offset rx lx - 1 max height
+      snd grf-chn selection-context #f fill-rectangle drop
       'inset-envelope snd chn channel-property { old-env }
       old-env if
 	new-peaks not
@@ -81,15 +79,15 @@ hide
 	data vct? if
 	  data vct-peak
 	else
-	  data car vct-peak data cadr vct-peak fmax
+	  data 0 array-ref vct-peak data 1 array-ref vct-peak fmax
 	then { data-max }
 	data-max f0> if height data-max f2* f/ else 0.0 then { data-scaler }
 	width 2* { new-len }
-	data vct? if data length else data car length then { data-len }
+	data vct? if data length else data 0 array-ref length then { data-len }
 	data-len width f/ fround->s { step }
 	data-len width > if
 	  new-len make-array to data0
-	  data list? if new-len make-array to data1 then
+	  data array? if new-len make-array to data1 then
 	  0 { idxi }
 	  0 { idxj }
 	  data-max fnegate { max-y }
@@ -97,8 +95,8 @@ hide
 	  0 { stepper }
 	  begin idxi data-len < idxj new-len < && while
 	      data1 if
-		max-y data cadr idxi vct-ref fmax to max-y
-		min-y data car  idxi vct-ref fmin to min-y
+		max-y data 1 array-ref idxi vct-ref fmax to max-y
+		min-y data 0 array-ref  idxi vct-ref fmin to min-y
 	      else
 		max-y data idxi vct-ref fmax to max-y
 	      then
@@ -130,15 +128,17 @@ hide
 	else
 	  width data-len f/ fround->s { xstep }
 	  data-len 2* make-array to data0
-	  data list? if new-len 2* make-array to data1 then
+	  data array? if new-len 2* make-array to data1 then
 	  0 { idxj }
 	  x-offset { xj }
 	  data-len 0 ?do
 	    data0 idxj xj array-set!
 	    data1 if
-	      data0 idxj 1+ y-offset data cadr i vct-ref data-scaler f* f- fround->s array-set!
+	      data0 idxj 1+ y-offset data 1 array-ref i vct-ref data-scaler f* f- fround->s
+	      array-set!
 	      data1 idxj    xj array-set!
-	      data1 idxj 1+ y-offset data car  i vct-ref data-scaler f* f- fround->s array-set!
+	      data1 idxj 1+ y-offset data 0 array-ref i vct-ref data-scaler f* f- fround->s
+	      array-set!
 	    else
 	      data0 idxj 1+ y-offset data i vct-ref data-scaler f* f- fround->s array-set!
 	    then
@@ -155,21 +155,22 @@ hide
 	vals 'y-offset      y-offset              hash-set!
 	'inset-envelope vals snd chn set-channel-property drop
       then
+      \ FIXME
+      data1 length 2 mod if data1 array-pop drop then
       data0 snd grf-chn time-graph draw-lines drop
       data1 if data1 snd grf-chn time-graph draw-lines drop then
     then
   then
 ;
-
 : click-current-window-location <{ snd chn button state x y axis -- f }>
   current-window-display-is-running
   axis time-graph = && if
-    snd chn undef axis-info { axinf }
-    axinf 12 list-ref { grf-width }
+    snd chn undef axis-info            { axinf }
+    axinf 12 array-ref                 { grf-width }
     inset-width grf-width f* fround->s { width }
-    grf-width width - { x-offset }
-    axinf 11 list-ref axinf 13 list-ref - inset-height f* fround->s { height }
-    axinf 13 list-ref 10 - { chan-offset }
+    grf-width width -                  { x-offset }
+    axinf 11 array-ref axinf 13 array-ref - inset-height f* fround->s { height }
+    axinf 13 array-ref 10 -            { chan-offset }
     width         0>
     x x-offset    >= &&
     x grf-width   <= &&
@@ -191,25 +192,18 @@ hide
     #f
   then
 ;
-
 : undo-cb { snd chn -- proc; self -- }
   0 proc-create snd , chn ,
  does> ( self -- )
   { self }
-  self @ { snd }
-  self cell+ @ { chn }
-  'inset-envelope snd chn channel-property { vals }
-  \ set edit-position to impossible value
-  vals if vals 'edit-position -2 hash-set! then
+  'inset-envelope #f self @ ( snd ) self cell+ @ ( chn ) set-channel-property drop
 ;
-
 : install-current-window-location <{ snd -- }>
   snd channels 0 ?do
     'inset-envelope snd i set-channel-property-save-state-ignore drop
     snd i undo-hook snd i undo-cb add-hook!
   loop
 ;
-
 set-current
 
 : make-current-window-display ( -- )
@@ -217,22 +211,22 @@ set-current
 and where the current window fits in it."
   current-window-display-is-running unless
     #t to current-window-display-is-running
-    after-open-hook  ['] install-current-window-location add-hook!
-    after-graph-hook ['] display-current-window-location add-hook!
-    mouse-click-hook ['] click-current-window-location   add-hook!
-    update-hook      ['] update-current-window-location  add-hook!
+    after-open-hook  <'> install-current-window-location add-hook!
+    after-graph-hook <'> display-current-window-location add-hook!
+    mouse-click-hook <'> click-current-window-location   add-hook!
+    update-hook      <'> update-current-window-location  add-hook!
   then
 ;
 
 : close-current-window-display ( -- )
   current-window-display-is-running if
     #f to current-window-display-is-running
-    after-open-hook  ['] install-current-window-location remove-hook! drop
-    after-graph-hook ['] display-current-window-location remove-hook! drop
-    mouse-click-hook ['] click-current-window-location   remove-hook! drop
-    update-hook      ['] update-current-window-location  remove-hook! drop
+    after-open-hook  <'> install-current-window-location remove-hook! drop
+    after-graph-hook <'> display-current-window-location remove-hook! drop
+    mouse-click-hook <'> click-current-window-location   remove-hook! drop
+    update-hook      <'> update-current-window-location  remove-hook! drop
     sounds each { snd }
-      snd channels 0 ?do snd i undo-hook ['] undo-cb remove-hook! drop loop
+      snd channels 0 ?do snd i undo-hook <'> undo-cb remove-hook! drop loop
     end-each
   then
 ;

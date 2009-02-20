@@ -2,7 +2,7 @@
 
 \ Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Jan 06 05:32:57 CET 2006
-\ Changed: Thu Feb 01 00:57:08 CET 2007
+\ Changed: Fri Dec 12 00:53:05 CET 2008
 
 \ Commentary:
 \
@@ -33,7 +33,7 @@ hide
   \ ;; remove rumbles and DC etc (since we're using zero crossings to find period starts)
   { snd chn }
   snd chn #f frames { old-len }
-  '( 0.0 0.0  16.0 f2* snd srate f/ 0.0  20.0 f2* snd srate f/ 1.0  1.0 1.0 ) ( flt-lst )
+  #( 0.0 0.0  16.0 f2* snd srate f/ 0.0  20.0 f2* snd srate f/ 1.0  1.0 1.0 ) ( flt-lst )
   2.0  old-len snd srate min flog 2.0 flog f/ fceil ( pow2 )  f**  f>s ( fftlen )
   snd chn #f undef filter-sound drop
   old-len snd chn set-frames drop
@@ -224,7 +224,7 @@ hide
       adding if
 	beg next-beg len snd chn env-add { new-samps }
 	show-details if
-	  beg $" %d:%d" '( i len extension f/ f>s ) string-format snd chn add-named-mark drop
+	  beg $" %d:%d" #( i len extension f/ f>s ) string-format snd chn add-named-mark drop
 	then
 	beg len new-samps snd chn #f insert-samples drop
 	mult 1 ?do
@@ -236,10 +236,10 @@ hide
 	end-each
       else
 	beg snd chn #f frames >= if
-	  $" trouble at %d: %d of %d" _ '( i beg snd chn #f frames ) clm-message
+	  $" trouble at %d: %d of %d" _ #( i beg snd chn #f frames ) clm-message
 	then
 	show-details if
-	  beg 1- $" %d:%d" '( i len extension f/ f>s ) string-format snd chn add-named-mark drop
+	  beg 1- $" %d:%d" #( i len extension f/ f>s ) string-format snd chn add-named-mark drop
 	then
 	beg len snd chn #f delete-samples drop
 	changed-len len + to changed-len
@@ -257,20 +257,20 @@ hide
     then
   end-each
   show-details if
-    $" wanted: %d, got %d" _ '( samps changed-len ) clm-message
+    $" wanted: %d, got %d" _ #( samps changed-len ) clm-message
   then
   \ ;; and return to original srate
   snd chn unsample-sound
   show-details if
     snd chn 0 frames { frms0 }
     snd chn undef frames { frms }
-    $" %d -> %d (%d)" '( frms0  frms  frms0 stretch f* floor f>s ) clm-message
+    $" %d -> %d (%d)" #( frms0  frms  frms0 stretch f* floor f>s ) clm-message
   then
 ;
 set-current
 : rubber-sound ( stretch snd chn -- res )
   { stretch snd chn }
-  stretch snd chn rubber-cb $" %s %s" '( stretch get-func-name ) string-format as-one-edit
+  stretch snd chn rubber-cb $" %s %s" #( stretch get-func-name ) string-format as-one-edit
 ;
 previous
 

@@ -608,11 +608,8 @@
 	  lst vals))
        every-menu))
 
-    (let ((color (XtCreateManagedWidget "Color" xmPushButtonWidgetClass fft-popup every-menu)))
-      (XtAddCallback color XmNactivateCallback (lambda (w c i) (color-dialog))))
-
-    (let ((orient (XtCreateManagedWidget "Orientation" xmPushButtonWidgetClass fft-popup every-menu)))
-      (XtAddCallback orient XmNactivateCallback (lambda (w c i) (orientation-dialog))))
+    (let ((color (XtCreateManagedWidget "Color/Orientation" xmPushButtonWidgetClass fft-popup every-menu)))
+      (XtAddCallback color XmNactivateCallback (lambda (w c i) (color-orientation-dialog))))
 
     fft-popup))
 

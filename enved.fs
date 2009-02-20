@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sun Nov 13 13:59:42 CET 2005
-\ Changed: Thu Mar 01 17:05:55 CET 2007
+\ Changed: Thu Dec 18 22:39:23 CET 2008
 
 \ Commentary:
 
@@ -44,70 +44,35 @@ fth-enved make-?obj enved?
 
 : make-enved ( envelope -- enved )
   { envelope }
-  envelope list? envelope 1 $" a list" _ assert-type
+  envelope array? envelope 1 $" an array" _ assert-type
   enved% %alloc { enved }
-  enved unless 'system-error '( get-func-name $" cannot create enved" _ ) fth-throw then
+  enved unless 'system-error #( get-func-name $" cannot create enved" _ ) fth-throw then
   envelope enved enved-fs-envelope !
   enved fth-enved make-instance
 ;  
 previous
 
-: enved-length  ( obj -- len ) envelope@ object-length 2/ ;
+: enved-length  ( obj -- len ) envelope@ array-length 2/ ;
 : enved-inspect ( obj -- str )
   { obj }
   "#<" make-string-output-port { prt }
-  prt $" %s[%d]: " '( obj object-name obj enved-length ) port-puts-format
-  obj enved-length 0= if
-    prt "'()" port-puts
-  else
-    prt obj envelope@ port-display
-  then
-  prt ">" port-puts
+  prt $" %s[%d]: %S>" #( obj object-name obj enved-length obj envelope@ ) port-puts-format
   prt port->string
 ;
-: enved->string ( obj -- str )
-  { obj }
-  obj enved-length 0= if
-    "'()"
-  else
-    obj envelope@ object->string
-  then
-;
-: enved-dump ( obj -- str )
-  { obj }
-  obj enved-length 0= if
-    $" '() make-enved"
-  else
-    $" %S make-enved" '( obj envelope@ ) string-format
-  then
-;
-: enved->array ( obj -- ary )
-  { obj }
-  obj enved-length 0= if
-    #()
-  else
-    obj cycle-start0
-    obj enved-length make-array map! obj cycle-ref end-map
-  then
-;
-: enved-copy ( obj1 -- obj2 )
-  { obj1 }
-  obj1 enved-length 0= if
-    '()
-  else
-    obj1 envelope@ list-copy
-  then make-enved
-;
-: enved-ref    ( obj index -- point )
+: enved->string ( obj -- str )  envelope@ object->string ;
+: enved-dump    ( obj -- str )  enved->string $"  make-enved" $+ ;
+: enved->array  ( obj -- ary )  envelope@ array->array ;
+: enved-copy    ( obj -- obj2 ) envelope@ array-copy make-enved ;
+: enved-ref     ( obj index -- point )
   { obj index }
   obj enved? obj 1 $" an enved object" _ assert-type
   index 0< if index obj enved-length + to index then
-  obj index range? if
+  obj index object-range? if
     index 2* to index
-    '( obj envelope@ index list-ref obj envelope@ index 1+ list-ref )
+    #( obj envelope@ index array-ref obj envelope@ index 1+ array-ref )
   else
     'out-of-range
-    '( get-func-name $" index %s, enved length %s" _ '( index obj enved-length ) )
+    #( get-func-name $" index %s, enved length %s" _ #( index obj enved-length ) )
     fth-throw
   then
 ;
@@ -115,26 +80,26 @@ previous
   { obj index point }
   obj enved? obj 1 $" an enved object" _ assert-type
   index 0< if index obj enved-length + to index then
-  obj index range? if
+  obj index object-range? if
     index 2* to index
-    obj envelope@ index    point car  list-set!
-    obj envelope@ index 1+ point cadr list-set!
+    obj envelope@ index    point 0 array-ref array-set!
+    obj envelope@ index 1+ point 1 array-ref array-set!
   else
     'out-of-range
-    '( get-func-name $" index %s, enved length %s" _ '( index obj enved-length ) )
+    #( get-func-name $" index %s, enved length %s" _ #( index obj enved-length ) )
     fth-throw
   then
 ;
 : enved-equal? ( obj1 obj2 -- f )
   { obj1 obj2 }
   obj1 enved? obj2 enved? && if
-    obj1 envelope@ obj2 envelope@ equal?
+    obj1 envelope@ obj2 envelope@ object-equal?
   else
     #f
   then
 ;
-: enved-mark ( obj -- ) envelope@ object-mark ;
-: enved-free ( obj -- ) instance-gen-ref free throw ;
+: enved-mark    ( obj -- ) envelope@ object-mark ;
+: enved-free    ( obj -- ) instance-gen-ref free throw ;
 
 \ Init enved
 <'> enved-inspect  fth-enved set-object-inspect	\ en .inspect
@@ -142,34 +107,34 @@ previous
 <'> enved-dump     fth-enved set-object-dump	\ en object-dump
 <'> enved->array   fth-enved set-object->array	\ en object->array
 <'> enved-copy     fth-enved set-object-copy	\ en object-copy
-<'> enved-ref      fth-enved set-object-value-ref \ en index          object-ref => '( x y )
-<'> enved-set!     fth-enved set-object-value-set \ en index '( x y ) object-set!
+<'> enved-ref      fth-enved set-object-value-ref \ en index          object-ref => #( x y )
+<'> enved-set!     fth-enved set-object-value-set \ en index #( x y ) object-set!
 <'> enved-equal?   fth-enved set-object-equal-p	\ obj1 obj2 equal?
 <'> enved-length   fth-enved set-object-length  \ en object-length => number of points (lstlen/2)
 <'> enved-mark     fth-enved set-object-mark    \ en object-mark and for gc
 <'> enved-free     fth-enved set-object-free	\ for gc
-<'> enved-ref      fth-enved 1 set-object-apply	\ en index apply => '( x y )
+<'> enved-ref      fth-enved 1 set-object-apply	\ en index apply => #( x y )
 
 \ ENVED-INDEX, ENVED-INSERT!, ENVED-DELETE!
 : enved-index ( obj x -- index|-1 )
   { obj x }
   obj enved? obj 1 $" an enved object" _ assert-type
-  -1 obj each car x f= if drop i leave then end-each
+  -1 obj each 0 array-ref x f= if drop i leave then end-each
 ;
 : enved-insert! ( obj index point -- )
   { obj index point }
   obj enved? obj 1 $" an enved object" _ assert-type
-  point list? point object-length 2 = &&  point 3 $" a point list '( x y )" _ assert-type
+  point array? point object-length 2 = &&  point 3 $" a point array #( x y )" _ assert-type
   obj enved-length 0= if
     point
   else
     index 0< if index obj enved-length + to index then
     index 0>= index obj enved-length <= || if
       index 2* to index
-      obj envelope@ index point list-insert
+      obj envelope@ index point array-insert
     else
       'out-of-range
-      '( get-func-name $" index %s, enved length %s" _ '( index obj enved-length ) )
+      #( get-func-name $" index %s, enved length %s" _ #( index obj enved-length ) )
       fth-throw
     then
   then obj envelope!
@@ -178,12 +143,13 @@ previous
   { obj index }
   obj enved? obj 1 $" an enved object" _ assert-type
   index 0< if index obj enved-length + to index then
-  obj index range? if
+  obj index object-range? if
     index 2* to index
-    obj envelope@ index :count 2 list-slice obj envelope!
+    obj envelope@ index array-delete! drop
+    obj envelope@ index array-delete! drop
   else
     'out-of-range
-    '( get-func-name $" index %s, enved length %s" _ '( index obj enved-length ) )
+    #( get-func-name $" index %s, enved length %s" _ #( index obj enved-length ) )
     fth-throw
   then
 ;

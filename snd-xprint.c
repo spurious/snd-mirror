@@ -214,11 +214,15 @@ static void start_print_dialog(XmString xmstr4, bool managed)
       XtSetArg(args[n], XmNtransient, false); n++; /* this gives us the resize handles */
       print_dialog = XmCreateMessageDialog(MAIN_PANE(ss), _("eps file:"), args, n);
 
+      XtVaSetValues(XmMessageBoxGetChild(print_dialog, XmDIALOG_MESSAGE_LABEL), XmNbackground, ss->sgx->basic_color, NULL);
+
       XmStringFree(xmstr1);
       XmStringFree(xmstr2);
       XmStringFree(xmstr3);
       XmStringFree(titlestr);
+
       XtUnmanageChild(XmMessageBoxGetChild(print_dialog, XmDIALOG_SYMBOL_LABEL));
+
       XtAddCallback(print_dialog, XmNhelpCallback, print_help_callback, NULL);
       XtAddCallback(print_dialog, XmNcancelCallback, print_cancel_callback, NULL);
       XtAddCallback(print_dialog, XmNokCallback, print_ok_callback, NULL);

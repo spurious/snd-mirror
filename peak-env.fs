@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Wed Dec 21 17:37:13 CET 2005
-\ Changed: Wed Apr 11 13:56:56 CEST 2007
+\ Changed: Sun Dec 14 21:34:13 CET 2008
 
 \ Commentary:
 \ 
@@ -34,7 +34,7 @@ make-hash value saved-peak-info
   { snd chn }
   snd file-name { fname }
   fname each { ch } [char] / ch = [char] . ch = || if fname i [char] _ string-set! then end-each
-  $" %s/%s-fth-peaks-%d" '( save-peak-env-info-directory fname chn ) string-format
+  $" %s/%s-fth-peaks-%d" #( save-peak-env-info-directory fname chn ) string-format
 ;
 
 \ intended as an initial-graph-hook-function
@@ -68,8 +68,8 @@ make-hash value saved-peak-info
 
 \ intended as a close-hook function
 : save-peak-env-info <{ snd -- }>
-  initial-graph-hook ['] restore-peak-env-info-upon-open add-hook!
-  update-hook        ['] peak-env-info-update-cb         add-hook!
+  initial-graph-hook <'> restore-peak-env-info-upon-open add-hook!
+  update-hook        <'> peak-env-info-update-cb         add-hook!
   save-peak-env-info?
   snd 0 0 peak-env-info length 0> && if
     #f { saved }
@@ -85,7 +85,7 @@ make-hash value saved-peak-info
 	  saved-peak-info snd file-name vals hash-set!
 	  #t to saved
 	then
-	snd i peak-file ['] write-peak-env-info-file 'no-such-envelope nil fth-catch 2drop
+	snd i peak-file <'> write-peak-env-info-file 'no-such-envelope nil fth-catch 2drop
       then
     loop
   then

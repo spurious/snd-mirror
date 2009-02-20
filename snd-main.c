@@ -1337,8 +1337,7 @@ void save_state(const char *save_state_name)
   
   if (transform_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", TO_PROC_NAME(S_transform_dialog));
   if (enved_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", TO_PROC_NAME(S_enved_dialog));
-  if (color_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", TO_PROC_NAME(S_color_dialog));
-  if (orientation_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", TO_PROC_NAME(S_orientation_dialog));
+  if (color_orientation_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", TO_PROC_NAME(S_color_orientation_dialog));
   if (region_dialog_is_active()) fprintf(save_fd, BPAREN "%s" EPAREN "\n", TO_PROC_NAME(S_view_regions_dialog));
   save_post_it_dialog_state(save_fd);
   save_find_dialog_state(save_fd);
@@ -2177,22 +2176,12 @@ static XEN g_snd_version(void)
 }
 
 
-static XEN g_color_dialog(XEN managed) 
+static XEN g_color_orientation_dialog(XEN managed) 
 {
   widget_t w;
-  #define H_color_dialog "(" S_color_dialog " :optional managed): start the Color dialog"
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(managed), managed, XEN_ONLY_ARG, S_color_dialog, "a boolean");
-  w = start_color_dialog(XEN_TO_C_BOOLEAN(managed));
-  return(XEN_WRAP_WIDGET(w));
-}
-
-
-static XEN g_orientation_dialog(XEN managed) 
-{
-  widget_t w;
-  #define H_orientation_dialog "(" S_orientation_dialog " :optional (managed " PROC_TRUE ")): start the Orientation dialog"
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(managed), managed, XEN_ONLY_ARG, S_orientation_dialog, "a boolean");
-  w = start_orientation_dialog(XEN_TO_C_BOOLEAN(managed));
+  #define H_color_orientation_dialog "(" S_color_orientation_dialog " :optional managed): start the Color/Orientation dialog"
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(managed), managed, XEN_ONLY_ARG, S_color_orientation_dialog, "a boolean");
+  w = start_color_orientation_dialog(XEN_TO_C_BOOLEAN(managed));
   return(XEN_WRAP_WIDGET(w));
 }
 
@@ -2326,8 +2315,7 @@ XEN_NARGIFY_1(g_set_axis_numbers_font_w, g_set_axis_numbers_font)
 XEN_NARGIFY_0(g_listener_font_w, g_listener_font)
 XEN_NARGIFY_1(g_set_listener_font_w, g_set_listener_font)
 XEN_NARGIFY_0(g_snd_version_w, g_snd_version)
-XEN_ARGIFY_1(g_color_dialog_w, g_color_dialog)
-XEN_ARGIFY_1(g_orientation_dialog_w, g_orientation_dialog)
+XEN_ARGIFY_1(g_color_orientation_dialog_w, g_color_orientation_dialog)
 XEN_ARGIFY_1(g_transform_dialog_w, g_transform_dialog)
 XEN_ARGIFY_2(g_print_dialog_w, g_print_dialog)
 XEN_NARGIFY_0(g_preferences_dialog_w, g_preferences_dialog)
@@ -2403,8 +2391,7 @@ XEN_NARGIFY_0(g_abortq_w, g_abortq)
 #define g_listener_font_w g_listener_font
 #define g_set_listener_font_w g_set_listener_font
 #define g_snd_version_w g_snd_version
-#define g_color_dialog_w g_color_dialog
-#define g_orientation_dialog_w g_orientation_dialog
+#define g_color_orientation_dialog_w g_color_orientation_dialog
 #define g_transform_dialog_w g_transform_dialog
 #define g_print_dialog_w g_print_dialog
 #define g_preferences_dialog_w g_preferences_dialog
@@ -2541,13 +2528,12 @@ the hook functions return " PROC_TRUE ", the save state process opens 'filename'
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_just_sounds, g_just_sounds_w, H_just_sounds, 
 				   S_setB S_just_sounds, g_set_just_sounds_w,  0, 0, 1, 0);
 
-  XEN_DEFINE_PROCEDURE(S_snd_version,           g_snd_version_w,           0, 0, 0, H_snd_version);
-  XEN_DEFINE_PROCEDURE(S_color_dialog,          g_color_dialog_w,          0, 1, 0, H_color_dialog);
-  XEN_DEFINE_PROCEDURE(S_orientation_dialog,    g_orientation_dialog_w,    0, 1, 0, H_orientation_dialog);
-  XEN_DEFINE_PROCEDURE(S_transform_dialog,      g_transform_dialog_w,      0, 1, 0, H_transform_dialog);
-  XEN_DEFINE_PROCEDURE(S_print_dialog,          g_print_dialog_w,          0, 2, 0, H_print_dialog);
-  XEN_DEFINE_PROCEDURE(S_preferences_dialog,    g_preferences_dialog_w,    0, 0, 0, H_preferences_dialog);
-  XEN_DEFINE_PROCEDURE(S_recorder_dialog,       g_recorder_dialog_w,       0, 0, 0, H_recorder_dialog);
-  XEN_DEFINE_PROCEDURE(S_abort,                 g_abort_w,                 0, 0, 0, H_abort);
-  XEN_DEFINE_PROCEDURE(S_c_g,                   g_abortq_w,                0, 0, 0, H_abortQ);
+  XEN_DEFINE_PROCEDURE(S_snd_version,              g_snd_version_w,              0, 0, 0, H_snd_version);
+  XEN_DEFINE_PROCEDURE(S_color_orientation_dialog, g_color_orientation_dialog_w, 0, 1, 0, H_color_orientation_dialog);
+  XEN_DEFINE_PROCEDURE(S_transform_dialog,         g_transform_dialog_w,         0, 1, 0, H_transform_dialog);
+  XEN_DEFINE_PROCEDURE(S_print_dialog,             g_print_dialog_w,             0, 2, 0, H_print_dialog);
+  XEN_DEFINE_PROCEDURE(S_preferences_dialog,       g_preferences_dialog_w,       0, 0, 0, H_preferences_dialog);
+  XEN_DEFINE_PROCEDURE(S_recorder_dialog,          g_recorder_dialog_w,          0, 0, 0, H_recorder_dialog);
+  XEN_DEFINE_PROCEDURE(S_abort,                    g_abort_w,                    0, 0, 0, H_abort);
+  XEN_DEFINE_PROCEDURE(S_c_g,                      g_abortq_w,                   0, 0, 0, H_abortQ);
 }

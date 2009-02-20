@@ -13,8 +13,11 @@ changed spectro-cutoff to spectrum-end and spectro-start to spectrum-start
   moved the spectrum end slider to the transform dialog and added spectrum start slider
     (this should make it easier to zoom into an arbitrary portion of the spectrum)
 
+merged the color and orientation dialogs
 
-checked: gsl 1.12, gtk 2.15.1|2|3, sbcl 1.0.25, cmucl 19f
+removed TODO.Snd, snd.spec, and old-snd.spec -- I don't plan to make any more rpm files.
+
+checked: gsl 1.12, gtk 2.15.1|2|3|4, sbcl 1.0.25, cmucl 19f
 
 Thanks!: Kjetil, Pavel Penev, Rick Taube, Michael Edwards
 

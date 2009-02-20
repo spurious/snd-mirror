@@ -3,7 +3,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sun Oct 16 23:04:30 CEST 2005
-\ Changed: Tue Jan 29 01:59:36 CET 2008
+\ Changed: Tue Dec 16 00:56:44 CET 2008
 
 \ Commentary:
 \
@@ -96,7 +96,7 @@ require rubber
 #f value use-combo-box-for-fft-size
 
 hide
-: cascade-cb <{ w c i -- }> c each '() run-proc drop end-each ;
+: cascade-cb <{ w c i -- }> c each #() run-proc drop end-each ;
 
 struct
   cell% field menu-parent
@@ -112,7 +112,7 @@ end-struct snd-menu%
 : menu-menu@   	 ( gen -- wid  ) menu-menu @ ;
 : menu-args@   	 ( gen -- args ) menu-args @ ;
 : menu-children@ ( gen -- ary  ) menu-children @ ;
-: menu-display   ( gen -- )      menu-display-cb @ '() run-proc drop ;
+: menu-display   ( gen -- )      menu-display-cb @ #() run-proc drop ;
 set-current
 
 : make-menu ( name parent args -- gen )
@@ -121,8 +121,8 @@ set-current
   parent name args undef FXmCreatePulldownMenu { menu }
   #() { lst }
   name FxmCascadeButtonWidgetClass parent
-  '( FXmNsubMenuId  menu FXmNbackground basic-color ) undef FXtCreateManagedWidget ( cascade )
-  FXmNcascadingCallback ['] cascade-cb lst FXtAddCallback drop
+  #( FXmNsubMenuId  menu FXmNbackground basic-color ) undef FXtCreateManagedWidget ( cascade )
+  FXmNcascadingCallback <'> cascade-cb lst FXtAddCallback drop
   parent mn menu-parent !
   name   mn menu-name !
   menu   mn menu-menu !
@@ -131,14 +131,14 @@ set-current
   mn
 ;
 
-' noop 0 make-proc constant effects-noop
+<'> noop 0 make-proc constant effects-noop
 
 : menu-entry ( gen prc disp-prc -- )
   { gen prc disp-prc }
   gen menu-name@ FxmPushButtonWidgetClass gen menu-menu@
   gen menu-args@ undef FXtCreateManagedWidget { child }
   child FXmNactivateCallback prc undef FXtAddCallback drop
-  gen menu-children@  disp-prc '( child ) run-proc  array-push drop
+  gen menu-children@  disp-prc #( child ) run-proc  array-push drop
 ;
 : make-main-menu ( name -- widget ) effects-noop add-to-main-menu dup to effects-menu main-menu ;
 : add-to-effects-menu ( name prc -- ) effects-menu -rot undef add-to-menu drop ;
@@ -152,8 +152,8 @@ hide
   "Help"    _ FXmFONTLIST_DEFAULT_TAG FXmStringCreate { xhelp }
   "DoIt"    _ FXmFONTLIST_DEFAULT_TAG FXmStringCreate { xok }
   label     _ FXmFONTLIST_DEFAULT_TAG FXmStringCreate { titlestr }
-  main-widgets cadr label
-  '( FXmNcancelLabelString xdismiss
+  main-widgets 1 array-ref label
+  #( FXmNcancelLabelString xdismiss
      FXmNhelpLabelString   xhelp
      FXmNokLabelString     xok
      FXmNautoUnmanage      #f
@@ -162,18 +162,18 @@ hide
      FXmNnoResize          #f
      FXmNbackground        basic-color
      FXmNtransient         #f ) undef FXmCreateTemplateDialog { new-dialog }
-  #( '( FXmDIALOG_HELP_BUTTON   help-button-color )
-     '( FXmDIALOG_CANCEL_BUTTON quit-button-color )
-     '( FXmDIALOG_OK_BUTTON     doit-button-color ) ) each { lst }
-    new-dialog lst car ( button ) FXmMessageBoxGetChild ( widget )
-    '( FXmNarmColor pushed-button-color FXmNbackground lst cadr ) FXtVaSetValues drop
+  #( #( FXmDIALOG_HELP_BUTTON   help-button-color )
+     #( FXmDIALOG_CANCEL_BUTTON quit-button-color )
+     #( FXmDIALOG_OK_BUTTON     doit-button-color ) ) each { lst }
+    new-dialog lst 0 array-ref ( button ) FXmMessageBoxGetChild ( widget )
+    #( FXmNarmColor pushed-button-color FXmNbackground lst 1 array-ref ) FXtVaSetValues drop
   end-each
-  new-dialog FXmNcancelCallback ['] unmanage-cb new-dialog FXtAddCallback drop
+  new-dialog FXmNcancelCallback <'> unmanage-cb new-dialog FXtAddCallback drop
   new-dialog FXmNhelpCallback   help-prc        undef      FXtAddCallback drop
   new-dialog FXmNokCallback     ok-prc          undef      FXtAddCallback drop
   reset-prc if
     "Reset" _ FxmPushButtonWidgetClass new-dialog
-    '( FXmNbackground      reset-button-color
+    #( FXmNbackground      reset-button-color
        FXmNforeground      black-pixel
        FXmNarmColor        pushed-button-color ) undef FXtCreateManagedWidget ( reset-button )
     FXmNactivateCallback reset-prc undef FXtAddCallback drop
@@ -202,18 +202,18 @@ hide
   hi flog          log2 f/ { log-hi }
   2.0  log-lo val log-scale-ticks f/ log-hi log-lo f- f* f+  f**
 ;
-: scale-log-label ( lo val hi -- str ) scale-linear->log "%.2f" swap 1 >list string-format ;
+: scale-log-label ( lo val hi -- str ) scale-linear->log "%.2f" swap 1 >array string-format ;
 : scale-log-cb <{ w c info -- }>
-  c car   { label }
-  c cadr  { low }
-  c caddr { high }
+  c 0 array-ref { label }
+  c 1 array-ref { low }
+  c 2 array-ref { high }
   label  low info Fvalue high scale-log-label  change-label
 ;
 : create-log-scale-widget { parent title low init high cb -- scale-label-list }
-  "%.2f" '( init ) string-format FxmLabelWidgetClass parent
-  '( FXmNbackground    basic-color ) undef FXtCreateManagedWidget { label }
+  "%.2f" #( init ) string-format FxmLabelWidgetClass parent
+  #( FXmNbackground    basic-color ) undef FXtCreateManagedWidget { label }
   "scale" FxmScaleWidgetClass parent
-  '( FXmNorientation   FXmHORIZONTAL
+  #( FXmNorientation   FXmHORIZONTAL
      FXmNshowValue     #f
      FXmNminimum       0
      FXmNmaximum       log-scale-ticks
@@ -221,18 +221,18 @@ hide
      FXmNdecimalPoints 0
      FXmNtitleString   title
      FXmNbackground    basic-color ) undef FXtCreateManagedWidget { scale }
-  '( label low high ) { data }
-  scale FXmNvalueChangedCallback ['] scale-log-cb data  FXtAddCallback drop
+  #( label low high ) { data }
+  scale FXmNvalueChangedCallback <'> scale-log-cb data  FXtAddCallback drop
   scale FXmNvalueChangedCallback cb               undef FXtAddCallback drop
-  scale FXmNdragCallback         ['] scale-log-cb data  FXtAddCallback drop
+  scale FXmNdragCallback         <'> scale-log-cb data  FXtAddCallback drop
   scale FXmNdragCallback         cb               undef FXtAddCallback drop
-  '( scale label )
+  #( scale label )
 ;
 
 \ semitone scaler widget
 
 24 value semi-range
-: semi-scale-label ( val -- str ) $" semitones: %s" _ swap semi-range - 1 >list string-format ;
+: semi-scale-label ( val -- str ) $" semitones: %s" _ swap semi-range - 1 >array string-format ;
 : semitones->ratio ( val -- r )
   2.0 swap 12.0 f/ f**
 ;
@@ -241,11 +241,11 @@ hide
 ;
 : scale-semi-cb <{ w c info -- }> c  info Fvalue semi-scale-label  change-label ;
 : create-semi-scale-widget { parent title init cb -- scale-label-list }
-  $" semitones: %s" _ '( init ratio->semitones ) string-format { str }
+  $" semitones: %s" _ #( init ratio->semitones ) string-format { str }
   str FxmLabelWidgetClass parent
-  '( FXmNbackground  basic-color ) undef FXtCreateManagedWidget { label }
+  #( FXmNbackground  basic-color ) undef FXtCreateManagedWidget { label }
   "scale" FxmScaleWidgetClass parent
-  '( FXmNorientation   FXmHORIZONTAL
+  #( FXmNorientation   FXmHORIZONTAL
      FXmNshowValue     #f
      FXmNminimum       0
      FXmNmaximum       semi-range 2*
@@ -253,16 +253,16 @@ hide
      FXmNdecimalPoints 0
      FXmNtitleString   title
      FXmNbackground    basic-color ) undef FXtCreateManagedWidget { scale }
-  scale FXmNvalueChangedCallback ['] scale-semi-cb label FXtAddCallback drop
+  scale FXmNvalueChangedCallback <'> scale-semi-cb label FXtAddCallback drop
   scale FXmNvalueChangedCallback cb                undef FXtAddCallback drop
-  scale FXmNdragCallback         ['] scale-semi-cb label FXtAddCallback drop
+  scale FXmNdragCallback         <'> scale-semi-cb label FXtAddCallback drop
   scale FXmNdragCallback         cb                undef FXtAddCallback drop
-  '( scale label )
+  #( scale label )
 ;
 
 : add-sliders { dialog sliders -- sliders-array }
   "formd" FxmFormWidgetClass dialog
-  '( FXmNleftAttachment   FXmATTACH_FORM
+  #( FXmNleftAttachment   FXmATTACH_FORM
      FXmNrightAttachment  FXmATTACH_FORM
      FXmNtopAttachment    FXmATTACH_FORM
      FXmNbottomAttachment FXmATTACH_WIDGET
@@ -273,7 +273,7 @@ hide
        drop
      then ) undef FXtCreateManagedWidget { mainfrm }
   "rcd" FxmRowColumnWidgetClass mainfrm
-  '( FXmNleftAttachment   FXmATTACH_FORM
+  #( FXmNleftAttachment   FXmATTACH_FORM
      FXmNrightAttachment  FXmATTACH_FORM
      FXmNbackground       highlight-color
      FXmNorientation      FXmVERTICAL ) undef FXtCreateManagedWidget { mainform }
@@ -292,7 +292,7 @@ hide
       then
     else
       *key* 0 array-ref FxmScaleWidgetClass mainform
-      '( FXmNorientation  	FXmHORIZONTAL
+      #( FXmNorientation  	FXmHORIZONTAL
 	 FXmNshowValue    	#t
 	 FXmNminimum      	low  scale f* fround->s
 	 FXmNmaximum      	high scale f* fround->s
@@ -331,7 +331,7 @@ hide
  does> ( self -- pixel )
   { self }
   self @ unless
-    main-widgets cadr { shell }
+    main-widgets 1 array-ref { shell }
     shell FXtDisplay { dpy }
     dpy FDefaultScreen { scr }
     dpy scr FDefaultColormap { cmap }
@@ -347,19 +347,19 @@ hide
 
 "yellow" color->pixel yellow-pixel
 
-\ c == '( prc type )
-: target-arm-cb      <{ w c info -- }> c car ( prc ) c cdr ( type ) run-proc drop ;
-: target-truncate-cb <{ w c info -- }> c     ( prc ) info Fset      run-proc drop ;
+\ c == #( prc type )
+: target-arm-cb      <{ w c info -- }> c 0 array-ref ( prc ) c 1 array-ref ( type ) run-proc drop ;
+: target-truncate-cb <{ w c info -- }> c             ( prc ) info Fset              run-proc drop ;
 
 #() value selection-buttons
 
 : add-target { mainform target-prc truncate-prc -- rc-wid }
   "sep" FxmSeparatorWidgetClass mainform
-  '( FXmNorientation      FXmHORIZONTAL
+  #( FXmNorientation      FXmHORIZONTAL
      FXmNseparatorType    FXmSHADOW_ETCHED_OUT
      FXmNbackground       basic-color ) undef FXtCreateManagedWidget drop
   "rc" FxmRowColumnWidgetClass mainform
-  '( FXmNorientation      FXmHORIZONTAL
+  #( FXmNorientation      FXmHORIZONTAL
      FXmNbackground       basic-color
      FXmNradioBehavior    #t
      FXmNradioAlwaysOne   #t
@@ -368,15 +368,15 @@ hide
      FXmNrightAttachment  FXmATTACH_FORM
      FXmNentryClass       FxmToggleButtonWidgetClass
      FXmNisHomogeneous    #t ) undef FXtCreateManagedWidget { rc }
-  #( '( $" entire sound"  _ 'sound     )
-     '( $" selection"     _ 'selection )
-     '( $" between marks" _ 'marks     ) ) each { lst }
-    lst cadr { typ }
-    lst car ( name ) FxmToggleButtonWidgetClass rc
-    '( FXmNbackground     basic-color
+  #( #( $" entire sound"  _ 'sound     )
+     #( $" selection"     _ 'selection )
+     #( $" between marks" _ 'marks     ) ) each { lst }
+    lst 1 array-ref { typ }
+    lst 0 array-ref ( name ) FxmToggleButtonWidgetClass rc
+    #( FXmNbackground     basic-color
        FXmNselectColor    yellow-pixel
        FXmNindicatorType  FXmONE_OF_MANY_ROUND
-       FXmNarmCallback    '( ['] target-arm-cb '( target-prc typ ) ) )
+       FXmNarmCallback    #( <'> target-arm-cb #( target-prc typ ) ) )
     undef FXtCreateManagedWidget { wid }
     typ 'sound equal? if wid #t #t FXmToggleButtonSetState drop then
     typ 'selection equal? if
@@ -386,12 +386,12 @@ hide
   end-each
   truncate-prc if
     "trsep" FxmSeparatorWidgetClass mainform
-    '( FXmNorientation FXmHORIZONTAL ) undef FXtCreateManagedWidget drop
+    #( FXmNorientation FXmHORIZONTAL ) undef FXtCreateManagedWidget drop
     $" truncate at end" _ FxmToggleButtonWidgetClass mainform
-    '( FXmNbackground  basic-color
+    #( FXmNbackground  basic-color
        FXmNset         #t
        FXmNselectColor yellow-pixel ) undef FXtCreateManagedWidget ( trbutton )
-    FXmNvalueChangedCallback ['] target-truncate-cb truncate-prc FXtAddCallback drop
+    FXmNvalueChangedCallback <'> target-truncate-cb truncate-prc FXtAddCallback drop
   then
   rc
 ;
@@ -425,9 +425,9 @@ hide
   ms length 2 < if
     #f
   else
-    ms ['] marks-sort array-sort! drop
+    ms <'> marks-sort array-sort! drop
     ms length 2 = if
-      ms array->list
+      ms array->array
     else
       snd chn left-sample { lw }
       snd chn right-sample { rw }
@@ -439,13 +439,13 @@ hide
       then { favor }
       ms each { p1 }
 	i ms length 2 - = if
-	  '( p1 ms last-ref )
+	  #( p1 ms last-ref )
 	  leave
 	then
 	ms i 1+ array-ref { p2 }
 	ms i 2 + array-ref { p3 }
 	p1 favor - abs p3 favor - abs < if
-	  '( p1 p2 )
+	  #( p1 p2 )
 	  leave
 	then
       end-each
@@ -463,7 +463,7 @@ hide
     else
       plausible-mark-samples { pts }
       pts if
-	pts car pts cdr each - end-each abs 1+
+	pts 0 array-ref pts 1 nil array-subarray each - end-each abs 1+
       else
 	0
       then
@@ -475,17 +475,17 @@ hide
   target 'selection equal? selection? not && if
     $" no selection" _ snd-warning drop
   else
-    target 'sound equal? sounds null? && if
+    target 'sound equal? sounds nil? && if
       $" no sound" _ snd-warning drop
     else
-      target 'marks equal? sounds null? && if
+      target 'marks equal? sounds nil? && if
 	$" no marks" _ snd-warning drop
       else
 	#f sync { snc }
 	target 'marks = if
 	  plausible-mark-samples
 	else
-	  '()
+	  #()
 	then { pts }
 	target 'sound equal? if
 	  0
@@ -493,7 +493,7 @@ hide
 	  target 'selection equal? if
 	    #f #f selection-position
 	  else
-	    pts car
+	    pts 0 array-ref
 	  then
 	then { beg }
 	decay number? if
@@ -504,23 +504,23 @@ hide
 	snc 0> if
 	  all-chans
 	else
-	  #( '( selected-sound dup selected-channel ) )
+	  #( #( selected-sound dup selected-channel ) )
 	then each { lst }
-	  lst car  { snd }
-	  lst cadr { chn }
+	  lst 0 array-ref { snd }
+	  lst 1 array-ref { chn }
 	  target 'sound equal? if
 	    snd chn undef frames 1-
 	  else
 	    target 'selection equal? if
 	      #f #f selection-position #f #f selection-frames +
 	    else
-	      pts cadr
+	      pts 1 array-ref
 	    then
 	  then { end }
 	  end beg - { dur }
 	  snd sync snc = if
-	    origin-func '( target dur ) run-proc { name orig }
-	    $" %s %s %s %s" '( orig beg
+	    origin-func #( target dur ) run-proc { name orig }
+	    $" %s %s %s %s" #( orig beg
 	       target 'sound equal? if #f else dur 1+ then
 	       name ) string-format { origin }
 	    func dur run-proc beg end overlap + 1+ snd chn #f origin map-channel drop
@@ -615,7 +615,7 @@ set-current
 : effects-squelch-channel <{ amount gate-size :optional snd #f chn #f -- val }>
   :size gate-size make-moving-average { f0 }
   :size gate-size :initial-element 1.0 make-moving-average { f1 }
-  $" %s %s %s" '( amount gate-size get-func-name ) string-format { origin }
+  $" %s %s %s" #( amount gate-size get-func-name ) string-format { origin }
   f0 f1 amount squelch-cb 0 #f snd chn #f origin map-channel
 ;
 previous
@@ -628,13 +628,13 @@ hide
  does> ( w c i self -- )
   { w c info self }
   self @ { gen }
-  gen envel@ xe-envelope '( 0.0 1.0 1.0 1.0 ) equal? if
+  gen envel@ xe-envelope #( 0.0 1.0 1.0 1.0 ) equal? if
     #f
   else
     gen envel@ xe-envelope gen amount@ scale-envelope
   then { with-env }
   gen target@ 'sound equal? if
-    with-env list? if
+    with-env array? if
       with-env 0 undef 1.0 #f #f #f env-sound drop
     else
       gen amount@ #f #f scale-by drop
@@ -642,7 +642,7 @@ hide
   else
     gen target@ 'selection equal? if
       selection? if
-	with-env list? if
+	with-env array? if
 	  with-env 1.0 env-selection drop
 	else
 	  gen amount@ scale-selection-by drop
@@ -653,10 +653,16 @@ hide
     else
       plausible-mark-samples { pts }
       pts if
-	with-env list? if
-	  with-env  pts car  pts cadr  pts car -  1.0 #f #f #f env-sound drop
+	with-env array? if
+	  with-env
+	  pts 0 array-ref
+	  pts 1 array-ref
+	  pts 0 array-ref -  1.0 #f #f #f env-sound drop
 	else
-	  gen amount@ pts car  pts cadr  pts car - #f #f #f normalize-channel drop
+	  gen amount@
+	  pts 0 array-ref
+	  pts 1 array-ref
+	  pts 0 array-ref - #f #f #f normalize-channel drop
 	then
       else
 	$" no marks" _ snd-warning drop
@@ -671,8 +677,8 @@ hide
   { w c info self }
   self @ { gen }
   self cell+ @ ( init ) gen amount!
-  gen envel@ '( 0.0 1.0 1.0 1.0 ) set-xe-envelope
-  gen sliders@ 0 array-ref '( FXmNvalue gen amount@ 100.0 f* f>s ) FXtVaSetValues drop
+  gen envel@ #( 0.0 1.0 1.0 1.0 ) set-xe-envelope
+  gen sliders@ 0 array-ref #( FXmNvalue gen amount@ 100.0 f* f>s ) FXtVaSetValues drop
 ;
 : gain-slider-cb ( gen -- prc; w c i self -- )
   3 proc-create swap ,
@@ -692,7 +698,7 @@ hide
     gen dialog@ #( #( "gain" _ 0.0 gen amount@ 5.0 gen gain-slider-cb 100 ) )
     add-sliders gen sliders!
     "fr" FxmFrameWidgetClass gen sliders@ 0 array-ref FXtParent FXtParent
-    '( FXmNheight          200
+    #( FXmNheight          200
        FXmNleftAttachment  FXmATTACH_FORM
        FXmNrightAttachment FXmATTACH_FORM
        FXmNtopAttachment   FXmATTACH_WIDGET
@@ -703,10 +709,10 @@ hide
     gen dialog@ activate-dialog
     gen label@ string-downcase
     fr
-    :envelope    '( 0.0 1.0 1.0 1.0 )
-    :axis-bounds '( 0.0 1.0 0.0 1.0 )
-    :args        '( FXmNheight 200 ) make-xenved gen envel!
-    fr '( FXmNbottomAttachment FXmATTACH_WIDGET FXmNbottomWidget target-row ) FXtVaSetValues drop
+    :envelope    #( 0.0 1.0 1.0 1.0 )
+    :axis-bounds #( 0.0 1.0 0.0 1.0 )
+    :args        #( FXmNheight 200 ) make-xenved gen envel!
+    fr #( FXmNbottomAttachment FXmATTACH_WIDGET FXmNbottomWidget target-row ) FXtVaSetValues drop
   else
     gen dialog@ activate-dialog
   then
@@ -725,7 +731,7 @@ set-current
  does> ( self -- )
   { self }
   self @ { gen }
-  self cell+ @ ( child ) $" %s (%.2f)" '( gen label@ gen amount@ ) string-format change-label
+  self cell+ @ ( child ) $" %s (%.2f)" #( gen label@ gen amount@ ) string-format change-label
 ;
 previous
 
@@ -749,7 +755,10 @@ hide
     else
       plausible-mark-samples { pts }
       pts if
-	gen amount@  pts car  pts cadr  pts car - #f #f #f normalize-channel drop
+	gen amount@
+	pts 0 array-ref
+	pts 1 array-ref
+	pts 0 array-ref - #f #f #f normalize-channel drop
       else
 	$" no marks" _ snd-warning drop
       then
@@ -763,7 +772,7 @@ hide
   { w c info self }
   self @ { gen }
   self cell+ @ ( init ) gen amount!
-  gen sliders@ 0 array-ref '( FXmNvalue gen amount@ 100.0 f* f>s ) FXtVaSetValues drop
+  gen sliders@ 0 array-ref #( FXmNvalue gen amount@ 100.0 f* f>s ) FXtVaSetValues drop
 ;
 : normalize-slider-cb ( gen -- prc; w c i self -- )
   3 proc-create swap ,
@@ -801,7 +810,7 @@ set-current
  does> ( self -- )
   { self }
   self @ { gen }
-  self cell+ @ ( child ) $" %s (%.2f)" '( gen label@ gen amount@ ) string-format change-label
+  self cell+ @ ( child ) $" %s (%.2f)" #( gen label@ gen amount@ ) string-format change-label
 ;
 previous
 
@@ -823,9 +832,9 @@ end-struct gate%
   selected-sound sync { snc }
   snc 0> if
     all-chans each { lst }
-      lst car { snd }
+      lst 0 array-ref { snd }
       snd sync snc = if
-	lst cadr { chn }
+	lst 1 array-ref { chn }
 	gen amount@ dup f* gen size@ snd chn effects-squelch-channel drop
       then
     end-each
@@ -840,7 +849,7 @@ end-struct gate%
   { w c info self }
   self @ { gen }
   self cell+ @ ( init ) gen amount!
-  gen sliders@ 0 array-ref '( FXmNvalue gen amount@ 1000.0 f* f>s ) FXtVaSetValues drop
+  gen sliders@ 0 array-ref #( FXmNvalue gen amount@ 1000.0 f* f>s ) FXtVaSetValues drop
 ;
 : gate-slider-cb ( gen -- prc; w c i self -- )
   3 proc-create swap ,
@@ -865,11 +874,11 @@ end-struct gate%
     add-sliders gen sliders!
     $" Omit silence" _ FXmStringCreateLocalized { s1 }
     $" Omit silence" _ FxmToggleButtonWidgetClass gen sliders@ 0 array-ref FXtParent
-    '( FXmNselectColor pushed-button-color
+    #( FXmNselectColor pushed-button-color
        FXmNbackground  basic-color
        FXmNvalue       gen omit-silence@ if 1 else 0 then
        FXmNlabelString s1 ) undef FXtCreateManagedWidget ( toggle )
-    FXmNvalueChangedCallback ['] gate-omit-cb gen FXtAddCallback drop
+    FXmNvalueChangedCallback <'> gate-omit-cb gen FXtAddCallback drop
     s1 FXmStringFree drop
   then
   gen dialog@ activate-dialog
@@ -889,7 +898,7 @@ set-current
  does> ( self -- )
   { self }
   self @ { gen }
-  self cell+ @ ( child ) $" %s (%.4f)" '( gen label@ gen amount@ ) string-format change-label
+  self cell+ @ ( child ) $" %s (%.4f)" #( gen label@ gen amount@ ) string-format change-label
 ;
 previous
 
@@ -947,7 +956,7 @@ set-current
       snd chn undef frames
     then
   then { samps }
-  $" %s %s %s %s %s %s" '( input-samps del-time amp beg dur get-func-name ) string-format { origin }
+  $" %s %s %s %s %s %s" #( input-samps del-time amp beg dur get-func-name ) string-format { origin }
   samps amp del effects-echo-cb beg dur snd chn #f origin map-channel
 ;
 
@@ -963,7 +972,7 @@ set-current
       snd chn undef frames
     then
   then { samps }
-  $" %s %s %s %s %s %s" '( amp secs input-samps beg dur get-func-name ) string-format { origin }
+  $" %s %s %s %s %s %s" #( amp secs input-samps beg dur get-func-name ) string-format { origin }
   amp samps flt del effects-flecho-cb beg dur snd chn #f origin map-channel
 ;
 
@@ -980,7 +989,7 @@ set-current
       snd chn undef frames
     then
   then { samps }
-  $" %s %s %s %s %s %s %s %s" '( scaler secs freq amp input-samps beg dur get-func-name )
+  $" %s %s %s %s %s %s %s %s" #( scaler secs freq amp input-samps beg dur get-func-name )
   string-format { origin }
   scaler amp samps os del effects-zecho-cb beg dur snd chn #f origin map-channel
 ;
@@ -1011,7 +1020,7 @@ hide
   self @ { gen }
   "effects-echo"
   $" %s %s %s"
-  '( gen target@ 'sound equal? if
+  #( gen target@ 'sound equal? if
        #f
      else
        samps
@@ -1035,8 +1044,8 @@ hide
   self @ { gen }
   self 1 cells + @ ( init-echo )  gen amount!
   self 2 cells + @ ( init-delay ) gen delay-time!
-  gen sliders@ 0 array-ref '( FXmNvalue gen delay-time@ 100.0 f* f>s ) FXtVaSetValues drop
-  gen sliders@ 1 array-ref '( FXmNvalue gen amount@     100.0 f* f>s ) FXtVaSetValues drop
+  gen sliders@ 0 array-ref #( FXmNvalue gen delay-time@ 100.0 f* f>s ) FXtVaSetValues drop
+  gen sliders@ 1 array-ref #( FXmNvalue gen amount@     100.0 f* f>s ) FXtVaSetValues drop
 ;
 : echo-delay-slider-cb ( gen -- prc; w c i self -- )
   3 proc-create swap ,
@@ -1083,7 +1092,7 @@ set-current
   { self }
   self @ { gen }
   self cell+ @ ( child )
-  $" %s (%.2f %.2f)" '( gen label@ gen delay-time@ gen amount@ ) string-format change-label
+  $" %s (%.2f %.2f)" #( gen label@ gen delay-time@ gen amount@ ) string-format change-label
 ;
 previous
 
@@ -1114,7 +1123,7 @@ hide
   self @ { gen }
   $" effects-flecho"
   $" %s %s %s"
-  '( gen amount@ gen delay-time@ gen target@ 'sound equal? if #f else samps then ) string-format
+  #( gen amount@ gen delay-time@ gen target@ 'sound equal? if #f else samps then ) string-format
 ;
 : flecho-ok-cb ( gen -- prc; w c i self -- )
   3 proc-create swap ,
@@ -1134,8 +1143,8 @@ hide
   self @ { gen }
   self 1 cells + @ ( init-delay )  gen delay-time!
   self 2 cells + @ ( init-scaler ) gen amount!
-  gen sliders@ 0 array-ref '( FXmNvalue gen amount@     100.0 f* f>s ) FXtVaSetValues drop
-  gen sliders@ 1 array-ref '( FXmNvalue gen delay-time@ 100.0 f* f>s ) FXtVaSetValues drop
+  gen sliders@ 0 array-ref #( FXmNvalue gen amount@     100.0 f* f>s ) FXtVaSetValues drop
+  gen sliders@ 1 array-ref #( FXmNvalue gen delay-time@ 100.0 f* f>s ) FXtVaSetValues drop
 ;
 : post-flecho-dialog ( gen -- prc; w c i self -- )
   3 proc-create swap ,
@@ -1171,7 +1180,7 @@ set-current
   { self }
   self @ { gen }
   self cell+ @ ( child )
-  $" %s (%.2f %.2f)" '( gen label@ gen amount@ gen delay-time@ ) string-format change-label
+  $" %s (%.2f %.2f)" #( gen label@ gen amount@ gen delay-time@ ) string-format change-label
 ;
 previous
 
@@ -1208,7 +1217,7 @@ hide
   self @ { gen }
   $" effects-zecho"
   $" %s %s %s %s %s"
-  '( gen scaler@ gen delay-time@ gen frequency@ gen amplitude@ gen target@ 'sound equal? if
+  #( gen scaler@ gen delay-time@ gen frequency@ gen amplitude@ gen target@ 'sound equal? if
     #f
   else
     samps
@@ -1234,10 +1243,10 @@ hide
   self 2 cells + @ ( init-freq )   gen frequency!
   self 3 cells + @ ( init-delay )  gen delay-time!
   self 4 cells + @ ( init-scaler ) gen scaler!
-  gen sliders@ 0 array-ref '( FXmNvalue gen scaler@     100.0 f* f>s ) FXtVaSetValues drop
-  gen sliders@ 1 array-ref '( FXmNvalue gen delay-time@ 100.0 f* f>s ) FXtVaSetValues drop
-  gen sliders@ 2 array-ref '( FXmNvalue gen frequency@  100.0 f* f>s ) FXtVaSetValues drop
-  gen sliders@ 3 array-ref '( FXmNvalue gen amplitude@  100.0 f* f>s ) FXtVaSetValues drop
+  gen sliders@ 0 array-ref #( FXmNvalue gen scaler@     100.0 f* f>s ) FXtVaSetValues drop
+  gen sliders@ 1 array-ref #( FXmNvalue gen delay-time@ 100.0 f* f>s ) FXtVaSetValues drop
+  gen sliders@ 2 array-ref #( FXmNvalue gen frequency@  100.0 f* f>s ) FXtVaSetValues drop
+  gen sliders@ 3 array-ref #( FXmNvalue gen amplitude@  100.0 f* f>s ) FXtVaSetValues drop
 ;
 : zecho-scl-slider-cb ( gen -- prc; w c i self -- )
   3 proc-create swap ,
@@ -1302,7 +1311,7 @@ set-current
   self @ { gen }
   self cell+ @ ( child )
   $" %s (%.2f %.2f %.2f %.2f)"
-  '( gen label@ gen scaler@ gen delay-time@ gen frequency@ gen amplitude@ )
+  #( gen label@ gen scaler@ gen delay-time@ gen frequency@ gen amplitude@ )
   string-format change-label
 ;
 previous
@@ -1310,32 +1319,32 @@ previous
 \ === FILTER EFFECTS ===
 
 : effects-bbp <{ freq bw :optional beg 0 dur #f snd #f chn #f -- res }>
-  $" %s %s %s %s %s" '( freq bw beg dur get-func-name ) string-format { origin }
+  $" %s %s %s %s %s" #( freq bw beg dur get-func-name ) string-format { origin }
   freq bw make-butter-band-pass beg dur snd chn #f #f origin clm-channel
 ;
 
 : effects-bbr <{ freq bw :optional beg 0 dur #f snd #f chn #f -- res }>
-  $" %s %s %s %s %s" '( freq bw beg dur get-func-name ) string-format { origin }
+  $" %s %s %s %s %s" #( freq bw beg dur get-func-name ) string-format { origin }
   freq bw make-butter-band-reject beg dur snd chn #f #f origin clm-channel
 ;
 
 : effects-bhp <{ freq :optional beg 0 dur #f snd #f chn #f -- res }>
-  $" %s %s %s %s" '( freq beg dur get-func-name ) string-format { origin }
+  $" %s %s %s %s" #( freq beg dur get-func-name ) string-format { origin }
   freq make-butter-high-pass beg dur snd chn #f #f origin clm-channel
 ;
 
 : effects-blp <{ freq :optional beg 0 dur #f snd #f chn #f -- res }>
-  $" %s %s %s %s" '( freq beg dur get-func-name ) string-format { origin }
+  $" %s %s %s %s" #( freq beg dur get-func-name ) string-format { origin }
   freq make-butter-low-pass beg dur snd chn #f #f origin clm-channel
 ;
 
 : effects-comb-filter <{ scaler size :optional beg 0 dur #f snd #f chn #f -- res }>
-  $" %s %s %s %s %s" '( scaler size beg dur get-func-name ) string-format { origin }
+  $" %s %s %s %s %s" #( scaler size beg dur get-func-name ) string-format { origin }
   scaler size comb-filter beg dur snd chn #f origin map-channel
 ;
 
 : effects-comb-chord <{ scaler size amp :optional beg 0 dur #f snd #f chn #f -- res }>
-  $" %s %s %s %s %s %s" '( scaler size amp beg dur get-func-name ) string-format { origin }
+  $" %s %s %s %s %s %s" #( scaler size amp beg dur get-func-name ) string-format { origin }
   scaler size amp comb-chord beg dur snd chn #f origin map-channel
 ;
 
@@ -1348,7 +1357,7 @@ hide
 ;
 set-current
 : effects-moog <{ freq Q :optional beg 0 dur #f snd #f chn #f -- res }>
-  $" %s %s %s %s %s" '( freq Q beg dur get-func-name ) string-format { origin }
+  $" %s %s %s %s %s" #( freq Q beg dur get-func-name ) string-format { origin }
   freq Q make-moog-filter moog-cb beg dur snd chn #f origin map-channel
 ;
 previous
@@ -1378,16 +1387,16 @@ end-struct bp-filter%
   self @ { gen }
   gen frequency@ gen band-pass-bw@ make-butter-band-pass { flt }
   gen target@ 'sound equal? if
-    $" %s %s 0 #f effects-bbp" '( gen frequency@ gen band-pass-bw@ ) string-format { origin }
+    $" %s %s 0 #f effects-bbp" #( gen frequency@ gen band-pass-bw@ ) string-format { origin }
     flt #f #f #f #f origin filter-sound drop
   else
     gen target@ 'selection equal? if
       flt #f #f filter-selection drop
     else
       plausible-mark-samples { pts }
-      pts car { bg }
-      pts cadr bg - 1+ { nd }
-      $" %s %s %s %s effects-bbp" '( gen frequency@ gen band-pass-bw@ bg nd )
+      pts 0 array-ref { bg }
+      pts 1 array-ref bg - 1+ { nd }
+      $" %s %s %s %s effects-bbp" #( gen frequency@ gen band-pass-bw@ bg nd )
       string-format { origin }
       flt bg nd #f #f #f #f origin clm-channel drop
     then
@@ -1401,10 +1410,10 @@ end-struct bp-filter%
   self @ { gen }
   self 1 cells + @ ( init-bw )   gen band-pass-bw!
   self 2 cells + @ ( init-freq ) gen frequency!
-  gen sliders@ 0 array-ref car
-  '( FXmNvalue 20.0 gen frequency@ 22050.0 scale-log->linear ) FXtVaSetValues drop
-  gen sliders@ 0 array-ref cadr gen frequency@ number->string change-label
-  gen sliders@ 1 array-ref '( FXmNvalue gen band-pass-bw@ ) FXtVaSetValues drop
+  gen sliders@ 0 array-ref 0 array-ref
+  #( FXmNvalue 20.0 gen frequency@ 22050.0 scale-log->linear ) FXtVaSetValues drop
+  gen sliders@ 0 array-ref 1 array-ref gen frequency@ number->string change-label
+  gen sliders@ 1 array-ref #( FXmNvalue gen band-pass-bw@ ) FXtVaSetValues drop
 ;
 : bp-freq-slider-cb ( gen -- prc; w c i self -- )
   3 proc-create swap ,
@@ -1433,7 +1442,7 @@ Move the sliders to change the center frequency and bandwidth." _ help-cb
     #( #( $" center frequency" _ 20.0 gen frequency@    22050.0 gen bp-freq-slider-cb 1 'log )
        #( $" bandwidth"        _    0 gen band-pass-bw@    1000 gen bp-bw-slider-cb   1 ) )
     add-sliders gen sliders!
-    gen sliders@ 0 array-ref car FXtParent gen target-cb #f add-target drop
+    gen sliders@ 0 array-ref 0 array-ref FXtParent gen target-cb #f add-target drop
   then
   gen dialog@ activate-dialog
 ;
@@ -1452,7 +1461,7 @@ set-current
   { self }
   self @ { gen }
   self cell+ @ ( child )
-  $" %s (%.2f %d)" '( gen label@ gen frequency@ gen band-pass-bw@ ) string-format change-label
+  $" %s (%.2f %d)" #( gen label@ gen frequency@ gen band-pass-bw@ ) string-format change-label
 ;
 previous
 
@@ -1473,16 +1482,16 @@ end-struct notch%
   self @ { gen }
   gen frequency@ gen notch-bw@ make-butter-band-reject { flt }
   gen target@ 'sound equal? if
-    $" %s %s 0 #f effects-bbr" '( gen frequency@ gen notch-bw@ ) string-format { origin }
+    $" %s %s 0 #f effects-bbr" #( gen frequency@ gen notch-bw@ ) string-format { origin }
     flt #f #f #f #f origin filter-sound drop
   else
     gen target@ 'selection equal? if
       flt #f #f filter-selection drop
     else
       plausible-mark-samples { pts }
-      pts car { bg }
-      pts cadr bg - 1+ { nd }
-      $" %s %s %s %s effects-bbp" '( gen frequency@ gen notch-bw@ bg nd ) string-format { origin }
+      pts 0 array-ref { bg }
+      pts 1 array-ref bg - 1+ { nd }
+      $" %s %s %s %s effects-bbp" #( gen frequency@ gen notch-bw@ bg nd ) string-format { origin }
       flt bg nd #f #f #f #f origin clm-channel drop
     then
   then
@@ -1495,10 +1504,10 @@ end-struct notch%
   self @ { gen }
   self 1 cells + @ ( init-bw )   gen notch-bw!
   self 2 cells + @ ( init-freq ) gen frequency!
-  gen sliders@ 0 array-ref car
-  '( FXmNvalue 20.0 gen frequency@ 22050.0 scale-log->linear ) FXtVaSetValues drop
-  gen sliders@ 0 array-ref cadr gen frequency@ number->string change-label
-  gen sliders@ 1 array-ref '( FXmNvalue gen notch-bw@ ) FXtVaSetValues drop
+  gen sliders@ 0 array-ref 0 array-ref
+  #( FXmNvalue 20.0 gen frequency@ 22050.0 scale-log->linear ) FXtVaSetValues drop
+  gen sliders@ 0 array-ref 1 array-ref gen frequency@ number->string change-label
+  gen sliders@ 1 array-ref #( FXmNvalue gen notch-bw@ ) FXtVaSetValues drop
 ;
 : br-freq-slider-cb ( gen -- prc; w c i self -- )
   3 proc-create swap ,
@@ -1527,7 +1536,7 @@ Move the sliders to change the center frequency and bandwidth." _ help-cb
     #( #( $" center frequency" _ 20.0 gen frequency@   22050.0 gen br-freq-slider-cb 1 'log )
        #( $" bandwidth"        _    0 gen notch-bw@       1000 gen br-bw-slider-cb   1  ) )
     add-sliders gen sliders!
-    gen sliders@ 0 array-ref car FXtParent gen target-cb #f add-target drop
+    gen sliders@ 0 array-ref 0 array-ref FXtParent gen target-cb #f add-target drop
   then
   gen dialog@ activate-dialog
 ;
@@ -1546,7 +1555,7 @@ set-current
   { self }
   self @ { gen }
   self cell+ @ ( child )
-  $" %s (%.2f %d)" '( gen label@ gen frequency@ gen notch-bw@ ) string-format change-label
+  $" %s (%.2f %d)" #( gen label@ gen frequency@ gen notch-bw@ ) string-format change-label
 ;
 previous
 
@@ -1567,9 +1576,9 @@ hide
       flt #f #f filter-selection drop
     else
       plausible-mark-samples { pts }
-      pts car { bg }
-      pts cadr bg - 1+ { nd }
-      $" %s %s %s effects-bhp" '( gen frequency@ bg nd ) string-format { origin }
+      pts 0 array-ref { bg }
+      pts 1 array-ref bg - 1+ { nd }
+      $" %s %s %s effects-bhp" #( gen frequency@ bg nd ) string-format { origin }
       flt bg nd #f #f #f #f origin clm-channel drop
     then
   then
@@ -1581,9 +1590,9 @@ hide
   { w c info self }
   self @ { gen  }
   self cell+ @ ( init-freq ) gen frequency!
-  gen sliders@ 0 array-ref car
-  '( FXmNvalue 20.0 gen frequency@ 22050.0 scale-log->linear ) FXtVaSetValues drop
-  gen sliders@ 0 array-ref cadr gen frequency@ number->string change-label
+  gen sliders@ 0 array-ref 0 array-ref
+  #( FXmNvalue 20.0 gen frequency@ 22050.0 scale-log->linear ) FXtVaSetValues drop
+  gen sliders@ 0 array-ref 1 array-ref gen frequency@ number->string change-label
 ;
 : hp-freq-slider-cb ( gen -- prc; w c i self -- )
   3 proc-create swap ,
@@ -1605,7 +1614,7 @@ Move the slider to change the high-pass cutoff frequency." _ help-cb
     gen dialog@
     #( #( $" high-pass cutoff frequency" _
 	  20.0 gen frequency@ 22050.0 gen hp-freq-slider-cb 1 'log ) ) add-sliders gen sliders!
-    gen sliders@ 0 array-ref car FXtParent gen target-cb #f add-target drop
+    gen sliders@ 0 array-ref 0 array-ref FXtParent gen target-cb #f add-target drop
   then
   gen dialog@ activate-dialog
 ;
@@ -1622,7 +1631,7 @@ set-current
  does> ( self -- )
   { self }
   self @ { gen }
-  self cell+ @ ( child ) $" %s (%.2f)" '( gen label@ gen frequency@ ) string-format change-label
+  self cell+ @ ( child ) $" %s (%.2f)" #( gen label@ gen frequency@ ) string-format change-label
 ;
 previous
 
@@ -1643,9 +1652,9 @@ hide
       flt #f #f filter-selection drop
     else
       plausible-mark-samples { pts }
-      pts car { bg }
-      pts cadr bg - 1+ { nd }
-      $" %s %s %s effects-blp" '( gen frequency@ bg nd ) string-format { origin }
+      pts 0 array-ref { bg }
+      pts 1 array-ref bg - 1+ { nd }
+      $" %s %s %s effects-blp" #( gen frequency@ bg nd ) string-format { origin }
       flt bg nd #f #f #f #f origin clm-channel drop
     then
   then
@@ -1657,9 +1666,9 @@ hide
   { w c info self }
   self @ { gen }
   self cell+ @ ( init-freq ) gen frequency!
-  gen sliders@ 0 array-ref car
-  '( FXmNvalue 20.0 gen frequency@ 22050.0 scale-log->linear ) FXtVaSetValues drop
-  gen sliders@ 0 array-ref cadr gen frequency@ number->string change-label
+  gen sliders@ 0 array-ref 0 array-ref
+  #( FXmNvalue 20.0 gen frequency@ 22050.0 scale-log->linear ) FXtVaSetValues drop
+  gen sliders@ 0 array-ref 1 array-ref gen frequency@ number->string change-label
 ;
 : lp-freq-slider-cb ( gen -- prc; w c i self -- )
   3 proc-create swap ,
@@ -1681,7 +1690,7 @@ Move the slider to change the low-pass cutoff frequency." _ help-cb
     gen dialog@
     #( #( $" low-pass cutoff frequency" _
 	  20.0 gen frequency@ 22050.0 gen lp-freq-slider-cb 1 'log ) ) add-sliders gen sliders!
-    gen sliders@ 0 array-ref car FXtParent gen target-cb #f add-target drop
+    gen sliders@ 0 array-ref 0 array-ref FXtParent gen target-cb #f add-target drop
   then
   gen dialog@ activate-dialog
 ;
@@ -1699,7 +1708,7 @@ set-current
   { self }
   self @ { gen }
   self cell+ @ ( child )
-  $" %s (%.2f)" '( gen label@ gen frequency@ ) string-format change-label
+  $" %s (%.2f)" #( gen label@ gen frequency@ ) string-format change-label
 ;
 previous
 
@@ -1717,7 +1726,7 @@ hide
  does> ( target input-samps self -- name origin )
   { target samps self }
   self @ { gen }
-  $" effects-comb-filter" $" %s %s" '( gen scaler@ gen size@ ) string-format
+  $" effects-comb-filter" $" %s %s" #( gen scaler@ gen size@ ) string-format
 ;
 : comb-ok-cb ( gen -- prc; w c i self -- )
   3 proc-create swap ,
@@ -1734,8 +1743,8 @@ hide
   self @ { gen }
   self 1 cells + @ ( init-size )   gen size!
   self 2 cells + @ ( init-scaler ) gen scaler!
-  gen sliders@ 0 array-ref '( FXmNvalue gen scaler@ 100.0 f* f>s ) FXtVaSetValues drop
-  gen sliders@ 1 array-ref '( FXmNvalue gen size@                ) FXtVaSetValues drop
+  gen sliders@ 0 array-ref #( FXmNvalue gen scaler@ 100.0 f* f>s ) FXtVaSetValues drop
+  gen sliders@ 1 array-ref #( FXmNvalue gen size@                ) FXtVaSetValues drop
 ;
 : scaler-slider-cb ( gen -- prc; w c i self -- )
   3 proc-create swap ,
@@ -1781,7 +1790,7 @@ set-current
   { self }
   self @ { gen }
   self cell+ @ ( child )
-  $" %s (%.2f %d)" '( gen label@ gen scaler@ gen size@ ) string-format change-label
+  $" %s (%.2f %d)" #( gen label@ gen scaler@ gen size@ ) string-format change-label
 ;
 previous
 
@@ -1801,7 +1810,7 @@ hide
   { target samps self }
   self @ { gen }
   $" effects-comb-chord"
-  $" %s %s %s" '( gen scaler@ gen size@ gen amplitude@ ) string-format
+  $" %s %s %s" #( gen scaler@ gen size@ gen amplitude@ ) string-format
 ;
 : cc-ok-cb ( gen -- prc; w c i self -- )
   3 proc-create swap ,
@@ -1819,9 +1828,9 @@ hide
   self 1 cells + @ ( init-amp )    gen amplitude!
   self 2 cells + @ ( init-size )   gen size!
   self 3 cells + @ ( init-scaler ) gen scaler!
-  gen sliders@ 0 array-ref '( FXmNvalue gen scaler@          100.0 f* f>s ) FXtVaSetValues drop
-  gen sliders@ 1 array-ref '( FXmNvalue gen size@                         ) FXtVaSetValues drop
-  gen sliders@ 2 array-ref '( FXmNvalue gen amplitude@       100.0 f* f>s ) FXtVaSetValues drop
+  gen sliders@ 0 array-ref #( FXmNvalue gen scaler@          100.0 f* f>s ) FXtVaSetValues drop
+  gen sliders@ 1 array-ref #( FXmNvalue gen size@                         ) FXtVaSetValues drop
+  gen sliders@ 2 array-ref #( FXmNvalue gen amplitude@       100.0 f* f>s ) FXtVaSetValues drop
 ;
 : cc-scaler-cb ( gen -- prc; w c i self -- )
   3 proc-create swap ,
@@ -1877,7 +1886,7 @@ set-current
   { self }
   self @ { gen }
   self cell+ @ ( child )
-  $" %s (%.2f %d %.2f)" '( gen label@ gen scaler@ gen size@ gen amplitude@ )
+  $" %s (%.2f %d %.2f)" #( gen label@ gen scaler@ gen size@ gen amplitude@ )
   string-format change-label
 ;
 previous
@@ -1905,7 +1914,7 @@ end-struct moog%
   { target samps self }
   self @ { gen }
   "effects-moog"
-  $" %s %s" '( gen frequency@ gen moog-resonance@ ) string-format
+  $" %s %s" #( gen frequency@ gen moog-resonance@ ) string-format
 ;
 : moog-ok-cb ( gen -- prc; w c i self -- )
   3 proc-create swap ,
@@ -1926,10 +1935,10 @@ end-struct moog%
   self @ { gen }
   self 1 cells + @ ( init-freq ) gen frequency!
   self 2 cells + @ ( init-res )  gen moog-resonance!
-  gen sliders@ 0 array-ref car
-  '( FXmNvalue 20.0 gen frequency@ 22050.0 scale-log->linear ) FXtVaSetValues drop
-  gen sliders@ 0 array-ref cadr gen frequency@ number->string change-label
-  gen sliders@ 1 array-ref '( FXmNvalue gen moog-resonance@ 100.0 f* f>s ) FXtVaSetValues drop
+  gen sliders@ 0 array-ref 0 array-ref
+  #( FXmNvalue 20.0 gen frequency@ 22050.0 scale-log->linear ) FXtVaSetValues drop
+  gen sliders@ 0 array-ref 1 array-ref gen frequency@ number->string change-label
+  gen sliders@ 1 array-ref #( FXmNvalue gen moog-resonance@ 100.0 f* f>s ) FXtVaSetValues drop
 ;
 : moog-freq-cb ( gen -- prc; w c i self -- )
   3 proc-create swap ,
@@ -1958,7 +1967,7 @@ Move the sliders to set the filter cutoff frequency and resonance." _ help-cb
     #( #( $" cutoff frequency" _ 20.0 gen frequency@ 22050.0 gen moog-freq-cb 1 'log )
        #( $" resonanze"        _  0.0 gen moog-resonance@ 1.0 gen moog-res-cb 100 ) )
     add-sliders gen sliders!
-    gen sliders@ 0 array-ref car FXtParent gen target-cb #f add-target drop
+    gen sliders@ 0 array-ref 0 array-ref FXtParent gen target-cb #f add-target drop
   then
   gen dialog@ activate-dialog
 ;
@@ -1977,7 +1986,7 @@ set-current
   { self }
   self @ { gen }
   self cell+ @ ( child )
-  $" %s (%.2f %.2f)" '( gen label@ gen frequency@ gen moog-resonance@ ) string-format change-label
+  $" %s (%.2f %.2f)" #( gen label@ gen frequency@ gen moog-resonance@ ) string-format change-label
 ;
 previous
 
@@ -2041,7 +2050,7 @@ hide
   { w c info self }
   self @ { gen }
   self cell+ @ ( init-size ) gen size!
-  gen sliders@ 0 array-ref '( FXmNvalue gen size@ ) FXtVaSetValues drop
+  gen sliders@ 0 array-ref #( FXmNvalue gen size@ ) FXtVaSetValues drop
 ;
 : adsat-size-cb ( gen -- prc; w c i self -- )
   3 proc-create swap ,
@@ -2078,7 +2087,7 @@ set-current
  does> ( self -- )
   { self }
   self @ { gen }
-  self cell+ @ ( child ) $" %s (%d)" '( gen label@ gen size@ ) string-format change-label
+  self cell+ @ ( child ) $" %s (%d)" #( gen label@ gen size@ ) string-format change-label
 ;
 previous
 
@@ -2111,7 +2120,7 @@ hide
   { w c info self }
   self @ { gen }
   self cell+ @ ( init-amount ) gen amount!
-  gen sliders@ 0 array-ref '( FXmNvalue gen amount@ 100.0 f* f>s ) FXtVaSetValues drop
+  gen sliders@ 0 array-ref #( FXmNvalue gen amount@ 100.0 f* f>s ) FXtVaSetValues drop
 ;
 : src-amount-cb ( gen -- prc; w c i self -- )
   3 proc-create swap ,
@@ -2149,7 +2158,7 @@ set-current
  does> ( self -- )
   { self }
   self @ { gen }
-  self cell+ @ ( child ) $" %s (%.2f)" '( gen label@ gen amount@ ) string-format change-label
+  self cell+ @ ( child ) $" %s (%.2f)" #( gen label@ gen amount@ ) string-format change-label
 ;
 previous
 
@@ -2192,7 +2201,10 @@ end-struct expsrc%
   gen target@ 'marks equal? if
     plausible-mark-samples { pts }
     pts if
-      snd 0  pts car  pts cadr pts car - 1+ apply-controls drop
+      snd 0
+      pts 0 array-ref
+      pts 1 array-ref
+      pts 0 array-ref - 1+ apply-controls drop
     else
       $" no marks" _ snd-warning drop
     then
@@ -2218,11 +2230,11 @@ end-struct expsrc%
   self 3 cells + @ ( init-seg-len )     gen segment-length!
   self 4 cells + @ ( init-ramp-scale )  gen ramp-scale!
   self 5 cells + @ ( init-pitch-scale ) gen pitch-scale!
-  gen sliders@ 0 array-ref '( FXmNvalue gen time-scale@     100.0 f* f>s ) FXtVaSetValues drop
-  gen sliders@ 1 array-ref '( FXmNvalue gen size@           100.0 f* f>s ) FXtVaSetValues drop
-  gen sliders@ 2 array-ref '( FXmNvalue gen segment-length@ 100.0 f* f>s ) FXtVaSetValues drop
-  gen sliders@ 3 array-ref '( FXmNvalue gen ramp-scale@     100.0 f* f>s ) FXtVaSetValues drop
-  gen sliders@ 4 array-ref '( FXmNvalue gen pitch-scale@    100.0 f* f>s ) FXtVaSetValues drop
+  gen sliders@ 0 array-ref #( FXmNvalue gen time-scale@     100.0 f* f>s ) FXtVaSetValues drop
+  gen sliders@ 1 array-ref #( FXmNvalue gen size@           100.0 f* f>s ) FXtVaSetValues drop
+  gen sliders@ 2 array-ref #( FXmNvalue gen segment-length@ 100.0 f* f>s ) FXtVaSetValues drop
+  gen sliders@ 3 array-ref #( FXmNvalue gen ramp-scale@     100.0 f* f>s ) FXtVaSetValues drop
+  gen sliders@ 4 array-ref #( FXmNvalue gen pitch-scale@    100.0 f* f>s ) FXtVaSetValues drop
 ;
 : expsrc-ts-cb ( gen -- prc; w c i self -- )
   3 proc-create swap ,
@@ -2293,7 +2305,7 @@ set-current
   { self }
   self @ { gen }
   self cell+ @ ( child )
-  $" %s (%.2f %.2f)" '( gen label@ gen time-scale@ gen pitch-scale@ ) string-format change-label
+  $" %s (%.2f %.2f)" #( gen label@ gen time-scale@ gen pitch-scale@ ) string-format change-label
 ;
 previous
 
@@ -2319,8 +2331,8 @@ hide
     else
       plausible-mark-samples { pts }
       pts if
-	pts car   { beg }
-	pts cadr  { end }
+	pts 0 array-ref { beg }
+	pts 1 array-ref { end }
 	end beg - { len }
 	:envelope en :length len make-env beg len selected-sound #f #f src-channel drop
       else
@@ -2336,8 +2348,8 @@ hide
   { w c info self }
   self @ { gen }
   self cell+ @ ( init ) gen scaler!
-  gen envel@ '( 0.0 1.0 1.0 1.0 ) set-xe-envelope
-  gen sliders@ 0 array-ref '( FXmNvalue gen scaler@ 100.0 f* f>s ) FXtVaSetValues drop
+  gen envel@ #( 0.0 1.0 1.0 1.0 ) set-xe-envelope
+  gen sliders@ 0 array-ref #( FXmNvalue gen scaler@ 100.0 f* f>s ) FXtVaSetValues drop
 ;
 : src-timevar-slider-cb ( gen -- prc; w c i self -- )
   3 proc-create swap ,
@@ -2358,7 +2370,7 @@ hide
     gen dialog@ #( #( $" Resample factor" _ 0.0 gen scaler@ 10.0 gen src-timevar-slider-cb 100 ) )
     add-sliders gen sliders!
     "fr" FxmFrameWidgetClass gen sliders@ 0 array-ref FXtParent FXtParent
-    '( FXmNheight          200
+    #( FXmNheight          200
        FXmNleftAttachment  FXmATTACH_FORM
        FXmNrightAttachment FXmATTACH_FORM
        FXmNtopAttachment   FXmATTACH_WIDGET
@@ -2369,10 +2381,10 @@ hide
     gen dialog@ activate-dialog
     gen label@ string-downcase
     fr
-    :envelope    '( 0.0 1.0 1.0 1.0 )
-    :axis-bounds '( 0.0 1.0 0.0 1.0 )
-    :args        '( FXmNheight 200 ) make-xenved gen envel!
-    fr '( FXmNbottomAttachment FXmATTACH_WIDGET FXmNbottomWidget target-row ) FXtVaSetValues drop
+    :envelope    #( 0.0 1.0 1.0 1.0 )
+    :axis-bounds #( 0.0 1.0 0.0 1.0 )
+    :args        #( FXmNheight 200 ) make-xenved gen envel!
+    fr #( FXmNbottomAttachment FXmATTACH_WIDGET FXmNbottomWidget target-row ) FXtVaSetValues drop
   else
     gen dialog@ activate-dialog
   then
@@ -2431,15 +2443,15 @@ hide
 set-current
 : effects-am <{ freq en :optional beg 0 dur #f snd #f chn #f -- res }>
   freq make-oscil { os }
-  en list? if :envelope en :length dur 1- make-env else #f then { e }
-  $" %s %s %s %s %s" '( freq en beg dur get-func-name ) string-format { origin }
+  en array? if :envelope en :length dur 1- make-env else #f then { e }
+  $" %s %s %s %s %s" #( freq en beg dur get-func-name ) string-format { origin }
   e if os e effects-am-env-cb else os effects-am-cb then beg dur snd chn #f origin map-channel
 ;
 
 : effects-rm <{ freq en :optional beg 0 dur #f snd #f chn #f -- res }>
   freq make-oscil { os }
-  en list? if :envelope en :length dur 1- make-env else #f then { e }
-  $" %s %s %s %s %s" '( freq en beg dur get-func-name ) string-format { origin }
+  en array? if :envelope en :length dur 1- make-env else #f then { e }
+  $" %s %s %s %s %s" #( freq en beg dur get-func-name ) string-format { origin }
   e if os e effects-rm-env-cb else os effects-rm-cb then beg dur snd chn #f origin map-channel
 ;
 previous
@@ -2453,7 +2465,7 @@ hide
   { samps self }
   self @ { gen }
   gen amount@ make-oscil { os }
-  gen envel@ xe-envelope '( 0.0 1.0 1.0 1.0 ) equal? if
+  gen envel@ xe-envelope #( 0.0 1.0 1.0 1.0 ) equal? if
     #f
   else
     :envelope gen envel@ xe-envelope :length gen target@ effect-frames 1- make-env
@@ -2466,8 +2478,8 @@ hide
   { target samps self }
   self @ { gen }
   "effects-am"
-  $" %s %s" '( gen amount@
-  gen envel@ xe-envelope '( 0.0 1.0 1.0 1.0 ) equal? if #f else gen envel@ xe-envelope then )
+  $" %s %s" #( gen amount@
+  gen envel@ xe-envelope #( 0.0 1.0 1.0 1.0 ) equal? if #f else gen envel@ xe-envelope then )
   string-format
 ;
 : am-ok-cb ( gen -- prc; w c i self -- )
@@ -2488,8 +2500,8 @@ hide
   { w c info self }
   self @ { gen }
   self cell+ @ ( init ) gen amount!
-  gen envel@ '( 0.0 1.0 1.0 1.0 ) set-xe-envelope
-  gen sliders@ 0 array-ref '( FXmNvalue gen amount@ f>s ) FXtVaSetValues drop
+  gen envel@ #( 0.0 1.0 1.0 1.0 ) set-xe-envelope
+  gen sliders@ 0 array-ref #( FXmNvalue gen amount@ f>s ) FXtVaSetValues drop
 ;
 : am-slider-cb ( gen -- prc; w c i self -- )
   3 proc-create swap ,
@@ -2510,7 +2522,7 @@ hide
     gen dialog@ #( #( $" amplitude modulation" _ 0.0 gen amount@ 1000.0 gen am-slider-cb 1 ) )
     add-sliders gen sliders!
     "fr" FxmFrameWidgetClass gen sliders@ 0 array-ref FXtParent FXtParent
-    '( FXmNheight          200
+    #( FXmNheight          200
        FXmNleftAttachment  FXmATTACH_FORM
        FXmNrightAttachment FXmATTACH_FORM
        FXmNtopAttachment   FXmATTACH_WIDGET
@@ -2521,10 +2533,10 @@ hide
     gen dialog@ activate-dialog
     gen label@ string-downcase
     fr
-    :envelope    '( 0.0 1.0 1.0 1.0 )
-    :axis-bounds '( 0.0 1.0 0.0 1.0 )
-    :args        '( FXmNheight 200 ) make-xenved gen envel!
-    fr '( FXmNbottomAttachment FXmATTACH_WIDGET FXmNbottomWidget target-row ) FXtVaSetValues drop
+    :envelope    #( 0.0 1.0 1.0 1.0 )
+    :axis-bounds #( 0.0 1.0 0.0 1.0 )
+    :args        #( FXmNheight 200 ) make-xenved gen envel!
+    fr #( FXmNbottomAttachment FXmATTACH_WIDGET FXmNbottomWidget target-row ) FXtVaSetValues drop
   else
     gen dialog@ activate-dialog
   then
@@ -2543,7 +2555,7 @@ set-current
  does> ( self -- )
   { self }
   self @ { gen }
-  self cell+ @ ( child ) $" %s (%.2f)" '( gen label@ gen amount@ ) string-format change-label
+  self cell+ @ ( child ) $" %s (%.2f)" #( gen label@ gen amount@ ) string-format change-label
 ;
 previous
 
@@ -2556,7 +2568,7 @@ hide
   { samps self }
   self @ { gen }
   gen frequency@ make-oscil { os }
-  gen envel@ xe-envelope '( 0.0 1.0 1.0 1.0 ) equal? if
+  gen envel@ xe-envelope #( 0.0 1.0 1.0 1.0 ) equal? if
     #f
   else
     :envelope gen envel@ xe-envelope :length gen target@ effect-frames 1- make-env
@@ -2569,8 +2581,8 @@ hide
   { target samps self }
   self @ { gen }
   "effects-rm"
-  $" %s %s" '( gen frequency@
-  gen envel@ xe-envelope '( 0.0 1.0 1.0 1.0 ) equal? if #f else gen envel@ xe-envelope then )
+  $" %s %s" #( gen frequency@
+  gen envel@ xe-envelope #( 0.0 1.0 1.0 1.0 ) equal? if #f else gen envel@ xe-envelope then )
   string-format
 ;
 : rm-ok-cb ( gen -- prc; w c i self -- )
@@ -2592,9 +2604,9 @@ hide
   self @ { gen }
   self 1 cells + @ ( init-freq )    gen frequency!
   self 2 cells + @ ( init-radians ) gen scaler!
-  gen envel@ '( 0.0 1.0 1.0 1.0 ) set-xe-envelope
-  gen sliders@ 0 array-ref '( FXmNvalue gen frequency@ f>s ) FXtVaSetValues drop
-  gen sliders@ 1 array-ref '( FXmNvalue gen scaler@    f>s ) FXtVaSetValues drop
+  gen envel@ #( 0.0 1.0 1.0 1.0 ) set-xe-envelope
+  gen sliders@ 0 array-ref #( FXmNvalue gen frequency@ f>s ) FXtVaSetValues drop
+  gen sliders@ 1 array-ref #( FXmNvalue gen scaler@    f>s ) FXtVaSetValues drop
 ;
 : rm-freq-cb ( gen -- prc; w c i self -- )
   3 proc-create swap ,
@@ -2623,7 +2635,7 @@ hide
        #( $" modulation radians"   _ 0 gen scaler@     360 gen rm-radians-cb 1 ) )
     add-sliders gen sliders!
     "fr" FxmFrameWidgetClass gen sliders@ 0 array-ref FXtParent FXtParent
-    '( FXmNheight          200
+    #( FXmNheight          200
        FXmNleftAttachment  FXmATTACH_FORM
        FXmNrightAttachment FXmATTACH_FORM
        FXmNtopAttachment   FXmATTACH_WIDGET
@@ -2634,10 +2646,10 @@ hide
     gen dialog@ activate-dialog
     gen label@ string-downcase
     fr
-    :envelope    '( 0.0 1.0 1.0 1.0 )
-    :axis-bounds '( 0.0 1.0 0.0 1.0 )
-    :args        '( FXmNheight 200 ) make-xenved gen envel!
-    fr '( FXmNbottomAttachment FXmATTACH_WIDGET FXmNbottomWidget target-row ) FXtVaSetValues drop
+    :envelope    #( 0.0 1.0 1.0 1.0 )
+    :axis-bounds #( 0.0 1.0 0.0 1.0 )
+    :args        #( FXmNheight 200 ) make-xenved gen envel!
+    fr #( FXmNbottomAttachment FXmATTACH_WIDGET FXmNbottomWidget target-row ) FXtVaSetValues drop
   else
     gen dialog@ activate-dialog
   then
@@ -2658,7 +2670,7 @@ set-current
   { self }
   self @ { gen }
   self cell+ @ ( child )
-  $" %s (%.2f %.2f)" '( gen label@ gen frequency@ gen scaler@ ) string-format change-label
+  $" %s (%.2f %.2f)" #( gen label@ gen frequency@ gen scaler@ ) string-format change-label
 ;
 previous
 
@@ -2714,7 +2726,7 @@ previous
 
 : effects-jc-reverb-1 <{ vol :optional beg 0 dur #f snd #f  chn #f -- res }>
   dur if dur else snd chn #f frames then { samps }
-  $" %s %s %s %s" '( vol beg dur get-func-name ) string-format { origin }
+  $" %s %s %s %s" #( vol beg dur get-func-name ) string-format { origin }
   samps vol effects-jc-reverb beg dur snd chn #f origin map-channel
 ;
 
@@ -2736,7 +2748,7 @@ hide
 ;
 set-current
 : effects-cnv <{ snd0 amp :optional snd #f chn #f -- res }>
-  snd0 sound? unless sounds car to snd0 then
+  snd0 sound? unless sounds 0 array-ref to snd0 then
   snd0 #f #f frames { flt-len }
   snd chn #f frames flt-len + { total-len }
   :filter 0 flt-len snd0 #f #f channel->vct make-convolve { cnv }
@@ -2747,9 +2759,9 @@ set-current
   sf free-sample-reader drop
   out-data amp vct-scale! drop
   out-data vct-peak { max-samp }
-  $" %s %s %s" '( snd0 amp get-func-name ) string-format { origin }
+  $" %s %s %s" #( snd0 amp get-func-name ) string-format { origin }
   out-data 0 total-len snd chn #f origin vct->channel drop
-  max-samp 1.0 f> if '( max-samp fnegate max-samp ) snd chn set-y-bounds drop then
+  max-samp 1.0 f> if #( max-samp fnegate max-samp ) snd chn set-y-bounds drop then
   max-samp
 ;
 previous
@@ -2781,8 +2793,11 @@ end-struct nrev-reverb%
   gen reverb-feedback@ snd set-reverb-control-feedback drop
   gen target@ 'marks equal? if
     plausible-mark-samples { pts }
-    pts list? if
-      snd 0  pts car  pts cadr pts car - 1+ apply-controls drop
+    pts array? if
+      snd 0
+      pts 0 array-ref
+      pts 1 array-ref
+      pts 0 array-ref - 1+ apply-controls drop
     else
       $" no marks" _ snd-warning drop
     then
@@ -2800,9 +2815,9 @@ end-struct nrev-reverb%
   self 1 cells + @ ( init-amount )   gen amount!
   self 2 cells + @ ( init-filter )   gen reverb-filter!
   self 3 cells + @ ( init-feedback ) gen reverb-feedback!
-  gen sliders@ 0 array-ref '( FXmNvalue gen amount@          100.0 f* f>s ) FXtVaSetValues drop
-  gen sliders@ 1 array-ref '( FXmNvalue gen reverb-filter@   100.0 f* f>s ) FXtVaSetValues drop
-  gen sliders@ 2 array-ref '( FXmNvalue gen reverb-feedback@ 100.0 f* f>s ) FXtVaSetValues drop
+  gen sliders@ 0 array-ref #( FXmNvalue gen amount@          100.0 f* f>s ) FXtVaSetValues drop
+  gen sliders@ 1 array-ref #( FXmNvalue gen reverb-filter@   100.0 f* f>s ) FXtVaSetValues drop
+  gen sliders@ 2 array-ref #( FXmNvalue gen reverb-feedback@ 100.0 f* f>s ) FXtVaSetValues drop
 ;
 : nrev-amount-cb ( gen -- prc; w c i self -- )
   3 proc-create swap ,
@@ -2860,7 +2875,7 @@ set-current
   self @ { gen }
   self cell+ @ ( child )
   $" %s (%.2f %.2f %.2f)"
-  '( gen label@ gen amount@ gen reverb-filter@ gen reverb-feedback@ ) string-format change-label
+  #( gen label@ gen amount@ gen reverb-filter@ gen reverb-feedback@ ) string-format change-label
 ;
 previous
 
@@ -2910,8 +2925,8 @@ end-struct jc-reverb%
   self @ { gen }
   self 1 cells + @ ( init-decay )  gen jc-reverb-decay!
   self 2 cells + @ ( init-volume ) gen jc-reverb-volume!
-  gen sliders@ 0 array-ref '( FXmNvalue gen jc-reverb-decay@  100.0 f* f>s ) FXtVaSetValues drop
-  gen sliders@ 1 array-ref '( FXmNvalue gen jc-reverb-volume@ 100.0 f* f>s ) FXtVaSetValues drop
+  gen sliders@ 0 array-ref #( FXmNvalue gen jc-reverb-decay@  100.0 f* f>s ) FXtVaSetValues drop
+  gen sliders@ 1 array-ref #( FXmNvalue gen jc-reverb-volume@ 100.0 f* f>s ) FXtVaSetValues drop
 ;
 : jc-decay-cb ( gen -- prc; w c i self -- )
   3 proc-create swap ,
@@ -2959,7 +2974,7 @@ set-current
   { self }
   self @ { gen }
   self cell+ @ ( child )
-  $" %s (%.2f %.2f)" '( gen label@ gen jc-reverb-decay@ gen jc-reverb-volume@ ) string-format
+  $" %s (%.2f %.2f)" #( gen label@ gen jc-reverb-decay@ gen jc-reverb-volume@ ) string-format
   change-label
 ;
 previous
@@ -2988,10 +3003,10 @@ end-struct effects-convolve%
     snd2 sound? if
       snd1 gen amplitude@ snd2 #f effects-cnv drop
     else
-      $" no such sound two: %S" '( snd2 ) string-format snd-warning drop
+      $" no such sound two: %S" #( snd2 ) string-format snd-warning drop
     then
   else
-    $" no such sound one: %S" '( snd1 ) string-format snd-warning drop
+    $" no such sound one: %S" #( snd1 ) string-format snd-warning drop
   then
 ;
 : cnv-reset-cb ( gen -- prc; w c i self -- )
@@ -3003,9 +3018,9 @@ end-struct effects-convolve%
   self 1 cells + @ ( init-one ) gen convolve-one!
   self 2 cells + @ ( init-two ) gen convolve-two!
   self 3 cells + @ ( init-amp ) gen amplitude!
-  gen sliders@ 0 array-ref '( FXmNvalue gen convolve-one@           ) FXtVaSetValues drop
-  gen sliders@ 1 array-ref '( FXmNvalue gen convolve-two@           ) FXtVaSetValues drop
-  gen sliders@ 2 array-ref '( FXmNvalue gen amplitude@ 100.0 f* f>s ) FXtVaSetValues drop
+  gen sliders@ 0 array-ref #( FXmNvalue gen convolve-one@           ) FXtVaSetValues drop
+  gen sliders@ 1 array-ref #( FXmNvalue gen convolve-two@           ) FXtVaSetValues drop
+  gen sliders@ 2 array-ref #( FXmNvalue gen amplitude@ 100.0 f* f>s ) FXtVaSetValues drop
 ;
 : cnv-one-cb ( gen -- prc; w c i self -- )
   3 proc-create swap ,
@@ -3069,7 +3084,7 @@ set-current
   self @ { gen }
   self cell+ @ ( child )
   $" %s (%d %d %.2f)"
-  '( gen label@ gen convolve-one@ gen convolve-two@ gen amplitude@ ) string-format change-label
+  #( gen label@ gen convolve-one@ gen convolve-two@ gen amplitude@ ) string-format change-label
 ;
 previous
 
@@ -3098,7 +3113,7 @@ set-current
 : effects-position-sound <{ mono pos :optional snd #f chn #f -- res }>
   mono #f #f frames { len }
   0 mono #f 1 #f make-sample-reader { rd }
-  $" %s %s %s" '( mono pos get-func-name ) string-format { origin }
+  $" %s %s %s" #( mono pos get-func-name ) string-format { origin }
   pos number? if
     rd pos numb-cb 0 len snd chn #f origin map-channel
   else
@@ -3141,7 +3156,7 @@ set-current
   time snd srate f* fround->s { len }
   :size len :max-size amnt f>s len 1 + + make-delay { del }
   $" %s %s %s %s %s %s"
-  '( amnt speed time beg
+  #( amnt speed time beg
   dur number? snd chn #f frames dur <> && if dur else #f then
   get-func-name ) string-format { origin }
   ri del flange-cb  beg dur snd chn #f origin map-channel
@@ -3186,8 +3201,8 @@ previous
 
 : effects-cross-synthesis-1 <{ csnd amp fftsize r :optional beg 0 dur #f snd #f  chn #f -- res }>
   { csnd amp fftsize r beg dur snd chn }
-  $" %s %s %s %s %s %s %s" '( csnd amp fftsize r beg dur get-func-name ) string-format { origin }
-  csnd sound? unless sounds car to csnd then
+  $" %s %s %s %s %s %s %s" #( csnd amp fftsize r beg dur get-func-name ) string-format { origin }
+  csnd sound? unless sounds 0 array-ref to csnd then
   csnd amp fftsize r effects-cross-synthesis beg dur snd chn #f origin map-channel
 ;
 
@@ -3216,7 +3231,7 @@ set-current
   dur if dur else snd chn #f frames then { len }
   len 0.0 make-vct { out-data }
   out-data   os sr sf amp vct-fp-cb   vct-map! drop
-  $" %s %s %s %s %s %s" '( srf amp freq beg dur get-func-name ) string-format { origin }
+  $" %s %s %s %s %s %s" #( srf amp freq beg dur get-func-name ) string-format { origin }
   out-data beg len snd chn #f origin vct->channel
 ;
 previous
@@ -3243,7 +3258,7 @@ set-current
     idx len = ?leave
     rd  rn  0.0 rand-interp  #f src
   end-map to out-data
-  $" %s %s %s %s %s" '( freq amp beg dur get-func-name ) string-format { origin }
+  $" %s %s %s %s %s" #( freq amp beg dur get-func-name ) string-format { origin }
   out-data beg out-data vct-length snd chn #f origin vct->channel
 ;
 previous
@@ -3270,7 +3285,7 @@ end-struct effects-place-sound%
   { w c info self }
   self @ { gen }
   gen envel@ xe-envelope { e }
-  e '( 0.0 1.0 1.0 1.0 ) equal? if
+  e #( 0.0 1.0 1.0 1.0 ) equal? if
     gen mono-snd@ gen stereo-snd@ gen pan-pos@ effects-place-sound drop
   else
     gen mono-snd@ gen stereo-snd@ e            effects-place-sound drop
@@ -3285,10 +3300,10 @@ end-struct effects-place-sound%
   self 1 cells + @ ( init-mono )   gen mono-snd!
   self 2 cells + @ ( init-stereo ) gen stereo-snd!
   self 3 cells + @ ( init-pos )    gen pan-pos!
-  gen envel@ '( 0.0 1.0 1.0 1.0 ) set-xe-envelope
-  gen sliders@ 0 array-ref '( FXmNvalue gen mono-snd@   ) FXtVaSetValues drop
-  gen sliders@ 1 array-ref '( FXmNvalue gen stereo-snd@ ) FXtVaSetValues drop
-  gen sliders@ 2 array-ref '( FXmNvalue gen pan-pos@    ) FXtVaSetValues drop
+  gen envel@ #( 0.0 1.0 1.0 1.0 ) set-xe-envelope
+  gen sliders@ 0 array-ref #( FXmNvalue gen mono-snd@   ) FXtVaSetValues drop
+  gen sliders@ 1 array-ref #( FXmNvalue gen stereo-snd@ ) FXtVaSetValues drop
+  gen sliders@ 2 array-ref #( FXmNvalue gen pan-pos@    ) FXtVaSetValues drop
 ;
 : ps-mono-cb ( gen -- prc; w c i self -- )
   3 proc-create swap ,
@@ -3322,7 +3337,7 @@ end-struct effects-place-sound%
        #( $" stereo sound" _ 0 gen stereo-snd@ 50 gen ps-stereo-cb 1 )
        #( $" pan position" _ 0 gen pan-pos@    90 gen ps-pos-cb    1 ) ) add-sliders gen sliders!
     "fr" FxmFrameWidgetClass gen sliders@ 0 array-ref FXtParent FXtParent
-    '( FXmNheight          200
+    #( FXmNheight          200
        FXmNleftAttachment  FXmATTACH_FORM
        FXmNrightAttachment FXmATTACH_FORM
        FXmNtopAttachment   FXmATTACH_WIDGET
@@ -3332,9 +3347,9 @@ end-struct effects-place-sound%
     gen dialog@ activate-dialog
     "panning"
     fr
-    :envelope    '( 0.0 1.0 1.0 1.0 )
-    :axis-bounds '( 0.0 1.0 0.0 1.0 )
-    :args        '( FXmNheight 200 ) make-xenved gen envel!
+    :envelope    #( 0.0 1.0 1.0 1.0 )
+    :axis-bounds #( 0.0 1.0 0.0 1.0 )
+    :args        #( FXmNheight 200 ) make-xenved gen envel!
   else
     gen dialog@ activate-dialog
   then
@@ -3356,7 +3371,7 @@ set-current
   self @ { gen }
   self cell+ @ ( child )
   $" %s (%d %d %d)"
-  '( gen label@ gen mono-snd@ gen stereo-snd@ gen pan-pos@ ) string-format change-label
+  #( gen label@ gen mono-snd@ gen stereo-snd@ gen pan-pos@ ) string-format change-label
 ;
 previous
 
@@ -3377,7 +3392,7 @@ hide
   { w c info self }
   self @ { gen }
   self 1 cells + @ ( init ) gen amount!
-  gen sliders@ 0 array-ref '( FXmNvalue gen amount@ 100.0 f* f>s ) FXtVaSetValues drop
+  gen sliders@ 0 array-ref #( FXmNvalue gen amount@ 100.0 f* f>s ) FXtVaSetValues drop
 ;
 : silence-amount-cb ( gen -- prc; w c i self -- )
   3 proc-create swap ,
@@ -3415,7 +3430,7 @@ set-current
  does> ( self -- )
   { self }
   self @ { gen }
-  self cell+ @ ( child ) $" %s (%.2f)" '( gen label@ gen amount@ ) string-format change-label
+  self cell+ @ ( child ) $" %s (%.2f)" #( gen label@ gen amount@ ) string-format change-label
 ;
 previous
 
@@ -3438,7 +3453,10 @@ hide
   gen target@ 'marks equal? if
     plausible-mark-samples { pts }
     pts if
-      snd 0  pts car  pts cadr pts car - 1+ apply-controls drop
+      snd 0
+      pts 0 array-ref
+      pts 1 array-ref
+      pts 0 array-ref - 1+ apply-controls drop
     else
       $" no marks" _ snd-warning drop
     then
@@ -3454,7 +3472,7 @@ hide
   { w c info self }
   self @ { gen }
   self 1 cells + @ ( init )  gen amount!
-  gen sliders@ 0 array-ref '( FXmNvalue gen amount@ 100.0 f* f>s ) FXtVaSetValues drop
+  gen sliders@ 0 array-ref #( FXmNvalue gen amount@ 100.0 f* f>s ) FXtVaSetValues drop
 ;
 : contrast-amount-cb ( gen -- prc; w c i self -- )
   3 proc-create swap ,
@@ -3491,7 +3509,7 @@ set-current
  does> ( self -- )
   { self }
   self @ { gen }
-  self cell+ @ ( child ) $" %s (%.2f)" '( gen label@ gen amount@ ) string-format change-label
+  self cell+ @ ( child ) $" %s (%.2f)" #( gen label@ gen amount@ ) string-format change-label
 ;
 previous
 
@@ -3524,7 +3542,7 @@ end-struct effects-cross%
   { target samps self }
   self @ { gen }
   "effects-cross-synthesis-1"
-  $" %s %s %s %s" '( gen cs-sound@ gen amplitude@ gen size@ gen cs-radius@ ) string-format
+  $" %s %s %s %s" #( gen cs-sound@ gen amplitude@ gen size@ gen cs-radius@ ) string-format
 ;
 : cs-ok-cb ( gen -- prc; w c i self -- )
   3 proc-create swap ,
@@ -3547,15 +3565,15 @@ end-struct effects-cross%
   self 2 cells + @ ( init-amp )   gen amplitude!
   self 3 cells + @ ( init-size )  gen size!
   self 4 cells + @ ( init-rad )   gen cs-radius!
-  gen sliders@ 0 array-ref '( FXmNvalue gen cs-sound@               ) FXtVaSetValues drop
-  gen sliders@ 1 array-ref '( FXmNvalue gen amplitude@ 100.0 f* f>s ) FXtVaSetValues drop
+  gen sliders@ 0 array-ref #( FXmNvalue gen cs-sound@               ) FXtVaSetValues drop
+  gen sliders@ 1 array-ref #( FXmNvalue gen amplitude@ 100.0 f* f>s ) FXtVaSetValues drop
   gen cs-fft-widget@
   use-combo-box-for-fft-size if
-    '( FXmNselectedPosition 1 ) FXtVaSetValues
+    #( FXmNselectedPosition 1 ) FXtVaSetValues
   else
     #t #t FXmToggleButtonSetState
   then drop
-  gen sliders@ 2 array-ref '( FXmNvalue gen cs-radius@ 100.0 f* f>s ) FXtVaSetValues drop
+  gen sliders@ 2 array-ref #( FXmNvalue gen cs-radius@ 100.0 f* f>s ) FXtVaSetValues drop
 ;
 : cs-snd-cb ( gen -- prc; w c i self -- )
   3 proc-create swap ,
@@ -3579,8 +3597,9 @@ end-struct effects-cross%
   3 proc-create swap ,
  does> ( w c i self -- )
   { w c info self }
-  info Fitem_or_text ( selected ) FXmFONTLIST_DEFAULT_TAG FXmStringGetLtoR \ size-as-list '(#t n)
-  cadr self @ ( gen ) size!
+  info Fitem_or_text { selected }
+  selected #f FXmCHARSET_TEXT FXmCHARSET_TEXT #f 0 FXmOUTPUT_ALL FXmStringUnparse { size-as-string }
+  1 array-ref self @ ( gen ) size!
 ;
 : cs-sel-changed-cb ( gen -- prc; w c i self -- )
   3 proc-create swap ,
@@ -3603,21 +3622,21 @@ the synthesis amplitude, the FFT size, and the radius value." _ help-cb
     #( #( $" input sound" _   0 gen cs-sound@     20 gen cs-snd-cb   1 )
        #( $" amplitude"   _ 0.0 gen amplitude@   1.0 gen cs-amp-cb 100 )
        #( $" radius"      _ 0.0 gen cs-radius@ 360.0 gen cs-rad-cb 100 ) ) add-sliders gen sliders!
-    '( 64 128 256 512 1024 4096 ) { sizes }
+    #( 64 128 256 512 1024 4096 ) { sizes }
     $" FFT size" _ FXmStringCreateLocalized { s1 }
     "frame" FxmFrameWidgetClass gen sliders@ 0 array-ref FXtParent
-    '( FXmNborderWidth   1
+    #( FXmNborderWidth   1
        FXmNshadowType    FXmSHADOW_ETCHED_IN
        FXmNpositionIndex 2 ) undef FXtCreateManagedWidget { frame }
     "frm" FxmFormWidgetClass frame
-    '( FXmNleftAttachment   FXmATTACH_FORM
+    #( FXmNleftAttachment   FXmATTACH_FORM
        FXmNrightAttachment  FXmATTACH_FORM
        FXmNtopAttachment    FXmATTACH_FORM
        FXmNbottomAttachment FXmATTACH_FORM
        FXmNbackground       basic-color ) undef FXtCreateManagedWidget { frm }
     use-combo-box-for-fft-size if
       $" FFT size" _ FxmLabelWidgetClass frm
-      '( FXmNleftAttachment   FXmATTACH_FORM
+      #( FXmNleftAttachment   FXmATTACH_FORM
 	 FXmNrightAttachment  FXmATTACH_NONE
 	 FXmNtopAttachment    FXmATTACH_FORM
 	 FXmNbottomAttachment FXmATTACH_FORM
@@ -3625,7 +3644,7 @@ the synthesis amplitude, the FFT size, and the radius value." _ help-cb
 	 FXmNbackground       basic-color ) undef FXtCreateManagedWidget { lab }
       sizes map! *key* number->string FXmStringCreateLocalized end-map { fft-labels }
       "fftsize" FxmComboBoxWidgetClass frm
-      '( FXmNleftAttachment   FXmATTACH_WIDGET
+      #( FXmNleftAttachment   FXmATTACH_WIDGET
 	 FXmNleftWidget       lab
 	 FXmNrightAttachment  FXmATTACH_FORM
 	 FXmNtopAttachment    FXmATTACH_FORM
@@ -3636,11 +3655,11 @@ the synthesis amplitude, the FFT size, and the radius value." _ help-cb
 	 FXmNbackground       basic-color ) undef FXtCreateManagedWidget { combo }
       combo gen cs-fft-widget!
       fft-labels each FXmStringFree drop end-each
-      combo '( FXmNselectedPosition 1 ) FXtVaSetValues drop
+      combo #( FXmNselectedPosition 1 ) FXtVaSetValues drop
       combo FXmNselectionCallback gen cs-sel-cb undef FXtAddCallback drop
     else
       "rc" FxmRowColumnWidgetClass frm
-      '( FXmNorientation      FXmHORIZONTAL
+      #( FXmNorientation      FXmHORIZONTAL
 	 FXmNradioBehavior    #t
 	 FXmNradioAlwaysOne   #t
 	 FXmNentryClass       FxmToggleButtonWidgetClass
@@ -3651,7 +3670,7 @@ the synthesis amplitude, the FFT size, and the radius value." _ help-cb
 	 FXmNbottomAttachment FXmATTACH_NONE
 	 FXmNbackground       basic-color ) undef FXtCreateManagedWidget { rc }
       $" FFT size" _ FxmLabelWidgetClass frm
-      '( FXmNleftAttachment   FXmATTACH_FORM
+      #( FXmNleftAttachment   FXmATTACH_FORM
 	 FXmNrightAttachment  FXmATTACH_FORM
 	 FXmNtopAttachment    FXmATTACH_WIDGET
 	 FXmNtopWidget        rc
@@ -3661,8 +3680,8 @@ the synthesis amplitude, the FFT size, and the radius value." _ help-cb
 	 FXmNbackground       basic-color ) undef FXtCreateManagedWidget { lab }
       sizes each { size }
 	size number->string FxmToggleButtonWidgetClass rc
-	'( FXmNbackground           basic-color
-	   FXmNvalueChangedCallback '( gen cs-sel-changed-cb size )
+	#( FXmNbackground           basic-color
+	   FXmNvalueChangedCallback #( gen cs-sel-changed-cb size )
 	   FXmNset                  size gen size@ = ) undef FXtCreateManagedWidget { button }
 	size gen size@ = if button gen cs-fft-widget! then
       end-each
@@ -3690,7 +3709,7 @@ set-current
   { self }
   self @ { gen }
   self cell+ @ ( child )
-  $" %s (%d %.2f %d %.2f)" '( gen label@ gen cs-sound@ gen amplitude@ gen size@ gen cs-radius@ )
+  $" %s (%d %.2f %d %.2f)" #( gen label@ gen cs-sound@ gen amplitude@ gen size@ gen cs-radius@ )
   string-format change-label
 ;
 previous
@@ -3727,7 +3746,7 @@ end-struct effects-flange%
   { target samps self }
   self @ { gen }
   "effects-flange"
-  $" %s %s %s" '( gen amount@ gen flange-speed@ gen flange-time@ ) string-format
+  $" %s %s %s" #( gen amount@ gen flange-speed@ gen flange-time@ ) string-format
 ;
 : flange-ok-cb ( gen -- prc; w c i self -- )
   3 proc-create swap ,
@@ -3749,9 +3768,9 @@ end-struct effects-flange%
   self 1 cells + @ ( init-speed )  gen flange-speed!
   self 2 cells + @ ( init-amount ) gen amount!
   self 3 cells + @ ( init-time )   gen flange-time!
-  gen sliders@ 0 array-ref '( FXmNvalue gen flange-speed@ 10.0 f* f>s ) FXtVaSetValues drop
-  gen sliders@ 1 array-ref '( FXmNvalue gen amount@       10.0 f* f>s ) FXtVaSetValues drop
-  gen sliders@ 2 array-ref '( FXmNvalue gen flange-time@ 100.0 f* f>s ) FXtVaSetValues drop
+  gen sliders@ 0 array-ref #( FXmNvalue gen flange-speed@ 10.0 f* f>s ) FXtVaSetValues drop
+  gen sliders@ 1 array-ref #( FXmNvalue gen amount@       10.0 f* f>s ) FXtVaSetValues drop
+  gen sliders@ 2 array-ref #( FXmNvalue gen flange-time@ 100.0 f* f>s ) FXtVaSetValues drop
 ;
 : flange-speed-cb ( gen -- prc; w c i self -- )
   3 proc-create swap ,
@@ -3806,7 +3825,7 @@ set-current
   { self }
   self @ { gen }
   self cell+ @ ( child )
-  $" %s (%.2f %.2f %.2f)" '( gen label@ gen flange-speed@ gen amount@ gen flange-time@ )
+  $" %s (%.2f %.2f %.2f)" #( gen label@ gen flange-speed@ gen amount@ gen flange-time@ )
   string-format change-label
 ;
 
@@ -3837,7 +3856,7 @@ hide
   { w c info self }
   self @ { gen }
   self 1 cells + @ ( init ) gen scaler!
-  gen sliders@ 0 array-ref '( FXmNvalue gen scaler@ 100.0 f* f>s ) FXtVaSetValues drop
+  gen sliders@ 0 array-ref #( FXmNvalue gen scaler@ 100.0 f* f>s ) FXtVaSetValues drop
 ;
 : rp-scl-cb ( gen -- prc; w c i self -- )
   3 proc-create swap ,
@@ -3873,7 +3892,7 @@ set-current
  does> ( self -- )
   { self }
   self @ { gen }
-  self cell+ @ ( child ) $" %s (%.2f)" '( gen label@ gen scaler@ ) string-format change-label
+  self cell+ @ ( child ) $" %s (%.2f)" #( gen label@ gen scaler@ ) string-format change-label
 ;
 
 \ === Robotize ===
@@ -3900,9 +3919,9 @@ end-struct effects-robotize%
     else
       plausible-mark-samples { pts }
       pts if
-	pts car  pts cadr pts car -
+	pts 0 array-ref  pts 1 array-ref pts 0 array-ref -
       else
-	'no-such-mark '( get-func-name pts ) fth-throw
+	'no-such-mark #( get-func-name pts ) fth-throw
       then
     then
   then #f #f effects-fp
@@ -3916,9 +3935,9 @@ end-struct effects-robotize%
   self 1 cells + @ ( init-sr )  gen samp-rate!
   self 2 cells + @ ( init-amp ) gen amplitude!
   self 3 cells + @ ( init-frq ) gen frequency!
-  gen sliders@ 0 array-ref '( FXmNvalue gen samp-rate@ 100.0 f* f>s ) FXtVaSetValues drop
-  gen sliders@ 1 array-ref '( FXmNvalue gen amplitude@ 100.0 f* f>s ) FXtVaSetValues drop
-  gen sliders@ 2 array-ref '( FXmNvalue gen frequency@ 100.0 f* f>s ) FXtVaSetValues drop
+  gen sliders@ 0 array-ref #( FXmNvalue gen samp-rate@ 100.0 f* f>s ) FXtVaSetValues drop
+  gen sliders@ 1 array-ref #( FXmNvalue gen amplitude@ 100.0 f* f>s ) FXtVaSetValues drop
+  gen sliders@ 2 array-ref #( FXmNvalue gen frequency@ 100.0 f* f>s ) FXtVaSetValues drop
 ;
 : robotize-sam-cb ( gen -- prc; w c i self -- )
   3 proc-create swap ,
@@ -3975,7 +3994,7 @@ set-current
   { self }
   self @ { gen }
   self cell+ @ ( child )
-  $" %s (%.2f %.2f %.2f)" '( gen label@ gen samp-rate@ gen amplitude@ gen frequency@ )
+  $" %s (%.2f %.2f %.2f)" #( gen label@ gen samp-rate@ gen amplitude@ gen frequency@ )
   string-format change-label
 ;
 
@@ -4002,7 +4021,7 @@ end-struct effects-rubber%
   { w c info self }
   self @ { gen }
   self 1 cells + @ ( init ) gen factor!
-  gen sliders@ 0 array-ref '( FXmNvalue gen factor@ 100.0 f* f>s ) FXtVaSetValues drop
+  gen sliders@ 0 array-ref #( FXmNvalue gen factor@ 100.0 f* f>s ) FXtVaSetValues drop
 ;
 : rubber-factor-cb ( gen -- prc; w c i self -- )
   3 proc-create swap ,
@@ -4041,7 +4060,7 @@ set-current
  does> ( self -- )
   { self }
   self @ { gen }
-  self cell+ @ ( child ) $" %s (%.2f)" '( gen label@ gen factor@ ) string-format change-label
+  self cell+ @ ( child ) $" %s (%.2f)" #( gen label@ gen factor@ ) string-format change-label
 ;
 
 \ === Wobble ===
@@ -4061,9 +4080,9 @@ hide
     else
       plausible-mark-samples { pts }
       pts if
-	pts car  pts cadr pts car -
+	pts 0 array-ref  pts 1 array-ref pts 0 array-ref -
       else
-	'no-such-mark '( get-func-name pts ) fth-throw
+	'no-such-mark #( get-func-name pts ) fth-throw
       then
     then
   then #f #f effects-hello-dentist
@@ -4076,8 +4095,8 @@ hide
   self @ { gen }
   self 1 cells + @ ( init-frq ) gen frequency!
   self 2 cells + @ ( init-amp ) gen amplitude!
-  gen sliders@ 0 array-ref '( FXmNvalue gen frequency@ 100.0 f* f>s ) FXtVaSetValues drop
-  gen sliders@ 1 array-ref '( FXmNvalue gen amplitude@ 100.0 f* f>s ) FXtVaSetValues drop
+  gen sliders@ 0 array-ref #( FXmNvalue gen frequency@ 100.0 f* f>s ) FXtVaSetValues drop
+  gen sliders@ 1 array-ref #( FXmNvalue gen amplitude@ 100.0 f* f>s ) FXtVaSetValues drop
 ;
 : wobble-frq-cb ( gen -- prc; w c i self -- )
   3 proc-create swap ,
@@ -4123,7 +4142,7 @@ set-current
  does> ( self -- )
   { self }
   self @ { gen }
-  self cell+ @ ( child ) $" %s (%.2f %.2f)" '( gen label@ gen frequency@ gen amplitude@ )
+  self cell+ @ ( child ) $" %s (%.2f %.2f)" #( gen label@ gen frequency@ gen amplitude@ )
   string-format change-label
 ;
 previous
@@ -4132,7 +4151,7 @@ $" Effects" _ value effects-menu-label
 
 : make-effects-menu ( -- widget )
   effects-menu-label make-main-menu { main }
-  '( FXmNbackground basic-color ) { args }
+  #( FXmNbackground basic-color ) { args }
   $" Amplitude Effects"        	  _ main args make-menu { menu }
   menu $" Gain"                	  _ make-gain-dialog         menu-entry
   menu $" Normalize"           	  _ make-normalize-dialog    menu-entry

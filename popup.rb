@@ -997,8 +997,7 @@ written: %s\n", channels(snd), srate(snd), frames(snd) / srate(snd).to_f,
         end
       end
     end
-    entry("Color") do |snd, chn, w| color_dialog end
-    entry("Orientation") do |snd, chn, w| orientation_dialog end
+    entry("Color/Orientation") do |snd, chn, w| color_orientation_dialog end
     before_popup_hook.add_hook!("transform popup") do |snd, chn, xe|
       fax = if transform_graph?(snd, chn)
               axis_info(snd, chn, Transform_graph)

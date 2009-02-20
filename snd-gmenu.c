@@ -267,8 +267,7 @@ static void view_listener_callback(GtkWidget *w, gpointer info) {handle_listener
 
 static void view_mix_dialog_callback(GtkWidget *w, gpointer info) {make_mix_dialog();}
 static void view_region_callback_1(GtkWidget *w, gpointer info) {view_region_callback(w, info);}
-static void view_orientation_callback_1(GtkWidget *w, gpointer info) {view_orientation_callback(w, info);}
-static void view_color_callback_1(GtkWidget *w, gpointer info) {view_color_callback(w, info);}
+static void view_color_orientation_callback_1(GtkWidget *w, gpointer info) {view_color_orientation_callback(w, info);}
 
 static void view_x_axis_seconds_callback(GtkWidget *w, gpointer info) {set_x_axis_style(X_AXIS_IN_SECONDS);}
 static void view_x_axis_clock_callback(GtkWidget *w, gpointer info) {set_x_axis_style(X_AXIS_AS_CLOCK);}
@@ -699,19 +698,12 @@ GtkWidget *add_menu(void)
   SG_SIGNAL_CONNECT(view_region_menu, "activate", view_region_callback_1, NULL);
   set_sensitive(view_region_menu, false);
 
-  view_color_menu = gtk_image_menu_item_new_with_label(_("Color"));
-  ml[v_color_menu] = _("Color");
-  gtk_menu_shell_append(GTK_MENU_SHELL(view_cascade_menu), view_color_menu);
-  gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(view_color_menu), gtk_image_new_from_stock(GTK_STOCK_SELECT_COLOR, GTK_ICON_SIZE_MENU));
-  gtk_widget_show(view_color_menu);
-  SG_SIGNAL_CONNECT(view_color_menu, "activate", view_color_callback_1, NULL);
-
-  view_orientation_menu = gtk_image_menu_item_new_with_label(_("Orientation"));
-  ml[v_orientation_menu] = _("Orientation");
-  gtk_menu_shell_append(GTK_MENU_SHELL(view_cascade_menu), view_orientation_menu);
-  gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(view_orientation_menu), gtk_image_new_from_stock(GTK_STOCK_PREFERENCES, GTK_ICON_SIZE_MENU));
-  gtk_widget_show(view_orientation_menu);
-  SG_SIGNAL_CONNECT(view_orientation_menu, "activate", view_orientation_callback_1, NULL);
+  view_color_orientation_menu = gtk_image_menu_item_new_with_label(_("Color/Orientation"));
+  ml[v_color_orientation_menu] = _("Color/Orientation");
+  gtk_menu_shell_append(GTK_MENU_SHELL(view_cascade_menu), view_color_orientation_menu);
+  gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(view_color_orientation_menu), gtk_image_new_from_stock(GTK_STOCK_SELECT_COLOR, GTK_ICON_SIZE_MENU));
+  gtk_widget_show(view_color_orientation_menu);
+  SG_SIGNAL_CONNECT(view_color_orientation_menu, "activate", view_color_orientation_callback_1, NULL);
 
   view_sep2_menu = gtk_menu_item_new();
   ml[v_sep2_menu] = NULL;

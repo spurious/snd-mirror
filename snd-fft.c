@@ -1847,13 +1847,6 @@ void sono_update(chan_info *cp)
 }
 
 
-void set_spectrum_end_and_redisplay(Float val)
-{
-  in_set_spectrum_end(val); 
-  for_each_chan(sono_update);
-}
-
-
 static void spectral_multiply(Float* rl1, Float* rl2, int n)
 {
   int j, n2;

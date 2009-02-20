@@ -11,11 +11,12 @@
  */
 
 #define XEN_MAJOR_VERSION 2
-#define XEN_MINOR_VERSION 24
-#define XEN_VERSION "2.24"
+#define XEN_MINOR_VERSION 25
+#define XEN_VERSION "2.25"
 
 /* HISTORY:
  *
+ *  20-Feb:    changed fth.h include to fth/fth.h.
  *  14-Jan-09: s7_xen_initialize.
  *  --------
  *  30-Nov-08: use s7_wrong_number_of_args_error.
@@ -1308,7 +1309,7 @@ XEN xen_rb_add_to_load_path(char *path);
 
 #define LOCAL_SIZEOF_OFF_T SIZEOF_OFF_T
 #undef SIZEOF_OFF_T
-#include <fth.h>
+#include <fth/fth.h>
 #undef SIZEOF_OFF_T
 #define SIZEOF_OFF_T LOCAL_SIZEOF_OFF_T
 

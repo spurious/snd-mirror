@@ -3,7 +3,7 @@
 
 \ Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Tue Oct 11 18:23:12 CEST 2005
-\ Changed: Tue May 01 23:30:56 CEST 2007
+\ Changed: Sun Dec 14 00:51:54 CET 2008
 
 \ Commentary:
 \
@@ -42,10 +42,10 @@ require examp
 : tree-for-each ( proc-or-xt tree -- ?? )
   doc" Applies PROC-OR-XT to every leaf of TREE."
   { proc-or-xt tree }
-  tree null? unless
-    tree pair? if
-      proc-or-xt tree car recurse
-      proc-or-xt tree cdr recurse
+  tree nil? unless
+    tree array? if
+      proc-or-xt tree 0 array-ref recurse
+      proc-or-xt tree 1 nil array-subarray recurse
     else
       proc-or-xt xt? if
 	tree proc-or-xt execute
@@ -90,7 +90,7 @@ previous
 : mix->vct ( id -- v )
   doc" Returns mix's data in vct."
   { id }
-  id mix? false? if 'no-such-mix '( get-func-name id ) fth-throw then
+  id mix? false? if 'no-such-mix #( get-func-name id ) fth-throw then
   id 0 make-mix-sample-reader { reader }
   id mix-length 0.0 make-vct map! reader read-mix-sample end-map
   reader free-sample-reader drop
@@ -114,8 +114,8 @@ hide
 : snap-mix-to-beat-cb ( id samps self -- #t )
   { id samps self }
   id mix-position samps + { samp }
-  id mix-home car { snd }
-  id mix-home cadr { chn }
+  id mix-home 0 array-ref { snd }
+  id mix-home 1 array-ref { chn }
   snd chn beats-per-minute 60.0 f/ { bps }
   snd srate { sr }
   samp bps f* sr f/ floor { beat }
@@ -138,14 +138,14 @@ previous
   doc" Returns the value associated with KEY in the given mix's property list, or #f."
   { id key }
   \ mix? returns mix id if mix id is active, but mix id 0 means false in Forth.
-  id mix? false? if 'no-such-mix '( get-func-name id ) fth-throw then
-  id mix-properties key list-assoc-ref
+  id mix? false? if 'no-such-mix #( get-func-name id ) fth-throw then
+  id mix-properties key array-assoc-ref
 ;
 : set-mix-property ( id key val -- )
   doc" Sets VAL to KEY in the given mix's property list."
   { id key val }
-  id mix? false? if 'no-such-mix '( get-func-name id ) fth-throw then
-  id dup mix-properties key val list-assoc-set! set-mix-properties drop
+  id mix? false? if 'no-such-mix #( get-func-name id ) fth-throw then
+  id dup mix-properties key val array-assoc-set! set-mix-properties drop
 ;
 
 : mix-click-sets-amp <{ id -- #t }>
@@ -166,17 +166,17 @@ previous
 : mix-click-info <{ id -- #t }>
   doc" A mix-click-hook function that describes a mix and its properties.\n\
 mix-click-hook ' mix-click-info add-hook!"
-  id mix-home car { mid }
-  id mix-name empty? if "" else $"  (%S)" '( id mix-name ) string-format then { mname }
-  $"        mix id: %d%s\n" '( id mname ) string-format make-string-output-port { prt }
-  prt $"      position: %d (%.3f secs)\n" '( id mix-position dup mid srate f/ ) port-puts-format
-  prt $"        length: %d (%.3f secs)\n" '( id mix-length   dup mid srate f/ ) port-puts-format
-  prt $"            in: %s[%d]\n"     '( mid short-file-name id mix-home cadr ) port-puts-format
-  prt $"        scaler: %s\n"   '( id mix-amp )     port-puts-format
-  prt $"         speed: %.3f\n" '( id mix-speed )   port-puts-format
-  prt $"           env: %s\n"   '( id mix-amp-env ) port-puts-format
+  id mix-home 0 array-ref { mid }
+  id mix-name empty? if "" else $"  (%S)" #( id mix-name ) string-format then { mname }
+  $"        mix id: %d%s\n" #( id mname ) string-format make-string-output-port { prt }
+  prt $"      position: %d (%.3f secs)\n" #( id mix-position dup mid srate f/ ) port-puts-format
+  prt $"        length: %d (%.3f secs)\n" #( id mix-length   dup mid srate f/ ) port-puts-format
+  prt $"            in: %s[%d]\n" #( mid short-file-name id mix-home 1 array-ref ) port-puts-format
+  prt $"        scaler: %s\n"   #( id mix-amp )     port-puts-format
+  prt $"         speed: %.3f\n" #( id mix-speed )   port-puts-format
+  prt $"           env: %s\n"   #( id mix-amp-env ) port-puts-format
   id mix-properties { props }
-  props empty? unless prt $"    properties: %s\n" '( props ) port-puts-format then
+  props empty? unless prt $"    properties: %s\n" #( props ) port-puts-format then
   $" Mix info" prt port->string info-dialog drop
   #t
 ;
@@ -193,7 +193,7 @@ mix-click-hook ' mix-click-info add-hook!"
 	mx mix-name name string= if drop mx exit then
       end-each
     loop
-  end-each dup false? if drop 'no-such-mix '( get-func-name name ) fth-throw then
+  end-each dup false? if drop 'no-such-mix #( get-func-name name ) fth-throw then
 ;
 
 \ ;;; ---------------- backwards compatibilty
@@ -259,8 +259,8 @@ hide
 set-current
 : scale-tempo ( mix-list tempo-scl -- )
   { mix-list tempo-scl }
-  mix-list car mix-position dup { first-beg last-beg }
-  mix-list cdr each { m }
+  mix-list 0 array-ref mix-position dup { first-beg last-beg }
+  mix-list 1 nil array-subarray each { m }
     m mix-position { pos }
     first-beg pos min to first-beg
     last-beg pos max to last-beg

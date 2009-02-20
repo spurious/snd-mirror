@@ -652,8 +652,7 @@ void selection_help(void);
 void colors_help(void);
 char *version_info(void);
 void transform_dialog_help(void);
-void color_dialog_help(void);
-void orientation_dialog_help(void);
+void color_orientation_dialog_help(void);
 void envelope_editor_dialog_help(void);
 void region_dialog_help(void);
 void raw_data_dialog_help(const char *info);
@@ -975,7 +974,6 @@ bool fft_window_beta_in_use(mus_fft_window_t win);
 bool fft_window_alpha_in_use(mus_fft_window_t win);
 void free_sono_info(chan_info *cp);
 void sono_update(chan_info *cp);
-void set_spectrum_end_and_redisplay(Float val);
 void c_convolve(const char *fname, Float amp, int filec, off_t filehdr, int filterc, off_t filterhdr, int filtersize,
 		int fftsize, int filter_chans, int filter_chan, int data_size, snd_info *gsp);
 void *make_sonogram_state(chan_info *cp, bool force_recalc);

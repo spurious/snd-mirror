@@ -3,7 +3,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Thu Oct 27 04:51:42 CEST 2005
-\ Changed: Thu Feb 01 00:54:04 CET 2007
+\ Changed: Tue Dec 16 00:57:03 CET 2008
 
 \ Commentary:
 \
@@ -42,17 +42,17 @@
 require clm
 
 : envelope? ( obj -- f )
-  doc" Returns #t if OBJ is a list, a vct or an array with even length and length >= 2."
+  doc" Returns #t if OBJ is a vct or an array with even length and length >= 2."
   ( obj ) length dup 2 mod 0= swap 2 >= &&
 ;
-' object-copy alias envelope-copy
-' envelope-copy $" ( en1 -- en2 )  Copies EN1 which may be a list, a vct, or an array." help-set!
+<'> object-copy alias envelope-copy
+<'> envelope-copy $" ( en1 -- en2 )  Copies EN1 which may be a vct, or an array." help-set!
 
 \ ;;; -------- envelope-interp
 
 : envelope-interp <{ x en :optional base 1.0 -- r }>
   doc" Returns value of ENV at X; BASE controls connecting segment type; \
-ENV may be a list, a vct, or an array:\n\
+ENV may be a vct, or an array:\n\
 0.3 #( 0.0 0.0 0.5 1.0 1.0 0.0 ) 1.0 envelope-interp => 0.6"
   en empty? if
     0.0
@@ -92,45 +92,45 @@ ENV may be a list, a vct, or an array:\n\
 
 : window-envelope ( beg end en1 -- en2 )
   doc" Returns portion of EN1 lying between x axis values BEG and END:\n\
-1.0 3.0 '( 0.0 0.0 5.0 1.0 ) window-envelope => '( 1.0 0.2 3.0 0.6 )"
+1.0 3.0 #( 0.0 0.0 5.0 1.0 ) window-envelope => #( 1.0 0.2 3.0 0.6 )"
   { beg end en1 }
-  nil { en2 }
-  en1 if en1 cadr else 0.0 then { lasty }
+  #() { en2 }
+  en1 length 1 > if en1 1 array-ref else 0.0 then { lasty }
   #f { return-early? }
   en1 length 0 ?do
-    en1 i    list-ref { x }
-    en1 i 1+ list-ref { y }
+    en1 i    array-ref { x }
+    en1 i 1+ array-ref { y }
     y to lasty
-    en2 null? if
+    en2 empty? if
       x beg f>= if
-	en2  beg  beg en1 1.0 envelope-interp  3 list-append to en2
+	en2  beg  array-push beg en1 1.0 envelope-interp array-push to en2
 	x beg f<> if
 	  x end f>= if
-	    en2  end  end en1 1.0 envelope-interp  3 list-append to en2
+	    en2  end  array-push end en1 1.0 envelope-interp array-push to en2
 	    #t to return-early?
 	    leave
 	  else
-	    en2 x y 3 list-append to en2
+	    en2 #( x y ) array-push to en2
 	  then
 	then
       then
     else
       x end f<= if
-	en2 x y 3 list-append to en2
+	en2 x array-push y array-push to en2
 	x end f= if
 	  #t to return-early?
 	  leave
 	then
       else
 	x end f> if
-	  en2  end  end en1 1.0 envelope-interp  3 list-append to en2
+	  en2 end array-push end en1 1.0 envelope-interp array-push to en2
 	  #t to return-early?
 	  leave
 	then
       then
     then
   2 +loop
-  return-early? unless en2 end lasty 3 list-append to en2 then
+  return-early? unless en2 end array-push lasty array-push to en2 then
   en2
 ;
 
@@ -163,7 +163,7 @@ set-current
   doc" Maps XT over the breakpoints in EN1 and EN2 returning a new envelope."
   { en1 en2 xt }
   #() { xs }
-  nil { en3 }
+  #() { en3 }
   en1 empty? if
     en2 xs (at0) to en3
   else
@@ -172,7 +172,7 @@ set-current
     else
       en1 xs (at0) { ee1 }
       en2 xs (at0) { ee2 }
-      xs array-uniq! ['] fnumb-cmp array-sort! drop
+      xs array-uniq! <'> fnumb-cmp array-sort! drop
       xs length 2* :initial-element 0.0 make-array to en3
       xs each { x }
 	en3 i 2* x array-set!
@@ -183,11 +183,7 @@ set-current
   en1 array? if
     en3
   else
-    en1 list? if
-      en3 array->list
-    else
-      en1 vct? if en3 vector->vct then
-    then
+    en1 vct? if en3 vector->vct then
   then
 ;
 previous
@@ -196,15 +192,15 @@ previous
 
 : add-envelopes ( env1 env2 -- env3 )
   doc" Adds break-points of ENV1 and ENV2 returning a new envelope."
-  ['] f+ map-envelopes
+  <'> f+ map-envelopes
 ;
 : multiply-envelopes ( env1 env2 -- env3 )
   doc" Multiplies break-points of ENV1 and ENV2 returning a new envelope:\n\
-'( 0 0 2 0.5 ) '( 0 0 1 2 2 1 ) multiply-envelopes => '( 0.0 0.0 0.5 0.5 1.0 0.5 )"
-  ['] f* map-envelopes
+#( 0 0 2 0.5 ) #( 0 0 1 2 2 1 ) multiply-envelopes => #( 0.0 0.0 0.5 0.5 1.0 0.5 )"
+  <'> f* map-envelopes
 ;
-' add-envelopes      alias envelopes+
-' multiply-envelopes alias envelopes*
+<'> add-envelopes      alias envelopes+
+<'> multiply-envelopes alias envelopes*
 
 \ ;;; -------- max-envelope
 
@@ -254,12 +250,12 @@ OLD-ATTACK is the original x axis attack end point, \
 NEW-ATTACK is where that section should end in the new envelope.  \
 Similarly for OLD-DECAY and NEW-DECAY.  \
 This mimics divseg in early versions of CLM and its antecedents in Sambox and Mus10 (linen).  \
-ENV may be a list, a vct, or an array.\n\
-'( 0 0 1 1 )     0.1 0.2         stretch-envelope => '( 0 0 0.2 0.1 1 1 )\n\
-'( 0 0 1 1 2 0 ) 0.1 0.2 1.5 1.6 stretch-envelope => '( 0 0 0.2 0.1 1.1 1 1.6 0.5 2 0 )"
+ENV may be a vct, or an array.\n\
+#( 0 0 1 1 )     0.1 0.2         stretch-envelope => #( 0 0 0.2 0.1 1 1 )\n\
+#( 0 0 1 1 2 0 ) 0.1 0.2 1.5 1.6 stretch-envelope => #( 0 0 0.2 0.1 1.1 1 1.6 0.5 2 0 )"
   old-decay new-decay not && if
     'argument-error
-    '( get-func-name $" old-decay, %s, but no new-decay, %s?" '( old-decay new-decay ) 5 )
+    #( get-func-name $" old-decay, %s, but no new-decay, %s?" #( old-decay new-decay ) 5 )
     fth-throw
   then
   fn length { len }
@@ -314,11 +310,7 @@ ENV may be a list, a vct, or an array.\n\
   fn array? if
     new-fn
   else
-    fn list? if
-      new-fn array->list
-    else
-      fn vct? if new-fn vector->vct then
-    then
+    fn vct? if new-fn vector->vct then
   then
 ;
 
@@ -351,26 +343,22 @@ EN may be a list, a vct, or an array."
 
 : envelope-concatenate ( en1 ... enn n -- ne )
   doc" Concatenates N envelopes into a new envelope (from clm/env.lisp)."
-  >list { envs }
-  envs length 1 = if
-    envs car dup list? if
-      object-copy
-    else
-      object->array array->list
-    then
+  >array { envs }
+  envs object-length 1 = if
+    envs 0 array-ref
   else
     0.0 { xoff }
-    nil { ne }
+    #() { rne }
     envs each { en }
       en first-ref { firstx }
-      en length 0 ?do
+      en object-length 0 ?do
 	en i    object-ref { x }
 	en i 1+ object-ref { y }
-	x firstx f- xoff f+ ne cons y swap cons to ne
+	rne x firstx f- xoff f+ array-push y array-push to rne
       2 +loop
-      ne cadr 0.01 f+ to xoff
+      rne -2 array-ref 0.01 f+ to xoff
     end-each
-    ne list-reverse
+    rne
   then
 ;
 
@@ -378,33 +366,32 @@ EN may be a list, a vct, or an array."
 
 : concatenate-envelopes ( en1 ... enn n -- ne )
   doc" Concatenates N envelopes into a new envelope (from snd/env.scm)."
-  >list { envs }
-  envs length 1 = if
-    envs car dup list? if
-      object-copy
-    else
-      object->array array->list
-    then
+  >array { envs }
+  envs object-length 1 = if
+    envs 0 array-ref
   else
     0.0 { xoff }
-    nil { ne }
+    #() { rne }
     envs each { en }
       en first-ref { firstx }
-      ne null? not
-      ne car en second-ref f= && if
-	xoff 0.01 f- to xoff
-	2
+      rne object-length 0> if
+	rne last-ref en second-ref f= if
+	  xoff 0.01 f- to xoff
+	  2
+	else
+	  0
+	then
       else
 	0
       then { beg }
-      en length beg ?do
+      en object-length beg ?do
 	en i    object-ref { x }
 	en i 1+ object-ref { y }
-	x firstx f- xoff f+ ne cons y swap cons to ne
+	rne x firstx f- xoff f+ array-push y array-push to rne
       2 +loop
-      ne cadr 0.01 f+ xoff f+ to xoff
+      rne -2 object-ref 0.01 f+ to xoff
     end-each
-    ne list-reverse
+    rne
   then
 ;
 
@@ -412,47 +399,43 @@ EN may be a list, a vct, or an array."
 
 : repeat-envelope <{ ur-env repeats :optional reflected #f normalized #f -- en }>
   doc" repeats UR-ENV REPEATS times.\n\
-'( 0 0 100 1 ) 2 repeat-envelope => '( 0 0 100 1 101 0 201 1 )\n\
+#( 0 0 100 1 ) 2 repeat-envelope => #( 0 0 100 1 101 0 201 1 )\n\
 If the final y value is different from the first y value, \
 a quick ramp is inserted between repeats.  \
 NORMALIZED causes the new envelope's x axis to have the same extent as the original's.  \
 REFLECTED causes every other repetition to be in reverse."
-  repeats  reflected if 2/ then { times }
-  nil { new-env }
+  repeats  reflected if f2/ fround->s then { times }
   reflected if
-    ur-env envelope-last-x   { lastx }
-    ur-env list-reverse cddr { rev-env }
-    ur-env list-reverse      to new-env
-    begin
-      rev-env
-    while
-	lastx rev-env cadr f- lastx f+ new-env cons rev-env car swap cons to new-env
-	rev-env cddr to rev-env
-    repeat
-    new-env list-reverse
+    ur-env envelope-last-x     { lastx }
+    ur-env array-copy          { n-env }
+    ur-env 0 -3 array-subarray array-reverse { r-env }
+    r-env object-length 1- 0 ?do
+      r-env i    object-ref { xx }
+      r-env i 1+ object-ref { yy }
+      n-env #( lastx yy f- lastx f+ xx ) array-append to n-env
+    2 +loop
+    n-env
   else
     ur-env
   then { e }
-  e cadr { first-y }
+  e second-ref { first-y }
   e envelope-last-x { x-max }
-  e car { x }
+  e first-ref { x }
   first-y e last-ref f= { first-y-is-last-y }
-  '( first-y x ) to new-env
-  e length { len }
+  #( x first-y ) { new-env }
   times 0 ?do
-    len 2 ?do
-      e i list-ref e i 2- list-ref f- x f+ to x
-      x new-env cons e i 1+ list-ref swap cons to new-env
+    e object-length 1- 2 ?do
+      e i object-ref e i 2- object-ref f- x f+ to x
+      new-env #( x e i 1+ object-ref ) array-append to new-env
     2 +loop
     i times 1- < first-y-is-last-y not && if
       x-max 100.0 f/ x f+ to x
-      x new-env cons first-y swap cons to new-env
+      new-env #( x first-y ) array-append to new-env
     then
   loop
-  new-env list-reverse to new-env
   normalized if
     x-max x f/ { scl }
-    new-env map! *key* i 2 mod 0= if scl f* then end-map
+    new-env map! *key* i 2 mod 0= if scl f* then end-map ( new-env' )
   else
     new-env
   then
@@ -470,7 +453,7 @@ REFLECTED causes every other repetition to be in reverse."
     envelope jj 4 + object-ref { y1 }
     envelope jj 2+  object-ref { base }
     3 +to jj
-    :envelope '( 0.0 y0 1.0 y1 )
+    :envelope #( 0.0 y0 1.0 y1 )
     :base     base
     :scaler   scaler
     :offset   offset
@@ -532,10 +515,10 @@ REFLECTED causes every other repetition to be in reverse."
     self 3 cells + @ { snd }
     self 4 cells + @ { chn }
     self 5 cells + @ { edpos }
-    en car { x1 }
+    en 0 array-ref { x1 }
     en -3 object-ref x1 f- { xrange }
-    en cadr { y1 }
-    en caddr { base }
+    en 1 array-ref { y1 }
+    en 2 array-ref { base }
     0.0 0.0 { x0 y0 }
     en length 3 ?do
       x1 to x0
@@ -552,11 +535,11 @@ REFLECTED causes every other repetition to be in reverse."
   set-current
   : powenv-channel <{ envelope :optional beg 0 dur #f snd #f chn #f edpos #f -- val }>
     \ ;; envelope with a separate base for each segment:
-    \ '( 0 0 0.325  1 1 32.0 2 0 32.0 ) powenv-channel
+    \ #( 0 0 0.325  1 1 32.0 2 0 32.0 ) powenv-channel
     envelope length 3 = if
-      envelope cadr beg dur snd chn edpos scale-channel
+      envelope 1 array-ref beg dur snd chn edpos scale-channel
     else
-      $" %s %s %s %s" '( envelope beg dur get-func-name ) string-format { origin }
+      $" %s %s %s %s" #( envelope beg dur get-func-name ) string-format { origin }
       envelope beg dur snd chn edpos powc-cb origin as-one-edit
     then
   ;
@@ -580,25 +563,25 @@ REFLECTED causes every other repetition to be in reverse."
   en1 first-ref { x-min }
   en1 envelope-last-x { x-max }
   x-max x-min f- xgrid f/ { x-incr }
-  nil { en2 }
+  #() { en2 }
   x-min { x }
   0.0 { y }
   largest-diff f0= if
     begin
       x en1 1.0 envelope-interp to y
-      x en2 cons y swap cons to en2
+      en2 #( x  y ) array-append to en2
       x-incr x f+ to x
       x x-max f>=
     until
   else
     begin
       x en1 1.0 envelope-interp to y
-      x en2 cons  y mn f- largest-diff f/  power  f** largest-diff f* mn f+  swap cons to en2
+      en2 #( x  y mn f- largest-diff f/ power f** largest-diff f* mn f+ ) array-append to en2
       x-incr x f+ to x
       x x-max f>=
     until
   then
-  en2 list-reverse
+  en2
 ;
 
 \ ;;; rms-envelope
@@ -606,8 +589,8 @@ REFLECTED causes every other repetition to be in reverse."
 [defined] make-sample-reader [if]
   : rms-envelope <{ file :key beg 0.0 dur #f rfreq 30.0 db #f -- en }>
     file find-file to file
-    file false? if 'no-such-file '( get-func-name file ) fth-throw then
-    nil { en }
+    file false? if 'no-such-file #( get-func-name file ) fth-throw then
+    #() { en }
     rfreq 1/f { incr }
     file mus-sound-srate { fsr }
     incr fsr f* fround->s { incrsamps }
@@ -622,10 +605,10 @@ REFLECTED causes every other repetition to be in reverse."
     end 0 ?do
       0.0 { rms-val }
       incrsamps 0 ?do
-	reader '() apply { val }
+	reader #() apply { val }
 	rms val dup f* moving-average to rms-val
       loop
-      i fsr f/ en cons to en
+      en i fsr f/ array-push to en
       rms-val fsqrt to rms-val
       db if
 	rms-val 0.00001 f< if
@@ -635,9 +618,9 @@ REFLECTED causes every other repetition to be in reverse."
 	then
       else
 	rms-val
-      then en cons to en
+      then en swap array-push to en
     incrsamps +loop
-    en list-reverse
+    en array-reverse
   ;
 [then]
 

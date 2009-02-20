@@ -944,15 +944,9 @@ static void dismiss_transform_callback(Widget w, XtPointer context, XtPointer in
 }
 
 
-static void orient_transform_callback(Widget w, XtPointer context, XtPointer info)
+static void color_orientation_callback(Widget w, XtPointer context, XtPointer info)
 {
-  start_orientation_dialog(true);
-}
-
-
-static void color_transform_callback(Widget w, XtPointer context, XtPointer info)
-{
-  start_color_dialog(true);
+  start_color_orientation_dialog(true);
 }
 
 
@@ -995,7 +989,7 @@ Widget fire_up_transform_dialog(bool managed)
   if (!transform_dialog)
     {
       Widget mainform, type_frame, type_form, type_label, size_frame, size_form, size_label, display_frame, display_form, display_label;
-      Widget window_frame, window_form, window_label, wavelet_frame, wavelet_form, wavelet_label, graph_frame, graph_form, color_button;
+      Widget window_frame, window_form, window_label, wavelet_frame, wavelet_form, wavelet_label, graph_frame, graph_form;
       Widget ab_form, ab_frame, ab_title;
       Widget se_form, se_frame, se_title;
       XmString s1;
@@ -1018,7 +1012,7 @@ Widget fire_up_transform_dialog(bool managed)
       xdismiss = XmStringCreateLocalized(_("Go Away")); /* needed by template dialog */
       xhelp = XmStringCreateLocalized(_("Help"));
       xtitle = XmStringCreateLocalized(_("Transform Options"));
-      xorient = XmStringCreateLocalized(_("Orientation"));
+      xorient = XmStringCreateLocalized(_("Color/Orientation"));
 
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
@@ -1032,7 +1026,7 @@ Widget fire_up_transform_dialog(bool managed)
       XtSetArg(args[n], XmNtransient, false); n++;
       transform_dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), _("Transform Options"), args, n);
 
-      XtAddCallback(transform_dialog, XmNcancelCallback, orient_transform_callback, NULL);
+      XtAddCallback(transform_dialog, XmNcancelCallback, color_orientation_callback, NULL);
       XtAddCallback(transform_dialog, XmNokCallback, dismiss_transform_callback, NULL);
       XtAddCallback(transform_dialog, XmNhelpCallback, help_transform_callback, NULL);
       XmStringFree(xhelp);
@@ -1046,12 +1040,6 @@ Widget fire_up_transform_dialog(bool managed)
       XtVaSetValues(XmMessageBoxGetChild(transform_dialog, XmDIALOG_CANCEL_BUTTON), XmNbackground, ss->sgx->doit_again_button_color, NULL);
       XtVaSetValues(XmMessageBoxGetChild(transform_dialog, XmDIALOG_HELP_BUTTON), XmNbackground, ss->sgx->help_button_color, NULL);
       XtVaSetValues(XmMessageBoxGetChild(transform_dialog, XmDIALOG_OK_BUTTON), XmNbackground, ss->sgx->quit_button_color, NULL);
-
-      n = 0;
-      XtSetArg(args[n], XmNbackground, ss->sgx->doit_button_color); n++;
-      XtSetArg(args[n], XmNarmColor, ss->sgx->pushed_button_color); n++;
-      color_button = XtCreateManagedWidget(_("Color"), xmPushButtonGadgetClass, transform_dialog, args, n);
-      XtAddCallback(color_button, XmNactivateCallback, color_transform_callback, NULL);
 
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;

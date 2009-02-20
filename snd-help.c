@@ -2537,60 +2537,39 @@ in linear terms.",
 }
 
 
-/* ---------------- Color Dialog ---------------- */
+/* ---------------- Color/Orientation Dialog ---------------- */
 
-static const char *color_dialog_xrefs[9] = {
+static const char *color_orientation_dialog_xrefs[11] = {
   "colormap variable: {colormap}",
+  "orientation variables: {" S_spectro_x_scale "}, {" S_spectro_x_angle "}, etc",
   "colormap constants: rgb." XEN_FILE_EXTENSION,
   "colormap colors: {" S_colormap_ref "}",
   "color dialog variables: {" S_color_cutoff "}, {" S_color_inverted "}, {" S_color_scale "}",
-  "specialize color dialog actions: {" S_color_hook "}",
-  "start the color dialog: {" S_color_dialog "}",
+  "start the color/orientation dialog: {" S_color_orientation_dialog "}",
   "add a new colormap: {" S_add_colormap "}",
   "remove a colormap: {" S_delete_colormap "}",
-  NULL};
-
-void color_dialog_help(void)
-{
-  snd_help_with_xrefs("View Color",
-
-#if HAVE_EXTENSION_LANGUAGE
-"This dialog sets the colormap and associated settings used during sonogram, spectrogram,  \
-and wavogram display. The cutoff scale refers to the minimum data value to be displayed. \
-You can add your own colormaps to the list via " S_add_colormap ", or delete one with " S_delete_colormap ".",
-#else
-"This dialog sets the colormap and associated variables used during sonogram, spectrogram,  \
-and wavogram display. The cutoff scale refers to the minimum data value to be displayed.",
-#endif
-		      WITH_WORD_WRAP,
-		      color_dialog_xrefs,
-		      NULL);
-}
-
-
-/* ---------------- Orientation Dialog ---------------- */
-
-static const char *orientation_dialog_xrefs[4] = {
-  "orientation variables: {" S_spectro_x_scale "}, {" S_spectro_x_angle "}, etc",
-  "start orientation dialog: {" S_orientation_dialog "}",
   "specialize orientation dialog actions: {" S_orientation_hook "}",
+  "specialize color dialog actions: {" S_color_hook "}",
   NULL};
 
-void orientation_dialog_help(void)
+void color_orientation_dialog_help(void)
 {
-  snd_help_with_xrefs("View Orientation",
+  snd_help_with_xrefs("View Color/Orientation",
 
-"This dialog sets the rotation and scaling variables used during sonogram, spectrogram, and wavogram display. \
+"This dialog sets the viewing projection (\"orientation\"), colormap and associated settings used during sonogram, spectrogram,  \
+and wavogram display. The cutoff scale refers to the minimum data value to be displayed. \
+You can add your own colormaps to the list via " S_add_colormap ", or delete one with " S_delete_colormap ".\
 The 'angle' scalers change the viewing angle, the 'scale' scalers change the 'stretch' amount \
-along a given axis, 'hop' refers to the density of the traces (the jump in samples between successive \
-ffts or time domain scans), and 'percent of spectrum' is equivalent to dragging the fft frequency axis -- it changes \
-the amount of the spectrum that is displayed.  If the 'use openGL' button is set, the \
+along a given axis, and 'hop' refers to the density of the traces (the jump in samples between successive \
+ffts or time domain scans).  If the 'use openGL' button is set, the \
 spectrogram is drawn by openGL.  In the spectrogram, 'x' refers to the time axis, \
 'y' to the amplitude axis, and 'z' to the frequency axis.",
 		      WITH_WORD_WRAP,
-		      orientation_dialog_xrefs,
+		      color_orientation_dialog_xrefs,
 		      NULL);
 }
+
+
 
 
 /* ---------------- Region Dialog ---------------- */
