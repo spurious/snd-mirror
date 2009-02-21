@@ -1,6 +1,6 @@
 #include "snd.h"
 
-#define FALLBACK_FONT "Monospace 14"
+#define FALLBACK_FONT "Sans 14"
 
 #if USE_CAIRO
   #define HIGHLIGHT_COLOR      rgb_to_color(1.00, 1.00, 0.94) /* "ivory1" */
@@ -1043,6 +1043,7 @@ class \"GtkTextView\" binding \"gtk-emacs-text-view\"\n			\
   gtk_container_add(GTK_CONTAINER(MAIN_SHELL(ss)), MAIN_PANE(ss));
 #endif
   add_menu(); /* adds menubar to MAIN_PANE (via box_pack_start) */
+
   if (sound_style(ss) != SOUNDS_IN_SEPARATE_WINDOWS)
     {
       SOUND_PANE(ss) = gtk_vpaned_new();

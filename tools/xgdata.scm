@@ -6717,6 +6717,7 @@
 (STRUCT "GdkEventButton GdkEventType type GdkWindow* window gint8 send_event guint32 time gdouble x gdouble y gdouble* axes guint state guint button GdkDevice* device gdouble x_root gdouble y_root")
 (STRUCT "GdkEventScroll GdkEventType type GdkWindow* window gint8 send_event guint32 time gdouble x gdouble y guint state GdkScrollDirection direction GdkDevice* device gdouble x_root gdouble y_root")
 (STRUCT "GdkEventKey GdkEventType type GdkWindow* window gint8 send_event guint32 time guint state guint keyval gint length gchar* string guint16 hardware_keycode guint8 group")
+(STRUCT "GdkGCValues GdkFunction function GdkFill fill GdkPixmap* tile GdkPixmap* stipple GdkPixmap* clip_mask GdkSubwindowMode subwindow_mode gint ts_x_origin gint ts_y_origin gint clip_x_origin gint clip_y_origin gint graphics_exposures gint line_width GdkLineStyle line_style GdkCapStyle cap_style GdkJoinStyle join_style")
 
 
 ;;; unused?
@@ -6732,11 +6733,6 @@
 ;(STRUCT "GdkEventSetting GdkEventType type GdkWindow* window gint8 send_event GdkSettingAction action char* name")
 ;(STRUCT "GdkEventWindowState GdkEventType type GdkWindow* window gint8 send_event GdkWindowState changed_mask GdkWindowState new_window_state")
 ;(STRUCT "GdkEventDND GdkEventType type GdkWindow* window gint8 send_event GdkDragContext* context guint32 time gshort x_root gshort y_root")
-
-
-(STRUCT "GdkGCValues GdkFunction function GdkFill fill GdkPixmap* tile GdkPixmap* stipple GdkPixmap* clip_mask GdkSubwindowMode subwindow_mode gint ts_x_origin gint ts_y_origin gint clip_x_origin gint clip_y_origin gint graphics_exposures gint line_width GdkLineStyle line_style GdkCapStyle cap_style GdkJoinStyle join_style")
-
-;;; I don't think these are currently in use
 ;(STRUCT "GdkGC gint clip_x_origin gint clip_y_origin gint ts_x_origin gint ts_y_origin GdkColormap* colormap")
 ;(STRUCT "GdkColormap gint size GdkColor* colors GdkVisual* visual gpointer windowing_data")
 ;(STRUCT "GdkDragContext GdkDragProtocol protocol gboolean is_source GdkWindow* source_window GdkWindow* dest_window GList* targets GdkDragAction actions GdkDragAction suggested_action GdkDragAction action guint32 start_time gpointer windowing_data")
@@ -6747,19 +6743,14 @@
 ;(STRUCT "GdkWindowAttr gchar* title gint event_mask gint x gint y gint width gint height GdkVisual* visual GdkColormap* colormap GdkWindowType window_type GdkCursor* cursor gchar* wmclass_name gchar* wmclass_class gboolean override_redirect")
 ;(STRUCT "GdkGeometry gint min_width gint min_height gint max_width gint max_height gint base_width gint base_height gint width_inc gint height_inc gdouble min_aspect gdouble max_aspect GdkGravity win_gravity")
 ;;; 2.13.6 (STRUCT "GtkAdjustment gdouble lower gdouble upper gdouble &value gdouble step_increment gdouble page_increment gdouble page_size")
+;(STRUCT "GtkFontSelectionDialog GtkWidget* action_area")
 
-
-(STRUCT "GtkStyle GdkColor* fg GdkColor* bg GdkColor* light GdkColor* dark GdkColor* mid GdkColor* text GdkColor* base GdkColor* text_aa PangoFontDescription* font_desc gint xthickness gint ythickness GdkGC** fg_gc GdkGC** bg_gc GdkGC** light_gc GdkGC** dark_gc GdkGC** mid_gc GdkGC** text_gc GdkGC** base_gc GdkGC** text_aa_gc GdkGC* black_gc GdkGC* white_gc GdkPixmap** bg_pixmap gint attach_count gint depth GdkColormap* colormap GtkRcStyle* rc_style GSList* styles GArray* property_cache GSList* icon_factories")
-
-(STRUCT "GtkColorSelectionDialog GtkWidget* colorsel GtkWidget* ok_button GtkWidget* cancel_button GtkWidget* help_button") ; all sealed -- need button funcs
-
-
-;;; these still need to be included for backwards compatibility -- need a (!...) case in makexg.scm
-
-(STRUCT "GtkDialog GtkWidget* vbox GtkWidget* action_area GtkWidget* separator") ; all sealed
-(STRUCT "GtkFontSelectionDialog GtkWidget* fontsel GtkWidget* main_vbox GtkWidget* action_area GtkWidget* ok_button GtkWidget* apply_button GtkWidget* cancel_button gint dialog_width gboolean auto_resize") ;all sealed
-(STRUCT "GtkWidget guint8 state guint8 saved_state gchar* name GtkStyle* style GdkWindow* window GtkWidget* parent") ; all sealed
-
+;;; removed unused fields 21-Feb-09
+(STRUCT "GtkStyle GdkGC* black_gc GdkGC* white_gc")
+(STRUCT "GtkColorSelectionDialog GtkWidget* ok_button GtkWidget* cancel_button")
+(STRUCT "GtkDialog GtkWidget* vbox GtkWidget* action_area") 
+(STRUCT "GtkWidget guint8 state GtkStyle* style GdkWindow* window")
+;;; gui.scm is currently the main (only?) user of these fields
 
 ;;; for 3.0...
 ;;;

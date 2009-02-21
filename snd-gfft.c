@@ -887,7 +887,7 @@ GtkWidget *fire_up_transform_dialog(bool managed)
       outer_table = gtk_table_new(8, 11, false); /* rows cols */
       gtk_container_add(GTK_CONTAINER(DIALOG_CONTENT_AREA(transform_dialog)), outer_table);
       gtk_table_set_row_spacings(GTK_TABLE(outer_table), 8);
-      gtk_table_set_col_spacings(GTK_TABLE(outer_table), 8);
+      gtk_table_set_col_spacings(GTK_TABLE(outer_table), 12);
       gtk_table_set_homogeneous(GTK_TABLE(outer_table), true);
 
       /* now 8 boxes within the main box:
@@ -1172,7 +1172,6 @@ GtkWidget *fire_up_transform_dialog(bool managed)
 	gtk_table_attach_defaults(GTK_TABLE(outer_table), graph_frame, 6, 11, 4, 8);
 	gtk_frame_set_label_align(GTK_FRAME(graph_frame), 0.5, 0.0);
 	gtk_frame_set_shadow_type(GTK_FRAME(graph_frame), GTK_SHADOW_ETCHED_IN);
-
 	gtk_frame_set_label_widget(GTK_FRAME(graph_frame), label);
 	gtk_widget_show(label);
       }
