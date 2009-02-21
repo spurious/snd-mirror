@@ -1130,6 +1130,13 @@ GtkWidget *start_color_orientation_dialog(bool managed)
       GtkWidget *light_label, *dark_label, *help_button, *dismiss_button, *reset_button;
       GtkWidget *outer_table, *scale_box, *cutoff_box, *cutoff_label;
       GtkWidget *color_frame, *color_label, *mainbox, *colorbox;
+      GtkWidget *shbox;
+
+      GtkWidget *ax_box, *ay_box, *az_box, *sx_box, *sy_box, *sz_box, *hop_box;
+      GtkWidget *ax_label, *ay_label, *az_label, *sx_label, *sy_label, *sz_label, *hop_label;
+      GtkWidget *orient_frame, *orient_label, *orientbox;
+      GtkWidget *sep1, *sep2, *sep3, *sep5;
+
 
       ccd_dialog = snd_gtk_dialog_new();
       SG_SIGNAL_CONNECT(ccd_dialog, "delete_event", delete_color_orientation_dialog, NULL);
@@ -1171,7 +1178,7 @@ GtkWidget *start_color_orientation_dialog(bool managed)
       gtk_frame_set_shadow_type(GTK_FRAME(color_frame), GTK_SHADOW_ETCHED_IN);
       gtk_widget_show(color_frame);
 
-      colorbox = gtk_vbox_new(false, 0);
+      colorbox = gtk_vbox_new(false, 2);
       gtk_container_add(GTK_CONTAINER(color_frame), colorbox);
       gtk_widget_show(colorbox);
 
@@ -1179,69 +1186,41 @@ GtkWidget *start_color_orientation_dialog(bool managed)
       gtk_box_pack_start(GTK_BOX(colorbox), color_label, false, false, 0);
       gtk_widget_show(color_label);
 
-      outer_table = gtk_table_new(5, 3, false);
-      gtk_box_pack_start(GTK_BOX(colorbox), outer_table, true, true, 0);
+      outer_table = gtk_table_new(3, 5, true); /* this seems backwards! */
+      gtk_box_pack_end(GTK_BOX(colorbox), outer_table, false, false, 4);
       gtk_widget_show(outer_table);
 
-      scale_box = gtk_table_new(2, 2, false);
+      scale_box = gtk_vbox_new(false, 0);
       gtk_table_attach(GTK_TABLE(outer_table), scale_box, 0, 3, 0, 1,
 		       (GtkAttachOptions)(GTK_FILL | GTK_EXPAND), 
 		       (GtkAttachOptions)(GTK_FILL | GTK_EXPAND | GTK_SHRINK), 
 		       10, 0);
+      gtk_widget_show(scale_box);
       
       ccd_scale_adj = gtk_adjustment_new(50.0, 0.0, 101.0, 0.1, 1.0, 1.0);
       ccd_scale = gtk_hscale_new(GTK_ADJUSTMENT(ccd_scale_adj));
       GTK_WIDGET_UNSET_FLAGS(ccd_scale, GTK_CAN_FOCUS);
       gtk_range_set_update_policy(GTK_RANGE(GTK_SCALE(ccd_scale)), GTK_UPDATE_CONTINUOUS);
       gtk_scale_set_digits(GTK_SCALE(ccd_scale), 0);
-      gtk_scale_set_value_pos(GTK_SCALE(ccd_scale), GTK_POS_LEFT);
+      gtk_scale_set_value_pos(GTK_SCALE(ccd_scale), GTK_POS_TOP);
       gtk_scale_set_draw_value(GTK_SCALE(ccd_scale), true);
-      gtk_table_attach_defaults(GTK_TABLE(scale_box), ccd_scale, 0, 2, 0, 1);
-
+      gtk_box_pack_start(GTK_BOX(scale_box), ccd_scale, true, true, 0);
       SG_SIGNAL_CONNECT(ccd_scale_adj, "value_changed", scale_color_callback, NULL);
+      gtk_widget_show(ccd_scale);
+
+      shbox = gtk_hbox_new(false, 0);
+      gtk_box_pack_start(GTK_BOX(scale_box), shbox, true, true, 0); 
+      gtk_widget_show(shbox);
 
       light_label = gtk_label_new(_("light"));
       gtk_misc_set_alignment(GTK_MISC (light_label), 0.05, 0.0);
-      gtk_table_attach_defaults(GTK_TABLE(scale_box), light_label, 0, 1, 1, 2);
+      gtk_box_pack_start(GTK_BOX(shbox), light_label, false, false, 0);
+      gtk_widget_show(light_label);
 
       dark_label = gtk_label_new(_("dark"));
       gtk_misc_set_alignment(GTK_MISC(dark_label), 0.95, 0.0);
-      gtk_table_attach_defaults(GTK_TABLE(scale_box), dark_label, 1, 2, 1, 2);
-
-      gtk_widget_show(ccd_scale);
-      gtk_widget_show(light_label);
+      gtk_box_pack_end(GTK_BOX(shbox), dark_label, false, false, 0);
       gtk_widget_show(dark_label);
-      gtk_widget_show(scale_box);
-
-      cutoff_box = gtk_table_new(2, 2, false);
-      gtk_table_attach(GTK_TABLE(outer_table), cutoff_box, 0, 3, 1, 2,
-		       (GtkAttachOptions)(GTK_FILL | GTK_EXPAND), 
-		       (GtkAttachOptions)(GTK_FILL | GTK_EXPAND | GTK_SHRINK), 
-		       10, 0);
-
-      ccd_cutoff_adj = gtk_adjustment_new(color_cutoff(ss), 0.0, 1.01, 0.001, 0.01, .01);
-      ccd_cutoff = gtk_hscale_new(GTK_ADJUSTMENT(ccd_cutoff_adj));
-      GTK_WIDGET_UNSET_FLAGS(ccd_cutoff, GTK_CAN_FOCUS);
-      gtk_range_set_update_policy(GTK_RANGE(GTK_SCALE(ccd_cutoff)), GTK_UPDATE_CONTINUOUS);
-      gtk_scale_set_digits(GTK_SCALE(ccd_cutoff), 3);
-      gtk_scale_set_value_pos(GTK_SCALE(ccd_cutoff), GTK_POS_LEFT);
-      gtk_scale_set_draw_value(GTK_SCALE(ccd_cutoff), true);
-      gtk_table_attach_defaults(GTK_TABLE(cutoff_box), ccd_cutoff, 0, 2, 0, 1);
-      SG_SIGNAL_CONNECT(ccd_cutoff_adj, "value_changed", cutoff_color_callback, NULL);
-
-      cutoff_label = gtk_label_new(_("data cutoff"));
-      gtk_misc_set_alignment(GTK_MISC (cutoff_label), 0.1, 0.0);
-      gtk_table_attach_defaults(GTK_TABLE(cutoff_box), cutoff_label, 0, 2, 1, 2);
-
-      gtk_widget_show(ccd_cutoff);
-      gtk_widget_show(cutoff_label);
-      gtk_widget_show(cutoff_box);
-
-      ccd_invert = gtk_check_button_new_with_label(_("invert"));
-      gtk_table_attach(GTK_TABLE(outer_table), ccd_invert, 0, 1, 2, 3, (GtkAttachOptions)GTK_FILL, (GtkAttachOptions)0, 0, 4);
-      SG_SIGNAL_CONNECT(ccd_invert, "toggled", invert_color_callback, NULL);
-      gtk_widget_show(ccd_invert);
-      set_toggle_button(ccd_invert, color_inverted(ss), false, NULL);
 
       {
 	char **names;
@@ -1252,8 +1231,7 @@ GtkWidget *start_color_orientation_dialog(bool managed)
 	gtk_container_set_border_width(GTK_CONTAINER(frame), 0);
 	gtk_frame_set_shadow_type(GTK_FRAME(frame), GTK_SHADOW_ETCHED_IN);
 	widget_modify_bg(frame, GTK_STATE_NORMAL, ss->sgx->zoom_color);
-	
-	gtk_table_attach(GTK_TABLE(outer_table), frame, 3, 4, 0, 3,
+	gtk_table_attach(GTK_TABLE(outer_table), frame, 3, 5, 0, 3,
 		       (GtkAttachOptions)(GTK_FILL | GTK_EXPAND), 
 		       (GtkAttachOptions)(GTK_FILL | GTK_EXPAND | GTK_SHRINK), 
 		       4, 4);
@@ -1267,25 +1245,51 @@ GtkWidget *start_color_orientation_dialog(bool managed)
 	free(names);
       }
 
-      gtk_widget_show(outer_table);
+      cutoff_box = gtk_hbox_new(false, 0);
+	gtk_table_attach(GTK_TABLE(outer_table), cutoff_box, 0, 3, 1, 2,
+		       (GtkAttachOptions)(GTK_FILL | GTK_EXPAND), 
+		       (GtkAttachOptions)(GTK_FILL | GTK_EXPAND | GTK_SHRINK), 
+		       0, 0);
+      gtk_widget_show(cutoff_box);
+
+      cutoff_label = gtk_label_new(_("data cutoff:"));
+      gtk_box_pack_start(GTK_BOX(cutoff_box), cutoff_label, false, false, 4);
+      gtk_widget_show(cutoff_label);      
+
+      ccd_cutoff_adj = gtk_adjustment_new(color_cutoff(ss), 0.0, 1.01, 0.001, 0.01, .01);
+      ccd_cutoff = gtk_hscale_new(GTK_ADJUSTMENT(ccd_cutoff_adj));
+      GTK_WIDGET_UNSET_FLAGS(ccd_cutoff, GTK_CAN_FOCUS);
+      gtk_range_set_update_policy(GTK_RANGE(GTK_SCALE(ccd_cutoff)), GTK_UPDATE_CONTINUOUS);
+      gtk_scale_set_digits(GTK_SCALE(ccd_cutoff), 3);
+      gtk_scale_set_value_pos(GTK_SCALE(ccd_cutoff), GTK_POS_LEFT);
+      gtk_scale_set_draw_value(GTK_SCALE(ccd_cutoff), true);
+      SG_SIGNAL_CONNECT(ccd_cutoff_adj, "value_changed", cutoff_color_callback, NULL);
+      gtk_box_pack_start(GTK_BOX(cutoff_box), ccd_cutoff, true, true, 0);
+      gtk_widget_show(ccd_cutoff);
+
+      ccd_invert = gtk_check_button_new_with_label(_("invert"));
+      SG_SIGNAL_CONNECT(ccd_invert, "toggled", invert_color_callback, NULL);
+
+	gtk_table_attach(GTK_TABLE(outer_table), ccd_invert, 0, 3, 2, 3,
+		       (GtkAttachOptions)(GTK_FILL | GTK_EXPAND), 
+		       (GtkAttachOptions)(GTK_FILL | GTK_EXPAND | GTK_SHRINK), 
+		       0, 0);
+
+      gtk_widget_show(ccd_invert);
+      set_toggle_button(ccd_invert, color_inverted(ss), false, NULL);
+
       set_dialog_widget(COLOR_ORIENTATION_DIALOG, ccd_dialog);
       if (color_map(ss) != BLACK_AND_WHITE_COLORMAP) slist_select(ccd_list, color_map(ss));
 
 
       /* orientation section */
-      /* set up dialog with table 8 by 2 */
-      {
-	GtkWidget *outer_table;
-      GtkWidget *ax_box, *ay_box, *az_box, *sx_box, *sy_box, *sz_box, *hop_box;
-      GtkWidget *ax_label, *ay_label, *az_label, *sx_label, *sy_label, *sz_label, *hop_label;
-      GtkWidget *orient_frame, *orient_label, *orientbox;
 
       orient_frame = gtk_frame_new(NULL);
       gtk_box_pack_start(GTK_BOX(mainbox), orient_frame, false, false, 10);
       gtk_frame_set_shadow_type(GTK_FRAME(orient_frame), GTK_SHADOW_ETCHED_IN);
       gtk_widget_show(orient_frame);
 
-      orientbox = gtk_vbox_new(false, 0);
+      orientbox = gtk_vbox_new(false, 2);
       gtk_container_add(GTK_CONTAINER(orient_frame), orientbox);
       gtk_widget_show(orientbox);
 
@@ -1294,18 +1298,20 @@ GtkWidget *start_color_orientation_dialog(bool managed)
       gtk_widget_show(orient_label);
 
 
-#if HAVE_GL
-      outer_table = gtk_table_new(5, 2, true);
-#else
-      outer_table = gtk_table_new(4, 2, true);
-#endif
-      gtk_box_pack_start(GTK_BOX(orientbox), outer_table, true, true, 0);
-      gtk_widget_show(outer_table);
+      sep3 = gtk_vseparator_new();
+      gtk_box_pack_start(GTK_BOX(orientbox), sep3, false, false, 3);
+      widget_modify_bg(sep3, GTK_STATE_NORMAL, ss->sgx->basic_color);
+      gtk_widget_show(sep3);
+
 
       /* AX */
-      ax_box = gtk_table_new(2, 1, false);
-      gtk_table_attach(GTK_TABLE(outer_table), ax_box, 0, 1, 0, 1,
-		       (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), X_PAD, Y_PAD);
+      ax_box = gtk_hbox_new(false, 0);
+      gtk_box_pack_start(GTK_BOX(orientbox), ax_box, true, true, 0);
+      gtk_widget_show(ax_box);
+
+      ax_label = gtk_label_new(_("x angle:"));
+      gtk_box_pack_start(GTK_BOX(ax_box), ax_label, false, false, 4);
+      gtk_widget_show(ax_label);
 
       oid_ax_adj = gtk_adjustment_new(spectro_x_angle(ss), 0.0, 361.0, 1.0, 10.0, 1.0);
       oid_ax = gtk_hscale_new(GTK_ADJUSTMENT(oid_ax_adj));
@@ -1314,24 +1320,19 @@ GtkWidget *start_color_orientation_dialog(bool managed)
       gtk_scale_set_digits(GTK_SCALE(oid_ax), 0);
       gtk_scale_set_value_pos(GTK_SCALE(oid_ax), GTK_POS_LEFT);
       gtk_scale_set_draw_value(GTK_SCALE(oid_ax), true);
-      gtk_table_attach(GTK_TABLE(ax_box), oid_ax, 0, 1, 0, 1,
-		       (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), XX_PAD, YY_PAD);
-
       SG_SIGNAL_CONNECT(oid_ax_adj, "value_changed", ax_orientation_callback, NULL);
-
-      ax_label = gtk_label_new(_("x angle"));
-      gtk_misc_set_alignment(GTK_MISC (ax_label), 0.1, 0.0);
-      gtk_table_attach(GTK_TABLE(ax_box), ax_label, 0, 1, 1, 2,
-		       (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), XX_PAD, YY_PAD);
-
+      gtk_box_pack_start(GTK_BOX(ax_box), oid_ax, true, true, 0);
       gtk_widget_show(oid_ax);
-      gtk_widget_show(ax_label);
-      gtk_widget_show(ax_box);
+
 
       /* AY */
-      ay_box = gtk_table_new(2, 1, false);
-      gtk_table_attach(GTK_TABLE(outer_table), ay_box, 0, 1, 1, 2,
-		       (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), X_PAD, Y_PAD);
+      ay_box = gtk_hbox_new(false, 0);
+      gtk_box_pack_start(GTK_BOX(orientbox), ay_box, true, true, 0);
+      gtk_widget_show(ay_box);
+
+      ay_label = gtk_label_new(_("y angle:"));
+      gtk_box_pack_start(GTK_BOX(ay_box), ay_label, false, false, 4);
+      gtk_widget_show(ay_label);
 
       oid_ay_adj = gtk_adjustment_new(spectro_y_angle(ss), 0.0, 361.0, 1.0, 10.0, 1.0);
       oid_ay = gtk_hscale_new(GTK_ADJUSTMENT(oid_ay_adj));
@@ -1340,23 +1341,19 @@ GtkWidget *start_color_orientation_dialog(bool managed)
       gtk_scale_set_digits(GTK_SCALE(oid_ay), 0);
       gtk_scale_set_value_pos(GTK_SCALE(oid_ay), GTK_POS_LEFT);
       gtk_scale_set_draw_value(GTK_SCALE(oid_ay), true);
-      gtk_table_attach(GTK_TABLE(ay_box), oid_ay, 0, 1, 0, 1,
-		       (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), XX_PAD, YY_PAD);
       SG_SIGNAL_CONNECT(oid_ay_adj, "value_changed", ay_orientation_callback, NULL);
-
-      ay_label = gtk_label_new(_("y angle"));
-      gtk_misc_set_alignment(GTK_MISC(ay_label), 0.1, 0.0);
-      gtk_table_attach(GTK_TABLE(ay_box), ay_label, 0, 1, 1, 2,
-		       (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), XX_PAD, YY_PAD);
-
+      gtk_box_pack_start(GTK_BOX(ay_box), oid_ay, true, true, 0);
       gtk_widget_show(oid_ay);
-      gtk_widget_show(ay_label);
-      gtk_widget_show(ay_box);
+
 
       /* AZ */
-      az_box = gtk_table_new(2, 1, false);
-      gtk_table_attach(GTK_TABLE(outer_table), az_box, 0, 1, 2, 3,
-		       (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), X_PAD, Y_PAD);
+      az_box = gtk_hbox_new(false, 0);
+      gtk_box_pack_start(GTK_BOX(orientbox), az_box, true, true, 0);
+      gtk_widget_show(az_box);
+
+      az_label = gtk_label_new(_("z angle:"));
+      gtk_box_pack_start(GTK_BOX(az_box), az_label, false, false, 4);
+      gtk_widget_show(az_label);
 
       oid_az_adj = gtk_adjustment_new(spectro_z_angle(ss), 0.0, 361.0, 1.0, 10.0, 1.0);
       oid_az = gtk_hscale_new(GTK_ADJUSTMENT(oid_az_adj));
@@ -1365,48 +1362,25 @@ GtkWidget *start_color_orientation_dialog(bool managed)
       gtk_scale_set_digits(GTK_SCALE(oid_az), 0);
       gtk_scale_set_value_pos(GTK_SCALE(oid_az), GTK_POS_LEFT);
       gtk_scale_set_draw_value(GTK_SCALE(oid_az), true);
-      gtk_table_attach(GTK_TABLE(az_box), oid_az, 0, 1, 0, 1,
-		       (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), XX_PAD, YY_PAD);
       SG_SIGNAL_CONNECT(oid_az_adj, "value_changed", az_orientation_callback, NULL);
-
-      az_label = gtk_label_new(_("z angle"));
-      gtk_misc_set_alignment(GTK_MISC (az_label), 0.1, 0.0);
-      gtk_table_attach(GTK_TABLE(az_box), az_label, 0, 1, 1, 2,
-		       (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), XX_PAD, YY_PAD);
-
+      gtk_box_pack_start(GTK_BOX(az_box), oid_az, true, true, 0);
       gtk_widget_show(oid_az);
-      gtk_widget_show(az_label);
-      gtk_widget_show(az_box);
 
-      /* HOP */
-      hop_box = gtk_table_new(2, 1, false);
-      gtk_table_attach(GTK_TABLE(outer_table), hop_box, 0, 1, 3, 4,
-		       (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), X_PAD, Y_PAD);
 
-      oid_hop_adj = gtk_adjustment_new((spectro_hop(ss) > 20) ? 20 : (spectro_hop(ss)), 0.0, 21.0, 0.1, 1.0, 1.0);
-      oid_hop = gtk_hscale_new(GTK_ADJUSTMENT(oid_hop_adj));
-      GTK_WIDGET_UNSET_FLAGS(oid_hop, GTK_CAN_FOCUS);
-      gtk_range_set_update_policy(GTK_RANGE(GTK_SCALE(oid_hop)), GTK_UPDATE_CONTINUOUS);
-      gtk_scale_set_digits(GTK_SCALE(oid_hop), 0);
-      gtk_scale_set_value_pos(GTK_SCALE(oid_hop), GTK_POS_LEFT);
-      gtk_scale_set_draw_value(GTK_SCALE(oid_hop), true);
-      gtk_table_attach(GTK_TABLE(hop_box), oid_hop, 0, 1, 0, 1,
-		       (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), XX_PAD, YY_PAD);
-      SG_SIGNAL_CONNECT(oid_hop_adj, "value_changed", hop_callback, NULL);
+      sep1 = gtk_vseparator_new(); /* not hseparator! */
+      gtk_box_pack_start(GTK_BOX(orientbox), sep1, false, false, 6);
+      widget_modify_bg(sep1, GTK_STATE_NORMAL, ss->sgx->basic_color);
+      gtk_widget_show(sep1);
 
-      hop_label = gtk_label_new(_("hop"));
-      gtk_misc_set_alignment(GTK_MISC (hop_label), 0.1, 0.0);
-      gtk_table_attach(GTK_TABLE(hop_box), hop_label, 0, 1, 1, 2,
-		       (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), XX_PAD, YY_PAD);
-
-      gtk_widget_show(oid_hop);
-      gtk_widget_show(hop_label);
-      gtk_widget_show(hop_box);
 
       /* SX */
-      sx_box = gtk_table_new(2, 1, false);
-      gtk_table_attach(GTK_TABLE(outer_table), sx_box, 1, 2, 0, 1,
-		       (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), X_PAD, Y_PAD);
+      sx_box = gtk_hbox_new(false, 0);
+      gtk_box_pack_start(GTK_BOX(orientbox), sx_box, true, true, 0);
+      gtk_widget_show(sx_box);
+
+      sx_label = gtk_label_new(_("x scale:"));
+      gtk_box_pack_start(GTK_BOX(sx_box), sx_label, false, false, 4);
+      gtk_widget_show(sx_label);
 
       oid_sx_adj = gtk_adjustment_new(spectro_x_scale(ss), 0.0, 2.01, .01, .1, .01);
       oid_sx = gtk_hscale_new(GTK_ADJUSTMENT(oid_sx_adj));
@@ -1415,23 +1389,19 @@ GtkWidget *start_color_orientation_dialog(bool managed)
       gtk_scale_set_digits(GTK_SCALE(oid_sx), 2);
       gtk_scale_set_value_pos(GTK_SCALE(oid_sx), GTK_POS_LEFT);
       gtk_scale_set_draw_value(GTK_SCALE(oid_sx), true);
-      gtk_table_attach(GTK_TABLE(sx_box), oid_sx, 0, 1, 0, 1,
-		       (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), XX_PAD, YY_PAD);
       SG_SIGNAL_CONNECT(oid_sx_adj, "value_changed", sx_orientation_callback, NULL);
-
-      sx_label = gtk_label_new(_("x scale"));
-      gtk_misc_set_alignment(GTK_MISC (sx_label), 0.1, 0.0);
-      gtk_table_attach(GTK_TABLE(sx_box), sx_label, 0, 1, 1, 2,
-		       (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), XX_PAD, YY_PAD);
-
+      gtk_box_pack_start(GTK_BOX(sx_box), oid_sx, true, true, 0);
       gtk_widget_show(oid_sx);
-      gtk_widget_show(sx_label);
-      gtk_widget_show(sx_box);
+
 
       /* SY */
-      sy_box = gtk_table_new(2, 1, false);
-      gtk_table_attach(GTK_TABLE(outer_table), sy_box, 1, 2, 1, 2,
-		       (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), X_PAD, Y_PAD);
+      sy_box = gtk_hbox_new(false, 0);
+      gtk_box_pack_start(GTK_BOX(orientbox), sy_box, true, true, 0);
+      gtk_widget_show(sy_box);
+
+      sy_label = gtk_label_new(_("y scale:"));
+      gtk_box_pack_start(GTK_BOX(sy_box), sy_label, false, false, 4);
+      gtk_widget_show(sy_label);
 
       oid_sy_adj = gtk_adjustment_new(spectro_y_scale(ss), 0.0, 2.01, .01, .1, .01);
       oid_sy = gtk_hscale_new(GTK_ADJUSTMENT(oid_sy_adj));
@@ -1440,52 +1410,74 @@ GtkWidget *start_color_orientation_dialog(bool managed)
       gtk_scale_set_digits(GTK_SCALE(oid_sy), 2);
       gtk_scale_set_value_pos(GTK_SCALE(oid_sy), GTK_POS_LEFT);
       gtk_scale_set_draw_value(GTK_SCALE(oid_sy), true);
-      gtk_table_attach(GTK_TABLE(sy_box), oid_sy, 0, 1, 0, 1,
-		       (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), XX_PAD, YY_PAD);
       SG_SIGNAL_CONNECT(oid_sy_adj, "value_changed", sy_orientation_callback, NULL);
-
-      sy_label = gtk_label_new(_("y scale"));
-      gtk_misc_set_alignment(GTK_MISC (sy_label), 0.1, 0.0);
-      gtk_table_attach(GTK_TABLE(sy_box), sy_label, 0, 1, 1, 2,
-		       (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), XX_PAD, YY_PAD);
-
+      gtk_box_pack_start(GTK_BOX(sy_box), oid_sy, true, true, 0);
       gtk_widget_show(oid_sy);
-      gtk_widget_show(sy_label);
-      gtk_widget_show(sy_box);
+
 
       /* SZ */
-      sz_box = gtk_table_new(2, 1, false);
-      gtk_table_attach(GTK_TABLE(outer_table), sz_box, 1, 2, 2, 3,
-		       (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), X_PAD, Y_PAD);
+      sz_box = gtk_hbox_new(false, 0);
+      gtk_box_pack_start(GTK_BOX(orientbox), sz_box, true, true, 0);
+      gtk_widget_show(sz_box);
+
+
+      sz_label = gtk_label_new(_("z scale:"));
+      gtk_box_pack_start(GTK_BOX(sz_box), sz_label, false, false, 4);
+      gtk_widget_show(sz_label);
 
       oid_sz_adj = gtk_adjustment_new(spectro_z_scale(ss), 0.0, 2.01, .01, .1, .01);
       oid_sz = gtk_hscale_new(GTK_ADJUSTMENT(oid_sz_adj));
       GTK_WIDGET_UNSET_FLAGS(oid_sz, GTK_CAN_FOCUS);
       gtk_range_set_update_policy(GTK_RANGE(GTK_SCALE(oid_sz)), GTK_UPDATE_CONTINUOUS);
-      gtk_scale_set_digits(GTK_SCALE(oid_sz), 3);
+      gtk_scale_set_digits(GTK_SCALE(oid_sz), 2);
       gtk_scale_set_value_pos(GTK_SCALE(oid_sz), GTK_POS_LEFT);
       gtk_scale_set_draw_value(GTK_SCALE(oid_sz), true);
-      gtk_table_attach(GTK_TABLE(sz_box), oid_sz, 0, 1, 0, 1,
-		       (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), XX_PAD, YY_PAD);
       SG_SIGNAL_CONNECT(oid_sz_adj, "value_changed", sz_orientation_callback, NULL);
-
-      sz_label = gtk_label_new(_("z scale"));
-      gtk_misc_set_alignment(GTK_MISC (sz_label), 0.1, 0.0);
-      gtk_table_attach(GTK_TABLE(sz_box), sz_label, 0, 1, 1, 2,
-		       (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), XX_PAD, YY_PAD);
+      gtk_box_pack_start(GTK_BOX(sz_box), oid_sz, true, true, 0);
       gtk_widget_show(oid_sz);
-      gtk_widget_show(sz_label);
-      gtk_widget_show(sz_box);
+
+
+      sep2 = gtk_vseparator_new();
+      gtk_box_pack_start(GTK_BOX(orientbox), sep2, false, false, 6);
+      widget_modify_bg(sep2, GTK_STATE_NORMAL, ss->sgx->basic_color);
+      gtk_widget_show(sep2);
+
+
+      /* HOP */
+      hop_box = gtk_hbox_new(false, 0);
+      gtk_box_pack_start(GTK_BOX(orientbox), hop_box, false, false, 0);
+      gtk_widget_show(hop_box);
+
+      hop_label = gtk_label_new(_("hop:     "));
+      gtk_box_pack_start(GTK_BOX(hop_box), hop_label, false, false, 4);
+      gtk_widget_show(hop_label);
+
+      oid_hop_adj = gtk_adjustment_new((spectro_hop(ss) > 20) ? 20 : (spectro_hop(ss)), 0.0, 21.0, 0.1, 1.0, 1.0);
+      oid_hop = gtk_hscale_new(GTK_ADJUSTMENT(oid_hop_adj));
+      GTK_WIDGET_UNSET_FLAGS(oid_hop, GTK_CAN_FOCUS);
+      gtk_range_set_update_policy(GTK_RANGE(GTK_SCALE(oid_hop)), GTK_UPDATE_CONTINUOUS);
+      gtk_scale_set_digits(GTK_SCALE(oid_hop), 0);
+      gtk_scale_set_value_pos(GTK_SCALE(oid_hop), GTK_POS_LEFT);
+      gtk_scale_set_draw_value(GTK_SCALE(oid_hop), true);
+      SG_SIGNAL_CONNECT(oid_hop_adj, "value_changed", hop_callback, NULL);
+      gtk_box_pack_start(GTK_BOX(hop_box), oid_hop, true, true, 0);
+      gtk_widget_show(oid_hop);
+
 
 #if HAVE_GL
       oid_glbutton = gtk_check_button_new_with_label(_("use OpenGL"));
-      gtk_table_attach(GTK_TABLE(outer_table), oid_glbutton, 0, 1, 4, 5,
-		       (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), (GtkAttachOptions)(GTK_EXPAND | GTK_FILL), X_PAD, Y_PAD);
-      SG_SIGNAL_CONNECT(oid_glbutton, "toggled", glbutton_callback, NULL);
+      gtk_box_pack_start(GTK_BOX(orientbox), oid_glbutton, false, false, 0);
       gtk_widget_show(oid_glbutton);
+      SG_SIGNAL_CONNECT(oid_glbutton, "toggled", glbutton_callback, NULL);
       set_toggle_button(oid_glbutton, with_gl(ss), false, NULL);
 #endif
-      }
+
+      sep5 = gtk_vseparator_new();
+      gtk_box_pack_start(GTK_BOX(orientbox), sep5, false, false, 3);
+      widget_modify_bg(sep5, GTK_STATE_NORMAL, ss->sgx->basic_color);
+      gtk_widget_show(sep5);
+
+
     }
   else raise_dialog(ccd_dialog);
   if (managed) gtk_widget_show(ccd_dialog);

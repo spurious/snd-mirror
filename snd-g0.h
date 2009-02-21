@@ -377,15 +377,6 @@ typedef enum {WITHOUT_COMMENT_FIELD, WITH_COMMENT_FIELD} dialog_comment_t;
 #define snd_K_Right GDK_Right	 
 #define snd_K_Down GDK_Down
 
-/*
-#define snd_keypad_PageUp GDK_KP_Page_Up
-#define snd_keypad_PageDown GDK_KP_Page_Down
-#define snd_keypad_Left GDK_KP_Left
-#define snd_keypad_Up GDK_KP_Up
-#define snd_keypad_Right GDK_KP_Right
-#define snd_keypad_Down GDK_KP_Down
-*/
-
 #define snd_keypad_Insert GDK_KP_Insert
 #define snd_keypad_Delete GDK_KP_Delete
 #define snd_keypad_Multiply GDK_KP_Multiply

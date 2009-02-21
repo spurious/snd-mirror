@@ -19,5 +19,5 @@ removed TODO.Snd, snd.spec, and old-snd.spec -- I don't plan to make any more rp
 
 checked: gsl 1.12, gtk 2.15.1|2|3|4, sbcl 1.0.25, cmucl 19f
 
-Thanks!: Kjetil, Pavel Penev, Rick Taube, Michael Edwards
+Thanks!: Kjetil, Pavel Penev, Rick Taube, Michael Edwards, Mike Scholz
 

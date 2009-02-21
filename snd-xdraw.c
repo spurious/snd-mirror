@@ -401,16 +401,6 @@ void draw_colored_lines(chan_info *cp, axis_context *ax, point_t *points, int nu
   set_foreground_color(ax, old_color);
 }
 
-#if 0
-(with-sound ()
- (let ((gen1 (make-oscil 100 0.0))
-       (gen2 (make-oscil 200 (* 0.5 pi)))
-       (gen3 (make-oscil 300 (* 1.0 pi)))
-       (gen4 (make-oscil 400 (* 1.5 pi))))
-  (do ((i 0 (1+ i))) ((= i 44100))
-    (outa i (* .1 (+ (oscil gen1) (oscil gen2) (oscil gen3) (oscil gen4))) *output*))))
-#endif
-
 
 
 /* -------- color/orientation browser -------- */
