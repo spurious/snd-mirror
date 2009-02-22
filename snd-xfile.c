@@ -2297,7 +2297,7 @@ static file_data *make_file_data_panel(Widget parent, const char *name, Arg *in_
   formats = type_and_format_to_position(fdat, header_type, data_format);
   nformats = fdat->formats;
 
-  /* pick up all args from caller */
+  /* pick up all args from caller -- args here are attachment points */
   form = XtCreateManagedWidget(name, xmFormWidgetClass, parent, in_args, in_n);
 
   if (with_header_type == WITH_HEADER_TYPE_FIELD)
@@ -2509,9 +2509,10 @@ static file_data *make_file_data_panel(Widget parent, const char *name, Arg *in_
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNleftWidget, sep3); n++;
-      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       fdat->chans_text = make_textfield_widget("chans-text", form, args, n, NOT_ACTIVATABLE, NO_COMPLETER);
+      XmTextFieldSetString(fdat->chans_text, "0");
 
       if (with_loc == WITH_DATA_LOCATION_FIELD)
 	{
@@ -2608,14 +2609,13 @@ static file_data *make_file_data_panel(Widget parent, const char *name, Arg *in_
       comment_label = XtCreateManagedWidget(_("comment:"), xmLabelWidgetClass, parent, args, n);
 
       n = 0;
-      XtSetArg(args[n], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNtopWidget, comment_label); n++;
-      XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
-      XtSetArg(args[n], XmNleftWidget, comment_label); n++;
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrows, 2); n++;
-      XtSetArg(args[n], XmNcolumns, 16); n++; /* this sets the lower size, so we don't want it too big */
+      /* XtSetArg(args[n], XmNcolumns, 16); n++; */ /* this sets the lower size, so we don't want it too big */
       fdat->comment_text = make_text_widget("comment-text", parent, args, n);
     }
   else fdat->comment_text = NULL;

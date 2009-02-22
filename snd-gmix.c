@@ -301,7 +301,7 @@ static gboolean mix_drawer_button_press(GtkWidget *w, GdkEventButton *ev, gpoint
 {
   if (!(mix_is_active(mix_dialog_id))) return(false);
   spf->with_dots = false;
-  if (env_editor_button_press(spf, (int)(ev->x), (int)(ev->y), ev->time, dialog_env))
+  if (env_editor_button_press(spf, (int)(EVENT_X(ev)), (int)(EVENT_Y(ev)), EVENT_TIME(ev), dialog_env))
     mix_amp_env_resize(w);
   return(false);
 }
@@ -319,19 +319,19 @@ static gboolean mix_drawer_button_release(GtkWidget *w, GdkEventButton *ev, gpoi
 static gboolean mix_drawer_button_motion(GtkWidget *w, GdkEventMotion *ev, gpointer data)
 { 
   if (!(mix_is_active(mix_dialog_id))) return(false);
-  if (BUTTON1_PRESSED(ev->state))
+  if (BUTTON1_PRESSED(EVENT_STATE(ev)))
     {
       int x, y;
       GdkModifierType state;
-      if (ev->is_hint)
-	gdk_window_get_pointer(ev->window, &x, &y, &state);
+      if (EVENT_IS_HINT(ev))
+	gdk_window_get_pointer(EVENT_WINDOW(ev), &x, &y, &state);
       else
 	{
-	  x = (int)(ev->x);
-	  y = (int)(ev->y);
+	  x = (int)(EVENT_X(ev));
+	  y = (int)(EVENT_Y(ev));
 	}
       spf->with_dots = false;
-      env_editor_button_motion(spf, x, y, ev->time, dialog_env);
+      env_editor_button_motion(spf, x, y, EVENT_TIME(ev), dialog_env);
       mix_amp_env_resize(w);
     }
   return(false);

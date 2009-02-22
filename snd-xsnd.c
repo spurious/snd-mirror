@@ -1830,12 +1830,18 @@ static void close_sound_dialog(Widget w, XtPointer context, XtPointer info)
 }
 
 
+static void manage_sync_button(snd_info *sp)
+{
+  XtManageChild(SYNC_BUTTON(sp));
+}
+
+
 static void attach_minibuffer(snd_info *sp)
 {
   XtUnmanageChild(MINIBUFFER_TEXT(sp));
   XtVaSetValues(MINIBUFFER_TEXT(sp),
 		XmNrightAttachment, XmATTACH_WIDGET,
-		XmNrightWidget, (XtIsManaged(UNITE_BUTTON(sp))) ? UNITE_BUTTON(sp) : SYNC_BUTTON(sp),
+		XmNrightWidget, (XtIsManaged(UNITE_BUTTON(sp))) ? UNITE_BUTTON(sp) : ((XtIsManaged(SYNC_BUTTON(sp))) ? SYNC_BUTTON(sp) : PLAY_BUTTON(sp)),
 		NULL);
   XtManageChild(MINIBUFFER_TEXT(sp));
 }
@@ -2872,6 +2878,25 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
     {
       XmToggleButtonSetState(UNITE_BUTTON(sp), false, false);
       XtUnmanageChild(UNITE_BUTTON(sp));
+
+      if (ss->active_sounds == 0) /* ticked at the end in snd-file.c */
+	{
+	  /* TODO: gtk sync also */
+	  /* TODO: if no regions and selection-creates-region is false, unmanage that menu item? */
+	  /* PERHAPS: thumbnail sketch in open info window? */
+	  /* TODO: gtk? "comment" label misplaced in save-as dialog and extract channel needs "0" + shorten */
+
+	  XmToggleButtonSetState(SYNC_BUTTON(sp), false, false);
+	  XtUnmanageChild(SYNC_BUTTON(sp));
+	}
+      else
+	{
+	  for_each_sound(manage_sync_button); 
+	}
+    }
+  else
+    {
+      for_each_sound(manage_sync_button); 
     }
   attach_minibuffer(sp);
 
@@ -2938,6 +2963,22 @@ void snd_info_cleanup(snd_info *sp)
       if ((sx->dialog) && 
 	  (XtIsManaged(sx->dialog))) 
 	XtUnmanageChild(sx->dialog);
+    }
+}
+
+
+static void reflect_file_close_in_sync(ss_watcher_reason_t reason, void *ignore)
+{
+  if ((reason == SS_FILE_CLOSED) && /* snd-file.c */
+      (ss->active_sounds == 1))
+    {
+      snd_info *sp;
+      sp = any_selected_sound();
+      if ((sp) && (sp->nchans == 1))
+	{
+	  XtUnmanageChild(SYNC_BUTTON(sp));
+	  attach_minibuffer(sp);
+	}
     }
 }
 
@@ -3217,6 +3258,8 @@ static XEN g_watch_sash(void)
 
 void g_init_gxsnd(void)
 {
+  add_ss_watcher(SS_FILE_OPEN_WATCHER, reflect_file_close_in_sync, NULL);
+
   XEN_DEFINE_PROCEDURE(S_sound_widgets,  g_sound_widgets_w,  0, 1, 0, H_sound_widgets);
 #if MUS_DEBUGGING && HAVE_GUILE && WITH_RELATIVE_PANES
   XEN_DEFINE_PROCEDURE("top-sash", g_sash, 0, 0, 0, "autotest func");

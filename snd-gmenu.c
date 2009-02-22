@@ -283,18 +283,18 @@ static void view_all_axes_unlabelled_callback(GtkWidget *w, gpointer info) {set_
 static void view_just_x_axis_unlabelled_callback(GtkWidget *w, gpointer info) {set_show_axes(SHOW_X_AXIS_UNLABELLED);}
 static void view_bare_x_axis_callback(GtkWidget *w, gpointer info) {set_show_axes(SHOW_BARE_X_AXIS);}
 
+static void view_focus_right_callback(GtkWidget *w, gpointer info, gpointer data) {set_zoom_focus_style(ZOOM_FOCUS_RIGHT);}
+static void view_focus_left_callback(GtkWidget *w, gpointer info, gpointer data) {set_zoom_focus_style(ZOOM_FOCUS_LEFT);}
+static void view_focus_middle_callback(GtkWidget *w, gpointer info, gpointer data) {set_zoom_focus_style(ZOOM_FOCUS_MIDDLE);}
+static void view_focus_active_callback(GtkWidget *w, gpointer info, gpointer data) {set_zoom_focus_style(ZOOM_FOCUS_ACTIVE);}
+
 
 /* -------------------------------- OPTIONS MENU -------------------------------- */
 
-static void options_menu_update_1(GtkWidget *w, gpointer info) {options_menu_update();}
 static void options_transform_callback(GtkWidget *w, gpointer info) {fire_up_transform_dialog(true);}
 #if HAVE_EXTENSION_LANGUAGE
 static void options_save_callback(GtkWidget *w, gpointer info) {save_options_from_menu();}
 #endif
-static void options_focus_right_callback(GtkWidget *w, gpointer info, gpointer data) {set_zoom_focus_style(ZOOM_FOCUS_RIGHT);}
-static void options_focus_left_callback(GtkWidget *w, gpointer info, gpointer data) {set_zoom_focus_style(ZOOM_FOCUS_LEFT);}
-static void options_focus_middle_callback(GtkWidget *w, gpointer info, gpointer data) {set_zoom_focus_style(ZOOM_FOCUS_MIDDLE);}
-static void options_focus_active_callback(GtkWidget *w, gpointer info, gpointer data) {set_zoom_focus_style(ZOOM_FOCUS_ACTIVE);}
 
 #if HAVE_EXTENSION_LANGUAGE
 static void options_save_state_callback(GtkWidget *w, gpointer info) {save_state_from_menu();}
@@ -892,6 +892,40 @@ GtkWidget *add_menu(void)
   gtk_widget_show(view_bare_x_axis_menu);
   SG_SIGNAL_CONNECT(view_bare_x_axis_menu, "activate", view_bare_x_axis_callback, NULL);
 
+  view_focus_style_menu = gtk_menu_item_new_with_label(_("Zoom focus"));
+  ml[v_focus_style_menu] = _("Zoom focus");
+  gtk_menu_shell_append(GTK_MENU_SHELL(view_cascade_menu), view_focus_style_menu);
+  gtk_widget_show(view_focus_style_menu);
+
+
+  view_focus_cascade_menu = gtk_menu_new();
+  ml[v_focus_cascade_menu] = NULL;
+  gtk_menu_item_set_submenu(GTK_MENU_ITEM(view_focus_style_menu), view_focus_cascade_menu);
+
+  view_focus_left_menu = gtk_menu_item_new_with_label(_("window left edge"));
+  ml[v_focus_left_menu] = _("window left edge");
+  gtk_menu_shell_append(GTK_MENU_SHELL(view_focus_cascade_menu), view_focus_left_menu);
+  gtk_widget_show(view_focus_left_menu);
+  SG_SIGNAL_CONNECT(view_focus_left_menu, "activate", view_focus_left_callback, NULL);
+
+  view_focus_right_menu = gtk_menu_item_new_with_label(_("window right edge"));
+  ml[v_focus_right_menu] = _("window right edge");
+  gtk_menu_shell_append(GTK_MENU_SHELL(view_focus_cascade_menu), view_focus_right_menu);
+  gtk_widget_show(view_focus_right_menu);
+  SG_SIGNAL_CONNECT(view_focus_right_menu, "activate", view_focus_right_callback, NULL);
+
+  view_focus_middle_menu = gtk_menu_item_new_with_label(_("window midpoint"));
+  ml[v_focus_middle_menu] = _("window midpoint");
+  gtk_menu_shell_append(GTK_MENU_SHELL(view_focus_cascade_menu), view_focus_middle_menu);
+  gtk_widget_show(view_focus_middle_menu);
+  SG_SIGNAL_CONNECT(view_focus_middle_menu, "activate", view_focus_middle_callback, NULL);
+
+  view_focus_active_menu = gtk_menu_item_new_with_label(_("cursor or selection"));
+  ml[v_focus_active_menu] = _("cursor or selection");
+  gtk_menu_shell_append(GTK_MENU_SHELL(view_focus_cascade_menu), view_focus_active_menu);
+  gtk_widget_show(view_focus_active_menu);
+  SG_SIGNAL_CONNECT(view_focus_active_menu, "activate", view_focus_active_callback, NULL);
+
 
 
   /* OPTIONS MENU */
@@ -909,39 +943,6 @@ GtkWidget *add_menu(void)
   gtk_menu_shell_append(GTK_MENU_SHELL(options_cascade_menu), options_transform_menu);
   gtk_widget_show(options_transform_menu);
   SG_SIGNAL_CONNECT(options_transform_menu, "activate", options_transform_callback, NULL);
-
-  options_focus_style_menu = gtk_menu_item_new_with_label(_("Zoom focus"));
-  ml[o_focus_style_menu] = _("Zoom focus");
-  gtk_menu_shell_append(GTK_MENU_SHELL(options_cascade_menu), options_focus_style_menu);
-  gtk_widget_show(options_focus_style_menu);
-
-  options_focus_cascade_menu = gtk_menu_new();
-  ml[o_focus_cascade_menu] = NULL;
-  gtk_menu_item_set_submenu(GTK_MENU_ITEM(options_focus_style_menu), options_focus_cascade_menu);
-
-  options_focus_left_menu = gtk_menu_item_new_with_label(_("window left edge"));
-  ml[o_focus_left_menu] = _("window left edge");
-  gtk_menu_shell_append(GTK_MENU_SHELL(options_focus_cascade_menu), options_focus_left_menu);
-  gtk_widget_show(options_focus_left_menu);
-  SG_SIGNAL_CONNECT(options_focus_left_menu, "activate", options_focus_left_callback, NULL);
-
-  options_focus_right_menu = gtk_menu_item_new_with_label(_("window right edge"));
-  ml[o_focus_right_menu] = _("window right edge");
-  gtk_menu_shell_append(GTK_MENU_SHELL(options_focus_cascade_menu), options_focus_right_menu);
-  gtk_widget_show(options_focus_right_menu);
-  SG_SIGNAL_CONNECT(options_focus_right_menu, "activate", options_focus_right_callback, NULL);
-
-  options_focus_middle_menu = gtk_menu_item_new_with_label(_("window midpoint"));
-  ml[o_focus_middle_menu] = _("window midpoint");
-  gtk_menu_shell_append(GTK_MENU_SHELL(options_focus_cascade_menu), options_focus_middle_menu);
-  gtk_widget_show(options_focus_middle_menu);
-  SG_SIGNAL_CONNECT(options_focus_middle_menu, "activate", options_focus_middle_callback, NULL);
-
-  options_focus_active_menu = gtk_menu_item_new_with_label(_("cursor or selection"));
-  ml[o_focus_active_menu] = _("cursor or selection");
-  gtk_menu_shell_append(GTK_MENU_SHELL(options_focus_cascade_menu), options_focus_active_menu);
-  gtk_widget_show(options_focus_active_menu);
-  SG_SIGNAL_CONNECT(options_focus_active_menu, "activate", options_focus_active_callback, NULL);
 
 #if HAVE_EXTENSION_LANGUAGE
   options_save_menu = gtk_menu_item_new_with_label(_("Save options"));
@@ -1133,7 +1134,6 @@ GtkWidget *add_menu(void)
   SG_SIGNAL_CONNECT(file_menu, "activate", file_menu_update_1, NULL);
   SG_SIGNAL_CONNECT(edit_menu, "activate", edit_menu_update_1, NULL);
   SG_SIGNAL_CONNECT(view_menu, "activate", view_menu_update_1, NULL);
-  SG_SIGNAL_CONNECT(options_menu, "activate", options_menu_update_1, NULL);
 
   return(main_menu);
 }
@@ -1324,7 +1324,7 @@ void popup_menu_from(GtkWidget *w, GdkEventButton *ev, gpointer data, int snd, i
 				  "gtk-popup-hook");
       if (XEN_TRUE_P(result)) return;
     }
-  create_popup_menu(ev->button, ev->time);
+  create_popup_menu(EVENT_BUTTON(ev), EVENT_TIME(ev));
 }
 
 

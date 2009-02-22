@@ -489,15 +489,15 @@ static gboolean drawer_button_motion(GtkWidget *w, GdkEventMotion *ev, gpointer 
   GdkModifierType state;
   oclock_t motion_time = 0;
   ignore_button_release = false;
-  if (BUTTON1_PRESSED(ev->state))
+  if (BUTTON1_PRESSED(EVENT_STATE(ev)))
     {
-      if (ev->is_hint)
-	gdk_window_get_pointer(ev->window, &evx, &evy, &state);
+      if (EVENT_IS_HINT(ev))
+	gdk_window_get_pointer(EVENT_WINDOW(ev), &evx, &evy, &state);
       else
 	{
-	  evx = (int)(ev->x);
-	  evy = (int)(ev->y);
-	  motion_time = ev->time;
+	  evx = (int)(EVENT_X(ev));
+	  evy = (int)(EVENT_Y(ev));
+	  motion_time = EVENT_TIME(ev);
 	  if ((motion_time - ss->enved->down_time) < 100) return(false);
 	}
     }
@@ -515,12 +515,12 @@ static gboolean drawer_button_motion(GtkWidget *w, GdkEventMotion *ev, gpointer 
 
 static gboolean drawer_button_press(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
-  ss->enved->down_time = ev->time;
+  ss->enved->down_time = EVENT_TIME(ev);
   ss->enved->env_dragged = false;
   if (showing_all_envs)
     {
       int pos;
-      pos = hit_env((int)(ev->x), (int)(ev->y), env_window_width, env_window_height);
+      pos = hit_env((int)(EVENT_X(ev)), (int)(EVENT_Y(ev)), env_window_width, env_window_height);
       slist_select(env_list, pos);
       if ((pos >= 0) && 
 	  (pos < enved_all_envs_top())) 
@@ -536,9 +536,9 @@ static gboolean drawer_button_press(GtkWidget *w, GdkEventButton *ev, gpointer d
 	  active_env = default_env(1.0, 0.0);
 	  env_redisplay(); /* needed to get current_xs set up correctly */
 	}
-      if (env_editor_button_press(ss->enved, (int)(ev->x), (int)(ev->y), ev->time, active_env))
+      if (env_editor_button_press(ss->enved, (int)(EVENT_X(ev)), (int)(EVENT_Y(ev)), EVENT_TIME(ev), active_env))
 	env_redisplay();
-      enved_display_point_label(ungrf_x(ss->enved->axis, ev->x), env_editor_ungrf_y_dB(ss->enved, (int)(ev->y)));
+      enved_display_point_label(ungrf_x(ss->enved->axis, EVENT_X(ev)), env_editor_ungrf_y_dB(ss->enved, (int)(EVENT_Y(ev))));
       set_sensitive(saveB, true);
       set_sensitive(undoB, true);
       set_sensitive(revertB, true);

@@ -1606,9 +1606,11 @@ void snd_close_file(snd_info *sp)
 	sequester_deferred_regions(sp->chans[i], -1);
 
   sp->inuse = SOUND_IDLE;
-  for (i = 0; i < sp->nchans; i++) sp->chans[i]->squelch_update = true;
-  /* view_files_add_file(NULL_WIDGET, sp->filename); */  /* removed 11-Jan-08 -- the open recent files menu item replaces this */
-  if (sp->playing) stop_playing_sound(sp, PLAY_CLOSE);
+  for (i = 0; i < sp->nchans; i++) 
+    sp->chans[i]->squelch_update = true;
+
+  if (sp->playing) 
+    stop_playing_sound(sp, PLAY_CLOSE);
 
   if (sp->sgx) 
     {

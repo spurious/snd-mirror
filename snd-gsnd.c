@@ -505,9 +505,9 @@ static gboolean minibuffer_key_callback(GtkWidget *w, GdkEventKey *event, gpoint
   /* can't use M-p in gtk version because it's trapped by a menu accelerator (File:Print) -- M-n is File:New */
   snd_info *sp = (snd_info *)data;
   if (((!sp->sgx->mini_active)) || 
-      (((event->keyval == snd_K_s) || 
-	(event->keyval == snd_K_r)) && 
-       (event->state & snd_ControlMask)))
+      (((EVENT_KEYVAL(event) == snd_K_s) || 
+	(EVENT_KEYVAL(event) == snd_K_r)) && 
+       (EVENT_STATE(event) & snd_ControlMask)))
     {
       chan_info *cp;
       cp = current_channel();
@@ -515,13 +515,13 @@ static gboolean minibuffer_key_callback(GtkWidget *w, GdkEventKey *event, gpoint
       g_signal_stop_emission(GTK_OBJECT(w), g_signal_lookup("key_press_event", G_OBJECT_TYPE(GTK_OBJECT(w))), 0);
       return(true);
     }
-  if (((event->keyval == snd_K_g) || (event->keyval == snd_K_G)) && 
-      (event->state & snd_ControlMask))
+  if (((EVENT_KEYVAL(event) == snd_K_g) || (EVENT_KEYVAL(event) == snd_K_G)) && 
+      (EVENT_STATE(event) & snd_ControlMask))
     {
       clear_minibuffer(sp);
       return(true);
     }
-  if (event->keyval == GDK_Tab)
+  if (EVENT_KEYVAL(event) == GDK_Tab)
     {
       gtk_entry_set_text(GTK_ENTRY(w), info_completer(w, (char *)gtk_entry_get_text(GTK_ENTRY(w)), data));
       gtk_editable_set_position(GTK_EDITABLE(w), mus_strlen((char *)gtk_entry_get_text(GTK_ENTRY(w))));
@@ -584,7 +584,7 @@ static int last_play_state = 0;
 
 static gboolean play_button_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
-  last_play_state = ev->state;
+  last_play_state = EVENT_STATE(ev);
   return(false);
 }
 
@@ -677,7 +677,7 @@ static int last_sync_state = 0;
 
 static gboolean sync_button_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
-  last_sync_state = ev->state;
+  last_sync_state = EVENT_STATE(ev);
   return(false);
 }
 
@@ -715,7 +715,7 @@ static int last_combine_state = 0;
 static gboolean unite_button_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
   /* click if set unsets, click if unset->combine, ctrl-click->superimpose */
-  last_combine_state = ev->state;
+  last_combine_state = EVENT_STATE(ev);
   return(false);
 }
 
@@ -799,7 +799,7 @@ static gboolean amp_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer da
   snd_info *sp = (snd_info *)data;
   snd_context *sx;
   sx = sp->sgx;
-  if (ev->state & (snd_ControlMask | snd_MetaMask)) 
+  if (EVENT_STATE(ev) & (snd_ControlMask | snd_MetaMask)) 
     set_amp(sp, sp->last_amp_control);
   else set_amp(sp, 1.0);
   return(false);
@@ -867,7 +867,7 @@ static gboolean speed_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer 
   snd_info *sp = (snd_info *)data;
   snd_context *sx;
   sx = sp->sgx;
-  if (ev->state & (snd_ControlMask | snd_MetaMask)) 
+  if (EVENT_STATE(ev) & (snd_ControlMask | snd_MetaMask)) 
     set_speed(sp, sp->last_speed_control);
   else set_speed(sp, 1.0);
 #if XEN_HAVE_RATIOS
@@ -1014,7 +1014,7 @@ static gboolean expand_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer
   snd_info *sp = (snd_info *)data;
   snd_context *sx;
   sx = sp->sgx;
-  if (ev->state & (snd_ControlMask | snd_MetaMask)) 
+  if (EVENT_STATE(ev) & (snd_ControlMask | snd_MetaMask)) 
     set_expand(sp, sp->last_expand_control);
   else set_expand(sp, 1.0);
   return(false);
@@ -1079,7 +1079,7 @@ static gboolean contrast_click_callback(GtkWidget *w, GdkEventButton *ev, gpoint
   snd_info *sp = (snd_info *)data;
   snd_context *sx;
   sx = sp->sgx;
-  if (ev->state & (snd_ControlMask | snd_MetaMask)) 
+  if (EVENT_STATE(ev) & (snd_ControlMask | snd_MetaMask)) 
     set_contrast(sp, sp->last_contrast_control);
   else set_contrast(sp, 0.0);
   return(false);
@@ -1170,7 +1170,7 @@ static gboolean revscl_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer
   snd_info *sp = (snd_info *)data;
   snd_context *sx;
   sx = sp->sgx;
-  if (ev->state & (snd_ControlMask | snd_MetaMask)) 
+  if (EVENT_STATE(ev) & (snd_ControlMask | snd_MetaMask)) 
     set_revscl(sp, sp->last_reverb_control_scale);
   else set_revscl(sp, 0.0);
   return(false);
@@ -1233,7 +1233,7 @@ static gboolean revlen_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer
   snd_info *sp = (snd_info *)data;
   snd_context *sx;
   sx = sp->sgx;
-  if (ev->state & (snd_ControlMask | snd_MetaMask)) 
+  if (EVENT_STATE(ev) & (snd_ControlMask | snd_MetaMask)) 
     set_revlen(sp, sp->last_reverb_control_length);
   else set_revlen(sp, 1.0);
   return(false);
@@ -1316,22 +1316,22 @@ void display_filter_env(snd_info *sp)
 
 static gboolean filter_drawer_button_motion(GtkWidget *w, GdkEventMotion *ev, gpointer data)
 {
-  if (BUTTON1_PRESSED(ev->state))
+  if (BUTTON1_PRESSED(EVENT_STATE(ev)))
     {
       snd_info *sp = (snd_info *)data;
       int evx, evy;
       GdkModifierType state;
       env_editor *edp;
-      if (ev->is_hint)
-	gdk_window_get_pointer(ev->window, &evx, &evy, &state);
+      if (EVENT_IS_HINT(ev))
+	gdk_window_get_pointer(EVENT_WINDOW(ev), &evx, &evy, &state);
       else
 	{
-	  evx = (int)(ev->x);
-	  evy = (int)(ev->y);
+	  evx = (int)(EVENT_X(ev));
+	  evy = (int)(EVENT_Y(ev));
 	}
       edp = sp->sgx->flt;
       edp->in_dB = sp->filter_control_in_dB;
-      env_editor_button_motion(edp, evx, evy, ev->time, sp->filter_control_envelope);
+      env_editor_button_motion(edp, evx, evy, EVENT_TIME(ev), sp->filter_control_envelope);
       display_filter_env(sp);
       sp->filter_control_changed = true;
     }
@@ -1345,7 +1345,7 @@ static gboolean filter_drawer_button_press(GtkWidget *w, GdkEventButton *ev, gpo
   env_editor *edp;
   edp = sp->sgx->flt;
   edp->in_dB = sp->filter_control_in_dB;
-  if (env_editor_button_press(edp, (int)(ev->x), (int)(ev->y), ev->time, sp->filter_control_envelope))
+  if (env_editor_button_press(edp, (int)(EVENT_X(ev)), (int)(EVENT_Y(ev)), EVENT_TIME(ev), sp->filter_control_envelope))
     display_filter_env(sp);
   return(false);
 }

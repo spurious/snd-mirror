@@ -348,7 +348,7 @@ static int last_f_state = 0;
 
 static gboolean f_toggle_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
 { 
-  last_f_state = ev->state;
+  last_f_state = EVENT_STATE(ev);
   return(false);
 }
 
@@ -365,7 +365,7 @@ static int last_w_state = 0;
 
 static gboolean w_toggle_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
 { 
-  last_w_state = ev->state;
+  last_w_state = EVENT_STATE(ev);
   return(false);
 }
 
@@ -387,8 +387,8 @@ static gboolean channel_expose_callback(GtkWidget *w, GdkEventExpose *ev, gpoint
   snd_info *sp;
   cp = (chan_info *)data;
   if ((cp == NULL) || (cp->active < CHANNEL_HAS_AXES) || (cp->sound == NULL)) return(false);
-  if ((ev->area.height < MIN_REGRAPH_Y) || 
-      (ev->area.width < MIN_REGRAPH_X)) 
+  if ((EVENT_AREA_HEIGHT(ev) < MIN_REGRAPH_Y) || 
+      (EVENT_AREA_WIDTH(ev) < MIN_REGRAPH_X)) 
     return(false);
   sp = cp->sound;
   if (sp->channel_style != CHANNELS_SEPARATE)
@@ -596,10 +596,10 @@ static gboolean real_graph_key_press(GtkWidget *w, GdkEventKey *ev, gpointer dat
   bool theirs;
   int x, y;
   GdkModifierType key_state;
-  gdk_window_get_pointer(ev->window, &x, &y, &key_state);
-  key_state = (GdkModifierType)(ev->state);
-  keysym = ev->keyval;
-  theirs = key_press_callback(cp, x, y, ev->state, keysym);
+  gdk_window_get_pointer(EVENT_WINDOW(ev), &x, &y, &key_state);
+  key_state = (GdkModifierType)(EVENT_STATE(ev));
+  keysym = EVENT_KEYVAL(ev);
+  theirs = key_press_callback(cp, x, y, EVENT_STATE(ev), keysym);
   if (theirs) ss->sgx->graph_is_active = false;
   g_signal_stop_emission(GTK_OBJECT(w), g_signal_lookup("key_press_event", G_OBJECT_TYPE(GTK_OBJECT(w))), 0);
   return(true);
@@ -613,10 +613,10 @@ gboolean graph_key_press(GtkWidget *w, GdkEventKey *ev, gpointer data)
   bool theirs;
   int x, y;
   GdkModifierType key_state;
-  gdk_window_get_pointer(ev->window, &x, &y, &key_state);
-  key_state = (GdkModifierType)(ev->state);
-  keysym = ev->keyval;
-  theirs = key_press_callback(cp, x, y, ev->state, keysym);
+  gdk_window_get_pointer(EVENT_WINDOW(ev), &x, &y, &key_state);
+  key_state = (GdkModifierType)(EVENT_STATE(ev));
+  keysym = EVENT_KEYVAL(ev);
+  theirs = key_press_callback(cp, x, y, EVENT_STATE(ev), keysym);
   if (theirs) ss->sgx->graph_is_active = true;
   return(true);
 }
@@ -624,9 +624,9 @@ gboolean graph_key_press(GtkWidget *w, GdkEventKey *ev, gpointer data)
 
 static gboolean graph_button_press(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
-  if ((NO_BUCKY_BITS_P(ev->state)) && 
-      (ev->type == GDK_BUTTON_PRESS) && 
-      (ev->button == POPUP_BUTTON))
+  if ((NO_BUCKY_BITS_P(EVENT_STATE(ev))) && 
+      (EVENT_TYPE(ev) == GDK_BUTTON_PRESS) && 
+      (EVENT_BUTTON(ev) == POPUP_BUTTON))
     {
       int pdata;
       pdata = get_user_int_data(G_OBJECT(w));
@@ -640,7 +640,7 @@ static gboolean graph_button_press(GtkWidget *w, GdkEventButton *ev, gpointer da
       gtk_widget_grab_focus(w);
       if ((cp->sound) && (cp->sound->sgx))
 	cp->sound->sgx->mini_active = false;
-      graph_button_press_callback(cp, (int)(ev->x), (int)(ev->y), ev->state, ev->button, ev->time);
+      graph_button_press_callback(cp, (int)(EVENT_X(ev)), (int)(EVENT_Y(ev)), EVENT_STATE(ev), EVENT_BUTTON(ev), EVENT_TIME(ev));
     }
   return(false);
 }
@@ -648,7 +648,7 @@ static gboolean graph_button_press(GtkWidget *w, GdkEventButton *ev, gpointer da
 
 static gboolean graph_button_release(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
-  graph_button_release_callback((chan_info *)data, (int)(ev->x), (int)(ev->y), ev->state, ev->button);
+  graph_button_release_callback((chan_info *)data, (int)(EVENT_X(ev)), (int)(EVENT_Y(ev)), EVENT_STATE(ev), EVENT_BUTTON(ev));
   return(false);
 }
 
@@ -656,25 +656,25 @@ static gboolean graph_button_release(GtkWidget *w, GdkEventButton *ev, gpointer 
 static gboolean graph_scroll(GtkWidget *w, GdkEventScroll *ev, gpointer data)
 {
   /* ev->direction + 4 maps this into mouse-click-hook as button 4 or 5 (!) -- is this a good idea? */
-  graph_button_release_callback((chan_info *)data, (int)(ev->x), (int)(ev->y), ev->state, ev->direction + 4);
+  graph_button_release_callback((chan_info *)data, (int)(EVENT_X(ev)), (int)(EVENT_Y(ev)), EVENT_STATE(ev), EVENT_DIRECTION(ev) + 4);
   return(false);
 }
 
 
 static gboolean graph_button_motion(GtkWidget *w, GdkEventMotion *ev, gpointer data)
 { 
-  if (BUTTON1_PRESSED(ev->state))
+  if (BUTTON1_PRESSED(EVENT_STATE(ev)))
     {
       int x, y;
       GdkModifierType state;
-      if (ev->is_hint)
-	gdk_window_get_pointer(ev->window, &x, &y, &state);
+      if (EVENT_IS_HINT(ev))
+	gdk_window_get_pointer(EVENT_WINDOW(ev), &x, &y, &state);
       else
 	{
-	  x = (int)(ev->x);
-	  y = (int)(ev->y);
+	  x = (int)(EVENT_X(ev));
+	  y = (int)(EVENT_Y(ev));
 	}
-      graph_button_motion_callback((chan_info *)data, x, y, ev->time);
+      graph_button_motion_callback((chan_info *)data, x, y, EVENT_TIME(ev));
     }
   return(false);
 }

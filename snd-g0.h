@@ -83,6 +83,38 @@ typedef enum {WITH_DEFAULT_BACKGROUND, WITH_WHITE_BACKGROUND} snd_entry_bg_t;
 #define TOGGLE_BUTTON_ACTIVE(Button) gtk_toggle_button_get_active((GTK_TOGGLE_BUTTON(Button)))
 #define BIN_CHILD(Bin) gtk_bin_get_child(GTK_BIN(Bin))
 
+#define EVENT_STATE(Ev) (Ev)->state
+/* perhaps #define EVENT_STATE(Ev) ({ GdkModifierType type;  gdk_event_get_state(Ev, &Type); Type; })
+   do we need GDK_EVENT_ANY(Ev)?
+*/
+
+#define EVENT_TIME(Ev) (Ev)->time
+/* perhaps #define EVENT_TIME(Ev) gdk_event_get_time(Ev)
+ */
+
+#define EVENT_X(Ev) (Ev)->x
+/* perhaps #define EVENT_X(Ev) ({ gdouble x, y; gdk_event_get_coords(Ev, &x, &y); x; })
+ */
+
+#define EVENT_Y(Ev) (Ev)->y
+/* perhaps #define EVENT_Y(Ev) ({ gdouble x, y; gdk_event_get_coords(Ev, &x, &y); y; })
+ */
+
+/* no accessors: */
+#define EVENT_WINDOW(Ev)      (Ev)->window
+#define EVENT_BUTTON(Ev)      (Ev)->button
+#define EVENT_TYPE(Ev)        (Ev)->type
+#define EVENT_KEYVAL(Ev)      (Ev)->keyval
+#define EVENT_DIRECTION(Ev)   (Ev)->direction
+#define EVENT_IS_HINT(Ev)     (Ev)->is_hint
+#define EVENT_AREA_WIDTH(Ev)  (Ev)->area.width
+#define EVENT_AREA_HEIGHT(Ev) (Ev)->area.height
+#define EVENT_ATOM(Ev)        (Ev)->atom
+
+/* there's gv.foregound in snd-gchn.c (GdkGCValues)
+ *  and lots of refs to GdkColor fields red|green|blue
+ */
+
 
 #define idle_t guint
 #define idle_func_t gboolean

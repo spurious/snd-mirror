@@ -327,19 +327,19 @@ static void view_all_axes_unlabelled_callback(Widget w, XtPointer info, XtPointe
 static void view_just_x_axis_unlabelled_callback(Widget w, XtPointer info, XtPointer context) {set_show_axes(SHOW_X_AXIS_UNLABELLED);}
 static void view_bare_x_axis_callback(Widget w, XtPointer info, XtPointer context) {set_show_axes(SHOW_BARE_X_AXIS);}
 
+static void view_focus_right_callback(Widget w, XtPointer info, XtPointer context) {set_zoom_focus_style(ZOOM_FOCUS_RIGHT);}
+static void view_focus_left_callback(Widget w, XtPointer info, XtPointer context) {set_zoom_focus_style(ZOOM_FOCUS_LEFT);}
+static void view_focus_middle_callback(Widget w, XtPointer info, XtPointer context) {set_zoom_focus_style(ZOOM_FOCUS_MIDDLE);}
+static void view_focus_active_callback(Widget w, XtPointer info, XtPointer context) {set_zoom_focus_style(ZOOM_FOCUS_ACTIVE);}
+
 
 
 /* -------------------------------- OPTIONS MENU -------------------------------- */
 
-static void options_menu_update_1(Widget w, XtPointer info, XtPointer context) {options_menu_update();}
 static void options_transform_callback(Widget w, XtPointer info, XtPointer context) {fire_up_transform_dialog(true);}
 #if HAVE_EXTENSION_LANGUAGE
 static void options_save_callback(Widget w, XtPointer info, XtPointer context) {save_options_from_menu();}
 #endif
-static void options_focus_right_callback(Widget w, XtPointer info, XtPointer context) {set_zoom_focus_style(ZOOM_FOCUS_RIGHT);}
-static void options_focus_left_callback(Widget w, XtPointer info, XtPointer context) {set_zoom_focus_style(ZOOM_FOCUS_LEFT);}
-static void options_focus_middle_callback(Widget w, XtPointer info, XtPointer context) {set_zoom_focus_style(ZOOM_FOCUS_MIDDLE);}
-static void options_focus_active_callback(Widget w, XtPointer info, XtPointer context) {set_zoom_focus_style(ZOOM_FOCUS_ACTIVE);}
 #if HAVE_EXTENSION_LANGUAGE
 static void options_save_state_callback(Widget w, XtPointer info, XtPointer context) {save_state_from_menu();}
 #endif
@@ -747,6 +747,24 @@ Widget add_menu(void)
   XtAddCallback(view_bare_x_axis_menu, XmNactivateCallback, view_bare_x_axis_callback, NULL);  
   if (show_axes(ss) == SHOW_BARE_X_AXIS) set_sensitive(view_bare_x_axis_menu, false);
 
+  view_focus_style_menu = XmCreatePulldownMenu(view_menu, (char *)"focusstyle", main_args, main_n);
+
+  k = main_n;
+  XtSetArg(main_args[k], XmNsubMenuId, view_focus_style_menu); k++;
+  view_focus_cascade_menu = XtCreateManagedWidget(_("Zoom focus"), xmCascadeButtonWidgetClass, view_menu, main_args, k);
+
+  view_focus_left_menu = XtCreateManagedWidget(_("window left edge"), xmPushButtonWidgetClass, view_focus_style_menu, main_args, main_n);
+  XtAddCallback(view_focus_left_menu, XmNactivateCallback, view_focus_left_callback, NULL);  
+
+  view_focus_right_menu = XtCreateManagedWidget(_("window right edge"), xmPushButtonWidgetClass, view_focus_style_menu, main_args, main_n);
+  XtAddCallback(view_focus_right_menu, XmNactivateCallback, view_focus_right_callback, NULL);  
+
+  view_focus_middle_menu = XtCreateManagedWidget(_("window midpoint"), xmPushButtonWidgetClass, view_focus_style_menu, main_args, main_n);
+  XtAddCallback(view_focus_middle_menu, XmNactivateCallback, view_focus_middle_callback, NULL);  
+
+  view_focus_active_menu = XtCreateManagedWidget(_("cursor or selection"), xmPushButtonWidgetClass, view_focus_style_menu, main_args, main_n);
+  XtAddCallback(view_focus_active_menu, XmNactivateCallback, view_focus_active_callback, NULL);  
+
 
   /* OPTIONS MENU */
   XtSetArg(main_args[main_n], XmNuserData, 3);
@@ -762,24 +780,6 @@ Widget add_menu(void)
   XtAddCallback(options_transform_menu, XmNactivateCallback, options_transform_callback, NULL);
   XtVaSetValues(options_transform_menu, XmNmnemonic, 't', NULL);
 
-
-  options_focus_style_menu = XmCreatePulldownMenu(options_menu, (char *)"focusstyle", main_args, main_n);
-
-  k = main_n;
-  XtSetArg(main_args[k], XmNsubMenuId, options_focus_style_menu); k++;
-  options_focus_cascade_menu = XtCreateManagedWidget(_("Zoom focus"), xmCascadeButtonWidgetClass, options_menu, main_args, k);
-
-  options_focus_left_menu = XtCreateManagedWidget(_("window left edge"), xmPushButtonWidgetClass, options_focus_style_menu, main_args, main_n);
-  XtAddCallback(options_focus_left_menu, XmNactivateCallback, options_focus_left_callback, NULL);  
-
-  options_focus_right_menu = XtCreateManagedWidget(_("window right edge"), xmPushButtonWidgetClass, options_focus_style_menu, main_args, main_n);
-  XtAddCallback(options_focus_right_menu, XmNactivateCallback, options_focus_right_callback, NULL);  
-
-  options_focus_middle_menu = XtCreateManagedWidget(_("window midpoint"), xmPushButtonWidgetClass, options_focus_style_menu, main_args, main_n);
-  XtAddCallback(options_focus_middle_menu, XmNactivateCallback, options_focus_middle_callback, NULL);  
-
-  options_focus_active_menu = XtCreateManagedWidget(_("cursor or selection"), xmPushButtonWidgetClass, options_focus_style_menu, main_args, main_n);
-  XtAddCallback(options_focus_active_menu, XmNactivateCallback, options_focus_active_callback, NULL);  
 
 #if HAVE_EXTENSION_LANGUAGE
   options_save_menu = XtCreateManagedWidget(_("Save options"), xmPushButtonWidgetClass, options_menu, main_args, main_n);
@@ -888,7 +888,6 @@ Widget add_menu(void)
   XtAddCallback(file_cascade_menu, XmNcascadingCallback, file_menu_update_1, NULL);
   XtAddCallback(edit_cascade_menu, XmNcascadingCallback, edit_menu_update_1, NULL);
   XtAddCallback(view_cascade_menu, XmNcascadingCallback, view_menu_update_1, NULL);
-  XtAddCallback(options_cascade_menu, XmNcascadingCallback, options_menu_update_1, NULL);
 
 #ifndef SND_AS_WIDGET
   XtManageChild(main_menu);

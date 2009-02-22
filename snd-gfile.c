@@ -719,9 +719,9 @@ static void file_dir_item_activate_callback(GtkWidget *w, gpointer context)
 static bool fsb_directory_button_press_callback(GdkEventButton *ev, void *data)
 {
   fsb *fs = (fsb *)data;
-  if ((NO_BUCKY_BITS_P(ev->state)) && 
-      (ev->type == GDK_BUTTON_PRESS) && 
-      (ev->button == POPUP_BUTTON))
+  if ((NO_BUCKY_BITS_P(EVENT_STATE(ev))) && 
+      (EVENT_TYPE(ev) == GDK_BUTTON_PRESS) && 
+      (EVENT_BUTTON(ev) == POPUP_BUTTON))
     {
       char *current_filename = NULL;
       int i, dirs_to_display = 0, len = 0;
@@ -776,7 +776,7 @@ static bool fsb_directory_button_press_callback(GdkEventButton *ev, void *data)
 	    (GTK_WIDGET_VISIBLE(fs->file_dir_items[i])))
 	  gtk_widget_hide(fs->file_dir_items[i]);
 
-      gtk_menu_popup(GTK_MENU(fs->dirs_menu), NULL, NULL, NULL, NULL, ev->button, ev->time);
+      gtk_menu_popup(GTK_MENU(fs->dirs_menu), NULL, NULL, NULL, NULL, EVENT_BUTTON(ev), EVENT_TIME(ev));
     }
   return(false);
 }
@@ -825,9 +825,9 @@ static GtkWidget *make_file_list_item(fsb *fs, int choice)
 static bool fsb_files_button_press_callback(GdkEventButton *ev, void *data)
 {
   fsb *fs = (fsb *)data;
-  if ((NO_BUCKY_BITS_P(ev->state)) && 
-      (ev->type == GDK_BUTTON_PRESS) && 
-      (ev->button == POPUP_BUTTON))
+  if ((NO_BUCKY_BITS_P(EVENT_STATE(ev))) && 
+      (EVENT_TYPE(ev) == GDK_BUTTON_PRESS) && 
+      (EVENT_BUTTON(ev) == POPUP_BUTTON))
     {
       int i, items_len;
       if (fs->file_list_items == NULL)
@@ -912,7 +912,7 @@ static bool fsb_files_button_press_callback(GdkEventButton *ev, void *data)
 	    }
 
 	}
-      gtk_menu_popup(GTK_MENU(fs->files_menu), NULL, NULL, NULL, NULL, ev->button, ev->time);
+      gtk_menu_popup(GTK_MENU(fs->files_menu), NULL, NULL, NULL, NULL, EVENT_BUTTON(ev), EVENT_TIME(ev));
     }
   return(false);
 }
@@ -1139,7 +1139,7 @@ static void watch_info_file(struct fam_info *fp, FAMEvent *fe)
 
 static gboolean filer_key_press(GtkWidget *w, GdkEventKey *event, gpointer data)
 {
-  if (event->keyval == GDK_Tab)
+  if (EVENT_KEYVAL(event) == GDK_Tab)
     {
       gtk_entry_set_text(GTK_ENTRY(w), sound_filename_completer(w, (char *)gtk_entry_get_text(GTK_ENTRY(w)), NULL));
       gtk_editable_set_position(GTK_EDITABLE(w), mus_strlen((char *)gtk_entry_get_text(GTK_ENTRY(w))));
@@ -1990,7 +1990,7 @@ static void set_file_dialog_sound_attributes(file_data *fdat, int type, int form
 
 static gboolean data_panel_srate_key_press(GtkWidget *w, GdkEventKey *event, gpointer data)
 {
-  if (event->keyval == GDK_Tab)
+  if (EVENT_KEYVAL(event) == GDK_Tab)
     {
       gtk_entry_set_text(GTK_ENTRY(w), srate_completer(w, (char *)gtk_entry_get_text(GTK_ENTRY(w)), NULL));
       gtk_editable_set_position(GTK_EDITABLE(w), mus_strlen((char *)gtk_entry_get_text(GTK_ENTRY(w))));
@@ -4310,7 +4310,7 @@ static int vf_last_select_state = 0;
 
 static gboolean select_event_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
-  vf_last_select_state = ev->state;
+  vf_last_select_state = EVENT_STATE(ev);
   return(false);
 }
 
@@ -5100,7 +5100,7 @@ static gboolean vf_drawer_button_press(GtkWidget *w, GdkEventButton *ev, gpointe
 {
   view_files_info *vdat = (view_files_info *)data;
   vdat->spf->with_dots = false;
-  if (env_editor_button_press(vdat->spf, (int)(ev->x), (int)(ev->y), ev->time, vdat->amp_env))
+  if (env_editor_button_press(vdat->spf, (int)(EVENT_X(ev)), (int)(EVENT_Y(ev)), EVENT_TIME(ev), vdat->amp_env))
     vf_amp_env_resize(vdat, w);
   return(false);
 }
@@ -5118,19 +5118,19 @@ static gboolean vf_drawer_button_release(GtkWidget *w, GdkEventButton *ev, gpoin
 static gboolean vf_drawer_button_motion(GtkWidget *w, GdkEventMotion *ev, gpointer data)
 { 
   view_files_info *vdat = (view_files_info *)data;
-  if (BUTTON1_PRESSED(ev->state))
+  if (BUTTON1_PRESSED(EVENT_STATE(ev)))
     {
       int x, y;
       GdkModifierType state;
-      if (ev->is_hint)
-	gdk_window_get_pointer(ev->window, &x, &y, &state);
+      if (EVENT_IS_HINT(ev))
+	gdk_window_get_pointer(EVENT_WINDOW(ev), &x, &y, &state);
       else
 	{
-	  x = (int)(ev->x);
-	  y = (int)(ev->y);
+	  x = (int)(EVENT_X(ev));
+	  y = (int)(EVENT_Y(ev));
 	}
       vdat->spf->with_dots = false;
-      env_editor_button_motion(vdat->spf, x, y, ev->time, vdat->amp_env);
+      env_editor_button_motion(vdat->spf, x, y, EVENT_TIME(ev), vdat->amp_env);
       vf_amp_env_resize(vdat, w);
     }
   return(false);

@@ -989,9 +989,9 @@ Widget fire_up_transform_dialog(bool managed)
   if (!transform_dialog)
     {
       Widget mainform, type_frame, type_form, type_label, size_frame, size_form, size_label, display_frame, display_form, display_label;
-      Widget window_frame, window_form, window_label, wavelet_frame, wavelet_form, wavelet_label, graph_frame, graph_form;
-      Widget ab_form, ab_frame, ab_title;
-      Widget se_form, se_frame, se_title;
+      Widget window_frame, window_form, window_label, wavelet_frame, wavelet_form, wavelet_label, graph_frame, graph_form, gsep;
+      Widget ab_form, ab_frame, ab_title, ab_sep;
+      Widget se_form, se_frame, se_title, se_sep;
       XmString s1;
       XmString xhelp, xdismiss, xtitle, bstr, xorient;
       Arg args[32];
@@ -1105,11 +1105,22 @@ Widget fire_up_transform_dialog(bool managed)
       se_title = XtCreateManagedWidget(_("spectrum start/end"), xmLabelWidgetClass, se_form, args, n);
 
       n = 0;
+      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
+      XtSetArg(args[n], XmNtopWidget, se_title); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
+      XtSetArg(args[n], XmNseparatorType, XmSHADOW_ETCHED_IN); n++;
+      XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
+      se_sep = XtCreateManagedWidget("se_sep", xmSeparatorWidgetClass, se_form, args, n);
+
+      n = 0;
       s1 = XmStringCreateLocalized(_("start:0.0  "));
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
-      XtSetArg(args[n], XmNtopWidget, se_title); n++;
+      XtSetArg(args[n], XmNtopWidget, se_sep); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
@@ -1199,11 +1210,22 @@ Widget fire_up_transform_dialog(bool managed)
       ab_title = XtCreateManagedWidget(_("window parameter"), xmLabelWidgetClass, ab_form, args, n);
 
       n = 0;
+      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
+      XtSetArg(args[n], XmNtopWidget, ab_title); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
+      XtSetArg(args[n], XmNseparatorType, XmSHADOW_ETCHED_IN); n++;
+      XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
+      ab_sep = XtCreateManagedWidget("ab_sep", xmSeparatorWidgetClass, ab_form, args, n);
+
+      n = 0;
       s1 = XmStringCreateLocalized(_("alpha:0.0  "));
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
-      XtSetArg(args[n], XmNtopWidget, ab_title); n++;
+      XtSetArg(args[n], XmNtopWidget, ab_sep); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
@@ -1743,15 +1765,25 @@ Widget fire_up_transform_dialog(bool managed)
       /* label should change according to what is being displayed */
 
       n = 0;
-      XtSetArg(args[n], XmNbackground, ss->sgx->graph_color); n++;
+      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNtopWidget, graph_label); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
+      XtSetArg(args[n], XmNseparatorType, XmSHADOW_ETCHED_IN); n++;
+      XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
+      gsep = XtCreateManagedWidget("gsep", xmSeparatorWidgetClass, graph_form, args, n);
+
+      n = 0;
+      XtSetArg(args[n], XmNbackground, ss->sgx->graph_color); n++;
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
+      XtSetArg(args[n], XmNtopWidget, gsep); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNallowResize, true); n++;
       graph_drawer = XtCreateManagedWidget("graph-drawer", xmDrawingAreaWidgetClass, graph_form, args, n);
-
 
       gv.function = GXcopy;
       XtVaGetValues(graph_drawer, XmNbackground, &gv.background, XmNforeground, &gv.foreground, NULL);

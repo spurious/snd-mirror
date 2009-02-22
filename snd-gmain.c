@@ -157,7 +157,7 @@ static gboolean who_called(GtkWidget *w, GdkEvent *event, gpointer context)
 {
   /* watch for communication from some other program via the SND_COMMAND property */
   GdkEventProperty *ev = (GdkEventProperty *)event;
-  if (ev->atom == snd_c)
+  if (EVENT_ATOM(ev) == snd_c)
     {
       GdkAtom type;
       gint format, nitems;

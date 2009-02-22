@@ -3373,7 +3373,7 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   XEN_EVAL_C_STRING("(defmacro use-modules (arg . args) #f)");
   XEN_EVAL_C_STRING("(define (debug-enable . args) #f)");
   XEN_EVAL_C_STRING("(define (read-enable . args) #f)");
-  XEN_EVAL_C_STRING("(define (debug-set! . args) #f)");
+  XEN_EVAL_C_STRING("(define-macro (debug-set! . args) #f)"); /* needs to be a macro so that its arguments are not evaluated */
   XEN_EVAL_C_STRING("(define (make-soft-port . args) #f)");
   XEN_EVAL_C_STRING("(define (current-module) (current-environment))");
 
@@ -3388,6 +3388,9 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   XEN_EVAL_C_STRING("(define (throw . args) (apply error args))"); /* selection.scm uses this */
 
   XEN_EVAL_C_STRING("(defmacro declare args `(snd-declare ',args))");
+
+  XEN_EVAL_C_STRING("(define (symbol-append . args) (string->symbol (apply string-append (map symbol->string args))))");
+  /* taken from guile/ice-9/boot9.scm, used by KM's stuff (gui.scm etc) */
 
   XEN_EVAL_C_STRING("\
         (define (apropos name)\

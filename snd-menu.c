@@ -103,16 +103,12 @@ void view_menu_update(void)
   set_menu_label(view_controls_menu, (in_show_controls(ss)) ? _("Hide controls") : _("Show controls"));
 
   /* set_sensitive(view_files_menu, get_view_files_end() >= 0); */
-}
 
-
-void options_menu_update(void)
-{
   /* zoom focus style */
-  set_sensitive(options_focus_left_menu,   zoom_focus_style(ss) != ZOOM_FOCUS_LEFT);
-  set_sensitive(options_focus_right_menu,  zoom_focus_style(ss) != ZOOM_FOCUS_RIGHT);
-  set_sensitive(options_focus_middle_menu, zoom_focus_style(ss) != ZOOM_FOCUS_MIDDLE);
-  set_sensitive(options_focus_active_menu, zoom_focus_style(ss) != ZOOM_FOCUS_ACTIVE);
+  set_sensitive(view_focus_left_menu,   zoom_focus_style(ss) != ZOOM_FOCUS_LEFT);
+  set_sensitive(view_focus_right_menu,  zoom_focus_style(ss) != ZOOM_FOCUS_RIGHT);
+  set_sensitive(view_focus_middle_menu, zoom_focus_style(ss) != ZOOM_FOCUS_MIDDLE);
+  set_sensitive(view_focus_active_menu, zoom_focus_style(ss) != ZOOM_FOCUS_ACTIVE);
 }
 
 

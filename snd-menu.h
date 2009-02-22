@@ -17,8 +17,6 @@ enum {m_menu,
           h_delete_menu, h_reverb_menu, h_debug_menu, h_region_menu, h_selection_menu, h_colors_menu,
         o_menu, o_cascade_menu,
           o_transform_menu,
-          o_focus_style_menu, o_focus_cascade_menu,
-            o_focus_right_menu, o_focus_left_menu, o_focus_middle_menu, o_focus_active_menu,
           o_save_menu, o_save_state_menu, o_sep_menu, o_preferences_menu,
         v_menu, v_cascade_menu,
           v_graph_style_menu, v_graph_style_cascade_menu,
@@ -33,6 +31,8 @@ enum {m_menu,
             v_x_axis_seconds_menu, v_x_axis_samples_menu, v_x_axis_percentage_menu, v_x_axis_beats_menu, v_x_axis_measures_menu, v_x_axis_clock_menu,
           v_axes_menu, v_axes_cascade_menu,
           v_no_axes_menu, v_all_axes_menu, v_just_x_axis_menu, v_all_axes_unlabelled_menu, v_just_x_axis_unlabelled_menu, v_bare_x_axis_menu,
+          v_focus_style_menu, v_focus_cascade_menu,
+            v_focus_right_menu, v_focus_left_menu, v_focus_middle_menu, v_focus_active_menu,
         v_sep2_menu,
       NUM_MENU_WIDGETS
 };
@@ -105,12 +105,6 @@ enum {m_menu,
 #define options_menu (ss->sgx->mw[o_menu])
 #define options_cascade_menu (ss->sgx->mw[o_cascade_menu])
 #define options_transform_menu (ss->sgx->mw[o_transform_menu])
-#define options_focus_style_menu (ss->sgx->mw[o_focus_style_menu])
-#define options_focus_cascade_menu (ss->sgx->mw[o_focus_cascade_menu])
-#define options_focus_right_menu (ss->sgx->mw[o_focus_right_menu])
-#define options_focus_left_menu (ss->sgx->mw[o_focus_left_menu])
-#define options_focus_middle_menu (ss->sgx->mw[o_focus_middle_menu])
-#define options_focus_active_menu (ss->sgx->mw[o_focus_active_menu])
 #define options_save_menu (ss->sgx->mw[o_save_menu])
 #define options_save_state_menu (ss->sgx->mw[o_save_state_menu])
 #define options_sep_menu (ss->sgx->mw[o_sep_menu])
@@ -155,6 +149,12 @@ enum {m_menu,
 #define view_just_x_axis_unlabelled_menu (ss->sgx->mw[v_just_x_axis_unlabelled_menu])
 #define view_bare_x_axis_menu (ss->sgx->mw[v_bare_x_axis_menu])
 #define view_sep2_menu (ss->sgx->mw[v_sep2_menu])
+#define view_focus_style_menu (ss->sgx->mw[v_focus_style_menu])
+#define view_focus_cascade_menu (ss->sgx->mw[v_focus_cascade_menu])
+#define view_focus_right_menu (ss->sgx->mw[v_focus_right_menu])
+#define view_focus_left_menu (ss->sgx->mw[v_focus_left_menu])
+#define view_focus_middle_menu (ss->sgx->mw[v_focus_middle_menu])
+#define view_focus_active_menu (ss->sgx->mw[v_focus_active_menu])
 
 enum {W_pop_play, W_pop_undo, W_pop_redo, W_pop_save, W_pop_info, W_pop_apply, W_pop_reset, NUM_POPUP_WIDGETS};
 
@@ -169,7 +169,6 @@ enum {W_pop_play, W_pop_undo, W_pop_redo, W_pop_save, W_pop_info, W_pop_apply, W
 
 void edit_menu_update(void);
 void view_menu_update(void);
-void options_menu_update(void);
 void file_menu_update(void);
 void popup_menu_update(void);
 void update_file_from_menu(void);
