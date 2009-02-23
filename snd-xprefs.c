@@ -1231,6 +1231,10 @@ static XColor *rgb_to_color_1(Float r, Float g, Float b)
 }
 
 
+#define COLOR_MAX 90
+#define COLOR_MAXF 90.0
+#define COLOR_MARGIN 1
+
 static color_t rgb_to_color(Float r, Float g, Float b)
 {
   color_t temp;
@@ -1256,6 +1260,18 @@ static void pixel_to_rgb(Pixel pix, float *r, float *g, float *b)
 }
 
 
+static void XmScrollBarGetValue(Widget w, int *val)
+{
+  XtVaGetValues(w, XmNvalue, val, NULL);
+}
+
+
+static void XmScrollBarSetValue(Widget w, int val)
+{
+  XtVaSetValues(w, XmNvalue, val, NULL);
+}
+
+
 static void reflect_color(prefs_info *prf)
 {
   int ir = 0, ig = 0, ib = 0;
@@ -1263,11 +1279,11 @@ static void reflect_color(prefs_info *prf)
   XColor *current_color;
   Pixel pixel;
 
-  XmScaleGetValue(prf->rscl, &ir);
-  XmScaleGetValue(prf->gscl, &ig);
-  XmScaleGetValue(prf->bscl, &ib);
+  XmScrollBarGetValue(prf->rscl, &ir);
+  XmScrollBarGetValue(prf->gscl, &ig);
+  XmScrollBarGetValue(prf->bscl, &ib);
 
-  current_color = rgb_to_color_1(ir / 100.0, ig / 100.0, ib / 100.0);
+  current_color = rgb_to_color_1(ir / COLOR_MAXF, ig / COLOR_MAXF, ib / COLOR_MAXF);
   r = RGB_TO_FLOAT(current_color->red);
   g = RGB_TO_FLOAT(current_color->green);
   b = RGB_TO_FLOAT(current_color->blue);
@@ -1321,7 +1337,9 @@ static void prefs_r_callback(Widget w, XtPointer context, XtPointer info)
   redirect_errors_to(errors_to_color_text, (void *)prf);
   r = (float)string_to_Float(str, 0.0, "red amount");
   redirect_errors_to(NULL, NULL);
-  XmScaleSetValue(prf->rscl, mus_iclamp(0, (int)(100 * r), 100));
+
+  XmScrollBarSetValue(prf->rscl, mus_iclamp(0, (int)(COLOR_MAX * r), COLOR_MAX));
+
   if (!(prf->got_error)) reflect_color(prf);
   if (str) XtFree(str);
 }
@@ -1336,7 +1354,9 @@ static void prefs_g_callback(Widget w, XtPointer context, XtPointer info)
   redirect_errors_to(errors_to_color_text, (void *)prf);
   r = (float)string_to_Float(str, 0.0, "green amount");
   redirect_errors_to(NULL, NULL);
-  XmScaleSetValue(prf->gscl, mus_iclamp(0, (int)(100 * r), 100));
+
+  XmScrollBarSetValue(prf->gscl, mus_iclamp(0, (int)(COLOR_MAX * r), COLOR_MAX));
+
   if (!(prf->got_error)) reflect_color(prf);
   if (str) XtFree(str);
 }
@@ -1351,7 +1371,9 @@ static void prefs_b_callback(Widget w, XtPointer context, XtPointer info)
   redirect_errors_to(errors_to_color_text, (void *)prf);
   r = (float)string_to_Float(str, 0.0, "blue amount");
   redirect_errors_to(NULL, NULL);
-  XmScaleSetValue(prf->bscl, mus_iclamp(0, (int)(100 * r), 100));
+
+  XmScrollBarSetValue(prf->bscl, mus_iclamp(0, (int)(COLOR_MAX * r), COLOR_MAX));
+
   if (!(prf->got_error)) reflect_color(prf);
   if (str) XtFree(str);
 }
@@ -1364,11 +1386,11 @@ static void prefs_call_color_func_callback(Widget w, XtPointer context, XtPointe
     {
       int ir = 0, ig = 0, ib = 0;
 
-      XmScaleGetValue(prf->rscl, &ir);
-      XmScaleGetValue(prf->gscl, &ig);
-      XmScaleGetValue(prf->bscl, &ib);
+      XmScrollBarGetValue(prf->rscl, &ir);
+      XmScrollBarGetValue(prf->gscl, &ig);
+      XmScrollBarGetValue(prf->bscl, &ib);
 
-      (*(prf->color_func))(prf, (float)ir / 100.0, (float)ig / 100.0, (float)ib / 100.0);
+      (*(prf->color_func))(prf, (float)ir / COLOR_MAXF, (float)ig / COLOR_MAXF, (float)ib / COLOR_MAXF);
     }
 }
 
@@ -1378,11 +1400,11 @@ static void scale_set_color(prefs_info *prf, color_t pixel)
   float r = 0.0, g = 0.0, b = 0.0;
   pixel_to_rgb(pixel, &r, &g, &b);
   float_to_textfield(prf->rtxt, r);
-  XmScaleSetValue(prf->rscl, (int)(100 * r));
+  XmScrollBarSetValue(prf->rscl, (int)(COLOR_MAX * r));
   float_to_textfield(prf->gtxt, g);
-  XmScaleSetValue(prf->gscl, (int)(100 * g));
+  XmScrollBarSetValue(prf->gscl, (int)(COLOR_MAX * g));
   float_to_textfield(prf->btxt, b);
-  XmScaleSetValue(prf->bscl, (int)(100 * b));
+  XmScrollBarSetValue(prf->bscl, (int)(COLOR_MAX * b));
   XtVaSetValues(prf->color, XmNbackground, pixel, NULL);
 }
 
@@ -1443,6 +1465,9 @@ static prefs_info *prefs_color_selector_row(const char *label, const char *varna
   
   n = 0;
   XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
+  XtSetArg(args[n], XmNforeground, red); n++;
+  XtSetArg(args[n], XmNsliderVisual, XmFOREGROUND_COLOR); n++;
+  XtSetArg(args[n], XmNsliderMark, XmTHUMB_MARK); n++;
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNtopWidget, prf->label); n++;
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
@@ -1456,54 +1481,64 @@ static prefs_info *prefs_color_selector_row(const char *label, const char *varna
       XtSetArg(args[n], XmNleftPosition, FIRST_COLOR_POSITION); n++;
     }
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_POSITION); n++;
-  XtSetArg(args[n], XmNrightPosition, SECOND_COLOR_POSITION); n++;
+  XtSetArg(args[n], XmNrightPosition, SECOND_COLOR_POSITION - COLOR_MARGIN); n++;
   XtSetArg(args[n], XmNmarginHeight, 0); n++;
-  XtSetArg(args[n], XmNborderWidth, 1); n++;
-  XtSetArg(args[n], XmNborderColor, red); n++;
+  /* scale widget borders are messed up in some Motifs -- they aren't erased correctly in a scrolled window 
+   *   so, try to use a scrollbar instead.
+   */
+  XtSetArg(args[n], XmNmaximum, 100); n++;
+  XtSetArg(args[n], XmNheight, 16); n++;
   XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
-  XtSetArg(args[n], XmNshowValue, XmNONE); n++;
-  XtSetArg(args[n], XmNvalue, (int)(100 * r)); n++;
+  XtSetArg(args[n], XmNshowArrows, XmNONE); n++;
+  XtSetArg(args[n], XmNvalue, (int)(COLOR_MAX * r)); n++;
   XtSetArg(args[n], XmNdragCallback, n1); n++;
   XtSetArg(args[n], XmNvalueChangedCallback, n1); n++;
-  prf->rscl = XtCreateManagedWidget("", xmScaleWidgetClass, box, args, n);
+  prf->rscl = XtCreateManagedWidget("", xmScrollBarWidgetClass, box, args, n);
+
 
   n = 0;
   XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
+  XtSetArg(args[n], XmNforeground, green); n++;
+  XtSetArg(args[n], XmNsliderVisual, XmFOREGROUND_COLOR); n++;
+  XtSetArg(args[n], XmNsliderMark, XmTHUMB_MARK); n++;
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNtopWidget, prf->label); n++;
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
-  XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
-  XtSetArg(args[n], XmNleftWidget, prf->rscl); n++;
+  XtSetArg(args[n], XmNleftAttachment, XmATTACH_POSITION); n++;
+  XtSetArg(args[n], XmNleftPosition, SECOND_COLOR_POSITION + COLOR_MARGIN); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_POSITION); n++;
-  XtSetArg(args[n], XmNrightPosition, THIRD_COLOR_POSITION); n++;
+  XtSetArg(args[n], XmNrightPosition, THIRD_COLOR_POSITION - COLOR_MARGIN); n++;
   XtSetArg(args[n], XmNmarginHeight, 0); n++;
-  XtSetArg(args[n], XmNborderWidth, 1); n++;
-  XtSetArg(args[n], XmNborderColor, green); n++;
+  XtSetArg(args[n], XmNmaximum, 100); n++;
+  XtSetArg(args[n], XmNheight, 16); n++;
   XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
-  XtSetArg(args[n], XmNshowValue, XmNONE); n++;
-  XtSetArg(args[n], XmNvalue, (int)(100 * g)); n++;
+  XtSetArg(args[n], XmNshowArrows, XmNONE); n++;
+  XtSetArg(args[n], XmNvalue, (int)(COLOR_MAX * g)); n++;
   XtSetArg(args[n], XmNdragCallback, n1); n++;
   XtSetArg(args[n], XmNvalueChangedCallback, n1); n++;
-  prf->gscl = XtCreateManagedWidget("", xmScaleWidgetClass, box, args, n);
+  prf->gscl = XtCreateManagedWidget("", xmScrollBarWidgetClass, box, args, n);
 
   n = 0;
   XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
+  XtSetArg(args[n], XmNforeground, blue); n++;
+  XtSetArg(args[n], XmNsliderVisual, XmFOREGROUND_COLOR); n++;
+  XtSetArg(args[n], XmNsliderMark, XmTHUMB_MARK); n++;
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNtopWidget, prf->label); n++;
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
-  XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
-  XtSetArg(args[n], XmNleftWidget, prf->gscl); n++;
+  XtSetArg(args[n], XmNleftAttachment, XmATTACH_POSITION); n++;
+  XtSetArg(args[n], XmNleftPosition, THIRD_COLOR_POSITION + COLOR_MARGIN); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_POSITION); n++;
   XtSetArg(args[n], XmNrightPosition, 80); n++;
   XtSetArg(args[n], XmNmarginHeight, 0); n++;
-  XtSetArg(args[n], XmNborderWidth, 1); n++;
-  XtSetArg(args[n], XmNborderColor, blue); n++;
+  XtSetArg(args[n], XmNmaximum, 100); n++;
+  XtSetArg(args[n], XmNheight, 16); n++;
   XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
-  XtSetArg(args[n], XmNshowValue, XmNONE); n++;
-  XtSetArg(args[n], XmNvalue, (int)(100 * b)); n++;
+  XtSetArg(args[n], XmNshowArrows, XmNONE); n++;
+  XtSetArg(args[n], XmNvalue, (int)(COLOR_MAX * b)); n++;
   XtSetArg(args[n], XmNdragCallback, n1); n++;
   XtSetArg(args[n], XmNvalueChangedCallback, n1); n++;
-  prf->bscl = XtCreateManagedWidget("", xmScaleWidgetClass, box, args, n);
+  prf->bscl = XtCreateManagedWidget("", xmScrollBarWidgetClass, box, args, n);
 
   XtAddCallback(prf->rtxt, XmNactivateCallback, prefs_r_callback, (XtPointer)prf);
   XtAddCallback(prf->gtxt, XmNactivateCallback, prefs_g_callback, (XtPointer)prf);
@@ -1580,6 +1615,7 @@ static Widget make_top_level_label(const char *label, Widget parent)
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;
+  XtSetArg(args[n], XmNheight, 32); n++;
   return(XtCreateManagedWidget(label, xmLabelWidgetClass, parent, args, n));
 }
 
@@ -1605,13 +1641,14 @@ static Widget make_inner_label(const char *label, Widget parent, Widget top_widg
   int n;
   Arg args[20];
   n = 0;
-  XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
+  XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
   XtSetArg(args[n], XmNtopWidget, top_widget); n++;
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
   XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;
+  XtSetArg(args[n], XmNheight, 32); n++;
   return(XtCreateManagedWidget(label, xmLabelWidgetClass, parent, args, n));
 }
 

@@ -2274,7 +2274,7 @@ static file_data *make_file_data_panel(GtkWidget *parent, const char *name,
 				       dialog_comment_t with_comment, 
 				       header_choice_t header_choice)
 {
-  GtkWidget *form, *scbox, *combox = NULL;
+  GtkWidget *form, *scbox, *combox = NULL, *frame, *frame_box;
   file_data *fdat;
   int nformats = 0, nheaders = 0;
   const char **formats = NULL, **headers = NULL;
@@ -2293,8 +2293,16 @@ static file_data *make_file_data_panel(GtkWidget *parent, const char *name,
   formats = type_and_format_to_position(fdat, header_type, data_format);
   nformats = fdat->formats;
 
+  frame = gtk_frame_new(NULL);
+  gtk_box_pack_start(GTK_BOX(parent), frame, false, false, 8);
+  gtk_widget_show(frame);
+
+  frame_box = gtk_vbox_new(false, 0);
+  gtk_container_add(GTK_CONTAINER(frame), frame_box);
+  gtk_widget_show(frame_box);
+
   form = gtk_hbox_new(false, 8);
-  gtk_box_pack_start(GTK_BOX(parent), form, false, false, 4);
+  gtk_box_pack_start(GTK_BOX(frame_box), form, false, false, 4);
   gtk_widget_show(form);
 
   /* header type */
@@ -2420,9 +2428,14 @@ static file_data *make_file_data_panel(GtkWidget *parent, const char *name,
   if (with_comment != WITHOUT_COMMENT_FIELD)
     {
       GtkWidget *frame, *comment_label;
+      GtkWidget *w1;
+
+      w1 = gtk_vseparator_new();
+      gtk_box_pack_start(GTK_BOX(frame_box), w1, false, false, 4);
+      gtk_widget_show(w1);
 
       combox = gtk_hbox_new(false, 0);
-      gtk_box_pack_start(GTK_BOX(parent), combox, true, true, 4);
+      gtk_box_pack_start(GTK_BOX(frame_box), combox, true, true, 4);
       gtk_widget_show(combox);
 
       comment_label = snd_gtk_highlight_label_new(_("comment:"));

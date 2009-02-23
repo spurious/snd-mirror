@@ -565,9 +565,9 @@ void widget_modify_bg(GtkWidget *w, GtkStateType type, color_t color)
 #if USE_CAIRO
   /* the color has to stick around??? */
   /* another stop-gap: allocate a color each time... */
-  gtk_widget_modify_bg(w, GTK_STATE_NORMAL, rgb_to_gdk_color(color));
+  gtk_widget_modify_bg(w, type, rgb_to_gdk_color(color));
 #else
-  gtk_widget_modify_bg(w, GTK_STATE_NORMAL, color);
+  gtk_widget_modify_bg(w, type, color);
 #endif
 }
 
@@ -575,9 +575,9 @@ void widget_modify_bg(GtkWidget *w, GtkStateType type, color_t color)
 void widget_modify_fg(GtkWidget *w, GtkStateType type, color_t color)
 {
 #if USE_CAIRO
-  gtk_widget_modify_fg(w, GTK_STATE_NORMAL, rgb_to_gdk_color(color));
+  gtk_widget_modify_fg(w, type, rgb_to_gdk_color(color));
 #else
-  gtk_widget_modify_fg(w, GTK_STATE_NORMAL, color);
+  gtk_widget_modify_fg(w, type, color);
 #endif
 }
 
@@ -585,9 +585,9 @@ void widget_modify_fg(GtkWidget *w, GtkStateType type, color_t color)
 void widget_modify_base(GtkWidget *w, GtkStateType type, color_t color)
 {
 #if USE_CAIRO
-  gtk_widget_modify_base(w, GTK_STATE_NORMAL, rgb_to_gdk_color(color));
+  gtk_widget_modify_base(w, type, rgb_to_gdk_color(color));
 #else
-  gtk_widget_modify_base(w, GTK_STATE_NORMAL, color);
+  gtk_widget_modify_base(w, type, color);
 #endif
 }
 
@@ -595,9 +595,9 @@ void widget_modify_base(GtkWidget *w, GtkStateType type, color_t color)
 void widget_modify_text(GtkWidget *w, GtkStateType type, color_t color)
 {
 #if USE_CAIRO
-  gtk_widget_modify_text(w, GTK_STATE_NORMAL, rgb_to_gdk_color(color));
+  gtk_widget_modify_text(w, type, rgb_to_gdk_color(color));
 #else
-  gtk_widget_modify_text(w, GTK_STATE_NORMAL, color);
+  gtk_widget_modify_text(w, type, color);
 #endif
 }
 

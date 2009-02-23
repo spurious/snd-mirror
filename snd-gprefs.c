@@ -1341,9 +1341,10 @@ static prefs_info *prefs_color_selector_row(const char *label, const char *varna
   prf->radj = gtk_adjustment_new(r, 0.0, 1.01, 0.001, 0.01, .01);
   prf->rscl = gtk_hscale_new(GTK_ADJUSTMENT(prf->radj));
   gtk_box_pack_start(GTK_BOX(row2), prf->rscl, true, true, 4);
-  /* normal = slider, active = trough, selected unused */
-  widget_modify_bg(prf->rscl, GTK_STATE_NORMAL, rscl_color);
-  widget_modify_bg(prf->rscl, GTK_STATE_PRELIGHT, rscl_color);
+
+  /* TODO: check cairo -- may need gtk_widget_modify_bg(prf->rscl, GTK_STATE_SELECTED, rgb_to_gdk_color(rscl_color)) here */
+
+  gtk_widget_modify_bg(prf->rscl, GTK_STATE_SELECTED, rscl_color);
   gtk_widget_show(prf->rscl);
   gtk_range_set_update_policy(GTK_RANGE(GTK_SCALE(prf->rscl)), GTK_UPDATE_CONTINUOUS);
   gtk_scale_set_draw_value(GTK_SCALE(prf->rscl), false);
@@ -1351,8 +1352,7 @@ static prefs_info *prefs_color_selector_row(const char *label, const char *varna
   prf->gadj = gtk_adjustment_new(g, 0.0, 1.01, 0.001, 0.01, .01);
   prf->gscl = gtk_hscale_new(GTK_ADJUSTMENT(prf->gadj));
   gtk_box_pack_start(GTK_BOX(row2), prf->gscl, true, true, 4);
-  widget_modify_bg(prf->gscl, GTK_STATE_NORMAL, gscl_color);
-  widget_modify_bg(prf->gscl, GTK_STATE_PRELIGHT, gscl_color);
+  gtk_widget_modify_bg(prf->gscl, GTK_STATE_SELECTED, gscl_color);
   gtk_widget_show(prf->gscl);
   gtk_range_set_update_policy(GTK_RANGE(GTK_SCALE(prf->gscl)), GTK_UPDATE_CONTINUOUS);
   gtk_scale_set_draw_value(GTK_SCALE(prf->gscl), false);
@@ -1360,8 +1360,7 @@ static prefs_info *prefs_color_selector_row(const char *label, const char *varna
   prf->badj = gtk_adjustment_new(b, 0.0, 1.01, 0.001, 0.01, .01);
   prf->bscl = gtk_hscale_new(GTK_ADJUSTMENT(prf->badj));
   gtk_box_pack_start(GTK_BOX(row2), prf->bscl, true, true, 4);
-  widget_modify_bg(prf->bscl, GTK_STATE_NORMAL, bscl_color);
-  widget_modify_bg(prf->bscl, GTK_STATE_PRELIGHT, bscl_color);
+  gtk_widget_modify_bg(prf->bscl, GTK_STATE_SELECTED, bscl_color);
   gtk_widget_show(prf->bscl);
   gtk_range_set_update_policy(GTK_RANGE(GTK_SCALE(prf->bscl)), GTK_UPDATE_CONTINUOUS);
   gtk_scale_set_draw_value(GTK_SCALE(prf->bscl), false);
@@ -1433,8 +1432,13 @@ static GtkWidget *make_inter_variable_separator(GtkWidget *topics)
 
 static GtkWidget *make_top_level_label(const char *label, GtkWidget *parent)
 {
-  GtkWidget *w;
+  GtkWidget *w, *w1, *w2;
   ASSERT_WIDGET_TYPE(GTK_IS_VBOX(parent), parent);
+
+  w1 = gtk_vseparator_new();
+  gtk_box_pack_start(GTK_BOX(parent), w1, false, false, 8);
+  gtk_widget_show(w1);
+
 #if HAVE_GTK_BUTTON_SET_ALIGNMENT
   w = snd_gtk_highlight_label_new(label);
   gtk_button_set_alignment(GTK_BUTTON(w), 0.01, 0.5);
@@ -1445,6 +1449,11 @@ static GtkWidget *make_top_level_label(const char *label, GtkWidget *parent)
 #endif
   gtk_box_pack_start(GTK_BOX(parent), w, false, false, 0);
   gtk_widget_show(w);
+
+  w2 = gtk_vseparator_new();
+  gtk_box_pack_start(GTK_BOX(parent), w2, false, false, 4);
+  gtk_widget_show(w2);
+
   return(w);
 }
 
@@ -1465,8 +1474,13 @@ static GtkWidget *make_top_level_box(GtkWidget *topics)
 
 static GtkWidget *make_inner_label(const char *label, GtkWidget *parent)
 {
-  GtkWidget *w;
+  GtkWidget *w, *w1, *w2;
   ASSERT_WIDGET_TYPE(GTK_IS_VBOX(parent), parent);
+
+  w1 = gtk_vseparator_new();
+  gtk_box_pack_start(GTK_BOX(parent), w1, false, false, 8);
+  gtk_widget_show(w1);
+
 #if HAVE_GTK_BUTTON_SET_ALIGNMENT
   w = snd_gtk_highlight_label_new(label);
   gtk_button_set_alignment(GTK_BUTTON(w), 0.0, 0.5);
@@ -1475,6 +1489,11 @@ static GtkWidget *make_inner_label(const char *label, GtkWidget *parent)
 #endif
   gtk_box_pack_start(GTK_BOX(parent), w, false, false, 0);
   gtk_widget_show(w);
+
+  w2 = gtk_vseparator_new();
+  gtk_box_pack_start(GTK_BOX(parent), w2, false, false, 4);
+  gtk_widget_show(w2);
+
   return(w);
 }
 
@@ -1660,9 +1679,9 @@ widget_t start_preferences_dialog(void)
   widgets_group = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
   help_group = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
 
-  rscl_color = rgb_to_color(1.0, 0.5, 0.5);
-  gscl_color = rgb_to_color(0.5, 0.9, 0.5);
-  bscl_color = rgb_to_color(0.7, 0.8, 0.9);
+  rscl_color = rgb_to_color(1.0, 0.0, 0.0);
+  gscl_color = rgb_to_color(0.0, 1.0, 0.0);
+  bscl_color = rgb_to_color(0.0, 0.0, 1.0);
 
 
   /* ---------------- overall behavior ---------------- */

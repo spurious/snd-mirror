@@ -1571,6 +1571,26 @@ static gboolean stop_sign_press(GtkWidget *w, GdkEventButton *ev, gpointer data)
 }
 
 
+static void show_sync_button(snd_info *sp)
+{
+  gtk_widget_show(SYNC_BUTTON(sp));
+}
+
+
+static void reflect_file_close_in_sync(ss_watcher_reason_t reason, void *ignore)
+{
+  if ((reason == SS_FILE_CLOSED) && /* snd-file.c */
+      (ss->active_sounds == 1))
+    {
+      snd_info *sp;
+      sp = any_selected_sound();
+      if ((sp) && (sp->nchans == 1))
+	gtk_widget_hide(SYNC_BUTTON(sp));
+    }
+}
+
+
+
 
 
 /* -------- SOUND PANE -------- */
@@ -2078,7 +2098,19 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
     }
 
   if (sp->nchans == 1) 
-    gtk_widget_hide(UNITE_BUTTON(sp));
+    {
+      gtk_widget_hide(UNITE_BUTTON(sp));
+      if (ss->active_sounds == 0)
+	gtk_widget_hide(SYNC_BUTTON(sp));
+      else
+	{
+	  for_each_sound(show_sync_button); 
+	}
+    }
+  else
+    {
+      for_each_sound(show_sync_button); 
+    }
 
   add_sound_data(filename, sp, WITH_GRAPH);
 
@@ -2342,5 +2374,7 @@ pane-box (10)name-form"
 
 void g_init_gxsnd(void) 
 {
+  add_ss_watcher(SS_FILE_OPEN_WATCHER, reflect_file_close_in_sync, NULL);
+
   XEN_DEFINE_PROCEDURE(S_sound_widgets, g_sound_widgets_w, 0, 1, 0, H_sound_widgets);
 }

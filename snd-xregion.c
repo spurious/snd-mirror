@@ -562,7 +562,8 @@ static void make_region_dialog(void)
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNorientation, XmVERTICAL); n++;
-  XtSetArg(args[n], XmNseparatorType, XmSHADOW_ETCHED_IN); n++;
+  XtSetArg(args[n], XmNseparatorType, XmNO_LINE); n++;
+  XtSetArg(args[n], XmNwidth, 8); n++;
   infosep = XtCreateManagedWidget("infosep", xmSeparatorWidgetClass, toppane, args, n);
 
   n = 0;

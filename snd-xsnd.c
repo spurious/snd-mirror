@@ -2881,10 +2881,10 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
 
       if (ss->active_sounds == 0) /* ticked at the end in snd-file.c */
 	{
-	  /* TODO: gtk sync also */
-	  /* TODO: if no regions and selection-creates-region is false, unmanage that menu item? */
+	  /* TODO: need spacer between sound panes in gtk */
+	  /* TODO: if no regions and selection-creates-region is false, unmanage that menu item? --without-regions? */
 	  /* PERHAPS: thumbnail sketch in open info window? */
-	  /* TODO: gtk? "comment" label misplaced in save-as dialog and extract channel needs "0" + shorten */
+	  /* TODO: undo the basic-color bg in gtk prefs! */
 
 	  XmToggleButtonSetState(SYNC_BUTTON(sp), false, false);
 	  XtUnmanageChild(SYNC_BUTTON(sp));
