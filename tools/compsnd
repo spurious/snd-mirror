@@ -691,6 +691,10 @@ echo ' '
 ./snd -noinit --features "'clm 'snd-gtk 'gsl 'gl 'snd-debug 'snd-s7 'gl2ps"
 
 
+make allclean
+rm -f snd
+rm -f config.cache
+
 echo ' -------------------------------------------------------------------------------- '
 echo ' ----                 --with-gtk --with-gmp                                  ---- '
 echo ' -------------------------------------------------------------------------------- '

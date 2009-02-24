@@ -1064,7 +1064,7 @@
 	(snd-display ";ladspa-dir set def: ~A" (ladspa-dir)))
     (set! (tiny-font) (tiny-font))
     (if (and (not (equal? (tiny-font) "6x12"))
-	     (not (equal? (tiny-font) "Monospace 8")))
+	     (not (equal? (tiny-font) "Sans 8")))
 	(snd-display ";tiny-font set def: ~A" (tiny-font)))
     (set! (transform-type) (transform-type))
     (if (not (equal? (transform-type)  0 )) 
@@ -1344,7 +1344,7 @@
       'temp-dir (temp-dir) #f 
       'time-graph-type (time-graph-type) graph-once
       'time-graph? (without-errors (time-graph?)) 'no-such-sound
-      'tiny-font (tiny-font) (if (provided? 'snd-motif) "6x12" "Monospace 8")
+      'tiny-font (tiny-font) (if (provided? 'snd-motif) "6x12" "Sans 8")
       'tracking-cursor-style (tracking-cursor-style) cursor-cross
       'transform-graph-type (transform-graph-type) 0
       'transform-graph? (without-errors (transform-graph?)) 'no-such-sound
@@ -1937,7 +1937,7 @@
 	(list 'speed-control-style speed-control-style 0 1)
 	(list 'speed-control-tones speed-control-tones 12 18)
 	(list 'sync sync 0 1)
-	(list 'tiny-font tiny-font (if (provided? 'snd-gtk) "Monospace 8" "6x12") (if (provided? 'snd-gtk) "Monospace 10" "9x15"))
+	(list 'tiny-font tiny-font (if (provided? 'snd-gtk) "Sans 8" "6x12") (if (provided? 'snd-gtk) "Monospace 10" "9x15"))
 	(list 'transform-type transform-type 0 1)
 	(list 'with-verbose-cursor with-verbose-cursor #f #t)
 	(list 'wavelet-type wavelet-type 0 1)
@@ -16690,6 +16690,7 @@ EDITS: 2
     (if (odd? clmtest) (set! (run-safety) 1) (set! (run-safety) 0))
 
     (numerical-reality-checks)
+
     (if (mus-generator? 321) (snd-display ";123 is a gen?"))
     (if (mus-generator? (list 321)) (snd-display ";(123) is a gen?"))
     (if (mus-generator? (list 'hi 321)) (snd-display ";(hi 123) is a gen?"))
@@ -17695,7 +17696,7 @@ EDITS: 2
     (test-gen-equal (make-comb 0.7 3 :initial-contents '(1.0 0.0 0.0)) 
 		    (make-comb 0.7 3 :initial-contents '(1.0 0.0 0.0)) 
 		    (make-comb 0.7 3 :initial-contents '(1.0 1.0 1.0)))
-    
+
     (let* ((del (make-comb 0.0 5 :max-size 8)))
       (comb del 1.0)
       (do ((i 0 (+ 1 i))) ((= i 4)) (comb del 0.0))
@@ -18696,7 +18697,7 @@ EDITS: 2
 	(set! mx (max mx (abs (- (gen1) (gen2))))))
       (if (fneq mx 0.0)
 	  (snd-display ";ncos +-: ~A" mx)))
-    
+
     (let ((gen (make-nsin 440.0 10))
 	  (v0 (make-vct 10))
 	  (gen1 (make-nsin 440.0 10))
@@ -19697,7 +19698,7 @@ EDITS: 2
 	(set! mx (max mx (abs (+ (gen1) (gen2))))))
       (if (fneq mx 0.0)
 	  (snd-display ";sawtooth +-: ~A" mx)))
-    
+
     (let ((gen (make-square-wave 440.0))
 	  (v0 (make-vct 10))
 	  (gen1 (make-square-wave 440.0))
@@ -20718,6 +20719,7 @@ EDITS: 2
     (let ((gen (make-fft-window bohman-window 16)))
       (if (not (vequal gen (vct 0.000 0.006 0.048 0.151 0.318 0.533 0.755 1.000 1.000 0.755 0.533 0.318 0.151 0.048 0.006 0.000)))
 	  (snd-display ";bohman window: ~A" gen)))
+
     (for-each
      (lambda (window-data)
        (let ((window (car window-data))
@@ -21738,7 +21740,7 @@ EDITS: 2
       (list mus-interp-all-pass (vct 1.000 0.000 0.429 0.143 0.095 0.905 0.397 0.830 0.793 0.912))
       (list mus-interp-hermite (vct 0.000 0.168 0.424 0.696 0.912 1.000 0.912 0.696 0.424 0.168))))
     ;; this is different if doubles -- not sure whether it's a bug or not
-    
+
     (let ((size 1000)
 	  (tbl-size 1024))
       
@@ -24591,7 +24593,7 @@ EDITS: 2
     (let ((var (catch #t (lambda () (make-granulate :hop 35.0 :length 35.0)) (lambda args args))))
       (if (not (eq? (car var) 'out-of-range))
 	  (snd-display ";make-granulate bad sizes: ~A" var)))
-    
+
     (let ((ind (open-sound "oboe.snd"))
 	  (mx (maxamp)))
       (let ((rd (make-sample-reader 0)))
@@ -26301,12 +26303,14 @@ EDITS: 2
 				(lambda () 0.0) (lambda (dir) 1.0) (lambda (a b c) 1.0) 0 1 -1 #f #t #\c 0.0 1.0 -1.0 '() 32 '(1 . 2)
 				))
 		  (gen-make-procs (list make-all-pass make-asymmetric-fm make-moving-average make-table-lookup make-triangle-wave
-					make-comb make-convolve make-delay make-env make-fft-window
-					make-filter make-filtered-comb make-fir-filter make-formant make-frame make-granulate
+					make-comb ;make-convolve
+					make-delay make-env make-fft-window
+					make-filter make-filtered-comb make-fir-filter make-formant make-frame ;make-granulate
 					make-iir-filter make-locsig make-mixer make-notch make-one-pole make-one-zero make-oscil make-ppolar
 					make-pulse-train make-rand make-rand-interp make-sawtooth-wave make-polyshape make-polywave
-					make-square-wave make-src
-					make-two-pole make-two-zero make-wave-train make-zpolar make-phase-vocoder make-ssb-am)))
+					make-square-wave ;make-src
+					make-two-pole make-two-zero make-wave-train make-zpolar ;make-phase-vocoder 
+					make-ssb-am)))
 	      
 	      (define (random-gen args)
 		(for-each
@@ -26342,6 +26346,7 @@ EDITS: 2
 		  random-args))
 	       random-args)))))
     
+
     (let ((gen (make-moving-max 4)))
       (let ((descr (mus-describe gen)))
 	(if (and (not (string=? descr "moving-max n: 4, gen: #<delay line[4, step]: [0.000 0.000 0.000 0.000]>"))
@@ -26622,8 +26627,6 @@ EDITS: 2
 			    (set! max-case (/ m n)))))))))
 	  (if (> maxerr 1e-12)
 	      (format #t "sin-m*pi/n (~A cases) max err ~A at ~A~%" cases maxerr max-case))))
-
-
     
     ))
 
@@ -29853,7 +29856,7 @@ EDITS: 2
 		(pd (and (not (provided? 'cairo)) (print-dialog)))
 		(ehd (without-errors (edit-header-dialog))))
 	    (if (not (equal? cold (list-ref (dialog-widgets) 0)))
-		(snd-display ";color-orientation-dialog -> ~A ~A" cold (list-ref (dialog-orientation-widgets) 0)))
+		(snd-display ";color-orientation-dialog -> ~A ~A" cold (list-ref (dialog-widgets) 0)))
 	    (if (and (not (provided? 'cairo)) 
 		     (not (equal? pd (list-ref (dialog-widgets) 17))))
 		(snd-display ";print-dialog -> ~A ~A" pd (list-ref (dialog-widgets) 17)))
@@ -57748,26 +57751,6 @@ EDITS: 1
 		   (if (not (Pixmap? p1)) (snd-display ";XmGetPixmapByDepth: ~A" p1))
 		   (XmDestroyPixmap scr p1))
 		 
-#|
-		 (let ((prop (cadr (XmRenderTableCvtToProp (cadr (main-widgets)) rendertable))))
-		   (if (not (string=? (substring prop 0 8) "tag,font"))
-		       (snd-display ";XmRenderTableCvtToProp: ~A" (substring prop 0 8)))
-		   (let ((copy (XmRenderTableCopy rendertable)))
-		     (if (not (XmRenderTable? copy)) (snd-display ";XmRenderTableCopy full: ~A" copy))
-		     (if (XmRenderTableCopy) (snd-display ";XmRenderTableCopy null: ~A" (XmRenderTableCopy)))
-		     (let ((rtags (XmRenderTableGetTags copy))
-			   (rends (XmRenderTableGetRenditions copy (list "one"))))
-		       (if (XmRenderTableGetRenditions) (snd-display ";XmRenderTableGetRenditions null: ~A" (XmRenderTableGetRenditions)))
-		       (set! copy (XmRenderTableRemoveRenditions copy (list (car rtags))))
-		       (if (not (equal? (XmRenderTableGetTags copy) (list "two" "three" "four")))
-			   (snd-display ";XmRenderTableRemoveRenditions: ~A" (XmRenderTableGetTags copy)))
-		       (let ((another (XmRenderTableCvtFromProp (cadr (main-widgets)) prop (string-length prop))))
-			 (if (not (XmRenderTable? another)) 
-			     (snd-display ";XmRenderTableCvtFromProp: ~A" another)
-			     (XmRenderTableFree another)))
-		       )))
-|#
-		 
 		 (let ((tabl (XmStringTableParseStringArray (list "hi" "ho") 2 "hiho" XmCHARSET_TEXT #f 0 #f)))
 		   (if (not (XmString? (car tabl))) (snd-display ";XmStringTableParseStringArray: ~A" tabl))
 		   (let ((strs (XmStringTableUnparse tabl 2 "hiho" XmCHARSET_TEXT XmCHARSET_TEXT #f 0 XmOUTPUT_ALL)))
@@ -62918,7 +62901,7 @@ EDITS: 1
 		   gdk_event_handler_set gdk_event_peek gdk_event_put
 		   gdk_event_send_client_message gdk_event_send_clientmessage_toall gdk_events_pending   gdk_flush   gdk_gc_copy gdk_gc_get_colormap gdk_gc_get_values
 		   gdk_gc_new gdk_gc_new_with_values gdk_gc_offset gdk_gc_set_background gdk_gc_set_clip_mask
-		   gdk_gc_set_clip_origin gdk_gc_set_clip_rectangle gdk_gc_set_clip_region gdk_gc_set_colormap gdk_gc_set_dashes
+		   gdk_gc_set_clip_origin gdk_gc_set_clip_rectangle gdk_gc_set_clip_region gdk_gc_set_colormap ;gdk_gc_set_dashes
 		   gdk_gc_set_exposures gdk_gc_set_fill gdk_gc_set_foreground gdk_gc_set_function gdk_gc_set_line_attributes
 		   gdk_gc_set_rgb_bg_color gdk_gc_set_rgb_fg_color gdk_gc_set_stipple gdk_gc_set_subwindow gdk_gc_set_tile
 		   gdk_gc_set_ts_origin gdk_gc_set_values gdk_get_default_root_window gdk_get_display

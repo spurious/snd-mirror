@@ -6,10 +6,11 @@
 #include <mus-config.h>
 #include <stdlib.h>
 
-#define XM_DATE "12-Jan-09"
+#define XM_DATE "24-Feb-09"
 
 /* HISTORY: 
  *
+ *   24-Feb:    and then changed some back to ULONGs!
  *   16-Jan:    changed some ULONG's to C_POINTER's
  *   12-Jan-09: changed strdup to xen_strdup.
  *   --------
@@ -437,16 +438,23 @@ static void define_xm_obj(void)
                             (XEN_SYMBOL_P(XEN_CAR(Value))) && \
                             (strcmp(Name, XEN_SYMBOL_TO_C_STRING(XEN_CAR(Value))) == 0))
 
+/* XM_TYPE is used for non-pointers (XID mainly) */
 #define XM_TYPE(Name, XType) \
-  static XEN C_TO_XEN_ ## Name (XType val) {return(WRAP_FOR_XEN(#Name, val));} \
-  static XType XEN_TO_C_ ## Name (XEN val) {return((XType)XEN_UNWRAP_C_POINTER(XEN_CADR(val)));} \
+  static XEN C_TO_XEN_ ## Name (XType val) {return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL(#Name), C_TO_XEN_ULONG(val)));} \
+  static XType XEN_TO_C_ ## Name (XEN val) {return((XType)XEN_TO_C_ULONG(XEN_CADR(val)));} \
   static bool XEN_ ## Name ## _P(XEN val) {return(WRAP_P(#Name, val));} \
   static XEN XEN_ ## Name ## _p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P(#Name, val)));}
 
 #define XM_TYPE_NO_p(Name, XType) \
-  static XEN C_TO_XEN_ ## Name (XType val) {return(WRAP_FOR_XEN(#Name, val));} \
-  static XType XEN_TO_C_ ## Name (XEN val) {return((XType)XEN_UNWRAP_C_POINTER(XEN_CADR(val)));} \
+  static XEN C_TO_XEN_ ## Name (XType val) {return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL(#Name), C_TO_XEN_ULONG(val)));} \
+  static XType XEN_TO_C_ ## Name (XEN val) {return((XType)XEN_TO_C_ULONG(XEN_CADR(val)));} \
   static bool XEN_ ## Name ## _P(XEN val) {return(WRAP_P(#Name, val));}
+
+#define XM_TYPE_INT(Name, XType) \
+  static XEN C_TO_XEN_ ## Name (XType val) {return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL(#Name), C_TO_XEN_INT(val)));} \
+  static XType XEN_TO_C_ ## Name (XEN val) {return((XType)XEN_TO_C_INT(XEN_CADR(val)));} \
+  static bool XEN_ ## Name ## _P(XEN val) {return(WRAP_P(#Name, val));} \
+  static XEN XEN_ ## Name ## _p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P(#Name, val)));}
 
 #define XM_TYPE_PTR(Name, XType) \
   static XEN C_TO_XEN_ ## Name (XType val) {if (val) return(WRAP_FOR_XEN(#Name, val)); return(XEN_FALSE);} \
@@ -475,12 +483,6 @@ static void define_xm_obj(void)
 #define XM_TYPE_PTR_OBJ(Name, XType) \
   static XEN C_TO_XEN_ ## Name (XType val) {if (val) return(WRAP_FOR_XEN_OBJ(#Name, val)); return(XEN_FALSE);} \
   static XType XEN_TO_C_ ## Name (XEN val) {if (XEN_FALSE_P(val)) return(NULL); return((XType)XEN_UNWRAP_C_POINTER(XEN_CADR(val)));} \
-  static bool XEN_ ## Name ## _P(XEN val) {return(WRAP_P(#Name, val));} \
-  static XEN XEN_ ## Name ## _p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P(#Name, val)));}
-
-#define XM_TYPE_INT(Name, XType) \
-  static XEN C_TO_XEN_ ## Name (XType val) {return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL(#Name), C_TO_XEN_INT(val)));} \
-  static XType XEN_TO_C_ ## Name (XEN val) {return((XType)XEN_TO_C_INT(XEN_CADR(val)));} \
   static bool XEN_ ## Name ## _P(XEN val) {return(WRAP_P(#Name, val));} \
   static XEN XEN_ ## Name ## _p(XEN val) {return(C_TO_XEN_BOOLEAN(WRAP_P(#Name, val)));}
 
@@ -2104,10 +2106,11 @@ static Arg *XEN_TO_C_Args(XEN inargl)
 	    XtSetArg(args[i], name, (XtArgVal)(XEN_TO_C_BOOLEAN(value)));
 	  else if (XEN_STRING_P(value))
 	    XtSetArg(args[i], name, (XtArgVal)(XEN_TO_C_STRING(value)));
+	  /* these are bare pointers -- we can't assume they can be "unwrapped" in xen jargon */
 	  else if (XEN_LIST_P(value))
-	    XtSetArg(args[i], name, (XtArgVal)(XEN_UNWRAP_C_POINTER(XEN_CADR(value))));  /* all tagged types */
+	    XtSetArg(args[i], name, (XtArgVal)(XEN_TO_C_OFF_T(XEN_CADR(value))));  /* all tagged types */
 	  else 
-	    XtSetArg(args[i], name, (XtArgVal)(XEN_UNWRAP_C_POINTER(value)));
+	    XtSetArg(args[i], name, (XtArgVal)(XEN_TO_C_OFF_T(value)));
 	  break;
 	}
     }

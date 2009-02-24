@@ -1670,7 +1670,9 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
     {
       SND_PANE(sp) = gtk_vpaned_new();
       set_user_int_data(G_OBJECT(SND_PANE(sp)), sp->index);
-      gtk_container_set_border_width(GTK_CONTAINER(SND_PANE(sp)), 0);
+      gtk_container_set_border_width(GTK_CONTAINER(SND_PANE(sp)), 4); /* this is the outer margin of each sound's box -- 6 seems slightly large */
+      /* I tried putting a frame around the entire pane, but it looked fussy, and the frame bottom cut into the filter widget! */
+
       if (sound_style(ss) == SOUNDS_IN_SEPARATE_WINDOWS)
 	{
 	  sx->dialog = gtk_window_new(GTK_WINDOW_TOPLEVEL);
@@ -1691,6 +1693,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
 	  else gtk_box_pack_start(GTK_BOX(SOUND_PANE_BOX(ss)), SND_PANE(sp), true, true, 0);
 	  /* child2 is listener */
 	}
+
       PANE_BOX(sp) = gtk_vbox_new(false, 0);
       gtk_paned_add1(GTK_PANED(SND_PANE(sp)), PANE_BOX(sp));
       gtk_widget_show(PANE_BOX(sp));
@@ -2073,7 +2076,8 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       gtk_widget_show(SND_PANE(sp));
     } /* new sound ss */
   else
-    { /* re-manage currently inactive chan */
+    { 
+      /* re-manage currently inactive chan */
       if (sound_style(ss) == SOUNDS_IN_SEPARATE_WINDOWS) 
 	raise_dialog(sx->dialog);
       gtk_widget_show(UNITE_BUTTON(sp));

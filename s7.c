@@ -65,7 +65,7 @@
  *        object->string, eval-string
  *        reverse!, list-set!
  *        gc, gc-verbose, load-verbose, quit
- *        backtrace, backtrace-length, clear-backtrace, backtracing
+ *        backtrace, set-backtrace-length, clear-backtrace, backtracing
  *        *features*, *load-path*, *vector-print-length*
  *        define-constant, pi, most-positive-fixnum, most-negative-fixnum
  *        format (only the simple directives)

@@ -1338,9 +1338,16 @@ AC_ARG_WITH(ruby,
 	      XEN_LIBS=`$RUBY -e [['\$:.each {|path| print "-L", path, " "}']]`
 	      RUBY_SEARCH_PATH=`$RUBY -e [['\$:.each {|path| print path, ":"}']]`
 	      RUBY_LIBS=`$RUBY -e [['require "rbconfig"; include Config; print CONFIG["LIBS"]']]`
+	      # these are the non-ruby libraries required by ruby
+	      #   so look for -lruby, then libruby-static.a
+
+	      LIBRUBY="/usr/local/lib/libruby-static.a"
+              AC_CHECK_LIB(ruby, rb_intern,
+	                   [LIBRUBY="-lruby"])
 
 	      AC_DEFINE_UNQUOTED(RUBY_SEARCH_PATH,"${RUBY_SEARCH_PATH}")
-              XEN_LIBS="$XEN_LIBS -lruby $RUBY_LIBS"
+              XEN_LIBS="$XEN_LIBS $LIBRUBY $RUBY_LIBS"
+
 	      if test "$enable_readline" != no ; then
 	        AC_CHECK_LIB(readline, readline, 
 			   [AC_DEFINE(HAVE_READLINE)
@@ -1353,14 +1360,46 @@ AC_ARG_WITH(ruby,
     	      LIBS="$XEN_LIBS $LIBS"
               OLD_CFLAGS="$CFLAGS"
               CFLAGS="$XEN_CFLAGS -lm $CFLAGS"
-              AC_CHECK_LIB(ruby, rb_gc_disable, [AC_DEFINE(HAVE_RB_GC_DISABLE)])
-	      AC_CHECK_LIB(ruby, rb_ary_dup, [AC_DEFINE(HAVE_RB_ARY_DUP)])
-	      AC_CHECK_LIB(ruby, rb_errinfo, [AC_DEFINE(HAVE_RB_ERRINFO)])
+
+    	      AC_MSG_CHECKING([for rb_gc_disable])
+              AC_RUN_IFELSE(
+                [AC_LANG_PROGRAM([#include <ruby.h>],
+                                 [ruby_init(); rb_gc_disable(); return(0)])], 
+                [AC_DEFINE(HAVE_RB_GC_DISABLE)
+                 AC_MSG_RESULT(yes)
+                ],
+                 AC_MSG_RESULT(no)
+                )
+
+    	      AC_MSG_CHECKING([for rb_ary_dup])
+              AC_RUN_IFELSE(
+                [AC_LANG_PROGRAM([#include <ruby.h>],
+                                 [VALUE lst; ruby_init(); lst = rb_ary_dup(rb_ary_new()); return(0)])], 
+                [AC_DEFINE(HAVE_RB_ARY_DUP)
+                 AC_MSG_RESULT(yes)
+                ],
+                 AC_MSG_RESULT(no)
+                )
+
+    	      AC_MSG_CHECKING([for rb_errinfo])
+              AC_RUN_IFELSE(
+                [AC_LANG_PROGRAM([#include <ruby.h>],
+                                 [char *str; ruby_init(); str = rb_errinfo(); return(0)])], 
+                [AC_DEFINE(HAVE_RB_ERRINFO)
+                 AC_MSG_RESULT(yes)
+                ],
+                 AC_MSG_RESULT(no)
+                )
+
+# these don't work if libruby.so doesn't exist (but libruby-static.a does)
+#             AC_CHECK_LIB(ruby, rb_gc_disable, [AC_DEFINE(HAVE_RB_GC_DISABLE)])
+#	      AC_CHECK_LIB(ruby, rb_ary_dup, [AC_DEFINE(HAVE_RB_ARY_DUP)])
+#	      AC_CHECK_LIB(ruby, rb_errinfo, [AC_DEFINE(HAVE_RB_ERRINFO)])
 
     	      AC_MSG_CHECKING([for working rb_gc_mark])
-              AC_COMPILE_IFELSE(
+              AC_RUN_IFELSE(
                 [AC_LANG_PROGRAM([#include <ruby.h>],
-                                 [VALUE val; rb_gc_mark(val)])], 
+                                 [VALUE val = Qnil; ruby_init(); rb_gc_mark(val); return(0)])], 
                 [AC_DEFINE(HAVE_REASONABLE_RB_GC_MARK)
                  AC_MSG_RESULT(yes)
                 ],
@@ -1371,7 +1410,7 @@ AC_ARG_WITH(ruby,
     	      AC_MSG_CHECKING([that rb_find_file deals in char*])
               AC_COMPILE_IFELSE(
                 [AC_LANG_PROGRAM([#include <ruby.h>],
-                                 [char *file; file = rb_find_file("hiho")])], 
+                                 [char *file; ruby_init(); file = rb_find_file("hiho")])], 
                 [AC_MSG_RESULT(yes)
                 ],
 		[AC_DEFINE(RB_FIND_FILE_TAKES_VALUE)

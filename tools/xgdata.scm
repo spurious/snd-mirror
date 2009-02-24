@@ -449,7 +449,8 @@
 (CFNC "void gdk_gc_set_subwindow GdkGC* gc GdkSubwindowMode mode")
 (CFNC "void gdk_gc_set_exposures GdkGC* gc gboolean exposures")
 (CFNC "void gdk_gc_set_line_attributes GdkGC* gc gint line_width GdkLineStyle line_style GdkCapStyle cap_style GdkJoinStyle join_style")
-(CFNC "void gdk_gc_set_dashes GdkGC* gc gint dash_offset gint8* dash_list gint n")
+;;;(CFNC "void gdk_gc_set_dashes GdkGC* gc gint dash_offset gint8* dash_list gint n")
+;;; gint8* is a problem (23-Feb-09)
 (CFNC "void gdk_gc_offset GdkGC* gc gint x_offset gint y_offset")
 (CFNC "void gdk_gc_copy GdkGC* dst_gc GdkGC* src_gc")
 (CFNC "void gdk_gc_set_colormap GdkGC* gc GdkColormap* colormap")
@@ -6712,12 +6713,13 @@
 
 ;;; Gtk 3.0 will probably disable a lot of these struct field accessors, so I need to start removing them
 
-(STRUCT "GdkEventAny GdkEventType type GdkWindow* window gint8 send_event")
-(STRUCT "GdkEventMotion GdkEventType type GdkWindow* window gint8 send_event guint32 time gdouble x gdouble y gdouble* axes guint state gint16 is_hint GdkDevice* device gdouble x_root gdouble y_root")
-(STRUCT "GdkEventButton GdkEventType type GdkWindow* window gint8 send_event guint32 time gdouble x gdouble y gdouble* axes guint state guint button GdkDevice* device gdouble x_root gdouble y_root")
-(STRUCT "GdkEventScroll GdkEventType type GdkWindow* window gint8 send_event guint32 time gdouble x gdouble y guint state GdkScrollDirection direction GdkDevice* device gdouble x_root gdouble y_root")
-(STRUCT "GdkEventKey GdkEventType type GdkWindow* window gint8 send_event guint32 time guint state guint keyval gint length gchar* string guint16 hardware_keycode guint8 group")
-(STRUCT "GdkGCValues GdkFunction function GdkFill fill GdkPixmap* tile GdkPixmap* stipple GdkPixmap* clip_mask GdkSubwindowMode subwindow_mode gint ts_x_origin gint ts_y_origin gint clip_x_origin gint clip_y_origin gint graphics_exposures gint line_width GdkLineStyle line_style GdkCapStyle cap_style GdkJoinStyle join_style")
+;;; removed unused fields 23-Feb-09
+(STRUCT "GdkEventAny GdkEventType type GdkWindow* window")
+(STRUCT "GdkEventMotion GdkEventType type GdkWindow* window guint32 time gdouble x gdouble y guint state gint16 is_hint")
+(STRUCT "GdkEventButton GdkEventType type GdkWindow* window guint32 time gdouble x gdouble y guint state guint button")
+(STRUCT "GdkEventScroll GdkEventType type GdkWindow* window guint32 time gdouble x gdouble y guint state GdkScrollDirection direction")
+(STRUCT "GdkEventKey GdkEventType type GdkWindow* window guint32 time guint state guint keyval")
+(STRUCT "GdkGCValues GdkFunction function")
 
 
 ;;; unused?

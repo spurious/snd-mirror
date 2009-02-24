@@ -228,6 +228,8 @@
 	"GtkPrintOperationAction"
 	"GtkTooltip*" "GtkCalendarDetailFunc" "GtkScaleButton*" "GtkEntryIconPosition"
 	"GdkDragAction" "GdkImageType"
+
+	"gdouble*"
 	))
 
 (define no-xen-p 
@@ -2237,12 +2239,13 @@
 (hey "                            (strcmp(Name, XEN_SYMBOL_TO_C_STRING(XEN_CAR(Value))) == 0))~%")
 (hey "~%")
 (hey "#define XM_TYPE(Name, XType) \\~%")
-(hey "  static XEN C_TO_XEN_ ## Name (XType val) {return(WRAP_FOR_XEN(#Name, val));} \\~%")
-(hey "  static XType XEN_TO_C_ ## Name (XEN val) {return((XType)XEN_UNWRAP_C_POINTER(XEN_CADR(val)));} \\~%")
+;; these are not pointers, so should not use wrap_c_pointer and friends 
+(hey "  static XEN C_TO_XEN_ ## Name (XType val) {return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL(#Name), C_TO_XEN_ULONG(val)));} \\~%")
+(hey "  static XType XEN_TO_C_ ## Name (XEN val) {return((XType)XEN_TO_C_ULONG(XEN_CADR(val)));} \\~%")
 (hey "  static bool XEN_ ## Name ## _P(XEN val) {return(WRAP_P(#Name, val));}~%")
 (hey "~%")
 (hey "#define XM_TYPE_1(Name, XType) \\~%")
-(hey "  static XType XEN_TO_C_ ## Name (XEN val) {return((XType)XEN_UNWRAP_C_POINTER(XEN_CADR(val)));} \\~%")
+(hey "  static XType XEN_TO_C_ ## Name (XEN val) {return((XType)XEN_TO_C_ULONG(XEN_CADR(val)));} \\~%")
 (hey "  static bool XEN_ ## Name ## _P(XEN val) {return(WRAP_P(#Name, val));}~%")
 (hey "~%")
 ;(hey "#define XM_TYPE_NO_P(Name, XType) \\~%")

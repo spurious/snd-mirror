@@ -1341,10 +1341,7 @@ static prefs_info *prefs_color_selector_row(const char *label, const char *varna
   prf->radj = gtk_adjustment_new(r, 0.0, 1.01, 0.001, 0.01, .01);
   prf->rscl = gtk_hscale_new(GTK_ADJUSTMENT(prf->radj));
   gtk_box_pack_start(GTK_BOX(row2), prf->rscl, true, true, 4);
-
-  /* TODO: check cairo -- may need gtk_widget_modify_bg(prf->rscl, GTK_STATE_SELECTED, rgb_to_gdk_color(rscl_color)) here */
-
-  gtk_widget_modify_bg(prf->rscl, GTK_STATE_SELECTED, rscl_color);
+  widget_modify_bg(prf->rscl, GTK_STATE_SELECTED, rscl_color);
   gtk_widget_show(prf->rscl);
   gtk_range_set_update_policy(GTK_RANGE(GTK_SCALE(prf->rscl)), GTK_UPDATE_CONTINUOUS);
   gtk_scale_set_draw_value(GTK_SCALE(prf->rscl), false);
@@ -1352,7 +1349,7 @@ static prefs_info *prefs_color_selector_row(const char *label, const char *varna
   prf->gadj = gtk_adjustment_new(g, 0.0, 1.01, 0.001, 0.01, .01);
   prf->gscl = gtk_hscale_new(GTK_ADJUSTMENT(prf->gadj));
   gtk_box_pack_start(GTK_BOX(row2), prf->gscl, true, true, 4);
-  gtk_widget_modify_bg(prf->gscl, GTK_STATE_SELECTED, gscl_color);
+  widget_modify_bg(prf->gscl, GTK_STATE_SELECTED, gscl_color);
   gtk_widget_show(prf->gscl);
   gtk_range_set_update_policy(GTK_RANGE(GTK_SCALE(prf->gscl)), GTK_UPDATE_CONTINUOUS);
   gtk_scale_set_draw_value(GTK_SCALE(prf->gscl), false);
@@ -1360,7 +1357,7 @@ static prefs_info *prefs_color_selector_row(const char *label, const char *varna
   prf->badj = gtk_adjustment_new(b, 0.0, 1.01, 0.001, 0.01, .01);
   prf->bscl = gtk_hscale_new(GTK_ADJUSTMENT(prf->badj));
   gtk_box_pack_start(GTK_BOX(row2), prf->bscl, true, true, 4);
-  gtk_widget_modify_bg(prf->bscl, GTK_STATE_SELECTED, bscl_color);
+  widget_modify_bg(prf->bscl, GTK_STATE_SELECTED, bscl_color);
   gtk_widget_show(prf->bscl);
   gtk_range_set_update_policy(GTK_RANGE(GTK_SCALE(prf->bscl)), GTK_UPDATE_CONTINUOUS);
   gtk_scale_set_draw_value(GTK_SCALE(prf->bscl), false);
@@ -1462,9 +1459,11 @@ static GtkWidget *make_top_level_box(GtkWidget *topics)
 {
   GtkWidget *w, *frame;
   ASSERT_WIDGET_TYPE(GTK_IS_VBOX(topics), topics);
+
   frame = gtk_frame_new(NULL);
   gtk_box_pack_start(GTK_BOX(topics), frame, true, true, 0);
   gtk_widget_show(frame);
+
   w = gtk_vbox_new(false, 0);
   gtk_container_add(GTK_CONTAINER(frame), w);
   gtk_widget_show(w);

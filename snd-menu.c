@@ -62,8 +62,17 @@ void edit_menu_update(void)
 
 void view_menu_update(void)
 {
-  /* are there any viewable regions? */
-  set_sensitive(view_region_menu, snd_regions() > 0);
+  /* are there any viewable regions? are we even using them? */
+  if ((snd_regions() == 0) &&
+      (!(selection_creates_region(ss))))
+    {
+      deactivate_widget(view_region_menu);
+    }
+  else
+    {
+      set_sensitive(view_region_menu, snd_regions() > 0);
+      activate_widget(view_region_menu);
+    }
 
   /* graph_style */
   set_sensitive(view_lines_menu,          graph_style(ss) != GRAPH_LINES);

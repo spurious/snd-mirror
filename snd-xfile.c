@@ -2512,7 +2512,7 @@ static file_data *make_file_data_panel(Widget parent, const char *name, Arg *in_
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       fdat->chans_text = make_textfield_widget("chans-text", form, args, n, NOT_ACTIVATABLE, NO_COMPLETER);
-      XmTextFieldSetString(fdat->chans_text, "0");
+      XmTextFieldSetString(fdat->chans_text, (char *)"0");
 
       if (with_loc == WITH_DATA_LOCATION_FIELD)
 	{

@@ -1038,14 +1038,12 @@ static void GHC_callback(Widget w, XtPointer info, XtPointer context)
 }
 
 
-#include <X11/IntrinsicP.h>
+static Widget *main_menus = NULL;
+static int main_menus_size = 0;
+/* fancy code here looping through the main menus children hangs or segfaults in 86_64 unoptimized cases! */
 
 Widget menu_widget(int which_menu)
 {
-  unsigned int i;
-  Widget w;
-  CompositeWidget cw;
-  int menu;
   switch (which_menu)
     {
     case 0: return(file_menu);    break;
@@ -1056,28 +1054,15 @@ Widget menu_widget(int which_menu)
     case 5: return(popup_menu);   break;
       
     default:
-      /* this code hangs in XtGetValues if threads and no optimization in gcc and called from init file? */
-      w = main_menu;
-      cw = (CompositeWidget)w;
-      for (i = 0; i < cw->composite.num_children; i++)
-	{
-	  w = cw->composite.children[i];
-	  if ((w) && (XtIsManaged(w)))
-	    {
-	      XtVaGetValues(w, XmNuserData, &menu, NULL);
-	      /* fprintf(stderr,"%s: menu: %d, slot: %d (%x)\n", XtName(w), MENU_INDEX(menu), CALL_INDEX(menu), menu); */
-	      if (which_menu == MENU_INDEX(menu))
-		{
-		  Widget subw;
-		  XtVaGetValues(w, XmNsubMenuId, &subw, NULL);
-		  return(subw);
-		}
-	    }
-	}
+      if (which_menu < main_menus_size)
+	return(main_menus[which_menu]);
+      break;
     }
   return(NULL);
 }
 
+
+#include <X11/IntrinsicP.h>
 
 static bool or_over_children(Widget w, bool (*func)(Widget uw, const char *ustr), const char *str)
 {
@@ -1159,6 +1144,21 @@ int g_add_to_main_menu(const char *label, int slot)
   if (slot >= 0) XtAddCallback(cas, XmNcascadingCallback, GHC_callback, NULL);
 
   if (auto_resize(ss)) XtVaSetValues(MAIN_SHELL(ss), XmNallowShellResize, true, NULL);
+  
+  if (main_menus_size == 0)
+    {
+      main_menus_size = 8;
+      main_menus = (Widget *)calloc(main_menus_size, sizeof(Widget));
+    }
+  else
+    {
+      if (new_menu >= main_menus_size)
+	{
+	  main_menus_size = new_menu + 8;
+	  main_menus = (Widget *)realloc(main_menus, main_menus_size * sizeof(Widget));
+	}
+    }
+  main_menus[new_menu] = m;
   return(new_menu);
 }
 
@@ -1173,27 +1173,30 @@ Widget g_add_to_menu(int which_menu, const char *label, int callb, int position)
   if (menw == NULL) return(NULL);
   if (label)
     {
-      /* look for currently unused widget first */
-      /*   but close-all and open-recent should be left alone! */
-      CompositeWidget cw = (CompositeWidget)menw;
-      for (i = 0; i < cw->composite.num_children; i++)
+      if (SIZEOF_LONG != SIZEOF_VOID_P) /* this stuff doesn't work in 64-bit machines */
 	{
-	  m = cw->composite.children[i];
-	  if ((m) && 
-	      (!(XtIsManaged(m))) &&
-	      (m != file_close_all_menu) &&
-	      (m != file_open_recent_menu) &&
-	      (m != file_open_recent_cascade_menu))
+	  /* look for currently unused widget first */
+	  /*   but close-all and open-recent should be left alone! */
+	  CompositeWidget cw = (CompositeWidget)menw;
+	  for (i = 0; i < cw->composite.num_children; i++)
 	    {
-	      if (!(mus_strcmp(XtName(m), label)))
+	      m = cw->composite.children[i];
+	      if ((m) && 
+		  (!(XtIsManaged(m))) &&
+		  (m != file_close_all_menu) &&
+		  (m != file_open_recent_menu) &&
+		  (m != file_open_recent_cascade_menu))
 		{
-		  set_widget_name(m, label);
-		  set_button_label(m, label);
+		  if (!(mus_strcmp(XtName(m), label)))
+		    {
+		      set_widget_name(m, label);
+		      set_button_label(m, label);
+		    }
+		  if (position >= 0) XtVaSetValues(m, XmNpositionIndex, position, NULL);
+		  XtVaSetValues(m, XmNuserData, PACK_MENU_DATA(callb, which_menu), NULL);
+		  XtManageChild(m);
+		  return(m);
 		}
-	      if (position >= 0) XtVaSetValues(m, XmNpositionIndex, position, NULL);
-	      XtVaSetValues(m, XmNuserData, PACK_MENU_DATA(callb, which_menu), NULL);
-	      XtManageChild(m);
-	      return(m);
 	    }
 	}
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;

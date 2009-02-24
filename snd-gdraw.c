@@ -889,7 +889,7 @@ static void check_orientation_hook(void)
 }
 
 
-static GtkWidget *oid_dialog = NULL, *oid_ax, *oid_ay, *oid_az, *oid_sx, *oid_sy, *oid_sz, *oid_hop, *oid_cut; 
+static GtkWidget *oid_dialog = NULL, *oid_ax, *oid_ay, *oid_az, *oid_sx, *oid_sy, *oid_sz, *oid_hop; 
 static GtkObject *oid_ax_adj, *oid_az_adj, *oid_ay_adj, *oid_sx_adj, *oid_sz_adj, *oid_sy_adj, *oid_hop_adj;
 #if HAVE_GL
   static GtkWidget *oid_glbutton;

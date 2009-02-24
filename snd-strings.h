@@ -73,7 +73,7 @@
 #define S_close_hook                    "close-hook"
 #define S_close_sound                   "close-sound"
 #define S_color_cutoff                  "color-cutoff"
-#define S_color_orientation_dialog      "color/orientation-dialog"
+#define S_color_orientation_dialog      "color-orientation-dialog"
 #define S_color_hook                    "color-hook"
 #define S_color_inverted                "color-inverted"
 #define S_color_p                       "color?"
