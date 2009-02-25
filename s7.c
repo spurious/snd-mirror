@@ -390,8 +390,6 @@ typedef struct s7_cell {
     struct {
       struct s7_cell *car;
       struct s7_cell *cdr;
-      /* num is the biggest entry here = 20 bytes, so there's a lot of unused space in most entries */
-      /*   so even with 64 bit pointers, we have room here for an int */
       int line;
     } cons;
     
@@ -1245,7 +1243,9 @@ static s7_pointer new_cell(s7_scheme *sc)
 	{
 	  /* alloc more heap */
 	  old_size = sc->heap_size;
-	  sc->heap_size *= 2;
+	  if (sc->heap_size < 512000)
+	    sc->heap_size *= 2;
+	  else sc->heap_size += 512000;
 	  sc->heap = (s7_cell **)realloc(sc->heap, (sc->heap_size + 1) * sizeof(s7_cell *));
 	  sc->free_heap = (s7_cell **)realloc(sc->free_heap, sc->heap_size * sizeof(s7_cell *));
 
@@ -1296,7 +1296,7 @@ static s7_pointer g_gc_verbose(s7_scheme *sc, s7_pointer a)
 static s7_pointer g_gc(s7_scheme *sc, s7_pointer args)
 {
   #define H_gc "(gc :optional on) runs the garbage collector.  If 'on' is supplied, it turns the GC on or off."
-  
+
   if (args != sc->NIL)
     {
       (*(sc->gc_off)) = (car(args) == sc->F);
@@ -1942,7 +1942,7 @@ static s7_pointer copy_stack(s7_scheme *sc, s7_pointer old_v, int top)
   ov = old_v->object.vector.elements;
   
   (*(sc->gc_off)) = true;
-  
+
   for (i = 0; i < top; i += 4)
     {
       nv[i + 0] = copy_object(sc, ov[i + 0]); /* code */
@@ -1952,7 +1952,6 @@ static s7_pointer copy_stack(s7_scheme *sc, s7_pointer old_v, int top)
     }
   
   (*(sc->gc_off)) = false;
-  
   return(new_v);
 }
 
@@ -1970,7 +1969,11 @@ static s7_pointer s7_make_goto(s7_scheme *sc)
 static s7_pointer s7_make_continuation(s7_scheme *sc) 
 {
   continuation *c;
-  s7_pointer x = new_cell(sc);
+  s7_pointer x;
+
+  gc(sc);
+
+  x = new_cell(sc);
   set_type(x, T_CONTINUATION | T_FINALIZABLE | T_DONT_COPY | T_PROCEDURE);
   c = (continuation *)calloc(1, sizeof(continuation));
   
@@ -6786,10 +6789,12 @@ static s7_pointer g_string_to_list(s7_scheme *sc, s7_pointer args)
   if (len == 0)
     return(sc->NIL);
   
+  /* TODO: is it necessary to turn off the gc here? */
   (*(sc->gc_off)) = true;
   for (i = 0; i < len; i++)
     lst = s7_cons(sc, s7_make_character(sc, str[i]), lst);
   (*(sc->gc_off)) = false;
+
   return(safe_reverse_in_place(sc, lst));
 }
 

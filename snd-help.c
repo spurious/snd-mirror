@@ -533,6 +533,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+26-Feb:  Snd 10.4\n\
 30-Jan:  big-gens.scm (scheme-only versions of the built-in generators).\n\
 15-Jan:  Snd 10.3.\n\
 8-Jan:   multiprecision math support for all scheme (s7) numeric\n\

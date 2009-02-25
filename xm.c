@@ -15701,10 +15701,10 @@ new source of events, which is usually file input but can also be file output."
   gc_loc = xm_protect(descr);
   id = XtAppAddInput(XEN_TO_C_XtAppContext(arg1), 
 		     XEN_TO_C_INT(arg2), 
-#if (HAVE_S7) && (SIZEOF_OFF_T != SIZEOF_VOID_P)
-		     (XtPointer)((int)XEN_TO_C_INT(arg3)),
+#if (SIZEOF_OFF_T != SIZEOF_VOID_P)
+		     (XtPointer)((int)XEN_TO_C_ULONG(arg3)),
 #else
-		     (XtPointer)XEN_TO_C_INT(arg3),
+		     (XtPointer)XEN_TO_C_OFF_T(arg3),
 #endif
 		     gxm_XtInputCallbackProc, 
 		     (XtPointer)descr);
