@@ -308,7 +308,7 @@ s7_pointer s7_open_input_file(s7_scheme *sc, const char *name, const char *mode)
                                                                             /* (open-input-file name mode) */
 s7_pointer s7_open_output_file(s7_scheme *sc, const char *name, const char *mode); 
                                                                             /* (open-output-file name mode) */
-  /* mode here is an optional C style flag, "ra" for "read-alter", etc ("r" is the input default, "w" is the output default) */
+  /* mode here is an optional C style flag, "a" for "alter", etc ("r" is the input default, "w" is the output default) */
 s7_pointer s7_open_input_string(s7_scheme *sc, const char *input_string);  
                                                                             /* (open-input-string str) */
 s7_pointer s7_open_output_string(s7_scheme *sc);                            /* (open-output-string) */

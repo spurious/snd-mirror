@@ -761,7 +761,6 @@ static char *s7_strdup(const char *str)
 
 
 
-static void s7_mark_object_1(s7_pointer p);
 static void s7_mark_embedded_objects(s7_pointer a); /* called by gc, calls fobj's mark func */
 static s7_pointer eval(s7_scheme *sc, opcode_t first_op);
 static s7_pointer s7_division_by_zero_error(s7_scheme *sc, const char *caller, s7_pointer arg);
@@ -1063,6 +1062,8 @@ static void finalize_s7_cell(s7_scheme *sc, s7_pointer a)
 }
 
 
+static void s7_mark_object_1(s7_pointer p);
+
 #if defined(__GNUC__) && (!(defined(__cplusplus)))
   #define S7_MARK(Obj) ({ s7_pointer _p_; _p_ = Obj; if (!is_marked(_p_)) s7_mark_object_1(_p_); })
 #else
@@ -1075,7 +1076,9 @@ static void mark_vector(s7_pointer p, int top)
 {
   int i;
   s7_pointer *tp;
-  set_mark(p);
+
+  set_mark(p); /* might be called outside s7_mark_object */
+
   tp = (s7_pointer *)(p->object.vector.elements);
   for (i = 0; i < top; i++) 
     S7_MARK(tp[i]);
@@ -1179,6 +1182,7 @@ static int gc(s7_scheme *sc)
   {
     s7_pointer *fp, *tp;
     fp = sc->free_heap;
+
     for (tp = sc->heap; (*tp); tp++) /* this form of the loop is slightly faster than counting i with sc->heap[i] */
       {
 	s7_pointer p;
@@ -1266,6 +1270,15 @@ static s7_pointer new_cell(s7_scheme *sc)
    */
 
 #if HAVE_PTHREADS
+  set_type(p, T_SIMPLE);
+  /* currently the overall allocation of an object is not locked, so we could
+   *   return a new cell from new_cell without its fields set yet, set_type to
+   *   something non-simple, then before setting the fields, be interrupted.
+   *   The mark/gc stuff then sees a typed object (T_PAIR for example), and
+   *   tries to mark its cdr (for example) which is probably 0 (not a valid
+   *   scheme object).  So set the type temporarily to T_SIMPLE to avoid that.
+   *   Ideally, I think, we'd set the type last in all the allocations.
+   */
   nsc->temps[nsc->temps_ctr++] = p;
   if (nsc->temps_ctr >= nsc->temps_size)
     nsc->temps_ctr = 0;
@@ -1972,6 +1985,10 @@ static s7_pointer s7_make_continuation(s7_scheme *sc)
   s7_pointer x;
 
   gc(sc);
+  /* this gc call is needed if there are lots of call/cc's -- by pure bad luck
+   *   we can end up hitting the end of the gc free list time after time while
+   *   in successive copy_stack's below, causing s7 to core up until it runs out of memory.
+   */
 
   x = new_cell(sc);
   set_type(x, T_CONTINUATION | T_FINALIZABLE | T_DONT_COPY | T_PROCEDURE);
@@ -6761,7 +6778,7 @@ static s7_pointer g_is_list(s7_scheme *sc, s7_pointer args);
 
 static s7_pointer g_list_to_string(s7_scheme *sc, s7_pointer args)
 {
-  #define H_list_to_string "(list->string lst) appends all the lists characters into one string"
+  #define H_list_to_string "(list->string lst) appends all the list's characters into one string"
   if (car(args) == sc->NIL)
     return(s7_make_string_with_length(sc, "", 0));
   
@@ -6788,12 +6805,8 @@ static s7_pointer g_string_to_list(s7_scheme *sc, s7_pointer args)
   if (str) len = strlen(str);
   if (len == 0)
     return(sc->NIL);
-  
-  /* TODO: is it necessary to turn off the gc here? */
-  (*(sc->gc_off)) = true;
   for (i = 0; i < len; i++)
     lst = s7_cons(sc, s7_make_character(sc, str[i]), lst);
-  (*(sc->gc_off)) = false;
 
   return(safe_reverse_in_place(sc, lst));
 }
@@ -8443,20 +8456,12 @@ static s7_pointer g_with_output_to_file(s7_scheme *sc, s7_pointer args)
 
 /* -------------------------------- lists -------------------------------- */
 
-static s7_pointer cons_untyped(s7_scheme *sc, s7_pointer a, s7_pointer b) 
+static s7_pointer s7_immutable_cons(s7_scheme *sc, s7_pointer a, s7_pointer b)
 {
   s7_pointer x;
   x = new_cell(sc); /* might trigger gc */
   car(x) = a;
   cdr(x) = b;
-  return(x);
-}
-
-
-static s7_pointer s7_immutable_cons(s7_scheme *sc, s7_pointer a, s7_pointer b)
-{
-  s7_pointer x;
-  x = cons_untyped(sc, a, b);
   set_type(x, T_PAIR | T_IMMUTABLE);
   return(x);
 }
@@ -8465,7 +8470,9 @@ static s7_pointer s7_immutable_cons(s7_scheme *sc, s7_pointer a, s7_pointer b)
 s7_pointer s7_cons(s7_scheme *sc, s7_pointer a, s7_pointer b) 
 {
   s7_pointer x;
-  x = cons_untyped(sc, a, b);
+  x = new_cell(sc); /* might trigger gc */
+  car(x) = a;
+  cdr(x) = b;
   set_type(x, T_PAIR);
   return(x);
 }
@@ -11242,7 +11249,6 @@ static s7_pointer g_backtracing(s7_scheme *sc, s7_pointer a)
 static void add_backtrace_entry(s7_scheme *sc, s7_pointer code, s7_pointer args)
 {
   int n;
-  if (sc->backtrace_size <= 0) return;
 
 #if HAVE_PTHREADS
   int id;
@@ -11250,6 +11256,8 @@ static void add_backtrace_entry(s7_scheme *sc, s7_pointer code, s7_pointer args)
   id = sc->thread_id;
   sc = sc->orig_sc;
 #endif
+
+  if (sc->backtrace_size <= 0) return;
 
   n = sc->backtrace_top++;
   if (sc->backtrace_top >= sc->backtrace_size)
@@ -12812,8 +12820,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
     EVAL_ARGS:
     case OP_EVAL_ARGS1:
-      sc->args = cons_untyped(sc, sc->value, sc->args);
-      set_type(sc->args, T_PAIR);
+      sc->args = s7_cons(sc, sc->value, sc->args);
 
       /* 1st time, value = op, args=nil (only e0 entry is from op_eval above), code is full list (at e0) */
       if (is_pair(sc->code))  /* evaluate current arg */
@@ -14375,6 +14382,9 @@ static s7_scheme *clone_s7(s7_scheme *sc, s7_pointer vect)
 {
   int i;
   s7_scheme *new_sc;
+
+  /* make_thread which calls us has grabbed alloc_lock for the duration */
+
   new_sc = (s7_scheme *)malloc(sizeof(s7_scheme));
   memcpy((void *)new_sc, (void *)sc, sizeof(s7_scheme));
   
@@ -14425,6 +14435,7 @@ static s7_scheme *clone_s7(s7_scheme *sc, s7_pointer vect)
 #if WITH_GMP
   new_sc->default_big_rng = NULL;
 #endif
+
   return(new_sc);
 }
 

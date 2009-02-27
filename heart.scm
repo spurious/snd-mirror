@@ -52,7 +52,7 @@
   ;; now display the data with y-axis bounds between 50 and 150, both traces in the same graph, x-axis in "samples" (readings)
   (set! (channel-style ind) channels-superimposed)
   (do ((chan 0 (+ 1 chan)))
-      ((= chan 5))
+      ((= chan 6))
     (set! (x-axis-style ind chan) x-axis-in-samples)
     (set! (x-axis-label ind chan) "days")
     (set! (y-bounds ind chan) (list 50 150)))

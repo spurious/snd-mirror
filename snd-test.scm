@@ -66452,6 +66452,7 @@ EDITS: 1
       (system "rm ../peaks/_home_bil_ruby-snd_*")
       (system "rm ../peaks/_home_bil_gtk-snd_*")
       (system "rm ../peaks/_home_bil_snd-nogui*")
+      (system "rm ../peaks/_home_bil_nogui*")
       (system "rm ../peaks/_home_bil_no-gui*")
       (system "rm ../peaks/_home_bil_cl_*")))
 

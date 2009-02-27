@@ -589,8 +589,6 @@
 	 (outa i (nxy1sin gen)))))))
 |#
 
-;;; TODO: test x86_64 gtk/motif pointer handling
-
 ;;;   we can get the sinusoidally varying maxamp by using e.g. (make-nxy1sin 1 1000 3)
 ;;;   the peak starts at ca .72 and goes to 1 etc
 
