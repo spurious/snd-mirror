@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "1.12"
-#define S7_DATE "29-Jan-09"
+#define S7_VERSION "1.13"
+#define S7_DATE "1-Mar-09"
 
 
 typedef long long int s7_Int;
@@ -266,6 +266,7 @@ s7_pointer s7_make_ratio(s7_scheme *sc, s7_Int a, s7_Int b);                /* r
 s7_pointer s7_rationalize(s7_scheme *sc, s7_Double x, s7_Double error);     /* (rationalize x error) */
 s7_Int s7_numerator(s7_pointer x);                                          /* (numerator x) */
 s7_Int s7_denominator(s7_pointer x);                                        /* (denominator x) */
+double s7_random(s7_scheme *sc);
 
 bool s7_is_complex(s7_pointer arg);                                         /* (complex? arg) */
 s7_pointer s7_make_complex(s7_scheme *sc, s7_Double a, s7_Double b);        /* returns the scheme object a+bi */
@@ -1276,6 +1277,7 @@ int main(int argc, char **argv)
  * 
  *        s7 changes
  *
+ * 1-Mar:     s7_random added to s7.h.
  * 29-Jan:    s7_is_bignum and friends.
  * 26-Jan:    added s7_scheme arg to s7_vector_fill.
  * 16-Jan:    s7_is_ulong_long and friends for C pointers in 64-bit situations.

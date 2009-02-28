@@ -1270,6 +1270,7 @@ static s7_pointer new_cell(s7_scheme *sc)
    */
 
 #if HAVE_PTHREADS
+
   set_type(p, T_SIMPLE);
   /* currently the overall allocation of an object is not locked, so we could
    *   return a new cell from new_cell without its fields set yet, set_type to
@@ -1290,6 +1291,7 @@ static s7_pointer new_cell(s7_scheme *sc)
   sc->temps[sc->temps_ctr++] = p;
   if (sc->temps_ctr >= sc->temps_size)
     sc->temps_ctr = 0;
+
 #endif
   
   return(p);
@@ -5957,6 +5959,25 @@ static double next_random(rng *r)
 }
 
 
+static rng *s7_default_rng(s7_scheme *sc)
+{
+  if (!sc->default_rng)
+    {
+      sc->default_rng = (rng *)calloc(1, sizeof(rng));
+      ((rng *)(sc->default_rng))->ran_seed = (unsigned int)time(NULL);
+      ((rng *)(sc->default_rng))->ran_carry = 1675393560;
+    }
+  return((rng *)(sc->default_rng));
+}
+
+
+double s7_random(s7_scheme *sc)
+{
+  /* an experiment -- for run.c */
+  return(next_random(s7_default_rng(sc)));
+}
+
+
 static s7_pointer g_random(s7_scheme *sc, s7_pointer args)
 {
   #define H_random "(random num :optional state) returns a random number between 0 and num (0 if num=0)."
@@ -5985,16 +6006,7 @@ static s7_pointer g_random(s7_scheme *sc, s7_pointer args)
 	  return(s7_wrong_type_arg_error(sc, "random", 2, state, "a random state as returned by make-random-state"));
 	}
     }
-  else
-    {
-      if (!sc->default_rng)
-	{
-	  sc->default_rng = (rng *)calloc(1, sizeof(rng));
-	  ((rng *)(sc->default_rng))->ran_seed = (unsigned int)time(NULL);
-	  ((rng *)(sc->default_rng))->ran_carry = 1675393560;
-	}
-      r = (rng *)(sc->default_rng);
-    }
+  else r = s7_default_rng(sc);
 
   dnum = s7_number_to_real(num);
 

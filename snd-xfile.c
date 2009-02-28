@@ -4538,6 +4538,7 @@ static void raw_data_help_callback(Widget w, XtPointer context, XtPointer info)
   raw_data_dialog_help(rp->help);
 }
 
+/* TODO: raw data dialog takes up all space on screen and its warning message is in the wrong bg color */
 
 static void make_raw_data_dialog(raw_info *rp, const char *title)
 {
@@ -4568,7 +4569,6 @@ static void make_raw_data_dialog(raw_info *rp, const char *title)
   XtSetArg(args[n], XmNautoUnmanage, false); n++;
   /* not transient -- we want this window to remain visible if possible */
   rp->dialog = XmCreateWarningDialog(MAIN_SHELL(ss), (char *)"raw data", args, n);
-  /* I don't know why this takes up all the vertical space on the screen */
 
   XtAddCallback(rp->dialog, XmNcancelCallback, raw_data_cancel_callback, (XtPointer)rp);
   XtAddCallback(rp->dialog, XmNhelpCallback,   raw_data_help_callback,   (XtPointer)rp);
@@ -4621,8 +4621,12 @@ static void make_raw_data_dialog(raw_info *rp, const char *title)
   XtVaSetValues(MSG_BOX(rp->dialog, XmDIALOG_HELP_BUTTON),   XmNbackground, ss->sgx->help_button_color,   NULL);
   XtVaSetValues(reset_button, XmNselectColor, ss->sgx->pushed_button_color, NULL);
   XtVaSetValues(rp->rdat->format_list, XmNbackground, ss->sgx->white, XmNforeground, ss->sgx->black, NULL);
+  /*
+   * this line makes the dialog take up all vertical space on the screen
+   * XtManageChild(rp->rdat->error_text);
+  */
+  XtVaSetValues(MSG_BOX(rp->dialog, XmDIALOG_MESSAGE_LABEL), XmNbackground, ss->sgx->basic_color, NULL);
 
-  XtManageChild(rp->rdat->error_text);
   XtManageChild(rp->dialog);
   XtUnmanageChild(rp->rdat->error_text); 
   set_dialog_widget(RAW_DATA_DIALOG, rp->dialog);

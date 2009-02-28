@@ -59,9 +59,9 @@
  *   list ops that reference constant lists and return something we can handle (like a number)
  *   throw with just the 1st arg (experimental...)
  *
- *   various sndlib, clm, and snd functions
+ *   various sndlib, clm, snd, and s7 functions
  *
- * LIMITATIONS: <insert anxious lucubration here about DSP context and so on>
+ * LIMITATIONS: 
  *      variables can have only one type, the type has to be ascertainable somehow (similarly for vector elements)
  *      some variables (imported from outside our context) cannot be set, in some cases they can't even be found (args to define* in Guile for example)
  *      no recursion (could be added with some pain)
@@ -101,6 +101,41 @@
  *            would be nice to have gens accept/return complex values, but outa? Jn? [as arg=>In]
  *
  * would it simplify variable handling to store everything as xen_value?
+ *
+ * TODO: all numeric types + multiprecision stuff
+ *       some or all of:
+
+    gensym [s7_gensym] symbol-table symbol? [s7_is_symbol] symbol->string [s7_symbol_name?] string->symbol [s7_make_symbol] symbol->value [s7_symbol_to_value]
+    global-environment [s7] current-environment [s7] provided? provide [s7_provide] defined? keyword? [s7_is_keyword]
+    make-keyword [s7] symbol->keyword keyword->symbol hash-table? [s7_is_hash_table] make-hash-table [s7_make_hash_table]
+    hash-table-ref [s7_hash_table_ref] hash-table-set! [s7_hash_table_set] hash-table-size 
+
+    port-line-number port-filename
+    eof-object? 
+    set-current-output-port [s7_set..] set-current-input-port [s7_set...] set-current-error-port [s7_set...]
+    open-input-file [s7] open-input-string [s7] open-output-string [s7]
+    get-output-string [s7] read-char [s7] peek-char [s7] read [s7] newline [s7] write-char [s7]
+    write [s7] display [s7] read-byte write-byte read-line call-with-input-string call-with-input-file
+    with-input-from-string with-input-from-file call-with-output-string call-with-output-file
+    with-output-to-string with-output-to-file 
+
+    make-polar make-rectangular magnitude angle rationalize real-part imag-part numerator denominator
+    integer-length make-random-state
+
+    string list->string string->list object->string [s7_object_to_c_string]
+    cdr [s7_cdr] caar caaar caadr cadar cdaar cdddr cdadr cddar caaaar caaadr caadar cadaar caaddr
+    cadadr caddar cdaaar cdaadr cdadar cddaar cdaddr cddddr cddadr cdddar assq assv
+    assoc [s7_assoc] memq memv member [s7_member] append [s7_append] list list-tail list-line-number 
+
+    vector? vector->list [s7_vector_to_list] list->vector
+
+    continuation? eval eval-string [s7_eval_c_string] apply
+    load [s7_load] force for-each map values call-with-values dynamic-wind catch error 
+    gc-verbose load-verbose backtrace clear-backtrace set-backtrace-length backtracing 
+    gc procedure? [s7_is_procedure] procedure-documentation [s7]
+    procedure-arity [s7] procedure-source [s7] [make-procedure-with-setter procedure-with-setter? procedure-with-setter-setter-arity]
+
+    what about the thread stuff: only thread_variable in s7.h now
  */
 
 #include <mus-config.h>
@@ -1135,8 +1170,18 @@ static char *describe_xen_value_1(int type, int addr, ptree *pt)
     case R_LIST_VECTOR:
     case R_INT_VECTOR:  
     case R_VCT_VECTOR:
-    case R_CLM_VECTOR:  return(mus_format("vect%d(%p)", addr, pt->vects[addr])); break;
-    case R_UNSPECIFIED: return(mus_strdup("#<unspecified>")); break;
+    case R_CLM_VECTOR:  
+      return(mus_format("vect%d(%p)", addr, pt->vects[addr])); 
+      break;
+
+    case R_UNSPECIFIED: 
+      return(mus_strdup("#<unspecified>")); 
+      break;
+
+    case R_XEN: 
+      return(mus_strdup("#<xen (scheme) value>"));
+      break;
+
     default:
       if (CLM_STRUCT_P(type))
 	return(mus_format("clm-struct%d(%s: %p)", addr, type_name(type), (pt->lists) ? pt->lists[addr] : NULL));
@@ -2916,6 +2961,7 @@ static triple *va_make_triple(void (*function)(int *arg_addrs, ptree *pt),
 
 #define STRING_RESULT pt->strs[args[0]]
 #define STRING_ARG_1 pt->strs[args[1]]
+#define STRING_ARG_2 pt->strs[args[2]]
 #define STRING_ARG_3 pt->strs[args[3]]
 #define STRING_ARG_OK(Arg) ((pt->strs) && ((pt->outer_tree) || ((args[Arg] >= 0) && (args[Arg] <= pt->str_ctr) && (args[Arg] < pt->strs_size))))
 
@@ -6525,30 +6571,51 @@ static xen_value *abs_1(ptree *prog, xen_value **args, int num_args)
 
 /* ---------------- random ---------------- */
 
-static void random_f(int *args, ptree *pt) {FLOAT_RESULT = mus_frandom(FLOAT_ARG_1);}
+static void mus_random_mf(int *args, ptree *pt) {FLOAT_RESULT = mus_random(FLOAT_ARG_1);}
+
+static void mus_random_mf_1(int *args, ptree *pt) {FLOAT_RESULT = mus_random_no_input();}
 
 
-static void random_f_1(int *args, ptree *pt) {FLOAT_RESULT = mus_frandom_no_input();}
+#if (!HAVE_S7)
 
+static void mus_random_f(int *args, ptree *pt) {FLOAT_RESULT = mus_frandom(FLOAT_ARG_1);}
 
-static void random_mf(int *args, ptree *pt) {FLOAT_RESULT = mus_random(FLOAT_ARG_1);}
+static void mus_random_f_1(int *args, ptree *pt) {FLOAT_RESULT = mus_frandom_no_input();}
 
+static void mus_random_i(int *args, ptree *pt) {INT_RESULT = mus_irandom(INT_ARG_1);}
 
-static void random_mf_1(int *args, ptree *pt) {FLOAT_RESULT = mus_random_no_input();}
+static xen_value *random_1(ptree *prog, xen_value **args, int num_args)
+{
+  if (args[1]->type == R_INT)
+    return(package(prog, R_INT, mus_random_i, "random_i", args, 1));
+  if ((prog->constants == 1) &&
+      (prog->dbls[args[1]->addr] == 1.0))
+    return(package(prog, R_FLOAT, mus_random_f_1, "random_f_1", args, 0));
+  return(package(prog, R_FLOAT, mus_random_f, "random_f", args, 1));
+}
 
+#else
 
-static void random_i(int *args, ptree *pt) {INT_RESULT = mus_irandom(INT_ARG_1);}
+/* an experiment -- use the s7 rng if "random" (as opposed to "mus-random") */
 
+static void random_f(int *args, ptree *pt) 
+{
+  FLOAT_RESULT = s7_random(s7) * FLOAT_ARG_1;
+}
+
+static void random_i(int *args, ptree *pt) 
+{
+  INT_RESULT = (Int)(s7_random(s7) * INT_ARG_1);
+}
 
 static xen_value *random_1(ptree *prog, xen_value **args, int num_args)
 {
   if (args[1]->type == R_INT)
     return(package(prog, R_INT, random_i, "random_i", args, 1));
-  if ((prog->constants == 1) &&
-      (prog->dbls[args[1]->addr] == 1.0))
-    return(package(prog, R_FLOAT, random_f_1, "random_f_1", args, 0));
   return(package(prog, R_FLOAT, random_f, "random_f", args, 1));
 }
+
+#endif
 
 
 static xen_value *mus_random_r(ptree *prog, xen_value **args, int num_args)
@@ -6556,8 +6623,8 @@ static xen_value *mus_random_r(ptree *prog, xen_value **args, int num_args)
   if (args[1]->type == R_INT) single_to_float(prog, args, 1);
   if ((prog->constants == 1) &&
       (prog->dbls[args[1]->addr] == 1.0))
-    return(package(prog, R_FLOAT, random_mf_1, "random_mf_1", args, 0));
-  return(package(prog, R_FLOAT, random_mf, "random_mf", args, 1));
+    return(package(prog, R_FLOAT, mus_random_mf_1, "random_mf_1", args, 0));
+  return(package(prog, R_FLOAT, mus_random_mf, "random_mf", args, 1));
 }
 
 
@@ -11930,6 +11997,7 @@ static XEN xen_value_to_xen(ptree *pt, xen_value *v)
     case R_CHAR:    return(C_TO_XEN_CHAR((char)(pt->ints[v->addr]))); break;
     case R_STRING:  return(C_TO_XEN_STRING(pt->strs[v->addr]));       break;
     case R_BOOL:    return(C_TO_XEN_BOOLEAN(pt->ints[v->addr]));      break;
+    case R_XEN:     return(pt->xens[v->addr]);                        break;
 
     case R_SYMBOL:
     case R_KEYWORD: return(pt->xens[v->addr]);                        break;
@@ -12101,6 +12169,124 @@ static void format_s(int *args, ptree *pt)
   if (STRING_RESULT) free(STRING_RESULT);
   STRING_RESULT = mus_strdup(s7_format(s7, xen_values_to_list(pt, args)));
 }
+
+
+static void s7_version_s(int *args, ptree *pt)
+{
+  if (STRING_RESULT) free(STRING_RESULT);
+  STRING_RESULT = mus_strdup(SND_VERSION);
+}
+
+static xen_value *s7_version_1(ptree *prog, xen_value **args, int num_args)
+{
+  return(package(prog, R_STRING, s7_version_s, "s7_version_s", args, 0));
+}
+
+
+static void open_output_file_s2(int *args, ptree *pt)
+{
+  XEN_RESULT = s7_open_output_file(s7, STRING_ARG_1, STRING_ARG_2);
+}
+
+static void open_output_file_s1(int *args, ptree *pt)
+{
+  XEN_RESULT = s7_open_output_file(s7, STRING_ARG_1, "w");
+}
+
+static xen_value *open_output_file_1(ptree *prog, xen_value **args, int num_args)
+{
+  args[0] = make_xen_value(R_XEN, add_xen_to_ptree(prog, s7_NIL(s7)), R_VARIABLE);
+  if (num_args == 1)
+    add_triple_to_ptree(prog, va_make_triple(open_output_file_s1, "open_output_file_s1", 2, args[0], args[1]));
+  else add_triple_to_ptree(prog, va_make_triple(open_output_file_s2, "open_output_file_s2", 3, args[0], args[1], args[2]));
+  return(args[0]);
+}
+
+
+static void close_output_port_s(int *args, ptree *pt)
+{
+  s7_close_output_port(s7, RXEN_ARG_1);
+  BOOL_RESULT = false;
+}
+
+static xen_value *close_output_port_1(ptree *prog, xen_value **args, int num_args)
+{
+  return(package(prog, R_BOOL, close_output_port_s, "close_output_port_s", args, 1));
+}
+
+
+static void close_input_port_s(int *args, ptree *pt)
+{
+  s7_close_input_port(s7, RXEN_ARG_1);
+  BOOL_RESULT = false;
+}
+
+static xen_value *close_input_port_1(ptree *prog, xen_value **args, int num_args)
+{
+  return(package(prog, R_BOOL, close_input_port_s, "close_input_port_s", args, 1));
+}
+
+
+static void is_output_port_s(int *args, ptree *pt)
+{
+  BOOL_RESULT = s7_is_output_port(s7, RXEN_ARG_1);
+}
+
+static xen_value *is_output_port_1(ptree *prog, xen_value **args, int num_args)
+{
+  return(package(prog, R_BOOL, is_output_port_s, "is_output_port_s", args, 1));
+}
+
+
+static void is_input_port_s(int *args, ptree *pt)
+{
+  BOOL_RESULT = s7_is_input_port(s7, RXEN_ARG_1);
+}
+
+static xen_value *is_input_port_1(ptree *prog, xen_value **args, int num_args)
+{
+  return(package(prog, R_BOOL, is_input_port_s, "is_input_port_s", args, 1));
+}
+
+
+static void current_output_port_x(int *args, ptree *pt)
+{
+  XEN_RESULT = s7_current_output_port(s7);
+}
+
+static xen_value *current_output_port_1(ptree *prog, xen_value **args, int num_args)
+{
+  args[0] = make_xen_value(R_XEN, add_xen_to_ptree(prog, s7_NIL(s7)), R_VARIABLE);
+  add_triple_to_ptree(prog, va_make_triple(current_output_port_x, "current_output_port_x", 1, args[0]));
+  return(args[0]);
+}
+
+
+static void current_input_port_x(int *args, ptree *pt)
+{
+  XEN_RESULT = s7_current_input_port(s7);
+}
+
+static xen_value *current_input_port_1(ptree *prog, xen_value **args, int num_args)
+{
+  args[0] = make_xen_value(R_XEN, add_xen_to_ptree(prog, s7_NIL(s7)), R_VARIABLE);
+  add_triple_to_ptree(prog, va_make_triple(current_input_port_x, "current_input_port_x", 1, args[0]));
+  return(args[0]);
+}
+
+
+static void current_error_port_x(int *args, ptree *pt)
+{
+  XEN_RESULT = s7_current_error_port(s7);
+}
+
+static xen_value *current_error_port_1(ptree *prog, xen_value **args, int num_args)
+{
+  args[0] = make_xen_value(R_XEN, add_xen_to_ptree(prog, s7_NIL(s7)), R_VARIABLE);
+  add_triple_to_ptree(prog, va_make_triple(current_error_port_x, "current_error_port_x", 1, args[0]));
+  return(args[0]);
+}
+
 
 #endif
 
@@ -13647,6 +13833,18 @@ static void init_walkers(void)
 #if HAVE_S7
   INIT_WALKER("format",    make_walker(format_1, NULL, NULL, 0, UNLIMITED_ARGS, R_STRING, false, 1, -R_XEN));
   INIT_WALKER("clm-print", make_walker(format_1, NULL, NULL, 0, UNLIMITED_ARGS, R_STRING, false, 1, -R_XEN));
+
+  INIT_WALKER("open-output-file", make_walker(open_output_file_1, NULL, NULL, 1, 2, R_XEN, false, 1, -R_STRING));
+  INIT_WALKER("close-output-port", make_walker(close_output_port_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_XEN));
+  INIT_WALKER("close-input-port", make_walker(close_input_port_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_XEN));
+  INIT_WALKER("output-port?", make_walker(is_output_port_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_XEN));
+  INIT_WALKER("input-port?", make_walker(is_input_port_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_XEN));
+
+  INIT_WALKER("current-output-port", make_walker(current_output_port_1, NULL, NULL, 0, 0, R_XEN, false, 0));
+  INIT_WALKER("current-input-port", make_walker(current_input_port_1, NULL, NULL, 0, 0, R_XEN, false, 0));
+  INIT_WALKER("current-error-port", make_walker(current_error_port_1, NULL, NULL, 0, 0, R_XEN, false, 0));
+
+  INIT_WALKER("s7-version", make_walker(s7_version_1, NULL, NULL, 0, 0, R_STRING, false, 0));
 #endif
 
 
