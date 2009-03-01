@@ -401,7 +401,6 @@ static XEN symbol_to_value(XEN code, XEN sym, bool *local)
 static void symbol_set_value(XEN code, XEN sym, XEN new_val)
 {
   XEN var = XEN_FALSE;
-  /* fprintf(stderr, "set %s to %s\n", XEN_AS_STRING(sym), XEN_AS_STRING(new_val)); */
 
   if (XEN_PROCEDURE_P(code))
     {

@@ -19,12 +19,14 @@ static XmRenderTable get_xm_font(XFontStruct *ignore, const char *font, const ch
   XmRenderTable tabl;
   int n;
   Arg args[12];
+
   n = 0;
   XtSetArg(args[n], XmNfontName, font); n++;
   XtSetArg(args[n], XmNfontType, XmFONT_IS_FONT); n++; 
   XtSetArg(args[n], XmNloadModel, XmLOAD_IMMEDIATE); n++;
   tmp = XmRenditionCreate(MAIN_SHELL(ss), (char *)tag, args, n);
   tabl = XmRenderTableAddRenditions(NULL, &tmp, 1, XmMERGE_NEW);
+
   /* XmRenditionFree(tmp); */ /* valgrind thinks this is a bad idea */
   return(tabl);
 }
@@ -338,8 +340,10 @@ void check_for_event(void)
   XEvent event;
   XtInputMask msk = 0;
   XtAppContext app;
+
   if (ss->checking_explicitly) return;
   ss->checking_explicitly = true;
+
   app = MAIN_APP(ss);
   while (true)
     {
@@ -625,10 +629,12 @@ static Pixmap rotate_text(Widget w, const char *str, XFontStruct *font, Float an
   matrix[1] = sin(angle_in_radians);
   matrix[2] = -sin(angle_in_radians);
   matrix[3] = cos(angle_in_radians);
+
   dp = XtDisplay(w);
   wn = XtWindow(w);
   scr = DefaultScreen(dp);
   vis = DefaultVisual(dp, scr);
+
   XtVaGetValues(w, XmNdepth, &depth, NULL);
   depth_bytes = (depth >> 3);
   if (depth_bytes == 0) depth_bytes = 1; /* unsigned so can't be negative */
@@ -762,10 +768,12 @@ void ensure_scrolled_window_row_visible(widget_t list, int row, int num_rows)
 {
   int minimum, maximum, value, size, new_value, increment, page_increment;
   Widget scrollbar, work_window;
+
   XtVaGetValues(list, 
 		XmNverticalScrollBar, &scrollbar, 
 		XmNworkWindow, &work_window,
 		NULL);
+
   XtVaGetValues(scrollbar, 
 		XmNminimum, &minimum,
 		XmNmaximum, &maximum,
@@ -774,6 +782,7 @@ void ensure_scrolled_window_row_visible(widget_t list, int row, int num_rows)
 		XmNincrement, &increment, /* needed for XmScrollBarSetValues which is needed to force list display update */
 		XmNpageIncrement, &page_increment,
 		NULL);
+
   maximum -= size;
   if (row == 0)
     new_value = 0;
@@ -792,11 +801,13 @@ XmString multi_line_label(const char *s, int *lines)
   /* taken from the Motif FAQ */
   XmString xms1, xms2, line, separator;
   char *p, *tmp;
+
   (*lines) = 1;
   tmp = mus_strdup(s);
   separator = XmStringSeparatorCreate();
   p = strtok(tmp, "\n");
   xms1 = XmStringCreateLocalized(p);
+
   p = strtok(NULL, "\n");
   while (p)
     {
@@ -809,6 +820,7 @@ XmString multi_line_label(const char *s, int *lines)
       XmStringFree(line);
       p = strtok(NULL, "\n");
     }
+
   XmStringFree(separator);
   free(tmp);
   return(xms1);

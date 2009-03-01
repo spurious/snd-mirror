@@ -78,7 +78,6 @@ http://www.notam02.no/arkiv/doc/snd-rt/
 
 
 
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;; BUS. ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -173,6 +172,8 @@ writing one period later[1]: bus[n]=v
 
 
 
+
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;; Jack ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -189,6 +190,7 @@ writing one period later[1]: bus[n]=v
 	  
 	  "#include <jack/jack.h>"
 	  "#include <jack/ringbuffer.h>"
+	  "#include <jack/thread.h>"
 
 	  (proto->public
 	   "
@@ -327,6 +329,9 @@ size_t jack_ringbuffer_write_space(const jack_ringbuffer_t *rb);
 
 	  (set!-string-is-pointer-#f)
 	  
+          (proto->public
+           "int jack_client_real_time_priority (jack_client_t*);")
+
 	  (variables->public
 	   (<int> JackPortIsInput
 		  JackPortIsOutput 
@@ -1027,6 +1032,7 @@ procfuncs=sorted
 	"#include <semaphore.h>"
 	"#include <jack/thread.h>"
 	"#include <errno.h>"
+        "#include <rollendurchmesserzeitsammler.h>"
 
         ;;"#include <rt-various.h>"
 
@@ -1282,6 +1288,8 @@ procfuncs=sorted
                                         (<int> nframes)
                                         (<int64> block_time)
                                         (<float> samplerate))
+
+                               (tar_init_block (/ (cast <float> nframes) samplerate))
 
 			       (<int> max_cycle_usage (/ (* nframes engine->max_cpu_usage) 100))
 

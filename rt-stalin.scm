@@ -4,8 +4,8 @@
 ;;;;;;;;;;;;;;;;; globals ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define *stalin-stack-size* (* 32 1024)) ;; total stack size (for safety)
-(define *stalin-stack-limit* (* 4 1024))  ;; If using more than this, instrument is stopped. (checked every block)
+(define *stalin-stack-size* (* 8 128 1024)) ;; total stack size (for safety)
+(define *stalin-stack-limit* (* 8 96 1024))  ;; If using more than this, instrument is stopped. (checked every block)
 (define *stalin-queue-max-size* 1024) ;; max number of non-sound coroutines.
 (define *stalin-add-health-checks* #t)
 (define *stalin-backtrace-length* 20)
@@ -837,7 +837,113 @@ old bus.
            vol)
           (else
            vol))))
-(define-stalin-macro (make-adsr :optkey a d s r)
+
+#!
+(define-stalin (make-adsr-do a d s r)
+  (define in (rt_make_env (vct 0 0 a 1 (+ a d) s) (+ a d))) ;; Small optimization.
+  ;;(define in (make-env `((0 0)(,a 1)(,(+ a d) ,s)) :dur (+ a d)))
+  (define out (make-env '((0 1)(1 0)) :dur r))
+  (define do-out #f)
+  (define do-in #t)
+  (define vol 0.0)
+  (define time 0)
+  (lambda (command)
+    (case command
+      ('run (lambda ()
+              (inc! time 1)
+              (cond (do-out
+                     (* vol (env out)))
+                    (do-in
+                     (cond ((= time (+ a d))
+                            (set! do-in #f)
+                            (set! vol s))
+                           (else
+                            (set! vol (env in))))
+                     vol)
+                    (else
+                     vol))))
+      ('stopped? (lambda ()
+                   (and do-out
+                        (>= time r))))
+      ('stop (lambda ()
+               (set! time 0)
+               (set! do-out #t))))))
+
+(define-stalin-struct adsr-data
+  :in (make-env)
+  :out (make-env)
+  :do-out #f
+  :do-in #t
+  :vol 0.0
+  :time 0
+  :a+d 0.0)
+
+(define-stalin (make-adsr-do a d s r)
+  (make-adsr-data :in (rt_make_env (vct 0 0 a 1 (+ a d) s) (+ a d))
+                  :out (make-env '((0 1)(1 0)) :dur r)
+                  :a+d (+ a d)))
+(define-stalin (adsr-run adsr-data)
+  (inc! (=> adsr-data :time) 1)
+  (cond ((=> adsr-data :do-out)
+         (* (=> adsr-data :vol) (env (=> adsr-data :out))))
+        ((=> adsr-data :do-in)
+         (cond ((= (=> adsr-data :time)) (=> adsr-data :a+d)
+                (set! (=> adsr-data :do-in) #f)
+                (set! (=> adsr-data :vol) s))
+               (else
+                (set! (=> adsr-data :vol) (env (=> adsr-data :in)))))
+         (=> adsr-data :vol))
+        (else
+         (=> adsr-data :vol))))
+
+(define-stalin (adsr-run adsr-data)
+  (namespace adsr-data)
+  (inc! time 1)
+  (cond (do-out
+         (* vol (env out)))
+        (do-in
+         (cond ((= time (+ a d))
+                (set! do-in #f)
+                (set! vol s))
+               (else
+                (set! vol (env in))))
+         vol)
+        (else
+         vol)))
+
+(define-stalin (midi-synth)
+  (while #t
+    (wait-midi :command note-on
+      (define adsr (make-adsr))
+      (define osc  (make-oscil :freq (midi-to-freq (midi-note))))
+      (sound
+        (if (adsr-stopped? adsr)
+            (stop)
+            (out (* 0.2 (adsr-run adsr) (midi-vol) (oscil osc)))))
+      (spawn
+        (wait-midi :command note-off :note (midi-note)
+          (adsr-stop! adsr))))))
+
+(define-stalin (midi-synth)
+  (while #t
+    (wait-midi :command note-on
+      (define adsr (make-adsr))
+      (define osc  (make-oscil :freq (midi-to-freq (midi-note))))
+      (sound
+        (if ((adsr 'stopped?))
+            (stop)
+            (out (* 0.2 ((adsr 'run)) (midi-vol) (oscil osc)))))
+      (spawn
+        (wait-midi :command note-off :note (midi-note)
+          ((adsr 'stop!)))))))
+
+!#
+
+(define-stalin-macro (make-adsr :optkey 
+                                (a '20:-ms)
+                                (d '20:-ms)
+                                (s 0.2)
+                                (r '50:-ms))
   `(make-adsr-do ,a ,d ,s ,r))
 
 
@@ -1239,6 +1345,13 @@ old bus.
 
  )
 !#
+
+(define-stalin-macro (hz->radians hz)
+  (if (number? hz)
+      (* hz (/ (* pi 2) (-> *rt-engine* samplerate)))
+      `(* ,hz ,(/ (* pi 2) (-> *rt-engine* samplerate)))))
+
+
 
 
 
@@ -3808,7 +3921,7 @@ had to be put into macroexpand instead.
 
 
 ;; Add: -copt -freg-struct-return ?
-
+;; The stalin optino "-df" must be added to ensure proper tail calls.
 (define (compile-stalin-file basename)
   ;;(define command (<-> "stalin -On -no-clone-size-limit  -split-even-if-no-widening  -Ob -Om -Or -Ot -c " basename ".scm"))
   ;;(define command (<-> "stalin -On -no-clone-size-limit  -Ob -Om -Or -Ot -c " basename ".scm"))
@@ -3817,7 +3930,7 @@ had to be put into macroexpand instead.
   ;;(define command (<-> "stalin -On -clone-size-limit 0 -no-escaping-continuations -c " basename ".scm"))
   ;;(define command (<-> "stalin -fully-convert-to-CPS -On -clone-size-limit 0 -c " basename ".scm"))
   ;;(define command (<-> "stalin -On -no-clone-size-limit -split-even-if-no-widening  -c " basename ".scm"))
-  (define command (<-> "stalin -On -clone-size-limit 0 -c " basename ".scm"))
+  (define command (<-> "stalin -df -On -clone-size-limit 0 -c " basename ".scm"))
   (delete-at-exit (<-> basename ".c"))
   (c-display command)
   (get-system-output command
@@ -3907,7 +4020,7 @@ had to be put into macroexpand instead.
 (define (link-stalin-file basename c-file program)
   (c-display "c-file:" c-file)
   (apply eval-c-non-macro
-         `(,(<-> "-I" snd-header-files-path " -I/home/kjetil/site/include" " -lpcl")
+         `(,(<-> "-I" snd-header-files-path " -fno-strict-aliasing -I/home/kjetil/site/include" " -lpcl")
            #f
 
            "#include <jack/jack.h>"
@@ -4003,7 +4116,7 @@ had to be put into macroexpand instead.
 
            (run-now
             (fprintf stderr (string "new heap start\\n"))
-            (set! heap (tar_new_heap))
+            (set! heap (tar_create_heap))
             (fprintf stderr (string "new heap end\\n"))
             
             (if (== 0 (tar_get_dynamic_roots_for (cast <char*> &heap) &start_dyn &end_dyn))
@@ -4081,9 +4194,6 @@ had to be put into macroexpand instead.
            "#undef fprintf"
            "#undef exit"
 
-           (<int> full_copy_counter ,(rte-samplerate)) ;; Do full copy each second.
-           (<bool> want_full_copy false)
-
            ;; public
            (functions->public
             (<int> process_func (lambda ((<void*> something)
@@ -4105,14 +4215,7 @@ had to be put into macroexpand instead.
                                     (clean_sounddata)
                                     (set! first_run 0))
 
-                                  (when (== false (tar_entering_audio_thread heap))
-                                    (rt_debug (string "Using too much CPU. Skipping\\n"))
-                                    (return 0))
-
-                                  full_copy_counter-=endframe-startframe
-                                  (when (<= full_copy_counter 0)
-                                    (set! full_copy_counter ,(rte-samplerate))
-                                    (set! want_full_copy true))
+                                  (tar_before_using_heap heap)
 
                                   (set! g_startframe startframe)
                                   (set! g_endframe endframe)
@@ -4128,38 +4231,35 @@ had to be put into macroexpand instead.
                                   (when (== 0 (% block_time (* ,*rt-block-size* 
                                                                (/ (* 2 (cast <int> ,(rte-samplerate)))
                                                                   ,*rt-block-size*))))
-                                    (rt_debug (string "data: %d, stack: %d %p %p, num_allocs: %d, mem_used: %d")
+                                    (rt_debug (string "data: %d, stack: %d %p %p, mem_used: %d/%d")
                                               (abs (- end_dyn start_dyn))
                                               (abs (- stack_top stack_bot))
                                               stack_bot
                                               stack_top
-                                              heap->num_allocs
-                                              -1
+                                              (tar_get_used_mem heap)
+                                              (tar_get_used_atomic_mem heap)
                                               ))
 
-                                  (if (tar_leave_audio_thread heap want_full_copy)
+                                  (if (tar_after_using_heap heap)
                                       (when (== 0 remove_me)
-                                        (rt_debug (string "data: %d, stack: %d %p %p, num_allocs: %d")
+                                        (rt_debug (string "data: %d, stack: %d %p %p, mem_used: %d/%d")
                                                   (abs (- end_dyn start_dyn))
                                                   (abs (- stack_top stack_bot))
                                                   stack_bot
                                                   stack_top
-                                                  heap->num_allocs
+                                                  (tar_get_used_mem heap)
+                                                  (tar_get_used_atomic_mem heap)
                                                   )
                                         
-                                        (tar_add_root heap start_dyn end_dyn) ; data
+                                        (tar_add_root_concurrently heap start_dyn end_dyn) ; data
                                         ;;(tar_add_root heap &dynstart &dynend) ;; This might work, but performance-vice it shouldn't matter. Probably better to be safe and just use start_dyn and end_dyn.
-                                        (tar_add_root heap stack_bot stack_top) ; stack
+                                        (tar_add_root_concurrently heap stack_bot stack_top) ; stack
 
                                         ;;(tar_add_root heap (- stack_top 120000) stack_top) ; stack
-                                        (tar_add_root heap dsp_coroutine (+ (cast <char*> dsp_coroutine)
-                                                                            (EC_MAX (sizeof <ucontext_t>) ;registers
-                                                                                    (sizeof <jmp_buf>))))
-                                        (if (== true want_full_copy)
-                                            (fprintf stderr (string "hepp\\n")))
-                                        (tar_run_gc heap want_full_copy)
-                                        (set! want_full_copy false)
-                                        ;;heap->num_allocs=0
+                                        (tar_add_root_concurrently heap dsp_coroutine (+ (cast <char*> dsp_coroutine)
+                                                                                         (EC_MAX (sizeof <ucontext_t>) ;registers
+                                                                                                 (sizeof <jmp_buf>))))
+                                        (tar_start_gc heap)
                                         ))
                                   
                                   (sounddata_to_bus startframe endframe)
@@ -4214,7 +4314,9 @@ had to be put into macroexpand instead.
                                        (when (== 1 do_I_free_questionmark)
                                          (fprintf stderr (string "Hepp, freeing stalin\\n"))
                                          (co_delete dsp_coroutine)
-                                         (tar_delete heap)
+                                         (if (> rt_engine->num_procfuncs 0)
+                                             (tar_delete_heap heap true)
+                                             (tar_delete_heap heap false))
                                          (free sounddata)
                                          )))
            

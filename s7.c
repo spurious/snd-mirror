@@ -48,6 +48,7 @@
  *   deliberate difference from r5rs:
  *        modulo, remainder, and quotient take integer, ratio, or real args 
  *        lcm and gcd can take integer or ratio args
+ *        expt can take more than 2 args
  *        delay is renamed make-promise to avoid collisions in CLM
  *        continuation? function to distinguish a continuation from a procedure
  *        log takes an optional 2nd arg (base)
@@ -774,6 +775,7 @@ static char *s7_describe_object(s7_scheme *sc, s7_pointer a);
 static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol);
 static bool s7_is_applicable_object(s7_pointer x);
 static s7_pointer make_list_1(s7_scheme *sc, s7_pointer a);
+static s7_pointer make_list_2(s7_scheme *sc, s7_pointer a, s7_pointer b);
 static void write_string(s7_scheme *sc, const char *s, s7_pointer pt);
 static s7_pointer s7_make_permanent_string(const char *str);
 
@@ -4932,6 +4934,9 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
     return(s7_wrong_type_arg_error(sc, "expt", 1, n, "a number"));
   if (!s7_is_number(pw))
     return(s7_wrong_type_arg_error(sc, "expt", 2, pw, "a number"));
+
+  if (cddr(args) != sc->NIL)
+    return(g_expt(sc, make_list_2(sc, car(args), g_expt(sc, cdr(args)))));
   
   if (object_number_type(pw) == NUM_INT)
     {
@@ -16708,6 +16713,10 @@ static s7_pointer big_expt(s7_scheme *sc, s7_pointer args)
   /* g_expt can overflow easily so I think I'll handle as many cases as possible here */
 
   s7_pointer x, y;
+
+  if (cddr(args) != sc->NIL)
+    return(big_expt(sc, make_list_2(sc, car(args), big_expt(sc, cdr(args)))));
+
   x = car(args);
   y = cadr(args);
 
@@ -18660,7 +18669,7 @@ static void s7_gmp_init(s7_scheme *sc)
 
   s7_define_function(sc, "abs",                 big_abs,              1, 0, false, H_abs);
   s7_define_function(sc, "exp",                 big_exp,              1, 0, false, H_exp);
-  s7_define_function(sc, "expt",                big_expt,             2, 0, false, H_expt);
+  s7_define_function(sc, "expt",                big_expt,             2, 0, true,  H_expt);
   s7_define_function(sc, "log",                 big_log,              1, 1, false, H_log);
   s7_define_function(sc, "sqrt",                big_sqrt,             1, 0, false, H_sqrt);
   s7_define_function(sc, "sin",                 big_sin,              1, 0, false, H_sin);
@@ -19033,7 +19042,7 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "acosh",                   g_acosh,                   1, 0, false, H_acosh);
   s7_define_function(sc, "atanh",                   g_atanh,                   1, 0, false, H_atanh);
   s7_define_function(sc, "sqrt",                    g_sqrt,                    1, 0, false, H_sqrt);
-  s7_define_function(sc, "expt",                    g_expt,                    2, 0, false, H_expt);
+  s7_define_function(sc, "expt",                    g_expt,                    2, 0, true,  H_expt);
   s7_define_function(sc, "floor",                   g_floor,                   1, 0, false, H_floor);
   s7_define_function(sc, "ceiling",                 g_ceiling,                 1, 0, false, H_ceiling);
   s7_define_function(sc, "truncate",                g_truncate,                1, 0, false, H_truncate);
@@ -19308,5 +19317,20 @@ s7_scheme *s7_init(void)
 }
 
 /* unicode is probably do-able if it is sequestered in the s7 strings 
+ * 
+ * extend vectors to mimic Snd vcts:
+ *    (let ((v (make-vct 3))) (set! (v 1) 1.0) (v 1))
+ *    "vector-ref|set!" are ugly and unreadable
+ * also extend vectors to accept multiple indices and bounds (in make) [lists too? and strings? (lst 1) for (list-ref lst 1) etc caar->(l 0 0)]
+ *       the other *-ref currently is hash-table-ref (tbl 'a)?
+ *    this also will require vector-rank|dimensions or something like that
+ *    and vector->list (or vice versa) using nested lists? [and eq? etc]
+ * another possibility: extend all arith ops to handle vectors/matrices
+ *    here the "*" choice is a problem -- probably should be convolution
+ * once these exist, nearly all the list funcs could also refer to vectors
+ * what about a type declaration (as in slib's array.scm) -- if say :float,
+ *   the vector-elements array could be double making it easy(?) to use gsl
+ * [is a 2-dimensional string a crossword puzzle?]
+ * this jettisons compatibility with Guile but I don't want yet another built-in type ("array"? "sequence"?)
  */
 

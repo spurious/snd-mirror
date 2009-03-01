@@ -40,8 +40,9 @@ and run simple lisp[4] functions.
 
 
 (define *tar-atomic-heap-size* (* 4 1024 1024))
-(define *tar-nonatomic-heap-size* (* 1 1024 1024))
-(define *tar-roots-size* (* 1024 1024))
+(define *tar-nonatomic-heap-size* (* 1 256 1024))
+(define *tar-max-mem-size* (* 512 1024))
+;;(define *tar-roots-size* (* 1024 1024))
 
 
 
@@ -148,7 +149,7 @@ and run simple lisp[4] functions.
   (c-get-cell-address ai9))
 (c-global-symbol 'ai2 (interaction-environment))
 (c-global-symbol 'ai2 (standard-interface-eval-closure (current-module)))
-(c-global-symbol 'ai2 (standard-interface-eval-closure (current-module))))))
+(c-global-symbol 'ai2 (standard-interface-eval-closure (current-module)))
 !#
 
 
@@ -1835,7 +1836,7 @@ and run simple lisp[4] functions.
 	   (- a 5))))
 
 (macroexpand-1 '(rt-macro-and a (or a)))
-(macroexpand-1 '(rt-macro-or a)))
+(macroexpand-1 '(rt-macro-or a))
 (macroexpand-1 '(rt-macro-oscil 2 3))
 
 
@@ -3817,7 +3818,7 @@ and run simple lisp[4] functions.
 
 
   
-;; modulo-logic picked up from run.c
+;; modulo-logic picked up from snd-run.c
 (define-rt-macro (modulo a b)
   (let ((x (rt-gensym))
 	(y (rt-gensym))
@@ -3879,7 +3880,7 @@ and run simple lisp[4] functions.
 
 
 	 
-;; truncate-logic picked up from run.c
+;; truncate-logic picked up from snd-run.c
 (define-rt-macro (truncate expand/a)
   (if (rt-immediate? a)
       `(if (negative? ,a)
@@ -3891,7 +3892,7 @@ and run simple lisp[4] functions.
 	       (- (floor (- ,x)))
 	       (floor ,x))))))
 
-;; round-logic picked up from run.c (I'm not sure this one works correctly, because of the "/"-casting)
+;; round-logic picked up from snd-run.c (I'm not sure this one works correctly, because of the "/"-casting)
 (define-rt-macro (round a)
   (let ((plus_half (rt-gensym))
 	(result (rt-gensym)))
@@ -3903,7 +3904,7 @@ and run simple lisp[4] functions.
 	   ,result))))
        
 
-;;logxor-logic picked up from run.c
+;;logxor-logic picked up from snd-run.c
 (define-rt-macro (logxor expand/x expand/y)
   (if (and (number? x)
 	   (number? y))
@@ -3919,7 +3920,7 @@ and run simple lisp[4] functions.
 		       (logior ,a ,b)))))))
 
 
-;;ash-logic picked up from run.c
+;;ash-logic picked up from snd-run.c
 (define-rt-macro (ash expand/a expand/b)
   (if (and (number? a)
 	   (number? b))
@@ -4837,7 +4838,7 @@ and run simple lisp[4] functions.
                                             (<NOTHING> ...))
                                      (<int> size)
                                      (<va_list> argp)
-                                     
+                                     ;;(fprintf stderr fmt)
                                      (if (> (strlen fmt) (- MAXSTRING 256))
                                          (begin
                                            (fprintf stderr (string
@@ -7108,7 +7109,9 @@ old syntax: (not very nice)
                            (run-now
                             (init_rollendurchmesserzeitsammler ,*tar-atomic-heap-size*
                                                                ,*tar-nonatomic-heap-size*
-                                                               ,*tar-roots-size*))))
+                                                               ,*tar-max-mem-size*
+                                                               ,(jack_client_real_time_priority (-> *rt-jack-engine* get-client))
+                                                               1.0f))))
   (set! *tar-is-started* #t))
 
 
@@ -8889,7 +8892,9 @@ old syntax: (not very nice)
                                                      (fprintf stderr (string "hepp, deleting rt_globals %p %p\\n") rt_globals rt_globals->main_coroutine.co)
                                                      (free rt_globals->queue)
                                                      (free rt_globals->block_queue)
-                                                     (tar_delete rt_globals->heap)
+                                                     (if (> rt_globals->engine->num_procfuncs 0)
+                                                         (tar_delete_heap rt_globals->heap true)
+                                                         (tar_delete_heap rt_globals->heap false))
                                                      (free rt_globals)
                                                      )
                                                    (begin ;; In case the scheduler in rt_engine has removed us, the coroutines will be freed here. (this can be quite heavy...)
@@ -8931,7 +8936,7 @@ old syntax: (not very nice)
 								   (set! rt_globals->block_queue[i] &dummy_coroutine))))
 
                                                      (fprintf stderr (string "new heap start %p\\n") &dummy_coroutine)
-                                                     (set! rt_globals->heap (tar_new_heap))
+                                                     (set! rt_globals->heap (tar_create_heap))
                                                      (fprintf stderr (string "new heap end %p %p\\n") start_dyn end_dyn)
 
 						     (return rt_globals))))
@@ -8967,10 +8972,7 @@ old syntax: (not very nice)
 						  (if (!= NULL rt_globals->faust)
 						      (return (rt_faustprocess rt_globals startframe endframe)))
 
-                                                  (when (== false (tar_entering_audio_thread heap))
-                                                    (rt_debug (string "Using too much CPU. Skipping\\n"))
-                                                    (return 0))
-
+                                                  (tar_before_using_heap heap)
 						  
 						  (set! rt_globals->prev_block_time engine->prev_block_time)
 						  (set! rt_globals->block_time engine->block_time)
@@ -9010,37 +9012,38 @@ old syntax: (not very nice)
 						      (set! rt_globals->remove_me 1))
 						  
 
-                                                  (if (tar_leave_audio_thread heap false)
+                                                  (if (== (tar_after_using_heap heap) true)
                                                       (when (== 0 rt_globals->remove_me)
-                                                        (rt_debug (string "data: %d, stack: %d %p %p, num_allocs: %d")
+                                                        (rt_debug (string "data: %d, stack: %d %d %d, used mem: %d, used atomic mem: %d")
                                                                   (abs (- end_dyn start_dyn))
                                                                   -1 -1 -1
 								  ;;(abs (- stack_top stack_bot))
                                                                   ;;stack_bot
                                                                   ;;stack_top
-                                                                  heap->num_allocs
+                                                                  (tar_get_used_mem heap)
+                                                                  (tar_get_used_atomic_mem heap)
                                                                   )
                                                 
-                                                        (tar_add_root heap start_dyn end_dyn) ; static data
+                                                        (tar_add_root_concurrently heap start_dyn end_dyn) ; static data
                                                         
                                                         (for-each 0 rt_globals->queue_size
                                                                   (lambda (i)
                                                                     (<struct-rt_coroutine*> coroutine rt_globals->queue[i])
-                                                                    (tar_add_root heap coroutine->stack_low coroutine->stack_high) ;stacks
-                                                                    (tar_add_root heap coroutine (+ (cast <char*> coroutine)   ;registerss
-                                                                                                    (EC_MAX (sizeof <ucontext_t>)
-                                                                                                            (sizeof <jmp_buf>))))))
+                                                                    (tar_add_root_concurrently heap coroutine->stack_low coroutine->stack_high) ;stacks
+                                                                    (tar_add_root_concurrently heap coroutine (+ (cast <char*> coroutine)   ;registerss
+                                                                                                                  (EC_MAX (sizeof <ucontext_t>)
+                                                                                                                          (sizeof <jmp_buf>))))))
                                                         (for-each 0 rt_globals->block_queue_size
                                                                   (lambda (i)
                                                                     (<struct-rt_coroutine*> coroutine rt_globals->block_queue[i])
-                                                                    (tar_add_root heap coroutine->stack_low coroutine->stack_high) ;stacks
-                                                                    (tar_add_root heap coroutine (+ (cast <char*> coroutine)   ;registerss
-                                                                                                    (EC_MAX (sizeof <ucontext_t>)
-                                                                                                            (sizeof <jmp_buf>))))))
+                                                                    (tar_add_root_concurrently heap coroutine->stack_low coroutine->stack_high) ;stacks
+                                                                    (tar_add_root_concurrently heap coroutine (+ (cast <char*> coroutine)   ;registerss
+                                                                                                                 (EC_MAX (sizeof <ucontext_t>)
+                                                                                                                         (sizeof <jmp_buf>))))))
                                                         
-                                                        (tar_add_root heap rt_globals (+ rt_globals (sizeof <struct-RT_Globals>))) ;; dynamic data
-
-                                                        (tar_run_gc heap false)
+                                                        (tar_add_root_concurrently heap rt_globals (+ (cast <char*> rt_globals) (sizeof <struct-RT_Globals>))) ;; dynamic data
+                                                        
+                                                        (tar_start_gc heap)
 
                                                         ))
 

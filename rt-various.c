@@ -60,67 +60,15 @@ int fix_stalin_c_source(char* infile, char *outfile){
 /* Rollendurchmesserzeitsammler stuff. */
 
 
-static void print_error(FILE *where,char *fmt, ...) {
-  char temp[10000];
-  va_list ap;
-  va_start(ap, fmt);{
-    vsnprintf (temp, 9998, fmt, ap);
-  }va_end(ap);
-  //syslog(LOG_INFO,temp);
-  fprintf(where,"tar snapshot benchmark: %s\n",temp);
-}
-
-static int set_pid_priority(pid_t pid,int policy,int priority,char *message,char *name){
-  struct sched_param par={0};
-  par.sched_priority=priority;
-  if((sched_setscheduler(pid,policy,&par)!=0)){
-    print_error(stderr,message,pid,name,strerror(errno));
-    return 0;
-  }
-  return 1;
-}
-
-static void set_realtime(void){
-  set_pid_priority(0,SCHED_FIFO,60,"Unable to set SCHED_FIFO for %d (\"%s\"). (%s)", "set_realtime()");
-}
-
-static void* threadstart_realtime(void *arg){
-  tar_threadstart threadstart=(tar_threadstart)arg;
-  set_realtime();
-  threadstart();
-  return NULL;
-
-}
-
-static void create_realtime_thread(tar_threadstart threadstart){
-  pthread_t *thread;
-  thread=calloc(sizeof(pthread_t*),1);
-  pthread_create(thread,NULL,threadstart_realtime,threadstart);
-}
-
-static void* threadstart_mark(void *arg){
-  tar_threadstart threadstart=(tar_threadstart)arg;
-  //set_pid_priority(0,SCHED_FIFO,0,"Unable to set SCHED_FIFO for %d (\"%s\"). (%s)", "threadstart_mark()");
-  threadstart();
-  return NULL;
-}
-
-static void create_mark_thread(tar_threadstart threadstart){
-  pthread_t *thread;
-  thread=calloc(sizeof(pthread_t*),1);
-  pthread_create(thread,NULL,threadstart_mark,threadstart);
-}
-
 static pid_t mainpid=0;
 
-void init_rollendurchmesserzeitsammler(int a,int b,int c){
+void init_rollendurchmesserzeitsammler(int a,int b,int c,int d,float e){
   mainpid=getpid();
   tar_init(a,
 	   b,
 	   c,
-	   create_realtime_thread,
-	   create_mark_thread
-	   );
+           d,
+           e);
 }
 
 
@@ -129,18 +77,24 @@ void rt_various_dummy(void){
   fprintf(stderr,"It is an error to call this function.\n");
 
   tar_get_dynamic_roots_for(NULL,NULL,NULL);
-  tar_entering_audio_thread(NULL);
-  tar_leave_audio_thread(NULL,false);
+  tar_init_block(1.0f);
+  tar_before_using_heap(NULL);
+  tar_after_using_heap(NULL);
   tar_add_root(NULL,NULL,NULL);
-  tar_run_gc(NULL,false);
-  tar_new_heap();
-  tar_delete(NULL);
+  tar_add_root_concurrently(NULL,NULL,NULL);
+  tar_start_gc(NULL);
+  tar_create_heap();
+  tar_delete_heap(NULL,false);
   tar_alloc(NULL,0);
   tar_alloc_atomic(NULL,0);
-  tar_malloc_atomic_uncollectable(0);
-  tar_calloc_atomic_uncollectable(0,0);
-  tar_free_atomic_uncollectable(NULL);
+  tar_get_used_mem(NULL);
+  tar_get_used_atomic_mem(NULL);
 
+  //tar_malloc_atomic_uncollectable(0);
+  //tar_calloc_atomic_uncollectable(0,0);
+  //tar_free_atomic_uncollectable(NULL);
+  //  tar_printstats();
+  //  tar_resetstats();
 }
 
 
@@ -182,7 +136,7 @@ int rt_mus_error(int type,const char* fmt,...){
 
 void* clm_calloc_atomic(int num,size_t size,const char* what){
   if(clm_tar_heap==NULL || mainpid==0 || getpid()==mainpid){
-    return calloc(num,size);
+    return CALLOC(num,size);
   }else{
     void *ret=tar_alloc_atomic(clm_tar_heap,num*size);
     if(ret==NULL){
@@ -196,7 +150,7 @@ void* clm_calloc_atomic(int num,size_t size,const char* what){
 
 void* clm_calloc(int num,size_t size,const char* what){
   if(clm_tar_heap==NULL || mainpid==0 || getpid()==mainpid){
-    return calloc(num,size);
+    return CALLOC(num,size);
   }else{
     void *ret=tar_alloc(clm_tar_heap,num*size);
     if(ret==NULL){
@@ -208,7 +162,7 @@ void* clm_calloc(int num,size_t size,const char* what){
 
 void* clm_malloc_atomic(size_t size,const char* what){
   if(clm_tar_heap==NULL || mainpid==0 || getpid()==mainpid){
-    return malloc(size);
+    return MALLOC(size);
   }else{
     void *ret=tar_alloc_atomic(clm_tar_heap,size);
     if(ret==NULL){
@@ -220,7 +174,7 @@ void* clm_malloc_atomic(size_t size,const char* what){
 
 void* clm_malloc(size_t size,const char* what){
   if(clm_tar_heap==NULL || mainpid==0 || getpid()==mainpid){
-    return malloc(size);
+    return MALLOC(size);
   }else{
     void *ret=tar_alloc(clm_tar_heap,size);
     if(ret==NULL){
@@ -232,20 +186,16 @@ void* clm_malloc(size_t size,const char* what){
 
 void* clm_realloc(void* old,size_t newsize){
   if(clm_tar_heap==NULL || mainpid==0 || getpid()==mainpid){
-    return realloc(old,newsize);
+    return REALLOC(old,newsize);
   }else{
-    tar_mem_t *mem=(tar_mem_t*)(((char*)old)-sizeof(tar_mem_t));
-    size_t size=mem->size;
-    if(newsize<size)
-      size=newsize;
-    return memcpy(clm_malloc(newsize,"realloc"),old,size);
+    return memcpy(clm_malloc(newsize,"realloc"),old,newsize);
   }
 }
 
 
 void clm_free(void* p){
   if(clm_tar_heap==NULL || mainpid==0 || getpid()==mainpid){
-    free(p);
+    FREE(p);
   }
 }
 
