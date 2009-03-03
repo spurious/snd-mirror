@@ -48,7 +48,6 @@
  *   deliberate difference from r5rs:
  *        modulo, remainder, and quotient take integer, ratio, or real args 
  *        lcm and gcd can take integer or ratio args
- *        expt can take more than 2 args
  *        delay is renamed make-promise to avoid collisions in CLM
  *        continuation? function to distinguish a continuation from a procedure
  *        log takes an optional 2nd arg (base)
@@ -71,6 +70,7 @@
  *        define-constant, pi, most-positive-fixnum, most-negative-fixnum
  *        format (only the simple directives)
  *        random for any numeric type and any numeric argument
+ *        optional multidimensional and applicable vectors
  *
  * Mike Scholz provided the FreeBSD support (complex trig funcs, etc)
  *
@@ -168,16 +168,6 @@
   /* this determines whether names are case sensitive */
 #endif
 
-#ifndef WITH_READ_LINE
-  #define WITH_READ_LINE 1
-  /* this includes the (non-standard) read-line function */
-#endif
-
-#ifndef WITH_CONS_STREAM
-  #define WITH_CONS_STREAM 0
-  /* this includes the "cons-stream" form */
-#endif
-
 #ifndef WITH_R5RS_RATIONALIZE
   #define WITH_R5RS_RATIONALIZE 0
   /* this causes s7 to follow the scheme spec for rationalize (not recommended) --
@@ -188,8 +178,14 @@
 #ifndef WITH_GMP
   #define WITH_GMP 0
   /* this includes multiprecision arithmetic for all numeric types and functions, using gmp, mpfr, and mpc
-   * WITH_GMP adds the following functions: 
-   *   bignum, bignum?, bignum-precision
+   * WITH_GMP adds the following functions: bignum, bignum?, bignum-precision
+   */
+#endif
+
+#ifndef WITH_MULTIDIMENSIONAL_VECTORS
+  #define WITH_MULTIDIMENSIONAL_VECTORS 1
+  /* this includes both the multidimension vector support and vectors as (set)applicable objects.
+   *   added function: vector-dimensions returns a list of dimensions
    */
 #endif
 
@@ -284,7 +280,7 @@ typedef enum {OP_READ_INTERNAL, OP_EVAL, OP_EVAL_ARGS0, OP_EVAL_ARGS1, OP_APPLY,
 	      OP_LOAD_RETURN_IF_EOF, OP_LOAD_CLOSE_AND_POP_IF_EOF, OP_EVAL_STRING, OP_EVAL_STRING_DONE, 
 	      OP_QUIT, OP_CATCH, OP_DYNAMIC_WIND, OP_FOR_EACH, OP_MAP, OP_DEFINE_CONSTANT0, OP_DEFINE_CONSTANT1, 
 	      OP_DO, OP_DO_END0, OP_DO_END1, OP_DO_STEP0, OP_DO_STEP1, OP_DO_STEP2, OP_DO_INIT,
-	      OP_DEFINE_STAR, OP_LAMBDA_STAR, OP_CONS_STREAM0, OP_CONS_STREAM1, OP_ERROR_QUIT,
+	      OP_DEFINE_STAR, OP_LAMBDA_STAR, OP_ERROR_QUIT,
 	      OP_MAX_DEFINED} opcode_t;
 
 typedef enum {TOKEN_EOF, TOKEN_LEFT_PAREN, TOKEN_RIGHT_PAREN, TOKEN_DOT, TOKEN_ATOM, TOKEN_QUOTE, TOKEN_DOUBLE_QUOTE, 
@@ -363,6 +359,12 @@ typedef struct dwind {
 } dwind;
 
 
+typedef struct vdims {
+  int ndims;
+  int *dims, *offsets;
+} vdims;
+
+
 /* cell structure */
 typedef struct s7_cell {
   unsigned int flag;
@@ -384,6 +386,9 @@ typedef struct s7_cell {
     struct {
       int length;
       s7_pointer *elements;
+#if WITH_MULTIDIMENSIONAL_VECTORS
+      vdims *dim_info;
+#endif
     } vector;
     
     ffunc *ffptr;
@@ -470,10 +475,8 @@ struct s7_scheme {
   int strbuf_size;
   char *strbuf;
   
-#if WITH_READ_LINE
   char *read_line_buf;
   int read_line_buf_size;
-#endif
 
   token_t tok;
   s7_pointer value;
@@ -633,6 +636,16 @@ struct s7_scheme {
 
 #define vector_length(p)              ((p)->object.vector.length)
 #define vector_element(p, i)          ((p)->object.vector.elements[i])
+#if WITH_MULTIDIMENSIONAL_VECTORS
+  #define vector_dimension(p, i)      ((p)->object.vector.dim_info->dims[i])
+  #define vector_ndims(p)             ((p)->object.vector.dim_info->ndims)
+  #define vector_offset(p, i)         ((p)->object.vector.dim_info->offsets[i])
+  #define vector_is_multidimensional(p) ((p)->object.vector.dim_info)
+  #define VECTOR_REST_ARGS true
+#else
+  #define VECTOR_REST_ARGS false
+#endif
+
 #define small_int(Sc, Val)            (Sc)->small_ints[Val]
 #define small_int_as_num(Sc, Val)     (Sc)->small_ints[Val]->object.number
 
@@ -872,8 +885,9 @@ static s7_pointer s7_set_immutable(s7_pointer p)
 
 static void set_pair_line_number(s7_pointer p, int n)
 {
-  if (!is_eternal(p))
-    p->object.cons.line = n;
+  if ((!is_eternal(p)) &&
+      (is_pair(p)))
+    pair_line_number(p) = n;
 }
 
 
@@ -1042,7 +1056,17 @@ static void finalize_s7_cell(s7_scheme *sc, s7_pointer a)
     case T_VECTOR:
     case T_HASH_TABLE:
       if (vector_length(a) > 0)
-	free(a->object.vector.elements);
+	{
+	  free(a->object.vector.elements);
+#if WITH_MULTIDIMENSIONAL_VECTORS
+	  if (vector_is_multidimensional(a))
+	    {
+	      free(a->object.vector.dim_info->dims);
+	      free(a->object.vector.dim_info->offsets);
+	      free(a->object.vector.dim_info);
+	    }
+#endif
+	}
       break;
       
     case T_CONTINUATION:
@@ -4930,13 +4954,19 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
   
   n = car(args);
   pw = cadr(args);
+
   if (!s7_is_number(n))
     return(s7_wrong_type_arg_error(sc, "expt", 1, n, "a number"));
   if (!s7_is_number(pw))
     return(s7_wrong_type_arg_error(sc, "expt", 2, pw, "a number"));
 
-  if (cddr(args) != sc->NIL)
-    return(g_expt(sc, make_list_2(sc, car(args), g_expt(sc, cdr(args)))));
+  /* this provides more than 2 args to expt:
+   *  if (cddr(args) != sc->NIL)
+   *    return(g_expt(sc, make_list_2(sc, car(args), g_expt(sc, cdr(args)))));
+   *
+   * but it's unusual in scheme to process args in reverse order, and the
+   * syntax by itself is ambiguous (does (expt 2 2 3) = 256 or 64?)
+   */
   
   if (object_number_type(pw) == NUM_INT)
     {
@@ -7378,8 +7408,6 @@ static s7_pointer g_peek_char(s7_scheme *sc, s7_pointer args)
 }
 
 
-#if WITH_READ_LINE
-
 static s7_pointer g_read_line(s7_scheme *sc, s7_pointer args)
 {
   #define H_read_line "(read-line port) returns the next line from port, or EOF"
@@ -7427,8 +7455,6 @@ static s7_pointer g_read_line(s7_scheme *sc, s7_pointer args)
     }
   return(sc->EOF_OBJECT);
 }
-#endif
-
 
 
 s7_pointer s7_read(s7_scheme *sc, s7_pointer port)
@@ -9394,7 +9420,6 @@ static s7_pointer g_list_line_number(s7_scheme *sc, s7_pointer args)
 
 /* -------------------------------- vectors -------------------------------- */
 
-
 bool s7_is_vector(s7_pointer p)    
 { 
   return(type(p) == T_VECTOR);
@@ -9413,6 +9438,7 @@ s7_pointer s7_make_vector(s7_scheme *sc, int len)
       s7_vector_fill(sc, x, sc->NIL);
     }
   else x->object.vector.elements = NULL;
+  x->object.vector.dim_info = NULL;
   return(x);
 }
 
@@ -9497,8 +9523,28 @@ static s7_pointer g_vector_to_list(s7_scheme *sc, s7_pointer args)
 static bool vectors_equal(s7_pointer x, s7_pointer y)
 {
   int i, len;
+
   len = vector_length(x);
   if (len != vector_length(y)) return(false);
+
+#if WITH_MULTIDIMENSIONAL_VECTORS
+  if (vector_is_multidimensional(x))
+    {
+      if (!(vector_is_multidimensional(y)))
+	return(false);
+      if (vector_ndims(x) != vector_ndims(y))
+	return(false);
+      for (i = 0; i < vector_ndims(x); i++)
+	if (vector_dimension(x, i) != vector_dimension(y, i))
+	  return(false);
+    }
+  else
+    {
+      if (vector_is_multidimensional(y))
+	return(false);
+    }
+#endif
+
   for (i = 0; i < len; i++)
     if (!(s7_is_equal(vector_element(x, i), vector_element(y, i))))
       return(false);
@@ -9560,21 +9606,50 @@ static s7_pointer g_vector_length(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_vector_ref(s7_scheme *sc, s7_pointer args)
 {
+#if WITH_MULTIDIMENSIONAL_VECTORS
+  #define H_vector_ref "(vector-ref v i) returns the i-th element of vector v.  If v \
+is a multidimensional vector, you can also use (vector-ref v ...) where the trailing args \
+are the indices, or omit 'vector-ref': (v ...)."
+#else
   #define H_vector_ref "(vector-ref v i) returns the i-th element of vector v"
-  s7_pointer vec, index;
+#endif
+  s7_pointer vec;
+  int index;
+
   vec = car(args);
-  index = cadr(args);
-  
   if (!s7_is_vector(vec))
     return(s7_wrong_type_arg_error(sc, "vector-ref", 1, car(args), "a vector"));
+
+#if WITH_MULTIDIMENSIONAL_VECTORS
+  if (vector_is_multidimensional(vec))
+    {
+      int i;
+      index = 0;
+      s7_pointer x;
+      for (x = args, i = 0; (x != sc->NIL) && (i < vector_ndims(vec)); x = cdr(x), i++)
+	index += s7_integer(car(x)) * vector_offset(vec, i);
+    }
+  else
+#endif
+    {
+      if (!s7_is_integer(cadr(args)))
+	return(s7_wrong_type_arg_error(sc, "vector-ref", 2, cadr(args), "an integer"));
+
+      index = s7_integer(cadr(args));
+#if WITH_MULTIDIMENSIONAL_VECTORS
+      if (cddr(args) != sc->NIL)
+	return(s7_error(sc, 
+			sc->WRONG_NUMBER_OF_ARGS, 
+			make_list_2(sc, s7_make_string_with_length(sc, "too many arguments: ~A", 22), args)));
+#endif
+    }
+
+  if (index < 0)
+    return(s7_out_of_range_error(sc, "vector-ref", 2, s7_make_integer(sc, index), "a non-negative integer"));
+  if (index >= vector_length(vec))
+    return(s7_out_of_range_error(sc, "vector-ref", 2, s7_make_integer(sc, index), "less than vector length"));
   
-  if ((!s7_is_integer(index)) || (s7_integer(index) < 0))
-    return(s7_wrong_type_arg_error(sc, "vector-ref", 2, index, "a non-negative integer"));
-  
-  if (s7_integer(index) >= vector_length(vec))
-    return(s7_out_of_range_error(sc, "vector-ref", 2, index, "less than vector length"));
-  
-  return(vector_element(vec, s7_integer(index)));
+  return(vector_element(vec, index));
 }
 
 
@@ -9606,21 +9681,79 @@ static s7_pointer g_vector_set(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_make_vector(s7_scheme *sc, s7_pointer args)
 {
+#if WITH_MULTIDIMENSIONAL_VECTORS
+  #define H_make_vector "(make-vector len :optional (value #f)) returns a vector of len elements initialized to value. \
+To create a multidimensional vector, put the dimension bounds in a list (this is to avoid ambiguities such as \
+(make-vector 1 2) where it's not clear whether the '2' is an initial value or a dimension size).  (make-vector '(2 3) 1.0) \
+returns a 2 dimensional vector of 6 total elements, all initialized to 1.0."
+#else
   #define H_make_vector "(make-vector len :optional (value #f)) returns a vector of len elements initialized to value"
+#endif
   int len;
-  s7_pointer fill = sc->UNSPECIFIED, vec;
+  s7_pointer x, fill = sc->UNSPECIFIED, vec;
+
+  x = car(args);
+  if (s7_is_integer(x))
+    {
+      if (s7_integer(x) < 0)
+	return(s7_wrong_type_arg_error(sc, "make-vector", 1, x, "a non-negative integer"));
+      len = s7_integer(x);
+    }
+#if WITH_MULTIDIMENSIONAL_VECTORS
+  else
+    {
+      s7_pointer y;
+      if (!(is_pair(x)))
+	return(s7_wrong_type_arg_error(sc, "make-vector", 1, x, "an integer or a list of integers"));
+
+      if (!is_pair(cdr(x)))
+	len = s7_integer(car(x));
+      else
+	{
+	  int i;
+	  for (i = 1, len = 1, y = x; y != sc->NIL; y = cdr(y), i++)
+	    {
+	      len *= s7_integer(car(y));
+	      if (len < 0)
+		return(s7_wrong_type_arg_error(sc, "make-vector", i, car(y), "a non-negative integer"));
+	    }
+	}
+    }
+#endif
   
-  if ((!s7_is_integer(car(args))) || (s7_integer(car(args)) < 0))
-    return(s7_wrong_type_arg_error(sc, "make-vector", 1, car(args), "a non-negative integer"));
-  
-  len = s7_integer(car(args));
   if (cdr(args) != sc->NIL) 
     fill = cadr(args);
-  
+
   vec = s7_make_vector(sc, len);
   if (fill != sc->NIL)
     s7_vector_fill(sc, vec, fill);
-  
+
+#if WITH_MULTIDIMENSIONAL_VECTORS
+  if ((is_pair(x)) &&
+      (is_pair(cdr(x))))
+    {
+      int i, offset = 1;
+      s7_pointer y;
+      vdims *v;
+
+      v = (vdims *)malloc(sizeof(vdims));
+      v->ndims = safe_list_length(sc, x);
+      v->dims = (int *)malloc(v->ndims * sizeof(int));
+      v->offsets = (int *)malloc(v->ndims * sizeof(int));
+
+      for (i = 0, y = x; y != sc->NIL; i++, y = cdr(y))
+	v->dims[i] = s7_integer(car(y));
+
+      for (i = v->ndims - 1; i >= 0; i--)
+	{
+	  v->offsets[i] = offset;
+	  offset *= v->dims[i];
+	}
+
+      vec->object.vector.dim_info = v;
+    }
+#endif
+
   return(vec);
 }
 
@@ -9630,6 +9763,61 @@ static s7_pointer g_is_vector(s7_scheme *sc, s7_pointer args)
   #define H_is_vector "(vector? obj) returns #t if obj is a vector"
   return(make_boolean(sc, s7_is_vector(car(args))));
 }
+
+
+#if WITH_MULTIDIMENSIONAL_VECTORS
+static s7_pointer g_vector_dimensions(s7_scheme *sc, s7_pointer args)
+{
+  #define H_vector_dimensions "(vector-dimensions vect) returns a list of vect's dimensions"
+  s7_pointer x;
+
+  x = car(args);
+  if (!s7_is_vector(x))
+    return(s7_wrong_type_arg_error(sc, "vector-dimensions", 0, x, "a vector"));
+
+  if (vector_is_multidimensional(x))
+    {
+      int i;
+      s7_pointer lst;
+      lst = sc->NIL;
+      for (i = vector_ndims(x) - 1; i--; i >= 0)
+	lst = s7_cons(sc, s7_make_integer(sc, vector_dimension(x, i)), lst);
+      return(lst);
+    }
+  
+  return(make_list_1(sc, s7_make_integer(sc, vector_length(x))));
+}
+
+
+static s7_pointer applicable_vector_ref(s7_scheme *sc, s7_pointer vect, s7_pointer indices)
+{
+  if (vector_is_multidimensional(vect))
+    {
+      int i, index = 0;
+      s7_pointer x;
+      for (x = indices, i = 0; (x != sc->NIL) && (i < vector_ndims(vect)); x = cdr(x), i++)
+	index += s7_integer(car(x)) * vector_offset(vect, i);
+      return(vector_element(vect, index));
+    }
+  return(vector_element(vect, s7_integer(car(indices))));
+}
+
+
+static s7_pointer applicable_vector_set(s7_scheme *sc, s7_pointer vect, s7_pointer indices, s7_pointer val)
+{
+  if (vector_is_multidimensional(vect))
+    {
+      int i, index = 0;
+      s7_pointer x;
+      for (x = indices, i = 0; (x != sc->NIL) && (i < vector_ndims(vect)); x = cdr(x), i++)
+	index += s7_integer(car(x)) * vector_offset(vect, i);
+      vector_element(vect, index) = val;
+    }
+  else vector_element(vect, s7_integer(car(indices))) = val;
+  return(val);
+}
+
+#endif
 
 
 
@@ -12880,7 +13068,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	  sc->args = safe_reverse_in_place(sc, sc->args); 
 	  sc->code = car(sc->args);
-	  if (!is_procedure(sc->code))
+
+	  if ((!is_procedure(sc->code)) &&
+	      (!s7_is_vector(sc->code)))
 	    return(eval_error(sc, "attempt to apply ~A?\n", sc->code));
 	  
 	  set_pair_line_number(sc->code, sc->saved_line_number);
@@ -13144,6 +13334,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  pop_stack(sc);
 	  goto START;
 
+#if WITH_MULTIDIMENSIONAL_VECTORS
+	case T_VECTOR:                            /* -------- vector as applicable object -------- */
+	  /* sc->code is the vector, sc->args is the list of dimensions */
+	  sc->value = applicable_vector_ref(sc, sc->code, sc->args);
+	  pop_stack(sc);
+	  goto START;
+#endif
+
 	default:
 	  return(eval_error(sc, "~A: apply of non-function?", sc->code));
 	}
@@ -13297,8 +13495,20 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  sc->x = s7_symbol_value(sc, caar(sc->code));
 	  if ((is_object(sc->x)) &&
 	      (object_set_function(sc->x)))
-	    sc->code = s7_cons(sc, sc->SET_OBJECT, s7_append(sc, car(sc->code), cdr(sc->code)));   /* use set method */
-	  else return(eval_error(sc, "no generalized set for ~A", caar(sc->code)));
+	    sc->code = s7_cons(sc, sc->SET_OBJECT, s7_append(sc, car(sc->code), cdr(sc->code)));   /* use set method (append flattens the lists) */
+	  else 
+	    {
+#if WITH_MULTIDIMENSIONAL_VECTORS
+	      if (type(sc->x) == T_VECTOR)
+		{
+		  /* sc->x is the vector, sc->code is expr without the set! */
+		  applicable_vector_set(sc, sc->x, cdar(sc->code), cadr(sc->code));
+		  pop_stack(sc);
+		  goto START;
+		}
+#endif
+	      return(eval_error(sc, "no generalized set for ~A", caar(sc->code)));
+	    }
 	}
       else 
 	{
@@ -13565,23 +13775,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       pop_stack(sc);
       goto START;
       
-      
-#if WITH_CONS_STREAM
-    case OP_CONS_STREAM0:
-      push_stack(sc, OP_CONS_STREAM1, sc->NIL, cdr(sc->code));
-      sc->code = car(sc->code);
-      goto EVAL;
-      
-      
-    case OP_CONS_STREAM1:
-      sc->args = sc->value;  /* save sc->value to register sc->args for gc */
-      sc->x = s7_make_closure(sc, s7_cons(sc, sc->NIL, sc->code), sc->envir);
-      set_type(sc->x, T_PROMISE);
-      sc->value = s7_cons(sc, sc->args, sc->x);
-      pop_stack(sc);
-      goto START;      
-#endif
-
       
     case OP_AND0:
       if (sc->code == sc->NIL) 
@@ -14413,10 +14606,8 @@ static s7_scheme *clone_s7(s7_scheme *sc, s7_pointer vect)
   new_sc->strbuf_size = INITIAL_STRBUF_SIZE;
   new_sc->strbuf = (char *)calloc(new_sc->strbuf_size, sizeof(char));
 
-#if WITH_READ_LINE
   new_sc->read_line_buf = NULL;
   new_sc->read_line_buf_size = 0;
-#endif
   
   new_sc->stack_top = 0;
   new_sc->stack = vect;
@@ -14461,9 +14652,7 @@ static s7_scheme *close_s7(s7_scheme *sc)
 {
   free(sc->strbuf);
   free(sc->temps);
-#if WITH_READ_LINE
   if (sc->read_line_buf) free(sc->read_line_buf);
-#endif
   if (sc->default_rng) free(sc->default_rng);
 #if WITH_GMP
   if (sc->default_big_rng) free(sc->default_big_rng);
@@ -16714,8 +16903,10 @@ static s7_pointer big_expt(s7_scheme *sc, s7_pointer args)
 
   s7_pointer x, y;
 
-  if (cddr(args) != sc->NIL)
-    return(big_expt(sc, make_list_2(sc, car(args), big_expt(sc, cdr(args)))));
+  /* see comment under g_expt
+   *  if (cddr(args) != sc->NIL)
+   *    return(big_expt(sc, make_list_2(sc, car(args), big_expt(sc, cdr(args)))));
+   */
 
   x = car(args);
   y = cadr(args);
@@ -18669,7 +18860,7 @@ static void s7_gmp_init(s7_scheme *sc)
 
   s7_define_function(sc, "abs",                 big_abs,              1, 0, false, H_abs);
   s7_define_function(sc, "exp",                 big_exp,              1, 0, false, H_exp);
-  s7_define_function(sc, "expt",                big_expt,             2, 0, true,  H_expt);
+  s7_define_function(sc, "expt",                big_expt,             2, 0, false, H_expt);
   s7_define_function(sc, "log",                 big_log,              1, 1, false, H_log);
   s7_define_function(sc, "sqrt",                big_sqrt,             1, 0, false, H_sqrt);
   s7_define_function(sc, "sin",                 big_sin,              1, 0, false, H_sin);
@@ -18729,10 +18920,8 @@ s7_scheme *s7_init(void)
   sc->strbuf_size = INITIAL_STRBUF_SIZE;
   sc->strbuf = (char *)calloc(sc->strbuf_size, sizeof(char));
   
-#if WITH_READ_LINE
   sc->read_line_buf = NULL;
   sc->read_line_buf_size = 0;
-#endif
 
   sc->NIL = &sc->_NIL;
   sc->T = &sc->_T;
@@ -18870,9 +19059,6 @@ s7_scheme *s7_init(void)
   assign_syntax(sc, "defmacro",        OP_DEFMACRO);
   assign_syntax(sc, "define-macro",    OP_DEFINE_MACRO);
   assign_syntax(sc, "do",              OP_DO);
-#if WITH_CONS_STREAM
-  assign_syntax(sc, "cons-stream",     OP_CONS_STREAM0); 
-#endif
   
   sc->LAMBDA = s7_make_symbol(sc, "lambda");
   typeflag(sc->LAMBDA) |= (T_IMMUTABLE | T_CONSTANT | T_DONT_COPY); 
@@ -19004,9 +19190,7 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "display",                 g_display,                 1, 1, false, H_display);
   s7_define_function(sc, "read-byte",               g_read_byte,               0, 1, false, H_read_byte);
   s7_define_function(sc, "write-byte",              g_write_byte,              1, 1, false, H_write_byte);
-#if WITH_READ_LINE
   s7_define_function(sc, "read-line",               g_read_line,               0, 0, true,  H_read_line);
-#endif
   
   s7_define_function(sc, "call-with-input-string",  g_call_with_input_string,  2, 0, false, H_call_with_input_string);
   s7_define_function(sc, "call-with-input-file",    g_call_with_input_file,    2, 0, false, H_call_with_input_file);
@@ -19042,7 +19226,7 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "acosh",                   g_acosh,                   1, 0, false, H_acosh);
   s7_define_function(sc, "atanh",                   g_atanh,                   1, 0, false, H_atanh);
   s7_define_function(sc, "sqrt",                    g_sqrt,                    1, 0, false, H_sqrt);
-  s7_define_function(sc, "expt",                    g_expt,                    2, 0, true,  H_expt);
+  s7_define_function(sc, "expt",                    g_expt,                    2, 0, false, H_expt);
   s7_define_function(sc, "floor",                   g_floor,                   1, 0, false, H_floor);
   s7_define_function(sc, "ceiling",                 g_ceiling,                 1, 0, false, H_ceiling);
   s7_define_function(sc, "truncate",                g_truncate,                1, 0, false, H_truncate);
@@ -19205,9 +19389,12 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "vector-fill!",            g_vector_fill,             2, 0, false, H_vector_fill);
   s7_define_function(sc, "vector",                  g_vector,                  0, 0, true,  H_vector);
   s7_define_function(sc, "vector-length",           g_vector_length,           1, 0, false, H_vector_length);
-  s7_define_function(sc, "vector-ref",              g_vector_ref,              2, 0, false, H_vector_ref);
-  s7_define_function(sc, "vector-set!",             g_vector_set,              3, 0, false, H_vector_set);
+  s7_define_function(sc, "vector-ref",              g_vector_ref,              2, 0, VECTOR_REST_ARGS, H_vector_ref);
+  s7_define_function(sc, "vector-set!",             g_vector_set,              3, 0, VECTOR_REST_ARGS, H_vector_set);
   s7_define_function(sc, "make-vector",             g_make_vector,             1, 1, false, H_make_vector);
+#if WITH_MULTIDIMENSIONAL_VECTORS
+  s7_define_function(sc, "vector-dimensions",       g_vector_dimensions,       1, 0, false, H_vector_dimensions);
+#endif
   
   
   s7_define_function(sc, "call/cc",                 g_call_cc,                 1, 0, false, H_call_cc);
@@ -19317,20 +19504,5 @@ s7_scheme *s7_init(void)
 }
 
 /* unicode is probably do-able if it is sequestered in the s7 strings 
- * 
- * extend vectors to mimic Snd vcts:
- *    (let ((v (make-vct 3))) (set! (v 1) 1.0) (v 1))
- *    "vector-ref|set!" are ugly and unreadable
- * also extend vectors to accept multiple indices and bounds (in make) [lists too? and strings? (lst 1) for (list-ref lst 1) etc caar->(l 0 0)]
- *       the other *-ref currently is hash-table-ref (tbl 'a)?
- *    this also will require vector-rank|dimensions or something like that
- *    and vector->list (or vice versa) using nested lists? [and eq? etc]
- * another possibility: extend all arith ops to handle vectors/matrices
- *    here the "*" choice is a problem -- probably should be convolution
- * once these exist, nearly all the list funcs could also refer to vectors
- * what about a type declaration (as in slib's array.scm) -- if say :float,
- *   the vector-elements array could be double making it easy(?) to use gsl
- * [is a 2-dimensional string a crossword puzzle?]
- * this jettisons compatibility with Guile but I don't want yet another built-in type ("array"? "sequence"?)
  */
 

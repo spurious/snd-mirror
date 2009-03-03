@@ -4538,7 +4538,6 @@ static void raw_data_help_callback(Widget w, XtPointer context, XtPointer info)
   raw_data_dialog_help(rp->help);
 }
 
-/* TODO: raw data dialog takes up all space on screen and its warning message is in the wrong bg color */
 
 static void make_raw_data_dialog(raw_info *rp, const char *title)
 {

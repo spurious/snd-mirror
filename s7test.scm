@@ -5572,7 +5572,7 @@
       (test (procedure-arity '+) '(0 0 #t))
       (test (procedure-arity log) '(1 1 #f))
       (test (procedure-arity '/) '(1 0 #t))
-      (test (procedure-arity vector-set!) '(3 0 #f))
+      ;(test (procedure-arity vector-set!) '(3 0 #f)) ; can be '(3 0 #t)
       (test (let ((hi (lambda () 1))) (procedure-arity hi)) '(0 0 #f))
       (test (let ((hi (lambda (a) 1))) (procedure-arity hi)) '(1 0 #f))
       (test (let ((hi (lambda (a b) 1))) (procedure-arity hi)) '(2 0 #f))
@@ -34708,7 +34708,7 @@
       (for-each
        (lambda (arg)
 	 (test (make-vector arg) 'error))
-       (list #\a '() -1 (list 1) '(1 . 2) #f "hi" 'a-symbol abs 3.14 3/4 1.0+1.0i #t (vector 1 2 3) (lambda (a) (+ a 1))))
+       (list #\a '() -1 #f "hi" 'a-symbol abs 3.14 3/4 1.0+1.0i #t (vector 1 2 3) (lambda (a) (+ a 1))))
       
       (for-each
        (lambda (arg)
@@ -34849,7 +34849,7 @@
       (test (expt) 'error)
       (test (expt 1.0+23.0i) 'error)
       (test (expt "hi" "hi") 'error)
-      (test (expt 1.0+23.0i 1.0+23.0i 1.0+23.0i) 'error)
+      ;(test (expt 1.0+23.0i 1.0+23.0i 1.0+23.0i) 'error) ; this is ok in s7
       (test (exact->inexact) 'error)
       (test (exact->inexact "hi") 'error)
       (test (exact->inexact 1.0+23.0i 1.0+23.0i) 'error)
@@ -35326,7 +35326,7 @@
       (for-each
        (lambda (arg)
 	 (test (apply arg '(1)) 'error))
-       (list "hi" -1 #\a 1 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i #t (list 1 2 3) '(1 . 2)))
+       (list "hi" -1 #\a 1 'a-symbol 3.14 3/4 1.0+1.0i #t (list 1 2 3) '(1 . 2)))
       
       (test (let ((x (list 1 2))) (set-cdr! x x) (apply + x)) 'error)
       (test (apply + '(1 2 . 3)) 'error)
@@ -35349,7 +35349,7 @@
       (for-each
        (lambda (arg)
 	 (test (call-with-values arg arg) 'error))
-       (list "hi" -1 #\a 1 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i #t (list 1 2 3) '(1 . 2)))
+       (list "hi" -1 #\a 1 'a-symbol 3.14 3/4 1.0+1.0i #t (list 1 2 3) '(1 . 2)))
       
       
       (test (let 1) 'error)
@@ -35385,7 +35385,7 @@
       (for-each
        (lambda (arg)
 	 (test (call/cc arg) 'error))
-       (list "hi" -1 #\a 1 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i #t (list 1 2 3) '(1 . 2)))
+       (list "hi" -1 #\a 1 'a-symbol 3.14 3/4 1.0+1.0i #t (list 1 2 3) '(1 . 2)))
       
       (test (call/cc . 1) 'error)
       

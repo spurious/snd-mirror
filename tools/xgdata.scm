@@ -6907,4 +6907,7 @@
 (CINT-2150 "PANGO_WEIGHT_THIN" "PangoWeight")
 (CINT-2150 "PANGO_WEIGHT_BOOK" "PangoWeight")
 (CINT-2150 "PANGO_WEIGHT_MEDIUM" "PangoWeight")
+
+;;; 2.15.5
+G_CONST_RETURN gchar     *gtk_window_get_default_icon_name        (void);
 |#
