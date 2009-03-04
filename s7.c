@@ -9630,7 +9630,20 @@ are the indices, or omit 'vector-ref': (v ...)."
       index = 0;
       s7_pointer x;
       for (x = cdr(args), i = 0; (x != sc->NIL) && (i < vector_ndims(vec)); x = cdr(x), i++)
-	index += s7_integer(car(x)) * vector_offset(vec, i);
+	{
+	  int n;
+	  if (!s7_is_integer(car(x)))
+	    return(s7_wrong_type_arg_error(sc, "vector-ref", i + 2, car(x), "an integer"));
+	  n = s7_integer(car(x));
+	  if ((n < 0) || 
+	      (n >= vector_dimension(vec, i)))
+	    return(s7_out_of_range_error(sc, "vector-ref", i, car(x), "between 0 and the dimension size"));
+	  index += n * vector_offset(vec, i);
+	}
+      if ((x != sc->NIL) ||
+	  ((i != vector_ndims(vec)) &&
+	   (i != 1)))
+	return(s7_wrong_number_of_args_error(sc, "vector-ref", args));
     }
   else
 #endif
@@ -9639,18 +9652,10 @@ are the indices, or omit 'vector-ref': (v ...)."
 	return(s7_wrong_type_arg_error(sc, "vector-ref", 2, cadr(args), "an integer"));
 
       index = s7_integer(cadr(args));
-#if WITH_MULTIDIMENSIONAL_VECTORS
-      if (cddr(args) != sc->NIL)
-	return(s7_error(sc, 
-			sc->WRONG_NUMBER_OF_ARGS, 
-			make_list_2(sc, s7_make_string_with_length(sc, "too many arguments: ~A", 22), args)));
-#endif
+      if ((index < 0) ||
+	  (index >= vector_length(vec)))
+	return(s7_out_of_range_error(sc, "vector-ref", 2, cadr(args), "between 0 and the vector length"));
     }
-
-  if (index < 0)
-    return(s7_out_of_range_error(sc, "vector-ref", 2, s7_make_integer(sc, index), "a non-negative integer"));
-  if (index >= vector_length(vec))
-    return(s7_out_of_range_error(sc, "vector-ref", 2, s7_make_integer(sc, index), "less than vector length"));
   
   return(vector_element(vec, index));
 }
@@ -9681,23 +9686,38 @@ can also use 'set!' instead of 'vector-set!': (set! (v ...) val) -- I find this 
       index = 0;
       s7_pointer x;
       for (x = cdr(args), i = 0; (cdr(x) != sc->NIL) && (i < vector_ndims(vec)); x = cdr(x), i++)
-	index += s7_integer(car(x)) * vector_offset(vec, i);
+	{
+	  int n;
+	  if (!s7_is_integer(car(x)))
+	    return(s7_wrong_type_arg_error(sc, "vector-set!", i + 2, car(x), "an integer"));
+	  n = s7_integer(car(x));
+	  if ((n < 0) || 
+	      (n >= vector_dimension(vec, i)))
+	    return(s7_out_of_range_error(sc, "vector-set!", i, car(x), "between 0 and the dimension size"));
+	  index += n * vector_offset(vec, i);
+	}
+
+      if ((cdr(x) != sc->NIL) ||
+	  ((i != vector_ndims(vec)) &&
+	   (i != 1)))
+	return(s7_wrong_number_of_args_error(sc, "vector-set!", args));
+
       val = car(x);
     }
   else
 #endif
     {
       if (!s7_is_integer(cadr(args)))
-	return(s7_wrong_type_arg_error(sc, "vector-ref", 2, cadr(args), "an integer"));
+	return(s7_wrong_type_arg_error(sc, "vector-set!", 2, cadr(args), "an integer"));
 
       index = s7_integer(cadr(args));
+      if ((index < 0) ||
+	  (index >= vector_length(vec)))
+	return(s7_out_of_range_error(sc, "vector-set!", 2, cadr(args), "between 0 and the vector length"));
+
       val = caddr(args);
     }
 
-  if (index < 0)
-    return(s7_out_of_range_error(sc, "vector-set!", 2, s7_make_integer(sc, index), "a non-negative integer"));
-  if (index >= vector_length(vec))
-    return(s7_out_of_range_error(sc, "vector-set!", 2, s7_make_integer(sc, index), "less than vector length"));
   
   vector_element(vec, index) = val;
   return(val);
@@ -9805,7 +9825,7 @@ static s7_pointer g_vector_dimensions(s7_scheme *sc, s7_pointer args)
       int i;
       s7_pointer lst;
       lst = sc->NIL;
-      for (i = vector_ndims(x) - 1; i--; i >= 0)
+      for (i = vector_ndims(x) - 1; i >= 0; i--)
 	lst = s7_cons(sc, s7_make_integer(sc, vector_dimension(x, i)), lst);
       return(lst);
     }
@@ -9814,34 +9834,77 @@ static s7_pointer g_vector_dimensions(s7_scheme *sc, s7_pointer args)
 }
 
 
-/* TODO: multidim vect check for wrong number of indices, or non-number index */
-/* TODO: multidim vect s7tests */
-
 static s7_pointer applicable_vector_ref(s7_scheme *sc, s7_pointer vect, s7_pointer indices)
 {
+  int index = 0;
   if (vector_is_multidimensional(vect))
     {
-      int i, index = 0;
+      int i;
       s7_pointer x;
       for (x = indices, i = 0; (x != sc->NIL) && (i < vector_ndims(vect)); x = cdr(x), i++)
-	index += s7_integer(car(x)) * vector_offset(vect, i);
-      return(vector_element(vect, index));
+	{
+	  int n;
+	  if (!s7_is_integer(car(x)))
+	    return(s7_wrong_type_arg_error(sc, "vector ref", i + 2, car(x), "an integer"));
+	  n = s7_integer(car(x));
+	  if ((n < 0) || 
+	      (n >= vector_dimension(vect, i)))
+	    return(s7_out_of_range_error(sc, "vector ref", i + 2, car(x), "between 0 and the dimension size"));
+	  index += n * vector_offset(vect, i);
+	}
+      if ((x != sc->NIL) ||
+	  (i != vector_ndims(vect)))
+	return(s7_wrong_number_of_args_error(sc, "vector ref", indices));
     }
-  return(vector_element(vect, s7_integer(car(indices))));
+  else
+    {
+      if (!s7_is_integer(car(indices)))
+	return(s7_wrong_type_arg_error(sc, "vector ref", 2, car(indices), "an integer"));
+      index = s7_integer(car(indices));
+      if ((index < 0) ||
+	  (index >= vector_length(vect)))
+	return(s7_out_of_range_error(sc, "vector ref", 2, s7_make_integer(sc, index), "between 0 and the vector length"));
+    }
+
+
+  return(vector_element(vect, index));
 }
 
 
 static s7_pointer applicable_vector_set(s7_scheme *sc, s7_pointer vect, s7_pointer indices, s7_pointer val)
 {
+  int index = 0;
   if (vector_is_multidimensional(vect))
     {
-      int i, index = 0;
+      int i;
       s7_pointer x;
       for (x = indices, i = 0; (x != sc->NIL) && (i < vector_ndims(vect)); x = cdr(x), i++)
-	index += s7_integer(car(x)) * vector_offset(vect, i);
-      vector_element(vect, index) = val;
+	{
+	  int n;
+	  if (!s7_is_integer(car(x)))
+	    return(s7_wrong_type_arg_error(sc, "vector set!", i + 2, car(x), "an integer"));
+	  n = s7_integer(car(x));
+	  if ((n < 0) || 
+	      (n >= vector_dimension(vect, i)))
+	    return(s7_out_of_range_error(sc, "vector set!", i + 2, car(x), "between 0 and the dimension size"));
+	  index += n * vector_offset(vect, i);
+	}
+      if ((x != sc->NIL) ||
+	  ((i != vector_ndims(vect)) &&
+	   (i != 1)))
+	return(s7_wrong_number_of_args_error(sc, "vector set!", indices));
     }
-  else vector_element(vect, s7_integer(car(indices))) = val;
+  else
+    {
+      if (!s7_is_integer(car(indices)))
+	return(s7_wrong_type_arg_error(sc, "vector set!", 2, car(indices), "an integer"));
+      index = s7_integer(car(indices));
+      if ((index < 0) ||
+	  (index >= vector_length(vect)))
+	return(s7_out_of_range_error(sc, "vector ref", 2, s7_make_integer(sc, index), "between 0 and the vector length"));
+    }
+
+  vector_element(vect, index) = val;
   return(val);
 }
 
