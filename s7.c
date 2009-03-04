@@ -3724,29 +3724,32 @@ static s7_pointer g_number_to_string(s7_scheme *sc, s7_pointer args)
   #define H_number_to_string "(number->string num :optional (radix 10)) converts num into a string"
   int radix = 0, size = 20;
   char *res;
+  s7_pointer x;
 
-  if (!s7_is_number(car(args)))
-    return(s7_wrong_type_arg_error(sc, "number->string", 1, car(args), "a number"));
+  x = car(args);
 
-  if (object_number_type(car(args)) > NUM_RATIO)
+  if (!s7_is_number(x))
+    return(s7_wrong_type_arg_error(sc, "number->string", 1, x, "a number"));
+
+  if (object_number_type(x) > NUM_RATIO)
     {
       /* if size = 20, (number->string .1) gives "0.10000000000000000555", but if it's less than 20,
        *    large numbers (or very small numbers) mess up the less significant digits.
        */
-      if (object_number_type(car(args)) < NUM_COMPLEX)
+      if (object_number_type(x) < NUM_COMPLEX)
 	{
 	  s7_Double val;
-	  val = s7_Double_abs(s7_real(car(args)));
+	  val = s7_Double_abs(s7_real(x));
 	  if ((val < (LONG_MAX / 4)) && (val > 1.0e-6))
 	    size = 14;
 	}
       else
 	{
 	  s7_Double rl, im;
-	  rl = s7_Double_abs(s7_real_part(car(args)));
+	  rl = s7_Double_abs(s7_real_part(x));
 	  if ((rl < (LONG_MAX / 4)) && (rl > 1.0e-6))
 	    {
-	      im = s7_Double_abs(s7_imag_part(car(args)));
+	      im = s7_Double_abs(s7_imag_part(x));
 	      if ((im < (LONG_MAX/4)) && (im > 1.0e-6))
 		size = 14;
 	    }
@@ -3760,9 +3763,9 @@ static s7_pointer g_number_to_string(s7_scheme *sc, s7_pointer args)
       if ((radix < 2) || (radix > 16))
 	return(s7_out_of_range_error(sc, "number->string", 2, cadr(args), "between 2 and 16"));
 
-      res = s7_number_to_string_with_radix(sc, car(args), radix, 0, (radix == 10) ? size : 20, 'g');
+      res = s7_number_to_string_with_radix(sc, x, radix, 0, (radix == 10) ? size : 20, 'g');
     }
-  else res = s7_number_to_string_base_10(car(args), 0, size, 'g');
+  else res = s7_number_to_string_base_10(x, 0, size, 'g');
   
   {
     s7_pointer y;
@@ -6524,7 +6527,7 @@ static s7_pointer g_substring(s7_scheme *sc, s7_pointer args)
   start = cadr(args);
   
   if (!s7_is_string(str))
-    return(s7_wrong_type_arg_error(sc, "substring", 1, car(args), "a string"));
+    return(s7_wrong_type_arg_error(sc, "substring", 1, str, "a string"));
   
   if ((!s7_is_integer(start)) || (s7_integer(start) < 0))
     return(s7_wrong_type_arg_error(sc, "substring", 2, start, "a non-negative integer"));
@@ -6944,7 +6947,7 @@ static s7_pointer g_set_current_input_port(s7_scheme *sc, s7_pointer args)
   port = car(args);
   if (s7_is_input_port(sc, port))
     sc->input_port = port;
-  else return(s7_wrong_type_arg_error(sc, "set-current-input-port", 0, car(args), "an input port or nil"));
+  else return(s7_wrong_type_arg_error(sc, "set-current-input-port", 0, port, "an input port or nil"));
   return(old_port);
 }
 
@@ -6979,7 +6982,7 @@ static s7_pointer g_set_current_output_port(s7_scheme *sc, s7_pointer args)
   port = car(args);
   if (s7_is_output_port(sc, port))
     sc->output_port = port;
-  else return(s7_wrong_type_arg_error(sc, "set-current-output-port", 0, car(args), "an output port or nil"));
+  else return(s7_wrong_type_arg_error(sc, "set-current-output-port", 0, port, "an output port or nil"));
   return(old_port);
 }
 
@@ -7014,7 +7017,7 @@ static s7_pointer g_set_current_error_port(s7_scheme *sc, s7_pointer args)
   port = car(args);
   if (s7_is_output_port(sc, port))
     sc->error_port = port;
-  else return(s7_wrong_type_arg_error(sc, "set-current-error-port", 0, car(args), "an output port or nil"));
+  else return(s7_wrong_type_arg_error(sc, "set-current-error-port", 0, port, "an output port or nil"));
   return(old_port);
 }
 
@@ -7026,7 +7029,7 @@ static s7_pointer g_is_char_ready(s7_scheme *sc, s7_pointer args)
     {
       s7_pointer pt = car(args);
       if (!s7_is_input_port(sc, pt))
-	return(s7_wrong_type_arg_error(sc, "char-ready?", 0, car(args), "an input port"));
+	return(s7_wrong_type_arg_error(sc, "char-ready?", 0, pt, "an input port"));
       
       return(make_boolean(sc, is_string_port(pt)));
     }
@@ -7152,7 +7155,7 @@ static s7_pointer g_open_input_file(s7_scheme *sc, s7_pointer args)
   #define H_open_input_file "(open-input-file filename :optional mode) opens filename for reading"
   s7_pointer name = car(args);
   if (!s7_is_string(name))
-    return(s7_wrong_type_arg_error(sc, "open-input-file", 1, car(args), "a string (a filename)"));
+    return(s7_wrong_type_arg_error(sc, "open-input-file", 1, name, "a string (a filename)"));
   
   if (is_pair(cdr(args)))
     {
@@ -7193,7 +7196,7 @@ static s7_pointer g_open_output_file(s7_scheme *sc, s7_pointer args)
   #define H_open_output_file "(open-output-file filename :optional mode) opens filename for writing"
   s7_pointer name = car(args);
   if (!s7_is_string(name))
-    return(s7_wrong_type_arg_error(sc, "open-output-file", 1, car(args), "a string (a filename)"));
+    return(s7_wrong_type_arg_error(sc, "open-output-file", 1, name, "a string (a filename)"));
   
   if (is_pair(cdr(args)))
     {
@@ -7229,7 +7232,7 @@ static s7_pointer g_open_input_string(s7_scheme *sc, s7_pointer args)
   #define H_open_input_string "(open-input-string str) opens an input port reading str"
   s7_pointer input_string = car(args);
   if (!s7_is_string(input_string))
-    return(s7_wrong_type_arg_error(sc, "open-input-string", 0, car(args), "a string"));
+    return(s7_wrong_type_arg_error(sc, "open-input-string", 0, input_string, "a string"));
   
   return(s7_open_input_string(sc, s7_string(input_string))); /* presumably the caller is protecting the input string?? */
 }
@@ -7273,7 +7276,7 @@ static s7_pointer g_get_output_string(s7_scheme *sc, s7_pointer args)
   s7_pointer p = car(args);
   if ((!is_output_port(p)) ||
       (!is_string_port(p)))
-    return(s7_wrong_type_arg_error(sc, "get-output-string", 0, car(args), "an output string port"));
+    return(s7_wrong_type_arg_error(sc, "get-output-string", 0, p, "an output string port"));
   return(s7_make_string(sc, s7_get_output_string(sc, p)));
 }
 
@@ -7493,7 +7496,7 @@ static s7_pointer g_read(s7_scheme *sc, s7_pointer args)
     /* s7_is_input_port here lets NIL through as stdin, but that segfaults in token
      *    should stdin work in that case?
      */
-    return(s7_wrong_type_arg_error(sc, "read", 0, car(args), "an input port"));
+    return(s7_wrong_type_arg_error(sc, "read", 0, port, "an input port"));
   
   push_input_port(sc, port);
   push_stack(sc, OP_READ_POP_AND_RETURN_EXPRESSION, sc->NIL, sc->NIL); /* this stops the internal read process so we only get one form */
@@ -7635,7 +7638,7 @@ defaults to the global environment; to load into the current environment instead
   
   name = car(args);
   if (!s7_is_string(name))
-    return(s7_wrong_type_arg_error(sc, "load", 1, car(args), "a string (a filename)"));
+    return(s7_wrong_type_arg_error(sc, "load", 1, name, "a string (a filename)"));
   
   fname = s7_string(name);
   
@@ -8297,7 +8300,7 @@ static s7_pointer g_newline(s7_scheme *sc, s7_pointer args)
     {
       port = car(args);
       if (!s7_is_output_port(sc, port))
-	return(s7_wrong_type_arg_error(sc, "newline", 0, car(args), "an output port"));
+	return(s7_wrong_type_arg_error(sc, "newline", 0, port, "an output port"));
     }
   else port = sc->output_port;
   
@@ -8397,7 +8400,7 @@ static s7_pointer g_read_byte(s7_scheme *sc, s7_pointer args)
   else port = sc->input_port;
   if ((!is_input_port(port)) ||
       (!is_file_port(port)))
-    return(s7_wrong_type_arg_error(sc, "read-byte", 0, car(args), "an input file port"));
+    return(s7_wrong_type_arg_error(sc, "read-byte", 0, port, "an input file port"));
   return(s7_make_integer(sc, fgetc(port_file(port))));
 }
 
@@ -9618,7 +9621,7 @@ are the indices, or omit 'vector-ref': (v ...)."
 
   vec = car(args);
   if (!s7_is_vector(vec))
-    return(s7_wrong_type_arg_error(sc, "vector-ref", 1, car(args), "a vector"));
+    return(s7_wrong_type_arg_error(sc, "vector-ref", 1, vec, "a vector"));
 
 #if WITH_MULTIDIMENSIONAL_VECTORS
   if (vector_is_multidimensional(vec))
@@ -9626,7 +9629,7 @@ are the indices, or omit 'vector-ref': (v ...)."
       int i;
       index = 0;
       s7_pointer x;
-      for (x = args, i = 0; (x != sc->NIL) && (i < vector_ndims(vec)); x = cdr(x), i++)
+      for (x = cdr(args), i = 0; (x != sc->NIL) && (i < vector_ndims(vec)); x = cdr(x), i++)
 	index += s7_integer(car(x)) * vector_offset(vec, i);
     }
   else
@@ -9655,26 +9658,48 @@ are the indices, or omit 'vector-ref': (v ...)."
 
 static s7_pointer g_vector_set(s7_scheme *sc, s7_pointer args)
 {
+#if WITH_MULTIDIMENSIONAL_VECTORS
+  #define H_vector_set "(vector-set! v i value) sets the i-th element of vector v to value.  If 'v' is \
+multidimensional you can also use (vector-set! v ... val) where the ellipsis refers to the indices.  You \
+can also use 'set!' instead of 'vector-set!': (set! (v ...) val) -- I find this form much easier to read."
+#else
   #define H_vector_set "(vector-set! v i value) sets the i-th element of vector v to value"
-  s7_pointer vec, index, val;
+#endif
+  s7_pointer vec, val;
+  int index;
   
   vec = car(args);
-  index = cadr(args);
-  val = caddr(args);
-  
   if (!s7_is_vector(vec))
-    return(s7_wrong_type_arg_error(sc, "vector-set!", 1, car(args), "a vector"));
-  
-  if ((!s7_is_integer(index)) || (s7_integer(index) < 0))
-    return(s7_wrong_type_arg_error(sc, "vector-set!", 2, index, "a non-negative integer"));
-  
-  if (s7_integer(index) >= vector_length(vec))
-    return(s7_out_of_range_error(sc, "vector-set!", 2, index, "less than vector length"));
-  
+    return(s7_wrong_type_arg_error(sc, "vector-set!", 1, vec, "a vector"));
   if (s7_is_immutable(vec))
     return(s7_wrong_type_arg_error(sc, "vector-set!", 1, vec, "a mutable vector"));
   
-  vector_element(vec, s7_integer(index)) = val;
+#if WITH_MULTIDIMENSIONAL_VECTORS
+  if (vector_is_multidimensional(vec))
+    {
+      int i;
+      index = 0;
+      s7_pointer x;
+      for (x = cdr(args), i = 0; (cdr(x) != sc->NIL) && (i < vector_ndims(vec)); x = cdr(x), i++)
+	index += s7_integer(car(x)) * vector_offset(vec, i);
+      val = car(x);
+    }
+  else
+#endif
+    {
+      if (!s7_is_integer(cadr(args)))
+	return(s7_wrong_type_arg_error(sc, "vector-ref", 2, cadr(args), "an integer"));
+
+      index = s7_integer(cadr(args));
+      val = caddr(args);
+    }
+
+  if (index < 0)
+    return(s7_out_of_range_error(sc, "vector-set!", 2, s7_make_integer(sc, index), "a non-negative integer"));
+  if (index >= vector_length(vec))
+    return(s7_out_of_range_error(sc, "vector-set!", 2, s7_make_integer(sc, index), "less than vector length"));
+  
+  vector_element(vec, index) = val;
   return(val);
 }
 
@@ -9788,6 +9813,9 @@ static s7_pointer g_vector_dimensions(s7_scheme *sc, s7_pointer args)
   return(make_list_1(sc, s7_make_integer(sc, vector_length(x))));
 }
 
+
+/* TODO: multidim vect check for wrong number of indices, or non-number index */
+/* TODO: multidim vect s7tests */
 
 static s7_pointer applicable_vector_ref(s7_scheme *sc, s7_pointer vect, s7_pointer indices)
 {
@@ -19474,6 +19502,14 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "thread-variable?",        g_is_thread_variable,      1, 0, false, H_is_thread_variable);
 
   g_provide(sc, make_list_1(sc, s7_make_symbol(sc, "threads")));
+#endif
+
+#if (!CASE_SENSITIVE)
+  g_provide(sc, make_list_1(sc, s7_make_symbol(sc, "case-insensitive")));
+#endif
+
+#if WITH_MULTIDIMENSIONAL_VECTORS
+  g_provide(sc, make_list_1(sc, s7_make_symbol(sc, "multidimensional-vectors")));
 #endif
 
   {
