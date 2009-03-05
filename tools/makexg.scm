@@ -229,7 +229,7 @@
 	"GtkTooltip*" "GtkCalendarDetailFunc" "GtkScaleButton*" "GtkEntryIconPosition"
 	"GdkDragAction" "GdkImageType"
 
-	"gdouble*"
+	"gdouble*" "GdkFill" "GdkSubwindowMode" "GdkLineStyle" "GdkCapStyle" "GdkJoinStyle"
 	))
 
 (define no-xen-p 

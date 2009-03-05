@@ -476,21 +476,16 @@ XM_TYPE_PTR_1(GdkGCValues_, GdkGCValues*)
 #define C_TO_XEN_GdkFunction(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GdkFunction(Arg) (GdkFunction)(XEN_TO_C_INT(Arg))
 #define XEN_GdkFunction_P(Arg) XEN_INTEGER_P(Arg)
-#define C_TO_XEN_GdkFill(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GdkFill(Arg) (GdkFill)(XEN_TO_C_INT(Arg))
 #define XEN_GdkFill_P(Arg) XEN_INTEGER_P(Arg)
 XM_TYPE_PTR(GdkBitmap_, GdkBitmap*)
 XM_TYPE_PTR(GdkRectangle_, GdkRectangle*)
-#define C_TO_XEN_GdkSubwindowMode(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GdkSubwindowMode(Arg) (GdkSubwindowMode)(XEN_TO_C_INT(Arg))
 #define XEN_GdkSubwindowMode_P(Arg) XEN_INTEGER_P(Arg)
-#define C_TO_XEN_GdkLineStyle(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GdkLineStyle(Arg) (GdkLineStyle)(XEN_TO_C_INT(Arg))
 #define XEN_GdkLineStyle_P(Arg) XEN_INTEGER_P(Arg)
-#define C_TO_XEN_GdkCapStyle(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GdkCapStyle(Arg) (GdkCapStyle)(XEN_TO_C_INT(Arg))
 #define XEN_GdkCapStyle_P(Arg) XEN_INTEGER_P(Arg)
-#define C_TO_XEN_GdkJoinStyle(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GdkJoinStyle(Arg) (GdkJoinStyle)(XEN_TO_C_INT(Arg))
 #define XEN_GdkJoinStyle_P(Arg) XEN_INTEGER_P(Arg)
 XM_TYPE_PTR(gchar__, gchar**)
@@ -47854,7 +47849,7 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("24-Feb-09"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("05-Mar-09"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

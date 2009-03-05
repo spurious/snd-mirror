@@ -1120,11 +1120,6 @@ bool color_orientation_dialog_is_active(void)
 
 GtkWidget *start_color_orientation_dialog(bool managed)
 {
-  #define X_PAD 10
-  #define Y_PAD 0
-  #define XX_PAD 0
-  #define YY_PAD 0
-
   if (!ccd_dialog)
     {
       GtkWidget *light_label, *dark_label, *help_button, *dismiss_button, *reset_button;

@@ -6909,5 +6909,5 @@
 (CINT-2150 "PANGO_WEIGHT_MEDIUM" "PangoWeight")
 
 ;;; 2.15.5
-G_CONST_RETURN gchar     *gtk_window_get_default_icon_name        (void);
+(CFNC-2150 "gchar* gtk_window_get_default_icon_name void" 'const)
 |#

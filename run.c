@@ -127,7 +127,7 @@
     cadadr caddar cdaaar cdaadr cdadar cddaar cdaddr cddddr cddadr cdddar assq assv
     assoc [s7_assoc] memq memv member [s7_member] append [s7_append] list list-tail list-line-number 
 
-    vector? vector->list [s7_vector_to_list] list->vector
+    vector->list [s7_vector_to_list] list->vector
 
     continuation? eval eval-string [s7_eval_c_string] apply
     load [s7_load] force for-each map values call-with-values dynamic-wind catch error 

@@ -8154,7 +8154,7 @@ through the 5-D landscape, each 4-D case being 8 3-D slices as before:
 
 <p>My initial guess was that the minimum peak amplitude would be around the square root of n, but
 instead it appears to be
-closer to (expt n .59).  
+closer to (expt n .58).  
 Here is a graph of the values I've found so far.
 If plotted as a log-log graph, it is
 a straight line with a slope just less than 0.6. I've included the n odd, even, and prime-numbered components min peak amps
@@ -8168,7 +8168,7 @@ as well.
 <!--
 (if (not (provided? 'snd-rgb.scm)) (load "rgb.scm"))
 
-(define (draw-sqrt-label xg yg) ; 20 3
+(define (draw-sqrt-label xg yg exponent) ; 20 3 ".59"
   (let* ((snd 0)
 	 (chn 0)
 	 (axinf (axis-info snd chn))
@@ -8222,11 +8222,11 @@ as well.
       (set! (foreground-color snd chn) green)
       (fill-rectangle (+ x1 10) (+ y1 yinit (* 4 yoff)) 30 3 snd chn)
       (set! (foreground-color snd chn) black)
-      (draw-string "n^.6" (+ x1 50) (+ y1 yinit (* 4 yoff) ytext) snd chn)
+      (draw-string (format #f "n^~A" exponent) (+ x1 50) (+ y1 yinit (* 4 yoff) ytext) snd chn)
       )))
 
 
-(define (make-sqrt-png)
+(define* (make-sqrt-png :optional (xp 0.59))
   (set! current-window-display-is-running #f)
   (reset-hook! time-graph-hook)
   (add-hook! time-graph-hook
@@ -8243,7 +8243,7 @@ as well.
 
   (with-sound (:channels 5 :clipped #f)
 
-    (do ((i 1 (+ 1 i)))
+    (do ((i 1 (1+ i)))
 	((> i 128))
       (let ((n-min-val (vector-find-if (lambda (val)
 					 (and val
@@ -8251,7 +8251,7 @@ as well.
 					      (= (vector-ref val 0) i)
 					      (let ((a-val (vector-ref val 1))
 						    (a-len (vector-length val)))
-						(do ((k 2 (+ 1 k)))
+						(do ((k 2 (1+ k)))
 						    ((= k a-len))
 						  (if (and (number? (vector-ref val k))
 							   (< (vector-ref val k) a-val))
@@ -8265,7 +8265,7 @@ as well.
 						  (= (vector-ref val 0) i)
 						  (let ((a-val (vector-ref val 1))
 							(a-len (vector-length val)))
-						    (do ((k 2 (+ 1 k)))
+						    (do ((k 2 (1+ k)))
 							((= k a-len))
 						      (if (and (number? (vector-ref val k))
 							       (< (vector-ref val k) a-val))
@@ -8279,7 +8279,7 @@ as well.
 						      (= (vector-ref val 0) i)
 						      (let ((a-val (vector-ref val 1))
 							    (a-len (vector-length val)))
-							(do ((k 2 (+ 1 k)))
+							(do ((k 2 (1+ k)))
 							    ((= k a-len))
 							  (if (and (number? (vector-ref val k))
 								   (< (vector-ref val k) a-val))
@@ -8293,7 +8293,7 @@ as well.
 						       (= (vector-ref val 0) i)
 						       (let ((a-val (vector-ref val 1))
 							     (a-len (vector-length val)))
-							 (do ((k 2 (+ 1 k)))
+							 (do ((k 2 (1+ k)))
 							     ((= k a-len))
 							   (if (and (number? (vector-ref val k))
 								    (< (vector-ref val k) a-val))
@@ -8304,7 +8304,7 @@ as well.
 	      (outa i (or n-min-val 0.0))
 	      (outb i (or odd-min-val 0.0))
 	      (outc i (or prime-min-val 0.0))
-	      (outd i (* 1.0 (expt (exact->inexact i) .6)))
+	      (outd i (expt (exact->inexact i) xp)) ; or (log pk n)?
 	      (out-any i (or even-min-val 0.0) 4)
 	      ))))))
 
@@ -8312,12 +8312,12 @@ as well.
   (set! (channel-style) channels-superimposed)
   (set! (axis-color) (make-color 0 0 0))
   (set! (x-axis-style) x-axis-in-samples)
-  (do ((i 0 (+ 1 i))) 
+  (do ((i 0 (1+ i))) 
       ((= i 5)) 
     (set! (x-axis-label 0 i) "n")) ;(set! (x-axis-label 0 i) "n, black: all, red: odd, blue: prime, green: n^.6"))
   (set! (selected-graph-color) (make-color 1 1 1))
   (set! (axis-label-font) "9x15")
-  
+  )
 
 -->
 
