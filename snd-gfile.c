@@ -112,6 +112,7 @@ static void watch_current_directory_contents(struct fam_info *famp, FAMEvent *fe
 	    }
 	}
       break;
+
     default:
       /* ignore the rest */
       break;
@@ -141,8 +142,10 @@ static void fsb_update_lists(fsb *fs)
   {
     position_t list_top;
     char *dir_case;
+
     dir_case = mus_format("dir:%s", fs->directory_name);
     list_top = dirpos_list_top(fs->dir_list, dir_case);
+
     if (list_top != POSITION_UNKNOWN)
       {
 	GtkAdjustment *adj;
@@ -153,6 +156,7 @@ static void fsb_update_lists(fsb *fs)
 	ADJUSTMENT_SET_VALUE(gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(fs->directory_list->scroller)), list_top);
       }
     else slist_moveto(fs->directory_list, 0);
+
     free(dir_case);
   }
 
@@ -264,7 +268,6 @@ static void fsb_directory_select_callback(const char *dir_name, int row, void *d
   fsb_update_lists(fs);
   if (fs->directory_select_callback)
     (*(fs->directory_select_callback))((const char *)(fs->directory_name), fs->directory_select_data);
-
 }
 
 
@@ -552,11 +555,14 @@ static void force_directory_reread(fsb *fs)
   char *filename = NULL, *selected;
   gdouble scroller_position;
   int i;
+
   selected = mus_strdup(slist_selection(fs->file_list));
   filename = mus_strdup(fsb_file_text(fs));
+
   scroller_position = ADJUSTMENT_VALUE(gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(fs->file_list->scroller)));
   fsb_update_lists(fs);
   fsb_file_set_text(fs, filename);
+
   if (selected)
     {
       for (i = 0; i < fs->current_files->len; i++)
@@ -781,6 +787,7 @@ static bool fsb_directory_button_press_callback(GdkEventButton *ev, void *data)
   return(false);
 }
 
+
 #define NO_FILTER_LABEL "no filter"
 
 #define FILE_FILTER_OFFSET 1024
@@ -824,11 +831,11 @@ static GtkWidget *make_file_list_item(fsb *fs, int choice)
 
 static bool fsb_files_button_press_callback(GdkEventButton *ev, void *data)
 {
-  fsb *fs = (fsb *)data;
   if ((NO_BUCKY_BITS_P(EVENT_STATE(ev))) && 
       (EVENT_TYPE(ev) == GDK_BUTTON_PRESS) && 
       (EVENT_BUTTON(ev) == POPUP_BUTTON))
     {
+      fsb *fs = (fsb *)data;
       int i, items_len;
       if (fs->file_list_items == NULL)
 	{
@@ -926,10 +933,12 @@ static void sort_files_and_redisplay(fsb *fs)
   dir_info *cur_dir;
   char *selected;
   gdouble scroller_position;
+
   cur_dir = fs->current_files;
   scroller_position = ADJUSTMENT_VALUE(gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(fs->file_list->scroller)));
   selected = mus_strdup(slist_selection(fs->file_list));
   slist_clear(fs->file_list);
+
   if (cur_dir->len == 0)
     slist_append(fs->file_list, NO_MATCHING_FILES);
   else
@@ -939,6 +948,7 @@ static void sort_files_and_redisplay(fsb *fs)
       for (i = 0; i < cur_dir->len; i++) 
 	slist_append(fs->file_list, cur_dir->files[i]->filename);
     }
+
   if (selected)
     {
       int i;
@@ -951,6 +961,7 @@ static void sort_files_and_redisplay(fsb *fs)
 	  }
       free(selected);
     }
+
   ADJUSTMENT_SET_VALUE(gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(fs->file_list->scroller)), scroller_position);
 }
 
@@ -1066,12 +1077,15 @@ static void post_sound_info(GtkWidget *info1, GtkWidget *info2, const char *file
 	       (mus_sound_chans(filename) > 1) ? "s" : "",
 	       mus_sound_srate(filename),
 	       mus_sound_duration(filename));
+
   info_widget_display(info1, buf);
   info_widget_set_size(info1, 1 + strlen(buf));
+
   mus_snprintf(buf, LABEL_BUFFER_SIZE, "%s, %s%s",
 	       mus_header_type_name(mus_sound_header_type(filename)),
 	       short_data_format_name(mus_sound_data_format(filename), filename),
 	       snd_strftime(", %d-%b-%Y", mus_sound_write_date(filename)));
+
   info_widget_display(info2, buf);
   info_widget_set_size(info2, 1 + strlen(buf));
 
@@ -1129,6 +1143,7 @@ static void watch_info_file(struct fam_info *fp, FAMEvent *fe)
     case FAMMoved:
       repost_sound_info((file_dialog_info *)(fp->data));
       break;
+
     default:
       /* ignore the rest */
       break;
@@ -1469,6 +1484,7 @@ static void unpost_unsound_error(struct fam_info *fp, FAMEvent *fe)
 	  (mus_strcmp(fe->filename, fd->unsound_filename)))
 	clear_file_error_label(fd);
       break;
+
     default:
       /* ignore the rest */
       break;
@@ -1498,6 +1514,7 @@ static void file_open_dialog_ok(GtkWidget *w, gpointer data)
   file_dialog_info *fd = (file_dialog_info *)data;
   char *filename = NULL;
   gpointer hide_me = 0;
+
   filename = fsb_file_text(fd->fs);
   if ((!filename) || (!(*filename)))
     {
@@ -1902,6 +1919,7 @@ char *get_file_dialog_sound_attributes(file_data *fdat, int *srate, int *chans, 
 	  fdat->current_type = (*type);
 	}
     }
+
   if (fdat->format_list)
     {
       res = fdat->format_list->selected_item;
@@ -1913,6 +1931,7 @@ char *get_file_dialog_sound_attributes(file_data *fdat, int *srate, int *chans, 
 	  fdat->current_format = (*format);
 	}
     }
+
   if (fdat->comment_text) 
     {
       if (GTK_IS_TEXT_VIEW(fdat->comment_text))
@@ -1921,6 +1940,7 @@ char *get_file_dialog_sound_attributes(file_data *fdat, int *srate, int *chans, 
       str = mus_strdup(comment);
       return(str);
     }
+
   return(NULL);
 }
 
@@ -1987,6 +2007,7 @@ static void set_file_dialog_sound_attributes(file_data *fdat, int type, int form
       (fdat->samples_text))
     widget_off_t_to_text(fdat->samples_text, samples);
 }
+
 
 static gboolean data_panel_srate_key_press(GtkWidget *w, GdkEventKey *event, gpointer data)
 {
@@ -2657,10 +2678,12 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
       if (!saving)
 	extractable_chans = sp->nchans;
       break;
+
     case SELECTION_SAVE_AS:
       if (!saving)
 	extractable_chans = selection_chans();
       break;
+
     default:
       break;
     }
@@ -2770,6 +2793,7 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
 	io_err = save_edits_without_display(sp, tmpfile, type, format, srate, comment, AT_CURRENT_EDIT_POSITION);
       else io_err = save_channel_edits(sp->chans[chan], tmpfile, AT_CURRENT_EDIT_POSITION); /* protects if same name */
       break;
+
     case SELECTION_SAVE_AS:
       {
 	char *ofile;
@@ -2782,6 +2806,7 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
 	free(ofile);
 	break;
       }
+
     case REGION_SAVE_AS:
       {
 	char *ofile;
@@ -2796,6 +2821,7 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
 	    free(ofile);
 	  }
 	break;
+
       default:
 	snd_error("internal screw up");
 	break;
@@ -3007,12 +3033,15 @@ static void make_save_as_dialog(save_as_dialog_info *sd, char *sound_name, int h
 	case SOUND_SAVE_AS:
 	  set_dialog_widget(SOUND_SAVE_AS_DIALOG, fs->dialog);
 	  break;
+
 	case SELECTION_SAVE_AS:
 	  set_dialog_widget(SELECTION_SAVE_AS_DIALOG, fs->dialog);
 	  break;
+
 	case REGION_SAVE_AS:
 	  set_dialog_widget(REGION_SAVE_AS_DIALOG, fs->dialog);
 	  break;
+
 	default:
 	  snd_error("internal screw up");
 	  break;
@@ -3300,10 +3329,12 @@ static void raw_data_ok_callback(GtkWidget *w, gpointer context)
 	      redirect_snd_error_to(redirect_file_open_error, (void *)mdat);
 	      mix_complete_file_at_cursor(any_selected_sound(), rp->filename);
 	      break;
+
 	    case FROM_INSERT_DIALOG:
 	      redirect_snd_error_to(redirect_file_open_error, (void *)idat);
 	      insert_complete_file_at_cursor(any_selected_sound(), rp->filename);
 	      break;
+
 	    case FROM_VIEW_FILES_MIX_DIALOG:
 	      {
 		int err;
@@ -3312,6 +3343,7 @@ static void raw_data_ok_callback(GtkWidget *w, gpointer context)
 		err = vf_mix(vdat);
 	      }
 	      break;
+
 	    case FROM_VIEW_FILES_INSERT_DIALOG:
 	      {
 		int err;
@@ -3320,6 +3352,7 @@ static void raw_data_ok_callback(GtkWidget *w, gpointer context)
 		err = vf_insert(vdat);
 	      }
 	      break;
+
 	    default:
 	      snd_error("wrong requestor type in raw data dialog? %d\n", (int)(rp->requestor));
 	      break;
@@ -3999,6 +4032,7 @@ static void watch_file_read_only(struct fam_info *fp, FAMEvent *fe)
 	  }
       }
 #endif
+
       /* else fall through */
     case FAMDeleted:
     case FAMCreated:
@@ -4664,6 +4698,7 @@ off_t vf_location(view_files_info *vdat)
   snd_info *sp;
   chan_info *cp;
   char *str;
+
   switch (vdat->location_choice)
     {
     case VF_AT_CURSOR:
@@ -4674,6 +4709,7 @@ off_t vf_location(view_files_info *vdat)
 	  return(CURSOR(cp));
 	}
       break;
+
     case VF_AT_END:
       sp = any_selected_sound();
       if (sp)
@@ -4682,9 +4718,11 @@ off_t vf_location(view_files_info *vdat)
 	  return(CURRENT_SAMPLES(cp));
 	}
       break;
+
     case VF_AT_BEGINNING:
       return(0);
       break;
+
     case VF_AT_MARK:
       str = (char *)gtk_entry_get_text(GTK_ENTRY(vdat->at_mark_text));
       if ((str) && (*str))
@@ -4695,6 +4733,7 @@ off_t vf_location(view_files_info *vdat)
 	}
       else snd_error_without_format("no mark?");
       break;
+
     case VF_AT_SAMPLE:
       str = (char *)gtk_entry_get_text(GTK_ENTRY(vdat->at_sample_text));
       if ((str) && (*str))

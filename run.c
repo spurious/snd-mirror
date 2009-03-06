@@ -12173,7 +12173,7 @@ static void format_s(int *args, ptree *pt)
 static void s7_version_s(int *args, ptree *pt)
 {
   if (STRING_RESULT) free(STRING_RESULT);
-  STRING_RESULT = mus_strdup(SND_VERSION);
+  STRING_RESULT = mus_strdup(S7_VERSION);
 }
 
 static xen_value *s7_version_1(ptree *prog, xen_value **args, int num_args)

@@ -1471,8 +1471,6 @@ GtkWidget *start_color_orientation_dialog(bool managed)
       gtk_box_pack_start(GTK_BOX(orientbox), sep5, false, false, 3);
       widget_modify_bg(sep5, GTK_STATE_NORMAL, ss->sgx->basic_color);
       gtk_widget_show(sep5);
-
-
     }
   else raise_dialog(ccd_dialog);
   if (managed) gtk_widget_show(ccd_dialog);

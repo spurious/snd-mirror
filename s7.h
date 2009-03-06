@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "1.13"
-#define S7_DATE "1-Mar-09"
+#define S7_VERSION "1.14"
+#define S7_DATE "6-Mar-09"
 
 
 typedef long long int s7_Int;
@@ -1277,6 +1277,7 @@ int main(int argc, char **argv)
  * 
  *        s7 changes
  *
+ * 4-Mar:     multidimensional and applicable vectors.
  * 1-Mar:     s7_random added to s7.h.
  * 29-Jan:    s7_is_bignum and friends.
  * 26-Jan:    added s7_scheme arg to s7_vector_fill.

@@ -686,6 +686,7 @@ static void sync_button_click(GtkWidget *w, gpointer data)
 {
   snd_info *sp = (snd_info *)data;
   bool on;
+
   on = (bool)(TOGGLE_BUTTON_ACTIVE(w));
   if (on)
     if (last_sync_state & snd_ControlMask) 
@@ -696,7 +697,9 @@ static void sync_button_click(GtkWidget *w, gpointer data)
       else sp->sync = 2;
     else sp->sync = 1;
   else sp->sync = 0;
+
   set_sync_color(sp);
+
   if (sp->sync != 0) 
     {
       chan_info *cp;
@@ -725,6 +728,7 @@ static void unite_button_click(GtkWidget *w, gpointer data)
   channel_style_t val;
   bool on;
   snd_info *sp = (snd_info *)data;
+
   on = (bool)(TOGGLE_BUTTON_ACTIVE(w));
   if (on)
     {
@@ -733,6 +737,7 @@ static void unite_button_click(GtkWidget *w, gpointer data)
       else val = CHANNELS_COMBINED;
     }
   else val = CHANNELS_SEPARATE;
+
   set_sound_channel_style(sp, val);
 }
 
@@ -866,14 +871,17 @@ static gboolean speed_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer 
 {
   snd_info *sp = (snd_info *)data;
   snd_context *sx;
+
   sx = sp->sgx;
   if (EVENT_STATE(ev) & (snd_ControlMask | snd_MetaMask)) 
     set_speed(sp, sp->last_speed_control);
   else set_speed(sp, 1.0);
+
 #if XEN_HAVE_RATIOS
   if (sp->speed_control_style == SPEED_CONTROL_AS_RATIO)
     snd_rationalize(sp->speed_control, &(sp->speed_control_numerator), &(sp->speed_control_denominator));
 #endif
+
   return(false);
 }
 
@@ -1281,12 +1289,15 @@ void display_filter_env(snd_info *sp)
   int height, width;
   GtkWidget *drawer;
   env_editor *edp;
+
   if (IS_PLAYER(sp)) return;
+
   edp = sp->sgx->flt;
   drawer = FILTER_ENV(sp);
   height = widget_height(drawer);
   if (height < MIN_FILTER_GRAPH_HEIGHT) return;
   width = widget_width(drawer);
+
   ax = (axis_context *)calloc(1, sizeof(axis_context));
   ax->gc = ss->sgx->fltenv_basic_gc;
   ax->wn = WIDGET_TO_WINDOW(drawer);
@@ -1294,11 +1305,14 @@ void display_filter_env(snd_info *sp)
 #if USE_CAIRO
   ax->cr = gdk_cairo_create(ax->wn);
 #endif
+
   gdk_window_clear(ax->wn);
   edp->in_dB = sp->filter_control_in_dB;
   edp->with_dots = true;
   if (sp->filter_control_envelope == NULL) sp->filter_control_envelope = default_env(sp->filter_control_xmax, 1.0);
+
   env_editor_display_env(edp, sp->filter_control_envelope, ax, _("frequency response"), 0, 0, width, height, NOT_PRINTING);
+
   if (edp->edited)
     {
       ax->gc = ss->sgx->fltenv_data_gc;
@@ -1610,6 +1624,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
   int app_y, app_dy, screen_y, chan_min_y;
   /* these dimensions are used to try to get a reasonable channel graph size without falling off the screen bottom */
   snd_context *sx;
+
   if (ss->translated_filename) 
     {
       old_name = filename;
@@ -1617,16 +1632,20 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       ss->translated_filename = NULL;
       free_filename = true;
     }
+
   nchans = hdr->chans;
   if (nchans <= 0) nchans = 1;
+
   app_y = widget_y(MAIN_SHELL(ss));
   app_dy = widget_height(MAIN_SHELL(ss));
+
   if (auto_resize(ss))
     {
       screen_y = gdk_screen_height();
       app_dy = (screen_y - app_y - app_dy - 20 * nchans);
     }
   else app_dy -= listener_height();
+
   chan_min_y = app_dy / nchans;
   if (chan_min_y > ss->channel_min_height)
     chan_min_y = ss->channel_min_height; 
@@ -1641,6 +1660,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       old_chans = osp->allocated_chans;
     }
   else old_chans = 0;
+
   make_widgets = (ss->sounds[snd_slot] == NULL);
   ss->sounds[snd_slot] = make_snd_info(ss->sounds[snd_slot], filename, hdr, snd_slot, read_only);
   sp = ss->sounds[snd_slot];
@@ -1648,6 +1668,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
   sx = sp->sgx;
   sp->bomb_ctr = 0;
   make_pixmaps();
+
   if (sx->snd_widgets == NULL)
     {
       sw = (GtkWidget **)calloc(NUM_SND_WIDGETS, sizeof(GtkWidget *));
@@ -1660,12 +1681,14 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       sw = sx->snd_widgets;
       adjs = sx->snd_adjs;
     }
+
   if (!(auto_resize(ss))) gtk_window_set_resizable(GTK_WINDOW(MAIN_SHELL(ss)), false);
   if ((!make_widgets) && (old_chans < nchans))
     {
       for (i = old_chans; i < nchans; i++) 
 	add_channel_window(sp, i, chan_min_y, 1, NULL, WITH_FW_BUTTONS, WITH_EVENTS);
     }
+
   if (make_widgets)
     {
       SND_PANE(sp) = gtk_vpaned_new();
