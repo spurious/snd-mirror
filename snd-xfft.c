@@ -290,7 +290,8 @@ void set_fft_window(mus_fft_window_t val)
       XmListSelectPos(window_list, (int)val + 1, false);
       set_label(graph_label, mus_fft_window_name(val));
       get_fft_window_data();
-      graph_redisplay();
+      if (XtIsManaged(transform_dialog))
+	graph_redisplay();
       highlight_alpha_beta_scales(val);
     }
 }
@@ -760,7 +761,8 @@ void set_fft_window_alpha(Float val)
     {
       set_alpha_scale(val);
       get_fft_window_data();
-      graph_redisplay();
+      if (XtIsManaged(transform_dialog))
+	graph_redisplay();
     }
   if (!(ss->graph_hook_active)) 
     for_each_chan(calculate_fft);
@@ -810,7 +812,8 @@ void set_fft_window_beta(Float val)
     {
       set_beta_scale(val);
       get_fft_window_data();
-      graph_redisplay();
+      if (XtIsManaged(transform_dialog))
+	graph_redisplay();
     }
   if (!(ss->graph_hook_active)) 
     for_each_chan(calculate_fft);

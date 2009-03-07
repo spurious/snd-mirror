@@ -2,7 +2,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Mon Mar 15 19:25:58 CET 2004
-\ Changed: Sun Dec 14 21:33:16 CET 2008
+\ Changed: Mon Mar 02 18:41:13 CET 2009
 
 \ Commentary:
 \
@@ -53,7 +53,7 @@
 \ with-mix             ( body-str args fname beg -- )
 \ sound-let            ( ws-xt-lst body-xt -- )
 
-$" fth 16-Oct-2008" value *clm-version*
+$" fth 02-Mar-2009" value *clm-version*
 
 \ defined in snd/snd-xen.c
 [ifundef] snd-print   : snd-print   ( str -- str )  dup .string ;             [then]
@@ -259,7 +259,7 @@ mus-lshort    value *clm-audio-format*
 #f	      value *clm-verbose*
 #f            value *clm-debug*
 #()           value *clm-search-list* \ array of sound directories
-#()           value *clm-instruments*	\ array of arrays #( ins-name start dur local-vars )
+#()           value *clm-instruments* \ array of arrays #( ins-name start dur local-vars )
 
 'snd provided? [unless]
   1                 constant default-output-chans

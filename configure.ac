@@ -76,6 +76,7 @@ AC_DEFINE_UNQUOTED(SND_HOST, "$host")
 #   --without-fam         libfam can be obsolete, but it's not clear how to test this
 #   --with-midi           include sndlib midi module
 #   --with-cairo          use cairo for Gtk graphics, if possible
+#   --with-pulseaudio     use PulseAudio
 #   GUILE_CONFIG_path     where to look for guile-config
 #   GUILE_CONFIG_name     Fink (OSX) includes guile-config under funny names
 #   GUILE_name            same problem
@@ -108,6 +109,7 @@ AC_ARG_WITH(midi,        [  --with-midi		  include sndlib midi module])
 AC_ARG_WITH(doubles,     [  --with-doubles	  use doubles throughout])
 AC_ARG_WITH(float-samples, [  --with-float-samples	  use floats (or doubles) as the internal sample respresentation, default=yes])
 AC_ARG_WITH(cairo,	 [  --with-cairo		  use cairo for graphics in Gtk -- not currently very usable])
+AC_ARG_WITH(pulseaudio,  [  --with-pulseaudio 		  use PulseAudio, default=no])
 
 # these are primarily for testing
 AC_ARG_WITH(gsl,         [  --with-gsl		  use GSL, default=yes])
@@ -1706,24 +1708,38 @@ JACK_FLAGS=""
 # test for Jack courtesy of Kjetil S. Matheussen
 
 if test "$with_esd" = yes ; then
-  AC_CHECK_LIB(esd,main,[
+  AC_CHECK_LIB(esd, main, [
     AC_CHECK_HEADER(esd.h,
-      [
-	AC_DEFINE(MUS_ESD)
+       [AC_DEFINE(MUS_ESD)
 	esd_version="`esd-config --version`"
         AC_DEFINE_UNQUOTED(MUS_ESD_VERSION,"${esd_version}")
         audiofile_version="`audiofile-config --version`"
         AC_DEFINE_UNQUOTED(MUS_AUDIOFILE_VERSION,"${audiofile_version}")
         AUDIO_LIB="`esd-config --libs`"
-#       ESD_CFLAGS="`esd-config --cflags`"
-	AC_SUBST(AUDIO_LIB)
         if test "$with_alsa" = yes || test "$with_static_alsa" = yes ; then
 	  AC_MSG_WARN([esd takes precedence over alsa -- the two are not compatible])
         fi
         AUDIO_SYSTEM=ESD
-      ],
+       ],
       [AC_MSG_WARN(can't find the ESD header files)])],
     [AC_MSG_WARN(can't find the ESD library)])
+
+else
+
+if test "$with_pulseaudio" = yes ; then
+  AC_CHECK_LIB(pulse-simple, main, [
+    AC_CHECK_HEADER(pulse/simple.h,
+       [AC_DEFINE(MUS_PULSEAUDIO)
+	if test x$PKG_CONFIG != xno ; then
+          AUDIO_LIB="`$PKG_CONFIG libpulse-simple --libs`"
+        else 
+          AUDIO_LIB="-lpulse-simple"
+        fi
+        AUDIO_SYSTEM=PULSEAUDIO
+       ],
+      [AC_MSG_WARN(can't find the pulseaudio header files)])],
+    [AC_MSG_WARN(can't find the pulseaudio library)])
+fi
 fi
 
 if test "$AUDIO_SYSTEM" != None ; then
@@ -1736,15 +1752,14 @@ if test "$with_alsa" = yes && test "$with_oss" = yes ; then
 fi
 
 if test "$with_jack" = yes ; then 
-            AC_CHECK_LIB(jack,main,[ 
-	      AC_CHECK_HEADER(jack/jack.h,
-                  ,
+            AC_CHECK_LIB(jack, main, [ 
+	      AC_CHECK_HEADER(jack/jack.h, ,
    	          [with_jack=no
                    AC_MSG_WARN(can't find the JACK header files)])],
               [with_jack=no
 	       AC_MSG_WARN(can't find the JACK library)])
-            AC_CHECK_LIB(samplerate,main,[ 
-	      AC_CHECK_HEADER(samplerate.h,  ,
+            AC_CHECK_LIB(samplerate, main,[ 
+	      AC_CHECK_HEADER(samplerate.h, ,
    	          [with_jack=no
                    AC_MSG_WARN(can't find the samplerate header files. JACK will not be used.)])],
               [with_jack=no
@@ -1814,7 +1829,6 @@ case "$host" in
 		    else
 	    	      AUDIO_LIB="-lasound"
 		    fi
-	    	    AC_SUBST(AUDIO_LIB)
 
                     # snd_config_get_id argnum changed in Nov-01
                     snd_config_get_id_args=1
@@ -1888,7 +1902,6 @@ case "$host" in
         AC_DEFINE(MUS_SGI)
 	AUDIO_SYSTEM=SGI
 	AUDIO_LIB="-laudio"
-	AC_SUBST(AUDIO_LIB)
         if test $GUILE_CONFIG_works = no; then
  	  LIBS="$LIBS -lc -lm -lmd"
         else
@@ -1954,7 +1967,6 @@ case "$host" in
 	    AC_DEFINE(MUS_MAC_OSX)
 	    AUDIO_SYSTEM=MacOSX
 	    AUDIO_LIB="-framework CoreAudio -framework CoreFoundation -framework CoreMIDI"
-	    AC_SUBST(AUDIO_LIB)
 
 	    # OSX 10.5, deprecating earlier AudioDeviceRemoveIOProc
 	    AC_MSG_CHECKING([for AudioDeviceDestroyIOProcID])
@@ -2001,8 +2013,10 @@ AC_MSG_CHECKING([for audio system])
 AC_MSG_RESULT($AUDIO_SYSTEM)
 fi
 
+AC_SUBST(AUDIO_LIB)
 AC_SUBST(JACK_LIBS)
 AC_SUBST(JACK_FLAGS)
+
 
 AC_SUBST(LDSO_FLAGS)
 AC_SUBST(SO_FLAGS)

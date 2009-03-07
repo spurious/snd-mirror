@@ -3,7 +3,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Dec 23 00:28:28 CET 2005
-\ Changed: Sun Dec 14 21:34:24 CET 2008
+\ Changed: Sun Mar 01 14:57:29 CET 2009
 
 \ Commentary:
 
@@ -806,8 +806,7 @@ value fft-trn-transform
   end-each
   stack restore-stack
 ;
-: fft-color <{ w c info -- val }> color-dialog ;
-: fft-orient <{ w c info -- val }> #t orientation-dialog ;
+: fft-color <{ w c info -- val }> color-orientation-dialog ;
 
 let: ( -- menu )
   $" fft-popup" main-widgets 2 array-ref
@@ -822,8 +821,7 @@ let: ( -- menu )
      #( $" Window"           _ 'cascade   win-labs         <'> win-set )
      #( $" Transform type"   _ 'cascade   trn-labs         <'> trn-set )
      #( $" Wavelet type"     _ 'cascade   typ-labs         <'> typ-set )
-     #( $" Color"            _ #f         <'> fft-color    #f )
-     #( $" Orientation"      _ #f         <'> fft-orient   #f ) ) make-popup-menu
+     #( $" Color/Orientation" _ #f        <'> fft-color    #f ) ) make-popup-menu
 ;let constant fft-popup-menu
 
 : fft-popup-cb { snd chn -- cb; widget self -- }

@@ -186,7 +186,8 @@ int label_height(bool use_tiny_font)
 
 void clear_window(axis_context *ax)
 {
-  if (ax) XClearWindow(ax->dp, ax->wn);
+  if ((ax) && (ax->dp) && (ax->wn))
+    XClearWindow(ax->dp, ax->wn);
 }
 
 

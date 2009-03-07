@@ -175,6 +175,10 @@ static void main_snd_help(const char *subject, ...)
   #endif
 #endif
 
+#if MUS_PULSEAUDIO
+  #include <pulse/version.h>
+#endif
+
 #if USE_MOTIF
   #define XM_VERSION_NAME "xm-version"
 #else
@@ -359,6 +363,9 @@ char *version_info(void)
 	  "\n    ", mus_audio_moniker(),
 #if MUS_JACK
 	  " (via Jack)", 
+#endif
+#if MUS_PULSEAUDIO
+	  " ", pa_get_library_version(),
 #endif
 	  "\n    Sndlib ", snd_itoa(SNDLIB_VERSION), ".", 
                            snd_itoa(SNDLIB_REVISION), 

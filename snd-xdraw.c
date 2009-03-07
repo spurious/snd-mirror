@@ -34,13 +34,27 @@ void gtk_style_draw_string(axis_context *ax, int x0, int y0, const char *str, in
   /* for callers of Scheme-level draw-string, the Motif and Gtk versions should agree on where "y0" is */
   XGCValues gv;
   static XFontStruct *fs = NULL;
+
   XGetGCValues(MAIN_DISPLAY(ss), ax->gc, GCFont, &gv);
+
   /* now gv.font is the default font */
   if (fs) XFree(fs);
+  /*  this doesn't free all the space */
+  /* but this: */
+  /* if (fs) XFreeFont(MAIN_DISPLAY(ss), fs); */
+  /* gets:
+     X Error of failed request:  BadFont (invalid Font parameter)
+     Major opcode of failed request:  56 (X_ChangeGC)
+     Resource id in failed request:  0x4e0035c
+     Serial number of failed request:  8479111
+     Current serial number in output stream:  8479240
+  */
+
   fs = XQueryFont(MAIN_DISPLAY(ss), gv.font);
   if (fs)
     XDrawString(ax->dp, ax->wn, ax->gc, x0, y0 + fs->ascent, str, len);
   else XDrawString(ax->dp, ax->wn, ax->gc, x0, y0, str, len); /* not sure why this happens... */
+
   /* XFreeFont here is trouble, but handling it as above seems ok -- Font.c in xlib does allocate new space */
 }
 

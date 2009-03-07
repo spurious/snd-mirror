@@ -802,6 +802,7 @@ with_midi
 with_doubles
 with_float_samples
 with_cairo
+with_pulseaudio
 with_gsl
 with_fftw
 with_xpm
@@ -1511,6 +1512,7 @@ Optional Packages:
   --with-doubles	  use doubles throughout
   --with-float-samples	  use floats (or doubles) as the internal sample respresentation, default=yes
   --with-cairo		  use cairo for graphics in Gtk -- not currently very usable
+  --with-pulseaudio 		  use PulseAudio, default=no
   --with-gsl		  use GSL, default=yes
   --with-fftw		  use fftw, default=yes
   --with-xpm		  use xpm, default=yes
@@ -3770,6 +3772,7 @@ _ACEOF
 #   --without-fam         libfam can be obsolete, but it's not clear how to test this
 #   --with-midi           include sndlib midi module
 #   --with-cairo          use cairo for Gtk graphics, if possible
+#   --with-pulseaudio     use PulseAudio
 #   GUILE_CONFIG_path     where to look for guile-config
 #   GUILE_CONFIG_name     Fink (OSX) includes guile-config under funny names
 #   GUILE_name            same problem
@@ -3925,6 +3928,12 @@ fi
 # Check whether --with-cairo was given.
 if test "${with_cairo+set}" = set; then
   withval=$with_cairo;
+fi
+
+
+# Check whether --with-pulseaudio was given.
+if test "${with_pulseaudio+set}" = set; then
+  withval=$with_pulseaudio;
 fi
 
 
@@ -21869,8 +21878,7 @@ $as_echo "$ac_cv_header_esd_h" >&6; }
 
 fi
 if test "x$ac_cv_header_esd_h" = x""yes; then
-
-	cat >>confdefs.h <<\_ACEOF
+  cat >>confdefs.h <<\_ACEOF
 #define MUS_ESD 1
 _ACEOF
 
@@ -21885,8 +21893,6 @@ _ACEOF
 _ACEOF
 
         AUDIO_LIB="`esd-config --libs`"
-#       ESD_CFLAGS="`esd-config --cflags`"
-
         if test "$with_alsa" = yes || test "$with_static_alsa" = yes ; then
 	  { $as_echo "$as_me:$LINENO: WARNING: esd takes precedence over alsa -- the two are not compatible" >&5
 $as_echo "$as_me: WARNING: esd takes precedence over alsa -- the two are not compatible" >&2;}
@@ -21904,6 +21910,227 @@ else
 $as_echo "$as_me: WARNING: can't find the ESD library" >&2;}
 fi
 
+
+else
+
+if test "$with_pulseaudio" = yes ; then
+  { $as_echo "$as_me:$LINENO: checking for main in -lpulse-simple" >&5
+$as_echo_n "checking for main in -lpulse-simple... " >&6; }
+if test "${ac_cv_lib_pulse_simple_main+set}" = set; then
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lpulse-simple  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+
+int
+main ()
+{
+return main ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (ac_try="$ac_link"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval ac_try_echo="\"\$as_me:$LINENO: $ac_try_echo\""
+$as_echo "$ac_try_echo") >&5
+  (eval "$ac_link") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && {
+	 test -z "$ac_c_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest$ac_exeext && {
+	 test "$cross_compiling" = yes ||
+	 $as_test_x conftest$ac_exeext
+       }; then
+  ac_cv_lib_pulse_simple_main=yes
+else
+  $as_echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+	ac_cv_lib_pulse_simple_main=no
+fi
+
+rm -rf conftest.dSYM
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:$LINENO: result: $ac_cv_lib_pulse_simple_main" >&5
+$as_echo "$ac_cv_lib_pulse_simple_main" >&6; }
+if test "x$ac_cv_lib_pulse_simple_main" = x""yes; then
+
+    if test "${ac_cv_header_pulse_simple_h+set}" = set; then
+  { $as_echo "$as_me:$LINENO: checking for pulse/simple.h" >&5
+$as_echo_n "checking for pulse/simple.h... " >&6; }
+if test "${ac_cv_header_pulse_simple_h+set}" = set; then
+  $as_echo_n "(cached) " >&6
+fi
+{ $as_echo "$as_me:$LINENO: result: $ac_cv_header_pulse_simple_h" >&5
+$as_echo "$ac_cv_header_pulse_simple_h" >&6; }
+else
+  # Is the header compilable?
+{ $as_echo "$as_me:$LINENO: checking pulse/simple.h usability" >&5
+$as_echo_n "checking pulse/simple.h usability... " >&6; }
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+$ac_includes_default
+#include <pulse/simple.h>
+_ACEOF
+rm -f conftest.$ac_objext
+if { (ac_try="$ac_compile"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval ac_try_echo="\"\$as_me:$LINENO: $ac_try_echo\""
+$as_echo "$ac_try_echo") >&5
+  (eval "$ac_compile") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && {
+	 test -z "$ac_c_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest.$ac_objext; then
+  ac_header_compiler=yes
+else
+  $as_echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+	ac_header_compiler=no
+fi
+
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+{ $as_echo "$as_me:$LINENO: result: $ac_header_compiler" >&5
+$as_echo "$ac_header_compiler" >&6; }
+
+# Is the header present?
+{ $as_echo "$as_me:$LINENO: checking pulse/simple.h presence" >&5
+$as_echo_n "checking pulse/simple.h presence... " >&6; }
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#include <pulse/simple.h>
+_ACEOF
+if { (ac_try="$ac_cpp conftest.$ac_ext"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval ac_try_echo="\"\$as_me:$LINENO: $ac_try_echo\""
+$as_echo "$ac_try_echo") >&5
+  (eval "$ac_cpp conftest.$ac_ext") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } >/dev/null && {
+	 test -z "$ac_c_preproc_warn_flag$ac_c_werror_flag" ||
+	 test ! -s conftest.err
+       }; then
+  ac_header_preproc=yes
+else
+  $as_echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+  ac_header_preproc=no
+fi
+
+rm -f conftest.err conftest.$ac_ext
+{ $as_echo "$as_me:$LINENO: result: $ac_header_preproc" >&5
+$as_echo "$ac_header_preproc" >&6; }
+
+# So?  What about this header?
+case $ac_header_compiler:$ac_header_preproc:$ac_c_preproc_warn_flag in
+  yes:no: )
+    { $as_echo "$as_me:$LINENO: WARNING: pulse/simple.h: accepted by the compiler, rejected by the preprocessor!" >&5
+$as_echo "$as_me: WARNING: pulse/simple.h: accepted by the compiler, rejected by the preprocessor!" >&2;}
+    { $as_echo "$as_me:$LINENO: WARNING: pulse/simple.h: proceeding with the compiler's result" >&5
+$as_echo "$as_me: WARNING: pulse/simple.h: proceeding with the compiler's result" >&2;}
+    ac_header_preproc=yes
+    ;;
+  no:yes:* )
+    { $as_echo "$as_me:$LINENO: WARNING: pulse/simple.h: present but cannot be compiled" >&5
+$as_echo "$as_me: WARNING: pulse/simple.h: present but cannot be compiled" >&2;}
+    { $as_echo "$as_me:$LINENO: WARNING: pulse/simple.h:     check for missing prerequisite headers?" >&5
+$as_echo "$as_me: WARNING: pulse/simple.h:     check for missing prerequisite headers?" >&2;}
+    { $as_echo "$as_me:$LINENO: WARNING: pulse/simple.h: see the Autoconf documentation" >&5
+$as_echo "$as_me: WARNING: pulse/simple.h: see the Autoconf documentation" >&2;}
+    { $as_echo "$as_me:$LINENO: WARNING: pulse/simple.h:     section \"Present But Cannot Be Compiled\"" >&5
+$as_echo "$as_me: WARNING: pulse/simple.h:     section \"Present But Cannot Be Compiled\"" >&2;}
+    { $as_echo "$as_me:$LINENO: WARNING: pulse/simple.h: proceeding with the preprocessor's result" >&5
+$as_echo "$as_me: WARNING: pulse/simple.h: proceeding with the preprocessor's result" >&2;}
+    { $as_echo "$as_me:$LINENO: WARNING: pulse/simple.h: in the future, the compiler will take precedence" >&5
+$as_echo "$as_me: WARNING: pulse/simple.h: in the future, the compiler will take precedence" >&2;}
+    ( cat <<\_ASBOX
+## ------------------------------------- ##
+## Report this to bil@ccrma.stanford.edu ##
+## ------------------------------------- ##
+_ASBOX
+     ) | sed "s/^/$as_me: WARNING:     /" >&2
+    ;;
+esac
+{ $as_echo "$as_me:$LINENO: checking for pulse/simple.h" >&5
+$as_echo_n "checking for pulse/simple.h... " >&6; }
+if test "${ac_cv_header_pulse_simple_h+set}" = set; then
+  $as_echo_n "(cached) " >&6
+else
+  ac_cv_header_pulse_simple_h=$ac_header_preproc
+fi
+{ $as_echo "$as_me:$LINENO: result: $ac_cv_header_pulse_simple_h" >&5
+$as_echo "$ac_cv_header_pulse_simple_h" >&6; }
+
+fi
+if test "x$ac_cv_header_pulse_simple_h" = x""yes; then
+  cat >>confdefs.h <<\_ACEOF
+#define MUS_PULSEAUDIO 1
+_ACEOF
+
+	if test x$PKG_CONFIG != xno ; then
+          AUDIO_LIB="`$PKG_CONFIG libpulse-simple --libs`"
+        else
+          AUDIO_LIB="-lpulse-simple"
+        fi
+        AUDIO_SYSTEM=PULSEAUDIO
+
+else
+  { $as_echo "$as_me:$LINENO: WARNING: can't find the pulseaudio header files" >&5
+$as_echo "$as_me: WARNING: can't find the pulseaudio header files" >&2;}
+fi
+
+
+else
+  { $as_echo "$as_me:$LINENO: WARNING: can't find the pulseaudio library" >&5
+$as_echo "$as_me: WARNING: can't find the pulseaudio library" >&2;}
+fi
+
+fi
 fi
 
 if test "$AUDIO_SYSTEM" != None ; then
@@ -22515,7 +22742,6 @@ _ACEOF
 	    	      AUDIO_LIB="-lasound"
 		    fi
 
-
                     # snd_config_get_id argnum changed in Nov-01
                     snd_config_get_id_args=1
                     { $as_echo "$as_me:$LINENO: checking alsa snd_config_get_id args" >&5
@@ -22701,7 +22927,6 @@ _ACEOF
 
 	AUDIO_SYSTEM=SGI
 	AUDIO_LIB="-laudio"
-
         if test $GUILE_CONFIG_works = no; then
  	  LIBS="$LIBS -lc -lm -lmd"
         else
@@ -22791,7 +23016,6 @@ _ACEOF
 
 	    AUDIO_SYSTEM=MacOSX
 	    AUDIO_LIB="-framework CoreAudio -framework CoreFoundation -framework CoreMIDI"
-
 
 	    # OSX 10.5, deprecating earlier AudioDeviceRemoveIOProc
 	    { $as_echo "$as_me:$LINENO: checking for AudioDeviceDestroyIOProcID" >&5
@@ -22968,6 +23192,8 @@ $as_echo_n "checking for audio system... " >&6; }
 { $as_echo "$as_me:$LINENO: result: $AUDIO_SYSTEM" >&5
 $as_echo "$AUDIO_SYSTEM" >&6; }
 fi
+
+
 
 
 
