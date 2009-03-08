@@ -271,10 +271,6 @@ XmString multi_line_label(const char *s, int *lines);
 /* -------- snd-xchn.c -------- */
 
 Widget channel_main_pane(chan_info *cp);
-Widget channel_sx(chan_info *cp);
-Widget channel_sy(chan_info *cp);
-Widget channel_zx(chan_info *cp);
-Widget channel_zy(chan_info *cp);
 Widget channel_w(chan_info *cp);
 Widget channel_f(chan_info *cp);
 Widget channel_graph(chan_info *cp);
@@ -307,6 +303,8 @@ bool restore_fft_pix(chan_info *cp, axis_context *ax);
 void save_fft_pix(chan_info *cp, axis_context *ax, int fwidth, int fheight, int x0, int y1);
 bool fixup_cp_cgx_ax_wn(chan_info *cp);
 void change_channel_style(snd_info *sp, channel_style_t new_style);
+void color_chan_components(color_t color, slider_choice_t which_component);
+void color_unselected_graphs(color_t color);
 
 void g_init_gxchn(void);
 
@@ -450,13 +448,6 @@ widget_t record_file(void);
 void file_print_callback(Widget w, XtPointer context, XtPointer info);
 widget_t make_file_print_dialog(bool managed, bool direct_to_printer);
 void save_print_dialog_state(FILE *fd);
-
-
-/* -------- snd-xxen.c -------- */
-
-void color_chan_components(color_t color, slider_choice_t which_component);
-void color_unselected_graphs(color_t color);
-void g_init_gxen(void);
 
 
 /* -------- snd-xprefs.c -------- */

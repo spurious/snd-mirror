@@ -1699,5 +1699,11 @@ void run_new_widget_hook(widget_t w);
 #if HAVE_LADSPA
 void g_ladspa_to_snd(void);
 #endif
+
+/* -------- snd-sms.c -------- */
+#if HAVE_LIBSMS
+void g_init_sms(void);
+#endif
+
 #endif
 

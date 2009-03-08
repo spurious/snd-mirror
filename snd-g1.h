@@ -206,10 +206,6 @@ void g_init_gxcolormaps(void);
 
 /* -------- snd-gchn.c -------- */
 
-GtkWidget *channel_sx(chan_info *cp);
-GtkWidget *channel_sy(chan_info *cp);
-GtkWidget *channel_zx(chan_info *cp);
-GtkWidget *channel_zy(chan_info *cp);
 GtkWidget *channel_w(chan_info *cp);
 GtkWidget *channel_f(chan_info *cp);
 GtkWidget *channel_graph(chan_info *cp);
@@ -251,6 +247,8 @@ void save_fft_pix(chan_info *cp, axis_context *ax, int fwidth, int fheight, int 
 #endif
 void cleanup_cw(chan_info *cp);
 void change_channel_style(snd_info *sp, channel_style_t new_style);
+void color_chan_components(color_t color, slider_choice_t which_component);
+void color_unselected_graphs(color_t color);
 
 void g_init_gxchn(void);
 
@@ -461,14 +459,6 @@ bool enved_dialog_is_active(void);
 void set_enved_filter_order(int order);
 void color_enved_waveform(color_info *pix);
 void g_init_gxenv(void);
-
-
-
-/* -------- snd-gxen.c -------- */
-
-void color_chan_components(color_t color, slider_choice_t which_component);
-void color_unselected_graphs(color_t color);
-void g_init_gxen(void);
 
 
 

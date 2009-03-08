@@ -299,6 +299,7 @@ int main(int argc, char **argv)
   add_file("snd-env.c");
   add_file("snd-xen.c");
   add_file("snd-ladspa.c");
+  add_file("snd-sms.c");
   add_file("run.c");
   add_file("snd-xutils.c");
   add_file("snd-xhelp.c");
@@ -322,7 +323,6 @@ int main(int argc, char **argv)
   add_file("snd-xprint.c");
   add_file("snd-xfile.c");
   add_file("snd-xprefs.c");
-  add_file("snd-xxen.c");
   add_file("snd-gutils.c");
   add_file("snd-ghelp.c");
   add_file("snd-gfind.c");
@@ -341,7 +341,6 @@ int main(int argc, char **argv)
   add_file("snd-gfft.c");
   add_file("snd-gprint.c");
   add_file("snd-gfile.c");
-  add_file("snd-gxen.c");
   add_file("snd-gprefs.c");
   add_file("snd-prefs.c");
   add_file("snd-nogui.c");

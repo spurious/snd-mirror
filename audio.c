@@ -10038,6 +10038,12 @@ static void describe_audio_state_1(void)
 #define AUDIO_OK 1
 
 
+/* this code compiles/loads, but I don't know if it works -- paplay itself
+ *   doesn't work on my machine due to either a libtool/dlopen mismatch
+ *   or some problem with "pulse-rt".
+ */
+
+
 #include <pulse/simple.h>
 #include <pulse/error.h>
 #include <pulse/gccmacro.h>

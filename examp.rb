@@ -2706,7 +2706,7 @@ Snd_error_tags = [# clm2xen.c
                   :bad_arity,
                   # snd-xmain.c
                   :xt_error,
-                  # snd-xxen.c
+                  # snd-xchn.c
                   :no_such_color,
                   # snd.c
                   :snd_top_level,
