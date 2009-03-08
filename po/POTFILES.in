@@ -36,7 +36,6 @@ snd-gsnd.c
 snd-gutils.c
 snd-gxbitmaps.c
 snd-gxcolormaps.c
-snd-gxen.c
 snd-gxutils.c
 snd-help.c
 snd-io.c
@@ -74,7 +73,6 @@ snd-xrec.c
 snd-xregion.c
 snd-xsnd.c
 snd-xutils.c
-snd-xxen.c
 snd.c
 # sndlib2xen.c
 # sound.c

@@ -362,7 +362,10 @@ char *version_info(void)
 	  ":\n    ", xversion,
 	  "\n    ", mus_audio_moniker(),
 #if MUS_JACK
-	  " (via Jack)", 
+	  ", Jack: ",
+#ifdef MUS_JACK_VERSION
+	  MUS_JACK_VERSION,
+#endif
 #endif
 #if MUS_PULSEAUDIO
 	  " ", pa_get_library_version(),
@@ -445,15 +448,15 @@ char *version_info(void)
                         snd_itoa(XpmRevision),
 #endif
 #if HAVE_LADSPA && HAVE_DLFCN_H && HAVE_DIRENT_H
-	  "\n    LADSPA",
+	  "\n    LADSPA: ",
   #ifdef LADSPA_HINT_DEFAULT_MASK
-	  " 1.1",
+	  "1.1",
   #else
-	  " 1.0",
+	  "1.0",
   #endif
 #endif
-#ifdef MUS_JACK_VERSION
-	  ", Jack: ", MUS_JACK_VERSION,
+#if HAVE_LIBSMS && HAVE_EXTENSION_LANGUAGE
+	  "\n    libSMS: ", snd_sms_version(),
 #endif
 #if HAVE_FAM
   #ifdef MUS_GAMIN_VERSION

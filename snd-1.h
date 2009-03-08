@@ -1701,7 +1701,8 @@ void g_ladspa_to_snd(void);
 #endif
 
 /* -------- snd-sms.c -------- */
-#if HAVE_LIBSMS
+#if HAVE_LIBSMS && HAVE_EXTENSION_LANGUAGE
+const char *snd_sms_version(void);
 void g_init_sms(void);
 #endif
 
