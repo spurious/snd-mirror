@@ -455,9 +455,6 @@ char *version_info(void)
 	  "1.0",
   #endif
 #endif
-#if HAVE_LIBSMS && HAVE_EXTENSION_LANGUAGE
-	  "\n    libSMS: ", snd_sms_version(),
-#endif
 #if HAVE_FAM
   #ifdef MUS_GAMIN_VERSION
 	  "\n    Gamin: ", MUS_GAMIN_VERSION,

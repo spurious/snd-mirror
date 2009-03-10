@@ -299,7 +299,6 @@ int main(int argc, char **argv)
   add_file("snd-env.c");
   add_file("snd-xen.c");
   add_file("snd-ladspa.c");
-  add_file("snd-sms.c");
   add_file("run.c");
   add_file("snd-xutils.c");
   add_file("snd-xhelp.c");

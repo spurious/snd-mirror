@@ -36,7 +36,6 @@ FAM_LIB = @FAM_LIB@
 JACK_LIBS = @JACK_LIBS@
 RT_LIBS = @RT_LIBS@
 GMP_LIBS = @GMP_LIBS@
-SMS_LIBS = @SMS_LIBS@
 
 LDSO_FLAGS = @LDSO_FLAGS@
 SO_FLAGS = @SO_FLAGS@
@@ -85,7 +84,7 @@ S7_O_FILES = @S7_LIB@
 
 NO_GUI_HEADERS = snd-nogui0.h snd-nogui1.h
 
-O_FILES = snd-io.o snd-utils.o snd-listener.o snd-error.o snd-completion.o snd-menu.o snd-axis.o snd-data.o snd-fft.o snd-marks.o snd-file.o snd-edits.o snd-chn.o snd-dac.o snd-region.o snd-select.o snd-find.o snd-snd.o snd-help.o snd-main.o snd-print.o snd-trans.o snd-mix.o snd.o snd-env.o snd-xen.o snd-ladspa.o snd-sms.o snd-kbd.o snd-sig.o snd-draw.o run.o rt-various.o
+O_FILES = snd-io.o snd-utils.o snd-listener.o snd-error.o snd-completion.o snd-menu.o snd-axis.o snd-data.o snd-fft.o snd-marks.o snd-file.o snd-edits.o snd-chn.o snd-dac.o snd-region.o snd-select.o snd-find.o snd-snd.o snd-help.o snd-main.o snd-print.o snd-trans.o snd-mix.o snd.o snd-env.o snd-xen.o snd-ladspa.o snd-kbd.o snd-sig.o snd-draw.o run.o rt-various.o
 
 X_O_FILES = snd-xutils.o snd-xhelp.o snd-xfind.o snd-xmenu.o snd-xdraw.o snd-xlistener.o snd-xchn.o snd-xsnd.o snd-xregion.o snd-xdrop.o snd-xmain.o snd-xmix.o snd-xrec.o snd-xenv.o snd-gxutils.o snd-gxbitmaps.o snd-gxcolormaps.o snd-xfft.o snd-xprint.o snd-xfile.o snd-xprefs.o
 
@@ -106,19 +105,19 @@ main_target: @MAKE_TARGET@
 
 snd: $(SNDLIB_HEADERS) $(SND_HEADERS) $(GX_HEADERS) $(S7_O_FILES) $(SNDLIB_FILES) $(MIDI_FILES) $(O_FILES) $(GX_FILES) $(GL_FILES)
 	(cd po && $(MAKE))
-	$(CC) $(LDFLAGS) $(CFLAGS) $(S7_O_FILES) $(SNDLIB_FILES) $(MIDI_FILES) $(O_FILES) $(GX_FILES) $(GL_FILES) -o snd $(SNDLIB_LIB) $(XEN_LIBS) $(GTK_LIBS) $(GL_LIBS) $(MOTIF_LIBS) $(JACK_LIBS) $(RT_LIBS) $(AUDIO_LIB) $(FFTW_LIBS) $(GSL_LIBS) $(FAM_LIB) $(GMP_LIBS) $(SMS_LIBS) $(LIBS)
+	$(CC) $(LDFLAGS) $(CFLAGS) $(S7_O_FILES) $(SNDLIB_FILES) $(MIDI_FILES) $(O_FILES) $(GX_FILES) $(GL_FILES) -o snd $(SNDLIB_LIB) $(XEN_LIBS) $(GTK_LIBS) $(GL_LIBS) $(MOTIF_LIBS) $(JACK_LIBS) $(RT_LIBS) $(AUDIO_LIB) $(FFTW_LIBS) $(GSL_LIBS) $(FAM_LIB) $(GMP_LIBS) $(LIBS)
 
 xm: 	xen.h mus-config.h
 	rm -f xen.o
 	$(CC) -c xen.c -DUNDEF_USE_SND $(DEFS) $(SO_FLAGS) $(GTK_CFLAGS) $(CAIRO_CFLAGS) $(CFLAGS) $(XEN_CFLAGS) $(MOTIF_FLAGS) $(GSL_FLAGS) $(JACK_FLAGS) $(GL_FLAGS)
 	$(CC) -c xm.c -DUNDEF_USE_SND $(DEFS) $(SO_FLAGS) $(GTK_CFLAGS) $(CAIRO_CFLAGS) $(CFLAGS) $(XEN_CFLAGS) $(MOTIF_FLAGS) $(GSL_FLAGS) $(JACK_FLAGS) $(GL_FLAGS)
-	$(SO_LD) xen.o $(GM_FILES) -o $(GM_SO_FILE) $(SO_FLAGS) $(LDSO_FLAGS) $(ORIGINAL_LDFLAGS) $(LD_XM_LIBS) $(GL_LIBS) $(MOTIF_LIBS) $(FAM_LIB) $(GMP_LIBS) $(SMS_LIBS) $(LIBS)
+	$(SO_LD) xen.o $(GM_FILES) -o $(GM_SO_FILE) $(SO_FLAGS) $(LDSO_FLAGS) $(ORIGINAL_LDFLAGS) $(LD_XM_LIBS) $(GL_LIBS) $(MOTIF_LIBS) $(FAM_LIB) $(GMP_LIBS) $(LIBS)
 
 xg: 	xen.h mus-config.h
 	rm -f xen.o
 	$(CC) -c xen.c -DUNDEF_USE_SND $(DEFS) $(SO_FLAGS) $(GTK_CFLAGS) $(CAIRO_CFLAGS) $(CFLAGS) $(XEN_CFLAGS) $(MOTIF_FLAGS) $(GSL_FLAGS) $(JACK_FLAGS) $(GL_FLAGS)
 	$(CC) -c xg.c -DUNDEF_USE_SND $(DEFS) $(SO_FLAGS) $(GTK_CFLAGS) $(CAIRO_CFLAGS) $(CFLAGS) $(XEN_CFLAGS) $(MOTIF_FLAGS) $(GSL_FLAGS) $(JACK_FLAGS) $(GL_FLAGS)
-	$(SO_LD) xen.o $(GG_FILES) -o $(GG_SO_FILE) $(LDSO_FLAGS) $(ORIGINAL_LDFLAGS) $(GTK_LD_LIBS) $(FAM_LIB) $(GMP_LIBS) $(SMS_LIBS) $(LIBS)
+	$(SO_LD) xen.o $(GG_FILES) -o $(GG_SO_FILE) $(LDSO_FLAGS) $(ORIGINAL_LDFLAGS) $(GTK_LD_LIBS) $(FAM_LIB) $(GMP_LIBS) $(LIBS)
 
 widget: snd_widget.o
 
@@ -126,7 +125,7 @@ snd_widget.o: $(SNDLIB_HEADERS) $(SND_HEADERS) $(GX_HEADERS) $(SNDLIB_FILES) $(M
 	$(LD) -r $(LDFLAGS) $(SNDLIB_FILES) $(MIDI_FILES) $(O_FILES) $(GX_FILES) $(GL_FILES) -o snd_widget.o
 
 external: $(SNDLIB_HEADERS) $(SND_HEADERS) $(GX_HEADERS) $(SNDLIB_FILES) $(MIDI_FILES) $(O_FILES) $(GX_FILES) $(GL_FILES)  snd_pd_external.o
-	$(CC) -shared -o snd.pd_linux $(LDFLAGS) $(SNDLIB_FILES) $(MIDI_FILES) $(O_FILES)  $(GX_FILES) $(SNDLIB_LIB) $(XEN_LIBS) $(JACK_LIBS) $(RT_LIBS) $(AUDIO_LIB) $(FFTW_LIBS) $(GSL_LIBS) $(FAM_LIB) $(GMP_LIBS) $(SMS_LIBS) $(LIBS) snd_pd_external.o
+	$(CC) -shared -o snd.pd_linux $(LDFLAGS) $(SNDLIB_FILES) $(MIDI_FILES) $(O_FILES)  $(GX_FILES) $(SNDLIB_LIB) $(XEN_LIBS) $(JACK_LIBS) $(RT_LIBS) $(AUDIO_LIB) $(FFTW_LIBS) $(GSL_LIBS) $(FAM_LIB) $(GMP_LIBS) $(LIBS) snd_pd_external.o
 	strip --strip-unneeded snd.pd_linux
 	ln -sf snd-10/snd.pd_linux ..
 

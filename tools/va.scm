@@ -252,7 +252,7 @@
   "snd-io.c" "snd-utils.c" "snd-listener.c" "snd-error.c" "snd-completion.c" "snd-menu.c" "snd-axis.c" 
   "snd-data.c" "snd-fft.c" "snd-marks.c" "snd-file.c" "snd-edits.c" "snd-chn.c" "snd-dac.c" "snd-region.c" 
   "snd-select.c" "snd-find.c" "snd-snd.c" "snd-help.c" "snd-main.c" "snd-print.c" "snd-trans.c" "snd-mix.c" 
-  "snd.c" "snd-env.c" "snd-xen.c" "snd-ladspa.c" "snd-sms.c" "snd-kbd.c" "snd-sig.c" "snd-draw.c" "run.c" 
+  "snd.c" "snd-env.c" "snd-xen.c" "snd-ladspa.c" "snd-kbd.c" "snd-sig.c" "snd-draw.c" "run.c" 
   "snd-xutils.c" "snd-xhelp.c" "snd-xfind.c" "snd-xmenu.c" "snd-xdraw.c" "snd-xlistener.c" "snd-xchn.c" 
   "snd-xsnd.c" "snd-xregion.c" "snd-xdrop.c" "snd-xmain.c" "snd-xmix.c" "snd-xrec.c" "snd-xenv.c" 
   "snd-gxutils.c" "snd-gxbitmaps.c" "snd-gxcolormaps.c" "snd-xfft.c" "snd-xprint.c" "snd-xfile.c" 
