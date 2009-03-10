@@ -8,15 +8,9 @@
 
 /* libsms by Xavier Serra and R. Eakin */
 
-/* in the 80's or was it the early 90's, I wrote a Common Lisp version of libsms -- seems like an old friend. */
-/*   Michael Klingbeil has made a very nice GUI for this kind of work -- can't remember what he calls it ("spear"?). */
-/*   There's almost no way I can match that, so I think I'll just provide the usual hooks in the library */
-
-
 /* TODO: send reakin a note about:
    sms.h defines PI and friends, also MIN/MAX -- these should be in a header private to the sms library.
    sms.h should define a string, or possibly a group of ints for the version, not a float! (also the tarfile says 1.02, but version=1.0)
-   it would be better I think to use const char* wherever possible
  */
 
 const char *snd_sms_version(void)
@@ -284,6 +278,28 @@ void sms_getWindow (int sizeWindow, float *pFWindow, int iWindowType);
 #define XEN_SMS_Data_P(Value)    (XEN_LIST_P(Value) && (XEN_LIST_LENGTH(Value) >= 2) && (XEN_SYMBOL_P(XEN_CAR(Value))) && \
                                   (strcmp("SMS_Data", XEN_SYMBOL_TO_C_STRING(XEN_CAR(Value))) == 0))
 
+#define C_TO_XEN_SMS_Header(Value) ((Value) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("SMS_Header"), XEN_WRAP_C_POINTER(Value)) : XEN_FALSE)
+#define XEN_TO_C_SMS_Header(Value) ((SMS_Header *)(XEN_UNWRAP_C_POINTER(XEN_CADR(Value))))
+#define XEN_SMS_Header_P(Value)    (XEN_LIST_P(Value) && (XEN_LIST_LENGTH(Value) >= 2) && (XEN_SYMBOL_P(XEN_CAR(Value))) && \
+                                        (strcmp("SMS_Header", XEN_SYMBOL_TO_C_STRING(XEN_CAR(Value))) == 0))
+
+#define C_TO_XEN_SMS_SndHeader(Value) ((Value) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("SMS_SndHeader"), XEN_WRAP_C_POINTER(Value)) : XEN_FALSE)
+#define XEN_TO_C_SMS_SndHeader(Value) ((SMS_SndHeader *)(XEN_UNWRAP_C_POINTER(XEN_CADR(Value))))
+#define XEN_SMS_SndHeader_P(Value)    (XEN_LIST_P(Value) && (XEN_LIST_LENGTH(Value) >= 2) && (XEN_SYMBOL_P(XEN_CAR(Value))) && \
+                                        (strcmp("SMS_SndHeader", XEN_SYMBOL_TO_C_STRING(XEN_CAR(Value))) == 0))
+
+#define C_TO_XEN_SMS_AnalParams(Value) ((Value) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("SMS_AnalParams"), XEN_WRAP_C_POINTER(Value)) : XEN_FALSE)
+#define XEN_TO_C_SMS_AnalParams(Value) ((SMS_AnalParams *)(XEN_UNWRAP_C_POINTER(XEN_CADR(Value))))
+#define XEN_SMS_AnalParams_P(Value)    (XEN_LIST_P(Value) && (XEN_LIST_LENGTH(Value) >= 2) && (XEN_SYMBOL_P(XEN_CAR(Value))) && \
+                                        (strcmp("SMS_AnalParams", XEN_SYMBOL_TO_C_STRING(XEN_CAR(Value))) == 0))
+
+#define C_TO_XEN_SMS_SynthParams(Value) ((Value) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("SMS_SynthParams"), XEN_WRAP_C_POINTER(Value)) : XEN_FALSE)
+#define XEN_TO_C_SMS_SynthParams(Value) ((SMS_SynthParams *)(XEN_UNWRAP_C_POINTER(XEN_CADR(Value))))
+#define XEN_SMS_SynthParams_P(Value)    (XEN_LIST_P(Value) && (XEN_LIST_LENGTH(Value) >= 2) && (XEN_SYMBOL_P(XEN_CAR(Value))) && \
+                                        (strcmp("SMS_SynthParams", XEN_SYMBOL_TO_C_STRING(XEN_CAR(Value))) == 0))
+
+
+
 #define S_sms_make_SMS_Data "sms_make_SMS_Data"
 
 static XEN g_sms_make_SMS_Data(void)
@@ -307,7 +323,9 @@ static XEN g_sms_free_SMS_Data(XEN ptr)
 static XEN g_SMS_Data_nTracks(XEN ptr)
 {
   #define H_SMS_Data_nTracks "(" FIELD_PREFIX "nTracks SMS_Data) returns the number of sinusoidal tracks in the frame"
-  XEN_ASSERT_TYPE(XEN_SMS_Data_P(ptr), ptr, XEN_ONLY_ARG, FIELD_PREFIX "nTracks", "SMS_Data pointer");
+  XEN_ASSERT_TYPE(XEN_SMS_Data_P(ptr) || XEN_SMS_Header_P(ptr), ptr, XEN_ONLY_ARG, FIELD_PREFIX "nTracks", "SMS_Data or SMS_Header pointer");
+  if (XEN_SMS_Header_P(ptr))
+    return(C_TO_XEN_INT((XEN_TO_C_SMS_Header(ptr))->nTracks));
   return(C_TO_XEN_INT((XEN_TO_C_SMS_Data(ptr))->nTracks));
 }
 
@@ -466,11 +484,6 @@ that is frame1 + factor * (frame2 - frame1).  It returns 'frame-out'."
 
 /* -------------------------------- SMS_AnalParams -------------------------------- */
 
-#define C_TO_XEN_SMS_AnalParams(Value) ((Value) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("SMS_AnalParams"), XEN_WRAP_C_POINTER(Value)) : XEN_FALSE)
-#define XEN_TO_C_SMS_AnalParams(Value) ((SMS_AnalParams *)(XEN_UNWRAP_C_POINTER(XEN_CADR(Value))))
-#define XEN_SMS_AnalParams_P(Value)    (XEN_LIST_P(Value) && (XEN_LIST_LENGTH(Value) >= 2) && (XEN_SYMBOL_P(XEN_CAR(Value))) && \
-                                        (strcmp("SMS_AnalParams", XEN_SYMBOL_TO_C_STRING(XEN_CAR(Value))) == 0))
-
 #define S_sms_make_SMS_AnalParams "sms_make_SMS_AnalParams"
 
 static XEN g_sms_make_SMS_AnalParams(void)
@@ -512,62 +525,235 @@ static XEN g_sms_freeAnalysis(XEN ptr)
 }
 
 
+/* unused: prevFrame soundBuffer synthBuffer pFrames ppFrames pFSpectrumWindow fftw */
 
-
-#if 0
-typedef struct 
+static XEN g_SMS_AnalParams_iDebugMode(XEN ptr)
 {
-	int iDebugMode; /*!< debug codes enumerated by SMS_DBG \see SMS_DBG */
-	int iFormat;          /*!< analysis format code defined by SMS_Format \see SMS_Format */
-	int iSoundType;            /*!< type of sound to be analyzed \see SMS_SOUND_TYPE */	
-	int iStochasticType;      /*!<  type of stochastic model defined by SMS_StocSynthType \see SMS_StocSynthType */
-	int iFrameRate;        /*!< rate in Hz of data frames */
-	int nStochasticCoeff;  /*!< number of stochastic coefficients per frame  */
-	float fLowestFundamental; /*!< lowest fundamental frequency in Hz */
-	float fHighestFundamental;/*!< highest fundamental frequency in Hz */
-	float fDefaultFundamental;/*!< default fundamental in Hz */
-	float fPeakContToGuide;   /*!< contribution of previous peak to current guide (between 0 and 1) */
-	float fFundContToGuide;   /*!< contribution of current fundamental to current guide (between 0 and 1) */
-	float fFreqDeviation;     /*!< maximum deviation from peak to peak */				     
-	int iSamplingRate;        /*! sampling rate of sound to be analyzed */
-	int iDefaultSizeWindow;   /*!< default size of analysis window in samples */
-	int sizeHop;              /*!< hop size of analysis window in samples */
-	float fSizeWindow;       /*!< size of analysis window in number of periods */
-	int nGuides;              /*!< number of guides used for peak detection and continuation \see SMS_Guide */
-	int iCleanTracks;           /*!< whether or not to clean sinusoidal tracks */
-	float fMinRefHarmMag;     /*!< minimum magnitude in dB for reference peak */
-	float fRefHarmMagDiffFromMax; /*!< maximum magnitude difference from reference peak to highest peak */
-	int iRefHarmonic;	       /*!< reference harmonic to use in the fundamental detection */
-	int iMinTrackLength;	       /*!< minimum length in samples of a given track */
-	int iMaxSleepingTime;	   /*!< maximum sleeping time for a track */
-	float fHighestFreq;        /*!< highest frequency to be searched */
-	float fMinPeakMag;         /*!< minimum magnitude in dB for a good peak */	
-	int iAnalysisDirection;    /*!< analysis direction, direct or reverse */	
-	int iSizeSound;             /*!< total size of sound to be analyzed in samples */	 	
-	int iWindowType;            /*!< type of FFT analysis window \see SMS_WINDOWS */			  	 			 
-        int iMaxDelayFrames;     /*!< maximum number of frames to delay before peak continuation */
-        SMS_Data prevFrame;   /*!< the previous analysis frame  */
-        SMS_SndBuffer soundBuffer;    /*!< signal to be analyzed */
-        SMS_SndBuffer synthBuffer; /*!< resynthesized signal used to create the residual */
-        SMS_AnalFrame *pFrames;  /*!< an array of frames that have already been analyzed */
-        SMS_AnalFrame **ppFrames; /*!< pointers to the frames analyzed (it is circular-shifted once the array is full */
-        float fResidualPercentage; /*!< accumalitive residual percentage */
-        float *pFSpectrumWindow; /*!< the window used during spectrum analysis */
-#ifdef FFTW
-        SMS_Fourier fftw; /*!< structure of data used by the FFTW library (floating point) */
-#endif
-} SMS_AnalParams;
-#endif
+  #define H_SMS_AnalParams_iDebugMode "(" FIELD_PREFIX "iDebugMode SMS_AnalParams) is the debug mode (SMS_DBG)"
+  XEN_ASSERT_TYPE(XEN_SMS_AnalParams_P(ptr), ptr, XEN_ONLY_ARG, FIELD_PREFIX "iDebugMode", "SMS_AnalParams pointer");
+  return(C_TO_XEN_INT((XEN_TO_C_SMS_AnalParams(ptr))->iDebugMode));
+}
+
+
+static XEN g_SMS_AnalParams_iFormat(XEN ptr)
+{
+  #define H_SMS_AnalParams_iFormat "(" FIELD_PREFIX "iFormat SMS_AnalParams) is the analysis format code"
+  XEN_ASSERT_TYPE(XEN_SMS_AnalParams_P(ptr) || XEN_SMS_Header_P(ptr), ptr, XEN_ONLY_ARG, FIELD_PREFIX "iFormat", "SMS_AnalParams or SMS_Header pointer");
+  if (XEN_SMS_Header_P(ptr))
+    return(C_TO_XEN_INT((XEN_TO_C_SMS_Header(ptr))->iFormat));
+  return(C_TO_XEN_INT((XEN_TO_C_SMS_AnalParams(ptr))->iFormat));
+}
+
+
+static XEN g_SMS_AnalParams_iSoundType(XEN ptr)
+{
+  #define H_SMS_AnalParams_iSoundType "(" FIELD_PREFIX "iSoundType SMS_AnalParams) is the type of sound to be analyzed"
+  XEN_ASSERT_TYPE(XEN_SMS_AnalParams_P(ptr), ptr, XEN_ONLY_ARG, FIELD_PREFIX "iSoundType", "SMS_AnalParams pointer");
+  return(C_TO_XEN_INT((XEN_TO_C_SMS_AnalParams(ptr))->iSoundType));
+}
+
+
+static XEN g_SMS_AnalParams_iFrameRate(XEN ptr)
+{
+  #define H_SMS_AnalParams_iFrameRate "(" FIELD_PREFIX "iFrameRate SMS_AnalParams) is the rate in Hz of the data frames"
+  XEN_ASSERT_TYPE(XEN_SMS_AnalParams_P(ptr) || XEN_SMS_Header_P(ptr), ptr, XEN_ONLY_ARG, FIELD_PREFIX "iFrameRate", "SMS_AnalParams or SMS_Header pointer");
+  if (XEN_SMS_Header_P(ptr))
+    return(C_TO_XEN_INT((XEN_TO_C_SMS_Header(ptr))->iFrameRate));
+  return(C_TO_XEN_INT((XEN_TO_C_SMS_AnalParams(ptr))->iFrameRate));
+}
+
+
+static XEN g_SMS_AnalParams_nStochasticCoeff(XEN ptr)
+{
+  #define H_SMS_AnalParams_nStochasticCoeff "(" FIELD_PREFIX "nStochasticCoeff SMS_AnalParams) is the number of stochastic coefficients per frame"
+  XEN_ASSERT_TYPE(XEN_SMS_AnalParams_P(ptr) || XEN_SMS_Header_P(ptr), ptr, XEN_ONLY_ARG, FIELD_PREFIX "nStochasticCoeff", "SMS_AnalParams or SMS_Header pointer");
+  if (XEN_SMS_Header_P(ptr))
+    return(C_TO_XEN_INT((XEN_TO_C_SMS_Header(ptr))->nStochasticCoeff));
+  return(C_TO_XEN_INT((XEN_TO_C_SMS_AnalParams(ptr))->nStochasticCoeff));
+}
+
+
+static XEN g_SMS_AnalParams_iDefaultSizeWindow(XEN ptr)
+{
+  #define H_SMS_AnalParams_iDefaultSizeWindow "(" FIELD_PREFIX "iDefaultSizeWindow SMS_AnalParams) is the size of the analysis window in samples"
+  XEN_ASSERT_TYPE(XEN_SMS_AnalParams_P(ptr), ptr, XEN_ONLY_ARG, FIELD_PREFIX "iDefaultSizeWindow", "SMS_AnalParams pointer");
+  return(C_TO_XEN_INT((XEN_TO_C_SMS_AnalParams(ptr))->iDefaultSizeWindow));
+}
+
+
+static XEN g_SMS_AnalParams_nGuides(XEN ptr)
+{
+  #define H_SMS_AnalParams_nGuides "(" FIELD_PREFIX "nGuides SMS_AnalParams) is the number of guides used for peak detection"
+  XEN_ASSERT_TYPE(XEN_SMS_AnalParams_P(ptr), ptr, XEN_ONLY_ARG, FIELD_PREFIX "nGuides", "SMS_AnalParams pointer");
+  return(C_TO_XEN_INT((XEN_TO_C_SMS_AnalParams(ptr))->nGuides));
+}
+
+
+static XEN g_SMS_AnalParams_iCleanTracks(XEN ptr)
+{
+  #define H_SMS_AnalParams_iCleanTracks "(" FIELD_PREFIX "iCleanTracks SMS_AnalParams) is the number of guides used for peak detection"
+  XEN_ASSERT_TYPE(XEN_SMS_AnalParams_P(ptr), ptr, XEN_ONLY_ARG, FIELD_PREFIX "iCleanTracks", "SMS_AnalParams pointer");
+  return(C_TO_XEN_INT((XEN_TO_C_SMS_AnalParams(ptr))->iCleanTracks));
+}
+
+
+static XEN g_SMS_AnalParams_iRefHarmonic(XEN ptr)
+{
+  #define H_SMS_AnalParams_iRefHarmonic "(" FIELD_PREFIX "iRefHarmonic SMS_AnalParams) is the reference harmonic to use for fundamental detection"
+  XEN_ASSERT_TYPE(XEN_SMS_AnalParams_P(ptr), ptr, XEN_ONLY_ARG, FIELD_PREFIX "iRefHarmonic", "SMS_AnalParams pointer");
+  return(C_TO_XEN_INT((XEN_TO_C_SMS_AnalParams(ptr))->iRefHarmonic));
+}
+
+
+static XEN g_SMS_AnalParams_iMinTrackLength(XEN ptr)
+{
+  #define H_SMS_AnalParams_iMinTrackLength "(" FIELD_PREFIX "iMinTrackLength SMS_AnalParams) is the minimum length in samples of a track"
+  XEN_ASSERT_TYPE(XEN_SMS_AnalParams_P(ptr), ptr, XEN_ONLY_ARG, FIELD_PREFIX "iMinTrackLength", "SMS_AnalParams pointer");
+  return(C_TO_XEN_INT((XEN_TO_C_SMS_AnalParams(ptr))->iMinTrackLength));
+}
+
+
+static XEN g_SMS_AnalParams_iMaxSleepingTime(XEN ptr)
+{
+  #define H_SMS_AnalParams_iMaxSleepingTime "(" FIELD_PREFIX "iMaxSleepingTime SMS_AnalParams) is the maximum sleeping time for a track"
+  XEN_ASSERT_TYPE(XEN_SMS_AnalParams_P(ptr), ptr, XEN_ONLY_ARG, FIELD_PREFIX "iMaxSleepingTime", "SMS_AnalParams pointer");
+  return(C_TO_XEN_INT((XEN_TO_C_SMS_AnalParams(ptr))->iMaxSleepingTime));
+}
+
+
+static XEN g_SMS_AnalParams_iSizeSound(XEN ptr)
+{
+  #define H_SMS_AnalParams_iSizeSound "(" FIELD_PREFIX "iSizeSound SMS_AnalParams) is the total size in samples of the sound to be analyzed"
+  XEN_ASSERT_TYPE(XEN_SMS_AnalParams_P(ptr), ptr, XEN_ONLY_ARG, FIELD_PREFIX "iSizeSound", "SMS_AnalParams pointer");
+  return(C_TO_XEN_INT((XEN_TO_C_SMS_AnalParams(ptr))->iSizeSound));
+}
+
+
+static XEN g_SMS_AnalParams_iWindowType(XEN ptr)
+{
+  #define H_SMS_AnalParams_iWindowType "(" FIELD_PREFIX "iWindowType SMS_AnalParams) is the type of FFT analysis window"
+  XEN_ASSERT_TYPE(XEN_SMS_AnalParams_P(ptr), ptr, XEN_ONLY_ARG, FIELD_PREFIX "iWindowType", "SMS_AnalParams pointer");
+  return(C_TO_XEN_INT((XEN_TO_C_SMS_AnalParams(ptr))->iWindowType));
+}
+
+
+static XEN g_SMS_AnalParams_iMaxDelayFrames(XEN ptr)
+{
+  #define H_SMS_AnalParams_iMaxDelayFrames "(" FIELD_PREFIX "iMaxDelayFrames SMS_AnalParams) is the maximum number of frames to delay before peak continuation"
+  XEN_ASSERT_TYPE(XEN_SMS_AnalParams_P(ptr), ptr, XEN_ONLY_ARG, FIELD_PREFIX "iMaxDelayFrames", "SMS_AnalParams pointer");
+  return(C_TO_XEN_INT((XEN_TO_C_SMS_AnalParams(ptr))->iMaxDelayFrames));
+}
+
+
+static XEN g_SMS_AnalParams_iAnalysisDirection(XEN ptr)
+{
+  #define H_SMS_AnalParams_iAnalysisDirection "(" FIELD_PREFIX "iAnalysisDirection SMS_AnalParams) is the analysis direction"
+  XEN_ASSERT_TYPE(XEN_SMS_AnalParams_P(ptr), ptr, XEN_ONLY_ARG, FIELD_PREFIX "iAnalysisDirection", "SMS_AnalParams pointer");
+  return(C_TO_XEN_INT((XEN_TO_C_SMS_AnalParams(ptr))->iAnalysisDirection));
+}
+
+
+static XEN g_SMS_AnalParams_fLowestFundamental(XEN ptr)
+{
+  #define H_SMS_AnalParams_fLowestFundamental "(" FIELD_PREFIX "fLowestFundamental SMS_AnalParams) is the lowest fundamental frequency in Hz"
+  XEN_ASSERT_TYPE(XEN_SMS_AnalParams_P(ptr), ptr, XEN_ONLY_ARG, FIELD_PREFIX "fLowestFundamental", "SMS_AnalParams pointer");
+  return(C_TO_XEN_DOUBLE((XEN_TO_C_SMS_AnalParams(ptr))->fLowestFundamental));
+}
+
+
+static XEN g_SMS_AnalParams_fHighestFundamental(XEN ptr)
+{
+  #define H_SMS_AnalParams_fHighestFundamental "(" FIELD_PREFIX "fHighestFundamental SMS_AnalParams) is the highest fundamental frequency in Hz"
+  XEN_ASSERT_TYPE(XEN_SMS_AnalParams_P(ptr), ptr, XEN_ONLY_ARG, FIELD_PREFIX "fHighestFundamental", "SMS_AnalParams pointer");
+  return(C_TO_XEN_DOUBLE((XEN_TO_C_SMS_AnalParams(ptr))->fHighestFundamental));
+}
+
+
+static XEN g_SMS_AnalParams_fDefaultFundamental(XEN ptr)
+{
+  #define H_SMS_AnalParams_fDefaultFundamental "(" FIELD_PREFIX "fDefaultFundamental SMS_AnalParams) is the default fundamental in Hz"
+  XEN_ASSERT_TYPE(XEN_SMS_AnalParams_P(ptr), ptr, XEN_ONLY_ARG, FIELD_PREFIX "fDefaultFundamental", "SMS_AnalParams pointer");
+  return(C_TO_XEN_DOUBLE((XEN_TO_C_SMS_AnalParams(ptr))->fDefaultFundamental));
+}
+
+
+static XEN g_SMS_AnalParams_fPeakContToGuide(XEN ptr)
+{
+  #define H_SMS_AnalParams_fPeakContToGuide "(" FIELD_PREFIX "fPeakContToGuide SMS_AnalParams) is the contribution of the previous peak to the current guide (between 0 and 1)"
+  XEN_ASSERT_TYPE(XEN_SMS_AnalParams_P(ptr), ptr, XEN_ONLY_ARG, FIELD_PREFIX "fPeakContToGuide", "SMS_AnalParams pointer");
+  return(C_TO_XEN_DOUBLE((XEN_TO_C_SMS_AnalParams(ptr))->fPeakContToGuide));
+}
+
+
+static XEN g_SMS_AnalParams_fFundContToGuide(XEN ptr)
+{
+  #define H_SMS_AnalParams_fFundContToGuide "(" FIELD_PREFIX "fFundContToGuide SMS_AnalParams) is the contribution of the fundamental to the current guide (between 0 and 1)"
+  XEN_ASSERT_TYPE(XEN_SMS_AnalParams_P(ptr), ptr, XEN_ONLY_ARG, FIELD_PREFIX "fFundContToGuide", "SMS_AnalParams pointer");
+  return(C_TO_XEN_DOUBLE((XEN_TO_C_SMS_AnalParams(ptr))->fFundContToGuide));
+}
+
+
+static XEN g_SMS_AnalParams_fFreqDeviation(XEN ptr)
+{
+  #define H_SMS_AnalParams_fFreqDeviation "(" FIELD_PREFIX "fFreqDeviation SMS_AnalParams) is the maximum deviation from peak to peak"
+  XEN_ASSERT_TYPE(XEN_SMS_AnalParams_P(ptr), ptr, XEN_ONLY_ARG, FIELD_PREFIX "fFreqDeviation", "SMS_AnalParams pointer");
+  return(C_TO_XEN_DOUBLE((XEN_TO_C_SMS_AnalParams(ptr))->fFreqDeviation));
+}
+
+
+static XEN g_SMS_AnalParams_fSizeWindow(XEN ptr)
+{
+  #define H_SMS_AnalParams_fSizeWindow "(" FIELD_PREFIX "fSizeWindow SMS_AnalParams) is the size in periods of the analysis window"
+  XEN_ASSERT_TYPE(XEN_SMS_AnalParams_P(ptr), ptr, XEN_ONLY_ARG, FIELD_PREFIX "fSizeWindow", "SMS_AnalParams pointer");
+  return(C_TO_XEN_DOUBLE((XEN_TO_C_SMS_AnalParams(ptr))->fSizeWindow));
+}
+
+
+static XEN g_SMS_AnalParams_fMinRefHarmMag(XEN ptr)
+{
+  #define H_SMS_AnalParams_fMinRefHarmMag "(" FIELD_PREFIX "fMinRefHarmMag SMS_AnalParams) is the minimum magnitude in dB of the reference peak"
+  XEN_ASSERT_TYPE(XEN_SMS_AnalParams_P(ptr), ptr, XEN_ONLY_ARG, FIELD_PREFIX "fMinRefHarmMag", "SMS_AnalParams pointer");
+  return(C_TO_XEN_DOUBLE((XEN_TO_C_SMS_AnalParams(ptr))->fMinRefHarmMag));
+}
+
+
+static XEN g_SMS_AnalParams_fRefHarmMagDiffFromMax(XEN ptr)
+{
+  #define H_SMS_AnalParams_fRefHarmMagDiffFromMax "(" FIELD_PREFIX "fRefHarmMagDiffFromMax SMS_AnalParams) is the maximum difference from the \
+reference peak to the highest peak"
+  XEN_ASSERT_TYPE(XEN_SMS_AnalParams_P(ptr), ptr, XEN_ONLY_ARG, FIELD_PREFIX "fRefHarmMagDiffFromMax", "SMS_AnalParams pointer");
+  return(C_TO_XEN_DOUBLE((XEN_TO_C_SMS_AnalParams(ptr))->fRefHarmMagDiffFromMax));
+}
+
+
+static XEN g_SMS_AnalParams_fHighestFreq(XEN ptr)
+{
+  #define H_SMS_AnalParams_fHighestFreq "(" FIELD_PREFIX "fHighestFreq SMS_AnalParams) is the highest frequency to be searched"
+  XEN_ASSERT_TYPE(XEN_SMS_AnalParams_P(ptr), ptr, XEN_ONLY_ARG, FIELD_PREFIX "fHighestFreq", "SMS_AnalParams pointer");
+  return(C_TO_XEN_DOUBLE((XEN_TO_C_SMS_AnalParams(ptr))->fHighestFreq));
+}
+
+
+static XEN g_SMS_AnalParams_fMinPeakMag(XEN ptr)
+{
+  #define H_SMS_AnalParams_fMinPeakMag "(" FIELD_PREFIX "MinPeakMagq SMS_AnalParams) is the minimum magnitude for a good peak (in dB)"
+  XEN_ASSERT_TYPE(XEN_SMS_AnalParams_P(ptr), ptr, XEN_ONLY_ARG, FIELD_PREFIX "fMinPeakMag", "SMS_AnalParams pointer");
+  return(C_TO_XEN_DOUBLE((XEN_TO_C_SMS_AnalParams(ptr))->fMinPeakMag));
+}
+
+
+static XEN g_SMS_AnalParams_fResidualPercentage(XEN ptr)
+{
+  #define H_SMS_AnalParams_fResidualPercentage "(" FIELD_PREFIX "ResidualPercentageq SMS_AnalParams) is the accumalated residual percentage"
+  XEN_ASSERT_TYPE(XEN_SMS_AnalParams_P(ptr), ptr, XEN_ONLY_ARG, FIELD_PREFIX "fResidualPercentage", "SMS_AnalParams pointer");
+  return(C_TO_XEN_DOUBLE((XEN_TO_C_SMS_AnalParams(ptr))->fResidualPercentage));
+}
+
 
 
 
 
 /* -------------------------------- SMS_SynthParams -------------------------------- */
-
-#define C_TO_XEN_SMS_SynthParams(Value) ((Value) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("SMS_SynthParams"), XEN_WRAP_C_POINTER(Value)) : XEN_FALSE)
-#define XEN_TO_C_SMS_SynthParams(Value) ((SMS_SynthParams *)(XEN_UNWRAP_C_POINTER(XEN_CADR(Value))))
-#define XEN_SMS_SynthParams_P(Value)    (XEN_LIST_P(Value) && (XEN_LIST_LENGTH(Value) >= 2) && (XEN_SYMBOL_P(XEN_CAR(Value))) && \
-                                        (strcmp("SMS_SynthParams", XEN_SYMBOL_TO_C_STRING(XEN_CAR(Value))) == 0))
 
 #define S_sms_make_SMS_SynthParams "sms_make_SMS_SynthParams"
 
@@ -599,47 +785,102 @@ static XEN g_sms_freeSynth(XEN ptr)
   return(XEN_FALSE);
 }
 
-#if 0
-/*! \struct SMS_SynthParams
- * \brief structure with information for synthesis functions
- *
- * This structure contains all the necessary settings for different types of synthesis.
- * It also holds arrays for windows and the inverse-FFT, as well as the previously
- * synthesized frame.
- *
- */
-typedef struct
+
+static XEN g_SMS_SynthParams_iStochasticType(XEN ptr)
 {
-	int iStochasticType;       /*!<  type of stochastic model defined by SMS_StocSynthType 
-                                                     \see SMS_StocSynthType */
-	int iSynthesisType;        /*!< type of synthesis to perform \see SMS_SynthType */
-        int iDetSynthType;         /*!< method for synthesizing deterministic component
-                                                 \see SMS_DetSynthType */
-	int iOriginalSRate;  /*!< samplerate of the sound model source.  I used to determine the stochastic
-                               synthesis approximation */
-	int iSamplingRate;         /*!< synthesis samplerate */
-	int sizeHop;                   /*!< number of samples to synthesis for each frame */
-        int origSizeHop;            /*!< original number of samples used to create each analysis frame */
-        float fStocGain;            /*!< gain multiplied to the stachostic component */
-        float fTranspose;          /*!< frequency transposing value multiplied by each frequency */
-	float *pFDetWindow;    /*!< array to hold the window used for deterministic synthesis  \see SMS_WIN_IFFT */
-        float *pFStocWindow; /*!< array to hold the window used for stochastic synthesis (Hanning) */
-	SMS_Data prevFrame; /*!< previous data frame, used for smooth interpolation between frames */
-#ifdef FFTW
-        SMS_Fourier fftw; /*!< structure of data used by the FFTW library (floating point) */
-#else
-        float *pFFTBuff;  /*!< an array for an inplace inverse FFT transform */
-#endif
-} SMS_SynthParams;
-#endif
+  #define H_SMS_SynthParams_iStochasticType "(" FIELD_PREFIX "iStochasticType SMS_SynthParams) is the type of the stochastic model"
+  XEN_ASSERT_TYPE(XEN_SMS_SynthParams_P(ptr) || 
+		  XEN_SMS_Header_P(ptr) ||
+		  XEN_SMS_AnalParams_P(ptr), 
+		  ptr, XEN_ONLY_ARG, FIELD_PREFIX "iStochasticType", "SMS_SynthParams, SMS_Header, or SMS_AnalParams pointer");
+  if (XEN_SMS_SynthParams_P(ptr))
+    return(C_TO_XEN_INT((XEN_TO_C_SMS_SynthParams(ptr))->iStochasticType));
+  if (XEN_SMS_Header_P(ptr))
+    return(C_TO_XEN_INT((XEN_TO_C_SMS_Header(ptr))->iStochasticType));
+  return(C_TO_XEN_INT((XEN_TO_C_SMS_AnalParams(ptr))->iStochasticType));
+}
+
+
+static XEN g_SMS_SynthParams_iSynthesisType(XEN ptr)
+{
+  #define H_SMS_SynthParams_iSynthesisType "(" FIELD_PREFIX "iSynthesisType SMS_SynthParams) is the type of the synthesis to perform"
+  XEN_ASSERT_TYPE(XEN_SMS_SynthParams_P(ptr), ptr, XEN_ONLY_ARG, FIELD_PREFIX "iStochasticType", "SMS_SynthParams pointer");
+  return(C_TO_XEN_INT((XEN_TO_C_SMS_SynthParams(ptr))->iSynthesisType));
+}
+
+
+static XEN g_SMS_SynthParams_iDetSynthType(XEN ptr)
+{
+  #define H_SMS_SynthParams_iDetSynthType "(" FIELD_PREFIX "iDetSynthType SMS_SynthParams) is the method for synthesizing the deterministic component"
+  XEN_ASSERT_TYPE(XEN_SMS_SynthParams_P(ptr), ptr, XEN_ONLY_ARG, FIELD_PREFIX "iDetSynthType", "SMS_SynthParams pointer");
+  return(C_TO_XEN_INT((XEN_TO_C_SMS_SynthParams(ptr))->iDetSynthType));
+}
+
+
+static XEN g_SMS_SynthParams_iOriginalSRate(XEN ptr)
+{
+  #define H_SMS_SynthParams_iOriginalSRate "(" FIELD_PREFIX "iOriginalSRate SMS_SynthParams) is the sound source sampling rate"
+  XEN_ASSERT_TYPE(XEN_SMS_SynthParams_P(ptr), ptr, XEN_ONLY_ARG, FIELD_PREFIX "iOriginalSRate", "SMS_SynthParams pointer");
+  return(C_TO_XEN_INT((XEN_TO_C_SMS_SynthParams(ptr))->iOriginalSRate));
+}
+
+
+static XEN g_SMS_SynthParams_iSamplingRate(XEN ptr)
+{
+  #define H_SMS_SynthParams_iSamplingRate "(" FIELD_PREFIX "iSamplingRate SMS_SynthParams) is the synthesis ampling rate"
+  XEN_ASSERT_TYPE(XEN_SMS_SynthParams_P(ptr) || 
+		  XEN_SMS_AnalParams_P(ptr) ||
+		  XEN_SMS_SndHeader_P(ptr) ||
+		  XEN_SMS_Header_P(ptr), 
+		  ptr, XEN_ONLY_ARG, FIELD_PREFIX "iSamplingRate", "SMS_SynthParams, SMS_Header, SMS_SndHeader, or SMS_AnalParams pointer");
+  if (XEN_SMS_SynthParams_P(ptr))
+    return(C_TO_XEN_INT((XEN_TO_C_SMS_SynthParams(ptr))->iSamplingRate));
+  if (XEN_SMS_Header_P(ptr))
+    return(C_TO_XEN_INT((XEN_TO_C_SMS_Header(ptr))->iSamplingRate));
+  if (XEN_SMS_SndHeader_P(ptr))
+    return(C_TO_XEN_INT((XEN_TO_C_SMS_SndHeader(ptr))->iSamplingRate));
+  return(C_TO_XEN_INT((XEN_TO_C_SMS_AnalParams(ptr))->iSamplingRate));
+}
+
+
+static XEN g_SMS_SynthParams_sizeHop(XEN ptr)
+{
+  #define H_SMS_SynthParams_sizeHop "(" FIELD_PREFIX "sizeHop SMS_SynthParams) is the number of samples to synthesize for each frame"
+  XEN_ASSERT_TYPE(XEN_SMS_SynthParams_P(ptr) || XEN_SMS_AnalParams_P(ptr), ptr, XEN_ONLY_ARG, FIELD_PREFIX "sizeHop", "SMS_SynthParams or SMS_AnalParams pointer");
+  if (XEN_SMS_SynthParams_P(ptr))
+    return(C_TO_XEN_INT((XEN_TO_C_SMS_SynthParams(ptr))->sizeHop));
+  return(C_TO_XEN_INT((XEN_TO_C_SMS_AnalParams(ptr))->sizeHop));
+}
+
+
+static XEN g_SMS_SynthParams_origSizeHop(XEN ptr)
+{
+  #define H_SMS_SynthParams_origSizeHop "(" FIELD_PREFIX "origSizeHop SMS_SynthParams) is the original number of samples per frame"
+  XEN_ASSERT_TYPE(XEN_SMS_SynthParams_P(ptr), ptr, XEN_ONLY_ARG, FIELD_PREFIX "origSizeHop", "SMS_SynthParams pointer");
+  return(C_TO_XEN_INT((XEN_TO_C_SMS_SynthParams(ptr))->origSizeHop));
+}
+
+
+static XEN g_SMS_SynthParams_fStocGain(XEN ptr)
+{
+  #define H_SMS_SynthParams_fStocGain "(" FIELD_PREFIX "fStocGain SMS_SynthParams) is the gain on the stochastic component"
+  XEN_ASSERT_TYPE(XEN_SMS_SynthParams_P(ptr), ptr, XEN_ONLY_ARG, FIELD_PREFIX "fStocGain", "SMS_SynthParams pointer");
+  return(C_TO_XEN_DOUBLE((XEN_TO_C_SMS_SynthParams(ptr))->fStocGain));
+}
+
+
+static XEN g_SMS_SynthParams_fTranspose(XEN ptr)
+{
+  #define H_SMS_SynthParams_fTranspose "(" FIELD_PREFIX "fTranspose SMS_SynthParams) is the frequency transposing multiplier"
+  XEN_ASSERT_TYPE(XEN_SMS_SynthParams_P(ptr), ptr, XEN_ONLY_ARG, FIELD_PREFIX "fTranspose", "SMS_SynthParams pointer");
+  return(C_TO_XEN_DOUBLE((XEN_TO_C_SMS_SynthParams(ptr))->fTranspose));
+}
+
+/* unused: pFDetWindow pFStocWindow prevFrame fftw pFFTBuff */
+
 
 
 /* -------------------------------- SMS_Header -------------------------------- */
-
-#define C_TO_XEN_SMS_Header(Value) ((Value) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("SMS_Header"), XEN_WRAP_C_POINTER(Value)) : XEN_FALSE)
-#define XEN_TO_C_SMS_Header(Value) ((SMS_Header *)(XEN_UNWRAP_C_POINTER(XEN_CADR(Value))))
-#define XEN_SMS_Header_P(Value)    (XEN_LIST_P(Value) && (XEN_LIST_LENGTH(Value) >= 2) && (XEN_SYMBOL_P(XEN_CAR(Value))) && \
-                                        (strcmp("SMS_Header", XEN_SYMBOL_TO_C_STRING(XEN_CAR(Value))) == 0))
 
 #define S_sms_make_SMS_Header "sms_make_SMS_Header"
 
@@ -681,61 +922,99 @@ static XEN g_sms_frameSizeB(XEN ptr)
   return(C_TO_XEN_INT(sms_frameSizeB(XEN_TO_C_SMS_Header(ptr))));
 }
 
-#if 0
-/*! \struct SMS_Header 
- *  \brief structure for the header of an SMS file 
- *  
- *  This header contains all the information necessary to read an SMS
- *  file, prepare memory and synthesizer parameters.
- *  
- *  The header also contains variable components for additional information
- *  that may be stored along with the analysis, such as descriptors or text.
- *  
- *  The first four members of the Header are necessary in this order to correctly
- *  open the .sms files created by this library.
- *
- *  iSampleRate contains the samplerate of the analysis signal because it is
- *  necessary to know this information to recreate the residual spectrum.
- *  
- *  In the first release, the descriptors are not used, but are here because they
- *  were implemented in previous versions of this code (in the 90's).  With time,
- *  the documentation will be updated to reflect which members of the header
- *  are useful in manipulations, and what functions to use for these manipulatinos
- */
-typedef struct 
+
+/* unused: nLoopRecords nSpecEnvelopePoints pILoopRecords pFSpectralEnvelope */
+
+static XEN g_SMS_Header_iSmsMagic(XEN ptr)
 {
-	int iSmsMagic;         /*!< identification constant */
-	int iHeadBSize;        /*!< size in bytes of header */
-	int nFrames;	         /*!< number of data frames */
-	int iFrameBSize;      /*!< size in bytes of each data frame */
-        int iSamplingRate;     /*!< samplerate of analysis signal (necessary to recreate residual spectrum */
-	int iFormat;           /*!< type of data format \see SMS_Format */
-	int nTracks;     /*!< number of sinusoidal tracks per frame */
-	int iFrameRate;        /*!< rate in Hz of data frames */
-	int iStochasticType;   /*!< type stochastic representation */
-	int nStochasticCoeff;  /*!< number of stochastic coefficients per frame  */
-	float fAmplitude;      /*!< average amplitude of represented sound.  */
-	float fFrequency;      /*!< average fundamental frequency */
-	int iBegSteadyState;   /*!< record number of begining of steady state. */
-	int iEndSteadyState;   /*!< record number of end of steady state. */
-	float fResidualPerc;   /*!< percentage of the residual to original */
-	int nLoopRecords;      /*!< number of loop records specified. */
-	int nSpecEnvelopePoints; /*!< number of breakpoints in spectral envelope */
-	int nTextCharacters;   /*!< number of text characters */
-	/* variable part */
-	int *pILoopRecords;    /*!< array of record numbers of loop points */
-	float *pFSpectralEnvelope; /*!< spectral envelope of partials */
-	char *pChTextCharacters; /*!< Text string relating to the sound */
-} SMS_Header;
-#endif
+  #define H_SMS_Header_iSmsMagic "(" FIELD_PREFIX "iSmsMagic SMS_Header) is the SMS file identifier"
+  XEN_ASSERT_TYPE(XEN_SMS_Header_P(ptr), ptr, XEN_ONLY_ARG, FIELD_PREFIX "iSmsMagic", "SMS_Header pointer");
+  return(C_TO_XEN_INT((XEN_TO_C_SMS_Header(ptr))->iSmsMagic));
+}
+
+
+static XEN g_SMS_Header_iHeadBSize(XEN ptr)
+{
+  #define H_SMS_Header_iHeadBSize "(" FIELD_PREFIX "iHeadBSize SMS_Header) is the header size in bytes"
+  XEN_ASSERT_TYPE(XEN_SMS_Header_P(ptr), ptr, XEN_ONLY_ARG, FIELD_PREFIX "iHeadBSize", "SMS_Header pointer");
+  return(C_TO_XEN_INT((XEN_TO_C_SMS_Header(ptr))->iHeadBSize));
+}
+
+
+static XEN g_SMS_Header_nFrames(XEN ptr)
+{
+  #define H_SMS_Header_nFrames "(" FIELD_PREFIX "nFrames SMS_Header) is the number of data frames"
+  XEN_ASSERT_TYPE(XEN_SMS_Header_P(ptr), ptr, XEN_ONLY_ARG, FIELD_PREFIX "nFrames", "SMS_Header pointer");
+  return(C_TO_XEN_INT((XEN_TO_C_SMS_Header(ptr))->nFrames));
+}
+
+
+static XEN g_SMS_Header_iFrameBSize(XEN ptr)
+{
+  #define H_SMS_Header_iFrameBSize "(" FIELD_PREFIX "iFrameBSize SMS_Header) is the data frame size in bytes"
+  XEN_ASSERT_TYPE(XEN_SMS_Header_P(ptr), ptr, XEN_ONLY_ARG, FIELD_PREFIX "iFrameBSize", "SMS_Header pointer");
+  return(C_TO_XEN_INT((XEN_TO_C_SMS_Header(ptr))->iFrameBSize));
+}
+
+
+static XEN g_SMS_Header_iBegSteadyState(XEN ptr)
+{
+  #define H_SMS_Header_iBegSteadyState "(" FIELD_PREFIX "iBegSteadyState SMS_Header) is the record number of the beginning of the steady state"
+  XEN_ASSERT_TYPE(XEN_SMS_Header_P(ptr), ptr, XEN_ONLY_ARG, FIELD_PREFIX "iBegSteadyState", "SMS_Header pointer");
+  return(C_TO_XEN_INT((XEN_TO_C_SMS_Header(ptr))->iBegSteadyState));
+}
+
+
+static XEN g_SMS_Header_iEndSteadyState(XEN ptr)
+{
+  #define H_SMS_Header_iEndSteadyState "(" FIELD_PREFIX "iEndSteadyState SMS_Header) is the record number of the end of the steady state"
+  XEN_ASSERT_TYPE(XEN_SMS_Header_P(ptr), ptr, XEN_ONLY_ARG, FIELD_PREFIX "iEndSteadyState", "SMS_Header pointer");
+  return(C_TO_XEN_INT((XEN_TO_C_SMS_Header(ptr))->iEndSteadyState));
+}
+
+
+static XEN g_SMS_Header_nTextCharacters(XEN ptr)
+{
+  #define H_SMS_Header_nTextCharacters "(" FIELD_PREFIX "nTextCharacters SMS_Header) is the number of text characters"
+  XEN_ASSERT_TYPE(XEN_SMS_Header_P(ptr), ptr, XEN_ONLY_ARG, FIELD_PREFIX "nTextCharacters", "SMS_Header pointer");
+  return(C_TO_XEN_INT((XEN_TO_C_SMS_Header(ptr))->nTextCharacters));
+}
+
+
+static XEN g_SMS_Header_fAmplitude(XEN ptr)
+{
+  #define H_SMS_Header_fAmplitude "(" FIELD_PREFIX "fAmplitude SMS_Header) is the average amplitude of the sound"
+  XEN_ASSERT_TYPE(XEN_SMS_Header_P(ptr), ptr, XEN_ONLY_ARG, FIELD_PREFIX "fAmplitude", "SMS_Header pointer");
+  return(C_TO_XEN_DOUBLE((XEN_TO_C_SMS_Header(ptr))->fAmplitude));
+}
+
+
+static XEN g_SMS_Header_fFrequency(XEN ptr)
+{
+  #define H_SMS_Header_fFrequency "(" FIELD_PREFIX "fFrequency SMS_Header) is the average fundamental frequency of the sound"
+  XEN_ASSERT_TYPE(XEN_SMS_Header_P(ptr), ptr, XEN_ONLY_ARG, FIELD_PREFIX "fFrequency", "SMS_Header pointer");
+  return(C_TO_XEN_DOUBLE((XEN_TO_C_SMS_Header(ptr))->fFrequency));
+}
+
+
+static XEN g_SMS_Header_fResidualPerc(XEN ptr)
+{
+  #define H_SMS_Header_fResidualPerc "(" FIELD_PREFIX "fResidualPerc SMS_Header) is the percentage of residual to original"
+  XEN_ASSERT_TYPE(XEN_SMS_Header_P(ptr), ptr, XEN_ONLY_ARG, FIELD_PREFIX "fResidualPerc", "SMS_Header pointer");
+  return(C_TO_XEN_DOUBLE((XEN_TO_C_SMS_Header(ptr))->fResidualPerc));
+}
+
+
+static XEN g_SMS_Header_pChTextCharacters(XEN ptr)
+{
+  #define H_SMS_Header_pChTextCharacters "(" FIELD_PREFIX "pChTextCharacters SMS_Header) is the sound's text string"
+  XEN_ASSERT_TYPE(XEN_SMS_Header_P(ptr), ptr, XEN_ONLY_ARG, FIELD_PREFIX "pChTextCharacters", "SMS_Header pointer");
+  return(C_TO_XEN_STRING((XEN_TO_C_SMS_Header(ptr))->pChTextCharacters));
+}
+
 
 
 /* -------------------------------- SMS_SndHeader -------------------------------- */
-
-#define C_TO_XEN_SMS_SndHeader(Value) ((Value) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("SMS_SndHeader"), XEN_WRAP_C_POINTER(Value)) : XEN_FALSE)
-#define XEN_TO_C_SMS_SndHeader(Value) ((SMS_SndHeader *)(XEN_UNWRAP_C_POINTER(XEN_CADR(Value))))
-#define XEN_SMS_SndHeader_P(Value)    (XEN_LIST_P(Value) && (XEN_LIST_LENGTH(Value) >= 2) && (XEN_SYMBOL_P(XEN_CAR(Value))) && \
-                                        (strcmp("SMS_SndHeader", XEN_SYMBOL_TO_C_STRING(XEN_CAR(Value))) == 0))
 
 #define S_sms_make_SMS_SndHeader "sms_make_SMS_SndHeader"
 
@@ -765,14 +1044,6 @@ static XEN g_SMS_SndHeader_nSamples(XEN ptr)
 }
 
 
-static XEN g_SMS_SndHeader_iSamplingRate(XEN ptr)
-{
-  #define H_SMS_SndHeader_iSamplingRate "(" FIELD_PREFIX "iSamplingRate SMS_SndHeader) returns the sampling rate of the sound"
-  XEN_ASSERT_TYPE(XEN_SMS_SndHeader_P(ptr), ptr, XEN_ONLY_ARG, FIELD_PREFIX "iSamplingRate", "SMS_SndHeader pointer");
-  return(C_TO_XEN_INT((XEN_TO_C_SMS_SndHeader(ptr))->iSamplingRate));
-}
-
-
 /* channelCount and sizeHeader not used */
 
 
@@ -785,6 +1056,15 @@ static XEN g_SMS_SndHeader_iSamplingRate(XEN ptr)
                                   (strcmp("FILE*", XEN_SYMBOL_TO_C_STRING(XEN_CAR(Value))) == 0))
 
 
+#define S_sms_fclose "sms_fclose"
+
+static XEN g_sms_fclose(XEN fp)
+{
+  #define H_sms_fclose "(" S_sms_fclose " fp) fcloses the FILE* fp"
+  XEN_ASSERT_TYPE(XEN_FILE_P(fp), fp, XEN_ONLY_ARG, S_sms_fclose, "a FILE pointer");
+  fclose(XEN_TO_C_FILE(fp));
+  return(XEN_FALSE);
+}
 
 
 #define S_sms_initSynth "sms_initSynth"
@@ -973,6 +1253,7 @@ void sms_fillHeader (SMS_Header *pSmsHeader,  int nFrames, SMS_AnalParams *pAnal
 
 
 #ifdef XEN_ARGIFY_1
+
 XEN_NARGIFY_0(g_sms_init_w, g_sms_init)
 XEN_NARGIFY_0(g_sms_free_w, g_sms_free)
 XEN_NARGIFY_0(g_sms_clearSine_w, g_sms_clearSine)
@@ -988,6 +1269,7 @@ XEN_NARGIFY_0(g_sms_writeSF_w, g_sms_writeSF)
 XEN_NARGIFY_1(g_sms_preEmphasis_w, g_sms_preEmphasis)
 XEN_NARGIFY_1(g_sms_deEmphasis_w, g_sms_deEmphasis)
 
+XEN_NARGIFY_1(g_sms_fclose_w, g_sms_fclose)
 XEN_NARGIFY_3(g_sms_createSF_w, g_sms_createSF)
 XEN_NARGIFY_2(g_sms_writeSound_w, g_sms_writeSound)
 XEN_NARGIFY_2(g_sms_copyFrame_w, g_sms_copyFrame)
@@ -1014,10 +1296,46 @@ XEN_NARGIFY_0(g_sms_make_SMS_AnalParams_w, g_sms_make_SMS_AnalParams)
 XEN_NARGIFY_1(g_sms_free_SMS_AnalParams_w, g_sms_free_SMS_AnalParams)
 XEN_NARGIFY_1(g_sms_initAnalysis_w, g_sms_initAnalysis)
 XEN_NARGIFY_1(g_sms_freeAnalysis_w, g_sms_freeAnalysis)
+XEN_NARGIFY_1(g_SMS_AnalParams_iDebugMode_w, g_SMS_AnalParams_iDebugMode) 
+XEN_NARGIFY_1(g_SMS_AnalParams_iFormat_w, g_SMS_AnalParams_iFormat)
+XEN_NARGIFY_1(g_SMS_AnalParams_iSoundType_w, g_SMS_AnalParams_iSoundType)
+XEN_NARGIFY_1(g_SMS_AnalParams_iFrameRate_w, g_SMS_AnalParams_iFrameRate)
+XEN_NARGIFY_1(g_SMS_AnalParams_nStochasticCoeff_w, g_SMS_AnalParams_nStochasticCoeff) 
+XEN_NARGIFY_1(g_SMS_AnalParams_iDefaultSizeWindow_w, g_SMS_AnalParams_iDefaultSizeWindow)
+XEN_NARGIFY_1(g_SMS_AnalParams_nGuides_w, g_SMS_AnalParams_nGuides)
+XEN_NARGIFY_1(g_SMS_AnalParams_iCleanTracks_w, g_SMS_AnalParams_iCleanTracks)
+XEN_NARGIFY_1(g_SMS_AnalParams_iRefHarmonic_w, g_SMS_AnalParams_iRefHarmonic)
+XEN_NARGIFY_1(g_SMS_AnalParams_iMinTrackLength_w, g_SMS_AnalParams_iMinTrackLength)
+XEN_NARGIFY_1(g_SMS_AnalParams_iMaxSleepingTime_w, g_SMS_AnalParams_iMaxSleepingTime)
+XEN_NARGIFY_1(g_SMS_AnalParams_iSizeSound_w, g_SMS_AnalParams_iSizeSound)
+XEN_NARGIFY_1(g_SMS_AnalParams_iWindowType_w, g_SMS_AnalParams_iWindowType)
+XEN_NARGIFY_1(g_SMS_AnalParams_iMaxDelayFrames_w, g_SMS_AnalParams_iMaxDelayFrames)
+XEN_NARGIFY_1(g_SMS_AnalParams_iAnalysisDirection_w, g_SMS_AnalParams_iAnalysisDirection)
+XEN_NARGIFY_1(g_SMS_AnalParams_fLowestFundamental_w, g_SMS_AnalParams_fLowestFundamental)
+XEN_NARGIFY_1(g_SMS_AnalParams_fHighestFundamental_w, g_SMS_AnalParams_fHighestFundamental)
+XEN_NARGIFY_1(g_SMS_AnalParams_fDefaultFundamental_w, g_SMS_AnalParams_fDefaultFundamental)
+XEN_NARGIFY_1(g_SMS_AnalParams_fPeakContToGuide_w, g_SMS_AnalParams_fPeakContToGuide)
+XEN_NARGIFY_1(g_SMS_AnalParams_fFundContToGuide_w, g_SMS_AnalParams_fFundContToGuide)
+XEN_NARGIFY_1(g_SMS_AnalParams_fFreqDeviation_w, g_SMS_AnalParams_fFreqDeviation)
+XEN_NARGIFY_1(g_SMS_AnalParams_fSizeWindow_w, g_SMS_AnalParams_fSizeWindow)
+XEN_NARGIFY_1(g_SMS_AnalParams_fMinRefHarmMag_w, g_SMS_AnalParams_fMinRefHarmMag)
+XEN_NARGIFY_1(g_SMS_AnalParams_fRefHarmMagDiffFromMax_w, g_SMS_AnalParams_fRefHarmMagDiffFromMax)
+XEN_NARGIFY_1(g_SMS_AnalParams_fHighestFreq_w, g_SMS_AnalParams_fHighestFreq)
+XEN_NARGIFY_1(g_SMS_AnalParams_fMinPeakMag_w, g_SMS_AnalParams_fMinPeakMag)
+XEN_NARGIFY_1(g_SMS_AnalParams_fResidualPercentage_w, g_SMS_AnalParams_fResidualPercentage)
 
 XEN_NARGIFY_0(g_sms_make_SMS_SynthParams_w, g_sms_make_SMS_SynthParams)
 XEN_NARGIFY_1(g_sms_free_SMS_SynthParams_w, g_sms_free_SMS_SynthParams)
 XEN_NARGIFY_1(g_sms_freeSynth_w, g_sms_freeSynth)
+XEN_NARGIFY_1(g_SMS_SynthParams_iStochasticType_w, g_SMS_SynthParams_iStochasticType) 
+XEN_NARGIFY_1(g_SMS_SynthParams_iSynthesisType_w, g_SMS_SynthParams_iSynthesisType) 
+XEN_NARGIFY_1(g_SMS_SynthParams_iDetSynthType_w, g_SMS_SynthParams_iDetSynthType) 
+XEN_NARGIFY_1(g_SMS_SynthParams_iOriginalSRate_w, g_SMS_SynthParams_iOriginalSRate) 
+XEN_NARGIFY_1(g_SMS_SynthParams_iSamplingRate_w, g_SMS_SynthParams_iSamplingRate) 
+XEN_NARGIFY_1(g_SMS_SynthParams_sizeHop_w, g_SMS_SynthParams_sizeHop) 
+XEN_NARGIFY_1(g_SMS_SynthParams_origSizeHop_w, g_SMS_SynthParams_origSizeHop) 
+XEN_NARGIFY_1(g_SMS_SynthParams_fStocGain_w, g_SMS_SynthParams_fStocGain) 
+XEN_NARGIFY_1(g_SMS_SynthParams_fTranspose_w, g_SMS_SynthParams_fTranspose) 
 
 XEN_NARGIFY_0(g_sms_make_SMS_Header_w, g_sms_make_SMS_Header)
 XEN_NARGIFY_1(g_sms_free_SMS_Header_w, g_sms_free_SMS_Header)
@@ -1026,10 +1344,21 @@ XEN_NARGIFY_1(g_sms_getHeader_w, g_sms_getHeader)
 XEN_NARGIFY_2(g_sms_writeHeader_w, g_sms_writeHeader)
 XEN_NARGIFY_1(g_sms_frameSizeB_w, g_sms_frameSizeB)
 
+XEN_NARGIFY_1(g_SMS_Header_iSmsMagic_w, g_SMS_Header_iSmsMagic)
+XEN_NARGIFY_1(g_SMS_Header_iHeadBSize_w, g_SMS_Header_iHeadBSize)
+XEN_NARGIFY_1(g_SMS_Header_nFrames_w, g_SMS_Header_nFrames)
+XEN_NARGIFY_1(g_SMS_Header_iFrameBSize_w, g_SMS_Header_iFrameBSize)
+XEN_NARGIFY_1(g_SMS_Header_iBegSteadyState_w, g_SMS_Header_iBegSteadyState)
+XEN_NARGIFY_1(g_SMS_Header_iEndSteadyState_w, g_SMS_Header_iEndSteadyState)
+XEN_NARGIFY_1(g_SMS_Header_nTextCharacters_w, g_SMS_Header_nTextCharacters)
+XEN_NARGIFY_1(g_SMS_Header_fAmplitude_w, g_SMS_Header_fAmplitude)
+XEN_NARGIFY_1(g_SMS_Header_fFrequency_w, g_SMS_Header_fFrequency)
+XEN_NARGIFY_1(g_SMS_Header_fResidualPerc_w, g_SMS_Header_fResidualPerc)
+XEN_NARGIFY_1(g_SMS_Header_pChTextCharacters_w, g_SMS_Header_pChTextCharacters)
+
 XEN_NARGIFY_0(g_sms_make_SMS_SndHeader_w, g_sms_make_SMS_SndHeader)
 XEN_NARGIFY_1(g_sms_free_SMS_SndHeader_w, g_sms_free_SMS_SndHeader)
 XEN_NARGIFY_1(g_SMS_SndHeader_nSamples_w, g_SMS_SndHeader_nSamples)
-XEN_NARGIFY_1(g_SMS_SndHeader_iSamplingRate_w, g_SMS_SndHeader_iSamplingRate)
 
 XEN_NARGIFY_2(g_sms_allocFrameH_w, g_sms_allocFrameH)
 XEN_NARGIFY_2(g_sms_initSynth_w, g_sms_initSynth)
@@ -1040,9 +1369,8 @@ XEN_NARGIFY_3(g_sms_writeFrame_w, g_sms_writeFrame)
 XEN_NARGIFY_4(g_sms_getSound_w, g_sms_getSound)
 XEN_NARGIFY_4(g_sms_analyze_w, g_sms_analyze)
 
-
-
 #else
+
 #define g_sms_init_w g_sms_init
 #define g_sms_free_w g_sms_free
 #define g_sms_clearSine_w g_sms_clearSine
@@ -1058,6 +1386,7 @@ XEN_NARGIFY_4(g_sms_analyze_w, g_sms_analyze)
 #define g_sms_preEmphasis_w g_sms_preEmphasis
 #define g_sms_deEmphasis_w g_sms_deEmphasis
 
+#define g_sms_fclose_w g_sms_fclose
 #define g_sms_createSF_w g_sms_createSF
 #define g_sms_writeSound_w g_sms_writeSound
 #define g_sms_copyFrame_w g_sms_copyFrame
@@ -1083,10 +1412,46 @@ XEN_NARGIFY_4(g_sms_analyze_w, g_sms_analyze)
 #define g_sms_free_SMS_AnalParams_w g_sms_free_SMS_AnalParams
 #define g_sms_initAnalysis_w g_sms_initAnalysis
 #define g_sms_freeAnalysis_w g_sms_freeAnalysis
+#define g_SMS_AnalParams_iDebugMode_w g_SMS_AnalParams_iDebugMode 
+#define g_SMS_AnalParams_iFormat_w g_SMS_AnalParams_iFormat
+#define g_SMS_AnalParams_iSoundType_w g_SMS_AnalParams_iSoundType
+#define g_SMS_AnalParams_iFrameRate_w g_SMS_AnalParams_iFrameRate
+#define g_SMS_AnalParams_nStochasticCoeff_w g_SMS_AnalParams_nStochasticCoeff 
+#define g_SMS_AnalParams_iDefaultSizeWindow_w g_SMS_AnalParams_iDefaultSizeWindow
+#define g_SMS_AnalParams_nGuides_w g_SMS_AnalParams_nGuides
+#define g_SMS_AnalParams_iCleanTracks_w g_SMS_AnalParams_iCleanTracks
+#define g_SMS_AnalParams_iRefHarmonic_w g_SMS_AnalParams_iRefHarmonic
+#define g_SMS_AnalParams_iMinTrackLength_w g_SMS_AnalParams_iMinTrackLength
+#define g_SMS_AnalParams_iMaxSleepingTime_w g_SMS_AnalParams_iMaxSleepingTime
+#define g_SMS_AnalParams_iSizeSound_w g_SMS_AnalParams_iSizeSound
+#define g_SMS_AnalParams_iWindowType_w g_SMS_AnalParams_iWindowType
+#define g_SMS_AnalParams_iMaxDelayFrames_w g_SMS_AnalParams_iMaxDelayFrames
+#define g_SMS_AnalParams_iAnalysisDirection_w g_SMS_AnalParams_iAnalysisDirection
+#define g_SMS_AnalParams_fLowestFundamental_w g_SMS_AnalParams_fLowestFundamental
+#define g_SMS_AnalParams_fHighestFundamental_w g_SMS_AnalParams_fHighestFundamental
+#define g_SMS_AnalParams_fDefaultFundamental_w g_SMS_AnalParams_fDefaultFundamental
+#define g_SMS_AnalParams_fPeakContToGuide_w g_SMS_AnalParams_fPeakContToGuide
+#define g_SMS_AnalParams_fFundContToGuide_w g_SMS_AnalParams_fFundContToGuide
+#define g_SMS_AnalParams_fFreqDeviation_w g_SMS_AnalParams_fFreqDeviation
+#define g_SMS_AnalParams_fSizeWindow_w g_SMS_AnalParams_fSizeWindow
+#define g_SMS_AnalParams_fMinRefHarmMag_w g_SMS_AnalParams_fMinRefHarmMag
+#define g_SMS_AnalParams_fRefHarmMagDiffFromMax_w g_SMS_AnalParams_fRefHarmMagDiffFromMax
+#define g_SMS_AnalParams_fHighestFreq_w g_SMS_AnalParams_fHighestFreq
+#define g_SMS_AnalParams_fMinPeakMag_w g_SMS_AnalParams_fMinPeakMag
+#define g_SMS_AnalParams_fResidualPercentage_w g_SMS_AnalParams_fResidualPercentage
 
 #define g_sms_make_SMS_SynthParams_w g_sms_make_SMS_SynthParams
 #define g_sms_free_SMS_SynthParams_w g_sms_free_SMS_SynthParams
 #define g_sms_freeSynth_w g_sms_freeSynth
+#define g_SMS_SynthParams_iStochasticType_w g_SMS_SynthParams_iStochasticType
+#define g_SMS_SynthParams_iSynthesisType_w g_SMS_SynthParams_iSynthesisType
+#define g_SMS_SynthParams_iDetSynthType_w g_SMS_SynthParams_iDetSynthType
+#define g_SMS_SynthParams_iOriginalSRate_w g_SMS_SynthParams_iOriginalSRate
+#define g_SMS_SynthParams_iSamplingRate_w g_SMS_SynthParams_iSamplingRate
+#define g_SMS_SynthParams_sizeHop_w g_SMS_SynthParams_sizeHop
+#define g_SMS_SynthParams_origSizeHop_w g_SMS_SynthParams_origSizeHop
+#define g_SMS_SynthParams_fStocGain_w g_SMS_SynthParams_fStocGain
+#define g_SMS_SynthParams_fTranspose_w g_SMS_SynthParams_fTranspose
 
 #define g_sms_make_SMS_Header_w g_sms_make_SMS_Header
 #define g_sms_free_SMS_Header_w g_sms_free_SMS_Header
@@ -1095,10 +1460,21 @@ XEN_NARGIFY_4(g_sms_analyze_w, g_sms_analyze)
 #define g_sms_initHeader_w g_sms_initHeader
 #define g_sms_frameSizeB_w g_sms_frameSizeB
 
+#define g_SMS_Header_iSmsMagic_w g_SMS_Header_iSmsMagic
+#define g_SMS_Header_iHeadBSize_w g_SMS_Header_iHeadBSize
+#define g_SMS_Header_nFrames_w g_SMS_Header_nFrames
+#define g_SMS_Header_iFrameBSize_w g_SMS_Header_iFrameBSize
+#define g_SMS_Header_iBegSteadyState_w g_SMS_Header_iBegSteadyState
+#define g_SMS_Header_iEndSteadyState_w g_SMS_Header_iEndSteadyState
+#define g_SMS_Header_nTextCharacters_w g_SMS_Header_nTextCharacters
+#define g_SMS_Header_fAmplitude_w g_SMS_Header_fAmplitude
+#define g_SMS_Header_fFrequency_w g_SMS_Header_fFrequency
+#define g_SMS_Header_fResidualPerc_w g_SMS_Header_fResidualPerc
+#define g_SMS_Header_pChTextCharacters_w g_SMS_Header_pChTextCharacters
+
 #define g_sms_make_SMS_SndHeader_w g_sms_make_SMS_SndHeader
 #define g_sms_free_SMS_SndHeader_w g_sms_free_SMS_SndHeader
 #define g_SMS_SndHeader_nSamples_w g_SMS_SndHeader_nSamples
-#define g_SMS_SndHeader_iSamplingRate_w g_SMS_SndHeader_iSamplingRate
 
 #define g_sms_initSynth_w g_sms_initSynth
 #define g_sms_allocFrameH_w g_sms_allocFrameH
@@ -1202,6 +1578,7 @@ void g_init_sms(void)
   XEN_DEFINE_PROCEDURE(S_sms_preEmphasis,  g_sms_preEmphasis_w,  1, 0, 0, H_sms_preEmphasis);
   XEN_DEFINE_PROCEDURE(S_sms_deEmphasis,   g_sms_deEmphasis_w,   1, 0, 0, H_sms_deEmphasis);
 
+  XEN_DEFINE_PROCEDURE(S_sms_fclose,       g_sms_fclose_w,       1, 0, 0, H_sms_fclose);
   XEN_DEFINE_PROCEDURE(S_sms_createSF,     g_sms_createSF_w,     3, 0, 0, H_sms_createSF);
   XEN_DEFINE_PROCEDURE(S_sms_writeSound,   g_sms_writeSound_w,   2, 0, 0, H_sms_writeSound);
   XEN_DEFINE_PROCEDURE(S_sms_copyFrame,    g_sms_copyFrame_w,    2, 0, 0, H_sms_copyFrame);
@@ -1230,9 +1607,47 @@ void g_init_sms(void)
   XEN_DEFINE_PROCEDURE(S_sms_initAnalysis, g_sms_initAnalysis_w, 1, 0, 0, H_sms_initAnalysis);
   XEN_DEFINE_PROCEDURE(S_sms_freeAnalysis, g_sms_freeAnalysis_w, 1, 0, 0, H_sms_freeAnalysis);
 
+  DEFINE_READER(iDebugMode, g_SMS_AnalParams_iDebugMode_w, H_SMS_AnalParams_iDebugMode);
+  DEFINE_READER(iFormat, g_SMS_AnalParams_iFormat_w, H_SMS_AnalParams_iFormat);
+  DEFINE_READER(iSoundType, g_SMS_AnalParams_iSoundType_w, H_SMS_AnalParams_iSoundType);
+  DEFINE_READER(iFrameRate, g_SMS_AnalParams_iFrameRate_w, H_SMS_AnalParams_iFrameRate);
+  DEFINE_READER(nStochasticCoeff, g_SMS_AnalParams_nStochasticCoeff_w, H_SMS_AnalParams_nStochasticCoeff);
+  DEFINE_READER(iDefaultSizeWindow, g_SMS_AnalParams_iDefaultSizeWindow_w, H_SMS_AnalParams_iDefaultSizeWindow);
+  DEFINE_READER(nGuides, g_SMS_AnalParams_nGuides_w, H_SMS_AnalParams_nGuides);
+  DEFINE_READER(iCleanTracks, g_SMS_AnalParams_iCleanTracks_w, H_SMS_AnalParams_iCleanTracks);
+  DEFINE_READER(iRefHarmonic, g_SMS_AnalParams_iRefHarmonic_w, H_SMS_AnalParams_iRefHarmonic);
+  DEFINE_READER(iMinTrackLength, g_SMS_AnalParams_iMinTrackLength_w, H_SMS_AnalParams_iMinTrackLength);
+  DEFINE_READER(iMaxSleepingTime, g_SMS_AnalParams_iMaxSleepingTime_w, H_SMS_AnalParams_iMaxSleepingTime);
+  DEFINE_READER(iSizeSound, g_SMS_AnalParams_iSizeSound_w, H_SMS_AnalParams_iSizeSound);
+  DEFINE_READER(iWindowType, g_SMS_AnalParams_iWindowType_w, H_SMS_AnalParams_iWindowType);
+  DEFINE_READER(iMaxDelayFrames, g_SMS_AnalParams_iMaxDelayFrames_w, H_SMS_AnalParams_iMaxDelayFrames);
+  DEFINE_READER(iAnalysisDirection, g_SMS_AnalParams_iAnalysisDirection_w, H_SMS_AnalParams_iAnalysisDirection);
+  DEFINE_READER(fLowestFundamental, g_SMS_AnalParams_fLowestFundamental_w, H_SMS_AnalParams_fLowestFundamental);
+  DEFINE_READER(fHighestFundamental, g_SMS_AnalParams_fHighestFundamental_w, H_SMS_AnalParams_fHighestFundamental);
+  DEFINE_READER(fDefaultFundamental, g_SMS_AnalParams_fDefaultFundamental_w, H_SMS_AnalParams_fDefaultFundamental);
+  DEFINE_READER(fPeakContToGuide, g_SMS_AnalParams_fPeakContToGuide_w, H_SMS_AnalParams_fPeakContToGuide);
+  DEFINE_READER(fFundContToGuide, g_SMS_AnalParams_fFundContToGuide_w, H_SMS_AnalParams_fFundContToGuide);
+  DEFINE_READER(fFreqDeviation, g_SMS_AnalParams_fFreqDeviation_w, H_SMS_AnalParams_fFreqDeviation);
+  DEFINE_READER(fSizeWindow, g_SMS_AnalParams_fSizeWindow_w, H_SMS_AnalParams_fSizeWindow);
+  DEFINE_READER(fMinRefHarmMag, g_SMS_AnalParams_fMinRefHarmMag_w, H_SMS_AnalParams_fMinRefHarmMag);
+  DEFINE_READER(fRefHarmMagDiffFromMax, g_SMS_AnalParams_fRefHarmMagDiffFromMax_w, H_SMS_AnalParams_fRefHarmMagDiffFromMax);
+  DEFINE_READER(fHighestFreq, g_SMS_AnalParams_fHighestFreq_w, H_SMS_AnalParams_fHighestFreq);
+  DEFINE_READER(fMinPeakMag, g_SMS_AnalParams_fMinPeakMag_w, H_SMS_AnalParams_fMinPeakMag);
+  DEFINE_READER(fResidualPercentage, g_SMS_AnalParams_fResidualPercentage_w, H_SMS_AnalParams_fResidualPercentage);
+
   XEN_DEFINE_PROCEDURE(S_sms_free_SMS_SynthParams, g_sms_free_SMS_SynthParams_w, 1, 0, 0, H_sms_free_SMS_SynthParams);
   XEN_DEFINE_PROCEDURE(S_sms_make_SMS_SynthParams, g_sms_make_SMS_SynthParams_w, 0, 0, 0, H_sms_make_SMS_SynthParams);
   XEN_DEFINE_PROCEDURE(S_sms_freeSynth, g_sms_freeSynth_w, 1, 0, 0, H_sms_freeSynth);
+
+  DEFINE_READER(iStochasticType, g_SMS_SynthParams_iStochasticType_w, H_SMS_SynthParams_iStochasticType);
+  DEFINE_READER(iSynthesisType, g_SMS_SynthParams_iSynthesisType_w, H_SMS_SynthParams_iSynthesisType);
+  DEFINE_READER(iDetSynthType, g_SMS_SynthParams_iDetSynthType_w, H_SMS_SynthParams_iDetSynthType);
+  DEFINE_READER(iOriginalSRate, g_SMS_SynthParams_iOriginalSRate_w, H_SMS_SynthParams_iOriginalSRate);
+  DEFINE_READER(iSamplingRate, g_SMS_SynthParams_iSamplingRate_w, H_SMS_SynthParams_iSamplingRate);
+  DEFINE_READER(sizeHop, g_SMS_SynthParams_sizeHop_w, H_SMS_SynthParams_sizeHop);
+  DEFINE_READER(origSizeHop, g_SMS_SynthParams_origSizeHop_w, H_SMS_SynthParams_origSizeHop);
+  DEFINE_READER(fStocGain, g_SMS_SynthParams_fStocGain_w, H_SMS_SynthParams_fStocGain);
+  DEFINE_READER(fTranspose, g_SMS_SynthParams_fTranspose_w, H_SMS_SynthParams_fTranspose);
 
   XEN_DEFINE_PROCEDURE(S_sms_free_SMS_Header, g_sms_free_SMS_Header_w, 1, 0, 0, H_sms_free_SMS_Header);
   XEN_DEFINE_PROCEDURE(S_sms_make_SMS_Header, g_sms_make_SMS_Header_w, 0, 0, 0, H_sms_make_SMS_Header);
@@ -1241,10 +1656,22 @@ void g_init_sms(void)
   XEN_DEFINE_PROCEDURE(S_sms_writeHeader, g_sms_writeHeader_w, 2, 0, 0, H_sms_writeHeader);
   XEN_DEFINE_PROCEDURE(S_sms_frameSizeB, g_sms_frameSizeB_w, 1, 0, 0, H_sms_frameSizeB);
 
+  DEFINE_READER(iSmsMagic, g_SMS_Header_iSmsMagic_w, H_SMS_Header_iSmsMagic);
+  DEFINE_READER(iHeadBSize, g_SMS_Header_iHeadBSize_w, H_SMS_Header_iHeadBSize);
+  DEFINE_READER(nFrames, g_SMS_Header_nFrames_w, H_SMS_Header_nFrames);
+  DEFINE_READER(iFrameBSize, g_SMS_Header_iFrameBSize_w, H_SMS_Header_iFrameBSize);
+  DEFINE_READER(iBegSteadyState, g_SMS_Header_iBegSteadyState_w, H_SMS_Header_iBegSteadyState);
+  DEFINE_READER(iEndSteadyState, g_SMS_Header_iEndSteadyState_w, H_SMS_Header_iEndSteadyState);
+  DEFINE_READER(nTextCharacters, g_SMS_Header_nTextCharacters_w, H_SMS_Header_nTextCharacters);
+  DEFINE_READER(fAmplitude, g_SMS_Header_fAmplitude_w, H_SMS_Header_fAmplitude);
+  DEFINE_READER(fFrequency, g_SMS_Header_fFrequency_w, H_SMS_Header_fFrequency);
+  DEFINE_READER(fResidualPerc, g_SMS_Header_fResidualPerc_w, H_SMS_Header_fResidualPerc);
+  DEFINE_READER(pChTextCharacters, g_SMS_Header_pChTextCharacters_w, H_SMS_Header_pChTextCharacters);
+
   XEN_DEFINE_PROCEDURE(S_sms_free_SMS_SndHeader, g_sms_free_SMS_SndHeader_w, 1, 0, 0, H_sms_free_SMS_SndHeader);
   XEN_DEFINE_PROCEDURE(S_sms_make_SMS_SndHeader, g_sms_make_SMS_SndHeader_w, 0, 0, 0, H_sms_make_SMS_SndHeader);
+
   DEFINE_READER(nSamples,           g_SMS_SndHeader_nSamples_w,           H_SMS_SndHeader_nSamples);
-  DEFINE_READER(iSamplingRate,           g_SMS_SndHeader_iSamplingRate_w,           H_SMS_SndHeader_iSamplingRate);
 
   XEN_DEFINE_PROCEDURE(S_sms_initSynth, g_sms_initSynth_w, 2, 0, 0, H_sms_initSynth);
   XEN_DEFINE_PROCEDURE(S_sms_allocFrameH, g_sms_allocFrameH_w, 2, 0, 0, H_sms_allocFrameH);
@@ -1255,6 +1682,7 @@ void g_init_sms(void)
   XEN_DEFINE_PROCEDURE(S_sms_getSound, g_sms_getSound_w, 4, 0, 0, H_sms_getSound);
   XEN_DEFINE_PROCEDURE(S_sms_analyze, g_sms_analyze_w, 4, 0, 0, H_sms_analyze);
 
+  XEN_YES_WE_HAVE("sms");
 }
 
 #endif

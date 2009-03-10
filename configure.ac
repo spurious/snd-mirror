@@ -77,6 +77,7 @@ AC_DEFINE_UNQUOTED(SND_HOST, "$host")
 #   --with-midi           include sndlib midi module
 #   --with-cairo          use cairo for Gtk graphics, if possible
 #   --with-pulseaudio     use PulseAudio
+#   --with-sms            include libsms (default=no currently)
 #   GUILE_CONFIG_path     where to look for guile-config
 #   GUILE_CONFIG_name     Fink (OSX) includes guile-config under funny names
 #   GUILE_name            same problem
@@ -110,6 +111,7 @@ AC_ARG_WITH(doubles,     [  --with-doubles	  use doubles throughout])
 AC_ARG_WITH(float-samples, [  --with-float-samples	  use floats (or doubles) as the internal sample respresentation, default=yes])
 AC_ARG_WITH(cairo,	 [  --with-cairo		  use cairo for graphics in Gtk -- not currently very usable])
 AC_ARG_WITH(pulseaudio,  [  --with-pulseaudio 		  use PulseAudio, default=no])
+AC_ARG_WITH(sms,  	 [  --with-sms 		  include libsms, default=no])
 
 # these are primarily for testing
 AC_ARG_WITH(gsl,         [  --with-gsl		  use GSL, default=yes])
@@ -621,6 +623,26 @@ if test "$with_ladspa" != no ; then
 		   AC_MSG_WARN([can't find ladspa.h!])
 		  fi)
 fi
+
+
+#--------------------------------------------------------------------------------
+# libsms
+#--------------------------------------------------------------------------------
+
+SMS_LIBS=""
+if test "$with_sms" = yes ; then
+  # we need libsms.a, sms.h, libsndfile
+  AC_CHECK_HEADER(sms.h, 
+    [AC_CHECK_LIB(sms, sms_init, 
+      [AC_CHECK_LIB(sndfile, main, 
+        [AC_DEFINE(HAVE_LIBSMS)
+         RANDOM_FEATURES="$RANDOM_FEATURES sms"
+         SMS_LIBS="-lsms -lsndfile"],
+        [AC_MSG_WARN("libsms needs libsndfile which I can't find")])],
+      [AC_MSG_WARN("can't find libsms")])],
+    [AC_MSG_WARN("can't find sms.h")])
+fi
+AC_SUBST(SMS_LIBS)
 
 
 #--------------------------------------------------------------------------------
