@@ -155,6 +155,15 @@ static void get_fft_window_data(void)
 }
 
 
+static void widget_float_to_text(Widget w, Float val)
+{
+  char *str;
+  str = (char *)calloc(16, sizeof(char));
+  mus_snprintf(str, 16, "%.2f", val);
+  XmTextFieldSetString(w, str);
+  free(str);
+}
+
 
 
 /* ---------------- errors ---------------- */

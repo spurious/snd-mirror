@@ -411,49 +411,6 @@ unsigned char *snd_plain_icon_bits(void) {return(snd_plain_bits);}
 #endif
 
 
-#if USE_GTK
-static const char *speaker_xpm[] = {
-"12 12 2 1",
-"-      c None s None",
-"X	c black",
-"--------XXX-",
-"------XX--X-",
-"----XX----X-",
-"-XXX------X-",
-"-XX-------X-",
-"-XX-------X-",
-"-XX-------X-",
-"-XX-------X-",
-"-XXX------X-",
-"----XX----X-",
-"------XX--X-",
-"--------XXX-"};
-
-const char **speaker_bits(void) {return(speaker_xpm);}
-
-
-static const char *blue_speaker_xpm[] = {
-"12 12 3 1",
-"-      c None s None",
-"o      c red",
-"X	c black",
-"--------XXX-",
-"------XXooX-",
-"----XXooooX-",
-"-XXXooooooX-",
-"-XXoooooooX-",
-"-XXoooooooX-",
-"-XXoooooooX-",
-"-XXoooooooX-",
-"-XXXooooooX-",
-"----XXooooX-",
-"------XXooX-",
-"--------XXX-"};
-
-const char **blue_speaker_bits(void) {return(blue_speaker_xpm);}
-#endif
-
-
 void make_icons_transparent(const char *color)
 {
 #if (HAVE_XPM) || (USE_GTK)
@@ -477,8 +434,7 @@ void make_icons_transparent(const char *color)
       tmp[1] = bg_line;
     }
 #if USE_GTK
-  speaker_xpm[1] = bg_line;
-  blue_speaker_xpm[1] = bg_line;
+  make_speaker_icons_transparent(bg_line);
 #endif
 #endif 
 }

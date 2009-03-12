@@ -578,6 +578,50 @@ static void mix_dialog_help_callback(GtkWidget *w, gpointer context)
 }
 
 
+static const char *speaker_xpm[] = {
+"12 12 2 1",
+"-      c None s None",
+"X	c black",
+"--------XXX-",
+"------XX--X-",
+"----XX----X-",
+"-XXX------X-",
+"-XX-------X-",
+"-XX-------X-",
+"-XX-------X-",
+"-XX-------X-",
+"-XXX------X-",
+"----XX----X-",
+"------XX--X-",
+"--------XXX-"};
+
+
+static const char *blue_speaker_xpm[] = {
+"12 12 3 1",
+"-      c None s None",
+"o      c red",
+"X	c black",
+"--------XXX-",
+"------XXooX-",
+"----XXooooX-",
+"-XXXooooooX-",
+"-XXoooooooX-",
+"-XXoooooooX-",
+"-XXoooooooX-",
+"-XXoooooooX-",
+"-XXXooooooX-",
+"----XXooooX-",
+"------XXooX-",
+"--------XXX-"};
+
+
+void make_speaker_icons_transparent(const char *bg_line)
+{
+  speaker_xpm[1] = bg_line;
+  blue_speaker_xpm[1] = bg_line;
+}
+
+
 GtkWidget *make_mix_dialog(void)
 {
   if (mix_dialog == NULL)
@@ -660,8 +704,8 @@ GtkWidget *make_mix_dialog(void)
       
       if (!speaker_off_pix)
 	{
-	  speaker_off_pix = gdk_pixmap_create_from_xpm_d(MAIN_WINDOW(ss), NULL, NULL, (gchar **)speaker_bits());
-	  speaker_on_pix = gdk_pixmap_create_from_xpm_d(MAIN_WINDOW(ss), NULL, NULL, (gchar **)blue_speaker_bits());
+	  speaker_off_pix = gdk_pixmap_create_from_xpm_d(MAIN_WINDOW(ss), NULL, NULL, (gchar **)speaker_xpm);
+	  speaker_on_pix = gdk_pixmap_create_from_xpm_d(MAIN_WINDOW(ss), NULL, NULL, (gchar **)blue_speaker_xpm);
 	}
 
       mix_speaker_pix = speaker_off_pix;

@@ -5697,6 +5697,3 @@ void g_init_sig(void)
 				   S_setB S_sinc_width, g_set_sinc_width_w,  0, 0, 1, 0);
 }
 
-
-/* convolve and src could be threaded but the readers must not call the gc etc -- too tricky */
-

@@ -55,20 +55,6 @@ int add_name(char *name, char *hdr)
   if ((isdigit(name[0])) || (strlen(name) == 1)) return(-1);
 
   if (isupper(name[0])) return(-1);
-#if 0
-  if ((strlen(name) > 2) && ((strncmp(name, "SCM", 3) == 0) ||
-			     (strncmp(name, "scm", 3) == 0) ||
-			     (strncmp(name, "clm_", 4) == 0) ||
-			     (strncmp(name, "rb_", 3) == 0) ||
-			     (strncmp(name, "gh_", 3) == 0) ||
-			     (strncmp(name, "GDK", 3) == 0) ||
-			     (strncmp(name, "XK_", 3) == 0) ||
-			     (strncmp(name, "snd_K", 5) == 0) ||
-			     (strncmp(name, "XEN", 3) == 0) ||
-			     (strncmp(name, "xen", 3) == 0)))
-
-    return(-1);
-#endif
   if ((strcmp(hdr, "snd-nogui0.h") == 0) ||
       (strcmp(hdr, "snd-nogui1.h") == 0))
     nnames[nname_ctr++] = name;
@@ -702,8 +688,8 @@ int main(int argc, char **argv)
       qsort((void *)qs, names_ctr, sizeof(qdata *), greater_compare);
       for (i = 0; i < names_ctr; i++)
 	{
-	  bool menu_case = false, file_case = false, nonogui_case = false, static_case = false;
-	  int menu_count = 0, file_count = 0, rec_count = 0;
+	  bool menu_case = false, file_case = false, nonogui_case = false, static_case = false, x_case = true;
+	  int menu_count = 0, file_count = 0, rec_count = 0, x_count = 0;
 	  int nfiles;
 	  nfiles = 0;
 	  /* try to get rid of a bunch of annoying false positives */
@@ -772,6 +758,16 @@ int main(int argc, char **argv)
 			    }
 			  else menu_count++;
 			}
+		      
+		      if (x_case)
+			{
+			  if (((strncmp(files[j], "snd-x", 5) != 0) &&
+			       (strncmp(files[j], "snd-g", 5) != 0)) ||
+			      (strcmp(files[j], "snd-xen.c") == 0))
+			    x_case = false;
+			  else x_count++;
+			}
+
 		      if (file_case)
 			{
 			  if ((strcmp(files[j], "snd-file.c") != 0) &&
@@ -818,6 +814,14 @@ int main(int argc, char **argv)
 		   (strcmp(qs[i]->def, "snd-xfile.c") == 0) ||
 		   (strcmp(qs[i]->def, "snd-gfile.c") == 0)))
 		fprintf(FD, "\n->SND-FILE.H\n");
+
+	      if ((x_case) &&
+		  (x_count > 0) &&
+		  (qs[i]->def) &&
+		  (strcmp(qs[i]->def, "snd-xen.c") != 0) &&
+		  ((strncmp(qs[i]->def, "snd-x", 5) == 0) || 
+		   (strncmp(qs[i]->def, "snd-g", 5) == 0)))
+		fprintf(FD, "\n    (all within gui)\n");
 
 	      if (nonogui_case) fprintf(FD, "\nnot needed in snd-nogui?\n");
 

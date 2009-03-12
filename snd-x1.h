@@ -260,7 +260,6 @@ void set_widget_position(Widget w, Position x, Position y);
 idle_t add_work_proc(XtWorkProc func, XtPointer data);
 int attach_all_sides(Arg *args, int n);
 void widget_int_to_text(Widget w, int val);
-void widget_float_to_text(Widget w, Float val);
 void widget_off_t_to_text(Widget w, off_t val);
 void draw_rotated_axis_label(chan_info *cp, axis_context *ax, const char *text, int x0, int y0);
 void ensure_list_row_visible(widget_t list, int row);

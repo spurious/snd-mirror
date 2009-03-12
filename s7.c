@@ -12338,10 +12338,10 @@ static s7_pointer eval_symbol(s7_scheme *sc, s7_pointer sym)
   x = s7_find_symbol_in_environment(sc, sc->envir, sym, true);
   if (x != sc->NIL) 
     return(symbol_value(x));
+
   if (s7_is_keyword(sym))
     return(sym);
 	  
-  /* isn't this in the global env? keyword also -- both these checks seem useless */
   x = symbol_table_find_by_name(sc, symbol_name(sym), symbol_location(sym));
   if (is_syntax(x))
     return(x);

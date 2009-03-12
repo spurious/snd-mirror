@@ -13,7 +13,6 @@
  *             mus_describe once again allocates a fresh output string.
  *             finally removed sine-bank (snd9.scm has replacement).
  * 9-Oct:      various thread-related internal changes.
- * 29-Jul:     mark mus_sine_bank for eventual removal.
  * 14-Jul:     mus_data_format_zero.
  * 12-Jul:     mus_interp_type_p and mus_fft_window_p for C++'s benefit.
  * 1-July:     mus-safety and various ints changed to off_t.

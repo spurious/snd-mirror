@@ -187,8 +187,6 @@ const char **speed_l_bits(void);
 const char **speed_r_bits(void);
 const char **stop_sign_bits(void);
 
-const char **speaker_bits(void);
-const char **blue_speaker_bits(void);
 void make_icons_transparent(const char *basic_color);
 
 
@@ -285,7 +283,6 @@ void set_label(GtkWidget *label, const char *str);
 void sg_left_justify_button(GtkWidget *button);
 void sg_left_justify_label(GtkWidget *label);
 void check_for_event(void);
-void force_update(GtkWidget *wid);
 void set_title(const char *title);
 void goto_window(GtkWidget *text);
 
@@ -306,7 +303,6 @@ void set_mix_color(color_info *color);
 void widget_modify_bg(GtkWidget *w, GtkStateType type, color_t color);
 void widget_modify_fg(GtkWidget *w, GtkStateType type, color_t color);
 void widget_modify_base(GtkWidget *w, GtkStateType type, color_t color);
-void widget_modify_text(GtkWidget *w, GtkStateType type, color_t color);
 color_t rgb_to_color(Float r, Float g, Float b);
 #if USE_CAIRO
   GdkColor *rgb_to_gdk_color(color_t col);
@@ -338,7 +334,6 @@ void sg_set_cursor(GtkWidget *w, int position);
 void sg_text_insert(GtkWidget *w, const char *text);
 int sg_cursor_position(GtkWidget *w);
 GtkWidget *make_scrolled_text(GtkWidget *parent, bool editable, int add_choice, bool resize);
-void sg_text_delete(GtkWidget *w, int start, int end);
 void sg_make_resizable(GtkWidget *w);
 idle_t add_work_proc(GtkFunction func, gpointer data);
 GtkWidget *snd_gtk_dialog_new(void);
@@ -348,7 +343,6 @@ void info_widget_display(GtkWidget *w, const char *message);
 void info_widget_set_size(GtkWidget *w, int size);
 GtkWidget *snd_gtk_highlight_label_new(const char *label);
 void widget_int_to_text(GtkWidget *w, int val);
-void widget_float_to_text(GtkWidget *w, Float val);
 void widget_off_t_to_text(GtkWidget *w, off_t val);
 void ensure_scrolled_window_row_visible(widget_t list, int pos, int num_rows);
 
@@ -428,7 +422,7 @@ GtkWidget *make_mix_dialog(void);
 void reflect_mix_play_stop(void);
 int mix_dialog_mix(void);
 void mix_dialog_set_mix(int id);
-
+void make_speaker_icons_transparent(const char *bg_line);
 
 
 /* -------- snd-genv.c -------- */

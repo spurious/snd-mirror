@@ -11562,11 +11562,25 @@ In the best cases, I see speed up factors of more or less n - 1 (14.8 times fast
 where the process monitor program shows all 16 cores running at better than 95%).  Now for 32...
 </p>
 
-<p>Snd in general does not yet handle s7 threads with aplomb.  The primary problems currently
-involve user-interface issues (Motif is not thread safe, for example).  sndlib and s7 itself 
-are thread safe, so I believe with-threaded-sound works with any CLM instrument, but I don't
-expect Snd editing functions such as filter-channel to work correctly.  Perhaps the no-gui version
-is usable?
+<br>
+<table border=0 bordercolor="lightgreen" width=20% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+  <table width=100% border=0><tr><td bgcolor="#EEFDEE"><h5>with-threaded-channels</h5></td></tr></table>
+</td></tr></table>
+
+<p><a name="withthreadedchannels">with-threaded-channels</a>
+is a related experiment in multithreading.  It applies 'func', a function
+of two arguments (the sound index and the channel number), to each channel in the sound 'snd',
+using a separate thread for each call. 
+</p>
+<pre>
+    (with-threaded-channels snd 
+      (lambda (snd chn) 
+        (src-channel 2.0 0 #f snd chn)))
+</pre>
+
+<p>Snd does not always  handle threads with aplomb.  The primary problem is that
+neither Motif nor Gtk is thread-safe, so you have to squelch updates during any
+threaded operation (see with-threaded-sound itself).
 </p>
 
 

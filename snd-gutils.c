@@ -359,16 +359,6 @@ void check_for_event(void)
 }
 
 
-void force_update(GtkWidget *wid)
-{
-  if ((wid) && (WIDGET_TO_WINDOW(wid)))
-    {
-      gdk_window_invalidate_rect(GDK_WINDOW(WIDGET_TO_WINDOW(wid)), NULL, true);
-      gdk_window_process_updates(GDK_WINDOW(WIDGET_TO_WINDOW(wid)), true);
-    }
-}
-
-
 void set_title(const char *title)
 {
 #ifndef SND_AS_WIDGET
@@ -592,16 +582,6 @@ void widget_modify_base(GtkWidget *w, GtkStateType type, color_t color)
 }
 
 
-void widget_modify_text(GtkWidget *w, GtkStateType type, color_t color)
-{
-#if USE_CAIRO
-  gtk_widget_modify_text(w, type, rgb_to_gdk_color(color));
-#else
-  gtk_widget_modify_text(w, type, color);
-#endif
-}
-
-
 void recolor_graph(chan_info *cp, bool selected)
 {
   state_context *sx;
@@ -751,17 +731,6 @@ char *sg_get_text(GtkWidget *w, int start, int end)
   gtk_text_buffer_get_iter_at_offset(buf, &s, start);
   gtk_text_buffer_get_iter_at_offset(buf, &e, end);  /* this is utterly idiotic!!! */
   return(gtk_text_buffer_get_text(buf, &s, &e, true));
-}
-
-
-void sg_text_delete(GtkWidget *w, int start, int end)
-{
-  GtkTextIter s, e;
-  GtkTextBuffer *buf;
-  buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(w));
-  gtk_text_buffer_get_iter_at_offset(buf, &s, start);
-  gtk_text_buffer_get_iter_at_offset(buf, &e, end); 
-  gtk_text_buffer_delete(buf, &s, &e);
 }
 
 
@@ -925,7 +894,7 @@ void widget_int_to_text(GtkWidget *w, int val)
   free(str);
 }
 
-
+#if 0
 void widget_float_to_text(GtkWidget *w, Float val)
 {
   char *str;
@@ -934,6 +903,7 @@ void widget_float_to_text(GtkWidget *w, Float val)
   gtk_entry_set_text(GTK_ENTRY(w), str);
   free(str);
 }
+#endif
 
 
 void widget_off_t_to_text(GtkWidget *w, off_t val)

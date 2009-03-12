@@ -136,6 +136,17 @@ static void append_listener_prompt()
 }
 
 
+static void sg_text_delete(GtkWidget *w, int start, int end)
+{
+  GtkTextIter s, e;
+  GtkTextBuffer *buf;
+  buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(w));
+  gtk_text_buffer_get_iter_at_offset(buf, &s, start);
+  gtk_text_buffer_get_iter_at_offset(buf, &e, end); 
+  gtk_text_buffer_delete(buf, &s, &e);
+}
+
+
 static void listener_completion(int end)
 {
   int beg;
@@ -948,7 +959,11 @@ void color_listener_text(color_info *pix)
 {
   ss->sgx->listener_text_color = pix;
   if (listener_text) 
-    widget_modify_text(listener_text, GTK_STATE_NORMAL, ss->sgx->listener_text_color);
+#if USE_CAIRO
+    gtk_widget_modify_text(listener_text, GTK_STATE_NORMAL, rgb_to_gdk_color(ss->sgx->listener_text_color));
+#else
+    gtk_widget_modify_text(listener_text, GTK_STATE_NORMAL, ss->sgx->listener_text_color);
+#endif
 }
 
 

@@ -1401,3 +1401,41 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 	  *clm-threads*
 	  *clm-output-safety*))
 
+
+
+
+;;; -------- with-threaded-channels
+
+(define (with-threaded-channels snd func)
+  (let ((chns (chans snd)))
+    (if (and (provided? 'snd-threads)
+	     (provided? 's7)
+	     (> chns 1))
+	
+	(dynamic-wind
+
+	 (lambda ()
+	   (do ((chn 0 (+ 1 chn)))
+	       ((= chn chns))
+	     (set! (squelch-update snd chn) #t)))
+	   
+	 (lambda ()
+	   (let ((threads '()))
+	     (do ((chn 0 (+ 1 chn)))
+		 ((= chn chns))
+	       (let ((lchn chn))
+		 (set! threads (cons (make-thread (lambda () (func snd lchn))) threads))))
+	     (for-each 
+	      (lambda (expr) 
+		(join-thread expr))
+	      threads)))
+
+	 (lambda ()
+	   (do ((chn 0 (+ 1 chn)))
+	       ((= chn chns))
+	     (set! (squelch-update snd chn) #f))))
+
+	;; else do it without threads
+	(do ((chn 0 (+ 1 chn)))
+	    ((= chn chns))
+	  (func snd chn)))))
