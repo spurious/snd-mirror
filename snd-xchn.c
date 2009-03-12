@@ -542,14 +542,6 @@ static void graph_button_release(Widget w, XtPointer context, XEvent *event, Boo
 static void graph_button_motion(Widget w, XtPointer context, XEvent *event, Boolean *cont) 
 { /* mouse drag */
   XMotionEvent *ev = (XMotionEvent *)event;
-
-#if MUS_DEBUGGING
-  if (ev->send_event)
-    {
-      /* in this case, we're being driven by scheme-generated fake X events (event.scm) */
-      graph_button_motion_callback((chan_info *)context, ev->x_root, ev->y_root, ev->time);
-    }
-#endif
   graph_button_motion_callback((chan_info *)context, ev->x, ev->y, ev->time);
 }
 

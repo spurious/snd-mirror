@@ -14789,6 +14789,47 @@ EDITS: 2
 
 (def-clm-struct sa1 (freq 0.0 :type float) (coscar #f :type clm) (sincar #f :type clm) (dly #f :type clm) (hlb #f :type clm))
 
+(define (make-papoulis-window n)
+  "(make-papoulis-window size) returns a papoulis window os the given size"
+  (let ((v (make-vct n))
+	(n2 (/ n 2)))
+    (do ((i (- n2) (+ i 1)))
+	((= i n2))
+      (let* ((ratio (/ i n))
+	     (pratio (* 2 pi ratio)))
+	(vct-set! v (+ i n2) (+ (/ (abs (sin pratio)) pi)
+				(* (- 1.0 (* 2 (abs ratio)))
+				   (cos pratio))))))
+    v))
+;; TODO: test papoulis window against old form
+
+;;; -------- make-dpss-window
+
+(define (make-dpss-window n w)
+  "(make-dpss-window size w) returns a prolate spheriodal (slepian) window of the given size"
+  ;; from Verma, Bilbao, Meng, "The Digital Prolate Spheroidal Window"
+  ;; output checked using Julius Smith's dpssw.m, although my "w" is different
+  (let* ((mat (make-mixer! n))
+	 (cw (cos (* 2 pi w))))
+    (do ((i 0 (+ i 1)))
+	((= i n))
+      (let ((n2 (- (* 0.5 (- n 1)) i))) 
+	(mixer-set! mat i i (* cw n2 n2))
+	(if (< i (- n 1))
+	    (mixer-set! mat i (+ i 1) (* 0.5 (+ i 1) (- n 1 i))))
+	(if (> i 0)
+	    (mixer-set! mat i (- i 1) (* 0.5 i (- n i))))))
+    (let ((v (vector->vct (vector-ref (cadr (gsl-eigenvectors mat)) 0)))
+	  (pk 0.0))
+      ;; sign of eigenvalue is arbitrary, and eigenvector is scaled to sum to 1.0
+      ;;   but we want peak of 1.0 to serve as fft window
+      (do ((i 0 (+ i 1)))
+	  ((= i n))
+	(if (> (abs (vct-ref v i)) (abs pk))
+	    (set! pk (vct-ref v i)))) 
+      (vct-scale! v (/ 1.0 pk)))))
+;; TODO: check new dpss window
+
 (define (snd-test-jc-reverb decay-dur low-pass volume amp-env)
   "(jc-reverb decay-dur low-pass volume amp-env) is the old Chowning reverberator: (jc-reverb 2.0 #f .1 #f)"
   (let* ((allpass1 (make-all-pass -0.700 0.700 1051))
@@ -41592,6 +41633,7 @@ EDITS: 1
 
 ;;; ---------------- test 20: transforms ----------------
 (define (snd_test_20)
+
   (define (bes-j0-1 x)				;returns J0(x) for any real x
     (if (< (abs x) 8.0)			;direct rational function fit
 	(let* ((y (* x x))

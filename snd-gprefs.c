@@ -103,13 +103,6 @@ static void set_text(GtkWidget *w, const char *value)
     {
       if (GTK_IS_ENTRY(BIN_CHILD(w)))
 	sg_entry_set_text(GTK_ENTRY(BIN_CHILD(w)), value);
-#if MUS_DEBUGGING
-      else
-	{
-	  fprintf(stderr,"oops: %s\n", value);
-	  abort();
-	}
-#endif
     }
 }
 
@@ -120,10 +113,6 @@ static char *get_text(GtkWidget *w)
     return((char *)gtk_entry_get_text(GTK_ENTRY(w)));
   if (GTK_IS_ENTRY(BIN_CHILD(w)))
     return((char *)gtk_entry_get_text(GTK_ENTRY(BIN_CHILD(w))));
-#if MUS_DEBUGGING
-  fprintf(stderr,"get oops");
-  abort();
-#endif
   return(NULL);
 }
 

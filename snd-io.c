@@ -245,75 +245,6 @@ static void reposition_file_buffers(snd_data *sd, off_t index)
 }
 
 
-#if MUS_DEBUGGING
-static int ios_size = 0;
-static snd_io **ios = NULL;
-
-static void add_io(snd_io *p)
-{
-  int loc = -1;
-  if (ios_size == 0)
-    {
-      ios_size = 256;
-      ios = (snd_io **)calloc(ios_size, sizeof(snd_io *));
-      loc = 0;
-    }
-  else
-    {
-      int i;
-      for (i = 0; i < ios_size; i++)
-	if (!(ios[i]))
-	  {
-	    loc = i;
-	    break;
-	  }
-      if (loc == -1)
-	{
-	  loc = ios_size;
-	  ios_size += 256;
-	  ios = (snd_io **)realloc(ios, ios_size * sizeof(snd_io *));
-	  for (i = loc; i < ios_size; i++) ios[i] = NULL;
-	}
-    }
-  ios[loc] = p;
-}
-
-
-static void remove_io(snd_io *p)
-{
-  int i;
-  for (i = 0; i < ios_size; i++)
-    if (p == ios[i])
-      {
-	ios[i] = NULL;
-	return;
-      }
-}
-
-
-void io_fds_in_use(int *open, int *closed, int *top);
-void io_fds_in_use(int *open, int *closed, int *top)
-{
-  int i, num = 0, odd_num = 0, high = 0;
-  for (i = 0; i < ios_size; i++)
-    {
-      snd_io *p;
-      p = ios[i];
-      if (p)
-	{
-	  high = i;
-	  if (p->fd != -1) 
-	    num++;
-	  else odd_num++;
-	}
-    }
-  (*open) = num;
-  (*closed) = odd_num;
-  (*top) = high;
-}
-#endif
-
-
 snd_io *make_file_state(int fd, file_info *hdr, int chan, off_t beg, int suggested_bufsize)
 {
   snd_io *io;
@@ -325,9 +256,6 @@ snd_io *make_file_state(int fd, file_info *hdr, int chan, off_t beg, int suggest
       (bufsize > chansize)) 
     bufsize = chansize + 1;
   io = (snd_io *)calloc(1, sizeof(snd_io)); /* only creation point */
-#if MUS_DEBUGGING
-  add_io(io);
-#endif
   io->arrays = (mus_sample_t **)calloc(hdr->chans, sizeof(mus_sample_t *));
   io->fd = fd;
   io->chans = hdr->chans;
@@ -784,16 +712,7 @@ snd_data *free_snd_data(snd_data *sd)
 	  if (sd->io)
 	    {
 	      int i, chans;
-#if MUS_DEBUGGING
-	      {
-		int fd;
-		fd = sd->io->fd;
-		sd->io->fd = -1;
-		if (sd->open == FD_OPEN) mus_file_close(fd);
-	      }
-#else
 	      if (sd->open == FD_OPEN) mus_file_close(sd->io->fd);
-#endif
 
 	      /* free the IO buffers as well as the descriptor buffer */
 	      chans = sd->io->chans;
@@ -801,9 +720,6 @@ snd_data *free_snd_data(snd_data *sd)
 		if (sd->io->arrays[i]) 
 		  free(sd->io->arrays[i]);
 	      free(sd->io->arrays);
-#if MUS_DEBUGGING
-	      remove_io(sd->io);
-#endif
 	      free(sd->io);
 	      sd->io = NULL;
 	      if (sd->temporary == DELETE_ME)

@@ -195,7 +195,7 @@ static char *xm_version(void)
 {
   XEN xm_val = XEN_FALSE;
 
-#if HAVE_GUILE || HAVE_S7
+#if HAVE_SCHEME
   #if USE_MOTIF
     xm_val = XEN_EVAL_C_STRING("(and (defined? 'xm-version) xm-version)");
   #else
@@ -246,20 +246,25 @@ static char *xm_version(void)
 static char *gl_version(void)
 {
   XEN gl_val = XEN_FALSE;
+
 #if (!JUST_GL)
   Init_libgl(); /* define the version string, if ./snd --version */
 #endif
-#if HAVE_GUILE || HAVE_S7
+
+#if HAVE_SCHEME
   gl_val = XEN_EVAL_C_STRING("(and (provided? 'gl) gl-version)"); /* this refers to gl.c, not the GL library */
 #endif
+
 #if HAVE_RUBY
   if (rb_const_defined(rb_cObject, rb_intern("Gl_Version")))
     gl_val = XEN_EVAL_C_STRING("Gl_Version");
 #endif
+
 #if HAVE_FORTH
   if (fth_provided_p("gl"))
     gl_val = XEN_VARIABLE_REF("gl-version");
 #endif
+
   if (XEN_STRING_P(gl_val))
     {
       char *version = NULL;

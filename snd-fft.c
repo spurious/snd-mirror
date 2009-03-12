@@ -267,12 +267,6 @@ static void walsh_transform(Float *data, int n)
 
 
 
-/* -------------------------------- AUTOCORRELATION -------------------------------- */
-
-/* moved to clm.c */
-
-
-
 /* -------------------------------- CEPSTRUM -------------------------------- */
 
 static void cepstrum(Float *data, int n)
@@ -490,9 +484,11 @@ int find_and_sort_transform_peaks(Float *buf, fft_peak *found, int num_peaks, in
 }
 
 
-static Float beta_maxes[MUS_NUM_FFT_WINDOWS] = {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,
-						1.0, 1.0, 15.0, 10.0, 10.0, 10.0, 1.0, 18.0, 10.0, 1.0, 18.0, 18.0,
-						1.0, 1.0, 1.0};
+static Float beta_maxes[MUS_NUM_FFT_WINDOWS] = {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 
+						1.0, 15.0 /* kaiser */, 10.0, 10.0, 10.0, 1.0, 18.0 /* dolph */, 10.0, 1.0, 18.0 /* samaraki */, 
+						18.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,
+						1.0, 1.0, 1.0, 1.0, 1.0, 0.24};
+
 Float fft_beta_max(mus_fft_window_t win) {return(beta_maxes[(int)win]);}
 
 
@@ -1198,7 +1194,8 @@ bool fft_window_beta_in_use(mus_fft_window_t win)
 	 (win == MUS_DOLPH_CHEBYSHEV_WINDOW) ||
 	 (win == MUS_HANN_POISSON_WINDOW) ||
 	 (win == MUS_SAMARAKI_WINDOW) ||
-	 (win == MUS_ULTRASPHERICAL_WINDOW));
+	 (win == MUS_ULTRASPHERICAL_WINDOW) ||
+	 (win == MUS_DPSS_WINDOW));
 }
 
 

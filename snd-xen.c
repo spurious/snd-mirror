@@ -840,7 +840,7 @@ char *procedure_ok(XEN proc, int args, const char *caller, const char *arg_name,
       */
 #endif
 
-#if HAVE_GUILE || HAVE_S7
+#if HAVE_SCHEME
       {
 	int oargs, restargs;
 #if HAVE_S7
@@ -1397,7 +1397,7 @@ void check_features_list(const char *features)
   /*  this can't be in snd.c because we haven't fully initialized the extension language and so on at that point */
   if (!features) return;
 
-#if HAVE_GUILE
+#if HAVE_SCHEME
   XEN_EVAL_C_STRING(mus_format("(for-each \
                                   (lambda (f)	\
                                     (if (not (provided? f)) \

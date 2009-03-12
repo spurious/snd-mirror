@@ -2532,13 +2532,6 @@ The saved file is " XEN_LANGUAGE_NAME " code, so to restore the marks, load that
 }
 
 
-static XEN g_restore_marks(XEN size_ignore, XEN snd_ignore, XEN chn_ignore, XEN marklist_ignore)
-{
-  /* this exists so that old saved-state files will still load.  It is obviously now a no-op */
-  return(XEN_FALSE);
-}
-
-
 #ifdef XEN_ARGIFY_1
 XEN_ARGIFY_2(g_mark_sample_w, g_mark_sample)
 XEN_NARGIFY_2(g_set_mark_sample_w, g_set_mark_sample)
@@ -2546,7 +2539,6 @@ XEN_ARGIFY_1(g_mark_sync_w, g_mark_sync)
 XEN_NARGIFY_2(g_set_mark_sync_w, g_set_mark_sync)
 XEN_ARGIFY_1(g_mark_name_w, g_mark_name)
 XEN_NARGIFY_2(g_set_mark_name_w, g_set_mark_name)
-XEN_NARGIFY_4(g_restore_marks_w, g_restore_marks)
 XEN_NARGIFY_0(g_mark_sync_max_w, g_mark_sync_max)
 XEN_ARGIFY_1(g_mark_home_w, g_mark_home)
 XEN_ARGIFY_3(g_marks_w, g_marks)
@@ -2572,7 +2564,6 @@ XEN_NARGIFY_1(g_mark_p_w, g_mark_p)
 #define g_set_mark_sync_w g_set_mark_sync
 #define g_mark_name_w g_mark_name
 #define g_set_mark_name_w g_set_mark_name
-#define g_restore_marks_w g_restore_marks
 #define g_mark_sync_max_w g_mark_sync_max
 #define g_mark_home_w g_mark_home
 #define g_marks_w g_marks
@@ -2637,9 +2628,6 @@ If the hook returns " PROC_TRUE ", the mark is not drawn."
 #if MUS_DEBUGGING && HAVE_SCHEME
   XEN_DEFINE_PROCEDURE("internal-test-control-drag-mark", g_test_control_drag_mark_w, 3, 0, 0, "internal testing func");
 #endif
-
-  /* obsolete */
-  XEN_DEFINE_PROCEDURE("restore-marks", g_restore_marks_w, 4, 0, 0, "no-op for backwards compatibility");
 }
 
 

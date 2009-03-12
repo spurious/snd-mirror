@@ -1433,7 +1433,7 @@ void add_or_edit_symbol(const char *name, env *val)
   free(buf);
 #endif
 
-#if HAVE_GUILE || HAVE_S7
+#if HAVE_SCHEME
   XEN e;
   if (!val) return;
   if (XEN_DEFINED_P(name))

@@ -480,10 +480,6 @@ static void remake_edit_history(chan_info *cp)
   if (!lst) return;
   slist_clear(lst);
   sp = cp->sound;
-#if MUS_DEBUGGING
-  if ((!sp) || (!(sp->active)) || (sp->inuse != SOUND_NORMAL))
-    fprintf(stderr, "trouble in remake_edit_history: %p %d %d\n", sp, (sp) ? sp->active : -1, (sp) ? sp->inuse : -1);
-#endif
   if (sp->channel_style != CHANNELS_SEPARATE)
     {
       int k, ed, filelen;

@@ -5369,18 +5369,6 @@ If 'filename' is a sound index (an integer), 'size' is interpreted as an edit-po
       env_state *es;
       XEN peak = XEN_FALSE;
       cp = sp->chans[chn];
-#if MUS_DEBUGGING
-      if (cp->active < CHANNEL_HAS_EDIT_LIST)
-	{
-	  fprintf(stderr, "channel after make_sound_readable has no edit list?");
-	  abort();
-	}
-      if (cp->edit_ctr != 0)
-	{
-	  fprintf(stderr, "channel after make_sound_readable has %d edits?", cp->edit_ctr);
-	  abort();
-	}
-#endif
       es = make_env_state(cp, cp->edits[0]->samples);
       if (es)
 	{

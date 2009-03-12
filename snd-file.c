@@ -1367,7 +1367,7 @@ static void read_snd_opened_sound_file(snd_info *sp)
   newname = snd_opened_sound_file_name(sp);
   if (file_write_date(newname) >= sp->write_date)
     {
-#if HAVE_GUILE || HAVE_S7
+#if HAVE_SCHEME
       /* this file shouldn't be left in the load list -- it will confuse the save-state process 
        *   (*snd-opened-sound* is defined here but not at the saved state file reload point)
        * *snd-loaded-files* is the variable name (snd-xen.c), so we save and restore its value if possible 
@@ -1475,9 +1475,11 @@ snd_info *finish_opening_sound(snd_info *sp, bool selected)
 #if HAVE_RUBY || HAVE_FORTH
       XEN_VARIABLE_SET(S_snd_opened_sound, C_TO_XEN_INT(sp->index));
 #endif
+
 #if HAVE_GUILE || HAVE_S7
       XEN_VARIABLE_SET(snd_opened_sound, C_TO_XEN_INT(sp->index));
 #endif
+
       sp->write_date = file_write_date(sp->filename);
       sp->need_update = false;
       ss->active_sounds++;
@@ -1485,9 +1487,11 @@ snd_info *finish_opening_sound(snd_info *sp, bool selected)
       sp->file_watcher = fam_monitor_file(sp->filename, (void *)sp, fam_sp_action);
     }
   for_each_separate_chan(channel_open_pane);
+
 #if USE_MOTIF
   for_each_separate_chan(channel_unlock_pane);
 #endif
+
   if (sp) 
     {
       add_srate_to_completion_list(SND_SRATE(sp));

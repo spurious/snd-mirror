@@ -456,16 +456,6 @@ static void save_button_pressed(Widget w, XtPointer context, XtPointer info)
 }
 
 
-#if MUS_DEBUGGING
-static XEN g_apply_enved(void)
-{
-  apply_enved();
-  last_active_channel = active_channel;
-  return(XEN_FALSE);
-}
-#endif
-
-
 static void apply_enved_callback(Widget w, XtPointer context, XtPointer info) 
 {
   /* apply current envs to currently sync'd channels */
@@ -1703,80 +1693,16 @@ static XEN g_set_enved_filter(XEN type)
 }
 
 
-#if MUS_DEBUGGING
-static XEN g_enved_dialog_widgets(void)
-{
-  if (enved_dialog)
-    return(XEN_CONS(XEN_WRAP_WIDGET(enved_dialog),
-	    XEN_CONS(XEN_WRAP_WIDGET(drawer),
-	     XEN_CONS(XEN_WRAP_WIDGET(orderL),
-	      XEN_CONS(XEN_WRAP_WIDGET(textL),
-	       XEN_CONS(XEN_WRAP_WIDGET(applyB),
-		XEN_CONS(XEN_WRAP_WIDGET(apply2B),
-		 XEN_CONS(XEN_WRAP_WIDGET(cancelB),
-		  XEN_CONS(XEN_WRAP_WIDGET(showB),
-		   XEN_CONS(XEN_WRAP_WIDGET(saveB),
-		    XEN_CONS(XEN_WRAP_WIDGET(revertB),
-		     XEN_CONS(XEN_WRAP_WIDGET(undoB),
-		      XEN_CONS(XEN_WRAP_WIDGET(redoB),
-		       XEN_CONS(XEN_WRAP_WIDGET(printB),
-			XEN_CONS(XEN_WRAP_WIDGET(graphB),
-			 XEN_CONS(XEN_WRAP_WIDGET(fltB),
-			  XEN_CONS(XEN_WRAP_WIDGET(ampB),
-			   XEN_CONS(XEN_WRAP_WIDGET(srcB),
-			    XEN_CONS(XEN_WRAP_WIDGET(clipB),
-			     XEN_CONS(XEN_WRAP_WIDGET(dBB),
-			      XEN_CONS(XEN_WRAP_WIDGET(deleteB),
-			       XEN_CONS(XEN_WRAP_WIDGET(expB),
-				XEN_CONS(XEN_WRAP_WIDGET(linB),
-				 XEN_CONS(XEN_WRAP_WIDGET(selectionB),
-				  XEN_CONS(XEN_WRAP_WIDGET(resetB),
-				   XEN_CONS(XEN_WRAP_WIDGET(screnvlst),
-				    XEN_CONS(XEN_WRAP_WIDGET(firB),
-				     XEN_EMPTY_LIST)))))))))))))))))))))))))));
-  return(XEN_EMPTY_LIST);
-}
-
-
-static XEN g_enved_axis_info(void)
-{
-  axis_info *ap;
-  if (enved_dialog)
-    {
-      if (axis == NULL)
-	enved_reset();
-      ap = axis;
-      return(XEN_CONS(C_TO_XEN_INT(ap->x_axis_x0),
-               XEN_CONS(C_TO_XEN_INT(ap->y_axis_y0),
-                 XEN_CONS(C_TO_XEN_INT(ap->x_axis_x1),
-		   XEN_CONS(C_TO_XEN_INT(ap->y_axis_y1),
-		     XEN_EMPTY_LIST)))));
-    }
-  return(XEN_EMPTY_LIST);
-}
-#endif
-
-
 #ifdef XEN_ARGIFY_1
 XEN_NARGIFY_0(g_enved_filter_w, g_enved_filter)
 XEN_NARGIFY_1(g_set_enved_filter_w, g_set_enved_filter)
 XEN_NARGIFY_0(g_enved_envelope_w, g_enved_envelope)
 XEN_NARGIFY_1(g_set_enved_envelope_w, g_set_enved_envelope)
-#if MUS_DEBUGGING
-XEN_NARGIFY_0(g_enved_dialog_widgets_w, g_enved_dialog_widgets)
-XEN_NARGIFY_0(g_enved_axis_info_w, g_enved_axis_info)
-XEN_NARGIFY_0(g_apply_enved_w, g_apply_enved)
-#endif
 #else
 #define g_enved_filter_w g_enved_filter
 #define g_set_enved_filter_w g_set_enved_filter
 #define g_enved_envelope_w g_enved_envelope
 #define g_set_enved_envelope_w g_set_enved_envelope
-#if MUS_DEBUGGING
-#define g_enved_dialog_widgets_w g_enved_dialog_widgets
-#define g_enved_axis_info_w g_enved_axis_info
-#define g_apply_enved_w g_apply_enved
-#endif
 #endif
 
 void g_init_gxenv(void)
@@ -1785,9 +1711,4 @@ void g_init_gxenv(void)
 				   S_setB S_enved_filter, g_set_enved_filter_w,  0, 0, 1, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_enved_envelope, g_enved_envelope_w, H_enved_envelope,
 				   S_setB S_enved_envelope, g_set_enved_envelope_w,  0, 0, 1, 0);
-#if MUS_DEBUGGING
-  XEN_DEFINE_PROCEDURE("enved-dialog-widgets", g_enved_dialog_widgets_w, 0, 0, 0, "internal testing function");
-  XEN_DEFINE_PROCEDURE("enved-axis-info",      g_enved_axis_info_w,      0, 0, 0, "internal testing function");
-  XEN_DEFINE_PROCEDURE("apply-enved",          g_apply_enved_w,          0, 0, 0, "internal testing function");
-#endif
 }

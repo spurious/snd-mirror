@@ -400,7 +400,7 @@ static const char *fft_window_xen_names[MUS_NUM_FFT_WINDOWS] =
      S_hann_poisson_window, S_connes_window, S_samaraki_window, S_ultraspherical_window,
      S_bartlett_hann_window, S_bohman_window, S_flat_top_window,
      S_blackman5_window, S_blackman6_window, S_blackman7_window, S_blackman8_window, S_blackman9_window, S_blackman10_window,
-     S_rv2_window, S_rv3_window, S_rv4_window, S_mlt_sine_window
+     S_rv2_window, S_rv3_window, S_rv4_window, S_mlt_sine_window, S_papoulis_window, S_dpss_window
 };
 
 
@@ -8632,6 +8632,8 @@ static void mus_xen_init(void)
   XEN_DEFINE_CONSTANT(S_rv3_window,             MUS_RV3_WINDOW,             "Rife-Vincent 3rd order window (Hann extension)");
   XEN_DEFINE_CONSTANT(S_rv4_window,             MUS_RV4_WINDOW,             "Rife-Vincent 4th order window (Hann extension)");
   XEN_DEFINE_CONSTANT(S_mlt_sine_window,        MUS_MLT_SINE_WINDOW,        "modulated lapped transform sine window");
+  XEN_DEFINE_CONSTANT(S_papoulis_window,        MUS_PAPOULIS_WINDOW,        "papoulise window");
+  XEN_DEFINE_CONSTANT(S_dpss_window,            MUS_DPSS_WINDOW,            "proplate spheroidal (slepian) window");
 
   XEN_DEFINE_CONSTANT(S_mus_interp_linear,      MUS_INTERP_LINEAR,          "locsig/delay linear interpolation");
   XEN_DEFINE_CONSTANT(S_mus_interp_sinusoidal,  MUS_INTERP_SINUSOIDAL,      "locsig sinusoidal interpolation");
@@ -9059,6 +9061,7 @@ static void mus_xen_init(void)
 	       S_delay_tick,
 	       S_dolph_chebyshev_window,
 	       S_dot_product,
+	       S_dpss_window,
 #if HAVE_COMPLEX_TRIG && XEN_HAVE_COMPLEX_NUMBERS
 	       S_edot_product,
 #endif
@@ -9260,6 +9263,7 @@ static void mus_xen_init(void)
 	       S_outc,
 	       S_outd,
 	       S_output,
+	       S_papoulis_window,
 	       S_partials_to_polynomial,
 	       S_partials_to_wave,
 	       S_parzen_window,

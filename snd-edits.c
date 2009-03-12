@@ -3297,7 +3297,7 @@ void edit_history_to_file(FILE *fd, chan_info *cp, bool with_save_state_hook)
 		    fprintf(fd, " #f");
 		}
 #endif
-#if HAVE_GUILE || HAVE_S7
+#if HAVE_SCHEME
 	      if (ed->edit_type == PTREE_EDIT)
 		{
 		  XEN code;

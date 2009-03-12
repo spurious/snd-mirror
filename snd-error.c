@@ -12,10 +12,6 @@ const char *io_error_name(io_error_t err)
 {
   if (err < IO_ERROR_NUM)
     return(io_error_names[(int)err]);
-#if MUS_DEBUGGING
-  fprintf(stderr, "unknown io_error: %d\n", err);
-  abort();
-#endif
   return(mus_format("unknown io_error: %d", err));
 }
 

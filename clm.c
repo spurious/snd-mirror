@@ -197,7 +197,7 @@ off_t mus_seconds_to_samples(Float secs) {return((off_t)(secs * sampling_rate));
 Float mus_samples_to_seconds(off_t samps) {return((Float)((double)samps / (double)sampling_rate));}
 
 
-
+/* TODO: describe buffer size needs to be a variable (large mixer print runs out of space) */
 #define DESCRIBE_BUFFER_SIZE 2048
 #define STR_SIZE 128
 
@@ -9878,11 +9878,17 @@ bool mus_fft_window_p(int val)
     case MUS_BOHMAN_WINDOW: case MUS_FLAT_TOP_WINDOW: case MUS_BLACKMAN5_WINDOW: case MUS_BLACKMAN6_WINDOW: 
     case MUS_BLACKMAN7_WINDOW: case MUS_BLACKMAN8_WINDOW: case MUS_BLACKMAN9_WINDOW: case MUS_BLACKMAN10_WINDOW: 
     case MUS_RV2_WINDOW: case MUS_RV3_WINDOW: case MUS_RV4_WINDOW: case MUS_MLT_SINE_WINDOW: 
+    case MUS_PAPOULIS_WINDOW: case MUS_DPSS_WINDOW:
       return(true);
       break;
     }
   return(false);
 }
+
+#if HAVE_GSL_EIGEN_NONSYMMV_WORKSPACE
+  #include <gsl/gsl_math.h>
+  #include <gsl/gsl_eigen.h>
+#endif
 
 
 static Float sqr(Float x) {return(x * x);}
@@ -10291,6 +10297,72 @@ Float *mus_make_fft_window_with_window(mus_fft_window_t type, off_t size, Float 
 	  }
       }
       break;
+      
+    case MUS_PAPOULIS_WINDOW:
+      {
+	int n2;
+	n2 = size / 2;
+	for (i = -n2; i < n2; i++)
+	  {
+	    double ratio, pratio;
+	    ratio = (double)i / (double)n2;
+	    pratio = M_PI * ratio;
+	    window[i + n2] = (fabs(sin(pratio)) / M_PI) + (cos(pratio) * (1.0 - fabs(ratio)));
+	  }
+      }
+      break;
+
+    case MUS_DPSS_WINDOW:
+#if HAVE_GSL_EIGEN_NONSYMMV_WORKSPACE
+      {
+	/* from Verma, Bilbao, Meng, "The Digital Prolate Spheroidal Window"
+	 *   output checked using Julius Smith's dpssw.m, although my "beta" is different
+	 */
+	double *data;
+	double cw, n1, pk = 0.0;
+
+	cw = cos(2 * M_PI * beta);
+	n1 = (size - 1) * 0.5;
+	data = (double *)calloc(size * size, sizeof(double));
+	for (i = 0; i < size; i++)
+	  {
+	    double n2;
+	    n2 = n1 - i;
+	    data[i * size + i] = cw * n2 * n2;
+	    if (i < (size - 1))
+	      data[i * (size + 1) + 1] = 0.5 * (i + 1) * (size - 1 - i);
+	    if (i > 0)
+	      data[i * (size + 1) - 1] = 0.5 * i * (size - i);
+	  }
+	{
+	  gsl_vector_complex_view evec_i;
+	  gsl_matrix_view m = gsl_matrix_view_array(data, size, size);
+	  gsl_vector_complex *eval = gsl_vector_complex_alloc(size);
+	  gsl_matrix_complex *evec = gsl_matrix_complex_alloc(size, size);
+	  gsl_eigen_nonsymmv_workspace *w = gsl_eigen_nonsymmv_alloc(size);
+	  gsl_eigen_nonsymmv(&m.matrix, eval, evec, w);
+	  gsl_eigen_nonsymmv_free(w);
+	  gsl_eigen_nonsymmv_sort(eval, evec, GSL_EIGEN_SORT_ABS_DESC);
+	  evec_i = gsl_matrix_complex_column(evec, 0);
+
+	  for (j = 0; j < size; j++)
+	    window[j] = GSL_REAL(gsl_vector_complex_get(&evec_i.vector, j));
+
+	  gsl_vector_complex_free(eval);
+	  gsl_matrix_complex_free(evec);
+	}
+	
+	for (i = 0; i < size; i++)
+	  if (fabs(window[i]) > fabs(pk))
+	    pk = window[i];
+	if (pk != 0.0)
+	  for (i = 0; i < size; i++)
+	    window[i] /= pk;
+      }
+#else
+      mus_error(MUS_NO_SUCH_FFT_WINDOW, "DPSS window needs GSL");
+#endif
+      break;
 
     case MUS_ULTRASPHERICAL_WINDOW:
     case MUS_SAMARAKI_WINDOW:
@@ -10445,7 +10517,7 @@ static const char *fft_window_names[MUS_NUM_FFT_WINDOWS] =
    "Exponential", "Riemann", "Kaiser", "Cauchy", "Poisson", "Gaussian", "Tukey", "Dolph-Chebyshev", "Hann-Poisson", "Connes",
    "Samaraki", "Ultraspherical", "Bartlett-Hann", "Bohman", "Flat-top",
    "Blackman5", "Blackman6", "Blackman7", "Blackman8", "Blackman9", "Blackman10",
-   "Rife-Vincent2", "Rife-Vincent3", "Rife-Vincent4", "MLT Sine"
+   "Rife-Vincent2", "Rife-Vincent3", "Rife-Vincent4", "MLT Sine", "Papoulis", "DPSS (Slepian)"
 };
 
 

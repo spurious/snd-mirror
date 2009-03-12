@@ -419,7 +419,7 @@ static char *no_stars(const char *name)
 
 static void prefs_variable_set(const char *name, XEN val)
 {
-#if HAVE_GUILE || HAVE_S7
+#if HAVE_SCHEME
   if (XEN_DEFINED_P(name))
     XEN_VARIABLE_SET(XEN_NAME_AS_C_STRING_TO_VARIABLE(name), val);
 #endif
