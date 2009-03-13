@@ -1300,6 +1300,114 @@ Widget fire_up_transform_dialog(bool managed)
       beta_scale = XtCreateManagedWidget("beta-scale", xmScrollBarWidgetClass, ab_form, args, n);
 
 
+      /* -------- WINDOW -------- */
+      n = 0;
+      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_POSITION); n++;
+      XtSetArg(args[n], XmNrightPosition, 30); n++;
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_POSITION); n++;
+      XtSetArg(args[n], XmNtopPosition, 35); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_WIDGET); n++;
+      XtSetArg(args[n], XmNbottomWidget, ab_frame); n++;
+      XtSetArg(args[n], XmNborderWidth, FRAME_BORDER_WIDTH); n++;
+      XtSetArg(args[n], XmNborderColor, ss->sgx->basic_color); n++;
+      window_frame = XtCreateManagedWidget("window-frame", xmFrameWidgetClass, mainform, args, n);
+
+      n = 0;
+      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
+      n = attach_all_sides(args, n);
+      window_form = XtCreateManagedWidget("window-form", xmFormWidgetClass, window_frame, args, n);
+
+      n = 0;
+      XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNalignment, XmALIGNMENT_CENTER); n++;
+      window_label = XtCreateManagedWidget(_("window"), xmLabelWidgetClass, window_form, args, n);
+
+      n = 0;
+      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNbottomWidget, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
+      XtSetArg(args[n], XmNtopWidget, window_label); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNtopItemPosition, ((int)fft_window(ss) > 2) ? ((int)fft_window(ss) - 1) : ((int)fft_window(ss) + 1)); n++;
+      window_list = XmCreateScrolledList(window_form, (char *)"window-list", args, n);
+
+      XtVaSetValues(window_list, XmNbackground, ss->sgx->white, XmNforeground, ss->sgx->black, NULL);
+      for (i = 0; i < MUS_NUM_FFT_WINDOWS; i++)
+	windows[i] = XmStringCreateLocalized((char *)mus_fft_window_name((mus_fft_window_t)i));
+
+      XtVaSetValues(window_list, 
+		    XmNitems, windows, 
+		    XmNitemCount, MUS_NUM_FFT_WINDOWS, 
+		    XmNvisibleItemCount, 8, 
+		    NULL);
+      for (i = 0; i < MUS_NUM_FFT_WINDOWS; i++) 
+	XmStringFree(windows[i]);
+
+      XtManageChild(window_list); 
+      XtAddCallback(window_list, XmNbrowseSelectionCallback, window_browse_callback, NULL);
+
+
+      /* -------- WAVELET -------- */
+      n = 0;
+      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
+      XtSetArg(args[n], XmNleftWidget, window_frame); n++;
+
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_POSITION); n++;
+      XtSetArg(args[n], XmNrightPosition, 60); n++;
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_POSITION); n++;
+      XtSetArg(args[n], XmNtopPosition, 35); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_WIDGET); n++;
+      XtSetArg(args[n], XmNbottomWidget, ab_frame); n++;
+      XtSetArg(args[n], XmNborderWidth, FRAME_BORDER_WIDTH); n++;
+      XtSetArg(args[n], XmNborderColor, ss->sgx->basic_color); n++;
+      wavelet_frame = XtCreateManagedWidget("wavelet-frame", xmFrameWidgetClass, mainform, args, n);
+
+      n = 0;
+      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
+      n = attach_all_sides(args, n);
+      wavelet_form = XtCreateManagedWidget("wavelet-form", xmFormWidgetClass, wavelet_frame, args, n);
+
+      n = 0;
+      XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNalignment, XmALIGNMENT_CENTER); n++;
+      wavelet_label = XtCreateManagedWidget(_("wavelet"), xmLabelWidgetClass, wavelet_form, args, n);
+
+      n = 0;
+      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNbottomWidget, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
+      XtSetArg(args[n], XmNtopWidget, wavelet_label); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+      wavelet_list = XmCreateScrolledList(wavelet_form, (char *)"wavelet-list", args, n);
+
+      XtVaSetValues(wavelet_list, XmNbackground, ss->sgx->white, XmNforeground, ss->sgx->black, NULL);
+      for (i = 0; i < NUM_WAVELETS; i++) 
+	wavelets[i] = XmStringCreateLocalized((char *)wavelet_name(i));
+
+      XtVaSetValues(wavelet_list, 
+		    XmNitems, wavelets, 
+		    XmNitemCount, NUM_WAVELETS, 
+		    XmNvisibleItemCount, 8, 
+		    NULL);
+      for (i = 0; i < NUM_WAVELETS; i++) 
+	XmStringFree(wavelets[i]);
+
+      XtManageChild(wavelet_list); 
+      XtAddCallback(wavelet_list, XmNbrowseSelectionCallback, wavelet_browse_callback, NULL);
+
 
       /* -------- TRANSFORM TYPE -------- */
       n = 0;
@@ -1638,116 +1746,6 @@ Widget fire_up_transform_dialog(bool managed)
 
 
       
-      /* -------- WINDOW -------- */
-      n = 0;
-      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
-      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNrightAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
-      XtSetArg(args[n], XmNrightWidget, type_frame); n++;
-      XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
-      XtSetArg(args[n], XmNtopWidget, type_frame); n++;
-      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_WIDGET); n++;
-      XtSetArg(args[n], XmNbottomWidget, ab_frame); n++;
-      XtSetArg(args[n], XmNborderWidth, FRAME_BORDER_WIDTH); n++;
-      XtSetArg(args[n], XmNborderColor, ss->sgx->basic_color); n++;
-      window_frame = XtCreateManagedWidget("window-frame", xmFrameWidgetClass, mainform, args, n);
-
-      n = 0;
-      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
-      n = attach_all_sides(args, n);
-      window_form = XtCreateManagedWidget("window-form", xmFormWidgetClass, window_frame, args, n);
-
-      n = 0;
-      XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
-      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
-      XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNalignment, XmALIGNMENT_CENTER); n++;
-      window_label = XtCreateManagedWidget(_("window"), xmLabelWidgetClass, window_form, args, n);
-
-      n = 0;
-      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
-      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNbottomWidget, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
-      XtSetArg(args[n], XmNtopWidget, window_label); n++;
-      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNtopItemPosition, ((int)fft_window(ss) > 2) ? ((int)fft_window(ss) - 1) : ((int)fft_window(ss) + 1)); n++;
-      window_list = XmCreateScrolledList(window_form, (char *)"window-list", args, n);
-
-      XtVaSetValues(window_list, XmNbackground, ss->sgx->white, XmNforeground, ss->sgx->black, NULL);
-      for (i = 0; i < MUS_NUM_FFT_WINDOWS; i++)
-	windows[i] = XmStringCreateLocalized((char *)mus_fft_window_name((mus_fft_window_t)i));
-
-      XtVaSetValues(window_list, 
-		    XmNitems, windows, 
-		    XmNitemCount, MUS_NUM_FFT_WINDOWS, 
-		    XmNvisibleItemCount, 8, 
-		    NULL);
-      for (i = 0; i < MUS_NUM_FFT_WINDOWS; i++) 
-	XmStringFree(windows[i]);
-
-      XtManageChild(window_list); 
-      XtAddCallback(window_list, XmNbrowseSelectionCallback, window_browse_callback, NULL);
-
-
-      /* -------- WAVELET -------- */
-      n = 0;
-      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
-      XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
-      XtSetArg(args[n], XmNleftWidget, window_frame); n++;
-      XtSetArg(args[n], XmNrightAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
-      XtSetArg(args[n], XmNrightWidget, size_frame); n++;
-      XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
-      XtSetArg(args[n], XmNtopWidget, size_frame); n++;
-      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_WIDGET); n++;
-      XtSetArg(args[n], XmNbottomWidget, ab_frame); n++;
-      XtSetArg(args[n], XmNborderWidth, FRAME_BORDER_WIDTH); n++;
-      XtSetArg(args[n], XmNborderColor, ss->sgx->basic_color); n++;
-      wavelet_frame = XtCreateManagedWidget("wavelet-frame", xmFrameWidgetClass, mainform, args, n);
-
-      n = 0;
-      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
-      n = attach_all_sides(args, n);
-      wavelet_form = XtCreateManagedWidget("wavelet-form", xmFormWidgetClass, wavelet_frame, args, n);
-
-
-      n = 0;
-      XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
-      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
-      XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNalignment, XmALIGNMENT_CENTER); n++;
-      wavelet_label = XtCreateManagedWidget(_("wavelet"), xmLabelWidgetClass, wavelet_form, args, n);
-
-      n = 0;
-      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
-      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNbottomWidget, XmATTACH_FORM); n++;
-      XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
-      XtSetArg(args[n], XmNtopWidget, wavelet_label); n++;
-      XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-      wavelet_list = XmCreateScrolledList(wavelet_form, (char *)"wavelet-list", args, n);
-
-      XtVaSetValues(wavelet_list, XmNbackground, ss->sgx->white, XmNforeground, ss->sgx->black, NULL);
-      for (i = 0; i < NUM_WAVELETS; i++) 
-	wavelets[i] = XmStringCreateLocalized((char *)wavelet_name(i));
-
-      XtVaSetValues(wavelet_list, 
-		    XmNitems, wavelets, 
-		    XmNitemCount, NUM_WAVELETS, 
-		    XmNvisibleItemCount, 8, 
-		    NULL);
-      for (i = 0; i < NUM_WAVELETS; i++) 
-	XmStringFree(wavelets[i]);
-
-      XtManageChild(wavelet_list); 
-      XtAddCallback(wavelet_list, XmNbrowseSelectionCallback, wavelet_browse_callback, NULL);
-
-
-
       /* -------- GRAPH -------- */
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;

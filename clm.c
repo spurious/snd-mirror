@@ -197,7 +197,6 @@ off_t mus_seconds_to_samples(Float secs) {return((off_t)(secs * sampling_rate));
 Float mus_samples_to_seconds(off_t samps) {return((Float)((double)samps / (double)sampling_rate));}
 
 
-/* TODO: describe buffer size needs to be a variable (large mixer print runs out of space) */
 #define DESCRIBE_BUFFER_SIZE 2048
 #define STR_SIZE 128
 
@@ -6563,14 +6562,19 @@ static char *describe_mixer(mus_any *ptr)
 {
   mus_mixer *gen = (mus_mixer *)ptr;
   char *str;
-  int i, j, lim;
+  int i, j, lim, bufsize;
   char *describe_buffer;
 
   lim = mus_array_print_length();
-  describe_buffer = (char *)clm_malloc(DESCRIBE_BUFFER_SIZE, "describe buffer");
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s chans: %d, [\n ", mus_name(ptr), gen->chans);
-  str = (char *)clm_calloc(64, sizeof(char), "describe_mixer");
   if (gen->chans < lim) lim = gen->chans;
+
+  bufsize = lim * lim * 16;
+  if (bufsize < DESCRIBE_BUFFER_SIZE) bufsize = DESCRIBE_BUFFER_SIZE;
+  if (bufsize > 65536) bufsize = 65536;
+
+  describe_buffer = (char *)clm_malloc(bufsize, "describe buffer");
+  mus_snprintf(describe_buffer, bufsize, "%s chans: %d, [\n ", mus_name(ptr), gen->chans);
+  str = (char *)clm_calloc(64, sizeof(char), "describe_mixer");
 
   for (i = 0; i < lim; i++)
     for (j = 0; j < lim; j++)
@@ -6580,7 +6584,7 @@ static char *describe_mixer(mus_any *ptr)
 		     ((j == (lim - 1)) && (lim < gen->chans)) ? "..." : "",
 		     (j == (lim - 1)) ? "\n" : "",
 		     ((i == (lim - 1)) && (j == (lim - 1))) ? "]" : " ");
-	if ((strlen(describe_buffer) + strlen(str)) < (DESCRIBE_BUFFER_SIZE - 1))
+	if ((strlen(describe_buffer) + strlen(str)) < (bufsize - 1))
 	  strcat(describe_buffer, str);
 	else break;
       }
@@ -10339,9 +10343,11 @@ Float *mus_make_fft_window_with_window(mus_fft_window_t type, off_t size, Float 
 	  gsl_matrix_view m = gsl_matrix_view_array(data, size, size);
 	  gsl_vector_complex *eval = gsl_vector_complex_alloc(size);
 	  gsl_matrix_complex *evec = gsl_matrix_complex_alloc(size, size);
+
 	  gsl_eigen_nonsymmv_workspace *w = gsl_eigen_nonsymmv_alloc(size);
 	  gsl_eigen_nonsymmv(&m.matrix, eval, evec, w);
 	  gsl_eigen_nonsymmv_free(w);
+
 	  gsl_eigen_nonsymmv_sort(eval, evec, GSL_EIGEN_SORT_ABS_DESC);
 	  evec_i = gsl_matrix_complex_column(evec, 0);
 
@@ -10358,6 +10364,8 @@ Float *mus_make_fft_window_with_window(mus_fft_window_t type, off_t size, Float 
 	if (pk != 0.0)
 	  for (i = 0; i < size; i++)
 	    window[i] /= pk;
+
+	free(data);
       }
 #else
       mus_error(MUS_NO_SUCH_FFT_WINDOW, "DPSS window needs GSL");
