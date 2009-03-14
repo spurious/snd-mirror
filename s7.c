@@ -568,8 +568,6 @@ struct s7_scheme {
 
 #define T_CONSTANT                    (1 << (TYPE_BITS + 5))
 #define is_constant(p)                ((typeflag(p) & T_CONSTANT) != 0)
-#define local_protect(p)              typeflag(p) |= T_CONSTANT
-#define local_unprotect(p)            typeflag(p) &= (~T_CONSTANT)
 
 #define T_OBJECT                      (1 << (TYPE_BITS + 6))
 #define T_FINALIZABLE                 (1 << (TYPE_BITS + 7))
@@ -1353,20 +1351,6 @@ static s7_pointer g_gc(s7_scheme *sc, s7_pointer args)
 #endif
   
   return(sc->UNSPECIFIED);
-}
-
-
-s7_pointer s7_local_gc_protect(s7_pointer p)
-{
-  local_protect(p);
-  return(p);
-}
-
-
-s7_pointer s7_local_gc_unprotect(s7_pointer p)
-{
-  local_unprotect(p);
-  return(p);
 }
 
 
@@ -8085,7 +8069,33 @@ static char *s7_atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
     case T_S7_OBJECT:
       return(s7_describe_object(sc, obj)); /* this allocates already */
     }
-  return(s7_strdup("#<unknown object!>"));
+
+  {
+    char *buf;
+    const char *type_names[21] = {"none", "nil", "string", "number", "symbol", "pair", "closure",
+				  "closure*", "continuation", "function", "character", "input port",
+				  "vector", "macro", "promise", "object", "goto","output port",
+				  "catch", "dynamic-wind", "hash-table"};
+
+    buf = (char *)calloc(512, sizeof(char));
+    snprintf(buf, 512, "<unknown object! type: %d (%s), flags: %x%s%s%s%s%s%s%s%s%s%s%s%s>", 
+	     type(obj), 
+	     (type(obj) < 22) ? type_names[type(obj)] : "none",
+	     typeflag(obj),
+	     is_simple(obj) ? " simple" : "",
+	     is_atom(obj) ? " atom" : "",
+	     is_eternal(obj) ? " eternal" : "",
+	     is_procedure(obj) ? " procedure" : "",
+	     is_constant(obj) ? " constant" : "",
+	     is_marked(obj) ? " gc-marked" : "",
+	     is_immutable(obj) ? " immutable" : "",
+	     is_syntax(obj) ? " syntax" : "",
+	     dont_copy(obj) ? " dont-copy" : "",
+	     ((typeflag(obj) & T_OBJECT) != 0) ? " obj" : "",
+	     ((typeflag(obj) & T_FINALIZABLE) != 0) ? " gc-finalize" : "",
+	     ((typeflag(obj) & 0xf0000000) != 0) ? " bad bits at top" : "");
+    return(buf);
+  }
 }
 
 

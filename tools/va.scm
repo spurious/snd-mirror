@@ -1,8 +1,5 @@
 ;;; a script to search for allocation mismatches and unterminated XtVa args 
 
-;(use-modules (ice-9 format))
-;(if (not (defined? 'read-line)) (use-modules (ice-9 rdelim)))
-
 (if (not (defined? 'sort))
     (begin
       (define sort!

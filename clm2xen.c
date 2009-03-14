@@ -2808,6 +2808,9 @@ a new one is created.  If normalize is " PROC_TRUE ", the resulting waveform goe
   Float *partial_data = NULL;
   int len = 0, i;
   bool partials_allocated = true;
+#if HAVE_S7
+  int gc_loc;
+#endif
 
   XEN_ASSERT_TYPE(MUS_VCT_P(partials) || XEN_LIST_P(partials), partials, XEN_ARG_1, S_partials_to_wave, "a list or a vct");
   XEN_ASSERT_TYPE(MUS_VCT_P(utable) || XEN_FALSE_P(utable) || (!(XEN_BOUND_P(utable))), utable, XEN_ARG_2, S_partials_to_wave, "a vct or " PROC_FALSE);
@@ -2847,7 +2850,10 @@ a new one is created.  If normalize is " PROC_TRUE ", the resulting waveform goe
       table = xen_make_vct(clm_table_size, wave);
     }
   else table = utable;
-  XEN_LOCAL_GC_PROTECT(table);
+
+#if HAVE_S7
+  gc_loc = s7_gc_protect(s7, table);
+#endif
 
   f = XEN_TO_VCT(table);
 
@@ -2864,7 +2870,11 @@ a new one is created.  If normalize is " PROC_TRUE ", the resulting waveform goe
 
   if (partials_allocated)
     free(partial_data);
-  XEN_LOCAL_GC_UNPROTECT(table);
+
+#if HAVE_S7
+  s7_gc_unprotect_at(s7, gc_loc);
+#endif
+
   return(xen_return_first(table, partials, utable));
 }
 
@@ -2876,6 +2886,9 @@ static XEN g_phase_partials_to_wave(XEN partials, XEN utable, XEN normalize)
   Float *partial_data = NULL, *wave;
   int len = 0, i;
   bool partials_allocated = true;
+#if HAVE_S7
+  int gc_loc;
+#endif
 
   #if HAVE_SCHEME
     #define pp2w_example "(" S_make_table_lookup " 440.0 :wave (" S_phase_partials_to_wave " (list  1 .75 0.0  2 .25 (* 3.14159 .5))))"
@@ -2929,7 +2942,10 @@ a new one is created.  If normalize is " PROC_TRUE ", the resulting waveform goe
       table = xen_make_vct(clm_table_size, wave);
     }
   else table = utable;
-  XEN_LOCAL_GC_PROTECT(table);
+
+#if HAVE_S7
+  gc_loc = s7_gc_protect(s7, table);
+#endif
 
   f = XEN_TO_VCT(table);
 
@@ -2946,7 +2962,11 @@ a new one is created.  If normalize is " PROC_TRUE ", the resulting waveform goe
 
   if (partials_allocated)
     free(partial_data);
-  XEN_LOCAL_GC_UNPROTECT(table);
+
+#if HAVE_S7
+  s7_gc_unprotect_at(s7, gc_loc);
+#endif
+
   return(xen_return_first(table, partials, utable));
 }
 

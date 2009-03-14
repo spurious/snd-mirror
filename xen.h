@@ -11,11 +11,12 @@
  */
 
 #define XEN_MAJOR_VERSION 2
-#define XEN_MINOR_VERSION 25
-#define XEN_VERSION "2.25"
+#define XEN_MINOR_VERSION 26
+#define XEN_VERSION "2.26"
 
 /* HISTORY:
  *
+ *  14-Mar:    removed XEN_LOCAL_GC_PROTECT and XEN_LOCAL_GC_UNPROTECT.
  *  20-Feb:    changed fth.h include to fth/fth.h.
  *  14-Jan-09: s7_xen_initialize.
  *  --------
@@ -1760,9 +1761,6 @@ extern XEN xen_false, xen_true, xen_nil, xen_undefined;
 
 #define XEN_YES_WE_HAVE(Feature)                   s7_provide(s7, Feature)
 #define XEN_PROTECT_FROM_GC(Arg)                   s7_gc_protect(s7, Arg)
-#define XEN_LOCAL_GC_PROTECT(Arg)                  s7_local_gc_protect(Arg)
-#define XEN_LOCAL_GC_UNPROTECT(Arg)                s7_local_gc_unprotect(Arg)
-
 
 #define XEN_WRONG_TYPE_ARG_ERROR(Caller, ArgN, Arg, Descr) \
    s7_wrong_type_arg_error(s7, Caller, ArgN, Arg, Descr)
@@ -2337,8 +2335,6 @@ void xen_no_ext_lang_check_args(const char *name, int args, int req_args, int op
 #define C_TO_XEN_OFF_T(a)             c_to_xen_off_t(a)
 #define XEN_TO_C_OFF_T(a)             xen_to_c_off_t(a)
 #define XEN_AS_STRING(form)           XEN_TO_C_STRING(XEN_TO_STRING(form))
-#define XEN_LOCAL_GC_PROTECT(Arg)     
-#define XEN_LOCAL_GC_UNPROTECT(Arg)   
 #else
 #define XEN_AS_STRING(form)           s7_object_to_c_string(s7, form)
 #endif

@@ -14250,14 +14250,17 @@ static XEN g_run_eval(XEN code, XEN arg, XEN arg1, XEN arg2)
 
 #if HAVE_S7
   s7_pointer cl;
+  int gc_loc;
+
   cl = s7_make_closure(s7, code, xen_nil);
-  XEN_LOCAL_GC_PROTECT(cl);
+  gc_loc = s7_gc_protect(s7, cl);
 
   pt = make_ptree(8);
   pt->code = cl;
   pt->result = walk(pt, code, NEED_ANY_RESULT);
 
-  XEN_LOCAL_GC_UNPROTECT(cl);
+  s7_gc_unprotect_at(s7, gc_loc);
+
 #else
   pt = make_ptree(8);
   pt->result = walk(pt, code, NEED_ANY_RESULT);
@@ -14364,18 +14367,21 @@ to Scheme and is equivalent to (thunk)."
 
   {
     XEN result;
+    int gc_loc;
     XEN_ASSERT_TYPE(XEN_PROCEDURE_P(proc_and_code) && (XEN_REQUIRED_ARGS_OK(proc_and_code, 0)), proc_and_code, XEN_ONLY_ARG, S_run, "a thunk");
 
-    code = XEN_LOCAL_GC_PROTECT(XEN_CONS(XEN_APPEND(XEN_CONS(C_STRING_TO_XEN_SYMBOL("lambda"), 
-							     XEN_EMPTY_LIST),
-						    XEN_CAR(proc_and_code)),
-					 XEN_CDR(proc_and_code)));
+    code = XEN_CONS(XEN_APPEND(XEN_CONS(C_STRING_TO_XEN_SYMBOL("lambda"), 
+					XEN_EMPTY_LIST),
+			       XEN_CAR(proc_and_code)),
+		    XEN_CDR(proc_and_code));
+    gc_loc = s7_gc_protect(s7, code);
 
     pt = form_to_ptree(code);
     if (pt)
       result = eval_ptree_to_xen(pt);
     else result = XEN_CALL_0(proc_and_code, S_run);
-    XEN_LOCAL_GC_UNPROTECT(code);
+    
+    s7_gc_unprotect_at(s7, gc_loc);
     return(result);
   }
 

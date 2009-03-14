@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "1.14"
-#define S7_DATE "6-Mar-09"
+#define S7_VERSION "1.15"
+#define S7_DATE "14-Mar-09"
 
 
 typedef long long int s7_Int;
@@ -161,24 +161,16 @@ int s7_gc_protect(s7_scheme *sc, s7_pointer x);
 void s7_gc_unprotect(s7_scheme *sc, s7_pointer x);
 void s7_gc_unprotect_at(s7_scheme *sc, int loc);
 s7_pointer s7_gc_protected_at(s7_scheme *sc, int loc);
-
-s7_pointer s7_local_gc_protect(s7_pointer p);
-s7_pointer s7_local_gc_unprotect(s7_pointer p);
-
 s7_pointer s7_gc_on(s7_scheme *sc, bool on);
 
   /* any s7_pointer object held in C (as a local variable for example) needs to be
    *   protected from garbage collection if there is any chance the GC may run without
-   *   an existing scheme-level reference to that object.  s7_gc_protect is intended
-   *   for longer term protection (a hook function, for example).  It places the
+   *   an existing scheme-level reference to that object.  s7_gc_protect places the
    *   object in a vector that the GC always checks, returning the object's location
    *   in that table.  s7_gc_unprotect and s7_gc_unprotect_at unprotect the object
-   *   (remove it from the vector) -- s7_gc_unprotect_at uses the location passed
+   *   (remove it from the vector).  s7_gc_unprotect_at uses the location passed
    *   to it, whereas s7_gc_unprotect scans the vector to find the object.  
    *   s7_gc_protected_at returns the object at the given location.
-   *
-   * for short-term protection (a local variable held across a function call that
-   *   might trigger a GC, for example), use s7_local_gc_protect and s7_local_gc_unprotect.
    * 
    * You can turn the GC on and off via s7_gc_on.
    *
@@ -1277,6 +1269,7 @@ int main(int argc, char **argv)
  * 
  *        s7 changes
  *
+ * 14-Mar:    removed s7_local_gc_protect and s7_local_gc_unprotect.
  * 4-Mar:     multidimensional and applicable vectors.
  * 1-Mar:     s7_random added to s7.h.
  * 29-Jan:    s7_is_bignum and friends.

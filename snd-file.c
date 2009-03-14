@@ -1053,10 +1053,17 @@ static file_info *open_raw_sound(const char *fullname, read_only_t read_only, bo
 
   if (XEN_HOOKED(open_raw_sound_hook))
     {
+#if HAVE_S7
+      int gc_loc;
+#endif
       XEN arg1;
       procs = XEN_HOOK_PROCEDURES(open_raw_sound_hook);
+
       arg1 = C_TO_XEN_STRING(fullname);
-      XEN_LOCAL_GC_PROTECT(arg1);
+#if HAVE_S7
+      gc_loc = s7_gc_protect(s7, arg1);
+#endif
+
       while (XEN_NOT_NULL_P(procs))
 	{
 	  res = XEN_CALL_2(XEN_CAR(procs), 
@@ -1067,7 +1074,9 @@ static file_info *open_raw_sound(const char *fullname, read_only_t read_only, bo
 	  res_loc = snd_protect(res);
 	  procs = XEN_CDR(procs);
 	}
-      XEN_LOCAL_GC_UNPROTECT(arg1);
+#if HAVE_S7
+      s7_gc_unprotect_at(s7, gc_loc);
+#endif
     }
   if (XEN_LIST_P(res)) /* empty list ok here -> accept all current defaults */
     {
@@ -1420,11 +1429,17 @@ char *output_name(const char *current_name)
 {
   if (XEN_HOOKED(output_name_hook))
     {
+#if HAVE_S7
+      int gc_loc;
+#endif
       XEN result, fname;
       XEN procs = XEN_HOOK_PROCEDURES (output_name_hook);
 
       fname = C_TO_XEN_STRING(current_name);
-      XEN_LOCAL_GC_PROTECT(fname);
+#if HAVE_S7
+      gc_loc = s7_gc_protect(s7, fname);
+#endif
+
       while (XEN_NOT_NULL_P(procs))
 	{
 	  result = XEN_CALL_1(XEN_CAR(procs),
@@ -1434,7 +1449,9 @@ char *output_name(const char *current_name)
 	    return(mus_strdup(XEN_TO_C_STRING(result)));
 	  procs = XEN_CDR (procs);
 	}
-      XEN_LOCAL_GC_UNPROTECT(fname);
+#if HAVE_S7
+      s7_gc_unprotect_at(s7, gc_loc);
+#endif
     }
   return(mus_strdup(current_name));
 }

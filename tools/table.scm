@@ -1,9 +1,3 @@
-;#!/usr/bin/guile -s
-;!#
-;
-;(use-modules (ice-9 format))
-;(if (not (defined? 'read-line)) (use-modules (ice-9 rdelim)))
-
 (define (no-dashes-or-cr str)
   (let* ((len (string-length str))
 	 (newstr (make-string 0))

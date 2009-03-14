@@ -154,7 +154,9 @@ XL_TYPE_PTR_1(GLboolean_, GLboolean*)
 #ifdef GLU_VERSION_1_2
 XL_TYPE_PTR(GLUtesselator_, GLUtesselator*)
 #endif
+XL_TYPE_PTR(GLUquadric_, GLUquadric*)
 XL_TYPE_PTR_1(GLint_, GLint*)
+XL_TYPE(_GLUfuncptr, _GLUfuncptr)
 
 
 /* ---------------------------------------- state readback confusion ---------------------------------------- */
@@ -3240,6 +3242,29 @@ GLsizei height, GLenum format, GLenum type, void* data)"
                                           XEN_TO_C_GLsizei(height), XEN_TO_C_GLenum(format), XEN_TO_C_GLenum(type), XEN_TO_C_void_(data))));
 }
 
+static XEN gxg_gluCylinder(XEN quad, XEN base, XEN top, XEN height, XEN slices, XEN stacks)
+{
+  #define H_gluCylinder "void gluCylinder(GLUquadric* quad, GLdouble base, GLdouble top, GLdouble height, \
+GLint slices, GLint stacks)"
+  XEN_ASSERT_TYPE(XEN_GLUquadric__P(quad), quad, 1, "gluCylinder", "GLUquadric*");
+  XEN_ASSERT_TYPE(XEN_GLdouble_P(base), base, 2, "gluCylinder", "GLdouble");
+  XEN_ASSERT_TYPE(XEN_GLdouble_P(top), top, 3, "gluCylinder", "GLdouble");
+  XEN_ASSERT_TYPE(XEN_GLdouble_P(height), height, 4, "gluCylinder", "GLdouble");
+  XEN_ASSERT_TYPE(XEN_GLint_P(slices), slices, 5, "gluCylinder", "GLint");
+  XEN_ASSERT_TYPE(XEN_GLint_P(stacks), stacks, 6, "gluCylinder", "GLint");
+  gluCylinder(XEN_TO_C_GLUquadric_(quad), XEN_TO_C_GLdouble(base), XEN_TO_C_GLdouble(top), XEN_TO_C_GLdouble(height), XEN_TO_C_GLint(slices), 
+              XEN_TO_C_GLint(stacks));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gluDeleteQuadric(XEN quad)
+{
+  #define H_gluDeleteQuadric "void gluDeleteQuadric(GLUquadric* quad)"
+  XEN_ASSERT_TYPE(XEN_GLUquadric__P(quad), quad, 1, "gluDeleteQuadric", "GLUquadric*");
+  gluDeleteQuadric(XEN_TO_C_GLUquadric_(quad));
+  return(XEN_FALSE);
+}
+
 #ifdef GLU_VERSION_1_2
 static XEN gxg_gluDeleteTess(XEN tess)
 {
@@ -3249,6 +3274,18 @@ static XEN gxg_gluDeleteTess(XEN tess)
   return(XEN_FALSE);
 }
 #endif
+
+static XEN gxg_gluDisk(XEN quad, XEN inner, XEN outer, XEN slices, XEN loops)
+{
+  #define H_gluDisk "void gluDisk(GLUquadric* quad, GLdouble inner, GLdouble outer, GLint slices, GLint loops)"
+  XEN_ASSERT_TYPE(XEN_GLUquadric__P(quad), quad, 1, "gluDisk", "GLUquadric*");
+  XEN_ASSERT_TYPE(XEN_GLdouble_P(inner), inner, 2, "gluDisk", "GLdouble");
+  XEN_ASSERT_TYPE(XEN_GLdouble_P(outer), outer, 3, "gluDisk", "GLdouble");
+  XEN_ASSERT_TYPE(XEN_GLint_P(slices), slices, 4, "gluDisk", "GLint");
+  XEN_ASSERT_TYPE(XEN_GLint_P(loops), loops, 5, "gluDisk", "GLint");
+  gluDisk(XEN_TO_C_GLUquadric_(quad), XEN_TO_C_GLdouble(inner), XEN_TO_C_GLdouble(outer), XEN_TO_C_GLint(slices), XEN_TO_C_GLint(loops));
+  return(XEN_FALSE);
+}
 
 #ifdef GLU_VERSION_1_2
 static XEN gxg_gluEndPolygon(XEN tess)
@@ -3304,6 +3341,12 @@ GLdouble centerY, GLdouble centerZ, GLdouble upX, GLdouble upY, GLdouble upZ)"
   return(XEN_FALSE);
 }
 
+static XEN gxg_gluNewQuadric(void)
+{
+  #define H_gluNewQuadric "GLUquadric* gluNewQuadric( void)"
+  return(C_TO_XEN_GLUquadric_(gluNewQuadric()));
+}
+
 #ifdef GLU_VERSION_1_2
 static XEN gxg_gluNewTess(void)
 {
@@ -3331,6 +3374,22 @@ static XEN gxg_gluOrtho2D(XEN left, XEN right, XEN bottom, XEN top)
   XEN_ASSERT_TYPE(XEN_GLdouble_P(bottom), bottom, 3, "gluOrtho2D", "GLdouble");
   XEN_ASSERT_TYPE(XEN_GLdouble_P(top), top, 4, "gluOrtho2D", "GLdouble");
   gluOrtho2D(XEN_TO_C_GLdouble(left), XEN_TO_C_GLdouble(right), XEN_TO_C_GLdouble(bottom), XEN_TO_C_GLdouble(top));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gluPartialDisk(XEN quad, XEN inner, XEN outer, XEN slices, XEN loops, XEN start, XEN sweep)
+{
+  #define H_gluPartialDisk "void gluPartialDisk(GLUquadric* quad, GLdouble inner, GLdouble outer, GLint slices, \
+GLint loops, GLdouble start, GLdouble sweep)"
+  XEN_ASSERT_TYPE(XEN_GLUquadric__P(quad), quad, 1, "gluPartialDisk", "GLUquadric*");
+  XEN_ASSERT_TYPE(XEN_GLdouble_P(inner), inner, 2, "gluPartialDisk", "GLdouble");
+  XEN_ASSERT_TYPE(XEN_GLdouble_P(outer), outer, 3, "gluPartialDisk", "GLdouble");
+  XEN_ASSERT_TYPE(XEN_GLint_P(slices), slices, 4, "gluPartialDisk", "GLint");
+  XEN_ASSERT_TYPE(XEN_GLint_P(loops), loops, 5, "gluPartialDisk", "GLint");
+  XEN_ASSERT_TYPE(XEN_GLdouble_P(start), start, 6, "gluPartialDisk", "GLdouble");
+  XEN_ASSERT_TYPE(XEN_GLdouble_P(sweep), sweep, 7, "gluPartialDisk", "GLdouble");
+  gluPartialDisk(XEN_TO_C_GLUquadric_(quad), XEN_TO_C_GLdouble(inner), XEN_TO_C_GLdouble(outer), XEN_TO_C_GLint(slices), 
+                 XEN_TO_C_GLint(loops), XEN_TO_C_GLdouble(start), XEN_TO_C_GLdouble(sweep));
   return(XEN_FALSE);
 }
 
@@ -3375,6 +3434,52 @@ GLdouble* proj, GLint* view, GLdouble* winX, GLdouble* winY, GLdouble* winZ)"
                                    XEN_TO_C_GLdouble_(winZ))));
 }
 
+static XEN gxg_gluQuadricCallback(XEN quad, XEN which, XEN CallBackFunc)
+{
+  #define H_gluQuadricCallback "void gluQuadricCallback(GLUquadric* quad, GLenum which, _GLUfuncptr CallBackFunc)"
+  XEN_ASSERT_TYPE(XEN_GLUquadric__P(quad), quad, 1, "gluQuadricCallback", "GLUquadric*");
+  XEN_ASSERT_TYPE(XEN_GLenum_P(which), which, 2, "gluQuadricCallback", "GLenum");
+  XEN_ASSERT_TYPE(XEN__GLUfuncptr_P(CallBackFunc), CallBackFunc, 3, "gluQuadricCallback", "_GLUfuncptr");
+  gluQuadricCallback(XEN_TO_C_GLUquadric_(quad), XEN_TO_C_GLenum(which), XEN_TO_C__GLUfuncptr(CallBackFunc));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gluQuadricDrawStyle(XEN quad, XEN draw)
+{
+  #define H_gluQuadricDrawStyle "void gluQuadricDrawStyle(GLUquadric* quad, GLenum draw)"
+  XEN_ASSERT_TYPE(XEN_GLUquadric__P(quad), quad, 1, "gluQuadricDrawStyle", "GLUquadric*");
+  XEN_ASSERT_TYPE(XEN_GLenum_P(draw), draw, 2, "gluQuadricDrawStyle", "GLenum");
+  gluQuadricDrawStyle(XEN_TO_C_GLUquadric_(quad), XEN_TO_C_GLenum(draw));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gluQuadricNormals(XEN quad, XEN normal)
+{
+  #define H_gluQuadricNormals "void gluQuadricNormals(GLUquadric* quad, GLenum normal)"
+  XEN_ASSERT_TYPE(XEN_GLUquadric__P(quad), quad, 1, "gluQuadricNormals", "GLUquadric*");
+  XEN_ASSERT_TYPE(XEN_GLenum_P(normal), normal, 2, "gluQuadricNormals", "GLenum");
+  gluQuadricNormals(XEN_TO_C_GLUquadric_(quad), XEN_TO_C_GLenum(normal));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gluQuadricOrientation(XEN quad, XEN orientation)
+{
+  #define H_gluQuadricOrientation "void gluQuadricOrientation(GLUquadric* quad, GLenum orientation)"
+  XEN_ASSERT_TYPE(XEN_GLUquadric__P(quad), quad, 1, "gluQuadricOrientation", "GLUquadric*");
+  XEN_ASSERT_TYPE(XEN_GLenum_P(orientation), orientation, 2, "gluQuadricOrientation", "GLenum");
+  gluQuadricOrientation(XEN_TO_C_GLUquadric_(quad), XEN_TO_C_GLenum(orientation));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gluQuadricTexture(XEN quad, XEN texture)
+{
+  #define H_gluQuadricTexture "void gluQuadricTexture(GLUquadric* quad, GLboolean texture)"
+  XEN_ASSERT_TYPE(XEN_GLUquadric__P(quad), quad, 1, "gluQuadricTexture", "GLUquadric*");
+  XEN_ASSERT_TYPE(XEN_GLboolean_P(texture), texture, 2, "gluQuadricTexture", "GLboolean");
+  gluQuadricTexture(XEN_TO_C_GLUquadric_(quad), XEN_TO_C_GLboolean(texture));
+  return(XEN_FALSE);
+}
+
 static XEN gxg_gluScaleImage(XEN format, XEN wIn, XEN hIn, XEN typeIn, XEN dataIn, XEN wOut, XEN hOut, XEN typeOut, XEN dataOut)
 {
   #define H_gluScaleImage "GLint gluScaleImage(GLenum format, GLsizei wIn, GLsizei hIn, GLenum typeIn, \
@@ -3391,6 +3496,17 @@ void* dataIn, GLsizei wOut, GLsizei hOut, GLenum typeOut, GLvoid* dataOut)"
   return(C_TO_XEN_GLint(gluScaleImage(XEN_TO_C_GLenum(format), XEN_TO_C_GLsizei(wIn), XEN_TO_C_GLsizei(hIn), XEN_TO_C_GLenum(typeIn), 
                                       XEN_TO_C_void_(dataIn), XEN_TO_C_GLsizei(wOut), XEN_TO_C_GLsizei(hOut), XEN_TO_C_GLenum(typeOut), 
                                       XEN_TO_C_GLvoid_(dataOut))));
+}
+
+static XEN gxg_gluSphere(XEN quad, XEN radius, XEN slices, XEN stacks)
+{
+  #define H_gluSphere "void gluSphere(GLUquadric* quad, GLdouble radius, GLint slices, GLint stacks)"
+  XEN_ASSERT_TYPE(XEN_GLUquadric__P(quad), quad, 1, "gluSphere", "GLUquadric*");
+  XEN_ASSERT_TYPE(XEN_GLdouble_P(radius), radius, 2, "gluSphere", "GLdouble");
+  XEN_ASSERT_TYPE(XEN_GLint_P(slices), slices, 3, "gluSphere", "GLint");
+  XEN_ASSERT_TYPE(XEN_GLint_P(stacks), stacks, 4, "gluSphere", "GLint");
+  gluSphere(XEN_TO_C_GLUquadric_(quad), XEN_TO_C_GLdouble(radius), XEN_TO_C_GLint(slices), XEN_TO_C_GLint(stacks));
+  return(XEN_FALSE);
 }
 
 #ifdef GLU_VERSION_1_2
@@ -3789,9 +3905,12 @@ XEN_NARGIFY_1(gxg_gluBeginPolygon_w, gxg_gluBeginPolygon)
 #endif
 XEN_NARGIFY_6(gxg_gluBuild1DMipmaps_w, gxg_gluBuild1DMipmaps)
 XEN_NARGIFY_7(gxg_gluBuild2DMipmaps_w, gxg_gluBuild2DMipmaps)
+XEN_NARGIFY_6(gxg_gluCylinder_w, gxg_gluCylinder)
+XEN_NARGIFY_1(gxg_gluDeleteQuadric_w, gxg_gluDeleteQuadric)
 #ifdef GLU_VERSION_1_2
 XEN_NARGIFY_1(gxg_gluDeleteTess_w, gxg_gluDeleteTess)
 #endif
+XEN_NARGIFY_5(gxg_gluDisk_w, gxg_gluDisk)
 #ifdef GLU_VERSION_1_2
 XEN_NARGIFY_1(gxg_gluEndPolygon_w, gxg_gluEndPolygon)
 #endif
@@ -3801,6 +3920,7 @@ XEN_NARGIFY_1(gxg_gluGetString_w, gxg_gluGetString)
 XEN_NARGIFY_3(gxg_gluGetTessProperty_w, gxg_gluGetTessProperty)
 #endif
 XEN_NARGIFY_9(gxg_gluLookAt_w, gxg_gluLookAt)
+XEN_NARGIFY_0(gxg_gluNewQuadric_w, gxg_gluNewQuadric)
 #ifdef GLU_VERSION_1_2
 XEN_NARGIFY_0(gxg_gluNewTess_w, gxg_gluNewTess)
 #endif
@@ -3808,10 +3928,17 @@ XEN_NARGIFY_0(gxg_gluNewTess_w, gxg_gluNewTess)
 XEN_NARGIFY_2(gxg_gluNextContour_w, gxg_gluNextContour)
 #endif
 XEN_NARGIFY_4(gxg_gluOrtho2D_w, gxg_gluOrtho2D)
+XEN_NARGIFY_7(gxg_gluPartialDisk_w, gxg_gluPartialDisk)
 XEN_NARGIFY_4(gxg_gluPerspective_w, gxg_gluPerspective)
 XEN_NARGIFY_5(gxg_gluPickMatrix_w, gxg_gluPickMatrix)
 XEN_NARGIFY_9(gxg_gluProject_w, gxg_gluProject)
+XEN_NARGIFY_3(gxg_gluQuadricCallback_w, gxg_gluQuadricCallback)
+XEN_NARGIFY_2(gxg_gluQuadricDrawStyle_w, gxg_gluQuadricDrawStyle)
+XEN_NARGIFY_2(gxg_gluQuadricNormals_w, gxg_gluQuadricNormals)
+XEN_NARGIFY_2(gxg_gluQuadricOrientation_w, gxg_gluQuadricOrientation)
+XEN_NARGIFY_2(gxg_gluQuadricTexture_w, gxg_gluQuadricTexture)
 XEN_NARGIFY_9(gxg_gluScaleImage_w, gxg_gluScaleImage)
+XEN_NARGIFY_4(gxg_gluSphere_w, gxg_gluSphere)
 #ifdef GLU_VERSION_1_2
 XEN_NARGIFY_1(gxg_gluTessBeginContour_w, gxg_gluTessBeginContour)
 #endif
@@ -4135,9 +4262,12 @@ XEN_NARGIFY_9(gxg_gluUnProject_w, gxg_gluUnProject)
 #endif
 #define gxg_gluBuild1DMipmaps_w gxg_gluBuild1DMipmaps
 #define gxg_gluBuild2DMipmaps_w gxg_gluBuild2DMipmaps
+#define gxg_gluCylinder_w gxg_gluCylinder
+#define gxg_gluDeleteQuadric_w gxg_gluDeleteQuadric
 #ifdef GLU_VERSION_1_2
 #define gxg_gluDeleteTess_w gxg_gluDeleteTess
 #endif
+#define gxg_gluDisk_w gxg_gluDisk
 #ifdef GLU_VERSION_1_2
 #define gxg_gluEndPolygon_w gxg_gluEndPolygon
 #endif
@@ -4147,6 +4277,7 @@ XEN_NARGIFY_9(gxg_gluUnProject_w, gxg_gluUnProject)
 #define gxg_gluGetTessProperty_w gxg_gluGetTessProperty
 #endif
 #define gxg_gluLookAt_w gxg_gluLookAt
+#define gxg_gluNewQuadric_w gxg_gluNewQuadric
 #ifdef GLU_VERSION_1_2
 #define gxg_gluNewTess_w gxg_gluNewTess
 #endif
@@ -4154,10 +4285,17 @@ XEN_NARGIFY_9(gxg_gluUnProject_w, gxg_gluUnProject)
 #define gxg_gluNextContour_w gxg_gluNextContour
 #endif
 #define gxg_gluOrtho2D_w gxg_gluOrtho2D
+#define gxg_gluPartialDisk_w gxg_gluPartialDisk
 #define gxg_gluPerspective_w gxg_gluPerspective
 #define gxg_gluPickMatrix_w gxg_gluPickMatrix
 #define gxg_gluProject_w gxg_gluProject
+#define gxg_gluQuadricCallback_w gxg_gluQuadricCallback
+#define gxg_gluQuadricDrawStyle_w gxg_gluQuadricDrawStyle
+#define gxg_gluQuadricNormals_w gxg_gluQuadricNormals
+#define gxg_gluQuadricOrientation_w gxg_gluQuadricOrientation
+#define gxg_gluQuadricTexture_w gxg_gluQuadricTexture
 #define gxg_gluScaleImage_w gxg_gluScaleImage
+#define gxg_gluSphere_w gxg_gluSphere
 #ifdef GLU_VERSION_1_2
 #define gxg_gluTessBeginContour_w gxg_gluTessBeginContour
 #endif
@@ -4482,9 +4620,12 @@ static void define_functions(void)
 #endif
   GL_DEFINE_PROCEDURE(gluBuild1DMipmaps, gxg_gluBuild1DMipmaps_w, 6, 0, 0, H_gluBuild1DMipmaps);
   GL_DEFINE_PROCEDURE(gluBuild2DMipmaps, gxg_gluBuild2DMipmaps_w, 7, 0, 0, H_gluBuild2DMipmaps);
+  GL_DEFINE_PROCEDURE(gluCylinder, gxg_gluCylinder_w, 6, 0, 0, H_gluCylinder);
+  GL_DEFINE_PROCEDURE(gluDeleteQuadric, gxg_gluDeleteQuadric_w, 1, 0, 0, H_gluDeleteQuadric);
 #ifdef GLU_VERSION_1_2
   GL_DEFINE_PROCEDURE(gluDeleteTess, gxg_gluDeleteTess_w, 1, 0, 0, H_gluDeleteTess);
 #endif
+  GL_DEFINE_PROCEDURE(gluDisk, gxg_gluDisk_w, 5, 0, 0, H_gluDisk);
 #ifdef GLU_VERSION_1_2
   GL_DEFINE_PROCEDURE(gluEndPolygon, gxg_gluEndPolygon_w, 1, 0, 0, H_gluEndPolygon);
 #endif
@@ -4494,6 +4635,7 @@ static void define_functions(void)
   GL_DEFINE_PROCEDURE(gluGetTessProperty, gxg_gluGetTessProperty_w, 3, 0, 0, H_gluGetTessProperty);
 #endif
   GL_DEFINE_PROCEDURE(gluLookAt, gxg_gluLookAt_w, 9, 0, 0, H_gluLookAt);
+  GL_DEFINE_PROCEDURE(gluNewQuadric, gxg_gluNewQuadric_w, 0, 0, 0, H_gluNewQuadric);
 #ifdef GLU_VERSION_1_2
   GL_DEFINE_PROCEDURE(gluNewTess, gxg_gluNewTess_w, 0, 0, 0, H_gluNewTess);
 #endif
@@ -4501,10 +4643,17 @@ static void define_functions(void)
   GL_DEFINE_PROCEDURE(gluNextContour, gxg_gluNextContour_w, 2, 0, 0, H_gluNextContour);
 #endif
   GL_DEFINE_PROCEDURE(gluOrtho2D, gxg_gluOrtho2D_w, 4, 0, 0, H_gluOrtho2D);
+  GL_DEFINE_PROCEDURE(gluPartialDisk, gxg_gluPartialDisk_w, 7, 0, 0, H_gluPartialDisk);
   GL_DEFINE_PROCEDURE(gluPerspective, gxg_gluPerspective_w, 4, 0, 0, H_gluPerspective);
   GL_DEFINE_PROCEDURE(gluPickMatrix, gxg_gluPickMatrix_w, 5, 0, 0, H_gluPickMatrix);
   GL_DEFINE_PROCEDURE(gluProject, gxg_gluProject_w, 9, 0, 0, H_gluProject);
+  GL_DEFINE_PROCEDURE(gluQuadricCallback, gxg_gluQuadricCallback_w, 3, 0, 0, H_gluQuadricCallback);
+  GL_DEFINE_PROCEDURE(gluQuadricDrawStyle, gxg_gluQuadricDrawStyle_w, 2, 0, 0, H_gluQuadricDrawStyle);
+  GL_DEFINE_PROCEDURE(gluQuadricNormals, gxg_gluQuadricNormals_w, 2, 0, 0, H_gluQuadricNormals);
+  GL_DEFINE_PROCEDURE(gluQuadricOrientation, gxg_gluQuadricOrientation_w, 2, 0, 0, H_gluQuadricOrientation);
+  GL_DEFINE_PROCEDURE(gluQuadricTexture, gxg_gluQuadricTexture_w, 2, 0, 0, H_gluQuadricTexture);
   GL_DEFINE_PROCEDURE(gluScaleImage, gxg_gluScaleImage_w, 9, 0, 0, H_gluScaleImage);
+  GL_DEFINE_PROCEDURE(gluSphere, gxg_gluSphere_w, 4, 0, 0, H_gluSphere);
 #ifdef GLU_VERSION_1_2
   GL_DEFINE_PROCEDURE(gluTessBeginContour, gxg_gluTessBeginContour_w, 1, 0, 0, H_gluTessBeginContour);
 #endif
@@ -5284,7 +5433,7 @@ void Init_libgl(void)
       define_integers();
       define_functions();
       XEN_YES_WE_HAVE("gl");
-      XEN_DEFINE("gl-version", C_TO_XEN_STRING("30-Jan-09"));
+      XEN_DEFINE("gl-version", C_TO_XEN_STRING("13-Mar-09"));
       gl_already_inited = true;
     }
 }

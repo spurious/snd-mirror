@@ -782,12 +782,14 @@ bool procedure_arity_ok(XEN proc, int args)
 
 #if HAVE_S7
   {
-    int oargs, restargs;
-    s7_local_gc_protect(arity);
+    int oargs, restargs, gc_loc;
+
+    gc_loc = s7_gc_protect(s7, arity);
     rargs = XEN_TO_C_INT(XEN_CAR(arity));
     oargs = XEN_TO_C_INT(XEN_CADR(arity));
     restargs = ((XEN_TRUE_P(XEN_CADDR(arity))) ? 1 : 0);
-    s7_local_gc_unprotect(arity);
+    s7_gc_unprotect_at(s7, gc_loc);
+
     if (rargs > args) return(false);
     if ((restargs == 0) && ((rargs + oargs) < args)) return(false);
   }
@@ -843,20 +845,14 @@ char *procedure_ok(XEN proc, int args, const char *caller, const char *arg_name,
 #if HAVE_SCHEME
       {
 	int oargs, restargs;
-#if HAVE_S7
-	s7_local_gc_protect(arity);
-#else
 	int loc;
+
 	loc = snd_protect(arity);
-#endif
 	rargs = XEN_TO_C_INT(XEN_CAR(arity));
 	oargs = XEN_TO_C_INT(XEN_CADR(arity));
 	restargs = ((XEN_TRUE_P(XEN_CADDR(arity))) ? 1 : 0);
-#if HAVE_S7
-	s7_local_gc_unprotect(arity);
-#else
 	snd_unprotect_at(loc);
-#endif
+
 	if (rargs > args)
 	  return(mus_format(_("%s function (%s arg %d) should take %d argument%s, but instead requires %d"),
 			    arg_name, caller, argn, args, (args != 1) ? "s" : "", rargs));
@@ -1527,10 +1523,14 @@ off_t string_to_off_t(const char *str, off_t lo, const char *field_name)
 XEN run_progn_hook(XEN hook, XEN args, const char *caller)
 {
   /* Guile built-in scm_c_run_hook doesn't return the value of the hook procedure(s) and exits on error */
+#if HAVE_S7
+  int gc_loc;
+#endif
   XEN result = XEN_FALSE;
   XEN procs = XEN_HOOK_PROCEDURES(hook);
 
-  XEN_LOCAL_GC_PROTECT(args);
+#if HAVE_S7
+  gc_loc = s7_gc_protect(s7, args);
   /* this gc protection is needed in s7 because the args are not s7 eval-assembled;
    *   they are cons'd up in our C code, and applied here via s7_call, so between
    *   s7_call's, they are not otherwise protected.  In normal function calls, the
@@ -1540,12 +1540,17 @@ XEN run_progn_hook(XEN hook, XEN args, const char *caller)
    *   below to be completely safe -- this tells the C compiler not to optimize
    *   them off the stack. 
    */
+#endif
+
   while (XEN_NOT_NULL_P(procs))
     {
       result = XEN_APPLY(XEN_CAR(procs), args, caller);
       procs = XEN_CDR(procs);
     }
-  XEN_LOCAL_GC_UNPROTECT(args);
+
+#if HAVE_S7
+  s7_gc_unprotect_at(s7, gc_loc);
+#endif
 
   return(xen_return_first(result, args));
 }
@@ -1553,9 +1558,15 @@ XEN run_progn_hook(XEN hook, XEN args, const char *caller)
 
 XEN run_hook(XEN hook, XEN args, const char *caller)
 {
+#if HAVE_S7
+  int gc_loc;
+#endif
   XEN procs = XEN_HOOK_PROCEDURES(hook);
 
-  XEN_LOCAL_GC_PROTECT(args);
+#if HAVE_S7
+  gc_loc = s7_gc_protect(s7, args);
+#endif
+
   while (XEN_NOT_NULL_P(procs))
     {
       if (!(XEN_EQ_P(args, XEN_EMPTY_LIST)))
@@ -1563,7 +1574,10 @@ XEN run_hook(XEN hook, XEN args, const char *caller)
       else XEN_CALL_0(XEN_CAR(procs), caller);
       procs = XEN_CDR (procs);
     }
-  XEN_LOCAL_GC_UNPROTECT(args);
+
+#if HAVE_S7
+  s7_gc_unprotect_at(s7, gc_loc);
+#endif
 
   return(xen_return_first(XEN_FALSE, args));
 }
@@ -1571,11 +1585,17 @@ XEN run_hook(XEN hook, XEN args, const char *caller)
 
 XEN run_or_hook(XEN hook, XEN args, const char *caller)
 {
+#if HAVE_S7
+  int gc_loc;
+#endif
   XEN result = XEN_FALSE; /* (or): #f */
   XEN hook_result = XEN_FALSE;
   XEN procs = XEN_HOOK_PROCEDURES (hook);
 
-  XEN_LOCAL_GC_PROTECT(args);
+#if HAVE_S7
+  gc_loc = s7_gc_protect(s7, args);
+#endif
+
   while (XEN_NOT_NULL_P(procs))
     {
       if (!(XEN_EQ_P(args, XEN_EMPTY_LIST)))
@@ -1592,7 +1612,11 @@ XEN run_or_hook(XEN hook, XEN args, const char *caller)
 #endif
       procs = XEN_CDR (procs);
     }
-  XEN_LOCAL_GC_UNPROTECT(args);
+
+#if HAVE_S7
+  s7_gc_unprotect_at(s7, gc_loc);
+#endif
+
   return(xen_return_first(hook_result, args));
 }
 

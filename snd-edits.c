@@ -310,16 +310,19 @@ char *run_save_state_hook(const char *file)
   filename = mus_strdup(file);
   if (XEN_HOOKED(save_state_hook))
     {
+#if HAVE_S7
+      int gc_loc;
+#endif
       XEN fname;
       XEN result = XEN_FALSE;
       XEN procs = XEN_HOOK_PROCEDURES(save_state_hook);
       fname = C_TO_XEN_STRING(filename);
-      XEN_LOCAL_GC_PROTECT(fname);
+#if HAVE_S7
+      gc_loc = s7_gc_protect(s7, fname);
+#endif
       while (XEN_NOT_NULL_P(procs))
 	{
-	  result = XEN_CALL_1(XEN_CAR(procs),
-			      fname,
-			      "save state hook");
+	  result = XEN_CALL_1(XEN_CAR(procs), fname, "save state hook");
 	  if (XEN_STRING_P(result))
 	    {
 	      free(filename);
@@ -327,7 +330,9 @@ char *run_save_state_hook(const char *file)
 	    }
 	  procs = XEN_CDR (procs);
 	}
-      XEN_LOCAL_GC_UNPROTECT(fname);
+#if HAVE_S7
+      s7_gc_unprotect_at(s7, gc_loc);
+#endif
     }
   return(filename);
 }
