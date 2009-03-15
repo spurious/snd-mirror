@@ -119,13 +119,8 @@ int sg_text_width(const char *txt, PangoFontDescription *font)
   if (txt == NULL) return(0);
   if (mus_strlen(txt) == 0) return(0);
   if (!(g_utf8_validate(txt, -1, NULL)))
-    {
-#if MUS_DEBUGGING
-      fprintf(stderr,"text width: invalid UTF-8: %s\n", txt);
-      abort();
-#endif
-      return(0);
-    }
+    return(0);
+
   ctx = gdk_pango_context_get();
   layout = pango_layout_new(ctx);
   if (layout)

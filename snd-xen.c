@@ -547,15 +547,19 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
 /* ---------------- RUBY error handler ---------------- */
 
 #if HAVE_RUBY
-static char *msg = NULL;
 void snd_rb_raise(XEN tag, XEN throw_args)
 {
+  static char *msg = NULL;
   XEN err = rb_eStandardError;
   bool need_comma = false;
   int size = 2048;
-  if (strcmp(rb_id2name(tag), "Out_of_range") == 0) err = rb_eRangeError;
+
+  if (strcmp(rb_id2name(tag), "Out_of_range") == 0) 
+    err = rb_eRangeError;
+
   if (msg) free(msg);
   msg = (char *)calloc(size, sizeof(char));
+
   if ((XEN_LIST_P(throw_args)) && 
       (XEN_LIST_LENGTH(throw_args) > 0))
     {
@@ -567,11 +571,15 @@ void snd_rb_raise(XEN tag, XEN throw_args)
 		   rb_id2name(tag));
 	  need_comma = true;
 	}
+
       if (XEN_LIST_LENGTH(throw_args) > 1)
 	{
 	  /* here XEN_CADR can contain formatting info and XEN_CADDR is a list of args to fit in */
 	  /* or it may be a list of info vars etc */
-	  if (need_comma) msg = mus_strcat(msg, ": ", &size);
+
+	  if (need_comma) 
+	    msg = mus_strcat(msg, ": ", &size);
+
 	  if (XEN_STRING_P(XEN_CADR(throw_args)))
 	    msg = mus_strcat(msg, XEN_TO_C_STRING(snd_format_if_needed(XEN_CDR(throw_args))), &size);
 	  else msg = mus_strcat(msg, XEN_AS_STRING(XEN_CDR(throw_args)), &size);
@@ -581,9 +589,10 @@ void snd_rb_raise(XEN tag, XEN throw_args)
   if (show_backtrace(ss)) 
     {
       XEN bt = rb_funcall(err, rb_intern("caller"), 0); 
+
       if (XEN_VECTOR_P(bt) && XEN_VECTOR_LENGTH(bt) > 0) 
 	{
-	  long i; 
+	  int i; 
 	  msg = mus_strcat(msg, "\n", &size); 
 	  for (i = 0; i < XEN_VECTOR_LENGTH(bt); i++) 
 	    { 
@@ -592,6 +601,7 @@ void snd_rb_raise(XEN tag, XEN throw_args)
 	    } 
 	} 
     }
+
   if (strcmp(rb_id2name(tag), "Snd_error") != 0)
     {
       if (!(run_snd_error_hook(msg)))
@@ -600,6 +610,7 @@ void snd_rb_raise(XEN tag, XEN throw_args)
 	    call_xen_error_handler(msg);
 	}
     }
+
   rb_raise(err, msg);
 }
 #endif
@@ -981,9 +992,11 @@ char *g_print_1(XEN obj) /* free return val */
 #if HAVE_S7
   return(XEN_AS_STRING(obj)); 
 #endif
+
 #if HAVE_FORTH || HAVE_RUBY
   return(mus_strdup(XEN_AS_STRING(obj))); 
 #endif
+
 #if HAVE_GUILE
 #if HAVE_SCM_OBJECT_TO_STRING
   return(mus_strdup(XEN_AS_STRING(obj))); 
@@ -998,6 +1011,7 @@ char *g_print_1(XEN obj) /* free return val */
   return(mus_strdup(XEN_TO_C_STRING(val)));
 #endif
 #endif
+
 #if (!HAVE_EXTENSION_LANGUAGE)
   return(NULL);
 #endif
@@ -1021,6 +1035,7 @@ static char *gl_print(XEN result)
 #if HAVE_SCHEME || HAVE_FORTH
   sprintf(newbuf, "#("); 
 #endif
+
 #if HAVE_RUBY
   sprintf(newbuf, "[");
 #endif
@@ -1045,6 +1060,7 @@ static char *gl_print(XEN result)
 #if HAVE_SCHEME || HAVE_FORTH
   newbuf = mus_strcat(newbuf, " ...)", &savelen);
 #endif
+
 #if HAVE_RUBY
   newbuf = mus_strcat(newbuf, " ...]", &savelen);
 #endif
@@ -1090,6 +1106,7 @@ void snd_report_listener_result(XEN form)
 #if HAVE_RUBY || HAVE_FORTH || HAVE_S7
   snd_report_result(form, "\n");
 #endif
+
 #if HAVE_GUILE
   snd_report_result(snd_catch_any(eval_form_wrapper, (void *)form, NULL), "\n");
 #endif
@@ -1200,9 +1217,11 @@ static bool snd_load_init_file_1(const char *filename)
 #if HAVE_SCHEME
       expr = mus_format("(load %s)", fullname);
 #endif
+
 #if HAVE_RUBY || HAVE_FORTH
       expr = mus_format("load(%s)", fullname);
 #endif
+
       result = snd_catch_any(eval_file_wrapper, (void *)fullname, expr);
       free(expr);
 
@@ -1224,6 +1243,7 @@ static bool snd_load_init_file_1(const char *filename)
 	}
 #endif
     }
+
   if (fullname) free(fullname);
   return(happy);
 }
@@ -2795,9 +2815,11 @@ void save_added_source_file_extensions(FILE *fd)
 #if HAVE_SCHEME
 	fprintf(fd, "(%s \"%s\")\n", S_add_source_file_extension, source_file_extensions[i]);
 #endif
+
 #if HAVE_RUBY
 	fprintf(fd, "%s(\"%s\")\n", TO_PROC_NAME(S_add_source_file_extension), source_file_extensions[i]);
 #endif
+
 #if HAVE_FORTH
 	fprintf(fd, "\"%s\" %s drop\n", source_file_extensions[i], S_add_source_file_extension);
 #endif

@@ -141,7 +141,7 @@ Version info:
   if Motif, then Motif 2.n but not Lesstif
   in Linux, if ALSA, then ALSA 0.9beta8 or later (or any version of OSS)
   if Guile, Guile 1.3.4 or later but most *.scm files need 1.5.0 or later
-  if Ruby, Ruby 1.6.4 or later, but some *.rb files need 1.8.0 or later
+  if Ruby, Ruby 1.8.0 or later.  Ruby 1.9.n is just barely usable -- any error causes a segfault.
   if Forth, any version
   if S7, any version
   if GSL, version 0.8 or later

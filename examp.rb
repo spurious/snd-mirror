@@ -2894,7 +2894,7 @@ Examples:
   Range
     gloop(0..3) do |i| puts i end
   Hash               (loops over all Hashs consecutively)
-    gloop({1, :a, 2, :b}, {11, :aa, 22, :bb}) do |k, v|
+    gloop({1 => :a, 2 => :b}, {11 => :aa, 22 => :bb}) do |k, v|
       print('key: ', k, ' value: ', v)
       puts
     end

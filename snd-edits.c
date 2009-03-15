@@ -2861,15 +2861,6 @@ static io_error_t channel_to_file_with_bounds(chan_info *cp, const char *ofile, 
     }
   else
     {
-#if MUS_DEBUGGING
-      if (!(hdr->comment))
-	{
-	  hdr->comment = (char *)"channel to file";
-	  err = snd_make_file(ofile, 1, hdr, sf, len);
-	  hdr->comment = NULL;
-	}
-      else
-#endif
       err = snd_make_file(ofile, 1, hdr, sf, len);
       free_snd_fd(sf[0]);
       free(sf);
@@ -6621,15 +6612,6 @@ io_error_t save_edits_and_update_display(snd_info *sp)
       }
 
     /* write the new file */
-#if MUS_DEBUGGING
-    if (!(sp->hdr->comment))
-      {
-	sp->hdr->comment = (char *)"save edits";
-	io_err = snd_make_file(ofile, sp->nchans, sp->hdr, sf, samples);
-	sp->hdr->comment = NULL;
-      }
-    else
-#endif
     io_err = snd_make_file(ofile, sp->nchans, sp->hdr, sf, samples);
     for (i = 0; i < sp->nchans; i++) free_snd_fd(sf[i]);
     free(sf);

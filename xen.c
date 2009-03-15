@@ -355,6 +355,9 @@ char *xen_guile_to_c_string_with_eventual_free(XEN str)
 
 /* ------------------------------ RUBY ------------------------------ */
 
+/* TODO: ruby 1.9.1 is very broken...
+ */
+
 #if HAVE_RUBY
 
 #define S_add_help "add_help"
@@ -402,7 +405,13 @@ return help associated with name (String or Symbol) or false"
 
 void xen_initialize(void)
 {
+#ifdef RUBY_INIT_STACK
+  RUBY_INIT_STACK;
+#endif
+
   ruby_init();
+  ruby_init_loadpath();
+
   Init_Hook();
 }
 
@@ -821,7 +830,7 @@ static XEN xen_rb_rescue(XEN val)
 }
 
 
-#ifndef HAVE_RB_ERRINFO
+#if (!HAVE_RB_ERRINFO)
 XEN rb_errinfo(void)
 {
   return ruby_errinfo;
@@ -869,11 +878,18 @@ XEN xen_rb_load_file_with_error(XEN file)
 
 XEN xen_rb_add_to_load_path(char *path)
 {
+#if (!HAVE_RB_GET_LOAD_PATH)
   extern VALUE rb_load_path;
   XEN rpath;
   rpath = rb_str_new2(path);
   if (XEN_FALSE_P(rb_ary_includes(rb_load_path, rpath)))
     rb_ary_unshift(rb_load_path, rpath);
+#else
+  XEN rpath;
+  rpath = rb_str_new2(path);
+  if (XEN_FALSE_P(rb_ary_includes(rb_get_load_path(), rpath)))
+    rb_ary_unshift(rb_get_load_path(), rpath);
+#endif
   return(XEN_FALSE);
 }
 

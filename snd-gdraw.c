@@ -161,13 +161,8 @@ void draw_string(axis_context *ax, int x0, int y0, const char *str, int len)
   if ((ax->wn == NULL) || (ax->current_font == NULL)) return;
   if ((!str) || (!(*str))) return;
   if (!(g_utf8_validate(str, -1, NULL)))
-    {
-#if MUS_DEBUGGING
-      fprintf(stderr,"invalid UTF-8: %s\n", str);
-      abort();
-#endif
-      return;
-    }
+    return;
+
 #if USE_CAIRO
   {
     PangoLayout *layout = NULL;

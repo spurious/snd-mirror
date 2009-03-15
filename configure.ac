@@ -1316,7 +1316,7 @@ RUBY="ruby"
 AC_ARG_WITH(ruby-prefix,[  --with-ruby-prefix=PFX  where Ruby is installed],
             	ruby_prefix="$withval"
 		RUBY="$ruby_prefix/bin/ruby",
-		ruby_prefix="")
+		ruby_prefix="/usr/local")
 
 if test "$with_ruby" = yes && test "$ac_snd_have_extension_language" = yes ; then
   with_ruby=no
@@ -1337,13 +1337,17 @@ AC_ARG_WITH(ruby,
               AC_DEFINE_UNQUOTED(RUBY_RELEASE_DATE,"${RUBY_RELEASE_DATE}")
 
 	      XEN_CFLAGS=`$RUBY -e [['\$:.each {|path| print "-I", path, " "}']]`
+	      # this is apparently actually intended for ruby programs (*.rb), not programs embedding ruby
+	      # we have to conjure up some plausible includes by hand:
+	      XEN_CFLAGS="$XEN_CFLAGS -I$ruby_prefix/include/ruby-$RUBY_VERSION/i686-linux -I$ruby_prefix/include/ruby-$RUBY_VERSION"
+
 	      XEN_LIBS=`$RUBY -e [['\$:.each {|path| print "-L", path, " "}']]`
 	      RUBY_SEARCH_PATH=`$RUBY -e [['\$:.each {|path| print path, ":"}']]`
 	      RUBY_LIBS=`$RUBY -e [['require "rbconfig"; include Config; print CONFIG["LIBS"]']]`
 	      # these are the non-ruby libraries required by ruby
 	      #   so look for -lruby, then libruby-static.a
 
-	      LIBRUBY="/usr/local/lib/libruby-static.a"
+	      LIBRUBY="$ruby_prefix/lib/libruby-static.a"
               AC_CHECK_LIB(ruby, rb_intern,
 	                   [LIBRUBY="-lruby"])
 
@@ -1388,6 +1392,16 @@ AC_ARG_WITH(ruby,
                 [AC_LANG_PROGRAM([#include <ruby.h>],
                                  [char *str; ruby_init(); str = rb_errinfo(); return(0)])], 
                 [AC_DEFINE(HAVE_RB_ERRINFO)
+                 AC_MSG_RESULT(yes)
+                ],
+                 AC_MSG_RESULT(no)
+                )
+
+    	      AC_MSG_CHECKING([for rb_get_load_path])
+              AC_RUN_IFELSE(
+                [AC_LANG_PROGRAM([#include <ruby.h>],
+                                 [VALUE load_path; ruby_init(); load_path = rb_get_load_path()])], 
+                [AC_DEFINE(HAVE_RB_GET_LOAD_PATH)
                  AC_MSG_RESULT(yes)
                 ],
                  AC_MSG_RESULT(no)

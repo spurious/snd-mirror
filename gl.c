@@ -151,6 +151,7 @@ XL_TYPE_PTR_1(GLvoid_, GLvoid*)
 XL_TYPE_PTR(void_, void*)
 XL_TYPE_PTR_1(GLuint_, GLuint*)
 XL_TYPE_PTR_1(GLboolean_, GLboolean*)
+XL_TYPE_PTR(GLUnurbs_, GLUnurbs*)
 #ifdef GLU_VERSION_1_2
 XL_TYPE_PTR(GLUtesselator_, GLUtesselator*)
 #endif
@@ -3203,6 +3204,14 @@ GLsizei height, GLenum format, GLenum type, GLvoid* row, GLvoid* column)"
 }
 
 #if HAVE_GLU
+static XEN gxg_gluBeginCurve(XEN nurb)
+{
+  #define H_gluBeginCurve "void gluBeginCurve(GLUnurbs* nurb)"
+  XEN_ASSERT_TYPE(XEN_GLUnurbs__P(nurb), nurb, 1, "gluBeginCurve", "GLUnurbs*");
+  gluBeginCurve(XEN_TO_C_GLUnurbs_(nurb));
+  return(XEN_FALSE);
+}
+
 #ifdef GLU_VERSION_1_2
 static XEN gxg_gluBeginPolygon(XEN tess)
 {
@@ -3212,6 +3221,40 @@ static XEN gxg_gluBeginPolygon(XEN tess)
   return(XEN_FALSE);
 }
 #endif
+
+static XEN gxg_gluBeginSurface(XEN nurb)
+{
+  #define H_gluBeginSurface "void gluBeginSurface(GLUnurbs* nurb)"
+  XEN_ASSERT_TYPE(XEN_GLUnurbs__P(nurb), nurb, 1, "gluBeginSurface", "GLUnurbs*");
+  gluBeginSurface(XEN_TO_C_GLUnurbs_(nurb));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gluBeginTrim(XEN nurb)
+{
+  #define H_gluBeginTrim "void gluBeginTrim(GLUnurbs* nurb)"
+  XEN_ASSERT_TYPE(XEN_GLUnurbs__P(nurb), nurb, 1, "gluBeginTrim", "GLUnurbs*");
+  gluBeginTrim(XEN_TO_C_GLUnurbs_(nurb));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gluBuild1DMipmapLevels(XEN target, XEN internalFormat, XEN width, XEN format, XEN type, XEN level, XEN base, XEN max, XEN data)
+{
+  #define H_gluBuild1DMipmapLevels "GLint gluBuild1DMipmapLevels(GLenum target, GLint internalFormat, \
+GLsizei width, GLenum format, GLenum type, GLint level, GLint base, GLint max, void* data)"
+  XEN_ASSERT_TYPE(XEN_GLenum_P(target), target, 1, "gluBuild1DMipmapLevels", "GLenum");
+  XEN_ASSERT_TYPE(XEN_GLint_P(internalFormat), internalFormat, 2, "gluBuild1DMipmapLevels", "GLint");
+  XEN_ASSERT_TYPE(XEN_GLsizei_P(width), width, 3, "gluBuild1DMipmapLevels", "GLsizei");
+  XEN_ASSERT_TYPE(XEN_GLenum_P(format), format, 4, "gluBuild1DMipmapLevels", "GLenum");
+  XEN_ASSERT_TYPE(XEN_GLenum_P(type), type, 5, "gluBuild1DMipmapLevels", "GLenum");
+  XEN_ASSERT_TYPE(XEN_GLint_P(level), level, 6, "gluBuild1DMipmapLevels", "GLint");
+  XEN_ASSERT_TYPE(XEN_GLint_P(base), base, 7, "gluBuild1DMipmapLevels", "GLint");
+  XEN_ASSERT_TYPE(XEN_GLint_P(max), max, 8, "gluBuild1DMipmapLevels", "GLint");
+  XEN_ASSERT_TYPE(XEN_void__P(data), data, 9, "gluBuild1DMipmapLevels", "void*");
+  return(C_TO_XEN_GLint(gluBuild1DMipmapLevels(XEN_TO_C_GLenum(target), XEN_TO_C_GLint(internalFormat), XEN_TO_C_GLsizei(width), 
+                                               XEN_TO_C_GLenum(format), XEN_TO_C_GLenum(type), XEN_TO_C_GLint(level), XEN_TO_C_GLint(base), 
+                                               XEN_TO_C_GLint(max), XEN_TO_C_void_(data))));
+}
 
 static XEN gxg_gluBuild1DMipmaps(XEN target, XEN internalFormat, XEN width, XEN format, XEN type, XEN data)
 {
@@ -3225,6 +3268,36 @@ GLenum format, GLenum type, void* data)"
   XEN_ASSERT_TYPE(XEN_void__P(data), data, 6, "gluBuild1DMipmaps", "void*");
   return(C_TO_XEN_GLint(gluBuild1DMipmaps(XEN_TO_C_GLenum(target), XEN_TO_C_GLint(internalFormat), XEN_TO_C_GLsizei(width), 
                                           XEN_TO_C_GLenum(format), XEN_TO_C_GLenum(type), XEN_TO_C_void_(data))));
+}
+
+static XEN gxg_gluBuild2DMipmapLevels(XEN arglist)
+{
+  #define H_gluBuild2DMipmapLevels "GLint gluBuild2DMipmapLevels(GLenum target, GLint internalFormat, \
+GLsizei width, GLsizei height, GLenum format, GLenum type, GLint level, GLint base, GLint max, void* data)"
+  XEN target, internalFormat, width, height, format, type, level, base, max, data;
+  target = XEN_LIST_REF(arglist, 0);
+  internalFormat = XEN_LIST_REF(arglist, 1);
+  width = XEN_LIST_REF(arglist, 2);
+  height = XEN_LIST_REF(arglist, 3);
+  format = XEN_LIST_REF(arglist, 4);
+  type = XEN_LIST_REF(arglist, 5);
+  level = XEN_LIST_REF(arglist, 6);
+  base = XEN_LIST_REF(arglist, 7);
+  max = XEN_LIST_REF(arglist, 8);
+  data = XEN_LIST_REF(arglist, 9);
+  XEN_ASSERT_TYPE(XEN_GLenum_P(target), target, 1, "gluBuild2DMipmapLevels", "GLenum");
+  XEN_ASSERT_TYPE(XEN_GLint_P(internalFormat), internalFormat, 2, "gluBuild2DMipmapLevels", "GLint");
+  XEN_ASSERT_TYPE(XEN_GLsizei_P(width), width, 3, "gluBuild2DMipmapLevels", "GLsizei");
+  XEN_ASSERT_TYPE(XEN_GLsizei_P(height), height, 4, "gluBuild2DMipmapLevels", "GLsizei");
+  XEN_ASSERT_TYPE(XEN_GLenum_P(format), format, 5, "gluBuild2DMipmapLevels", "GLenum");
+  XEN_ASSERT_TYPE(XEN_GLenum_P(type), type, 6, "gluBuild2DMipmapLevels", "GLenum");
+  XEN_ASSERT_TYPE(XEN_GLint_P(level), level, 7, "gluBuild2DMipmapLevels", "GLint");
+  XEN_ASSERT_TYPE(XEN_GLint_P(base), base, 8, "gluBuild2DMipmapLevels", "GLint");
+  XEN_ASSERT_TYPE(XEN_GLint_P(max), max, 9, "gluBuild2DMipmapLevels", "GLint");
+  XEN_ASSERT_TYPE(XEN_void__P(data), data, 10, "gluBuild2DMipmapLevels", "void*");
+  return(C_TO_XEN_GLint(gluBuild2DMipmapLevels(XEN_TO_C_GLenum(target), XEN_TO_C_GLint(internalFormat), XEN_TO_C_GLsizei(width), 
+                                               XEN_TO_C_GLsizei(height), XEN_TO_C_GLenum(format), XEN_TO_C_GLenum(type), 
+                                               XEN_TO_C_GLint(level), XEN_TO_C_GLint(base), XEN_TO_C_GLint(max), XEN_TO_C_void_(data))));
 }
 
 static XEN gxg_gluBuild2DMipmaps(XEN target, XEN internalFormat, XEN width, XEN height, XEN format, XEN type, XEN data)
@@ -3242,6 +3315,65 @@ GLsizei height, GLenum format, GLenum type, void* data)"
                                           XEN_TO_C_GLsizei(height), XEN_TO_C_GLenum(format), XEN_TO_C_GLenum(type), XEN_TO_C_void_(data))));
 }
 
+static XEN gxg_gluBuild3DMipmapLevels(XEN arglist)
+{
+  #define H_gluBuild3DMipmapLevels "GLint gluBuild3DMipmapLevels(GLenum target, GLint internalFormat, \
+GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, GLint level, GLint base, GLint max, \
+void* data)"
+  XEN target, internalFormat, width, height, depth, format, type, level, base, max, data;
+  target = XEN_LIST_REF(arglist, 0);
+  internalFormat = XEN_LIST_REF(arglist, 1);
+  width = XEN_LIST_REF(arglist, 2);
+  height = XEN_LIST_REF(arglist, 3);
+  depth = XEN_LIST_REF(arglist, 4);
+  format = XEN_LIST_REF(arglist, 5);
+  type = XEN_LIST_REF(arglist, 6);
+  level = XEN_LIST_REF(arglist, 7);
+  base = XEN_LIST_REF(arglist, 8);
+  max = XEN_LIST_REF(arglist, 9);
+  data = XEN_LIST_REF(arglist, 10);
+  XEN_ASSERT_TYPE(XEN_GLenum_P(target), target, 1, "gluBuild3DMipmapLevels", "GLenum");
+  XEN_ASSERT_TYPE(XEN_GLint_P(internalFormat), internalFormat, 2, "gluBuild3DMipmapLevels", "GLint");
+  XEN_ASSERT_TYPE(XEN_GLsizei_P(width), width, 3, "gluBuild3DMipmapLevels", "GLsizei");
+  XEN_ASSERT_TYPE(XEN_GLsizei_P(height), height, 4, "gluBuild3DMipmapLevels", "GLsizei");
+  XEN_ASSERT_TYPE(XEN_GLsizei_P(depth), depth, 5, "gluBuild3DMipmapLevels", "GLsizei");
+  XEN_ASSERT_TYPE(XEN_GLenum_P(format), format, 6, "gluBuild3DMipmapLevels", "GLenum");
+  XEN_ASSERT_TYPE(XEN_GLenum_P(type), type, 7, "gluBuild3DMipmapLevels", "GLenum");
+  XEN_ASSERT_TYPE(XEN_GLint_P(level), level, 8, "gluBuild3DMipmapLevels", "GLint");
+  XEN_ASSERT_TYPE(XEN_GLint_P(base), base, 9, "gluBuild3DMipmapLevels", "GLint");
+  XEN_ASSERT_TYPE(XEN_GLint_P(max), max, 10, "gluBuild3DMipmapLevels", "GLint");
+  XEN_ASSERT_TYPE(XEN_void__P(data), data, 11, "gluBuild3DMipmapLevels", "void*");
+  return(C_TO_XEN_GLint(gluBuild3DMipmapLevels(XEN_TO_C_GLenum(target), XEN_TO_C_GLint(internalFormat), XEN_TO_C_GLsizei(width), 
+                                               XEN_TO_C_GLsizei(height), XEN_TO_C_GLsizei(depth), XEN_TO_C_GLenum(format), 
+                                               XEN_TO_C_GLenum(type), XEN_TO_C_GLint(level), XEN_TO_C_GLint(base), XEN_TO_C_GLint(max), 
+                                               XEN_TO_C_void_(data))));
+}
+
+static XEN gxg_gluBuild3DMipmaps(XEN target, XEN internalFormat, XEN width, XEN height, XEN depth, XEN format, XEN type, XEN data)
+{
+  #define H_gluBuild3DMipmaps "GLint gluBuild3DMipmaps(GLenum target, GLint internalFormat, GLsizei width, \
+GLsizei height, GLsizei depth, GLenum format, GLenum type, void* data)"
+  XEN_ASSERT_TYPE(XEN_GLenum_P(target), target, 1, "gluBuild3DMipmaps", "GLenum");
+  XEN_ASSERT_TYPE(XEN_GLint_P(internalFormat), internalFormat, 2, "gluBuild3DMipmaps", "GLint");
+  XEN_ASSERT_TYPE(XEN_GLsizei_P(width), width, 3, "gluBuild3DMipmaps", "GLsizei");
+  XEN_ASSERT_TYPE(XEN_GLsizei_P(height), height, 4, "gluBuild3DMipmaps", "GLsizei");
+  XEN_ASSERT_TYPE(XEN_GLsizei_P(depth), depth, 5, "gluBuild3DMipmaps", "GLsizei");
+  XEN_ASSERT_TYPE(XEN_GLenum_P(format), format, 6, "gluBuild3DMipmaps", "GLenum");
+  XEN_ASSERT_TYPE(XEN_GLenum_P(type), type, 7, "gluBuild3DMipmaps", "GLenum");
+  XEN_ASSERT_TYPE(XEN_void__P(data), data, 8, "gluBuild3DMipmaps", "void*");
+  return(C_TO_XEN_GLint(gluBuild3DMipmaps(XEN_TO_C_GLenum(target), XEN_TO_C_GLint(internalFormat), XEN_TO_C_GLsizei(width), 
+                                          XEN_TO_C_GLsizei(height), XEN_TO_C_GLsizei(depth), XEN_TO_C_GLenum(format), XEN_TO_C_GLenum(type), 
+                                          XEN_TO_C_void_(data))));
+}
+
+static XEN gxg_gluCheckExtension(XEN extName, XEN extString)
+{
+  #define H_gluCheckExtension "GLboolean gluCheckExtension(GLubyte* extName, GLubyte* extString)"
+  XEN_ASSERT_TYPE(XEN_GLubyte__P(extName), extName, 1, "gluCheckExtension", "GLubyte*");
+  XEN_ASSERT_TYPE(XEN_GLubyte__P(extString), extString, 2, "gluCheckExtension", "GLubyte*");
+  return(C_TO_XEN_GLboolean(gluCheckExtension(XEN_TO_C_GLubyte_(extName), XEN_TO_C_GLubyte_(extString))));
+}
+
 static XEN gxg_gluCylinder(XEN quad, XEN base, XEN top, XEN height, XEN slices, XEN stacks)
 {
   #define H_gluCylinder "void gluCylinder(GLUquadric* quad, GLdouble base, GLdouble top, GLdouble height, \
@@ -3254,6 +3386,14 @@ GLint slices, GLint stacks)"
   XEN_ASSERT_TYPE(XEN_GLint_P(stacks), stacks, 6, "gluCylinder", "GLint");
   gluCylinder(XEN_TO_C_GLUquadric_(quad), XEN_TO_C_GLdouble(base), XEN_TO_C_GLdouble(top), XEN_TO_C_GLdouble(height), XEN_TO_C_GLint(slices), 
               XEN_TO_C_GLint(stacks));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gluDeleteNurbsRenderer(XEN nurb)
+{
+  #define H_gluDeleteNurbsRenderer "void gluDeleteNurbsRenderer(GLUnurbs* nurb)"
+  XEN_ASSERT_TYPE(XEN_GLUnurbs__P(nurb), nurb, 1, "gluDeleteNurbsRenderer", "GLUnurbs*");
+  gluDeleteNurbsRenderer(XEN_TO_C_GLUnurbs_(nurb));
   return(XEN_FALSE);
 }
 
@@ -3287,6 +3427,14 @@ static XEN gxg_gluDisk(XEN quad, XEN inner, XEN outer, XEN slices, XEN loops)
   return(XEN_FALSE);
 }
 
+static XEN gxg_gluEndCurve(XEN nurb)
+{
+  #define H_gluEndCurve "void gluEndCurve(GLUnurbs* nurb)"
+  XEN_ASSERT_TYPE(XEN_GLUnurbs__P(nurb), nurb, 1, "gluEndCurve", "GLUnurbs*");
+  gluEndCurve(XEN_TO_C_GLUnurbs_(nurb));
+  return(XEN_FALSE);
+}
+
 #ifdef GLU_VERSION_1_2
 static XEN gxg_gluEndPolygon(XEN tess)
 {
@@ -3297,11 +3445,37 @@ static XEN gxg_gluEndPolygon(XEN tess)
 }
 #endif
 
+static XEN gxg_gluEndSurface(XEN nurb)
+{
+  #define H_gluEndSurface "void gluEndSurface(GLUnurbs* nurb)"
+  XEN_ASSERT_TYPE(XEN_GLUnurbs__P(nurb), nurb, 1, "gluEndSurface", "GLUnurbs*");
+  gluEndSurface(XEN_TO_C_GLUnurbs_(nurb));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gluEndTrim(XEN nurb)
+{
+  #define H_gluEndTrim "void gluEndTrim(GLUnurbs* nurb)"
+  XEN_ASSERT_TYPE(XEN_GLUnurbs__P(nurb), nurb, 1, "gluEndTrim", "GLUnurbs*");
+  gluEndTrim(XEN_TO_C_GLUnurbs_(nurb));
+  return(XEN_FALSE);
+}
+
 static XEN gxg_gluErrorString(XEN error)
 {
   #define H_gluErrorString "constchar* gluErrorString(GLenum error)"
   XEN_ASSERT_TYPE(XEN_GLenum_P(error), error, 1, "gluErrorString", "GLenum");
   return(C_TO_XEN_constchar_(gluErrorString(XEN_TO_C_GLenum(error))));
+}
+
+static XEN gxg_gluGetNurbsProperty(XEN nurb, XEN property, XEN data)
+{
+  #define H_gluGetNurbsProperty "void gluGetNurbsProperty(GLUnurbs* nurb, GLenum property, GLfloat* data)"
+  XEN_ASSERT_TYPE(XEN_GLUnurbs__P(nurb), nurb, 1, "gluGetNurbsProperty", "GLUnurbs*");
+  XEN_ASSERT_TYPE(XEN_GLenum_P(property), property, 2, "gluGetNurbsProperty", "GLenum");
+  XEN_ASSERT_TYPE(XEN_GLfloat__P(data), data, 3, "gluGetNurbsProperty", "GLfloat*");
+  gluGetNurbsProperty(XEN_TO_C_GLUnurbs_(nurb), XEN_TO_C_GLenum(property), XEN_TO_C_GLfloat_(data));
+  return(XEN_FALSE);
 }
 
 static XEN gxg_gluGetString(XEN name)
@@ -3323,6 +3497,18 @@ static XEN gxg_gluGetTessProperty(XEN tess, XEN which, XEN data)
 }
 #endif
 
+static XEN gxg_gluLoadSamplingMatrices(XEN nurb, XEN model, XEN perspective, XEN view)
+{
+  #define H_gluLoadSamplingMatrices "void gluLoadSamplingMatrices(GLUnurbs* nurb, GLfloat* model, GLfloat* perspective, \
+GLint* view)"
+  XEN_ASSERT_TYPE(XEN_GLUnurbs__P(nurb), nurb, 1, "gluLoadSamplingMatrices", "GLUnurbs*");
+  XEN_ASSERT_TYPE(XEN_GLfloat__P(model), model, 2, "gluLoadSamplingMatrices", "GLfloat*");
+  XEN_ASSERT_TYPE(XEN_GLfloat__P(perspective), perspective, 3, "gluLoadSamplingMatrices", "GLfloat*");
+  XEN_ASSERT_TYPE(XEN_GLint__P(view), view, 4, "gluLoadSamplingMatrices", "GLint*");
+  gluLoadSamplingMatrices(XEN_TO_C_GLUnurbs_(nurb), XEN_TO_C_GLfloat_(model), XEN_TO_C_GLfloat_(perspective), XEN_TO_C_GLint_(view));
+  return(XEN_FALSE);
+}
+
 static XEN gxg_gluLookAt(XEN eyeX, XEN eyeY, XEN eyeZ, XEN centerX, XEN centerY, XEN centerZ, XEN upX, XEN upY, XEN upZ)
 {
   #define H_gluLookAt "void gluLookAt(GLdouble eyeX, GLdouble eyeY, GLdouble eyeZ, GLdouble centerX, \
@@ -3339,6 +3525,12 @@ GLdouble centerY, GLdouble centerZ, GLdouble upX, GLdouble upY, GLdouble upZ)"
   gluLookAt(XEN_TO_C_GLdouble(eyeX), XEN_TO_C_GLdouble(eyeY), XEN_TO_C_GLdouble(eyeZ), XEN_TO_C_GLdouble(centerX), XEN_TO_C_GLdouble(centerY), 
             XEN_TO_C_GLdouble(centerZ), XEN_TO_C_GLdouble(upX), XEN_TO_C_GLdouble(upY), XEN_TO_C_GLdouble(upZ));
   return(XEN_FALSE);
+}
+
+static XEN gxg_gluNewNurbsRenderer(void)
+{
+  #define H_gluNewNurbsRenderer "GLUnurbs* gluNewNurbsRenderer( void)"
+  return(C_TO_XEN_GLUnurbs_(gluNewNurbsRenderer()));
 }
 
 static XEN gxg_gluNewQuadric(void)
@@ -3365,6 +3557,94 @@ static XEN gxg_gluNextContour(XEN tess, XEN type)
   return(XEN_FALSE);
 }
 #endif
+
+static XEN gxg_gluNurbsCallback(XEN nurb, XEN which, XEN CallBackFunc)
+{
+  #define H_gluNurbsCallback "void gluNurbsCallback(GLUnurbs* nurb, GLenum which, _GLUfuncptr CallBackFunc)"
+  XEN_ASSERT_TYPE(XEN_GLUnurbs__P(nurb), nurb, 1, "gluNurbsCallback", "GLUnurbs*");
+  XEN_ASSERT_TYPE(XEN_GLenum_P(which), which, 2, "gluNurbsCallback", "GLenum");
+  XEN_ASSERT_TYPE(XEN__GLUfuncptr_P(CallBackFunc), CallBackFunc, 3, "gluNurbsCallback", "_GLUfuncptr");
+  gluNurbsCallback(XEN_TO_C_GLUnurbs_(nurb), XEN_TO_C_GLenum(which), XEN_TO_C__GLUfuncptr(CallBackFunc));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gluNurbsCallbackData(XEN nurb, XEN userData)
+{
+  #define H_gluNurbsCallbackData "void gluNurbsCallbackData(GLUnurbs* nurb, GLvoid* userData)"
+  XEN_ASSERT_TYPE(XEN_GLUnurbs__P(nurb), nurb, 1, "gluNurbsCallbackData", "GLUnurbs*");
+  XEN_ASSERT_TYPE(XEN_GLvoid__P(userData), userData, 2, "gluNurbsCallbackData", "GLvoid*");
+  gluNurbsCallbackData(XEN_TO_C_GLUnurbs_(nurb), XEN_TO_C_GLvoid_(userData));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gluNurbsCallbackDataEXT(XEN nurb, XEN userData)
+{
+  #define H_gluNurbsCallbackDataEXT "void gluNurbsCallbackDataEXT(GLUnurbs* nurb, GLvoid* userData)"
+  XEN_ASSERT_TYPE(XEN_GLUnurbs__P(nurb), nurb, 1, "gluNurbsCallbackDataEXT", "GLUnurbs*");
+  XEN_ASSERT_TYPE(XEN_GLvoid__P(userData), userData, 2, "gluNurbsCallbackDataEXT", "GLvoid*");
+  gluNurbsCallbackDataEXT(XEN_TO_C_GLUnurbs_(nurb), XEN_TO_C_GLvoid_(userData));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gluNurbsCurve(XEN nurb, XEN knotCount, XEN knots, XEN stride, XEN control, XEN order, XEN type)
+{
+  #define H_gluNurbsCurve "void gluNurbsCurve(GLUnurbs* nurb, GLint knotCount, GLfloat* knots, GLint stride, \
+GLfloat* control, GLint order, GLenum type)"
+  XEN_ASSERT_TYPE(XEN_GLUnurbs__P(nurb), nurb, 1, "gluNurbsCurve", "GLUnurbs*");
+  XEN_ASSERT_TYPE(XEN_GLint_P(knotCount), knotCount, 2, "gluNurbsCurve", "GLint");
+  XEN_ASSERT_TYPE(XEN_GLfloat__P(knots), knots, 3, "gluNurbsCurve", "GLfloat*");
+  XEN_ASSERT_TYPE(XEN_GLint_P(stride), stride, 4, "gluNurbsCurve", "GLint");
+  XEN_ASSERT_TYPE(XEN_GLfloat__P(control), control, 5, "gluNurbsCurve", "GLfloat*");
+  XEN_ASSERT_TYPE(XEN_GLint_P(order), order, 6, "gluNurbsCurve", "GLint");
+  XEN_ASSERT_TYPE(XEN_GLenum_P(type), type, 7, "gluNurbsCurve", "GLenum");
+  gluNurbsCurve(XEN_TO_C_GLUnurbs_(nurb), XEN_TO_C_GLint(knotCount), XEN_TO_C_GLfloat_(knots), XEN_TO_C_GLint(stride), XEN_TO_C_GLfloat_(control), 
+                XEN_TO_C_GLint(order), XEN_TO_C_GLenum(type));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gluNurbsProperty(XEN nurb, XEN property, XEN value)
+{
+  #define H_gluNurbsProperty "void gluNurbsProperty(GLUnurbs* nurb, GLenum property, GLfloat value)"
+  XEN_ASSERT_TYPE(XEN_GLUnurbs__P(nurb), nurb, 1, "gluNurbsProperty", "GLUnurbs*");
+  XEN_ASSERT_TYPE(XEN_GLenum_P(property), property, 2, "gluNurbsProperty", "GLenum");
+  XEN_ASSERT_TYPE(XEN_GLfloat_P(value), value, 3, "gluNurbsProperty", "GLfloat");
+  gluNurbsProperty(XEN_TO_C_GLUnurbs_(nurb), XEN_TO_C_GLenum(property), XEN_TO_C_GLfloat(value));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gluNurbsSurface(XEN arglist)
+{
+  #define H_gluNurbsSurface "void gluNurbsSurface(GLUnurbs* nurb, GLint sKnotCount, GLfloat* sKnots, \
+GLint tKnotCount, GLfloat* tKnots, GLint sStride, GLint tStride, GLfloat* control, GLint sOrder, GLint tOrder, \
+GLenum type)"
+  XEN nurb, sKnotCount, sKnots, tKnotCount, tKnots, sStride, tStride, control, sOrder, tOrder, type;
+  nurb = XEN_LIST_REF(arglist, 0);
+  sKnotCount = XEN_LIST_REF(arglist, 1);
+  sKnots = XEN_LIST_REF(arglist, 2);
+  tKnotCount = XEN_LIST_REF(arglist, 3);
+  tKnots = XEN_LIST_REF(arglist, 4);
+  sStride = XEN_LIST_REF(arglist, 5);
+  tStride = XEN_LIST_REF(arglist, 6);
+  control = XEN_LIST_REF(arglist, 7);
+  sOrder = XEN_LIST_REF(arglist, 8);
+  tOrder = XEN_LIST_REF(arglist, 9);
+  type = XEN_LIST_REF(arglist, 10);
+  XEN_ASSERT_TYPE(XEN_GLUnurbs__P(nurb), nurb, 1, "gluNurbsSurface", "GLUnurbs*");
+  XEN_ASSERT_TYPE(XEN_GLint_P(sKnotCount), sKnotCount, 2, "gluNurbsSurface", "GLint");
+  XEN_ASSERT_TYPE(XEN_GLfloat__P(sKnots), sKnots, 3, "gluNurbsSurface", "GLfloat*");
+  XEN_ASSERT_TYPE(XEN_GLint_P(tKnotCount), tKnotCount, 4, "gluNurbsSurface", "GLint");
+  XEN_ASSERT_TYPE(XEN_GLfloat__P(tKnots), tKnots, 5, "gluNurbsSurface", "GLfloat*");
+  XEN_ASSERT_TYPE(XEN_GLint_P(sStride), sStride, 6, "gluNurbsSurface", "GLint");
+  XEN_ASSERT_TYPE(XEN_GLint_P(tStride), tStride, 7, "gluNurbsSurface", "GLint");
+  XEN_ASSERT_TYPE(XEN_GLfloat__P(control), control, 8, "gluNurbsSurface", "GLfloat*");
+  XEN_ASSERT_TYPE(XEN_GLint_P(sOrder), sOrder, 9, "gluNurbsSurface", "GLint");
+  XEN_ASSERT_TYPE(XEN_GLint_P(tOrder), tOrder, 10, "gluNurbsSurface", "GLint");
+  XEN_ASSERT_TYPE(XEN_GLenum_P(type), type, 11, "gluNurbsSurface", "GLenum");
+  gluNurbsSurface(XEN_TO_C_GLUnurbs_(nurb), XEN_TO_C_GLint(sKnotCount), XEN_TO_C_GLfloat_(sKnots), XEN_TO_C_GLint(tKnotCount), 
+                  XEN_TO_C_GLfloat_(tKnots), XEN_TO_C_GLint(sStride), XEN_TO_C_GLint(tStride), XEN_TO_C_GLfloat_(control), 
+                  XEN_TO_C_GLint(sOrder), XEN_TO_C_GLint(tOrder), XEN_TO_C_GLenum(type));
+  return(xen_return_first(XEN_FALSE, arglist));
+}
 
 static XEN gxg_gluOrtho2D(XEN left, XEN right, XEN bottom, XEN top)
 {
@@ -3419,19 +3699,34 @@ static XEN gxg_gluPickMatrix(XEN x, XEN y, XEN delX, XEN delY, XEN viewport)
 static XEN gxg_gluProject(XEN objX, XEN objY, XEN objZ, XEN model, XEN proj, XEN view, XEN winX, XEN winY, XEN winZ)
 {
   #define H_gluProject "GLint gluProject(GLdouble objX, GLdouble objY, GLdouble objZ, GLdouble* model, \
-GLdouble* proj, GLint* view, GLdouble* winX, GLdouble* winY, GLdouble* winZ)"
+GLdouble* proj, GLint* view, GLdouble* [winX], GLdouble* [winY], GLdouble* [winZ])"
+  GLdouble ref_winX[1];
+  GLdouble ref_winY[1];
+  GLdouble ref_winZ[1];
   XEN_ASSERT_TYPE(XEN_GLdouble_P(objX), objX, 1, "gluProject", "GLdouble");
   XEN_ASSERT_TYPE(XEN_GLdouble_P(objY), objY, 2, "gluProject", "GLdouble");
   XEN_ASSERT_TYPE(XEN_GLdouble_P(objZ), objZ, 3, "gluProject", "GLdouble");
   XEN_ASSERT_TYPE(XEN_GLdouble__P(model), model, 4, "gluProject", "GLdouble*");
   XEN_ASSERT_TYPE(XEN_GLdouble__P(proj), proj, 5, "gluProject", "GLdouble*");
   XEN_ASSERT_TYPE(XEN_GLint__P(view), view, 6, "gluProject", "GLint*");
-  XEN_ASSERT_TYPE(XEN_GLdouble__P(winX), winX, 7, "gluProject", "GLdouble*");
-  XEN_ASSERT_TYPE(XEN_GLdouble__P(winY), winY, 8, "gluProject", "GLdouble*");
-  XEN_ASSERT_TYPE(XEN_GLdouble__P(winZ), winZ, 9, "gluProject", "GLdouble*");
-  return(C_TO_XEN_GLint(gluProject(XEN_TO_C_GLdouble(objX), XEN_TO_C_GLdouble(objY), XEN_TO_C_GLdouble(objZ), XEN_TO_C_GLdouble_(model), 
-                                   XEN_TO_C_GLdouble_(proj), XEN_TO_C_GLint_(view), XEN_TO_C_GLdouble_(winX), XEN_TO_C_GLdouble_(winY), 
-                                   XEN_TO_C_GLdouble_(winZ))));
+  {
+    XEN result = XEN_FALSE;
+    result = C_TO_XEN_GLint(gluProject(XEN_TO_C_GLdouble(objX), XEN_TO_C_GLdouble(objY), XEN_TO_C_GLdouble(objZ), XEN_TO_C_GLdouble_(model), 
+                                       XEN_TO_C_GLdouble_(proj), XEN_TO_C_GLint_(view), ref_winX, ref_winY, ref_winZ));
+    return(XEN_LIST_4(result, C_TO_XEN_GLdouble(ref_winX[0]), C_TO_XEN_GLdouble(ref_winY[0]), C_TO_XEN_GLdouble(ref_winZ[0])));
+   }
+}
+
+static XEN gxg_gluPwlCurve(XEN nurb, XEN count, XEN data, XEN stride, XEN type)
+{
+  #define H_gluPwlCurve "void gluPwlCurve(GLUnurbs* nurb, GLint count, GLfloat* data, GLint stride, GLenum type)"
+  XEN_ASSERT_TYPE(XEN_GLUnurbs__P(nurb), nurb, 1, "gluPwlCurve", "GLUnurbs*");
+  XEN_ASSERT_TYPE(XEN_GLint_P(count), count, 2, "gluPwlCurve", "GLint");
+  XEN_ASSERT_TYPE(XEN_GLfloat__P(data), data, 3, "gluPwlCurve", "GLfloat*");
+  XEN_ASSERT_TYPE(XEN_GLint_P(stride), stride, 4, "gluPwlCurve", "GLint");
+  XEN_ASSERT_TYPE(XEN_GLenum_P(type), type, 5, "gluPwlCurve", "GLenum");
+  gluPwlCurve(XEN_TO_C_GLUnurbs_(nurb), XEN_TO_C_GLint(count), XEN_TO_C_GLfloat_(data), XEN_TO_C_GLint(stride), XEN_TO_C_GLenum(type));
+  return(XEN_FALSE);
 }
 
 static XEN gxg_gluQuadricCallback(XEN quad, XEN which, XEN CallBackFunc)
@@ -3530,6 +3825,16 @@ static XEN gxg_gluTessBeginPolygon(XEN tess, XEN data)
 }
 #endif
 
+static XEN gxg_gluTessCallback(XEN tess, XEN which, XEN CallBackFunc)
+{
+  #define H_gluTessCallback "void gluTessCallback(GLUtesselator* tess, GLenum which, _GLUfuncptr CallBackFunc)"
+  XEN_ASSERT_TYPE(XEN_GLUtesselator__P(tess), tess, 1, "gluTessCallback", "GLUtesselator*");
+  XEN_ASSERT_TYPE(XEN_GLenum_P(which), which, 2, "gluTessCallback", "GLenum");
+  XEN_ASSERT_TYPE(XEN__GLUfuncptr_P(CallBackFunc), CallBackFunc, 3, "gluTessCallback", "_GLUfuncptr");
+  gluTessCallback(XEN_TO_C_GLUtesselator_(tess), XEN_TO_C_GLenum(which), XEN_TO_C__GLUfuncptr(CallBackFunc));
+  return(XEN_FALSE);
+}
+
 #ifdef GLU_VERSION_1_2
 static XEN gxg_gluTessEndContour(XEN tess)
 {
@@ -3591,19 +3896,59 @@ static XEN gxg_gluTessVertex(XEN tess, XEN location, XEN data)
 static XEN gxg_gluUnProject(XEN winX, XEN winY, XEN winZ, XEN model, XEN proj, XEN view, XEN objX, XEN objY, XEN objZ)
 {
   #define H_gluUnProject "GLint gluUnProject(GLdouble winX, GLdouble winY, GLdouble winZ, GLdouble* model, \
-GLdouble* proj, GLint* view, GLdouble* objX, GLdouble* objY, GLdouble* objZ)"
+GLdouble* proj, GLint* view, GLdouble* [objX], GLdouble* [objY], GLdouble* [objZ])"
+  GLdouble ref_objX[1];
+  GLdouble ref_objY[1];
+  GLdouble ref_objZ[1];
   XEN_ASSERT_TYPE(XEN_GLdouble_P(winX), winX, 1, "gluUnProject", "GLdouble");
   XEN_ASSERT_TYPE(XEN_GLdouble_P(winY), winY, 2, "gluUnProject", "GLdouble");
   XEN_ASSERT_TYPE(XEN_GLdouble_P(winZ), winZ, 3, "gluUnProject", "GLdouble");
   XEN_ASSERT_TYPE(XEN_GLdouble__P(model), model, 4, "gluUnProject", "GLdouble*");
   XEN_ASSERT_TYPE(XEN_GLdouble__P(proj), proj, 5, "gluUnProject", "GLdouble*");
   XEN_ASSERT_TYPE(XEN_GLint__P(view), view, 6, "gluUnProject", "GLint*");
-  XEN_ASSERT_TYPE(XEN_GLdouble__P(objX), objX, 7, "gluUnProject", "GLdouble*");
-  XEN_ASSERT_TYPE(XEN_GLdouble__P(objY), objY, 8, "gluUnProject", "GLdouble*");
-  XEN_ASSERT_TYPE(XEN_GLdouble__P(objZ), objZ, 9, "gluUnProject", "GLdouble*");
-  return(C_TO_XEN_GLint(gluUnProject(XEN_TO_C_GLdouble(winX), XEN_TO_C_GLdouble(winY), XEN_TO_C_GLdouble(winZ), XEN_TO_C_GLdouble_(model), 
-                                     XEN_TO_C_GLdouble_(proj), XEN_TO_C_GLint_(view), XEN_TO_C_GLdouble_(objX), XEN_TO_C_GLdouble_(objY), 
-                                     XEN_TO_C_GLdouble_(objZ))));
+  {
+    XEN result = XEN_FALSE;
+    result = C_TO_XEN_GLint(gluUnProject(XEN_TO_C_GLdouble(winX), XEN_TO_C_GLdouble(winY), XEN_TO_C_GLdouble(winZ), XEN_TO_C_GLdouble_(model), 
+                                         XEN_TO_C_GLdouble_(proj), XEN_TO_C_GLint_(view), ref_objX, ref_objY, ref_objZ));
+    return(XEN_LIST_4(result, C_TO_XEN_GLdouble(ref_objX[0]), C_TO_XEN_GLdouble(ref_objY[0]), C_TO_XEN_GLdouble(ref_objZ[0])));
+   }
+}
+
+static XEN gxg_gluUnProject4(XEN arglist)
+{
+  #define H_gluUnProject4 "GLint gluUnProject4(GLdouble winX, GLdouble winY, GLdouble winZ, GLdouble clipW, \
+GLdouble* model, GLdouble* proj, GLint* view, GLdouble near, GLdouble far, GLdouble* [objX], GLdouble* [objY], \
+GLdouble* [objZ], GLdouble* [objW])"
+  GLdouble ref_objX[1];
+  GLdouble ref_objY[1];
+  GLdouble ref_objZ[1];
+  GLdouble ref_objW[1];
+  XEN winX, winY, winZ, clipW, model, proj, view, near, far;
+  winX = XEN_LIST_REF(arglist, 0);
+  winY = XEN_LIST_REF(arglist, 1);
+  winZ = XEN_LIST_REF(arglist, 2);
+  clipW = XEN_LIST_REF(arglist, 3);
+  model = XEN_LIST_REF(arglist, 4);
+  proj = XEN_LIST_REF(arglist, 5);
+  view = XEN_LIST_REF(arglist, 6);
+  near = XEN_LIST_REF(arglist, 7);
+  far = XEN_LIST_REF(arglist, 8);
+  XEN_ASSERT_TYPE(XEN_GLdouble_P(winX), winX, 1, "gluUnProject4", "GLdouble");
+  XEN_ASSERT_TYPE(XEN_GLdouble_P(winY), winY, 2, "gluUnProject4", "GLdouble");
+  XEN_ASSERT_TYPE(XEN_GLdouble_P(winZ), winZ, 3, "gluUnProject4", "GLdouble");
+  XEN_ASSERT_TYPE(XEN_GLdouble_P(clipW), clipW, 4, "gluUnProject4", "GLdouble");
+  XEN_ASSERT_TYPE(XEN_GLdouble__P(model), model, 5, "gluUnProject4", "GLdouble*");
+  XEN_ASSERT_TYPE(XEN_GLdouble__P(proj), proj, 6, "gluUnProject4", "GLdouble*");
+  XEN_ASSERT_TYPE(XEN_GLint__P(view), view, 7, "gluUnProject4", "GLint*");
+  XEN_ASSERT_TYPE(XEN_GLdouble_P(near), near, 8, "gluUnProject4", "GLdouble");
+  XEN_ASSERT_TYPE(XEN_GLdouble_P(far), far, 9, "gluUnProject4", "GLdouble");
+  {
+    XEN result = XEN_FALSE;
+    result = C_TO_XEN_GLint(gluUnProject4(XEN_TO_C_GLdouble(winX), XEN_TO_C_GLdouble(winY), XEN_TO_C_GLdouble(winZ), XEN_TO_C_GLdouble(clipW), 
+                                          XEN_TO_C_GLdouble_(model), XEN_TO_C_GLdouble_(proj), XEN_TO_C_GLint_(view), XEN_TO_C_GLdouble(near), 
+                                          XEN_TO_C_GLdouble(far), ref_objX, ref_objY, ref_objZ, ref_objW));
+    return(XEN_LIST_5(result, C_TO_XEN_GLdouble(ref_objX[0]), C_TO_XEN_GLdouble(ref_objY[0]), C_TO_XEN_GLdouble(ref_objZ[0]), C_TO_XEN_GLdouble(ref_objW[0])));
+   }
 }
 
 #endif
@@ -3900,26 +4245,41 @@ XEN_NARGIFY_5(gxg_glCopyConvolutionFilter1D_w, gxg_glCopyConvolutionFilter1D)
 XEN_NARGIFY_6(gxg_glCopyConvolutionFilter2D_w, gxg_glCopyConvolutionFilter2D)
 XEN_NARGIFY_8(gxg_glSeparableFilter2D_w, gxg_glSeparableFilter2D)
 #if HAVE_GLU
+XEN_NARGIFY_1(gxg_gluBeginCurve_w, gxg_gluBeginCurve)
 #ifdef GLU_VERSION_1_2
 XEN_NARGIFY_1(gxg_gluBeginPolygon_w, gxg_gluBeginPolygon)
 #endif
+XEN_NARGIFY_1(gxg_gluBeginSurface_w, gxg_gluBeginSurface)
+XEN_NARGIFY_1(gxg_gluBeginTrim_w, gxg_gluBeginTrim)
+XEN_NARGIFY_9(gxg_gluBuild1DMipmapLevels_w, gxg_gluBuild1DMipmapLevels)
 XEN_NARGIFY_6(gxg_gluBuild1DMipmaps_w, gxg_gluBuild1DMipmaps)
+XEN_VARGIFY(gxg_gluBuild2DMipmapLevels_w, gxg_gluBuild2DMipmapLevels)
 XEN_NARGIFY_7(gxg_gluBuild2DMipmaps_w, gxg_gluBuild2DMipmaps)
+XEN_VARGIFY(gxg_gluBuild3DMipmapLevels_w, gxg_gluBuild3DMipmapLevels)
+XEN_NARGIFY_8(gxg_gluBuild3DMipmaps_w, gxg_gluBuild3DMipmaps)
+XEN_NARGIFY_2(gxg_gluCheckExtension_w, gxg_gluCheckExtension)
 XEN_NARGIFY_6(gxg_gluCylinder_w, gxg_gluCylinder)
+XEN_NARGIFY_1(gxg_gluDeleteNurbsRenderer_w, gxg_gluDeleteNurbsRenderer)
 XEN_NARGIFY_1(gxg_gluDeleteQuadric_w, gxg_gluDeleteQuadric)
 #ifdef GLU_VERSION_1_2
 XEN_NARGIFY_1(gxg_gluDeleteTess_w, gxg_gluDeleteTess)
 #endif
 XEN_NARGIFY_5(gxg_gluDisk_w, gxg_gluDisk)
+XEN_NARGIFY_1(gxg_gluEndCurve_w, gxg_gluEndCurve)
 #ifdef GLU_VERSION_1_2
 XEN_NARGIFY_1(gxg_gluEndPolygon_w, gxg_gluEndPolygon)
 #endif
+XEN_NARGIFY_1(gxg_gluEndSurface_w, gxg_gluEndSurface)
+XEN_NARGIFY_1(gxg_gluEndTrim_w, gxg_gluEndTrim)
 XEN_NARGIFY_1(gxg_gluErrorString_w, gxg_gluErrorString)
+XEN_NARGIFY_3(gxg_gluGetNurbsProperty_w, gxg_gluGetNurbsProperty)
 XEN_NARGIFY_1(gxg_gluGetString_w, gxg_gluGetString)
 #ifdef GLU_VERSION_1_2
 XEN_NARGIFY_3(gxg_gluGetTessProperty_w, gxg_gluGetTessProperty)
 #endif
+XEN_NARGIFY_4(gxg_gluLoadSamplingMatrices_w, gxg_gluLoadSamplingMatrices)
 XEN_NARGIFY_9(gxg_gluLookAt_w, gxg_gluLookAt)
+XEN_NARGIFY_0(gxg_gluNewNurbsRenderer_w, gxg_gluNewNurbsRenderer)
 XEN_NARGIFY_0(gxg_gluNewQuadric_w, gxg_gluNewQuadric)
 #ifdef GLU_VERSION_1_2
 XEN_NARGIFY_0(gxg_gluNewTess_w, gxg_gluNewTess)
@@ -3927,11 +4287,18 @@ XEN_NARGIFY_0(gxg_gluNewTess_w, gxg_gluNewTess)
 #ifdef GLU_VERSION_1_2
 XEN_NARGIFY_2(gxg_gluNextContour_w, gxg_gluNextContour)
 #endif
+XEN_NARGIFY_3(gxg_gluNurbsCallback_w, gxg_gluNurbsCallback)
+XEN_NARGIFY_2(gxg_gluNurbsCallbackData_w, gxg_gluNurbsCallbackData)
+XEN_NARGIFY_2(gxg_gluNurbsCallbackDataEXT_w, gxg_gluNurbsCallbackDataEXT)
+XEN_NARGIFY_7(gxg_gluNurbsCurve_w, gxg_gluNurbsCurve)
+XEN_NARGIFY_3(gxg_gluNurbsProperty_w, gxg_gluNurbsProperty)
+XEN_VARGIFY(gxg_gluNurbsSurface_w, gxg_gluNurbsSurface)
 XEN_NARGIFY_4(gxg_gluOrtho2D_w, gxg_gluOrtho2D)
 XEN_NARGIFY_7(gxg_gluPartialDisk_w, gxg_gluPartialDisk)
 XEN_NARGIFY_4(gxg_gluPerspective_w, gxg_gluPerspective)
 XEN_NARGIFY_5(gxg_gluPickMatrix_w, gxg_gluPickMatrix)
-XEN_NARGIFY_9(gxg_gluProject_w, gxg_gluProject)
+XEN_ARGIFY_9(gxg_gluProject_w, gxg_gluProject)
+XEN_NARGIFY_5(gxg_gluPwlCurve_w, gxg_gluPwlCurve)
 XEN_NARGIFY_3(gxg_gluQuadricCallback_w, gxg_gluQuadricCallback)
 XEN_NARGIFY_2(gxg_gluQuadricDrawStyle_w, gxg_gluQuadricDrawStyle)
 XEN_NARGIFY_2(gxg_gluQuadricNormals_w, gxg_gluQuadricNormals)
@@ -3945,6 +4312,7 @@ XEN_NARGIFY_1(gxg_gluTessBeginContour_w, gxg_gluTessBeginContour)
 #ifdef GLU_VERSION_1_2
 XEN_NARGIFY_2(gxg_gluTessBeginPolygon_w, gxg_gluTessBeginPolygon)
 #endif
+XEN_NARGIFY_3(gxg_gluTessCallback_w, gxg_gluTessCallback)
 #ifdef GLU_VERSION_1_2
 XEN_NARGIFY_1(gxg_gluTessEndContour_w, gxg_gluTessEndContour)
 #endif
@@ -3960,7 +4328,8 @@ XEN_NARGIFY_3(gxg_gluTessProperty_w, gxg_gluTessProperty)
 #ifdef GLU_VERSION_1_2
 XEN_NARGIFY_3(gxg_gluTessVertex_w, gxg_gluTessVertex)
 #endif
-XEN_NARGIFY_9(gxg_gluUnProject_w, gxg_gluUnProject)
+XEN_ARGIFY_9(gxg_gluUnProject_w, gxg_gluUnProject)
+XEN_VARGIFY(gxg_gluUnProject4_w, gxg_gluUnProject4)
 #endif
 
 #else
@@ -4257,26 +4626,41 @@ XEN_NARGIFY_9(gxg_gluUnProject_w, gxg_gluUnProject)
 #define gxg_glCopyConvolutionFilter2D_w gxg_glCopyConvolutionFilter2D
 #define gxg_glSeparableFilter2D_w gxg_glSeparableFilter2D
 #if HAVE_GLU
+#define gxg_gluBeginCurve_w gxg_gluBeginCurve
 #ifdef GLU_VERSION_1_2
 #define gxg_gluBeginPolygon_w gxg_gluBeginPolygon
 #endif
+#define gxg_gluBeginSurface_w gxg_gluBeginSurface
+#define gxg_gluBeginTrim_w gxg_gluBeginTrim
+#define gxg_gluBuild1DMipmapLevels_w gxg_gluBuild1DMipmapLevels
 #define gxg_gluBuild1DMipmaps_w gxg_gluBuild1DMipmaps
+#define gxg_gluBuild2DMipmapLevels_w gxg_gluBuild2DMipmapLevels
 #define gxg_gluBuild2DMipmaps_w gxg_gluBuild2DMipmaps
+#define gxg_gluBuild3DMipmapLevels_w gxg_gluBuild3DMipmapLevels
+#define gxg_gluBuild3DMipmaps_w gxg_gluBuild3DMipmaps
+#define gxg_gluCheckExtension_w gxg_gluCheckExtension
 #define gxg_gluCylinder_w gxg_gluCylinder
+#define gxg_gluDeleteNurbsRenderer_w gxg_gluDeleteNurbsRenderer
 #define gxg_gluDeleteQuadric_w gxg_gluDeleteQuadric
 #ifdef GLU_VERSION_1_2
 #define gxg_gluDeleteTess_w gxg_gluDeleteTess
 #endif
 #define gxg_gluDisk_w gxg_gluDisk
+#define gxg_gluEndCurve_w gxg_gluEndCurve
 #ifdef GLU_VERSION_1_2
 #define gxg_gluEndPolygon_w gxg_gluEndPolygon
 #endif
+#define gxg_gluEndSurface_w gxg_gluEndSurface
+#define gxg_gluEndTrim_w gxg_gluEndTrim
 #define gxg_gluErrorString_w gxg_gluErrorString
+#define gxg_gluGetNurbsProperty_w gxg_gluGetNurbsProperty
 #define gxg_gluGetString_w gxg_gluGetString
 #ifdef GLU_VERSION_1_2
 #define gxg_gluGetTessProperty_w gxg_gluGetTessProperty
 #endif
+#define gxg_gluLoadSamplingMatrices_w gxg_gluLoadSamplingMatrices
 #define gxg_gluLookAt_w gxg_gluLookAt
+#define gxg_gluNewNurbsRenderer_w gxg_gluNewNurbsRenderer
 #define gxg_gluNewQuadric_w gxg_gluNewQuadric
 #ifdef GLU_VERSION_1_2
 #define gxg_gluNewTess_w gxg_gluNewTess
@@ -4284,11 +4668,18 @@ XEN_NARGIFY_9(gxg_gluUnProject_w, gxg_gluUnProject)
 #ifdef GLU_VERSION_1_2
 #define gxg_gluNextContour_w gxg_gluNextContour
 #endif
+#define gxg_gluNurbsCallback_w gxg_gluNurbsCallback
+#define gxg_gluNurbsCallbackData_w gxg_gluNurbsCallbackData
+#define gxg_gluNurbsCallbackDataEXT_w gxg_gluNurbsCallbackDataEXT
+#define gxg_gluNurbsCurve_w gxg_gluNurbsCurve
+#define gxg_gluNurbsProperty_w gxg_gluNurbsProperty
+#define gxg_gluNurbsSurface_w gxg_gluNurbsSurface
 #define gxg_gluOrtho2D_w gxg_gluOrtho2D
 #define gxg_gluPartialDisk_w gxg_gluPartialDisk
 #define gxg_gluPerspective_w gxg_gluPerspective
 #define gxg_gluPickMatrix_w gxg_gluPickMatrix
 #define gxg_gluProject_w gxg_gluProject
+#define gxg_gluPwlCurve_w gxg_gluPwlCurve
 #define gxg_gluQuadricCallback_w gxg_gluQuadricCallback
 #define gxg_gluQuadricDrawStyle_w gxg_gluQuadricDrawStyle
 #define gxg_gluQuadricNormals_w gxg_gluQuadricNormals
@@ -4302,6 +4693,7 @@ XEN_NARGIFY_9(gxg_gluUnProject_w, gxg_gluUnProject)
 #ifdef GLU_VERSION_1_2
 #define gxg_gluTessBeginPolygon_w gxg_gluTessBeginPolygon
 #endif
+#define gxg_gluTessCallback_w gxg_gluTessCallback
 #ifdef GLU_VERSION_1_2
 #define gxg_gluTessEndContour_w gxg_gluTessEndContour
 #endif
@@ -4318,6 +4710,7 @@ XEN_NARGIFY_9(gxg_gluUnProject_w, gxg_gluUnProject)
 #define gxg_gluTessVertex_w gxg_gluTessVertex
 #endif
 #define gxg_gluUnProject_w gxg_gluUnProject
+#define gxg_gluUnProject4_w gxg_gluUnProject4
 #endif
 #endif
 static void define_functions(void)
@@ -4615,26 +5008,41 @@ static void define_functions(void)
   GL_DEFINE_PROCEDURE(glCopyConvolutionFilter2D, gxg_glCopyConvolutionFilter2D_w, 6, 0, 0, H_glCopyConvolutionFilter2D);
   GL_DEFINE_PROCEDURE(glSeparableFilter2D, gxg_glSeparableFilter2D_w, 8, 0, 0, H_glSeparableFilter2D);
 #if HAVE_GLU
+  GL_DEFINE_PROCEDURE(gluBeginCurve, gxg_gluBeginCurve_w, 1, 0, 0, H_gluBeginCurve);
 #ifdef GLU_VERSION_1_2
   GL_DEFINE_PROCEDURE(gluBeginPolygon, gxg_gluBeginPolygon_w, 1, 0, 0, H_gluBeginPolygon);
 #endif
+  GL_DEFINE_PROCEDURE(gluBeginSurface, gxg_gluBeginSurface_w, 1, 0, 0, H_gluBeginSurface);
+  GL_DEFINE_PROCEDURE(gluBeginTrim, gxg_gluBeginTrim_w, 1, 0, 0, H_gluBeginTrim);
+  GL_DEFINE_PROCEDURE(gluBuild1DMipmapLevels, gxg_gluBuild1DMipmapLevels_w, 9, 0, 0, H_gluBuild1DMipmapLevels);
   GL_DEFINE_PROCEDURE(gluBuild1DMipmaps, gxg_gluBuild1DMipmaps_w, 6, 0, 0, H_gluBuild1DMipmaps);
+  GL_DEFINE_PROCEDURE(gluBuild2DMipmapLevels, gxg_gluBuild2DMipmapLevels_w, 0, 0, 1, H_gluBuild2DMipmapLevels);
   GL_DEFINE_PROCEDURE(gluBuild2DMipmaps, gxg_gluBuild2DMipmaps_w, 7, 0, 0, H_gluBuild2DMipmaps);
+  GL_DEFINE_PROCEDURE(gluBuild3DMipmapLevels, gxg_gluBuild3DMipmapLevels_w, 0, 0, 1, H_gluBuild3DMipmapLevels);
+  GL_DEFINE_PROCEDURE(gluBuild3DMipmaps, gxg_gluBuild3DMipmaps_w, 8, 0, 0, H_gluBuild3DMipmaps);
+  GL_DEFINE_PROCEDURE(gluCheckExtension, gxg_gluCheckExtension_w, 2, 0, 0, H_gluCheckExtension);
   GL_DEFINE_PROCEDURE(gluCylinder, gxg_gluCylinder_w, 6, 0, 0, H_gluCylinder);
+  GL_DEFINE_PROCEDURE(gluDeleteNurbsRenderer, gxg_gluDeleteNurbsRenderer_w, 1, 0, 0, H_gluDeleteNurbsRenderer);
   GL_DEFINE_PROCEDURE(gluDeleteQuadric, gxg_gluDeleteQuadric_w, 1, 0, 0, H_gluDeleteQuadric);
 #ifdef GLU_VERSION_1_2
   GL_DEFINE_PROCEDURE(gluDeleteTess, gxg_gluDeleteTess_w, 1, 0, 0, H_gluDeleteTess);
 #endif
   GL_DEFINE_PROCEDURE(gluDisk, gxg_gluDisk_w, 5, 0, 0, H_gluDisk);
+  GL_DEFINE_PROCEDURE(gluEndCurve, gxg_gluEndCurve_w, 1, 0, 0, H_gluEndCurve);
 #ifdef GLU_VERSION_1_2
   GL_DEFINE_PROCEDURE(gluEndPolygon, gxg_gluEndPolygon_w, 1, 0, 0, H_gluEndPolygon);
 #endif
+  GL_DEFINE_PROCEDURE(gluEndSurface, gxg_gluEndSurface_w, 1, 0, 0, H_gluEndSurface);
+  GL_DEFINE_PROCEDURE(gluEndTrim, gxg_gluEndTrim_w, 1, 0, 0, H_gluEndTrim);
   GL_DEFINE_PROCEDURE(gluErrorString, gxg_gluErrorString_w, 1, 0, 0, H_gluErrorString);
+  GL_DEFINE_PROCEDURE(gluGetNurbsProperty, gxg_gluGetNurbsProperty_w, 3, 0, 0, H_gluGetNurbsProperty);
   GL_DEFINE_PROCEDURE(gluGetString, gxg_gluGetString_w, 1, 0, 0, H_gluGetString);
 #ifdef GLU_VERSION_1_2
   GL_DEFINE_PROCEDURE(gluGetTessProperty, gxg_gluGetTessProperty_w, 3, 0, 0, H_gluGetTessProperty);
 #endif
+  GL_DEFINE_PROCEDURE(gluLoadSamplingMatrices, gxg_gluLoadSamplingMatrices_w, 4, 0, 0, H_gluLoadSamplingMatrices);
   GL_DEFINE_PROCEDURE(gluLookAt, gxg_gluLookAt_w, 9, 0, 0, H_gluLookAt);
+  GL_DEFINE_PROCEDURE(gluNewNurbsRenderer, gxg_gluNewNurbsRenderer_w, 0, 0, 0, H_gluNewNurbsRenderer);
   GL_DEFINE_PROCEDURE(gluNewQuadric, gxg_gluNewQuadric_w, 0, 0, 0, H_gluNewQuadric);
 #ifdef GLU_VERSION_1_2
   GL_DEFINE_PROCEDURE(gluNewTess, gxg_gluNewTess_w, 0, 0, 0, H_gluNewTess);
@@ -4642,11 +5050,18 @@ static void define_functions(void)
 #ifdef GLU_VERSION_1_2
   GL_DEFINE_PROCEDURE(gluNextContour, gxg_gluNextContour_w, 2, 0, 0, H_gluNextContour);
 #endif
+  GL_DEFINE_PROCEDURE(gluNurbsCallback, gxg_gluNurbsCallback_w, 3, 0, 0, H_gluNurbsCallback);
+  GL_DEFINE_PROCEDURE(gluNurbsCallbackData, gxg_gluNurbsCallbackData_w, 2, 0, 0, H_gluNurbsCallbackData);
+  GL_DEFINE_PROCEDURE(gluNurbsCallbackDataEXT, gxg_gluNurbsCallbackDataEXT_w, 2, 0, 0, H_gluNurbsCallbackDataEXT);
+  GL_DEFINE_PROCEDURE(gluNurbsCurve, gxg_gluNurbsCurve_w, 7, 0, 0, H_gluNurbsCurve);
+  GL_DEFINE_PROCEDURE(gluNurbsProperty, gxg_gluNurbsProperty_w, 3, 0, 0, H_gluNurbsProperty);
+  GL_DEFINE_PROCEDURE(gluNurbsSurface, gxg_gluNurbsSurface_w, 0, 0, 1, H_gluNurbsSurface);
   GL_DEFINE_PROCEDURE(gluOrtho2D, gxg_gluOrtho2D_w, 4, 0, 0, H_gluOrtho2D);
   GL_DEFINE_PROCEDURE(gluPartialDisk, gxg_gluPartialDisk_w, 7, 0, 0, H_gluPartialDisk);
   GL_DEFINE_PROCEDURE(gluPerspective, gxg_gluPerspective_w, 4, 0, 0, H_gluPerspective);
   GL_DEFINE_PROCEDURE(gluPickMatrix, gxg_gluPickMatrix_w, 5, 0, 0, H_gluPickMatrix);
-  GL_DEFINE_PROCEDURE(gluProject, gxg_gluProject_w, 9, 0, 0, H_gluProject);
+  GL_DEFINE_PROCEDURE(gluProject, gxg_gluProject_w, 6, 3, 0, H_gluProject);
+  GL_DEFINE_PROCEDURE(gluPwlCurve, gxg_gluPwlCurve_w, 5, 0, 0, H_gluPwlCurve);
   GL_DEFINE_PROCEDURE(gluQuadricCallback, gxg_gluQuadricCallback_w, 3, 0, 0, H_gluQuadricCallback);
   GL_DEFINE_PROCEDURE(gluQuadricDrawStyle, gxg_gluQuadricDrawStyle_w, 2, 0, 0, H_gluQuadricDrawStyle);
   GL_DEFINE_PROCEDURE(gluQuadricNormals, gxg_gluQuadricNormals_w, 2, 0, 0, H_gluQuadricNormals);
@@ -4660,6 +5075,7 @@ static void define_functions(void)
 #ifdef GLU_VERSION_1_2
   GL_DEFINE_PROCEDURE(gluTessBeginPolygon, gxg_gluTessBeginPolygon_w, 2, 0, 0, H_gluTessBeginPolygon);
 #endif
+  GL_DEFINE_PROCEDURE(gluTessCallback, gxg_gluTessCallback_w, 3, 0, 0, H_gluTessCallback);
 #ifdef GLU_VERSION_1_2
   GL_DEFINE_PROCEDURE(gluTessEndContour, gxg_gluTessEndContour_w, 1, 0, 0, H_gluTessEndContour);
 #endif
@@ -4675,7 +5091,8 @@ static void define_functions(void)
 #ifdef GLU_VERSION_1_2
   GL_DEFINE_PROCEDURE(gluTessVertex, gxg_gluTessVertex_w, 3, 0, 0, H_gluTessVertex);
 #endif
-  GL_DEFINE_PROCEDURE(gluUnProject, gxg_gluUnProject_w, 9, 0, 0, H_gluUnProject);
+  GL_DEFINE_PROCEDURE(gluUnProject, gxg_gluUnProject_w, 6, 3, 0, H_gluUnProject);
+  GL_DEFINE_PROCEDURE(gluUnProject4, gxg_gluUnProject4_w, 0, 0, 1, H_gluUnProject4);
 #endif
 }
 
@@ -5364,9 +5781,72 @@ static void define_integers(void)
   DEFINE_INTEGER(GLU_INVALID_ENUM);
   DEFINE_INTEGER(GLU_INVALID_VALUE);
   DEFINE_INTEGER(GLU_OUT_OF_MEMORY);
+  DEFINE_INTEGER(GLU_INVALID_OPERATION);
   DEFINE_INTEGER(GLU_OUTLINE_POLYGON);
   DEFINE_INTEGER(GLU_OUTLINE_PATCH);
+  DEFINE_INTEGER(GLU_NURBS_ERROR);
   DEFINE_INTEGER(GLU_ERROR);
+  DEFINE_INTEGER(GLU_NURBS_BEGIN);
+  DEFINE_INTEGER(GLU_NURBS_BEGIN_EXT);
+  DEFINE_INTEGER(GLU_NURBS_VERTEX);
+  DEFINE_INTEGER(GLU_NURBS_VERTEX_EXT);
+  DEFINE_INTEGER(GLU_NURBS_NORMAL);
+  DEFINE_INTEGER(GLU_NURBS_NORMAL_EXT);
+  DEFINE_INTEGER(GLU_NURBS_COLOR);
+  DEFINE_INTEGER(GLU_NURBS_COLOR_EXT);
+  DEFINE_INTEGER(GLU_NURBS_TEXTURE_COORD);
+  DEFINE_INTEGER(GLU_NURBS_TEX_COORD_EXT);
+  DEFINE_INTEGER(GLU_NURBS_END);
+  DEFINE_INTEGER(GLU_NURBS_END_EXT);
+  DEFINE_INTEGER(GLU_NURBS_BEGIN_DATA);
+  DEFINE_INTEGER(GLU_NURBS_BEGIN_DATA_EXT);
+  DEFINE_INTEGER(GLU_NURBS_VERTEX_DATA);
+  DEFINE_INTEGER(GLU_NURBS_VERTEX_DATA_EXT);
+  DEFINE_INTEGER(GLU_NURBS_NORMAL_DATA);
+  DEFINE_INTEGER(GLU_NURBS_NORMAL_DATA_EXT);
+  DEFINE_INTEGER(GLU_NURBS_COLOR_DATA);
+  DEFINE_INTEGER(GLU_NURBS_COLOR_DATA_EXT);
+  DEFINE_INTEGER(GLU_NURBS_TEXTURE_COORD_DATA);
+  DEFINE_INTEGER(GLU_NURBS_TEX_COORD_DATA_EXT);
+  DEFINE_INTEGER(GLU_NURBS_END_DATA);
+  DEFINE_INTEGER(GLU_NURBS_END_DATA_EXT);
+  DEFINE_INTEGER(GLU_NURBS_ERROR1);
+  DEFINE_INTEGER(GLU_NURBS_ERROR2);
+  DEFINE_INTEGER(GLU_NURBS_ERROR3);
+  DEFINE_INTEGER(GLU_NURBS_ERROR4);
+  DEFINE_INTEGER(GLU_NURBS_ERROR5);
+  DEFINE_INTEGER(GLU_NURBS_ERROR6);
+  DEFINE_INTEGER(GLU_NURBS_ERROR7);
+  DEFINE_INTEGER(GLU_NURBS_ERROR8);
+  DEFINE_INTEGER(GLU_NURBS_ERROR9);
+  DEFINE_INTEGER(GLU_NURBS_ERROR10);
+  DEFINE_INTEGER(GLU_NURBS_ERROR11);
+  DEFINE_INTEGER(GLU_NURBS_ERROR12);
+  DEFINE_INTEGER(GLU_NURBS_ERROR13);
+  DEFINE_INTEGER(GLU_NURBS_ERROR14);
+  DEFINE_INTEGER(GLU_NURBS_ERROR15);
+  DEFINE_INTEGER(GLU_NURBS_ERROR16);
+  DEFINE_INTEGER(GLU_NURBS_ERROR17);
+  DEFINE_INTEGER(GLU_NURBS_ERROR18);
+  DEFINE_INTEGER(GLU_NURBS_ERROR19);
+  DEFINE_INTEGER(GLU_NURBS_ERROR20);
+  DEFINE_INTEGER(GLU_NURBS_ERROR21);
+  DEFINE_INTEGER(GLU_NURBS_ERROR22);
+  DEFINE_INTEGER(GLU_NURBS_ERROR23);
+  DEFINE_INTEGER(GLU_NURBS_ERROR24);
+  DEFINE_INTEGER(GLU_NURBS_ERROR25);
+  DEFINE_INTEGER(GLU_NURBS_ERROR26);
+  DEFINE_INTEGER(GLU_NURBS_ERROR27);
+  DEFINE_INTEGER(GLU_NURBS_ERROR28);
+  DEFINE_INTEGER(GLU_NURBS_ERROR29);
+  DEFINE_INTEGER(GLU_NURBS_ERROR30);
+  DEFINE_INTEGER(GLU_NURBS_ERROR31);
+  DEFINE_INTEGER(GLU_NURBS_ERROR32);
+  DEFINE_INTEGER(GLU_NURBS_ERROR33);
+  DEFINE_INTEGER(GLU_NURBS_ERROR34);
+  DEFINE_INTEGER(GLU_NURBS_ERROR35);
+  DEFINE_INTEGER(GLU_NURBS_ERROR36);
+  DEFINE_INTEGER(GLU_NURBS_ERROR37);
   DEFINE_INTEGER(GLU_AUTO_LOAD_MATRIX);
   DEFINE_INTEGER(GLU_CULLING);
   DEFINE_INTEGER(GLU_SAMPLING_TOLERANCE);
@@ -5375,6 +5855,16 @@ static void define_integers(void)
   DEFINE_INTEGER(GLU_SAMPLING_METHOD);
   DEFINE_INTEGER(GLU_U_STEP);
   DEFINE_INTEGER(GLU_V_STEP);
+  DEFINE_INTEGER(GLU_NURBS_MODE);
+  DEFINE_INTEGER(GLU_NURBS_MODE_EXT);
+  DEFINE_INTEGER(GLU_NURBS_TESSELLATOR);
+  DEFINE_INTEGER(GLU_NURBS_TESSELLATOR_EXT);
+  DEFINE_INTEGER(GLU_NURBS_RENDERER);
+  DEFINE_INTEGER(GLU_NURBS_RENDERER_EXT);
+  DEFINE_INTEGER(GLU_OBJECT_PARAMETRIC_ERROR);
+  DEFINE_INTEGER(GLU_OBJECT_PARAMETRIC_ERROR_EXT);
+  DEFINE_INTEGER(GLU_OBJECT_PATH_LENGTH);
+  DEFINE_INTEGER(GLU_OBJECT_PATH_LENGTH_EXT);
   DEFINE_INTEGER(GLU_PATH_LENGTH);
   DEFINE_INTEGER(GLU_PARAMETRIC_ERROR);
   DEFINE_INTEGER(GLU_DOMAIN_DISTANCE);
@@ -5413,6 +5903,20 @@ static void define_integers(void)
   DEFINE_INTEGER(GLU_TESS_WINDING_RULE);
   DEFINE_INTEGER(GLU_TESS_BOUNDARY_ONLY);
   DEFINE_INTEGER(GLU_TESS_TOLERANCE);
+  DEFINE_INTEGER(GLU_TESS_ERROR1);
+  DEFINE_INTEGER(GLU_TESS_ERROR2);
+  DEFINE_INTEGER(GLU_TESS_ERROR3);
+  DEFINE_INTEGER(GLU_TESS_ERROR4);
+  DEFINE_INTEGER(GLU_TESS_ERROR5);
+  DEFINE_INTEGER(GLU_TESS_ERROR6);
+  DEFINE_INTEGER(GLU_TESS_ERROR7);
+  DEFINE_INTEGER(GLU_TESS_ERROR8);
+  DEFINE_INTEGER(GLU_TESS_MISSING_BEGIN_POLYGON);
+  DEFINE_INTEGER(GLU_TESS_MISSING_BEGIN_CONTOUR);
+  DEFINE_INTEGER(GLU_TESS_MISSING_END_POLYGON);
+  DEFINE_INTEGER(GLU_TESS_MISSING_END_CONTOUR);
+  DEFINE_INTEGER(GLU_TESS_COORD_TOO_LARGE);
+  DEFINE_INTEGER(GLU_TESS_NEED_COMBINE_CALLBACK);
   DEFINE_INTEGER(GLU_TESS_WINDING_ODD);
   DEFINE_INTEGER(GLU_TESS_WINDING_NONZERO);
   DEFINE_INTEGER(GLU_TESS_WINDING_POSITIVE);
@@ -5433,7 +5937,7 @@ void Init_libgl(void)
       define_integers();
       define_functions();
       XEN_YES_WE_HAVE("gl");
-      XEN_DEFINE("gl-version", C_TO_XEN_STRING("13-Mar-09"));
+      XEN_DEFINE("gl-version", C_TO_XEN_STRING("14-Mar-09"));
       gl_already_inited = true;
     }
 }

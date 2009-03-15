@@ -187,7 +187,6 @@
 ;;(setlocale LC_ALL "de_DE")
 (set! (with-background-processes) #f)
 (set! (show-backtrace) #t)
-(define debugging-device-channels 2)
 (define max-optimization 6)
 
 ;; start-playing-hook is only called when an indexed sound is played, not if play-mix etc -- need a way to hit all possible playback
@@ -2463,29 +2462,6 @@
 	    (snd-display ";mus-data-format->string: ~A" (mus-data-format->string mus-bshort)))
 	(if (not (string=? (mus-header-type->string mus-aifc) "mus-aifc"))
 	    (snd-display ";mus-header-type->string: ~A" (mus-header-type->string mus-aifc)))
-	(if (provided? 'snd-debug)
-	    (for-each
-	     (lambda (format type name)
-	       (if (not (string=? name (mus-header-original-format-name format type)))
-		   (snd-display ";original name: ~A ~A" name (mus-header-original-format-name format type))))
-	     (list 29 13 17 10 8 23 20
-		   (logior (ash (char->integer #\M) 24) (ash (char->integer #\A) 16) (ash (char->integer #\C) 8) (char->integer #\!))
-		   2 #x10 #x13 #x16 #x19 #x22 #x25 #x28 #x32
-		   #x35 #x38 #x3b #x40 #x50 #x55 #x61 #x64 #x67
-		   #x71 #x74 #x77 #x80 #x83 #x86 #x91 #x98 #x101
-		   #x111 #x200 #x203 #x220 #x680 #x1002 #x1100 #x1500)
-	     (list mus-next mus-next mus-next mus-next mus-next mus-next mus-next
-		   mus-aifc
-		   mus-riff mus-riff mus-riff mus-riff mus-riff mus-riff mus-riff mus-riff mus-riff
-		   mus-riff mus-riff mus-riff mus-riff mus-riff mus-riff mus-riff mus-riff mus-riff
-		   mus-riff mus-riff mus-riff mus-riff mus-riff mus-riff mus-riff mus-riff mus-riff 
-		   mus-riff mus-riff mus-riff mus-riff mus-riff mus-riff mus-riff mus-riff)
-	     (list "delat_mulaw_8" "dsp_data_24" "mulaw_squelch" "dsp_core" "indirect" "adpcm_g721" "compressed_emphasized"
-		   "!CAM"
-		   "ADPCM" "OKI_ADPCM" "Sierra_ADPCM" "DIGIFIX" "HP cu codec" "DSPGroup_TrueSpeech" "APTX" "lrc" "MSN audio codec"
-		   "DIGIREAL" "NMS_VBXADPCM" "Rockwell adpcm" "G721_ADPCM" "MPEG" "Mpeg layer 3" "ESS Tech pcm" "G726" "DSAT display"
-		   "voxware ac10 " "voxware rt24" "voxware vr12 " "softsound" "G729A" "DF GSM610" "sbc24" "philips lpcbb" "Irat"
-		   "vivo G723" "Creative_ADPCM" "Creative fastspeech 10" "quarterdeck" "VME vmpcm" "OLICELP" "LH codec" "Soundspace musicompression")))
 	(mus-sound-report-cache "hiho.tmp")
 	(if (defined? 'read-line)
 	    (let ((p (open-input-file "hiho.tmp")))

@@ -1571,14 +1571,6 @@ static void g_new_sound_hook(const char *filename)
 }
 
 
-#if MUS_DEBUGGING && HAVE_SCHEME
-static XEN g_mus_header_original_format_name(XEN format, XEN type)
-{
-  return(C_TO_XEN_STRING(mus_header_original_format_name(XEN_TO_C_INT(format), XEN_TO_C_INT(type))));
-}
-#endif
-
-
 #if HAVE_OSS
 #define S_mus_audio_reinitialize "mus-audio-reinitialize"
 static XEN g_mus_audio_reinitialize(void)
@@ -2566,10 +2558,6 @@ XEN_NARGIFY_1(g_mus_alsa_set_squelch_warning_w, g_mus_alsa_set_squelch_warning)
   XEN_NARGIFY_0(g_mus_audio_reinitialize_w, g_mus_audio_reinitialize)
 #endif
 
-#if MUS_DEBUGGING && HAVE_SCHEME
-  XEN_NARGIFY_2(g_mus_header_original_format_name_w, g_mus_header_original_format_name)
-#endif
-
 #if MUS_MAC_OSX
 XEN_NARGIFY_1(g_mus_audio_output_properties_mutable_w, g_mus_audio_output_properties_mutable)
 #endif
@@ -2683,9 +2671,6 @@ XEN_NARGIFY_1(g_mus_set_max_table_size_w, g_mus_set_max_table_size)
 #endif
 #if MUS_MAC_OSX
   #define g_mus_audio_output_properties_mutable_w g_mus_audio_output_properties_mutable
-#endif
-#if MUS_DEBUGGING && HAVE_SCHEME
-#define g_mus_header_original_format_name_w g_mus_header_original_format_name
 #endif
 
 #define g_mus_max_malloc_w g_mus_max_malloc
@@ -2958,10 +2943,6 @@ void mus_sndlib_xen_initialize(void)
 
 #if HAVE_OSS
   XEN_DEFINE_PROCEDURE(S_mus_audio_reinitialize,   g_mus_audio_reinitialize_w, 0, 0, 0,  H_mus_audio_reinitialize);
-#endif
-
-#if MUS_DEBUGGING && HAVE_SCHEME
-  XEN_DEFINE_PROCEDURE("mus-header-original-format-name", g_mus_header_original_format_name_w, 2, 0, 0, "internal testing function");
 #endif
 
 #if HAVE_FORTH

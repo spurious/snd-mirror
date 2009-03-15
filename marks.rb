@@ -488,7 +488,7 @@ sets the value 'val' to 'key' in the given mark's property list")
     Snd.raise(:no_such_mark, id) unless mark?(id)
     unless hash?(h = mark_properties(id)) and h.store(key, val)
       $all_mark_properties.push(id)
-      set_mark_properties(id, {key, val})
+      set_mark_properties(id, {key => val})
     end
   end
 

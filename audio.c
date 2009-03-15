@@ -189,16 +189,6 @@ int device_gains(int dev);
 int device_channels(int dev)
 {
   float val[4];
-#if USE_SND && MUS_DEBUGGING
-  XEN res;
-  res = XEN_EVAL_C_STRING((char *)"(if (defined? 'debugging-device-channels) debugging-device-channels 0)");
-  if (XEN_INTEGER_P(res))
-    {
-      int chans;
-      chans = XEN_TO_C_INT(res);
-      if (chans > 0) return(chans);
-    }
-#endif
   mus_audio_mixer_read(dev, MUS_AUDIO_CHANNEL, 0, val);
   return((int)val[0]);
 }
@@ -3694,15 +3684,6 @@ static int alsa_mus_audio_write(int id, char *buf, int bytes)
   ssize_t frames;
   if (id == MUS_ERROR) return(MUS_ERROR);
   frames = snd_pcm_bytes_to_frames(handles[id], bytes);
-#if MUS_DEBUGGING
-  if ((frames <= 0) || (frames > bytes))
-    {
-      /* pcm->frame_bits not correct? */
-      mus_print("audio write " SSIZE_TD " frames (%d bytes)?", frames, bytes);
-      abort();
-      return(MUS_ERROR);
-    }
-#endif
   status = snd_pcm_writei(handles[id], buf, frames);
   if ((status == -EAGAIN) || 
       ((status >= 0) && (status < frames)))
@@ -3731,14 +3712,6 @@ static int alsa_mus_audio_read(int id, char *buf, int bytes)
   ssize_t frames;
   if (id == MUS_ERROR) return(MUS_ERROR);
   frames = snd_pcm_bytes_to_frames(handles[id], bytes);
-#if MUS_DEBUGGING
-  if ((frames <= 0) || (frames > bytes))
-    {
-      mus_print("audio read " SSIZE_TD " frames (%d bytes)?", frames, bytes);
-      abort();
-      return(MUS_ERROR);
-    }
-#endif
   status = snd_pcm_readi(handles[id], buf, frames);
   if ((status == -EAGAIN) || 
       ((status >= 0) && (status < frames)))

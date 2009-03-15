@@ -352,9 +352,6 @@ static int too_many_files_cleanup(void)
     rtn = -1;
   else rtn = (*closed);
   free(closed);
-#if MUS_DEBUGGING
-  fprintf(stderr, "too many files open, recovered %d\n", (rtn < 0) ? 0 : rtn);
-#endif
   return(rtn);
 }
 
@@ -428,9 +425,6 @@ io_error_t sndlib_error_to_snd(int sndlib_err)
       case MUS_INTERRUPTED:              return(IO_INTERRUPTED);
       case MUS_CANT_CLOSE_FILE:          return(IO_CANT_CLOSE_FILE);
       }
-#if MUS_DEBUGGING
-  fprintf(stderr, "sndlib_error_to_snd: %d (%s)\n", sndlib_err, mus_error_type_to_string(sndlib_err));
-#endif
   return(IO_UNKNOWN_SNDLIB_ERROR);
 }
 

@@ -711,8 +711,8 @@ class Peak_env
             file_write_date(peak_file) < file_write_date(file_name(snd))
           unless saved
             @saved_peak_info[file_name(snd)] =
-              {:data_format, data_format(snd),
-              :channels, channels(snd)}
+              {:data_format => data_format(snd),
+              :channels => channels(snd)}
             saved = true
           end
           Snd.catch(:no_such_envelope) do | | write_peak_env_info_file(snd, chn, peak_file) end
@@ -729,8 +729,8 @@ class Peak_env
       if File.exist?(peak_file) and
           file_write_date(peak_file) > file_write_date(file_name(snd))
         @saved_peak_info[file_name(snd)] =
-          {:data_format, data_format(snd),
-          :channels, channels(snd)}
+          {:data_format => data_format(snd),
+          :channels => channels(snd)}
         read_peak_env_info_file(snd, chn, peak_file)
       end
     end

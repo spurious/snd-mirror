@@ -9828,7 +9828,10 @@ static s7_pointer g_is_vector(s7_scheme *sc, s7_pointer args)
 #if WITH_MULTIDIMENSIONAL_VECTORS
 static s7_pointer g_vector_dimensions(s7_scheme *sc, s7_pointer args)
 {
-  #define H_vector_dimensions "(vector-dimensions vect) returns a list of vect's dimensions"
+  #define H_vector_dimensions "(vector-dimensions vect) returns a list of vect's dimensions.  In srfi-63 terms:\n\
+    (define array-dimensions vector-dimensions)\n\
+    (define (array-rank v) (length (vector-dimensions v)))"
+
   s7_pointer x;
 
   x = car(args);
