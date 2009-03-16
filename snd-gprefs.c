@@ -1330,7 +1330,8 @@ static prefs_info *prefs_color_selector_row(const char *label, const char *varna
   prf->radj = gtk_adjustment_new(r, 0.0, 1.01, 0.001, 0.01, .01);
   prf->rscl = gtk_hscale_new(GTK_ADJUSTMENT(prf->radj));
   gtk_box_pack_start(GTK_BOX(row2), prf->rscl, true, true, 4);
-  widget_modify_bg(prf->rscl, GTK_STATE_SELECTED, rscl_color);
+  widget_modify_bg(prf->rscl, GTK_STATE_NORMAL, rscl_color); /* this is the slider except when clicked */
+  widget_modify_bg(prf->rscl, GTK_STATE_PRELIGHT, rscl_color); /* this is the slider when clicked */
   gtk_widget_show(prf->rscl);
   gtk_range_set_update_policy(GTK_RANGE(GTK_SCALE(prf->rscl)), GTK_UPDATE_CONTINUOUS);
   gtk_scale_set_draw_value(GTK_SCALE(prf->rscl), false);
@@ -1338,7 +1339,8 @@ static prefs_info *prefs_color_selector_row(const char *label, const char *varna
   prf->gadj = gtk_adjustment_new(g, 0.0, 1.01, 0.001, 0.01, .01);
   prf->gscl = gtk_hscale_new(GTK_ADJUSTMENT(prf->gadj));
   gtk_box_pack_start(GTK_BOX(row2), prf->gscl, true, true, 4);
-  widget_modify_bg(prf->gscl, GTK_STATE_SELECTED, gscl_color);
+  widget_modify_bg(prf->gscl, GTK_STATE_NORMAL, gscl_color);
+  widget_modify_bg(prf->gscl, GTK_STATE_PRELIGHT, gscl_color);
   gtk_widget_show(prf->gscl);
   gtk_range_set_update_policy(GTK_RANGE(GTK_SCALE(prf->gscl)), GTK_UPDATE_CONTINUOUS);
   gtk_scale_set_draw_value(GTK_SCALE(prf->gscl), false);
@@ -1346,7 +1348,8 @@ static prefs_info *prefs_color_selector_row(const char *label, const char *varna
   prf->badj = gtk_adjustment_new(b, 0.0, 1.01, 0.001, 0.01, .01);
   prf->bscl = gtk_hscale_new(GTK_ADJUSTMENT(prf->badj));
   gtk_box_pack_start(GTK_BOX(row2), prf->bscl, true, true, 4);
-  widget_modify_bg(prf->bscl, GTK_STATE_SELECTED, bscl_color);
+  widget_modify_bg(prf->bscl, GTK_STATE_NORMAL, bscl_color);
+  widget_modify_bg(prf->bscl, GTK_STATE_PRELIGHT, bscl_color);
   gtk_widget_show(prf->bscl);
   gtk_range_set_update_policy(GTK_RANGE(GTK_SCALE(prf->bscl)), GTK_UPDATE_CONTINUOUS);
   gtk_scale_set_draw_value(GTK_SCALE(prf->bscl), false);

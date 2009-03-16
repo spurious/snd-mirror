@@ -183,3 +183,6 @@
       (set! (edit-position snd1 chn1) edpos1)
       (or result
 	  (unconvolve (channel->vct 0 #f snd0 chn0) (channel->vct 0 #f snd1 chn1))))))
+
+;; for env: slam both to 1 at every peak, check for eq, see if smooth env gives match?
+;;   or check spectr for eq leaving out low stuff, then try env?

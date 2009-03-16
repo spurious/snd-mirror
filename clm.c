@@ -1141,21 +1141,27 @@ Float mus_interpolate(mus_interp_t type, Float x, Float *table, off_t table_size
 	return(table[x0]);
       }
       break;
+
     case MUS_INTERP_LAGRANGE:
       return(mus_array_lagrange_interp(table, x, table_size));
       break;
+
     case MUS_INTERP_HERMITE:
       return(mus_array_hermite_interp(table, x, table_size));
       break;
+
     case MUS_INTERP_LINEAR:
       return(mus_array_interp(table, x, table_size));
       break;
+
     case MUS_INTERP_ALL_PASS:
       return(mus_array_all_pass_interp(table, x, table_size, y));
       break;
+
     case MUS_INTERP_BEZIER:
       return(mus_array_bezier_interp(table, x, table_size));
       break;
+
     default:
       mus_error(MUS_ARG_OUT_OF_RANGE, "unknown interpolation type: %d", type);
       break;
@@ -5844,9 +5850,11 @@ static void dmagify_env(seg *e, Float *data, int pts, off_t dur, double scaler)
       case ENV_STEP:
 	e->rates[pts - 1] = e->rates[pts - 2]; /* stick at last value, which in this case is the value (not an increment) */
 	break;
+
       case ENV_SEG:
 	e->rates[pts - 1] = 0.0;
 	break;
+
       case ENV_EXP:
 	e->rates[pts - 1] = 1.0;
 	break;
@@ -10392,11 +10400,14 @@ Float *mus_make_fft_window_with_window(mus_fft_window_t type, off_t size, Float 
 	Float *rl, *im;
 	Float pk = 0.0;
 	double alpha;
+
 	freq = M_PI / (Float)size;
 	if (beta < 0.2) beta = 0.2;
 	alpha = creal(ccosh(cacosh(pow(10.0, beta)) / (Float)size));
+
 	rl = (Float *)clm_calloc_atomic(size, sizeof(Float), "ifft window buffer");
 	im = (Float *)clm_calloc_atomic(size, sizeof(Float), "ifft window buffer");
+
 	for (i = 0, angle = 0.0; i < size; i++, angle += freq)
 	  {
 	    switch (type)
@@ -10404,19 +10415,24 @@ Float *mus_make_fft_window_with_window(mus_fft_window_t type, off_t size, Float 
 	      case MUS_DOLPH_CHEBYSHEV_WINDOW:
 		rl[i] = creal(ccos(cacos(alpha * cos(angle)) * size)); /* here is Tn (Chebyshev polynomial 1st kind) */
 		break;
+
 	      case MUS_SAMARAKI_WINDOW:
 		/* Samaraki window uses Un instead */
 		rl[i] = creal(csin(cacos(alpha * cos(angle)) * (size + 1.0)) / csin(cacos(alpha * cos(angle))));
 		break;
+
 	      case MUS_ULTRASPHERICAL_WINDOW:
 		/* Cn here */
 		rl[i] = ultraspherical(size, alpha * cos(angle), mu);
 		break;
+
 	      default: 
 		break;
 	      }
 	  }
+
 	mus_fft(rl, im, size, -1);    /* can be 1 here */
+
 	pk = 0.0;
 	for (i = 0; i < size; i++) 
 	  if (pk < rl[i]) 
@@ -10443,14 +10459,17 @@ Float *mus_make_fft_window_with_window(mus_fft_window_t type, off_t size, Float 
 	Float *rl, *im;
 	Float pk;
 	double alpha;
+
 	freq = M_PI / (Float)size;
 	if (beta < 0.2) beta = 0.2;
 	alpha = GSL_REAL(gsl_complex_cosh(
 			   gsl_complex_mul_real(
 			     gsl_complex_arccosh_real(pow(10.0, beta)),
 			     (double)(1.0 / (Float)size))));
+
 	rl = (Float *)clm_calloc_atomic(size, sizeof(Float), "ifft window buffer");
 	im = (Float *)clm_calloc_atomic(size, sizeof(Float), "ifft window buffer");
+
 	for (i = 0, angle = 0.0; i < size; i++, angle += freq)
 	  {
 	    switch (type)
@@ -10481,7 +10500,9 @@ Float *mus_make_fft_window_with_window(mus_fft_window_t type, off_t size, Float 
 	      }
 
 	  }
+
 	mus_fft(rl, im, size, -1);    /* can be 1 here */
+
 	pk = 0.0;
 	for (i = 0; i < size; i++) 
 	  if (pk < rl[i]) 
@@ -10506,6 +10527,7 @@ Float *mus_make_fft_window_with_window(mus_fft_window_t type, off_t size, Float 
 #endif
 #endif
       break;
+
     default: 
       mus_error(MUS_NO_SUCH_FFT_WINDOW, "unknown fft data window: %d", (int)type); 
       break;

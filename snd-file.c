@@ -695,30 +695,39 @@ void init_sound_file_extensions(void)
   add_sound_file_extension("sf2");
   add_sound_file_extension("rf64");
   add_sound_file_extension("caf");
+
 #if HAVE_OGG
   add_sound_file_extension("ogg");
 #endif
+
 #if HAVE_SPEEX
   add_sound_file_extension("speex"); /* ?? */
 #endif
+
 #if HAVE_FLAC
   add_sound_file_extension("flac");
 #endif
+
 #if HAVE_MIDI
   add_sound_file_extension("mid");
 #endif
+
 #if HAVE_MPEG
   add_sound_file_extension("mpeg");
 #endif
+
 #if HAVE_SHORTEN
   add_sound_file_extension("shn");
 #endif
+
 #if HAVE_TTA
   add_sound_file_extension("tta");
 #endif
+
 #if HAVE_WAVPACK
   add_sound_file_extension("wv");
 #endif
+
   default_sound_file_extensions = sound_file_extensions_end;
 }
 
@@ -732,9 +741,11 @@ void save_added_sound_file_extensions(FILE *fd)
 #if HAVE_SCHEME
 	fprintf(fd, "(%s \"%s\")\n", S_add_sound_file_extension, sound_file_extensions[i]);
 #endif
+
 #if HAVE_RUBY
 	fprintf(fd, "%s(\"%s\")\n", TO_PROC_NAME(S_add_sound_file_extension), sound_file_extensions[i]);
 #endif
+
 #if HAVE_FORTH
 	fprintf(fd, "\"%s\" %s drop\n", sound_file_extensions[i], S_add_sound_file_extension);
 #endif
@@ -1212,7 +1223,7 @@ file_info *make_file_info(const char *fullname, read_only_t read_only, bool sele
 	  (type == MUS_IEEE) ||
 	  (type == MUS_MUS10) ||
 	  (type == MUS_HCOM) ||
-	  (encoded_header_p(type))) /* MUS_MATLAB here? */
+	  (encoded_header_p(type)))
 	{
 	  return(translate_file(fullname, type));
 	}
@@ -2390,18 +2401,22 @@ void initialize_format_lists(void)
   h_type_to_pos[MUS_OGG] = i;
   h_pos_to_type[i++] = MUS_OGG;
 #endif
+
 #if HAVE_FLAC
   h_type_to_pos[MUS_FLAC] = i;
   h_pos_to_type[i++] = MUS_FLAC;
 #endif
+
 #if HAVE_SPEEX
   h_type_to_pos[MUS_SPEEX] = i;
   h_pos_to_type[i++] = MUS_SPEEX;
 #endif
+
 #if HAVE_TTA
   h_type_to_pos[MUS_TTA] = i;
   h_pos_to_type[i++] = MUS_TTA;
 #endif
+
 #if HAVE_WAVPACK
   h_type_to_pos[MUS_WAVPACK] = i;
   h_pos_to_type[i++] = MUS_WAVPACK;
@@ -2412,10 +2427,12 @@ void initialize_format_lists(void)
   h_type_to_pos[MUS_MPEG] = i;
   h_pos_to_type[i++] = MUS_MPEG;
 #endif
+
 #if HAVE_MIDI
   h_type_to_pos[MUS_MIDI] = i;
   h_pos_to_type[i++] = MUS_MIDI;
 #endif
+
 #if HAVE_SHORTEN
   h_type_to_pos[MUS_SHORTEN] = i;
   h_pos_to_type[i++] = MUS_SHORTEN;
@@ -2455,22 +2472,27 @@ const char **short_writable_headers(int *len)
       */
       writable_headers[i++] = h_names[H_OGG];
 #endif
+
 #if HAVE_FLAC
       /* flac tempfile.wav -o output.flac */
       writable_headers[i++] = h_names[H_FLAC];
 #endif
+
 #if HAVE_SPEEX
       /* speexenc tempfile.wav output.spx */
       writable_headers[i++] = h_names[H_SPEEX];
 #endif
+
 #if HAVE_TTA
       /* ttaenc -e in out */
       writable_headers[i++] = h_names[H_TTA];
 #endif
+
 #if HAVE_WAVPACK
       /* wavpack in -o out */
       writable_headers[i++] = h_names[H_WAVPACK];
 #endif
+
       num_writable_headers = i;
     }
   (*len) = num_writable_headers;
@@ -2495,6 +2517,7 @@ const char **short_readable_headers(int *len)
       */
       readable_headers[i++] = h_names[H_OGG];
 #endif
+
 #if HAVE_FLAC
       /* flac -d infile.flac -o output.wav
        *  the -d -> decode 
@@ -2502,12 +2525,14 @@ const char **short_readable_headers(int *len)
        */
       readable_headers[i++] = h_names[H_FLAC];
 #endif
+
 #if HAVE_SPEEX
       /* speexdec infile.spx tempfile.wav
 	 no other choices
        */
       readable_headers[i++] = h_names[H_SPEEX];
 #endif
+
 #if HAVE_MPEG
       /* mpg321 -q -w output.wav input.mpg
 	   this is mpeg->wav only
@@ -2516,6 +2541,7 @@ const char **short_readable_headers(int *len)
        */
       readable_headers[i++] = h_names[H_MPEG];
 #endif
+
 #if HAVE_TIMIDITY
       /* timidity input.mid -Ou -o output.snd
 	 midi->next/sun
@@ -2523,12 +2549,15 @@ const char **short_readable_headers(int *len)
       */
       readable_headers[i++] = h_names[H_MIDI];
 #endif
+
 #if HAVE_SHORTEN
       readable_headers[i++] = h_names[H_SHORTEN];
 #endif
+
 #if HAVE_TTA
       readable_headers[i++] = h_names[H_TTA];
 #endif
+
 #if HAVE_WAVPACK
       readable_headers[i++] = h_names[H_WAVPACK];
 #endif
@@ -2667,16 +2696,19 @@ int snd_decode(int type, const char *input_filename, const char *output_filename
       command = mus_format("%s %s -b 16 -o %s", PATH_OGGDEC, input_filename, output_filename);
       break;
 #endif
+
 #if HAVE_FLAC
     case MUS_FLAC: 
       command = mus_format("%s -d %s -o %s", PATH_FLAC, input_filename, output_filename);
       break;
 #endif
+
 #if HAVE_SPEEX
     case MUS_SPEEX:
       command = mus_format("%s %s %s", PATH_SPEEXDEC, input_filename, output_filename);
       break;
 #endif
+
 #if HAVE_MPEG
     case MUS_MPEG:
 #if HAVE_MPG321
@@ -2686,21 +2718,25 @@ int snd_decode(int type, const char *input_filename, const char *output_filename
 #endif
       break;
 #endif
+
 #if HAVE_TIMIDITY
     case MUS_MIDI:
       command = mus_format("%s %s -Ou -o %s", PATH_TIMIDITY, input_filename, output_filename);
       break;
 #endif
+
 #if HAVE_SHORTEN
     case MUS_SHORTEN:
       command = mus_format("%s -x %s %s", PATH_SHORTEN, input_filename, output_filename);
       break;
 #endif
+
 #if HAVE_TTA
     case MUS_TTA:
       command = mus_format("%s -d %s -o %s", PATH_TTA, input_filename, output_filename);
       break;
 #endif
+
 #if HAVE_WAVPACK
     case MUS_WAVPACK:
       command = mus_format("%s %s -o %s", PATH_WVUNPACK, input_filename, output_filename);
@@ -3970,15 +4006,19 @@ void view_files_display_list(view_files_info *vdat)
   int i;
   widget_t last_row = NULL_WIDGET; /* ignored in gtk version */
   vf_row *r;
+
   if (!vdat) return;
   if (!(vdat->dialog)) return;
+
   if (vdat->end >= 0)
     {
       int i, old_len;
       char **old_names = NULL;
+
       old_len = vdat->currently_selected_files;
       if (old_len > 0)
 	old_names = vf_selected_files(vdat);
+
       view_files_sort_list(vdat);
       for (i = 0; i <= vdat->end; i++)
 	{
@@ -3994,6 +4034,7 @@ void view_files_display_list(view_files_info *vdat)
 	  if (!(widget_is_active(r->rw))) activate_widget(r->rw);
 	  last_row = r->rw;
 	}
+
       if (old_names)
 	{
 	  vf_fixup_selected_files(vdat, old_names, old_len);
@@ -4001,6 +4042,7 @@ void view_files_display_list(view_files_info *vdat)
 	  free(old_names);
 	}
     }
+
   for (i = vdat->end + 1; i < vdat->size; i++)
     {
       r = vdat->file_list_entries[i];
@@ -4010,6 +4052,7 @@ void view_files_display_list(view_files_info *vdat)
 	    deactivate_widget(r->rw);
 	}
     }
+
   if (!(widget_is_active(vdat->file_list))) 
     activate_widget(vdat->file_list);
 }
@@ -4043,9 +4086,11 @@ void view_files_update_list(view_files_info *vdat)
   /* here we need the file's full name */
   int i, old_len;
   char **old_names = NULL;
+
   old_len = vdat->currently_selected_files;
   if (old_len > 0) 
     old_names = vf_selected_files(vdat);
+
   if (vdat->names)
     {
       int i, j;
@@ -4060,6 +4105,7 @@ void view_files_update_list(view_files_info *vdat)
 		vdat->full_names[i] = NULL;
 	      }
 	  }
+
       for (i = 0, j = 0; i <= vdat->end; i++)
 	if (vdat->names[i])
 	  {
@@ -4077,6 +4123,7 @@ void view_files_update_list(view_files_info *vdat)
       vf_clear_button_set_sensitive(vdat, vdat->end >= 0);
 #endif
     }
+
   if (old_names)
     {
       vf_fixup_selected_files(vdat, old_names, old_len);
@@ -4104,8 +4151,10 @@ int vf_mix(view_files_info *vdat)
 {
   int len, id_or_error = 0;
   snd_info *sp;
+
   sp = any_selected_sound();
   len = vdat->currently_selected_files;
+
   if ((len == 1) &&
       (snd_feq(vdat->amp, 1.0)) &&
       (snd_feq(vdat->speed, 1.0)) &&
@@ -4121,8 +4170,10 @@ int vf_mix(view_files_info *vdat)
       bool err = false;
       char *tempfile;
       char **selected_files;
+
       selected_files = vf_selected_files(vdat);
       tempfile = scale_and_src(selected_files, len, sp->nchans, vdat->amp, vdat->speed, vdat->amp_env, &err);
+
       if (err)
 	{
 	  vf_post_error(tempfile, vdat);
@@ -4153,6 +4204,7 @@ void view_files_mix_selected_files(widget_t w, view_files_info *vdat)
   redirect_snd_error_to(redirect_vf_post_location_error, (void *)vdat);
   vdat->beg = vf_location(vdat);
   redirect_snd_error_to(NULL, NULL);
+
   if (!(vdat->error_p))
     {
       int id_or_error = 0;
@@ -4203,8 +4255,10 @@ bool vf_insert(view_files_info *vdat)
       bool err = false;
       char *tempfile;
       char **selected_files;
+
       selected_files = vf_selected_files(vdat);
       tempfile = scale_and_src(selected_files, len, sp->nchans, vdat->amp, vdat->speed, vdat->amp_env, &err);
+
       if (err)
 	{
 	  vf_post_error(tempfile, vdat);
@@ -4235,9 +4289,11 @@ void view_files_insert_selected_files(widget_t w, view_files_info *vdat)
   redirect_snd_error_to(redirect_vf_post_location_error, (void *)vdat);
   vdat->beg = vf_location(vdat);
   redirect_snd_error_to(NULL, NULL);
+
   if (!(vdat->error_p))
     {
       bool ok = false;
+
       redirect_snd_error_to(redirect_vf_post_error, (void *)vdat);
       redirect_snd_warning_to(redirect_vf_post_error, (void *)vdat);
       ss->sgx->requestor_dialog = w;
@@ -4246,6 +4302,7 @@ void view_files_insert_selected_files(widget_t w, view_files_info *vdat)
       ok = vf_insert(vdat);
       redirect_snd_error_to(NULL, NULL);
       redirect_snd_warning_to(NULL, NULL);
+
       if (ok)
 	{
 	  char *msg;
@@ -4410,8 +4467,10 @@ void save_view_files_dialogs(FILE *fd)
       {
 	int k;
 	vdat = view_files_infos[i];
+
 #if HAVE_SCHEME
 	fprintf(fd, "(let ((vf (" S_view_files_dialog " #t #t)))\n");
+
 	if (vdat->full_names)
 	  {
 	    fprintf(fd, "  (set! (" S_view_files_files " vf) (list");
@@ -4427,23 +4486,22 @@ void save_view_files_dialogs(FILE *fd)
 	      }
 	  }
 	if (!(snd_feq(vdat->amp, 1.0)))
-	  {
-	    fprintf(fd, "  (set! (" S_view_files_amp " vf) %.3f)\n", vdat->amp);
-	  }
+	  fprintf(fd, "  (set! (" S_view_files_amp " vf) %.3f)\n", vdat->amp);
+
 	if (!(snd_feq(vdat->speed, 1.0)))
-	  {
-	    fprintf(fd, "  (set! (" S_view_files_speed " vf) %.3f)\n", vdat->speed);
-	  }
+	  fprintf(fd, "  (set! (" S_view_files_speed " vf) %.3f)\n", vdat->speed);
+
 	if (!(default_env_p(vdat->amp_env)))
-	  {
-	    fprintf(fd, "  (set! (" S_view_files_amp_env " vf) %s)\n", env_to_string(vdat->amp_env));
-	  }
+	  fprintf(fd, "  (set! (" S_view_files_amp_env " vf) %s)\n", env_to_string(vdat->amp_env));
+
 	/* assume file-sorters are set up already */
 	fprintf(fd, "  (set! (" S_view_files_sort " vf) %d)\n", vdat->sorter);	    
 	fprintf(fd, ")\n");
 #endif
+
 #if HAVE_RUBY
 	fprintf(fd, "vf = view_files_dialog(true, true)\n");
+
 	if (vdat->full_names)
 	  {
 	    fprintf(fd, "  set_view_files_files(vf, [");
@@ -4459,23 +4517,22 @@ void save_view_files_dialogs(FILE *fd)
 	      }
 	  }
 	if (!(snd_feq(vdat->amp, 1.0)))
-	  {
-	    fprintf(fd, "  set_view_files_amp(vf, %.3f)\n", vdat->amp);
-	  }
+	  fprintf(fd, "  set_view_files_amp(vf, %.3f)\n", vdat->amp);
+
 	if (!(snd_feq(vdat->speed, 1.0)))
-	  {
-	    fprintf(fd, "  set_view_files_speed(vf, %.3f)\n", vdat->speed);
-	  }
+	  fprintf(fd, "  set_view_files_speed(vf, %.3f)\n", vdat->speed);
+
 	if (!(default_env_p(vdat->amp_env)))
-	  {
-	    fprintf(fd, "  set_view_files_amp_env(vf, %s)\n", env_to_string(vdat->amp_env));
-	  }
+	  fprintf(fd, "  set_view_files_amp_env(vf, %s)\n", env_to_string(vdat->amp_env));
+
 	/* assume file-sorters are set up already */
 	fprintf(fd, "  set_view_files_sort(vf, %d)\n", vdat->sorter);	    
 	fprintf(fd, "\n");
 #endif
+
 #if HAVE_FORTH
 	fprintf(fd, "#t #t view-files-dialog value vf\n");
+
 	if (vdat->full_names)
 	  {
 	    fprintf(fd, "  vf '(");
@@ -4491,17 +4548,14 @@ void save_view_files_dialogs(FILE *fd)
 	      }
 	  }
 	if (!(snd_feq(vdat->amp, 1.0)))
-	  {
-	    fprintf(fd, "  vf %.3f set-view-files-amp drop\n", vdat->amp);
-	  }
+	  fprintf(fd, "  vf %.3f set-view-files-amp drop\n", vdat->amp);
+
 	if (!(snd_feq(vdat->speed, 1.0)))
-	  {
-	    fprintf(fd, "  vf %.3f set-view-files-speed drop\n", vdat->speed);
-	  }
+	  fprintf(fd, "  vf %.3f set-view-files-speed drop\n", vdat->speed);
+
 	if (!(default_env_p(vdat->amp_env)))
-	  {
-	    fprintf(fd, "  vf %s set-view-files-amp-env drop\n", env_to_string(vdat->amp_env));
-	  }
+	  fprintf(fd, "  vf %s set-view-files-amp-env drop\n", env_to_string(vdat->amp_env));
+
 	/* assume file-sorters are set up already */
 	fprintf(fd, "  vf %d set-view-files-sort drop\n\n", vdat->sorter);
 #endif
@@ -4514,6 +4568,7 @@ void view_files_add_directory(widget_t dialog, const char *dirname)
 {
   view_files_info *vdat = NULL;
   char *full_filename;
+
   if (dialog)
     vdat = view_files_find_dialog(dialog);
   else 
@@ -4526,6 +4581,7 @@ void view_files_add_directory(widget_t dialog, const char *dirname)
 	  start_view_files_dialog_1(vdat, false);
 	}
     }
+
   if (vdat)
     {
       full_filename = mus_expand_filename((const char *)dirname);
@@ -4555,6 +4611,7 @@ static void view_files_add_file(widget_t dialog, const char *filename)
 {
   view_files_info *vdat = NULL;
   char *full_filename;
+
   if (dialog)
     vdat = view_files_find_dialog(dialog);
   else 
@@ -4567,6 +4624,7 @@ static void view_files_add_file(widget_t dialog, const char *filename)
 	  start_view_files_dialog_1(vdat, false);
 	}
     }
+
   if (vdat)
     {
       full_filename = mus_expand_filename((const char *)filename);
@@ -4580,6 +4638,7 @@ void view_files_open_selected_files(view_files_info *vdat)
 {
   snd_info *sp = NULL;
   ss->open_requestor = FROM_VIEW_FILES;
+
   if (vdat->currently_selected_files > 0)
     {
       int i;
@@ -4593,6 +4652,7 @@ void view_files_open_selected_files(view_files_info *vdat)
 void view_files_remove_selected_files(view_files_info *vdat)
 {
   int i, loc;
+
   for (i = 0; i < vdat->currently_selected_files; i++)
     {
       loc = vdat->selected_files[i];
@@ -4604,6 +4664,7 @@ void view_files_remove_selected_files(view_files_info *vdat)
 	  vdat->full_names[loc] = NULL;
 	}
     }
+
   vdat->currently_selected_files = 0;
   vf_unpost_info(vdat);
   view_files_update_list(vdat);
@@ -4707,6 +4768,7 @@ static XEN g_set_view_files_sort(XEN dialog, XEN val)
 
   if (XEN_BOUND_P(val)) sort_choice = val; else sort_choice = dialog;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(sort_choice), sort_choice, XEN_ARG_1, S_setB S_view_files_sort, "an integer"); 
+
   choice = XEN_TO_C_INT(sort_choice);
   if ((choice < 0) ||
       (choice >= (ss->file_sorters_size + SORT_XEN)))
@@ -4796,11 +4858,13 @@ static XEN g_view_files_set_speed_style(XEN dialog, XEN speed_style)
 
 static XEN g_view_files_selected_files(XEN dialog)
 {
+  #define H_view_files_selected_files "(" S_view_files_selected_files " dialog): list of files currently selected in the given View:Files dialog"
   XEN result = XEN_EMPTY_LIST;
   char **selected_files;
   int i, len = 0;
-  #define H_view_files_selected_files "(" S_view_files_selected_files " dialog): list of files currently selected in the given View:Files dialog"
+
   XEN_ASSERT_TYPE(XEN_WIDGET_P(dialog), dialog, XEN_ONLY_ARG, S_view_files_selected_files, "a view-files dialog widget"); 
+
   selected_files = view_files_selected_files((widget_t)(XEN_UNWRAP_WIDGET(dialog)), &len);
   if ((selected_files) && (len > 0))
     {
@@ -4819,8 +4883,10 @@ static XEN g_view_files_set_selected_files(XEN dialog, XEN files)
 {
   int i, len;
   char **cfiles = NULL;
+
   XEN_ASSERT_TYPE(XEN_WIDGET_P(dialog), dialog, XEN_ARG_1, S_setB S_view_files_selected_files, "a view-files dialog widget");   
   XEN_ASSERT_TYPE(XEN_LIST_P(files), files, XEN_ARG_2, S_setB S_view_files_selected_files, "a list of files or directories");
+
   len = XEN_LIST_LENGTH(files);
   if (len > 0)
     {
@@ -4842,11 +4908,13 @@ static XEN g_view_files_set_selected_files(XEN dialog, XEN files)
 
 static XEN g_view_files_files(XEN dialog)
 {
+  #define H_view_files_files "(" S_view_files_files " dialog): list of files currently available in the given View:Files dialog"
   XEN result = XEN_EMPTY_LIST;
   char **files;
   int i, len = 0;
-  #define H_view_files_files "(" S_view_files_files " dialog): list of files currently available in the given View:Files dialog"
+
   XEN_ASSERT_TYPE(XEN_WIDGET_P(dialog), dialog, XEN_ONLY_ARG, S_view_files_files, "a view-files dialog widget"); 
+
   files = view_files_files((widget_t)(XEN_UNWRAP_WIDGET(dialog)), &len);
   if ((files) && (len > 0))
     for (i = 0; i < len; i++)
@@ -4859,8 +4927,10 @@ static XEN g_view_files_set_files(XEN dialog, XEN files)
 {
   int i, len = 0;
   char **cfiles = NULL;
+
   XEN_ASSERT_TYPE(XEN_WIDGET_P(dialog), dialog, XEN_ARG_1, S_setB S_view_files_files, "a view-files dialog widget");   
   XEN_ASSERT_TYPE(XEN_LIST_P(files), files, XEN_ARG_2, S_setB S_view_files_files, "a list of files or directories");
+
   len = XEN_LIST_LENGTH(files);
   if (len > 0)
     {
@@ -4944,12 +5014,15 @@ static XEN g_file_write_date(XEN file)
   #if HAVE_GUILE
     #define write_date_equivalent "Equivalent to Guile's (stat:mtime (stat file))"
   #endif
+
   #if HAVE_RUBY
     #define write_date_equivalent "Equivalent to Ruby's File.mtime(file)"
   #endif
+
   #if HAVE_FORTH
     #define write_date_equivalent "Equivalent to Forth's file-mtime"
   #endif
+
   #if HAVE_S7
     #define write_date_equivalent ""
   #endif
@@ -5000,6 +5073,7 @@ static XEN g_set_sound_loop_info(XEN snd, XEN vals)
   XEN mode0 = XEN_UNDEFINED, mode1 = XEN_UNDEFINED;
   XEN note = XEN_UNDEFINED, detune = XEN_UNDEFINED;
   XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(vals) || XEN_LIST_P_WITH_LENGTH(vals, len), vals, XEN_ARG_2, S_setB S_sound_loop_info, "a list");
+
   if (XEN_NOT_BOUND_P(vals))
     {
       /* what is going on here? -- (set! (sound-loop-info) (list...))? */
@@ -5013,6 +5087,7 @@ static XEN g_set_sound_loop_info(XEN snd, XEN vals)
       ASSERT_SOUND(S_setB S_sound_loop_info, snd, 1);
       sp = get_sp(snd, NO_PLAYERS);
     }
+
   if (sp == NULL) 
     return(snd_no_such_sound_error(S_setB S_sound_loop_info, snd));
   if ((sp->user_read_only == FILE_READ_ONLY) || 
@@ -5046,6 +5121,7 @@ static XEN g_set_sound_loop_info(XEN snd, XEN vals)
 			      if (len > 7)
 				mode1 = XEN_LIST_REF(vals, 7);
 			    }}}}}}}
+
   if (hdr->loops == NULL)
     hdr->loops = (int *)calloc(MUS_LOOP_INFO_SIZE, sizeof(int));
   else memset((void *)(hdr->loops), 0, MUS_LOOP_INFO_SIZE * sizeof(int));
@@ -5070,6 +5146,7 @@ static XEN g_set_sound_loop_info(XEN snd, XEN vals)
     }
   mus_sound_set_loop_info(sp->filename, hdr->loops);
   mus_header_set_aiff_loop_info(hdr->loops);
+
   type = hdr->type;
   if ((type != MUS_AIFF) && 
       (type != MUS_AIFC))
@@ -5389,10 +5466,8 @@ static XEN g_add_file_sorter(XEN name, XEN proc)
 {
   #define H_add_file_sorter "(" S_add_file_sorter " name proc) -- add proc with identifier name to file sorter list, returns its index"
   int i, len, choice = -1;
-  /* redundant
-  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_1, S_add_file_sorter, "a string");   
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(proc), proc, XEN_ARG_2, S_add_file_sorter, "a procedure");
-  */
+  /* type checks are redundant here */
+
   if (file_sorter_ok(name, proc, S_add_file_sorter))
     {
       len = ss->file_sorters_size;
@@ -5471,14 +5546,18 @@ static XEN g_set_auto_update_interval(XEN val)
   Float ctime, old_time;
   #define H_auto_update_interval "(" S_auto_update_interval "): time (seconds) between background checks for changed file on disk (default: 60). \
 This value only matters if " S_auto_update " is " PROC_TRUE
+
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_setB S_auto_update_interval, "a number"); 
+
   ctime = XEN_TO_C_DOUBLE(val);
   if ((ctime < 0.0) || (ctime > (24 * 3600)))
     XEN_OUT_OF_RANGE_ERROR(S_setB S_auto_update_interval, 1, val, "~A: invalid time");
+
   old_time = auto_update_interval(ss);
   set_auto_update_interval(ctime);
   /* if new value is 0.0, auto_update_check will notice that, and not run or re-start the update check */
   /* if new value is not 0.0, and old value was 0.0, we need to restart the timeout proc, unless it's still on the queue */
+
   if ((ctime > 0.0) && (old_time == 0.0))
     auto_update_restart();
   return(C_TO_XEN_DOUBLE(auto_update_interval(ss)));
@@ -5517,7 +5596,9 @@ static XEN g_set_default_output_header_type(XEN val)
   #define H_default_output_header_type "(" S_default_output_header_type "): default header type when a new or temporary file is created. \
 Normally this is " S_mus_next "; -1 here indicates you want Snd to use the current sound's header type, if possible. \
 Other writable headers include " S_mus_aiff ", " S_mus_riff ", " S_mus_ircam ", " S_mus_nist ", " S_mus_aifc ", and " S_mus_raw "."
+
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_default_output_header_type, "an integer"); 
+
   typ = XEN_TO_C_INT(val);
   if (mus_header_writable(typ, -2))
     set_default_output_header_type(typ); 
@@ -5534,7 +5615,9 @@ static XEN g_set_default_output_data_format(XEN val)
   #define H_default_output_data_format "(" S_default_output_data_format "): default data format when a new or temporary file is created, \
 normally " S_mus_bshort "; -1 here means try to use the current sound's data format; many other formats \
 are available, but not all are compatible with all header types"
+
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_default_output_data_format, "an integer"); 
+
   format = XEN_TO_C_INT(val);
   if (mus_data_format_p(format))
     set_default_output_data_format(format); 

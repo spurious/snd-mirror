@@ -73,6 +73,7 @@ mus_error_handler_t *mus_thread_get_previous_error_handler(void)
 }
 #endif
 
+
 static char *mus_error_buffer = NULL;
 static int mus_error_buffer_size = 1024;
 
@@ -610,6 +611,7 @@ static sound_file *fill_sf_record(const char *name, sound_file *sf)
   sf->header_type = mus_header_type();
   sf->original_sound_format = mus_header_original_format();
   sf->true_file_length = mus_header_true_length();
+
   sf->comment_start = mus_header_comment_start();
   sf->comment_end = mus_header_comment_end();
   if (((sf->header_type == MUS_AIFC) || 
@@ -627,11 +629,13 @@ static sound_file *fill_sf_record(const char *name, sound_file *sf)
 	  sf->aux_comment_end[i] = mus_header_aux_comment_end(i);
 	}
     }
+
   sf->type_specifier = mus_header_type_specifier();
   sf->bits_per_sample = mus_header_bits_per_sample();
   sf->fact_samples = mus_header_fact_samples();
   sf->block_align = mus_header_block_align();
   sf->write_date = local_file_write_date(name);
+
   if ((sf->header_type == MUS_AIFF) || (sf->header_type == MUS_AIFC))
     {
       int *marker_ids, *marker_positions;
@@ -644,6 +648,7 @@ static sound_file *fill_sf_record(const char *name, sound_file *sf)
 	  memcpy((void *)(sf->marker_positions), (void *)marker_positions, sizeof(int) * sf->markers);
 	}
     }
+
   if (mus_header_loop_mode(0) > 0)
     {
       sf->loop_modes = (int *)calloc(2, sizeof(int));
@@ -744,6 +749,7 @@ off_t mus_sound_samples(const char *arg)
   return(result);
 }
 
+
 off_t mus_sound_frames(const char *arg)        
 {
   sound_file *sf;
@@ -754,6 +760,7 @@ off_t mus_sound_frames(const char *arg)
   MUS_UNLOCK(&sound_table_lock);
   return(result);
 }
+
 
 int mus_sound_datum_size(const char *arg)      
 {
@@ -766,6 +773,7 @@ int mus_sound_datum_size(const char *arg)
   return(result);
 }
 
+
 off_t mus_sound_data_location(const char *arg) 
 {
   sound_file *sf;
@@ -776,6 +784,7 @@ off_t mus_sound_data_location(const char *arg)
   MUS_UNLOCK(&sound_table_lock);
   return(result);
 }
+
 
 int mus_sound_chans(const char *arg)           
 {
@@ -788,6 +797,7 @@ int mus_sound_chans(const char *arg)
   return(result);
 }
 
+
 int mus_sound_srate(const char *arg)           
 {
   sound_file *sf;
@@ -798,6 +808,7 @@ int mus_sound_srate(const char *arg)
   MUS_UNLOCK(&sound_table_lock);
   return(result);
 }
+
 
 int mus_sound_header_type(const char *arg)     
 {
@@ -810,6 +821,7 @@ int mus_sound_header_type(const char *arg)
   return(result);
 }
 
+
 int mus_sound_data_format(const char *arg)     
 {
   sound_file *sf;
@@ -820,6 +832,7 @@ int mus_sound_data_format(const char *arg)
   MUS_UNLOCK(&sound_table_lock);
   return(result);
 }
+
 
 int mus_sound_original_format(const char *arg) 
 {
@@ -832,6 +845,7 @@ int mus_sound_original_format(const char *arg)
   return(result);
 }
 
+
 off_t mus_sound_comment_start(const char *arg) 
 {
   sound_file *sf;
@@ -842,6 +856,7 @@ off_t mus_sound_comment_start(const char *arg)
   MUS_UNLOCK(&sound_table_lock);
   return(result);
 }
+
 
 off_t mus_sound_comment_end(const char *arg)   
 {
@@ -854,6 +869,7 @@ off_t mus_sound_comment_end(const char *arg)
   return(result);
 }
 
+
 off_t mus_sound_length(const char *arg)        
 {
   sound_file *sf;
@@ -864,6 +880,7 @@ off_t mus_sound_length(const char *arg)
   MUS_UNLOCK(&sound_table_lock);
   return(result);
 }
+
 
 int mus_sound_fact_samples(const char *arg)    
 {
@@ -876,6 +893,7 @@ int mus_sound_fact_samples(const char *arg)
   return(result);
 }
 
+
 time_t mus_sound_write_date(const char *arg)   
 {
   sound_file *sf;
@@ -886,6 +904,7 @@ time_t mus_sound_write_date(const char *arg)
   MUS_UNLOCK(&sound_table_lock);
   return(result);
 }
+
 
 int mus_sound_type_specifier(const char *arg)  
 {
@@ -898,6 +917,7 @@ int mus_sound_type_specifier(const char *arg)
   return(result);
 }
 
+
 int mus_sound_block_align(const char *arg)     
 {
   sound_file *sf;
@@ -909,6 +929,7 @@ int mus_sound_block_align(const char *arg)
   return(result);
 }
 
+
 int mus_sound_bits_per_sample(const char *arg) 
 {
   sound_file *sf;
@@ -919,7 +940,6 @@ int mus_sound_bits_per_sample(const char *arg)
   MUS_UNLOCK(&sound_table_lock);
   return(result);
 }
-
 
 
 float mus_sound_duration(const char *arg) 
@@ -1034,7 +1054,9 @@ char *mus_sound_comment(const char *name)
   off_t start, end, len;
   char *sc = NULL;
   sound_file *sf = NULL;
+
   MUS_LOCK(&sound_table_lock);
+
   sf = get_sf(name); 
   if (sf)
     {
@@ -1198,16 +1220,20 @@ static int mus_sound_set_field(const char *arg, sf_field_t field, int val)
 	case SF_CHANS:    
 	  sf->chans = val;       
 	  break;
+
 	case SF_SRATE:    
 	  sf->srate = val;       
 	  break;
+
 	case SF_TYPE:     
 	  sf->header_type = val; 
 	  break;
+
 	case SF_FORMAT:   
 	  sf->data_format = val; 
 	  sf->datum_size = mus_bytes_per_sample(val); 
 	  break;
+
 	default: 
 	  result = MUS_ERROR; 
 	  break;
@@ -1233,9 +1259,11 @@ static int mus_sound_set_off_t_field(const char *arg, sf_field_t field, off_t va
 	case SF_SIZE:     
 	  sf->samples = val; 
 	  break;
+
 	case SF_LOCATION: 
 	  sf->data_location = val; 
 	  break;
+
 	default: 
 	  result = MUS_ERROR;
 	  break;
@@ -1302,34 +1330,32 @@ off_t mus_sound_maxamps(const char *ifile, int chans, mus_sample_t *vals, off_t 
 {
   off_t frames;
   int i, ichans, chn;
-
+  sound_file *sf; 
+    
   MUS_LOCK(&sound_table_lock);
 
-  {
-    sound_file *sf; 
-
-    sf = get_sf(ifile); 
-    if (sf->chans <= 0)
-      {
-	MUS_UNLOCK(&sound_table_lock);
-	return(MUS_ERROR);
-      }
+  sf = get_sf(ifile); 
+  if (sf->chans <= 0)
+    {
+      MUS_UNLOCK(&sound_table_lock);
+      return(MUS_ERROR);
+    }
   
-    if ((sf) && (sf->maxamps))
-      {
-	if (chans > sf->chans) 
-	  ichans = sf->chans; 
-	else ichans = chans;
-	for (chn = 0; chn < ichans; chn++)
-	  {
-	    times[chn] = sf->maxtimes[chn];
-	    vals[chn] = sf->maxamps[chn];
-	  }
-	frames = sf->samples / sf->chans;
-	MUS_UNLOCK(&sound_table_lock);
-	return(frames);
-      }
-  }
+  if ((sf) && (sf->maxamps))
+    {
+      if (chans > sf->chans) 
+	ichans = sf->chans; 
+      else ichans = chans;
+      for (chn = 0; chn < ichans; chn++)
+	{
+	  times[chn] = sf->maxtimes[chn];
+	  vals[chn] = sf->maxamps[chn];
+	}
+      frames = sf->samples / sf->chans;
+      MUS_UNLOCK(&sound_table_lock);
+      return(frames);
+    }
+
   MUS_UNLOCK(&sound_table_lock);
 
   {
@@ -1338,6 +1364,7 @@ off_t mus_sound_maxamps(const char *ifile, int chans, mus_sample_t *vals, off_t 
     mus_sample_t *buffer, *samp;
     off_t *time;
     mus_sample_t **ibufs;
+
     ifd = mus_sound_open_input(ifile);
     if (ifd == MUS_ERROR) return(MUS_ERROR);
     ichans = mus_sound_chans(ifile);
@@ -1349,12 +1376,15 @@ off_t mus_sound_maxamps(const char *ifile, int chans, mus_sample_t *vals, off_t 
       }
 
     mus_file_seek_frame(ifd, 0);
+
     ibufs = (mus_sample_t **)calloc(ichans, sizeof(mus_sample_t *));
     bufnum = 8192;
     for (j = 0; j < ichans; j++) 
       ibufs[j] = (mus_sample_t *)calloc(bufnum, sizeof(mus_sample_t));
+
     time = (off_t *)calloc(ichans, sizeof(off_t));
     samp = (mus_sample_t *)calloc(ichans, sizeof(mus_sample_t));
+
     for (n = 0; n < frames; n += bufnum)
       {
 	if ((n + bufnum) < frames) 
@@ -1376,14 +1406,17 @@ off_t mus_sound_maxamps(const char *ifile, int chans, mus_sample_t *vals, off_t 
 	      }
 	  }
       }
+
     mus_sound_close_input(ifd);
     mus_sound_set_maxamps(ifile, ichans, samp, time); /* save the complete set */
+
     if (ichans > chans) ichans = chans;
     for (chn = 0; chn < ichans; chn++)
       {
 	times[chn] = time[chn];
 	vals[chn] = samp[chn];
       }
+
     free(time);
     free(samp);
     for (j = 0; j < ichans; j++) free(ibufs[j]);
@@ -1451,20 +1484,26 @@ off_t mus_file_to_array(const char *filename, int chan, off_t start, off_t sampl
   int ifd, chans;
   off_t total_read;
   mus_sample_t **bufs;
+
   ifd = mus_sound_open_input(filename);
   if (ifd == MUS_ERROR) return(MUS_ERROR);
+
   chans = mus_sound_chans(filename);
   if (chan >= chans) 
     {
       mus_sound_close_input(ifd);      
       return(mus_error(MUS_NO_SUCH_CHANNEL, "mus_file_to_array can't read %s channel %d (file has %d chans)", filename, chan, chans));
     }
+
   bufs = (mus_sample_t **)calloc(chans, sizeof(mus_sample_t *));
   bufs[chan] = array;
+
   mus_file_seek_frame(ifd, start);
   total_read = mus_file_read_any(ifd, 0, chans, samples, bufs, bufs);
+
   mus_sound_close_input(ifd);
   free(bufs);
+
   return(total_read);
 }
 
@@ -1551,10 +1590,9 @@ int mus_float_array_to_file(const char *filename, Float *ddata, off_t len, int s
 }
 
 
-static bool sndlib_initialized = false;
-
 int mus_sound_initialize(void)
 {
+  static bool sndlib_initialized = false;
   if (!sndlib_initialized)
     {
       int err = MUS_NO_ERROR;

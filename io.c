@@ -2265,18 +2265,23 @@ int mus_samples_bounds(unsigned char *data, int bytes, int chan, int chans, int 
     case MUS_MULAW:
       min_max_mulaw(data, bytes, chan, chans, min_samp, max_samp);
       break;
+
     case MUS_ALAW:
       min_max_alaw(data, bytes, chan, chans, min_samp, max_samp);
       break;
+
     case MUS_BYTE:
       min_max_bytes(data, bytes, chan, chans, min_samp, max_samp);
       break;
+
     case MUS_UBYTE:
       min_max_ubytes(data, bytes, chan, chans, min_samp, max_samp);
       break;
+
     case MUS_L24INT:
       min_max_24s(data, bytes, chan, chans, min_samp, max_samp, false);
       break;
+
     case MUS_B24INT:
       min_max_24s(data, bytes, chan, chans, min_samp, max_samp, true);
       break;
@@ -2286,36 +2291,45 @@ int mus_samples_bounds(unsigned char *data, int bytes, int chan, int chans, int 
     case MUS_LSHORT:
       min_max_shorts(data, bytes, chan, chans, min_samp, max_samp);
       break;
+
     case MUS_BSHORT:
       min_max_switch_shorts(data, bytes, chan, chans, min_samp, max_samp);
       break;
+
     case MUS_ULSHORT:
       min_max_ushorts(data, bytes, chan, chans, min_samp, max_samp);
       break;
+
     case MUS_UBSHORT:
       min_max_switch_ushorts(data, bytes, chan, chans, min_samp, max_samp);
       break;
+
     case MUS_LINT:
     case MUS_LINTN:
       min_max_ints(data, bytes, chan, chans, min_samp, max_samp, format == MUS_LINT);
       break;
+
     case MUS_BINT:
     case MUS_BINTN:
       min_max_switch_ints(data, bytes, chan, chans, min_samp, max_samp, format == MUS_BINT);
       break;
+
     case MUS_LFLOAT:
     case MUS_LFLOAT_UNSCALED:
       /* prescaler is known to be 1.0 here */
       min_max_floats(data, bytes, chan, chans, min_samp, max_samp, format == MUS_LFLOAT_UNSCALED);
       break;
+
     case MUS_BFLOAT:
     case MUS_BFLOAT_UNSCALED:
       min_max_switch_floats(data, bytes, chan, chans, min_samp, max_samp, format == MUS_BFLOAT_UNSCALED);
       break;
+
     case MUS_LDOUBLE:
     case MUS_LDOUBLE_UNSCALED:
       min_max_doubles(data, bytes, chan, chans, min_samp, max_samp, format == MUS_LDOUBLE_UNSCALED);
       break;
+
     case MUS_BDOUBLE:
     case MUS_BDOUBLE_UNSCALED:
       min_max_switch_doubles(data, bytes, chan, chans, min_samp, max_samp, format == MUS_BDOUBLE_UNSCALED);
@@ -2326,35 +2340,43 @@ int mus_samples_bounds(unsigned char *data, int bytes, int chan, int chans, int 
     case MUS_LSHORT:
       min_max_switch_shorts(data, bytes, chan, chans, min_samp, max_samp);
       break;
+
     case MUS_BSHORT:
       min_max_shorts(data, bytes, chan, chans, min_samp, max_samp);
       break;
     case MUS_ULSHORT:
       min_max_switch_ushorts(data, bytes, chan, chans, min_samp, max_samp);
       break;
+
     case MUS_UBSHORT:
       min_max_ushorts(data, bytes, chan, chans, min_samp, max_samp);
       break;
+
     case MUS_LINT:
     case MUS_LINTN:
       min_max_switch_ints(data, bytes, chan, chans, min_samp, max_samp, format == MUS_LINT);
       break;
+
     case MUS_BINT:
     case MUS_BINTN:
       min_max_ints(data, bytes, chan, chans, min_samp, max_samp, format == MUS_BINT);
       break;
+
     case MUS_LFLOAT:
     case MUS_LFLOAT_UNSCALED:
       min_max_switch_floats(data, bytes, chan, chans, min_samp, max_samp, format == MUS_LFLOAT_UNSCALED);
       break;
+
     case MUS_BFLOAT:
     case MUS_BFLOAT_UNSCALED:
       min_max_floats(data, bytes, chan, chans, min_samp, max_samp, format == MUS_BFLOAT_UNSCALED);
       break;
+
     case MUS_LDOUBLE:
     case MUS_LDOUBLE_UNSCALED:
       min_max_switch_doubles(data, bytes, chan, chans, min_samp, max_samp, format == MUS_LDOUBLE_UNSCALED);
       break;
+
     case MUS_BDOUBLE:
     case MUS_BDOUBLE_UNSCALED:
       min_max_doubles(data, bytes, chan, chans, min_samp, max_samp, format == MUS_BDOUBLE_UNSCALED);

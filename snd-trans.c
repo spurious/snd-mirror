@@ -1473,8 +1473,10 @@ int snd_translate(const char *oldname, const char *newname, int type)
   /* called from snd-file.c */
   int err;
   char *hdr = NULL;
+
   if (MUS_CANT_TRANSLATE == 0) MUS_CANT_TRANSLATE = mus_make_error((char *)"can't translate");
   err = MUS_CANT_TRANSLATE;
+
   hdr = (char *)calloc(TRANS_BUF_SIZE, sizeof(char));
   /* set up default output header */
   mus_bint_to_char((unsigned char *)hdr, 0x2e736e64);   /* .snd */
@@ -1483,22 +1485,53 @@ int snd_translate(const char *oldname, const char *newname, int type)
   mus_bint_to_char((unsigned char *)(hdr + 12), 3);     /* 16-bit linear */
   mus_bint_to_char((unsigned char *)(hdr + 16), 22050);
   mus_bint_to_char((unsigned char *)(hdr + 20), 1);     /* chans */
+
   switch (type)
     {
-    case MUS_MIDI_SAMPLE_DUMP: err = read_midi_sample_dump(oldname, newname, hdr); break;
-    case MUS_IEEE: err = read_ieee_text(oldname, newname, hdr); break;
-    case MUS_MUS10: err = read_mus10(oldname, newname, hdr); break;
-    case MUS_HCOM: err = read_hcom(oldname, newname, hdr); break;
-    case MUS_YAMAHA_TX16W: err = read_12bit(oldname, newname, hdr); break;
-    case MUS_NVF: err = read_g72x_adpcm(oldname, newname, hdr, 0); break;
+    case MUS_MIDI_SAMPLE_DUMP: 
+      err = read_midi_sample_dump(oldname, newname, hdr); 
+      break;
+
+    case MUS_IEEE: 
+      err = read_ieee_text(oldname, newname, hdr); 
+      break;
+
+    case MUS_MUS10: 
+      err = read_mus10(oldname, newname, hdr); 
+      break;
+
+    case MUS_HCOM: 
+      err = read_hcom(oldname, newname, hdr); 
+      break;
+
+    case MUS_YAMAHA_TX16W: 
+      err = read_12bit(oldname, newname, hdr); 
+      break;
+
+    case MUS_NVF: 
+      err = read_g72x_adpcm(oldname, newname, hdr, 0); 
+      break;
+
     case MUS_RF64:
     case MUS_RIFF:
       switch (mus_sound_original_format(oldname))
 	{
-	case RIFF_MS_ADPCM: case RIFF_Intel_ADPCM: err = read_dvi_adpcm(oldname, newname, hdr, 0); break;
-	case RIFF_IBM_ADPCM: err = read_ibm_adpcm(oldname, newname, hdr); break;
-	case RIFF_Oki_ADPCM: err = read_oki_adpcm(oldname, newname, hdr); break;
-	case RIFF_G721: err = read_g72x_adpcm(oldname, newname, hdr, 0); break; /* untested */
+	case RIFF_MS_ADPCM: case RIFF_Intel_ADPCM: 
+	  err = read_dvi_adpcm(oldname, newname, hdr, 0); 
+	  break;
+
+	case RIFF_IBM_ADPCM: 
+	  err = read_ibm_adpcm(oldname, newname, hdr); 
+	  break;
+
+	case RIFF_Oki_ADPCM: 
+	  err = read_oki_adpcm(oldname, newname, hdr); 
+	  break;
+
+	case RIFF_G721: 
+	  err = read_g72x_adpcm(oldname, newname, hdr, 0); 
+	  break; /* untested */
+
 	case RIFF_G723: case RIFF_MS_G723: case RIFF_Lucent_G723: case RIFF_Vivo_G723: /* untested */
 	  if (mus_sound_bits_per_sample(oldname) == 3)
 	    err = read_g72x_adpcm(oldname, newname, hdr, 1);
@@ -1508,25 +1541,26 @@ int snd_translate(const char *oldname, const char *newname, int type)
 	  break;
 	}
       break;
+
     case MUS_NIST:
       if (mus_sound_original_format(oldname) == MUS_NIST_SHORTPACK) 
 	err = read_nist_shortpack(oldname, newname, hdr); 
       break;
+
     case MUS_NEXT:
       switch (mus_sound_original_format(oldname))
 	{
-	case NeXT_G721: err = read_g72x_adpcm(oldname, newname, hdr, 0); break;
-	case NeXT_G723: err = read_g72x_adpcm(oldname, newname, hdr, 1); break;
+	case NeXT_G721:   err = read_g72x_adpcm(oldname, newname, hdr, 0); break;
+	case NeXT_G723:   err = read_g72x_adpcm(oldname, newname, hdr, 1); break;
 	case NeXT_G723_5: err = read_g72x_adpcm(oldname, newname, hdr, 2); break;
 	}
       break;
+
     case MUS_AIFC:
       if (mus_sound_original_format(oldname) == MUS_AIFF_IMA_ADPCM) 
 	err = read_dvi_adpcm(oldname, newname, hdr, 1); 
       break;
-    case MUS_MATLAB:
-      /* assume all vectors are channels */
-      break;
+ 
     case MUS_OGG: case MUS_SPEEX: case MUS_FLAC: case MUS_MIDI: case MUS_MPEG:
     case MUS_SHORTEN: case MUS_TTA: case MUS_WAVPACK:
     default:
@@ -1534,6 +1568,7 @@ int snd_translate(const char *oldname, const char *newname, int type)
 	err = MUS_NO_ERROR;
       break;
     }
+
   free(hdr);
   if (err == MUS_CANT_TRANSLATE)
     return(mus_error(MUS_CANT_TRANSLATE,

@@ -1534,7 +1534,7 @@ void sound_files_help(void)
     Gravis Ultrasound, ASF, PAF, CSL, Comdisco SPW, Goldwave sample, omf, quicktime, sox,\n\
     Sonic Foundry (w64), SBStudio II, Delusion digital, Digiplayer ST3, Farandole Composer WaveSample,\n\
     Ultratracker WaveSample, Sample Dump exchange, Yamaha SY85, SY99, and TX16, Covox v8, AVI, \n\
-    Impulse tracker, Korg, Akai, Turtle Beach\n\
+    Impulse tracker, Korg, Akai, Turtle Beach, Matlab-5\n\
 \n\n\
   automatically translated to a readable format:\n\
     IEEE text, Mus10, SAM 16-bit (modes 1 and 4), AVI, \n\
