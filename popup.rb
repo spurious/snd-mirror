@@ -2,7 +2,7 @@
 
 # Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Thu Sep 05 22:28:49 CEST 2002
-# Changed: Sat Nov 17 00:50:32 CET 2007
+# Changed: Sun Mar 01 15:01:33 CET 2009
 
 # Commentary:
 #

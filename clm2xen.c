@@ -662,7 +662,7 @@ static XEN g_fft_window_1(xclm_window_t choice, XEN val1, XEN val2, XEN ulen, co
   if (len > v2->length) len = v2->length;
   switch (choice)
     {
-    case G_MULTIPLY_ARRAYS: mus_multiply_arrays(v1->data, v2->data, len); break;
+    case G_MULTIPLY_ARRAYS:   mus_multiply_arrays(v1->data, v2->data, len);      break;
     case G_RECTANGULAR_POLAR: mus_rectangular_to_polar(v1->data, v2->data, len); break;
     case G_POLAR_RECTANGULAR: mus_polar_to_rectangular(v1->data, v2->data, len); break;
     }
@@ -1952,9 +1952,11 @@ static XEN g_make_delay_1(xclm_delay_t choice, XEN arglist)
 	case G_DELAY: 
 	case G_MOVING_AVERAGE:
 	  break;
+
 	case G_COMB: case G_NOTCH: case G_FCOMB:
 	  scaler = mus_optkey_to_float(keys[scaler_key], caller, orig_arg[scaler_key], scaler);
 	  break;
+
 	case G_ALL_PASS:
 	  feedback = mus_optkey_to_float(keys[feedback_key], caller, orig_arg[feedback_key], feedback);
 	  feedforward = mus_optkey_to_float(keys[feedforward_key], caller, orig_arg[feedforward_key], feedforward);
@@ -2054,12 +2056,12 @@ static XEN g_make_delay_1(xclm_delay_t choice, XEN arglist)
     old_error_handler = mus_error_set_handler(local_mus_error);
     switch (choice)
       {
-      case G_DELAY:    ge = mus_make_delay(size, line, max_size, (mus_interp_t)interp_type); break;
-      case G_MOVING_AVERAGE:  ge = mus_make_moving_average(size, line); break;
-      case G_COMB:     ge = mus_make_comb(scaler, size, line, max_size, (mus_interp_t)interp_type); break;
-      case G_NOTCH:    ge = mus_make_notch(scaler, size, line, max_size, (mus_interp_t)interp_type); break;
+      case G_DELAY:    ge = mus_make_delay(size, line, max_size, (mus_interp_t)interp_type);                           break;
+      case G_MOVING_AVERAGE:  ge = mus_make_moving_average(size, line);                                                break;
+      case G_COMB:     ge = mus_make_comb(scaler, size, line, max_size, (mus_interp_t)interp_type);                    break;
+      case G_NOTCH:    ge = mus_make_notch(scaler, size, line, max_size, (mus_interp_t)interp_type);                   break;
       case G_ALL_PASS: ge = mus_make_all_pass(feedback, feedforward, size, line, max_size, (mus_interp_t)interp_type); break;
-      case G_FCOMB:    ge = mus_make_filtered_comb(scaler, size, line, max_size, (mus_interp_t)interp_type, filt); break;
+      case G_FCOMB:    ge = mus_make_filtered_comb(scaler, size, line, max_size, (mus_interp_t)interp_type, filt);     break;
       }
     mus_error_set_handler(old_error_handler);
   }
@@ -3084,9 +3086,9 @@ static XEN g_make_sw(xclm_wave_t type, Float def_phase, XEN arg1, XEN arg2, XEN 
   switch (type)
     {
       case G_SAWTOOTH_WAVE: caller = S_make_sawtooth_wave; break;
-      case G_SQUARE_WAVE: caller = S_make_square_wave; break;
+      case G_SQUARE_WAVE:   caller = S_make_square_wave;   break;
       case G_TRIANGLE_WAVE: caller = S_make_triangle_wave; break;
-      case G_PULSE_TRAIN: caller = S_make_pulse_train; break;
+      case G_PULSE_TRAIN:   caller = S_make_pulse_train;   break;
     }
 
   keys[0] = kw_frequency;
@@ -3109,9 +3111,9 @@ static XEN g_make_sw(xclm_wave_t type, Float def_phase, XEN arg1, XEN arg2, XEN 
   switch (type)
     {
     case G_SAWTOOTH_WAVE: ge = mus_make_sawtooth_wave(freq, base, phase); break;
-    case G_SQUARE_WAVE: ge = mus_make_square_wave(freq, base, phase); break;
+    case G_SQUARE_WAVE:   ge = mus_make_square_wave(freq, base, phase);   break;
     case G_TRIANGLE_WAVE: ge = mus_make_triangle_wave(freq, base, phase); break;
-    case G_PULSE_TRAIN: ge = mus_make_pulse_train(freq, base, phase); break;
+    case G_PULSE_TRAIN:   ge = mus_make_pulse_train(freq, base, phase);   break;
     }
   if (ge) return(mus_xen_to_object(mus_any_to_mus_xen(ge)));
   return(XEN_FALSE);

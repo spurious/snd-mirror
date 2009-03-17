@@ -2,7 +2,7 @@
 
 # Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Wed Feb 25 05:31:02 CET 2004
-# Changed: Sat Nov 17 01:06:09 CET 2007
+# Changed: Sun Mar 01 22:08:00 CET 2009
 
 # Commentary:
 #
@@ -1206,11 +1206,12 @@ module Snd_Motif
   end
   
   def string2compound(*args)
-    RXmStringCreateLtoR(format(*args), RXmFONTLIST_DEFAULT_TAG)
+    args[0] = String(args[0])
+    RXmStringCreateLocalized(format(*args))
   end
 
   def compound2string(xstr)
-    RXmStringGetLtoR(xstr, RXmFONTLIST_DEFAULT_TAG)[1]
+    RXmStringUnparse(xstr, false, RXmCHARSET_TEXT, RXmCHARSET_TEXT, false, 0, RXmOUTPUT_ALL)
   end
 
   def get_xtvalue(widget, item)

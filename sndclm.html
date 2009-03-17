@@ -7420,6 +7420,44 @@ In Ruby, frame* is frame_multiply, frame+ is frame_add, and mixer* is mixer_mult
      0.000 0.000 2.000
     ]&gt;</em>
 </pre>
+
+<p>make-mixer! (with the exclamation point) overrides an internal size check.  Since the size
+is interpreted normally as the number of channels, the make-mixer (no excl) max size is pretty
+low (128 when last checked).  If you're using mixers as honest matrices, you'll often want large
+mixers.  Here's a curious example that takes the "wavogram" view of a sound (as a sequence
+of equal length traces), loads it into a mixer, inverts the mixer (via matrix inversion, <a href="sndscm.html#invertmatrix">invert-matrix</a>), then
+writes out the new "sound":
+</p>
+
+<pre>
+(let* ((snd (open-sound "oboe.snd"))
+       (size 225) ; 225 * 225 is about the size of oboe.snd
+       (mx (<em class=red>make-mixer!</em> size))
+       (rd (make-sample-reader 0)))
+  (do ((i 0 (+ i 1)))
+      ((= i size))
+    (do ((j 0 (+ j 1)))
+	((= j size))
+      (<em class=red>mixer-set!</em> mx i j (rd))))
+
+  (invert-matrix mx)
+
+  (let ((nsnd (new-sound "test.snd" :srate 22050))
+	(samp 0)
+	(samps (make-vct (* size size))))
+    (do ((i 0 (+ i 1)))
+	((= i size))
+      (do ((j 0 (+ j 1)))
+	  ((= j size))
+	(vct-set! samps samp (<em class=red>mixer-ref</em> mx i j))
+	(set! samp (+ samp 1))))
+
+    (vct-&gt;channel samps 0 (* size size) nsnd)))
+</pre>
+
+<p>Can you predict what this will sound like (suitably scaled, of course)?
+</p>
+
 <br><br>
 
 

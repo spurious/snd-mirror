@@ -899,6 +899,7 @@ static const int mulaw[256] = {
 
 #if SNDLIB_USE_FLOATS
   #define MUS_SAMPLE_UNSCALED(n) ((n) / 32768.0)
+  /* see note in _sndlib.h" values are "unscaled" from the DAC's point of view */
 #else
   #define MUS_SAMPLE_UNSCALED(n) ((n) * (1 << (MUS_SAMPLE_BITS - 16)))
 #endif

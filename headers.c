@@ -995,9 +995,10 @@ static void read_aif_appl_chunk(unsigned char *buf, off_t offset, int chunksize)
 
   if (match_four_chars((unsigned char *)(buf + 8), I_MUS_))
     {
-      /* my own chunk has the arbitrary length comment I use (actually the ASCII    */
-      /* representation of a lisp program evaluated in the CLM package) to handle mix et al. */
-      /* It is nothing more than the actual string -- remember to pad to even length here. */
+      /* my chunk has an arbitrary length comment (a lisp program evaluated in the CLM package) 
+       *   to handle mix et al.  Can't use the built-in chunk for this because the comment length might
+       *   be greater than 65536 chars.  Need to remember to pad to even length here. 
+       */
       comment_start = offset + 12;
       comment_end = comment_start + chunksize - 5;
     }
@@ -5427,7 +5428,7 @@ static int read_sox_header(const char *filename, int fd)
  *   4 bytes size: (not including the tag)
  *   array types: 6: double 7:float 
  *
- * I'll assume a sound file is stored as a matlab array (type 15 in the cases I've looked at)
+ * I'll assume a sound file is stored as a matlab array
  * and each separate array is a channel (non-interleaved, so if chans>1 we have to pre-translate it).
  *
  */
@@ -5448,6 +5449,7 @@ static int read_matlab_5_header(const char *filename, int fd)
 
   if (mus_char_to_lshort((unsigned char *)(hdrbuf + 126)) == 0x494d)
     swapped = true;
+  /* byte swapping not handled yet */
 
   type = mus_char_to_lint((unsigned char *)(hdrbuf + 128));
   if (type != 14)
@@ -5479,7 +5481,6 @@ static int read_matlab_5_header(const char *filename, int fd)
   srate = 44100; /* a plausible guess */
 
   true_file_length = SEEK_FILE_LENGTH(fd);
-  
   return(MUS_NO_ERROR);
 }
 

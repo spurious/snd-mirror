@@ -207,8 +207,14 @@ enum {MUS_UNKNOWN, MUS_BSHORT, MUS_MULAW, MUS_BYTE, MUS_BFLOAT, MUS_BINT, MUS_AL
       MUS_BINTN, MUS_LINTN, MUS_BFLOAT_UNSCALED, MUS_LFLOAT_UNSCALED, MUS_BDOUBLE_UNSCALED, MUS_LDOUBLE_UNSCALED,
       MUS_NUM_DATA_FORMATS};
 
-/* MUS_LINTN and MUS_BINTN refer to 32 bit ints with 31 bits of "fraction" -- the data is "left justified" */
-/* "unscaled" means the float value is used directly (i.e. not as -1.0 to 1.0, but (probably) -32768.0 to 32768.0) */
+/* MUS_LINTN and MUS_BINTN refer to 32 bit ints with 31 bits of "fraction" -- the data is "left justified" 
+ */
+
+/* "unscaled" means the float value is not between -1.0 to 1.0, but -32768.0 to 32768.0 -- although io.c
+ *    promptly scales the unscaled value back down to -1.0..1.0, it's "unscaled" in the sense that the
+ *    original user thought it would go directly (after float->int conversion) to a 16-bit DAC.  Such were
+ *    the gyrations of the ancients.
+ */
 
 
 #if MUS_MAC_OSX
