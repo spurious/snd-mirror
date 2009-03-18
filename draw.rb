@@ -1,8 +1,8 @@
 # draw.rb -- draw.scm --> draw.rb -*- snd-ruby -*-
 
-# Translator: Michael Scholz <scholz-micha@gmx.de>
+# Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Tue Apr 05 00:17:04 CEST 2005
-# Changed: Thu Oct 19 23:30:53 CEST 2006
+# Changed: Tue Mar 17 21:41:16 CET 2009
 
 # Commentary:
 #
@@ -224,7 +224,7 @@ displays time domain graph using current colormap (just an example of colormap-r
           data_scaler = ((data_max > 0.0) ? (height / (2.0 * data_max)) : 0.0)
           new_len = width * 2
           data_len = (vct?(data) ? data.length : data.car.length)
-          step = data_len / width.to_f
+          step = (data_len / width.to_f).to_i
           if data_len > width
             data0 = make_array(new_len)
             data1 = ((not vct?(data)) and make_array(new_len))
@@ -266,7 +266,7 @@ displays time domain graph using current colormap (just an example of colormap-r
               j += 2
             end
           else
-            xstep = width.to_f / data_len
+            xstep = (width.to_f / data_len).to_i
             data0 = make_array(data_len * 2)
             data1 = ((not vct?(data)) and make_array(data_len * 2))
             j = 0
@@ -285,12 +285,12 @@ displays time domain graph using current colormap (just an example of colormap-r
             end
           end
           set_channel_property(:inset_envelope,
-                               {:width, width,
-                                 :height, height,
-                                 :edit_position, edit_position(snd, chn),
-                                 :data0, data0,
-                                 :data1, data1,
-                                 :y_offset, y_offset},
+                               {:width => width,
+                                 :height => height,
+                                 :edit_position => edit_position(snd, chn),
+                                 :data0 => data0,
+                                 :data1 => data1,
+                                 :y_offset => y_offset},
                                snd, chn)
         end
         draw_lines(data0, snd, grf_chn)

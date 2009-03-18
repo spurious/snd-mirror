@@ -280,7 +280,7 @@ typedef enum {OP_READ_INTERNAL, OP_EVAL, OP_EVAL_ARGS0, OP_EVAL_ARGS1, OP_APPLY,
 	      OP_LOAD_RETURN_IF_EOF, OP_LOAD_CLOSE_AND_POP_IF_EOF, OP_EVAL_STRING, OP_EVAL_STRING_DONE, 
 	      OP_QUIT, OP_CATCH, OP_DYNAMIC_WIND, OP_FOR_EACH, OP_MAP, OP_DEFINE_CONSTANT0, OP_DEFINE_CONSTANT1, 
 	      OP_DO, OP_DO_END0, OP_DO_END1, OP_DO_STEP0, OP_DO_STEP1, OP_DO_STEP2, OP_DO_INIT,
-	      OP_DEFINE_STAR, OP_LAMBDA_STAR, OP_ERROR_QUIT,
+	      OP_DEFINE_STAR, OP_LAMBDA_STAR, OP_ERROR_QUIT, OP_UNWIND_INPUT, OP_UNWIND_OUTPUT,
 	      OP_MAX_DEFINED} opcode_t;
 
 typedef enum {TOKEN_EOF, TOKEN_LEFT_PAREN, TOKEN_RIGHT_PAREN, TOKEN_DOT, TOKEN_ATOM, TOKEN_QUOTE, TOKEN_DOUBLE_QUOTE, 
@@ -7745,7 +7745,7 @@ s7_pointer s7_eval_c_string(s7_scheme *sc, const char *str)
 
 static s7_pointer call_with_input(s7_scheme *sc, s7_pointer port, s7_pointer args)
 {
-  push_stack(sc, OP_EVAL_STRING_DONE, sc->args, sc->code);
+  push_stack(sc, OP_UNWIND_INPUT, sc->F, port);
   sc->code = cadr(args);
   sc->args = make_list_1(sc, port);
   eval(sc, OP_APPLY);
@@ -7763,6 +7763,8 @@ static s7_pointer g_call_with_input_string(s7_scheme *sc, s7_pointer args)
   
   if (!s7_is_string(car(args)))
     return(s7_wrong_type_arg_error(sc, "call-with-input-string", 1, car(args), "a string"));
+  if (!is_procedure(cadr(args)))
+    return(s7_wrong_type_arg_error(sc, "call-with-input-string", 2, cadr(args), "a procedure"));
   
   return(call_with_input(sc, s7_open_input_string(sc, s7_string(car(args))), args));
 }
@@ -7774,6 +7776,8 @@ static s7_pointer g_call_with_input_file(s7_scheme *sc, s7_pointer args)
   
   if (!s7_is_string(car(args)))
     return(s7_wrong_type_arg_error(sc, "call-with-input-file", 1, car(args), "a string (a filename)"));
+  if (!is_procedure(cadr(args)))
+    return(s7_wrong_type_arg_error(sc, "call-with-input-file", 2, cadr(args), "a procedure"));
   
   return(call_with_input(sc, s7_open_input_file(sc, s7_string(car(args)), "r"), args));
 }
@@ -7785,7 +7789,7 @@ static s7_pointer with_input(s7_scheme *sc, s7_pointer port, s7_pointer args)
   old_input_port = sc->input_port;
   sc->input_port = port;
   
-  push_stack(sc, OP_EVAL_STRING_DONE, sc->args, sc->code);
+  push_stack(sc, OP_UNWIND_INPUT, old_input_port, port);
   sc->code = cadr(args);
   sc->args = sc->NIL;
   eval(sc, OP_APPLY);
@@ -7802,6 +7806,8 @@ static s7_pointer g_with_input_from_string(s7_scheme *sc, s7_pointer args)
   
   if (!s7_is_string(car(args)))
     return(s7_wrong_type_arg_error(sc, "with-input-from-string", 1, car(args), "a string"));
+  if (!is_procedure(cadr(args)))
+    return(s7_wrong_type_arg_error(sc, "with-input-from-string", 2, cadr(args), "a thunk"));
   
   return(with_input(sc, s7_open_input_string(sc, s7_string(car(args))), args));
 }
@@ -7813,6 +7819,8 @@ static s7_pointer g_with_input_from_file(s7_scheme *sc, s7_pointer args)
   
   if (!s7_is_string(car(args)))
     return(s7_wrong_type_arg_error(sc, "with-input-from-file", 1, car(args), "a string (a filename)"));
+  if (!is_procedure(cadr(args)))
+    return(s7_wrong_type_arg_error(sc, "with-input-from-file", 2, cadr(args), "a thunk"));
   
   return(with_input(sc, s7_open_input_file(sc, s7_string(car(args)), "r"), args));
 }
@@ -8099,14 +8107,14 @@ static char *s7_atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
 }
 
 
-static char *s7_vector_to_c_string(s7_scheme *sc, s7_pointer vect, int depth);
+static char *s7_vector_to_c_string(s7_scheme *sc, s7_pointer vect, int depth, bool to_file);
 static char *s7_list_to_c_string(s7_scheme *sc, s7_pointer lst, int depth);
 
-static char *s7_object_to_c_string_1(s7_scheme *sc, s7_pointer obj, bool use_write, int depth)
+static char *s7_object_to_c_string_1(s7_scheme *sc, s7_pointer obj, bool use_write, int depth, bool to_file)
 {
   if ((s7_is_vector(obj)) ||
       (s7_is_hash_table(obj)))
-    return(s7_vector_to_c_string(sc, obj, depth));
+    return(s7_vector_to_c_string(sc, obj, depth, to_file));
 
   if (is_pair(obj))
     return(s7_list_to_c_string(sc, obj, depth));
@@ -8130,13 +8138,13 @@ static char *object_to_c_string_with_circle_check(s7_scheme *sc, s7_pointer vr, 
 	return(s7_strdup("[circular list]"));
       }
 
-  return(s7_object_to_c_string_1(sc, vr, true, depth + 1));
+  return(s7_object_to_c_string_1(sc, vr, true, depth + 1, false));
 }
 
 
-static char *s7_vector_to_c_string(s7_scheme *sc, s7_pointer vect, int depth)
+static char *s7_vector_to_c_string(s7_scheme *sc, s7_pointer vect, int depth, bool to_file)
 {
-  int i, len, plen, bufsize = 0;
+  int i, len, bufsize = 0;
   bool too_long = false;
   char **elements = NULL;
   char *buf;
@@ -8145,11 +8153,22 @@ static char *s7_vector_to_c_string(s7_scheme *sc, s7_pointer vect, int depth)
   if (len == 0)
     return(s7_strdup("#()"));
   
-  plen = s7_integer(s7_symbol_value(sc, s7_make_symbol(sc, "*vector-print-length*")));
-  if (len > plen)
+  if (!to_file)
     {
-      too_long = true;
-      len = plen;
+      int plen;
+      /* if to_file we ignore *vector-print-length* so a subsequent read will be ok
+       *
+       * (with-output-to-file "test.test" 
+       *   (lambda () 
+       *     (let ((vect (make-vector (+ *vector-print-length* 2) 1.0))) 
+       *       (write vect))))
+       */
+      plen = s7_integer(s7_symbol_value(sc, s7_make_symbol(sc, "*vector-print-length*")));
+      if (len > plen)
+	{
+	  too_long = true;
+	  len = plen;
+	}
     }
 
   if (depth < CIRCULAR_REFS_SIZE)
@@ -8192,7 +8211,7 @@ static s7_pointer s7_vector_to_string(s7_scheme *sc, s7_pointer vect)
 {
   char *buf;
   s7_pointer result;
-  buf = s7_vector_to_c_string(sc, vect, 0);
+  buf = s7_vector_to_c_string(sc, vect, 0, false);
   result = s7_make_string(sc, buf);
   free(buf);
   return(result);
@@ -8278,7 +8297,7 @@ static s7_pointer s7_list_to_string(s7_scheme *sc, s7_pointer lst)
 
 char *s7_object_to_c_string(s7_scheme *sc, s7_pointer obj)
 {
-  return(s7_object_to_c_string_1(sc, obj, true, 0));
+  return(s7_object_to_c_string_1(sc, obj, true, 0, false));
 }
 
 
@@ -8352,7 +8371,7 @@ static s7_pointer g_write_char(s7_scheme *sc, s7_pointer args)
 static void write_or_display(s7_scheme *sc, s7_pointer obj, s7_pointer port, bool use_write)
 {
   char *val;
-  val = s7_object_to_c_string_1(sc, obj, use_write, 0);
+  val = s7_object_to_c_string_1(sc, obj, use_write, 0, is_file_port(port));
   write_string(sc, val, port);
   if (val) free(val);
 }
@@ -8445,9 +8464,12 @@ static s7_pointer g_call_with_output_string(s7_scheme *sc, s7_pointer args)
 {
   #define H_call_with_output_string "(call-with-output-string proc) opens a string port applies proc to it, then returns the collected output"
   s7_pointer port, result;
+
+  if (!is_procedure(car(args)))
+    return(s7_wrong_type_arg_error(sc, "call-with-output-string", 1, car(args), "a procedure"));
   
   port = s7_open_output_string(sc);
-  push_stack(sc, OP_EVAL_STRING_DONE, sc->args, sc->code);
+  push_stack(sc, OP_UNWIND_OUTPUT, sc->F, port);
   sc->code = car(args);
   sc->args = make_list_1(sc, port);
   eval(sc, OP_APPLY);
@@ -8464,9 +8486,11 @@ static s7_pointer g_call_with_output_file(s7_scheme *sc, s7_pointer args)
   
   if (!s7_is_string(car(args)))
     return(s7_wrong_type_arg_error(sc, "call-with-output-file", 1, car(args), "a string (a filename)"));
+  if (!is_procedure(cadr(args)))
+    return(s7_wrong_type_arg_error(sc, "call-with-output-file", 2, cadr(args), "a procedure"));
   
   port = s7_open_output_file(sc, s7_string(car(args)), "w");
-  push_stack(sc, OP_EVAL_STRING_DONE, sc->args, sc->code);
+  push_stack(sc, OP_UNWIND_OUTPUT, sc->F, port);
   sc->code = cadr(args);
   sc->args = make_list_1(sc, port);
   eval(sc, OP_APPLY);
@@ -8479,10 +8503,13 @@ static s7_pointer g_with_output_to_string(s7_scheme *sc, s7_pointer args)
 {
   #define H_with_output_to_string "(with-output-to-string thunk) opens a string as a temporary current-output-port, calls thunk, then returns the collected output"
   s7_pointer old_output_port, result;
+
+  if (!is_procedure(car(args)))
+    return(s7_wrong_type_arg_error(sc, "with-output-to-string", 1, car(args), "a thunk"));
   
   old_output_port = sc->output_port;
   sc->output_port = s7_open_output_string(sc);
-  push_stack(sc, OP_EVAL_STRING_DONE, sc->args, sc->code);
+  push_stack(sc, OP_UNWIND_OUTPUT, old_output_port, sc->output_port);
   sc->code = car(args);
   sc->args = sc->NIL;
   eval(sc, OP_APPLY);
@@ -8500,10 +8527,12 @@ static s7_pointer g_with_output_to_file(s7_scheme *sc, s7_pointer args)
   
   if (!s7_is_string(car(args)))
     return(s7_wrong_type_arg_error(sc, "with-output-to-file", 1, car(args), "a string (a filename)"));
+  if (!is_procedure(cadr(args)))
+    return(s7_wrong_type_arg_error(sc, "with-output-to-file", 2, cadr(args), "a thunk"));
   
   old_output_port = sc->output_port;
   sc->output_port = s7_open_output_file(sc, s7_string(car(args)), "w");
-  push_stack(sc, OP_EVAL_STRING_DONE, sc->args, sc->code);
+  push_stack(sc, OP_UNWIND_OUTPUT, old_output_port, sc->output_port);
   sc->code = cadr(args);
   sc->args = sc->NIL;
   eval(sc, OP_APPLY);
@@ -11068,6 +11097,13 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
 		  format_append_char(fdat, '\n');
 		  i++;
 		  break;
+
+		case '&':                           /* -------- conditional newline -------- */
+		  if ((fdat->loc > 0) &&
+		      (fdat->str[fdat->loc - 1] != '\n'))
+		    format_append_char(fdat, '\n');
+		  i++;
+		  break;
 		  
 		case '~':                           /* -------- tilde -------- */
 		  format_append_char(fdat, '~');
@@ -11100,6 +11136,9 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
 		case 'A': case 'a':                 /* -------- object->string -------- */
 		case 'C': case 'c':
 		case 'S': case 's':
+
+		  /* PERHAPS: num arg to ~A and ~S to truncate: ~20A sends only (up to) 290 chars of object->string result */
+
 		  if (fdat->args == sc->NIL)
 		    return(s7_format_error(sc, "missing argument", str, args, fdat));
 		  i++;
@@ -11107,7 +11146,7 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
 		      (!s7_is_character(car(fdat->args))))
 		    return(s7_format_error(sc, "~C directive requires a character argument", str, args, fdat));
 
-		  tmp = s7_object_to_c_string_1(sc, car(fdat->args), (str[i] == 'S') || (str[i] == 's'), 0);
+		  tmp = s7_object_to_c_string_1(sc, car(fdat->args), (str[i] == 'S') || (str[i] == 's'), 0, false);
 		  format_append_string(fdat, tmp);
 		  if (tmp) free(tmp);
 		  fdat->args = cdr(fdat->args);
@@ -11317,16 +11356,6 @@ static s7_pointer format_to_output(s7_scheme *sc, s7_pointer out_loc, const char
     }
 
   out_str = format_to_c_string(sc, in_str, args, NULL);
-#if 0
-  if (safe_strlen(out_str) > 200)
-    {
-      out_str[196] = '.';
-      out_str[197] = '.';
-      out_str[198] = '.';
-      out_str[199] = '\0';
-    }
-#endif
-
   result = s7_make_string(sc, out_str);
   if (out_str) free(out_str);
 
@@ -11822,29 +11851,49 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
       opcode_t op;
       s7_pointer x;
       op = (opcode_t)s7_integer(vector_element(sc->stack, i));
-      if (op == OP_DYNAMIC_WIND)
+      
+      switch (op)
 	{
+	case OP_DYNAMIC_WIND:
 	  x = vector_element(sc->stack, i - 3);
 	  if (dynamic_wind_state(x) == DWIND_BODY)
 	    s7_call(sc, dynamic_wind_out(x), sc->NIL);
 	  /* TODO: if an error happens in this call, we can get an infinite loop -- need to just get back to top-level */
-	}
-      else
-	{
-	  if (op == OP_CATCH)
+	  break;
+
+	case OP_CATCH:
+	  x = vector_element(sc->stack, i - 3);
+	  if ((type == sc->T) ||
+	      (catch_tag(x) == sc->T) ||
+	      (s7_is_eq(catch_tag(x), type)))
 	    {
-	      x = vector_element(sc->stack, i - 3);
-	      if ((type == sc->T) ||
-		  (catch_tag(x) == sc->T) ||
-		  (s7_is_eq(catch_tag(x), type)))
-		{
-		  catcher = x;
-		  break;
-		}
+	      catcher = x;
+	      goto GOT_CATCH;
 	    }
+	  break;
+
+	case OP_UNWIND_OUTPUT:
+	  x = vector_element(sc->stack, i - 3); /* "code" = port that we opened */
+	  s7_close_output_port(sc, x);
+	  x = vector_element(sc->stack, i - 1); /* "args" = port that we shadowed, if not #f */
+	  if (x != sc->F)
+	    sc->output_port = x;
+	  break;
+
+	case OP_UNWIND_INPUT:
+	  x = vector_element(sc->stack, i - 3); /* "code" = port that we opened */
+	  s7_close_input_port(sc, x);
+	  x = vector_element(sc->stack, i - 1); /* "args" = port that we shadowed, if not #f */
+	  if (x != sc->F)
+	    sc->input_port = x;
+	  break;
+
+	default:
+	  break;
 	}
     }
   
+GOT_CATCH:
   if (catcher != sc->F)
     {
       sc->args = make_list_2(sc, type, info);
@@ -14163,7 +14212,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	}
       break;
       
+
+    case OP_UNWIND_OUTPUT:
+    case OP_UNWIND_INPUT:
+      return(sc->F);
       
+
     case OP_CATCH:
       pop_stack(sc);
       goto START;
