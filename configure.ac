@@ -1117,7 +1117,7 @@ else
 	AC_CHECK_LIB(m, gtk_test_widget_click, [AC_DEFINE(HAVE_GTK_TEST_WIDGET_CLICK)], ,$GTK_LIBS)
 	# for 2.13.6 (uses 2134)
 	AC_CHECK_LIB(m, gtk_adjustment_get_upper, [AC_DEFINE(HAVE_GTK_ADJUSTMENT_GET_UPPER)], ,$GTK_LIBS)
-	# for 2.15.0|1|2|3 (uses 2150)
+	# for 2.15.0|1|2|3 and 2.16.0 (uses 2150)
 	AC_CHECK_LIB(m, gtk_scale_add_mark, [AC_DEFINE(HAVE_GTK_SCALE_ADD_MARK)], ,$GTK_LIBS)
 
 	# for gdk|pango_cairo 

@@ -1,4 +1,4 @@
-/* xm.c: Guile/Ruby/Forth bindings for X/Xt/Xpm/Xm/Xp/Xext
+/* xm.c: s7/Guile/Ruby/Forth bindings for X/Xt/Xpm/Xm/Xp/Xext
  *   needs xen.h
  *   for tests and examples see snd-motif.scm, bess.scm|rb, and snd-test.scm
  */
@@ -28702,11 +28702,6 @@ static void define_pointers(void)
 #if HAVE_XmCreateTabStack
   DEFINE_POINTER(xmTabStackWidgetClass);
 #endif
-
-  /*
-  DEFINE_POINTER(xmHierarchyWidgetClass);
-  */
-
 #if HAVE_XmCreateDropDown
   DEFINE_POINTER(xmDropDownWidgetClass);
 #endif
@@ -28723,6 +28718,8 @@ static void define_pointers(void)
   DEFINE_POINTER(xmSimpleSpinBoxWidgetClass);
 #endif
 }
+
+
   
 /* -------------------------------- predefined Atoms -------------------------------- */
 

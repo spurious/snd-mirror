@@ -1481,7 +1481,7 @@ Reverb-feedback sets the scaler on the feedback.
   ;; graphics stuff (fonts etc)
   (let*  ((gv (XGCValues))
 	  (shell (list-ref (main-widgets) 1))
-	  (button-fontstruct (XLoadQueryFont (XtDisplay shell) (listener-font))))
+	  (button-fontstruct (XLoadQueryFont (XtDisplay shell) (or (listener-font) "9x15"))))
     (set! (.foreground gv) (data-color))
     (set! (.background gv) (basic-color))
     (set! (.font gv) (.fid button-fontstruct))

@@ -11368,7 +11368,16 @@ static s7_pointer format_to_output(s7_scheme *sc, s7_pointer out_loc, const char
 
 static s7_pointer g_format(s7_scheme *sc, s7_pointer args)
 {
-  #define H_format "(format out str . args) substitutes args into str sending the result to out."
+  #define H_format "(format out str . args) substitutes args into str sending the result to out. Most of \
+s7's format directives are taken from CL: ~% = newline, ~& = newline if the preceding output character was \
+no a newline, ~~ = ~, ~<newline> trims white space, ~* skips an argument, ~^ exits {} iteration if the arg list is exhausted, \
+~nT inserts n tabs, ~A prints a representation of any object, ~S is the same, but puts strings in double quotes, \
+~C prints a character, numbers are handled by ~F, ~E, ~G, ~B, ~O, ~D, and ~X with preceding numbers giving \
+spacing (and spacing character) and precision.  ~{ starts an embedded format directive which is ended by ~}: \n\
+\n\
+  >(format #f \"dashed: ~{~A~^-~}\" '(1 2 3))\n\
+  \"dashed: 1-2-3\""
+
   s7_pointer pt;
   pt = car(args);
 
