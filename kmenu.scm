@@ -5,6 +5,28 @@
 (use-modules (srfi srfi-1))
 (use-modules (srfi srfi-13))
 
+(if (provided? 'snd-s7)
+    (begin
+      (define (string-index str chr)
+	(let ((len (string-length str))
+	      (res #f))
+	  (and (char? chr)
+	       (do ((i 0 (+ i 1)))
+		   ((or res (= i len)) res)
+		 (set! res (char=? (string-ref str i) chr))))))
+
+      (define (string-replace str rstr ind ignore)
+	(string-set! str i (string-ref rstr 0)))
+
+      (define (find thunk lst)
+	(if (null? lst)
+	    #f
+	    (if (thunk (car lst))
+		(car lst)
+		(find thunk (cdr lst)))))
+      ))
+      
+
 (let ()
   ;; returns #f if there is no label (e.g. for tearoff menu item)
   (define (get-label widget)

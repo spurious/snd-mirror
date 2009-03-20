@@ -8003,8 +8003,18 @@ themselves are borderline unsolvable (even when n=3), we have to try
 some other approach.  
 I tried about a dozen different search strategies while collecting the data in peak-phases.scm.
 The most productive simply set the initial phases randomly to either 0 or pi (corresponding
-to setting the sign of the sinusoid).  Even this very sparse search is overwhlemed by the
-size of the "space" we are trying to probe.
+to setting the sign of the sinusoid).  
+<!--
+Even this very sparse search is overwhlemed by the
+size of the "space" we are trying to probe, but I believe an oddity of high-dimensional geometry
+comes to our rescue.  Since the peak function is slowly and smoothly varying, every value is
+very close to nearly all the other values, so the function is a few high spikes (e.g. all cosines)
+and a nearly flat, heavily populated bottom.  Nearly any random stab-in-the-dark value
+will be reasonable.  But each of the 500 or so cases in peak-phases.scm represents more than 100 million
+random tests; at this point my searchers are taking about 5 GHz days of computing
+to find a new lower value.  (I also believe these "random tests" are not actually covering
+the entire search space; another surprise to investigate).
+-->
 </p>
 
 <!--
@@ -8139,7 +8149,7 @@ through the 5-D landscape, each 4-D case being 8 3-D slices as before:
 
 <p>My initial guess was that the minimum peak amplitude would be around the square root of n, but
 instead it appears to be
-closer to (expt n .58).  
+closer to (expt n .576).  
 Here is a graph of the values I've found so far.
 If plotted as a log-log graph, it is
 a straight line with a slope just less than 0.6. I've included the n odd, even, and prime-numbered components min peak amps
@@ -11565,7 +11575,7 @@ using a separate thread for each call.
 
 <p>Snd does not always  handle threads with aplomb.  The primary problem is that
 neither Motif nor Gtk is thread-safe, so you have to squelch updates during any
-threaded operation (see with-threaded-sound itself).
+threaded operation (see with-threaded-channels itself).
 </p>
 
 
