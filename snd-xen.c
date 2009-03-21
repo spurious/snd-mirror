@@ -3032,6 +3032,12 @@ static XEN g_file_exists_p(XEN name)
   return(C_TO_XEN_BOOLEAN(mus_file_probe(XEN_TO_C_STRING(name))));
 }
 
+static XEN g_getpid(void)
+{
+  #define H_getpid "(getpid) returns the current job's process id"
+  return(C_TO_XEN_INT((int)getpid()));
+}
+
 static XEN g_file_is_directory(XEN name)
 {
   #define H_file_is_directory "(file-is-directory? filename): #t if filename names a directory"
@@ -3118,6 +3124,7 @@ static XEN g_tmpnam(void)
   return(str);
 }
 
+XEN_NARGIFY_0(g_getpid_w, g_getpid)
 XEN_NARGIFY_1(g_file_exists_p_w, g_file_exists_p)
 XEN_NARGIFY_1(g_file_is_directory_w, g_file_is_directory)
 XEN_NARGIFY_1(g_system_w, g_system)
@@ -3220,6 +3227,7 @@ void g_xen_initialize(void)
 #endif
 
 #if HAVE_S7
+  XEN_DEFINE_PROCEDURE("getpid",                 g_getpid_w,                 0, 0, 0, H_getpid);
   XEN_DEFINE_PROCEDURE("file-exists?",           g_file_exists_p_w,          1, 0, 0, H_file_exists_p);
   XEN_DEFINE_PROCEDURE("file-is-directory?",     g_file_is_directory_w,      1, 0, 0, H_file_is_directory); /* "directory?" would be a better name, but we follow Guile */
   XEN_DEFINE_PROCEDURE("system",                 g_system_w,                 1, 0, 0, H_system);

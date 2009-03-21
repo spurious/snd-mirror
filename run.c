@@ -12287,6 +12287,28 @@ static xen_value *current_error_port_1(ptree *prog, xen_value **args, int num_ar
 }
 
 
+static void file_exists_p(int *args, ptree *pt)
+{
+  BOOL_RESULT = mus_file_probe(STRING_ARG_1);
+}
+
+static xen_value *file_exists_p_1(ptree *prog, xen_value **args, int num_args)
+{
+  return(package(prog, R_BOOL, file_exists_p, "file_exists_p", args, 1));
+}
+
+
+static void getpid_i(int *args, ptree *pt)
+{
+  INT_RESULT = getpid();
+}
+
+static xen_value *getpid_1(ptree *prog, xen_value **args, int num_args)
+{
+  return(package(prog, R_INT, getpid_i, "getpid_i", args, 0));
+}
+
+
 #endif
 
 
@@ -13838,6 +13860,8 @@ static void init_walkers(void)
   INIT_WALKER("close-input-port", make_walker(close_input_port_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_XEN));
   INIT_WALKER("output-port?", make_walker(is_output_port_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_XEN));
   INIT_WALKER("input-port?", make_walker(is_input_port_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_XEN));
+  INIT_WALKER("file-exists?", make_walker(file_exists_p_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_STRING));
+  INIT_WALKER("getpid", make_walker(getpid_1, NULL, NULL, 0, 0, R_INT, false, 0));
 
   INIT_WALKER("current-output-port", make_walker(current_output_port_1, NULL, NULL, 0, 0, R_XEN, false, 0));
   INIT_WALKER("current-input-port", make_walker(current_input_port_1, NULL, NULL, 0, 0, R_XEN, false, 0));
