@@ -1,5 +1,7 @@
 /* this file included as text in snd-g|xprefs.c */
 
+/* TODO: if something is requested that requires xm|xg.so, give a warning if they can't be loaded
+ */
 
 static void int_to_textfield(widget_t w, int val)
 {
@@ -93,6 +95,7 @@ static void remember_pref(prefs_info *prf,
 	  for (i = prefs_top; i < prefs_size; i++) prefs[i] = NULL;
 	}
     }
+
   prf->reflect_func = reflect_func;
   prf->save_func = save_func;
   prf->help_func = help_func;
@@ -148,16 +151,16 @@ static void preferences_revert_or_clear(bool revert)
 {
   clear_prefs_dialog_error();
   if (revert)
-    {
-      revert_prefs();
-    }
+    revert_prefs();
   else
     {
       snd_set_global_defaults(true);
       clear_prefs();
     }
+
   reflect_prefs();
   prefs_unsaved = false;
+
   if (prefs_saved_filename) 
     {
       char *fullname;
@@ -204,8 +207,10 @@ static char **load_path_to_string_array(int *len)
   char **cdirs = NULL;
   int dir_len = 0, i, j = 0;
   XEN dirs;
+
   dirs = XEN_LOAD_PATH; /* in Guile, if this is the %load-path symbol value, the list gets mangled?? (so use eval string) */
   dir_len = XEN_LIST_LENGTH(dirs);
+
   if (dir_len > 0)
     {
       cdirs = (char **)calloc(dir_len, sizeof(char *));
@@ -217,6 +222,7 @@ static char **load_path_to_string_array(int *len)
 	    cdirs[j++] = mus_strdup(path);
 	}
     }
+
   (*len) = j;
   return(cdirs);
 }
@@ -227,13 +233,16 @@ static void add_local_load_path(FILE *fd, char *path)
 #if HAVE_GUILE
   fprintf(fd, "(if (not (member \"%s\" %%load-path)) (set! %%load-path (cons \"%s\" %%load-path)))\n", path, path);
 #endif
+
 #if HAVE_RUBY
   fprintf(fd, "if (not $LOAD_PATH.include?(\"%s\")) then $LOAD_PATH.push(\"%s\") end\n", path, path);
 #endif
+
 #if HAVE_FORTH
   /* this already checks */
   fprintf(fd, "\"%s\" add-load-path\n", path); /* no drop here */
 #endif
+
 #if HAVE_S7
   fprintf(fd, "(if (not (member \"%s\" *load-path*)) (set! *load-path* (cons \"%s\" *load-path*)))\n", path, path);
 #endif
@@ -244,10 +253,10 @@ static void save_prefs(const char *filename)
 {
   char *fullname;
   FILE *fd;
+
   if (!filename) return; /* error earlier */
   fullname = mus_expand_filename(filename);
   fd = FOPEN(fullname, "a");
-
   fprintf(fd, "\n");
 
   if (fd)
@@ -452,6 +461,7 @@ static void prefs_variable_save(FILE *fd, const char *name, const char *file, XE
   if (temp) free(temp);
 #endif
 #endif
+
 #if HAVE_RUBY
   char *str;
   str = no_stars(name);
@@ -460,6 +470,7 @@ static void prefs_variable_save(FILE *fd, const char *name, const char *file, XE
   fprintf(fd, "set_%s(%s)\n", str, XEN_AS_STRING(val));
   free(str);
 #endif
+
 #if HAVE_FORTH
   if (file)
     fprintf(fd, "require %s\n", file);
@@ -508,12 +519,15 @@ static void prefs_function_call_0(const char *func)
 #if HAVE_SCHEME
   str = mus_format("(%s)\n", func);
 #endif
+
 #if HAVE_RUBY
   str = mus_format("%s()\n", TO_PROC_NAME(func));
 #endif
+
 #if HAVE_FORTH
   str = mus_format("%s\n", func);
 #endif
+
   XEN_EVAL_C_STRING(str);
   free(str);
 #endif
@@ -531,12 +545,15 @@ static void prefs_function_call_1(const char *func, XEN arg)
   if (temp) free(temp);
 #endif
 #endif
+
 #if HAVE_RUBY
   str = mus_format("%s(%s)\n", TO_PROC_NAME(func), XEN_AS_STRING(arg));
 #endif
+
 #if HAVE_FORTH
   str = mus_format("%s %s\n", XEN_AS_STRING(arg), func);
 #endif
+
   XEN_EVAL_C_STRING(str);
   free(str);
 #endif
@@ -550,6 +567,7 @@ static void prefs_function_save_0(FILE *fd, const char *name, const char *file)
     fprintf(fd, "(if (not (provided? 'snd-%s.scm)) (load-from-path \"%s.scm\"))\n", file, file);
   fprintf(fd, "(%s)\n", name);
 #endif
+
 #if HAVE_RUBY
   char *str;
   str = TO_PROC_NAME(name);
@@ -558,6 +576,7 @@ static void prefs_function_save_0(FILE *fd, const char *name, const char *file)
   fprintf(fd, "%s()\n", str);
   free(str);
 #endif
+
 #if HAVE_FORTH
   if (file)
     fprintf(fd, "require %s\n", file);
@@ -577,6 +596,7 @@ static void prefs_function_save_1(FILE *fd, const char *name, const char *file, 
   if (temp) free(temp);
 #endif
 #endif
+
 #if HAVE_RUBY
   char *str;
   str = TO_PROC_NAME(name);
@@ -585,6 +605,7 @@ static void prefs_function_save_1(FILE *fd, const char *name, const char *file, 
   fprintf(fd, "%s(%s)\n", str, XEN_AS_STRING(val));
   free(str);
 #endif
+
 #if HAVE_FORTH
   if (file)
     fprintf(fd, "require %s\n", file);
@@ -1464,9 +1485,11 @@ static void save_view_files_directory(prefs_info *prf, FILE *fd)
 #if HAVE_SCHEME
       fprintf(fd, "(%s \"%s\")\n", S_add_directory_to_view_files_list, rts_vf_directory);
 #endif
+
 #if HAVE_RUBY
       fprintf(fd, "%s(\"%s\")\n", TO_PROC_NAME(S_add_directory_to_view_files_list), rts_vf_directory);
 #endif
+
 #if HAVE_FORTH
       fprintf(fd, "\"%s\" %s drop\n", rts_vf_directory, S_add_directory_to_view_files_list);
 #endif
@@ -2855,6 +2878,7 @@ static int header_to_data(int ht, int frm)
 	case MUS_LDOUBLE: return(MUS_BDOUBLE); break;
 	}
       break;
+
     case MUS_AIFF:
       switch (frm)
 	{
@@ -2863,6 +2887,7 @@ static int header_to_data(int ht, int frm)
 	case MUS_LFLOAT: case MUS_LDOUBLE: case MUS_BFLOAT: case MUS_BDOUBLE: return(MUS_BINT); break;
 	}
       break;
+
     case MUS_NIST:
       switch (frm)
 	{
@@ -2870,6 +2895,7 @@ static int header_to_data(int ht, int frm)
 	case MUS_BFLOAT: case MUS_BDOUBLE: return(MUS_BINT); break;
 	}
       break;
+
     case MUS_RF64:
     case MUS_RIFF:
       switch (frm)
@@ -2880,6 +2906,7 @@ static int header_to_data(int ht, int frm)
 	case MUS_BDOUBLE: return(MUS_LDOUBLE); break;
 	}
       break;
+
     case MUS_CAFF:
       if (frm == MUS_LINT)
 	return(MUS_LINTN);
@@ -2890,6 +2917,7 @@ static int header_to_data(int ht, int frm)
   return(frm);
 }
 
+
 static int chans_to_button(int chans)
 {
   int i;
@@ -2898,6 +2926,7 @@ static int chans_to_button(int chans)
       return(i);
   return(0);
 }
+
 
 static void reflect_default_output_chans(prefs_info *prf) {set_radio_button(prf, chans_to_button(default_output_chans(ss)));}
 static void revert_default_output_chans(prefs_info *prf) {set_default_output_chans(rts_default_output_chans);}
@@ -3000,6 +3029,7 @@ static void default_output_data_format_choice(prefs_info *prf)
 	      break;
 	    }
 	  break;
+
 	case MUS_LFLOAT:
 	  switch (default_output_header_type(ss))
 	    {
@@ -3015,6 +3045,7 @@ static void default_output_data_format_choice(prefs_info *prf)
 	      break;
 	    }
 	  break;
+
 	case MUS_LDOUBLE:
 	  switch (default_output_header_type(ss))
 	    {
@@ -3240,6 +3271,7 @@ static void save_with_sound(prefs_info *prf, FILE *fd)
       if (rts_clm_table_size != 512)
 	fprintf(fd, "(set! *clm-table-size* %d)\n", rts_clm_table_size);
 #endif
+
 #if HAVE_RUBY
       fprintf(fd, "require \"ws\"\n");
       if (rts_clm_file_name)
@@ -3249,6 +3281,7 @@ static void save_with_sound(prefs_info *prf, FILE *fd)
       if (rts_clm_table_size != 512)
 	fprintf(fd, "$clm_table_size = %d\n", rts_clm_table_size);
 #endif
+
 #if HAVE_FORTH
       fprintf(fd, "require clm\n");
       if (rts_clm_file_name)
@@ -3423,9 +3456,11 @@ static void save_context_sensitive_popup(prefs_info *prf, FILE *fd)
 #if HAVE_SCHEME
       fprintf(fd, "(if (provided? 'snd-motif)\n    (if (not (provided? 'snd-popup.scm))\n        (load-from-path \"popup.scm\"))\n    (if (not (provided? 'snd-gtk-popup.scm))\n	(load-from-path \"gtk-popup.scm\")))\n");
 #endif
+
 #if HAVE_RUBY
       fprintf(fd, "require \"popup\"\n");
 #endif
+
 #if HAVE_FORTH
       fprintf(fd, "require popup\n");
 #endif
@@ -3472,9 +3507,11 @@ static void save_effects_menu(prefs_info *prf, FILE *fd)
 #if HAVE_SCHEME
       fprintf(fd, "(if (provided? 'snd-motif)\n    (if (not (provided? 'snd-new-effects.scm))\n        (load-from-path \"new-effects.scm\"))\n    (if (not (provided? 'snd-gtk-effects.scm))\n	(load-from-path \"gtk-effects.scm\")))\n");
 #endif
+
 #if HAVE_RUBY
       fprintf(fd, "require \"effects\"\n");
 #endif
+
 #if HAVE_FORTH
       fprintf(fd, "require effects\n");
 #endif
@@ -3801,6 +3838,7 @@ static bool find_smpte(void)
   return((XEN_DEFINED_P("smpte-is-on")) && 
 	 (!(XEN_FALSE_P(XEN_EVAL_C_STRING("(smpte-is-on)"))))); /* "member" of hook-list -> a list if successful */ 
 #endif
+
 #if HAVE_RUBY || HAVE_FORTH
   return((XEN_DEFINED_P("smpte-is-on")) && 
 	 XEN_TO_C_BOOLEAN(XEN_EVAL_C_STRING(TO_PROC_NAME("smpte-is-on")))); /* "member" of hook-list -> true */ 
@@ -3840,10 +3878,12 @@ static void save_smpte(prefs_info *prf, FILE *fd)
   fprintf(fd, "(if (provided? 'snd-motif)\n    (if (not (provided? 'snd-snd-motif.scm))\n        (load-from-path \"snd-motif.scm\"))\n    (if (not (provided? 'snd-snd-gtk.scm))\n        (load-from-path \"snd-gtk.scm\")))\n");
   fprintf(fd, "(show-smpte-label #t)\n");
 #endif
+
 #if HAVE_RUBY
   fprintf(fd, "require \"snd-xm\"\n");
   fprintf(fd, "show_smpte_label(true)\n");
 #endif
+
 #if HAVE_FORTH
   fprintf(fd, "require snd-xm\n");
   fprintf(fd, "\\ #t show-smpte-label drop\n"); 
@@ -4286,11 +4326,13 @@ static void save_peak_envs(prefs_info *prf, FILE *fd)
       if (include_peak_env_directory)
 	fprintf(fd, "(set! save-peak-env-info-directory \"%s\")\n", include_peak_env_directory);
 #endif
+
 #if HAVE_RUBY
       fprintf(fd, "require \"env\"\n");
       if (include_peak_env_directory)
 	fprintf(fd, "$save_peak_env_info_directory = \"%s\"\n", include_peak_env_directory);
 #endif
+
 #if HAVE_FORTH
       fprintf(fd, "require peak-env\n");
       if (include_peak_env_directory)
@@ -4709,12 +4751,14 @@ static char *make_pfc_binding(char *key, bool ctrl, bool meta, bool cx)
 		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
 		    (cx) ? "#t" : "#f"));
 #endif
+
 #if HAVE_RUBY
   return(mus_format("bind_key(%s, %d, lambda do\n  set_pausing(false)\n  play(cursor())\n  end, %s, \"play sound from cursor\", \"play-from-cursor\")\n", 
 		    possibly_quote(key), 
 		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
 		    (cx) ? "true" : "false"));
 #endif
+
 #if HAVE_FORTH
   return(mus_format("%s %d lambda: <{ }> #f set-pausing drop  #f #f #f cursor play drop ; %s \"play sound from cursor\" \"play-from-cursor\" bind-key drop\n",
 		    possibly_quote(key), 
@@ -4764,6 +4808,7 @@ static char *make_show_all_binding(char *key, bool ctrl, bool meta, bool cx)
 		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
 		    (cx) ? "#t" : "#f"));
 #endif
+
 #if HAVE_RUBY
   return(mus_format("bind_key(%s, %d, lambda do\n\
                                         old_sync = sync()\n\
@@ -4775,6 +4820,7 @@ static char *make_show_all_binding(char *key, bool ctrl, bool meta, bool cx)
 		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
 		    (cx) ? "true" : "false"));
 #endif
+
 #if HAVE_FORTH
   return(mus_format("%s %d lambda: <{ }> #f sync sync-max 1+ #f set-sync drop '( 0.0 #f #f #f frames #f srate f/ ) #f #f set-x-bounds drop #f set-sync ; %s \"show entire sound\" \"show-all\" bind-key drop\n",
 		    possibly_quote(key), 
@@ -4824,6 +4870,7 @@ static char *make_select_all_binding(char *key, bool ctrl, bool meta, bool cx)
 		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
 		    (cx) ? "#t" : "#f"));
 #endif
+
 #if HAVE_RUBY
   return(mus_format("bind_key(%s, %d, lambda do\n\
                                         old_sync = sync()\n\
@@ -4835,6 +4882,7 @@ static char *make_select_all_binding(char *key, bool ctrl, bool meta, bool cx)
 		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
 		    (cx) ? "true" : "false"));
 #endif
+
 #if HAVE_FORTH
   return(mus_format("%s %d lambda: <{ }> #f sync sync-max 1+ #f set-sync drop #f #f select-all drop #f set-sync ; %s \"select entire sound\" \"select-all\" bind-key drop\n",
 		    possibly_quote(key), 
@@ -4879,12 +4927,14 @@ static char *make_revert_binding(char *key, bool ctrl, bool meta, bool cx)
 		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
 		    (cx) ? "#t" : "#f"));
 #endif
+
 #if HAVE_RUBY
   return(mus_format("bind_key(%s, %d, lambda do\n  revert_sound())\n  end, %s, \"undo all edits\", \"revert-sound\")\n", 
 		    possibly_quote(key), 
 		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
 		    (cx) ? "true" : "false"));
 #endif
+
 #if HAVE_FORTH
   return(mus_format("%s %d lambda: <{ }> #f revert-sound ; %s \"undo all edits\" \"revert-sound\" bind-key drop\n",
 		    possibly_quote(key), 
@@ -4929,12 +4979,14 @@ static char *make_exit_binding(char *key, bool ctrl, bool meta, bool cx)
 		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
 		    (cx) ? "#t" : "#f"));
 #endif
+
 #if HAVE_RUBY
   return(mus_format("bind_key(%s, %d, lambda do\n  exit())\n  end, %s, \"exit\", \"exit\")\n", 
 		    possibly_quote(key), 
 		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
 		    (cx) ? "true" : "false"));
 #endif
+
 #if HAVE_FORTH
   return(mus_format("%s %d lambda: <{ }> 0 snd-exit ; %s \"exit\" \"exit\" bind-key drop\n",
 		    possibly_quote(key), 
@@ -4979,12 +5031,14 @@ static char *make_goto_maxamp_binding(char *key, bool ctrl, bool meta, bool cx)
 		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
 		    (cx) ? "#t" : "#f"));
 #endif
+
 #if HAVE_RUBY
   return(mus_format("bind_key(%s, %d, lambda do\n  set_cursor(maxamp_position())\n  end, %s, \"goto maxamp\", \"goto-maxamp\")\n", 
 		    possibly_quote(key), 
 		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
 		    (cx) ? "true" : "false"));
 #endif
+
 #if HAVE_FORTH
   return(mus_format("%s %d lambda: <{ }> #f #f #f maxamp-position #f #f #f set-cursor ; %s \"goto maxamp\" \"goto-maxamp\" bind-key drop\n",
 		    possibly_quote(key), 
@@ -5029,12 +5083,14 @@ static char *make_show_selection_binding(char *key, bool ctrl, bool meta, bool c
 		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
 		    (cx) ? "#t" : "#f"));
 #endif
+
 #if HAVE_RUBY
   return(mus_format("require \"extensions\"\nbind_key(%s, %d, lambda do\n  show_selection())\n  end, %s, \"show selection\", \"show-selection\")\n", 
 		    possibly_quote(key), 
 		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
 		    (cx) ? "true" : "false"));
 #endif
+
 #if HAVE_FORTH
   return(mus_format("require extensions\n%s %d ' show-selection %s \"show selection\" \"show-selection\" bind-key drop\n",
 		    possibly_quote(key), 

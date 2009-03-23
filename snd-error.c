@@ -163,6 +163,11 @@ static void snd_warning_1(const char *msg)
 }
 
 
+/* TODO: if we are not started in a terminal, error and warning messages
+ *    need to be output in a dialog or something -- otherwise they're lost
+ */
+
+
 static int snd_error_buffer_size = 1024;
 static char *snd_error_buffer = NULL;
 

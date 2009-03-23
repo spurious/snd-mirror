@@ -1161,22 +1161,28 @@ void snd_eval_stdin_str(const char *buf)
 {
   /* we may get incomplete expressions here */
   /*   (Ilisp always sends a complete expression, but it may be broken into two or more pieces from read's point of view) */
+
   char *str = NULL;
   if (mus_strlen(buf) == 0) return;
+
   str = stdin_check_for_full_expression(buf);
   if (str)
     {
       XEN result;
       int loc;
+
       redirect_everything_to(string_to_stdout, NULL);
       result = snd_catch_any(eval_str_wrapper, (void *)str, str);
       redirect_everything_to(NULL, NULL);
+
       loc = snd_protect(result);
       if (stdin_str) free(stdin_str);
+
       /* same as str here; if c-g! evaluated from stdin, clear_listener is called which frees/nullifies stdin_str */
       stdin_str = NULL;
       str = gl_print(result);
       string_to_stdout(str, NULL);
+
       if (str) free(str);
       snd_unprotect_at(loc);
     }

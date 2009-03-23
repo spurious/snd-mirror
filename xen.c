@@ -1635,18 +1635,32 @@ void xen_s7_set_repl_prompt(const char *new_prompt)
 void xen_repl(int argc, char **argv)
 {
   int size = 512;
+  bool expr_ok = true;
   char *buffer = NULL;
   buffer = (char *)calloc(size, sizeof(char));
 
   while (true)
     {
-      fprintf(stdout, "\n%s", xen_s7_repl_prompt);
+      if (expr_ok)
+	fprintf(stdout, "\n%s", xen_s7_repl_prompt);
       if (fgets(buffer, size, stdin) != NULL)
 	{
-	  if ((buffer[0] != '\n') || (strlen(buffer) > 1))
+	  /* also, it's possible to get a string of spaces or nulls (? -- not sure what is coming in) if stdin is /dev/null */
+	  /*   then if (as in condor) stdout is being saved in a file, we get in an infinite loop storing "snd>" until the disk fills up */
+	  int i, len;
+
+	  expr_ok = false;
+	  len = strlen(buffer);
+	  for (i = 0; i < len; i++)
+	    if (!isspace(buffer[i]))
+	      {
+		expr_ok = true;
+		break;
+	      }
+	  if (expr_ok)
 	    {
 	      char *temp;
-	      temp = (char *)malloc(strlen(buffer) + 128);
+	      temp = (char *)malloc(len + 128);
 	      sprintf(temp, 
 		      "(write %s)",
 		      buffer);           /* use write, not display so that strings are in double quotes */
