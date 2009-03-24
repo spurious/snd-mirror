@@ -2704,5 +2704,8 @@ widget_t start_preferences_dialog(void)
   gtk_widget_show(preferences_dialog);
   prefs_unsaved = false;
   prefs_set_dialog_title(NULL);
+
+  add_ss_watcher(SS_SND_ERROR_WATCHER, watch_for_snd_error_in_prefs, NULL);
+
   return(preferences_dialog);
 }

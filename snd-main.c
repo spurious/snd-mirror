@@ -123,6 +123,21 @@ void call_ss_watchers(ss_watcher_t type, ss_watcher_reason_t reason)
 }
 
 
+void call_ss_watchers_with_context(ss_watcher_t type, ss_watcher_reason_t reason, void *context)
+{
+  if (ss->watchers)
+    {
+      int i;
+      for (i = 0; i < ss->watchers_size; i++)
+	if ((ss->watchers[i]) &&
+	    ((type == SS_ANY_WATCHER) ||
+	     (ss->watchers[i]->type == type)))
+	  (*(ss->watchers[i]->watcher))(reason, context);
+    }
+  run_watchers();
+}
+
+
 
 /* ---------------- save sound state (options, or entire state) ---------------- */
 

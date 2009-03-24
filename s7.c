@@ -11137,8 +11137,9 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
 		case 'C': case 'c':
 		case 'S': case 's':
 
-		  /* PERHAPS: num arg to ~A and ~S to truncate: ~20A sends only (up to) 290 chars of object->string result */
-
+		  /* slib suggests num arg to ~A and ~S to truncate: ~20A sends only (up to) 20 chars of object->string result,
+		   *   but that could easily(?) be handled with substring and an embedded format arg.
+		   */
 		  if (fdat->args == sc->NIL)
 		    return(s7_format_error(sc, "missing argument", str, args, fdat));
 		  i++;

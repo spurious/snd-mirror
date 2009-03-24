@@ -1,8 +1,5 @@
 /* this file included as text in snd-g|xprefs.c */
 
-/* TODO: if something is requested that requires xm|xg.so, give a warning if they can't be loaded
- */
-
 static void int_to_textfield(widget_t w, int val)
 {
   char *str;
@@ -502,12 +499,24 @@ static XEN prefs_variable_get(const char *name)
 }
 
 
-static void xen_load_file_with_path_and_extension(const char *file)
+static bool prefs_is_loading = false;
+
+static void watch_for_snd_error_in_prefs(ss_watcher_reason_t reason, void *msg)
+{
+  if ((prefs_is_loading) &&
+      (widget_is_active(preferences_dialog)))
+    post_it("Load error", (const char *)msg);
+}
+
+
+static void load_file_with_path_and_extension(const char *file)
 {
   /* file is bare (no extension, no directory) file name */
   char *str;
   str = mus_format("%s.%s", file, XEN_FILE_EXTENSION);
+  prefs_is_loading = true;
   XEN_LOAD_FILE_WITH_PATH(str);
+  prefs_is_loading = false;
   free(str);
 }
 
@@ -1902,7 +1911,7 @@ static void set_sync_choice(int val, const char *load)
 {
   if ((load) &&
       (!XEN_DEFINED_P("global-sync-choice")))
-    xen_load_file_with_path_and_extension(load);
+    load_file_with_path_and_extension(load);
   if (XEN_DEFINED_P("global-sync-choice")) 
     {
       prefs_variable_set("global-sync-choice", 
@@ -2208,7 +2217,7 @@ static void set_unsaved_edits(bool val, const char *load)
   prefs_unsaved_edits = val;
   if ((load) &&
       (!XEN_DEFINED_P("checking-for-unsaved-edits")))
-    xen_load_file_with_path_and_extension(load);
+    load_file_with_path_and_extension(load);
   if (XEN_DEFINED_P("checking-for-unsaved-edits")) 
     prefs_function_call_1("check-for-unsaved-edits", C_TO_XEN_BOOLEAN(val));
 }
@@ -2259,7 +2268,7 @@ static void set_current_window_display(bool val, const char *load)
   if ((load) && (val) &&
       (!XEN_DEFINED_P("current-window-display-is-running")))
     {
-      xen_load_file_with_path_and_extension(load);
+      load_file_with_path_and_extension(load);
       prefs_function_call_0("make-current-window-display");
     }
   prefs_variable_set("current-window-display-is-running", C_TO_XEN_BOOLEAN(val));
@@ -3254,7 +3263,7 @@ static void with_sound_toggle(prefs_info *prf)
 {
   if ((GET_TOGGLE(prf->toggle)) &&
       (!(XEN_DEFINED_P("with-sound"))))
-    xen_load_file_with_path_and_extension("ws");
+    load_file_with_path_and_extension("ws");
 }
 
 static void save_with_sound(prefs_info *prf, FILE *fd)
@@ -3472,9 +3481,9 @@ static void context_sensitive_popup_toggle(prefs_info *prf)
   if ((GET_TOGGLE(prf->toggle)) &&
       (!(find_context_sensitive_popup())))
 #if USE_MOTIF
-    xen_load_file_with_path_and_extension("popup");
+    load_file_with_path_and_extension("popup");
 #else
-    xen_load_file_with_path_and_extension("gtk-popup");
+    load_file_with_path_and_extension("gtk-popup");
 #endif
 }
 
@@ -3523,9 +3532,9 @@ static void effects_menu_toggle(prefs_info *prf)
   if ((GET_TOGGLE(prf->toggle)) &&
       (!(find_effects_menu())))
 #if USE_MOTIF
-    xen_load_file_with_path_and_extension("new-effects");
+    load_file_with_path_and_extension("new-effects");
 #else
-    xen_load_file_with_path_and_extension("gtk-effects");
+    load_file_with_path_and_extension("gtk-effects");
 #endif
 }
 
@@ -3564,7 +3573,7 @@ static void edit_menu_toggle(prefs_info *prf)
 {
   if ((GET_TOGGLE(prf->toggle)) &&
       (!(find_edit_menu())))
-    xen_load_file_with_path_and_extension("edit-menu");
+    load_file_with_path_and_extension("edit-menu");
 }
 
 static void reflect_edit_menu(prefs_info *prf) {}
@@ -3597,7 +3606,7 @@ static void marks_menu_toggle(prefs_info *prf)
 {
   if ((GET_TOGGLE(prf->toggle)) &&
       (!(find_marks_menu())))
-    xen_load_file_with_path_and_extension("marks-menu");
+    load_file_with_path_and_extension("marks-menu");
 }
 
 static void reflect_marks_menu(prefs_info *prf) {}
@@ -3629,7 +3638,7 @@ static void icon_box_toggle(prefs_info *prf)
 {
   if ((GET_TOGGLE(prf->toggle)) &&
       (!(find_icon_box())))
-    xen_load_file_with_path_and_extension("new-buttons");
+    load_file_with_path_and_extension("new-buttons");
 }
 
 static void reflect_icon_box(prefs_info *prf) {}
@@ -3668,7 +3677,7 @@ static void reopen_menu_toggle(prefs_info *prf)
   if ((GET_TOGGLE(prf->toggle)) &&
       (!(find_reopen_menu())))
     {
-      xen_load_file_with_path_and_extension("extensions");
+      load_file_with_path_and_extension("extensions");
       prefs_function_call_0("with-reopen-menu");
     }
 }
@@ -3712,7 +3721,7 @@ static void mark_pane_toggle(prefs_info *prf)
   if ((GET_TOGGLE(prf->toggle)) &&
       (!(find_mark_pane())))
     {
-      xen_load_file_with_path_and_extension(MARK_PANE_SOURCE);
+      load_file_with_path_and_extension(MARK_PANE_SOURCE);
       prefs_function_call_0("add-mark-pane");
     }
 }
@@ -3769,7 +3778,7 @@ static void hidden_controls_toggle(prefs_info *prf)
   if ((GET_TOGGLE(prf->toggle)) &&
       (!(find_hidden_controls())))
     {
-      xen_load_file_with_path_and_extension("snd-motif");
+      load_file_with_path_and_extension("snd-motif");
       prefs_function_call_0("make-hidden-controls-dialog");
     }
 }
@@ -3801,7 +3810,7 @@ static void debugging_aids_toggle(prefs_info *prf)
 {
   if ((GET_TOGGLE(prf->toggle)) &&
       (!(find_debugging_aids())))
-    xen_load_file_with_path_and_extension("debug");
+    load_file_with_path_and_extension("debug");
 }
 
 static void save_debugging_aids(prefs_info *prf, FILE *fd)
@@ -3864,7 +3873,7 @@ static void smpte_toggle(prefs_info *prf)
 {
   if ((GET_TOGGLE(prf->toggle)) &&
       (!(find_smpte())))
-    xen_load_file_with_path_and_extension(SMPTE_SOURCE);
+    load_file_with_path_and_extension(SMPTE_SOURCE);
   if (find_smpte())
     prefs_function_call_1("show-smpte-label", C_TO_XEN_BOOLEAN(GET_TOGGLE(prf->toggle)));
 }
@@ -4645,7 +4654,7 @@ static void initial_bounds_toggle(prefs_info *prf)
 {
   include_duration = true;
   if (!(XEN_DEFINED_P("prefs-show-full-duration")))
-    xen_load_file_with_path_and_extension("extensions");
+    load_file_with_path_and_extension("extensions");
   prefs_variable_set("prefs-show-full-duration", C_TO_XEN_BOOLEAN(GET_TOGGLE(prf->toggle)));
 }
 
@@ -4657,7 +4666,7 @@ static void initial_bounds_text(prefs_info *prf)
   str = GET_TEXT(prf->text);
   sscanf(str, "%f : %f", &beg, &dur);
   if (!(XEN_DEFINED_P("prefs-initial-beg")))
-    xen_load_file_with_path_and_extension("extensions");
+    load_file_with_path_and_extension("extensions");
   prefs_variable_set("prefs-initial-beg", C_TO_XEN_DOUBLE(beg));
   prefs_variable_set("prefs-initial-dur", C_TO_XEN_DOUBLE(dur));
   free_TEXT(str);

@@ -163,11 +163,6 @@ static void snd_warning_1(const char *msg)
 }
 
 
-/* TODO: if we are not started in a terminal, error and warning messages
- *    need to be output in a dialog or something -- otherwise they're lost
- */
-
-
 static int snd_error_buffer_size = 1024;
 static char *snd_error_buffer = NULL;
 
@@ -254,6 +249,8 @@ static XEN g_snd_error(XEN msg)
   /* this throws a 'snd-error error; it does not call snd_error_1 or friends above */
   #define H_snd_error "(" S_snd_error " str): throws a 'snd-error error"
   XEN_ASSERT_TYPE(XEN_STRING_P(msg), msg, XEN_ONLY_ARG, S_snd_error, "a string");
+
+  call_ss_watchers_with_context(SS_SND_ERROR_WATCHER, SS_SND_ERROR, (void *)(XEN_TO_C_STRING(msg)));
 
   if (!(run_snd_error_hook(XEN_TO_C_STRING(msg)))) /* have to call this before the throw, else we end up at top level */
     XEN_ERROR(XEN_ERROR_TYPE("snd-error"),

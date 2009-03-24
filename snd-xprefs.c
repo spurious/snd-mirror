@@ -2911,5 +2911,8 @@ widget_t start_preferences_dialog(void)
 
   XtManageChild(preferences_dialog);
   set_dialog_widget(PREFERENCES_DIALOG, preferences_dialog);
+
+  add_ss_watcher(SS_SND_ERROR_WATCHER, watch_for_snd_error_in_prefs, NULL);
+
   return(preferences_dialog);
 }
