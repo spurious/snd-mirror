@@ -861,6 +861,18 @@ data-location should be retrieved from a previous call to " S_mus_sound_data_loc
 }
 
 
+#if (!HAVE_UNISTD_H) || (_MSC_VER)
+#ifndef STDIN_FILENO
+#define STDIN_FILENO 0
+#endif
+#ifndef STDOUT_FILENO
+#define STDOUT_FILENO 1
+#endif
+#ifndef STDERR_FILENO
+#define STDERR_FILENO 2
+#endif
+#endif
+
 static XEN g_mus_sound_close_input(XEN fd)
 {
   #define H_mus_sound_close_input "(" S_mus_sound_close_input " fd): close (low-level) file fd that was opened \

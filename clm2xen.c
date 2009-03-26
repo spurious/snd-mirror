@@ -7843,7 +7843,7 @@ static XEN g_mus_irandom(XEN val) {return(C_TO_XEN_INT(mus_irandom(XEN_TO_C_INT(
 
 
 #if HAVE_S7
-#if HAVE_GETTIMEOFDAY && HAVE_DIFFTIME && HAVE_SYS_TIME_H
+#if HAVE_GETTIMEOFDAY && HAVE_DIFFTIME && HAVE_SYS_TIME_H && (!MSC_VER)
 
 #include <time.h>
 #include <sys/time.h>
@@ -9008,11 +9008,9 @@ static void mus_xen_init(void)
   XEN_DEFINE_VARIABLE(S_output, clm_output, XEN_FALSE);
   XEN_DEFINE_VARIABLE(S_reverb, clm_reverb, XEN_FALSE);
 
-#if HAVE_S7
-#if HAVE_GETTIMEOFDAY && HAVE_DIFFTIME && HAVE_SYS_TIME_H
+#if HAVE_S7 && HAVE_GETTIMEOFDAY && HAVE_DIFFTIME && HAVE_SYS_TIME_H && (!MSC_VER)
   XEN_DEFINE_PROCEDURE("get-internal-real-time", g_get_internal_real_time_w, 0, 0, 0, "get system time");
   XEN_DEFINE_CONSTANT("internal-time-units-per-second", 1, "clock speed");
-#endif
 #endif
 
   XEN_YES_WE_HAVE("clm");
@@ -9023,13 +9021,11 @@ static void mus_xen_init(void)
     free(clm_version);
   }
 
-#if HAVE_S7
-#if HAVE_GETTIMEOFDAY && HAVE_DIFFTIME && HAVE_SYS_TIME_H
+#if HAVE_S7 && HAVE_GETTIMEOFDAY && HAVE_DIFFTIME && HAVE_SYS_TIME_H && (!MSC_VER)
   {
     struct timezone z0;
     gettimeofday(&overall_start_time, &z0);
   }
-#endif
 #endif
 
   /* is this a good idea?  I think it means these names are automatically imported into
