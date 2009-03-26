@@ -893,7 +893,102 @@ static int s7_int_max = 0, s7_int_min = 0, s7_int_bits = 0, s7_int_digits = 0; /
 
 
 
+
 /* -------------------------------- GC -------------------------------- */
+
+
+/* -------- gc benchmark -------- */
+
+#define BENCHMARK_GC 0
+
+#if BENCHMARK_GC
+
+#include <inttypes.h>
+
+/* Code below made by looking at code in jack. (www.jackaudio.org) -Kjetil. */
+
+typedef unsigned long long cycles_t;
+
+#if defined(__x86_64__)
+typedef long unsigned int s7_time_t;
+#else
+typedef long long unsigned int s7_time_t;
+#endif
+
+static s7_time_t __s7_cpu_mhz = 0;
+
+
+s7_time_t s7_get_mhz(void)
+{
+  FILE *f = fopen("/proc/cpuinfo", "r");
+  if (f == 0)
+    {
+      perror("can't open /proc/cpuinfo\n");
+      exit(1);
+    }
+  
+  for ( ; ; )
+    {
+      s7_time_t mhz;
+      int ret;
+      char buf[1000];
+      
+      if (fgets(buf, sizeof(buf), f) == NULL) 
+	{
+	  fprintf (stderr, "cannot locate cpu MHz in /proc/cpuinfo\n");
+	  exit(1);
+	}
+      
+#if defined(__powerpc__)
+      ret = sscanf(buf, "clock\t: %" SCNu64 "MHz", &mhz);
+#elif defined( __i386__ ) || defined (__hppa__)  || defined (__ia64__) || defined(__x86_64__)
+      ret = sscanf(buf, "cpu MHz         : %" SCNu64, &mhz);
+#elif defined( __sparc__ )
+      ret = sscanf(buf, "Cpu0Bogo        : %" SCNu64, &mhz);
+#elif defined( __mc68000__ )
+      ret = sscanf(buf, "Clocking:       %" SCNu64, &mhz);
+#elif defined( __s390__  )
+      ret = sscanf(buf, "bogomips per cpu: %" SCNu64, &mhz);
+#else /* MIPS, ARM, alpha */
+      ret = sscanf(buf, "BogoMIPS        : %" SCNu64, &mhz);
+#endif
+      
+      if (ret == 1)
+	{
+	  fclose(f);
+	  return((s7_time_t)mhz);
+	}
+    }
+}
+
+
+void s7_init_gc_bench()
+{
+  __s7_cpu_mhz = s7_get_mhz();
+}
+
+
+static inline cycles_t s7_get_cycles(void)
+{
+  unsigned long long ret;
+  __asm__ __volatile__("rdtsc" : "=A" (ret));
+  return(ret);
+}
+
+
+static double s7_cycle_to_time(cycles_t cycles)
+{
+  return(cycles / ((double)__s7_cpu_mhz * 1000000.0));
+}
+
+static double gc_total = 0.0;
+static double gc_max = 0.0;
+
+#endif 
+/* BENCHMARK_GC */
+
+
+
 
 #if HAVE_PTHREADS
 static pthread_mutex_t protected_objects_lock = PTHREAD_MUTEX_INITIALIZER;
@@ -1163,10 +1258,15 @@ void s7_mark_object(s7_pointer p)
 }
 
 
+
 static int gc(s7_scheme *sc)
 {
   int i, old_free_heap_top;
-  
+
+#if BENCHMARK_GC
+  cycles_t start = s7_get_cycles();
+#endif
+
   if (*(sc->gc_verbose))
     write_string(sc, "gc...", s7_current_output_port(sc));
   
@@ -1237,7 +1337,18 @@ static int gc(s7_scheme *sc)
       write_string(sc, msg, s7_current_output_port(sc));
       free(msg);
     }
-  
+
+#if BENCHMARK_GC
+  {
+    cycles_t end = s7_get_cycles();
+    double gc_time = s7_cycle_to_time(end - start);
+    gc_total += gc_time;
+    if (gc_time > gc_max)
+      gc_max = gc_time;
+    fprintf(stderr, "time used to gc: %f. \ttotal: %f. \tmax: %f\n", (float)gc_time, (float)gc_total, (float)gc_max);
+  }
+#endif
+
   return(sc->free_heap_top - old_free_heap_top); /* needed by cell allocator to decide when to increase heap size */
 }
 
@@ -19090,6 +19201,10 @@ s7_scheme *s7_init(void)
   s7_scheme *sc;
   
   init_ctables();
+
+#if BENCHMARK_GC
+  s7_init_gc_bench();
+#endif
   
   sc = (s7_scheme *)calloc(1, sizeof(s7_scheme)); /* malloc is not recommended here */
 #if HAVE_PTHREADS
