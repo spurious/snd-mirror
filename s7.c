@@ -2469,12 +2469,6 @@ static bool c_rationalize(s7_Double ux, s7_Double error, s7_Int *numer, s7_Int *
     {
       a = a2 + a1 * tt;
       b = b2 + b1 * tt;
-      
-      /*
-      fprintf(stderr, "ux: %lf, a: %lld, b: %lld -> %lf (%lf)\n", ux, a, b,
-	      s7_Double_abs(ux - (s7_Double)a / (s7_Double)b), error);
-      */
-
       if (s7_Double_abs(ux - (s7_Double)a / (s7_Double)b) < error)
 	{
 	  a += (b * int_part);
@@ -4762,6 +4756,7 @@ static s7_pointer g_atan(s7_scheme *sc, s7_pointer args)
     return(s7_wrong_type_arg_error(sc, "atan", 1, x, "a real"));
   if (!s7_is_real(y))
     return(s7_wrong_type_arg_error(sc, "atan", 2, y, "a real"));
+
   return(s7_make_real(sc, atan2(num_to_real(x->object.number), 
 				num_to_real(y->object.number))));
 }  
@@ -4812,6 +4807,7 @@ static s7_pointer g_tanh(s7_scheme *sc, s7_pointer args)
     return(s7_make_real(sc, 1.0));  /* closer than 0.0 which is what ctanh is about to return! */
   if (s7_real_part(x) < -350.0)
     return(s7_make_real(sc, -1.0)); /* closer than -0.0 which is what ctanh is about to return! */
+
   return(s7_from_c_complex(sc, ctanh(s7_complex(x))));
 }
 
@@ -5031,6 +5027,7 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
 	    return(g_sqrt(sc, args));
 	  if (denominator(pw->object.number) == 3)
 	    return(s7_make_real(sc, cbrt(num_to_real(n->object.number))));
+	  /* and 4 -> sqrt(sqrt...) etc? */
 	}
 
       x = num_to_real(n->object.number);
@@ -12260,7 +12257,6 @@ s7_pointer s7_call(s7_scheme *sc, s7_pointer func, s7_pointer args)
       if ((sc->op == OP_ERROR_QUIT) &&
 	  (sc->longjmp_ok))
 	{
-	  /* fprintf(stderr, "try to pass along error quit\n"); */
 	  longjmp(sc->goto_start, 1); /* this is trying to clear the C stack back to some clean state */
 	}
 
@@ -14193,10 +14189,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
     case OP_ERROR_QUIT:
     case OP_QUIT:
+    case OP_UNWIND_OUTPUT:
+    case OP_UNWIND_INPUT:
       return(sc->F);
       break;
       
-      
+
     case OP_DYNAMIC_WIND:
       
       switch (dynamic_wind_state(sc->code))
@@ -14221,11 +14219,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  goto START;
 	}
       break;
-      
-
-    case OP_UNWIND_OUTPUT:
-    case OP_UNWIND_INPUT:
-      return(sc->F);
       
 
     case OP_CATCH:
@@ -18850,7 +18843,7 @@ static s7_pointer big_random(s7_scheme *sc, s7_pointer args)
     {
       /* bignum case -- provide a state if none was passed,
        *   promote num if bignum state was passed but num is not a bignum
-       *   if num==0, just return 0 (above) since gmp otherwise throws an srithmetic exception
+       *   if num==0, just return 0 (above) since gmp otherwise throws an arithmetic exception
        */
       big_rng *r = NULL;
 

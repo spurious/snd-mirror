@@ -11548,7 +11548,7 @@ if test "$with_gmp" = yes ; then
   # look for gmp, mpfr, and mpc
 
   SAVELIBS=$LIBS
-  LIBS="$LIBS -lgmp -lmpfr -lmpc -lm"
+  LIBS="$LIBS -lgmp -lm"
   { $as_echo "$as_me:$LINENO: checking for __gmpz_init in -lgmp" >&5
 $as_echo_n "checking for __gmpz_init in -lgmp... " >&6; }
 if test "${ac_cv_lib_gmp___gmpz_init+set}" = set; then
@@ -11623,6 +11623,7 @@ $as_echo "$as_me: error: libgmp not found" >&2;}
 fi
 
 
+  LIBS="$LIBS -lmpfr"
   { $as_echo "$as_me:$LINENO: checking for libmpfr" >&5
 $as_echo_n "checking for libmpfr... " >&6; }
   GMP_LIBS="$GMP_LIBS -lmpfr"
@@ -11677,6 +11678,7 @@ rm -rf conftest.dSYM
 rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 
+  LIBS="$LIBS -lmpc"
   { $as_echo "$as_me:$LINENO: checking for libmpc" >&5
 $as_echo_n "checking for libmpc... " >&6; }
   GMP_LIBS="$GMP_LIBS -lmpc"
@@ -17065,7 +17067,7 @@ _ACEOF
 
 fi
 
-	# for 2.15.0|1|2|3 (uses 2150)
+	# for 2.15.0|1|2|3 and 2.16.0 (uses 2150)
 	{ $as_echo "$as_me:$LINENO: checking for gtk_scale_add_mark in -lm" >&5
 $as_echo_n "checking for gtk_scale_add_mark in -lm... " >&6; }
 if test "${ac_cv_lib_m_gtk_scale_add_mark+set}" = set; then

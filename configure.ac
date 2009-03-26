@@ -510,11 +510,12 @@ if test "$with_gmp" = yes ; then
   # look for gmp, mpfr, and mpc 
 
   SAVELIBS=$LIBS
-  LIBS="$LIBS -lgmp -lmpfr -lmpc -lm"
+  LIBS="$LIBS -lgmp -lm"
   AC_CHECK_LIB(gmp, __gmpz_init,
              [GMP_LIBS="-lgmp"],
              [AC_MSG_ERROR(libgmp not found)])
 
+  LIBS="$LIBS -lmpfr"
   AC_MSG_CHECKING(for libmpfr)
   GMP_LIBS="$GMP_LIBS -lmpfr"
   AC_LINK_IFELSE(
@@ -525,6 +526,7 @@ if test "$with_gmp" = yes ; then
         [AC_MSG_RESULT(yes)],
         [AC_MSG_RESULT(no)])
 
+  LIBS="$LIBS -lmpc"
   AC_MSG_CHECKING(for libmpc)
   GMP_LIBS="$GMP_LIBS -lmpc"
   AC_LINK_IFELSE(

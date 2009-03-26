@@ -792,11 +792,13 @@ static color_t saved_basic_color;
 static void save_basic_color(prefs_info *prf, FILE *ignore) {saved_basic_color = ss->sgx->basic_color;}
 static void basic_color_func(prefs_info *prf, float r, float g, float b) {set_basic_color(rgb_to_color(r, g, b));}
 
+
 static void revert_basic_color(prefs_info *prf) 
 {
   scale_set_color(prf, saved_basic_color); 
   set_basic_color(saved_basic_color);
 }
+
 
 static void clear_basic_color(prefs_info *prf) 
 {
@@ -805,17 +807,20 @@ static void clear_basic_color(prefs_info *prf)
 }
 
 
+
 /* ---------------- highlight-color ---------------- */
 
 static color_t saved_highlight_color;
 static void save_highlight_color(prefs_info *prf, FILE *ignore) {saved_highlight_color = ss->sgx->highlight_color;}
 static void highlight_color_func(prefs_info *prf, float r, float g, float b) {set_highlight_color(rgb_to_color(r, g, b));}
 
+
 static void revert_highlight_color(prefs_info *prf) 
 {
   scale_set_color(prf, saved_highlight_color); 
   set_highlight_color(saved_highlight_color);
 }
+
 
 static void clear_highlight_color(prefs_info *prf) 
 {
@@ -824,17 +829,20 @@ static void clear_highlight_color(prefs_info *prf)
 }
 
 
+
 /* ---------------- position-color ---------------- */
 
 static color_t saved_position_color;
 static void save_position_color(prefs_info *prf, FILE *ignore) {saved_position_color = ss->sgx->position_color;}
 static void position_color_func(prefs_info *prf, float r, float g, float b) {set_position_color(rgb_to_color(r, g, b));}
 
+
 static void revert_position_color(prefs_info *prf) 
 {
   scale_set_color(prf, saved_position_color); 
   set_position_color(saved_position_color);
 }
+
 
 static void clear_position_color(prefs_info *prf) 
 {
@@ -843,11 +851,13 @@ static void clear_position_color(prefs_info *prf)
 }
 
 
+
 /* ---------------- zoom-color ---------------- */
 
 static color_t saved_zoom_color;
 static void save_zoom_color(prefs_info *prf, FILE *ignore) {saved_zoom_color = ss->sgx->zoom_color;}
 static void zoom_color_func(prefs_info *prf, float r, float g, float b) {set_zoom_color(rgb_to_color(r, g, b));}
+
 
 static void revert_zoom_color(prefs_info *prf) 
 {
@@ -855,11 +865,13 @@ static void revert_zoom_color(prefs_info *prf)
   set_zoom_color(saved_zoom_color);
 }
 
+
 static void clear_zoom_color(prefs_info *prf) 
 {
   scale_set_color(prf, ss->sgx->orig_zoom_color); 
   set_zoom_color(ss->sgx->orig_zoom_color);
 }
+
 
 
 /* ---------------- cursor-color ---------------- */
@@ -873,11 +885,13 @@ static void cursor_color_func(prefs_info *prf, float r, float g, float b)
   for_each_chan(update_graph);
 }
 
+
 static void revert_cursor_color(prefs_info *prf) 
 {
   scale_set_color(prf, saved_cursor_color); 
   color_cursor(saved_cursor_color);
 }
+
 
 static void clear_cursor_color(prefs_info *prf) 
 {
@@ -886,17 +900,20 @@ static void clear_cursor_color(prefs_info *prf)
 }
 
 
+
 /* ---------------- data-color ---------------- */
 
 static color_t saved_data_color;
 static void save_data_color(prefs_info *prf, FILE *ignore) {saved_data_color = ss->sgx->data_color;}
 static void data_color_func(prefs_info *prf, float r, float g, float b) {set_data_color(rgb_to_color(r, g, b));}
 
+
 static void revert_data_color(prefs_info *prf) 
 {
   scale_set_color(prf, saved_data_color); 
   set_data_color(saved_data_color);
 }
+
 
 static void clear_data_color(prefs_info *prf) 
 {
@@ -905,17 +922,20 @@ static void clear_data_color(prefs_info *prf)
 }
 
 
+
 /* ---------------- graph-color ---------------- */
 
 static color_t saved_graph_color;
 static void save_graph_color(prefs_info *prf, FILE *ignore) {saved_graph_color = ss->sgx->graph_color;}
 static void graph_color_func(prefs_info *prf, float r, float g, float b) {set_graph_color(rgb_to_color(r, g, b));}
 
+
 static void revert_graph_color(prefs_info *prf) 
 {
   scale_set_color(prf, saved_graph_color); 
   set_graph_color(saved_graph_color);
 }
+
 
 static void clear_graph_color(prefs_info *prf) 
 {
@@ -924,17 +944,20 @@ static void clear_graph_color(prefs_info *prf)
 }
 
 
+
 /* ---------------- selected-data-color ---------------- */
 
 static color_t saved_selected_data_color;
 static void save_selected_data_color(prefs_info *prf, FILE *ignore) {saved_selected_data_color = ss->sgx->selected_data_color;}
 static void selected_data_color_func(prefs_info *prf, float r, float g, float b) {set_selected_data_color(rgb_to_color(r, g, b));}
 
+
 static void revert_selected_data_color(prefs_info *prf) 
 {
   scale_set_color(prf, saved_selected_data_color); 
   set_selected_data_color(saved_selected_data_color);
 }
+
 
 static void clear_selected_data_color(prefs_info *prf) 
 {
@@ -943,11 +966,13 @@ static void clear_selected_data_color(prefs_info *prf)
 }
 
 
+
 /* ---------------- selected-graph-color ---------------- */
 
 static color_t saved_selected_graph_color;
 static void save_selected_graph_color(prefs_info *prf, FILE *ignore) {saved_selected_graph_color = ss->sgx->selected_graph_color;}
 static void selected_graph_color_func(prefs_info *prf, float r, float g, float b) {set_selected_graph_color(rgb_to_color(r, g, b));}
+
 
 static void revert_selected_graph_color(prefs_info *prf) 
 {
@@ -955,11 +980,13 @@ static void revert_selected_graph_color(prefs_info *prf)
   set_selected_graph_color(saved_selected_graph_color);
 }
 
+
 static void clear_selected_graph_color(prefs_info *prf) 
 {
   scale_set_color(prf, ss->sgx->orig_selected_graph_color); 
   set_selected_graph_color(ss->sgx->orig_selected_graph_color);
 }
+
 
 
 /* ---------------- selection-color ---------------- */
@@ -970,15 +997,18 @@ static void set_selection_color(color_t color)
   for_each_chan(update_graph);
 }
 
+
 static color_t saved_selection_color;
 static void save_selection_color(prefs_info *prf, FILE *ignore) {saved_selection_color = ss->sgx->selection_color;}
 static void selection_color_func(prefs_info *prf, float r, float g, float b) {set_selection_color(rgb_to_color(r, g, b));}
+
 
 static void revert_selection_color(prefs_info *prf) 
 {
   scale_set_color(prf, saved_selection_color); 
   set_selection_color(saved_selection_color);
 }
+
 
 static void clear_selection_color(prefs_info *prf) 
 {
@@ -987,17 +1017,20 @@ static void clear_selection_color(prefs_info *prf)
 }
 
 
+
 /* ---------------- mark-color ---------------- */
 
 static color_t saved_mark_color;
 static void save_mark_color(prefs_info *prf, FILE *ignore) {saved_mark_color = ss->sgx->mark_color;}
 static void mark_color_func(prefs_info *prf, float r, float g, float b) {color_marks(rgb_to_color(r, g, b));}
 
+
 static void revert_mark_color(prefs_info *prf) 
 {
   scale_set_color(prf, saved_mark_color);
   color_marks(saved_mark_color);
 }
+
 
 static void clear_mark_color(prefs_info *prf) 
 {
@@ -1006,17 +1039,20 @@ static void clear_mark_color(prefs_info *prf)
 }
 
 
+
 /* ---------------- mix-color (waveform) ---------------- */
 
 static color_t saved_mix_color;
 static void save_mix_color(prefs_info *prf, FILE *ignore) {saved_mix_color = ss->sgx->mix_color;}
 static void mix_color_func(prefs_info *prf, float r, float g, float b) {color_mixes(rgb_to_color(r, g, b));}
 
+
 static void revert_mix_color(prefs_info *prf) 
 {
   scale_set_color(prf, saved_mix_color);
   color_mixes(saved_mix_color);
 }
+
 
 static void clear_mix_color(prefs_info *prf) 
 {
@@ -1025,17 +1061,20 @@ static void clear_mix_color(prefs_info *prf)
 }
 
 
+
 /* ---------------- listener-color ---------------- */
 
 static color_t saved_listener_color;
 static void save_listener_color(prefs_info *prf, FILE *ignore) {saved_listener_color = ss->sgx->listener_color;}
 static void listener_color_func(prefs_info *prf, float r, float g, float b) {color_listener(rgb_to_color(r, g, b));}
 
+
 static void revert_listener_color(prefs_info *prf) 
 {
   scale_set_color(prf, saved_listener_color);
   color_listener(saved_listener_color);
 }
+
 
 static void clear_listener_color(prefs_info *prf) 
 {
@@ -1044,11 +1083,13 @@ static void clear_listener_color(prefs_info *prf)
 }
 
 
+
 /* ---------------- listener-text-color ---------------- */
 
 static color_t saved_listener_text_color;
 static void save_listener_text_color(prefs_info *prf, FILE *ignore) {saved_listener_text_color = ss->sgx->listener_text_color;}
 static void listener_text_color_func(prefs_info *prf, float r, float g, float b) {color_listener_text(rgb_to_color(r, g, b));}
+
 
 static void revert_listener_text_color(prefs_info *prf) 
 {
@@ -1056,11 +1097,13 @@ static void revert_listener_text_color(prefs_info *prf)
   color_listener_text(saved_listener_text_color);
 }
 
+
 static void clear_listener_text_color(prefs_info *prf) 
 {
   scale_set_color(prf, ss->sgx->orig_listener_text_color);
   color_listener_text(ss->sgx->orig_listener_text_color);
 }
+
 
 
 /* ---------------- axis-label-font ---------------- */
@@ -1074,15 +1117,18 @@ static TIMEOUT_TYPE axis_label_font_error_erase_func(TIMEOUT_ARGS)
   TIMEOUT_RESULT
 }
 
+
 static void save_axis_label_font(prefs_info *prf, FILE *ignore)
 {
   if (rts_axis_label_font) free(rts_axis_label_font);
   rts_axis_label_font = mus_strdup(axis_label_font(ss));
 }
 
+
 static void reflect_axis_label_font(prefs_info *prf) {SET_TEXT(prf->text, axis_label_font(ss));}
 static void revert_axis_label_font(prefs_info *prf) {set_axis_label_font(rts_axis_label_font);}
 static void clear_axis_label_font(prefs_info *prf) {set_axis_label_font(ss->orig_axis_label_font);}
+
 
 static void axis_label_font_text(prefs_info *prf)
 {
@@ -1102,6 +1148,7 @@ static void axis_label_font_text(prefs_info *prf)
 }
 
 
+
 /* ---------------- axis-numbers-font ---------------- */
 
 static char *rts_axis_numbers_font = NULL;
@@ -1113,15 +1160,18 @@ static TIMEOUT_TYPE axis_numbers_font_error_erase_func(TIMEOUT_ARGS)
   TIMEOUT_RESULT
 }
 
+
 static void save_axis_numbers_font(prefs_info *prf, FILE *ignore)
 {
   if (rts_axis_numbers_font) free(rts_axis_numbers_font);
   rts_axis_numbers_font = mus_strdup(axis_numbers_font(ss));
 }
 
+
 static void reflect_axis_numbers_font(prefs_info *prf) {SET_TEXT(prf->text, axis_numbers_font(ss));}
 static void revert_axis_numbers_font(prefs_info *prf) {set_axis_numbers_font(rts_axis_numbers_font);}
 static void clear_axis_numbers_font(prefs_info *prf) {set_axis_numbers_font(ss->orig_axis_numbers_font);}
+
 
 static void axis_numbers_font_text(prefs_info *prf)
 {
@@ -1141,6 +1191,7 @@ static void axis_numbers_font_text(prefs_info *prf)
 }
 
 
+
 /* ---------------- peaks-font ---------------- */
 
 static char *rts_peaks_font = NULL;
@@ -1152,15 +1203,18 @@ static TIMEOUT_TYPE peaks_font_error_erase_func(TIMEOUT_ARGS)
   TIMEOUT_RESULT
 }
 
+
 static void save_peaks_font(prefs_info *prf, FILE *ignore)
 {
   if (rts_peaks_font) free(rts_peaks_font);
   rts_peaks_font = mus_strdup(peaks_font(ss));
 }
 
+
 static void reflect_peaks_font(prefs_info *prf) {SET_TEXT(prf->text, peaks_font(ss));}
 static void revert_peaks_font(prefs_info *prf) {set_peaks_font(rts_peaks_font);}
 static void clear_peaks_font(prefs_info *prf) {set_peaks_font(ss->orig_peaks_font);}
+
 
 static void peaks_font_text(prefs_info *prf)
 {
@@ -1180,6 +1234,7 @@ static void peaks_font_text(prefs_info *prf)
 }
 
 
+
 /* ---------------- bold-peaks-font ---------------- */
 
 static char *rts_bold_peaks_font = NULL;
@@ -1191,15 +1246,18 @@ static TIMEOUT_TYPE bold_peaks_font_error_erase_func(TIMEOUT_ARGS)
   TIMEOUT_RESULT
 }
 
+
 static void save_bold_peaks_font(prefs_info *prf, FILE *ignore)
 {
   if (rts_bold_peaks_font) free(rts_bold_peaks_font);
   rts_bold_peaks_font = mus_strdup(bold_peaks_font(ss));
 }
 
+
 static void reflect_bold_peaks_font(prefs_info *prf) {SET_TEXT(prf->text, bold_peaks_font(ss));}
 static void revert_bold_peaks_font(prefs_info *prf) {set_bold_peaks_font(rts_bold_peaks_font);}
 static void clear_bold_peaks_font(prefs_info *prf) {set_bold_peaks_font(ss->orig_bold_peaks_font);}
+
 
 static void bold_peaks_font_text(prefs_info *prf)
 {
@@ -1219,6 +1277,7 @@ static void bold_peaks_font_text(prefs_info *prf)
 }
 
 
+
 /* ---------------- tiny-font ---------------- */
 
 static char *rts_tiny_font = NULL;
@@ -1230,15 +1289,18 @@ static TIMEOUT_TYPE tiny_font_error_erase_func(TIMEOUT_ARGS)
   TIMEOUT_RESULT
 }
 
+
 static void save_tiny_font(prefs_info *prf, FILE *ignore)
 {
   if (rts_tiny_font) free(rts_tiny_font);
   rts_tiny_font = mus_strdup(tiny_font(ss));
 }
 
+
 static void reflect_tiny_font(prefs_info *prf) {SET_TEXT(prf->text, tiny_font(ss));}
 static void revert_tiny_font(prefs_info *prf) {set_tiny_font(rts_tiny_font);}
 static void clear_tiny_font(prefs_info *prf) {set_tiny_font(ss->orig_tiny_font);}
+
 
 static void tiny_font_text(prefs_info *prf)
 {
@@ -1258,6 +1320,7 @@ static void tiny_font_text(prefs_info *prf)
 }
 
 
+
 /* ---------------- listener-font ---------------- */
 
 static char *rts_listener_font = NULL;
@@ -1269,15 +1332,18 @@ static TIMEOUT_TYPE listener_font_error_erase_func(TIMEOUT_ARGS)
   TIMEOUT_RESULT
 }
 
+
 static void save_listener_font(prefs_info *prf, FILE *ignore)
 {
   if (rts_listener_font) free(rts_listener_font);
   rts_listener_font = mus_strdup(listener_font(ss));
 }
 
+
 static void reflect_listener_font(prefs_info *prf) {SET_TEXT(prf->text, listener_font(ss));}
 static void revert_listener_font(prefs_info *prf) {set_listener_font(rts_listener_font);}
 static void clear_listener_font(prefs_info *prf) {set_listener_font(ss->orig_listener_font);}
+
 
 static void listener_font_text(prefs_info *prf)
 {
@@ -1297,6 +1363,7 @@ static void listener_font_text(prefs_info *prf)
 }
 
 
+
 /* ---------------- save-state-file ---------------- */
 
 static char *rts_save_state_file = NULL;
@@ -1306,17 +1373,20 @@ static void reflect_save_state_file(prefs_info *prf)
   SET_TEXT(prf->text, save_state_file(ss));
 }
 
+
 static void revert_save_state_file(prefs_info *prf) 
 {
   if (save_state_file(ss)) free(save_state_file(ss));
   in_set_save_state_file(mus_strdup(rts_save_state_file));
 }
 
+
 static void save_save_state_file(prefs_info *prf, FILE *ignore) 
 {
   if (rts_save_state_file) free(rts_save_state_file);
   rts_save_state_file = mus_strdup(save_state_file(ss));
 }
+
 
 static void save_state_file_text(prefs_info *prf)
 {
@@ -1331,6 +1401,7 @@ static void save_state_file_text(prefs_info *prf)
 }
 
 
+
 /* ---------------- temp-dir ---------------- */
 
 static char *rts_temp_dir = NULL;
@@ -1340,17 +1411,20 @@ static void reflect_temp_dir(prefs_info *prf)
   SET_TEXT(prf->text, temp_dir(ss));
 }
 
+
 static void revert_temp_dir(prefs_info *prf) 
 {
   if (temp_dir(ss)) free(temp_dir(ss));
   set_temp_dir(mus_strdup(rts_temp_dir));
 }
 
+
 static void save_temp_dir(prefs_info *prf, FILE *ignore) 
 {
   if (rts_temp_dir) free(rts_temp_dir);
   rts_temp_dir = mus_strdup(temp_dir(ss));
 }
+
 
 static TIMEOUT_TYPE temp_dir_error_erase_func(TIMEOUT_ARGS)
 {
@@ -1359,13 +1433,16 @@ static TIMEOUT_TYPE temp_dir_error_erase_func(TIMEOUT_ARGS)
   TIMEOUT_RESULT
 }
 
+
 static void temp_dir_text(prefs_info *prf)
 {
   char *str = NULL, *dir = NULL;
+
   str = GET_TEXT(prf->text);
   if ((!str) || (!(*str))) 
     dir = MUS_DEFAULT_TEMP_DIR;
   else dir = str;
+
   if (local_access(dir))
     {
       if (temp_dir(ss)) free(temp_dir(ss));
@@ -1382,6 +1459,7 @@ static void temp_dir_text(prefs_info *prf)
 }
 
 
+
 /* ---------------- save-dir ---------------- */
 
 static char *rts_save_dir = NULL;
@@ -1391,17 +1469,20 @@ static void reflect_save_dir(prefs_info *prf)
   SET_TEXT(prf->text, save_dir(ss));
 }
 
+
 static void revert_save_dir(prefs_info *prf) 
 {
   if (save_dir(ss)) free(save_dir(ss));
   set_save_dir(mus_strdup(rts_save_dir));
 }
 
+
 static void save_save_dir(prefs_info *prf, FILE *ignore) 
 {
   if (rts_save_dir) free(rts_save_dir);
   rts_save_dir = mus_strdup(save_dir(ss));
 }
+
 
 static TIMEOUT_TYPE save_dir_error_erase_func(TIMEOUT_ARGS)
 {
@@ -1410,13 +1491,16 @@ static TIMEOUT_TYPE save_dir_error_erase_func(TIMEOUT_ARGS)
   TIMEOUT_RESULT
 }
 
+
 static void save_dir_text(prefs_info *prf)
 {
   char *str = NULL, *dir = NULL;
+
   str = GET_TEXT(prf->text);
   if ((!str) || (!(*str))) 
     dir = MUS_DEFAULT_SAVE_DIR;
   else dir = str;
+
   if (local_access(dir))
     {
       if (save_dir(ss)) free(save_dir(ss));
@@ -1433,6 +1517,7 @@ static void save_dir_text(prefs_info *prf)
 }
 
 
+
 #if HAVE_LADSPA
 /* ---------------- ladspa-dir ---------------- */
 
@@ -1443,17 +1528,20 @@ static void reflect_ladspa_dir(prefs_info *prf)
   SET_TEXT(prf->text, ladspa_dir(ss));
 }
 
+
 static void revert_ladspa_dir(prefs_info *prf)
 {
   if (ladspa_dir(ss)) free(ladspa_dir(ss));
   set_ladspa_dir(mus_strdup(rts_ladspa_dir));
 }
 
+
 static void save_ladspa_dir(prefs_info *prf, FILE *ignore)
 {
   if (rts_ladspa_dir) free(rts_ladspa_dir);
   rts_ladspa_dir = mus_strdup(ladspa_dir(ss));
 }
+
 
 static void ladspa_dir_text(prefs_info *prf)
 {
@@ -1470,6 +1558,7 @@ static void ladspa_dir_text(prefs_info *prf)
 #endif
 
 
+
 /* ---------------- view-files directory ---------------- */
 
 static char *rts_vf_directory = NULL;
@@ -1479,11 +1568,13 @@ static void reflect_view_files_directory(prefs_info *prf)
   SET_TEXT(prf->text, view_files_find_any_directory());
 }
 
+
 static void revert_view_files_directory(prefs_info *prf)
 {
   if (rts_vf_directory)
     view_files_add_directory(NULL_WIDGET, (const char *)rts_vf_directory);
 }
+
 
 static void save_view_files_directory(prefs_info *prf, FILE *fd)
 {
@@ -1505,6 +1596,7 @@ static void save_view_files_directory(prefs_info *prf, FILE *fd)
     }
 }
 
+
 static void view_files_directory_text(prefs_info *prf)
 {
   char *str;
@@ -1517,6 +1609,7 @@ static void view_files_directory_text(prefs_info *prf)
 }
 
 
+
 /* ---------------- html-program ---------------- */
 
 static char *rts_html_program = NULL;
@@ -1526,17 +1619,20 @@ static void reflect_html_program(prefs_info *prf)
   SET_TEXT(prf->text, html_program(ss));
 }
 
+
 static void revert_html_program(prefs_info *prf)
 {
   if (html_program(ss)) free(html_program(ss));
   set_html_program(mus_strdup(rts_html_program));
 }
 
+
 static void save_html_program(prefs_info *prf, FILE *ignore)
 {
   if (rts_html_program) free(rts_html_program);
   rts_html_program = mus_strdup(html_program(ss));
 }
+
 
 static void html_program_text(prefs_info *prf)
 {
@@ -1561,6 +1657,7 @@ static void reflect_listener_prompt(prefs_info *prf)
   SET_TEXT(prf->text, listener_prompt(ss));
 }
 
+
 static void revert_listener_prompt(prefs_info *prf)
 {
   if (rts_listener_prompt)
@@ -1570,11 +1667,13 @@ static void revert_listener_prompt(prefs_info *prf)
     }
 }
 
+
 static void save_listener_prompt(prefs_info *prf, FILE *ignore)
 {
   if (rts_listener_prompt) free(rts_listener_prompt);
   rts_listener_prompt = mus_strdup(listener_prompt(ss));
 }
+
 
 static void listener_prompt_text(prefs_info *prf)
 {
@@ -1589,6 +1688,7 @@ static void listener_prompt_text(prefs_info *prf)
 }
 
 
+
 /* ---------------- show-transform-peaks ---------------- */
 
 static bool rts_show_transform_peaks = DEFAULT_SHOW_TRANSFORM_PEAKS;
@@ -1600,11 +1700,13 @@ static void reflect_transform_peaks(prefs_info *prf)
   int_to_textfield(prf->text, max_transform_peaks(ss));
 }
 
+
 static void revert_transform_peaks(prefs_info *prf) 
 {
   in_set_show_transform_peaks(rts_show_transform_peaks);
   in_set_max_transform_peaks(rts_max_transform_peaks);
 }
+
 
 static void save_transform_peaks(prefs_info *prf, FILE *ignore)
 {
@@ -1612,10 +1714,12 @@ static void save_transform_peaks(prefs_info *prf, FILE *ignore)
   rts_max_transform_peaks = max_transform_peaks(ss);
 }
 
+
 static void transform_peaks_toggle(prefs_info *prf)
 {
   in_set_show_transform_peaks(GET_TOGGLE(prf->toggle));
 }
+
 
 static void max_peaks_text(prefs_info *prf)
 {
@@ -1624,9 +1728,11 @@ static void max_peaks_text(prefs_info *prf)
   if ((str) && (*str))
     {
       int value = 0;
+
       redirect_errors_to(any_error_to_text, (void *)prf);
       value = string_to_int(str, 0, "max peaks");
       redirect_errors_to(NULL, NULL);
+
       if (!(prf->got_error))
 	in_set_max_transform_peaks(value);
       free_TEXT(str);
@@ -1646,11 +1752,13 @@ static void reflect_mix_waveforms(prefs_info *prf)
   int_to_textfield(prf->text, mix_waveform_height(ss));
 }
 
+
 static void revert_mix_waveforms(prefs_info *prf) 
 {
   in_set_show_mix_waveforms(rts_show_mix_waveforms);
   in_set_mix_waveform_height(rts_mix_waveform_height);
 }
+
 
 static void save_mix_waveforms(prefs_info *prf, FILE *ignore)
 {
@@ -1658,10 +1766,12 @@ static void save_mix_waveforms(prefs_info *prf, FILE *ignore)
   rts_mix_waveform_height = mix_waveform_height(ss);
 }
 
+
 static void show_mix_waveforms_toggle(prefs_info *prf)
 {
   in_set_show_mix_waveforms(GET_TOGGLE(prf->toggle));
 }
+
 
 static void mix_waveform_height_text(prefs_info *prf)
 {
@@ -1670,9 +1780,11 @@ static void mix_waveform_height_text(prefs_info *prf)
   if ((str) && (*str))
     {
       int value = 0;
+
       redirect_errors_to(any_error_to_text, (void *)prf);
       value = string_to_int(str, 0, "mix waveform height");
       redirect_errors_to(NULL, NULL);
+
       if (!(prf->got_error))
 	in_set_mix_waveform_height(value);
       free_TEXT(str);
@@ -1680,10 +1792,12 @@ static void mix_waveform_height_text(prefs_info *prf)
 }
 
 
+
 /* ---------------- selection-creates-region, max-regions ---------------- */
 
 static bool rts_selection_creates_region = DEFAULT_SELECTION_CREATES_REGION;
 static int rts_max_regions = DEFAULT_MAX_REGIONS;
+
 
 static void reflect_selection_creates_region(prefs_info *prf) 
 {
@@ -1691,11 +1805,13 @@ static void reflect_selection_creates_region(prefs_info *prf)
   int_to_textfield(prf->text, max_regions(ss));
 }
 
+
 static void revert_selection_creates_region(prefs_info *prf) 
 {
   set_selection_creates_region(rts_selection_creates_region);
   in_set_max_regions(rts_max_regions);
 }
+
 
 static void save_selection_creates_region(prefs_info *prf, FILE *ignore)
 {
@@ -1703,10 +1819,12 @@ static void save_selection_creates_region(prefs_info *prf, FILE *ignore)
   rts_max_regions = max_regions(ss);
 }
 
+
 static void selection_creates_region_toggle(prefs_info *prf)
 {
   set_selection_creates_region(GET_TOGGLE(prf->toggle));
 }
+
 
 static void max_regions_text(prefs_info *prf)
 {
@@ -1715,9 +1833,11 @@ static void max_regions_text(prefs_info *prf)
   if ((str) && (*str))
     {
       int value = 0;
+
       redirect_errors_to(any_error_to_text, (void *)prf);
       value = string_to_int(str, 0, "max regions");
       redirect_errors_to(NULL, NULL);
+
       if (!(prf->got_error))
 	in_set_max_regions(value);
       free_TEXT(str);
@@ -1725,9 +1845,11 @@ static void max_regions_text(prefs_info *prf)
 }
 
 
+
 /* ---------------- sinc width ---------------- */
 
 static int rts_sinc_width = DEFAULT_SINC_WIDTH;
+
 static void reflect_sinc_width(prefs_info *prf) {int_to_textfield(prf->text, sinc_width(ss));}
 static void revert_sinc_width(prefs_info *prf) {set_sinc_width(rts_sinc_width);}
 static void save_sinc_width(prefs_info *prf, FILE *ignore) {rts_sinc_width = sinc_width(ss);}
@@ -1739,9 +1861,11 @@ static void sinc_width_text(prefs_info *prf)
   if ((str) && (*str))
     {
       int value = 0;
+
       redirect_errors_to(any_error_to_text, (void *)prf);
       value = string_to_int(str, 0, "sinc width");
       redirect_errors_to(NULL, NULL);
+
       if (!(prf->got_error))
 	set_sinc_width(value);
       free_TEXT(str);
@@ -1749,12 +1873,15 @@ static void sinc_width_text(prefs_info *prf)
 }
 
 
+
 /* ---------------- print-length ---------------- */
 
 static int rts_print_length = DEFAULT_PRINT_LENGTH;
+
 static void reflect_print_length(prefs_info *prf) {int_to_textfield(prf->text, print_length(ss));}
 static void revert_print_length(prefs_info *prf) {set_print_length(rts_print_length); mus_vct_set_print_length(rts_print_length);}
 static void save_print_length(prefs_info *prf, FILE *ignore) {rts_print_length = print_length(ss);}
+
 
 static void print_length_text(prefs_info *prf)
 {
@@ -1763,9 +1890,11 @@ static void print_length_text(prefs_info *prf)
   if ((str) && (*str))
     {
       int value = 0;
+
       redirect_errors_to(any_error_to_text, (void *)prf);
       value = string_to_int(str, 0, "print length");
       redirect_errors_to(NULL, NULL);
+
       if (!(prf->got_error))
 	{
 	  set_print_length(value);
@@ -1777,12 +1906,15 @@ static void print_length_text(prefs_info *prf)
 }
 
 
+
 /* ---------------- dac-size ---------------- */
 
 static int rts_dac_size = DEFAULT_DAC_SIZE;
+
 static void reflect_dac_size(prefs_info *prf) {int_to_textfield(prf->text, dac_size(ss));}
 static void revert_dac_size(prefs_info *prf) {set_dac_size(rts_dac_size);}
 static void save_dac_size(prefs_info *prf, FILE *ignore) {rts_dac_size = dac_size(ss);}
+
 
 static void dac_size_text(prefs_info *prf)
 {
@@ -1791,9 +1923,11 @@ static void dac_size_text(prefs_info *prf)
   if ((str) && (*str))
     {
       int value = 0;
+
       redirect_errors_to(any_error_to_text, (void *)prf);
       value = string_to_int(str, 0, "dac size");
       redirect_errors_to(NULL, NULL);
+
       if (!(prf->got_error))
 	set_dac_size(value);
       free_TEXT(str);
@@ -1801,12 +1935,15 @@ static void dac_size_text(prefs_info *prf)
 }
 
 
+
 /* ---------------- min-dB ---------------- */
 
 static Float rts_min_dB = DEFAULT_MIN_DB;
+
 static void reflect_min_dB(prefs_info *prf) {float_1_to_textfield(prf->text, min_dB(ss));}
 static void revert_min_dB(prefs_info *prf) {set_min_dB(rts_min_dB);}
 static void save_min_dB(prefs_info *prf, FILE *ignore) {rts_min_dB = min_dB(ss);}
+
 
 static void min_dB_text(prefs_info *prf)
 {
@@ -1815,14 +1952,18 @@ static void min_dB_text(prefs_info *prf)
   if ((str) && (*str))
     {
       float value = 0.0;
+
       redirect_errors_to(any_error_to_text, (void *)prf);
       value = (float)string_to_Float(str, -100000.0, "min dB");
       redirect_errors_to(NULL, NULL);
+
       if ((!(prf->got_error)) && (value < 0.0))
 	set_min_db(value); /* snd-chn.c -- redisplays */
       free_TEXT(str);
     }
 }
+
+
 
 /* ---------------- fft-window-beta ---------------- */
 
@@ -1834,9 +1975,11 @@ static void reflect_fft_window_beta(prefs_info *prf)
   float_to_textfield(prf->text, fft_window_beta(ss));
 }
 
+
 static void revert_fft_window_beta(prefs_info *prf) {in_set_fft_window_beta(rts_fft_window_beta);}
 static void save_fft_window_beta(prefs_info *prf, FILE *ignore) {rts_fft_window_beta = fft_window_beta(ss);}
 static void fft_window_beta_scale_callback(prefs_info *prf) {in_set_fft_window_beta(GET_SCALE() * prf->scale_max);}
+
 
 static void fft_window_beta_text_callback(prefs_info *prf)
 {
@@ -1845,9 +1988,11 @@ static void fft_window_beta_text_callback(prefs_info *prf)
   if ((str) && (*str))
     {
       float value = 0.0;
+
       redirect_errors_to(any_error_to_text, (void *)prf);
       value = (float)string_to_Float(str, 0.0, "fft beta");
       redirect_errors_to(NULL, NULL);
+
       if ((!(prf->got_error)) && (value <= prf->scale_max))
 	{
 	  in_set_fft_window_beta(value);
@@ -1868,9 +2013,11 @@ static void reflect_grid_density(prefs_info *prf)
   float_to_textfield(prf->text, grid_density(ss));
 }
 
+
 static void revert_grid_density(prefs_info *prf) {in_set_grid_density(rts_grid_density);}
 static void save_grid_density(prefs_info *prf, FILE *ignore) {rts_grid_density = grid_density(ss);}
 static void grid_density_scale_callback(prefs_info *prf) {in_set_grid_density(GET_SCALE() * prf->scale_max);}
+
 
 static void grid_density_text_callback(prefs_info *prf)
 {
@@ -1879,9 +2026,11 @@ static void grid_density_text_callback(prefs_info *prf)
   if ((str) && (*str))
     {
       float value = 0.0;
+
       redirect_errors_to(any_error_to_text, (void *)prf);
       value = (float)string_to_Float(str, 0.0, "grid density");
       redirect_errors_to(NULL, NULL);
+
       if ((!(prf->got_error)) && (value <= prf->scale_max))
 	{
 	  in_set_grid_density(value);
@@ -1890,6 +2039,7 @@ static void grid_density_text_callback(prefs_info *prf)
       free_TEXT(str);
     }
 }
+
 
 
 /* ---------------- sync choice ---------------- */
@@ -1907,6 +2057,7 @@ static int sync_choice(void)
 			      SYNC_DISABLED));
 }
 
+
 static void set_sync_choice(int val, const char *load)
 {
   if ((load) &&
@@ -1922,8 +2073,10 @@ static void set_sync_choice(int val, const char *load)
     }
 }
 
+
 static void revert_sync_choice(prefs_info *prf) {set_sync_choice(rts_sync_choice, NULL);}
 static void clear_sync_choice(prefs_info *prf) {set_sync_choice(SYNC_DISABLED, NULL);}
+
 
 static void help_sync_choice(prefs_info *prf)
 {
@@ -1935,12 +2088,14 @@ to operate only on the selected channel (neither button selected).",
 	   WITH_WORD_WRAP);
 }
 
+
 static void reflect_sync_choice(prefs_info *prf)
 {
   prefs_sync_choice = sync_choice();
   SET_TOGGLE(prf->toggle, prefs_sync_choice == SYNC_WITHIN_EACH_SOUND);
   SET_TOGGLE(prf->toggle2, prefs_sync_choice == SYNC_ACROSS_ALL_SOUNDS);
 }
+
 
 static void save_sync_choice(prefs_info *prf, FILE *fd)
 {
@@ -1951,6 +2106,7 @@ static void save_sync_choice(prefs_info *prf, FILE *fd)
 	prefs_variable_save(fd, "global-sync-choice", "extensions", C_TO_XEN_INT(prefs_sync_choice));
     }
 }
+
 
 static void sync1_choice(prefs_info *prf)
 {
@@ -1963,6 +2119,7 @@ static void sync1_choice(prefs_info *prf)
    */
   set_sync_choice(prefs_sync_choice, "extensions"); 
 }
+
 
 static void sync2_choice(prefs_info *prf)
 {
@@ -1985,17 +2142,20 @@ static void reflect_mark_tag_size(prefs_info *prf)
   int_to_textfield(prf->rtxt, mark_tag_height(ss));
 }
 
+
 static void revert_mark_tag_size(prefs_info *prf)
 {
   set_mark_tag_width(rts_mark_tag_width);
   set_mark_tag_height(rts_mark_tag_height);
 }
 
+
 static void save_mark_tag_size(prefs_info *prf, FILE *ignore)
 {
   rts_mark_tag_width = mark_tag_width(ss);
   rts_mark_tag_height = mark_tag_height(ss);
 }
+
 
 static TIMEOUT_TYPE mark_tag_width_erase_func(TIMEOUT_ARGS)
 {
@@ -2004,12 +2164,14 @@ static TIMEOUT_TYPE mark_tag_width_erase_func(TIMEOUT_ARGS)
   TIMEOUT_RESULT
 }
 
+
 static TIMEOUT_TYPE mark_tag_height_erase_func(TIMEOUT_ARGS)
 {
   prefs_info *prf = (prefs_info *)context;
   int_to_textfield(prf->rtxt, mark_tag_height(ss));
   TIMEOUT_RESULT
 }
+
 
 static void mark_tag_width_error(const char *msg, void *data)
 {
@@ -2018,12 +2180,14 @@ static void mark_tag_width_error(const char *msg, void *data)
   TIMEOUT(mark_tag_width_erase_func);
 }
 
+
 static void mark_tag_height_error(const char *msg, void *data)
 {
   prefs_info *prf = (prefs_info *)data;
   SET_TEXT(prf->rtxt, "must be > 0");
   TIMEOUT(mark_tag_height_erase_func);
 }
+
 
 static void mark_tag_size_text(prefs_info *prf)
 {
@@ -2032,18 +2196,22 @@ static void mark_tag_size_text(prefs_info *prf)
   if ((str) && (*str))
     {
       int width = 0;
+
       redirect_errors_to(mark_tag_width_error, (void *)prf);
       width = string_to_int(str, 1, "mark tag width");
       redirect_errors_to(NULL, NULL);
+
       if (width > 0) set_mark_tag_width(width);
       free_TEXT(str);
       str = GET_TEXT(prf->rtxt);
       if ((str) && (*str))
 	{
 	  int height;
+
 	  redirect_errors_to(mark_tag_height_error, (void *)prf);
 	  height = string_to_int(str, 1, "mark tag height");
 	  redirect_errors_to(NULL, NULL);
+
 	  if (height > 0) set_mark_tag_height(height);
 	  free_TEXT(str);
 	}
@@ -2061,17 +2229,20 @@ static void reflect_mix_tag_size(prefs_info *prf)
   int_to_textfield(prf->rtxt, mix_tag_height(ss));
 }
 
+
 static void revert_mix_tag_size(prefs_info *prf)
 {
   set_mix_tag_width(rts_mix_tag_width);
   set_mix_tag_height(rts_mix_tag_height);
 }
 
+
 static void save_mix_tag_size(prefs_info *prf, FILE *ignore)
 {
   rts_mix_tag_width = mix_tag_width(ss);
   rts_mix_tag_height = mix_tag_height(ss);
 }
+
 
 static TIMEOUT_TYPE mix_tag_width_erase_func(TIMEOUT_ARGS)
 {
@@ -2080,12 +2251,14 @@ static TIMEOUT_TYPE mix_tag_width_erase_func(TIMEOUT_ARGS)
   TIMEOUT_RESULT
 }
 
+
 static TIMEOUT_TYPE mix_tag_height_erase_func(TIMEOUT_ARGS)
 {
   prefs_info *prf = (prefs_info *)context;
   int_to_textfield(prf->rtxt, mix_tag_height(ss));
   TIMEOUT_RESULT
 }
+
 
 static void mix_tag_width_error(const char *msg, void *data)
 {
@@ -2094,12 +2267,14 @@ static void mix_tag_width_error(const char *msg, void *data)
   TIMEOUT(mix_tag_width_erase_func);
 }
 
+
 static void mix_tag_height_error(const char *msg, void *data)
 {
   prefs_info *prf = (prefs_info *)data;
   SET_TEXT(prf->rtxt, "must be > 0");
   TIMEOUT(mix_tag_height_erase_func);
 }
+
 
 static void mix_tag_size_text(prefs_info *prf)
 {
@@ -2108,18 +2283,22 @@ static void mix_tag_size_text(prefs_info *prf)
   if ((str) && (*str))
     {
       int width = 0;
+
       redirect_errors_to(mix_tag_width_error, (void *)prf);
       width = string_to_int(str, 1, "mix tag width");
       redirect_errors_to(NULL, NULL);
+
       if (width > 0) set_mix_tag_width(width);
       free_TEXT(str);
       str = GET_TEXT(prf->rtxt);
       if ((str) && (*str))
 	{
 	  int height;
+
 	  redirect_errors_to(mix_tag_height_error, (void *)prf);
 	  height = string_to_int(str, 1, "mix tag height");
 	  redirect_errors_to(NULL, NULL);
+
 	  if (height > 0) set_mix_tag_height(height);
 	  free_TEXT(str);
 	}
@@ -2137,17 +2316,20 @@ static void revert_init_window_size(prefs_info *prf)
   ss->init_window_height = rts_init_window_height;
 }
 
+
 static void clear_init_window_size(prefs_info *prf)
 {
   ss->init_window_width = DEFAULT_INIT_WINDOW_WIDTH;
   ss->init_window_height = DEFAULT_INIT_WINDOW_HEIGHT;
 }
 
+
 static void save_init_window_size(prefs_info *prf, FILE *ignore)
 {
   rts_init_window_width = ss->init_window_width;
   rts_init_window_height = ss->init_window_height;
 }
+
 
 static TIMEOUT_TYPE startup_width_erase_func(TIMEOUT_ARGS)
 {
@@ -2156,12 +2338,14 @@ static TIMEOUT_TYPE startup_width_erase_func(TIMEOUT_ARGS)
   TIMEOUT_RESULT
 }
 
+
 static TIMEOUT_TYPE startup_height_erase_func(TIMEOUT_ARGS)
 {
   prefs_info *prf = (prefs_info *)context;
   int_to_textfield(prf->rtxt, ss->init_window_height);
   TIMEOUT_RESULT
 }
+
 
 static void startup_width_error(const char *msg, void *data)
 {
@@ -2170,12 +2354,14 @@ static void startup_width_error(const char *msg, void *data)
   TIMEOUT(startup_width_erase_func);
 }
 
+
 static void startup_height_error(const char *msg, void *data)
 {
   prefs_info *prf = (prefs_info *)data;
   SET_TEXT(prf->rtxt, "must be > 0");
   TIMEOUT(startup_height_erase_func);
 }
+
 
 static void startup_size_text(prefs_info *prf)
 {
@@ -2184,18 +2370,22 @@ static void startup_size_text(prefs_info *prf)
   if ((str) && (*str))
     {
       int width = 0;
+
       redirect_errors_to(startup_width_error, (void *)prf);
       width = string_to_int(str, 1, "startup width");
       redirect_errors_to(NULL, NULL);
+
       if (width > 0) ss->init_window_width = width;
       free_TEXT(str);
       str = GET_TEXT(prf->rtxt);
       if ((str) && (*str))
 	{
 	  int height;
+
 	  redirect_errors_to(startup_height_error, (void *)prf);
 	  height = string_to_int(str, 1, "startup height");
 	  redirect_errors_to(NULL, NULL);
+
 	  if (height > 0) ss->init_window_height = height;
 	  free_TEXT(str);
 	}
@@ -2212,6 +2402,7 @@ static bool unsaved_edits(void)
   return(XEN_TO_C_BOOLEAN(prefs_variable_get("checking-for-unsaved-edits")));
 }
 
+
 static void set_unsaved_edits(bool val, const char *load)
 {
   prefs_unsaved_edits = val;
@@ -2222,8 +2413,10 @@ static void set_unsaved_edits(bool val, const char *load)
     prefs_function_call_1("check-for-unsaved-edits", C_TO_XEN_BOOLEAN(val));
 }
 
+
 static void revert_unsaved_edits(prefs_info *prf) {set_unsaved_edits(rts_unsaved_edits, NULL);}
 static void clear_unsaved_edits(prefs_info *prf) {set_unsaved_edits(false, NULL);}
+
 
 static void save_unsaved_edits(prefs_info *prf, FILE *fd)
 {
@@ -2232,11 +2425,13 @@ static void save_unsaved_edits(prefs_info *prf, FILE *fd)
     prefs_function_save_1(fd, "check-for-unsaved-edits", "extensions", C_TO_XEN_BOOLEAN(prefs_unsaved_edits));
 }
 
+
 static void reflect_unsaved_edits(prefs_info *prf) 
 {
   prefs_unsaved_edits = unsaved_edits();
   SET_TOGGLE(prf->toggle, prefs_unsaved_edits);
 }
+
 
 static void help_unsaved_edits(prefs_info *prf)
 {
@@ -2245,6 +2440,7 @@ static void help_unsaved_edits(prefs_info *prf)
 finds any, it asks you whether you want to save them.",
 	   WITH_WORD_WRAP);
 }
+
 
 static void unsaved_edits_toggle(prefs_info *prf)
 {
@@ -2262,6 +2458,7 @@ static bool current_window_display(void)
   return(XEN_TO_C_BOOLEAN(prefs_variable_get("current-window-display-is-running")));
 }
 
+
 static void set_current_window_display(bool val, const char *load)
 {
   prefs_current_window_display = val;
@@ -2274,8 +2471,10 @@ static void set_current_window_display(bool val, const char *load)
   prefs_variable_set("current-window-display-is-running", C_TO_XEN_BOOLEAN(val));
 }
 
+
 static void revert_current_window_display(prefs_info *prf) {set_current_window_display(rts_current_window_display, NULL);}
 static void clear_current_window_display(prefs_info *prf) {set_current_window_display(false, NULL);}
+
 
 static void save_current_window_display(prefs_info *prf, FILE *fd)
 {
@@ -2283,6 +2482,7 @@ static void save_current_window_display(prefs_info *prf, FILE *fd)
   if (rts_current_window_display)
     prefs_function_save_0(fd, "make-current-window-display", "draw");
 }
+
 
 static void help_current_window(prefs_info *prf)
 {
@@ -2293,10 +2493,12 @@ little graph, the cursor and main window are moved to that spot.",
 	   WITH_WORD_WRAP);
 }
 
+
 static void current_window_display_toggle(prefs_info *prf)
 {
   set_current_window_display(GET_TOGGLE(prf->toggle), "draw");
 }
+
 
 static void reflect_current_window_display(prefs_info *prf) 
 {
@@ -2315,14 +2517,17 @@ static bool focus_follows_mouse(void)
   return(XEN_TO_C_BOOLEAN(prefs_variable_get("focus-is-following-mouse")));
 }
 
+
 static void set_focus_follows_mouse(bool val, const char *load)
 {
   prefs_focus_follows_mouse = val;
   prefs_variable_set("focus-is-following-mouse", C_TO_XEN_BOOLEAN(val));
 }
 
+
 static void revert_focus_follows_mouse(prefs_info *prf) {set_focus_follows_mouse(rts_focus_follows_mouse, NULL);}
 static void clear_focus_follows_mouse(prefs_info *prf) {set_focus_follows_mouse(false, NULL);}
+
 
 static void save_focus_follows_mouse(prefs_info *prf, FILE *fd) 
 {
@@ -2330,6 +2535,7 @@ static void save_focus_follows_mouse(prefs_info *prf, FILE *fd)
   if (rts_focus_follows_mouse)
     prefs_function_save_0(fd, "focus-follows-mouse", "extensions");
 }
+
 
 static void help_focus_follows_mouse(prefs_info *prf)
 {
@@ -2340,11 +2546,13 @@ taking some action in it.  (This option only takes effect when you restart Snd).
 	   WITH_WORD_WRAP);
 }
 
+
 static void reflect_focus_follows_mouse(prefs_info *prf) 
 {
   prefs_focus_follows_mouse = focus_follows_mouse();
   SET_TOGGLE(prf->toggle, prefs_focus_follows_mouse);
 }
+
 
 static void focus_follows_mouse_toggle(prefs_info *prf)
 {
@@ -2364,12 +2572,14 @@ static int rts_optimization = DEFAULT_OPTIMIZATION;
 static void revert_optimization(prefs_info *prf) {set_optimization(rts_optimization);}
 static void save_optimization(prefs_info *prf, FILE *ignore) {rts_optimization = optimization(ss);}
 
+
 static void reflect_optimization(prefs_info *prf)
 {
   int_to_textfield(prf->text, optimization(ss));
   SET_SENSITIVE(prf->arrow_up, optimization(ss) < MAX_OPTIMIZATION);
   SET_SENSITIVE(prf->arrow_down, optimization(ss) > MIN_OPTIMIZATION);
 }
+
 
 static void optimization_up(prefs_info *prf)
 {
@@ -2381,6 +2591,7 @@ static void optimization_up(prefs_info *prf)
   int_to_textfield(prf->text, optimization(ss));
 }
 
+
 static void optimization_down(prefs_info *prf)
 {
   int val;
@@ -2391,6 +2602,7 @@ static void optimization_down(prefs_info *prf)
   int_to_textfield(prf->text, optimization(ss));
 }
 
+
 static void optimization_from_text(prefs_info *prf)
 {
   int opt;
@@ -2399,9 +2611,11 @@ static void optimization_from_text(prefs_info *prf)
   if ((str) && (*str))
     {
       prf->got_error = false;
+
       redirect_errors_to(redirect_post_prefs_error, (void *)prf);
       opt = string_to_int(str, MIN_OPTIMIZATION, "optimization"); 
       redirect_errors_to(NULL, NULL);
+
       free_TEXT(str);
       if (!(prf->got_error))
 	{
@@ -2415,6 +2629,8 @@ static void optimization_from_text(prefs_info *prf)
 #endif
 
 
+
+
 /* ---------------- cursor-size ---------------- */
 
 static int rts_cursor_size = DEFAULT_CURSOR_SIZE;
@@ -2425,12 +2641,14 @@ static int rts_cursor_size = DEFAULT_CURSOR_SIZE;
 static void revert_cursor_size(prefs_info *prf) {in_set_cursor_size(rts_cursor_size);}
 static void save_cursor_size(prefs_info *prf, FILE *ignore) {rts_cursor_size = cursor_size(ss);}
 
+
 static void reflect_cursor_size(prefs_info *prf)
 {
   int_to_textfield(prf->text, cursor_size(ss));
   SET_SENSITIVE(prf->arrow_up, cursor_size(ss) < MAX_CURSOR_SIZE);
   SET_SENSITIVE(prf->arrow_down, cursor_size(ss) > MIN_CURSOR_SIZE);
 }
+
 
 static void cursor_size_up(prefs_info *prf)
 {
@@ -2442,6 +2660,7 @@ static void cursor_size_up(prefs_info *prf)
   int_to_textfield(prf->text, cursor_size(ss));
 }
 
+
 static void cursor_size_down(prefs_info *prf)
 {
   int size;
@@ -2452,6 +2671,7 @@ static void cursor_size_down(prefs_info *prf)
   int_to_textfield(prf->text, cursor_size(ss));
 }
 
+
 static void cursor_size_from_text(prefs_info *prf)
 {
   int size;
@@ -2460,9 +2680,11 @@ static void cursor_size_from_text(prefs_info *prf)
   if ((str) && (*str))
     {
       prf->got_error = false;
+
       redirect_errors_to(redirect_post_prefs_error, (void *)prf);
       size = string_to_int(str, 0, "cursor size"); 
       redirect_errors_to(NULL, NULL);
+
       free_TEXT(str);
       if (!(prf->got_error))
 	{
@@ -2479,6 +2701,8 @@ static void cursor_size_from_text(prefs_info *prf)
   else post_prefs_error("no size?", prf);
 }
 
+
+
 /* ---------------- dot-size ---------------- */
 
 static int rts_dot_size = DEFAULT_DOT_SIZE;
@@ -2489,12 +2713,14 @@ static int rts_dot_size = DEFAULT_DOT_SIZE;
 static void revert_dot_size(prefs_info *prf) {in_set_dot_size(rts_dot_size);}
 static void save_dot_size(prefs_info *prf, FILE *ignore) {rts_dot_size = dot_size(ss);}
 
+
 static void reflect_dot_size(prefs_info *prf)
 {
   int_to_textfield(prf->text, dot_size(ss));
   SET_SENSITIVE(prf->arrow_up, dot_size(ss) < MAX_DOT_SIZE);
   SET_SENSITIVE(prf->arrow_down, dot_size(ss) > MIN_DOT_SIZE);
 }
+
 
 static void dot_size_up(prefs_info *prf)
 {
@@ -2506,6 +2732,7 @@ static void dot_size_up(prefs_info *prf)
   int_to_textfield(prf->text, dot_size(ss));
 }
 
+
 static void dot_size_down(prefs_info *prf)
 {
   int size;
@@ -2516,6 +2743,7 @@ static void dot_size_down(prefs_info *prf)
   int_to_textfield(prf->text, dot_size(ss));
 }
 
+
 static void dot_size_from_text(prefs_info *prf)
 {
   int size;
@@ -2524,9 +2752,11 @@ static void dot_size_from_text(prefs_info *prf)
   if ((str) && (*str))
     {
       prf->got_error = false;
+
       redirect_errors_to(redirect_post_prefs_error, (void *)prf);
       size = string_to_int(str, 0, "dot size"); 
       redirect_errors_to(NULL, NULL);
+
       free_TEXT(str);
       if (!(prf->got_error))
 	{
@@ -2554,12 +2784,14 @@ static off_t rts_fft_size = DEFAULT_TRANSFORM_SIZE;
 static void revert_fft_size(prefs_info *prf) {in_set_transform_size(rts_fft_size);}
 static void save_fft_size(prefs_info *prf, FILE *ignore) {rts_fft_size = transform_size(ss);}
 
+
 static void reflect_fft_size(prefs_info *prf)
 {
   off_t_to_textfield(prf->text, transform_size(ss));
   SET_SENSITIVE(prf->arrow_up, transform_size(ss) < MAX_TRANSFORM_SIZE);
   SET_SENSITIVE(prf->arrow_down, transform_size(ss) > MIN_TRANSFORM_SIZE);
 }
+
 
 static void fft_size_up(prefs_info *prf)
 {
@@ -2571,6 +2803,7 @@ static void fft_size_up(prefs_info *prf)
   off_t_to_textfield(prf->text, transform_size(ss));
 }
 
+
 static void fft_size_down(prefs_info *prf)
 {
   off_t size;
@@ -2581,6 +2814,7 @@ static void fft_size_down(prefs_info *prf)
   off_t_to_textfield(prf->text, transform_size(ss));
 }
 
+
 static void fft_size_from_text(prefs_info *prf)
 {
   off_t size;
@@ -2589,9 +2823,11 @@ static void fft_size_from_text(prefs_info *prf)
   if ((str) && (*str))
     {
       prf->got_error = false;
+
       redirect_errors_to(redirect_post_prefs_error, (void *)prf);
       size = string_to_off_t(str, MIN_TRANSFORM_SIZE, "size"); 
       redirect_errors_to(NULL, NULL);
+
       free_TEXT(str);
       if (!(prf->got_error))
 	{
@@ -2614,12 +2850,14 @@ static tracking_cursor_t rts_with_tracking_cursor = DEFAULT_WITH_TRACKING_CURSOR
 static Float rts_cursor_update_interval = DEFAULT_CURSOR_UPDATE_INTERVAL;
 static int rts_cursor_location_offset = DEFAULT_CURSOR_LOCATION_OFFSET;
 
+
 static void revert_with_tracking_cursor(prefs_info *prf)
 {
   in_set_with_tracking_cursor(ss, rts_with_tracking_cursor);
   set_cursor_update_interval(rts_cursor_update_interval);
   set_cursor_location_offset(rts_cursor_location_offset);
 }
+
 
 static void save_with_tracking_cursor(prefs_info *prf, FILE *ignore)
 {
@@ -2628,6 +2866,7 @@ static void save_with_tracking_cursor(prefs_info *prf, FILE *ignore)
   rts_cursor_location_offset = cursor_location_offset(ss);
 }
 
+
 static void reflect_with_tracking_cursor(prefs_info *prf) 
 {
   SET_TOGGLE(prf->toggle, with_tracking_cursor(ss));
@@ -2635,10 +2874,12 @@ static void reflect_with_tracking_cursor(prefs_info *prf)
   float_to_textfield(prf->text, cursor_update_interval(ss));
 }
 
+
 static void with_tracking_cursor_toggle(prefs_info *prf)
 {
   in_set_with_tracking_cursor(ss, (GET_TOGGLE(prf->toggle)) ? ALWAYS_TRACK : DONT_TRACK);
 }
+
 
 static void cursor_location_text(prefs_info *prf)
 {
@@ -2647,19 +2888,24 @@ static void cursor_location_text(prefs_info *prf)
   if ((str) && (*str))
     {
       float interval = DEFAULT_CURSOR_UPDATE_INTERVAL;
+
       redirect_errors_to(any_error_to_text, (void *)prf);
       interval = (float)string_to_Float(str, 0.0, "cursor offset");
       redirect_errors_to(NULL, NULL);
+
       if (!(prf->got_error))
 	set_cursor_update_interval(interval);
       free_TEXT(str);
+
       str = GET_TEXT(prf->rtxt);
       if ((str) && (*str))
 	{
 	  int loc = DEFAULT_CURSOR_LOCATION_OFFSET;
+
 	  redirect_errors_to(any_error_to_text, (void *)prf);
 	  loc = string_to_int(str, 0, "cursor offset");
 	  redirect_errors_to(NULL, NULL);
+
 	  if (!(prf->got_error))
 	    set_cursor_location_offset(loc);
 	  free_TEXT(str);
@@ -2674,9 +2920,11 @@ static channel_style_t rts_channel_style = DEFAULT_CHANNEL_STYLE;
 
 static const char *channel_styles[NUM_CHANNEL_STYLES] = {"separate", "combined", "superimposed"};
 
+
 static void reflect_channel_style(prefs_info *prf) {set_radio_button(prf, (int)channel_style(ss));}
 static void revert_channel_style(prefs_info *prf) {in_set_channel_style(rts_channel_style);}
 static void save_channel_style(prefs_info *prf, FILE *ignore) {rts_channel_style = channel_style(ss);}
+
 
 static void channel_style_choice(prefs_info *prf)
 {
@@ -2692,9 +2940,11 @@ static cursor_style_t rts_cursor_style = DEFAULT_CURSOR_STYLE;
 #define NUM_CURSOR_STYLES 2
 static const char *cursor_styles[NUM_CURSOR_STYLES] = {"cross", "line"};
 
+
 static void reflect_cursor_style(prefs_info *prf) {set_radio_button(prf, (int)cursor_style(ss));}
 static void revert_cursor_style(prefs_info *prf) {in_set_cursor_style(rts_cursor_style);}
 static void save_cursor_style(prefs_info *prf, FILE *ignore) {rts_cursor_style = cursor_style(ss);}
+
 
 static void cursor_style_choice(prefs_info *prf)
 {
@@ -2707,9 +2957,11 @@ static void cursor_style_choice(prefs_info *prf)
 
 static cursor_style_t rts_tracking_cursor_style = DEFAULT_CURSOR_STYLE;
 
+
 static void reflect_tracking_cursor_style(prefs_info *prf) {set_radio_button(prf, (int)tracking_cursor_style(ss));}
 static void revert_tracking_cursor_style(prefs_info *prf) {in_set_tracking_cursor_style(rts_tracking_cursor_style);}
 static void save_tracking_cursor_style(prefs_info *prf, FILE *ignore) {rts_tracking_cursor_style = tracking_cursor_style(ss);}
+
 
 static void tracking_cursor_style_choice(prefs_info *prf)
 {
@@ -2725,9 +2977,11 @@ static graph_type_t rts_transform_graph_type = DEFAULT_TRANSFORM_GRAPH_TYPE;
 #define NUM_TRANSFORM_GRAPH_TYPES 3
 static const char *transform_graph_types[NUM_TRANSFORM_GRAPH_TYPES] = {"normal", "sonogram", "spectrogram"};
 
+
 static void reflect_transform_graph_type(prefs_info *prf) {set_radio_button(prf, (int)transform_graph_type(ss));}
 static void revert_transform_graph_type(prefs_info *prf) {in_set_transform_graph_type(rts_transform_graph_type);}
 static void save_transform_graph_type(prefs_info *prf, FILE *ignore) {rts_transform_graph_type = transform_graph_type(ss);}
+
 
 static void transform_graph_type_choice(prefs_info *prf) 
 {
@@ -2742,9 +2996,11 @@ static fft_normalize_t rts_transform_normalization = DEFAULT_TRANSFORM_NORMALIZA
 
 static const char *transform_normalizations[NUM_TRANSFORM_NORMALIZATIONS] = {"none", "by channel", "by sound", "global"};
 
+
 static void reflect_transform_normalization(prefs_info *prf) {set_radio_button(prf, (int)transform_normalization(ss));}
 static void revert_transform_normalization(prefs_info *prf) {in_set_transform_normalization(rts_transform_normalization);}
 static void save_transform_normalization(prefs_info *prf, FILE *ignore) {rts_transform_normalization = transform_normalization(ss);}
+
 
 static void transform_normalization_choice(prefs_info *prf)
 {
@@ -2759,9 +3015,11 @@ static graph_style_t rts_graph_style = DEFAULT_GRAPH_STYLE;
 
 static const char *graph_styles[NUM_GRAPH_STYLES] = {"line", "dot", "filled", "dot+line", "lollipop"};
 
+
 static void reflect_graph_style(prefs_info *prf) {set_radio_button(prf, (int)graph_style(ss));}
 static void revert_graph_style(prefs_info *prf) {in_set_graph_style(rts_graph_style);}
 static void save_graph_style(prefs_info *prf, FILE *ignore) {rts_graph_style = graph_style(ss);}
+
 
 static void graph_style_choice(prefs_info *prf)
 {
@@ -2784,17 +3042,20 @@ static void show_speed_control_semitones(prefs_info *prf)
   SET_SENSITIVE(prf->arrow_down, (speed_control_tones(ss) > MIN_SPEED_CONTROL_SEMITONES));
 }
 
+
 static void speed_control_up(prefs_info *prf)
 {
   in_set_speed_control_tones(ss, speed_control_tones(ss) + 1);
   show_speed_control_semitones(prf);
 }
 
+
 static void speed_control_down(prefs_info *prf)
 {
   in_set_speed_control_tones(ss, speed_control_tones(ss) - 1);
   show_speed_control_semitones(prf);
 }
+
 
 static void speed_control_text(prefs_info *prf)
 {
@@ -2817,11 +3078,13 @@ static void speed_control_text(prefs_info *prf)
     }
 }
 
+
 static void reflect_speed_control(prefs_info *prf)
 {
   set_radio_button(prf, (int)speed_control_style(ss));
   show_speed_control_semitones(prf);
 }
+
 
 static void speed_control_choice(prefs_info *prf)
 {
@@ -2829,11 +3092,13 @@ static void speed_control_choice(prefs_info *prf)
     in_set_speed_control_style(ss, (speed_style_t)which_radio_button(prf));
 }
 
+
 static void revert_speed_control(prefs_info *prf) 
 {
   in_set_speed_control_style(ss, rts_speed_control_style);
   in_set_speed_control_tones(ss, rts_speed_control_tones);
 }
+
 
 static void save_speed_control(prefs_info *prf, FILE *ignore) 
 {
@@ -2866,6 +3131,7 @@ static int output_types[NUM_OUTPUT_TYPE_CHOICES] = {MUS_AIFC, MUS_RIFF, MUS_NEXT
 #define NUM_OUTPUT_FORMAT_CHOICES 4
 static const char *output_format_choices[NUM_OUTPUT_FORMAT_CHOICES] = {"short", "int", "float", "double"};
 static int output_formats[NUM_OUTPUT_FORMAT_CHOICES] = {MUS_LSHORT, MUS_LINT, MUS_LFLOAT, MUS_LDOUBLE};
+
 
 static int header_to_data(int ht, int frm)
 {
@@ -2941,11 +3207,13 @@ static void reflect_default_output_chans(prefs_info *prf) {set_radio_button(prf,
 static void revert_default_output_chans(prefs_info *prf) {set_default_output_chans(rts_default_output_chans);}
 static void save_default_output_chans(prefs_info *prf, FILE *ignore) {rts_default_output_chans = default_output_chans(ss);}
 
+
 static void default_output_chans_choice(prefs_info *prf)
 {
   if (GET_TOGGLE(prf->radio_button))
     set_default_output_chans(output_chans[which_radio_button(prf)]);
 }
+
 
 static int srate_to_button(int srate)
 {
@@ -2956,15 +3224,18 @@ static int srate_to_button(int srate)
   return(0);
 }
 
+
 static void reflect_default_output_srate(prefs_info *prf) {set_radio_button(prf, srate_to_button(default_output_srate(ss)));}
 static void revert_default_output_srate(prefs_info *prf) {set_default_output_srate(rts_default_output_srate);}
 static void save_default_output_srate(prefs_info *prf, FILE *ignore) {rts_default_output_srate = default_output_srate(ss);}
+
 
 static void default_output_srate_choice(prefs_info *prf)
 {
   if (GET_TOGGLE(prf->radio_button))
     set_default_output_srate(output_srates[which_radio_button(prf)]);
 }
+
 
 static void reflect_default_output_header_type(prefs_info *prf)
 {
@@ -2982,8 +3253,18 @@ static void reflect_default_output_header_type(prefs_info *prf)
   set_radio_button(prf, which);
 }
 
-static void revert_default_output_header_type(prefs_info *prf) {set_default_output_header_type(rts_default_output_header_type);}
-static void save_default_output_header_type(prefs_info *prf, FILE *ignore) {rts_default_output_header_type = default_output_header_type(ss);}
+
+static void revert_default_output_header_type(prefs_info *prf) 
+{
+  set_default_output_header_type(rts_default_output_header_type);
+}
+
+
+static void save_default_output_header_type(prefs_info *prf, FILE *ignore) 
+{
+  rts_default_output_header_type = default_output_header_type(ss);
+}
+
 
 static void reflect_default_output_data_format(prefs_info *prf)
 {
@@ -2998,6 +3279,7 @@ static void reflect_default_output_data_format(prefs_info *prf)
   set_radio_button(prf, which);
 }
 
+
 static void default_output_header_type_choice(prefs_info *prf)
 {
   if (GET_TOGGLE(prf->radio_button))
@@ -3008,8 +3290,17 @@ static void default_output_header_type_choice(prefs_info *prf)
     }
 }
 
-static void revert_default_output_data_format(prefs_info *prf) {set_default_output_data_format(rts_default_output_data_format);}
-static void save_default_output_data_format(prefs_info *prf, FILE *ignore) {rts_default_output_data_format = default_output_data_format(ss);}
+static void revert_default_output_data_format(prefs_info *prf) 
+{
+  set_default_output_data_format(rts_default_output_data_format);
+}
+
+
+static void save_default_output_data_format(prefs_info *prf, FILE *ignore) 
+{
+  rts_default_output_data_format = default_output_data_format(ss);
+}
+
 
 static void default_output_data_format_choice(prefs_info *prf)
 {
@@ -3090,6 +3381,7 @@ static void revert_raw_chans(prefs_info *prf)
   mus_header_set_raw_defaults(srate, chans, format);
 }
 
+
 static void save_raw_chans(prefs_info *prf, FILE *ignore)
 {
   int srate = 0, chans = 0, format = 0;
@@ -3097,12 +3389,14 @@ static void save_raw_chans(prefs_info *prf, FILE *ignore)
   rts_raw_chans = chans;
 }
 
+
 static void reflect_raw_chans(prefs_info *prf)
 {
   int srate = 0, chans = 0, format = 0;
   mus_header_raw_defaults(&srate, &chans, &format);
   int_to_textfield(prf->text, chans);
 }
+
 
 static void raw_chans_choice(prefs_info *prf)
 {
@@ -3121,6 +3415,7 @@ static void raw_chans_choice(prefs_info *prf)
     }
 }
 
+
 static void revert_raw_srate(prefs_info *prf)
 {
   int srate = 0, chans = 0, format = 0;
@@ -3129,6 +3424,7 @@ static void revert_raw_srate(prefs_info *prf)
   mus_header_set_raw_defaults(srate, chans, format);
 }
 
+
 static void save_raw_srate(prefs_info *prf, FILE *ignore)
 {
   int srate = 0, chans = 0, format = 0;
@@ -3136,12 +3432,14 @@ static void save_raw_srate(prefs_info *prf, FILE *ignore)
   rts_raw_srate = srate;
 }
 
+
 static void reflect_raw_srate(prefs_info *prf)
 {
   int srate = 0, chans = 0, format = 0;
   mus_header_raw_defaults(&srate, &chans, &format);
   int_to_textfield(prf->text, srate);
 }
+
 
 static void raw_srate_choice(prefs_info *prf)
 {
@@ -3159,6 +3457,7 @@ static void raw_srate_choice(prefs_info *prf)
       free_TEXT(str);
     }
 }
+
 
 static char *raw_data_format_to_string(int format)
 {
@@ -3185,6 +3484,7 @@ static char *raw_data_format_to_string(int format)
   return(mus_strdup("unknown"));
 }
 
+
 static void revert_raw_data_format(prefs_info *prf)
 {
   int srate = 0, chans = 0, format = 0;
@@ -3193,12 +3493,14 @@ static void revert_raw_data_format(prefs_info *prf)
   mus_header_set_raw_defaults(srate, chans, format);
 }
 
+
 static void save_raw_data_format(prefs_info *prf, FILE *ignore)
 {
   int srate = 0, chans = 0, format = 0;
   mus_header_raw_defaults(&srate, &chans, &format);
   rts_raw_data_format = format;
 }
+
 
 static void reflect_raw_data_format(prefs_info *prf)
 {
@@ -3209,6 +3511,7 @@ static void reflect_raw_data_format(prefs_info *prf)
   SET_TEXT(prf->text, str);
   free(str);
 }
+
 
 static char **raw_data_format_choices = NULL;
 
@@ -3231,6 +3534,7 @@ static void raw_data_format_from_text(prefs_info *prf)
     }
 }
 
+
 #if USE_MOTIF
 static void raw_data_format_from_menu(prefs_info *prf, char *value)
 {
@@ -3247,6 +3551,7 @@ static void raw_data_format_from_menu(prefs_info *prf, char *value)
 #endif
 
 
+
 /* ---------------- with-sound ---------------- */
 
 static bool rts_with_sound = false;
@@ -3254,10 +3559,12 @@ static char *rts_clm_file_name = NULL;
 static int rts_clm_file_buffer_size = 65536;
 static int rts_clm_table_size = 512;
 
+
 static bool with_sound_is_loaded(void) {return(XEN_DEFINED_P("with-sound"));}
 static void reflect_with_sound(prefs_info *prf) {}
 static void revert_with_sound(prefs_info *prf) {SET_TOGGLE(prf->toggle, rts_with_sound);}
 static void clear_with_sound(prefs_info *prf) {SET_TOGGLE(prf->toggle, false);}
+
 
 static void with_sound_toggle(prefs_info *prf)
 {
@@ -3265,6 +3572,7 @@ static void with_sound_toggle(prefs_info *prf)
       (!(XEN_DEFINED_P("with-sound"))))
     load_file_with_path_and_extension("ws");
 }
+
 
 static void save_with_sound(prefs_info *prf, FILE *fd)
 {
@@ -3303,6 +3611,7 @@ static void save_with_sound(prefs_info *prf, FILE *fd)
     }
 }
 
+
 static void help_with_sound(prefs_info *prf)
 {
   snd_help(prf->var_name,
@@ -3328,6 +3637,7 @@ static const char *find_clm_file_name(void)
   return(NULL);
 }
 
+
 static void clm_file_name_text(prefs_info *prf)
 {
   char *str;
@@ -3342,13 +3652,16 @@ static void clm_file_name_text(prefs_info *prf)
     }
 }
 
+
 static void reflect_clm_file_name(prefs_info *prf) {SET_TEXT(prf->text, find_clm_file_name());}
 static void clear_clm_file_name(prefs_info *prf) {prefs_variable_set(CLM_FILE_NAME, C_TO_XEN_STRING("test.snd"));}
+
 
 static void revert_clm_file_name(prefs_info *prf) 
 {
   prefs_variable_set(CLM_FILE_NAME, C_TO_XEN_STRING((char *)((rts_clm_file_name) ? rts_clm_file_name : "test.snd")));
 }
+
 
 static void help_clm_file_name(prefs_info *prf)
 {
@@ -3356,6 +3669,7 @@ static void help_clm_file_name(prefs_info *prf)
 	   "This option sets the default output file name used by with-sound.",
 	   WITH_WORD_WRAP);
 }
+
 
 static void save_clm_file_name(prefs_info *prf, FILE *ignore)
 {
@@ -3374,10 +3688,12 @@ static int find_clm_table_size(void)
   return(XEN_TO_C_INT_OR_ELSE(prefs_variable_get(CLM_TABLE_SIZE), 512));
 }
 
+
 static int find_clm_file_buffer_size(void)
 {
   return(XEN_TO_C_INT_OR_ELSE(prefs_variable_get(CLM_FILE_BUFFER_SIZE), 65536));
 }
+
 
 static void reflect_clm_sizes(prefs_info *prf)
 {
@@ -3387,9 +3703,11 @@ static void reflect_clm_sizes(prefs_info *prf)
   int_to_textfield(prf->rtxt, rts_clm_file_buffer_size);
 }
 
+
 static void clm_sizes_text(prefs_info *prf)
 {
   char *str;
+
   str = GET_TEXT(prf->text);
   if ((str) && (*str))
     {
@@ -3402,6 +3720,7 @@ static void clm_sizes_text(prefs_info *prf)
 	rts_clm_table_size = size;
       free_TEXT(str);
     }
+
   str = GET_TEXT(prf->rtxt);
   if ((str) && (*str))
     {
@@ -3416,6 +3735,7 @@ static void clm_sizes_text(prefs_info *prf)
     }
 }
 
+
 static void help_clm_sizes(prefs_info *prf)
 {
   snd_help(prf->var_name,
@@ -3423,17 +3743,20 @@ static void help_clm_sizes(prefs_info *prf)
 	   WITH_WORD_WRAP);
 }
 
+
 static void revert_clm_sizes(prefs_info *prf)
 {
   prefs_variable_set(CLM_FILE_BUFFER_SIZE, C_TO_XEN_INT(rts_clm_file_buffer_size));
   prefs_variable_set(CLM_TABLE_SIZE, C_TO_XEN_INT(rts_clm_table_size));
 }
 
+
 static void clear_clm_sizes(prefs_info *prf)
 {
   prefs_variable_set(CLM_FILE_BUFFER_SIZE, C_TO_XEN_INT(65536));
   prefs_variable_set(CLM_TABLE_SIZE, C_TO_XEN_INT(512));
 }
+
 
 static void save_clm_sizes(prefs_info *prf, FILE *ignore)
 {
@@ -3455,7 +3778,12 @@ portions of the graphs, the listener, the edit history pane, and the current sel
 	   WITH_WORD_WRAP);
 }
 
-static bool find_context_sensitive_popup(void) {return(XEN_DEFINED_P("edhist-help-edits"));}
+
+static bool find_context_sensitive_popup(void) 
+{
+  return(XEN_DEFINED_P("edhist-help-edits"));
+}
+
 
 static void save_context_sensitive_popup(prefs_info *prf, FILE *fd)
 {
@@ -3476,6 +3804,7 @@ static void save_context_sensitive_popup(prefs_info *prf, FILE *fd)
     }
 }
 
+
 static void context_sensitive_popup_toggle(prefs_info *prf)
 {
   if ((GET_TOGGLE(prf->toggle)) &&
@@ -3486,6 +3815,7 @@ static void context_sensitive_popup_toggle(prefs_info *prf)
     load_file_with_path_and_extension("gtk-popup");
 #endif
 }
+
 
 static void reflect_context_sensitive_popup(prefs_info *prf) {}
 static void revert_context_sensitive_popup(prefs_info *prf) {SET_TOGGLE(prf->toggle, include_context_sensitive_popup);}
@@ -3506,7 +3836,12 @@ filtering, padding, cross synthesis, and so on.",
 	   WITH_WORD_WRAP);
 }
 
-static bool find_effects_menu(void) {return(XEN_DEFINED_P("effects-menu"));}
+
+static bool find_effects_menu(void) 
+{
+  return(XEN_DEFINED_P("effects-menu"));
+}
+
 
 static void save_effects_menu(prefs_info *prf, FILE *fd)
 {
@@ -3527,6 +3862,7 @@ static void save_effects_menu(prefs_info *prf, FILE *fd)
     }
 }
 
+
 static void effects_menu_toggle(prefs_info *prf)
 {
   if ((GET_TOGGLE(prf->toggle)) &&
@@ -3537,6 +3873,7 @@ static void effects_menu_toggle(prefs_info *prf)
     load_file_with_path_and_extension("gtk-effects");
 #endif
 }
+
 
 static void reflect_effects_menu(prefs_info *prf) {}
 static void revert_effects_menu(prefs_info *prf) {SET_TOGGLE(prf->toggle, include_effects_menu);}
@@ -3549,6 +3886,7 @@ static void clear_effects_menu(prefs_info *prf) {SET_TOGGLE(prf->toggle, false);
 
 static bool include_edit_menu = false;
 
+
 static void help_edit_menu(prefs_info *prf)
 {
   snd_help(prf->var_name,
@@ -3557,10 +3895,12 @@ append selection, mono to stereo, trim, crop, etc.",
 	   WITH_WORD_WRAP);
 }
 
+
 static bool find_edit_menu(void)
 {
   return(XEN_DEFINED_P("make-stereofile")); /* a kludge... currently this is only defined in edit-menu.scm */
 }
+
 
 static void save_edit_menu(prefs_info *prf, FILE *fd)
 {
@@ -3569,6 +3909,7 @@ static void save_edit_menu(prefs_info *prf, FILE *fd)
     fprintf(fd, "(if (not (provided? 'snd-edit-menu.scm)) (load-from-path \"edit-menu.scm\"))\n"); /* ok for either case */
 }
 
+
 static void edit_menu_toggle(prefs_info *prf)
 {
   if ((GET_TOGGLE(prf->toggle)) &&
@@ -3576,16 +3917,22 @@ static void edit_menu_toggle(prefs_info *prf)
     load_file_with_path_and_extension("edit-menu");
 }
 
+
 static void reflect_edit_menu(prefs_info *prf) {}
 static void revert_edit_menu(prefs_info *prf) {SET_TOGGLE(prf->toggle, include_edit_menu);}
 static void clear_edit_menu(prefs_info *prf) {SET_TOGGLE(prf->toggle, false);}
+
 
 
 /* ---------------- marks menu ---------------- */
 
 static bool include_marks_menu = false;
 
-static bool find_marks_menu(void) {return(XEN_DEFINED_P("marks-menu"));}
+static bool find_marks_menu(void) 
+{
+  return(XEN_DEFINED_P("marks-menu"));
+}
+
 
 static void help_marks_menu(prefs_info *prf)
 {
@@ -3595,12 +3942,14 @@ trim, crop, define selection via marks, etc",
 	   WITH_WORD_WRAP);
 }
 
+
 static void save_marks_menu(prefs_info *prf, FILE *fd)
 {
   include_marks_menu = GET_TOGGLE(prf->toggle);
   if (include_marks_menu)
     fprintf(fd, "(if (not (provided? 'snd-marks-menu.scm)) (load-from-path \"marks-menu.scm\"))\n");
 }
+
 
 static void marks_menu_toggle(prefs_info *prf)
 {
@@ -3609,9 +3958,11 @@ static void marks_menu_toggle(prefs_info *prf)
     load_file_with_path_and_extension("marks-menu");
 }
 
+
 static void reflect_marks_menu(prefs_info *prf) {}
 static void revert_marks_menu(prefs_info *prf) {SET_TOGGLE(prf->toggle, include_marks_menu);}
 static void clear_marks_menu(prefs_info *prf) {SET_TOGGLE(prf->toggle, false);}
+
 
 
 /* ---------------- icon box ---------------- */
@@ -3625,7 +3976,12 @@ static void help_icon_box(prefs_info *prf)
 	   WITH_WORD_WRAP);
 }
 
-static bool find_icon_box(void) {return(XEN_DEFINED_P("add-useful-icons"));}
+
+static bool find_icon_box(void) 
+{
+  return(XEN_DEFINED_P("add-useful-icons"));
+}
+
 
 static void save_icon_box(prefs_info *prf, FILE *fd)
 {
@@ -3634,12 +3990,14 @@ static void save_icon_box(prefs_info *prf, FILE *fd)
     fprintf(fd, "(if (not (provided? 'snd-toolbar.scm)) (load-from-path \"toolbar.scm\"))\n");
 }
 
+
 static void icon_box_toggle(prefs_info *prf)
 {
   if ((GET_TOGGLE(prf->toggle)) &&
       (!(find_icon_box())))
     load_file_with_path_and_extension("new-buttons");
 }
+
 
 static void reflect_icon_box(prefs_info *prf) {}
 static void revert_icon_box(prefs_info *prf) {SET_TOGGLE(prf->toggle, include_icon_box);}
@@ -3659,11 +4017,13 @@ as menu items.",
 	   WITH_WORD_WRAP);
 }
 
+
 static bool find_reopen_menu(void)
 {
   return((XEN_DEFINED_P("including-reopen-menu")) &&
 	 XEN_TO_C_BOOLEAN(XEN_NAME_AS_C_STRING_TO_VALUE("including-reopen-menu")));
 }
+
 
 static void save_reopen_menu(prefs_info *prf, FILE *fd)
 {
@@ -3671,6 +4031,7 @@ static void save_reopen_menu(prefs_info *prf, FILE *fd)
   if (include_reopen_menu)
     prefs_function_save_0(fd, "with-reopen-menu", "extensions");
 }
+
 
 static void reopen_menu_toggle(prefs_info *prf)
 {
@@ -3681,6 +4042,7 @@ static void reopen_menu_toggle(prefs_info *prf)
       prefs_function_call_0("with-reopen-menu");
     }
 }
+
 
 static void reflect_reopen_menu(prefs_info *prf) {}
 static void revert_reopen_menu(prefs_info *prf) {SET_TOGGLE(prf->toggle, include_reopen_menu);}
@@ -3700,11 +4062,13 @@ static void help_mark_pane(prefs_info *prf)
 	   WITH_WORD_WRAP);
 }
 
+
 static bool find_mark_pane(void)
 {
   return((XEN_DEFINED_P("including-mark-pane")) &&
 	 XEN_TO_C_BOOLEAN(XEN_NAME_AS_C_STRING_TO_VALUE("including-mark-pane")));
 }
+
 
 #if HAVE_SCHEME
   #if USE_MOTIF
@@ -3726,6 +4090,7 @@ static void mark_pane_toggle(prefs_info *prf)
     }
 }
 
+
 static void save_mark_pane(prefs_info *prf, FILE *fd)
 {
   include_mark_pane = GET_TOGGLE(prf->toggle);
@@ -3733,10 +4098,12 @@ static void save_mark_pane(prefs_info *prf, FILE *fd)
     prefs_function_save_0(fd, "add-mark-pane", MARK_PANE_SOURCE);
 }
 
+
 static void reflect_mark_pane(prefs_info *prf) {}
 static void revert_mark_pane(prefs_info *prf) {SET_TOGGLE(prf->toggle, include_mark_pane);}
 static void clear_mark_pane(prefs_info *prf) {SET_TOGGLE(prf->toggle, false);}
 #endif
+
 
 
 #if HAVE_SCHEME
@@ -3757,11 +4124,13 @@ the lowpass filter coefficient in the reverberator.",
 	   WITH_WORD_WRAP);
 }
 
+
 static bool find_hidden_controls(void)
 {
   return((XEN_DEFINED_P("hidden-controls-dialog")) &&
 	 (XEN_NOT_FALSE_P(XEN_NAME_AS_C_STRING_TO_VALUE("hidden-controls-dialog"))));
 }
+
 
 static void save_hidden_controls(prefs_info *prf, FILE *fd)
 {
@@ -3773,6 +4142,7 @@ static void save_hidden_controls(prefs_info *prf, FILE *fd)
     }
 }
 
+
 static void hidden_controls_toggle(prefs_info *prf)
 {
   if ((GET_TOGGLE(prf->toggle)) &&
@@ -3782,6 +4152,7 @@ static void hidden_controls_toggle(prefs_info *prf)
       prefs_function_call_0("make-hidden-controls-dialog");
     }
 }
+
 
 static void reflect_hidden_controls(prefs_info *prf) {}
 static void revert_hidden_controls(prefs_info *prf) {SET_TOGGLE(prf->toggle, include_hidden_controls);}
@@ -3802,9 +4173,11 @@ static bool find_debugging_aids(void)
 	 (XEN_DEFINED_P("untrace-stack")));
 }
 
+
 static void reflect_debugging_aids(prefs_info *prf) {}
 static void revert_debugging_aids(prefs_info *prf) {SET_TOGGLE(prf->toggle, include_debugging_aids);}
 static void clear_debugging_aids(prefs_info *prf) {SET_TOGGLE(prf->toggle, false);}
+
 
 static void debugging_aids_toggle(prefs_info *prf)
 {
@@ -3812,6 +4185,7 @@ static void debugging_aids_toggle(prefs_info *prf)
       (!(find_debugging_aids())))
     load_file_with_path_and_extension("debug");
 }
+
 
 static void save_debugging_aids(prefs_info *prf, FILE *fd)
 {
@@ -3830,6 +4204,8 @@ static void save_debugging_aids(prefs_info *prf, FILE *fd)
 }
 #endif
 
+
+
 /* ---------------- smpte ---------------- */
 
 static bool include_smpte = false;
@@ -3840,6 +4216,7 @@ static void help_smpte(prefs_info *prf)
 	   "This option adds a label to the time domain graph showing the current SMPTE frame of the leftmost sample.",
 	   WITH_WORD_WRAP);
 }
+
 
 static bool find_smpte(void) 
 {
@@ -3855,9 +4232,11 @@ static bool find_smpte(void)
   return(false);
 }
 
+
 static void reflect_smpte(prefs_info *prf) {}
 static void revert_smpte(prefs_info *prf) {SET_TOGGLE(prf->toggle, include_smpte);}
 static void clear_smpte(prefs_info *prf) {SET_TOGGLE(prf->toggle, false);}
+
 
 #if HAVE_SCHEME
   #if USE_MOTIF
@@ -3877,6 +4256,7 @@ static void smpte_toggle(prefs_info *prf)
   if (find_smpte())
     prefs_function_call_1("show-smpte-label", C_TO_XEN_BOOLEAN(GET_TOGGLE(prf->toggle)));
 }
+
 
 static void save_smpte(prefs_info *prf, FILE *fd)
 {
@@ -3901,6 +4281,7 @@ static void save_smpte(prefs_info *prf, FILE *fd)
 }
 
 
+
 /* ---------------- remember-sound-state ---------------- */
 
 static int rts_remember_sound_state_choice = 0, remember_sound_state_choice = 0; /* 0=none, 1=local, 2=global+not local, 3=local+global */
@@ -3913,9 +4294,11 @@ and if that same sound is later re-opened, Snd restores the previous state. This
 	   WITH_WORD_WRAP);
 }
 
+
 static int find_remember_sound_state_choice(void) {return(XEN_TO_C_INT_OR_ELSE(prefs_variable_get("remembering-sound-state"), 0));}
 static void revert_remember_sound_state(prefs_info *prf) {remember_sound_state_choice = rts_remember_sound_state_choice;}
 static void clear_remember_sound_state(prefs_info *prf) {remember_sound_state_choice = 0;}
+
 
 static void reflect_remember_sound_state_choice(prefs_info *prf)
 {
@@ -3932,12 +4315,14 @@ static void save_remember_sound_state_choice(prefs_info *prf, FILE *fd)
       fprintf(fd, "(if (not (provided? 'snd-extensions.scm)) (load-from-path \"extensions.scm\"))\n");
       fprintf(fd, "(remember-sound-state %d)\n", remember_sound_state_choice);
 #endif
+
 #if HAVE_RUBY
       fprintf(fd, "require \"extensions\"\n");
       if (remember_sound_state_choice & 2)
 	fprintf(fd, "remember_all_sound_properties\n");
       else fprintf(fd, "remember_sound_state\n");
 #endif
+
 #if HAVE_FORTH
       fprintf(fd, "require extensions\n");
       fprintf(fd, "%d remember-sound-state\n", remember_sound_state_choice);
@@ -3945,12 +4330,14 @@ static void save_remember_sound_state_choice(prefs_info *prf, FILE *fd)
     }
 }
 
+
 static void remember_sound_state_1_choice(prefs_info *prf)
 {
   if (GET_TOGGLE(prf->toggle))
     remember_sound_state_choice |= 1;
   else remember_sound_state_choice &= 2;
 }
+
 
 static void remember_sound_state_2_choice(prefs_info *prf)
 {
@@ -3960,16 +4347,19 @@ static void remember_sound_state_2_choice(prefs_info *prf)
 }
 
 
+
 /* ---------------- show-axes ---------------- */
 
 static show_axes_t rts_show_axes = DEFAULT_SHOW_AXES;
 
 static const char *show_axes_choices[NUM_SHOW_AXES] = {"none", "X and Y", "just X", "X and Y unlabelled", "just X unlabelled", "bare X"};
 
+
 static void reflect_show_axes(prefs_info *prf) {SET_TEXT(prf->text, (char *)show_axes_choices[(int)show_axes(ss)]);}
 static void revert_show_axes(prefs_info *prf) {in_set_show_axes(rts_show_axes);}
 static void clear_show_axes(prefs_info *prf) {in_set_show_axes(DEFAULT_SHOW_AXES);}
 static void save_show_axes(prefs_info *prf, FILE *ignore) {rts_show_axes = show_axes(ss);}
+
 
 #if USE_MOTIF
 static void show_axes_from_menu(prefs_info *prf, char *value)
@@ -3984,6 +4374,7 @@ static void show_axes_from_menu(prefs_info *prf, char *value)
       }
 }
 #endif
+
 
 static void show_axes_from_text(prefs_info *prf)
 {
@@ -4014,16 +4405,20 @@ static void show_axes_from_text(prefs_info *prf)
   else post_prefs_error("need an axis choice", prf);
 }
 
+
+
 /* ---------------- x-axis-style ---------------- */
 
 static x_axis_style_t rts_x_axis_style = DEFAULT_X_AXIS_STYLE;
 
 static const char *x_axis_styles[NUM_X_AXIS_STYLES] = {"seconds", "samples", "% of total", "beats", "measures", "clock"};
 
+
 static void reflect_x_axis_style(prefs_info *prf) {SET_TEXT(prf->text, (char *)x_axis_styles[(int)x_axis_style(ss)]);}
 static void revert_x_axis_style(prefs_info *prf) {in_set_x_axis_style(rts_x_axis_style);}
 static void clear_x_axis_style(prefs_info *prf) {in_set_x_axis_style(DEFAULT_X_AXIS_STYLE);}
 static void save_x_axis_style(prefs_info *prf, FILE *ignore) {rts_x_axis_style = x_axis_style(ss);}
+
 
 #if USE_MOTIF
 static void x_axis_style_from_menu(prefs_info *prf, char *value)
@@ -4038,6 +4433,7 @@ static void x_axis_style_from_menu(prefs_info *prf, char *value)
       }
 }
 #endif
+
 
 static void x_axis_style_from_text(prefs_info *prf)
 {
@@ -4069,6 +4465,7 @@ static void x_axis_style_from_text(prefs_info *prf)
 }
 
 
+
 /* ---------------- transform-type ---------------- */
 
 static int rts_transform_type = DEFAULT_TRANSFORM_TYPE;
@@ -4077,14 +4474,17 @@ static const char *transform_types[NUM_BUILTIN_TRANSFORM_TYPES] = {"Fourier", "W
 
 static list_completer_info *transform_type_completer_info = NULL;
 
+
 static void reflect_transform_type(prefs_info *prf)
 {
   SET_TEXT(prf->text, (char *)transform_types[mus_iclamp(0, transform_type(ss), NUM_BUILTIN_TRANSFORM_TYPES - 1)]); 
 }
 
+
 static void revert_transform_type(prefs_info *prf) {in_set_transform_type(rts_transform_type);}
 static void clear_transform_type(prefs_info *prf) {in_set_transform_type(DEFAULT_TRANSFORM_TYPE);}
 static void save_transform_type(prefs_info *prf, FILE *ignore) {rts_transform_type = transform_type(ss);}
+
 
 static char *transform_type_completer(widget_t w, const char *text, void *data)
 {
@@ -4099,6 +4499,7 @@ static char *transform_type_completer(widget_t w, const char *text, void *data)
   return(list_completer(w, text, (void *)transform_type_completer_info));
 }
 
+
 #if USE_MOTIF
 static void transform_type_from_menu(prefs_info *prf, char *value)
 {
@@ -4112,6 +4513,7 @@ static void transform_type_from_menu(prefs_info *prf, char *value)
       }
 }
 #endif
+
 
 static void transform_type_from_text(prefs_info *prf)
 {
@@ -4143,6 +4545,7 @@ static void transform_type_from_text(prefs_info *prf)
 }
 
 
+
 /* -------- fft-window -------- */
 
 static mus_fft_window_t rts_fft_window = DEFAULT_FFT_WINDOW;
@@ -4153,6 +4556,7 @@ static void clear_fft_window(prefs_info *prf) {in_set_fft_window(DEFAULT_FFT_WIN
 static void save_fft_window(prefs_info *prf, FILE *ignore) {rts_fft_window = fft_window(ss);}
 
 static list_completer_info *fft_window_completer_info = NULL;
+
 
 static char *fft_window_completer(widget_t w, const char *text, void *data)
 {
@@ -4167,6 +4571,7 @@ static char *fft_window_completer(widget_t w, const char *text, void *data)
   return(list_completer(w, text, (void *)fft_window_completer_info));
 }
 
+
 #if USE_MOTIF
 static void fft_window_from_menu(prefs_info *prf, char *value)
 {
@@ -4180,6 +4585,7 @@ static void fft_window_from_menu(prefs_info *prf, char *value)
       }
 }
 #endif
+
 
 static void fft_window_from_text(prefs_info *prf)
 {
@@ -4211,6 +4617,7 @@ static void fft_window_from_text(prefs_info *prf)
 }
 
 
+
 /* ---------------- colormap ---------------- */
 
 static int rts_colormap = DEFAULT_COLOR_MAP;
@@ -4235,15 +4642,18 @@ static char *colormap_completer(widget_t w, const char *text, void *data)
   return(result);
 }
 
+
 static void reflect_colormap(prefs_info *prf) {SET_TEXT(prf->text, colormap_name(color_map(ss)));}
 static void clear_colormap(prefs_info *prf) {in_set_color_map(DEFAULT_COLOR_MAP);}
 static void save_colormap(prefs_info *prf, FILE *ignore) {rts_colormap = color_map(ss);}
+
 
 static void revert_colormap(prefs_info *prf) 
 {
   if (!(is_colormap(rts_colormap))) rts_colormap = DEFAULT_COLOR_MAP;
   in_set_color_map(rts_colormap);
 }
+
 
 static void colormap_from_text(prefs_info *prf)
 {
@@ -4276,6 +4686,7 @@ static void colormap_from_text(prefs_info *prf)
   else post_prefs_error("no colormap?", prf);
 }
 
+
 #if USE_MOTIF
 static void colormap_from_menu(prefs_info *prf, char *value)
 {
@@ -4290,6 +4701,7 @@ static void colormap_from_menu(prefs_info *prf, char *value)
       }
 }
 #endif
+
 
 
 /* ---------------- peak-envs ---------------- */
@@ -4307,7 +4719,12 @@ and it resides in the 'peak-env-directory'.",
 	   WITH_WORD_WRAP);
 }
 
-static bool find_peak_envs(void) {return(XEN_TO_C_BOOLEAN(prefs_variable_get("save-peak-env-info?")));}
+
+static bool find_peak_envs(void) 
+{
+  return(XEN_TO_C_BOOLEAN(prefs_variable_get("save-peak-env-info?")));
+}
+
 
 static void clear_peak_envs(prefs_info *prf)
 {
@@ -4316,12 +4733,14 @@ static void clear_peak_envs(prefs_info *prf)
   include_peak_envs = false;
 }
 
+
 static void revert_peak_envs(prefs_info *prf)
 {
   if (include_peak_env_directory) free(include_peak_env_directory); 
   include_peak_env_directory = mus_strdup(rts_peak_env_directory);
   include_peak_envs = rts_peak_envs;
 }
+
 
 static void save_peak_envs(prefs_info *prf, FILE *fd)
 {
@@ -4350,6 +4769,7 @@ static void save_peak_envs(prefs_info *prf, FILE *fd)
     }
 }
 
+
 static const char *peak_env_directory(void)
 {
   if (include_peak_env_directory)
@@ -4359,16 +4779,19 @@ static const char *peak_env_directory(void)
   return(NULL);
 }
 
+
 static void reflect_peak_envs(prefs_info *prf) 
 {
   SET_TOGGLE(prf->toggle, include_peak_envs);
   SET_TEXT(prf->text, include_peak_env_directory);
 }
 
+
 static void peak_envs_toggle(prefs_info *prf)
 {
   include_peak_envs = GET_TOGGLE(prf->toggle);
 }
+
 
 static void peak_envs_text(prefs_info *prf)
 {
@@ -4381,6 +4804,7 @@ static void peak_envs_text(prefs_info *prf)
       free_TEXT(str);
     }
 }
+
 
 
 /* ---------------- load path ---------------- */
@@ -4416,6 +4840,7 @@ find elsewhere.  The current load path list is: \n\n%s\n",
 #endif
   free(hlp);
 }
+
 
 static char *find_sources(void) /* returns full filename if found else null */
 {
@@ -4509,6 +4934,7 @@ static char *find_sources(void) /* returns full filename if found else null */
   return(NULL);
 }
 
+
 static void clear_load_path(prefs_info *prf)
 {
   char *str;
@@ -4525,6 +4951,7 @@ static void clear_load_path(prefs_info *prf)
     }
 }
 
+
 static void revert_load_path(prefs_info *prf)
 {
   SET_TEXT(prf->text, rts_load_path);
@@ -4535,6 +4962,7 @@ static void revert_load_path(prefs_info *prf)
       red_text(prf);
     }
 }
+
 
 static void reflect_load_path(prefs_info *prf) {}
 
@@ -4567,15 +4995,18 @@ static bool full_duration(void)
   return(XEN_TO_C_BOOLEAN(prefs_variable_get("prefs-show-full-duration")));
 }
 
+
 static Float initial_beg(void)
 {
   return(XEN_TO_C_DOUBLE_OR_ELSE(prefs_variable_get("prefs-initial-beg"), 0.0));
 }
 
+
 static Float initial_dur(void)
 {
   return(XEN_TO_C_DOUBLE_OR_ELSE(prefs_variable_get("prefs-initial-dur"), 0.1));
 }
+
 
 static void help_initial_bounds(prefs_info *prf)
 {
@@ -4585,10 +5016,12 @@ sets either new bounds for that display, or directs Snd to display the entire so
 	   WITH_WORD_WRAP);
 }
 
+
 static char *initial_bounds_to_string(void)
 {
   return(mus_format("%.2f : %.2f", initial_beg(), initial_dur()));
 }
+
 
 static void save_initial_bounds(prefs_info *prf, FILE *fd)
 {
@@ -4614,17 +5047,20 @@ static void save_initial_bounds(prefs_info *prf, FILE *fd)
       fprintf(fd, "(if (not (provided? 'snd-extensions.scm)) (load-from-path \"extensions.scm\"))\n");
       fprintf(fd, "(prefs-activate-initial-bounds %.2f %.2f %s)\n", rts_initial_beg, rts_initial_dur, (rts_full_duration) ? "#t" : "#f");
 #endif
+
 #if HAVE_RUBY
       fprintf(fd, "require \"extensions\"\n");
       fprintf(fd, "prefs_activate_initial_bounds(%.2f, %.2f, %s)\n", rts_initial_beg, rts_initial_dur, (rts_full_duration) ? "true" : "false");
 
 #endif
+
 #if HAVE_FORTH
       fprintf(fd, "require extensions\n");
       fprintf(fd, "%.2f %.2f %s prefs-activate-initial-bounds\n", rts_initial_beg, rts_initial_dur, (rts_full_duration) ? "true" : "false");
 #endif
     }
 }
+
 
 static void reflect_initial_bounds(prefs_info *prf)
 {
@@ -4636,6 +5072,7 @@ static void reflect_initial_bounds(prefs_info *prf)
   SET_TOGGLE(prf->toggle, full_duration());
 }
 
+
 static void revert_initial_bounds(prefs_info *prf)
 {
   prefs_variable_set("prefs-initial-beg", C_TO_XEN_DOUBLE(rts_initial_beg));
@@ -4643,12 +5080,14 @@ static void revert_initial_bounds(prefs_info *prf)
   prefs_variable_set("prefs-show-full-duration", C_TO_XEN_BOOLEAN(rts_full_duration));
 }
 
+
 static void clear_initial_bounds(prefs_info *prf)
 {
   prefs_variable_set("prefs-initial-beg", C_TO_XEN_DOUBLE(0.0));
   prefs_variable_set("prefs-initial-dur", C_TO_XEN_DOUBLE(0.1));
   prefs_variable_set("prefs-show-full-duration", XEN_FALSE);
 }
+
 
 static void initial_bounds_toggle(prefs_info *prf)
 {
@@ -4658,19 +5097,23 @@ static void initial_bounds_toggle(prefs_info *prf)
   prefs_variable_set("prefs-show-full-duration", C_TO_XEN_BOOLEAN(GET_TOGGLE(prf->toggle)));
 }
 
+
 static void initial_bounds_text(prefs_info *prf)
 {
   float beg = 0.0, dur = 0.1;
   char *str;
   include_duration = true;
+
   str = GET_TEXT(prf->text);
   sscanf(str, "%f : %f", &beg, &dur);
   if (!(XEN_DEFINED_P("prefs-initial-beg")))
     load_file_with_path_and_extension("extensions");
+
   prefs_variable_set("prefs-initial-beg", C_TO_XEN_DOUBLE(beg));
   prefs_variable_set("prefs-initial-dur", C_TO_XEN_DOUBLE(dur));
   free_TEXT(str);
 }
+
 
 
 /* ---------------- keys ---------------- */
@@ -4685,6 +5128,7 @@ static void reflect_key(prefs_info *prf, const char *key_name)
   SET_TEXT(prf->text, ki->key);
   free(ki);
 }
+
 
 static void save_key_binding(prefs_info *prf, FILE *fd, char *(*binder)(char *key, bool c, bool m, bool x))
 {
@@ -4702,6 +5146,7 @@ static void save_key_binding(prefs_info *prf, FILE *fd, char *(*binder)(char *ke
     }
 }
 
+
 static void key_bind(prefs_info *prf, char *(*binder)(char *key, bool c, bool m, bool x))
 {
   char *key, *expr;
@@ -4718,6 +5163,7 @@ static void key_bind(prefs_info *prf, char *(*binder)(char *key, bool c, bool m,
       free(expr);
     }
 }
+
 
 static void clear_key(prefs_info *prf, const char *name)
 {
@@ -4741,6 +5187,7 @@ static void clear_key(prefs_info *prf, const char *name)
 }
 
 
+
 /* -------- key: play all chans from cursor -------- */
 
 static void help_play_from_cursor(prefs_info *prf)
@@ -4751,6 +5198,7 @@ sound; this option binds a key for that purpose, and also overrides the pause se
 not take effect until you type return in the text widget.",
 	   WITH_WORD_WRAP);
 }
+
 
 static char *make_pfc_binding(char *key, bool ctrl, bool meta, bool cx)
 {
@@ -4777,22 +5225,30 @@ static char *make_pfc_binding(char *key, bool ctrl, bool meta, bool cx)
   return(NULL);
 }
 
+
 static void reflect_play_from_cursor(prefs_info *prf)
 {
   reflect_key(prf, "play-from-cursor");
 }
+
 
 static void save_pfc_binding(prefs_info *prf, FILE *fd)
 {
   save_key_binding(prf, fd, make_pfc_binding);
 }
 
+
 static void bind_play_from_cursor(prefs_info *prf)
 {
   key_bind(prf, make_pfc_binding);
 }
 
-static void clear_play_from_cursor(prefs_info *prf) {clear_key(prf, "play-from-cursor");}
+
+static void clear_play_from_cursor(prefs_info *prf) 
+{
+  clear_key(prf, "play-from-cursor");
+}
+
 
 
 /* -------- key: show all of sound -------- */
@@ -4804,6 +5260,7 @@ static void help_show_all(prefs_info *prf)
 equivalent to moving the 'zoom' slider all the way to the right.",
 	   WITH_WORD_WRAP);
 }
+
 
 static char *make_show_all_binding(char *key, bool ctrl, bool meta, bool cx)
 {
@@ -4839,22 +5296,30 @@ static char *make_show_all_binding(char *key, bool ctrl, bool meta, bool cx)
   return(NULL);
 }
 
+
 static void reflect_show_all(prefs_info *prf)
 {
   reflect_key(prf, "show-all");
 }
+
 
 static void save_show_all_binding(prefs_info *prf, FILE *fd)
 {
   save_key_binding(prf, fd, make_show_all_binding);
 }
 
+
 static void bind_show_all(prefs_info *prf)
 {
   key_bind(prf, make_show_all_binding);
 }
 
-static void clear_show_all(prefs_info *prf) {clear_key(prf, "show-all");}
+
+static void clear_show_all(prefs_info *prf) 
+{
+  clear_key(prf, "show-all");
+}
+
 
 
 /* -------- key: select all of sound -------- */
@@ -4866,6 +5331,7 @@ static void help_select_all(prefs_info *prf)
 follows the 'sync' buttons when deciding which channels to select.",
 	   WITH_WORD_WRAP);
 }
+
 
 static char *make_select_all_binding(char *key, bool ctrl, bool meta, bool cx)
 {
@@ -4901,22 +5367,30 @@ static char *make_select_all_binding(char *key, bool ctrl, bool meta, bool cx)
   return(NULL);
 }
 
+
 static void reflect_select_all(prefs_info *prf)
 {
   reflect_key(prf, "select-all");
 }
+
 
 static void save_select_all_binding(prefs_info *prf, FILE *fd)
 {
   save_key_binding(prf, fd, make_select_all_binding);
 }
 
+
 static void bind_select_all(prefs_info *prf)
 {
   key_bind(prf, make_select_all_binding);
 }
 
-static void clear_select_all(prefs_info *prf) {clear_key(prf, "select-all");}
+
+static void clear_select_all(prefs_info *prf) 
+{
+  clear_key(prf, "select-all");
+}
+
 
 
 /* -------- key: undo all edits -------- */
@@ -4927,6 +5401,7 @@ static void help_revert(prefs_info *prf)
 	   "This option binds a key to undo any edits in the current sound, equivalent to the File:Revert menu item.",
 	   WITH_WORD_WRAP);
 }
+
 
 static char *make_revert_binding(char *key, bool ctrl, bool meta, bool cx)
 {
@@ -4953,22 +5428,30 @@ static char *make_revert_binding(char *key, bool ctrl, bool meta, bool cx)
   return(NULL);
 }
 
+
 static void reflect_revert(prefs_info *prf)
 {
   reflect_key(prf, "revert-sound");
 }
+
 
 static void save_revert_binding(prefs_info *prf, FILE *fd)
 {
   save_key_binding(prf, fd, make_revert_binding);
 }
 
+
 static void bind_revert(prefs_info *prf)
 {
   key_bind(prf, make_revert_binding);
 }
 
-static void clear_revert_sound(prefs_info *prf) {clear_key(prf, "revert-sound");}
+
+static void clear_revert_sound(prefs_info *prf) 
+{
+  clear_key(prf, "revert-sound");
+}
+
 
 
 /* -------- key: exit -------- */
@@ -4979,6 +5462,7 @@ static void help_exit(prefs_info *prf)
 	   "This option binds a key to exit from Snd, equivalent to the File:Exit menu item.",
 	   WITH_WORD_WRAP);
 }
+
 
 static char *make_exit_binding(char *key, bool ctrl, bool meta, bool cx)
 {
@@ -5005,22 +5489,30 @@ static char *make_exit_binding(char *key, bool ctrl, bool meta, bool cx)
   return(NULL);
 }
 
+
 static void reflect_exit(prefs_info *prf)
 {
   reflect_key(prf, "exit");
 }
+
 
 static void save_exit_binding(prefs_info *prf, FILE *fd)
 {
   save_key_binding(prf, fd, make_exit_binding);
 }
 
+
 static void bind_exit(prefs_info *prf)
 {
   key_bind(prf, make_exit_binding);
 }
 
-static void clear_exit(prefs_info *prf) {clear_key(prf, "exit");}
+
+static void clear_exit(prefs_info *prf) 
+{
+  clear_key(prf, "exit");
+}
+
 
 
 /* -------- key: goto maxamp -------- */
@@ -5031,6 +5523,7 @@ static void help_goto_maxamp(prefs_info *prf)
 	   "This option binds a key to move the view (and cursor) to the position of the current channel's maximum sample.",
 	   WITH_WORD_WRAP);
 }
+
 
 static char *make_goto_maxamp_binding(char *key, bool ctrl, bool meta, bool cx)
 {
@@ -5057,22 +5550,30 @@ static char *make_goto_maxamp_binding(char *key, bool ctrl, bool meta, bool cx)
   return(NULL);
 }
 
+
 static void reflect_goto_maxamp(prefs_info *prf)
 {
   reflect_key(prf, "goto-maxamp");
 }
+
 
 static void save_goto_maxamp_binding(prefs_info *prf, FILE *fd)
 {
   save_key_binding(prf, fd, make_goto_maxamp_binding);
 }
 
+
 static void bind_goto_maxamp(prefs_info *prf)
 {
   key_bind(prf, make_goto_maxamp_binding);
 }
 
-static void clear_goto_maxamp(prefs_info *prf) {clear_key(prf, "goto-maxamp");}
+
+static void clear_goto_maxamp(prefs_info *prf) 
+{
+  clear_key(prf, "goto-maxamp");
+}
+
 
 
 /* -------- key: show selection -------- */
@@ -5083,6 +5584,7 @@ static void help_show_selection(prefs_info *prf)
 	   "This option binds a key to cause the current selection to fill the time domain graph.",
 	   WITH_WORD_WRAP);
 }
+
 
 static char *make_show_selection_binding(char *key, bool ctrl, bool meta, bool cx)
 {
@@ -5109,19 +5611,26 @@ static char *make_show_selection_binding(char *key, bool ctrl, bool meta, bool c
   return(NULL);
 }
 
+
 static void reflect_show_selection(prefs_info *prf)
 {
   reflect_key(prf, "show-selection");
 }
+
 
 static void save_show_selection_binding(prefs_info *prf, FILE *fd)
 {
   save_key_binding(prf, fd, make_show_selection_binding);
 }
 
+
 static void bind_show_selection(prefs_info *prf)
 {
   key_bind(prf, make_show_selection_binding);
 }
 
-static void clear_show_selection(prefs_info *prf) {clear_key(prf, "show-selection");}
+
+static void clear_show_selection(prefs_info *prf) 
+{
+  clear_key(prf, "show-selection");
+}
