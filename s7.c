@@ -2154,6 +2154,40 @@ static s7_pointer g_call_with_exit(s7_scheme *sc, s7_pointer args)
 /* fabsl doesn't exist in netBSD! */
 
 
+#ifdef _MSC_VER
+/* need to provide inverse hyperbolic trig funcs and cbrt */
+
+double asinh(double x);
+double asinh(double x) 
+{ 
+  return(log(x + sqrt(1.0 + x * x))); 
+} 
+
+
+double acosh(double x);
+double acosh(double x)
+{ 
+  return(log(x + sqrt(x * x - 1.0))); 
+  /* perhaps less prone to numerical troubles (untested):
+   *   2.0 * log(sqrt(0.5 * (x + 1.0)) + sqrt(0.5 * (x - 1.0)))
+   */
+} 
+
+
+double atanh(double x);
+double atanh(double x)
+{ 
+  return(log((1.0 + x) / (1.0 - x)) / 2.0); 
+} 
+
+
+double cbrt(double x);
+double cbrt(double x)
+{
+  return(pow(x, 1.0 / 3.0));
+}
+#endif
+
 #if WITH_COMPLEX
 
 #if __cplusplus

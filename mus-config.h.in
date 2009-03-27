@@ -288,4 +288,19 @@
 #ifndef USE_SND
   #define USE_SND 1
 #endif
+
+#ifdef _MSC_VER
+  typedef long off_t;
+  #if _MSC_VER > 1200
+    #define _CRT_SECURE_NO_DEPRECATE 1
+    #define _CRT_NONSTDC_NO_DEPRECATE 1
+    #if defined(_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES)
+      #undef _CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES
+      #define _CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES 1
+    #else
+      #define _CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES 1
+    #endif
+  #endif
+#endif
+
 #endif

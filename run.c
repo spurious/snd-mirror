@@ -5952,6 +5952,12 @@ static xen_value * CName ## _1(ptree *prog, xen_value **args, int num_args) \
 
 /* only collapsible funcs here -- if constant arg, constant val (not random!) */
 
+#ifdef _MSC_VER
+double asinh(double x);
+double acosh(double x);
+double atanh(double x);
+#endif
+
 FL_OP(mus_radians_to_hz)
 FL_OP(mus_hz_to_radians)
 FL_OP(mus_degrees_to_radians)
