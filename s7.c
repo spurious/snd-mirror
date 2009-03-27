@@ -2184,7 +2184,9 @@ double atanh(double x)
 double cbrt(double x);
 double cbrt(double x)
 {
-  return(pow(x, 1.0 / 3.0));
+  if (x >= 0.0)
+    return(pow(x, 1.0 / 3.0));
+  return(-pow(-x, 1.0 / 3.0));
 }
 #endif
 

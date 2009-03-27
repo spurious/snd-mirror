@@ -1,23 +1,24 @@
-Snd 10.4
+Snd 10.5
 
-(this is mostly a "clean up loose ends" version)
+many more improvements thanks to Kjetil and Mike Scholz.
 
+multidimensional and applicable vectors in s7.
 
-Kjetil made improvements to the pd external support, and made
-       a port of CMN to ABCL.
+pulseaudio support (--with-pulseaudio in configure): 
+  I don't know if this actually works, since pulseaudio (paplay) itself
+  doesn't work on my machine. 
 
-big-gens.scm (scheme-only versions of some of the built-in generators)
+moved the papoulis and dpss (slepian) fft-windows from dsp.scm to clm.c.
 
-changed spectro-cutoff to spectrum-end and spectro-start to spectrum-start
-  moved the 10 spectro-* keypad key bindings to snd10.scm (keypad-spectro-bindings)
-  moved the spectrum end slider to the transform dialog and added spectrum start slider
-    (this should make it easier to zoom into an arbitrary portion of the spectrum)
+matlab mat-5 headers (for 1-channel sound data).
 
-merged the color and orientation dialogs
+all hash literals using ',' changed to use '=>' in *.rb (for ruby 1.9.*)
+  but ruby 1.9.n is not usable yet -- it segfaults on any error.
+  Use strace to find out where the problem is.
 
-removed TODO.Snd, snd.spec, and old-snd.spec -- I don't plan to make any more rpm files.
+checked: mpfr 2.4.1, gtk 2.15.5|16.0, fftw 3.2.1
 
-checked: gsl 1.12, gtk 2.15.1|2|3|4, sbcl 1.0.25, cmucl 19f
+Thanks!: Michael Edwards, Kjetil, Mike Scholz, Al Steffens, Anders Vinjar,
+	 Oded Ben-Tal, Rick Taube.
 
-Thanks!: Kjetil, Pavel Penev, Rick Taube, Michael Edwards, Mike Scholz
 

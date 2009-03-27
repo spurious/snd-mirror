@@ -291,6 +291,8 @@
 
 #ifdef _MSC_VER
   typedef long off_t;
+  #define strcasecmp _stricmp
+  #define strtoll strtol
   #if _MSC_VER > 1200
     #define _CRT_SECURE_NO_DEPRECATE 1
     #define _CRT_NONSTDC_NO_DEPRECATE 1
