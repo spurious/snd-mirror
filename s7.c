@@ -426,6 +426,10 @@ struct s7_scheme {
   s7_pointer code;                    /* current code */
   
   s7_pointer stack;                   /* stack is a vector in this case */
+#if PARALLEL_GC
+  s7_pointer gc_stack;
+  int gc_stack_top;
+#endif
   int stack_size, stack_top;
   s7_pointer *small_ints;             /* permanent numbers for opcode entries in the stack */
   
@@ -586,6 +590,26 @@ struct s7_scheme {
 
 /* unused type bits: 0xf0000000 */
 
+#define PARALLEL_GC 0
+
+#if PARALLEL_GC
+#error "PARALLEL_GC is not fully implemented yet."
+
+#define SET(PLACE,VAL)   \
+  do{                      \
+    if (running_mark) \
+      write_barrier(PLACE); \
+    (PLACE) = (VAL);	   \
+    } \
+  while(0);
+
+#else
+
+#define SET(PLACE,VAL) ((PLACE) = (VAL))
+
+#endif
+/* PARALLEL_GC */
+
 #if HAVE_PTHREADS
 #define set_type(p, f)                typeflag(p) = ((typeflag(p) & T_GC_MARK) | (f) | T_OBJECT)
 /* the gc call can be interrupted, leaving mark bits set -- we better not clear those bits */
@@ -627,7 +651,7 @@ struct s7_scheme {
 #define symbol_name(p)                string_value(car(p))
 #define symbol_name_length(p)         string_length(car(p))
 #define symbol_value(Sym)             cdr(Sym)
-#define set_symbol_value(Sym, Val)    cdr(Sym) = (Val)
+#define set_symbol_value(Sym, Val)    SET(cdr(Sym), (Val))
 
 #define string_value(p)               ((p)->object.string.svalue)
 #define string_length(p)              ((p)->object.string.length)
@@ -1432,6 +1456,9 @@ static void push_stack(s7_scheme *sc, opcode_t op, s7_pointer args, s7_pointer c
 	vector_element(sc->stack, i) = sc->NIL;
       sc->stack->object.vector.length = new_size;
       sc->stack_size = new_size;
+#if PARALLEL_GC
+      sc->stack_gc->object.vector.elements = (s7_pointer *)realloc(sc->stack->object.vector.elements, new_size * sizeof(s7_pointer));
+#endif
     }
 
   vel = (s7_pointer *)(sc->stack->object.vector.elements + sc->stack_top - 4);
@@ -1701,8 +1728,8 @@ static s7_pointer add_to_environment(s7_scheme *sc, s7_pointer env, s7_pointer v
   s7_pointer slot;
   slot = s7_immutable_cons(sc, variable, value); 
   if (s7_is_vector(car(env))) 
-    vector_element(car(env), symbol_location(variable)) = s7_immutable_cons(sc, slot, vector_element(car(env), symbol_location(variable))); 
-  else car(env) = s7_immutable_cons(sc, slot, car(env));
+    SET( vector_element(car(env), symbol_location(variable)), s7_immutable_cons(sc, slot, vector_element(car(env), symbol_location(variable))));
+  else SET(car(env), s7_immutable_cons(sc, slot, car(env)));
   return(slot);
 } 
 
@@ -1781,7 +1808,7 @@ static bool lambda_star_argument_set_value(s7_scheme *sc, s7_pointer sym, s7_poi
     if (caar(x) == sym)
       {
 	/* car(x) is our binding (symbol value) */
-	cdar(x) = val;
+	SET(cdar(x), val);
 	return(true);
       }
   return(false);
@@ -8668,14 +8695,14 @@ s7_pointer s7_cdr(s7_pointer p)
 
 s7_pointer s7_set_car(s7_pointer p, s7_pointer q) 
 { 
-  car(p) = q;
+  SET(car(p), q);
   return(p);
 }
 
 
 s7_pointer s7_set_cdr(s7_pointer p, s7_pointer q) 
 { 
-  cdr(p) = q;
+  SET(cdr(p), q);
   return(p);
 }
 
@@ -8749,7 +8776,7 @@ s7_pointer s7_list_set(s7_scheme *sc, s7_pointer lst, int num, s7_pointer val)
   for (x = lst, i = 0; (i < num) && (is_pair(x)); i++, x = cdr(x)) {}
   if ((i == num) &&
       (is_pair(x)))
-    car(x) = val;
+    SET(car(x), val);
   return(val);
 }
 
@@ -8798,7 +8825,7 @@ static s7_pointer s7_reverse_in_place(s7_scheme *sc, s7_pointer term, s7_pointer
       if ((!is_pair(q)) &&
 	  (q != sc->NIL))
 	return(sc->NIL); /* improper list? */
-      cdr(p) = result;
+      SET(cdr(p), result);
       result = p;
       p = q;
     }
@@ -8815,7 +8842,7 @@ static s7_pointer safe_reverse_in_place(s7_scheme *sc, s7_pointer list)
     {
       q = cdr(p);
       /*   also if (list == sc->NIL) || (cdr(list) == sc->NIL) return(list) */
-      cdr(p) = result;
+      SET(cdr(p), result);
       result = p;
       p = q;
     }
@@ -8985,7 +9012,7 @@ static s7_pointer g_list_set(s7_scheme *sc, s7_pointer args)
   if (!is_pair(p))
     return(s7_wrong_type_arg_error(sc, "list-set!", i, p, "a proper list"));
   
-  car(p) = caddr(args);
+  SET(car(p), caddr(args));
   return(caddr(args));
 }
 
@@ -9059,7 +9086,7 @@ static s7_pointer g_set_car(s7_scheme *sc, s7_pointer args)
   if (s7_is_immutable(car(args))) 
     return(s7_wrong_type_arg_error(sc, "set-car!", 1, car(args), "a mutable pair"));
   
-  caar(args) = cadr(args);
+  SET(caar(args), cadr(args));
   return(args);
 }
 
@@ -9074,7 +9101,7 @@ static s7_pointer g_set_cdr(s7_scheme *sc, s7_pointer args)
   if (s7_is_immutable(car(args))) 
     return(s7_wrong_type_arg_error(sc, "set-cdr!", 1, car(args), "a mutable pair"));
   
-  cdar(args) = cadr(args);
+  SET(cdar(args), cadr(args));
   return(args);
 }
 
@@ -9573,7 +9600,7 @@ void s7_vector_fill(s7_scheme *sc, s7_pointer vec, s7_pointer obj)
   len = vector_length(vec);
   tp = (s7_pointer *)(vec->object.vector.elements);
   for (i = 0; i < len; i++) 
-    tp[i] = obj;
+    SET(tp[i], obj);
 }
 #endif
 
@@ -9605,7 +9632,7 @@ s7_pointer s7_vector_set(s7_scheme *sc, s7_pointer vec, int index, s7_pointer a)
   if (index >= vector_length(vec))
     return(s7_out_of_range_error(sc, "vector-set!", 2, s7_make_integer(sc, index), "index is too high"));
 
-  vector_element(vec, index) = a;
+  SET(vector_element(vec, index), a);
   return(a);
 }
 
@@ -9832,7 +9859,7 @@ can also use 'set!' instead of 'vector-set!': (set! (v ...) val) -- I find this 
     }
 
   
-  vector_element(vec, index) = val;
+  SET(vector_element(vec, index), val);
   return(val);
 }
 
@@ -10022,7 +10049,7 @@ static s7_pointer applicable_vector_set(s7_scheme *sc, s7_pointer vect, s7_point
 	return(s7_out_of_range_error(sc, "vector ref", 2, s7_make_integer(sc, index), "between 0 and the vector length"));
     }
 
-  vector_element(vect, index) = val;
+  SET(vector_element(vect, index), val);
   return(val);
 }
 
@@ -10935,11 +10962,11 @@ s7_pointer s7_hash_table_set(s7_scheme *sc, s7_pointer table, const char *name, 
 	cdar(x) = value;
 	return(value);
       }
-  vector_element(table, location) = s7_cons(sc, 
+  SET(vector_element(table, location), s7_cons(sc, 
 					    s7_cons(sc, 
 						    s7_make_string(sc, name), 
 						    value),
-					    vector_element(table, location)); 
+					       vector_element(table, location)));
   return(value);
 }
 
@@ -13535,6 +13562,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    continuation *c;
 	    c = sc->code->object.cc;
 	    check_for_dynamic_winds(sc, c);
+
+#if PARALLEL_GC
+	    /* There is no write barrier for the stack, so a new stack must be added to the root set before using it. -Kjetil */
+	    add_vector_to_roots(c->cc_stack, c->cc_stack_top);
+#endif
 	    sc->stack = copy_stack(sc, c->cc_stack, c->cc_stack_top);
 	    sc->stack_size = c->cc_stack_size;
 	    sc->stack_top = c->cc_stack_top;
@@ -16086,16 +16118,16 @@ void s7_vector_fill(s7_scheme *sc, s7_pointer vec, s7_pointer obj)
       for (i = 0; i < len; i++) 
 	{
 	  if (type == big_real_tag)
-	    tp[i] = mpfr_to_big_real(sc, S7_BIG_REAL(obj));
+	    SET(tp[i], mpfr_to_big_real(sc, S7_BIG_REAL(obj)));
 	  else
 	    {
 	      if (type == big_integer_tag)
-		tp[i] = mpz_to_big_integer(sc, S7_BIG_INTEGER(obj));
+		SET(tp[i], mpz_to_big_integer(sc, S7_BIG_INTEGER(obj)));
 	      else
 		{
 		  if (type == big_complex_tag)
-		    tp[i] = mpc_to_big_complex(sc, S7_BIG_COMPLEX(obj));
-		  else tp[i] = mpq_to_big_ratio(sc, S7_BIG_RATIO(obj));
+		    SET(tp[i], mpc_to_big_complex(sc, S7_BIG_COMPLEX(obj)));
+		  else SET(tp[i], mpq_to_big_ratio(sc, S7_BIG_RATIO(obj)));
 		}
 	    }
 	}
@@ -16103,7 +16135,7 @@ void s7_vector_fill(s7_scheme *sc, s7_pointer vec, s7_pointer obj)
   else
     {
       for (i = 0; i < len; i++) 
-	tp[i] = obj;
+	SET(tp[i], obj);
     }
 }
 
@@ -19253,7 +19285,9 @@ s7_scheme *s7_init(void)
   sc->stack_top = 0;
   sc->stack = s7_make_vector(sc, INITIAL_STACK_SIZE);
   sc->stack_size = INITIAL_STACK_SIZE;
-  
+#if PARALLEL_GC
+  sc->stack_gc = s7_make_vector(sc, INITIAL_STACK_SIZE);
+#endif
   sc->symbol_table = s7_make_vector(sc, SYMBOL_TABLE_SIZE);
   set_immutable(sc->symbol_table);
   typeflag(sc->symbol_table) |= (T_CONSTANT | T_DONT_COPY);

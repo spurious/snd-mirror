@@ -2700,7 +2700,7 @@
     (begin (display "with-output-to-file did not restore current-output-port? ") (display start-output-port) (display " ") (display (current-output-port)) (newline)))
 
 
-(let ((newly-found-sonnet-probably-by-shakesepeare 
+(let ((newly-found-sonnet-probably-by-shakespeare 
         "This is the story, a sad tale but true \
         Of a programmer who had far too little to do.\
         One day as he sat in his hut swilling stew, \
@@ -2719,20 +2719,20 @@
         But his employer might mutter, this result were he to see."))
   (call-with-output-file "tmp1.r5rs"
     (lambda (p)
-      (write newly-found-sonnet-probably-by-shakesepeare p)))
+      (write newly-found-sonnet-probably-by-shakespeare p)))
   (let ((sonnet (with-input-from-file "tmp1.r5rs"
 		  (lambda ()
 		    (read)))))
     (if (or (not (string? sonnet))
-	    (not (string=? sonnet newly-found-sonnet-probably-by-shakesepeare)))
+	    (not (string=? sonnet newly-found-sonnet-probably-by-shakespeare)))
 	(begin (display "write/read long string returned: ") (display sonnet) (newline))))
 
   (let ((file (open-output-file "tmp1.r5rs")))
-    (let ((len (string-length newly-found-sonnet-probably-by-shakesepeare)))
+    (let ((len (string-length newly-found-sonnet-probably-by-shakespeare)))
       (write-char #\" file)
       (do ((i 0 (+ i 1)))
 	  ((= i len))
-	(let ((chr (string-ref newly-found-sonnet-probably-by-shakesepeare i)))
+	(let ((chr (string-ref newly-found-sonnet-probably-by-shakespeare i)))
 	  (if (char=? chr #\")
 	      (write-char #\\ file))
 	  (write-char chr file)))
@@ -2742,7 +2742,7 @@
     (let ((sonnet (read file)))
       (close-input-port file)
       (if (or (not (string? sonnet))
-	      (not (string=? sonnet newly-found-sonnet-probably-by-shakesepeare)))
+	      (not (string=? sonnet newly-found-sonnet-probably-by-shakespeare)))
 	  (begin (display "write-char/read long string returned: ") (display sonnet) (newline))))))
 
 (let ((file (open-output-file "tmp1.r5rs")))
@@ -31702,7 +31702,7 @@
 		     ((= i n))
 		   (let ((y (random range)))
 		     (if (not (chker y))
-			 (format #t "(random ~A) -> ~A?~%" y))
+			 (format #t "(random ~A) -> ~A?~%" range y))
 		     (let ((iy (inexact->exact (floor (* 100 (/ y range))))))
 		       (vector-set! hits iy (+ 1 (vector-ref hits iy))))))
 		 (let ((sum 0.0)
