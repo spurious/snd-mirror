@@ -291,6 +291,7 @@
 #define S_sawtooth_wave              "sawtooth-wave"
 #define S_sawtooth_wave_p            "sawtooth-wave?"
 #define S_seconds_to_samples         "seconds->samples"
+#define S_sinc_window                "sinc-window"
 #define S_sine_bank                  "sine-bank"
 #define S_spectrum                   "spectrum"
 #define S_square_wave                "square-wave"

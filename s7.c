@@ -73,6 +73,7 @@
  *        optional multidimensional and applicable vectors
  *
  * Mike Scholz provided the FreeBSD support (complex trig funcs, etc)
+ * Rick Taube provided the MS Visual C++ support
  *
  *
  * Documentation is in s7.h.  A "regression test" is s7test.scm in the Snd tarball,
@@ -163,8 +164,8 @@
 
 /* ---------------- scheme choices ---------------- */
 
-#ifndef CASE_SENSITIVE
-  #define CASE_SENSITIVE 1
+#ifndef WITH_CASE_SENSITIVE_SYMBOL_NAMES
+  #define WITH_CASE_SENSITIVE_SYMBOL_NAMES 1
   /* this determines whether names are case sensitive */
 #endif
 
@@ -728,7 +729,7 @@ struct s7_scheme {
 #define real(n)                       n.value.real_value
 
 
-#if CASE_SENSITIVE
+#if WITH_CASE_SENSITIVE_SYMBOL_NAMES
 
 #define string_downcase(Str) Str
 #define STRCMP(Str1, Str2) strcmp(Str1, Str2)
@@ -4169,7 +4170,7 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
 	  c = *p++; 
 	} 
       if (!ISDIGIT(c, current_radix))
-	return((want_symbol) ? s7_make_symbol(sc, string_downcase(q)) : sc->F);  /* if CASE_SENSITIVE, string_downcase is a no-op */
+	return((want_symbol) ? s7_make_symbol(sc, string_downcase(q)) : sc->F);  /* if WITH_CASE_SENSITIVE_SYMBOL_NAMES, string_downcase is a no-op */
     } 
   else 
     {
@@ -19732,7 +19733,7 @@ s7_scheme *s7_init(void)
   g_provide(sc, make_list_1(sc, s7_make_symbol(sc, "threads")));
 #endif
 
-#if (!CASE_SENSITIVE)
+#if (!WITH_CASE_SENSITIVE_SYMBOL_NAMES)
   g_provide(sc, make_list_1(sc, s7_make_symbol(sc, "case-insensitive")));
 #endif
 

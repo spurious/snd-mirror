@@ -622,6 +622,9 @@
       'bohman-window bohman-window 22
       'cauchy-window cauchy-window 12 
       'mlt-sine-window mlt-sine-window 33
+      'papoulis-window papoulis-window 34
+      'dpss-window dpss-window 35
+      'sinc-window sinc-window 36
       'channels-combined channels-combined 1 
       'channels-separate channels-separate 0 
       'channels-superimposed channels-superimposed 2

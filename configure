@@ -21585,6 +21585,19 @@ _ACEOF
 _ACEOF
 
 
+    cat >>confdefs.h <<\_ACEOF
+#define WITH_CASE_SENSITIVE_SYMBOL_NAMES 1
+_ACEOF
+
+    cat >>confdefs.h <<\_ACEOF
+#define WITH_MULTIDIMENSIONAL_VECTORS 1
+_ACEOF
+
+    cat >>confdefs.h <<\_ACEOF
+#define WITH_R5RS_RATIONALIZE 0
+_ACEOF
+
+
     if test "${ac_cv_header_complex_h+set}" = set; then
   { $as_echo "$as_me:$LINENO: checking for complex.h" >&5
 $as_echo_n "checking for complex.h... " >&6; }

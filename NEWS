@@ -9,6 +9,7 @@ pulseaudio support (--with-pulseaudio in configure):
   doesn't work on my machine. 
 
 moved the papoulis and dpss (slepian) fft-windows from dsp.scm to clm.c.
+  added sinc-window.
 
 matlab mat-5 headers (for 1-channel sound data).
 
@@ -16,7 +17,7 @@ all hash literals using ',' changed to use '=>' in *.rb (for ruby 1.9.*)
   but ruby 1.9.n is not usable yet -- it segfaults on any error.
   Use strace to find out where the problem is.
 
-checked: mpfr 2.4.1, gtk 2.15.5|16.0, fftw 3.2.1
+checked: mpfr 2.4.1, gtk 2.15.5|16.0, fftw 3.2.1, fth 1.2.3
 
 Thanks!: Michael Edwards, Kjetil, Mike Scholz, Al Steffens, Anders Vinjar,
 	 Oded Ben-Tal, Rick Taube.

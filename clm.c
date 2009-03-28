@@ -9890,7 +9890,7 @@ bool mus_fft_window_p(int val)
     case MUS_BOHMAN_WINDOW: case MUS_FLAT_TOP_WINDOW: case MUS_BLACKMAN5_WINDOW: case MUS_BLACKMAN6_WINDOW: 
     case MUS_BLACKMAN7_WINDOW: case MUS_BLACKMAN8_WINDOW: case MUS_BLACKMAN9_WINDOW: case MUS_BLACKMAN10_WINDOW: 
     case MUS_RV2_WINDOW: case MUS_RV3_WINDOW: case MUS_RV4_WINDOW: case MUS_MLT_SINE_WINDOW: 
-    case MUS_PAPOULIS_WINDOW: case MUS_DPSS_WINDOW:
+    case MUS_PAPOULIS_WINDOW: case MUS_DPSS_WINDOW: case MUS_SINC_WINDOW:
       return(true);
       break;
     }
@@ -10324,6 +10324,19 @@ Float *mus_make_fft_window_with_window(mus_fft_window_t type, off_t size, Float 
       }
       break;
 
+    case MUS_SINC_WINDOW:
+      {
+	double scl;
+	scl = 2 * M_PI / (size - 1);
+	for (i = -midn, j = 0; i < midn; i++, j++)
+	  {
+	    if (i == 0)
+	      window[j] = 1.0;
+	    else window[j] = sin(i * scl) / (i * scl);
+	  }
+      }
+      break;
+
     case MUS_DPSS_WINDOW:
 #if HAVE_GSL_EIGEN_NONSYMMV_WORKSPACE
       {
@@ -10547,7 +10560,7 @@ static const char *fft_window_names[MUS_NUM_FFT_WINDOWS] =
    "Exponential", "Riemann", "Kaiser", "Cauchy", "Poisson", "Gaussian", "Tukey", "Dolph-Chebyshev", "Hann-Poisson", "Connes",
    "Samaraki", "Ultraspherical", "Bartlett-Hann", "Bohman", "Flat-top",
    "Blackman5", "Blackman6", "Blackman7", "Blackman8", "Blackman9", "Blackman10",
-   "Rife-Vincent2", "Rife-Vincent3", "Rife-Vincent4", "MLT Sine", "Papoulis", "DPSS (Slepian)"
+   "Rife-Vincent2", "Rife-Vincent3", "Rife-Vincent4", "MLT Sine", "Papoulis", "DPSS (Slepian)", "Sinc"
 };
 
 
