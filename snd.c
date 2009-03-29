@@ -412,12 +412,10 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
   ss->startup_errors = NULL;
 
   mus_sound_initialize(); /* has to precede version check (mus_audio_moniker needs to be setup in Alsa/Oss) */
-
-#if HAVE_FORTH || HAVE_RUBY || HAVE_S7
   xen_initialize();
+
 #if HAVE_S7 && HAVE_SETJMP_H
   s7_set_error_exiter(s7, jump_to_top_level);
-#endif
 #endif
 
   for (i = 1; i < argc; i++)
@@ -518,6 +516,7 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
     int main(int argc, char *argv[])
      {
        scm_boot_guile(argc, argv, snd_main, 0);
+       /* anything after this call will not be executed */
        return(0);
      }
     #endif
@@ -526,10 +525,11 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
 
 
 #ifdef SND_AS_PD_EXTERNAL
-int snd_pd_main(void){
-  char *argv[]={"pd","-noglob","-noinit"};
-  snd_main(NULL,3,argv);
-  return 0;
+int snd_pd_main(void)
+{
+  char *argv[] = {"pd", "-noglob", "-noinit"};
+  snd_main(NULL, 3, argv);
+  return(0);
 }
 #endif
 

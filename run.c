@@ -13676,12 +13676,11 @@ static void init_walkers(void)
 {
   #define INIT_WALKER(Name, Val) XEN_SET_WALKER((XEN)(C_STRING_TO_XEN_SYMBOL(Name)), XEN_WRAP_C_POINTER(Val))
 
-  XEN declare;
 #if (HAVE_GUILE) && (!HAVE_GUILE_CALL_CC)
   XEN call_cc;
   XEN_DEFINE_VARIABLE("call/cc", call_cc, XEN_FALSE);
 #endif
-  XEN_DEFINE_VARIABLE("declare", declare, XEN_FALSE);
+
   walk_sym = C_STRING_TO_XEN_SYMBOL("snd-walk");
   XEN_PROTECT_FROM_GC(walk_sym);
 
@@ -14530,6 +14529,8 @@ void mus_init_run(void)
 
   XEN_DEFINE_PROCEDURE("run",           g_run_w,           1, 0, 0, "run macro testing...");
   XEN_DEFINE_PROCEDURE("run-eval",      g_run_eval_w,      1, 3, 0, "run macro testing...");
+  walker_hash_table = s7_make_hash_table(s7, 1031);
+  s7_gc_protect(s7, walker_hash_table);
 
 #endif
 
@@ -14538,22 +14539,30 @@ void mus_init_run(void)
 		       
   XEN_YES_WE_HAVE("run");
 
-#if HAVE_S7
-  walker_hash_table = s7_make_hash_table(s7, 1031);
-  s7_gc_protect(s7, walker_hash_table);
-#endif
-
 #else /* else not with run */
+
 #if HAVE_SCHEME
   XEN_EVAL_C_STRING("(defmacro " S_run " (thunk) `(,thunk))");
 #endif
 #endif
 
+
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_optimization, g_optimization_w, H_optimization, S_setB S_optimization, g_set_optimization_w,  0, 0, 1, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_run_safety, g_run_safety_w, H_run_safety, S_setB S_run_safety, g_set_run_safety_w,  0, 0, 1, 0);
   XEN_DEFINE_PROCEDURE(S_snd_declare, g_snd_declare_w, 1, 0, 0, H_snd_declare);
 
+#if HAVE_SCHEME
+  XEN_EVAL_C_STRING("(defmacro declare args `(snd-declare ',args))");
+  /* declare has to be a macro, else it evaluates its arguments in the fallback-on-scheme case
+   *   however, we want it to still be findable on an external function (when using procedure-source to splice in the body)
+   *   so in the optimizer case, it sees the original "declare" form, but in the scheme case, the snd-declare (a no-op),
+   *   and in the optimizer-splicing-source case, the snd-declare, I hope.
+   */
+#endif
+
+
 #if USE_SND
+
 #if WITH_RUN
   add_ss_watcher(SS_MUS_ERROR_WATCHER, watch_for_mus_error_in_run, NULL);
 
@@ -14564,15 +14573,13 @@ You can often slightly rewrite the form to make run happy."
 #else
 #define H_optimization_hook S_optimization_hook " (msg): this hook is ignored because 'run' is not included in this version of Snd."
 #endif
+
   optimization_hook = XEN_DEFINE_HOOK(S_optimization_hook, 1, H_optimization_hook);      /* arg = message */
 #endif
 
 #if WITH_RUN
 #if (!USE_SND)
   current_optimization = MAX_OPTIMIZATION;
-#if HAVE_S7
-  XEN_EVAL_C_STRING("(defmacro declare args `(snd-declare ',args))");
-#endif
 #endif
   init_walkers();
   init_type_names();

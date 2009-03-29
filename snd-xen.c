@@ -1760,46 +1760,6 @@ static XEN g_snd_sound_pointer(XEN snd)
 #endif
 
 
-static XEN g_gc_off(void) 
-{
-#if HAVE_GUILE
-  #define H_gc_off "(" S_gc_off ") is a no-op"
-#else
-  #define H_gc_off "(" S_gc_off ") turns off garbage collection"
-#endif
-
-#if HAVE_RUBY && HAVE_RB_GC_DISABLE
-  rb_gc_disable();
-#endif
-
-#if HAVE_FORTH
-  fth_gc_off();
-#endif
-
-  return(XEN_FALSE);
-}
-
-
-static XEN g_gc_on(void) 
-{
-#if HAVE_GUILE
-  #define H_gc_on "(" S_gc_on ") is a no-op"
-#else
-  #define H_gc_on "(" S_gc_on ") turns on garbage collection"
-#endif
-
-#if HAVE_RUBY && HAVE_RB_GC_DISABLE
-  rb_gc_enable();
-#endif
-
-#if HAVE_FORTH
-  fth_gc_on();
-#endif
-
-  return(XEN_FALSE);
-}
-
-
 static XEN g_fmod(XEN a, XEN b)
 {
   double val, x, y;
@@ -2614,50 +2574,6 @@ static XEN g_gsl_roots(XEN poly)
 #endif
 
 
-#if HAVE_GUILE
-/* libguile/read.c */
-
-/* this doesn't always work correctly -- the # reader is called at a different place in
- *    libguile/read.c than the built-in #! !# reader, and insists on returning a value.
- *    That value (#f here) screws up code such as:
- *
- *      (define (gad a)
- *        (let ((b a))
- *          b
- *      #|
- *          a comment
- *      |#
- *          ))
- * 
- *   which returns #f, not b.  I can't see how to fix this.
- */
-
-static XEN g_skip_block_comment(XEN ch, XEN port)
-{
-  int bang_seen = 0;
-  while (true)
-    {
-      int c;
-      c = scm_getc(port);
-      if (c == EOF)
-	{
-	  snd_warning("unterminated `#| ... |#' comment");
-	  return(XEN_FALSE);
-	}
-      if (c == '|')
-	bang_seen = 1;
-      else 
-	{
-	  if ((c == '#') && (bang_seen))
-	    return(XEN_FALSE);
-	  else bang_seen = 0;
-	}
-    }
-  return(XEN_FALSE);
-}
-#endif
-
-
 /* -------- watchers -------- */
 
 #define NOT_A_WATCHER -1
@@ -2856,8 +2772,6 @@ XEN_NARGIFY_1(g_add_source_file_extension_w, g_add_source_file_extension)
 #endif
 
 XEN_NARGIFY_2(g_fmod_w, g_fmod)
-XEN_NARGIFY_0(g_gc_off_w, g_gc_off)
-XEN_NARGIFY_0(g_gc_on_w, g_gc_on)
 
 #if HAVE_SPECIAL_FUNCTIONS || HAVE_GSL
   XEN_NARGIFY_1(g_j0_w, g_j0)
@@ -2914,8 +2828,6 @@ XEN_NARGIFY_1(g_add_watcher_w, g_add_watcher)
   #define g_snd_sound_pointer_w g_snd_sound_pointer
 #endif
 #define g_fmod_w g_fmod
-#define g_gc_off_w g_gc_off
-#define g_gc_on_w g_gc_on
 #if HAVE_SPECIAL_FUNCTIONS || HAVE_GSL
   #define g_j0_w g_j0
   #define g_j1_w g_j1
@@ -3021,13 +2933,6 @@ void g_xen_initialize(void)
 
 #if MUS_DEBUGGING
   XEN_DEFINE_PROCEDURE("snd-sound-pointer", g_snd_sound_pointer_w, 1, 0, 0, "internal testing function");
-#endif
-
-  XEN_DEFINE_PROCEDURE(S_gc_off, g_gc_off_w, 0, 0, 0, H_gc_off);
-  XEN_DEFINE_PROCEDURE(S_gc_on,  g_gc_on_w,  0, 0, 0, H_gc_on);
-
-#if HAVE_GUILE
-  XEN_DEFINE_PROCEDURE(S_write_byte, g_write_byte, 1, 0, 0, H_write_byte);
 #endif
 
   Init_sndlib();
@@ -3166,10 +3071,6 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   g_init_gxfind();
 #endif
 
-#if HAVE_GUILE
-  mus_init_run();
-#endif
-
 #if HAVE_SCHEME && HAVE_DLFCN_H
   XEN_DEFINE_PROCEDURE("dlopen",  g_dlopen_w,  1, 0 ,0, "");
   XEN_DEFINE_PROCEDURE("dlclose", g_dlclose_w, 1, 0 ,0, "");
@@ -3195,36 +3096,12 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   } 
 
 #if HAVE_GUILE
-  #if (!defined(M_PI))
-    #define M_PI 3.14159265358979323846264338327
-  #endif
-  XEN_DEFINE("pi", C_TO_XEN_DOUBLE(M_PI)); /* not XEN_DEFINE_CONSTANT which assumes int */
-
-  {
-    /* CL uses '#| |#' for block comments, so implement them in Guile */
-    /*   this is in R6RS, so presumably Guile will eventually implement them itself */
-    XEN proc;
-    proc = XEN_NEW_PROCEDURE("%skip-comment%", g_skip_block_comment, 2, 0, 0);
-    scm_read_hash_extend(C_TO_XEN_CHAR('|'), proc);
-  }
+  XEN_DEFINE_PROCEDURE(S_write_byte, g_write_byte, 1, 0, 0, H_write_byte);
 
   XEN_EVAL_C_STRING("(read-set! keywords 'prefix)");
   XEN_EVAL_C_STRING("(print-enable 'source)");
 
-  XEN_EVAL_C_STRING("(define (clm-print . args) (snd-print (apply format #f args)))");
-  XEN_EVAL_C_STRING("(defmacro declare args `(snd-declare ',args))");
-
-  /* declare has to be a macro, else it evaluates its arguments in the fallback-on-scheme case
-   *   however, we want it to still be findable on an external function (when using procedure-source to splice in the body)
-   *   so in the optimizer case, it sees the original "declare" form, but in the scheme case, the snd-declare (a no-op),
-   *   and in the optimizer-splicing-source case, the snd-declare, I hope.
-   */
-
-  XEN_EVAL_C_STRING("(define (bignum x) x)");          /* consistency with s7 */
-  XEN_EVAL_C_STRING("(define bignum-precision (make-procedure-with-setter (lambda () 0) (lambda (x) x)))");
   XEN_EVAL_C_STRING("(define (big-fft . args) #f)");
-  XEN_EVAL_C_STRING("(define call-with-exit call-with-current-continuation)"); /* call/cc here doesn't work in Guile 1.6.n */
- 
   XEN_EVAL_C_STRING("(define redo-edit redo)");        /* consistency with Ruby */
   XEN_EVAL_C_STRING("(define undo-edit undo)");
 
@@ -3262,13 +3139,10 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
 #if HAVE_S7
   XEN_EVAL_C_STRING("(define redo-edit redo)");        /* consistency with Ruby */
   XEN_EVAL_C_STRING("(define undo-edit undo)");
-  XEN_EVAL_C_STRING("(define (clm-print . args) (snd-print (apply format #f args)))");
 
   /* from ice-9/r4rs.scm but with output to snd listener */
   XEN_EVAL_C_STRING("(define *snd-loaded-files* '())");
   XEN_EVAL_C_STRING("(define *snd-remember-paths* #t)");
-
-  XEN_EVAL_C_STRING("(defmacro declare args `(snd-declare ',args))");
 
   XEN_EVAL_C_STRING("(define (symbol-append . args) (string->symbol (apply string-append (map symbol->string args))))");
   /* taken from guile/ice-9/boot9.scm, used by KM's stuff (gui.scm etc) */
@@ -3321,14 +3195,7 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   /* also gtk_adjustment fields, but I think they are not in use in Snd's gtk code */
 #endif
 
-#if HAVE_RUBY
-  XEN_EVAL_C_STRING("def clm_print(str, *args)\n\
-                      snd_print format(str, *args)\n\
-                      end");
-#endif
-
 #if HAVE_FORTH
-  XEN_EVAL_C_STRING(": clm-print ( fmt lst -- ) string-format snd-print drop ;");
   XEN_EVAL_C_STRING("' redo alias redo-edit");        /* consistency with Ruby */
   XEN_EVAL_C_STRING("' undo alias undo-edit");
 #endif

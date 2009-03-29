@@ -9014,6 +9014,42 @@ static void mus_xen_init(void)
   XEN_DEFINE_CONSTANT("internal-time-units-per-second", 1, "clock speed");
 #endif
 
+
+  /* -------- clm-print -------- */
+#if USE_SND
+#if HAVE_FORTH
+  XEN_EVAL_C_STRING(": clm-print ( fmt lst -- ) string-format snd-print drop ;");
+#endif
+
+#if HAVE_RUBY
+  XEN_EVAL_C_STRING("def clm_print(str, *args)\n\
+                      snd_print format(str, *args)\n\
+                      end");
+#endif
+
+#if HAVE_SCHEME
+  XEN_EVAL_C_STRING("(define (clm-print . args) (snd-print (apply format #f args)))");
+#endif
+
+#else
+  /* not USE_SND */
+
+#if HAVE_FORTH
+  XEN_EVAL_C_STRING(": clm-print ( fmt lst -- ) string-format fth-print drop ;");
+#endif
+
+#if HAVE_RUBY
+  XEN_EVAL_C_STRING("def clm_print(str, *args)\n\
+                      $stdout.print format(str, *args)\n\
+                      end");
+#endif
+
+#if HAVE_SCHEME
+  XEN_EVAL_C_STRING("(define (clm-print . args) (apply format #t args))");
+#endif
+#endif
+
+
   XEN_YES_WE_HAVE("clm");
   {
     char *clm_version;
@@ -9376,7 +9412,5 @@ void Init_sndlib(void)
   mus_sndlib_xen_initialize();
   mus_vct_init();
   mus_xen_init();
-#if (!HAVE_GUILE) || (!USE_SND)
   mus_init_run();
-#endif
 }

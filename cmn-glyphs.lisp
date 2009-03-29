@@ -1305,7 +1305,7 @@
 
 
 (defun draw-subito (score &optional style)
-  (declare (ignore style))
+  ;(declare (ignore style))
   ;(comment score "I")
   (setf (line-width score) 0.02)
   (moveto score 0.3 -0.2)

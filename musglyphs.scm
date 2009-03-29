@@ -160,8 +160,8 @@
 (define (music-font score) #f)
 (define g-mustext (lambda args #f))
 (define (output-type score) #f)
-(if (defined? 'declare) (define old-declare declare) (define old-declare #f))
-(define (declare args) #f)
+;(if (defined? 'declare) (define old-declare declare) (define old-declare #f))
+;(define (declare args) #f)
 (define sound-comment comment)
 
 ;(define comment
@@ -184,7 +184,7 @@
 (load-from-path "cmn-glyphs.lisp")
 
 (set! defvar old-defvar)
-(set! declare old-declare)
+;(set! declare old-declare)
 
 
 

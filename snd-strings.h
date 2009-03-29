@@ -227,8 +227,6 @@
 #define S_frames                        "frames"
 #define S_free_player                   "free-player"
 #define S_free_sample_reader            "free-sample-reader"
-#define S_gc_off                        "gc-off"
-#define S_gc_on                         "gc-on"
 #define S_gl_graph_to_ps                "gl-graph->ps"
 #define S_goto_listener_end             "goto-listener-end"
 #define S_graph                         "graph"

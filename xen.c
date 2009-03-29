@@ -16,6 +16,9 @@
 
 #include "xen.h"
 
+#define S_gc_off "gc-off"
+#define S_gc_on  "gc-on"
+
 
 XEN xen_return_first(XEN a, ...)
 {
@@ -31,7 +34,6 @@ char *xen_strdup(const char *str)
   if (newstr) strcpy(newstr, str);
   return(newstr);
 }
-
 
 
 
@@ -357,14 +359,85 @@ static XEN g_continuation_p(XEN obj)
 #endif
 
 
+/* -------- block comments -------- */
+/* libguile/read.c */
+
+/* this doesn't always work correctly -- the # reader is called at a different place in
+ *    libguile/read.c than the built-in #! !# reader, and insists on returning a value.
+ *    That value (#f here) screws up code such as:
+ *
+ *      (define (gad a)
+ *        (let ((b a))
+ *          b
+ *      #|
+ *          a comment
+ *      |#
+ *          ))
+ * 
+ *   which returns #f, not b.  I can't see how to fix this.
+ */
+
+static XEN g_skip_block_comment(XEN ch, XEN port)
+{
+  int bang_seen = 0;
+  while (true)
+    {
+      int c;
+      c = scm_getc(port);
+      if (c == EOF)
+	{
+#if USE_SND
+	  snd_warning("unterminated `#| ... |#' comment");
+#endif
+	  return(XEN_FALSE);
+	}
+      if (c == '|')
+	bang_seen = 1;
+      else 
+	{
+	  if ((c == '#') && (bang_seen))
+	    return(XEN_FALSE);
+	  else bang_seen = 0;
+	}
+    }
+  return(XEN_FALSE);
+}
+
+
+static XEN g_gc_off(void) {}
+static XEN g_gc_on(void) {}
+
+
 void xen_initialize(void)
 {
 #if (!HAVE_SCM_CONTINUATION_P)
   XEN_DEFINE_PROCEDURE("continuation?", g_continuation_p, 1, 0, 0, "#t if arg is a continuation");
 #endif
-}
+
+#if (!defined(M_PI))
+  #define M_PI 3.14159265358979323846264338327
+#endif
+  XEN_DEFINE("pi", C_TO_XEN_DOUBLE(M_PI)); /* not XEN_DEFINE_CONSTANT which assumes int */
+
+  {
+    /* CL uses '#| |#' for block comments, so implement them in Guile */
+    /*   this is in R6RS, so presumably Guile will eventually implement them itself */
+    XEN proc;
+    proc = XEN_NEW_PROCEDURE("%skip-comment%", g_skip_block_comment, 2, 0, 0);
+    scm_read_hash_extend(C_TO_XEN_CHAR('|'), proc);
+  }
+
+  XEN_DEFINE_PROCEDURE(S_gc_off, g_gc_off, 0, 0, 0, "(" S_gc_off ") is a no-op");
+  XEN_DEFINE_PROCEDURE(S_gc_on,  g_gc_on,  0, 0, 0, "(" S_gc_on ") is a no-op");
+
+  XEN_EVAL_C_STRING("(define (bignum x) x)");          /* consistency with s7 */
+  XEN_EVAL_C_STRING("(define bignum-precision (make-procedure-with-setter (lambda () 0) (lambda (x) x)))");
+
+  XEN_EVAL_C_STRING("(define call-with-exit call-with-current-continuation)"); /* call/cc here doesn't work in Guile 1.6.n */
+ }
 
 #endif
+
 
 
 
@@ -1453,11 +1526,37 @@ XEN rb_properties(void)
 }
 
 
+static XEN g_gc_off(void) 
+{
+#if HAVE_RB_GC_DISABLE
+  #define H_gc_off "(" S_gc_off ") turns off garbage collection"
+  rb_gc_disable();
+#else
+  #define H_gc_off "(" S_gc_off ") is a no-op"
+#endif
+}
+
+
+static XEN g_gc_on(void) 
+{
+#if HAVE_RB_GC_DISABLE
+  #define H_gc_on "(" S_gc_on ") turns on garbage collection"
+  rb_gc_enable();
+#else
+  #define H_gc_on "(" S_gc_on ") is a no-op"
+#endif
+}
+
+
 XEN_ARGIFY_1(g_get_help_w, g_get_help);
 XEN_NARGIFY_2(g_add_help_w, g_add_help);
 XEN_NARGIFY_3(g_set_property_w, rb_set_property);
 XEN_NARGIFY_2(g_property_w, rb_property);
 XEN_NARGIFY_0(g_properties_w, rb_properties);
+
+XEN_NARGIFY_0(g_gc_off_w, g_gc_off)
+XEN_NARGIFY_0(g_gc_on_w, g_gc_on)
+
 
 static bool hook_inited = false;
 
@@ -1502,6 +1601,9 @@ void Init_Hook(void)
   XEN_DEFINE_PROCEDURE(S_set_property,         g_set_property_w,         3, 0, 0, H_set_property);
   XEN_DEFINE_PROCEDURE(S_property,             g_property_w,             2, 0, 0, H_property);
   XEN_DEFINE_PROCEDURE(S_properties,           g_properties_w,           0, 0, 0, H_properties);
+
+  XEN_DEFINE_PROCEDURE(S_gc_off,               g_gc_off_w,               0, 0, 0, H_gc_off);
+  XEN_DEFINE_PROCEDURE(S_gc_on,                g_gc_on_w,                0, 0, 0, H_gc_on);
 }
 
 /* end of class Hook */
@@ -1578,10 +1680,27 @@ static void fth_snd_exit(int n)
 } 
  
 
+static XEN g_gc_off(void) 
+{
+  #define H_gc_off "(" S_gc_off ") turns off garbage collection"
+  fth_gc_on();
+}
+
+
+static XEN g_gc_on(void) 
+{
+  #define H_gc_on "(" S_gc_on ") turns on garbage collection"
+  fth_gc_on();
+}
+
+
 void xen_initialize(void)
 {
   fth_init();
   fth_exit_hook = fth_snd_exit; 
+
+  XEN_DEFINE_PROCEDURE(S_gc_off, g_gc_off, 0, 0, 0, H_gc_off);
+  XEN_DEFINE_PROCEDURE(S_gc_on,  g_gc_on,  0, 0, 0, H_gc_on);
 }
 
 #endif 	/* HAVE_FORTH */
@@ -1999,6 +2118,65 @@ static char *print_hook(s7_scheme *sc, void *v)
 
 /* add various file functions that everyone else implements */
 
+#if (defined(HAVE_LIBC_H) && (!defined(HAVE_UNISTD_H)))
+  #include <libc.h>
+#else
+  #if (!(defined(_MSC_VER)))
+    #include <unistd.h>
+  #endif
+#endif
+
+#if HAVE_SYS_TIME_H
+  #include <sys/time.h>
+#endif
+
+#if HAVE_FCNTL_H
+  #include <fcntl.h>
+#endif
+
+#if USE_SND
+
+char *snd_tempnam(void);
+bool mus_file_probe(const char *arg);
+bool directory_p(const char *filename);
+
+#else
+
+static bool mus_file_probe(const char *arg)
+{
+  /* from io.c */
+#if HAVE_ACCESS
+  return(access(arg, F_OK) == 0);
+#else
+  int fd;
+#ifdef O_NONBLOCK
+  fd = OPEN(arg, O_RDONLY, O_NONBLOCK);
+#else
+  fd = OPEN(arg, O_RDONLY, 0);
+#endif
+  if (fd == -1) return(false);
+  CLOSE(fd, arg);
+  return(true);
+#endif
+}
+
+static bool directory_p(const char *filename)
+{
+  /* from snd-file.c */
+  struct stat statbuf;
+#if HAVE_LSTAT
+  return((lstat(filename, &statbuf) >= 0) &&
+	 (S_ISDIR(statbuf.st_mode)));
+  return(false);
+#else
+  return((stat(filename, &statbuf) == 0) && 
+	 (S_ISDIR(statbuf.st_mode)));
+#endif
+}
+
+#endif
+
+
 static XEN g_file_exists_p(XEN name)
 {
   #define H_file_exists_p "(file-exists? filename): #t if the file exists"
@@ -2006,11 +2184,13 @@ static XEN g_file_exists_p(XEN name)
   return(C_TO_XEN_BOOLEAN(mus_file_probe(XEN_TO_C_STRING(name))));
 }
 
+
 static XEN g_getpid(void)
 {
   #define H_getpid "(getpid) returns the current job's process id"
   return(C_TO_XEN_INT((int)getpid()));
 }
+
 
 static XEN g_file_is_directory(XEN name)
 {
@@ -2019,12 +2199,14 @@ static XEN g_file_is_directory(XEN name)
   return(C_TO_XEN_BOOLEAN(directory_p(XEN_TO_C_STRING(name)))); /* snd-file.c l 84 */
 }
 
+
 static XEN g_system(XEN command)
 {
   #define H_system "(system command): execute command"
   XEN_ASSERT_TYPE(XEN_STRING_P(command), command, XEN_ONLY_ARG, "system", "a string");
   return(C_TO_XEN_INT(system(XEN_TO_C_STRING(command))));
 }
+
 
 static XEN g_s7_getenv(XEN var) /* "g_getenv" is in use in glib! */
 {
@@ -2033,6 +2215,7 @@ static XEN g_s7_getenv(XEN var) /* "g_getenv" is in use in glib! */
   return(C_TO_XEN_STRING(getenv(XEN_TO_C_STRING(var))));
 }
 
+
 static XEN g_delete_file(XEN name)
 {
   #define H_delete_file "(delete-file filename): deletes the file"
@@ -2040,13 +2223,6 @@ static XEN g_delete_file(XEN name)
   return(C_TO_XEN_BOOLEAN(unlink(XEN_TO_C_STRING(name))));
 }
 
-#if (defined(HAVE_LIBC_H) && (!defined(HAVE_UNISTD_H)))
-  #include <libc.h>
-#else
-  #if (!(defined(_MSC_VER)))
-    #include <unistd.h>
-  #endif
-#endif
 
 static XEN g_getcwd(void)
 {
@@ -2060,9 +2236,6 @@ static XEN g_getcwd(void)
   return(result);
 }
 
-#if HAVE_SYS_TIME_H
-  #include <sys/time.h>
-#endif
 
 static XEN g_strftime(XEN format, XEN tm)
 {
@@ -2077,6 +2250,7 @@ static XEN g_strftime(XEN format, XEN tm)
   return(result);
 }
 
+
 /* (format #f ";~A~%" (strftime "%d-%b %H:%M %Z" (localtime (current-time)))) */
 /* these two need to be compatible with g_file_write_date in snd-file.c */
 
@@ -2088,6 +2262,7 @@ static XEN g_localtime(XEN tm)
   return(XEN_WRAP_C_POINTER(localtime((time_t *)(&rtime))));
 }
 
+
 static XEN g_current_time(void)
 {
   time_t curtime;
@@ -2096,9 +2271,6 @@ static XEN g_current_time(void)
   return(C_TO_XEN_INT(curtime));
 }
 
-#if USE_SND
-char *snd_tempnam(void);
-#endif
 
 static XEN g_tmpnam(void)
 {
@@ -2119,6 +2291,21 @@ static XEN g_ftell(XEN fd)
 {
   return(C_TO_XEN_OFF_T(lseek(XEN_TO_C_INT(fd), 0, SEEK_CUR)));
 }
+
+
+static XEN g_gc_off(void) 
+{
+  #define H_gc_off "(" S_gc_off ") turns off garbage collection"
+  s7_gc_on(s7, false);
+}
+
+
+static XEN g_gc_on(void) 
+{
+  #define H_gc_on "(" S_gc_on ") turns on garbage collection"
+  s7_gc_on(s7, true);
+}
+
 
 
 XEN_NARGIFY_1(g_hook_p_w, g_hook_p);
@@ -2142,6 +2329,9 @@ XEN_NARGIFY_1(g_localtime_w, g_localtime)
 XEN_NARGIFY_0(g_current_time_w, g_current_time)
 XEN_NARGIFY_0(g_tmpnam_w, g_tmpnam)
 XEN_NARGIFY_1(g_ftell_w, g_ftell)
+
+XEN_NARGIFY_0(g_gc_off_w, g_gc_off)
+XEN_NARGIFY_0(g_gc_on_w, g_gc_on)
 
 
 s7_scheme *s7_xen_initialize(s7_scheme *sc)
@@ -2186,6 +2376,8 @@ s7_scheme *s7_xen_initialize(s7_scheme *sc)
   XEN_DEFINE_PROCEDURE("localtime",           g_localtime_w,          1, 0, 0, H_localtime);
   XEN_DEFINE_PROCEDURE("current-time",        g_current_time_w,       0, 0, 0, H_current_time);
   XEN_DEFINE_PROCEDURE("ftell",               g_ftell_w,              1, 0, 0, "(ftell fd): lseek");
+  XEN_DEFINE_PROCEDURE(S_gc_off,              g_gc_off_w,             0, 0, 0, H_gc_off);
+  XEN_DEFINE_PROCEDURE(S_gc_on,               g_gc_on_w,              0, 0, 0, H_gc_on);
 
 
   /* these are for compatibility with Guile (rather than add hundreds of "if provided?" checks) */
