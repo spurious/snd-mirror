@@ -11,11 +11,12 @@
  */
 
 #define XEN_MAJOR_VERSION 2
-#define XEN_MINOR_VERSION 26
-#define XEN_VERSION "2.26"
+#define XEN_MINOR_VERSION 27
+#define XEN_VERSION "2.27"
 
 /* HISTORY:
  *
+ *  30-Mar:    added a bunch of file-oriented functions for s7 (xen.c).
  *  14-Mar:    removed XEN_LOCAL_GC_PROTECT and XEN_LOCAL_GC_UNPROTECT.
  *  20-Feb:    changed fth.h include to fth/fth.h.
  *  14-Jan-09: s7_xen_initialize.

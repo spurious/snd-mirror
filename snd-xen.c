@@ -1800,18 +1800,6 @@ static XEN g_gc_on(void)
 }
 
 
-#if HAVE_GUILE && (!HAVE_SCM_CONTINUATION_P)
-static XEN g_continuation_p(XEN obj)
-{
-#ifdef SCM_CONTINUATIONP
-  return(C_TO_XEN_BOOLEAN(SCM_NIMP(obj) && SCM_CONTINUATIONP(obj)));
-#else
-  return(C_TO_XEN_BOOLEAN(XEN_PROCEDURE_P(obj)));
-#endif
-}
-#endif
-
-
 static XEN g_fmod(XEN a, XEN b)
 {
   double val, x, y;
@@ -2626,14 +2614,6 @@ static XEN g_gsl_roots(XEN poly)
 #endif
 
 
-#if HAVE_S7
-static XEN g_ftell(XEN fd)
-{
-  return(C_TO_XEN_OFF_T(lseek(XEN_TO_C_INT(fd), 0, SEEK_CUR)));
-}
-#endif
-
-
 #if HAVE_GUILE
 /* libguile/read.c */
 
@@ -2865,9 +2845,6 @@ static char *find_source_file(const char *orig)
   XEN_NARGIFY_2(g_dlinit_w, g_dlinit)
 #endif
 
-#if HAVE_GUILE && (!HAVE_SCM_CONTINUATION_P)
-  XEN_NARGIFY_1(g_continuation_p_w, g_continuation_p)
-#endif
 XEN_NARGIFY_1(g_snd_print_w, g_snd_print)
 XEN_NARGIFY_0(g_little_endian_w, g_little_endian)
 XEN_NARGIFY_0(g_snd_global_state_w, g_snd_global_state)
@@ -2915,10 +2892,6 @@ XEN_NARGIFY_1(g_i0_w, g_i0)
   #endif
 #endif
 
-#if HAVE_S7
-  XEN_NARGIFY_1(g_ftell_w, g_ftell)
-#endif
-
 XEN_NARGIFY_1(g_delete_watcher_w, g_delete_watcher)
 XEN_NARGIFY_1(g_add_watcher_w, g_add_watcher)
 
@@ -2932,9 +2905,6 @@ XEN_NARGIFY_1(g_add_watcher_w, g_add_watcher)
   #define g_dlinit_w g_dlinit
 #endif
 
-#if HAVE_GUILE && (!HAVE_SCM_CONTINUATION_P)
-  #define g_continuation_p_w g_continuation_p
-#endif
 #define g_snd_print_w g_snd_print
 #define g_little_endian_w g_little_endian
 #define g_snd_global_state_w g_snd_global_state
@@ -3030,119 +3000,6 @@ static char *legalize_path(const char *in_str)
   return(out_str); 
 } 
 
-#if HAVE_S7
-static XEN g_file_exists_p(XEN name)
-{
-  #define H_file_exists_p "(file-exists? filename): #t if the file exists"
-  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ONLY_ARG, "file-exists?", "a string");
-  return(C_TO_XEN_BOOLEAN(mus_file_probe(XEN_TO_C_STRING(name))));
-}
-
-static XEN g_getpid(void)
-{
-  #define H_getpid "(getpid) returns the current job's process id"
-  return(C_TO_XEN_INT((int)getpid()));
-}
-
-static XEN g_file_is_directory(XEN name)
-{
-  #define H_file_is_directory "(file-is-directory? filename): #t if filename names a directory"
-  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ONLY_ARG, "file-is-directory?", "a string");
-  return(C_TO_XEN_BOOLEAN(directory_p(XEN_TO_C_STRING(name)))); /* snd-file.c l 84 */
-}
-
-static XEN g_system(XEN command)
-{
-  #define H_system "(system command): execute command"
-  XEN_ASSERT_TYPE(XEN_STRING_P(command), command, XEN_ONLY_ARG, "system", "a string");
-  return(C_TO_XEN_INT(system(XEN_TO_C_STRING(command))));
-}
-
-static XEN g_s7_getenv(XEN var) /* "g_getenv" is in use in glib! */
-{
-  #define H_getenv "(getenv var): return value of environment variable var"
-  XEN_ASSERT_TYPE(XEN_STRING_P(var), var, XEN_ONLY_ARG, "getenv", "a string");
-  return(C_TO_XEN_STRING(getenv(XEN_TO_C_STRING(var))));
-}
-
-static XEN g_delete_file(XEN name)
-{
-  #define H_delete_file "(delete-file filename): deletes the file"
-  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ONLY_ARG, "delete-file", "a string");
-  return(C_TO_XEN_BOOLEAN(unlink(XEN_TO_C_STRING(name))));
-}
-
-static XEN g_getcwd(void)
-{
-  #define H_getcwd "(getcwd) returns the name of the current working directory"
-  char *buf;
-  XEN result = XEN_FALSE;
-  buf = (char *)calloc(1024, sizeof(char));
-  if (getcwd(buf, 1024) != NULL)
-    result = C_TO_XEN_STRING(buf);
-  free(buf);
-  return(result);
-}
-
-#if HAVE_SYS_TIME_H
-  #include <sys/time.h>
-#endif
-
-static XEN g_strftime(XEN format, XEN tm)
-{
-  #define H_strftime "(strftime format time) returns a string describing the time: (strftime \"%d-%b %H:%M %Z\" (localtime (current-time)))"
-  char *buf;
-  XEN result;
-  XEN_ASSERT_TYPE(XEN_STRING_P(format), format, XEN_ARG_1, "strftime", "a string");
-  buf = (char *)calloc(1024, sizeof(char));
-  strftime(buf, 1024, XEN_TO_C_STRING(format), (const struct tm *)XEN_UNWRAP_C_POINTER(tm));
-  result = C_TO_XEN_STRING(buf);
-  free(buf);
-  return(result);
-}
-
-/* (snd-display ";~A~%" (strftime "%d-%b %H:%M %Z" (localtime (current-time)))) */
-/* these two need to be compatible with g_file_write_date in snd-file.c */
-
-static XEN g_localtime(XEN tm)
-{
-  #define H_localtime "(localtime tm) breaks up tm into something suitable for strftime"
-  time_t rtime;
-  rtime = (time_t)XEN_TO_C_INT(tm);
-  return(XEN_WRAP_C_POINTER(localtime((time_t *)(&rtime))));
-}
-
-static XEN g_current_time(void)
-{
-  time_t curtime;
-  #define H_current_time "(current-time) returns the current time (for localtime and strftime)"
-  curtime = time(NULL);
-  return(C_TO_XEN_INT(curtime));
-}
-
-static XEN g_tmpnam(void)
-{
-  XEN str;
-  char *result;
-  result = snd_tempnam();
-  str = C_TO_XEN_STRING(result);
-  free(result);
-  return(str);
-}
-
-XEN_NARGIFY_0(g_getpid_w, g_getpid)
-XEN_NARGIFY_1(g_file_exists_p_w, g_file_exists_p)
-XEN_NARGIFY_1(g_file_is_directory_w, g_file_is_directory)
-XEN_NARGIFY_1(g_system_w, g_system)
-XEN_NARGIFY_1(g_s7_getenv_w, g_s7_getenv)
-XEN_NARGIFY_1(g_delete_file_w, g_delete_file)
-XEN_NARGIFY_0(g_getcwd_w, g_getcwd)
-XEN_NARGIFY_2(g_strftime_w, g_strftime)
-XEN_NARGIFY_1(g_localtime_w, g_localtime)
-XEN_NARGIFY_0(g_current_time_w, g_current_time)
-XEN_NARGIFY_0(g_tmpnam_w, g_tmpnam)
-#endif
-
 
 void g_xen_initialize(void)
 {
@@ -3171,9 +3028,6 @@ void g_xen_initialize(void)
 
 #if HAVE_GUILE
   XEN_DEFINE_PROCEDURE(S_write_byte, g_write_byte, 1, 0, 0, H_write_byte);
-#if (!HAVE_SCM_CONTINUATION_P)
-  XEN_DEFINE_PROCEDURE("continuation?", g_continuation_p_w, 1, 0, 0, "#t if arg is a continuation");
-#endif
 #endif
 
   Init_sndlib();
@@ -3232,22 +3086,8 @@ void g_xen_initialize(void)
 
 #endif
 
-#if HAVE_S7
-  XEN_DEFINE_PROCEDURE("getpid",                 g_getpid_w,                 0, 0, 0, H_getpid);
-  XEN_DEFINE_PROCEDURE("file-exists?",           g_file_exists_p_w,          1, 0, 0, H_file_exists_p);
-  XEN_DEFINE_PROCEDURE("file-is-directory?",     g_file_is_directory_w,      1, 0, 0, H_file_is_directory); /* "directory?" would be a better name, but we follow Guile */
-  XEN_DEFINE_PROCEDURE("system",                 g_system_w,                 1, 0, 0, H_system);
-  XEN_DEFINE_PROCEDURE("getenv",                 g_s7_getenv_w,              1, 0, 0, H_getenv);
-  XEN_DEFINE_PROCEDURE("delete-file",            g_delete_file_w,            1, 0, 0, H_delete_file);
-  XEN_DEFINE_PROCEDURE("getcwd",                 g_getcwd_w,                 0, 0, 0, H_getcwd);
-  XEN_DEFINE_PROCEDURE("strftime",               g_strftime_w,               2, 0, 0, H_strftime);
-  XEN_DEFINE_PROCEDURE("tmpnam",                 g_tmpnam_w,                 0, 0, 0, H_localtime);
-  XEN_DEFINE_PROCEDURE("localtime",              g_localtime_w,              1, 0, 0, H_localtime);
-  XEN_DEFINE_PROCEDURE("current-time",           g_current_time_w,           0, 0, 0, H_current_time);
-  XEN_DEFINE_PROCEDURE("ftell",                  g_ftell_w,                  1, 0, 0, "(ftell fd): lseek");
-#if WITH_GMP
-  s7_define_function(s7, "bignum-fft",           bignum_fft,                 3, 1, false, H_bignum_fft);
-#endif
+#if HAVE_S7 && WITH_GMP
+  s7_define_function(s7, "bignum-fft", bignum_fft, 3, 1, false, H_bignum_fft);
 #endif
 
   XEN_DEFINE_PROCEDURE(S_delete_watcher, g_delete_watcher_w, 1, 0, 0, H_delete_watcher);
@@ -3427,24 +3267,6 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   /* from ice-9/r4rs.scm but with output to snd listener */
   XEN_EVAL_C_STRING("(define *snd-loaded-files* '())");
   XEN_EVAL_C_STRING("(define *snd-remember-paths* #t)");
-
-  /* these are for compatibility with Guile (rather than add hundreds of "if provided?" checks) */
-  XEN_EVAL_C_STRING("(defmacro use-modules (arg . args) #f)");
-  XEN_EVAL_C_STRING("(define (debug-enable . args) #f)");
-  XEN_EVAL_C_STRING("(define (read-enable . args) #f)");
-  XEN_EVAL_C_STRING("(define-macro (debug-set! . args) #f)"); /* needs to be a macro so that its arguments are not evaluated */
-  XEN_EVAL_C_STRING("(define (make-soft-port . args) #f)");
-  XEN_EVAL_C_STRING("(define (current-module) (current-environment))");
-
-  XEN_EVAL_C_STRING("(define load-from-path load)");
-
-  XEN_EVAL_C_STRING("(define shell system)");
-  XEN_EVAL_C_STRING("(define (1+ x) (+ x 1))");
-  XEN_EVAL_C_STRING("(define (1- x) (- x 1))");
-  XEN_EVAL_C_STRING("(defmacro while (cond . body) `(do () ((not ,cond)) ,@body))");
-
-  XEN_EVAL_C_STRING("(define (identity x) x)");                    /* popup.scm uses this */
-  XEN_EVAL_C_STRING("(define (throw . args) (apply error args))"); /* selection.scm uses this */
 
   XEN_EVAL_C_STRING("(defmacro declare args `(snd-declare ',args))");
 

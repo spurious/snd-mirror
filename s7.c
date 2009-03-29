@@ -425,7 +425,7 @@ struct s7_scheme {
   s7_pointer envir;                   /* current environment */
   s7_pointer code;                    /* current code */
   
-  s7_pointer stack;                   /* stack is a vector in this case */
+  s7_pointer stack;                   /* stack is a vector */
 #if PARALLEL_GC
   s7_pointer gc_stack;
   int gc_stack_top;
@@ -10963,9 +10963,9 @@ s7_pointer s7_hash_table_set(s7_scheme *sc, s7_pointer table, const char *name, 
 	return(value);
       }
   SET(vector_element(table, location), s7_cons(sc, 
-					    s7_cons(sc, 
-						    s7_make_string(sc, name), 
-						    value),
+					       s7_cons(sc, 
+						       s7_make_string(sc, name), 
+						       value),
 					       vector_element(table, location)));
   return(value);
 }

@@ -184,11 +184,6 @@ int xen_to_c_int_or_else(XEN obj, int fallback)
 }
 
 
-void xen_initialize(void)
-{
-}
-
-
 void xen_guile_define_procedure_with_setter(const char *get_name, XEN (*get_func)(), 
 					    const char *get_help, XEN (*set_func)(), XEN local_doc,
 					    int get_req, int get_opt, int set_req, int set_opt)
@@ -348,6 +343,26 @@ char *xen_guile_to_c_string_with_eventual_free(XEN str)
 #if !(defined(__GNUC__) && (!(defined(__cplusplus))))
   XEN xen_guile_c_to_xen_string(const char *a) {return((a) ? scm_from_locale_string(a) : XEN_FALSE);}
 #endif
+
+
+#if (!HAVE_SCM_CONTINUATION_P)
+static XEN g_continuation_p(XEN obj)
+{
+#ifdef SCM_CONTINUATIONP
+  return(C_TO_XEN_BOOLEAN(SCM_NIMP(obj) && SCM_CONTINUATIONP(obj)));
+#else
+  return(C_TO_XEN_BOOLEAN(XEN_PROCEDURE_P(obj)));
+#endif
+}
+#endif
+
+
+void xen_initialize(void)
+{
+#if (!HAVE_SCM_CONTINUATION_P)
+  XEN_DEFINE_PROCEDURE("continuation?", g_continuation_p, 1, 0, 0, "#t if arg is a continuation");
+#endif
+}
 
 #endif
 
@@ -1982,6 +1997,130 @@ static char *print_hook(s7_scheme *sc, void *v)
 }
 
 
+/* add various file functions that everyone else implements */
+
+static XEN g_file_exists_p(XEN name)
+{
+  #define H_file_exists_p "(file-exists? filename): #t if the file exists"
+  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ONLY_ARG, "file-exists?", "a string");
+  return(C_TO_XEN_BOOLEAN(mus_file_probe(XEN_TO_C_STRING(name))));
+}
+
+static XEN g_getpid(void)
+{
+  #define H_getpid "(getpid) returns the current job's process id"
+  return(C_TO_XEN_INT((int)getpid()));
+}
+
+static XEN g_file_is_directory(XEN name)
+{
+  #define H_file_is_directory "(file-is-directory? filename): #t if filename names a directory"
+  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ONLY_ARG, "file-is-directory?", "a string");
+  return(C_TO_XEN_BOOLEAN(directory_p(XEN_TO_C_STRING(name)))); /* snd-file.c l 84 */
+}
+
+static XEN g_system(XEN command)
+{
+  #define H_system "(system command): execute command"
+  XEN_ASSERT_TYPE(XEN_STRING_P(command), command, XEN_ONLY_ARG, "system", "a string");
+  return(C_TO_XEN_INT(system(XEN_TO_C_STRING(command))));
+}
+
+static XEN g_s7_getenv(XEN var) /* "g_getenv" is in use in glib! */
+{
+  #define H_getenv "(getenv var): return value of environment variable var"
+  XEN_ASSERT_TYPE(XEN_STRING_P(var), var, XEN_ONLY_ARG, "getenv", "a string");
+  return(C_TO_XEN_STRING(getenv(XEN_TO_C_STRING(var))));
+}
+
+static XEN g_delete_file(XEN name)
+{
+  #define H_delete_file "(delete-file filename): deletes the file"
+  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ONLY_ARG, "delete-file", "a string");
+  return(C_TO_XEN_BOOLEAN(unlink(XEN_TO_C_STRING(name))));
+}
+
+#if (defined(HAVE_LIBC_H) && (!defined(HAVE_UNISTD_H)))
+  #include <libc.h>
+#else
+  #if (!(defined(_MSC_VER)))
+    #include <unistd.h>
+  #endif
+#endif
+
+static XEN g_getcwd(void)
+{
+  #define H_getcwd "(getcwd) returns the name of the current working directory"
+  char *buf;
+  XEN result = XEN_FALSE;
+  buf = (char *)calloc(1024, sizeof(char));
+  if (getcwd(buf, 1024) != NULL)
+    result = C_TO_XEN_STRING(buf);
+  free(buf);
+  return(result);
+}
+
+#if HAVE_SYS_TIME_H
+  #include <sys/time.h>
+#endif
+
+static XEN g_strftime(XEN format, XEN tm)
+{
+  #define H_strftime "(strftime format time) returns a string describing the time: (strftime \"%d-%b %H:%M %Z\" (localtime (current-time)))"
+  char *buf;
+  XEN result;
+  XEN_ASSERT_TYPE(XEN_STRING_P(format), format, XEN_ARG_1, "strftime", "a string");
+  buf = (char *)calloc(1024, sizeof(char));
+  strftime(buf, 1024, XEN_TO_C_STRING(format), (const struct tm *)XEN_UNWRAP_C_POINTER(tm));
+  result = C_TO_XEN_STRING(buf);
+  free(buf);
+  return(result);
+}
+
+/* (format #f ";~A~%" (strftime "%d-%b %H:%M %Z" (localtime (current-time)))) */
+/* these two need to be compatible with g_file_write_date in snd-file.c */
+
+static XEN g_localtime(XEN tm)
+{
+  #define H_localtime "(localtime tm) breaks up tm into something suitable for strftime"
+  time_t rtime;
+  rtime = (time_t)XEN_TO_C_INT(tm);
+  return(XEN_WRAP_C_POINTER(localtime((time_t *)(&rtime))));
+}
+
+static XEN g_current_time(void)
+{
+  time_t curtime;
+  #define H_current_time "(current-time) returns the current time (for localtime and strftime)"
+  curtime = time(NULL);
+  return(C_TO_XEN_INT(curtime));
+}
+
+#if USE_SND
+char *snd_tempnam(void);
+#endif
+
+static XEN g_tmpnam(void)
+{
+  XEN str;
+  char *result;
+#if USE_SND
+  result = snd_tempnam();
+#else
+  result = tempnam(NULL, "xen_");
+#endif
+  str = C_TO_XEN_STRING(result);
+  free(result);
+  return(str);
+}
+
+
+static XEN g_ftell(XEN fd)
+{
+  return(C_TO_XEN_OFF_T(lseek(XEN_TO_C_INT(fd), 0, SEEK_CUR)));
+}
+
+
 XEN_NARGIFY_1(g_hook_p_w, g_hook_p);
 XEN_NARGIFY_1(g_hook_empty_p_w, g_hook_empty_p)
 XEN_NARGIFY_2(g_remove_hook_w, g_remove_hook)
@@ -1990,6 +2129,19 @@ XEN_VARGIFY(g_run_hook_w, g_run_hook)
 XEN_NARGIFY_1(g_reset_hook_w, xen_s7_reset_hook)
 XEN_ARGIFY_2(g_make_hook_w, g_make_hook)
 XEN_ARGIFY_3(g_add_hook_w, g_add_hook)
+
+XEN_NARGIFY_0(g_getpid_w, g_getpid)
+XEN_NARGIFY_1(g_file_exists_p_w, g_file_exists_p)
+XEN_NARGIFY_1(g_file_is_directory_w, g_file_is_directory)
+XEN_NARGIFY_1(g_system_w, g_system)
+XEN_NARGIFY_1(g_s7_getenv_w, g_s7_getenv)
+XEN_NARGIFY_1(g_delete_file_w, g_delete_file)
+XEN_NARGIFY_0(g_getcwd_w, g_getcwd)
+XEN_NARGIFY_2(g_strftime_w, g_strftime)
+XEN_NARGIFY_1(g_localtime_w, g_localtime)
+XEN_NARGIFY_0(g_current_time_w, g_current_time)
+XEN_NARGIFY_0(g_tmpnam_w, g_tmpnam)
+XEN_NARGIFY_1(g_ftell_w, g_ftell)
 
 
 s7_scheme *s7_xen_initialize(s7_scheme *sc)
@@ -2013,14 +2165,43 @@ s7_scheme *s7_xen_initialize(s7_scheme *sc)
 
   ghook_tag = XEN_MAKE_OBJECT_TYPE("<hook>", print_hook, free_hook, equalp_hook, mark_hook, NULL, NULL);
 
-  XEN_DEFINE_PROCEDURE("hook?",        g_hook_p_w,       1, 0, 0, "(hook? obj) -> #t if obj is a hook");
-  XEN_DEFINE_PROCEDURE("hook-empty?",  g_hook_empty_p_w, 1, 0, 0, "(hook-empty? hook) -> #t if obj is an empty hook");
-  XEN_DEFINE_PROCEDURE("remove-hook!", g_remove_hook_w,  2, 0, 0, "(remove-hook! hook func) removes func from hook obj");
-  XEN_DEFINE_PROCEDURE("reset-hook!",  g_reset_hook_w,   1, 0, 0, "(reset-hook! hook) removes all funcs from hook obj");
-  XEN_DEFINE_PROCEDURE("hook->list",   g_hook_to_list_w, 1, 0, 0, "(hook->list hook) -> list of functions on hook obj");
-  XEN_DEFINE_PROCEDURE("run-hook",     g_run_hook_w,     0, 0, 1, "(run-hook hook . args) applies each hook function to args");
-  XEN_DEFINE_PROCEDURE("make-hook",    g_make_hook_w,    1, 1, 0, "(make-hook arity :optional help) makes a new hook object");
-  XEN_DEFINE_PROCEDURE("add-hook!",    g_add_hook_w,     2, 1, 0, "(add-hook! hook func :optional append) adds func to the hooks function list");
+  XEN_DEFINE_PROCEDURE("hook?",               g_hook_p_w,             1, 0, 0, "(hook? obj) -> #t if obj is a hook");
+  XEN_DEFINE_PROCEDURE("hook-empty?",         g_hook_empty_p_w,       1, 0, 0, "(hook-empty? hook) -> #t if obj is an empty hook");
+  XEN_DEFINE_PROCEDURE("remove-hook!",        g_remove_hook_w,        2, 0, 0, "(remove-hook! hook func) removes func from hook obj");
+  XEN_DEFINE_PROCEDURE("reset-hook!",         g_reset_hook_w,         1, 0, 0, "(reset-hook! hook) removes all funcs from hook obj");
+  XEN_DEFINE_PROCEDURE("hook->list",          g_hook_to_list_w,       1, 0, 0, "(hook->list hook) -> list of functions on hook obj");
+  XEN_DEFINE_PROCEDURE("run-hook",            g_run_hook_w,           0, 0, 1, "(run-hook hook . args) applies each hook function to args");
+  XEN_DEFINE_PROCEDURE("make-hook",           g_make_hook_w,          1, 1, 0, "(make-hook arity :optional help) makes a new hook object");
+  XEN_DEFINE_PROCEDURE("add-hook!",           g_add_hook_w,           2, 1, 0, "(add-hook! hook func :optional append) adds func to the hooks function list");
+
+  XEN_DEFINE_PROCEDURE("getpid",              g_getpid_w,             0, 0, 0, H_getpid);
+  XEN_DEFINE_PROCEDURE("file-exists?",        g_file_exists_p_w,      1, 0, 0, H_file_exists_p);
+  XEN_DEFINE_PROCEDURE("file-is-directory?",  g_file_is_directory_w,  1, 0, 0, H_file_is_directory); /* "directory?" would be a better name, but we follow Guile */
+  XEN_DEFINE_PROCEDURE("system",              g_system_w,             1, 0, 0, H_system);
+  XEN_DEFINE_PROCEDURE("getenv",              g_s7_getenv_w,          1, 0, 0, H_getenv);
+  XEN_DEFINE_PROCEDURE("delete-file",         g_delete_file_w,        1, 0, 0, H_delete_file);
+  XEN_DEFINE_PROCEDURE("getcwd",              g_getcwd_w,             0, 0, 0, H_getcwd);
+  XEN_DEFINE_PROCEDURE("strftime",            g_strftime_w,           2, 0, 0, H_strftime);
+  XEN_DEFINE_PROCEDURE("tmpnam",              g_tmpnam_w,             0, 0, 0, H_localtime);
+  XEN_DEFINE_PROCEDURE("localtime",           g_localtime_w,          1, 0, 0, H_localtime);
+  XEN_DEFINE_PROCEDURE("current-time",        g_current_time_w,       0, 0, 0, H_current_time);
+  XEN_DEFINE_PROCEDURE("ftell",               g_ftell_w,              1, 0, 0, "(ftell fd): lseek");
+
+
+  /* these are for compatibility with Guile (rather than add hundreds of "if provided?" checks) */
+  XEN_EVAL_C_STRING("(defmacro use-modules (arg . args) #f)");
+  XEN_EVAL_C_STRING("(define (debug-enable . args) #f)");
+  XEN_EVAL_C_STRING("(define (read-enable . args) #f)");
+  XEN_EVAL_C_STRING("(define-macro (debug-set! . args) #f)"); /* needs to be a macro so that its arguments are not evaluated */
+  XEN_EVAL_C_STRING("(define (make-soft-port . args) #f)");
+  XEN_EVAL_C_STRING("(define (current-module) (current-environment))");
+  XEN_EVAL_C_STRING("(define load-from-path load)");
+  XEN_EVAL_C_STRING("(define shell system)");
+  XEN_EVAL_C_STRING("(define (1+ x) (+ x 1))");
+  XEN_EVAL_C_STRING("(define (1- x) (- x 1))");
+  XEN_EVAL_C_STRING("(defmacro while (cond . body) `(do () ((not ,cond)) ,@body))");
+  XEN_EVAL_C_STRING("(define (identity x) x)");                    /* popup.scm uses this */
+  XEN_EVAL_C_STRING("(define (throw . args) (apply error args))"); /* selection.scm uses this */
 
   return(s7);
 }
