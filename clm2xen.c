@@ -9015,27 +9015,11 @@ static void mus_xen_init(void)
 #endif
 
 
-  /* -------- clm-print -------- */
-#if USE_SND
-#if HAVE_FORTH
-  XEN_EVAL_C_STRING(": clm-print ( fmt lst -- ) string-format snd-print drop ;");
-#endif
-
-#if HAVE_RUBY
-  XEN_EVAL_C_STRING("def clm_print(str, *args)\n\
-                      snd_print format(str, *args)\n\
-                      end");
-#endif
-
-#if HAVE_SCHEME
-  XEN_EVAL_C_STRING("(define (clm-print . args) (snd-print (apply format #f args)))");
-#endif
-
-#else
-  /* not USE_SND */
+  /* -------- clm-print (see also snd-xen.c) -------- */
+#if (!USE_SND)
 
 #if HAVE_FORTH
-  XEN_EVAL_C_STRING(": clm-print ( fmt lst -- ) string-format fth-print drop ;");
+  XEN_EVAL_C_STRING(": clm-print ( fmt lst -- ) 0 drop ;");
 #endif
 
 #if HAVE_RUBY

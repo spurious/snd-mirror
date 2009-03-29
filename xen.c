@@ -377,6 +377,10 @@ static XEN g_continuation_p(XEN obj)
  *   which returns #f, not b.  I can't see how to fix this.
  */
 
+#if USE_SND
+  void snd_warning(const char *format, ...);
+#endif
+
 static XEN g_skip_block_comment(XEN ch, XEN port)
 {
   int bang_seen = 0;
@@ -388,6 +392,8 @@ static XEN g_skip_block_comment(XEN ch, XEN port)
 	{
 #if USE_SND
 	  snd_warning("unterminated `#| ... |#' comment");
+#else
+	  fprintf(stderr, "unterminated `#| ... |#' comment");
 #endif
 	  return(XEN_FALSE);
 	}
@@ -404,8 +410,8 @@ static XEN g_skip_block_comment(XEN ch, XEN port)
 }
 
 
-static XEN g_gc_off(void) {}
-static XEN g_gc_on(void) {}
+static XEN g_gc_off(void) {return(XEN_FALSE);}
+static XEN g_gc_on(void)  {return(XEN_FALSE);}
 
 
 void xen_initialize(void)
@@ -1534,6 +1540,7 @@ static XEN g_gc_off(void)
 #else
   #define H_gc_off "(" S_gc_off ") is a no-op"
 #endif
+  return(XEN_FALSE);
 }
 
 
@@ -1545,6 +1552,7 @@ static XEN g_gc_on(void)
 #else
   #define H_gc_on "(" S_gc_on ") is a no-op"
 #endif
+  return(XEN_FALSE);
 }
 
 
@@ -1684,6 +1692,7 @@ static XEN g_gc_off(void)
 {
   #define H_gc_off "(" S_gc_off ") turns off garbage collection"
   fth_gc_on();
+  return(XEN_FALSE);
 }
 
 
@@ -1691,6 +1700,7 @@ static XEN g_gc_on(void)
 {
   #define H_gc_on "(" S_gc_on ") turns on garbage collection"
   fth_gc_on();
+  return(XEN_FALSE);
 }
 
 
@@ -2134,15 +2144,8 @@ static char *print_hook(s7_scheme *sc, void *v)
   #include <fcntl.h>
 #endif
 
-#if USE_SND
 
-char *snd_tempnam(void);
-bool mus_file_probe(const char *arg);
-bool directory_p(const char *filename);
-
-#else
-
-static bool mus_file_probe(const char *arg)
+static bool file_probe(const char *arg)
 {
   /* from io.c */
 #if HAVE_ACCESS
@@ -2159,6 +2162,14 @@ static bool mus_file_probe(const char *arg)
   return(true);
 #endif
 }
+
+
+#if USE_SND
+
+char *snd_tempnam(void);
+bool directory_p(const char *filename);
+
+#else
 
 static bool directory_p(const char *filename)
 {
@@ -2181,7 +2192,7 @@ static XEN g_file_exists_p(XEN name)
 {
   #define H_file_exists_p "(file-exists? filename): #t if the file exists"
   XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ONLY_ARG, "file-exists?", "a string");
-  return(C_TO_XEN_BOOLEAN(mus_file_probe(XEN_TO_C_STRING(name))));
+  return(C_TO_XEN_BOOLEAN(file_probe(XEN_TO_C_STRING(name))));
 }
 
 
@@ -2297,6 +2308,7 @@ static XEN g_gc_off(void)
 {
   #define H_gc_off "(" S_gc_off ") turns off garbage collection"
   s7_gc_on(s7, false);
+  return(XEN_FALSE);
 }
 
 
@@ -2304,6 +2316,7 @@ static XEN g_gc_on(void)
 {
   #define H_gc_on "(" S_gc_on ") turns on garbage collection"
   s7_gc_on(s7, true);
+  return(XEN_FALSE);
 }
 
 

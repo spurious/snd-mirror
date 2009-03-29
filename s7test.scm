@@ -70,7 +70,9 @@
 
 (if #t ; s7
     (begin
-      (set! (mus-rand-seed) (current-time))
+      (if (and (defined? 'current-time) ; in Snd
+	       (defined? 'mus-rand-seed))
+	  (set! (mus-rand-seed) (current-time)))
       (define (test-eval expr) (eval expr)))) ; (current-environment)))))
 
 (if #f ; guile
@@ -36517,7 +36519,7 @@ expt error > 1e-6 around 2^-46.506993328423
       ;; --------------------------------------------------------------------------------
       
       
-      (if (provided? 's7) (set! (mus-rand-seed) (current-time)))
+      (if (and (provided? 's7) (defined? 'current-time) (defined? 'mus-rand-seed)) (set! (mus-rand-seed) (current-time)))
       
       (format #t "the bug machine is running...")
       

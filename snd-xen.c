@@ -3200,6 +3200,22 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   XEN_EVAL_C_STRING("' undo alias undo-edit");
 #endif
 
+
+#if HAVE_FORTH
+  /* XEN_EVAL_C_STRING(": clm-print ( fmt lst -- ) 0 drop ;"); */
+#endif
+
+#if HAVE_RUBY
+  XEN_EVAL_C_STRING("def clm_print(str, *args)\n\
+                      snd_print format(str, *args)\n\
+                      end");
+#endif
+
+#if HAVE_SCHEME
+  XEN_EVAL_C_STRING("(define (clm-print . args) (snd-print (apply format #f args)))");
+#endif
+
+
 #if HAVE_STATIC_XM
   #if USE_MOTIF
     Init_libxm();

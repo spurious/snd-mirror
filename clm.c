@@ -6592,7 +6592,7 @@ static char *describe_mixer(mus_any *ptr)
 		     ((j == (lim - 1)) && (lim < gen->chans)) ? "..." : "",
 		     (j == (lim - 1)) ? "\n" : "",
 		     ((i == (lim - 1)) && (j == (lim - 1))) ? "]" : " ");
-	if ((strlen(describe_buffer) + strlen(str)) < (bufsize - 1))
+	if ((int)(strlen(describe_buffer) + strlen(str)) < (bufsize - 1))
 	  strcat(describe_buffer, str);
 	else break;
       }
