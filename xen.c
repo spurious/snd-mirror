@@ -2140,6 +2140,8 @@ static char *print_hook(s7_scheme *sc, void *v)
   #include <sys/time.h>
 #endif
 
+#include <sys/stat.h>
+
 #if HAVE_FCNTL_H
   #include <fcntl.h>
 #endif
