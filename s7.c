@@ -590,6 +590,7 @@ struct s7_scheme {
 
 /* unused type bits: 0xf0000000 */
 
+
 #define PARALLEL_GC 0
 
 #if PARALLEL_GC
@@ -609,6 +610,7 @@ struct s7_scheme {
 
 #endif
 /* PARALLEL_GC */
+
 
 #if HAVE_PTHREADS
 #define set_type(p, f)                typeflag(p) = ((typeflag(p) & T_GC_MARK) | (f) | T_OBJECT)
@@ -913,8 +915,6 @@ static void set_pair_line_number(s7_pointer p, int n)
     pair_line_number(p) = n;
 }
 
-
-static int s7_int_max = 0, s7_int_min = 0, s7_int_bits = 0, s7_int_digits = 0; /* initialized later */
 
 
 
@@ -2480,8 +2480,6 @@ static num nvalue(s7_pointer p)
 }
 
 
-static double default_rationalize_error = 1.0e-12;
-
 static s7_Int c_mod(s7_Int x, s7_Int y)
 {
   s7_Int z;
@@ -2846,6 +2844,8 @@ static s7_pointer exact_to_inexact(s7_scheme *sc, s7_pointer x)
 }
 
 
+static double default_rationalize_error = 1.0e-12;
+
 static s7_pointer inexact_to_exact(s7_scheme *sc, s7_pointer x)
 {
   if ((s7_is_real(x)) && 
@@ -3047,6 +3047,8 @@ static int integer_length(s7_Int a)
   return(56 + bits[a >> 56]);
 }
 
+
+static int s7_int_max = 0, s7_int_min = 0, s7_int_bits = 0, s7_int_digits = 0; /* initialized later */
 
 static num num_add(num a, num b) 
 {

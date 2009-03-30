@@ -842,15 +842,6 @@ char *procedure_ok(XEN proc, int args, const char *caller, const char *arg_name,
       if (!xen_rb_arity_ok(rargs, args))
  	return(mus_format(_("%s function (%s arg %d) should take %d args, not %d"),
  			  arg_name, caller, argn, args, (rargs < 0) ? (-rargs) : rargs));
-      /*
-      if ((rargs > args) ||
-	  ((rargs < 0) && (-rargs > args)))
-	return(mus_format(_("%s function (%s arg %d) should take %d args, not %d"), 
-			  arg_name, caller, argn, args, (rargs < 0) ? (-rargs) : rargs));
-      if ((args == 0) && (rargs != 0))
-	return(mus_format(_("%s function (%s arg %d) should take no args, not %d"), 
-			  arg_name, caller, argn, (rargs < 0) ? (-rargs) : rargs));
-      */
 #endif
 
 #if HAVE_SCHEME
@@ -867,9 +858,11 @@ char *procedure_ok(XEN proc, int args, const char *caller, const char *arg_name,
 	if (rargs > args)
 	  return(mus_format(_("%s function (%s arg %d) should take %d argument%s, but instead requires %d"),
 			    arg_name, caller, argn, args, (args != 1) ? "s" : "", rargs));
+
 	if ((restargs == 0) && ((rargs + oargs) < args))
 	  return(mus_format(_("%s function (%s arg %d) should accept at least %d argument%s, but instead accepts only %d"),
 			    arg_name, caller, argn, args, (args != 1) ? "s" : "", rargs + oargs));
+
 	if ((args == 0) &&
 	    ((rargs != 0) || (oargs != 0) || (restargs != 0)))
 	  return(mus_format(_("%s function (%s arg %d) should take no args, not %d"), 
@@ -3201,6 +3194,7 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
 #endif
 
 
+  /* clm-print */
 #if HAVE_FORTH
   /* XEN_EVAL_C_STRING(": clm-print ( fmt lst -- ) 0 drop ;"); */
 #endif
