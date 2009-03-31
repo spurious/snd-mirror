@@ -48,6 +48,13 @@ echo ' '
 # ./snd tmp.scm
 # rm tmp.scm
 
+echo ' -------------------------------- s7 r5rs and other defaults changed -------------------------------- '
+make allclean
+./configure --quiet CFLAGS="-Wall -I/usr/X11R6/include -DWITH_R5RS_RATIONALIZE=1 -DWITH_MULTIDIMENSIONAL_VECTORS=0" LDFLAGS="-L/usr/X11R6/lib" 
+make
+echo ' '
+echo ' '
+
 echo ' -------------------------------- no strftime -------------------------------- '
 
 sed mus-config.h -e 's/#define HAVE_STRFTIME 1/#define HAVE_STRFTIME 0/' > tmp

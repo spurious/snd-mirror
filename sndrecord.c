@@ -23,7 +23,7 @@
 #define BUFFER_SIZE 4096
 #define READS 10
 typedef short indata;
-#ifdef WINDOZE
+#ifdef MUS_WINDOZE
   #define FILE_TYPE MUS_RIFF
   #define DATA_TYPE MUS_UBYTE
   #define SAMPLING_RATE 22050

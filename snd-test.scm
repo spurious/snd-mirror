@@ -52030,6 +52030,9 @@ EDITS: 1
 (if (not (provided? 'snd-freeverb.scm)) (load "freeverb.scm"))
 (if (not (provided? 'snd-grani.scm)) (load "grani.scm"))
 (if (not (provided? 'snd-animals.scm)) (load "animals.scm"))
+(if (and (provided? 'multidimensional-vectors)
+	 (not (provided? 'snd-gib-gens.scm)))
+    (load "big-gens.scm"))
 (if (and (not (provided? 'snd-dlocsig.scm))
 	 (not (provided? 'snd-s7))) ; define-class and so on -- not supported
     (catch #t 
@@ -56239,7 +56242,9 @@ EDITS: 1
 	
 	(calling-all-animals)
 	(calling-all-generators)
-	
+	;;; TODO: big-gens.scm test (doc?)
+
+
 	(let ((funcs (list nssb nxysin nxycos nxy1cos nxy1sin noddsin noddcos noddssb ncos2 npcos
 			   nrsin nrcos nrssb nkssb nsincos rcos rssb rxysin rxycos
 			   rxyk!sin rxyk!cos ercos erssb eoddcos rkcos rksin rkssb
@@ -66707,4 +66712,3 @@ EDITS: 1
 
 ;;; ---------------- test the end
 
-;;; TODO: big-gens.scm test (doc?)

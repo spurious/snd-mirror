@@ -168,11 +168,6 @@
 
 /* ---------------- scheme choices ---------------- */
 
-#ifndef WITH_CASE_SENSITIVE_SYMBOL_NAMES
-  #define WITH_CASE_SENSITIVE_SYMBOL_NAMES 1
-  /* this determines whether names are case sensitive */
-#endif
-
 #ifndef WITH_R5RS_RATIONALIZE
   #define WITH_R5RS_RATIONALIZE 0
   /* this causes s7 to follow the scheme spec for rationalize (not recommended) --
@@ -736,27 +731,8 @@ struct s7_scheme {
 #define real(n)                       n.value.real_value
 
 
-#if WITH_CASE_SENSITIVE_SYMBOL_NAMES
-
-#define string_downcase(Str) Str
 #define STRCMP(Str1, Str2) strcmp(Str1, Str2)
 /* STRCMP currently only used in symbol table (hash) refs, and only checks == 0 */
-
-#else
-
-#define STRCMP(Str1, Str2) strcasecmp(Str1, Str2)
-static const char *string_downcase(char *s) 
-{
-  const char *p = s;
-  while (*s) 
-    {
-      *s = tolower(*s);
-      s++;
-    }
-  return(p);
-}
-
-#endif
 
 
 static int safe_strlen(const char *str)
@@ -903,12 +879,13 @@ static void set_pair_line_number(s7_pointer p, int n)
 
 /* -------- gc benchmark -------- */
 
-#define BENCHMARK_GC 0
+#define BENCHMARK_GC 1
 
 #if BENCHMARK_GC
 
 static double gc_total = 0.0;
 static double gc_max = 0.0;
+static double gc_mark_max = 0.0;
 
 static double s7_get_gc_bench_time(void)
 {
@@ -1192,7 +1169,7 @@ static int gc(s7_scheme *sc)
   int i, old_free_heap_top;
   
 #if BENCHMARK_GC
-  double start_time;
+  double start_time, gc_mark_time;
   start_time = s7_get_gc_bench_time();
 #endif
 
@@ -1229,6 +1206,14 @@ static int gc(s7_scheme *sc)
       S7_MARK(sc->backtrace_args[i]);
     }
   
+ #if BENCHMARK_GC
+   {
+     gc_mark_time = s7_get_gc_bench_time() - start_time;
+     if (gc_mark_time > gc_mark_max)
+       gc_mark_max = gc_mark_time;
+   }
+#endif
+
   /* free up all other objects */
   old_free_heap_top = sc->free_heap_top;
 
@@ -1266,7 +1251,7 @@ static int gc(s7_scheme *sc)
      if (gc_time > gc_max)
        gc_max = gc_time;
     
-     fprintf(stderr, "time used to gc: %f. \ttotal: %f. \tmax: %f\n", (float)gc_time, (float)gc_total, (float)gc_max);
+     fprintf(stderr, "time used to gc: %f %f. \ttotal: %f. \tmax: %f %f\n", (float)gc_mark_time, (float)gc_time, (float)gc_total, (float)gc_mark_max, (float)gc_max);
    }
 #endif
 
@@ -4177,7 +4162,7 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
 	  c = *p++; 
 	} 
       if (!ISDIGIT(c, current_radix))
-	return((want_symbol) ? s7_make_symbol(sc, string_downcase(q)) : sc->F);  /* if WITH_CASE_SENSITIVE_SYMBOL_NAMES, string_downcase is a no-op */
+	return((want_symbol) ? s7_make_symbol(sc, q) : sc->F);
     } 
   else 
     {
@@ -4186,12 +4171,12 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
 	  has_dec_point1 = true; 
 	  c = *p++; 
 	  if (!ISDIGIT(c, current_radix))
-	    return((want_symbol) ? s7_make_symbol(sc, string_downcase(q)) : sc->F); 
+	    return((want_symbol) ? s7_make_symbol(sc, q) : sc->F); 
 	} 
       else 
 	{
 	  if (!ISDIGIT(c, current_radix))
-	    return((want_symbol) ? s7_make_symbol(sc, string_downcase(q)) : sc->F); 
+	    return((want_symbol) ? s7_make_symbol(sc, q) : sc->F); 
 	}
     }
   
@@ -4206,16 +4191,16 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
 	      if (((has_dec_point1) ||
 		   (slash1)) &&
 		  (has_plus_or_minus == 0)) /* 1.. or 1/2. */
-		return((want_symbol) ? s7_make_symbol(sc, string_downcase(q)) : sc->F); 
+		return((want_symbol) ? s7_make_symbol(sc, q) : sc->F); 
 
 	      if (((has_dec_point2) ||
 		   (slash2)) &&
 		  (has_plus_or_minus != 0)) /* 1+1.. or 1+1/2. */
-		return((want_symbol) ? s7_make_symbol(sc, string_downcase(q)) : sc->F); 
+		return((want_symbol) ? s7_make_symbol(sc, q) : sc->F); 
 
 	      if ((!ISDIGIT(p[1], current_radix)) &&
 		  (!ISDIGIT(p[-1], current_radix))) 
-		return((want_symbol) ? s7_make_symbol(sc, string_downcase(q)) : sc->F); 
+		return((want_symbol) ? s7_make_symbol(sc, q) : sc->F); 
 	      
 	      if (has_plus_or_minus == 0)
 		has_dec_point1 = true;
@@ -4227,7 +4212,7 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
 	      if (exponent_table[(int)c])
 		{
 		  if (current_radix > 10)
-		    return((want_symbol) ? s7_make_symbol(sc, string_downcase(q)) : sc->F); 
+		    return((want_symbol) ? s7_make_symbol(sc, q) : sc->F); 
 		  /* see note above */
 
 		  current_radix = 10;
@@ -4235,16 +4220,16 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
 		  if (((ex1) ||
 		       (slash1)) &&
 		      (has_plus_or_minus == 0)) /* ee */
-		    return((want_symbol) ? s7_make_symbol(sc, string_downcase(q)) : sc->F); 
+		    return((want_symbol) ? s7_make_symbol(sc, q) : sc->F); 
 
 		  if (((ex2) ||
 		       (slash2)) &&
 		      (has_plus_or_minus != 0)) /* 1+1.0ee */
-		    return((want_symbol) ? s7_make_symbol(sc, string_downcase(q)) : sc->F); 
+		    return((want_symbol) ? s7_make_symbol(sc, q) : sc->F); 
 
 		  if ((!ISDIGIT(p[-1], current_radix)) &&
 		      (p[-1] != '.'))
-		    return((want_symbol) ? s7_make_symbol(sc, string_downcase(q)) : sc->F); 
+		    return((want_symbol) ? s7_make_symbol(sc, q) : sc->F); 
 
 		  if (has_plus_or_minus == 0)
 		    {
@@ -4266,7 +4251,7 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
 		  if ((c == '+') || (c == '-'))
 		    {
 		      if (has_plus_or_minus != 0) /* already have the separator */
-			return((want_symbol) ? s7_make_symbol(sc, string_downcase(q)) : sc->F);
+			return((want_symbol) ? s7_make_symbol(sc, q) : sc->F);
 		      
 		      if (c == '+') has_plus_or_minus = 1; else has_plus_or_minus = -1;
 		      plus = (char *)(p + 1);
@@ -4280,13 +4265,13 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
 			      ((ex1) ||
 			       (slash1) ||
 			       (has_dec_point1)))
-			    return((want_symbol) ? s7_make_symbol(sc, string_downcase(q)) : sc->F);
+			    return((want_symbol) ? s7_make_symbol(sc, q) : sc->F);
 
 			  if ((has_plus_or_minus != 0) &&
 			      ((ex2) ||
 			       (slash2) ||
 			       (has_dec_point2)))
-			    return((want_symbol) ? s7_make_symbol(sc, string_downcase(q)) : sc->F);
+			    return((want_symbol) ? s7_make_symbol(sc, q) : sc->F);
 			  
 			  if (has_plus_or_minus == 0)
 			    slash1 = (char *)(p + 1);
@@ -4294,7 +4279,7 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
 
 			  if ((!ISDIGIT(p[1], current_radix)) ||
 			      (!ISDIGIT(p[-1], current_radix)))
-			    return((want_symbol) ? s7_make_symbol(sc, string_downcase(q)) : sc->F);
+			    return((want_symbol) ? s7_make_symbol(sc, q) : sc->F);
 
 			  continue;
 			}
@@ -4311,13 +4296,13 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
 		    }
 		}
 	    }
-	  return((want_symbol) ? s7_make_symbol(sc, string_downcase(q)) : sc->F);
+	  return((want_symbol) ? s7_make_symbol(sc, q) : sc->F);
 	}
     }
   
   if ((has_plus_or_minus != 0) &&
       (!has_i))
-    return((want_symbol) ? s7_make_symbol(sc, string_downcase(q)) : sc->F);
+    return((want_symbol) ? s7_make_symbol(sc, q) : sc->F);
 
   if (has_i)
     {
@@ -4330,7 +4315,7 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
       len = strlen(q);
       
       if (q[len - 1] != 'i')
-	return((want_symbol) ? s7_make_symbol(sc, string_downcase(q)) : sc->F);
+	return((want_symbol) ? s7_make_symbol(sc, q) : sc->F);
 
       saved_q = s7_strdup(q);
 
@@ -4392,7 +4377,7 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
       char old_e = 0;
 
       if (slash1)  /* not complex, so slash and "." is not a number */
-	return((want_symbol) ? s7_make_symbol(sc, string_downcase(q)) : sc->F);
+	return((want_symbol) ? s7_make_symbol(sc, q) : sc->F);
 
       if (ex1)
 	{
@@ -9561,7 +9546,9 @@ s7_pointer s7_make_vector(s7_scheme *sc, int len)
       s7_vector_fill(sc, x, sc->NIL);
     }
   else x->object.vector.elements = NULL;
+#if WITH_MULTIDIMENSIONAL_VECTORS
   x->object.vector.dim_info = NULL;
+#endif
   return(x);
 }
 
@@ -19666,10 +19653,6 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "thread-variable?",        g_is_thread_variable,      1, 0, false, H_is_thread_variable);
 
   g_provide(sc, make_list_1(sc, s7_make_symbol(sc, "threads")));
-#endif
-
-#if (!WITH_CASE_SENSITIVE_SYMBOL_NAMES)
-  g_provide(sc, make_list_1(sc, s7_make_symbol(sc, "case-insensitive")));
 #endif
 
 #if WITH_MULTIDIMENSIONAL_VECTORS

@@ -2562,6 +2562,42 @@
 ;(let ((lst (list 1 2)) (v (make-vector 3))) (vector-fill! v lst) (list-set! (vector-ref v 0) 1 #\a) lst) -> '(1 #\a)
 
 
+(if (provided? 'multidimensional-vectors)
+    (let ((v1 (make-vector 3 1)))
+      (num-test (v1 1) 1)
+      (set! (v1 1) 2)
+      (num-test (v1 1) 2)
+      (let ((i0 0)
+	    (i2 2))
+	(num-test (v1 i0) 1)
+	(num-test (vector-ref v1 i2) 1)
+	(set! (v1 i0) 0)
+	(num-test (v1 0) 0)
+	(set! (v1 i0) i2)
+	(num-test (v1 i0) i2))
+      (test (vector-dimensions v1) '(3))
+      (set! v1 (make-vector '(3 2)))
+      (test (vector-dimensions v1) '(3 2))
+      (vector-set! v1 1 1 0)
+      (num-test (vector-ref v1 1 1) 0)
+      (let ((i0 1)
+	    (i1 1)
+	    (i2 32))
+	(set! (v1 i0 i1) i2)
+	(num-test (vector-ref v1 1 1) 32)
+	(num-test (v1 i0 i1) i2)
+	(vector-set! v1 0 1 3)
+	(num-test (v1 0 1) 3)
+	(num-test (v1 1 1) 32))
+      (set! v1 (make-vector '(2 4 3) 1))
+      (test (vector-dimensions v1) '(2 4 3))      
+      (num-test (vector-ref v1 1 1 1) 1)
+      (vector-set! v1 0 0 0 32)
+      (num-test (v1 0 0 0) 32)
+      (set! (v1 0 1 1) 3)
+      (num-test (v1 0 1 1) 3)))
+
+
 
 ;;; --------------------------------------------------------------------------------
 ;;; PORTS
