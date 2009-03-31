@@ -72,6 +72,10 @@
  *        random for any numeric type and any numeric argument
  *        optional multidimensional and applicable vectors
  *
+ *   things I ought to change:
+ *        length should work on vectors and strings [fill!, copy, reverse! ?]
+ *
+ *
  * Mike Scholz provided the FreeBSD support (complex trig funcs, etc)
  * Rick Taube provided the MS Visual C++ support
  *
@@ -426,10 +430,6 @@ struct s7_scheme {
   s7_pointer code;                    /* current code */
   
   s7_pointer stack;                   /* stack is a vector */
-#if PARALLEL_GC
-  s7_pointer gc_stack;
-  int gc_stack_top;
-#endif
   int stack_size, stack_top;
   s7_pointer *small_ints;             /* permanent numbers for opcode entries in the stack */
   
@@ -463,6 +463,9 @@ struct s7_scheme {
   s7_pointer KEY_KEY, KEY_OPTIONAL, KEY_REST;
   s7_pointer FEED_TO;                 /* => */
   s7_pointer SET_OBJECT;              /* object set method */
+#if WITH_MULTIDIMENSIONAL_VECTORS
+  s7_pointer VECTOR_SET;              /* applicable vector set method */
+#endif
   
   s7_pointer input_port;              /* current-input-port (nil = stdin) */
   s7_pointer input_port_stack;        /*   input port stack (load and read internally) */
@@ -590,28 +593,6 @@ struct s7_scheme {
 
 /* unused type bits: 0xf0000000 */
 
-
-#define PARALLEL_GC 0
-
-#if PARALLEL_GC
-#error "PARALLEL_GC is not fully implemented yet."
-
-#define SET(PLACE,VAL)   \
-  do{                      \
-    if (running_mark) \
-      write_barrier(PLACE); \
-    (PLACE) = (VAL);	   \
-    } \
-  while(0);
-
-#else
-
-#define SET(PLACE,VAL) ((PLACE) = (VAL))
-
-#endif
-/* PARALLEL_GC */
-
-
 #if HAVE_PTHREADS
 #define set_type(p, f)                typeflag(p) = ((typeflag(p) & T_GC_MARK) | (f) | T_OBJECT)
 /* the gc call can be interrupted, leaving mark bits set -- we better not clear those bits */
@@ -653,7 +634,7 @@ struct s7_scheme {
 #define symbol_name(p)                string_value(car(p))
 #define symbol_name_length(p)         string_length(car(p))
 #define symbol_value(Sym)             cdr(Sym)
-#define set_symbol_value(Sym, Val)    SET(cdr(Sym), (Val))
+#define set_symbol_value(Sym, Val)    cdr(Sym) = (Val)
 
 #define string_value(p)               ((p)->object.string.svalue)
 #define string_length(p)              ((p)->object.string.length)
@@ -1456,9 +1437,6 @@ static void push_stack(s7_scheme *sc, opcode_t op, s7_pointer args, s7_pointer c
 	vector_element(sc->stack, i) = sc->NIL;
       sc->stack->object.vector.length = new_size;
       sc->stack_size = new_size;
-#if PARALLEL_GC
-      sc->stack_gc->object.vector.elements = (s7_pointer *)realloc(sc->stack->object.vector.elements, new_size * sizeof(s7_pointer));
-#endif
     }
 
   vel = (s7_pointer *)(sc->stack->object.vector.elements + sc->stack_top - 4);
@@ -1728,8 +1706,8 @@ static s7_pointer add_to_environment(s7_scheme *sc, s7_pointer env, s7_pointer v
   s7_pointer slot;
   slot = s7_immutable_cons(sc, variable, value); 
   if (s7_is_vector(car(env))) 
-    SET( vector_element(car(env), symbol_location(variable)), s7_immutable_cons(sc, slot, vector_element(car(env), symbol_location(variable))));
-  else SET(car(env), s7_immutable_cons(sc, slot, car(env)));
+    vector_element(car(env), symbol_location(variable)) = s7_immutable_cons(sc, slot, vector_element(car(env), symbol_location(variable))); 
+  else car(env) = s7_immutable_cons(sc, slot, car(env));
   return(slot);
 } 
 
@@ -1808,7 +1786,7 @@ static bool lambda_star_argument_set_value(s7_scheme *sc, s7_pointer sym, s7_poi
     if (caar(x) == sym)
       {
 	/* car(x) is our binding (symbol value) */
-	SET(cdar(x), val);
+	cdar(x) = val;
 	return(true);
       }
   return(false);
@@ -8697,14 +8675,14 @@ s7_pointer s7_cdr(s7_pointer p)
 
 s7_pointer s7_set_car(s7_pointer p, s7_pointer q) 
 { 
-  SET(car(p), q);
+  car(p) = q;
   return(p);
 }
 
 
 s7_pointer s7_set_cdr(s7_pointer p, s7_pointer q) 
 { 
-  SET(cdr(p), q);
+  cdr(p) = q;
   return(p);
 }
 
@@ -8778,7 +8756,7 @@ s7_pointer s7_list_set(s7_scheme *sc, s7_pointer lst, int num, s7_pointer val)
   for (x = lst, i = 0; (i < num) && (is_pair(x)); i++, x = cdr(x)) {}
   if ((i == num) &&
       (is_pair(x)))
-    SET(car(x), val);
+    car(x) = val;
   return(val);
 }
 
@@ -8827,7 +8805,7 @@ static s7_pointer s7_reverse_in_place(s7_scheme *sc, s7_pointer term, s7_pointer
       if ((!is_pair(q)) &&
 	  (q != sc->NIL))
 	return(sc->NIL); /* improper list? */
-      SET(cdr(p), result);
+      cdr(p) = result;
       result = p;
       p = q;
     }
@@ -8844,7 +8822,7 @@ static s7_pointer safe_reverse_in_place(s7_scheme *sc, s7_pointer list)
     {
       q = cdr(p);
       /*   also if (list == sc->NIL) || (cdr(list) == sc->NIL) return(list) */
-      SET(cdr(p), result);
+      cdr(p) = result;
       result = p;
       p = q;
     }
@@ -9014,7 +8992,7 @@ static s7_pointer g_list_set(s7_scheme *sc, s7_pointer args)
   if (!is_pair(p))
     return(s7_wrong_type_arg_error(sc, "list-set!", i, p, "a proper list"));
   
-  SET(car(p), caddr(args));
+  car(p) = caddr(args);
   return(caddr(args));
 }
 
@@ -9088,7 +9066,7 @@ static s7_pointer g_set_car(s7_scheme *sc, s7_pointer args)
   if (s7_is_immutable(car(args))) 
     return(s7_wrong_type_arg_error(sc, "set-car!", 1, car(args), "a mutable pair"));
   
-  SET(caar(args), cadr(args));
+  caar(args) = cadr(args);
   return(args);
 }
 
@@ -9103,7 +9081,7 @@ static s7_pointer g_set_cdr(s7_scheme *sc, s7_pointer args)
   if (s7_is_immutable(car(args))) 
     return(s7_wrong_type_arg_error(sc, "set-cdr!", 1, car(args), "a mutable pair"));
   
-  SET(cdar(args), cadr(args));
+  cdar(args) = cadr(args);
   return(args);
 }
 
@@ -9602,7 +9580,7 @@ void s7_vector_fill(s7_scheme *sc, s7_pointer vec, s7_pointer obj)
   len = vector_length(vec);
   tp = (s7_pointer *)(vec->object.vector.elements);
   for (i = 0; i < len; i++) 
-    SET(tp[i], obj);
+    tp[i] = obj;
 }
 #endif
 
@@ -9634,7 +9612,7 @@ s7_pointer s7_vector_set(s7_scheme *sc, s7_pointer vec, int index, s7_pointer a)
   if (index >= vector_length(vec))
     return(s7_out_of_range_error(sc, "vector-set!", 2, s7_make_integer(sc, index), "index is too high"));
 
-  SET(vector_element(vec, index), a);
+  vector_element(vec, index) = a;
   return(a);
 }
 
@@ -9749,6 +9727,45 @@ static s7_pointer g_vector_length(s7_scheme *sc, s7_pointer args)
 }
 
 
+static s7_pointer vector_ref_1(s7_scheme *sc, s7_pointer vect, s7_pointer indices)
+{
+  int index = 0;
+#if WITH_MULTIDIMENSIONAL_VECTORS
+  if (vector_is_multidimensional(vect))
+    {
+      int i;
+      s7_pointer x;
+      for (x = indices, i = 0; (x != sc->NIL) && (i < vector_ndims(vect)); x = cdr(x), i++)
+	{
+	  int n;
+	  if (!s7_is_integer(car(x)))
+	    return(s7_wrong_type_arg_error(sc, "vector ref", i + 2, car(x), "an integer"));
+	  n = s7_integer(car(x));
+	  if ((n < 0) || 
+	      (n >= vector_dimension(vect, i)))
+	    return(s7_out_of_range_error(sc, "vector ref", i + 2, car(x), "between 0 and the dimension size"));
+	  index += n * vector_offset(vect, i);
+	}
+      if ((x != sc->NIL) ||
+	  (i != vector_ndims(vect)))
+	return(s7_wrong_number_of_args_error(sc, "vector ref", indices));
+    }
+  else
+#endif
+    {
+      /* (let ((hi (make-vector 3 0.0)) (sum 0.0)) (do ((i 0 (+ i 1))) ((= i 3)) (set! sum (+ sum (hi i)))) sum) */
+      if (!s7_is_integer(car(indices)))
+	return(s7_wrong_type_arg_error(sc, "vector ref", 2, car(indices), "an integer"));
+      index = s7_integer(car(indices));
+      if ((index < 0) ||
+	  (index >= vector_length(vect)))
+	return(s7_out_of_range_error(sc, "vector ref", 2, s7_make_integer(sc, index), "between 0 and the vector length"));
+    }
+
+  return(vector_element(vect, index));
+}
+
+
 static s7_pointer g_vector_ref(s7_scheme *sc, s7_pointer args)
 {
 #if WITH_MULTIDIMENSIONAL_VECTORS
@@ -9758,48 +9775,13 @@ are the indices, or omit 'vector-ref': (v ...)."
 #else
   #define H_vector_ref "(vector-ref v i) returns the i-th element of vector v"
 #endif
-  s7_pointer vec;
-  int index;
 
+  s7_pointer vec;
   vec = car(args);
   if (!s7_is_vector(vec))
     return(s7_wrong_type_arg_error(sc, "vector-ref", 1, vec, "a vector"));
 
-#if WITH_MULTIDIMENSIONAL_VECTORS
-  if (vector_is_multidimensional(vec))
-    {
-      int i;
-      s7_pointer x;
-      index = 0;
-      for (x = cdr(args), i = 0; (x != sc->NIL) && (i < vector_ndims(vec)); x = cdr(x), i++)
-	{
-	  int n;
-	  if (!s7_is_integer(car(x)))
-	    return(s7_wrong_type_arg_error(sc, "vector-ref", i + 2, car(x), "an integer"));
-	  n = s7_integer(car(x));
-	  if ((n < 0) || 
-	      (n >= vector_dimension(vec, i)))
-	    return(s7_out_of_range_error(sc, "vector-ref", i, car(x), "between 0 and the dimension size"));
-	  index += n * vector_offset(vec, i);
-	}
-      if ((x != sc->NIL) ||
-	  ((i != vector_ndims(vec)) &&
-	   (i != 1)))
-	return(s7_wrong_number_of_args_error(sc, "vector-ref", args));
-    }
-  else
-#endif
-    {
-      if (!s7_is_integer(cadr(args)))
-	return(s7_wrong_type_arg_error(sc, "vector-ref", 2, cadr(args), "an integer"));
-
-      index = s7_integer(cadr(args));
-      if ((index < 0) ||
-	  (index >= vector_length(vec)))
-	return(s7_out_of_range_error(sc, "vector-ref", 2, cadr(args), "between 0 and the vector length"));
-    }
-  
-  return(vector_element(vec, index));
+  return(vector_ref_1(sc, vec, cdr(args)));
 }
 
 
@@ -9859,9 +9841,8 @@ can also use 'set!' instead of 'vector-set!': (set! (v ...) val) -- I find this 
 
       val = caddr(args);
     }
-
   
-  SET(vector_element(vec, index), val);
+  vector_element(vec, index) = val;
   return(val);
 }
 
@@ -9979,83 +9960,8 @@ static s7_pointer g_vector_dimensions(s7_scheme *sc, s7_pointer args)
   
   return(make_list_1(sc, s7_make_integer(sc, vector_length(x))));
 }
-
-
-static s7_pointer applicable_vector_ref(s7_scheme *sc, s7_pointer vect, s7_pointer indices)
-{
-  int index = 0;
-  if (vector_is_multidimensional(vect))
-    {
-      int i;
-      s7_pointer x;
-      for (x = indices, i = 0; (x != sc->NIL) && (i < vector_ndims(vect)); x = cdr(x), i++)
-	{
-	  int n;
-	  if (!s7_is_integer(car(x)))
-	    return(s7_wrong_type_arg_error(sc, "vector ref", i + 2, car(x), "an integer"));
-	  n = s7_integer(car(x));
-	  if ((n < 0) || 
-	      (n >= vector_dimension(vect, i)))
-	    return(s7_out_of_range_error(sc, "vector ref", i + 2, car(x), "between 0 and the dimension size"));
-	  index += n * vector_offset(vect, i);
-	}
-      if ((x != sc->NIL) ||
-	  (i != vector_ndims(vect)))
-	return(s7_wrong_number_of_args_error(sc, "vector ref", indices));
-    }
-  else
-    {
-      if (!s7_is_integer(car(indices)))
-	return(s7_wrong_type_arg_error(sc, "vector ref", 2, car(indices), "an integer"));
-      index = s7_integer(car(indices));
-      if ((index < 0) ||
-	  (index >= vector_length(vect)))
-	return(s7_out_of_range_error(sc, "vector ref", 2, s7_make_integer(sc, index), "between 0 and the vector length"));
-    }
-
-
-  return(vector_element(vect, index));
-}
-
-
-static s7_pointer applicable_vector_set(s7_scheme *sc, s7_pointer vect, s7_pointer indices, s7_pointer val)
-{
-  int index = 0;
-  if (vector_is_multidimensional(vect))
-    {
-      int i;
-      s7_pointer x;
-      for (x = indices, i = 0; (x != sc->NIL) && (i < vector_ndims(vect)); x = cdr(x), i++)
-	{
-	  int n;
-	  if (!s7_is_integer(car(x)))
-	    return(s7_wrong_type_arg_error(sc, "vector set!", i + 2, car(x), "an integer"));
-	  n = s7_integer(car(x));
-	  if ((n < 0) || 
-	      (n >= vector_dimension(vect, i)))
-	    return(s7_out_of_range_error(sc, "vector set!", i + 2, car(x), "between 0 and the dimension size"));
-	  index += n * vector_offset(vect, i);
-	}
-      if ((x != sc->NIL) ||
-	  ((i != vector_ndims(vect)) &&
-	   (i != 1)))
-	return(s7_wrong_number_of_args_error(sc, "vector set!", indices));
-    }
-  else
-    {
-      if (!s7_is_integer(car(indices)))
-	return(s7_wrong_type_arg_error(sc, "vector set!", 2, car(indices), "an integer"));
-      index = s7_integer(car(indices));
-      if ((index < 0) ||
-	  (index >= vector_length(vect)))
-	return(s7_out_of_range_error(sc, "vector ref", 2, s7_make_integer(sc, index), "between 0 and the vector length"));
-    }
-
-  SET(vector_element(vect, index), val);
-  return(val);
-}
-
 #endif
+
 
 
 
@@ -10964,11 +10870,11 @@ s7_pointer s7_hash_table_set(s7_scheme *sc, s7_pointer table, const char *name, 
 	cdar(x) = value;
 	return(value);
       }
-  SET(vector_element(table, location), s7_cons(sc, 
-					       s7_cons(sc, 
-						       s7_make_string(sc, name), 
-						       value),
-					       vector_element(table, location)));
+  vector_element(table, location) = s7_cons(sc, 
+					    s7_cons(sc, 
+						    s7_make_string(sc, name), 
+						    value),
+					    vector_element(table, location)); 
   return(value);
 }
 
@@ -13564,11 +13470,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    continuation *c;
 	    c = sc->code->object.cc;
 	    check_for_dynamic_winds(sc, c);
-
-#if PARALLEL_GC
-	    /* There is no write barrier for the stack, so a new stack must be added to the root set before using it. -Kjetil */
-	    add_vector_to_roots(c->cc_stack, c->cc_stack_top);
-#endif
 	    sc->stack = copy_stack(sc, c->cc_stack, c->cc_stack_top);
 	    sc->stack_size = c->cc_stack_size;
 	    sc->stack_top = c->cc_stack_top;
@@ -13613,7 +13514,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 #if WITH_MULTIDIMENSIONAL_VECTORS
 	case T_VECTOR:                            /* -------- vector as applicable object -------- */
 	  /* sc->code is the vector, sc->args is the list of dimensions */
-	  sc->value = applicable_vector_ref(sc, sc->code, sc->args);
+	  sc->value = vector_ref_1(sc, sc->code, sc->args);
 	  pop_stack(sc);
 	  goto START;
 #endif
@@ -13778,10 +13679,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      if (type(sc->x) == T_VECTOR)
 		{
 		  /* sc->x is the vector, sc->code is expr without the set! */
-		  applicable_vector_set(sc, sc->x, cdar(sc->code), cadr(sc->code));
-		  pop_stack(sc);
-		  goto START;
+		  /*  args have not been evaluated! */
+		  sc->code = s7_cons(sc, sc->VECTOR_SET, s7_append(sc, car(sc->code), cdr(sc->code))); 
 		}
+	      else
 #endif
 	      return(eval_error(sc, "no generalized set for ~A", caar(sc->code)));
 	    }
@@ -16120,16 +16021,16 @@ void s7_vector_fill(s7_scheme *sc, s7_pointer vec, s7_pointer obj)
       for (i = 0; i < len; i++) 
 	{
 	  if (type == big_real_tag)
-	    SET(tp[i], mpfr_to_big_real(sc, S7_BIG_REAL(obj)));
+	    tp[i] = mpfr_to_big_real(sc, S7_BIG_REAL(obj));
 	  else
 	    {
 	      if (type == big_integer_tag)
-		SET(tp[i], mpz_to_big_integer(sc, S7_BIG_INTEGER(obj)));
+		tp[i] = mpz_to_big_integer(sc, S7_BIG_INTEGER(obj));
 	      else
 		{
 		  if (type == big_complex_tag)
-		    SET(tp[i], mpc_to_big_complex(sc, S7_BIG_COMPLEX(obj)));
-		  else SET(tp[i], mpq_to_big_ratio(sc, S7_BIG_RATIO(obj)));
+		    tp[i] = mpc_to_big_complex(sc, S7_BIG_COMPLEX(obj));
+		  else tp[i] = mpq_to_big_ratio(sc, S7_BIG_RATIO(obj));
 		}
 	    }
 	}
@@ -16137,7 +16038,7 @@ void s7_vector_fill(s7_scheme *sc, s7_pointer vec, s7_pointer obj)
   else
     {
       for (i = 0; i < len; i++) 
-	SET(tp[i], obj);
+	tp[i] = obj;
     }
 }
 
@@ -19287,9 +19188,7 @@ s7_scheme *s7_init(void)
   sc->stack_top = 0;
   sc->stack = s7_make_vector(sc, INITIAL_STACK_SIZE);
   sc->stack_size = INITIAL_STACK_SIZE;
-#if PARALLEL_GC
-  sc->stack_gc = s7_make_vector(sc, INITIAL_STACK_SIZE);
-#endif
+  
   sc->symbol_table = s7_make_vector(sc, SYMBOL_TABLE_SIZE);
   set_immutable(sc->symbol_table);
   typeflag(sc->symbol_table) |= (T_CONSTANT | T_DONT_COPY);
@@ -19375,7 +19274,7 @@ s7_scheme *s7_init(void)
   typeflag(sc->FEED_TO) |= (T_IMMUTABLE | T_CONSTANT | T_DONT_COPY); 
   
   #define set_object_name "(generalized set!)"
-  sc->SET_OBJECT = s7_make_symbol(sc, set_object_name);
+  sc->SET_OBJECT = s7_make_symbol(sc, set_object_name);   /* will call g_set_object */
   typeflag(sc->SET_OBJECT) |= (T_CONSTANT | T_DONT_COPY); 
 
   sc->APPLY = s7_make_symbol(sc, "apply");
@@ -19774,6 +19673,9 @@ s7_scheme *s7_init(void)
 #endif
 
 #if WITH_MULTIDIMENSIONAL_VECTORS
+  sc->VECTOR_SET = s7_symbol_value(sc, s7_make_symbol(sc, "vector-set!"));
+  typeflag(sc->VECTOR_SET) |= (T_CONSTANT | T_DONT_COPY); 
+
   g_provide(sc, make_list_1(sc, s7_make_symbol(sc, "multidimensional-vectors")));
 #endif
 

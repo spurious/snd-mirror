@@ -2,6 +2,8 @@
 
 (if (not (provided? 'snd-generators.scm)) (load "generators.scm"))
 
+;;; this file currently does not work in Guile
+
 
 ;;; -------- conversions --------
 
@@ -33,19 +35,54 @@
   (let ((len (vector-length rl)))
     (do ((i 0 (+ i 1)))
 	((= i len))
-      (let* ((rl1 (vector-ref rl i))
-	     (im1 (vector-ref im i)))
-	(vector-set! rl i (sqrt (+ (* rl1 rl1) (* im1 im1))))
-	(vector-set! im i (- (atan im1 rl1)))))))
+      (let* ((rl1 (rl i))
+	     (im1 (im i)))
+	(set! (rl i) (sqrt (+ (* rl1 rl1) (* im1 im1))))
+	(set! (im i) (- (atan im1 rl1)))))))
 
 (define (big-polar->rectangular mag ang)
   (let ((len (vector-length mag)))
     (do ((i 0 (+ i 1)))
 	((= i len))
-      (let* ((mag1 (vector-ref mag i))
-	     (ang1 (- (vector-ref ang i))))
-	(vector-set! mag i (* mag1 (cos ang1)))
-	(vector-set! ang i (* mag1 (sin ang1)))))))
+      (let* ((mag1 (mag i))
+	     (ang1 (- (ang i))))
+	(set! (mag i) (* mag1 (cos ang1)))
+	(set! (ang i) (* mag1 (sin ang1)))))))
+
+
+;;; -------- arrays (vectors in this context) --------
+
+(define (big-array-clear v)
+  (vector-fill! v 0.0))
+
+(define (big-array-normalize v)
+  (let* ((len (vector-length v))
+	 (pk 0.0))
+    (do ((i 0 (+ i 1)))
+	((= i len))
+      (set! pk (max pk (abs (v i)))))
+    (if (and (not (= pk 0.0))
+	     (not (= pk 1.0)))
+	(do ((i 0 (+ i 1)))
+	    ((= i len))
+	  (set! (v i) (/ (v i) pk))))
+    v))
+
+(define (big-array-interp wave x n)
+  (let* ((xx (modulo x n))
+	 (ipart (floor xx))
+	 (fpart (- xx ipart)))
+    (if (zero? fpart)
+	(wave ipart)
+	(+ (wave ipart)
+	   (* fpart (- (wave (modulo (+ ipart 1) n)) 
+		       (wave ipart)))))))
+
+(define (big-multiply-arrays v1 v2)
+  (let ((len (min (vector-length v1) (vector-length v2))))
+    (do ((i 0 (+ i 1)))
+	((= i len) v1)
+      (set! (v1 i) (* (vi 1) (v2 i))))))
 
 
 
@@ -53,11 +90,11 @@
 
 (define (big-polynomial coeffs x)
   (let* ((top (- (vector-length coeffs) 1))
-	 (sum (vector-ref coeffs top)))
+	 (sum (coeffs top)))
     (do ((i (- top 1) (- i 1)))
 	((< i 0) sum)
       (set! sum (+ (* x sum)
-		   (vector-ref coeffs i))))))
+		   (coeffs i))))))
 
 
 ;;; -------- dot-product --------
@@ -67,7 +104,7 @@
     (do ((sum 0.0)
 	 (i 0 (+ i 1)))
 	((= i len) sum)
-      (set! sum (+ sum (* (vector-ref v1 i) (vector-ref v2 i)))))))
+      (set! sum (+ sum (* (v1 i) (v2 i)))))))
 
 
 ;;; -------- ring-modulate --------
@@ -179,16 +216,6 @@
 
 ;;; -------- table-lookup --------
 
-(define (big-array-interp wave x n)
-  (let* ((xx (modulo x n))
-	 (ipart (floor xx))
-	 (fpart (- xx ipart)))
-    (if (zero? fpart)
-	(vector-ref wave ipart)
-	(+ (vector-ref wave ipart)
-	   (* fpart (- (vector-ref wave (modulo (+ ipart 1) n)) 
-		       (vector-ref wave ipart)))))))
-
 (defgenerator (big-table-lookup
   :make-wrapper
     (lambda (g)
@@ -208,31 +235,12 @@
     (set! (big-table-lookup-angle gen) (+ x (big-table-lookup-frequency gen) (/ (* fm n) (* 2 pi))))
     (big-array-interp w x n)))
       
-(define (big-array-clear v)
-  (let ((len (vector-length v)))
-    (do ((i 0 (+ i 1)))
-	((= i len) v)
-      (vector-set! v i 0.0))))
-
-(define (big-array-normalize v)
-  (let* ((len (vector-length v))
-	 (pk 0.0))
-    (do ((i 0 (+ i 1)))
-	((= i len))
-      (set! pk (max pk (abs (vector-ref v i)))))
-    (if (and (not (= pk 0.0))
-	     (not (= pk 1.0)))
-	(do ((i 0 (+ i 1)))
-	    ((= i len))
-	  (vector-set! v i (/ (vector-ref v i) pk))))
-    v))
-
 #|
 (with-sound (:statistics #t :clipped #f) 
   (let ((g (make-big-table-lookup 100.0 0.0 (let ((w (make-vector 32)))
 					      (do ((i 0 (+ i 1)))
 						  ((= i 32) w)
-						(vector-set! w i (sin (/ (* i pi) 16))))))))
+						(set! (w i) (sin (/ (* i pi) 16))))))))
     (do ((i 0 (+ i 1))) 
 	((= i 22050))
       (outa i (* .5 (big-table-lookup g))))))

@@ -9912,6 +9912,7 @@ Float *mus_make_fft_window_with_window(mus_fft_window_t type, off_t size, Float 
    *    Fredric J. Harris, "On the Use of Windows for Harmonic Analysis with the
    *    Discrete Fourier Transform," Proceedings of the IEEE, Vol. 66, No. 1,
    *    January 1978.
+   *
    *    Albert H. Nuttall, "Some Windows with Very Good Sidelobe Behaviour", 
    *    IEEE Transactions of Acoustics, Speech, and Signal Processing, Vol. ASSP-29,
    *    No. 1, February 1981, pp 84-91

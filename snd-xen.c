@@ -554,6 +554,8 @@ void snd_rb_raise(XEN tag, XEN throw_args)
   bool need_comma = false;
   int size = 2048;
 
+  /* fprintf(stderr, "err: %s %s\n", XEN_AS_STRING(tag), XEN_AS_STRING(throw_args)); */
+
   if (strcmp(rb_id2name(tag), "Out_of_range") == 0) 
     err = rb_eRangeError;
 
@@ -566,7 +568,7 @@ void snd_rb_raise(XEN tag, XEN throw_args)
       /* normally car is string name of calling func */
       if (XEN_NOT_FALSE_P(XEN_CAR(throw_args)))
 	{
-	  snprintf(msg, 2048, "%s: %s", 
+	  snprintf(msg, size, "%s: %s", 
 		   XEN_AS_STRING(XEN_CAR(throw_args)), 
 		   rb_id2name(tag));
 	  need_comma = true;
@@ -578,7 +580,7 @@ void snd_rb_raise(XEN tag, XEN throw_args)
 	  /* or it may be a list of info vars etc */
 
 	  if (need_comma) 
-	    msg = mus_strcat(msg, ": ", &size);
+	    msg = mus_strcat(msg, ": ", &size); /* new size, if realloc, reported through size arg */
 
 	  if (XEN_STRING_P(XEN_CADR(throw_args)))
 	    msg = mus_strcat(msg, XEN_TO_C_STRING(snd_format_if_needed(XEN_CDR(throw_args))), &size);

@@ -8,6 +8,7 @@ int mark_sync_max(void)
   return(sync_max);
 }
 
+
 void set_mark_sync(mark *m, int val) 
 {
   m->sync = val; 
@@ -27,10 +28,12 @@ static mark *make_mark_1(off_t samp, const char *name, int id, int sc)
   return(mp);
 }
 
+
 static mark *make_mark(off_t samp, const char *name) 
 {
   return(make_mark_1(samp, name, mark_id_counter++, 0));
 }
+
 
 static mark *copy_mark(mark *m) 
 {
@@ -132,6 +135,7 @@ static mark *find_mark_id_1(chan_info *cp, mark *mp, int id)
   return(NULL);
 }
 
+
 static mark *find_mark_from_id(int id, chan_info **cps, int pos)
 {
   int i;
@@ -183,6 +187,7 @@ static mark *find_named_mark_1(chan_info *cp, mark *mp, void *uname)
   else return(NULL);
 }
 
+
 static mark *find_named_mark(chan_info *cp, const char *name)
 {
   return(map_over_marks(cp, find_named_mark_1, (void *)name, READ_FORWARD));
@@ -195,6 +200,7 @@ static mark *find_previous_mark_1(chan_info *cp, mark *mp, void *m)
     return(mp); 
   return(NULL);
 }
+
 
 static mark *find_previous_mark(off_t current_sample, chan_info *cp)
 {
@@ -209,6 +215,7 @@ static mark *find_next_mark_1(chan_info *cp, mark *mp, void *m)
   return(NULL);
 }
 
+
 static mark *find_next_mark(off_t current_sample, chan_info *cp)
 {
   return(map_over_marks(cp, find_next_mark_1, (void *)(&current_sample), READ_FORWARD));
@@ -220,6 +227,7 @@ static mark* marks_off_1(chan_info *cp, mark *mp, void *ignore)
   mp->visible = false;
   return(NULL);
 }
+
 
 void marks_off(chan_info *cp)
 {
@@ -254,6 +262,7 @@ static void draw_mark(chan_info *cp, axis_info *ap, mark *mp)
   if (!(mp->visible)) draw_mark_1(cp, ap, mp, true);
 }
 
+
 static void erase_mark(chan_info *cp, axis_info *ap, mark *mp)
 {
   if (mp->visible) draw_mark_1(cp, ap, mp, false);
@@ -270,9 +279,11 @@ static mark *hit_mark_1(chan_info *cp, mark *mp, void *m)
   int mx;
   mdata *md = (mdata *)m;
   axis_info *ap;
+
   ap = cp->axis;
   if (mp->samp < ap->losamp) return(NULL);
   if (mp->samp > ap->hisamp) return(md->all_done); /* grf_x clips so we can be confused by off-screen marks */
+
   mx = grf_x((double)(mp->samp) / (double)SND_SRATE(cp->sound), cp->axis);
   if (mx > (md->x + mark_tag_width(ss))) return(md->all_done); /* past it */
   if (mx < (md->x - mark_tag_width(ss))) return(NULL);         /* before it */
@@ -294,9 +305,11 @@ static mark *hit_triangle_1(chan_info *cp, mark *mp, void *m)
   int mx, y;
   mdata *md = (mdata *)m;
   axis_info *ap;
+
   ap = cp->axis;
   if (mp->samp < ap->losamp) return(NULL);
   if (mp->samp > ap->hisamp) return(md->all_done); /* grf_x clips so we can be confused by off-screen marks */
+
   mx = grf_x((double)(mp->samp) / (double)SND_SRATE(cp->sound), cp->axis);
   if (mx > md->x) return(md->all_done);
   if ((mx + MARK_PLAY_ARROW_SIZE) < md->x) return(NULL);
@@ -357,6 +370,7 @@ static TIMEOUT_TYPE watch_mouse(TIMEOUT_ARGS)
   TIMEOUT_RESULT
 }
 #endif
+
 
 static void start_mark_watching(chan_info *cp, mark *mp)
 {
@@ -803,6 +817,7 @@ static mark *active_mark_1(chan_info *cp, mark *mp, void *ignore)
   return(NULL);
 }
 
+
 mark *active_mark(chan_info *cp)
 {
   return(map_over_marks(cp, active_mark_1, NULL, READ_FORWARD));
@@ -839,6 +854,7 @@ static mark *display_channel_marks_1(chan_info *cp, mark *mp, void *m)
     draw_mark(cp, ap, mp);
   return(NULL);
 }
+
 
 void display_channel_marks(chan_info *cp)
 {
@@ -970,6 +986,7 @@ static mark *reverse_mark_1(chan_info *cp, mark *mp, void *um)
   mp->samp = m->samp - mp->samp;
   return(NULL);
 }
+
 
 void reverse_marks(chan_info *cp, off_t beg, off_t dur) /* beg -1 for full sound */
 {
@@ -1490,6 +1507,7 @@ static bool move_syncd_mark(chan_info *cp, mark *m, int x)
   return(redraw);
 }
 
+
 #if (!USE_NO_GUI)
 static void move_axis_to_track_mark(chan_info *cp)
 {
@@ -1503,6 +1521,7 @@ static void move_axis_to_track_mark(chan_info *cp)
     }
 }
 #endif
+
 
 void move_mark(chan_info *cp, mark *mp, int x) /* from mouse drag callback in snd-chn.c, called whenever mark is visible */
 {
@@ -1616,6 +1635,7 @@ static void make_mark_graph(chan_info *cp, off_t initial_sample, off_t current_s
   snd_fd *sf = NULL;
   int x_start, x_end;
   double start_time = 0.0, cur_srate = 1.0;
+
   sp = cp->sound;
   ap = cp->axis;
   cur_srate = (double)SND_SRATE(sp);
@@ -2106,10 +2126,12 @@ static XEN g_add_mark_1(XEN samp_n, XEN snd_n, XEN chn_n, XEN name, XEN sync, bo
   return(XEN_FALSE);
 }
 
+
 static XEN g_add_mark(XEN samp_n, XEN snd_n, XEN chn_n, XEN name, XEN sync)
 {
   return(g_add_mark_1(samp_n, snd_n, chn_n, name, sync, true));
 }
+
 
 static XEN g_add_mark_unchecked(XEN samp_n, XEN snd_n, XEN chn_n, XEN name, XEN sync)
 {
