@@ -2271,7 +2271,7 @@ static XEN g_localtime(XEN tm)
 {
   #define H_localtime "(localtime tm) breaks up tm into something suitable for strftime"
   time_t rtime;
-  rtime = (time_t)XEN_TO_C_INT(tm);
+  rtime = (time_t)XEN_TO_C_ULONG(tm);
   return(XEN_WRAP_C_POINTER(localtime((time_t *)(&rtime))));
 }
 
@@ -2281,7 +2281,7 @@ static XEN g_current_time(void)
   time_t curtime;
   #define H_current_time "(current-time) returns the current time (for localtime and strftime)"
   curtime = time(NULL);
-  return(C_TO_XEN_INT(curtime));
+  return(C_TO_XEN_ULONG(curtime));
 }
 
 

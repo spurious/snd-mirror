@@ -2743,7 +2743,7 @@ static void display_edits(chan_info *cp, FILE *outp, bool with_source)
 }
 
 
-static io_error_t snd_make_file(const char *ofile, int chans, file_info *hdr, snd_fd **sfs, off_t length)
+static io_error_t snd_make_file(const char *ofile, int chans, file_info *hdr, snd_fd **sfs, off_t length, bool report_ok)
 {
   /* create ofile, fill it by following sfs, use hdr for srate/type/format decisions */
   int ofd;
@@ -2764,7 +2764,7 @@ static io_error_t snd_make_file(const char *ofile, int chans, file_info *hdr, sn
   for (i = 0; i < chans; i++)
     obufs[i] = (mus_sample_t *)calloc(FILE_BUFFER_SIZE, sizeof(mus_sample_t));
   j = 0;
-  reporting = (length > REPORTING_SIZE);
+  reporting = ((report_ok) && (length > REPORTING_SIZE));
   if (reporting) 
     {
       cp = sfs[0]->cp;
@@ -2841,7 +2841,7 @@ static io_error_t snd_make_file(const char *ofile, int chans, file_info *hdr, sn
 }
 
 
-static io_error_t channel_to_file_with_bounds(chan_info *cp, const char *ofile, int edpos, off_t beg, off_t len, file_info *hdr)
+static io_error_t channel_to_file_with_bounds(chan_info *cp, const char *ofile, int edpos, off_t beg, off_t len, file_info *hdr, bool report_ok)
 {
   snd_info *sp;
   snd_fd **sf;
@@ -2861,7 +2861,7 @@ static io_error_t channel_to_file_with_bounds(chan_info *cp, const char *ofile, 
     }
   else
     {
-      err = snd_make_file(ofile, 1, hdr, sf, len);
+      err = snd_make_file(ofile, 1, hdr, sf, len, report_ok);
       free_snd_fd(sf[0]);
       free(sf);
       if ((err != IO_NO_ERROR) &&
@@ -2878,7 +2878,7 @@ static io_error_t channel_to_file_with_bounds(chan_info *cp, const char *ofile, 
 
 static io_error_t channel_to_file(chan_info *cp, const char *ofile, int edpos) /* preserves cp->sound's header settings */
 {
-  return(channel_to_file_with_bounds(cp, ofile, edpos, 0, cp->edits[edpos]->samples, cp->sound->hdr));
+  return(channel_to_file_with_bounds(cp, ofile, edpos, 0, cp->edits[edpos]->samples, cp->sound->hdr, true));
 }
 
 
@@ -2909,7 +2909,7 @@ io_error_t channel_to_file_with_settings(chan_info *cp, const char *new_name, in
       return(IO_WRITE_PROTECTED);
     }
 
-  err = channel_to_file_with_bounds(cp, new_name, pos, 0, cp->edits[pos]->samples, hdr);
+  err = channel_to_file_with_bounds(cp, new_name, pos, 0, cp->edits[pos]->samples, hdr, true);
 
   free_file_info(hdr);
   return(err);
@@ -4362,7 +4362,7 @@ static bool lock_affected_mixes(chan_info *cp, int edpos, off_t beg, off_t end)
       cur_len = ed->samples;
       cur_cursor = ed->cursor;
       temp_file_name = snd_tempnam();
-      err = channel_to_file_with_bounds(cp, temp_file_name, edpos, change_beg, change_end - change_beg + 1, cp->sound->hdr);
+      err = channel_to_file_with_bounds(cp, temp_file_name, edpos, change_beg, change_end - change_beg + 1, cp->sound->hdr, false);
       if (err == IO_NO_ERROR) /* else snd_error earlier? */
 	{
 	  file_info *hdr;
@@ -6612,7 +6612,7 @@ io_error_t save_edits_and_update_display(snd_info *sp)
       }
 
     /* write the new file */
-    io_err = snd_make_file(ofile, sp->nchans, sp->hdr, sf, samples);
+    io_err = snd_make_file(ofile, sp->nchans, sp->hdr, sf, samples, true);
     for (i = 0; i < sp->nchans; i++) free_snd_fd(sf[i]);
     free(sf);
     sf = NULL;
@@ -6727,7 +6727,7 @@ io_error_t save_edits_without_display(snd_info *sp, const char *new_name, int ty
 	}
     }
 
-  err = snd_make_file(new_name, sp->nchans, hdr, sf, frames);
+  err = snd_make_file(new_name, sp->nchans, hdr, sf, frames, true);
 
   for (i = 0; i < sp->nchans; i++) 
     free_snd_fd(sf[i]);

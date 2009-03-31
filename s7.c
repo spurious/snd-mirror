@@ -462,7 +462,7 @@ struct s7_scheme {
   s7_pointer ERROR, WRONG_TYPE_ARG, OUT_OF_RANGE, FORMAT_ERROR, WRONG_NUMBER_OF_ARGS;
   s7_pointer KEY_KEY, KEY_OPTIONAL, KEY_REST;
   s7_pointer FEED_TO;                 /* => */
-  s7_pointer SET_OBJECT;              /* object set method */
+  s7_pointer OBJECT_SET;              /* applicable object set method */
 #if WITH_MULTIDIMENSIONAL_VECTORS
   s7_pointer VECTOR_SET;              /* applicable vector set method */
 #endif
@@ -10338,7 +10338,7 @@ static s7_pointer s7_apply_object(s7_scheme *sc, s7_pointer obj, s7_pointer args
 
 #define object_set_function(Obj) object_types[(Obj)->object.fobj.type].set
 
-static s7_pointer s7_set_object(s7_scheme *sc, s7_pointer obj, s7_pointer args)
+static s7_pointer s7_object_set(s7_scheme *sc, s7_pointer obj, s7_pointer args)
 {
   int tag;
   tag = obj->object.fobj.type;
@@ -10348,11 +10348,11 @@ static s7_pointer s7_set_object(s7_scheme *sc, s7_pointer obj, s7_pointer args)
 }
 
 
-/* generalized set! calls g_set_object which then calls the object's set function */
+/* generalized set! calls g_object_set which then calls the object's set function */
 
-static s7_pointer g_set_object(s7_scheme *sc, s7_pointer args)
+static s7_pointer g_object_set(s7_scheme *sc, s7_pointer args)
 {
-  return(s7_set_object(sc, car(args), cdr(args)));
+  return(s7_object_set(sc, car(args), cdr(args)));
 }
 
 
@@ -13672,7 +13672,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  sc->x = s7_symbol_value(sc, caar(sc->code));
 	  if ((is_object(sc->x)) &&
 	      (object_set_function(sc->x)))
-	    sc->code = s7_cons(sc, sc->SET_OBJECT, s7_append(sc, car(sc->code), cdr(sc->code)));   /* use set method (append flattens the lists) */
+	    sc->code = s7_cons(sc, sc->OBJECT_SET, s7_append(sc, car(sc->code), cdr(sc->code)));   /* use set method (append flattens the lists) */
 	  else 
 	    {
 #if WITH_MULTIDIMENSIONAL_VECTORS
@@ -19273,9 +19273,9 @@ s7_scheme *s7_init(void)
   sc->FEED_TO = s7_make_symbol(sc, "=>");
   typeflag(sc->FEED_TO) |= (T_IMMUTABLE | T_CONSTANT | T_DONT_COPY); 
   
-  #define set_object_name "(generalized set!)"
-  sc->SET_OBJECT = s7_make_symbol(sc, set_object_name);   /* will call g_set_object */
-  typeflag(sc->SET_OBJECT) |= (T_CONSTANT | T_DONT_COPY); 
+  #define object_set_name "(generalized set!)"
+  sc->OBJECT_SET = s7_make_symbol(sc, object_set_name);   /* will call g_object_set */
+  typeflag(sc->OBJECT_SET) |= (T_CONSTANT | T_DONT_COPY); 
 
   sc->APPLY = s7_make_symbol(sc, "apply");
   typeflag(sc->APPLY) |= (T_CONSTANT | T_DONT_COPY); 
@@ -19638,7 +19638,7 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "equal?",                  g_is_equal,                2, 0, false, H_is_equal);
   
   s7_define_function(sc, "s7-version",              g_s7_version,              0, 0, false, H_s7_version);
-  s7_define_function(sc, set_object_name,           g_set_object,              1, 0, true, "internal setter redirection");
+  s7_define_function(sc, object_set_name,           g_object_set,              1, 0, true, "internal setter redirection");
   s7_define_function(sc, "_quasiquote_",            g_quasiquote,              2, 0, false, "internal quasiquote handler");
   
   s7_define_variable(sc, "*features*", sc->NIL);

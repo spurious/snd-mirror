@@ -56,7 +56,7 @@ static mark *map_over_marks(chan_info *cp, mark *(*func)(chan_info *ncp, mark *m
 {
   ed_list *ed;
   ed = cp->edits[cp->edit_ctr];
-  if (ed->marks)
+  if ((ed) && (ed->marks))
     {
       int marks;
       mark **mps;
