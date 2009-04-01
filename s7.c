@@ -190,6 +190,7 @@
 #endif
 
 
+
 /* -------------------------------------------------------------------------------- */
 
 /* s7.c is organized as follows:
@@ -586,7 +587,8 @@ struct s7_scheme {
 #define T_ETERNAL                     (1 << (TYPE_BITS + 11))
 #define is_eternal(p)                 ((typeflag(p) & T_ETERNAL) != 0)
 
-/* unused type bits: 0xf0000000 */
+#define UNUSED_BITS                   0xf0000000
+
 
 #if HAVE_PTHREADS
 #define set_type(p, f)                typeflag(p) = ((typeflag(p) & T_GC_MARK) | (f) | T_OBJECT)
@@ -621,6 +623,7 @@ struct s7_scheme {
 #define caaadr(p)                     car(car(car(cdr(p))))
 #define cadaar(p)                     car(cdr(car(car(p))))
 #define cadddr(p)                     car(cdr(cdr(cdr(p))))
+#define caaddr(p)                     car(car(cdr(cdr(p))))
 #define cddddr(p)                     cdr(cdr(cdr(cdr(p))))
 #define caddar(p)                     car(cdr(cdr(car(p))))
 #define pair_line_number(p)           (p)->object.cons.line
@@ -729,10 +732,6 @@ struct s7_scheme {
 #endif
 
 #define real(n)                       n.value.real_value
-
-
-#define STRCMP(Str1, Str2) strcmp(Str1, Str2)
-/* STRCMP currently only used in symbol table (hash) refs, and only checks == 0 */
 
 
 static int safe_strlen(const char *str)
@@ -879,7 +878,7 @@ static void set_pair_line_number(s7_pointer p, int n)
 
 /* -------- gc benchmark -------- */
 
-#define BENCHMARK_GC 1
+#define BENCHMARK_GC 0
 
 #if BENCHMARK_GC
 
@@ -1493,7 +1492,7 @@ static  s7_pointer symbol_table_find_by_name(s7_scheme *sc, const char *name, in
     { 
       const char *s; 
       s = s7_symbol_name(car(x)); 
-      if ((s) && (STRCMP(name, s) == 0))
+      if ((s) && (strcmp(name, s) == 0))
 	{
 #if HAVE_PTHREADS
 	  pthread_mutex_unlock(&symtab_lock);
@@ -4001,23 +4000,23 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top)
       /* #\space or whatever (named character) */
       { 
 	int c = 0;
-	if (STRCMP(name + 1, "space") == 0) 
+	if (strcmp(name + 1, "space") == 0) 
 	  c =' ';
 	else 
 	  {
-	    if ((STRCMP(name + 1, "newline") == 0) || (STRCMP(name + 1, "linefeed") == 0))
+	    if ((strcmp(name + 1, "newline") == 0) || (strcmp(name + 1, "linefeed") == 0))
 	      c ='\n';
 	    else 
 	      {
-		if (STRCMP(name + 1, "return") == 0) 
+		if (strcmp(name + 1, "return") == 0) 
 		  c ='\r';
 		else 
 		  {
-		    if (STRCMP(name + 1, "tab") == 0) 
+		    if (strcmp(name + 1, "tab") == 0) 
 		      c ='\t';
 		    else 
 		      {
-			if ((STRCMP(name + 1, "null") == 0) || (STRCMP(name + 1, "nul") == 0))
+			if ((strcmp(name + 1, "null") == 0) || (strcmp(name + 1, "nul") == 0))
 			  c ='\0';
 			else 
 			  {
@@ -8162,7 +8161,7 @@ static char *s7_atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
 	     dont_copy(obj) ? " dont-copy" : "",
 	     ((typeflag(obj) & T_OBJECT) != 0) ? " obj" : "",
 	     ((typeflag(obj) & T_FINALIZABLE) != 0) ? " gc-finalize" : "",
-	     ((typeflag(obj) & 0xf0000000) != 0) ? " bad bits at top" : "");
+	     ((typeflag(obj) & UNUSED_BITS) != 0) ? " bad bits at top" : "");
     return(buf);
   }
 }
@@ -10837,7 +10836,7 @@ s7_pointer s7_hash_table_ref(s7_scheme *sc, s7_pointer table, const char *name)
   
   location = hash_fn(name, vector_length(table));
   for (x = vector_element(table, location); x != sc->NIL; x = cdr(x)) 
-    if (STRCMP(name, string_value(caar(x))) == 0) 
+    if (strcmp(name, string_value(caar(x))) == 0) 
       return(cdar(x)); 
   
   return(sc->F);
@@ -10852,7 +10851,7 @@ s7_pointer s7_hash_table_set(s7_scheme *sc, s7_pointer table, const char *name, 
   
   /* if it exists, update value, else add to table */
   for (x = vector_element(table, location); x != sc->NIL; x = cdr(x)) 
-    if (STRCMP(name, string_value(caar(x))) == 0)
+    if (strcmp(name, string_value(caar(x))) == 0)
       {
 	cdar(x) = value;
 	return(value);
@@ -12799,6 +12798,9 @@ static s7_pointer read_expression(s7_scheme *sc)
       
 
 
+static s7_pointer g_quasiquote_1(s7_scheme *sc, int level, s7_pointer form);
+
+
 /* -------------------------------- eval -------------------------------- */
 
 /* all explicit write-* in eval assume current-output-port -- error fallback handling, etc */
@@ -13101,7 +13103,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       sc->args = sc->NIL;
       goto EVAL;
       
-      
+
     case OP_DO_STEP2:
       car(sc->code) = s7_cons(sc, sc->value, car(sc->code));  /* add this value to our growing list */
       sc->args = cdr(sc->args);                               /* go to next */
@@ -13237,7 +13239,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      (!s7_is_vector(sc->code)))
 	    return(eval_error(sc, "attempt to apply ~A?\n", sc->code));
 	  
-	  set_pair_line_number(sc->code, sc->saved_line_number);
+	  /* set_pair_line_number(sc->code, sc->saved_line_number); */
+	  /*   this is a no-op -- sc->code is not (normally?) a pair! */
+
 	  sc->args = cdr(sc->args);
 	  /* goto APPLY;  */
 	}
@@ -14073,6 +14077,36 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       sc->x = car(sc->code);
       if (!s7_is_symbol(sc->x))
 	return(eval_error(sc, "defmacro macro name is not a symbol?", sc->x));
+
+      /* (defmacro hi (a) `(+ ,a 1))
+       *   cdr(sc->code): ((a) (quasiquote (+ (unquote a) 1)))
+       *   caddr(sc->code):    (quasiquote (+ (unquote a) 1))
+       *   cadr(caddr(sc->code):           (+ (unquote a) 1)
+       *   g_quasiquote_1(sc, 0, ^):       (cons (quote +) (cons a (cons 1 (quote ()))))
+       *
+       * so the quasiquote can be evaluated immediately
+       */
+
+      if ((is_pair(cdr(sc->code))) &&
+	  (is_pair(cddr(sc->code))) &&
+	  (is_pair(caddr(sc->code))) &&
+	  (s7_is_symbol(caaddr(sc->code))) &&
+	  (caaddr(sc->code) == sc->QUASIQUOTE))
+	{
+	  /*
+	    fprintf(stderr, "cdr(code): %s\n", s7_object_to_c_string(sc, cdr(sc->code)));
+	    fprintf(stderr, "quasi: %s, cadr: %s -> %s\n", 
+	                    s7_object_to_c_string(sc, caddr(sc->code)), 
+			    s7_object_to_c_string(sc, cadr(caddr(sc->code))), 
+			    s7_object_to_c_string(sc, g_quasiquote_1(sc, 0, cadr(caddr(sc->code)))));
+	  */
+	  sc->z = s7_cons(sc,
+			  cadr(sc->code),
+			  s7_cons(sc,
+				  g_quasiquote_1(sc, 0, cadr(caddr(sc->code))),
+				  sc->NIL));
+	}
+      else sc->z = cdr(sc->code);
 	
       sc->code = s7_cons(sc,
 			 sc->LAMBDA,
@@ -14083,9 +14117,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 						     sc->APPLY,
 						     s7_cons(sc, 
 							     s7_cons(sc, 
-								     sc->LAMBDA, 
-								     cdr(sc->code)), /* sc->value is a temp */
+								     sc->LAMBDA,
+								     sc->z),
 							     make_list_1(sc, make_list_2(sc, sc->CDR, sc->y)))))));
+
+      /* fprintf(stderr, "def: %s\n", s7_object_to_c_string(sc, sc->code)); */
+
       /* so, (defmacro hi (a b) `(+ ,a ,b)) becomes:
        *   sc->x: hi
        *   sc->code: (lambda (defmac-51) (apply (lambda (a b) (quasiquote (+ (unquote a) (unquote b)))) (cdr defmac-51)))
@@ -14416,6 +14453,7 @@ static s7_pointer g_quasiquote_1(s7_scheme *sc, int level, s7_pointer form)
  MCONS:
   {
     s7_pointer l, r;
+
     l = g_quasiquote_1(sc, level, car(form));
     r = g_quasiquote_1(sc, level, cdr(form));
 
@@ -14439,6 +14477,8 @@ static s7_pointer g_quasiquote(s7_scheme *sc, s7_pointer args)
 {
   return(g_quasiquote_1(sc, s7_integer(car(args)), cadr(args)));
 }
+  
+
 
 
 
