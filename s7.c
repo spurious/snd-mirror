@@ -13274,7 +13274,26 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 					  s7_make_string_with_length(sc, "~A: too many arguments: ~A", 26),
 					  sc->code, sc->args)));
 	    
-	    sc ->value = function_call(sc->code)(sc, sc->args);
+	    sc->value = function_call(sc->code)(sc, sc->args);
+
+#if 0
+	    /* this works, and does reduce the gc load a bit by freeing do-loop step-var arg lists,
+	     *   but valgrind says we lose more here than we gain by calling the gc less.
+	     */
+	    sc->z = sc->args;
+	    pop_stack(sc); /* this replaces the pop_stack below -- we need to see if we're in the do step loop */
+	    if (sc->op == OP_DO_STEP2)
+	      {
+		s7_pointer tmp;
+		for (tmp = sc->z; tmp != sc->NIL; tmp = cdr(tmp))
+		  {
+		    typeflag(tmp) = 0;
+		    sc->free_heap[sc->free_heap_top++] = tmp;		    
+		  }
+	      }
+	    sc->z = sc->NIL;
+#endif
+
 	    pop_stack(sc);
 	    goto START;
 	  }
@@ -14071,7 +14090,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        *             ,@(cdddr dform))          
        *            (cdr ,form)))))             
        *    
-       *    end up with name as sc->x going to OP_MACRO1, ((gensym) (lambda (args) body) going to eval
+       *    end up with name as sc->x, args and body as sc->z going to OP_MACRO1, ((gensym) (lambda (args) body) going to eval
        */
       sc->y = s7_gensym(sc, "defmac");
       sc->x = car(sc->code);
@@ -14084,7 +14103,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        *   cadr(caddr(sc->code):           (+ (unquote a) 1)
        *   g_quasiquote_1(sc, 0, ^):       (cons (quote +) (cons a (cons 1 (quote ()))))
        *
-       * so the quasiquote can be evaluated immediately
+       * so the quasiquote can be evaluated immediately.  It's possible that we could
+       *   always precompute quasiquotes, but this change takes case of 99% of the cases.
        */
 
       if ((is_pair(cdr(sc->code))) &&
@@ -14108,7 +14128,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	}
       else sc->z = cdr(sc->code);
 	
-      sc->code = s7_cons(sc,
+      sc->code = s7_cons(sc, 
 			 sc->LAMBDA,
 			 s7_cons(sc, 
 				 make_list_1(sc, sc->y),
@@ -14125,7 +14145,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       /* so, (defmacro hi (a b) `(+ ,a ,b)) becomes:
        *   sc->x: hi
-       *   sc->code: (lambda (defmac-51) (apply (lambda (a b) (quasiquote (+ (unquote a) (unquote b)))) (cdr defmac-51)))
+       *   sc->code: (lambda (defmac-21) 
+       *               (apply (lambda (a b) 
+       *                        (cons (quote +) (cons a (cons b (quote ()))))) 
+       *                      (cdr defmac-21)))
        */
       push_stack(sc, OP_MACRO1, /* sc->code */ sc->NIL, sc->x);   /* sc->x (the name symbol) will be sc->code when we pop to OP_MACRO1 */
                                                                   /* sc->code is merely being protected */
@@ -14141,6 +14164,22 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if (!s7_is_symbol(sc->x))
 	return(eval_error(sc, "define-macro macro name is not a symbol?", sc->x));
 
+      /* (define-macro (hi a) `(+ ,a 1))
+       *   cdr(sc->code): ((quasiquote (+ (unquote a) 1)))
+       *   so in this case we want cadr, not caddr of defmacro
+       */
+
+      if ((is_pair(cdr(sc->code))) &&
+	  (is_pair(cadr(sc->code))) &&
+	  (s7_is_symbol(caadr(sc->code))) &&
+	  (caadr(sc->code) == sc->QUASIQUOTE))
+	{
+	  sc->z = s7_cons(sc,
+			  g_quasiquote_1(sc, 0, cadr(cadr(sc->code))),
+			  sc->NIL);
+	}
+      else sc->z = cdr(sc->code);
+
       sc->code = s7_cons(sc,
 			 sc->LAMBDA,
 			 s7_cons(sc, 
@@ -14152,12 +14191,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 							     s7_cons(sc, 
 								     sc->LAMBDA,
 								     s7_cons(sc, 
-									     cdar(sc->code),  /* cdadr value */
-									     cdr(sc->code))), /* cddr value */
+									     cdar(sc->code), /* arg list */
+									     sc->z)),
 							     make_list_1(sc, make_list_2(sc, sc->CDR, sc->y)))))));
+
       /* (define-macro (hi a b) `(+ ,a ,b)) becomes:
        *   sc->x: hi
-       *   sc->code: (lambda (defmac-51) (apply (lambda (a b) (quasiquote (+ (unquote a) (unquote b)))) (cdr defmac-51)))
+       *   sc->code: (lambda (defmac-22) (apply (lambda (a b) (cons (quote +) (cons a (cons b (quote ()))))) (cdr defmac-22)))
        */
       push_stack(sc, OP_MACRO1, sc->NIL, sc->x);   /* sc->x (the name symbol) will be sc->code when we pop to OP_MACRO1 */
       goto EVAL;

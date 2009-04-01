@@ -2155,12 +2155,12 @@ static bool file_probe(const char *arg)
 #else
   int fd;
 #ifdef O_NONBLOCK
-  fd = OPEN(arg, O_RDONLY, O_NONBLOCK);
+  fd = open(arg, O_RDONLY, O_NONBLOCK);
 #else
-  fd = OPEN(arg, O_RDONLY, 0);
+  fd = open(arg, O_RDONLY, 0);
 #endif
   if (fd == -1) return(false);
-  CLOSE(fd, arg);
+  close(fd, arg);
   return(true);
 #endif
 }
@@ -2176,6 +2176,7 @@ bool directory_p(const char *filename);
 static bool directory_p(const char *filename)
 {
   /* from snd-file.c */
+#ifdef S_ISDIR
   struct stat statbuf;
 #if HAVE_LSTAT
   return((lstat(filename, &statbuf) >= 0) &&
@@ -2184,6 +2185,7 @@ static bool directory_p(const char *filename)
 #else
   return((stat(filename, &statbuf) == 0) && 
 	 (S_ISDIR(statbuf.st_mode)));
+#endif
 #endif
 }
 
