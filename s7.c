@@ -1696,7 +1696,7 @@ static s7_pointer add_to_environment(s7_scheme *sc, s7_pointer env, s7_pointer v
 } 
 
 
-static s7_pointer s7_find_symbol_in_environment(s7_scheme *sc, s7_pointer env, s7_pointer hdl, bool all) 
+static s7_pointer s7_find_symbol_in_environment(s7_scheme *sc, s7_pointer env, s7_pointer hdl, bool all_envirs) 
 { 
   s7_pointer x, y;
   /* this is a list (of alists, each representing a frame) ending with a vector (the global environment) */
@@ -1711,7 +1711,7 @@ static s7_pointer s7_find_symbol_in_environment(s7_scheme *sc, s7_pointer env, s
 	if (caar(y) == hdl)
 	  return(car(y));
 
-      if (!all) 
+      if (!all_envirs) 
 	return(sc->NIL); 
     } 
   return(sc->NIL); 
@@ -9862,6 +9862,9 @@ returns a 2 dimensional vector of 6 total elements, all initialized to 1.0."
       if (!(is_pair(x)))
 	return(s7_wrong_type_arg_error(sc, "make-vector", 1, x, "an integer or a list of integers"));
 
+      if (!s7_is_integer(car(x)))
+	return(s7_wrong_type_arg_error(sc, "make-vector", 1, car(x), "each dimension should be an integer"));
+
       if (!is_pair(cdr(x)))
 	len = s7_integer(car(x));
       else
@@ -9869,6 +9872,8 @@ returns a 2 dimensional vector of 6 total elements, all initialized to 1.0."
 	  int i;
 	  for (i = 1, len = 1, y = x; y != sc->NIL; y = cdr(y), i++)
 	    {
+	      if (!s7_is_integer(car(y)))
+		return(s7_wrong_type_arg_error(sc, "make-vector", i, car(y), "each dimension should be an integer"));
 	      len *= s7_integer(car(y));
 	      if (len < 0)
 		return(s7_wrong_type_arg_error(sc, "make-vector", i, car(y), "a non-negative integer"));
@@ -14090,7 +14095,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        *             ,@(cdddr dform))          
        *            (cdr ,form)))))             
        *    
-       *    end up with name as sc->x, args and body as sc->z going to OP_MACRO1, ((gensym) (lambda (args) body) going to eval
+       *    end up with name as sc->x, args and body as sc->z going to OP_MACRO1, ((gensym) (lambda (args) body)) going to eval
        */
       sc->y = s7_gensym(sc, "defmac");
       sc->x = car(sc->code);
@@ -14111,7 +14116,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  (is_pair(cddr(sc->code))) &&
 	  (is_pair(caddr(sc->code))) &&
 	  (s7_is_symbol(caaddr(sc->code))) &&
-	  (caaddr(sc->code) == sc->QUASIQUOTE))
+	  (caaddr(sc->code) == sc->QUASIQUOTE) &&
+	  (cdddr(sc->code) == sc->NIL))            /* protect against (defmacro hi (a) `(+ ,a 1) #f) */
 	{
 	  /*
 	    fprintf(stderr, "cdr(code): %s\n", s7_object_to_c_string(sc, cdr(sc->code)));
@@ -14172,7 +14178,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if ((is_pair(cdr(sc->code))) &&
 	  (is_pair(cadr(sc->code))) &&
 	  (s7_is_symbol(caadr(sc->code))) &&
-	  (caadr(sc->code) == sc->QUASIQUOTE))
+	  (caadr(sc->code) == sc->QUASIQUOTE) &&
+	  (cddr(sc->code) == sc->NIL))
 	{
 	  sc->z = s7_cons(sc,
 			  g_quasiquote_1(sc, 0, cadr(cadr(sc->code))),

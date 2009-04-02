@@ -64048,6 +64048,7 @@ EDITS: 1
       (do ((i 0 (+ i 1)))
 	  ((= i tests))
 	(load "s7test.scm")
+	(if all-args (s7-test-at-random))
 	(gc)))
 
 

@@ -5658,11 +5658,13 @@
       (test (let () (defmacro hiho () `(+ 3 1)) (hiho)) 4)
       (test (let () (defmacro hiho () `(+ 3 1)) (hiho 1)) 'error)
       (test (let () (defmacro hi (a) `(+ ,@a)) (hi (1 2 3))) 6)
+      (test (let () (defmacro hi (a) `(+ ,a 1) #f) (hi 2)) #f)
 
       (test (let () (define-macro (hiho a) `(+ ,a 1)) (hiho 3)) 4)
       (test (let () (define-macro (hiho) `(+ 3 1)) (hiho)) 4)
       (test (let () (define-macro (hiho) `(+ 3 1)) (hiho 1)) 'error)
       (test (let () (define-macro (hi a) `(+ ,@a)) (hi (1 2 3))) 6)
+      (test (let () (define-macro (hi a) `(+ ,a 1) #f) (hi 2)) #f)
 
       (test (string=? (let ((hi (lambda (b) (+ b 1)))) (object->string hi)) "hi") #t)
       (test (string=? (object->string 32) "32") #t)
@@ -39267,7 +39269,7 @@ expt error > 1e-6 around 2^-46.506993328423
 					;(display "four args") (newline)
       (for-each
        (lambda (f)
-	 (display f) (display " ")
+	 ;(display f) (display " ")
 	 (for-each
 	  (lambda (a)
 	    (for-each
