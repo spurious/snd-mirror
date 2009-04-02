@@ -571,9 +571,6 @@ struct s7_scheme {
  *   the size increase is more important.
  */
 
-#define T_CONSTANT                    (1 << (TYPE_BITS + 5))
-#define is_constant(p)                ((typeflag(p) & T_CONSTANT) != 0)
-
 #define T_OBJECT                      (1 << (TYPE_BITS + 6))
 #define T_FINALIZABLE                 (1 << (TYPE_BITS + 7))
 #define T_SIMPLE                      (1 << (TYPE_BITS + 8))
@@ -588,7 +585,7 @@ struct s7_scheme {
 #define T_ETERNAL                     (1 << (TYPE_BITS + 11))
 #define is_eternal(p)                 ((typeflag(p) & T_ETERNAL) != 0)
 
-#define UNUSED_BITS                   0xf0000000
+#define UNUSED_BITS                   (0xf0000000 | (1 << (TYPE_BITS + 5)))
 
 
 #if HAVE_PTHREADS
@@ -1223,13 +1220,10 @@ static int gc(s7_scheme *sc)
 	      clear_mark(p);
 	    else 
 	      {
-		if (!is_constant(p))
-		  {
-		    if (typeflag(p) & T_FINALIZABLE)
-		      finalize_s7_cell(sc, p); 
-		    typeflag(p) = 0;
-		    fp[sc->free_heap_top++] = p;
-		  }
+		if (typeflag(p) & T_FINALIZABLE)
+		  finalize_s7_cell(sc, p); 
+		typeflag(p) = 0;
+		fp[sc->free_heap_top++] = p;
 	      }
 	  }
       }
@@ -1449,7 +1443,7 @@ static s7_pointer symbol_table_add_by_name_at_location(s7_scheme *sc, const char
   s7_pointer x, str; 
   
   str = s7_make_permanent_string(name);
-  x = s7_permanent_cons(str, sc->NIL, T_SYMBOL | T_ATOM | T_SIMPLE | T_CONSTANT | T_DONT_COPY | T_ETERNAL);
+  x = s7_permanent_cons(str, sc->NIL, T_SYMBOL | T_ATOM | T_SIMPLE | T_DONT_COPY | T_ETERNAL);
   symbol_location(x) = location;
 
 #if HAVE_PTHREADS
@@ -1458,7 +1452,7 @@ static s7_pointer symbol_table_add_by_name_at_location(s7_scheme *sc, const char
 
   vector_element(sc->symbol_table, location) = s7_permanent_cons(x, 
 								 vector_element(sc->symbol_table, location), 
-								 T_PAIR | T_ATOM | T_SIMPLE | T_CONSTANT | T_IMMUTABLE | T_DONT_COPY);
+								 T_PAIR | T_ATOM | T_SIMPLE | T_IMMUTABLE | T_DONT_COPY);
 #if HAVE_PTHREADS
   pthread_mutex_unlock(&symtab_lock);
 #endif
@@ -6396,7 +6390,7 @@ static s7_pointer s7_make_permanent_string(const char *str)
   /* for the symbol table which is never GC'd */
   s7_pointer x;
   x = (s7_cell *)malloc(sizeof(s7_cell));
-  set_type(x, T_STRING | T_ATOM | T_SIMPLE | T_CONSTANT | T_IMMUTABLE | T_DONT_COPY);
+  set_type(x, T_STRING | T_ATOM | T_SIMPLE | T_IMMUTABLE | T_DONT_COPY);
   if (str)
     {
       string_value(x) = s7_strdup(str);
@@ -8140,7 +8134,7 @@ static char *s7_atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
 				  "catch", "dynamic-wind", "hash-table"};
 
     buf = (char *)calloc(512, sizeof(char));
-    snprintf(buf, 512, "<unknown object! type: %d (%s), flags: %x%s%s%s%s%s%s%s%s%s%s%s%s>", 
+    snprintf(buf, 512, "<unknown object! type: %d (%s), flags: %x%s%s%s%s%s%s%s%s%s%s%s>", 
 	     type(obj), 
 	     (type(obj) < 22) ? type_names[type(obj)] : "none",
 	     typeflag(obj),
@@ -8148,7 +8142,6 @@ static char *s7_atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
 	     is_atom(obj) ? " atom" : "",
 	     is_eternal(obj) ? " eternal" : "",
 	     is_procedure(obj) ? " procedure" : "",
-	     is_constant(obj) ? " constant" : "",
 	     is_marked(obj) ? " gc-marked" : "",
 	     is_immutable(obj) ? " immutable" : "",
 	     is_syntax(obj) ? " syntax" : "",
@@ -9984,7 +9977,7 @@ s7_pointer s7_make_function(s7_scheme *sc, const char *name, s7_function f, int 
   s7_pointer x = new_cell(sc);
   ptr = (ffunc *)calloc(1, sizeof(ffunc));
   set_type(x, T_S7_FUNCTION | T_ATOM | T_SIMPLE | T_FINALIZABLE | T_DONT_COPY | T_PROCEDURE);
-  /* was T_CONSTANT, but these guys can be freed -- in Snd, for example, "random" is defined in C, but then later redefined in snd-test.scm */
+  /* these guys can be freed -- in Snd, for example, "random" is defined in C, but then later redefined in snd-test.scm */
   x->object.ffptr = ptr;
   x->object.ffptr->ff = f;
   x->object.ffptr->name = name;
@@ -10721,7 +10714,7 @@ s7_pointer s7_make_keyword(s7_scheme *sc, const char *key)
   name = (char *)malloc((safe_strlen(key) + 2) * sizeof(char));
   sprintf(name, ":%s", key);                     /* prepend ":" */
   sym = s7_make_symbol(sc, name);
-  typeflag(sym) |= (T_IMMUTABLE | T_CONSTANT | T_DONT_COPY); 
+  typeflag(sym) |= (T_IMMUTABLE | T_DONT_COPY); 
   free(name);
   
   x = s7_find_symbol_in_environment(sc, sc->envir, sym, true); /* is it already defined? */
@@ -12222,7 +12215,7 @@ static void assign_syntax(s7_scheme *sc, const char *name, opcode_t op)
 {
   s7_pointer x;
   x = symbol_table_add_by_name(sc, name); 
-  typeflag(x) |= (T_SYNTAX | T_IMMUTABLE | T_CONSTANT | T_DONT_COPY); 
+  typeflag(x) |= (T_SYNTAX | T_IMMUTABLE | T_DONT_COPY); 
   typeflag(x) &= (~T_FINALIZABLE);
   syntax_opcode(x) = small_int(sc, (int)op);
 }
@@ -19195,22 +19188,22 @@ s7_scheme *s7_init(void)
   sc->UNSPECIFIED = &sc->_UNSPECIFIED;  
   sc->UNDEFINED = &sc->_UNDEFINED;
 
-  set_type(sc->NIL, T_NIL_TYPE | T_ATOM | T_GC_MARK | T_IMMUTABLE | T_CONSTANT | T_SIMPLE | T_DONT_COPY);
+  set_type(sc->NIL, T_NIL_TYPE | T_ATOM | T_GC_MARK | T_IMMUTABLE | T_SIMPLE | T_DONT_COPY);
   car(sc->NIL) = cdr(sc->NIL) = sc->UNSPECIFIED;
   
-  set_type(sc->T, T_NIL_TYPE | T_ATOM | T_GC_MARK | T_IMMUTABLE | T_CONSTANT | T_SIMPLE | T_DONT_COPY);
+  set_type(sc->T, T_NIL_TYPE | T_ATOM | T_GC_MARK | T_IMMUTABLE | T_SIMPLE | T_DONT_COPY);
   car(sc->T) = cdr(sc->T) = sc->UNSPECIFIED;
   
-  set_type(sc->F, T_NIL_TYPE | T_ATOM | T_GC_MARK | T_IMMUTABLE | T_CONSTANT | T_SIMPLE | T_DONT_COPY);
+  set_type(sc->F, T_NIL_TYPE | T_ATOM | T_GC_MARK | T_IMMUTABLE | T_SIMPLE | T_DONT_COPY);
   car(sc->F) = cdr(sc->F) = sc->UNSPECIFIED;
   
-  set_type(sc->EOF_OBJECT, T_NIL_TYPE | T_ATOM | T_GC_MARK | T_IMMUTABLE | T_CONSTANT | T_SIMPLE | T_DONT_COPY);
+  set_type(sc->EOF_OBJECT, T_NIL_TYPE | T_ATOM | T_GC_MARK | T_IMMUTABLE | T_SIMPLE | T_DONT_COPY);
   car(sc->EOF_OBJECT) = cdr(sc->EOF_OBJECT) = sc->UNSPECIFIED;
   
-  set_type(sc->UNSPECIFIED, T_NIL_TYPE | T_ATOM | T_GC_MARK | T_IMMUTABLE | T_CONSTANT | T_SIMPLE | T_DONT_COPY);
+  set_type(sc->UNSPECIFIED, T_NIL_TYPE | T_ATOM | T_GC_MARK | T_IMMUTABLE | T_SIMPLE | T_DONT_COPY);
   car(sc->UNSPECIFIED) = cdr(sc->UNSPECIFIED) = sc->UNSPECIFIED;
   
-  set_type(sc->UNDEFINED, T_NIL_TYPE | T_ATOM | T_GC_MARK | T_IMMUTABLE | T_CONSTANT | T_SIMPLE | T_DONT_COPY);
+  set_type(sc->UNDEFINED, T_NIL_TYPE | T_ATOM | T_GC_MARK | T_IMMUTABLE | T_SIMPLE | T_DONT_COPY);
   car(sc->UNDEFINED) = cdr(sc->UNDEFINED) = sc->UNSPECIFIED;
   
   sc->input_port = sc->NIL;
@@ -19256,15 +19249,15 @@ s7_scheme *s7_init(void)
   (*(sc->protected_objects_loc)) = 0;
   sc->protected_objects = s7_make_vector(sc, INITIAL_PROTECTED_OBJECTS_SIZE); /* realloc happens to the embedded array, so this pointer is global */
   set_immutable(sc->protected_objects);
-  typeflag(sc->protected_objects) |= (T_CONSTANT | T_DONT_COPY);
+  typeflag(sc->protected_objects) |= T_DONT_COPY;
   
   sc->stack_top = 0;
   sc->stack = s7_make_vector(sc, INITIAL_STACK_SIZE);
   sc->stack_size = INITIAL_STACK_SIZE;
   
   /* keep the symbol table out of the heap */
-  sc->symbol_table = (s7_pointer)malloc(sizeof(s7_cell));
-  set_type(sc->symbol_table, T_VECTOR | T_FINALIZABLE | T_DONT_COPY | T_CONSTANT | T_IMMUTABLE);
+  sc->symbol_table = (s7_pointer)calloc(1, sizeof(s7_cell));
+  set_type(sc->symbol_table, T_VECTOR | T_FINALIZABLE | T_DONT_COPY | T_IMMUTABLE);
   vector_length(sc->symbol_table) = SYMBOL_TABLE_SIZE;
   sc->symbol_table->object.vector.elements = (s7_pointer *)malloc(SYMBOL_TABLE_SIZE * sizeof(s7_pointer));
   s7_vector_fill(sc, sc->symbol_table, sc->NIL);
@@ -19290,11 +19283,11 @@ s7_scheme *s7_init(void)
   
   /* keep the small_ints out of the heap */
   sc->small_ints = (s7_pointer *)malloc((OP_MAX_DEFINED + 1) * sizeof(s7_pointer));
-  for (i = 0; i < OP_MAX_DEFINED; i++) 
+  for (i = 0; i <= OP_MAX_DEFINED; i++) 
     {
       s7_pointer p;
       p = (s7_pointer)calloc(1, sizeof(s7_cell));
-      p->flag = T_OBJECT | T_IMMUTABLE | T_ATOM | T_NUMBER | T_CONSTANT | T_SIMPLE | T_DONT_COPY;
+      p->flag = T_OBJECT | T_IMMUTABLE | T_ATOM | T_NUMBER | T_SIMPLE | T_DONT_COPY;
       p->object.number.type = NUM_INT;
       integer(p->object.number) = (s7_Int)i;
       sc->small_ints[i] = p;
@@ -19325,76 +19318,76 @@ s7_scheme *s7_init(void)
   assign_syntax(sc, "do",              OP_DO);
   
   sc->LAMBDA = s7_make_symbol(sc, "lambda");
-  typeflag(sc->LAMBDA) |= (T_IMMUTABLE | T_CONSTANT | T_DONT_COPY); 
+  typeflag(sc->LAMBDA) |= (T_IMMUTABLE | T_DONT_COPY); 
   
   sc->LAMBDA_STAR = s7_make_symbol(sc, "lambda*");
-  typeflag(sc->LAMBDA_STAR) |= (T_IMMUTABLE | T_CONSTANT | T_DONT_COPY); 
+  typeflag(sc->LAMBDA_STAR) |= (T_IMMUTABLE | T_DONT_COPY); 
   
   sc->QUOTE = s7_make_symbol(sc, "quote");
-  typeflag(sc->QUOTE) |= (T_IMMUTABLE | T_CONSTANT | T_DONT_COPY); 
+  typeflag(sc->QUOTE) |= (T_IMMUTABLE | T_DONT_COPY); 
   
   sc->QUASIQUOTE = s7_make_symbol(sc, "quasiquote");
-  typeflag(sc->QUASIQUOTE) |= (T_IMMUTABLE | T_CONSTANT | T_DONT_COPY); 
+  typeflag(sc->QUASIQUOTE) |= (T_IMMUTABLE | T_DONT_COPY); 
   
   sc->UNQUOTE = s7_make_symbol(sc, "unquote");
-  typeflag(sc->UNQUOTE) |= (T_IMMUTABLE | T_CONSTANT | T_DONT_COPY); 
+  typeflag(sc->UNQUOTE) |= (T_IMMUTABLE | T_DONT_COPY); 
   
   sc->UNQUOTE_SPLICING = s7_make_symbol(sc, "unquote-splicing");
-  typeflag(sc->UNQUOTE_SPLICING) |= (T_IMMUTABLE | T_CONSTANT | T_DONT_COPY); 
+  typeflag(sc->UNQUOTE_SPLICING) |= (T_IMMUTABLE | T_DONT_COPY); 
   
   sc->FEED_TO = s7_make_symbol(sc, "=>");
-  typeflag(sc->FEED_TO) |= (T_IMMUTABLE | T_CONSTANT | T_DONT_COPY); 
+  typeflag(sc->FEED_TO) |= (T_IMMUTABLE | T_DONT_COPY); 
   
   #define object_set_name "(generalized set!)"
   sc->OBJECT_SET = s7_make_symbol(sc, object_set_name);   /* will call g_object_set */
-  typeflag(sc->OBJECT_SET) |= (T_CONSTANT | T_DONT_COPY); 
+  typeflag(sc->OBJECT_SET) |= T_DONT_COPY; 
 
   sc->APPLY = s7_make_symbol(sc, "apply");
-  typeflag(sc->APPLY) |= (T_CONSTANT | T_DONT_COPY); 
+  typeflag(sc->APPLY) |= T_DONT_COPY; 
   
   sc->CONS = s7_make_symbol(sc, "cons");
-  typeflag(sc->CONS) |= (T_CONSTANT | T_DONT_COPY); 
+  typeflag(sc->CONS) |= T_DONT_COPY; 
   
   sc->APPEND = s7_make_symbol(sc, "append");
-  typeflag(sc->APPEND) |= (T_CONSTANT | T_DONT_COPY); 
+  typeflag(sc->APPEND) |= T_DONT_COPY; 
   
   sc->CDR = s7_make_symbol(sc, "cdr");
-  typeflag(sc->CDR) |= (T_CONSTANT | T_DONT_COPY); 
+  typeflag(sc->CDR) |= T_DONT_COPY; 
   
   sc->ELSE = s7_make_symbol(sc, "else");
-  typeflag(sc->ELSE) |= (T_CONSTANT | T_DONT_COPY); 
+  typeflag(sc->ELSE) |= T_DONT_COPY; 
   add_to_current_environment(sc, sc->ELSE, sc->T); 
 
   sc->VECTOR = s7_make_symbol(sc, "vector");
-  typeflag(sc->VECTOR) |= (T_CONSTANT | T_DONT_COPY); 
+  typeflag(sc->VECTOR) |= T_DONT_COPY; 
   sc->VECTOR_FUNCTION = s7_name_to_value(sc, "vector");
   
   sc->VALUES = s7_make_symbol(sc, "values");
-  typeflag(sc->VALUES) |= (T_CONSTANT | T_DONT_COPY); 
+  typeflag(sc->VALUES) |= T_DONT_COPY; 
 
   sc->ERROR = s7_make_symbol(sc, "error");
-  typeflag(sc->ERROR) |= (T_CONSTANT | T_DONT_COPY); 
+  typeflag(sc->ERROR) |= T_DONT_COPY; 
 
   sc->WRONG_TYPE_ARG = s7_make_symbol(sc, "wrong-type-arg");
-  typeflag(sc->WRONG_TYPE_ARG) |= (T_CONSTANT | T_DONT_COPY); 
+  typeflag(sc->WRONG_TYPE_ARG) |= T_DONT_COPY; 
 
   sc->WRONG_NUMBER_OF_ARGS = s7_make_symbol(sc, "wrong-number-of-args");
-  typeflag(sc->WRONG_NUMBER_OF_ARGS) |= (T_CONSTANT | T_DONT_COPY); 
+  typeflag(sc->WRONG_NUMBER_OF_ARGS) |= T_DONT_COPY; 
 
   sc->FORMAT_ERROR = s7_make_symbol(sc, "format-error");
-  typeflag(sc->FORMAT_ERROR) |= (T_CONSTANT | T_DONT_COPY); 
+  typeflag(sc->FORMAT_ERROR) |= T_DONT_COPY; 
 
   sc->OUT_OF_RANGE = s7_make_symbol(sc, "out-of-range");
-  typeflag(sc->OUT_OF_RANGE) |= (T_CONSTANT | T_DONT_COPY); 
+  typeflag(sc->OUT_OF_RANGE) |= T_DONT_COPY; 
 
   sc->KEY_KEY = s7_make_keyword(sc, "key");
-  typeflag(sc->KEY_KEY) |= (T_CONSTANT | T_DONT_COPY); 
+  typeflag(sc->KEY_KEY) |= T_DONT_COPY; 
   
   sc->KEY_OPTIONAL = s7_make_keyword(sc, "optional");
-  typeflag(sc->KEY_OPTIONAL) |= (T_CONSTANT | T_DONT_COPY); 
+  typeflag(sc->KEY_OPTIONAL) |= T_DONT_COPY; 
   
   sc->KEY_REST = s7_make_keyword(sc, "rest");
-  typeflag(sc->KEY_REST) |= (T_CONSTANT | T_DONT_COPY); 
+  typeflag(sc->KEY_REST) |= T_DONT_COPY; 
   
 
   s7_define_function(sc, "gensym",                  g_gensym,                  0, 1, false, H_gensym);
@@ -19742,7 +19735,7 @@ s7_scheme *s7_init(void)
 
 #if WITH_MULTIDIMENSIONAL_VECTORS
   sc->VECTOR_SET = s7_symbol_value(sc, s7_make_symbol(sc, "vector-set!"));
-  typeflag(sc->VECTOR_SET) |= (T_CONSTANT | T_DONT_COPY); 
+  typeflag(sc->VECTOR_SET) |= T_DONT_COPY; 
 
   g_provide(sc, make_list_1(sc, s7_make_symbol(sc, "multidimensional-vectors")));
 #endif
