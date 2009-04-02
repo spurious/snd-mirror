@@ -248,9 +248,30 @@
 
 
 
+;;; -------- one-zero --------
 
+(defgenerator big-one-zero (a0 1.0) (a1 0.0) (x1 0.0))
 
+(define* (big-one-zero gen x)
+  (declare (gen big-one-zero) (x float))
+  (let ((val (+ (* x (big-one-zero-a0 gen))
+		(* (big-one-zero-x1 gen) (big-one-zero-a1 gen)))))
+    (set! (big-one-zero-x1 gen) x)
+    val))
 
+		  
+;;; -------- one-pole --------
+
+(defgenerator big-one-pole (a0 1.0) (b1 0.0) (y1 0.0))
+
+(define* (big-one-pole gen x)
+  (declare (gen big-one-pole) (x float))
+  (let ((val (- (* x (big-one-pole-a0 gen))
+		(* (big-one-pole-y1 gen) (big-one-pole-b1 gen)))))
+    (set! (big-one-pole-y1 gen) val)
+    val))
+
+		  
 
 
 

@@ -509,6 +509,7 @@ struct s7_scheme {
   int saved_line_number;
   int backtrace_size, backtrace_top;
   s7_pointer *backtrace_ops, *backtrace_args;
+  int *backtrace_lines;
 #if HAVE_PTHREADS
   int *backtrace_thread_ids;
   int thread_id;
@@ -876,25 +877,6 @@ static void set_pair_line_number(s7_pointer p, int n)
 
 /* -------------------------------- GC -------------------------------- */
 
-/* -------- gc benchmark -------- */
-
-#define BENCHMARK_GC 0
-
-#if BENCHMARK_GC
-
-static double gc_total = 0.0;
-static double gc_max = 0.0;
-static double gc_mark_max = 0.0;
-
-static double s7_get_gc_bench_time(void)
-{
-  struct timeval tv;
-  gettimeofday(&tv, NULL);
-  return(tv.tv_sec + tv.tv_usec / 1000000.0);
-}
-#endif
-
-
 #if HAVE_PTHREADS
 static pthread_mutex_t protected_objects_lock = PTHREAD_MUTEX_INITIALIZER;
 #endif
@@ -1163,18 +1145,36 @@ void s7_mark_object(s7_pointer p)
 }
 
 
+/* -------- gc benchmark -------- */
+
+#define BENCHMARK_GC 0
+
+#if BENCHMARK_GC
+
+static double gc_total = 0.0;
+static double gc_max = 0.0;
+
+static double s7_get_gc_bench_time(void)
+{
+  struct timeval tv;
+  gettimeofday(&tv, NULL);
+  return(tv.tv_sec + tv.tv_usec / 1000000.0);
+}
+#endif
+
+
 static int gc(s7_scheme *sc)
 {
   int i, old_free_heap_top;
   
-#if BENCHMARK_GC
-  double start_time, gc_mark_time;
-  start_time = s7_get_gc_bench_time();
-#endif
-
   if (*(sc->gc_verbose))
     write_string(sc, "gc...", s7_current_output_port(sc));
   
+#if BENCHMARK_GC
+  double start_time;
+  start_time = s7_get_gc_bench_time();
+#endif
+
   /* mark all live objects (the symbol table is in permanent memory, not the heap) */
   S7_MARK(sc->global_env);
   S7_MARK(sc->args);
@@ -1205,14 +1205,6 @@ static int gc(s7_scheme *sc)
       S7_MARK(sc->backtrace_args[i]);
     }
   
- #if BENCHMARK_GC
-   {
-     gc_mark_time = s7_get_gc_bench_time() - start_time;
-     if (gc_mark_time > gc_mark_max)
-       gc_mark_max = gc_mark_time;
-   }
-#endif
-
   /* free up all other objects */
   old_free_heap_top = sc->free_heap_top;
 
@@ -1224,6 +1216,7 @@ static int gc(s7_scheme *sc)
       {
 	s7_pointer p;
 	p = (*tp);
+
 	if (typeflag(p) != 0) /* an already-free object? */
 	  {
 	    if (is_marked(p)) 
@@ -1250,7 +1243,7 @@ static int gc(s7_scheme *sc)
      if (gc_time > gc_max)
        gc_max = gc_time;
     
-     fprintf(stderr, "time used to gc: %f %f. \ttotal: %f. \tmax: %f %f\n", (float)gc_mark_time, (float)gc_time, (float)gc_total, (float)gc_mark_max, (float)gc_max);
+     fprintf(stderr, "time used to gc: %f. \ttotal: %f. \tmax: %f\n", (float)gc_time, (float)gc_total, (float)gc_max);
    }
 #endif
 
@@ -4582,6 +4575,7 @@ static s7_pointer g_rationalize(s7_scheme *sc, s7_pointer args)
       err = s7_real(cadr(args));
     }
   else err = default_rationalize_error;
+
   if (c_rationalize(s7_real(x), err, &numer, &denom))
     return(s7_make_ratio(sc, numer, denom));
   return(sc->F);
@@ -11507,6 +11501,7 @@ static void print_backtrace_entry(s7_scheme *sc, int n)
 
   code = sc->backtrace_ops[n];
   args = sc->backtrace_args[n];
+  line = sc->backtrace_lines[n];
 
   if ((code == sc->NIL) && (args == sc->NIL))
     return;
@@ -11544,7 +11539,6 @@ static void print_backtrace_entry(s7_scheme *sc, int n)
       str[127] = '\0';
     }
 
-  line = pair_line_number(code);
   if (line > 0)
     {
       if ((remembered_line_number(line) != 0) &&
@@ -11600,7 +11594,7 @@ static s7_pointer g_backtracing(s7_scheme *sc, s7_pointer a)
 }
 
 
-static void add_backtrace_entry(s7_scheme *sc, s7_pointer code, s7_pointer args)
+static void add_backtrace_entry(s7_scheme *sc, s7_pointer code, s7_pointer args, int line_num)
 {
   int n;
 
@@ -11619,6 +11613,7 @@ static void add_backtrace_entry(s7_scheme *sc, s7_pointer code, s7_pointer args)
 
   sc->backtrace_ops[n] = code;
   sc->backtrace_args[n] = args;
+  sc->backtrace_lines[n] = line_num;
 
 #if HAVE_PTHREADS
   sc->backtrace_thread_ids[n] = id;
@@ -11642,6 +11637,7 @@ static s7_pointer g_clear_backtrace(s7_scheme *sc, s7_pointer args)
     {
       sc->backtrace_ops[i] = sc->NIL;
       sc->backtrace_args[i] = sc->NIL;
+      sc->backtrace_lines[i] = 0;
     }
 
 #if HAVE_PTHREADS
@@ -11664,6 +11660,7 @@ static void make_backtrace_buffer(s7_scheme *sc, int size)
 
   if (sc->backtrace_ops) free(sc->backtrace_ops);
   if (sc->backtrace_args) free(sc->backtrace_args);
+  if (sc->backtrace_lines) free(sc->backtrace_lines);
 
   sc->backtrace_top = 0;
   sc->backtrace_size = size;
@@ -11672,6 +11669,7 @@ static void make_backtrace_buffer(s7_scheme *sc, int size)
     {
       sc->backtrace_ops = (s7_pointer *)malloc(sc->backtrace_size * sizeof(s7_pointer));
       sc->backtrace_args = (s7_pointer *)malloc(sc->backtrace_size * sizeof(s7_pointer));
+      sc->backtrace_lines = (int *)calloc(sc->backtrace_size, sizeof(int));
       for (i = 0; i < sc->backtrace_size; i++)
 	{
 	  sc->backtrace_ops[i] = sc->NIL;
@@ -11682,6 +11680,7 @@ static void make_backtrace_buffer(s7_scheme *sc, int size)
     {
       sc->backtrace_ops = NULL;
       sc->backtrace_args = NULL;
+      sc->backtrace_lines = NULL;
     }
 
 #if HAVE_PTHREADS
@@ -13170,7 +13169,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  push_stack(sc, OP_DOMACRO, sc->NIL, sc->NIL);
 	  sc->args = make_list_1(sc, sc->code);
 	  sc->code = sc->value;
-	  set_pair_line_number(sc->code, sc->saved_line_number);
 	  goto APPLY;
 	} 
       else 
@@ -13244,9 +13242,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      (!s7_is_vector(sc->code)))
 	    return(eval_error(sc, "attempt to apply ~A?\n", sc->code));
 	  
-	  /* set_pair_line_number(sc->code, sc->saved_line_number); */
-	  /*   this is a no-op -- sc->code is not (normally?) a pair! */
-
 	  sc->args = cdr(sc->args);
 	  /* goto APPLY;  */
 	}
@@ -13256,7 +13251,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     APPLY:
     case OP_APPLY:      /* apply 'code' to 'args' */
       if (*(sc->backtracing)) 
-	add_backtrace_entry(sc, sc->code, sc->args);
+	{
+	  add_backtrace_entry(sc, sc->code, sc->args, sc->saved_line_number);
+	  sc->saved_line_number = 0;
+	}
 
       switch (type(sc->code))
 	{
@@ -14891,6 +14889,7 @@ static s7_scheme *clone_s7(s7_scheme *sc, s7_pointer vect)
   new_sc->backtrace_size = 0;
   new_sc->backtrace_ops = NULL;
   new_sc->backtrace_args = NULL;
+  new_sc->backtrace_lines = NULL;
   new_sc->backtrace_thread_ids = NULL;
   new_sc->default_rng = NULL;
 #if WITH_GMP
@@ -19263,9 +19262,12 @@ s7_scheme *s7_init(void)
   sc->stack = s7_make_vector(sc, INITIAL_STACK_SIZE);
   sc->stack_size = INITIAL_STACK_SIZE;
   
-  sc->symbol_table = s7_make_vector(sc, SYMBOL_TABLE_SIZE);
-  set_immutable(sc->symbol_table);
-  typeflag(sc->symbol_table) |= (T_CONSTANT | T_DONT_COPY);
+  /* keep the symbol table out of the heap */
+  sc->symbol_table = (s7_pointer)malloc(sizeof(s7_cell));
+  set_type(sc->symbol_table, T_VECTOR | T_FINALIZABLE | T_DONT_COPY | T_CONSTANT | T_IMMUTABLE);
+  vector_length(sc->symbol_table) = SYMBOL_TABLE_SIZE;
+  sc->symbol_table->object.vector.elements = (s7_pointer *)malloc(SYMBOL_TABLE_SIZE * sizeof(s7_pointer));
+  s7_vector_fill(sc, sc->symbol_table, sc->NIL);
   
   sc->gc_verbose = (bool *)calloc(1, sizeof(bool));
   sc->load_verbose = (bool *)calloc(1, sizeof(bool));
@@ -19274,6 +19276,7 @@ s7_scheme *s7_init(void)
 
   sc->backtrace_ops = NULL;
   sc->backtrace_args = NULL;
+  sc->backtrace_lines = NULL;
   make_backtrace_buffer(sc, INITIAL_BACKTRACE_SIZE);
 
 #if HAVE_PTHREADS
@@ -19285,17 +19288,12 @@ s7_scheme *s7_init(void)
   sc->global_env = s7_immutable_cons(sc, s7_make_vector(sc, SYMBOL_TABLE_SIZE), sc->NIL);
   sc->envir = sc->global_env;
   
-  {
-    s7_pointer x;
-    x = s7_make_vector(sc, OP_MAX_DEFINED + 1);
-    typeflag(x) |= (T_CONSTANT | T_DONT_COPY);
-    sc->small_ints = x->object.vector.elements;
-  }
-
+  /* keep the small_ints out of the heap */
+  sc->small_ints = (s7_pointer *)malloc((OP_MAX_DEFINED + 1) * sizeof(s7_pointer));
   for (i = 0; i < OP_MAX_DEFINED; i++) 
     {
       s7_pointer p;
-      p = (s7_cell *)calloc(1, sizeof(s7_cell));
+      p = (s7_pointer)calloc(1, sizeof(s7_cell));
       p->flag = T_OBJECT | T_IMMUTABLE | T_ATOM | T_NUMBER | T_CONSTANT | T_SIMPLE | T_DONT_COPY;
       p->object.number.type = NUM_INT;
       integer(p->object.number) = (s7_Int)i;
