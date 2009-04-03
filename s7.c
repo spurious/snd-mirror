@@ -649,7 +649,6 @@ struct s7_scheme {
 #endif
 
 #define small_int(Sc, Val)            (Sc)->small_ints[Val]
-#define small_int_as_num(Sc, Val)     (Sc)->small_ints[Val]->object.number
 
 #define is_input_port(p)              (type(p) == T_INPUT_PORT) 
 #define is_output_port(p)             (type(p) == T_OUTPUT_PORT)
@@ -1780,7 +1779,7 @@ static s7_pointer lambda_star_argument_default_value(s7_scheme *sc, s7_pointer v
 }
 
 
-static s7_pointer g_global_environment(s7_scheme *sc, s7_pointer p)
+static s7_pointer g_global_environment(s7_scheme *sc, s7_pointer ignore)
 {
   #define H_global_environment "(global-environment) returns the top-level definitions (symbol bindings)"
   return(sc->global_env);
@@ -2703,6 +2702,9 @@ static num make_complex(s7_Double rl, s7_Double im)
 s7_pointer s7_make_integer(s7_scheme *sc, s7_Int n) 
 {
   s7_pointer x;
+  if ((n >= 0) && (n < OP_MAX_DEFINED))
+    return(small_int(sc, n));
+
   x = new_cell(sc);
   set_type(x, T_NUMBER | T_ATOM | T_SIMPLE | T_DONT_COPY);
   
@@ -4544,7 +4546,7 @@ static s7_pointer g_angle(s7_scheme *sc, s7_pointer args)
   if (num_to_real(x->object.number) < 0.0)
     return(s7_make_real(sc, M_PI));
   if (object_number_type(x) <= NUM_RATIO)
-    return(s7_make_integer(sc, 0));
+    return(small_int(sc, 0));
   return(s7_make_real(sc, 0.0));
 }
 
@@ -5007,7 +5009,7 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
       s7_Int y;
       y = s7_integer(pw);
       if (y == 0)
-	return(s7_make_integer(sc, 1));
+	return(small_int(sc, 1));
 
       if (object_number_type(n) == NUM_INT)
 	{
@@ -5020,7 +5022,7 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
 	    {
 	      if (s7_Int_abs(y) & 1)
 		return(n);
-	      return(s7_make_integer(sc, 1));
+	      return(small_int(sc, 1));
 	    }
 
 	  if (int_pow_ok(x, s7_Int_abs(y)))
@@ -5242,7 +5244,7 @@ static s7_pointer g_lcm(s7_scheme *sc, s7_pointer args)
 	    return(big_lcm(sc, s7_cons(sc, s7_Int_to_big_integer(sc, n), x)));
 #endif
 	  if (n == 0)
-	    return(s7_make_integer(sc, 0));
+	    return(small_int(sc, 0));
 	}
       return(s7_make_integer(sc, n));
     }
@@ -5255,7 +5257,7 @@ static s7_pointer g_lcm(s7_scheme *sc, s7_pointer args)
 	return(big_lcm(sc, s7_cons(sc, s7_ratio_to_big_ratio(sc, n, d), x)));
 #endif
       if (n == 0)
-	return(s7_make_integer(sc, 0));
+	return(small_int(sc, 0));
       d = c_gcd(d, s7_denominator(car(x)));
     }
   return(s7_make_ratio(sc, n, d));
@@ -5281,7 +5283,7 @@ static s7_pointer g_gcd(s7_scheme *sc, s7_pointer args)
 	{
 	  n = c_gcd(n, s7_integer(car(x)));
 	  if (n == 1)
-	    return(s7_make_integer(sc, 1));
+	    return(small_int(sc, 1));
 	}
       return(s7_make_integer(sc, n));
     }
@@ -5332,7 +5334,7 @@ static s7_pointer g_add(s7_scheme *sc, s7_pointer args)
   s7_pointer x;
 
   if (args == sc->NIL)
-    return(make_number(sc, small_int_as_num(sc, 0)));
+    return(small_int(sc, 0));
   
   for (i = 1, x = args; x != sc->NIL; i++, x = cdr(x)) 
     if (!s7_is_number(car(x)))
@@ -5426,7 +5428,7 @@ static s7_pointer g_multiply(s7_scheme *sc, s7_pointer args)
   s7_pointer x;
 
   if (args == sc->NIL)
-    return(make_number(sc, small_int_as_num(sc, 1)));
+    return(small_int(sc, 1));
   
   for (i = 1, x = args; x != sc->NIL; i++, x = cdr(x)) 
     if (!s7_is_number(car(x)))
@@ -5671,7 +5673,7 @@ static s7_pointer g_imag_part(s7_scheme *sc, s7_pointer args)
   if (!s7_is_number(p))
     return(s7_wrong_type_arg_error(sc, "imag-part", 0, p, "a number"));
   if (object_number_type(p) < NUM_REAL)
-    return(s7_make_integer(sc, 0));                /* try to maintain exactness throughout expressions */
+    return(small_int(sc, 0));                /* try to maintain exactness throughout expressions */
   return(s7_make_real(sc, s7_imag_part(p)));
 }
 
@@ -9368,7 +9370,7 @@ static s7_pointer g_length(s7_scheme *sc, s7_pointer args)
   s7_pointer lst = car(args);
   
   if (lst == sc->NIL)
-    return(s7_make_integer(sc, 0));
+    return(small_int(sc, 0));
   
   if (!is_pair(lst)) 
     return(s7_wrong_type_arg_error(sc, "length", 0, lst, "a list"));
@@ -10146,13 +10148,13 @@ s7_pointer s7_procedure_arity(s7_scheme *sc, s7_pointer x)
       else 
 	{
 	  if (s7_is_symbol(caar(x)))
-	    return(make_list_3(sc, s7_make_integer(sc, 0), s7_make_integer(sc, 0), sc->T));
+	    return(make_list_3(sc, small_int(sc, 0), small_int(sc, 0), sc->T));
 	  len = s7_list_length(sc, caar(x));
 	}
       
       if (len >= 0)
-	return(make_list_3(sc, s7_make_integer(sc, len), s7_make_integer(sc, 0), sc->F));
-      return(make_list_3(sc, s7_make_integer(sc, abs(len)), s7_make_integer(sc, 0), sc->T));
+	return(make_list_3(sc, s7_make_integer(sc, len), small_int(sc, 0), sc->F));
+      return(make_list_3(sc, s7_make_integer(sc, abs(len)), small_int(sc, 0), sc->T));
     }
   
   if (s7_is_procedure_with_setter(x))
@@ -10162,7 +10164,7 @@ s7_pointer s7_procedure_arity(s7_scheme *sc, s7_pointer x)
 		       sc->F));
   
   if (s7_is_applicable_object(x))
-    return(make_list_3(sc, s7_make_integer(sc, 0), s7_make_integer(sc, 0), sc->T));
+    return(make_list_3(sc, small_int(sc, 0), small_int(sc, 0), sc->T));
   return(sc->NIL);
 }
 
@@ -16149,7 +16151,7 @@ static s7_pointer big_add(s7_scheme *sc, s7_pointer args)
   s7_pointer x, result;
 
   if (args == sc->NIL)
-    return(make_number(sc, small_int_as_num(sc, 0)));
+    return(small_int(sc, 0));
 
   if ((cdr(args) == sc->NIL) && (s7_is_number(car(args))))
     return(car(args));
@@ -16329,7 +16331,7 @@ static s7_pointer big_multiply(s7_scheme *sc, s7_pointer args)
   s7_pointer x, result;
 
   if (args == sc->NIL)
-    return(make_number(sc, small_int_as_num(sc, 1)));
+    return(small_int(sc, 1));
 
   if ((cdr(args) == sc->NIL) && (s7_is_number(car(args))))
     return(car(args));
@@ -16576,7 +16578,7 @@ static s7_pointer big_denominator(s7_scheme *sc, s7_pointer args)
   if (is_object(p))
     {
       if (object_type(p) == big_integer_tag)
-	return(make_number(sc, small_int_as_num(sc, 1)));
+	return(small_int(sc, 1));
       if (object_type(p) == big_ratio_tag)
 	return(mpz_to_big_integer(sc, mpq_denref(S7_BIG_RATIO(p))));
     }
@@ -16651,7 +16653,7 @@ static s7_pointer big_imag_part(s7_scheme *sc, s7_pointer args)
 	  if ((object_type(p) == big_integer_tag) ||
 	      (object_type(p) == big_ratio_tag) ||
 	      (object_type(p) == big_real_tag))
-	    return(make_number(sc, small_int_as_num(sc, 0)));
+	    return(small_int(sc, 0));
 	}
     }
   return(g_imag_part(sc, args));
@@ -16729,14 +16731,14 @@ static s7_pointer big_angle(s7_scheme *sc, s7_pointer args)
       if (object_type(p) == big_integer_tag)
 	{
 	  if (mpz_cmp_ui(S7_BIG_INTEGER(p), 0) >= 0)
-	    return(s7_make_integer(sc, 0));
+	    return(small_int(sc, 0));
 	  return(big_pi(sc));
 	}
 
       if (object_type(p) == big_ratio_tag)
 	{
 	  if (mpq_cmp_ui(S7_BIG_RATIO(p), 0, 1) >= 0)
-	    return(s7_make_integer(sc, 0));
+	    return(small_int(sc, 0));
 	  return(big_pi(sc));
 	}
 
@@ -17165,7 +17167,7 @@ static s7_pointer big_expt(s7_scheme *sc, s7_pointer args)
       if (yval == 0)
 	{
 	  if (s7_is_rational(x))
-	    return(s7_make_integer(sc, 1));
+	    return(small_int(sc, 1));
 	  return(s7_make_real(sc, 1.0));
 	}
 
@@ -17316,14 +17318,14 @@ static s7_pointer big_expt(s7_scheme *sc, s7_pointer args)
 	{
 	  mpc_clear(*z);
 	  free(z);
-	  return(make_number(sc, small_int_as_num(sc, 0)));
+	  return(small_int(sc, 0));
 	}
 
       if (mpc_cmp_si_si(*z, 1, 0) == 0)
 	{
 	  mpc_clear(*z);
 	  free(z);
-	  return(make_number(sc, small_int_as_num(sc, 1)));
+	  return(small_int(sc, 1));
 	}
 
       mpfr_init(r);
@@ -18699,7 +18701,7 @@ static s7_pointer big_gcd(s7_scheme *sc, s7_pointer args)
 	    {
 	      mpz_clear(*n);
 	      free(n);
-	      return(s7_make_integer(sc, 1));
+	      return(small_int(sc, 1));
 	    }
 	}
       return(s7_make_object(sc, big_integer_tag, (void *)n));
@@ -18767,7 +18769,7 @@ static s7_pointer big_lcm(s7_scheme *sc, s7_pointer args)
 	    {
 	      mpz_clear(*n);
 	      free(n);
-	      return(s7_make_integer(sc, 0));
+	      return(small_int(sc, 0));
 	    }
 	}
       return(s7_make_object(sc, big_integer_tag, (void *)n));
@@ -18782,7 +18784,7 @@ static s7_pointer big_lcm(s7_scheme *sc, s7_pointer args)
       if (mpz_cmp_ui(n, 0) == 0)
 	{
 	  mpz_clear(n);
-	  return(s7_make_integer(sc, 0));
+	  return(small_int(sc, 0));
 	}
       mpz_init_set(d, mpq_denref(S7_BIG_RATIO(rat)));
       for (x = cdr(args); x != sc->NIL; x = cdr(x))
@@ -18793,7 +18795,7 @@ static s7_pointer big_lcm(s7_scheme *sc, s7_pointer args)
 	    {
 	      mpz_clear(n);
 	      mpz_clear(d);
-	      return(s7_make_integer(sc, 0));
+	      return(small_int(sc, 0));
 	    }
 	  mpz_gcd(d, d, mpq_denref(S7_BIG_RATIO(rat)));
 	}

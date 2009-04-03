@@ -29962,12 +29962,6 @@ EDITS: 2
 	  (if (or (not (number? hamming-window))
 		  (not (= hamming-window old-val)))
 	      (snd-display ";snd-help clobbered out-of-module variable: ~A ~A" old-value hamming-window)))
-	(if (provided? 'snd-guile)
-	    (begin
-	      (let ((val (snd-help (list "hi" "ho") #f)))
-		(if val (snd-display ";snd-help list: ~A" val)))
-	      (let ((val (snd-help 123.123 #f)))
-		(if val (snd-display ";snd-help num: ~A" val)))))
 	(let ((vals (snd-urls)))
 	  (do ((i 0 (+ 1 i)))
 	      ((= i 25)) ; need to cycle the 8's
@@ -30719,31 +30713,6 @@ EDITS: 2
     (add-hook! mark-drag-triangle-hook mdt-test)
     (if (not (hook-member mdt-test mark-drag-triangle-hook)) (snd-display ";hook-member #f? ~A" (hook->list mark-drag-triangle-hook)))
     (reset-hook! mark-drag-triangle-hook)
-    (if (provided? 'snd-guile) ; depends on pipes and whatnot -- no longer of any interest
-	(let ((fr (frames fd))
-	      (chn (chans fd))
-	      (sr (srate fd))
-	      (mx (maxamp fd)))
-	  (copyfile-1 #f)
-	  (if (not (equal? (edit-fragment) '("(cp)" "set" 0 50828))) (snd-display ";copyfile-1: ~A?" (edit-fragment)))
-	  (if (or (not (= fr (frames fd)))
-		  (not (= chn (chans fd)))
-		  (fneq mx (maxamp fd))
-		  (fneq sr (srate fd)))
-	      (snd-display ";copyfile(1): ~A ~A ~A ~A?" (frames fd) (chans fd) (srate fd) (maxamp fd)))
-	  (let ((eds (edits)))
-	    (add-file-to-view-files-list "oboe.snd")
-	    (add-directory-to-view-files-list ".")
-	    (select-all)
-	    (copyfile-1 #t)
-	    (if (not (equal? (edit-fragment) '("(cp)" "set" 0 50828))) (snd-display ";copyfile-1 (select): ~A?" (edit-fragment)))
-	    (if (not (equal? (edits) (list (+ (car eds) 1) (cadr eds)))) (snd-display ";copyfile-1 (select eds): ~A ~A?" eds (edits)))
-	    (if (or (not (= fr (frames fd)))
-		    (not (= chn (chans fd)))
-		    (fneq mx (maxamp fd))
-		    (fneq sr (srate fd)))
-		(snd-display ";copyfile(2): ~A ~A ~A ~A?" (frames fd) (chans fd) (srate fd) (maxamp fd))))))
-    
     (set! (transform-size fd 0) 256)
     (for-each
      (lambda (dpy-type fft-type)
@@ -66185,11 +66154,6 @@ EDITS: 1
 	(system "chmod 644 test.snd")
 	(delete-file "test.snd")
 	
-	(if (provided? 'snd-guile)
-	    (begin
-	      (trace traced)
-	      (snd-trace (if #t (traced 12)))))
-	
 	;; these redefine several basic names ("tap"), so they're not in test 23
 	(if all-args
 	    (begin
@@ -66370,14 +66334,7 @@ EDITS: 1
 	    (if (not (eq? tag 'bad-arity)) (snd-display ";edpos proc bad args: ~A" tag)))
 	  
 	  (if (not (sound? ind)) (snd-display ";edpos bad arity proc clobbers chan?? ~A" ind))
-	  
-	  (if (provided? 'snd-guile)
-	      (let ((tag (catch #t
-				(lambda () (scale-channel .5 0 100 ind 0 (lambda (snd chn) (close-sound snd) current-edit-position)))
-				(lambda args (car args)))))
-		(if (not (eq? tag 'no-such-channel)) (snd-display ";edpos clobbers channel: ~A" tag))
-		(if (sound? ind) (snd-display ";edpos proc clobbers chan?? ~A" ind)))
-	      (close-sound ind)))
+	  )
 	
 	(set! env3 #f)
 	(set! delay-32 #f)
