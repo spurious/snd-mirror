@@ -428,6 +428,7 @@ struct s7_scheme {
   s7_pointer stack;                   /* stack is a vector */
   int stack_size, stack_top;
   s7_pointer *small_ints;             /* permanent numbers for opcode entries in the stack */
+  s7_pointer real_zero;
   
   s7_pointer protected_objects;       /* a vector of gc-protected objects */
   int *protected_objects_size, *protected_objects_loc; /* pointers so they're global across threads */
@@ -1396,8 +1397,14 @@ static void pop_stack(s7_scheme *sc)
 static void push_stack(s7_scheme *sc, opcode_t op, s7_pointer args, s7_pointer code)
 { 
   s7_pointer *vel;
-  sc->stack_top += 4;
 
+  vel = (s7_pointer *)(sc->stack->object.vector.elements + sc->stack_top);
+  vel[0] = code;
+  vel[1] = sc->envir;
+  vel[2] = args;
+  vel[3] = sc->small_ints[(int)op];
+
+  sc->stack_top += 4;
   if (sc->stack_top >= sc->stack_size)
     {
       int i, new_size;
@@ -1408,12 +1415,6 @@ static void push_stack(s7_scheme *sc, opcode_t op, s7_pointer args, s7_pointer c
       sc->stack->object.vector.length = new_size;
       sc->stack_size = new_size;
     }
-
-  vel = (s7_pointer *)(sc->stack->object.vector.elements + sc->stack_top - 4);
-  vel[0] = code;
-  vel[1] = sc->envir;
-  vel[2] = args;
-  vel[3] = sc->small_ints[(int)op];
 } 
 
 
@@ -2704,6 +2705,7 @@ s7_pointer s7_make_integer(s7_scheme *sc, s7_Int n)
   s7_pointer x;
   if ((n >= 0) && (n < OP_MAX_DEFINED))
     return(small_int(sc, n));
+  /* there are ca 6300 -1's in s7test -- if like sc->real_zero (64000), this would gain us .2% overall speed */
 
   x = new_cell(sc);
   set_type(x, T_NUMBER | T_ATOM | T_SIMPLE | T_DONT_COPY);
@@ -2717,7 +2719,11 @@ s7_pointer s7_make_integer(s7_scheme *sc, s7_Int n)
 
 s7_pointer s7_make_real(s7_scheme *sc, s7_Double n) 
 {
-  s7_pointer x = new_cell(sc);
+  s7_pointer x;
+  if (n == 0.0)
+    return(sc->real_zero);
+
+  x = new_cell(sc);
   set_type(x, T_NUMBER | T_ATOM | T_SIMPLE | T_DONT_COPY);
   
   x->object.number.type = NUM_REAL;
@@ -4547,7 +4553,7 @@ static s7_pointer g_angle(s7_scheme *sc, s7_pointer args)
     return(s7_make_real(sc, M_PI));
   if (object_number_type(x) <= NUM_RATIO)
     return(small_int(sc, 0));
-  return(s7_make_real(sc, 0.0));
+  return(sc->real_zero);
 }
 
 
@@ -5085,7 +5091,7 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
 
       x = num_to_real(n->object.number);
       if (x == 0.0)
-	return(s7_make_real(sc, 0.0));
+	return(sc->real_zero);
       y = num_to_real(pw->object.number);
       if (y == 0.0)
 	return(s7_make_real(sc, 1.0));
@@ -7661,6 +7667,7 @@ s7_pointer s7_load(s7_scheme *sc, const char *filename)
       pop_input_port(sc);
       s7_close_input_port(sc, port);
     }
+
   return(sc->UNSPECIFIED);
 }
 
@@ -16745,7 +16752,7 @@ static s7_pointer big_angle(s7_scheme *sc, s7_pointer args)
       if (object_type(p) == big_real_tag)
 	{
 	  if (mpfr_cmp_ui(S7_BIG_REAL(p), 0) >= 0)
-	    return(s7_make_real(sc, 0.0));
+	    return(sc->real_zero);
 	  return(big_pi(sc));
 	}
 
@@ -19294,6 +19301,11 @@ s7_scheme *s7_init(void)
       integer(p->object.number) = (s7_Int)i;
       sc->small_ints[i] = p;
     }
+  
+  sc->real_zero = (s7_pointer)calloc(1, sizeof(s7_cell));
+  sc->real_zero->flag = T_OBJECT | T_IMMUTABLE | T_ATOM | T_NUMBER | T_SIMPLE | T_DONT_COPY;
+  sc->real_zero->object.number.type = NUM_REAL;
+  real(sc->real_zero->object.number) = (s7_Double)0.0;
   
   /* initialization of global pointers to special symbols */
   assign_syntax(sc, "lambda",          OP_LAMBDA);

@@ -2175,6 +2175,10 @@ bool directory_p(const char *filename);
 
 static bool directory_p(const char *filename)
 {
+#if MUS_WINDOZE
+  return(false);
+
+#else
   /* from snd-file.c */
 #ifdef S_ISDIR
   struct stat statbuf;
@@ -2185,6 +2189,7 @@ static bool directory_p(const char *filename)
 #else
   return((stat(filename, &statbuf) == 0) && 
 	 (S_ISDIR(statbuf.st_mode)));
+#endif
 #endif
 #endif
 }

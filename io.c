@@ -30,6 +30,8 @@
   #include <pthread.h>
 #endif
 
+#include <sys/stat.h>
+
 #include "_sndlib.h"
 
 
@@ -716,7 +718,7 @@ int mus_file_open_write(const char *arg)
   int fd;
 #ifdef MUS_WINDOZE
   if ((fd = OPEN(arg, O_RDWR | O_BINARY, 0)) == -1)
-    fd = CREAT(arg, 0x0100 | 0x0080); 
+    fd = CREAT(arg, S_IREAD | S_IWRITE);               /* 0x0100 | 0x0080 */
 #else
   if ((fd = OPEN(arg, O_RDWR, 0)) == -1)
     fd = CREAT(arg, 0666);  /* equivalent to the new open(arg, O_RDWR | O_CREAT | O_TRUNC, 0666) */
