@@ -2160,7 +2160,7 @@ static bool file_probe(const char *arg)
   fd = open(arg, O_RDONLY, 0);
 #endif
   if (fd == -1) return(false);
-  close(fd, arg);
+  close(fd);
   return(true);
 #endif
 }

@@ -13187,6 +13187,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
     EVAL_ARGS:
     case OP_EVAL_ARGS1:
+      /* this is where most of s7's compute time goes (leaving aside the gc, but this is the main source
+       *   of temporary cells, so it affects that as well).
+       */
       sc->args = s7_cons(sc, sc->value, sc->args);
 
       /* 1st time, value = op, args=nil (only e0 entry is from op_eval above), code is full list (at e0) */
@@ -14100,7 +14103,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        *   g_quasiquote_1(sc, 0, ^):       (cons (quote +) (cons a (cons 1 (quote ()))))
        *
        * so the quasiquote can be evaluated immediately.  It's possible that we could
-       *   always precompute quasiquotes, but this change takes case of 99% of the cases.
+       *   always precompute quasiquotes, but this change takes care of 99% of the cases.
        */
 
       if ((is_pair(cdr(sc->code))) &&
@@ -14138,8 +14141,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 								     sc->z),
 							     make_list_1(sc, make_list_2(sc, sc->CDR, sc->y)))))));
 
-      /* fprintf(stderr, "def: %s\n", s7_object_to_c_string(sc, sc->code)); */
-
       /* so, (defmacro hi (a b) `(+ ,a ,b)) becomes:
        *   sc->x: hi
        *   sc->code: (lambda (defmac-21) 
@@ -14147,8 +14148,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        *                        (cons (quote +) (cons a (cons b (quote ()))))) 
        *                      (cdr defmac-21)))
        */
-      push_stack(sc, OP_MACRO1, /* sc->code */ sc->NIL, sc->x);   /* sc->x (the name symbol) will be sc->code when we pop to OP_MACRO1 */
-                                                                  /* sc->code is merely being protected */
+      push_stack(sc, OP_MACRO1, sc->NIL, sc->x);   /* sc->x (the name symbol) will be sc->code when we pop to OP_MACRO1 */
       goto EVAL;
       
       
