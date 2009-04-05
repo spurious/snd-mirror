@@ -8828,7 +8828,8 @@ typedef struct {
 
 
 /* I wonder if it would be more accurate and not too much slower to use
- *   the Chebyshev expansion of sinc here
+ *   the Chebyshev expansion of sinc here, or even the power series:
+ *   1 - x^2/3! + x^4/5! etc (i.e. x divides sin(x))
  */
 
 #define SRC_SINC_DENSITY 1000

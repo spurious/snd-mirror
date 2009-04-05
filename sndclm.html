@@ -3948,6 +3948,8 @@ and <a href="#othergenerators">generators.scm</a>.
 </p>
 
 
+<!-- TODO: update sceq14 for 2n typo -->
+
 <!-- LATEX:
 sceq14:
 \small
@@ -3955,7 +3957,7 @@ sceq14:
 &\sum_{k=0}^{n}\sin(x+ky)=\frac{\sin\Big(x+\frac{n-1}{2}y\Big)\sin\frac{ny}{2}}{\sin\frac{y}{2}} \\
 &\sum_{k=0}^{n}\cos(x+ky)=\frac{\cos\Big(x+\frac{n-1}{2}y\Big)\sin\frac{ny}{2}}{\sin\frac{y}{2}} \\
 &\sum_{k=0}^{2n-1}(-1)^{k}\cos(x+ky)=\frac{\sin\Big(x+\frac{2n-1}{2}y\Big)\sin ny}{\cos\frac{y}{2}} \\
-&\sum_{k=0}^{2n-1}(-1)^{k}\sin(x+ky)=\frac{\sin\Big(x+\frac{n-1}{2}(y+\pi)\Big)\sin\frac{n(y+\pi)}{2}}{\cos\frac{y}{2}} \\
+&\sum_{k=0}^{n-1}(-1)^{k}\sin(x+ky)=\frac{\sin\Big(x+\frac{n-1}{2}(y+\pi)\Big)\sin\frac{n(y+\pi)}{2}}{\cos\frac{y}{2}} \\
 &\sum_{k=1}^{n}\sin(2k-1)x=\frac{\sin^{2}nx}{\sin x} \\
 &\sum_{k=1}^{n}\cos(2k-1)x=\frac{1}{2}\frac{\sin 2nx}{\sin x} \\
 &\sum_{k=1}^{n}(-1)^{k}\cos kx=-\frac{1}{2}+\frac{(-1)^{n}\cos(\frac{2n+1}{2}x)}{2\cos\frac{x}{2}} \\
@@ -8981,7 +8983,7 @@ think there would be any difference, even taking FM into account.
 </pre>
 <p>These produce a sum of "n" sinsoids starting at "frequency", spaced by "ratio".  Since "frequency" can be treated
 as the carrier, there's no point in an ssb version.  nxy1cos is the same as nxycos, but every other
-component is multiplied by -1, and "n" produces 2n-1 components.
+component is multiplied by -1, and "n" produces 2n components.
 Normalization in the "sin" cases is tricky.  If ratio is 1, we can use nsin's normalization, and if ratio = 2, noddsin's,
 but otherwise nxysin currently simply uses 1/n.  This ensures that the generator output is always between -1 and 1,
 but in some cases (mainly involving low "n" and simple "ratio"), the output might not be full amplitude.  nxy1sin is

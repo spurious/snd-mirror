@@ -514,7 +514,7 @@
 
 (define* (nxy1cos gen :optional (fm 0.0))
   "  (make-nxy1cos frequency (ratio 1.0) (n 1)) creates an nxy1cos generator.\n\
-   (nxy1cos gen (fm 0.0)) returns 2n-1 cosines from frequency spaced by frequency * ratio with every other cosine multiplied by -1."
+   (nxy1cos gen (fm 0.0)) returns 2n cosines from frequency spaced by frequency * ratio with every other cosine multiplied by -1."
   (declare (gen nxy1cos) (fm float))
   (let* ((x (nxy1cos-angle gen))
 	 (y (* x (nxy1cos-ratio gen)))
@@ -566,7 +566,7 @@
 
 (define* (nxy1sin gen :optional (fm 0.0))
   "  (make-nxy1sin frequency (ratio 1.0) (n 1)) creates an nxy1sin generator.\n\
-   (nxy1sin gen (fm 0.0)) returns 2n-1 sines from frequency spaced by frequency * ratio with every other sine multiplied by -1."
+   (nxy1sin gen (fm 0.0)) returns n sines from frequency spaced by frequency * ratio with every other sine multiplied by -1."
   (declare (gen nxy1sin) (fm float))
   (let* ((x (nxy1sin-angle gen))
 	 (y (* x (nxy1sin-ratio gen)))
@@ -591,6 +591,7 @@
 
 ;;;   we can get the sinusoidally varying maxamp by using e.g. (make-nxy1sin 1 1000 3)
 ;;;   the peak starts at ca .72 and goes to 1 etc
+;;; the peak is just offset from pi (either way)
 
 
 

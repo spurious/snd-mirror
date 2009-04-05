@@ -2008,7 +2008,8 @@ static s7_pointer s7_make_continuation(s7_scheme *sc)
   continuation *c;
   s7_pointer x;
 
-  gc(sc);
+  if (sc->free_heap_top < sc->heap_size / 4)
+    gc(sc);
   /* this gc call is needed if there are lots of call/cc's -- by pure bad luck
    *   we can end up hitting the end of the gc free list time after time while
    *   in successive copy_stack's below, causing s7 to core up until it runs out of memory.
@@ -3944,12 +3945,15 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top)
 	    else return(sc->NIL);
 	  }
 	x = make_atom(sc, (char *)(name + num_at), (name[0] == 'o') ? 8 : ((name[0] == 'x') ? 16 : ((name[0] == 'b') ? 2 : 10)), false);
+
 	/* #x#i1 apparently makes sense, so #x1.0 should also be accepted */
 	if (!s7_is_number(x))
 	  return(sc->NIL);
+
 	if ((s7_imag_part(x) != 0.0) ||
 	    ((!to_exact) && (!to_inexact)))
 	  return(x);
+
 	if (to_exact)
 	  return(inexact_to_exact(sc, x));
 	return(exact_to_inexact(sc, x));
@@ -4434,8 +4438,8 @@ static s7_pointer g_string_to_number(s7_scheme *sc, s7_pointer args)
 
       if (s7_is_integer(cadr(args)))
 	radix = s7_integer(cadr(args));
-      if ((radix < 2) ||
-	  (radix > 36))
+      if ((radix < 2) ||              /* well, 0 is expressible in base 1, and 2 would -10 in base -2... */
+	  (radix > 36))               /* the only problem here is printing the number; what about putting each digit in "()" in base 10: (123)(0)(34) */
 	return(s7_out_of_range_error(sc, "string->number", 2, cadr(args), "between 2 and 36"));
     }
   else radix = 10;
@@ -9984,6 +9988,12 @@ s7_pointer s7_make_function(s7_scheme *sc, const char *name, s7_function f, int 
 {
   ffunc *ptr;
   s7_pointer x = new_cell(sc);
+  /* these are normally not gc'd (C-level function defs), but they can be in a few cases
+   *   (C-level redefinition as in the gmp case), and then we can't be certain they haven't
+   *   been protected as the value of some Scheme variable.  It saves about 1% overall
+   *   compute time (in s7test.scm) if we ignore those issues and use calloc here, rather
+   *   then new_cell.
+   */
   ptr = (ffunc *)calloc(1, sizeof(ffunc));
   set_type(x, T_S7_FUNCTION | T_ATOM | T_SIMPLE | T_FINALIZABLE | T_DONT_COPY | T_PROCEDURE);
   /* these guys can be freed -- in Snd, for example, "random" is defined in C, but then later redefined in snd-test.scm */
@@ -12709,6 +12719,10 @@ static s7_pointer read_string_constant(s7_scheme *sc, s7_pointer pt)
     }
 }
 
+
+/* it should be possible to remove this from the eval table -- the read-ops happen
+ *   only here, and make minimal use of the stack (which slows them down). 
+ */
 
 static s7_pointer read_expression(s7_scheme *sc)
 {
