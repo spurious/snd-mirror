@@ -1772,6 +1772,68 @@ If you're trying to produce a sum of sinusoids, use polywave &mdash; it makes a 
 -->
 
 
+<center><table border=1 hspace=100 cellpadding=4 vspace=10><tr><td>
+<small> 
+<p>table-lookup of a sine (or some facsimile thereof) probably predates Ptolemy.
+One neat method of generating the table is that of Bhaskara I, AD 600, India, mentioned
+in van Brummelen, "The Mathematics of the Heavens and the Earth": use the rational
+approximation 4x(180-x)/(40500-x(180-x)), x in degrees, or more readably:
+4x(pi-x)/(12.337-x(pi-x)), x in radians.  The maximum error is 0.00163 at x=11.54 (degrees)!
+</small>
+</td></tr></table></center>
+
+<!--
+(define (bhaskara-sine x) ; x degrees
+  (list (/ (* 4.0 x (- 180 x))
+	   (- 40500 (* x (- 180 x))))
+	(sin (degrees->radians x))
+	(let* ((dx (degrees->radians x))
+	       (px (- pi dx))
+	       (cs (degrees->radians (degrees->radians 40500))))
+	  (/ (* 4 dx px)
+	     (- cs (* dx px))))
+	(let ((dx (degrees->radians x)))
+	  (/ (* 4 dx (- pi dx))
+	     (- 12.337 (* dx (- pi dx)))))))
+
+Ayyangar: Ganesh -- same thing using n=pi/x: 16(n-1)/(5n^2-4n+4)
+(define (ganesh-sine x) ; x radians
+  (list (if (= x 0.0)
+	    0.0
+	    (let ((n (/ pi x)))
+	      (/ (* 16 (- n 1))
+		 (+ (* 5 n n) (* -4 n) 4))))
+	(if (= x 0.0)
+	    0.0
+	    (let* ((n (/ pi x))
+		   (n2 (* n n))
+		   (n-2 (- n 2))
+		   (n2-2 (* n-2 n-2)))
+	      (/ (- n2 n2-2)
+		 (+ n2 (/ n2-2 4)))))
+	(sin x)))
+
+(define (pade-sine x) ; x < pi/4, Martin Brown
+  (list (* x (/ (- 60 (* 7 x x))
+		(+ 60 (* 3 x x))))
+	(sin x)))
+
+(define (koren-sine ux) ; |ux|<pi/4, Kren and Zinaty
+  (let* ((x (/ (* 4 ux) pi))
+	 (x2 (* x x))
+	 (a0 1805490264.6910)
+	 (a1 -164384678.2275)
+	 (a2    3664210.6476)
+	 (a3     -28904.1402)
+	 (a4         76.5690)
+	 (b0 2298821602.6389)
+	 (b1   27037050.1189)
+	 (b2     155791.3885)
+	 (b3        540.5675))
+    (* x (/ (+ a0 (* x2 (+ a1 (* x2 (+ a2 (* x2 (+ a3 (* x2 a4))))))))
+	    (+ b0 (* x2 (+ b1 (* x2 (+ b2 (* x2 (+ b3 x2)))))))))))
+-->
+
 <br>
 <p><a href="spectr.clm">spectr.clm</a> has a steady state spectra of
 several standard orchestral instruments, courtesy of James A. Moorer.

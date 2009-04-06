@@ -4438,8 +4438,8 @@ static s7_pointer g_string_to_number(s7_scheme *sc, s7_pointer args)
 
       if (s7_is_integer(cadr(args)))
 	radix = s7_integer(cadr(args));
-      if ((radix < 2) ||              /* well, 0 is expressible in base 1, and 2 would -10 in base -2... */
-	  (radix > 36))               /* the only problem here is printing the number; what about putting each digit in "()" in base 10: (123)(0)(34) */
+      if ((radix < 2) ||              /* what about negative int as base (Knuth), reals such as phi, and some complex like -1+i */
+	  (radix > 36))               /* the only problem here is printing the number; perhaps put each digit in "()" in base 10: (123)(0)(34) */
 	return(s7_out_of_range_error(sc, "string->number", 2, cadr(args), "between 2 and 36"));
     }
   else radix = 10;
@@ -12415,6 +12415,7 @@ static s7_pointer eval_symbol(s7_scheme *sc, s7_pointer sym)
   s7_pointer x;
 
   x = s7_find_symbol_in_environment(sc, sc->envir, sym, true);
+
   if (x != sc->NIL) 
     return(symbol_value(x));
 
@@ -13167,6 +13168,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       if (s7_is_symbol(sc->code))
 	{
+	  /* is it necessary to eval_symbol every time?  Here and below, if we're doing a function call,
+	   *   surely we can simply use symbol_value(sc->code) or something similar?
+	   */
 	  sc->value = eval_symbol(sc, sc->code);
 	  pop_stack(sc);
 	  goto START;
