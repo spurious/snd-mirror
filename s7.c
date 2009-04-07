@@ -574,6 +574,9 @@ struct s7_scheme {
 
 #define T_OBJECT                      (1 << (TYPE_BITS + 6))
 #define T_FINALIZABLE                 (1 << (TYPE_BITS + 7))
+#define is_finalizable(p)             ((typeflag(p) & T_FINALIZABLE) != 0)
+#define clear_finalizable(p)          typeflag(p) &= (~T_FINALIZABLE)
+
 #define T_SIMPLE                      (1 << (TYPE_BITS + 8))
 #define is_simple(p)                  ((typeflag(p) & T_SIMPLE) != 0)
 
@@ -587,7 +590,6 @@ struct s7_scheme {
 #define is_eternal(p)                 ((typeflag(p) & T_ETERNAL) != 0)
 
 #define UNUSED_BITS                   (0xf0000000 | (1 << (TYPE_BITS + 5)))
-
 
 #if HAVE_PTHREADS
 #define set_type(p, f)                typeflag(p) = ((typeflag(p) & T_GC_MARK) | (f) | T_OBJECT)
@@ -769,7 +771,6 @@ static bool s7_is_applicable_object(s7_pointer x);
 static s7_pointer make_list_1(s7_scheme *sc, s7_pointer a);
 static s7_pointer make_list_2(s7_scheme *sc, s7_pointer a, s7_pointer b);
 static void write_string(s7_scheme *sc, const char *s, s7_pointer pt);
-static s7_pointer s7_make_permanent_string(const char *str);
 
 
 
@@ -1220,7 +1221,7 @@ static int gc(s7_scheme *sc)
 	      clear_mark(p);
 	    else 
 	      {
-		if (typeflag(p) & T_FINALIZABLE)
+		if (is_finalizable(p))
 		  finalize_s7_cell(sc, p); 
 		typeflag(p) = 0;
 		fp[sc->free_heap_top++] = p;
@@ -1251,6 +1252,30 @@ static int gc(s7_scheme *sc)
     }
   
   return(sc->free_heap_top - old_free_heap_top); /* needed by cell allocator to decide when to increase heap size */
+}
+
+
+static s7_pointer g_dump_heap(s7_scheme *sc, s7_pointer args)
+{
+  FILE *fd;
+  s7_pointer *tp;
+  int i;
+
+  for (i = 0; i < sc->temps_size; i++)
+    sc->temps[i] = sc->NIL;
+  gc(sc);
+
+  fd = fopen("heap.data", "w");
+  for (tp = sc->heap; (*tp); tp++)
+    {
+      s7_pointer p;
+      p = (*tp);
+      if (typeflag(p) != 0)
+	fprintf(fd, "%s\n", s7_object_to_c_string(sc, p));
+    }
+  fclose(fd);
+
+  return(sc->NIL);
 }
 
 
@@ -1677,7 +1702,7 @@ static s7_pointer add_to_environment(s7_scheme *sc, s7_pointer env, s7_pointer v
   s7_pointer slot;
   slot = s7_immutable_cons(sc, variable, value); 
   if (s7_is_vector(car(env))) 
-    vector_element(car(env), symbol_location(variable)) = s7_immutable_cons(sc, slot, vector_element(car(env), symbol_location(variable))); 
+    vector_element(car(env), symbol_location(variable)) = s7_immutable_cons(sc, slot, vector_element(car(env), symbol_location(variable)));
   else car(env) = s7_immutable_cons(sc, slot, car(env));
   return(slot);
 } 
@@ -6397,7 +6422,7 @@ s7_pointer s7_make_string(s7_scheme *sc, const char *str)
 }
 
 
-static s7_pointer s7_make_permanent_string(const char *str) 
+s7_pointer s7_make_permanent_string(const char *str) 
 {
   /* for the symbol table which is never GC'd */
   s7_pointer x;
@@ -8160,7 +8185,7 @@ static char *s7_atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
 	     is_syntax(obj) ? " syntax" : "",
 	     dont_copy(obj) ? " dont-copy" : "",
 	     ((typeflag(obj) & T_OBJECT) != 0) ? " obj" : "",
-	     ((typeflag(obj) & T_FINALIZABLE) != 0) ? " gc-finalize" : "",
+	     is_finalizable(obj) ? " gc-finalize" : "",
 	     ((typeflag(obj) & UNUSED_BITS) != 0) ? " bad bits at top" : "");
     return(buf);
   }
@@ -12235,7 +12260,7 @@ static void assign_syntax(s7_scheme *sc, const char *name, opcode_t op)
   s7_pointer x;
   x = symbol_table_add_by_name(sc, name); 
   typeflag(x) |= (T_SYNTAX | T_IMMUTABLE | T_DONT_COPY); 
-  typeflag(x) &= (~T_FINALIZABLE);
+  clear_finalizable(x);
   syntax_opcode(x) = small_int(sc, (int)op);
 }
 
@@ -12723,6 +12748,7 @@ static s7_pointer read_string_constant(s7_scheme *sc, s7_pointer pt)
 
 /* it should be possible to remove this from the eval table -- the read-ops happen
  *   only here, and make minimal use of the stack (which slows them down). 
+ * read_expression is always followed by pop_stack+goto START, sets sc->value to return val(??)
  */
 
 static s7_pointer read_expression(s7_scheme *sc)
@@ -13567,6 +13593,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       
     case OP_LAMBDA: 
+      /* this includes unevaluated symbols (direct symbol table refs) in macro arg list */
       if ((!is_pair(sc->code)) ||
 	  (!is_pair(cdr(sc->code))))                               /* (lambda) or (lambda #f) */
 	return(eval_error(sc, "lambda: no args or no body? ~A", sc->code));
@@ -13597,7 +13624,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if (!s7_is_list(sc, car(sc->code)))
 	{
 	  if (!s7_is_symbol(car(sc->code)))                        /* (lambda* "hi" ...) */
-	    return(eval_error(sc, "lambda parameter ~A is not a symbol", car(sc->code)));
+	    return(eval_error(sc, "lambda* parameter ~A is not a symbol", car(sc->code)));
 	}
       else
 	{ 
@@ -13984,7 +14011,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        *   We can't just say sc->code = sc->value because we're playing funny games with
        *   self-modifying code here.  So...
        */
-      typeflag(sc->value)  &= (~T_FINALIZABLE); /* make sure GC calls free once */
+      clear_finalizable(sc->value); /* make sure GC calls free once */
       pop_stack(sc);
       goto START;
       
@@ -19795,6 +19822,8 @@ s7_scheme *s7_init(void)
 #if WITH_GMP
   s7_gmp_init(sc);
 #endif
+
+  s7_define_function(sc, "dump-heap", g_dump_heap, 0, 0, false, "hiho");
 
   return(sc);
 }

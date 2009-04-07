@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "1.15"
-#define S7_DATE "14-Mar-09"
+#define S7_VERSION "1.16"
+#define S7_DATE "6-Apr-09"
 
 
 typedef long long int s7_Int;
@@ -225,6 +225,7 @@ bool s7_is_string(s7_pointer p);                                             /* 
 const char *s7_string(s7_pointer p);                                         /* scheme string -> C string (do not free the string) */
 s7_pointer s7_make_string(s7_scheme *sc, const char *str);                   /* C string -> scheme string (str is copied) */
 s7_pointer s7_make_string_with_length(s7_scheme *sc, const char *str, int len);  /* same as s7_make_string, but provides strlen */
+s7_pointer s7_make_permanent_string(const char *str);                        /* make a string that will never be GC'd */
 
 bool s7_is_character(s7_pointer p);                                          /* (character? p) */
 char s7_character(s7_pointer p);                                             /* scheme character -> C char */
@@ -1269,6 +1270,7 @@ int main(int argc, char **argv)
  * 
  *        s7 changes
  *
+ * 6-Apr:     added s7_make_permanent_string.
  * 14-Mar:    removed s7_local_gc_protect and s7_local_gc_unprotect.
  * 4-Mar:     multidimensional and applicable vectors.
  * 1-Mar:     s7_random added to s7.h.

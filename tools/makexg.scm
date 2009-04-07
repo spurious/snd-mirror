@@ -3783,7 +3783,7 @@
 (hey "{~%")
 (hey "  ~%")
 (hey "#if HAVE_S7~%")
-(hey "  #define DEFINE_STRING(Name) s7_define_constant(s7, XG_PRE #Name XG_POST, C_TO_XEN_STRING(Name))~%")
+(hey "  #define DEFINE_STRING(Name) s7_define_constant(s7, XG_PRE #Name XG_POST, s7_make_permanent_string(Name))~%")
 (hey "#else~%")
 (hey "  #define DEFINE_STRING(Name) XEN_DEFINE(XG_PRE #Name XG_POST, C_TO_XEN_STRING(Name))~%")
 (hey "#endif~%")

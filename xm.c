@@ -26027,9 +26027,9 @@ static xm_resource_t resource_type(const char *name)
 static void define_strings(void)
 {
 #if HAVE_S7
-  #define DEFINE_STRING(Name) s7_define_constant(s7, XM_PREFIX #Name XM_POSTFIX, C_TO_XEN_STRING(Name))
+  #define DEFINE_STRING(Name) s7_define_constant(s7, XM_PREFIX #Name XM_POSTFIX, s7_make_permanent_string(Name))
   #define DEFINE_RESOURCE(Name, Type) \
-            s7_define_constant(s7, XM_PREFIX #Name XM_POSTFIX, C_TO_XEN_STRING(Name)); \
+            s7_define_constant(s7, XM_PREFIX #Name XM_POSTFIX, s7_make_permanent_string(Name)); \
             hash_resource(Name, Type)
 #else
   #define DEFINE_STRING(Name) XEN_DEFINE(XM_PREFIX #Name XM_POSTFIX, C_TO_XEN_STRING(Name))

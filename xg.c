@@ -47682,7 +47682,7 @@ static void define_strings(void)
 {
   
 #if HAVE_S7
-  #define DEFINE_STRING(Name) s7_define_constant(s7, XG_PRE #Name XG_POST, C_TO_XEN_STRING(Name))
+  #define DEFINE_STRING(Name) s7_define_constant(s7, XG_PRE #Name XG_POST, s7_make_permanent_string(Name))
 #else
   #define DEFINE_STRING(Name) XEN_DEFINE(XG_PRE #Name XG_POST, C_TO_XEN_STRING(Name))
 #endif
@@ -47849,7 +47849,7 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("05-Mar-09"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("06-Apr-09"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */
