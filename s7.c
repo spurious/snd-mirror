@@ -153,7 +153,7 @@
  *   setting it to 100043 did improve performance.  Max list size (at 9601) in snd-test.scm is 6.
  */
 
-#define INITIAL_STACK_SIZE 1000            
+#define INITIAL_STACK_SIZE 10000            
 /* the stack grows as needed, each frame takes 4 entries, this is its initial size */
 
 #define INITIAL_PROTECTED_OBJECTS_SIZE 16  
@@ -340,7 +340,7 @@ typedef struct ffunc {
   s7_function ff;
   const char *name;
   char *doc;
-  int required_args, optional_args;
+  int required_args, optional_args, all_args;
   bool rest_arg;
 } ffunc;
 
@@ -559,9 +559,11 @@ struct s7_scheme {
 #define T_IMMUTABLE                   (1 << (TYPE_BITS + 2))
 #define is_immutable(p)               ((typeflag(p) & T_IMMUTABLE) != 0)
 #define set_immutable(p)              typeflag(p) |= T_IMMUTABLE
+/* immutable means the object's value can't be changed via set! */
 
 #define T_ATOM                        (1 << (TYPE_BITS + 3))
 #define is_atom(p)                    ((typeflag(p) & T_ATOM) != 0)
+/* is_atom means there's no car/cdr to be marked */
 
 #define T_GC_MARK                     (1 << (TYPE_BITS + 4))
 #define is_marked(p)                  ((typeflag(p) &  T_GC_MARK) != 0)
@@ -573,21 +575,26 @@ struct s7_scheme {
  */
 
 #define T_OBJECT                      (1 << (TYPE_BITS + 6))
+
 #define T_FINALIZABLE                 (1 << (TYPE_BITS + 7))
 #define is_finalizable(p)             ((typeflag(p) & T_FINALIZABLE) != 0)
 #define clear_finalizable(p)          typeflag(p) &= (~T_FINALIZABLE)
+/* finalizable means some action may need to be taken when the cell is GC'd */
 
 #define T_SIMPLE                      (1 << (TYPE_BITS + 8))
 #define is_simple(p)                  ((typeflag(p) & T_SIMPLE) != 0)
+/* a simple object has no markable subfields and no special mark actions */
 
 #define T_DONT_COPY                   (1 << (TYPE_BITS + 9))
 #define dont_copy(p)                  ((typeflag(p) & T_DONT_COPY) != 0)
+/* dont_copy means the object is not copied when saved in a continuation */
 
 #define T_PROCEDURE                   (1 << (TYPE_BITS + 10))
 #define is_procedure(p)               ((typeflag(p) & T_PROCEDURE) != 0)
 
 #define T_ETERNAL                     (1 << (TYPE_BITS + 11))
 #define is_eternal(p)                 ((typeflag(p) & T_ETERNAL) != 0)
+/* an eternal object is a cons whose "line_number" is actually the global environment vector location (i.e. a symbol table entry) */
 
 #define UNUSED_BITS                   (0xf0000000 | (1 << (TYPE_BITS + 5)))
 
@@ -676,6 +683,7 @@ struct s7_scheme {
 #define function_required_args(f)     (f)->object.ffptr->required_args
 #define function_optional_args(f)     (f)->object.ffptr->optional_args
 #define function_has_rest_arg(f)      (f)->object.ffptr->rest_arg
+#define function_all_args(f)          (f)->object.ffptr->all_args
 
 #define continuation_cc_stack(p)      (p)->object.cc->cc_stack
 
@@ -1422,15 +1430,18 @@ static void pop_stack(s7_scheme *sc)
 static void push_stack(s7_scheme *sc, opcode_t op, s7_pointer args, s7_pointer code)
 { 
   s7_pointer *vel;
-
   vel = (s7_pointer *)(sc->stack->object.vector.elements + sc->stack_top);
   vel[0] = code;
   vel[1] = sc->envir;
   vel[2] = args;
   vel[3] = sc->small_ints[(int)op];
-
   sc->stack_top += 4;
-  if (sc->stack_top >= sc->stack_size)
+}
+
+
+static void check_stack_size(s7_scheme *sc)
+{
+  if (sc->stack_top >= (sc->stack_size / 2))
     {
       int i, new_size;
       new_size = sc->stack_size * 2;
@@ -2731,7 +2742,7 @@ s7_pointer s7_make_integer(s7_scheme *sc, s7_Int n)
   s7_pointer x;
   if ((n >= 0) && (n < OP_MAX_DEFINED))
     return(small_int(sc, n));
-  /* there are ca 6300 -1's in s7test -- if like sc->real_zero (64000), this would gain us .2% overall speed */
+  /* there are ca 6300 -1's in s7test (14500 small negative ints) -- if like sc->real_zero (64000), this would gain us .2% overall speed */
 
   x = new_cell(sc);
   set_type(x, T_NUMBER | T_ATOM | T_SIMPLE | T_DONT_COPY);
@@ -8654,7 +8665,7 @@ s7_pointer s7_cons(s7_scheme *sc, s7_pointer a, s7_pointer b)
 
 static s7_pointer s7_permanent_cons(s7_pointer a, s7_pointer b, int type)
 {
-  /* for the symbol table which is never GC'd */
+  /* for the symbol table which is never GC'd (and its contents aren't marked) */
   s7_pointer x;
   x = (s7_cell *)calloc(1, sizeof(s7_cell));
   car(x) = a;
@@ -10030,6 +10041,9 @@ s7_pointer s7_make_function(s7_scheme *sc, const char *name, s7_function f, int 
   x->object.ffptr->required_args = required_args;
   x->object.ffptr->optional_args = optional_args;
   x->object.ffptr->rest_arg = rest_arg;
+  if (rest_arg)
+    x->object.ffptr->all_args = 10000000;
+  else x->object.ffptr->all_args = required_args + optional_args;
   return(x);
 }
 
@@ -10216,9 +10230,7 @@ static bool is_thunk(s7_scheme *sc, s7_pointer x)
   switch (type(x))
     {
     case T_S7_FUNCTION:
-      return((x->object.ffptr->required_args == 0) &&
-	     (x->object.ffptr->optional_args == 0) &&
-	     (!(x->object.ffptr->rest_arg)));
+      return(function_all_args(x) == 0);
 
     case T_CLOSURE:
     case T_CLOSURE_STAR:
@@ -13194,9 +13206,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       if (s7_is_symbol(sc->code))
 	{
-	  /* is it necessary to eval_symbol every time?  Here and below, if we're doing a function call,
-	   *   surely we can simply use symbol_value(sc->code) or something similar?
-	   */
 	  sc->value = eval_symbol(sc, sc->code);
 	  pop_stack(sc);
 	  goto START;
@@ -13240,9 +13249,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
     EVAL_ARGS:
     case OP_EVAL_ARGS1:
-      /* this is where most of s7's compute time goes (leaving aside the gc, but this is the main source
-       *   of temporary cells, so it affects that as well).
-       */
+      /* this is where most of s7's compute time goes */
       sc->args = s7_cons(sc, sc->value, sc->args);
 
       /* 1st time, value = op, args=nil (only e0 entry is from op_eval above), code is full list (at e0) */
@@ -13258,12 +13265,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      goto EVAL;
 	    }
 	  if (typ == T_SYMBOL)
-	    {
-	      sc->value = eval_symbol(sc, car(sc->code));
-	      sc->code = cdr(sc->code);
-	      goto EVAL_ARGS;
-	    }
-	  sc->value = car(sc->code);
+	    sc->value = eval_symbol(sc, car(sc->code));
+	  else sc->value = car(sc->code);
 	  sc->code = cdr(sc->code);
 	  goto EVAL_ARGS;
 	}
@@ -13304,6 +13307,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  add_backtrace_entry(sc, sc->code, sc->args, sc->saved_line_number);
 	  sc->saved_line_number = 0;
 	}
+      check_stack_size(sc);
 
       switch (type(sc->code))
 	{
@@ -13318,8 +13322,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 					  s7_make_string_with_length(sc, "~A: not enough arguments: ~A", 28), 
 					  sc->code, sc->args)));
 	    
-	    if ((!function_has_rest_arg(sc->code)) &&
-		((function_required_args(sc->code) + function_optional_args(sc->code)) < len))
+	    if (function_all_args(sc->code) < len)
 	      return(s7_error(sc, 
 			      sc->WRONG_NUMBER_OF_ARGS, 
 			      make_list_3(sc, 

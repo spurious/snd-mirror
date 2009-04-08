@@ -45943,11 +45943,11 @@ EDITS: 1
   
   (define (fitst form result)
     (let ((val (run-eval form)))
-      (if (not (equal? val result)) (snd-display ";~A -> ~A (~A)" form val result))))
+      (if (not (= val result)) (snd-display ";~A -> ~A (~A)" form val result))))
   
   (define (fitsta form arg result)
     (let ((val (run-eval form arg)))
-      (if (not (equal? val result)) (snd-display ";~A -> ~A (~A)" form val result))))
+      (if (not (= val result)) (snd-display ";~A -> ~A (~A)" form val result))))
   
   (define (btst form result)
     (let ((val (run-eval form)))

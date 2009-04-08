@@ -102,7 +102,8 @@
  *
  * would it simplify variable handling to store everything as xen_value?
  *
- * TODO: all numeric types + multiprecision stuff
+ * TODO: vector<->vct
+ *       all numeric types + multiprecision stuff
  *       some or all of:
 
     gensym [s7_gensym] symbol-table symbol? [s7_is_symbol] symbol->string [s7_symbol_name?] string->symbol [s7_make_symbol] symbol->value [s7_symbol_to_value]
@@ -6123,17 +6124,22 @@ static Double f_round(Double x)
   return((plus_half == result) && ((plus_half / 2) != floor(plus_half / 2)) ? result - 1 : result);
 }
 
+#if (!HAVE_S7)
 static void round_f(int *args, ptree *pt) {FLOAT_RESULT = f_round(FLOAT_ARG_1);}
-
+#endif
 
 static void round_i(int *args, ptree *pt) {INT_RESULT = (Int)f_round(FLOAT_ARG_1);}
-
 
 static xen_value *round_1(ptree *prog, xen_value **args, int num_args)
 {
   /* (round 1) -> 1.0! */
   if (args[1]->type == R_INT)
     return(copy_xen_value(args[1]));
+#if HAVE_S7
+  if (prog->constants == 1)
+    return(make_xen_value(R_INT, add_int_to_ptree(prog, (Int)f_round(prog->dbls[args[1]->addr])), R_CONSTANT));
+  return(package(prog, R_INT, round_i, "round_i", args, 1));
+#else
   if (prog->constants == 1)
     {
       if (prog->walk_result == NEED_INT_RESULT)
@@ -6143,6 +6149,7 @@ static xen_value *round_1(ptree *prog, xen_value **args, int num_args)
   if (prog->walk_result == NEED_INT_RESULT)
     return(package(prog, R_INT, round_i, "round_i", args, 1));
   return(package(prog, R_FLOAT, round_f, "round_f", args, 1));
+#endif
 }
 
 
@@ -6155,8 +6162,9 @@ static Double f_truncate(Double x)
   return(floor(x));
 }
 
+#if (!HAVE_S7)
 static void truncate_f(int *args, ptree *pt) {FLOAT_RESULT = f_truncate(FLOAT_ARG_1);}
-
+#endif
 
 static void truncate_i(int *args, ptree *pt) {INT_RESULT = (Int)f_truncate(FLOAT_ARG_1);}
 
@@ -6165,6 +6173,11 @@ static xen_value *truncate_1(ptree *prog, xen_value **args, int num_args)
 {
   if (args[1]->type == R_INT)
     return(copy_xen_value(args[1]));
+#if HAVE_S7
+  if (prog->constants == 1)
+    return(make_xen_value(R_INT, add_int_to_ptree(prog, (Int)f_truncate(prog->dbls[args[1]->addr])), R_CONSTANT));
+  return(package(prog, R_INT, truncate_i, "truncate_i", args, 1));
+#else
   if (prog->constants == 1)
     {
       if (prog->walk_result == NEED_INT_RESULT)
@@ -6174,12 +6187,14 @@ static xen_value *truncate_1(ptree *prog, xen_value **args, int num_args)
   if (prog->walk_result == NEED_INT_RESULT)
     return(package(prog, R_INT, truncate_i, "truncate_i", args, 1));
   return(package(prog, R_FLOAT, truncate_f, "truncate_f", args, 1));
+#endif
 }
 
 /* ---------------- floor ---------------- */
 
+#if (!HAVE_S7)
 static void floor_f(int *args, ptree *pt) {FLOAT_RESULT = floor(FLOAT_ARG_1);}
-
+#endif
 
 static void floor_i(int *args, ptree *pt) {INT_RESULT = (Int)floor(FLOAT_ARG_1);}
 
@@ -6188,6 +6203,11 @@ static xen_value *floor_1(ptree *prog, xen_value **args, int num_args)
 {
   if (args[1]->type == R_INT)
     return(copy_xen_value(args[1]));
+#if HAVE_S7
+  if (prog->constants == 1)
+    return(make_xen_value(R_INT, add_int_to_ptree(prog, (Int)floor(prog->dbls[args[1]->addr])), R_CONSTANT));
+  return(package(prog, R_INT, floor_i, "floor_i", args, 1));
+#else
   if (prog->constants == 1)
     {
       if (prog->walk_result == NEED_INT_RESULT)
@@ -6197,13 +6217,15 @@ static xen_value *floor_1(ptree *prog, xen_value **args, int num_args)
   if (prog->walk_result == NEED_INT_RESULT)
     return(package(prog, R_INT, floor_i, "floor_i", args, 1));
   return(package(prog, R_FLOAT, floor_f, "floor_f", args, 1));
+#endif
 }
 
 
 /* ---------------- ceiling ---------------- */
 
+#if (!HAVE_S7)
 static void ceiling_f(int *args, ptree *pt) {FLOAT_RESULT = ceil(FLOAT_ARG_1);}
-
+#endif
 
 static void ceiling_i(int *args, ptree *pt) {INT_RESULT = (Int)ceil(FLOAT_ARG_1);}
 
@@ -6212,6 +6234,11 @@ static xen_value *ceiling_1(ptree *prog, xen_value **args, int num_args)
 {
   if (args[1]->type == R_INT)
     return(copy_xen_value(args[1]));
+#if HAVE_S7
+  if (prog->constants == 1)
+    return(make_xen_value(R_INT, add_int_to_ptree(prog, (Int)ceil(prog->dbls[args[1]->addr])), R_CONSTANT));
+  return(package(prog, R_INT, ceiling_i, "ceiling_i", args, 1));
+#else
   if (prog->constants == 1)
     {
       if (prog->walk_result == NEED_INT_RESULT)
@@ -6221,6 +6248,7 @@ static xen_value *ceiling_1(ptree *prog, xen_value **args, int num_args)
   if (prog->walk_result == NEED_INT_RESULT)
     return(package(prog, R_INT, ceiling_i, "ceiling_i", args, 1));
   return(package(prog, R_FLOAT, ceiling_f, "ceiling_f", args, 1));
+#endif
 }
 
 
@@ -13779,10 +13807,17 @@ static void init_walkers(void)
   INIT_WALKER("erfc",           make_walker(erfc_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
   INIT_WALKER("lgamma",         make_walker(lgamma_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
 #endif
+#if HAVE_S7
+  INIT_WALKER("round",          make_walker(round_1, NULL, NULL, 1, 1, R_INT, false, 1, R_NUMBER));
+  INIT_WALKER("truncate",       make_walker(truncate_1, NULL, NULL, 1, 1, R_INT, false, 1, R_NUMBER));
+  INIT_WALKER("floor",          make_walker(floor_1, NULL, NULL, 1, 1, R_INT, false, 1, R_NUMBER));
+  INIT_WALKER("ceiling",        make_walker(ceiling_1, NULL, NULL, 1, 1, R_INT, false, 1, R_NUMBER));
+#else
   INIT_WALKER("round",          make_walker(round_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
   INIT_WALKER("truncate",       make_walker(truncate_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
   INIT_WALKER("floor",          make_walker(floor_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
   INIT_WALKER("ceiling",        make_walker(ceiling_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
+#endif
   INIT_WALKER("odd?",           make_walker(odd_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_NUMBER));
   INIT_WALKER("even?",          make_walker(even_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_NUMBER));
   INIT_WALKER("zero?",          make_walker(zero_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_NUMBER));
