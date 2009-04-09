@@ -585,16 +585,6 @@ void widget_int_to_text(Widget w, int val)
 }
 
 
-void widget_float_to_text(Widget w, Float val)
-{
-  char *str;
-  str = (char *)calloc(16, sizeof(char));
-  mus_snprintf(str, 16, "%.2f", val);
-  XmTextFieldSetString(w, str);
-  free(str);
-}
-
-
 void widget_off_t_to_text(Widget w, off_t val)
 {
   char *str;

@@ -7874,7 +7874,9 @@ we get that the peak amplitude approaches 8*n*(sin^2(3*pi/8))/(3*pi), about 0.72
 (using the right hand expression above, set x to (3*pi)/(4*n), let n be large,
 so (n+1)/n approaches 1 and sin(y) is close to y if it is very small).
 A sum of n odd harmonics behaves similarly (the peak comes half as far from the zero crossing,
-but has the same max).  Those are the easy cases.  The next case involves 3 harmonics,
+but has the same max).  A sum of n sines of alternating sign also has the same peak amp,
+but now the peak is at pi-(3*pi)/(4*n).  
+Those are the easy cases.  The next case involves 3 harmonics,
 where we vary the 2nd and 3rd harmonic's initial phase, looking for the minimum peak amplitude.
 One view of this terrain has the 2nd harmonic's initial phase on the Y axis, the 3rd's on the X axis,
 and the color for the height of the corresponding peak:
@@ -8315,6 +8317,8 @@ as well.
   )
 
 -->
+
+<!-- TODO: update sqrt png and add expt png -->
 
 
 <p>Here is the time domain view of the n=5 case when the minimum peak phases are chosen; the sum of the 5 components is in black.
