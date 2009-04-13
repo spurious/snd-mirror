@@ -8139,10 +8139,11 @@ and in a few cases, it is possible to get below the square root:
 
 <table hspace=20 border=1 cellpadding=4>
 <tr><th>n</th><th>harmonics</th><th>sqrt(n)</th><th>peak amp</th><th>phases (* pi)</th></tr>
-<tr><td>7</td><td>odd</td><td>2.6457</td><td>2.6432</td><td>#(0 1/2 385/256 15/8 415/256 1/2 15/128)</td></tr>
+<tr><td>7</td><td>odd</td><td>2.6457</td><td>2.6324</td><td>#(0 1/2 97/64 15/8 415/256 33/64 9/64)</td></tr>
 <tr><td>8</td><td>all</td><td>2.8284</td><td>2.8167</td><td>#(0 859/512 13/16 5/8 439/512 17/16 11/64 29/32)</td></tr>
+<tr><td>8</td><td>odd</td><td>2.8284</td><td>2.8157</td><td>#(0 27/32 7/4 1 13/16 123/64 11/64 21/64)</td></tr>
 <tr><td>9</td><td>odd</td><td>3.0</td><td>2.9896</td><td>#(0 3/2 1 115/256 1 1/128 221/256 33/32 1191/1024)</td></tr>
-<tr><td>10</td><td>odd</td><td>3.1622</td><td>3.1418</td><td>#(0 29/16 7/16 5/32 49/32 3/2 47/32 13/32 23/16 0)</td></tr>
+<tr><td>10</td><td>odd</td><td>3.1622</td><td>3.140</td><td>#(0 57/32 13/32 5/32 3/2 3/2 3/2 7/16 23/16 0)</td></tr>
 <tr><td>11</td><td>all</td><td>3.3166</td><td>3.2943</td><td>#(0 85/64 31/16 9/8 1324517/8388608 1/16 55/32 1/32 9/32 19/16 41/32)</td></tr>
 </table>
 
@@ -8153,7 +8154,8 @@ the exponent vs n (n^y = peak amp).
 
 
 <img src="pix/sqrt.png" alt="sqrt n" hspace=40>
-
+<br>
+<img src="pix/sqrt1.png" alt="n^y" hspace=40>
 
 <!--
 (if (not (provided? 'snd-rgb.scm)) (load "rgb.scm"))
@@ -8310,8 +8312,6 @@ the exponent vs n (n^y = peak amp).
   )
 
 -->
-
-<!-- TODO: update sqrt png and add expt png -->
 
 
 <p>Here is the time domain view of the n=5 case when the minimum peak phases are chosen; the sum of the 5 components is in black.
