@@ -8000,23 +8000,7 @@ initial phase is 1.28892570352252, and the 3rd's is 5.288363163944985. But this 
 of search is not feasible when n is more than 6 or so;
 we need to check ((2*pi)/initial-phase-increment)^(n-1) cases!  If our increment is
 0.001, and n is only 4, we have something like 248050213442 cases, each involving
-a run of 4 sinusoids between 0 and 2 pi, looking for the peak.  Since the equations
-themselves are borderline unsolvable (even when n=3), we have to try
-some other approach.  
-I tried about a dozen different search strategies while collecting the data in peak-phases.scm.
-The most productive simply set the initial phases randomly to either 0 or pi (corresponding
-to setting the sign of the sinusoid).  
-<!--
-Even this very sparse search is overwhlemed by the
-size of the "space" we are trying to probe, but I believe an oddity of high-dimensional geometry
-comes to our rescue.  Since the peak function is slowly and smoothly varying, every value is
-very close to nearly all the other values, so the function is a few high spikes (e.g. all cosines)
-and a nearly flat, heavily populated bottom.  Nearly any random stab-in-the-dark value
-will be reasonable.  But each of the 500 or so cases in peak-phases.scm represents more than 100 million
-random tests; at this point my searchers are taking about 5 GHz days of computing
-to find a new lower value.  (I also believe these "random tests" are not actually covering
-the entire search space; another surprise to investigate).
--->
+a run of 4 sinusoids between 0 and 2 pi, looking for the peak. 
 </p>
 
 <!--
@@ -8149,13 +8133,22 @@ through the 5-D landscape, each 4-D case being 8 3-D slices as before:
   (set! (time-graph-type) graph-as-wavogram))
 -->
 
-<p>My initial guess was that the minimum peak amplitude would be around the square root of n, but
-instead it appears to be
-closer to (expt n .576).  
-Here is a graph of the values I've found so far.
-If plotted as a log-log graph, it is
-a straight line with a slope just less than 0.6. I've included the n odd, even, and prime-numbered components min peak amps
-as well.
+<p>My initial guess was that the minimum peak amplitude would be around the square root of n,
+and in a few cases, it is possible to get below the square root:
+</p>
+
+<table hspace=20 border=1 cellpadding=4>
+<tr><th>n</th><th>harmonics</th><th>sqrt(n)</th><th>peak amp</th><th>phases (* pi)</th></tr>
+<tr><td>7</td><td>odd</td><td>2.6457</td><td>2.6432</td><td>#(0 1/2 385/256 15/8 415/256 1/2 15/128)</td></tr>
+<tr><td>8</td><td>all</td><td>2.8284</td><td>2.8167</td><td>#(0 859/512 13/16 5/8 439/512 17/16 11/64 29/32)</td></tr>
+<tr><td>9</td><td>odd</td><td>3.0</td><td>2.9896</td><td>#(0 3/2 1 115/256 1 1/128 221/256 33/32 1191/1024)</td></tr>
+<tr><td>10</td><td>odd</td><td>3.1622</td><td>3.1418</td><td>#(0 29/16 7/16 5/32 49/32 3/2 47/32 13/32 23/16 0)</td></tr>
+<tr><td>11</td><td>all</td><td>3.3166</td><td>3.2943</td><td>#(0 85/64 31/16 9/8 1324517/8388608 1/16 55/32 1/32 9/32 19/16 41/32)</td></tr>
+</table>
+
+<p>
+Here is a graph of the values I've found so far, followed by a graph of
+the exponent vs n (n^y = peak amp).  
 </p>
 
 
