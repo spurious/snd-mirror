@@ -14552,6 +14552,10 @@ XEN_ARGIFY_4(g_run_eval_w, g_run_eval)
 
 void mus_init_run(void)
 {
+  static bool run_inited = false;
+  if (run_inited) fprintf(stderr, "redundant run initialization?");
+  run_inited = true;
+
 #if WITH_RUN
 #if (!HAVE_S7)
 

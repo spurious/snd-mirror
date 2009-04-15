@@ -9396,5 +9396,7 @@ void Init_sndlib(void)
   mus_sndlib_xen_initialize();
   mus_vct_init();
   mus_xen_init();
+#if (!USE_SND)
   mus_init_run();
+#endif
 }

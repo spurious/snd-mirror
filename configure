@@ -11544,6 +11544,9 @@ fi
 
 GMP_LIBS=""
 GMP_CFLAGS=""
+LOCAL_GMP_LIBS=""
+ac_snd_have_gmp=no
+
 if test "$with_gmp" = yes ; then
   # look for gmp, mpfr, and mpc
 
@@ -11615,7 +11618,10 @@ fi
 { $as_echo "$as_me:$LINENO: result: $ac_cv_lib_gmp___gmpz_init" >&5
 $as_echo "$ac_cv_lib_gmp___gmpz_init" >&6; }
 if test "x$ac_cv_lib_gmp___gmpz_init" = x""yes; then
-  GMP_LIBS="-lgmp"
+
+	       LOCAL_GMP_LIBS="-lgmp"
+  	       ac_snd_have_gmp=yes
+
 else
   { { $as_echo "$as_me:$LINENO: error: libgmp not found" >&5
 $as_echo "$as_me: error: libgmp not found" >&2;}
@@ -11623,11 +11629,12 @@ $as_echo "$as_me: error: libgmp not found" >&2;}
 fi
 
 
-  LIBS="$LIBS -lmpfr"
-  { $as_echo "$as_me:$LINENO: checking for libmpfr" >&5
+  if test "$ac_snd_have_gmp" != no ; then
+    LIBS="$LIBS -lmpfr"
+    { $as_echo "$as_me:$LINENO: checking for libmpfr" >&5
 $as_echo_n "checking for libmpfr... " >&6; }
-  GMP_LIBS="$GMP_LIBS -lmpfr"
-  cat >conftest.$ac_ext <<_ACEOF
+    LOCAL_GMP_LIBS="$LOCAL_GMP_LIBS -lmpfr"
+    cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
 cat confdefs.h >>conftest.$ac_ext
@@ -11670,19 +11677,24 @@ else
   $as_echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-	{ $as_echo "$as_me:$LINENO: result: no" >&5
+
+	  { $as_echo "$as_me:$LINENO: result: no" >&5
 $as_echo "no" >&6; }
+	  ac_snd_have_gmp=no
+
 fi
 
 rm -rf conftest.dSYM
 rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
+  fi
 
-  LIBS="$LIBS -lmpc"
-  { $as_echo "$as_me:$LINENO: checking for libmpc" >&5
+  if test "$ac_snd_have_gmp" != no ; then
+    LIBS="$LIBS -lmpc"
+    { $as_echo "$as_me:$LINENO: checking for libmpc" >&5
 $as_echo_n "checking for libmpc... " >&6; }
-  GMP_LIBS="$GMP_LIBS -lmpc"
-  cat >conftest.$ac_ext <<_ACEOF
+    LOCAL_GMP_LIBS="$LOCAL_GMP_LIBS -lmpc"
+    cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
 cat confdefs.h >>conftest.$ac_ext
@@ -11787,10 +11799,12 @@ fi
 { $as_echo "$as_me:$LINENO: result: $ac_cv_lib_mpc_mpc_arg" >&5
 $as_echo "$ac_cv_lib_mpc_mpc_arg" >&6; }
 if test "x$ac_cv_lib_mpc_mpc_arg" = x""yes; then
-  cat >>confdefs.h <<\_ACEOF
+
+		 cat >>confdefs.h <<\_ACEOF
 #define WITH_GMP 1
 _ACEOF
 
+		 GMP_LIBS="$LOCAL_GMP_LIBS"
                  OPTIONAL_LIBRARIES="$OPTIONAL_LIBRARIES gmp mpfr mpc"
 
 else
@@ -11811,8 +11825,12 @@ fi
 rm -rf conftest.dSYM
 rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
+  fi
+
   LIBS=$SAVELIBS
 fi
+
+
 
 
 
