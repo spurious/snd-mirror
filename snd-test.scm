@@ -44420,7 +44420,8 @@ EDITS: 1
 				       0))))))
 		  (if (> k 127) (begin (set! k (char->integer #\x)) (set! s 4)))
 		  (if (> (random 1.0) .99) (clear-listener))
-		  (if (or (= k (char->integer #\e)) (= k (char->integer #\E)))
+		  (if (or (= k (char->integer #\e)) 
+			  (= k (char->integer #\E)))
 		      (snd-simulate-keystroke ind 0 (char->integer #\g) 0))
 		  (snd-simulate-keystroke ind (random (channels ind)) k s)
 		  (if (and (sound? ind) (> (frames ind 0) 1000000))
@@ -62972,8 +62973,8 @@ EDITS: 1
 		   gdk_color_copy gdk_color_equal gdk_color_free
 		   gdk_color_hash gdk_color_parse gdk_colormap_alloc_color gdk_colormap_alloc_colors
 		   gdk_colormap_get_system gdk_colormap_get_visual gdk_colormap_new gdk_colormap_query_color
-		   gdk_cursor_new gdk_cursor_new_from_pixbuf
-		   gdk_cursor_new_from_pixmap gdk_cursor_ref gdk_cursor_unref ;gdk_device_free_history
+		   ;gdk_cursor_new gdk_cursor_new_from_pixbuf
+		   ;gdk_cursor_new_from_pixmap gdk_cursor_ref gdk_cursor_unref ;gdk_device_free_history
 		   gdk_display_add_client_message_filter gdk_display_beep gdk_display_close gdk_display_flush ;gdk_display_get_core_pointer
 		   gdk_display_get_default gdk_display_get_default_cursor_size gdk_display_get_default_group gdk_display_get_default_screen gdk_display_get_event
 		   gdk_display_get_maximal_cursor_size gdk_display_get_n_screens gdk_display_get_name gdk_display_get_pointer gdk_display_get_screen
@@ -64017,7 +64018,7 @@ EDITS: 1
       (do ((i 0 (+ i 1)))
 	  ((= i tests))
 	(load "s7test.scm")
-	(if all-args (s7-test-at-random))
+	;(if all-args (s7-test-at-random))
 	(gc)))
 
 
@@ -66621,9 +66622,6 @@ EDITS: 1
 		 (set! (view-files-files d) '()))
 	       vfs)))))
 (gc)(gc)
-
-(if all-args 
-    (system "cp memlog memlog.full"))
 
 (if #f
     (let ((total 0)

@@ -39178,7 +39178,7 @@ expt error > 1e-6 around 2^-46.506993328423
 					;with-output-to-string with-output-to-file 
 		   number->string string->number make-polar 
 		   make-rectangular magnitude angle rationalize abs exp log sin cos tan asin acos atan
-		   sinh cosh tanh asinh acosh atanh sqrt expt floor ceiling truncate round lcm gcd + - * /
+		   sinh cosh tanh asinh acosh atanh sqrt expt floor ceiling truncate round lcm gcd + - * ; / -- too many divide by 0 complaints
 		   max min quotient remainder modulo = < > <= >= number? integer? real? complex? rational?
 		   even? odd? zero? positive? negative? real-part imag-part numerator denominator inexact->exact
 		   exact->inexact exact? inexact? integer-length logior logxor logand lognot ash random
@@ -39206,13 +39206,14 @@ expt error > 1e-6 around 2^-46.506993328423
 					;load
 		   force for-each map values call-with-values dynamic-wind catch error 
 					;gc-verbose load-verbose
-		   backtrace clear-backtrace set-backtrace-length backtracing 
+					;backtrace -- too confusing!  it looks like an error has occurred
+		   clear-backtrace set-backtrace-length backtracing 
 					;quit gc
 		   procedure? procedure-documentation
 		   help procedure-arity procedure-source make-procedure-with-setter procedure-with-setter? 
 		   procedure-with-setter-setter-arity not boolean? eq? eqv? equal? s7-version)))
     
-    (let ((args (list #t #f -1 0 1 (list 1 2) (cons 1 2) '() '#(1 2) '((1 2) (3 4))
+    (let ((argls (list #t #f -1 0 1 (list 1 2) (cons 1 2) '() '#(1 2) '((1 2) (3 4))
 		      "hi" "" 'hi :hi #\a #\newline 1.5 1.0+1.0i 3/4 abs (make-random-state 1234))))
       
 					;(display "no args") (newline)
@@ -39233,7 +39234,7 @@ expt error > 1e-6 around 2^-46.506993328423
 		   (lambda () 
 		     (f a))
 		   (lambda args #f)))
-	  args))
+	  argls))
        ops)
       
 					;(display "two args") (newline)
@@ -39247,8 +39248,8 @@ expt error > 1e-6 around 2^-46.506993328423
 		      (lambda () 
 			(f a b))
 		      (lambda args #f)))
-	     args))
-	  args))
+	     argls))
+	  argls))
        ops)
       
 					;(display "three args") (newline)
@@ -39264,8 +39265,8 @@ expt error > 1e-6 around 2^-46.506993328423
 			 (lambda () 
 			   (f a b c))
 			 (lambda args #f)))
-		args))
-	     args))
+		argls))
+	     argls))
 	  args))
        ops)
       
@@ -39285,10 +39286,10 @@ expt error > 1e-6 around 2^-46.506993328423
 			    (lambda () 
 			      (f a b c d))
 			    (lambda args #f)))
-		   args))
-		args))
-	     args))
-	  args))
+		   argls))
+		argls))
+	     argls))
+	  argls))
        ops)
       )))
   

@@ -16,6 +16,8 @@ matlab mat-5 headers (for 1-channel sound data).
 all hash literals using ',' changed to use '=>' in *.rb (for ruby 1.9.*)
   but ruby 1.9.n is not usable yet -- it segfaults on any error.
 
+With Kjetil's help, s7 is more than twice as fast now in s7test.
+
 checked: mpfr 2.4.1, gtk 2.15.5|16.0|1, fftw 3.2.1, fth 1.2.3, sbcl 1.0.27
 
 Thanks!: Michael Edwards, Kjetil Matheussen, Mike Scholz, Al Steffens, 

@@ -13250,8 +13250,6 @@ static xen_value *walk(ptree *prog, XEN form, walk_result_t walk_result)
 	return(clean_up(set_up_format(prog, args, num_args, false), args, num_args));
 #endif
 
-      /* fprintf(stderr, "still looking for %s\n", funcname); */
-
       /* check for function defined elsewhere, get source, splice in if possible */
       if ((v == NULL) && 
 	  (current_optimization >= SOURCE_OK) &&
@@ -13264,7 +13262,6 @@ static xen_value *walk(ptree *prog, XEN form, walk_result_t walk_result)
 	  )
 	{
 	  v = splice_in_function_body(prog, rtnval, args, num_args, funcname);
-	  /* fprintf(stderr, "spliced: %p\n", v); */
 	  if (v) 
 	    return(clean_up(v, args, num_args));
 	}
@@ -13299,6 +13296,7 @@ static xen_value *walk(ptree *prog, XEN form, walk_result_t walk_result)
 	}
       /* things like complex numbers fall through here */
     }
+
   if (!run_warned)
     {
       xen_value *rv;
@@ -13311,6 +13309,7 @@ static xen_value *walk(ptree *prog, XEN form, walk_result_t walk_result)
 #endif
       return(rv);
     }
+
   return(NULL);
 }
 
