@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "1.16"
-#define S7_DATE "6-Apr-09"
+#define S7_VERSION "1.17"
+#define S7_DATE "20-Apr-09"
 
 
 typedef long long int s7_Int;
@@ -1270,6 +1270,7 @@ int main(int argc, char **argv)
  * 
  *        s7 changes
  *
+ * 20-Apr:    changed rationalize to be both r5rs-acceptable and fast.
  * 6-Apr:     added s7_make_permanent_string.
  * 14-Mar:    removed s7_local_gc_protect and s7_local_gc_unprotect.
  * 4-Mar:     multidimensional and applicable vectors.

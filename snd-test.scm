@@ -454,8 +454,6 @@
 			      (snd-display ";test ~D" n)
 			      (gc)(gc)
 			      (set! (show-backtrace) #t) ; #f??
-					;(if (file-exists? "memlog")
-					;	 (system (format #f "cp memlog memlog.~D" (- n 1))))
 			      ))
 
 
@@ -66524,7 +66522,7 @@ EDITS: 1
 (if (file-exists? (string-append home-dir "/.snd_prefs_guile"))
     (delete-file (string-append home-dir "/.snd_prefs_guile")))
 
-(if (defined? 'dlocsig-speaker-configs) (set! dlocsig-speaker-configs #f)) ; this list is confusing the memleak checker!
+(if (defined? 'dlocsig-speaker-configs) (set! dlocsig-speaker-configs #f))
 
 (for-each
  (lambda (f)
@@ -66587,7 +66585,6 @@ EDITS: 1
   (string-append sf-dir "wood.sds.snd")
   (string-append sf-dir "o2_dvi.wave.snd")
   (string-append sf-dir "nist-shortpack.wav.snd")
-  (string-append sf-dir "memlog")
   (string-append sf-dir "bad_data_format.snd.snd")
   ))
 

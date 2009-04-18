@@ -168,13 +168,6 @@
 
 /* ---------------- scheme choices ---------------- */
 
-#ifndef WITH_R5RS_RATIONALIZE
-  #define WITH_R5RS_RATIONALIZE 0
-  /* this causes s7 to follow the scheme spec for rationalize (not recommended) --
-   *   consider a linear search for a bignum ratio!!  
-   */
-#endif
-
 #ifndef WITH_GMP
   #define WITH_GMP 0
   /* this includes multiprecision arithmetic for all numeric types and functions, using gmp, mpfr, and mpc
@@ -2505,108 +2498,142 @@ static s7_Int c_lcm(s7_Int a, s7_Int b)
 }
 
 
-#if (!WITH_R5RS_RATIONALIZE)
-
 static bool c_rationalize(s7_Double ux, s7_Double error, s7_Int *numer, s7_Int *denom)
 {
-  s7_Int a1 = 0, a2 = 1, b1 = 1, b2 = 0, tt = 1, a = 0, b = 0, ctr, int_part = 0;
-  bool neg = false;
-  s7_Double x;
+  /*
+    (define* (rat ux (err 0.0000001))
+      ;; translated from CL code in Canny, Donald, Ressler, "A Rational Rotation Method for Robust Geometric Algorithms"
+      (let ((x0 (- ux error))
+	    (x1 (+ ux error)))
+        (let ((i (ceiling x0))
+	      (i0 (floor x0))
+	      (i1 (ceiling x1))
+	      (r 0))
+          (if (>= x1 i)
+	      i
+	      (do ((p0 i0 (+ p1 (* r p0)))
+	           (q0 1 (+ q1 (* r q0)))
+	           (p1 i1 p0)
+	           (q1 1 q0)
+	           (e0 (- i1 x0) e1p)
+	           (e1 (- x0 i0) (- e0p (* r e1p)))
+	           (e0p (- i1 x1) e1)
+	           (e1p (- x1 i0) (- e0 (* r e1))))
+	          ((<= x0 (/ p0 q0) x1)
+	           (/ p0 q0))
+	        (set! r (min (floor (/ e0 e1))
+			     (ceiling (/ e0p e1p)))))))))
+  */
   
-  if (ux == 0.0)
+  s7_Double x0, x1, val;
+  s7_Int i, i0, i1, r, r1, p0, q0, p1, q1;
+  s7_Double e0, e1, e0p, e1p;
+  s7_Int old_p1, old_q1;
+  s7_Double old_e0, old_e1, old_e0p;
+  
+  x0 = ux - error;
+  x1 = ux + error;
+  i = (s7_Int)ceil(x0);
+  i0 = (s7_Int)floor(x0);
+  i1 = (s7_Int)ceil(x1);
+  
+  if (x1 >= i)
     {
-      (*numer) = 0;
+      (*numer) = i;
       (*denom) = 1;
       return(true);
     }
-  
-  if (ux < 0.0)
+
+  p0 = i0; 
+  q0 = 1;
+  p1 = i1; 
+  q1 = 1; 
+  e0 = i1 - x0;
+  e1 = x0 - i0;
+  e0p = i1 - x1;
+  e1p = x1 - i0;
+
+  while (true)
     {
-      neg = true;
-      ux = -ux;
-    }
-  
-  if (ux == 1.0)
-    {
-      (*numer) = (neg) ? -1 : 1;
-      (*denom) = 1;
-      return(true);
-    }
-  
-  if (ux > 1.0)
-    {
-      int_part = (s7_Int)floor(ux);
-      ux -= int_part;
-    }
-  
-  if (ux < error)
-    {
-      if (ux > 0.5) int_part++;
-      (*numer) = (neg) ? -int_part : int_part;
-      (*denom) = 1;
-      return(true);
-    }
-  
-  x = 1.0 / ux;
-  for (ctr = 0; ctr < 100; ctr++)
-    {
-      a = a2 + a1 * tt;
-      b = b2 + b1 * tt;
-      if (s7_Double_abs(ux - (s7_Double)a / (s7_Double)b) < error)
-	{
-	  a += (b * int_part);
-	  (*numer) = (neg) ? -a : a;
-	  (*denom) = b;
-	  return(true);
-	}
-      if (x == tt)
-	return(false);
+      val = (double)p0 / (double)q0;
       
-      x = 1.0 / (x - tt);
-      tt = (s7_Int)floor(x);
-      a2 = a1;
-      b2 = b1;
-      a1 = a;
-      b1 = b;
+      if ((x0 <= val) && (val <= x1))
+	{
+	  (*numer) = p0;
+	  (*denom) = q0;
+	  return(true);
+	}
+
+      r = (s7_Int)floor(e0 / e1);
+      r1 = (s7_Int)ceil(e0p / e1p);
+      if (r1 < r) r = r1;
+
+      if (r < 0) abort();
+      
+      /* CL "do" handles all step vars in parallel */
+      old_p1 = p1;
+      p1 = p0;
+      old_q1 = q1;
+      q1 = q0;
+      old_e0 = e0;
+      e0 = e1p;
+      old_e0p = e0p;
+      e0p = e1;
+      old_e1 = e1;
+
+      p0 = old_p1 + r * p0;
+      q0 = old_q1 + r * q0;
+      e1 = old_e0p - r * e1p;
+      e1p = old_e0 - r * old_e1;
     }
   return(false);
 }
 
-#else
+#if 0
+/* there is another way to rationalize.  Here is a scheme version of
+ *   Bill Gosper's farint:
 
-static bool c_rationalize(s7_Double ux, s7_Double error, s7_Int *n, s7_Int *d)
-{
-  s7_Int numer, denom, lim, sign = 0;
-  lim = 1.0 / error;
-  if (ux < 0.0)
-    {
-      ux = -ux;
-      sign = 1;
-    }
+(define* (farint x (err 1/1000000))
   
-  for (denom = 1; denom <= lim; denom++)
-    {
-      numer = (s7_Int)floor(ux * denom);
-      if ((((s7_Double)numer / (s7_Double)denom) + error) >= ux)
-	{
-	  if (sign)
-	    (*n) = -numer;
-	  else (*n) = numer;
-	  (*d) = denom;
-	  return(true);
-	}
-      numer++;
-      if ((((s7_Double)numer / (s7_Double)denom) - error) <= ux)
-	{
-	  if (sign)
-	    (*n) = -numer;
-	  else (*n) = numer;
-	  (*d) = denom;
-	  return(true);
-	}
-    }
-  return(false);
-}
+  (define* (farint-1 x nhi dhi (ln 0) (ld 1) (hn 1) (hd 0))
+    (if (> (+ ln hn) (* (+ ld hd) x))
+	(let* ((m (min (if (= 0 ln) 
+			   nhi 
+			 (floor (/ (- nhi hn) ln)))
+		       (floor (/ (- dhi hd) ld))))
+	       (d (- (* x ld) ln))
+	       (k (if (= 0 d) 
+		      m 
+		    (ceiling (/ (- hn (* x hd)) d)))))
+	  (if (< k m)
+	      (let ((hn1 (+ (* k ln) hn))
+		    (hd1 (+ (* k ld) hd)))
+		(farint-1 x nhi dhi hn1 hd1 (- hn1 ln) (- hd1 ld)))
+
+	    (let* ((n (+ (* m ln) hn)) (d (+ (* m ld) hd)))
+	      (if (< (* 2 d ld x) (+ (* ld n) (* ln d)))
+		  (/ ln ld) 
+		(/ n d)))))
+
+      (let* ((m (min (floor (/ (- nhi ln) hn))
+		     (if (= 0 hd) 
+			 dhi 
+		       (floor (/ (- dhi ld) hd)))))
+	     (d (- hn (* x hd)))
+	     (k (if (= 0 d) 
+		    m 
+		  (ceiling (/ (- (* x ld) ln) d)))))
+	(if (< k m)
+	    (let ((ln1 (+ (* k hn) ln))
+		  (ld1 (+ (* k hd) ld)))
+	    (farint-1 x nhi dhi (- ln1 hn) (- ld1 hd) ln1 ld1))
+	  (let* ((n (+ (* m hn) ln)) (d (+ (* m hd) ld)))
+	    (if (< (* 2 d hd x) (+ (* hd n) (* hn d)))
+		(/ n d) 
+	      (/ hn hd)))))))
+
+  (farint-1 x (/ err) (/ err)))
+*/
 #endif
 
 
@@ -2670,15 +2697,6 @@ static num make_ratio(s7_Int numer, s7_Int denom)
 {
   num ret;
   s7_Int divisor;
-
-  if (denom == 0)
-    {
-      fprintf(stderr, "%lld/%lld currently just returns %lld in s7", (long long int)numer, (long long int)denom, (long long int)numer);
-      /* I can't decide how to handle this */
-      ret.type = NUM_INT;
-      integer(ret) = numer;
-      return(ret);
-    }
 
   if (numer == 0)
     {
@@ -2798,7 +2816,7 @@ s7_pointer s7_make_ratio(s7_scheme *sc, s7_Int a, s7_Int b)
   s7_pointer x;
 
   if (b == 0)
-    return(sc->F); /* ?? */
+    return(s7_division_by_zero_error(sc, "make-ratio", make_list_2(sc, s7_make_integer(sc, a), s7_make_integer(sc, b))));
 
   x = new_cell(sc);
   set_type(x, T_NUMBER | T_ATOM | T_SIMPLE | T_DONT_COPY);
@@ -3063,7 +3081,7 @@ static num num_add(num a, num b)
 	d2 = num_to_denominator(b);
 	n2 = num_to_numerator(b);
 	if (d1 == d2)                                     /* the easy case -- if overflow here, it matches the int case */
-	  return(make_ratio(n1 + n2, d1));
+	  return(make_ratio(n1 + n2, d1));      /* d1 can't be zero */
 
 #if (!WITH_GMP)
 	if ((d1 > s7_int_max) || (d2 > s7_int_max) ||     /* before counting bits, check that overflow is possible */
@@ -3239,6 +3257,7 @@ static num num_invert(num a)
   switch (num_type(a))
     {
     case NUM_INT:
+      /* a already checked, not 0 */
       return(make_ratio(1, integer(a)));
       
     case NUM_RATIO:
@@ -3268,6 +3287,7 @@ static num num_div(num a, num b)
   switch (num_type(ret))
     {
     case NUM_INT: 
+      /* b checked for 0 below */
       return(make_ratio(integer(a), integer(b)));
       
     case NUM_RATIO:
@@ -5486,11 +5506,14 @@ static s7_pointer g_multiply(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_divide_unchecked(s7_scheme *sc, s7_pointer args)
 {
+  /* "unchecked" => we're sure they're numbers, but the divisor needs to be checked for 0 */
   s7_pointer x;
 
   sc->v = nvalue(car(args));
   for (x = cdr(args); x != sc->NIL; x = cdr(x))
     {
+      if (s7_is_zero(car(x)))
+	return(s7_division_by_zero_error(sc, "/", args));
 #if WITH_GMP
       switch (sc->v.type)
 	{
@@ -5521,16 +5544,15 @@ static s7_pointer g_divide(s7_scheme *sc, s7_pointer args)
   s7_pointer x;
 
   for (i = 1, x = args; x != sc->NIL; i++, x = cdr(x))
-    {
-      if (!s7_is_number(car(x)))
-	return(s7_wrong_type_arg_error(sc, "/", i, car(x), "a number"));
-      if ((i > 1) && 
-	  (s7_is_zero(car(x))))
-	return(s7_division_by_zero_error(sc, "/", args));
-    }
+    if (!s7_is_number(car(x)))
+      return(s7_wrong_type_arg_error(sc, "/", i, car(x), "a number"));
 
-  if (cdr(args) == sc->NIL) 
-    return(make_number(sc, num_invert(nvalue(car(args)))));
+  if (cdr(args) == sc->NIL)
+    {
+      if (s7_is_zero(car(args)))
+	return(s7_division_by_zero_error(sc, "/", args));
+      return(make_number(sc, num_invert(nvalue(car(args)))));
+    }
 
   return(g_divide_unchecked(sc, args));
 }
@@ -16446,11 +16468,16 @@ static s7_pointer big_multiply(s7_scheme *sc, s7_pointer args)
 }
 
 
+static s7_pointer big_is_zero_1(s7_scheme *sc, s7_pointer x);
+
 static s7_pointer big_invert(s7_scheme *sc, s7_pointer args)
 {
   /* assume cdr(args) is nil and we're called from divide, so check for big num else call g_divide */
   s7_pointer p;
   p = car(args);
+  if (big_is_zero_1(sc, p) == sc->T)
+    return(s7_division_by_zero_error(sc, "/", p));
+
   if (is_object(p))
     {
       if (object_type(p) == big_integer_tag)
@@ -16571,7 +16598,13 @@ static s7_pointer big_divide(s7_scheme *sc, s7_pointer args)
 	}
     }
     
+  if (big_is_zero_1(sc, divisor) == sc->T)
+    return(s7_division_by_zero_error(sc, "/", args));
+
   result = copy_and_promote_number(sc, result_type, car(args));
+
+  /* TODO: we need to catch gmp exceptions somehow */
+
   switch (result_type)
     {
     case T_BIG_INTEGER:
@@ -17815,10 +17848,8 @@ static s7_pointer big_asin(s7_scheme *sc, s7_pointer args)
 }
 
 
-static s7_pointer big_is_zero(s7_scheme *sc, s7_pointer args)
+static s7_pointer big_is_zero_1(s7_scheme *sc, s7_pointer p)
 {
-  s7_pointer p;
-  p = car(args);
   if (is_object(p))
     {
       if (object_type(p) == big_integer_tag)
@@ -17830,7 +17861,16 @@ static s7_pointer big_is_zero(s7_scheme *sc, s7_pointer args)
       if (object_type(p) == big_complex_tag)
 	return(make_boolean(sc, mpc_cmp_si_si(S7_BIG_COMPLEX(p), 0, 0) == 0));
     }
-  return(g_is_zero(sc, args));
+
+  if (!s7_is_number(p))
+    return(s7_wrong_type_arg_error(sc, "zero?", 0, p, "a number"));
+  return(make_boolean(sc, s7_is_zero(p)));
+}
+
+
+static s7_pointer big_is_zero(s7_scheme *sc, s7_pointer args)
+{
+  return(big_is_zero_1(sc, car(args)));
 }
 
 
@@ -17992,6 +18032,8 @@ static s7_pointer big_logxor(s7_scheme *sc, s7_pointer args)
 static s7_pointer big_rationalize(s7_scheme *sc, s7_pointer args)
 {
   /* commas.c from ca 1990! */
+  /* TODO: fix big_rationalize (and in s7test) */
+
   s7_pointer p0, p1 = NULL;
 
   p0 = car(args);
