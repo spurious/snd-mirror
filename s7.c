@@ -18031,8 +18031,7 @@ static s7_pointer big_logxor(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer big_rationalize(s7_scheme *sc, s7_pointer args)
 {
-  /* commas.c from ca 1990! */
-  /* TODO: fix big_rationalize (and in s7test) */
+  /* TODO: fix big_rationalize */
 
   s7_pointer p0, p1 = NULL;
 

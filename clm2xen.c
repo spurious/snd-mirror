@@ -3014,7 +3014,7 @@ is the same in effect as " S_make_oscil ".  'type' sets the interpolation choice
     {
       freq = mus_optkey_to_float(keys[0], S_make_table_lookup, orig_arg[0], freq);
       if (freq > (0.5 * mus_srate()))
-	XEN_OUT_OF_RANGE_ERROR(S_make_table_lookup, orig_arg[1], keys[1], "freq ~A > srate/2?");
+	XEN_OUT_OF_RANGE_ERROR(S_make_table_lookup, orig_arg[0], keys[0], "freq ~A > srate/2?");
 
       phase = mus_optkey_to_float(keys[1], S_make_table_lookup, orig_arg[1], phase);
       if (phase < 0.0)
