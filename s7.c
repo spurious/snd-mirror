@@ -2530,19 +2530,38 @@ static bool c_rationalize(s7_Double ux, s7_Double error, s7_Int *numer, s7_Int *
   s7_Double e0, e1, e0p, e1p;
   s7_Int old_p1, old_q1;
   s7_Double old_e0, old_e1, old_e0p;
-  
+
   x0 = ux - error;
   x1 = ux + error;
   i = (s7_Int)ceil(x0);
-  i0 = (s7_Int)floor(x0);
-  i1 = (s7_Int)ceil(x1);
   
-  if (x1 >= i)
+  if (error >= 1.0) /* aw good grief! */
     {
-      (*numer) = i;
+      if (x0 < 0)
+	{
+	  if (x1 < 0)
+	    (*numer) = (s7_Int)floor(x1);
+	  else (*numer) = 0;
+	}
+      else
+	{
+	  (*numer) = i;
+	}
       (*denom) = 1;
       return(true);
     }
+  
+  if (x1 >= i)
+    {
+      if (i >= 0)
+	(*numer) = i;
+      else (*numer) = (s7_Int)floor(x1);
+      (*denom) = 1;
+      return(true);
+    }
+
+  i0 = (s7_Int)floor(x0);
+  i1 = (s7_Int)ceil(x1);
 
   p0 = i0; 
   q0 = 1;
@@ -2568,9 +2587,7 @@ static bool c_rationalize(s7_Double ux, s7_Double error, s7_Int *numer, s7_Int *
       r1 = (s7_Int)ceil(e0p / e1p);
       if (r1 < r) r = r1;
 
-      if (r < 0) abort();
-      
-      /* CL "do" handles all step vars in parallel */
+      /* Scheme "do" handles all step vars in parallel */
       old_p1 = p1;
       p1 = p0;
       old_q1 = q1;
@@ -4628,17 +4645,15 @@ static s7_pointer g_rationalize(s7_scheme *sc, s7_pointer args)
   if (!s7_is_real(x))
     return(s7_wrong_type_arg_error(sc, "rationalize", 1, x, "a real"));
 
-  if (s7_is_exact(x)) 
-    return(x);
   if (cdr(args) != sc->NIL)
     {
       if (!s7_is_real(cadr(args)))
 	return(s7_wrong_type_arg_error(sc, "rationalize", 2, cadr(args), "a real"));
-      err = s7_real(cadr(args));
+      err = s7_number_to_real(cadr(args));
     }
   else err = default_rationalize_error;
 
-  if (c_rationalize(s7_real(x), err, &numer, &denom))
+  if (c_rationalize(s7_number_to_real(x), err, &numer, &denom))
     return(s7_make_ratio(sc, numer, denom));
   return(sc->F);
 }
@@ -15009,6 +15024,51 @@ static void mark_s7(s7_scheme *sc)
 
 #if WITH_GMP
 
+
+/* ---------------- MPC fixups ----------------
+ *
+ * mpc changed a lot in version 0.6, so we need to provide backwards compatibility (without any autoconf switches) 
+ *   they also left a dangling declaration of mpc_default_prec, so we have to provide a different name
+ */
+
+#if defined(MPC_VERSION_MAJOR) && defined(MPC_VERSION_MINOR)
+#if ((MPC_VERSION_MAJOR == 0) && (MPC_VERSION_MINOR > 5))
+
+#define TRIG_TYPE int
+
+static mp_prec_t mpc_precision = 128;
+static mp_prec_t mpc_set_default_precision(mp_prec_t prec) {mpc_precision = prec; return(prec);}
+
+
+#define mpc_init(Z) mpc_init2(Z, mpc_precision)
+
+static void mpc_init_set(mpc_ptr z, mpc_ptr y, mpc_rnd_t rnd)
+{
+  mpc_init(z);
+  mpc_set(z, y, rnd);
+}
+
+
+static void mpc_init_set_ui_ui(mpc_ptr z, unsigned long int x, unsigned long int y, mpc_rnd_t rnd)
+{
+  mpc_init(z);
+  mpc_set_ui_ui(z, x, y, rnd);
+}
+
+#else
+#define TRIG_TYPE void
+#define mpc_set_default_precision(Prec) mpc_set_default_prec(Prec)
+#endif
+
+#else
+#define TRIG_TYPE void
+#define mpc_set_default_precision(Prec) mpc_set_default_prec(Prec)
+#endif
+
+/* -------------------------------------------------------------------------------- */
+
+
+
 static s7_pointer promote_number(s7_scheme *sc, int type, s7_pointer x);
 
 static int big_integer_tag = 0;
@@ -17123,8 +17183,8 @@ static s7_pointer big_sqrt(s7_scheme *sc, s7_pointer args)
 enum {TRIG_NO_CHECK, TRIG_TAN_CHECK, TRIG_TANH_CHECK};
 
 static s7_pointer big_trig(s7_scheme *sc, s7_pointer args, s7_function g_trig, 
-			   int (*mpfr_trig)(mpfr_ptr, mpfr_srcptr,mpfr_rnd_t),
-			   void (*mpc_trig)(mpc_ptr, mpc_srcptr, mpc_rnd_t),
+			   int (*mpfr_trig)(mpfr_ptr, mpfr_srcptr, mpfr_rnd_t),
+			   TRIG_TYPE (*mpc_trig)(mpc_ptr, mpc_srcptr, mpc_rnd_t),
 			   int tan_case)
 /* these declarations mimic the mpfr.h and mpc.h declarations.  It seems to me that
  *   they ought to be:
@@ -18031,14 +18091,10 @@ static s7_pointer big_logxor(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer big_rationalize(s7_scheme *sc, s7_pointer args)
 {
-  /* TODO: fix big_rationalize */
-
   s7_pointer p0, p1 = NULL;
 
   p0 = car(args);
-  if (s7_is_exact(p0))
-    return(p0);
-
+  /* p0 can be exact, but we still have to check it for simplification */
   if (cdr(args) != sc->NIL)
     p1 = cadr(args);
 
@@ -18047,135 +18103,177 @@ static s7_pointer big_rationalize(s7_scheme *sc, s7_pointer args)
       (s7_is_real(p0)) &&
       ((!p1) || (s7_is_real(p1))))   /* both are real (or error arg is omitted) */
     {
-      mpfr_t x, error, ux;
-      mpz_t a1, a2, b1, b2, tt, a, b, int_part;
-      int ctr;
-      bool neg = false;
+      mpfr_t error, ux, x0, x1;
+      mpz_t i, i0, i1;
 
       if (is_object(p0))
-	mpfr_init_set(x, S7_BIG_REAL(p0), GMP_RNDN);
-      else mpfr_init_set_d(x, s7_number_to_real(p0), GMP_RNDN);
-
-      if (mpfr_integer_p(x))
-	{
-	  /* here there's a problem with precision -- if 128 bits, 385817946978768113605842402465609185854927496022065152.5
-	   *   looks like an integer to mpfr, so rationalize just throws away the .5!  Checking that x has not been
-	   *   truncated won't help -- we have to increase the precision locally to fit x.
-	   */
-	  mpz_t *n;
-	  n = (mpz_t *)malloc(sizeof(mpz_t));
-	  mpz_init(*n);
-	  mpfr_get_z(*n, x, GMP_RNDN);
-	  return(s7_make_object(sc, big_integer_tag, (void *)n));      
-	}
-
-      if (mpfr_cmp_ui(x, 0) < 0)
-	{
-	  neg = true;
-	  mpfr_neg(x, x, GMP_RNDN);
-	}
-      
-      mpz_init_set_ui(int_part, 0);
-      if (mpfr_cmp_ui(x, 1) > 0)
-	{
-	  mpfr_get_z(int_part, x, GMP_RNDZ);
-	  mpfr_frac(x, x, GMP_RNDN);
-	}
-      mpfr_init_set(ux, x, GMP_RNDN); /* save the original without the integer part */
+	mpfr_init_set(ux, S7_BIG_REAL(promote_number(sc, T_BIG_REAL, p0)), GMP_RNDN);
+      else mpfr_init_set_d(ux, s7_number_to_real(p0), GMP_RNDN);
 
       if (p1)
 	{
 	  if (is_object(p1))
-	    mpfr_init_set(error, S7_BIG_REAL(p1), GMP_RNDN);
+	    mpfr_init_set(error, S7_BIG_REAL(promote_number(sc, T_BIG_REAL, p1)), GMP_RNDN);
 	  else mpfr_init_set_d(error, s7_number_to_real(p1), GMP_RNDN);
 	}
       else mpfr_init_set_d(error, default_rationalize_error, GMP_RNDN);
 
-      if (mpfr_cmp(x, error) <= 0)
+      mpfr_init_set(x0, ux, GMP_RNDN);        /* x0 = ux - error */
+      mpfr_sub(x0, x0, error, GMP_RNDN);
+      mpfr_init_set(x1, ux, GMP_RNDN);        /* x1 = ux + error */
+      mpfr_add(x1, x1, error, GMP_RNDN);
+      mpz_init(i);
+      mpfr_get_z(i, x0, GMP_RNDU);            /* i = ceil(x0) */
+
+      if (mpfr_cmp_ui(error, 1) >= 0)         /* if (error >= 1.0) */
 	{
 	  mpz_t *n;
 	  n = (mpz_t *)malloc(sizeof(mpz_t));
-	  s7_pointer result;
-	  if (mpfr_cmp_d(x, 0.5) > 0)
-	    mpz_add_ui(int_part, int_part, 1);
-	  mpz_init_set(*n, int_part);
-	  if (neg)
-	    mpz_neg(*n, *n);
-	  result = s7_make_object(sc, big_integer_tag, (void *)n);   
-	  mpz_clear(int_part);
-	  return(result);
+
+	  if (mpfr_cmp_ui(x0, 0) < 0)                /* if (x0 < 0) */
+	    {
+	      if (mpfr_cmp_ui(x1, 0) < 0)            /*   if (x1 < 0) */
+		{
+		  mpz_init(*n);
+		  mpfr_get_z(*n, x1, GMP_RNDD);      /*     num = floor(x1) */
+		}
+	      else mpz_init_set_ui(*n, 0);           /*   else num = 0 */
+	    }
+	  else mpz_init_set(*n, i);                  /* else num = i */
+
+	  mpz_clear(i);
+	  mpfr_clear(ux);
+	  mpfr_clear(x0);
+	  mpfr_clear(x1);
+	  mpfr_clear(error);
+	  return(s7_make_object(sc, big_integer_tag, (void *)n));
 	}
 
-      mpz_init_set_ui(a1, 0);
-      mpz_init_set_ui(a2, 1);
-      mpz_init_set_ui(b1, 1);
-      mpz_init_set_ui(b2, 0);
-      mpz_init_set_ui(tt, 1);
-      mpz_init_set_ui(a, 0);
-      mpz_init_set_ui(b, 0);
+      if (mpfr_cmp_z(x1, i) >= 0)                /* if (x1 >= i) */
+	{
+	  mpz_t *n;
+	  n = (mpz_t *)malloc(sizeof(mpz_t));
+	  
+	  if (mpz_cmp_ui(i, 0) >= 0)             /* if (i >= 0) */
+	    mpz_init_set(*n, i);                 /*   num = i */
+	  else
+	    {
+	      mpz_init(*n);
+	      mpfr_get_z(*n, x1, GMP_RNDD);      /* else num = floor(x1) */
+	    }
 
-      mpfr_ui_div(x, 1, x, GMP_RNDN);
+	  mpz_clear(i);
+	  mpfr_clear(ux);
+	  mpfr_clear(x0);
+	  mpfr_clear(x1);
+	  mpfr_clear(error);
+	  return(s7_make_object(sc, big_integer_tag, (void *)n)); 
+	}
+
       {
-	mpz_t temp;
-	mpfr_t xerr;
-	mpz_init(temp);
-	mpfr_init(xerr);
-	for (ctr = 0; ctr < 1000; ctr++)
+	mpz_t p0, q0, r, r1, p1, q1, old_p1, old_q1;
+	mpfr_t val, e0, e1, e0p, e1p, old_e0, old_e1, old_e0p;
+
+	mpz_init(i0);
+	mpz_init(i1);
+	mpfr_get_z(i0, x0, GMP_RNDD);            /* i0 = floor(x0) */
+	mpfr_get_z(i1, x1, GMP_RNDU);            /* i1 = ceil(x1) */
+
+	mpz_init_set(p0, i0);                    /* p0 = i0 */
+	mpz_init_set_ui(q0, 1);                  /* q0 = 1 */
+	mpz_init_set(p1, i1);                    /* p1 = i1 */
+	mpz_init_set_ui(q1, 1);                  /* q1 = 1 */
+	mpfr_init(e0);
+	mpfr_init(e1);
+	mpfr_init(e0p);
+	mpfr_init(e1p);
+	mpfr_sub_z(e0, x0, i1, GMP_RNDN);        /* e0 = i1 - x0 */
+	mpfr_neg(e0, e0, GMP_RNDN);
+	mpfr_sub_z(e1, x0, i0, GMP_RNDN);        /* e1 = x0 - i0 */
+	mpfr_sub_z(e0p, x1, i1, GMP_RNDN);       /* e0p = i1 - x1 */
+	mpfr_neg(e0p, e0p, GMP_RNDN);
+	mpfr_sub_z(e1p, x1, i0, GMP_RNDN);       /* e1p = x1 - i0 */
+
+	mpfr_init(val);
+
+	mpfr_init(old_e0);
+	mpfr_init(old_e1);
+	mpfr_init(old_e0p);
+
+	mpz_init(r);
+	mpz_init(r1);
+	mpz_init(old_p1);
+	mpz_init(old_q1);
+
+	while (true)
 	  {
-	    mpz_mul(temp, a1, tt);
-	    mpz_add(a, a2, temp);
-	    mpz_mul(temp, b1, tt);
-	    mpz_add(b, b2, temp);
-	    mpfr_set_z(xerr, a, GMP_RNDN);
-	    mpfr_div_z(xerr, xerr, b, GMP_RNDN);
-	    mpfr_sub(xerr, ux, xerr, GMP_RNDN);
-	    mpfr_abs(xerr, xerr, GMP_RNDN);
-
-	    if (mpfr_lessequal_p(xerr, error))
+	    mpfr_set_z(val, p0, GMP_RNDN);
+	    mpfr_div_z(val, val, q0, GMP_RNDN);  /* val = p0/q0 */
+	    if ((mpfr_cmp(x0, val) <= 0) &&      /* if ((x0 <= val) && (val <= x1)) */
+		(mpfr_cmp(val, x1) <= 0))
 	      {
-		mpq_t *n;
-		if (mpz_cmp_ui(b, 1) == 0)
-		  {
-		    mpz_t *n;
-		    n = (mpz_t *)malloc(sizeof(mpz_t));
-		    mpz_add(a, a, int_part);
-		    if (neg) mpz_neg(a, a);
-		    mpz_init_set(*n, a);
-		    return(s7_make_object(sc, big_integer_tag, (void *)n));
-		  }
-		n = (mpq_t *)malloc(sizeof(mpq_t));
-		mpq_init(*n);
-		mpz_mul(int_part, b, int_part);
-		mpz_add(a, a, int_part);
-		if (neg) mpz_neg(a, a);
-		mpq_set_num(*n, a);
-		mpq_set_den(*n, b);
-		mpz_clear(a);
-		mpz_clear(a1);
-		mpz_clear(a2);
-		mpz_clear(b);
-		mpz_clear(b1);
-		mpz_clear(b2);
-		mpz_clear(tt);
-		mpz_clear(int_part);
-		mpfr_clear(error);
-		mpfr_clear(x);
+		mpq_t *q;
+		q = (mpq_t *)malloc(sizeof(mpq_t));
+		mpq_init(*q);
+		mpq_set_num(*q, p0);            /* return(p0/q0) */
+		mpq_set_den(*q, q0);
+
+		mpz_clear(i);
 		mpfr_clear(ux);
-		mpz_clear(temp);
-		mpfr_clear(xerr);
-		return(s7_make_object(sc, big_ratio_tag, (void *)n));
+		mpfr_clear(x0);
+		mpfr_clear(x1);
+		mpfr_clear(error);
+
+		mpz_clear(p0);
+		mpz_clear(q0);
+		mpz_clear(r);
+		mpz_clear(r1);
+		mpz_clear(p1);
+		mpz_clear(q1);
+		mpz_clear(old_p1);
+		mpz_clear(old_q1);
+	
+		mpfr_clear(val);
+		mpfr_clear(e0);
+		mpfr_clear(e1);
+		mpfr_clear(e0p);
+		mpfr_clear(e1p);
+		mpfr_clear(old_e0);
+		mpfr_clear(old_e1);
+		mpfr_clear(old_e0p);
+
+		return(s7_make_object(sc, big_ratio_tag, (void *)q)); 
 	      }
+	    
+	    mpfr_div(val, e0, e1, GMP_RNDN);
+	    mpfr_get_z(r, val, GMP_RNDD);           /* r = floor(e0/e1) */
+	    mpfr_div(val, e0p, e1p, GMP_RNDN);
+	    mpfr_get_z(r1, val, GMP_RNDU);          /* r1 = ceil(e0p/e1p) */
+	    if (mpz_cmp(r1, r) < 0)                 /* if (r1 < r) */
+	      mpz_set(r, r1);                       /*   r = r1 */
+	    
+	    mpz_set(old_p1, p1);                    /* old_p1 = p1 */
+	    mpz_set(p1, p0);                        /* p1 = p0 */
+	    mpz_set(old_q1, q1);                    /* old_q1 = q1 */
+	    mpz_set(q1, q0);                        /* q1 = q0 */
 
-	    if (mpfr_cmp_z(x, tt) == 0)
-	      return(s7_error(sc, sc->ERROR, make_list_3(sc, s7_make_string(sc, "rationalize"), args, s7_make_string(sc, "failed to converge?"))));
+	    mpfr_set(old_e0, e0, GMP_RNDN);         /* old_e0 = e0 */
+	    mpfr_set(e0, e1p, GMP_RNDN);            /* e0 = e1p */
+	    mpfr_set(old_e0p, e0p, GMP_RNDN);       /* old_e0p = e0p */
+	    mpfr_set(e0p, e1, GMP_RNDN);            /* e0p = e1 */
+	    mpfr_set(old_e1, e1, GMP_RNDN);         /* old_e1 = e1 */
 
-	    mpfr_sub_z(x, x, tt, GMP_RNDN);
-	    mpfr_ui_div(x, 1, x, GMP_RNDN);
-	    mpfr_get_z(tt, x, GMP_RNDZ);
-	    mpz_set(a2, a1);
-	    mpz_set(b2, b1);
-	    mpz_set(a1, a);
-	    mpz_set(b1, b);
+	    mpz_mul(p0, p0, r);                     /* p0 = old_p1 + r * p0 */
+	    mpz_add(p0, p0, old_p1); 
+	    
+	    mpz_mul(q0, q0, r);                     /* q0 = old_q1 + r * q0 */
+	    mpz_add(q0, q0, old_q1); 
+	    
+	    mpfr_mul_z(e1, e1p, r, GMP_RNDN);       /* e1 = old_e0p - r * e1p */
+	    mpfr_sub(e1, old_e0p, e1, GMP_RNDN); 
+	    
+	    mpfr_mul_z(e1p, old_e1, r, GMP_RNDN);   /* e1p = old_e0 - r * old_e1 */
+	    mpfr_sub(e1p, old_e0, e1p, GMP_RNDN); 
 	  }
       }
     }
@@ -18928,7 +19026,7 @@ static s7_pointer g_set_precision(s7_scheme *sc, s7_pointer args)
 
   bits = (mp_prec_t)s7_integer(car(args));
   mpfr_set_default_prec(bits);
-  mpc_set_default_prec(bits);
+  mpc_set_default_precision(bits);
   s7_symbol_set_value(sc, s7_make_symbol(sc, "pi"), big_pi(sc));
   return(car(args));
 }
@@ -19243,7 +19341,7 @@ static void s7_gmp_init(s7_scheme *sc)
 
   add_max = (1 << (s7_int_bits - 1));
   mpfr_set_default_prec((mp_prec_t)128); 
-  mpc_set_default_prec((mp_prec_t)128);
+  mpc_set_default_precision((mp_prec_t)128);
 
   s7_symbol_set_value(sc, s7_make_symbol(sc, "pi"), big_pi(sc));
   g_provide(sc, make_list_1(sc, s7_make_symbol(sc, "gmp")));
