@@ -7993,14 +7993,19 @@ on its left). (The complexity in this case is mostly due to the slice-at-a-time 
 
 <img src="pix/noid3.png" hspace=20 alt="n=3 case">
 
-<p>We're trying to pinpoint the minimum (there appear to be 4 black areas in the 3D graph,
-corresponding somehow to the four minima in the 2nd graph).
-A laborious search tells us the first minimum is 1.979799678333 when the 2nd harmonic's
-initial phase is 1.28892570352252, and the 3rd's is 5.288363163944985. But this kind
-of search is not feasible when n is more than 6 or so;
-we need to check ((2*pi)/initial-phase-increment)^(n-1) cases!  If our increment is
-0.001, and n is only 4, we have something like 248050213442 cases, each involving
-a run of 4 sinusoids between 0 and 2 pi, looking for the peak. 
+<p>We're trying to pinpoint the minima (there appear to be 4 black areas in the 3D graph,
+corresponding (I hope!) to the four minima in the second graph).
+A laborious search finds these values:
+</p>
+<pre>
+     1.9798054823226 #(0.0 0.58972511242747172044431636095396243035  0.3166675693251937984129540382127743214) 
+     1.9798054823226 #(0.0 1.58972511242745917492413809668505564332  0.3166675693251493894919690319511573761)
+     1.9798054823222 #(0.0 0.41027488757208596670267297668033279478  1.68333243067326587816268101960304193198)  
+     1.9798054823222 #(0.0 1.41027488757208596670267297668033279478  1.68333243067326587816268101960304193198)
+</pre>
+<p>which shows that the minima are essentially at (23/39 19/60), (16/39 101/60), (1 + 23/39, 19/60), and (1 + 16/39, 101/60),
+all numbers multiplied by pi of course.  Can we find an exact expression, perhaps using the searchers of Lenstra, or
+Ferguson and Bailey (PSLQ)?
 </p>
 
 <!--
@@ -8138,16 +8143,17 @@ and in a few cases, it is possible to get below the square root (see peak-phases
 </p>
 
 <table hspace=20 border=1 cellpadding=4>
-<tr><th>n</th><th>harmonics</th><th>sqrt(n)</th><th>peak amp</th><th>exponent: (log peak n)</th></tr>
+<tr><th>n</th><th>harmonics</th><th>(sqrt n)</th><th>peak</th><th>(log peak n)</th></tr>
 <tr><td>7</td><td>all</td><td>2.6457</td><td>2.6424</td><td>.499</td></tr>
 <tr><td>7</td><td>odd</td><td>2.6457</td><td>2.6324</td><td>.497</td></tr>
 <tr><td>8</td><td>all</td><td>2.8284</td><td>2.8015</td><td>.495</td></tr>
 <tr><td>8</td><td>odd</td><td>2.8284</td><td>2.8071</td><td>.496</td></tr>
-<tr><td>9</td><td>odd</td><td>3.0</td><td>2.9896</td><td>.498</td></tr>
+<tr><td>9</td><td>odd</td><td>3.0</td><td>2.9790</td><td>.497</td></tr>
 <tr><td>10</td><td>odd</td><td>3.1622</td><td>3.140</td><td>.497</td></tr>
 <tr><td>11</td><td>all</td><td>3.3166</td><td>3.2352</td><td>.489</td></tr>
 <tr><td>12</td><td>all</td><td>3.4641</td><td>3.4103</td><td>.494</td></tr>
-<tr><td>14</td><td>all</td><td>3.7416</td><td>3.6531</td><td>.491</td></tr>
+<tr><td>13</td><td>all</td><td>3.6055</td><td>3.5777</td><td>.497</td></tr>
+<tr><td>14</td><td>all</td><td>3.7416</td><td>3.6439</td><td>.490</td></tr>
 <tr><td>20</td><td>all</td><td>4.4721</td><td>4.4622</td><td>.499</td></tr>
 </table>
 
