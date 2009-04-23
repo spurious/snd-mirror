@@ -13824,7 +13824,9 @@
       (num-test (rationalize -1/3 1/3) 0)
       (num-test (rationalize -3/10 1/10) -1/3)
 
-
+      (num-test (rationalize .239 .0005) 11/46) ;baseball of course... the average .001 is the hardest to get: 1/667
+      (num-test (rationalize .001 .0005) 1/667)
+      (num-test (rationalize .334 .0005) 96/287)
 
       (num-test (rationalize 1.0000001 0.00000001) 9090911/9090910)
       (num-test (rationalize 0.000000015 0.000000001) 1/62500001)
@@ -14530,6 +14532,11 @@
 (num-test (lcm 362880 -362880) 362880)
 (num-test (gcd -362880 -362880) 362880)
 (num-test (lcm -362880 -362880) 362880)
+(num-test (gcd 60 42) 6)
+(num-test (gcd 3333 -33 101) 1)
+(num-test (gcd 3333 -33 1002001) 11)
+(num-test (gcd 91 -49) 7)
+(num-test (gcd 63 -42 35) 7)
 (num-test (gcd 0 0 0 10) 10)
 (num-test (lcm 0 0 0 10) 0)
 (num-test (gcd 0 1 -1 362880) 1)
@@ -34037,6 +34044,7 @@
        (test (logior 1) 1)
        (test (logior -1) -1)
        (test (logior 12341234 10001111) 12378103)
+       (test (logior 1 2 4 8) 15)
 
 
        (test (logand 0 1) 0)
@@ -34055,6 +34063,7 @@
        (test (logand -1 -1) -1)
        (test (logand 1 -1) 1)
        (test (logand 1 1) 1)
+       (test (logand 16 31) 16)
 
 
        (test (logxor 0 1) 1)
@@ -34064,14 +34073,32 @@
        (test (logxor -6 3) -7)
        (test (logxor #b1 #b11 #b111 #b1111) #b1010)
        (test (logxor 12341234 10001111) 2413861)
+       (test (logxor 1 3 7 15) 10)
 
 
        (test (lognot 0) -1)
        (test (lognot -1) 0)
+       (test (lognot 1) -2)
        (test (lognot #b101) -6)
        (test (lognot -6) #b101)
        (test (lognot 12341234) -12341235)
        (test (lognot #b-101) 4)
+       (test (lognot (1+ (lognot 1000))) 999)
+
+       ;; from CL spec
+       (test (let ((str ""))
+	       (let ((show (lambda (m x y)
+			     (set! str (string-append str (format #f "[m = #o~6,'0O, x = #o~6,'0O, y = #o~6,'0O] " m x y))))))
+		 (let ((m #o007750)
+		       (x #o452576)
+		       (y #o317407))
+		   (show m x y)
+		   (let ((z (logand (logxor x y) m)))
+		     (set! x (logxor z x))
+		     (set! y (logxor z y))
+		     (show m x y)))) str)
+	     "[m = #o007750, x = #o452576, y = #o317407] [m = #o007750, x = #o457426, y = #o312557] ")
+
 
 
        (test (ash 0 1) 0)
@@ -34138,6 +34165,7 @@
 
 	     (num-test (ash 1 48) 281474976710656)
 	     (num-test (ash 281474976710656 -48) 1)
+	     (num-test (ash -100000000000000000000000000000000 -100) -79)
 	     
 	     (num-test (ash 1 63) 9223372036854775808)
 	     (num-test (ash 1 64) 18446744073709551616)
@@ -37610,8 +37638,9 @@ expt error > 1e-6 around 2^-46.506993328423
 			  (lambda (nlst v)
 			    (ok-number 'integer-length nlst v 
 				       (lambda (n1 v)
-					 (let ((a (logical:integer-length n1)))
-					   (= a v)))))
+					 (let ((a (logical:integer-length n1))
+					       (b (ceiling (log (abs n1) 2))))
+					   (= a b v)))))
 			  choose-integer)
 		    (list (lambda () #f) (lambda (a b) #t) (lambda () '())))
 

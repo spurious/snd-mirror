@@ -1526,7 +1526,7 @@ static  s7_pointer symbol_table_find_by_name(s7_scheme *sc, const char *name, in
 
 static s7_pointer g_symbol_table(s7_scheme *sc, s7_pointer args)
 {
-  #define H_symbol_table "(symbol-table) returns the symbol table (a vector)"
+  #define H_symbol_table "(symbol-table) returns the s7 symbol table (a vector)"
   return(sc->symbol_table);
 }
 
@@ -1664,7 +1664,7 @@ const char *s7_symbol_name(s7_pointer p)
 
 static s7_pointer g_symbol_to_string(s7_scheme *sc, s7_pointer args)
 {
-  #define H_symbol_to_string "(symbol->string sym) returns sym converted to a string"
+  #define H_symbol_to_string "(symbol->string sym) returns the symbol sym converted to a string"
   if (!s7_is_symbol(car(args)))
     return(s7_wrong_type_arg_error(sc, "symbol->string", 0, car(args), "a symbol"));
   return(s7_set_immutable(s7_make_string(sc, s7_symbol_name(car(args)))));
@@ -1673,7 +1673,7 @@ static s7_pointer g_symbol_to_string(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_string_to_symbol(s7_scheme *sc, s7_pointer args)
 {
-  #define H_string_to_symbol "(string->symbol str) returns str converted to a symbol"
+  #define H_string_to_symbol "(string->symbol str) returns the string str converted to a symbol"
   if (!s7_is_string(car(args)))
     return(s7_wrong_type_arg_error(sc, "string->symbol", 0, car(args), "a string"));
   return(s7_make_symbol(sc, string_value(car(args))));
@@ -1762,7 +1762,7 @@ s7_pointer s7_symbol_local_value(s7_scheme *sc, s7_pointer sym, s7_pointer local
 
 static s7_pointer g_symbol_to_value(s7_scheme *sc, s7_pointer args)
 {
-  #define H_symbol_to_value "(symbol->value sym) returns the current binding of (value associated with) the symbol sym"
+  #define H_symbol_to_value "(symbol->value sym) returns the current binding of (the value associated with) the symbol sym"
   if (!s7_is_symbol(car(args)))
     return(s7_wrong_type_arg_error(sc, "symbol->value", 0, car(args), "a symbol"));
   return(s7_symbol_value(sc, car(args)));
@@ -1811,7 +1811,7 @@ static s7_pointer lambda_star_argument_default_value(s7_scheme *sc, s7_pointer v
 
 static s7_pointer g_global_environment(s7_scheme *sc, s7_pointer ignore)
 {
-  #define H_global_environment "(global-environment) returns the top-level definitions (symbol bindings)"
+  #define H_global_environment "(global-environment) returns the current s7 top-level definitions (symbol bindings)"
   return(sc->global_env);
 }
 
@@ -3831,7 +3831,7 @@ char *s7_number_to_string(s7_scheme *sc, s7_pointer obj, int radix)
 
 static s7_pointer g_number_to_string(s7_scheme *sc, s7_pointer args)
 {
-  #define H_number_to_string "(number->string num :optional (radix 10)) converts num into a string"
+  #define H_number_to_string "(number->string num :optional (radix 10)) converts the number num into a string"
   int radix = 0, size = 20;
   char *res;
   s7_pointer x;
@@ -4585,7 +4585,7 @@ static s7_pointer g_make_rectangular(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_abs(s7_scheme *sc, s7_pointer args)
 {
-  #define H_abs "(abs x) returns the absolute value of x"
+  #define H_abs "(abs x) returns the absolute value of the real number x"
   if (!s7_is_real(car(args)))
     return(s7_wrong_type_arg_error(sc, "abs", 0, car(args), "a real"));
   sc->v = nvalue(car(args));
@@ -4636,7 +4636,7 @@ static s7_pointer g_angle(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_rationalize(s7_scheme *sc, s7_pointer args)
 {
-  #define H_rationalize "(rationalize x err) returns a ratio within err of x"
+  #define H_rationalize "(rationalize x err) returns the ratio with lowest denominator within err of x"
   s7_Double err;
   s7_Int numer = 0, denom = 1;
   s7_pointer x;
@@ -4661,7 +4661,7 @@ static s7_pointer g_rationalize(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_exp(s7_scheme *sc, s7_pointer args)
 {
-  #define H_exp "(exp z) returns e^z"
+  #define H_exp "(exp z) returns e^z, (exp 1) is 2.718281828459"
   s7_pointer x;
 
   x = car(args);
@@ -4676,7 +4676,7 @@ static s7_pointer g_exp(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_log(s7_scheme *sc, s7_pointer args)
 {
-  #define H_log "(log z1 :optional z2) returns log(z1) / log(z2) where z2 defaults to e"
+  #define H_log "(log z1 :optional z2) returns log(z1) / log(z2) where z2 (the base) defaults to e: (log 8 2) = 3"
   s7_pointer x;
   
   x = car(args);
@@ -4775,7 +4775,7 @@ static s7_pointer g_tan(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_asin(s7_scheme *sc, s7_pointer args)
 {
-  #define H_asin "(asin z) returns asin(z)"
+  #define H_asin "(asin z) returns asin(z); (sin (asin 1)) = 1"
   s7_pointer n;
 
   n = car(args);
@@ -4824,7 +4824,7 @@ static s7_pointer g_asin(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_acos(s7_scheme *sc, s7_pointer args)
 {
-  #define H_acos "(acos z) returns acos(z)"
+  #define H_acos "(acos z) returns acos(z); (cos (acos 1)) = 1"
   s7_pointer n;
 
   n = car(args);
@@ -5457,7 +5457,7 @@ static s7_pointer g_subtract_unchecked(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_subtract(s7_scheme *sc, s7_pointer args)
 {
-  #define H_subtract "(- x1 ...) subtract its trailing arguments from the first, or negates the first if only one argument is given"
+  #define H_subtract "(- x1 ...) subtracts its trailing arguments from the first, or negates the first if only one argument is given"
   int i;
   s7_pointer x;
 
@@ -5615,7 +5615,7 @@ static s7_pointer g_min(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_quotient(s7_scheme *sc, s7_pointer args)
 {
-  #define H_quotient "(quotient x1 x2) returns the integer quotient of x1 and x2"
+  #define H_quotient "(quotient x1 x2) returns the integer quotient of x1 and x2; (quotient 4 3) = 1"
   
   if (!s7_is_real(car(args)))
     return(s7_wrong_type_arg_error(sc, "quotient", 1, car(args), "a real"));
@@ -5632,7 +5632,7 @@ static s7_pointer g_quotient(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_remainder(s7_scheme *sc, s7_pointer args)
 {
-  #define H_remainder "(remainder x1 x2) returns the integer remainder of x1 and x2"
+  #define H_remainder "(remainder x1 x2) returns the integer remainder of x1 and x2; (remainder 10 3) = 1"
   
   if (!s7_is_real(car(args)))
     return(s7_wrong_type_arg_error(sc, "remainder", 1, car(args), "a real"));
@@ -5649,7 +5649,7 @@ static s7_pointer g_remainder(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_modulo(s7_scheme *sc, s7_pointer args)
 {
-  #define H_modulo "(modulo x1 x2) returns x1 mod x2"
+  #define H_modulo "(modulo x1 x2) returns x1 mod x2; (modulo 4 3) = 1.  The arguments can be real numbers."
   
   if (!s7_is_real(car(args)))
     return(s7_wrong_type_arg_error(sc, "modulo", 1, car(args), "a real"));
@@ -5843,7 +5843,7 @@ static s7_pointer g_is_zero(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_is_positive(s7_scheme *sc, s7_pointer args)
 {
-  #define H_is_positive "(positive? num) returns #t if the real number num is positive"
+  #define H_is_positive "(positive? num) returns #t if the real number num is positive (greater than 0)"
   if (!s7_is_real(car(args)))
     return(s7_wrong_type_arg_error(sc, "positive?", 0, car(args), "a real"));
   return(make_boolean(sc, s7_is_positive(car(args))));
@@ -5852,7 +5852,7 @@ static s7_pointer g_is_positive(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_is_negative(s7_scheme *sc, s7_pointer args)
 {
-  #define H_is_negative "(negative? num) returns #t if the real number num is negative"
+  #define H_is_negative "(negative? num) returns #t if the real number num is negative (less than 0)"
   if (!s7_is_real(car(args)))
     return(s7_wrong_type_arg_error(sc, "negative?", 0, car(args), "a real"));
   return(make_boolean(sc, s7_is_negative(car(args))));
@@ -5861,7 +5861,7 @@ static s7_pointer g_is_negative(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_inexact_to_exact(s7_scheme *sc, s7_pointer args)
 {
-  #define H_inexact_to_exact "(inexact->exact num) converts num to an exact number"
+  #define H_inexact_to_exact "(inexact->exact num) converts num to an exact number; (inexact->exact 1.5) = 3/2"
   if (!s7_is_number(car(args)))
     return(s7_wrong_type_arg_error(sc, "inexact->exact", 0, car(args), "a number"));
   return(inexact_to_exact(sc, car(args)));
@@ -5870,7 +5870,7 @@ static s7_pointer g_inexact_to_exact(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_exact_to_inexact(s7_scheme *sc, s7_pointer args)
 {
-  #define H_exact_to_inexact "(exact->inexact num) converts num to an inexact number"
+  #define H_exact_to_inexact "(exact->inexact num) converts num to an inexact number; (exact->inexact 3/2) = 1.5"
   if (!s7_is_number(car(args)))
     return(s7_wrong_type_arg_error(sc, "exact->inexact", 0, car(args), "a number"));
   return(exact_to_inexact(sc, car(args)));
@@ -5879,7 +5879,7 @@ static s7_pointer g_exact_to_inexact(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_is_exact(s7_scheme *sc, s7_pointer args)
 {
-  #define H_is_exact "(exact? num) returns #t if num is exact"
+  #define H_is_exact "(exact? num) returns #t if num is exact (an integer or a ratio)"
   if (!s7_is_number(car(args)))
     return(s7_wrong_type_arg_error(sc, "exact?", 0, car(args), "a number"));
   return(make_boolean(sc, s7_is_exact(car(args))));
@@ -5888,7 +5888,7 @@ static s7_pointer g_is_exact(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_is_inexact(s7_scheme *sc, s7_pointer args)
 {
-  #define H_is_inexact "(inexact? num) returns #t if num is inexact"
+  #define H_is_inexact "(inexact? num) returns #t if num is inexact (not an integer or a ratio)"
   if (!s7_is_number(car(args)))
     return(s7_wrong_type_arg_error(sc, "inexact?", 0, car(args), "a number"));
   return(make_boolean(sc, s7_is_inexact(car(args))));
@@ -5947,7 +5947,7 @@ s7_pointer s7_make_ulong_long(s7_scheme *sc, unsigned long long n)
 
 static s7_pointer g_integer_length(s7_scheme *sc, s7_pointer args)
 {
-  #define H_integer_length "(integer-length arg) returns the number of bits required to represent the integer 'arg'"
+  #define H_integer_length "(integer-length arg) returns the number of bits required to represent the integer 'arg': (ceiling (log (abs arg) 2))"
   s7_Int x;
   if (!s7_is_integer(car(args)))
       return(s7_wrong_type_arg_error(sc, "integer-length", 0, car(args), "an integer"));
@@ -16663,7 +16663,19 @@ static s7_pointer big_divide(s7_scheme *sc, s7_pointer args)
 
   result = copy_and_promote_number(sc, result_type, car(args));
 
-  /* TODO: we need to catch gmp exceptions somehow */
+
+#if 0
+/* SOMEDAY: we need to catch gmp exceptions somehow: SIGFPE (exception=deliberate /0 -- see gmp/errno.c) */
+#include <signal.h>
+
+static void s7_sigfpe(int ignored)
+{
+  /* can we recover? */
+}
+
+then in init: signal(SIGFPE, s7_sigfpe);
+#endif
+
 
   switch (result_type)
     {
@@ -19031,16 +19043,6 @@ static s7_pointer g_set_precision(s7_scheme *sc, s7_pointer args)
   return(car(args));
 }
 
-/*
- * bignums and threads
-   gmp.info:
-   " It's safe for two threads to read from the same GMP variable
-     simultaneously, but it's not safe for one to read while the
-     another might be writing, nor for two threads to write
-     simultaneously.  It's not safe for two threads to generate a
-     random number from the same `gmp_randstate_t' simultaneously,
-     since this involves an update of that variable."
- */
 
 typedef struct {
   gmp_randstate_t state;

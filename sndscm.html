@@ -1079,7 +1079,7 @@ and see what is left: <code>(notch-sound (list 425 450 470 546 667 789 910) #f 1
 This erased most of the hum, but it also
 changed the timbre of the voices which wasn't acceptable.
 I goofed around with the notch-width and filter-size parameters, looking
-for something that that would still do the trick without removing
+for something that would still do the trick without removing
 the personal side of the voices, but in only a few cases was the result
 usable. What was being said was not very important, but the
 individual characteristics of each voice were.
@@ -7979,7 +7979,7 @@ graph got truncated slightly: the top should match the bottom).
 The graph on the right is
 an attempt to show the 4-dimensional 4-harmonic case by stacking 3-D slices.
 A different way to view these graphs that 
-that can be applied to any number
+can be applied to any number
 of dimensions (until we run out of disk space and patience), is to move through the possibilities
 in much the way you'd count to 100; before each 10's digit increments, you'd count diligently
 through all the 1's.  Similarly, in the next set of graphs, we go from 0 to 2pi completely
@@ -8142,21 +8142,44 @@ through the 5-D landscape, each 4-D case being 8 3-D slices as before:
 and in a few cases, it is possible to get below the square root (see peak-phases.scm for the phases):
 </p>
 
-<table hspace=20 border=1 cellpadding=4>
-<tr><th>n</th><th>harmonics</th><th>(sqrt n)</th><th>peak</th><th>(log peak n)</th></tr>
-<tr><td>7</td><td>all</td><td>2.6457</td><td>2.6424</td><td>.499</td></tr>
-<tr><td>7</td><td>odd</td><td>2.6457</td><td>2.6261</td><td>.496</td></tr>
-<tr><td>8</td><td>all</td><td>2.8284</td><td>2.8015</td><td>.495</td></tr>
-<tr><td>8</td><td>odd</td><td>2.8284</td><td>2.7963</td><td>.495</td></tr>
-<tr><td>9</td><td>odd</td><td>3.0</td><td>2.9788</td><td>.497</td></tr>
-<tr><td>10</td><td>odd</td><td>3.1622</td><td>3.109</td><td>.493</td></tr>
-<tr><td>11</td><td>all</td><td>3.3166</td><td>3.2352</td><td>.489</td></tr>
-<tr><td>12</td><td>all</td><td>3.4641</td><td>3.4103</td><td>.494</td></tr>
-<tr><td>13</td><td>all</td><td>3.6055</td><td>3.5739</td><td>.496</td></tr>
-<tr><td>14</td><td>all</td><td>3.7416</td><td>3.6435</td><td>.490</td></tr>
-<tr><td>18</td><td>all</td><td>4.2426</td><td>4.2088</td><td>.497</td></tr>
-<tr><td>19</td><td>all</td><td>4.3588</td><td>4.3318</td><td>.498</td></tr>
-<tr><td>20</td><td>all</td><td>4.4721</td><td>4.4389</td><td>.498</td></tr>
+<table border=0><tr><td>
+
+<table hspace=20 border=1 cellspacing=10>
+<tr><th>all harmonics</th></tr>
+<tr><td>
+<table border=0 cellpadding=0 cellspacing=6>
+<tr><th>n</th><th>(sqrt n)</th><th>peak</th><th>(log peak n)</th></tr>
+<tr><td width=30>7</td><td>2.6457</td><td>2.6424</td><td><center>.499</center></td></tr>
+<tr><td>8</td><td>2.8284</td><td>2.8015</td>         <td><center>.495</center></td></tr>
+<tr><td>11</td><td>3.3166</td><td>3.2352</td>        <td><center>.489</center></td></tr>
+<tr><td>12</td><td>3.4641</td><td>3.4103</td>        <td><center>.494</center></td></tr>
+<tr><td>13</td><td>3.6055</td><td>3.5739</td>        <td><center>.496</center></td></tr>
+<tr><td>14</td><td>3.7416</td><td>3.6435</td>        <td><center>.490</center></td></tr>
+<tr><td>15</td><td>3.8729</td><td>3.8683</td>        <td><center>.499</center></td></tr>
+<tr><td>18</td><td>4.2426</td><td>4.2064</td>        <td><center>.497</center></td></tr>
+<tr><td>19</td><td>4.3588</td><td>4.3318</td>        <td><center>.498</center></td></tr>
+<tr><td>20</td><td>4.4721</td><td>4.4389</td>        <td><center>.498</center></td></tr>
+</table>
+</td></tr>
+</table>
+
+</td><td>
+
+<table hspace=20 border=1 cellspacing=10>
+<tr><th>odd harmonics</th></tr>
+<tr><td>
+<table border=0 cellpadding=0 cellspacing=6>
+<tr><th>n</th><th>(sqrt n)</th><th>peak</th><th>(log peak n)</th></tr>
+<tr><td width=30>7</td><td>2.6457</td><td>2.6261</td><td><center>.496</center></td></tr>
+<tr><td>8</td><td>2.8284</td><td>2.7962</td>         <td><center>.495</center></td></tr>
+<tr><td>9</td><td>3.0</td><td>2.9788</td>            <td><center>.497</center></td></tr>
+<tr><td>10</td><td>3.1622</td><td>3.1088</td>        <td><center>.493</center></td></tr>
+<tr><td>11</td><td>3.3166</td><td>3.3150</td>        <td><center>.499</center></td></tr>
+</table>
+</td></tr>
+</table>
+
+</td></tr>
 </table>
 
 <p>
