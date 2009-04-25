@@ -74,6 +74,7 @@
  *
  *   things I ought to change:
  *        length should work on vectors and strings [fill!, copy, reverse! ?]
+ *        get rid of values and call-with-values
  *
  *
  * Mike Scholz provided the FreeBSD support (complex trig funcs, etc)
@@ -1410,6 +1411,7 @@ static void stack_reset(s7_scheme *sc)
 
 static void pop_stack(s7_scheme *sc) 
 { 
+  /* avoid "if..then" here and in push_stack -- these 2 are called a zillion times */
   s7_pointer *vel;
   sc->stack_top -= 4;
   vel = (s7_pointer *)(sc->stack->object.vector.elements + sc->stack_top);
@@ -7534,7 +7536,7 @@ static s7_pointer g_peek_char(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_read_line(s7_scheme *sc, s7_pointer args)
 {
-  #define H_read_line "(read-line port) returns the next line from port, or EOF"
+  #define H_read_line "(read-line port) returns the next line from port, or #<eof> (use the function eof-object?)."
   s7_pointer port;
   int i;
 
@@ -12455,7 +12457,7 @@ static s7_pointer g_map(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_values(s7_scheme *sc, s7_pointer args)
 {
-  /* I can't see any point in this thing, even in its fancy version (which this is not) */
+  /* I can't see any point to this thing, even in its fancy version (which this is not) */
   #define H_values "(values obj ...) returns its arguments"
   
   if (args == sc->NIL)
