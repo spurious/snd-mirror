@@ -1796,11 +1796,15 @@ void xen_repl(int argc, char **argv)
 	  expr_ok = false;
 	  len = strlen(buffer);
 	  for (i = 0; i < len; i++)
-	    if (!isspace(buffer[i]))
-	      {
-		expr_ok = true;
+	    {
+	      if (buffer[i] == 0)
 		break;
-	      }
+	      if (!isspace(buffer[i]))
+		{
+		  expr_ok = true;
+		  break;
+		}
+	    }
 	  if (expr_ok)
 	    {
 	      char *temp;

@@ -5648,8 +5648,8 @@
       (test (eval-string "(+ 1 2)") 3)
       (test (eval '(+ 1 2)) 3)
 
-      (test (string=? (procedure-documentation abs) "(abs x) returns the absolute value of x") #t)
-      (test (string=? (procedure-documentation 'abs) "(abs x) returns the absolute value of x") #t)
+      (test (string=? (procedure-documentation abs) "(abs x) returns the absolute value of the real number x") #t)
+      (test (string=? (procedure-documentation 'abs) "(abs x) returns the absolute value of the real number x") #t)
       (test (let ((hi (lambda (x) "this is a test" (+ x 1)))) 
 	      (list (hi 1) (procedure-documentation hi)))
 	    (list 2 "this is a test"))

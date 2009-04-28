@@ -278,6 +278,16 @@ int s7_vector_length(s7_pointer vec);                                       /* (
 s7_pointer s7_vector_to_list(s7_scheme *sc, s7_pointer vect);               /* (vector->list vect) */
 s7_pointer *s7_vector_elements(s7_pointer vec);                             /* a pointer to the array of s7_pointers */
 
+  /* if s7 is built with multidimensional and applicable vectors, 
+   *
+   *  (vect i) is the same as (vector-ref vect i)
+   *  (set! (vect i) x) is the same as (vector-set! vect i x)
+   *  (vect i j k) accesses the 3-dimensional vect
+   *  (set! (vect i j k) x) sets that element (vector-ref and vector-set! can also be used)
+   *  (make-vector (list 2 3 4)) returns a 3-dimensional vector with the given dimension sizes
+   *  (make-vector '(2 3) 1.0) returns a 2-dim vector with all elements set to 1.0
+   */
+
 
 bool s7_is_hash_table(s7_pointer p);                                        /* (hash-table? p) */
 s7_pointer s7_make_hash_table(s7_scheme *sc, int size);                     /* (make-hash-table size) */
@@ -1294,4 +1304,3 @@ int main(int argc, char **argv)
  *              and s7_scheme arg to new_type print func.
  * 1-Oct-08   version 1.0
  */
-

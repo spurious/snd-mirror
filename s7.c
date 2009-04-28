@@ -1145,24 +1145,6 @@ void s7_mark_object(s7_pointer p)
 }
 
 
-/* -------- gc benchmark -------- */
-
-#define BENCHMARK_GC 0
-
-#if BENCHMARK_GC
-
-static double gc_total = 0.0;
-static double gc_max = 0.0;
-
-static double s7_get_gc_bench_time(void)
-{
-  struct timeval tv;
-  gettimeofday(&tv, NULL);
-  return(tv.tv_sec + tv.tv_usec / 1000000.0);
-}
-#endif
-
-
 static int gc(s7_scheme *sc)
 {
   int i, old_free_heap_top;
@@ -1170,11 +1152,6 @@ static int gc(s7_scheme *sc)
   if (*(sc->gc_verbose))
     write_string(sc, "gc...", s7_current_output_port(sc));
   
-#if BENCHMARK_GC
-  double start_time;
-  start_time = s7_get_gc_bench_time();
-#endif
-
   /* mark all live objects (the symbol table is in permanent memory, not the heap) */
   S7_MARK(sc->global_env);
   S7_MARK(sc->args);
@@ -1232,18 +1209,6 @@ static int gc(s7_scheme *sc)
       }
   }
   
- #if BENCHMARK_GC
-   {
-     double gc_time;
-     gc_time = s7_get_gc_bench_time() - start_time;
-     gc_total += gc_time;
-     if (gc_time > gc_max)
-       gc_max = gc_time;
-    
-     fprintf(stderr, "time used to gc: %f. \ttotal: %f. \tmax: %f\n", (float)gc_time, (float)gc_total, (float)gc_max);
-   }
-#endif
-
   if (*(sc->gc_verbose))
     {
       char *msg;

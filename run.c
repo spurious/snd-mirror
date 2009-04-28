@@ -102,12 +102,13 @@
  *
  * would it simplify variable handling to store everything as xen_value?
  *
+ * TODO: s7 vector syntax
  * TODO: vector<->vct
  *       all numeric types + multiprecision stuff
  *       some or all of:
 
-    gensym [s7_gensym] symbol-table symbol? [s7_is_symbol] symbol->string [s7_symbol_name?] string->symbol [s7_make_symbol] symbol->value [s7_symbol_to_value]
-    global-environment [s7] current-environment [s7] provided? provide [s7_provide] defined? keyword? [s7_is_keyword]
+    gensym [s7_gensym] symbol-table symbol->string [s7_symbol_name?] string->symbol [s7_make_symbol] symbol->value [s7_symbol_to_value]
+    global-environment [s7] current-environment [s7] provided? provide [s7_provide] defined? 
     make-keyword [s7] symbol->keyword keyword->symbol hash-table? [s7_is_hash_table] make-hash-table [s7_make_hash_table]
     hash-table-ref [s7_hash_table_ref] hash-table-set! [s7_hash_table_set] hash-table-size 
 
