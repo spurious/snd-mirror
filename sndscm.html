@@ -8185,9 +8185,31 @@ and in a few cases, it is possible to get below the square root (see peak-phases
 </td></tr>
 </table>
 
+<p>My searchers are very close to the square root in several other cases:
+</p>
+<table border=0 hspace=40>
+<tr><td>
+<pre>
+  (log peak n)    type   n      peak
+
+0.50124916842996  :all  24   4.9184667201491
+0.50161063563351  :all  17   4.1419634819031
+0.50215114922391  :odd  12   3.4826682200729
+0.50228170086523  :all  23   4.8302651750784
+0.50359092449236  :odd   3   1.738897302452
+0.5036489174323   :odd  13   3.6394550800323
+0.50475573712956  :all  27   5.2782392501831
+0.50523531958076  :all  26   5.186740398407
+0.50567258829573  :odd  15   3.9329380989075
+0.50585763250663  :all  10   3.2052184391367
+0.50631564362962  :all  25   5.1026865984188
+0.50766664311226  :odd  18   4.3377046585083
+</pre>
+</td></tr></table>
+
 <p>
 Here is a graph of the values I've found so far, followed by a graph of
-the exponent vs n (n^y = peak amp).  (These are mostly restricted to initial phases of 0.0 and pi,
+the exponent vs n (n^y = peak amp).  (The higher "n" cases are currently restricted to initial phases of 0.0 and pi,
 but if we allow ourselves arbitrary initial phases, we can get much better results.  One very good
 set for all harmonics up to n=40 is given in Horner and Beauchamp, "a genetic algorithm-based method
 for synthesis of low peak amplitude signals", J. Acoustic. Soc. Am Vol 99 No 1 Jan 96, online

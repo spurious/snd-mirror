@@ -2060,21 +2060,26 @@ static XEN g_run_hook(XEN all_args)
   ghook *obj;
   int arglen;
   XEN functions, val = XEN_FALSE;
+
   hook = XEN_CAR(all_args);
   XEN_ASSERT_TYPE(xen_hook_p(hook), hook, XEN_ARG_1, "run-hook", "a hook");
+
   obj = XEN_TO_GHOOK(hook);
   args = XEN_CDR(all_args);
   arglen = XEN_LIST_LENGTH(args);
+
   if (ghook_arity(obj) != arglen)
     XEN_ERROR(XEN_ERROR_TYPE("wrong-number-of-args"),
 	      XEN_LIST_2(C_TO_XEN_STRING("run-hook"),
 			 args));
+
   functions = ghook_functions(obj);
   while (XEN_NOT_NULL_P(functions))
     {
       val = XEN_APPLY(XEN_CAR(functions), args, "run-hook");
       functions = XEN_CDR(functions);
     }
+
   return(val);
 }
 

@@ -178,7 +178,6 @@
 
 
 #if USE_SND
-  static XEN optimization_hook;
   #define PROTECT(Obj) snd_protect(Obj)
   #define UNPROTECT_AT(Loc) snd_unprotect_at(Loc)
 #else
@@ -211,9 +210,11 @@ static int run_safety = RUN_UNSAFE;
 
 
 #define MAX_OPTIMIZATION 6
+static XEN optimization_hook;
 
 #if WITH_RUN || (!USE_SND)
 static int current_optimization = 0;
+#define S_optimization_hook "optimization-hook"
 #endif
 
 
@@ -718,6 +719,38 @@ static xen_value *make_xen_value(int typ, int address, xen_value_constant_t cons
 }
 
 
+#if (!USE_SND)
+
+/* copy run_hook from snd-xen.c */
+XEN run_hook(XEN hook, XEN args, const char *caller)
+{
+#if HAVE_S7
+  int gc_loc;
+#endif
+  XEN procs = XEN_HOOK_PROCEDURES(hook);
+
+#if HAVE_S7
+  gc_loc = s7_gc_protect(s7, args);
+#endif
+
+  while (XEN_NOT_NULL_P(procs))
+    {
+      if (!(XEN_EQ_P(args, XEN_EMPTY_LIST)))
+	XEN_APPLY(XEN_CAR(procs), args, caller);
+      else XEN_CALL_0(XEN_CAR(procs), caller);
+      procs = XEN_CDR (procs);
+    }
+
+#if HAVE_S7
+  s7_gc_unprotect_at(s7, gc_loc);
+#endif
+
+  return(xen_return_first(XEN_FALSE, args));
+}
+
+#endif
+
+
 #define OPTIMIZER_WARNING_BUFFER_SIZE 1024
 static char *optimizer_warning_buffer = NULL;
 
@@ -738,12 +771,12 @@ static xen_value *run_warn(const char *format, ...)
   vsprintf(optimizer_warning_buffer, format, ap);
 #endif
   va_end(ap);
-#if USE_SND
+
   if (XEN_HOOKED(optimization_hook))
     run_hook(optimization_hook, 
 	     XEN_LIST_1(C_TO_XEN_STRING(optimizer_warning_buffer)),
 	     S_optimization_hook);
-#endif
+
   return(NULL); /* this is so we can insert the call into the error return call chain */
 }
 
@@ -754,12 +787,12 @@ static xen_value *run_warn_with_free(char *str)
   run_warned = true;
   msg = C_TO_XEN_STRING(str);
   free(str);
-#if USE_SND
+
   if (XEN_HOOKED(optimization_hook))
     run_hook(optimization_hook, 
 	     XEN_LIST_1(msg),
 	     S_optimization_hook);
-#endif
+
   return(NULL);
 }
 
@@ -14600,21 +14633,20 @@ void mus_init_run(void)
 #endif
 
 
-#if USE_SND
+#if USE_SND && WITH_RUN
+  add_ss_watcher(SS_MUS_ERROR_WATCHER, watch_for_mus_error_in_run, NULL);
+#endif
 
 #if WITH_RUN
-  add_ss_watcher(SS_MUS_ERROR_WATCHER, watch_for_mus_error_in_run, NULL);
-
   #define H_optimization_hook S_optimization_hook " (msg): called if the run macro encounters \
 something it can't optimize.  'msg' is a string description of the offending form:\n\
-  (add-hook! " S_optimization_hook " (lambda (msg) (" S_snd_print " msg)))\n\
+  (add-hook! " S_optimization_hook " (lambda (msg) (display (format #f \"run trouble: ~A~%\" msg))))\n\
 You can often slightly rewrite the form to make run happy."
 #else
-#define H_optimization_hook S_optimization_hook " (msg): this hook is ignored because 'run' is not included in this version of Snd."
+#define H_optimization_hook S_optimization_hook " (msg): this hook is ignored because 'run' is not implemented."
 #endif
 
   optimization_hook = XEN_DEFINE_HOOK(S_optimization_hook, 1, H_optimization_hook);      /* arg = message */
-#endif
 
 #if WITH_RUN
 #if (!USE_SND)
