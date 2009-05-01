@@ -442,8 +442,7 @@
 	     (set! couplingFilter-input (+ string1-junction-input string2-junction-input string3-junction-input))
 	     (set! couplingFilter-output (one-pole-one-zero cou0 cou1 couplingFilter-input))
 	     (set! sampCount (+ 1 sampCount))
-	     (outa i couplingFilter-input)))))
-))
+	     (outa i couplingFilter-input)))))))
 
 
 

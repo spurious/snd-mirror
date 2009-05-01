@@ -4418,7 +4418,7 @@ static char *describe_noi(mus_any *ptr)
 		 mus_scaler(ptr),
 		 (gen->distribution) ? ", with distribution envelope" : "");
   else
-    mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, S_rand_interp "%s freq: %.3fHz, phase: %.3f, amp: %.3f, incr: %.3f, curval: %.3f%s",
+    mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s freq: %.3fHz, phase: %.3f, amp: %.3f, incr: %.3f, curval: %.3f%s",
 		 mus_name(ptr),
 		 mus_frequency(ptr),
 		 mus_phase(ptr),

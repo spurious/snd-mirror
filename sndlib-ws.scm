@@ -678,3 +678,105 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 
 
 (if (not (defined? 'ws-interrupt?)) (define (ws-interrupt? . args) #f))
+
+
+
+
+;;; -------- with-threaded-sound --------
+
+(defmacro with-threaded-sound (args . body)
+  (if (and (provided? 'threads)
+	   (provided? 's7)
+	   (not (= (optimization) 0)))
+      (let ((split 
+	     (lambda (l n k)
+	       (define (split-1 s l n i)
+		 (if (null? l)
+		     (reverse s)
+		     (if (= i n)
+			 (split-1 (cons (car l) s) (cdr l) n 1)
+			 (split-1 s (cdr l) n (+ i 1)))))
+	       (split-1 '() l n (- n k))))
+
+	    (remove-output-and-reverb-args
+	     (lambda (lst)
+	       (let ((badarg #f)
+		     (new-args '()))
+		 (for-each 
+		  (lambda (arg)
+		    (if badarg
+			(set! badarg #f)
+			(if (not (member arg (list :output :reverb :revfile :reverb-data :reverb-channels)))
+			    (set! new-args (cons arg new-args))
+			    (set! badarg #t))))
+		  lst)
+		 (reverse new-args)))))
+
+	(let ((lists '()))
+	  (do ((i 0 (+ 1 i)))
+	      ((= i *clm-threads*))
+	    (set! lists (cons (split body *clm-threads* i) lists)))
+
+	  (let ((new-args (remove-output-and-reverb-args args)))
+
+	    `(with-sound-helper 
+	      (lambda ()
+		(let ((threads '())
+		      (thread-output (make-thread-variable))
+		      (thread-reverb (and *reverb* (make-thread-variable)))
+		      (mix-lock (make-lock))
+		      (main-output *output*)
+		      (main-reverb *reverb*))
+
+		  (set! *output* thread-output)
+		  (if thread-reverb (set! *reverb* thread-reverb))
+		  
+		  ,@(map
+		     (lambda (expr)
+		       `(set! threads (cons (make-thread 
+					     (lambda ()
+					       (let* ((reverb-tmp (and *reverb* (tmpnam)))
+						      (tmp (with-sound-helper 
+							    (lambda ()
+							      ,@expr
+							      #f)
+							    :thread-output thread-output
+							    :thread-reverb thread-reverb
+							    :output (tmpnam)
+							    :revfile reverb-tmp
+							    :to-snd #f
+							    ,@new-args
+							    )))
+						 (grab-lock mix-lock)
+						 (display (format #f "mix ~S [~D]~%" tmp (mus-safety main-output)))
+						 (if (= (mus-safety main-output) 1)
+						     (begin
+						       (sample->file+ main-output (thread-output))
+						       (mus-close (thread-output)))
+						     (mus-mix main-output tmp))
+						 (if *reverb*
+						     (if (= (mus-safety main-output) 1)
+							 (begin
+							   (sample->file+ main-reverb (thread-reverb))
+							   (mus-close (thread-reverb)))
+							 (mus-mix main-reverb reverb-tmp)))
+						 (release-lock mix-lock)
+						 (delete-file tmp))))
+					    threads)))
+		     lists)
+		  
+		  (for-each 
+		   (lambda (thread) 
+		     (join-thread thread))
+		   threads)
+		  
+		  (if main-reverb (set! *reverb* main-reverb))
+		  (set! *output* main-output)))
+	      
+	      ,@args))))
+      
+      `(with-sound-helper
+	(lambda ()
+	  ,@body)
+	,@args)))
+

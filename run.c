@@ -103,6 +103,8 @@
  * would it simplify variable handling to store everything as xen_value?
  *
  * TODO: s7 vector syntax
+ * TODO: run doesn't always warn about a closure (explicit gen basically) -- if it's used directly,
+ *         there's no warning, but it doesn't handle the closed-over variables correctly
  * TODO: vector<->vct
  *       all numeric types + multiprecision stuff
  *       some or all of:
