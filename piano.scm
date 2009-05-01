@@ -3,6 +3,30 @@
 (provide 'snd-piano.scm)
 (if (not (provided? 'snd-ws.scm)) (load-from-path "ws.scm"))
 (if (not (provided? 'snd-env.scm)) (load-from-path "env.scm"))
+(if (not (provided? 'snd-generators.scm)) (load-from-path "generators.scm"))
+
+
+(defgenerator one-pole-allpass (coeff 0.0) (x1 0.0) (y1 0.0))
+
+(define* (one-pole-allpass gen input)
+  (declare (gen one-pole-allpass) (input float))
+  (let* ((coeff (one-pole-allpass-coeff gen))
+	 (y1 (one-pole-allpass-y1 gen))
+	 (x1 (one-pole-allpass-x1 gen)))
+    (set! (one-pole-allpass-y1 gen) (+ (* coeff (- input y1)) x1))
+    (set! (one-pole-allpass-x1 gen) input)
+    (one-pole-allpass-y1 gen)))
+
+
+(defgenerator expseg (currentValue 0.0) (targetValue 0.0)) ; (like musickit asymp)
+
+(define* (expseg gen r)
+  (declare (gen expseg) (r float))
+  (let ((cv (expseg-currentValue gen))
+	(tv (expseg-targetValue gen)))
+    (set! (expseg-currentValue gen) (+ cv (* (- tv cv) r)))
+    cv)) ; (bil) this is slightly different (getting clicks)
+    
 
 (define number-of-stiffness-allpasses 8)
 (define longitudinal-mode-cutoff-keynum 29)
@@ -125,32 +149,13 @@
   ;; converts t60 values to suitable :rate values for expseg
   (define (In-t60 t60) (- 1.0 (expt 0.001 (/ 1.0 t60 (mus-srate)))))
   
-  ;; expseg (like musickit asymp)
-  (define* (make-expseg :key (currentValue 0.0) (targetValue 0.0))
-    (let ((cv currentValue)
-	  (tv targetValue))
-      (lambda (r)
-	(let ((old-cv cv))
-	  (set! cv (+ cv (* (- tv cv) r)))
-	  old-cv)))) ; (bil) this is slightly different (getting clicks)
-  
   ;; signal controlled one-pole lowpass filter
   (define (make-one-pole-swept)
     (let ((y1 0.0))
       (lambda (input coef)
 	(set! y1 (- (* (+ 1 coef) input) (* coef y1)))
 	y1)))
-  
-  ;; one-pole allpass filter
-  (define (make-one-pole-allpass coeff)
-    (let ((coef coeff)
-	  (x1 0.0)
-	  (y1 0.0))
-      (lambda (input)
-	(set! y1 (+ (* coef (- input y1)) x1))
-	(set! x1 input)
-	y1)))
-  
+
   
   (define (one-pole-one-zero f0 f1 input)
     (one-zero f0 (one-pole f1 input)))
@@ -386,20 +391,20 @@
 	   (do ((i beg (+ 1 i)))
 	       ((= i end))
 	     (if is-release-time
-		 (set! loop-gain (loop-gain-expseg looprate))
+		 (set! loop-gain (expseg loop-gain-expseg looprate))
 		 (if (= sampCount dur)
 		     (begin
 		       (set! is-release-time #t)
 		       (set! dryamprate sb-cutoff-rate)
 		       (set! wetamprate sb-cutoff-rate))))
-	     (set! dryTap (* (dryTap-amp-expseg dryamprate)
+	     (set! dryTap (* (expseg dryTap-amp-expseg dryamprate)
 			     (dryTap-one-pole-swept
 			      (one-pole-one-zero dryTap0 dryTap1 (noi amp)) ;(- (random (* 2 amp)) amp))
-			      (dryTap-coef-expseg drycoefrate))))
-	     (set! openStrings (* (wetTap-amp-expseg wetamprate)
+			      (expseg dryTap-coef-expseg drycoefrate))))
+	     (set! openStrings (* (expseg wetTap-amp-expseg wetamprate)
 				  (wetTap-one-pole-swept
 				   (one-pole-one-zero wetTap0 wetTap1 (noi amp)) ;(- (random (* 2 amp)) amp))
-				   (wetTap-coef-expseg wetcoefrate))))
+				   (expseg wetTap-coef-expseg wetcoefrate))))
 	     (set! totalTap (+ dryTap openStrings))
 
 	     (set! adelIn totalTap)
@@ -408,36 +413,37 @@
 	       (set! adelIn (one-pole (vector-ref hammer-one-pole i) adelIn)))
 
 	     (set! combedExcitationSignal (* hammerGain (+ adelOut (* adelIn StrikePositionInvFac))))
-	     (set! adelOut (agraffe-tuning-ap1 (delay0 agraffe-delay1 adelIn)))
+	     (set! adelOut (one-pole-allpass agraffe-tuning-ap1 (delay0 agraffe-delay1 adelIn)))
 	     (set! string1-junction-input (+ couplingFilter-output string1-junction-input))
 	     (do ((i 0 (+ 1 i))) 
 		 ((= i 8))
-	       (set! string1-junction-input ((vector-ref string1-stiffness-ap i) string1-junction-input)))
+	       (set! string1-junction-input (one-pole-allpass (vector-ref string1-stiffness-ap i) string1-junction-input)))
 
 	     (set! string1-junction-input (+ (* unaCordaGain combedExcitationSignal)
 					     (* loop-gain
 						(delay0 string1-delay
-							(string1-tuning-ap string1-junction-input)))))
+							(one-pole-allpass string1-tuning-ap string1-junction-input)))))
 	     (set! string2-junction-input (+ couplingFilter-output string2-junction-input))
 	     (do ((i 0 (+ 1 i))) 
 		 ((= i 8))
-	       (set! string2-junction-input ((vector-ref string2-stiffness-ap i) string2-junction-input)))
+	       (set! string2-junction-input (one-pole-allpass (vector-ref string2-stiffness-ap i) string2-junction-input)))
 	     (set! string2-junction-input (+ combedExcitationSignal
 					     (* loop-gain (delay0 string2-delay
-								  (string2-tuning-ap string2-junction-input)))))
+								  (one-pole-allpass string2-tuning-ap string2-junction-input)))))
 	     (set! string3-junction-input (+ couplingFilter-output string3-junction-input))
 	     (do ((i 0 (+ 1 i))) 
 		 ((= i 8))
-	       (set! string3-junction-input ((vector-ref string3-stiffness-ap i) string3-junction-input)))
+	       (set! string3-junction-input (one-pole-allpass (vector-ref string3-stiffness-ap i) string3-junction-input)))
 
 	     (set! string3-junction-input (+ combedExcitationSignal
 					     (* loop-gain
 						(delay0 string3-delay
-							(string3-tuning-ap string3-junction-input)))))
+							(one-pole-allpass string3-tuning-ap string3-junction-input)))))
 	     (set! couplingFilter-input (+ string1-junction-input string2-junction-input string3-junction-input))
 	     (set! couplingFilter-output (one-pole-one-zero cou0 cou1 couplingFilter-input))
 	     (set! sampCount (+ 1 sampCount))
-	     (outa i couplingFilter-input)))))))
+	     (outa i couplingFilter-input)))))
+))
 
 
 
