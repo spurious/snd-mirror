@@ -5862,7 +5862,7 @@ static s7_pointer g_is_inexact(s7_scheme *sc, s7_pointer args)
 }
 
 
-/* these are for uninterpreted C pointers */
+/* these are for uninterpreted C pointers, but we do need at least equality checks */
 
 bool s7_is_ulong(s7_pointer arg) 
 {

@@ -310,7 +310,7 @@ static XEN g_mus_sound_write_date(XEN filename)
   #define H_mus_sound_write_date "(" S_mus_sound_write_date " filename): write date of sound file"
   XEN_ASSERT_TYPE(XEN_STRING_P(filename), filename, XEN_ONLY_ARG, S_mus_sound_write_date, "a string"); 
   str = mus_expand_filename(XEN_TO_C_STRING(filename));
-  result = C_TO_XEN_ULONG((unsigned long)mus_sound_write_date(str));
+  result = C_TO_XEN_ULONG((unsigned long)mus_sound_write_date(str)); /* actually time_t */
   if (str) free(str);
   return(result);
 }

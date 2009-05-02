@@ -1446,7 +1446,7 @@ expressed:
 Schottstaedt, "The Simulation of Natural Instrument Tones Using Frequency Modulation with a 
 Complex Modulating Wave".  (There's a function to do it for you in dsp.scm: fm-parallel-component). 
 In simple cases, the extra modulating components flatten and spread out the 
-spectrum somewhat (see <a href="sndclm.html#ncosdoc">ncos</a> for a discussion of a very different non-simple case).
+spectrum somewhat (see below and <a href="sndclm.html#ncosdoc">ncos</a> for discussions of very different not-so-simple cases).
 In general:
 </p>
 
@@ -1651,7 +1651,65 @@ A pared down version of the fm-violin is:
 <!-- -->
 </td></tr></table>
 
+<p>There is one surprising aspect of the parallel FM equation.  Since we can fiddle with the initial phases of the modulating signal's components,
+we can get very different spectra from modulating signals with the same magnitude spectrum.  In the next two graphs, both cases involve a
+modulating signal made up of 6 equal amplitude harmonically related sinusoids, but the first uses all cosines, and the second uses a
+set of initial phases that minimizes the modulating signal's peak amplitude:
+</p>
 
+<table hspace=40 border=1>
+<tr><td>
+<img src="pix/fmpar6.png" alt="comparison of 2 6-sinusoid spectra">
+</td></tr></table>
+
+
+<!--
+(with-sound (:clipped #f :statistics #t :channels 4 :srate 441000)
+  (let* ((freq 100.0)
+	 (n 6)
+	 (mods1 (make-vector n #f))
+	 (mods2 (make-vector n #f))
+	 (car1 (make-oscil freq))
+	 (car2 (make-oscil freq))
+	 (phases (if (= n 4)
+		     '#(0.0 9.429973765023149656627765580196864902973E-1 1.340090256365081833322960846999194473028E0 1.112605206055434337031329050660133361816E0)
+		     (if (= n 6) 
+			 '#(0.0 0.88722838124921 0.26020415169852 1.2966409163042 1.3233535939997 1.15281977798) ;'#(0 0 0 0 1 0)
+			 (if (= n 8)
+			     '#(0.0 1.6766927120402 0.81654336999861 0.62403216688615 0.85406407763019 1.0608486873128 0.16723371585947 0.90568594225519)
+			     (if (= n 12)
+				 '#(0 1 1 0 0 1 0 1 0 0 0 0)
+				 (if (= n 24)
+				     '#(0 1 1 0 0 1 1 0 0 0 1 1 1 0 1 0 1 1 0 1 0 0 0 0)
+				     '#(0 0 0 0 0 0 0 1 1 0 1 0 1 0 0 1 0 1 0 0 0 0 0 1 0 0 1 1 1 0 1 0 1 0 1 1 1 0 1 1 0 0 1 0 1 0 0 0 0 1 1 0 1 1 0 1 1 0 0 1 1 1 1 1)
+				     )))))))
+
+    (do ((i 0 (+ i 1)))
+	((= i n))
+      (set! (mods1 i) (make-oscil (* (+ i 1) freq) (/ pi 2)))
+      (set! (mods2 i) (make-oscil (* (+ i 1) freq) (* pi (phases i)))))
+
+    (run 
+     (lambda ()
+       (do ((i 0 (+ i 1 ))) 
+	   ((= i 441000))
+	 (let ((mod1 0.0)
+	       (mod2 0.0))
+	   (do ((k 0 (+ k 1)))
+	       ((= k n))
+	     (set! mod1 (+ mod1 (oscil (vector-ref mods1 k))))
+	     (set! mod2 (+ mod2 (oscil (vector-ref mods2 k)))))
+	   (outa i (/ mod1 n))
+	   (outb i (oscil car1 (/ mod1 (* n n))))
+	   (outc i (/ mod2 n))
+	   (outd i (oscil car2 (/ mod2 (* n n))))
+	   ))))))
+
+(set! (selected-graph-color) (make-color 1 1 1))
+(set! (selected-data-color) (make-color 0 0 0))
+-->
+
+<br><br>
 
 <table align=right border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><center><h5>cascade FM: sin(sin(sin))</h5></center></td></tr></table>
 
