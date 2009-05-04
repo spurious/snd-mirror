@@ -19,6 +19,8 @@
 (provide 'snd-singer.scm)
 (if (not (provided? 'snd-ws.scm)) (load-from-path "ws.scm"))
 
+(use-modules (ice-9 optargs) (ice-9 format))
+
 (definstrument (singer beg amp data)
   ;; data is a list of lists very similar to the sequence of synthesize calls in Perry's original implementation.
   ;;    Each imbedded list has the form: dur shape glot pitch glotamp noiseamps vibramt.

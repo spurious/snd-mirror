@@ -806,12 +806,14 @@ static xen_value *copy_xen_value(xen_value *v)
 
 
 static char *describe_xen_value(xen_value *v, ptree *pt);
+static char *describe_xen_value_1(int type, int addr, ptree *pt);
+static char *describe_xen_value_with_var_name(int type, int addr, ptree *pt);
 
 static char *describe_xen_var(xen_var *var, ptree *pt)
 {
   char *buf, *temp;
   if (var == NULL) return(mus_strdup("#<xen_var: null>"));
-  temp = describe_xen_value(var->v, pt);
+  temp = describe_xen_value_1(var->v->type, var->v->addr, pt);
   if (temp)
     {
       buf = (char *)calloc(strlen(var->name) + strlen(temp) + 32, sizeof(char));
@@ -900,8 +902,6 @@ XEN mus_run_ptree_code(struct ptree *pt)
 #define B2S(Arg) ((Arg) ? "#t" : "#f")
 #define GO_PT   "cont%d(continuation)"
 
-static char *describe_xen_value_1(int type, int addr, ptree *pt);
-
 
 static char *describe_triple(triple *trp, ptree *pt)
 {
@@ -915,7 +915,7 @@ static char *describe_triple(triple *trp, ptree *pt)
 	  descrs = (char **)calloc(trp->num_args, sizeof(char *));
 	  for (i = 0; i < trp->num_args; i++)
 	    {
-	      descrs[i] = describe_xen_value_1(trp->types[i], trp->args[i], pt);
+	      descrs[i] = describe_xen_value_with_var_name(trp->types[i], trp->args[i], pt);
 	      size += (mus_strlen(descrs[i]) + 2);
 	    }
 	  str = (char *)calloc(size + mus_strlen(trp->op_name) + 8, sizeof(char));
@@ -1069,13 +1069,13 @@ static char *describe_ptree(ptree *pt, const char *space)
   for (i = 0; i < pt->global_var_ctr; i++)
     {
       temp = describe_xen_var(pt->global_vars[i], pt);
-      buf = str_append(buf, &size, mus_format("%s[global_var %d]: %s\n", space, i, temp));
+      buf = str_append(buf, &size, mus_format("%s%s\n", space, temp));
       free(temp);
     }
 
   if (pt->result)
     {
-      temp = describe_xen_value(pt->result, pt);
+      temp = describe_xen_value_with_var_name(pt->result->type, pt->result->addr, pt);
       if (temp)
 	{
 	  buf = str_append(buf, &size, mus_format("%sresult: %s\n", space, temp));
@@ -1226,6 +1226,30 @@ static char *describe_xen_value_1(int type, int addr, ptree *pt)
 
     }
   return(NULL);
+}
+
+
+static char *describe_xen_value_with_var_name(int type, int addr, ptree *pt)
+{
+  int i;
+  for (i = 0; i < pt->global_var_ctr; i++)
+    {
+      xen_var *xv;
+      xv = pt->global_vars[i];
+      if ((xv) &&
+	  (xv->v) &&
+	  (xv->v->addr == addr) &&
+	  (xv->v->type == type))
+	{
+	  char *temp, *res;
+	  temp = describe_xen_value_1(type, addr, pt);
+	  res = mus_format("[%s] %s", xv->name, temp);
+	  free(temp);
+	  return(res);
+	}
+    }
+
+  return(describe_xen_value_1(type, addr, pt));
 }
 
 
@@ -3450,6 +3474,7 @@ static char *sequential_binds(ptree *prog, XEN old_lets, const char *name)
 #endif
 	      return(str);
 	    }
+	  /* TODO: if v is a temp, do we need to copy it and so on? */
 	  vs = transfer_value(prog, v);
 	  add_var_to_ptree(prog, XEN_SYMBOL_TO_C_STRING(XEN_CAR(var)), vs);
 	  set_var(prog, vs, v);
@@ -8663,7 +8688,7 @@ static void vct_check_index_2(int *args, ptree *pt)
 static void vct_check_index(int *args, ptree *pt) 
 {
   if (VCT_ARG_1->length <= INT_ARG_2) 
-    mus_error(MUS_NO_DATA, "vct index (" INT_PT ") too high (len = " OFF_TD ")", args[2], INT_ARG_2, VCT_ARG_1->length);
+    mus_error(MUS_NO_DATA, "vct index (" INT_STR ") too high (len = " OFF_TD ")", INT_ARG_2, VCT_ARG_1->length);
 }
 
 
@@ -9116,9 +9141,9 @@ static void sound_data_check_2(int *args, ptree *pt)
 static void sound_data_check_index(int *args, ptree *pt) 
 {
   if (SOUND_DATA_ARG_1->chans <= INT_ARG_2) 
-    mus_error(MUS_NO_DATA, "sound-data chan (" INT_PT ") too high (chans = %d)", args[2], INT_ARG_2, SOUND_DATA_ARG_1->chans);
+    mus_error(MUS_NO_DATA, "sound-data chan (" INT_STR ") too high (chans = %d)", INT_ARG_2, SOUND_DATA_ARG_1->chans);
   if (SOUND_DATA_ARG_1->length <= INT_ARG_3) 
-    mus_error(MUS_NO_DATA, "sound-data index (" INT_PT ") too high (length = " OFF_TD ")", args[3], INT_ARG_3, SOUND_DATA_ARG_1->length);
+    mus_error(MUS_NO_DATA, "sound-data index (" INT_STR ") too high (length = " OFF_TD ")", INT_ARG_3, SOUND_DATA_ARG_1->length);
 }
 
 
@@ -12918,7 +12943,7 @@ static xen_value *arg_warn(ptree *prog, const char *funcname, int arg_num, xen_v
 {
   char *xb;
   const char *tb;
-  xb = describe_xen_value(args[arg_num], prog);
+  xb = describe_xen_value_with_var_name(args[arg_num]->type, args[arg_num]->addr, prog);
   tb = type_name(args[arg_num]->type);
   if (xb)
     {

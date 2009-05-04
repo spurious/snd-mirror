@@ -6581,23 +6581,30 @@ static char *describe_mixer(mus_any *ptr)
   if (bufsize > 65536) bufsize = 65536;
 
   describe_buffer = (char *)clm_malloc(bufsize, "describe buffer");
-  mus_snprintf(describe_buffer, bufsize, "%s chans: %d, [\n ", mus_name(ptr), gen->chans);
-  str = (char *)clm_calloc(64, sizeof(char), "describe_mixer");
 
-  for (i = 0; i < lim; i++)
-    for (j = 0; j < lim; j++)
-      {
-	mus_snprintf(str, 64, "%.3f%s%s%s",
-		     gen->vals[i][j],
-		     ((j == (lim - 1)) && (lim < gen->chans)) ? "..." : "",
-		     (j == (lim - 1)) ? "\n" : "",
-		     ((i == (lim - 1)) && (j == (lim - 1))) ? "]" : " ");
-	if ((int)(strlen(describe_buffer) + strlen(str)) < (bufsize - 1))
-	  strcat(describe_buffer, str);
-	else break;
-      }
+  if (gen->chans == 1)
+    mus_snprintf(describe_buffer, bufsize, "%s chans: 1, [%.3f]", mus_name(ptr), gen->vals[0][0]);
+  else
+    {
+      mus_snprintf(describe_buffer, bufsize, "%s chans: %d, [\n ", mus_name(ptr), gen->chans);
+      str = (char *)clm_calloc(64, sizeof(char), "describe_mixer");
 
-  clm_free(str);
+      for (i = 0; i < lim; i++)
+	for (j = 0; j < lim; j++)
+	  {
+	    mus_snprintf(str, 64, "%.3f%s%s%s",
+			 gen->vals[i][j],
+			 ((j == (lim - 1)) && (lim < gen->chans)) ? "..." : "",
+			 (j == (lim - 1)) ? "\n" : "",
+			 ((i == (lim - 1)) && (j == (lim - 1))) ? "]" : " ");
+	    if ((int)(strlen(describe_buffer) + strlen(str)) < (bufsize - 1))
+	      strcat(describe_buffer, str);
+	    else break;
+	  }
+
+      clm_free(str);
+    }
+
   return(describe_buffer);
 }
 

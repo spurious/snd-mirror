@@ -4,6 +4,8 @@
 (provide 'snd-maraca.scm)
 (if (not (provided? 'snd-ws.scm)) (load-from-path "ws.scm"))
 
+(use-modules (ice-9 optargs) (ice-9 format))
+
 (define two-pi (* 2 pi))
 
 (definstrument (maraca beg dur :optional (amp .1) 

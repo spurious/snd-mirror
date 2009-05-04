@@ -2,6 +2,8 @@
 
 (provide 'sndlib-ws.scm)
 
+(use-modules (ice-9 optargs) (ice-9 format))
+
 (define *clm-srate* 44100)
 (define *clm-file-name* "test.snd")
 (define *clm-channels* 1)

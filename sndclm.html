@@ -241,7 +241,7 @@ hear it; click "f" to see its spectrum.
 </pre>
 
 <p>Snd is telling you that "open-file" (presumably part of the load sequence) can't find v.scm.
-I guess it's on some other directory, so try:
+I guess it's on some other directory, so (in Guile) try:
 </p>
 
 <pre>
@@ -282,7 +282,14 @@ In Ruby, we'd do it this way:
     <em class=listener>\ filename: test.snd</em>
 </pre>
 
-<p>In most of this document, I'll stick with Scheme as implemented by Guile.  
+<p>In s7, the load path variable is named *load-path*:
+</p>
+<pre>
+    <em class=listener>&gt;</em><em class=typing>*load-path*</em>
+    <em class=listener>("." "/home/bil/cl" "/home/bil/cl" "/usr/local/share/snd")</em>
+</pre>
+
+<p>In most of this document, I'll stick with Scheme as implemented by s7 or Guile.  
 <a href="extsnd.html">extsnd.html</a> and <a href="sndscm.html">sndscm.html</a> have numerous
 Ruby and Forth examples, and I'll toss some in here as I go along.
 You can save yourself a lot of typing by using two features of the listener.  First, &lt;TAB&gt; (that is, the key marked TAB) tries to complete 

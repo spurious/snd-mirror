@@ -6,6 +6,8 @@
 ;;;
 ;;; translated from fade.ins
 
+(use-modules (ice-9 optargs) (ice-9 format))
+
 (definstrument (cross-fade beg dur amp file1 file2 ramp-beg ramp-dur ramp-type bank-dur fs fwidth)
   ;; ramp-type 0=sweep up, 1=sweep down, 2=split from middle
   (let* ((fil1 (make-sample-reader 0 file1))
