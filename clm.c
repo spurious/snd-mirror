@@ -5756,20 +5756,16 @@ Float mus_env(mus_any *ptr)
       gen->rate = gen->rates[gen->index];
     }
 
-  switch (gen->style)
+  if (gen->style == ENV_SEG)
+    gen->current_value += gen->rate; 
+  else
     {
-    case ENV_SEG: 
-      gen->current_value += gen->rate; 
-      break;
-
-    case ENV_STEP: 
-      gen->current_value = gen->rate; 
-      break;
-
-    case ENV_EXP:
-      gen->power *= gen->rate;
-      gen->current_value = gen->offset + (gen->scaler * gen->power);
-      break;
+      if (gen->style == ENV_EXP)
+	{
+	  gen->power *= gen->rate;
+	  gen->current_value = gen->offset + (gen->scaler * gen->power);
+	}
+      else gen->current_value = gen->rate; 
     }
 
   gen->loc++;

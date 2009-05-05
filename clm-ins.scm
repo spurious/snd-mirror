@@ -2925,7 +2925,8 @@ mjkoskin@sci.fi
 		 ;; should be (mod (- i beg) update-rate) but i is ok
 		 ;; since we set the initial values when we constructed
 		 ;; the unit generators
-		 (if (and update-env (= 0 (modulo (- i beg) update-rate)))
+		 (if (and update-env 
+			  (= 0 (modulo (- i beg) update-rate)))
 		     (let* ((expa (env expenv)) ;current expansion amount
 			    (segl (env lenenv)) ;current segment length
 			    (rmpl (env rampenv)) ;current ramp length (0 to .5)
