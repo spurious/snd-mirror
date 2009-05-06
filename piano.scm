@@ -10,7 +10,7 @@
 
 (defgenerator one-pole-allpass (coeff 0.0) (x1 0.0) (y1 0.0))
 
-(define* (one-pole-allpass gen input)
+(define (one-pole-allpass gen input)
   (declare (gen one-pole-allpass) (input float))
   (let* ((coeff (one-pole-allpass-coeff gen))
 	 (y1 (one-pole-allpass-y1 gen))
@@ -22,13 +22,33 @@
 
 (defgenerator expseg (currentValue 0.0) (targetValue 0.0)) ; (like musickit asymp)
 
-(define* (expseg gen r)
+(define (expseg gen r)
   (declare (gen expseg) (r float))
   (let ((cv (expseg-currentValue gen))
 	(tv (expseg-targetValue gen)))
     (set! (expseg-currentValue gen) (+ cv (* (- tv cv) r)))
     cv)) ; (bil) this is slightly different (getting clicks)
     
+
+(defgenerator one-pole-swept (y1 0.0))
+
+(define (one-pole-swept gen input coef)
+  (declare (gen one-pole-swept) (input float) (coeff float))
+  ;; signal controlled one-pole lowpass filter
+  (set! (one-pole-swept-y1 gen) (- (* (+ 1 coef) input) (* coef (one-pole-swept-y1 gen))))
+  (one-pole-swept-y1 gen))
+
+  
+(defgenerator pnoise (seed 16383))
+
+(define (pnoise gen amp)
+  (declare (gen pnoise) (amp float))
+  ;; very special noise generator
+  (set! (pnoise-seed gen) (logand (+ (* (pnoise-seed gen) 1103515245) 12345) #xffffffff))
+  ;; (bil) added the logand -- otherwise we get an overflow somewhere
+  (* amp (- (* (modulo (inexact->exact (floor (/ (pnoise-seed gen) 65536))) 65536) 0.0000305185) 1.0)))
+  
+
 
 (define number-of-stiffness-allpasses 8)
 (define longitudinal-mode-cutoff-keynum 29)
@@ -151,39 +171,12 @@
   ;; converts t60 values to suitable :rate values for expseg
   (define (In-t60 t60) (- 1.0 (expt 0.001 (/ 1.0 t60 (mus-srate)))))
   
-  ;; signal controlled one-pole lowpass filter
-  (define (make-one-pole-swept)
-    (let ((y1 0.0))
-      (lambda (input coef)
-	(set! y1 (- (* (+ 1 coef) input) (* coef y1)))
-	y1)))
-
-  
   (define (one-pole-one-zero f0 f1 input)
     (one-zero f0 (one-pole f1 input)))
   
   (define (make-one-pole-one-zero a0 a1 b1)
     (list (make-one-zero a0 a1)
 	  (make-one-pole 1.0 b1)))
-  
-  
-  ;; very special noise generator
-  (define (make-noise)
-    (let ((noise-seed 16383))
-      (lambda (amp)
-	(set! noise-seed (logand (+ (* noise-seed 1103515245) 12345) #xffffffff))
-	;; (bil) added the logand -- otherwise we get an overflow somewhere
-	(* amp (- (* (modulo (inexact->exact (floor (/ noise-seed 65536))) 65536) 0.0000305185) 1.0)))))
-  
-  
-  ;; delay line unit generator with length 0 capabilities...
-  (define (make-delay0 len)
-    (if (> len 0)
-	(make-delay len)
-	#f))
-  
-  (define (delay0 f input)
-    (if f (delay f input) input))
   
   (define (apPhase a1 wT)
     (atan (* (- (* a1 a1) 1.0) (sin wT))
@@ -305,7 +298,7 @@
       (let* ((vals (apfloor agraffe-len wT))
 	     (dlen1 (car vals))
 	     (apcoef1 (cadr vals))
-	     (agraffe-delay1 (make-delay0 dlen1))
+	     (agraffe-delay1 (make-delay dlen1))
 	     (agraffe-tuning-ap1 (make-one-pole-allpass apcoef1))
 	     
 	     ;;compute coefficients for and initialize the coupling filter
@@ -352,13 +345,13 @@
 	     (delayLength3 (car vals3))
 	     (tuningCoefficient3 (cadr vals3))
 
-	     (string1-delay (make-delay0 (- delayLength1 1)))
+	     (string1-delay (make-delay (- delayLength1 1)))
 	     (string1-tuning-ap (make-one-pole-allpass tuningCoefficient1))
 	     (string1-stiffness-ap (make-vector 8))
-	     (string2-delay (make-delay0 (- delayLength2 1)))
+	     (string2-delay (make-delay (- delayLength2 1)))
 	     (string2-tuning-ap (make-one-pole-allpass tuningCoefficient2))
 	     (string2-stiffness-ap (make-vector 8))
-	     (string3-delay (make-delay0 (- delayLength3 1)))
+	     (string3-delay (make-delay (- delayLength3 1)))
 	     (string3-tuning-ap (make-one-pole-allpass tuningCoefficient3))
 	     (string3-stiffness-ap (make-vector 8))
 
@@ -379,7 +372,7 @@
 	     (couplingFilter-input 0.0)
 	     (couplingFilter-output 0.0)
 	     (sampCount 0)
-	     (noi (make-noise)))
+	     (noi (make-pnoise)))
 
 	(do ((i 0 (+ 1 i))) ((= i 8))
 	  (vector-set! string1-stiffness-ap i (make-one-pole-allpass stiffnessCoefficientL)))
@@ -400,12 +393,12 @@
 		       (set! dryamprate sb-cutoff-rate)
 		       (set! wetamprate sb-cutoff-rate))))
 	     (set! dryTap (* (expseg dryTap-amp-expseg dryamprate)
-			     (dryTap-one-pole-swept
-			      (one-pole-one-zero dryTap0 dryTap1 (noi amp)) ;(- (random (* 2 amp)) amp))
+			     (one-pole-swept dryTap-one-pole-swept
+			      (one-pole-one-zero dryTap0 dryTap1 (pnoise noi amp)) ;(- (random (* 2 amp)) amp))
 			      (expseg dryTap-coef-expseg drycoefrate))))
 	     (set! openStrings (* (expseg wetTap-amp-expseg wetamprate)
-				  (wetTap-one-pole-swept
-				   (one-pole-one-zero wetTap0 wetTap1 (noi amp)) ;(- (random (* 2 amp)) amp))
+				  (one-pole-swept wetTap-one-pole-swept
+				   (one-pole-one-zero wetTap0 wetTap1 (pnoise noi amp)) ;(- (random (* 2 amp)) amp))
 				   (expseg wetTap-coef-expseg wetcoefrate))))
 	     (set! totalTap (+ dryTap openStrings))
 
@@ -415,7 +408,7 @@
 	       (set! adelIn (one-pole (vector-ref hammer-one-pole i) adelIn)))
 
 	     (set! combedExcitationSignal (* hammerGain (+ adelOut (* adelIn StrikePositionInvFac))))
-	     (set! adelOut (one-pole-allpass agraffe-tuning-ap1 (delay0 agraffe-delay1 adelIn)))
+	     (set! adelOut (one-pole-allpass agraffe-tuning-ap1 (delay agraffe-delay1 adelIn)))
 	     (set! string1-junction-input (+ couplingFilter-output string1-junction-input))
 	     (do ((i 0 (+ 1 i))) 
 		 ((= i 8))
@@ -423,14 +416,14 @@
 
 	     (set! string1-junction-input (+ (* unaCordaGain combedExcitationSignal)
 					     (* loop-gain
-						(delay0 string1-delay
+						(delay string1-delay
 							(one-pole-allpass string1-tuning-ap string1-junction-input)))))
 	     (set! string2-junction-input (+ couplingFilter-output string2-junction-input))
 	     (do ((i 0 (+ 1 i))) 
 		 ((= i 8))
 	       (set! string2-junction-input (one-pole-allpass (vector-ref string2-stiffness-ap i) string2-junction-input)))
 	     (set! string2-junction-input (+ combedExcitationSignal
-					     (* loop-gain (delay0 string2-delay
+					     (* loop-gain (delay string2-delay
 								  (one-pole-allpass string2-tuning-ap string2-junction-input)))))
 	     (set! string3-junction-input (+ couplingFilter-output string3-junction-input))
 	     (do ((i 0 (+ 1 i))) 
@@ -439,7 +432,7 @@
 
 	     (set! string3-junction-input (+ combedExcitationSignal
 					     (* loop-gain
-						(delay0 string3-delay
+						(delay string3-delay
 							(one-pole-allpass string3-tuning-ap string3-junction-input)))))
 	     (set! couplingFilter-input (+ string1-junction-input string2-junction-input string3-junction-input))
 	     (set! couplingFilter-output (one-pole-one-zero cou0 cou1 couplingFilter-input))

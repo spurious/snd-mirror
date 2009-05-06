@@ -2913,15 +2913,8 @@ static void eval_embedded_ptree(ptree *prog, ptree *pt)
 #else
   int old_pc;
 #endif
-  bool old_all_done;
   old_pc = pt->pc;
-  old_all_done = pt->all_done;
-#if WITH_POINTER_PC
-  pt->pc = NULL;
-#else
-  pt->pc = 0;
-#endif
-  pt->all_done = false;
+
   prog->ints = pt->ints;
   prog->dbls = pt->dbls;
   prog->xen_vars = pt->xen_vars;
@@ -2938,25 +2931,11 @@ static void eval_embedded_ptree(ptree *prog, ptree *pt)
   prog->readers = pt->readers;
   prog->mix_readers = pt->mix_readers;
 #endif
+
   eval_ptree(prog);
-  prog->ints = NULL;
-  prog->dbls = NULL;
-  prog->xen_vars = NULL;
-  prog->strs = NULL;
-  prog->vcts = NULL;
-  prog->sds = NULL;
-  prog->clms = NULL;
-  prog->clm_locs = NULL;
-  prog->vects = NULL;
-  prog->lists = NULL;
-  prog->fncs = NULL;
-  prog->xens = NULL;
-#if USE_SND
-  prog->readers = NULL;
-  prog->mix_readers = NULL;
-#endif
+
   pt->pc = old_pc;
-  pt->all_done = old_all_done;
+  pt->all_done = false;
 }
 
 
@@ -4620,6 +4599,8 @@ static xen_value *do_form(ptree *prog, XEN form, walk_result_t need_result)
 
   jump_to_body = make_xen_value(R_INT, add_int_to_ptree(prog, 0), R_VARIABLE);
   prog->ints[jump_to_body->addr] = body_loc;
+
+  /* the other cases, such as geq_i2, don't happen very often in current instruments */
 
   if (prog->program[prog->triple_ctr - 1]->function == equal_i2)
     {
@@ -7556,6 +7537,29 @@ static xen_value *number2string_1(ptree *prog, xen_value **args, int num_args)
 
 /* ---------------- user-defined function call ---------------- */
 
+static void funcall_f1(int *args, ptree *pt)
+{
+  /* 1 float arg, float result? */
+  ptree *func;
+  func = ((ptree **)(pt->fncs))[args[1]];
+  pt->dbls[func->args[0]] = pt->dbls[args[2]]; 
+  eval_embedded_ptree(func, pt);  
+  FLOAT_RESULT = pt->dbls[func->result->addr]; 
+}
+
+
+static void funcall_cf2(int *args, ptree *pt)
+{
+  /* clm struct and float arg, float result -- very common case! */
+  ptree *func;
+  func = ((ptree **)(pt->fncs))[args[1]];
+  pt->lists[func->args[0]] = pt->lists[args[2]]; 
+  pt->dbls[func->args[1]] = pt->dbls[args[3]]; 
+  eval_embedded_ptree(func, pt);  
+  FLOAT_RESULT = pt->dbls[func->result->addr]; 
+}
+
+
 static void funcall_nf(int *args, ptree *pt) 
 {
   int i;
@@ -7772,12 +7776,22 @@ static xen_value *funcall_n(ptree *prog, xen_value **args, int num_args, xen_val
 	}
     }
 
-
-
   new_args[1] = sf;
   new_args[0] = add_temporary_var_to_ptree(prog, fres->type);
   args[0] = new_args[0];
-  add_triple_to_ptree(prog, make_triple(funcall_nf, "funcall_nf", new_args, total_args + 2));
+
+  if ((num_args == 1) &&
+      (func->arg_types[0] == R_FLOAT) &&
+      (fres->type == R_FLOAT))
+    add_triple_to_ptree(prog, make_triple(funcall_f1, "funcall_f1", new_args, total_args + 2));
+
+  if ((num_args == 2) &&
+      (CLM_STRUCT_P(func->arg_types[0])) &&
+      (func->arg_types[1] == R_FLOAT) &&
+      (fres->type == R_FLOAT))
+    add_triple_to_ptree(prog, make_triple(funcall_cf2, "funcall_cf2", new_args, total_args + 2));
+  
+  else add_triple_to_ptree(prog, make_triple(funcall_nf, "funcall_nf", new_args, total_args + 2));
 
   free(new_args);
   return(args[0]);
@@ -8436,6 +8450,19 @@ static xen_value *mus_audio_write_1(ptree *prog, xen_value **args, int num_args)
 
 /* ---------------- list ---------------- */
 
+static void float_list_ref(int *args, ptree *pt) {FLOAT_RESULT = pt->dbls[LIST_ARG_1->vals[INT_ARG_2]->addr];}
+
+
+static void float_list_ref_0(int *args, ptree *pt) {FLOAT_RESULT = pt->dbls[LIST_ARG_1->vals[0]->addr];}
+static void float_list_ref_1(int *args, ptree *pt) {FLOAT_RESULT = pt->dbls[LIST_ARG_1->vals[1]->addr];}
+static void float_list_ref_2(int *args, ptree *pt) {FLOAT_RESULT = pt->dbls[LIST_ARG_1->vals[2]->addr];}
+static void float_list_ref_3(int *args, ptree *pt) {FLOAT_RESULT = pt->dbls[LIST_ARG_1->vals[3]->addr];}
+static void float_list_ref_4(int *args, ptree *pt) {FLOAT_RESULT = pt->dbls[LIST_ARG_1->vals[4]->addr];}
+
+
+static void int_list_ref(int *args, ptree *pt) {INT_RESULT = pt->ints[LIST_ARG_1->vals[INT_ARG_2]->addr];}
+
+
 static void list_ref(int *args, ptree *pt) 
 {
   xen_value *v;
@@ -8517,34 +8544,58 @@ static void list_check_1(int *args, ptree *pt)
 }
 
 
+static char *def_clm_struct_field_name(int def_clm_struct_type, int field);
+
+static xen_value *package_clm_struct(ptree *prog, int struct_type, xen_value **args, int num_args)
+{
+  int type;
+  char *name;
+  type = def_clm_struct_field_type(struct_type, prog->ints[args[2]->addr]);
+  name = def_clm_struct_field_name(struct_type, prog->ints[args[2]->addr]);
+  if (type == R_FLOAT)
+    {
+      switch (prog->ints[args[2]->addr])
+	{
+	case 0: return(package(prog, type, float_list_ref_0, name, args, num_args)); 
+	case 1: return(package(prog, type, float_list_ref_1, name, args, num_args)); 
+	case 2: return(package(prog, type, float_list_ref_2, name, args, num_args)); 
+	case 3: return(package(prog, type, float_list_ref_3, name, args, num_args)); 
+	case 4: return(package(prog, type, float_list_ref_4, name, args, num_args)); 
+	default:  return(package(prog, type, float_list_ref, name, args, num_args)); 
+	}
+    }
+  if (type == R_INT)
+    return(package(prog, type, int_list_ref, name, args, num_args)); 
+  return(package(prog, type, list_ref, name, args, num_args)); 
+}
+
+
 static xen_value *list_ref_1(ptree *prog, xen_value **args, int num_args)
 {
   list *xl;
   /* these are list constants, we know in advance what all element types are */
 
-  /*
-  fprintf(stderr,"args[1]: %d %d\n", args[1]->type, args[1]->addr);
-  fprintf(stderr,"args[1]: %s\n", describe_xen_value(args[1], prog));
-  fprintf(stderr,"args[2]: %d %d\n", args[2]->type, args[2]->addr);
-  fprintf(stderr,"args[2]: %s\n", describe_xen_value(args[2], prog));
-  */
-
   if (run_safety == RUN_SAFE) 
     temp_package(prog, R_BOOL, list_check_1, "list_check_1", args, 1);
 
   if (CLM_STRUCT_P(args[1]->type))
-    return(package(prog, def_clm_struct_field_type(args[1]->type, prog->ints[args[2]->addr]), list_ref, "clm-struct-ref", args, 2)); 
+    return(package_clm_struct(prog, args[1]->type, args, num_args));
 
   xl = prog->lists[args[1]->addr];
   if (xl)
     {
       if (CLM_STRUCT_P(xl->type))
-	return(package(prog, def_clm_struct_field_type(xl->type, prog->ints[args[2]->addr]), list_ref, "clm-struct-ref", args, 2)); 
+	return(package_clm_struct(prog, xl->type, args, num_args));
+
+      if (xl->type == R_FLOAT)
+	return(package(prog, xl->type, float_list_ref, "float_list_ref", args, 2));
+      if (xl->type == R_INT)
+	return(package(prog, xl->type, int_list_ref, "int_list_ref", args, 2));
+
       return(package(prog, xl->type, list_ref, "list_ref", args, 2));
     }
 
-  /* fprintf(stderr,"no known list -- assume float"); */
-  return(package(prog, R_FLOAT, list_ref, "list_ref", args, 2));  
+  return(package(prog, R_FLOAT, float_list_ref, "float_list_ref", args, 2));  
 }
 
 
@@ -8567,6 +8618,19 @@ static xen_value *cadr_1(ptree *prog, xen_value **args, int num_args) {return(cx
 static xen_value *caddr_1(ptree *prog, xen_value **args, int num_args) {return(cxr_1(prog, args, num_args, 2));}
 
 static xen_value *cadddr_1(ptree *prog, xen_value **args, int num_args) {return(cxr_1(prog, args, num_args, 3));}
+
+
+static void float_list_set(int *args, ptree *pt) {pt->dbls[LIST_ARG_1->vals[INT_ARG_2]->addr] = FLOAT_ARG_3;}
+
+
+static void float_list_set_0(int *args, ptree *pt) {pt->dbls[LIST_ARG_1->vals[0]->addr] = FLOAT_ARG_3;}
+static void float_list_set_1(int *args, ptree *pt) {pt->dbls[LIST_ARG_1->vals[1]->addr] = FLOAT_ARG_3;}
+static void float_list_set_2(int *args, ptree *pt) {pt->dbls[LIST_ARG_1->vals[2]->addr] = FLOAT_ARG_3;}
+static void float_list_set_3(int *args, ptree *pt) {pt->dbls[LIST_ARG_1->vals[3]->addr] = FLOAT_ARG_3;}
+static void float_list_set_4(int *args, ptree *pt) {pt->dbls[LIST_ARG_1->vals[4]->addr] = FLOAT_ARG_3;}
+
+
+static void int_list_set(int *args, ptree *pt) {pt->ints[LIST_ARG_1->vals[INT_ARG_2]->addr] = INT_ARG_3;}
 
 
 static void list_set(int *args, ptree *pt) 
@@ -8605,6 +8669,30 @@ static void list_set(int *args, ptree *pt)
 }
 
 
+static xen_value *package_clm_struct_set(ptree *prog, int struct_type, xen_value **args, int num_args)
+{
+  int type;
+  char *name;
+  type = def_clm_struct_field_type(struct_type, prog->ints[args[2]->addr]);
+  name = def_clm_struct_field_name(struct_type, prog->ints[args[2]->addr]);
+  if (type == R_FLOAT)
+    {
+      switch (prog->ints[args[2]->addr])
+	{
+	case 0: return(package(prog, type, float_list_set_0, name, args, num_args)); 
+	case 1: return(package(prog, type, float_list_set_1, name, args, num_args)); 
+	case 2: return(package(prog, type, float_list_set_2, name, args, num_args)); 
+	case 3: return(package(prog, type, float_list_set_3, name, args, num_args)); 
+	case 4: return(package(prog, type, float_list_set_4, name, args, num_args)); 
+	default:  return(package(prog, type, float_list_set, name, args, num_args)); 
+	}
+    }
+  if (type == R_INT)
+    return(package(prog, type, int_list_set, name, args, num_args)); 
+  return(package(prog, type, list_set, name, args, num_args)); 
+}
+
+
 static xen_value *list_set_1(ptree *prog, xen_value **args, int num_args)
 {
   list *xl;
@@ -8614,18 +8702,23 @@ static xen_value *list_set_1(ptree *prog, xen_value **args, int num_args)
     var->unclean = true;
 
   if (CLM_STRUCT_P(args[1]->type))
-    return(package(prog, def_clm_struct_field_type(args[1]->type, prog->ints[args[2]->addr]), list_set, "clm-struct-set", args, num_args));
+    return(package_clm_struct_set(prog, args[1]->type, args, num_args));
 
   xl = prog->lists[args[1]->addr];
   if (xl)
     {
       if (CLM_STRUCT_P(xl->type))  /* INT_ARG_2 is a constant in this case */
-	return(package(prog, def_clm_struct_field_type(xl->type, prog->ints[args[2]->addr]), list_set, "clm-struct-set", args, num_args)); 
+	return(package_clm_struct_set(prog, xl->type, args, num_args));
+
+      if (xl->type == R_FLOAT)
+	return(package(prog, xl->type, float_list_set, "float_list_set", args, num_args));
+      if (xl->type == R_INT)
+	return(package(prog, xl->type, int_list_set, "int_list_set", args, num_args));
       return(package(prog, xl->type, list_set, "list_set", args, num_args));
     }
-  /* assume float */
 
-  return(package(prog, R_FLOAT, list_set, "list_set", args, num_args));
+  /* else assume float */
+  return(package(prog, R_FLOAT, float_list_set, "float_list_set", args, num_args));
 }
 
 
@@ -8673,18 +8766,15 @@ static xen_value *null_1(ptree *prog, xen_value **args, int num_args)
 
 static void clm_struct_field_set_1(ptree *prog, xen_value *in_v, xen_value *in_v1, xen_value *in_v2, xen_value *v)
 {
-  /* in_v is list, v is val, w->data has addr -> in_v2->addr */
-
-  xen_var *var;
-  xen_value *new_v;
-  var = find_var_in_ptree_via_addr(prog, in_v->type, in_v->addr);
-  if (var) var->unclean = true;
-
-  new_v = make_xen_value(R_INT, add_int_to_ptree(prog, in_v2->addr), R_CONSTANT);
-  add_triple_to_ptree(prog, va_make_triple(list_set, "clm_struct_field_set", 4, NULL, in_v, new_v, v));
-  free(new_v);
+  /* in_v = args[1], new_v has int_arg[2] for addr, v is new_val */
+  xen_value *args[4];
+  args[0] = NULL;
+  args[1] = in_v;
+  args[2] = make_xen_value(R_INT, add_int_to_ptree(prog, in_v2->addr), R_CONSTANT);
+  args[3] = v;
+  list_set_1(prog, args, 3);
+  free(args[2]);
 }
-
 
 
 
@@ -13037,6 +13127,7 @@ static int add_clm_type(XEN name)
 typedef struct {
   int fields;
   int *field_types;
+  char **field_names;
 } dcs;
 
 static dcs **def_clm_structs = NULL;
@@ -13084,14 +13175,17 @@ static XEN g_add_clm_field(XEN struct_name, XEN name, XEN offset, XEN type)
 	{
 	  d->fields = 8;
 	  d->field_types = (int *)calloc(d->fields, sizeof(int));
+	  d->field_names = (char **)calloc(d->fields, sizeof(char *));
 	}
       else
 	{
 	  d->fields *= 2;
 	  d->field_types = (int *)realloc(d->field_types, d->fields * sizeof(int));
+	  d->field_names = (char **)realloc(d->field_names, d->fields * sizeof(char *));
 	}
     }
   d->field_types[field_offset] = field_type;
+  d->field_names[field_offset] = mus_strdup(field_name);
 
   /* now declare the get and set walkers */
 
@@ -13116,6 +13210,15 @@ static int def_clm_struct_field_type(int def_clm_struct_type, int field)
 }
 
 
+static char *def_clm_struct_field_name(int def_clm_struct_type, int field)
+{
+  dcs *d;
+  d = def_clm_structs[def_clm_struct_type];
+  if ((d) &&
+      (field < d->fields))
+    return(d->field_names[field]);
+  return(mus_strdup("unknown clm-struct field"));
+}
 
 
 

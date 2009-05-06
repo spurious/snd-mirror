@@ -2560,6 +2560,8 @@ static Float *pw_set_data(mus_any *ptr, Float *val) {((pw *)ptr)->coeffs = val; 
 static Float pw_index(mus_any *ptr) {return(((pw *)ptr)->index);}
 static Float pw_set_index(mus_any *ptr, Float val) {((pw *)ptr)->index = val; return(val);}
 
+static int pw_choice(mus_any *ptr) {return(((pw *)ptr)->cheby_choice);}
+
 
 Float mus_chebyshev_tu_sum(Float x, int n, Float *tn, Float *un)
 {
@@ -2780,7 +2782,8 @@ static mus_any_class POLYWAVE_CLASS = {
   MUS_NOT_SPECIAL, 
   NULL, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 
+  &pw_choice,
   0, 0, 0, 0, 0,
   &pw_reset,
   0, 0, 0
@@ -7949,7 +7952,7 @@ int mus_close_file(mus_any *ptr)
 Float mus_out_any(off_t samp, Float val, int chan, mus_any *IO)
 {
   if (IO) 
-    return(mus_sample_to_file(IO, samp, chan, val));
+    return(mus_write_sample(IO, samp, chan, val));
   return(val);
 }
 
@@ -8029,7 +8032,7 @@ mus_any *mus_frame_to_file(mus_any *ptr, off_t samp, mus_any *udata)
   if (data) 
     {
       if (data->chans == 1)
-	mus_sample_to_file(ptr, samp, 0, data->vals[0]);
+	mus_write_sample(ptr, samp, 0, data->vals[0]);
       else
 	{
 	  int i, chans;
@@ -8037,7 +8040,7 @@ mus_any *mus_frame_to_file(mus_any *ptr, off_t samp, mus_any *udata)
 	  if (gen->chans < chans) 
 	    chans = gen->chans;
 	  for (i = 0; i < chans; i++) 
-	    mus_sample_to_file(ptr, samp, i, data->vals[i]);
+	    mus_write_sample(ptr, samp, i, data->vals[i]);
 	}
     }
   return((mus_any *)data);
@@ -8500,6 +8503,22 @@ Float mus_locsig(mus_any *ptr, off_t loc, Float val)
     }
   else
     {
+      rdout *writer = (rdout *)(gen->outn_writer);
+      for (i = 0; i < gen->chans; i++)
+	{
+	  (gen->outf)->vals[i] = val * gen->outn[i];
+	  if (writer)
+	    ((*(writer->core)->write_sample))((mus_any *)writer, loc, i, gen->outf->vals[i]);
+	}
+      writer = (rdout *)(gen->revn_writer);
+      for (i = 0; i < gen->rev_chans; i++)
+	{
+	  (gen->revf)->vals[i] = val * gen->revn[i];
+	  if (writer)
+	    ((*(writer->core)->write_sample))((mus_any *)writer, loc, i, gen->revf->vals[i]);
+	}
+
+#if 0
       for (i = 0; i < gen->chans; i++)
 	(gen->outf)->vals[i] = val * gen->outn[i];
       for (i = 0; i < gen->rev_chans; i++)
@@ -8508,6 +8527,8 @@ Float mus_locsig(mus_any *ptr, off_t loc, Float val)
 	mus_frame_to_file(gen->revn_writer, loc, (mus_any *)(gen->revf));
       if (gen->outn_writer)
 	mus_frame_to_file(gen->outn_writer, loc, (mus_any *)(gen->outf));
+#endif
+
     }
   return(val);
 }
