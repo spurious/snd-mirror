@@ -602,9 +602,15 @@ typedef struct {
 } vect;
 
 
+#define WITH_POINTER_PC 1
+
 typedef struct ptree {
   bool all_done;
+#if WITH_POINTER_PC
+  struct triple **pc;
+#else
   int pc;
+#endif
   struct triple **program;
   Int *ints; 
   Double *dbls;
@@ -624,7 +630,11 @@ typedef struct ptree {
   int gc_ctr, gcs_size;
   int *gc_protected;
   int gc_protected_ctr, gc_protected_size;
+#if WITH_POINTER_PC
+  struct triple **initial_pc;
+#else
   int initial_pc;
+#endif
   XEN code, form;
   int form_loc;
   int str_ctr, strs_size;
@@ -1073,7 +1083,9 @@ static char *describe_ptree(ptree *pt, const char *space)
 	  free(temp);
 	}
     }
+#if (!WITH_POINTER_PC)
   buf = str_append(buf, &size, mus_format("%sPC: %d (%d)\n\n", space, pt->pc, pt->initial_pc));
+#endif
 
   for (i = 0; i < pt->triple_ctr; i++)
     {
@@ -1294,7 +1306,11 @@ static ptree *attach_to_ptree(ptree *pt)
   new_tree->args = NULL;
   new_tree->default_args = NULL;
   new_tree->arg_types = NULL;
+#if WITH_POINTER_PC
+  new_tree->initial_pc = NULL;
+#else
   new_tree->initial_pc = 0;
+#endif
   return(new_tree);
 }
 
@@ -2048,6 +2064,10 @@ static triple *add_triple_to_ptree(ptree *pt, triple *trp)
 	  pt->program = (triple **)realloc(pt->program, pt->program_size * sizeof(triple *));
 	  for (i = old_size; i < pt->program_size; i++) pt->program[i] = NULL;
 	}
+#if WITH_POINTER_PC
+      pt->pc = pt->program;
+      pt->initial_pc = pt->program;
+#endif
     }
   pt->program[pt->triple_ctr++] = trp;
   return(trp);
@@ -2872,9 +2892,15 @@ static void eval_ptree(ptree *pt)
   pt->all_done = false;
   while (!(pt->all_done))
     {
+#if WITH_POINTER_PC
+      triple *cpc;
+      cpc = (*(pt->pc++));
+      (*(cpc->function))(cpc->args, pt);
+#else
       triple *curfunc;
       curfunc = ((triple **)(pt->program))[pt->pc++];
       (*(curfunc->function))(curfunc->args, pt);
+#endif
     }
   pt->pc = pt->initial_pc; /* don't reset closure junk after initial evaluation */
 }
@@ -2882,11 +2908,20 @@ static void eval_ptree(ptree *pt)
 
 static void eval_embedded_ptree(ptree *prog, ptree *pt)
 {
-  Int old_pc, old_all_done;
+#if WITH_POINTER_PC
+  triple **old_pc;
+#else
+  int old_pc;
+#endif
+  bool old_all_done;
   old_pc = pt->pc;
   old_all_done = pt->all_done;
+#if WITH_POINTER_PC
+  pt->pc = NULL;
+#else
   pt->pc = 0;
-  pt->all_done = (Int)false;
+#endif
+  pt->all_done = false;
   prog->ints = pt->ints;
   prog->dbls = pt->dbls;
   prog->xen_vars = pt->xen_vars;
@@ -3089,7 +3124,7 @@ static triple *va_make_triple(void (*function)(int *arg_addrs, ptree *pt),
 
 static void quit(int *args, ptree *pt) {pt->all_done = true;}
 
-
+#if (!WITH_POINTER_PC)
 static void jump(int *args, ptree *pt) {pt->pc += pt->ints[args[0]];}
 
 
@@ -3102,13 +3137,43 @@ static void jump_indirect(int *args, ptree *pt) {pt->pc = pt->ints[pt->ints[args
 static void jump_if(int *args, ptree *pt) {if (INT_ARG_1 != 0) pt->pc += pt->ints[args[0]];}
 
 
-static void jump_if_abs(int *args, ptree *pt) {if (INT_ARG_1 != 0) pt->pc = pt->ints[args[0]];}
+static void jump_if_not_abs(int *args, ptree *pt) {if (INT_ARG_1 == 0) pt->pc = pt->ints[args[0]];}
 
 
 static void jump_if_equal(int *args, ptree *pt) {if (INT_ARG_1 == INT_ARG_2) pt->pc = pt->ints[args[0]];}
 
 
+static void jump_if_not_equal(int *args, ptree *pt) {if (INT_ARG_1 != INT_ARG_2) pt->pc = pt->ints[args[0]];}
+
+
 static void jump_if_not(int *args, ptree *pt) {if (INT_ARG_1 == 0) pt->pc += pt->ints[args[0]];}
+
+#else
+
+static void jump(int *args, ptree *pt) {pt->pc += pt->ints[args[0]];}
+
+
+static void jump_abs(int *args, ptree *pt) {pt->pc = pt->program + pt->ints[args[0]];}
+
+
+static void jump_indirect(int *args, ptree *pt) {pt->pc = pt->program + pt->ints[pt->ints[args[0]]];}
+
+
+static void jump_if(int *args, ptree *pt) {if (INT_ARG_1 != 0) pt->pc += pt->ints[args[0]];}
+
+
+static void jump_if_not_abs(int *args, ptree *pt) {if (INT_ARG_1 == 0) pt->pc = pt->program + pt->ints[args[0]];}
+
+
+static void jump_if_equal(int *args, ptree *pt) {if (INT_ARG_1 == INT_ARG_2) pt->pc = pt->program + pt->ints[args[0]];}
+
+
+static void jump_if_not_equal(int *args, ptree *pt) {if (INT_ARG_1 != INT_ARG_2) pt->pc = pt->program + pt->ints[args[0]];}
+
+
+static void jump_if_not(int *args, ptree *pt) {if (INT_ARG_1 == 0) pt->pc += pt->ints[args[0]];}
+
+#endif
 
 
 static void store_i(int *args, ptree *pt) {INT_RESULT = INT_ARG_1;}
@@ -3866,7 +3931,11 @@ static xen_value *let_star_form(ptree *prog, XEN form, walk_result_t need_result
   locals_loc = prog->var_ctr; /* lets can be nested */
   err = sequential_binds(prog, XEN_CADR(form), "let*");
   if (err) return(run_warn_with_free(err));
+#if WITH_POINTER_PC
+  if (!(prog->got_lambda)) prog->initial_pc = prog->program + prog->triple_ctr;
+#else
   if (!(prog->got_lambda)) prog->initial_pc = prog->triple_ctr;
+#endif
   return(walk_then_undefine(prog, XEN_CDDR(form), need_result, "let*", locals_loc));
 }
 
@@ -3881,7 +3950,11 @@ static xen_value *let_form(ptree *prog, XEN form, walk_result_t need_result)
   locals_loc = prog->var_ctr; /* lets can be nested */
   trouble = parallel_binds(prog, lets, "let");
   if (trouble) return(run_warn_with_free(trouble));
+#if WITH_POINTER_PC
+  if (!(prog->got_lambda)) prog->initial_pc = prog->program + prog->triple_ctr;
+#else
   if (!(prog->got_lambda)) prog->initial_pc = prog->triple_ctr;
+#endif
   return(walk_then_undefine(prog, XEN_CDDR(form), need_result, "let", locals_loc));
 }
 
@@ -4358,10 +4431,10 @@ static xen_value *do_form(ptree *prog, XEN form, walk_result_t need_result)
 {
   /* (do ([(var val [up])...]) (test [res ...]) [exp ...]): (do () (#t))  */
 
-  xen_value *result = NULL, *test, *expr, *jump_to_result, *jump_to_test, **exprs = NULL;
+  xen_value *result = NULL, *test, *expr, *jump_to_test, *jump_to_body, **exprs = NULL;
   XEN var, vars, done, body, results, test_form;
   xen_var *vr;
-  int i, locals_loc, test_loc, varlen, jump_loc;
+  int i, locals_loc, varlen, body_loc;
   char *trouble;
 
   vars = XEN_CADR(form);
@@ -4371,56 +4444,21 @@ static xen_value *do_form(ptree *prog, XEN form, walk_result_t need_result)
   test_form = XEN_CAR(done);
   results = XEN_CDR(done);
 
-  /* let to set init */
-  /* test ctr */
-  /* test if t goto res */
-  /*      if f goto body, then steps, jump to test ctr */
-  /*   for res, return last if any */
-
+  /* init step vars */
   locals_loc = prog->var_ctr; /* lets can be nested */
   trouble = parallel_binds(prog, vars, "do");
   if (trouble) return(run_warn_with_free(trouble));
 
-  test_loc = prog->triple_ctr;
-  test = walk(prog, test_form, NEED_ANY_RESULT);
-  if (test == NULL) return(NULL);
-  if (test->type != R_BOOL) 
-    {
-      xen_value *rv;
-      char *temp = NULL;
-      free(test);
-      rv = run_warn("do test must be boolean: %s", temp = XEN_AS_STRING(test_form));
-#if HAVE_S7
-      if (temp) free(temp);
-#endif
-      return(rv);
-    }
+  /* jump to end test (location fixed up later) */
+  jump_to_test = make_xen_value(R_INT, add_int_to_ptree(prog, 0), R_VARIABLE);
+  add_triple_to_ptree(prog, va_make_triple(jump_abs, "jump_abs", 1, jump_to_test));
 
-  /* if test true, jump to result section */
-  /* we could reorder things here to get just one jump per loop which might be a 1% speedup */
-
-  jump_loc = prog->triple_ctr;
-  jump_to_result = make_xen_value(R_INT, add_int_to_ptree(prog, 0), R_VARIABLE);
-
-  if (prog->program[prog->triple_ctr - 1]->function == equal_i2)
-    {
-      /* change previous instruction to jump_if_equal */
-      prog->program[prog->triple_ctr - 1]->function = jump_if_equal;
-      prog->program[prog->triple_ctr - 1]->args[0] = jump_to_result->addr; /* fixup at end */
-      prog->program[prog->triple_ctr - 1]->types[0] = R_INT;
-      prog->program[prog->triple_ctr - 1]->op_name = "jump_if_equal";
-    }
-  else
-    {
-      add_triple_to_ptree(prog, va_make_triple(jump_if_abs, "jump_if_abs", 2, jump_to_result, test));
-    }
-  free(test);
-
-  /* now walk the do body */
+  /* walk the do body */
+  body_loc = prog->triple_ctr;
   expr = walk_sequence(prog, body, DONT_NEED_RESULT, "do");
   if (expr == NULL) /* if do body is empty, expr => #f (not NULL) -- shouldn't NULL trigger run_warn? */
     {
-      free(jump_to_result);
+      free(jump_to_test);
       return(NULL);
     }
   free(expr);
@@ -4478,7 +4516,7 @@ static xen_value *do_form(ptree *prog, XEN form, walk_result_t need_result)
 		      for (k = 0; k < i; k++) if (exprs[k]) free(exprs[k]);
 		      free(exprs);
 		    }
-		  free(jump_to_result);
+		  free(jump_to_test);
 		  return(NULL);
 		}
 
@@ -4494,7 +4532,7 @@ static xen_value *do_form(ptree *prog, XEN form, walk_result_t need_result)
 			  for (k = 0; k < i; k++) if (exprs[k]) free(exprs[k]);
 			  free(exprs);
 			}
-		      free(jump_to_result);
+		      free(jump_to_test);
 		      return(do_warn_of_type_trouble(vr->v->type, expr->type, var));
 		    }
 
@@ -4523,9 +4561,11 @@ static xen_value *do_form(ptree *prog, XEN form, walk_result_t need_result)
 		      vr = find_var_in_ptree(prog, XEN_SYMBOL_TO_C_STRING(XEN_CADDR(var)));
 		      temp = add_empty_var_to_ptree(prog, vr->v->type);
 
-		      if (temp->type != expr->type) /* mem leak here -- at least jump_to_result needs to be freed */
-			return(do_warn_of_type_trouble(temp->type, expr->type, var));
-
+		      if (temp->type != expr->type) 
+			{
+			  free(jump_to_test);
+			  return(do_warn_of_type_trouble(temp->type, expr->type, var));
+			}
 		      set_var(prog, temp, expr);
 		      free(expr);
 		      expr = NULL;
@@ -4544,9 +4584,11 @@ static xen_value *do_form(ptree *prog, XEN form, walk_result_t need_result)
 		var = XEN_CAR(vars);
 		vr = find_var_in_ptree(prog, XEN_SYMBOL_TO_C_STRING(XEN_CAR(var)));
 
-		if (vr->v->type != exprs[i]->type) /* mem leak here -- at least jump_to_result needs to be freed */
-		  return(do_warn_of_type_trouble(vr->v->type, exprs[i]->type, var));
-
+		if (vr->v->type != exprs[i]->type) 
+		  {
+		    free(jump_to_test);
+		    return(do_warn_of_type_trouble(vr->v->type, exprs[i]->type, var));
+		  }
 		set_var(prog, vr->v, exprs[i]);
 		free(exprs[i]);
 	      }
@@ -4554,16 +4596,45 @@ static xen_value *do_form(ptree *prog, XEN form, walk_result_t need_result)
 	}
     }
 
-  /* jump back to test */
-  jump_to_test = make_xen_value(R_INT, add_int_to_ptree(prog, 0), R_VARIABLE);
-  add_triple_to_ptree(prog, va_make_triple(jump_abs, "jump_abs", 1, jump_to_test));
-  prog->ints[jump_to_test->addr] = test_loc;
-  free(jump_to_test);
+  /* test for repeat */
+  prog->ints[jump_to_test->addr] = prog->triple_ctr;
+  test = walk(prog, test_form, NEED_ANY_RESULT);
 
-  /* fixup jump from true test above */
-  /* prog->ints[jump_to_result->addr] = prog->triple_ctr - jump_loc - 1; */
-  prog->ints[jump_to_result->addr] = prog->triple_ctr;
-  free(jump_to_result);
+  if (test == NULL) 
+    {
+      free(jump_to_test);
+      return(NULL);
+    }
+  if (test->type != R_BOOL) 
+    {
+      xen_value *rv;
+      char *temp = NULL;
+      free(test);
+      free(jump_to_test);
+      rv = run_warn("do test must be boolean: %s", temp = XEN_AS_STRING(test_form));
+#if HAVE_S7
+      if (temp) free(temp);
+#endif
+      return(rv);
+    }
+
+  jump_to_body = make_xen_value(R_INT, add_int_to_ptree(prog, 0), R_VARIABLE);
+  prog->ints[jump_to_body->addr] = body_loc;
+
+  if (prog->program[prog->triple_ctr - 1]->function == equal_i2)
+    {
+      /* change previous instruction to jump_if_not_equal */
+      prog->program[prog->triple_ctr - 1]->function = jump_if_not_equal;
+      prog->program[prog->triple_ctr - 1]->args[0] = jump_to_body->addr;
+      prog->program[prog->triple_ctr - 1]->types[0] = R_INT;
+      prog->program[prog->triple_ctr - 1]->op_name = "jump_if_not_equal";
+    }
+  else
+    {
+      add_triple_to_ptree(prog, va_make_triple(jump_if_not_abs, "jump_if_not_abs", 2, jump_to_body, test));
+    }
+  free(jump_to_body);
+  free(test);
 
   /* now the result block */
   if (XEN_NOT_NULL_P(results))
@@ -5121,6 +5192,12 @@ static void multiply_in(int *args, ptree *pt)
 }
 
 
+static void multiply_i_f(int *args, ptree *pt) {FLOAT_RESULT = (INT_ARG_1 * FLOAT_ARG_2);}
+
+
+static void multiply_f_i(int *args, ptree *pt) {FLOAT_RESULT = (FLOAT_ARG_1 * INT_ARG_2);}
+
+
 static xen_value *multiply(ptree *prog, xen_value **args, int num_args)
 {
   if (num_args == 0) return(make_xen_value(R_INT, add_int_to_ptree(prog, 1), R_CONSTANT));
@@ -5157,6 +5234,17 @@ static xen_value *multiply(ptree *prog, xen_value **args, int num_args)
 	  if (args[cons_loc])
 	    return(copy_xen_value(args[cons_loc]));
 	  else return(make_xen_value(R_INT, add_int_to_ptree(prog, 1), R_CONSTANT));
+	}
+    }
+  else
+    {
+      if ((num_args == 2) &&
+	  (prog->float_result))
+	{
+	  if (args[1]->type == R_INT)
+	    return(package(prog, R_FLOAT, multiply_i_f, "multiply_i_f", args, num_args));
+	  if (args[2]->type == R_INT)
+	    return(package(prog, R_FLOAT, multiply_f_i, "multiply_f_i", args, num_args));
 	}
     }
 
@@ -5219,6 +5307,12 @@ static void add_in(int *args, ptree *pt)
 }
 
 
+static void add_i_f(int *args, ptree *pt) {FLOAT_RESULT = (INT_ARG_1 + FLOAT_ARG_2);}
+
+
+static void add_f_i(int *args, ptree *pt) {FLOAT_RESULT = (FLOAT_ARG_1 + INT_ARG_2);}
+
+
 static xen_value *add(ptree *prog, xen_value **args, int num_args)
 {
   if (num_args == 0) return(make_xen_value(R_INT, add_int_to_ptree(prog, 0), R_CONSTANT));
@@ -5253,6 +5347,17 @@ static xen_value *add(ptree *prog, xen_value **args, int num_args)
 	  if (args[cons_loc])
 	    return(copy_xen_value(args[cons_loc]));
 	  else return(make_xen_value(R_INT, add_int_to_ptree(prog, 0), R_CONSTANT));
+	}
+    }
+  else
+    {
+      if ((num_args == 2) &&
+	  (prog->float_result))
+	{
+	  if (args[1]->type == R_INT)
+	    return(package(prog, R_FLOAT, add_i_f, "add_i_f", args, num_args));
+	  if (args[2]->type == R_INT)
+	    return(package(prog, R_FLOAT, add_f_i, "add_f_i", args, num_args));
 	}
     }
 
@@ -5313,6 +5418,12 @@ static void subtract_in(int *args, ptree *pt)
 }
 
 
+static void subtract_i_f(int *args, ptree *pt) {FLOAT_RESULT = (INT_ARG_1 - FLOAT_ARG_2);}
+
+
+static void subtract_f_i(int *args, ptree *pt) {FLOAT_RESULT = (FLOAT_ARG_1 - INT_ARG_2);}
+
+
 static xen_value *subtract(ptree *prog, xen_value **args, int num_args)
 {
   if ((num_args == 1) && (args[1]->constant == R_CONSTANT))
@@ -5360,6 +5471,17 @@ static xen_value *subtract(ptree *prog, xen_value **args, int num_args)
 	      else return(make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, prog->dbls[args[1]->addr] - (fscl + iscl)), R_CONSTANT));
 	    }
 	  else return(make_xen_value(R_INT, add_int_to_ptree(prog, prog->ints[args[1]->addr] - iscl), R_CONSTANT));
+	}
+    }
+  else
+    {
+      if ((num_args == 2) &&
+	  (prog->float_result))
+	{
+	  if (args[1]->type == R_INT)
+	    return(package(prog, R_FLOAT, subtract_i_f, "subtract_i_f", args, num_args));
+	  if (args[2]->type == R_INT)
+	    return(package(prog, R_FLOAT, subtract_f_i, "subtract_f_i", args, num_args));
 	}
     }
 
@@ -5448,6 +5570,12 @@ static void divide_fn(int *args, ptree *pt)
 }
 
 
+static void divide_i_f(int *args, ptree *pt) {FLOAT_RESULT = (INT_ARG_1 / FLOAT_ARG_2);}
+
+
+static void divide_f_i(int *args, ptree *pt) {FLOAT_RESULT = (FLOAT_ARG_1 / INT_ARG_2);}
+
+
 static xen_value *divide(ptree *prog, xen_value **args, int num_args)
 {
   if ((num_args == 1) && (args[1]->constant == R_CONSTANT))
@@ -5513,6 +5641,16 @@ static xen_value *divide(ptree *prog, xen_value **args, int num_args)
 	      if (args[1]->type == R_INT) float_all_args(prog, num_args, args, true);
 	      return(package(prog, R_FLOAT, multiply_f2, "multiply_f2", args, 2));
 	    }
+	}
+    }
+    {
+      if ((num_args == 2) &&
+	  (prog->float_result))
+	{
+	  if (args[1]->type == R_INT)
+	    return(package(prog, R_FLOAT, divide_i_f, "divide_i_f", args, num_args));
+	  if (args[2]->type == R_INT)
+	    return(package(prog, R_FLOAT, divide_f_i, "divide_f_i", args, num_args));
 	}
     }
 
@@ -7495,13 +7633,7 @@ static void funcall_nf(int *args, ptree *pt)
 
       default:
 	if (CLM_STRUCT_P(func->arg_types[i]))
-	  {
-	    xen_var *var;
-	    /* fprintf(stderr,"got clm struct %p %d as arg %d, placed at %d\n", pt->lists[args[i+2]], args[i + 2], i, func->args[i]); */
-	    pt->lists[func->args[i]] = pt->lists[args[i + 2]]; 
-	    var = find_var_in_ptree_via_addr(pt, func->arg_types[i], args[i + 2]);
-	    if (var) var->unclean = true;
-	  }
+	  pt->lists[func->args[i]] = pt->lists[args[i + 2]]; 
 	break;
       }
 
@@ -7598,8 +7730,18 @@ static xen_value *funcall_n(ptree *prog, xen_value **args, int num_args, xen_val
 
   fres = func->result;
   new_args = (xen_value **)calloc(total_args + 2, sizeof(xen_value *));
+
   for (i = 1; i <= num_args; i++)
-    new_args[i + 1] = args[i];
+    {
+      new_args[i + 1] = args[i];
+
+      if (CLM_STRUCT_P(args[i]->type))
+	{
+	  xen_var *var;
+	  var = find_var_in_ptree_via_addr(prog, args[i]->type, args[i]->addr);
+	  if (var) var->unclean = true;
+	}
+    }
 
   if (total_args > num_args)
     {
@@ -7629,6 +7771,8 @@ static xen_value *funcall_n(ptree *prog, xen_value **args, int num_args, xen_val
 	  new_args[i + 1] = v;
 	}
     }
+
+
 
   new_args[1] = sf;
   new_args[0] = add_temporary_var_to_ptree(prog, fres->type);
@@ -8295,68 +8439,71 @@ static xen_value *mus_audio_write_1(ptree *prog, xen_value **args, int num_args)
 static void list_ref(int *args, ptree *pt) 
 {
   xen_value *v;
+  int addr;
 
   v = LIST_ARG_1->vals[INT_ARG_2];
+  addr = v->addr;
+
   switch (v->type)
     {
     case R_INT:   
-      INT_RESULT = pt->ints[v->addr];   
+      INT_RESULT = pt->ints[addr];   
       break;
 
     case R_BOOL:   
-      BOOL_RESULT = pt->ints[v->addr];   
+      BOOL_RESULT = pt->ints[addr];   
       break;
 
     case R_CHAR:   
-      CHAR_RESULT = (char)(pt->ints[v->addr]);   
+      CHAR_RESULT = (char)(pt->ints[addr]);   
       break;
 
     case R_FLOAT: 
-      FLOAT_RESULT = pt->dbls[v->addr]; 
+      FLOAT_RESULT = pt->dbls[addr]; 
       break;
 
     case R_STRING:
       if (STRING_RESULT) free(STRING_RESULT);
       /* (let ((val (list "l1" "l2" "l3"))) (run (lambda () (let ((str (list-ref val 1))) (do ((i 0 (1+ i))) ((= i 2)) (set! str (list-ref val i))))))) */
-      STRING_RESULT = mus_strdup(pt->strs[v->addr]);
+      STRING_RESULT = mus_strdup(pt->strs[addr]);
       break; 
 
     case R_FLOAT_VECTOR:
     case R_VCT:   
-      VCT_RESULT = pt->vcts[v->addr];   
+      VCT_RESULT = pt->vcts[addr];   
       break;
 
     case R_SOUND_DATA:   
-      SOUND_DATA_RESULT = pt->sds[v->addr];   
+      SOUND_DATA_RESULT = pt->sds[addr];   
       break;
 
     case R_CLM:   
-      CLM_RESULT = pt->clms[v->addr];   
+      CLM_RESULT = pt->clms[addr];   
       break;
 
     case R_LIST_VECTOR:   
     case R_CLM_VECTOR:   
     case R_INT_VECTOR:   
     case R_VCT_VECTOR:   
-      VECT_RESULT = pt->vects[v->addr];   
+      VECT_RESULT = pt->vects[addr];   
       break;
 
     case R_SYMBOL: 
     case R_KEYWORD:
-      XEN_RESULT = pt->xens[v->addr];
+      XEN_RESULT = pt->xens[addr];
       break;
 
     case R_FUNCTION:   
-      FNC_RESULT = ((ptree **)(pt->fncs))[v->addr];   
+      FNC_RESULT = ((ptree **)(pt->fncs))[addr];   
       break;
 
 #if USE_SND
     case R_READER:   
-      READER_RESULT = pt->readers[v->addr];   
+      READER_RESULT = pt->readers[addr];   
       break;
 
     case R_MIX_READER:   
-      MIX_READER_RESULT = pt->mix_readers[v->addr];   
+      MIX_READER_RESULT = pt->mix_readers[addr];   
       break;
 #endif
     }
@@ -8386,13 +8533,13 @@ static xen_value *list_ref_1(ptree *prog, xen_value **args, int num_args)
     temp_package(prog, R_BOOL, list_check_1, "list_check_1", args, 1);
 
   if (CLM_STRUCT_P(args[1]->type))
-    return(package(prog, def_clm_struct_field_type(args[1]->type, prog->ints[args[2]->addr]), list_ref, "list_ref", args, 2)); 
+    return(package(prog, def_clm_struct_field_type(args[1]->type, prog->ints[args[2]->addr]), list_ref, "clm-struct-ref", args, 2)); 
 
   xl = prog->lists[args[1]->addr];
   if (xl)
     {
       if (CLM_STRUCT_P(xl->type))
-	return(package(prog, def_clm_struct_field_type(xl->type, prog->ints[args[2]->addr]), list_ref, "list_ref", args, 2)); 
+	return(package(prog, def_clm_struct_field_type(xl->type, prog->ints[args[2]->addr]), list_ref, "clm-struct-ref", args, 2)); 
       return(package(prog, xl->type, list_ref, "list_ref", args, 2));
     }
 
@@ -8425,32 +8572,35 @@ static xen_value *cadddr_1(ptree *prog, xen_value **args, int num_args) {return(
 static void list_set(int *args, ptree *pt) 
 {
   xen_value *v;
+  int addr;
+
   v = LIST_ARG_1->vals[INT_ARG_2];
+  addr = v->addr;
 
   /* fprintf(stderr,"list set %s (%d %f)\n", describe_xen_value(v, pt), (int)(INT_ARG_2), FLOAT_ARG_3); */
 
   switch (v->type)
     {
-    case R_INT:          pt->ints[v->addr] = INT_ARG_3;                 break;
-    case R_BOOL:         pt->ints[v->addr] = BOOL_ARG_3;                break;
-    case R_CHAR:         pt->ints[v->addr] = (Int)(CHAR_ARG_3);         break;
-    case R_FLOAT:        pt->dbls[v->addr] = FLOAT_ARG_3;               break;
-    case R_CLM:          pt->clms[v->addr] = CLM_ARG_3;                 break;
-    case R_STRING:       pt->strs[v->addr] = mus_strdup(STRING_ARG_3); break;
+    case R_INT:          pt->ints[addr] = INT_ARG_3;                 break;
+    case R_BOOL:         pt->ints[addr] = BOOL_ARG_3;                break;
+    case R_CHAR:         pt->ints[addr] = (Int)(CHAR_ARG_3);         break;
+    case R_FLOAT:        pt->dbls[addr] = FLOAT_ARG_3;               break;
+    case R_CLM:          pt->clms[addr] = CLM_ARG_3;                 break;
+    case R_STRING:       pt->strs[addr] = mus_strdup(STRING_ARG_3);  break;
     case R_KEYWORD:
-    case R_SYMBOL:       pt->xens[v->addr] = RXEN_ARG_3;                break;
+    case R_SYMBOL:       pt->xens[addr] = RXEN_ARG_3;                break;
     case R_FLOAT_VECTOR:
-    case R_VCT:          pt->vcts[v->addr] = VCT_ARG_3;                 break;
-    case R_SOUND_DATA:   pt->sds[v->addr] = SOUND_DATA_ARG_3;           break;
+    case R_VCT:          pt->vcts[addr] = VCT_ARG_3;                 break;
+    case R_SOUND_DATA:   pt->sds[addr] = SOUND_DATA_ARG_3;           break;
 #if USE_SND
-    case R_READER:       pt->readers[v->addr] = READER_ARG_3;           break;
-    case R_MIX_READER:   pt->mix_readers[v->addr] = MIX_READER_ARG_3;   break;
+    case R_READER:       pt->readers[addr] = READER_ARG_3;           break;
+    case R_MIX_READER:   pt->mix_readers[addr] = MIX_READER_ARG_3;   break;
 #endif
-    case R_LIST:         pt->lists[v->addr] = LIST_ARG_3;               break;
+    case R_LIST:         pt->lists[addr] = LIST_ARG_3;               break;
     case R_LIST_VECTOR:
     case R_INT_VECTOR: 
     case R_VCT_VECTOR:
-    case R_CLM_VECTOR:   pt->vects[v->addr] = VECT_ARG_3;               break;
+    case R_CLM_VECTOR:   pt->vects[addr] = VECT_ARG_3;               break;
     }
 }
 
@@ -8464,13 +8614,13 @@ static xen_value *list_set_1(ptree *prog, xen_value **args, int num_args)
     var->unclean = true;
 
   if (CLM_STRUCT_P(args[1]->type))
-    return(package(prog, def_clm_struct_field_type(args[1]->type, prog->ints[args[2]->addr]), list_set, "list_set", args, num_args));
+    return(package(prog, def_clm_struct_field_type(args[1]->type, prog->ints[args[2]->addr]), list_set, "clm-struct-set", args, num_args));
 
   xl = prog->lists[args[1]->addr];
   if (xl)
     {
-      if (CLM_STRUCT_P(xl->type))
-	return(package(prog, def_clm_struct_field_type(xl->type, prog->ints[args[2]->addr]), list_set, "list_set", args, num_args)); /* INT_ARG_2 is a constant in this case */
+      if (CLM_STRUCT_P(xl->type))  /* INT_ARG_2 is a constant in this case */
+	return(package(prog, def_clm_struct_field_type(xl->type, prog->ints[args[2]->addr]), list_set, "clm-struct-set", args, num_args)); 
       return(package(prog, xl->type, list_set, "list_set", args, num_args));
     }
   /* assume float */
@@ -8531,7 +8681,7 @@ static void clm_struct_field_set_1(ptree *prog, xen_value *in_v, xen_value *in_v
   if (var) var->unclean = true;
 
   new_v = make_xen_value(R_INT, add_int_to_ptree(prog, in_v2->addr), R_CONSTANT);
-  add_triple_to_ptree(prog, va_make_triple(list_set, "clm_struct_set", 4, NULL, in_v, new_v, v));
+  add_triple_to_ptree(prog, va_make_triple(list_set, "clm_struct_field_set", 4, NULL, in_v, new_v, v));
   free(new_v);
 }
 
