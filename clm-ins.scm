@@ -2243,6 +2243,7 @@ is a physical model of a flute:
 	 (max-len (seconds->samples (+ (max max-out-hop max-in-hop) max-seg-len)))
 	 (ampe (make-env :envelope (or ampenv (list 0 0 .5 1 1 0)) :scaler amp :duration dur))
 	 (exA (make-granulate :expansion initial-exp-amt
+			      :input f0
 			      :max-size max-len
 			      :ramp initial-ramp-time 
 			      :hop initial-out-hop
@@ -2251,8 +2252,8 @@ is a physical model of a flute:
 	 (ex-samp 0.0)
 	 (next-samp 0.0)
 	 (vol (env ampe))
-	 (valA0 (* vol (granulate exA (lambda (dir) (readin f0)))))
-	 (valA1 (* vol (granulate exA (lambda (dir) (readin f0))))))
+	 (valA0 (* vol (granulate exA)))
+	 (valA1 (* vol (granulate exA))))
     (ws-interrupt?)
     (if (or (<= (min-envelope rampdata) 0.0)
 	    (>= (max-envelope rampdata) 0.5))
@@ -2281,7 +2282,7 @@ is a physical model of a flute:
 		     (do ((k 0 (+ 1 k)))
 			 ((= k samps))
 		       (set! valA0 valA1)
-		       (set! valA1 (* vol (granulate exA (lambda (dir) (readin f0)))))
+		       (set! valA1 (* vol (granulate exA)))
 		       (set! ex-samp (+ 1 ex-samp)))))
 	       (if (= next-samp ex-samp)
 		   (outa i valA0)
@@ -2656,8 +2657,8 @@ mjkoskin@sci.fi
 	       (srcs (make-vector in-chans #f)))
 	  (do ((inp 0 (+ 1 inp)))
 	      ((= inp in-chans))
-	    (vector-set! srcs inp (make-src :srate srate)))
-	  ;; can't use run here yet because 2-dim vect and #f elements
+	    (vector-set! srcs inp (make-src :input (vector-ref file inp) :srate srate)))
+
 	  (if envs
 	      (run 
 	       (lambda ()
@@ -2672,7 +2673,7 @@ mjkoskin@sci.fi
 			   (mixer-set! mx inp outp (env (vector-ref (vector-ref envs inp) outp)))))))
 		 (do ((inp 0 (+ 1 inp)))
 		     ((= inp in-chans))
-		   (frame-set! inframe inp (src (vector-ref srcs inp) 0.0 (lambda (dir) (readin (vector-ref file inp))))))
+		   (frame-set! inframe inp (src (vector-ref srcs inp))))
 		 (frame->file *output* i (frame->frame inframe mx outframe))
 		 (if rev-mx (frame->file *reverb* i (frame->frame inframe rev-mx revframe)))))
 	      ;; no envs
@@ -2682,7 +2683,7 @@ mjkoskin@sci.fi
 		     ((= i nd))
 		   (do ((inp 0 (+ 1 inp)))
 		       ((= inp in-chans))
-		     (frame-set! inframe inp (src (vector-ref srcs inp) 0.0 (lambda (dir) (readin (vector-ref file inp))))))
+		     (frame-set! inframe inp (src (vector-ref srcs inp))))
 		   (frame->file *output* i (frame->frame inframe mx outframe))
 		   (if rev-mx (frame->file *reverb* i (frame->frame inframe rev-mx revframe)))))))))))
 
@@ -2921,21 +2922,14 @@ mjkoskin@sci.fi
 	       (declare (ex-array clm-vector))
 	       (let ((vol (env ampenv)))
 		 (if srenv (set! resa (env srenv)))
-
-		 ;; should be (mod (- i beg) update-rate) but i is ok
-		 ;; since we set the initial values when we constructed
-		 ;; the unit generators
 		 (if (and update-env 
 			  (= 0 (modulo (- i beg) update-rate)))
-		     (let* ((expa (env expenv)) ;current expansion amount
-			    (segl (env lenenv)) ;current segment length
-			    (rmpl (env rampenv)) ;current ramp length (0 to .5)
-			    (hp (env hopenv)) ;current hop size
-			    ;; now we set the granulate generator internal
-			    ;; state to reflect all these envelopes
+		     (let* ((expa (env expenv))                ;current expansion amount
+			    (segl (env lenenv))                ;current segment length
+			    (rmpl (env rampenv))               ;current ramp length (0 to .5)
+			    (hp (env hopenv))                  ;current hop size
 			    (sl (inexact->exact (floor (* segl (mus-srate)))))
 			    (rl (inexact->exact (floor (* rmpl sl)))))
-		       ;; declare types
 		       (do ((ix 0 (+ 1 ix)))
 			   ((= ix in-chans))
 			 (let ((gen (vector-ref ex-array ix)))

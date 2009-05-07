@@ -7403,7 +7403,7 @@ Float mus_readin(mus_any *ptr)
 {
   Float res;
   rdin *rd = (rdin *)ptr;
-  res = mus_file_to_sample(ptr, rd->loc, rd->chan);
+  res = file_sample(ptr, rd->loc, rd->chan);
   rd->loc += rd->dir;
   return(res);
 }
@@ -7423,7 +7423,7 @@ off_t mus_set_location(mus_any *gen, off_t loc)
 
 Float mus_in_any(off_t samp, int chan, mus_any *IO)
 {
-  if (IO) return(mus_file_to_sample(IO, samp, chan));
+  if (IO) return(mus_read_sample(IO, samp, chan));
   return(0.0);
 }
 
@@ -7515,7 +7515,7 @@ mus_any *mus_file_to_frame(mus_any *ptr, off_t samp, mus_any *uf)
     f = (mus_frame *)mus_make_empty_frame(gen->chans); 
   else f = (mus_frame *)uf;
   for (i = 0; i < gen->chans; i++) 
-    f->vals[i] = mus_file_to_sample(ptr, samp, i);
+    f->vals[i] = file_sample(ptr, samp, i);
   return((mus_any *)f);
 }
 
@@ -8032,7 +8032,7 @@ mus_any *mus_frame_to_file(mus_any *ptr, off_t samp, mus_any *udata)
   if (data) 
     {
       if (data->chans == 1)
-	mus_write_sample(ptr, samp, 0, data->vals[0]);
+	sample_file(ptr, samp, 0, data->vals[0]);
       else
 	{
 	  int i, chans;
@@ -8040,7 +8040,7 @@ mus_any *mus_frame_to_file(mus_any *ptr, off_t samp, mus_any *udata)
 	  if (gen->chans < chans) 
 	    chans = gen->chans;
 	  for (i = 0; i < chans; i++) 
-	    mus_write_sample(ptr, samp, i, data->vals[i]);
+	    sample_file(ptr, samp, i, data->vals[i]);
 	}
     }
   return((mus_any *)data);
@@ -8508,27 +8508,15 @@ Float mus_locsig(mus_any *ptr, off_t loc, Float val)
 	{
 	  (gen->outf)->vals[i] = val * gen->outn[i];
 	  if (writer)
-	    ((*(writer->core)->write_sample))((mus_any *)writer, loc, i, gen->outf->vals[i]);
+	    sample_file((mus_any *)writer, loc, i, gen->outf->vals[i]);
 	}
       writer = (rdout *)(gen->revn_writer);
       for (i = 0; i < gen->rev_chans; i++)
 	{
 	  (gen->revf)->vals[i] = val * gen->revn[i];
 	  if (writer)
-	    ((*(writer->core)->write_sample))((mus_any *)writer, loc, i, gen->revf->vals[i]);
+	    sample_file((mus_any *)writer, loc, i, gen->revf->vals[i]);
 	}
-
-#if 0
-      for (i = 0; i < gen->chans; i++)
-	(gen->outf)->vals[i] = val * gen->outn[i];
-      for (i = 0; i < gen->rev_chans; i++)
-	(gen->revf)->vals[i] = val * gen->revn[i];
-      if (gen->revn_writer)
-	mus_frame_to_file(gen->revn_writer, loc, (mus_any *)(gen->revf));
-      if (gen->outn_writer)
-	mus_frame_to_file(gen->outn_writer, loc, (mus_any *)(gen->outf));
-#endif
-
     }
   return(val);
 }

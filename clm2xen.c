@@ -6827,6 +6827,13 @@ static Float as_needed_input_func(void *ptr, int direction) /* intended for "as-
   else return(0.0);
 }
 
+
+static Float as_needed_input_generator(void *ptr, int direction) /* intended for "as-needed" input funcs */
+{
+  return(MUS_RUN(XEN_TO_MUS_ANY(((mus_xen *)ptr)->vcts[MUS_INPUT_FUNCTION]), 0.0, 0.0));
+}
+
+
 static XEN g_mus_clear_sincs(void)
 {
   mus_clear_sinc_tables();
@@ -6920,17 +6927,20 @@ width (effectively the steepness of the low-pass filter), normally between 10 an
   gn->nvcts = MUS_MAX_VCTS;
   gn->vcts = make_vcts(gn->nvcts);
   gn->vcts[MUS_INPUT_FUNCTION] = in_obj;
+
   {
     mus_error_handler_t *old_error_handler;
     old_error_handler = mus_error_set_handler(local_mus_error);
-    ge = mus_make_src(as_needed_input_func, srate, wid, gn);
+    ge = mus_make_src((MUS_XEN_P(in_obj)) ? as_needed_input_generator : as_needed_input_func, srate, wid, gn);
     mus_error_set_handler(old_error_handler);
   }
+
   if (ge)
     {
       gn->gen = ge;
       return(mus_xen_to_object(gn));
     }
+
   free(gn->vcts);
   free(gn);
   return(clm_mus_error(local_error_type, local_error_msg));
@@ -7092,7 +7102,7 @@ The edit function, if any, should return the length in samples of the grain, or 
   {
     mus_error_handler_t *old_error_handler;
     old_error_handler = mus_error_set_handler(local_mus_error);
-    ge = mus_make_granulate(as_needed_input_func, 
+    ge = mus_make_granulate((MUS_XEN_P(in_obj)) ? as_needed_input_generator : as_needed_input_func, 
 			    expansion, segment_length, segment_scaler, output_hop, ramp_time, jitter, maxsize, 
 			    (XEN_NOT_BOUND_P(edit_obj) ? NULL : grnedit),
 			    (void *)gn);
@@ -7203,7 +7213,7 @@ return a new convolution generator which convolves its input with the impulse re
   {
     mus_error_handler_t *old_error_handler;
     old_error_handler = mus_error_set_handler(local_mus_error);
-    ge = mus_make_convolve(as_needed_input_func, filter->data, fft_size, filter->length, gn);
+    ge = mus_make_convolve((MUS_XEN_P(in_obj)) ? as_needed_input_generator : as_needed_input_func, filter->data, fft_size, filter->length, gn);
     mus_error_set_handler(old_error_handler);
   }
   if (ge)
@@ -7447,7 +7457,7 @@ output. \n\n  " pv_example "\n\n  " pv_edit_example
   {
     mus_error_handler_t *old_error_handler;
     old_error_handler = mus_error_set_handler(local_mus_error);
-    ge = mus_make_phase_vocoder(as_needed_input_func,
+    ge = mus_make_phase_vocoder((MUS_XEN_P(in_obj)) ? as_needed_input_generator : as_needed_input_func,
 				fft_size, overlap, interp, pitch,
 				(XEN_NOT_BOUND_P(analyze_obj) ? NULL : pvanalyze),
 				(XEN_NOT_BOUND_P(edit_obj) ? NULL : pvedit),

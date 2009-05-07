@@ -1304,7 +1304,10 @@ static int mus_write_1(int tfd, off_t beg, off_t end, int chans, mus_sample_t **
       data_format = fd->data_format;
       clipping = fd->clipping;
 
-      if ((data_format == MUS_OUT_FORMAT) && (chans == 1) && (!clipping) && (beg == 0))
+      if ((data_format == MUS_OUT_FORMAT) && 
+	  (chans == 1) && 
+	  (!clipping) && 
+	  (beg == 0))
 	{
 	  bytes = (end + 1) * siz;
 	  return(checked_write(tfd, (char *)(bufs[0]), bytes));
@@ -1366,6 +1369,14 @@ static int mus_write_1(int tfd, off_t beg, off_t end, int chans, mus_sample_t **
 			buffer[cliploc] = (*mus_clip_handler)(buffer[cliploc]);
 		      else buffer[cliploc] = MUS_SAMPLE_MIN;
 		    }
+
+	      if ((data_format == MUS_OUT_FORMAT) && 
+		  (chans == 1) && 
+		  (beg == 0))
+		{
+		  bytes = (end + 1) * siz;
+		  return(checked_write(tfd, (char *)(bufs[0]), bytes));
+		}
 	    }
 	  loclim = loc + lim;
 	  jchar = (unsigned char *)charbuf; /* if to_buffer we should add the loop offset here, or never loop */

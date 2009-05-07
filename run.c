@@ -1079,13 +1079,10 @@ static char *describe_ptree(ptree *pt, const char *space)
       temp = describe_xen_value_with_var_name(pt->result->type, pt->result->addr, pt);
       if (temp)
 	{
-	  buf = str_append(buf, &size, mus_format("%sresult: %s\n", space, temp));
+	  buf = str_append(buf, &size, mus_format("%sresult: %s\n\n", space, temp));
 	  free(temp);
 	}
     }
-#if (!WITH_POINTER_PC)
-  buf = str_append(buf, &size, mus_format("%sPC: %d (%d)\n\n", space, pt->pc, pt->initial_pc));
-#endif
 
   for (i = 0; i < pt->triple_ctr; i++)
     {
@@ -4578,10 +4575,11 @@ static xen_value *do_form(ptree *prog, XEN form, walk_result_t need_result)
   /* test for repeat */
   prog->ints[jump_to_test->addr] = prog->triple_ctr;
   test = walk(prog, test_form, NEED_ANY_RESULT);
+  free(jump_to_test);
+  jump_to_test = NULL;
 
   if (test == NULL) 
     {
-      free(jump_to_test);
       return(NULL);
     }
   if (test->type != R_BOOL) 
@@ -4589,7 +4587,6 @@ static xen_value *do_form(ptree *prog, XEN form, walk_result_t need_result)
       xen_value *rv;
       char *temp = NULL;
       free(test);
-      free(jump_to_test);
       rv = run_warn("do test must be boolean: %s", temp = XEN_AS_STRING(test_form));
 #if HAVE_S7
       if (temp) free(temp);
@@ -7537,14 +7534,49 @@ static xen_value *number2string_1(ptree *prog, xen_value **args, int num_args)
 
 /* ---------------- user-defined function call ---------------- */
 
+static void funcall_i1(int *args, ptree *pt)
+{
+  /* 1 int arg, int result */
+  ptree *func;
+  func = ((ptree **)(pt->fncs))[args[1]];
+  pt->ints[func->args[0]] = pt->ints[args[2]]; 
+  eval_embedded_ptree(func, pt);  
+  INT_RESULT = pt->ints[func->result->addr]; 
+}
+
+
 static void funcall_f1(int *args, ptree *pt)
 {
-  /* 1 float arg, float result? */
+  /* 1 float arg, float result */
   ptree *func;
   func = ((ptree **)(pt->fncs))[args[1]];
   pt->dbls[func->args[0]] = pt->dbls[args[2]]; 
   eval_embedded_ptree(func, pt);  
   FLOAT_RESULT = pt->dbls[func->result->addr]; 
+}
+
+
+static void funcall_f2(int *args, ptree *pt)
+{
+  /* 2 float args, float result */
+  ptree *func;
+  func = ((ptree **)(pt->fncs))[args[1]];
+  pt->dbls[func->args[0]] = pt->dbls[args[2]]; 
+  pt->dbls[func->args[1]] = pt->dbls[args[3]]; 
+  eval_embedded_ptree(func, pt);  
+  FLOAT_RESULT = pt->dbls[func->result->addr]; 
+}
+
+
+static void funcall_f2b(int *args, ptree *pt)
+{
+  /* 2 float args, boolean result */
+  ptree *func;
+  func = ((ptree **)(pt->fncs))[args[1]];
+  pt->dbls[func->args[0]] = pt->dbls[args[2]]; 
+  pt->dbls[func->args[1]] = pt->dbls[args[3]]; 
+  eval_embedded_ptree(func, pt);  
+  BOOL_RESULT = pt->ints[func->result->addr]; 
 }
 
 
@@ -7779,19 +7811,47 @@ static xen_value *funcall_n(ptree *prog, xen_value **args, int num_args, xen_val
   new_args[1] = sf;
   new_args[0] = add_temporary_var_to_ptree(prog, fres->type);
   args[0] = new_args[0];
-
-  if ((num_args == 1) &&
-      (func->arg_types[0] == R_FLOAT) &&
-      (fres->type == R_FLOAT))
-    add_triple_to_ptree(prog, make_triple(funcall_f1, "funcall_f1", new_args, total_args + 2));
-
-  if ((num_args == 2) &&
-      (CLM_STRUCT_P(func->arg_types[0])) &&
-      (func->arg_types[1] == R_FLOAT) &&
-      (fres->type == R_FLOAT))
-    add_triple_to_ptree(prog, make_triple(funcall_cf2, "funcall_cf2", new_args, total_args + 2));
   
-  else add_triple_to_ptree(prog, make_triple(funcall_nf, "funcall_nf", new_args, total_args + 2));
+  if (total_args == 1)
+    {
+      if ((func->arg_types[0] == R_FLOAT) &&
+	  (fres->type == R_FLOAT))
+	add_triple_to_ptree(prog, make_triple(funcall_f1, "funcall_f1", new_args, total_args + 2));
+      else
+	{
+	  if ((func->arg_types[0] == R_INT) &&
+	      (fres->type == R_INT))
+	    add_triple_to_ptree(prog, make_triple(funcall_i1, "funcall_i1", new_args, total_args + 2));
+	  else add_triple_to_ptree(prog, make_triple(funcall_nf, "funcall_nf", new_args, total_args + 2));
+	}
+    }
+  else
+    {
+      if (total_args == 2)
+	{
+	  if ((func->arg_types[0] == R_FLOAT) &&
+	      (func->arg_types[1] == R_FLOAT))
+	    {
+	      if (fres->type == R_FLOAT)
+		add_triple_to_ptree(prog, make_triple(funcall_f2, "funcall_f2", new_args, total_args + 2));
+	      else
+		{
+		  if (fres->type == R_BOOL)
+		    add_triple_to_ptree(prog, make_triple(funcall_f2b, "funcall_f2b", new_args, total_args + 2));
+		  else add_triple_to_ptree(prog, make_triple(funcall_nf, "funcall_nf", new_args, total_args + 2));
+		}
+	    }
+	  else
+	    {
+	      if ((CLM_STRUCT_P(func->arg_types[0])) &&
+		  (func->arg_types[1] == R_FLOAT) &&
+		  (fres->type == R_FLOAT))
+		add_triple_to_ptree(prog, make_triple(funcall_cf2, "funcall_cf2", new_args, total_args + 2));
+	      else add_triple_to_ptree(prog, make_triple(funcall_nf, "funcall_nf", new_args, total_args + 2));
+	    }
+	}
+      else add_triple_to_ptree(prog, make_triple(funcall_nf, "funcall_nf", new_args, total_args + 2));
+    }
 
   free(new_args);
   return(args[0]);
@@ -8824,6 +8884,9 @@ static xen_value *vector_length_1(ptree *prog, xen_value **args, int num_args)
 /* ref */
 
 static void vector_ref_f(int *args, ptree *pt) {FLOAT_RESULT = VCT_ARG_1->data[INT_ARG_2];}
+static void vector_ref_f0(int *args, ptree *pt) {FLOAT_RESULT = VCT_ARG_1->data[0];}
+static void vector_ref_f1(int *args, ptree *pt) {FLOAT_RESULT = VCT_ARG_1->data[1];}
+static void vector_ref_f2(int *args, ptree *pt) {FLOAT_RESULT = VCT_ARG_1->data[2];}
 
 static void vector_ref_i(int *args, ptree *pt) {INT_RESULT = VECT_ARG_1->data.ints[INT_ARG_2];}
 
@@ -8844,7 +8907,19 @@ static xen_value *vector_ref_1(ptree *prog, xen_value **args, int num_args)
     }
   switch (args[1]->type)
     {
-    case R_FLOAT_VECTOR: return(package(prog, R_FLOAT, vector_ref_f, "vector_ref_f", args, 2)); break;
+    case R_FLOAT_VECTOR: 
+      if (args[2]->constant == R_CONSTANT)
+	{
+	  if (prog->ints[args[2]->addr] == 0)
+	    return(package(prog, R_FLOAT, vector_ref_f0, "vector_ref_f0", args, 2));
+	  if (prog->ints[args[2]->addr] == 1)
+	    return(package(prog, R_FLOAT, vector_ref_f1, "vector_ref_f1", args, 2));
+	  if (prog->ints[args[2]->addr] == 2)
+	    return(package(prog, R_FLOAT, vector_ref_f2, "vector_ref_f2", args, 2));
+	}
+      return(package(prog, R_FLOAT, vector_ref_f, "vector_ref_f", args, 2)); 
+      break;
+
     case R_INT_VECTOR:   return(package(prog, R_INT, vector_ref_i, "vector_ref_i", args, 2));   break;
     case R_VCT_VECTOR:   return(package(prog, R_VCT, vector_ref_v, "vector_ref_v", args, 2));   break;
     case R_CLM_VECTOR:   return(package(prog, R_CLM, vector_ref_c, "vector_ref_c", args, 2));   break;
@@ -8865,6 +8940,9 @@ static xen_value *vector_ref_1(ptree *prog, xen_value **args, int num_args)
 /* set */
 
 static void vector_set_f(int *args, ptree *pt) {VCT_ARG_1->data[INT_ARG_2] = FLOAT_ARG_3;}
+static void vector_set_f0(int *args, ptree *pt) {VCT_ARG_1->data[0] = FLOAT_ARG_3;}
+static void vector_set_f1(int *args, ptree *pt) {VCT_ARG_1->data[1] = FLOAT_ARG_3;}
+static void vector_set_f2(int *args, ptree *pt) {VCT_ARG_1->data[2] = FLOAT_ARG_3;}
 
 static void vector_set_i(int *args, ptree *pt) {VECT_ARG_1->data.ints[INT_ARG_2] = INT_ARG_3;}
 
@@ -8888,6 +8966,15 @@ static xen_value *vector_set_1(ptree *prog, xen_value **args, int num_args)
     {
     case R_FLOAT_VECTOR: 
       if (args[3]->type != R_FLOAT) return(run_warn("wrong new val type for float vector set"));
+      if (args[2]->constant == R_CONSTANT)
+	{
+	  if (prog->ints[args[2]->addr] == 0)
+	    return(package(prog, R_FLOAT, vector_set_f0, "vector_set_f0", args, 3));
+	  if (prog->ints[args[2]->addr] == 1)
+	    return(package(prog, R_FLOAT, vector_set_f1, "vector_set_f1", args, 3));
+	  if (prog->ints[args[2]->addr] == 2)
+	    return(package(prog, R_FLOAT, vector_set_f2, "vector_set_f2", args, 3));
+	}
       return(package(prog, R_FLOAT, vector_set_f, "vector_set_f", args, 3)); 
       break;
 
@@ -8971,22 +9058,11 @@ static xen_value *vector_fill_1(ptree *prog, xen_value **args, int num_args)
 
 /* ---------------- vct stuff ---------------- */
 
-static void vct_check_index_1(int *args, ptree *pt) 
-{
-  if (VCT_ARG_1->length < 2) mus_error(MUS_NO_DATA, "vct index (1) too high");
-}
-
-static void vct_check_index_2(int *args, ptree *pt) 
-{
-  if (VCT_ARG_1->length < 3) mus_error(MUS_NO_DATA, "vct index (2) too high");
-}
-
 static void vct_check_index(int *args, ptree *pt) 
 {
   if (VCT_ARG_1->length <= INT_ARG_2) 
     mus_error(MUS_NO_DATA, "vct index (" INT_STR ") too high (len = " OFF_TD ")", INT_ARG_2, VCT_ARG_1->length);
 }
-
 
 
 static void vct_length_i(int *args, ptree *pt) {INT_RESULT = VCT_ARG_1->length;}
@@ -9000,10 +9076,9 @@ static xen_value *vct_length_1(ptree *prog, xen_value **args, int num_args)
 
 
 static void vct_constant_ref_0(int *args, ptree *pt) {FLOAT_RESULT = VCT_ARG_1->data[0];}
-
 static void vct_constant_ref_1(int *args, ptree *pt) {FLOAT_RESULT = VCT_ARG_1->data[1];}
-
 static void vct_constant_ref_2(int *args, ptree *pt) {FLOAT_RESULT = VCT_ARG_1->data[2];}
+static void vct_constant_ref_3(int *args, ptree *pt) {FLOAT_RESULT = VCT_ARG_1->data[3];}
 
 
 static void vct_ref_f(int *args, ptree *pt) {FLOAT_RESULT = VCT_ARG_1->data[INT_ARG_2];}
@@ -9016,15 +9091,11 @@ static xen_value *vct_ref_1(ptree *prog, xen_value **args, int num_args)
       if (prog->ints[args[2]->addr] == 0)
 	return(package(prog, R_FLOAT, vct_constant_ref_0, "vct_constant_ref_0", args, 1));
       if (prog->ints[args[2]->addr] == 1)
-	{
-	  if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, vct_check_index_1, "vct_check_index_1", args, 2);
-	  return(package(prog, R_FLOAT, vct_constant_ref_1, "vct_constant_ref_1", args, 1));
-	}
+	return(package(prog, R_FLOAT, vct_constant_ref_1, "vct_constant_ref_1", args, 1));
       if (prog->ints[args[2]->addr] == 2)
-	{
-	  if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, vct_check_index_2, "vct_check_index_2", args, 2);
-	  return(package(prog, R_FLOAT, vct_constant_ref_2, "vct_constant_ref_2", args, 1));
-	}
+	return(package(prog, R_FLOAT, vct_constant_ref_2, "vct_constant_ref_2", args, 1));
+      if (prog->ints[args[2]->addr] == 3)
+	return(package(prog, R_FLOAT, vct_constant_ref_3, "vct_constant_ref_3", args, 1));
     }
   if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, vct_check_index, "vct_check_index", args, 2);
   return(package(prog, R_FLOAT, vct_ref_f, "vct_ref_f", args, 2));
@@ -9032,10 +9103,9 @@ static xen_value *vct_ref_1(ptree *prog, xen_value **args, int num_args)
 
 
 static void vct_constant_set_0(int *args, ptree *pt) {VCT_ARG_1->data[0] = FLOAT_ARG_3; FLOAT_RESULT = FLOAT_ARG_3;}
-
 static void vct_constant_set_1(int *args, ptree *pt) {VCT_ARG_1->data[1] = FLOAT_ARG_3; FLOAT_RESULT = FLOAT_ARG_3;}
-
 static void vct_constant_set_2(int *args, ptree *pt) {VCT_ARG_1->data[2] = FLOAT_ARG_3; FLOAT_RESULT = FLOAT_ARG_3;}
+static void vct_constant_set_3(int *args, ptree *pt) {VCT_ARG_1->data[3] = FLOAT_ARG_3; FLOAT_RESULT = FLOAT_ARG_3;}
 
 static void vct_set_f(int *args, ptree *pt) {VCT_ARG_1->data[INT_ARG_2] = FLOAT_ARG_3; FLOAT_RESULT = FLOAT_ARG_3;}
 
@@ -9058,6 +9128,9 @@ static void vct_set_1(ptree *prog, xen_value *in_v, xen_value *in_v1, xen_value 
 	add_triple_to_ptree(prog, va_make_triple(vct_constant_set_1, "vct_constant_set_1", 4, NULL, in_v, in_v1, v));
       else if (prog->ints[in_v1->addr] == 2)
 	add_triple_to_ptree(prog, va_make_triple(vct_constant_set_2, "vct_constant_set_2", 4, NULL, in_v, in_v1, v));
+      else if (prog->ints[in_v1->addr] == 3)
+	add_triple_to_ptree(prog, va_make_triple(vct_constant_set_3, "vct_constant_set_3", 4, NULL, in_v, in_v1, v));
+      else add_triple_to_ptree(prog, va_make_triple(vct_set_f, "vct_set_f", 4, NULL, in_v, in_v1, v));
     }
   else add_triple_to_ptree(prog, va_make_triple(vct_set_f, "vct_set_f", 4, NULL, in_v, in_v1, v));
 }
@@ -9077,15 +9150,11 @@ static xen_value *vct_set_2(ptree *prog, xen_value **args, int num_args)
 	  if (prog->ints[args[2]->addr] == 0)
 	    return(package(prog, R_FLOAT, vct_constant_set_0, "vct_constant_set_0", args, 3));
 	  if (prog->ints[args[2]->addr] == 1)
-	    {
-	      if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, vct_check_index_1, "vct_check_index_1", args, 2);
-	      return(package(prog, R_FLOAT, vct_constant_set_1, "vct_constant_set_1", args, 3));
-	    }
+	    return(package(prog, R_FLOAT, vct_constant_set_1, "vct_constant_set_1", args, 3));
 	  if (prog->ints[args[2]->addr] == 2)
-	    {
-	      if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, vct_check_index_2, "vct_check_index_2", args, 2);
-	      return(package(prog, R_FLOAT, vct_constant_set_2, "vct_constant_set_2", args, 3));
-	    }
+	    return(package(prog, R_FLOAT, vct_constant_set_2, "vct_constant_set_2", args, 3));
+	  if (prog->ints[args[2]->addr] == 3)
+	    return(package(prog, R_FLOAT, vct_constant_set_3, "vct_constant_set_3", args, 3));
 	}
       if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, vct_check_index, "vct_check_index", args, 2);
       return(package(prog, R_FLOAT, vct_set_f, "vct_set_f", args, 3));
@@ -11703,11 +11772,15 @@ static void granulate_2f_split(int *args, ptree *pt)
 static void granulate_1f(int *args, ptree *pt)
 {
   ((mus_xen *)mus_environ(CLM_ARG_1))->input_ptree = FNC_ARG_2;
-  FLOAT_RESULT = mus_granulate(CLM_ARG_1, src_input);
+  FLOAT_RESULT = mus_granulate_with_editor(CLM_ARG_1, src_input, NULL);
 }
 
 
-static void granulate_0f(int *args, ptree *pt) {FLOAT_RESULT = mus_granulate(CLM_ARG_1, NULL);}
+static void granulate_0f(int *args, ptree *pt) 
+{
+  FLOAT_RESULT = mus_granulate_with_editor(CLM_ARG_1, NULL, NULL);
+}
+
 
 static xen_value *granulate_1(ptree *prog, xen_value **args, int num_args)
 {
@@ -11806,7 +11879,11 @@ static void phase_vocoder_1f(int *args, ptree *pt)
 }
 
 
-static void phase_vocoder_0f(int *args, ptree *pt) {FLOAT_RESULT = mus_phase_vocoder(CLM_ARG_1, NULL);}
+static void phase_vocoder_0f(int *args, ptree *pt) 
+{
+  FLOAT_RESULT = mus_phase_vocoder(CLM_ARG_1, NULL);
+}
+
 
 static xen_value *phase_vocoder_1(ptree *prog, xen_value **args, int num_args)
 {

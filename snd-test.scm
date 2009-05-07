@@ -45733,6 +45733,7 @@ EDITS: 1
 
 
 ;;; ---------------- test 22: run ----------------
+;(show-ptree 1)
 
 (defmacro time-it (a) 
   `(let ((start (real-time))) 
@@ -50065,16 +50066,6 @@ EDITS: 1
 					;       (jcrev   165 22 8)
 					;       (expsnd  65 8 8)
 					;       (fm vln  131 18 7)
-					;Gauche:
-					;       (osc+env 196 177 1)
-					;       (vct-ref 155 8 19)
-					;       (let if  115 9 13)
-					;       (abs sin 153 11 14)
-					;       (-1      128 6 21)
-					;       (*2      113 5 23)
-					;       (jcrev   139 140 1)
-					;       (expsnd  93 93 1)
-					;       (fm vln  79 98 1)
 					;s7 20-Nov-08:
 					;       ("osc+env" 261 16 16)
 					;       ("vct-ref" 259 9 27)
@@ -51043,12 +51034,6 @@ EDITS: 1
       (if (not (equal? val 'mus-error)) (snd-display ";run-safety #f osc: ~A" val)))
     (let ((val (catch #t (lambda () (run-eval '(lambda () (let ((os (make-oscil)) (ts (make-table-lookup))) (oscil ts))))) (lambda args (car args)))))
       (if (not (equal? val 'mus-error)) (snd-display ";run-safety tbl osc: ~A" val)))
-    (let ((val (catch #t (lambda () (run-eval '(lambda () (let ((v (make-vct 1))) (vct-ref v 2))))) (lambda args (car args)))))
-      (if (not (equal? val 'mus-error)) (snd-display ";run-safety vct 2: ~A" val)))
-    (let ((val (catch #t (lambda () (run-eval '(lambda () (let ((v (make-vct 1))) (vct-ref v 1))))) (lambda args (car args)))))
-      (if (not (equal? val 'mus-error)) (snd-display ";run-safety vct 1: ~A" val)))
-    (let ((val (catch #t (lambda () (run-eval '(lambda () (let ((v (make-vct 4)) (i 5)) (vct-ref v i))))) (lambda args (car args)))))
-      (if (not (equal? val 'mus-error)) (snd-display ";run-safety vct i: ~A" val)))
     (let ((val (catch #t (lambda () (run-eval '(lambda () (let ((v (make-sound-data 1 4)) (i 5)) (sound-data-ref v 0 i))))) (lambda args (car args)))))
       (if (not (equal? val 'mus-error)) (snd-display ";run-safety sound-data index i: ~A" val)))
     (set! (run-safety) 0)
