@@ -2,11 +2,13 @@
 #define CLM_H
 
 #define MUS_VERSION 4
-#define MUS_REVISION 22
-#define MUS_DATE "12-Mar-09"
+#define MUS_REVISION 23
+#define MUS_DATE "11-May-09"
 
 /*
- * 12-Mar-09:  sinc, papoulis and dpss (slepian windows).
+ * 11-May:     MUS_ENV_LINEAR and friends, also mus_env_linear|exponential.
+ *             mus_frame_to_frame_mono|stereo.
+ * 12-Mar:     sinc, papoulis and dpss (slepian windows).
  * 1-Jan-09:   added MUS_EXPORT.
  * --------
  * 11-Dec:     deprecated the sine-summation, sum-of-cosines, and sum-of-sines generators.
@@ -307,6 +309,7 @@ typedef struct mus_any_class {
 
 typedef enum {MUS_INTERP_NONE, MUS_INTERP_LINEAR, MUS_INTERP_SINUSOIDAL, MUS_INTERP_ALL_PASS, 
 	      MUS_INTERP_LAGRANGE, MUS_INTERP_BEZIER, MUS_INTERP_HERMITE, MUS_NUM_INTERPS} mus_interp_t;
+typedef enum {MUS_ENV_LINEAR, MUS_ENV_EXPONENTIAL, MUS_ENV_STEP} mus_env_t;
 
 typedef enum {MUS_RECTANGULAR_WINDOW, MUS_HANN_WINDOW, MUS_WELCH_WINDOW, MUS_PARZEN_WINDOW, MUS_BARTLETT_WINDOW,
 	      MUS_HAMMING_WINDOW, MUS_BLACKMAN2_WINDOW, MUS_BLACKMAN3_WINDOW, MUS_BLACKMAN4_WINDOW,
@@ -633,6 +636,9 @@ MUS_EXPORT double mus_env_initial_power(mus_any *gen); /* for Snd */
 MUS_EXPORT int mus_env_breakpoints(mus_any *gen);      /* for Snd */
 MUS_EXPORT Float mus_env_any(mus_any *e, Float (*connect_points)(Float val));
 #define mus_make_env_with_length(Brkpts, Pts, Scaler, Offset, Base, Length) mus_make_env(Brkpts, Pts, Scaler, Offset, Base, 0.0, (Length) - 1, NULL)
+MUS_EXPORT Float mus_env_linear(mus_any *ptr);
+MUS_EXPORT Float mus_env_exponential(mus_any *ptr);
+MUS_EXPORT mus_env_t mus_env_type(mus_any *ptr);
 
 MUS_EXPORT bool mus_frame_p(mus_any *ptr);
 MUS_EXPORT mus_any *mus_make_empty_frame(int chans);
@@ -658,6 +664,9 @@ MUS_EXPORT mus_any *mus_mixer_add(mus_any *f1, mus_any *f2, mus_any *res);
 MUS_EXPORT mus_any *mus_mixer_scale(mus_any *uf1, Float scaler, mus_any *ures);
 MUS_EXPORT mus_any *mus_mixer_offset(mus_any *uf1, Float offset, mus_any *ures);
 MUS_EXPORT mus_any *mus_make_scalar_mixer(int chans, Float scalar);
+MUS_EXPORT mus_any *mus_frame_to_frame_mono(mus_any *frame, mus_any *mix, mus_any *out);
+MUS_EXPORT mus_any *mus_frame_to_frame_stereo(mus_any *frame, mus_any *mix, mus_any *out);
+MUS_EXPORT mus_any *mus_frame_to_frame_mono_to_stereo(mus_any *frame, mus_any *mix, mus_any *out);
 
 MUS_EXPORT bool mus_file_to_sample_p(mus_any *ptr);
 MUS_EXPORT mus_any *mus_make_file_to_sample(const char *filename);

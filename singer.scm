@@ -525,8 +525,9 @@
 	   ))))))
 
 #|
-(singer 0 .1 (list (list .4 ehh.shp test.glt 523.0 .8 0.0 .01) (list .6 oo.shp test.glt 523.0 .7 .1 .01)))
+(with-sound () (singer 0 .1 (list (list .4 ehh.shp test.glt 523.0 .8 0.0 .01) (list .6 oo.shp test.glt 523.0 .7 .1 .01))))
 
+(with-sound ()
 (singer 0 .1 (list (list .05 ehh.shp test.glt 523.0 0.8 0.0 .01) 
 		   (list .15 ehh.shp test.glt 523.0 0.8 0.0 .01) 
 		   (list .05 kkk.shp test.glt 523.0 0.0 0.0 .01) 
@@ -541,7 +542,7 @@
 		   (list .15 ehh.shp test.glt 523.0 0.8 0.0 .01) 
 		   (list .05 mmm.shp test.glt 523.0 0.8 0.0 .01) 
 		   (list .15 mmm.shp test.glt 523.0 0.8 0.0 .01) 			      
-		   (list .10 mmm.shp test.glt 523.0 0.0 0.0 .01) ))
+		   (list .10 mmm.shp test.glt 523.0 0.0 0.0 .01) )))
 |#
 
 (define test.glt (list 10 .65 .65))

@@ -4402,6 +4402,8 @@ static xen_value *do_warn_of_type_trouble(int var_type, int expr_type, XEN form)
 
 
 static void equal_i2(int *args, ptree *pt);
+static void inc_i_1(int *args, ptree *pt);
+static void add_i2(int *args, ptree *pt);
 
 static xen_value *do_form(ptree *prog, XEN form, walk_result_t need_result)
 {
@@ -4517,11 +4519,24 @@ static xen_value *do_form(ptree *prog, XEN form, walk_result_t need_result)
 		      (prog->triple_ctr > 0))
 		    {
 		      /* as in set!, if possible, simply redirect the previous store to us (implicit set) */
+		      triple *prev_op;
 		      int *addrs;
-		      addrs = ((triple **)(prog->program))[prog->triple_ctr - 1]->args;
+		      prev_op = prog->program[prog->triple_ctr - 1];
+		      addrs = prev_op->args;
 		      if ((addrs) && 
 			  (addrs[0] == expr->addr))
-			addrs[0] = vr->v->addr; /* redirect the store to us */
+			{
+			  addrs[0] = vr->v->addr; /* redirect the store to us */
+			  /* look for simple increment cases */
+			  if ((prev_op->function == add_i2) &&
+			      (((addrs[1] != addrs[0]) && (prev_op->types[1] == R_CONSTANT) && (prog->ints[addrs[1]] == 1)) ||
+			       ((addrs[2] != addrs[0]) && (prev_op->types[2] == R_CONSTANT) && (prog->ints[addrs[2]] == 1))))
+			      
+			    {
+			      prev_op->function = inc_i_1;
+			      prev_op->op_name = "inc_i_1";
+			    }
+			}
 		      else set_var(prog, vr->v, expr);
 		    }
 		  else set_var(prog, vr->v, expr); 
@@ -4966,8 +4981,12 @@ static xen_value *set_form(ptree *prog, XEN form, walk_result_t ignore)
 	{
 	  /* if possible, simply redirect the previous store to us (implicit set) */
 	  /* (run '(let ((a 2) (b 1)) (set! a (+ b 1)))) */
+	  /* but don't try to optimize increments here: */
+	  /* (let ((a 0)) (run (lambda () (and (let ((b 32)) (if (< a 0) (set! a b) (set! a (+ 1 b))) #t) #f))) a) */
+	  triple *prev_op;
 	  int *addrs;
-	  addrs = ((triple **)(prog->program))[prog->triple_ctr - 1]->args;
+	  prev_op = prog->program[prog->triple_ctr - 1];
+	  addrs = prev_op->args;
 	  if ((addrs) && 
 	      (addrs[0] == v->addr))
 	    {
@@ -4975,6 +4994,7 @@ static xen_value *set_form(ptree *prog, XEN form, walk_result_t ignore)
 	      var->unclean = true;
 	      free(v);
 	      return(copy_xen_value(var->v));
+
 	    }
 	}
       set_var(prog, var->v, v);
@@ -5137,6 +5157,9 @@ static int float_all_args(ptree *prog, int num_args, xen_value **args, bool floa
 static void multiply_f2(int *args, ptree *pt) {FLOAT_RESULT = (FLOAT_ARG_1 * FLOAT_ARG_2);}
 
 
+static void multiply_f2_i(int *args, ptree *pt) {INT_RESULT = (Int)(FLOAT_ARG_1 * FLOAT_ARG_2);}
+
+
 static void multiply_f3(int *args, ptree *pt) {FLOAT_RESULT = (FLOAT_ARG_1 * FLOAT_ARG_2 * FLOAT_ARG_3);}
 
 
@@ -5249,6 +5272,9 @@ static xen_value *multiply(ptree *prog, xen_value **args, int num_args)
 static void add_f2(int *args, ptree *pt) {FLOAT_RESULT = (FLOAT_ARG_1 + FLOAT_ARG_2);}
 
 
+static void add_f2_i(int *args, ptree *pt) {INT_RESULT = (Int)(FLOAT_ARG_1 + FLOAT_ARG_2);}
+
+
 static void add_f3(int *args, ptree *pt) {FLOAT_RESULT = (FLOAT_ARG_1 + FLOAT_ARG_2 + FLOAT_ARG_3);}
 
 
@@ -5256,6 +5282,9 @@ static void add_f4(int *args, ptree *pt) {FLOAT_RESULT = (FLOAT_ARG_1 + FLOAT_AR
 
 
 static void add_f5(int *args, ptree *pt) {FLOAT_RESULT = (FLOAT_ARG_1 + FLOAT_ARG_2 + FLOAT_ARG_3 + FLOAT_ARG_4 + FLOAT_ARG_5);}
+
+
+static void multiply_add_f2(int *args, ptree *pt) {FLOAT_RESULT = (FLOAT_ARG_1 * FLOAT_ARG_2) + FLOAT_ARG_3;}
 
 
 static void add_fn(int *args, ptree *pt) 
@@ -5268,6 +5297,8 @@ static void add_fn(int *args, ptree *pt)
 
 
 static void add_i2(int *args, ptree *pt) {INT_RESULT = (INT_ARG_1 + INT_ARG_2);}
+
+static void inc_i_1(int *args, ptree *pt) {(INT_RESULT)++;}
 
 
 static void add_i3(int *args, ptree *pt) {INT_RESULT = (INT_ARG_1 + INT_ARG_2 + INT_ARG_3);}
@@ -5344,7 +5375,34 @@ static xen_value *add(ptree *prog, xen_value **args, int num_args)
 
   if (prog->float_result)
     {
-      if (num_args == 2) return(package(prog, R_FLOAT, add_f2, "add_f2", args, num_args));
+      if (num_args == 2) 
+	{
+	  /* (run (lambda () (let ((y 1.5) (z 2.3)) (let ((x (* y z))) (+ x 1.0)))))
+	   * (run (lambda () (let ((y 1.5) (z 2.3)) (let ((x (* y z))) (+ (* x y) z)))))
+	   */
+	  if (prog->triple_ctr > 0) 
+	    {
+	      triple *prev_op;
+	      prev_op = prog->program[prog->triple_ctr - 1];
+	      if ((prev_op->function == multiply_f2) &&
+		  ((prev_op->args[0] == args[1]->addr) ||
+		   (prev_op->args[0] == args[2]->addr)) &&
+		  ((find_var_in_ptree_via_addr(prog, R_FLOAT, prev_op->args[0])) == NULL))
+		{
+		  prev_op->function = multiply_add_f2;
+		  prev_op->op_name = "multiply_add_f2";
+		  prev_op->types = (int *)realloc(prev_op->types, 4 * sizeof(int));
+		  prev_op->args = (int *)realloc(prev_op->args, 4 * sizeof(int));
+		  prev_op->types[3] = R_FLOAT;
+		  if (prev_op->args[0] == args[1]->addr)
+		    prev_op->args[3] = args[2]->addr;
+		  else prev_op->args[3] = args[1]->addr;
+		  prev_op->num_args = 4;
+		  return(make_xen_value(R_FLOAT, prev_op->args[0], R_TEMPORARY));
+		}
+	    }
+	  return(package(prog, R_FLOAT, add_f2, "add_f2", args, num_args));
+	}
       if (num_args == 3) return(package(prog, R_FLOAT, add_f3, "add_f3", args, num_args));
       if (num_args == 4) return(package(prog, R_FLOAT, add_f4, "add_f4", args, num_args));
       if (num_args == 5) return(package(prog, R_FLOAT, add_f5, "add_f5", args, num_args));
@@ -5364,6 +5422,9 @@ static void subtract_f1(int *args, ptree *pt) {FLOAT_RESULT = -(FLOAT_ARG_1);}
 
 
 static void subtract_f2(int *args, ptree *pt) {FLOAT_RESULT = (FLOAT_ARG_1 - FLOAT_ARG_2);}
+
+
+static void subtract_f2_i(int *args, ptree *pt) {INT_RESULT = (Int)(FLOAT_ARG_1 - FLOAT_ARG_2);}
 
 
 static void subtract_f3(int *args, ptree *pt) {FLOAT_RESULT = (FLOAT_ARG_1 - FLOAT_ARG_2 - FLOAT_ARG_3);}
@@ -5530,6 +5591,9 @@ static void divide_if1(int *args, ptree *pt) {INT_RESULT = (Int)(1.0 / FLOAT_ARG
 
 
 static void divide_f2(int *args, ptree *pt) {FLOAT_RESULT = (FLOAT_ARG_1 / FLOAT_ARG_2);}
+
+
+static void divide_f2_i(int *args, ptree *pt) {INT_RESULT = (Int)(FLOAT_ARG_1 / FLOAT_ARG_2);}
 
 
 static void divide_if2(int *args, ptree *pt) {INT_RESULT = (Int)(FLOAT_ARG_1 / FLOAT_ARG_2);}
@@ -6436,10 +6500,10 @@ static xen_value *floor_1(ptree *prog, xen_value **args, int num_args)
 {
   if (args[1]->type == R_INT)
     return(copy_xen_value(args[1]));
+
 #if HAVE_S7
   if (prog->constants == 1)
     return(make_xen_value(R_INT, add_int_to_ptree(prog, (Int)floor(prog->dbls[args[1]->addr])), R_CONSTANT));
-  return(package(prog, R_INT, floor_i, "floor_i", args, 1));
 #else
   if (prog->constants == 1)
     {
@@ -6447,6 +6511,54 @@ static xen_value *floor_1(ptree *prog, xen_value **args, int num_args)
 	return(make_xen_value(R_INT, add_int_to_ptree(prog, (Int)floor(prog->dbls[args[1]->addr])), R_CONSTANT));
       return(make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, floor(prog->dbls[args[1]->addr])), R_CONSTANT));
     }
+#endif
+
+  if (prog->triple_ctr > 0)
+    {
+      triple *prev_op;
+      bool happy = false;
+      prev_op = prog->program[prog->triple_ctr - 1];
+      if ((prev_op->args[0] == args[1]->addr) &&
+	  (prev_op->types[0] == R_FLOAT) &&
+	  (find_var_in_ptree_via_addr(prog, R_FLOAT, prev_op->args[0])) == NULL)
+	{
+	  if (prev_op->function == multiply_f2)
+	    {
+	      prev_op->function = multiply_f2_i;
+	      prev_op->op_name = "multiply_f2_i";
+	      happy = true;
+	    }
+	  if (prev_op->function == divide_f2)
+	    {
+	      prev_op->function = divide_f2_i;
+	      prev_op->op_name = "divide_f2_i";
+	      happy = true;
+	    }
+	  if (prev_op->function == subtract_f2)
+	    {
+	      prev_op->function = subtract_f2_i;
+	      prev_op->op_name = "subtract_f2_i";
+	      happy = true;
+	    }
+	  if (prev_op->function == add_f2)
+	    {
+	      prev_op->function = add_f2_i;
+	      prev_op->op_name = "add_f2_i";
+	      happy = true;
+	    }
+	  if (happy)
+	    {
+	      args[0] = add_temporary_var_to_ptree(prog, R_INT);
+	      prev_op->types[0] = R_INT;
+	      prev_op->args[0] = args[0]->addr;
+	      return(args[0]);
+	    }
+	}
+    }
+
+#if HAVE_S7
+  return(package(prog, R_INT, floor_i, "floor_i", args, 1));
+#else
   if (prog->walk_result == NEED_INT_RESULT)
     return(package(prog, R_INT, floor_i, "floor_i", args, 1));
   return(package(prog, R_FLOAT, floor_f, "floor_f", args, 1));
@@ -9987,7 +10099,42 @@ static xen_value *firmant_1(ptree *prog, xen_value **args, int num_args)
   }
 
 
-GEN1(env)
+/* GEN1(env) */
+GEN_P(env)
+
+static void env_0f(int *args, ptree *pt) {FLOAT_RESULT = mus_env(CLM_ARG_1);}  
+static void env_linear_0f(int *args, ptree *pt) {FLOAT_RESULT = mus_env_linear(CLM_ARG_1);}  
+static void env_exponential_0f(int *args, ptree *pt) {FLOAT_RESULT = mus_env_exponential(CLM_ARG_1);}  
+
+static xen_value *env_1(ptree *prog, xen_value **args, int num_args)
+{
+  if (run_safety == RUN_SAFE) safe_package(prog, R_BOOL, env_check, "env_check", args, 1);
+
+  if ((args[1]->type == R_CLM) &&
+      (mus_env_p(prog->clms[args[1]->addr])))
+    {
+      /* this sort of optimization assumes the ptree is not saved,
+       *   and that run-time make-env values are not already set?!?
+       */
+      mus_env_t style;
+      mus_any *e;
+      e = prog->clms[args[1]->addr];
+      style = mus_env_type(e);
+
+      /* if it's a constant, return its value as in (+ 1 2) */
+      if (mus_env_breakpoints(e) == 1)
+	return(make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, mus_env(e)), R_CONSTANT));
+
+      if (style == MUS_ENV_LINEAR)
+	return(package(prog, R_FLOAT, env_linear_0f, "env_linear_0f", args, 1));
+      if (style == MUS_ENV_EXPONENTIAL)
+	return(package(prog, R_FLOAT, env_exponential_0f, "env_exponential_0f", args, 1));
+    }
+
+  return(package(prog, R_FLOAT, env_0f, "env_0f", args, 1));
+}
+
+
 GEN1(readin)
 
 GEN3(notch)
@@ -10838,11 +10985,53 @@ static void frame_to_frame_3(int *args, ptree *pt)
   CLM_RESULT = mus_frame_to_frame(CLM_ARG_1, CLM_ARG_2, CLM_ARG_3);
 }
 
+static void frame_to_frame_mono(int *args, ptree *pt)
+{
+  CLM_RESULT = mus_frame_to_frame_mono(CLM_ARG_1, CLM_ARG_2, CLM_ARG_3);
+}
+
+static void frame_to_frame_mono_to_stereo(int *args, ptree *pt)
+{
+  CLM_RESULT = mus_frame_to_frame_mono_to_stereo(CLM_ARG_1, CLM_ARG_2, CLM_ARG_3);
+}
+
+static void frame_to_frame_stereo(int *args, ptree *pt)
+{
+  CLM_RESULT = mus_frame_to_frame_stereo(CLM_ARG_1, CLM_ARG_2, CLM_ARG_3);
+}
+
 static xen_value *frame_to_frame_1(ptree *prog, xen_value **args, int num_args)
 {
   if (num_args == 2) return(package(prog, R_CLM, frame_to_frame_2, "frame_to_frame_2", args, 2));
+
+  if ((args[1]->type == R_CLM) &&
+      (mus_frame_p(prog->clms[args[1]->addr])) &&
+      (args[2]->type == R_CLM) &&
+      (mus_mixer_p(prog->clms[args[2]->addr])) &&
+      (args[3]->type == R_CLM) &&
+      (mus_frame_p(prog->clms[args[3]->addr])))
+    {
+      if ((mus_channels(prog->clms[args[1]->addr]) == 1) &&
+	  (mus_channels(prog->clms[args[2]->addr]) >= 1) &&
+	  (mus_channels(prog->clms[args[3]->addr]) == 1))
+	return(package(prog, R_CLM, frame_to_frame_mono, "frame_to_frame_mono", args, 3));
+
+      if ((mus_channels(prog->clms[args[1]->addr]) == 2) &&
+	  (mus_channels(prog->clms[args[2]->addr]) >= 2) &&
+	  (mus_channels(prog->clms[args[3]->addr]) == 2))
+	return(package(prog, R_CLM, frame_to_frame_stereo, "frame_to_frame_stereo", args, 3));
+
+      if ((mus_channels(prog->clms[args[1]->addr]) == 1) &&
+	  (mus_channels(prog->clms[args[2]->addr]) >= 2) &&
+	  (mus_channels(prog->clms[args[3]->addr]) == 2))
+	return(package(prog, R_CLM, frame_to_frame_mono_to_stereo, "frame_to_frame_mono_to_stereo", args, 3));
+
+    }
+
   return(package(prog, R_CLM, frame_to_frame_3, "frame_to_frame_3", args, 3));
 }
+
+/* frame_to_frame_via_mixer chans ok, out already allocated, if 1 chan just mult etc, arg1=frame, arg2=mixer, arg3=frame */
 
 
 /* ---------------- frame->sample ---------------- */

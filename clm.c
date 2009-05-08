@@ -5691,13 +5691,11 @@ Float *mus_make_fir_coeffs(int order, Float *envl, Float *aa)
 
 /* ---------------- env ---------------- */
 
-typedef enum {ENV_SEG, ENV_STEP, ENV_EXP} env_style_t;
-
 typedef struct {
   mus_any_class *core;
   double rate, current_value, base, offset, scaler, power, init_y, init_power, original_scaler, original_offset;
   off_t loc, end;
-  env_style_t style;
+  mus_env_t style;
   int index, size;
   bool data_allocated;
   Float *original_data;
@@ -5745,6 +5743,12 @@ bool mus_env_p(mus_any *ptr)
 }
 
 
+mus_env_t mus_env_type(mus_any *ptr)
+{
+  return(((seg *)ptr)->style);
+}
+
+
 Float mus_env(mus_any *ptr)
 {
   seg *gen = (seg *)ptr;
@@ -5752,18 +5756,17 @@ Float mus_env(mus_any *ptr)
 
   val = gen->current_value;
 
-  if ((gen->index < gen->size) && 
-      (gen->loc >= gen->locs[gen->index]))
+  if (gen->loc >= gen->locs[gen->index])
     {
       gen->index++;
       gen->rate = gen->rates[gen->index];
     }
 
-  if (gen->style == ENV_SEG)
+  if (gen->style == MUS_ENV_LINEAR)
     gen->current_value += gen->rate; 
   else
     {
-      if (gen->style == ENV_EXP)
+      if (gen->style == MUS_ENV_EXPONENTIAL)
 	{
 	  gen->power *= gen->rate;
 	  gen->current_value = gen->offset + (gen->scaler * gen->power);
@@ -5771,6 +5774,39 @@ Float mus_env(mus_any *ptr)
       else gen->current_value = gen->rate; 
     }
 
+  gen->loc++;
+  return(val);
+}
+
+
+Float mus_env_linear(mus_any *ptr)
+{
+  seg *gen = (seg *)ptr;
+  Float val;
+  val = gen->current_value;
+  if (gen->loc >= gen->locs[gen->index])
+    {
+      gen->index++;
+      gen->rate = gen->rates[gen->index];
+    }
+  gen->current_value += gen->rate; 
+  gen->loc++;
+  return(val);
+}
+
+
+Float mus_env_exponential(mus_any *ptr)
+{
+  seg *gen = (seg *)ptr;
+  Float val;
+  val = gen->current_value;
+  if (gen->loc >= gen->locs[gen->index])
+    {
+      gen->index++;
+      gen->rate = gen->rates[gen->index];
+    }
+  gen->power *= gen->rate;
+  gen->current_value = gen->offset + (gen->scaler * gen->power);
   gen->loc++;
   return(val);
 }
@@ -5794,7 +5830,7 @@ static void dmagify_env(seg *e, Float *data, int pts, off_t dur, double scaler)
     xscl = (double)(dur - 1) / (double)(data[pts * 2 - 2] - data[0]); /* was dur, 7-Apr-02 */
 
   e->rates = (double *)clm_calloc_atomic(pts, sizeof(double), "env rates");
-  e->locs = (off_t *)clm_calloc_atomic(pts, sizeof(off_t), "env locs");
+  e->locs = (off_t *)clm_calloc_atomic(pts + 1, sizeof(off_t), "env locs");
 
   for (j = 0, i = 2; i < pts * 2; i += 2, j++)
     {
@@ -5810,7 +5846,7 @@ static void dmagify_env(seg *e, Float *data, int pts, off_t dur, double scaler)
       if (cur_dx < 1.0) cur_dx = 1.0;
       cur_loc += cur_dx;
 
-      if (e->style == ENV_STEP)
+      if (e->style == MUS_ENV_STEP)
 	e->locs[j] = (off_t)cur_loc; /* this is the change boundary (confusing...) */
       else e->locs[j] = (off_t)(cur_loc + 0.5);
 
@@ -5820,20 +5856,20 @@ static void dmagify_env(seg *e, Float *data, int pts, off_t dur, double scaler)
 
       switch (e->style)
 	{
-	case ENV_STEP:
-	  e->rates[j] = e->offset + (scaler * y0);
-	  break;
-
-	case ENV_SEG:
+	case MUS_ENV_LINEAR:
 	  if ((y0 == y1) || (samps == 0))
 	    e->rates[j] = 0.0;
 	  else e->rates[j] = scaler * (y1 - y0) / (double)samps;
 	  break;
 
-	case ENV_EXP:
+	case MUS_ENV_EXPONENTIAL:
 	  if ((y0 == y1) || (samps == 0))
 	    e->rates[j] = 1.0;
 	  else e->rates[j] = exp((y1 - y0) / (double)samps);
+	  break;
+
+	case MUS_ENV_STEP:
+	  e->rates[j] = e->offset + (scaler * y0);
 	  break;
 	}
     }
@@ -5846,21 +5882,22 @@ static void dmagify_env(seg *e, Float *data, int pts, off_t dur, double scaler)
     {
       switch (e->style)
       {
-      case ENV_STEP:
+      case MUS_ENV_STEP:
 	e->rates[pts - 1] = e->rates[pts - 2]; /* stick at last value, which in this case is the value (not an increment) */
 	break;
 
-      case ENV_SEG:
+      case MUS_ENV_LINEAR:
 	e->rates[pts - 1] = 0.0;
 	break;
 
-      case ENV_EXP:
+      case MUS_ENV_EXPONENTIAL:
 	e->rates[pts - 1] = 1.0;
 	break;
       }
     }
 
   e->locs[pts - 1] = 1000000000;
+  e->locs[pts] = 1000000000; /* guard cell at end to make bounds check simpler */
 }
 
 
@@ -5947,7 +5984,7 @@ static char *describe_env(mus_any *ptr)
   describe_buffer = (char *)clm_malloc(DESCRIBE_BUFFER_SIZE, "describe buffer");
   mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s %s, pass: " OFF_TD " (dur: " OFF_TD "), index: %d, scaler: %.4f, offset: %.4f, data: %s",
 	       mus_name(ptr),
-	       ((e->style == ENV_SEG) ? "linear" : ((e->style == ENV_EXP) ? "exponential" : "step")),
+	       ((e->style == MUS_ENV_LINEAR) ? "linear" : ((e->style == MUS_ENV_EXPONENTIAL) ? "exponential" : "step")),
 	       e->loc, 
 	       e->end + 1, 
 	       e->index,
@@ -6006,7 +6043,7 @@ static off_t seg_set_pass(mus_any *ptr, off_t val) {env_set_location(ptr, val); 
 
 static Float env_increment(mus_any *rd)
 {
-  if (((seg *)rd)->style == ENV_STEP)
+  if (((seg *)rd)->style == MUS_ENV_STEP)
     return(0.0);
   return(((seg *)rd)->base);
 }
@@ -6150,19 +6187,19 @@ mus_any *mus_make_env(Float *brkpts, int npts, double scaler, double offset, dou
 
   if (base == 0.0)
     {
-      e->style = ENV_STEP;
+      e->style = MUS_ENV_STEP;
       dmagify_env(e, brkpts, npts, dur_in_samples, scaler);
     }
   else
     {
       if (base == 1.0)
 	{
-	  e->style = ENV_SEG;
+	  e->style = MUS_ENV_LINEAR;
 	  dmagify_env(e, brkpts, npts, dur_in_samples, scaler);
 	}
       else
 	{
-	  e->style = ENV_EXP;
+	  e->style = MUS_ENV_EXPONENTIAL;
 
 	  edata = fixup_exp_env(e, brkpts, npts, offset, scaler, base);
 	  if (edata == NULL)
@@ -6209,15 +6246,15 @@ static void env_set_location(mus_any *ptr, off_t val)
 
       switch (gen->style)
 	{
-	case ENV_SEG: 
+	case MUS_ENV_LINEAR: 
 	  gen->current_value += (samps * gen->rate);
 	  break;
 
-	case ENV_STEP: 
+	case MUS_ENV_STEP: 
 	  gen->current_value = gen->rate; 
 	  break;
 
-	case ENV_EXP: 
+	case MUS_ENV_EXPONENTIAL: 
 	  gen->power *= exp(samps * log(gen->rate));
 	  gen->current_value = gen->offset + (gen->scaler * gen->power);
 	  break;
@@ -6792,7 +6829,33 @@ static mus_any *frame_to_frame_right(mus_any *arg1, mus_any *arg2, mus_any *arg_
       for (j = 0; j < in_chans; j++)
 	out->vals[i] += (frame->vals[j] * mix->vals[j][i]);
     }
-  return((mus_any *)out);
+  return((mus_any *)out); /* not arg_out since out may be allocated above, and clm2xen.c expects this to be legit */
+}
+
+
+mus_any *mus_frame_to_frame_mono(mus_any *frame, mus_any *mix, mus_any *out)
+{
+  /* assume every possible problem has already been checked somewhere */
+  ((mus_frame *)out)->vals[0] = ((mus_frame *)frame)->vals[0] * ((mus_mixer *)mix)->vals[0][0];
+  return(out);
+}
+
+
+mus_any *mus_frame_to_frame_stereo(mus_any *frame, mus_any *mix, mus_any *out)
+{
+  ((mus_frame *)out)->vals[0] = ((mus_frame *)frame)->vals[0] * ((mus_mixer *)mix)->vals[0][0] + 
+                                ((mus_frame *)frame)->vals[1] * ((mus_mixer *)mix)->vals[1][0];
+  ((mus_frame *)out)->vals[1] = ((mus_frame *)frame)->vals[0] * ((mus_mixer *)mix)->vals[0][1] + 
+                                ((mus_frame *)frame)->vals[1] * ((mus_mixer *)mix)->vals[1][1];
+  return(out);
+}
+
+
+mus_any *mus_frame_to_frame_mono_to_stereo(mus_any *frame, mus_any *mix, mus_any *out)
+{
+  ((mus_frame *)out)->vals[0] = ((mus_frame *)frame)->vals[0] * ((mus_mixer *)mix)->vals[0][0];
+  ((mus_frame *)out)->vals[1] = ((mus_frame *)frame)->vals[0] * ((mus_mixer *)mix)->vals[0][1];
+  return(out);
 }
 
 
@@ -8035,15 +8098,24 @@ mus_any *mus_frame_to_file(mus_any *ptr, off_t samp, mus_any *udata)
 	sample_file(ptr, samp, 0, data->vals[0]);
       else
 	{
-	  int i, chans;
-	  chans = data->chans;
-	  if (gen->chans < chans) 
-	    chans = gen->chans;
-	  for (i = 0; i < chans; i++) 
-	    sample_file(ptr, samp, i, data->vals[i]);
+	  if ((data->chans == 2) &&
+	      (gen->chans == 2))
+	    {
+	      sample_file(ptr, samp, 0, data->vals[0]);
+	      sample_file(ptr, samp, 1, data->vals[1]);
+	    }
+	  else
+	    {
+	      int i, chans;
+	      chans = data->chans;
+	      if (gen->chans < chans) 
+		chans = gen->chans;
+	      for (i = 0; i < chans; i++) 
+		sample_file(ptr, samp, i, data->vals[i]);
+	    }
 	}
     }
-  return((mus_any *)data);
+  return(udata);
 }
 
 

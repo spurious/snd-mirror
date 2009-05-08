@@ -17553,6 +17553,18 @@ EDITS: 2
 	(set! impulse 0.0))
       (if (not (vequal data (vct 1.4 0.0 0.0 0.0 0.0))) ; hmmm -- they're asking for undefined values here 
 	  (snd-display ";delay size 0, max 1, off -0.4: ~A" data))
+
+      (set! dly1 (make-delay 0))
+      (set! impulse 1.0)
+      (do ((i 0 (+ 1 i)))
+	  ((= i 5))
+	(vct-set! data i (delay dly1 impulse)) 
+	(set! impulse 0.0))
+      (if (not (vequal data (vct 1 0 0 0 0)))
+	  (snd-display ";delay size 0: ~A" data))
+
+      (if (fneq (delay dly1 0.5) 0.5)
+	  (snd-display ";delay size 0 0.5: ~A" (delay dly 0.5)))
       )
     
     (let ((gen (make-delay :size 0 :max-size 100))
@@ -45733,7 +45745,6 @@ EDITS: 1
 
 
 ;;; ---------------- test 22: run ----------------
-;(show-ptree 1)
 
 (defmacro time-it (a) 
   `(let ((start (real-time))) 
