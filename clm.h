@@ -714,6 +714,20 @@ MUS_EXPORT mus_any *mus_locsig_outf(mus_any *ptr);
 MUS_EXPORT mus_any *mus_locsig_revf(mus_any *ptr);
 MUS_EXPORT void *mus_locsig_closure(mus_any *ptr);
 
+  /* these are for the optimizer (run.c) */
+void mus_locsig_mono_no_reverb(mus_any *ptr, off_t loc, Float val);
+void mus_locsig_mono(mus_any *ptr, off_t loc, Float val);
+void mus_locsig_stereo_no_reverb(mus_any *ptr, off_t loc, Float val);
+void mus_locsig_stereo(mus_any *ptr, off_t loc, Float val);
+void mus_locsig_safe_mono_no_reverb(mus_any *ptr, off_t loc, Float val);
+void mus_locsig_safe_mono(mus_any *ptr, off_t loc, Float val);
+void mus_locsig_safe_stereo_no_reverb(mus_any *ptr, off_t loc, Float val);
+void mus_locsig_safe_stereo(mus_any *ptr, off_t loc, Float val);
+int mus_locsig_channels(mus_any *ptr);
+int mus_locsig_reverb_channels(mus_any *ptr);
+int mus_locsig_safety(mus_any *ptr);
+
+
 MUS_EXPORT bool mus_move_sound_p(mus_any *ptr);
 MUS_EXPORT Float mus_move_sound(mus_any *ptr, off_t loc, Float val);
 MUS_EXPORT mus_any *mus_make_move_sound(off_t start, off_t end, int out_channels, int rev_channels,

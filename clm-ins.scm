@@ -1178,7 +1178,7 @@ is a physical model of a flute:
 	 (delA 0.0)
 	 (delB 0.0)
 	 (decay-dur (* decay (mus-srate)))
-	 (len (+ decay-dur (mus-length *reverb*))))
+	 (len (floor (+ decay-dur (mus-length *reverb*)))))
     (ws-interrupt?)
     (run
      (lambda ()
@@ -2617,6 +2617,7 @@ mjkoskin@sci.fi
 		     #f))
 	 (revframe (if rev-mx (make-frame 1) #f))
 	 (envs #f))
+
     (if matrix
 	(begin
 	  (if (list? matrix) ; matrix is list of scalers, envelopes (lists), or env gens
@@ -2646,11 +2647,13 @@ mjkoskin@sci.fi
 		  ((= inp in-chans))
 		(if (< inp out-chans)
 		    (mixer-set! mx inp inp matrix))))))
+
     (if (not srate)
 	;; no src
 	(begin
 	  (mus-mix *output* file st samps inloc mx envs)
 	  (if rev-mx (mus-mix *reverb* revframe st samps inloc rev-mx #f)))
+
 	;; with src
 	(let* ((inframe (make-frame in-chans))
 	       (outframe (make-frame out-chans))
@@ -2659,23 +2662,22 @@ mjkoskin@sci.fi
 	      ((= inp in-chans))
 	    (vector-set! srcs inp (make-src :input (vector-ref file inp) :srate srate)))
 
-	  (if envs
-	      (run 
-	       (lambda ()
-		 (do ((i st (+ i 1)))
-		     ((= i nd))
-		   (do ((inp 0 (+ 1 inp)))
-		       ((= inp in-chans))
-		     (do ((outp 0 (+ 1 outp)))
-			 ((= outp out-chans))
-		       (if (and (vector-ref envs inp)
-				(env? (vector-ref (vector-ref envs inp) outp)))
-			   (mixer-set! mx inp outp (env (vector-ref (vector-ref envs inp) outp)))))))
-		 (do ((inp 0 (+ 1 inp)))
-		     ((= inp in-chans))
-		   (frame-set! inframe inp (src (vector-ref srcs inp))))
-		 (frame->file *output* i (frame->frame inframe mx outframe))
-		 (if rev-mx (frame->file *reverb* i (frame->frame inframe rev-mx revframe)))))
+	  (if envs ; a vector of vectors of env gens, which is not currently run-optimizable
+	      (do ((i st (+ i 1)))
+		  ((= i nd))
+		(do ((inp 0 (+ 1 inp)))
+		    ((= inp in-chans))
+		  (do ((outp 0 (+ 1 outp)))
+		      ((= outp out-chans))
+		    (if (and (vector-ref envs inp)
+			     (env? (vector-ref (vector-ref envs inp) outp)))
+			(mixer-set! mx inp outp (env (vector-ref (vector-ref envs inp) outp))))))
+		(do ((inp 0 (+ 1 inp)))
+		    ((= inp in-chans))
+		  (frame-set! inframe inp (src (vector-ref srcs inp))))
+		(frame->file *output* i (frame->frame inframe mx outframe))
+		(if rev-mx (frame->file *reverb* i (frame->frame inframe rev-mx revframe))))
+
 	      ;; no envs
 	      (run 
 	       (lambda ()
@@ -2964,17 +2966,14 @@ mjkoskin@sci.fi
 		     ;; output actual samples
 		     (do ((ix 0 (+ 1 ix)))
 			 ((= ix in-chans))
-		       (let ((samp (vct-ref samples-0 ix)))
-			 (frame-set! inframe ix samp)))
+		       (frame-set! inframe ix (vct-ref samples-0 ix)))
 		     ;; output interpolated samples
 		     (do ((ix 0 (+ 1 ix)))
 			 ((= ix in-chans))
 		       (let* ((v0 (vct-ref samples-0 ix))
-			      (v1 (vct-ref samples-1 ix))
-			      (samp (+ v0 (* (- next-samp ex-samp)
-					     (- v1 v0)))))
-			 (frame-set! inframe ix samp))))
-
+			      (v1 (vct-ref samples-1 ix)))
+			 (frame-set! inframe ix (+ v0 (* (- next-samp ex-samp)
+							 (- v1 v0)))))))
 		 ;; output mixed result
 		 (frame->file *output* i (frame->frame inframe mx outframe))
 		 ;; if reverb is turned on, output to the reverb streams

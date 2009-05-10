@@ -8594,6 +8594,100 @@ Float mus_locsig(mus_any *ptr, off_t loc, Float val)
 }
 
 
+int mus_locsig_channels(mus_any *ptr)
+{
+  return(((locs *)ptr)->chans);
+}
+
+int mus_locsig_reverb_channels(mus_any *ptr)
+{
+  return(((locs *)ptr)->rev_chans);
+}
+
+
+int mus_locsig_safety(mus_any *ptr)
+{
+  return(((locs *)ptr)->safety);
+}
+
+
+void mus_locsig_mono_no_reverb(mus_any *ptr, off_t loc, Float val)
+{
+  locs *gen = (locs *)ptr;
+  sample_file(gen->outn_writer, loc, 0, val * gen->outn[0]);
+}
+
+
+void mus_locsig_mono(mus_any *ptr, off_t loc, Float val)
+{
+  locs *gen = (locs *)ptr;
+  sample_file(gen->outn_writer, loc, 0, val * gen->outn[0]);
+  sample_file(gen->revn_writer, loc, 0, val * gen->revn[0]);
+}
+
+
+void mus_locsig_stereo_no_reverb(mus_any *ptr, off_t loc, Float val)
+{
+  locs *gen = (locs *)ptr;
+  sample_file(gen->outn_writer, loc, 0, val * gen->outn[0]);
+  sample_file(gen->outn_writer, loc, 1, val * gen->outn[1]);
+}
+
+
+void mus_locsig_stereo(mus_any *ptr, off_t loc, Float val) /* but mono rev */
+{
+  locs *gen = (locs *)ptr;
+  sample_file(gen->outn_writer, loc, 0, val * gen->outn[0]);
+  sample_file(gen->outn_writer, loc, 1, val * gen->outn[1]);
+  sample_file(gen->revn_writer, loc, 0, val * gen->revn[0]);
+}
+
+
+void mus_locsig_safe_mono_no_reverb(mus_any *ptr, off_t loc, Float val)
+{
+  locs *gen = (locs *)ptr;
+  rdout *writer = (rdout *)(gen->outn_writer);
+  writer->obufs[0][loc] += MUS_FLOAT_TO_SAMPLE(val * gen->outn[0]);   
+  if (loc > writer->out_end) 
+    writer->out_end = loc;
+}
+
+
+void mus_locsig_safe_mono(mus_any *ptr, off_t loc, Float val)
+{
+  locs *gen = (locs *)ptr;
+  rdout *writer = (rdout *)(gen->outn_writer);
+  writer->obufs[0][loc] += MUS_FLOAT_TO_SAMPLE(val * gen->outn[0]); 
+  writer = (rdout *)(gen->revn_writer);
+  writer->obufs[0][loc] += MUS_FLOAT_TO_SAMPLE(val * gen->revn[0]);   
+  if (loc > writer->out_end) 
+    writer->out_end = loc;
+}
+
+
+void mus_locsig_safe_stereo_no_reverb(mus_any *ptr, off_t loc, Float val)
+{
+  locs *gen = (locs *)ptr;
+  rdout *writer = (rdout *)(gen->outn_writer);
+  writer->obufs[0][loc] += MUS_FLOAT_TO_SAMPLE(val * gen->outn[0]);   
+  writer->obufs[1][loc] += MUS_FLOAT_TO_SAMPLE(val * gen->outn[1]);   
+  if (loc > writer->out_end) 
+    writer->out_end = loc;
+}
+
+void mus_locsig_safe_stereo(mus_any *ptr, off_t loc, Float val)
+{
+  locs *gen = (locs *)ptr;
+  rdout *writer = (rdout *)(gen->outn_writer);
+  writer->obufs[0][loc] += MUS_FLOAT_TO_SAMPLE(val * gen->outn[0]); 
+  writer->obufs[1][loc] += MUS_FLOAT_TO_SAMPLE(val * gen->outn[1]); 
+  writer = (rdout *)(gen->revn_writer);
+  writer->obufs[0][loc] += MUS_FLOAT_TO_SAMPLE(val * gen->revn[0]);   
+  if (loc > writer->out_end) 
+    writer->out_end = loc;
+}
+
+
 void mus_move_locsig(mus_any *ptr, Float degree, Float distance)
 {
   locs *gen = (locs *)ptr;

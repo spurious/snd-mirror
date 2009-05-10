@@ -4531,7 +4531,6 @@ static xen_value *do_form(ptree *prog, XEN form, walk_result_t need_result)
 			  if ((prev_op->function == add_i2) &&
 			      (((addrs[1] != addrs[0]) && (prev_op->types[1] == R_CONSTANT) && (prog->ints[addrs[1]] == 1)) ||
 			       ((addrs[2] != addrs[0]) && (prev_op->types[2] == R_CONSTANT) && (prog->ints[addrs[2]] == 1))))
-			      
 			    {
 			      prev_op->function = inc_i_1;
 			      prev_op->op_name = "inc_i_1";
@@ -5199,6 +5198,111 @@ static void multiply_i_f(int *args, ptree *pt) {FLOAT_RESULT = (INT_ARG_1 * FLOA
 static void multiply_f_i(int *args, ptree *pt) {FLOAT_RESULT = (FLOAT_ARG_1 * INT_ARG_2);}
 
 
+static void multiply_f_i_i(int *args, ptree *pt) {INT_RESULT = (Int)(FLOAT_ARG_1 * INT_ARG_2);}
+
+static void add_f2_mult(int *args, ptree *pt);
+static void add_f2(int *args, ptree *pt);
+static void subtract_f2(int *args, ptree *pt);
+static void subtract_f2_mult(int *args, ptree *pt);
+static void multiply_add_f2(int *args, ptree *pt);
+static void multiply_add_f2_mult(int *args, ptree *pt);
+static void oscil_0f_1(int *args, ptree *pt);
+static void oscil_0f_1_env(int *args, ptree *pt);
+static void oscil_0f_1_mult(int *args, ptree *pt);
+static void oscil_1f_1(int *args, ptree *pt);
+static void oscil_1f_1_env(int *args, ptree *pt);
+static void oscil_1f_1_mult(int *args, ptree *pt);
+static void polywave_0f_env(int *args, ptree *pt);
+static void polywave_0f_mult(int *args, ptree *pt);
+static void polywave_0f(int *args, ptree *pt);
+static void polywave_1f_env(int *args, ptree *pt);
+static void polywave_1f_mult(int *args, ptree *pt);
+static void polywave_1f(int *args, ptree *pt);
+static void sin_f(int *args, ptree *pt);
+static void sin_f_mult(int *args, ptree *pt);
+static void cos_f(int *args, ptree *pt);
+static void cos_f_mult(int *args, ptree *pt);
+static void abs_f(int *args, ptree *pt);
+static void abs_f_mult(int *args, ptree *pt);
+static void sqrt_f(int *args, ptree *pt);
+static void sqrt_f_mult(int *args, ptree *pt);
+static void env_linear_0f_mult(int *args, ptree *pt);
+static void env_linear_0f(int *args, ptree *pt);
+static void rand_0f(int *args, ptree *pt);
+static void rand_0f_env(int *args, ptree *pt);
+static void rand_0f_mult(int *args, ptree *pt);
+static void rand_interp_0f(int *args, ptree *pt);
+static void rand_interp_0f_env(int *args, ptree *pt);
+static void rand_interp_0f_mult(int *args, ptree *pt);
+static void vct_constant_ref_0(int *args, ptree *pt);
+static void vct_constant_ref_0_mult(int *args, ptree *pt);
+static void vct_ref_f(int *args, ptree *pt);
+static void vct_ref_f_mult(int *args, ptree *pt);
+static void delay_1f(int *args, ptree *pt);
+static void delay_1f_env(int *args, ptree *pt);
+static void delay_1f_mult(int *args, ptree *pt);
+
+
+/* 2 arg ops that can be combined into a multiply */
+typedef struct {
+  void (*func)(int *args, ptree *pt);
+  const char *func_name;
+  void (*mult_func)(int *args, ptree *pt);
+  const char *mult_func_name;
+  void (*env_func)(int *args, ptree *pt);
+  const char *env_func_name;
+} mf2_ops;
+
+#define NUM_2_MULT_OPS 10
+
+static mf2_ops arg_2_mf2_ops[NUM_2_MULT_OPS] = {
+  {oscil_0f_1, "oscil_0f", oscil_0f_1_mult, "oscil_0f_mult", oscil_0f_1_env, "oscil_0f_env"},
+  {polywave_0f, "polywave_0f", polywave_0f_mult, "polywave_0f_mult", polywave_0f_env, "polywave_0f_env"},
+  {env_linear_0f, "env_linear_0f", env_linear_0f_mult, "env_linear_0f_mult", NULL, NULL},
+  {sin_f, "sin_f", sin_f_mult, "sin_f_mult", NULL, NULL},
+  {cos_f, "cos_f", cos_f_mult, "cos_f_mult", NULL, NULL},
+  {rand_0f, "rand_0f", rand_0f_mult, "rand_0f_mult", rand_0f_env, "rand_0f_env"},
+  {rand_interp_0f, "rand_interp_0f", rand_interp_0f_mult, "rand_interp_0f_mult", rand_interp_0f_env, "rand_interp_0f_env"},
+  {abs_f, "abs_f", abs_f_mult, "abs_f_mult", NULL, NULL},
+  {sqrt_f, "sqrt_f", sqrt_f_mult, "sqrt_f_mult", NULL, NULL},
+  {vct_constant_ref_0, "vct_constant_ref_0", vct_constant_ref_0_mult, "vct_constant_ref_0_mult", NULL, NULL},
+};
+
+
+static int find_arg_2_mf2_op(triple *prev_op)
+{
+  int i;
+  for (i = 0; i < NUM_2_MULT_OPS; i++)
+    if (prev_op->function == arg_2_mf2_ops[i].func)
+      return(i);
+  return(-1);
+}
+
+
+/* 3 arg ops that can be combined into a multiply */
+#define NUM_3_MULT_OPS 6
+
+static mf2_ops arg_3_mf2_ops[NUM_3_MULT_OPS] = {
+  {oscil_1f_1, "oscil_1f", oscil_1f_1_mult, "oscil_1f_mult", oscil_1f_1_env, "oscil_1f_env"},
+  {polywave_1f, "polywave_1f", polywave_1f_mult, "polywave_1f_mult", polywave_1f_env, "polywave_1f_env"},
+  {delay_1f, "delay_1f", delay_1f_mult, "delay_1f_mult", delay_1f_env, "delay_1f_env"},
+  {add_f2, "add_f2", add_f2_mult, "add_f2_mult", NULL, NULL},
+  {subtract_f2, "subtract_f2", subtract_f2_mult, "subtract_f2_mult", NULL, NULL},
+  {vct_ref_f, "vct_ref_f", vct_ref_f_mult, "vct_ref_f_mult", NULL, NULL},
+};
+
+
+
+static int find_arg_3_mf2_op(triple *prev_op)
+{
+  int i;
+  for (i = 0; i < NUM_3_MULT_OPS; i++)
+    if (prev_op->function == arg_3_mf2_ops[i].func)
+      return(i);
+  return(-1);
+}
+
+
 static xen_value *multiply(ptree *prog, xen_value **args, int num_args)
 {
   if (num_args == 0) return(make_xen_value(R_INT, add_int_to_ptree(prog, 1), R_CONSTANT));
@@ -5254,7 +5358,129 @@ static xen_value *multiply(ptree *prog, xen_value **args, int num_args)
 
   if (prog->float_result)
     {
-      if (num_args == 2) return(package(prog, R_FLOAT, multiply_f2, "multiply_f2", args, num_args));
+      if (num_args == 2) 
+	{
+	  if (prog->triple_ctr > 0)
+	    {
+	      triple *prev_op;
+	      prev_op = prog->program[prog->triple_ctr - 1];
+	      if (((prev_op->args[0] == args[1]->addr) ||
+		   (prev_op->args[0] == args[2]->addr)) &&
+		  ((find_var_in_ptree_via_addr(prog, R_FLOAT, prev_op->args[0])) == NULL))
+		{
+		  if (prev_op->num_args == 2)
+		    {
+		      int loc;
+		      loc = find_arg_2_mf2_op(prev_op);
+		      if (loc >= 0)
+			{
+			  /* its output is either arg1 or arg2, we can use its output loc */
+			  if ((prog->triple_ctr > 1) &&
+			      (arg_2_mf2_ops[loc].env_func)) /* env is a possibility */
+			    {
+			      triple *p2_op;
+			      p2_op = prog->program[prog->triple_ctr - 2];
+			      if ((p2_op->function == env_linear_0f) &&
+				  (((p2_op->args[0] == args[1]->addr) && (prev_op->args[0] == args[2]->addr)) ||
+				   ((p2_op->args[0] == args[2]->addr) && (prev_op->args[0] == args[1]->addr))) &&
+				  ((find_var_in_ptree_via_addr(prog, R_FLOAT, p2_op->args[0])) == NULL))
+				{
+				  p2_op->types = (int *)realloc(p2_op->types, 3 * sizeof(int));
+				  p2_op->args = (int *)realloc(p2_op->args, 3 * sizeof(int));
+				  /* env becomes arg 2 */
+				  p2_op->args[2] = p2_op->args[1];
+				  p2_op->types[2] = p2_op->types[1];
+				  p2_op->args[1] = prev_op->args[1];
+				  p2_op->types[1] = prev_op->types[1];
+				  p2_op->num_args = 3;
+				  p2_op->function = arg_2_mf2_ops[loc].env_func;
+				  p2_op->op_name = arg_2_mf2_ops[loc].env_func_name;
+				  free_triple(prev_op);
+				  prog->triple_ctr--;
+				  return(make_xen_value(R_FLOAT, p2_op->args[0], R_TEMPORARY));
+				}
+			    }
+			  prev_op->types = (int *)realloc(prev_op->types, 3 * sizeof(int));
+			  prev_op->args = (int *)realloc(prev_op->args, 3 * sizeof(int));
+			  if (prev_op->args[0] == args[1]->addr)
+			    prev_op->args[2] = args[2]->addr;
+			  else prev_op->args[2] = args[1]->addr;
+			  prev_op->num_args = 3;
+			  prev_op->function = arg_2_mf2_ops[loc].mult_func;
+			  prev_op->op_name = arg_2_mf2_ops[loc].mult_func_name;
+			  prev_op->types[2] = R_FLOAT;
+			  return(make_xen_value(R_FLOAT, prev_op->args[0], R_TEMPORARY));
+			}
+		    }
+		  else
+		    {
+		      if (prev_op->num_args == 3)
+			{
+			  int loc;
+			  loc = find_arg_3_mf2_op(prev_op);
+			  if (loc >= 0)
+			    {
+			      if ((prog->triple_ctr > 1) &&
+				  (arg_3_mf2_ops[loc].env_func)) /* env is a possibility */
+				{
+				  triple *p2_op;
+				  p2_op = prog->program[prog->triple_ctr - 2];
+				  if ((p2_op->function == env_linear_0f) &&
+				      (((p2_op->args[0] == args[1]->addr) && (prev_op->args[0] == args[2]->addr)) ||
+				       ((p2_op->args[0] == args[2]->addr) && (prev_op->args[0] == args[1]->addr))) &&
+				      ((find_var_in_ptree_via_addr(prog, R_FLOAT, p2_op->args[0])) == NULL))
+				    {
+				      p2_op->types = (int *)realloc(p2_op->types, 4 * sizeof(int));
+				      p2_op->args = (int *)realloc(p2_op->args, 4 * sizeof(int));
+				      /* env becomes arg 3 */
+				      p2_op->args[3] = p2_op->args[1];
+				      p2_op->types[3] = p2_op->types[1];
+				      p2_op->args[1] = prev_op->args[1];
+				      p2_op->types[1] = prev_op->types[1];
+				      p2_op->args[2] = prev_op->args[2];
+				      p2_op->types[2] = prev_op->types[2];
+				      p2_op->num_args = 4;
+				      p2_op->function = arg_3_mf2_ops[loc].env_func;
+				      p2_op->op_name = arg_3_mf2_ops[loc].env_func_name;
+				      free_triple(prev_op);
+				      prog->triple_ctr--;
+				      return(make_xen_value(R_FLOAT, p2_op->args[0], R_TEMPORARY));
+				    }
+				}
+			      prev_op->types = (int *)realloc(prev_op->types, 4 * sizeof(int));
+			      prev_op->args = (int *)realloc(prev_op->args, 4 * sizeof(int));
+			      if (prev_op->args[0] == args[1]->addr)
+				prev_op->args[3] = args[2]->addr;
+			      else prev_op->args[3] = args[1]->addr;
+			      prev_op->num_args = 4;
+			      prev_op->function = arg_3_mf2_ops[loc].mult_func;
+			      prev_op->op_name = arg_3_mf2_ops[loc].mult_func_name;
+			      prev_op->types[3] = R_FLOAT;
+			      return(make_xen_value(R_FLOAT, prev_op->args[0], R_TEMPORARY));
+			    }
+			}
+		      else
+			{
+			  if ((prev_op->num_args == 4) &&
+			      (prev_op->function == multiply_add_f2))
+			    {
+			      prev_op->types = (int *)realloc(prev_op->types, 5 * sizeof(int));
+			      prev_op->args = (int *)realloc(prev_op->args, 5 * sizeof(int));
+			      if (prev_op->args[0] == args[1]->addr)
+				prev_op->args[4] = args[2]->addr;
+			      else prev_op->args[4] = args[1]->addr;
+			      prev_op->num_args = 5;
+			      prev_op->function = multiply_add_f2_mult;
+			      prev_op->op_name = "multiply_add_f2_mult";
+			      prev_op->types[4] = R_FLOAT;
+			      return(make_xen_value(R_FLOAT, prev_op->args[0], R_TEMPORARY));
+			    }}}
+		}}
+
+	  
+	  return(package(prog, R_FLOAT, multiply_f2, "multiply_f2", args, num_args));
+	  
+	}
       if (num_args == 3) return(package(prog, R_FLOAT, multiply_f3, "multiply_f3", args, num_args));
       if (num_args == 4) return(package(prog, R_FLOAT, multiply_f4, "multiply_f4", args, num_args));
       return(package_n(prog, R_FLOAT, multiply_fn, "multiply_fn", args, num_args));
@@ -5271,6 +5497,8 @@ static xen_value *multiply(ptree *prog, xen_value **args, int num_args)
 
 static void add_f2(int *args, ptree *pt) {FLOAT_RESULT = (FLOAT_ARG_1 + FLOAT_ARG_2);}
 
+static void add_f2_mult(int *args, ptree *pt) {FLOAT_RESULT = FLOAT_ARG_3 * (FLOAT_ARG_1 + FLOAT_ARG_2);}
+
 
 static void add_f2_i(int *args, ptree *pt) {INT_RESULT = (Int)(FLOAT_ARG_1 + FLOAT_ARG_2);}
 
@@ -5285,6 +5513,7 @@ static void add_f5(int *args, ptree *pt) {FLOAT_RESULT = (FLOAT_ARG_1 + FLOAT_AR
 
 
 static void multiply_add_f2(int *args, ptree *pt) {FLOAT_RESULT = (FLOAT_ARG_1 * FLOAT_ARG_2) + FLOAT_ARG_3;}
+static void multiply_add_f2_mult(int *args, ptree *pt) {FLOAT_RESULT = FLOAT_ARG_4 * ((FLOAT_ARG_1 * FLOAT_ARG_2) + FLOAT_ARG_3);}
 
 
 static void add_fn(int *args, ptree *pt) 
@@ -5384,13 +5613,15 @@ static xen_value *add(ptree *prog, xen_value **args, int num_args)
 	    {
 	      triple *prev_op;
 	      prev_op = prog->program[prog->triple_ctr - 1];
-	      if ((prev_op->function == multiply_f2) &&
+
+	      if ((prev_op->function == multiply_f2) &&             /* this covers the great majority of these cases */
 		  ((prev_op->args[0] == args[1]->addr) ||
 		   (prev_op->args[0] == args[2]->addr)) &&
 		  ((find_var_in_ptree_via_addr(prog, R_FLOAT, prev_op->args[0])) == NULL))
 		{
 		  prev_op->function = multiply_add_f2;
 		  prev_op->op_name = "multiply_add_f2";
+
 		  prev_op->types = (int *)realloc(prev_op->types, 4 * sizeof(int));
 		  prev_op->args = (int *)realloc(prev_op->args, 4 * sizeof(int));
 		  prev_op->types[3] = R_FLOAT;
@@ -5398,6 +5629,7 @@ static xen_value *add(ptree *prog, xen_value **args, int num_args)
 		    prev_op->args[3] = args[2]->addr;
 		  else prev_op->args[3] = args[1]->addr;
 		  prev_op->num_args = 4;
+
 		  return(make_xen_value(R_FLOAT, prev_op->args[0], R_TEMPORARY));
 		}
 	    }
@@ -5422,6 +5654,7 @@ static void subtract_f1(int *args, ptree *pt) {FLOAT_RESULT = -(FLOAT_ARG_1);}
 
 
 static void subtract_f2(int *args, ptree *pt) {FLOAT_RESULT = (FLOAT_ARG_1 - FLOAT_ARG_2);}
+static void subtract_f2_mult(int *args, ptree *pt) {FLOAT_RESULT = FLOAT_ARG_3 * (FLOAT_ARG_1 - FLOAT_ARG_2);}
 
 
 static void subtract_f2_i(int *args, ptree *pt) {INT_RESULT = (Int)(FLOAT_ARG_1 - FLOAT_ARG_2);}
@@ -6289,6 +6522,10 @@ FL_OP(atanh)
 #endif
 FL_OP(mus_bessi0)
 
+static void sin_f_mult(int *args, ptree *pt) {FLOAT_RESULT = FLOAT_ARG_2 * sin(FLOAT_ARG_1);}
+static void cos_f_mult(int *args, ptree *pt) {FLOAT_RESULT = FLOAT_ARG_2 * cos(FLOAT_ARG_1);}
+static void sqrt_f_mult(int *args, ptree *pt) {FLOAT_RESULT = FLOAT_ARG_2 * sqrt(FLOAT_ARG_1);}
+
 
 static void atan2_f(int *args, ptree *pt) {FLOAT_RESULT = atan2(FLOAT_ARG_1, FLOAT_ARG_2);}
 
@@ -6528,24 +6765,38 @@ static xen_value *floor_1(ptree *prog, xen_value **args, int num_args)
 	      prev_op->op_name = "multiply_f2_i";
 	      happy = true;
 	    }
-	  if (prev_op->function == divide_f2)
+	  else
 	    {
-	      prev_op->function = divide_f2_i;
-	      prev_op->op_name = "divide_f2_i";
-	      happy = true;
-	    }
-	  if (prev_op->function == subtract_f2)
-	    {
-	      prev_op->function = subtract_f2_i;
-	      prev_op->op_name = "subtract_f2_i";
-	      happy = true;
-	    }
-	  if (prev_op->function == add_f2)
-	    {
-	      prev_op->function = add_f2_i;
-	      prev_op->op_name = "add_f2_i";
-	      happy = true;
-	    }
+	      if (prev_op->function == multiply_f_i)
+		{
+		  prev_op->function = multiply_f_i_i;
+		  prev_op->op_name = "multiply_f_i_i";
+		  happy = true;
+		}
+	      else
+		{
+		  if (prev_op->function == divide_f2)
+		    {
+		      prev_op->function = divide_f2_i;
+		      prev_op->op_name = "divide_f2_i";
+		      happy = true;
+		    }
+		  else
+		    {
+		      if (prev_op->function == subtract_f2)
+			{
+			  prev_op->function = subtract_f2_i;
+			  prev_op->op_name = "subtract_f2_i";
+			  happy = true;
+			}
+		      else
+			{
+			  if (prev_op->function == add_f2)
+			    {
+			      prev_op->function = add_f2_i;
+			      prev_op->op_name = "add_f2_i";
+			      happy = true;
+			    }}}}}
 	  if (happy)
 	    {
 	      args[0] = add_temporary_var_to_ptree(prog, R_INT);
@@ -6924,6 +7175,7 @@ static xen_value *expt_1(ptree *prog, xen_value **args, int num_args)
 /* ---------------- abs ---------------- */
 
 static void abs_f(int *args, ptree *pt) {FLOAT_RESULT = fabs(FLOAT_ARG_1);}
+static void abs_f_mult(int *args, ptree *pt) {FLOAT_RESULT = FLOAT_ARG_2 * fabs(FLOAT_ARG_1);}
 
 
 static void abs_i(int *args, ptree *pt) {INT_RESULT = ((INT_ARG_1 >= 0) ? INT_ARG_1 : (-INT_ARG_1));} /* not abs=32 bit truncation */
@@ -9188,12 +9440,14 @@ static xen_value *vct_length_1(ptree *prog, xen_value **args, int num_args)
 
 
 static void vct_constant_ref_0(int *args, ptree *pt) {FLOAT_RESULT = VCT_ARG_1->data[0];}
+static void vct_constant_ref_0_mult(int *args, ptree *pt) {FLOAT_RESULT = FLOAT_ARG_2 * VCT_ARG_1->data[0];}
 static void vct_constant_ref_1(int *args, ptree *pt) {FLOAT_RESULT = VCT_ARG_1->data[1];}
 static void vct_constant_ref_2(int *args, ptree *pt) {FLOAT_RESULT = VCT_ARG_1->data[2];}
 static void vct_constant_ref_3(int *args, ptree *pt) {FLOAT_RESULT = VCT_ARG_1->data[3];}
 
 
 static void vct_ref_f(int *args, ptree *pt) {FLOAT_RESULT = VCT_ARG_1->data[INT_ARG_2];}
+static void vct_ref_f_mult(int *args, ptree *pt) {FLOAT_RESULT = FLOAT_ARG_3 * VCT_ARG_1->data[INT_ARG_2];}
 
 static xen_value *vct_ref_1(ptree *prog, xen_value **args, int num_args)
 {
@@ -9929,7 +10183,11 @@ static xen_value *mus_generator_p_1(ptree *prog, xen_value **args, int num_args)
   static xen_value * Name ## _p(ptree *prog, xen_value **args, int num_args) \
   { \
     if (args[1]->type == R_CLM) \
-      return(package(prog, R_BOOL, Name ## _0p, #Name "_0p", args, 1)); \
+      { \
+        if (mus_ ## Name ## _p(prog->clms[args[1]->addr])) \
+          return(make_xen_value(R_BOOL, add_int_to_ptree(prog, (Int)true), R_CONSTANT)); \
+        return(package(prog, R_BOOL, Name ## _0p, #Name "_0p", args, 1)); \
+      } \
     return(make_xen_value(R_BOOL, add_int_to_ptree(prog, (Int)false), R_CONSTANT)); \
   } \
   static void Name ## _check(int *args, ptree *pt) \
@@ -10000,7 +10258,15 @@ static xen_value *mus_generator_p_1(ptree *prog, xen_value **args, int num_args)
 
 static void oscil_0f_1(int *args, ptree *pt) {FLOAT_RESULT = mus_oscil_unmodulated(CLM_ARG_1);}
 
+static void oscil_0f_1_env(int *args, ptree *pt) {FLOAT_RESULT = mus_env_linear(CLM_ARG_2) * mus_oscil_unmodulated(CLM_ARG_1);}
+
+static void oscil_0f_1_mult(int *args, ptree *pt) {FLOAT_RESULT = FLOAT_ARG_2 * mus_oscil_unmodulated(CLM_ARG_1);}
+
 static void oscil_1f_1(int *args, ptree *pt) {FLOAT_RESULT = mus_oscil_fm(CLM_ARG_1, FLOAT_ARG_2);}
+
+static void oscil_1f_1_env(int *args, ptree *pt) {FLOAT_RESULT = mus_env_linear(CLM_ARG_3) * mus_oscil_fm(CLM_ARG_1, FLOAT_ARG_2);}
+
+static void oscil_1f_1_mult(int *args, ptree *pt) {FLOAT_RESULT = FLOAT_ARG_3 * mus_oscil_fm(CLM_ARG_1, FLOAT_ARG_2);}
 
 static void oscil_2f_1(int *args, ptree *pt) {FLOAT_RESULT = mus_oscil_pm(CLM_ARG_1, FLOAT_ARG_3);}
 
@@ -10104,6 +10370,7 @@ GEN_P(env)
 
 static void env_0f(int *args, ptree *pt) {FLOAT_RESULT = mus_env(CLM_ARG_1);}  
 static void env_linear_0f(int *args, ptree *pt) {FLOAT_RESULT = mus_env_linear(CLM_ARG_1);}  
+static void env_linear_0f_mult(int *args, ptree *pt) {FLOAT_RESULT = FLOAT_ARG_2 * mus_env_linear(CLM_ARG_1);}  
 static void env_exponential_0f(int *args, ptree *pt) {FLOAT_RESULT = mus_env_exponential(CLM_ARG_1);}  
 
 static xen_value *env_1(ptree *prog, xen_value **args, int num_args)
@@ -10147,7 +10414,21 @@ GEN3(ssb_am)
 GEN3(asymmetric_fm)
 GEN_WAVER(polyshape)
 
-GEN2(polywave)
+GEN2_OPT(polywave)
+
+static void polywave_0f_env(int *args, ptree *pt) {FLOAT_RESULT = mus_env_linear(CLM_ARG_2) * mus_polywave_unmodulated(CLM_ARG_1);}
+static void polywave_0f_mult(int *args, ptree *pt) {FLOAT_RESULT = FLOAT_ARG_2 * mus_polywave_unmodulated(CLM_ARG_1);}
+static void polywave_1f_env(int *args, ptree *pt) {FLOAT_RESULT = mus_env_linear(CLM_ARG_3) * mus_polywave(CLM_ARG_1, FLOAT_ARG_2);}
+static void polywave_1f_mult(int *args, ptree *pt) {FLOAT_RESULT = FLOAT_ARG_3 * mus_polywave(CLM_ARG_1, FLOAT_ARG_2);}
+
+static void rand_0f_env(int *args, ptree *pt) {FLOAT_RESULT = mus_env_linear(CLM_ARG_2) * mus_rand(CLM_ARG_1, 0.0);}
+static void rand_0f_mult(int *args, ptree *pt) {FLOAT_RESULT = FLOAT_ARG_2 * mus_rand(CLM_ARG_1, 0.0);}
+static void rand_interp_0f_env(int *args, ptree *pt) {FLOAT_RESULT = mus_env_linear(CLM_ARG_2) * mus_rand_interp(CLM_ARG_1, 0.0);}
+static void rand_interp_0f_mult(int *args, ptree *pt) {FLOAT_RESULT = FLOAT_ARG_2 * mus_rand_interp(CLM_ARG_1, 0.0);}
+
+static void delay_1f_env(int *args, ptree *pt) {FLOAT_RESULT = mus_env_linear(CLM_ARG_3) * mus_delay_unmodulated(CLM_ARG_1, FLOAT_ARG_2);}
+static void delay_1f_mult(int *args, ptree *pt) {FLOAT_RESULT = FLOAT_ARG_3 * mus_delay_unmodulated(CLM_ARG_1, FLOAT_ARG_2);}
+
 
 GEN2(moving_average)
 GEN2(rand)
@@ -10820,12 +11101,15 @@ static xen_value *sample_to_file_1(ptree *prog, xen_value **args, int num_args)
 
 /* ---------------- locsig ---------------- */
 
+  /* 
+   * TODO: delay can also be optimized in this context
+   * TODO: (if (= a b)...) also (if (> a b)...)
+   * TODO: outa ina readin etc (as per locsig)
+   */
+
+
 static void locsig_3(int *args, ptree *pt) 
 {
-  /* we can't tell at parse time what the output situation is -- the user could
-   *   pass a vct as :output while *output* was active as a sample->file.
-   *   so, we have to use the environ (closure) setting to decide what to do.
-   */
   mus_xen *gn;
   gn = (mus_xen *)mus_locsig_closure(CLM_ARG_1); /* skip the gen check in mus_environ */
   if (!gn)
@@ -10838,9 +11122,102 @@ static void locsig_3(int *args, ptree *pt)
     }
 }
 
+
+static void locsig_3f(int *args, ptree *pt)
+{
+  mus_locsig(CLM_ARG_1, INT_ARG_2, FLOAT_ARG_3);
+}
+
+
+static void locsig_3f_mono_no_rev(int *args, ptree *pt)
+{
+  mus_locsig_mono_no_reverb(CLM_ARG_1, INT_ARG_2, FLOAT_ARG_3);
+}
+
+static void locsig_3f_mono(int *args, ptree *pt)
+{
+  mus_locsig_mono(CLM_ARG_1, INT_ARG_2, FLOAT_ARG_3);
+}
+
+static void locsig_3f_stereo_no_rev(int *args, ptree *pt)
+{
+  mus_locsig_stereo_no_reverb(CLM_ARG_1, INT_ARG_2, FLOAT_ARG_3);
+}
+
+static void locsig_3f_stereo(int *args, ptree *pt)
+{
+  mus_locsig_stereo(CLM_ARG_1, INT_ARG_2, FLOAT_ARG_3);
+}
+
+
+static void locsig_3f_safe_mono_no_rev(int *args, ptree *pt)
+{
+  mus_locsig_safe_mono_no_reverb(CLM_ARG_1, INT_ARG_2, FLOAT_ARG_3);
+}
+
+static void locsig_3f_safe_mono(int *args, ptree *pt)
+{
+  mus_locsig_safe_mono(CLM_ARG_1, INT_ARG_2, FLOAT_ARG_3);
+}
+
+static void locsig_3f_safe_stereo_no_rev(int *args, ptree *pt)
+{
+  mus_locsig_safe_stereo_no_reverb(CLM_ARG_1, INT_ARG_2, FLOAT_ARG_3);
+}
+
+static void locsig_3f_safe_stereo(int *args, ptree *pt)
+{
+  mus_locsig_safe_stereo(CLM_ARG_1, INT_ARG_2, FLOAT_ARG_3);
+}
+
+
 static xen_value *locsig_1(ptree *prog, xen_value **args, int num_args) 
 {
   if (run_safety == RUN_SAFE) safe_package(prog, R_BOOL, locsig_check, "locsig_check", args, 1);
+  /* choose output func based on the locsig output and reverb fields and run-safety */
+
+  if ((args[1]->type == R_CLM) &&
+      (mus_locsig_p(prog->clms[args[1]->addr])) &&
+      (prog->walk_result == DONT_NEED_RESULT))
+    {
+      mus_any *g;
+      mus_xen *gn;
+      g = prog->clms[args[1]->addr];
+      gn = (mus_xen *)mus_locsig_closure(g); /* same as mus_environ(g) but skip the gen check in mus_environ */
+      if (!gn)
+	{
+	  bool direct;
+	  /* locsig "environ" not set (clm2xen.c) so there's nothing special about the outputs */
+	  direct = (mus_locsig_safety(g) == 1);
+
+	  if (mus_locsig_channels(g) == 1)
+	    {
+	      if (mus_locsig_reverb_channels(g) == 0)
+		return(package(prog, R_FLOAT, 
+			       (direct) ? locsig_3f_safe_mono_no_rev : locsig_3f_mono_no_rev, 
+			       (direct) ? "locsig_3f_safe_mono_no_rev" : "locsig_3f_mono_no_rev", args, 3));
+	      if (mus_locsig_reverb_channels(g) == 1)
+		return(package(prog, R_FLOAT, 
+			       (direct) ? locsig_3f_safe_mono : locsig_3f_mono, 
+			       (direct) ? "locsig_3f_safe_mono" : "locsig_3f_mono", args, 3));
+	    }
+	  else
+	    {
+	      if (mus_locsig_channels(g) == 2)
+		{
+		  if (mus_locsig_reverb_channels(g) == 0)
+		    return(package(prog, R_FLOAT, 
+				   (direct) ? locsig_3f_safe_stereo_no_rev : locsig_3f_stereo_no_rev, 
+				   (direct) ? "locsig_3f_safe_stereo_no_rev" : "locsig_3f_stereo_no_rev", args, 3));
+		  if (mus_locsig_reverb_channels(g) == 1)
+		    return(package(prog, R_FLOAT, 
+				   (direct) ? locsig_3f_safe_stereo : locsig_3f_stereo, 
+				   (direct) ? "locsig_3f_safe_stereo" : "locsig_3f_stereo", args, 3));
+		}
+	    }
+	  return(package(prog, R_FLOAT, locsig_3f, "locsig_3f", args, 3));
+	}
+    }
   return(package(prog, R_FLOAT, locsig_3, "locsig_3", args, 3));
 }
 
@@ -11120,6 +11497,12 @@ static xen_value *file_to_frame_1(ptree *prog, xen_value **args, int num_args)
 /* ---------------- out-any ---------------- */
 
 /* see env_any for R_FUNCTION as arg */
+
+/* TODO: within one ins call, if using run, *output* should not change -- surely we can optimize
+ *   the standard case here and in locsig/frame_to_file/sample->file (i.e. *output* is rdout gen => sample_file: mus_write_sample_to_file
+ *
+ * use locsig opt procs! and prog->need_result as in locsig
+ */
 
 static void outa_3(int *args, ptree *pt) {FLOAT_RESULT = mus_out_any(INT_ARG_1, FLOAT_ARG_2, 0, CLM_ARG_3);}
 
