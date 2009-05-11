@@ -623,6 +623,7 @@ MUS_EXPORT Float mus_polywave(mus_any *ptr, Float fm);
 MUS_EXPORT Float mus_chebyshev_t_sum(Float x, int n, Float *tn);
 MUS_EXPORT Float mus_chebyshev_u_sum(Float x, int n, Float *un);
 MUS_EXPORT Float mus_chebyshev_tu_sum(Float x, int n, Float *tn, Float *un);
+#define mus_polywave_type(Obj) mus_channel(Obj)
 
 MUS_EXPORT Float mus_env(mus_any *ptr);
 MUS_EXPORT mus_any *mus_make_env(Float *brkpts, int npts, double scaler, double offset, double base, double duration, off_t end, Float *odata);
@@ -672,6 +673,7 @@ MUS_EXPORT bool mus_file_to_sample_p(mus_any *ptr);
 MUS_EXPORT mus_any *mus_make_file_to_sample(const char *filename);
 MUS_EXPORT mus_any *mus_make_file_to_sample_with_buffer_size(const char *filename, off_t buffer_size);
 MUS_EXPORT Float mus_file_to_sample(mus_any *ptr, off_t samp, int chan);
+MUS_EXPORT Float mus_in_any_from_file(mus_any *ptr, off_t samp, int chan);
 
 MUS_EXPORT Float mus_readin(mus_any *rd);
 MUS_EXPORT mus_any *mus_make_readin_with_buffer_size(const char *filename, int chan, off_t start, int direction, off_t buffer_size);
@@ -696,6 +698,7 @@ MUS_EXPORT int mus_close_file(mus_any *ptr);
 MUS_EXPORT mus_any *mus_sample_to_file_add(mus_any *out1, mus_any *out2);
 
 MUS_EXPORT Float mus_out_any(off_t frame, Float val, int chan, mus_any *IO);
+MUS_EXPORT Float mus_out_any_to_file(mus_any *ptr, off_t samp, int chan, Float val);
 MUS_EXPORT bool mus_frame_to_file_p(mus_any *ptr);
 MUS_EXPORT mus_any *mus_frame_to_file(mus_any *ptr, off_t samp, mus_any *data);
 MUS_EXPORT mus_any *mus_make_frame_to_file_with_comment(const char *filename, int chans, int out_format, int out_type, const char *comment);
@@ -715,17 +718,17 @@ MUS_EXPORT mus_any *mus_locsig_revf(mus_any *ptr);
 MUS_EXPORT void *mus_locsig_closure(mus_any *ptr);
 
   /* these are for the optimizer (run.c) */
-void mus_locsig_mono_no_reverb(mus_any *ptr, off_t loc, Float val);
-void mus_locsig_mono(mus_any *ptr, off_t loc, Float val);
-void mus_locsig_stereo_no_reverb(mus_any *ptr, off_t loc, Float val);
-void mus_locsig_stereo(mus_any *ptr, off_t loc, Float val);
-void mus_locsig_safe_mono_no_reverb(mus_any *ptr, off_t loc, Float val);
-void mus_locsig_safe_mono(mus_any *ptr, off_t loc, Float val);
-void mus_locsig_safe_stereo_no_reverb(mus_any *ptr, off_t loc, Float val);
-void mus_locsig_safe_stereo(mus_any *ptr, off_t loc, Float val);
-int mus_locsig_channels(mus_any *ptr);
-int mus_locsig_reverb_channels(mus_any *ptr);
-int mus_locsig_safety(mus_any *ptr);
+MUS_EXPORT void mus_locsig_mono_no_reverb(mus_any *ptr, off_t loc, Float val);
+MUS_EXPORT void mus_locsig_mono(mus_any *ptr, off_t loc, Float val);
+MUS_EXPORT void mus_locsig_stereo_no_reverb(mus_any *ptr, off_t loc, Float val);
+MUS_EXPORT void mus_locsig_stereo(mus_any *ptr, off_t loc, Float val);
+MUS_EXPORT void mus_locsig_safe_mono_no_reverb(mus_any *ptr, off_t loc, Float val);
+MUS_EXPORT void mus_locsig_safe_mono(mus_any *ptr, off_t loc, Float val);
+MUS_EXPORT void mus_locsig_safe_stereo_no_reverb(mus_any *ptr, off_t loc, Float val);
+MUS_EXPORT void mus_locsig_safe_stereo(mus_any *ptr, off_t loc, Float val);
+MUS_EXPORT int mus_locsig_channels(mus_any *ptr);
+MUS_EXPORT int mus_locsig_reverb_channels(mus_any *ptr);
+MUS_EXPORT int mus_locsig_safety(mus_any *ptr);
 
 
 MUS_EXPORT bool mus_move_sound_p(mus_any *ptr);

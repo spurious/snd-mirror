@@ -2714,16 +2714,23 @@ static Float poly_TU(mus_any *ptr, Float fm)
   Float result;
 
   if (gen->cheby_choice != MUS_CHEBYSHEV_SECOND_KIND)
-    result = mus_chebyshev_t_sum_with_index(gen->phase,
-					    gen->index,
-					    gen->n,
-					    gen->coeffs);
-  else result = mus_chebyshev_u_sum_with_index(gen->phase,
-					       gen->index,
-					       gen->n,
-					       gen->coeffs);
+    result = mus_chebyshev_t_sum_with_index(gen->phase, gen->index, gen->n, gen->coeffs);
+  else result = mus_chebyshev_u_sum_with_index(gen->phase, gen->index, gen->n, gen->coeffs);
+
   gen->phase += (gen->freq + fm);
   return(result);
+}
+
+
+Float mus_polywave(mus_any *ptr, Float fm)
+{
+  return(poly_TU(ptr, fm));
+}
+ 
+
+Float mus_polywave_unmodulated(mus_any *ptr)
+{
+  return(poly_TU(ptr, 0.0));
 }
 
 
@@ -2745,18 +2752,6 @@ static char *describe_polywave(mus_any *ptr)
 	       str);
   if (str) clm_free(str);
   return(describe_buffer);
-}
-
-
-Float mus_polywave(mus_any *ptr, Float fm)
-{
-  return(poly_TU(ptr, fm));
-}
- 
-
-Float mus_polywave_unmodulated(mus_any *ptr)
-{
-  return(poly_TU(ptr, 0.0));
 }
 
 
@@ -7181,11 +7176,9 @@ static char *file_to_sample_file_name(mus_any *ptr) {return(((rdin *)ptr)->file_
 
 static void no_reset(mus_any *ptr) {}
 
-static Float file_sample(mus_any *ptr, off_t samp, int chan);
-
 static int file_to_sample_end(mus_any *ptr);
 
-static Float run_file_to_sample(mus_any *ptr, Float arg1, Float arg2) {return(file_sample(ptr, (int)arg1, (int)arg2));} /* mus_read_sample here? */
+static Float run_file_to_sample(mus_any *ptr, Float arg1, Float arg2) {return(mus_in_any_from_file(ptr, (int)arg1, (int)arg2));} /* mus_read_sample here? */
 
 
 static mus_any_class FILE_TO_SAMPLE_CLASS = {
@@ -7205,7 +7198,7 @@ static mus_any_class FILE_TO_SAMPLE_CLASS = {
   NULL,
   &file_to_sample_channels,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  &file_sample,
+  &mus_in_any_from_file,
   0,
   &file_to_sample_file_name,
   &file_to_sample_end,
@@ -7220,7 +7213,7 @@ static mus_any_class FILE_TO_SAMPLE_CLASS = {
 };
 
 
-static Float file_sample(mus_any *ptr, off_t samp, int chan)
+Float mus_in_any_from_file(mus_any *ptr, off_t samp, int chan)
 {
   /* check in-core buffer bounds,
    * if needed read new buffer (taking into account dir)
@@ -7361,7 +7354,7 @@ mus_any *mus_make_file_to_sample(const char *filename)
 
 Float mus_file_to_sample(mus_any *ptr, off_t samp, int chan)
 {
-  return(mus_read_sample(ptr, samp, chan));
+  return(mus_in_any_from_file(ptr, samp, chan));
 }
 
 
@@ -7423,7 +7416,7 @@ static mus_any_class READIN_CLASS = {
   NULL,
   &file_to_sample_channels,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  &file_sample,
+  &mus_in_any_from_file,
   0,
   &file_to_sample_file_name,
   &file_to_sample_end,
@@ -7466,7 +7459,7 @@ Float mus_readin(mus_any *ptr)
 {
   Float res;
   rdin *rd = (rdin *)ptr;
-  res = file_sample(ptr, rd->loc, rd->chan);
+  res = mus_in_any_from_file(ptr, rd->loc, rd->chan);
   rd->loc += rd->dir;
   return(res);
 }
@@ -7530,7 +7523,7 @@ static mus_any_class FILE_TO_FRAME_CLASS = {
   NULL,
   &file_to_sample_channels,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  &file_sample,
+  &mus_in_any_from_file,
   0,
   &file_to_sample_file_name,
   &file_to_sample_end,
@@ -7578,7 +7571,7 @@ mus_any *mus_file_to_frame(mus_any *ptr, off_t samp, mus_any *uf)
     f = (mus_frame *)mus_make_empty_frame(gen->chans); 
   else f = (mus_frame *)uf;
   for (i = 0; i < gen->chans; i++) 
-    f->vals[i] = file_sample(ptr, samp, i);
+    f->vals[i] = mus_in_any_from_file(ptr, samp, i);
   return((mus_any *)f);
 }
 
@@ -7643,8 +7636,6 @@ static char *sample_to_file_file_name(mus_any *ptr) {return(((rdout *)ptr)->file
 static int sample_to_file_safety(mus_any *ptr) {return(((rdout *)ptr)->safety);}
 static int sample_to_file_set_safety(mus_any *ptr, int val) {((rdout *)ptr)->safety = val; return(val);}
 
-static Float sample_file(mus_any *ptr, off_t samp, int chan, Float val);
-
 static int sample_to_file_end(mus_any *ptr);
 
 static Float run_sample_to_file(mus_any *ptr, Float arg1, Float arg2) {mus_error(MUS_NO_RUN, "no run method for sample->file"); return(0.0);}
@@ -7666,7 +7657,7 @@ static mus_any_class SAMPLE_TO_FILE_CLASS = {
   &sample_to_file_channels,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0,
-  &sample_file,
+  &mus_out_any_to_file,
   &sample_to_file_file_name,
   &sample_to_file_end,
   0, 0, 0,
@@ -7877,7 +7868,7 @@ mus_any *mus_sample_to_file_add(mus_any *out1, mus_any *out2)
 }
 
 
-static Float sample_file(mus_any *ptr, off_t samp, int chan, Float val)
+Float mus_out_any_to_file(mus_any *ptr, off_t samp, int chan, Float val)
 {
   rdout *gen = (rdout *)ptr;
   
@@ -7998,7 +7989,7 @@ mus_any *mus_make_sample_to_file_with_comment(const char *filename, int out_chan
 
 Float mus_sample_to_file(mus_any *ptr, off_t samp, int chan, Float val)
 {
-  return(mus_write_sample(ptr, samp, chan, val)); /* write_sample -> write_sample in class struct -> file_sample for example */
+  return(mus_write_sample(ptr, samp, chan, val)); /* write_sample -> write_sample in class struct -> mus_in_any_from_file for example */
 }
 
 
@@ -8059,7 +8050,7 @@ static mus_any_class FRAME_TO_FILE_CLASS = {
   &sample_to_file_channels,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0,
-  &sample_file,
+  &mus_out_any_to_file,
   &sample_to_file_file_name,
   &sample_to_file_end,
   0, 0, 0,
@@ -8095,14 +8086,14 @@ mus_any *mus_frame_to_file(mus_any *ptr, off_t samp, mus_any *udata)
   if (data) 
     {
       if (data->chans == 1)
-	sample_file(ptr, samp, 0, data->vals[0]);
+	mus_out_any_to_file(ptr, samp, 0, data->vals[0]);
       else
 	{
 	  if ((data->chans == 2) &&
 	      (gen->chans == 2))
 	    {
-	      sample_file(ptr, samp, 0, data->vals[0]);
-	      sample_file(ptr, samp, 1, data->vals[1]);
+	      mus_out_any_to_file(ptr, samp, 0, data->vals[0]);
+	      mus_out_any_to_file(ptr, samp, 1, data->vals[1]);
 	    }
 	  else
 	    {
@@ -8111,7 +8102,7 @@ mus_any *mus_frame_to_file(mus_any *ptr, off_t samp, mus_any *udata)
 	      if (gen->chans < chans) 
 		chans = gen->chans;
 	      for (i = 0; i < chans; i++) 
-		sample_file(ptr, samp, i, data->vals[i]);
+		mus_out_any_to_file(ptr, samp, i, data->vals[i]);
 	    }
 	}
     }
@@ -8580,14 +8571,14 @@ Float mus_locsig(mus_any *ptr, off_t loc, Float val)
 	{
 	  (gen->outf)->vals[i] = val * gen->outn[i];
 	  if (writer)
-	    sample_file((mus_any *)writer, loc, i, gen->outf->vals[i]);
+	    mus_out_any_to_file((mus_any *)writer, loc, i, gen->outf->vals[i]);
 	}
       writer = (rdout *)(gen->revn_writer);
       for (i = 0; i < gen->rev_chans; i++)
 	{
 	  (gen->revf)->vals[i] = val * gen->revn[i];
 	  if (writer)
-	    sample_file((mus_any *)writer, loc, i, gen->revf->vals[i]);
+	    mus_out_any_to_file((mus_any *)writer, loc, i, gen->revf->vals[i]);
 	}
     }
   return(val);
@@ -8614,32 +8605,32 @@ int mus_locsig_safety(mus_any *ptr)
 void mus_locsig_mono_no_reverb(mus_any *ptr, off_t loc, Float val)
 {
   locs *gen = (locs *)ptr;
-  sample_file(gen->outn_writer, loc, 0, val * gen->outn[0]);
+  mus_out_any_to_file(gen->outn_writer, loc, 0, val * gen->outn[0]);
 }
 
 
 void mus_locsig_mono(mus_any *ptr, off_t loc, Float val)
 {
   locs *gen = (locs *)ptr;
-  sample_file(gen->outn_writer, loc, 0, val * gen->outn[0]);
-  sample_file(gen->revn_writer, loc, 0, val * gen->revn[0]);
+  mus_out_any_to_file(gen->outn_writer, loc, 0, val * gen->outn[0]);
+  mus_out_any_to_file(gen->revn_writer, loc, 0, val * gen->revn[0]);
 }
 
 
 void mus_locsig_stereo_no_reverb(mus_any *ptr, off_t loc, Float val)
 {
   locs *gen = (locs *)ptr;
-  sample_file(gen->outn_writer, loc, 0, val * gen->outn[0]);
-  sample_file(gen->outn_writer, loc, 1, val * gen->outn[1]);
+  mus_out_any_to_file(gen->outn_writer, loc, 0, val * gen->outn[0]);
+  mus_out_any_to_file(gen->outn_writer, loc, 1, val * gen->outn[1]);
 }
 
 
 void mus_locsig_stereo(mus_any *ptr, off_t loc, Float val) /* but mono rev */
 {
   locs *gen = (locs *)ptr;
-  sample_file(gen->outn_writer, loc, 0, val * gen->outn[0]);
-  sample_file(gen->outn_writer, loc, 1, val * gen->outn[1]);
-  sample_file(gen->revn_writer, loc, 0, val * gen->revn[0]);
+  mus_out_any_to_file(gen->outn_writer, loc, 0, val * gen->outn[0]);
+  mus_out_any_to_file(gen->outn_writer, loc, 1, val * gen->outn[1]);
+  mus_out_any_to_file(gen->revn_writer, loc, 0, val * gen->revn[0]);
 }
 
 

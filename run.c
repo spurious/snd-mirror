@@ -142,6 +142,14 @@
     what about the thread stuff: only thread_variable in s7.h now
  */
 
+  /* 
+   * TODO: delay can also be optimized in this context
+   * TODO: (if (= a b)...) also (if (> a b)...)
+   * also add_f2 as mult_f2
+   * also outa+oscil_mult(etc mf3 mf2), locsig same
+   * also oscil where fm is add_f3 or polywave add_f2|3
+   */
+
 #include <mus-config.h>
 
 #if USE_SND
@@ -207,6 +215,7 @@
 
 
 #define S_run_safety "run-safety"
+/* this is now a no-op in Scheme */
 enum {RUN_UNSAFE, RUN_SAFE};
 static int run_safety = RUN_UNSAFE;
 
@@ -5029,79 +5038,6 @@ static xen_value *package(ptree *prog,
 }
 
 
-static xen_value *temp_package(ptree *prog,
-			       int type, 
-			       void (*function)(int *arg_addrs, ptree *pt),
-			       const char *descr,
-			       xen_value **args,
-			       int num_args)
-{
-  xen_value *temp;
-  temp = args[0];
-  args[0] = add_temporary_var_to_ptree(prog, type);
-  add_triple_to_ptree(prog, make_triple(function, descr, args, num_args + 1));
-  free(args[0]);
-  args[0] = temp;
-  return(args[0]);
-}
-
-
-static void dbl_check_1(int *args, ptree *pt)
-{
-  if (!(FLOAT_ARG_OK(1))) 
-    mus_error(MUS_NO_DATA, "float arg 1 addr (%d) is invalid (%d of %d)", args[1], pt->dbl_ctr, pt->dbls_size);
-#if HAVE_DECL_ISNAN
-  if (isnan(FLOAT_ARG_1)) mus_error(MUS_ARG_OUT_OF_RANGE, "float arg 1 is NaN");
-#endif
-}
-
-
-static void dbl_check_2(int *args, ptree *pt)
-{
-  if (!(FLOAT_ARG_OK(2))) 
-    mus_error(MUS_NO_DATA, "float arg 2 addr (%d) is invalid (%d of %d)", args[2], pt->dbl_ctr, pt->dbls_size);
-#if HAVE_DECL_ISNAN
-  if (isnan(FLOAT_ARG_2)) mus_error(MUS_ARG_OUT_OF_RANGE, "float arg 2 is NaN");
-#endif
-}
-
-
-static void dbl_check_3(int *args, ptree *pt)
-{
-  if (!(FLOAT_ARG_OK(3))) 
-    mus_error(MUS_NO_DATA, "float arg 3 addr (%d) is invalid (%d of %d)", args[3], pt->dbl_ctr, pt->dbls_size);
-#if HAVE_DECL_ISNAN
-  if (isnan(FLOAT_ARG_3)) mus_error(MUS_ARG_OUT_OF_RANGE, "float arg 3 is NaN");
-#endif
-}
-
-
-static void safe_package(ptree *prog,
-			 int type, 
-			 void (*function)(int *arg_addrs, ptree *pt),
-			 const char *descr,
-			 xen_value **args,
-			 int num_args)
-{
-  /* package with added float arg checks for NaN; run_safety already checked */
-  temp_package(prog, type, function, descr, args, num_args);
-#if HAVE_DECL_ISNAN
-  if (num_args >= 1)
-    {
-      if (args[1]->type == R_FLOAT) temp_package(prog, R_BOOL, dbl_check_1, "dbl_check_1", args, num_args);
-      if (num_args >= 2)
-	{
-	  if (args[2]->type == R_FLOAT) temp_package(prog, R_BOOL, dbl_check_2, "dbl_check_2", args, num_args);
-	  if (num_args >= 3)
-	    {
-	      if (args[3]->type == R_FLOAT) temp_package(prog, R_BOOL, dbl_check_3, "dbl_check_3", args, num_args);
-	    }
-	}
-    }
-#endif
-}
-
-
 static xen_value *package_n(ptree *prog,
 			    int type, 
 			    void (*function)(int *arg_addrs, ptree *pt),
@@ -5202,8 +5138,12 @@ static void multiply_f_i_i(int *args, ptree *pt) {INT_RESULT = (Int)(FLOAT_ARG_1
 
 static void add_f2_mult(int *args, ptree *pt);
 static void add_f2(int *args, ptree *pt);
+static void add_f3_mult(int *args, ptree *pt);
+static void add_f3(int *args, ptree *pt);
 static void subtract_f2(int *args, ptree *pt);
 static void subtract_f2_mult(int *args, ptree *pt);
+static void subtract_f3(int *args, ptree *pt);
+static void subtract_f3_mult(int *args, ptree *pt);
 static void multiply_add_f2(int *args, ptree *pt);
 static void multiply_add_f2_mult(int *args, ptree *pt);
 static void oscil_0f_1(int *args, ptree *pt);
@@ -5212,6 +5152,9 @@ static void oscil_0f_1_mult(int *args, ptree *pt);
 static void oscil_1f_1(int *args, ptree *pt);
 static void oscil_1f_1_env(int *args, ptree *pt);
 static void oscil_1f_1_mult(int *args, ptree *pt);
+static void oscil_1f_2(int *args, ptree *pt);
+static void oscil_1f_2_env(int *args, ptree *pt);
+static void oscil_1f_2_mult(int *args, ptree *pt);
 static void polywave_0f_env(int *args, ptree *pt);
 static void polywave_0f_mult(int *args, ptree *pt);
 static void polywave_0f(int *args, ptree *pt);
@@ -5227,6 +5170,7 @@ static void abs_f_mult(int *args, ptree *pt);
 static void sqrt_f(int *args, ptree *pt);
 static void sqrt_f_mult(int *args, ptree *pt);
 static void env_linear_0f_mult(int *args, ptree *pt);
+static void env_linear_0f_env(int *args, ptree *pt);
 static void env_linear_0f(int *args, ptree *pt);
 static void rand_0f(int *args, ptree *pt);
 static void rand_0f_env(int *args, ptree *pt);
@@ -5241,6 +5185,9 @@ static void vct_ref_f_mult(int *args, ptree *pt);
 static void delay_1f(int *args, ptree *pt);
 static void delay_1f_env(int *args, ptree *pt);
 static void delay_1f_mult(int *args, ptree *pt);
+static void granulate_0f_env(int *args, ptree *pt);
+static void granulate_0f_mult(int *args, ptree *pt);
+static void granulate_0f(int *args, ptree *pt);
 
 
 /* 2 arg ops that can be combined into a multiply */
@@ -5253,12 +5200,12 @@ typedef struct {
   const char *env_func_name;
 } mf2_ops;
 
-#define NUM_2_MULT_OPS 10
+#define NUM_2_MULT_OPS 11
 
 static mf2_ops arg_2_mf2_ops[NUM_2_MULT_OPS] = {
   {oscil_0f_1, "oscil_0f", oscil_0f_1_mult, "oscil_0f_mult", oscil_0f_1_env, "oscil_0f_env"},
   {polywave_0f, "polywave_0f", polywave_0f_mult, "polywave_0f_mult", polywave_0f_env, "polywave_0f_env"},
-  {env_linear_0f, "env_linear_0f", env_linear_0f_mult, "env_linear_0f_mult", NULL, NULL},
+  {env_linear_0f, "env_linear_0f", env_linear_0f_mult, "env_linear_0f_mult", env_linear_0f_env, "env_linear_0f_env"},
   {sin_f, "sin_f", sin_f_mult, "sin_f_mult", NULL, NULL},
   {cos_f, "cos_f", cos_f_mult, "cos_f_mult", NULL, NULL},
   {rand_0f, "rand_0f", rand_0f_mult, "rand_0f_mult", rand_0f_env, "rand_0f_env"},
@@ -5266,6 +5213,7 @@ static mf2_ops arg_2_mf2_ops[NUM_2_MULT_OPS] = {
   {abs_f, "abs_f", abs_f_mult, "abs_f_mult", NULL, NULL},
   {sqrt_f, "sqrt_f", sqrt_f_mult, "sqrt_f_mult", NULL, NULL},
   {vct_constant_ref_0, "vct_constant_ref_0", vct_constant_ref_0_mult, "vct_constant_ref_0_mult", NULL, NULL},
+  {granulate_0f, "granulate_0f", granulate_0f_mult, "granulate_0f_mult", granulate_0f_env, "granulate_0f_env"},
 };
 
 
@@ -5283,7 +5231,7 @@ static int find_arg_2_mf2_op(triple *prev_op)
 #define NUM_3_MULT_OPS 6
 
 static mf2_ops arg_3_mf2_ops[NUM_3_MULT_OPS] = {
-  {oscil_1f_1, "oscil_1f", oscil_1f_1_mult, "oscil_1f_mult", oscil_1f_1_env, "oscil_1f_env"},
+  {oscil_1f_1, "oscil_1f_1", oscil_1f_1_mult, "oscil_1f_1_mult", oscil_1f_1_env, "oscil_1f_1_env"},
   {polywave_1f, "polywave_1f", polywave_1f_mult, "polywave_1f_mult", polywave_1f_env, "polywave_1f_env"},
   {delay_1f, "delay_1f", delay_1f_mult, "delay_1f_mult", delay_1f_env, "delay_1f_env"},
   {add_f2, "add_f2", add_f2_mult, "add_f2_mult", NULL, NULL},
@@ -5292,12 +5240,32 @@ static mf2_ops arg_3_mf2_ops[NUM_3_MULT_OPS] = {
 };
 
 
-
 static int find_arg_3_mf2_op(triple *prev_op)
 {
   int i;
   for (i = 0; i < NUM_3_MULT_OPS; i++)
     if (prev_op->function == arg_3_mf2_ops[i].func)
+      return(i);
+  return(-1);
+}
+
+
+/* 4 arg ops that can be combined into a multiply */
+#define NUM_4_MULT_OPS 4
+
+static mf2_ops arg_4_mf2_ops[NUM_3_MULT_OPS] = {
+  {multiply_add_f2, "multiply_add_f2", multiply_add_f2_mult, "multiply_add_f2_mult", NULL, NULL},
+  {add_f3, "add_f3", add_f3_mult, "add_f3_mult", NULL, NULL},
+  {oscil_1f_2, "oscil_1f_2", oscil_1f_2_mult, "oscil_1f_2_mult", oscil_1f_2_env, "oscil_1f_2_env"},
+  {subtract_f3, "subtract_f3", subtract_f3_mult, "subtract_f3_mult", NULL, NULL},
+};
+
+
+static int find_arg_4_mf2_op(triple *prev_op)
+{
+  int i;
+  for (i = 0; i < NUM_4_MULT_OPS; i++)
+    if (prev_op->function == arg_4_mf2_ops[i].func)
       return(i);
   return(-1);
 }
@@ -5360,6 +5328,7 @@ static xen_value *multiply(ptree *prog, xen_value **args, int num_args)
     {
       if (num_args == 2) 
 	{
+	  /* in instruments, this is the most common operation, coupled with things like envelopes, so it's worth some optimization */
 	  if (prog->triple_ctr > 0)
 	    {
 	      triple *prev_op;
@@ -5368,9 +5337,12 @@ static xen_value *multiply(ptree *prog, xen_value **args, int num_args)
 		   (prev_op->args[0] == args[2]->addr)) &&
 		  ((find_var_in_ptree_via_addr(prog, R_FLOAT, prev_op->args[0])) == NULL))
 		{
-		  if (prev_op->num_args == 2)
+		  int loc;
+		  switch (prev_op->num_args)
 		    {
-		      int loc;
+
+		      /* -------- 2 args -------- */
+		    case 2:
 		      loc = find_arg_2_mf2_op(prev_op);
 		      if (loc >= 0)
 			{
@@ -5411,75 +5383,73 @@ static xen_value *multiply(ptree *prog, xen_value **args, int num_args)
 			  prev_op->types[2] = R_FLOAT;
 			  return(make_xen_value(R_FLOAT, prev_op->args[0], R_TEMPORARY));
 			}
-		    }
-		  else
-		    {
-		      if (prev_op->num_args == 3)
-			{
-			  int loc;
-			  loc = find_arg_3_mf2_op(prev_op);
-			  if (loc >= 0)
-			    {
-			      if ((prog->triple_ctr > 1) &&
-				  (arg_3_mf2_ops[loc].env_func)) /* env is a possibility */
-				{
-				  triple *p2_op;
-				  p2_op = prog->program[prog->triple_ctr - 2];
-				  if ((p2_op->function == env_linear_0f) &&
-				      (((p2_op->args[0] == args[1]->addr) && (prev_op->args[0] == args[2]->addr)) ||
-				       ((p2_op->args[0] == args[2]->addr) && (prev_op->args[0] == args[1]->addr))) &&
-				      ((find_var_in_ptree_via_addr(prog, R_FLOAT, p2_op->args[0])) == NULL))
-				    {
-				      p2_op->types = (int *)realloc(p2_op->types, 4 * sizeof(int));
-				      p2_op->args = (int *)realloc(p2_op->args, 4 * sizeof(int));
-				      /* env becomes arg 3 */
-				      p2_op->args[3] = p2_op->args[1];
-				      p2_op->types[3] = p2_op->types[1];
-				      p2_op->args[1] = prev_op->args[1];
-				      p2_op->types[1] = prev_op->types[1];
-				      p2_op->args[2] = prev_op->args[2];
-				      p2_op->types[2] = prev_op->types[2];
-				      p2_op->num_args = 4;
-				      p2_op->function = arg_3_mf2_ops[loc].env_func;
-				      p2_op->op_name = arg_3_mf2_ops[loc].env_func_name;
-				      free_triple(prev_op);
-				      prog->triple_ctr--;
-				      return(make_xen_value(R_FLOAT, p2_op->args[0], R_TEMPORARY));
-				    }
-				}
-			      prev_op->types = (int *)realloc(prev_op->types, 4 * sizeof(int));
-			      prev_op->args = (int *)realloc(prev_op->args, 4 * sizeof(int));
-			      if (prev_op->args[0] == args[1]->addr)
-				prev_op->args[3] = args[2]->addr;
-			      else prev_op->args[3] = args[1]->addr;
-			      prev_op->num_args = 4;
-			      prev_op->function = arg_3_mf2_ops[loc].mult_func;
-			      prev_op->op_name = arg_3_mf2_ops[loc].mult_func_name;
-			      prev_op->types[3] = R_FLOAT;
-			      return(make_xen_value(R_FLOAT, prev_op->args[0], R_TEMPORARY));
-			    }
-			}
-		      else
-			{
-			  if ((prev_op->num_args == 4) &&
-			      (prev_op->function == multiply_add_f2))
-			    {
-			      prev_op->types = (int *)realloc(prev_op->types, 5 * sizeof(int));
-			      prev_op->args = (int *)realloc(prev_op->args, 5 * sizeof(int));
-			      if (prev_op->args[0] == args[1]->addr)
-				prev_op->args[4] = args[2]->addr;
-			      else prev_op->args[4] = args[1]->addr;
-			      prev_op->num_args = 5;
-			      prev_op->function = multiply_add_f2_mult;
-			      prev_op->op_name = "multiply_add_f2_mult";
-			      prev_op->types[4] = R_FLOAT;
-			      return(make_xen_value(R_FLOAT, prev_op->args[0], R_TEMPORARY));
-			    }}}
-		}}
+		      break;
 
-	  
+		      /* -------- 3 args -------- */
+		    case 3:
+		      loc = find_arg_3_mf2_op(prev_op);
+		      if (loc >= 0)
+			{
+			  if ((prog->triple_ctr > 1) &&
+			      (arg_3_mf2_ops[loc].env_func)) /* env is a possibility */
+			    {
+			      triple *p2_op;
+			      p2_op = prog->program[prog->triple_ctr - 2];
+			      if ((p2_op->function == env_linear_0f) &&
+				  (((p2_op->args[0] == args[1]->addr) && (prev_op->args[0] == args[2]->addr)) ||
+				   ((p2_op->args[0] == args[2]->addr) && (prev_op->args[0] == args[1]->addr))) &&
+				  ((find_var_in_ptree_via_addr(prog, R_FLOAT, p2_op->args[0])) == NULL))
+				{
+				  p2_op->types = (int *)realloc(p2_op->types, 4 * sizeof(int));
+				  p2_op->args = (int *)realloc(p2_op->args, 4 * sizeof(int));
+				  /* env becomes arg 3 */
+				  p2_op->args[3] = p2_op->args[1];
+				  p2_op->types[3] = p2_op->types[1];
+				  p2_op->args[1] = prev_op->args[1];
+				  p2_op->types[1] = prev_op->types[1];
+				  p2_op->args[2] = prev_op->args[2];
+				  p2_op->types[2] = prev_op->types[2];
+				  p2_op->num_args = 4;
+				  p2_op->function = arg_3_mf2_ops[loc].env_func;
+				  p2_op->op_name = arg_3_mf2_ops[loc].env_func_name;
+				  free_triple(prev_op);
+				  prog->triple_ctr--;
+				  return(make_xen_value(R_FLOAT, p2_op->args[0], R_TEMPORARY));
+				}
+			    }
+			  prev_op->types = (int *)realloc(prev_op->types, 4 * sizeof(int));
+			  prev_op->args = (int *)realloc(prev_op->args, 4 * sizeof(int));
+			  if (prev_op->args[0] == args[1]->addr)
+			    prev_op->args[3] = args[2]->addr;
+			  else prev_op->args[3] = args[1]->addr;
+			  prev_op->num_args = 4;
+			  prev_op->function = arg_3_mf2_ops[loc].mult_func;
+			  prev_op->op_name = arg_3_mf2_ops[loc].mult_func_name;
+			  prev_op->types[3] = R_FLOAT;
+			  return(make_xen_value(R_FLOAT, prev_op->args[0], R_TEMPORARY));
+			}
+		      break;
+
+		      /* -------- 4 args -------- */
+		    case 4:
+		      loc = find_arg_4_mf2_op(prev_op);
+		      if (loc >= 0)
+			{
+			  prev_op->types = (int *)realloc(prev_op->types, 5 * sizeof(int));
+			  prev_op->args = (int *)realloc(prev_op->args, 5 * sizeof(int));
+			  if (prev_op->args[0] == args[1]->addr)
+			    prev_op->args[4] = args[2]->addr;
+			  else prev_op->args[4] = args[1]->addr;
+			  prev_op->num_args = 5;
+			  prev_op->function = arg_4_mf2_ops[loc].mult_func;
+			  prev_op->op_name = arg_4_mf2_ops[loc].mult_func_name;
+			  prev_op->types[4] = R_FLOAT;
+			  return(make_xen_value(R_FLOAT, prev_op->args[0], R_TEMPORARY));
+			}
+		      break;
+		    }
+		}}
 	  return(package(prog, R_FLOAT, multiply_f2, "multiply_f2", args, num_args));
-	  
 	}
       if (num_args == 3) return(package(prog, R_FLOAT, multiply_f3, "multiply_f3", args, num_args));
       if (num_args == 4) return(package(prog, R_FLOAT, multiply_f4, "multiply_f4", args, num_args));
@@ -5496,7 +5466,6 @@ static xen_value *multiply(ptree *prog, xen_value **args, int num_args)
 /* ---------------- add ---------------- */
 
 static void add_f2(int *args, ptree *pt) {FLOAT_RESULT = (FLOAT_ARG_1 + FLOAT_ARG_2);}
-
 static void add_f2_mult(int *args, ptree *pt) {FLOAT_RESULT = FLOAT_ARG_3 * (FLOAT_ARG_1 + FLOAT_ARG_2);}
 
 
@@ -5504,6 +5473,7 @@ static void add_f2_i(int *args, ptree *pt) {INT_RESULT = (Int)(FLOAT_ARG_1 + FLO
 
 
 static void add_f3(int *args, ptree *pt) {FLOAT_RESULT = (FLOAT_ARG_1 + FLOAT_ARG_2 + FLOAT_ARG_3);}
+static void add_f3_mult(int *args, ptree *pt) {FLOAT_RESULT = FLOAT_ARG_4 * (FLOAT_ARG_1 + FLOAT_ARG_2 + FLOAT_ARG_3);}
 
 
 static void add_f4(int *args, ptree *pt) {FLOAT_RESULT = (FLOAT_ARG_1 + FLOAT_ARG_2 + FLOAT_ARG_3 + FLOAT_ARG_4);}
@@ -5661,6 +5631,7 @@ static void subtract_f2_i(int *args, ptree *pt) {INT_RESULT = (Int)(FLOAT_ARG_1 
 
 
 static void subtract_f3(int *args, ptree *pt) {FLOAT_RESULT = (FLOAT_ARG_1 - FLOAT_ARG_2 - FLOAT_ARG_3);}
+static void subtract_f3_mult(int *args, ptree *pt) {FLOAT_RESULT = FLOAT_ARG_4 * (FLOAT_ARG_1 - FLOAT_ARG_2 - FLOAT_ARG_3);}
 
 
 static void subtract_fn(int *args, ptree *pt) 
@@ -6629,19 +6600,26 @@ static xen_value *yn_1(ptree *prog, xen_value **args, int num_args)
 
 
 
-static void seconds_to_samples_f(int *args, ptree *pt) {INT_RESULT = mus_seconds_to_samples(FLOAT_ARG_1);}
+static void seconds_to_samples_i(int *args, ptree *pt) {INT_RESULT = mus_seconds_to_samples(FLOAT_ARG_1);}
 
 
 static xen_value *seconds_to_samples_1(ptree *prog, xen_value **args, int num_args)
 {
   xen_value *temp;
+  if (prog->constants == 1)
+    {
+      if (args[1]->type == R_INT)
+	return(make_xen_value(R_INT, add_int_to_ptree(prog, mus_seconds_to_samples((Float)(prog->ints[args[1]->addr]))), R_CONSTANT));
+      return(make_xen_value(R_INT, add_int_to_ptree(prog, mus_seconds_to_samples(prog->dbls[args[1]->addr])), R_CONSTANT));
+    }
+
   if (args[1]->type == R_INT)
     {
       temp = args[1];
       args[1] = convert_int_to_dbl(prog, args[1]);
       free(temp);
     }
-  return(package(prog, R_INT, seconds_to_samples_f, "seconds_to_samples_f", args, 1));
+  return(package(prog, R_INT, seconds_to_samples_i, "seconds_to_samples_i", args, 1));
 }
 
 
@@ -8753,21 +8731,6 @@ static xen_value *make_mix_sample_reader_1(ptree *pt, xen_value **args, int num_
 
 
 
-static void vct_check_1(int *args, ptree *pt) 
-{
-  if (!(VCT_ARG_OK(1))) mus_error(MUS_NO_DATA, "vct arg 1 addr (%d) is invalid (%d of %d)", args[1], pt->vct_ctr, pt->vcts_size);
-  if (!(VCT_ARG_1)) mus_error(MUS_NO_DATA, "arg 1 (vct) is null");
-}
-
-
-static void vct_check_2(int *args, ptree *pt) 
-{
-  if (!(VCT_ARG_OK(2))) mus_error(MUS_NO_DATA, "vct arg 2 addr (%d) is invalid (%d of %d)", args[2], pt->vct_ctr, pt->vcts_size);
-  if (!(VCT_ARG_2)) mus_error(MUS_NO_DATA, "arg 2 (vct) is null");
-}
-
-
-
 /* ---------------- autocorrelate ---------------- */
 
 static void autocorrelate_0(int *args, ptree *pt) 
@@ -8779,7 +8742,6 @@ static void autocorrelate_0(int *args, ptree *pt)
 
 static xen_value *autocorrelate_1(ptree *prog, xen_value **args, int num_args) 
 {
-  if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, vct_check_1, "vct_check_1", args, 1);
   return(package(prog, R_VCT, autocorrelate_0, "autocorrelate_0", args, 1));
 }
 
@@ -8800,11 +8762,6 @@ static void correlate_0(int *args, ptree *pt)
 
 static xen_value *correlate_1(ptree *prog, xen_value **args, int num_args) 
 {
-  if (run_safety == RUN_SAFE) 
-    {
-      temp_package(prog, R_BOOL, vct_check_1, "vct_check_1", args, 1);
-      temp_package(prog, R_BOOL, vct_check_2, "vct_check_2", args, 2);
-    }
   return(package(prog, R_VCT, correlate_0, "correlate_0", args, 2));
 }
 
@@ -8961,13 +8918,6 @@ static void list_ref(int *args, ptree *pt)
 }
 
 
-static void list_check_1(int *args, ptree *pt) 
-{
-  if (!(LIST_ARG_OK(1))) mus_error(MUS_NO_DATA, "list arg 1 addr (%d) is invalid (%d of %d)", args[1], pt->list_ctr, pt->lists_size);
-  if (!(LIST_ARG_1)) mus_error(MUS_NO_DATA, "arg 1 (list) is null");
-}
-
-
 static char *def_clm_struct_field_name(int def_clm_struct_type, int field);
 
 static xen_value *package_clm_struct(ptree *prog, int struct_type, xen_value **args, int num_args)
@@ -8998,9 +8948,6 @@ static xen_value *list_ref_1(ptree *prog, xen_value **args, int num_args)
 {
   list *xl;
   /* these are list constants, we know in advance what all element types are */
-
-  if (run_safety == RUN_SAFE) 
-    temp_package(prog, R_BOOL, list_check_1, "list_check_1", args, 1);
 
   if (CLM_STRUCT_P(args[1]->type))
     return(package_clm_struct(prog, args[1]->type, args, num_args));
@@ -9168,9 +9115,6 @@ static void length_0(int *args, ptree *pt)
 
 static xen_value *length_1(ptree *prog, xen_value **args, int num_args)
 {
-  if (run_safety == RUN_SAFE) 
-    temp_package(prog, R_BOOL, list_check_1, "list_check_1", args, 1);
-
   return(package(prog, R_INT, length_0, "length", args, 1));
 }
 
@@ -9207,13 +9151,6 @@ static void clm_struct_field_set_1(ptree *prog, xen_value *in_v, xen_value *in_v
 /* float vectors are handled as vcts
  */
 
-static void vect_check_1(int *args, ptree *pt) 
-{
-  if (!(VECT_ARG_OK(1))) mus_error(MUS_NO_DATA, "vector arg 1 addr (%d) is invalid (%d of %d)", args[1], pt->vect_ctr, pt->vects_size);
-  if (!(VECT_ARG_1)) mus_error(MUS_NO_DATA, "arg 1 (vector) is null");
-}
-
-
 /* length */
 
 static void vector_length_f(int *args, ptree *pt) {INT_RESULT = VCT_ARG_1->length;}
@@ -9223,12 +9160,6 @@ static void vector_length_i(int *args, ptree *pt) {INT_RESULT = VECT_ARG_1->leng
 
 static xen_value *vector_length_1(ptree *prog, xen_value **args, int num_args)
 {
-  if (run_safety == RUN_SAFE) 
-    {
-      if (args[1]->type == R_FLOAT_VECTOR)
-	temp_package(prog, R_BOOL, vct_check_1, "vct_check_1", args, 1);
-      else temp_package(prog, R_BOOL, vect_check_1, "vect_check_1", args, 1);
-    }
   switch (args[1]->type)
     {
     case R_FLOAT_VECTOR: 
@@ -9263,12 +9194,6 @@ static void vector_ref_l(int *args, ptree *pt) {LIST_RESULT = VECT_ARG_1->data.l
 
 static xen_value *vector_ref_1(ptree *prog, xen_value **args, int num_args)
 {
-  if (run_safety == RUN_SAFE) 
-    {
-      if (args[1]->type == R_FLOAT_VECTOR)
-	temp_package(prog, R_BOOL, vct_check_1, "vct_check_1", args, 1);
-      else temp_package(prog, R_BOOL, vect_check_1, "vect_check_1", args, 1);
-    }
   switch (args[1]->type)
     {
     case R_FLOAT_VECTOR: 
@@ -9318,12 +9243,6 @@ static void vector_set_c(int *args, ptree *pt) {VECT_ARG_1->data.gens[INT_ARG_2]
 static xen_value *vector_set_1(ptree *prog, xen_value **args, int num_args)
 {
   xen_var *var;
-  if (run_safety == RUN_SAFE) 
-    {
-      if (args[1]->type == R_FLOAT_VECTOR)
-	temp_package(prog, R_BOOL, vct_check_1, "vct_check_1", args, 1);
-      else temp_package(prog, R_BOOL, vect_check_1, "vect_check_1", args, 1);
-    }
   var = find_var_in_ptree_via_addr(prog, args[1]->type, args[1]->addr);
   if (var) var->unclean = true;
   switch (args[1]->type)
@@ -9387,12 +9306,6 @@ static void vector_fill_c(int *args, ptree *pt)
 
 static xen_value *vector_fill_1(ptree *prog, xen_value **args, int num_args)
 {
-  if (run_safety == RUN_SAFE) 
-    {
-      if (args[1]->type == R_FLOAT_VECTOR)
-	temp_package(prog, R_BOOL, vct_check_1, "vct_check_1", args, 1);
-      else temp_package(prog, R_BOOL, vect_check_1, "vect_check_1", args, 1);
-    }
   switch (args[1]->type)
     {
     case R_FLOAT_VECTOR: 
@@ -9422,19 +9335,11 @@ static xen_value *vector_fill_1(ptree *prog, xen_value **args, int num_args)
 
 /* ---------------- vct stuff ---------------- */
 
-static void vct_check_index(int *args, ptree *pt) 
-{
-  if (VCT_ARG_1->length <= INT_ARG_2) 
-    mus_error(MUS_NO_DATA, "vct index (" INT_STR ") too high (len = " OFF_TD ")", INT_ARG_2, VCT_ARG_1->length);
-}
-
-
 static void vct_length_i(int *args, ptree *pt) {INT_RESULT = VCT_ARG_1->length;}
 
 
 static xen_value *vct_length_1(ptree *prog, xen_value **args, int num_args)
 {
-  if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, vct_check_1, "vct_check_1", args, 1);
   return(package(prog, R_INT, vct_length_i, "vct_length_i", args, 1));
 }
 
@@ -9451,7 +9356,6 @@ static void vct_ref_f_mult(int *args, ptree *pt) {FLOAT_RESULT = FLOAT_ARG_3 * V
 
 static xen_value *vct_ref_1(ptree *prog, xen_value **args, int num_args)
 {
-  if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, vct_check_1, "vct_check_1", args, 1);
   if (args[2]->constant == R_CONSTANT)
     {
       if (prog->ints[args[2]->addr] == 0)
@@ -9463,7 +9367,6 @@ static xen_value *vct_ref_1(ptree *prog, xen_value **args, int num_args)
       if (prog->ints[args[2]->addr] == 3)
 	return(package(prog, R_FLOAT, vct_constant_ref_3, "vct_constant_ref_3", args, 1));
     }
-  if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, vct_check_index, "vct_check_index", args, 2);
   return(package(prog, R_FLOAT, vct_ref_f, "vct_ref_f", args, 2));
 }
 
@@ -9508,7 +9411,6 @@ static xen_value *vct_set_2(ptree *prog, xen_value **args, int num_args)
   xen_var *var;
   var = find_var_in_ptree_via_addr(prog, args[1]->type, args[1]->addr);
   if (var) var->unclean = true;
-  if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, vct_check_1, "vct_check_1", args, 1);
   if (args[3]->type == R_FLOAT)
     {
       if (args[2]->constant == R_CONSTANT)
@@ -9522,10 +9424,8 @@ static xen_value *vct_set_2(ptree *prog, xen_value **args, int num_args)
 	  if (prog->ints[args[2]->addr] == 3)
 	    return(package(prog, R_FLOAT, vct_constant_set_3, "vct_constant_set_3", args, 3));
 	}
-      if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, vct_check_index, "vct_check_index", args, 2);
       return(package(prog, R_FLOAT, vct_set_f, "vct_set_f", args, 3));
     }
-  if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, vct_check_index, "vct_check_index", args, 2);
   return(package(prog, R_FLOAT, vct_set_i, "vct_set_i", args, 3));
 }
 
@@ -9628,7 +9528,6 @@ static void vct_copy_v(int *args, ptree *pt)
 
 static xen_value *vct_copy_1(ptree *prog, xen_value **args, int num_args)
 {
-  if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, vct_check_1, "vct_check_1", args, 1);
   args[0] = make_xen_value(R_VCT, add_vct_to_ptree(prog, NULL), R_VARIABLE);
   add_obj_to_gcs(prog, R_VCT, args[0]->addr);
   add_triple_to_ptree(prog, va_make_triple(vct_copy_v, "vct_copy_v", 2, args[0], args[1]));
@@ -9653,7 +9552,6 @@ static xen_value *vct_ ## CName ## _1(ptree *prog, xen_value **args, int num_arg
       args[2] = convert_int_to_dbl(prog, args[2]); \
       free(temp); \
     } \
-  if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, vct_check_1, "vct_check_1", args, 1); \
   return(package(prog, R_VCT, vct_ ## CName ## _f, "vct_" #CName "_f", args, 2)); \
 }
 
@@ -9678,8 +9576,6 @@ static void vct_ ## CName ## _f(int *args, ptree *pt) \
 } \
 static xen_value *vct_ ## CName ## _1(ptree *prog, xen_value **args, int num_args) \
 { \
-  if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, vct_check_1, "vct_check_1", args, 1); \
-  if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, vct_check_2, "vct_check_2", args, 2); \
   return(package(prog, R_VCT, vct_ ## CName ## _f, "vct_" #CName "_f", args, 2)); \
 }
 
@@ -9840,8 +9736,6 @@ static xen_value *vct_to_channel_1(ptree *pt, xen_value **args, int num_args)
   xen_value *true_args[6];
   xen_value *rtn;
   int k;
-  if (run_safety == RUN_SAFE) 
-    temp_package(pt, R_BOOL, vct_check_1, "vct_check_1", args, 1);
   for (k = 0; k < 4; k++) true_args[k] = args[k];
   run_opt_arg(pt, args, num_args, 4, true_args);
   run_opt_arg(pt, args, num_args, 5, true_args);
@@ -9855,35 +9749,11 @@ static xen_value *vct_to_channel_1(ptree *pt, xen_value **args, int num_args)
 
 /* ---------------- sound-data ---------------- */
 
-static void sound_data_check_1(int *args, ptree *pt) 
-{
-  if (!(SOUND_DATA_ARG_OK(1))) mus_error(MUS_NO_DATA, "sound-data arg 1 addr (%d) is invalid (%d of %d)", args[1], pt->sd_ctr, pt->sds_size);
-  if (!(SOUND_DATA_ARG_1)) mus_error(MUS_NO_DATA, "arg 1 (sound-data) is null");
-}
-
-
-static void sound_data_check_2(int *args, ptree *pt) 
-{
-  if (!(SOUND_DATA_ARG_OK(2))) mus_error(MUS_NO_DATA, "sound-data arg 2 addr (%d) is invalid (%d of %d)", args[2], pt->sd_ctr, pt->sds_size);
-  if (!(SOUND_DATA_ARG_2)) mus_error(MUS_NO_DATA, "arg 2 (sound-data) is null");
-}
-
-
-static void sound_data_check_index(int *args, ptree *pt) 
-{
-  if (SOUND_DATA_ARG_1->chans <= INT_ARG_2) 
-    mus_error(MUS_NO_DATA, "sound-data chan (" INT_STR ") too high (chans = %d)", INT_ARG_2, SOUND_DATA_ARG_1->chans);
-  if (SOUND_DATA_ARG_1->length <= INT_ARG_3) 
-    mus_error(MUS_NO_DATA, "sound-data index (" INT_STR ") too high (length = " OFF_TD ")", INT_ARG_3, SOUND_DATA_ARG_1->length);
-}
-
-
 static void sound_data_length_i(int *args, ptree *pt) {INT_RESULT = SOUND_DATA_ARG_1->length;}
 
 
 static xen_value *sound_data_length_1(ptree *prog, xen_value **args, int num_args)
 {
-  if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, sound_data_check_1, "sound_data_check_1", args, 1);
   return(package(prog, R_INT, sound_data_length_i, "sound_data_length_i", args, 1));
 }
 
@@ -9893,7 +9763,6 @@ static void sound_data_chans_i(int *args, ptree *pt) {INT_RESULT = SOUND_DATA_AR
 
 static xen_value *sound_data_chans_1(ptree *prog, xen_value **args, int num_args)
 {
-  if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, sound_data_check_1, "sound_data_check_1", args, 1);
   return(package(prog, R_INT, sound_data_chans_i, "sound_data_chans_i", args, 1));
 }
 
@@ -9903,7 +9772,6 @@ static void sound_data_peak_f(int *args, ptree *pt) {FLOAT_RESULT = sound_data_p
 
 static xen_value *sound_data_peak_1(ptree *prog, xen_value **args, int num_args)
 {
-  if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, sound_data_check_1, "sound_data_check_1", args, 1);
   return(package(prog, R_FLOAT, sound_data_peak_f, "sound_data_peak_f", args, 1));
 }
 
@@ -9917,7 +9785,6 @@ static void sound_data_copy_f(int *args, ptree *pt)
 
 static xen_value *sound_data_copy_1(ptree *prog, xen_value **args, int num_args)
 {
-  if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, sound_data_check_1, "sound_data_check_1", args, 1);
   args[0] = make_xen_value(R_SOUND_DATA, add_sound_data_to_ptree(prog, NULL), R_VARIABLE);
   add_obj_to_gcs(prog, R_SOUND_DATA, args[0]->addr);
   add_triple_to_ptree(prog, va_make_triple(sound_data_copy_f, "sound_data_copy_f", 2, args[0], args[1]));
@@ -9930,7 +9797,6 @@ static void sound_data_reverse_f(int *args, ptree *pt) {SOUND_DATA_RESULT = soun
 
 static xen_value *sound_data_reverse_1(ptree *prog, xen_value **args, int num_args)
 {
-  if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, sound_data_check_1, "sound_data_check_1", args, 1);
   return(package(prog, R_SOUND_DATA, sound_data_reverse_f, "sound_data_reverse_f", args, 1));
 }
 
@@ -9940,11 +9806,6 @@ static void sound_data_ref_f(int *args, ptree *pt) {FLOAT_RESULT = SOUND_DATA_AR
 
 static xen_value *sound_data_ref_1(ptree *prog, xen_value **args, int num_args)
 {
-  if (run_safety == RUN_SAFE) 
-    {
-      temp_package(prog, R_BOOL, sound_data_check_1, "sound_data_check_1", args, 1);
-      temp_package(prog, R_BOOL, sound_data_check_index, "sound_data_check_index", args, 3);
-    }
   return(package(prog, R_FLOAT, sound_data_ref_f, "sound_data_ref_f", args, 3));
 }
 
@@ -9977,11 +9838,6 @@ static xen_value *sound_data_set_2(ptree *prog, xen_value **args, int num_args)
   xen_var *var;
   var = find_var_in_ptree_via_addr(prog, args[1]->type, args[1]->addr);
   if (var) var->unclean = true;
-  if (run_safety == RUN_SAFE) 
-    {
-      temp_package(prog, R_BOOL, sound_data_check_1, "sound_data_check_1", args, 1);
-      temp_package(prog, R_BOOL, sound_data_check_index, "sound_data_check_index", args, 3);
-    }
   if (args[4]->type == R_FLOAT)
     return(package(prog, R_FLOAT, sound_data_set_f, "sound_data_set_f", args, 4));
   return(package(prog, R_FLOAT, sound_data_set_i, "sound_data_set_i", args, 4));
@@ -10016,8 +9872,6 @@ static xen_value *sound_data_scale_1(ptree *prog, xen_value **args, int num_args
       args[2] = convert_int_to_dbl(prog, args[2]);
       free(temp);
     }
-  if (run_safety == RUN_SAFE) 
-    temp_package(prog, R_BOOL, sound_data_check_1, "sound_data_check_1", args, 1);
   return(package(prog, R_SOUND_DATA, sound_data_scale_f, "sound_data_scale_f", args, 2));
 }
 
@@ -10034,8 +9888,6 @@ static xen_value *sound_data_offset_1(ptree *prog, xen_value **args, int num_arg
       args[2] = convert_int_to_dbl(prog, args[2]);
       free(temp);
     }
-  if (run_safety == RUN_SAFE) 
-    temp_package(prog, R_BOOL, sound_data_check_1, "sound_data_check_1", args, 1);
   return(package(prog, R_SOUND_DATA, sound_data_offset_f, "sound_data_offset_f", args, 2));
 }
 
@@ -10052,8 +9904,6 @@ static xen_value *sound_data_fill_1(ptree *prog, xen_value **args, int num_args)
       args[2] = convert_int_to_dbl(prog, args[2]);
       free(temp);
     }
-  if (run_safety == RUN_SAFE) 
-    temp_package(prog, R_BOOL, sound_data_check_1, "sound_data_check_1", args, 1);
   return(package(prog, R_SOUND_DATA, sound_data_fill_f, "sound_data_fill_f", args, 2));
 }
 
@@ -10063,11 +9913,6 @@ static void sound_data_add_f(int *args, ptree *pt) {SOUND_DATA_RESULT = sound_da
 
 static xen_value *sound_data_add_1(ptree *prog, xen_value **args, int num_args)
 {
-  if (run_safety == RUN_SAFE) 
-    {
-      temp_package(prog, R_BOOL, sound_data_check_1, "sound_data_check_1", args, 2);
-      temp_package(prog, R_BOOL, sound_data_check_2, "sound_data_check_2", args, 2);
-    }
   return(package(prog, R_SOUND_DATA, sound_data_add_f, "sound_data_add_f", args, 2));
 }
 
@@ -10076,11 +9921,6 @@ static void sound_data_multiply_f(int *args, ptree *pt) {SOUND_DATA_RESULT = sou
 
 static xen_value *sound_data_multiply_1(ptree *prog, xen_value **args, int num_args)
 {
-  if (run_safety == RUN_SAFE) 
-    {
-      temp_package(prog, R_BOOL, sound_data_check_1, "sound_data_check_1", args, 2);
-      temp_package(prog, R_BOOL, sound_data_check_2, "sound_data_check_2", args, 2);
-    }
   return(package(prog, R_SOUND_DATA, sound_data_multiply_f, "sound_data_multiply_f", args, 2));
 }
 
@@ -10138,8 +9978,6 @@ static void sound_data_to_vct_v(int *args, ptree *pt)
 
 static xen_value *sound_data_to_vct_1(ptree *prog, xen_value **args, int num_args)
 {
-  if (run_safety == RUN_SAFE) 
-    temp_package(prog, R_BOOL, sound_data_check_1, "sound_data_check_1", args, 1);
   return(package(prog, R_VCT, sound_data_to_vct_v, "sound_data_to_vct_v", args, 3));
 }
 
@@ -10162,8 +10000,6 @@ static void vct_to_sound_data_v(int *args, ptree *pt)
 
 static xen_value *vct_to_sound_data_1(ptree *prog, xen_value **args, int num_args)
 {
-  if (run_safety == RUN_SAFE) 
-    temp_package(prog, R_BOOL, vct_check_1, "vct_check_1", args, 1);
   return(package(prog, R_SOUND_DATA, vct_to_sound_data_v, "vct_to_sound_data_v", args, 3));
 }
 
@@ -10189,11 +10025,6 @@ static xen_value *mus_generator_p_1(ptree *prog, xen_value **args, int num_args)
         return(package(prog, R_BOOL, Name ## _0p, #Name "_0p", args, 1)); \
       } \
     return(make_xen_value(R_BOOL, add_int_to_ptree(prog, (Int)false), R_CONSTANT)); \
-  } \
-  static void Name ## _check(int *args, ptree *pt) \
-  { \
-    if (!(CLM_ARG_OK(1))) mus_error(MUS_NO_DATA, "clm generator arg 1 addr (%d) is invalid (%d of %d)", args[1], pt->clm_ctr, pt->clms_size); \
-    if (!mus_ ## Name ## _p(CLM_ARG_1)) mus_error(MUS_NO_GEN, #Name ": bad arg: %s", (CLM_ARG_1) ? mus_name(CLM_ARG_1) : "null"); \
   }
 
 /* GEN_P but no check procs for run-safety */
@@ -10230,7 +10061,6 @@ static xen_value *mus_generator_p_1(ptree *prog, xen_value **args, int num_args)
   GEN_P(Name) \
   static xen_value * Name ## _1(ptree *prog, xen_value **args, int num_args) \
   { \
-    if (run_safety == RUN_SAFE) safe_package(prog, R_BOOL, Name ## _check, #Name "_check", args, num_args); \
     if ((num_args > 1) && (args[2]->type == R_INT)) single_to_float(prog, args, 2); \
     if ((num_args > 2) && (args[3]->type == R_INT)) single_to_float(prog, args, 3); \
     if (num_args == 1) return(package(prog, R_FLOAT, Name ## _0f, #Name "_0f", args, 1)); \
@@ -10246,7 +10076,6 @@ static xen_value *mus_generator_p_1(ptree *prog, xen_value **args, int num_args)
   GEN_P(Name) \
   static xen_value * Name ## _1(ptree *prog, xen_value **args, int num_args) \
   { \
-    if (run_safety == RUN_SAFE) safe_package(prog, R_BOOL, Name ## _check, #Name "_check", args, num_args); \
     if ((num_args > 1) && (args[2]->type == R_INT)) single_to_float(prog, args, 2); \
     if ((num_args > 2) && (args[3]->type == R_INT)) single_to_float(prog, args, 3); \
     if (num_args == 1) return(package(prog, R_FLOAT, Name ## _0f, #Name "_0f", args, 1)); \
@@ -10268,6 +10097,12 @@ static void oscil_1f_1_env(int *args, ptree *pt) {FLOAT_RESULT = mus_env_linear(
 
 static void oscil_1f_1_mult(int *args, ptree *pt) {FLOAT_RESULT = FLOAT_ARG_3 * mus_oscil_fm(CLM_ARG_1, FLOAT_ARG_2);}
 
+static void oscil_1f_2(int *args, ptree *pt) {FLOAT_RESULT = mus_oscil_fm(CLM_ARG_1, FLOAT_ARG_2 + FLOAT_ARG_3);}
+
+static void oscil_1f_2_env(int *args, ptree *pt) {FLOAT_RESULT = mus_env_linear(CLM_ARG_4) * mus_oscil_fm(CLM_ARG_1, FLOAT_ARG_2 + FLOAT_ARG_3);}
+
+static void oscil_1f_2_mult(int *args, ptree *pt) {FLOAT_RESULT = FLOAT_ARG_4 * mus_oscil_fm(CLM_ARG_1, FLOAT_ARG_2 + FLOAT_ARG_3);}
+
 static void oscil_2f_1(int *args, ptree *pt) {FLOAT_RESULT = mus_oscil_pm(CLM_ARG_1, FLOAT_ARG_3);}
 
 static void oscil_2f(int *args, ptree *pt) {FLOAT_RESULT = mus_oscil(CLM_ARG_1, FLOAT_ARG_2, FLOAT_ARG_3);}
@@ -10276,15 +10111,44 @@ GEN_P(oscil)
 
 static xen_value *oscil_1(ptree *prog, xen_value **args, int num_args)
 {
-  if (run_safety == RUN_SAFE) safe_package(prog, R_BOOL, oscil_check, "oscil_check", args, num_args);
   if ((num_args > 1) && (args[2]->type == R_INT)) single_to_float(prog, args, 2);
   if ((num_args > 2) && (args[3]->type == R_INT)) single_to_float(prog, args, 3);
+
   if ((num_args == 1) || ((num_args == 2) && (args[2]->constant == R_CONSTANT) && (prog->dbls[args[2]->addr] == 0.0)))
     return(package(prog, R_FLOAT, oscil_0f_1, "oscil_0f_1", args, 1));
-  if ((num_args == 2) || ((num_args == 3) && (args[3]->constant == R_CONSTANT) && (prog->dbls[args[3]->addr] == 0.0)))
-    return(package(prog, R_FLOAT, oscil_1f_1, "oscil_1f_1", args, 2));
+ 
+  if ((num_args == 2) || 
+      ((num_args == 3) && 
+       (args[3]->constant == R_CONSTANT) && 
+       (prog->dbls[args[3]->addr] == 0.0)))
+    {
+      if (prog->triple_ctr > 0)
+	{
+	  triple *prev_op;
+	  prev_op = prog->program[prog->triple_ctr - 1];
+	  if ((prev_op->function == add_f2) &&
+	      (prev_op->args[0] == args[2]->addr) &&
+	      (find_var_in_ptree_via_addr(prog, R_FLOAT, prev_op->args[0])) == NULL)
+	    {
+	      prev_op->types = (int *)realloc(prev_op->types, 4 * sizeof(int));
+	      prev_op->args = (int *)realloc(prev_op->args, 4 * sizeof(int));
+	      prev_op->args[3] = prev_op->args[2];
+	      prev_op->args[2] = prev_op->args[1];
+	      prev_op->types[3] = R_FLOAT;
+	      prev_op->args[1] = args[1]->addr;
+	      prev_op->types[1] = R_CLM;
+	      prev_op->num_args = 4;
+	      prev_op->function = oscil_1f_2;
+	      prev_op->op_name = "oscil_1f_2";
+	      return(make_xen_value(R_FLOAT, prev_op->args[0], R_TEMPORARY));
+	    }
+	}
+      return(package(prog, R_FLOAT, oscil_1f_1, "oscil_1f_1", args, 2));
+    }
+
   if ((num_args == 3) && (args[2]->constant == R_CONSTANT) && (prog->dbls[args[2]->addr] == 0.0))
     return(package(prog, R_FLOAT, oscil_2f_1, "oscil_2f_1", args, 3));
+
   return(package(prog, R_FLOAT, oscil_2f, "oscil_2f", args, 3));
 }
 
@@ -10299,7 +10163,6 @@ GEN_P(formant)
 
 static xen_value *formant_1(ptree *prog, xen_value **args, int num_args)
 {
-  if (run_safety == RUN_SAFE) safe_package(prog, R_BOOL, formant_check, "formant_check", args, num_args);
   if ((num_args > 1) && (args[2]->type == R_INT)) single_to_float(prog, args, 2);
   if ((num_args > 2) && (args[3]->type == R_INT)) single_to_float(prog, args, 3);
   if (num_args == 1)
@@ -10320,7 +10183,6 @@ GEN_P(firmant)
 
 static xen_value *firmant_1(ptree *prog, xen_value **args, int num_args)
 {
-  if (run_safety == RUN_SAFE) safe_package(prog, R_BOOL, firmant_check, "firmant_check", args, num_args);
   if ((num_args > 1) && (args[2]->type == R_INT)) single_to_float(prog, args, 2);
   if ((num_args > 2) && (args[3]->type == R_INT)) single_to_float(prog, args, 3);
   if (num_args == 1)
@@ -10337,7 +10199,6 @@ static xen_value *firmant_1(ptree *prog, xen_value **args, int num_args)
   GEN_P(Name) \
   static xen_value * Name ## _1(ptree *prog, xen_value **args, int num_args) \
   { \
-    if (run_safety == RUN_SAFE) safe_package(prog, R_BOOL, Name ## _check, #Name "_check", args, 1); \
     if ((num_args > 1) && (args[2]->type == R_INT)) single_to_float(prog, args, 2); \
     if (num_args == 1) return(package(prog, R_FLOAT, Name ## _0f, #Name "_0f", args, 1)); \
     return(package(prog, R_FLOAT, Name ## _1f, #Name "_1f", args, 2)); \
@@ -10349,7 +10210,6 @@ static xen_value *firmant_1(ptree *prog, xen_value **args, int num_args)
   GEN_P(Name) \
   static xen_value * Name ## _1(ptree *prog, xen_value **args, int num_args) \
   { \
-    if (run_safety == RUN_SAFE) safe_package(prog, R_BOOL, Name ## _check, #Name "_check", args, 1); \
     if ((num_args > 1) && (args[2]->type == R_INT)) single_to_float(prog, args, 2); \
     if (num_args == 1) return(package(prog, R_FLOAT, Name ## _0f, #Name "_0f", args, 1)); \
     return(package(prog, R_FLOAT, Name ## _1f, #Name "_1f", args, 2)); \
@@ -10360,23 +10220,32 @@ static xen_value *firmant_1(ptree *prog, xen_value **args, int num_args)
   GEN_P(Name) \
   static xen_value * Name ## _1(ptree *prog, xen_value **args, int num_args) \
   { \
-    if (run_safety == RUN_SAFE) safe_package(prog, R_BOOL, Name ## _check, #Name "_check", args, 1); \
     return(package(prog, R_FLOAT, Name ## _0f, #Name "_0f", args, 1)); \
   }
 
 
 /* GEN1(env) */
+
+static bool env_is_constant(mus_any *e)
+{
+  Float *data;
+  if (mus_env_breakpoints(e) == 1) return(true);
+  if (mus_env_breakpoints(e) > 2) return(false);
+  data = mus_data(e);
+  return(data[1] == data[3]);
+}
+
+
 GEN_P(env)
 
 static void env_0f(int *args, ptree *pt) {FLOAT_RESULT = mus_env(CLM_ARG_1);}  
 static void env_linear_0f(int *args, ptree *pt) {FLOAT_RESULT = mus_env_linear(CLM_ARG_1);}  
 static void env_linear_0f_mult(int *args, ptree *pt) {FLOAT_RESULT = FLOAT_ARG_2 * mus_env_linear(CLM_ARG_1);}  
+static void env_linear_0f_env(int *args, ptree *pt) {FLOAT_RESULT = mus_env_linear(CLM_ARG_2) * mus_env_linear(CLM_ARG_1);}  
 static void env_exponential_0f(int *args, ptree *pt) {FLOAT_RESULT = mus_env_exponential(CLM_ARG_1);}  
 
 static xen_value *env_1(ptree *prog, xen_value **args, int num_args)
 {
-  if (run_safety == RUN_SAFE) safe_package(prog, R_BOOL, env_check, "env_check", args, 1);
-
   if ((args[1]->type == R_CLM) &&
       (mus_env_p(prog->clms[args[1]->addr])))
     {
@@ -10389,7 +10258,7 @@ static xen_value *env_1(ptree *prog, xen_value **args, int num_args)
       style = mus_env_type(e);
 
       /* if it's a constant, return its value as in (+ 1 2) */
-      if (mus_env_breakpoints(e) == 1)
+      if (env_is_constant(e))
 	return(make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, mus_env(e)), R_CONSTANT));
 
       if (style == MUS_ENV_LINEAR)
@@ -10413,13 +10282,6 @@ GEN3(all_pass)
 GEN3(ssb_am)
 GEN3(asymmetric_fm)
 GEN_WAVER(polyshape)
-
-GEN2_OPT(polywave)
-
-static void polywave_0f_env(int *args, ptree *pt) {FLOAT_RESULT = mus_env_linear(CLM_ARG_2) * mus_polywave_unmodulated(CLM_ARG_1);}
-static void polywave_0f_mult(int *args, ptree *pt) {FLOAT_RESULT = FLOAT_ARG_2 * mus_polywave_unmodulated(CLM_ARG_1);}
-static void polywave_1f_env(int *args, ptree *pt) {FLOAT_RESULT = mus_env_linear(CLM_ARG_3) * mus_polywave(CLM_ARG_1, FLOAT_ARG_2);}
-static void polywave_1f_mult(int *args, ptree *pt) {FLOAT_RESULT = FLOAT_ARG_3 * mus_polywave(CLM_ARG_1, FLOAT_ARG_2);}
 
 static void rand_0f_env(int *args, ptree *pt) {FLOAT_RESULT = mus_env_linear(CLM_ARG_2) * mus_rand(CLM_ARG_1, 0.0);}
 static void rand_0f_mult(int *args, ptree *pt) {FLOAT_RESULT = FLOAT_ARG_2 * mus_rand(CLM_ARG_1, 0.0);}
@@ -10470,24 +10332,37 @@ GEN_P(locsig)
 GEN_P(move_sound)
 
 
+static void polywave_0f(int *args, ptree *pt) {FLOAT_RESULT = mus_polywave_unmodulated(CLM_ARG_1);}
+static void polywave_1f(int *args, ptree *pt) {FLOAT_RESULT = mus_polywave(CLM_ARG_1, FLOAT_ARG_2);}
+
+GEN_P(polywave) 
+
+static xen_value *polywave_1(ptree *prog, xen_value **args, int num_args) 
+{ 
+  bool one_arg;
+  one_arg = ((num_args == 1) || ((num_args == 2) && (args[2]->constant == R_CONSTANT) && (prog->dbls[args[2]->addr] == 0.0)));
+
+  if ((num_args > 1) && (args[2]->type == R_INT)) single_to_float(prog, args, 2);
+  
+  /* splitting out the "kind" check does not help (I tried this twice!) */
+  if (one_arg)
+    return(package(prog, R_FLOAT, polywave_0f, "polywave_0f", args, 1));
+  return(package(prog, R_FLOAT, polywave_1f, "polywave_1f", args, 2));
+}
+
+static void polywave_0f_env(int *args, ptree *pt) {FLOAT_RESULT = mus_env_linear(CLM_ARG_2) * mus_polywave_unmodulated(CLM_ARG_1);}
+static void polywave_0f_mult(int *args, ptree *pt) {FLOAT_RESULT = FLOAT_ARG_2 * mus_polywave_unmodulated(CLM_ARG_1);}
+static void polywave_1f_env(int *args, ptree *pt) {FLOAT_RESULT = mus_env_linear(CLM_ARG_3) * mus_polywave(CLM_ARG_1, FLOAT_ARG_2);}
+static void polywave_1f_mult(int *args, ptree *pt) {FLOAT_RESULT = FLOAT_ARG_3 * mus_polywave(CLM_ARG_1, FLOAT_ARG_2);}
+
+
 
 static void tap_0f(int *args, ptree *pt) {FLOAT_RESULT = mus_tap_unmodulated(CLM_ARG_1);}  
 
 static void tap_1f(int *args, ptree *pt) {FLOAT_RESULT = mus_tap(CLM_ARG_1, FLOAT_ARG_2);}
 
-static void tap_delay_line_check(int *args, ptree *pt)
-{
-  if (!(CLM_ARG_OK(1))) 
-    mus_error(MUS_NO_DATA, "delay gen arg 1 addr (%d) is invalid (%d of %d)", args[1], pt->clm_ctr, pt->clms_size);
-  if (!mus_delay_line_p(CLM_ARG_1)) 
-    mus_error(MUS_NO_GEN, "tap: gen arg: %s is not a delay line", (CLM_ARG_1) ? mus_name(CLM_ARG_1) : "null");
-}
-
-
 static xen_value *tap_1(ptree *prog, xen_value **args, int num_args)
 {
-  if (run_safety == RUN_SAFE) 
-    safe_package(prog, R_BOOL, tap_delay_line_check, "delay_line_check", args, 1);
   if (num_args == 1)
     return(package(prog, R_FLOAT, tap_0f, "tap_0f", args, 1));
   if (args[2]->type == R_INT) single_to_float(prog, args, 2);
@@ -10495,20 +10370,10 @@ static xen_value *tap_1(ptree *prog, xen_value **args, int num_args)
 }
 
 
-static void tick_delay_line_check(int *args, ptree *pt)
-{
-  if (!(CLM_ARG_OK(1))) 
-    mus_error(MUS_NO_DATA, "tick delay gen arg 1 addr (%d) is invalid (%d of %d)", args[1], pt->clm_ctr, pt->clms_size);
-  if (!mus_delay_line_p(CLM_ARG_1)) 
-    mus_error(MUS_NO_GEN, "delay-tick: gen arg: %s is not a delay line", (CLM_ARG_1) ? mus_name(CLM_ARG_1) : "null");
-}
-
-
 static void delay_tick_1f(int *args, ptree *pt) {FLOAT_RESULT = mus_delay_tick(CLM_ARG_1, FLOAT_ARG_2);}
 
 static xen_value *delay_tick_1(ptree *prog, xen_value **args, int num_args)
 {
-  if (run_safety == RUN_SAFE) safe_package(prog, R_BOOL, tick_delay_line_check, "delay_line_check", args, 1);
   if (args[2]->type == R_INT) single_to_float(prog, args, 2);
   return(package(prog, R_FLOAT, delay_tick_1f, "delay_tick_1f", args, 2));
 }
@@ -10517,7 +10382,6 @@ static void move_locsig_2f(int *args, ptree *pt) {mus_move_locsig(CLM_ARG_1, FLO
  
 static xen_value *move_locsig_1(ptree *prog, xen_value **args, int num_args)
 { 
-  if (run_safety == RUN_SAFE) safe_package(prog, R_BOOL, locsig_check, "locsig_check", args, 1);
   return(package(prog, R_BOOL, move_locsig_2f, "move_locsig_2f", args, 3));
 }
 
@@ -10526,7 +10390,6 @@ static void mixer_ref_0(int *args, ptree *pt) {FLOAT_RESULT = mus_mixer_ref(CLM_
 
 static xen_value *mixer_ref_1(ptree *prog, xen_value **args, int num_args)
 {
-  if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, mixer_check, "mixer_check", args, 1);
   return(package(prog, R_FLOAT, mixer_ref_0, "mixer_ref_0", args, 3));
 }
 
@@ -10545,7 +10408,6 @@ static void mixer_set_i(int *args, ptree *pt)
 static xen_value *mixer_set_2(ptree *prog, xen_value **args, int num_args)
 {
   /* mixer-set! */
-  if (run_safety == RUN_SAFE) safe_package(prog, R_BOOL, mixer_check, "mixer_check", args, 1);
   if (args[4]->type == R_FLOAT)
     return(package(prog, R_FLOAT, mixer_set_0, "mixer_set_0", args, 4));
   return(package(prog, R_FLOAT, mixer_set_i, "mixer_set_i", args, 4));
@@ -10561,7 +10423,6 @@ static void mixer_set_1(ptree *prog, xen_value *in_v, xen_value *in_v1, xen_valu
   static void Name ## _0r(int *args, ptree *pt) {FLOAT_RESULT = mus_ ## Name (CLM_ARG_1, INT_ARG_2);} \
   static xen_value * Name ## _0(ptree *prog, xen_value **args, int num_args) \
   { \
-    if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, SName ## _check, #SName "_check", args, 1); \
     return(package(prog, R_FLOAT, Name ## _0r, #Name "_0r", args, 2)); \
   }
 
@@ -10575,7 +10436,6 @@ REF_GEN0(locsig_reverb_ref, locsig)
   static void Name ## _ir(int *args, ptree *pt) {mus_ ## Name (CLM_ARG_1, INT_ARG_2, (Float)(INT_ARG_3));} \
   static xen_value * Name ## _2(ptree *prog, xen_value **args, int num_args) \
   { \
-    if (run_safety == RUN_SAFE) safe_package(prog, R_BOOL, SName ## _check, #SName "_check", args, 1); \
     if (args[3]->type == R_FLOAT) \
       return(package(prog, R_FLOAT, Name ## _0r, #Name "_0r", args, 3)); \
     return(package(prog, R_FLOAT, Name ## _ir, #Name "_ir", args, 3)); \
@@ -10882,7 +10742,6 @@ static void set_formant_radius_and_frequency_2f(int *args, ptree *pt)
 
 static xen_value *set_formant_radius_and_frequency_1(ptree *prog, xen_value **args, int num_args)
 {
-  if (run_safety == RUN_SAFE) safe_package(prog, R_BOOL, formant_check, "formant_check", args, 1);
   if (args[2]->type == R_INT) single_to_float(prog, args, 2);
   if (args[3]->type == R_INT) single_to_float(prog, args, 3);
   return(package(prog, R_BOOL, set_formant_radius_and_frequency_2f, "mus_set_formant_radius_and_frequency_2f", args, 3));
@@ -11018,8 +10877,6 @@ static void mus_fft_2v_2(int *args, ptree *pt)
 
 static xen_value *mus_fft_1(ptree *prog, xen_value **args, int num_args) 
 {
-  if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, vct_check_1, "vct_check_1", args, 1);
-  if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, vct_check_2, "vct_check_2", args, 2);
   if (num_args == 2) return(package(prog, R_VCT, mus_fft_2v, "mus_fft_2v", args, 2));
   if (num_args == 3) return(package(prog, R_VCT, mus_fft_2v_1, "mus_fft_2v_1", args, 3));
   return(package(prog, R_VCT, mus_fft_2v_2, "mus_fft_2v_2", args, 4));
@@ -11043,8 +10900,6 @@ static void fft_2v_1(int *args, ptree *pt)
 
 static xen_value *fft_1(ptree *prog, xen_value **args, int num_args) 
 {
-  if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, vct_check_1, "vct_check_1", args, 1);
-  if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, vct_check_2, "vct_check_2", args, 2);
   if (num_args == 2) return(package(prog, R_VCT, fft_2v, "fft_2v", args, 2));
   return(package(prog, R_VCT, fft_2v_1, "fft_2v_1", args, 3));
 }
@@ -11058,7 +10913,6 @@ static void file_to_sample_2f(int *args, ptree *pt) {FLOAT_RESULT = mus_file_to_
 
 static xen_value *file_to_sample_1(ptree *prog, xen_value **args, int num_args) 
 {
-  if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, file_to_sample_check, "file_to_sample_check", args, 1);
   if (num_args == 2) return(package(prog, R_FLOAT, file_to_sample_1f, "file_to_sample_1f", args, 2));
   return(package(prog, R_FLOAT, file_to_sample_2f, "file_to_sample_2f", args, 3));
 }
@@ -11094,19 +10948,11 @@ static void sample_to_file_4(int *args, ptree *pt) {FLOAT_RESULT = mus_sample_to
 
 static xen_value *sample_to_file_1(ptree *prog, xen_value **args, int num_args) 
 {
-  if (run_safety == RUN_SAFE) safe_package(prog, R_BOOL, sample_to_file_check, "sample_to_file_check", args, 1);
   return(package(prog, R_FLOAT, sample_to_file_4, "sample_to_file_4", args, 4));
 }
 
 
 /* ---------------- locsig ---------------- */
-
-  /* 
-   * TODO: delay can also be optimized in this context
-   * TODO: (if (= a b)...) also (if (> a b)...)
-   * TODO: outa ina readin etc (as per locsig)
-   */
-
 
 static void locsig_3(int *args, ptree *pt) 
 {
@@ -11173,7 +11019,6 @@ static void locsig_3f_safe_stereo(int *args, ptree *pt)
 
 static xen_value *locsig_1(ptree *prog, xen_value **args, int num_args) 
 {
-  if (run_safety == RUN_SAFE) safe_package(prog, R_BOOL, locsig_check, "locsig_check", args, 1);
   /* choose output func based on the locsig output and reverb fields and run-safety */
 
   if ((args[1]->type == R_CLM) &&
@@ -11239,7 +11084,6 @@ static void move_sound_3(int *args, ptree *pt)
 
 static xen_value *move_sound_1(ptree *prog, xen_value **args, int num_args) 
 {
-  if (run_safety == RUN_SAFE) safe_package(prog, R_BOOL, move_sound_check, "move_sound_check", args, 1);
   return(package(prog, R_FLOAT, move_sound_3, "move_sound_3", args, 3));
 }
 
@@ -11449,17 +11293,8 @@ static void frame_to_file_3(int *args, ptree *pt)
   CLM_RESULT = mus_frame_to_file(CLM_ARG_1, INT_ARG_2, CLM_ARG_3);
 }
 
-static void frame_file_check(int *args, ptree *pt)
-{
-  if (!(CLM_ARG_OK(1))) 
-    mus_error(MUS_NO_DATA, "frame->file gen arg 1 addr (%d) is invalid (%d of %d)", args[1], pt->clm_ctr, pt->clms_size);
-  if (!mus_output_p(CLM_ARG_1)) 
-    mus_error(MUS_NO_GEN, "frame->file: gen arg: %s is not an output generator", (CLM_ARG_1) ? mus_name(CLM_ARG_1) : "null");
-}
-
 static xen_value *frame_to_file_1(ptree *prog, xen_value **args, int num_args) 
 {
-  if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, frame_file_check, "frame_file_check", args, 1);
   return(package(prog, R_CLM, frame_to_file_3, "frame_to_file_3", args, 3));
 }
 
@@ -11477,17 +11312,8 @@ static void file_to_frame_2(int *args, ptree *pt)
   CLM_RESULT = mus_file_to_frame(CLM_ARG_1, INT_ARG_2, NULL);
 }
 
-static void file_frame_check(int *args, ptree *pt)
-{
-  if (!(CLM_ARG_OK(1))) 
-    mus_error(MUS_NO_DATA, "file->frame gen arg 1 addr (%d) is invalid (%d of %d)", args[1], pt->clm_ctr, pt->clms_size);
-  if (!mus_input_p(CLM_ARG_1)) 
-    mus_error(MUS_NO_GEN, "file->frame: gen arg: %s is not an input generator", (CLM_ARG_1) ? mus_name(CLM_ARG_1) : "null");
-}
-
 static xen_value *file_to_frame_1(ptree *prog, xen_value **args, int num_args) 
 {
-  if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, file_frame_check, "file_frame_check", args, 1);
   if (num_args == 2)
     return(package(prog, R_CLM, file_to_frame_2, "file_to_frame_2", args, 2));
   return(package(prog, R_CLM, file_to_frame_3, "file_to_frame_3", args, 3));
@@ -11498,21 +11324,20 @@ static xen_value *file_to_frame_1(ptree *prog, xen_value **args, int num_args)
 
 /* see env_any for R_FUNCTION as arg */
 
-/* TODO: within one ins call, if using run, *output* should not change -- surely we can optimize
- *   the standard case here and in locsig/frame_to_file/sample->file (i.e. *output* is rdout gen => sample_file: mus_write_sample_to_file
- *
- * use locsig opt procs! and prog->need_result as in locsig
- */
-
 static void outa_3(int *args, ptree *pt) {FLOAT_RESULT = mus_out_any(INT_ARG_1, FLOAT_ARG_2, 0, CLM_ARG_3);}
+static void outa_3f(int *args, ptree *pt) {mus_out_any_to_file(CLM_ARG_3, INT_ARG_1, 0, FLOAT_ARG_2);}
 
 static void outb_3(int *args, ptree *pt) {FLOAT_RESULT = mus_out_any(INT_ARG_1, FLOAT_ARG_2, 1, CLM_ARG_3);}
+static void outb_3f(int *args, ptree *pt) {mus_out_any_to_file(CLM_ARG_3, INT_ARG_1, 1, FLOAT_ARG_2);}
 
 static void outc_3(int *args, ptree *pt) {FLOAT_RESULT = mus_out_any(INT_ARG_1, FLOAT_ARG_2, 2, CLM_ARG_3);}
+static void outc_3f(int *args, ptree *pt) {mus_out_any_to_file(CLM_ARG_3, INT_ARG_1, 2, FLOAT_ARG_2);}
 
 static void outd_3(int *args, ptree *pt) {FLOAT_RESULT = mus_out_any(INT_ARG_1, FLOAT_ARG_2, 3, CLM_ARG_3);}
+static void outd_3f(int *args, ptree *pt) {mus_out_any_to_file(CLM_ARG_3, INT_ARG_1, 3, FLOAT_ARG_2);}
 
 static void out_any_4(int *args, ptree *pt) {FLOAT_RESULT = mus_out_any(INT_ARG_1, FLOAT_ARG_2, INT_ARG_3, CLM_ARG_4);} 
+static void out_any_4f(int *args, ptree *pt) {mus_out_any_to_file(CLM_ARG_4, INT_ARG_1, INT_ARG_3, FLOAT_ARG_2);}
 
 
 static void out_f_3(int *args, ptree *pt) {FLOAT_RESULT = FLOAT_ARG_2;}
@@ -11608,7 +11433,15 @@ static void out_any_sound_data_4(int *args, ptree *pt)
 static xen_value *outa_2(ptree *prog, xen_value **args, int num_args) 
 {
   if (args[3]->type == R_CLM)
-    return(package(prog, R_FLOAT, outa_3, "outa_3", args, 3));
+    {
+      /* TODO: look for add_f3, add_f2, multiply_f2, multiply_f3, oscil_1f*, polywave_1f*
+       */
+
+      if ((prog->walk_result == DONT_NEED_RESULT) &&
+	  (mus_output_p(prog->clms[args[3]->addr])))   
+	return(package(prog, R_FLOAT, outa_3f, "outa_3f", args, 3));
+      return(package(prog, R_FLOAT, outa_3, "outa_3", args, 3));
+    }
   if (args[3]->type == R_VCT)
     return(package(prog, R_FLOAT, out_vct_3, "outa_vct_3", args, 3));
   if (args[3]->type == R_SOUND_DATA)
@@ -11623,7 +11456,12 @@ static xen_value *outa_2(ptree *prog, xen_value **args, int num_args)
 static xen_value *outb_2(ptree *prog, xen_value **args, int num_args) 
 {
   if (args[3]->type == R_CLM)
-    return(package(prog, R_FLOAT, outb_3, "outb_3", args, 3));
+    {
+      if ((prog->walk_result == DONT_NEED_RESULT) &&
+	  (mus_output_p(prog->clms[args[3]->addr])))   
+	return(package(prog, R_FLOAT, outb_3f, "outb_3f", args, 3));
+      return(package(prog, R_FLOAT, outb_3, "outb_3", args, 3));
+    }
   if (args[3]->type == R_SOUND_DATA)
     return(package(prog, R_FLOAT, outb_sound_data_3, "outb_sound_data_3", args, 3));
   if (args[3]->type == R_FUNCTION)
@@ -11634,7 +11472,12 @@ static xen_value *outb_2(ptree *prog, xen_value **args, int num_args)
 static xen_value *outc_2(ptree *prog, xen_value **args, int num_args) 
 {
   if (args[3]->type == R_CLM)
-    return(package(prog, R_FLOAT, outc_3, "outc_3", args, 3));
+    {
+      if ((prog->walk_result == DONT_NEED_RESULT) &&
+	  (mus_output_p(prog->clms[args[3]->addr])))   
+	return(package(prog, R_FLOAT, outc_3f, "outc_3f", args, 3));
+      return(package(prog, R_FLOAT, outc_3, "outc_3", args, 3));
+    }
   if (args[3]->type == R_SOUND_DATA)
     return(package(prog, R_FLOAT, outc_sound_data_3, "outc_sound_data_3", args, 3));
   if (args[3]->type == R_FUNCTION)
@@ -11645,7 +11488,12 @@ static xen_value *outc_2(ptree *prog, xen_value **args, int num_args)
 static xen_value *outd_2(ptree *prog, xen_value **args, int num_args) 
 {
   if (args[3]->type == R_CLM)
-    return(package(prog, R_FLOAT, outd_3, "outd_3", args, 3));
+    {
+      if ((prog->walk_result == DONT_NEED_RESULT) &&
+	  (mus_output_p(prog->clms[args[3]->addr])))   
+	return(package(prog, R_FLOAT, outd_3f, "outd_3f", args, 3));
+      return(package(prog, R_FLOAT, outd_3, "outd_3", args, 3));
+    }
   if (args[3]->type == R_SOUND_DATA)
     return(package(prog, R_FLOAT, outd_sound_data_3, "outd_sound_data_3", args, 3));
   if (args[3]->type == R_FUNCTION)
@@ -11656,7 +11504,12 @@ static xen_value *outd_2(ptree *prog, xen_value **args, int num_args)
 static xen_value *out_any_2(ptree *prog, xen_value **args, int num_args)
 {
   if (args[4]->type == R_CLM)
-    return(package(prog, R_FLOAT, out_any_4, "out_any_4", args, 4));
+    {
+      if ((prog->walk_result == DONT_NEED_RESULT) &&
+	  (mus_output_p(prog->clms[args[4]->addr])))   
+	return(package(prog, R_FLOAT, out_any_4f, "out_any_4f", args, 4));
+      return(package(prog, R_FLOAT, out_any_4, "out_any_4", args, 4));
+    }
   if (args[4]->type == R_VCT)
     return(package(prog, R_FLOAT, out_any_vct_4, "out_any_vct_4", args, 4));
   if (args[4]->type == R_SOUND_DATA)
@@ -11819,10 +11672,13 @@ static xen_value *out_any_1(ptree *prog, xen_value **args, int num_args)
 /* ---------------- in-any ---------------- */
 
 static void ina_2(int *args, ptree *pt) {FLOAT_RESULT = mus_in_any(INT_ARG_1, 0, CLM_ARG_2);}
+static void ina_2f(int *args, ptree *pt) {FLOAT_RESULT = mus_in_any_from_file(CLM_ARG_2, INT_ARG_1, 0);}
 
 static void inb_2(int *args, ptree *pt) {FLOAT_RESULT = mus_in_any(INT_ARG_1, 1, CLM_ARG_2);}
+static void inb_2f(int *args, ptree *pt) {FLOAT_RESULT = mus_in_any_from_file(CLM_ARG_2, INT_ARG_1, 1);}
 
 static void in_any_3(int *args, ptree *pt) {FLOAT_RESULT = mus_in_any(INT_ARG_1, INT_ARG_2, CLM_ARG_3);}
+static void in_any_3f(int *args, ptree *pt) {FLOAT_RESULT = mus_in_any_from_file(CLM_ARG_3, INT_ARG_1, INT_ARG_2);}
 
 
 static void in_f_2(int *args, ptree *pt) {FLOAT_RESULT = 0.0;}
@@ -11896,7 +11752,11 @@ static void in_any_function_3(int *args, ptree *pt)
 static xen_value *ina_1(ptree *prog, xen_value **args, int num_args) 
 {
   if (args[2]->type == R_CLM)
-    return(package(prog, R_FLOAT, ina_2, "ina_2", args, 2));
+    {
+      if (mus_file_to_sample_p(prog->clms[args[2]->addr]))
+	return(package(prog, R_FLOAT, ina_2f, "ina_2f", args, 2));
+      return(package(prog, R_FLOAT, ina_2, "ina_2", args, 2));
+    }
   if (args[2]->type == R_VCT)
     return(package(prog, R_FLOAT, in_vct_2, "ina_vct_2", args, 2));
   if (args[2]->type == R_SOUND_DATA)
@@ -11909,7 +11769,11 @@ static xen_value *ina_1(ptree *prog, xen_value **args, int num_args)
 static xen_value *inb_1(ptree *prog, xen_value **args, int num_args) 
 {
   if (args[2]->type == R_CLM)
-    return(package(prog, R_FLOAT, inb_2, "inb_2", args, 2));
+    {
+      if (mus_file_to_sample_p(prog->clms[args[2]->addr]))
+	return(package(prog, R_FLOAT, inb_2f, "inb_2f", args, 2));
+      return(package(prog, R_FLOAT, inb_2, "inb_2", args, 2));
+    }
   if (args[2]->type == R_SOUND_DATA)
     return(package(prog, R_FLOAT, inb_sound_data_2, "inb_sound_data_2", args, 2));
   if (args[2]->type == R_FUNCTION)
@@ -11920,7 +11784,11 @@ static xen_value *inb_1(ptree *prog, xen_value **args, int num_args)
 static xen_value *in_any_1(ptree *prog, xen_value **args, int num_args)
 {
   if (args[3]->type == R_CLM)
-    return(package(prog, R_FLOAT, in_any_3, "in_any_3", args, 3));
+    {
+      if (mus_file_to_sample_p(prog->clms[args[3]->addr]))
+	return(package(prog, R_FLOAT, in_any_3f, "in_any_3f", args, 3));
+      return(package(prog, R_FLOAT, in_any_3, "in_any_3", args, 3));
+    }
   if (args[3]->type == R_VCT)
     return(package(prog, R_FLOAT, in_any_vct_3, "in_any_vct_3", args, 3));
   if (args[3]->type == R_SOUND_DATA)
@@ -11986,7 +11854,6 @@ static void clear_array_1f(int *args, ptree *pt)
 
 static xen_value *clear_array_1(ptree *prog, xen_value **args, int num_args) 
 {
-  if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, vct_check_1, "vct_check_1", args, 1);
   return(package(prog, R_VCT, clear_array_1f, "clear_array_1f", args, 1));
 }
 
@@ -12006,8 +11873,6 @@ static void CName ## _3f(int *args, ptree *pt)  \
 } \
 static xen_value * CName ## _1(ptree *prog, xen_value **args, int num_args)  \
 { \
-  if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, vct_check_1, "vct_check_1", args, 1); \
-  if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, vct_check_2, "vct_check_2", args, 2); \
   if (num_args == 2) \
     return(package(prog, R_VCT, CName ## _2f, #CName "_2f", args, 2)); \
   else return(package(prog, R_VCT, CName ## _3f, #CName "_3f", args, 3)); \
@@ -12030,8 +11895,6 @@ static void CName ## _3f(int *args, ptree *pt)  \
 } \
 static xen_value * CName ## _1(ptree *prog, xen_value **args, int num_args)  \
 { \
-  if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, vct_check_1, "vct_check_1", args, 1); \
-  if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, vct_check_2, "vct_check_2", args, 2); \
   if (num_args == 2) \
     return(package(prog, R_FLOAT, CName ## _2f, #CName "_2f", args, 2)); \
   else return(package(prog, R_FLOAT, CName ## _3f, #CName "_3f", args, 3)); \
@@ -12107,11 +11970,6 @@ static void mus_spectrum_4v_f(int *args, ptree *pt)
 
 static xen_value *mus_spectrum_1(ptree *prog, xen_value **args, int num_args) 
 {
-  if (run_safety == RUN_SAFE) 
-    {
-      temp_package(prog, R_BOOL, vct_check_1, "vct_check_1", args, 1);
-      temp_package(prog, R_BOOL, vct_check_2, "vct_check_2", args, 2);
-    }
   if (num_args == 3) 
     {
       if (args[3]->type == R_VCT)
@@ -12269,7 +12127,6 @@ static xen_value *src_1(ptree *prog, xen_value **args, int num_args)
 	}
       else num_args = 2;
     }
-  if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, src_check, "src_check", args, 1);
   switch (num_args)
     {
     case 1: return(package(prog, R_FLOAT, src_0f, "src_0f", args, 1)); break;
@@ -12303,7 +12160,6 @@ static xen_value *convolve_1(ptree *prog, xen_value **args, int num_args)
 	}
       else num_args = 1;
     }
-  if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, convolve_check, "convolve_check", args, 1);
   if (num_args == 1)
     return(package(prog, R_FLOAT, convolve_0f, "convolve_0f", args, 1));
   return(package(prog, R_FLOAT, convolve_1f, "convolve_1f", args, 2));
@@ -12348,10 +12204,9 @@ static void granulate_1f(int *args, ptree *pt)
 }
 
 
-static void granulate_0f(int *args, ptree *pt) 
-{
-  FLOAT_RESULT = mus_granulate_with_editor(CLM_ARG_1, NULL, NULL);
-}
+static void granulate_0f(int *args, ptree *pt) {FLOAT_RESULT = mus_granulate_with_editor(CLM_ARG_1, NULL, NULL);}
+static void granulate_0f_mult(int *args, ptree *pt) {FLOAT_RESULT = FLOAT_ARG_2 * mus_granulate_with_editor(CLM_ARG_1, NULL, NULL);}
+static void granulate_0f_env(int *args, ptree *pt) {FLOAT_RESULT = mus_env_linear(CLM_ARG_2) * mus_granulate_with_editor(CLM_ARG_1, NULL, NULL);}
 
 
 static xen_value *granulate_1(ptree *prog, xen_value **args, int num_args)
@@ -12384,9 +12239,6 @@ static xen_value *granulate_1(ptree *prog, xen_value **args, int num_args)
 	    num_args = 1;
 	}
     }
-
-  if (run_safety == RUN_SAFE) 
-    temp_package(prog, R_BOOL, granulate_check, "granulate_check", args, 1);
 
   if (num_args == 1)
     return(package(prog, R_FLOAT, granulate_0f, "granulate_0f", args, 1));
@@ -12521,9 +12373,6 @@ static xen_value *phase_vocoder_1(ptree *prog, xen_value **args, int num_args)
 	}
     }
 
-  if (run_safety == RUN_SAFE) 
-    temp_package(prog, R_BOOL, phase_vocoder_check, "phase_vocoder_check", args, 1);
-
   if (num_args == 1)
     return(package(prog, R_FLOAT, phase_vocoder_0f, "phase_vocoder_0f", args, 1));
 
@@ -12567,7 +12416,6 @@ static void pv_ ## Name ## _1(int *args, ptree *pt) \
 } \
 static xen_value *phase_vocoder_ ## Name ## _1(ptree *prog, xen_value **args, int num_args) \
 { \
-  if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, phase_vocoder_check, "phase_vocoder_check", args, 1); \
   if (args[1]->type == R_CLM) \
     return(package(prog, R_VCT, pv_ ## Name ## _1, "pv_" #Name "_1", args, 1)); \
   return(run_warn("wrong type arg (%s) to mus_phase_vocoder_ " #Name , type_name(args[1]->type))); \

@@ -1079,9 +1079,6 @@
     (set! (optimization) (optimization))
     (if (not (equal? (optimization) 0)) 
 	(snd-display ";optimization set def: ~A" (optimization)))
-    (set! (run-safety) (run-safety))
-    (if (not (equal? (run-safety) 0)) 
-	(snd-display ";run-safety set def: ~A" (run-safety)))
     (set! (clm-table-size) (clm-table-size))
     (if (not (equal? (clm-table-size) 512)) 
 	(snd-display ";clm-table-size set def: ~A" (clm-table-size)))
@@ -1315,7 +1312,6 @@
       'reverb-control-scale (without-errors (reverb-control-scale)) 'no-such-sound
       'reverb-control-scale-bounds (cadr (reverb-control-scale-bounds)) 4.0
       'reverb-control? (without-errors (reverb-control?)) 'no-such-sound
-      'run-safety (run-safety) 0
       'save-state-file (save-state-file) "saved-snd.scm" 
       'selection-creates-region (selection-creates-region) #t 
       'show-axes (show-axes) 1
@@ -2251,7 +2247,7 @@
 		       'reverb-control-decay 'reverb-control-feedback 'reverb-control-length 'reverb-control-length-bounds 'reverb-control-lowpass
 		       'reverb-control-scale 'reverb-control-scale-bounds 'reverb-control? 'reverse-channel 'reverse-selection
 		       'reverse-sound 'revert-sound 'riemann-window 'right-sample 'ring-modulate
-		       'run 'run-safety 'rv2-window 'rv3-window 'rv4-window 
+		       'run 'rv2-window 'rv3-window 'rv4-window 
 		       'samaraki-window 'sample 'sample->file
 		       'sample->file? 'sample->frame 'sample-reader-at-end? 'sample-reader-home 'sample-reader-position
 		       'sample-reader? 'samples 'samples->seconds 'sash-color
@@ -16704,8 +16700,6 @@ EDITS: 2
   (do ((clmtest 0 (+ 1 clmtest))) ((= clmtest tests))
     
     (log-mem clmtest)
-    (if (odd? clmtest) (set! (run-safety) 1) (set! (run-safety) 0))
-
     (numerical-reality-checks)
 
     (if (mus-generator? 321) (snd-display ";123 is a gen?"))
@@ -26960,8 +26954,6 @@ EDITS: 2
 	(do ((test-ctr 0 (+ 1 test-ctr)))
 	    ((= test-ctr tests))
 
-	  (if (odd? test-ctr) (set! (run-safety) 1) (set! (run-safety) 0))
-
 	  (let ((ind (new-sound "test.snd" :size 10)))
 	    (let ((v (vct .1 .2 .3)))
 	      (let ((id (mix-vct v 0)))
@@ -32172,7 +32164,6 @@ EDITS: 2
 	       (sounds))))
       (clear-sincs)      
       (log-mem test-ctr)
-      (if (odd? test-ctr) (set! (run-safety) 1) (set! (run-safety) 0))
       
       (if (and (> test-ctr 0) (< test-ctr 10)) ; this creates too many leftover save-state sound files
 	  (let ((files (length (sounds))))
@@ -51039,16 +51030,6 @@ EDITS: 1
 			      (vct-ref b 2))))))
       (if (fneq val 1.0) (snd-display ";mus-data -> vct opt: ~A" val)))
     
-    (set! (run-safety) 1)
-    ;; currently all of these result in dangling ptrees
-    (let ((val (catch #t (lambda () (run-eval '(lambda () (let ((os (make-oscil))) (oscil #f))))) (lambda args (car args)))))
-      (if (not (equal? val 'mus-error)) (snd-display ";run-safety #f osc: ~A" val)))
-    (let ((val (catch #t (lambda () (run-eval '(lambda () (let ((os (make-oscil)) (ts (make-table-lookup))) (oscil ts))))) (lambda args (car args)))))
-      (if (not (equal? val 'mus-error)) (snd-display ";run-safety tbl osc: ~A" val)))
-    (let ((val (catch #t (lambda () (run-eval '(lambda () (let ((v (make-sound-data 1 4)) (i 5)) (sound-data-ref v 0 i))))) (lambda args (car args)))))
-      (if (not (equal? val 'mus-error)) (snd-display ";run-safety sound-data index i: ~A" val)))
-    (set! (run-safety) 0)
-    
     (let ((diff 
 	   (run (lambda ()
 		  (let ((x 1.0))
@@ -52757,7 +52738,6 @@ EDITS: 1
 	(do ((clmtest 0 (+ 1 clmtest))) ((= clmtest tests)) 
 	  (log-mem clmtest)
 	  
-	  (if (odd? clmtest) (set! (run-safety) 1) (set! (run-safety) 0))
 	  (set! (mus-srate) 22050)
 	  (set! (default-output-srate) 22050)
 	  
@@ -53676,7 +53656,6 @@ EDITS: 1
 
 	(for-each close-sound (sounds))
 	
-	(set! (run-safety) 1)
 	(with-sound ()
 		    (simple-ssb 0 .2 440 .1)
 		    (simple-osc 0.75 .2 440 .1)
@@ -53782,7 +53761,6 @@ EDITS: 1
 		    (cndf-ins 7 .2 .1 20.0 4)
 		    (sample-pvoc5 7.25 .2 .1 256 "oboe.snd" 440.0)
 		    )
-	(set! (run-safety) 0)
   
 	(if all-args
 	    (let* ((outfile (with-sound () (pvoc-a 0 2.3 1 256 "oboe.snd") (pvoc-e 0 2.3 -1 256 "oboe.snd")))
@@ -64297,7 +64275,7 @@ EDITS: 1
 		     start-progress-report stop-player stop-playing swap-channels syncd-marks sync sync-max sound-properties temp-dir
 		     text-focus-color tiny-font region-sample-reader? transform-dialog transform-sample
 		     transform->vct transform-frames transform-type trap-segfault with-file-monitor optimization unbind-key undo
-		     update-transform-graph update-time-graph update-lisp-graph update-sound run-safety clm-table-size clm-default-frequency
+		     update-transform-graph update-time-graph update-lisp-graph update-sound clm-table-size clm-default-frequency
 		     with-verbose-cursor view-sound wavelet-type
 		     time-graph?  time-graph-type wavo-hop wavo-trace window-height window-width window-x window-y
 		     with-mix-tags with-relative-panes with-gl write-peak-env-info-file x-axis-style beats-per-measure
@@ -64419,7 +64397,7 @@ EDITS: 1
 			 mus-feedback mus-feedforward mus-frequency mus-hop
 			 mus-increment mus-length mus-location mus-name mus-phase mus-ramp mus-scaler vct-ref x-axis-label
 			 filter-control-coeffs locsig-type mus-file-buffer-size 
-			 mus-rand-seed mus-width clm-table-size clm-default-frequency run-safety mus-offset mus-reset
+			 mus-rand-seed mus-width clm-table-size clm-default-frequency mus-offset mus-reset
 			 phase-vocoder-amp-increments phase-vocoder-amps 
 			 phase-vocoder-freqs phase-vocoder-phase-increments phase-vocoder-phases 
 			 quit-button-color help-button-color reset-button-color doit-button-color doit-again-button-color
@@ -65203,7 +65181,7 @@ EDITS: 1
 			    show-selection-transform sinc-width temp-dir text-focus-color tiny-font
 			    trap-segfault with-file-monitor optimization unbind-key with-verbose-cursor window-height beats-per-measure
 			    window-width window-x window-y with-gl with-mix-tags x-axis-style beats-per-minute zoom-color mix-tag-height
-			    mix-tag-width with-relative-panes run-safety clm-table-size clm-default-frequency mark-tag-width mark-tag-height
+			    mix-tag-width with-relative-panes clm-table-size clm-default-frequency mark-tag-width mark-tag-height
 			    quit-button-color help-button-color reset-button-color doit-button-color doit-again-button-color
 			    ))
 	    (gc)(gc))
