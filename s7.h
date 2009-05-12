@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "1.17"
-#define S7_DATE "20-Apr-09"
+#define S7_VERSION "1.18"
+#define S7_DATE "12-May-09"
 
 
 typedef long long int s7_Int;
@@ -417,6 +417,7 @@ void s7_for_each_symbol(s7_scheme *sc, bool (*symbol_func)(const char *symbol_na
 void s7_define(s7_scheme *sc, s7_pointer env, s7_pointer symbol, s7_pointer value);
 void s7_define_variable(s7_scheme *sc, const char *name, s7_pointer value);
 void s7_define_constant(s7_scheme *sc, const char *name, s7_pointer value);
+bool s7_is_constant(s7_pointer p);
 
   /* These three functions add a symbol and its binding to either the top-level environment
    *    or the 'env' passed as the second argument to s7_define.
@@ -1280,6 +1281,7 @@ int main(int argc, char **argv)
  * 
  *        s7 changes
  *
+ * 12-May:    s7_is_constant.
  * 20-Apr:    changed rationalize to be both r5rs-acceptable and fast.
  * 6-Apr:     added s7_make_permanent_string.
  * 14-Mar:    removed s7_local_gc_protect and s7_local_gc_unprotect.

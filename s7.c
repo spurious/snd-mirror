@@ -858,6 +858,12 @@ static bool s7_is_immutable(s7_pointer p)
 }
 
 
+bool s7_is_constant(s7_pointer p) 
+{ 
+  return((typeflag(p) & T_IMMUTABLE) != 0);
+}
+
+
 static s7_pointer s7_set_immutable(s7_pointer p) 
 { 
   typeflag(p) |= T_IMMUTABLE;
