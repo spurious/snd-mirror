@@ -2,7 +2,7 @@
 
 # Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Mon Mar 07 13:50:44 CET 2005
-# Changed: Mon Nov 19 18:30:48 CET 2007
+# Changed: Mon May 11 23:15:07 CEST 2009
 
 # Commentary:
 #
@@ -188,6 +188,7 @@
 # Code:
 
 require "examp"
+require "ws"
 require "env"
 require "complex"
 
@@ -678,7 +679,7 @@ calls fft, sets all phases to 0, and un-ffts")
       super()
       frequency, ratio, r, index, freq, phase = nil
       optkey(args, binding,
-             [:frequency, 0.0],
+             [:frequency, $clm_default_frequency],
              [:ratio, 1.0],
              [:r, 1.0],
              [:index, 1.0],
@@ -708,17 +709,13 @@ calls fft, sets all phases to 0, and un-ffts")
     end
     
     def asyfm_J(input)
+      # It follows now asyfm-J in generators.scm, not dsp-asyfm-J in clm23.scm.
       r1 = 1.0 / @r
+      one = ((@r > 1.0) or (@r < 0.0 and @r > -1.0)) ? -1.0 : 1.0
       modphase = @ratio * @phase
-      one = if @r > 1.0 or
-                (@r < 0.0 and @r > -1.0)
-              -1.0
-            else
-              1.0
-            end
       result = exp(0.5 * @index * (@r - r1) * (one + cos(modphase))) *
         cos(@phase + 0.5 * @index * (@r + r1) * sin(modphase))
-      @phase += input + @freq
+      @phase += (input + @freq)
       result
     end
     
@@ -727,7 +724,7 @@ calls fft, sets all phases to 0, and un-ffts")
       modphase = @ratio * @phase
       result = exp(0.5 * @index * (@r + r1) * (cos(modphase) - 1.0)) -
         cos(@phase + 0.5 * @index * (@r - r1) * sin(modphase))
-      @phase += input + @freq
+      @phase += (input + @freq)
       result
     end
   end
@@ -1668,7 +1665,7 @@ returns the amplitude and initial-phase (for sin) at freq between beg and dur")
       vct_scale!(im, 0.0)
       n.times do |k| rl[k] = rd.call end
       mus_fft(rl, im)
-      n.times do |k| average_data[k] += rl[k] * rl[k] + im[k] * im[k] end
+      n.times do |k| average_data[k] += (rl[k] * rl[k] + im[k] * im[k]) end
     end
     graph(vct_scale!(average_data, 1.0 / (len / n).ceil))
   end
@@ -1725,7 +1722,7 @@ returns the amplitude and initial-phase (for sin) at freq between beg and dur")
       aff = (i + 1.0) * old_freq
       bwf = bw * (1.0 + (i + 1.0) / (2.0 * pairs))
       ssbs[i] = make_ssb_am((i + 1.0) * factor * old_freq)
-      frenvs[i] = make_env(:envelope, freq_env, :scaler, hz2radians(i.to_f), :length, frames())
+      frenvs[i] = make_env(:envelope, freq_env, :scaler, hz2radians(i.to_f), :length, frames() - 1)
       make_bandpass(hz_to_2pi(aff - bwf), hz_to_2pi(aff + bwf), order)
     end
     as_one_edit_rb("%s(%s, %s, %s, %s, %s, %s, %s, %s",
@@ -2192,7 +2189,7 @@ performs sampling rate conversion using linear interpolation.")
   with_sound(:clm, true) do
     rd = make_sample_reader(0, "oboe.snd")
     m = make_mfilter(:decay, 0.99, :frequency, 1000)
-    e = make_env([0, 100, 1, 2000], :length, 10001)
+    e = make_env([0, 100, 1, 2000], :length, 10000)
     10000.times do |i|
       outa(i, mfilter(m, 0.1 * rd.call), $output)
       m.eps = 2.0 * sind((PI * env(e)) / mus_srate())

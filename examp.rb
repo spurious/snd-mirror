@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Wed Sep 04 18:34:00 CEST 2002
-# Changed: Fri Jul 11 15:41:52 CEST 2008
+# Changed: Tue May 12 21:05:58 CEST 2009
 
 # Commentary:
 #
@@ -203,8 +203,8 @@
 # module Enumerable
 #  map_with_index do |x, i| ... end
 #  map_with_index! do |x, i| ... end
-#  cycle
-#  cycle=(val)
+#  clm_cycle
+#  clm_cycle=(val)
 #
 # as_one_edit_rb(*origin, &body)
 # map_channel_rb(beg, dur, snd, chn, edpos, edname, &body)
@@ -1797,22 +1797,22 @@ module Enumerable
     self.map! do |x| yield(x, i += 1) end
   end
   
-  def cycle
-    unless defined? @cycle_index then @cycle_index = 0 end
-    val = self[@cycle_index % self.length]
-    @cycle_index += 1
-    if @cycle_index == self.length then @cycle_index = 0 end
+  def clm_cycle
+    unless defined? @clm_cycle_index then @clm_cycle_index = 0 end
+    val = self[@clm_cycle_index % self.length]
+    @clm_cycle_index += 1
+    if @clm_cycle_index == self.length then @clm_cycle_index = 0 end
     val
   end
 
-  def cycle=(val)
-    unless defined? @cycle_index then @cycle_index = 0 end
-    self[@cycle_index % self.length] = val
-    @cycle_index += 1
-    if @cycle_index == self.length then @cycle_index = 0 end
+  def clm_cycle=(val)
+    unless defined? @clm_cycle_index then @clm_cycle_index = 0 end
+    self[@clm_cycle_index % self.length] = val
+    @clm_cycle_index += 1
+    if @clm_cycle_index == self.length then @clm_cycle_index = 0 end
     val
   end
-  attr_accessor :cycle_index
+  attr_accessor :clm_cycle_index
 
   # backward compatibility methods
   def each_index
@@ -2894,7 +2894,7 @@ Examples:
   Range
     gloop(0..3) do |i| puts i end
   Hash               (loops over all Hashs consecutively)
-    gloop({1 => :a, 2 => :b}, {11 => :aa, 22 => :bb}) do |k, v|
+    gloop({1 => :a, 2 => :b}, {11 => :aa => 22 => :bb}) do |k, v|
       print('key: ', k, ' value: ', v)
       puts
     end

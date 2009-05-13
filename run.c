@@ -147,6 +147,7 @@
    * also outa+oscil_mult(etc mf3 mf2), locsig same
    * also the snd-test stuff from gad180
    * also look back for current temp mult -- might be env
+   * try old benchmarks and make a new set
    */
 
 #include <mus-config.h>
@@ -3026,6 +3027,7 @@ static triple *va_make_triple(void (*function)(int *arg_addrs, ptree *pt),
 #define FLOAT_ARG_3 pt->dbls[args[3]]
 #define FLOAT_ARG_4 pt->dbls[args[4]]
 #define FLOAT_ARG_5 pt->dbls[args[5]]
+#define FLOAT_ARG_6 pt->dbls[args[6]]
 #define FLOAT_ARG_OK(Arg) ((pt->dbls) && ((pt->outer_tree) || ((args[Arg] >= 0) && (args[Arg] <= pt->dbl_ctr) && (args[Arg] < pt->dbls_size))))
 
 #define VCT_RESULT pt->vcts[args[0]]
@@ -5205,11 +5207,11 @@ typedef struct {
   const char *mult_func_name;
   void (*env_func)(int *args, ptree *pt);
   const char *env_func_name;
-} mf2_ops;
+} opt_ops;
 
-#define NUM_2_MULT_OPS 11
+#define NUM_M2_OPS 11
 
-static mf2_ops arg_2_mf2_ops[NUM_2_MULT_OPS] = {
+static opt_ops m2_ops[NUM_M2_OPS] = {
   {oscil_0f_1, "oscil_0f", oscil_0f_1_mult, "oscil_0f_mult", oscil_0f_1_env, "oscil_0f_env"},
   {polywave_0f, "polywave_0f", polywave_0f_mult, "polywave_0f_mult", polywave_0f_env, "polywave_0f_env"},
   {env_linear_0f, "env_linear_0f", env_linear_0f_mult, "env_linear_0f_mult", env_linear_0f_env, "env_linear_0f_env"},
@@ -5224,20 +5226,20 @@ static mf2_ops arg_2_mf2_ops[NUM_2_MULT_OPS] = {
 };
 
 
-static int find_arg_2_mf2_op(triple *prev_op)
+static int find_m2_op(triple *prev_op)
 {
   int i;
-  for (i = 0; i < NUM_2_MULT_OPS; i++)
-    if (prev_op->function == arg_2_mf2_ops[i].func)
+  for (i = 0; i < NUM_M2_OPS; i++)
+    if (prev_op->function == m2_ops[i].func)
       return(i);
   return(-1);
 }
 
 
 /* 3 arg ops that can be combined into a multiply */
-#define NUM_3_MULT_OPS 9
+#define NUM_M3_OPS 9
 
-static mf2_ops arg_3_mf2_ops[NUM_3_MULT_OPS] = {
+static opt_ops m3_ops[NUM_M3_OPS] = {
   {oscil_1f_1, "oscil_1f_1", oscil_1f_1_mult, "oscil_1f_1_mult", oscil_1f_1_env, "oscil_1f_1_env"},
   {polywave_1f, "polywave_1f", polywave_1f_mult, "polywave_1f_mult", polywave_1f_env, "polywave_1f_env"},
   {delay_1f, "delay_1f", delay_1f_mult, "delay_1f_mult", delay_1f_env, "delay_1f_env"},
@@ -5250,20 +5252,20 @@ static mf2_ops arg_3_mf2_ops[NUM_3_MULT_OPS] = {
 };
 
 
-static int find_arg_3_mf2_op(triple *prev_op)
+static int find_m3_op(triple *prev_op)
 {
   int i;
-  for (i = 0; i < NUM_3_MULT_OPS; i++)
-    if (prev_op->function == arg_3_mf2_ops[i].func)
+  for (i = 0; i < NUM_M3_OPS; i++)
+    if (prev_op->function == m3_ops[i].func)
       return(i);
   return(-1);
 }
 
 
 /* 4 arg ops that can be combined into a multiply */
-#define NUM_4_MULT_OPS 5
+#define NUM_M4_OPS 5
 
-static mf2_ops arg_4_mf2_ops[NUM_3_MULT_OPS] = {
+static opt_ops m4_ops[NUM_M4_OPS] = {
   {multiply_add_f2, "multiply_add_f2", multiply_add_f2_mult, "multiply_add_f2_mult", NULL, NULL},
   {add_f3, "add_f3", add_f3_mult, "add_f3_mult", NULL, NULL},
   {oscil_1f_2, "oscil_1f_2", oscil_1f_2_mult, "oscil_1f_2_mult", oscil_1f_2_env, "oscil_1f_2_env"},
@@ -5277,14 +5279,15 @@ static mf2_ops arg_4_mf2_ops[NUM_3_MULT_OPS] = {
  */
 
 
-static int find_arg_4_mf2_op(triple *prev_op)
+static int find_m4_op(triple *prev_op)
 {
   int i;
-  for (i = 0; i < NUM_4_MULT_OPS; i++)
-    if (prev_op->function == arg_4_mf2_ops[i].func)
+  for (i = 0; i < NUM_M4_OPS; i++)
+    if (prev_op->function == m4_ops[i].func)
       return(i);
   return(-1);
 }
+
 
 
 static xen_value *multiply(ptree *prog, xen_value **args, int num_args)
@@ -5359,12 +5362,12 @@ static xen_value *multiply(ptree *prog, xen_value **args, int num_args)
 
 		      /* -------- 2 args -------- */
 		    case 2:
-		      loc = find_arg_2_mf2_op(prev_op);
+		      loc = find_m2_op(prev_op);
 		      if (loc >= 0)
 			{
 			  /* its output is either arg1 or arg2, we can use its output loc */
 			  if ((prog->triple_ctr > 1) &&
-			      (arg_2_mf2_ops[loc].env_func)) /* env is a possibility */
+			      (m2_ops[loc].env_func)) /* env is a possibility */
 			    {
 			      triple *p2_op;
 			      p2_op = prog->program[prog->triple_ctr - 2];
@@ -5381,8 +5384,8 @@ static xen_value *multiply(ptree *prog, xen_value **args, int num_args)
 				  p2_op->args[1] = prev_op->args[1];
 				  p2_op->types[1] = prev_op->types[1];
 				  p2_op->num_args = 3;
-				  p2_op->function = arg_2_mf2_ops[loc].env_func;
-				  p2_op->op_name = arg_2_mf2_ops[loc].env_func_name;
+				  p2_op->function = m2_ops[loc].env_func;
+				  p2_op->op_name = m2_ops[loc].env_func_name;
 				  free_triple(prev_op);
 				  prog->triple_ctr--;
 				  return(make_xen_value(R_FLOAT, p2_op->args[0], R_TEMPORARY));
@@ -5394,8 +5397,8 @@ static xen_value *multiply(ptree *prog, xen_value **args, int num_args)
 			    prev_op->args[2] = args[2]->addr;
 			  else prev_op->args[2] = args[1]->addr;
 			  prev_op->num_args = 3;
-			  prev_op->function = arg_2_mf2_ops[loc].mult_func;
-			  prev_op->op_name = arg_2_mf2_ops[loc].mult_func_name;
+			  prev_op->function = m2_ops[loc].mult_func;
+			  prev_op->op_name = m2_ops[loc].mult_func_name;
 			  prev_op->types[2] = R_FLOAT;
 			  return(make_xen_value(R_FLOAT, prev_op->args[0], R_TEMPORARY));
 			}
@@ -5403,11 +5406,11 @@ static xen_value *multiply(ptree *prog, xen_value **args, int num_args)
 
 		      /* -------- 3 args -------- */
 		    case 3:
-		      loc = find_arg_3_mf2_op(prev_op);
+		      loc = find_m3_op(prev_op);
 		      if (loc >= 0)
 			{
 			  if ((prog->triple_ctr > 1) &&
-			      (arg_3_mf2_ops[loc].env_func)) /* env is a possibility */
+			      (m3_ops[loc].env_func)) /* env is a possibility */
 			    {
 			      triple *p2_op;
 			      p2_op = prog->program[prog->triple_ctr - 2];
@@ -5426,8 +5429,8 @@ static xen_value *multiply(ptree *prog, xen_value **args, int num_args)
 				  p2_op->args[2] = prev_op->args[2];
 				  p2_op->types[2] = prev_op->types[2];
 				  p2_op->num_args = 4;
-				  p2_op->function = arg_3_mf2_ops[loc].env_func;
-				  p2_op->op_name = arg_3_mf2_ops[loc].env_func_name;
+				  p2_op->function = m3_ops[loc].env_func;
+				  p2_op->op_name = m3_ops[loc].env_func_name;
 				  free_triple(prev_op);
 				  prog->triple_ctr--;
 				  return(make_xen_value(R_FLOAT, p2_op->args[0], R_TEMPORARY));
@@ -5439,8 +5442,8 @@ static xen_value *multiply(ptree *prog, xen_value **args, int num_args)
 			    prev_op->args[3] = args[2]->addr;
 			  else prev_op->args[3] = args[1]->addr;
 			  prev_op->num_args = 4;
-			  prev_op->function = arg_3_mf2_ops[loc].mult_func;
-			  prev_op->op_name = arg_3_mf2_ops[loc].mult_func_name;
+			  prev_op->function = m3_ops[loc].mult_func;
+			  prev_op->op_name = m3_ops[loc].mult_func_name;
 			  prev_op->types[3] = R_FLOAT;
 			  return(make_xen_value(R_FLOAT, prev_op->args[0], R_TEMPORARY));
 			}
@@ -5448,7 +5451,7 @@ static xen_value *multiply(ptree *prog, xen_value **args, int num_args)
 
 		      /* -------- 4 args -------- */
 		    case 4:
-		      loc = find_arg_4_mf2_op(prev_op);
+		      loc = find_m4_op(prev_op);
 		      if (loc >= 0)
 			{
 			  prev_op->types = (int *)realloc(prev_op->types, 5 * sizeof(int));
@@ -5457,8 +5460,8 @@ static xen_value *multiply(ptree *prog, xen_value **args, int num_args)
 			    prev_op->args[4] = args[2]->addr;
 			  else prev_op->args[4] = args[1]->addr;
 			  prev_op->num_args = 5;
-			  prev_op->function = arg_4_mf2_ops[loc].mult_func;
-			  prev_op->op_name = arg_4_mf2_ops[loc].mult_func_name;
+			  prev_op->function = m4_ops[loc].mult_func;
+			  prev_op->op_name = m4_ops[loc].mult_func_name;
 			  prev_op->types[4] = R_FLOAT;
 			  return(make_xen_value(R_FLOAT, prev_op->args[0], R_TEMPORARY));
 			}
@@ -5552,28 +5555,29 @@ static void subtract_f2_add(int *args, ptree *pt);
 static void sin_f_mult_add(int *args, ptree *pt);
 static void cos_f_mult_add(int *args, ptree *pt);
 
-#define NUM_2_ADD_OPS 3
 
-static mf2_ops arg_2_af2_ops[NUM_2_ADD_OPS] = {
+#define NUM_A2_OPS 3
+
+static opt_ops a2_ops[NUM_A2_OPS] = {
   {rand_interp_0f, "rand_interp_0f", rand_interp_0f_add, "rand_interp_0f_add", NULL, NULL},
   {abs_f, "abs_f", abs_f_add, "abs_f_add", NULL, NULL},
   {mus_random_mf, "random_mf", mus_random_mf_add, "random_mf_add", NULL, NULL},
 };
 
 
-static int find_arg_2_af2_op(triple *prev_op)
+static int find_a2_op(triple *prev_op)
 {
   int i;
-  for (i = 0; i < NUM_2_ADD_OPS; i++)
-    if (prev_op->function == arg_2_af2_ops[i].func)
+  for (i = 0; i < NUM_A2_OPS; i++)
+    if (prev_op->function == a2_ops[i].func)
       return(i);
   return(-1);
 }
 
 
-#define NUM_3_ADD_OPS 6
+#define NUM_A3_OPS 6
 
-static mf2_ops arg_3_af2_ops[NUM_3_ADD_OPS] = {
+static opt_ops a3_ops[NUM_A3_OPS] = {
   {multiply_f2, "multiply_f2", multiply_add_f2, "multiply_add_f2", NULL, NULL},
   {subtract_f2, "subtract_f2", subtract_f2_add, "subtract_f2_add", NULL, NULL},
   {add_f2, "add_f2", add_f3, "add_f3", NULL, NULL},
@@ -5583,15 +5587,14 @@ static mf2_ops arg_3_af2_ops[NUM_3_ADD_OPS] = {
 };
 
 
-static int find_arg_3_af2_op(triple *prev_op)
+static int find_a3_op(triple *prev_op)
 {
   int i;
-  for (i = 0; i < NUM_3_ADD_OPS; i++)
-    if (prev_op->function == arg_3_af2_ops[i].func)
+  for (i = 0; i < NUM_A3_OPS; i++)
+    if (prev_op->function == a3_ops[i].func)
       return(i);
   return(-1);
 }
-
 
 
 static xen_value *add(ptree *prog, xen_value **args, int num_args)
@@ -5665,7 +5668,7 @@ static xen_value *add(ptree *prog, xen_value **args, int num_args)
 		    {
 		      /* -------- 2 args -------- */
 		    case 2:
-		      loc = find_arg_2_af2_op(prev_op);
+		      loc = find_a2_op(prev_op);
 		      if (loc >= 0)
 			{
 			  prev_op->types = (int *)realloc(prev_op->types, 3 * sizeof(int));
@@ -5674,8 +5677,8 @@ static xen_value *add(ptree *prog, xen_value **args, int num_args)
 			    prev_op->args[2] = args[2]->addr;
 			  else prev_op->args[2] = args[1]->addr;
 			  prev_op->num_args = 3;
-			  prev_op->function = arg_2_af2_ops[loc].mult_func;
-			  prev_op->op_name = arg_2_af2_ops[loc].mult_func_name;
+			  prev_op->function = a2_ops[loc].mult_func;
+			  prev_op->op_name = a2_ops[loc].mult_func_name;
 			  prev_op->types[2] = R_FLOAT;
 			  return(make_xen_value(R_FLOAT, prev_op->args[0], R_TEMPORARY));
 			}
@@ -5683,7 +5686,7 @@ static xen_value *add(ptree *prog, xen_value **args, int num_args)
 
 		      /* -------- 3 args -------- */
 		    case 3:
-		      loc = find_arg_3_af2_op(prev_op);
+		      loc = find_a3_op(prev_op);
 		      if (loc >= 0)
 			{
 			  prev_op->types = (int *)realloc(prev_op->types, 4 * sizeof(int));
@@ -5692,8 +5695,8 @@ static xen_value *add(ptree *prog, xen_value **args, int num_args)
 			    prev_op->args[3] = args[2]->addr;
 			  else prev_op->args[3] = args[1]->addr;
 			  prev_op->num_args = 4;
-			  prev_op->function = arg_3_af2_ops[loc].mult_func;
-			  prev_op->op_name = arg_3_af2_ops[loc].mult_func_name;
+			  prev_op->function = a3_ops[loc].mult_func;
+			  prev_op->op_name = a3_ops[loc].mult_func_name;
 			  prev_op->types[3] = R_FLOAT;
 			  return(make_xen_value(R_FLOAT, prev_op->args[0], R_TEMPORARY));
 			}
@@ -8041,6 +8044,17 @@ static void funcall_cf2(int *args, ptree *pt)
   pt->dbls[func->args[1]] = pt->dbls[args[3]]; 
   eval_embedded_ptree(func, pt);  
   FLOAT_RESULT = pt->dbls[func->result->addr]; 
+}
+
+
+static void outa_funcall_cf2(int *args, ptree *pt)
+{
+  ptree *func;
+  func = ((ptree **)(pt->fncs))[args[4]];
+  pt->lists[func->args[0]] = pt->lists[args[2]]; 
+  pt->dbls[func->args[1]] = pt->dbls[args[5]]; 
+  eval_embedded_ptree(func, pt);  
+  mus_out_any(INT_ARG_1, pt->dbls[func->result->addr], 0, CLM_ARG_3);
 }
 
 
@@ -11627,6 +11641,21 @@ static xen_value *file_to_frame_1(ptree *prog, xen_value **args, int num_args)
 
 static void outa_3(int *args, ptree *pt) {FLOAT_RESULT = mus_out_any(INT_ARG_1, FLOAT_ARG_2, 0, CLM_ARG_3);}
 static void outa_3f(int *args, ptree *pt) {mus_out_any_to_file(CLM_ARG_3, INT_ARG_1, 0, FLOAT_ARG_2);}
+static void outa_oscil_0_mult(int *args, ptree *pt) {mus_out_any_to_file(CLM_ARG_3, INT_ARG_1, 0, FLOAT_ARG_2 * mus_oscil_unmodulated(CLM_ARG_4));}
+
+static void outa_add_f2(int *args, ptree *pt) {mus_out_any_to_file(CLM_ARG_3, INT_ARG_1, 0, FLOAT_ARG_2 + FLOAT_ARG_4);}
+static void outa_add_f3(int *args, ptree *pt) {mus_out_any_to_file(CLM_ARG_3, INT_ARG_1, 0, FLOAT_ARG_2 + FLOAT_ARG_4 + FLOAT_ARG_5);}
+static void outa_add_f4(int *args, ptree *pt) {mus_out_any_to_file(CLM_ARG_3, INT_ARG_1, 0, FLOAT_ARG_2 + FLOAT_ARG_4 + FLOAT_ARG_5 + FLOAT_ARG_6);}
+
+static void outa_multiply_f2(int *args, ptree *pt) {mus_out_any_to_file(CLM_ARG_3, INT_ARG_1, 0, FLOAT_ARG_2 * FLOAT_ARG_4);}
+static void outa_multiply_f3(int *args, ptree *pt) {mus_out_any_to_file(CLM_ARG_3, INT_ARG_1, 0, FLOAT_ARG_2 * FLOAT_ARG_4 * FLOAT_ARG_5);}
+static void outa_multiply_f4(int *args, ptree *pt) {mus_out_any_to_file(CLM_ARG_3, INT_ARG_1, 0, FLOAT_ARG_2 * FLOAT_ARG_4 * FLOAT_ARG_5 * FLOAT_ARG_6);}
+static void outa_oscil_1_mult(int *args, ptree *pt) {mus_out_any_to_file(CLM_ARG_3, INT_ARG_1, 0, FLOAT_ARG_5 * mus_oscil_fm(CLM_ARG_4, FLOAT_ARG_2));}
+static void outa_polywave_1_mult(int *args, ptree *pt) {mus_out_any_to_file(CLM_ARG_3, INT_ARG_1, 0, FLOAT_ARG_5 * mus_polywave(CLM_ARG_4, FLOAT_ARG_2));}
+static void outa_delay_1_mult(int *args, ptree *pt) {mus_out_any_to_file(CLM_ARG_3, INT_ARG_1, 0, FLOAT_ARG_5 * mus_delay_unmodulated_noz(CLM_ARG_4, FLOAT_ARG_2));}
+
+static void outa_add_f2_mult(int *args, ptree *pt) {mus_out_any_to_file(CLM_ARG_3, INT_ARG_1, 0, FLOAT_ARG_5 * (FLOAT_ARG_2 + FLOAT_ARG_4));}
+static void outa_add_f3_mult(int *args, ptree *pt) {mus_out_any_to_file(CLM_ARG_3, INT_ARG_1, 0, FLOAT_ARG_4 * (FLOAT_ARG_2 + FLOAT_ARG_5 + FLOAT_ARG_6));}
 
 static void outb_3(int *args, ptree *pt) {FLOAT_RESULT = mus_out_any(INT_ARG_1, FLOAT_ARG_2, 1, CLM_ARG_3);}
 static void outb_3f(int *args, ptree *pt) {mus_out_any_to_file(CLM_ARG_3, INT_ARG_1, 1, FLOAT_ARG_2);}
@@ -11731,16 +11760,186 @@ static void out_any_sound_data_4(int *args, ptree *pt)
 }
 
 
+/* outa optimizations */
+
+#define NUM_O3_OPS 3
+
+static opt_ops o3_ops[NUM_O3_OPS] = {
+  {add_f2, "add_f2", outa_add_f2, "outa_add_f2", NULL, NULL},
+  {multiply_f2, "multiply_f2", outa_multiply_f2, "outa_multiply_f2", NULL, NULL},
+  {oscil_0f_1_mult, "oscil_0f_mult", outa_oscil_0_mult, "outa_oscil_0_mult", NULL, NULL},
+};
+
+
+static int find_o3_op(triple *prev_op)
+{
+  int i;
+  for (i = 0; i < NUM_O3_OPS; i++)
+    if (prev_op->function == o3_ops[i].func)
+      return(i);
+  return(-1);
+}
+
+
+#define NUM_O4_OPS 7
+
+static opt_ops o4_ops[NUM_O4_OPS] = {
+  {add_f3, "add_f3", outa_add_f3, "outa_add_f3", NULL, NULL},
+  {multiply_f3, "multiply_f3", outa_multiply_f3, "outa_multiply_f3", NULL, NULL},
+  {add_f2_mult, "add_f2_mult", outa_add_f2_mult, "outa_add_f2_mult", NULL, NULL},
+  {oscil_1f_1_mult, "oscil_1f_1_mult", outa_oscil_1_mult, "outa_oscil_1_mult", NULL, NULL},
+  {polywave_1f_mult, "polywave_1f_mult", outa_polywave_1_mult, "outa_polywave_1_mult", NULL, NULL},
+  {delay_1f_noz_mult, "delay_1f_noz_mult", outa_delay_1_mult, "outa_delay_1_mult", NULL, NULL},
+  {funcall_cf2, "funcall_cf2", outa_funcall_cf2, "outa_funcall_cf2", NULL, NULL},
+};
+
+
+static int find_o4_op(triple *prev_op)
+{
+  int i;
+  for (i = 0; i < NUM_O4_OPS; i++)
+    if (prev_op->function == o4_ops[i].func)
+      return(i);
+  return(-1);
+}
+
+#define NUM_O5_OPS 3
+
+static opt_ops o5_ops[NUM_O5_OPS] = {
+  {add_f4, "add_f4", outa_add_f4, "outa_add_f4", NULL, NULL},
+  {multiply_f4, "multiply_f4", outa_multiply_f4, "outa_multiply_f4", NULL, NULL},
+  {add_f3_mult, "add_f3_mult", outa_add_f3_mult, "outa_add_f3_mult", NULL, NULL},
+};
+
+
+static int find_o5_op(triple *prev_op)
+{
+  int i;
+  for (i = 0; i < NUM_O5_OPS; i++)
+    if (prev_op->function == o5_ops[i].func)
+      return(i);
+  return(-1);
+}
+
+
 static xen_value *outa_2(ptree *prog, xen_value **args, int num_args) 
 {
   if (args[3]->type == R_CLM)
     {
-      /* TODO: look for add_f3, add_f2, multiply_f2, multiply_f3, oscil_1f*, polywave_1f*
-       */
-
       if ((prog->walk_result == DONT_NEED_RESULT) &&
 	  (mus_output_p(prog->clms[args[3]->addr])))   
-	return(package(prog, R_FLOAT, outa_3f, "outa_3f", args, 3));
+	{
+	  if (prog->triple_ctr > 0)
+	    {
+	      triple *prev_op;
+	      prev_op = prog->program[prog->triple_ctr - 1];
+	      if ((prev_op->args[0] == args[2]->addr) &&
+		  ((find_var_in_ptree_via_addr(prog, R_FLOAT, prev_op->args[0])) == NULL))
+		{
+		  int loc;
+		  switch (prev_op->num_args)
+		    {
+
+		      /* -------- 3 args -------- */
+		    case 3:
+		      loc = find_o3_op(prev_op);
+		      /* (with-sound () (let ((x 1.0) (y 2.0)) (run (lambda () (do ((i 0 (+ i 1))) ((= i 2)) (outa i (+ x y) )))))) */
+		      if (loc >= 0)
+			{
+			  /* 1 -> 4 */
+			  prev_op->types = (int *)realloc(prev_op->types, 5 * sizeof(int));
+			  prev_op->args = (int *)realloc(prev_op->args, 5 * sizeof(int));
+			  prev_op->num_args = 5;
+			  /* reshuffle args in prev_op so that arg1 -> arg4, (arg2 can stay), then arg1 <- cur1, arg3 <- cur3 */
+
+			  prev_op->types[4] = prev_op->types[1]; /* transfer 1 -> 4 */
+			  prev_op->args[4] = prev_op->args[1];   /* new arg1 is the sample loc */
+			  prev_op->types[1] = R_INT;             /* sample location */
+			  prev_op->args[1] = args[1]->addr;
+
+			  /* args[2]->addr is the old output which we ignore, using the old arg2 as it is */
+
+			  prev_op->types[3] = R_CLM;             /* output writer */
+			  prev_op->args[3] = args[3]->addr;
+
+			  prev_op->function = o3_ops[loc].mult_func;
+			  prev_op->op_name = o3_ops[loc].mult_func_name;
+			  return(make_xen_value(R_FLOAT, prev_op->args[0], R_TEMPORARY));
+			}
+		      break;
+
+		      /* -------- 4 args -------- */
+		    case 4:
+		      loc = find_o4_op(prev_op);
+		      if (loc >= 0)
+			{
+			  /* move old 1 to 4, old 3 to 5, leave 2, fixup old 1 as loc, old 3 as output gen */
+			  /* (with-sound () (let ((gen (make-oscil 100.0)) (x 0.5) (y 0.25)) (run (lambda () (do ((i 0 (+ i 1))) ((= i 2)) (outa i (* y (oscil gen x)))))))) */
+
+			  prev_op->types = (int *)realloc(prev_op->types, 6 * sizeof(int));
+			  prev_op->args = (int *)realloc(prev_op->args, 6 * sizeof(int));
+			  prev_op->num_args = 6;
+
+			  prev_op->types[4] = prev_op->types[1]; /* transfer 1 -> 4 */
+			  prev_op->args[4] = prev_op->args[1];   /* new arg1 is the sample loc */
+			  prev_op->types[1] = R_INT;             /* sample location */
+			  prev_op->args[1] = args[1]->addr;
+
+			  /* args[2]->addr is the old output which we ignore, using the old arg2 as it is */
+
+			  prev_op->types[5] = prev_op->types[3]; /* transfer 3 -> 5 */
+			  prev_op->args[5] = prev_op->args[3];   /* new arg3 is the writer gen */
+			  prev_op->types[3] = R_CLM;             /* output writer */
+			  prev_op->args[3] = args[3]->addr;
+
+			  prev_op->function = o4_ops[loc].mult_func;
+			  prev_op->op_name = o4_ops[loc].mult_func_name;
+			  return(make_xen_value(R_FLOAT, prev_op->args[0], R_TEMPORARY));
+			}
+		      break;
+
+		      /* -------- 5 args -------- */
+		    case 5:
+		      loc = find_o5_op(prev_op);
+		      if (loc >= 0)
+			{
+			  /* move old 1 to 5, old 3 to 6, leave 2 and 4, fixup old 1 as loc, old 3 as output gen */
+			  prev_op->types = (int *)realloc(prev_op->types, 7 * sizeof(int));
+			  prev_op->args = (int *)realloc(prev_op->args, 7 * sizeof(int));
+			  prev_op->num_args = 7;
+
+			  prev_op->types[5] = prev_op->types[1]; /* transfer 1 -> 5 */
+			  prev_op->args[5] = prev_op->args[1];   /* new arg1 is the sample loc */
+			  prev_op->types[1] = R_INT;             /* sample location */
+			  prev_op->args[1] = args[1]->addr;
+			  
+			  /* 2 and 4 can stay */
+
+			  prev_op->types[6] = prev_op->types[3]; /* transfer 3 -> 6 */
+			  prev_op->args[6] = prev_op->args[3];   /* new arg3 is the writer gen */
+			  prev_op->types[3] = R_CLM;             /* output writer */
+			  prev_op->args[3] = args[3]->addr;
+
+			  prev_op->function = o5_ops[loc].mult_func;
+			  prev_op->op_name = o5_ops[loc].mult_func_name;
+			  return(make_xen_value(R_FLOAT, prev_op->args[0], R_TEMPORARY));
+			}
+		      break;
+		    }
+		}
+	    }
+#if 0
+	  if (prog->triple_ctr > 0)
+	    {
+	      triple *prev_op;
+	      prev_op = prog->program[prog->triple_ctr - 1];
+	      if ((prev_op->args[0] == args[2]->addr) &&
+		  ((find_var_in_ptree_via_addr(prog, R_FLOAT, prev_op->args[0])) == NULL))
+		fprintf(stderr, "outa %s (%d)\n", prev_op->op_name, prev_op->num_args);
+	    }
+#endif
+	  return(package(prog, R_FLOAT, outa_3f, "outa_3f", args, 3));
+	}
       return(package(prog, R_FLOAT, outa_3, "outa_3", args, 3));
     }
   if (args[3]->type == R_VCT)

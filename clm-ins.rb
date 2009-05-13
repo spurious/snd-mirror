@@ -2,7 +2,7 @@
 
 # Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Tue Sep 16 01:27:09 CEST 2003
-# Changed: Wed Apr 16 17:41:01 CEST 2008
+# Changed: Tue May 12 21:03:53 CEST 2009
 
 # Instruments work with
 #   with_sound (CLM (sample2file gens) and Snd)
@@ -125,8 +125,8 @@ def pluck(start, dur, freq, amp, weighting = 0.5, lossfact = 0.9)
   feedb = make_one_zero(c, 1.0)     # or feedb = make_one_zero(1.0, c)
   dlen.times do |i| tab[i] = 1.0 - random(2.0) end
   run_instrument(start, dur) do
-    val = tab.cycle
-    tab[tab.cycle_index] = (1.0 - c) * one_zero(feedb, one_zero(allp, val))
+    val = tab.clm_cycle
+    tab[tab.clm_cycle_index] = (1.0 - c) * one_zero(feedb, one_zero(allp, val))
     amp * val
   end
 end

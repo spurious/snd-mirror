@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Sat Jan 03 17:30:23 CET 2004
-# Changed: Tue Nov 20 21:59:04 CET 2007
+# Changed: Wed May 13 02:37:33 CEST 2009
 
 # Commentary:
 # 
@@ -53,6 +53,7 @@
 #  mixer_scale(mx, scl, nmx)
 #  make_iir_low_pass_1(fc)
 #  make_iir_high_pass_1(fc)
+#  sine_bank(amps, phases, size)
 #
 # module Extensions
 #  channel_property(key, snd, chn)
@@ -749,6 +750,16 @@ turns a sound-data object's data into a list of lists (one for each channel)")
     gamma = cos(theta) / (1.0 + sin(theta))
     xc = (1.0 + gamma) / 2.0
     make_filter(2, vct(xc, -xc), vct(0.0, -gamma))
+  end
+
+  # 
+  # Snd-9 compatibility stuff
+  # 
+  def sine_bank(amps, phases, size = nil)
+    len = (size or amps.length)
+    sum = 0.0
+    len.times do |i| sum += amps[i] * sin(phases[i]) end
+    sum
   end
 end
 
