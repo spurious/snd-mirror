@@ -482,21 +482,26 @@ MUS_EXPORT mus_any *mus_make_delay(int size, Float *line, int line_size, mus_int
 MUS_EXPORT bool mus_delay_p(mus_any *ptr);
 MUS_EXPORT bool mus_delay_line_p(mus_any *gen); /* added 2-Mar-03 for tap error checks */
 MUS_EXPORT Float mus_delay_tick(mus_any *ptr, Float input);
+MUS_EXPORT Float mus_delay_tick_noz(mus_any *ptr, Float input);
+MUS_EXPORT Float mus_delay_unmodulated_noz(mus_any *ptr, Float input);
 
 MUS_EXPORT Float mus_comb(mus_any *gen, Float input, Float pm);
 MUS_EXPORT Float mus_comb_unmodulated(mus_any *gen, Float input);
 MUS_EXPORT mus_any *mus_make_comb(Float scaler, int size, Float *line, int line_size, mus_interp_t type);
 MUS_EXPORT bool mus_comb_p(mus_any *ptr);
+MUS_EXPORT Float mus_comb_unmodulated_noz(mus_any *ptr, Float input);
 
 MUS_EXPORT Float mus_notch(mus_any *gen, Float input, Float pm);
 MUS_EXPORT Float mus_notch_unmodulated(mus_any *gen, Float input);
 MUS_EXPORT mus_any *mus_make_notch(Float scaler, int size, Float *line, int line_size, mus_interp_t type);
 MUS_EXPORT bool mus_notch_p(mus_any *ptr);
+MUS_EXPORT Float mus_notch_unmodulated_noz(mus_any *ptr, Float input);
 
 MUS_EXPORT Float mus_all_pass(mus_any *gen, Float input, Float pm);
 MUS_EXPORT Float mus_all_pass_unmodulated(mus_any *gen, Float input);
 MUS_EXPORT mus_any *mus_make_all_pass(Float backward, Float forward, int size, Float *line, int line_size, mus_interp_t type);
 MUS_EXPORT bool mus_all_pass_p(mus_any *ptr);
+MUS_EXPORT Float mus_all_pass_unmodulated_noz(mus_any *ptr, Float input);
 
 MUS_EXPORT mus_any *mus_make_moving_average(int size, Float *line);
 MUS_EXPORT bool mus_moving_average_p(mus_any *ptr);

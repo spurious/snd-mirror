@@ -3142,6 +3142,17 @@ Float mus_delay_tick(mus_any *ptr, Float input)
 }
 
 
+Float mus_delay_tick_noz(mus_any *ptr, Float input)
+{
+  dly *gen = (dly *)ptr;
+  gen->line[gen->loc] = input;
+  gen->loc++;
+  if (gen->loc >= gen->size) 
+    gen->loc = 0;
+  return(input);
+}
+
+
 Float mus_delay(mus_any *ptr, Float input, Float pm)
 {
   Float result;
@@ -3165,6 +3176,19 @@ Float mus_delay_unmodulated(mus_any *ptr, Float input)
     }
   else result = gen->line[gen->loc];
   mus_delay_tick(ptr, input);
+  return(result);
+}
+
+
+Float mus_delay_unmodulated_noz(mus_any *ptr, Float input)
+{
+  dly *gen = (dly *)ptr;
+  Float result;
+  result = gen->line[gen->loc];
+  gen->line[gen->loc] = input;
+  gen->loc++;
+  if (gen->loc >= gen->size) 
+    gen->loc = 0;
   return(result);
 }
 
@@ -3267,6 +3291,7 @@ static Float delay_fb(mus_any *ptr) {return(((dly *)ptr)->yscl);}
 static Float delay_set_fb(mus_any *ptr, Float val) {((dly *)ptr)->yscl = val; return(val);}
 
 static int delay_interp_type(mus_any *ptr) {return((int)(((dly *)ptr)->type));}
+static int delay_zdly(mus_any *ptr) {return((int)(((dly *)ptr)->zdly));}
 
 static Float *delay_data(mus_any *ptr) {return(((dly *)ptr)->line);}
 
@@ -3337,7 +3362,7 @@ static mus_any_class DELAY_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0,
   &delay_reset,
-  0, 0, 0
+  0, &delay_zdly, 0
 };
 
 
@@ -3398,6 +3423,19 @@ Float mus_comb_unmodulated(mus_any *ptr, Float input)
 }
 
 
+Float mus_comb_unmodulated_noz(mus_any *ptr, Float input) 
+{
+  dly *gen = (dly *)ptr;
+  Float result;
+  result = gen->line[gen->loc];
+  gen->line[gen->loc] = input + (gen->line[gen->loc] * gen->yscl);
+  gen->loc++;
+  if (gen->loc >= gen->size) 
+    gen->loc = 0;
+  return(result);
+}
+
+
 static char *describe_comb(mus_any *ptr)
 {
   char *str = NULL;
@@ -3446,7 +3484,7 @@ static mus_any_class COMB_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0,
   &delay_reset,
-  0, 0, 0
+  0, &delay_zdly, 0
 };
 
 
@@ -3518,7 +3556,7 @@ static mus_any_class NOTCH_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0,
   &delay_reset,
-  0, 0, 0
+  0, &delay_zdly, 0
 };
 
 
@@ -3532,6 +3570,19 @@ Float mus_notch(mus_any *ptr, Float input, Float pm)
 Float mus_notch_unmodulated(mus_any *ptr, Float input) 
 {
   return((input * ((dly *)ptr)->xscl) + mus_delay_unmodulated(ptr, input));
+}
+
+
+Float mus_notch_unmodulated_noz(mus_any *ptr, Float input) 
+{
+  dly *gen = (dly *)ptr;
+  Float result;
+  result = gen->line[gen->loc] + (input * gen->xscl);
+  gen->line[gen->loc] = input;
+  gen->loc++;
+  if (gen->loc >= gen->size) 
+    gen->loc = 0;
+  return(result);
 }
 
 
@@ -3573,6 +3624,20 @@ Float mus_all_pass_unmodulated(mus_any *ptr, Float input)
   dly *gen = (dly *)ptr;
   din = input + (gen->yscl * gen->line[gen->loc]);
   return(mus_delay_unmodulated(ptr, din) + (gen->xscl * din));
+}
+
+
+Float mus_all_pass_unmodulated_noz(mus_any *ptr, Float input)
+{
+  Float result, din;
+  dly *gen = (dly *)ptr;
+  din = input + (gen->yscl * gen->line[gen->loc]);
+  result = gen->line[gen->loc] + (gen->xscl * din);
+  gen->line[gen->loc] = din;
+  gen->loc++;
+  if (gen->loc >= gen->size) 
+    gen->loc = 0;
+  return(result);
 }
 
 
@@ -3633,7 +3698,7 @@ static mus_any_class ALL_PASS_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0,
   &delay_reset,
-  0, 0, 0
+  0, &delay_zdly, 0
 };
 
 
@@ -3663,7 +3728,7 @@ Float mus_moving_average(mus_any *ptr, Float input)
 {
   dly *gen = (dly *)ptr;
   Float output;
-  output = mus_delay_unmodulated(ptr, input);
+  output = mus_delay_unmodulated_noz(ptr, input);
   gen->xscl += (input - output);
   return(gen->xscl * gen->yscl); /* xscl=sum, yscl=1/n */
 }
@@ -3718,7 +3783,7 @@ static mus_any_class MOVING_AVERAGE_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0,
   &moving_average_reset,
-  0, 0, 0
+  0, &delay_zdly, 0
 };
 
 
