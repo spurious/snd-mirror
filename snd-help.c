@@ -3236,7 +3236,13 @@ static int help_name_to_url(const char *name)
       int comp;
       if (u < l) return(-1);
       i = (l + u) / 2;
+#if HAVE_RUBY
+      if (name[0] == '$')
+	comp = STRCMP(help_names[i], (const char *)(name + 1));
+      else comp = STRCMP(help_names[i], name);
+#else
       comp = STRCMP(help_names[i], name);
+#endif
       if (comp == 0) return(i);
       if (comp < 0)
 	l = i + 1;

@@ -319,6 +319,12 @@
      (my-subseq outstr 0 j)
      url-str)))
 
+(defun without-dollar-sign (str)
+  (if (char= (char str 0) #\$)
+      (substring str 1)
+    str))
+
+
 (defun make-array-name (str)
   (do ((i 0 (1+ i)))
       ((= i (length str)) str)
@@ -547,7 +553,7 @@
 		  (format sfil "static const char *help_names[HELP_NAMES_SIZE] = {~%  ")
 		  (format sfil "~S" (car help-names))
 		  (loop for ctr from 1 and name in (cdr help-names) do
-		    (format sfil ",~%  ~S" (scm->rb name)))
+		    (format sfil ",~%  ~S" (without-dollar-sign (scm->rb name))))
 		  (format sfil "};~%#endif~%")
 		  (format sfil "#if (!HAVE_EXTENSION_LANGUAGE)~%static const char **help_names = NULL;~%#endif~%")
 		  (format sfil "static const char *help_urls[HELP_NAMES_SIZE] = {~%  ")

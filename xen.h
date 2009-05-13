@@ -979,7 +979,7 @@ char *xen_guile_to_c_string_with_eventual_free(XEN str);
 #define XEN_DEFINED_P(Name)             xen_rb_defined_p(Name)
 
 #define XEN_WRAP_C_POINTER(a)           Data_Wrap_Struct(rb_cData, 0, 0, (void *)a)
-#define XEN_UNWRAP_C_POINTER(a)         DATA_PTR(a)
+#define XEN_UNWRAP_C_POINTER(a)         ((TYPE(a) == T_DATA) ? DATA_PTR(a) : NULL)
 #define XEN_WRAPPED_C_POINTER_P(a)      (TYPE(a) == T_DATA)
 
 /* ---- C structs ---- */
