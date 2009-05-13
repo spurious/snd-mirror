@@ -728,10 +728,14 @@ int mus_file_open_write(const char *arg)
 }
 
 
-int mus_file_create(const char *arg)
-{
-  return(CREAT(arg, 0666));
-}
+int mus_file_create(const char *arg) 
+{ 
+#ifdef MUS_WINDOZE 
+  return(CREAT(arg, S_IREAD | S_IWRITE)); 
+#else 
+  return(CREAT(arg, 0666)); 
+#endif 
+} 
 
 
 int mus_file_reopen_write(const char *arg)
