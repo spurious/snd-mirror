@@ -5527,6 +5527,164 @@ frequency whistles leaking through."
 }
 
 
+#if HAVE_NESTED_FUNCTIONS
+
+#define S_find_min_peak_phases "find-min-peak-phases"
+
+static XEN g_find_min_peak_phases(XEN arglist)
+{
+  #define H_find_min_peak_phases "(" S_find_min_peak_phases " vcts...) returns a vector of (sample-wise) offsets \
+that give a minimum peak amplitude when the signals are added together."
+
+  double best = 0.0;
+  int n, size = 0;
+  int *best_phases;
+  int *current_phases;
+  double *current_max;
+  double **current_sum;
+  double **sines;
+  int *sizes;
+  auto void try_case(int i);
+
+  void try_case(int i)
+  {
+    if ((current_max[i - 1] - n + i) < best)
+      {
+	double x, incr;
+	int j, k, kk, n1, isize;
+
+	n1 = n - 1;
+	isize = sizes[i];
+
+	for (j = 0; j < size; j++)
+	  {
+	    /* j is current phase of i-th component */
+
+	    current_max[i] = 0.0;
+	    current_phases[i] = j;
+
+	    for (k = 0, kk = j; k < size; k++, kk++)
+	      {
+		double fval;
+		if (kk >= isize) kk = 0;
+		fval = current_sum[i - 1][k] + sines[i][kk];
+		current_sum[i][k] = fval;
+		fval = fabs(fval);
+		if (fval > current_max[i])
+		  {
+		    current_max[i] = fval;
+		    if ((i == n1) &&
+			(fval > best))
+		      break;
+		  }
+	      }
+
+	    if (i == n1)
+	      {
+		if (current_max[i] < best)
+		  {
+		    int m;
+		    best = current_max[i];
+		    for (m = 0; m < n; m++)
+		      best_phases[m] = current_phases[m];
+#if 0
+		    fprintf(stderr, "%f #(", best);
+		    for (m = 0; m < n; m++)
+		      fprintf(stderr, "%d ", best_phases[m]);
+		    fprintf(stderr, ")\n");
+#endif
+		  }
+	      }
+	    else try_case(i + 1);
+	  }
+      }
+  }
+
+  int i;
+  double cmax;
+  XEN result = XEN_EMPTY_LIST;
+
+  n = XEN_LIST_LENGTH(arglist);
+  if (n < 2) return(XEN_LIST_1(C_TO_XEN_INT(0)));
+
+  sines = (double **)calloc(n, sizeof(double *));
+  sizes = (int *)calloc(n, sizeof(int));
+  best_phases = (int *)calloc(n, sizeof(int));
+  current_phases = (int *)calloc(n, sizeof(int));
+  current_sum = (double **)calloc(n, sizeof(double *));
+  current_max = (double *)calloc(n, sizeof(double));
+
+  for (i = 0; i < n; i++)
+    {
+      vct *v;
+      current_max[i] = 0.0;
+      v = XEN_TO_VCT(XEN_LIST_REF(arglist, i));
+      sines[i] = v->data;
+      sizes[i] = v->length;
+      if (sizes[i] > size)
+	size = sizes[i];
+    }
+
+  for (i = 0; i < n; i++)
+    current_sum[i] = (double *)calloc(size, sizeof(double));
+
+  best = 10000.0;
+  cmax = fabs(sines[0][0]);
+  for (i = 1; i < sizes[0]; i++) 
+    {
+      double absv;
+      absv = fabs(sines[0][i]); 
+      if (absv > cmax) cmax = absv;
+    }
+  current_max[0] = cmax;
+  current_phases[0] = 0;
+
+  for (i = 0; i < size; i++)
+    current_sum[0][i] = sines[0][i];
+
+  try_case(1);
+
+  for (i = 0; i < n; i++)
+    result = XEN_CONS(C_TO_XEN_INT(best_phases[i]), result);
+
+  free(best_phases);
+  free(current_phases);
+  for (i = 0; i < n; i++)
+    free(current_sum[i]);
+  free(current_sum);
+  free(sines);
+  free(current_max);
+
+  return(XEN_LIST_2(C_TO_XEN_DOUBLE(best), XEN_LIST_REVERSE(result)));
+}
+
+#if 0
+
+(let ((v1 (make-vct 2048))
+      (v2 (make-vct 2048))
+      (v3 (make-vct 2048))
+      (incr (/ (* 2 pi) 2048)))
+  (do ((i 0 (+ i 1))
+       (x 0.0 (+ x incr)))
+      ((= i 2048))
+    (vct-set! v1 i (sin x))
+    (vct-set! v2 i (sin (* 2 x)))
+    (vct-set! v3 i (sin (* 3 x))))
+  (find-min-peak-phases v1 v2 v3))
+
+(1.98045 (0 210 1940))
+
+:(modulo (/ (* 210 2) 1024.0) 2.0)
+0.41015625
+:(modulo (/ (* 1940 3) 1024.0) 2.0)
+1.68359375
+
+#endif
+
+#endif
+
+
+
 #ifdef XEN_ARGIFY_1
 XEN_ARGIFY_6(g_scan_chan_w, g_scan_chan)
 XEN_ARGIFY_7(g_map_chan_w, g_map_chan)
@@ -5567,6 +5725,9 @@ XEN_ARGIFY_8(g_clm_channel_w, g_clm_channel)
 XEN_NARGIFY_0(g_sinc_width_w, g_sinc_width)
 XEN_NARGIFY_1(g_set_sinc_width_w, g_set_sinc_width)
 XEN_ARGIFY_9(g_ptree_channel_w, g_ptree_channel)
+#if HAVE_NESTED_FUNCTIONS
+XEN_VARGIFY(g_find_min_peak_phases_w, g_find_min_peak_phases)
+#endif
 #else
 #define g_scan_chan_w g_scan_chan
 #define g_map_chan_w g_map_chan
@@ -5607,6 +5768,9 @@ XEN_ARGIFY_9(g_ptree_channel_w, g_ptree_channel)
 #define g_sinc_width_w g_sinc_width
 #define g_set_sinc_width_w g_set_sinc_width
 #define g_ptree_channel_w g_ptree_channel
+#if HAVE_NESTED_FUNCTIONS
+#define g_find_min_peak_phases, g_find_min_peak_phases
+#endif
 #endif
 
 void g_init_sig(void)
@@ -5695,5 +5859,8 @@ void g_init_sig(void)
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_sinc_width, g_sinc_width_w, H_sinc_width,
 				   S_setB S_sinc_width, g_set_sinc_width_w,  0, 0, 1, 0);
+#if HAVE_NESTED_FUNCTIONS
+  XEN_DEFINE_PROCEDURE(S_find_min_peak_phases, g_find_min_peak_phases_w, 0, 0, 1, H_find_min_peak_phases);
+#endif
 }
 

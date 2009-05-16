@@ -1,35 +1,35 @@
 ;;; Snd tests
 ;;;
-;;;  test 0: constants                           [591]
-;;;  test 1: defaults                            [1177]
-;;;  test 2: headers                             [1379]
-;;;  test 3: variables                           [1696]
-;;;  test 4: sndlib                              [2331]
-;;;  test 5: simple overall checks               [5032]
-;;;  test 6: vcts                                [13955]
-;;;  test 7: colors                              [14281]
-;;;  test 8: clm                                 [14778]
-;;;  test 9: mix                                 [26694]
-;;;  test 10: marks                              [28915]
-;;;  test 11: dialogs                            [29876]
-;;;  test 12: extensions                         [30123]
-;;;  test 13: menus, edit lists, hooks, etc      [30394]
-;;;  test 14: all together now                   [32074]
-;;;  test 15: chan-local vars                    [33052]
-;;;  test 16: regularized funcs                  [34697]
-;;;  test 17: dialogs and graphics               [39765]
-;;;  test 18: enved                              [39857]
-;;;  test 19: save and restore                   [39876]
-;;;  test 20: transforms                         [41651]
-;;;  test 21: new stuff                          [43783]
-;;;  test 22: run                                [45788]
-;;;  test 23: with-sound                         [52037]
-;;;  test 25: X/Xt/Xm                            [56484]
-;;;  test 26: Gtk                                [60256]
-;;;  test 27: GL                                 [63840]
-;;;  test 28: errors                             [63964]
-;;;  test all done                               [66481]
-;;;  test the end                                [66729]
+;;;  test 0: constants                           [588]
+;;;  test 1: defaults                            [1174]
+;;;  test 2: headers                             [1375]
+;;;  test 3: variables                           [1692]
+;;;  test 4: sndlib                              [2327]
+;;;  test 5: simple overall checks               [5005]
+;;;  test 6: vcts                                [13928]
+;;;  test 7: colors                              [14254]
+;;;  test 8: clm                                 [14751]
+;;;  test 9: mix                                 [26677]
+;;;  test 10: marks                              [28896]
+;;;  test 11: dialogs                            [29857]
+;;;  test 12: extensions                         [30098]
+;;;  test 13: menus, edit lists, hooks, etc      [30369]
+;;;  test 14: all together now                   [32024]
+;;;  test 15: chan-local vars                    [33001]
+;;;  test 16: regularized funcs                  [34646]
+;;;  test 17: dialogs and graphics               [39714]
+;;;  test 18: enved                              [39806]
+;;;  test 19: save and restore                   [39825]
+;;;  test 20: transforms                         [41600]
+;;;  test 21: new stuff                          [43732]
+;;;  test 22: run                                [45738]
+;;;  test 23: with-sound                         [52220]
+;;;  test 25: X/Xt/Xm                            [56669]
+;;;  test 26: Gtk                                [60441]
+;;;  test 27: GL                                 [64025]
+;;;  test 28: errors                             [64149]
+;;;  test all done                               [66655]
+;;;  test the end                                [66899]
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
@@ -40,6 +40,8 @@
 ;(show-ptree 1)
 ;(debug-enable 'warn-deprecated)
 ;(gc-verbose #t)
+
+(if (defined? 'run-clear-counts) (run-clear-counts))
 
 (if (and (provided? 'snd-guile) (provided? 'snd-s7)) (display ";both switches are on?"))
 
@@ -46003,6 +46005,26 @@ EDITS: 1
       (if (or (not (string? val))
 	      (not (string=? val result)))
 	  (snd-display ";~A -> ~A (~A)" form val result))))
+
+  (define (t22-i->i arg) (+ arg 32))
+  (define (t22-i->b arg) (= arg 3))
+  (define (t22-i->f arg) (* arg 2.0))
+  (define (t22-i->s arg) (if (= arg 3) "yes" "no"))
+  (define (t22-i->c arg) (integer->char (+ arg 70)))
+  (define (t22-i->k arg) (if (= arg 3) :yes :no))
+  (define (t22-i->sym arg) (if (= arg 3) 'yes 'no))
+  (define (t22-i->clm arg) (make-oscil arg))
+  (define (t22-i2->i arg) (+ arg (t22-i->i arg)))
+  (define (t22-i-f->f arg1 arg2) (+ arg1 arg2))
+  (define (t22-iv-i-i->iv arg1 arg2 arg3) (vector-set! arg1 arg2 arg3) arg1)
+  (define (t22-fv-i-f->fv arg1 arg2 arg3) (vector-set! arg1 arg2 arg3) arg1)
+  (define (t22-s->c arg) (string-ref arg 1))
+  (define (t22-sd->f arg) (sound-data-ref arg 1 1))
+  (define (t22-sd->sd arg) (sound-data-set! arg 1 1 44.0) arg)
+  (define (t22-clm->i arg) (mus-order arg))
+  (define (t22-vct->vct arg) (vct-set! arg 1 44.0) arg)
+  (define (t22-cv->f arg) (mus-frequency (vector-ref arg 1)))
+  
   
   (set! (optimization) 6)
   
@@ -50164,6 +50186,283 @@ EDITS: 1
 	  (snd-display ";embedded func 18: ~A" val)))
     (mus-reset efunc-gen)
     
+    (let* ((arg 3)
+	   (val (run (lambda () (t22-i->i arg)))))
+      (if (not (equal? val 35)) (snd-display ";run func i->i: ~A (35)" val)))
+    (let* ((arg 3)
+	   (val (run (lambda () (t22-i2->i arg)))))
+      (if (not (equal? val 38)) (snd-display ";run func i2->i: ~A (38)" val)))
+    (let* ((arg1 3)
+	   (val (run (lambda () (t22-i->i (t22-i->i arg1))))))
+      (if (not (equal? val 67)) (snd-display ";run func i->i (2): ~A (67)" val)))
+    (let* ((arg1 3)
+	   (arg2 2)
+	   (val (run (lambda () (t22-i->i (* arg2 (t22-i->i arg1)))))))
+      (if (not (equal? val 102)) (snd-display ";run func i->i (3): ~A (102)" val)))
+    (let* ((arg 3)
+	   (val (run (lambda () (t22-i->f arg)))))
+      (if (not (equal? val 6.0)) (snd-display ";run func i->f: ~A (6.0)" val)))
+    (let* ((arg 3)
+	   (val (run (lambda () (t22-i->s arg)))))
+      (if (not (equal? val "yes")) (snd-display ";run func i->s: ~A (\"yes\")" val)))
+    (let* ((arg 3)
+	   (val (run (lambda () (t22-i->b arg)))))
+      (if (not (equal? val #t)) (snd-display ";run func i->b: ~A (#t)" val)))
+    (let* ((arg 3)
+	   (val (run (lambda () (t22-i->c arg)))))
+      (if (not (equal? val #\I)) (snd-display ";run func i->c: ~A (#\\I)" val)))
+    (let* ((arg 3)
+	   (val (run (lambda () (t22-i->k arg)))))
+      (if (not (equal? val :yes)) (snd-display ";run func i->k: ~A (:yes)" val)))
+    (let* ((arg 3)
+	   (val (run (lambda () (t22-i->sym arg)))))
+      (if (not (equal? val 'yes)) (snd-display ";run func i->sym: ~A ('yes)" val)))
+    (let* ((arg 440)
+	   (val (run (lambda () (t22-i->clm arg)))))
+      (if (not (equal? val (make-oscil 440))) (snd-display ";run func i->clm: ~A (oscil at 440)" val)))
+    (let* ((arg1 11)
+	   (arg2 44.0)
+	   (val (run (lambda () (t22-i-f->f arg1 arg2)))))
+      (if (not (equal? val 55.0)) (snd-display ";run func i-f->f: ~A (55.0)" val)))
+    (let* ((arg2 1)
+	   (arg3 44)
+	   (arg1 (make-vector 3 0)) 
+	   (val (run (lambda () (t22-iv-i-i->iv arg1 arg2 arg3)))))
+      (if (not (equal? val '#(0 44 0))) (snd-display ";run func iv-i-i->iv: ~A (#(0 44 0))" val)))
+    (let* ((arg2 1)
+	   (arg3 44.0)
+	   (arg1 (make-vector 3 0.0)) 
+	   (val (run (lambda () (t22-fv-i-f->fv arg1 arg2 arg3)))))
+      (if (not (vequal val (vct 0.0 44.0 0.0))) (snd-display ";run func iv-i-f->iv: ~A (#(0.0 44.0 0.0))" val)))
+    (let ((val (run (lambda () (t22-s->c "abcdef")))))
+      (if (not (equal? val #\b)) (snd-display ";run func s->c: ~A (#\\b)" val)))
+    (let ((sd (make-sound-data 2 2)))
+      (sound-data-set! sd 1 1 3.0)
+      (let ((val (t22-sd->f sd)))
+	(if (fneq val 3.0) (snd-display ";run func sd->f: ~A (3.0)" val))))
+    (let ((sd (make-sound-data 2 2)))
+      (sound-data-set! sd 1 1 3.0)
+      (let ((val (t22-sd->sd sd)))
+	(if (fneq (sound-data-ref val 1 1) 44.0) (snd-display ";run func sd->sd: ~A (44.0)" val))))
+    (let ((gen (make-fir-filter 12 (make-vct 12 .1))))
+      (let ((val (t22-clm->i gen)))
+	(if (not (equal? val 12)) (snd-display ";run func clm->i: ~A (12)" val))))
+    (let* ((arg (vct 1.0 2.0 3.0 4.0))
+	   (val (t22-vct->vct arg)))
+      (if (not (vequal val (vct 1.0 44.0 3.0 4.0))) (snd-display ";run func vct->vct: ~A (<1 2 3 4>)" val)))
+    (let* ((arg (vector (make-oscil 330.0) (make-oscil 440.0) (make-oscil 550.0)))
+	   (val (t22-cv->f arg)))
+      (if (fneq val 440.0) (snd-display ";run func clm-vect->f: ~A (440.0)" val)))
+    
+    (let* ((arg1 3.0)
+	   (val (run (lambda () (+ 1.0 (* arg1 2))))))
+      (if (fneq val 7.0) (snd-display ";mfa run opt: ~A (7.0)" val)))
+    (let* ((arg1 3.0)
+	   (arg2 5)
+	   (arg3 4)
+	   (val (run (lambda () (+ (* arg2 arg1) (* arg1 arg3))))))
+      (if (fneq val 27.0) (snd-display ";mfi run opt: ~A (27.0)" val)))
+    (let* ((arg1 2.0)
+	   (val (run (lambda () (* (sin (/ pi 2)) arg1)))))
+      (if (fneq val 2.0) (snd-display ";sin and pi run opt: ~A (2.0)" val)))
+    (let* ((arg1 2.0)
+	   (arg2 pi)
+	   (val (run (lambda () (* (sin (/ arg2 2)) arg1)))))
+      (if (fneq val 2.0) (snd-display ";sin run opt: ~A (2.0)" val)))
+    
+    (let ((val
+	   (let ((xx 3)
+		 (yy 0))
+	     (run
+	      (lambda ()
+		(let ((x (+ xx 1)))
+		  (do ((i x (+ i 1)))
+		      ((= i 10))
+		    (set! yy x)))))
+	     yy)))
+      (if (not (= val 4)) (snd-display ";run do: ~A (4)" val)))
+    
+    (let ((val
+	   (let ((xx 3)
+		 (yy 0))
+	     (run
+	      (lambda ()
+		(let* ((x (+ xx 1)))
+		  (let ((i x))
+		    (set! i 10)
+		    (set! yy x)))))
+	     yy)))
+      (if (not (= val 4)) (snd-display ";run do 1: ~A (4)" val)))
+    
+    (let ((val
+	   (let ((x 0))
+	     (define (x+ a) (set! x a) (+ a 1))
+	     (run
+	      (lambda ()
+		(do ((i 0 (x+ i)))
+		    ((= i 4)))))
+	     x)))
+      (if (not (= val 3)) (snd-display ";run do 2: ~A (3)" val)))
+    
+    (let ((val
+	   (let ((x 0))
+	     (define (x+ a) (set! x a) (+ a 1))
+	     (do ((i 0 (x+ i)))
+		 ((= i 4)))
+	     x)))
+      (if (not (= val 3)) (snd-display ";run do 3: ~A (3)" val)))
+    
+    (let ((val
+	   (run
+	    (lambda ()
+	      (let ((xx 0))
+		(do ((i xx (+ i 1)))
+		    ((= i 4) xx)
+		  (set! xx i)))))))
+      (if (not (= val 3)) (snd-display ";run do 4: ~A (3)" val)))
+    
+    (let ((val
+	   (let ((xx 0))
+	     (run
+	      (lambda ()
+		(do ((i 0 (+ i 1)))
+		    ((= i 3) xx)
+		  (set! xx i)))))))
+      (if (not (= val 2)) (snd-display ";run do 5: ~A (2)" val)))
+    
+    (let ((val
+	   (let ((k 2)
+		 (x 3.1))
+	     (run
+	      (lambda ()
+		(* k x))))))
+      (if (fneq val 6.2) (snd-display ";run do 6: ~A (6.2)" val)))
+    
+    (let ((val
+	   (let ((k 2)
+		 (x 3.1))
+	     (run
+	      (lambda ()
+		(* x k))))))
+      (if (fneq val 6.2) (snd-display ";run do 7: ~A (6.2)" val)))
+    
+    (let ((val
+	   (let ((k 2)
+		 (x 3.1))
+	     (run
+	      (lambda ()
+		(+ k x))))))
+      (if (fneq val 5.1) (snd-display ";run do 8: ~A (5.1)" val)))
+    
+    (let ((val
+	   (let ((k 2)
+		 (x 3.1))
+	     (run
+	      (lambda ()
+		(+ x k))))))
+      (if (fneq val 5.1) (snd-display ";run do 9: ~A (5.1)" val)))
+    
+    (let ((val
+	   (let ((k 2)
+		 (x 3.1))
+	     (run
+	      (lambda ()
+		(- k x))))))
+      (if (fneq val -1.1) (snd-display ";run do 10: ~A (-1.1)" val)))
+    
+    (let ((val
+	   (let ((k 2)
+		 (x 3.1))
+	     (run
+	      (lambda ()
+		(- x k))))))
+      (if (fneq val 1.1) (snd-display ";run do 11: ~A (1.1)" val)))
+    
+    (let ((val
+	   (let ((k 2)
+		 (x 3.1))
+	     (run
+	      (lambda ()
+		(/ k x))))))
+      (if (fneq val 0.64516129) (snd-display ";run do 12: ~A (0.64516129)" val)))
+    
+    (let ((val
+	   (let ((k 2)
+		 (x 3.1))
+	     (run
+	      (lambda ()
+		(/ x k))))))
+      (if (fneq val 1.55) (snd-display ";run do 12: ~A (1.55)" val)))
+    
+    (let ((val
+	   (let ((v (vct 1 2 3 4 5)))
+	     (run
+	      (lambda () 
+		(vct-ref v 3))))))
+      (if (fneq val 4.0) (snd-display ";run do 13: ~A (4.0)" val)))
+    
+    (let ((val
+	   (let ((v (vct 1 2 3 4 5)))
+	     (run
+	      (lambda () 
+		(vct-ref v 4))))))
+      (if (fneq val 5.0) (snd-display ";run do 14: ~A (5.0)" val)))
+    
+    (let ((val
+	   (let ((v (vct 1 2 3 4 5)))
+	     (run
+	      (lambda () 
+		(vct-set! v 3 32.0)
+		(vct-ref v 3))))))
+      (if (fneq val 32.0) (snd-display ";run do 15: ~A (21.0)" val)))
+    
+    (let ((val
+	   (let ((v (vct 1 2 3 4 5)))
+	     (run
+	      (lambda () 
+		(set! (vct-ref v 3) 32.0) ; bug here!
+		(vct-ref v 3))))))
+      (if (fneq val 32.0) (snd-display ";run do 16: ~A (21.0)" val)))
+
+    (let ((data1 (make-vct 10))
+	  (data2 (make-vct 10))
+	  (gen1 (make-oscil 100.0))
+	  (gen2 (make-oscil 100.0))
+	  (e1 (make-env '(0 0 1 1) :end 10))
+	  (e2 (make-env '(0 0 1 1) :end 10))
+	  (x1 0.1)
+	  (y1 0.2)
+	  (x2 0.1)
+	  (y2 0.2))
+      (do ((i 0 (+ i 1)))
+	  ((= i 10))
+	(vct-set! data1 i (* (env e1) (oscil gen1 (+ x1 y1)))))
+      (run
+       (lambda ()
+	 (do ((i 0 (+ i 1)))
+	     ((= i 10))
+	   (vct-set! data2 i (* (env e2) (oscil gen2 (+ x2 y2)))))))
+      (if (not (vequal data1 data2)) (snd-display ";run opt oscil_1f_2_env: ~A ~A" data1 data2)))
+    
+    (let ((data1 (make-vct 10))
+	  (data2 (make-vct 10))
+	  (gen1 (make-polyshape 100.0 0.0 (vct 1 .5 2 .5)))
+	  (gen2 (make-polyshape 100.0 0.0 (vct 1 .5 2 .5)))
+	  (e1 (make-env '(0 0 1 1) :end 10))
+	  (e2 (make-env '(0 0 1 1) :end 10))
+	  (x1 0.1)
+	  (x2 0.1))
+      (do ((i 0 (+ i 1)))
+	  ((= i 10))
+	(vct-set! data1 i (* (env e1) (polyshape gen1 1.0 x1))))
+      (run
+       (lambda ()
+	 (do ((i 0 (+ i 1)))
+	     ((= i 10))
+	   (vct-set! data2 i (* (env e2) (polyshape gen2 1.0 x2))))))
+      (if (not (vequal data1 data2)) (snd-display ";run opt polyshape_1fn_env: ~A ~A" data1 data2)))
+
+
     (if with-gui
 	(begin
 	  (let* ((ind (open-sound "oboe.snd"))
@@ -66634,6 +66933,9 @@ EDITS: 1
        (sort symbols (lambda (a b)
 		       (string< (symbol->string (car a)) 
 				(symbol->string (car b))))))))
+
+
+(if (defined? 'run-report-counts) (run-report-counts))
 
 (if with-exit (exit))
 
