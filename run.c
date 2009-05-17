@@ -149,131 +149,6 @@
    * try old benchmarks and make a new set
    */
 
-/* some common (post-op) pairs:
-69915543: env_linear_0f
-         oscil_1f_3ma_mult
-46610362: oscil_1f_3ma_mult
-         env_linear_0f
-36101267: formant_1f
-         add_f2
-35518545: triangle_wave_0f
-         rand_interp_0f_add
-33932804: multiply_f2
-         subtract_f2_mult_add
-33648555: vector_ref_c
-         multiply_f2
-33648555: subtract_f2_mult_add
-         formant_1f
-25835941: vct_ref_f
-         vector_ref_c
-23910283: equal_f2
-         not_b
-23679954: not_b
-         jump_if_not
-23599950: add_f3
-         env_linear_0f
-23305181: env_linear_0f
-         oscil_1f_3ma
-23305181: oscil_1f_3ma
-         multiply_f3
-23305181: oscil_1f_3ma_mult
-         add_f3
-22757945: multiply_f3
-         locsig_3f_mono_no_rev
-22402802: add_f2
-         gt_fn
-22402800: gt_fn
-         jump_if_not
-15214290: vct_ref_f
-         add_f2
-13875640: env_linear_0f
-         env_linear_0f
-13494864: add_i2
-         vector_ref_c
-13043772: add_i2
-         multiply_i_f
-12469275: add_multiply_i2
-         vct_ref_f
-12436200: add_f2
-         sin_f_add
-12436200: multiply_i_f
-         add_multiply_i2
-12127369: polywave_1f_env
-         oscil_1f_2_mult
-11306469: min_f2
-         max_f2
-11286625: multiply_i_f
-         subtract_f2
-11245755: subtract_f2
-         min_f2
-11245755: max_f2
-         add_i2
-9793188: comb_1f_noz
-         comb_1f_noz
-8872679: random_f
-         subtract_f2
-7488843: gt_f2
-         jump_if_not
-7237665: abs_f
-         gt_f2
-7062788: subtract_f2
-         abs_f
-6700099: rand_interp_0f_add
-         env_exponential_0f
-6693484: oscil_1f_2_mult
-         locsig_3f_stereo
-6678049: env_exponential_0f
-         polywave_1f_env
-6405675: all_pass_1f_noz
-         all_pass_1f_noz
-5819175: rand_interp_0f_add
-         env_linear_0f
-5746011: env_linear_0f
-         env_exponential_0f
-5575983: env_linear_0f
-         polywave_1f_env
-5491152: env_exponential_0f
-         env_linear_0f
-4621679: env_linear_0f
-         random_f
-4414410: multiply_f2
-         outb_3f
-4414410: firmant_1f
-         multiply_f2
-4414410: firmant_2f
-         multiply_f2
-4410000: subtract_f2
-         formant_2f
-4410000: multiply_f2
-         outd_3f
-4410000: formant_1f_mult
-         outc_3f
-4410000: outb_3f
-         firmant_1f
-4410000: outc_3f
-         firmant_2f
-4410000: outd_3f
-         set_scaler_f
-4410000: set_scaler_f
-         formant_1f_mult
-4410000: formant_2f
-         outa_multiply_f2
-4410000: outa_multiply_f2
-         set_scaler_f
-4328320: sound_data_set_f
-         inc_i_1
-4328320: jump_if_not_equal
-         sound_data_ref_f
-4240000: subtract_f2
-         sound_data_set_f
-4240000: sound_data_ref_f
-         sound_data_ref_f
-4240000: sound_data_ref_f
-         funcall_f2b
-4011115: oscil_1f_2_mult
-         locsig_3f_mono_no_rev
-*/
-
 
 #define WITH_COUNTERS 0
 
@@ -3029,6 +2904,8 @@ typedef void (*trip_func)(int *args, ptree *pt);
 static trip_func funcs[COUNTER_NUM];
 static const char *func_names[COUNTER_NUM];
 
+static void quit(int *args, ptree *pt);
+
 static void clear_counts(void) 
 {
   int i, j; 
@@ -3052,12 +2929,33 @@ static int get_func_loc(trip_func func, const char *name)
 
 static XEN g_report_counts(void)
 {
-  int rpt;
+  int i, j, rpt, imax, jmax;
+  off_t cmax;
+  off_t *totals;
+
+  fprintf(stderr, "most used:\n");
+  totals = (off_t *)calloc(top_counter, sizeof(off_t));
+  for (i = 0; i < top_counter; i++)
+    for (j = 0; j < top_counter; j++)
+      totals[j] += counts[i][j];
+  for (rpt = 0; rpt < 32; rpt++)
+    {
+      cmax = 0;
+      for (i = 0; i < top_counter; i++)
+	if (totals[i] > cmax)
+	  {
+	    cmax = totals[i];
+	    imax = i;
+	  }
+      fprintf(stderr, "    %s %lld\n", func_names[imax], totals[imax]);
+      totals[imax] = 0;
+    }
+  free(totals);
+
   fprintf(stderr, "funcs: %d\n", top_counter - 1);
   for (rpt = 0; rpt < 100; rpt++)
     {
-      off_t cmax = 0;
-      int i, j, imax, jmax;
+      cmax = 0;
       for (i = 0; i < top_counter; i++) 
 	for (j = 0; j < top_counter; j++) 
 	  if (counts[i][j] > cmax)
@@ -3067,7 +2965,9 @@ static XEN g_report_counts(void)
 	      jmax = j;
 	    }
       if (cmax == 0) break;
-      fprintf(stderr, "%lld: %s\n         %s\n", cmax, func_names[imax], func_names[jmax]);
+      if ((imax != 0) &&
+	  (funcs[jmax] != quit))
+	fprintf(stderr, "%lld: %s\n         %s\n", cmax, func_names[imax], func_names[jmax]);
       counts[imax][jmax] = 0;
     }
   return(XEN_TRUE);
@@ -3274,6 +3174,7 @@ static triple *va_make_triple(void (*function)(int *arg_addrs, ptree *pt),
 #define CLM_ARG_2 pt->clms[args[2]]
 #define CLM_ARG_3 pt->clms[args[3]]
 #define CLM_ARG_4 pt->clms[args[4]]
+#define CLM_ARG_5 pt->clms[args[5]]
 #define CLM_ARG_OK(Arg) ((pt->clms) && ((pt->outer_tree) || ((args[Arg] >= 0) && (args[Arg] <= pt->clm_ctr) && (args[Arg] < pt->clms_size))))
 
 #if USE_SND
@@ -5443,6 +5344,12 @@ static void granulate_0f(int *args, ptree *pt);
 static void formant_1f(int *args, ptree *pt);
 static void formant_1f_mult(int *args, ptree *pt);
 static void formant_1f_env(int *args, ptree *pt);
+static void firmant_1f(int *args, ptree *pt);
+static void firmant_1f_mult(int *args, ptree *pt);
+static void firmant_1f_env(int *args, ptree *pt);
+static void firmant_2f(int *args, ptree *pt);
+static void firmant_2f_mult(int *args, ptree *pt);
+static void firmant_2f_env(int *args, ptree *pt);
 static void polyshape_1fn(int *args, ptree *pt);
 static void polyshape_1fn_mult(int *args, ptree *pt);
 static void polyshape_1fn_env(int *args, ptree *pt);
@@ -5487,7 +5394,7 @@ static int find_m2_op(triple *prev_op)
 
 
 /* 3 arg ops that can be combined into a multiply */
-#define NUM_M3_OPS 9
+#define NUM_M3_OPS 10
 
 static opt_ops m3_ops[NUM_M3_OPS] = {
   {oscil_1f_1, "oscil_1f_1", oscil_1f_1_mult, "oscil_1f_1_mult", oscil_1f_1_env, "oscil_1f_1_env"},
@@ -5498,6 +5405,7 @@ static opt_ops m3_ops[NUM_M3_OPS] = {
   {subtract_f2, "subtract_f2", subtract_f2_mult, "subtract_f2_mult", NULL, NULL},
   {vct_ref_f, "vct_ref_f", vct_ref_f_mult, "vct_ref_f_mult", NULL, NULL},
   {formant_1f, "formant_1f", formant_1f_mult, "formant_1f_mult", formant_1f_env, "formant_1f_env"},
+  {firmant_1f, "firmant_1f", firmant_1f_mult, "firmant_1f_mult", firmant_1f_env, "firmant_1f_env"},
   {multiply_f2, "multiply_f2", multiply_f3, "multiply_f3", NULL, NULL},
 };
 
@@ -5513,7 +5421,7 @@ static int find_m3_op(triple *prev_op)
 
 
 /* 4 arg ops that can be combined into a multiply */
-#define NUM_M4_OPS 8
+#define NUM_M4_OPS 9
 
 static opt_ops m4_ops[NUM_M4_OPS] = {
   {multiply_add_f2, "multiply_add_f2", multiply_add_f2_mult, "multiply_add_f2_mult", NULL, NULL},
@@ -5524,6 +5432,7 @@ static opt_ops m4_ops[NUM_M4_OPS] = {
   {polyshape_1fn, "polyshape_1fn", polyshape_1fn_mult, "polyshape_1fn_mult", polyshape_1fn_env, "polyshape_1fn_env"},
   {subtract_f3, "subtract_f3", subtract_f3_mult, "subtract_f3_mult", NULL, NULL},
   {multiply_f3, "multiply_f3", multiply_f4, "multiply_f4", NULL, NULL},
+  {firmant_2f, "firmant_2f", firmant_2f_mult, "firmant_2f_mult", firmant_2f_env, "firmant_2f_env"},
 };
 
 
@@ -5881,6 +5790,7 @@ static void add_f_i(int *args, ptree *pt) {FLOAT_RESULT = (FLOAT_ARG_1 + INT_ARG
 
 
 static void rand_interp_0f_add(int *args, ptree *pt);
+static void formant_1f_add(int *args, ptree *pt);
 static void abs_f_add(int *args, ptree *pt);
 static void sin_f_add(int *args, ptree *pt);
 static void cos_f_add(int *args, ptree *pt);
@@ -5891,6 +5801,8 @@ static void subtract_f2_add(int *args, ptree *pt);
 static void sin_f_mult_add(int *args, ptree *pt);
 static void cos_f_mult_add(int *args, ptree *pt);
 static void subtract_f2_mult_add(int *args, ptree *pt);
+static void vct_ref_f_add(int *args, ptree *pt);
+
 
 #define NUM_A2_OPS 5
 
@@ -5913,7 +5825,7 @@ static int find_a2_op(triple *prev_op)
 }
 
 
-#define NUM_A3_OPS 6
+#define NUM_A3_OPS 8
 
 static opt_ops a3_ops[NUM_A3_OPS] = {
   {multiply_f2, "multiply_f2", multiply_add_f2, "multiply_add_f2", NULL, NULL},
@@ -5922,6 +5834,8 @@ static opt_ops a3_ops[NUM_A3_OPS] = {
   {sin_f_mult, "sin_f_mult", sin_f_mult_add, "sin_f_mult_add", NULL, NULL},
   {cos_f_mult, "cos_f_mult", cos_f_mult_add, "cos_f_mult_add", NULL, NULL},
   {abs_f_mult, "abs_f_mult", abs_f_mult_add, "abs_f_mult_add", NULL, NULL},
+  {formant_1f, "formant_1f", formant_1f_add, "formant_1f_add", NULL, NULL},
+  {vct_ref_f, "vct_ref_f", vct_ref_f_add, "vct_ref_f_add", NULL, NULL},
 };
 
 
@@ -6504,6 +6418,8 @@ static void float_rel_args(ptree *prog, int num_args, xen_value **args)
 
 #define REL_OP(CName, SName, COp, FOp) \
 static void CName ## _f2(int *args, ptree *pt) {BOOL_RESULT = (Int)(FLOAT_ARG_1 COp FLOAT_ARG_2);} \
+static void CName ## _f3(int *args, ptree *pt) {BOOL_RESULT = (Int)((FLOAT_ARG_1 COp FLOAT_ARG_2) && (FLOAT_ARG_2 COp FLOAT_ARG_3));} \
+static void CName ## _f4(int *args, ptree *pt) {BOOL_RESULT = (Int)((FLOAT_ARG_1 COp FLOAT_ARG_2) && (FLOAT_ARG_2 COp FLOAT_ARG_3) && (FLOAT_ARG_3 COp FLOAT_ARG_4));} \
 static void CName ## _fn(int *args, ptree *pt) \
 { \
   int i, n; \
@@ -6515,6 +6431,8 @@ static void CName ## _fn(int *args, ptree *pt) \
     } \
 } \
 static void CName ## _i2(int *args, ptree *pt) {BOOL_RESULT = (Int)(INT_ARG_1 COp INT_ARG_2);} \
+static void CName ## _i3(int *args, ptree *pt) {BOOL_RESULT = (Int)((INT_ARG_1 COp INT_ARG_2) && (INT_ARG_2 COp INT_ARG_3));} \
+static void CName ## _i4(int *args, ptree *pt) {BOOL_RESULT = (Int)((INT_ARG_1 COp INT_ARG_2) && (INT_ARG_2 COp INT_ARG_3) && (INT_ARG_3 COp INT_ARG_4));} \
 static void CName ## _in(int *args, ptree *pt) \
 { \
   int i, n; \
@@ -6527,8 +6445,10 @@ static void CName ## _in(int *args, ptree *pt) \
 } \
 static xen_value * SName(ptree *prog, bool float_result, xen_value **args, int num_args) \
 { \
-  if (num_args <= 1) return(make_xen_value(R_BOOL, add_int_to_ptree(prog, (Int)true), R_CONSTANT)); \
-  if ((prog->constants > 0) && (float_result)) float_rel_constant_args(prog, num_args, args); \
+  if (num_args <= 1) \
+    return(make_xen_value(R_BOOL, add_int_to_ptree(prog, (Int)true), R_CONSTANT)); \
+  if ((prog->constants > 0) && (float_result)) \
+    float_rel_constant_args(prog, num_args, args); \
   if (prog->constants > 1) \
     { \
       int i; \
@@ -6565,11 +6485,15 @@ static xen_value * SName(ptree *prog, bool float_result, xen_value **args, int n
     { \
       float_rel_args(prog, num_args, args); \
       if (num_args == 2) return(package(prog, R_BOOL, CName ## _f2, #CName "_f2", args, num_args)); \
+      if (num_args == 3) return(package(prog, R_BOOL, CName ## _f3, #CName "_f3", args, num_args)); \
+      if (num_args == 4) return(package(prog, R_BOOL, CName ## _f4, #CName "_f4", args, num_args)); \
       return(package_n(prog, R_BOOL, CName ## _fn, #CName "_fn", args, num_args)); \
     } \
   else \
     { \
       if (num_args == 2) return(package(prog, R_BOOL, CName ## _i2, #CName "_i2", args, num_args)); \
+      if (num_args == 3) return(package(prog, R_BOOL, CName ## _i3, #CName "_i3", args, num_args)); \
+      if (num_args == 4) return(package(prog, R_BOOL, CName ## _i4, #CName "_i4", args, num_args)); \
       return(package_n(prog, R_BOOL, CName ## _in, #CName "_in", args, num_args)); \
     } \
   return(run_warn(#COp " trouble")); \
@@ -6585,6 +6509,28 @@ REL_OP(equal, numbers_equal, ==, !=)
 /* ---------------- max ---------------- */
 
 static void max_f2(int *args, ptree *pt) {FLOAT_RESULT = (FLOAT_ARG_1 > FLOAT_ARG_2) ? FLOAT_ARG_1 : FLOAT_ARG_2;}
+
+
+static void min_f2(int *args, ptree *pt);
+
+
+static void min_max_f2(int *args, ptree *pt) 
+{
+  FLOAT_RESULT = (FLOAT_ARG_1 > FLOAT_ARG_2) ? FLOAT_ARG_1 : FLOAT_ARG_2;
+  if (FLOAT_ARG_3 < FLOAT_RESULT) FLOAT_RESULT = FLOAT_ARG_3;
+
+  /* (let ((x -2.0) (y 1.0)) (run (lambda () (max (- x) (min x y))))) */
+}
+
+
+static void max_min_f2(int *args, ptree *pt) 
+{
+  FLOAT_RESULT = (FLOAT_ARG_1 > FLOAT_ARG_2) ? FLOAT_ARG_2 : FLOAT_ARG_1;
+  if (FLOAT_ARG_3 > FLOAT_RESULT) FLOAT_RESULT = FLOAT_ARG_3;
+
+  /* (let ((x -2.0) (y 1.0)) (run (lambda () (min (- x) (max x y))))) */
+}
+
 
 
 static void max_fn(int *args, ptree *pt)
@@ -6641,7 +6587,35 @@ static xen_value *max_1(ptree *prog, xen_value **args, int num_args)
   if (prog->float_result)
     {
       float_rel_args(prog, num_args, args);
-      if (num_args == 2) return(package(prog, R_FLOAT, max_f2, "max_f2", args, num_args));
+      if (num_args == 2) 
+	{
+	  if (prog->triple_ctr > 0)
+	    {
+	      triple *prev_op;
+	      prev_op = prog->program[prog->triple_ctr - 1];
+	      if ((prev_op->function == min_f2) &&
+		  ((prev_op->args[0] == args[1]->addr) ||
+		   (prev_op->args[0] == args[2]->addr)) &&
+		  ((find_var_in_ptree_via_addr(prog, R_FLOAT, prev_op->args[0])) == NULL))
+		{
+		  prev_op->types = (int *)realloc(prev_op->types, 4 * sizeof(int));
+		  prev_op->args = (int *)realloc(prev_op->args, 4 * sizeof(int));
+		  if (prev_op->args[0] == args[1]->addr)
+		    prev_op->args[3] = args[2]->addr;
+		  else prev_op->args[3] = args[1]->addr;
+		  prev_op->num_args = 4;
+		  prev_op->function = max_min_f2;
+		  prev_op->op_name = "max_min_f2";
+#if WITH_COUNTERS
+		  prev_op->func_loc = get_func_loc(prev_op->function, prev_op->op_name);
+#endif				  
+		  prev_op->types[3] = R_FLOAT;
+		  return(make_xen_value(R_FLOAT, prev_op->args[0], R_TEMPORARY));
+		}
+	    }
+
+	  return(package(prog, R_FLOAT, max_f2, "max_f2", args, num_args));
+	}
       return(package_n(prog, R_FLOAT, max_fn, "max_fn", args, num_args));
     }
   if (num_args == 2) return(package(prog, R_INT, max_i2, "max_i2", args, num_args));
@@ -6652,6 +6626,7 @@ static xen_value *max_1(ptree *prog, xen_value **args, int num_args)
 /* ---------------- min ---------------- */
 
 static void min_f2(int *args, ptree *pt) {FLOAT_RESULT = (FLOAT_ARG_1 > FLOAT_ARG_2) ? FLOAT_ARG_2 : FLOAT_ARG_1;}
+
 
 static void min_fn(int *args, ptree *pt)
 {
@@ -6707,7 +6682,34 @@ static xen_value *min_1(ptree *prog, xen_value **args, int num_args)
   if (prog->float_result)
     {
       float_rel_args(prog, num_args, args);
-      if (num_args == 2) return(package(prog, R_FLOAT, min_f2, "min_f2", args, num_args));
+      if (num_args == 2) 
+	{
+	  if (prog->triple_ctr > 0)
+	    {
+	      triple *prev_op;
+	      prev_op = prog->program[prog->triple_ctr - 1];
+	      if ((prev_op->function == max_f2) &&
+		  ((prev_op->args[0] == args[1]->addr) ||
+		   (prev_op->args[0] == args[2]->addr)) &&
+		  ((find_var_in_ptree_via_addr(prog, R_FLOAT, prev_op->args[0])) == NULL))
+		{
+		  prev_op->types = (int *)realloc(prev_op->types, 4 * sizeof(int));
+		  prev_op->args = (int *)realloc(prev_op->args, 4 * sizeof(int));
+		  if (prev_op->args[0] == args[1]->addr)
+		    prev_op->args[3] = args[2]->addr;
+		  else prev_op->args[3] = args[1]->addr;
+		  prev_op->num_args = 4;
+		  prev_op->function = min_max_f2;
+		  prev_op->op_name = "min_max_f2";
+#if WITH_COUNTERS
+		  prev_op->func_loc = get_func_loc(prev_op->function, prev_op->op_name);
+#endif				  
+		  prev_op->types[3] = R_FLOAT;
+		  return(make_xen_value(R_FLOAT, prev_op->args[0], R_TEMPORARY));
+		}
+	    }
+	  return(package(prog, R_FLOAT, min_f2, "min_f2", args, num_args));
+	}
       return(package_n(prog, R_FLOAT, min_fn, "min_fn", args, num_args));
     }
   if (num_args == 2) return(package(prog, R_INT, min_i2, "min_i2", args, num_args));
@@ -7715,7 +7717,7 @@ static void abs_f(int *args, ptree *pt) {FLOAT_RESULT = fabs(FLOAT_ARG_1);}
 static void abs_f_mult(int *args, ptree *pt) {FLOAT_RESULT = FLOAT_ARG_2 * fabs(FLOAT_ARG_1);}
 static void abs_f_add(int *args, ptree *pt) {FLOAT_RESULT = FLOAT_ARG_2 + fabs(FLOAT_ARG_1);}
 static void abs_f_mult_add(int *args, ptree *pt) {FLOAT_RESULT = FLOAT_ARG_3 + FLOAT_ARG_2 * fabs(FLOAT_ARG_1);}
-
+static void abs_subtract_f2(int *args, ptree *pt) {FLOAT_RESULT = fabs(FLOAT_ARG_1 - FLOAT_ARG_2);}
 
 static void abs_i(int *args, ptree *pt) {INT_RESULT = ((INT_ARG_1 >= 0) ? INT_ARG_1 : (-INT_ARG_1));} /* not abs=32 bit truncation */
 
@@ -7734,6 +7736,23 @@ static xen_value *abs_1(ptree *prog, xen_value **args, int num_args)
     }
   if (args[1]->type == R_INT)
     return(package(prog, R_INT, abs_i, "abs_i", args, 1));
+
+  if (prog->triple_ctr > 0)
+    {
+      triple *prev_op;
+      prev_op = prog->program[prog->triple_ctr - 1];
+      if ((prev_op->args[0] == args[1]->addr) &&
+	  (prev_op->function == subtract_f2) &&
+	  ((find_var_in_ptree_via_addr(prog, R_INT, prev_op->args[0])) == NULL))
+	{
+	  prev_op->function = abs_subtract_f2;
+	  prev_op->op_name = "abs_subtract_f2";
+#if WITH_COUNTERS
+	  prev_op->func_loc = get_func_loc(prev_op->function, prev_op->op_name);
+#endif				  
+	  return(make_xen_value(R_FLOAT, prev_op->args[0], R_TEMPORARY));
+	}
+    }
   return(package(prog, R_FLOAT, abs_f, "abs_f", args, 1));
 }
 
@@ -9926,6 +9945,7 @@ static void vct_constant_ref_3(int *args, ptree *pt) {FLOAT_RESULT = VCT_ARG_1->
 
 static void vct_ref_f(int *args, ptree *pt) {FLOAT_RESULT = VCT_ARG_1->data[INT_ARG_2];}
 static void vct_ref_f_mult(int *args, ptree *pt) {FLOAT_RESULT = FLOAT_ARG_3 * VCT_ARG_1->data[INT_ARG_2];}
+static void vct_ref_f_add(int *args, ptree *pt) {FLOAT_RESULT = FLOAT_ARG_3 + VCT_ARG_1->data[INT_ARG_2];}
 
 static xen_value *vct_ref_1(ptree *prog, xen_value **args, int num_args)
 {
@@ -10788,8 +10808,11 @@ static xen_value *oscil_1(ptree *prog, xen_value **args, int num_args)
 static void formant_0f(int *args, ptree *pt) {FLOAT_RESULT = mus_formant(CLM_ARG_1, 0.0);}
 
 static void formant_1f(int *args, ptree *pt) {FLOAT_RESULT = mus_formant(CLM_ARG_1, FLOAT_ARG_2);}
+static void formant_1f_add(int *args, ptree *pt) {FLOAT_RESULT = FLOAT_ARG_3 + mus_formant(CLM_ARG_1, FLOAT_ARG_2);}
 static void formant_1f_mult(int *args, ptree *pt) {FLOAT_RESULT = FLOAT_ARG_3 * mus_formant(CLM_ARG_1, FLOAT_ARG_2);}
 static void formant_1f_env(int *args, ptree *pt) {FLOAT_RESULT = mus_env_linear(CLM_ARG_3) * mus_formant(CLM_ARG_1, FLOAT_ARG_2);}
+
+static void formant_1f_sma(int *args, ptree *pt) {FLOAT_RESULT = mus_formant(CLM_ARG_5, FLOAT_ARG_4 + FLOAT_ARG_3 * (FLOAT_ARG_1 - FLOAT_ARG_2));}
 
 static void formant_2f(int *args, ptree *pt) {FLOAT_RESULT = mus_formant_with_frequency(CLM_ARG_1, FLOAT_ARG_2, FLOAT_ARG_3);}
 
@@ -10802,7 +10825,31 @@ static xen_value *formant_1(ptree *prog, xen_value **args, int num_args)
   if (num_args == 1)
     return(package(prog, R_FLOAT, formant_0f, "formant_0f", args, 1));
   if (num_args == 2)
-    return(package(prog, R_FLOAT, formant_1f, "formant_1f", args, 2));
+    {
+      if (prog->triple_ctr > 0)
+	{
+	  triple *prev_op;
+	  prev_op = prog->program[prog->triple_ctr - 1];
+	  if ((prev_op->function == subtract_f2_mult_add) &&
+	      (prev_op->args[0] == args[2]->addr) &&
+	      ((find_var_in_ptree_via_addr(prog, R_FLOAT, prev_op->args[0])) == NULL))
+	    {
+	      prev_op->types = (int *)realloc(prev_op->types, 6 * sizeof(int));
+	      prev_op->args = (int *)realloc(prev_op->args, 6 * sizeof(int));
+	      prev_op->num_args = 6;
+	      prev_op->function = formant_1f_sma;
+	      prev_op->op_name = "formant_1f_sma";
+#if WITH_COUNTERS
+	      prev_op->func_loc = get_func_loc(prev_op->function, prev_op->op_name);
+#endif				  
+	      prev_op->types[5] = R_CLM;
+	      prev_op->args[5] = args[1]->addr;
+	      return(make_xen_value(R_FLOAT, prev_op->args[0], R_TEMPORARY));
+	    }
+	}
+
+      return(package(prog, R_FLOAT, formant_1f, "formant_1f", args, 2));
+    }
   return(package(prog, R_FLOAT, formant_2f, "formant_2f", args, 3));
 }
 
@@ -10810,8 +10857,12 @@ static xen_value *formant_1(ptree *prog, xen_value **args, int num_args)
 static void firmant_0f(int *args, ptree *pt) {FLOAT_RESULT = mus_firmant(CLM_ARG_1, 0.0);}
 
 static void firmant_1f(int *args, ptree *pt) {FLOAT_RESULT = mus_firmant(CLM_ARG_1, FLOAT_ARG_2);}
+static void firmant_1f_mult(int *args, ptree *pt) {FLOAT_RESULT = FLOAT_ARG_3 * mus_firmant(CLM_ARG_1, FLOAT_ARG_2);}
+static void firmant_1f_env(int *args, ptree *pt) {FLOAT_RESULT = mus_env_linear(CLM_ARG_3) * mus_firmant(CLM_ARG_1, FLOAT_ARG_2);}
 
 static void firmant_2f(int *args, ptree *pt) {FLOAT_RESULT = mus_firmant_with_frequency(CLM_ARG_1, FLOAT_ARG_2, FLOAT_ARG_3);}
+static void firmant_2f_mult(int *args, ptree *pt) {FLOAT_RESULT = FLOAT_ARG_4 * mus_firmant_with_frequency(CLM_ARG_1, FLOAT_ARG_2, FLOAT_ARG_3);}
+static void firmant_2f_env(int *args, ptree *pt) {FLOAT_RESULT = mus_env_linear(CLM_ARG_4) * mus_firmant_with_frequency(CLM_ARG_1, FLOAT_ARG_2, FLOAT_ARG_3);}
 
 GEN_P(firmant)
 
@@ -10877,6 +10928,7 @@ static void env_linear_0f(int *args, ptree *pt) {FLOAT_RESULT = mus_env_linear(C
 static void env_linear_0f_mult(int *args, ptree *pt) {FLOAT_RESULT = FLOAT_ARG_2 * mus_env_linear(CLM_ARG_1);}  
 static void env_linear_0f_env(int *args, ptree *pt) {FLOAT_RESULT = mus_env_linear(CLM_ARG_2) * mus_env_linear(CLM_ARG_1);}  
 static void env_exponential_0f(int *args, ptree *pt) {FLOAT_RESULT = mus_env_exponential(CLM_ARG_1);}  
+
 
 static xen_value *env_1(ptree *prog, xen_value **args, int num_args)
 {

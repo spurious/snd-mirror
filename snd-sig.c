@@ -5550,7 +5550,6 @@ that give a minimum peak amplitude when the signals are added together."
   {
     if ((current_max[i - 1] - n + i) < best)
       {
-	double x, incr;
 	int j, k, kk, n1, isize;
 
 	n1 = n - 1;
