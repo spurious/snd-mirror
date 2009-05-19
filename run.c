@@ -143,10 +143,10 @@
  */
 
   /* 
-   * TODO: (if (= a b)...) also (if (> a b)...)
-   * also locsig special output cases (copy outa)
-   * also look back for current temp mult -- might be env
-   * try old benchmarks and make a new set
+   * TODO: locsig special output cases (copy outa)
+   * TODO: try old benchmarks and make a new set
+   * TODO: and, or, cond optimized like if
+   * PERHAPS: subtract opts, simple outb opts, add_f2+random_f?
    */
 
 
@@ -612,15 +612,9 @@ typedef struct {
 } vect;
 
 
-#define WITH_POINTER_PC 1
-
 typedef struct ptree {
   bool all_done;
-#if WITH_POINTER_PC
   struct triple **pc;
-#else
-  int pc;
-#endif
   struct triple **program;
   Int *ints; 
   Double *dbls;
@@ -640,11 +634,7 @@ typedef struct ptree {
   int gc_ctr, gcs_size;
   int *gc_protected;
   int gc_protected_ctr, gc_protected_size;
-#if WITH_POINTER_PC
   struct triple **initial_pc;
-#else
-  int initial_pc;
-#endif
   XEN code, form;
   int form_loc;
   int str_ctr, strs_size;
@@ -701,6 +691,17 @@ typedef struct triple {
   int func_loc;
 #endif
 } triple;
+
+
+typedef struct {
+  void (*func)(int *args, ptree *pt);
+  const char *func_name;
+  void (*mult_func)(int *args, ptree *pt);
+  const char *mult_func_name;
+  void (*env_func)(int *args, ptree *pt);
+  const char *env_func_name;
+} opt_ops;
+
 
 
 static int allocate_xen_vars(ptree *pt, int size)
@@ -1316,11 +1317,7 @@ static ptree *attach_to_ptree(ptree *pt)
   new_tree->args = NULL;
   new_tree->default_args = NULL;
   new_tree->arg_types = NULL;
-#if WITH_POINTER_PC
   new_tree->initial_pc = NULL;
-#else
-  new_tree->initial_pc = 0;
-#endif
   return(new_tree);
 }
 
@@ -2074,10 +2071,8 @@ static triple *add_triple_to_ptree(ptree *pt, triple *trp)
 	  pt->program = (triple **)realloc(pt->program, pt->program_size * sizeof(triple *));
 	  for (i = old_size; i < pt->program_size; i++) pt->program[i] = NULL;
 	}
-#if WITH_POINTER_PC
       pt->pc = pt->program;
       pt->initial_pc = pt->program;
-#endif
     }
   pt->program[pt->triple_ctr++] = trp;
   return(trp);
@@ -2938,7 +2933,7 @@ static XEN g_report_counts(void)
   for (i = 0; i < top_counter; i++)
     for (j = 0; j < top_counter; j++)
       totals[j] += counts[i][j];
-  for (rpt = 0; rpt < 32; rpt++)
+  for (rpt = 0; rpt < 100; rpt++)
     {
       cmax = 0;
       for (i = 0; i < top_counter; i++)
@@ -2947,6 +2942,7 @@ static XEN g_report_counts(void)
 	    cmax = totals[i];
 	    imax = i;
 	  }
+      if (totals[imax] == 0) break;
       fprintf(stderr, "    %s %lld\n", func_names[imax], totals[imax]);
       totals[imax] = 0;
     }
@@ -2993,7 +2989,6 @@ static void eval_ptree(ptree *pt)
   pt->all_done = false;
   while (!(pt->all_done))
     {
-#if WITH_POINTER_PC
       triple *cpc;
       cpc = (*(pt->pc++));
 #if WITH_COUNTERS
@@ -3002,16 +2997,6 @@ static void eval_ptree(ptree *pt)
       last_loc = this_loc;
 #endif
       (*(cpc->function))(cpc->args, pt);
-#else
-      triple *curfunc;
-      curfunc = ((triple **)(pt->program))[pt->pc++];
-#if WITH_COUNTERS
-      this_loc = curfunc->func_loc;
-      counts[last_loc][this_loc]++;
-      last_loc = this_loc;
-#endif
-      (*(curfunc->function))(curfunc->args, pt);
-#endif
     }
   pt->pc = pt->initial_pc; /* don't reset closure junk after initial evaluation */
 }
@@ -3019,11 +3004,7 @@ static void eval_ptree(ptree *pt)
 
 static void eval_embedded_ptree(ptree *prog, ptree *pt)
 {
-#if WITH_POINTER_PC
   triple **old_pc;
-#else
-  int old_pc;
-#endif
   old_pc = pt->pc;
 
   prog->ints = pt->ints;
@@ -3222,58 +3203,83 @@ static triple *va_make_triple(void (*function)(int *arg_addrs, ptree *pt),
 
 static void quit(int *args, ptree *pt) {pt->all_done = true;}
 
-#if (!WITH_POINTER_PC)
 static void jump(int *args, ptree *pt) {pt->pc += pt->ints[args[0]];}
-
-
-static void jump_abs(int *args, ptree *pt) {pt->pc = pt->ints[args[0]];}
-
-
-static void jump_indirect(int *args, ptree *pt) {pt->pc = pt->ints[pt->ints[args[0]]];}
-
-
-static void jump_if(int *args, ptree *pt) {if (INT_ARG_1 != 0) pt->pc += pt->ints[args[0]];}
-
-
-static void jump_if_abs(int *args, ptree *pt) {if (INT_ARG_1 != 0) pt->pc = pt->ints[args[0]];}
-static void jump_if_not_abs(int *args, ptree *pt) {if (INT_ARG_1 == 0) pt->pc = pt->ints[args[0]];}
-
-
-static void jump_if_equal(int *args, ptree *pt) {if (INT_ARG_1 == INT_ARG_2) pt->pc = pt->ints[args[0]];}
-
-
-static void jump_if_not_equal(int *args, ptree *pt) {if (INT_ARG_1 != INT_ARG_2) pt->pc = pt->ints[args[0]];}
-
-
-static void jump_if_not(int *args, ptree *pt) {if (INT_ARG_1 == 0) pt->pc += pt->ints[args[0]];}
-
-#else
-
-static void jump(int *args, ptree *pt) {pt->pc += pt->ints[args[0]];}
-
 
 static void jump_abs(int *args, ptree *pt) {pt->pc = pt->program + pt->ints[args[0]];}
-
-
 static void jump_indirect(int *args, ptree *pt) {pt->pc = pt->program + pt->ints[pt->ints[args[0]]];}
-
-
-static void jump_if(int *args, ptree *pt) {if (INT_ARG_1 != 0) pt->pc += pt->ints[args[0]];}
-
-
 static void jump_if_abs(int *args, ptree *pt) {if (INT_ARG_1 != 0) pt->pc = pt->program + pt->ints[args[0]];}
 static void jump_if_not_abs(int *args, ptree *pt) {if (INT_ARG_1 == 0) pt->pc = pt->program + pt->ints[args[0]];}
 
-
 static void jump_if_equal(int *args, ptree *pt) {if (INT_ARG_1 == INT_ARG_2) pt->pc = pt->program + pt->ints[args[0]];}
-
-
 static void jump_if_not_equal(int *args, ptree *pt) {if (INT_ARG_1 != INT_ARG_2) pt->pc = pt->program + pt->ints[args[0]];}
 
-
+static void jump_if(int *args, ptree *pt) {if (INT_ARG_1 != 0) pt->pc += pt->ints[args[0]];}
 static void jump_if_not(int *args, ptree *pt) {if (INT_ARG_1 == 0) pt->pc += pt->ints[args[0]];}
 
-#endif
+static void jump_if_equal_i2_rel(int *args, ptree *pt)     {if (INT_ARG_1 == INT_ARG_2) pt->pc += pt->ints[args[0]];}
+static void jump_if_not_equal_i2_rel(int *args, ptree *pt) {if (INT_ARG_1 != INT_ARG_2) pt->pc += pt->ints[args[0]];}
+static void jump_if_gt_i2_rel(int *args, ptree *pt)        {if (INT_ARG_1 > INT_ARG_2) pt->pc += pt->ints[args[0]];}
+static void jump_if_not_gt_i2_rel(int *args, ptree *pt)    {if (INT_ARG_1 <= INT_ARG_2) pt->pc += pt->ints[args[0]];}
+static void jump_if_lt_i2_rel(int *args, ptree *pt)        {if (INT_ARG_1 < INT_ARG_2) pt->pc += pt->ints[args[0]];}
+static void jump_if_not_lt_i2_rel(int *args, ptree *pt)    {if (INT_ARG_1 >= INT_ARG_2) pt->pc += pt->ints[args[0]];}
+static void jump_if_geq_i2_rel(int *args, ptree *pt)       {if (INT_ARG_1 >= INT_ARG_2) pt->pc += pt->ints[args[0]];}
+static void jump_if_not_geq_i2_rel(int *args, ptree *pt)   {if (INT_ARG_1 < INT_ARG_2) pt->pc += pt->ints[args[0]];}
+static void jump_if_leq_i2_rel(int *args, ptree *pt)       {if (INT_ARG_1 <= INT_ARG_2) pt->pc += pt->ints[args[0]];}
+static void jump_if_not_leq_i2_rel(int *args, ptree *pt)   {if (INT_ARG_1 > INT_ARG_2) pt->pc += pt->ints[args[0]];}
+
+static void jump_if_equal_f2_rel(int *args, ptree *pt)     {if (FLOAT_ARG_1 == FLOAT_ARG_2) pt->pc += pt->ints[args[0]];}
+static void jump_if_not_equal_f2_rel(int *args, ptree *pt) {if (FLOAT_ARG_1 != FLOAT_ARG_2) pt->pc += pt->ints[args[0]];}
+static void jump_if_gt_f2_rel(int *args, ptree *pt)        {if (FLOAT_ARG_1 > FLOAT_ARG_2) pt->pc += pt->ints[args[0]];}
+static void jump_if_not_gt_f2_rel(int *args, ptree *pt)    {if (FLOAT_ARG_1 <= FLOAT_ARG_2) pt->pc += pt->ints[args[0]];}
+static void jump_if_lt_f2_rel(int *args, ptree *pt)        {if (FLOAT_ARG_1 < FLOAT_ARG_2) pt->pc += pt->ints[args[0]];}
+static void jump_if_not_lt_f2_rel(int *args, ptree *pt)    {if (FLOAT_ARG_1 >= FLOAT_ARG_2) pt->pc += pt->ints[args[0]];}
+static void jump_if_geq_f2_rel(int *args, ptree *pt)       {if (FLOAT_ARG_1 >= FLOAT_ARG_2) pt->pc += pt->ints[args[0]];}
+static void jump_if_not_geq_f2_rel(int *args, ptree *pt)   {if (FLOAT_ARG_1 < FLOAT_ARG_2) pt->pc += pt->ints[args[0]];}
+static void jump_if_leq_f2_rel(int *args, ptree *pt)       {if (FLOAT_ARG_1 <= FLOAT_ARG_2) pt->pc += pt->ints[args[0]];}
+static void jump_if_not_leq_f2_rel(int *args, ptree *pt)   {if (FLOAT_ARG_1 > FLOAT_ARG_2) pt->pc += pt->ints[args[0]];}
+
+static void jump_if_equal_i3_rel(int *args, ptree *pt)     {if ((INT_ARG_1 == INT_ARG_2) && (INT_ARG_2 == INT_ARG_3)) pt->pc += pt->ints[args[0]];}
+static void jump_if_not_equal_i3_rel(int *args, ptree *pt) {if (!((INT_ARG_1 == INT_ARG_2) && (INT_ARG_2 == INT_ARG_3))) pt->pc += pt->ints[args[0]];}
+static void jump_if_gt_i3_rel(int *args, ptree *pt)        {if ((INT_ARG_1 > INT_ARG_2) && (INT_ARG_2 > INT_ARG_3)) pt->pc += pt->ints[args[0]];}
+static void jump_if_not_gt_i3_rel(int *args, ptree *pt)    {if (!((INT_ARG_1 > INT_ARG_2) && (INT_ARG_2 > INT_ARG_3))) pt->pc += pt->ints[args[0]];}
+static void jump_if_lt_i3_rel(int *args, ptree *pt)        {if ((INT_ARG_1 < INT_ARG_2) && (INT_ARG_2 < INT_ARG_3)) pt->pc += pt->ints[args[0]];}
+static void jump_if_not_lt_i3_rel(int *args, ptree *pt)    {if (!((INT_ARG_1 < INT_ARG_2) && (INT_ARG_2 < INT_ARG_3))) pt->pc += pt->ints[args[0]];}
+static void jump_if_geq_i3_rel(int *args, ptree *pt)       {if ((INT_ARG_1 >= INT_ARG_2) && (INT_ARG_2 >= INT_ARG_3)) pt->pc += pt->ints[args[0]];}
+static void jump_if_not_geq_i3_rel(int *args, ptree *pt)   {if (!((INT_ARG_1 >= INT_ARG_2) && (INT_ARG_2 >= INT_ARG_3))) pt->pc += pt->ints[args[0]];}
+static void jump_if_leq_i3_rel(int *args, ptree *pt)       {if ((INT_ARG_1 <= INT_ARG_2) && (INT_ARG_2 <= INT_ARG_3)) pt->pc += pt->ints[args[0]];}
+static void jump_if_not_leq_i3_rel(int *args, ptree *pt)   {if (!((INT_ARG_1 <= INT_ARG_2) && (INT_ARG_2 <= INT_ARG_3))) pt->pc += pt->ints[args[0]];}
+
+static void jump_if_equal_f3_rel(int *args, ptree *pt)     {if ((FLOAT_ARG_1 == FLOAT_ARG_2) && (FLOAT_ARG_2 == FLOAT_ARG_3)) pt->pc += pt->ints[args[0]];}
+static void jump_if_not_equal_f3_rel(int *args, ptree *pt) {if (!((FLOAT_ARG_1 == FLOAT_ARG_2) && (FLOAT_ARG_2 == FLOAT_ARG_3))) pt->pc += pt->ints[args[0]];}
+static void jump_if_gt_f3_rel(int *args, ptree *pt)        {if ((FLOAT_ARG_1 > FLOAT_ARG_2) && (FLOAT_ARG_2 > FLOAT_ARG_3)) pt->pc += pt->ints[args[0]];}
+static void jump_if_not_gt_f3_rel(int *args, ptree *pt)    {if (!((FLOAT_ARG_1 > FLOAT_ARG_2) && (FLOAT_ARG_2 > FLOAT_ARG_3))) pt->pc += pt->ints[args[0]];}
+static void jump_if_lt_f3_rel(int *args, ptree *pt)        {if ((FLOAT_ARG_1 < FLOAT_ARG_2) && (FLOAT_ARG_2 < FLOAT_ARG_3)) pt->pc += pt->ints[args[0]];}
+static void jump_if_not_lt_f3_rel(int *args, ptree *pt)    {if (!((FLOAT_ARG_1 < FLOAT_ARG_2) && (FLOAT_ARG_2 < FLOAT_ARG_3))) pt->pc += pt->ints[args[0]];}
+static void jump_if_geq_f3_rel(int *args, ptree *pt)       {if ((FLOAT_ARG_1 >= FLOAT_ARG_2) && (FLOAT_ARG_2 >= FLOAT_ARG_3)) pt->pc += pt->ints[args[0]];}
+static void jump_if_not_geq_f3_rel(int *args, ptree *pt)   {if (!((FLOAT_ARG_1 >= FLOAT_ARG_2) && (FLOAT_ARG_2 >= FLOAT_ARG_3))) pt->pc += pt->ints[args[0]];}
+static void jump_if_leq_f3_rel(int *args, ptree *pt)       {if ((FLOAT_ARG_1 <= FLOAT_ARG_2) && (FLOAT_ARG_2 <= FLOAT_ARG_3)) pt->pc += pt->ints[args[0]];}
+static void jump_if_not_leq_f3_rel(int *args, ptree *pt)   {if (!((FLOAT_ARG_1 <= FLOAT_ARG_2) && (FLOAT_ARG_2 <= FLOAT_ARG_3))) pt->pc += pt->ints[args[0]];}
+
+static void jump_if_odd_i_rel(int *args, ptree *pt)        {if (INT_ARG_1 & 1) pt->pc += pt->ints[args[0]];}
+static void jump_if_even_i_rel(int *args, ptree *pt)       {if (!(INT_ARG_1 & 1)) pt->pc += pt->ints[args[0]];}
+
+static void jump_if_zero_i_rel(int *args, ptree *pt)           {if (INT_ARG_1 == 0) pt->pc += pt->ints[args[0]];}
+static void jump_if_not_zero_i_rel(int *args, ptree *pt)       {if (INT_ARG_1 != 0) pt->pc += pt->ints[args[0]];}
+
+static void jump_if_negative_i_rel(int *args, ptree *pt)       {if (INT_ARG_1 < 0) pt->pc += pt->ints[args[0]];}
+static void jump_if_not_negative_i_rel(int *args, ptree *pt)   {if (INT_ARG_1 >= 0) pt->pc += pt->ints[args[0]];}
+
+static void jump_if_positive_i_rel(int *args, ptree *pt)       {if (INT_ARG_1 > 0) pt->pc += pt->ints[args[0]];}
+static void jump_if_not_positive_i_rel(int *args, ptree *pt)   {if (INT_ARG_1 <= 0) pt->pc += pt->ints[args[0]];}
+
+static void jump_if_zero_f_rel(int *args, ptree *pt)           {if (FLOAT_ARG_1 == 0.0) pt->pc += pt->ints[args[0]];}
+static void jump_if_not_zero_f_rel(int *args, ptree *pt)       {if (FLOAT_ARG_1 != 0.0) pt->pc += pt->ints[args[0]];}
+
+static void jump_if_negative_f_rel(int *args, ptree *pt)       {if (FLOAT_ARG_1 < 0.0) pt->pc += pt->ints[args[0]];}
+static void jump_if_not_negative_f_rel(int *args, ptree *pt)   {if (FLOAT_ARG_1 >= 0.0) pt->pc += pt->ints[args[0]];}
+
+static void jump_if_positive_f_rel(int *args, ptree *pt)       {if (FLOAT_ARG_1 > 0.0) pt->pc += pt->ints[args[0]];}
+static void jump_if_not_positive_f_rel(int *args, ptree *pt)   {if (FLOAT_ARG_1 <= 0.0) pt->pc += pt->ints[args[0]];}
 
 
 static void store_i(int *args, ptree *pt) {INT_RESULT = INT_ARG_1;}
@@ -4031,11 +4037,7 @@ static xen_value *let_star_form(ptree *prog, XEN form, walk_result_t need_result
   locals_loc = prog->var_ctr; /* lets can be nested */
   err = sequential_binds(prog, XEN_CADR(form), "let*");
   if (err) return(run_warn_with_free(err));
-#if WITH_POINTER_PC
   if (!(prog->got_lambda)) prog->initial_pc = prog->program + prog->triple_ctr;
-#else
-  if (!(prog->got_lambda)) prog->initial_pc = prog->triple_ctr;
-#endif
   return(walk_then_undefine(prog, XEN_CDDR(form), need_result, "let*", locals_loc));
 }
 
@@ -4050,11 +4052,7 @@ static xen_value *let_form(ptree *prog, XEN form, walk_result_t need_result)
   locals_loc = prog->var_ctr; /* lets can be nested */
   trouble = parallel_binds(prog, lets, "let");
   if (trouble) return(run_warn_with_free(trouble));
-#if WITH_POINTER_PC
   if (!(prog->got_lambda)) prog->initial_pc = prog->program + prog->triple_ctr;
-#else
-  if (!(prog->got_lambda)) prog->initial_pc = prog->triple_ctr;
-#endif
   return(walk_then_undefine(prog, XEN_CDDR(form), need_result, "let", locals_loc));
 }
 
@@ -4066,6 +4064,93 @@ static xen_value *coerce_to_boolean(ptree *prog, xen_value *v)
   set_var_no_opt(prog, temp, v);
   free(v);
   return(temp);
+}
+
+
+static void equal_i2(int *args, ptree *pt);
+static void gt_i2(int *args, ptree *pt);
+static void lt_i2(int *args, ptree *pt);
+static void geq_i2(int *args, ptree *pt);
+static void leq_i2(int *args, ptree *pt);
+
+static void equal_f2(int *args, ptree *pt);
+static void gt_f2(int *args, ptree *pt);
+static void lt_f2(int *args, ptree *pt);
+static void geq_f2(int *args, ptree *pt);
+static void leq_f2(int *args, ptree *pt);
+
+static void equal_i3(int *args, ptree *pt);
+static void gt_i3(int *args, ptree *pt);
+static void lt_i3(int *args, ptree *pt);
+static void geq_i3(int *args, ptree *pt);
+static void leq_i3(int *args, ptree *pt);
+
+static void equal_f3(int *args, ptree *pt);
+static void gt_f3(int *args, ptree *pt);
+static void lt_f3(int *args, ptree *pt);
+static void geq_f3(int *args, ptree *pt);
+static void leq_f3(int *args, ptree *pt);
+
+static void not_b(int *args, ptree *pt);
+
+static void odd_i(int *args, ptree *pt);
+static void even_i(int *args, ptree *pt);
+static void zero_i(int *args, ptree *pt);
+static void negative_i(int *args, ptree *pt);
+static void positive_i(int *args, ptree *pt);
+static void zero_f(int *args, ptree *pt);
+static void negative_f(int *args, ptree *pt);
+static void positive_f(int *args, ptree *pt);
+
+
+#define NUM_IF_OPS 29
+
+static opt_ops if_ops[NUM_IF_OPS] = {
+  {not_b, "not_b", jump_if, "jump_if", NULL, NULL},
+
+  {equal_i2, "equal_i2", jump_if_not_equal_i2_rel, "jump_if_not_equal_i2_rel", jump_if_equal_i2_rel, "jump_if_equal_i2_rel"},
+  {gt_i2, "gt_i2", jump_if_not_gt_i2_rel, "jump_if_not_gt_i2_rel", jump_if_gt_i2_rel, "jump_if_gt_i2_rel"},
+  {lt_i2, "lt_i2", jump_if_not_lt_i2_rel, "jump_if_not_lt_i2_rel", jump_if_lt_i2_rel, "jump_if_lt_i2_rel"},
+  {geq_i2, "geq_i2", jump_if_not_geq_i2_rel, "jump_if_not_geq_i2_rel", jump_if_geq_i2_rel, "jump_if_geq_i2_rel"},
+  {leq_i2, "leq_i2", jump_if_not_leq_i2_rel, "jump_if_not_leq_i2_rel", jump_if_leq_i2_rel, "jump_if_leq_i2_rel"},
+
+  {equal_f2, "equal_f2", jump_if_not_equal_f2_rel, "jump_if_not_equal_f2_rel", jump_if_equal_f2_rel, "jump_if_equal_f2_rel"},
+  {gt_f2, "gt_f2", jump_if_not_gt_f2_rel, "jump_if_not_gt_f2_rel", jump_if_gt_f2_rel, "jump_if_gt_f2_rel"},
+  {lt_f2, "lt_f2", jump_if_not_lt_f2_rel, "jump_if_not_lt_f2_rel", jump_if_lt_f2_rel, "jump_if_lt_f2_rel"},
+  {geq_f2, "geq_f2", jump_if_not_geq_f2_rel, "jump_if_not_geq_f2_rel", jump_if_geq_f2_rel, "jump_if_geq_f2_rel"},
+  {leq_f2, "leq_f2", jump_if_not_leq_f2_rel, "jump_if_not_leq_f2_rel", jump_if_leq_f2_rel, "jump_if_leq_f2_rel"},
+
+  {equal_i3, "equal_i3", jump_if_not_equal_i3_rel, "jump_if_not_equal_i3_rel", jump_if_equal_i3_rel, "jump_if_equal_i3_rel"},
+  {gt_i3, "gt_i3", jump_if_not_gt_i3_rel, "jump_if_not_gt_i3_rel", jump_if_gt_i3_rel, "jump_if_gt_i3_rel"},
+  {lt_i3, "lt_i3", jump_if_not_lt_i3_rel, "jump_if_not_lt_i3_rel", jump_if_lt_i3_rel, "jump_if_lt_i3_rel"},
+  {geq_i3, "geq_i3", jump_if_not_geq_i3_rel, "jump_if_not_geq_i3_rel", jump_if_geq_i3_rel, "jump_if_geq_i3_rel"},
+  {leq_i3, "leq_i3", jump_if_not_leq_i3_rel, "jump_if_not_leq_i3_rel", jump_if_leq_i3_rel, "jump_if_leq_i3_rel"},
+
+  {equal_f3, "equal_f3", jump_if_not_equal_f3_rel, "jump_if_not_equal_f3_rel", jump_if_equal_f3_rel, "jump_if_equal_f3_rel"},
+  {gt_f3, "gt_f3", jump_if_not_gt_f3_rel, "jump_if_not_gt_f3_rel", jump_if_gt_f3_rel, "jump_if_gt_f3_rel"},
+  {lt_f3, "lt_f3", jump_if_not_lt_f3_rel, "jump_if_not_lt_f3_rel", jump_if_lt_f3_rel, "jump_if_lt_f3_rel"},
+  {geq_f3, "geq_f3", jump_if_not_geq_f3_rel, "jump_if_not_geq_f3_rel", jump_if_geq_f3_rel, "jump_if_geq_f3_rel"},
+  {leq_f3, "leq_f3", jump_if_not_leq_f3_rel, "jump_if_not_leq_f3_rel", jump_if_leq_f3_rel, "jump_if_leq_f3_rel"},
+
+  {odd_i, "odd_i", jump_if_even_i_rel, "jump_if_even_i_rel", jump_if_odd_i_rel, "jump_if_odd_i_rel"},
+  {even_i, "even_i", jump_if_odd_i_rel, "jump_if_odd_i_rel", jump_if_even_i_rel, "jump_if_even_i_rel"},
+
+  {zero_i, "zero_i", jump_if_not_zero_i_rel, "jump_if_not_zero_i_rel", jump_if_zero_i_rel, "jump_if_zero_i_rel"},
+  {zero_f, "zero_f", jump_if_not_zero_f_rel, "jump_if_not_zero_f_rel", jump_if_zero_f_rel, "jump_if_zero_f_rel"},
+  {negative_i, "negative_i", jump_if_not_negative_i_rel, "jump_if_not_negative_i_rel", jump_if_negative_i_rel, "jump_if_negative_i_rel"},
+  {negative_f, "negative_f", jump_if_not_negative_f_rel, "jump_if_not_negative_f_rel", jump_if_negative_f_rel, "jump_if_negative_f_rel"},
+  {positive_i, "positive_i", jump_if_not_positive_i_rel, "jump_if_not_positive_i_rel", jump_if_positive_i_rel, "jump_if_positive_i_rel"},
+  {positive_f, "positive_f", jump_if_not_positive_f_rel, "jump_if_not_positive_f_rel", jump_if_positive_f_rel, "jump_if_positive_f_rel"},
+};
+
+
+static int find_if_op(triple *prev_op)
+{
+  int i;
+  for (i = 0; i < NUM_IF_OPS; i++)
+    if (prev_op->function == if_ops[i].func)
+      return(i);
+  return(-1);
 }
 
 
@@ -4108,9 +4193,82 @@ static xen_value *if_form(ptree *prog, XEN form, walk_result_t need_result)
       return(if_value);
     }
 
-  current_pc = prog->triple_ctr;
   jump_to_false = make_xen_value(R_INT, add_int_to_ptree(prog, 0), R_VARIABLE);
-  add_triple_to_ptree(prog, va_make_triple(jump_if_not, "jump_if_not", 2, jump_to_false, if_value));
+
+  /* if preceding is equal_i2 etc, we can double up */
+  {
+    bool jumped = false;
+    if (prog->triple_ctr > 0)
+      {
+	triple *prev_op;
+	int loc;
+	prev_op = prog->program[prog->triple_ctr - 1];
+	if (prev_op->args[0] == if_value->addr)
+	  {
+	    loc = find_if_op(prev_op);
+	    if (loc >= 0)
+	      {
+		/* if it's "not", look at preceding op as well */
+		if ((prev_op->function == not_b) &&
+		    (prog->triple_ctr > 1))
+		  {
+		    triple *p2_op;
+		    int not_loc;
+		    p2_op = prog->program[prog->triple_ctr - 2];
+
+		    if (p2_op->args[0] == prev_op->args[1])
+		      {
+			not_loc = find_if_op(p2_op);
+			if ((not_loc >= 0) &&
+			    (p2_op->function != not_b) &&
+			    (p2_op->args[0] == prev_op->args[1]))
+			  {
+			    p2_op->function = if_ops[not_loc].env_func;
+			    p2_op->op_name = if_ops[not_loc].env_func_name;
+			    p2_op->args[0] = jump_to_false->addr;
+			    p2_op->types[0] = R_INT;
+#if WITH_COUNTERS
+			    p2_op->func_loc = get_func_loc(p2_op->function, p2_op->op_name);
+#endif				  
+			    free_triple(prev_op);
+			    prog->triple_ctr--;
+			    current_pc = prog->triple_ctr - 1;
+			    jumped = true;
+			  }
+		      }
+		  }
+		
+		if (!jumped)
+		  {
+		    prev_op->function = if_ops[loc].mult_func;
+		    prev_op->op_name = if_ops[loc].mult_func_name;
+		    prev_op->args[0] = jump_to_false->addr;
+		    prev_op->types[0] = R_INT;
+#if WITH_COUNTERS
+		    prev_op->func_loc = get_func_loc(prev_op->function, prev_op->op_name);
+#endif
+		    current_pc = prog->triple_ctr - 1;
+		    jumped = true;
+		    
+		    /* TODO: add these to snd-test */
+		    /* (let ((x 1) (y 2)) (run (lambda () (if (= x y) (+ x y) (- x y))))) */
+		    /* (let ((x 1) (y 2)) (run (lambda () (if (not (= x y 1)) 3 2)))) */
+		    /* (let ((x 1)) (run (lambda () (if (or (= x 2) (not (= x 3))) 3 2)))) */
+		    /* (let ((x 0) (y 1)) (run (lambda () (if (not (= x 1)) (if (not (= y 1)) 3 2) 1)))) */
+		    /* (let ((x 1) (y 2) (z #t)) (run (lambda () (= x y) (if z 1 0)))) */
+		    /* TODO: add side-effect tests to s7test */
+		  }
+	      }
+	  }
+      }
+
+    if (!jumped)
+      {
+	current_pc = prog->triple_ctr;
+	add_triple_to_ptree(prog, va_make_triple(jump_if_not, "jump_if_not", 2, jump_to_false, if_value));
+      }
+  }
+
   free(if_value);
 
   true_result = walk(prog, XEN_CADDR(form), need_result);                           /* walk true branch */
@@ -4256,6 +4414,7 @@ static xen_value *cond_form(ptree *prog, XEN form, walk_result_t need_result)
 	  current_pc = prog->triple_ctr;
 	  jump_to_next_clause = make_xen_value(R_INT, add_int_to_ptree(prog, 0), R_VARIABLE);
 	  add_triple_to_ptree(prog, va_make_triple(jump_if_not, "jump_if_not", 2, jump_to_next_clause, test_value));
+	  /* TODO: follow if_form optimizations? */
 	  clause_value = walk_sequence(prog, local_clauses, need_result, "cond");
 	  if (clause_value == NULL)
 	    {
@@ -4525,7 +4684,6 @@ static xen_value *do_warn_of_type_trouble(int var_type, int expr_type, XEN form)
 }
 
 
-static void equal_i2(int *args, ptree *pt);
 static void inc_i_1(int *args, ptree *pt);
 static void add_i2(int *args, ptree *pt);
 static void not_b(int *args, ptree *pt);
@@ -4864,6 +5022,7 @@ static xen_value *or_form(ptree *prog, XEN form, walk_result_t ignored)
 	v = coerce_to_boolean(prog, v);
       fixups[i] = make_xen_value(R_INT, add_int_to_ptree(prog, prog->triple_ctr), R_VARIABLE);
       add_triple_to_ptree(prog, va_make_triple(jump_if, "jump_if", 2, fixups[i], v));
+      /* TODO: if_form opts reversed here? */
       free(v);
     }
 
@@ -4932,6 +5091,7 @@ static xen_value *and_form(ptree *prog, XEN form, walk_result_t ignored)
 	v = coerce_to_boolean(prog, v);
       fixups[i] = make_xen_value(R_INT, add_int_to_ptree(prog, prog->triple_ctr), R_VARIABLE);
       add_triple_to_ptree(prog, va_make_triple(jump_if_not, "jump_if_not", 2, fixups[i], v));
+      /* TODO: can't these be optimized just like if_form? */
       free(v);
     }
 
@@ -5239,6 +5399,7 @@ static void multiply_f3(int *args, ptree *pt) {FLOAT_RESULT = (FLOAT_ARG_1 * FLO
 
 
 static void multiply_f4(int *args, ptree *pt) {FLOAT_RESULT = (FLOAT_ARG_1 * FLOAT_ARG_2 * FLOAT_ARG_3 * FLOAT_ARG_4);}
+static void multiply_f5(int *args, ptree *pt) {FLOAT_RESULT = (FLOAT_ARG_1 * FLOAT_ARG_2 * FLOAT_ARG_3 * FLOAT_ARG_4 * FLOAT_ARG_5);}
 
 
 static void multiply_fn(int *args, ptree *pt) 
@@ -5257,6 +5418,7 @@ static void multiply_i3(int *args, ptree *pt) {INT_RESULT = (INT_ARG_1 * INT_ARG
 
 
 static void multiply_i4(int *args, ptree *pt) {INT_RESULT = (INT_ARG_1 * INT_ARG_2 * INT_ARG_3 * INT_ARG_4);}
+static void multiply_i5(int *args, ptree *pt) {INT_RESULT = (INT_ARG_1 * INT_ARG_2 * INT_ARG_3 * INT_ARG_4 * INT_ARG_5);}
 
 
 static void multiply_in(int *args, ptree *pt)
@@ -5357,15 +5519,6 @@ static void polyshape_1fn_env(int *args, ptree *pt);
 
 
 /* 2 arg ops that can be combined into a multiply */
-typedef struct {
-  void (*func)(int *args, ptree *pt);
-  const char *func_name;
-  void (*mult_func)(int *args, ptree *pt);
-  const char *mult_func_name;
-  void (*env_func)(int *args, ptree *pt);
-  const char *env_func_name;
-} opt_ops;
-
 #define NUM_M2_OPS 11
 
 static opt_ops m2_ops[NUM_M2_OPS] = {
@@ -5448,11 +5601,12 @@ static int find_m4_op(triple *prev_op)
 
 
 /* 5 arg ops that can be combined into a multiply */
-#define NUM_M5_OPS 2
+#define NUM_M5_OPS 3
 
 static opt_ops m5_ops[NUM_M5_OPS] = {
   {oscil_1f_3ma, "oscil_1f_3ma", oscil_1f_3ma_mult, "oscil_1f_3ma_mult", NULL, NULL},
   {oscil_1f_3, "oscil_1f_3", oscil_1f_3_mult, "oscil_1f_3_mult", NULL, NULL},
+  {multiply_f4, "multiply_f4", multiply_f5, "multiply_f5", NULL, NULL},
   
 };
 
@@ -5720,12 +5874,14 @@ static xen_value *multiply(ptree *prog, xen_value **args, int num_args)
 	}
       if (num_args == 3) return(package(prog, R_FLOAT, multiply_f3, "multiply_f3", args, num_args));
       if (num_args == 4) return(package(prog, R_FLOAT, multiply_f4, "multiply_f4", args, num_args));
+      if (num_args == 5) return(package(prog, R_FLOAT, multiply_f5, "multiply_f5", args, num_args));
       return(package_n(prog, R_FLOAT, multiply_fn, "multiply_fn", args, num_args));
     }
 
   if (num_args == 2) return(package(prog, R_INT, multiply_i2, "multiply_i2", args, num_args)); 
   if (num_args == 3) return(package(prog, R_INT, multiply_i3, "multiply_i3", args, num_args));
   if (num_args == 4) return(package(prog, R_INT, multiply_i4, "multiply_i4", args, num_args));
+  if (num_args == 5) return(package(prog, R_INT, multiply_i5, "multiply_i5", args, num_args));
   return(package_n(prog, R_INT, multiply_in, "multiply_in", args, num_args));
 }
 
@@ -5795,8 +5951,10 @@ static void abs_f_add(int *args, ptree *pt);
 static void sin_f_add(int *args, ptree *pt);
 static void cos_f_add(int *args, ptree *pt);
 static void abs_f_mult_add(int *args, ptree *pt);
-static void mus_random_mf_add(int *args, ptree *pt);
-static void mus_random_mf(int *args, ptree *pt);
+static void mus_random_f_add(int *args, ptree *pt);
+static void mus_random_f(int *args, ptree *pt);
+static void random_f_add(int *args, ptree *pt);
+static void random_f(int *args, ptree *pt);
 static void subtract_f2_add(int *args, ptree *pt);
 static void sin_f_mult_add(int *args, ptree *pt);
 static void cos_f_mult_add(int *args, ptree *pt);
@@ -5804,14 +5962,15 @@ static void subtract_f2_mult_add(int *args, ptree *pt);
 static void vct_ref_f_add(int *args, ptree *pt);
 
 
-#define NUM_A2_OPS 5
+#define NUM_A2_OPS 7
 
 static opt_ops a2_ops[NUM_A2_OPS] = {
   {rand_interp_0f, "rand_interp_0f", rand_interp_0f_add, "rand_interp_0f_add", NULL, NULL},
   {abs_f, "abs_f", abs_f_add, "abs_f_add", NULL, NULL},
   {sin_f, "sin_f", sin_f_add, "sin_f_add", NULL, NULL},
   {cos_f, "cos_f", cos_f_add, "cos_f_add", NULL, NULL},
-  {mus_random_mf, "random_mf", mus_random_mf_add, "random_mf_add", NULL, NULL},
+  {random_f, "random_f", random_f_add, "random_f_add", NULL, NULL},
+  {mus_random_f, "mus_random_f", mus_random_f_add, "mus_random_f_add", NULL, NULL},
 };
 
 
@@ -6068,6 +6227,7 @@ static void subtract_f2_i(int *args, ptree *pt) {INT_RESULT = (Int)(FLOAT_ARG_1 
 static void subtract_f3(int *args, ptree *pt) {FLOAT_RESULT = (FLOAT_ARG_1 - FLOAT_ARG_2 - FLOAT_ARG_3);}
 static void subtract_f3_mult(int *args, ptree *pt) {FLOAT_RESULT = FLOAT_ARG_4 * (FLOAT_ARG_1 - FLOAT_ARG_2 - FLOAT_ARG_3);}
 
+static void subtract_f4(int *args, ptree *pt) {FLOAT_RESULT = (FLOAT_ARG_1 - FLOAT_ARG_2 - FLOAT_ARG_3 - FLOAT_ARG_4);}
 
 static void subtract_fn(int *args, ptree *pt) 
 {
@@ -6085,6 +6245,7 @@ static void subtract_i2(int *args, ptree *pt) {INT_RESULT = (INT_ARG_1 - INT_ARG
 
 
 static void subtract_i3(int *args, ptree *pt) {INT_RESULT = (INT_ARG_1 - INT_ARG_2 - INT_ARG_3);}
+static void subtract_i4(int *args, ptree *pt) {INT_RESULT = (INT_ARG_1 - INT_ARG_2 - INT_ARG_3 - INT_ARG_4);}
 
 
 static void subtract_in(int *args, ptree *pt)
@@ -6184,6 +6345,7 @@ static xen_value *subtract(ptree *prog, xen_value **args, int num_args)
 	return(package(prog, R_FLOAT, subtract_f2, "subtract_f2", args, num_args));
 	}
       if (num_args == 3) return(package(prog, R_FLOAT, subtract_f3, "subtract_f3", args, num_args));
+      if (num_args == 4) return(package(prog, R_FLOAT, subtract_f4, "subtract_f4", args, num_args));
       return(package_n(prog, R_FLOAT, subtract_fn, "subtract_fn", args, num_args));
     }
 
@@ -6205,6 +6367,7 @@ static xen_value *subtract(ptree *prog, xen_value **args, int num_args)
       return(package(prog, R_INT, subtract_i2, "subtract_i2", args, num_args));
     }
   if (num_args == 3) return(package(prog, R_INT, subtract_i3, "subtract_i3", args, num_args));
+  if (num_args == 4) return(package(prog, R_INT, subtract_i4, "subtract_i4", args, num_args));
   return(package_n(prog, R_INT, subtract_in, "subtract_in", args, num_args));
 }
 
@@ -6445,7 +6608,7 @@ static void CName ## _in(int *args, ptree *pt) \
 } \
 static xen_value * SName(ptree *prog, bool float_result, xen_value **args, int num_args) \
 { \
-  if (num_args <= 1) \
+ if ((prog->walk_result == DONT_NEED_RESULT) || (num_args <= 1)) \
     return(make_xen_value(R_BOOL, add_int_to_ptree(prog, (Int)true), R_CONSTANT)); \
   if ((prog->constants > 0) && (float_result)) \
     float_rel_constant_args(prog, num_args, args); \
@@ -6510,6 +6673,12 @@ REL_OP(equal, numbers_equal, ==, !=)
 
 static void max_f2(int *args, ptree *pt) {FLOAT_RESULT = (FLOAT_ARG_1 > FLOAT_ARG_2) ? FLOAT_ARG_1 : FLOAT_ARG_2;}
 
+static void max_f3(int *args, ptree *pt) 
+{
+  FLOAT_RESULT = (FLOAT_ARG_1 > FLOAT_ARG_2) ? FLOAT_ARG_1 : FLOAT_ARG_2;
+  if (FLOAT_ARG_3 > FLOAT_RESULT) FLOAT_RESULT = FLOAT_ARG_3;
+}
+
 
 static void min_f2(int *args, ptree *pt);
 
@@ -6546,6 +6715,12 @@ static void max_fn(int *args, ptree *pt)
 
 
 static void max_i2(int *args, ptree *pt) {INT_RESULT = (INT_ARG_1 > INT_ARG_2) ? INT_ARG_1 : INT_ARG_2;}
+
+static void max_i3(int *args, ptree *pt) 
+{
+  INT_RESULT = (INT_ARG_1 > INT_ARG_2) ? INT_ARG_1 : INT_ARG_2;
+  if (INT_ARG_3 > INT_RESULT) INT_RESULT = INT_ARG_3;
+}
 
 
 static void max_in(int *args, ptree *pt)
@@ -6613,12 +6788,13 @@ static xen_value *max_1(ptree *prog, xen_value **args, int num_args)
 		  return(make_xen_value(R_FLOAT, prev_op->args[0], R_TEMPORARY));
 		}
 	    }
-
 	  return(package(prog, R_FLOAT, max_f2, "max_f2", args, num_args));
 	}
+      if (num_args == 3) return(package(prog, R_FLOAT, max_f3, "max_f3", args, num_args));
       return(package_n(prog, R_FLOAT, max_fn, "max_fn", args, num_args));
     }
   if (num_args == 2) return(package(prog, R_INT, max_i2, "max_i2", args, num_args));
+  if (num_args == 3) return(package(prog, R_INT, max_i3, "max_i3", args, num_args));
   return(package_n(prog, R_INT, max_in, "max_in", args, num_args));
 }
 
@@ -6626,6 +6802,12 @@ static xen_value *max_1(ptree *prog, xen_value **args, int num_args)
 /* ---------------- min ---------------- */
 
 static void min_f2(int *args, ptree *pt) {FLOAT_RESULT = (FLOAT_ARG_1 > FLOAT_ARG_2) ? FLOAT_ARG_2 : FLOAT_ARG_1;}
+
+static void min_f3(int *args, ptree *pt) 
+{
+  FLOAT_RESULT = (FLOAT_ARG_1 > FLOAT_ARG_2) ? FLOAT_ARG_2 : FLOAT_ARG_1;
+  if (FLOAT_ARG_3 < FLOAT_RESULT) FLOAT_RESULT = FLOAT_ARG_3;
+}
 
 
 static void min_fn(int *args, ptree *pt)
@@ -6641,6 +6823,12 @@ static void min_fn(int *args, ptree *pt)
 
 
 static void min_i2(int *args, ptree *pt) {INT_RESULT = (INT_ARG_1 > INT_ARG_2) ? INT_ARG_2 : INT_ARG_1;}
+
+static void min_i3(int *args, ptree *pt) 
+{
+  INT_RESULT = (INT_ARG_1 > INT_ARG_2) ? INT_ARG_2 : INT_ARG_1;
+  if (INT_ARG_3 < INT_RESULT) INT_RESULT = INT_ARG_3;
+}
 
 
 static void min_in(int *args, ptree *pt)
@@ -6710,9 +6898,11 @@ static xen_value *min_1(ptree *prog, xen_value **args, int num_args)
 	    }
 	  return(package(prog, R_FLOAT, min_f2, "min_f2", args, num_args));
 	}
+      if (num_args == 3) return(package(prog, R_FLOAT, min_f3, "min_f3", args, num_args));
       return(package_n(prog, R_FLOAT, min_fn, "min_fn", args, num_args));
     }
   if (num_args == 2) return(package(prog, R_INT, min_i2, "min_i2", args, num_args));
+  if (num_args == 3) return(package(prog, R_INT, min_i3, "min_i3", args, num_args));
   return(package_n(prog, R_INT, min_in, "min_in", args, num_args));
 }
 
@@ -7757,45 +7947,51 @@ static xen_value *abs_1(ptree *prog, xen_value **args, int num_args)
 }
 
 
+
 /* ---------------- random ---------------- */
 
-static void mus_random_mf(int *args, ptree *pt) {FLOAT_RESULT = mus_random(FLOAT_ARG_1);}
-static void mus_random_mf_add(int *args, ptree *pt) {FLOAT_RESULT = FLOAT_ARG_2 + mus_random(FLOAT_ARG_1);}
+/* random is 0..arg, mus_random is -arg..arg, 
+ * random arg determines return type, mus_random returns float 
+ */
 
-static void mus_random_mf_1(int *args, ptree *pt) {FLOAT_RESULT = mus_random_no_input();}
+static void mus_random_f(int *args, ptree *pt) {FLOAT_RESULT = mus_random(FLOAT_ARG_1);}
+static void mus_random_f_add(int *args, ptree *pt) {FLOAT_RESULT = FLOAT_ARG_2 + mus_random(FLOAT_ARG_1);}
+static void mus_random_f_1(int *args, ptree *pt) {FLOAT_RESULT = mus_random_no_input();}
+
+/* (run (lambda () (+ (mus-random 1.0) 1.0))) */
+
+static xen_value *mus_random_1(ptree *prog, xen_value **args, int num_args)
+{
+  if (args[1]->type == R_INT) single_to_float(prog, args, 1);
+  if ((prog->constants == 1) &&
+      (prog->dbls[args[1]->addr] == 1.0))
+    return(package(prog, R_FLOAT, mus_random_f_1, "mus_random_f_1", args, 0));
+  return(package(prog, R_FLOAT, mus_random_f, "mus_random_f", args, 1));
+}
 
 
-#if (!HAVE_S7)
+#if (HAVE_GUILE)
 
-static void mus_random_f(int *args, ptree *pt) {FLOAT_RESULT = mus_frandom(FLOAT_ARG_1);}
-
-static void mus_random_f_1(int *args, ptree *pt) {FLOAT_RESULT = mus_frandom_no_input();}
-
-static void mus_random_i(int *args, ptree *pt) {INT_RESULT = mus_irandom(INT_ARG_1);}
+static void random_f(int *args, ptree *pt) {FLOAT_RESULT = mus_frandom(FLOAT_ARG_1);}
+static void random_f_add(int *args, ptree *pt) {FLOAT_RESULT = FLOAT_ARG_2 + mus_frandom(FLOAT_ARG_1);}
+static void random_f_1(int *args, ptree *pt) {FLOAT_RESULT = mus_frandom_no_input();}
+static void random_i(int *args, ptree *pt) {INT_RESULT = mus_irandom(INT_ARG_1);}
 
 static xen_value *random_1(ptree *prog, xen_value **args, int num_args)
 {
   if (args[1]->type == R_INT)
-    return(package(prog, R_INT, mus_random_i, "random_i", args, 1));
+    return(package(prog, R_INT, random_i, "random_i", args, 1));
   if ((prog->constants == 1) &&
       (prog->dbls[args[1]->addr] == 1.0))
-    return(package(prog, R_FLOAT, mus_random_f_1, "random_f_1", args, 0));
-  return(package(prog, R_FLOAT, mus_random_f, "random_f", args, 1));
+    return(package(prog, R_FLOAT, random_f_1, "random_f_1", args, 0));
+  return(package(prog, R_FLOAT, random_f, "random_f", args, 1));
 }
 
 #else
 
-/* an experiment -- use the s7 rng if "random" (as opposed to "mus-random") */
-
-static void random_f(int *args, ptree *pt) 
-{
-  FLOAT_RESULT = s7_random(s7) * FLOAT_ARG_1;
-}
-
-static void random_i(int *args, ptree *pt) 
-{
-  INT_RESULT = (Int)(s7_random(s7) * INT_ARG_1);
-}
+static void random_f(int *args, ptree *pt) {FLOAT_RESULT = s7_random(s7) * FLOAT_ARG_1;}
+static void random_f_add(int *args, ptree *pt) {FLOAT_RESULT = FLOAT_ARG_2 + s7_random(s7) * FLOAT_ARG_1;}
+static void random_i(int *args, ptree *pt) {INT_RESULT = (Int)(s7_random(s7) * INT_ARG_1);}
 
 static xen_value *random_1(ptree *prog, xen_value **args, int num_args)
 {
@@ -7805,16 +8001,6 @@ static xen_value *random_1(ptree *prog, xen_value **args, int num_args)
 }
 
 #endif
-
-
-static xen_value *mus_random_r(ptree *prog, xen_value **args, int num_args)
-{
-  if (args[1]->type == R_INT) single_to_float(prog, args, 1);
-  if ((prog->constants == 1) &&
-      (prog->dbls[args[1]->addr] == 1.0))
-    return(package(prog, R_FLOAT, mus_random_mf_1, "random_mf_1", args, 0));
-  return(package(prog, R_FLOAT, mus_random_mf, "random_mf", args, 1));
-}
 
 
 
@@ -8327,6 +8513,7 @@ static bool str_ ## CName ## _n(ptree *pt, xen_value **args, int num_args) \
       return(false); \
   return(true); \
 } \
+static void string_ ## CName ## _2(int *args, ptree *pt) {BOOL_RESULT = (!(strcmp(STRING_ARG_1, STRING_ARG_2) COp 0));} \
 static void string_ ## CName ## _n(int *args, ptree *pt) \
 { \
   int i, n; \
@@ -8353,6 +8540,7 @@ static xen_value *string_ ## CName ## _1(ptree *pt, xen_value **args, int num_ar
 	    return(make_xen_value(R_BOOL, add_int_to_ptree(pt, (Int)false), R_CONSTANT)); \
 	  lasts = pt->strs[args[i]->addr]; \
 	} \
+  if (num_args == 2) return(package(pt, R_BOOL, string_ ## CName ## _2, "string_" #CName "_2", args, num_args)); \
   return(package_n(pt, R_BOOL, string_ ## CName ## _n, "string_" #CName "_n", args, num_args)); \
 }
 
@@ -16028,7 +16216,7 @@ static void init_walkers(void)
   INIT_WALKER(S_db_to_linear,       make_walker(mus_db_to_linear_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
   INIT_WALKER(S_linear_to_db,       make_walker(mus_linear_to_db_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
   INIT_WALKER(S_seconds_to_samples, make_walker(seconds_to_samples_1, NULL, NULL, 1, 1, R_INT, false, 1, R_NUMBER));
-  INIT_WALKER(S_mus_random,         make_walker(mus_random_r, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
+  INIT_WALKER(S_mus_random,         make_walker(mus_random_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
 
   INIT_WALKER(S_make_all_pass,       make_walker(make_all_pass_1, NULL, NULL, 0, UNLIMITED_ARGS, R_CLM, false, 1, -R_XEN));
   INIT_WALKER(S_make_moving_average, make_walker(make_moving_average_1, NULL, NULL, 0, UNLIMITED_ARGS, R_CLM, false, 1, -R_XEN));

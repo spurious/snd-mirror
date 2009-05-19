@@ -5536,13 +5536,13 @@ static XEN g_find_min_peak_phases(XEN arglist)
   #define H_find_min_peak_phases "(" S_find_min_peak_phases " vcts...) returns a vector of (sample-wise) offsets \
 that give a minimum peak amplitude when the signals are added together."
 
-  double best = 0.0;
+  Float best = 0.0;
   int n, size = 0;
   int *best_phases;
   int *current_phases;
-  double *current_max;
-  double **current_sum;
-  double **sines;
+  Float *current_max;
+  Float **current_sum;
+  Float **sines;
   int *sizes;
   auto void try_case(int i);
 
@@ -5564,7 +5564,7 @@ that give a minimum peak amplitude when the signals are added together."
 
 	    for (k = 0, kk = j; k < size; k++, kk++)
 	      {
-		double fval;
+		Float fval;
 		if (kk >= isize) kk = 0;
 		fval = current_sum[i - 1][k] + sines[i][kk];
 		current_sum[i][k] = fval;
@@ -5600,18 +5600,18 @@ that give a minimum peak amplitude when the signals are added together."
   }
 
   int i;
-  double cmax;
+  Float cmax;
   XEN result = XEN_EMPTY_LIST;
 
   n = XEN_LIST_LENGTH(arglist);
   if (n < 2) return(XEN_LIST_1(C_TO_XEN_INT(0)));
 
-  sines = (double **)calloc(n, sizeof(double *));
+  sines = (Float **)calloc(n, sizeof(Float *));
   sizes = (int *)calloc(n, sizeof(int));
   best_phases = (int *)calloc(n, sizeof(int));
   current_phases = (int *)calloc(n, sizeof(int));
-  current_sum = (double **)calloc(n, sizeof(double *));
-  current_max = (double *)calloc(n, sizeof(double));
+  current_sum = (Float **)calloc(n, sizeof(Float *));
+  current_max = (Float *)calloc(n, sizeof(Float));
 
   for (i = 0; i < n; i++)
     {
@@ -5625,13 +5625,13 @@ that give a minimum peak amplitude when the signals are added together."
     }
 
   for (i = 0; i < n; i++)
-    current_sum[i] = (double *)calloc(size, sizeof(double));
+    current_sum[i] = (Float *)calloc(size, sizeof(Float));
 
   best = 10000.0;
   cmax = fabs(sines[0][0]);
   for (i = 1; i < sizes[0]; i++) 
     {
-      double absv;
+      Float absv;
       absv = fabs(sines[0][i]); 
       if (absv > cmax) cmax = absv;
     }
