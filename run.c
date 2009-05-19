@@ -145,8 +145,8 @@
   /* 
    * TODO: locsig special output cases (copy outa)
    * TODO: try old benchmarks and make a new set
-   * TODO: and, or, cond optimized like if
-   * PERHAPS: subtract opts, simple outb opts, add_f2+random_f?
+   * TODO: or optimized like if
+   * PERHAPS: subtract opts, simple outb opts
    */
 
 
@@ -4154,6 +4154,88 @@ static int find_if_op(triple *prev_op)
 }
 
 
+static int if_jump_opt(ptree *prog, xen_value *jump_to_false, xen_value *if_value)
+{
+  bool jumped = false;
+  int current_pc;
+  current_pc = prog->triple_ctr;
+
+  if (prog->triple_ctr > 0)
+    {
+      triple *prev_op;
+      int loc;
+      prev_op = prog->program[prog->triple_ctr - 1];
+      if (prev_op->args[0] == if_value->addr)
+	{
+	  loc = find_if_op(prev_op);
+	  if (loc >= 0)
+	    {
+	      /* if it's "not", look at preceding op as well */
+	      if ((prev_op->function == not_b) &&
+		  (prog->triple_ctr > 1))
+		{
+		  triple *p2_op;
+		  int not_loc;
+		  p2_op = prog->program[prog->triple_ctr - 2];
+		  
+		  if (p2_op->args[0] == prev_op->args[1])
+		    {
+		      not_loc = find_if_op(p2_op);
+		      if ((not_loc >= 0) &&
+			  (p2_op->function != not_b) &&
+			  (p2_op->args[0] == prev_op->args[1]))
+			{
+			  p2_op->function = if_ops[not_loc].env_func;
+			  p2_op->op_name = if_ops[not_loc].env_func_name;
+			  p2_op->args[0] = jump_to_false->addr;
+			  p2_op->types[0] = R_INT;
+#if WITH_COUNTERS
+			  p2_op->func_loc = get_func_loc(p2_op->function, p2_op->op_name);
+#endif				  
+			  free_triple(prev_op);
+			  prog->triple_ctr--;
+			  current_pc = prog->triple_ctr - 1;
+			  jumped = true;
+			}
+		    }
+		}
+	      
+	      if (!jumped)
+		{
+		  prev_op->function = if_ops[loc].mult_func;
+		  prev_op->op_name = if_ops[loc].mult_func_name;
+		  prev_op->args[0] = jump_to_false->addr;
+		  prev_op->types[0] = R_INT;
+#if WITH_COUNTERS
+		  prev_op->func_loc = get_func_loc(prev_op->function, prev_op->op_name);
+#endif
+		  current_pc = prog->triple_ctr - 1;
+		  jumped = true;
+		  
+		  /* TODO: add these to snd-test */
+		  /* (let ((x 1) (y 2)) (run (lambda () (if (= x y) (+ x y) (- x y))))) */
+		  /* (let ((x 1) (y 2)) (run (lambda () (if (not (= x y 1)) 3 2)))) */
+		  /* (let ((x 1)) (run (lambda () (if (or (= x 2) (not (= x 3))) 3 2)))) */
+		  /* (let ((x 0) (y 1)) (run (lambda () (if (not (= x 1)) (if (not (= y 1)) 3 2) 1)))) */
+		  /* (let ((x 1) (y 2) (z #t)) (run (lambda () (= x y) (if z 1 0)))) */
+
+		  /* (let ((x 1)) (run (lambda () (cond ((= x 0) 1) ((= x 1) 2) ((= x 3) 3))))) */
+		  /* TODO: add side-effect tests to s7test */
+		}
+	    }
+	}
+    }
+  
+  if (!jumped)
+    {
+      current_pc = prog->triple_ctr;
+      add_triple_to_ptree(prog, va_make_triple(jump_if_not, "jump_if_not", 2, jump_to_false, if_value));
+    }
+
+  return(current_pc);
+}
+
+
 static xen_value *if_form(ptree *prog, XEN form, walk_result_t need_result)
 {
   /* form: (if selector true [false]) */
@@ -4194,81 +4276,7 @@ static xen_value *if_form(ptree *prog, XEN form, walk_result_t need_result)
     }
 
   jump_to_false = make_xen_value(R_INT, add_int_to_ptree(prog, 0), R_VARIABLE);
-
-  /* if preceding is equal_i2 etc, we can double up */
-  {
-    bool jumped = false;
-    if (prog->triple_ctr > 0)
-      {
-	triple *prev_op;
-	int loc;
-	prev_op = prog->program[prog->triple_ctr - 1];
-	if (prev_op->args[0] == if_value->addr)
-	  {
-	    loc = find_if_op(prev_op);
-	    if (loc >= 0)
-	      {
-		/* if it's "not", look at preceding op as well */
-		if ((prev_op->function == not_b) &&
-		    (prog->triple_ctr > 1))
-		  {
-		    triple *p2_op;
-		    int not_loc;
-		    p2_op = prog->program[prog->triple_ctr - 2];
-
-		    if (p2_op->args[0] == prev_op->args[1])
-		      {
-			not_loc = find_if_op(p2_op);
-			if ((not_loc >= 0) &&
-			    (p2_op->function != not_b) &&
-			    (p2_op->args[0] == prev_op->args[1]))
-			  {
-			    p2_op->function = if_ops[not_loc].env_func;
-			    p2_op->op_name = if_ops[not_loc].env_func_name;
-			    p2_op->args[0] = jump_to_false->addr;
-			    p2_op->types[0] = R_INT;
-#if WITH_COUNTERS
-			    p2_op->func_loc = get_func_loc(p2_op->function, p2_op->op_name);
-#endif				  
-			    free_triple(prev_op);
-			    prog->triple_ctr--;
-			    current_pc = prog->triple_ctr - 1;
-			    jumped = true;
-			  }
-		      }
-		  }
-		
-		if (!jumped)
-		  {
-		    prev_op->function = if_ops[loc].mult_func;
-		    prev_op->op_name = if_ops[loc].mult_func_name;
-		    prev_op->args[0] = jump_to_false->addr;
-		    prev_op->types[0] = R_INT;
-#if WITH_COUNTERS
-		    prev_op->func_loc = get_func_loc(prev_op->function, prev_op->op_name);
-#endif
-		    current_pc = prog->triple_ctr - 1;
-		    jumped = true;
-		    
-		    /* TODO: add these to snd-test */
-		    /* (let ((x 1) (y 2)) (run (lambda () (if (= x y) (+ x y) (- x y))))) */
-		    /* (let ((x 1) (y 2)) (run (lambda () (if (not (= x y 1)) 3 2)))) */
-		    /* (let ((x 1)) (run (lambda () (if (or (= x 2) (not (= x 3))) 3 2)))) */
-		    /* (let ((x 0) (y 1)) (run (lambda () (if (not (= x 1)) (if (not (= y 1)) 3 2) 1)))) */
-		    /* (let ((x 1) (y 2) (z #t)) (run (lambda () (= x y) (if z 1 0)))) */
-		    /* TODO: add side-effect tests to s7test */
-		  }
-	      }
-	  }
-      }
-
-    if (!jumped)
-      {
-	current_pc = prog->triple_ctr;
-	add_triple_to_ptree(prog, va_make_triple(jump_if_not, "jump_if_not", 2, jump_to_false, if_value));
-      }
-  }
-
+  current_pc = if_jump_opt(prog, jump_to_false, if_value);
   free(if_value);
 
   true_result = walk(prog, XEN_CADDR(form), need_result);                           /* walk true branch */
@@ -4411,10 +4419,9 @@ static xen_value *cond_form(ptree *prog, XEN form, walk_result_t need_result)
       local_len = XEN_LIST_LENGTH(local_clauses);
       if (local_len > 0)
 	{
-	  current_pc = prog->triple_ctr;
 	  jump_to_next_clause = make_xen_value(R_INT, add_int_to_ptree(prog, 0), R_VARIABLE);
-	  add_triple_to_ptree(prog, va_make_triple(jump_if_not, "jump_if_not", 2, jump_to_next_clause, test_value));
-	  /* TODO: follow if_form optimizations? */
+	  current_pc = if_jump_opt(prog, jump_to_next_clause, test_value);
+
 	  clause_value = walk_sequence(prog, local_clauses, need_result, "cond");
 	  if (clause_value == NULL)
 	    {
@@ -5089,9 +5096,9 @@ static xen_value *and_form(ptree *prog, XEN form, walk_result_t ignored)
 
       if (v->type != R_BOOL)
 	v = coerce_to_boolean(prog, v);
-      fixups[i] = make_xen_value(R_INT, add_int_to_ptree(prog, prog->triple_ctr), R_VARIABLE);
-      add_triple_to_ptree(prog, va_make_triple(jump_if_not, "jump_if_not", 2, fixups[i], v));
-      /* TODO: can't these be optimized just like if_form? */
+      fixups[i] = make_xen_value(R_INT, add_int_to_ptree(prog, 0), R_VARIABLE);
+      prog->ints[fixups[i]->addr] = if_jump_opt(prog, fixups[i], v);
+
       free(v);
     }
 

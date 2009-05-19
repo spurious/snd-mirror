@@ -34185,6 +34185,27 @@
 	     (num-test (ash 1267650600228229401496703205376 -100) 1)
 	     ))
   
+       (if (defined? 'most-positive-fixnum)
+	   (begin
+	     (test (> 0 most-negative-fixnum) #t)
+	     (test (> most-negative-fixnum 0) #f)
+	     (test (> most-positive-fixnum 0) #t)
+	     (test (> 0 most-positive-fixnum) #f)
+	     (test (> most-positive-fixnum most-negative-fixnum) #t)
+	     (test (> most-negative-fixnum most-positive-fixnum) #f)
+	     (test (< 0 most-negative-fixnum) #f)
+	     (test (< most-negative-fixnum 0) #t)
+	     (test (< most-positive-fixnum 0) #f)
+	     (test (< 0 most-positive-fixnum) #t)
+	     (test (< most-positive-fixnum most-negative-fixnum) #f)
+	     (test (< most-negative-fixnum most-positive-fixnum) #t)
+	     (test (negative? most-negative-fixnum) #t)
+	     (test (zero? most-negative-fixnum) #f)
+	     (test (zero? most-positive-fixnum) #f)
+	     (test (negative? most-positive-fixnum) #f)
+	     (test (= (+ most-negative-fixnum 1) (- most-positive-fixnum)) #t)
+	     ))
+
 
        ))
 

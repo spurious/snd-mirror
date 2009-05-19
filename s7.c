@@ -3478,9 +3478,15 @@ static bool num_gt(num a, num b)
 {
   /* the ">" operator here is a problem.
    *   we get different results depending on the gcc optimization level for cases like (< 1234/11 1234/11)
-   *   so, to keep ratios honest, we'll use num_sub and compare against 0
+   *   so, to keep ratios honest, we'll use num_sub and compare against 0.  But that can cause problems:
+   *   :(> 0 most-negative-fixnum)
+   *   #f
    */
   num val;
+  if ((num_type(a) == NUM_INT) && 
+      (num_type(b) == NUM_INT))
+    return(integer(a) > integer(b));
+
   val = num_sub(a, b);
   switch (num_type(val))
     {
@@ -3502,6 +3508,10 @@ static bool num_gt(num a, num b)
 static bool num_lt(num a, num b) 
 {
   num val;
+  if ((num_type(a) == NUM_INT) && 
+      (num_type(b) == NUM_INT))
+    return(integer(a) < integer(b));
+
   val = num_sub(a, b);
   switch (num_type(val))
     {
