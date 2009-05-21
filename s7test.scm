@@ -34204,6 +34204,13 @@
 	     (test (zero? most-positive-fixnum) #f)
 	     (test (negative? most-positive-fixnum) #f)
 	     (test (= (+ most-negative-fixnum 1) (- most-positive-fixnum)) #t)
+	     (test (= (abs (+ most-negative-fixnum 1)) most-positive-fixnum) #t)
+	     (test (= (+ most-negative-fixnum most-positive-fixnum) -1) #t)
+	     (test (even? most-positive-fixnum) #f)
+	     (test (odd? most-positive-fixnum) #t)
+	     (test (even? most-negative-fixnum) #t)
+	     (test (odd? most-negative-fixnum) #f)
+	     (test (integer? most-negative-fixnum) #t)
 	     ))
 
 

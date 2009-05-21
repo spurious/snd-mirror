@@ -142,13 +142,9 @@
     what about the thread stuff: only thread_variable in s7.h now
  */
 
-  /* 
-   * TODO: locsig special output cases (copy outa)
-   * TODO: try old benchmarks and make a new set
-   * TODO: or optimized like if
-   * PERHAPS: subtract opts, simple outb opts
-   */
-
+/* TODO: try old benchmarks and make a new set */
+/* TODO: ruby 1.9.1! */
+/* TODO: add side-effect tests to s7test */
 
 #define WITH_COUNTERS 0
 
@@ -3112,6 +3108,7 @@ static triple *va_make_triple(void (*function)(int *arg_addrs, ptree *pt),
 #define INT_ARG_3 pt->ints[args[3]]
 #define INT_ARG_4 pt->ints[args[4]]
 #define INT_ARG_5 pt->ints[args[5]]
+#define INT_ARG_6 pt->ints[args[6]]
 #define INT_ARG_OK(Arg) ((pt->ints) && ((pt->outer_tree) || ((args[Arg] >= 0) && (args[Arg] <= pt->int_ctr) && (args[Arg] < pt->ints_size))))
 
 #define FLOAT_RESULT pt->dbls[args[0]]
@@ -4106,7 +4103,7 @@ static void positive_f(int *args, ptree *pt);
 #define NUM_IF_OPS 29
 
 static opt_ops if_ops[NUM_IF_OPS] = {
-  {not_b, "not_b", jump_if, "jump_if", NULL, NULL},
+  {not_b, "not_b", jump_if, "jump_if", jump_if_not, "jump_if_not"},
 
   {equal_i2, "equal_i2", jump_if_not_equal_i2_rel, "jump_if_not_equal_i2_rel", jump_if_equal_i2_rel, "jump_if_equal_i2_rel"},
   {gt_i2, "gt_i2", jump_if_not_gt_i2_rel, "jump_if_not_gt_i2_rel", jump_if_gt_i2_rel, "jump_if_gt_i2_rel"},
@@ -4153,8 +4150,10 @@ static int find_if_op(triple *prev_op)
   return(-1);
 }
 
+#define JUMP_IF_FALSE false
+#define JUMP_IF_TRUE true
 
-static int if_jump_opt(ptree *prog, xen_value *jump_to_false, xen_value *if_value)
+static int if_jump_opt(ptree *prog, xen_value *jump_to_false, xen_value *if_value, bool jump_choice)
 {
   bool jumped = false;
   int current_pc;
@@ -4185,8 +4184,16 @@ static int if_jump_opt(ptree *prog, xen_value *jump_to_false, xen_value *if_valu
 			  (p2_op->function != not_b) &&
 			  (p2_op->args[0] == prev_op->args[1]))
 			{
-			  p2_op->function = if_ops[not_loc].env_func;
-			  p2_op->op_name = if_ops[not_loc].env_func_name;
+			  if (jump_choice == JUMP_IF_FALSE)
+			    {
+			      p2_op->function = if_ops[not_loc].env_func;
+			      p2_op->op_name = if_ops[not_loc].env_func_name;
+			    }
+			  else
+			    {
+			      p2_op->function = if_ops[not_loc].mult_func;
+			      p2_op->op_name = if_ops[not_loc].mult_func_name;
+			    }
 			  p2_op->args[0] = jump_to_false->addr;
 			  p2_op->types[0] = R_INT;
 #if WITH_COUNTERS
@@ -4202,8 +4209,16 @@ static int if_jump_opt(ptree *prog, xen_value *jump_to_false, xen_value *if_valu
 	      
 	      if (!jumped)
 		{
-		  prev_op->function = if_ops[loc].mult_func;
-		  prev_op->op_name = if_ops[loc].mult_func_name;
+		  if (jump_choice == JUMP_IF_FALSE)
+		    {
+		      prev_op->function = if_ops[loc].mult_func;
+		      prev_op->op_name = if_ops[loc].mult_func_name;
+		    }
+		  else
+		    {
+		      prev_op->function = if_ops[loc].env_func;
+		      prev_op->op_name = if_ops[loc].env_func_name;
+		    }
 		  prev_op->args[0] = jump_to_false->addr;
 		  prev_op->types[0] = R_INT;
 #if WITH_COUNTERS
@@ -4211,16 +4226,6 @@ static int if_jump_opt(ptree *prog, xen_value *jump_to_false, xen_value *if_valu
 #endif
 		  current_pc = prog->triple_ctr - 1;
 		  jumped = true;
-		  
-		  /* TODO: add these to snd-test */
-		  /* (let ((x 1) (y 2)) (run (lambda () (if (= x y) (+ x y) (- x y))))) */
-		  /* (let ((x 1) (y 2)) (run (lambda () (if (not (= x y 1)) 3 2)))) */
-		  /* (let ((x 1)) (run (lambda () (if (or (= x 2) (not (= x 3))) 3 2)))) */
-		  /* (let ((x 0) (y 1)) (run (lambda () (if (not (= x 1)) (if (not (= y 1)) 3 2) 1)))) */
-		  /* (let ((x 1) (y 2) (z #t)) (run (lambda () (= x y) (if z 1 0)))) */
-
-		  /* (let ((x 1)) (run (lambda () (cond ((= x 0) 1) ((= x 1) 2) ((= x 3) 3))))) */
-		  /* TODO: add side-effect tests to s7test */
 		}
 	    }
 	}
@@ -4229,7 +4234,9 @@ static int if_jump_opt(ptree *prog, xen_value *jump_to_false, xen_value *if_valu
   if (!jumped)
     {
       current_pc = prog->triple_ctr;
-      add_triple_to_ptree(prog, va_make_triple(jump_if_not, "jump_if_not", 2, jump_to_false, if_value));
+      if (jump_choice == JUMP_IF_FALSE)
+	add_triple_to_ptree(prog, va_make_triple(jump_if_not, "jump_if_not", 2, jump_to_false, if_value));
+      else add_triple_to_ptree(prog, va_make_triple(jump_if, "jump_if", 2, jump_to_false, if_value));
     }
 
   return(current_pc);
@@ -4276,7 +4283,7 @@ static xen_value *if_form(ptree *prog, XEN form, walk_result_t need_result)
     }
 
   jump_to_false = make_xen_value(R_INT, add_int_to_ptree(prog, 0), R_VARIABLE);
-  current_pc = if_jump_opt(prog, jump_to_false, if_value);
+  current_pc = if_jump_opt(prog, jump_to_false, if_value, JUMP_IF_FALSE);
   free(if_value);
 
   true_result = walk(prog, XEN_CADDR(form), need_result);                           /* walk true branch */
@@ -4420,7 +4427,7 @@ static xen_value *cond_form(ptree *prog, XEN form, walk_result_t need_result)
       if (local_len > 0)
 	{
 	  jump_to_next_clause = make_xen_value(R_INT, add_int_to_ptree(prog, 0), R_VARIABLE);
-	  current_pc = if_jump_opt(prog, jump_to_next_clause, test_value);
+	  current_pc = if_jump_opt(prog, jump_to_next_clause, test_value, JUMP_IF_FALSE);
 
 	  clause_value = walk_sequence(prog, local_clauses, need_result, "cond");
 	  if (clause_value == NULL)
@@ -5027,9 +5034,10 @@ static xen_value *or_form(ptree *prog, XEN form, walk_result_t ignored)
 
       if (v->type != R_BOOL)
 	v = coerce_to_boolean(prog, v);
-      fixups[i] = make_xen_value(R_INT, add_int_to_ptree(prog, prog->triple_ctr), R_VARIABLE);
-      add_triple_to_ptree(prog, va_make_triple(jump_if, "jump_if", 2, fixups[i], v));
-      /* TODO: if_form opts reversed here? */
+
+      fixups[i] = make_xen_value(R_INT, add_int_to_ptree(prog, 0), R_VARIABLE);
+      prog->ints[fixups[i]->addr] = if_jump_opt(prog, fixups[i], v, JUMP_IF_TRUE);
+
       free(v);
     }
 
@@ -5097,7 +5105,7 @@ static xen_value *and_form(ptree *prog, XEN form, walk_result_t ignored)
       if (v->type != R_BOOL)
 	v = coerce_to_boolean(prog, v);
       fixups[i] = make_xen_value(R_INT, add_int_to_ptree(prog, 0), R_VARIABLE);
-      prog->ints[fixups[i]->addr] = if_jump_opt(prog, fixups[i], v);
+      prog->ints[fixups[i]->addr] = if_jump_opt(prog, fixups[i], v, JUMP_IF_FALSE);
 
       free(v);
     }
@@ -6269,6 +6277,11 @@ static void subtract_i_f(int *args, ptree *pt) {FLOAT_RESULT = (INT_ARG_1 - FLOA
 
 static void subtract_f_i(int *args, ptree *pt) {FLOAT_RESULT = (FLOAT_ARG_1 - INT_ARG_2);}
 
+static void subtract_mult_1f(int *args, ptree *pt) {FLOAT_RESULT = (FLOAT_ARG_1 * FLOAT_ARG_2) - FLOAT_ARG_3;}
+/* (let ((x 1.0) (y 2.0) (z 3.0)) (run (lambda () (- (* y z) x)))) */
+static void subtract_mult_2f(int *args, ptree *pt) {FLOAT_RESULT = FLOAT_ARG_3 - (FLOAT_ARG_1 * FLOAT_ARG_2);}
+/* (let ((x 1.0) (y 2.0) (z 3.0)) (run (lambda () (- x (* y z))))) */
+
 
 static xen_value *subtract(ptree *prog, xen_value **args, int num_args)
 {
@@ -6337,18 +6350,37 @@ static xen_value *subtract(ptree *prog, xen_value **args, int num_args)
       if (num_args == 1) return(package(prog, R_FLOAT, subtract_f1, "subtract_f1", args, num_args));
       if (num_args == 2) 
 	{
-#if 0
-	  /* multiply_f2|3 random_f store_i_f  store_f vct_ref_f sqrt_f abs_f add_f2 mixer_ref_0r cos_f  divide_f2 cos_f_mult */
-      if (prog->triple_ctr > 0)
-	{
-	  triple *prev_op;
-	  prev_op = prog->program[prog->triple_ctr - 1];
-	  if (((prev_op->args[0] == args[1]->addr) ||
-	       (prev_op->args[0] == args[2]->addr)) &&
-	      ((find_var_in_ptree_via_addr(prog, R_INT, prev_op->args[0])) == NULL))
-	    fprintf(stderr, "subtract_f2 skip %s\n", prev_op->op_name);
-	}
-#endif
+	  if (prog->triple_ctr > 0)
+	    {
+	      triple *prev_op;
+	      prev_op = prog->program[prog->triple_ctr - 1];
+	      if ((prev_op->function == multiply_f2) &&
+		  ((prev_op->args[0] == args[1]->addr) || (prev_op->args[0] == args[2]->addr)) &&
+		  ((find_var_in_ptree_via_addr(prog, R_FLOAT, prev_op->args[0])) == NULL))
+		{
+		  prev_op->types = (int *)realloc(prev_op->types, 4 * sizeof(int));
+		  prev_op->args = (int *)realloc(prev_op->args, 4 * sizeof(int));
+		  prev_op->num_args = 4;
+		  if (prev_op->args[0] == args[1]->addr)
+		    {
+		      prev_op->function = subtract_mult_1f;
+		      prev_op->op_name = "subtract_mult_1f";
+		      prev_op->args[3] = args[2]->addr;
+		    }
+		  else
+		    {
+		      prev_op->function = subtract_mult_2f;
+		      prev_op->op_name = "subtract_mult_2f";
+		      prev_op->args[3] = args[1]->addr;
+		    }
+		  prev_op->types[3] = R_FLOAT;
+#if WITH_COUNTERS
+		  prev_op->func_loc = get_func_loc(prev_op->function, prev_op->op_name);
+#endif				  
+		  return(make_xen_value(R_FLOAT, prev_op->args[0], R_TEMPORARY));
+		}
+	    }
+
 	return(package(prog, R_FLOAT, subtract_f2, "subtract_f2", args, num_args));
 	}
       if (num_args == 3) return(package(prog, R_FLOAT, subtract_f3, "subtract_f3", args, num_args));
@@ -6357,22 +6389,7 @@ static xen_value *subtract(ptree *prog, xen_value **args, int num_args)
     }
 
   if (num_args == 1) return(package(prog, R_INT, subtract_i1, "subtract_i1", args, num_args));
-  if (num_args == 2) 
-    {
-#if 0
-      /* i2e_i subtract_i2 add_i3 */
-      if (prog->triple_ctr > 0)
-	{
-	  triple *prev_op;
-	  prev_op = prog->program[prog->triple_ctr - 1];
-	  if (((prev_op->args[0] == args[1]->addr) ||
-	       (prev_op->args[0] == args[2]->addr)) &&
-	      ((find_var_in_ptree_via_addr(prog, R_INT, prev_op->args[0])) == NULL))
-	    fprintf(stderr, "subtract_i2 skip %s\n", prev_op->op_name);
-	}
-#endif
-      return(package(prog, R_INT, subtract_i2, "subtract_i2", args, num_args));
-    }
+  if (num_args == 2) return(package(prog, R_INT, subtract_i2, "subtract_i2", args, num_args));
   if (num_args == 3) return(package(prog, R_INT, subtract_i3, "subtract_i3", args, num_args));
   if (num_args == 4) return(package(prog, R_INT, subtract_i4, "subtract_i4", args, num_args));
   return(package_n(prog, R_INT, subtract_in, "subtract_in", args, num_args));
@@ -7190,6 +7207,7 @@ static void single_to_float(ptree *prog, xen_value **args, int num)
 
 #define FL_OP(CName) \
 static void CName ## _f(int *args, ptree *pt) {FLOAT_RESULT = CName(FLOAT_ARG_1);} \
+static void CName ## _f_i(int *args, ptree *pt) {FLOAT_RESULT = CName((double)(INT_ARG_1));} \
 static xen_value * CName ## _1(ptree *prog, xen_value **args, int num_args) \
 { \
   if (prog->constants == 1) \
@@ -7198,7 +7216,7 @@ static xen_value * CName ## _1(ptree *prog, xen_value **args, int num_args) \
 	return(make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, CName((Double)(prog->ints[args[1]->addr]))), R_CONSTANT)); \
       else return(make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, CName(prog->dbls[args[1]->addr])), R_CONSTANT)); \
     } \
-  if (args[1]->type == R_INT) single_to_float(prog, args, 1); \
+  if (args[1]->type == R_INT) return(package(prog, R_FLOAT, CName ## _f_i, #CName "_f_i", args, 1)); \
   return(package(prog, R_FLOAT, CName ## _f, #CName "_f", args, 1)); \
 }
 
@@ -7890,7 +7908,9 @@ static xen_value *ash_1(ptree *prog, xen_value **args, int num_args)
 /* ---------------- expt ---------------- */
 
 static void expt_f(int *args, ptree *pt) {FLOAT_RESULT = pow(FLOAT_ARG_1, FLOAT_ARG_2);}
-
+static void expt_f_i(int *args, ptree *pt) {FLOAT_RESULT = pow(FLOAT_ARG_1, (double)(INT_ARG_2));}
+static void expt_i_f(int *args, ptree *pt) {FLOAT_RESULT = pow((double)(INT_ARG_1), FLOAT_ARG_2);}
+static void expt_i_i(int *args, ptree *pt) {FLOAT_RESULT = pow((double)(INT_ARG_1), (double)(INT_ARG_2));}
 
 static xen_value *expt_1(ptree *prog, xen_value **args, int num_args)
 {
@@ -7902,8 +7922,17 @@ static xen_value *expt_1(ptree *prog, xen_value **args, int num_args)
       if (args[2]->type == R_INT) f2 = (Double)(prog->ints[args[2]->addr]); else f2 = prog->dbls[args[2]->addr];
       return(make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, pow(f1, f2)), R_CONSTANT));
     }
-  if (args[1]->type == R_INT) single_to_float(prog, args, 1);
-  if (args[2]->type == R_INT) single_to_float(prog, args, 2);
+  if (args[1]->type == R_INT) 
+    {
+      if (args[2]->type == R_INT) 
+	return(package(prog, R_FLOAT, expt_i_i, "expt_i_i", args, 2));
+      return(package(prog, R_FLOAT, expt_i_f, "expt_i_f", args, 2));
+    }
+  else
+    {
+      if (args[2]->type == R_INT)
+	return(package(prog, R_FLOAT, expt_f_i, "expt_f_i", args, 2));
+    }
   return(package(prog, R_FLOAT, expt_f, "expt_f", args, 2));
 }
 
@@ -8718,6 +8747,17 @@ static void outa_funcall_cf2(int *args, ptree *pt)
   pt->dbls[func->args[1]] = pt->dbls[args[5]]; 
   eval_embedded_ptree(func, pt);  
   mus_out_any(INT_ARG_1, pt->dbls[func->result->addr], 0, CLM_ARG_3);
+}
+
+
+static void outb_funcall_cf2(int *args, ptree *pt)
+{
+  ptree *func;
+  func = ((ptree **)(pt->fncs))[args[4]];
+  pt->lists[func->args[0]] = pt->lists[args[2]]; 
+  pt->dbls[func->args[1]] = pt->dbls[args[5]]; 
+  eval_embedded_ptree(func, pt);  
+  mus_out_any(INT_ARG_1, pt->dbls[func->result->addr], 1, CLM_ARG_3);
 }
 
 
@@ -9978,6 +10018,8 @@ static void vector_ref_c(int *args, ptree *pt) {CLM_RESULT = VECT_ARG_1->data.ge
 
 static void vector_ref_l(int *args, ptree *pt) {LIST_RESULT = VECT_ARG_1->data.lists[INT_ARG_2];}
 
+static void vector_add_i2(int *args, ptree *pt) {FLOAT_RESULT = VCT_ARG_1->data[INT_ARG_2 + INT_ARG_3];}
+static void vector_subtract_i2(int *args, ptree *pt) {FLOAT_RESULT = VCT_ARG_1->data[INT_ARG_3 - INT_ARG_2];}
 
 static xen_value *vector_ref_1(ptree *prog, xen_value **args, int num_args)
 {
@@ -9992,6 +10034,41 @@ static xen_value *vector_ref_1(ptree *prog, xen_value **args, int num_args)
 	    return(package(prog, R_FLOAT, vector_ref_f1, "vector_ref_f1", args, 2));
 	  if (prog->ints[args[2]->addr] == 2)
 	    return(package(prog, R_FLOAT, vector_ref_f2, "vector_ref_f2", args, 2));
+	}
+      if (prog->triple_ctr > 0)
+	{
+	  triple *prev_op;
+	  prev_op = prog->program[prog->triple_ctr - 1];
+	  if ((prev_op->args[0] == args[2]->addr) &&
+	      ((prev_op->function == add_i2) || (prev_op->function == subtract_i2)) &&
+	      ((find_var_in_ptree_via_addr(prog, R_INT, prev_op->args[0])) == NULL))
+	    {
+	      xen_value *new0;
+	      new0 = add_temporary_var_to_ptree(prog, R_FLOAT);  
+	      prev_op->types = (int *)realloc(prev_op->types, 4 * sizeof(int));
+	      prev_op->args = (int *)realloc(prev_op->args, 4 * sizeof(int));
+	      prev_op->args[3] = prev_op->args[1];
+	      prev_op->types[3] = prev_op->types[1];
+	      prev_op->args[1] = args[1]->addr;
+	      prev_op->types[1] = R_FLOAT_VECTOR;
+	      prev_op->num_args = 4;
+	      prev_op->args[0] = new0->addr;
+	      prev_op->types[0] = R_FLOAT;
+	      if (prev_op->function == add_i2)
+		{
+		  prev_op->function = vector_add_i2;
+		  prev_op->op_name = "vector_add_i2";
+		}
+	      else
+		{
+		  prev_op->function = vector_subtract_i2;
+		  prev_op->op_name = "vector_subtract_i2";
+		}
+#if WITH_COUNTERS
+	      prev_op->func_loc = get_func_loc(prev_op->function, prev_op->op_name);
+#endif				  
+	      return(new0);
+	    }
 	}
       return(package(prog, R_FLOAT, vector_ref_f, "vector_ref_f", args, 2)); 
       break;
@@ -10142,6 +10219,9 @@ static void vct_ref_f(int *args, ptree *pt) {FLOAT_RESULT = VCT_ARG_1->data[INT_
 static void vct_ref_f_mult(int *args, ptree *pt) {FLOAT_RESULT = FLOAT_ARG_3 * VCT_ARG_1->data[INT_ARG_2];}
 static void vct_ref_f_add(int *args, ptree *pt) {FLOAT_RESULT = FLOAT_ARG_3 + VCT_ARG_1->data[INT_ARG_2];}
 
+static void vct_add_i2(int *args, ptree *pt) {FLOAT_RESULT = VCT_ARG_1->data[INT_ARG_2 + INT_ARG_3];}
+static void vct_subtract_i2(int *args, ptree *pt) {FLOAT_RESULT = VCT_ARG_1->data[INT_ARG_3 - INT_ARG_2];}
+
 static xen_value *vct_ref_1(ptree *prog, xen_value **args, int num_args)
 {
   if (args[2]->constant == R_CONSTANT)
@@ -10154,6 +10234,41 @@ static xen_value *vct_ref_1(ptree *prog, xen_value **args, int num_args)
 	return(package(prog, R_FLOAT, vct_constant_ref_2, "vct_constant_ref_2", args, 1));
       if (prog->ints[args[2]->addr] == 3)
 	return(package(prog, R_FLOAT, vct_constant_ref_3, "vct_constant_ref_3", args, 1));
+    }
+  if (prog->triple_ctr > 0)
+    {
+      triple *prev_op;
+      prev_op = prog->program[prog->triple_ctr - 1];
+      if ((prev_op->args[0] == args[2]->addr) &&
+	  ((prev_op->function == add_i2) || (prev_op->function == subtract_i2)) &&
+	  ((find_var_in_ptree_via_addr(prog, R_INT, prev_op->args[0])) == NULL))
+	{
+	  xen_value *new0;
+	  new0 = add_temporary_var_to_ptree(prog, R_FLOAT);  
+	  prev_op->types = (int *)realloc(prev_op->types, 4 * sizeof(int));
+	  prev_op->args = (int *)realloc(prev_op->args, 4 * sizeof(int));
+	  prev_op->args[3] = prev_op->args[1];
+	  prev_op->types[3] = prev_op->types[1];
+	  prev_op->args[1] = args[1]->addr;
+	  prev_op->types[1] = R_VCT;
+	  prev_op->args[0] = new0->addr;
+	  prev_op->types[0] = R_FLOAT;
+	  prev_op->num_args = 4;
+	  if (prev_op->function == add_i2)
+	    {
+	      prev_op->function = vct_add_i2;
+	      prev_op->op_name = "vct_add_i2";
+	    }
+	  else
+	    {
+	      prev_op->function = vct_subtract_i2;
+	      prev_op->op_name = "vct_subtract_i2";
+	    }
+#if WITH_COUNTERS
+	  prev_op->func_loc = get_func_loc(prev_op->function, prev_op->op_name);
+#endif				  
+	  return(new0);
+	}
     }
   return(package(prog, R_FLOAT, vct_ref_f, "vct_ref_f", args, 2));
 }
@@ -11124,6 +11239,12 @@ static void env_linear_0f_mult(int *args, ptree *pt) {FLOAT_RESULT = FLOAT_ARG_2
 static void env_linear_0f_env(int *args, ptree *pt) {FLOAT_RESULT = mus_env_linear(CLM_ARG_2) * mus_env_linear(CLM_ARG_1);}  
 static void env_exponential_0f(int *args, ptree *pt) {FLOAT_RESULT = mus_env_exponential(CLM_ARG_1);}  
 
+static void env_linear_2f(int *args, ptree *pt) 
+{
+  FLOAT_RESULT = mus_env_linear(CLM_ARG_1); /* the original (prev_op) */
+  FLOAT_ARG_2 = mus_env_linear(CLM_ARG_3);  /* 2nd (independent, arg[0] -> arg[2], arg[1] -> arg[3]) */
+}  
+
 
 static xen_value *env_1(ptree *prog, xen_value **args, int num_args)
 {
@@ -11140,10 +11261,37 @@ static xen_value *env_1(ptree *prog, xen_value **args, int num_args)
 
       /* if it's a constant, return its value as in (+ 1 2) */
       if (env_is_constant(e))
-	return(make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, mus_env(e)), R_CONSTANT));
+	return(make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, mus_env(e)), R_CONSTANT)); /* this assumes no set scaler/offset etc */
 
       if (style == MUS_ENV_LINEAR)
-	return(package(prog, R_FLOAT, env_linear_0f, "env_linear_0f", args, 1));
+	{
+	  if (prog->triple_ctr > 0)
+	    {
+	      triple *prev_op;
+	      xen_value *new0;
+	      prev_op = prog->program[prog->triple_ctr - 1];
+	      if (prev_op->function == env_linear_0f)
+		{
+		  prev_op->types = (int *)realloc(prev_op->types, 4 * sizeof(int));
+		  prev_op->args = (int *)realloc(prev_op->args, 4 * sizeof(int));
+		  prev_op->num_args = 4;
+		  prev_op->function = env_linear_2f;
+		  prev_op->op_name = "env_linear_2f";
+#if WITH_COUNTERS
+		  prev_op->func_loc = get_func_loc(prev_op->function, prev_op->op_name);
+#endif				  
+		  new0 = add_temporary_var_to_ptree(prog, R_FLOAT);
+		  prev_op->args[2] = new0->addr;
+		  prev_op->types[2] = R_FLOAT;
+		  prev_op->args[3] = args[1]->addr;
+		  prev_op->types[3] = R_CLM;
+		  return(new0);
+		}
+	    }
+
+	  return(package(prog, R_FLOAT, env_linear_0f, "env_linear_0f", args, 1));
+	}
+
       if (style == MUS_ENV_EXPONENTIAL)
 	return(package(prog, R_FLOAT, env_exponential_0f, "env_exponential_0f", args, 1));
     }
@@ -11195,6 +11343,12 @@ static void comb_2f(int *args, ptree *pt) {FLOAT_RESULT = mus_comb(CLM_ARG_1, FL
 static void comb_0f_noz(int *args, ptree *pt) {FLOAT_RESULT = mus_comb_unmodulated_noz(CLM_ARG_1, 0.0);}
 static void comb_1f_noz(int *args, ptree *pt) {FLOAT_RESULT = mus_comb_unmodulated_noz(CLM_ARG_1, FLOAT_ARG_2);}
 
+static void comb_2_noz(int *args, ptree *pt) 
+{
+  FLOAT_RESULT = mus_comb_unmodulated_noz(CLM_ARG_1, FLOAT_ARG_2);
+  FLOAT_ARG_3 = mus_comb_unmodulated_noz(CLM_ARG_4, FLOAT_ARG_5);
+}
+
 GEN_P(comb)
 
 static xen_value *comb_1(ptree *prog, xen_value **args, int num_args)
@@ -11207,9 +11361,36 @@ static xen_value *comb_1(ptree *prog, xen_value **args, int num_args)
       (mus_safety(prog->clms[args[1]->addr]) == 0))
     {
       if (num_args == 1) return(package(prog, R_FLOAT, comb_0f_noz, "comb_0f_noz", args, 1));
-      if (num_args == 2) return(package(prog, R_FLOAT, comb_1f_noz, "comb_1f_noz", args, 2));
+      if (num_args == 2) 
+	{
+	  if (prog->triple_ctr > 0)
+	    {
+	      triple *prev_op;
+	      xen_value *new0;
+	      prev_op = prog->program[prog->triple_ctr - 1];
+	      if (prev_op->function == comb_1f_noz)
+		{
+		  prev_op->types = (int *)realloc(prev_op->types, 6 * sizeof(int));
+		  prev_op->args = (int *)realloc(prev_op->args, 6 * sizeof(int));
+		  prev_op->num_args = 6;
+		  prev_op->function = comb_2_noz;
+		  prev_op->op_name = "comb_2_noz";
+#if WITH_COUNTERS
+		  prev_op->func_loc = get_func_loc(prev_op->function, prev_op->op_name);
+#endif				  
+		  new0 = add_temporary_var_to_ptree(prog, R_FLOAT);
+		  prev_op->args[3] = new0->addr;
+		  prev_op->types[3] = R_FLOAT;
+		  prev_op->args[4] = args[1]->addr;
+		  prev_op->types[4] = R_CLM;
+		  prev_op->args[5] = args[2]->addr;
+		  prev_op->types[5] = R_FLOAT;
+		  return(new0);
+		}
+	    }
+	  return(package(prog, R_FLOAT, comb_1f_noz, "comb_1f_noz", args, 2));
+	}
     }
-
   if (num_args == 1) return(package(prog, R_FLOAT, comb_0f, "comb_0f", args, 1));
   if (num_args == 2) return(package(prog, R_FLOAT, comb_1f, "comb_1f", args, 2));
   return(package(prog, R_FLOAT, comb_2f, "comb_2f", args, 3)); 
@@ -11251,6 +11432,12 @@ static void all_pass_2f(int *args, ptree *pt) {FLOAT_RESULT = mus_all_pass(CLM_A
 static void all_pass_0f_noz(int *args, ptree *pt) {FLOAT_RESULT = mus_all_pass_unmodulated_noz(CLM_ARG_1, 0.0);}
 static void all_pass_1f_noz(int *args, ptree *pt) {FLOAT_RESULT = mus_all_pass_unmodulated_noz(CLM_ARG_1, FLOAT_ARG_2);}
 
+static void all_pass_2_noz(int *args, ptree *pt) 
+{
+  FLOAT_RESULT = mus_all_pass_unmodulated_noz(CLM_ARG_1, FLOAT_ARG_2);
+  FLOAT_ARG_3 = mus_all_pass_unmodulated_noz(CLM_ARG_4, FLOAT_ARG_5);
+}
+
 GEN_P(all_pass)
 
 static xen_value *all_pass_1(ptree *prog, xen_value **args, int num_args)
@@ -11263,7 +11450,35 @@ static xen_value *all_pass_1(ptree *prog, xen_value **args, int num_args)
       (mus_safety(prog->clms[args[1]->addr]) == 0))
     {
       if (num_args == 1) return(package(prog, R_FLOAT, all_pass_0f_noz, "all_pass_0f_noz", args, 1));
-      if (num_args == 2) return(package(prog, R_FLOAT, all_pass_1f_noz, "all_pass_1f_noz", args, 2));
+      if (num_args == 2) 
+	{
+	  if (prog->triple_ctr > 0)
+	    {
+	      triple *prev_op;
+	      xen_value *new0;
+	      prev_op = prog->program[prog->triple_ctr - 1];
+	      if (prev_op->function == all_pass_1f_noz)
+		{
+		  prev_op->types = (int *)realloc(prev_op->types, 6 * sizeof(int));
+		  prev_op->args = (int *)realloc(prev_op->args, 6 * sizeof(int));
+		  prev_op->num_args = 6;
+		  prev_op->function = all_pass_2_noz;
+		  prev_op->op_name = "all_pass_2_noz";
+#if WITH_COUNTERS
+		  prev_op->func_loc = get_func_loc(prev_op->function, prev_op->op_name);
+#endif				  
+		  new0 = add_temporary_var_to_ptree(prog, R_FLOAT);
+		  prev_op->args[3] = new0->addr;
+		  prev_op->types[3] = R_FLOAT;
+		  prev_op->args[4] = args[1]->addr;
+		  prev_op->types[4] = R_CLM;
+		  prev_op->args[5] = args[2]->addr;
+		  prev_op->types[5] = R_FLOAT;
+		  return(new0);
+		}
+	    }
+	  return(package(prog, R_FLOAT, all_pass_1f_noz, "all_pass_1f_noz", args, 2));
+	}
     }
 
   if (num_args == 1) return(package(prog, R_FLOAT, all_pass_0f, "all_pass_0f", args, 1));
@@ -11383,7 +11598,7 @@ static xen_value *polywave_1(ptree *prog, xen_value **args, int num_args)
 	}
     }
   
-  /* splitting out the "kind" check does not help (I tried this twice!) */
+  /* splitting out the "kind" check does not help (I tried this three times and still can't believe it) */
   if (one_arg)
     return(package(prog, R_FLOAT, polywave_0f, "polywave_0f", args, 1));
   return(package(prog, R_FLOAT, polywave_1f, "polywave_1f", args, 2));
@@ -12019,20 +12234,55 @@ static void locsig_3(int *args, ptree *pt)
 
 static void locsig_3f(int *args, ptree *pt) {mus_locsig(CLM_ARG_1, INT_ARG_2, FLOAT_ARG_3);}
 
-static void locsig_3f_mono_no_rev(int *args, ptree *pt)        {mus_locsig_mono_no_reverb(       CLM_ARG_1, INT_ARG_2, FLOAT_ARG_3);}
-static void locsig_3f_mono(int *args, ptree *pt)               {mus_locsig_mono(                 CLM_ARG_1, INT_ARG_2, FLOAT_ARG_3);}
-static void locsig_3f_stereo_no_rev(int *args, ptree *pt)      {mus_locsig_stereo_no_reverb(     CLM_ARG_1, INT_ARG_2, FLOAT_ARG_3);}
-static void locsig_3f_stereo(int *args, ptree *pt)             {mus_locsig_stereo(               CLM_ARG_1, INT_ARG_2, FLOAT_ARG_3);}
-static void locsig_3f_safe_mono_no_rev(int *args, ptree *pt)   {mus_locsig_safe_mono_no_reverb(  CLM_ARG_1, INT_ARG_2, FLOAT_ARG_3);}
-static void locsig_3f_safe_mono(int *args, ptree *pt)          {mus_locsig_safe_mono(            CLM_ARG_1, INT_ARG_2, FLOAT_ARG_3);}
+static void locsig_3f_mono_no_rev(int *args, ptree *pt)        {mus_locsig_mono_no_reverb       (CLM_ARG_1, INT_ARG_2, FLOAT_ARG_3);}
+static void locsig_3f_mono(int *args, ptree *pt)               {mus_locsig_mono                 (CLM_ARG_1, INT_ARG_2, FLOAT_ARG_3);}
+static void locsig_3f_stereo_no_rev(int *args, ptree *pt)      {mus_locsig_stereo_no_reverb     (CLM_ARG_1, INT_ARG_2, FLOAT_ARG_3);}
+static void locsig_3f_stereo(int *args, ptree *pt)             {mus_locsig_stereo               (CLM_ARG_1, INT_ARG_2, FLOAT_ARG_3);}
+static void locsig_3f_safe_mono_no_rev(int *args, ptree *pt)   {mus_locsig_safe_mono_no_reverb  (CLM_ARG_1, INT_ARG_2, FLOAT_ARG_3);}
+static void locsig_3f_safe_mono(int *args, ptree *pt)          {mus_locsig_safe_mono            (CLM_ARG_1, INT_ARG_2, FLOAT_ARG_3);}
 static void locsig_3f_safe_stereo_no_rev(int *args, ptree *pt) {mus_locsig_safe_stereo_no_reverb(CLM_ARG_1, INT_ARG_2, FLOAT_ARG_3);}
-static void locsig_3f_safe_stereo(int *args, ptree *pt)        {mus_locsig_safe_stereo(          CLM_ARG_1, INT_ARG_2, FLOAT_ARG_3);}
+static void locsig_3f_safe_stereo(int *args, ptree *pt)        {mus_locsig_safe_stereo          (CLM_ARG_1, INT_ARG_2, FLOAT_ARG_3);}
 
-#if 0
-typedef void (*loc_op)(int *args, ptree *pt);
-static loc_op loc_ops[2][2][2][NUM_LOC_OPS]; /* indexed: [out_chans][rev_chans][is_safe][op] */
-/* or handle it as bits: op + (out_chans + (rev_chans * 2) + (is_safe * 4)) * NUM_OPS */
-#endif
+static void locsig_v_mono_no_rev(int *args, ptree *pt) 
+{
+  mus_locsig_mono_no_reverb(CLM_ARG_5, INT_ARG_6, FLOAT_ARG_4 * mus_oscil_fm(CLM_ARG_1, FLOAT_ARG_2 + FLOAT_ARG_3));
+}
+
+static void locsig_v_mono(int *args, ptree *pt) 
+{
+  mus_locsig_mono(CLM_ARG_5, INT_ARG_6, FLOAT_ARG_4 * mus_oscil_fm(CLM_ARG_1, FLOAT_ARG_2 + FLOAT_ARG_3));
+}
+
+static void locsig_v_stereo_no_rev(int *args, ptree *pt) 
+{
+  mus_locsig_stereo_no_reverb(CLM_ARG_5, INT_ARG_6, FLOAT_ARG_4 * mus_oscil_fm(CLM_ARG_1, FLOAT_ARG_2 + FLOAT_ARG_3));
+}
+
+static void locsig_v_stereo(int *args, ptree *pt) 
+{
+  mus_locsig_stereo(CLM_ARG_5, INT_ARG_6, FLOAT_ARG_4 * mus_oscil_fm(CLM_ARG_1, FLOAT_ARG_2 + FLOAT_ARG_3));
+}
+
+static void locsig_v_safe_mono_no_rev(int *args, ptree *pt) 
+{
+  mus_locsig_safe_mono_no_reverb(CLM_ARG_5, INT_ARG_6, FLOAT_ARG_4 * mus_oscil_fm(CLM_ARG_1, FLOAT_ARG_2 + FLOAT_ARG_3));
+}
+
+static void locsig_v_safe_mono(int *args, ptree *pt) 
+{
+  mus_locsig_safe_mono(CLM_ARG_5, INT_ARG_6, FLOAT_ARG_4 * mus_oscil_fm(CLM_ARG_1, FLOAT_ARG_2 + FLOAT_ARG_3));
+}
+
+static void locsig_v_safe_stereo_no_rev(int *args, ptree *pt) 
+{
+  mus_locsig_safe_stereo_no_reverb(CLM_ARG_5, INT_ARG_6, FLOAT_ARG_4 * mus_oscil_fm(CLM_ARG_1, FLOAT_ARG_2 + FLOAT_ARG_3));
+}
+
+static void locsig_v_safe_stereo(int *args, ptree *pt) 
+{
+  mus_locsig_safe_stereo(CLM_ARG_5, INT_ARG_6, FLOAT_ARG_4 * mus_oscil_fm(CLM_ARG_1, FLOAT_ARG_2 + FLOAT_ARG_3));
+}
+
 
 static xen_value *locsig_1(ptree *prog, xen_value **args, int num_args) 
 {
@@ -12052,17 +12302,60 @@ static xen_value *locsig_1(ptree *prog, xen_value **args, int num_args)
 	  /* locsig "environ" not set (clm2xen.c) so there's nothing special about the outputs */
 	  direct = (mus_locsig_safety(g) == 1);
 
-#if 0
-	  /* oscil_1f_2_mult (5) (fmv),  multiply_f3(4) f2(3), add_f4(5) f3(4) f2(3), = 48 procs! */
+	  /* oscil_1f_2_mult|env (5) (fmv),  multiply_f3(4) f2(3), add_f4(5) f3(4) f2(3), = 48 procs! */
 	  if (prog->triple_ctr > 0)
 	    {
 	      triple *prev_op;
 	      prev_op = prog->program[prog->triple_ctr - 1];
 	      if ((prev_op->args[0] == args[3]->addr) &&
+		  (prev_op->function == oscil_1f_2_mult) &&
+		  (mus_locsig_channels(g) <= 2) &&
+		  (mus_locsig_reverb_channels(g) <= 1) &&
 		  ((find_var_in_ptree_via_addr(prog, R_FLOAT, prev_op->args[0])) == NULL))
-		fprintf(stderr, "locsig %s (%d), rev: %d, out: %d\n", prev_op->op_name, prev_op->num_args, mus_locsig_reverb_channels(g), mus_locsig_channels(g));
+		{
+		  /* an experiment */
+
+		  prev_op->types = (int *)realloc(prev_op->types, 7 * sizeof(int));
+		  prev_op->args = (int *)realloc(prev_op->args, 7 * sizeof(int));
+		  prev_op->num_args = 7;
+		  prev_op->types[5] = R_CLM;
+		  prev_op->args[5] = args[1]->addr;
+		  prev_op->types[6] = R_INT;
+		  prev_op->args[6] = args[2]->addr;
+
+		  if (mus_locsig_channels(g) == 1)
+		    {
+		      if (mus_locsig_reverb_channels(g) == 0)
+			{
+			  prev_op->function = (direct) ? locsig_v_safe_mono_no_rev : locsig_v_mono_no_rev;
+			  prev_op->op_name = (direct) ? "locsig_v_safe_mono_no_rev" : "locsig_v_mono_no_rev";
+			}
+		      else
+			{
+			  prev_op->function = (direct) ? locsig_v_safe_mono : locsig_v_mono;
+			  prev_op->op_name = (direct) ? "locsig_v_safe_mono" : "locsig_v_mono";
+			}
+		    }
+		  else
+		    {
+		      if (mus_locsig_reverb_channels(g) == 0)
+			{
+			  prev_op->function = (direct) ? locsig_v_safe_stereo_no_rev : locsig_v_stereo_no_rev;
+			  prev_op->op_name = (direct) ? "locsig_v_safe_stereo_no_rev" : "locsig_v_stereo_no_rev";
+			}
+		      else
+			{
+			  prev_op->function = (direct) ? locsig_v_safe_stereo : locsig_v_stereo;
+			  prev_op->op_name = (direct) ? "locsig_v_safe_stereo" : "locsig_v_stereo";
+			}
+		    }
+
+#if WITH_COUNTERS
+		  prev_op->func_loc = get_func_loc(prev_op->function, prev_op->op_name);
+#endif				  
+		  return(make_xen_value(R_FLOAT, prev_op->args[0], R_TEMPORARY));
+		}
 	    }
-#endif
 
 	  if (mus_locsig_channels(g) == 1)
 	    {
@@ -12353,26 +12646,37 @@ static xen_value *file_to_frame_1(ptree *prog, xen_value **args, int num_args)
 
 /* see env_any for R_FUNCTION as arg */
 
-static void outa_3(int *args, ptree *pt) {FLOAT_RESULT = mus_out_any(INT_ARG_1, FLOAT_ARG_2, 0, CLM_ARG_3);}
-static void outa_3f(int *args, ptree *pt) {mus_out_any_to_file(CLM_ARG_3, INT_ARG_1, 0, FLOAT_ARG_2);}
-static void outa_oscil_0_mult(int *args, ptree *pt) {mus_out_any_to_file(CLM_ARG_3, INT_ARG_1, 0, FLOAT_ARG_2 * mus_oscil_unmodulated(CLM_ARG_4));}
-
-static void outa_add_f2(int *args, ptree *pt) {mus_out_any_to_file(CLM_ARG_3, INT_ARG_1, 0, FLOAT_ARG_2 + FLOAT_ARG_4);}
-static void outa_add_f3(int *args, ptree *pt) {mus_out_any_to_file(CLM_ARG_3, INT_ARG_1, 0, FLOAT_ARG_2 + FLOAT_ARG_4 + FLOAT_ARG_5);}
-static void outa_add_f4(int *args, ptree *pt) {mus_out_any_to_file(CLM_ARG_3, INT_ARG_1, 0, FLOAT_ARG_2 + FLOAT_ARG_4 + FLOAT_ARG_5 + FLOAT_ARG_6);}
-
-static void outa_multiply_f2(int *args, ptree *pt) {mus_out_any_to_file(CLM_ARG_3, INT_ARG_1, 0, FLOAT_ARG_2 * FLOAT_ARG_4);}
-static void outa_multiply_f3(int *args, ptree *pt) {mus_out_any_to_file(CLM_ARG_3, INT_ARG_1, 0, FLOAT_ARG_2 * FLOAT_ARG_4 * FLOAT_ARG_5);}
-static void outa_multiply_f4(int *args, ptree *pt) {mus_out_any_to_file(CLM_ARG_3, INT_ARG_1, 0, FLOAT_ARG_2 * FLOAT_ARG_4 * FLOAT_ARG_5 * FLOAT_ARG_6);}
-static void outa_oscil_1_mult(int *args, ptree *pt) {mus_out_any_to_file(CLM_ARG_3, INT_ARG_1, 0, FLOAT_ARG_5 * mus_oscil_fm(CLM_ARG_4, FLOAT_ARG_2));}
+static void outa_3(int *args, ptree *pt)               {FLOAT_RESULT = mus_out_any(INT_ARG_1, FLOAT_ARG_2, 0, CLM_ARG_3);}
+static void outa_3f(int *args, ptree *pt)              {mus_out_any_to_file(CLM_ARG_3, INT_ARG_1, 0, FLOAT_ARG_2);}
+static void outa_oscil_0_mult(int *args, ptree *pt)    {mus_out_any_to_file(CLM_ARG_3, INT_ARG_1, 0, FLOAT_ARG_2 * mus_oscil_unmodulated(CLM_ARG_4));}
+static void outa_add_f2(int *args, ptree *pt)          {mus_out_any_to_file(CLM_ARG_3, INT_ARG_1, 0, FLOAT_ARG_2 + FLOAT_ARG_4);}
+static void outa_add_f3(int *args, ptree *pt)          {mus_out_any_to_file(CLM_ARG_3, INT_ARG_1, 0, FLOAT_ARG_2 + FLOAT_ARG_4 + FLOAT_ARG_5);}
+static void outa_add_f4(int *args, ptree *pt)          {mus_out_any_to_file(CLM_ARG_3, INT_ARG_1, 0, FLOAT_ARG_2 + FLOAT_ARG_4 + FLOAT_ARG_5 + FLOAT_ARG_6);}
+static void outa_multiply_f2(int *args, ptree *pt)     {mus_out_any_to_file(CLM_ARG_3, INT_ARG_1, 0, FLOAT_ARG_2 * FLOAT_ARG_4);}
+static void outa_multiply_f3(int *args, ptree *pt)     {mus_out_any_to_file(CLM_ARG_3, INT_ARG_1, 0, FLOAT_ARG_2 * FLOAT_ARG_4 * FLOAT_ARG_5);}
+static void outa_multiply_f4(int *args, ptree *pt)     {mus_out_any_to_file(CLM_ARG_3, INT_ARG_1, 0, FLOAT_ARG_2 * FLOAT_ARG_4 * FLOAT_ARG_5 * FLOAT_ARG_6);}
+static void outa_oscil_1_mult(int *args, ptree *pt)    {mus_out_any_to_file(CLM_ARG_3, INT_ARG_1, 0, FLOAT_ARG_5 * mus_oscil_fm(CLM_ARG_4, FLOAT_ARG_2));}
 static void outa_polywave_1_mult(int *args, ptree *pt) {mus_out_any_to_file(CLM_ARG_3, INT_ARG_1, 0, FLOAT_ARG_5 * mus_polywave(CLM_ARG_4, FLOAT_ARG_2));}
-static void outa_delay_1_mult(int *args, ptree *pt) {mus_out_any_to_file(CLM_ARG_3, INT_ARG_1, 0, FLOAT_ARG_5 * mus_delay_unmodulated_noz(CLM_ARG_4, FLOAT_ARG_2));}
+static void outa_delay_1_mult(int *args, ptree *pt)    {mus_out_any_to_file(CLM_ARG_3, INT_ARG_1, 0, FLOAT_ARG_5 * mus_delay_unmodulated_noz(CLM_ARG_4, FLOAT_ARG_2));}
+static void outa_add_f2_mult(int *args, ptree *pt)     {mus_out_any_to_file(CLM_ARG_3, INT_ARG_1, 0, FLOAT_ARG_5 * (FLOAT_ARG_2 + FLOAT_ARG_4));}
+static void outa_add_f3_mult(int *args, ptree *pt)     {mus_out_any_to_file(CLM_ARG_3, INT_ARG_1, 0, FLOAT_ARG_4 * (FLOAT_ARG_2 + FLOAT_ARG_5 + FLOAT_ARG_6));}
 
-static void outa_add_f2_mult(int *args, ptree *pt) {mus_out_any_to_file(CLM_ARG_3, INT_ARG_1, 0, FLOAT_ARG_5 * (FLOAT_ARG_2 + FLOAT_ARG_4));}
-static void outa_add_f3_mult(int *args, ptree *pt) {mus_out_any_to_file(CLM_ARG_3, INT_ARG_1, 0, FLOAT_ARG_4 * (FLOAT_ARG_2 + FLOAT_ARG_5 + FLOAT_ARG_6));}
 
-static void outb_3(int *args, ptree *pt) {FLOAT_RESULT = mus_out_any(INT_ARG_1, FLOAT_ARG_2, 1, CLM_ARG_3);}
-static void outb_3f(int *args, ptree *pt) {mus_out_any_to_file(CLM_ARG_3, INT_ARG_1, 1, FLOAT_ARG_2);}
+static void outb_3(int *args, ptree *pt)               {FLOAT_RESULT = mus_out_any(INT_ARG_1, FLOAT_ARG_2, 1, CLM_ARG_3);}
+static void outb_3f(int *args, ptree *pt)              {mus_out_any_to_file(CLM_ARG_3, INT_ARG_1, 1, FLOAT_ARG_2);}
+static void outb_oscil_0_mult(int *args, ptree *pt)    {mus_out_any_to_file(CLM_ARG_3, INT_ARG_1, 1, FLOAT_ARG_2 * mus_oscil_unmodulated(CLM_ARG_4));}
+static void outb_add_f2(int *args, ptree *pt)          {mus_out_any_to_file(CLM_ARG_3, INT_ARG_1, 1, FLOAT_ARG_2 + FLOAT_ARG_4);}
+static void outb_add_f3(int *args, ptree *pt)          {mus_out_any_to_file(CLM_ARG_3, INT_ARG_1, 1, FLOAT_ARG_2 + FLOAT_ARG_4 + FLOAT_ARG_5);}
+static void outb_add_f4(int *args, ptree *pt)          {mus_out_any_to_file(CLM_ARG_3, INT_ARG_1, 1, FLOAT_ARG_2 + FLOAT_ARG_4 + FLOAT_ARG_5 + FLOAT_ARG_6);}
+static void outb_multiply_f2(int *args, ptree *pt)     {mus_out_any_to_file(CLM_ARG_3, INT_ARG_1, 1, FLOAT_ARG_2 * FLOAT_ARG_4);}
+static void outb_multiply_f3(int *args, ptree *pt)     {mus_out_any_to_file(CLM_ARG_3, INT_ARG_1, 1, FLOAT_ARG_2 * FLOAT_ARG_4 * FLOAT_ARG_5);}
+static void outb_multiply_f4(int *args, ptree *pt)     {mus_out_any_to_file(CLM_ARG_3, INT_ARG_1, 1, FLOAT_ARG_2 * FLOAT_ARG_4 * FLOAT_ARG_5 * FLOAT_ARG_6);}
+static void outb_oscil_1_mult(int *args, ptree *pt)    {mus_out_any_to_file(CLM_ARG_3, INT_ARG_1, 1, FLOAT_ARG_5 * mus_oscil_fm(CLM_ARG_4, FLOAT_ARG_2));}
+static void outb_polywave_1_mult(int *args, ptree *pt) {mus_out_any_to_file(CLM_ARG_3, INT_ARG_1, 1, FLOAT_ARG_5 * mus_polywave(CLM_ARG_4, FLOAT_ARG_2));}
+static void outb_delay_1_mult(int *args, ptree *pt)    {mus_out_any_to_file(CLM_ARG_3, INT_ARG_1, 1, FLOAT_ARG_5 * mus_delay_unmodulated_noz(CLM_ARG_4, FLOAT_ARG_2));}
+static void outb_add_f2_mult(int *args, ptree *pt)     {mus_out_any_to_file(CLM_ARG_3, INT_ARG_1, 1, FLOAT_ARG_5 * (FLOAT_ARG_2 + FLOAT_ARG_4));}
+static void outb_add_f3_mult(int *args, ptree *pt)     {mus_out_any_to_file(CLM_ARG_3, INT_ARG_1, 1, FLOAT_ARG_4 * (FLOAT_ARG_2 + FLOAT_ARG_5 + FLOAT_ARG_6));}
+
 
 static void outc_3(int *args, ptree *pt) {FLOAT_RESULT = mus_out_any(INT_ARG_1, FLOAT_ARG_2, 2, CLM_ARG_3);}
 static void outc_3f(int *args, ptree *pt) {mus_out_any_to_file(CLM_ARG_3, INT_ARG_1, 2, FLOAT_ARG_2);}
@@ -12479,9 +12783,9 @@ static void out_any_sound_data_4(int *args, ptree *pt)
 #define NUM_O3_OPS 3
 
 static opt_ops o3_ops[NUM_O3_OPS] = {
-  {add_f2, "add_f2", outa_add_f2, "outa_add_f2", NULL, NULL},
-  {multiply_f2, "multiply_f2", outa_multiply_f2, "outa_multiply_f2", NULL, NULL},
-  {oscil_0f_1_mult, "oscil_0f_mult", outa_oscil_0_mult, "outa_oscil_0_mult", NULL, NULL},
+  {add_f2, "add_f2", outa_add_f2, "outa_add_f2", outb_add_f2, "outb_add_f2"},
+  {multiply_f2, "multiply_f2", outa_multiply_f2, "outa_multiply_f2", outb_multiply_f2, "outb_multiply_f2"},
+  {oscil_0f_1_mult, "oscil_0f_mult", outa_oscil_0_mult, "outa_oscil_0_mult", outb_oscil_0_mult, "outb_oscil_0_mult"},
 };
 
 
@@ -12498,13 +12802,13 @@ static int find_o3_op(triple *prev_op)
 #define NUM_O4_OPS 7
 
 static opt_ops o4_ops[NUM_O4_OPS] = {
-  {add_f3, "add_f3", outa_add_f3, "outa_add_f3", NULL, NULL},
-  {multiply_f3, "multiply_f3", outa_multiply_f3, "outa_multiply_f3", NULL, NULL},
-  {add_f2_mult, "add_f2_mult", outa_add_f2_mult, "outa_add_f2_mult", NULL, NULL},
-  {oscil_1f_1_mult, "oscil_1f_1_mult", outa_oscil_1_mult, "outa_oscil_1_mult", NULL, NULL},
-  {polywave_1f_mult, "polywave_1f_mult", outa_polywave_1_mult, "outa_polywave_1_mult", NULL, NULL},
-  {delay_1f_noz_mult, "delay_1f_noz_mult", outa_delay_1_mult, "outa_delay_1_mult", NULL, NULL},
-  {funcall_cf2, "funcall_cf2", outa_funcall_cf2, "outa_funcall_cf2", NULL, NULL},
+  {add_f3, "add_f3", outa_add_f3, "outa_add_f3", outb_add_f3, "outb_add_f3"},
+  {multiply_f3, "multiply_f3", outa_multiply_f3, "outa_multiply_f3", outb_multiply_f3, "outb_multiply_f3"},
+  {add_f2_mult, "add_f2_mult", outa_add_f2_mult, "outa_add_f2_mult", outb_add_f2_mult, "outb_add_f2_mult"},
+  {oscil_1f_1_mult, "oscil_1f_1_mult", outa_oscil_1_mult, "outa_oscil_1_mult", outb_oscil_1_mult, "outb_oscil_1_mult"},
+  {polywave_1f_mult, "polywave_1f_mult", outa_polywave_1_mult, "outa_polywave_1_mult", outb_polywave_1_mult, "outb_polywave_1_mult"},
+  {delay_1f_noz_mult, "delay_1f_noz_mult", outa_delay_1_mult, "outa_delay_1_mult", outb_delay_1_mult, "outb_delay_1_mult"},
+  {funcall_cf2, "funcall_cf2", outa_funcall_cf2, "outa_funcall_cf2", outb_funcall_cf2, "outb_funcall_cf2"},
 };
 
 
@@ -12520,10 +12824,13 @@ static int find_o4_op(triple *prev_op)
 #define NUM_O5_OPS 3
 
 static opt_ops o5_ops[NUM_O5_OPS] = {
-  {add_f4, "add_f4", outa_add_f4, "outa_add_f4", NULL, NULL},
-  {multiply_f4, "multiply_f4", outa_multiply_f4, "outa_multiply_f4", NULL, NULL},
-  {add_f3_mult, "add_f3_mult", outa_add_f3_mult, "outa_add_f3_mult", NULL, NULL},
+  {add_f4, "add_f4", outa_add_f4, "outa_add_f4", outb_add_f4, "outb_add_f4"},
+  {multiply_f4, "multiply_f4", outa_multiply_f4, "outa_multiply_f4", outb_multiply_f4, "outb_multiply_f4"},
+  {add_f3_mult, "add_f3_mult", outa_add_f3_mult, "outa_add_f3_mult", outb_add_f3_mult, "outb_add_f3_mult"},
 };
+
+
+/* polywave_1f_env */
 
 
 static int find_o5_op(triple *prev_op)
@@ -12536,135 +12843,157 @@ static int find_o5_op(triple *prev_op)
 }
 
 
+static xen_value *out_opt(ptree *prog, xen_value **args, int num_args, int channel)
+{
+  if ((prog->walk_result == DONT_NEED_RESULT) &&
+      (mus_output_p(prog->clms[args[3]->addr])))   
+    {
+      if (prog->triple_ctr > 0)
+	{
+	  triple *prev_op;
+	  prev_op = prog->program[prog->triple_ctr - 1];
+	  if ((prev_op->args[0] == args[2]->addr) &&
+	      ((find_var_in_ptree_via_addr(prog, R_FLOAT, prev_op->args[0])) == NULL))
+	    {
+	      int loc;
+	      switch (prev_op->num_args)
+		{
+		  
+		  /* -------- 3 args -------- */
+		case 3:
+		  loc = find_o3_op(prev_op);
+		  /* (with-sound () (let ((x 1.0) (y 2.0)) (run (lambda () (do ((i 0 (+ i 1))) ((= i 2)) (outa i (+ x y) )))))) */
+		  if (loc >= 0)
+		    {
+		      /* 1 -> 4 */
+		      prev_op->types = (int *)realloc(prev_op->types, 5 * sizeof(int));
+		      prev_op->args = (int *)realloc(prev_op->args, 5 * sizeof(int));
+		      prev_op->num_args = 5;
+		      /* reshuffle args in prev_op so that arg1 -> arg4, (arg2 can stay), then arg1 <- cur1, arg3 <- cur3 */
+
+		      prev_op->types[4] = prev_op->types[1]; /* transfer 1 -> 4 */
+		      prev_op->args[4] = prev_op->args[1];   /* new arg1 is the sample loc */
+		      prev_op->types[1] = R_INT;             /* sample location */
+		      prev_op->args[1] = args[1]->addr;
+
+		      /* args[2]->addr is the old output which we ignore, using the old arg2 as it is */
+
+		      prev_op->types[3] = R_CLM;             /* output writer */
+		      prev_op->args[3] = args[3]->addr;
+		      
+		      if (channel == 0)
+			{
+			  prev_op->function = o3_ops[loc].mult_func;
+			  prev_op->op_name = o3_ops[loc].mult_func_name;
+			}
+		      else
+			{
+			  prev_op->function = o3_ops[loc].env_func;
+			  prev_op->op_name = o3_ops[loc].env_func_name;
+			}
+#if WITH_COUNTERS
+		      prev_op->func_loc = get_func_loc(prev_op->function, prev_op->op_name);
+#endif				  
+		      return(make_xen_value(R_FLOAT, prev_op->args[0], R_TEMPORARY));
+		    }
+		  break;
+
+		  /* -------- 4 args -------- */
+		case 4:
+		  loc = find_o4_op(prev_op);
+		  if (loc >= 0)
+		    {
+		      /* move old 1 to 4, old 3 to 5, leave 2, fixup old 1 as loc, old 3 as output gen */
+		      /* (with-sound () (let ((gen (make-oscil 100.0)) (x 0.5) (y 0.25)) (run (lambda () (do ((i 0 (+ i 1))) ((= i 2)) (outa i (* y (oscil gen x)))))))) */
+		      
+		      prev_op->types = (int *)realloc(prev_op->types, 6 * sizeof(int));
+		      prev_op->args = (int *)realloc(prev_op->args, 6 * sizeof(int));
+		      prev_op->num_args = 6;
+		      
+		      prev_op->types[4] = prev_op->types[1]; /* transfer 1 -> 4 */
+		      prev_op->args[4] = prev_op->args[1];   /* new arg1 is the sample loc */
+		      prev_op->types[1] = R_INT;             /* sample location */
+		      prev_op->args[1] = args[1]->addr;
+		      
+		      /* args[2]->addr is the old output which we ignore, using the old arg2 as it is */
+		      
+		      prev_op->types[5] = prev_op->types[3]; /* transfer 3 -> 5 */
+		      prev_op->args[5] = prev_op->args[3];   /* new arg3 is the writer gen */
+		      prev_op->types[3] = R_CLM;             /* output writer */
+		      prev_op->args[3] = args[3]->addr;
+		      
+		      if (channel == 0)
+			{
+			  prev_op->function = o4_ops[loc].mult_func;
+			  prev_op->op_name = o4_ops[loc].mult_func_name;
+			}
+		      else
+			{
+			  prev_op->function = o4_ops[loc].env_func;
+			  prev_op->op_name = o4_ops[loc].env_func_name;
+			}
+#if WITH_COUNTERS
+		      prev_op->func_loc = get_func_loc(prev_op->function, prev_op->op_name);
+#endif				  
+		      return(make_xen_value(R_FLOAT, prev_op->args[0], R_TEMPORARY));
+		    }
+		  break;
+		  
+		  /* -------- 5 args -------- */
+		case 5:
+		  loc = find_o5_op(prev_op);
+		  if (loc >= 0)
+		    {
+		      /* move old 1 to 5, old 3 to 6, leave 2 and 4, fixup old 1 as loc, old 3 as output gen */
+		      prev_op->types = (int *)realloc(prev_op->types, 7 * sizeof(int));
+		      prev_op->args = (int *)realloc(prev_op->args, 7 * sizeof(int));
+		      prev_op->num_args = 7;
+		      
+		      prev_op->types[5] = prev_op->types[1]; /* transfer 1 -> 5 */
+		      prev_op->args[5] = prev_op->args[1];   /* new arg1 is the sample loc */
+		      prev_op->types[1] = R_INT;             /* sample location */
+		      prev_op->args[1] = args[1]->addr;
+		      
+		      /* 2 and 4 can stay */
+		      
+		      prev_op->types[6] = prev_op->types[3]; /* transfer 3 -> 6 */
+		      prev_op->args[6] = prev_op->args[3];   /* new arg3 is the writer gen */
+		      prev_op->types[3] = R_CLM;             /* output writer */
+		      prev_op->args[3] = args[3]->addr;
+		      
+		      if (channel == 0)
+			{
+			  prev_op->function = o5_ops[loc].mult_func;
+			  prev_op->op_name = o5_ops[loc].mult_func_name;
+			}
+		      else
+			{
+			  prev_op->function = o5_ops[loc].env_func;
+			  prev_op->op_name = o5_ops[loc].env_func_name;
+			}
+#if WITH_COUNTERS
+		      prev_op->func_loc = get_func_loc(prev_op->function, prev_op->op_name);
+#endif				  
+		      return(make_xen_value(R_FLOAT, prev_op->args[0], R_TEMPORARY));
+		    }
+		  break;
+		}
+	    }
+	}
+      if (channel == 0)
+	return(package(prog, R_FLOAT, outa_3f, "outa_3f", args, 3));
+      return(package(prog, R_FLOAT, outb_3f, "outb_3f", args, 3));
+    }
+  if (channel == 0)
+    return(package(prog, R_FLOAT, outa_3, "outa_3", args, 3));
+  return(package(prog, R_FLOAT, outb_3, "outb_3", args, 3));
+}
+
+
 static xen_value *outa_2(ptree *prog, xen_value **args, int num_args) 
 {
   if (args[3]->type == R_CLM)
-    {
-      if ((prog->walk_result == DONT_NEED_RESULT) &&
-	  (mus_output_p(prog->clms[args[3]->addr])))   
-	{
-	  if (prog->triple_ctr > 0)
-	    {
-	      triple *prev_op;
-	      prev_op = prog->program[prog->triple_ctr - 1];
-	      if ((prev_op->args[0] == args[2]->addr) &&
-		  ((find_var_in_ptree_via_addr(prog, R_FLOAT, prev_op->args[0])) == NULL))
-		{
-		  int loc;
-		  switch (prev_op->num_args)
-		    {
-
-		      /* -------- 3 args -------- */
-		    case 3:
-		      loc = find_o3_op(prev_op);
-		      /* (with-sound () (let ((x 1.0) (y 2.0)) (run (lambda () (do ((i 0 (+ i 1))) ((= i 2)) (outa i (+ x y) )))))) */
-		      if (loc >= 0)
-			{
-			  /* 1 -> 4 */
-			  prev_op->types = (int *)realloc(prev_op->types, 5 * sizeof(int));
-			  prev_op->args = (int *)realloc(prev_op->args, 5 * sizeof(int));
-			  prev_op->num_args = 5;
-			  /* reshuffle args in prev_op so that arg1 -> arg4, (arg2 can stay), then arg1 <- cur1, arg3 <- cur3 */
-
-			  prev_op->types[4] = prev_op->types[1]; /* transfer 1 -> 4 */
-			  prev_op->args[4] = prev_op->args[1];   /* new arg1 is the sample loc */
-			  prev_op->types[1] = R_INT;             /* sample location */
-			  prev_op->args[1] = args[1]->addr;
-
-			  /* args[2]->addr is the old output which we ignore, using the old arg2 as it is */
-
-			  prev_op->types[3] = R_CLM;             /* output writer */
-			  prev_op->args[3] = args[3]->addr;
-
-			  prev_op->function = o3_ops[loc].mult_func;
-			  prev_op->op_name = o3_ops[loc].mult_func_name;
-#if WITH_COUNTERS
-			  prev_op->func_loc = get_func_loc(prev_op->function, prev_op->op_name);
-#endif				  
-			  return(make_xen_value(R_FLOAT, prev_op->args[0], R_TEMPORARY));
-			}
-		      break;
-
-		      /* -------- 4 args -------- */
-		    case 4:
-		      loc = find_o4_op(prev_op);
-		      if (loc >= 0)
-			{
-			  /* move old 1 to 4, old 3 to 5, leave 2, fixup old 1 as loc, old 3 as output gen */
-			  /* (with-sound () (let ((gen (make-oscil 100.0)) (x 0.5) (y 0.25)) (run (lambda () (do ((i 0 (+ i 1))) ((= i 2)) (outa i (* y (oscil gen x)))))))) */
-
-			  prev_op->types = (int *)realloc(prev_op->types, 6 * sizeof(int));
-			  prev_op->args = (int *)realloc(prev_op->args, 6 * sizeof(int));
-			  prev_op->num_args = 6;
-
-			  prev_op->types[4] = prev_op->types[1]; /* transfer 1 -> 4 */
-			  prev_op->args[4] = prev_op->args[1];   /* new arg1 is the sample loc */
-			  prev_op->types[1] = R_INT;             /* sample location */
-			  prev_op->args[1] = args[1]->addr;
-
-			  /* args[2]->addr is the old output which we ignore, using the old arg2 as it is */
-
-			  prev_op->types[5] = prev_op->types[3]; /* transfer 3 -> 5 */
-			  prev_op->args[5] = prev_op->args[3];   /* new arg3 is the writer gen */
-			  prev_op->types[3] = R_CLM;             /* output writer */
-			  prev_op->args[3] = args[3]->addr;
-
-			  prev_op->function = o4_ops[loc].mult_func;
-			  prev_op->op_name = o4_ops[loc].mult_func_name;
-#if WITH_COUNTERS
-			  prev_op->func_loc = get_func_loc(prev_op->function, prev_op->op_name);
-#endif				  
-			  return(make_xen_value(R_FLOAT, prev_op->args[0], R_TEMPORARY));
-			}
-		      break;
-
-		      /* -------- 5 args -------- */
-		    case 5:
-		      loc = find_o5_op(prev_op);
-		      if (loc >= 0)
-			{
-			  /* move old 1 to 5, old 3 to 6, leave 2 and 4, fixup old 1 as loc, old 3 as output gen */
-			  prev_op->types = (int *)realloc(prev_op->types, 7 * sizeof(int));
-			  prev_op->args = (int *)realloc(prev_op->args, 7 * sizeof(int));
-			  prev_op->num_args = 7;
-
-			  prev_op->types[5] = prev_op->types[1]; /* transfer 1 -> 5 */
-			  prev_op->args[5] = prev_op->args[1];   /* new arg1 is the sample loc */
-			  prev_op->types[1] = R_INT;             /* sample location */
-			  prev_op->args[1] = args[1]->addr;
-			  
-			  /* 2 and 4 can stay */
-
-			  prev_op->types[6] = prev_op->types[3]; /* transfer 3 -> 6 */
-			  prev_op->args[6] = prev_op->args[3];   /* new arg3 is the writer gen */
-			  prev_op->types[3] = R_CLM;             /* output writer */
-			  prev_op->args[3] = args[3]->addr;
-
-			  prev_op->function = o5_ops[loc].mult_func;
-			  prev_op->op_name = o5_ops[loc].mult_func_name;
-#if WITH_COUNTERS
-			  prev_op->func_loc = get_func_loc(prev_op->function, prev_op->op_name);
-#endif				  
-			  return(make_xen_value(R_FLOAT, prev_op->args[0], R_TEMPORARY));
-			}
-		      break;
-		    }
-		}
-	    }
-#if 0
-	  if (prog->triple_ctr > 0)
-	    {
-	      triple *prev_op;
-	      prev_op = prog->program[prog->triple_ctr - 1];
-	      if ((prev_op->args[0] == args[2]->addr) &&
-		  ((find_var_in_ptree_via_addr(prog, R_FLOAT, prev_op->args[0])) == NULL))
-		fprintf(stderr, "outa %s (%d)\n", prev_op->op_name, prev_op->num_args);
-	    }
-#endif
-	  return(package(prog, R_FLOAT, outa_3f, "outa_3f", args, 3));
-	}
-      return(package(prog, R_FLOAT, outa_3, "outa_3", args, 3));
-    }
+    return(out_opt(prog, args, num_args, 0));
   if (args[3]->type == R_VCT)
     return(package(prog, R_FLOAT, out_vct_3, "outa_vct_3", args, 3));
   if (args[3]->type == R_SOUND_DATA)
@@ -12679,12 +13008,7 @@ static xen_value *outa_2(ptree *prog, xen_value **args, int num_args)
 static xen_value *outb_2(ptree *prog, xen_value **args, int num_args) 
 {
   if (args[3]->type == R_CLM)
-    {
-      if ((prog->walk_result == DONT_NEED_RESULT) &&
-	  (mus_output_p(prog->clms[args[3]->addr])))   
-	return(package(prog, R_FLOAT, outb_3f, "outb_3f", args, 3));
-      return(package(prog, R_FLOAT, outb_3, "outb_3", args, 3));
-    }
+    return(out_opt(prog, args, num_args, 1));
   if (args[3]->type == R_SOUND_DATA)
     return(package(prog, R_FLOAT, outb_sound_data_3, "outb_sound_data_3", args, 3));
   if (args[3]->type == R_FUNCTION)

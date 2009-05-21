@@ -5533,11 +5533,11 @@ frequency whistles leaking through."
 
 static XEN g_find_min_peak_phases(XEN arglist)
 {
-  #define H_find_min_peak_phases "(" S_find_min_peak_phases " vcts...) returns a vector of (sample-wise) offsets \
+  #define H_find_min_peak_phases "(" S_find_min_peak_phases " dist vcts...) returns a vector of (sample-wise) offsets \
 that give a minimum peak amplitude when the signals are added together."
 
   Float best = 0.0;
-  int n, size = 0;
+  int n, size = 0, dist = 0;
   int *best_phases;
   int *current_phases;
   Float *current_max;
@@ -5555,7 +5555,7 @@ that give a minimum peak amplitude when the signals are added together."
 	n1 = n - 1;
 	isize = sizes[i];
 
-	for (j = 0; j < size; j++)
+	for (j = 0; j < dist; j++)
 	  {
 	    /* j is current phase of i-th component */
 
@@ -5586,12 +5586,6 @@ that give a minimum peak amplitude when the signals are added together."
 		    best = current_max[i];
 		    for (m = 0; m < n; m++)
 		      best_phases[m] = current_phases[m];
-#if 0
-		    fprintf(stderr, "%f #(", best);
-		    for (m = 0; m < n; m++)
-		      fprintf(stderr, "%d ", best_phases[m]);
-		    fprintf(stderr, ")\n");
-#endif
 		  }
 	      }
 	    else try_case(i + 1);
@@ -5603,8 +5597,10 @@ that give a minimum peak amplitude when the signals are added together."
   Float cmax;
   XEN result = XEN_EMPTY_LIST;
 
-  n = XEN_LIST_LENGTH(arglist);
+  n = (XEN_LIST_LENGTH(arglist) - 1);
   if (n < 2) return(XEN_LIST_1(C_TO_XEN_INT(0)));
+  dist = XEN_TO_C_INT(XEN_CAR(arglist));
+  arglist = XEN_CDR(arglist);
 
   sines = (Float **)calloc(n, sizeof(Float *));
   sizes = (int *)calloc(n, sizeof(int));
@@ -5768,7 +5764,7 @@ XEN_VARGIFY(g_find_min_peak_phases_w, g_find_min_peak_phases)
 #define g_set_sinc_width_w g_set_sinc_width
 #define g_ptree_channel_w g_ptree_channel
 #if HAVE_NESTED_FUNCTIONS
-#define g_find_min_peak_phases, g_find_min_peak_phases
+#define g_find_min_peak_phases g_find_min_peak_phases
 #endif
 #endif
 
