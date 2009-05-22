@@ -142,9 +142,13 @@
     what about the thread stuff: only thread_variable in s7.h now
  */
 
-/* TODO: try old benchmarks and make a new set */
+
 /* TODO: ruby 1.9.1! */
-/* TODO: add side-effect tests to s7test */
+
+/* TODO: from runtest:
+   (and 3) got #t but expected 3 (also 'or)
+*/
+
 
 #define WITH_COUNTERS 0
 
@@ -201,15 +205,66 @@
   #endif
 #endif
 
-#ifndef STRCMP
-#if HAVE_STRCASECMP
-  #define STRCMP(a, b) strcasecmp(a, b)
-  #define STRNCMP(a, b, c) strncasecmp(a, b, c)
-#else
-  #define STRCMP(a, b) strcmp(a, b)
-  #define STRNCMP(a, b, c) strncmp(a, b, c)
-#endif
-#endif
+
+static int safe_strcmp(const char *s1, const char *s2)
+{
+  int val;
+  if (s1 == NULL)
+    {
+      if (s2 == NULL)
+	return(0);
+      return(-1);
+    }
+  if (s2 == NULL)
+    return(1);
+
+  val = strcmp(s1, s2); /* strcmp can return stuff like -97, but we want -1, 0, or 1 */
+
+  if (val <= -1)
+    return(-1);
+  if (val >= 1)
+    return(1);
+  return(val);
+}
+
+
+static int safe_strcasecmp(const char *s1, const char *s2)
+{
+  int len1, len2, len;
+  int i;
+  if (s1 == NULL)
+    {
+      if (s2 == NULL)
+	return(0);
+      return(-1);
+    }
+
+  if (s2 == NULL)
+    return(1);
+
+  len1 = strlen(s1);
+  len2 = strlen(s2);
+  len = len1;
+  if (len1 > len2)
+    len = len2;
+
+  for (i = 0; i < len; i++)
+    if (toupper(s1[i]) < toupper(s2[i]))
+      return(-1);
+    else
+      {
+	if (toupper(s1[i]) > toupper(s2[i]))
+	  return(1);
+      }
+
+  if (len1 < len2) 
+    return(-1);
+  if (len1 > len2)
+    return(1);
+
+  return(0);
+}
+
 
 
 #define S_run_safety "run-safety"
@@ -2675,8 +2730,8 @@ int mus_run_xen_to_run_type(XEN val)
 				    if (CLM_STRUCT_P(type))
 				      return(type); /* might be a list of symbols?? */
 				  }
-
-				return(R_LIST); 
+				if (XEN_LIST_LENGTH(val) >= 0) /* no dotted lists here */
+				  return(R_LIST); 
 			      }
 			    else
 
@@ -3547,7 +3602,7 @@ static XEN handle_defines(ptree *prog, XEN forms)
       form = XEN_CAR(forms);
       if ((XEN_LIST_P(form)) && 
 	  (XEN_NOT_NULL_P(form)) &&
-	  (strcmp("define", temp = XEN_AS_STRING(XEN_CAR(form))) == 0))
+	  (safe_strcmp("define", temp = XEN_AS_STRING(XEN_CAR(form))) == 0))
 	{
 	  char *err;
 #if HAVE_S7
@@ -3729,9 +3784,9 @@ static char *declare_args(ptree *prog, XEN form, int default_arg_type, bool sepa
   num_template_args = template_args_len;
   for (i = 0; i < template_args_len; i++)
     if ((XEN_SYMBOL_P(XEN_LIST_REF(template_args, i))) &&
-	((strcmp(XEN_SYMBOL_TO_C_STRING(XEN_LIST_REF(template_args, i)), ":optional") == 0) ||
-	 (strcmp(XEN_SYMBOL_TO_C_STRING(XEN_LIST_REF(template_args, i)), ":key") == 0) ||
-	 (strcmp(XEN_SYMBOL_TO_C_STRING(XEN_LIST_REF(template_args, i)), ":rest") == 0)))
+	((safe_strcmp(XEN_SYMBOL_TO_C_STRING(XEN_LIST_REF(template_args, i)), ":optional") == 0) ||
+	 (safe_strcmp(XEN_SYMBOL_TO_C_STRING(XEN_LIST_REF(template_args, i)), ":key") == 0) ||
+	 (safe_strcmp(XEN_SYMBOL_TO_C_STRING(XEN_LIST_REF(template_args, i)), ":rest") == 0)))
       num_template_args--;
 
   if (num_passed_args > num_template_args)
@@ -3769,10 +3824,10 @@ static char *declare_args(ptree *prog, XEN form, int default_arg_type, bool sepa
       if ((XEN_LIST_P(declarations)) && 
 	  (XEN_NOT_NULL_P(declarations)) &&
 	  (XEN_SYMBOL_P(XEN_CAR(declarations))) &&
-	  ((strcmp(XEN_SYMBOL_TO_C_STRING(XEN_CAR(declarations)), "declare") == 0) ||
-	   (strcmp(XEN_SYMBOL_TO_C_STRING(XEN_CAR(declarations)), "snd-declare") == 0)))
+	  ((safe_strcmp(XEN_SYMBOL_TO_C_STRING(XEN_CAR(declarations)), "declare") == 0) ||
+	   (safe_strcmp(XEN_SYMBOL_TO_C_STRING(XEN_CAR(declarations)), "snd-declare") == 0)))
 	{
-	  if (strcmp(XEN_SYMBOL_TO_C_STRING(XEN_CAR(declarations)), "declare") == 0)
+	  if (safe_strcmp(XEN_SYMBOL_TO_C_STRING(XEN_CAR(declarations)), "declare") == 0)
 	    declarations = XEN_CDR(declarations);
 	  else declarations = XEN_CADR(XEN_CADR(declarations));
 	}
@@ -3794,9 +3849,9 @@ static char *declare_args(ptree *prog, XEN form, int default_arg_type, bool sepa
 
       template_arg = XEN_CAR(template_args);
       if ((XEN_KEYWORD_P(template_arg)) &&
-	  ((strcmp(XEN_SYMBOL_TO_C_STRING(template_arg), ":optional") == 0) ||
-	   (strcmp(XEN_SYMBOL_TO_C_STRING(template_arg), ":key") == 0) ||
-	   (strcmp(XEN_SYMBOL_TO_C_STRING(template_arg), ":rest") == 0)))
+	  ((safe_strcmp(XEN_SYMBOL_TO_C_STRING(template_arg), ":optional") == 0) ||
+	   (safe_strcmp(XEN_SYMBOL_TO_C_STRING(template_arg), ":key") == 0) ||
+	   (safe_strcmp(XEN_SYMBOL_TO_C_STRING(template_arg), ":rest") == 0)))
 	{
 	  template_args = XEN_CDR(template_args);                        /* skip this one */
 	  template_arg = XEN_CAR(template_args);
@@ -3829,11 +3884,11 @@ static char *declare_args(ptree *prog, XEN form, int default_arg_type, bool sepa
 	      
 	      if (arg_type == R_UNSPECIFIED)                 /* not a predefined type name like "float" */
 		{
-		  if (strcmp(type, "integer") == 0) 
+		  if (safe_strcmp(type, "integer") == 0) 
 		    arg_type = R_INT; 
 		  else
 		    {
-		      if (strcmp(type, "real") == 0) 
+		      if (safe_strcmp(type, "real") == 0) 
 			arg_type = R_FLOAT; 
 		      else 
 			{
@@ -4403,7 +4458,7 @@ static xen_value *cond_form(ptree *prog, XEN form, walk_result_t need_result)
       clause = XEN_CAR(clauses);
       /* check car -- if #t evaluate rest */
       if ((XEN_SYMBOL_P(XEN_CAR(clause))) &&
-	  (strcmp("else", XEN_SYMBOL_TO_C_STRING(XEN_CAR(clause))) == 0))
+	  (safe_strcmp("else", XEN_SYMBOL_TO_C_STRING(XEN_CAR(clause))) == 0))
 	test_value = make_xen_value(R_BOOL, add_int_to_ptree(prog, (Int)true), R_CONSTANT);
       else test_value = walk(prog, XEN_CAR(clause), NEED_ANY_RESULT);
       if (test_value == NULL)
@@ -4419,9 +4474,13 @@ static xen_value *cond_form(ptree *prog, XEN form, walk_result_t need_result)
 #endif
 	  return(rv);
 	}
+
+      /* this coercion clobbers the result if there are no clauses:
       if (test_value->type != R_BOOL)
 	test_value = coerce_to_boolean(prog, test_value);
-      /* test was #t */
+      */
+
+      /* test was not #f */
       local_clauses = XEN_CDR(clause); /* can be null */
       local_len = XEN_LIST_LENGTH(local_clauses);
       if (local_len > 0)
@@ -4569,7 +4628,7 @@ static xen_value *case_form(ptree *prog, XEN form, walk_result_t need_result)
       if (XEN_SYMBOL_P(keys))
 	{
 	  if ((XEN_SYMBOL_P(keys)) &&
-	      (strcmp(XEN_SYMBOL_TO_C_STRING(keys), "else") == 0))
+	      (safe_strcmp(XEN_SYMBOL_TO_C_STRING(keys), "else") == 0))
 	    elseval = make_xen_value(R_INT, i, R_CONSTANT);
 	  else 
 	    {
@@ -5110,7 +5169,6 @@ static xen_value *and_form(ptree *prog, XEN form, walk_result_t ignored)
       free(v);
     }
 
-  /* if we fall through, return #t */
   result = make_xen_value(R_BOOL, add_int_to_ptree(prog, 1), R_VARIABLE);
   add_triple_to_ptree(prog, va_make_triple(store_true, "store_true", 1, result));
   jump_to_end = make_xen_value(R_INT, add_int_to_ptree(prog, prog->triple_ctr), R_VARIABLE);
@@ -6970,6 +7028,7 @@ static xen_value *eq_p(ptree *prog, xen_value **args, int num_args)
 {
   if ((args[1]->type != args[2]->type) || 
       ((args[1]->type == R_FLOAT) && (prog->constants > 0)) ||
+      (args[1]->type == R_STRING) ||
       (args[1]->type == R_FUNCTION))
     return(make_xen_value(R_BOOL, add_int_to_ptree(prog, (Int)false), R_CONSTANT));
   if ((args[1]->type == args[2]->type) &&
@@ -7018,7 +7077,9 @@ static void eqv_clm(int *args, ptree *pt) {BOOL_RESULT = (Int)mus_equalp(CLM_ARG
 
 static xen_value *eqv_p(ptree *prog, xen_value **args, int num_args)
 {
-  if ((args[1]->type != args[2]->type) || (args[1]->type == R_FUNCTION))
+  if ((args[1]->type != args[2]->type) || 
+      (args[1]->type == R_STRING) ||
+      (args[1]->type == R_FUNCTION))
     return(make_xen_value(R_BOOL, add_int_to_ptree(prog, (Int)false), R_CONSTANT));
   if (prog->constants == 2)
     {
@@ -7051,6 +7112,8 @@ static xen_value *eqv_p(ptree *prog, xen_value **args, int num_args)
 
 
 static void xen_equal_b(int *args, ptree *pt) {BOOL_RESULT = (Int)XEN_EQUAL_P(RXEN_ARG_1, RXEN_ARG_2);}
+
+static void xen_equal_s(int *args, ptree *pt) {BOOL_RESULT = mus_strcmp(STRING_ARG_1, STRING_ARG_2);}
 
 
 static void list_equal_p(int *args, ptree *pt) 
@@ -7116,6 +7179,10 @@ static xen_value *equal_p(ptree *prog, xen_value **args, int num_args)
       case R_KEYWORD:
       case R_SYMBOL: 
 	return(package(prog, R_BOOL, xen_equal_b, "xen_equal_b", args, 2));
+	break;
+
+      case R_STRING:
+	return(package(prog, R_BOOL, xen_equal_s, "xen_equal_s", args, 2));
 	break;
 
       case R_LIST:
@@ -7697,7 +7764,7 @@ static xen_value *gcd_1(ptree *prog, xen_value **args, int num_args)
   if (num_args == 1)
     {
       if (args[1]->constant == R_CONSTANT)
-	return(make_xen_value(R_INT, add_int_to_ptree(prog, prog->ints[args[1]->addr]), R_CONSTANT)); /* (gcd n) -> n */
+	return(make_xen_value(R_INT, add_int_to_ptree(prog, abs(prog->ints[args[1]->addr])), R_CONSTANT)); /* (gcd n) -> (abs n) */
       else 
 	{
 	  args[0] = make_xen_value(R_INT, add_int_to_ptree(prog, 0), R_VARIABLE);
@@ -7759,7 +7826,7 @@ static xen_value *lcm_1(ptree *prog, xen_value **args, int num_args)
   if (num_args == 1)
     {
       if (args[1]->constant == R_CONSTANT)
-	return(make_xen_value(R_INT, add_int_to_ptree(prog, prog->ints[args[1]->addr]), R_CONSTANT)); /* (lcm n) -> n */
+	return(make_xen_value(R_INT, add_int_to_ptree(prog, abs(prog->ints[args[1]->addr])), R_CONSTANT)); /* (lcm n) -> (abs n) */
       else 
 	{
 	  args[0] = make_xen_value(R_INT, add_int_to_ptree(prog, 0), R_VARIABLE);
@@ -8545,18 +8612,18 @@ static bool str_ ## CName ## _n(ptree *pt, xen_value **args, int num_args) \
 { \
   int i; \
   for (i = 2; i <= num_args; i++) \
-    if (strcmp(pt->strs[args[i - 1]->addr], pt->strs[args[i]->addr]) COp 0) \
+    if (safe_strcmp(pt->strs[args[i - 1]->addr], pt->strs[args[i]->addr]) COp 0) \
       return(false); \
   return(true); \
 } \
-static void string_ ## CName ## _2(int *args, ptree *pt) {BOOL_RESULT = (!(strcmp(STRING_ARG_1, STRING_ARG_2) COp 0));} \
+static void string_ ## CName ## _2(int *args, ptree *pt) {BOOL_RESULT = (!(safe_strcmp(STRING_ARG_1, STRING_ARG_2) COp 0));} \
 static void string_ ## CName ## _n(int *args, ptree *pt) \
 { \
   int i, n; \
   n = INT_ARG_1; \
   BOOL_RESULT = (Int)true; \
   for (i = 2; i <= n; i++) \
-    if (strcmp(pt->strs[args[i]], pt->strs[args[i + 1]]) COp 0) \
+    if (safe_strcmp(pt->strs[args[i]], pt->strs[args[i + 1]]) COp 0) \
       { \
 	BOOL_RESULT = (Int)false; \
 	break; \
@@ -8572,7 +8639,7 @@ static xen_value *string_ ## CName ## _1(ptree *pt, xen_value **args, int num_ar
     for (i = 1; i <= num_args; i++) \
       if (args[i]->constant == R_CONSTANT) \
 	{ \
-	  if ((lasts) && (strcmp(lasts, pt->strs[args[i]->addr]) COp 0)) \
+	  if ((lasts) && (safe_strcmp(lasts, pt->strs[args[i]->addr]) COp 0)) \
 	    return(make_xen_value(R_BOOL, add_int_to_ptree(pt, (Int)false), R_CONSTANT)); \
 	  lasts = pt->strs[args[i]->addr]; \
 	} \
@@ -8592,7 +8659,7 @@ static bool str_ci_ ## CName ## _n(ptree *pt, xen_value **args, int num_args) \
 { \
   int i; \
   for (i = 2; i <= num_args; i++) \
-    if (STRCMP(pt->strs[args[i - 1]->addr], pt->strs[args[i]->addr]) COp 0) \
+    if (safe_strcasecmp(pt->strs[args[i - 1]->addr], pt->strs[args[i]->addr]) COp 0) \
       return(false); \
   return(true); \
 } \
@@ -8602,7 +8669,7 @@ static void string_ci_ ## CName ## _n(int *args, ptree *pt) \
   n = INT_ARG_1; \
   BOOL_RESULT = (Int)true; \
   for (i = 2; i <= n; i++) \
-    if (STRCMP(pt->strs[args[i]], pt->strs[args[i + 1]]) COp 0) \
+    if (safe_strcasecmp(pt->strs[args[i]], pt->strs[args[i + 1]]) COp 0) \
       { \
 	BOOL_RESULT = (Int)false; \
 	break; \
@@ -9980,9 +10047,9 @@ static void clm_struct_field_set_1(ptree *prog, xen_value *in_v, xen_value *in_v
 
 /* length */
 
-static void vector_length_f(int *args, ptree *pt) {INT_RESULT = VCT_ARG_1->length;}
+static void vector_length_f(int *args, ptree *pt) {INT_RESULT = (VCT_ARG_1) ? VCT_ARG_1->length : 0;}
 
-static void vector_length_i(int *args, ptree *pt) {INT_RESULT = VECT_ARG_1->length;}
+static void vector_length_i(int *args, ptree *pt) {INT_RESULT = (VECT_ARG_1) ? VECT_ARG_1->length : 0;}
 
 
 static xen_value *vector_length_1(ptree *prog, xen_value **args, int num_args)
@@ -15130,7 +15197,18 @@ static int xen_to_addr(ptree *pt, XEN arg, int type, int addr)
 static xen_value *quote_form(ptree *prog, XEN form, walk_result_t ignore) 
 {
   xen_value *v;
+
   v = add_value_to_ptree(prog, XEN_CADR(form), mus_run_xen_to_run_type(XEN_CADR(form)));
+  if (v == NULL)
+    {
+      xen_value *rv;
+      char *temp = NULL;
+      rv = run_warn("can't handle %s", temp = XEN_AS_STRING(form));
+#if HAVE_S7
+      if (temp) free(temp);
+#endif
+      return(rv);
+    }
   v->constant = R_CONSTANT;
   return(v);
 }
@@ -15385,7 +15463,7 @@ static xen_value *walk(ptree *prog, XEN form, walk_result_t walk_result)
 	  if (XEN_SYMBOL_P(caar))
 	    {
 	      caar_name = XEN_SYMBOL_TO_C_STRING(caar);
-	      if (strcmp(caar_name, "setter") == 0)
+	      if (safe_strcmp(caar_name, "setter") == 0)
 		{
 		  /* should be clm-struct ref: ((setter moog-y) gen .1) for example */
 		  /* transform (back) to (set! (moog-y gen) .1) */

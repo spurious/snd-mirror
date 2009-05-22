@@ -1960,9 +1960,7 @@ is a physical model of a flute:
 	 (attack-size (or attack 1))
 	 (ramp-ind 0)
 	 (ramped-attack (make-vct attack-size)))
-    (if (< (* dur time-scaler) file-duration)
-	(snd-print (format #f "~A is ~1,3F seconds long, but we'll need ~1,3F seconds of data for this note" 
-			   file file-duration (* dur time-scaler))))
+
     (do ((i 0 (+ i 1)))
 	((= i max-oscils))
       (vector-set! resynth-oscils i (make-oscil :frequency 0)))

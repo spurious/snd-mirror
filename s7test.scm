@@ -520,6 +520,9 @@
 (test (equal? '() '()) #t)
 (test (equal? '() (list)) #t)
 
+(test (equal? "asd""asd") #t) ; is this the norm?
+(let ((streq (lambda (a b) (equal? a b)))) (test (streq "asd""asd") #t))
+
 (let ((things (vector #t #f #\space '() "" 0 1 3/4 1+i 1.5 '(1 .2) '#() (vector 1) (list 1) 'f 't #\t)))
   (do ((i 0 (+ i 1)))
       ((= i (- (vector-length things) 1)))
@@ -3349,7 +3352,7 @@
 (test (and (memq 'b '(a b c)) (+ 3 0)) 3)
 (test (and 3 9) 9)
 (test (and #f 3 asdf) #f) ; "evaluation stops immediately"
-(test (and 3 (zero? 1) (/ 1 0) (display "or is about to exit!") (exit)) #f)
+(test (and 3 (zero? 1) (/ 1 0) (display "and is about to exit!") (exit)) #f)
 
 (for-each
  (lambda (arg)
@@ -3921,6 +3924,9 @@
  (lambda (arg)
    (test (let ((x arg)) x) arg))
  (list "hi" -1 #\a "" '() '#() (current-output-port) 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i #t abs (list 1 2 3) '(1 . 2)))
+
+(test (let ((x 1)) (= 1 (let ((y 2)) (set! x y) x)) (+ x 1)) 3)
+(test (let ((x 1)) (let ((xx (lambda (a) (set! x a) a))) (= 1 (xx 2))) (+ x 1)) 3)
 
 
 ;(let ((initial-chars "aA!$%&*/:<=>?^_~")

@@ -452,22 +452,22 @@ void snd_doit(int argc, char **argv)
 #endif
 
 #if HAVE_RUBY
-  XEN_EVAL_C_STRING("def axis_info (s c a) false end");
-  XEN_EVAL_C_STRING("def channel_widgets (s c) false end");
+  XEN_EVAL_C_STRING("def axis_info (s, c, a) false end");
+  XEN_EVAL_C_STRING("def channel_widgets (s, c) false end");
   XEN_EVAL_C_STRING("def color? (a) false end");
   XEN_EVAL_C_STRING("def color_to_list (a) false end");
   XEN_EVAL_C_STRING("def current_font () false end");
   XEN_EVAL_C_STRING("def dialog_widgets () false end");
   XEN_EVAL_C_STRING("def enved_filter () false end");
   XEN_EVAL_C_STRING("def main_widgets (s) false end");
-  XEN_EVAL_C_STRING("def make_color (r g b) false end");
+  XEN_EVAL_C_STRING("def make_color (r, g, b) false end");
   XEN_EVAL_C_STRING("def menu_widgets (s) false end");
   XEN_EVAL_C_STRING("def reset_listener_cursor () false end");
   XEN_EVAL_C_STRING("def sound_widgets (s) false end");
   XEN_EVAL_C_STRING("def view_regions_dialog () false end");
   XEN_EVAL_C_STRING("def find_dialog () false end");
   XEN_EVAL_C_STRING("def x_axis_label () false end");
-  XEN_EVAL_C_STRING("def y_axis_label () false(char *) end");
+  XEN_EVAL_C_STRING("def y_axis_label () false end");
 
   XEN_EVAL_C_STRING("def basic_color () false end");
   XEN_EVAL_C_STRING("def set_basic_color (a) false end");
@@ -530,7 +530,7 @@ void snd_doit(int argc, char **argv)
   XEN_EVAL_C_STRING("def widget_position () false end");
   XEN_EVAL_C_STRING("def set_widget_position (a) false end");
   XEN_EVAL_C_STRING("def colormap? (a) false end");
-  XEN_EVAL_C_STRING("def in (a b) false end");
+  XEN_EVAL_C_STRING("def in (a, b) false end");
   XEN_EVAL_C_STRING("def send_mozilla (a) false end");
   XEN_EVAL_C_STRING("def widget_text (a) false end");
 
@@ -557,8 +557,8 @@ void snd_doit(int argc, char **argv)
   XEN_EVAL_C_STRING("def colormap_name (a) false end");
   XEN_EVAL_C_STRING("def add_colormap (a) false end");
 
-  XEN_EVAL_C_STRING("def make_graph_data (a b c) false end");
-  XEN_EVAL_C_STRING("def graph_data (a b c) false end");
+  XEN_EVAL_C_STRING("def make_graph_data (a, b, c) false end");
+  XEN_EVAL_C_STRING("def graph_data (a, b, c) false end");
 
   XEN_EVAL_C_STRING("$drop_hook = false");
   XEN_EVAL_C_STRING("$listener_click_hook = false");
