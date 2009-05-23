@@ -5849,6 +5849,27 @@ index 10 (so 10/2 is the bes-jn arg):
     result))
 
 
+(define (polyoid-env gen fm amps phases)
+  (declare (gen polyoid) (fm float) (amps clm-vector) (phases clm-vector))
+  ;; amps and phases are the envelopes, one for each harmonic, setting the sample-wise amp and phase
+  (let* ((tn (polyoid-tn gen))
+	 (un (polyoid-un gen))
+	 (original-data (polyoid-partial-amps-and-phases gen))
+	 (data-len (vct-length original-data))
+	 (amps-len (vector-length amps)))
+    (do ((i 0 (+ i 3))
+	 (j 0 (+ j 1)))
+	((or (= j amps-len)
+	     (= i data-len)))
+      (let* ((hn (inexact->exact (vct-ref original-data i)))
+	     (amp (env (vector-ref amps j)))
+	     (phase (env (vector-ref phases j))))
+	(vct-set! tn hn (* amp (sin phase)))
+	(vct-set! un hn (* amp (cos phase)))))
+    (polyoid gen fm)))
+
+
+
 #|
 (with-sound (:clipped #f)
   (let ((samps 44100)
@@ -5930,6 +5951,55 @@ index 10 (so 10/2 is the bes-jn arg):
   (channel-distance snd 0 snd 1)))
 
 ;;; 0 diff up to 4096 so far (unopt and opt) -- 1.0e-12 at 4096, opt is more than 20 times as fast
+
+
+(with-sound (:clipped #f :channels 2 :statistics #t)
+  (let* ((samps 44100)
+	 (gen1 (make-polyoid 100.0 (vct 1 0.5 0.0  3 0.25 0.0  4 .25 0.0)))
+	 (gen2 (make-polyoid 100.0 (vct 1 0.5 0.0  3 0.25 0.0  4 .25 0.0)))
+	 (amps1 (vector (make-env '(0 0 1 1 2 0) :end samps :scaler 0.5)
+		       (make-env '(0 1 1 0 2 1) :end samps :scaler 0.25)
+		       (make-env '(0 1 1 0) :end samps :scaler 0.25)))
+	 (phases1 (vector (make-env '(0 0 1 1) :end samps :scaler (/ pi 2))
+			 (make-env '(0 0 1 1) :end samps :scaler (/ pi 2))
+			 (make-env '(0 1 1 0) :end samps :scaler (/ pi 2))))
+	 (amps2 (vector (make-env '(0 0 1 1 2 0) :end samps :scaler 0.5)
+		       (make-env '(0 1 1 0 2 1) :end samps :scaler 0.25)
+		       (make-env '(0 1 1 0) :end samps :scaler 0.25)))
+	 (phases2 (vector (make-env '(0 0 1 0) :end samps)
+			 (make-env '(0 0 1 0) :end samps)
+			 (make-env '(0 0 1 0) :end samps))))
+    (run
+     (lambda ()
+       (do ((i 0 (+ i 1)))
+	   ((= i samps))
+	 (outa i (polyoid-env gen1 0.0 amps1 phases1))
+	 (outb i (polyoid-env gen2 0.0 amps2 phases2)))))))
+
+
+(with-sound (:clipped #f :channels 2 :channels 3 :statistics #t)
+  (let* ((samps 44100)
+	 (gen1 (make-polyoid 100.0 (vct 1 1 0 2 1 0 3 1 0)))
+	 (gen2 (make-polyoid 100.0 (vct 1 1 0 2 1 0 3 1 0)))
+	 (gen3 (make-polyoid 100.0 (vct 1 1 (/ pi 2) 2 1 (/ pi 2) 3 1 (/ pi 2))))
+	 (amps1 (vector (make-env '(0 1 1 1) :end samps) (make-env '(0 1 1 1) :end samps) (make-env '(0 1 1 1) :end samps)))
+	 (amps2 (vector (make-env '(0 1 1 1) :end samps) (make-env '(0 1 1 1) :end samps) (make-env '(0 1 1 1) :end samps)))
+	 (amps3 (vector (make-env '(0 1 1 1) :end samps) (make-env '(0 1 1 1) :end samps) (make-env '(0 1 1 1) :end samps)))
+	 (phases1 (vector (make-env '(0 0 1 0) :end samps) (make-env '(0 0 1 0) :end samps) (make-env '(0 0 1 0) :end samps)))
+	 (phases2 (vector (make-env '(0 0 .1 0 .9 1 1 1) :end samps :scaler (/ pi 2))
+			  (make-env '(0 0 .1 0 .9 1 1 1) :end samps :scaler (/ pi 2))
+			  (make-env '(0 0 .1 0 .9 1 1 1) :end samps :scaler (/ pi 2))))
+	 (phases3 (vector (make-env '(0 1 1 1) :end samps :scaler (/ pi 2)) 
+			  (make-env '(0 1 1 1) :end samps :scaler (/ pi 2)) 
+			  (make-env '(0 1 1 1) :end samps :scaler (/ pi 2)))))
+    (run
+     (lambda ()
+       (do ((i 0 (+ i 1)))
+	   ((= i samps))
+	 (outa i (* .1 (polyoid-env gen1 0.0 amps1 phases1)))
+	 (outb i (* .1 (polyoid-env gen2 0.0 amps2 phases2)))
+	 (outc i (* .1 (polyoid-env gen3 0.0 amps3 phases3))))))))
+
 |#
 
 

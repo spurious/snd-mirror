@@ -1,35 +1,35 @@
 ;;; Snd tests
 ;;;
-;;;  test 0: constants                           [588]
-;;;  test 1: defaults                            [1174]
-;;;  test 2: headers                             [1375]
-;;;  test 3: variables                           [1692]
-;;;  test 4: sndlib                              [2327]
-;;;  test 5: simple overall checks               [5005]
-;;;  test 6: vcts                                [13928]
-;;;  test 7: colors                              [14254]
-;;;  test 8: clm                                 [14751]
-;;;  test 9: mix                                 [26677]
-;;;  test 10: marks                              [28896]
-;;;  test 11: dialogs                            [29857]
-;;;  test 12: extensions                         [30098]
-;;;  test 13: menus, edit lists, hooks, etc      [30369]
-;;;  test 14: all together now                   [32024]
-;;;  test 15: chan-local vars                    [33001]
-;;;  test 16: regularized funcs                  [34646]
-;;;  test 17: dialogs and graphics               [39714]
-;;;  test 18: enved                              [39806]
-;;;  test 19: save and restore                   [39825]
-;;;  test 20: transforms                         [41600]
-;;;  test 21: new stuff                          [43732]
-;;;  test 22: run                                [45738]
-;;;  test 23: with-sound                         [52220]
-;;;  test 25: X/Xt/Xm                            [56669]
-;;;  test 26: Gtk                                [60441]
-;;;  test 27: GL                                 [64025]
-;;;  test 28: errors                             [64149]
-;;;  test all done                               [66655]
-;;;  test the end                                [66899]
+;;;  test 0: constants                           [590]
+;;;  test 1: defaults                            [1176]
+;;;  test 2: headers                             [1377]
+;;;  test 3: variables                           [1694]
+;;;  test 4: sndlib                              [2329]
+;;;  test 5: simple overall checks               [5007]
+;;;  test 6: vcts                                [13930]
+;;;  test 7: colors                              [14256]
+;;;  test 8: clm                                 [14753]
+;;;  test 9: mix                                 [26679]
+;;;  test 10: marks                              [28898]
+;;;  test 11: dialogs                            [29859]
+;;;  test 12: extensions                         [30100]
+;;;  test 13: menus, edit lists, hooks, etc      [30371]
+;;;  test 14: all together now                   [32026]
+;;;  test 15: chan-local vars                    [33003]
+;;;  test 16: regularized funcs                  [34648]
+;;;  test 17: dialogs and graphics               [39716]
+;;;  test 18: enved                              [39808]
+;;;  test 19: save and restore                   [39827]
+;;;  test 20: transforms                         [41602]
+;;;  test 21: new stuff                          [43734]
+;;;  test 22: run                                [45740]
+;;;  test 23: with-sound                         [52486]
+;;;  test 25: X/Xt/Xm                            [56935]
+;;;  test 26: Gtk                                [60707]
+;;;  test 27: GL                                 [64291]
+;;;  test 28: errors                             [64415]
+;;;  test all done                               [66921]
+;;;  test the end                                [67168]
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
@@ -45739,6 +45739,21 @@ EDITS: 1
 
 ;;; ---------------- test 22: run ----------------
 
+(defmacro fxtst (form result)
+  `(let ((val ,form))
+     (if (fneq val ,result) 
+	 (snd-display ";~A -> ~A (~A)" ',form val ,result))))
+
+(defmacro ixtst (form result)
+  `(let ((val ,form))
+     (if (not (= val ,result))
+	 (snd-display ";~A -> ~A (~A)" ',form val ,result))))
+
+(defmacro bxtst (form result)
+  `(let ((val ,form))
+     (if (not (eq? val ,result))
+	 (snd-display ";~A -> ~A (~A)" ',form val ,result))))
+
 (defmacro time-it (a) 
   `(let ((start (real-time))) 
      ,a 
@@ -52251,6 +52266,217 @@ EDITS: 1
 	  (if (fneq (run (lambda () (+ (hi 1.0) (hi 1.0 2.0) (hi)))) 4.0) (snd-display ";run opt args 8"))
 	  (if (fneq (run (lambda () (+ (hi 1.0 2.0) (hi) (hi 1.0)))) 4.0) (snd-display ";run opt args 9"))))
 
+    ;; optimizer tests
+    (ixtst (let ((x 1) (y 2)) (run (lambda () (if (= x y) (+ x y) (- x y))))) -1)
+    (ixtst (let ((x 1) (y 2)) (run (lambda () (if (not (= x y 1)) 3 2)))) 3)
+    (ixtst (let ((x 1)) (run (lambda () (if (or (= x 2) (not (= x 3))) 3 2)))) 3)
+    (ixtst (let ((x 0) (y 1)) (run (lambda () (if (not (= x 1)) (if (not (= y 1)) 3 2) 1)))) 2)
+    (ixtst (let ((x 1) (y 2) (z #t)) (run (lambda () (= x y) (if z 1 0)))) 1)
+    (ixtst (let ((x 1)) (run (lambda () (if (and (= x 1) (not (< x 0))) 3 2)))) 3)
+    (ixtst (let ((x 1)) (run (lambda () (if (or (= x 1) (not (< x 0))) 3 2)))) 3)
+    (ixtst (let ((x 1)) (run (lambda () (cond ((= x 0) 1) ((= x 1) 2) ((= x 3) 3))))) 2)
+    
+    (ixtst (let ((x 1)) (run (lambda () (if (= x 1) 1 2)))) 1)
+    (ixtst (let ((x 1)) (run (lambda () (if (> x 1) 1 2)))) 2)
+    (ixtst (let ((x 1)) (run (lambda () (if (< x 1) 1 2)))) 2)
+    (ixtst (let ((x 1)) (run (lambda () (if (>= x 1) 1 2)))) 1)
+    (ixtst (let ((x 1)) (run (lambda () (if (<= x 1) 1 2)))) 1)
+    
+    (ixtst (let ((x 1)) (run (lambda () (if (not (= x 1)) 1 2)))) 2)
+    (ixtst (let ((x 1)) (run (lambda () (if (not (> x 1)) 1 2)))) 1)
+    (ixtst (let ((x 1)) (run (lambda () (if (not (< x 1)) 1 2)))) 1)
+    (ixtst (let ((x 1)) (run (lambda () (if (not (>= x 1)) 1 2)))) 2)
+    (ixtst (let ((x 1)) (run (lambda () (if (not (<= x 1)) 1 2)))) 2)
+    
+    (fxtst (let ((x 1.0)) (run (lambda () (if (= x 1.0) 1 2)))) 1)
+    (fxtst (let ((x 1.0)) (run (lambda () (if (> x 1.0) 1 2)))) 2)
+    (fxtst (let ((x 1.0)) (run (lambda () (if (< x 1.0) 1 2)))) 2)
+    (fxtst (let ((x 1.0)) (run (lambda () (if (>= x 1.0) 1 2)))) 1)
+    (fxtst (let ((x 1.0)) (run (lambda () (if (<= x 1.0) 1 2)))) 1)
+    
+    (fxtst (let ((x 1.0)) (run (lambda () (if (not (= x 1.0)) 1 2)))) 2)
+    (fxtst (let ((x 1.0)) (run (lambda () (if (not (> x 1.0)) 1 2)))) 1)
+    (fxtst (let ((x 1.0)) (run (lambda () (if (not (< x 1.0)) 1 2)))) 1)
+    (fxtst (let ((x 1.0)) (run (lambda () (if (not (>= x 1.0)) 1 2)))) 2)
+    (fxtst (let ((x 1.0)) (run (lambda () (if (not (<= x 1.0)) 1 2)))) 2)
+    
+    
+    (ixtst (let ((x 1) (y 2)) (run (lambda () (if (= y x 1) 1 2)))) 2)
+    (ixtst (let ((x 1) (y 2)) (run (lambda () (if (> y x 1) 1 2)))) 2)
+    (ixtst (let ((x 1) (y 2)) (run (lambda () (if (< y x 1) 1 2)))) 2)
+    (ixtst (let ((x 1) (y 2)) (run (lambda () (if (>= y x 1) 1 2)))) 1)
+    (ixtst (let ((x 1) (y 2)) (run (lambda () (if (<= y x 1) 1 2)))) 2)
+    
+    (ixtst (let ((x 1) (y 2)) (run (lambda () (if (not (= y x 1)) 1 2)))) 1)
+    (ixtst (let ((x 1) (y 2)) (run (lambda () (if (not (> y x 1)) 1 2)))) 1)
+    (ixtst (let ((x 1) (y 2)) (run (lambda () (if (not (< y x 1)) 1 2)))) 1)
+    (ixtst (let ((x 1) (y 2)) (run (lambda () (if (not (>= y x 1)) 1 2)))) 2)
+    (ixtst (let ((x 1) (y 2)) (run (lambda () (if (not (<= y x 1)) 1 2)))) 1)
+    
+    (fxtst (let ((x 1.0) (y 2.0)) (run (lambda () (if (= y x 1.0) 1 2)))) 2)
+    (fxtst (let ((x 1.0) (y 2.0)) (run (lambda () (if (> y x 1.0) 1 2)))) 2)
+    (fxtst (let ((x 1.0) (y 2.0)) (run (lambda () (if (< y x 1.0) 1 2)))) 2)
+    (fxtst (let ((x 1.0) (y 2.0)) (run (lambda () (if (>= y x 1.0) 1 2)))) 1)
+    (fxtst (let ((x 1.0) (y 2.0)) (run (lambda () (if (<= y x 1.0) 1 2)))) 2)
+    
+    (fxtst (let ((x 1.0) (y 2.0)) (run (lambda () (if (not (= y x 1.0)) 1 2)))) 1)
+    (fxtst (let ((x 1.0) (y 2.0)) (run (lambda () (if (not (> y x 1.0)) 1 2)))) 1)
+    (fxtst (let ((x 1.0) (y 2.0)) (run (lambda () (if (not (< y x 1.0)) 1 2)))) 1)
+    (fxtst (let ((x 1.0) (y 2.0)) (run (lambda () (if (not (>= y x 1.0)) 1 2)))) 2)
+    (fxtst (let ((x 1.0) (y 2.0)) (run (lambda () (if (not (<= y x 1.0)) 1 2)))) 1)
+    
+    (ixtst (let ((x 3)) (run (lambda () (if (odd? x) 1 2)))) 1)
+    (ixtst (let ((x 3)) (run (lambda () (if (even? x) 1 2)))) 2)
+    (ixtst (let ((x 3)) (run (lambda () (if (not (odd? x)) 1 2)))) 2)
+    (ixtst (let ((x 3)) (run (lambda () (if (not (even? x)) 1 2)))) 1)
+    
+    (ixtst (let ((x -4)) (run (lambda () (if (odd? x) 1 2)))) 2)
+    (ixtst (let ((x -4)) (run (lambda () (if (even? x) 1 2)))) 1)
+    (ixtst (let ((x -4)) (run (lambda () (if (not (odd? x)) 1 2)))) 1)
+    (ixtst (let ((x -4)) (run (lambda () (if (not (even? x)) 1 2)))) 2)
+    
+    (ixtst (let ((x 2)) (run (lambda () (if (zero? x) 1 2)))) 2)
+    (ixtst (let ((x 2)) (run (lambda () (if (negative? x) 1 2)))) 2)
+    (ixtst (let ((x 2)) (run (lambda () (if (positive? x) 1 2)))) 1)
+    (ixtst (let ((x 2)) (run (lambda () (if (not (zero? x)) 1 2)))) 1)
+    (ixtst (let ((x 2)) (run (lambda () (if (not (negative? x)) 1 2)))) 1)
+    (ixtst (let ((x 2)) (run (lambda () (if (not (positive? x)) 1 2)))) 2)
+    
+    (fxtst (let ((x 2.0)) (run (lambda () (if (zero? x) 1 2)))) 2)
+    (fxtst (let ((x 2.0)) (run (lambda () (if (negative? x) 1 2)))) 2)
+    (fxtst (let ((x 2.0)) (run (lambda () (if (positive? x) 1 2)))) 1)
+    (fxtst (let ((x 2.0)) (run (lambda () (if (not (zero? x)) 1 2)))) 1)
+    (fxtst (let ((x 2.0)) (run (lambda () (if (not (negative? x)) 1 2)))) 1)
+    (fxtst (let ((x 2.0)) (run (lambda () (if (not (positive? x)) 1 2)))) 2)
+    
+    
+    (ixtst (let ((x 1)) (run (lambda () (cond ((= x 1) 1) (#t 2))))) 1)
+    (ixtst (let ((x 1)) (run (lambda () (cond ((> x 1) 1) (#t 2))))) 2)
+    (ixtst (let ((x 1)) (run (lambda () (cond ((< x 1) 1) (#t 2))))) 2)
+    (ixtst (let ((x 1)) (run (lambda () (cond ((>= x 1) 1) (#t 2))))) 1)
+    (ixtst (let ((x 1)) (run (lambda () (cond ((<= x 1) 1) (#t 2))))) 1)
+    
+    (ixtst (let ((x 1)) (run (lambda () (cond ((not (= x 1)) 1) (#t 2))))) 2)
+    (ixtst (let ((x 1)) (run (lambda () (cond ((not (> x 1)) 1) (#t 2))))) 1)
+    (ixtst (let ((x 1)) (run (lambda () (cond ((not (< x 1)) 1) (#t 2))))) 1)
+    (ixtst (let ((x 1)) (run (lambda () (cond ((not (>= x 1)) 1) (#t 2))))) 2)
+    (ixtst (let ((x 1)) (run (lambda () (cond ((not (<= x 1)) 1) (#t 2))))) 2)
+    
+    (fxtst (let ((x 1.0)) (run (lambda () (cond ((= x 1.0) 1) (#t 2))))) 1)
+    (fxtst (let ((x 1.0)) (run (lambda () (cond ((> x 1.0) 1) (#t 2))))) 2)
+    (fxtst (let ((x 1.0)) (run (lambda () (cond ((< x 1.0) 1) (#t 2))))) 2)
+    (fxtst (let ((x 1.0)) (run (lambda () (cond ((>= x 1.0) 1) (#t 2))))) 1)
+    (fxtst (let ((x 1.0)) (run (lambda () (cond ((<= x 1.0) 1) (#t 2))))) 1)
+    
+    (fxtst (let ((x 1.0)) (run (lambda () (cond ((not (= x 1.0)) 1) (#t 2))))) 2)
+    (fxtst (let ((x 1.0)) (run (lambda () (cond ((not (> x 1.0)) 1) (#t 2))))) 1)
+    (fxtst (let ((x 1.0)) (run (lambda () (cond ((not (< x 1.0)) 1) (#t 2))))) 1)
+    (fxtst (let ((x 1.0)) (run (lambda () (cond ((not (>= x 1.0)) 1) (#t 2))))) 2)
+    (fxtst (let ((x 1.0)) (run (lambda () (cond ((not (<= x 1.0)) 1) (#t 2))))) 2)
+    
+    
+    (ixtst (let ((x 1) (y 2)) (run (lambda () (cond ((= y x 1) 1) (#t 2))))) 2)
+    (ixtst (let ((x 1) (y 2)) (run (lambda () (cond ((> y x 1) 1) (#t 2))))) 2)
+    (ixtst (let ((x 1) (y 2)) (run (lambda () (cond ((< y x 1) 1) (#t 2))))) 2)
+    (ixtst (let ((x 1) (y 2)) (run (lambda () (cond ((>= y x 1) 1) (#t 2))))) 1)
+    (ixtst (let ((x 1) (y 2)) (run (lambda () (cond ((<= y x 1) 1) (#t 2))))) 2)
+    
+    (ixtst (let ((x 1) (y 2)) (run (lambda () (cond ((not (= y x 1)) 1) (#t 2))))) 1)
+    (ixtst (let ((x 1) (y 2)) (run (lambda () (cond ((not (> y x 1)) 1) (#t 2))))) 1)
+    (ixtst (let ((x 1) (y 2)) (run (lambda () (cond ((not (< y x 1)) 1) (#t 2))))) 1)
+    (ixtst (let ((x 1) (y 2)) (run (lambda () (cond ((not (>= y x 1)) 1) (#t 2))))) 2)
+    (ixtst (let ((x 1) (y 2)) (run (lambda () (cond ((not (<= y x 1)) 1) (#t 2))))) 1)
+    
+    (fxtst (let ((x 1.0) (y 2.0)) (run (lambda () (cond ((= y x 1.0) 1) (#t 2))))) 2)
+    (fxtst (let ((x 1.0) (y 2.0)) (run (lambda () (cond ((> y x 1.0) 1) (#t 2))))) 2)
+    (fxtst (let ((x 1.0) (y 2.0)) (run (lambda () (cond ((< y x 1.0) 1) (#t 2))))) 2)
+    (fxtst (let ((x 1.0) (y 2.0)) (run (lambda () (cond ((>= y x 1.0) 1) (#t 2))))) 1)
+    (fxtst (let ((x 1.0) (y 2.0)) (run (lambda () (cond ((<= y x 1.0) 1) (#t 2))))) 2)
+    
+    (fxtst (let ((x 1.0) (y 2.0)) (run (lambda () (cond ((not (= y x 1.0)) 1) (#t 2))))) 1)
+    (fxtst (let ((x 1.0) (y 2.0)) (run (lambda () (cond ((not (> y x 1.0)) 1) (#t 2))))) 1)
+    (fxtst (let ((x 1.0) (y 2.0)) (run (lambda () (cond ((not (< y x 1.0)) 1) (#t 2))))) 1)
+    (fxtst (let ((x 1.0) (y 2.0)) (run (lambda () (cond ((not (>= y x 1.0)) 1) (#t 2))))) 2)
+    (fxtst (let ((x 1.0) (y 2.0)) (run (lambda () (cond ((not (<= y x 1.0)) 1) (#t 2))))) 1)
+    
+    (ixtst (let ((x 3)) (run (lambda () (cond ((odd? x) 1) (#t 2))))) 1)
+    (ixtst (let ((x 3)) (run (lambda () (cond ((even? x) 1) (#t 2))))) 2)
+    (ixtst (let ((x 3)) (run (lambda () (cond ((not (odd? x)) 1) (#t 2))))) 2)
+    (ixtst (let ((x 3)) (run (lambda () (cond ((not (even? x)) 1) (#t 2))))) 1)
+    
+    (ixtst (let ((x -4)) (run (lambda () (cond ((odd? x) 1) (#t 2))))) 2)
+    (ixtst (let ((x -4)) (run (lambda () (cond ((even? x) 1) (#t 2))))) 1)
+    (ixtst (let ((x -4)) (run (lambda () (cond ((not (odd? x)) 1) (#t 2))))) 1)
+    (ixtst (let ((x -4)) (run (lambda () (cond ((not (even? x)) 1) (#t 2))))) 2)
+    
+    (ixtst (let ((x 2)) (run (lambda () (cond ((zero? x) 1) (#t 2))))) 2)
+    (ixtst (let ((x 2)) (run (lambda () (cond ((negative? x) 1) (#t 2))))) 2)
+    (ixtst (let ((x 2)) (run (lambda () (cond ((positive? x) 1) (#t 2))))) 1)
+    (ixtst (let ((x 2)) (run (lambda () (cond ((not (zero? x)) 1) (#t 2))))) 1)
+    (ixtst (let ((x 2)) (run (lambda () (cond ((not (negative? x)) 1) (#t 2))))) 1)
+    (ixtst (let ((x 2)) (run (lambda () (cond ((not (positive? x)) 1) (#t 2))))) 2)
+    
+    (fxtst (let ((x 2.0)) (run (lambda () (cond ((zero? x) 1) (#t 2))))) 2)
+    (fxtst (let ((x 2.0)) (run (lambda () (cond ((negative? x) 1) (#t 2))))) 2)
+    (fxtst (let ((x 2.0)) (run (lambda () (cond ((positive? x) 1) (#t 2))))) 1)
+    (fxtst (let ((x 2.0)) (run (lambda () (cond ((not (zero? x)) 1) (#t 2))))) 1)
+    (fxtst (let ((x 2.0)) (run (lambda () (cond ((not (negative? x)) 1) (#t 2))))) 1)
+    (fxtst (let ((x 2.0)) (run (lambda () (cond ((not (positive? x)) 1) (#t 2))))) 2)
+    
+    (ixtst (let ((x 1)) (run (lambda () (cond ((= x 0) 1) ((> x 1) 2) ((< x 3) 3))))) 3)
+    (ixtst (run (lambda () (let ((x 1)) (= 1 (let ((y 2)) (set! x y) x)) (+ x 1)))) 3)
+    (ixtst (let ((x 1)) (let ((xx (lambda (a) (set! x a) a))) (run (lambda () (= 1 (xx 2)) (+ x 1))))) 3)
+    (ixtst (run (lambda () (let ((x 1) (xx 1.0)) (+ (cond ((= x 2) (cond ((> xx 2.0) 1) (#t 2))) ((= x 1) (cond ((> xx 0.0) 3) (#t 4)))) 32)))) 35)
+    (ixtst (run (lambda () (let ((x 1) (xx 1.0)) (+ (cond ((= x 2) (cond ((> xx 2.0) 1) (#t 2))) ((= x 1) (cond ((> xx 2.0) 3) (#t 4)))) 32)))) 36)
+    (bxtst (run (lambda () (let ((x 1) (y 2) (z #f)) (cond ((= x 2) (not z)) ((= y 2) (= x 1)))))) #t)
+    
+    (bxtst (run (lambda () (let ((x 1) (y 2)) (and (= x 1) (> y 2))))) #f)
+    (bxtst (run (lambda () (let ((x 1) (y 2)) (and (< x 1) (not (= y 2)))))) #f)
+    (bxtst (run (lambda () (let ((x 1) (y 2)) (and (not (= x 2)) (not (> y 2)))))) #t)
+    (bxtst (run (lambda () (let ((x 1) (y 2) (z #f)) (and (= x 1) (not z) (> y 2))))) #f)
+    (bxtst (run (lambda () (let ((x 1) (y 2) (z #f)) (and (>= x 1) (not z) (<= y 2))))) #t)
+    (bxtst (run (lambda () (let ((x 1) (y 2) (z #f)) (and (odd? x) z (even? y))))) #f)
+    (bxtst (run (lambda () (let ((x 1) (y 2) (z #f)) (and (odd? x) (not (not (not z))) (even? y))))) #t)
+    
+    (bxtst (run (lambda () (let ((x 1) (y 2)) (or (= x 1) (> y 2))))) #t)
+    (bxtst (run (lambda () (let ((x 1) (y 2)) (or (< x 1) (not (= y 2)))))) #f)
+    (bxtst (run (lambda () (let ((x 1) (y 2)) (or (not (= x 2)) (not (> y 2)))))) #t)
+    (bxtst (run (lambda () (let ((x 1) (y 2) (z #f)) (or (= x 1) (not z) (> y 2))))) #t)
+    (bxtst (run (lambda () (let ((x 1) (y 2) (z #f)) (or (>= x 1) (not z) (<= y 2))))) #t)
+    (bxtst (run (lambda () (let ((x 1) (y 2) (z #f)) (or (odd? x) z (even? y))))) #t)
+    (bxtst (run (lambda () (let ((x 1) (y 2) (z #f)) (or (negative? x) (not (not z)) (zero? y))))) #f)
+    
+    (bxtst (run (lambda () (cond (#t 'a) (#t 'b)))) 'a)
+    (bxtst (run (lambda () (cond ((> 3 2) 'greater) ((< 3 2) 'less)))) 'greater)
+    (bxtst (run (lambda () (cond ((> 3 3) 'greater) ((< 3 3) 'less)  (else 'equal)))) 'equal)
+    (ixtst (run (lambda () (cond (#f 2) (else 5)))) 5)
+    (ixtst (run (lambda () (cond (1 2) (else 5)))) 2)
+    (ixtst (run (lambda () (cond ((+ 1 2))))) 3)
+    (ixtst (run (lambda () (cond ((zero? 1) 123) ((= 1 1) 321)))) 321)
+    (ixtst (run (lambda () (cond (1 2 3)))) 3)
+    (ixtst (run (lambda () (cond ((= 1 2) 3) ((+ 3 4))))) 7)
+    (ixtst (run (lambda () (cond ((= 1 1) (abs -1) (+ 2 3) (* 10 2)) (else 123)))) 20)
+    (ixtst (run (lambda () (let ((a 1)) (cond ((= a 1) (set! a 2) (+ a 3)))))) 5)
+    (ixtst (run (lambda () (let ((a 1)) (cond ((= a 2) (+ a 2)) (else (set! a 3) (+ a 3)))))) 6)
+    (bxtst (run (lambda () (cond ((= 1 1))))) #t)
+    (bxtst (run (lambda () (cond ((= 1 2) #f) (#t)))) #t)
+    (ixtst (run (lambda () (cond ((+ 1 2))))) 3)
+    
+    (bxtst (run (lambda () (and (= 2 2) (> 2 1)))) #t)
+    (bxtst (run (lambda () (and (= 2 2) (< 2 1)))) #f)
+    (bxtst (run (lambda () (and))) #t)
+    (bxtst (run (lambda () (and 3 (zero? 1) (/ 1 0) (display "or is about to exit!") (exit)))) #f)
+    (bxtst (run (lambda () (and (or (and (> 3 2) (> 3 4)) (> 2 3)) 4))) #f)
+    (bxtst (run (lambda () (let ((a 1)) (and (let () (set! a 2) #t) (= a 1) (let () (set! a 3) #f) (and (= a 3) a) (let () (set! a 4) #f) a)))) #f)
+    
+    
+    (ixtst (run (lambda () (lcm -1))) 1)
+    (ixtst (run (lambda () (gcd -1))) 1)
+    (bxtst (run (lambda () (eq? "asd" "asd"))) #f)
+    (bxtst (run (lambda () (eqv? "asd" "asd"))) #f)
+    (bxtst (run (lambda () (equal? "asd" "asd"))) #t)
+    (bxtst (run (lambda () (equal? "asd" "dsa"))) #f)
+    
     
     ))
 

@@ -5673,7 +5673,6 @@ that give a minimum peak amplitude when the signals are added together."
 0.41015625
 :(modulo (/ (* 1940 3) 1024.0) 2.0)
 1.68359375
-
 #endif
 
 #endif
@@ -5764,7 +5763,7 @@ XEN_VARGIFY(g_find_min_peak_phases_w, g_find_min_peak_phases)
 #define g_set_sinc_width_w g_set_sinc_width
 #define g_ptree_channel_w g_ptree_channel
 #if HAVE_NESTED_FUNCTIONS
-#define g_find_min_peak_phases g_find_min_peak_phases
+#define g_find_min_peak_phases_w g_find_min_peak_phases
 #endif
 #endif
 

@@ -1786,6 +1786,7 @@ One neat method of generating the table is that of Bhaskara I, AD 600, India, me
 in van Brummelen, "The Mathematics of the Heavens and the Earth": use the rational
 approximation 4x(180-x)/(40500-x(180-x)), x in degrees, or more readably:
 4x(pi-x)/(12.337-x(pi-x)), x in radians.  The maximum error is 0.00163 at x=11.54 (degrees)!
+</p>
 </small>
 </td></tr></table></center>
 
@@ -2620,6 +2621,8 @@ is at its maximum:
        #<vct[len=2]: -1.000 1.000>
      and we use array-interp to drive it with a sinusoid, so x=x!
 -->
+
+<!-- TODO: give example of mus_cheby_t|u for changing amp and (relative) phase of each harmonic, or is this obvious? -->
 
 <p>
 See also <a href="#polyoid">polyoid and noid</a> in generators.scm.
@@ -8345,6 +8348,8 @@ frequency and the spacing between successive sidebands).
   <a class=def name="polyoid">polyoid</a> w :optional (fm 0.0)
   <a class=def name="polyoid?">polyoid?</a> w
 
+  <a class=def name="polyoidenv">polyoid-env</a> w fm amps phases
+
   <a class=def name="make-noid">make-noid</a> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (n 1) phases
   <a class=def name="noid">noid</a> w :optional (fm 0.0)
 </pre>
@@ -8359,6 +8364,8 @@ a vct, the vct's values are used as the phases; if 'max-peak, all phases are set
 to pi/2 (ncos essentially &mdash; use <code>(make-vct n 0.0)</code> to get nsin);
 and if 'min-peak, the minimum peak amplitude phases in <a href="sndscm.html#peakphasesdoc">peak-phases.scm</a> are used.
 In the 'min-peak and 'max-peak cases, noid's output is normalized to fall between -1.0 and 1.0.
+polyoid-env is an extension of polyoid that takes envelopes to control the amplitude and phase of each
+harmonic.
 </p>
 
 <img src="pix/noidchoices.png" alt="noid choices" hspace=20>

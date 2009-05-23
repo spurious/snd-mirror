@@ -142,14 +142,6 @@
     what about the thread stuff: only thread_variable in s7.h now
  */
 
-
-/* TODO: ruby 1.9.1! */
-
-/* TODO: from runtest:
-   (and 3) got #t but expected 3 (also 'or)
-*/
-
-
 #define WITH_COUNTERS 0
 
 #include <mus-config.h>
