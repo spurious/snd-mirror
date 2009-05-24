@@ -10989,16 +10989,6 @@ static xen_value *mus_generator_p_1(ptree *prog, xen_value **args, int num_args)
     return(make_xen_value(R_BOOL, add_int_to_ptree(prog, (Int)false), R_CONSTANT)); \
   }
 
-/* GEN_P but no check procs for run-safety */
-#define GEN_P_1(Name) \
-  static void Name ## _0p(int *args, ptree *pt) {BOOL_RESULT = (Int)mus_ ## Name ## _p(CLM_ARG_1);} \
-  static xen_value * Name ## _p(ptree *prog, xen_value **args, int num_args) \
-  { \
-    if (args[1]->type == R_CLM) \
-      return(package(prog, R_BOOL, Name ## _0p, #Name "_0p", args, 1)); \
-    return(make_xen_value(R_BOOL, add_int_to_ptree(prog, (Int)false), R_CONSTANT)); \
-  }
-
 
 #define GEN2_0(Name) \
   static void Name ## _0f(int *args, ptree *pt) {FLOAT_RESULT = mus_ ## Name (CLM_ARG_1, 0.0);}  
@@ -11589,10 +11579,10 @@ GEN_P(frame)
 GEN_P(mixer)
 GEN_P(file_to_sample)
 GEN_P(sample_to_file)
-GEN_P_1(file_to_frame)
-GEN_P_1(frame_to_file)
-GEN_P_1(input)
-GEN_P_1(output)
+GEN_P(file_to_frame)
+GEN_P(frame_to_file)
+GEN_P(input)
+GEN_P(output)
 GEN_P(locsig)
 GEN_P(move_sound)
 
@@ -11721,6 +11711,7 @@ static void mixer_set_0(int *args, ptree *pt)
   mus_mixer_set(CLM_ARG_1, INT_ARG_2, INT_ARG_3, FLOAT_ARG_4);
 }
 
+/* PERHAPS: mixer direct */
 
 static void mixer_set_i(int *args, ptree *pt) 
 {
@@ -11741,35 +11732,89 @@ static void mixer_set_1(ptree *prog, xen_value *in_v, xen_value *in_v1, xen_valu
   add_triple_to_ptree(prog, va_make_triple(mixer_set_0, "mixer_set_0", 5, NULL, in_v, in_v1, in_v2, v));
 }
 
-#define REF_GEN0(Name, SName) \
-  static void Name ## _0r(int *args, ptree *pt) {FLOAT_RESULT = mus_ ## Name (CLM_ARG_1, INT_ARG_2);} \
+#define REF_GEN0(Name, SName, DName)						\
+  static void Name ## _direct(int *args, ptree *pt) {FLOAT_RESULT = VCT_ARG_1->data[INT_ARG_2];} \
+  static void Name ## _constant_0(int *args, ptree *pt) {FLOAT_RESULT = VCT_ARG_1->data[0];} \
+  static void Name ## _constant_1(int *args, ptree *pt) {FLOAT_RESULT = VCT_ARG_1->data[1];} \
+  static void Name ## _f(int *args, ptree *pt) {FLOAT_RESULT = mus_ ## Name (CLM_ARG_1, INT_ARG_2);} \
   static xen_value * Name ## _0(ptree *prog, xen_value **args, int num_args) \
   { \
-    return(package(prog, R_FLOAT, Name ## _0r, #Name "_0r", args, 2)); \
+    if ((args[1]->type == R_CLM) && (mus_ ## SName ## _p(prog->clms[args[1]->addr]))) \
+      { \
+        vct *v; \
+        v = (vct *)malloc(sizeof(vct)); \
+        v->length = mus_length(prog->clms[args[1]->addr]); \
+        v->data = mus_ ## DName (prog->clms[args[1]->addr]); \
+        v->dont_free = true; \
+        args[1]->type = R_VCT; \
+        args[1]->addr = add_vct_to_ptree(prog, v); \
+        if (args[2]->constant == R_CONSTANT) \
+          { \
+            if (prog->ints[args[2]->addr] == 0) \
+              return(package(prog, R_FLOAT, Name ## _constant_0, #Name "_constant_0", args, 2)); \
+            if (prog->ints[args[2]->addr] == 1) \
+              return(package(prog, R_FLOAT, Name ## _constant_1, #Name "_constant_1", args, 2)); \
+          } \
+        return(package(prog, R_FLOAT, Name ## _direct, #Name "_direct", args, 2)); \
+      } \
+    return(package(prog, R_FLOAT, Name ## _f, #Name "_f", args, 2)); \
   }
 
-REF_GEN0(frame_ref, frame)
-REF_GEN0(locsig_ref, locsig)
-REF_GEN0(locsig_reverb_ref, locsig)
+REF_GEN0(frame_ref, frame, data)
+REF_GEN0(locsig_ref, locsig, data)
+REF_GEN0(locsig_reverb_ref, locsig, xcoeffs)
 
 
-#define SET_GEN0(Name, SName) \
-  static void Name ## _0r(int *args, ptree *pt) {mus_ ## Name (CLM_ARG_1, INT_ARG_2, FLOAT_ARG_3);} \
-  static void Name ## _ir(int *args, ptree *pt) {mus_ ## Name (CLM_ARG_1, INT_ARG_2, (Float)(INT_ARG_3));} \
+#define SET_GEN0(Name, SName, DName)						\
+  static void Name ## _f(int *args, ptree *pt) {mus_ ## Name (CLM_ARG_1, INT_ARG_2, FLOAT_ARG_3);} \
+  static void Name ## _i(int *args, ptree *pt) {mus_ ## Name (CLM_ARG_1, INT_ARG_2, (Float)(INT_ARG_3));} \
+  static void Name ## _direct_f(int *args, ptree *pt) {VCT_ARG_1->data[INT_ARG_2] = FLOAT_ARG_3;} \
+  static void Name ## _direct_i(int *args, ptree *pt) {VCT_ARG_1->data[INT_ARG_2] = (Float)INT_ARG_3;} \
+  static void Name ## _constant_0_f(int *args, ptree *pt) {VCT_ARG_1->data[0] = FLOAT_ARG_3;} \
+  static void Name ## _constant_1_f(int *args, ptree *pt) {VCT_ARG_1->data[1] = FLOAT_ARG_3;} \
+  static void Name ## _constant_0_i(int *args, ptree *pt) {VCT_ARG_1->data[0] = (Float)INT_ARG_3;} \
+  static void Name ## _constant_1_i(int *args, ptree *pt) {VCT_ARG_1->data[1] = (Float)INT_ARG_3;} \
   static xen_value * Name ## _2(ptree *prog, xen_value **args, int num_args) \
   { \
+    if ((args[1]->type == R_CLM) && (mus_ ## SName ## _p(prog->clms[args[1]->addr]))) \
+      { \
+        vct *v; \
+        v = (vct *)malloc(sizeof(vct)); \
+        v->length = mus_length(prog->clms[args[1]->addr]); \
+        v->data = mus_ ## DName (prog->clms[args[1]->addr]); \
+        v->dont_free = true; \
+        args[1]->type = R_VCT; \
+        args[1]->addr = add_vct_to_ptree(prog, v); \
+        if (args[2]->constant == R_CONSTANT) \
+          { \
+ 	    if (args[3]->type == R_FLOAT) \
+              { \
+                if (prog->ints[args[2]->addr] == 0) \
+                  return(package(prog, R_FLOAT, Name ## _constant_0_f, #Name "_constant_0_f", args, 3)); \
+                if (prog->ints[args[2]->addr] == 1) \
+                  return(package(prog, R_FLOAT, Name ## _constant_1_f, #Name "_constant_1_f", args, 3)); \
+              } \
+            if (prog->ints[args[2]->addr] == 0) \
+              return(package(prog, R_FLOAT, Name ## _constant_0_i, #Name "_constant_0_i", args, 3)); \
+            if (prog->ints[args[2]->addr] == 1) \
+              return(package(prog, R_FLOAT, Name ## _constant_1_i, #Name "_constant_1_i", args, 3)); \
+          } \
+	if (args[3]->type == R_FLOAT) \
+          return(package(prog, R_FLOAT, Name ## _direct_f, #Name "_direct_f", args, 3)); \
+        return(package(prog, R_FLOAT, Name ## _direct_i, #Name "_direct_i", args, 3)); \
+      } \
     if (args[3]->type == R_FLOAT) \
-      return(package(prog, R_FLOAT, Name ## _0r, #Name "_0r", args, 3)); \
-    return(package(prog, R_FLOAT, Name ## _ir, #Name "_ir", args, 3)); \
+      return(package(prog, R_FLOAT, Name ## _f, #Name "_f", args, 3)); \
+    return(package(prog, R_FLOAT, Name ## _i, #Name "_i", args, 3)); \
   } \
   static void Name ## _1(ptree *prog, xen_value *in_v, xen_value *in_v1, xen_value *in_v2, xen_value *v) \
   { \
-    add_triple_to_ptree(prog, va_make_triple( Name ## _0r, #Name "_0r", 4, NULL, in_v, in_v1, v)); \
+    add_triple_to_ptree(prog, va_make_triple( Name ## _f, #Name "_f", 4, NULL, in_v, in_v1, v)); \
   }
 
-SET_GEN0(frame_set, frame)
-SET_GEN0(locsig_set, locsig)
-SET_GEN0(locsig_reverb_set, locsig)
+SET_GEN0(frame_set, frame, data)
+SET_GEN0(locsig_set, locsig, data)
+SET_GEN0(locsig_reverb_set, locsig, xcoeffs)
 
 
 
@@ -14191,23 +14236,11 @@ static xen_value *formant_bank_1(ptree *prog, xen_value **args, int num_args)
 
 /* ---------------- mus-srate ---------------- */
 
-static void srate_f(int *args, ptree *pt) {FLOAT_RESULT = mus_srate();}
-
 static xen_value *mus_srate_1(ptree *prog, xen_value **args, int num_args) 
 {
-  return(package(prog, R_FLOAT, srate_f, "srate_f", args, 0));
+  return(make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, mus_srate()), R_CONSTANT));
 }
 
-static void set_srate_f(int *args, ptree *pt) {mus_set_srate(FLOAT_ARG_1); FLOAT_RESULT = mus_srate();}
-
-static void set_srate_i(int *args, ptree *pt) {mus_set_srate((Float)INT_ARG_1); FLOAT_RESULT = mus_srate();}
-
-static void mus_set_srate_1(ptree *prog, xen_value *in_v, xen_value *in_v1, xen_value *in_v2, xen_value *v)
-{
-  if (v->type == R_FLOAT)
-    add_triple_to_ptree(prog, va_make_triple(set_srate_f, "set_srate_f", 2, NULL, v));
-  else add_triple_to_ptree(prog, va_make_triple(set_srate_i, "set_srate_i", 2, NULL, v));
-}
 
 
 
@@ -16586,7 +16619,7 @@ static void init_walkers(void)
   INIT_WALKER(S_clear_array,          make_walker(clear_array_1, NULL, NULL, 1, 1, R_VCT, false, 1, R_VCT));
   INIT_WALKER(S_array_interp,         make_walker(array_interp_1, NULL, NULL, 2, 3, R_FLOAT, false, 3, R_VCT, R_FLOAT, R_INT));
   INIT_WALKER(S_mus_interpolate,      make_walker(mus_interpolate_1, NULL, NULL, 3, 5, R_FLOAT, false, 3, R_INT, R_FLOAT, R_VCT, R_INT, R_FLOAT));
-  INIT_WALKER(S_mus_srate,            make_walker(mus_srate_1, NULL, mus_set_srate_1, 0, 0, R_NUMBER, false, 0));
+  INIT_WALKER(S_mus_srate,            make_walker(mus_srate_1, NULL, NULL, 0, 0, R_NUMBER, false, 0));
   INIT_WALKER(S_ring_modulate,        make_walker(ring_modulate_1, NULL, NULL, 2, 2, R_FLOAT, false, 2, R_NUMBER, R_NUMBER));
   INIT_WALKER(S_amplitude_modulate,   make_walker(amplitude_modulate_1, NULL, NULL, 3, 3, R_FLOAT, false, 3, R_NUMBER, R_NUMBER, R_NUMBER));
   INIT_WALKER(S_contrast_enhancement, make_walker(contrast_enhancement_1, NULL, NULL, 2, 2, R_FLOAT, false, 2, R_NUMBER, R_NUMBER));
