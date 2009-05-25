@@ -8216,18 +8216,24 @@ odd    19   4.4895    0.5100
 
 <p>
 Here is a graph of the values I've found so far (well, as of March 2009), followed by a graph of
-the exponent vs n (n^y = peak amp).  (The higher "n" cases are currently restricted to initial phases of 0.0 and pi,
-but if we allow ourselves arbitrary initial phases, we can get much better results.  One very good
+the exponent vs n (n^y = peak amp).  
+One very good
 set for all harmonics up to n=40 is given in Horner and Beauchamp, "a genetic algorithm-based method
 for synthesis of low peak amplitude signals", J. Acoustic. Soc. Am Vol 99 No 1 Jan 96, online
-at ems.music.uiuc.edu/beaucham/papers/JASA.01.96.pdf. I intend to
-remove the 0.0/pi restriction in my searchers soon!).
+at ems.music.uiuc.edu/beaucham/papers/JASA.01.96.pdf.
 </p>
-
 
 <img src="pix/sqrt.png" alt="sqrt n" hspace=40>
 <br>
 <img src="pix/sqrt1.png" alt="n^y" hspace=40>
+
+<p>The "even" cases are not independent of the "all" cases; each even set can be at worst 1.0 above
+its corresponding (n-1) all set (shift the current all to the right one, and set the new fundamental
+to 0.0 phase).  But the "odd" cases are always better than the evens, so I think the three sets
+follow the same law, at least for large n.  (I think we could get down to the sqrt(n) in all cases,
+given enough time and some luck, or even better, some algorithm for finding the minimum).
+</p>
+
 
 <!--
 (if (not (provided? 'snd-rgb.scm)) (load "rgb.scm"))
@@ -8386,7 +8392,7 @@ remove the 0.0/pi restriction in my searchers soon!).
 -->
 
 
-<p>Here is the time domain view of the n=5 case when the minimum peak phases are chosen; the sum of the 5 components is in black.
+<p>Here is the time domain view of one of the n=5 cases when the minimum peak phases are chosen; the sum of the 5 components is in black.
 </p>
 
 <img src="pix/sum5.png" hspace=20 alt="n=5 case">
@@ -8411,6 +8417,10 @@ remove the 0.0/pi restriction in my searchers soon!).
   (sine-wave 0 1 10.0 1.0)
   (sine-wave 0 1 20.0 1.0)
   (sine-wave 0 1 30.0 1.0))
+
+(add-hook! mix-drag-hook   ; report the current maxamp as we drag a component
+  (lambda (id x y) 
+    (report-in-minibuffer (format #f "maxamp: ~A" (maxamp)))))
 </pre>
 </td></tr></table>
 
@@ -10567,7 +10577,7 @@ END;
 <tr><td>then</td><td>now</td></tr>
 </table>
 
-<p><small>
+<p>
 This instrument required about 60 seconds of computing on a PDP-10
 (a $250,000 minicomputer) for 1 second of sound (our normal sampling
 rate was 12800).  Since the PDP was massively time-shared, 60 seconds
@@ -10576,7 +10586,7 @@ AI scientists play Space War.
 Mus10 was an extension of Music V for the PDP-10 family of computers.
 To give a feel for how one worked in those days, here's a brief quote from the Mus10 manual (by Tovar and
 Leland Smith, May 1977):
-</small></p>
+</p>
 
 <table border=0 hspace=20><tr><td><pre>
 The following generates  1 second of a  440 Hz sine wave  followed by
@@ -10599,13 +10609,13 @@ PLAY ;
   FINISH;
 </pre></td></tr></table>
 
-<p><small>
+<p>
 The computation involved was considered so burdensome, that the names of
 the main users were posted in the AI lab halls, apparently to try to
 get us to go away.  I was normally the primary user (in terms of computrons) for the entire lab, and I had no intention
 of going away.  
 In the Samson box world, this (in its initial "chorus" version) was:
-</small></p>
+</p>
 
 <table border=0 hspace=20><tr><td><pre>
 Instrument(Violin);
@@ -10668,14 +10678,14 @@ AddArrEnv(Pns,GensA,4,"F",freq,Freq*skewmult,skewfunc,ratsA,
 End!Instrument(Pns);			! deallocation;
 </pre></td></tr></table>
 
-<p><small>
+<p>
 The Sambox version eventually became incredibly complicated, mainly to
 try to handle note list problems in the instrument.  The Samson box could
 run about 5 or 6 of these in "real-time", similar to a modern-day
 500 MHz Pentium running CLM.
 The parallel in the Sambox world to the SIMP example above is (this is
 taken from SAMBOX.BIL, November 1984):
-</small></p>
+</p>
 
 <table border=0 hspace=20><tr><td><pre>
     Instrument(Simp);
@@ -10685,7 +10695,7 @@ taken from SAMBOX.BIL, November 1984):
     End_Instrument(Pns);
 </pre></td></tr></table>
 
-<p><small>The CLM version of this is:</small></p>
+<p>The CLM version of this is:</p>
 
 <table border=0 hspace=20><tr><td><pre>
 (<a class=quiet href="#definstrument" onmouseout="UnTip()" onmouseover="Tip(sndscm_definstrument_tip)">definstrument</a> simp (start-time duration frequency amplitude
@@ -10698,9 +10708,9 @@ taken from SAMBOX.BIL, November 1984):
          (<a class=quiet href="sndclm.html#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i (* (<a class=quiet href="sndclm.html#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> amp) (<a class=quiet href="sndclm.html#oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_oscil_tip)">oscil</a> s))))))))
 </pre></td></tr></table>
 
-<p><small>
+<p>
 In CLM, the fm-violin became (fm.html, 1989):
-</small></p>
+</p>
 
 <table border=0 hspace=20><tr><td><pre>
 (<a class=quiet href="#definstrument" onmouseout="UnTip()" onmouseover="Tip(sndscm_definstrument_tip)">definstrument</a> violin (beg end frequency amplitude fm-index)
@@ -10731,8 +10741,8 @@ In CLM, the fm-violin became (fm.html, 1989):
                             (* (<a class=quiet href="sndclm.html#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> indf3) (<a class=quiet href="sndclm.html#oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_oscil_tip)">oscil</a> fmosc3 (* 4.0 vib)))))))))))
 </pre></td></tr></table>
 
-<p><small>or in its actual (non-simplified) form:
-</small></p>
+<p>or in its actual (non-simplified) form:
+</p>
 
 <table border=0 hspace=20><tr><td><pre>
 (defun bit20 (x)			;Samson box modifier got 20 bit int interpreted as fraction 
@@ -10871,9 +10881,9 @@ In CLM, the fm-violin became (fm.html, 1989):
 		(<a class=quiet href="sndclm.html#oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_oscil_tip)">oscil</a> carrier (+ vib (* ind-fuzz modulation)))))))))
 </pre></td></tr></table>
 
-<p><small>which is very similar to the Scheme version (v.scm).
+<p>which is very similar to the Scheme version (v.scm).
 And I just found this out on the net; I'm no csound expert, so I merely quote what I find:
-</small></p>
+</p>
 
 <table border=0 hspace=20><tr><td><pre>
 ;ORC
@@ -10937,9 +10947,9 @@ continue:
         aleft   = asig
 </pre></td></tr></table>
 
-<p><small>There's a C/CLM version of this instrument in <a href="sndlib.html">sndlib.html</a>.  The body of the fm-violin
+<p>There's a C/CLM version of this instrument in <a href="sndlib.html">sndlib.html</a>.  The body of the fm-violin
 in C/CLM is:
-</small></p>
+</p>
 
 <table border=0 hspace=20><tr><td><pre>
       if (noise_amount != 0.0) fuzz = mus_rand(fmnoi,0.0);
@@ -10958,7 +10968,7 @@ in C/CLM is:
 </pre></td></tr></table>
 
 
-<p><small>And here is the Ruby version, written by Michael Scholz (see examp.rb):</small></p>
+<p>And here is the Ruby version, written by Michael Scholz (see examp.rb):</p>
 
 <table border=0 hspace=20><tr><td><pre>
 #

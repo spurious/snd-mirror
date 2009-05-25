@@ -2580,6 +2580,39 @@ mjkoskin@sci.fi
 |#
 
 
+#|
+(with-sound () (fullmix "pistol.snd"))
+(with-sound () (fullmix "pistol.snd" 1))
+(with-sound () (fullmix "pistol.snd" 1 1))
+(with-sound () (fullmix "pistol.snd" 0 1 1))
+(with-sound (:statistics #t) (fullmix "pistol.snd" 0 1 0 2.0))
+(with-sound (:statistics #t :channels 2) (fullmix "pistol.snd" 0 1 0 2.0))
+(with-sound (:statistics #t :channels 2) (fullmix "pistol.snd" 0 1 0 (list (list 0.1 0.7))))
+(with-sound (:statistics #t :channels 2) (fullmix "pistol.snd" 0 1 0 (list (list 0.1 (list 0 0 1 1)))))
+
+
+(with-sound (:channels 2 :output "one-2.snd") (do ((i 0 (+ i 1))) ((= i 10000)) (outa i 0.5) (outb i -0.5)))
+(with-sound (:channels 4 :output "one-4.snd") (do ((i 0 (+ i 1))) ((= i 10000)) (outa i 0.5) (outb i -0.5) (outc i 0.1) (outd i -0.1)))
+
+(with-sound (:statistics #t :channels 2) (fullmix "one-2.snd" 0 .2 0 '((1.0 0.5) (0.5 1.0))))
+(with-sound (:statistics #t :channels 2) (fullmix "one-2.snd" 0 .2 0 (list (list 0.1 (list 0 0 1 1)) (list (list 0 1 1  0) .5))))
+(with-sound (:statistics #t :channels 2) 
+  (let ((e0->0 (make-env '(0 0 1 1) :end 10000))
+	(e0->1 (make-env '(0 1 1 0) :end 10000))
+	(e1->0 (make-env '(0 1 1 0) :end 10000))
+	(e1->1 (make-env '(0 0 1 1) :end 10000)))
+    (fullmix "one-2.snd" 0 .2 0 (list (list e0->0 e0->1) (list e1->0 e1->1)))))
+
+
+(with-sound (:statistics #t :channels 2 :reverb jc-reverb) 
+  (let ((e0->0 (make-env '(0 0 1 1) :end 10000))
+	(e0->1 (make-env '(0 1 1 0) :end 10000))
+	(e1->0 (make-env '(0 1 1 0) :end 10000))
+	(e1->1 (make-env '(0 0 1 1) :end 10000)))
+    (fullmix "one-2.snd" 0 .2 0 (list (list e0->0 e0->1) (list e1->0 e1->1)) #f .1)))
+|#
+
+
 (definstrument (fullmix in-file :optional beg outdur inbeg matrix srate reverb-amount)
   ;; "matrix" can be a simple amplitude or a list of lists
   ;;     each inner list represents one input channel's amps into one output channel
@@ -2592,13 +2625,6 @@ mjkoskin@sci.fi
 	 (nd (+ st samps))
 	 (in-chans (mus-sound-chans in-file))
 	 (inloc (inexact->exact (floor (* (or inbeg 0.0) (mus-sound-srate in-file)))))
-	 (file (if (not srate) 
-		   (make-file->frame in-file)
-		   (let ((vect (make-vector in-chans)))
-		     (do ((i 0 (+ i 1)))
-			 ((= i in-chans))
-		       (vector-set! vect i (make-readin in-file i inloc)))
-		     vect)))
 	 (out-chans (mus-channels *output*))
 	 (mx (if matrix
 		 (make-mixer (max in-chans out-chans))
@@ -2611,6 +2637,14 @@ mjkoskin@sci.fi
 		       rmx)
 		     #f))
 	 (revframe (if rev-mx (make-frame 1) #f))
+	 (file (if (and (or (not srate) (= srate 1.0))
+			(not rev-mx))
+		   (make-file->frame in-file)
+		   (let ((vect (make-vector in-chans)))
+		     (do ((i 0 (+ i 1)))
+			 ((= i in-chans))
+		       (vector-set! vect i (make-readin in-file i inloc)))
+		     vect)))
 	 (envs #f))
 
     (if matrix
@@ -2643,14 +2677,47 @@ mjkoskin@sci.fi
 		(if (< inp out-chans)
 		    (mixer-set! mx inp inp matrix))))))
 
-    (if (not srate)
-	;; no src
-	(begin
-	  (mus-mix *output* file st samps inloc mx envs)
-	  (if rev-mx (mus-mix *reverb* revframe st samps inloc rev-mx #f)))
+    (if (and (or (not srate)
+		 (= srate 1.0))
+	     (not rev-mx))
+	;; -------- no reverb, no src
+	(mus-mix *output* file st samps inloc mx envs)
 
-	;; with src
-	;; unroll the loops if 1 or 2 chan input
+	(if (or (not srate)
+		(= srate 1.0))
+	    ;; -------- no src
+	    (let* ((inframe (make-frame in-chans))
+		   (outframe (make-frame out-chans)))
+	      ;; "file" is a vector of readin gens in this case
+	      (if envs 
+		  (do ((i st (+ i 1)))
+		      ((= i nd))
+		    (do ((inp 0 (+ 1 inp)))
+			((= inp in-chans))
+		      (do ((outp 0 (+ 1 outp)))
+			  ((= outp out-chans))
+			(if (and (vector-ref envs inp)
+				 (env? (vector-ref (vector-ref envs inp) outp)))
+			    (mixer-set! mx inp outp (env (vector-ref (vector-ref envs inp) outp))))))
+		    (do ((inp 0 (+ 1 inp)))
+			((= inp in-chans))
+		      (frame-set! inframe inp (readin (vector-ref file inp))))
+		    (frame->file *output* i (frame->frame inframe mx outframe))
+		    (if rev-mx (frame->file *reverb* i (frame->frame inframe rev-mx revframe))))
+		  
+		  ;; no envs
+		  (run 
+		   (lambda ()
+		     (do ((i st (+ i 1)))
+			 ((= i nd))
+		       (do ((inp 0 (+ 1 inp)))
+			   ((= inp in-chans))
+			 (frame-set! inframe inp (readin (vector-ref file inp))))
+		       (frame->file *output* i (frame->frame inframe mx outframe))
+		       (if rev-mx (frame->file *reverb* i (frame->frame inframe rev-mx revframe))))))))
+	    
+	;; -------- with src
+	;; unroll the loops if 1 chan input
 	(if (= in-chans 1)
 	    (let ((sr (make-src :input (vector-ref file 0) :srate srate))
 		  (outframe (make-frame out-chans)))
@@ -2681,8 +2748,7 @@ mjkoskin@sci.fi
 			 (frame->file *output* i (sample->frame mx inframe outframe))
 			 (if rev-mx (frame->file *reverb* i (sample->frame rev-mx inframe revframe)))))))))
 
-	    ;; TODO: unroll stereo case, also make explicit tests for all fullmix/expandn possibilities
-
+	    ;; more than 1 chan input
 	    (let* ((inframe (make-frame in-chans))
 		   (outframe (make-frame out-chans))
 		   (srcs (make-vector in-chans #f)))
@@ -2715,7 +2781,7 @@ mjkoskin@sci.fi
 			   ((= inp in-chans))
 			 (frame-set! inframe inp (src (vector-ref srcs inp))))
 		       (frame->file *output* i (frame->frame inframe mx outframe))
-		       (if rev-mx (frame->file *reverb* i (frame->frame inframe rev-mx revframe))))))))))))
+		       (if rev-mx (frame->file *reverb* i (frame->frame inframe rev-mx revframe)))))))))))))
   
 #|
   (with-sound (:channels 2 :statistics #t)
