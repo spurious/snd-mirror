@@ -153,8 +153,9 @@ char *mus_vct_to_string(vct *v)
   if (len > v->length) len = v->length;
 
   buf = (char *)calloc((len + 1) * VCT_PRINT_BUFFER_SIZE, sizeof(char));
+
   sprintf(buf, "#<vct[len=" OFF_TD "]:", v->length);
-  if (len > 0)
+  if ((len > 0) && (v->data != NULL))
     {
       int i;
       for (i = 0; i < len; i++)

@@ -1410,7 +1410,7 @@ AC_ARG_WITH(ruby,
     	      AC_MSG_CHECKING([for rb_errinfo])
               AC_RUN_IFELSE(
                 [AC_LANG_PROGRAM([#include <ruby.h>],
-                                 [char *str; ruby_init(); str = rb_errinfo(); return(0)])], 
+                                 [VALUE str; ruby_init(); str = rb_errinfo(); return(0)])], 
                 [AC_DEFINE(HAVE_RB_ERRINFO)
                  AC_MSG_RESULT(yes)
                 ],

@@ -18545,7 +18545,7 @@ cat >>conftest.$ac_ext <<_ACEOF
 int
 main ()
 {
-char *str; ruby_init(); str = rb_errinfo(); return(0)
+VALUE str; ruby_init(); str = rb_errinfo(); return(0)
   ;
   return 0;
 }

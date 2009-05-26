@@ -3,7 +3,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sun Dec 18 19:21:00 CET 2005
-\ Changed: Tue Dec 16 00:57:10 CET 2008
+\ Changed: Thu Apr 30 02:18:06 CEST 2009
 
 \ Commentary:
 \
@@ -302,7 +302,7 @@ If KEY exists, VAL overwrites the old value."
 : remove-sound-property <{ key :optional snd #f -- alist }>
   doc" Removes key-value pair in the given sound's property list.  \
 Returns altered list."
-  snd sound-properties key array-assoc-remove
+  snd sound-properties key array-assoc-remove!
 ;
 
 : set-sound-property-save-state-ignore <{ key :optional snd #f -- alist }>
@@ -328,7 +328,7 @@ If KEY exists, VAL overwrites the old value."
 : remove-channel-property <{ key :optional snd #f chn #f -- alist }>
   doc" Removes key-value pair in the given channel's property list.  \
 Returns altered list."
-  snd chn channel-properties key array-assoc-remove
+  snd chn channel-properties key array-assoc-remove!
 ;
 
 : set-channel-property-save-state-ignore <{ key :optional snd #f chn #f -- alist }>

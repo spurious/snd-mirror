@@ -103,6 +103,7 @@
  * would it simplify variable handling to store everything as xen_value?
  *
  * TODO: s7 vector syntax
+ * TODO: print support for int vectors
  * TODO: run doesn't always warn about a closure (explicit gen basically) -- if it's used directly,
  *         there's no warning, but it doesn't handle the closed-over variables correctly
  * TODO: vector<->vct
@@ -198,6 +199,7 @@
 #endif
 
 
+#if WITH_RUN
 static int safe_strcmp(const char *s1, const char *s2)
 {
   int val;
@@ -256,7 +258,7 @@ static int safe_strcasecmp(const char *s1, const char *s2)
 
   return(0);
 }
-
+#endif
 
 
 #define S_run_safety "run-safety"
@@ -2097,8 +2099,6 @@ void mus_run_free_ptree(struct ptree *pt)
 
 static triple *add_triple_to_ptree(ptree *pt, triple *trp)
 {
-  if (!trp) fprintf(stderr,"add null triple?!?");
-
   if (pt->triple_ctr >= pt->program_size)
     {
       if (pt->program_size == 0)
@@ -4248,6 +4248,7 @@ static int if_jump_opt(ptree *prog, xen_value *jump_to_false, xen_value *if_valu
 #endif				  
 			  free_triple(prev_op);
 			  prog->triple_ctr--;
+			  prog->program[prog->triple_ctr] = NULL;
 			  current_pc = prog->triple_ctr - 1;
 			  jumped = true;
 			}
@@ -4751,7 +4752,6 @@ static xen_value *do_warn_of_type_trouble(int var_type, int expr_type, XEN form)
 
 static void inc_i_1(int *args, ptree *pt);
 static void add_i2(int *args, ptree *pt);
-static void not_b(int *args, ptree *pt);
 
 static xen_value *do_form(ptree *prog, XEN form, walk_result_t need_result)
 {
@@ -5788,6 +5788,7 @@ static xen_value *multiply(ptree *prog, xen_value **args, int num_args)
 #endif				  
 				  free_triple(prev_op);
 				  prog->triple_ctr--;
+				  prog->program[prog->triple_ctr] = NULL;
 				  return(make_xen_value(R_FLOAT, p2_op->args[0], R_TEMPORARY));
 				}
 			    }
@@ -5839,6 +5840,7 @@ static xen_value *multiply(ptree *prog, xen_value **args, int num_args)
 #endif				  
 				  free_triple(prev_op);
 				  prog->triple_ctr--;
+				  prog->program[prog->triple_ctr] = NULL;
 				  return(make_xen_value(R_FLOAT, p2_op->args[0], R_TEMPORARY));
 				}
 			    }
@@ -5892,6 +5894,7 @@ static xen_value *multiply(ptree *prog, xen_value **args, int num_args)
 #endif				  
 				  free_triple(prev_op);
 				  prog->triple_ctr--;
+				  prog->program[prog->triple_ctr] = NULL;
 				  return(make_xen_value(R_FLOAT, p2_op->args[0], R_TEMPORARY));
 				}
 			      /* (let ((gen (make-polyshape)) (e (make-env '(0 0 1 1)))) (run (lambda () (* (env e) (polyshape gen 1.0 1.5))))) */
@@ -11732,89 +11735,35 @@ static void mixer_set_1(ptree *prog, xen_value *in_v, xen_value *in_v1, xen_valu
   add_triple_to_ptree(prog, va_make_triple(mixer_set_0, "mixer_set_0", 5, NULL, in_v, in_v1, in_v2, v));
 }
 
-#define REF_GEN0(Name, SName, DName)						\
-  static void Name ## _direct(int *args, ptree *pt) {FLOAT_RESULT = VCT_ARG_1->data[INT_ARG_2];} \
-  static void Name ## _constant_0(int *args, ptree *pt) {FLOAT_RESULT = VCT_ARG_1->data[0];} \
-  static void Name ## _constant_1(int *args, ptree *pt) {FLOAT_RESULT = VCT_ARG_1->data[1];} \
-  static void Name ## _f(int *args, ptree *pt) {FLOAT_RESULT = mus_ ## Name (CLM_ARG_1, INT_ARG_2);} \
+#define REF_GEN0(Name, SName) \
+  static void Name ## _0r(int *args, ptree *pt) {FLOAT_RESULT = mus_ ## Name (CLM_ARG_1, INT_ARG_2);} \
   static xen_value * Name ## _0(ptree *prog, xen_value **args, int num_args) \
   { \
-    if ((args[1]->type == R_CLM) && (mus_ ## SName ## _p(prog->clms[args[1]->addr]))) \
-      { \
-        vct *v; \
-        v = (vct *)malloc(sizeof(vct)); \
-        v->length = mus_length(prog->clms[args[1]->addr]); \
-        v->data = mus_ ## DName (prog->clms[args[1]->addr]); \
-        v->dont_free = true; \
-        args[1]->type = R_VCT; \
-        args[1]->addr = add_vct_to_ptree(prog, v); \
-        if (args[2]->constant == R_CONSTANT) \
-          { \
-            if (prog->ints[args[2]->addr] == 0) \
-              return(package(prog, R_FLOAT, Name ## _constant_0, #Name "_constant_0", args, 2)); \
-            if (prog->ints[args[2]->addr] == 1) \
-              return(package(prog, R_FLOAT, Name ## _constant_1, #Name "_constant_1", args, 2)); \
-          } \
-        return(package(prog, R_FLOAT, Name ## _direct, #Name "_direct", args, 2)); \
-      } \
-    return(package(prog, R_FLOAT, Name ## _f, #Name "_f", args, 2)); \
+    return(package(prog, R_FLOAT, Name ## _0r, #Name "_0r", args, 2)); \
   }
 
-REF_GEN0(frame_ref, frame, data)
-REF_GEN0(locsig_ref, locsig, data)
-REF_GEN0(locsig_reverb_ref, locsig, xcoeffs)
+REF_GEN0(frame_ref, frame)
+REF_GEN0(locsig_ref, locsig)
+REF_GEN0(locsig_reverb_ref, locsig)
 
 
-#define SET_GEN0(Name, SName, DName)						\
-  static void Name ## _f(int *args, ptree *pt) {mus_ ## Name (CLM_ARG_1, INT_ARG_2, FLOAT_ARG_3);} \
-  static void Name ## _i(int *args, ptree *pt) {mus_ ## Name (CLM_ARG_1, INT_ARG_2, (Float)(INT_ARG_3));} \
-  static void Name ## _direct_f(int *args, ptree *pt) {VCT_ARG_1->data[INT_ARG_2] = FLOAT_ARG_3;} \
-  static void Name ## _direct_i(int *args, ptree *pt) {VCT_ARG_1->data[INT_ARG_2] = (Float)INT_ARG_3;} \
-  static void Name ## _constant_0_f(int *args, ptree *pt) {VCT_ARG_1->data[0] = FLOAT_ARG_3;} \
-  static void Name ## _constant_1_f(int *args, ptree *pt) {VCT_ARG_1->data[1] = FLOAT_ARG_3;} \
-  static void Name ## _constant_0_i(int *args, ptree *pt) {VCT_ARG_1->data[0] = (Float)INT_ARG_3;} \
-  static void Name ## _constant_1_i(int *args, ptree *pt) {VCT_ARG_1->data[1] = (Float)INT_ARG_3;} \
+#define SET_GEN0(Name, SName) \
+  static void Name ## _0r(int *args, ptree *pt) {mus_ ## Name (CLM_ARG_1, INT_ARG_2, FLOAT_ARG_3);} \
+  static void Name ## _ir(int *args, ptree *pt) {mus_ ## Name (CLM_ARG_1, INT_ARG_2, (Float)(INT_ARG_3));} \
   static xen_value * Name ## _2(ptree *prog, xen_value **args, int num_args) \
   { \
-    if ((args[1]->type == R_CLM) && (mus_ ## SName ## _p(prog->clms[args[1]->addr]))) \
-      { \
-        vct *v; \
-        v = (vct *)malloc(sizeof(vct)); \
-        v->length = mus_length(prog->clms[args[1]->addr]); \
-        v->data = mus_ ## DName (prog->clms[args[1]->addr]); \
-        v->dont_free = true; \
-        args[1]->type = R_VCT; \
-        args[1]->addr = add_vct_to_ptree(prog, v); \
-        if (args[2]->constant == R_CONSTANT) \
-          { \
- 	    if (args[3]->type == R_FLOAT) \
-              { \
-                if (prog->ints[args[2]->addr] == 0) \
-                  return(package(prog, R_FLOAT, Name ## _constant_0_f, #Name "_constant_0_f", args, 3)); \
-                if (prog->ints[args[2]->addr] == 1) \
-                  return(package(prog, R_FLOAT, Name ## _constant_1_f, #Name "_constant_1_f", args, 3)); \
-              } \
-            if (prog->ints[args[2]->addr] == 0) \
-              return(package(prog, R_FLOAT, Name ## _constant_0_i, #Name "_constant_0_i", args, 3)); \
-            if (prog->ints[args[2]->addr] == 1) \
-              return(package(prog, R_FLOAT, Name ## _constant_1_i, #Name "_constant_1_i", args, 3)); \
-          } \
-	if (args[3]->type == R_FLOAT) \
-          return(package(prog, R_FLOAT, Name ## _direct_f, #Name "_direct_f", args, 3)); \
-        return(package(prog, R_FLOAT, Name ## _direct_i, #Name "_direct_i", args, 3)); \
-      } \
     if (args[3]->type == R_FLOAT) \
-      return(package(prog, R_FLOAT, Name ## _f, #Name "_f", args, 3)); \
-    return(package(prog, R_FLOAT, Name ## _i, #Name "_i", args, 3)); \
+      return(package(prog, R_FLOAT, Name ## _0r, #Name "_0r", args, 3)); \
+    return(package(prog, R_FLOAT, Name ## _ir, #Name "_ir", args, 3)); \
   } \
   static void Name ## _1(ptree *prog, xen_value *in_v, xen_value *in_v1, xen_value *in_v2, xen_value *v) \
   { \
-    add_triple_to_ptree(prog, va_make_triple( Name ## _f, #Name "_f", 4, NULL, in_v, in_v1, v)); \
+    add_triple_to_ptree(prog, va_make_triple( Name ## _0r, #Name "_0r", 4, NULL, in_v, in_v1, v)); \
   }
 
-SET_GEN0(frame_set, frame, data)
-SET_GEN0(locsig_set, locsig, data)
-SET_GEN0(locsig_reverb_set, locsig, xcoeffs)
+SET_GEN0(frame_set, frame)
+SET_GEN0(locsig_set, locsig)
+SET_GEN0(locsig_reverb_set, locsig)
 
 
 

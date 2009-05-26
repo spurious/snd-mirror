@@ -1316,13 +1316,9 @@ static int mus_write_1(int tfd, off_t beg, off_t end, int chans, mus_sample_t **
 	  bytes = (end + 1) * siz;
 	  return(checked_write(tfd, (char *)(bufs[0]), bytes));
 	}
-      charbuf = (char *)calloc(BUFLIM, sizeof(char)); 
-      if (charbuf == NULL) 
-	return(mus_error(MUS_MEMORY_ALLOCATION_FAILED, "mus_write: IO buffer allocation failed"));
     }
   else
     {
-      charbuf = inbuf;
       siz = mus_bytes_per_sample(tfd);
       data_format = tfd; /* in this case, tfd is the data format (see mus_file_write_buffer below) -- this should be changed! */
       clipping = clipped;
@@ -1336,6 +1332,9 @@ static int mus_write_1(int tfd, off_t beg, off_t end, int chans, mus_sample_t **
     buflim = (BUFLIM) - k;
   else buflim = BUFLIM;
   loc = beg;
+
+  if (inbuf)
+    charbuf = inbuf;
 
   while (leftover > 0)
     {
@@ -1383,6 +1382,13 @@ static int mus_write_1(int tfd, off_t beg, off_t end, int chans, mus_sample_t **
 		}
 	    }
 	  loclim = loc + lim;
+	  if (!charbuf)
+	    {
+	      charbuf = (char *)calloc(BUFLIM, sizeof(char)); 
+	      if (charbuf == NULL) 
+		return(mus_error(MUS_MEMORY_ALLOCATION_FAILED, "mus_write: IO buffer allocation failed"));
+	    }
+
 	  jchar = (unsigned char *)charbuf; /* if to_buffer we should add the loop offset here, or never loop */
 	  jchar += (k * siz); 
 	  switch (data_format)
