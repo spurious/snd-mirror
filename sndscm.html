@@ -8230,8 +8230,14 @@ at ems.music.uiuc.edu/beaucham/papers/JASA.01.96.pdf.
 <p>The "even" cases are not independent of the "all" cases; each even set can be at worst 1.0 above
 its corresponding (n-1) all set (shift the current all to the right one, and set the new fundamental
 to 0.0 phase).  But the "odd" cases are always better than the evens, so I think the three sets
-follow the same law, at least for large n.  (I think we could get down to the sqrt(n) in all cases,
-given enough time and some luck, or even better, some algorithm for finding the minimum).
+follow the same law, at least for large n.  I think we could get close to sqrt(n) in all cases,
+given enough time and some luck, or even better, some algorithm for finding the minimum.  peak-phases.scm
+represents the results of about a dozen different search methods applied to this problem.  When n is
+small, almost any algorithm works, even brute force.  But the search space grows exponentially in n,
+and the search space is full of potholes ("local minima"), so as n grows, every searcher begins
+to stagger to a halt.  peak-phases.scm started with brute force (for n < 30) and a random search (n > 30) for the simplest cases
+(0 and pi as the only initial phases), then did a fuzzy gradient descent around those points,
+then applied genetic algorithms around those points, and so on.  
 </p>
 
 
@@ -8436,6 +8442,9 @@ white noise (in sound as well as appearance); here is a small portion of one per
 <br>
 
 <br><br>
+
+
+
 
 <!-- ---------------------------------------- FILE: piano ---------------------------------------- -->
 

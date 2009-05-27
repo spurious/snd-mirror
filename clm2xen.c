@@ -1717,41 +1717,57 @@ static XEN g_mus_ycoeffs(XEN gen)
 
 static XEN g_mus_xcoeff(XEN gen, XEN index)
 {
+  int ind;
   #define H_mus_xcoeff "(" S_mus_xcoeff " gen index): gen's filter xcoeff value at index (0-based)"
   if (XEN_LIST_P(gen)) return(call_get_method_2(gen, index, S_mus_xcoeff));
   XEN_ASSERT_TYPE(MUS_XEN_P(gen), gen, XEN_ARG_1, S_mus_xcoeff, "a generator");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(index), index, XEN_ARG_2, S_mus_xcoeff, "an int");
-  return(C_TO_XEN_DOUBLE(mus_xcoeff(XEN_TO_MUS_ANY(gen), XEN_TO_C_INT(index))));
+  ind = XEN_TO_C_INT(index);
+  if (ind < 0)
+    XEN_OUT_OF_RANGE_ERROR(S_mus_xcoeff, XEN_ARG_2, index, "index must be non-negative");
+  return(C_TO_XEN_DOUBLE(mus_xcoeff(XEN_TO_MUS_ANY(gen), ind)));
 }
 
 
 static XEN g_mus_set_xcoeff(XEN gen, XEN index, XEN val)
 {
-  if (XEN_LIST_P(gen)) return(call_set_method_2(gen, index, val, S_mus_xcoeff));
-  XEN_ASSERT_TYPE(MUS_XEN_P(gen), gen, XEN_ARG_1, S_mus_xcoeff, "a generator");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(index), index, XEN_ARG_2, S_mus_xcoeff, "an int");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_3, S_mus_xcoeff, "a number");
-  return(C_TO_XEN_DOUBLE(mus_set_xcoeff(XEN_TO_MUS_ANY(gen), XEN_TO_C_INT(index), XEN_TO_C_DOUBLE(val))));
+  int ind;
+  if (XEN_LIST_P(gen)) return(call_set_method_2(gen, index, val, S_setB S_mus_xcoeff));
+  XEN_ASSERT_TYPE(MUS_XEN_P(gen), gen, XEN_ARG_1, S_setB S_mus_xcoeff, "a generator");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(index), index, XEN_ARG_2, S_setB S_mus_xcoeff, "an int");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_3, S_setB S_mus_xcoeff, "a number");
+  ind = XEN_TO_C_INT(index);
+  if (ind < 0)
+    XEN_OUT_OF_RANGE_ERROR(S_setB S_mus_xcoeff, XEN_ARG_2, index, "index must be non-negative");
+  return(C_TO_XEN_DOUBLE(mus_set_xcoeff(XEN_TO_MUS_ANY(gen), ind, XEN_TO_C_DOUBLE(val))));
 }
 
 
 static XEN g_mus_ycoeff(XEN gen, XEN index)
 {
+  int ind;
   #define H_mus_ycoeff "(" S_mus_ycoeff " gen index): gen's filter ycoeff value at index (0-based)"
   if (XEN_LIST_P(gen)) return(call_get_method_2(gen, index, S_mus_ycoeff));
   XEN_ASSERT_TYPE(MUS_XEN_P(gen), gen, XEN_ARG_1, S_mus_ycoeff, "a generator");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(index), index, XEN_ARG_2, S_mus_ycoeff, "an int");
-  return(C_TO_XEN_DOUBLE(mus_ycoeff(XEN_TO_MUS_ANY(gen), XEN_TO_C_INT(index))));
+  ind = XEN_TO_C_INT(index);
+  if (ind < 0)
+    XEN_OUT_OF_RANGE_ERROR(S_mus_ycoeff, XEN_ARG_2, index, "index must be non-negative");
+  return(C_TO_XEN_DOUBLE(mus_ycoeff(XEN_TO_MUS_ANY(gen), ind)));
 }
 
 
 static XEN g_mus_set_ycoeff(XEN gen, XEN index, XEN val)
 {
-  if (XEN_LIST_P(gen)) return(call_set_method_2(gen, index, val, S_mus_ycoeff));
-  XEN_ASSERT_TYPE(MUS_XEN_P(gen), gen, XEN_ARG_1, S_mus_ycoeff, "a generator");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(index), index, XEN_ARG_2, S_mus_ycoeff, "an int");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_3, S_mus_ycoeff, "a number");
-  return(C_TO_XEN_DOUBLE(mus_set_ycoeff(XEN_TO_MUS_ANY(gen), XEN_TO_C_INT(index), XEN_TO_C_DOUBLE(val))));
+  int ind;
+  if (XEN_LIST_P(gen)) return(call_set_method_2(gen, index, val, S_setB S_mus_ycoeff));
+  XEN_ASSERT_TYPE(MUS_XEN_P(gen), gen, XEN_ARG_1, S_setB S_mus_ycoeff, "a generator");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(index), index, XEN_ARG_2, S_setB S_mus_ycoeff, "an int");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_3, S_setB S_mus_ycoeff, "a number");
+  ind = XEN_TO_C_INT(index);
+  if (ind < 0)
+    XEN_OUT_OF_RANGE_ERROR(S_setB S_mus_ycoeff, XEN_ARG_2, index, "index must be non-negative");
+  return(C_TO_XEN_DOUBLE(mus_set_ycoeff(XEN_TO_MUS_ANY(gen), ind, XEN_TO_C_DOUBLE(val))));
 }
 
 
