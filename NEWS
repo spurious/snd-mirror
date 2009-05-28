@@ -1,26 +1,13 @@
-Snd 10.5
+Snd 10.6
 
-many more improvements thanks to Kjetil and Mike Scholz.
+more Ruby and Forth improvements from Mike.
 
-multidimensional and applicable vectors in s7.
+sndlib.vsproj and other files for MS C sndlib from Rick and Andrew Burnson.
 
-pulseaudio support (--with-pulseaudio in configure): 
-  I don't know if this actually works, since pulseaudio (paplay) itself
-  doesn't work on my machine. 
+polyoid-env generator (generators.scm).
 
-moved the papoulis and dpss (slepian) fft-windows from dsp.scm to clm.c.
-  added sinc-window.
+run improved.
 
-matlab mat-5 headers (for 1-channel sound data).
+checked: mpc 0.6, gmp 4.3.0|1, sbcl 1.0.28, gtk 2.17.0, fth 1.2.4
 
-all hash literals using ',' changed to use '=>' in *.rb (for ruby 1.9.*)
-  but ruby 1.9.n is not usable yet -- it segfaults on any error.
-
-With Kjetil's help, s7 is more than twice as fast now in s7test.
-
-checked: mpfr 2.4.1, gtk 2.15.5|16.0|1, fftw 3.2.1, fth 1.2.3, sbcl 1.0.27
-
-Thanks!: Michael Edwards, Kjetil Matheussen, Mike Scholz, Al Steffens, 
-         Anders Vinjar, Oded Ben-Tal, Rick Taube, Andrew Burnson.
-
-
+Thanks!: Mike Scholz, Thomas Baruchel, Rick, Andrew Burnson.
