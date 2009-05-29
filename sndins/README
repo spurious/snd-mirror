@@ -4,11 +4,10 @@
 
 The C/XEN library `libsndins.so' provides the instrument FM-VIOLIN and
 the reverberators JC-REVERB, NREV, and FREEVERB to use them in longer
-notelists in Snd/Guile, Snd/Gauche, Snd/Ruby, or Snd/Forth.  They are
-not so fast as Lisp's FFI versions, at least not on my machine, but
-they run much faster than the Scheme, Ruby, or Forth variants.  In
-addition I have added the FCOMB example from sndscm.html which is used
-in freeverb.
+notelists in Snd/Scheme, Snd/Ruby, or Snd/Forth.  They are not so fast
+as Lisp's FFI versions, at least not on my machine, but they run much
+faster than the Scheme, Ruby, or Forth variants.  In addition I have
+added the FCOMB example from sndscm.html which is used in freeverb.
 
 The library is based on Bill Schottstaedt's `xen' and `sndlib'
 libraries and the Snd editor itself.  Thank you for these great music
@@ -254,8 +253,9 @@ The following functions are accessible from C.
 Sndins depends on a configured and compiled, but not necessary
 installed, libsndlib.a one directory in the hierarchy above sndins.
 Configuring sndlib from sndlib.tar.gz creates a Makefile in
-sndlib/sndins, sndlib's config.h is needed as well and the compiled
-sndlib/libsndlib.a will be linked in sndlib/sndins/libsndins.*
+sndlib/sndins, sndlib's mus-config.h is needed as well and the
+compiled sndlib/libsndlib.a will be linked in
+sndlib/sndins/libsndins.*
 
 * Compilation
 
@@ -269,7 +269,7 @@ Again: Sndlib must be configured before!
 
 * Installation
 
-** Guile	
+** Scheme
 
 You can install libsndlib.so and libsndins.so to ${prefix}/lib with
 the usual `make install' command.  Again: Sndlib must be configured
@@ -290,7 +290,7 @@ it by:
 
 	(sh)  LD_LIBRARY_PATH=/usr/gnu/lib:${LD_LIBRARY_PATH}; export LD_LIBRARY_PATH
 
-In Snd/Guile one can add to the ~/.snd(_guile) init file:
+In Snd/Scheme one can add to the ~/.snd init file:
 
 (if (provided? 'snd)
     (begin
@@ -308,34 +308,19 @@ In Snd/Guile one can add to the ~/.snd(_guile) init file:
       (if (not (provided? 'sndlib)) (load-extension "libsndlib" "Init_sndlib"))
       (if (not (provided? 'sndins)) (load-extension "libsndins" "Init_sndins"))))
 
-** Gauche
-
-You can install sndlib.so and sndins.so in the gauche library path, e.g.
-
-    cd ${compile_sndlib_dir}
-    make
-    install -c sndlib.so ${prefix}/lib/gauche/site/0.8.7/i686-socrates-freebsd5.1/
-    cd sndins
-    make
-    install -c sndins.so ${prefix}/lib/gauche/site/0.8.7/i686-socrates-freebsd5.1/
-
-In Snd/Gauche one can add to the ~/.snd(_gauche) init file:
-
-    (if (not (provided? 'sndlib))
-        (dynamic-load "sndlib" :init-function "Init_sndlib" :export-symbols #t))
-    (if (not (provided? 'sndins))
-        (dynamic-load "sndins" :init-function "Init_sndins" :export-symbols #t))
-
 ** Ruby
 
 You can install sndlib.so and sndins.so in the ruby library path, e.g.
 
+    (csh) setenv RUBYLIB ${HOME}/share/ruby/site-ruby:${HOME}/share/snd:${HOME}/lib/ruby/site-ruby
+    (sh)  RUBYLIB=${HOME}/share/ruby/site-ruby:${HOME}/share/snd:${HOME}/lib/ruby/site-ruby
+    (sh)  export RUBYLIB
     cd ${compile_sndlib_dir}
     make
-    install -c sndlib.so ${prefix}/lib/ruby/site_ruby/1.9/i686-freebsd5.1/
+    install -c sndlib.so ~/lib/ruby/site-ruby/
     cd sndins
     make
-    install -c sndins.so ${prefix}/lib/ruby/site_ruby/1.9/i686-freebsd5.1/
+    install -c sndins.so ~/lib/ruby/site-ruby/
 
 So in Snd/Ruby one can add to the ~/.snd(_ruby) init file:
 
@@ -346,15 +331,20 @@ So in Snd/Ruby one can add to the ~/.snd(_ruby) init file:
 
 Installing so-libs in Forth is possible with these command lines:
 
+    (csh) setenv FTH_FTHPATH ${HOME}/share/fth/site-fth
+    (csh) setenv FTH_LIBPATH ${HOME}/lib/fth
+    (sh)  FTH_FTHPATH=${HOME}/share/fth/site-fth; export FTH_FTHPATH
+    (sh)  FTH_LIBPATH=${HOME}/lib/fth;            export FTH_LIBPATH
+
     cd ${compile_sndlib_dir}
     make
-    fth --verbose --no-init --eval "install sndlib.so"
+    fth -Qve "install sndlib.so"
     cd sndins
     make
-    fth --verbose --no-init --eval "install sndins.so"
+    fth -Qve "install sndins.so"
 
-These lines install the libraries in $(prefix)/lib/fth where FTH will
-look for so-libs at first.
+These lines install the libraries in ~/lib/fth, the first user
+writeable path.
 
 Then in Snd/Forth one can add to the ~/.snd(_forth) init file:
 
@@ -363,17 +353,17 @@ Then in Snd/Forth one can add to the ~/.snd(_forth) init file:
 
 * Samples
 
-You can load the sample files into Snd and with Ruby and Forth you can
+You can load the sample files into Snd, with Ruby and Forth you can
 test them in a shell too.  One may set with-sound variables in agn.*
 and fmviolin.* files.
 
-The agn.* files are translations of clm-2/clm-example.clm into Scheme,
+The agn.* files are translations of clm/clm-example.clm into Scheme,
 Ruby, and Forth as a test case.
 
-The fmviolin.* files are translations of clm-2/fmviolin.clm into
-Scheme, Ruby, and Forth as a test case.
+The fmviolin.* files are translations of clm/fmviolin.clm into Scheme,
+Ruby, and Forth as a test case.
 
-** Scheme (Guile, Gauche)
+** Scheme
 
 You can load the *.scm scripts into Snd.  If you have compiled and
 installed the Scheme sndlib and sndins libraries, you can type

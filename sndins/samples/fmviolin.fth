@@ -1,13 +1,13 @@
-#! /usr/bin/env fth --no-init-file --script
+#! /usr/bin/env fth
 \ fmviolin.fth -- CLM fmviolin.clm -*- snd-forth -*-
 
-\ Translator/Author: Michael Scholz <scholz-micha@gmx.de>
+\ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Mon Dec 06 17:23:22 CET 2004
-\ Changed: Wed Aug 30 22:38:27 CEST 2006
+\ Changed: Fri May 29 01:16:29 CEST 2009
 
 \ Commentary:
 
-\ A translation of Bill Schottstaedt's clm-3/fmviolin.clm from Lisp
+\ A translation of Bill Schottstaedt's clm/fmviolin.clm from Lisp
 \ into Fth.
 
 \ short-example
@@ -19,14 +19,14 @@ dl-load sndlib Init_sndlib
 dl-load sndins Init_sndins
 require clm
 
-$" test-ins-f.snd"   to *clm-file-name*
-#t   	    	     to *clm-play*
-#t   	    	     to *clm-statistics*
-#t   	    	     to *clm-verbose*
-22050  	    	     to *clm-srate*
-2      	    	     to *clm-channels*
-2           	     to *clm-reverb-channels*
-#t          	     to *clm-delete-reverb*
+"test-ins-f.snd"   to *clm-file-name*
+#t   	    	   to *clm-play*
+#t   	    	   to *clm-statistics*
+#t   	    	   to *clm-verbose*
+22050  	    	   to *clm-srate*
+2      	    	   to *clm-channels*
+2           	   to *clm-reverb-channels*
+#t          	   to *clm-delete-reverb*
 
 1.0                          value fmv-fm-index                   
 '( 0 0 25 1 75 1 100 0 )     value fmv-amp-env                    
@@ -146,7 +146,7 @@ $" test-ins-f.snd"   to *clm-file-name*
   :degree                     degree
   :distance                   distance
   :reverb-amount              revamount
-  :index-type                 index-type   fm-violin drop
+  :index-type                 index-type   fm-violin
 ;
 
 : vln-one-sin ( start dur freq amp keyword-args -- )
@@ -187,7 +187,7 @@ $" test-ins-f.snd"   to *clm-file-name*
     amp					\ amp
     :fm-index      fm-index 1.0 random 0.75 f+ f*
     :amp-env       amp-env
-    :reverb-amount rev-amt fm-violin drop
+    :reverb-amount rev-amt fm-violin
   loop
 ;
 
@@ -208,7 +208,7 @@ event: fth-short-example ( -- )
 : test-info { ctime -- }
   *counter* 1+ to *counter*
   *timer* stop-timer
-  $" \\ %02d: score %3d   utime %7.3f\n" '( *counter* ctime *timer* user-time@ ) fth-print
+  $" \\ %02d: score %3d   utime %7.3f\n" '( *counter* ctime *timer* utime@ ) fth-print
 ;
 
 event: fth-long-example ( -- )
@@ -1675,6 +1675,13 @@ event: fth-long-example ( -- )
   ['] fth-short-example :reverb ['] nrev     :reverb-data '( :lp-coeff   0.6 ) with-sound
 ;
 
-'snd provided? [unless] *argc* 0= [if] long-example [else] short-example [then] [then]
+'snd provided? [unless]
+  *argc* 2 > [if]
+    *argv* array-pop drop
+    long-example
+  [else]
+    short-example
+  [then]
+[then]
 
 \ fmviolin.fth ends here

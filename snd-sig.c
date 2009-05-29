@@ -5665,7 +5665,7 @@ that give a minimum peak amplitude when the signals are added together."
     (vct-set! v1 i (sin x))
     (vct-set! v2 i (sin (* 2 x)))
     (vct-set! v3 i (sin (* 3 x))))
-  (find-min-peak-phases v1 v2 v3))
+ (find-min-peak-phases 1024 v1 v2 v3))
 
 (1.98045 (0 210 1940))
 
@@ -5674,6 +5674,235 @@ that give a minimum peak amplitude when the signals are added together."
 :(modulo (/ (* 1940 3) 1024.0) 2.0)
 1.68359375
 #endif
+
+#if HAVE_SYS_TIME_H
+  #include <sys/time.h>
+#endif
+
+#define S_find_min_peak_phases_via_sa "find-min-peak-phases-via-sa"
+
+typedef struct {
+  Float pk;
+  Float *phases;
+} pk_data;
+
+static XEN g_find_min_peak_phases_via_sa(XEN x_choice, XEN x_n, XEN x_size, XEN x_increment, XEN x_counts)
+{
+  #define H_find_min_peak_phases_via_sa "(" S_find_min_peak_phases_via_sa " choice n size increment counts) searches \
+for a peak-amp minimum using a simulated annealing form of the genetic algorithm"
+
+  #define FFT_MULT 128
+  #define INCR_MULT 0.99
+  #define INCR_MIN 0.01
+  #define RETRIES 10
+  #define RETRY_MULT 2
+
+  /* (find-min-peak-phases-via-sa 0 8 1024 1.0 1000) */
+  /* choice: 0=all, 1=odd, 2=even, 3=prime */
+
+  int choice, n, size, counts = 0, day_counter = 0, free_top = 0, fft_size = 0, ffts = 0;
+  Float increment, orig_incr, local_best = 1000.0;
+  Float *min_phases = NULL;
+  char *choice_name[4] = {"all", "odd", "prime", "even"};
+  pk_data **choices = NULL, **free_choices = NULL;
+  Float *rl, *im;
+  bool cycling = true;
+
+  static int primes[129] = {1, 2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 
+			    89, 97, 101, 103, 107, 109, 113, 127, 131, 137, 139, 149, 151, 157, 163, 167, 173, 179, 181, 
+			    191, 193, 197, 199, 211, 223, 227, 229, 233, 239, 241, 251, 257, 263, 269, 271, 277, 281, 
+			    283, 293, 307, 311, 313, 317, 331, 337, 347, 349, 353, 359, 367, 373, 379, 383, 389, 397, 
+			    401, 409, 419, 421, 431, 433, 439, 443, 449, 457, 461, 463, 467, 479, 487, 491, 499, 503, 
+			    509, 521, 523, 541, 547, 557, 563, 569, 571, 577, 587, 593, 599, 601, 607, 613, 617, 619, 
+			    631, 641, 643, 647, 653, 659, 661, 673, 677, 683, 691, 701, 709, 719};
+
+  Float get_peak(Float *phases)
+  {
+    int i, m;
+    Float pi2, mx;
+
+    pi2 = M_PI / 2.0;
+    memset((void *)rl, 0, fft_size * sizeof(Float));
+    memset((void *)im, 0, fft_size * sizeof(Float));
+
+    for (m = 0; m < n; m++)
+      {
+	int bin;
+	Float phi;
+	phi = (M_PI * phases[m]) + pi2;
+	if (choice == 0)
+	  bin = m + 1;
+	else
+	  {
+	    if (choice == 1)
+	      bin = (m * 2) + 1;
+	    else 
+	      {
+		if (choice == 2)
+		  {
+		    bin = m * 2;
+		    if (bin == 0) bin = 1;
+		  }
+		else bin = primes[m];
+	      }
+	  }
+	rl[bin] = cos(phi);
+	im[bin] = sin(phi);
+      }
+
+    mus_fft(rl, im, fft_size, -1);
+    ffts++;
+
+    mx = fabs(rl[0]);
+    for (i = 1; i < fft_size; i++)
+      {
+	Float mxtemp;
+	mxtemp = fabs(rl[i]);
+	if (mxtemp > mx)
+	  mx = mxtemp;
+      }
+    return(mx);
+  }
+  
+  pk_data *next_choice(pk_data *data)
+  {
+    Float *phases, *new_phases;
+    Float cur_min, pk = 100000.0;
+    int len, local_try, i, local_tries;
+    pk_data *new_pk;
+
+    new_pk = free_choices[--free_top];
+    new_phases = new_pk->phases;
+    cur_min = data->pk;
+    phases = data->phases;
+    len = n;
+    local_tries = RETRIES + day_counter * RETRY_MULT;
+
+    for (local_try = 0; (local_try < local_tries) && (pk >= cur_min); local_try++)
+      {
+	for (i = 1; i < len; i++)
+	  new_phases[i] = fmod(phases[i] + mus_frandom(increment), 2.0); /* mus_random? */
+	pk = get_peak(new_phases);
+	if (pk < local_best)
+	  {
+	    int k;
+	    local_best = pk;
+	    for (k = 1; k < len; k++) min_phases[k] = new_phases[k];
+	    fprintf(stderr, "[%d, %f, %d]: %s, %d %f #(", day_counter, increment, ffts, choice_name[choice], n, pk);
+	    for (k = 0; k < len - 1; k++) fprintf(stderr, "%f ", min_phases[k]);
+	    fprintf(stderr, "%f)\n\n", min_phases[len - 1]);
+	    day_counter = 0;
+	    ffts = 0;
+	  }
+      }
+    new_pk->pk = pk;
+    return(new_pk);
+  }
+
+  bool day(void)
+  {
+    int i, j = 0, k, len;
+    Float sum = 0.0, avg;
+    len = size;
+    day_counter++;
+    for (i = 0; i < len; i++) sum += choices[i]->pk;
+    avg = sum / len;
+
+    for (i = 0; i < len; i++)
+      {
+	pk_data *datum;
+	datum = choices[i];
+	choices[i] = NULL;
+	if (datum->pk < avg)
+	  choices[j++] = datum;
+	else free_choices[free_top++] = datum;
+      }
+
+    for (i = 0, k = j; k < len; i++, k++)
+      {
+	if (i == j)
+	  i = 0;
+	choices[k] = next_choice(choices[i]);
+      }
+
+    if (day_counter < counts)
+      {
+	/*
+	increment *= INCR_MULT;
+	if (increment < INCR_MIN) increment = INCR_MIN;
+	*/
+	return(true);
+      }
+    return(false);
+  }
+
+#if HAVE_SYS_TIME_H
+  {
+    struct timeval tm;
+    struct timezone tz;
+    gettimeofday(&tm, &tz);
+    mus_set_rand_seed((unsigned long)(tm.tv_sec * 1000 + tm.tv_usec / 1000));
+  }
+#endif
+
+  choice = XEN_TO_C_INT(x_choice);
+  n = XEN_TO_C_INT(x_n);
+
+  if (XEN_INTEGER_P(x_size))
+    size = XEN_TO_C_INT(x_size);
+  else size = 100;
+
+  if (XEN_INTEGER_P(x_counts))
+    counts = XEN_TO_C_INT(x_counts);
+  else counts = 1000;
+
+  if (XEN_DOUBLE_P(x_increment))
+    increment = XEN_TO_C_DOUBLE(x_increment);
+  else increment = 0.01;
+  orig_incr = increment;
+
+  min_phases = (Float *)calloc(n, sizeof(Float));
+  local_best = (Float)n;
+
+  {
+    int i, start, n1;
+
+    if (choice == 0)
+      n1 = n;
+    else
+      {
+	if (choice != 3)
+	  n1 = n * 2;
+	else n1 = primes[n];
+      }
+    fft_size = (int)pow(2.0, (int)ceil(log(FFT_MULT * n1) / log(2.0)));
+    rl = (Float *)calloc(fft_size, sizeof(Float));
+    im = (Float *)calloc(fft_size, sizeof(Float));
+
+    choices = (pk_data **)calloc(size, sizeof(pk_data *));
+    free_choices = (pk_data **)calloc(size, sizeof(pk_data *));
+    free_top = 0;
+
+    for (start = 0; start < size; start++)
+      {
+	choices[start] = (pk_data *)calloc(1, sizeof(pk_data));
+	choices[start]->phases = (Float *)calloc(n, sizeof(Float));
+
+	/*
+	for (i = 0; i < n - 1; i++)
+	  if ((start & (1 << i)) != 0)
+	    choices[start]->phases[i + 1] = 1.0;
+	*/
+	for (i = 1; i < n; i++)
+	  choices[start]->phases[i] = mus_frandom(1.0);
+
+	choices[start]->pk = get_peak(choices[start]->phases);
+      }
+    while (day()) {}
+  }
+  return(XEN_FALSE);
+}
+
 
 #endif
 
@@ -5721,6 +5950,7 @@ XEN_NARGIFY_1(g_set_sinc_width_w, g_set_sinc_width)
 XEN_ARGIFY_9(g_ptree_channel_w, g_ptree_channel)
 #if HAVE_NESTED_FUNCTIONS
 XEN_VARGIFY(g_find_min_peak_phases_w, g_find_min_peak_phases)
+XEN_ARGIFY_5(g_find_min_peak_phases_via_sa_w, g_find_min_peak_phases_via_sa)
 #endif
 #else
 #define g_scan_chan_w g_scan_chan
@@ -5764,6 +5994,7 @@ XEN_VARGIFY(g_find_min_peak_phases_w, g_find_min_peak_phases)
 #define g_ptree_channel_w g_ptree_channel
 #if HAVE_NESTED_FUNCTIONS
 #define g_find_min_peak_phases_w g_find_min_peak_phases
+#define g_find_min_peak_phases_via_sa_w g_find_min_peak_phases_via_sa
 #endif
 #endif
 
@@ -5855,6 +6086,7 @@ void g_init_sig(void)
 				   S_setB S_sinc_width, g_set_sinc_width_w,  0, 0, 1, 0);
 #if HAVE_NESTED_FUNCTIONS
   XEN_DEFINE_PROCEDURE(S_find_min_peak_phases, g_find_min_peak_phases_w, 0, 0, 1, H_find_min_peak_phases);
+  XEN_DEFINE_PROCEDURE(S_find_min_peak_phases_via_sa, g_find_min_peak_phases_via_sa_w, 2, 3, 0, H_find_min_peak_phases_via_sa);
 #endif
 }
 

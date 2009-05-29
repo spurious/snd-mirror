@@ -2,7 +2,7 @@
 ;;; Examples of the fm violin (see v.ins) 
 ;;; This file semi-automatically translated from a sambox note list ca 1983.
 ;;;
-;;; Converted into Scheme by Michael Scholz <scholz-micha@gmx.de>
+;;; Converted into Scheme by Michael Scholz <mi-scholz@users.sourceforge.net>
 
 ;; This file is part of Sndins.
 

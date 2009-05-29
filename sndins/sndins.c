@@ -1,26 +1,28 @@
-/* sndins.c -- Sndins for Snd
+/* sndins.c -- Sndins for Snd/CLM
  *
- * Copyright (C) 2003--2006 Michael Scholz
+ * Copyright (c) 2003--2009 Michael Scholz <mi-scholz@users.sourceforge.net>
+ * All rights reserved.
  *
- * Author: Michael Scholz <scholz-micha@gmx.de>
- * Created: Sat Jun 07 02:24:46 CEST 2003
- * Changed: Thu Nov 23 02:48:27 CET 2006
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
  *
- * This file is part of Sndins.
- *
- * This library is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 2 of the License, or (at your option) any later version.
- *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
  *
  * Commentary:
  * 
@@ -38,32 +40,21 @@
  * off_t ins_freeverb(Float start, Float dur, [...]);
  *
  * void Init_sndins(void);
- * 
- * Code:
  */
 
 #if HAVE_CONFIG_H
 # include <mus-config.h>
 #endif
+#if HAVE_STRING_H
+# include <string.h>
+#endif
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#if HAVE_STRING_H
-# include <string.h>
-#endif
 #include <stdarg.h>
 
-#if HAVE_GUILE
-# if (HAVE_SCM_NUM2INT || HAVE_SCM_C_MAKE_RECTANGULAR)
-#  include <libguile.h>
-/* libguile/evalext.h: #if (SCM_ENABLE_DEPRECATED == 1) */
-#  ifndef scm_definedp
-#   define scm_definedp scm_defined_p
-#  endif
-# endif
-#endif
-
+#include "_sndlib.h"
 #include "xen.h"
 #include "clm.h"
 #include "vct.h"
@@ -124,12 +115,20 @@ init_keywords(void)
 # define INS_VERBOSE          "clm_verbose"
 # define INS_LOCSIG_TYPE      "clm_locsig_type"
 # define INS_DECAY_TIME       "clm_decay_time"
+# define INS_LIST_BEG         "["
+# define INS_LIST_END         "]"
+# define INS_FALSE            "false"
+# define INS_SYMBOL_PREFIX    ":"
 #else
 # define INS_OUTPUT           "*output*"
 # define INS_REVERB           "*reverb*"
 # define INS_VERBOSE          "*clm-verbose*"
 # define INS_LOCSIG_TYPE      "*clm-locsig-type*"
 # define INS_DECAY_TIME       "*clm-decay-time*"
+# define INS_LIST_BEG         "'("
+# define INS_LIST_END         ")"
+# define INS_FALSE            "#f"
+# define INS_SYMBOL_PREFIX    "'"
 #endif
 
 static mus_any *
@@ -841,25 +840,26 @@ ins_fm_violin(Float start,
 	  partials[(int)(fm2_rat)] = index2;
 	  partials[(int)(fm3_rat)] = index3;
 	  fmosc1 = mus_make_polyshape(freq * fm1_rat, 0.0,
-				      mus_partials_to_polynomial(nparts, partials, 1), nparts);
+				      mus_partials_to_polynomial(nparts, partials, 1),
+				      nparts, MUS_CHEBYSHEV_FIRST_KIND);
 	}
       else
 	fmosc1 = mus_make_oscil(freq * fm1_rat, 0.0);
 
-      indf1 = mus_make_env(fm1_env, fm1_len / 2, norm, 0.0, 1.0, dur, 0, 0, NULL);
+      indf1 = mus_make_env(fm1_env, fm1_len / 2, norm, 0.0, 1.0, dur, 0, NULL);
 
       if (!easy_case)
 	{
 	  fmosc2 = mus_make_oscil(freq * fm2_rat, 0.0);
 	  fmosc3 = mus_make_oscil(freq * fm3_rat, 0.0);
-	  indf2 = mus_make_env(fm2_env, fm2_len / 2, index2, 0.0, 1.0, dur, 0, 0, NULL);
-	  indf3 = mus_make_env(fm3_env, fm3_len / 2, index3, 0.0, 1.0, dur, 0, 0, NULL);
+	  indf2 = mus_make_env(fm2_env, fm2_len / 2, index2, 0.0, 1.0, dur, 0, NULL);
+	  indf3 = mus_make_env(fm3_env, fm3_len / 2, index3, 0.0, 1.0, dur, 0, NULL);
 	}
     }
 
-  ampf = mus_make_env(amp_env, amp_len / 2, amp, 0.0, base, dur, 0, 0, NULL);
+  ampf = mus_make_env(amp_env, amp_len / 2, amp, 0.0, base, dur, 0, NULL);
   frqf = mus_make_env(gliss_env, gliss_len / 2,
-		      gliss_amount * frq_scl, 0.0, 1.0, dur, 0, 0, NULL);
+		      gliss_amount * frq_scl, 0.0, 1.0, dur, 0, NULL);
   pervib = mus_make_triangle_wave(periodic_vibrato_rate, periodic_vibrato_amp * frq_scl, 0.0);
   ranvib = mus_make_rand_interp(random_vibrato_rate, random_vibrato_amp * frq_scl);
 
@@ -891,14 +891,14 @@ ins_fm_violin(Float start,
       if (modulate)
 	{
 	  if (easy_case)
-	    mod = mus_env(indf1) * mus_polyshape_2(fmosc1, vib);
+	    mod = mus_env(indf1) * mus_polyshape_unmodulated(fmosc1, vib);
 	  else
 	    mod =
-	      mus_env(indf1) * mus_oscil_1(fmosc1, fuzz + fm1_rat * vib) + 
-	      mus_env(indf2) * mus_oscil_1(fmosc2, fuzz + fm2_rat * vib) + 
-	      mus_env(indf3) * mus_oscil_1(fmosc3, fuzz + fm3_rat * vib);
+	      mus_env(indf1) * mus_oscil(fmosc1, fuzz + fm1_rat * vib, 0.0) + 
+	      mus_env(indf2) * mus_oscil(fmosc2, fuzz + fm2_rat * vib, 0.0) + 
+	      mus_env(indf3) * mus_oscil(fmosc3, fuzz + fm3_rat * vib, 0.0);
 	}
-      mus_locsig(loc, i, mus_env(ampf) * amp_fuzz * mus_oscil_1(carrier, vib + ind_fuzz * mod));
+      mus_locsig(loc, i, mus_env(ampf) * amp_fuzz * mus_oscil(carrier, vib + ind_fuzz * mod, 0.0));
     }
 
   mus_free(pervib);
@@ -987,7 +987,7 @@ ins_jc_reverb(Float start,
     }
 
   if (amp_env)
-    env_a = mus_make_env(amp_env, amp_len / 2, volume, 0.0, 1.0, dur, 0, 0, NULL);
+    env_a = mus_make_env(amp_env, amp_len / 2, volume, 0.0, 1.0, dur, 0, NULL);
 
   if (doubled && chan4)
     INS_MISC_ERROR(S_jc_reverb, "is not set up for doubled reverb in quad");
@@ -998,37 +998,37 @@ ins_jc_reverb(Float start,
       Float ho;
 
       for (j = 0, ho = 0.0; j < rev_chans; j++) ho += mus_in_any(i, j, rev);
-      allpass_sum = mus_all_pass_1(allpass3,
-				   mus_all_pass_1(allpass2,
-						  mus_all_pass_1(allpass1, ho)));
+      allpass_sum = mus_all_pass_unmodulated(allpass3,
+					     mus_all_pass_unmodulated(allpass2,
+								      mus_all_pass_unmodulated(allpass1, ho)));
       comb_sum_2 = comb_sum_1;
       comb_sum_1 = comb_sum;
       comb_sum =
-	mus_comb_1(comb1, allpass_sum) +
-	mus_comb_1(comb2, allpass_sum) +
-	mus_comb_1(comb3, allpass_sum) +
-	mus_comb_1(comb4, allpass_sum);
+	mus_comb_unmodulated(comb1, allpass_sum) +
+	mus_comb_unmodulated(comb2, allpass_sum) +
+	mus_comb_unmodulated(comb3, allpass_sum) +
+	mus_comb_unmodulated(comb4, allpass_sum);
 
       if (low_pass)
 	all_sums = 0.25 * (comb_sum + comb_sum_2) + 0.5 * comb_sum_1;
       else
 	all_sums = comb_sum;
 
-      delA = mus_delay_1(outdel1, all_sums);
-      if (doubled) delA += mus_delay_1(outdel3, all_sums);
+      delA = mus_delay_unmodulated(outdel1, all_sums);
+      if (doubled) delA += mus_delay_unmodulated(outdel3, all_sums);
       if (env_a) volume = mus_env(env_a);
       mus_out_any(i, delA * volume, 0, out);
 
       if (chan2)
 	{
-	  delB = mus_delay_1(outdel2, all_sums);
-	  if (doubled) delB += mus_delay_1(outdel4, all_sums);
+	  delB = mus_delay_unmodulated(outdel2, all_sums);
+	  if (doubled) delB += mus_delay_unmodulated(outdel4, all_sums);
 	  mus_out_any(i, delB * volume, 1, out);
 
 	  if (chan4)
 	    {
-	      mus_out_any(i, volume * mus_delay_1(outdel3, all_sums), 2, out);
-	      mus_out_any(i, volume * mus_delay_1(outdel4, all_sums), 3, out);
+	      mus_out_any(i, volume * mus_delay_unmodulated(outdel3, all_sums), 2, out);
+	      mus_out_any(i, volume * mus_delay_unmodulated(outdel4, all_sums), 3, out);
 	    }
 	}
     }
@@ -1083,7 +1083,7 @@ ins_nrev(Float start,
 
   chans = mus_channels(out);
   rev_chans = mus_channels(rev);
-  env_a = mus_make_env(amp_env, amp_len / 2, output_scale, 0.0, 1.0, dur, beg, 0, NULL);
+  env_a = mus_make_env(amp_env, amp_len / 2, output_scale, 0.0, 1.0, dur, 0, NULL);
 
   for (i = 0; i < 14; i++)
     {
@@ -1130,27 +1130,21 @@ ins_nrev(Float start,
       
       for (j = 0, ho = 0.0; j < rev_chans; j++) ho += mus_in_any(i, j, rev);
       inrev = volume * mus_env(env_a) * ho;
-      outrev =
-	mus_all_pass_1(
-		       allpass4,
-		       mus_one_pole(
-				    low,
-				    mus_all_pass_1(
-						   allpass3,
-						   mus_all_pass_1(
-								  allpass2,
-								  mus_all_pass_1(
-										 allpass1,
-										 mus_comb_1(comb1, inrev) +
-										 mus_comb_1(comb2, inrev) +
-										 mus_comb_1(comb3, inrev) +
-										 mus_comb_1(comb4, inrev) +
-										 mus_comb_1(comb5, inrev) +
-										 mus_comb_1(comb6, inrev))))));
-      sample_a = output_scale * mus_one_pole(low_a, mus_all_pass_1(allpass5, outrev));
-      sample_b = output_scale * mus_one_pole(low_b, mus_all_pass_1(allpass6, outrev));
-      sample_c = output_scale * mus_one_pole(low_c, mus_all_pass_1(allpass7, outrev));
-      sample_d = output_scale * mus_one_pole(low_d, mus_all_pass_1(allpass8, outrev));
+      outrev = mus_all_pass_unmodulated(allpass4,
+					mus_one_pole(low,
+						     mus_all_pass_unmodulated(allpass3,
+									      mus_all_pass_unmodulated(allpass2,
+												       mus_all_pass_unmodulated(allpass1,
+																mus_comb_unmodulated(comb1, inrev) +
+																mus_comb_unmodulated(comb2, inrev) +
+																mus_comb_unmodulated(comb3, inrev) +
+																mus_comb_unmodulated(comb4, inrev) +
+																mus_comb_unmodulated(comb5, inrev) +
+																mus_comb_unmodulated(comb6, inrev))))));
+      sample_a = output_scale * mus_one_pole(low_a, mus_all_pass_unmodulated(allpass5, outrev));
+      sample_b = output_scale * mus_one_pole(low_b, mus_all_pass_unmodulated(allpass6, outrev));
+      sample_c = output_scale * mus_one_pole(low_c, mus_all_pass_unmodulated(allpass7, outrev));
+      sample_d = output_scale * mus_one_pole(low_d, mus_all_pass_unmodulated(allpass8, outrev));
 
       if (chans == 2)
 	mus_out_any(i, (sample_a + sample_d) / 2.0, 0, out);
@@ -1300,7 +1294,7 @@ ins_freeverb(Float start,
 	if (in_chans > 1)
 	  for (j = 0; j < out_chans; j++)
 	    {
-	      mus_frame_set(f_in, j, mus_delay_1(predelays[j], mus_frame_ref(f_in, j)));
+	      mus_frame_set(f_in, j, mus_delay_unmodulated(predelays[j], mus_frame_ref(f_in, j)));
 	      mus_frame_set(f_out, j, 0.0);
 	      for (k = 0; k < comb_len; k++)
 		mus_frame_set(f_out, j,
@@ -1309,7 +1303,7 @@ ins_freeverb(Float start,
 	    }
 	else
 	  {
-	    mus_frame_set(f_in, 0, mus_delay_1(predelays[0], mus_frame_ref(f_in, 0)));
+	    mus_frame_set(f_in, 0, mus_delay_unmodulated(predelays[0], mus_frame_ref(f_in, 0)));
 	    for (j = 0; j < out_chans; j++)
 	      {
 		mus_frame_set(f_out, j, 0.0);
@@ -1322,7 +1316,7 @@ ins_freeverb(Float start,
 	for (j = 0; j < out_chans; j++)
 	  for (k = 0; k < all_len; k++)
 	    mus_frame_set(f_out, j,
-			  mus_all_pass_1(allpasses[j][k], mus_frame_ref(f_out, j)));
+			  mus_all_pass_unmodulated(allpasses[j][k], mus_frame_ref(f_out, j)));
 	mus_frame_to_file(out, i, mus_frame_to_frame(out_mix, f_out, out_buf));
       } /* run loop */
 
@@ -1357,7 +1351,7 @@ ins_freeverb(Float start,
  :frequency                     440.0\n\
  :amplitude                     0.5\n\
  :fm-index                      1.0\n\
- :amp-env                       '( 0 0 25 1 75 1 100 0 )\n\
+ :amp-env                       " INS_LIST_BEG " 0 0 25 1 75 1 100 0 " INS_LIST_END "\n\
  :periodic-vibrato-rate         5.0\n\
  :periodic-vibrato-amplitude    0.0025\n\
  :random-vibrato-rate           16.0\n\
@@ -1368,23 +1362,23 @@ ins_freeverb(Float start,
  :ind-noise-amount   		0.0\n\
  :amp-noise-freq     		20.0\n\
  :amp-noise-amount   		0.0\n\
- :gliss-env          		'( 0 0 100 0 )\n\
+ :gliss-env          		" INS_LIST_BEG " 0 0 100 0 " INS_LIST_END "\n\
  :glissando-amount   		0.0\n\
- :fm1-env      			'( 0 1 25 0.4 75 0.6 100 0 )\n\
- :fm2-env      			'( 0 1 25 0.4 75 0.6 100 0 )\n\
- :fm3-env      			'( 0 1 25 0.4 75 0.6 100 0 )\n\
+ :fm1-env      			" INS_LIST_BEG " 0 1 25 0.4 75 0.6 100 0 " INS_LIST_END "\n\
+ :fm2-env      			" INS_LIST_BEG " 0 1 25 0.4 75 0.6 100 0 " INS_LIST_END "\n\
+ :fm3-env      			" INS_LIST_BEG " 0 1 25 0.4 75 0.6 100 0 " INS_LIST_END "\n\
  :fm1-rat      			1.0\n\
  :fm2-rat      			3.0\n\
  :fm3-rat      			4.0\n\
- :fm1-index    			#f\n\
- :fm2-index    			#f\n\
- :fm3-index    			#f\n\
+ :fm1-index    			" INS_FALSE "\n\
+ :fm2-index    			" INS_FALSE "\n\
+ :fm3-index    			" INS_FALSE "\n\
  :base                          1.0\n\
  :degree                        0.0\n\
  :distance                      1.0\n\
  :reverb-amount                 0.01\n\
- :index-type                    'violin ('cello or 'violin)\n\
- :no-waveshaping                #f"
+ :index-type                    " INS_SYMBOL_PREFIX "violin (" INS_SYMBOL_PREFIX "cello or " INS_SYMBOL_PREFIX "violin)\n\
+ :no-waveshaping                " INS_FALSE
 
 #if HAVE_RUBY
 # define H_fm_violin S_fm_violin "(*args)\n" h_fm_violin_args "\n\
@@ -1398,8 +1392,8 @@ end"
 #  define H_fm_violin S_fm_violin " ( args -- )\n" h_fm_violin_args "\n\
 require clm\n\
 dl-load sndins Init_sndins\n\
-0 1 440 0.2 :fm-index 1.3 ' fm-violin\n\
-  :reverb ' jc-reverb :reverb-data '( :volume 0.8 ) with-sound"
+0 1 440 0.2 :fm-index 1.3 <'> fm-violin\n\
+  :reverb <'> jc-reverb :reverb-data #( :volume 0.8 ) with-sound"
 # else	/* !HAVE_FORTH */
 #  define H_fm_violin "(" S_fm_violin " . args)\n" h_fm_violin_args "\n\
  (load-from-path \"ws\")\n\
@@ -1648,9 +1642,9 @@ c_fm_violin(XEN args)
  :delay2     0.011\n\
  :delay3     0.015\n\
  :delay4     0.017\n\
- :low-pass   #f\n\
- :doubled    #f\n\
- :amp-env    #f"
+ :low-pass   " INS_FALSE "\n\
+ :doubled    " INS_FALSE "\n\
+ :amp-env    " INS_FALSE
 
 #if HAVE_RUBY
 # define H_jc_reverb S_jc_reverb "(*args)\n" h_jc_reverb_args "\n\
@@ -1664,8 +1658,8 @@ end"
 #  define H_jc_reverb S_jc_reverb " ( args -- )\n" h_jc_reverb_args "\n\
 require clm\n\
 dl-load sndins Init_sndins\n\
-0 1 440 0.2 :fm-index 1.3 ' fm-violin\n\
-  :reverb ' jc-reverb :reverb-data '( :volume 0.8 ) with-sound"
+0 1 440 0.2 :fm-index 1.3 <'> fm-violin\n\
+  :reverb <'> jc-reverb :reverb-data #( :volume 0.8 ) with-sound"
 # else	/* !HAVE_FORTH */
 #  define H_jc_reverb "(" S_jc_reverb " . args)\n" h_jc_reverb_args "\n\
  (load-from-path \"ws\")\n\
@@ -1757,7 +1751,7 @@ c_jc_reverb(XEN args)
  :lp-coeff        0.7\n\
  :lp-out-coeff    0.85\n\
  :output-scale    1.0\n\
- :amp-env         '( 0 1 1 1 )\n\
+ :amp-env         " INS_LIST_BEG " 0 1 1 1 " INS_LIST_END "\n\
  :volume          1.0"
 
 #if HAVE_RUBY
@@ -1772,8 +1766,8 @@ end"
 #  define H_nrev S_nrev " ( args -- )\n" h_nrev_args "\n\
 require clm\n\
 dl-load sndins Init_sndins\n\
-0 1 440 0.7 :fm-index 1.3 ' fm-violin\n\
-  :reverb ' nrev :reverb-data '( :lp-coeff 0.6 ) with-sound"
+0 1 440 0.7 :fm-index 1.3 <'> fm-violin\n\
+  :reverb <'> nrev :reverb-data #( :lp-coeff 0.6 ) with-sound"
 # else	/* !HAVE_FORTH */
 #  define H_nrev "(" S_nrev " . args)\n" h_nrev_args "\n\
  (load-from-path \"ws\")\n\
@@ -1861,11 +1855,11 @@ c_nrev(XEN args)
  :global              0.3\n\
  :predelay            0.03\n\
  :output-gain         1.0\n\
- :output-mixer        #f\n\
+ :output-mixer        " INS_FALSE "\n\
  :scale-room-decay    0.28\n\
  :offset-room-decay   0.7\n\
- :combtuning          '( 1116 1188 1277 1356 1422 1491 1557 1617 )\n\
- :allpasstuning       '( 556 441 341 225 )\n\
+ :combtuning          " INS_LIST_BEG " 1116 1188 1277 1356 1422 1491 1557 1617 " INS_LIST_END "\n\
+ :allpasstuning       " INS_LIST_BEG " 556 441 341 225 " INS_LIST_END "\n\
  :scale-damping       0.4\n\
  :stereo-spread       23.0"
 
@@ -1881,8 +1875,8 @@ end"
 #  define H_freeverb S_freeverb " ( args -- )\n" h_freeverb_args "\n\
 require clm\n\
 dl-load sndins Init_sndins\n\
-0 1 440 0.7 ' fm-violin :reverb ' freeverb\n\
-  :reverb-data '( :room-decay 0.8 ) with-sound"
+0 1 440 0.7 <'> fm-violin :reverb <'> freeverb\n\
+  :reverb-data #( :room-decay 0.8 ) with-sound"
 # else	/* !HAVE_FORTH */
 #  define H_freeverb "(" S_freeverb " . args)\n" h_freeverb_args "\n\
  (load-from-path \"ws\")\n\

@@ -2,9 +2,9 @@
 # -*- snd-ruby -*-
 # agn.rb -- Bill Schottstaedt's agn.cl (see clm-2/clm-example.clm and clm-2/bess5.cl)
 
-# Translator/Author: Michael Scholz <scholz-micha@gmx.de>
+# Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Sat May 24 20:35:03 CEST 2003
-# Changed: Wed Aug 30 22:15:28 CEST 2006
+# Changed: Thu May 28 17:30:09 CEST 2009
 
 # This file is part of Sndins.
 

@@ -2,15 +2,15 @@
 # -*- snd-ruby -*-
 # fmviolin.rb -- CLM fmviolin.clm --> RBM fmviolin.rb
 
-# Translator/Author: Michael Scholz <scholz-micha@gmx.de>
+# Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Fri Oct 18 11:29:08 CEST 2002
-# Changed: Wed Aug 30 22:20:15 CEST 2006
+# Changed: Thu May 28 17:20:42 CEST 2009
 
 # This file is part of Sndins.
 
 # Commentary:
 
-# A translation of Bill Schottstaedt's clm-3/fmviolin.clm from Lisp
+# A translation of Bill Schottstaedt's clm/fmviolin.clm from Lisp
 # into Ruby.
 
 # short_example

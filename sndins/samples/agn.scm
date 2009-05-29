@@ -1,9 +1,9 @@
 ;; -*- snd-scheme -*-
 ;;; agn.scm -- Bill Schottstaedt's agn.cl (see clm-2/clm-example.clm and clm-2/bess5.cl)
 
-;; Translator/Author: Michael Scholz <scholz-micha@gmx.de>
+;; Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 ;; Created: Tue Jun 24 19:05:06 CEST 2003
-;; Changed: Wed Aug 30 22:14:56 CEST 2006
+;; Changed: Thu May 28 17:30:51 CEST 2009
 
 ;; This file is part of Sndins.
 
