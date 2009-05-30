@@ -8068,6 +8068,11 @@ here also, so despite appearances, blue is a maximum, and we're looking for the 
 
 <!-- montage -tile 8X1 n51a.png n52a.png n53a.png n54a.png n55a.png n56a.png n57a.png n58a.png n5-all.png -->
 
+<p>And just for grins, here is the n=6 case:
+</p>
+
+<img src="pix/n6.png" alt="n=6 case" hspace=20>
+
 <!--
 (with-sound (:clipped #f :channels 64 :statistics #t :output "n5a.snd")
   (run 
@@ -8114,6 +8119,60 @@ here also, so despite appearances, blue is a maximum, and we're looking for the 
   (set! (spectro-y-scale) 0.9)
   (set! (spectro-z-scale) 0.9)
   (set! (time-graph-type) graph-as-wavogram))
+
+(do ((snd 0 (+ snd 1)))
+    ((= snd 8))
+  (do ((snd1 0 (+ snd1 1)))
+      ((= snd1 8))
+    (let* ((outfile (format #f "n6-~D-~D.snd" snd snd1))
+	   (size 100)
+	   (incr (/ (* 2 pi) size)))
+      (with-sound (:clipped #f :channels 8 :statistics #t :output outfile)
+        (run 
+	 (lambda ()
+	   (let* ((i 0))
+	     (do ((phi1 0.0 (+ phi1 incr))
+		  (j 0 (+ j 1)))
+		 ((= j size))
+	       (do ((phi2 0.0 (+ phi2 incr))
+		    (k 0 (+ k 1)))
+		   ((= k size))
+		 (do ((phi3 0.0 (+ phi3 (/ pi 4)))
+		      (m 0 (+ m 1)))
+		     ((= m 8))
+		   (let ((pk 0.0)
+			 (phi4 (* snd1 (/ pi 4)))
+			 (phi5 (* snd (/ pi 4))))
+		     (do ((x 0.0 (+ x incr))
+			  (n 0 (+ n 1)))
+			 ((= n size))
+		       (let ((val (+ (sin x)
+				     (sin (+ (* 2 x) phi1))
+				     (sin (+ (* 3 x) phi2))
+				     (sin (+ (* 4 x) phi3))
+				     (sin (+ (* 5 x) phi4))
+				     (sin (+ (* 6 x) phi5)))))
+			 (if (> (abs val) pk)
+			     (set! pk (abs val)))))
+		     (out-any i pk m)))
+		 (set! i (+ i 1)))))))))))
+
+
+(define (gad6)
+  (do ((i 0 (+ i 1))) ((= i 8)) (map-channel (lambda (y) (/ (- (abs y) 2.5) (- 6.0 2.5))) 0 (frames) 0 i))
+  (set! (selected-graph-color) (make-color 1 1 1))
+  (set! (wavo-trace) 100)
+  (set! (wavo-hop) 1)
+  (set! (spectro-x-angle) 15) ; was 10
+  (set! (spectro-y-angle) 0)
+  (set! (spectro-x-scale) 0.9) ; was .75
+  (set! (spectro-y-scale) 0.9)
+  (set! (spectro-z-scale) 1.0) ; was .9
+  (set! (colormap) 7) ; jet
+  (set! (color-cutoff) 0.001)
+  (set! (color-scale) 1.0) ; 50%
+  (set! (time-graph-type) graph-as-wavogram))
+
 -->
 
 <p>My initial guess was that the minimum peak amplitude would be around the square root of n,
