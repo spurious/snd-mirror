@@ -7924,20 +7924,6 @@ and the color for the height of the corresponding peak:
 	    (outa i tpk)
 	    (set! i (+ i 1)))))))))
 
-(define (gad4)
-  (do ((i 0 (+ i 1)))
-      ((= i 8))
-    (map-channel (lambda (y) (/ (- (abs y) 2) 2)) 0 (frames) 0 i))
-  (set! (wavo-trace) 500)
-  (set! (wavo-hop) 1)
-  (set! (spectro-x-angle) 80)
-  (set! (spectro-y-angle) 0)
-  (set! (spectro-x-scale) 0.75)
-  (set! (spectro-y-scale) 0.9)
-  (set! (spectro-z-scale) 0.9)
-  (set! (time-graph-type) graph-as-wavogram))
-
-
 (with-sound (:clipped #f :channels 8 :statistics #t :output "n4.snd")
   (run 
    (lambda ()
@@ -7949,7 +7935,7 @@ and the color for the height of the corresponding peak:
 	(do ((phi2 0.0 (+ phi2 incr))
 	     (k 0 (+ k 1)))
 	    ((= k 500))
-	  (do ((phi3 0.0 (+ phi3 (/ pi 4)))
+	  (do ((phi3 0.0 (+ phi3 (/ pi 4))) ; 8 strips through the 3-D landscape
 	       (m 0 (+ m 1)))
 	      ((= m 8))
 	    (let ((pk 0.0)
@@ -7967,17 +7953,35 @@ and the color for the height of the corresponding peak:
 			(set! tpk val)))))
 	      (out-any i tpk m)))
 	  (set! i (+ i 1))))))))
+
+(define (gad4)
+  (do ((i 0 (+ i 1)))
+      ((= i 8))
+    (map-channel (lambda (y) (/ (- (abs y) 2) 2)) 0 (frames) 0 i))
+  (set! (selected-graph-color) (make-color 1 1 1))
+  (set! (wavo-trace) 500)
+  (set! (wavo-hop) 1)
+  (set! (spectro-x-angle) 80)
+  (set! (spectro-y-angle) 0)
+  (set! (spectro-x-scale) 0.75)
+  (set! (spectro-y-scale) 0.9)
+  (set! (spectro-z-scale) 0.9)
+  (set! (time-graph-type) graph-as-wavogram))
+
+
 -->
 
 
 <p>
-Surprisingly reminiscent of sin(x)*sin(x-y)!
+Reminiscent of sin(x)*sin(x-y)!
 I tilted the graph slightly to try to show how the colors match the peaks.  
 If we set the 2nd component's phase to (a+pi)/2 where "a" is the 3rd one's initial phase,
 we travel along the minimum going diagonally through the middle of the graph (I think the
 graph got truncated slightly: the top should match the bottom).
 The graph on the right is
 an attempt to show the 4-dimensional 4-harmonic case by stacking 3-D slices.
+I forgot to "invert" the colors, so red in the n=4 case matches a minimum (blue in the n=3 case);
+I should redo these graphs! 
 A different way to view these graphs that 
 can be applied to any number
 of dimensions (until we run out of disk space and patience), is to move through the possibilities
@@ -8004,8 +8008,7 @@ A laborious search finds these values:
      1.9798054823222 #(0.0 1.41027488757208596670267297668033279478  1.68333243067326587816268101960304193198)
 </pre>
 <p>which shows that the minima are essentially at (23/39 19/60), (16/39 101/60), (1 + 23/39, 19/60), and (1 + 16/39, 101/60),
-all numbers multiplied by pi of course.  Can we find an exact expression, perhaps using the searchers of Lenstra, or
-Ferguson and Bailey (PSLQ)?
+all numbers multiplied by pi of course.  
 </p>
 
 <!--
@@ -8057,7 +8060,8 @@ n=5:
 -->
 
 <p>Here is the corresponding 3-D graph of the 5 harmonic case.  It is trying to show 8 4-D slices
-through the 5-D landscape, each 4-D case being 8 3-D slices as before:
+through the 5-D landscape, each 4-D case being 8 3-D slices as before (I forgot to invert the colors
+here also, so despite appearances, blue is a maximum, and we're looking for the reddest point, the global minimum):
 </p>
 
 <table border=0 hspace=20>
@@ -8149,10 +8153,10 @@ and in a few cases, it is possible to get below the square root (see peak-phases
 <tr><td>
 <table border=0 cellpadding=0 cellspacing=6>
 <tr><th>n</th><th>(sqrt n)</th><th>peak</th><th>(log peak n)</th></tr>
-<tr><td width=30>7</td><td>2.6457</td>  <td>2.6424</td>  <td><center>.499</center></td></tr>
+<tr><td width=30>7</td><td>2.6457</td>  <td>2.6419</td>  <td><center>.499</center></td></tr>
 <tr><td>8</td>         <td>2.8284</td>  <td>2.7974</td>  <td><center>.494</center></td></tr>
-<tr><td>9</td>         <td>3.0</td>     <td>2.9965</td>  <td><center>.499</center></td></tr>
-<tr><td>10</td>        <td>3.1623</td>  <td>3.1300</td>  <td><center>.495</center></td></tr>
+<tr><td>9</td>         <td>3.0</td>     <td>2.9709</td>  <td><center>.496</center></td></tr>
+<tr><td>10</td>        <td>3.1623</td>  <td>3.1259</td>  <td><center>.495</center></td></tr>
 <tr><td>11</td>        <td>3.3166</td>  <td>3.2352</td>  <td><center>.489</center></td></tr>
 <tr><td>12</td>        <td>3.4641</td>  <td>3.4103</td>  <td><center>.494</center></td></tr>
 <tr><td>13</td>        <td>3.6055</td>  <td>3.5739</td>  <td><center>.496</center></td></tr>
@@ -8160,9 +8164,9 @@ and in a few cases, it is possible to get below the square root (see peak-phases
 <tr><td>15</td>        <td>3.8729</td>  <td>3.8582</td>  <td><center>.499</center></td></tr>
 <tr><td>16</td>        <td>4.0</td>     <td>3.9718</td>  <td><center>.497</center></td></tr>
 <tr><td>18</td>        <td>4.2426</td>  <td>4.2064</td>  <td><center>.497</center></td></tr>
-<tr><td>19</td>        <td>4.3588</td>  <td>4.3103</td>  <td><center>.496</center></td></tr>
+<tr><td>19</td>        <td>4.3588</td>  <td>4.2932</td>  <td><center>.495</center></td></tr>
 <tr><td>20</td>        <td>4.4721</td>  <td>4.4201</td>  <td><center>.496</center></td></tr>
-<tr><td>21</td>        <td>4.5825</td>  <td>4.5325</td>  <td><center>.496</center></td></tr>
+<tr><td>21</td>        <td>4.5825</td>  <td>4.5285</td>  <td><center>.496</center></td></tr>
 <tr><td>22</td>        <td>4.6904</td>  <td>4.6746</td>  <td><center>.499</center></td></tr>
 </table>
 </td></tr>
@@ -8180,8 +8184,10 @@ and in a few cases, it is possible to get below the square root (see peak-phases
 <tr><td>9</td>         <td>3.0</td>     <td>2.9788</td>  <td><center>.497</center></td></tr>
 <tr><td>10</td>        <td>3.1622</td>  <td>3.1088</td>  <td><center>.493</center></td></tr>
 <tr><td>11</td>        <td>3.3166</td>  <td>3.3150</td>  <td><center>.499</center></td></tr>
-<tr><td>12</td>        <td>3.4641</td>  <td>3.4528</td>  <td><center>.499</center></td></tr>
+<tr><td>12</td>        <td>3.4641</td>  <td>3.4523</td>  <td><center>.499</center></td></tr>
 <tr><td>13</td>        <td>3.6055</td>  <td>3.5730</td>  <td><center>.498</center></td></tr>
+<tr><td>14</td>        <td>3.7416</td>  <td>3.7338</td>  <td><center>.499</center></td></tr>
+<tr><td>17</td>        <td>4.1231</td>  <td>4.0726</td>  <td><center>.496</center></td></tr>
 </table>
 </td></tr>
 </table>
@@ -8196,27 +8202,30 @@ and in a few cases, it is possible to get below the square root (see peak-phases
 <pre>
 type    n    peak   (log peak n)
 
-all    24   4.9184    0.5012
-all    17   4.1417    0.5016
-all    23   4.8299    0.5022
-odd    23   4.8477    0.5034 
-all    27   5.2773    0.5047 
-all    26   5.1858    0.5051 
-odd    15   3.9329    0.5056 
-all    25   5.1001    0.5061 
-odd    14   3.8041    0.5062 
-odd    18   4.3352    0.5074 
-odd    21   4.6974    0.5081 
-all    29   5.5375    0.5082 
-all    30   5.6390    0.5085 
-all    28   5.4579    0.5092 
-odd    19   4.4895    0.5100 
+all    24   4.9122    0.5008
+all    23   4.8191    0.5015
+all    17   4.1416    0.5015
+odd    16   4.0313    0.5028
+odd    17   4.1575    0.5029
+odd    23   4.8477    0.5034
+all    27   5.2773    0.5047
+all    26   5.1826    0.5049
+all    33   5.8511    0.5052
+odd    15   3.9300    0.5053
+all    25   5.0981    0.5060
+all    30   5.5974    0.5063
+all    32   5.7844    0.5064
+odd    18   4.3352    0.5074
+all    29   5.5331    0.5080
+odd    21   4.6974    0.5081
+all    31   5.7385    0.5087
+all    35   6.1056    0.5088
 </pre>
 </td></tr></table>
 
 <p>
-Here is a graph of the values I've found so far (well, as of March 2009), followed by a graph of
-the exponent vs n (n^y = peak amp).  
+Here is a graph of the values I've found so far (well, as of May 2009), followed by a graph of
+the exponent vs n (n^y = peak amp). 
 One very good
 set for all harmonics up to n=40 is given in Horner and Beauchamp, "a genetic algorithm-based method
 for synthesis of low peak amplitude signals", J. Acoustic. Soc. Am Vol 99 No 1 Jan 96, online
