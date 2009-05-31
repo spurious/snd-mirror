@@ -1780,8 +1780,10 @@ Xavier has a website devoted to this system, but it seems to move; search for CL
 <tr><td colspan=2 bgcolor="#f2f4ff">
 <A class=def NAME="pluck">pluck</A> <code>(beg dur freq amp :optional (weighting .5) (lossfact .9))</code>
 </td></tr><tr><td></td><td>
+<p>
 pluck is based on
-the <A HREF="http://ccrma.stanford.edu/~jos/SimpleStrings/Karplus_Strong_Algorithm.html">Karplus-Strong</A> algorithm as extended by David Jaffe and Julius Smith &mdash; see 
+the <A HREF="http://ccrma.stanford.edu/~jos/SimpleStrings/Karplus_Strong_Algorithm.html">Karplus-Strong</A> 
+algorithm as extended by David Jaffe and Julius Smith &mdash; see 
 Jaffe and Smith, "Extensions of the Karplus-Strong Plucked-String Algorithm"
 CMJ vol 7 no 2 Summer 1983, reprinted in "The Music Machine".
 The basic idea is to fill an array with noise, then filter the array values as it is played repeatedly,
@@ -1791,23 +1793,19 @@ makes great use of this instrument.
 'weighting' is the ratio of the once-delayed to the twice-delayed samples.  It defaults to .5 which gives a short decay;
 anything other than .5 produces a longer decay.  It should be between 0.0 and 1.0. 
 'lossfact' can be used to shorten decays.  The most useful values are between .8 and 1.0. 
-
-<table border=0><tr>
-<td>
+</p>
 <pre>
 (<a class=quiet href="#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> () 
   (pluck 0 1 330 .3 .95 .95) 
   (pluck .3 2 330 .3 .9 .9999) 
   (pluck .7 2 330 .3 .8 .99))
 </pre>
-</td><td width=40></td><td>
-<img src="pix/pluck.png" alt="wavogram of pluck" onmouseout="UnTip()" onmouseover="Tip('this is a wavogram of the with-sound on the left:<br><br><code>(set! (time-graph-type) graph-as-wavogram)</code><br><br>To get this graph, use the \'hot\' colormap<br>color data cutoff at .004, darkness 100<br>x angle 20, scale .85, y 100 .79, z 138 .85<br>wavo-trace 100, wavo-hop 1, and scale the sound to 1.0')">
-</td></tr></table>
-
+<p>
 In Ruby:
 <pre>
   with_sound() do pluck(0.05, 0.1, 330, 0.1, 0.95, 0.95) end
 </pre>
+</p>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -8196,10 +8194,10 @@ and in a few cases, it is possible to get below the square root (see peak-phases
 <tr><td>14</td>        <td>3.7416</td>  <td>3.6435</td>  <td><center>.490</center></td></tr>
 <tr><td>15</td>        <td>3.8729</td>  <td>3.8582</td>  <td><center>.499</center></td></tr>
 <tr><td>16</td>        <td>4.0</td>     <td>3.9718</td>  <td><center>.497</center></td></tr>
-<tr><td>18</td>        <td>4.2426</td>  <td>4.2064</td>  <td><center>.497</center></td></tr>
-<tr><td>19</td>        <td>4.3588</td>  <td>4.2932</td>  <td><center>.495</center></td></tr>
+<tr><td>18</td>        <td>4.2426</td>  <td>4.1820</td>  <td><center>.497</center></td></tr>
+<tr><td>19</td>        <td>4.3588</td>  <td>4.2838</td>  <td><center>.495</center></td></tr>
 <tr><td>20</td>        <td>4.4721</td>  <td>4.4201</td>  <td><center>.496</center></td></tr>
-<tr><td>21</td>        <td>4.5825</td>  <td>4.5285</td>  <td><center>.496</center></td></tr>
+<tr><td>21</td>        <td>4.5825</td>  <td>4.5224</td>  <td><center>.496</center></td></tr>
 <tr><td>22</td>        <td>4.6904</td>  <td>4.6746</td>  <td><center>.499</center></td></tr>
 </table>
 </td></tr>
@@ -8219,7 +8217,7 @@ and in a few cases, it is possible to get below the square root (see peak-phases
 <tr><td>11</td>        <td>3.3166</td>  <td>3.3150</td>  <td><center>.499</center></td></tr>
 <tr><td>12</td>        <td>3.4641</td>  <td>3.4523</td>  <td><center>.499</center></td></tr>
 <tr><td>13</td>        <td>3.6055</td>  <td>3.5730</td>  <td><center>.498</center></td></tr>
-<tr><td>14</td>        <td>3.7416</td>  <td>3.7338</td>  <td><center>.499</center></td></tr>
+<tr><td>14</td>        <td>3.7416</td>  <td>3.7305</td>  <td><center>.499</center></td></tr>
 <tr><td>17</td>        <td>4.1231</td>  <td>4.0726</td>  <td><center>.496</center></td></tr>
 </table>
 </td></tr>
@@ -8256,6 +8254,8 @@ all    35   6.1056    0.5088
 </pre>
 </td></tr></table>
 
+<!-- TODO: fix the green color in the expt graph, perhaps add zoom in to n=6 min, also odd/prime n=5 cases -->
+
 <p>
 Here is a graph of the values I've found so far (well, as of May 2009), followed by a graph of
 the exponent vs n (n^y = peak amp). 
@@ -8270,8 +8270,8 @@ at ems.music.uiuc.edu/beaucham/papers/JASA.01.96.pdf.
 <img src="pix/sqrt1.png" alt="n^y" hspace=40>
 
 <p>The "even" cases are not independent of the "all" cases; each even set can be at worst 1.0 above
-its corresponding (n-1) all set (shift the current all to the right one, and set the new fundamental
-to 0.0 phase).  But the "odd" cases are always better than the evens, so I think the three sets
+its corresponding (n-1) all set (shift the current "all" choices right to multiply each by 2), then set the new fundamental
+phase to 0.0).  But the "odd" cases are always better than the evens, so I think the three sets
 follow the same law, at least for large n.  I think we could get close to sqrt(n) in all cases,
 given enough time and some luck, or even better, some algorithm for finding the minimum.  peak-phases.scm
 represents the results of about a dozen different search methods applied to this problem.  When n is
