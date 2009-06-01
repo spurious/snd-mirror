@@ -5692,8 +5692,10 @@ static XEN g_find_min_peak_phases_via_sa(XEN x_choice, XEN x_n, XEN x_size, XEN 
 for a peak-amp minimum using a simulated annealing form of the genetic algorithm"
 
   #define FFT_MULT 128
-  #define INCR_MULT 0.99
-  #define INCR_MIN 0.01
+  #define INCR_DOWN 0.9
+  #define INCR_UP 1.11
+  #define INCR_MAX 0.20
+  #define INCR_MIN 0.001
   #define RETRIES 10
   #define RETRY_MULT 2
 
@@ -5701,12 +5703,11 @@ for a peak-amp minimum using a simulated annealing form of the genetic algorithm
   /* choice: 0=all, 1=odd, 2=even, 3=prime */
 
   int choice, n, size, counts = 0, day_counter = 0, free_top = 0, fft_size = 0, ffts = 0;
-  Float increment, orig_incr, local_best = 1000.0;
+  Float increment = INCR_MAX, orig_incr, local_best = 1000.0, incr_mult = INCR_DOWN;
   Float *min_phases = NULL;
   char *choice_name[4] = {"all", "odd", "prime", "even"};
   pk_data **choices = NULL, **free_choices = NULL;
   Float *rl, *im;
-  bool cycling = true;
 
   static int primes[129] = {1, 2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 
 			    89, 97, 101, 103, 107, 109, 113, 127, 131, 137, 139, 149, 151, 157, 163, 167, 173, 179, 181, 
@@ -5827,10 +5828,17 @@ for a peak-amp minimum using a simulated annealing form of the genetic algorithm
 
     if (day_counter < counts)
       {
-	/*
-	increment *= INCR_MULT;
-	if (increment < INCR_MIN) increment = INCR_MIN;
-	*/
+	increment *= incr_mult;
+	if (increment < INCR_MIN) 
+	  {
+	    increment = INCR_MIN;
+	    incr_mult = INCR_UP;
+	  }
+	if (increment > INCR_MAX)
+	  {
+	    increment = INCR_MAX;
+	    incr_mult = INCR_DOWN;
+	  }
 	return(true);
       }
     return(false);
@@ -5858,8 +5866,9 @@ for a peak-amp minimum using a simulated annealing form of the genetic algorithm
 
   if (XEN_DOUBLE_P(x_increment))
     increment = XEN_TO_C_DOUBLE(x_increment);
-  else increment = 0.01;
+  else increment = INCR_MAX;
   orig_incr = increment;
+  incr_mult = INCR_DOWN;
 
   min_phases = (Float *)calloc(n, sizeof(Float));
   local_best = (Float)n;
@@ -5894,7 +5903,7 @@ for a peak-amp minimum using a simulated annealing form of the genetic algorithm
 	    choices[start]->phases[i + 1] = 1.0;
 	*/
 	for (i = 1; i < n; i++)
-	  choices[start]->phases[i] = mus_frandom(1.0);
+	  choices[start]->phases[i] = mus_frandom(2.0);
 
 	choices[start]->pk = get_peak(choices[start]->phases);
       }

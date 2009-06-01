@@ -6910,4 +6910,9 @@
 
 ;;; 2.15.5
 (CFNC-2150 "gchar* gtk_window_get_default_icon_name void" 'const)
+
+;;; 2.17.1
+G_CONST_RETURN gchar *gtk_label_get_current_uri (GtkLabel *label);
+
+
 |#
