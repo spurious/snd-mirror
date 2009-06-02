@@ -252,6 +252,7 @@
 		     (let ((new-gfd (+ last-gfd 2)))
 		       (set! last-gfd new-gfd)))
 		 (set! next-offset (inexact->exact (vct-ref change-times (+ offset 1))))))
+
 	   (if (not (= new-tract 0))
 	       (begin
 		 (do ((j last-sfd (+ 1 j))
@@ -461,7 +462,7 @@
 		     (set! nose-last-plus-refl (- nose-reftemp minussamp)))
 		   (begin
 		     (if (not (= velum-pos 0.0))
-			 (set! time-nose-closed 0) 
+			 (set! time-nose-closed 0)
 			 (set! time-nose-closed (+ time-nose-closed)))
 		     ;; nasal tick
 		     (let* ((nose-t1 0.0)

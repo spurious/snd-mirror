@@ -638,6 +638,5 @@
 	       ;; reset position of input file reader
 	       (set! (mus-location rd) in-start))))))))
 
-;; (with-sound (:channels 2 :reverb jc-reverb :reverb-channels 1)
-;; 	    (let ((file "oboe.snd"))
-;; 	      (grani 0 2 5 file :grain-envelope (raised-cosine))))
+;; (with-sound (:channels 2 :reverb jc-reverb :reverb-channels 1) (let ((file "oboe.snd")) (grani 0 2 5 file :grain-envelope (raised-cosine))))
+;; (with-sound (:channels 2) (let ((file "oboe.snd")) (grani 0 2 5 file :grain-envelope (raised-cosine))))

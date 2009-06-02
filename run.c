@@ -10029,6 +10029,7 @@ static void clm_struct_field_set_1(ptree *prog, xen_value *in_v, xen_value *in_v
   args[1] = in_v;
   args[2] = make_xen_value(R_INT, add_int_to_ptree(prog, in_v2->addr), R_CONSTANT);
   args[3] = v;
+  /* TODO: there is a memleak here */
   list_set_1(prog, args, 3);
   free(args[2]);
 }
