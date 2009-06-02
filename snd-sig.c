@@ -5694,8 +5694,8 @@ for a peak-amp minimum using a simulated annealing form of the genetic algorithm
   #define FFT_MULT 128
   #define INCR_DOWN 0.9
   #define INCR_UP 1.11
-  #define INCR_MAX 0.20
-  #define INCR_MIN 0.001
+  #define INCR_MAX 0.10
+  #define INCR_MIN 0.01
   #define RETRIES 10
   #define RETRY_MULT 2
 
@@ -5704,7 +5704,7 @@ for a peak-amp minimum using a simulated annealing form of the genetic algorithm
 
   int choice, n, size, counts = 0, day_counter = 0, free_top = 0, fft_size = 0, ffts = 0;
   Float increment = INCR_MAX, orig_incr, local_best = 1000.0, incr_mult = INCR_DOWN;
-  Float *min_phases = NULL;
+  Float *min_phases = NULL, *temp_phases = NULL, *diff_phases = NULL;
   char *choice_name[4] = {"all", "odd", "prime", "even"};
   pk_data **choices = NULL, **free_choices = NULL;
   Float *rl, *im;
@@ -5767,36 +5767,66 @@ for a peak-amp minimum using a simulated annealing form of the genetic algorithm
   
   pk_data *next_choice(pk_data *data)
   {
-    Float *phases, *new_phases;
-    Float cur_min, pk = 100000.0;
-    int len, local_try, i, local_tries;
+    Float *phases;
+    Float cur_min, temp_min = 100000.0, pk = 100000.0;
+    int len, local_try, i, k, local_tries;
     pk_data *new_pk;
 
     new_pk = free_choices[--free_top];
-    new_phases = new_pk->phases;
     cur_min = data->pk;
     phases = data->phases;
     len = n;
     local_tries = RETRIES + day_counter * RETRY_MULT;
 
+    /* try to find a point nearby that is better */
     for (local_try = 0; (local_try < local_tries) && (pk >= cur_min); local_try++)
       {
 	for (i = 1; i < len; i++)
-	  new_phases[i] = fmod(phases[i] + mus_frandom(increment), 2.0); /* mus_random? */
-	pk = get_peak(new_phases);
-	if (pk < local_best)
+	  temp_phases[i] = fmod(phases[i] + mus_frandom(increment), 2.0); /* mus_random? frandom is 0.0 to amp */
+	pk = get_peak(temp_phases);
+	
+	if (pk < temp_min)
 	  {
-	    int k;
-	    local_best = pk;
-	    for (k = 1; k < len; k++) min_phases[k] = new_phases[k];
-	    fprintf(stderr, "[%d, %f, %d]: %s, %d %f #(", day_counter, increment, ffts, choice_name[choice], n, pk);
-	    for (k = 0; k < len - 1; k++) fprintf(stderr, "%f ", min_phases[k]);
-	    fprintf(stderr, "%f)\n\n", min_phases[len - 1]);
-	    day_counter = 0;
-	    ffts = 0;
+	    temp_min = pk;
+	    new_pk->pk = pk;
+	    for (k = 1; k < len; k++) new_pk->phases[k] = temp_phases[k];	    
 	  }
       }
-    new_pk->pk = pk;
+    
+    /* if a better point is found, try to follow the slopes */
+    if (new_pk->pk < data->pk)
+      {
+	bool happy = true;
+	for (k = 1; k < len; k++)
+	  diff_phases[k] = new_pk->phases[k] - data->phases[k];
+
+	while (happy)
+	  {
+	    for (k = 1; k < len; k++)
+	      temp_phases[k] = fmod(new_pk->phases[k] + diff_phases[k], 2.0); /* frandom here? */
+	    pk = get_peak(temp_phases);
+
+	    if (pk < new_pk->pk)
+	      {
+		new_pk->pk = pk;
+		for (k = 1; k < len; k++) new_pk->phases[k] = temp_phases[k];
+	      }
+	    else happy = false;
+	  }
+      }
+
+    pk = new_pk->pk;
+
+    if (pk < local_best)
+      {
+	local_best = pk;
+	for (k = 1; k < len; k++) min_phases[k] = temp_phases[k];
+	fprintf(stderr, "[%d, %f, %d]: %s, %d %f #(", day_counter, increment, ffts, choice_name[choice], n, pk);
+	for (k = 0; k < len - 1; k++) fprintf(stderr, "%f ", min_phases[k]);
+	fprintf(stderr, "%f)\n\n", min_phases[len - 1]);
+	day_counter = 0;
+	ffts = 0;
+      }
     return(new_pk);
   }
 
@@ -5871,6 +5901,8 @@ for a peak-amp minimum using a simulated annealing form of the genetic algorithm
   incr_mult = INCR_DOWN;
 
   min_phases = (Float *)calloc(n, sizeof(Float));
+  temp_phases = (Float *)calloc(n, sizeof(Float));
+  diff_phases = (Float *)calloc(n, sizeof(Float));
   local_best = (Float)n;
 
   {
@@ -5894,6 +5926,7 @@ for a peak-amp minimum using a simulated annealing form of the genetic algorithm
 
     for (start = 0; start < size; start++)
       {
+	Float pk;
 	choices[start] = (pk_data *)calloc(1, sizeof(pk_data));
 	choices[start]->phases = (Float *)calloc(n, sizeof(Float));
 
@@ -5904,8 +5937,20 @@ for a peak-amp minimum using a simulated annealing form of the genetic algorithm
 	*/
 	for (i = 1; i < n; i++)
 	  choices[start]->phases[i] = mus_frandom(2.0);
+	
+	pk = get_peak(choices[start]->phases);
+	choices[start]->pk = pk;
 
-	choices[start]->pk = get_peak(choices[start]->phases);
+	if (pk < local_best)
+	  {
+	    int k;
+	    local_best = pk;
+	    for (k = 1; k < n; k++) min_phases[k] = choices[start]->phases[k];
+	    fprintf(stderr, "[%d, %f, %d]: %s, %d %f #(", day_counter, increment, ffts, choice_name[choice], n, pk);
+	    for (k = 0; k < n - 1; k++) fprintf(stderr, "%f ", min_phases[k]);
+	    fprintf(stderr, "%f)\n\n", min_phases[n - 1]);
+	  }
+
       }
     while (day()) {}
   }
