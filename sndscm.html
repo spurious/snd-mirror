@@ -1802,10 +1802,10 @@ anything other than .5 produces a longer decay.  It should be between 0.0 and 1.
 </pre>
 <p>
 In Ruby:
+</p>
 <pre>
   with_sound() do pluck(0.05, 0.1, 330, 0.1, 0.95, 0.95) end
 </pre>
-</p>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -8179,31 +8179,31 @@ in a few cases, it is possible to get below the square root (see peak-phases.scm
 <pre>
 type    n     peak   (log peak n)
 
+odd     10   3.0558    0.4851
 all     11   3.2352    0.4896
 all     14   3.6434    0.4899
-odd     17   4.0303    0.4920
-odd     10   3.1089    0.4926
+all     10   3.1032    0.4918
+odd     17   4.0290    0.4918
 all     12   3.4103    0.4937
 all     19   4.2817    0.4939
 all     8    2.7947    0.4942
 all     21   4.5043    0.4943
 odd     8    2.7956    0.4944
+all     16   3.9393    0.4945
 all     18   4.1798    0.4948
-all     10   3.1256    0.4949
 all     9    2.9709    0.4956
 odd     7    2.6234    0.4956
 odd     13   3.5678    0.4959
 all     20   4.4202    0.4961
+odd     15   3.8324    0.4961
 all     13   3.5739    0.4966
 odd     9    2.9789    0.4968
-all     16   3.9718    0.4974
-odd     15   3.8485    0.4977
 odd     12   3.4457    0.4979
 all     15   3.8582    0.4986
 odd     14   3.7297    0.4988
+all     7    2.6396    0.4988
 all     22   4.6742    0.4989
 all     23   4.7808    0.4990
-all     7    2.6419    0.4993
 odd     11   3.3150    0.4998
 </pre>
 </td></tr></table>
@@ -8254,14 +8254,17 @@ at ems.music.uiuc.edu/beaucham/papers/JASA.01.96.pdf.
 <p>The "even" cases are not independent of the "all" cases; each even set can be at worst 1.0 above
 its corresponding (n-1) all set (shift the current "all" choices right to multiply each by 2), then set the new fundamental
 phase to 0.0).  But the "odd" cases are always better than the evens, so I think the three sets
-follow the same law, at least for large n.  I think we could get close to sqrt(n) in all cases,
-given enough time and some luck, or even better, some algorithm for finding the minimum.  peak-phases.scm
-represents the results of about a dozen different search methods applied to this problem.  When n is
+follow the same law, at least for large n.  
+peak-phases.scm has the results of about a dozen different search methods applied to this problem.  When n is
 small, almost any algorithm works, even brute force.  But the search space grows exponentially in n,
-and the search space is full of potholes ("local minima"), so as n grows, every searcher begins
-to stagger to a halt.  peak-phases.scm started with brute force (for n < 30) and a random search (n > 30) for the simplest cases
+and the search space is full of cuspy potholes ("local minima"), so as n grows, every searcher begins
+to stagger to a halt.  peak-phases.scm started with brute force (for n &lt; 30) and a random search (n &gt; 30) for the simplest cases
 (0 and pi as the only initial phases), then did a fuzzy gradient descent around those points,
-then applied genetic algorithms around those points, and so on.  
+then applied genetic algorithms around those points, and so on.  Some of the results represent several
+hundred hours of cpu time (via ccrma's 150-cpu condor pool).  My current impression is that it's not
+too hard to get to (expt n .53), but it's very hard to find the lonely cusp that goes down to (expt n .5),
+if it exists.  When you finally find the thing, after literally days of searching, you feel like
+you've fallen in a well.
 </p>
 
 

@@ -5686,7 +5686,7 @@ typedef struct {
   Float *phases;
 } pk_data;
 
-static XEN g_find_min_peak_phases_via_sa(XEN x_choice, XEN x_n, XEN x_size, XEN x_increment, XEN x_counts, XEN x_file)
+static XEN g_find_min_peak_phases_via_sa(XEN x_choice, XEN x_n, XEN x_size, XEN x_increment, XEN x_counts, XEN x_file, XEN x_just_best)
 {
   #define H_find_min_peak_phases_via_sa "(" S_find_min_peak_phases_via_sa " choice n size increment counts output-file) searches \
 for a peak-amp minimum using a simulated annealing form of the genetic algorithm"
@@ -5694,8 +5694,8 @@ for a peak-amp minimum using a simulated annealing form of the genetic algorithm
   #define FFT_MULT 128
   #define INCR_DOWN 0.9
   #define INCR_UP 1.11
-  #define INCR_MAX 0.10
-  #define INCR_MIN 0.01
+  #define INCR_MAX 1.0
+  #define INCR_MIN 0.001
   #define RETRIES 10
   #define RETRY_MULT 2
   #define INIT_TRIES 1000
@@ -5703,13 +5703,14 @@ for a peak-amp minimum using a simulated annealing form of the genetic algorithm
   /* (find-min-peak-phases-via-sa 0 8 1024 1.0 1000) */
   /* choice: 0=all, 1=odd, 2=even, 3=prime */
 
-  int choice, n, size, counts = 0, day_counter = 0, free_top = 0, fft_size = 0, ffts = 0;
+  int choice, n, size, counts = 0, day_counter = 0, days = 0, free_top = 0, fft_size = 0, ffts = 0;
   Float increment = INCR_MAX, orig_incr, local_best = 1000.0, incr_mult = INCR_DOWN;
   Float *min_phases = NULL, *temp_phases = NULL, *diff_phases = NULL;
-  char *choice_name[4] = {"all", "odd", "prime", "even"};
+  char *choice_name[4] = {"all", "odd", "even", "prime"};
   pk_data **choices = NULL, **free_choices = NULL;
   Float *rl, *im;
   const char *file = NULL;
+  bool just_best = false;
 
   static int primes[129] = {1, 2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 
 			    89, 97, 101, 103, 107, 109, 113, 127, 131, 137, 139, 149, 151, 157, 163, 167, 173, 179, 181, 
@@ -5718,6 +5719,26 @@ for a peak-amp minimum using a simulated annealing form of the genetic algorithm
 			    401, 409, 419, 421, 431, 433, 439, 443, 449, 457, 461, 463, 467, 479, 487, 491, 499, 503, 
 			    509, 521, 523, 541, 547, 557, 563, 569, 571, 577, 587, 593, 599, 601, 607, 613, 617, 619, 
 			    631, 641, 643, 647, 653, 659, 661, 673, 677, 683, 691, 701, 709, 719};
+
+  static Float all_mins[128] = {1.0000, 1.7600, 1.9797, 2.0390, 2.3435, 2.5493, 2.6419, 2.7947, 2.9709, 3.1034, 3.2352, 3.4103, 3.5739, 3.6434, 3.8582, 3.9718, 4.1417, 4.1798, 4.2817, 4.4202, 4.5043, 4.6742, 4.7808, 4.9119, 5.0945, 5.1806, 5.2774, 5.4562, 5.5170, 5.5745, 5.6780, 5.7553, 5.7956, 5.9920, 6.0632, 6.3004, 6.4100, 6.5510, 6.6393, 6.5384, 7.2965, 7.5558, 7.6026, 7.7901, 7.9566, 8.1076, 8.0428, 8.3243, 8.2899, 8.1498, 8.7815, 8.5799, 8.3982, 8.9309, 8.8435, 8.9224, 9.1387, 9.3049, 9.1601, 9.1905, 9.4264, 9.8653, 9.8097, 9.7046, 10.0225, 9.9111, 10.1560, 10.2122, 10.4955, 10.3326, 10.3565, 10.6618, 10.5621, 10.3713, 10.7386, 10.6684, 11.1041, 11.3508, 11.2846, 11.2402, 11.2083, 11.4011, 11.2822, 11.5987, 11.9091, 11.7449, 11.6799, 11.5403, 12.1417, 11.9608, 12.1103, 11.9235, 12.1153, 12.5055, 12.2565, 12.5846, 12.5215, 12.7087, 12.8624, 12.9984, 13.1074, 13.1180, 13.3088, 13.3234, 13.5422, 13.1611, 13.1937, 13.4952, 13.4390, 13.2659, 13.7820, 13.7009, 13.8329, 13.5647, 14.3470, 13.9796, 14.0603, 14.1116, 14.3228, 14.5346, 14.0508, 14.3426, 14.6097, 14.5996, 14.7324, 14.4278, 14.8423, 15.1240};
+
+  static Float odd_mins[128] = {1.0000, 1.5390, 1.7387, 2.0452, 2.3073, 2.5228, 2.6234, 2.7956, 2.9789, 3.0573, 3.3150, 3.4457, 3.5678, 3.7297, 3.8324, 4.0225, 4.0290, 4.3352, 4.4895, 4.7439, 4.6947, 4.8831, 4.8477, 5.1996, 5.4810, 5.5509, 5.3842, 5.6611, 5.6742, 5.9064, 6.0024, 6.1165, 6.1944, 6.4423, 6.2819, 6.5813, 6.7512, 6.8393, 6.8533, 7.3831, 7.1117, 7.6174, 7.5118, 7.7943, 7.9658, 7.9312, 8.0932, 8.1448, 8.5173, 8.3692, 8.4260, 8.7527, 8.7298, 8.8426, 8.9238, 9.2826, 8.9519, 9.3456, 9.1880, 9.5398, 9.5036, 9.5414, 9.7010, 9.8743, 10.0325, 10.0339, 10.1807, 10.1009, 10.4436, 10.0517, 10.5949, 10.7663, 10.5035, 11.1518, 10.8551, 11.0864, 10.9585, 11.4060, 11.5334, 11.0812, 11.1220, 11.6517, 11.6430, 11.4820, 11.7768, 12.0144, 11.8319, 12.0143, 12.2764, 12.2621, 12.1333, 12.2559, 12.3966, 12.3539, 12.4674, 12.7971, 12.6863, 12.7875, 12.9396, 12.7072, 13.2164, 13.1528, 13.0169, 13.1316, 13.4861, 13.0898, 13.2842, 13.4728, 13.7536, 13.5363, 13.4988, 13.9019, 13.5192, 13.7946, 14.2031, 13.8235, 14.4275, 14.2851, 14.4590, 13.9592, 14.2891, 14.2665, 14.7019, 14.8171, 14.7029, 14.9615, 14.6867, 14.5010};
+
+  static Float prime_mins[128] = {1.0000, 1.7600, 1.9798, 2.1921, 2.4788, 2.8069, 3.0673, 3.2676, 3.4018, 3.6525, 3.9208, 4.1477, 4.3824, 4.4449, 4.7553, 4.8524, 4.9942, 5.1587, 5.4640, 5.6127, 5.9679, 5.9448, 6.0749, 6.1101, 6.3215, 6.3429, 6.5705, 6.8858, 6.9408, 7.0740, 7.3725, 7.5291, 7.4259, 7.6784, 7.7385, 7.9788, 8.3119, 8.4771, 8.4486, 8.7189, 8.9790, 8.9177, 9.3626, 9.5020, 9.3565, 9.3461, 9.7513, 9.7476, 10.1408, 10.2458, 10.5515, 10.5859, 10.6537, 10.4957, 10.7974, 10.8548, 11.2049, 11.2547, 11.2496, 11.4165, 11.7689, 11.6310, 11.6245, 11.9329, 12.2059, 12.0907, 12.1297, 12.2909, 12.1961, 12.6547, 12.4629, 12.6981, 12.8711, 12.9433, 13.1638, 13.2735, 13.1254, 13.4369, 13.0943, 13.4912, 13.6226, 13.9557, 13.8855, 14.0176, 14.2408, 14.0057, 13.7821, 14.5600, 14.6564, 14.8221, 14.6789, 14.4120, 14.9810, 14.8114, 15.2033, 14.8389, 15.3941, 15.3662, 15.3834, 15.6268, 15.6467, 15.3006, 16.2695, 15.8968, 15.9735, 15.6320, 16.1077, 16.4968, 16.5668, 16.3371, 16.4672, 16.5562, 16.2039, 16.4337, 16.4846, 16.7152, 17.4747, 17.0811, 17.1098, 16.9752, 17.7767, 17.8684, 17.1781, 17.8388, 17.6368, 18.2221, 18.1987, 18.2044};
+
+  static Float even_mins[128] = {1.0000, 1.7602, 2.0215, 2.4306, 2.6048, 2.8370, 3.0470, 3.2057, 3.4911, 3.6368, 3.7743, 3.9742, 4.1571, 4.1738, 4.3950, 4.4753, 4.8330, 4.8441, 5.1715, 5.0911, 5.2837, 5.2937, 5.5463, 5.7705, 5.8836, 5.7723, 6.1282, 6.1566, 6.2261, 6.2425, 6.3427, 6.5590, 6.5783, 6.5148, 6.7535, 6.8099, 7.0298, 7.0823, 7.3027, 7.5284, 7.3772, 8.0919, 7.8099, 8.0848, 8.4485, 8.3466, 8.3609, 8.7296, 8.8845, 8.9154, 9.1192, 9.3629, 9.2173, 9.3767, 9.1158, 9.4888, 9.4889, 9.3895, 9.4499, 10.0955, 10.0007, 10.0079, 10.3036, 10.3839, 10.5938, 10.6903, 10.5812, 10.7766, 11.1170, 11.0254, 10.9879, 11.2425, 11.2000, 11.4521, 11.3120, 11.4725, 11.4961, 11.7649, 11.8097, 11.9471, 11.9697, 11.7216, 11.9227, 12.2168, 12.2553, 12.6279, 12.4990, 12.4156, 12.2035, 12.6918, 12.8213, 12.7365, 12.8730, 12.9903, 12.7964, 13.0299, 12.9115, 13.3298, 13.2884, 13.4578, 13.8560, 13.4372, 13.8464, 14.0286, 14.0158, 13.8415, 13.9533, 13.6344, 14.1473, 14.0992, 13.8732, 14.4826, 14.3937, 14.4567, 14.3115, 14.9623, 14.8524, 14.7595, 14.9598, 15.0510, 14.5076, 14.8883, 15.0549, 15.1717, 15.3116, 15.2746, 15.1171, 15.6399};
+
+  Float saved_min(int ch, int nn)
+  {
+    switch (ch)
+      {
+      case 0: return(all_mins[nn - 1]);
+      case 1: return(odd_mins[nn - 1]);
+      case 2: return(even_mins[nn - 1]);
+      case 3: return(prime_mins[nn - 1]);
+      }
+    return((Float)nn);
+  }
 
   Float get_peak(Float *phases)
   {
@@ -5784,7 +5805,7 @@ for a peak-amp minimum using a simulated annealing form of the genetic algorithm
     for (local_try = 0; (local_try < local_tries) && (pk >= cur_min); local_try++)
       {
 	for (i = 1; i < len; i++)
-	  temp_phases[i] = fmod(phases[i] + mus_frandom(increment), 2.0); /* mus_random? frandom is 0.0 to amp */
+	  temp_phases[i] = fmod(phases[i] + mus_random(increment), 2.0); /* mus_frandom? frandom is 0.0 to amp */
 	pk = get_peak(temp_phases);
 	
 	if (pk < temp_min)
@@ -5821,18 +5842,22 @@ for a peak-amp minimum using a simulated annealing form of the genetic algorithm
 
     if (pk < local_best)
       {
-	FILE *ofile;
-	if (file)
-	  ofile = fopen(file, "a");
-	else ofile = stderr;
 	local_best = pk;
-	for (k = 1; k < len; k++) min_phases[k] = temp_phases[k];
-	fprintf(ofile, "[%d, %f, %d]: %s, %d %f #(", day_counter, increment, ffts, choice_name[choice], n, pk);
-	for (k = 0; k < len - 1; k++) fprintf(ofile, "%f ", min_phases[k]);
-	fprintf(ofile, "%f)\n\n", min_phases[len - 1]);
+	if ((!just_best) ||
+	    (pk < saved_min(choice, n)))
+	  {
+	    FILE *ofile;
+	    if (file)
+	      ofile = fopen(file, "a");
+	    else ofile = stderr;
+	    for (k = 1; k < len; k++) min_phases[k] = temp_phases[k];
+	    fprintf(ofile, "[%d, %f, %d]: %s, %d %f #(", days, increment, ffts, choice_name[choice], n, pk);
+	    for (k = 0; k < len - 1; k++) fprintf(ofile, "%f ", min_phases[k]);
+	    fprintf(ofile, "%f)\n\n", min_phases[len - 1]);
+	    if (file) fclose(ofile);
+	  }
+
 	day_counter = 0;
-	ffts = 0;
-	if (file) fclose(ofile);
       }
     return(new_pk);
   }
@@ -5843,6 +5868,7 @@ for a peak-amp minimum using a simulated annealing form of the genetic algorithm
     Float sum = 0.0, avg;
     len = size;
     day_counter++;
+    days++;
     for (i = 0; i < len; i++) sum += choices[i]->pk;
     avg = sum / len;
 
@@ -5895,11 +5921,11 @@ for a peak-amp minimum using a simulated annealing form of the genetic algorithm
 
   if (XEN_INTEGER_P(x_size))
     size = XEN_TO_C_INT(x_size);
-  else size = 100;
+  else size = 1000;
 
   if (XEN_INTEGER_P(x_counts))
     counts = XEN_TO_C_INT(x_counts);
-  else counts = 1000;
+  else counts = 100;
 
   if (XEN_DOUBLE_P(x_increment))
     increment = XEN_TO_C_DOUBLE(x_increment);
@@ -5909,6 +5935,9 @@ for a peak-amp minimum using a simulated annealing form of the genetic algorithm
 
   if (XEN_STRING_P(x_file))
     file = XEN_TO_C_STRING(x_file);
+
+  if (XEN_BOOLEAN_P(x_just_best))
+    just_best = XEN_TO_C_BOOLEAN(x_just_best);
 
   min_phases = (Float *)calloc(n, sizeof(Float));
   temp_phases = (Float *)calloc(n, sizeof(Float));
@@ -5948,16 +5977,20 @@ for a peak-amp minimum using a simulated annealing form of the genetic algorithm
 
 	    if (pk < local_best)
 	      {
-		FILE *ofile;
-		if (file)
-		  ofile = fopen(file, "a");
-		else ofile = stderr;
 		local_best = pk;
-		for (k = 1; k < n; k++) min_phases[k] = temp_phases[k];
-		fprintf(ofile, "[%d, %f, %d]: %s, %d %f #(", day_counter, increment, ffts, choice_name[choice], n, pk);
-		for (k = 0; k < n - 1; k++) fprintf(ofile, "%f ", min_phases[k]);
-		fprintf(ofile, "%f)\n\n", min_phases[n - 1]);
-		if (file) fclose(ofile);
+		if ((!just_best) ||
+		    (pk < saved_min(choice, n)))
+		  {
+		    FILE *ofile;
+		    if (file)
+		      ofile = fopen(file, "a");
+		    else ofile = stderr;
+		    for (k = 1; k < n; k++) min_phases[k] = temp_phases[k];
+		    fprintf(ofile, "[%d, %f, %d]: %s, %d %f #(", days, increment, ffts, choice_name[choice], n, pk);
+		    for (k = 0; k < n - 1; k++) fprintf(ofile, "%f ", min_phases[k]);
+		    fprintf(ofile, "%f)\n\n", min_phases[n - 1]);
+		    if (file) fclose(ofile);
+		  }
 	      }
 
 	    if (pk < local_pk)
@@ -6021,7 +6054,7 @@ XEN_NARGIFY_1(g_set_sinc_width_w, g_set_sinc_width)
 XEN_ARGIFY_9(g_ptree_channel_w, g_ptree_channel)
 #if HAVE_NESTED_FUNCTIONS
 XEN_VARGIFY(g_find_min_peak_phases_w, g_find_min_peak_phases)
-XEN_ARGIFY_6(g_find_min_peak_phases_via_sa_w, g_find_min_peak_phases_via_sa)
+XEN_ARGIFY_7(g_find_min_peak_phases_via_sa_w, g_find_min_peak_phases_via_sa)
 #endif
 #else
 #define g_scan_chan_w g_scan_chan
@@ -6157,7 +6190,7 @@ void g_init_sig(void)
 				   S_setB S_sinc_width, g_set_sinc_width_w,  0, 0, 1, 0);
 #if HAVE_NESTED_FUNCTIONS
   XEN_DEFINE_PROCEDURE(S_find_min_peak_phases, g_find_min_peak_phases_w, 0, 0, 1, H_find_min_peak_phases);
-  XEN_DEFINE_PROCEDURE(S_find_min_peak_phases_via_sa, g_find_min_peak_phases_via_sa_w, 2, 4, 0, H_find_min_peak_phases_via_sa);
+  XEN_DEFINE_PROCEDURE(S_find_min_peak_phases_via_sa, g_find_min_peak_phases_via_sa_w, 2, 5, 0, H_find_min_peak_phases_via_sa);
 #endif
 }
 
