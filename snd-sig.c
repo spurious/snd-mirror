@@ -5805,7 +5805,7 @@ for a peak-amp minimum using a simulated annealing form of the genetic algorithm
     for (local_try = 0; (local_try < local_tries) && (pk >= cur_min); local_try++)
       {
 	for (i = 1; i < len; i++)
-	  temp_phases[i] = fmod(phases[i] + mus_random(increment), 2.0); /* mus_frandom? frandom is 0.0 to amp */
+	  temp_phases[i] = fmod(phases[i] + mus_random(increment), 2.0); /* not mus_frandom! */
 	pk = get_peak(temp_phases);
 	
 	if (pk < temp_min)
