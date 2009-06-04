@@ -8179,25 +8179,24 @@ in a few cases, it is possible to get below the square root (see peak-phases.scm
 <pre>
          n     peak   (log peak n)            n     peak   (log peak n)
 
-all     11   3.2190    0.4875,        odd     11   3.1774    0.4821
-all     14   3.6287    0.4884,        odd     9    2.8866    0.4825
-all     12   3.3898    0.4913,        odd     10   3.0548    0.4850
-all     10   3.1030    0.4918,        odd     16   3.8644    0.4876
-all     17   4.0428    0.4931,        odd     12   3.3757    0.4896
-all     19   4.2817    0.4939,        odd     15   3.7835    0.4914
+all     14   3.6151    0.4870,        odd     11   3.1774    0.4821
+all     11   3.2190    0.4875,        odd     9    2.8866    0.4825
+all     12   3.3896    0.4912,        odd     10   3.0543    0.4849
+all     10   3.1030    0.4918,        odd     16   3.8633    0.4875
+all     17   4.0422    0.4930,        odd     12   3.3749    0.4895
+all     19   4.2817    0.4939,        odd     15   3.7828    0.4913
 all     9    2.9621    0.4942,        odd     8    2.7910    0.4936
-all     8    2.7947    0.4942,        odd     13   3.5515    0.4941
-all     21   4.5043    0.4943,        odd     7    2.6185    0.4947
-all     13   3.5572    0.4947,        odd     14   3.6971    0.4955
-all     18   4.1798    0.4948,        odd     17   4.0863    0.4968
-all     15   3.8305    0.4959,        odd     19   4.3481    0.4992
-all     20   4.4202    0.4961,        odd     18   4.2402    0.4998
-all     16   3.9610    0.4965,        odd     20   4.4700    0.4998
-all     22   4.6431    0.4967
+all     8    2.7947    0.4942,        odd     13   3.5510    0.4941
+all     21   4.5043    0.4943,        odd     7    2.6184    0.4947
+all     13   3.5567    0.4947,        odd     14   3.6956    0.4953
+all     18   4.1798    0.4948,        odd     17   4.0877    0.4970
+all     15   3.8305    0.4959,        odd     19   4.3450    0.4989
+all     20   4.4202    0.4961,        odd     24   4.8853    0.4991
+all     16   3.9610    0.4965,        odd     20   4.4631    0.4993
+all     22   4.6412    0.4966,        odd     18   4.2364    0.4995
 all     7    2.6394    0.4988
 all     23   4.7808    0.4990
 all     24   4.8983    0.5000
-
 </pre>
 </td></tr></table>
 
@@ -8209,19 +8208,18 @@ all     24   4.8983    0.5000
 <pre>
          n     peak   (log peak n)            n     peak   (log peak n)
 
-all     33   5.7956    0.5025,        odd     21   4.5877    0.5004
-all     29   5.4324    0.5026,        odd     24   4.9321    0.5021
-all     27   5.2774    0.5047,        odd     23   4.8477    0.5034
-all     26   5.1806    0.5049,        odd     3    1.7387    0.5035
-all     32   5.7553    0.5050,        odd     26   5.2260    0.5076
-all     30   5.5745    0.5052,        odd     22   4.8077    0.5080
+all     25   5.0346    0.5021,        odd     21   4.5877    0.5004
+all     29   5.4277    0.5023,        odd     23   4.8477    0.5034
+all     33   5.7956    0.5025,        odd     3    1.7387    0.5035
+all     27   5.2774    0.5047,        odd     22   4.7708    0.5055
+all     26   5.1806    0.5049,        odd     26   5.2129    0.5068
+all     32   5.7553    0.5050,        odd     28   5.4657    0.5097
+all     30   5.5745    0.5052,        odd     27   5.3677    0.5099
 all     31   5.6780    0.5057
-all     25   5.0945    0.5058
 all     35   6.0632    0.5069
 all     34   5.9920    0.5077
 all     40   6.5384    0.5090
 all     28   5.4562    0.5092
-
 </pre>
 </td></tr></table>
 
@@ -8238,8 +8236,8 @@ at ems.music.uiuc.edu/beaucham/papers/JASA.01.96.pdf.
 <br>
 <img src="pix/sqrt1.png" alt="n^y" hspace=40>
 
-<p>The "even" cases are not independent of the "all" cases; each even set can be at worst 1.0 above
-its corresponding (n-1) all set (shift the current "all" choices right to multiply each by 2), then set the new fundamental
+<p>The "even" cases are not independent of the "all" cases; each even-harmonics set can be at worst 1.0 above
+its corresponding (n-1) all-harmonics set (shift the current "all" choices right to multiply each by 2), then set the new fundamental
 phase to 0.0).  But the "odd" cases are always better than the evens, so I think the three sets
 follow the same law, at least for large n.  
 peak-phases.scm has the results of about a dozen different search methods applied to this problem.  When n is
