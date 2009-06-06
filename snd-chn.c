@@ -3185,6 +3185,11 @@ static bool make_spectrogram(chan_info *cp)
 
 /* ---------------------------------------- wavograms ---------------------------------------- */
 
+/* (with-sound () (do ((j 0 (+ j 1))) ((= j 500)) (do ((i 0 (+ i 1))) ((= i 100)) (outa (+ (* j 100) i) (* i j .002 .01)))))
+ *
+ * xdeg=45, ydeg=0, zdeg=0 is the "flat" display
+ */
+
 typedef struct wavogram_state {
   int hop, trace, width, height, graph_x0, cmap, cmap_size, edit_ctr;
   bool inverted;
