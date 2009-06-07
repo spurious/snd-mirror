@@ -2,6 +2,10 @@
 #include "clm2xen.h"
 #include "clm-strings.h"
 
+/* TODO: the per-chan attributes (y-bounds, graph-type etc) are a mess when update, unite, sync etc happen
+ * TODO: the default should be to show the full y-bounds if possible
+ */
+
 bool graph_style_p(int grf)
 {
   switch (grf)
@@ -34,7 +38,7 @@ chan_info *get_cp(XEN x_snd_n, XEN x_chn_n, const char *caller)
   if ((sp == NULL) || (!(sp->active)) || (sp->inuse == SOUND_IDLE))
     {
       snd_no_such_sound_error(caller, x_snd_n); 
-      return(NULL); /* gad -- just in case our catch has been clobbered */
+      return(NULL); /* just in case our catch has been clobbered */
     }
 
   if (XEN_INTEGER_P(x_chn_n))
