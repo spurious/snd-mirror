@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Oct 21 18:22:57 CEST 2005
-\ Changed: Sat Dec 20 02:32:30 CET 2008
+\ Changed: Fri May 29 04:51:07 CEST 2009
 
 \ Commentary:
 
@@ -14,7 +14,6 @@
 \  xe->string 	  	( obj -- str )
 \  xe-dump 	  	( obj -- str )
 \  xe->array            ( obj -- ary )
-\  xe-copy              ( obj1 -- obj2 )
 \  xe-ref               ( obj index -- point )
 \  xe-set!              ( obj index point -- )
 \  xe-equal?  	  	( obj1 obj2 -- f )
@@ -175,7 +174,6 @@ fth-xenved make-?obj xenved?
      obj xe-args@ ) string-format
 ;
 : xe->array   ( obj -- ary )         xe-enved@ enved->array ;  
-defer xe-copy ( obj1 -- obj2 )
 : xe-ref      ( obj index -- point ) swap xe-enved@ swap enved-ref ;
 : xe-set!     ( obj index point -- ) rot xe-enved@ -rot enved-set! ;
 : xe-equal?   ( obj1 obj2 -- f )
@@ -209,7 +207,6 @@ defer xe-copy ( obj1 -- obj2 )
 <'> xe->string  fth-xenved set-object->string   \ xe object->string
 <'> xe-dump     fth-xenved set-object-dump      \ xe object-dump
 <'> xe->array   fth-xenved set-object->array    \ xe object->array
-<'> xe-copy     fth-xenved set-object-copy      \ xe object-copy
 <'> xe-ref      fth-xenved set-object-value-ref \ xe index        object-ref => #( x y )
 <'> xe-set!     fth-xenved set-object-value-set \ xe index #( x y ) object-set!
 <'> xe-equal?   fth-xenved set-object-equal-p   \ obj1 obj2 equal?
@@ -232,7 +229,7 @@ defer xe-copy ( obj1 -- obj2 )
     gen xe-px1@ { px1 }
     gen xe-bx0@ { bx0 }
     gen xe-bx1@ { bx1 }
-    x bx0 f-  bx1 bx0 f-  f/  px1 px0 -  f*  px0  f+  fround->s  px0  max  px1  min
+    x bx0 f-  bx1 bx0 f-  f/  px1 px0 f-  f*  px0  f+  floor f>s  px0  max  px1  min
   then
 ;
 : grfy ( y gen -- val )
@@ -244,7 +241,7 @@ defer xe-copy ( obj1 -- obj2 )
     gen xe-py1@ { py1 }
     gen xe-by0@ { by0 }
     gen xe-by1@ { by1 }
-    y by1 f-  by0 by1 f-  f/  py0 py1 f-  f*  py1 f+  fround->s  py1  max  py0  min
+    y by1 f-  by0 by1 f-  f/  py0 py1 f-  f*  py1 f+  floor f>s  py1  max  py0  min
   then
 ;
 : ungrfx ( x gen -- val )
@@ -281,17 +278,22 @@ defer xe-copy ( obj1 -- obj2 )
     drawer FXtDisplay { dpy }
     drawer FXtWindow { win }
     dpy win FXClearWindow drop
-    drawer gc gen xe-name@ gen xe-bx0@ gen xe-bx1@ gen xe-by0@ gen xe-by1@
-    x-axis-in-seconds show-all-axes draw-axes drop
+    drawer
+    gc
+    gen xe-name@
+    gen xe-bx0@
+    gen xe-bx1@
+    gen xe-by0@
+    gen xe-by1@
+    x-axis-in-seconds
+    show-all-axes draw-axes drop
     #f #f { lx ly }
     10 { mouse-d }
     5  { mouse-r }
     gen each { point }
-      dpy win gc
-      point 0 array-ref gen grfx dup { cx } mouse-r -
-      point 1 array-ref gen grfy dup { cy } mouse-r -
-      mouse-d mouse-d
-      0 360*64 FXFillArc drop
+      point 0 array-ref gen grfx { cx }
+      point 1 array-ref gen grfy { cy }
+      dpy win gc  cx mouse-r -  cy mouse-r -  mouse-d mouse-d 0 360*64 FXFillArc drop
       lx if dpy win gc lx ly cx cy FXDrawLine drop then
       cx to lx
       cy to ly
@@ -436,8 +438,9 @@ defer xe-copy ( obj1 -- obj2 )
   0   xe xe-mouse-pos !
   #f  xe xe-mouse-new !
   xe fth-xenved make-instance { gen }
-  drawer FXmNresizeCallback gen draw-axes-cb      	     #f FXtAddCallback drop
-  drawer FXmNexposeCallback gen draw-axes-cb      	     #f FXtAddCallback drop
+  gen draw-axes-cb { axes-cb }
+  drawer FXmNresizeCallback axes-cb      	             #f FXtAddCallback drop
+  drawer FXmNexposeCallback axes-cb      	             #f FXtAddCallback drop
   drawer FButtonPressMask   #f gen mouse-press-cb    	     #f FXtAddEventHandler drop
   drawer FButtonReleaseMask #f gen mouse-release-cb 	     #f FXtAddEventHandler drop
   drawer FButtonMotionMask  #f gen mouse-drag-cb     	     #f FXtAddEventHandler drop
@@ -446,13 +449,6 @@ defer xe-copy ( obj1 -- obj2 )
   gen
 ;
 
-lambda: ( obj1 -- obj2 )
-  { obj }
-  obj xe-name@
-  obj xe-parent@
-  :envelope    obj xe-envelope@ array-copy
-  :args        obj xe-args@     array-copy make-xenved
-; is xe-copy
 : xe-envelope ( gen -- lst )
   { gen }
   gen xenved? gen 1 $" an xenved object" _ assert-type

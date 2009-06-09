@@ -3,7 +3,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sun Oct 16 23:04:30 CEST 2005
-\ Changed: Tue Dec 16 00:56:44 CET 2008
+\ Changed: Fri May 29 05:12:13 CEST 2009
 
 \ Commentary:
 \
@@ -508,21 +508,23 @@ hide
 	then each { lst }
 	  lst 0 array-ref { snd }
 	  lst 1 array-ref { chn }
-	  target 'sound equal? if
-	    snd chn undef frames 1-
-	  else
-	    target 'selection equal? if
-	      #f #f selection-position #f #f selection-frames +
-	    else
-	      pts 1 array-ref
-	    then
-	  then { end }
-	  end beg - { dur }
 	  snd sync snc = if
-	    origin-func #( target dur ) run-proc { name orig }
-	    $" %s %s %s %s" #( orig beg
+	    target 'sound equal? if
+	      snd chn undef frames 1-
+	    else
+	      target 'selection equal? if
+		#f #f selection-position #f #f selection-frames +
+	      else
+		pts 1 array-ref
+	      then
+	    then { end }
+	    end beg - { dur }
+	    origin-func #( target dur ) run-proc { name-and-orig }
+	    $" %s %s %s %s"
+	    #( name-and-orig 0 array-ref
+	       beg
 	       target 'sound equal? if #f else dur 1+ then
-	       name ) string-format { origin }
+	       name-and-orig 1 array-ref ) string-format { origin }
 	    func dur run-proc beg end overlap + 1+ snd chn #f origin map-channel drop
 	  then
 	end-each
@@ -572,8 +574,8 @@ set-current
 : delay-time! ( del gen -- ) effects-delay ! ;
 : amount@     ( gen -- amt ) effects-amount @ ;
 : amount!     ( amt gen -- ) effects-amount ! ;
-: envel@   ( gen -- env ) effects-envelope @ ;
-: envel!   ( env gen -- ) effects-envelope ! ;
+: envel@      ( gen -- env ) effects-envelope @ ;
+: envel!      ( env gen -- ) effects-envelope ! ;
 : size@       ( gen -- siz ) effects-size @ ;
 : size!       ( siz gen -- ) effects-size ! ;
 

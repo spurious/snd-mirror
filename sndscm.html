@@ -8209,16 +8209,16 @@ all     23   4.7808    0.4990,        odd     20   4.4631    0.4993
 <pre>
          n     peak   (log peak n)            n     peak   (log peak n)
 
-all     27   5.2176    0.5012,        odd     27   5.2067    0.5006
-all     29   5.4277    0.5023,        odd     28   5.3311    0.5022
-all     33   5.8016    0.5028,        odd     26   5.1595    0.5036
-all     26   5.1467    0.5029,        odd     29   5.5145    0.5070
-all     32   5.7245    0.5034,        odd     34   6.0377    0.5099
-all     28   5.3840    0.5052
-all     30   5.5880    0.5059
+all     28   5.2980    0.5004,        odd     27   5.2060    0.5006
+all     27   5.2176    0.5012,        odd     28   5.3287    0.5021
+all     29   5.4277    0.5023,        odd     26   5.1343    0.5021
+all     33   5.8016    0.5028,        odd     34   5.9364    0.5051
+all     26   5.1467    0.5029,        odd     29   5.4984    0.5062
+all     30   5.5339    0.5030
+all     32   5.7245    0.5034
+all     34   5.9523    0.5058
 all     31   5.6834    0.5060
 all     35   6.0710    0.5073
-all     34   5.9963    0.5079
 all     40   6.5384    0.5090
 </pre>
 </td></tr></table>
@@ -8238,14 +8238,8 @@ at ems.music.uiuc.edu/beaucham/papers/JASA.01.96.pdf.
 
 <p>The "even" cases are not independent of the "all" cases; each even-harmonics set can be at worst 1.0 above
 its corresponding (n-1) all-harmonics set (shift the current "all" choices right to multiply each by 2), then set the new fundamental
-phase to 0.0).  But the "odd" cases are always better than the evens, so I think the three sets
-follow the same law, at least for large n.  
-peak-phases.scm has the results of about a dozen different search methods applied to this problem.  When n is
-small, almost any algorithm works, even brute force.  But the search space grows exponentially in n,
-and the search space is full of cuspy potholes ("local minima"), so as n grows, every searcher begins
-to stagger to a halt.  peak-phases.scm started with brute force (for n &lt; 30) and a random search (n &gt; 30) for the simplest cases
-(0 and pi as the only initial phases), then a fuzzy gradient descent around those points,
-then various genetic algorithms. 
+phase to 0.0).  
+peak-phases.scm has the results of about a dozen different search methods applied to this problem.
 </p>
 
 
