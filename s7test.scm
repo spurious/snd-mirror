@@ -3338,7 +3338,7 @@
 (test (call/cc (lambda (r) (or #f (< 3 2) (r 123) 321))) 123)
 (test (+ (or #f (not (null? '())) 3) (or (zero? 1) 2)) 5)
 (test (or 0) 0)
-
+(test (if (or) 1 2) 2)
 
 
 
@@ -3353,6 +3353,7 @@
 (test (and 3 9) 9)
 (test (and #f 3 asdf) #f) ; "evaluation stops immediately"
 (test (and 3 (zero? 1) (/ 1 0) (display "and is about to exit!") (exit)) #f)
+(test (if (and) 1 2) 1)
 
 (for-each
  (lambda (arg)

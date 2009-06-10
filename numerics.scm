@@ -44,7 +44,7 @@
 (define binomial n-choose-k)
 
 
-
+;;; --------------------------------------------------------------------------------
 ;;; from Numerical Recipes
 (define (plgndr l m x)			;Legendre polynomial P m/l (x), m and l integer
 					;0 <= m <= l and -1<= x <= 1 (x real)
@@ -233,7 +233,7 @@
 
 
 #|
-;;; ----------------
+;;; --------------------------------------------------------------------------------
 ;;; 
 ;;; just for my amusement -- apply a linear-fractional or Mobius transformation to the fft data (treated as complex)
 ;;; 
@@ -276,6 +276,8 @@
     (vct->channel rl 0 len snd chn #f (format #f "automorph ~A ~A ~A ~A" a b c d))))
 |#
 
+
+;;; --------------------------------------------------------------------------------
 
 (define (bes-i1 x)				;I1(x)
   (if (< (abs x) 3.75)
@@ -332,6 +334,7 @@
 		(* ans (/ (bes-i0 x) bi)))))))
 
 
+;;; --------------------------------------------------------------------------------
 
 (define (aux-f x)			;1<=x<inf
   (let ((x2 (* x x)))
@@ -385,6 +388,7 @@
       (+ g (log x) sum))))
 
 
+;;; --------------------------------------------------------------------------------
 
 (define bernoulli3
   (let ((saved-values (let ((v (make-vector 100 #f))
@@ -646,6 +650,7 @@
 |#
 
 
+;;; --------------------------------------------------------------------------------
 
 (define (show-digits-of-pi-starting-at-digit id)
   ;; piqpr8.c
@@ -753,6 +758,8 @@
     (ihex pid 10 chx)
     (format #t " position = ~D~% fraction = ~,15F~% hex digits =  ~S~%" id pid chx)))
   
+
+;;; --------------------------------------------------------------------------------
 
 (define* (sin-nx-peak n :optional (error 1e-12))
   ;; return the min peak amp and its location for sin(x)+sin(nx+a)
