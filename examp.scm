@@ -149,7 +149,7 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 
 (if (not (defined? 'log10))
     (define (log10 a) 
-      "(log10 a) returns the log bas 10 of 'a'"
+      "(log10 a) returns the log base 10 of 'a'"
       (/ (log a) (log 10))))
 
 
