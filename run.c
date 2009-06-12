@@ -12145,8 +12145,13 @@ static xen_value *mus_ ## Name ## _1(ptree *prog, xen_value **args, int num_args
 { \
   if (args[1]->type == R_CLM) \
     return(package(prog, R_VCT, Name ## _1, #Name "_1", args, 1)); \
+  if (CLM_STRUCT_P(args[1]->type)) \
+    return(splice_in_method(prog, args, num_args, "mus_" #Name, USE_GET_METHOD)); \
   return(run_warn("wrong type arg (%s) to mus-" #Name , type_name(args[1]->type))); \
 }
+
+/* (let ((gen (make-polyoid 100.0 (vct 1 1 0.0)))) (run (lambda () (mus-xcoeffs gen)))) */
+/* TODO: get clm-struct vct methods (mus-xcoeffs) to work */
 
 MUS_VCT_1(data, 0)
 MUS_VCT_1(xcoeffs, 1)

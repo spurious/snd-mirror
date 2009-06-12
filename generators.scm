@@ -5593,7 +5593,7 @@ index 10 (so 10/2 is the bes-jn arg):
 
 (define (moving-max gen y)
   "(make-moving-max (n 128) returns a moving-max generator.\n\
-  (moving-max gen input) returns the maxamp in a moving window over the last n inputs."
+  (moving-max gen input) returns the maxamp over the last n inputs."
   (declare (gen moving-max) (y float))
   (let* ((absy (abs y))
 	 (dly (moving-max-gen gen))
@@ -6327,6 +6327,7 @@ index 10 (so 10/2 is the bes-jn arg):
 (defgenerator (tanhsin
 	       :make-wrapper (lambda (g)
 			       (set! (tanhsin-osc g) (make-oscil (tanhsin-frequency g) (tanhsin-initial-phase g)))
+			       (set! (tanhsin-frequency g) (hz->radians (tanhsin-frequency g))) ; so that mus-frequency works at least read side
 			       g))
   (frequency *clm-default-frequency*) (r 1.0) (initial-phase 0.0)
   (osc #f :type clm))
@@ -6340,10 +6341,91 @@ index 10 (so 10/2 is the bes-jn arg):
 	   (oscil (tanhsin-osc gen) fm))))
 
 
+
+;;; ---------------- moving-fft generator ----------------
+
+(defgenerator (moving-fft
+	       :make-wrapper (lambda (g)
+			       (let ((n (moving-fft-n g)))
+				 (set! (moving-fft-rl g) (make-vct n))
+				 (set! (moving-fft-im g) (make-vct n))
+				 (set! (moving-fft-data g) (make-vct n))
+				 (set! (moving-fft-fft-window g) (make-fft-window hamming-window n))
+				 (vct-scale! (moving-fft-fft-window g) (/ 2.0 (* 0.54 n)))
+				 (set! (moving-fft-outctr g) (+ n 1)) ; first time fill flag
+				 g))
+	       :methods (list
+			 (list 'mus-data
+			       (lambda (g) (moving-fft-data g)))
+			 (list 'mus-xcoeffs
+			       (lambda (g) (moving-fft-rl g)))
+			 (list 'mus-ycoeffs
+			       (lambda (g) (moving-fft-im g)))))
+  (input #f :type clm) (n 512 :type int) (hop 128 :type int) (outctr 0 :type int)
+  (rl #f :type vct) (im #f :type vct) (data #f :type vct) 
+  (fft-window #f :type vct))
+
+
+(define (moving-fft gen)
+  "(make-moving-fft reader (size 512) (hop 128)) returns a moving-fft generator. \n\
+(moving-fft gen) produces an FFT (polar form) of 'size' samples every 'hop' samples, \n\
+taking input from the readin generator 'reader'.  The magnitudes are available as mus-xcoeffs, \n\
+the phases as mus-ycoeffs, and the current input data as mus-data."
+  (declare (gen moving-fft))
+  (let* ((n (moving-fft-n gen))
+	 (n2 (/ n 2))
+	 (rl (moving-fft-rl gen))
+	 (im (moving-fft-im gen))
+	 (data (moving-fft-data gen))
+	 (hop (moving-fft-hop gen))
+	 (outctr (moving-fft-outctr gen)))
+    (if (>= outctr hop)
+	(let* ((fft-window (moving-fft-fft-window gen)))
+	  (if (> outctr n) ; must be first time through -- fill data array
+	      (begin
+		(do ((i 0 (+ i 1)))
+		    ((= i n))
+		  (vct-set! data i (readin (moving-fft-input gen)))))
+	      (begin
+		(do ((i 0 (+ i 1))
+		     (j hop (+ 1 j)))
+		    ((= j n))
+		  (vct-set! data i (vct-ref data j)))
+		(do ((i (- n hop) (+ i 1)))
+		    ((= i n))
+		  (vct-set! data i (readin (moving-fft-input gen))))))
+	  (set! outctr 0) ; -1??
+	  (clear-array im)
+	  (do ((i 0 (+ i 1)))
+	      ((= i n))
+	    (vct-set! rl i (* (vct-ref fft-window i) (vct-ref data i))))
+	  (mus-fft rl im n 1)
+	  (rectangular->polar rl im)))
+    (set! (moving-fft-outctr gen) (+ outctr 1))))
+
+    
+#|
+(let* ((rd (make-readin "oboe.snd"))
+       (ft (make-moving-fft rd))
+       (data (make-vct 256)))
+  (set! (lisp-graph?) #t)
+  (do ((i 0 (+ i 1)))
+      ((= i 10000))
+    (moving-fft ft)
+    (vct-subseq (mus-xcoeffs ft) 0 255 data)
+    (graph data "fft" 0.0 11025.0 0.0 0.1 0 0 #t)))
+|#
+
+
+;;; TODO: snd-test moving-fft and moving-spectrum (are there others?)
+;;; PERHAPS: moving-autocorrelation, moving-cepstrum, moving-centroid, moving-wavelet, moving-lpc
+;;; TODO: moving-pitch
+;;; PERHAPS: cepstrum support in clm (like current autocorrelation -- run etc) what name? cepstrify?
+;;; PERHAPS: can moving-spectrum be derived from moving-fft?
+
+
+
 ;;; ---------------- moving spectrum ----------------
-;;;
-;;; this is the first half of the phase-vocoder (modulo ignoring "interp!=hop" business)
-;;;   I will probably move this into C eventually
 
 (defgenerator (moving-spectrum
 	       :make-wrapper (lambda (g)

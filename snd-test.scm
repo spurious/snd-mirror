@@ -16742,7 +16742,6 @@ EDITS: 2
     (if (fneq (degrees->radians 57.2957801818848) 1.0) (snd-display ";degrees->radians: ~F?" (degrees->radians 57.2957801818848)))
     (if (fneq (linear->db .25) -12.0411996841431) (snd-display ";linear->db: ~F?" (linear->db .25)))
     (if (fneq (db->linear -12.0411996841431) .25) (snd-display ";db->linear: ~F?" (db->linear -12.0411996841431)))
-    (if (fneq (hz->radians 1.0) (in-hz 1.0)) (snd-display ";in-hz: ~F? " (in-hz 1.0)))
     (if (fneq (ring-modulate .4 .5) .2) (snd-display ";ring-modulate: ~F?" (ring-modulate .4 .5)))
     (if (fneq (amplitude-modulate 1.0 .5 .4) .7) (snd-display ";amplitude-modulate: ~F?" (amplitude-modulate 1.0 .5 .4)))
     (if (fneq (contrast-enhancement 0.1 0.75) (sin (+ (* 0.1 (/ pi 2)) (* .75 (sin (* 0.1 2.0 pi))))))
@@ -48496,13 +48495,11 @@ EDITS: 1
       (ftst '(degrees->radians 57.2957801818848) 1.0)
       (ftst '(linear->db .25) -12.0411996841431)
       (ftst '(db->linear -12.0411996841431) .25)
-      (ftst '(hz->radians 1.0) (in-hz 1.0))
       (ftsta '(lambda (y) (radians->hz y)) 2.84951704088598e-4 1.0)
       (ftsta '(lambda (y) (radians->degrees y)) 1.0 57.2957801818848)
       (ftsta '(lambda (y) (degrees->radians y)) 57.2957801818848 1.0)
       (ftsta '(lambda (y) (linear->db y)) .25 -12.0411996841431)
       (ftsta '(lambda (y) (db->linear y)) -12.0411996841431 .25)
-      (ftsta '(lambda (y) (hz->radians y)) 1.0 (in-hz 1.0))
       (ftst '(ring-modulate .4 .5) .2)
       (ftst '(amplitude-modulate 1.0 .5 .4) .7)
       (ftst '(contrast-enhancement 0.1 0.75) (sin (+ (* 0.1 (/ pi 2)) (* .75 (sin (* 0.1 2.0 pi))))))
@@ -64968,7 +64965,7 @@ EDITS: 1
 	     (procs8 (remove-if (lambda (n) (or (not (procedure? n)) (not (arity-ok n 8)))) procs))
 	     (procs10 (remove-if (lambda (n) (or (not (procedure? n)) (not (arity-ok n 10)))) procs))
 	     
-	     (already-warned '("mus-length" "mus-data" "hz->radians" "in-hz" "mus-order" "mus-xcoeffs" "mus-ycoeffs"
+	     (already-warned '("mus-length" "mus-data" "hz->radians" "mus-order" "mus-xcoeffs" "mus-ycoeffs"
 			       "list->vct" "vct" "formant-bank"
 			       ))
 	     )

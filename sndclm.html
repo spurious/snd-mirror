@@ -9786,6 +9786,31 @@ variants of those given above.
 </p>
 <br>
 
+
+<pre style="background-color: #f2f4ff">
+  <a class=def name="make-moving-fft">make-moving-fft</a> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (input #f :type clm) (n 512) (hop 128)
+  <a class=def name="moving-fft">moving-fft</A> gen
+  <a class=def name="moving-fft?">moving-fft?</A> gen
+</pre>
+
+<p>moving-fft provides a sample-by-sample FFT (magnitudes and phases) of its
+input (currently assumed to be a readin generator).  
+mus-xcoeffs returns the magnitudes, mus-ycoeffs returns the phases, and mus-data returns the current input block.
+We could mimic the fft display window in the "lisp graph" via:
+</p>
+<pre>
+(let* ((rd (make-readin "oboe.snd"))
+       (ft (<em class=red>make-moving-fft</em> rd))
+       (data (make-vct 256)))
+  (set! (lisp-graph?) #t)
+  (do ((i 0 (+ i 1)))
+      ((= i 10000))
+    (<em class=red>moving-fft</em> ft)
+    (vct-subseq (mus-xcoeffs ft) 0 255 data)
+    (graph data "fft" 0.0 11025.0 0.0 0.1 0 0 #t)))
+</pre>
+<br>
+
 <pre style="background-color: #f2f4ff">
   <a class=def name="make-moving-spectrum">make-moving-spectrum</a> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (input #f :type clm) (n 512) (hop 128)
   <a class=def name="moving-spectrum">moving-spectrum</A> gen

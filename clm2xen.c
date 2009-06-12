@@ -8616,7 +8616,9 @@ static void mus_xen_init(void)
 
   XEN_DEFINE_PROCEDURE(S_radians_to_hz,        g_radians_to_hz_w,        1, 0, 0, H_radians_to_hz);
   XEN_DEFINE_PROCEDURE(S_hz_to_radians,        g_hz_to_radians_w,        1, 0, 0, H_hz_to_radians);
+#ifndef CLM_DISABLE_DEPRECATED
   XEN_DEFINE_PROCEDURE("in-hz",                g_hz_to_radians_w,        1, 0, 0, H_hz_to_radians); /* backwards compatibility */
+#endif
   XEN_DEFINE_PROCEDURE(S_radians_to_degrees,   g_radians_to_degrees_w,   1, 0, 0, H_radians_to_degrees);
   XEN_DEFINE_PROCEDURE(S_degrees_to_radians,   g_degrees_to_radians_w,   1, 0, 0, H_degrees_to_radians);
   XEN_DEFINE_PROCEDURE(S_db_to_linear,         g_db_to_linear_w,         1, 0, 0, H_db_to_linear);

@@ -2,10 +2,11 @@
 #define CLM_H
 
 #define MUS_VERSION 4
-#define MUS_REVISION 23
-#define MUS_DATE "11-May-09"
+#define MUS_REVISION 24
+#define MUS_DATE "11-June-09"
 
 /*
+ * 11-Jun:     mus_cepstrum.
  * 11-May:     MUS_ENV_LINEAR and friends, also mus_env_linear|exponential.
  *             mus_frame_to_frame_mono|stereo.
  * 12-Mar:     sinc, papoulis and dpss (slepian windows).
@@ -771,6 +772,7 @@ MUS_EXPORT Float *mus_autocorrelate(Float *data, int n);
 MUS_EXPORT Float *mus_correlate(Float *data1, Float *data2, int n);
 MUS_EXPORT Float *mus_convolution(Float* rl1, Float* rl2, int n);
 MUS_EXPORT void mus_convolve_files(const char *file1, const char *file2, Float maxamp, const char *output_file);
+MUS_EXPORT Float *mus_cepstrum(Float *data, int n);
 
 MUS_EXPORT bool mus_granulate_p(mus_any *ptr);
 MUS_EXPORT Float mus_granulate(mus_any *ptr, Float (*input)(void *arg, int direction));

@@ -10923,6 +10923,46 @@ Float *mus_correlate(Float *data1, Float *data2, int n)
 }
 
 
+Float *mus_cepstrum(Float *data, int n)
+{
+  Float *rl, *im;
+  Float fscl = 0.0, lowest;
+  int i;
+
+  lowest = 0.00000001;
+  fscl = 2.0 / (Float)n;
+
+  rl = (Float *)clm_malloc_atomic(n * sizeof(Float), "mus_cepstrum real data");
+  im = (Float *)clm_calloc_atomic(n, sizeof(Float), "mus_cepstrum imaginary data");
+  memcpy((void *)rl, (void *)data, n * sizeof(Float));
+
+  mus_fft(rl, im, n, 1);
+
+  for (i = 0; i < n; i++)
+    {
+      rl[i] = rl[i] * rl[i] + im[i] * im[i];
+      if (rl[i] < lowest)
+	rl[i] = -10.0;
+      else rl[i] = log(sqrt(rl[i]));
+    }
+  memset((void *)im, 0, n * sizeof(Float));
+
+  mus_fft(rl, im, n, -1);
+
+  for (i = 0; i < n; i++)
+    if (fabs(rl[i]) > fscl) 
+      fscl = fabs(rl[i]);
+
+  if (fscl > 0.0)
+    for (i = 0; i < n; i++) 
+      data[i] = rl[i] / fscl;
+
+  free(rl);
+  free(im);
+  return(data);
+}
+
+
 
 /* ---------------- convolve ---------------- */
 

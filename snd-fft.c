@@ -267,39 +267,6 @@ static void walsh_transform(Float *data, int n)
 
 
 
-/* -------------------------------- CEPSTRUM -------------------------------- */
-
-static void cepstrum(Float *data, int n)
-{
-  Float *rl, *im;
-  Float fscl = 0.0, lowest;
-  int i;
-  lowest = 0.00000001;
-  fscl = 2.0 / (Float)n;
-  rl = (Float *)malloc(n * sizeof(Float));
-  im = (Float *)calloc(n, sizeof(Float));
-  memcpy((void *)rl, (void *)data, n * sizeof(Float));
-  mus_fft(rl, im, n, 1);
-  for (i = 0; i < n; i++)
-    {
-      rl[i] = rl[i] * rl[i] + im[i] * im[i];
-      if (rl[i] < lowest)
-	rl[i] = -10.0;
-      else rl[i] = log(sqrt(rl[i]));
-    }
-  memset((void *)im, 0, n * sizeof(Float));
-  mus_fft(rl, im, n, -1);
-  for (i = 0; i < n; i++)
-    if (fabs(rl[i]) > fscl) 
-      fscl = fabs(rl[i]);
-  if (fscl > 0.0)
-    for (i = 0; i < n; i++) 
-      data[i] = rl[i] / fscl;
-  free(rl);
-  free(im);
-}
-
-
 static int compare_peaks(const void *pk1, const void *pk2)
 {
   if (((fft_peak *)pk1)->freq > ((fft_peak *)pk2)->freq) return(1);
@@ -946,7 +913,7 @@ static void apply_fft(fft_state *fs)
       for (i = 0; i < data_len; i++) fft_data[i] = read_sample(sf);
       if (data_len < fs->size) 
 	memset((void *)(fft_data + data_len), 0, (fs->size - data_len) * sizeof(Float));
-      cepstrum(fft_data, fs->size);
+      mus_cepstrum(fft_data, fs->size);
       break;
 
     case WALSH:
@@ -2204,7 +2171,7 @@ static XEN g_snd_transform(XEN type, XEN data, XEN hint)
       haar_transform(v->data, v->length);
       break;
     case CEPSTRUM:
-      cepstrum(v->data, v->length);
+      mus_cepstrum(v->data, v->length);
       break;
     case WALSH:
       walsh_transform(v->data, v->length);
