@@ -6350,8 +6350,8 @@ index 10 (so 10/2 is the bes-jn arg):
 				 (set! (moving-fft-rl g) (make-vct n))
 				 (set! (moving-fft-im g) (make-vct n))
 				 (set! (moving-fft-data g) (make-vct n))
-				 (set! (moving-fft-fft-window g) (make-fft-window hamming-window n))
-				 (vct-scale! (moving-fft-fft-window g) (/ 2.0 (* 0.54 n)))
+				 (set! (moving-fft-window g) (make-fft-window hamming-window n))
+				 (vct-scale! (moving-fft-window g) (/ 2.0 (* 0.54 n)))
 				 (set! (moving-fft-outctr g) (+ n 1)) ; first time fill flag
 				 g))
 	       :methods (list
@@ -6363,14 +6363,16 @@ index 10 (so 10/2 is the bes-jn arg):
 			       (lambda (g) (moving-fft-im g)))))
   (input #f :type clm) (n 512 :type int) (hop 128 :type int) (outctr 0 :type int)
   (rl #f :type vct) (im #f :type vct) (data #f :type vct) 
-  (fft-window #f :type vct))
+  (window #f :type vct))
 
 
 (define (moving-fft gen)
+
   "(make-moving-fft reader (size 512) (hop 128)) returns a moving-fft generator. \n\
 (moving-fft gen) produces an FFT (polar form) of 'size' samples every 'hop' samples, \n\
 taking input from the readin generator 'reader'.  The magnitudes are available as mus-xcoeffs, \n\
 the phases as mus-ycoeffs, and the current input data as mus-data."
+
   (declare (gen moving-fft))
   (let* ((n (moving-fft-n gen))
 	 (n2 (/ n 2))
@@ -6380,7 +6382,7 @@ the phases as mus-ycoeffs, and the current input data as mus-data."
 	 (hop (moving-fft-hop gen))
 	 (outctr (moving-fft-outctr gen)))
     (if (>= outctr hop)
-	(let* ((fft-window (moving-fft-fft-window gen)))
+	(let* ((fft-window (moving-fft-window gen)))
 	  (if (> outctr n) ; must be first time through -- fill data array
 	      (begin
 		(do ((i 0 (+ i 1)))
@@ -6405,7 +6407,8 @@ the phases as mus-ycoeffs, and the current input data as mus-data."
 
     
 #|
-(let* ((rd (make-readin "oboe.snd"))
+(let* ((snd (new-sound))
+       (rd (make-readin "oboe.snd"))
        (ft (make-moving-fft rd))
        (data (make-vct 256)))
   (set! (lisp-graph?) #t)
@@ -6413,11 +6416,11 @@ the phases as mus-ycoeffs, and the current input data as mus-data."
       ((= i 10000))
     (moving-fft ft)
     (vct-subseq (mus-xcoeffs ft) 0 255 data)
-    (graph data "fft" 0.0 11025.0 0.0 0.1 0 0 #t)))
+    (graph data "fft" 0.0 11025.0 0.0 0.1 0 0 #t))
+  (close-sound snd))
 |#
 
 
-;;; TODO: snd-test moving-fft and moving-spectrum (are there others?)
 ;;; PERHAPS: moving-autocorrelation, moving-cepstrum, moving-centroid, moving-wavelet, moving-lpc
 ;;; TODO: moving-pitch
 ;;; PERHAPS: cepstrum support in clm (like current autocorrelation -- run etc) what name? cepstrify?

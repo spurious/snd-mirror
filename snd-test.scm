@@ -56432,6 +56432,19 @@ EDITS: 1
 	  (if (not (sound? snd)) (snd-display ";tanhsin ~A" snd))
 	  (if (> (abs (- 1.0 (maxamp snd))) 0.1) (snd-display ";tanhsin max: ~A" (maxamp snd))))
 
+	(if (not (provided? 'snd-nogui))
+	    (let* ((snd (new-sound))
+		   (rd (make-readin "oboe.snd"))
+		   (ft (make-moving-fft rd))
+		   (data (make-vct 256)))
+	      (set! (lisp-graph?) #t)
+	      (do ((i 0 (+ i 1)))
+		  ((= i 10000))
+		(moving-fft ft)
+		(vct-subseq (mus-xcoeffs ft) 0 255 data)
+		(graph data "fft" 0.0 11025.0 0.0 0.1 0 0 #t))
+	      (close-sound snd)))
+
 	(test-sv)
 
 	(let ((val (make-vector 3))
