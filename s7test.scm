@@ -3354,6 +3354,8 @@
 (test (and #f 3 asdf) #f) ; "evaluation stops immediately"
 (test (and 3 (zero? 1) (/ 1 0) (display "and is about to exit!") (exit)) #f)
 (test (if (and) 1 2) 1)
+(test (if (+) 1 2) 1)
+(test (if (*) 1 2) 1)
 
 (for-each
  (lambda (arg)

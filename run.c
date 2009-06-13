@@ -61,7 +61,7 @@
  *
  *   various sndlib, clm, snd, and s7 functions
  *
- * LIMITATIONS: 
+ * limitations: 
  *      variables can have only one type, the type has to be ascertainable somehow (similarly for vector elements)
  *      some variables (imported from outside our context) cannot be set, in some cases they can't even be found (args to define* in Guile for example)
  *      no recursion (could be added with some pain)
@@ -87,13 +87,7 @@
  *   currently make-rand|-interp distribution arg (an env) can't be a vct
  */
 
-/* it would be nice to have a compile time check for generator mismatches, but
- *    there are instruments that choose the type at run-time, passing the same
- *    pointer to the various choices (fm-violin).  Perhaps the *_check functions could use
- *    the __builtin_expect stuff?  Currently run-safety=1 adds about 25% to the
- *    compute time -- (calling-all-animals): 4.1 to 5.2.
- *
- * complex number support for run
+/* complex number support for run
  *            3+4i real-part imag-part make-rectangular make-polar angle magnitude complex? real? declare case
  *            complex.h: ccos csin ctan cacos casin catan ccosh csinh ctanh cacosh casinh catanh cexp clog cabs cpow csqrt
  *                       carg[angle] creal cimag, complex double _Complex_I
@@ -103,7 +97,6 @@
  * would it simplify variable handling to store everything as xen_value?
  *
  * TODO: s7 vector syntax
- * TODO: print support for int vectors
  * TODO: run doesn't always warn about a closure (explicit gen basically) -- if it's used directly,
  *         there's no warning, but it doesn't handle the closed-over variables correctly
  * TODO: vector<->vct
@@ -10025,12 +10018,13 @@ static void clm_struct_field_set_1(ptree *prog, xen_value *in_v, xen_value *in_v
 {
   /* in_v = args[1], new_v has int_arg[2] for addr, v is new_val */
   xen_value *args[4];
+  xen_value *rtn;    
   args[0] = NULL;
   args[1] = in_v;
   args[2] = make_xen_value(R_INT, add_int_to_ptree(prog, in_v2->addr), R_CONSTANT);
   args[3] = v;
-  /* TODO: there is a memleak here */
-  list_set_1(prog, args, 3);
+  rtn = list_set_1(prog, args, 3);
+  free(rtn);
   free(args[2]);
 }
 
@@ -14411,12 +14405,14 @@ static xen_value *lambda_preform(ptree *prog, XEN form, walk_result_t ignore) {r
 
 /* clm-print and xen args support */
 
-static bool xenable(xen_value *v)
+static bool xenable(xen_value *v) /* see xen_value_to_xen */
 {
   switch (v->type)
     {
-    case R_FLOAT: case R_INT: case R_CHAR: case R_STRING: case R_BOOL:
-    case R_FLOAT_VECTOR: case R_VCT: case R_SOUND_DATA: case R_KEYWORD: case R_SYMBOL:
+    case R_FLOAT: case R_INT: case R_CHAR: case R_STRING: case R_BOOL: case R_XEN:
+    case R_FLOAT_VECTOR: case R_VCT: case R_SOUND_DATA: 
+    case R_INT_VECTOR:
+    case R_KEYWORD: case R_SYMBOL:
     case R_CLM: case R_LIST: 
       return(true);
       break;
@@ -14638,7 +14634,7 @@ static XEN xen_values_to_list(ptree *pt, int *args)
 static XEN format_func;
 
 static void format_s(int *args, ptree *pt) 
-{
+{ /* (let ((v (make-vector 3 123))) (run (lambda () (format #t "~A~%" v)))) */
   if (STRING_RESULT) free(STRING_RESULT);
   /* fprintf(stderr, "apply: %s\n", XEN_AS_STRING(xen_values_to_list(pt, args))); */
   STRING_RESULT = mus_strdup(XEN_TO_C_STRING(XEN_APPLY(format_func, xen_values_to_list(pt, args), "format")));

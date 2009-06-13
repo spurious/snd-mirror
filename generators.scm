@@ -6023,7 +6023,7 @@ index 10 (so 10/2 is the bes-jn arg):
 		    (case choice
 		      ((all)   (vct-set! amps j i))
 		      ((odd)   (vct-set! amps j (- (* 2 i) 1)))
-		      ((prime) (vct-set! amps j (vector-ref some-primes (- i 1)))) ; defined below up to 1024th or so
+		      ((prime) (vct-set! amps j (vector-ref some-primes (- i 1)))) ; defined below up to 1024th or so -- probably should use low-primes.scm
 		      ((even)  (vct-set! amps j (max 1 (* 2 (- i 1))))))
 		    
 		    (vct-set! amps (+ j 1) (/ 1.0 n))
@@ -6077,7 +6077,7 @@ index 10 (so 10/2 is the bes-jn arg):
 				(do ((i 1 (+ i 1))
 				     (j 0 (+ j 3)))
 				    ((> i n))
-				  (vct-set! amps (+ j 1) (/ 0.999 norm)) ; I'm truncating when saving the peak
+				  (vct-set! amps (+ j 1) (/ 1.0 n)) ;(/ 0.999 norm)) -- can't decide about this -- I guess it should be consistent with the #f case
 				  (vct-set! amps (+ j 2) (* pi (vector-ref rats (- i 1))))))))))
 			      
 		  amps)))

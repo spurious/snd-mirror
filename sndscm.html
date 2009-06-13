@@ -8235,8 +8235,14 @@ the exponent vs n (n^y = peak amp).
 One very good
 set for all harmonics up to n=40 is given in Horner and Beauchamp, "a genetic algorithm-based method
 for synthesis of low peak amplitude signals", J. Acoustic. Soc. Am Vol 99 No 1 Jan 96, online
-at ems.music.uiuc.edu/beaucham/papers/JASA.01.96.pdf.
+at ems.music.uiuc.edu/beaucham/papers/JASA.01.96.pdf.  
 </p>
+
+<!--
+(In both this paper, and Schroeder's earlier
+one, much fuss is made of the RMS value, but that value is independent of the
+initial phases, so it is obviously irrelevant).
+-->
 
 <img src="pix/sqrt.png" alt="sqrt n" hspace=40>
 <br>
@@ -8397,7 +8403,7 @@ phase to 0.0).
   (set! (x-axis-style) x-axis-in-samples)
   (do ((i 0 (1+ i))) 
       ((= i 5)) 
-    (set! (x-axis-label 0 i) "n")) ;(set! (x-axis-label 0 i) "n, black: all, red: odd, blue: prime, green: n^.6"))
+    (set! (x-axis-label 0 i) "n"))
   (set! (selected-graph-color) (make-color 1 1 1))
   (set! (axis-label-font) "9x15")
   )
