@@ -3293,6 +3293,8 @@ static Float delay_set_fb(mus_any *ptr, Float val) {((dly *)ptr)->yscl = val; re
 static int delay_interp_type(mus_any *ptr) {return((int)(((dly *)ptr)->type));}
 static int delay_zdly(mus_any *ptr) {return((int)(((dly *)ptr)->zdly));}
 
+static off_t delay_loc(mus_any *ptr){return((off_t)(((dly *)ptr)->loc));}
+
 static Float *delay_data(mus_any *ptr) {return(((dly *)ptr)->line);}
 
 static Float *delay_set_data(mus_any *ptr, Float *val) 
@@ -3359,7 +3361,9 @@ static mus_any_class DELAY_CLASS = {
   NULL, 
   &delay_interp_type,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0,
+  &delay_loc,
+  0, 0,
   0, 0, 0, 0, 0,
   &delay_reset,
   0, &delay_zdly, 0
@@ -3481,7 +3485,9 @@ static mus_any_class COMB_CLASS = {
   NULL,
   &delay_interp_type,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0,
+  &delay_loc,
+  0, 0,
   0, 0, 0, 0, 0,
   &delay_reset,
   0, &delay_zdly, 0
@@ -3553,7 +3559,9 @@ static mus_any_class NOTCH_CLASS = {
   NULL,
   &delay_interp_type,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0,
+  &delay_loc,
+  0, 0,
   0, 0, 0, 0, 0,
   &delay_reset,
   0, &delay_zdly, 0
@@ -3695,7 +3703,9 @@ static mus_any_class ALL_PASS_CLASS = {
   NULL,
   &delay_interp_type,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0,
+  &delay_loc,
+  0, 0,
   0, 0, 0, 0, 0,
   &delay_reset,
   0, &delay_zdly, 0
@@ -3780,7 +3790,9 @@ static mus_any_class MOVING_AVERAGE_CLASS = {
   MUS_DELAY_LINE,
   NULL, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0,
+  &delay_loc,
+  0, 0,
   0, 0, 0, 0, 0,
   &moving_average_reset,
   0, &delay_zdly, 0
@@ -3896,7 +3908,9 @@ static mus_any_class FILTERED_COMB_CLASS = {
   NULL,
   &delay_interp_type,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0,
+  &delay_loc,
+  0, 0,
   0, 0, 0, 0, 0,
   &filtered_comb_reset,
   0, 0, 0

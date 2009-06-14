@@ -215,7 +215,8 @@ AC_ARG_WITH(snd-as-pd-external,
 
     	   case "$host" in
              *-apple-*)
- 	       CFLAGS="$CFLAGS -DPD -I. -bundle -undefined suppress -flat_namespace"
+# 	       CFLAGS="$CFLAGS -DPD -I. -bundle -undefined suppress -flat_namespace"
+	       CFLAGS="$CFLAGS -DPD -I. -undefined suppress -flat_namespace"
  	     ;;
            esac
 
@@ -2402,6 +2403,10 @@ if test "$ac_snd_have_extension_language" = no ; then
        AC_MSG_ERROR(Guile is needed when making snd as a pd external.)
     fi
   fi
+fi
+
+if test "$with_snd_as_pd_external" = yes ; then
+  CFLAGS="$CFLAGS -bundle"
 fi
 
 

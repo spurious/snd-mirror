@@ -10044,15 +10044,18 @@ s7_pointer s7_make_function(s7_scheme *sc, const char *name, s7_function f, int 
 {
   ffunc *ptr;
   s7_pointer x = new_cell(sc);
+
   /* these are normally not gc'd (C-level function defs), but they can be in a few cases
    *   (C-level redefinition as in the gmp case), and then we can't be certain they haven't
    *   been protected as the value of some Scheme variable.  It saves about 1% overall
    *   compute time (in s7test.scm) if we ignore those issues and use calloc here, rather
    *   then new_cell.
    */
+
   ptr = (ffunc *)calloc(1, sizeof(ffunc));
   set_type(x, T_S7_FUNCTION | T_ATOM | T_SIMPLE | T_FINALIZABLE | T_DONT_COPY | T_PROCEDURE);
   /* these guys can be freed -- in Snd, for example, "random" is defined in C, but then later redefined in snd-test.scm */
+
   x->object.ffptr = ptr;
   x->object.ffptr->ff = f;
   x->object.ffptr->name = name;
@@ -10064,6 +10067,7 @@ s7_pointer s7_make_function(s7_scheme *sc, const char *name, s7_function f, int 
   if (rest_arg)
     x->object.ffptr->all_args = 10000000;
   else x->object.ffptr->all_args = required_args + optional_args;
+
   return(x);
 }
 

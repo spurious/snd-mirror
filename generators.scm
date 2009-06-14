@@ -6396,7 +6396,7 @@ the phases as mus-ycoeffs, and the current input data as mus-data."
 		(do ((i (- n hop) (+ i 1)))
 		    ((= i n))
 		  (vct-set! data i (readin (moving-fft-input gen))))))
-	  (set! outctr 0) ; -1??
+	  (set! outctr 0)
 	  (clear-array im)
 	  (do ((i 0 (+ i 1)))
 	      ((= i n))
@@ -6421,7 +6421,7 @@ the phases as mus-ycoeffs, and the current input data as mus-data."
 |#
 
 
-;;; PERHAPS: moving-autocorrelation, moving-cepstrum, moving-centroid, moving-wavelet, moving-lpc
+;;; PERHAPS: moving-autocorrelation, moving-cepstrum, moving-wavelet, moving-lpc
 ;;; TODO: moving-pitch
 ;;; PERHAPS: cepstrum support in clm (like current autocorrelation -- run etc) what name? cepstrify?
 ;;; PERHAPS: can moving-spectrum be derived from moving-fft?
@@ -6562,6 +6562,83 @@ the phases as mus-ycoeffs, and the current input data as mus-data."
 
 
 
+;;; ---------------- moving scentroid ----------------
+
+(defgenerator (moving-scentroid
+	       :make-wrapper (lambda (g)
+			       (let ((n (moving-scentroid-size g)))
+				 (set! (moving-scentroid-rl g) (make-vct n))
+				 (set! (moving-scentroid-im g) (make-vct n))
+				 (set! (moving-scentroid-dly g) (make-delay n))
+				 (set! (moving-scentroid-rms g) (make-moving-rms n))
+				 (set! (moving-scentroid-hop g) (inexact->exact (floor (/ (mus-srate) (moving-scentroid-rfreq g)))))
+				 (set! (moving-scentroid-binwidth g) (/ (mus-srate) n))
+				 g)))
+  (dbfloor -40.0) (rfreq 100.0) 
+  (size 4096 :type int) (hop 1024 :type int) (outctr 0 :type int)
+  (curval 0.0) (binwidth 1.0)
+  (rl #f :type vct) (im #f :type vct) 
+  (dly #f :type clm) (rms #f :type clm))
+
+(define* (moving-scentroid gen :optional (x 0.0))
+  (declare (gen moving-scentroid) (x float))
+  (let ((outctr (moving-scentroid-outctr gen)))
+    (let ((rms (moving-rms (moving-scentroid-rms gen) x)))
+      (if (>= (moving-scentroid-outctr gen) (moving-scentroid-hop gen))
+	  (begin
+	    (set! outctr 0)	    
+	    (if (< (linear->db rms) (moving-scentroid-dbfloor gen))
+		(set! (moving-scentroid-curval gen) 0.0)
+		(let* ((rl (moving-scentroid-rl gen))
+		       (im (moving-scentroid-im gen))
+		       (data (mus-data (moving-scentroid-dly gen)))
+		       (n (moving-scentroid-size gen))
+		       (fft2 (/ n 2))
+		       (numsum 0.0)
+		       (densum 0.0))
+		  (clear-array im)
+		  (vct-subseq data 0 (- n 1) rl)
+		  (mus-fft rl im n 1)
+		  (rectangular->polar rl im)
+		  (do ((k 0 (+ 1 k)))
+		      ((= k fft2))
+		   (set! numsum (+ numsum (* k (vct-ref rl k))))
+		   (set! densum (+ densum (vct-ref rl k))))
+		  (set! (moving-scentroid-curval gen) (/ (* (moving-scentroid-binwidth gen) numsum) densum)))))))
+    (delay (moving-scentroid-dly gen) x)
+    (set! (moving-scentroid-outctr gen) (+ outctr 1))
+    (moving-scentroid-curval gen)))
+
+#|
+(let* ((snd (open-sound "oboe.snd"))
+       (cur-srate (srate snd))
+       (old-srate (mus-srate)))
+  (set! (mus-srate) cur-srate)
+
+  (let ((scn (make-moving-scentroid -40.0 100.0 128))
+	(vals (scentroid "oboe.snd" 0.0 1.1 -40.0 100.0 128))
+	(k 0))
+
+    (let ((data (channel->vct 0 22050 snd 0)))
+      (close-sound snd)
+      (do ((i 0 (+ i 1)))
+	  ((= i (moving-scentroid-size scn)))
+	(moving-scentroid scn (vct-ref data i)))
+      (set! (moving-scentroid-outctr scn) (moving-scentroid-hop scn))
+
+      (do ((i (moving-scentroid-size scn) (+ i 1))
+	   (j 0 (+ j 1)))
+	  ((= i 22050))
+	(let ((val (moving-scentroid scn (vct-ref data i))))
+	  (if (= (modulo j (moving-scentroid-hop scn)) 0)
+	      (begin
+		(format #t "[~A ~A]~%" val (vct-ref vals k))
+		(set! k (+ k 1)))))))
+    (set! (mus-srate) old-srate)))
+|#
+
+
+
 #|
 (define (abel k)
   ;; sum i from 1 to k (-1)^(i + 1) * (sin i) / i
@@ -6655,7 +6732,7 @@ the phases as mus-ycoeffs, and the current input data as mus-data."
 		adjustable-square-wave adjustable-triangle-wave adjustable-sawtooth-wave adjustable-oscil 
 		round-interp sinc-train pink-noise green-noise brown-noise green-noise-interp
 		moving-max moving-sum moving-rms moving-length weighted-moving-average exponentially-weighted-moving-average 
-		tanhsin
+		tanhsin moving-fft
 		))
      (list make-nssb make-nxysin make-nxycos make-nxy1cos make-nxy1sin make-noddsin make-noddcos make-noddssb make-ncos2 make-npcos
 	   make-nrsin make-nrcos make-nrssb make-nkssb make-nsincos make-rcos make-rssb make-rxysin make-rxycos
@@ -6666,7 +6743,7 @@ the phases as mus-ycoeffs, and the current input data as mus-data."
 	   make-adjustable-square-wave make-adjustable-triangle-wave make-adjustable-sawtooth-wave make-adjustable-oscil
 	   make-round-interp make-sinc-train make-pink-noise make-green-noise make-brown-noise make-green-noise-interp
 	   make-moving-max make-moving-sum make-moving-rms make-moving-length make-weighted-moving-average make-exponentially-weighted-moving-average 
-	   make-tanhsin
+	   make-tanhsin make-moving-fft
 	   )))
 
 

@@ -1645,7 +1645,7 @@ the rendering frequency, the number of measurements per second; 'db-floor' is th
      (lambda ()
        (do ((i start (+ i incrsamps))
 	    (loc 0 (+ 1 loc)))
-	   ((>= i end) results)
+	   ((>= i end))
 	 (set! (mus-location rd) i)
 	 (let ((sum-of-squares 0.0))
 	   (do ((j 0 (+ 1 j)))
@@ -1663,7 +1663,8 @@ the rendering frequency, the number of measurements per second; 'db-floor' is th
 		     ((= k fft2))
 		   (set! numsum (+ numsum (* k binwidth (vct-ref fdr k))))
 		   (set! densum (+ densum (vct-ref fdr k))))
-		 (vct-set! results loc (/ numsum densum))))))))))
+		 (vct-set! results loc (/ numsum densum))))))))
+    results))
 	     
 
 ;;; ----------------

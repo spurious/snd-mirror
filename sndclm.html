@@ -6100,6 +6100,7 @@ mus-interp-lagrange, mus-interp-bezier, or mus-interp-hermite.
 <tr><td><em class=gen>mus-data</em></td><td>delay line itself (no set!)</td></tr>
 <tr><td><em class=gen>mus-interp-type</em></td><td>interpolation choice (no set!)</td></tr>
 <tr><td><em class=gen>mus-scaler</em></td><td>available for delay specializations</td></tr>
+<tr><td><em class=gen>mus-location</em></td><td>current delay line write position</td></tr>
 </table>
 <br>
 <pre>
@@ -6139,6 +6140,16 @@ See prc95.scm for examples of both of these functions.
 the <a href="#moving-max">moving-max</a> generator uses mus-scaler to track the current maximum sample value
 in the delay line; the result is an envelope that tracks the peak amplitude in the
 last "size" samples.
+The <a href="#mus-location">mus-location</a> field returns the current delay line write position.
+To access the delay line contents as a sliding window on the input data, use:
+</p>
+
+<pre>
+  (define (delay-ref dly loc)
+    (vct-ref (mus-data dly) (modulo (+ loc (<em class=red>mus-location</em> dly)) (mus-length dly))))
+</pre>
+
+<p>
 The delay generator is used in some reverbs (<a href="sndscm.html#nrev">nrev</a>), many physical
 models (<a href="sndscm.html#stereoflute">stereo-flute</a>), <a href="sndscm.html#dlocsigdoc">dlocsig</a>,
 chorus effects (<a href="sndscm.html#chorus">chorus</a> in dsp.scm), and flanging (<a href="sndscm.html#neweffectsdoc">new-effects</a>),
@@ -9822,7 +9833,20 @@ input (currently assumed to be a readin generator).  It is identical to the firs
 the phase-vocoder generator (see test-sv in generators.scm for details).  To access the current amps and so on,
 use moving-spectrum-amps, moving-spectrum-phases, and moving-spectrum-freqs.
 </p>
+<br>
+
+
+<pre style="background-color: #f2f4ff">
+  <a class=def name="make-moving-scentroid">make-moving-scentroid</a> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (dbfloor -40.0) (rfreq 100.0) (size 4096)
+  <a class=def name="moving-scentroid">moving-scentroid</A> gen
+  <a class=def name="moving-scentroid?">moving-scentroid?</A> gen
+</pre>
+
+<p>moving-scentroid provides a generator that mimics Bret Battey's scentroid instrument (in dsp.scm or scentroid.ins).
+</p>
 <br><br>
+
+
 
 
 <!-- defgenerator -->

@@ -56442,7 +56442,7 @@ EDITS: 1
 		  ((= i 10000))
 		(moving-fft ft)
 		(vct-subseq (mus-xcoeffs ft) 0 255 data)
-		(graph data "fft" 0.0 11025.0 0.0 0.1 0 0 #t))
+		(graph data "fft" 0.0 11025.0 0.0 0.1 snd 0 #t))
 	      (close-sound snd)))
 
 	(test-sv)
