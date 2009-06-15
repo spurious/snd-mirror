@@ -13478,6 +13478,7 @@ static xen_value * CName ## _1(ptree *prog, xen_value **args, int num_args)  \
   else return(package(prog, R_VCT, CName ## _3f, #CName "_3f", args, 3)); \
 }
 
+VCT_2_I(rectangular_to_magnitudes, rectangular->magnitudes)
 VCT_2_I(rectangular_to_polar, rectangular->polar)
 VCT_2_I(polar_to_rectangular, polar->rectangular)
 VCT_2_I(multiply_arrays, multiply-arrays)
@@ -16576,6 +16577,7 @@ static void init_walkers(void)
   INIT_WALKER(S_contrast_enhancement, make_walker(contrast_enhancement_1, NULL, NULL, 2, 2, R_FLOAT, false, 2, R_NUMBER, R_NUMBER));
   INIT_WALKER(S_dot_product,          make_walker(dot_product_1, NULL, NULL, 2, 3, R_FLOAT, false, 3, R_VCT, R_VCT, R_INT));
   INIT_WALKER(S_polar_to_rectangular, make_walker(polar_to_rectangular_1, NULL, NULL, 2, 2, R_VCT, false, 2, R_VCT, R_VCT));
+  INIT_WALKER(S_rectangular_to_magnitudes, make_walker(rectangular_to_magnitudes_1, NULL, NULL, 2, 2, R_VCT, false, 2, R_VCT, R_VCT));
   INIT_WALKER(S_rectangular_to_polar, make_walker(rectangular_to_polar_1, NULL, NULL, 2, 2, R_VCT, false, 2, R_VCT, R_VCT));
   INIT_WALKER(S_multiply_arrays,      make_walker(multiply_arrays_1, NULL, NULL, 2, 3, R_VCT, false, 3, R_VCT, R_VCT, R_INT));
   INIT_WALKER(S_mus_fft,              make_walker(mus_fft_1, NULL, NULL, 2, 4, R_VCT, false, 4, R_VCT, R_VCT, R_INT, R_INT));

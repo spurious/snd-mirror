@@ -637,7 +637,7 @@ static XEN g_edot_product(XEN val1, XEN val2)
 #endif
 
 
-typedef enum {G_MULTIPLY_ARRAYS, G_RECTANGULAR_POLAR, G_POLAR_RECTANGULAR} xclm_window_t;
+typedef enum {G_MULTIPLY_ARRAYS, G_RECTANGULAR_POLAR, G_POLAR_RECTANGULAR, G_RECTANGULAR_MAGNITUDES} xclm_window_t;
 
 static XEN g_fft_window_1(xclm_window_t choice, XEN val1, XEN val2, XEN ulen, const char *caller) 
 {
@@ -662,9 +662,10 @@ static XEN g_fft_window_1(xclm_window_t choice, XEN val1, XEN val2, XEN ulen, co
   if (len > v2->length) len = v2->length;
   switch (choice)
     {
-    case G_MULTIPLY_ARRAYS:   mus_multiply_arrays(v1->data, v2->data, len);      break;
-    case G_RECTANGULAR_POLAR: mus_rectangular_to_polar(v1->data, v2->data, len); break;
-    case G_POLAR_RECTANGULAR: mus_polar_to_rectangular(v1->data, v2->data, len); break;
+    case G_MULTIPLY_ARRAYS:        mus_multiply_arrays(v1->data, v2->data, len);           break;
+    case G_RECTANGULAR_POLAR:      mus_rectangular_to_polar(v1->data, v2->data, len);      break;
+    case G_RECTANGULAR_MAGNITUDES: mus_rectangular_to_magnitudes(v1->data, v2->data, len); break;
+    case G_POLAR_RECTANGULAR:      mus_polar_to_rectangular(v1->data, v2->data, len);      break;
     }
   return(xen_return_first(val1, val2));
 }
@@ -683,6 +684,15 @@ static XEN g_rectangular_to_polar(XEN val1, XEN val2)
 data in vcts rl and im from rectangular form (fft output) to polar form (a spectrum)"
 
   return(g_fft_window_1(G_RECTANGULAR_POLAR, val1, val2, XEN_UNDEFINED, S_rectangular_to_polar));
+}
+
+
+static XEN g_rectangular_to_magnitudes(XEN val1, XEN val2) 
+{
+  #define H_rectangular_to_magnitudes "(" S_rectangular_to_magnitudes " rl im): convert real/imaginary \
+data in vcts rl and im from rectangular form (fft output) to polar form, but ignore the phases"
+
+  return(g_fft_window_1(G_RECTANGULAR_MAGNITUDES, val1, val2, XEN_UNDEFINED, S_rectangular_to_magnitudes));
 }
 
 
@@ -7928,6 +7938,7 @@ XEN_NARGIFY_1(g_autocorrelate_w, g_autocorrelate)
 XEN_NARGIFY_2(g_correlate_w, g_correlate)
 XEN_ARGIFY_3(g_convolution_w, g_convolution)
 XEN_NARGIFY_2(g_rectangular_to_polar_w, g_rectangular_to_polar)
+XEN_NARGIFY_2(g_rectangular_to_magnitudes_w, g_rectangular_to_magnitudes)
 XEN_NARGIFY_2(g_polar_to_rectangular_w, g_polar_to_rectangular)
 XEN_ARGIFY_3(g_array_interp_w, g_array_interp)
 XEN_ARGIFY_5(g_mus_interpolate_w, g_mus_interpolate)
@@ -8237,6 +8248,7 @@ XEN_NARGIFY_1(g_mus_irandom_w, g_mus_irandom)
 #define g_correlate_w g_correlate
 #define g_convolution_w g_convolution
 #define g_rectangular_to_polar_w g_rectangular_to_polar
+#define g_rectangular_to_magnitudes_w g_rectangular_to_magnitudes
 #define g_polar_to_rectangular_w g_polar_to_rectangular
 #define g_array_interp_w g_array_interp
 #define g_mus_interpolate_w g_mus_interpolate
@@ -8642,6 +8654,7 @@ static void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_correlate,            g_correlate_w,            2, 0, 0, H_correlate);
   XEN_DEFINE_PROCEDURE(S_convolution,          g_convolution_w,          2, 1, 0, H_mus_convolution);
   XEN_DEFINE_PROCEDURE(S_rectangular_to_polar, g_rectangular_to_polar_w, 2, 0, 0, H_rectangular_to_polar);
+  XEN_DEFINE_PROCEDURE(S_rectangular_to_magnitudes, g_rectangular_to_magnitudes_w, 2, 0, 0, H_rectangular_to_magnitudes);
   XEN_DEFINE_PROCEDURE(S_polar_to_rectangular, g_polar_to_rectangular_w, 2, 0, 0, H_polar_to_rectangular);
   XEN_DEFINE_PROCEDURE(S_array_interp,         g_array_interp_w,         2, 1, 0, H_array_interp);
   XEN_DEFINE_PROCEDURE(S_mus_interpolate,      g_mus_interpolate_w,      3, 2, 0, H_mus_interpolate);
@@ -9359,6 +9372,7 @@ static void mus_xen_init(void)
 	       S_rand_p,
 	       S_readin,
 	       S_readin_p,
+	       S_rectangular_to_magnitudes,
 	       S_rectangular_to_polar,
 	       S_rectangular_window,
 	       S_reverb,

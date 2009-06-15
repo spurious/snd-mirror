@@ -2029,7 +2029,7 @@ is a physical model of a flute:
 			     (let* ((logla (/ (log la) log10))
 				    (logca (/ (log ca) log10)) 
 				    (logra (/ (log ra) log10))
-				    (offset (/ (* .5 (- logla logra)) (+ logla (* -2 logca) logra)))
+				    (offset (/ (* .5 (- logla logra)) (+ logla (* -2 logca) logra))) ; isn't logca always 0?
 				    (amp (expt 10.0 (- logca (* .25 (- logla logra) offset))))
 				    (freq (* fft-mag (+ k offset -1))))
 			       (if (= peaks max-peaks-1)

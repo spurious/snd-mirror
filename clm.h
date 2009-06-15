@@ -2,10 +2,11 @@
 #define CLM_H
 
 #define MUS_VERSION 4
-#define MUS_REVISION 24
-#define MUS_DATE "11-June-09"
+#define MUS_REVISION 25
+#define MUS_DATE "15-June-09"
 
 /*
+ * 15-Jun:     mus_rectangular_to_magnitudes (polar, but ignore phases).
  * 11-Jun:     mus_cepstrum.
  * 11-May:     MUS_ENV_LINEAR and friends, also mus_env_linear|exponential.
  *             mus_frame_to_frame_mono|stereo.
@@ -371,6 +372,7 @@ MUS_EXPORT bool mus_arrays_are_equal(Float *arr1, Float *arr2, Float fudge, off_
 MUS_EXPORT Float mus_polynomial(Float *coeffs, Float x, int ncoeffs);
 MUS_EXPORT void mus_multiply_arrays(Float *data, Float *window, off_t len);
 MUS_EXPORT void mus_rectangular_to_polar(Float *rl, Float *im, off_t size);
+MUS_EXPORT void mus_rectangular_to_magnitudes(Float *rl, Float *im, off_t size);
 MUS_EXPORT void mus_polar_to_rectangular(Float *rl, Float *im, off_t size);
 MUS_EXPORT Float mus_array_interp(Float *wave, Float phase, off_t size);
 MUS_EXPORT double mus_bessi0(Float x);

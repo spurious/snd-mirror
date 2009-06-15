@@ -275,6 +275,7 @@
 #define S_rand_p                     "rand?"
 #define S_readin                     "readin"
 #define S_readin_p                   "readin?"
+#define S_rectangular_to_magnitudes  "rectangular->magnitudes"
 #define S_rectangular_to_polar       "rectangular->polar"
 #define S_rectangular_window         "rectangular-window"
 #define S_riemann_window             "riemann-window"

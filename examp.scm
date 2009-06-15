@@ -1988,14 +1988,13 @@ as env moves to 0.0, low-pass gets more intense; amplitude and low-pass amount m
 (define (find-pitch pitch)
   "(find-pitch pitch) finds the point in the current sound where 'pitch' (in Hz) predominates -- C-s (find-pitch 300) 
 In most cases, this will be slightly offset from the true beginning of the note"
-  (define (interpolated-peak-offset la ca ra)
-    (let* ((pk (+ .001 (max la ca ra)))
-	   (logla (/ (log (/ (max la .0000001) pk)) (log 10)))
-	   (logca (/ (log (/ (max ca .0000001) pk)) (log 10)))
-	   (logra (/ (log (/ (max ra .0000001) pk)) (log 10))))
+
+  (define (interpolated-peak-offset la pk ra)
+    (let ((logla (/ (log (/ (max la .0000001) pk)) (log 10)))
+	  (logra (/ (log (/ (max ra .0000001) pk)) (log 10))))
       (/ (* 0.5 (- logla logra))
-	 (- (+ logla logra)
-	    (* 2 logca)))))
+	 (+ logla logra))))
+
   (let ((data (make-vct (transform-size)))
 	(data-loc 0))
     (lambda (n)
@@ -2012,19 +2011,20 @@ In most cases, this will be slightly offset from the true beginning of the note"
 		    (let ((pit 
 			   (do ((i 0 (+ i 1)))
 			       ((= i (/ (transform-size) 2)) 
-				(/ (* (+ pkloc
-					 (if (> pkloc 0)
+				(if (or (= pk 0.0)
+					(= peak-loc 0))
+				    0.0
+				    (/ (* (+ pkloc
 					     (interpolated-peak-offset (vct-ref spectr (- pkloc 1))
-								       (vct-ref spectr pkloc)
-								       (vct-ref spectr (+ 1 pkloc)))
-					     0.0))
-				      (srate)) 
-				   (transform-size)))
+								       pk
+								       (vct-ref spectr (+ 1 pkloc))))
+					  (srate))
+				       (transform-size))))
 			     (if (> (vct-ref spectr i) pk)
 				 (begin
 				   (set! pk (vct-ref spectr i))
 				   (set! pkloc i))))))
-		      (if (< (abs (- pitch pit)) (/ (srate) (* 2 (transform-size))))
+		      (if (< (abs (- pitch pit)) (/ (srate) (* 2 (transform-size)))) ; uh... why not do it direct?
 			  (set! rtn (- (/ (transform-size) 2)))))))
 	       (vct-fill! data 0.0)))
 	 rtn))))

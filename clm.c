@@ -934,7 +934,19 @@ void mus_rectangular_to_polar(Float *rl, Float *im, off_t size)
     }
 }
 
-/* PERHAPS: mus_rectangular_to_magnitudes?  we often don't care about the phases */
+
+void mus_rectangular_to_magnitudes(Float *rl, Float *im, off_t size) 
+{
+  off_t i; 
+  for (i = 0; i < size; i++)
+    {
+      Float temp; /* apparently floating underflows in sqrt are bringing us to a halt */
+      temp = rl[i] * rl[i] + im[i] * im[i];
+      if (temp < .00000001) 
+	rl[i] = 0.0;
+      else rl[i] = sqrt(temp);
+    }
+}
 
 
 void mus_polar_to_rectangular(Float *rl, Float *im, off_t size) 

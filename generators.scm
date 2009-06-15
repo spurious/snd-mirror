@@ -6342,7 +6342,7 @@ index 10 (so 10/2 is the bes-jn arg):
 
 
 
-;;; ---------------- moving-fft generator ----------------
+;;; ---------------- moving-fft ----------------
 
 (defgenerator (moving-fft
 	       :make-wrapper (lambda (g)
@@ -6369,7 +6369,7 @@ index 10 (so 10/2 is the bes-jn arg):
 (define (moving-fft gen)
 
   "(make-moving-fft reader (size 512) (hop 128)) returns a moving-fft generator. \n\
-(moving-fft gen) produces an FFT (polar form) of 'size' samples every 'hop' samples, \n\
+ (moving-fft gen) produces an FFT (polar form) of 'size' samples every 'hop' samples, \n\
 taking input from the readin generator 'reader'.  The magnitudes are available as mus-xcoeffs, \n\
 the phases as mus-ycoeffs, and the current input data as mus-data."
 
@@ -6380,7 +6380,8 @@ the phases as mus-ycoeffs, and the current input data as mus-data."
 	 (im (moving-fft-im gen))
 	 (data (moving-fft-data gen))
 	 (hop (moving-fft-hop gen))
-	 (outctr (moving-fft-outctr gen)))
+	 (outctr (moving-fft-outctr gen))
+	 (new-data #f))
     (if (>= outctr hop)
 	(let* ((fft-window (moving-fft-window gen)))
 	  (if (> outctr n) ; must be first time through -- fill data array
@@ -6397,13 +6398,15 @@ the phases as mus-ycoeffs, and the current input data as mus-data."
 		    ((= i n))
 		  (vct-set! data i (readin (moving-fft-input gen))))))
 	  (set! outctr 0)
+	  (set! new-data #t)
 	  (clear-array im)
 	  (do ((i 0 (+ i 1)))
 	      ((= i n))
 	    (vct-set! rl i (* (vct-ref fft-window i) (vct-ref data i))))
 	  (mus-fft rl im n 1)
 	  (rectangular->polar rl im)))
-    (set! (moving-fft-outctr gen) (+ outctr 1))))
+    (set! (moving-fft-outctr gen) (+ outctr 1))
+    new-data))
 
     
 #|
@@ -6421,8 +6424,7 @@ the phases as mus-ycoeffs, and the current input data as mus-data."
 |#
 
 
-;;; PERHAPS: moving-autocorrelation, moving-cepstrum, moving-wavelet, moving-lpc
-;;; TODO: moving-pitch
+;;; PERHAPS: moving-cepstrum, moving-wavelet, moving-lpc
 ;;; PERHAPS: cepstrum support in clm (like current autocorrelation -- run etc) what name? cepstrify?
 
 
@@ -6598,7 +6600,7 @@ the phases as mus-ycoeffs, and the current input data as mus-data."
 		  (clear-array im)
 		  (vct-subseq data 0 (- n 1) rl)
 		  (mus-fft rl im n 1)          ; we can use the delay line contents un-reordered because phases are ignored here
-		  (rectangular->polar rl im)
+		  (rectangular->magnitudes rl im)
 		  (do ((k 0 (+ 1 k)))
 		      ((= k fft2))
 		   (set! numsum (+ numsum (* k (vct-ref rl k))))
@@ -6637,6 +6639,124 @@ the phases as mus-ycoeffs, and the current input data as mus-data."
 |#
 
 
+
+;;; ---------------- moving-autocorrelation ----------------
+
+(defgenerator (moving-autocorrelation
+	       :make-wrapper (lambda (g)
+			       (let ((n (moving-autocorrelation-n g)))
+				 (set! (moving-autocorrelation-rl g) (make-vct n))
+				 (set! (moving-autocorrelation-im g) (make-vct n))
+				 (set! (moving-autocorrelation-data g) (make-vct n))
+				 (set! (moving-autocorrelation-outctr g) (+ n 1)) ; first time fill flag
+				 g))
+	       :methods (list
+			 (list 'mus-data
+			       (lambda (g) (moving-autocorrelation-rl g)))))
+  (input #f :type clm) (n 512 :type int) (hop 128 :type int) (outctr 0 :type int)
+  (rl #f :type vct) (im #f :type vct) (data #f :type vct))
+
+
+(define (moving-autocorrelation gen)
+
+  "(make-moving-autocorrelation reader (size 512) (hop 128)) returns a moving-autocorrelation generator. \n\
+ (moving-autocorrelation gen) produces the autocorrelation of 'size' samples every 'hop' samples, \n\
+taking input from the readin generator 'reader'.  The output data is available via mus-data."
+
+  (declare (gen moving-autocorrelation))
+  (let* ((n (moving-autocorrelation-n gen))
+	 (n2 (/ n 2))
+	 (rl (moving-autocorrelation-rl gen))
+	 (im (moving-autocorrelation-im gen))
+	 (data (moving-autocorrelation-data gen))
+	 (hop (moving-autocorrelation-hop gen))
+	 (outctr (moving-autocorrelation-outctr gen))
+	 (new-data #f))
+    (if (>= outctr hop)
+	(begin
+	  (if (> outctr n) ; must be first time through -- fill data array
+	      (begin
+		(do ((i 0 (+ i 1)))
+		    ((= i n))
+		  (vct-set! data i (readin (moving-autocorrelation-input gen)))))
+	      (begin
+		(do ((i 0 (+ i 1))
+		     (j hop (+ 1 j)))
+		    ((= j n))
+		  (vct-set! data i (vct-ref data j)))
+		(do ((i (- n hop) (+ i 1)))
+		    ((= i n))
+		  (vct-set! data i (readin (moving-autocorrelation-input gen))))))
+	  (set! outctr 0)
+	  (set! new-data #t)
+	  (clear-array im)
+	  (vct-subseq data 0 (- n 1) rl)
+	  (autocorrelate rl)))
+    (set! (moving-autocorrelation-outctr gen) (+ outctr 1))
+    new-data))
+
+
+
+;;; ---------------- moving-pitch ----------------
+
+(defgenerator (moving-pitch
+	       :make-wrapper (lambda (g)
+			       (set! (moving-pitch-ac g) (make-moving-autocorrelation
+							  (moving-pitch-input g)
+							  (moving-pitch-n g)
+							  (moving-pitch-hop g)))
+			       g))
+  (input #f :type clm) (n 512 :type int) (hop 128 :type int)
+  (ac #f :type clm) (val 0.0))
+
+
+(define (moving-pitch gen)
+  (declare (gen moving-pitch))
+  (if (moving-autocorrelation (moving-pitch-ac gen))
+      (let* ((data (mus-data (moving-pitch-ac gen)))
+	     (peak 0.0)
+	     (peak-loc 0)
+	     (len (vct-length data)))
+	(do ((i 8 (+ i 1))) ; assume we're not in the top few octaves
+	    ((= i len))
+	  (let ((apk (abs (vct-ref data i))))
+	    (if (> apk peak)
+		(begin
+		  (set! peak apk)
+		  (set! peak-loc i)))))
+	(if (or (= peak 0.0)
+		(= peak-loc 0))
+	    0.0
+	    (let* ((la (vct-ref data (- peak-loc 1)))
+		   (ra (vct-ref data (+ peak-loc 1)))
+		   (logla (log (/ (max la .0000001) peak) 10))
+		   (logra (log (/ (max ra .0000001) peak) 10)))
+	      (set! (moving-pitch-val gen)
+		    (/ (mus-srate)
+		       (+ peak-loc (/ (* 0.5 (- logla logra))
+				      (+ logla logra)))))))))
+  (moving-pitch-val gen))
+
+#|
+(let* ((rd (make-readin "oboe.snd"))
+       (cur-srate (mus-sound-srate "oboe.snd"))
+       (old-srate (mus-srate)))
+  (set! (mus-srate) cur-srate)
+  (let* ((scn (make-moving-pitch rd))
+	 (last-pitch 0.0)
+	 (pitch 0.0))
+    (do ((i 0 (+ i 1)))
+	((= i 22050))
+      (set! last-pitch pitch)
+      (set! pitch (moving-pitch scn))
+      (if (not (= last-pitch pitch))
+	  (format #t "~A: ~A~%" (exact->inexact (/ i cur-srate)) pitch))))
+  (set! (mus-srate) old-srate))
+|#
+
+
+;;; TODO: snd-test moving-pitch and moving-autocorrelation
+;;; TODO: doc/test rectangular->magnitudes
 
 #|
 (define (abel k)

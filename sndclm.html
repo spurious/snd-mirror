@@ -9837,6 +9837,46 @@ use moving-spectrum-amps, moving-spectrum-phases, and moving-spectrum-freqs.
 
 
 <pre style="background-color: #f2f4ff">
+  <a class=def name="make-moving-autocorrelation">make-moving-autocorrelation</a> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (input #f :type clm) (n 512) (hop 128)
+  <a class=def name="moving-autocorrelation">moving-autocorrelation</A> gen
+  <a class=def name="moving-autocorrelation?">moving-autocorrelation?</A> gen
+</pre>
+
+<p>moving-autocorrelation provides the autocorrelation of the last 'n' samples every 'hop' samples.
+The samples come from 'input' (currently assumed to be a readin generator). The output is accessible
+via mus-data.
+</p>
+<br>
+
+
+<pre style="background-color: #f2f4ff">
+  <a class=def name="make-moving-pitch">make-moving-pitch</a> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (input #f :type clm) (n 512) (hop 128)
+  <a class=def name="moving-pitch">moving-pitch</A> gen
+  <a class=def name="moving-pitch?">moving-pitch?</A> gen
+</pre>
+
+<p>moving-pitch provides the current pitch of its input, recalculated (via moving-autocorrelation) every 'hop' samples.
+</p>
+<pre>
+(let* ((rd (make-readin "oboe.snd"))
+       (cur-srate (mus-sound-srate "oboe.snd"))
+       (old-srate (mus-srate)))
+  (set! (mus-srate) cur-srate)
+  (let* ((scn (<em class=red>make-moving-pitch</em> rd))
+	 (last-pitch 0.0)
+	 (pitch 0.0))
+    (do ((i 0 (+ i 1)))
+	((= i 22050))
+      (set! last-pitch pitch)
+      (set! pitch (<em class=red>moving-pitch</em> scn))
+      (if (not (= last-pitch pitch))
+	  (format #t "~A: ~A~%" (exact-&gt;inexact (/ i cur-srate)) pitch))))
+  (set! (mus-srate) old-srate))
+</pre>
+<br>
+
+
+<pre style="background-color: #f2f4ff">
   <a class=def name="make-moving-scentroid">make-moving-scentroid</a> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (dbfloor -40.0) (rfreq 100.0) (size 4096)
   <a class=def name="moving-scentroid">moving-scentroid</A> gen
   <a class=def name="moving-scentroid?">moving-scentroid?</A> gen

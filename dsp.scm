@@ -385,7 +385,7 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
     (if (> old-pk 0.0)
 	(begin
 	  (fft rl im 1)
-	  (rectangular->polar rl im)
+	  (rectangular->magnitudes rl im)
 	  (vct-scale! rl fftscale)
 	  (vct-scale! im 0.0)
 	  (fft rl im -1)
@@ -405,7 +405,7 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
     (if (> old-pk 0.0)
 	(begin
 	  (fft rl im 1)
-	  (rectangular->polar rl im)
+	  (rectangular->magnitudes rl im)
 	  (vct-scale! rl fftscale)
 	  (vct-set! im 0 0.0)
 	  (do ((i 1 (+ i 1))
@@ -1658,7 +1658,7 @@ the rendering frequency, the number of measurements per second; 'db-floor' is th
 		     (densum 0.0))
 		 (clear-array fdi)
 		 (mus-fft fdr fdi fftsize)
-		 (rectangular->polar fdr fdi)
+		 (rectangular->magnitudes fdr fdi)
 		 (do ((k 0 (+ 1 k)))
 		     ((= k fft2))
 		   (set! numsum (+ numsum (* k binwidth (vct-ref fdr k))))
