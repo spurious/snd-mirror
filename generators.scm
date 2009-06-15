@@ -6424,7 +6424,6 @@ the phases as mus-ycoeffs, and the current input data as mus-data."
 ;;; PERHAPS: moving-autocorrelation, moving-cepstrum, moving-wavelet, moving-lpc
 ;;; TODO: moving-pitch
 ;;; PERHAPS: cepstrum support in clm (like current autocorrelation -- run etc) what name? cepstrify?
-;;; PERHAPS: can moving-spectrum be derived from moving-fft?
 
 
 
@@ -6598,14 +6597,14 @@ the phases as mus-ycoeffs, and the current input data as mus-data."
 		       (densum 0.0))
 		  (clear-array im)
 		  (vct-subseq data 0 (- n 1) rl)
-		  (mus-fft rl im n 1)
+		  (mus-fft rl im n 1)          ; we can use the delay line contents un-reordered because phases are ignored here
 		  (rectangular->polar rl im)
 		  (do ((k 0 (+ 1 k)))
 		      ((= k fft2))
 		   (set! numsum (+ numsum (* k (vct-ref rl k))))
 		   (set! densum (+ densum (vct-ref rl k))))
 		  (set! (moving-scentroid-curval gen) (/ (* (moving-scentroid-binwidth gen) numsum) densum)))))))
-    (delay (moving-scentroid-dly gen) x)
+    (delay (moving-scentroid-dly gen) x)       ; our "sliding window" on the input data
     (set! (moving-scentroid-outctr gen) (+ outctr 1))
     (moving-scentroid-curval gen)))
 

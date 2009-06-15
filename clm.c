@@ -934,6 +934,8 @@ void mus_rectangular_to_polar(Float *rl, Float *im, off_t size)
     }
 }
 
+/* PERHAPS: mus_rectangular_to_magnitudes?  we often don't care about the phases */
+
 
 void mus_polar_to_rectangular(Float *rl, Float *im, off_t size) 
 {
@@ -941,7 +943,7 @@ void mus_polar_to_rectangular(Float *rl, Float *im, off_t size)
   for (i = 0; i < size; i++)
     {
       Float temp;
-      temp = rl[i] * sin(-im[i]); /* minus to match sense of above */
+      temp = rl[i] * sin(-im[i]); /* minus to match sense of rectangular->polar above */
       rl[i] *= cos(-im[i]);
       im[i] = temp;
     }
