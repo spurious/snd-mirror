@@ -6424,10 +6424,6 @@ the phases as mus-ycoeffs, and the current input data as mus-data."
 |#
 
 
-;;; PERHAPS: moving-cepstrum, moving-wavelet, moving-lpc
-;;; PERHAPS: cepstrum support in clm (like current autocorrelation -- run etc) what name? cepstrify?
-
-
 
 ;;; ---------------- moving spectrum ----------------
 
@@ -6726,7 +6722,7 @@ taking input from the readin generator 'reader'.  The output data is available v
 		  (set! peak-loc i)))))
 	(if (or (= peak 0.0)
 		(= peak-loc 0))
-	    0.0
+	    (set! (moving-pitch-val gen) 0.0)
 	    (let* ((la (vct-ref data (- peak-loc 1)))
 		   (ra (vct-ref data (+ peak-loc 1)))
 		   (logla (log (/ (max la .0000001) peak) 10))
@@ -6756,7 +6752,6 @@ taking input from the readin generator 'reader'.  The output data is available v
 
 
 ;;; TODO: snd-test moving-pitch and moving-autocorrelation
-;;; TODO: doc/test rectangular->magnitudes
 
 #|
 (define (abel k)

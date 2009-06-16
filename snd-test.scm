@@ -2241,7 +2241,7 @@
 		       'ramp-channel 'rand 'rand-interp 'rand-interp? 'rand?
 		       'read-hook 'read-mix-sample 'read-only 'read-peak-env-info-file 'read-region-sample
 		       'read-sample 'readin 'readin? 
-		       'rectangular->polar 'rectangular-window 'redo 'redo-edit
+		       'rectangular->magnitudes 'rectangular->polar 'rectangular-window 'redo 'redo-edit
 		       'region->vct 'region-chans 'region-home 'region-frames 'region-graph-style 'region-maxamp
 		       'region-maxamp-position 'region-position 'region-sample 'region-sample-reader? 'region-srate
 		       'region? 'regions 'remove-from-menu 'report-in-minibuffer 'reset-button-color
@@ -16993,6 +16993,30 @@ EDITS: 2
 			     (vct-ref rl i) (vct-ref rl-copy i)
 			     (vct-ref im i) (vct-ref im-copy i)))))
 	(close-sound ind)))
+
+    (let ((v0 (make-vct 8))
+	  (v1 (make-vct 8)))
+      (do ((i 0 (+ i 1))) ((= i 8)) (vct-set! v0 i i) (vct-set! v1 i (/ (+ i 1))))
+      (rectangular->magnitudes v0 v1)
+      (if (not (vequal v0 (vct 1.000 1.118 2.028 3.010 4.005 5.003 6.002 7.001)))
+	  (snd-display ";rectangular->magnitudes v0: ~A" v0)))
+
+    (let ((v0 (make-vct 8))
+	  (v1 (make-vct 8))
+	  (v2 (make-vct 8))
+	  (v3 (make-vct 8)))
+      (do ((i 0 (+ i 1)))
+	  ((= i 8))
+	(let ((val1 (random 1.0))
+	      (val2 (random 1.0)))
+	  (vct-set! v0 i val1)
+	  (vct-set! v2 i val1)
+	  (vct-set! v1 i val2)
+	  (vct-set! v3 i val2)))
+      (rectangular->magnitudes v0 v1)
+      (rectangular->polar v2 v3)
+      (if (not (vequal v0 v2))
+	  (snd-display ";rectangular->magnitudes|polar: ~A ~A" v0 v2)))
     
     (if (defined? 'edot-product) ; needs complex numbers in C
 	(let* ((vals (make-vct 1 1.0))
@@ -55667,7 +55691,7 @@ EDITS: 1
 				    (outa i (noid gen))))))
 	       (snd (find-sound res)))
 	  (if (not (sound? snd)) (snd-display ";noid ~A" snd))
-	  (if (ffneq (maxamp snd) 1.0) (snd-display ";noid min-peak max: ~A" (maxamp snd))))
+	  (if (ffneq (maxamp snd) 0.6599) (snd-display ";noid min-peak max: ~A" (maxamp snd))))
 
 	(let* ((res (with-sound (:clipped #f)
 				(let ((samps 44100)
@@ -56719,8 +56743,6 @@ EDITS: 1
 	
 	(calling-all-animals)
 	(calling-all-generators)
-	;;; TODO: big-gens.scm test (doc?)
-
 
 	(let ((funcs (list nssb nxysin nxycos nxy1cos nxy1sin noddsin noddcos noddssb ncos2 npcos
 			   nrsin nrcos nrssb nkssb nsincos rcos rssb rxysin rxycos
@@ -64855,7 +64877,7 @@ EDITS: 1
 		     mus-ramp mus-random mus-scaler mus-srate mus-xcoeff mus-xcoeffs mus-ycoeff mus-ycoeffs notch notch? one-pole one-pole?
 		     one-zero one-zero? oscil oscil? out-any outa outb outc outd partials->polynomial normalize-partials
 		     partials->wave phase-partials->wave polynomial pulse-train pulse-train?
-		     radians->degrees radians->hz rand rand-interp rand-interp?  rand? readin readin?  rectangular->polar
+		     radians->degrees radians->hz rand rand-interp rand-interp?  rand? readin readin? rectangular->polar rectangular->magnitudes
 		     ring-modulate sample->file sample->file? sample->frame sawtooth-wave
 		     sawtooth-wave? nrxysin nrxysin? nrxycos nrxycos?
 		     spectrum square-wave square-wave? src src? ncos nsin ssb-am
@@ -65334,7 +65356,7 @@ EDITS: 1
 			  make-nsin make-table-lookup make-triangle-wave
 			  make-two-pole make-two-zero make-wave-train mixer* mixer+ multiply-arrays
 			  notch one-pole one-zero oscil partials->polynomial partials->wave make-polyshape make-polywave
-			  phase-partials->wave phase-vocoder polynomial pulse-train rand rand-interp rectangular->polar
+			  phase-partials->wave phase-vocoder polynomial pulse-train rand rand-interp rectangular->polar rectangular->magnitudes
 			  ring-modulate sample->frame sawtooth-wave nrxysin nrxycos square-wave src ncos nsin
 			  table-lookup tap triangle-wave two-pole two-zero wave-train ssb-am make-ssb-am))
 	  

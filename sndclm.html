@@ -10383,6 +10383,7 @@ The upper sidebands may foldover (alias); if it's a problem, low-pass filter the
   <a class=def name="make-fft-window">make-fft-window</a> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> type size (beta 0.0) (alpha 0.0)
   <a class=def name="multiply-arrays">multiply-arrays</a> rdat window
   <a class=def name="rectangulartopolar">rectangular-&gt;polar</a> rdat idat
+  <a class=def name="rectangulartomagnitudes">rectangular-&gt;magnitudes</a> rdat idat
   <a class=def name="polartorectangular">polar-&gt;rectangular</a> rdat idat
   <a class=def name="spectrum">spectrum</a> rdat idat window norm-type
   <a class=def name="convolution">convolution</a> rdat idat size
@@ -10392,7 +10393,7 @@ The upper sidebands may foldover (alias); if it's a problem, low-pass filter the
 
 <p>mus-fft, spectrum, and convolution are the standard functions used everywhere.
 fft is the Fourier transform, convolution convolves its arguments, and spectrum
-returns (magnitude (rectangular-&gt;polar (fft))).  The results are in dB (if "norm-type" is 0),
+returns '(magnitude (rectangular-&gt;polar (fft))).  The results are in dB (if "norm-type" is 0),
 or linear and normalized to 1.0 ("norm-type" = 1), or linear unnormalized.
 The name "mus-fft" is used to distuinguish clm's fft routine from Snd's; the
 only difference is that mus-fft includes the fft length as an argument, whereas
@@ -10449,6 +10450,7 @@ only difference is that mus-fft includes the fft length as an argument, whereas
 </pre>
 
 <p>rectangular-&gt;polar and polar-&gt;rectangular change how we view the FFT data: in polar or rectangular coordinates.
+rectangular-&gt;magnitudes is the same as rectangular-&gt;polar, but only returns the magnitudes.
 multiply-arrays does an element-wise multiply of two vcts.
 autocorrelate performs an (in place) autocorrelation of 'data' (a vct).  See <a href="sndscm.html#spotfreq">spot-freq</a> in dsp.scm, 
 or <a href="sndscm.html#rubberdoc">rubber.scm</a>.
