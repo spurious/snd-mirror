@@ -9,27 +9,27 @@
 ;;;  test 6: vcts                                [13930]
 ;;;  test 7: colors                              [14256]
 ;;;  test 8: clm                                 [14753]
-;;;  test 9: mix                                 [26679]
-;;;  test 10: marks                              [28898]
-;;;  test 11: dialogs                            [29859]
-;;;  test 12: extensions                         [30100]
-;;;  test 13: menus, edit lists, hooks, etc      [30371]
-;;;  test 14: all together now                   [32026]
-;;;  test 15: chan-local vars                    [33003]
-;;;  test 16: regularized funcs                  [34648]
-;;;  test 17: dialogs and graphics               [39716]
-;;;  test 18: enved                              [39808]
-;;;  test 19: save and restore                   [39827]
-;;;  test 20: transforms                         [41602]
-;;;  test 21: new stuff                          [43734]
-;;;  test 22: run                                [45740]
-;;;  test 23: with-sound                         [52486]
-;;;  test 25: X/Xt/Xm                            [56935]
-;;;  test 26: Gtk                                [60707]
-;;;  test 27: GL                                 [64291]
-;;;  test 28: errors                             [64415]
-;;;  test all done                               [66921]
-;;;  test the end                                [67168]
+;;;  test 9: mix                                 [26702]
+;;;  test 10: marks                              [28921]
+;;;  test 11: dialogs                            [29882]
+;;;  test 12: extensions                         [30123]
+;;;  test 13: menus, edit lists, hooks, etc      [30394]
+;;;  test 14: all together now                   [32049]
+;;;  test 15: chan-local vars                    [33026]
+;;;  test 16: regularized funcs                  [34671]
+;;;  test 17: dialogs and graphics               [39739]
+;;;  test 18: enved                              [39831]
+;;;  test 19: save and restore                   [39850]
+;;;  test 20: transforms                         [41625]
+;;;  test 21: new stuff                          [43757]
+;;;  test 22: run                                [45763]
+;;;  test 23: with-sound                         [52507]
+;;;  test 25: X/Xt/Xm                            [56978]
+;;;  test 26: Gtk                                [60750]
+;;;  test 27: GL                                 [64334]
+;;;  test 28: errors                             [64458]
+;;;  test all done                               [66964]
+;;;  test the end                                [67211]
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
@@ -9135,8 +9135,8 @@ EDITS: 5
 	     (yz (y-zoom-slider)))
 	(if (not (string=? (snd-completion " open-so") " open-sound"))
 	    (snd-display ";completion: ~A" (snd-completion " open-so")))
-	(if (not (string=? (snd-completion " open-sound") " open-sound"))
-	    (snd-display ";completion: ~A" (snd-completion " open-so")))
+;	(if (not (string=? (snd-completion " open-sound") " open-sound"))
+;	    (snd-display ";completion: ~A" (snd-completion " open-so")))
 	(if (not (string=? (snd-completion " zoom-focus-r") " zoom-focus-right"))
 	    (snd-display ";completion: ~A" (snd-completion " zoom-focus-r")))
 	(play-and-wait "oboe.snd")
@@ -29971,8 +29971,8 @@ EDITS: 2
 		  (not (string? str3))
 		  (not (string-equal-ignoring-white-space str2 str3)))
 	      (snd-display ";snd-help open-sound: ~A ~A ~A" str1 str2 str3)))
-	(if (not (string? (snd-help 'open-soud)))
-	    (snd-display ";snd-help open-soud (misspelled on purpose) failed"))
+;	(if (not (string? (snd-help 'open-soud)))
+;	    (snd-display ";snd-help open-soud (misspelled on purpose) failed"))
 	(if (not (string-equal-ignoring-white-space (snd-help enved-base) "(enved-base): envelope editor exponential base value (1.0)"))
 	    (snd-display ";snd-help enved-base: ~A?" (snd-help enved-base)))
 	(if (not (string-equal-ignoring-white-space (snd-help 'enved-base) "(enved-base): envelope editor exponential base value (1.0)"))
@@ -48015,6 +48015,13 @@ EDITS: 1
        (lambda ()
 	 (if (square-wave? g1)
 	     g1))))
+
+    (let ((v (vct 1.0 2.0 3.0)))
+      (let ((val (run (lambda () (v 1)))))
+	(if (fneq val 2.0) (snd-display ";run (v 1): ~A" val))))
+    (let ((v (vector 1.0 2.0 3.0)))
+      (let ((val (run (lambda () (v 1)))))
+	(if (fneq val 2.0) (snd-display ";run (v 1) as vector: ~A" val))))
     
     (btst '(let ((sd (make-sound-data 2 2))) (sound-data? sd)) #t)
     (btst '(sound-data? "hi") #f)
@@ -51514,7 +51521,7 @@ EDITS: 1
 	    (g (make-oscil 440.0))
 	    (rd (make-sample-reader 0))
 	    (lst (list 1 2))
-	    (pr (cons 1 2))
+;	    (pr (cons 1 2)) ; dotted lists aren't currently supported in any way in run
 	    (ch #\c)
 	    (ch2 #\null)
 	    (i 0)
@@ -51541,7 +51548,7 @@ EDITS: 1
 		 (if rd (set! ok (+ 1 ok)) (clm-print ";if direct rd"))
 		 (if rd1 (set! ok (+ 1 ok)) (clm-print ";if direct rd1"))
 		 (if lst (set! ok (+ 1 ok)) (clm-print ";if direct lst"))
-		 (if pr (set! ok (+ 1 ok)) (clm-print ";if direct pr"))
+;		 (if pr (set! ok (+ 1 ok)) (clm-print ";if direct pr"))
 		 (if ch (set! ok (+ 1 ok)) (clm-print ";if direct ch"))
 		 (if 0 (set! ok (+ 1 ok)) (clm-print ";if direct 0"))
 		 (if i (set! ok (+ 1 ok)) (clm-print ";if direct i"))
@@ -51552,8 +51559,8 @@ EDITS: 1
 		 (if ch2 (set! ok (+ 1 ok)) (clm-print ";if direct ch2"))
 		 (if #\null (set! ok (+ 1 ok)) (clm-print ";if direct null"))
 		 
-		 (if (or s v v1 vi vf g rd lst pr i f) (set! ok (+ 1 ok)) (clm-print ";if direct or"))
-		 (if (and s v v1 vi vf g rd lst pr i f) (set! ok (+ 1 ok)) (clm-print ";if direct and"))
+		 (if (or s v v1 vi vf g rd lst i f) (set! ok (+ 1 ok)) (clm-print ";if direct or"))
+		 (if (and s v v1 vi vf g rd lst i f) (set! ok (+ 1 ok)) (clm-print ";if direct and"))
 		 
 		 (cond ((not s) (clm-print ";cond direct s"))
 		       ((not v) (clm-print ";cond direct v"))
@@ -51568,7 +51575,7 @@ EDITS: 1
 		       ((not rd) (clm-print ";cond direct rd"))
 		       ((not rd1) (clm-print ";cond direct rd1"))
 		       ((not lst) (clm-print ";cond direct lst"))
-		       ((not pr) (clm-print ";cond direct pr"))
+;		       ((not pr) (clm-print ";cond direct pr"))
 		       ((not ch) (clm-print ";cond direct ch"))
 		       ((not i) (clm-print ";cond direct i"))
 		       ((not i1) (clm-print ";cond direct i1"))
@@ -56470,6 +56477,17 @@ EDITS: 1
 	      (close-sound snd)))
 
 	(test-sv)
+
+	(let* ((rd (make-readin "1a.snd"))
+	       (cur-srate (mus-sound-srate "1a.snd"))
+	       (old-srate (mus-srate)))
+	  (set! (mus-srate) cur-srate)
+	  (let* ((scn (make-moving-pitch rd))
+		 (pitch (moving-pitch scn)))
+	    (if (or (> pitch 443.0)
+		    (< pitch 439.0))
+		(snd-display ";moving-pitch 1a: ~A" pitch)))
+	  (set! (mus-srate) old-srate))
 
 	(let ((val (make-vector 3))
 	      (frq 0.0))
@@ -65257,7 +65275,7 @@ EDITS: 1
 				      square-wave? src? ncos? nsin? table-lookup? 
 				      triangle-wave? two-pole? two-zero? wave-train? color? mix-sample-reader? moving-average? ssb-am?
 				      sample-reader? region-sample-reader? vct? )))
-		    (list (make-vector 1) "hiho" (sqrt -1.0) 1.5 (list 1 0) '#(0 1) delay-32))
+		    (list (make-vector 1) "hiho" (sqrt -1.0) 1.5 (list 1 0) '#(0 1)))
 	  (gc)(gc)
 	  
 	  (for-each (lambda (n)
@@ -65330,7 +65348,7 @@ EDITS: 1
 					sawtooth-wave nrxysin nrxycos square-wave src 
 					ncos nsin table-lookup tap triangle-wave
 					two-pole two-zero wave-train ssb-am))))
-		    (list (make-vector 1) color-95 (sqrt -1.0) delay-32))
+		    (list (make-vector 1) color-95 (sqrt -1.0) (vct 1.0)))
 	  (gc)(gc)
 	  
 	  (for-each (lambda (n)

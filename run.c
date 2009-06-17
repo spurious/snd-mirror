@@ -96,7 +96,8 @@
  *
  * would it simplify variable handling to store everything as xen_value?
  *
- * TODO: s7 vector syntax
+ * TODO: (let ((pr (cons 1 2))) (run (lambda () (if pr 1 2)))) -> if: bad selector? pr
+ * TODO: s7 vector/vct syntax [the ref part of this seems to work now]
  * TODO: run doesn't always warn about a closure (explicit gen basically) -- if it's used directly,
  *         there's no warning, but it doesn't handle the closed-over variables correctly
  * TODO: vector<->vct
@@ -9404,6 +9405,21 @@ static xen_value *c_g_p_1(ptree *pt, xen_value **args, int num_args)
 }
 
 
+/* ---------------- exit ---------------- */
+
+static void exit_0(int *args, ptree *pt) 
+{
+  if (snd_exit_cleanly(EXIT_NOT_FORCED))
+    snd_exit(1);
+}
+
+static xen_value *exit_1(ptree *pt, xen_value **args, int num_args)
+{
+  return(package(pt, R_BOOL, exit_0, "exit_0", args, 0));
+}
+
+
+
 /* ---------------- frames ---------------- */
 
 static void frames_i(int *args, ptree *pt) 
@@ -10328,6 +10344,19 @@ static xen_value *vct_ref_1(ptree *prog, xen_value **args, int num_args)
 	}
     }
   return(package(prog, R_FLOAT, vct_ref_f, "vct_ref_f", args, 2));
+}
+
+
+static void vct_nf(int *args, ptree *pt) {if (VCT_ARG_1) FLOAT_RESULT = VCT_ARG_1->data[INT_ARG_2];}
+
+static xen_value *vct_n(ptree *prog, xen_value **args, int num_args, xen_value *sf)
+{
+  /* this is handling the vct-as-applicable-func stuff (v ind) = (vct-ref v ind) */
+  /* (let ((v (make-vct 3 1.0))) (run (lambda () (v 0)))) */
+  if (args[0]) free(args[0]);
+  args[0] = make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, 0.0), R_VARIABLE);
+  add_triple_to_ptree(prog, va_make_triple(vct_nf, "vct_nf", 4, args[0], sf, args[1], args[2]));
+  return(args[0]);
 }
 
 
@@ -15553,6 +15582,11 @@ static xen_value *walk(ptree *prog, XEN form, walk_result_t walk_result)
 		  res = funcall_n(prog, args, num_args, v);
 		  break;
 
+		case R_VCT:
+		case R_FLOAT_VECTOR:
+		  res = vct_n(prog, args, num_args, v);
+		  break;
+
 		  /* fall through here if unknown function encountered (will give up later) */
 		}
 	      if (var == NULL) {free(v); v = NULL;}
@@ -16755,6 +16789,7 @@ static void init_walkers(void)
   INIT_WALKER(S_channels,       make_walker(channels_1, NULL, NULL, 0, 1, R_INT, false, 0));
   INIT_WALKER(S_c_g,            make_walker(c_g_p_1, NULL, NULL, 0, 0, R_BOOL, false, 0));
   INIT_WALKER(S_vct_to_channel, make_walker(vct_to_channel_1, NULL, NULL, 3, 5, R_BOOL, false, 3, R_VCT, R_INT, R_INT));
+  INIT_WALKER(S_exit,           make_walker(exit_1, NULL, NULL, 0, 0, R_BOOL, false, 0));
 
   INIT_WALKER(S_snd_print,            make_walker(snd_print_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_STRING));
   INIT_WALKER(S_snd_warning,          make_walker(snd_warning_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_STRING));

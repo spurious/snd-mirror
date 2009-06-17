@@ -1140,6 +1140,8 @@ else
 	AC_CHECK_LIB(m, gtk_adjustment_get_upper, [AC_DEFINE(HAVE_GTK_ADJUSTMENT_GET_UPPER)], ,$GTK_LIBS)
 	# for 2.15.0|1|2|3 and 2.16.0 (uses 2150)
 	AC_CHECK_LIB(m, gtk_scale_add_mark, [AC_DEFINE(HAVE_GTK_SCALE_ADD_MARK)], ,$GTK_LIBS)
+	# for 2.15.1 up to 2.17.2
+	AC_CHECK_LIB(m, gtk_info_bar_new, [AC_DEFINE(HAVE_GTK_INFO_BAR_NEW)], ,$GTK_LIBS)	
 
 	# for gdk|pango_cairo 
 	AC_CHECK_LIB(m, gdk_cairo_create, 

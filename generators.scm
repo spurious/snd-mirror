@@ -6751,7 +6751,6 @@ taking input from the readin generator 'reader'.  The output data is available v
 |#
 
 
-;;; TODO: snd-test moving-pitch and moving-autocorrelation
 
 #|
 (define (abel k)

@@ -3181,7 +3181,7 @@
 (CFNC "void gtk_tree_view_column_pack_start GtkTreeViewColumn* tree_column GtkCellRenderer* cell gboolean expand")
 (CFNC "void gtk_tree_view_column_pack_end GtkTreeViewColumn* tree_column GtkCellRenderer* cell gboolean expand")
 (CFNC "void gtk_tree_view_column_clear GtkTreeViewColumn* tree_column")
-(CFNC "GList* gtk_tree_view_column_get_cell_renderers GtkTreeViewColumn* tree_column")
+;;; out 2.17.2 (CFNC "GList* gtk_tree_view_column_get_cell_renderers GtkTreeViewColumn* tree_column")
 (CFNC "void gtk_tree_view_column_add_attribute GtkTreeViewColumn* tree_column GtkCellRenderer* cell_renderer gchar* attribute gint column")
 (CFNC-PA "void gtk_tree_view_column_set_attributes GtkTreeViewColumn* tree_column GtkCellRenderer* cell_renderer etc attributes" 2 10 '("gchar*" "int"))
 (CFNC "void gtk_tree_view_column_set_cell_data_func GtkTreeViewColumn* tree_column GtkCellRenderer* cell_renderer GtkTreeCellDataFunc func lambda_data func_info GtkDestroyNotify destroy")
@@ -4932,7 +4932,7 @@
 (CFNC-250 "gboolean gtk_cell_view_get_size_of_row GtkCellView* cell_view GtkTreePath* path GtkRequisition* requisition") ; assumes requisition is alloc'd
 (CFNC-250 "void gtk_cell_view_set_background_color GtkCellView* cell_view GdkColor* color")
 ;;; out 2.5.6 (CFNC-250 "void gtk_cell_view_set_cell_data GtkCellView* cellview")
-(CFNC-250 "GList* gtk_cell_view_get_cell_renderers GtkCellView* cellview") ; FREE (g_list_free)
+;;; out 2.17.2 (CFNC-250 "GList* gtk_cell_view_get_cell_renderers GtkCellView* cellview") ; FREE (g_list_free)
 
 (CFNC-250 "void gdk_window_set_focus_on_map GdkWindow* window gboolean focus_on_map")
 (CFNC-250 "void gdk_window_enable_synchronized_configure GdkWindow* window")
@@ -5731,7 +5731,7 @@
 (CFNC-290 "time_t gtk_recent_info_get_modified GtkRecentInfo* info")
 (CFNC-290 "time_t gtk_recent_info_get_visited GtkRecentInfo* info")
 (CFNC-290 "gboolean gtk_recent_info_get_private_hint GtkRecentInfo* info")
-(CFNC-290 "gboolean gtk_recent_info_get_application_info GtkRecentInfo* info gchar* app_name gchar** [app_exec] guint* [count] time_t* [time]")
+;(CFNC-290 "gboolean gtk_recent_info_get_application_info GtkRecentInfo* info gchar* app_name gchar** [app_exec] guint* [count] time_t* [time]") ; const args
 (CFNC-290 "gchar** gtk_recent_info_get_applications GtkRecentInfo* info gsize* [length]")
 (CFNC-290 "gchar* gtk_recent_info_last_application GtkRecentInfo* info")
 (CFNC-290 "gboolean gtk_recent_info_has_application GtkRecentInfo* info gchar* app_name")
@@ -6847,11 +6847,11 @@
 (CFNC-2150 "void gtk_entry_set_icon_from_stock GtkEntry* entry GtkEntryIconPosition icon_pos gchar* stock_id")
 (CFNC-2150 "void gtk_entry_set_icon_from_icon_name GtkEntry* entry GtkEntryIconPosition icon_pos gchar* icon_name")
 (CFNC-2150 "void gtk_entry_set_icon_from_gicon GtkEntry* entry GtkEntryIconPosition icon_pos GIcon* icon")
-(CFNC-2150 "GtkImageType gtk_entry_get_storage_type GtkEntry* entry GtkEntryIconPosition icon_pos")
-(CFNC-2150 "GdkPixbuf* gtk_entry_get_pixbuf GtkEntry* entry GtkEntryIconPosition icon_pos")
-(CFNC-2150 "gchar* gtk_entry_get_stock GtkEntry* entry GtkEntryIconPosition icon_pos" 'const)
+;??? (CFNC-2150 "GtkImageType gtk_entry_get_storage_type GtkEntry* entry GtkEntryIconPosition icon_pos")
+;??? (CFNC-2150 "GdkPixbuf* gtk_entry_get_pixbuf GtkEntry* entry GtkEntryIconPosition icon_pos")
+;??? (CFNC-2150 "gchar* gtk_entry_get_stock GtkEntry* entry GtkEntryIconPosition icon_pos" 'const)
 (CFNC-2150 "gchar* gtk_entry_get_icon_name GtkEntry* entry GtkEntryIconPosition icon_pos" 'const)
-(CFNC-2150 "GIcon* gtk_entry_get_gicon GtkEntry* entry GtkEntryIconPosition icon_pos")
+;??? (CFNC-2150 "GIcon* gtk_entry_get_gicon GtkEntry* entry GtkEntryIconPosition icon_pos")
 (CFNC-2150 "void gtk_entry_set_icon_activatable GtkEntry* entry GtkEntryIconPosition icon_pos gboolean activatable")
 (CFNC-2150 "gboolean gtk_entry_get_icon_activatable GtkEntry* entry GtkEntryIconPosition icon_pos")
 (CFNC-2150 "void gtk_entry_set_icon_sensitive GtkEntry* entry GtkEntryIconPosition icon_pos gboolean sensitive")
@@ -6899,20 +6899,38 @@
 (CFNC-2150 "void gtk_scale_clear_marks GtkScale* scale")
 
 
-#|
-;;; 2.15.2
-(CFNC-2150 "void gtk_image_menu_item_set_always_show_image GtkImageMenuItem* image_menu_item gboolean always_show")
-(CFNC-2150 "gboolean gtk_image_menu_item_get_always_show_image GtkImageMenuItem* image_menu_item")
 
-(CINT-2150 "PANGO_WEIGHT_THIN" "PangoWeight")
-(CINT-2150 "PANGO_WEIGHT_BOOK" "PangoWeight")
-(CINT-2150 "PANGO_WEIGHT_MEDIUM" "PangoWeight")
+;;; 2.15.2 (these on 2.17.2)
+(CFNC-2172 "void gtk_image_menu_item_set_always_show_image GtkImageMenuItem* image_menu_item gboolean always_show")
+(CFNC-2172 "gboolean gtk_image_menu_item_get_always_show_image GtkImageMenuItem* image_menu_item")
+
+(CINT-2172 "PANGO_WEIGHT_THIN" "PangoWeight")
+(CINT-2172 "PANGO_WEIGHT_BOOK" "PangoWeight")
+(CINT-2172 "PANGO_WEIGHT_MEDIUM" "PangoWeight")
 
 ;;; 2.15.5
-(CFNC-2150 "gchar* gtk_window_get_default_icon_name void" 'const)
+(CFNC-2172 "gchar* gtk_window_get_default_icon_name void" 'const)
 
 ;;; 2.17.1
-G_CONST_RETURN gchar *gtk_label_get_current_uri (GtkLabel *label);
+(CFNC-2172 "gchar* gtk_label_get_current_uri GtkLabel* label" 'const)
 
 
-|#
+;;; 2.17.2
+(CCAST-2172 "GTK_INFO_BAR(obj)" "GtkInfoBar*")
+(CCHK-2172 "GTK_IS_INFO_BAR(obj)" "GtkInfoBar*")
+
+(CFNC-2172 "GtkWidget* gtk_info_bar_new void")
+;(CFNC-2172 "GtkWidget* gtk_info_bar_new_with_buttons gchar* first_button_text ...")
+(CFNC-2172 "GtkWidget* gtk_info_bar_get_action_area GtkInfoBar* info_bar")
+(CFNC-2172 "GtkWidget* gtk_info_bar_get_content_area GtkInfoBar* info_bar")
+(CFNC-2172 "void gtk_info_bar_add_action_widget GtkInfoBar* info_bar GtkWidget* child gint response_id")
+(CFNC-2172 "GtkWidget* gtk_info_bar_add_button GtkInfoBar* info_bar gchar* button_text gint response_id")
+;(CFNC-2172 "void gtk_info_bar_add_buttons GtkInfoBar* info_bar gchar* first_button_text ...")
+(CFNC-2172 "void gtk_info_bar_set_response_sensitive GtkInfoBar* info_bar gint response_id gboolean setting") ; const arg
+(CFNC-2172 "void gtk_info_bar_set_default_response GtkInfoBar* info_bar gint response_id")
+(CFNC-2172 "void gtk_info_bar_response GtkInfoBar* info_bar gint response_id")
+(CFNC-2172 "void gtk_info_bar_set_message_type GtkInfoBar* info_bar GtkMessageType message_type")
+(CFNC-2172 "GtkMessageType gtk_info_bar_get_message_type GtkInfoBar* info_bar")
+
+
+
