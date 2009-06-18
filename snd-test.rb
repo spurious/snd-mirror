@@ -12456,9 +12456,6 @@ def test008
   if fneq(res = db2linear(-12.0411996841431), 0.25)
     snd_display("db2linear: %s?", res)
   end
-  if fneq(hz2radians(1.0), in_hz(1.0))
-    snd_display("in_hz: %s?", in_hz(1.0))
-  end
   if fneq(res = ring_modulate(0.4, 0.5), 0.2)
     snd_display("ring_modulate: %s?", res)
   end
@@ -38225,10 +38222,10 @@ Procs =
    :mus_location, :mus_mix, :mus_order, :mus_output?, :mus_phase, :mus_ramp, :mus_random,
    :mus_scaler, :mus_srate, :mus_xcoeffs, :mus_ycoeffs, :notch, :notch?, :one_pole, :one_pole?,
    :one_zero, :one_zero?, :oscil, :oscil?, :out_any, :outa, :outb, :outc, :outd,
-   :partials2polynomial, :partials2wave, :phase_partials2wave,
-   :polynomial, :pulse_train, :pulse_train?, :radians2degrees, :radians2hz, :rand,
-   :rand_interp, :rand_interp?, :rand?, :readin, :readin?, :rectangular2polar, :ring_modulate,
-   :sample2file, :sample2file?, :sample2frame, :sawtooth_wave, :sawtooth_wave?,
+   :partials2polynomial, :partials2wave, :phase_partials2wave, :polynomial, :pulse_train,
+   :pulse_train?, :radians2degrees, :radians2hz, :rand, :rand_interp, :rand_interp?, :rand?,
+   :readin, :readin?, :rectangular2polar, :rectangular2magnitudes,
+   :ring_modulate, :sample2file, :sample2file?, :sample2frame, :sawtooth_wave, :sawtooth_wave?,
    :spectrum, :square_wave, :square_wave?, :src, :src?, :ssb_am, :ssb_am?, :table_lookup,
    :table_lookup?, :tap, :triangle_wave, :triangle_wave?, :two_pole, :two_pole?, :two_zero,
    :two_zero?, :wave_train, :wave_train?, :make_vct, :vct_add!,
@@ -38600,10 +38597,10 @@ def test0028
    :make_nrxysin, :make_nrxycos,
    :make_square_wave, :make_src, :make_ncos, :make_nsin,
    :make_table_lookup, :make_triangle_wave, :make_two_pole, :make_two_zero,
-   :make_wave_train, :mixer_multiply, :mixer_add,
-   :multiply_arrays, :notch, :one_pole, :one_zero, :oscil, :partials2polynomial,
-   :partials2wave, :make_polyshape, :make_polywave, :phase_partials2wave,
-   :phase_vocoder, :polynomial, :pulse_train, :rand, :rand_interp, :rectangular2polar,
+   :make_wave_train, :mixer_multiply, :mixer_add, :multiply_arrays, :notch, :one_pole, :one_zero,
+   :oscil, :partials2polynomial, :partials2wave, :make_polyshape, :make_polywave,
+   :phase_partials2wave, :phase_vocoder, :polynomial, :pulse_train, :rand, :rand_interp,
+   :rectangular2polar, :rectangular2magnitudes,
    :ring_modulate, :sample2frame, :sawtooth_wave, :nrxysin, :nrxycos,
    :square_wave, :src, :ncos, :nsin, :table_lookup, :tap, :triangle_wave,
    :two_pole, :two_zero, :wave_train, :ssb_am, :make_ssb_am].each do |n|

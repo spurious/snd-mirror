@@ -2,7 +2,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Dec 30 04:52:13 CET 2005
-\ Changed: Thu Dec 18 22:56:44 CET 2008
+\ Changed: Sun Jun 14 23:22:41 CEST 2009
 
 \ src-duration             ( en -- dur )
 \ src-fit-envelope         ( e1 target-dur -- e2 )
@@ -134,8 +134,8 @@
 \ undisplay-bark-fft       ( -- )
 \ lpc-coeffs               ( data n m -- val )
 \ lpc-predict              ( data n coeffs m nf :optional clipped -- val )
-\ unclip-channel           ( :optional snd chn -- hash )
-\ unclip-sound             ( :optional snd -- ary-of-hashs )
+\ unclip-channel           ( :optional snd chn -- assoc )
+\ unclip-sound             ( :optional snd -- assoc )
 
 require clm
 require env
@@ -551,48 +551,48 @@ Global variable CHORDALIZE-CHORD is an array of members of chord such as #( 1 5/
      :r     r
      :index index }
 ;
-: asyfm-freq-ref   ( gen -- val ) :freq  hash-ref radians->hz ;
-: asyfm-freq-set!  ( gen val -- ) :freq  swap hz->radians hash-set! ;
-: asyfm-phase-ref  ( gen -- val ) :phase hash-ref ; 
-: asyfm-phase-set! ( gen val -- ) :phase swap hash-set! ;
-: asyfm-ratio-ref  ( gen -- val ) :ratio hash-ref ; 
-: asyfm-ratio-set! ( gen val -- ) :ratio swap hash-set! ;
-: asyfm-r-ref      ( gen -- val ) :r     hash-ref ; 
-: asyfm-r-set!     ( gen val -- ) :r     swap hash-set! ;
-: asyfm-index-ref  ( gen -- val ) :index hash-ref ; 
-: asyfm-index-set! ( gen val -- ) :index swap hash-set! ;
+: asyfm-freq-ref   ( gen -- val ) :freq  array-assoc-ref radians->hz ;
+: asyfm-freq-set!  ( gen val -- ) :freq  swap hz->radians array-assoc-set! drop ;
+: asyfm-phase-ref  ( gen -- val ) :phase array-assoc-ref ; 
+: asyfm-phase-set! ( gen val -- ) :phase swap array-assoc-set! drop ;
+: asyfm-ratio-ref  ( gen -- val ) :ratio array-assoc-ref ; 
+: asyfm-ratio-set! ( gen val -- ) :ratio swap array-assoc-set! drop ;
+: asyfm-r-ref      ( gen -- val ) :r     array-assoc-ref ; 
+: asyfm-r-set!     ( gen val -- ) :r     swap array-assoc-set! drop ;
+: asyfm-index-ref  ( gen -- val ) :index array-assoc-ref ; 
+: asyfm-index-set! ( gen val -- ) :index swap array-assoc-set! drop ;
 : asyfm-J ( gen input -- val )
   doc" ;; this is the same as the CLM asymmetric-fm generator, \
 set r != 1.0 to get the asymmetric spectra.\n\
 :frequency 2000 :ratio 0.1 make-asyfm value gen\n\
 lambda: <{ n }> gen 0.0 asyfm-J ; map-channel."
   { gen input }
-  gen :freq  hash-ref { freq }
-  gen :phase hash-ref { phase }
-  gen :ratio hash-ref { ratio }
-  gen :r     hash-ref { r }
-  gen :index hash-ref { index }
+  gen :freq  array-assoc-ref { freq }
+  gen :phase array-assoc-ref { phase }
+  gen :ratio array-assoc-ref { ratio }
+  gen :r     array-assoc-ref { r }
+  gen :index array-assoc-ref { index }
   r 1/f { r1 }
   ratio phase f* { modphase }
   modphase fcos r r1 f- f* index f* 0.5 f* fexp
   modphase fsin r r1 f+ f* index f* 0.5 f* phase f+ fsin  f* ( val )
-  gen :phase phase input freq f+ f+ hash-set!
+  gen :phase phase input freq f+ f+ array-assoc-set! drop
 ;
 \ :frequency 2000 :ratio 0.1 value gen
 \ lambda: <{ n -- val }> gen 0.0 asyfm-J ; map-channel
 : asyfm-I ( gen input -- val )
   { gen input }
-  gen :freq  hash-ref { freq }
-  gen :phase hash-ref { phase }
-  gen :ratio hash-ref { ratio }
-  gen :r     hash-ref { r }
-  gen :index hash-ref { index }
+  gen :freq  array-assoc-ref { freq }
+  gen :phase array-assoc-ref { phase }
+  gen :ratio array-assoc-ref { ratio }
+  gen :r     array-assoc-ref { r }
+  gen :index array-assoc-ref { index }
   r 1/f { r1 }
   ratio phase f* { modphase }
   modphase fcos r r1 f+ f* index f* 0.5 f*
   r r1 f+ index f* bes-i0 flog 0.5 f*  f-  fexp
   modphase fsin r r1 f- f* index f* 0.5 f* phase f+ fsin  f* ( val )
-  gen :phase phase input freq f+ f+ hash-set!
+  gen :phase phase input freq f+ f+ array-assoc-set! drop
 ;
 
 \ ;;; -------- cosine-summation (a simpler version of sine-summation)
@@ -2231,10 +2231,17 @@ previous
      :yn 0.0 }
 ;
 : mfilter <{ m :optional x-input 0.0 y-input 0.0 -- val }>
-  m :xn hash-ref  m :eps hash-ref m :yn hash-ref f*  f-  m :decay hash-ref f*  x-input f+ { xn1 }
-  m :eps hash-ref xn1 f*  m :yn hash-ref f+  m :decay hash-ref f*  y-input f+ { yn1 }
-  m :xn xn1 hash-set!
-  m :yn yn1 hash-set!
+  m :xn array-assoc-ref
+  m :eps array-assoc-ref
+  m :yn array-assoc-ref f*  f-
+  m :decay array-assoc-ref f*
+  x-input f+ { xn1 }
+  m :eps array-assoc-ref xn1 f*
+  m :yn array-assoc-ref f+
+  m :decay array-assoc-ref f*
+  y-input f+ { yn1 }
+  m     :xn xn1 array-assoc-set!
+  ( m ) :yn yn1 array-assoc-set! drop
   yn1
 ;
 0 [if]
@@ -2572,7 +2579,7 @@ hide
   #f
 ;
 set-current
-: unclip-channel <{ :optional snd #f chn #f -- hash }>
+: unclip-channel <{ :optional snd #f chn #f -- assoc }>
   doc" Looks for clipped portions and tries to reconstruct the original using LPC."
   #() { clip-data }			\ #( #( beg end ) #( ... ) ... )
   0.0 { unclipped-max }
@@ -2585,15 +2592,20 @@ set-current
     unclipped-max snd chn #f maxamp f/ 0 len snd chn #f scale-channel drop
     #{ :max unclipped-max :clips clip-data length 2/ :max-len max-len }
   else
-    #{}
+    #()
   then
 ;
 previous
-: unclip-sound <{ :optional snd #f -- ary-of-hashs }>
+: unclip-sound <{ :optional snd #f -- assoc }>
   doc" Applies unclip-channel to each channel of SND."
   snd snd-snd to snd
   snd sound? if
     snd channels make-array map! snd i unclip-channel end-map ( res )
+    #() ( assoc )
+    snd channels 0 ?do
+      ( assoc ) snd i unclip-channel assoc
+    loop
+    ( assoc )
   else
     'no-such-sound #( get-func-name snd ) fth-throw
   then

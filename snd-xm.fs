@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Mon Dec 26 22:36:46 CET 2005
-\ Changed: Sun Dec 14 23:59:12 CET 2008
+\ Changed: Sun Jun 14 20:40:00 CEST 2009
 
 \ Commentary:
 \
@@ -372,19 +372,19 @@ hide
   axinf 13 array-ref { y }
   axinf 12 array-ref x - { grf-width }
   axinf 11 array-ref y - { grf-height }
-  grf-height vars 'height hash-ref 2* >
-  grf-width  vars 'width  hash-ref 1.5 f* f>s > &&
+  grf-height vars 'height array-assoc-ref 2* >
+  grf-width  vars 'width  array-assoc-ref 1.5 f* f>s > &&
   snd chn time-graph? && if
     axinf 0 array-ref snd srate smpte-label { smpte }
-    x y vars 'width hash-ref 2 snd chn undef undef fill-rectangle drop
-    x y vars 'height hash-ref + vars 'width hash-ref 2 snd chn undef undef fill-rectangle drop
-    x y 2 vars 'height hash-ref snd chn undef undef fill-rectangle drop
-    x vars 'width hash-ref 2 - + y 2 vars 'height hash-ref snd chn undef undef fill-rectangle drop
-    vars 'dpy hash-ref snd selected-channel chn = if
+    x y vars 'width array-assoc-ref 2 snd chn undef undef fill-rectangle drop
+    x y vars 'height array-assoc-ref + vars 'width array-assoc-ref 2 snd chn undef undef fill-rectangle drop
+    x y 2 vars 'height array-assoc-ref snd chn undef undef fill-rectangle drop
+    x vars 'width array-assoc-ref 2 - + y 2 vars 'height array-assoc-ref snd chn undef undef fill-rectangle drop
+    vars 'dpy array-assoc-ref snd selected-channel chn = if
       snd-gcs 1 array-ref
     else
       snd-gcs 0 array-ref
-    then vars 'fs hash-ref Ffid FXSetFont drop
+    then vars 'fs array-assoc-ref Ffid FXSetFont drop
     smpte x 4 + y 4 + snd chn undef draw-string drop
   then
 ;
@@ -394,13 +394,12 @@ set-current
 the current smpte frame of the leftmost sample."
   ( on-or-off ) if
     after-graph-hook <'> draw-smpte-label hook-member? unless
-      #{} { vars }
       main-widgets 1 array-ref FXtDisplay { dpy }
       dpy axis-numbers-font FXLoadQueryFont { fs }
-      vars 'width   fs $" 00:00:00:00" 11 FXTextWidth  8 +  hash-set!
-      vars 'height  fs "0" 1 FXTextExtents 2 array-ref 8 +  hash-set!
-      vars 'dpy dpy hash-set!
-      vars 'fs  fs  hash-set!
+      #()      'width   fs $" 00:00:00:00" 11 FXTextWidth  8 +  array-assoc-set!
+      ( vars ) 'height  fs "0" 1 FXTextExtents 2 array-ref 8 +  array-assoc-set!
+      ( vars ) 'dpy     dpy array-assoc-set!
+      ( vars ) 'fs      fs  array-assoc-set! { vars }
       after-graph-hook vars draw-smpte-label add-hook!
       #t #t update-time-graph drop
     then

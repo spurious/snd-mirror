@@ -2,7 +2,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Mon Mar 15 19:25:58 CET 2004
-\ Changed: Mon Mar 02 18:41:13 CET 2009
+\ Changed: Mon Jun 15 02:21:19 CEST 2009
 
 \ Commentary:
 \
@@ -53,7 +53,7 @@
 \ with-mix             ( body-str args fname beg -- )
 \ sound-let            ( ws-xt-lst body-xt -- )
 
-$" fth 02-Mar-2009" value *clm-version*
+$" fth 15-Jun-2009" value *clm-version*
 
 \ defined in snd/snd-xen.c
 [ifundef] snd-print   : snd-print   ( str -- str )  dup .string ;             [then]
@@ -301,14 +301,14 @@ uses /tmp as temporary path and produces something like:\n\
 [...]"
   1 *fth-file-number* +!
   "%s/fth-%d-%d.snd"
-  environ "TMP" hash-find ?dup-if
-    1 array-ref
+  environ "TMP" array-assoc-ref ?dup-if
+    1 object-ref
   else
-    environ "TEMP" hash-find ?dup-if
-      1 array-ref
+    environ "TEMP" array-assoc-ref ?dup-if
+      1 object-ref
     else
-      environ "TMPDIR" hash-find ?dup-if
-	1 array-ref
+      environ "TMPDIR" array-assoc-ref ?dup-if
+	1 object-ref
       else
 	"/tmp"
       then
@@ -391,14 +391,14 @@ hide
 : (run)            ( start dur vars      -- limit begin ) ws-info times->samples ;
 : (run-instrument) ( start dur args vars -- limit begin )
   { start dur args vars }
-  args hash? unless #{} to args then
-  :degree    args :degree   hash-ref         0.0 ||
-  :distance  args :distance hash-ref         1.0 ||
-  :reverb    args :reverb   hash-ref        0.05 ||
-  :channels  args :channels hash-ref  *channels* ||
-  :output    args :output   hash-ref    *output* ||
-  :revout    args :revout   hash-ref    *reverb* ||
-  :type      args :type     hash-ref locsig-type || make-locsig to *locsig*
+  args array? unless #() to args then
+  :degree    args :degree   array-assoc-ref         0.0 ||
+  :distance  args :distance array-assoc-ref         1.0 ||
+  :reverb    args :reverb   array-assoc-ref        0.05 ||
+  :channels  args :channels array-assoc-ref  *channels* ||
+  :output    args :output   array-assoc-ref    *output* ||
+  :revout    args :revout   array-assoc-ref    *reverb* ||
+  :type      args :type     array-assoc-ref locsig-type || make-locsig to *locsig*
   \ we set channel 3/4 if any to 0.5 * channel 1/2
   *output* mus-output? if
     *output* mus-channels 2 > if
@@ -429,7 +429,7 @@ set-current
 \ sample value must remain on top of stack!
 \
 \ instrument: foo
-\   0 0.1 #{} run-instrument 0.2 end-run
+\   0 0.1 nil run-instrument 0.2 end-run
 \ ;instrument
 \ <'> foo with-sound
 \
@@ -667,92 +667,92 @@ The whole oboe.snd file will be mixed in because :frames is not specified."
 hide
 : ws-get-snd ( ws -- snd )
   { ws }
-  ws :output hash-ref find-file { fname }
+  ws :output array-assoc-ref find-file { fname }
   fname 0 find-sound dup sound? if ( snd ) save-sound then drop
   fname open-sound ( snd )
 ;
 : ws-scaled-to ( ws -- )
   { ws }
-  ws :scaled-to hash-ref { scale }
+  ws :scaled-to array-assoc-ref { scale }
   'snd provided? if
     ws ws-get-snd { snd }
     0.0  snd #t #f maxamp each fmax end-each { mx }
     mx f0<> if
       scale mx f/ to scale
       snd #f #f frames { len }
-      ws :channels hash-ref 0 ?do scale 0 len snd i ( chn ) #f scale-channel drop loop
+      ws :channels array-assoc-ref 0 ?do scale 0 len snd i ( chn ) #f scale-channel drop loop
     then
     snd save-sound drop
   else
-    ws :output hash-ref mus-sound-maxamp { smax }
+    ws :output array-assoc-ref mus-sound-maxamp { smax }
     0.0 smax length 1 ?do smax i array-ref fabs fmax 2 +loop { mx }
     mx f0<> if
-      ws :output hash-ref :scaler scale mx f/ clm-mix
+      ws :output array-assoc-ref :scaler scale mx f/ clm-mix
     then
   then
 ;
 : ws-scaled-by ( ws -- )
   { ws }
-  ws :scaled-by hash-ref { scale }
+  ws :scaled-by array-assoc-ref { scale }
   'snd provided? if
     ws ws-get-snd { snd }
     snd #f #f frames { len }
-    ws :channels hash-ref 0 ?do scale 0 len snd i ( chn ) #f scale-channel drop loop
+    ws :channels array-assoc-ref 0 ?do scale 0 len snd i ( chn ) #f scale-channel drop loop
     snd save-sound drop
   else
-    ws :output hash-ref :scaler scale clm-mix
+    ws :output array-assoc-ref :scaler scale clm-mix
   then
 ;
 : ws-before-output ( ws -- )
   { ws }
-  ws :old-table-size         clm-table-size         	hash-set!
-  ws :old-file-buffer-size   mus-file-buffer-size   	hash-set!
-  ws :old-array-print-length mus-array-print-length 	hash-set!
-  ws :old-clipping           mus-clipping           	hash-set!
-  ws :old-srate       	     mus-srate        	    	hash-set!
-  ws :old-locsig-type 	     locsig-type      	    	hash-set!
-  ws :old-*output*    	     *output*         	    	hash-set!
-  ws :old-*reverb*    	     *reverb*         	    	hash-set!
-  ws :old-verbose     	     *verbose*        	    	hash-set! 
-  ws :old-debug       	     *clm-debug*      	    	hash-set!
-  ws :old-channels    	     *channels*       	    	hash-set!
-  ws :old-notehook    	     *notehook*       	    	hash-set!
-  ws :old-decay-time  	     *clm-decay-time* 	    	hash-set!
-  ws :verbose                hash-ref  		    	to *verbose*
-  ws :debug                  hash-ref  		    	to *clm-debug*
-  ws :channels               hash-ref  		    	to *channels*
-  ws :notehook               hash-ref  		    	to *notehook*
-  ws :decay-time             hash-ref  		    	to *clm-decay-time*
+  ws     :old-table-size         clm-table-size         	array-assoc-set!
+  ( ws ) :old-file-buffer-size   mus-file-buffer-size   	array-assoc-set!
+  ( ws ) :old-array-print-length mus-array-print-length 	array-assoc-set!
+  ( ws ) :old-clipping           mus-clipping           	array-assoc-set!
+  ( ws ) :old-srate       	 mus-srate        	    	array-assoc-set!
+  ( ws ) :old-locsig-type 	 locsig-type      	    	array-assoc-set!
+  ( ws ) :old-*output*    	 *output*         	    	array-assoc-set!
+  ( ws ) :old-*reverb*    	 *reverb*         	    	array-assoc-set!
+  ( ws ) :old-verbose     	 *verbose*        	    	array-assoc-set! 
+  ( ws ) :old-debug       	 *clm-debug*      	    	array-assoc-set!
+  ( ws ) :old-channels    	 *channels*       	    	array-assoc-set!
+  ( ws ) :old-notehook    	 *notehook*       	    	array-assoc-set!
+  ( ws ) :old-decay-time  	 *clm-decay-time* 	    	array-assoc-set! to ws
+  ws :verbose                array-assoc-ref  		    	to *verbose*
+  ws :debug                  array-assoc-ref  		    	to *clm-debug*
+  ws :channels               array-assoc-ref  		    	to *channels*
+  ws :notehook               array-assoc-ref  		    	to *notehook*
+  ws :decay-time             array-assoc-ref  		    	to *clm-decay-time*
   *clm-table-size*           set-clm-table-size         drop
   *clm-file-buffer-size*     set-mus-file-buffer-size   drop
   *clm-array-print-length*   set-mus-array-print-length drop
   *clm-clipped* boolean? if *clm-clipped* else #f then set-mus-clipping drop
-  ws :srate                  hash-ref  		    	set-mus-srate   drop
-  ws :locsig-type            hash-ref  		    	set-locsig-type drop
+  ws :srate                  array-assoc-ref  		    	set-mus-srate   drop
+  ws :locsig-type            array-assoc-ref  		    	set-locsig-type drop
 ;
 : ws-after-output ( ws -- ws )
   { ws }
-  ws :old-table-size         hash-ref set-clm-table-size         drop
-  ws :old-file-buffer-size   hash-ref set-mus-file-buffer-size   drop
-  ws :old-array-print-length hash-ref set-mus-array-print-length drop
-  ws :old-clipping           hash-ref set-mus-clipping           drop
-  ws :old-srate       	     hash-ref set-mus-srate              drop
-  ws :old-locsig-type 	     hash-ref set-locsig-type            drop
-  ws :old-*output*    	     hash-ref 				 to *output*
-  ws :old-*reverb*    	     hash-ref 				 to *reverb*
-  ws :old-verbose     	     hash-ref 				 to *verbose*
-  ws :old-debug       	     hash-ref 				 to *clm-debug*
-  ws :old-channels    	     hash-ref 				 to *channels*
-  ws :old-notehook    	     hash-ref 				 to *notehook*
-  ws :old-decay-time  	     hash-ref 				 to *clm-decay-time*
+  ws :old-table-size         array-assoc-ref set-clm-table-size         drop
+  ws :old-file-buffer-size   array-assoc-ref set-mus-file-buffer-size   drop
+  ws :old-array-print-length array-assoc-ref set-mus-array-print-length drop
+  ws :old-clipping           array-assoc-ref set-mus-clipping           drop
+  ws :old-srate       	     array-assoc-ref set-mus-srate              drop
+  ws :old-locsig-type 	     array-assoc-ref set-locsig-type            drop
+  ws :old-*output*    	     array-assoc-ref 				 to *output*
+  ws :old-*reverb*    	     array-assoc-ref 				 to *reverb*
+  ws :old-verbose     	     array-assoc-ref 				 to *verbose*
+  ws :old-debug       	     array-assoc-ref 				 to *clm-debug*
+  ws :old-channels    	     array-assoc-ref 				 to *channels*
+  ws :old-notehook    	     array-assoc-ref 				 to *notehook*
+  ws :old-decay-time  	     array-assoc-ref 				 to *clm-decay-time*
   *ws-args* array-pop
 ;
 : ws-statistics ( ws -- )
   { ws }
-  ws :output hash-ref
-  :reverb-file-name ws :reverb-file-name  hash-ref
-  :scaled?          ws :scaled-to hash-ref ws :scaled-by hash-ref ||
-  :timer            ws :timer             hash-ref
+  ws :output array-assoc-ref
+  :reverb-file-name ws :reverb-file-name  array-assoc-ref
+  :scaled?          ws :scaled-to array-assoc-ref ws :scaled-by array-assoc-ref ||
+  :timer            ws :timer             array-assoc-ref
   snd-info
 ;
 \ player can be one of xt, proc, string, or #f.
@@ -772,8 +772,8 @@ hide
 \ <'> play-3-times to *clm-player*
 : ws-play-it ( ws -- )
   { ws }
-  ws :output hash-ref { output }
-  ws :player hash-ref { player }
+  ws :output array-assoc-ref { output }
+  ws :player array-assoc-ref { player }
   player proc? if
     player #( output ) run-proc drop
   else
@@ -790,12 +790,12 @@ hide
 ;
 : set-args ( key def ws -- )
   { key def ws }
-  key def get-optkey ws key rot hash-set!
+  key def get-optkey ws key rot array-assoc-set! to ws
 ;
 set-current
 : with-sound-default-args ( keyword-args -- ws )
   #() to *clm-instruments*
-  make-hash { ws }
+  #() { ws }
   *ws-args* ws array-push to *ws-args*
   :play              *clm-play*             ws set-args
   :statistics        *clm-statistics*       ws set-args
@@ -822,57 +822,57 @@ set-current
   ws
 ;  
 : with-sound-args ( keyword-args -- ws )
-  make-hash { ws }
+  #() { ws }
   *ws-args* -1 array-ref { ws1 }
   *ws-args* ws array-push to *ws-args*
   :play              #f                        	    ws set-args
   :player            #f                        	    ws set-args
   :statistics        #f                        	    ws set-args
   :continue-old-file #f               	            ws set-args
-  :verbose           ws1 :verbose     	   hash-ref ws set-args
-  :debug             ws1 :debug       	   hash-ref ws set-args
-  :output            ws1 :output      	   hash-ref ws set-args
-  :channels          ws1 :channels    	   hash-ref ws set-args
-  :srate             ws1 :srate       	   hash-ref ws set-args
-  :locsig-type       ws1 :locsig-type 	   hash-ref ws set-args
-  :header-type       ws1 :header-type 	   hash-ref ws set-args
-  :data-format       ws1 :data-format 	   hash-ref ws set-args
+  :verbose           ws1 :verbose     	   array-assoc-ref ws set-args
+  :debug             ws1 :debug       	   array-assoc-ref ws set-args
+  :output            ws1 :output      	   array-assoc-ref ws set-args
+  :channels          ws1 :channels    	   array-assoc-ref ws set-args
+  :srate             ws1 :srate       	   array-assoc-ref ws set-args
+  :locsig-type       ws1 :locsig-type 	   array-assoc-ref ws set-args
+  :header-type       ws1 :header-type 	   array-assoc-ref ws set-args
+  :data-format       ws1 :data-format 	   array-assoc-ref ws set-args
   :comment $" with-sound level %d" #( *ws-args* length ) string-format ws set-args
-  :notehook          ws1 :notehook         hash-ref ws set-args
-  :scaled-to         ws1 :scaled-to        hash-ref ws set-args
-  :scaled-by         ws1 :scaled-by        hash-ref ws set-args
-  :delete-reverb     ws1 :delete-reverb    hash-ref ws set-args
-  :reverb            ws1 :reverb           hash-ref ws set-args
-  :reverb-data       ws1 :reverb-data      hash-ref ws set-args
-  :reverb-channels   ws1 :reverb-channels  hash-ref ws set-args
-  :reverb-file-name  ws1 :reverb-file-name hash-ref ws set-args
-  :decay-time        ws1 :decay-time       hash-ref ws set-args
+  :notehook          ws1 :notehook         array-assoc-ref ws set-args
+  :scaled-to         ws1 :scaled-to        array-assoc-ref ws set-args
+  :scaled-by         ws1 :scaled-by        array-assoc-ref ws set-args
+  :delete-reverb     ws1 :delete-reverb    array-assoc-ref ws set-args
+  :reverb            ws1 :reverb           array-assoc-ref ws set-args
+  :reverb-data       ws1 :reverb-data      array-assoc-ref ws set-args
+  :reverb-channels   ws1 :reverb-channels  array-assoc-ref ws set-args
+  :reverb-file-name  ws1 :reverb-file-name array-assoc-ref ws set-args
+  :decay-time        ws1 :decay-time       array-assoc-ref ws set-args
   ws
 ;
 : with-sound-main ( body-xt ws -- ws )
   { body-xt ws }
-  body-xt xt? body-xt proc? || body-xt 1 $" a proc or xt" assert-type
-  ws hash?                     ws      2 $" a hash"       assert-type
+  body-xt xt? body-xt proc? || body-xt 1 $" a proc or xt"         assert-type
+  ws array?                    ws      2 $" an associative array" assert-type
   ws ws-before-output
-  ws :reverb hash-ref { reverb-xt }
+  ws :reverb array-assoc-ref { reverb-xt }
   reverb-xt if
     reverb-xt xt? reverb-xt proc? || reverb-xt 3 $" a proc or xt" assert-type
     #t
   else
     #f
   then { rev? }
-  ws :output            hash-ref { output }
-  ws :reverb-file-name  hash-ref { revput }
-  ws :continue-old-file hash-ref { cont? }
+  ws :output            array-assoc-ref { output }
+  ws :reverb-file-name  array-assoc-ref { revput }
+  ws :continue-old-file array-assoc-ref { cont? }
   cont? if
     output continue-sample->file
   else
     output file-delete
     output
-    ws :channels    hash-ref
-    ws :data-format hash-ref
-    ws :header-type hash-ref
-    ws :comment hash-ref dup empty? if drop make-default-comment then
+    ws :channels    array-assoc-ref
+    ws :data-format array-assoc-ref
+    ws :header-type array-assoc-ref
+    ws :comment array-assoc-ref dup empty? if drop make-default-comment then
     make-sample->file
   then to *output*
   *output* sample->file? unless
@@ -888,16 +888,16 @@ set-current
     else
       revput file-delete
       revput
-      ws :reverb-channels hash-ref
-      ws :data-format     hash-ref
-      ws :header-type     hash-ref
+      ws :reverb-channels array-assoc-ref
+      ws :data-format     array-assoc-ref
+      ws :header-type     array-assoc-ref
       $" with-sound temporary reverb file" make-sample->file
     then to *reverb*
     *reverb* sample->file? unless
       'with-sound-error #( get-func-name $" cannot open reverb sample->file" _ ) fth-throw
     then
   then
-  ws :timer make-timer hash-set!
+  ws :timer make-timer array-assoc-set! to ws
   \ compute ws body
   *clm-debug* if
     \ EXECUTE provides probably a more precise backtrace than FTH-CATCH.
@@ -914,14 +914,14 @@ set-current
   then
   reverb-xt if
     *reverb* mus-close drop
-    ws :reverb-file-name hash-ref undef make-file->sample to *reverb*
+    ws :reverb-file-name array-assoc-ref undef make-file->sample to *reverb*
     *reverb* file->sample? unless
       'with-sound-error #( get-func-name $" cannot open file->sample" _ ) fth-throw
     then
     \ compute ws reverb
     *clm-debug* if
       \ push reverb arguments on stack
-      ws :reverb-data hash-ref each end-each reverb-xt dup proc? if proc->xt then execute
+      ws :reverb-data array-assoc-ref each end-each reverb-xt dup proc? if proc->xt then execute
     else
       reverb-xt 'with-sound-interrupt #t fth-catch if
 	stack-reset
@@ -935,13 +935,13 @@ set-current
     *reverb* mus-close drop
   then
   *output* mus-close drop
-  ws :timer hash-ref stop-timer
+  ws :timer array-assoc-ref stop-timer
   ws ws-get-snd drop
-  ws :statistics    hash-ref              if ws ws-statistics then
-  ws :delete-reverb hash-ref reverb-xt && if ws :reverb-file-name hash-ref file-delete then
-  ws :scaled-to     hash-ref   	     	  if ws ws-scaled-to  then
-  ws :scaled-by     hash-ref   	     	  if ws ws-scaled-by  then
-  ws :play          hash-ref   	     	  if ws ws-play-it    then
+  ws :statistics    array-assoc-ref              if ws ws-statistics then
+  ws :delete-reverb array-assoc-ref reverb-xt && if ws :reverb-file-name array-assoc-ref file-delete then
+  ws :scaled-to     array-assoc-ref   	     	  if ws ws-scaled-to  then
+  ws :scaled-by     array-assoc-ref   	     	  if ws ws-scaled-by  then
+  ws :play          array-assoc-ref   	     	  if ws ws-play-it    then
   ws ws-after-output ( ws )
 ;
 previous
@@ -973,7 +973,7 @@ previous
 :reverb-file-name  *clm-reverb-file-name* (\"test.reverb\")\n\
 :player            *clm-player*           (#f)\n\
 :decay-time        *clm-decay-time*       (1.0)\n\
-Executes BODY-XT, a proc object or an xt, and returns a hash with with-sound arguments.\n\
+Executes BODY-XT, a proc object or an xt, and returns an assoc array with with-sound arguments.\n\
 <'> resflt-test with-sound .g cr\n\
 <'> resflt-test :play #t :channels 2 :srate 44100 with-sound drop"
   *ws-args* empty? if
@@ -994,7 +994,7 @@ See with-sound for a full keyword list.\n\
   then
   { fname ws }
   fname file-exists? if
-    ws :verbose hash-ref if $" loading %S" _ #( fname ) clm-message then
+    ws :verbose array-assoc-ref if $" loading %S" _ #( fname ) clm-message then
     fname <'> file-eval ws with-sound-main ( ws )
   else
     'no-such-file $" %s: %S not found" #( get-func-name fname ) fth-raise
@@ -1009,9 +1009,9 @@ Takes all arguments from current with-sound except :output, :scaled-to, :scaled-
   then
   with-sound-args { ws }
   fth-tempnam { output }
-  ws :output    output    hash-set!
-  ws :scaled-to scaled-to hash-set!
-  ws :scaled-by scaled-by hash-set!
+  ws     :output    output    array-assoc-set!
+  ( ws ) :scaled-to scaled-to array-assoc-set!
+  ( ws ) :scaled-by scaled-by array-assoc-set! to ws
   body-xt ws with-sound-main drop
   output :output-frame offset seconds->samples clm-mix
   output file-delete
@@ -1112,9 +1112,9 @@ lambda: { tmp1 tmp2 }\n\
     'with-sound-error $" %s can only be called within with-sound" #( get-func-name ) fth-raise
   then
   ws-xt-lst map
-    *key* 0 array-ref ( args ) each end-each with-sound-args { ws }
-    ws :output fth-tempnam hash-set!
-    *key* 1 array-ref ( xt ) each end-each ws with-sound-main :output hash-ref ( outfile )
+    *key* 0 array-ref ( args ) each end-each with-sound-args
+    ( ws ) :output fth-tempnam array-assoc-set! { ws }
+    *key* 1 array-ref ( xt ) each end-each ws with-sound-main :output array-assoc-ref ( outfile )
   end-map { outfiles }
   body-xt xt? if
     outfiles each end-each body-xt execute

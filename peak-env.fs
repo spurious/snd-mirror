@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Wed Dec 21 17:37:13 CET 2005
-\ Changed: Sun Dec 14 21:34:13 CET 2008
+\ Changed: Sun Jun 14 18:16:22 CEST 2009
 
 \ Commentary:
 \ 
@@ -28,7 +28,7 @@ $" ~/peaks" value save-peak-env-info-directory
 
 hide
 
-make-hash value saved-peak-info
+#() value saved-peak-info
 
 : peak-env-info-file-name ( snd chn -- name )
   { snd chn }
@@ -39,10 +39,10 @@ make-hash value saved-peak-info
 
 \ intended as an initial-graph-hook-function
 : restore-peak-env-info-upon-open <{ snd chn dur -- #f }>
-  saved-peak-info snd file-name hash-ref { peak-info }
+  saved-peak-info snd file-name array-assoc-ref { peak-info }
   peak-info if
-    peak-info 'data-format hash-ref snd data-format =
-    peak-info 'channels    hash-ref snd channels    = &&
+    peak-info 'data-format array-assoc-ref snd data-format =
+    peak-info 'channels    array-assoc-ref snd channels    = &&
   else
     #t
   then if
@@ -50,10 +50,10 @@ make-hash value saved-peak-info
     peak-file file-exists?
     peak-file file-write-date
     snd file-name file-write-date b> && if
-      make-hash { vals }
-      vals 'data-format snd data-format hash-set!
-      vals 'channels    snd channels    hash-set!
-      saved-peak-info snd file-name vals hash-set!
+      #() { vals }
+      vals     'data-format snd data-format array-assoc-set!
+      ( vals ) 'channels    snd channels    array-assoc-set! to vals
+      saved-peak-info snd file-name vals array-assoc-set! drop
       snd chn peak-file read-peak-env-info-file drop
     then
   then
@@ -79,10 +79,10 @@ make-hash value saved-peak-info
       peak-file file-write-date
       snd file-name file-write-date b< || if
 	saved unless
-	  make-hash { vals }
-	  vals 'data-format snd data-format hash-set!
-	  vals 'channels    snd channels    hash-set!
-	  saved-peak-info snd file-name vals hash-set!
+	  #() { vals }
+	  vals     'data-format snd data-format array-assoc-set!
+	  ( vals ) 'channels    snd channels    array-assoc-set! to vals
+	  saved-peak-info snd file-name vals array-assoc-set! drop
 	  #t to saved
 	then
 	snd i peak-file <'> write-peak-env-info-file 'no-such-envelope nil fth-catch 2drop

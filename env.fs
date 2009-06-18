@@ -3,7 +3,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Thu Oct 27 04:51:42 CEST 2005
-\ Changed: Tue Dec 16 00:57:03 CET 2008
+\ Changed: Sun Jun 14 18:46:17 CEST 2009
 
 \ Commentary:
 \
@@ -466,13 +466,13 @@ REFLECTED causes every other repetition to be in reverse."
 
 : power-env ( pe -- val )
   { pe }
-  pe :envs hash-ref pe :current-env hash-ref array-ref env ( val )
-  pe :current-pass hash-ref 1- { pass }
+  pe :envs array-assoc-ref pe :current-env array-assoc-ref array-ref env ( val )
+  pe :current-pass array-assoc-ref 1- { pass }
   pass 0= if
-    pe :current-env  pe :current-env hash-ref 1+  hash-set!
-    pe :envs hash-ref pe :current-env hash-ref array-ref mus-length to pass
+    pe :current-env  pe :current-env array-assoc-ref 1+  array-assoc-set!
+    ( pe ) :envs array-assoc-ref pe :current-env array-assoc-ref array-ref mus-length to pass
   then
-  pe :current-pass pass hash-set!
+  pe :current-pass pass array-assoc-set! drop
   ( val )
 ;
 
@@ -486,7 +486,7 @@ REFLECTED causes every other repetition to be in reverse."
     self 2 cells + @ { snd }
     self 3 cells + @ { chn }
     self 4 cells + @ { edpos }
-    pe :envs hash-ref each { e }
+    pe :envs array-assoc-ref each { e }
       e mus-length 1+ { len }
       e beg len snd chn edpos env-channel drop
       len +to beg

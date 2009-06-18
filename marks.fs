@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Tue Dec 27 19:22:06 CET 2005
-\ Changed: Thu Dec 11 00:27:49 CET 2008
+\ Changed: Sun Jun 14 18:43:51 CEST 2009
 
 \ Commentary:
 \
@@ -93,7 +93,7 @@ require examp
 
 \ --- Mark Properties ---
 : mark-properties ( id -- props )
-  doc" Returns mark ID's entire property hash."
+  doc" Returns mark ID's entire property list."
   { id }
   id mark? unless 'no-such-mark #( get-func-name id ) fth-throw then
   :mark-property id object-id property-ref
@@ -106,18 +106,12 @@ require examp
 : mark-property ( id key -- val )
   doc" Returns the value associated with KEY in the given mark's property list, or #f."
   { id key }
-  id mark? unless 'no-such-mark #( get-func-name id ) fth-throw then
-  id mark-properties ?dup-if key hash-ref else #f then
+  id mark-properties key list-assoc-ref
 ;
 : set-mark-property ( id key val -- )
   doc" Sets VAL to KEY in the given mark's property list."
   { id key val }
-  id mark? unless 'no-such-mark #( get-func-name id ) fth-throw then
-  id mark-properties ?dup-if
-    key val hash-set!
-  else
-    id #{ key val } set-mark-properties
-  then
+  id dup mark-properties key val list-assoc-set! set-mark-properties
 ;
 
 hide

@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Oct 21 18:22:57 CEST 2005
-\ Changed: Fri May 29 04:51:07 CEST 2009
+\ Changed: Mon Jun 15 02:32:14 CEST 2009
 
 \ Commentary:
 
@@ -185,20 +185,19 @@ fth-xenved make-?obj xenved?
   then
 ;
 : xe-mark ( obj -- )
-  { obj }
-  obj xe-envelope@   object-mark
-  obj xe-name@       object-mark
-  obj xe-parent@     object-mark
-  obj xe-args@       object-mark
-  obj xe-drawer@     object-mark
-  obj xe-gcs@        object-mark
-  obj xe-bx0@ 	     object-mark
-  obj xe-bx1@ 	     object-mark
-  obj xe-by0@ 	     object-mark
-  obj xe-by1@ 	     object-mark
-  obj xe-mouse-up@   object-mark
-  obj xe-mouse-down@ object-mark
-  obj xe-click-time@ object-mark
+  ( obj ) xe-envelope@   gc-mark
+  ( obj ) xe-name@       gc-mark
+  ( obj ) xe-parent@     gc-mark
+  ( obj ) xe-args@       gc-mark
+  ( obj ) xe-drawer@     gc-mark
+  ( obj ) xe-gcs@        gc-mark
+  ( obj ) xe-bx0@        gc-mark
+  ( obj ) xe-bx1@ 	 gc-mark
+  ( obj ) xe-by0@ 	 gc-mark
+  ( obj ) xe-by1@ 	 gc-mark
+  ( obj ) xe-mouse-up@   gc-mark
+  ( obj ) xe-mouse-down@ gc-mark
+  ( obj ) xe-click-time@ gc-mark drop
 ;
 : xe-free ( obj -- ) instance-gen-ref free throw ;
 
@@ -211,7 +210,7 @@ fth-xenved make-?obj xenved?
 <'> xe-set!     fth-xenved set-object-value-set \ xe index #( x y ) object-set!
 <'> xe-equal?   fth-xenved set-object-equal-p   \ obj1 obj2 equal?
 <'> xe-length   fth-xenved set-object-length    \ xe object-length => number of points (lstlen/2)
-<'> xe-mark     fth-xenved set-object-mark      \ xe object-mark and for gc
+<'> xe-mark     fth-xenved set-object-mark      \ for gc
 <'> xe-free     fth-xenved set-object-free      \ for gc
 <'> xe-ref      fth-xenved 1 set-object-apply   \ xe index apply => #( x y )
 

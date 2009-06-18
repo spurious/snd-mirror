@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sun Dec 18 23:36:09 CET 2005
-\ Changed: Mon Dec 15 00:52:20 CET 2008
+\ Changed: Sun Jun 14 18:48:14 CEST 2009
 
 \ Commentary:
 
@@ -27,7 +27,7 @@ hide
     snd channels 0 ?do
       'inset-envelope snd i channel-property { vals }
       \ set edit-position to impossible value
-      vals if vals 'edit-position -2 hash-set! then
+      vals if vals 'edit-position -2 array-assoc-set! to vals then
     loop
   then
   #f
@@ -61,12 +61,12 @@ hide
       'inset-envelope snd chn channel-property { old-env }
       old-env if
 	new-peaks not
-	old-env 'width         hash-ref width                 = &&
-	old-env 'height        hash-ref height                = &&
-	old-env 'y-offset      hash-ref y-offset              = &&
-	old-env 'edit-position hash-ref snd chn edit-position = && if
-	  old-env 'data0 hash-ref to data0
-	  old-env 'data1 hash-ref to data1
+	old-env 'width         array-assoc-ref width                 = &&
+	old-env 'height        array-assoc-ref height                = &&
+	old-env 'y-offset      array-assoc-ref y-offset              = &&
+	old-env 'edit-position array-assoc-ref snd chn edit-position = && if
+	  old-env 'data0 array-assoc-ref to data0
+	  old-env 'data1 array-assoc-ref to data1
 	  #t
 	else
 	  #f
@@ -146,13 +146,12 @@ hide
 	    xj xstep + to xj
 	  loop
 	then
-	make-hash { vals }
-	vals 'width         width                 hash-set!
-	vals 'height        height                hash-set!
-	vals 'edit-position snd chn edit-position hash-set!
-	vals 'data0         data0                 hash-set!
-	vals 'data1         data1                 hash-set!
-	vals 'y-offset      y-offset              hash-set!
+	#()      'width         width                 array-assoc-set!
+	( vals ) 'height        height                array-assoc-set!
+	( vals ) 'edit-position snd chn edit-position array-assoc-set!
+	( vals ) 'data0         data0                 array-assoc-set!
+	( vals ) 'data1         data1                 array-assoc-set!
+	( vals ) 'y-offset      y-offset              array-assoc-set! { vals }
 	'inset-envelope vals snd chn set-channel-property drop
       then
       \ FIXME

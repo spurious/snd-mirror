@@ -3,7 +3,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Dec 23 00:28:28 CET 2005
-\ Changed: Sun Mar 01 14:57:29 CET 2009
+\ Changed: Sun Jun 14 18:13:53 CEST 2009
 
 \ Commentary:
 
@@ -188,10 +188,10 @@ hide
   0 proc-create swap ,
  does> { self -- }
   self @ { vars }
-  vars :stopping hash-ref if
-    vars :stopping #f hash-set!
-    vars :stop-widget hash-ref FWidget? if
-      vars :stop-widget hash-ref "Play" _ change-label
+  vars :stopping array-assoc-ref if
+    vars     :stopping #f array-assoc-set!
+    ( vars ) :stop-widget array-assoc-ref FWidget? if
+      vars :stop-widget array-assoc-ref "Play" _ change-label
     then
   then
 ;
@@ -199,27 +199,27 @@ hide
   3 proc-create swap ,
  does> { w c info self -- }
   self @ { vars }
-  vars :stopping hash-ref if
-    vars :stopping #f hash-set!
+  vars :stopping array-assoc-ref if
     w "Play" _ change-label
-    vars :stopping1 hash-ref if
-      vars :stopping1 #f hash-set!
-      vars :stop-widget1 hash-ref $" Loop play" _ change-label
+    vars :stopping #f array-assoc-set!
+    ( vars ) :stopping1 array-assoc-ref if
+      vars   :stopping1 #f array-assoc-set!
+      ( vars ) :stop-widget1 array-assoc-ref $" Loop play" _ change-label
     then
     undef stop-playing drop
   else
     w "Stop" _ change-label
-    vars :stop-widget w hash-set!
-    vars :stopping #t hash-set!
+    vars :stop-widget w array-assoc-set!
+    ( vars ) :stopping #t array-assoc-set! drop
     #f undef play-selection drop
   then
 ;
 : stop-playing-selection { w vars -- }
-  vars :stopping1 #f hash-set!
   w $" Loop play" _ change-label
-  vars :stopping hash-ref if
-    vars :stopping #f hash-set!
-    vars :stop-widget hash-ref "Play" _ change-label
+  vars     :stopping1 #f array-assoc-set!
+  ( vars ) :stopping array-assoc-ref if
+    vars :stopping #f array-assoc-set!
+    ( vars ) :stop-widget array-assoc-ref "Play" _ change-label
   then
 ;
 : play-selection-again { w vars -- prc; reason self -- }
@@ -227,29 +227,29 @@ hide
  does> { reason self -- }
   self       @ { w }
   self cell+ @ { vars }
-  vars hash? if
-    c-g?                 not
-    reason                0= &&
-    vars :stopping1 hash-ref && if
+  vars array? if
+    c-g?                        not
+    reason                       0= &&
+    vars :stopping1 array-assoc-ref && if
       #f  w vars recurse  play-selection drop
     else
       w vars stop-playing-selection
     then
   else
-    $" %s: hash required, got %s" #( get-func-name vars ) string-format snd-warning drop
+    $" %s: assoc array required, got %s" #( get-func-name vars ) string-format snd-warning drop
   then
 ;
 : sel-loop-cb ( vars -- prc; w c i self -- )
   3 proc-create swap ,
  does> { w c info self -- }
   self @ { vars }
-  vars :stopping1 hash-ref if
+  vars :stopping1 array-assoc-ref if
     w vars stop-playing-selection
     undef stop-playing drop
   else
     w "Stop!" _ change-label
-    vars :stop-widget1 w  hash-set!
-    vars :stopping1    #t hash-set!
+    vars     :stop-widget1 w  array-assoc-set!
+    ( vars ) :stopping1    #t array-assoc-set! to vars
     #f  w vars play-selection-again  play-selection drop
   then
 ;
@@ -344,44 +344,44 @@ let: ( -- menu )
   1 proc-create swap ,
  does> { snd self -- }
   self @ { vars }
-  vars :stopping hash-ref if
-    vars :stopping #f hash-set!
-    vars :stop-widget hash-ref dup if "Play" _ change-label else drop then
+  vars :stopping array-assoc-ref if
+    vars     :stopping #f array-assoc-set!
+    ( vars ) :stop-widget array-assoc-ref dup if "Play" _ change-label else drop then
   then
 ;
 : play-cb ( vars -- prc; w c i self -- )
   3 proc-create swap ,
  does> { w c info self -- }
   self @ { vars }
-  vars :stopping hash-ref if
-    vars :stopping #f hash-set!
+  vars :stopping array-assoc-ref if
+    vars :stopping #f array-assoc-set! drop
     w "Play" _ change-label
     undef stop-playing drop
   else
     w "Stop" _ change-label
-    vars :stopping #t hash-set!
+    vars :stopping #t array-assoc-set! drop
     0 graph-popup-snd undef undef undef undef undef undef play drop
   then
 ;
 : stop-cb ( vars -- prc; widget self -- )
   1 proc-create swap ,
  does> { w self -- }
-  self @ ( vars ) :stop-widget w hash-set!
+  self @ ( vars ) :stop-widget w array-assoc-set! drop
 ;
 : pchan-cb ( vars -- prc; w c i self -- )
   3 proc-create swap ,
  does> { w c info self -- }
   self @ { vars }
-  vars :stopping #t hash-set!
-  vars :stop-widget hash-ref "Stop" _ change-label
+  vars     :stopping #t array-assoc-set!
+  ( vars ) :stop-widget array-assoc-ref "Stop" _ change-label
   0 graph-popup-snd graph-popup-chn undef undef undef undef undef play drop
 ;
 : pcur-cb ( vars -- prc; w c i self -- )
   3 proc-create swap ,
  does> { w c info self -- }
   self @ { vars }
-  vars :stopping #t hash-set!
-  vars :stop-widget hash-ref "Stop" _ change-label
+  vars     :stopping #t array-assoc-set!
+  ( vars ) :stop-widget array-assoc-ref "Stop" _ change-label
   graph-popup-snd graph-popup-chn #f cursor
   graph-popup-snd undef undef undef undef undef undef play drop
 ;
@@ -389,8 +389,8 @@ let: ( -- menu )
   3 proc-create swap ,
  does> { w c info self -- }
   self @ { vars }
-  vars :stopping #t hash-set!
-  vars :stop-widget hash-ref "Stop" _ change-label
+  vars     :stopping #t array-assoc-set!
+  ( vars ) :stop-widget array-assoc-ref "Stop" _ change-label
   0 graph-popup-snd graph-popup-chn #f #f
   graph-popup-snd graph-popup-chn edit-position 1-
   undef undef play drop
@@ -399,8 +399,8 @@ let: ( -- menu )
   3 proc-create swap ,
  does> { w c info self -- }
   self @ { vars }
-  vars :stopping #t hash-set!
-  vars :stop-widget hash-ref "Stop" _ change-label
+  vars     :stopping #t array-assoc-set!
+  ( vars ) :stop-widget array-assoc-ref "Stop" _ change-label
   0 graph-popup-snd graph-popup-chn #f #f 0 undef undef play drop
 ;
 

@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Tue Jul 05 13:09:37 CEST 2005
-\ Changed: Mon Mar 16 19:04:42 CET 2009
+\ Changed: Sun Jun 14 20:39:17 CEST 2009
 
 \ Commentary:
 \
@@ -2162,7 +2162,7 @@ instrument: chain-dsps <{ start dur :optional dsps #() -- }>
       *key*
     then
   end-map { dsp-chain }
-  start dur #{} run-instrument
+  start dur nil run-instrument
     0.0 { val }
     dsp-chain each { gen }
       gen env? if

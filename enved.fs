@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sun Nov 13 13:59:42 CET 2005
-\ Changed: Thu Dec 18 22:39:23 CET 2008
+\ Changed: Mon Jun 15 02:30:45 CEST 2009
 
 \ Commentary:
 
@@ -98,7 +98,7 @@ previous
     #f
   then
 ;
-: enved-mark    ( obj -- ) envelope@ object-mark ;
+: enved-mark    ( obj -- ) envelope@ gc-mark drop ;
 : enved-free    ( obj -- ) instance-gen-ref free throw ;
 
 \ Init enved
@@ -111,7 +111,7 @@ previous
 <'> enved-set!     fth-enved set-object-value-set \ en index #( x y ) object-set!
 <'> enved-equal?   fth-enved set-object-equal-p	\ obj1 obj2 equal?
 <'> enved-length   fth-enved set-object-length  \ en object-length => number of points (lstlen/2)
-<'> enved-mark     fth-enved set-object-mark    \ en object-mark and for gc
+<'> enved-mark     fth-enved set-object-mark    \ for gc
 <'> enved-free     fth-enved set-object-free	\ for gc
 <'> enved-ref      fth-enved 1 set-object-apply	\ en index apply => #( x y )
 

@@ -2,7 +2,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Feb 03 10:36:51 CET 2006
-\ Changed: Tue Dec 16 00:56:37 CET 2008
+\ Changed: Sun Jun 14 20:37:46 CEST 2009
 
 \ Commentary:
 \
@@ -427,7 +427,7 @@ instrument: vox <{ start dur freq amp ampfun freqfun freqscl voxfun index
   size make-array { f2 }
   size make-array { f3 }
   size 1- 0 ?do
-    clm-ins-formants voxfun i 1+ object-ref hash-ref { phon }
+    clm-ins-formants voxfun i 1+ object-ref array-assoc-ref { phon }
     voxfun i object-ref { n }
     f1 i n array-set!
     phon 0 array-ref f1 i 1+ rot array-set!
@@ -670,7 +670,7 @@ instrument: pqw-vox <{ start dur
     phone1 i ph array-set!
     phone2 i ph array-set!
     phone3 i ph array-set!
-    clm-ins-formants phonemes i 1+ object-ref hash-ref { ary }
+    clm-ins-formants phonemes i 1+ object-ref array-assoc-ref { ary }
     phone1 i 1+ ary 0 object-ref array-set!
     phone2 i 1+ ary 1 object-ref array-set!
     phone3 i 1+ ary 2 object-ref array-set!
@@ -3238,31 +3238,30 @@ end-struct fm2%
   2.0  two-pi mus-srate f/ hp f* fcos  f- { b }
   b  b b f* 1.0 f- fsqrt  f- { c2 }
   1.0 c2 f- { c1 }
-  make-hash { rmsg }
-  rmsg :rmsg-c1   c1  hash-set!
-  rmsg :rmsg-c2   c2  hash-set!
-  rmsg :rmsg-q    0.0 hash-set!
-  rmsg :rmsg-r    0.0 hash-set!
-  rmsg :rmsg-avg  0.0 hash-set!
-  rmsg :rmsg-avgc 0   hash-set!
-  rmsg
+  #()      :rmsg-c1   c1  array-assoc-set!
+  ( rmsg ) :rmsg-c2   c2  array-assoc-set!
+  ( rmsg ) :rmsg-q    0.0 array-assoc-set!
+  ( rmsg ) :rmsg-r    0.0 array-assoc-set!
+  ( rmsg ) :rmsg-avg  0.0 array-assoc-set!
+  ( rmsg ) :rmsg-avgc 0   array-assoc-set!
+  ( rmsg )
 ;
 : rmsgain-rms ( gen sig -- val )
   doc" runs an RMS gain generator."
   { gen sig }
-  gen :rmsg-c1 hash-ref  sig f*  sig f*
-  gen :rmsg-c2 hash-ref  gen :rmsg-q hash-ref  f*  f+
-  dup gen :rmsg-q rot hash-set! ( val ) fsqrt
+  gen :rmsg-c1 array-assoc-ref  sig f*  sig f*
+  gen :rmsg-c2 array-assoc-ref  gen :rmsg-q array-assoc-ref  f*  f+
+  dup gen :rmsg-q rot array-assoc-set! drop ( val ) fsqrt
 ;
 : rmsgain-gain ( gen sig rmsval -- val )
   doc" returns the current RMS gain."
   { gen sig rmsval }
-  gen :rmsg-c1 hash-ref  sig f*  sig f*
-  gen :rmsg-c2 hash-ref  gen :rmsg-r hash-ref  f*  f+
-  dup ( val val ) gen :rmsg-r rot hash-set!
-  ( val ) f0= if rmsval else rmsval  gen :rmsg-r hash-ref fsqrt  f/ then { this-gain }
-  gen :rmsg-avg hash-ref this-gain f+ gen :rmsg-avg  rot hash-set!
-  gen :rmsg-avgc hash-ref 1+          gen :rmsg-avgc rot hash-set!
+  gen :rmsg-c1 array-assoc-ref  sig f*  sig f*
+  gen :rmsg-c2 array-assoc-ref  gen :rmsg-r array-assoc-ref  f*  f+
+  dup ( val val ) gen :rmsg-r rot array-assoc-set! drop
+  ( val ) f0= if rmsval else rmsval  gen :rmsg-r array-assoc-ref fsqrt  f/ then { this-gain }
+  gen     :rmsg-avg array-assoc-ref this-gain f+ gen :rmsg-avg  rot array-assoc-set!
+  ( gen ) :rmsg-avgc array-assoc-ref 1+          gen :rmsg-avgc rot array-assoc-set! drop
   sig this-gain f*
 ;
 : rmsgain-balance ( gen sig comp -- val )
@@ -3273,11 +3272,11 @@ end-struct fm2%
 : rmsgain-gain-avg ( gen -- val )
   doc" is part of the RMS gain stuff."
   { gen }
-  gen :rmsg-avg hash-ref  gen :rmsg-avgc hash-ref f/
+  gen :rmsg-avg array-assoc-ref  gen :rmsg-avgc array-assoc-ref f/
 ;
 : rmsgain-balance-avg ( gen -- val )
   doc" is part of the RM gain stuff."
-  :rmsg-avg hash-ref
+  :rmsg-avg array-assoc-ref
 ;
 
 : clm-ins-test <{ :optional start 0.0 dur 1.0 }>
