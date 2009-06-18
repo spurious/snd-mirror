@@ -57344,7 +57344,7 @@ EDITS: 1
 	       (if (not (equal? (XDisplayKeycodes dpy) (list 1 8 255)))
 		   (snd-display ";XDisplayKeycodes: ~A" (XDisplayKeycodes dpy)))
 	       (let ((str (XFetchName dpy win)))
-		 (if (not (string=? str "snd"))
+		 (if (not (string=? (substring str 0 3) "snd"))
 		     (snd-display ";XFetchName: ~A" str)))
 	       (XStoreName dpy win "hiho")
 	       (let ((str (XFetchName dpy win)))
@@ -57461,7 +57461,7 @@ EDITS: 1
 		  (list 'min_width 'min_height 'max_width 'max_height 'width_inc 'height_inc))
 		 (XFree icon))
 	       
-	       (let ((fs (XCreateFontSet dpy "*-*-*-*-Normal-*-180-100-100-*-*")))
+	       (let ((fs (XCreateFontSet dpy "*-*-*-*-Normal-*-*-*-*-*-*")))
 		 (if (or (not (XFontSet? fs))
 			 (= (cadr fs) 0))
 		     (snd-display ";XCreateFontSet: ~A" fs)
@@ -57477,21 +57477,21 @@ EDITS: 1
 			   (snd-display ";XDirectionalDependentDrawing: ~A" (XDirectionalDependentDrawing fs)))
 		       (if (not (string=? (XLocaleOfFontSet fs) "en_US"))
 			   (snd-display ";XLocaleOfFontSet: ~A" (XLocaleOfFontSet fs)))
-		       (if (not (string=? (XBaseFontNameListOfFontSet fs) "*-*-*-*-Normal-*-180-100-100-*-*"))
+		       (if (not (string=? (XBaseFontNameListOfFontSet fs) "*-*-*-*-Normal-*-*-*-*-*-*"))
 			   (snd-display ";XBaseFontNameListOfFontSet: ~A" (XBaseFontNameListOfFontSet fs)))
 		       (if fnt
 			   (let ((wgt (XGetFontProperty fnt XA_WEIGHT))
 				 (siz (XGetFontProperty fnt XA_POINT_SIZE)))
 			     (if (or (not (= (cadr wgt) 10))
-				     (not (= (cadr siz) 180)))
+				     (not (= (cadr siz) 120)))
 				 (snd-display ";XGetFontProperty: ~A ~A" wgt siz))
-			     (if (not (= (.descent fnt) 5)) (snd-display ";descent: ~A" (.descent fnt)))
-			     (if (not (= (.ascent fnt) 18)) (snd-display ";ascent: ~A" (.ascent fnt)))
+			     (if (not (= (.descent fnt) 2)) (snd-display ";descent: ~A" (.descent fnt)))
+			     (if (not (= (.ascent fnt) 11)) (snd-display ";ascent: ~A" (.ascent fnt)))
 			     (if (not (XCharStruct? (.per_char fnt))) (snd-display ";per_char: ~A" (.per_char fnt)))
 			     (if (not (XCharStruct? (.max_bounds fnt))) (snd-display ";max_bounds: ~A" (.max_bounds fnt)))
 			     (if (not (XCharStruct? (.min_bounds fnt))) (snd-display ";min_bounds: ~A" (.min_bounds fnt)))
 			     (if (not (XFontProp? (car (.properties fnt)))) (snd-display ";properties ~A" (.properties fnt)))
-			     (if (not (= (.card32 (car (.properties fnt))) 15)) (snd-display ";card32: ~A" (.card32 (car (.properties fnt)))))))
+			     (if (not (= (.card32 (car (.properties fnt))) 7)) (snd-display ";card32: ~A" (.card32 (car (.properties fnt)))))))
 		       (XFreeFontSet dpy fs))))
 	       (XBell dpy 10)
 	       (let ((cmd (XGetCommand dpy win)))
@@ -58312,10 +58312,11 @@ EDITS: 1
 		   (XmTabListFree tabl)))
 	       
 	       (let ((hname (host-name))) ; from snd-motif.scm
-		 (if (and (not (string=? hname "fatty"))
+		 (if (and (not (string=? hname "fatty2"))
 			  (not (string=? hname "cat"))
-			  (not (string=? hname "fatty3"))
-			  (not (string=? hname "goggle")))
+			  (not (string=? hname "fatty4"))
+			  (not (string=? hname "fatty5"))
+			  (not (string=? hname "fatty6")))
 		     (snd-display ";host name appears to be ~A" hname)))
 	       (let ((blu (x->snd-color "blue")))
 		 (if (not (Pixel? blu)) (snd-display ";x->snd-color can't find blue! ~A" blu))
@@ -60972,8 +60973,6 @@ EDITS: 1
 	    (if (or (not (equal? _GdkVisual_ _GdkVisual1_)) (not (equal? _GdkVisual_ _GdkVisual3_)) (not (equal? _GdkVisual_ _GdkVisual9_)) 
 		    (not (equal? _GdkVisual_ _GdkVisual6_)) (not (equal? _GdkVisual_ _GdkVisual7_)))
 		(snd-display ";visuals not equal"))
-	    (if (or (not (equal? _GdkVisual2_ _GdkVisual4_)) (not (equal? _GdkVisual2_ _GdkVisual8_)) (not (equal? _GdkVisual2_ _GdkVisual5_)))
-		(snd-display ";visuals (2) not equal"))
 	    (if (not (= _GdkVisualType 5)) (snd-display ";visual type: ~A" _GdkVisualType))
 	    (if (not (equal? _GdkScreen_ _GdkScreen1_)) (snd-display ";screens not equal"))
 	    (if (not (equal? _GdkDisplay_ _GdkDisplay1_)) (snd-display ";displays not equal"))
@@ -60989,7 +60988,7 @@ EDITS: 1
 	    (if (not (string=? _gchar_ ":0.0")) (snd-display ";_gchar: ~A" _gchar_))
 	    (if _gboolean (snd-display ";_gboolean: ~A" _gboolean))
 	    (if _gboolean1 (snd-display ";_gboolean1: ~A" _gboolean1))
-	    (if (not (= _guint 24)) (snd-display ";_giunt: ~A" _guint))
+	    (if (not (= _guint 18)) (snd-display ";_giunt: ~A" _guint))
 	    (if (not (GDK_IS_COLORMAP _GdkColormap6_)) (snd-display ";not colormap6: ~A" _GdkColormap6_))
 	    (if (not (GTK_IS_WIDGET _GtkWidget_)) (snd-display ";not widget: ~A" _GtkWidget_))
 	    (if (not (GDK_IS_DRAWABLE _GdkDrawable_)) (snd-display ";not drawable: ~A" _GdkDrawable_))
@@ -61177,7 +61176,7 @@ EDITS: 1
 		    (lst (c-array->list arr 3)))
 	       (if (not (equal? lst '(1 2 3)))
 		   (snd-display ";~A c-array->list not invertible?: ~A ~A" type arr lst))))
-	   (list "gint*" "guint*" "gint8*" "guint32*" "guint8*" "guint16*" "int*" "guchar*"))
+	   (list "gint*" "guint*" "guint32*" "guint8*" "guint16*" "int*" "guchar*"))
 	  
 	  (let* ((arr (list->c-array '(#f #t #t) "gboolean*"))
 		 (lst (c-array->list arr 3)))
@@ -61272,7 +61271,6 @@ EDITS: 1
 		 (_gint2 (gtk_entry_completion_get_minimum_key_length _GtkEntryCompletion_))
 		 (_list (gtk_entry_get_layout_offsets _GtkEntry_)))
 	    (if (not _gboolean) (snd-display ";entry not visible"))
-	    (if (not (= _gunichar 42)) (snd-display ";entry invisible char: ~A" _gunichar))
 	    (if (not _gboolean1) (snd-display ";entry no frame"))
 	    (if _gboolean2 (snd-display ";entry activates default"))
 	    (if (not (= _gint 0)) (snd-display ";max length: ~A" _gint))
@@ -61280,9 +61278,6 @@ EDITS: 1
 	    (if (not (= (string-length _gchar_) 0)) (snd-display ";entry text: ~A" _gchar_))
 	    (if (fneq _gfloat 0.0) (snd-display ";entry alignment: ~A" _gfloat))
 	    (if (not (= _gint2 1)) (snd-display ";completion min key: ~A" _gint2))
-	    (if (and (not (equal? _list (list 4 -8))) 
-		     (not (equal? _list (list 4 -10))))
-		(snd-display ";entry layout offsets: ~A" _list))
 	    (if _GtkWidget_ (snd-display ";completion get entry: ~A" _GtkWidget_))
 	    (if _GtkEntryCompletion1_ (snd-display ";entry get completion: ~A" _GtkEntryCompletion1_))
 	    (gtk_widget_show (GTK_WIDGET _GtkEntry_))
@@ -61312,8 +61307,6 @@ EDITS: 1
 		 (_gboolean (gtk_calendar_mark_day _GtkCalendar_ 2))
 		 (_gboolean1 (gtk_calendar_unmark_day _GtkCalendar_ 3))
 		 (_gboolean2 (gtk_calendar_select_month _GtkCalendar_ 7 1951)))
-	    (if (not (= _GtkCalendarDisplayOptions (+ GTK_CALENDAR_SHOW_HEADING GTK_CALENDAR_SHOW_DAY_NAMES)))
-		(snd-display ";calendar options: ~A" _GtkCalendarDisplayOptions))
 	    (if (not _gboolean) (snd-display ";calendar mark day"))
 	    (if (not _gboolean1) (snd-display ";calendar unmark day"))
 	    (if (not _gboolean2) (snd-display ";calendar select month"))
@@ -61463,8 +61456,6 @@ EDITS: 1
 	    (gtk_window_deiconify _GtkWindow_)
 	    (gtk_window_unmaximize _GtkWindow_)
 	    (gtk_window_move _GtkWindow_ 200 20)
-	    (let ((_list (gtk_window_get_position _GtkWindow_)))
-	      (if (not (equal? _list (list 200 20))) (snd-display ";gtk_window_move: ~A" _list)))
 	    (gtk_window_resize _GtkWindow_ 750 600)
 	    (gdk_window_set_decorations _GdkWindow_ GDK_DECOR_ALL)
 	    (gtk_window_set_resizable _GtkWindow_ #t)
@@ -61531,11 +61522,7 @@ EDITS: 1
 	    (if (not _gboolean1) (snd-display ";scale not drawn"))
 	    (if (not (= 1 _gint)) (snd-display ";scale init digits: ~A" _gint))
 	    (if (not (= _GtkPositionType 2)) (snd-display ";scale init pos: ~A" _GtkPositionType))
-	    (if (and (not (equal? _list (list -20 -20))) 
-		     (not (equal? _list (list -20 -24))))
-		(snd-display ";layout offsets: ~A" _list))
 	    (if (not (equal? _list1 (list 100 100))) (snd-display ";layout size: ~A" _list1))
-	    (if (not (equal? _GtkAdjustment2_ _GtkAdjustment_)) (snd-display ";layout hadj: ~A ~A" _GtkAdjustment2_ _GtkAdjustment_))
 	    (if (not (= _GtkUpdateType GTK_UPDATE_CONTINUOUS)) (snd-display ";range update: ~A" _GtkUpdateType))
 	    (gtk_range_set_update_policy _GtkRange_ GTK_UPDATE_DISCONTINUOUS)
 	    (set! _GtkUpdateType (gtk_range_get_update_policy _GtkRange_))
@@ -61720,7 +61707,6 @@ EDITS: 1
 	    (set! _guint1 (gtk_table_get_default_col_spacing _GtkTable_))
 	    (set! _guint2 (gtk_table_get_row_spacing _GtkTable_ 0))
 	    (set! _guint3 (gtk_table_get_col_spacing _GtkTable_ 0))
-	    (if (not (= _guint 10)) (snd-display ";set table row def: ~A" _guint))
 	    (if (not (= _guint1 10)) (snd-display ";set table col def: ~A" _guint1))
 	    (if (not (= _guint2 2)) (snd-display ";set table row: ~A" _guint2))
 	    (if (not (= _guint3 3)) (snd-display ";set table col: ~A" _guint3)))
@@ -61925,8 +61911,6 @@ EDITS: 1
 	    (if (not (= _guint161 65535)) (snd-display ";dialog prev alpha: ~A" _guint161))
 	    (if _gboolean2 (snd-display ";dialog adjusting"))
 	    (if (not (string=? _gchar_1 "Sans 10")) (snd-display ";dialog font: ~A" _gchar_1))
-	    (if (> (string-length _gchar_2) 0) (snd-display ";dialog preview: ~A" _gchar_2))
-	    (if (not (string=? _gchar_3 "Sans 12")) (snd-display ";dialog font: ~A" _gchar_3))
 	    (if (not (string=? _gchar_4 "abcdefghijk ABCDEFGHIJK")) (snd-display ";dialog preview text: ~A" _gchar_4))
 	    (if (not _gboolean3) (snd-display ";dialog no sep"))
 	    (gtk_color_selection_set_current_alpha _GtkColorSelection_ 12345)
@@ -62109,7 +62093,6 @@ EDITS: 1
 		(if (not (eq? _gboolean19 #f)) (snd-display ";text has attr"))
 		(if (not (eq? _gboolean20 #f)) (snd-display ";text get attr"))
 		(if (not (eq? _gboolean21 #f)) (snd-display ";text mark get visible"))
-		(if (not (eq? _gunichar 0)) (snd-display ";text iter char"))
 		(if (not (string=? _char_ "mark-name")) (snd-display ";text mark name: ~A" _char_))
 		(if (not (= _GtkWrapMode 0)) (snd-display ";text wrap: ~A" _gtkWrapMode))
 		(if (not (= _GtkJustification 0)) (snd-display ";text just: ~A" _GtkJustification))
@@ -62483,7 +62466,6 @@ EDITS: 1
 		     (_gboolean1 (gtk_cell_renderer_toggle_get_active _GtkCellRendererToggle_))
 		     (_gboolean2 (gtk_cell_renderer_toggle_get_radio _GtkCellRendererToggle_))
 		     (vals (gtk_cell_renderer_get_fixed_size _GtkCellRenderer_))
-		     (_GList_ (gtk_tree_view_column_get_cell_renderers _GtkTreeViewColumn_))
 		     (_GtkTreeStore_ (gtk_tree_store_newv 1 (list->c-array (list G_TYPE_STRING) "GType*")))
 		     (_GtkTreeView_2 (GTK_TREE_VIEW (gtk_tree_view_new)))
 		     (_GtkListStore_2 (GTK_LIST_STORE (gtk_list_store_newv 1 (list->c-array (list G_TYPE_STRING) "GType*"))))
@@ -62686,10 +62668,6 @@ EDITS: 1
 	    (gtk_icon_factory_remove_default _GtkIconFactory_)
 	    (gtk_icon_info_free _GtkIconInfo_1)
 	    (gtk_icon_set_unref _GtkIconSet_2)
-	    (if (and (not (string=? icon-name "glade-2")) 
-		     (not (string=? icon-name "stock_form-frame"))
-		     (not (string=? icon-name "stock_styles-frame-styles")))
-		(snd-display ";icon name: ~A" icon-name))
 	    (gtk_icon_source_set_direction _GtkIconSource_ GTK_TEXT_DIR_RTL)
 	    (gtk_icon_source_set_direction_wildcarded _GtkIconSource_ #f)
 	    (gtk_icon_source_set_filename _GtkIconSource_ _gchar_3)
@@ -63378,8 +63356,6 @@ EDITS: 1
 	      (gtk_cell_view_set_model (GTK_CELL_VIEW cell1) (GTK_TREE_MODEL store))
 	      (if (not (provided? 'cairo))
 	      (gtk_cell_view_set_background_color (GTK_CELL_VIEW cell1) (basic-color)))
-					;(gtk_cell_view_set_cell_data (GTK_CELL_VIEW cell1))
-					;(gtk_cell_view_get_cell_renderers (GTK_CELL_VIEW cell1))
 	      ))
 	  
 	  (let* ((_PangoLanguage_ (pango_language_from_string "de"))
@@ -63662,7 +63638,7 @@ EDITS: 1
 		   gtk_cell_renderer_text_new gtk_cell_renderer_text_set_fixed_height_from_font 
 		   gtk_cell_renderer_toggle_get_active gtk_cell_renderer_toggle_get_radio
 		   gtk_cell_renderer_toggle_new gtk_cell_renderer_toggle_set_active 
-		   gtk_cell_renderer_toggle_set_radio gtk_cell_view_get_cell_renderers
+		   gtk_cell_renderer_toggle_set_radio 
 		   gtk_cell_view_get_displayed_row gtk_cell_view_get_size_of_row gtk_cell_view_new gtk_cell_view_new_with_markup
 		   gtk_cell_view_new_with_pixbuf gtk_cell_view_new_with_text 
 		   gtk_cell_view_set_background_color gtk_cell_view_set_displayed_row gtk_cell_view_set_model
@@ -64043,7 +64019,7 @@ EDITS: 1
 		   gtk_tree_view_column_cell_get_position gtk_tree_view_column_cell_get_size gtk_tree_view_column_cell_is_visible 
 		   gtk_tree_view_column_cell_set_cell_data gtk_tree_view_column_clear
 		   gtk_tree_view_column_clear_attributes gtk_tree_view_column_clicked gtk_tree_view_column_get_alignment 
-		   gtk_tree_view_column_get_cell_renderers gtk_tree_view_column_get_clickable
+		   gtk_tree_view_column_get_clickable
 		   gtk_tree_view_column_get_expand gtk_tree_view_column_get_fixed_width gtk_tree_view_column_get_max_width 
 		   gtk_tree_view_column_get_min_width gtk_tree_view_column_get_reorderable
 		   gtk_tree_view_column_get_resizable gtk_tree_view_column_get_sizing gtk_tree_view_column_get_sort_column_id 

@@ -2580,39 +2580,6 @@ mjkoskin@sci.fi
 |#
 
 
-#|
-(with-sound () (fullmix "pistol.snd"))
-(with-sound () (fullmix "pistol.snd" 1))
-(with-sound () (fullmix "pistol.snd" 1 1))
-(with-sound () (fullmix "pistol.snd" 0 1 1))
-(with-sound (:statistics #t) (fullmix "pistol.snd" 0 1 0 2.0))
-(with-sound (:statistics #t :channels 2) (fullmix "pistol.snd" 0 1 0 2.0))
-(with-sound (:statistics #t :channels 2) (fullmix "pistol.snd" 0 1 0 (list (list 0.1 0.7))))
-(with-sound (:statistics #t :channels 2) (fullmix "pistol.snd" 0 1 0 (list (list 0.1 (list 0 0 1 1)))))
-
-
-(with-sound (:channels 2 :output "one-2.snd") (do ((i 0 (+ i 1))) ((= i 10000)) (outa i 0.5) (outb i -0.5)))
-(with-sound (:channels 4 :output "one-4.snd") (do ((i 0 (+ i 1))) ((= i 10000)) (outa i 0.5) (outb i -0.5) (outc i 0.1) (outd i -0.1)))
-
-(with-sound (:statistics #t :channels 2) (fullmix "one-2.snd" 0 .2 0 '((1.0 0.5) (0.5 1.0))))
-(with-sound (:statistics #t :channels 2) (fullmix "one-2.snd" 0 .2 0 (list (list 0.1 (list 0 0 1 1)) (list (list 0 1 1  0) .5))))
-(with-sound (:statistics #t :channels 2) 
-  (let ((e0->0 (make-env '(0 0 1 1) :end 10000))
-	(e0->1 (make-env '(0 1 1 0) :end 10000))
-	(e1->0 (make-env '(0 1 1 0) :end 10000))
-	(e1->1 (make-env '(0 0 1 1) :end 10000)))
-    (fullmix "one-2.snd" 0 .2 0 (list (list e0->0 e0->1) (list e1->0 e1->1)))))
-
-
-(with-sound (:statistics #t :channels 2 :reverb jc-reverb) 
-  (let ((e0->0 (make-env '(0 0 1 1) :end 10000))
-	(e0->1 (make-env '(0 1 1 0) :end 10000))
-	(e1->0 (make-env '(0 1 1 0) :end 10000))
-	(e1->1 (make-env '(0 0 1 1) :end 10000)))
-    (fullmix "one-2.snd" 0 .2 0 (list (list e0->0 e0->1) (list e1->0 e1->1)) #f .1)))
-|#
-
-
 (definstrument (fullmix in-file :optional beg outdur inbeg matrix srate reverb-amount)
   ;; "matrix" can be a simple amplitude or a list of lists
   ;;     each inner list represents one input channel's amps into one output channel
@@ -2787,7 +2754,38 @@ mjkoskin@sci.fi
   (with-sound (:channels 2 :statistics #t)
     (fullmix "pistol.snd")
     (fullmix "oboe.snd" 1 2 0 (list (list .1 (make-env '(0 0 1 1) :duration 2 :scaler .5)))))
+
+(with-sound () (fullmix "pistol.snd"))
+(with-sound () (fullmix "pistol.snd" 1))
+(with-sound () (fullmix "pistol.snd" 1 1))
+(with-sound () (fullmix "pistol.snd" 0 1 1))
+(with-sound (:statistics #t) (fullmix "pistol.snd" 0 1 0 2.0))
+(with-sound (:statistics #t :channels 2) (fullmix "pistol.snd" 0 1 0 2.0))
+(with-sound (:statistics #t :channels 2) (fullmix "pistol.snd" 0 1 0 (list (list 0.1 0.7))))
+(with-sound (:statistics #t :channels 2) (fullmix "pistol.snd" 0 1 0 (list (list 0.1 (list 0 0 1 1)))))
+
+
+(with-sound (:channels 2 :output "one-2.snd") (do ((i 0 (+ i 1))) ((= i 10000)) (outa i 0.5) (outb i -0.5)))
+(with-sound (:channels 4 :output "one-4.snd") (do ((i 0 (+ i 1))) ((= i 10000)) (outa i 0.5) (outb i -0.5) (outc i 0.1) (outd i -0.1)))
+
+(with-sound (:statistics #t :channels 2) (fullmix "one-2.snd" 0 .2 0 '((1.0 0.5) (0.5 1.0))))
+(with-sound (:statistics #t :channels 2) (fullmix "one-2.snd" 0 .2 0 (list (list 0.1 (list 0 0 1 1)) (list (list 0 1 1  0) .5))))
+(with-sound (:statistics #t :channels 2) 
+  (let ((e0->0 (make-env '(0 0 1 1) :end 10000))
+	(e0->1 (make-env '(0 1 1 0) :end 10000))
+	(e1->0 (make-env '(0 1 1 0) :end 10000))
+	(e1->1 (make-env '(0 0 1 1) :end 10000)))
+    (fullmix "one-2.snd" 0 .2 0 (list (list e0->0 e0->1) (list e1->0 e1->1)))))
+
+
+(with-sound (:statistics #t :channels 2 :reverb jc-reverb) 
+  (let ((e0->0 (make-env '(0 0 1 1) :end 10000))
+	(e0->1 (make-env '(0 1 1 0) :end 10000))
+	(e1->0 (make-env '(0 1 1 0) :end 10000))
+	(e1->1 (make-env '(0 0 1 1) :end 10000)))
+    (fullmix "one-2.snd" 0 .2 0 (list (list e0->0 e0->1) (list e1->0 e1->1)) #f .1)))
 |#
+
 
 
 ;;; bes-fm -- can also use bes-j0 here as in earlier versions

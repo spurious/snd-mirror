@@ -1,5 +1,5 @@
 /* run macro
- *   initial timing tests indicate that this is 10 times as fast as Guile.
+ *   
  *   Rather than write/compile (via gcc) a C source file, as in CLM, this
  *   produces the intermediate "triples" on the fly, packaging them into
  *   a "program" (a list of triples), and precomputing all function, program,
@@ -599,7 +599,6 @@ static int add_new_type(const char *new_type)
 static int name_to_type(const char *name)
 {
   int i;
-  /* fprintf(stderr,"name -> type: %s\n", name); */
   for (i = 0; i <= last_type; i++)
     if (mus_strcmp(name, type_names[i]))
       return(i);

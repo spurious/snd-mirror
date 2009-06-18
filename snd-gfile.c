@@ -1,6 +1,8 @@
 #include "snd.h"
 #include "snd-file.h"
 
+/* the error labels should probably by gtk-info-bars if >= 2.17.2 */
+
 /* various file-related dialogs:
    File|Edit:Save-as
    File:Open|View
