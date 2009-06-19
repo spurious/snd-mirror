@@ -48022,6 +48022,12 @@ EDITS: 1
     (let ((v (vector 1.0 2.0 3.0)))
       (let ((val (run (lambda () (v 1)))))
 	(if (fneq val 2.0) (snd-display ";run (v 1) as vector: ~A" val))))
+    (let ((v (vct 1.0 2.0 3.0))) 
+      (run (lambda () (set! (v 1) 0.5)))
+      (if (fneq (vct-ref v 1) 0.5) (snd-display ";run set (v 1): ~A" (vct-ref v 1))))
+    (let ((v (vector 1.0 2.0 3.0))) 
+      (let ((val (run (lambda () (set! (v 1) 0.5) (vector-ref v 1)))))
+	(if (fneq val 0.5) (snd-display ";run vector-set (v 1): ~A" val))))
     
     (btst '(let ((sd (make-sound-data 2 2))) (sound-data? sd)) #t)
     (btst '(sound-data? "hi") #f)

@@ -97,7 +97,6 @@
  * would it simplify variable handling to store everything as xen_value?
  *
  * TODO: (let ((pr (cons 1 2))) (run (lambda () (if pr 1 2)))) -> if: bad selector? pr
- * TODO: s7 vector/vct syntax [the ref part of this seems to work now]
  * TODO: run doesn't always warn about a closure (explicit gen basically) -- if it's used directly,
  *         there's no warning, but it doesn't handle the closed-over variables correctly
  * TODO: vector<->vct
@@ -5202,29 +5201,33 @@ static xen_value *generalized_set_form(ptree *prog, XEN form)
 	  return(rv);
 	}
 
-      in_settee = XEN_CAR(settee);
+      in_settee = XEN_CAR(settee);    
       if (XEN_NOT_NULL_P(XEN_CDR(settee)))
 	{
 	  in_v0 = walk(prog, XEN_CADR(settee), NEED_ANY_RESULT);
 	  if ((in_v0) &&
-	      (in_v0->type != R_UNSPECIFIED) &&
-	      (in_v0->constant != R_CONSTANT))
+	      (in_v0->type != R_UNSPECIFIED))
+
 	    {
-	      if (XEN_NOT_NULL_P(XEN_CDDR(settee)))
+	      if (in_v0->constant != R_CONSTANT)
 		{
-		  in_v1 = walk(prog, XEN_CADDR(settee), NEED_ANY_RESULT);
-		  if ((in_v1) &&
-		      (in_v1->type != R_UNSPECIFIED))
+		  if (XEN_NOT_NULL_P(XEN_CDDR(settee)))
 		    {
-		      if (XEN_NOT_NULL_P(XEN_CDDDR(settee)))
+		      in_v1 = walk(prog, XEN_CADDR(settee), NEED_ANY_RESULT);
+		      if ((in_v1) &&
+			  (in_v1->type != R_UNSPECIFIED))
 			{
-			  in_v2 = walk(prog, XEN_CADDDR(settee), NEED_ANY_RESULT);
-			  if ((in_v2) &&
-			      (in_v2->type != R_UNSPECIFIED))
-			    return(lookup_generalized_set(prog, in_settee, in_v0, in_v1, in_v2, v));
+			  if (XEN_NOT_NULL_P(XEN_CDDDR(settee)))
+			    {
+			      in_v2 = walk(prog, XEN_CADDDR(settee), NEED_ANY_RESULT);
+			      if ((in_v2) &&
+				  (in_v2->type != R_UNSPECIFIED))
+				return(lookup_generalized_set(prog, in_settee, in_v0, in_v1, in_v2, v));
+			    }
+			  else return(lookup_generalized_set(prog, in_settee, in_v0, in_v1, NULL, v));
 			}
-		      else return(lookup_generalized_set(prog, in_settee, in_v0, in_v1, NULL, v));
 		    }
+		  else return(lookup_generalized_set(prog, in_settee, in_v0, NULL, NULL, v));
 		}
 	      else return(lookup_generalized_set(prog, in_settee, in_v0, NULL, NULL, v));
 	    }
@@ -10354,7 +10357,7 @@ static xen_value *vct_n(ptree *prog, xen_value **args, int num_args, xen_value *
   /* (let ((v (make-vct 3 1.0))) (run (lambda () (v 0)))) */
   if (args[0]) free(args[0]);
   args[0] = make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, 0.0), R_VARIABLE);
-  add_triple_to_ptree(prog, va_make_triple(vct_nf, "vct_nf", 4, args[0], sf, args[1], args[2]));
+  add_triple_to_ptree(prog, va_make_triple(vct_nf, "vct_nf", 3, args[0], sf, args[1]));
   return(args[0]);
 }
 
@@ -15865,6 +15868,21 @@ static xen_value *lookup_generalized_set(ptree *prog, XEN acc_form, xen_value *i
 	    }
 	}
     }
+
+  { /* (let ((v (vct 1.0 2.0 3.0))) (run (lambda () (set! (v 1) 0.5)))) */
+    xen_value *val;
+    val = walk(prog, acc_form, DONT_NEED_RESULT);
+    if (val)
+      {
+	if ((val->type == R_VCT) ||
+	    (val->type == R_FLOAT_VECTOR))
+	  {
+	    vct_set_1(prog, val, in_v, NULL, v);
+	    happy = 1;
+	  }
+	free(val);
+      }
+  }
 
   if (in_v) free(in_v);
   if (in_v1) free(in_v1);

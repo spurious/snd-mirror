@@ -82,3 +82,6 @@
       "increase spectro-y-angle by 1.0"
       (set! (spectro-y-angle) (min 359.0 (+ (spectro-y-angle) 1.0)))))
   )
+
+
+(if (not (defined? 'in-hz)) (define in-hz hz->radians))
