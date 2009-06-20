@@ -10,15 +10,14 @@
 	  (snd-error (format #f "new-effects.scm needs the xm module (either 'make xm' or build Snd with --with-static-xm): ~A" hxm))
 	  (dlinit hxm "Init_libxm"))))
 
-(if (not (defined? 'raise-dialog))
-    (define (raise-dialog w)
-      "(raise-dialog w) tries to put 'w' on top of any widgets that are obscuring it"
-      (if (and (Widget? w) 
-	       (XtIsManaged w))
-	  (let ((parent (XtParent w)))
-	    (if (and (Widget? parent)
-		     (XtIsSubclass parent xmDialogShellWidgetClass))
-		(XtPopup parent XtGrabNone))))))
+(define (raise-dialog w)
+  "(raise-dialog w) tries to put 'w' on top of any widgets that are obscuring it"
+  (if (and (Widget? w) 
+	   (XtIsManaged w))
+      (let ((parent (XtParent w)))
+	(if (and (Widget? parent)
+		 (XtIsSubclass parent xmDialogShellWidgetClass))
+	    (XtPopup parent XtGrabNone)))))
 
 (define (activate-dialog dialog)
   "(activate-dialog dialog) makes 'dialog' active and brings it to the top of the currently displayed widgets"
@@ -26,15 +25,14 @@
       (XtManageChild dialog)
       (raise-dialog dialog)))
 
-(if (not (defined? 'for-each-child))
-    (define (for-each-child w func)
-      "(for-each-child w func) applies 'func' to 'w' and to its descendents"
-      (func w)
-      (if (XtIsComposite w)
-	  (for-each 
-	   (lambda (n)
-	     (for-each-child n func))
-	   (cadr (XtGetValues w (list XmNchildren 0) 1))))))
+(define (for-each-child w func)
+  "(for-each-child w func) applies 'func' to 'w' and to its descendents"
+  (func w)
+  (if (XtIsComposite w)
+      (for-each 
+       (lambda (n)
+	 (for-each-child n func))
+       (cadr (XtGetValues w (list XmNchildren 0) 1)))))
 
 (define use-combo-box-for-fft-size #f) ; cross-synthesis fft size: radio-buttons or combo-box choice
 

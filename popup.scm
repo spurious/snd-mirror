@@ -20,15 +20,14 @@
 	  (snd-error (format #f "popup.scm needs the xm module (either 'make xm' or build Snd with --with-static-xm): ~A" hxm))
 	  (dlinit hxm "Init_libxm"))))
 
-(if (not (defined? 'for-each-child))
-    (define (for-each-child w func)
-      "(for-each-child widget func) applies func to widget and each of its children"
-      (func w)
-      (if (XtIsComposite w)
-	  (for-each 
-	   (lambda (n)
-	     (for-each-child n func))
-	   (cadr (XtGetValues w (list XmNchildren 0) 1))))))
+(define (for-each-child w func)
+  "(for-each-child widget func) applies func to widget and each of its children"
+  (func w)
+  (if (XtIsComposite w)
+      (for-each 
+       (lambda (n)
+	 (for-each-child n func))
+       (cadr (XtGetValues w (list XmNchildren 0) 1)))))
 
 (define (change-label w new-label)
   "(change-label widget new-label) changes widget's label to be new-label"

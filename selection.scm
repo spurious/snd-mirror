@@ -22,17 +22,16 @@
 (provide 'snd-selection.scm)
 
 
-(if (not (defined? 'all-chans))
-    (define (all-chans)
-      (let ((sndlist '())
-	    (chnlist '()))
-	(for-each (lambda (snd)
-		    (do ((i (- (channels snd) 1) (- i 1)))
-			((< i 0))
-		      (set! sndlist (cons snd sndlist))
-		      (set! chnlist (cons i chnlist))))
-		  (sounds))
-	(list sndlist chnlist))))
+(define (all-chans)
+  (let ((sndlist '())
+	(chnlist '()))
+    (for-each (lambda (snd)
+		(do ((i (- (channels snd) 1) (- i 1)))
+		    ((< i 0))
+		  (set! sndlist (cons snd sndlist))
+		  (set! chnlist (cons i chnlist))))
+	      (sounds))
+    (list sndlist chnlist)))
 
 
 

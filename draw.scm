@@ -5,14 +5,6 @@
 (provide 'snd-draw.scm)
 (if (not (provided? 'snd-extensions.scm)) (load-from-path "extensions.scm"))
 
-;; these two are in dsp.scm
-(if (not (defined? 'make-moving-rms))
-    (define* (make-moving-rms :optional (size 128))
-      (make-moving-average size)))
-
-(if (not (defined? 'moving-rms))
-    (define (moving-rms gen y)
-      (sqrt (moving-average gen (* y y)))))
 
 (define (overlay-rms-env snd chn)
   (let* ((red (make-color 1 0 0))            ; rms env displayed in red
@@ -64,6 +56,12 @@
 	    (if (<= val (vct-ref v 0))
 		(vct-ref v 2)
 		(+ (vct-ref v 5) (* val (vct-ref v 4))))))))
+
+    (define* (make-moving-rms :optional (size 128))
+      (make-moving-average size))
+
+    (define (moving-rms gen y)
+      (sqrt (moving-average gen (* y y))))
 
     (if (equal? axinf old-axinf)                    ; the previously calculated lines can be re-used
 	(begin

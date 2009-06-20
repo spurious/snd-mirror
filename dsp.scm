@@ -6,10 +6,9 @@
 (if (not (provided? 'snd-ws.scm)) (load-from-path "ws.scm"))
 (if (not (provided? 'snd-generators.scm)) (load-from-path "generators.scm")) ; moving-*
 
-(if (not (defined? 'log10))
-    (define (log10 a) 
-      "(log10 a) returns the log base 10 of 'a'"
-      (/ (log a) (log 10))))
+(define (log10 a) 
+  "(log10 a) returns the log base 10 of 'a'"
+  (/ (log a) (log 10)))
 
 ;;; src-duration (see src-channel in extsnd.html)
 
@@ -1823,216 +1822,218 @@ and replaces it with the spectrum given in coeffs"
 
 ;;; -------- spectrum displayed in various frequency scales
 
-(if (not (defined? 'snd-color))
-    (define (snd-color . args) #f)) ; no-gui case I guess
-
 (define display-bark-fft
   ;; click in lisp-graph to change the tick placement choice
 
-  (let ((bark-fft-size 0)
-	(bark-tick-function 0)
-	(color1 (snd-color 8))  ; selected-data-color
-	(color2 (snd-color 2))  ; red
-	(color3 (snd-color 4))) ; blue
-
-    (define (bark f) 
-      (let ((f2 (/ f 7500))) 
-	(+ (* 13.5 (atan (* .00076 f))) (* 3.5 (atan (* f2 f2))))))
-    
-    (define (mel f) 
-      (* 1127 (log (+ 1.0 (/ f 700.0)))))
-    
-    (define (erb f) 
-      (+ 43.0 (* 11.17 (log (/ (+ f 312) (+ f 14675))))))
-    
-    (define (display-bark-fft-1 snd chn)
-      (let* ((ls (left-sample snd chn))
-	     (rs (right-sample snd chn))
-	     (fftlen (inexact->exact (expt 2 (inexact->exact (ceiling (/ (log (+ 1 (- rs ls))) (log 2))))))))
-	(if (> fftlen 0)
-	    (let ((data (channel->vct ls fftlen snd chn))
-		  (normalized (not (= (transform-normalization snd chn) dont-normalize)))
-		  (linear #t))                               ; can't currently show lisp graph in dB 
-	      ;; snd-axis make_axes: WITH_LOG_Y_AXIS, but LINEAR currently in snd-chn.c 3250
-	      (if (vct? data)
-		  (let ((fft (snd-spectrum data              ; returns fftlen / 2 data points
-					   (fft-window snd chn) fftlen linear 
-					   (fft-window-beta snd chn) #f normalized)))
-		    (if (vct? fft)
-			(let* ((sr (srate snd))
-			       (mx (vct-peak fft))
-			       (data-len (vct-length fft))
-			       
-			       ;; bark settings
-			       (bark-low (floor (bark 20.0)))
-			       (bark-high (ceiling (bark (* 0.5 sr))))
-			       (bark-frqscl (/ data-len (- bark-high bark-low)))
-			       (bark-data (make-vct data-len))
-			       
-			       ;; mel settings
-			       (mel-low (floor (mel 20.0)))
-			       (mel-high (ceiling (mel (* 0.5 sr))))
-			       (mel-frqscl (/ data-len (- mel-high mel-low)))
-			       (mel-data (make-vct data-len))
-			       
-			       ;; erb settings
-			       (erb-low (floor (erb 20.0)))
-			       (erb-high (ceiling (erb (* 0.5 sr))))
-			       (erb-frqscl (/ data-len (- erb-high erb-low)))
-			       (erb-data (make-vct data-len)))
-			  
-			  (set! bark-fft-size fftlen)
-			  
-			  (run 
-			   (lambda ()
-			     (do ((i 0 (+ i 1)))
-				 ((= i data-len))
-			       (let* ((val (vct-ref fft i))
-				      (frq (* sr (/ i fftlen)))
-				      (bark-bin (inexact->exact (round (* bark-frqscl (- (bark frq) bark-low)))))
-				      (mel-bin (inexact->exact (round (* mel-frqscl (- (mel frq) mel-low)))))
-				      (erb-bin (inexact->exact (round (* erb-frqscl (- (erb frq) erb-low))))))
-				 (if (and (>= bark-bin 0)
-					  (< bark-bin data-len))
-				     (vct-set! bark-data bark-bin (+ val (vct-ref bark-data bark-bin))))
-				 (if (and (>= mel-bin 0)
-					  (< mel-bin data-len))
-				     (vct-set! mel-data mel-bin (+ val (vct-ref mel-data mel-bin))))
-				 (if (and (>= erb-bin 0)
-					  (< erb-bin data-len))
-				     (vct-set! erb-data erb-bin (+ val (vct-ref erb-data erb-bin))))))
-			     
-			     (if normalized
-				 (let ((bmx (vct-peak bark-data))
-				       (mmx (vct-peak mel-data))
-				       (emx (vct-peak erb-data)))
-				   (if (> (abs (- mx bmx)) .01)
-				       (vct-scale! bark-data (/ mx bmx)))
-				   (if (> (abs (- mx mmx)) .01)
-				       (vct-scale! mel-data (/ mx mmx)))
-				   (if (> (abs (- mx emx)) .01)
-				       (vct-scale! erb-data (/ mx emx)))))))
-			  
-			  (graph (list bark-data mel-data erb-data) 
-				 "ignored" 
-				 20.0 (* 0.5 sr) 
-				 0.0 (if normalized 1.0 (* data-len (y-zoom-slider snd chn)))
-				 snd chn 
-				 #f show-bare-x-axis)))))))
-	
-	(list color1 color2 color3))) ; tell lisp graph display what colors to use
-    
-    (define (make-bark-labels snd chn)
-      ;; at this point the x axis has no markings, but there is room for labels and ticks
+  (let ((snd-color-1 (lambda args
+		       (if (defined? 'snd-color)
+			   (apply snd-color args)
+			   #f)))) ; no-gui case I guess
+		       
+    (let ((bark-fft-size 0)
+	  (bark-tick-function 0)
+	  (color1 (snd-color-1 8))  ; selected-data-color
+	  (color2 (snd-color-1 2))  ; red
+	  (color3 (snd-color-1 4))) ; blue
       
-      (let ((old-foreground-color (foreground-color snd chn copy-context)))
+      (define (bark f) 
+	(let ((f2 (/ f 7500))) 
+	  (+ (* 13.5 (atan (* .00076 f))) (* 3.5 (atan (* f2 f2))))))
+      
+      (define (mel f) 
+	(* 1127 (log (+ 1.0 (/ f 700.0)))))
+      
+      (define (erb f) 
+	(+ 43.0 (* 11.17 (log (/ (+ f 312) (+ f 14675))))))
+      
+      (define (display-bark-fft-1 snd chn)
+	(let* ((ls (left-sample snd chn))
+	       (rs (right-sample snd chn))
+	       (fftlen (inexact->exact (expt 2 (inexact->exact (ceiling (/ (log (+ 1 (- rs ls))) (log 2))))))))
+	  (if (> fftlen 0)
+	      (let ((data (channel->vct ls fftlen snd chn))
+		    (normalized (not (= (transform-normalization snd chn) dont-normalize)))
+		    (linear #t))                               ; can't currently show lisp graph in dB 
+		;; snd-axis make_axes: WITH_LOG_Y_AXIS, but LINEAR currently in snd-chn.c 3250
+		(if (vct? data)
+		    (let ((fft (snd-spectrum data              ; returns fftlen / 2 data points
+					     (fft-window snd chn) fftlen linear 
+					     (fft-window-beta snd chn) #f normalized)))
+		      (if (vct? fft)
+			  (let* ((sr (srate snd))
+				 (mx (vct-peak fft))
+				 (data-len (vct-length fft))
+				 
+				 ;; bark settings
+				 (bark-low (floor (bark 20.0)))
+				 (bark-high (ceiling (bark (* 0.5 sr))))
+				 (bark-frqscl (/ data-len (- bark-high bark-low)))
+				 (bark-data (make-vct data-len))
+				 
+				 ;; mel settings
+				 (mel-low (floor (mel 20.0)))
+				 (mel-high (ceiling (mel (* 0.5 sr))))
+				 (mel-frqscl (/ data-len (- mel-high mel-low)))
+				 (mel-data (make-vct data-len))
+				 
+				 ;; erb settings
+				 (erb-low (floor (erb 20.0)))
+				 (erb-high (ceiling (erb (* 0.5 sr))))
+				 (erb-frqscl (/ data-len (- erb-high erb-low)))
+				 (erb-data (make-vct data-len)))
+			    
+			    (set! bark-fft-size fftlen)
+			    
+			    (run 
+			     (lambda ()
+			       (do ((i 0 (+ i 1)))
+				   ((= i data-len))
+				 (let* ((val (vct-ref fft i))
+					(frq (* sr (/ i fftlen)))
+					(bark-bin (inexact->exact (round (* bark-frqscl (- (bark frq) bark-low)))))
+					(mel-bin (inexact->exact (round (* mel-frqscl (- (mel frq) mel-low)))))
+					(erb-bin (inexact->exact (round (* erb-frqscl (- (erb frq) erb-low))))))
+				   (if (and (>= bark-bin 0)
+					    (< bark-bin data-len))
+				       (vct-set! bark-data bark-bin (+ val (vct-ref bark-data bark-bin))))
+				   (if (and (>= mel-bin 0)
+					    (< mel-bin data-len))
+				       (vct-set! mel-data mel-bin (+ val (vct-ref mel-data mel-bin))))
+				   (if (and (>= erb-bin 0)
+					    (< erb-bin data-len))
+				       (vct-set! erb-data erb-bin (+ val (vct-ref erb-data erb-bin))))))
+			       
+			       (if normalized
+				   (let ((bmx (vct-peak bark-data))
+					 (mmx (vct-peak mel-data))
+					 (emx (vct-peak erb-data)))
+				     (if (> (abs (- mx bmx)) .01)
+					 (vct-scale! bark-data (/ mx bmx)))
+				     (if (> (abs (- mx mmx)) .01)
+					 (vct-scale! mel-data (/ mx mmx)))
+				     (if (> (abs (- mx emx)) .01)
+					 (vct-scale! erb-data (/ mx emx)))))))
+			    
+			    (graph (list bark-data mel-data erb-data) 
+				   "ignored" 
+				   20.0 (* 0.5 sr) 
+				   0.0 (if normalized 1.0 (* data-len (y-zoom-slider snd chn)))
+				   snd chn 
+				   #f show-bare-x-axis)))))))
+	  
+	  (list color1 color2 color3))) ; tell lisp graph display what colors to use
+      
+      (define (make-bark-labels snd chn)
+	;; at this point the x axis has no markings, but there is room for labels and ticks
 	
-	(let* ((axinfo (axis-info snd chn lisp-graph))
-	       (axis-x0 (list-ref axinfo 10))
-	       (axis-x1 (list-ref axinfo 12))
-	       (axis-y0 (list-ref axinfo 13))
-	       (axis-y1 (list-ref axinfo 11))
-	       (label-height 15)
-	       (char-width 8)
-	       (sr2 (* 0.5 (srate snd)))
-	       (minor-tick-len 6)
-	       (major-tick-len 12)
-	       (tick-y0 axis-y1)
-	       (minor-y0 (+ axis-y1 minor-tick-len))
-	       (major-y0 (+ axis-y1 major-tick-len))
-	       (bark-label-font (snd-font 3))
-	       (bark-numbers-font (snd-font 2))
-	       (label-pos (inexact->exact (+ axis-x0 (* .45 (- axis-x1 axis-x0))))))
+	(let ((old-foreground-color (foreground-color snd chn copy-context)))
 	  
-	  (define (scale-position scale f)
-	    (let ((b20 (scale 20.0)))
-	      (inexact->exact (round (+ axis-x0 
-					(/ (* (- axis-x1 axis-x0) (- (scale f) b20)) 
-					   (- (scale sr2) b20)))))))
-	  
-	  (define (bark-position f) (scale-position bark f))
-	  (define (mel-position f) (scale-position mel f))
-	  (define (erb-position f) (scale-position erb f))
-	  
-	  (define (draw-bark-ticks bark-function)
-	    (if bark-numbers-font (set! (current-font snd chn copy-context) bark-numbers-font))
+	  (let* ((axinfo (axis-info snd chn lisp-graph))
+		 (axis-x0 (list-ref axinfo 10))
+		 (axis-x1 (list-ref axinfo 12))
+		 (axis-y0 (list-ref axinfo 13))
+		 (axis-y1 (list-ref axinfo 11))
+		 (label-height 15)
+		 (char-width 8)
+		 (sr2 (* 0.5 (srate snd)))
+		 (minor-tick-len 6)
+		 (major-tick-len 12)
+		 (tick-y0 axis-y1)
+		 (minor-y0 (+ axis-y1 minor-tick-len))
+		 (major-y0 (+ axis-y1 major-tick-len))
+		 (bark-label-font (snd-font 3))
+		 (bark-numbers-font (snd-font 2))
+		 (label-pos (inexact->exact (+ axis-x0 (* .45 (- axis-x1 axis-x0))))))
 	    
-	    (draw-line axis-x0 tick-y0 axis-x0 major-y0 snd chn copy-context)
-	    (let* ((i1000 (scale-position bark-function 1000.0))
-		   (i10000 (scale-position bark-function 10000.0)))
+	    (define (scale-position scale f)
+	      (let ((b20 (scale 20.0)))
+		(inexact->exact (round (+ axis-x0 
+					  (/ (* (- axis-x1 axis-x0) (- (scale f) b20)) 
+					     (- (scale sr2) b20)))))))
+	    
+	    (define (bark-position f) (scale-position bark f))
+	    (define (mel-position f) (scale-position mel f))
+	    (define (erb-position f) (scale-position erb f))
+	    
+	    (define (draw-bark-ticks bark-function)
+	      (if bark-numbers-font (set! (current-font snd chn copy-context) bark-numbers-font))
 	      
-	      (draw-line i1000 tick-y0 i1000 major-y0 snd chn copy-context)
-	      (draw-line i10000 tick-y0 i10000 major-y0 snd chn copy-context)
-	      
-	      (draw-string "20" axis-x0 major-y0 snd chn copy-context)
-	      (draw-string "1000" (- i1000 (* 3 4)) major-y0 snd chn copy-context)
-	      (draw-string "10000" (- i10000 (* 6 4)) major-y0 snd chn copy-context)
-	      
-	      (draw-string (format #f "fft size: ~D" bark-fft-size) (+ axis-x0 10) axis-y0 snd chn copy-context)
-	      
-	      (do ((i 100 (+ i 100)))
-		  ((= i 1000))
-		(let* ((i100 (scale-position bark-function i)))
-		  (draw-line i100 tick-y0 i100 minor-y0 snd chn copy-context)))
-	      
-	      (do ((i 2000 (+ i 1000)))
-		  ((= i 10000))
-		(let* ((i1000 (scale-position bark-function i)))
-		  (draw-line i1000 tick-y0 i1000 minor-y0 snd chn copy-context)))))
-
-	  ;; bark label/ticks
-	  (set! (foreground-color snd chn copy-context) color1)
-	  (if (= bark-tick-function 0) (draw-bark-ticks bark-position))
-	  (if bark-label-font (set! (current-font snd chn copy-context) bark-label-font))
-	  (draw-string "bark," label-pos (+ axis-y1 label-height) snd chn copy-context)
+	      (draw-line axis-x0 tick-y0 axis-x0 major-y0 snd chn copy-context)
+	      (let* ((i1000 (scale-position bark-function 1000.0))
+		     (i10000 (scale-position bark-function 10000.0)))
+		
+		(draw-line i1000 tick-y0 i1000 major-y0 snd chn copy-context)
+		(draw-line i10000 tick-y0 i10000 major-y0 snd chn copy-context)
+		
+		(draw-string "20" axis-x0 major-y0 snd chn copy-context)
+		(draw-string "1000" (- i1000 (* 3 4)) major-y0 snd chn copy-context)
+		(draw-string "10000" (- i10000 (* 6 4)) major-y0 snd chn copy-context)
+		
+		(draw-string (format #f "fft size: ~D" bark-fft-size) (+ axis-x0 10) axis-y0 snd chn copy-context)
+		
+		(do ((i 100 (+ i 100)))
+		    ((= i 1000))
+		  (let* ((i100 (scale-position bark-function i)))
+		    (draw-line i100 tick-y0 i100 minor-y0 snd chn copy-context)))
+		
+		(do ((i 2000 (+ i 1000)))
+		    ((= i 10000))
+		  (let* ((i1000 (scale-position bark-function i)))
+		    (draw-line i1000 tick-y0 i1000 minor-y0 snd chn copy-context)))))
+	    
+	    ;; bark label/ticks
+	    (set! (foreground-color snd chn copy-context) color1)
+	    (if (= bark-tick-function 0) (draw-bark-ticks bark-position))
+	    (if bark-label-font (set! (current-font snd chn copy-context) bark-label-font))
+	    (draw-string "bark," label-pos (+ axis-y1 label-height) snd chn copy-context)
+	    
+	    ;; mel label/ticks
+	    (set! (foreground-color snd chn copy-context) color2)
+	    (if (= bark-tick-function 1) (draw-bark-ticks mel-position))
+	    (if bark-label-font (set! (current-font snd chn copy-context) bark-label-font))
+	    (draw-string "mel," (+ (* char-width 6) label-pos) (+ axis-y1 label-height) snd chn copy-context)
+	    
+	    ;; erb label/ticks
+	    (set! (foreground-color snd chn copy-context) color3)
+	    (if (= bark-tick-function 2) (draw-bark-ticks erb-position))
+	    (if bark-label-font (set! (current-font snd chn copy-context) bark-label-font))
+	    (draw-string "erb" (+ (* char-width (+ 6 5)) label-pos) (+ axis-y1 label-height) snd chn copy-context))
 	  
-	  ;; mel label/ticks
-	  (set! (foreground-color snd chn copy-context) color2)
-	  (if (= bark-tick-function 1) (draw-bark-ticks mel-position))
-	  (if bark-label-font (set! (current-font snd chn copy-context) bark-label-font))
-	  (draw-string "mel," (+ (* char-width 6) label-pos) (+ axis-y1 label-height) snd chn copy-context)
-	  
-	  ;; erb label/ticks
-	  (set! (foreground-color snd chn copy-context) color3)
-	  (if (= bark-tick-function 2) (draw-bark-ticks erb-position))
-	  (if bark-label-font (set! (current-font snd chn copy-context) bark-label-font))
-	  (draw-string "erb" (+ (* char-width (+ 6 5)) label-pos) (+ axis-y1 label-height) snd chn copy-context))
-	
-	(set! (foreground-color snd chn copy-context) old-foreground-color)))
-    
-    ;; mouse click = move to next scale's ticks
-    (define (choose-bark-ticks snd chn button state x y axis)
-      (if (= axis lisp-graph)
-	  (begin
-	    (set! bark-tick-function (+ 1 bark-tick-function))
-	    (if (> bark-tick-function 2)
-		(set! bark-tick-function 0))
-	    (update-lisp-graph snd chn))))
-    
-    ;; user's view of display-bark-fft function
-    (lambda* (:optional off col1 col2 col3)
-      (if col1 (set! color1 col1))
-      (if col2 (set! color2 col2))
-      (if col3 (set! color3 col3))
-      (if (not off)
-	  (begin
-	    (add-hook! lisp-graph-hook display-bark-fft-1)
-	    (add-hook! after-lisp-graph-hook make-bark-labels)
-	    (add-hook! mouse-click-hook choose-bark-ticks)
-	    (for-each (lambda (snd)
-			(do ((c 0 (+ 1 c)))
-			    ((= c (chans snd)))
-			  (update-lisp-graph snd c)))
-		      (sounds)))
-	  (begin
-	    (remove-hook! lisp-graph-hook display-bark-fft-1)
-	    (remove-hook! after-lisp-graph-hook make-bark-labels)
-	    (remove-hook! mouse-click-hook choose-bark-ticks)
-	    (for-each (lambda (snd)
-			(do ((c 0 (+ 1 c)))
-			    ((= c (chans snd)))
-			  (set! (lisp-graph? snd c) #f)))
-		      (sounds)))))))
+	  (set! (foreground-color snd chn copy-context) old-foreground-color)))
+      
+      ;; mouse click = move to next scale's ticks
+      (define (choose-bark-ticks snd chn button state x y axis)
+	(if (= axis lisp-graph)
+	    (begin
+	      (set! bark-tick-function (+ 1 bark-tick-function))
+	      (if (> bark-tick-function 2)
+		  (set! bark-tick-function 0))
+	      (update-lisp-graph snd chn))))
+      
+      ;; user's view of display-bark-fft function
+      (lambda* (:optional off col1 col2 col3)
+	       (if col1 (set! color1 col1))
+	       (if col2 (set! color2 col2))
+	       (if col3 (set! color3 col3))
+	       (if (not off)
+		   (begin
+		     (add-hook! lisp-graph-hook display-bark-fft-1)
+		     (add-hook! after-lisp-graph-hook make-bark-labels)
+		     (add-hook! mouse-click-hook choose-bark-ticks)
+		     (for-each (lambda (snd)
+				 (do ((c 0 (+ 1 c)))
+				     ((= c (chans snd)))
+				   (update-lisp-graph snd c)))
+			       (sounds)))
+		   (begin
+		     (remove-hook! lisp-graph-hook display-bark-fft-1)
+		     (remove-hook! after-lisp-graph-hook make-bark-labels)
+		     (remove-hook! mouse-click-hook choose-bark-ticks)
+		     (for-each (lambda (snd)
+				 (do ((c 0 (+ 1 c)))
+				     ((= c (chans snd)))
+				   (set! (lisp-graph? snd c) #f)))
+			       (sounds))))))))
 
 (define (undisplay-bark-fft) (display-bark-fft #t))
 
@@ -2043,9 +2044,9 @@ and replaces it with the spectrum given in coeffs"
 (define (lpc-coeffs data n m)
   ;; translated and changed to use 0-based arrays from memcof of NRinC
   ;; not vcts except incoming data here because we need double precision
-
+  
   "(lpc-coeffs data n m) returns 'm' LPC coeffients (in a vector) given 'n' data points in the vct 'data'"
-
+  
   (letrec ((sqr (lambda (x) (* x x))))
     (let ((d (make-vector m 0.0))
 	  (wk1 (make-vector n 0.0))

@@ -61,20 +61,6 @@
 (provide 'snd-examp.scm)
 (if (not (provided? 'snd-ws.scm)) (load-from-path "ws.scm"))
 
-(if (not (defined? 'all-chans))
-    (define (all-chans)
-      "(all-chans) -> two parallel lists, the first snd indices, the second channel numbers.  If we have 
-two sounds open (indices 0 and 1 for example), and the second has two channels, (all-chans) returns '((0 1 1) (0 0 1))"
-      (let ((sndlist '())
-	    (chnlist '()))
-	(for-each (lambda (snd)
-		    (do ((i (- (channels snd) 1) (- i 1)))
-			((< i 0))
-		      (set! sndlist (cons snd sndlist))
-		      (set! chnlist (cons i chnlist))))
-		  (sounds))
-	(list sndlist chnlist))))
-
 
 ;;; -------- (ext)snd.html examples made harder to break --------
 ;;;
@@ -147,16 +133,15 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 
 ;(add-hook! lisp-graph-hook display-energy)
 
-(if (not (defined? 'log10))
-    (define (log10 a) 
-      "(log10 a) returns the log base 10 of 'a'"
-      (/ (log a) (log 10))))
-
 
 (define display-db
   (lambda (snd chn)
     "(display-db snd chn) is a lisp-graph-hook function to display the time domain data in dB"
     (let ((datal (make-graph-data snd chn)))
+
+      (define (log10 a) 
+	(/ (log a) (log 10)))
+
       (if datal
 	  (let* ((data (if (vct? datal) datal (cadr datal)))
 		 (len (vct-length data))
@@ -665,6 +650,19 @@ read an ASCII sound file"
 
 ;;; -------- mapping extensions (map arbitrary single-channel function over various channel collections)
 ;;;
+
+(define (all-chans)
+  "(all-chans) -> two parallel lists, the first snd indices, the second channel numbers.  If we have 
+two sounds open (indices 0 and 1 for example), and the second has two channels, (all-chans) returns '((0 1 1) (0 0 1))"
+  (let ((sndlist '())
+	(chnlist '()))
+    (for-each (lambda (snd)
+		(do ((i (- (channels snd) 1) (- i 1)))
+		    ((< i 0))
+		  (set! sndlist (cons snd sndlist))
+		  (set! chnlist (cons i chnlist))))
+	      (sounds))
+    (list sndlist chnlist)))
 
 (define* (do-all-chans func :optional origin)
   "(do-all-chans func edhist) applies func to all active channels, using edhist as the edit history 
@@ -2032,17 +2030,16 @@ In most cases, this will be slightly offset from the true beginning of the note"
 
 ;;; -------- file->vct and a sort of cue-list, I think
 
-(if (not (defined? 'file->vct))
-    (define (file->vct file)
-      "(file->vct file) returns a vct with file's data"
-      (let* ((len (mus-sound-frames file))
-	     (reader (make-sample-reader 0 file))
-	     (data (make-vct len)))
-	(do ((i 0 (+ i 1)))
-	    ((= i len))
-	  (vct-set! data i (next-sample reader)))
-	(free-sample-reader reader)
-	data)))
+(define (file->vct file)
+  "(file->vct file) returns a vct with file's data"
+  (let* ((len (mus-sound-frames file))
+	 (reader (make-sample-reader 0 file))
+	 (data (make-vct len)))
+    (do ((i 0 (+ i 1)))
+	((= i len))
+      (vct-set! data i (next-sample reader)))
+    (free-sample-reader reader)
+    data))
 
 
 (define* (add-notes notes :optional snd chn)

@@ -1,7 +1,5 @@
 ;;; a script to search for allocation mismatches and unterminated XtVa args 
 
-(if (not (defined? 'sort))
-    (begin
       (define sort!
 	;; http://www.math.grin.edu/~stone/events/scheme-workshop/quicksort.html
 	(lambda (ls . opt)
@@ -32,7 +30,6 @@
 			    (cons pivot (qs larges)))))))))
 
       (define (sort lst . opt) (sort! (append lst '()) (if (null? opt) < (car opt))))
-      ))
 
 (define xtva-ctr 0)
 

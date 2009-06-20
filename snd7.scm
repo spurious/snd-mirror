@@ -355,18 +355,16 @@
 	 (if (member after-save-as-hook-replace-sound (hook->list after-save-as-hook))
 	     (remove-hook! after-save-as-hook after-save-as-hook-replace-sound))))))
 
-(if (defined? 'send-mozilla) (define send-netscape send-mozilla))
-
-(if (not (defined? 'in-hz)) (define in-hz hz->radians))
-(if (not (defined? 'restart-env)) (define restart-env mus-reset))
+(define in-hz hz->radians)
+(define restart-env mus-reset)
 
 (define mixer-scale mixer*)
 (define mus-error-to-string mus-error-type->string)
 (define save-options save-state)
 (define delete-samples-with-origin delete-samples)
 
-(if (not (defined? 'default-output-type)) (define default-output-type default-output-header-type))
-(if (not (defined? 'default-output-format)) (define default-output-format default-output-data-format))
+(define default-output-type default-output-header-type)
+(define default-output-format default-output-data-format)
 
 (define previous-files-sort view-files-sort)
 ;; (define previous-files-sort-procedure view-files-sort-procedure)
@@ -375,10 +373,6 @@
 
 (define preload-directory add-directory-to-view-files-list)
 (define preload-file add-file-to-view-files-list)
-
-;(if (not (defined? 'recorder-in-format)) (define recorder-in-format recorder-in-data-format))
-;(if (not (defined? 'recorder-out-format)) (define recorder-out-format recorder-out-data-format))
-;(if (not (defined? 'recorder-out-type)) (define recorder-out-type recorder-out-header-type))
 
 (define (snd-apropos val)
   "(snd-apropos val) is a wrapper for Scheme's apropos"
@@ -414,11 +408,8 @@
 (define mus-audio-set-oss-buffers mus-oss-set-buffers)
 
 ;;; this was actually referring to the default (global) value, not file-specific
-(if (not (defined? 'mus-file-data-clipped)) 
-    (define mus-file-data-clipped mus-clipping))
-
-(if (not (defined? 'data-clipped))
-    (define data-clipped clipping))
+(define mus-file-data-clipped mus-clipping)
+(define data-clipped clipping)
 
 (define (dac-is-running) (playing))
 

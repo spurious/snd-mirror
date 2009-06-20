@@ -23,15 +23,14 @@
       (vector-set! p1 i (* scl (vector-ref p1 i))))
     p1))
 
-(if (not (defined? 'vector-copy))
-    (define (vector-copy p1)
-      "(vector-copy p1) returnns a copy of the vector p1"
-      (let* ((len (vector-length p1))
-	     (v (make-vector len)))
-	(do ((i 0 (+ i 1)))
-	    ((= i len))
-	  (vector-set! v i (vector-ref p1 i)))
-	v)))
+(define (vector-copy p1)
+  "(vector-copy p1) returnns a copy of the vector p1"
+  (let* ((len (vector-length p1))
+	 (v (make-vector len)))
+    (do ((i 0 (+ i 1)))
+	((= i len))
+      (vector-set! v i (vector-ref p1 i)))
+    v))
 
 (define (poly-as-vector-eval v x)
   "(poly-as-vector-eval v x) treats 'v' as a vector of polynomial coefficients, returning the value of the polynomial at x"

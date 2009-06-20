@@ -21,21 +21,12 @@
 (provide 'snd-extensions.scm)
 
 
-(if (not (defined? 'remove-if))
-    (define (remove-if pred l) ; from guile/ice-9/common-list.scm
-      "(remove-if func lst) removes any element from 'lst' that 'func' likes"
-      (let loop ((l l) (result '()))
-	(cond ((null? l) (reverse! result))
-	      ((pred (car l)) (loop (cdr l) result))
-	      (else (loop (cdr l) (cons (car l) result)))))))
-
-
-(if (not (defined? 'find-if))
-    (define (find-if pred l)
-      "(find-if func lst) scans 'lst' for any element that 'func' likes"
-      (cond ((null? l) #f)
-	    ((pred (car l)) (car l))
-	    (else (find-if pred (cdr l))))))
+(define (remove-if pred l) ; from guile/ice-9/common-list.scm
+  "(remove-if func lst) removes any element from 'lst' that 'func' likes"
+  (let loop ((l l) (result '()))
+    (cond ((null? l) (reverse! result))
+	  ((pred (car l)) (loop (cdr l) result))
+	  (else (loop (cdr l) (cons (car l) result))))))
 
 
 ;;; -------- channel-property
@@ -106,19 +97,19 @@
 
 
 
-(if (not (defined? 'all-chans))
-    (define (all-chans)
-      "(all-chans) -> two parallel lists, the first snd indices, the second channel numbers.  If we have
+
+(define (all-chans)
+  "(all-chans) -> two parallel lists, the first snd indices, the second channel numbers.  If we have
 two sounds open (indices 0 and 1 for example), and the second has two channels, (all-chans) returns '((0 1 1) (0 0 1))"
-      (let ((sndlist '())
-	    (chnlist '()))
-	(for-each (lambda (snd)
-		    (do ((i (- (channels snd) 1) (- i 1)))
-			((< i 0))
-		      (set! sndlist (cons snd sndlist))
-		      (set! chnlist (cons i chnlist))))
-		  (sounds))
-	(list sndlist chnlist))))
+  (let ((sndlist '())
+	(chnlist '()))
+    (for-each (lambda (snd)
+		(do ((i (- (channels snd) 1) (- i 1)))
+		    ((< i 0))
+		  (set! sndlist (cons snd sndlist))
+		  (set! chnlist (cons i chnlist))))
+	      (sounds))
+    (list sndlist chnlist)))
 
 
 
@@ -334,6 +325,12 @@ If 'check' is #f, the hooks are removed."
 			   field))
 			(format fd ")"))
 		      (format fd "~A" field))))))
+
+    (define (find-if pred l)
+      "(find-if func lst) scans 'lst' for any element that 'func' likes"
+      (cond ((null? l) #f)
+	    ((pred (car l)) (car l))
+	    (else (find-if pred (cdr l)))))
 
     (define saved-state
       (make-procedure-with-setter

@@ -14,11 +14,13 @@
 ;;;
 ;;; defgenerator
 
-(if (provided? 'snd-guile)
-    (define (symbol->value sym)
+
+(define (symbol->value-1 sym)
+  (if (provided? 'snd-guile)
       (if (defined? 'module-ref)
 	  (module-ref (current-module) sym) ; symbol-binding is deprecated
-	  (symbol-binding #f sym))))
+	  (symbol-binding #f sym))
+      (symbol->value sym)))
 
 ;;; this is provided directly in s7
 
@@ -192,8 +194,8 @@
 									       (if first-time " " ", ")
 									       field
 									       (if (string=? field "frequency")
-										   (radians->hz ((symbol->value (string->symbol (string-append ,sname "-" field))) g))
-										   ((symbol->value (string->symbol (string-append ,sname "-" field))) g)))))
+										   (radians->hz ((symbol->value-1 (string->symbol (string-append ,sname "-" field))) g))
+										   ((symbol->value-1 (string->symbol (string-append ,sname "-" field))) g)))))
 					     (set! first-time #f))
 					   (list ,@field-names))
 					  desc))))
@@ -212,11 +214,11 @@
 					(for-each
 					 (lambda (name type orig)
 					   (if (or (not (string=? type "clm"))
-						   (not ((symbol->value (string->symbol (string-append ,sname "-" name))) g)))
+						   (not ((symbol->value-1 (string->symbol (string-append ,sname "-" name))) g)))
 					       (if (provided? 'snd-s7)
 						   (set! ((string->symbol (string-append ,sname "-" name)) g) orig)
-						   (set! ((symbol->value (string->symbol (string-append ,sname "-" name))) g) orig))
-					       (mus-reset ((symbol->value (string->symbol (string-append ,sname "-" name))) g))))
+						   (set! ((symbol->value-1 (string->symbol (string-append ,sname "-" name))) g) orig))
+					       (mus-reset ((symbol->value-1 (string->symbol (string-append ,sname "-" name))) g))))
 					 (list ,@field-names)
 					 (list ,@(map symbol->string field-types))
 					 (list ,@(map (lambda (n)

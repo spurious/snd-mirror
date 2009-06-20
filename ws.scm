@@ -1,171 +1,13 @@
 ;;; with-sound and friends
 
 (use-modules (ice-9 optargs) (ice-9 format))
-
-;;; this file assumes it is run in the context of the Snd editor
-
 (provide 'snd-ws.scm)
 
-(if (and (provided? 'snd-guile) (not (provided? 'snd-debug.scm))) (load-from-path "debug.scm"))
 (if (not (provided? 'snd-extensions.scm)) (load-from-path "extensions.scm")) ; we need sound-property in with-mixed-sound
 
-
-;;; -------- with-sound debugger --------
-;;;
-;;; slightly different from the snd-break debugger because there are several
-;;;   ways one might want to get out of the with-sound (w/out rev etc).
-
-(define *ws-stacks* '())
-(define *ws-stack* #f)
-(define *ws-continues* '())
-(define *ws-continue* #f)
-(define *ws-finishes* '())
-(define *ws-finish* #f)
-(define *ws-top-level-prompt* (listener-prompt))
-
-(define (ws-prompt)
-  "(ws-prompt) returns the current with-sound debugger prompt, set partially by the variable *ws-top-level-prompt*"
-  (let ((stack-len (length *ws-stacks*)))
-    (if (> stack-len 1)
-	(format #f "ws(~D)~A" (- stack-len 1) *ws-top-level-prompt*)
-	(if (> stack-len 0)
-	    (format #f "ws~A" *ws-top-level-prompt*)
-	    *ws-top-level-prompt*))))
-
-(define (pop-ws)
-  "(pop-ws) pops the with-sound continuation stack"
-  (if (not (null? *ws-continues*))
-      (begin
-	(set! *ws-continue* (car *ws-continues*))
-	(set! *ws-continues* (cdr *ws-continues*)))
-      (set! *ws-continue* #f))
-  (if (not (null? *ws-stacks*))
-      (begin
-	(set! *ws-stack* (car *ws-stacks*))
-	(set! *ws-stacks* (cdr *ws-stacks*)))
-      (set! *ws-stack* #f))
-  (if (not (null? *ws-finishes*))
-      (begin
-	(set! *ws-finish* (car *ws-finishes*))
-	(set! *ws-finishes* (cdr *ws-finishes*)))
-      (set! *ws-continue* #f))
-  (set! (listener-prompt) (ws-prompt))
-  (snd-print (format #f "~%~A" (listener-prompt)))
-  (goto-listener-end))
-
-(define (push-ws continue finish stack)
-  "(push-ws continue finish stack) adds a continuation to the with-sound stack of continuations"
-  (if (null? *ws-continues*) (set! *ws-top-level-prompt* (listener-prompt)))
-  (set! *ws-continues* (cons *ws-continue* *ws-continues*))
-  (set! *ws-continue* continue)
-  (set! *ws-stacks* (cons *ws-stack* *ws-stacks*))
-  (set! *ws-stack* stack)
-  (set! *ws-finishes* (cons *ws-finish* *ws-finishes*))
-  (set! *ws-finish* finish)
-  (set! (listener-prompt) (ws-prompt))
-  (snd-print (format #f "~%~A" (listener-prompt)))
-  (goto-listener-end))
-
-(define* (ws-go :optional val)
-  "(ws-go (val #f)) tries to continue from the point at which with-sound was interrupted. 'val' is 
-the value returned by the interrupt (ws-interrupt? normally)"
-  (let ((current-continuation *ws-continue*))
-    (pop-ws)
-    (if (continuation? current-continuation)
-	(current-continuation val)
-	";no notelist to continue?")))
-
-(define (ws-quit)
-  "(ws-quit) exits a with-sound context (without reverb)"
-  (let ((current-finish *ws-finish*))
-    (pop-ws)
-    (if (continuation? current-finish)
-	(current-finish #f)
-	";no with-sound to quit")))
-
-(define (ws-quit!)
-  "(ws-quit!) exits all current with-sound contexts, returning you to the true top-level."
-  (ws-quit)
-  (if (not (null? *ws-continues*))
-      (ws-quit!)))
-
-(define (ws-stop)
-  "(ws-stop) exits a with-sound context (but runs the reverb, if any)"
-  (let ((current-finish *ws-finish*))
-    (pop-ws)
-    (if (continuation? current-finish)
-	(current-finish #t)
-	";no with-sound to stop")))
-
-(define (ws-stop!)
-  "(ws-quit!) exits all current with-sound contexts (running any reverbs on the way), 
-returning you to the true top-level."
-  (ws-stop)
-  (if (not (null? *ws-continues*))
-      (ws-stop!)))
-
-(if (provided? 'snd-s7)
-    (define (snd-backtrace . args) #f))
-
-(define* (ws-backtrace :optional all) 
-  "(ws-backtrace (all #f)) shows the stack backtrace at the point where with-sound was interrupted."
-  (snd-backtrace *ws-stack* all))
-
-(define* (ws-locals :optional (index 0)) 
-  "(ws-locals (index 0)) shows the local variables at the index-th frame."
-  (local-variables *ws-stack* index))
-
-(define* (ws-local obj :optional (index 0)) 
-  "(ws-local obj (index 0)) shows the value of obj in the context where with-sound was interrupted."
-  (local-variable *ws-stack* obj index))
-
-(define (ws-location)
-  "(ws-location) tries to report where with-sound was at the point of an interruption"
-  (if (stack? *ws-stack*)
-      (let ((len (stack-length *ws-stack*)))
-	(call-with-current-continuation
-	 (lambda (ok)
-	   (do ((i 3 (+ 1 i)))
-	       ((= i len))
-	     (let ((fr (stack-ref *ws-stack* i)))
-	       (if (frame-procedure? fr) ; perhaps better here would be (procedure-property 'definstrument) or some such test
-		   (let ((source (frame-source fr)))
-		     (if (memoized? source)
-			 (ok ((if (defined? 'unmemoize) unmemoize unmemoize-expr) source))
-			 (ok source)))))))))
-      #f))
-  
-(define (ws-help)
-  "
-;The '?' prompt means you're in the with-sound debugger.
-;This is the standard Snd listener, so anything is ok at this level, but
-;there are also several additional functions:
-;  (ws-go (val #f)) continues from the point of the interrupt.
-;  (ws-quit) finishes with-sound, ignoring any reverb request.
-;  (ws-stop) runs the reverb, then finishes with-sound.
-;  (ws-quit!) and (ws-stop!) are similar, but if you're nested several
-;     levels deep in the debugger, these two will pop you back to the top level.
-;  (ws-locals) shows the local variables and their values.
-;  (ws-local obj) shows the value of obj.
-;  (ws-backtrace) shows the backtrace at the point of the interrupt.
-")
-
-;;; ws-interrupt? checks for C-g within with-sound, setting up continuation etc
-;;; this goes anywhere in the instrument (and any number of times), 
-;;;    but not in the run macro body (run doesn't (yet?) handle code this complex)
-
-(if (provided? 'snd-s7)
-    (define (make-stack . args) #f))
-
 (defmacro ws-interrupt? ()
-  ;; using defmacro, not define, so that we can more easily find the instrument (as a procedure)
-  ;;   for ws-locals above -- some sort of procedure property is probably better
   `(if (c-g?) 
-       (let ((stack (make-stack #t)))
-	 (call-with-current-continuation
-	  (lambda (continue)
-	    (throw 'with-sound-interrupt continue stack))))
-       #f)) ; there is a possible return value from the continuation, so I guess this will make it easier to use?
+       (throw 'with-sound-interrupt)))
 
 
 
@@ -232,8 +74,6 @@ returning you to the true top-level."
        ,doc
        (if *clm-notehook*
 	   (*clm-notehook* (symbol->string ',name) ,@utargs))
-       (if (not (zero? (run-safety))) 
-	   (set! *ws-stack* (make-stack #t)))
        ((lambda () ; for inner defines, if any
 	  ,@body)))
      ,@(if *definstrument-hook*
@@ -272,7 +112,6 @@ returning you to the true top-level."
   (let* ((old-srate (mus-srate))
 	 (old-*output* *output*)
 	 (old-*reverb* *reverb*)
-	 (in-debugger #f)
 	 (old-notehook *clm-notehook*)
 	 (old-verbose *clm-verbose*)
 	 (old-auto-update-interval (auto-update-interval))
@@ -374,35 +213,9 @@ returning you to the true top-level."
 		  (catch 'with-sound-interrupt
 			 thunk
 			 (lambda args 
-			   ;; if from ws-interrupt? we have (continue stack message) as args
-			   (begin
-
-			     (if (and (not (null? (cdr args)))
-				      (continuation? (cadr args)))
-				 ;; instrument passed us a way to continue, so drop into the with-sound debugger
-				 (let ((val (call-with-current-continuation
-					     (lambda (finish)
-					       (push-ws (cadr args)              ; continue in notelist from ws-interrupt
-							finish                   ; stop notelist, go to output close section below
-							(if (> (length args) 2)
-							    (list-ref args 2) 
-							    (make-stack #t)))    ; stack at point of ws-interrupt or stack right here
-					       (set! in-debugger #t)             ; gad -- turn off dynamic-wind output fixup below
-					       (throw 'snd-top-level             ; return to "top level" (can be nested)
-						      (format #f ";~A~A" 
-							      (if (> (length args) 3)    ; optional message to ws-interrupt
-								  (list-ref args 3)
-								  "")
-							      (let ((loc (ws-location)))
-								(if (string? loc)
-								    (format #f ", interrupted at: ~A" loc)
-								    ""))))))))
-				   (set! in-debugger #f)
-				   (set! flush-reverb (eq? val #f)))
-				 (begin
-				   (snd-print (format #f "with-sound interrupted: ~{~A~^ ~}" (cdr args)))
-				   (set! flush-reverb #t)))
-			     args))))
+			   (snd-print (format #f "with-sound interrupted: ~{~A~^ ~}" (cdr args)))
+			   (set! flush-reverb #t)
+			   args)))
 
 		(lambda args
 		  ;; hit mus-error, for example:
@@ -413,12 +226,6 @@ returning you to the true top-level."
 
 		  ;; now try to get something to listener, since there may be no stdout
 		  (snd-print (format #f ";~%with-sound mus-error: ~{~A~^ ~}~%" (cdr args)))
-
-		  ;; we want to be able to clean up and yet we want a stack trace...
-		  (ws-backtrace)
-		  ;; but for that to work right we need     
-		  ;;    (if (not (zero? (run-safety))) (set! *ws-stack* (make-stack #t)))
-		  ;; before the outer let in definstrument -- this seems to be ok -- I see only a slight slowdown
 		  (set! flush-reverb #t)))
 		  
 	 (if (and reverb 
@@ -541,22 +348,20 @@ returning you to the true top-level."
        (set! *clm-verbose* old-verbose)
        (set! *clm-notehook* old-notehook)
        (set! (auto-update-interval) old-auto-update-interval)
-       (if (not in-debugger)
+       (if *reverb*
 	   (begin
-	     (if *reverb*
-		 (begin
-		   (if thread-reverb
-		       (if (not (= (mus-safety (thread-reverb)) 1)) (mus-close (thread-reverb)))
-		       (mus-close *reverb*))
-		   (set! *reverb* old-*reverb*)))
-	     (if *output*
-		 (begin
-		   (if thread-output
-		       (if (not (= (mus-safety (thread-output)) 1)) (mus-close (thread-output)))
-		       (if (mus-output? *output*)
-			   (mus-close *output*)))
-		   (set! *output* old-*output*)))
-	     (set! (mus-srate) old-srate)))))))
+	     (if thread-reverb
+		 (if (not (= (mus-safety (thread-reverb)) 1)) (mus-close (thread-reverb)))
+		 (mus-close *reverb*))
+	     (set! *reverb* old-*reverb*)))
+       (if *output*
+	   (begin
+	     (if thread-output
+		 (if (not (= (mus-safety (thread-output)) 1)) (mus-close (thread-output)))
+		 (if (mus-output? *output*)
+		     (mus-close *output*)))
+	     (set! *output* old-*output*)))
+       (set! (mus-srate) old-srate)))))
 
 
 (defmacro with-sound (args . body)
@@ -1016,20 +821,19 @@ finish-with-sound to complete the process."
 
 ;;; -------- with-sound save state --------
 
-(if (not (defined? 'open-appending))
-    (define (open-appending filename)
-      (if (provided? 'snd-guile)
-	  (open filename (logior O_RDWR O_APPEND))
-	  (open-output-file filename "a"))))
-
-(if (not (defined? 'close-appending))
-    (define (close-appending fd)
-      (if (provided? 'snd-guile)
-	  (close fd)
-	  (close-output-port fd))))
-
 (define (ws-save-state filename)
   "(ws-save-state filename) is an after-save-state-hook function that saves the current with-sound global settings"
+
+  (define (open-appending filename)
+    (if (provided? 'snd-guile)
+	(open filename (logior O_RDWR O_APPEND))
+	(open-output-file filename "a")))
+
+  (define (close-appending fd)
+    (if (provided? 'snd-guile)
+	(close fd)
+	(close-output-port fd)))
+
   (let ((fd (open-appending filename)))
     ;; open in Guile throws 'system-error (I think) if anything goes wrong
     ;; fd is a Scheme port at this point (not an integer), so we can use format etc
@@ -1082,10 +886,7 @@ finish-with-sound to complete the process."
        default))))
 
 (defmacro with-mix-error (message)
-  `(let ((stack (make-stack #t)))
-     (call-with-current-continuation
-      (lambda (continue)
-	(throw 'with-sound-interrupt continue stack ,message)))))
+  (throw 'with-sound-interrupt ,message))
 
 (defmacro with-mix (options ur-chkpt-file ur-beg . body)
   `(let ((chkpt-file ,ur-chkpt-file)
@@ -1227,8 +1028,6 @@ finish-with-sound to complete the process."
      (def-optkey-fun (,name ,@targs)
        (if *clm-notehook*
 	   (*clm-notehook* (symbol->string ',name) ,@utargs))
-       (if (not (zero? (run-safety))) 
-	   (set! *ws-stack* (make-stack #t)))
        ((lambda () ; for inner defines, if any
 	  ,@body)))
      ,@(if *definstrument-hook*
@@ -1276,10 +1075,6 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 
 ;;; -------- def-clm-struct --------
 
-(if (not (defined? 'add-clm-type)) (define (add-clm-type . args) #f)) ; these are in run
-(if (not (defined? 'add-clm-field)) (define (add-clm-field . args) #f))
-
-
 ;;;  :(def-clm-struct (osc :make-wrapper (lambda (gen) (set! (osc-freq gen) (hz->radians (osc-freq gen))) gen)) freq phase)
 ;;;  #<unspecified>
 ;;;  :(define hi (make-osc 440.0 0.0))
@@ -1288,8 +1083,7 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 ;;;  (osc 0.125378749798983 0.0)
 
 ;;; besides setting up the list accessors, the make function, and the type predicate, this
-;;;   calls add-clm-type to make sure run knows about the struct and, on each field,
-;;;   add-clm-field to tell run the type of each list element (only actually needed if
+;;;   calls add-clm-field to tell run the type of each list element (only actually needed if
 ;;;   there are different types in use)
 ;;;
 ;;; see defgenerator in generators.scm for an extension that adds various methods such as mus-describe

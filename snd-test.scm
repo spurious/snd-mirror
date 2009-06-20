@@ -101,10 +101,6 @@
       (define (sort lst . opt) (sort! (append lst '()) (if (null? opt) < (car opt))))
       ))
 
-(if (and (provided? 'snd-guile)
-	 (not (provided? 'snd-debug.scm)))
-    (load "debug.scm"))
-
 (if (not (defined? 'snd-test)) (define snd-test -1))
 (define full-test (< snd-test 0))
 (define total-tests 28)
@@ -417,8 +413,6 @@
     (define have-log-0 #f))
 
 (define (log0) (if have-log-0 (log 0) 0.0)) ; trying to generate -inf.0 
-
-(if (not (defined? 'nan)) (define (nan) 0.0))
 
 (define safe-color (make-color 1 0 0))
 (define (make-color-with-catch c1 c2 c3)
@@ -2071,7 +2065,7 @@
     (dismiss-all-dialogs)
     
     (let ((undef '())
-	  (names (list '*snd-opened-sound* 'abort 'add-clm-field 'add-clm-type 'add-colormap 
+	  (names (list '*snd-opened-sound* 'abort 'add-clm-field 'add-colormap 
 		       'add-directory-to-view-files-list 'add-file-filter 'add-file-sorter 'add-file-to-view-files-list 'add-mark
 		       'add-player 'add-sound-file-extension 'add-source-file-extension 'add-to-main-menu 'add-to-menu
 		       'add-transform 'add-watcher 'after-apply-controls-hook 'after-edit-hook 'after-graph-hook 'after-lisp-graph-hook
@@ -26302,11 +26296,11 @@ EDITS: 2
 		     (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color-with-catch .95 .95 .95)  '#(0 1) 3/4 'mus-error (sqrt -1.0) (make-delay 32)
 			   (lambda () #t) (current-module) (make-sound-data 2 3) :order 0 1 -1 (make-hook 2) #f #t #\c 0.0 1.0 -1.0 
 			   '() '3 4 2 8 16 32 64 (make-vector 0) '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0)
-			   12345678901234567890 (log0) (nan))))
+			   12345678901234567890 (log0))))
 		  (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color-with-catch .95 .95 .95)  '#(0 1) 3/4 'mus-error (sqrt -1.0) (make-delay 32)
 			(lambda () #t) (current-module) (make-sound-data 2 3) :order 0 1 -1 (make-hook 2) #f #t #\c 0.0 1.0 -1.0 
 			'() '3 4 2 8 16 32 64 (make-vector 0) '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0)
-			12345678901234567890 (log0) (nan)))
+			12345678901234567890 (log0)))
 		 ;; generic args
 		 (for-each
 		  (lambda (func name)
@@ -26323,7 +26317,7 @@ EDITS: 2
 				(list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) '#(0 1) 3/4 'mus-error (sqrt -1.0)
 				      (lambda () #t) (make-sound-data 2 3) :order 0 1 -1 #f #t #\c 0.0 1.0 -1.0 
 				      '() '3 4 64 -64 (make-vector 0) '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0)
-				      12345678901234567890 (log0) (nan) (lambda (a) a)))
+				      12345678901234567890 (log0) (lambda (a) a)))
 			       (if (not (equal? (func gen) default-value))
 				   (catch #t
 					  (lambda ()
@@ -56951,9 +56945,6 @@ EDITS: 1
 	
 	(test-documentation-instruments) ; clm23.scm
 	
-	(if (provided? 'snd-guile) ; make-stack
-	    (test-ws-errors))
-
 	(if #f
 	    (let ((outfile "/home/bil/test/sound/big3.snd"))
 	      (if (file-exists? outfile)
@@ -66207,7 +66198,7 @@ EDITS: 1
 			  (lambda () (n arg1 arg2))
 			  (lambda args (car args))))
 		 make-procs))
-	      (list 1.5 "/hiho" (list 0 1) 1234 vct-3 :wave -1 0 1 #f #t '() vector-0 12345678901234567890 delay-32 (log0) (nan))))
+	      (list 1.5 "/hiho" (list 0 1) 1234 vct-3 :wave -1 0 1 #f #t '() vector-0 12345678901234567890 delay-32 (log0))))
 	   keyargs)
 	  
 	  (if (and all-args (= test-28 0))
@@ -66224,9 +66215,9 @@ EDITS: 1
 				   (lambda () (n arg1 arg2 arg3))
 				   (lambda args (car args))))
 			  make-procs))
-		       (list 1.5 "/hiho" (list 0 1) 1234 vct-3 :wave -1 0 1 #f #t '() vector-0 12345678901234567890 (log0) (nan) delay-32)))
+		       (list 1.5 "/hiho" (list 0 1) 1234 vct-3 :wave -1 0 1 #f #t '() vector-0 12345678901234567890 (log0) delay-32)))
 		    keyargs))
-		 (list 1.5 "/hiho" (list 0 1) 1234 vct-3 :wave -1 0 1 #f #t '() vector-0 12345678901234567890 (log0) (nan) delay-32))
+		 (list 1.5 "/hiho" (list 0 1) 1234 vct-3 :wave -1 0 1 #f #t '() vector-0 12345678901234567890 (log0) delay-32))
 		
 		(for-each
 		 (lambda (arg1)
@@ -66243,9 +66234,9 @@ EDITS: 1
 				      (lambda args (car args))))
 			     make-procs))
 			  keyargs))
-		       (list 1.5 "/hiho" (list 0 1) 1234 vct-3 :wave -1 0 1 #f #t '() vector-0 12345678901234567890 (log0) (nan) delay-32)))
+		       (list 1.5 "/hiho" (list 0 1) 1234 vct-3 :wave -1 0 1 #f #t '() vector-0 12345678901234567890 (log0) delay-32)))
 		    keyargs))
-		 (list 1.5 "/hiho" (list 0 1) 1234 vct-3 :wave -1 0 1 #f #t '() vector-0 12345678901234567890 (log0) (nan) delay-32))))
+		 (list 1.5 "/hiho" (list 0 1) 1234 vct-3 :wave -1 0 1 #f #t '() vector-0 12345678901234567890 (log0) delay-32))))
 	  
 	  (gc)(gc)
 	  
@@ -66269,9 +66260,9 @@ EDITS: 1
 	  (let* ((main-args (list 1.5 "/hiho" (list 0 1) 1234 vct-3 color-95  '#(0 1) 3/4 'mus-error (sqrt -1.0) delay-32
 				 (lambda () #t) vct-5 sound-data-23 :order 0 1 -1 a-hook #f #t #\c 0.0 1.0 -1.0 
 				 '() '3 2 8 64 -64 vector-0 '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0) car-main cadr-main 
-				 12345678901234567890 (log0) (nan) (lambda (a) #f) abs))
+				 12345678901234567890 (log0) (lambda (a) #f) abs))
 		 (few-args (list 1.5 "/hiho" (list 0 1) 1234 vct-3 color-95 '#(0 1) 3/4 -1.0
-				 (sqrt -1.0) delay-32 :feedback -1 0 1 3 64 -64 #f #t '() vector-0 12345678901234567890 (log0) (nan)))
+				 (sqrt -1.0) delay-32 :feedback -1 0 1 3 64 -64 #f #t '() vector-0 12345678901234567890 (log0)))
 		 (fewer-args (list "/hiho" 1234 vct-3 -1.0 (sqrt -1.0) delay-32 -1 0 1 #f #t '() 12345678901234567890 (log0)))
 		 (less-args (if all-args main-args few-args)))
 

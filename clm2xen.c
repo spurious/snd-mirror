@@ -8737,8 +8737,10 @@ static void mus_xen_init(void)
 
 #if HAVE_SCHEME
 #if (!HAVE_S7)
-  XEN_EVAL_C_STRING("(define %delay delay)"); /* protect the original meaning (a Scheme built-in function) */
-  XEN_EVAL_C_STRING("(define make-promise delay)"); /* this is the s7 name */
+  #if (!HAVE_SCM_MODULE_PUBLIC_INTERFACE) /* guile 1.9.0 */
+    XEN_EVAL_C_STRING("(define %delay delay)"); /* protect the original meaning (a Scheme built-in function) */
+    XEN_EVAL_C_STRING("(define make-promise delay)"); /* this is the s7 name */
+  #endif
 #else
   XEN_EVAL_C_STRING("(defmacro %delay (arg) `(make-promise ,arg))"); 
 #endif
@@ -8917,7 +8919,9 @@ static void mus_xen_init(void)
 
 
 #if HAVE_SCHEME
-  XEN_EVAL_C_STRING("(if (defined? 'filter) (define %filter filter))"); /* defined in Guile 1.7 */
+  #if (!HAVE_SCM_MODULE_PUBLIC_INTERFACE) /* guile 1.9.0 */
+    XEN_EVAL_C_STRING("(if (defined? 'filter) (define %filter filter))"); /* defined in Guile 1.7 */
+  #endif
 #endif
   XEN_DEFINE_PROCEDURE(S_make_filter,     g_make_filter_w,     0, 6, 0, H_make_filter);
   XEN_DEFINE_PROCEDURE(S_filter,          g_filter_w,          2, 0, 0, H_filter);

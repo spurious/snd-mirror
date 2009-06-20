@@ -6,14 +6,6 @@
 (use-modules (ice-9 common-list) (ice-9 format))
 (provide 'snd-xm-enved.scm)
 
-(if (and (not (defined? 'white-pixel))
-	 (provided? 'cairo))
-    (define white-pixel
-      (let ((tmp (GdkColor)))
-	(gdk_color_parse "white" tmp)
-	(let ((col (gdk_color_copy tmp)))
-	  (gdk_rgb_find_color (gdk_colormap_get_system) col)
-	  col))))
 
 (if (provided? 'snd-motif)
     (if (not (provided? 'xm))
@@ -234,6 +226,14 @@
 			   (list x0 y0 x1 y1)
 			   (list gc #f)
 			   name)))
+
+	(define white-pixel
+	  (let ((tmp (GdkColor)))
+	    (gdk_color_parse "white" tmp)
+	    (let ((col (gdk_color_copy tmp)))
+	      (gdk_rgb_find_color (gdk_colormap_get_system) col)
+	      col)))
+
 	(gtk_widget_set_events drawer GDK_ALL_EVENTS_MASK)
 	(gtk_box_pack_start (GTK_BOX parent) drawer #t #t 10)
 	(gtk_widget_show drawer)

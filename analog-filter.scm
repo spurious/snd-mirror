@@ -12,7 +12,13 @@
 
 (provide 'snd-analog-filter.scm)
 
-(if (not (defined? 'cascade->canonical)) ; dsp.scm normally
+
+(define* (analog->digital n num den fz)
+  (let* ((g 1.0)
+	 (Q 1.0)
+	 (wc (tan (* pi fz)))
+	 (c (make-vct (* 2 n))))
+
     (define (cascade->canonical A)
       "(cascade->canonical A) converts cascade filter coeffs to canonical form"
       ;; from Orfanidis "Introduction to Signal Processing"
@@ -36,13 +42,7 @@
 	  (do ((j 0 (+ 1 j)))
 	      ((= j (+ 3 (* 2 i))))
 	    (vct-set! a1 j (vct-ref d j))))
-	a1)))
-
-(define* (analog->digital n num den fz)
-  (let* ((g 1.0)
-	 (Q 1.0)
-	 (wc (tan (* pi fz)))
-	 (c (make-vct (* 2 n))))
+	a1))
 
     (do ((i 0 (+ i 2))
 	 (j 0 (+ j 3))

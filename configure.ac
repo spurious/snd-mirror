@@ -1645,6 +1645,7 @@ if test $GUILE_CONFIG_works = yes; then
     AC_CHECK_LIB($GNAME, scm_is_simple_vector,   [AC_DEFINE(HAVE_SCM_IS_SIMPLE_VECTOR)])
     AC_CHECK_LIB($GNAME, scm_c_primitive_load,   [AC_DEFINE(HAVE_SCM_C_PRIMITIVE_LOAD)])
     AC_CHECK_LIB($GNAME, scm_nan_p,              [AC_DEFINE(HAVE_SCM_NAN_P)])
+    AC_CHECK_LIB($GNAME, scm_module_public_interface, [AC_DEFINE(HAVE_SCM_MODULE_PUBLIC_INTERFACE)])
     AC_CHECK_LIB($GNAME, scm_c_define_module,    [if test "$with_modules" = yes; then
 						    AC_DEFINE(WITH_MODULES)
 						  fi])

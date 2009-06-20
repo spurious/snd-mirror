@@ -5100,8 +5100,6 @@
 
 ;;; -------- syntax-rules --------
 
-;(use-syntax (ice-9 syncase))
-
 (if with-syntax-rules
     (begin
 

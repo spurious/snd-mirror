@@ -3,12 +3,6 @@
 (use-modules (ice-9 format) (ice-9 common-list))
 (provide 'snd-marks.scm)
 
-(if (not (defined? 'find-if))
-    (define (find-if pred l)
-      (cond ((null? l) #f)
-	    ((pred (car l)) (car l))
-	    (else (find-if pred (cdr l))))))
-
 ;;; Contents:
 ;;;     mark-name->id is a global version of find-mark
 ;;;     move-syncd-marks moves all syncd marks together
@@ -265,10 +259,12 @@
 
 (define (eval-between-marks func)
   "(eval-between-marks func) evaluates func between the leftmost marks; func takes one arg, the original sample"
-  (define (find-if pred l) ; this is from guile/ice-9/common-list.scm but returns l not car l
+
+  (define (find-if pred l)
     (cond ((null? l) #f)
 	  ((pred (car l)) l)
 	  (else (find-if pred (cdr l)))))
+
   (if (procedure? func)
       ;; find leftmost two marks in selected chn
       (let ((chan (selected-channel))
@@ -420,21 +416,20 @@
 						       (not (mark? (car val))))
 						     all-mark-properties)))))
 
-(if (not (defined? 'open-appending))
-    (define (open-appending filename)
-      (if (provided? 'snd-guile)
-	  (open filename (logior O_RDWR O_APPEND))
-	  (open-output-file filename "a"))))
-
-(if (not (defined? 'close-appending))
-    (define (close-appending fd)
-      (if (provided? 'snd-guile)
-	  (close fd)
-	  (close-output-port fd))))
 
 (define (save-mark-properties)
   "(save-mark-properties) sets up an after-save-state-hook function to save any mark-properties"
-  (if (defined? 'open)
+
+  (define (open-appending filename)
+    (if (provided? 'snd-guile)
+	(open filename (logior O_RDWR O_APPEND))
+	(open-output-file filename "a")))
+
+  (define (close-appending fd)
+    (if (provided? 'snd-guile)
+	(close fd)
+	(close-output-port fd)))
+
   (add-hook! after-save-state-hook 
     (lambda (filename)
       (let ((fd (open-appending filename)))
@@ -460,7 +455,7 @@
 	       chn-m))
 	    snd-m))
 	 (marks))
-	(close-appending fd))))))
+	(close-appending fd)))))
 
 
 (define (mark-click-info n)

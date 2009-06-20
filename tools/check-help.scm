@@ -1,10 +1,11 @@
 ;;; check procedure help strings
 
-(if (not (defined? 'symbol->value))
-(define (symbol->value sym)
-  (if (defined? 'module-ref)
-      (module-ref (current-module) sym) ; symbol-binding is deprecated
-      (symbol-binding #f sym))))
+(define (symbol->value-1 sym)
+  (if (defined? 'symbol->value)
+      (symbol->value sym)
+      (if (defined? 'module-ref)
+	  (module-ref (current-module) sym) ; symbol-binding is deprecated
+	  (symbol-binding #f sym))))
 
 
 (let ((names (snd-urls)))
@@ -12,11 +13,11 @@
    (lambda (biname)
      (let ((name (string->symbol(car biname))))
        (if (and (defined? name)
-		(procedure? (symbol->value name)))
+		(procedure? (symbol->value-1 name)))
 	   (let* ((help (snd-help name))
 		  (arity (if (provided? 'snd-s7)
-			     (procedure-arity (symbol->value name))
-			     (procedure-property (symbol->value name) 'arity))))
+			     (procedure-arity (symbol->value-1 name))
+			     (procedure-property (symbol->value-1 name) 'arity))))
 	     (if (and (string? help)
 		      (char=? (string-ref help 0) #\()
 		      (not (caddr arity))) ; rest args
