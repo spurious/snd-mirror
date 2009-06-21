@@ -6089,9 +6089,9 @@ static int free_env_gen(mus_any *pt)
   seg *ptr = (seg *)pt;
   if (ptr) 
     {
-      if (ptr->locs) clm_free(ptr->locs);
-      if (ptr->rates) clm_free(ptr->rates);
-      if ((ptr->original_data) && (ptr->data_allocated)) clm_free(ptr->original_data);
+      if (ptr->locs) {clm_free(ptr->locs); ptr->locs = NULL;}
+      if (ptr->rates) {clm_free(ptr->rates); ptr->rates = NULL;}
+      if ((ptr->original_data) && (ptr->data_allocated)) {clm_free(ptr->original_data); ptr->original_data = NULL;}
       clm_free(ptr); 
     }
   return(0);

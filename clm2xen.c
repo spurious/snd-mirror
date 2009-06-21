@@ -5281,6 +5281,11 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
 	    {
 	      v = XEN_TO_VCT(keys[0]);
 	      len = v->length;
+	      if ((len < 2) || (len & 1))
+		XEN_ERROR(BAD_TYPE,
+			  XEN_LIST_3(C_TO_XEN_STRING(S_make_env), 
+				     C_TO_XEN_STRING("vct is a bogus breakpoints list"), 
+				     keys[0]));
 	    }
 	  else
 	    {
@@ -5346,8 +5351,8 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
     {
       if ((end > 0) && ((end + 1) != dur))
 	{
-	  if (brkpts) free(brkpts);
-	  if (odata) free(odata);
+	  if (brkpts) {free(brkpts); brkpts = NULL;}
+	  if (odata) {free(odata); odata = NULL;}
 	  XEN_ERROR(CLM_ERROR,
 		    XEN_LIST_3(C_TO_XEN_STRING(S_make_env), 
 			       C_TO_XEN_STRING("end (~A) and dur (~A) specified, but dur != end+1"),

@@ -3137,9 +3137,6 @@ static triple *va_make_triple(void (*function)(int *arg_addrs, ptree *pt),
 #define BOOL_RESULT pt->ints[args[0]]
 #define BOOL_ARG_1 ((bool)(pt->ints[args[1]]))
 #define BOOL_ARG_3 ((bool)(pt->ints[args[3]]))
-#define BOOL_ARG_OK(Arg) ((pt->ints) && ((pt->outer_tree) || ((args[Arg] >= 0) && (args[Arg] <= pt->int_ctr) && (args[Arg] < pt->ints_size))))
-/* these *_ARG_OK macros were intended for internal arg error checking */
-/* an embedded ptree is evalled by simply copying the outer data pointers, but not their ctr/size vars, so we need to accept those */
 
 #define INT_RESULT pt->ints[args[0]]
 #define INT_ARG_1 pt->ints[args[1]]
@@ -3148,7 +3145,6 @@ static triple *va_make_triple(void (*function)(int *arg_addrs, ptree *pt),
 #define INT_ARG_4 pt->ints[args[4]]
 #define INT_ARG_5 pt->ints[args[5]]
 #define INT_ARG_6 pt->ints[args[6]]
-#define INT_ARG_OK(Arg) ((pt->ints) && ((pt->outer_tree) || ((args[Arg] >= 0) && (args[Arg] <= pt->int_ctr) && (args[Arg] < pt->ints_size))))
 
 #define FLOAT_RESULT pt->dbls[args[0]]
 #define FLOAT_ARG_1 pt->dbls[args[1]]
@@ -3157,33 +3153,28 @@ static triple *va_make_triple(void (*function)(int *arg_addrs, ptree *pt),
 #define FLOAT_ARG_4 pt->dbls[args[4]]
 #define FLOAT_ARG_5 pt->dbls[args[5]]
 #define FLOAT_ARG_6 pt->dbls[args[6]]
-#define FLOAT_ARG_OK(Arg) ((pt->dbls) && ((pt->outer_tree) || ((args[Arg] >= 0) && (args[Arg] <= pt->dbl_ctr) && (args[Arg] < pt->dbls_size))))
 
 #define VCT_RESULT pt->vcts[args[0]]
 #define VCT_ARG_1 pt->vcts[args[1]]
 #define VCT_ARG_2 pt->vcts[args[2]]
 #define VCT_ARG_3 pt->vcts[args[3]]
 #define VCT_ARG_4 pt->vcts[args[4]]
-#define VCT_ARG_OK(Arg) ((pt->vcts) && ((pt->outer_tree) || ((args[Arg] >= 0) && (args[Arg] <= pt->vct_ctr) && (args[Arg] < pt->vcts_size))))
 
 #define SOUND_DATA_RESULT pt->sds[args[0]]
 #define SOUND_DATA_ARG_1 pt->sds[args[1]]
 #define SOUND_DATA_ARG_2 pt->sds[args[2]]
 #define SOUND_DATA_ARG_3 pt->sds[args[3]]
 #define SOUND_DATA_ARG_4 pt->sds[args[4]]
-#define SOUND_DATA_ARG_OK(Arg) ((pt->sds) && ((pt->outer_tree) || ((args[Arg] >= 0) && (args[Arg] <= pt->sd_ctr) && (args[Arg] < pt->sds_size))))
 
 #define STRING_RESULT pt->strs[args[0]]
 #define STRING_ARG_1 pt->strs[args[1]]
 #define STRING_ARG_2 pt->strs[args[2]]
 #define STRING_ARG_3 pt->strs[args[3]]
-#define STRING_ARG_OK(Arg) ((pt->strs) && ((pt->outer_tree) || ((args[Arg] >= 0) && (args[Arg] <= pt->str_ctr) && (args[Arg] < pt->strs_size))))
 
 #define CHAR_RESULT pt->ints[args[0]]
 #define CHAR_ARG_1 ((char)(INT_ARG_1))
 #define CHAR_ARG_2 ((char)(INT_ARG_2))
 #define CHAR_ARG_3 ((char)(INT_ARG_3))
-#define CHAR_ARG_OK(Arg) ((pt->ints) && ((pt->outer_tree) || ((args[Arg] >= 0) && (args[Arg] <= pt->int_ctr) && (args[Arg] < pt->ints_size))))
 
 #define CLM_RESULT pt->clms[args[0]]
 #define CLM_LOC pt->clm_locs[args[0]]
@@ -3192,20 +3183,17 @@ static triple *va_make_triple(void (*function)(int *arg_addrs, ptree *pt),
 #define CLM_ARG_3 pt->clms[args[3]]
 #define CLM_ARG_4 pt->clms[args[4]]
 #define CLM_ARG_5 pt->clms[args[5]]
-#define CLM_ARG_OK(Arg) ((pt->clms) && ((pt->outer_tree) || ((args[Arg] >= 0) && (args[Arg] <= pt->clm_ctr) && (args[Arg] < pt->clms_size))))
 
 #if USE_SND
 #define READER_RESULT pt->readers[args[0]]
 #define READER_ARG_1 pt->readers[args[1]]
 #define READER_ARG_2 pt->readers[args[2]]
 #define READER_ARG_3 pt->readers[args[3]]
-#define READER_ARG_OK(Arg) ((pt->readers) && ((pt->outer_tree) || ((args[Arg] >= 0) && (args[Arg] <= pt->reader_ctr) && (args[Arg] < pt->readers_size))))
 
 #define MIX_READER_RESULT pt->mix_readers[args[0]]
 #define MIX_READER_ARG_1 pt->mix_readers[args[1]]
 #define MIX_READER_ARG_2 pt->mix_readers[args[2]]
 #define MIX_READER_ARG_3 pt->mix_readers[args[3]]
-#define MIX_READER_ARG_OK(Arg) ((pt->mix_readers) && ((pt->outer_tree) || ((args[Arg] >= 0) && (args[Arg] <= pt->mix_reader_ctr) && (args[Arg] < pt->mix_readers_size))))
 #endif
 
 #define FNC_RESULT ((ptree **)(pt->fncs))[args[0]]
@@ -3215,26 +3203,22 @@ static triple *va_make_triple(void (*function)(int *arg_addrs, ptree *pt),
 #define FNC_ARG_4 ((ptree **)(pt->fncs))[args[4]]
 #define FNC_ARG_5 ((ptree **)(pt->fncs))[args[5]]
 #define FNC_ARG_6 ((ptree **)(pt->fncs))[args[6]]
-#define FNC_ARG_OK(Arg) ((pt->fncs) && ((pt->outer_tree) || ((args[Arg] >= 0) && (args[Arg] <= pt->fnc_ctr) && (args[Arg] < pt->fncs_size))))
 
 #define XEN_RESULT pt->xens[args[0]]
 #define RXEN_ARG_1 pt->xens[args[1]]
 #define RXEN_ARG_2 pt->xens[args[2]]
 #define RXEN_ARG_3 pt->xens[args[3]]
 /* using "RXEN" here because XEN_ARG_* is already used in xen.h */
-#define RXEN_ARG_OK(Arg) ((pt->xens) && ((pt->outer_tree) || ((args[Arg] >= 0) && (args[Arg] <= pt->xen_ctr) && (args[Arg] < pt->xens_size))))
 
 #define VECT_RESULT pt->vects[args[0]]
 #define VECT_ARG_1 pt->vects[args[1]]
 #define VECT_ARG_2 pt->vects[args[2]]
 #define VECT_ARG_3 pt->vects[args[3]]
-#define VECT_ARG_OK(Arg) ((pt->vects) && ((pt->outer_tree) || ((args[Arg] >= 0) && (args[Arg] <= pt->vect_ctr) && (args[Arg] < pt->vects_size))))
 
 #define LIST_RESULT pt->lists[args[0]]
 #define LIST_ARG_1 pt->lists[args[1]]
 #define LIST_ARG_2 pt->lists[args[2]]
 #define LIST_ARG_3 pt->lists[args[3]]
-#define LIST_ARG_OK(Arg) ((pt->lists) && ((pt->outer_tree) || ((args[Arg] >= 0) && (args[Arg] <= pt->list_ctr) && (args[Arg] < pt->lists_size))))
 
 
 static void quit(int *args, ptree *pt) {pt->all_done = true;}

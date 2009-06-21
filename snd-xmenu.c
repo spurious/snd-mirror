@@ -1018,7 +1018,6 @@ void create_popup_menu(void)
 
 #define INVALID_MENU -1
 #define CALL_INDEX(Data) (Data >> 16)
-#define MENU_INDEX(Data) (Data & 0xffff)
 #define PACK_MENU_DATA(Slot, Menu) ((Slot << 16) | (Menu))
 
 static void SND_callback(Widget w, XtPointer info, XtPointer context) 

@@ -2468,8 +2468,10 @@ static void make_sonogram(chan_info *cp)
   sono_info *si;
   static int *sono_js = NULL;
   static int sono_js_size = 0;
+
   if (chan_fft_in_progress(cp)) return;
   si = cp->sonogram_data;
+
   if ((si) && (si->scale > 0.0))
     {
       int i, slice, fwidth, fheight, j, bins;
@@ -5611,37 +5613,37 @@ static XEN channel_get(XEN snd_n, XEN chn_n, cp_field_t fld, const char *caller)
 	      return(cp->undo_hook);
 	      break;
 
-	    case CP_SHOW_Y_ZERO:             return(C_TO_XEN_BOOLEAN(cp->show_y_zero));                        break;
-	    case CP_SHOW_GRID:               return(C_TO_XEN_BOOLEAN((bool)(cp->show_grid)));                  break;
-	    case CP_GRID_DENSITY:            return(C_TO_XEN_DOUBLE(cp->grid_density));                        break;
-	    case CP_SHOW_SONOGRAM_CURSOR:    return(C_TO_XEN_BOOLEAN((bool)(cp->show_sonogram_cursor)));       break;
-	    case CP_SHOW_MARKS:              return(C_TO_XEN_BOOLEAN(cp->show_marks));                         break;
-	    case CP_TIME_GRAPH_TYPE:         return(C_TO_XEN_INT((int)(cp->time_graph_type)));                 break;
-	    case CP_WAVO_HOP:                return(C_TO_XEN_INT(cp->wavo_hop));                               break;
-	    case CP_WAVO_TRACE:              return(C_TO_XEN_INT(cp->wavo_trace));                             break;
-	    case CP_MAX_TRANSFORM_PEAKS:     return(C_TO_XEN_INT(cp->max_transform_peaks));                    break;
-	    case CP_ZERO_PAD:                return(C_TO_XEN_INT(cp->zero_pad));                               break;
-	    case CP_WAVELET_TYPE:            return(C_TO_XEN_INT(cp->wavelet_type));                           break;
-	    case CP_SHOW_TRANSFORM_PEAKS:    return(C_TO_XEN_BOOLEAN(cp->show_transform_peaks));               break;
-	    case CP_VERBOSE_CURSOR:          return(C_TO_XEN_BOOLEAN(cp->verbose_cursor));                     break;
-	    case CP_FFT_LOG_FREQUENCY:       return(C_TO_XEN_BOOLEAN(cp->fft_log_frequency));                  break;
-	    case CP_FFT_LOG_MAGNITUDE:       return(C_TO_XEN_BOOLEAN(cp->fft_log_magnitude));                  break;
-	    case CP_FFT_WITH_PHASES:         return(C_TO_XEN_BOOLEAN(cp->fft_with_phases));                    break;
-	    case CP_SPECTRO_HOP:             return(C_TO_XEN_INT(cp->spectro_hop));                            break;
-	    case CP_TRANSFORM_SIZE:          return(C_TO_XEN_OFF_T(cp->transform_size));                       break;
-	    case CP_TRANSFORM_GRAPH_TYPE:    return(C_TO_XEN_INT((int)(cp->transform_graph_type)));            break;
-	    case CP_FFT_WINDOW:              return(C_TO_XEN_INT((int)(cp->fft_window)));                      break;
-	    case CP_TRANSFORM_TYPE:          return(C_TO_XEN_INT(cp->transform_type));                         break;
-	    case CP_TRANSFORM_NORMALIZATION: return(C_TO_XEN_INT((int)(cp->transform_normalization)));         break;
-	    case CP_SHOW_MIX_WAVEFORMS:      return(C_TO_XEN_BOOLEAN(cp->show_mix_waveforms));                 break;
-	    case CP_TIME_GRAPH_STYLE:        return(C_TO_XEN_INT(cp->time_graph_style));                       break;
-	    case CP_LISP_GRAPH_STYLE:        return(C_TO_XEN_INT(cp->lisp_graph_style));                       break;
-	    case CP_TRANSFORM_GRAPH_STYLE:   return(C_TO_XEN_INT(cp->transform_graph_style));                  break;
-	    case CP_X_AXIS_STYLE:            return(C_TO_XEN_INT((int)(cp->x_axis_style)));                    break;
-	    case CP_DOT_SIZE:                return(C_TO_XEN_INT(cp->dot_size));                               break;
-	    case CP_SHOW_AXES:               return(C_TO_XEN_INT((int)(cp->show_axes)));                       break;
-	    case CP_GRAPHS_HORIZONTAL:       return(C_TO_XEN_BOOLEAN(cp->graphs_horizontal));                  break;
-	    case CP_CURSOR_POSITION:         return(XEN_LIST_2(C_TO_XEN_INT(cp->cx), C_TO_XEN_INT(cp->cy)));   break;
+	    case CP_SHOW_Y_ZERO:             return(C_TO_XEN_BOOLEAN(cp->show_y_zero));                          break;
+	    case CP_SHOW_GRID:               return(C_TO_XEN_BOOLEAN((bool)(cp->show_grid)));                    break;
+	    case CP_GRID_DENSITY:            return(C_TO_XEN_DOUBLE(cp->grid_density));                          break;
+	    case CP_SHOW_SONOGRAM_CURSOR:    return(C_TO_XEN_BOOLEAN((bool)(cp->show_sonogram_cursor)));         break;
+	    case CP_SHOW_MARKS:              return(C_TO_XEN_BOOLEAN(cp->show_marks));                           break;
+	    case CP_TIME_GRAPH_TYPE:         return(C_TO_XEN_INT((int)(cp->time_graph_type)));                   break;
+	    case CP_WAVO_HOP:                return(C_TO_XEN_INT(cp->wavo_hop));                                 break;
+	    case CP_WAVO_TRACE:              return(C_TO_XEN_INT(cp->wavo_trace));                               break;
+	    case CP_MAX_TRANSFORM_PEAKS:     return(C_TO_XEN_INT(cp->max_transform_peaks));                      break;
+	    case CP_ZERO_PAD:                return(C_TO_XEN_INT(cp->zero_pad));                                 break;
+	    case CP_WAVELET_TYPE:            return(C_TO_XEN_INT(cp->wavelet_type));                             break;
+	    case CP_SHOW_TRANSFORM_PEAKS:    return(C_TO_XEN_BOOLEAN(cp->show_transform_peaks));                 break;
+	    case CP_VERBOSE_CURSOR:          return(C_TO_XEN_BOOLEAN(cp->verbose_cursor));                       break;
+	    case CP_FFT_LOG_FREQUENCY:       return(C_TO_XEN_BOOLEAN(cp->fft_log_frequency));                    break;
+	    case CP_FFT_LOG_MAGNITUDE:       return(C_TO_XEN_BOOLEAN(cp->fft_log_magnitude));                    break;
+	    case CP_FFT_WITH_PHASES:         return(C_TO_XEN_BOOLEAN(cp->fft_with_phases));                      break;
+	    case CP_SPECTRO_HOP:             return(C_TO_XEN_INT(cp->spectro_hop));                              break;
+	    case CP_TRANSFORM_SIZE:          return(C_TO_XEN_OFF_T(cp->transform_size));                         break;
+	    case CP_TRANSFORM_GRAPH_TYPE:    return(C_TO_XEN_INT((int)(cp->transform_graph_type)));              break;
+	    case CP_FFT_WINDOW:              return(C_TO_XEN_INT((int)(cp->fft_window)));                        break;
+	    case CP_TRANSFORM_TYPE:          return(C_TO_XEN_INT(cp->transform_type));                           break;
+	    case CP_TRANSFORM_NORMALIZATION: return(C_TO_XEN_INT((int)(cp->transform_normalization)));           break;
+	    case CP_SHOW_MIX_WAVEFORMS:      return(C_TO_XEN_BOOLEAN(cp->show_mix_waveforms));                   break;
+	    case CP_TIME_GRAPH_STYLE:        return(C_TO_XEN_INT(cp->time_graph_style));                         break;
+	    case CP_LISP_GRAPH_STYLE:        return(C_TO_XEN_INT(cp->lisp_graph_style));                         break;
+	    case CP_TRANSFORM_GRAPH_STYLE:   return(C_TO_XEN_INT(cp->transform_graph_style));                    break;
+	    case CP_X_AXIS_STYLE:            return(C_TO_XEN_INT((int)(cp->x_axis_style)));                      break;
+	    case CP_DOT_SIZE:                return(C_TO_XEN_INT(cp->dot_size));                                 break;
+	    case CP_SHOW_AXES:               return(C_TO_XEN_INT((int)(cp->show_axes)));                         break;
+	    case CP_GRAPHS_HORIZONTAL:       return(C_TO_XEN_BOOLEAN(cp->graphs_horizontal));                    break;
+	    case CP_CURSOR_POSITION:         return(XEN_LIST_2(C_TO_XEN_INT(cp->cx), C_TO_XEN_INT(cp->cy)));     break;
 	    case CP_EDPOS_FRAMES:            return(C_TO_XEN_OFF_T(to_c_edit_samples(cp, cp_edpos, caller, 3))); break;
 
 	    case CP_UPDATE_TIME:
@@ -6166,6 +6168,7 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, cp_field_t fld, const char 
     case CP_SPECTRO_X_ANGLE: cp->spectro_x_angle = mus_fclamp(MIN_SPECTRO_ANGLE, XEN_TO_C_DOUBLE(on), MAX_SPECTRO_ANGLE); calculate_fft(cp); break;
     case CP_SPECTRO_Y_ANGLE: cp->spectro_y_angle = mus_fclamp(MIN_SPECTRO_ANGLE, XEN_TO_C_DOUBLE(on), MAX_SPECTRO_ANGLE); calculate_fft(cp); break;
     case CP_SPECTRO_Z_ANGLE: cp->spectro_z_angle = mus_fclamp(MIN_SPECTRO_ANGLE, XEN_TO_C_DOUBLE(on), MAX_SPECTRO_ANGLE); calculate_fft(cp); break;
+
     case CP_SPECTRO_X_SCALE: cp->spectro_x_scale = mus_fclamp(0.0, XEN_TO_C_DOUBLE(on), MAX_SPECTRO_SCALE); calculate_fft(cp); break;
     case CP_SPECTRO_Y_SCALE: cp->spectro_y_scale = mus_fclamp(0.0, XEN_TO_C_DOUBLE(on), MAX_SPECTRO_SCALE); calculate_fft(cp); break;
     case CP_SPECTRO_Z_SCALE: cp->spectro_z_scale = mus_fclamp(0.0, XEN_TO_C_DOUBLE(on), MAX_SPECTRO_SCALE); calculate_fft(cp); break;

@@ -1437,9 +1437,6 @@ var clm_ins_doc_tip = "Instruments using many standard synthesis techniques,<br>
                       " including a bagpipe, FOF synthesis, many FM examples,<br>" +
                       " granular synthesis, spectral modeling, reverbs, and physical modeling.";
 
-var debug_doc_tip = "These are guile-specific debugging functions for tracing execution,<br>" +
-                    " inserting breakpoints, and displaying a stack trace.";
-
 
 var dlocsig_doc_tip = "dlocsig sets up envelopes to mimic a moving sound;<br>" +
                       " included are many path-specification functions";

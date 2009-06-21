@@ -146,7 +146,7 @@
 		      (if (char=? ch #\s)
 			  (if (string=? (substring line i (+ i flen)) "snd-display \"")
 			      (if (not (char=? (string-ref line (+ i flen)) #\;))
-				  (display (format #f "~A: ~A~%" line-ctr line))))))))
+				  (display (format #f "~A (snd-display but no initial semicolon): ~A~%" line-ctr line))))))))
 	      (loop (read-line file 'concat))))))))
 #!
 (define (directory->list dir)

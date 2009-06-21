@@ -175,15 +175,18 @@
   #if HAVE_RUBY
     #define S_setB "set_"
     #define PROC_FALSE "false"
+    #define PROC_TRUE "true"
   #endif
   #if HAVE_SCHEME
     #define S_setB "set! "
     #define PROC_FALSE "#f"
+    #define PROC_TRUE "#t"
   #endif
   #if HAVE_FORTH
     #define S_setB "set-"
-    #define PROC_FALSE "#f"
-  #endif
+    #define PROC_FALSE "#f" 
+    #define PROC_TRUE "#t"
+ #endif
   #define NOT_A_GC_LOC -1
 #endif
 
@@ -4896,7 +4899,7 @@ The TabStack widget creation function"
 
 static XEN gxm_XmIsTabStack(XEN arg)
 {
-  #define H_XmIsTabStack "XmIsTabStack(arg): #t if arg is a TabStack widget"
+  #define H_XmIsTabStack "XmIsTabStack(arg): " PROC_TRUE " if arg is a TabStack widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsTabStack", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsTabStack(XEN_TO_C_Widget(arg))));
 }
@@ -4948,7 +4951,7 @@ The DataField widget creation function"
 
 static XEN gxm_XmIsDataField(XEN arg)
 {
-  #define H_XmIsDataField "XmIsDataField(arg): #t if arg is a DataField widget"
+  #define H_XmIsDataField "XmIsDataField(arg): " PROC_TRUE " if arg is a DataField widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsDataField", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsDataField(XEN_TO_C_Widget(arg))));
 }
@@ -5090,7 +5093,7 @@ The ButtonBox widget creation function"
 
 static XEN gxm_XmIsButtonBox(XEN arg)
 {
-  #define H_XmIsButtonBox "XmIsButtonBox(arg): #t if arg is a ButtonBox widget"
+  #define H_XmIsButtonBox "XmIsButtonBox(arg): " PROC_TRUE " if arg is a ButtonBox widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsButtonBox", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsButtonBox(XEN_TO_C_Widget(arg))));
 }
@@ -5110,7 +5113,7 @@ The Column widget creation function"
 
 static XEN gxm_XmIsColumn(XEN arg)
 {
-  #define H_XmIsColumn "XmIsColumn(arg): #t if arg is a Column widget"
+  #define H_XmIsColumn "XmIsColumn(arg): " PROC_TRUE " if arg is a Column widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsColumn", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsColumn(XEN_TO_C_Widget(arg))));
 }
@@ -5146,7 +5149,7 @@ return(gxm_new_widget("XmCreateDropDown", XmCreateCombinationBox2, arg1, arg2, a
 
 static XEN gxm_XmIsDropDown(XEN arg)
 {
-  #define H_XmIsDropDown "XmIsDropDown(arg): #t if arg is a DropDown widget"
+  #define H_XmIsDropDown "XmIsDropDown(arg): " PROC_TRUE " if arg is a DropDown widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsDropDown", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsDropDown(XEN_TO_C_Widget(arg))));
 }
@@ -7592,49 +7595,49 @@ The MessageBox widget creation function"
 
 static XEN gxm_XmIsMessageBox(XEN arg)
 {
-  #define H_XmIsMessageBox "XmIsMessageBox(arg): #t if arg is a MessageBox widget"
+  #define H_XmIsMessageBox "XmIsMessageBox(arg): " PROC_TRUE " if arg is a MessageBox widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsMessageBox", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsMessageBox(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsArrowButtonGadget(XEN arg)
 {
-  #define H_XmIsArrowButtonGadget "XmIsArrowButtonGadget(arg): #t if arg is an ArrowButton gadget"
+  #define H_XmIsArrowButtonGadget "XmIsArrowButtonGadget(arg): " PROC_TRUE " if arg is an ArrowButton gadget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsArrowButtonGadget", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsArrowButtonGadget(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsArrowButton(XEN arg)
 {
-  #define H_XmIsArrowButton "XmIsArrowButton(arg): #t if arg is an ArrowButton widget"
+  #define H_XmIsArrowButton "XmIsArrowButton(arg): " PROC_TRUE " if arg is an ArrowButton widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsArrowButton", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsArrowButton(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsNotebook(XEN arg)
 {
-  #define H_XmIsNotebook "XmIsNotebook(arg): #t if arg is a Notebook widget"
+  #define H_XmIsNotebook "XmIsNotebook(arg): " PROC_TRUE " if arg is a Notebook widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsNotebook", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsNotebook(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsPanedWindow(XEN arg)
 {
-  #define H_XmIsPanedWindow "XmIsPanedWindow(arg): #t if arg is a PanedWindow widget"
+  #define H_XmIsPanedWindow "XmIsPanedWindow(arg): " PROC_TRUE " if arg is a PanedWindow widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsPanedWindow", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsPanedWindow(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsBulletinBoard(XEN arg)
 {
-  #define H_XmIsBulletinBoard "XmIsBulletinBoard(arg): #t if arg is a BulletinBoard widget"
+  #define H_XmIsBulletinBoard "XmIsBulletinBoard(arg): " PROC_TRUE " if arg is a BulletinBoard widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsBulletinBoard", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsBulletinBoard(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsPrimitive(XEN arg)
 {
-  #define H_XmIsPrimitive "XmIsPrimitive(arg): #t if arg is a Primitive widget"
+  #define H_XmIsPrimitive "XmIsPrimitive(arg): " PROC_TRUE " if arg is a Primitive widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsPrimitive", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsPrimitive(XEN_TO_C_Widget(arg))));
 }
@@ -7650,287 +7653,287 @@ static XEN gxm_XmIsPrintShell(XEN arg)
 
 static XEN gxm_XmIsCascadeButtonGadget(XEN arg)
 {
-  #define H_XmIsCascadeButtonGadget "XmIsCascadeButtonGadget(arg): #t if arg is a CascadeButtonGadget gadget"
+  #define H_XmIsCascadeButtonGadget "XmIsCascadeButtonGadget(arg): " PROC_TRUE " if arg is a CascadeButtonGadget gadget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsCascadeButtonGadget", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsCascadeButtonGadget(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsCascadeButton(XEN arg)
 {
-  #define H_XmIsCascadeButton "XmIsCascadeButton(arg): #t if arg is a CascadeButton widget"
+  #define H_XmIsCascadeButton "XmIsCascadeButton(arg): " PROC_TRUE " if arg is a CascadeButton widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsCascadeButton", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsCascadeButton(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsPushButtonGadget(XEN arg)
 {
-  #define H_XmIsPushButtonGadget "XmIsPushButtonGadget(arg): #t if arg is a PushButtonGadget gadget"
+  #define H_XmIsPushButtonGadget "XmIsPushButtonGadget(arg): " PROC_TRUE " if arg is a PushButtonGadget gadget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsPushButtonGadget", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsPushButtonGadget(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsPushButton(XEN arg)
 {
-  #define H_XmIsPushButton "XmIsPushButton(arg): #t if arg is a PushButton widget"
+  #define H_XmIsPushButton "XmIsPushButton(arg): " PROC_TRUE " if arg is a PushButton widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsPushButton", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsPushButton(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsComboBox(XEN arg)
 {
-  #define H_XmIsComboBox "XmIsComboBox(arg): #t if arg is a ComboBox widget"
+  #define H_XmIsComboBox "XmIsComboBox(arg): " PROC_TRUE " if arg is a ComboBox widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsComboBox", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsComboBox(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsCommand(XEN arg)
 {
-  #define H_XmIsCommand "XmIsCommand(arg): #t if arg is a Command widget"
+  #define H_XmIsCommand "XmIsCommand(arg): " PROC_TRUE " if arg is a Command widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsCommand", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsCommand(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsRowColumn(XEN arg)
 {
-  #define H_XmIsRowColumn "XmIsRowColumn(arg): #t if arg is a RowColumn widget"
+  #define H_XmIsRowColumn "XmIsRowColumn(arg): " PROC_TRUE " if arg is a RowColumn widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsRowColumn", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsRowColumn(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsContainer(XEN arg)
 {
-  #define H_XmIsContainer "XmIsContainer(arg): #t if arg is a Container widget"
+  #define H_XmIsContainer "XmIsContainer(arg): " PROC_TRUE " if arg is a Container widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsContainer", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsContainer(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsScreen(XEN arg)
 {
-  #define H_XmIsScreen "XmIsScreen(arg): #t if arg is a Screen widget"
+  #define H_XmIsScreen "XmIsScreen(arg): " PROC_TRUE " if arg is a Screen widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsScreen", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsScreen(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsScale(XEN arg)
 {
-  #define H_XmIsScale "XmIsScale(arg): #t if arg is a Scale widget"
+  #define H_XmIsScale "XmIsScale(arg): " PROC_TRUE " if arg is a Scale widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsScale", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsScale(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsScrollBar(XEN arg)
 {
-  #define H_XmIsScrollBar "XmIsScrollBar(arg): #t if arg is a ScrollBar widget"
+  #define H_XmIsScrollBar "XmIsScrollBar(arg): " PROC_TRUE " if arg is a ScrollBar widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsScrollBar", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsScrollBar(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsDialogShell(XEN arg)
 {
-  #define H_XmIsDialogShell "XmIsDialogShell(arg): #t if arg is a DialogShell widget"
+  #define H_XmIsDialogShell "XmIsDialogShell(arg): " PROC_TRUE " if arg is a DialogShell widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsDialogShell", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsDialogShell(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsScrolledWindow(XEN arg)
 {
-  #define H_XmIsScrolledWindow "XmIsScrolledWindow(arg): #t if arg is a ScrolledWindow widget"
+  #define H_XmIsScrolledWindow "XmIsScrolledWindow(arg): " PROC_TRUE " if arg is a ScrolledWindow widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsScrolledWindow", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsScrolledWindow(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsDisplay(XEN arg)
 {
-  #define H_XmIsDisplay "XmIsDisplay(arg): #t if arg is a Display widget"
+  #define H_XmIsDisplay "XmIsDisplay(arg): " PROC_TRUE " if arg is a Display widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsDisplay", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsDisplay(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsSelectionBox(XEN arg)
 {
-  #define H_XmIsSelectionBox "XmIsSelectionBox(arg): #t if arg is a SelectionBox widget"
+  #define H_XmIsSelectionBox "XmIsSelectionBox(arg): " PROC_TRUE " if arg is a SelectionBox widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsSelectionBox", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsSelectionBox(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsDragContext(XEN arg)
 {
-  #define H_XmIsDragContext "XmIsDragContext(arg): #t if arg is a DragContext widget"
+  #define H_XmIsDragContext "XmIsDragContext(arg): " PROC_TRUE " if arg is a DragContext widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsDragContext", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsDragContext(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsSeparatorGadget(XEN arg)
 {
-  #define H_XmIsSeparatorGadget "XmIsSeparatorGadget(arg): #t if arg is a SeparatorGadget gadget"
+  #define H_XmIsSeparatorGadget "XmIsSeparatorGadget(arg): " PROC_TRUE " if arg is a SeparatorGadget gadget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsSeparatorGadget", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsSeparatorGadget(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsDragIconObjectClass(XEN arg)
 {
-  #define H_XmIsDragIconObjectClass "XmIsDragIconObjectClass(arg): #t if arg is a DragIconObjectClass widget"
+  #define H_XmIsDragIconObjectClass "XmIsDragIconObjectClass(arg): " PROC_TRUE " if arg is a DragIconObjectClass widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsDragIconObjectClass", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsDragIconObjectClass(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsSeparator(XEN arg)
 {
-  #define H_XmIsSeparator "XmIsSeparator(arg): #t if arg is a Separator widget"
+  #define H_XmIsSeparator "XmIsSeparator(arg): " PROC_TRUE " if arg is a Separator widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsSeparator", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsSeparator(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsDrawingArea(XEN arg)
 {
-  #define H_XmIsDrawingArea "XmIsDrawingArea(arg): #t if arg is a DrawingArea widget"
+  #define H_XmIsDrawingArea "XmIsDrawingArea(arg): " PROC_TRUE " if arg is a DrawingArea widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsDrawingArea", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsDrawingArea(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsDrawnButton(XEN arg)
 {
-  #define H_XmIsDrawnButton "XmIsDrawnButton(arg): #t if arg is a DrawnButton widget"
+  #define H_XmIsDrawnButton "XmIsDrawnButton(arg): " PROC_TRUE " if arg is a DrawnButton widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsDrawnButton", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsDrawnButton(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsDropSiteManager(XEN arg)
 {
-  #define H_XmIsDropSiteManager "XmIsDropSiteManager(arg): #t if arg is a DropSiteManager widget"
+  #define H_XmIsDropSiteManager "XmIsDropSiteManager(arg): " PROC_TRUE " if arg is a DropSiteManager widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsDropSiteManager", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsDropSiteManager(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsDropTransfer(XEN arg)
 {
-  #define H_XmIsDropTransfer "XmIsDropTransfer(arg): #t if arg is a DropTransfer widget"
+  #define H_XmIsDropTransfer "XmIsDropTransfer(arg): " PROC_TRUE " if arg is a DropTransfer widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsDropTransfer", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsDropTransfer(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsTextField(XEN arg)
 {
-  #define H_XmIsTextField "XmIsTextField(arg): #t if arg is a TextField widget"
+  #define H_XmIsTextField "XmIsTextField(arg): " PROC_TRUE " if arg is a TextField widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsTextField", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsTextField(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsFileSelectionBox(XEN arg)
 {
-  #define H_XmIsFileSelectionBox "XmIsFileSelectionBox(arg): #t if arg is a FileSelectionBox widget"
+  #define H_XmIsFileSelectionBox "XmIsFileSelectionBox(arg): " PROC_TRUE " if arg is a FileSelectionBox widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsFileSelectionBox", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsFileSelectionBox(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsText(XEN arg)
 {
-  #define H_XmIsText "XmIsText(arg): #t if arg is a Text widget"
+  #define H_XmIsText "XmIsText(arg): " PROC_TRUE " if arg is a Text widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsText", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsText(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsForm(XEN arg)
 {
-  #define H_XmIsForm "XmIsForm(arg): #t if arg is a Form widget"
+  #define H_XmIsForm "XmIsForm(arg): " PROC_TRUE " if arg is a Form widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsForm", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsForm(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsFrame(XEN arg)
 {
-  #define H_XmIsFrame "XmIsFrame(arg): #t if arg is a Frame widget"
+  #define H_XmIsFrame "XmIsFrame(arg): " PROC_TRUE " if arg is a Frame widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsFrame", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsFrame(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsGadget(XEN arg)
 {
-  #define H_XmIsGadget "XmIsGadget(arg): #t if arg is a Gadget"
+  #define H_XmIsGadget "XmIsGadget(arg): " PROC_TRUE " if arg is a Gadget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsGadget", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsGadget(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsToggleButtonGadget(XEN arg)
 {
-  #define H_XmIsToggleButtonGadget "XmIsToggleButtonGadget(arg): #t if arg is a ToggleButtonGadget gadget"
+  #define H_XmIsToggleButtonGadget "XmIsToggleButtonGadget(arg): " PROC_TRUE " if arg is a ToggleButtonGadget gadget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsToggleButtonGadget", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsToggleButtonGadget(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsGrabShell(XEN arg)
 {
-  #define H_XmIsGrabShell "XmIsGrabShell(arg): #t if arg is a GrabShell widget"
+  #define H_XmIsGrabShell "XmIsGrabShell(arg): " PROC_TRUE " if arg is a GrabShell widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsGrabShell", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsGrabShell(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsToggleButton(XEN arg)
 {
-  #define H_XmIsToggleButton "XmIsToggleButton(arg): #t if arg is a ToggleButton widget"
+  #define H_XmIsToggleButton "XmIsToggleButton(arg): " PROC_TRUE " if arg is a ToggleButton widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsToggleButton", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsToggleButton(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsIconGadget(XEN arg)
 {
-  #define H_XmIsIconGadget "XmIsIconGadget(arg): #t if arg is a IconGadget widget"
+  #define H_XmIsIconGadget "XmIsIconGadget(arg): " PROC_TRUE " if arg is a IconGadget widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsIconGadget", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsIconGadget(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsIconHeader(XEN arg)
 {
-  #define H_XmIsIconHeader "XmIsIconHeader(arg): #t if arg is a IconHeader widget"
+  #define H_XmIsIconHeader "XmIsIconHeader(arg): " PROC_TRUE " if arg is a IconHeader widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsIconHeader", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsIconHeader(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsLabelGadget(XEN arg)
 {
-  #define H_XmIsLabelGadget "XmIsLabelGadget(arg): #t if arg is a LabelGadget widget"
+  #define H_XmIsLabelGadget "XmIsLabelGadget(arg): " PROC_TRUE " if arg is a LabelGadget widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsLabelGadget", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsLabelGadget(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsLabel(XEN arg)
 {
-  #define H_XmIsLabel "XmIsLabel(arg): #t if arg is a Label widget"
+  #define H_XmIsLabel "XmIsLabel(arg): " PROC_TRUE " if arg is a Label widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsLabel", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsLabel(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsVendorShell(XEN arg)
 {
-  #define H_XmIsVendorShell "XmIsVendorShell(arg): #t if arg is a VendorShell widget"
+  #define H_XmIsVendorShell "XmIsVendorShell(arg): " PROC_TRUE " if arg is a VendorShell widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsVendorShell", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsVendorShell(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsList(XEN arg)
 {
-  #define H_XmIsList "XmIsList(arg): #t if arg is a List widget"
+  #define H_XmIsList "XmIsList(arg): " PROC_TRUE " if arg is a List widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsList", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsList(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsMainWindow(XEN arg)
 {
-  #define H_XmIsMainWindow "XmIsMainWindow(arg): #t if arg is a MainWindow widget"
+  #define H_XmIsMainWindow "XmIsMainWindow(arg): " PROC_TRUE " if arg is a MainWindow widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsMainWindow", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsMainWindow(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsManager(XEN arg)
 {
-  #define H_XmIsManager "XmIsManager(arg): #t if arg is a Manager widget"
+  #define H_XmIsManager "XmIsManager(arg): " PROC_TRUE " if arg is a Manager widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsManager", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsManager(XEN_TO_C_Widget(arg))));
 }
 
 static XEN gxm_XmIsMenuShell(XEN arg)
 {
-  #define H_XmIsMenuShell "XmIsMenuShell(arg): #t if arg is a MenuShell widget"
+  #define H_XmIsMenuShell "XmIsMenuShell(arg): " PROC_TRUE " if arg is a MenuShell widget"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsMenuShell", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsMenuShell(XEN_TO_C_Widget(arg))));
 }
@@ -8141,7 +8144,7 @@ static XEN gxm_XPolygonRegion(XEN larg1, XEN arg2, XEN arg3)
 
 static XEN gxm_XPointInRegion(XEN arg1, XEN arg2, XEN arg3)
 {
-  #define H_XPointInRegion "Bool XPointInRegion(r, x, y): returns #t if the point (x, y) is contained in the region r."
+  #define H_XPointInRegion "Bool XPointInRegion(r, x, y): returns " PROC_TRUE " if the point (x, y) is contained in the region r."
   XEN_ASSERT_TYPE(XEN_Region_P(arg1), arg1, 1, "XPointInRegion", "Region");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XPointInRegion", "int");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XPointInRegion", "int");
@@ -8317,7 +8320,7 @@ static XEN gxm_XFindContext(XEN arg1, XEN arg2, XEN arg3)
 
 static XEN gxm_XEqualRegion(XEN arg1, XEN arg2)
 {
-  #define H_XEqualRegion "Bool XEqualRegion(r1, r2): returns #t if the two regions have the same offset, size, and shape."
+  #define H_XEqualRegion "Bool XEqualRegion(r1, r2): returns " PROC_TRUE " if the two regions have the same offset, size, and shape."
   XEN_ASSERT_TYPE(XEN_Region_P(arg1), arg1, 1, "XEqualRegion", "Region");
   XEN_ASSERT_TYPE(XEN_Region_P(arg2), arg2, 2, "XEqualRegion", "Region");
   return(C_TO_XEN_BOOLEAN(XEqualRegion(XEN_TO_C_Region(arg1), XEN_TO_C_Region(arg2))));
@@ -8325,7 +8328,7 @@ static XEN gxm_XEqualRegion(XEN arg1, XEN arg2)
 
 static XEN gxm_XEmptyRegion(XEN arg1)
 {
-  #define H_XEmptyRegion "Bool XEmptyRegion(r): returns #t if the region is empty."
+  #define H_XEmptyRegion "Bool XEmptyRegion(r): returns " PROC_TRUE " if the region is empty."
   XEN_ASSERT_TYPE(XEN_Region_P(arg1), arg1, 1, "XEmptyRegion", "Region");
   return(C_TO_XEN_BOOLEAN(XEmptyRegion(XEN_TO_C_Region(arg1))));
 }
@@ -8399,14 +8402,14 @@ static XEN gxm_XFilterEvent(XEN arg1, XEN arg2)
 
 static XEN gxm_XContextualDrawing(XEN arg1)
 {
-  #define H_XContextualDrawing "Bool XContextualDrawing(font_set): returns #t if text drawn with the font set might include context-dependent drawing."
+  #define H_XContextualDrawing "Bool XContextualDrawing(font_set): returns " PROC_TRUE " if text drawn with the font set might include context-dependent drawing."
   XEN_ASSERT_TYPE(XEN_XFontSet_P(arg1), arg1, 1, "XContextualDrawing", "XFontSet");
   return(C_TO_XEN_BOOLEAN(XContextualDrawing(XEN_TO_C_XFontSet(arg1))));
 }
 
 static XEN gxm_XDirectionalDependentDrawing(XEN arg1)
 {
-  #define H_XDirectionalDependentDrawing "Bool XDirectionalDependentDrawing(font_set): returns #t if the drawing functions implement \
+  #define H_XDirectionalDependentDrawing "Bool XDirectionalDependentDrawing(font_set): returns " PROC_TRUE " if the drawing functions implement \
 implicit text directionality."
   XEN_ASSERT_TYPE(XEN_XFontSet_P(arg1), arg1, 1, "XDirectionalDependentDrawing", "XFontSet");
   return(C_TO_XEN_BOOLEAN(XDirectionalDependentDrawing(XEN_TO_C_XFontSet(arg1))));
@@ -8414,7 +8417,7 @@ implicit text directionality."
 
 static XEN gxm_XContextDependentDrawing(XEN arg1)
 {
-  #define H_XContextDependentDrawing "Bool XContextDependentDrawing(font_set): returns #t if the drawing functions implement implicit \
+  #define H_XContextDependentDrawing "Bool XContextDependentDrawing(font_set): returns " PROC_TRUE " if the drawing functions implement implicit \
 text directionality or if text drawn with the font_set might include context-dependent drawing."
   XEN_ASSERT_TYPE(XEN_XFontSet_P(arg1), arg1, 1, "XContextDependentDrawing", "XFontSet");
   return(C_TO_XEN_BOOLEAN(XContextDependentDrawing(XEN_TO_C_XFontSet(arg1))));
@@ -8491,7 +8494,7 @@ static XEN gxm_XSetLocaleModifiers(XEN arg1)
 
 static XEN gxm_XSupportsLocale(void)
 {
-  #define H_XSupportsLocale "Bool XSupportsLocale(): returns #t if Xlib functions are capable of operating under the current locale."
+  #define H_XSupportsLocale "Bool XSupportsLocale(): returns " PROC_TRUE " if Xlib functions are capable of operating under the current locale."
   return(C_TO_XEN_BOOLEAN(XSupportsLocale()));
 }
 
@@ -9746,7 +9749,7 @@ static Bool gxm_XPeekIfEventProc(Display *dpy, XEvent *e, XtPointer p)
 
 static XEN gxm_XPeekIfEvent(XEN arg1, XEN arg2, XEN arg3)
 {
-  #define H_XPeekIfEvent "XPeekIfEvent(display, predicate, arg): returns only when the specified predicate procedure returns #t for an event."
+  #define H_XPeekIfEvent "XPeekIfEvent(display, predicate, arg): returns only when the specified predicate procedure returns " PROC_TRUE " for an event."
   /* DIFF: XPeekIfEvent dpy [evrtn] proc ptr -> (list val evrtn)
    */
   XEvent *e;
@@ -9958,7 +9961,7 @@ static XEN gxm_XImageByteOrder(XEN arg1)
 
 static XEN gxm_XIfEvent(XEN arg1, XEN arg2, XEN arg3)
 {
-  #define H_XIfEvent "XIfEvent(display, predicate, arg) completes only when the specified predicate procedure returns #t for \
+  #define H_XIfEvent "XIfEvent(display, predicate, arg) completes only when the specified predicate procedure returns " PROC_TRUE " for \
 an event, which indicates an event in the queue matches."
   /* DIFF: XIfEvent dpy [ev] proc ptr -> (list val ev)
    */
@@ -13275,49 +13278,49 @@ static XEN gxm_DefaultDepth(XEN arg1, XEN arg2)
 
 static XEN gxm_IsKeypadKey(XEN arg)
 {
-  #define H_IsKeypadKey "IsKeypadKey(keysym): returns #t if the specified KeySym is a keypad key."
+  #define H_IsKeypadKey "IsKeypadKey(keysym): returns " PROC_TRUE " if the specified KeySym is a keypad key."
   XEN_ASSERT_TYPE(XEN_KeySym_P(arg), arg, 0, "IsKeypadKey", "KeySym");
   return(C_TO_XEN_BOOLEAN(IsKeypadKey(XEN_TO_C_KeySym(arg))));
 }
 
 static XEN gxm_IsPrivateKeypadKey(XEN arg)
 {
-  #define H_IsPrivateKeypadKey "IsPrivateKeypadKey(keysym): returns #t if the specified KeySym is a vendor-private keypad key."
+  #define H_IsPrivateKeypadKey "IsPrivateKeypadKey(keysym): returns " PROC_TRUE " if the specified KeySym is a vendor-private keypad key."
   XEN_ASSERT_TYPE(XEN_KeySym_P(arg), arg, 0, "IsPrivateKeypadKey", "KeySym");
   return(C_TO_XEN_BOOLEAN(IsPrivateKeypadKey(XEN_TO_C_KeySym(arg))));
 }
 
 static XEN gxm_IsCursorKey(XEN arg)
 {
-  #define H_IsCursorKey "IsCursorKey(keysym): returns #t if the specified KeySym is a cursor key."
+  #define H_IsCursorKey "IsCursorKey(keysym): returns " PROC_TRUE " if the specified KeySym is a cursor key."
   XEN_ASSERT_TYPE(XEN_KeySym_P(arg), arg, 0, "IsCursorKey", "KeySym");
   return(C_TO_XEN_BOOLEAN(IsCursorKey(XEN_TO_C_KeySym(arg))));
 }
 
 static XEN gxm_IsPFKey(XEN arg)
 {
-  #define H_IsPFKey "IsPFKey(keysym): returns #t if the specified KeySym is a PF key."
+  #define H_IsPFKey "IsPFKey(keysym): returns " PROC_TRUE " if the specified KeySym is a PF key."
   XEN_ASSERT_TYPE(XEN_KeySym_P(arg), arg, 0, "IsPFKey", "KeySym");
   return(C_TO_XEN_BOOLEAN(IsPFKey(XEN_TO_C_KeySym(arg))));
 }
 
 static XEN gxm_IsFunctionKey(XEN arg)
 {
-  #define H_IsFunctionKey "IsFunctionKey(keysym): returns #t if the KeySym is a function key."
+  #define H_IsFunctionKey "IsFunctionKey(keysym): returns " PROC_TRUE " if the KeySym is a function key."
   XEN_ASSERT_TYPE(XEN_KeySym_P(arg), arg, 0, "IsFunctionKey", "KeySym");
   return(C_TO_XEN_BOOLEAN(IsFunctionKey(XEN_TO_C_KeySym(arg))));
 }
 
 static XEN gxm_IsMiscFunctionKey(XEN arg)
 {
-  #define H_IsMiscFunctionKey "IsMiscFunctionKey(keysym): returns #t if the specified KeySym is a miscellaneous function key."
+  #define H_IsMiscFunctionKey "IsMiscFunctionKey(keysym): returns " PROC_TRUE " if the specified KeySym is a miscellaneous function key."
   XEN_ASSERT_TYPE(XEN_KeySym_P(arg), arg, 0, "IsMiscFunctionKey", "KeySym");
   return(C_TO_XEN_BOOLEAN(IsMiscFunctionKey(XEN_TO_C_KeySym(arg))));
 }
 
 static XEN gxm_IsModifierKey(XEN arg)
 {
-  #define H_IsModifierKey "IsModifierKey(keysym): returns #t if the specified KeySym is a modifier key."
+  #define H_IsModifierKey "IsModifierKey(keysym): returns " PROC_TRUE " if the specified KeySym is a modifier key."
   XEN_ASSERT_TYPE(XEN_KeySym_P(arg), arg, 0, "IsModifierKey", "KeySym");
   return(C_TO_XEN_BOOLEAN(IsModifierKey(XEN_TO_C_KeySym(arg))));
 }
@@ -15850,7 +15853,7 @@ including the specified widget. "
 static XEN gxm_XtAddGrab(XEN arg1, XEN arg2, XEN arg3)
 {
   #define H_XtAddGrab "void XtAddGrab(w, exclusive, spring_loaded) appends the widget (and associated parameters) to the modal cascade and \
-checks that exclusive is #t if spring_loaded is #t."
+checks that exclusive is " PROC_TRUE " if spring_loaded is " PROC_TRUE "."
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XtAddGrab", "Widget");
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(arg2), arg2, 2, "XtAddGrab", "boolean");
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(arg3), arg3, 3, "XtAddGrab", "boolean");
@@ -16649,21 +16652,21 @@ mechanism that a widget believes it owns a selection."
 
 static XEN gxm_XtIsSensitive(XEN arg1)
 {
-  #define H_XtIsSensitive "Boolean XtIsSensitive(w): returns #t if user input events are being dispatched."
+  #define H_XtIsSensitive "Boolean XtIsSensitive(w): returns " PROC_TRUE " if user input events are being dispatched."
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XtIsSensitive", "Widget");
   return(C_TO_XEN_BOOLEAN(XtIsSensitive(XEN_TO_C_Widget(arg1))));
 }
 
 static XEN gxm_XtIsRealized(XEN arg1)
 {
-  #define H_XtIsRealized "Boolean XtIsRealized(w): returns #t if the widget has been realized,"
+  #define H_XtIsRealized "Boolean XtIsRealized(w): returns " PROC_TRUE " if the widget has been realized,"
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XtIsRealized", "Widget");
   return(C_TO_XEN_BOOLEAN(XtIsRealized(XEN_TO_C_Widget(arg1))));
 }
 
 static XEN gxm_XtIsManaged(XEN arg1)
 {
-  #define H_XtIsManaged "Boolean XtIsManaged(widget): returns #t if the specified widget is of class RectObj or any subclass thereof and is managed."
+  #define H_XtIsManaged "Boolean XtIsManaged(widget): returns " PROC_TRUE " if the specified widget is of class RectObj or any subclass thereof and is managed."
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XtIsManaged", "Widget");
   return(C_TO_XEN_BOOLEAN(XtIsManaged(XEN_TO_C_Widget(arg1))));
 }
@@ -16677,7 +16680,7 @@ static XEN gxm_XtIsObject(XEN arg1)
 
 static XEN gxm_XtIsSubclass(XEN arg1, XEN arg2)
 {
-  #define H_XtIsSubclass "Boolean XtIsSubclass(w, widget_class): returns #t if the class of the specified widget is equal to or is a \
+  #define H_XtIsSubclass "Boolean XtIsSubclass(w, widget_class): returns " PROC_TRUE " if the class of the specified widget is equal to or is a \
 subclass of the specified class."
   XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XtIsSubclass", "Widget");
   XEN_ASSERT_TYPE(XEN_WidgetClass_P(arg2), arg2, 2, "XtIsSubclass", "WidgetClass");
@@ -24971,38 +24974,38 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(IsMiscFunctionKey, gxm_IsMiscFunctionKey_w, 1, 0, 0, H_IsMiscFunctionKey);
   XM_DEFINE_PROCEDURE(IsModifierKey, gxm_IsModifierKey_w, 1, 0, 0, H_IsModifierKey);
 
-  XM_DEFINE_PROCEDURE(XButtonEvent?, XEN_XButtonEvent_p_w, 1, 0, 0, "#t if arg is a XButtonEvent");
-  XM_DEFINE_PROCEDURE(XCirculateEvent?, XEN_XCirculateEvent_p_w, 1, 0, 0, "#t if arg is a XCirculateEvent");
-  XM_DEFINE_PROCEDURE(XCirculateRequestEvent?, XEN_XCirculateRequestEvent_p_w, 1, 0, 0, "#t if arg is a XCirculateRequestEvent");
-  XM_DEFINE_PROCEDURE(XClientMessageEvent?, XEN_XClientMessageEvent_p_w, 1, 0, 0, "#t if arg is a XClientMessageEvent");
-  XM_DEFINE_PROCEDURE(XColormapEvent?, XEN_XColormapEvent_p_w, 1, 0, 0, "#t if arg is a XColormapEvent");
-  XM_DEFINE_PROCEDURE(XConfigureEvent?, XEN_XConfigureEvent_p_w, 1, 0, 0, "#t if arg is a XConfigureEvent");
-  XM_DEFINE_PROCEDURE(XConfigureRequestEvent?, XEN_XConfigureRequestEvent_p_w, 1, 0, 0, "#t if arg is a XConfigureRequestEvent");
-  XM_DEFINE_PROCEDURE(XCreateWindowEvent?, XEN_XCreateWindowEvent_p_w, 1, 0, 0, "#t if arg is a XCreateWindowEvent");
-  XM_DEFINE_PROCEDURE(XCrossingEvent?, XEN_XCrossingEvent_p_w, 1, 0, 0, "#t if arg is a XCrossingEvent");
-  XM_DEFINE_PROCEDURE(XDestroyWindowEvent?, XEN_XDestroyWindowEvent_p_w, 1, 0, 0, "#t if arg is a XDestroyWindowEvent");
-  XM_DEFINE_PROCEDURE(XErrorEvent?, XEN_XErrorEvent_p_w, 1, 0, 0, "#t if arg is a XErrorEvent");
-  XM_DEFINE_PROCEDURE(XExposeEvent?, XEN_XExposeEvent_p_w, 1, 0, 0, "#t if arg is a XExposeEvent");
-  XM_DEFINE_PROCEDURE(XFocusChangeEvent?, XEN_XFocusChangeEvent_p_w, 1, 0, 0, "#t if arg is a XFocusChangeEvent");
-  XM_DEFINE_PROCEDURE(XGraphicsExposeEvent?, XEN_XGraphicsExposeEvent_p_w, 1, 0, 0, "#t if arg is a XGraphicsExposeEvent");
-  XM_DEFINE_PROCEDURE(XGravityEvent?, XEN_XGravityEvent_p_w, 1, 0, 0, "#t if arg is a XGravityEvent");
-  XM_DEFINE_PROCEDURE(XKeyEvent?, XEN_XKeyEvent_p_w, 1, 0, 0, "#t if arg is a XKeyEvent");
-  XM_DEFINE_PROCEDURE(XKeymapEvent?, XEN_XKeymapEvent_p_w, 1, 0, 0, "#t if arg is a XKeymapEvent");
-  XM_DEFINE_PROCEDURE(XMapEvent?, XEN_XMapEvent_p_w, 1, 0, 0, "#t if arg is a XMapEvent");
-  XM_DEFINE_PROCEDURE(XMapRequestEvent?, XEN_XMapRequestEvent_p_w, 1, 0, 0, "#t if arg is a XMapRequestEvent");
-  XM_DEFINE_PROCEDURE(XMappingEvent?, XEN_XMappingEvent_p_w, 1, 0, 0, "#t if arg is a XMappingEvent");
-  XM_DEFINE_PROCEDURE(XMotionEvent?, XEN_XMotionEvent_p_w, 1, 0, 0, "#t if arg is a XMotionEvent");
-  XM_DEFINE_PROCEDURE(XNoExposeEvent?, XEN_XNoExposeEvent_p_w, 1, 0, 0, "#t if arg is a XNoExposeEvent");
-  XM_DEFINE_PROCEDURE(XPropertyEvent?, XEN_XPropertyEvent_p_w, 1, 0, 0, "#t if arg is a XPropertyEvent");
-  XM_DEFINE_PROCEDURE(XReparentEvent?, XEN_XReparentEvent_p_w, 1, 0, 0, "#t if arg is a XReparentEvent");
-  XM_DEFINE_PROCEDURE(XResizeRequestEvent?, XEN_XResizeRequestEvent_p_w, 1, 0, 0, "#t if arg is a XResizeRequestEvent");
-  XM_DEFINE_PROCEDURE(XSelectionClearEvent?, XEN_XSelectionClearEvent_p_w, 1, 0, 0, "#t if arg is a XSelectionClearEvent");
-  XM_DEFINE_PROCEDURE(XSelectionEvent?, XEN_XSelectionEvent_p_w, 1, 0, 0, "#t if arg is a XSelectionEvent");
-  XM_DEFINE_PROCEDURE(XSelectionRequestEvent?, XEN_XSelectionRequestEvent_p_w, 1, 0, 0, "#t if arg is a XSelectionRequestEvent");
-  XM_DEFINE_PROCEDURE(XSetWindowAttributes?, XEN_XSetWindowAttributes_p_w, 1, 0, 0, "#t if arg is a XSetWindowAttributes");
-  XM_DEFINE_PROCEDURE(XUnmapEvent?, XEN_XUnmapEvent_p_w, 1, 0, 0, "#t if arg is a XUnmapEvent");
-  XM_DEFINE_PROCEDURE(XVisibilityEvent?, XEN_XVisibilityEvent_p_w, 1, 0, 0, "#t if arg is a XVisibilityEvent");
-  XM_DEFINE_PROCEDURE(XIconSize?, XEN_XIconSize_p_w, 1, 0, 0, "#t if arg is a XIconSize object");
+  XM_DEFINE_PROCEDURE(XButtonEvent?, XEN_XButtonEvent_p_w, 1, 0, 0, PROC_TRUE " if arg is a XButtonEvent");
+  XM_DEFINE_PROCEDURE(XCirculateEvent?, XEN_XCirculateEvent_p_w, 1, 0, 0, PROC_TRUE " if arg is a XCirculateEvent");
+  XM_DEFINE_PROCEDURE(XCirculateRequestEvent?, XEN_XCirculateRequestEvent_p_w, 1, 0, 0, PROC_TRUE " if arg is a XCirculateRequestEvent");
+  XM_DEFINE_PROCEDURE(XClientMessageEvent?, XEN_XClientMessageEvent_p_w, 1, 0, 0, PROC_TRUE " if arg is a XClientMessageEvent");
+  XM_DEFINE_PROCEDURE(XColormapEvent?, XEN_XColormapEvent_p_w, 1, 0, 0, PROC_TRUE " if arg is a XColormapEvent");
+  XM_DEFINE_PROCEDURE(XConfigureEvent?, XEN_XConfigureEvent_p_w, 1, 0, 0, PROC_TRUE " if arg is a XConfigureEvent");
+  XM_DEFINE_PROCEDURE(XConfigureRequestEvent?, XEN_XConfigureRequestEvent_p_w, 1, 0, 0, PROC_TRUE " if arg is a XConfigureRequestEvent");
+  XM_DEFINE_PROCEDURE(XCreateWindowEvent?, XEN_XCreateWindowEvent_p_w, 1, 0, 0, PROC_TRUE " if arg is a XCreateWindowEvent");
+  XM_DEFINE_PROCEDURE(XCrossingEvent?, XEN_XCrossingEvent_p_w, 1, 0, 0, PROC_TRUE " if arg is a XCrossingEvent");
+  XM_DEFINE_PROCEDURE(XDestroyWindowEvent?, XEN_XDestroyWindowEvent_p_w, 1, 0, 0, PROC_TRUE " if arg is a XDestroyWindowEvent");
+  XM_DEFINE_PROCEDURE(XErrorEvent?, XEN_XErrorEvent_p_w, 1, 0, 0, PROC_TRUE " if arg is a XErrorEvent");
+  XM_DEFINE_PROCEDURE(XExposeEvent?, XEN_XExposeEvent_p_w, 1, 0, 0, PROC_TRUE " if arg is a XExposeEvent");
+  XM_DEFINE_PROCEDURE(XFocusChangeEvent?, XEN_XFocusChangeEvent_p_w, 1, 0, 0, PROC_TRUE " if arg is a XFocusChangeEvent");
+  XM_DEFINE_PROCEDURE(XGraphicsExposeEvent?, XEN_XGraphicsExposeEvent_p_w, 1, 0, 0, PROC_TRUE " if arg is a XGraphicsExposeEvent");
+  XM_DEFINE_PROCEDURE(XGravityEvent?, XEN_XGravityEvent_p_w, 1, 0, 0, PROC_TRUE " if arg is a XGravityEvent");
+  XM_DEFINE_PROCEDURE(XKeyEvent?, XEN_XKeyEvent_p_w, 1, 0, 0, PROC_TRUE " if arg is a XKeyEvent");
+  XM_DEFINE_PROCEDURE(XKeymapEvent?, XEN_XKeymapEvent_p_w, 1, 0, 0, PROC_TRUE " if arg is a XKeymapEvent");
+  XM_DEFINE_PROCEDURE(XMapEvent?, XEN_XMapEvent_p_w, 1, 0, 0, PROC_TRUE " if arg is a XMapEvent");
+  XM_DEFINE_PROCEDURE(XMapRequestEvent?, XEN_XMapRequestEvent_p_w, 1, 0, 0, PROC_TRUE " if arg is a XMapRequestEvent");
+  XM_DEFINE_PROCEDURE(XMappingEvent?, XEN_XMappingEvent_p_w, 1, 0, 0, PROC_TRUE " if arg is a XMappingEvent");
+  XM_DEFINE_PROCEDURE(XMotionEvent?, XEN_XMotionEvent_p_w, 1, 0, 0, PROC_TRUE " if arg is a XMotionEvent");
+  XM_DEFINE_PROCEDURE(XNoExposeEvent?, XEN_XNoExposeEvent_p_w, 1, 0, 0, PROC_TRUE " if arg is a XNoExposeEvent");
+  XM_DEFINE_PROCEDURE(XPropertyEvent?, XEN_XPropertyEvent_p_w, 1, 0, 0, PROC_TRUE " if arg is a XPropertyEvent");
+  XM_DEFINE_PROCEDURE(XReparentEvent?, XEN_XReparentEvent_p_w, 1, 0, 0, PROC_TRUE " if arg is a XReparentEvent");
+  XM_DEFINE_PROCEDURE(XResizeRequestEvent?, XEN_XResizeRequestEvent_p_w, 1, 0, 0, PROC_TRUE " if arg is a XResizeRequestEvent");
+  XM_DEFINE_PROCEDURE(XSelectionClearEvent?, XEN_XSelectionClearEvent_p_w, 1, 0, 0, PROC_TRUE " if arg is a XSelectionClearEvent");
+  XM_DEFINE_PROCEDURE(XSelectionEvent?, XEN_XSelectionEvent_p_w, 1, 0, 0, PROC_TRUE " if arg is a XSelectionEvent");
+  XM_DEFINE_PROCEDURE(XSelectionRequestEvent?, XEN_XSelectionRequestEvent_p_w, 1, 0, 0, PROC_TRUE " if arg is a XSelectionRequestEvent");
+  XM_DEFINE_PROCEDURE(XSetWindowAttributes?, XEN_XSetWindowAttributes_p_w, 1, 0, 0, PROC_TRUE " if arg is a XSetWindowAttributes");
+  XM_DEFINE_PROCEDURE(XUnmapEvent?, XEN_XUnmapEvent_p_w, 1, 0, 0, PROC_TRUE " if arg is a XUnmapEvent");
+  XM_DEFINE_PROCEDURE(XVisibilityEvent?, XEN_XVisibilityEvent_p_w, 1, 0, 0, PROC_TRUE " if arg is a XVisibilityEvent");
+  XM_DEFINE_PROCEDURE(XIconSize?, XEN_XIconSize_p_w, 1, 0, 0, PROC_TRUE " if arg is a XIconSize object");
 
 #if HAVE_MOTIF
   XM_DEFINE_PROCEDURE(XmCreateMessageBox, gxm_XmCreateMessageBox_w, 3, 1, 0, H_XmCreateMessageBox);
@@ -25534,59 +25537,59 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XAddPixel, gxm_XAddPixel_w, 2, 0, 0, H_XAddPixel);
 
 #if HAVE_MOTIF
-  XM_DEFINE_PROCEDURE(XtAppContext?, XEN_XtAppContext_p_w, 1, 0, 0, "#t if arg is a XtAppContext");
-  XM_DEFINE_PROCEDURE(XtRequestId?, XEN_XtRequestId_p_w, 1, 0, 0, "#t if arg is a XtRequestId");
-  XM_DEFINE_PROCEDURE(XtWorkProcId?, XEN_XtWorkProcId_p_w, 1, 0, 0, "#t if arg is a XtWorkProcId");
-  XM_DEFINE_PROCEDURE(XtInputId?, XEN_XtInputId_p_w, 1, 0, 0, "#t if arg is a XtInputId");
-  XM_DEFINE_PROCEDURE(XtIntervalId?, XEN_XtIntervalId_p_w, 1, 0, 0, "#t if arg is a XtIntervalId");
+  XM_DEFINE_PROCEDURE(XtAppContext?, XEN_XtAppContext_p_w, 1, 0, 0, PROC_TRUE " if arg is a XtAppContext");
+  XM_DEFINE_PROCEDURE(XtRequestId?, XEN_XtRequestId_p_w, 1, 0, 0, PROC_TRUE " if arg is a XtRequestId");
+  XM_DEFINE_PROCEDURE(XtWorkProcId?, XEN_XtWorkProcId_p_w, 1, 0, 0, PROC_TRUE " if arg is a XtWorkProcId");
+  XM_DEFINE_PROCEDURE(XtInputId?, XEN_XtInputId_p_w, 1, 0, 0, PROC_TRUE " if arg is a XtInputId");
+  XM_DEFINE_PROCEDURE(XtIntervalId?, XEN_XtIntervalId_p_w, 1, 0, 0, PROC_TRUE " if arg is a XtIntervalId");
 #endif
-  XM_DEFINE_PROCEDURE(Screen?, XEN_Screen_p_w, 1, 0, 0, "#t if arg is a Screen");
-  XM_DEFINE_PROCEDURE(XEvent?, XEN_XEvent_p_w, 1, 0, 0, "#t if arg is a XEvent");
-  XM_DEFINE_PROCEDURE(XRectangle?, XEN_XRectangle_p_w, 1, 0, 0, "#t if arg is a XRectangle");
-  XM_DEFINE_PROCEDURE(XArc?, XEN_XArc_p_w, 1, 0, 0, "#t if arg is a XArc");
-  XM_DEFINE_PROCEDURE(XPoint?, XEN_XPoint_p_w, 1, 0, 0, "#t if arg is a XPoint");
-  XM_DEFINE_PROCEDURE(XSegment?, XEN_XSegment_p_w, 1, 0, 0, "#t if arg is a XSegment");
-  XM_DEFINE_PROCEDURE(XColor?, XEN_XColor_p_w, 1, 0, 0, "#t if arg is a XColor");
-  XM_DEFINE_PROCEDURE(Atom?, XEN_Atom_p_w, 1, 0, 0, "#t if arg is an Atom");
-  XM_DEFINE_PROCEDURE(Colormap?, XEN_Colormap_p_w, 1, 0, 0, "#t if arg is a Colormap");
-  XM_DEFINE_PROCEDURE(XModifierKeymap?, XEN_XModifierKeymap_p_w, 1, 0, 0, "#t if arg is a XModifierKeymap");
-  XM_DEFINE_PROCEDURE(Depth?, XEN_Depth_p_w, 1, 0, 0, "#t if arg is a Depth");
-  XM_DEFINE_PROCEDURE(Display?, XEN_Display_p_w, 1, 0, 0, "#t if arg is a Display");
-  XM_DEFINE_PROCEDURE(Drawable?, XEN_Window_p_w, 1, 0, 0, "#t if arg is a Drawable");
-  XM_DEFINE_PROCEDURE(Font?, XEN_Font_p_w, 1, 0, 0, "#t if arg is a Font");
-  XM_DEFINE_PROCEDURE(GC?, XEN_GC_p_w, 1, 0, 0, "#t if arg is a GC");
-  XM_DEFINE_PROCEDURE(KeySym?, XEN_KeySym_p_w, 1, 0, 0, "#t if arg is a KeySym");
-  XM_DEFINE_PROCEDURE(Pixel?, XEN_Pixel_p_w, 1, 0, 0, "#t if arg is a Pixel");
-  XM_DEFINE_PROCEDURE(Pixmap?, XEN_Pixmap_p_w, 1, 0, 0, "#t if arg is a Pixmap");
-  XM_DEFINE_PROCEDURE(Region?, XEN_Region_p_w, 1, 0, 0, "#t if arg is a Region");
-  XM_DEFINE_PROCEDURE(Time?, XEN_Time_p_w, 1, 0, 0, "#t if arg is a Time");
-  XM_DEFINE_PROCEDURE(Visual?, XEN_Visual_p_w, 1, 0, 0, "#t if arg is a Visual");
-  XM_DEFINE_PROCEDURE(Window?, XEN_Window_p_w, 1, 0, 0, "#t if arg is a Window");
+  XM_DEFINE_PROCEDURE(Screen?, XEN_Screen_p_w, 1, 0, 0, PROC_TRUE " if arg is a Screen");
+  XM_DEFINE_PROCEDURE(XEvent?, XEN_XEvent_p_w, 1, 0, 0, PROC_TRUE " if arg is a XEvent");
+  XM_DEFINE_PROCEDURE(XRectangle?, XEN_XRectangle_p_w, 1, 0, 0, PROC_TRUE " if arg is a XRectangle");
+  XM_DEFINE_PROCEDURE(XArc?, XEN_XArc_p_w, 1, 0, 0, PROC_TRUE " if arg is a XArc");
+  XM_DEFINE_PROCEDURE(XPoint?, XEN_XPoint_p_w, 1, 0, 0, PROC_TRUE " if arg is a XPoint");
+  XM_DEFINE_PROCEDURE(XSegment?, XEN_XSegment_p_w, 1, 0, 0, PROC_TRUE " if arg is a XSegment");
+  XM_DEFINE_PROCEDURE(XColor?, XEN_XColor_p_w, 1, 0, 0, PROC_TRUE " if arg is a XColor");
+  XM_DEFINE_PROCEDURE(Atom?, XEN_Atom_p_w, 1, 0, 0, PROC_TRUE " if arg is an Atom");
+  XM_DEFINE_PROCEDURE(Colormap?, XEN_Colormap_p_w, 1, 0, 0, PROC_TRUE " if arg is a Colormap");
+  XM_DEFINE_PROCEDURE(XModifierKeymap?, XEN_XModifierKeymap_p_w, 1, 0, 0, PROC_TRUE " if arg is a XModifierKeymap");
+  XM_DEFINE_PROCEDURE(Depth?, XEN_Depth_p_w, 1, 0, 0, PROC_TRUE " if arg is a Depth");
+  XM_DEFINE_PROCEDURE(Display?, XEN_Display_p_w, 1, 0, 0, PROC_TRUE " if arg is a Display");
+  XM_DEFINE_PROCEDURE(Drawable?, XEN_Window_p_w, 1, 0, 0, PROC_TRUE " if arg is a Drawable");
+  XM_DEFINE_PROCEDURE(Font?, XEN_Font_p_w, 1, 0, 0, PROC_TRUE " if arg is a Font");
+  XM_DEFINE_PROCEDURE(GC?, XEN_GC_p_w, 1, 0, 0, PROC_TRUE " if arg is a GC");
+  XM_DEFINE_PROCEDURE(KeySym?, XEN_KeySym_p_w, 1, 0, 0, PROC_TRUE " if arg is a KeySym");
+  XM_DEFINE_PROCEDURE(Pixel?, XEN_Pixel_p_w, 1, 0, 0, PROC_TRUE " if arg is a Pixel");
+  XM_DEFINE_PROCEDURE(Pixmap?, XEN_Pixmap_p_w, 1, 0, 0, PROC_TRUE " if arg is a Pixmap");
+  XM_DEFINE_PROCEDURE(Region?, XEN_Region_p_w, 1, 0, 0, PROC_TRUE " if arg is a Region");
+  XM_DEFINE_PROCEDURE(Time?, XEN_Time_p_w, 1, 0, 0, PROC_TRUE " if arg is a Time");
+  XM_DEFINE_PROCEDURE(Visual?, XEN_Visual_p_w, 1, 0, 0, PROC_TRUE " if arg is a Visual");
+  XM_DEFINE_PROCEDURE(Window?, XEN_Window_p_w, 1, 0, 0, PROC_TRUE " if arg is a Window");
 #if HAVE_MOTIF
-  XM_DEFINE_PROCEDURE(Widget?, XEN_Widget_p_w, 1, 0, 0, "#t if arg is a Widget");
-  XM_DEFINE_PROCEDURE(XmStringContext?, XEN_XmStringContext_p_w, 1, 0, 0, "#t if arg is a XmStringContext");
+  XM_DEFINE_PROCEDURE(Widget?, XEN_Widget_p_w, 1, 0, 0, PROC_TRUE " if arg is a Widget");
+  XM_DEFINE_PROCEDURE(XmStringContext?, XEN_XmStringContext_p_w, 1, 0, 0, PROC_TRUE " if arg is a XmStringContext");
 #endif
-  XM_DEFINE_PROCEDURE(XFontProp?, XEN_XFontProp_p_w, 1, 0, 0, "#t if arg is a XFontProp");
-  XM_DEFINE_PROCEDURE(XFontSet?, XEN_XFontSet_p_w, 1, 0, 0, "#t if arg is a XFontSet");
-  XM_DEFINE_PROCEDURE(XFontStruct?, XEN_XFontStruct_p_w, 1, 0, 0, "#t if arg is a XFontStruct");
-  XM_DEFINE_PROCEDURE(XGCValues?, XEN_XGCValues_p_w, 1, 0, 0, "#t if arg is a XGCValues");
-  XM_DEFINE_PROCEDURE(XImage?, XEN_XImage_p_w, 1, 0, 0, "#t if arg is a XImage");
-  XM_DEFINE_PROCEDURE(XVisualInfo?, XEN_XVisualInfo_p_w, 1, 0, 0, "#t if arg is a XVisualInfo");
-  XM_DEFINE_PROCEDURE(XWMHints?, XEN_XWMHints_p_w, 1, 0, 0, "#t if arg is a XWMHints");
-  XM_DEFINE_PROCEDURE(XWindowAttributes?, XEN_XWindowAttributes_p_w, 1, 0, 0, "#t if arg is a XWindowAttributes");
-  XM_DEFINE_PROCEDURE(XWindowChanges?, XEN_XWindowChanges_p_w, 1, 0, 0, "#t if arg is a XWindowChanges");
-  XM_DEFINE_PROCEDURE(KeyCode?, XEN_KeyCode_p_w, 1, 0, 0, "#t if arg is a KeyCode");
-  XM_DEFINE_PROCEDURE(XContext?, XEN_XContext_p_w, 1, 0, 0, "#t if arg is a XContext");
-  XM_DEFINE_PROCEDURE(XCharStruct?, XEN_XCharStruct_p_w, 1, 0, 0, "#t if arg is a XCharStruct");
-  XM_DEFINE_PROCEDURE(XTextItem?, XEN_XTextItem_p_w, 1, 0, 0, "#t if arg is a XTextItem");
-  XM_DEFINE_PROCEDURE(XStandardColormap?, XEN_XStandardColormap_p_w, 1, 0, 0, "#t if arg is a XStandardColormap");
-  XM_DEFINE_PROCEDURE(Cursor?, XEN_Cursor_p_w, 1, 0, 0, "#t if arg is a Cursor");
+  XM_DEFINE_PROCEDURE(XFontProp?, XEN_XFontProp_p_w, 1, 0, 0, PROC_TRUE " if arg is a XFontProp");
+  XM_DEFINE_PROCEDURE(XFontSet?, XEN_XFontSet_p_w, 1, 0, 0, PROC_TRUE " if arg is a XFontSet");
+  XM_DEFINE_PROCEDURE(XFontStruct?, XEN_XFontStruct_p_w, 1, 0, 0, PROC_TRUE " if arg is a XFontStruct");
+  XM_DEFINE_PROCEDURE(XGCValues?, XEN_XGCValues_p_w, 1, 0, 0, PROC_TRUE " if arg is a XGCValues");
+  XM_DEFINE_PROCEDURE(XImage?, XEN_XImage_p_w, 1, 0, 0, PROC_TRUE " if arg is a XImage");
+  XM_DEFINE_PROCEDURE(XVisualInfo?, XEN_XVisualInfo_p_w, 1, 0, 0, PROC_TRUE " if arg is a XVisualInfo");
+  XM_DEFINE_PROCEDURE(XWMHints?, XEN_XWMHints_p_w, 1, 0, 0, PROC_TRUE " if arg is a XWMHints");
+  XM_DEFINE_PROCEDURE(XWindowAttributes?, XEN_XWindowAttributes_p_w, 1, 0, 0, PROC_TRUE " if arg is a XWindowAttributes");
+  XM_DEFINE_PROCEDURE(XWindowChanges?, XEN_XWindowChanges_p_w, 1, 0, 0, PROC_TRUE " if arg is a XWindowChanges");
+  XM_DEFINE_PROCEDURE(KeyCode?, XEN_KeyCode_p_w, 1, 0, 0, PROC_TRUE " if arg is a KeyCode");
+  XM_DEFINE_PROCEDURE(XContext?, XEN_XContext_p_w, 1, 0, 0, PROC_TRUE " if arg is a XContext");
+  XM_DEFINE_PROCEDURE(XCharStruct?, XEN_XCharStruct_p_w, 1, 0, 0, PROC_TRUE " if arg is a XCharStruct");
+  XM_DEFINE_PROCEDURE(XTextItem?, XEN_XTextItem_p_w, 1, 0, 0, PROC_TRUE " if arg is a XTextItem");
+  XM_DEFINE_PROCEDURE(XStandardColormap?, XEN_XStandardColormap_p_w, 1, 0, 0, PROC_TRUE " if arg is a XStandardColormap");
+  XM_DEFINE_PROCEDURE(Cursor?, XEN_Cursor_p_w, 1, 0, 0, PROC_TRUE " if arg is a Cursor");
 #if HAVE_XM_XP
-  XM_DEFINE_PROCEDURE(XPContext?, XEN_XPContext_p_w, 1, 0, 0, "#t if arg is a XPContext");
+  XM_DEFINE_PROCEDURE(XPContext?, XEN_XPContext_p_w, 1, 0, 0, PROC_TRUE " if arg is a XPContext");
 #endif
 #if HAVE_MOTIF
-  XM_DEFINE_PROCEDURE(WidgetClass?, XEN_WidgetClass_p_w, 1, 0, 0, "#t if arg is a WidgetClass");
-  XM_DEFINE_PROCEDURE(XmString?, XEN_XmString_p_w, 1, 0, 0, "#t if arg is a XmString");
+  XM_DEFINE_PROCEDURE(WidgetClass?, XEN_WidgetClass_p_w, 1, 0, 0, PROC_TRUE " if arg is a WidgetClass");
+  XM_DEFINE_PROCEDURE(XmString?, XEN_XmString_p_w, 1, 0, 0, PROC_TRUE " if arg is a XmString");
   XM_DEFINE_PROCEDURE(XmToggleButton?, gxm_XmIsToggleButton_w, 1, 0, 0, H_XmIsToggleButton);
   XM_DEFINE_PROCEDURE(XmDrawingArea?, gxm_XmIsDrawingArea_w, 1, 0, 0, H_XmIsDrawingArea);
   XM_DEFINE_PROCEDURE(XmPushButton?, gxm_XmIsPushButton_w, 1, 0, 0, H_XmIsPushButton);
@@ -25601,7 +25604,7 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XmCommand?, gxm_XmIsCommand_w, 1, 0, 0, H_XmIsCommand);
   XM_DEFINE_PROCEDURE(XmScale?, gxm_XmIsScale_w, 1, 0, 0, H_XmIsScale);
   XM_DEFINE_PROCEDURE(XmRowColumn?, gxm_XmIsRowColumn_w, 1, 0, 0, H_XmIsRowColumn);
-  XM_DEFINE_PROCEDURE(XmTab?, XEN_XmTab_p_w, 1, 0, 0, "#t if arg is a Tab");
+  XM_DEFINE_PROCEDURE(XmTab?, XEN_XmTab_p_w, 1, 0, 0, PROC_TRUE " if arg is a Tab");
   XM_DEFINE_PROCEDURE(XmNotebook?, gxm_XmIsNotebook_w, 1, 0, 0, H_XmIsNotebook);
 #if HAVE_XM_XP
   XM_DEFINE_PROCEDURE(XmPrintShell?, gxm_XmIsPrintShell_w, 1, 0, 0, H_XmIsPrintShell);
@@ -25610,11 +25613,11 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XmContainer?, gxm_XmIsContainer_w, 1, 0, 0, H_XmIsContainer);
   XM_DEFINE_PROCEDURE(XmIconHeader?, gxm_XmIsIconHeader_w, 1, 0, 0, H_XmIsIconHeader);
   XM_DEFINE_PROCEDURE(XmGrabShell?, gxm_XmIsGrabShell_w, 1, 0, 0, H_XmIsGrabShell);
-  XM_DEFINE_PROCEDURE(XmRendition?, XEN_XmRendition_p_w, 1, 0, 0, "#t if arg is a Rendition");
-  XM_DEFINE_PROCEDURE(XmRenderTable?, XEN_XmRenderTable_p_w, 1, 0, 0, "#t if arg is a RenderTable");
+  XM_DEFINE_PROCEDURE(XmRendition?, XEN_XmRendition_p_w, 1, 0, 0, PROC_TRUE " if arg is a Rendition");
+  XM_DEFINE_PROCEDURE(XmRenderTable?, XEN_XmRenderTable_p_w, 1, 0, 0, PROC_TRUE " if arg is a RenderTable");
   XM_DEFINE_PROCEDURE(XmIconGadget?, gxm_XmIsIconGadget_w, 1, 0, 0, H_XmIsIconGadget);
-  XM_DEFINE_PROCEDURE(XmTabList?, XEN_XmTabList_p_w, 1, 0, 0, "#t if arg is a TabList");
-  XM_DEFINE_PROCEDURE(XmParseMapping?, XEN_XmParseMapping_p_w, 1, 0, 0, "#t if arg is a ParseMapping");
+  XM_DEFINE_PROCEDURE(XmTabList?, XEN_XmTabList_p_w, 1, 0, 0, PROC_TRUE " if arg is a TabList");
+  XM_DEFINE_PROCEDURE(XmParseMapping?, XEN_XmParseMapping_p_w, 1, 0, 0, PROC_TRUE " if arg is a ParseMapping");
   XM_DEFINE_PROCEDURE(XmPanedWindow?, gxm_XmIsPanedWindow_w, 1, 0, 0, H_XmIsPanedWindow);
   XM_DEFINE_PROCEDURE(XmScrolledWindow?, gxm_XmIsScrolledWindow_w, 1, 0, 0, H_XmIsScrolledWindow);
   XM_DEFINE_PROCEDURE(XmCascadeButton?, gxm_XmIsCascadeButton_w, 1, 0, 0, H_XmIsCascadeButton);
@@ -25642,13 +25645,13 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XmToggleButtonGadget?, gxm_XmIsToggleButtonGadget_w, 1, 0, 0, H_XmIsToggleButtonGadget);
   XM_DEFINE_PROCEDURE(XmDrawnButton?, gxm_XmIsDrawnButton_w, 1, 0, 0, H_XmIsDrawnButton);
   XM_DEFINE_PROCEDURE(XmPrimitive?, gxm_XmIsPrimitive_w, 1, 0, 0, H_XmIsPrimitive);
-  XM_DEFINE_PROCEDURE(XmTextSource?, XEN_XmTextSource_p_w, 1, 0, 0, "#t if arg is a TextSource");
+  XM_DEFINE_PROCEDURE(XmTextSource?, XEN_XmTextSource_p_w, 1, 0, 0, PROC_TRUE " if arg is a TextSource");
 #endif
 
 #if HAVE_XPM
-  XM_DEFINE_PROCEDURE(XpmAttributes?, XEN_XpmAttributes_p_w, 1, 0, 0, "#t if arg is a XpmAttributes");
-  XM_DEFINE_PROCEDURE(XpmImage?, XEN_XpmImage_p_w, 1, 0, 0, "#t if arg is a XpmImage");
-  XM_DEFINE_PROCEDURE(XpmColorSymbol?, XEN_XpmColorSymbol_p_w, 1, 0, 0, "#t if arg is a XpmColorSymbol");
+  XM_DEFINE_PROCEDURE(XpmAttributes?, XEN_XpmAttributes_p_w, 1, 0, 0, PROC_TRUE " if arg is a XpmAttributes");
+  XM_DEFINE_PROCEDURE(XpmImage?, XEN_XpmImage_p_w, 1, 0, 0, PROC_TRUE " if arg is a XpmImage");
+  XM_DEFINE_PROCEDURE(XpmColorSymbol?, XEN_XpmColorSymbol_p_w, 1, 0, 0, PROC_TRUE " if arg is a XpmColorSymbol");
 #endif
 #if HAVE_SCHEME && HAVE_MOTIF
   XEN_DEFINE_PROCEDURE("->string", c_to_xen_string_w, 1, 0, 0, H_to_string);
