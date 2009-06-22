@@ -601,7 +601,7 @@ static int oss_mus_audio_initialize(void)
 		}
 	      else 
 		{
-		  if ((errno != ENXIO) && (errno != ENODEV))
+		  if ((errno != ENXIO) && (errno != ENODEV) && (errno != ENOENT))
 		    fprintf(stderr, "%s: %s! ", dname, strerror(errno));
 		  break;
 		}

@@ -81,7 +81,6 @@
            (list)))))
 
 
-
 ;;; -------- with-sound --------
 
 (define* (with-sound-helper thunk 
@@ -885,8 +884,8 @@ finish-with-sound to complete the process."
 	     (ok (substring file (+ 1 i) len))))
        default))))
 
-(defmacro with-mix-error (message)
-  (throw 'with-sound-interrupt ,message))
+(define (with-mix-error message)
+  (throw 'with-sound-interrupt message))
 
 (defmacro with-mix (options ur-chkpt-file ur-beg . body)
   `(let ((chkpt-file ,ur-chkpt-file)
@@ -949,11 +948,10 @@ finish-with-sound to complete the process."
 				 (set! *to-snd* old-to-snd)
 				 (mus-mix *output* new-sound beg)
 				 (if revf (mus-mix *reverb* revf beg)))))))))))))
-  
-  
-  
+
 ;;; a test case for ws-debug
 ;;; (with-sound () (fm-violin 0 1 440 .1) (sleep 1) (fm-violin 1 1 440 .1) (sleep 1) (fm-violin 2 1 440 .1) (sleep 1))
+
 
 
 ;;; -------- def-optkey-fun --------
@@ -1233,3 +1231,4 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 	(do ((chn 0 (+ 1 chn)))
 	    ((= chn chns))
 	  (func snd chn)))))
+
