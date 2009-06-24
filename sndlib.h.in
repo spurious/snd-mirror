@@ -19,6 +19,7 @@
 /* time_t used by mus_sound_write_date */
 #include <sys/types.h>
 /* off_t used everywhere -- should this be redefined to long if not defined in types.h? */
+/* TODO: we can't safely use off_t directly -- need to protect against _FILE_OFFSET_BITS being different in caller's code */
 
 /* not sure how to handle this one cleanly: */
 #ifndef __cplusplus

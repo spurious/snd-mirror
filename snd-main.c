@@ -1627,6 +1627,13 @@ int handle_next_startup_arg(int auto_open_ctr, char **auto_open_file_names, bool
 				      XEN_ADD_TO_LOAD_PATH(auto_open_file_names[auto_open_ctr]);
 				    }
 				}
+#if 0
+#if HAVE_GUILE && HAVE_SCM_MODULE_PUBLIC_INTERFACE /* 1.9.0 autocompile flag */
+			      /* the 1.9 guile shell (which we use as our repl if no-gui) says to use this arg, so we need to implement it */
+			      if (strcmp("--no-autocompile", argname) == 0)
+				
+#endif
+#endif
 			      else
 				{
 				  if (startup_filename == NULL)

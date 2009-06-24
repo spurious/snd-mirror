@@ -319,6 +319,7 @@ AC_TYPE_SIZE_T
 # AC_TYPE_SSIZE_T -- in the docs, but apparently doesn't actually work
 AC_CHECK_TYPE(ssize_t, int)
 AC_TYPE_PID_T
+AC_TYPE_INT64_T
 
 # new form of this macro from autoconf 2.62 makes the Mac case a real headache
 #  so this is a call on the old form

@@ -7,6 +7,7 @@
 #undef size_t
 #undef ssize_t
 #undef off_t
+#undef int64_t
 
 #undef HAVE_GETCWD
 #undef HAVE_GETWD

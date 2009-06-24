@@ -981,6 +981,7 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 	(if prefs-show-full-duration
 	    dur
 	    (min prefs-initial-dur dur))))
+
 (define (prefs-activate-initial-bounds beg dur full)
   "(prefs-activate-initial-bounds beg dur full) activates the preferences dialog initial graph bounds settings"
   (set! prefs-initial-beg beg)

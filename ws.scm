@@ -949,65 +949,50 @@ finish-with-sound to complete the process."
 				 (mus-mix *output* new-sound beg)
 				 (if revf (mus-mix *reverb* revf beg)))))))))))))
 
-;;; a test case for ws-debug
-;;; (with-sound () (fm-violin 0 1 440 .1) (sleep 1) (fm-violin 1 1 440 .1) (sleep 1) (fm-violin 2 1 440 .1) (sleep 1))
 
 
-
-;;; -------- def-optkey-fun --------
-;;;
-;;; this is a translation of CLM's def-optkey-fun
-
-(if (provided? 'snd-guile)
+#|
+;;; TODO: test def-optkey-fun in new guile and move to snd-xen.c
 (defmacro def-optkey-fun (decls . body)
-  (let ((func-name (car decls))
-	(func-args (cdr decls)))
-    (if (null? func-args)
-	`(define (,func-name) ,@body)
-	(let ((args (map (lambda (arg)
-			   (symbol->keyword (if (list? arg) (car arg) arg)))
-			 func-args))
-	      (key-name (string->symbol (string-append (symbol->string func-name) "-1"))))
-	  (if (= (length func-args) 1)
-	      `(begin
-		 (define* (,key-name :key ,@func-args) ,@body)
-		 (define* (,func-name :rest passed-args)
-		   (if (or (null? passed-args)
-			   (keyword? (car passed-args)))
-		       (apply ,key-name passed-args)
-		       (apply ,key-name ,(car args) passed-args))))
-	      `(begin
-		 (define* (,key-name :key ,@func-args) ,@body)
-		 (define* (,func-name :rest passed-args)
-		   (if (or (null? passed-args)
-			   (keyword? (car passed-args)))
-		       (apply ,key-name passed-args)
-		       (let ((arglen (length passed-args)))
-			 (if (or (= arglen 1) 
-				 (and (> arglen 2) 
-				      (keyword? (cadr passed-args))))
-			     (apply ,key-name ,(car args) (car passed-args) (cdr passed-args))
-			     (if (or (= arglen 2) 
-				     (and (> arglen 3) 
-					  (keyword? (caddr passed-args))))
-				 (apply ,key-name 
-					,(car args) (car passed-args) 
-					,(cadr args) (cadr passed-args) 
-					(cddr passed-args))
-				 (let ((allargs (call-with-exit
-						 (lambda (break)
-						   (let ((arglist '())
-							 (pa passed-args)
-							 (na ',args))
-						     (do ((k 0 (+ 1 k)))
-							 ((= k arglen) arglist)
-						       (if (keyword? (car pa))
-							   (break (append arglist pa))
-							   (begin
-							     (set! arglist (append arglist (list (car na) (car pa))))
-							     (set! pa (cdr pa))
-							     (set! na (cdr na))))))))))
-				   (apply ,key-name allargs))))))))))))))
+  (let* ((func-name (car decls))
+	 (func-args (cdr decls))
+	 (args (map (lambda (arg)
+		     (symbol->keyword (if (list? arg) (car arg) arg)))
+		   func-args))
+	 (key-name (string->symbol (string-append (symbol->string func-name) "-1"))))
+    `(begin
+       (define* (,key-name :key ,@func-args) ,@body)
+       (define* (,func-name :rest passed-args)
+	 (if (or (null? passed-args)
+		 (keyword? (car passed-args)))
+	     (apply ,key-name passed-args)
+	     (let ((arglen (length passed-args)))
+	       (if (or (= arglen 1) 
+		       (and (> arglen 2) 
+			    (keyword? (cadr passed-args))))
+		   (apply ,key-name ,(car args) (car passed-args) (cdr passed-args))
+		   (if (or (= arglen 2) 
+			   (and (> arglen 3) 
+				(keyword? (caddr passed-args))))
+		       (apply ,key-name 
+			      ,(car args) (car passed-args) 
+			      ,(cadr args) (cadr passed-args) 
+			      (cddr passed-args))
+		       (let ((allargs (call-with-exit
+				       (lambda (break)
+					 (let ((arglist '())
+					       (pa passed-args)
+					       (na ',args))
+					   (do ((k 0 (+ 1 k)))
+					       ((= k arglen) arglist)
+					     (if (keyword? (car pa))
+						 (break (append arglist pa))
+						 (begin
+						   (set! arglist (append arglist (list (car na) (car pa))))
+						   (set! pa (cdr pa))
+						   (set! na (cdr na))))))))))
+			 (apply ,key-name allargs))))))))))
+|#
 
 
 (defmacro def-optkey-instrument (args . body)
