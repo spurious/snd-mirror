@@ -96,6 +96,7 @@
  *
  * would it simplify variable handling to store everything as xen_value?
  *
+ * TODO: run does not work in guile 1.9 (can't find func args any more)
  * TODO: (let ((pr (cons 1 2))) (run (lambda () (if pr 1 2)))) -> if: bad selector? pr
  * TODO: run doesn't always warn about a closure (explicit gen basically) -- if it's used directly,
  *         there's no warning, but it doesn't handle the closed-over variables correctly

@@ -41,11 +41,10 @@
 
 (if (not (provided? 'snd-motif)) (snd-error "snd-motif.scm is Motif-specific"))
 
-(if (not (defined? 'find-if))
-    (define (find-if pred l)
-      (cond ((null? l) #f)
-	    ((pred (car l)) (car l))
-	    (else (find-if pred (cdr l))))))
+(define (find-if pred l)
+  (cond ((null? l) #f)
+	((pred (car l)) (car l))
+	(else (find-if pred (cdr l)))))
 
 (if (not (provided? 'xm))
     (let ((hxm (dlopen "xm.so")))
@@ -473,15 +472,14 @@ Box: (install-searcher (lambda (file) (= (mus-sound-srate file) 44100)))"
 
 ;;; -------- bring possibly-obscured dialog to top
 
-(if (not (defined? 'raise-dialog))
-    (define (raise-dialog w)
-      "(raise-dialog w) tries to bring 'w' to the top of the widget heirarchy"
-      (if (and (Widget? w) 
-	       (XtIsManaged w))
-	  (let ((parent (XtParent w)))
-	    (if (and (Widget? parent)
-		     (XtIsSubclass parent xmDialogShellWidgetClass))
-		(XtPopup parent XtGrabNone))))))
+(define (raise-dialog w)
+  "(raise-dialog w) tries to bring 'w' to the top of the widget heirarchy"
+  (if (and (Widget? w) 
+	   (XtIsManaged w))
+      (let ((parent (XtParent w)))
+	(if (and (Widget? parent)
+		 (XtIsSubclass parent xmDialogShellWidgetClass))
+	    (XtPopup parent XtGrabNone)))))
 
 
 
