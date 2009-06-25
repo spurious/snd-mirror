@@ -2418,7 +2418,7 @@ s7_scheme *s7_xen_initialize(s7_scheme *sc)
   XEN_DEFINE_PROCEDURE(S_gc_on,               g_gc_on_w,              0, 0, 0, H_gc_on);
 
 
-  /* these are for compatibility with Guile (rather than add hundreds of "if provided?" checks) */
+  /* these are for compatibility with Guile */
   XEN_EVAL_C_STRING("(defmacro use-modules (arg . args) #f)");
   XEN_EVAL_C_STRING("(define (debug-enable . args) #f)");
   XEN_EVAL_C_STRING("(define (read-enable . args) #f)");
@@ -2426,7 +2426,7 @@ s7_scheme *s7_xen_initialize(s7_scheme *sc)
   XEN_EVAL_C_STRING("(define (make-soft-port . args) #f)");
   XEN_EVAL_C_STRING("(define (current-module) (current-environment))");
   XEN_EVAL_C_STRING("(define load-from-path load)");
-  XEN_EVAL_C_STRING("(define shell system)");
+  XEN_EVAL_C_STRING("(define shell system)"); /* backwards compatibility (no longer in examp.scm) */
   XEN_EVAL_C_STRING("(define (1+ x) (+ x 1))");
   XEN_EVAL_C_STRING("(define (1- x) (- x 1))");
   XEN_EVAL_C_STRING("(defmacro while (cond . body) `(do () ((not ,cond)) ,@body))");

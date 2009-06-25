@@ -32767,7 +32767,6 @@ EDITS: 2
 	  (set! (transform-type) graph-once)
 	  (set! (x-bounds) '(.1 .2))
 	  (add-hook! lisp-graph-hook display-energy)
-	  (shell "df")
 	  (reset-hook! graph-hook)
 	  (add-hook! graph-hook display-correlation)
 	  (set! (x-bounds) '(.1 .12))

@@ -372,30 +372,6 @@
      ,@body))
 
 
-;;; -------- make a system call from the listener
-;;;
-;;;   (shell "df") for example -- there's probably a more elegant way to do this is in Scheme
-;;; or to play a sound whenever a file is closed:
-;;;   (add-hook! close-hook (lambda (snd) (shell \"sndplay wood16.wav\")))
-
-(use-modules (ice-9 popen))  
-
-(if (provided? 'snd-guile)
-    (define (shell cmd)
-      "(shell cmd) sends 'cmd' to a shell (executes it as a shell command) and returns the result."
-      (let* ((str "")
-	     (fil (open-pipe cmd "r")))
-	(do ((val (read-char fil) (read-char fil))) 
-	    ((eof-object? val))
-	  (set! str (string-append str (string val))))
-	(close-pipe fil)
-	str)))
-
-;;; to simply make a system call, you can use the system function
-;;;   (system "ls *.snd")
-;;; but output goes to stdout.
-
-
 
 ;;; -------- translate mpeg input to 16-bit linear and read into Snd
 ;;;

@@ -89,7 +89,7 @@
 					(and (= (length struct-name) 5)
 					     (equal? (list-ref struct-name 3) :methods)
 					     (list-ref struct-name 4))))
-			       '()))
+			       (list)))
 
 	 (method-exists? (lambda (method)
 			   (and (not (null? original-methods))
@@ -132,9 +132,10 @@
 						    field-names)))
 				  (and fld (string-append "-" fld)))))
 
-	 (methods `(append (if ,(not (null? original-methods))  ; using append to splice out unwanted entries
+	 ;; using append to splice out unwanted entries
+	 (methods `(append ;(if ,(not (null? original-methods))  
 			       ,original-methods
-			       (list))
+			       ;(list))
 			   
 			   (if ,phase-field-name
 			       (list 
@@ -205,7 +206,8 @@
 			       (list
 				(list 'mus-run
 				      (lambda (g arg1 arg2)
-					(,(string->symbol sname) g arg1)))))
+					(,(string->symbol sname) g arg1))))
+			       (list))
 			   
 			   (if ,(not (method-exists? 'mus-reset))
 			       (list 
@@ -243,13 +245,11 @@
     `(begin
        (define ,(string->symbol (string-append sname "?"))
 	 (lambda (obj)
-	   "clm struct type check"
 	   (and (list? obj)
 		(eq? (car obj) ',(string->symbol sname)))))
 
        (define ,(string->symbol (string-append sname "-methods"))
 	 (lambda ()
-	   "clm struct local method list accessor"
 	   ,methods))
 
        (def-optkey-fun (,(string->symbol (string-append "make-" sname))

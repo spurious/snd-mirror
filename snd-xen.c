@@ -3189,6 +3189,38 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
 							     (set! na (cdr na))))))))))\
 				   (apply ,key-name allargs)))))))))))))");
 #else
+  XEN_EVAL_C_STRING("(use-modules (ice-9 optargs))");
+
+  XEN_EVAL_C_STRING("\
+(defmacro def-optkey-fun (decls . body)\
+  (let* ((func-name (car decls))\
+	 (func-args (cdr decls))\
+	 (args (map (lambda (arg)\
+		     (symbol->keyword (if (list? arg) (car arg) arg)))\
+		   func-args))\
+	 (key-name (string->symbol (string-append (symbol->string func-name) \"-1\"))))\
+    `(begin\
+       (define* (,key-name #:key ,@func-args) ,@body)\
+       (define (,func-name . passed-args)\
+	 (if (or (null? passed-args)\
+		 (keyword? (car passed-args)))\
+	     (apply ,key-name passed-args)\
+	     (let ((arglen (length passed-args)))\
+	       (let ((allargs (call/cc\
+			       (lambda (break)\
+				 (let ((arglist '())\
+				       (pa passed-args)\
+				       (na ',args))\
+				   (do ((k 0 (+ 1 k)))\
+				       ((= k arglen) arglist)\
+				     (if (keyword? (car pa))\
+					 (break (append arglist pa))\
+					 (begin\
+					   (set! arglist (append arglist (list (car na) (car pa))))\
+					   (set! pa (cdr pa))\
+					   (set! na (cdr na))))))))))\
+		 (apply ,key-name allargs))))))))");
+
   /* XEN_EVAL_C_STRING("(set! %load-should-autocompile #f)"); */
 #endif
 
@@ -3198,13 +3230,13 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   XEN_EVAL_C_STRING("(define redo-edit redo)");        /* consistency with Ruby */
   XEN_EVAL_C_STRING("(define undo-edit undo)");
 
-  /* from ice-9/r4rs.scm but with output to snd listener */
   XEN_EVAL_C_STRING("(define *snd-loaded-files* '())");
   XEN_EVAL_C_STRING("(define *snd-remember-paths* #t)");
 
   XEN_EVAL_C_STRING("(define (symbol-append . args) (string->symbol (apply string-append (map symbol->string args))))");
   /* taken from guile/ice-9/boot9.scm, used by KM's stuff (gui.scm etc) */
 
+  /* from ice-9/r4rs.scm but with output to snd listener */
   XEN_EVAL_C_STRING("\
         (define (apropos name)\
           (define (substring? subs s)\

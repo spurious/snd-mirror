@@ -4519,7 +4519,7 @@ static const char *Playing_xrefs[] = {
   "play repeatedly until C-g: {play-until-c-g}",
   "play region repeatedly: {play-region-forever}",
   "play a file upon a keystroke: {bind-key}",
-  "play using an external program: (shell \"sndplay wood16.wav\")",
+  "play using an external program: (system \"sndplay wood16.wav\")",
   "play a sine-wave or spectrum: {play-sine} and {play-sines}",
   "play arbitrary mixtures of things: {make-player} and related functions, {play-syncd-marks}",
   "send arbitrary data to the DAC: {mus-audio-write}, {start-dac}",
