@@ -2271,7 +2271,10 @@ A simple instrument that uses dlocsig is:
 	   (<em class=red>dlocsig</em> dloc i (* (<a class=quiet href="sndclm.html#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> aenv) (<a class=quiet href="sndclm.html#oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_oscil_tip)">oscil</a> osc)))))))))
 
 (<a class=quiet href="#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> (:channels 2) (sinewave 0 1.0 440 .5 :path (make-path '((-10 10) (0.5 0.5) (10 10)) :3d #f)))
-</pre></td></tr></table>
+</pre>
+<p>dlocsig.scm works only in Guile (not s7).
+</p>
+</td></tr></table>
 <br><br>
 
 
@@ -7540,7 +7543,7 @@ In Ruby, this functionality is in env.rb.  It can be activated via:
 <A NAME="peakphasesdoc"></a><table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>peak-phases</h2></td></tr></table>
 </td></tr></table>
 
-<p>This file contains the phases that produce a minimum peak amplitude sum of sinusoids,
+<p>This file contains the phases that produce a minimum peak amplitude ("low peak-factor") sum of sinusoids,
 the unpulse-train, so to speak.  I started with the questions: given a sum of
 n equal amplitude harmonically related sinusoids, what set of initial phases minimizes
 the peak amplitude?  What is that peak as a function of n?  Can we find any pattern
@@ -8125,14 +8128,14 @@ all     34   5.8219    0.4996
 all     31   5.5953    0.5014,        odd     31   5.6145    0.5024
 all     35   5.9503    0.5016,        odd     32   5.7272    0.5036
 all     37   6.1978    0.5052,        odd     30   5.5557    0.5042
-all     46   6.9547    0.5066,        odd     34   5.9364    0.5051
-all     40   6.4878    0.5069,        odd     33   5.9201    0.5086
-all     36   6.1555    0.5071,        odd     36   6.2024    0.5093
+all     36   6.1257    0.5058,        odd     34   5.9364    0.5051
+all     46   6.9547    0.5066,        odd     33   5.9201    0.5086
+all     40   6.4878    0.5069,        odd     36   6.2024    0.5093
 all     38   6.3435    0.5079,        odd     39   6.4621    0.5093
 all     42   6.7020    0.5090,        odd     35   6.1337    0.5102
 all     43   6.7939    0.5094,        odd     43   6.8205    0.5105
-all     41   6.6441    0.5099,        odd     37   6.3452    0.5117
-all     39   6.5085    0.5113,        odd     45   7.0156    0.5118
+all     41   6.6399    0.5098,        odd     37   6.3452    0.5117
+all     39   6.4939    0.5107,        odd     45   7.0156    0.5118
 </pre>
 </td></tr></table>
 

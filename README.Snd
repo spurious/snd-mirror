@@ -140,7 +140,7 @@ Version info:
   if Gtk, then Gtk+ 2.0.0 or later
   if Motif, then Motif 2.n but not Lesstif
   in Linux, if ALSA, then ALSA 0.9beta8 or later (or any version of OSS)
-  if Guile, Guile 1.3.4 or later but most *.scm files need 1.5.0 or later
+  if Guile, Guile 1.3.4 or later but most *.scm files need 1.5.0 or later, and 1.9.0 is problematic
   if Ruby, Ruby 1.8.0 or later.  Ruby 1.9.n is just barely usable -- any error causes a segfault.
   if Forth, any version
   if S7, any version
@@ -501,15 +501,6 @@ broken.
 
 
 
----- colors: ----
-
-If you're running KDE and the menu labels are invisible, check
-the 'theme' you're using.  You normally want black label foregrounds;
-you can get these by
-
-    ./snd -xrm '*foreground: Black'
-
-
 ---- fonts: ----
 
 If you're getting empty boxes where characters should be, or Xt
@@ -585,7 +576,7 @@ about missing gsl_complex_cos (or whatever), you need to get the
 GSL sources and build it again; apparently the version of libgsl.a
 that comes with Redhat 7.0 doesn't include any of the complex
 trig package?  If GSL is used at all (it is only needed if your
-C compiler/libraries don't support complex trig), the Snd needs 
+C compiler/libraries don't support complex trig), then Snd needs 
 GSL 0.8 or later.
 
 
@@ -671,7 +662,7 @@ similar problems involving "applicable smobs" and the tab-completion
 system; if possible, get the latest Guile.
 
 
-If you're using the CVS Guile (1.7.0), or Forte C on a Sun, and get
+If you're using a newish Guile, or Forte C on a Sun, and get
 some complaint about lt_dlopen (or some name like that), you need to
 add -lltdl to the library list.  If that doesn't fix it, add
 -lguile-ltdl -- this part of the CVS guile is in flux, so the load
