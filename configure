@@ -24747,11 +24747,8 @@ fi
 #--------------------------------------------------------------------------------
 # gettext
 #--------------------------------------------------------------------------------
-#
-# this goddamn macro is much more trouble than it is worth!
 
-if test "$enable_nls" != no ; then
-  { $as_echo "$as_me:$LINENO: checking whether ${MAKE-make} sets \$(MAKE)" >&5
+{ $as_echo "$as_me:$LINENO: checking whether ${MAKE-make} sets \$(MAKE)" >&5
 $as_echo_n "checking whether ${MAKE-make} sets \$(MAKE)... " >&6; }
 set x ${MAKE-make}
 ac_make=`$as_echo "$2" | sed 's/+/p/g; s/[^a-zA-Z0-9_]/_/g'`
@@ -26557,12 +26554,16 @@ _ACEOF
 
 
 
-  OPTIONAL_LIBRARIES="$OPTIONAL_LIBRARIES gettext"
-else
-# desperation!
-cp makefile.in makefile.gettext
-cp makefile.no-gettext makefile.in
-fi
+
+# if test "$enable_nls" != no ; then
+#   AM_GNU_GETTEXT([external])
+#   OPTIONAL_LIBRARIES="$OPTIONAL_LIBRARIES gettext"
+# else
+# # desperation!
+# cp makefile.in makefile.gettext
+# cp makefile.no-gettext makefile.in
+# fi
+
 
 
 #--------------------------------------------------------------------------------

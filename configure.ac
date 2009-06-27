@@ -2321,17 +2321,18 @@ AC_SUBST(SNDLIB_LIB)
 #--------------------------------------------------------------------------------
 # gettext
 #--------------------------------------------------------------------------------
-#
-# this goddamn macro is much more trouble than it is worth!
 
-if test "$enable_nls" != no ; then
-  AM_GNU_GETTEXT([external])
-  OPTIONAL_LIBRARIES="$OPTIONAL_LIBRARIES gettext"
-else
-# desperation!
-cp makefile.in makefile.gettext
-cp makefile.no-gettext makefile.in
-fi
+AM_GNU_GETTEXT([external]) 
+ 
+# if test "$enable_nls" != no ; then 
+#   AM_GNU_GETTEXT([external]) 
+#   OPTIONAL_LIBRARIES="$OPTIONAL_LIBRARIES gettext" 
+# else 
+# # desperation! 
+# cp makefile.in makefile.gettext 
+# cp makefile.no-gettext makefile.in 
+# fi 
+
 
 
 #--------------------------------------------------------------------------------

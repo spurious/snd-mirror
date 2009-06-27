@@ -10,6 +10,8 @@
 #
 # Origin: gettext-0.14.2
 
+PACKAGE = @PACKAGE_NAME@
+VERSION = @PACKAGE_VERSION@
 PACKAGE_NAME = @PACKAGE_NAME@ 
 VERSION_NAME = @PACKAGE_VERSION@ 
 PACKAGE_BUGREPORT = @PACKAGE_BUGREPORT@
@@ -23,6 +25,7 @@ VPATH = @srcdir@
 
 prefix = @prefix@
 exec_prefix = @exec_prefix@
+datarootdir = @datarootdir@ 
 datadir = @datadir@
 localedir = $(datadir)/locale
 gettextsrcdir = $(datadir)/gettext/po
@@ -101,10 +104,10 @@ stamp-po: $(srcdir)/$(DOMAIN).pot
 # This target rebuilds $(DOMAIN).pot; it is an expensive operation.
 # Note that $(DOMAIN).pot is not touched if it doesn't need to be changed.
 $(DOMAIN).pot-update: $(POTFILES) $(srcdir)/POTFILES.in remove-potcdate.sed
-	if test -n '$(MSGID_BUGS_ADDRESS)' || test '$(PACKAGE_NAME_BUGREPORT)' = '@'PACKAGE_NAME_BUGREPORT'@'; then \
+	if test -n '$(MSGID_BUGS_ADDRESS)' || test '$(PACKAGE_BUGREPORT)' = '@'PACKAGE_BUGREPORT'@'; then \
 	  msgid_bugs_address='$(MSGID_BUGS_ADDRESS)'; \
 	else \
-	  msgid_bugs_address='$(PACKAGE_NAME_BUGREPORT)'; \
+	  msgid_bugs_address='$(PACKAGE_BUGREPORT)'; \
 	fi; \
 	$(XGETTEXT) --default-domain=$(DOMAIN) --directory=$(top_srcdir) \
 	  --add-comments=TRANSLATORS: $(XGETTEXT_OPTIONS) \
@@ -148,7 +151,7 @@ $(POFILES): $(srcdir)/$(DOMAIN).pot
 install: install-exec install-data
 install-exec:
 install-data: install-data-@USE_NLS@
-	if test "$(PACKAGE_NAME)" = "gettext-tools"; then \
+	if test "$(PACKAGE)" = "gettext-tools"; then \
 	  $(mkinstalldirs) $(DESTDIR)$(gettextsrcdir); \
 	  for file in $(DISTFILES.common) Makevars.template; do \
 	    $(INSTALL_DATA) $(srcdir)/$$file \
@@ -207,7 +210,7 @@ install-strip: install
 installdirs: installdirs-exec installdirs-data
 installdirs-exec:
 installdirs-data: installdirs-data-@USE_NLS@
-	if test "$(PACKAGE_NAME)" = "gettext-tools"; then \
+	if test "$(PACKAGE)" = "gettext-tools"; then \
 	  $(mkinstalldirs) $(DESTDIR)$(gettextsrcdir); \
 	else \
 	  : ; \
@@ -252,7 +255,7 @@ installcheck:
 uninstall: uninstall-exec uninstall-data
 uninstall-exec:
 uninstall-data: uninstall-data-@USE_NLS@
-	if test "$(PACKAGE_NAME)" = "gettext-tools"; then \
+	if test "$(PACKAGE)" = "gettext-tools"; then \
 	  for file in $(DISTFILES.common) Makevars.template; do \
 	    rm -f $(DESTDIR)$(gettextsrcdir)/$$file; \
 	  done; \
@@ -290,14 +293,14 @@ maintainer-clean: distclean
 	@echo "it deletes files that may require special tools to rebuild."
 	rm -f stamp-po $(GMOFILES)
 
-distdir = $(top_builddir)/$(PACKAGE_NAME)-$(VERSION_NAME)/$(subdir)
+distdir = $(top_builddir)/$(PACKAGE)-$(VERSION)/$(subdir)
 dist distdir:
 	$(MAKE) update-po
 	@$(MAKE) dist2
 # This is a separate target because 'update-po' must be executed before.
 dist2: $(DISTFILES)
 	dists="$(DISTFILES)"; \
-	if test "$(PACKAGE_NAME)" = "gettext-tools"; then \
+	if test "$(PACKAGE)" = "gettext-tools"; then \
 	  dists="$$dists Makevars.template"; \
 	fi; \
 	if test -f $(srcdir)/ChangeLog; then \
@@ -333,7 +336,7 @@ update-po: Makefile
 
 .nop.po-update:
 	@lang=`echo $@ | sed -e 's/\.po-update$$//'`; \
-	if test "$(PACKAGE_NAME)" = "gettext-tools"; then PATH=`pwd`/../src:$$PATH; fi; \
+	if test "$(PACKAGE)" = "gettext-tools"; then PATH=`pwd`/../src:$$PATH; fi; \
 	tmpdir=`pwd`; \
 	echo "$$lang:"; \
 	test "$(srcdir)" = . && cdcmd="" || cdcmd="cd $(srcdir) && "; \
