@@ -1088,12 +1088,12 @@ typedef struct {
   char *value;
 } list_entry;
 
-static list_entry *make_list_entry(prefs_info *prf, char *value)
+static list_entry *make_list_entry(prefs_info *prf, const char *value)
 {
   list_entry *le;
   le = (list_entry *)calloc(1, sizeof(list_entry));
   le->prf = prf;
-  le->value = value;
+  le->value = (char *)value;
   return(le);
 }
 
@@ -1192,7 +1192,7 @@ static prefs_info *prefs_row_with_list(const char *label, const char *varname, c
       {
 	Widget tmp;
 	tmp = XtCreateManagedWidget(values[i],  xmPushButtonWidgetClass, prf->list_menu, args, n);
-	XtAddCallback(tmp, XmNactivateCallback, prefs_list_callback, make_list_entry(prf, (char *)values[i]));
+	XtAddCallback(tmp, XmNactivateCallback, prefs_list_callback, make_list_entry(prf, values[i]));
 	XtAddCallback(tmp, XmNactivateCallback, prefs_change_callback, NULL);
       }
 

@@ -546,7 +546,7 @@ if test "$with_gmp" = yes ; then
     AC_LINK_IFELSE(
         [AC_LANG_PROGRAM(
                 [#include <mpc.h>],
-                [mpc_t x;  mpc_init(x); mpc_clear(x);]
+                [mpc_t x;  mpc_init2(x, 53); mpc_clear(x);] 
         )],
         [AC_MSG_RESULT(yes)
          AC_CHECK_LIB(mpc, mpc_arg, 
