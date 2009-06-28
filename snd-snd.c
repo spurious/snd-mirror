@@ -4898,7 +4898,7 @@ the envelopes are complete (they are the result of a background process), and th
   ASSERT_CHANNEL(S_peak_env_info, snd, chn, 1);
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(pos), pos, XEN_ARG_3, S_peak_env_info, "an integer");
   cp = get_cp(snd, chn, S_peak_env_info);
-  if (!cp) return(XEN_FALSE);
+  if (!cp) return(XEN_EMPTY_LIST);
 
   cgx = cp->cgx;
   if ((!cgx) || (!(cp->edits)))
@@ -4955,11 +4955,15 @@ static XEN g_write_peak_env_info_file(XEN snd, XEN chn, XEN name)
   ASSERT_CHANNEL(S_write_peak_env_info_file, snd, chn, 1);
   cp = get_cp(snd, chn, S_write_peak_env_info_file);
   if (!cp) return(XEN_FALSE);
-  if (cp->edits[0]->peak_env == NULL)
-    XEN_ERROR(NO_SUCH_ENVELOPE,
-	      XEN_LIST_3(C_TO_XEN_STRING(S_write_peak_env_info_file),
-			 snd,
-			 chn));
+  ep = cp->edits[0]->peak_env;
+  if (ep == NULL)
+    {
+      XEN_ERROR(NO_SUCH_ENVELOPE,
+		XEN_LIST_3(C_TO_XEN_STRING(S_write_peak_env_info_file),
+			   snd,
+			   chn));
+      return(XEN_FALSE);  /* not sure why this is needed sometimes... */
+    }
 
   fullname = mus_expand_filename(XEN_TO_C_STRING(name));
   fd = mus_file_create(fullname);
@@ -4973,7 +4977,7 @@ static XEN g_write_peak_env_info_file(XEN snd, XEN chn, XEN name)
 			   errstr,
 			   C_TO_XEN_STRING(snd_open_strerror())));
     }
-  ep = cp->edits[0]->peak_env;
+
   ibuf[0] = ((ep->completed) ? 1 : 0) | PEAK_ENV_VERSION | (pack_env_info_type() << 16);
   ibuf[1] = ep->peak_env_size;
   ibuf[2] = ep->samps_per_bin;

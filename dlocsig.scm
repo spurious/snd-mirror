@@ -9,7 +9,7 @@
 ;;; address email to: nando@ccrma.stanford.edu
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(use-modules (oop goops) (ice-9 format) (ice-9 optargs))
+(use-modules (ice-9 format) (ice-9 optargs))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Dynamic multichannel three-dimentional signal locator
@@ -25,6 +25,7 @@
 ;;; http://www.york.ac.uk/inst/mustech/3d_audio/ambison.htm for more details...
 
 ;;; CHANGES:
+;;; 06/28/2009: remove class/method stuff for s7 (Bill)
 ;;; 01/08/2007: make a few functions local etc (Bill)
 ;;; 07/05/2006: translate to scheme, use move-sound generator (Bill)
 ;;; 04/29/2002: fixed reverb envelopes for no reverb under clisp
@@ -79,10 +80,45 @@
 ;;;     make it so that you can concatenate them...
 ;;; | 11/25/1999 fix the "diagonal case" (sounds go through the head of the listener)
 
-(if (not (provided? 'snd-ws.scm)) (load-from-path "ws.scm"))   ; need def-optkey-fun
-(if (not (provided? 'snd-env.scm)) (load-from-path "env.scm")) ; need envelope-interp
-
 (provide 'snd-dlocsig.scm)
+
+
+(define* (envelope-interp x env :optional base)   ;env is list of x y breakpoint pairs, interpolate at x returning y
+  "(envelope-interp x env :optional (base 1.0)) -> value of env at x; base controls connecting segment 
+type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
+  (cond ((null? env) 0.0)		;no data -- return 0.0
+	((or (<= x (car env))	        ;we're sitting on x val (or if < we blew it)
+	     (null? (cddr env)))	;or we're at the end of the list
+	 (cadr env))		        ;so return current y value
+	((> (caddr env) x)		;x <= next env x axis value
+	 (if (or (= (cadr env) (cadddr env))
+		 (and base (= base 0.0)))
+	     (cadr env)		;y1=y0, so just return y0 (avoid endless calculations below)
+	     (if (or (not base) (= base 1.0))
+		 (+ (cadr env)	;y0+(x-x0)*(y1-y0)/(x1-x0)
+		    (* (- x (car env))
+		       (/ (- (cadddr env) (cadr env))
+			  (- (caddr env) (car env)))))
+		 (+ (cadr env) ; this does not exactly match xramp-channel
+		    (* (/ (- (cadddr env) (cadr env))
+			  (- base 1.0))
+		       (- (expt base (/ (- x (car env))
+					(- (caddr env) (car env))))
+			  1.0))))))
+	(else (envelope-interp x (cddr env) base)))) ;go on looking for x segment
+
+(define (x-norm env xmax)
+  "(x-norm env xmax) changes 'env' x axis values so that they run to 'xmax'"
+  (let ((scl (/ xmax (list-ref env (- (length env) 2))))
+	(val '())
+	(len (length env)))
+    (do ((i 0 (+ i 2)))
+	((>= i len))
+      (set! val (cons (* (list-ref env i) scl) val))
+      (set! val (cons (list-ref env (+ i 1)) val)))
+    (reverse val)))
+
+
 
 ;;;;;;;;;;;;;;;;;;;;;
 ;;; Global Parameters
@@ -191,16 +227,12 @@
   "(listp lst) is #t is 'lst' is a non-null list"
   (and (list? a) (not (null? a))))
 
-(define (x-norm env xmax)
-  "(x-norm env xmax) changes 'env' x axis values so that they run to 'xmax'"
-  (let ((scl (/ xmax (list-ref env (- (length env) 2))))
-	(val '())
-	(len (length env)))
-    (do ((i 0 (+ i 2)))
-	((>= i len))
-      (set! val (cons (* (list-ref env i) scl) val))
-      (set! val (cons (list-ref env (+ i 1)) val)))
-    (reverse val)))
+(define (make-list n val)
+  (let ((lst '()))
+    (do ((i 0 (+ i 1)))
+	((= i n))
+      (set! lst (cons val lst)))
+    lst))
 
 
 (def-optkey-fun (arrange-speakers (speakers '())
@@ -562,54 +594,57 @@
 
 ;;; Generic path class
 
-(defmacro <define-class> (name classes . fields)
-  `(define-class ,name ,classes ,@fields))
+;;; path is a list (type rx ry rz rv rt tx ty tz tt ...)
 
-(defmacro <define-method> (name args . body)
-  `(define-method (,name ,@args) ,@body))
+(define path-rx (make-procedure-with-setter (lambda (p) (list-ref p 1)) (lambda (p val) (list-set! p 1 val))))
+(define path-ry (make-procedure-with-setter (lambda (p) (list-ref p 2)) (lambda (p val) (list-set! p 2 val))))
+(define path-rz (make-procedure-with-setter (lambda (p) (list-ref p 3)) (lambda (p val) (list-set! p 3 val))))
+(define path-rv (make-procedure-with-setter (lambda (p) (list-ref p 4)) (lambda (p val) (list-set! p 4 val))))
+(define path-rt (make-procedure-with-setter (lambda (p) (list-ref p 5)) (lambda (p val) (list-set! p 5 val))))
+(define path-tx (make-procedure-with-setter (lambda (p) (list-ref p 6)) (lambda (p val) (list-set! p 6 val))))
+(define path-ty (make-procedure-with-setter (lambda (p) (list-ref p 7)) (lambda (p val) (list-set! p 7 val))))
+(define path-tz (make-procedure-with-setter (lambda (p) (list-ref p 8)) (lambda (p val) (list-set! p 8 val))))
+(define path-tt (make-procedure-with-setter (lambda (p) (list-ref p 9)) (lambda (p val) (list-set! p 9 val))))
 
-(<define-class> <path> ()
-  ;; rendered coordinates
-  (rx :init-value '() :accessor rx)
-  (ry :init-value '() :accessor ry)
-  (rz :init-value '() :accessor rz)
-  (rv :init-value '() :accessor rv)
-  (rt :init-value '() :accessor rt)
-  ;; transformed coordinates
-  (tx :init-value '() :accessor tx)
-  (ty :init-value '() :accessor ty)
-  (tz :init-value '() :accessor tz)
-  (tt :init-value '() :accessor tt))
+;(define (make-path) (list 'path '() '() '() '() '() '() '() '() '()))
 
-(<define-method> describe ((path <path>))
-  (format #f "<path>:~%  rx: ~A~%  ry: ~A~%  rz: ~A~%  rv: ~A~%  rt: ~A~%  tx: ~A~%  ty: ~A~%  tz: ~A~%  tt: ~A~%"
-	  (rx path) (ry path) (rz path) (rv path) (rt path) (tx path) (ty path) (tz path) (tt path)))
+(define (describe path)
+  (cond ((or (eq? (car path) 'bezier-path)
+	     (eq? (car path) 'open-bezier-path))
+	 (format #f "<bezier-path>:~%  rx: ~A~%  ry: ~A~%  rz: ~A~%  rv: ~A~%  rt: ~A~%  tx: ~A~%  ty: ~A~%  tz: ~A~%  tt: ~A~%  ~
+                         x: ~A~%  y: ~A~%  z: ~A~%  v: ~A~%  bx: ~A~%  by: ~A~%  bz: ~A~%  error: ~A~%  curvature: ~A~%"
+		 (path-rx path) (path-ry path) (path-rz path) (path-rv path) (path-rt path) (path-tx path) (path-ty path) (path-tz path) (path-tt path)
+		 (bezier-x path) (bezier-y path) (bezier-z path) (bezier-v path) (bezier-bx path) (bezier-by path) (bezier-bz path) (bezier-error path) (bezier-curvature path)))
+	(else
+	 (format #f "<path>:~%  rx: ~A~%  ry: ~A~%  rz: ~A~%  rv: ~A~%  rt: ~A~%  tx: ~A~%  ty: ~A~%  tz: ~A~%  tt: ~A~%"
+		 (path-rx path) (path-ry path) (path-rz path) (path-rv path) (path-rt path) (path-tx path) (path-ty path) (path-tz path) (path-tt path)))))
+
 
 ;;; Inquiries into the state of the path
 
-(<define-method> not-rendered ((path <path>))
-  (null? (rx path)))
+(define (not-rendered path)
+  (null? (path-rx path)))
 
-(<define-method> not-transformed ((path <path>))
-  (null? (tx path)))
+(define (not-transformed path)
+  (null? (path-tx path)))
 
 ;;; Reset any transformations on the originally rendered path
 
-(<define-method> reset-transformation ((path <path>))
-  (set! (tt path) '())
-  (set! (tx path) '())
-  (set! (ty path) '())
-  (set! (tz path) '())
+(define (reset-transformation path)
+  (set! (path-tt path) '())
+  (set! (path-tx path) '())
+  (set! (path-ty path) '())
+  (set! (path-tz path) '())
   path)
 
 ;;; Reset the rendered path (and any transformations)
 
-(<define-method> reset-rendering ((path <path>))
-  (set! (rt path) '())
-  (set! (rv path) '())
-  (set! (rx path) '())
-  (set! (ry path) '())
-  (set! (rz path) '())
+(define (reset-rendering path)
+  (set! (path-rt path) '())
+  (set! (path-rv path) '())
+  (set! (path-rx path) '())
+  (set! (path-ry path) '())
+  (set! (path-rz path) '())
   (reset-transformation path))
 
 ;;; Return the best possible set of coordinates
@@ -618,25 +653,25 @@
   "list?? returns a if it is a list"
   (and (listp a) a))
 
-(<define-method> path-x ((path <path>))
-  (or (list?? (tx path))
-      (list?? (rx path))
-      (rx (render-path path))))
+(define (path-x path)
+  (or (list?? (path-tx path))
+      (list?? (path-rx path))
+      (path-rx (render-path path))))
 
-(<define-method> path-y ((path <path>))
-  (or (list?? (ty path))
-      (list?? (ry path))
-      (ry (render-path path))))
+(define (path-y path)
+  (or (list?? (path-ty path))
+      (list?? (path-ry path))
+      (path-ry (render-path path))))
 
-(<define-method> path-z ((path <path>))
-  (or (list?? (tz path))
-      (list?? (rz path))
-      (rz (render-path path))))
+(define (path-z path)
+  (or (list?? (path-tz path))
+      (list?? (path-rz path))
+      (path-rz (render-path path))))
 
-(<define-method> path-time ((path <path>))
-  (or (list?? (tt path))
-      (list?? (rt path))
-      (rt (render-path path))))
+(define (path-time path)
+  (or (list?? (path-tt path))
+      (list?? (path-rt path))
+      (path-rt (render-path path))))
 
 
 ;;;;;;;;;;;;;;;;
@@ -649,42 +684,36 @@
 
 ;;; Path class for bezier rendered paths
 
-(<define-class> <bezier-path> (<path>) 
-  (path :init-value '() :init-keyword :path :accessor path)
-  (3d :init-value #t :init-keyword :3d :accessor 3d)           ; it is parsed as a 3d or 2d path?
-  (polar :init-value #f :init-keyword :polar :accessor polar)  ; by default a path is cartesian
-  (x :init-value '() :accessor x)                              ; parsed coordinates and velocity of original points
-  (y :init-value '() :accessor y)
-  (z :init-value '() :accessor z)
-  (v :init-value '() :accessor v)
-  (bx :init-value '() :accessor bx)                            ; control points for bezier curve fitting 
-  (by :init-value '() :accessor by) 
-  (bz :init-value '() :accessor bz)
-  (error :init-value 0.01 :init-keyword :error :accessor error)
-  (curvature :init-value #f :init-keyword :curvature :accessor curvature))
+;;; bezier-path is path + path 3d polar x y z v bx by bz error curvature
 
-(<define-method> describe ((path <bezier-path>))
-  (format #f "<bezier-path>:~%  rx: ~A~%  ry: ~A~%  rz: ~A~%  rv: ~A~%  rt: ~A~%  tx: ~A~%  ty: ~A~%  tz: ~A~%  tt: ~A~%  ~
-                         x: ~A~%  y: ~A~%  z: ~A~%  v: ~A~%  bx: ~A~%  by: ~A~%  bz: ~A~%  error: ~A~%  curvature: ~A~%"
-	  (rx path) (ry path) (rz path) (rv path) (rt path) (tx path) (ty path) (tz path) (tt path)
-	  (x path) (y path) (z path) (v path) (bx path) (by path) (bz path) (error path) (curvature path)))
+
+(define bezier-path      (make-procedure-with-setter (lambda (p) (list-ref p 10)) (lambda (p val) (list-set! p 10 val))))
+(define bezier-3d        (make-procedure-with-setter (lambda (p) (list-ref p 11)) (lambda (p val) (list-set! p 11 val))))
+(define bezier-polar     (make-procedure-with-setter (lambda (p) (list-ref p 12)) (lambda (p val) (list-set! p 12 val))))
+(define bezier-x         (make-procedure-with-setter (lambda (p) (list-ref p 13)) (lambda (p val) (list-set! p 13 val))))
+(define bezier-y         (make-procedure-with-setter (lambda (p) (list-ref p 14)) (lambda (p val) (list-set! p 14 val))))
+(define bezier-z         (make-procedure-with-setter (lambda (p) (list-ref p 15)) (lambda (p val) (list-set! p 15 val))))
+(define bezier-v         (make-procedure-with-setter (lambda (p) (list-ref p 16)) (lambda (p val) (list-set! p 16 val))))
+(define bezier-bx        (make-procedure-with-setter (lambda (p) (list-ref p 17)) (lambda (p val) (list-set! p 17 val))))
+(define bezier-by        (make-procedure-with-setter (lambda (p) (list-ref p 18)) (lambda (p val) (list-set! p 18 val))))
+(define bezier-bz        (make-procedure-with-setter (lambda (p) (list-ref p 19)) (lambda (p val) (list-set! p 19 val))))
+(define bezier-error     (make-procedure-with-setter (lambda (p) (list-ref p 20)) (lambda (p val) (list-set! p 20 val))))
+(define bezier-curvature (make-procedure-with-setter (lambda (p) (list-ref p 21)) (lambda (p val) (list-set! p 21 val))))
+
+(def-optkey-fun (make-bezier-path (path '()) (3d #t) (polar #f) (error 0.01) (curvature #f))
+  (list 'bezier-path '() '() '() '() '() '() '() '() '() path 3d polar '() '() '() '() '() '() '() error curvature))
 
 
 ;;; Path class for open bezier paths
 
-(<define-class> <open-bezier-path> (<bezier-path>)
-  ;; bezier curve fitting control parameters
-  (initial-direction :init-value '(0.0 0.0 0.0) :init-keyword :initial-direction :accessor initial-direction)
-  (final-direction :init-value '(0.0 0.0 0.0) :init-keyword :final-direction :accessor final-direction))
+(define initial-direction (make-procedure-with-setter (lambda (p) (list-ref p 22)) (lambda (p val) (list-set! p 22 val))))
+(define final-direction   (make-procedure-with-setter (lambda (p) (list-ref p 23)) (lambda (p val) (list-set! p 23 val))))
 
-;;; Path class for closed bezier paths
+(def-optkey-fun (make-open-bezier-path (path '()) (3d #t) (polar #f) (error 0.01) (curvature #f) 
+				       (initial-direction '(0.0 0.0 0.0)) (final-direction '(0.0 0.0 0.0)))
+  (list 'open-bezier-path '() '() '() '() '() '() '() '() '() path 3d polar '() '() '() '() '() '() '() error curvature initial-direction final-direction))
 
-(<define-class> <closed-bezier-path> (<bezier-path>) )
 
-;;; Generic error when method passed illegal path
-
-;(define (illegal-path-argument path)
-;  (snd-error (format #f "~A is not a path or a list describing a path" path)))
 
 ;;;
 ;;; Generic defining function (for open, closed, polar and cartesian paths)
@@ -724,13 +753,13 @@
 
   ;; create the path structure
   (if closed
-      (make-instance <closed-bezier-path>
+      (make-bezier-path
 		     :path path
 		     :3d 3d
 		     :polar polar
 		     :curvature curvature
 		     :error error)
-    (make-instance <open-bezier-path>
+    (make-open-bezier-path
 		   :path path
 		   :3d 3d
 		   :polar polar
@@ -780,52 +809,13 @@
 
 
 
-;;; Set components of a path and reset appropriate part of the rendering process
-;;; Rendering steps:
-;;;   (fit-path path)        calculate the bezier curve control points
-;;;   (render-path path)     derive a linear approximation to the bezier segments
-
-;;; Set a new cartesian set of points
-
-(<define-method> set-path ((path <bezier-path>) points)
-  (set! (path path) points)
-  (set! (polar path) #f)
-  (xparse-path path))
-
-;;; Set a new polar set of points
-
-(<define-method> set-polar-path ((path <bezier-path>) points)
-  (set! (path path) points)
-  (set! (polar path) #t)
-  (xparse-path path))
-
-;;; Set a new path curvature
-
-(<define-method> set-path-curvature ((path <bezier-path>) curvature)
-  (when curvature
-    (set! (curvature path) curvature)
-    (reset-fit path)))
-
-;;; Set a new path rendering error bound
-
-(<define-method> set-path-error ((path <bezier-path>) error)
-  (when error
-    (set! (error path) error)
-    (reset-rendering path)))
-
 ;;;
 ;;; Parse a path and transform it into cartesian coordinates
 ;;;
 
-(<define-method> not-parsed ((path <bezier-path>))
-  (null? (x path)))
+(define (not-parsed path)
+  (null? (bezier-x path)))
 
-(<define-method> reset-parsing ((path <bezier-path>))
-  (set! (x path) '())
-  (set! (y path) '())
-  (set! (z path) '())
-  (set! (v path) '())
-  (reset-fit path))
 
 ;;; Parse a set of 2d or 3d points into the separate coordinates
 
@@ -966,29 +956,29 @@
 	(list (reverse x) (reverse y) (make-list (length x) 0.0) (make-list (length x) #f))))))
 
 
-(<define-method> xparse-path ((xpath <bezier-path>)) ; goops won't accept the name "parse-path"???
-  (let* ((polar (polar xpath))
-	 (points (path xpath))
-	 (3d (3d xpath)))
+(define (xparse-path xpath)
+  (let* ((polar (bezier-polar xpath))
+	 (points (bezier-path xpath))
+	 (3d (bezier-3d xpath)))
     (if polar
 	;; parse a polar path
 	(let ((vals (parse-polar-coordinates points 3d)))
-	  (set! (x xpath) (car vals))
-	  (set! (y xpath) (cadr vals))
-	  (set! (z xpath) (caddr vals))
-	  (set! (v xpath) (cadddr vals)))
+	  (set! (bezier-x xpath) (car vals))
+	  (set! (bezier-y xpath) (cadr vals))
+	  (set! (bezier-z xpath) (caddr vals))
+	  (set! (bezier-v xpath) (cadddr vals)))
       (let ((vals (parse-cartesian-coordinates points 3d)))
       ;; parse a cartesian path
-	(set! (x xpath) (car vals))
-	(set! (y xpath) (cadr vals))
-	(set! (z xpath) (caddr vals))
-	(set! (v xpath) (cadddr vals)))))
+	(set! (bezier-x xpath) (car vals))
+	(set! (bezier-y xpath) (cadr vals))
+	(set! (bezier-z xpath) (caddr vals))
+	(set! (bezier-v xpath) (cadddr vals)))))
   (for-each
    (lambda (v)
      (if (and (number? v) 
 	      (< v 0))
-	 (snd-error (format #f "velocities for path ~A must be all positive" (path xpath)))))
-   (v xpath))
+	 (snd-error (format #f "velocities for path ~A must be all positive" (bezier-path xpath)))))
+   (bezier-v xpath))
   (reset-fit xpath))
 
 
@@ -1091,293 +1081,333 @@
 ;;; Calculate bezier difference vectors for the given path
 ;;; (path-x (make-path '((-10 10)(0 5)(10 10))))
 
-(<define-method> calculate-fit ((path <closed-bezier-path>))
+(define (calculate-fit path)
+  (cond ((not (eq? (car path) 'open-bezier-path))
+	 (let* ((n (- (length (bezier-x path )) 1))
+		(m (/ (- n (if (odd? n) 3 4)) 2))
+		;; data points P(i)
+		(p (vector (list->vector (bezier-x path))
+			   (list->vector (bezier-y path))
+			   (list->vector (bezier-z path))))
+		;; control points D(i)
+		(d (vector (make-vector n 0.0)
+			   (make-vector n 0.0)
+			   (make-vector n 0.0))))
 
-  (let* ((n (- (length (x path )) 1))
-	 (m (/ (- n (if (odd? n) 3 4)) 2))
-	 ;; data points P(i)
-	 (p (vector (list->vector (x path))
-		    (list->vector (y path))
-		    (list->vector (z path))))
-	 ;; control points D(i)
-	 (d (vector (make-vector n 0.0)
-		    (make-vector n 0.0)
-		    (make-vector n 0.0))))
+	   (define (a-1 k n)
+	     (if (odd? (min (+ (* path-maxcoeff 2) 1) n))
+		 (begin
+		   (if (not path-ak-odd) (make-a-odd))
+		   (vector-ref (vector-ref path-ak-odd (/ (- n 3) 2)) (- k 1)))
+		 (begin
+		   (if (not path-ak-even) (make-a-even))
+		   (vector-ref (vector-ref path-ak-even (/ (- n 4) 2)) (- k 1)))))
 
-    (define (a-1 k n)
-      (if (odd? (min (+ (* path-maxcoeff 2) 1) n))
-	  (begin
-	    (if (not path-ak-odd) (make-a-odd))
-	    (vector-ref (vector-ref path-ak-odd (/ (- n 3) 2)) (- k 1)))
-	  (begin
-	    (if (not path-ak-even) (make-a-even))
-	    (vector-ref (vector-ref path-ak-even (/ (- n 4) 2)) (- k 1)))))
+	   (define (xvector-ref z j i)
+	     (if (> i (- n 1))
+		 (vector-ref (vector-ref z j) (- i n))
+		 (if (< i 0) 
+		     (vector-ref (vector-ref z j) (+ i n))
+		     (vector-ref (vector-ref z j) i))))
 
-    (define (xvector-ref z j i)
-      (if (> i (- n 1))
-	  (vector-ref (vector-ref z j) (- i n))
-	(if (< i 0) 
-	    (vector-ref (vector-ref z j) (+ i n))
-	  (vector-ref (vector-ref z j) i))))
-
-    (do ((i 0 (+ 1 i)))
-	((= i n))
-      (do ((k 1 (+ 1 k)))
-	  ((> k m))
-	(do ((a 0 (+ 1 a)))
-	    ((> a 2))
-	  (vector-set! (vector-ref d a) i 
-		     (+ (vector-ref (vector-ref d a) i)
-			(* (a-1 k n)
-			   (- (xvector-ref p a (+ i k))
-			      (xvector-ref p a (- i k)))))))))
-    (if (curvature path)
-	(do ((i 0 (+ 1 i)))
-	    ((= i n))
-	  (vector-set! (vector-ref d 0) i (* (vector-ref (vector-ref d 0) i) curve))
-	  (vector-set! (vector-ref d 1) i (* (vector-ref (vector-ref d 1) i) curve))
-	  (vector-set! (vector-ref d 2) i (* (vector-ref (vector-ref d 2) i) curve))))
-    (list (- n 1) p d)))
-
-(<define-method> calculate-fit ((path <open-bezier-path>))
-  (let* ((n (- (length (x path)) 1))
-	 (m (- n 1))
-	 ;; data points P(i)
-	 (p (vector (list->vector (x path))
-		    (list->vector (y path))
-		    (list->vector (z path))))
-	 ;; control points D(i)
-	 (d (vector (make-vector (+ n 1) 0.0) 
-		    (make-vector (+ n 1) 0.0) 
-		    (make-vector (+ n 1) 0.0))))
-
-    (define (ac k n)
-      (let ((un (min n path-maxcoeff)))
-	(if (not path-ak-even) (make-a-even))
-	(vector-ref (vector-ref path-ak-even (- un 2)) (- k 1))))
-
-    (define (ref z j i)
-      (if (> i n) 
-	  (vector-ref (vector-ref z j) (- i n))
-	(if (< i 0) 
-	    (vector-ref (vector-ref z j) (+ i n))
-	  (if (= i n) 
-	      (- (vector-ref (vector-ref z j) n) 
-		 (vector-ref (vector-ref d j) n))
-	    (if (= i 0) 
-		(+ (vector-ref (vector-ref z j) 0) 
-		   (vector-ref (vector-ref d j) 0))
-	      (vector-ref (vector-ref z j) i))))))
-
-    ;; forced initial direction
-    (if (initial-direction path)
-	(begin
-	  (vector-set! (vector-ref d 0) 0 (car (initial-direction path)))
-	  (vector-set! (vector-ref d 1) 0 (cadr (initial-direction path)))
-	  (vector-set! (vector-ref d 2) 0 (third (initial-direction path))))
-      (begin
-	(vector-set! (vector-ref d 0) 0 0.0)
-	(vector-set! (vector-ref d 1) 0 0.0)
-	(vector-set! (vector-ref d 2) 0 0.0)))
-
-    ;; forced final direction
-    (if (final-direction path)
-	(begin
-	 (vector-set! (vector-ref d 0) n (car (final-direction path)))
-	 (vector-set! (vector-ref d 1) n (cadr (final-direction path)))
-	 (vector-set! (vector-ref d 2) n (caddr (final-direction path))))
-      (begin
-	(vector-set! (vector-ref d 0) n 0.0)
-	(vector-set! (vector-ref d 1) n 0.0)
-	(vector-set! (vector-ref d 2) n 0.0)))
-
-    ;; calculate fit
-    (do ((i 1 (+ 1 i)))
-	((= i n))
-      (do ((k 1 (+ 1 k)))
-	  ((> k (min m (- path-maxcoeff 1))))
-	(let ((d0 (vector-ref (vector-ref d 0) i))
-	      (d1 (vector-ref (vector-ref d 1) i))
-	      (d2 (vector-ref (vector-ref d 2) i)))
-	  (vector-set! (vector-ref d 0) i (+ d0 
-					 (* (ac k n)
-					    (- (ref p 0 (+ i k))
-					       (ref p 0 (- i k))))))
-	  (vector-set! (vector-ref d 1) i (+ d1
-					 (* (ac k n)
-					    (- (ref p 1 (+ i k))
-					       (ref p 1 (- i k))))))
-	  (vector-set! (vector-ref d 2) i (+ d2
-					 (* (ac k n)
-					    (- (ref p 2 (+ i k))
-					       (ref p 2 (- i k)))))))))
-    (list n p d)))
+	   (do ((i 0 (+ 1 i)))
+	       ((= i n))
+	     (do ((k 1 (+ 1 k)))
+		 ((> k m))
+	       (do ((a 0 (+ 1 a)))
+		   ((> a 2))
+		 (vector-set! (vector-ref d a) i 
+			      (+ (vector-ref (vector-ref d a) i)
+				 (* (a-1 k n)
+				    (- (xvector-ref p a (+ i k))
+				       (xvector-ref p a (- i k)))))))))
+	   (if (bezier-curvature path)
+	       (do ((i 0 (+ 1 i)))
+		   ((= i n))
+		 (vector-set! (vector-ref d 0) i (* (vector-ref (vector-ref d 0) i) curve))
+		 (vector-set! (vector-ref d 1) i (* (vector-ref (vector-ref d 1) i) curve))
+		 (vector-set! (vector-ref d 2) i (* (vector-ref (vector-ref d 2) i) curve))))
+	   (list (- n 1) p d)))
+	(else
+	 (let* ((n (- (length (bezier-x path)) 1))
+		(m (- n 1))
+		;; data points P(i)
+		(p (vector (list->vector (bezier-x path))
+			   (list->vector (bezier-y path))
+			   (list->vector (bezier-z path))))
+		;; control points D(i)
+		(d (vector (make-vector (+ n 1) 0.0) 
+			   (make-vector (+ n 1) 0.0) 
+			   (make-vector (+ n 1) 0.0))))
+	   
+	   (define (ac k n)
+	     (let ((un (min n path-maxcoeff)))
+	       (if (not path-ak-even) (make-a-even))
+	       (vector-ref (vector-ref path-ak-even (- un 2)) (- k 1))))
+	   
+	   (define (ref z j i)
+	     (if (> i n) 
+		 (vector-ref (vector-ref z j) (- i n))
+		 (if (< i 0) 
+		     (vector-ref (vector-ref z j) (+ i n))
+		     (if (= i n) 
+			 (- (vector-ref (vector-ref z j) n) 
+			    (vector-ref (vector-ref d j) n))
+			 (if (= i 0) 
+			     (+ (vector-ref (vector-ref z j) 0) 
+				(vector-ref (vector-ref d j) 0))
+			     (vector-ref (vector-ref z j) i))))))
+	   
+	   ;; forced initial direction
+	   (if (initial-direction path)
+	       (begin
+		 (vector-set! (vector-ref d 0) 0 (car (initial-direction path)))
+		 (vector-set! (vector-ref d 1) 0 (cadr (initial-direction path)))
+		 (vector-set! (vector-ref d 2) 0 (third (initial-direction path))))
+	       (begin
+		 (vector-set! (vector-ref d 0) 0 0.0)
+		 (vector-set! (vector-ref d 1) 0 0.0)
+		 (vector-set! (vector-ref d 2) 0 0.0)))
+	   
+	   ;; forced final direction
+	   (if (final-direction path)
+	       (begin
+		 (vector-set! (vector-ref d 0) n (car (final-direction path)))
+		 (vector-set! (vector-ref d 1) n (cadr (final-direction path)))
+		 (vector-set! (vector-ref d 2) n (caddr (final-direction path))))
+	       (begin
+		 (vector-set! (vector-ref d 0) n 0.0)
+		 (vector-set! (vector-ref d 1) n 0.0)
+		 (vector-set! (vector-ref d 2) n 0.0)))
+	   
+	   ;; calculate fit
+	   (do ((i 1 (+ 1 i)))
+	       ((= i n))
+	     (do ((k 1 (+ 1 k)))
+		 ((> k (min m (- path-maxcoeff 1))))
+	       (let ((d0 (vector-ref (vector-ref d 0) i))
+		     (d1 (vector-ref (vector-ref d 1) i))
+		     (d2 (vector-ref (vector-ref d 2) i)))
+		 (vector-set! (vector-ref d 0) i (+ d0 
+						    (* (ac k n)
+						       (- (ref p 0 (+ i k))
+							  (ref p 0 (- i k))))))
+		 (vector-set! (vector-ref d 1) i (+ d1
+						    (* (ac k n)
+						       (- (ref p 1 (+ i k))
+							  (ref p 1 (- i k))))))
+		 (vector-set! (vector-ref d 2) i (+ d2
+						    (* (ac k n)
+						       (- (ref p 2 (+ i k))
+							  (ref p 2 (- i k)))))))))
+	   (list n p d)))))
 
 ;;; Calculate bezier control points for the given open path
 
-(<define-method> not-fitted ((path <bezier-path>))
-  (null? (bx path)))
+(define (not-fitted path)
+  (null? (bezier-bx path)))
 
-(<define-method> reset-fit ((path <bezier-path>))
-  (set! (bx path) '())
-  (set! (by path) '())
-  (set! (bz path) '())
+(define (reset-fit path)
+  (set! (bezier-bx path) '())
+  (set! (bezier-by path) '())
+  (set! (bezier-bz path) '())
   (reset-rendering path))
 
-(<define-method> fit-path ((path <bezier-path>))
-  (if (not-parsed path)
-      (xparse-path path))
-  (fit-path (make-path path))
-  (reset-rendering path))
+(define (fit-path path)
+  (cond ((eq? (car path) 'open-bezier-path)
+	 (if (not-parsed path)
+	     (xparse-path path))
+	 
+	 (let ((points (length (bezier-x path))))
+	   (if (> points 2)
+	       (let* ((vals (calculate-fit path))
+		      (n (car vals))
+		      (p (cadr vals))
+		      (d (caddr vals)))
+		 (let* ((c (bezier-curvature path))
+			(cs (make-vector n)))
+		   ;; setup the curvatures array
+		   (if (or (not c) (null? c))                          ; no curvature specified, default is 1.0
+		       (do ((i 0 (+ 1 i)))
+			   ((= i n))
+			 (vector-set! cs i (list 1.0 1.0)))
+		       (if (number? c)                    ; same curvature for all segments
+			   (do ((i 0 (+ 1 i)))
+			       ((= i n))
+			     (vector-set! cs i (list c c)))
+			   (if (and (list? c) (= n (length c)))   ; list of curvatures
+			       (let ((i 0))
+				 (for-each
+				  (lambda (ci)
+				    (vector-set! cs i (if (list? ci) 
+							  (if (not (= (length ci) 2))
+							      (snd-error (format #f "curvature sublist must have two elements ~A" ci))
+							      ci)
+							  (list ci ci)))
+				    (set! i (+ 1 i)))
+				  c))
+			       (snd-error (format #f "bad curvature argument ~A to path, need ~A elements" c n)))))
 
-(<define-method> fit-path ((path <open-bezier-path>))
-  (if (not-parsed path)
-      (xparse-path path))
-
-  (let ((points (length (x path))))
-    (if (> points 2)
-	(let* ((vals (calculate-fit path))
-	       (n (car vals))
-	       (p (cadr vals))
-	       (d (caddr vals)))
-	  (let* ((c (curvature path))
-		 (cs (make-vector n)))
-	       ;; setup the curvatures array
-	    (if (or (not c) (null? c))                          ; no curvature specified, default is 1.0
-		(do ((i 0 (+ 1 i)))
-		    ((= i n))
-		  (vector-set! cs i (list 1.0 1.0)))
-		(if (number? c)                    ; same curvature for all segments
-		    (do ((i 0 (+ 1 i)))
-			((= i n))
-		      (vector-set! cs i (list c c)))
-		    (if (and (list? c) (= n (length c)))   ; list of curvatures
-			(let ((i 0))
-			  (for-each
-			   (lambda (ci)
-			     (vector-set! cs i (if (list? ci) 
-						   (if (not (= (length ci) 2))
-						       (snd-error (format #f "curvature sublist must have two elements ~A" ci))
-						       ci)
-						   (list ci ci)))
-			     (set! i (+ 1 i)))
-			   c))
-			(snd-error (format #f "bad curvature argument ~A to path, need ~A elements" c n)))))
-
-	    ;; calculate control points
-	    (let ((xc '())
-		  (yc '())
-		  (zc '()))
-	      (do ((i 0 (+ 1 i)))
-		  ((= i n))
-		
-		(set! xc (cons (list (vector-ref (vector-ref p 0) i)
-				     (+ (vector-ref (vector-ref p 0) i) (* (vector-ref (vector-ref d 0) i) (car (vector-ref cs i))))
-				     (- (vector-ref (vector-ref p 0) (+ i 1)) (* (vector-ref (vector-ref d 0) (+ i 1)) (cadr (vector-ref cs i))))
-				     (vector-ref (vector-ref p 0) (+ i 1))) xc))
-		(set! yc (cons (list (vector-ref (vector-ref p 1) i)
-				     (+ (vector-ref (vector-ref p 1) i) (* (vector-ref (vector-ref d 1) i) (car (vector-ref cs i))))
-				     (- (vector-ref (vector-ref p 1) (+ i 1)) (* (vector-ref (vector-ref d 1) (+ i 1)) (cadr (vector-ref cs i))))
-				     (vector-ref (vector-ref p 1) (+ i 1))) yc))
-		(set! zc (cons (list (vector-ref (vector-ref p 2) i)
-				     (+ (vector-ref (vector-ref p 2) i) (* (vector-ref (vector-ref d 2) i) (car (vector-ref cs i))))
-				     (- (vector-ref (vector-ref p 2) (+ i 1)) (* (vector-ref (vector-ref d 2) (+ i 1)) (cadr (vector-ref cs i))))
-				     (vector-ref (vector-ref p 2) (+ i 1))) zc)))
-	      (set! (bx path) (reverse xc))
-	      (set! (by path) (reverse yc))
-	      (set! (bz path) (reverse zc)))))
+		   ;; calculate control points
+		   (let ((xc '())
+			 (yc '())
+			 (zc '()))
+		     (do ((i 0 (+ 1 i)))
+			 ((= i n))
+		       
+		       (set! xc (cons (list (vector-ref (vector-ref p 0) i)
+					    (+ (vector-ref (vector-ref p 0) i) (* (vector-ref (vector-ref d 0) i) (car (vector-ref cs i))))
+					    (- (vector-ref (vector-ref p 0) (+ i 1)) (* (vector-ref (vector-ref d 0) (+ i 1)) (cadr (vector-ref cs i))))
+					    (vector-ref (vector-ref p 0) (+ i 1))) xc))
+		       (set! yc (cons (list (vector-ref (vector-ref p 1) i)
+					    (+ (vector-ref (vector-ref p 1) i) (* (vector-ref (vector-ref d 1) i) (car (vector-ref cs i))))
+					    (- (vector-ref (vector-ref p 1) (+ i 1)) (* (vector-ref (vector-ref d 1) (+ i 1)) (cadr (vector-ref cs i))))
+					    (vector-ref (vector-ref p 1) (+ i 1))) yc))
+		       (set! zc (cons (list (vector-ref (vector-ref p 2) i)
+					    (+ (vector-ref (vector-ref p 2) i) (* (vector-ref (vector-ref d 2) i) (car (vector-ref cs i))))
+					    (- (vector-ref (vector-ref p 2) (+ i 1)) (* (vector-ref (vector-ref d 2) (+ i 1)) (cadr (vector-ref cs i))))
+					    (vector-ref (vector-ref p 2) (+ i 1))) zc)))
+		     (set! (bezier-bx path) (reverse xc))
+		     (set! (bezier-by path) (reverse yc))
+		     (set! (bezier-bz path) (reverse zc)))))
+	       
+	       (if (= points 2)
+		   ;; just a line, stays a line
+		   (let* ((x1 (car (bezier-x path)))
+			  (x2 (cadr (bezier-x path)))
+			  (y1 (car (bezier-y path)))
+			  (y2 (cadr (bezier-y path)))
+			  (z1 (car (bezier-z path)))
+			  (z2 (cadr (bezier-z path))))
+		     (set! (bezier-bx path) (list (list x1 x1 x2 x2)))
+		     (set! (bezier-by path) (list (list y1 y1 y2 y2)))
+		     (set! (bezier-bz path) (list (list z1 z1 z2 z2))))
+		   (if (= points 1)
+		       ;; just one point, bezier won't do much here
+		       (begin
+			 (set! (bezier-bx path) '())
+			 (set! (bezier-by path) '())
+			 (set! (bezier-bz path) '())))))
+	   (reset-rendering path)))
 	
-	(if (= points 2)
-	    ;; just a line, stays a line
-	    (let* ((x1 (car (x path)))
-		   (x2 (cadr (x path)))
-		   (y1 (car (y path)))
-		   (y2 (cadr (y path)))
-		   (z1 (car (z path)))
-		   (z2 (cadr (z path))))
-	      (set! (bx path) (list (list x1 x1 x2 x2)))
-	      (set! (by path) (list (list y1 y1 y2 y2)))
-	      (set! (bz path) (list (list z1 z1 z2 z2))))
-	    (if (= points 1)
-		;; just one point, bezier won't do much here
-		(begin
-		  (set! (bx path) '())
-		  (set! (by path) '())
-		  (set! (bz path) '())))))
-    (reset-rendering path)))
+	(else
+	 (if (not-parsed path)
+	     (xparse-path path))
+			 
+	 (if (> (length (bezier-x path)) 4)
+	     (let* ((vals (calculate-fit path))
+		    (n (car vals))
+		    (p (cadr vals))
+		    (d (caddr vals)))
+	       ;; enough points, fit path
+	       (let ((xc '())
+		     (yc '())
+		     (zc '()))
+		 (do ((i 0 (+ 1 i)))
+		     ((= i n))
+		   (set! xc (cons (list (vector-ref (vector-ref p 0) i)
+					(+ (vector-ref (vector-ref p 0) i) (vector-ref (vector-ref d 0) i))
+					(- (vector-ref (vector-ref p 0) (+ i 1)) (vector-ref (vector-ref d 0) (+ i 1)))
+					(vector-ref (vector-ref p 0) (+ i 1))) xc))
+		   (set! yc (cons (list (vector-ref (vector-ref p 1) i)
+					(+ (vector-ref (vector-ref p 1) i) (vector-ref (vector-ref d 1) i))
+					(- (vector-ref (vector-ref p 1) (+ i 1)) (vector-ref (vector-ref d 1) (+ i 1)))
+					(vector-ref (vector-ref p 1) (+ i 1))) yc))
+		   (set! zc (cons (list (vector-ref (vector-ref p 2) i)
+					(+ (vector-ref (vector-ref p 2) i) (vector-ref (vector-ref d 2) i))
+					(- (vector-ref (vector-ref p 2) (+ i 1)) (vector-ref (vector-ref d 2) (+ i 1)))
+					(vector-ref (vector-ref p 2) (+ i 1))) zc)))
+		 (set! (bezier-bx path) (append (reverse xc) (list (list (vector-ref (vector-ref p 0) n)
+								  (+ (vector-ref (vector-ref p 0) n) (vector-ref (vector-ref d 0) n))
+								  (- (vector-ref (vector-ref p 0) 0) (vector-ref (vector-ref d 0) 0))
+								  (vector-ref (vector-ref p 0) 0)))))
+		 (set! (bezier-by path) (append (reverse yc) (list (list (vector-ref (vector-ref p 1) n)
+								  (+ (vector-ref (vector-ref p 1) n) (vector-ref (vector-ref d 1) n))
+								  (- (vector-ref (vector-ref p 1) 0) (vector-ref (vector-ref d 1) 0))
+								  (vector-ref (vector-ref p 1) 0)))))
+		 (set! (bezier-bz path) (append (reverse zc) (list (list (vector-ref (vector-ref p 2) n)
+								  (+ (vector-ref (vector-ref p 2) n) (vector-ref (vector-ref d 2) n))
+								  (- (vector-ref (vector-ref p 2) 0) (vector-ref (vector-ref d 2) 0))
+								  (vector-ref (vector-ref p 2) 0)))))))
+	     
+	     ;; not enough points to fit a closed path
+	     (let ((xc '())
+		   (yc '())
+		   (zc '())
+		   (len (min (length (bezier-x path)) (length (bezier-y path)) (length (bezier-z path)))))
+	       (do ((i 0 (+ 1 i)))
+		   ((>= i len))
+		 (let ((x1 (list-ref (bezier-x path) i))
+		       (x2 (list-ref (bezier-x path) (+ i 1)))
+		       (y1 (list-ref (bezier-y path) i))
+		       (y2 (list-ref (bezier-y path) (+ i 1)))
+		       (z1 (list-ref (bezier-z path) i))
+		       (z2 (list-ref (bezier-z path) (+ i 1))))
+		   (set! xc (cons (list x1 x1 x2 x2) xc))
+		   (set! yc (cons (list y1 y1 y2 y2) yc))
+		   (set! zc (cons (list z1 z1 z2 z2) zc))))
+	       (warn "[fit-path:closed-path] not enough points to do bezier fit (~A points)" len)
+	       (set! (bezier-bx path) (reverse xc))
+	       (set! (bezier-by path) (reverse yc))
+	       (set! (bezier-bz path) (reverse zc))))
+	 (reset-rendering path))))
 
-;;; Calculate bezier control points for the given closed path
 
-(<define-method> fit-path ((path <closed-bezier-path>))
-  (if (not-parsed path)
-      (xparse-path path))
 
-  (if (> (length (x path)) 4)
-      (let* ((vals (calculate-fit path))
-	     (n (car vals))
-	     (p (cadr vals))
-	     (d (caddr vals)))
-	;; enough points, fit path
-	(let ((xc '())
-	      (yc '())
-	      (zc '()))
-	  (do ((i 0 (+ 1 i)))
-	      ((= i n))
-	    (set! xc (cons (list (vector-ref (vector-ref p 0) i)
-				 (+ (vector-ref (vector-ref p 0) i) (vector-ref (vector-ref d 0) i))
-				 (- (vector-ref (vector-ref p 0) (+ i 1)) (vector-ref (vector-ref d 0) (+ i 1)))
-				 (vector-ref (vector-ref p 0) (+ i 1))) xc))
-	    (set! yc (cons (list (vector-ref (vector-ref p 1) i)
-				 (+ (vector-ref (vector-ref p 1) i) (vector-ref (vector-ref d 1) i))
-				 (- (vector-ref (vector-ref p 1) (+ i 1)) (vector-ref (vector-ref d 1) (+ i 1)))
-				 (vector-ref (vector-ref p 1) (+ i 1))) yc))
-	    (set! zc (cons (list (vector-ref (vector-ref p 2) i)
-				 (+ (vector-ref (vector-ref p 2) i) (vector-ref (vector-ref d 2) i))
-				 (- (vector-ref (vector-ref p 2) (+ i 1)) (vector-ref (vector-ref d 2) (+ i 1)))
-				 (vector-ref (vector-ref p 2) (+ i 1))) zc)))
-	  (set! (bx path) (append (reverse xc) (list (list (vector-ref (vector-ref p 0) n)
-							  (+ (vector-ref (vector-ref p 0) n) (vector-ref (vector-ref d 0) n))
-							  (- (vector-ref (vector-ref p 0) 0) (vector-ref (vector-ref d 0) 0))
-							  (vector-ref (vector-ref p 0) 0)))))
-	  (set! (by path) (append (reverse yc) (list (list (vector-ref (vector-ref p 1) n)
-							   (+ (vector-ref (vector-ref p 1) n) (vector-ref (vector-ref d 1) n))
-							   (- (vector-ref (vector-ref p 1) 0) (vector-ref (vector-ref d 1) 0))
-							   (vector-ref (vector-ref p 1) 0)))))
-	  (set! (bz path) (append (reverse zc) (list (list (vector-ref (vector-ref p 2) n)
-							   (+ (vector-ref (vector-ref p 2) n) (vector-ref (vector-ref d 2) n))
-							   (- (vector-ref (vector-ref p 2) 0) (vector-ref (vector-ref d 2) 0))
-							   (vector-ref (vector-ref p 2) 0)))))))
-      
-      ;; not enough points to fit a closed path
-      (let ((xc '())
-	    (yc '())
-	    (zc '())
-	    (len (min (length (x path)) (length (y path)) (length (z path)))))
-	(do ((i 0 (+ 1 i)))
-	    ((>= i len))
-	  (let ((x1 (list-ref (x path) i))
-		(x2 (list-ref (x path) (+ i 1)))
-		(y1 (list-ref (y path) i))
-		(y2 (list-ref (y path) (+ i 1)))
-		(z1 (list-ref (z path) i))
-		(z2 (list-ref (z path) (+ i 1))))
-	    (set! xc (cons (list x1 x1 x2 x2) xc))
-	    (set! yc (cons (list y1 y1 y2 y2) yc))
-	    (set! zc (cons (list z1 z1 z2 z2) zc))))
-	(warn "[fit-path:closed-path] not enough points to do bezier fit (~A points)" len)
-	(set! (bx path) (reverse xc))
-	(set! (by path) (reverse yc))
-	(set! (bz path) (reverse zc))))
-  (reset-rendering path))
+;;;;;;;;;;;;;;;;;
+;;; Literal paths
+;;;;;;;;;;;;;;;;;
+
+
+(define literal-points (make-procedure-with-setter (lambda (p) (list-ref p 10)) (lambda (p val) (list-set! p 10 val))))
+(define literal-3d     (make-procedure-with-setter (lambda (p) (list-ref p 11)) (lambda (p val) (list-set! p 11 val))))
+(define literal-polar  (make-procedure-with-setter (lambda (p) (list-ref p 12)) (lambda (p val) (list-set! p 12 val))))
+
+;;; Generic literal path creation function
+(def-optkey-fun (make-literal-path (points '()) (3d path-3d) polar)
+  (list 'literal-path '() '() '() '() '() '() '() '() '() points 3d polar))
+
+;;; Specific polar literal path creation function
+(def-optkey-fun (make-literal-polar-path (points '()) (3d path-3d))
+  (make-literal-path points 3d #t))
+
+
+;;;;;;;;;;;
+;;; Spirals
+;;;;;;;;;;;
+
+(define spiral-start-angle (make-procedure-with-setter (lambda (p) (list-ref p 13)) (lambda (p val) (list-set! p 13 val))))
+(define spiral-total-angle (make-procedure-with-setter (lambda (p) (list-ref p 14)) (lambda (p val) (list-set! p 14 val))))
+(define spiral-step-angle  (make-procedure-with-setter (lambda (p) (list-ref p 15)) (lambda (p val) (list-set! p 15 val))))
+(define spiral-turns       (make-procedure-with-setter (lambda (p) (list-ref p 16)) (lambda (p val) (list-set! p 16 val))))
+(define spiral-distance    (make-procedure-with-setter (lambda (p) (list-ref p 17)) (lambda (p val) (list-set! p 17 val))))
+(define spiral-height      (make-procedure-with-setter (lambda (p) (list-ref p 18)) (lambda (p val) (list-set! p 18 val))))
+(define spiral-velocity    (make-procedure-with-setter (lambda (p) (list-ref p 19)) (lambda (p val) (list-set! p 19 val))))
+
+(def-optkey-fun (make-spiral-path (start-angle 0.0)
+				  total-angle
+				  step-angle
+				  (turns '())
+				  (distance '(0 10 1 10))
+				  (height '(0 0 1 0))
+				  (velocity '(0 1 1 1)))
+  (if (and total-angle (not (null? turns)))
+      (snd-error (format #f "can't specify total-angle [~A] and turns [~A] at the same time for the spiral path" total-angle turns)))
+  
+  (list 'spiral-path '() '() '() '() '() '() '() '() '() '() path-3d #f 
+	start-angle total-angle 
+	(or step-angle (/ dlocsig-one-turn 100))
+	turns distance height velocity))
+
 
 
 ;;; Transform a Bezier control point fit to a linear segment approximation
 
-(<define-method> render-path ((path <bezier-path>))
+(define (bezier-render path)
   (if (not-fitted path)
       (fit-path path))
   (let ((xrx '()) (xry '()) (xrz '()) (xrv '()))
-
+    
     (define (bezier-point u c)
       ;; Evaluate a point at parameter u in bezier segment
       (let* ((u1 (- 1 u))
@@ -1391,15 +1421,15 @@
 	    ((< i 0))
 	  (do ((j 0 (+ 1 j)))
 	      ((> j i))
-
-	  (vector-set! (vector-ref cr 0) j (+ (* u1 (vector-ref (vector-ref cr 0) j)) (* u (vector-ref (vector-ref cr 0) (+ j 1)))))
-	  (vector-set! (vector-ref cr 1) j (+ (* u1 (vector-ref (vector-ref cr 1) j)) (* u (vector-ref (vector-ref cr 1) (+ j 1)))))
-	  (vector-set! (vector-ref cr 2) j (+ (* u1 (vector-ref (vector-ref cr 2) j)) (* u (vector-ref (vector-ref cr 2) (+ j 1)))))
-	  ))
+	    
+	    (vector-set! (vector-ref cr 0) j (+ (* u1 (vector-ref (vector-ref cr 0) j)) (* u (vector-ref (vector-ref cr 0) (+ j 1)))))
+	    (vector-set! (vector-ref cr 1) j (+ (* u1 (vector-ref (vector-ref cr 1) j)) (* u (vector-ref (vector-ref cr 1) (+ j 1)))))
+	    (vector-set! (vector-ref cr 2) j (+ (* u1 (vector-ref (vector-ref cr 2) j)) (* u (vector-ref (vector-ref cr 2) (+ j 1)))))
+	    ))
 	(list (vector-ref (vector-ref cr 0) 0)
 	      (vector-ref (vector-ref cr 1) 0)
 	      (vector-ref (vector-ref cr 2) 0))))
-
+    
     (define (berny xl yl zl xh yh zh ul u uh c err)
       ;; Create a linear segment rendering of a bezier segment
       (let* ((vals (bezier-point u c))
@@ -1423,66 +1453,66 @@
 			(append yi (list y) yj)
 			(append zi (list z) zj))))
 	      (list '() '() '())))))
-
+    
     ;; Create linear segment approximations of the bezier segments
     ;; make sure there are initial and final velocity values
-    (if (not (listp (v path)))
-	(set! (v path) (list 1 1))
-	(if (not (car (v path)))
+    (if (not (listp (bezier-v path)))
+	(set! (bezier-v path) (list 1 1))
+	(if (not (car (bezier-v path)))
 	    (begin
-	      (list-set! (v path) 0 1)
-	      (list-set! (v path) (- (length (v path)) 1) 1))))
-
+	      (list-set! (bezier-v path) 0 1)
+	      (list-set! (bezier-v path) (- (length (bezier-v path)) 1) 1))))
+    
     ;; only one point means no movement, static source
-    (if (= (length (x path)) 1)
+    (if (= (length (bezier-x path)) 1)
 	(begin
-	  (set! (rx path) (x path))
-	  (set! (ry path) (y path))
-	  (set! (rz path) (z path))
-	  (set! (rt path) (list 0.0))
+	  (set! (path-rx path) (bezier-x path))
+	  (set! (path-ry path) (bezier-y path))
+	  (set! (path-rz path) (bezier-z path))
+	  (set! (path-rt path) (list 0.0))
 	  (reset-transformation path)) ; after?
 	(begin
-	(let ((len (length (bx path))))
-	  ;(path-x (make-path '((-10 10)(0 5)(10 10))))
-	  ;; render the path only if it has at least two points
-	  (do ((i 0 (+ 1 i)))
-	      ((= i len))
-	    (let* ((x-bz (list-ref (bx path) i))
-		   (y-bz (list-ref (by path) i))
-		   (z-bz (list-ref (bz path) i))
-		   (vi-bz (list-ref (v path) i))
-		   (vf-bz (list-ref (v path) (+ i 1)))
-		   (xi-bz (car x-bz))
-		   (xf-bz (list-ref x-bz (- (length x-bz) 1)))
-		   (yi-bz (car y-bz))
-		   (yf-bz (list-ref y-bz (- (length y-bz) 1)))
-		   (zi-bz (car z-bz))
-		   (zf-bz (list-ref z-bz (- (length z-bz) 1))))
-	      (let* ((vals (berny xi-bz yi-bz zi-bz xf-bz yf-bz zf-bz 0.0 0.5 1.0 
-				  (vector (list->vector x-bz)
-					  (list->vector y-bz)
-					  (list->vector z-bz))
-				  (error path)))
-		     (xs (car vals))
-		     (ys (cadr vals))
-		     (zs (caddr vals)))
-
-		;; approximate the bezier curve with linear segments
-		(set! xrx (append xrx (list xi-bz) xs))
-		(set! xry (append xry (list yi-bz) ys))
-		(set! xrz (append xrz (list zi-bz) zs))
-
-		;; accumulate intermediate unknown velocities as nils
-		(set! xrv (append xrv (list vi-bz) (make-list (length xs) #f)))
-		(if (= i (- len 1))
-		    (begin
-		      ;; add the last point
-		      (set! xrx (append xrx (list xf-bz)))
-		      (set! xry (append xry (list yf-bz)))
-		      (set! xrz (append xrz (list zf-bz)))
-		      (set! xrv (append xrv (list vf-bz)))
-		      ))))))
-
+	  (let ((len (length (bezier-bx path))))
+					;(path-x (make-path '((-10 10)(0 5)(10 10))))
+	    ;; render the path only if it has at least two points
+	    (do ((i 0 (+ 1 i)))
+		((= i len))
+	      (let* ((x-bz (list-ref (bezier-bx path) i))
+		     (y-bz (list-ref (bezier-by path) i))
+		     (z-bz (list-ref (bezier-bz path) i))
+		     (vi-bz (list-ref (bezier-v path) i))
+		     (vf-bz (list-ref (bezier-v path) (+ i 1)))
+		     (xi-bz (car x-bz))
+		     (xf-bz (list-ref x-bz (- (length x-bz) 1)))
+		     (yi-bz (car y-bz))
+		     (yf-bz (list-ref y-bz (- (length y-bz) 1)))
+		     (zi-bz (car z-bz))
+		     (zf-bz (list-ref z-bz (- (length z-bz) 1))))
+		(let* ((vals (berny xi-bz yi-bz zi-bz xf-bz yf-bz zf-bz 0.0 0.5 1.0 
+				    (vector (list->vector x-bz)
+					    (list->vector y-bz)
+					    (list->vector z-bz))
+				    (bezier-error path)))
+		       (xs (car vals))
+		       (ys (cadr vals))
+		       (zs (caddr vals)))
+		  
+		  ;; approximate the bezier curve with linear segments
+		  (set! xrx (append xrx (list xi-bz) xs))
+		  (set! xry (append xry (list yi-bz) ys))
+		  (set! xrz (append xrz (list zi-bz) zs))
+		  
+		  ;; accumulate intermediate unknown velocities as nils
+		  (set! xrv (append xrv (list vi-bz) (make-list (length xs) #f)))
+		  (if (= i (- len 1))
+		      (begin
+			;; add the last point
+			(set! xrx (append xrx (list xf-bz)))
+			(set! xry (append xry (list yf-bz)))
+			(set! xrz (append xrz (list zf-bz)))
+			(set! xrv (append xrv (list vf-bz)))
+			))))))
+	  
 	  ;; calculate times for each velocity segment
 	  (let ((len (- (length xrx) 1))
 		(ti 0)
@@ -1502,12 +1532,12 @@
 		(set! yseg (append yseg (list y)))
 		(set! zseg (append zseg (list z)))
 		(set! vseg (append vseg (list v)))
-
+		
 		(if v
 		    (let* ((dseg (list))
 			   (sum 0.0)
 			   (len (- (length xseg) 1)))
-
+		      
 		      (do ((i 0 (+ 1 i)))
 			  ((= i len))
 			(let* ((xsi (list-ref xseg i))
@@ -1516,10 +1546,10 @@
 			       (xsf (list-ref xseg (+ i 1)))
 			       (ysf (list-ref yseg (+ i 1)))
 			       (zsf (list-ref zseg (+ i 1))))
-
+			  
 			  (set! sum (+ sum (distance (- xsf xsi) (- ysf ysi) (- zsf zsi))))
 			  (set! dseg (cons sum dseg))))
-
+		      
 		      (let* ((df (car dseg)))
 			(set! dseg (reverse dseg))
 			(let* ((tseg '())
@@ -1535,7 +1565,7 @@
 			   dseg)
 			  (set! ti (car tseg))
 			  (set! tseg (reverse tseg))
-
+			  
 			  (set! times (append times tseg))
 			  (set! xseg (list x))
 			  (set! yseg (list y))
@@ -1543,77 +1573,54 @@
 			  (set! vseg (list v))
 			  (set! vi v)))))
 		))
-
-	  (set! (rx path) xrx)
-	  (set! (ry path) xry)
-	  (set! (rz path) xrz)
-	  (set! (rt path) 
-		(let* ((tf (list-ref times (- (length times) 1)))
-		       (val '()))
-		  (for-each
-		   (lambda (ti)
-		     (set! val (cons (/ ti tf) val)))
-		   times)
-		  (reverse val)))
-	  (reset-transformation path))))))
+	    
+	    (set! (path-rx path) xrx)
+	    (set! (path-ry path) xry)
+	    (set! (path-rz path) xrz)
+	    (set! (path-rt path) 
+		  (let* ((tf (list-ref times (- (length times) 1)))
+			 (val '()))
+		    (for-each
+		     (lambda (ti)
+		       (set! val (cons (/ ti tf) val)))
+		     times)
+		    (reverse val)))
+	    (reset-transformation path))))))
 
 ;; (set! p (make-path '((-10 10 0 0) (0 5 0 1) (10 10 0 0)) :error 0.01))
 ;; (set! p (make-path '((-10 10 0 1) (-7 7 0 0.9) (0 5 0 0) (7 7 0 0.2) (10 10 0 1)) :error 0.001))
 ;; (with-sound(:channels 4 :play #f) (sinewave 0 2 880 0.5 :path p))
 
 
-;;;;;;;;;;;;;;;;;
-;;; Literal paths
-;;;;;;;;;;;;;;;;;
-
-;;; Generic literal path class
-(<define-class> <literal-path> (<path>)
-  (points :init-value '() :init-keyword :points :accessor literal-points) ; points 
-  (3d :init-value #t :init-keyword :3d :accessor literal-3d)              ; it is parsed as a 3d or 2d path?
-  (polar :init-value #f :init-keyword :polar :accessor literal-polar))    ; by default a path is cartesian
-
-;;; Generic literal path creation function
-(def-optkey-fun (make-literal-path points (3d path-3d) polar)
-  (make-instance <literal-path>
-		 :points points
-		 :3d 3d
-		 :polar polar))
-
-;;; Specific polar literal path creation function
-(def-optkey-fun (make-literal-polar-path points (3d path-3d))
-  (make-instance <literal-path>
-		 :points points
-		 :3d 3d
-		 :polar #t))
-
-;;; Render a user-defined literal path from the data points
-
-(<define-method> render-path ((path <literal-path>))
+(define (literal-render path)
+  
+  ;; Render a user-defined literal path from the data points
+  
   ;; decode the points into coordinates
   (let* ((points (literal-points path))
 	 (3d (literal-3d path))
 	 (polar (literal-polar path)))
     (let ((vals (if polar (parse-polar-coordinates points 3d) (parse-cartesian-coordinates points 3d))))
-      (set! (rx path) (car vals))
-      (set! (ry path) (cadr vals))
-      (set! (rz path) (caddr vals))
-      (set! (rv path) (cadddr vals)))
-
+      (set! (path-rx path) (car vals))
+      (set! (path-ry path) (cadr vals))
+      (set! (path-rz path) (caddr vals))
+      (set! (path-rv path) (cadddr vals)))
+    
     ;; make sure there are initial and final velocity values
-    (if (not (car (rv path)))
+    (if (not (car (path-rv path)))
 	(begin
-	  (list-set! (rv path) 0 1)
-	  (list-set! (rv path) (- (length (rv path)) 1) 1)))
-
+	  (list-set! (path-rv path) 0 1)
+	  (list-set! (path-rv path) (- (length (path-rv path)) 1) 1)))
+    
     ;; only one point means no movement, static source
-    (if (= (length (rx path)) 1)
+    (if (= (length (path-rx path)) 1)
 	(begin
-	  (set! (rt path) (list 0.0))
+	  (set! (path-rt path) (list 0.0))
 	  (reset-transformation path))
-	(let* ((rx (rx path))
-	       (ry (ry path))
-	       (rz (rz path))
-	       (rv (rv path))
+	(let* ((rx (path-rx path))
+	       (ry (path-ry path))
+	       (rz (path-rz path))
+	       (rv (path-rv path))
 	       (xseg (list (car rx)))
 	       (yseg (list (car ry)))
 	       (zseg (list (car rz)))
@@ -1632,7 +1639,7 @@
 	      (set! yseg (append yseg (list y)))
 	      (set! zseg (append zseg (list z)))
 	      (set! vseg (append vseg (list v)))
-
+	      
 	      (if (number? v) ; when v
 		  (let* ((sofar 0.0)
 			 (dseg '())
@@ -1667,8 +1674,8 @@
 			(set! zseg (list z))
 			(set! vseg (list v))
 			(set! vi v)))))))
-
-	  (set! (rt path) (let ((val '())
+	  
+	  (set! (path-rt path) (let ((val '())
 				(tf (list-ref times (- (length times) 1))))
 			    (for-each
 			     (lambda (ti)
@@ -1677,48 +1684,15 @@
 			    (reverse val)))
 	  (reset-transformation path)))))
 
-;;;;;;;;;;;
-;;; Spirals
-;;;;;;;;;;;
-
-(<define-class> <spiral-path> (<literal-path>)
-  (start-angle :init-value 0.0 :init-keyword :start-angle :accessor spiral-start-angle)                    ; start angle
-  (total-angle :init-value #f :init-keyword :total-angle :accessor spiral-total-angle)                     ; total angle for the spiral
-  (step-angle :init-value (/ dlocsig-one-turn 100) :init-keyword :step-angle :accessor spiral-step-angle)  ; step angle for rendering
-  (turns :init-value '() :init-keyword :turns :accessor spiral-turns)                                      ; fractional number of turns
-  (distance :init-value '(0 10 1 10) :init-keyword :distance :accessor spiral-distance)                    ; distance envelope
-  (height :init-value '(0 0 1 0) :init-keyword :height :accessor spiral-height)                            ; height envelope
-  (velocity :init-value '(0 1 1 1) :init-keyword :velocity :accessor spiral-velocity))                     ; velocity envelope
-
-;;; Spiral path creation function
-
-(def-optkey-fun (make-spiral-path (start-angle 0.0)
-				  total-angle
-				  (step-angle (/ dlocsig-one-turn 100))
-				  turns
-				  (distance '(0 10 1 10))
-				  (height '(0 0 1 0))
-				  (velocity '(0 1 1 1)))
-  (if (and total-angle turns)
-      (snd-error (format #f "can't specify total-angle [~A] and turns [~A] at the same time for the spiral path" total-angle turns)))
-  (make-instance <spiral-path> 
-		 :start-angle start-angle
-		 :total-angle total-angle
-		 :step-angle step-angle
-		 :turns turns
-		 :distance distance
-		 :height height
-		 :velocity velocity))
-
-;;; Render a spiral path from the object data
-
-(<define-method> render-path ((path <spiral-path>))
+(define (spiral-render path)
+  ;; Render a spiral path from the object data
+  
   (let* ((start (* (/ (spiral-start-angle path) dlocsig-one-turn) 2 pi))
 	 (total (if (spiral-total-angle path)
 		    (* (/ (spiral-total-angle path) dlocsig-one-turn) 2 pi)
-		  (if (spiral-turns path)
-		      (* (spiral-turns path) 2 pi)
-		    (snd-error (format #f "a spiral-path needs either a total-angle or turns, none specified")))))
+		    (if (spiral-turns path)
+			(* (spiral-turns path) 2 pi)
+			(snd-error (format #f "a spiral-path needs either a total-angle or turns, none specified")))))
 	 (steps (abs (/ total (* (/ (spiral-step-angle path) dlocsig-one-turn) 2 pi))))
 	 (step (/ total (ceiling steps)
 		  (if (< (spiral-step-angle path) 0) -1 1)))
@@ -1737,11 +1711,11 @@
 	  (set! x (cons (* d (imag-part xy)) x))
 	  (set! y (cons (* d (real-part xy)) y))
 	  (set! z (cons (envelope-interp angle height) z))))
-
+      
       (set! x (reverse x))
       (set! y (reverse y))
       (set! z (reverse z))
-
+      
       (let* ((dp '())
 	     (len (- (length x) 1))
 	     (sofar 0.0))
@@ -1771,17 +1745,28 @@
 		(set! td (+ td (/ (- df di) (+ vi vf) 2)))))
 	    (let ((tf (car tp)))
 	      (set! tp (reverse tp))
-	      (set! (rx path) x)
-	      (set! (ry path) y)
-	      (set! (rz path) z)
+	      (set! (path-rx path) x)
+	      (set! (path-ry path) y)
+	      (set! (path-rz path) z)
 	      (let ((val '()))
 		(for-each
 		 (lambda (ti)
 		   (set! val (cons (/ ti tf) val)))
 		 tp)
-		(set! (rt path) (reverse val))))))))
-
+		(set! (path-rt path) (reverse val))))))))
+    
     (reset-transformation path)))
+
+
+(define (render-path path)
+  (cond ((or (eq? (car path) 'bezier-path)
+	     (eq? (car path) 'open-bezier-path))
+	 (bezier-render path))
+	((eq? (car path) 'literal-path)
+	 (literal-render path))
+	(#t (spiral-render path))))
+
+
 
 
 ;;;;;;;;;;;;;;;;;;;
@@ -1793,12 +1778,12 @@
 ;;; Transform a path (scaling + translation + rotation)
 
 (define* (transform-path path :key
-			       scaling
-			       translation
-			       rotation
-			       rotation-center
-			       (rotation-axis '(0.0 0.0 1.0)))
-
+			 scaling
+			 translation
+			 rotation
+			 rotation-center
+			 (rotation-axis '(0.0 0.0 1.0)))
+  
   ;; Derive a rotation matrix from an axis vector and an angle
 
   (define (rotation-matrix x y z angle)
@@ -1920,25 +1905,25 @@
 	      (set! ytr (cons yw ytr))
 	      (set! ztr (cons zw ztr))))
 
-	  (set! (tx path) (reverse xtr))
-	  (set! (ty path) (reverse ytr))
-	  (set! (tz path) (reverse ztr))))
+	  (set! (path-tx path) (reverse xtr))
+	  (set! (path-ty path) (reverse ytr))
+	  (set! (path-tz path) (reverse ztr))))
       (begin
 	;; if there's no transformation just copy the rendered path
-	(set! (tt path) (copy-list (rt path)))
-	(set! (tx path) (copy-list (rx path)))
-	(set! (ty path) (copy-list (ry path)))
-	(set! (tz path) (copy-list (rz path)))))
+	(set! (path-tt path) (copy-list (path-rt path)))
+	(set! (path-tx path) (copy-list (path-rx path)))
+	(set! (path-ty path) (copy-list (path-ry path)))
+	(set! (path-tz path) (copy-list (path-rz path)))))
   path)
 
 ;;; Scale a path
 
-(<define-method> scale-path ((path <path>) scaling)
+(define (scale-path path)
   (transform-path path :scaling scaling))
 
 ;;; Translate a path
 
-(<define-method> translate-path ((path <path>) translation)
+(define (translate-path path)
   (transform-path path :translation translation))
 
 ;;; Rotate a path
@@ -1963,21 +1948,21 @@
 	(for-each
 	 (lambda (x)
 	   (set! val (cons (- around x) val)))
-	 (tx path))
-	(set! (tx path) (reverse val)))
+	 (path-tx path))
+	(set! (path-tx path) (reverse val)))
       (let ((val '()))
 	(for-each
 	 (lambda (y)
 	   (set! val (cons (- around y) val)))
-	 (ty path))
-	(set! (ty path) (reverse val))))
+	 (path-ty path))
+	(set! (path-ty path) (reverse val))))
   path)
 
 ;;; Change the times of the rendered envelope so that the velocity is constant
 
 (define (constant-velocity path)
   "constant-velocity is a dlocsig function that changes the times of the rendered envelope so that the velocity is constant"
-  (if (not (rx path))
+  (if (not (path-rx path))
       (render-path path))
   (reset-transformation path)
   (let* ((xcoords (path-x path))
@@ -2015,10 +2000,10 @@
 	  (set! dist (+ dist (distance (- x xp) (- y yp) (- z zp))))
 	  (set! now (cons (/ dist velocity) now))))
       (set! now (reverse now))
-      (set! (rt path) (append (list start-time) now))
-      (set! (tx path) (copy-list (rx path)))
-      (set! (ty path) (copy-list (ry path)))
-      (set! (tz path) (copy-list (rz path)))))
+      (set! (path-rt path) (append (list start-time) now))
+      (set! (path-tx path) (copy-list (path-rx path)))
+      (set! (path-ty path) (copy-list (path-ry path)))
+      (set! (path-tz path) (copy-list (path-rz path)))))
   path)
 
 
@@ -2913,3 +2898,5 @@
 |#
 
 
+
+;;; TODO: this segfaults in guile 1.9.0 (in the previous class/method version also)

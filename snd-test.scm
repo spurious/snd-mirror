@@ -52530,11 +52530,7 @@ EDITS: 1
 (if (and (provided? 'multidimensional-vectors)
 	 (not (provided? 'snd-gib-gens.scm)))
     (load "big-gens.scm"))
-(if (and (not (provided? 'snd-dlocsig.scm))
-	 (not (provided? 'snd-s7))) ; define-class and so on -- not supported
-    (catch #t 
-	   (lambda () (load "dlocsig.scm"))
-	   (lambda args (snd-display ";load dlocsig: ~A" args))))
+(if (not (provided? 'snd-dlocsig.scm)) (load "dlocsig.scm"))
 (if (not (provided? 'snd-sndwarp.scm)) (load "sndwarp.scm"))
 
 (define old-opt-23 (optimization))
@@ -54461,9 +54457,7 @@ EDITS: 1
 	      (if (fneq v1 v2)
 	  (snd-display ";rand case mfilter/firmant: ~A ~A" i v1 v2)))))
 
-	
-	(if (not (provided? 'snd-s7))
-	    (begin
+
 	;; dlocsig tests
 	(if (not (provided? 'snd-dlocsig.scm))
 	    (catch #t 
@@ -55040,7 +55034,7 @@ EDITS: 1
 					.018 .015 .013 .011 .010 .009 .008 .007 .007 .006 .006 
 					.005 .005 .004 .004 .004)
 				ind 3 "dlocsig 15 3")
-		))))); end dlocsig tests
+		))); end dlocsig tests
 	
 	(let ((a4 (->frequency 'a4))
 	      (a440 (->frequency 440.0))

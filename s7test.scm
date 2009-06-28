@@ -3455,6 +3455,8 @@
 (test (let ((=> 3) (cond 4)) (+ => cond)) 7)
 (test (cond (cond 'cond)) 'cond)
 
+(test (and (defined? 'else) (boolean? else)) #f)
+
 
 
 ;;; -------- case --------
