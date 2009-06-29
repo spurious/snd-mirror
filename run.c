@@ -14659,8 +14659,6 @@ static void format_s(int *args, ptree *pt)
 
 #else
 
-const char *s7_format(s7_scheme *sc, s7_pointer args);
-
 static void format_s(int *args, ptree *pt) 
 {
   if (STRING_RESULT) free(STRING_RESULT);

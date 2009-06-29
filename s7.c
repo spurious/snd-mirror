@@ -1228,6 +1228,7 @@ static int gc(s7_scheme *sc)
 }
 
 
+#if 0
 static s7_pointer g_dump_heap(s7_scheme *sc, s7_pointer args)
 {
   FILE *fd;
@@ -1250,6 +1251,7 @@ static s7_pointer g_dump_heap(s7_scheme *sc, s7_pointer args)
 
   return(sc->NIL);
 }
+#endif
 
 
 #if HAVE_PTHREADS
@@ -1986,7 +1988,9 @@ static s7_pointer copy_stack(s7_scheme *sc, s7_pointer old_v, int top)
     {
       nv[i + 0] = copy_object(sc, ov[i + 0]); /* code */
       nv[i + 1] = ov[i + 1];                  /* environment pointer */
-      nv[i + 2] = copy_list(sc, ov[i + 2]);   /* args (copy is needed -- see s7test.scm) */
+      if (is_pair(ov[i + 2]))                 /* args need not be a list (it can be a port or #f, etc) */
+	nv[i + 2] = copy_list(sc, ov[i + 2]); /* args (copy is needed -- see s7test.scm) */
+      else nv[i + 2] = ov[i + 2];             /* is this a safe assumption? */
       nv[i + 3] = ov[i + 3];                  /* op (constant int) */
     }
   
@@ -10936,6 +10940,7 @@ s7_pointer s7_hash_table_set(s7_scheme *sc, s7_pointer table, const char *name, 
   return(value);
 }
 
+/* SOMEDAY: hash mp nums? */
 
 #define HASHED_INTEGER_BUFFER_SIZE 32
 
@@ -11461,7 +11466,6 @@ spacing (and spacing character) and precision.  ~{ starts an embedded format dir
 }
 
 
-const char *s7_format(s7_scheme *sc, s7_pointer args);
 const char *s7_format(s7_scheme *sc, s7_pointer args)
 {
   return(s7_string(g_format(sc, args))); /* for the run macro in run.c */
@@ -19954,7 +19958,7 @@ s7_scheme *s7_init(void)
   s7_gmp_init(sc);
 #endif
 
-  s7_define_function(sc, "dump-heap", g_dump_heap, 0, 0, false, "hiho");
+  /* s7_define_function(sc, "dump-heap", g_dump_heap, 0, 0, false, "hiho"); */
 
   return(sc);
 }

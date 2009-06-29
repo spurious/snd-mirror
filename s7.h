@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "1.18"
-#define S7_DATE "12-May-09"
+#define S7_VERSION "1.19"
+#define S7_DATE "29-Jun-09"
 
 
 typedef long long int s7_Int;
@@ -44,7 +44,7 @@ typedef double s7_Double;
    *    load-verbose            if argument is #t, "load" prints out the name of the file it is loading
    *    gc-verbose              if argument is #t, the garbage collector reports on its activities
    *    provided?               checks the *features* list for a symbol
-   *    provided                adds a symbol to the *features* list
+   *    provide                 adds a symbol to the *features* list
    *    port-line-number        current line during loading
    *    port-filename           current file name during loading
    *    gc                      calls the GC, if its argument is #f, the GC is turned off
@@ -62,7 +62,7 @@ typedef double s7_Double;
    *
    * and various others mentioned at the start of s7.c -- nearly every Scheme implementation includes
    * stuff like logior, sinh, read-line, format, define*, etc.  See also the start of s7.c for choices
-   * such as case-insensitive symbol names, multiprecision arithmetic, initial heap and stack size, etc.
+   * such as multiprecision arithmetic, multidimensional vectors, initial heap and stack size, etc.
    */
 
 
@@ -326,6 +326,7 @@ void s7_newline(s7_scheme *sc, s7_pointer port);                            /* (
 void s7_write_char(s7_scheme *sc, char c, s7_pointer port);                 /* (write-char c port) */
 void s7_write(s7_scheme *sc, s7_pointer obj, s7_pointer port);              /* (write obj port) */
 void s7_display(s7_scheme *sc, s7_pointer obj, s7_pointer port);            /* (display obj port) */
+const char *s7_format(s7_scheme *sc, s7_pointer args);                      /* (format ... */
 
 
 bool s7_is_procedure(s7_pointer x);                                         /* (procedure? x) */
@@ -1281,6 +1282,7 @@ int main(int argc, char **argv)
  * 
  *        s7 changes
  *
+ * 29-Jun:    s7_format declaration.
  * 12-May:    s7_is_constant.
  * 20-Apr:    changed rationalize to be both r5rs-acceptable and fast.
  * 6-Apr:     added s7_make_permanent_string.
