@@ -2856,9 +2856,9 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
      run-beg
      run-end)))
 
-;(with-sound(:channels 6 :play nil :statistics t) (sinewave 0 10 440 0.5 :path (make-path '((-10 10) (0.5 0.5) (10 10)) :error 0.001)))
+;(with-sound(:channels 6 :play #f :statistics #t) (sinewave 0 10 440 0.5 :path (make-path '((-10 10) (0.5 0.5) (10 10)) :error 0.001)))
 ;
-;(with-sound(:statistics t :channels 4 :reverb-channels 4 :reverb freeverb :decay-time 3)
+;(with-sound(:statistics #t :channels 4 :reverb-channels 4 :reverb freeverb :decay-time 3)
 ;  (move 0 "/usr/ccrma/snd/nando/sounds/kitchen/bowl/small-medium-large-1.snd"
 ;	:paths (list (make-spiral-path :start-angle 0 :turns 2.5)
 ;		     (make-spiral-path :start-angle 180 :turns 3.5))))

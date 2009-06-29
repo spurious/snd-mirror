@@ -2824,15 +2824,80 @@
   (if (not (equal? val lists))
       (begin (display "read/write lists returned ") (display val) (newline))))
 
+(if with-open-input-string-and-friends
+    (let ((str (with-output-to-string
+		 (lambda ()
+		   (with-input-from-string "hiho123"
+		     (lambda ()
+		       (do ((c (read-char) (read-char)))
+			   ((eof-object? c))
+			 (display c))))))))
+      (if (not (string=? str "hiho123"))
+	  (begin (display "with string ports: \"") (display str) (display "\"?") (newline)))))
 
-
-
-
-
+(if with-open-input-string-and-friends
+    (let ((str (with-output-to-string ; this is from the guile-user mailing list, I think -- don't know who wrote it
+		 (lambda ()
+		   (with-input-from-string "A2B5E3426FG0ZYW3210PQ89R."
+		     (lambda ()
+		       (call/cc
+			(lambda (hlt)
+			  (define (nextchar)
+			    (let ((c (read-char)))
+			      (if (and (char? c) 
+				       (char=? c #\space))
+				  (nextchar) 
+				  c)))
+			  
+			  (define inx
+			    (lambda()
+			      (let in1 ()
+				(let ((c (nextchar)))
+				  (if (char-numeric? c)
+				      (let ((r (nextchar)))
+					(let out*n ((n (- (char->integer c) (char->integer #\0))))
+					  (out r)
+					  (if (not (zero? n))
+					      (out*n (- n 1)))))
+				      (out c))
+				  (in1)))))
+			  
+			  (define (move-char c)
+			    (write-char c)
+			    (if (char=? c #\.)
+				(begin (hlt))))
+			  
+			  (define outx
+			    (lambda()
+			      (let out1 ()
+				(let h1 ((n 16))
+				  (move-char (in))
+				  (move-char (in))
+				  (move-char (in))
+				  (if (= n 1)
+				      (begin (out1))
+				      (begin (write-char #\space) (h1 (- n 1))) )))))
+			  
+			  (define (in)
+			    (call/cc (lambda(return)
+				       (set! outx return)
+				       (inx))))
+			  
+			  (define (out c)
+			    (call/cc (lambda(return) 
+				       (set! inx return)
+				       (outx c))))
+			  (outx)))))))))
+      (if (not (string=? str "ABB BEE EEE E44 446 66F GZY W22 220 0PQ 999 999 999 R."))
+	  (format #t "call/cc with-input-from-string str: ~A~%" str))))
+    
+    
+    
+    
 ;;; --------------------------------------------------------------------------------
 ;;; CONTROL OPS
 ;;; --------------------------------------------------------------------------------
-
+    
 (define control-ops (list lambda define quote if begin set! let let* letrec cond case and or do
 			  call/cc eval apply for-each map values call-with-values dynamic-wind
 			  quasiquote))

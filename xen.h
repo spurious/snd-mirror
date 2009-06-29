@@ -11,14 +11,14 @@
  */
 
 #define XEN_MAJOR_VERSION 2
-#define XEN_MINOR_VERSION 27
-#define XEN_VERSION "2.27"
+#define XEN_MINOR_VERSION 28
+#define XEN_VERSION "2.28"
 
 /* HISTORY:
  *
+ *  29-Jun:    some fth changes.
  *  30-Mar:    added a bunch of file-oriented functions for s7 (xen.c).
  *  14-Mar:    removed XEN_LOCAL_GC_PROTECT and XEN_LOCAL_GC_UNPROTECT.
- *  20-Feb:    changed fth.h include to fth/fth.h.
  *  14-Jan-09: s7_xen_initialize.
  *  --------
  *  30-Nov-08: use s7_wrong_number_of_args_error.
@@ -1309,11 +1309,7 @@ XEN xen_rb_add_to_load_path(char *path);
 
 #if HAVE_FORTH
 
-#define LOCAL_SIZEOF_OFF_T SIZEOF_OFF_T
-#undef SIZEOF_OFF_T
-#include <fth/fth.h>
-#undef SIZEOF_OFF_T
-#define SIZEOF_OFF_T LOCAL_SIZEOF_OFF_T
+#include <fth.h>
 
 #if USE_SND
 # undef gettext_noop
