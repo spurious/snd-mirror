@@ -73,7 +73,7 @@
  *        optional multidimensional and applicable vectors
  *
  *   things I ought to change:
- *        length should work on vectors and strings [fill!, copy, reverse! ?]
+ *        length should work on vectors and strings [fill!, copy, reverse! null? ?]
  *        get rid of values and call-with-values
  *
  *
@@ -7641,7 +7641,7 @@ static FILE *search_load_path(s7_scheme *sc, const char *name)
 }
 
 
-static s7_pointer load_file(s7_scheme *sc, FILE *fp)
+static s7_pointer load_file(s7_scheme *sc, FILE *fp, const char *name)
 {
   s7_pointer port;
   long size;
@@ -7661,6 +7661,8 @@ static s7_pointer load_file(s7_scheme *sc, FILE *fp)
       rewind(fp);
       content = (char *)malloc((size + 1) * sizeof(char));
       bytes = fread(content, sizeof(char), size, fp);
+      if (bytes != size)
+	fprintf(stderr, "(load \"%s\") read %ld bytes of an expected %ld?", name, (long)bytes, size);
       content[size] = '\0';
     }
   else
@@ -7703,7 +7705,7 @@ s7_pointer s7_load(s7_scheme *sc, const char *filename)
       free(msg);
     }
 
-  port = load_file(sc, fp);
+  port = load_file(sc, fp, filename);
   port_file_number(port) = remember_file_name(filename);
   push_input_port(sc, port);
   
@@ -7772,7 +7774,7 @@ defaults to the global environment; to load into the current environment instead
       free(msg);
     }
   
-  port = load_file(sc, fp);
+  port = load_file(sc, fp, fname);
   port_file_number(port) = remember_file_name(fname);
   push_input_port(sc, port);
 

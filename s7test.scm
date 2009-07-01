@@ -20,9 +20,9 @@
 ;;;   various mailing lists
 
 
-(define with-bignums (provided? 'gmp))                         ; scheme integer has any number of bits
-(define with-bigfloats (provided? 'gmp))                       ; scheme real has any number of bits
-(define with-bignum-function (defined? 'bignum))               ;   this is a function that turns its string arg into a bignum
+(define with-bignums #t)                                       ; scheme integer has any number of bits
+(define with-bigfloats #t)                                     ; scheme real has any number of bits
+(define with-bignum-function #t)                               ;   this is a function that turns its string arg into a bignum
 (define with-64-bit-ints #t)                                   ; scheme integer has at least 64 bits
 (define with-hyperbolic-functions #t)                          ; sinh et al
 (define with-char-ops-with-more-than-2-args #t)                ; char<? et al restricted to 2 args?
@@ -49,6 +49,7 @@
 (define with-error-checks #t)                                  ; include checks for bad arg types etc
 (define with-large-powers #t)                                  ; for Gauche
 (define with-rationalize #t)                                   ; test rationalize
+(define with-full-fledged-random #t)                           ; random exists and can take any kind of numeric args, also make-random-state
 
 
 (define our-pi 3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117067982148086513282306647093844609550582231725359408128481117450284102701938521105559644622948954930382)
@@ -75,7 +76,7 @@
 	  (set! (mus-rand-seed) (current-time)))
       (define (test-eval expr) (eval expr)))) ; (current-environment)))))
 
-(if #f ; guile
+(if #f ; guile (but you'll need to move these statements to top-level)
     (begin
       (use-modules (ice-9 format))
       (define (test-eval expr) (eval expr (interaction-environment)))
@@ -2837,6 +2838,17 @@
 	  (begin (display "with string ports: \"") (display str) (display "\"?") (newline)))))
 
 (if with-open-input-string-and-friends
+    (let ((str (with-output-to-string
+		 (lambda ()
+		   (with-input-from-string ""
+		     (lambda ()
+		       (do ((c (read-char) (read-char)))
+			   ((eof-object? c))
+			 (display c))))))))
+      (if (not (string=? str ""))
+	  (begin (display "with string ports and null string: \"") (display str) (display "\"?") (newline)))))
+
+(if with-open-input-string-and-friends
     (let ((str (with-output-to-string ; this is from the guile-user mailing list, I think -- don't know who wrote it
 		 (lambda ()
 		   (with-input-from-string "A2B5E3426FG0ZYW3210PQ89R."
@@ -2892,7 +2904,11 @@
       (if (not (string=? str "ABB BEE EEE E44 446 66F GZY W22 220 0PQ 999 999 999 R."))
 	  (format #t "call/cc with-input-from-string str: ~A~%" str))))
     
-    
+(let ((badfile "tmp1.r5rs"))
+  (let ((p (open-output-file "tmp1.r5rs")))
+    (close-output-port p))
+  (load "tmp1.r5rs"))
+
     
     
 ;;; --------------------------------------------------------------------------------
@@ -5616,21 +5632,21 @@
       (format (current-output-port) " output-port: ~D! (this is testing output ports)~%" 2)
 
 
-      ;; for float formats, assume s7 for now -- use pi and most-positive-fixnum
+      ;; for float formats, assume s7 for now -- use our-pi and most-positive-fixnum
       
       (if (and (defined? 'most-positive-fixnum)
 	       (defined? 'pi))
 	  (begin
 
 	    ;;clisp:
-	    ;;[10]> (format nil "~F ~G ~E ~,6F ~,6G ~,6E ~6F~%~6G ~6E ~6,10F ~6,10G ~6,10E" pi pi pi pi pi pi pi pi pi pi pi pi)
+	    ;;[10]> (format nil "~F ~G ~E ~,6F ~,6G ~,6E ~6F~%~6G ~6E ~6,10F ~6,10G ~6,10E" our-pi pi our-pi pi our-pi pi our-pi pi our-pi pi our-pi our-pi)
 	    ;;"3.1415926535897932385 3.1415926535897932385     3.1415926535897932385L+0 3.141593 3.14159     3.141593L+0 3.1416
 	    ;;3.1415926535897932385     3.1L+0 3.1415926536 3.141592654     3.1415926536L+0"
-	    ;;[14]> (defvar tpi (* 1000.0 pi))
+	    ;;[14]> (defvar tpi (* 1000.0 our-pi))
 	    ;;[15]> (format nil "~F ~G ~E ~,6F ~,6G ~,6E ~6F~%~6G ~6E ~6,10F ~6,10G ~6,10E" tpi tpi tpi tpi tpi tpi tpi tpi tpi tpi tpi tpi)
 	    ;;"3141.5928 3141.5928     3.1415927E+3 3141.592800 3141.59     3.141593E+3 3141.6
 	    ;;3141.5928     3.1E+3 3141.5928000000 3141.592800     3.1415927000E+3"
-	    ;;[16]> (setf tpi (* 0.0001 pi))
+	    ;;[16]> (setf tpi (* 0.0001 our-pi))
 	    ;;3.1415926E-4
 	    ;;[17]> (format nil "~F ~G ~E ~,6F ~,6G ~,6E ~6F~%~6G ~6E ~6,10F ~6,10G ~6,10E" tpi tpi tpi tpi tpi tpi tpi tpi tpi tpi tpi tpi)
 	    ;;"0.00031415926 3.14159240000E-4 3.1415924E-4 0.000314 3.141592E-4 3.141592E-4 .00031
@@ -5639,7 +5655,7 @@
 	    ;;sbcl has a different default precision, but otherwise agrees
 	    ;;
 	    ;;format.scm from guile:
-	    ;;:(format #f "~F ~G ~E ~,6F ~,6G ~,6E ~6F~% ~6G ~6E ~6,10F ~6,10G ~6,10E" pi pi pi pi pi pi pi pi pi pi pi pi)
+	    ;;:(format #f "~F ~G ~E ~,6F ~,6G ~,6E ~6F~% ~6G ~6E ~6,10F ~6,10G ~6,10E" our-pi pi our-pi pi our-pi pi our-pi pi our-pi pi our-pi our-pi)
 	    ;;"3.14159265358979 3.14159265358979     3.14159265358979E+0 3.141593 3.14159     3.141593E+0 3.1416
 	    ;;3.14159265358979     3.1E+0 3.1415926536 3.141592654     3.1415926536E+0"
 	    ;;(format #f "~F ~G ~E ~,6F ~,6G ~,6E ~6F~%~6G ~6E ~6,10F ~6,10G ~6,10E" tpi tpi tpi tpi tpi tpi tpi tpi tpi tpi tpi tpi)
@@ -5652,7 +5668,7 @@
 
 	    ))
 
-      ;; (format with 18 digits is enough to tell what s7_Double is via built-in pi)
+      ;; (format with 18 digits is enough to tell what s7_Double is via built-in our-pi)
 
       ))
 
@@ -30719,9 +30735,9 @@
 (num-test (exp (* our-pi (sqrt 163))) 262537412640768743.999999999999)
 (if with-bigfloats
     (begin
-      (num-test (exp (* pi (sqrt (bignum "163")))) 2.625374126407687439999999999992500725895E17)
+      (num-test (exp (* our-pi (sqrt (bignum "163")))) 2.625374126407687439999999999992500725895E17)
       ;; H Cohen p 383
-      (test (< (abs (- (expt (- (exp (* pi (sqrt (bignum "163")))) 744) 1/3) 6.4031999999999999999999999999939031735E5)) 1e-32) #t)
+      (test (< (abs (- (expt (- (exp (* our-pi (sqrt (bignum "163")))) 744) 1/3) 6.4031999999999999999999999999939031735E5)) 1e-32) #t)
       ))
 
 (num-test (+ 1/2 0.5) 1.0)
@@ -30920,7 +30936,7 @@
 (if (or with-bignums with-64-bit-ints) (num-test (+ (expt 415280564497/348671682660 3) (expt 676702467503/348671682660 3)) 9))
 (num-test (expt 25 6) (+ (expt 1 6) (expt 2 6) (expt 3 6) (expt 5 6) (expt 6 6) (expt 7 6) (expt 8 6) (expt 9 6) 
 			 (expt 10 6) (expt 12 6) (expt 13 6) (expt 15 6) (expt 16 6) (expt 17 6) (expt 18 6) (expt 23 6)))
-(num-test (/ (- (sqrt 5) 1) 2) (/ (sin (* pi 1/5)) (sin (* pi 2/5))))
+(num-test (/ (- (sqrt 5) 1) 2) (/ (sin (* our-pi 1/5)) (sin (* our-pi 2/5))))
 (num-test (let* ((N 3502)
 		 (D (* 1/2 (+ 1071 (* 184 (sqrt 34)))))
 		 (E (* 1/2 (+ 1553 (* 266 (sqrt 34)))))
@@ -31475,7 +31491,7 @@
 					     (bigify (car lst)))
 					 (bigify (cdr lst)))
 				   lst))))
-	      (let ((val (sin (/ (* m pi) n)))
+	      (let ((val (sin (/ (* m our-pi) n)))
 		    (expr (bigify (sin-m*pi/n m n))))
 		(if expr 
 		    (let ((err (magnitude (- val (eval expr)))))
@@ -31812,7 +31828,7 @@
 
 ;; -------- random
 
-(if (defined? 'random)
+(if with-full-fledged-random
     (let ((v (lambda (n range chker) ; chi^2 or mus-random
 	       (let ((hits (make-vector 100 0)))
 		 (do ((i 0 (+ 1 i )))
@@ -31852,6 +31868,7 @@
 		(> vr 400))
 	    (format #t "(random 100) not so random? ~A~%" vr)))
 
+      ;; this assumes random can take a fraction
       (let ((vr (v 1000 
 		   1/2
 		   (lambda (val)
@@ -31872,6 +31889,7 @@
 		(> vr 400))
 	    (format #t "(random -10.0) not so random? ~A~%" vr)))
 
+      ;; this assumes random can take a complex arg
       (do ((i 0 (+ i 1)))
 	  ((= i 100))
 	(let ((val (random 1.0+1.0i)))
@@ -37577,7 +37595,7 @@ expt error > 1e-6 around 2^-46.506993328423
 					(lambda (n1 n2 v)
 
 					  (let ((a1 (if (zero? n1) 0 (exp (* n2 (log n1)))))
-						(a2 (if (zero? n1) 0 (exp (* n2 (+ (* 2 pi 0+i) (log n1)))))))
+						(a2 (if (zero? n1) 0 (exp (* n2 (+ (* 2 our-pi 0+i) (log n1)))))))
 					    (if (and (> (/ (distance a1 v) (magnitude v)) err-max)
 						     (> (/ (distance a2 v) (magnitude v)) err-max))
 						(format #t "[expt ~A ~A -> ~A, ~A -> ~A]~%" n1 n2 v a1 (distance a1 v)))
