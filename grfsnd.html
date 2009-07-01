@@ -898,6 +898,7 @@ Depending on how Snd is configured, any of the following symbols may be "provide
 <tr><td bgcolor="#f2f4ff">snd-guile</td><td bgcolor="#f2f4ff">Guile as extension language (--with-guile, usually the default if guile can be found)</td></tr>
 <tr><td>snd-ruby</td><td>Ruby as extension language (--with-ruby)</td></tr>
 <tr><td bgcolor="#f2f4ff">snd-forth</td><td bgcolor="#f2f4ff">Forth as extension language (--with-forth)</td></tr>
+<tr><td>snd-s7</td><td>S7 as extension language (--with-s7)</td></tr>
 <tr><td bgcolor="#f2f4ff">snd-debug</td><td bgcolor="#f2f4ff">internal debugging hooks included (--enable-snd-debug)</td></tr>
 <tr><td>snd</td><td>It's Snd, ferchrissake... (always included)</td></tr>
 <tr><td bgcolor="#f2f4ff">xg</td><td bgcolor="#f2f4ff">Gtk module (xg.c) included (--with-static-xg, or loaded dynamically)</td></tr>
@@ -908,7 +909,6 @@ Depending on how Snd is configured, any of the following symbols may be "provide
 <tr><td>gl2ps</td><td>gl2ps is included (--with-gl2ps)</td></tr>
 <tr><td bgcolor="#f2f4ff">cairo</td><td bgcolor="#f2f4ff">cairo used for graphics (--with-cairo)</td></tr>
 <tr><td>snd-threads</td><td>multithreading support is included (--enable-threads)</td></tr>
-<tr><td bgcolor="#f2f4ff">snd-s7</td><td bgcolor="#f2f4ff">S7 as extension language (--with-s7)</td></tr>
 </table>
 </td></tr>
 </table>
@@ -1953,7 +1953,7 @@ reordered in some cases to place the optional values after the new value.  That 
 Hooks in Ruby (which have little or nothing to do with Ruby's "hookable variables")
 are just procedures or nil, not lists of procedures as in Scheme.
 Here's a Ruby version of the init file given
-above:
+above (named ~/.snd_ruby):
 </p>
 
 <table border=0 cellpadding=5 hspace=20><tr><td><pre>

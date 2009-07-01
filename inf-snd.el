@@ -1,27 +1,28 @@
 ;;; inf-snd.el -- Inferior Snd Process (Ruby/Scheme/Forth)
 
-;; Copyright (C) 2002--2007 Michael Scholz
-
-;; Author: Michael Scholz <scholz-micha@gmx.de>
-;; Created: Wed Nov 27 20:52:54 CET 2002
-;; Changed: Sun Mar 25 01:11:47 CET 2007
-;; Keywords: processes, snd, ruby, scheme, forth
-
-;; This file is not part of GNU Emacs.
-
-;; This program is free software; you can redistribute it and/or modify
-;; it under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 2 of the License, or
-;; (at your option) any later version.
-
-;; This program is distributed in the hope that it will be useful,
-;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;; GNU General Public License for more details.
-
-;; You should have received a copy of the GNU General Public License
-;; along with this program; if not, write to the Free Software
-;; Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+;; Copyright (c) 2002--2009 Michael Scholz <mike@fth-devel.net>
+;; All rights reserved.
+;; 
+;; Redistribution and use in source and binary forms, with or without
+;; modification, are permitted provided that the following conditions
+;; are met:
+;; 1. Redistributions of source code must retain the above copyright
+;;    notice, this list of conditions and the following disclaimer.
+;; 2. Redistributions in binary form must reproduce the above copyright
+;;    notice, this list of conditions and the following disclaimer in the
+;;    documentation and/or other materials provided with the distribution.
+;; 
+;; THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+;; ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+;; IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+;; ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+;; FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+;; DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+;; OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+;; HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+;; LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+;; OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+;; SUCH DAMAGE.
 
 ;;; Commentary:
 
@@ -31,7 +32,7 @@
 ;; (inf-snd-forth-mode), furthermore a Snd-Ruby mode (snd-ruby-mode),
 ;; a Snd-Scheme mode (snd-scheme-mode) and a Snd-Forth mode
 ;; (snd-forth-mode) for editing source files.  It is tested with
-;; Snd-Ruby, Snd-Scheme and Snd-Forth 8.4 and GNU Emacs 22.0.50.
+;; Snd-Ruby, Snd-Scheme and Snd-Forth 10.3 and GNU Emacs 22.3.1.
 
 ;; Since this mode is built on top of the general command-interpreter-
 ;; in-a-buffer mode (comint-mode), it shares a common base
@@ -56,9 +57,9 @@
 ;; Variables of the inferior Snd-process-modes
 ;; inf-snd-ruby|scheme|forth-mode (defaults):
 ;;
+;; inf-snd-scheme-program-name "snd-s7"      Snd-Scheme program name
 ;; inf-snd-ruby-program-name   "snd-ruby"    Snd-Ruby program name
-;; inf-snd-scheme-program-name "snd-scheme"  Snd-Scheme program name
-;; inf-snd-forth-program-name  "snd-forth"   Snd-Forth program name
+;; inf-snd-forth-program-name  "snd-fth"     Snd-Forth program name
 ;; inf-snd-working-directory   "~/"          where Ruby, Scheme or Forth scripts reside
 ;; inf-snd-ruby-mode-hook      nil           to customize inf-snd-ruby-mode
 ;; inf-snd-scheme-mode-hook    nil           to customize inf-snd-scheme-mode
@@ -72,8 +73,8 @@
 ;; Variables of the editing modes snd-ruby|scheme|forth-mode
 ;; (defaults):
 ;;
-;; snd-ruby-mode-hook          nil     	     to customize snd-ruby-mode
 ;; snd-scheme-mode-hook        nil     	     to customize snd-scheme-mode
+;; snd-ruby-mode-hook          nil     	     to customize snd-ruby-mode
 ;; snd-forth-mode-hook         nil     	     to customize snd-forth-mode
 
 ;; You can start inf-snd-ruby-mode interactive either with prefix-key
@@ -84,16 +85,16 @@
 
 ;; Example for your .emacs file:
 ;;
-;; (autoload 'run-snd-ruby     "inf-snd" "Start inferior Snd-Ruby process" t)
 ;; (autoload 'run-snd-scheme   "inf-snd" "Start inferior Snd-Scheme process" t)
+;; (autoload 'run-snd-ruby     "inf-snd" "Start inferior Snd-Ruby process" t)
 ;; (autoload 'run-snd-forth    "inf-snd" "Start inferior Snd-Forth process" t)
-;; (autoload 'snd-ruby-mode    "inf-snd" "Load snd-ruby-mode." t)
 ;; (autoload 'snd-scheme-mode  "inf-snd" "Load snd-scheme-mode." t)
+;; (autoload 'snd-ruby-mode    "inf-snd" "Load snd-ruby-mode." t)
 ;; (autoload 'snd-forth-mode   "inf-snd" "Load snd-forth-mode." t)
 ;;
 ;; ;; These variables should be set to your needs!
+;; (setq inf-snd-scheme-program-name "snd-s7 -notehook")
 ;; (setq inf-snd-ruby-program-name "snd-ruby -notebook")
-;; (setq inf-snd-scheme-program-name "snd-guile -notehook")
 ;; (setq inf-snd-forth-program-name "snd-forth")
 ;; (setq inf-snd-working-directory "~/Snd/")
 ;; (setq inf-snd-index-path "~/Snd/snd/")
@@ -195,7 +196,7 @@
 ;;; News:
 ;;
 ;; All variables and functions containing the string `guile' are
-;; renamed to `scheme'.  It exists aliases for the following functions
+;; renamed to `scheme'.  There are aliases for the following functions
 ;; and variables:
 ;;
 ;; new name                     alias for backward compatibility
@@ -218,7 +219,7 @@
 (require 'cmuscheme)
 (require 'forth-mode "gforth")
 
-(defconst inf-snd-version "25-Mar-2007"
+(defconst inf-snd-version "30-June-2009"
   "Version date of inf-snd.el.")
 
 ;; snd-ruby
@@ -275,7 +276,7 @@ inferior Snd-Scheme process.")
   "*User hook variable of `inf-snd-scheme-mode'.
 Will be called before finishing inferior Snd-Scheme process.")
 
-(defvar inf-snd-scheme-program-name "snd-guile"
+(defvar inf-snd-scheme-program-name "snd-s7"
   "*User variable to set Snd-Scheme-program name and optional args.")
 
 (if (fboundp 'defvaralias)
@@ -485,7 +486,7 @@ non-nil, it won't translate.  See `inf-snd-load' for the latter case."
   (and (not no-strip-p)
        (eq 'ruby inf-snd-kind)
        (while (string-match "-" str)
-	 (setq str (replace-match "_" t nil str))))
+	 (setq str (replace-match "_" t t str))))
   (if (eq 'scheme inf-snd-kind)
       (setq str (concat "(" str ")")))
   (with-current-buffer (inf-snd-proc-buffer)
@@ -553,7 +554,7 @@ snd-xref.c."
       (unless (string= str "")
 	(unless html-help
 	  (while (string-match " " str)
-	    (setq str (replace-match "" t nil str))))
+	    (setq str (replace-match "" t t str))))
 	(let ((inf-str (if (and html-help
 				(not (eq 'forth inf-snd-kind)))
 			   (format "(html \"%s\")" str)
@@ -641,21 +642,19 @@ Prepends matching lines with ruby's comment sign and space `# '.
 Showing a prompt is forced by run_emacs_eval_hook() in
 snd/examp.rb.  This function could be on the so called abnormal
 hook with one arg `comint-preoutput-filter-functions'."
-  (if (string-match "\\(^nil\n\\)" string)
-      (setq string (replace-match "" t nil string 1)))
   ;; Drop trailing '\n' ("...snd(0)> \n" => "...snd(0)> ").
   (if (string-match inf-snd-prompt string)
-      (setq string (substring string 0 -1)))
+      (setq string (substring string 0 (match-end 0))))
   (while (string-match inf-snd-to-comment-regexp string)
     (setq string (replace-match "# \\1" t nil string 1)))
   string)
   
 (defun inf-snd-comint-put-prompt-forth (string)
-  "If STRING contains a trailing nil, replace it by `inf-snd-prompt'.
+  "If STRING contains one or more undef strings, replace them with `inf-snd-prompt'.
 This function could be on the so called abnormal hook with one
 arg `comint-preoutput-filter-functions'."
-  (if (string-match "\\(\\(nil\\|#<undef>\\|#<nil>\\)\n$\\)" string)
-      (replace-match inf-snd-prompt t nil string 1)
+  (if (string-match "\\s-?\\(\\(undef\\s-\\)+\\)$" string)
+      (replace-match inf-snd-prompt t t string 1)
     string))
 
 (defun inf-snd-comint-put-prompt-scheme (string)
@@ -880,7 +879,7 @@ called, one will be asked for program name to run."
       (setq inf-snd-forth-program-name cmd)
       (set-buffer (apply 'make-comint inf-snd-forth-buffer-name (car cmdlist) nil (cdr cmdlist))))
     (inf-snd-forth-mode)
-    (snd-send-invisible "nil")))
+    (snd-send-invisible "undef")))	;for inf-snd-comint-put-prompt-forth
 
 (defun run-snd-scheme (cmd)
   "Start inferior Snd-Scheme process.

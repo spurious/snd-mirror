@@ -3075,7 +3075,7 @@ static num num_add(num a, num b)
 	d2 = num_to_denominator(b);
 	n2 = num_to_numerator(b);
 	if (d1 == d2)                                     /* the easy case -- if overflow here, it matches the int case */
-	  return(make_ratio(n1 + n2, d1));      /* d1 can't be zero */
+	  return(make_ratio(n1 + n2, d1));                /* d1 can't be zero */
 
 #if (!WITH_GMP)
 	if ((d1 > s7_int_max) || (d2 > s7_int_max) ||     /* before counting bits, check that overflow is possible */
@@ -7662,6 +7662,10 @@ static s7_pointer load_file(s7_scheme *sc, FILE *fp)
       content = (char *)malloc((size + 1) * sizeof(char));
       bytes = fread(content, sizeof(char), size, fp);
       content[size] = '\0';
+    }
+  else
+    {
+      content = (char *)calloc(1, sizeof(char)); /* empty file in load still accesses the string (for 0=eof) */
     }
   fclose(fp);
 
