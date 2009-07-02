@@ -3484,7 +3484,7 @@
 (test (cond ((+ 1 2))) 3)
 (test (cond ((zero? 1) 123) ((= 1 1) 321)) 321)
 (test (cond ('() 1)) 1)
-(test (cond (1 2) '()) 2)
+;(test (cond (1 2) '()) 2)
 (test (cond (1 2 3)) 3)
 (test (cond ((= 1 2) 3) ((+ 3 4))) 7)
 (test (cond ((= 1 1) (abs -1) (+ 2 3) (* 10 2)) (else 123)) 20)
@@ -5630,46 +5630,8 @@
 
       (format #t "format #t: ~D" 1)
       (format (current-output-port) " output-port: ~D! (this is testing output ports)~%" 2)
-
-
       ;; for float formats, assume s7 for now -- use our-pi and most-positive-fixnum
-      
-      (if (and (defined? 'most-positive-fixnum)
-	       (defined? 'pi))
-	  (begin
-
-	    ;;clisp:
-	    ;;[10]> (format nil "~F ~G ~E ~,6F ~,6G ~,6E ~6F~%~6G ~6E ~6,10F ~6,10G ~6,10E" our-pi pi our-pi pi our-pi pi our-pi pi our-pi pi our-pi our-pi)
-	    ;;"3.1415926535897932385 3.1415926535897932385     3.1415926535897932385L+0 3.141593 3.14159     3.141593L+0 3.1416
-	    ;;3.1415926535897932385     3.1L+0 3.1415926536 3.141592654     3.1415926536L+0"
-	    ;;[14]> (defvar tpi (* 1000.0 our-pi))
-	    ;;[15]> (format nil "~F ~G ~E ~,6F ~,6G ~,6E ~6F~%~6G ~6E ~6,10F ~6,10G ~6,10E" tpi tpi tpi tpi tpi tpi tpi tpi tpi tpi tpi tpi)
-	    ;;"3141.5928 3141.5928     3.1415927E+3 3141.592800 3141.59     3.141593E+3 3141.6
-	    ;;3141.5928     3.1E+3 3141.5928000000 3141.592800     3.1415927000E+3"
-	    ;;[16]> (setf tpi (* 0.0001 our-pi))
-	    ;;3.1415926E-4
-	    ;;[17]> (format nil "~F ~G ~E ~,6F ~,6G ~,6E ~6F~%~6G ~6E ~6,10F ~6,10G ~6,10E" tpi tpi tpi tpi tpi tpi tpi tpi tpi tpi tpi tpi)
-	    ;;"0.00031415926 3.14159240000E-4 3.1415924E-4 0.000314 3.141592E-4 3.141592E-4 .00031
-	    ;;3.14159240000E-4 3.1E-4 .0003141593 3.1415924000E-4 3.1415924000E-4"
-	    ;;
-	    ;;sbcl has a different default precision, but otherwise agrees
-	    ;;
-	    ;;format.scm from guile:
-	    ;;:(format #f "~F ~G ~E ~,6F ~,6G ~,6E ~6F~% ~6G ~6E ~6,10F ~6,10G ~6,10E" our-pi pi our-pi pi our-pi pi our-pi pi our-pi pi our-pi our-pi)
-	    ;;"3.14159265358979 3.14159265358979     3.14159265358979E+0 3.141593 3.14159     3.141593E+0 3.1416
-	    ;;3.14159265358979     3.1E+0 3.1415926536 3.141592654     3.1415926536E+0"
-	    ;;(format #f "~F ~G ~E ~,6F ~,6G ~,6E ~6F~%~6G ~6E ~6,10F ~6,10G ~6,10E" tpi tpi tpi tpi tpi tpi tpi tpi tpi tpi tpi tpi)
-	    ;;"3141.59265358979 3141.59265358979     3.14159265358979E+3 3141.592654 3141.59     3.141593E+3 3141.6
-	    ;;3141.59265358979     3.1E+3 3141.5926535898 3141.592654     3.1415926536E+3"
-	    ;;:(format #f"~F ~G ~E ~,6F ~,6G ~,6E ~6F~%~6G ~6E ~6,10F ~6,10G ~6,10E" tpi tpi tpi tpi tpi tpi tpi tpi tpi tpi tpi tpi)
-	    ;;"0.000314159265358979 3.14159265358979E-4 3.14159265358979E-4 0.000314 3.141593E-4 3.141593E-4 0.0003
-	    ;;3.1E-4 3.1E-4 .0003141593 3.1415926536E-4 3.1415926536E-4"
-	    ;;
-
-	    ))
-
-      ;; (format with 18 digits is enough to tell what s7_Double is via built-in our-pi)
-
+      ;; (format with 18 digits is enough to tell what s7_Double is via built-in pi)
       ))
 
 

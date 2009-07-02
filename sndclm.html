@@ -202,7 +202,7 @@ note lists and instruments are described in <a href="sndscm.html">sndscm.html</a
 
 <table border=0 hspace=100 vspace=20><tr><td>
 <p><small>
-I'm not sure how to motivate this set of functions.  If you try to make
+If you try to make
 new sounds, or recreate and alter existing sounds, you'll find that there are
 some functions that seem to pop up everywhere.  The basic
 building block of sound is the sinusoid, so we have things like oscil and polywave.
@@ -210,7 +210,6 @@ Another basic thing is noise, so we have rand and rand-interp.
 Sounds get louder and softer, or go up and down in pitch, so we have envelopes (env).
 We need a way to get at them (in-any, readin), and play them (out-any, locsig).
 We need tons of reverb (delay, convolve).
-I love this stuff.
 </small></p></td></tr></table>
 
 <p>Start Snd, open the listener (choose "Show listener" in the View menu), and:
@@ -1077,7 +1076,7 @@ at 440 Hz when the srate is 1000, 4000, and 16000:
       duration      ; duration in seconds
       (offset 0.0)  ; value added to every y value
       base          ; type of connecting line between break-points
-      end           ; end sample number (obsolete -- use length)
+      end           ; end sample number (obsolete, use length)
       length        ; duration in samples
 
   <a class=def name="env">env</a> e
@@ -3947,7 +3946,7 @@ kosine95
 
 
 <p>nsin produces a sum of equal amplitude sines.  It is very similar (good and bad) to <a href="#ncos">ncos</a>.
-For n greater than 10 or so, its peak amplitude occurs at approximately 3pi/4n, and is about .7245*n -- 8n*(sin^2(3pi/8))/3pi.
+For n greater than 10 or so, its peak amplitude occurs at approximately 3pi/4n, and is about .7245*n (that is, 8n*(sin^2(3pi/8))/3pi).
 The nsin generator scales its output to be between -1 and 1 for any n.  We can use nxysin to try any initial-phase in a
 sum of equal sinusoids.  The peak amp in this case varys sinusoidally from a sum-of-sines n * 0.7245 to a sum-of-cosines n * 1.0;
 the peak amp is nsin-max(n) + abs(sin(initial-phase))*(1 - nsin-max(n)).
