@@ -2508,6 +2508,8 @@ static bool c_rationalize(s7_Double ux, s7_Double error, s7_Int *numer, s7_Int *
   s7_Int old_p1, old_q1;
   s7_Double old_e0, old_e1, old_e0p;
 
+  if (error < 0.0) error = -error;
+
   x0 = ux - error;
   x1 = ux + error;
   i = (s7_Int)ceil(x0);
@@ -18124,6 +18126,7 @@ static s7_pointer big_rationalize(s7_scheme *sc, s7_pointer args)
 	  if (is_object(p1))
 	    mpfr_init_set(error, S7_BIG_REAL(promote_number(sc, T_BIG_REAL, p1)), GMP_RNDN);
 	  else mpfr_init_set_d(error, s7_number_to_real(p1), GMP_RNDN);
+	  mpfr_abs(error, error, GMP_RNDN);
 	}
       else mpfr_init_set_d(error, default_rationalize_error, GMP_RNDN);
 

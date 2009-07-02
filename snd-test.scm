@@ -16468,7 +16468,8 @@ EDITS: 2
     ;; one (20 1.0) is off by a lot but the val is 1e22 
     
     ;; numerics stuff
-    (if (not (provided? 'snd-s7)) ; this requires bignums
+    (if (or (not (provided? 'snd-s7)) ; this requires bignums
+	    (provided? 'gmp))
 	(let ((ns (vector 1 6 6 6 15 15 15 15 15 15 15 25 25 25 25 25 25 25 25 25))
 	      (ks (vector 0 1 3 5 1 3 5 7 9 11 13 1 3 5 7 9 11 13 15 17))
 	      (vals (vector 1 6 20 6 15 455 3003 6435 5005 1365 105 25 2300 53130 480700 2042975 4457400 5200300 3268760 1081575)))
@@ -64531,7 +64532,7 @@ EDITS: 1
       (do ((i 0 (+ i 1)))
 	  ((= i tests))
 	(load "s7test.scm")
-	;(if all-args (s7-test-at-random))
+	(if all-args (s7-test-at-random))
 	(gc)))
 
 

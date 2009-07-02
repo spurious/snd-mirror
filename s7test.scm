@@ -13988,6 +13988,11 @@
       (num-test (rationalize 1.0000001 0.00000001) 9090911/9090910)
       (num-test (rationalize 0.000000015 0.000000001) 1/62500001)
 
+      (num-test (rationalize -1 -1) 0) ;; spec says "differs by no more than, but that seems to imply a comparison
+                                       ;; on either side, so a negative error doesn't change the result??
+      (num-test (rationalize 1/4 -1/6) 1/3)
+      (num-test (rationalize -3/10 -1/10) -1/3)
+      (num-test (rationalize (exact->inexact 1/3) (exact->inexact -1/4)) 1/2)
       
       (if with-bigfloats
 	  (begin
@@ -39402,7 +39407,7 @@ expt error > 1e-6 around 2^-46.506993328423
 			 (lambda args #f)))
 		argls))
 	     argls))
-	  args))
+	  argls))
        ops)
       
 					;(display "four args") (newline)
@@ -39427,7 +39432,3 @@ expt error > 1e-6 around 2^-46.506993328423
 	  argls))
        ops)
       )))
-  
-  
-  
-  

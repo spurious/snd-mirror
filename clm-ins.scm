@@ -2910,7 +2910,8 @@ mjkoskin@sci.fi
 ;;; $Revision: 1.1 $
 ;;; $Date: 2005/10/16 22:15:44 $
 ;;;
-;;; clm-4 and scheme 12-May-08 bil
+;;; clm-4 and scheme May-08 bil
+;;; split out cases to optimize May-09 bil
 
 (definstrument (expandn time duration filename amplitude
 			:key (expand 1.0)
