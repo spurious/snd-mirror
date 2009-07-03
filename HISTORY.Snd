@@ -1,5 +1,6 @@
 Snd change log
 
+ 2-Jul:     default audio in Linux is now ALSA.
  28-May:    Snd 10.6.
  17-Apr:    Snd 10.5.
  26-Feb:    Snd 10.4.

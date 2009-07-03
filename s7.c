@@ -7663,7 +7663,7 @@ static s7_pointer load_file(s7_scheme *sc, FILE *fp, const char *name)
       rewind(fp);
       content = (char *)malloc((size + 1) * sizeof(char));
       bytes = fread(content, sizeof(char), size, fp);
-      if (bytes != size)
+      if (bytes != (size_t)size)
 	fprintf(stderr, "(load \"%s\") read %ld bytes of an expected %ld?", name, (long)bytes, size);
       content[size] = '\0';
     }
@@ -10962,7 +10962,7 @@ static char *s7_hashed_integer_name(s7_Int key, char *intbuf) /* not const here 
 static char *s7_hashed_real_name(s7_Double key, char *intbuf)
 {
   /* this is actually not safe due to the challenges faced by %f */
-  snprintf(intbuf, HASHED_INTEGER_BUFFER_SIZE, "\b%f\b", key);
+  snprintf(intbuf, HASHED_INTEGER_BUFFER_SIZE, "\b%.20f\b", key); /* default precision is not enough */
   return(intbuf);
 }
 

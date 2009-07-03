@@ -3535,43 +3535,21 @@ total requested buffer size is %d frames, minimum allowed is %d, maximum is %d",
   {
     unsigned int new_rate;
     new_rate = srate;
+    /* r is unsigned int so it can't be negative */
     r = snd_pcm_hw_params_set_rate_near(handle, hw_params, &new_rate, 0);
-    if (r < 0) 
+    if ((new_rate != (unsigned int)srate) && (!alsa_squelch_warning))
       {
-	snd_pcm_close(handle);
-	handles[alsa_stream] = NULL;
-	alsa_dump_configuration(alsa_name, hw_params, sw_params);
-	return(alsa_mus_error(MUS_AUDIO_CONFIGURATION_NOT_AVAILABLE, 
-			      mus_format("%s: %s: cannot set sampling rate near %d", 
-					 snd_strerror(r), alsa_name, srate)));
-      } 
-    else 
-      {
-	if ((new_rate != srate) && (!alsa_squelch_warning))
-	  {
-	    mus_print("%s: could not set rate to exactly %d, set to %d instead",
-		      alsa_name, srate, new_rate);
-	  }
+	mus_print("%s: could not set rate to exactly %d, set to %d instead",
+		  alsa_name, srate, new_rate);
       }
   }
 #else
   r = snd_pcm_hw_params_set_rate_near(handle, hw_params, srate, 0);
-  if (r < 0) 
+  /* r is unsigned int so it can't be negative */
+  if (r != srate) 
     {
-      snd_pcm_close(handle);
-      handles[alsa_stream] = NULL;
-      alsa_dump_configuration(alsa_name, hw_params, sw_params);
-      return(alsa_mus_error(MUS_AUDIO_CONFIGURATION_NOT_AVAILABLE, 
-			    mus_format("%s: %s: cannot set sampling rate near %d", 
-				       snd_strerror(r), alsa_name, srate)));
-    } 
-  else 
-    {
-      if (r != srate) 
-	{
-	  mus_print("%s: could not set rate to exactly %d, set to %d instead",
-		    alsa_name, srate, r);
-	}
+      mus_print("%s: could not set rate to exactly %d, set to %d instead",
+		alsa_name, srate, r);
     }
 #endif
 
@@ -3844,7 +3822,7 @@ static int alsa_mus_audio_mixer_read(int ur_dev, int field, int chan, float *val
 	      int max_channels = snd_pcm_hw_params_get_channels_max(alsa_hw_params[alsa_stream]);
 #endif
 	      if ((alsa_stream == SND_PCM_STREAM_CAPTURE) &&
-		  (max_channels > alsa_max_capture_channels))
+		  (max_channels > (unsigned int)alsa_max_capture_channels))
 		{
 		  /* limit number of capture channels to a reasonable maximum, if the user
 		     specifies a plug pcm as the capture pcm then the returned number of channels

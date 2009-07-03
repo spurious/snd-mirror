@@ -3,19 +3,20 @@
 
 /* macros for extension language support 
  *
- * Guile:     covers 1.3.4 to present (1.8.0)
- * Ruby:      covers 1.6 to present (1.9)
- * Forth:     covers 1.0
+ * Guile:     covers 1.3.4 to present (1.9.0)
+ * Ruby:      covers 1.6 to present (1.9, but avoid the latter!)
+ * Forth:     covers 1.0 to present
  * S7:        all versions
  * None:      all versions
  */
 
 #define XEN_MAJOR_VERSION 2
-#define XEN_MINOR_VERSION 28
-#define XEN_VERSION "2.28"
+#define XEN_MINOR_VERSION 29
+#define XEN_VERSION "2.29"
 
 /* HISTORY:
  *
+ *  6-Jul:     cleaned up XEN_WRAP_C_POINTER et al (Mike Scholz).
  *  29-Jun:    some fth changes.
  *  30-Mar:    added a bunch of file-oriented functions for s7 (xen.c).
  *  14-Mar:    removed XEN_LOCAL_GC_PROTECT and XEN_LOCAL_GC_UNPROTECT.
@@ -135,6 +136,7 @@
 #endif
 
 
+
 /* ------------------------------ GUILE ------------------------------ */
 
 #if HAVE_GUILE
@@ -242,6 +244,10 @@
   #define XEN_OFF_T_P(Arg)           (XEN_NOT_FALSE_P(scm_integer_p(Arg)))
 #endif
 
+#define XEN_ULONG_LONG_P(Arg)        XEN_ULONG_P(Arg) 
+#define XEN_TO_C_ULONG_LONG(Arg)     XEN_TO_C_OFF_T(a) 
+#define C_TO_XEN_ULONG_LONG(Arg)     C_TO_XEN_OFF_T((off_t)a) 
+
 #if HAVE_SCM_NAN_P
   #define XEN_NAN_P(Arg)             XEN_TRUE_P(scm_nan_p(Arg))
   #define XEN_INF_P(Arg)             XEN_TRUE_P(scm_inf_p(Arg))
@@ -257,212 +263,212 @@
 
 #if HAVE_COMPLEX_TRIG
   #if HAVE_SCM_C_MAKE_RECTANGULAR
-    #define XEN_HAVE_COMPLEX_NUMBERS 1
-    #define XEN_COMPLEX_P(Arg)       scm_is_complex(Arg)
+    #define XEN_HAVE_COMPLEX_NUMBERS          1
+    #define XEN_COMPLEX_P(Arg)                scm_is_complex(Arg)
     #if defined(__GNUC__) && (!(defined(__cplusplus)))
-      #define XEN_TO_C_COMPLEX(a)    ({ XEN _xen_h_23_ = a; (scm_c_real_part(_xen_h_23_) + scm_c_imag_part(_xen_h_23_) * _Complex_I); })    
-      #define C_TO_XEN_COMPLEX(a)    ({ complex _xen_h_24_ = a; scm_c_make_rectangular(creal(_xen_h_24_), cimag(_xen_h_24_)); })
+      #define XEN_TO_C_COMPLEX(a)             ({ XEN _xen_h_23_ = a; (scm_c_real_part(_xen_h_23_) + scm_c_imag_part(_xen_h_23_) * _Complex_I); })    
+      #define C_TO_XEN_COMPLEX(a)             ({ complex _xen_h_24_ = a; scm_c_make_rectangular(creal(_xen_h_24_), cimag(_xen_h_24_)); })
     #else
-      #define XEN_TO_C_COMPLEX(a)    (scm_c_real_part(a) + scm_c_imag_part(a) * _Complex_I)
-      #define C_TO_XEN_COMPLEX(a)    scm_c_make_rectangular(creal(a), cimag(a))
+      #define XEN_TO_C_COMPLEX(a)             (scm_c_real_part(a) + scm_c_imag_part(a) * _Complex_I)
+      #define C_TO_XEN_COMPLEX(a)             scm_c_make_rectangular(creal(a), cimag(a))
     #endif
   #else
     #if HAVE_SCM_MAKE_COMPLEX
-      #define XEN_HAVE_COMPLEX_NUMBERS 1
-      #define XEN_COMPLEX_P(Arg)       (XEN_NOT_FALSE_P(scm_number_p(Arg)))
-      #define XEN_TO_C_COMPLEX(a)      XEN_TO_C_DOUBLE(scm_real_part(a)) + (XEN_TO_C_DOUBLE(scm_imag_part(a)) * _Complex_I)
-      #define C_TO_XEN_COMPLEX(a)      scm_make_complex(creal(a), cimag(a))
+      #define XEN_HAVE_COMPLEX_NUMBERS        1
+      #define XEN_COMPLEX_P(Arg)              (XEN_NOT_FALSE_P(scm_number_p(Arg)))
+      #define XEN_TO_C_COMPLEX(a)             XEN_TO_C_DOUBLE(scm_real_part(a)) + (XEN_TO_C_DOUBLE(scm_imag_part(a)) * _Complex_I)
+      #define C_TO_XEN_COMPLEX(a)             scm_make_complex(creal(a), cimag(a))
     #endif
   #endif
 #endif
 
 #if HAVE_SCM_MAKE_RATIO || HAVE_SCM_C_MAKE_RECTANGULAR
-  #define XEN_HAVE_RATIOS                 1
-  #define XEN_NUMERATOR(Arg)          XEN_TO_C_OFF_T(scm_numerator(Arg))
-  #define XEN_DENOMINATOR(Arg)        XEN_TO_C_OFF_T(scm_denominator(Arg))
-  #define XEN_RATIONALIZE(Arg1, Arg2) scm_rationalize(scm_inexact_to_exact(Arg1), scm_inexact_to_exact(Arg2))
-  #define XEN_RATIO_P(Arg)            SCM_FRACTIONP(Arg)
+  #define XEN_HAVE_RATIOS                     1
+  #define XEN_NUMERATOR(Arg)                  XEN_TO_C_OFF_T(scm_numerator(Arg))
+  #define XEN_DENOMINATOR(Arg)                XEN_TO_C_OFF_T(scm_denominator(Arg))
+  #define XEN_RATIONALIZE(Arg1, Arg2)         scm_rationalize(scm_inexact_to_exact(Arg1), scm_inexact_to_exact(Arg2))
+  #define XEN_RATIO_P(Arg)                    SCM_FRACTIONP(Arg)
   #if HAVE_SCM_C_MAKE_RECTANGULAR
-    #define XEN_MAKE_RATIO(Num, Den)  scm_divide(Num, Den)
+    #define XEN_MAKE_RATIO(Num, Den)          scm_divide(Num, Den)
   #else
-    #define XEN_MAKE_RATIO(Num, Den)  scm_make_ratio(Num, Den)
+    #define XEN_MAKE_RATIO(Num, Den)          scm_make_ratio(Num, Den)
   #endif
 #endif
 
 /* ---- lists ---- */
-#define XEN_LIST_P(Arg)               (scm_ilength(Arg) >= 0)
-#define XEN_LIST_P_WITH_LENGTH(Arg, Len) ((Len = ((int)scm_ilength(Arg))) >= 0)
-#define XEN_LIST_LENGTH(Arg)          ((int)(scm_ilength(Arg)))
-#define XEN_LIST_REF(Lst, Num)        scm_list_ref(Lst, C_TO_XEN_INT(Num))
-#define XEN_LIST_SET(Lst, Loc, Val)   scm_list_set_x(Lst, C_TO_XEN_INT(Loc), Val)
-#define XEN_LIST_REVERSE(Lst)         scm_reverse(Lst)
+#define XEN_LIST_P(Arg)                       (scm_ilength(Arg) >= 0)
+#define XEN_LIST_P_WITH_LENGTH(Arg, Len)      ((Len = ((int)scm_ilength(Arg))) >= 0)
+#define XEN_LIST_LENGTH(Arg)                  ((int)(scm_ilength(Arg)))
+#define XEN_LIST_REF(Lst, Num)                scm_list_ref(Lst, C_TO_XEN_INT(Num))
+#define XEN_LIST_SET(Lst, Loc, Val)           scm_list_set_x(Lst, C_TO_XEN_INT(Loc), Val)
+#define XEN_LIST_REVERSE(Lst)                 scm_reverse(Lst)
 #if HAVE_SCM_LIST_N
-  #define XEN_LIST_1(a)                   scm_list_1(a)
-  #define XEN_LIST_2(a, b)                scm_list_2(a, b)
-  #define XEN_LIST_3(a, b, c)             scm_list_3(a, b, c)
-  #define XEN_LIST_4(a, b, c, d)          scm_list_4(a, b, c, d)
-  #define XEN_LIST_5(a, b, c, d, e)       scm_list_5(a, b, c, d, e)
-  #define XEN_LIST_6(a, b, c, d, e, f)    scm_list_n(a, b, c, d, e, f, XEN_UNDEFINED)
-  #define XEN_LIST_7(a, b, c, d, e, f, g) scm_list_n(a, b, c, d, e, f, g, XEN_UNDEFINED)
-  #define XEN_LIST_8(a, b, c, d, e, f, g, h) scm_list_n(a, b, c, d, e, f, g, h, XEN_UNDEFINED)
+  #define XEN_LIST_1(a)                       scm_list_1(a)
+  #define XEN_LIST_2(a, b)                    scm_list_2(a, b)
+  #define XEN_LIST_3(a, b, c)                 scm_list_3(a, b, c)
+  #define XEN_LIST_4(a, b, c, d)              scm_list_4(a, b, c, d)
+  #define XEN_LIST_5(a, b, c, d, e)           scm_list_5(a, b, c, d, e)
+  #define XEN_LIST_6(a, b, c, d, e, f)        scm_list_n(a, b, c, d, e, f, XEN_UNDEFINED)
+  #define XEN_LIST_7(a, b, c, d, e, f, g)     scm_list_n(a, b, c, d, e, f, g, XEN_UNDEFINED)
+  #define XEN_LIST_8(a, b, c, d, e, f, g, h)  scm_list_n(a, b, c, d, e, f, g, h, XEN_UNDEFINED)
   #define XEN_LIST_9(a, b, c, d, e, f, g, h, i) scm_list_n(a, b, c, d, e, f, g, h, i, XEN_UNDEFINED)
 #else
-  #define XEN_LIST_1(a)                   SCM_LIST1(a)
-  #define XEN_LIST_2(a, b)                SCM_LIST2(a, b)
-  #define XEN_LIST_3(a, b, c)             SCM_LIST3(a, b, c)
-  #define XEN_LIST_4(a, b, c, d)          SCM_LIST4(a, b, c, d)
-  #define XEN_LIST_5(a, b, c, d, e)       SCM_LIST5(a, b, c, d, e)
-  #define XEN_LIST_6(a, b, c, d, e, f)    SCM_LIST6(a, b, c, d, e, f)
-  #define XEN_LIST_7(a, b, c, d, e, f, g) SCM_LIST7(a, b, c, d, e, f, g)
-  #define XEN_LIST_8(a, b, c, d, e, f, g, h) SCM_LIST8(a, b, c, d, e, f, g, h)
+  #define XEN_LIST_1(a)                       SCM_LIST1(a)
+  #define XEN_LIST_2(a, b)                    SCM_LIST2(a, b)
+  #define XEN_LIST_3(a, b, c)                 SCM_LIST3(a, b, c)
+  #define XEN_LIST_4(a, b, c, d)              SCM_LIST4(a, b, c, d)
+  #define XEN_LIST_5(a, b, c, d, e)           SCM_LIST5(a, b, c, d, e)
+  #define XEN_LIST_6(a, b, c, d, e, f)        SCM_LIST6(a, b, c, d, e, f)
+  #define XEN_LIST_7(a, b, c, d, e, f, g)     SCM_LIST7(a, b, c, d, e, f, g)
+  #define XEN_LIST_8(a, b, c, d, e, f, g, h)  SCM_LIST8(a, b, c, d, e, f, g, h)
   #define XEN_LIST_9(a, b, c, d, e, f, g, h, i) SCM_LIST9(a, b, c, d, e, f, g, h, i)
 #endif
-#define XEN_APPEND(a, b)                  scm_append(XEN_LIST_2(a, b))
+#define XEN_APPEND(a, b)                      scm_append(XEN_LIST_2(a, b))
 /* these are only used in Scheme-side stuff, so aren't defined in other cases; in Ruby the args are reversed, I think: rb_ary_assoc */
-#define XEN_ASSOC(a, b)                   scm_assoc(a, b)
-#define XEN_MEMBER(a, b)                  scm_member(a, b)
+#define XEN_ASSOC(a, b)                       scm_assoc(a, b)
+#define XEN_MEMBER(a, b)                      scm_member(a, b)
 
 /* ---- vectors ---- */
 #if HAVE_SCM_IS_SIMPLE_VECTOR
-  #define XEN_VECTOR_P(Arg)               scm_is_simple_vector(Arg)
-  #define XEN_VECTOR_LENGTH(Arg)          SCM_SIMPLE_VECTOR_LENGTH(Arg)
-  #define XEN_VECTOR_REF(Vect, Num)       SCM_SIMPLE_VECTOR_REF(Vect, Num)
-  #define XEN_VECTOR_SET(Vect, Num, Val)  SCM_SIMPLE_VECTOR_SET(Vect, Num, Val)
+  #define XEN_VECTOR_P(Arg)                   scm_is_simple_vector(Arg)
+  #define XEN_VECTOR_LENGTH(Arg)              SCM_SIMPLE_VECTOR_LENGTH(Arg)
+  #define XEN_VECTOR_REF(Vect, Num)           SCM_SIMPLE_VECTOR_REF(Vect, Num)
+  #define XEN_VECTOR_SET(Vect, Num, Val)      SCM_SIMPLE_VECTOR_SET(Vect, Num, Val)
 #else
   #if HAVE_SCM_IS_VECTOR
-    #define XEN_VECTOR_P(Arg)              scm_is_vector(Arg)
-    #define XEN_VECTOR_LENGTH(Arg)         scm_c_vector_length(Arg)
-    #define XEN_VECTOR_REF(Vect, Num)      scm_c_vector_ref(Vect, Num)
-    #define XEN_VECTOR_SET(Vect, Num, Val) scm_c_vector_set_x(Vect, Num, Val)
+    #define XEN_VECTOR_P(Arg)                 scm_is_vector(Arg)
+    #define XEN_VECTOR_LENGTH(Arg)            scm_c_vector_length(Arg)
+    #define XEN_VECTOR_REF(Vect, Num)         scm_c_vector_ref(Vect, Num)
+    #define XEN_VECTOR_SET(Vect, Num, Val)    scm_c_vector_set_x(Vect, Num, Val)
   #else
-    #define XEN_VECTOR_P(Arg)             (SCM_VECTORP(Arg))
+    #define XEN_VECTOR_P(Arg)                 (SCM_VECTORP(Arg))
     #ifndef SCM_VECTOR_LENGTH
-      #define XEN_VECTOR_LENGTH(Arg)      ((int)(gh_vector_length(Arg)))
+      #define XEN_VECTOR_LENGTH(Arg)          ((int)(gh_vector_length(Arg)))
     #else
-      #define XEN_VECTOR_LENGTH(Arg)      ((int)(SCM_VECTOR_LENGTH(Arg)))
+      #define XEN_VECTOR_LENGTH(Arg)          ((int)(SCM_VECTOR_LENGTH(Arg)))
     #endif
     #ifdef SCM_VECTOR_REF
-      #define XEN_VECTOR_REF(Vect, Num)      SCM_VECTOR_REF(Vect, Num)
-      #define XEN_VECTOR_SET(Vect, Num, Val) SCM_VECTOR_SET(Vect, Num, Val)
+      #define XEN_VECTOR_REF(Vect, Num)       SCM_VECTOR_REF(Vect, Num)
+      #define XEN_VECTOR_SET(Vect, Num, Val)  SCM_VECTOR_SET(Vect, Num, Val)
     #else
-      #define XEN_VECTOR_REF(Vect, Num)      scm_vector_ref(Vect, C_TO_XEN_INT(Num))
-      #define XEN_VECTOR_SET(Vect, Num, Val) scm_vector_set_x(Vect, C_TO_XEN_INT(Num), Val)
+      #define XEN_VECTOR_REF(Vect, Num)       scm_vector_ref(Vect, C_TO_XEN_INT(Num))
+      #define XEN_VECTOR_SET(Vect, Num, Val)  scm_vector_set_x(Vect, C_TO_XEN_INT(Num), Val)
     #endif
   #endif
 #endif
 
-#define XEN_VECTOR_TO_LIST(Vect)      scm_vector_to_list(Vect)
+#define XEN_VECTOR_TO_LIST(Vect)              scm_vector_to_list(Vect)
 #if HAVE_SCM_C_MAKE_VECTOR
-  #define XEN_MAKE_VECTOR(Num, Fill)  scm_c_make_vector((unsigned long)(Num), Fill)
+  #define XEN_MAKE_VECTOR(Num, Fill)          scm_c_make_vector((unsigned long)(Num), Fill)
 #else
-  #define XEN_MAKE_VECTOR(Num, Fill)  scm_make_vector(C_TO_XEN_INT(Num), Fill)
+  #define XEN_MAKE_VECTOR(Num, Fill)          scm_make_vector(C_TO_XEN_INT(Num), Fill)
 #endif
 
 /* ---- hooks ---- */
-#define XEN_HOOK_P(Arg)               (SCM_HOOKP(Arg))
-#define XEN_DEFINE_HOOK(Name, Arity, Help) xen_guile_create_hook(Name, Arity, Help, XEN_DOCUMENTATION_SYMBOL)
-#define XEN_DEFINE_SIMPLE_HOOK(Arity) scm_make_hook(C_TO_XEN_INT(Arity))
-#define XEN_CLEAR_HOOK(Arg)           scm_reset_hook_x(Arg)
-#define XEN_HOOKED(a)                 (XEN_NOT_NULL_P(SCM_HOOK_PROCEDURES(a)))
-#define XEN_HOOK_PROCEDURES(a)        SCM_HOOK_PROCEDURES(a)
+#define XEN_HOOK_P(Arg)                       (SCM_HOOKP(Arg))
+#define XEN_DEFINE_HOOK(Name, Arity, Help)    xen_guile_create_hook(Name, Arity, Help, XEN_DOCUMENTATION_SYMBOL)
+#define XEN_DEFINE_SIMPLE_HOOK(Arity)         scm_make_hook(C_TO_XEN_INT(Arity))
+#define XEN_CLEAR_HOOK(Arg)                   scm_reset_hook_x(Arg)
+#define XEN_HOOKED(a)                         (XEN_NOT_NULL_P(SCM_HOOK_PROCEDURES(a)))
+#define XEN_HOOK_PROCEDURES(a)                SCM_HOOK_PROCEDURES(a)
 
 /* ---- characters, strings, keywords ---- */
 #ifdef SCM_CHARP
-  #define XEN_CHAR_P(Arg)             (SCM_CHARP(Arg))
+  #define XEN_CHAR_P(Arg)                     (SCM_CHARP(Arg))
 #else
-  #define XEN_CHAR_P(Arg)             gh_char_p(Arg)
+  #define XEN_CHAR_P(Arg)                     gh_char_p(Arg)
 #endif
 #ifdef SCM_CHAR
-  #define XEN_TO_C_CHAR(Arg)          SCM_CHAR(Arg)
+  #define XEN_TO_C_CHAR(Arg)                  SCM_CHAR(Arg)
 #else
-  #define XEN_TO_C_CHAR(Arg)          gh_scm2char(Arg)
+  #define XEN_TO_C_CHAR(Arg)                  gh_scm2char(Arg)
 #endif
 #ifdef SCM_MAKE_CHAR
-  #define C_TO_XEN_CHAR(c)            SCM_MAKE_CHAR(c)
+  #define C_TO_XEN_CHAR(c)                    SCM_MAKE_CHAR(c)
 #else
-  #define C_TO_XEN_CHAR(c)            SCM_MAKICHR(c)
+  #define C_TO_XEN_CHAR(c)                    SCM_MAKICHR(c)
 #endif
 
 #if HAVE_SCM_FROM_LOCALE_KEYWORD
-  #define XEN_KEYWORD_P(Obj)          scm_is_keyword(Obj)
-  #define XEN_MAKE_KEYWORD(Arg)       scm_from_locale_keyword(Arg)
+  #define XEN_KEYWORD_P(Obj)                  scm_is_keyword(Obj)
+  #define XEN_MAKE_KEYWORD(Arg)               scm_from_locale_keyword(Arg)
 #else
   #ifdef SCM_CHARP
-    #define XEN_KEYWORD_P(Obj)        (SCM_KEYWORDP(Obj))
+    #define XEN_KEYWORD_P(Obj)                (SCM_KEYWORDP(Obj))
   #else
-    #define XEN_KEYWORD_P(Obj)        XEN_TRUE_P(scm_keyword_p(Obj))
+    #define XEN_KEYWORD_P(Obj)                XEN_TRUE_P(scm_keyword_p(Obj))
   #endif
-  #define XEN_MAKE_KEYWORD(Arg)       scm_c_make_keyword(Arg)
+  #define XEN_MAKE_KEYWORD(Arg)               scm_c_make_keyword(Arg)
 #endif
-#define XEN_KEYWORD_EQ_P(k1, k2)      XEN_EQ_P(k1, k2)
+#define XEN_KEYWORD_EQ_P(k1, k2)              XEN_EQ_P(k1, k2)
 
 /* there is SCM_CONTINUATIONP -- why doesn't scheme have continuation? */
 
 #if HAVE_SCM_C_MAKE_RECTANGULAR
-  #define XEN_STRING_P(Arg)           scm_is_string(Arg)
-  #define XEN_TO_C_STRING(Str)        xen_guile_to_c_string_with_eventual_free(Str)
+  #define XEN_STRING_P(Arg)                   scm_is_string(Arg)
+  #define XEN_TO_C_STRING(Str)                xen_guile_to_c_string_with_eventual_free(Str)
 
   #if defined(__GNUC__) && (!(defined(__cplusplus)))
-    #define C_TO_XEN_STRING(Str)      ({ const char *a = Str; (a) ? scm_from_locale_string(a) : XEN_FALSE; })
+    #define C_TO_XEN_STRING(Str)              ({ const char *a = Str; (a) ? scm_from_locale_string(a) : XEN_FALSE; })
   #else
-    #define C_TO_XEN_STRING(a)          xen_guile_c_to_xen_string(a)
+    #define C_TO_XEN_STRING(a)                xen_guile_c_to_xen_string(a)
   #endif
 
-  #define C_TO_XEN_STRINGN(Str, Len)  scm_from_locale_stringn(Str, Len)
+  #define C_TO_XEN_STRINGN(Str, Len)          scm_from_locale_stringn(Str, Len)
 #else
-  #define XEN_STRING_P(Arg)           (SCM_STRINGP(Arg))
+  #define XEN_STRING_P(Arg)                   (SCM_STRINGP(Arg))
   #ifndef SCM_STRING_CHARS
-    #define XEN_TO_C_STRING(STR)      SCM_CHARS(STR)
+    #define XEN_TO_C_STRING(STR)              SCM_CHARS(STR)
   #else
-    #define XEN_TO_C_STRING(STR)      SCM_STRING_CHARS(STR)
+    #define XEN_TO_C_STRING(STR)              SCM_STRING_CHARS(STR)
     /* this assumes its argument is a XEN string and does not allocate new space */
   #endif
-  #define C_TO_XEN_STRING(a)          scm_makfrom0str((const char *)(a))
+  #define C_TO_XEN_STRING(a)                  scm_makfrom0str((const char *)(a))
   #if HAVE_SCM_MEM2STRING
-    #define C_TO_XEN_STRINGN(Str, Len)  scm_mem2string(Str, Len)
+    #define C_TO_XEN_STRINGN(Str, Len)        scm_mem2string(Str, Len)
   #else
-    #define C_TO_XEN_STRINGN(Str, Len)  scm_makfromstr(Str, Len, 0)
+    #define C_TO_XEN_STRINGN(Str, Len)        scm_makfromstr(Str, Len, 0)
   #endif
 #endif
 
 #if HAVE_SCM_OBJECT_TO_STRING
-  #define XEN_TO_STRING(Obj)          scm_object_to_string(Obj, XEN_UNDEFINED)
+  #define XEN_TO_STRING(Obj)                  scm_object_to_string(Obj, XEN_UNDEFINED)
 #else
-  #define XEN_TO_STRING(Obj)          scm_strprint_obj(Obj)
+  #define XEN_TO_STRING(Obj)                  scm_strprint_obj(Obj)
 #endif
 
 /* ---- eval ---- */
 #if HAVE_SCM_C_EVAL_STRING
-  #define C_STRING_TO_XEN_FORM(Str)   scm_c_read_string(Str)
-  #define XEN_EVAL_C_STRING(Arg)      scm_c_eval_string(Arg)
+  #define C_STRING_TO_XEN_FORM(Str)           scm_c_read_string(Str)
+  #define XEN_EVAL_C_STRING(Arg)              scm_c_eval_string(Arg)
 #else
-  #define C_STRING_TO_XEN_FORM(Str)   scm_read_0str(Str)
-  #define XEN_EVAL_C_STRING(Arg)      scm_eval_0str(Arg)
+  #define C_STRING_TO_XEN_FORM(Str)           scm_read_0str(Str)
+  #define XEN_EVAL_C_STRING(Arg)              scm_eval_0str(Arg)
 #endif
 
 #if HAVE_SCM_C_MAKE_RECTANGULAR
-  #define C_STRING_TO_XEN_SYMBOL(a)   scm_from_locale_symbol(a)
+  #define C_STRING_TO_XEN_SYMBOL(a)           scm_from_locale_symbol(a)
 #else
   #if HAVE_SCM_STR2SYMBOL
-    #define C_STRING_TO_XEN_SYMBOL(a) scm_str2symbol(a)
+    #define C_STRING_TO_XEN_SYMBOL(a)         scm_str2symbol(a)
   #else
-#define C_STRING_TO_XEN_SYMBOL(a)     gh_symbol2scm((char *)(a))
+#define C_STRING_TO_XEN_SYMBOL(a)             gh_symbol2scm((char *)(a))
   #endif
 #endif
 
 #if HAVE_SCM_C_MAKE_RECTANGULAR
-  #define XEN_SYMBOL_P(Arg)           scm_is_symbol(Arg)
-  #define XEN_EVAL_FORM(Form)         scm_eval((XEN)(Form), scm_interaction_environment())
-  #define XEN_SYMBOL_TO_C_STRING(a)   XEN_TO_C_STRING(scm_symbol_to_string(a))
+  #define XEN_SYMBOL_P(Arg)                   scm_is_symbol(Arg)
+  #define XEN_EVAL_FORM(Form)                 scm_eval((XEN)(Form), scm_interaction_environment())
+  #define XEN_SYMBOL_TO_C_STRING(a)           XEN_TO_C_STRING(scm_symbol_to_string(a))
 #else
-  #define XEN_SYMBOL_P(Arg)           (SCM_SYMBOLP(Arg))
+  #define XEN_SYMBOL_P(Arg)                   (SCM_SYMBOLP(Arg))
   #ifdef SCM_SYMBOL_CHARS
-    #define XEN_EVAL_FORM(Form)       scm_eval((XEN)(Form), scm_interaction_environment())
+    #define XEN_EVAL_FORM(Form)               scm_eval((XEN)(Form), scm_interaction_environment())
     /* was scm_eval_x but I'm not sure that's safe */
-    #define XEN_SYMBOL_TO_C_STRING(a) SCM_SYMBOL_CHARS(a)
+    #define XEN_SYMBOL_TO_C_STRING(a)         SCM_SYMBOL_CHARS(a)
   #else
-    #define XEN_EVAL_FORM(Form)       scm_eval((XEN)(Form))
-    #define XEN_SYMBOL_TO_C_STRING(a) gh_symbol2newstr(a, NULL)
+    #define XEN_EVAL_FORM(Form)               scm_eval((XEN)(Form))
+    #define XEN_SYMBOL_TO_C_STRING(a)         gh_symbol2newstr(a, NULL)
   #endif
 #endif
 
@@ -552,22 +558,6 @@
     Original_Free((Type *)XEN_OBJECT_REF(obj)); \
     return(0); \
   }
-
-#if (SIZEOF_VOID_P == SIZEOF_UNSIGNED_LONG)
-/* (need a way to pass an uninterpreted pointer from C to XEN then back to C) */
-#if (SCM_DEBUG_TYPING_STRICTNESS == 2)
-  #define XEN_WRAP_C_POINTER(a)       C_TO_XEN_ULONG((unsigned long)a)
-#else
-  #define XEN_WRAP_C_POINTER(a)       ((XEN)(C_TO_XEN_ULONG((unsigned long)a)))
-#endif
-  #define XEN_UNWRAP_C_POINTER(a)     XEN_TO_C_ULONG(a)
-
-#else
-  #define XEN_WRAP_C_POINTER(a)       C_TO_XEN_OFF_T((off_t)a)
-  #define XEN_UNWRAP_C_POINTER(a)     XEN_TO_C_OFF_T(a)
-#endif
-
-#define XEN_WRAPPED_C_POINTER_P(a)    XEN_NOT_FALSE_P(scm_number_p(a))
 
 #define XEN_SET_DOCUMENTATION(Func, Help) scm_set_object_property_x(C_STRING_TO_XEN_SYMBOL(Func), XEN_DOCUMENTATION_SYMBOL, C_TO_XEN_STRING(Help))
 
@@ -718,8 +708,8 @@
   #define XEN_CATCH_BODY_TYPE scm_catch_body_t
 #endif
 
-#define XEN_YES_WE_HAVE(Feature)      scm_add_feature(Feature)
-#define XEN_PROTECT_FROM_GC(Obj)      scm_permanent_object(Obj)
+#define XEN_YES_WE_HAVE(Feature)        scm_add_feature(Feature)
+#define XEN_PROTECT_FROM_GC(Obj)        scm_permanent_object(Obj)
 #if HAVE_SCM_C_PRIMITIVE_LOAD
   #define XEN_LOAD_FILE(File)           scm_c_primitive_load(File)
   #define XEN_LOAD_FILE_WITH_PATH(File) scm_c_primitive_load_path(File)
@@ -727,14 +717,14 @@
   #define XEN_LOAD_FILE(File)           scm_primitive_load(C_TO_XEN_STRING(File))
   #define XEN_LOAD_FILE_WITH_PATH(File) scm_primitive_load_path(C_TO_XEN_STRING(File))
 #endif
-#define XEN_LOAD_PATH                 XEN_EVAL_C_STRING("%load-path")
-#define XEN_ADD_TO_LOAD_PATH(Path)    xen_guile_add_to_load_path(Path)
+#define XEN_LOAD_PATH                   XEN_EVAL_C_STRING("%load-path")
+#define XEN_ADD_TO_LOAD_PATH(Path)      xen_guile_add_to_load_path(Path)
 
-#define XEN_PUTS(Str, Port)           scm_puts(Str, Port)
-#define XEN_DISPLAY(Val, Port)        scm_display(Val, Port)
-#define XEN_FLUSH_PORT(Port)          scm_force_output(Port)
-#define XEN_CLOSE_PORT(Port)          scm_close_port(Port)
-#define XEN_PORT_TO_STRING(Port)      scm_strport_to_string(Port)
+#define XEN_PUTS(Str, Port)             scm_puts(Str, Port)
+#define XEN_DISPLAY(Val, Port)          scm_display(Val, Port)
+#define XEN_FLUSH_PORT(Port)            scm_force_output(Port)
+#define XEN_CLOSE_PORT(Port)            scm_close_port(Port)
+#define XEN_PORT_TO_STRING(Port)        scm_strport_to_string(Port)
 
 #ifdef __cplusplus
 extern "C" {
@@ -905,6 +895,10 @@ char *xen_guile_to_c_string_with_eventual_free(XEN str);
 #define C_TO_XEN_LONG_LONG(a)           OFFT2NUM(a)
 #define XEN_TO_C_LONG_LONG(a)           NUM2OFFT(a)
 
+#define XEN_ULONG_LONG_P(Arg)           XEN_ULONG_P(Arg) 
+#define XEN_TO_C_ULONG_LONG(Arg)        XEN_TO_C_OFF_T(a) 
+#define C_TO_XEN_ULONG_LONG(Arg)        C_TO_XEN_OFF_T((off_t)a) 
+
 /* ---- strings ---- */
 #define XEN_STRING_P(Arg)               ((TYPE(Arg) == T_STRING) && (!SYMBOL_P(Arg)))
 #define C_TO_XEN_STRING(a)              xen_rb_str_new2((char *)a)
@@ -977,10 +971,6 @@ char *xen_guile_to_c_string_with_eventual_free(XEN str);
   }
 #define XEN_DEFINE(Name, Value)         xen_rb_define(Name, Value)
 #define XEN_DEFINED_P(Name)             xen_rb_defined_p(Name)
-
-#define XEN_WRAP_C_POINTER(a)           Data_Wrap_Struct(rb_cData, 0, 0, (void *)a)
-#define XEN_UNWRAP_C_POINTER(a)         ((TYPE(a) == T_DATA) ? DATA_PTR(a) : NULL)
-#define XEN_WRAPPED_C_POINTER_P(a)      (TYPE(a) == T_DATA)
 
 /* ---- C structs ---- */
 #define XEN_MARK_OBJECT_TYPE            void *
@@ -1361,6 +1351,10 @@ XEN xen_rb_add_to_load_path(char *path);
 #define C_TO_XEN_ULONG(a)               fth_make_unsigned((unsigned long)(a))
 #define XEN_TO_C_ULONG(a)               fth_unsigned_ref(a)
 
+#define XEN_ULONG_LONG_P(Arg)           XEN_ULONG_P(Arg) 
+#define XEN_TO_C_ULONG_LONG(Arg)        fth_ulong_long_ref(Arg) 
+#define C_TO_XEN_ULONG_LONG(Arg)        fth_make_ulong_long((unsigned long long)Arg) 
+
 #define XEN_OFF_T_P(Arg)                FTH_LONG_LONG_P(Arg)
 #define C_TO_XEN_LONG_LONG(a)           fth_make_long_long(a)
 #define XEN_TO_C_LONG_LONG(a)           fth_long_long_ref(a)
@@ -1540,16 +1534,6 @@ XEN xen_rb_add_to_load_path(char *path);
 #define XEN_MAKE_OBJECT_TYPE(Typ, Siz)  fth_make_object_type(Typ)
 #define XEN_OBJECT_HELP(Name)           fth_documentation_ref(Name)
 
-#define XEN_WRAPPED_C_POINTER_P(a)      XEN_ULONG_P(a)
-
-#if (SIZEOF_VOID_P == SIZEOF_UNSIGNED_LONG)
-  #define XEN_WRAP_C_POINTER(a)         C_TO_XEN_ULONG((unsigned long)(a))
-  #define XEN_UNWRAP_C_POINTER(a)       XEN_TO_C_ULONG(a)
-#else
-  #define XEN_WRAP_C_POINTER(a)         C_TO_XEN_OFF_T((off_t)(a))
-  #define XEN_UNWRAP_C_POINTER(a)       XEN_TO_C_OFF_T(a)
-#endif
-
 #define XEN_PROTECT_FROM_GC(Obj)        fth_gc_protect(Obj)
 #define XEN_UNPROTECT_FROM_GC(Obj)      fth_gc_unprotect(Obj)
 
@@ -1672,6 +1656,10 @@ extern XEN xen_false, xen_true, xen_nil, xen_undefined;
 #define XEN_TO_C_ULONG(Arg)                        s7_ulong(Arg)
 #define C_TO_XEN_ULONG(Arg)                        s7_make_ulong(s7, (unsigned long)Arg)
 
+#define XEN_ULONG_LONG_P(Arg)                      s7_is_ulong_long(Arg) 
+#define XEN_TO_C_ULONG_LONG(Arg)                   s7_ulong_long(Arg) 
+#define C_TO_XEN_ULONG_LONG(Arg)                   s7_make_ulong_long(s7, (unsigned long long)Arg) 
+
 #define C_TO_XEN_LONG_LONG(Arg)                    C_TO_XEN_OFF_T(Arg)
 #define XEN_TO_C_LONG_LONG(Arg)                    XEN_TO_C_OFF_T(Arg)
 
@@ -1718,16 +1706,6 @@ extern XEN xen_false, xen_true, xen_nil, xen_undefined;
 #define C_STRING_TO_XEN_SYMBOL(Arg)                s7_make_symbol(s7, Arg)
 #define XEN_DOCUMENTATION_SYMBOL                   C_STRING_TO_XEN_SYMBOL("documentation")
 #define XEN_SET_DOCUMENTATION(Var, Doc) 
-
-#if (SIZEOF_VOID_P == SIZEOF_UNSIGNED_LONG)
-  #define XEN_WRAP_C_POINTER(Arg)                  s7_make_ulong(s7, (unsigned long)Arg)
-  #define XEN_UNWRAP_C_POINTER(Arg)                s7_ulong(Arg)
-  #define XEN_WRAPPED_C_POINTER_P(Arg)             s7_is_ulong(Arg)
-#else
-  #define XEN_WRAP_C_POINTER(Arg)                  s7_make_ulong_long(s7, (unsigned long long)Arg)
-  #define XEN_UNWRAP_C_POINTER(Arg)                s7_ulong_long(Arg)
-  #define XEN_WRAPPED_C_POINTER_P(Arg)             s7_is_ulong_long(Arg)
-#endif
 
 #define XEN_VECTOR_P(Arg)                          s7_is_vector(Arg)
 #define XEN_VECTOR_LENGTH(Arg)                     s7_vector_length(Arg)
@@ -2162,15 +2140,15 @@ const char *xen_s7_constant_help(const char *name);
 #define C_TO_XEN_ULONG(a) 0
 #define C_TO_XEN_LONG_LONG(a) a
 #define XEN_TO_C_LONG_LONG(a) a
+#define XEN_ULONG_LONG_P(Arg) 0 
+#define XEN_TO_C_ULONG_LONG(Arg) 0 
+#define C_TO_XEN_ULONG_LONG(Arg) 0 
 #define XEN_EXACT_P(Arg) 0
 #define C_STRING_TO_XEN_FORM(Str) 0
 #define XEN_EVAL_FORM(Form) 0
 #define XEN_EVAL_C_STRING(Arg) 0
 #define XEN_SYMBOL_TO_C_STRING(a) "(not a symbol)"
 #define XEN_TO_STRING(Obj) "(unknown)"
-#define XEN_WRAP_C_POINTER(a) 0
-#define XEN_UNWRAP_C_POINTER(a) 0
-#define XEN_WRAPPED_C_POINTER_P(a) 0
 #define XEN_PROCEDURE_P(Arg) 0
 #define XEN_PROCEDURE_SOURCE(Func) 0
 
@@ -2353,6 +2331,18 @@ void xen_no_ext_lang_check_args(const char *name, int args, int req_args, int op
 #ifndef XEN_DEFINED_P
   #define XEN_DEFINED_P(Name) false
 #endif
+
+
+/* (need a way to pass an uninterpreted pointer from C to XEN then back to C) */
+#if (SIZEOF_VOID_P == SIZEOF_UNSIGNED_LONG) 
+ #define XEN_WRAP_C_POINTER(a)         ((XEN)(C_TO_XEN_ULONG((unsigned long)a))) 
+ #define XEN_UNWRAP_C_POINTER(a)       XEN_TO_C_ULONG(a) 
+#else 
+ #define XEN_WRAP_C_POINTER(a)         C_TO_XEN_OFF_T((off_t)(a)) 
+ #define XEN_UNWRAP_C_POINTER(a)       XEN_TO_C_OFF_T(a) 
+#endif 
+#define XEN_WRAPPED_C_POINTER_P(a)     XEN_EXACT_P(a) 
+
 
 #ifdef __cplusplus
 extern "C" {

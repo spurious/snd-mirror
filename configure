@@ -3728,8 +3728,8 @@ _ACEOF
 #   --with-motif          use Motif (the default)
 #   --with-static-motif   use Motif statically loaded (for RPM generation)
 #   --with-gtk            use Gtk+
-#   --with-alsa           use ALSA if possible
-#   --with-oss            use OSS (the default)
+#   --with-alsa           use ALSA if possible (the default)
+#   --with-oss            use OSS
 #   --with-jack           use Jack
 #   --with-static-alsa    use ALSA statically loaded (for RPM generation)
 #   --with-snd-as-widget  make Snd a loadable widget, not a standalone program
@@ -11822,7 +11822,6 @@ int
 main ()
 {
 mpc_t x;  mpc_init2(x, 53); mpc_clear(x);
-
 
   ;
   return 0;
@@ -22515,9 +22514,9 @@ $as_echo "Using the $AUDIO_SYSTEM audio system" >&6; }
 else
 
 if test "$with_alsa" = yes && test "$with_oss" = yes ; then
-  with_alsa=no
-  { $as_echo "$as_me:$LINENO: WARNING: You asked for both ALSA and OSS -- OSS will be used" >&5
-$as_echo "$as_me: WARNING: You asked for both ALSA and OSS -- OSS will be used" >&2;}
+  with_oss=no
+  { $as_echo "$as_me:$LINENO: WARNING: You asked for both ALSA and OSS -- ALSA will be used" >&5
+$as_echo "$as_me: WARNING: You asked for both ALSA and OSS -- ALSA will be used" >&2;}
 fi
 
 if test "$with_jack" = yes ; then
@@ -22971,9 +22970,11 @@ _ACEOF
 	  SO_FLAGS="-fPIC $SO_FLAGS"
         fi
 
-        AUDIO_SYSTEM=OSS
+        AUDIO_SYSTEM=ALSA
+	if test "$with_oss" = yes ; then
+          AUDIO_SYSTEM=OSS
+	else
 
-	if test "$with_alsa" = yes || test "$with_static_alsa" = yes ; then
           if test "$ac_cv_header_alsa_asoundlib_h" = yes ; then
             { $as_echo "$as_me:$LINENO: checking for main in -lasound" >&5
 $as_echo_n "checking for main in -lasound... " >&6; }
@@ -23044,6 +23045,7 @@ fi
           else
             { $as_echo "$as_me:$LINENO: WARNING: can't find the ALSA header files" >&5
 $as_echo "$as_me: WARNING: can't find the ALSA header files" >&2;}
+	    AUDIO_SYSTEM=OSS
           fi
 	fi
 
@@ -23263,6 +23265,7 @@ _ACEOF
 #define HAVE_OSS 1
 _ACEOF
 
+		AUDIO_SYSTEM=OSS
 		;;
 	esac
 	;;

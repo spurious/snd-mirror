@@ -2687,12 +2687,6 @@
 (test (call-with-input-file "tmp1.r5rs" (lambda (p) (read p) (let ((val (read p))) (eof-object? val)))) #t)
 
 
-
-;;; (test (call-with-input-file "tmp1.r5rs" (lambda (p) (read p) (let ((val (read p))) (char-ready? p)))) #f)
-;;; how can I test char-ready? in this context?
-
-
-
 (test (call-with-input-file "tmp1.r5rs" (lambda (p) (read-char p))) #\3)
 (test (call-with-input-file "tmp1.r5rs" (lambda (p) (peek-char p))) #\3)
 (test (call-with-input-file "tmp1.r5rs" (lambda (p) (peek-char p) (read-char p))) #\3)
@@ -2833,6 +2827,18 @@
 		     (lambda ()
 		       (do ((c (read-char) (read-char)))
 			   ((eof-object? c))
+			 (display c))))))))
+      (if (not (string=? str "hiho123"))
+	  (begin (display "with string ports: \"") (display str) (display "\"?") (newline)))))
+
+(if with-open-input-string-and-friends
+    (let ((str (with-output-to-string
+		 (lambda ()
+		   (with-input-from-string "hiho123"
+		     (lambda ()
+		       (do ((c (read-char) (read-char)))
+			   ((or (not (char-ready?))
+				(eof-object? c)))
 			 (display c))))))))
       (if (not (string=? str "hiho123"))
 	  (begin (display "with string ports: \"") (display str) (display "\"?") (newline)))))
@@ -5226,6 +5232,7 @@
 	(test (let () (hash-table-set! ht "ky" 3.14) (hash-table-ref ht "ky")) 3.14)
 	(test (let () (hash-table-set! ht 123 "hiho") (hash-table-ref ht 123)) "hiho")
 	(test (let () (hash-table-set! ht 3.14 "hi") (hash-table-ref ht 3.14)) "hi")
+	(test (let () (hash-table-set! ht our-pi "hiho") (hash-table-ref ht our-pi)) "hiho")
 	(test (hash-table-ref ht "123") #f)
 	(for-each
 	 (lambda (arg)
@@ -13988,7 +13995,7 @@
       (num-test (rationalize 1.0000001 0.00000001) 9090911/9090910)
       (num-test (rationalize 0.000000015 0.000000001) 1/62500001)
 
-      (num-test (rationalize -1 -1) 0) ;; spec says "differs by no more than, but that seems to imply a comparison
+      (num-test (rationalize -1 -1) 0) ;; spec says "differs by no more than", but that seems to imply a comparison
                                        ;; on either side, so a negative error doesn't change the result??
       (num-test (rationalize 1/4 -1/6) 1/3)
       (num-test (rationalize -3/10 -1/10) -1/3)

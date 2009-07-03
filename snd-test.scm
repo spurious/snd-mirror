@@ -215,14 +215,6 @@
 ;; try to get a different random number sequence on each run
 (set! (mus-rand-seed) (current-time))
 
-(if (provided? 'snd-guile)
-    (define (random n)
-      (if (exact? n)
-	  (mus-irandom n)
-	  (mus-frandom n))))
-
-(define rs (lambda (n) #t))
-
 (reset-hook! bad-header-hook)
 (add-hook! bad-header-hook (lambda (n) #t))
 
@@ -407,12 +399,6 @@
 				(gtk_widget_hide d)))))
 		  dialog))))
        (dialog-widgets))))
-
-(if (provided? 'snd-guile)
-    (define have-log-0 (or (string=? (version) "1.7.0") (string=? (version) "1.7.1") (string=? (version) "1.7.2") (string=? (version) "1.8.0")))
-    (define have-log-0 #f))
-
-(define (log0) (if have-log-0 (log 0) 0.0)) ; trying to generate -inf.0 
 
 (define safe-color (make-color 1 0 0))
 (define (make-color-with-catch c1 c2 c3)
@@ -16226,7 +16212,6 @@ EDITS: 2
     (set! (mus-phase gen) 0.0)
     (gen 1234567812345678)
     (gen -1234567812345678)
-    (gen (log0))
     (set! (mus-frequency gen) 0.0)
     (set! (mus-phase gen) 0.0)
     (gen -2.0)
@@ -16468,18 +16453,16 @@ EDITS: 2
     ;; one (20 1.0) is off by a lot but the val is 1e22 
     
     ;; numerics stuff
-    (if (or (not (provided? 'snd-s7)) ; this requires bignums
-	    (provided? 'gmp))
-	(let ((ns (vector 1 6 6 6 15 15 15 15 15 15 15 25 25 25 25 25 25 25 25 25))
-	      (ks (vector 0 1 3 5 1 3 5 7 9 11 13 1 3 5 7 9 11 13 15 17))
-	      (vals (vector 1 6 20 6 15 455 3003 6435 5005 1365 105 25 2300 53130 480700 2042975 4457400 5200300 3268760 1081575)))
-	  (do ((i 0 (+ 1 i)))
-	      ((= i 20))
-	    (let* ((nval (binomial-direct (vector-ref ns i) (vector-ref ks i)))
-		   (mval (n-choose-k (vector-ref ns i) (vector-ref ks i))))
-	      (if (or (not (= nval (vector-ref vals i)))
-		      (not (= mval (vector-ref vals i))))
-		  (snd-display ";binomial(~A ~A): ~A ~A ~A" (vector-ref ns i) (vector-ref ks i) nval mval (vector-ref vals i)))))))
+    (let ((ns (vector 1 6 6 6 15 15 15 15 15 15 15))
+	  (ks (vector 0 1 3 5 1  3  5  7  9  11 13))
+	  (vals (vector 1 6 20 6 15 455 3003 6435 5005 1365 105)))
+      (do ((i 0 (+ 1 i)))
+	  ((= i 11))
+	(let* ((nval (binomial-direct (vector-ref ns i) (vector-ref ks i)))
+	       (mval (n-choose-k (vector-ref ns i) (vector-ref ks i))))
+	  (if (or (not (= nval (vector-ref vals i)))
+		  (not (= mval (vector-ref vals i))))
+	      (snd-display ";binomial(~A ~A): ~A ~A ~A" (vector-ref ns i) (vector-ref ks i) nval mval (vector-ref vals i))))))
 
     (let ((ls (vector 1 1 1 1 1 2 2 2 3 3 3 3 4 5 6 7 8 9 10))
 	  (ms (vector 0 0 0 0 1 0 1 2 0 1 2 3 2 2 3 3 4 4 5))
@@ -24607,10 +24590,6 @@ EDITS: 2
 	    (if (fneq old-val new-val)
 		(snd-display ";reset src ~A ~A ~A" i old-val new-val))))))
     
-    (let ((s1 (make-src (lambda (dir) 1.0))))
-      (let ((val (src s1 (log0))))
-	(if (fneq val 1.0) (snd-display ";inf as sr-change: ~A" val))))
-    
     (let ((gen (make-granulate :expansion 2.0))
 	  (v0 (make-vct 1000))
 	  (rd (make-readin "oboe.snd" 0 4000 1 2048))
@@ -26297,11 +26276,11 @@ EDITS: 2
 		     (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color-with-catch .95 .95 .95)  '#(0 1) 3/4 'mus-error (sqrt -1.0) (make-delay 32)
 			   (lambda () #t) (current-module) (make-sound-data 2 3) :order 0 1 -1 (make-hook 2) #f #t #\c 0.0 1.0 -1.0 
 			   '() '3 4 2 8 16 32 64 (make-vector 0) '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0)
-			   12345678901234567890 (log0))))
+			   12345678901234567890)))
 		  (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color-with-catch .95 .95 .95)  '#(0 1) 3/4 'mus-error (sqrt -1.0) (make-delay 32)
 			(lambda () #t) (current-module) (make-sound-data 2 3) :order 0 1 -1 (make-hook 2) #f #t #\c 0.0 1.0 -1.0 
 			'() '3 4 2 8 16 32 64 (make-vector 0) '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0)
-			12345678901234567890 (log0)))
+			12345678901234567890))
 		 ;; generic args
 		 (for-each
 		  (lambda (func name)
@@ -26318,7 +26297,7 @@ EDITS: 2
 				(list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) '#(0 1) 3/4 'mus-error (sqrt -1.0)
 				      (lambda () #t) (make-sound-data 2 3) :order 0 1 -1 #f #t #\c 0.0 1.0 -1.0 
 				      '() '3 4 64 -64 (make-vector 0) '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0)
-				      12345678901234567890 (log0) (lambda (a) a)))
+				      12345678901234567890 (lambda (a) a)))
 			       (if (not (equal? (func gen) default-value))
 				   (catch #t
 					  (lambda ()
@@ -32206,20 +32185,14 @@ EDITS: 2
       (let* ((len (length open-files))
 	     (open-chance (max 0.0 (* (- 8 len) .125)))
 	     (close-chance (* len .125)))
-	(if (or (= len 0) (rs open-chance))
-	    (let* ((choice (random cur-dir-len))
-		   (name (list-ref cur-dir-files choice))
-		   (ht (mus-sound-header-type name))
-		   (df (mus-sound-data-format name))
-		   (fd (if (or (= ht mus-raw) (= df -1)) -1 (view-sound name))))
-	      (if (and (number? fd)
-		       (not (= fd -1)))
-		  (set! open-files (cons fd open-files))))
-	    (if (and (> len 0) (rs close-chance))
-		(let* ((choice (random (length open-files)))
-		       (fd (list-ref open-files choice)))
-		  (close-sound fd)
-		  (set! open-files (remove-if (lambda (a) (= a fd)) open-files)))))
+	(let* ((choice (random cur-dir-len))
+	       (name (list-ref cur-dir-files choice))
+	       (ht (mus-sound-header-type name))
+	       (df (mus-sound-data-format name))
+	       (fd (if (or (= ht mus-raw) (= df -1)) -1 (view-sound name))))
+	  (if (and (number? fd)
+		   (not (= fd -1)))
+	      (set! open-files (cons fd open-files))))
 	
 	(set! open-ctr (length open-files))
 	(if (= open-ctr 0)
@@ -32369,53 +32342,35 @@ EDITS: 2
 	   (let ((cfd (car open-files)))
 	     (set! (sync cfd) 1)
 	     (if (not (null? (cdr open-files))) (set! (sync (cadr open-files)) 1))
-	     (if (rs 0.5)
-		 (begin
-		   (safe-make-selection 1000 2000 cfd)
-		   (src-selection .5)
-		   (undo 1 cfd)))
-	     (if (rs 0.5)
-		 (begin
-		   (safe-make-selection 1000 2000 cfd)
-		   (src-selection -1.5)
-		   (undo 1 cfd)))
-	     (if (rs 0.5)
-		 (begin
-		   (safe-make-selection 1000 2000 cfd)
-		   (env-selection '(0 0 1 1 2 0))
-		   (undo 1 cfd)))
-	     (if (rs 0.5)
-		 (begin
-		   (safe-make-selection 1000 2000 cfd)
-		   (reverse-selection)
-		   (undo 1 cfd)))
-	     (if (rs 0.5)
-		 (begin
-		   (safe-make-selection 1000 2000 cfd)
-		   (filter-selection '(0 0 .1 1 1 0) 40)
-		   (undo 1 cfd)))
-	     (if (rs 0.5)
-		 (begin
-		   (safe-make-selection 1000 2000 cfd)
-		   (convolve-selection-with "oboe.snd")
-		   (undo 1 cfd)))
-	     (if (rs 0.5)
-		 (begin
-		   (safe-make-selection 1000 2000 cfd)
-		   (smooth-selection)
-		   (undo 1 cfd)))
-	     (if (rs 0.5)
-		 (begin
-		   (safe-make-selection 1000 2000 cfd)
-		   (scale-selection-by .5)
-		   (undo 1 cfd)))
-	     (if (rs 0.5)
-		 (begin
-		   (scale-selection-to .5)
-		   (reverse-selection)
-		   (undo 2)
-		   (src-selection '(0 .5 1 1))
-		   (undo)))
+	     (safe-make-selection 1000 2000 cfd)
+	     (src-selection .5)
+	     (undo 1 cfd)
+	     (safe-make-selection 1000 2000 cfd)
+	     (src-selection -1.5)
+	     (undo 1 cfd)
+	     (safe-make-selection 1000 2000 cfd)
+	     (env-selection '(0 0 1 1 2 0))
+	     (undo 1 cfd)
+	     (safe-make-selection 1000 2000 cfd)
+	     (reverse-selection)
+	     (undo 1 cfd)
+	     (safe-make-selection 1000 2000 cfd)
+	     (filter-selection '(0 0 .1 1 1 0) 40)
+	     (undo 1 cfd)
+	     (safe-make-selection 1000 2000 cfd)
+	     (convolve-selection-with "oboe.snd")
+	     (undo 1 cfd)
+	     (safe-make-selection 1000 2000 cfd)
+	     (smooth-selection)
+	     (undo 1 cfd)
+	     (safe-make-selection 1000 2000 cfd)
+	     (scale-selection-by .5)
+	     (undo 1 cfd)
+	     (scale-selection-to .5)
+	     (reverse-selection)
+	     (undo 2)
+	     (src-selection '(0 .5 1 1))
+	     (undo)
 	     (revert-sound cfd)
 	     (if (not (null? (cdr open-files))) (revert-sound (cadr open-files)))))
 	  
@@ -32595,21 +32550,19 @@ EDITS: 2
 		(let ((uval (random 3)))
 		  (set! (channel-style cfd) uval)
 		  (if (not (= uval (channel-style cfd))) (snd-display ";channel-style: ~A ~A?" uval (channel-style cfd)))))
-	    (if (rs 0.5) (src-sound 2.5 1.0 cfd))
-	    (if (rs 0.5) (src-sound -2.5 1.0 cfd))
-	    (if (rs 0.5) (src-sound .5 1.0 cfd))
-	    (if (rs 0.5) (revert-sound cfd))
-	    (if (rs 0.5) (src-sound -.5 1.0 cfd))
-	    (if (rs 0.5) (src-sound '(0 .5 1 1.5) 1.0 cfd))
-	    (if (rs 0.5) (if (> (frames cfd) 0) (src-sound (make-env '(0 .5 1 1.5) :length (frames cfd)) 1.0 cfd)))
-	    (if (rs 0.5) (revert-sound cfd))
-	    (if (rs 0.5) (filter-sound '(0 1 .2 0 .5 1 1 0) 20 cfd))      ; FIR direct form
-	    (if (rs 0.5) (filter-sound '(0 0 .1 0 .11 1 .12 0 1 0) 2048 cfd))
-	    (if (rs 0.5) (env-sound '(0 0 .5 1 1 0) 0 (frames cfd) 1.0 cfd))
-	    (if (rs 0.5)
-		(begin
-		  (insert-sample 1200 .1 cfd)
-		  (if (fneq (sample 1200 cfd) .1) (snd-display ";insert-sample(looped): ~A?" (sample 1200 cfd)))))
+	    (src-sound 2.5 1.0 cfd)
+	    (src-sound -2.5 1.0 cfd)
+	    (src-sound .5 1.0 cfd)
+	    (revert-sound cfd)
+	    (src-sound -.5 1.0 cfd)
+	    (src-sound '(0 .5 1 1.5) 1.0 cfd)
+	    (if (> (frames cfd) 0) (src-sound (make-env '(0 .5 1 1.5) :length (frames cfd)) 1.0 cfd))
+	    (revert-sound cfd)
+	    (filter-sound '(0 1 .2 0 .5 1 1 0) 20 cfd)
+	    (filter-sound '(0 0 .1 0 .11 1 .12 0 1 0) 2048 cfd)
+	    (env-sound '(0 0 .5 1 1 0) 0 (frames cfd) 1.0 cfd)
+	    (insert-sample 1200 .1 cfd)
+	    (if (fneq (sample 1200 cfd) .1) (snd-display ";insert-sample(looped): ~A?" (sample 1200 cfd)))
 	    (revert-sound cfd))
 	  
 	  (let ((cfd (open-sound "obtest.snd")))
@@ -32821,8 +32774,7 @@ EDITS: 2
 	  
 	  (for-each
 	   (lambda (snd)
-	     (if (rs .5)
-		 (set! (sync snd) (inexact->exact (floor (random 3)))))
+	     (set! (sync snd) (inexact->exact (floor (random 3))))
 	     (update-lisp-graph snd))
 	   (sounds))
 	  (add-hook! graph-hook superimpose-ffts)
@@ -32830,7 +32782,7 @@ EDITS: 2
 	      ((= i 10))
 	    (for-each
 	     (lambda (snd)
-	       (if (and (> (frames snd) 0) (rs .5))
+	       (if (> (frames snd) 0)
 		   (let* ((dur (floor (/ (frames snd) (srate snd))))
 			  (start (max 0.0 (min (- dur .1) (random dur)))))
 		     (if (> dur 0.0) 
@@ -32856,7 +32808,7 @@ EDITS: 2
 			    
 			    (if index
 				(if (equal? minval #f)
-				    (setfnc (rs 0.5) index)
+				    (setfnc #t index)
 				    (if (exact? minval)
 					(if (equal? name #t)
 					    (setfnc (inexact->exact
@@ -32867,7 +32819,7 @@ EDITS: 2
 					    (setfnc (+ minval (inexact->exact (floor (* (- maxval minval) (random 1.0))))) index))
 					(setfnc (+ minval (* (- maxval minval) (random 1.0))) index)))
 				(if (equal? minval #f)
-				    (setfnc-1 (rs 0.5))
+				    (setfnc-1 #t)
 				    (if (exact? minval)
 					(if (equal? name #t)
 					    (setfnc-1 (inexact->exact
@@ -64528,15 +64480,15 @@ EDITS: 1
   
   (set! (with-background-processes) #t)
   
-  (if (provided? 'snd-s7)
-      (do ((i 0 (+ i 1)))
-	  ((= i tests))
+  (if (and (provided? 'snd-s7)
+	   (provided? 'gmp))
+      (begin
 	(load "s7test.scm")
-	(if all-args (s7-test-at-random))
-	(gc)))
+	(if all-args (s7-test-at-random))))
 
 
   (if (and (provided? 'gsl)
+	   (provided? 'gmp)
 	   (provided? 'snd-s7))
       (begin
 
@@ -66066,9 +66018,6 @@ EDITS: 1
 		  (check-error-tag 'wrong-type-arg (lambda () (play 0 #f #f #f #f #f (lambda () #f))))
 		  (check-error-tag 'out-of-range (lambda () (set! (reverb-control-length-bounds ind) (list .1 .01))))
 		  (check-error-tag 'out-of-range (lambda () (set! (reverb-control-scale-bounds ind) (list .1 .01))))
-		  (let ((eds (edits)))
-		    (catch #t (lambda () (undo (log0))) (lambda args args))
-		    (if (not (equal? (edits) eds)) (snd-display ";undo -inf): ~A" (edits))))
 		  (check-error-tag 'wrong-type-arg (lambda () (scale-by #f)))
 		  (check-error-tag 'wrong-type-arg (lambda () (scale-by (make-mixer 2 .1 .1 .2 .2))))
 		  (check-error-tag 'wrong-type-arg (lambda () (src-sound 3.0 1.0 #t)))
@@ -66192,7 +66141,7 @@ EDITS: 1
 			  (lambda () (n arg1 arg2))
 			  (lambda args (car args))))
 		 make-procs))
-	      (list 1.5 "/hiho" (list 0 1) 1234 vct-3 :wave -1 0 1 #f #t '() vector-0 12345678901234567890 delay-32 (log0))))
+	      (list 1.5 "/hiho" (list 0 1) 1234 vct-3 :wave -1 0 1 #f #t '() vector-0 12345678901234567890 delay-32)))
 	   keyargs)
 	  
 	  (if (and all-args (= test-28 0))
@@ -66209,9 +66158,9 @@ EDITS: 1
 				   (lambda () (n arg1 arg2 arg3))
 				   (lambda args (car args))))
 			  make-procs))
-		       (list 1.5 "/hiho" (list 0 1) 1234 vct-3 :wave -1 0 1 #f #t '() vector-0 12345678901234567890 (log0) delay-32)))
+		       (list 1.5 "/hiho" (list 0 1) 1234 vct-3 :wave -1 0 1 #f #t '() vector-0 12345678901234567890 delay-32)))
 		    keyargs))
-		 (list 1.5 "/hiho" (list 0 1) 1234 vct-3 :wave -1 0 1 #f #t '() vector-0 12345678901234567890 (log0) delay-32))
+		 (list 1.5 "/hiho" (list 0 1) 1234 vct-3 :wave -1 0 1 #f #t '() vector-0 12345678901234567890 delay-32))
 		
 		(for-each
 		 (lambda (arg1)
@@ -66228,9 +66177,9 @@ EDITS: 1
 				      (lambda args (car args))))
 			     make-procs))
 			  keyargs))
-		       (list 1.5 "/hiho" (list 0 1) 1234 vct-3 :wave -1 0 1 #f #t '() vector-0 12345678901234567890 (log0) delay-32)))
+		       (list 1.5 "/hiho" (list 0 1) 1234 vct-3 :wave -1 0 1 #f #t '() vector-0 12345678901234567890 delay-32)))
 		    keyargs))
-		 (list 1.5 "/hiho" (list 0 1) 1234 vct-3 :wave -1 0 1 #f #t '() vector-0 12345678901234567890 (log0) delay-32))))
+		 (list 1.5 "/hiho" (list 0 1) 1234 vct-3 :wave -1 0 1 #f #t '() vector-0 12345678901234567890 delay-32))))
 	  
 	  (gc)(gc)
 	  
@@ -66254,10 +66203,10 @@ EDITS: 1
 	  (let* ((main-args (list 1.5 "/hiho" (list 0 1) 1234 vct-3 color-95  '#(0 1) 3/4 'mus-error (sqrt -1.0) delay-32
 				 (lambda () #t) vct-5 sound-data-23 :order 0 1 -1 a-hook #f #t #\c 0.0 1.0 -1.0 
 				 '() '3 2 8 64 -64 vector-0 '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0) car-main cadr-main 
-				 12345678901234567890 (log0) (lambda (a) #f) abs))
+				 12345678901234567890 (lambda (a) #f) abs))
 		 (few-args (list 1.5 "/hiho" (list 0 1) 1234 vct-3 color-95 '#(0 1) 3/4 -1.0
-				 (sqrt -1.0) delay-32 :feedback -1 0 1 3 64 -64 #f #t '() vector-0 12345678901234567890 (log0)))
-		 (fewer-args (list "/hiho" 1234 vct-3 -1.0 (sqrt -1.0) delay-32 -1 0 1 #f #t '() 12345678901234567890 (log0)))
+				 (sqrt -1.0) delay-32 :feedback -1 0 1 3 64 -64 #f #t '() vector-0 12345678901234567890))
+		 (fewer-args (list "/hiho" 1234 vct-3 -1.0 (sqrt -1.0) delay-32 -1 0 1 #f #t '() 12345678901234567890))
 		 (less-args (if all-args main-args few-args)))
 
 	    ;; ---------------- 1 Arg
@@ -66503,7 +66452,7 @@ EDITS: 1
 					 (if (eq? err 'wrong-number-of-args)
 					     (snd-display ";procs6: ~A ~A" err (procedure-property n 'documentation)))))
 				     procs6))
-				  (list 1.5 "/hiho" -1234 -1 0 #f #t '() vct-3 (log0) delay-32)))
+				  (list 1.5 "/hiho" -1234 -1 0 #f #t '() vct-3 delay-32)))
 			       (list 1.5 "/hiho" -1234 0 vct-5 #f #t delay-32)))
 			    (list 1.5 "/hiho" -1234 vct-3 #f #t delay-32)))
 			 (list 1.5 "/hiho" -1234 vct-3 -1 #f #t delay-32)))
@@ -66538,7 +66487,7 @@ EDITS: 1
 					       (if (eq? err 'wrong-number-of-args)
 						   (snd-display ";procs8: ~A ~A" err (procedure-property n 'documentation)))))
 					   procs8))
-					(list 1.5 -1 1234 #f '() (log0) delay-32)))
+					(list 1.5 -1 1234 #f '() delay-32)))
 				     (list "/hiho" -1 1234 '() vct-5 delay-32)))
 				  (list #t #f -1 1234 '() vct-3 delay-32)))
 			       (list (sqrt -1.0) 1234 0 -1 '() delay-32)))

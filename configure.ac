@@ -32,8 +32,8 @@ AC_DEFINE_UNQUOTED(SND_HOST, "$host")
 #   --with-motif          use Motif (the default)
 #   --with-static-motif   use Motif statically loaded (for RPM generation)
 #   --with-gtk            use Gtk+	
-#   --with-alsa           use ALSA if possible
-#   --with-oss            use OSS (the default)
+#   --with-alsa           use ALSA if possible (the default)
+#   --with-oss            use OSS 
 #   --with-jack           use Jack
 #   --with-static-alsa    use ALSA statically loaded (for RPM generation)
 #   --with-snd-as-widget  make Snd a loadable widget, not a standalone program
@@ -1790,8 +1790,8 @@ if test "$AUDIO_SYSTEM" != None ; then
 else
 
 if test "$with_alsa" = yes && test "$with_oss" = yes ; then
-  with_alsa=no
-  AC_MSG_WARN([You asked for both ALSA and OSS -- OSS will be used])
+  with_oss=no
+  AC_MSG_WARN([You asked for both ALSA and OSS -- ALSA will be used])
 fi
 
 if test "$with_jack" = yes ; then 
@@ -1832,15 +1832,18 @@ case "$host" in
 	  SO_FLAGS="-fPIC $SO_FLAGS"
         fi
 
-        AUDIO_SYSTEM=OSS
+        AUDIO_SYSTEM=ALSA
+	if test "$with_oss" = yes ; then 
+          AUDIO_SYSTEM=OSS
+	else
 
-	if test "$with_alsa" = yes || test "$with_static_alsa" = yes ; then
           if test "$ac_cv_header_alsa_asoundlib_h" = yes ; then
             AC_CHECK_LIB(asound, main,
                AUDIO_SYSTEM=ALSA,
                [AC_MSG_WARN(can't find the ALSA library)])
           else
             AC_MSG_WARN(can't find the ALSA header files)
+	    AUDIO_SYSTEM=OSS
           fi
 	fi
 
@@ -1917,6 +1920,7 @@ case "$host" in
 		;;
 	    OSS)
 		AC_DEFINE(HAVE_OSS)
+		AUDIO_SYSTEM=OSS
 		;;
 	esac
 	;;

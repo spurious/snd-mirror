@@ -548,6 +548,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+2-Jul:   default audio in Linux is now ALSA.\n\
 28-May:  Snd 10.6\n\
 17-Apr:  Snd 10.5\n\
 ",
@@ -3225,12 +3226,11 @@ static int levenstein(const char *s1, const char *s2)
 
 static int help_name_to_url(const char *name)
 {
-  int i, l = 0, u = HELP_NAMES_SIZE - 1;
-  while (true)
+  /* trying to be fancy here just causes trouble -- this is not a function that needs to be fast! */
+  int i;
+  for (i = 0; i < HELP_NAMES_SIZE; i++)
     {
       int comp;
-      if (u < l) return(-1);
-      i = (l + u) / 2;
 #if HAVE_RUBY
       if (name[0] == '$')
 	comp = STRCMP(help_names[i], (const char *)(name + 1));
@@ -3239,9 +3239,6 @@ static int help_name_to_url(const char *name)
       comp = STRCMP(help_names[i], name);
 #endif
       if (comp == 0) return(i);
-      if (comp < 0)
-	l = i + 1;
-      else u = i - 1;
     }
   return(-1);
 }
