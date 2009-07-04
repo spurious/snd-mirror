@@ -329,16 +329,15 @@ static int main_alsa(int argc, char *argv[])
   int afd[MAX_SLOTS];
   short *out_buf[MAX_SLOTS];
   float val[MAX_SLOTS];
-  int ival[MAX_SLOTS];
   int afd0, afd1;
-  char *name;
+  char *name = NULL;
   int base, curframes;
   int allocated;
   int out_devs[MAX_SLOTS];
   int out_chans[MAX_SLOTS];
   int out_format[MAX_SLOTS];
   int out_bytes[MAX_SLOTS];
-  int samples_per_chan;
+  int samples_per_chan = 0;
   int last_device;
   int devices[MAX_SLOTS];
   int available_chans[MAX_SLOTS];

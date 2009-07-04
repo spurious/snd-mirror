@@ -1,13 +1,24 @@
-Snd 10.6
+Snd 10.7
 
-more Ruby and Forth improvements from Mike.
+Mike made many improvements throughout Snd.
 
-sndlib.vsproj and other files for MS C sndlib from Rick and Andrew Burnson.
+generators.scm: moving-fft, moving-scentroid, moving-autocorrelation, moving-pitch.
 
-polyoid-env generator (generators.scm).
+dlocsig.scm works now in s7, but not guile 1.9.0.
 
-run improved.
+clm: added rectangular->magnitudes (ignores phases)
 
-checked: mpc 0.6, gmp 4.3.0|1, sbcl 1.0.28, gtk 2.17.0, fth 1.2.4
+ALSA is now the default audio choice in Linux (this affects CLM/Sndlib also).
+  This is a slight problem in Clisp because there's no way to tell that 
+  we're in Linux, so in that case, push :alsa on *features* before loading
+  all.lisp.
 
-Thanks!: Mike Scholz, Thomas Baruchel, Rick, Andrew Burnson.
+Checked: gtk 2.17.1|2, sbcl 1.0.29, Fedora Core 11, guile 1.9.0
+
+in the new guile, %delay and %filter are not defined, and there are many changes
+  due to the guile compiler, so debug.scm has been removed, as well as the with-sound
+  debugging stuff (ws.scm) that depended on it.  1.9.0 doesn't handle off_t cleanly,
+  so you'll actually need 1.9.1.  Due to new restrictions in the syntax it accepts,
+  this version of guile also can't handle generators.scm. And run doesn't work.
+
+Thanks!: Mike Scholz, Jose Padovani, Kjetil Matheussen, Rick Taube.

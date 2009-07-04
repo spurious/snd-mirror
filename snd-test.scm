@@ -66625,8 +66625,7 @@ EDITS: 1
 	      (set! *clm-table-size* 512)
 	      (set! *clm-file-buffer-size* (* 1024 1024))
 	      (if (and (file-exists? "away.scm")
-		       (file-exists? "away.frb")
-		       have-log-0) ; 1.6.n dies at #o2247166 with an uncatchable fatal (exit) error!!!
+		       (file-exists? "away.frb"))
 		  (begin
 		    (let ((val (simple-time (load "away.scm"))))
 		      (snd-display ";away: ~A" val))
