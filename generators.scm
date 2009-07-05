@@ -133,9 +133,11 @@
 				  (and fld (string-append "-" fld)))))
 
 	 ;; using append to splice out unwanted entries
-	 (methods `(append ;(if ,(not (null? original-methods))  
+	 (methods `(append (if (provided? 'snd-s7)
 			       ,original-methods
-			       ;(list))
+			       (if ,(not (null? original-methods))  
+				   ,original-methods
+				   (list)))
 			   
 			   (if ,phase-field-name
 			       (list 

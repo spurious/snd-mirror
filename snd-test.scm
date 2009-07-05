@@ -31,7 +31,7 @@
 ;;;  test all done                               [66964]
 ;;;  test the end                                [67211]
 
-(use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
+(use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs))
 
 (define tests 1)
 (define keep-going #f)
@@ -50,9 +50,6 @@
       (define O_RDWR 2)
       (define O_APPEND 1024)
       (define O_RDONLY 0)
-
-      (define (open-pipe . args) #f)
-      (define (close-pipe . args) #f)
 
       (define (copy-file src dest) (system (string-append "cp " src " " dest)))
 
@@ -3230,23 +3227,24 @@
 	
 	(let* ((vals (make-vct 32))
 	       (err (mus-audio-mixer-read mus-audio-microphone mus-audio-amp 0 vals)))
-	  (if (= err -1) (snd-display ";mus-audio-mixer-read?"))
-	  (for-each 
-	   (lambda (field)
-	     (for-each
-	      (lambda (device)
-		(if (not (= (mus-audio-mixer-read device field 0 vals) -1))
-		    (mus-audio-mixer-write device field 0 vals)))
-	      (list mus-audio-default mus-audio-duplex-default mus-audio-line-out mus-audio-line-in mus-audio-microphone
-		    mus-audio-speakers mus-audio-dac-out mus-audio-adat-in mus-audio-aes-in mus-audio-digital-in
-		    mus-audio-digital-out mus-audio-adat-out mus-audio-aes-out mus-audio-dac-filter mus-audio-mixer
-		    mus-audio-line1 mus-audio-line2 mus-audio-line3 mus-audio-aux-input mus-audio-cd mus-audio-aux-output
-		    mus-audio-spdif-in mus-audio-spdif-out)))
-	   (list mus-audio-amp mus-audio-srate mus-audio-channel mus-audio-format mus-audio-port mus-audio-imix
-		 mus-audio-igain mus-audio-reclev mus-audio-pcm mus-audio-pcm2 mus-audio-ogain mus-audio-line
-		 mus-audio-line1 mus-audio-line2 mus-audio-line3 mus-audio-cd
-		 mus-audio-synth mus-audio-bass mus-audio-treble mus-audio-direction mus-audio-samples-per-channel))
-	  )
+	  (if (= err -1) 
+	      (snd-display ";mus-audio-mixer-read?")
+	      (for-each 
+	       (lambda (field)
+		 (for-each
+		  (lambda (device)
+		    (if (not (= (mus-audio-mixer-read device field 0 vals) -1))
+			(mus-audio-mixer-write device field 0 vals)))
+		  (list mus-audio-default mus-audio-duplex-default mus-audio-line-out mus-audio-line-in mus-audio-microphone
+			mus-audio-speakers mus-audio-dac-out mus-audio-adat-in mus-audio-aes-in mus-audio-digital-in
+			mus-audio-digital-out mus-audio-adat-out mus-audio-aes-out mus-audio-dac-filter mus-audio-mixer
+			mus-audio-line1 mus-audio-line2 mus-audio-line3 mus-audio-aux-input mus-audio-cd mus-audio-aux-output
+			mus-audio-spdif-in mus-audio-spdif-out)))
+	       (list mus-audio-amp mus-audio-srate mus-audio-channel mus-audio-format mus-audio-port mus-audio-imix
+		     mus-audio-igain mus-audio-reclev mus-audio-pcm mus-audio-pcm2 mus-audio-ogain mus-audio-line
+		     mus-audio-line1 mus-audio-line2 mus-audio-line3 mus-audio-cd
+		     mus-audio-synth mus-audio-bass mus-audio-treble mus-audio-direction mus-audio-samples-per-channel))
+	      ))
 	
 	(if (file-exists? (string-append (or sf-dir "") "a.sf2"))
 	    (let ((fil (open-sound (string-append (or sf-dir "") "a.sf2"))))
@@ -3520,7 +3518,7 @@
 		  (mus-sound-close-input fd)
 		  (let ((v0 0.0)
 			(v1 0.0))
-		    (catch #t
+		    (catch 'read-write-error
 			   (lambda ()
 			     (run
 			      (lambda ()
@@ -3532,6 +3530,7 @@
 					(begin
 					  (set! v0 (sound-data-ref sdata k i))
 					  (set! v1 (sound-data-ref ndata k i))
+					  ;(snd-display ";v0: ~A, v1: ~A, diff: ~A, k: ~A, i: ~A" v0 v1 (- v1 v0) k i)
 					  (throw 'read-write-error))))))))
 			   (lambda args 
 			     (begin 
@@ -30449,46 +30448,6 @@ EDITS: 2
 (define clm_buffer_added #f)
 
 (define (snd_test_13)
-  (define read-or-run
-    (lambda (fil)
-      (let ((val (peek-char fil)))
-	(or (and val (read-char fil))
-	    (c-g?)
-	    (read-or-run fil)))))
-  
-  (define execute-and-wait
-    (lambda (cmd)
-      (let ((fil (open-pipe cmd "r")))
-	(do ((val (read-or-run fil) (read-or-run fil)))
-	    ((or (eq? val #t) (eof-object? val))
-	     (eq? val #t))
-	  (write-char val (current-output-port)))
-	(close-pipe fil))))
-  
-  (define loop-through-files
-    (lambda (description make-cmd select)
-      (let* ((data (if select 
-		       (selection-to-temps mus-next mus-out-format) 
-		       (sound-to-temps mus-next mus-out-format)))
-	     (input-names (temp-filenames data))
-	     (files (vector-length input-names))
-	     (output-names (make-vector files ""))
-	     (stopped #f))
-	(do ((i 0 (+ 1 i)))
-	    ((or stopped (= i files)))
-	  (vector-set! output-names i (string-append (tmpnam) ".snd"))
-	  (set! stopped (execute-and-wait (make-cmd (vector-ref input-names i) (vector-ref output-names i)))))
-	(if select 
-	    (temps-to-selection data output-names description)
-	    (temps-to-sound data output-names description)))))
-  
-  (define copyfile-1
-    (lambda (select)
-      (loop-through-files
-       "(cp)"
-       (lambda (in out)
-	 (string-append "cp " in " " out))
-       select)))
   
   (define (test-hooks)
     (define (arg0) 32)
@@ -52743,7 +52702,7 @@ EDITS: 1
 	  (if (>= segctr seglen)
 	      (begin
 		(set! segctr 0)
-		(if (fneq segmax (vector-ref vals valctr))
+		(if (> (abs (- segmax (vector-ref vals valctr))) .003)
 		    (begin
 					;(if (< unhappy 2)
 		      (snd-print (format #f "~A: seg ~D differs: ~A ~A~%" name valctr segmax (vector-ref vals valctr)));)
@@ -64977,7 +64936,7 @@ EDITS: 1
 			    (set! vector-0 (make-iir-filter 3 (vct 1 2 3)))
 			    (set! vct-3 (make-ncos))
 			    (set! car-main (make-env '(0 0 1 1) :length 101))
-			    (set! cadr-main (make-locsig :degree 90))
+			    (set! cadr-main (make-nsin 100 4))
 			    (set! sound-data-23 (make-ssb-am 440))
 			    (set! a-hook (make-nsin 100 3)))
 			  (if (= test-28 5)
@@ -64986,7 +64945,7 @@ EDITS: 1
 				(set! color-95 (make-color-with-catch .9 .9 .9))
 				(set! vector-0 (make-vector 1))
 				(set! car-main (make-moving-average 3))
-				(set! cadr-main (make-nsin))
+				(set! cadr-main (make-oscil 440))
 				(set! a-hook (make-mixer 2 .1 .2 .1 .2))
 				))))))
 

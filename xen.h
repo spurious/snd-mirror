@@ -2341,7 +2341,13 @@ void xen_no_ext_lang_check_args(const char *name, int args, int req_args, int op
  #define XEN_WRAP_C_POINTER(a)         C_TO_XEN_OFF_T((off_t)(a)) 
  #define XEN_UNWRAP_C_POINTER(a)       XEN_TO_C_OFF_T(a) 
 #endif 
-#define XEN_WRAPPED_C_POINTER_P(a)     XEN_EXACT_P(a) 
+
+#if HAVE_GUILE
+  #define XEN_WRAPPED_C_POINTER_P(a)   (XEN_NUMBER_P(a) && XEN_EXACT_P(a))
+  /* guile assumes the argument to exact? is a number and throws an error otherwise */
+#else
+  #define XEN_WRAPPED_C_POINTER_P(a)   XEN_EXACT_P(a)
+#endif
 
 
 #ifdef __cplusplus

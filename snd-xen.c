@@ -7,6 +7,8 @@
  *              filter is defined in srfi-1 so we need protection against that
  *
  *   In Guile, frame? is %frame?
+ *             we redefine guile's random to accept 0 or 0.0 as its 1st argument
+ *             we redefine log to take a 2nd arg.
  *   In Ruby, rand is kernel_rand.
  *   In Forth, Snd's exit is named snd-exit.
  */
@@ -3104,6 +3106,19 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   XEN_EVAL_C_STRING("(define redo-edit redo)");        /* consistency with Ruby */
   XEN_EVAL_C_STRING("(define undo-edit undo)");
 
+  XEN_EVAL_C_STRING("(define %random random)");        /* CL/Guile random is inexcusably stupid */
+  XEN_EVAL_C_STRING("(define (random . args)\
+                       (if (and (not (null? args))\
+                                (zero? (car args)))\
+                           (car args)\
+                           (apply %random args)))");
+
+  XEN_EVAL_C_STRING("(define %log log)");
+  XEN_EVAL_C_STRING("(define (log . args)\
+                       (if (not (null? (cdr args)))\
+                           (/ (%log (car args)) (%log (cadr args)))\
+                           (%log (car args))))");
+
   /* from ice-9/r4rs.scm but with output to snd listener */
   XEN_EVAL_C_STRING("(define *snd-loaded-files* '())");
   XEN_EVAL_C_STRING("(define *snd-remember-paths* #t)");
@@ -3122,15 +3137,9 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
                                  (if (char=? (string-ref curfile i) #\\/)\
 	                             (set! last-slash i)))\
                                      (let ((new-path (substring curfile 0 last-slash)))\
-                                       (if (and (not (member new-path %load-path))\
-                                                (not (string=? (substring curfile (max 0 (- last-slash 5)) last-slash) \"ice-9\")))\
+                                       (if (not (member new-path %load-path))\
 	                                   (set! %load-path (append %load-path (list new-path)))))))))");
-
-  /* the "ice-9" business is to keep us from loading ice-9/debug.scm when we intend our own debug.scm.
-   *   load-from-path can still be fooled, but the user will have to work at it.
-   *   If you load Guile's debug.scm by mistake (set! %load-verbosely #t) to see Snd's names get clobbered!
-   * 
-   * one gotcha here is that when an initialization file is loaded, and we're using cons to reset the load-path,
+  /* one gotcha here is that when an initialization file is loaded, and we're using cons to reset the load-path,
    *   the user's home directory gets placed on the load list, pushing the cwd to second; hence append above
    */
 
