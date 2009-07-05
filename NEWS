@@ -11,7 +11,8 @@ clm: added rectangular->magnitudes (ignores phases)
 ALSA is now the default audio choice in Linux (this affects CLM/Sndlib also).
   This is a slight problem in Clisp because there's no way to tell that 
   we're in Linux, so in that case, push :alsa on *features* before loading
-  all.lisp.
+  all.lisp.  I've noticed playback can hang or simply fail if the pulseaudio
+  server is running.  Linux audio is a never-ending pain.
 
 Checked: gtk 2.17.1|2, sbcl 1.0.29, Fedora Core 11, guile 1.9.0
 
@@ -20,5 +21,8 @@ in the new guile, %delay and %filter are not defined, and there are many changes
   debugging stuff (ws.scm) that depended on it.  1.9.0 doesn't handle off_t cleanly,
   so you'll actually need 1.9.1.  Due to new restrictions in the syntax it accepts,
   this version of guile also can't handle generators.scm. And run doesn't work.
+
+as mentioned previously, the new ruby (1.9) segfaults on any attempt to raise
+  an error.
 
 Thanks!: Mike Scholz, Jose Padovani, Kjetil Matheussen, Rick Taube.
