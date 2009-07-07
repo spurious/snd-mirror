@@ -6624,7 +6624,7 @@ int mus_audio_mixer_read(int dev1, int field, int chan, float *val)
       size = sizeof(Float32);
       err = AudioDeviceGetProperty(dev, chan + 1, false, kAudioDevicePropertyVolumeScalar, &size, &amp);
       if (err == noErr)
-	val[0] = (Float)amp;
+	val[0] = (float)amp;
       else val[0] = 0.0;
       break;
     case MUS_AUDIO_CHANNEL: 

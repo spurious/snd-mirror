@@ -254,83 +254,83 @@ is included in the <a href="http://ccrma.stanford.edu/planetccrma/software/">Pla
 <td><a href="#closefile">Close</a></td>
 <td><a href="#undoredo">Redo</a></td>
 <td><a href="extsnd.html#lisplistener">Open listener</a></td>
-<td><a href="#zoomoption">Zoom focus</a></td>
+<td><a href="#saveoptions">Save options</a></td>
 <td><a href="extsnd.html#appearance">Customization</a></td>
 </tr>
 <tr>
 <td><a href="#savefile">Save</a></td>
 <td><a href="#menufind">Find</a></td>
 <td><a href="#mixdialog">Mixes</a></td>
-<td><a href="#saveoptions">Save options</a></td>
+<td><a href="#savedstate">Save session</a></td>
 <td><a href="#controls">Control panel</a></td>
 </tr>
 <tr>
 <td><a href="#savefile">Save as</a></td>
 <td><a href="#editcut">Cut</a></td>
 <td><a href="#regionbrowser">Regions</a></td>
-<td><a href="#savedstate">Save session</a></td>
+<td><a href="#preferencesbrowser">Preferences</a></td>
 <td><a href="#builtinkeys">Key bindings</a></td>
 </tr>
 <tr>
 <td><a href="#revertfile">Revert</a></td>
 <td><a href="#editcut">Paste</a></td>
 <td><a href="#viewfiles">Files</a></td>
-<td><a href="#preferencesbrowser">Preferences</a></td>
+<td></td>
 <td><a href="#recordfile">Record</a></td>
 </tr>
 <tr>
 <td><a href="#mixingfiles">Mix</a></td>
 <td><a href="#editcut">Mix Selection</a></td>
-<td><a href="#colorbrowser">Color</a></td>
+<td><a href="#colorbrowser">Color/Orientation</a></td>
 <td></td>
 <td><a href="#menuplay">Play</a></td>
 </tr>
 <tr>
 <td><a href="#insertfile">Insert</a></td>
 <td><a href="#cxp">Play Selection</a></td>
-<td><a href="#orientationbrowser">Orientation</a></td>
+<td><a href="#viewdots">Graph style</a></td>
 <td></td>
 <td><a href="#savefile">Save</a></td>
 </tr>
 <tr>
 <td><a href="#updatefile">Update</a></td>
 <td><a href="#cxw">Save Selection</a></td>
-<td><a href="#viewdots">Graph style</a></td>
+<td><a href="extsnd.html#withverbosecursor">Verbose cursor</a></td>
 <td></td>
 <td><a href="#mixingfiles">Mix</a></td>
 </tr>
 <tr>
 <td><a href="#newfile">New</a></td>
 <td><a href="#menuselectall">Select all</a></td>
-<td><a href="extsnd.html#withverbosecursor">Verbose cursor</a></td>
+<td><a href="#unitebutton">Channel style</a></td>
 <td></td>
 <td><a href="#speed">Resample</a></td>
 </tr>
 <tr>
 <td><a href="#recordfile">Record</a></td>
 <td><a href="#editenvelope">Edit Envelope</a></td>
-<td><a href="#unitebutton">Channel style</a></td>
+<td><a href="#viewy0">Show y=0</a></td>
 <td></td>
 <td><a href="#viewfft">FFT</a></td>
 </tr>
 <tr>
 <td><a href="#openfile">View</a></td>
 <td><a href="#editheader">Edit Header</a></td>
-<td><a href="#viewy0">Show y=0</a></td>
+<td><a href="extsnd.html#xaxisstyle">X axis units</a></td>
 <td></td>
 <td><a href="#filtercontrol">Filter</a></td>
 </tr>
 <tr>
 <td><a href="#printfile">Print</a></td>
 <td></td>
-<td><a href="extsnd.html#xaxisstyle">X axis units</a></td>
+<td><a href="extsnd.html#showaxes">Axes</a></td>
 <td></td>
 <td><a href="#reverb">Reverb</a></td>
 </tr>
 <tr>
 <td><a href="#exitfile">Exit</a></td>
 <td></td>
-<td><a href="extsnd.html#showaxes">Axes</a></td>
+<td><a href="#zoomoption">Zoom focus</a></td>
 <td></td>
 <td><a href="#ampenvs">Envelope</a></td>
 </tr>
@@ -796,13 +796,13 @@ flushed (but see the function check-for-unsaved-edits in <a href="sndscm.html#ch
 <tr><td><a href="#mixdialog">Mixes</a></td><td>mix browser</td><td></td></tr>
 <tr><td><a href="#regionbrowser">Regions</a></td><td>a browser to examine the region stack</td><td></td></tr>
 <tr><td><a href="#viewfiles">Files</a></td><td>a browser of interesting files</td><td></td></tr>
-<tr><td><a href="#colorbrowser">Color</a></td><td>a browser that chooses color maps</td><td></td></tr>
-<tr><td><a href="#orientationbrowser">Orientation</a></td><td>a browser that sets spectrogram and wavogram orientation</td><td></td></tr>
+<tr><td><a href="#colorbrowser">Color/Orientation</a></td><td>a browser for color and viewing-orientation choices</td><td></td></tr>
 <tr><td><a href="#unitebutton">Channel style</a></td><td>separate, combined or superimposed channels</td><td></td></tr>
 <tr><td><a href="#viewdots">Graph style</a></td><td>use dots, lines, filled polygons etc in the data displays</td><td></td></tr>
 <tr><td><a href="extsnd.html#withverbosecursor">Verbose cursor</a></td><td>describe the current sample every time the cursor moves</td><td></td></tr>
 <tr><td><a href="#viewy0">Show y=0</a></td><td>show or hide the y=0 line</td><td></td></tr>
 <tr><td><a href="extsnd.html#xaxisstyle">X axis units</a></td><td>x axis labelled in seconds, samples, percent of total</td><td></td></tr>
+<tr><td><a href="#zoomoption">Zoom focus</a></td><td>where to focus during zooms</td></tr>
 </table>
 
         <!-- I(control panel):M(View: Show controls)(controls) --><!-- I(control panel):K(C-x C-o, C-x C-c)(cxco) -->
@@ -826,9 +826,8 @@ To open or close the listener, use Open listener.
 </p>
         <!-- I(dots or lines):A(viewdots) --><!-- I(y=0 line):A(viewy0) -->
 
-<p>The <A class=def NAME="colorbrowser">Color</a> and 
-<A class=def NAME="orientationbrowser">Orientation</a>
-options activate windows that set various aspects of the sonogram, spectrogram,
+<p>The <A class=def NAME="colorbrowser">Color/Orientation</a> option
+activates a window that sets various aspects of the sonogram, spectrogram,
 and wavogram displays.  There are fifteen or so colormaps available along with
 ways to invert the maps, and scale (darken) them differently according to screen or
 printer characteristics.
@@ -879,7 +878,6 @@ about each file as the mouse passes over it.
 <table border=8 bordercolor="lightgreen" hspace=20>
 <tr><th></th><th>Options Menu</th><th></th></tr>
 <tr><td width=160><a href="#viewfft">Transform options</a></td><td>various transform (FFT, etc) choices</td></tr>
-<tr><td><a href="#zoomoption">Zoom focus</a></td><td>where to focus during zooms</td></tr>
 <tr><td><a href="#saveoptions">Save options</a></td><td>save current state of various variables</td></tr>
 <tr><td><a href="#savedstate">Save session</a></td><td>save current state</td></tr>
 <tr><td><a href="#preferencesbrowser">Preferences</a></td><td>customize Snd</td></tr>
@@ -968,8 +966,8 @@ button makes a similar choice along the frequency axis.
 </p>
 
 <p>The easiest way to change the colormap and graph orientation
-of the spectrogram, wavogram, and sonogram, is to use the Color and Orientation 
-dialogs from the View menu.
+of the spectrogram, wavogram, and sonogram, is to use the Color/Orientation 
+dialog from the View menu.
 The keypad keys are mapped to various variables as follows:</p>
 
 <table border=0 hspace=20>

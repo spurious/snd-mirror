@@ -1811,7 +1811,7 @@ void sono_update(chan_info *cp)
 }
 
 
-static void spectral_multiply(Float* rl1, Float* rl2, int n)
+static void spectral_multiply(Float *rl1, Float *rl2, int n)
 {
   int j, n2;
   Float invn;

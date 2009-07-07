@@ -4571,6 +4571,50 @@
 (test (+ 2 (call/cc (lambda (rtn) (+ 1 (let () (begin (define x (+ 1 (rtn 3)))) x))))) 5)
 
 
+;;; others from stackoverflow.com Paul Hollingsworth etc:
+
+(test (procedure? (call/cc (lambda (k) k))) #t)
+(test (call/cc (lambda (k) (+ 56 (k 3)))) 3)
+(test (apply
+       (lambda (k i) 
+	 (if (> i 5) 
+	     i 
+	     (k (list k (* 2 i)))))
+       (call/cc (lambda (k) (list k 1))))
+      8)
+(test (apply
+       (lambda (k i n) (if (= i 0) n (k (list k (- i 1) (* i n)))))
+       (call/cc (lambda (k) (list k 6 1))))
+      720)
+(test (let* ((ka (call/cc (lambda (k) `(,k 1)))) (k (car ka)) (a (cadr ka)))
+	(if (< a 5) (k `(,k ,(* 2 a))) a))
+      8)
+
+(test (apply (lambda (k i n) (if (eq? i 0) n (k (list k (- i 1) (* i n))))) (call/cc (lambda (k) (list k 6 1)))) 720)
+(test ((call/cc (lambda (k) k)) (lambda (x) 5)) 5)
+
+(let ()
+  (define (generate-one-element-at-a-time a-list)
+    (define (generator)
+      (call/cc control-state)) 
+    (define (control-state return)
+      (for-each 
+       (lambda (an-element-from-a-list)
+	 (set! return
+	       (call/cc
+		(lambda (resume-here)
+		  (set! control-state resume-here)
+		  (return an-element-from-a-list)))))
+       a-list)
+      (return 'you-fell-off-the-end-of-the-list))
+    generator)
+  (let ((gen (generate-one-element-at-a-time (list 3 2 1))))
+    (test (gen) 3)
+    (test (gen) 2)
+    (test (gen) 1)
+    (test (gen) 'you-fell-off-the-end-of-the-list)))
+
+
 
 
 ;;; -------- dynamic-wind --------
@@ -39325,7 +39369,8 @@ expt error > 1e-6 around 2^-46.506993328423
 					;with-output-to-string with-output-to-file 
 		   number->string string->number make-polar 
 		   make-rectangular magnitude angle rationalize abs exp log sin cos tan asin acos atan
-		   sinh cosh tanh asinh acosh atanh sqrt expt floor ceiling truncate round lcm gcd + - * ; / -- too many divide by 0 complaints
+		   sinh cosh tanh asinh acosh atanh sqrt expt floor ceiling truncate round lcm gcd + - * 
+					; / -- too many divide by 0 complaints
 		   max min quotient remainder modulo = < > <= >= number? integer? real? complex? rational?
 		   even? odd? zero? positive? negative? real-part imag-part numerator denominator inexact->exact
 		   exact->inexact exact? inexact? integer-length logior logxor logand lognot ash random

@@ -9025,7 +9025,7 @@ Orientation dialog. See zoom-fft in examp.scm.
 <code><a class=def name="spectrohop">spectro-hop</a> (:optional <em class=narg>snd chn</em>)</code>
 </td></tr><tr><td></td><td>
 This is the distance (in pixels) moved between successive spectrogram traces 
-(default is 4).  spectro-hop is the 'hop' slider in the Orientation dialog.
+(default is 4).  spectro-hop is the 'hop' slider in the Color/Orientation dialog.
 </td></tr><tr><td colspan=2 height=18></td></tr>
 
 
@@ -11065,8 +11065,7 @@ This removes the file sorter function associated with 'index' from the file sort
 </td></tr><tr><td></td><td>
 dialog-widgets returns a list of dialog widgets (or lists thereof, or #f if none yet):
 <pre>
-    0: View: Color dialog 
-    1: View: Orientation dialog 
+    0: View: Color/Orientation dialog 
     2: Edit: EnvelopeEditor dialog 
        3 and 4: unused
     5: Options: Transform dialog 
@@ -13025,7 +13024,7 @@ If the requested font can't be loaded, the set! statement returns the old (uncha
 </td></tr><tr><td></td><td>
 add-colormap adds a new colormap to the colormap table, returning its index (for
 use with <a href="#colormap">colormap</a> or <a href="#colormapref">colormap-ref</a>).
-'name' is the name displayed in the Color Dialog's list of colormaps.
+'name' is the name displayed in the Color/Orientation Dialog's list of colormaps.
 'func' is a function of one argument, the desired colormap size; it will be
 called whenever the new colormap's values are needed or the colormap size changes,
 so that the colormap needs to be recomputed.  It should return a list of
@@ -13112,7 +13111,7 @@ This returns the rgb color components of 'obj' in a list.
 <code><a class=def name="colorcutoff">color-cutoff</a> ()</code>
 </td></tr><tr><td></td><td>
 In spectra, this sets the lowest data value that will be colored (the default is 0.003).  Anything less than that
-is rendered in the background color.  This is the "data cutoff" slider in the View:Color dialog.
+is rendered in the background color.  This is the "data cutoff" slider in the View:Color/Orientation dialog.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -13120,7 +13119,7 @@ is rendered in the background color.  This is the "data cutoff" slider in the Vi
 <tr><td colspan=2 bgcolor="#f2f4ff">
 <code><a class=def name="colorinverted">color-inverted</a> ()</code>
 </td></tr><tr><td></td><td>
-This reflects the 'invert' button in the View:<a href="snd.html#colorbrowser">Colors</a> dialog.
+This reflects the 'invert' button in the View:<a href="snd.html#colorbrowser">Color/Orientation</a> dialog.
 If the colormap is inverted, the order of colors is reversed.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -13129,7 +13128,7 @@ If the colormap is inverted, the order of colors is reversed.
 <tr><td colspan=2 bgcolor="#f2f4ff">
 <code><a class=def name="colorscale">color-scale</a> ()</code>
 </td></tr><tr><td></td><td>
-color-scale reflects the darkness setting in the View:<a href="snd.html#colorbrowser">Colors</a> dialog.
+color-scale reflects the darkness setting in the View:<a href="snd.html#colorbrowser">Color/Orientation</a> dialog.
 The mapping between the slider in the dialog and the color-scale value is not linear, and is
 currently different in Gtk and Motif.  
 The color chooser function in <a href="#timegraphhook">time-graph-hook</a> can use

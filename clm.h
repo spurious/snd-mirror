@@ -772,7 +772,7 @@ MUS_EXPORT const char **mus_fft_window_names(void);
 
 MUS_EXPORT Float *mus_autocorrelate(Float *data, int n);
 MUS_EXPORT Float *mus_correlate(Float *data1, Float *data2, int n);
-MUS_EXPORT Float *mus_convolution(Float* rl1, Float* rl2, int n);
+MUS_EXPORT Float *mus_convolution(Float *rl1, Float *rl2, int n);
 MUS_EXPORT void mus_convolve_files(const char *file1, const char *file2, Float maxamp, const char *output_file);
 MUS_EXPORT Float *mus_cepstrum(Float *data, int n);
 

@@ -19,7 +19,12 @@ fgrep -e "the the " *.html
 fgrep udpate *.c
 fgrep udpate *.html
 fgrep udpate *.scm
-fgrep ";;" *.[ch]
+fgrep -e "Float* " *.[ch]
+fgrep -e "float* " *.h
+fgrep -e "double* " *.h
+fgrep -e "int* " *.h
+fgrep -e "off_t* " *.[ch]
+fgrep -e "long* " *.[ch]
 grep ' \-\-$' *.html
 /home/bil/cl/snd tools/va.scm
 # tools/check-gtk.scm

@@ -2449,15 +2449,15 @@ sets SND_COMMAND to 'str', which Snd subsequently notices.
 <p>Snd can be used in conjunction with OpenGL.  If it is configured
 with the switch --with-gl or --with-just-gl, the top level Snd shell
 is setup to handle OpenGL graphics.  These are used automatically by
-the spectrogram display; the colormap is set by either the View:Colors
-dialog or <a href="extsnd.html#colormap">colormap</a>, and the orientation
-is set by either the View:Orientation dialog or the various spectro-*
+the spectrogram display; the colormap and viewing angle are set by either the View:Color/Orientation
+dialog or <a href="extsnd.html#colormap">colormap</a>, and the
+various spectro-*
 variables.
 </p>
 <img src="pix/nowgl.png" alt="gl" hspace=20>
 <p>
 The GL-to-Scheme bindings are in gl.c, and follow the same name and type
-conventions of the Gtk/Motif bindings in xm.c.
+conventions of the Gtk/Motif bindings in xm.c or xg.c.
 Any of the Snd drawing area widgets (or your own) can receive GL graphics
 commands.  Here is a translation of the SGI/xjournal glxmotif
 program:

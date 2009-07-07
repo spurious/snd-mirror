@@ -9939,7 +9939,7 @@ void mus_fftw(Float *rl, int n, int dir)
 #endif
 
 
-static void mus_scramble(Float* rl, Float* im, int n)
+static void mus_scramble(Float *rl, Float *im, int n)
 {
   /* bit reversal */
 
@@ -10994,7 +10994,7 @@ Float *mus_cepstrum(Float *data, int n)
 
 /* ---------------- convolve ---------------- */
 
-Float *mus_convolution(Float* rl1, Float* rl2, int n)
+Float *mus_convolution(Float *rl1, Float *rl2, int n)
 {
   /* convolves two real arrays.                                           */
   /* rl1 and rl2 are assumed to be set up correctly for the convolution   */
