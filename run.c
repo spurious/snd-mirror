@@ -255,12 +255,6 @@ static int safe_strcasecmp(const char *s1, const char *s2)
 #endif
 
 
-#define S_run_safety "run-safety"
-/* this is now a no-op in Scheme */
-enum {RUN_UNSAFE, RUN_SAFE};
-static int run_safety = RUN_UNSAFE;
-
-
 #define MAX_OPTIMIZATION 6
 static XEN optimization_hook;
 
@@ -12355,7 +12349,7 @@ static void locsig_v_safe_stereo(int *args, ptree *pt)
 
 static xen_value *locsig_1(ptree *prog, xen_value **args, int num_args) 
 {
-  /* choose output func based on the locsig output and reverb fields and run-safety */
+  /* choose output func based on the locsig output and reverb fields */
 
   if ((args[1]->type == R_CLM) &&
       (mus_locsig_p(prog->clms[args[1]->addr])) &&
@@ -17015,17 +17009,8 @@ static XEN g_set_optimization(XEN val)
 #endif
 
 
-static XEN g_run_safety(void) {return(C_TO_XEN_INT(run_safety));}
-
-static XEN g_set_run_safety(XEN val) 
-{
-  #define H_run_safety "(" S_run_safety "): the current 'run' safety level (default 0 = off)"
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_run_safety, "an integer");
-  run_safety = XEN_TO_C_INT(val);
-  if ((run_safety != RUN_SAFE) && (run_safety != RUN_UNSAFE))
-    XEN_OUT_OF_RANGE_ERROR(S_setB S_run_safety, XEN_ONLY_ARG, val, "must be 0 (no checks) or 1 (with checks)");
-  return(C_TO_XEN_INT(run_safety));
-}
+static XEN g_run_safety(void) {return(C_TO_XEN_INT(0));}
+static XEN g_set_run_safety(XEN val) {return(C_TO_XEN_INT(0));}
 
 
 #define S_snd_declare "snd-declare"
@@ -17114,8 +17099,10 @@ void mus_init_run(void)
 
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_optimization, g_optimization_w, H_optimization, S_setB S_optimization, g_set_optimization_w,  0, 0, 1, 0);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_run_safety, g_run_safety_w, H_run_safety, S_setB S_run_safety, g_set_run_safety_w,  0, 0, 1, 0);
   XEN_DEFINE_PROCEDURE(S_snd_declare, g_snd_declare_w, 1, 0, 0, H_snd_declare);
+
+  /* backwards compatibility */
+  XEN_DEFINE_PROCEDURE_WITH_SETTER("run-safety", g_run_safety_w, "obsolete", S_setB "run-safety", g_set_run_safety_w,  0, 0, 1, 0);
 
 #if HAVE_SCHEME
   XEN_EVAL_C_STRING("(defmacro declare args `(snd-declare ',args))");

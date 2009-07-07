@@ -499,19 +499,13 @@ return help associated with name (String or Symbol) or false"
 
 void xen_initialize(void)
 {
-  /* something vital is missing here in ruby 1.9.1, as everyone else on the web seems to have noticed,
-   *   since any error in rb_eval_string segfaults (rather than raising an exception that I can pass
-   *   on to the user), but there is no way I can see to fix it.  ruby_sysinit makes no difference
-   *   in this context, nor does RUBY_GLOBAL_SETUP.  irb does the right thing, but apparently it
-   *   doesn't use rb_eval_string??  20 people have reported this segfault on every conceivable
-   *   ruby forum with no response.
-   */
 #ifdef RUBY_INIT_STACK
   RUBY_INIT_STACK;
 #endif
 
   ruby_init();
   ruby_init_loadpath();
+  ruby_script("xen");        /* necessary in ruby 1.9 */
 
   Init_Hook();
 }

@@ -24,7 +24,7 @@
 (define *clm-notehook* #f)
 (define *clm-with-sound-depth* 0) ; for CM, not otherwise used
 (define *clm-default-frequency* 0.0)
-(define *clm-safety* (run-safety)); slightly different from CL/CLM but has similar effect
+(define *clm-safety* 0)
 (define *clm-delete-reverb* #f)   ; should with-sound clean up reverb stream
 (define *clm-threads* 4)
 (define *clm-output-safety* 0)    ; if 1, assume output buffers will not need to be flushed except at the very end
