@@ -60,8 +60,8 @@ reset-all-hooks
 #f value my-snd-error-hook
 #f value my-mus-error-hook
 
-save-dir "/zap/snd" || 		  value original-save-dir
-temp-dir "/zap/tmp" || 		  value original-temp-dir
+save-dir "/home/bil/zap/snd" || 		  value original-save-dir
+temp-dir "/home/bil/zap/tmp" || 		  value original-temp-dir
 listener-prompt        		  value original-prompt
 300                    		  value sample-reader-tests
 1024 8 *               		  value default-file-buffer-size
@@ -3534,6 +3534,6 @@ let: ( -- )
   <'> 30-test            run-fth-test	\ local fragment test
   finish-snd-test
   with-exit if 0 snd-exit drop then
-;let
+;
 
 \ snd-test.fs ends here
