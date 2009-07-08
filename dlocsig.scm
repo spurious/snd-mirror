@@ -2875,6 +2875,7 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 
 ;(define hi (make-path '((-10 10) (0.5 0.5) (10 10)) :3d #f :error 0.001))
 ;(make-dlocsig 0 1.0 :out-channels 2 :rev-channels 0 :path (make-path '((-10 10) (0.5 0.5) (10 10)) :3d #f))
+(if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
 
 (define* (sinewave start-time duration freq amp 
 		   :key (amp-env '(0 1 1 1))
@@ -2893,10 +2894,8 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 	     ((= i end))
 	   (dlocsig dloc i (* (env aenv) (oscil osc)))))))))
 
-;(with-sound (:channels 2) (sinewave 0 1.0 440 .5 :path (make-path '((-10 10) (0.5 0.5) (10 10)) :3d #f)))
+(with-sound (:channels 2) (sinewave 0 1.0 440 .5 :path (make-path '((-10 10) (0.5 0.5) (10 10)) :3d #f)))
 
 |#
 
 
-
-;;; TODO: this segfaults in guile 1.9.0 (in the previous class/method version also)

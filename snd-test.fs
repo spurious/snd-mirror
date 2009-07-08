@@ -3534,6 +3534,6 @@ let: ( -- )
   <'> 30-test            run-fth-test	\ local fragment test
   finish-snd-test
   with-exit if 0 snd-exit drop then
-;
+;let
 
 \ snd-test.fs ends here

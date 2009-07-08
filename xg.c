@@ -31392,6 +31392,101 @@ static XEN gxg_gtk_info_bar_get_message_type(XEN info_bar)
 
 #endif
 
+#if HAVE_GTK_STATUS_ICON_GET_TITLE
+static XEN gxg_gdk_region_rect_equal(XEN region, XEN rectangle)
+{
+  #define H_gdk_region_rect_equal "gboolean gdk_region_rect_equal(GdkRegion* region, GdkRectangle* rectangle)"
+  XEN_ASSERT_TYPE(XEN_GdkRegion__P(region), region, 1, "gdk_region_rect_equal", "GdkRegion*");
+  XEN_ASSERT_TYPE(XEN_GdkRectangle__P(rectangle), rectangle, 2, "gdk_region_rect_equal", "GdkRectangle*");
+  return(C_TO_XEN_gboolean(gdk_region_rect_equal(XEN_TO_C_GdkRegion_(region), XEN_TO_C_GdkRectangle_(rectangle))));
+}
+
+static XEN gxg_gdk_window_ensure_native(XEN window)
+{
+  #define H_gdk_window_ensure_native "gboolean gdk_window_ensure_native(GdkWindow* window)"
+  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 1, "gdk_window_ensure_native", "GdkWindow*");
+  return(C_TO_XEN_gboolean(gdk_window_ensure_native(XEN_TO_C_GdkWindow_(window))));
+}
+
+static XEN gxg_gdk_window_get_root_coords(XEN window, XEN x, XEN y, XEN ignore_root_x, XEN ignore_root_y)
+{
+  #define H_gdk_window_get_root_coords "void gdk_window_get_root_coords(GdkWindow* window, gint x, gint y, \
+gint* [root_x], gint* [root_y])"
+  gint ref_root_x;
+  gint ref_root_y;
+  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 1, "gdk_window_get_root_coords", "GdkWindow*");
+  XEN_ASSERT_TYPE(XEN_gint_P(x), x, 2, "gdk_window_get_root_coords", "gint");
+  XEN_ASSERT_TYPE(XEN_gint_P(y), y, 3, "gdk_window_get_root_coords", "gint");
+  gdk_window_get_root_coords(XEN_TO_C_GdkWindow_(window), XEN_TO_C_gint(x), XEN_TO_C_gint(y), &ref_root_x, &ref_root_y);
+  return(XEN_LIST_2(C_TO_XEN_gint(ref_root_x), C_TO_XEN_gint(ref_root_y)));
+}
+
+static XEN gxg_gdk_offscreen_window_get_pixmap(XEN window)
+{
+  #define H_gdk_offscreen_window_get_pixmap "GdkPixmap* gdk_offscreen_window_get_pixmap(GdkWindow* window)"
+  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 1, "gdk_offscreen_window_get_pixmap", "GdkWindow*");
+  return(C_TO_XEN_GdkPixmap_(gdk_offscreen_window_get_pixmap(XEN_TO_C_GdkWindow_(window))));
+}
+
+static XEN gxg_gdk_offscreen_window_set_embedder(XEN window, XEN embedder)
+{
+  #define H_gdk_offscreen_window_set_embedder "void gdk_offscreen_window_set_embedder(GdkWindow* window, \
+GdkWindow* embedder)"
+  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 1, "gdk_offscreen_window_set_embedder", "GdkWindow*");
+  XEN_ASSERT_TYPE(XEN_GdkWindow__P(embedder), embedder, 2, "gdk_offscreen_window_set_embedder", "GdkWindow*");
+  gdk_offscreen_window_set_embedder(XEN_TO_C_GdkWindow_(window), XEN_TO_C_GdkWindow_(embedder));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gdk_offscreen_window_get_embedder(XEN window)
+{
+  #define H_gdk_offscreen_window_get_embedder "GdkWindow* gdk_offscreen_window_get_embedder(GdkWindow* window)"
+  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 1, "gdk_offscreen_window_get_embedder", "GdkWindow*");
+  return(C_TO_XEN_GdkWindow_(gdk_offscreen_window_get_embedder(XEN_TO_C_GdkWindow_(window))));
+}
+
+static XEN gxg_gdk_window_geometry_changed(XEN window)
+{
+  #define H_gdk_window_geometry_changed "void gdk_window_geometry_changed(GdkWindow* window)"
+  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 1, "gdk_window_geometry_changed", "GdkWindow*");
+  gdk_window_geometry_changed(XEN_TO_C_GdkWindow_(window));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_menu_set_reserve_toggle_size(XEN menu, XEN reserve_toggle_size)
+{
+  #define H_gtk_menu_set_reserve_toggle_size "void gtk_menu_set_reserve_toggle_size(GtkMenu* menu, gboolean reserve_toggle_size)"
+  XEN_ASSERT_TYPE(XEN_GtkMenu__P(menu), menu, 1, "gtk_menu_set_reserve_toggle_size", "GtkMenu*");
+  XEN_ASSERT_TYPE(XEN_gboolean_P(reserve_toggle_size), reserve_toggle_size, 2, "gtk_menu_set_reserve_toggle_size", "gboolean");
+  gtk_menu_set_reserve_toggle_size(XEN_TO_C_GtkMenu_(menu), XEN_TO_C_gboolean(reserve_toggle_size));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_menu_get_reserve_toggle_size(XEN menu)
+{
+  #define H_gtk_menu_get_reserve_toggle_size "gboolean gtk_menu_get_reserve_toggle_size(GtkMenu* menu)"
+  XEN_ASSERT_TYPE(XEN_GtkMenu__P(menu), menu, 1, "gtk_menu_get_reserve_toggle_size", "GtkMenu*");
+  return(C_TO_XEN_gboolean(gtk_menu_get_reserve_toggle_size(XEN_TO_C_GtkMenu_(menu))));
+}
+
+static XEN gxg_gtk_status_icon_set_title(XEN status_icon, XEN title)
+{
+  #define H_gtk_status_icon_set_title "void gtk_status_icon_set_title(GtkStatusIcon* status_icon, gchar* title)"
+  XEN_ASSERT_TYPE(XEN_GtkStatusIcon__P(status_icon), status_icon, 1, "gtk_status_icon_set_title", "GtkStatusIcon*");
+  XEN_ASSERT_TYPE(XEN_gchar__P(title), title, 2, "gtk_status_icon_set_title", "gchar*");
+  gtk_status_icon_set_title(XEN_TO_C_GtkStatusIcon_(status_icon), XEN_TO_C_gchar_(title));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_status_icon_get_title(XEN status_icon)
+{
+  #define H_gtk_status_icon_get_title "gchar* gtk_status_icon_get_title(GtkStatusIcon* status_icon)"
+  XEN_ASSERT_TYPE(XEN_GtkStatusIcon__P(status_icon), status_icon, 1, "gtk_status_icon_get_title", "GtkStatusIcon*");
+  return(C_TO_XEN_gchar_(gtk_status_icon_get_title(XEN_TO_C_GtkStatusIcon_(status_icon))));
+}
+
+#endif
+
 #if HAVE_CAIRO_CREATE
 static XEN gxg_cairo_create(XEN target)
 {
@@ -37667,6 +37762,20 @@ XEN_NARGIFY_2(gxg_gtk_info_bar_set_message_type_w, gxg_gtk_info_bar_set_message_
 XEN_NARGIFY_1(gxg_gtk_info_bar_get_message_type_w, gxg_gtk_info_bar_get_message_type)
 #endif
 
+#if HAVE_GTK_STATUS_ICON_GET_TITLE
+XEN_NARGIFY_2(gxg_gdk_region_rect_equal_w, gxg_gdk_region_rect_equal)
+XEN_NARGIFY_1(gxg_gdk_window_ensure_native_w, gxg_gdk_window_ensure_native)
+XEN_ARGIFY_5(gxg_gdk_window_get_root_coords_w, gxg_gdk_window_get_root_coords)
+XEN_NARGIFY_1(gxg_gdk_offscreen_window_get_pixmap_w, gxg_gdk_offscreen_window_get_pixmap)
+XEN_NARGIFY_2(gxg_gdk_offscreen_window_set_embedder_w, gxg_gdk_offscreen_window_set_embedder)
+XEN_NARGIFY_1(gxg_gdk_offscreen_window_get_embedder_w, gxg_gdk_offscreen_window_get_embedder)
+XEN_NARGIFY_1(gxg_gdk_window_geometry_changed_w, gxg_gdk_window_geometry_changed)
+XEN_NARGIFY_2(gxg_gtk_menu_set_reserve_toggle_size_w, gxg_gtk_menu_set_reserve_toggle_size)
+XEN_NARGIFY_1(gxg_gtk_menu_get_reserve_toggle_size_w, gxg_gtk_menu_get_reserve_toggle_size)
+XEN_NARGIFY_2(gxg_gtk_status_icon_set_title_w, gxg_gtk_status_icon_set_title)
+XEN_NARGIFY_1(gxg_gtk_status_icon_get_title_w, gxg_gtk_status_icon_get_title)
+#endif
+
 #if HAVE_CAIRO_CREATE
 XEN_NARGIFY_1(gxg_cairo_create_w, gxg_cairo_create)
 XEN_NARGIFY_0(gxg_cairo_version_w, gxg_cairo_version)
@@ -41553,6 +41662,20 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gtk_info_bar_response_w gxg_gtk_info_bar_response
 #define gxg_gtk_info_bar_set_message_type_w gxg_gtk_info_bar_set_message_type
 #define gxg_gtk_info_bar_get_message_type_w gxg_gtk_info_bar_get_message_type
+#endif
+
+#if HAVE_GTK_STATUS_ICON_GET_TITLE
+#define gxg_gdk_region_rect_equal_w gxg_gdk_region_rect_equal
+#define gxg_gdk_window_ensure_native_w gxg_gdk_window_ensure_native
+#define gxg_gdk_window_get_root_coords_w gxg_gdk_window_get_root_coords
+#define gxg_gdk_offscreen_window_get_pixmap_w gxg_gdk_offscreen_window_get_pixmap
+#define gxg_gdk_offscreen_window_set_embedder_w gxg_gdk_offscreen_window_set_embedder
+#define gxg_gdk_offscreen_window_get_embedder_w gxg_gdk_offscreen_window_get_embedder
+#define gxg_gdk_window_geometry_changed_w gxg_gdk_window_geometry_changed
+#define gxg_gtk_menu_set_reserve_toggle_size_w gxg_gtk_menu_set_reserve_toggle_size
+#define gxg_gtk_menu_get_reserve_toggle_size_w gxg_gtk_menu_get_reserve_toggle_size
+#define gxg_gtk_status_icon_set_title_w gxg_gtk_status_icon_set_title
+#define gxg_gtk_status_icon_get_title_w gxg_gtk_status_icon_get_title
 #endif
 
 #if HAVE_CAIRO_CREATE
@@ -45450,6 +45573,20 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_info_bar_get_message_type, gxg_gtk_info_bar_get_message_type_w, 1, 0, 0, H_gtk_info_bar_get_message_type);
 #endif
 
+#if HAVE_GTK_STATUS_ICON_GET_TITLE
+  XG_DEFINE_PROCEDURE(gdk_region_rect_equal, gxg_gdk_region_rect_equal_w, 2, 0, 0, H_gdk_region_rect_equal);
+  XG_DEFINE_PROCEDURE(gdk_window_ensure_native, gxg_gdk_window_ensure_native_w, 1, 0, 0, H_gdk_window_ensure_native);
+  XG_DEFINE_PROCEDURE(gdk_window_get_root_coords, gxg_gdk_window_get_root_coords_w, 3, 2, 0, H_gdk_window_get_root_coords);
+  XG_DEFINE_PROCEDURE(gdk_offscreen_window_get_pixmap, gxg_gdk_offscreen_window_get_pixmap_w, 1, 0, 0, H_gdk_offscreen_window_get_pixmap);
+  XG_DEFINE_PROCEDURE(gdk_offscreen_window_set_embedder, gxg_gdk_offscreen_window_set_embedder_w, 2, 0, 0, H_gdk_offscreen_window_set_embedder);
+  XG_DEFINE_PROCEDURE(gdk_offscreen_window_get_embedder, gxg_gdk_offscreen_window_get_embedder_w, 1, 0, 0, H_gdk_offscreen_window_get_embedder);
+  XG_DEFINE_PROCEDURE(gdk_window_geometry_changed, gxg_gdk_window_geometry_changed_w, 1, 0, 0, H_gdk_window_geometry_changed);
+  XG_DEFINE_PROCEDURE(gtk_menu_set_reserve_toggle_size, gxg_gtk_menu_set_reserve_toggle_size_w, 2, 0, 0, H_gtk_menu_set_reserve_toggle_size);
+  XG_DEFINE_PROCEDURE(gtk_menu_get_reserve_toggle_size, gxg_gtk_menu_get_reserve_toggle_size_w, 1, 0, 0, H_gtk_menu_get_reserve_toggle_size);
+  XG_DEFINE_PROCEDURE(gtk_status_icon_set_title, gxg_gtk_status_icon_set_title_w, 2, 0, 0, H_gtk_status_icon_set_title);
+  XG_DEFINE_PROCEDURE(gtk_status_icon_get_title, gxg_gtk_status_icon_get_title_w, 1, 0, 0, H_gtk_status_icon_get_title);
+#endif
+
 #if HAVE_CAIRO_CREATE
   XG_DEFINE_PROCEDURE(cairo_create, gxg_cairo_create_w, 1, 0, 0, H_cairo_create);
   XG_DEFINE_PROCEDURE(cairo_version, gxg_cairo_version_w, 0, 0, 0, H_cairo_version);
@@ -47376,6 +47513,10 @@ static void define_integers(void)
   DEFINE_INTEGER(PANGO_WEIGHT_MEDIUM);
 #endif
 
+#if HAVE_GTK_STATUS_ICON_GET_TITLE
+  DEFINE_INTEGER(GDK_WINDOW_OFFSCREEN);
+#endif
+
 #if HAVE_CAIRO_CREATE
   DEFINE_INTEGER(CAIRO_STATUS_SUCCESS);
   DEFINE_INTEGER(CAIRO_STATUS_NO_MEMORY);
@@ -47993,7 +48134,7 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("21-Jun-09"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("07-Jul-09"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

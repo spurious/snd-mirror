@@ -505,7 +505,7 @@ void xen_initialize(void)
 
   ruby_init();
   ruby_init_loadpath();
-  ruby_script("xen");        /* necessary in ruby 1.9 */
+  ruby_script("xen");        /* necessary in ruby 1.9 (else segfault in rb_raise) */
 
   Init_Hook();
 }

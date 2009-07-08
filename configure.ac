@@ -1134,7 +1134,6 @@ else
 	AC_CHECK_LIB(m, gtk_print_operation_new, [AC_DEFINE(HAVE_GTK_PRINT_OPERATION_NEW)], ,$GTK_LIBS)
 	# for 2.11.0..6
 	AC_CHECK_LIB(m, gtk_widget_get_has_tooltip, [AC_DEFINE(HAVE_GTK_WIDGET_GET_HAS_TOOLTIP)], ,$GTK_LIBS)
-
 	# for 2.13.0
 	AC_CHECK_LIB(m, gtk_test_widget_click, [AC_DEFINE(HAVE_GTK_TEST_WIDGET_CLICK)], ,$GTK_LIBS)
 	# for 2.13.6 (uses 2134)
@@ -1143,6 +1142,8 @@ else
 	AC_CHECK_LIB(m, gtk_scale_add_mark, [AC_DEFINE(HAVE_GTK_SCALE_ADD_MARK)], ,$GTK_LIBS)
 	# for 2.15.1 up to 2.17.2
 	AC_CHECK_LIB(m, gtk_info_bar_new, [AC_DEFINE(HAVE_GTK_INFO_BAR_NEW)], ,$GTK_LIBS)	
+	# for 2.17.3
+	AC_CHECK_LIB(m, gtk_status_icon_get_title, [AC_DEFINE(HAVE_GTK_STATUS_ICON_GET_TITLE)], ,$GTK_LIBS)
 
 	# for gdk|pango_cairo 
 	AC_CHECK_LIB(m, gdk_cairo_create, 

@@ -6933,4 +6933,19 @@
 (CFNC-2172 "GtkMessageType gtk_info_bar_get_message_type GtkInfoBar* info_bar")
 
 
+;;; 2.17.3
+
+(CINT-2173 "GDK_WINDOW_OFFSCREEN" "GdkWindowType")
+
+(CFNC-2173 "gboolean gdk_region_rect_equal GdkRegion* region GdkRectangle* rectangle" 'const)
+(CFNC-2173 "gboolean gdk_window_ensure_native GdkWindow* window")
+(CFNC-2173 "void gdk_window_get_root_coords GdkWindow* window gint x gint y gint* [root_x] gint* [root_y]")
+(CFNC-2173 "GdkPixmap* gdk_offscreen_window_get_pixmap GdkWindow* window")
+(CFNC-2173 "void gdk_offscreen_window_set_embedder GdkWindow* window GdkWindow* embedder")
+(CFNC-2173 "GdkWindow* gdk_offscreen_window_get_embedder GdkWindow* window")
+(CFNC-2173 "void gdk_window_geometry_changed GdkWindow* window")
+(CFNC-2173 "void gtk_menu_set_reserve_toggle_size GtkMenu* menu gboolean reserve_toggle_size")
+(CFNC-2173 "gboolean gtk_menu_get_reserve_toggle_size GtkMenu* menu")
+(CFNC-2173 "void gtk_status_icon_set_title GtkStatusIcon* status_icon gchar* title")
+(CFNC-2173 "gchar* gtk_status_icon_get_title GtkStatusIcon* status_icon")
 
