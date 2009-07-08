@@ -11797,7 +11797,7 @@ static xen_value *splice_in_function_body(ptree *prog, XEN proc, xen_value **arg
 #else
   func_form = XEN_PROCEDURE_SOURCE(proc);
 #endif
-  /* fprintf(stderr,"splice in %s\n", XEN_AS_STRING(func_form));  */
+  /* fprintf(stderr,"splice in %s\n", XEN_AS_STRING(func_form)); */
 
   if ((XEN_LIST_P(func_form)) &&
       (XEN_SYMBOL_P(XEN_CAR(func_form))) &&
@@ -11837,6 +11837,8 @@ static xen_value *splice_in_method(ptree *prog, xen_value **args, int num_args, 
   methods = XEN_EVAL_C_STRING(method_str);
   methods_loc = PROTECT(methods);
   free(method_str);
+
+  /* fprintf(stderr, "methods: %s\n", XEN_AS_STRING(methods)); */
 
   if (XEN_LIST_P(methods))
     {
@@ -12150,12 +12152,11 @@ static xen_value *mus_ ## Name ## _1(ptree *prog, xen_value **args, int num_args
   if (args[1]->type == R_CLM) \
     return(package(prog, R_VCT, Name ## _1, #Name "_1", args, 1)); \
   if (CLM_STRUCT_P(args[1]->type)) \
-    return(splice_in_method(prog, args, num_args, "mus_" #Name, USE_GET_METHOD)); \
+    return(splice_in_method(prog, args, num_args, "mus-" #Name, USE_GET_METHOD)); \
   return(run_warn("wrong type arg (%s) to mus-" #Name , type_name(args[1]->type))); \
 }
 
-/* (let ((gen (make-polyoid 100.0 (vct 1 1 0.0)))) (run (lambda () (mus-xcoeffs gen)))) */
-/* TODO: get clm-struct vct methods (mus-xcoeffs) to work */
+/* (let ((gen (make-polyoid 100.0 (vct 1 1 0.0)))) (run (lambda () (mus-ycoeffs gen)))) */
 
 MUS_VCT_1(data, 0)
 MUS_VCT_1(xcoeffs, 1)

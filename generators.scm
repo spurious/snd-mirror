@@ -5832,12 +5832,12 @@ index 10 (so 10/2 is the bes-jn arg):
 			       (lambda (g ind)
 				 (vct-ref (polyoid-tn g) ind))
 			       (lambda (g ind val)
-				 (vct-set! (poltoid-tn g) ind val)))
+				 (vct-set! (polyoid-tn g) ind val)))
 			 (list 'mus-ycoeff
 			       (lambda (g ind)
 				 (vct-ref (polyoid-un g) ind))
 			       (lambda (g ind val)
-				 (vct-set! (poltoid-un g) ind val)))))
+				 (vct-set! (polyoid-un g) ind val)))))
 
   (frequency *clm-default-frequency*) (partial-amps-and-phases #f :type vct) (angle 0.0)
   (tn #f :type vct) (un #f :type vct))

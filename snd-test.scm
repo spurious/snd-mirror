@@ -51797,6 +51797,11 @@ EDITS: 1
     (let ((val '()))
       (if (not (= (run (lambda () (length val))) 0))
 	  (snd-display ";length 0: ~A" (run (lambda () (length val))))))
+
+    (let ((gen (make-polyoid 100.0 (vct 1 1 0.0)))) 
+      (let ((val (run (lambda () (mus-ycoeffs gen)))))
+	(if (not (vct? val))
+	    (snd-display ";run mus-ycoeffs: ~A" val))))
     
     (let ((val (list 1 2 3))) 
       (if (run (lambda () (null? val)))

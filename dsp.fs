@@ -2,7 +2,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Dec 30 04:52:13 CET 2005
-\ Changed: Sun Jun 14 23:22:41 CEST 2009
+\ Changed: Thu Jun 25 19:48:39 CEST 2009
 
 \ src-duration             ( en -- dur )
 \ src-fit-envelope         ( e1 target-dur -- e2 )
@@ -551,48 +551,48 @@ Global variable CHORDALIZE-CHORD is an array of members of chord such as #( 1 5/
      :r     r
      :index index }
 ;
-: asyfm-freq-ref   ( gen -- val ) :freq  array-assoc-ref radians->hz ;
-: asyfm-freq-set!  ( gen val -- ) :freq  swap hz->radians array-assoc-set! drop ;
-: asyfm-phase-ref  ( gen -- val ) :phase array-assoc-ref ; 
-: asyfm-phase-set! ( gen val -- ) :phase swap array-assoc-set! drop ;
-: asyfm-ratio-ref  ( gen -- val ) :ratio array-assoc-ref ; 
-: asyfm-ratio-set! ( gen val -- ) :ratio swap array-assoc-set! drop ;
-: asyfm-r-ref      ( gen -- val ) :r     array-assoc-ref ; 
-: asyfm-r-set!     ( gen val -- ) :r     swap array-assoc-set! drop ;
-: asyfm-index-ref  ( gen -- val ) :index array-assoc-ref ; 
-: asyfm-index-set! ( gen val -- ) :index swap array-assoc-set! drop ;
+: asyfm-freq-ref   ( gen -- val ) :freq  hash-ref radians->hz ;
+: asyfm-freq-set!  ( gen val -- ) :freq  swap hz->radians hash-set! drop ;
+: asyfm-phase-ref  ( gen -- val ) :phase hash-ref ; 
+: asyfm-phase-set! ( gen val -- ) :phase swap hash-set! drop ;
+: asyfm-ratio-ref  ( gen -- val ) :ratio hash-ref ; 
+: asyfm-ratio-set! ( gen val -- ) :ratio swap hash-set! drop ;
+: asyfm-r-ref      ( gen -- val ) :r     hash-ref ; 
+: asyfm-r-set!     ( gen val -- ) :r     swap hash-set! drop ;
+: asyfm-index-ref  ( gen -- val ) :index hash-ref ; 
+: asyfm-index-set! ( gen val -- ) :index swap hash-set! drop ;
 : asyfm-J ( gen input -- val )
   doc" ;; this is the same as the CLM asymmetric-fm generator, \
 set r != 1.0 to get the asymmetric spectra.\n\
 :frequency 2000 :ratio 0.1 make-asyfm value gen\n\
 lambda: <{ n }> gen 0.0 asyfm-J ; map-channel."
   { gen input }
-  gen :freq  array-assoc-ref { freq }
-  gen :phase array-assoc-ref { phase }
-  gen :ratio array-assoc-ref { ratio }
-  gen :r     array-assoc-ref { r }
-  gen :index array-assoc-ref { index }
+  gen :freq  hash-ref { freq }
+  gen :phase hash-ref { phase }
+  gen :ratio hash-ref { ratio }
+  gen :r     hash-ref { r }
+  gen :index hash-ref { index }
   r 1/f { r1 }
   ratio phase f* { modphase }
   modphase fcos r r1 f- f* index f* 0.5 f* fexp
   modphase fsin r r1 f+ f* index f* 0.5 f* phase f+ fsin  f* ( val )
-  gen :phase phase input freq f+ f+ array-assoc-set! drop
+  gen :phase phase input freq f+ f+ hash-set! drop
 ;
 \ :frequency 2000 :ratio 0.1 value gen
 \ lambda: <{ n -- val }> gen 0.0 asyfm-J ; map-channel
 : asyfm-I ( gen input -- val )
   { gen input }
-  gen :freq  array-assoc-ref { freq }
-  gen :phase array-assoc-ref { phase }
-  gen :ratio array-assoc-ref { ratio }
-  gen :r     array-assoc-ref { r }
-  gen :index array-assoc-ref { index }
+  gen :freq  hash-ref { freq }
+  gen :phase hash-ref { phase }
+  gen :ratio hash-ref { ratio }
+  gen :r     hash-ref { r }
+  gen :index hash-ref { index }
   r 1/f { r1 }
   ratio phase f* { modphase }
   modphase fcos r r1 f+ f* index f* 0.5 f*
   r r1 f+ index f* bes-i0 flog 0.5 f*  f-  fexp
   modphase fsin r r1 f- f* index f* 0.5 f* phase f+ fsin  f* ( val )
-  gen :phase phase input freq f+ f+ array-assoc-set! drop
+  gen :phase phase input freq f+ f+ hash-set! drop
 ;
 
 \ ;;; -------- cosine-summation (a simpler version of sine-summation)
@@ -2231,17 +2231,17 @@ previous
      :yn 0.0 }
 ;
 : mfilter <{ m :optional x-input 0.0 y-input 0.0 -- val }>
-  m :xn array-assoc-ref
-  m :eps array-assoc-ref
-  m :yn array-assoc-ref f*  f-
-  m :decay array-assoc-ref f*
+  m :xn hash-ref
+  m :eps hash-ref
+  m :yn hash-ref f*  f-
+  m :decay hash-ref f*
   x-input f+ { xn1 }
-  m :eps array-assoc-ref xn1 f*
-  m :yn array-assoc-ref f+
-  m :decay array-assoc-ref f*
+  m :eps hash-ref xn1 f*
+  m :yn hash-ref f+
+  m :decay hash-ref f*
   y-input f+ { yn1 }
-  m     :xn xn1 array-assoc-set!
-  ( m ) :yn yn1 array-assoc-set! drop
+  m     :xn xn1 hash-set!
+  ( m ) :yn yn1 hash-set! drop
   yn1
 ;
 0 [if]

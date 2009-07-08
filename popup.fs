@@ -3,7 +3,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Dec 23 00:28:28 CET 2005
-\ Changed: Sun Jun 14 18:13:53 CEST 2009
+\ Changed: Thu Jun 25 19:51:41 CEST 2009
 
 \ Commentary:
 
@@ -313,7 +313,7 @@ hide
 : sel-invert <{ w c info -- val }> -1.0 scale-selection-by ;
 
 let: ( -- menu )
-  #{ :stopping #f :stopping1 #f :stop-widget #f :stop-widget1 #f } { vars }
+  #a( :stopping #f :stopping1 #f :stop-widget #f :stop-widget1 #f ) { vars }
   stop-playing-selection-hook vars sel-stop-play-cb add-hook!
   "selection-popup" main-widgets 2 array-ref
   #( #( $" Selection"        _ 'label     #f               #f )
@@ -524,7 +524,7 @@ let: ( -- menu )
 : exit-cb <{ w c info -- val }> 0 snd-exit ;
 
 let: ( -- menu )
-  #{ :stopping #f :stop-widget #f } { vars }
+  #a( :stopping #f :stop-widget #f ) { vars }
   stop-playing-hook vars stop-playing-cb add-hook!
   "graph-popup" main-widgets 2 array-ref
   #( #( $" Snd"              'label       #f              #f )

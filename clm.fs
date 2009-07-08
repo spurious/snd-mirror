@@ -2,7 +2,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Mon Mar 15 19:25:58 CET 2004
-\ Changed: Mon Jun 15 02:21:19 CEST 2009
+\ Changed: Fri Jun 26 23:04:01 CEST 2009
 
 \ Commentary:
 \
@@ -53,7 +53,7 @@
 \ with-mix             ( body-str args fname beg -- )
 \ sound-let            ( ws-xt-lst body-xt -- )
 
-$" fth 15-Jun-2009" value *clm-version*
+$" fth 26-Jun-2009" value *clm-version*
 
 \ defined in snd/snd-xen.c
 [ifundef] snd-print   : snd-print   ( str -- str )  dup .string ;             [then]
@@ -391,14 +391,14 @@ hide
 : (run)            ( start dur vars      -- limit begin ) ws-info times->samples ;
 : (run-instrument) ( start dur args vars -- limit begin )
   { start dur args vars }
-  args array? unless #() to args then
-  :degree    args :degree   array-assoc-ref         0.0 ||
-  :distance  args :distance array-assoc-ref         1.0 ||
-  :reverb    args :reverb   array-assoc-ref        0.05 ||
-  :channels  args :channels array-assoc-ref  *channels* ||
-  :output    args :output   array-assoc-ref    *output* ||
-  :revout    args :revout   array-assoc-ref    *reverb* ||
-  :type      args :type     array-assoc-ref locsig-type || make-locsig to *locsig*
+  args hash? unless #{} to args then
+  :degree    args :degree   hash-ref         0.0 ||
+  :distance  args :distance hash-ref         1.0 ||
+  :reverb    args :reverb   hash-ref        0.05 ||
+  :channels  args :channels hash-ref  *channels* ||
+  :output    args :output   hash-ref    *output* ||
+  :revout    args :revout   hash-ref    *reverb* ||
+  :type      args :type     hash-ref locsig-type || make-locsig to *locsig*
   \ we set channel 3/4 if any to 0.5 * channel 1/2
   *output* mus-output? if
     *output* mus-channels 2 > if

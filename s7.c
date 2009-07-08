@@ -1864,7 +1864,9 @@ static s7_pointer g_is_defined(s7_scheme *sc, s7_pointer args)
       x = cadr(args);
     }
   else x = sc->envir;
-  return(make_boolean(sc, s7_find_symbol_in_environment(sc, x, car(args), true) != sc->NIL));
+  
+  x = s7_find_symbol_in_environment(sc, x, car(args), true);
+  return(make_boolean(sc, (x != sc->NIL) && (x != sc->UNDEFINED)));
 }
 
 
@@ -11787,6 +11789,62 @@ static s7_pointer g_set_backtrace_length(s7_scheme *sc, s7_pointer args)
 }
 
 
+static const char *s7_type_name(s7_pointer arg)
+{
+  switch (type(arg))
+    {
+    case T_NIL_TYPE:     return("nil");
+    case T_STRING:       return("string");
+    case T_SYMBOL:       return("symbol");
+    case T_PAIR:         return("pair");
+    case T_CLOSURE:
+    case T_CLOSURE_STAR: return("closure");
+    case T_GOTO:
+    case T_CONTINUATION: return("continuation");
+    case T_S7_FUNCTION:  return("function");
+    case T_CHARACTER:    return("character");
+    case T_VECTOR:       return("vector");
+    case T_MACRO:        return("macro");
+    case T_PROMISE:      return("promise");
+    case T_CATCH:        return("catch");
+    case T_DYNAMIC_WIND: return("dynamic-wind");
+    case T_HASH_TABLE:   return("hash-table");
+    case T_S7_OBJECT:    return(object_types[arg->object.fobj.type].name);
+
+    case T_INPUT_PORT:
+      {
+	if (is_file_port(arg))
+	  return("input file port");
+	if (is_string_port(arg))
+	  return("input string port");
+	return("input port");
+      }
+
+    case T_OUTPUT_PORT:
+      {
+	if (is_file_port(arg))
+	  return("output file port");
+	if (is_string_port(arg))
+	  return("output string port");
+	return("output port");
+      }
+      
+    case T_NUMBER: 
+      {
+	switch (object_number_type(arg))
+	  {
+	  case NUM_INT:   return("integer");
+	  case NUM_RATIO: return("ratio");
+	  case NUM_REAL:  
+	  case NUM_REAL2: return("real");
+	  default:        return("complex");
+	  }
+      }
+    }
+  return("unknown");
+}
+
+
 s7_pointer s7_wrong_type_arg_error(s7_scheme *sc, const char *caller, int arg_n, s7_pointer arg, const char *descr)
 {
   int len, slen;
@@ -11796,11 +11854,11 @@ s7_pointer s7_wrong_type_arg_error(s7_scheme *sc, const char *caller, int arg_n,
   len = safe_strlen(descr) + safe_strlen(caller) + 64;
   errmsg = (char *)malloc(len * sizeof(char));
   if (arg_n == 0)
-    slen = snprintf(errmsg, len, "%s: argument ~A has wrong type (expecting %s)", caller, descr);
+    slen = snprintf(errmsg, len, "%s: argument ~A has wrong type (%s, expected %s)", caller, s7_type_name(arg), descr);
   else
     {
       if (arg_n < 0) arg_n = 1;
-      slen = snprintf(errmsg, len, "%s: argument %d, ~A, has wrong type (expecting %s)", caller, arg_n, descr);
+      slen = snprintf(errmsg, len, "%s: argument %d, ~A, has wrong type (%s, expected %s)", caller, arg_n, s7_type_name(arg), descr);
     }
   x = make_list_2(sc, s7_make_string_with_length(sc, errmsg, slen), arg);
   free(errmsg);

@@ -12897,6 +12897,7 @@
 (num-test (log 0-i) (make-rectangular 0.0 (* -0.5 our-pi)))
 (num-test (log 1.0e-8) -18.42068074395237)
 (num-test (log 1.0e-12) -27.63102111592855)
+(num-test (log (log (log -1))) 0.66457192224882+0.9410294873126i)
 
 (let ((err 0.0))
   (do ((i 0 (+ i 1))
@@ -13771,7 +13772,7 @@
 
 
 
-;;; -------- rationalize (both versions)
+;;; -------- rationalize
 
 (if with-rationalize 
     (begin
@@ -35498,6 +35499,7 @@
       (test (set! (let () 'a) 1) 'error)
       (test (set!) 'error)
       (test (set! #t #f) 'error)
+      (test (set! (call/cc (lambda (a) a)) #f) 'error)
       
       (test (let ((a (lambda (x) (set! a 3) x))) (list (a 1) a)) 'error)
       (test (let ((a (let ((b 1)) (set! a 3) b))) a) 'error)            
@@ -39405,8 +39407,17 @@ expt error > 1e-6 around 2^-46.506993328423
 		   help procedure-arity procedure-source make-procedure-with-setter procedure-with-setter? 
 		   procedure-with-setter-setter-arity not boolean? eq? eqv? equal? s7-version)))
     
-    (let ((argls (list #t #f -1 0 1 (list 1 2) (cons 1 2) '() '#(1 2) '((1 2) (3 4))
-		      "hi" "" 'hi :hi #\a #\newline 1.5 1.0+1.0i 3/4 abs (make-random-state 1234))))
+    (let ((argls (list #t #f 
+		       -1 0 1 1.5 1.0+1.0i 3/4 
+		       (list 1 2) (cons 1 2) '() '((1 2) (3 4)) '((1 (2)) (((3) 4)))
+		       '#(1 2) (vector 1 #\a '(3)) (make-vector 0)
+		       (let ((x 3)) (lambda (y) (+ x y))) abs
+		       "hi" "" 
+		       'hi :hi 
+		       #\a #\newline 
+		       (call/cc (lambda (a) a))
+		       (make-hash-table 256)
+		       (make-random-state 1234))))
       
 					;(display "no args") (newline)
       (for-each

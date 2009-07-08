@@ -2,7 +2,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Feb 03 10:36:51 CET 2006
-\ Changed: Sun Jun 14 20:37:46 CEST 2009
+\ Changed: Thu Jun 25 19:41:26 CEST 2009
 
 \ Commentary:
 \
@@ -427,7 +427,7 @@ instrument: vox <{ start dur freq amp ampfun freqfun freqscl voxfun index
   size make-array { f2 }
   size make-array { f3 }
   size 1- 0 ?do
-    clm-ins-formants voxfun i 1+ object-ref array-assoc-ref { phon }
+    clm-ins-formants voxfun i 1+ object-ref hash-ref { phon }
     voxfun i object-ref { n }
     f1 i n array-set!
     phon 0 array-ref f1 i 1+ rot array-set!
@@ -670,7 +670,7 @@ instrument: pqw-vox <{ start dur
     phone1 i ph array-set!
     phone2 i ph array-set!
     phone3 i ph array-set!
-    clm-ins-formants phonemes i 1+ object-ref array-assoc-ref { ary }
+    clm-ins-formants phonemes i 1+ object-ref hash-ref { ary }
     phone1 i 1+ ary 0 object-ref array-set!
     phone2 i 1+ ary 1 object-ref array-set!
     phone3 i 1+ ary 2 object-ref array-set!
