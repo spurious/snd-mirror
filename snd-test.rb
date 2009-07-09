@@ -105,8 +105,8 @@ $info_array_print_length = 48
 
 # Returns the Ascii value of KEY as a Fixnum.
 #
-# Since Ruby 1.9.0 (July/August 2006) ?x returns the string "x"
-# instead of the fixnum 120, we need a new function.
+# Since Ruby 1.9.0 (July/August 2006) ?x returns string "x" instead of
+# fixnum 120, so we need a new function.
 #
 # key_to_int(?x) => 120
 def key_to_int(key)
@@ -122,7 +122,6 @@ trap("SIGINT") do |sig|
   puts
   snd_info("Interrupt received.  Finish snd-test.rb.")
   snd_info
-  set_mus_audio_playback_amp($orig_audio_amp)
   $timings.last.last.stop
   finish_snd_test
   exit(2) if $with_exit
@@ -134,7 +133,6 @@ $audio_amp_zero = 0.0
 $with_backtrace = false
 $sf_dir = "/home/bil/sf1/"
 $with_exit = true
-$full_test = true
 
 $with_big_file = false
 $bigger_snd = "/home/bil/zap/sounds/bigger.snd"
@@ -185,7 +183,6 @@ $my_snd_error_hook = lambda do |msg|
         snd_display("#<snd-error-hook ********** end>")
       end
       if $ERROR_AND_EXIT
-        set_mus_audio_playback_amp(0.75)
         $timings.last.last.stop
         finish_snd_test
         exit(3)
@@ -300,7 +297,6 @@ if script_arg.positive?
       if arg.between?(0, 28)
         eval(format("$test%02d = true", arg))
         $with_exit = true
-        $full_test = false
       end
     end
   end
@@ -378,14 +374,6 @@ end
 
 def vmaxdiff(v0, v1)
   v0.dup.subtract(v1).peak
-end
-
-def rs(val)
-  random(1.0) < val
-end
-
-def log0(try_it = true)
-  try_it ? log(0) : 0.0
 end
 
 def list_p(obj)
@@ -491,10 +479,6 @@ rescue
   make_color(1, 0, 0)
 end
 
-def exec_cmd(cmd, *args)
-  shell(cmd, *args)
-end
-
 def file_copy(f1, f2)
   if File.exist?(f1)
     fin = File.open(f1, "r")
@@ -513,7 +497,7 @@ def delete_files(*files)
   files.each do |f| delete_file(f) end
 end
 
-def with_file(file, verbose = true, &body)
+def with_file(file, verbose = $DEBUG, &body)
   if File.exist?(full_name = $sf_dir + file)
     body.call(full_name)
   else
@@ -546,7 +530,7 @@ def snd_error_test
     end
   end
 end
-snd_error_test if $full_test
+snd_error_test
 
 show_listener
 set_window_x(600)
@@ -2677,6 +2661,7 @@ def test054
     if ffneq(res = maxamp(ind), 0.1)
       snd_display("max: %s, format: %s?", res, mus_data_format2string(type))
     end
+    close_sound(ind)
   end
 end
 
@@ -3011,21 +2996,18 @@ def test074
   end
   vct2sound_data(vx, sdata2, 0)
   mus_sound_write(fd, 0, 99, 1, sdata)
-  mus_sound_close_output(fd, 200)
+  mus_sound_close_output(fd, 100 * mus_bytes_per_sample(Mus_bshort))
   fd = mus_sound_reopen_output(fmv5_snd, 1, Mus_bshort, Mus_aiff, mus_sound_data_location(fmv5_snd))
-  mus_sound_close_output(fd, 200)
+  mus_sound_close_output(fd, 100 * mus_bytes_per_sample(Mus_bshort))
   fd = mus_sound_open_input(fmv5_snd)
   mus_sound_read(fd, 0, 99, 1, sdata)
   if fneq(res = sdata[0, 10], 0.1)
     snd_display("mus_sound_write: %s", res)
   end
-  if RUBY_VERSION > "1.6.6"
-    if (pos = mus_sound_seek_frame(fd, 20)) != (io_pos = IO.new(fd).tell)
-      snd_display("1 mus_sound_seek_frame: %d %d?", pos, io_pos)
-    end
-    if frame2byte(fmv5_snd, 20) != pos
-      snd_display("2 mus_sound_seek_frame: %d %d?", pos, frame2byte(fmv5_snd, 20))
-    end
+  pos = mus_sound_seek_frame(fd, 20)
+  f2b_pos = frame2byte(fmv5_snd, 20)
+  if f2b_pos != pos
+    snd_display("2 mus_sound_seek_frame: %d %d?", pos, f2b_pos)
   end
   mus_sound_read(fd, 0, 10, 1, sdata)
   if fneq(res = sdata[0, 0], 0.2)
@@ -3156,7 +3138,6 @@ def test074
     end
   end
   mus_audio_mixer_write(Mus_audio_microphone, Mus_audio_amp, 0, make_vct(1))
-#  ind = open_sound("/usr/local/" + Dir.pwd + "/2.snd")
   ind = open_sound("2.snd")
   sd1 = samples2sound_data(12000, 10, ind, 0)
   vc1 = sound_data2vct(sd1)
@@ -3207,25 +3188,25 @@ end
 def test084
   [1, 2, 4, 8].each do |chans|
     [[Mus_bshort, Mus_next],
-      [Mus_bfloat, Mus_aifc],
-      [Mus_lshort, Mus_aifc],
-      [Mus_lfloat, Mus_riff],
-      [Mus_lshort, Mus_nist],
-      [Mus_bint, Mus_aiff],
-      [Mus_lint, Mus_next],
-      [Mus_bintn, Mus_next],
-      [Mus_lintn, Mus_next],
-      [Mus_b24int, Mus_aifc],
-      [Mus_l24int, Mus_riff],
-      [Mus_bfloat, Mus_ircam],
-      [Mus_bfloat_unscaled, Mus_next],
-      [Mus_lfloat_unscaled, Mus_next],
-      [Mus_bdouble_unscaled, Mus_next],
-      [Mus_ldouble_unscaled, Mus_next],
-      [Mus_bdouble, Mus_next],
-      [Mus_ldouble, Mus_next],
-      [Mus_ulshort, Mus_next],
-      [Mus_ubshort, Mus_next]].each do |df, ht|
+     [Mus_bfloat, Mus_aifc],
+     [Mus_lshort, Mus_aifc],
+     [Mus_lfloat, Mus_riff],
+     [Mus_lshort, Mus_nist],
+     [Mus_bint, Mus_aiff],
+     [Mus_lint, Mus_next],
+     [Mus_bintn, Mus_next],
+     [Mus_lintn, Mus_next],
+     [Mus_b24int, Mus_aifc],
+     [Mus_l24int, Mus_riff],
+     [Mus_bfloat, Mus_ircam],
+     [Mus_bfloat_unscaled, Mus_next],
+     [Mus_lfloat_unscaled, Mus_next],
+     [Mus_bdouble_unscaled, Mus_next],
+     [Mus_ldouble_unscaled, Mus_next],
+     [Mus_bdouble, Mus_next],
+     [Mus_ldouble, Mus_next],
+     [Mus_ulshort, Mus_next],
+     [Mus_ubshort, Mus_next]].each do |df, ht|
       samps = case chans
               when 1
                 100000
@@ -3242,32 +3223,27 @@ def test084
       delete_file("fmv5.snd")
       fd = mus_sound_open_output("fmv5.snd", 22050, chans, df, ht, "no, comment")
       mus_sound_write(fd, 0, samps - 1, chans, sdata)
-      mus_sound_close_output(fd, (samps * chans * mus_bytes_per_sample(df)))
+      mus_sound_close_output(fd, samps * chans * mus_bytes_per_sample(df))
       fd = mus_sound_open_input("fmv5.snd")
       mus_sound_read(fd, 0, samps - 1, chans, ndata)
       pos = mus_sound_seek_frame(fd, 100)
-      if RUBY_VERSION > "1.6.6"
-        if (res = IO.new(fd).tell) != pos
-          snd_display("mus_sound_seek_frame[%d]: chans %d %d (%s %s)?",
-                      pos, chans, res, mus_header_type_name(ht), mus_data_format_name(df))
-        end
-      end
-      if (res = frame2byte("fmv5.snd", 100)) != pos
+      f2b_pos = frame2byte("fmv5.snd", 100)
+      if f2b_pos != pos
         snd_display("mus_sound_seek_frame(100): chans %d %d %d (%s %s)?",
-                    chans, pos, res, mus_header_type_name(ht), mus_data_format_name(df))
+                    chans, pos, f2b_pos, mus_header_type_name(ht), mus_data_format_name(df))
       end
       mus_sound_close_input(fd)
       delete_file("fmv5.snd")
       v0 = v1 = 0.0
-      res = Snd.catch(:all, lambda do |*args|
+      res = Snd.catch(:read_write_error, lambda do |*args|
                         snd_display("read_write trouble: %s %s (%s != %s)?", *args)
                       end) do
         chans.times do |chn|
           samps.times do |i|
             if fneq(v0 = sdata[chn, i], v1 = ndata[chn, i])
               Snd.throw(:read_write_error,
-                        mus_header_type_name(ht),
                         mus_data_format_name(df),
+                        mus_header_type_name(ht),
                         v0, v1)
             end
           end
@@ -3319,11 +3295,7 @@ def test094
   set_clipping(false)
   map_channel(lambda do |y| y * 10.0 end, 0, frames(ind), ind, 0)
   save_sound_as("test.snd", ind, Mus_next, Mus_bfloat)
-  # Mon Mar 16 21:11:58 CET 2009
-  # #<snd-error-hook: mus_file_seek_frame: file descriptor = 5?: Mus_error>
-  # # [:mus_error] mus_file_seek_frame: file descriptor = 5?: Mus_error (StandardError)
-  # That's why catch ... end.
-  Snd.catch do undo_edit(1, ind, 0) end
+  undo_edit(1, ind, 0)
   ind1 = open_sound("test.snd")
   if fneq(res1 = maxamp(ind1, 0), res2 = 10.0 * maxamp(ind, 0))
     snd_display("clipping 0: %s %s?", res1, res2)
@@ -3331,17 +3303,9 @@ def test094
   close_sound(ind1)
   delete_file("test.snd")
   set_clipping(true)
-  # [ms] Fri Mar  6 12:49:56 CET 2009
-  # #<snd-error-hook: mus_file_seek_frame: file descriptor = 3?: Mus_error>
-  # That's why catch ... end.
-  Snd.catch do
-    map_channel(lambda do |y| y * 10.0 end, 0, frames(ind), ind, 0)
-  end
+  map_channel(lambda do |y| y * 10.0 end, 0, frames(ind), ind, 0)
   save_sound_as("test.snd", ind, Mus_next, Mus_bfloat)
-  # [ms] Sat Nov 17 00:21:11 CET 2007
-  # #<snd-error-hook: mus_file_seek_frame: file descriptor = 5?: Mus_error>
-  # That's why catch ... end.
-  Snd.catch do undo_edit(1, ind, 0) end
+  undo_edit(1, ind, 0)
   ind1 = open_sound("test.snd")
   if fneq(res = maxamp(ind1, 0), 1.0)
     snd_display("clipping 1: %s %s?", res, maxamp(ind, 0))
@@ -3480,7 +3444,7 @@ def test094
   if !list?(res) || res.car != :out_of_range
     snd_display("mus_sound_read too many bytes: %s", res.inspect)
   end
-  mus_sound_close_output(snd, 40)
+  mus_sound_close_output(snd, 0)
   delete_file("test.snd")
   mus_sound_forget("test.snd")
   set_mus_clipping(false)       # default
@@ -3590,13 +3554,10 @@ def test094
     vct(0.267, 0.278, 0.309, 0.360, 0.383, 0.414, 0.464, 0.475, 0.486, 0.495)]
   ].each do |file, beg, dur, data|
     with_file(file) do |fsnd|
-      # INFO
-      # :mus_error: can't translate /usr/gnu/sound/sf1/oboe.g721 to /usr/gnu/sound/sf1/oboe.g721.snd
-      if sound?(ind = Snd.catch(:mus_error) do open_sound(fsnd) end.first)
-        ndata = samples2vct(beg, dur, ind, 0)
-        snd_display("%s: %s != %s", file, data, ndata) unless vequal(data, ndata)
-        close_sound(ind)
-      end
+      ind = open_sound(fsnd)
+      ndata = samples2vct(beg, dur, ind, 0)
+      snd_display("%s: %s != %s", file, data, ndata) unless vequal(data, ndata)
+      close_sound(ind)
     end
   end
 end
@@ -3777,9 +3738,10 @@ def test104
     if (res = frames(ind)) != (cur_samps * 2)
       snd_display("set_samples (%s): %s != %s", file, cur_samps, res)
     end
-    set_channels(ind, cur_chans * 2)
-    if (res = chans(ind)) != (cur_chans * 2)
-      snd_display("set_chans (%s): %s != %s", file, cur_chans, res)
+    set_chans(ind, cur_chans * 2) # this can change the index
+    ind = find_sound(file)
+    if (res = channels(ind)) != (cur_chans * 2)
+      snd_display("set_channels (%s): %s != %s", file, cur_chans, res)
     end
     set_data_location(ind, cur_loc * 2)
     if (res = data_location(ind)) != (cur_loc * 2)
@@ -3800,6 +3762,8 @@ def test104
     set_header_type(ind, cur_type)
     set_data_format(ind, cur_format)
   end
+  # [ms] In case index has changed on set_chans() above.
+  Snd.sounds.apply(:close_sound)
 end
 
 # with big file
@@ -4593,7 +4557,6 @@ def test04
     test124
     test134
     test144
-    Snd.sounds.apply(:close_sound)
     $after_test_hook.call(4)
   end
 end
@@ -4670,7 +4633,7 @@ def test_orig(func0, func1, func_name, ind1)
   end
   func1.call(ind1)
   v2 = samples2vct(12000, 10, ind1, 0)
-  # INFO vfequal --> vffequal
+  # INFO: vfequal --> vffequal [ms]
   unless vffequal(v0, v2)
     snd_display("%s (orig: 1)\n# %s\n# %s", func_name, v0, v2)
   end
@@ -6852,8 +6815,8 @@ def test105
   if (res = snd_completion(" open-so")) != " open-sound"
     snd_display("completion (1): %s", res)
   end
-  # INFO
-  # Zoom_focus_right (constant) replaced by zoom_focus_style
+  # INFO:
+  # Zoom_focus_right (constant) replaced by zoom_focus_style [ms]
   if (res = snd_completion(" zoom_focus_s")) != " zoom_focus_style"
     snd_display("completion (2): %s", res)
   end
@@ -7011,12 +6974,10 @@ def test105
   num_transforms.times do |i|
     set_transform_type(i)
     snd_display("transform? %d?", i) unless transform?(i)
-    # FIXME: X Error of failed request:  BadWindow (invalid Window parameter)
-    #        if num_transform_graph_types > 0
-    #num_transform_graph_types.times do |j|
-    #  set_transform_graph_type(j, ind, 0)
-    #  update_transform_graph(ind, 0)
-    #end
+    num_transform_graph_types.times do |j|
+      set_transform_graph_type(j, ind, 0)
+      update_transform_graph(ind, 0)
+    end
   end
   set_transform_type(Fourier_transform)
   unless (res = transform?(transform_type))
@@ -7060,8 +7021,7 @@ def test105
     end
     graph2ps("aaa.eps")
   end
-  # FIXME: X Error of failed request:  BadWindow (invalid Window parameter)
-  #close_sound(n2)
+  close_sound(n2)
   if channels(ind) == 1
     set_channel_style(Channels_superimposed, ind)
     if (res = channel_style(ind)) != Channels_separate
@@ -7096,7 +7056,7 @@ def test105
     [:data_format, Mus_bshort],
     [:maxamp, 0.14724],
     [:maxamp_position, 24971],
-    [:comment, ""],].each do |func, val|
+    [:comment, ""]].each do |func, val|
     notequal = case val
                when Float
                  lambda do |a, b| fneq(a, b) end
@@ -7110,10 +7070,10 @@ def test105
   if (res = short_file_name(ind)) != "oboe.snd"
     snd_display("oboe: short name: %s?", res)
   end
-  if (res = count_matches(lambda do |y| y > 0.125 end)) != 1313
+  if (res = count_matches(lambda do |y| y > 0.125 end)) != 1314
     snd_display("oboe: count_matches %d?", res)
   end
-  if (res = count_matches(lambda do |y| a = [0.1, 0.2]; (y > a.car); end)) != 2851
+  if (res = count_matches(lambda do |y| a = [0.1, 0.2]; (y > a.car); end)) != 2852
     snd_display("oboe: unopt count_matches %d?", res)
   end
   spot = find_channel(lambda do |y| y > 0.13 end)
@@ -7131,8 +7091,7 @@ def test105
   eds = edits
   snd_display("edits: %s?", eds) if eds[0].nonzero? or eds[1].nonzero?
   snd_display("edit_position: %s %s?", edit_position, eds) if edit_position != eds[0]
-  # FIXME: X Error of failed request:  BadWindow (invalid Window parameter)
-  #play_and_wait(0, ind, 0)
+  play_and_wait(0, ind, 0)
   bomb(ind, false)
   select_all(ind, 0)
   r0 = regions.first
@@ -7162,8 +7121,7 @@ def test105
   else
     snd_display("save_region file disappeared?")
   end
-  # FIXME: X Error of failed request:  BadWindow (invalid Window parameter)
-  #play_region(r0, true)   # needs to be true here or it never gets run
+  play_region(r0, true)   # needs to be true here or it never gets run
   snd_display("regions: %s", regions) if regions.length != 1
   unless (res = selection_member?(ind))
     snd_display("selection_member?: %s?", res)
@@ -7306,8 +7264,7 @@ def test105
     snd_display("speed_control_tones 18: %d?", res)
   end
   graph2ps("aaa.eps")
-  # FIXME: X Error of failed request:  BadWindow (invalid Window parameter)
-  #close_sound(nind)
+  close_sound(nind)
   revert_sound(ind)
   set_sample(50, 0.5, ind)
   snd_display("set_sample: %s?", sample(50)) if fneq(sample(50), 0.5)
@@ -7487,8 +7444,7 @@ def test105
   end
   delete_file("fmv.snd")
   delete_file("aaa.eps")
-  # FIXME: X Error of failed request:  BadWindow (invalid Window parameter)
-  #close_sound(ind)
+  close_sound(ind)
 end
 
 def test115
@@ -7853,16 +7809,16 @@ def test125
       end
     end
   end
-  if fneq(sample(998),   -0.03) or
+  if fffneq(sample(998),   -0.03) or
       fneq(sample(999),   0.0) or
       fneq(sample(1000),  0.0) or
-      fneq(sample(1001), -0.03)
+      fffneq(sample(1001), -0.03)
     snd_display("insert_silence [999 for 2]: %s?",
                 [sample(998), sample(999), sample(1000), sample(1001)])
   end
-  if fneq(sample(2006),  -0.033) or
+  if fffneq(sample(2006),  -0.033) or
       fneq(sample(2007),  0.0) or
-      fneq(sample(2008), -0.033)
+      fffneq(sample(2008), -0.033)
     snd_display("insert_silence [2007 for 1]: %s?", [sample(2006), sample(2007), sample(2008)])
   end
   revert_sound(obind)
@@ -8164,10 +8120,10 @@ def xtest155(obind)
   xpos = x0 + 0.5 * (x1 - x0)
   ypos = y0 + 0.75 * (y1 - y0)
   cp_x = lambda do |x|
-    axinfo[10] + (x - x0) * ((axinfo[12] - axinfo[10]) / (x1 - x0))
+    (axinfo[10] + ((x - x0) * ((axinfo[12] - axinfo[10]).to_f / (x1 - x0)))).floor.to_i
   end
   cp_y = lambda do |y|
-    axinfo[13] + (y1 - y) * ((axinfo[11] - axinfo[13]) / (y1 - y0))
+    (axinfo[13] + ((y1 - y) * ((axinfo[11] - axinfo[13]).to_f / (y1 - y0)))).floor.to_i
   end
   select_channel(0)
   set_cursor(100, obind)
@@ -8196,28 +8152,26 @@ def xtest155(obind)
   snd_display("x1->position: %s?", res) if (res[0] - res[1]).abs > 1
   res = our_x2position(obind, 0.5 * (x0 + x1))
   snd_display("xmid->position: %s?", res) if (res[0] - res[1]).abs > 1
-  unless $full_test
-    if ((res = x2position(xpos)) - cp_x.call(xpos)).abs > 1
-      snd_display("cp_x 0.5: %s %s?", res, cp_x.call(xpos))
+  if ((res = x2position(xpos)) - cp_x.call(xpos)).abs > 1
+    snd_display("cp_x 0.5: %s %s?", res, cp_x.call(xpos))
+  end
+  if ((res = y2position(ypos)) - cp_y.call(ypos)).abs > 1
+    snd_display("cp_y 0.75: %s %s?", res, cp_y.call(ypos))
+  end
+  10.times do |i|
+    xxpos = x0 + random(x1 - x0)
+    yypos = y0 + random(y1 - y0)
+    if ((res = x2position(xxpos)) - cp_x.call(xxpos)).abs > 1
+      snd_display("cp_x[%d] %s: %s %s?", i, xxpos, res, cp_x.call(xxpos))
     end
-    if ((res = y2position(ypos)) - cp_y.call(ypos)).abs > 1
-      snd_display("cp_y 0.75: %s %s?", res, cp_y.call(ypos))
+    if ((res = y2position(yypos)) - cp_y.call(yypos)).abs > 1
+      snd_display("cp_y[%d] %s: %s %s?", i, yypos, res, cp_y.call(yypos))
     end
-    10.times do |i|
-      xxpos = x0 + random(x1 - x0)
-      yypos = y0 + random(y1 - y0)
-      if ((res = x2position(xxpos)) - cp_x.call(xxpos)).abs > 1
-        snd_display("cp_x[%d] %s: %s %s?", i, xxpos, res, cp_x.call(xxpos))
-      end
-      if ((res = y2position(yypos)) - cp_y.call(yypos)).abs > 1
-        snd_display("cp_y[%d] %s: %s %s?", i, yypos, res, cp_y.call(yypos))
-      end
-      if fneq(res = position2x(cp_x.call(xxpos).to_i), xxpos)
-        snd_display("x2position cp_x: %s %s?", xxpos, res)
-      end
-      if fffneq(res = position2y(cp_y.call(yypos).to_i), yypos)
-        snd_display("y2position cp_y: %s %s?", yypos, res)
-      end
+    if fneq(res = position2x(cp_x.call(xxpos)), xxpos)
+      snd_display("x2position cp_x: %s %s?", xxpos, res)
+    end
+    if fffneq(res = position2y(cp_y.call(yypos)), yypos)
+      snd_display("y2position cp_y: %s %s?", yypos, res)
     end
   end
   set_left_sample(1234, obind, 0)
@@ -8835,93 +8789,6 @@ def test205
   set_transform_graph?(true)
   close_sound(ind)
   close_sound(ind1)
-end
-
-def test215
-  File.open("sndtst", "w") do |fp|
-    fp.print <<EOF
-#!/usr/bin/env ruby
-require "sndlib" unless $".member?("sndlib") # "
-ARGV.each do |name|
-  if File.exist?(name)
-    print name, ": ", mus_sound_comment(name), "\\n"
-  else
-    print name, " doesn't exists\\n"
-  end
-end
-exit 0
-EOF
-    fp.chmod(0755)
-  end
-  if (res = exec_cmd("sndtst fyow.snd")) !=
-      "fyow.snd: ;Written on Mon 1-Jul-91 at 12:10 PDT  at localhost (NeXT) using Allegro CL and clm of 25-June-91\n"
-    snd_display("script: %s?", res.inspect)
-  end
-  delete_file("sndtst")
-  File.open("sndtst", "w") do |fp|
-    fp.print <<EOF
-#!#{$home_dir}/cl/snd -batch
-open_sound "fmv.snd"
-scale_by 2.0
-save_sound
-exit 0
-EOF
-    fp.chmod(0755)
-  end
-  delete_file("fmv.snd")
-  mus_sound_prune
-  file_copy("oboe.snd", "fmv.snd")
-  sleep 1
-  ind = open_sound("fmv.snd")
-  samps = samples2vct(5000, 10)
-  date = mus_sound_write_date("fmv.snd")
-  if frames(ind) != mus_sound_frames("oboe.snd")
-    snd_display("cp oboe.snd -> fmv.snd: %s %s?", frames(ind), mus_sound_frames("oboe.snd"))
-  end
-  s_in = s_out = nil
-  $update_hook.reset_hook!
-  $update_hook.add_hook!("snd-test") do |snd|
-    s_in = snd
-    lambda do |newsnd| s_out = newsnd end
-  end
-  scale_by 3.0
-  Snd.catch do
-    add_mark(101, ind)
-    add_mark(202, ind)
-  end
-  exec_cmd("sndtst")
-  if (res = mus_sound_write_date("fmv.snd")) == date
-    snd_display("script didn\'t overwrite fmv.snd?")
-  end
-  set_sync(123, ind)
-  nind = update_sound(ind)
-  if edits(nind) != [0, 0]
-    snd_display("update_sound edits: %s?", edits(nind))
-  end
-  if (res = marks(nind, 0).map do |x| mark_sample(x) end) != [101, 202]
-    snd_display("update_sound marks: %s?", res)
-  end
-  snd_display("update_sound sync: %s?", sync(nind)) if sync(nind) != 123
-  nsamps = samples2vct(5000, 10)
-  unless vequal(samps, vct_scale!(nsamps, 0.5))
-    snd_display("update_sound amps: %s %s?", samps, nsamps)
-  end
-  if (not integer?(s_in)) or ind != s_in
-    snd_display("update_hook init: %s %s?", ind, s_in)
-  end
-  if (not integer?(s_out)) or nind != s_in
-    snd_display("update_hook done: %s %s?", nind, s_out)
-  end
-  $update_hook.reset_hook!
-  close_sound(ind)
-  ind = open_sound("fmv.snd")
-  $update_hook.add_hook!("snd-test") do |snd| lambda do |ind| snd_display("oops (%s)", ind) end end
-  exec_cmd("sndtst")
-  if (res = Snd.catch do update_sound(ind) end).first != :bad_arity
-    snd_display("bad update_hook result: %s", res.inspect)
-  end
-  close_sound(find_sound("fmv.snd"))
-  delete_files("fmv.snd", "sndtst")
 end
 
 def peak_env_equal?(name, index, e, diff)
@@ -9718,7 +9585,7 @@ def test255
     snd_display("find+count: %s?", res)
   end
   set_cursor(1000)
-  # INFO: set_sample(0.5) isn't possible
+  # INFO: set_sample(0.5) isn't possible [ms]
   set_sample(1000, 0.5)
   snd_display("set sample no arg: %s %s?", sample(1000), sample(0)) if fneq(sample(1000), 0.5)
   close_sound(ind)
@@ -10184,7 +10051,7 @@ end
 def test05
   if $test05
     $before_test_hook.call(5)
-    unless provided?(:snd_nogui) or true then test005 end
+    test005 unless provided?(:snd_nogui) # no set_x_axis_label [ms]
     test015
     test025
     test035
@@ -10194,10 +10061,12 @@ def test05
     test075
     test085
     test095
-    # FIXME: X Error of failed request:  BadWindow (invalid Window parameter)
-    unless provided?(:snd_nogui) or true then test105 end
+    # INFO on test105: [ms]
+    # snd_nogui: no set_x_axis_label
+    # snd_gtk: BadWindow (invalid Window parameter)
+    test105 if provided?(:snd_motif)
     test115
-    unless provided?(:snd_nogui) or true then test125 end
+    test125
     test135
     test145
     test155
@@ -10206,7 +10075,6 @@ def test05
     test185
     test195
     test205
-    test215
     test225
     test235
     test245
@@ -10736,19 +10604,14 @@ def test007
   snd_display("color equal? %s %s", c1, c2) unless c1.equal?(c2)
   snd_display("color eql? %s %s", c1, c2) unless c1.eql?(c2)
   snd_display("color == %s %s", c1, c2) unless c1 == c2
-  if provided? :snd_motif
-    snd_display("diff color equal? %s %s", c1, c3) unless c1.eql?(c3)
-    snd_display("diff color eql? %s %s", c1, c3) unless c1.eql?(c3)
-  end
   if (res = color2list(c1)) != [0.0, 0.0, 1.0]
     snd_display("color2list: %s %s?", c1, res)
   end
-  true_color_list = [
-    [0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 1.0, 1.0],
-    [0.0, 0.0, 7.01915007248035e-4], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0],
-    [0.0, 0.0, 0.49999], [1.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 0.0, 1.0],
-    [1.0, 0.0, 1.0], [0.0, 0.500007629510948, 0.4], [1.0, 0.0, 0.0],
-    [1.0, 0.0, 0.0], [0.0, 0.0, 0.0]]
+  true_color_list = [[0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 1.0, 1.0],
+                     [0.0, 0.0, 7.01915007248035e-4], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0],
+                     [0.0, 0.0, 0.49999], [1.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 0.0, 1.0],
+                     [1.0, 0.0, 1.0], [0.0, 0.500007629510948, 0.4], [1.0, 0.0, 0.0],
+                     [1.0, 0.0, 0.0], [0.0, 0.0, 0.0]]
   Last_colormap.times do |i|
     if colormap?(i)
       unless vequal(res0 = colormap_ref(i, 0), res1 = true_color_list[i])
@@ -10758,41 +10621,43 @@ def test007
   end
   Snd.catch do
     [[:basic_color, Ivory2],
-      [:cursor_color, Red],
-      [:data_color, Black],
-      [:enved_waveform_color, Blue],
-      [:filter_control_waveform_color, Blue],
-      [:graph_color, White],
-      [:highlight_color, Ivory1],
-      [:listener_color, Alice_blue],
-      [:listener_text_color, Black],
-      [:mark_color, Red],
-      [:mix_color, Dark_gray],
-      [:position_color, Ivory3],
-      [:pushed_button_color, Lightsteelblue1],
-      [:sash_color, Light_green],
-      [:selected_data_color, Black],
-      [:selected_graph_color, White],
-      [:selection_color, Lightsteelblue1],
-      [:text_focus_color, White],
-      [:zoom_color, Ivory4],
-      [:quit_button_color, Indian_red],
-      [:help_button_color, Lightsteelblue2],
-      [:reset_button_color, Goldenrod1],
-      [:doit_button_color, Palegreen2],
-      [:doit_again_button_color, Darkolivegreen1]].each do |getfnc, initval|
+     [:cursor_color, Red],
+     [:data_color, Black],
+     [:enved_waveform_color, Blue],
+     [:filter_control_waveform_color, Blue],
+     [:graph_color, White],
+     [:highlight_color, Ivory1],
+     [:listener_color, Alice_blue],
+     [:listener_text_color, Black],
+     [:mark_color, Red],
+     [:mix_color, Dark_gray],
+     [:position_color, Ivory3],
+     [:pushed_button_color, Lightsteelblue1],
+     [:sash_color, Light_green],
+     [:selected_data_color, Black],
+     [:selected_graph_color, White],
+     [:selection_color, Lightsteelblue1],
+     [:text_focus_color, White],
+     [:zoom_color, Ivory4],
+     [:quit_button_color, Indian_red],
+     [:help_button_color, Lightsteelblue2],
+     [:reset_button_color, Goldenrod1],
+     [:doit_button_color, Palegreen2],
+     [:doit_again_button_color, Darkolivegreen1]].each do |getfnc, initval|
       snd_display("%s not color?", initval) unless color?(initval)
       set_snd_func(getfnc, Beige)
-      snd_display("set_%s != Beige (%s)?", getfnc, snd_func(getfnc)) if snd_func(getfnc) != Beige
+      if (res = snd_func(getfnc)) != Beige
+        snd_display("set_%s != Beige (%s)?", getfnc, res)
+      end
       set_snd_func(getfnc, initval)
     end
     ind = open_sound("oboe.snd")
     set_selected_data_color(Light_green)
     set_data_color(Blue)
     set_selected_graph_color(Light_green)
-    red = make_color_with_catch(1.0, 0.0, 0.0)
-    set_foreground_color(red, ind, 0, Cursor_context)
     if provided? :snd_motif
+      red = make_color_with_catch(1.0, 0.0, 0.0)
+      set_foreground_color(red, ind, 0, Cursor_context)
       if (res = foreground_color(ind, 0, Cursor_context)) != red
         snd_display("set_foreground_color cursor: %s %s?", res, red)
       end
@@ -10825,7 +10690,7 @@ def test017
       r = (x < (3.0 / 4)) ? ((7.0 / 8) * x) : ((11.0 / 8) * x - 3.0 / 8)
       g = (x < (3.0 / 8)) ? ((7.0 / 8) * x) : ((x < (3.0 / 4)) ?
                                                ((29.0 / 24) * x - 1.0 / 8) :
-                                                 ((7.0 / 8) * x + 1.0 / 8))
+                                               ((7.0 / 8) * x + 1.0 / 8))
       b = (x < (3.0 / 8)) ? ((29.0 / 24) * x) : ((7.0 / 8) * x + 1.0 / 8)
       rgb = colormap_ref(Bone_colormap, x)
       r1, g1, b1 = rgb
@@ -10842,7 +10707,8 @@ def test017
       b = (1.0 / 2) * x
       rgb = colormap_ref(Copper_colormap, x)
       r1, g1, b1 = rgb
-      if x < 1.0 - 1.0 / n and (fneq_err(r, r1, err) or fneq_err(g, g1, err) or fneq_err(b, b1, err))
+      if x < 1.0 - 1.0 / n and
+          (fneq_err(r, r1, err) or fneq_err(g, g1, err) or fneq_err(b, b1, err))
         snd_display("copper %.3f (%.3f): %s %s",
                     x, [(r - r1).abs, (g - g1).abs, (b - b1).abs].max,
                     [r, g, b], [r1, g1, b1])
@@ -10855,7 +10721,8 @@ def test017
       b = 1.0 - g / 2.0
       rgb = colormap_ref(Winter_colormap, x)
       r1, g1, b1 = rgb
-      if x < 1.0 - 1.0 / n and (fneq_err(r, r1, err) or fneq_err(g, g1, err) or fneq_err(b, b1, err))
+      if x < 1.0 - 1.0 / n and
+          (fneq_err(r, r1, err) or fneq_err(g, g1, err) or fneq_err(b, b1, err))
         snd_display("winter %.3f (%.3f): %s %s",
                     x, [(r - r1).abs, (g - g1).abs, (b - b1).abs].max,
                     [r, g, b], [r1, g1, b1])
@@ -10868,7 +10735,8 @@ def test017
       b = 0.0
       rgb = colormap_ref(Autumn_colormap, x)
       r1, g1, b1 = rgb
-      if x < 1.0 - 1.0 / n and (fneq_err(r, r1, err) or fneq_err(g, g1, err) or fneq_err(b, b1, err))
+      if x < 1.0 - 1.0 / n and
+          (fneq_err(r, r1, err) or fneq_err(g, g1, err) or fneq_err(b, b1, err))
         snd_display("autumn %.3f (%.3f): %s %s",
                     x, [(r - r1).abs, (g - g1).abs, (b - b1).abs].max,
                     [r, g, b], [r1, g1, b1])
@@ -10881,7 +10749,8 @@ def test017
       b = 1.0
       rgb = colormap_ref(Cool_colormap, x)
       r1, g1, b1 = rgb
-      if x < 1.0 - 1.0 / n and (fneq_err(r, r1, err) or fneq_err(g, g1, err) or fneq_err(b, b1, err))
+      if x < 1.0 - 1.0 / n and
+          (fneq_err(r, r1, err) or fneq_err(g, g1, err) or fneq_err(b, b1, err))
         snd_display("cool %.3f (%.3f): %s %s",
                     x, [(r - r1).abs, (g - g1).abs, (b - b1).abs].max,
                     [r, g, b], [r1, g1, b1])
@@ -10894,7 +10763,8 @@ def test017
       b = (x < (3.0 / 4)) ? 0.0 : (4.0 * x - 3)
       rgb = colormap_ref(Hot_colormap, x)
       r1, g1, b1 = rgb
-      if x < 1.0 - 1.0 / n and (fneq_err(r, r1, err) or fneq_err(g, g1, err) or fneq_err(b, b1, err))
+      if x < 1.0 - 1.0 / n and
+          (fneq_err(r, r1, err) or fneq_err(g, g1, err) or fneq_err(b, b1, err))
         snd_display("hot %.3f (%.3f): %s %s",
                     x, [(r - r1).abs, (g - g1).abs, (b - b1).abs].max,
                     [r, g, b], [r1, g1, b1])
@@ -10903,15 +10773,16 @@ def test017
     10.times do |i|
       x = random(1.0)
       r = (x < (3.0 / 8)) ? 0.0 : ((x < (5.0 / 8)) ? (4.0 * x - 3.0 / 2) :
-                                     ((x < (7.0 / 8)) ? 1.0 : (-4.0 * x + 9.0 / 2)))
+                                   ((x < (7.0 / 8)) ? 1.0 : (-4.0 * x + 9.0 / 2)))
       g = (x < (1.0 / 8)) ? 0.0 : ((x < (3.0 / 8)) ? (4.0 * x - 0.5) :
-                                     (((x < (5.0 / 8)) ? 1.0 :
-                                         ((x < (7.0 / 8)) ? (-4.0 * x + 7.0 / 2) : 0.0))))
+                                   (((x < (5.0 / 8)) ? 1.0 :
+                                     ((x < (7.0 / 8)) ? (-4.0 * x + 7.0 / 2) : 0.0))))
       b = (x < (1.0 / 8)) ? (4.0 * x + 0.5) : ((x < (3.0 / 8)) ? 1.0 :
-                                                 ((x < (5.0 / 8)) ? (-4.0 * x + 5.0 / 2) : 0.0))
+                                               ((x < (5.0 / 8)) ? (-4.0 * x + 5.0 / 2) : 0.0))
       rgb = colormap_ref(Jet_colormap, x)
       r1, g1, b1 = rgb
-      if x < 1.0 - 1.0 / n and (fneq_err(r, r1, err) or fneq_err(g, g1, err) or fneq_err(b, b1, err))
+      if x < 1.0 - 1.0 / n and
+          (fneq_err(r, r1, err) or fneq_err(g, g1, err) or fneq_err(b, b1, err))
         snd_display("jet %.3f (%.3f): %s %s",
                     x, [(r - r1).abs, (g - g1).abs, (b - b1).abs].max,
                     [r, g, b], [r1, g1, b1])
@@ -10925,7 +10796,8 @@ def test017
       b = (x < (3.0 / 4)) ? ((2.0 / 3) * x) : (2.0 * x - 1.0)
       rgb = colormap_ref(Pink_colormap, x)
       r1, g1, b1 = rgb
-      if x < 1.0 - 1.0 / n and (fneq_err(r, r1, err) or fneq_err(g, g1, err) or fneq_err(b, b1, err))
+      if x < 1.0 - 1.0 / n and
+          (fneq_err(r, r1, err) or fneq_err(g, g1, err) or fneq_err(b, b1, err))
         snd_display("pink %.3f (%.3f): %s %s",
                     x, [(r - r1).abs, (g - g1).abs, (b - b1).abs].max,
                     [r, g, b], [r1, g1, b1])
@@ -10938,7 +10810,8 @@ def test017
       b = 1.0 - g
       rgb = colormap_ref(Spring_colormap, x)
       r1, g1, b1 = rgb
-      if x < 1.0 - 1.0 / n and (fneq_err(r, r1, err) or fneq_err(g, g1, err) or fneq_err(b, b1, err))
+      if x < 1.0 - 1.0 / n and
+          (fneq_err(r, r1, err) or fneq_err(g, g1, err) or fneq_err(b, b1, err))
         snd_display("spring %.3f (%.3f): %s %s",
                     x, [(r - r1).abs, (g - g1).abs, (b - b1).abs].max,
                     [r, g, b], [r1, g1, b1])
@@ -10951,7 +10824,8 @@ def test017
       b = x
       rgb = colormap_ref(Gray_colormap, x)
       r1, g1, b1 = rgb
-      if x < 1.0 - 1.0 / n and (fneq_err(r, r1, err) or fneq_err(g, g1, err) or fneq_err(b, b1, err))
+      if x < 1.0 - 1.0 / n and
+          (fneq_err(r, r1, err) or fneq_err(g, g1, err) or fneq_err(b, b1, err))
         snd_display("gray %.3f (%.3f): %s %s",
                     x, [(r - r1).abs, (g - g1).abs, (b - b1).abs].max,
                     [r, g, b], [r1, g1, b1])
@@ -10964,7 +10838,8 @@ def test017
       b = 0.0
       rgb = colormap_ref(Black_and_white_colormap, x)
       r1, g1, b1 = rgb
-      if x < 1.0 - 1.0 / n and (fneq_err(r, r1, err) or fneq_err(g, g1, err) or fneq_err(b, b1, err))
+      if x < 1.0 - 1.0 / n and
+          (fneq_err(r, r1, err) or fneq_err(g, g1, err) or fneq_err(b, b1, err))
         snd_display("black_and_white %.3f (%.3f): %s %s",
                     x, [(r - r1).abs, (g - g1).abs, (b - b1).abs].max,
                     [r, g, b], [r1, g1, b1])
@@ -10977,7 +10852,8 @@ def test017
       b = 0.4
       rgb = colormap_ref(Summer_colormap, x)
       r1, g1, b1 = rgb
-      if x < 1.0 - 1.0 / n and (fneq_err(r, r1, err) or fneq_err(g, g1, err) or fneq_err(b, b1, err))
+      if x < 1.0 - 1.0 / n and
+          (fneq_err(r, r1, err) or fneq_err(g, g1, err) or fneq_err(b, b1, err))
         snd_display("summer %.3f (%.3f): %s %s",
                     x, [(r - r1).abs, (g - g1).abs, (b - b1).abs].max,
                     [r, g, b], [r1, g1, b1])
@@ -10986,13 +10862,14 @@ def test017
     10.times do |i|
       x = random(1.0)
       r = (x < (2.0 / 5)) ? 1.0 : ((x < (3.0 / 5)) ? (-5.0 * x + 3) :
-                                     ((x < (4.0 / 5)) ? 0.0 : (10.0 / 3 * x - 8.0 / 3)))
+                                   ((x < (4.0 / 5)) ? 0.0 : (10.0 / 3 * x - 8.0 / 3)))
       g = (x < (2.0 / 5)) ? ((5.0 / 2) * x) : ((x < (3.0 / 5)) ? 1.0 :
-                                                 ((x < (4.0 / 5)) ? (-5.0 * x + 4) : 0.0))
+                                               ((x < (4.0 / 5)) ? (-5.0 * x + 4) : 0.0))
       b = (x < (3.0 / 5)) ? 0.0 : ((x < (4.0 / 5)) ? (5.0 * x - 3) : 1.0)
       rgb = colormap_ref(Rainbow_colormap, x)
       r1, g1, b1 = rgb
-      if x < 1.0 - 1.0 / n and (fneq_err(r, r1, err) or fneq_err(g, g1, err) or fneq_err(b, b1, err))
+      if x < 1.0 - 1.0 / n and
+          (fneq_err(r, r1, err) or fneq_err(g, g1, err) or fneq_err(b, b1, err))
         snd_display("rainbow %.3f (%.3f): %s %s",
                     x, [(r - r1).abs, (g - g1).abs, (b - b1).abs].max,
                     [r, g, b], [r1, g1, b1])
@@ -11538,7 +11415,7 @@ def analog_filter_tests
   f1 = make_inverse_chebyshev_lowpass(8, 0.1)
   vals = sweep2bins(f1, 10)
   if ffneq(vals[0], 0.51) then snd_display("inverse_chebyshev lp 8 max: %s?", vals[0]) end
-  # INFO: vequal --> vffequal
+  # INFO: vequal --> vffequal [ms]
   unless vffequal(vals[1], vct(0.501, 0.496, 0.001, 0, 0.001, 0, 0, 0, 0, 0.001))
     snd_display("inverse_chebyshev lp 8 0.1 spect: %s?", vals[1])
   end
@@ -11564,7 +11441,7 @@ def analog_filter_tests
   f1 = make_inverse_chebyshev_lowpass(10, 0.4, 10)
   vals = sweep2bins(f1, 10)
   if ffneq(vals[0], 0.51) then snd_display("inverse_chebyshev lp 10 0.4 max: %s?", vals[0]) end
-  # INFO: vequal --> vfffequal
+  # INFO: vequal --> vfffequal [ms]
   unless vfffequal(vals[1], vct(0.5, 0.500, 0.500, 0.500, 0.500, 0.500, 0.500, 0.500, 0.372, 0.302))
     snd_display("inverse_chebyshev lp 10 0.4 10 spect: %s?", vals[1])
   end
@@ -11604,9 +11481,9 @@ def analog_filter_tests
   end
   f1 = make_inverse_chebyshev_highpass(10, 0.1, 10)
   vals = sweep2bins(f1, 10)
-  # INFO: ffneq --> fffneq
+  # INFO: ffneq --> fffneq [ms]
   if fffneq(vals[0], 0.55) then snd_display("inverse_chebyshev hp 10 0.1 10 max: %s?", vals[0]) end
-  # INFO: vequal --> vfffequal
+  # INFO: vequal --> vfffequal [ms]
   unless vfffequal(vals[1], vct(0.366, 0.312, 0.558, 0.504, 0.502, 0.501, 0.501, 0.500, 0.500, 0.5))
     snd_display("inverse_chebyshev hp 10 0.1 10 spect: %s?", vals[1])
   end
@@ -11847,7 +11724,7 @@ def analog_filter_tests
     f1 = make_elliptic_bandstop(8, 0.1, 0.3, 0.1, 120)
     vals = sweep2bins(f1, 10)
     if fffneq(vals[0], 0.5) then snd_display("elliptic bs 8 max: %s?", vals[0]) end
-    # INFO: vequal --> vfequal
+    # INFO: vequal --> vfequal [ms]
     unless vfequal(vals[1], vct(0.500, 0.499, 0.476, 0, 0, 0.495, 0.526, 0.505, 0.501, 0.501))
       snd_display("elliptic bs 8 0.1 0.3 0.1 120 spect: %s?", vals[1])
     end
@@ -12046,7 +11923,7 @@ def poly_roots_tests
   unless vequal(res = poly_roots(vct(2, -1, -2, 1)), [2.0, -1.0, 1.0])
     snd_display("poly_roots 2 -1 -2 1: %s?", res)
   end
-  # INFO: 0.544 comes first with poly.rb
+  # INFO: 0.544 comes first with poly.rb [ms]
   if vcneql(res = poly(-1, 1, 1, 1).roots,
             [0.544, Complex(-0.772, 1.115), Complex(-0.772, -1.115)]) and
       vcneql(res = poly(-1, 1, 1, 1).roots,
@@ -12064,7 +11941,7 @@ def poly_roots_tests
       vcneql(res, [Complex(0.397, 0.687), Complex(0.397, -0.687) -0.794])
     snd_display("poly_roots 0.5 0 0 1: %s?", res)
   end
-  # INFO: reduce added
+  # INFO: reduce added [ms]
   res =(poly(-1, 1) * poly(1, 1) * poly(-2, 1) * poly(2, 1) * poly(-3, 1) * poly(3, 1)).reduce.roots
   unless vequal(res, [-3.0, 3.0, -1.0, 1.0, -2.0, 2.0])
     snd_display("cube in 2: %s?", res)
@@ -12348,7 +12225,6 @@ def fm_test(gen)
   gen.phase = 0.0
   gen.run(1234567812345678)
   gen.run(-1234567812345678)
-  gen.run(log0)
   gen.frequency = 0.0
   gen.phase = 0.0
   gen.run(-2.0)
@@ -17986,10 +17862,6 @@ def test158
       snd_display("reset src %d: %s %s?", i, old_val, new_val)
     end
   end
-  s1 = make_src(lambda do |dir| 1.0 end)
-  if fneq(res = src(s1, log0(false)), 1.0) # log(0) -> -Infinity: rejected by src
-    snd_display("inf as sr_change: %s?", res)
-  end
   #
   gen = make_granulate(:expansion, 2.0)
   gen1 = make_granulate(:expansion, 2.0)
@@ -20075,8 +19947,7 @@ def test238
                  [1, 2],
                  2.0 ** 21.5,
                  2.0 ** -18.0,
-                 12345678901234567890,
-                 log0]
+                 12345678901234567890]
   functions.each do |name_sym, make_args, run_func|
     gen = if make_args
             snd_func(format("make_%s", name_sym), *make_args)
@@ -20175,7 +20046,7 @@ def test248
     random_gen.call(arg1)
     random_args.each do |arg2|
       random_gen.call(arg1, arg2)
-      # INFO: it's very long
+      # INFO: it's very long [ms]
       # random_args.each do |arg3|
       #   random_gen.call(arg1, arg2, arg3)
       #   random_args.each do |arg4|
@@ -21178,7 +21049,7 @@ def test0110
   if file != "hiho.marks"
     snd_display("save_marks with arg: %s?", file)
   end
-  unless exec_cmd("diff hiho.marks %s/oboe.marks", Dir.pwd)
+  unless shell("diff hiho.marks %s/oboe.marks", Dir.pwd)
     snd_display("save marks differs")
   end
   close_sound(fd)
@@ -21884,38 +21755,33 @@ def test11
     $before_test_hook.call(11)
     Snd.catch do peaks end
     mus_audio_describe
-    # FIXEM:
-    # 
-    # Doesn't seem to work any longer.  Every time calling xxx_dialog
-    # a new instance will be created.
-    # 
-    #cold = color_orientation_dialog
-    #trd  = transform_dialog
-    #regd = view_regions_dialog
-    #if (res = dialog_widgets[0]) != cold
-    #  snd_display("color_orientation_dialog -> %s %s?", cold, res)
-    #end
-    #unless provided? :cairo
-    #  pd = print_dialog
-    #  if (res = dialog_widgets[17]) != pd
-    #    snd_display("print_dialog -> %s %s?", pd, res)
-    #  end
-    #end
-    #if (res = dialog_widgets[5]) != trd
-    #  snd_display("transform_dialog -> %s %s?", trd, res)
-    #end
-    #if (res = dialog_widgets[19]) != regd
-    #  snd_display("view_regions_dialog -> %s %s?", regd, res)
-    #end
-    #if (res1 = open_file_dialog(false)) != (res2 = dialog_widgets[6])
-    #  snd_display("open_file_dialog -> %s %s?", res1, res2)
-    #end
-    #if (res1 = mix_file_dialog(false)) != (res2 = dialog_widgets[11])
-    #  snd_display("mix_file_dialog -> %s %s?", res1, res2)
-    #end
-    #if (res1 = insert_file_dialog(false)) != (res2 = dialog_widgets[23])
-    #  snd_display("insert_file_dialog -> %s %s?", res1, res2)
-    #end
+    cold = color_orientation_dialog
+    trd  = transform_dialog
+    regd = view_regions_dialog
+    if (res = dialog_widgets[0]) != cold
+      snd_display("color_orientation_dialog -> %s %s?", cold, res)
+    end
+    unless provided? :cairo
+      pd = print_dialog
+      if (res = dialog_widgets[17]) != pd
+        snd_display("print_dialog -> %s %s?", pd, res)
+      end
+    end
+    if (res = dialog_widgets[5]) != trd
+      snd_display("transform_dialog -> %s %s?", trd, res)
+    end
+    if (res = dialog_widgets[19]) != regd
+      snd_display("view_regions_dialog -> %s %s?", regd, res)
+    end
+    if (res1 = open_file_dialog(false)) != (res2 = dialog_widgets[6])
+      snd_display("open_file_dialog -> %s %s?", res1, res2)
+    end
+    if (res1 = mix_file_dialog(false)) != (res2 = dialog_widgets[11])
+      snd_display("mix_file_dialog -> %s %s?", res1, res2)
+    end
+    if (res1 = insert_file_dialog(false)) != (res2 = dialog_widgets[23])
+      snd_display("insert_file_dialog -> %s %s?", res1, res2)
+    end
     held = help_dialog("Test", "snd-test here")
     if (res = menu_widgets.length) != 7
       snd_display("menu_widgets: %s?", res)
@@ -21923,9 +21789,9 @@ def test11
     if (res = widget_position(menu_widgets[0])) != [0, 0]
       snd_display("position main menubar: %s?", res)
     end
-    #if (res = dialog_widgets[14]) != held
-    #  snd_display("help_dialog -> %s %s?", held, res)
-    #end
+    if (res = dialog_widgets[14]) != held
+      snd_display("help_dialog -> %s %s?", held, res)
+    end
     define_envelope("env4", [0, 1, 1, 0])
     save_envelopes("hiho.env")
     load("hiho.env")
@@ -21934,19 +21800,14 @@ def test11
     help_dialog("test2", "this is the next test",
                 ["string 1{open-sound}", "{env-sound}string2", "string{close-sound}3"],
                 ["extsnd.html#sndopen", "extsnd.html#sndenv", "extsnd.html#sndclose"])
-    # FIXME: X Error of failed request:  BadWindow (invalid Window parameter)
+    # FIXME: X Error of failed request:  BadWindow (invalid Window parameter) [ms]
     #dismiss_all_dialogs
     #
     ind = open_sound("oboe.snd")
     edit_header_dialog(ind)
-    # FIXME: X Error of failed request:  BadWindow (invalid Window parameter)
+    # FIXME: X Error of failed request:  BadWindow (invalid Window parameter) [ms]
     #dismiss_all_dialogs
     close_sound(ind)
-    # FIXME:
-    # snd_url works only sporadic!
-    # snd_url("oscil")      => "sndclm.html#oscil"
-    # snd_url("oscil?")     => "sndclm.html#oscil?"
-    # snd_url("open_sound") => ""
     if (res = snd_url(:open_sound)) != "extsnd.html#opensound"
       snd_display("snd_url :open_sound: %s?", res.inspect)
     end
@@ -22355,7 +22216,7 @@ def loop_through_files(description, select, &make_cmd)
   output_names = make_array(data.length) do |i|
     break unless cont
     outname = format("/tmp/snd_test_%d.snd", random(1.0).object_id)
-    cont = exec_cmd(make_cmd.call(data[i], outname))
+    cont = shell(make_cmd.call(data[i], outname))
     outname
   end
   if select
@@ -22515,39 +22376,6 @@ def test_hooks_old
   end
 end
 
-def test_menus
-  # snd-test.rb:25441: warning: global variable `$clm_file_name_' not initialized
-  # I'm not sure where those $clm_..._ variables come from.
-  $clm_file_name_        = $clm_file_name
-  $clm_table_size_       = $clm_table_size
-  $clm_file_buffer_size_ = $clm_file_buffer_size
-  $clm_table_size_       = $clm_table_size
-  each_child(menu_widgets.first) do |w|
-    unless RXmIsRowColumn(w)
-      option_holder = RXtGetValues(w, [RXmNsubMenuId, 0])[1]
-      each_child(option_holder) do |menu|
-        if RXmIsPushButton(menu) and
-            RXtIsManaged(menu) and
-            RXtIsSensitive(menu) and
-            (not ["Exit",
-                  "New", 
-                  "Save   C-x C-s", 
-                  "Close  C-x k",
-                  "Close all",
-                  "Save options",
-                  "Mixes",
-                  "clm",
-                  "fm-violin",
-                  "Effects"].member?(RXtName(menu)))
-          RXtCallCallbacks(menu, RXmNactivateCallback, snd_global_state)
-        end
-      end
-    end
-  end
-  Snd.sounds.apply(:close_sound)
-  dismiss_all_dialogs
-end
-
 def mdt_test(a, b, c, d)
   false
 end
@@ -22590,7 +22418,7 @@ def test0013
     "hiho:" + b
   end
   ho = snd_help(:cursor_position)
-  # INFO [ms]
+  # INFO: [ms]
   # HI has one char more than HO:
   # HI: cursor_postion(:optional, snd, chn):
   # HO: (cursor-postion :optional snd chn):
@@ -22719,7 +22547,7 @@ def test0013
   #
   fd = open_sound("obtest.snd")
   Snd.sounds.apply(:close_sound)
-  # INFO: method(:func).to_proc.arity returns -1 on older versions
+  # INFO: method(:func).to_proc.arity returns -1 on older versions [ms]
   if method(:display_energy).to_proc.arity == 2
     test_hooks
   else
@@ -23618,7 +23446,7 @@ def test0213
 end
 
 def test13
-  if $test13
+  if (not provided?(:snd_nogui)) and $test13
     $before_test_hook.call(13)
     reset_almost_all_hooks
     test0013
@@ -23745,7 +23573,7 @@ def test14
     len = open_files.length
     open_chance = [0.0, (8.0 - len) * 0.125].max
     close_chance = len * 0.125
-    if len.zero? or rs(open_chance)
+    if len.zero?
       name = cur_dir_files[random(cur_dir_files.length)]
       ht = mus_sound_header_type(name)
       df = mus_sound_data_format(name)
@@ -23754,7 +23582,7 @@ def test14
         open_files.push(fd)
       end
     end
-    if len > 0 and rs(close_chance)
+    if len > 0
       fd = open_files[random(open_files.length)]
       close_sound(fd)
       open_files.delete_if do |f| f == fd end
@@ -23849,106 +23677,6 @@ def test14
         snd_display("delete marks: %s %s?", new_marks, old_marks)
       end
     end
-    #
-    # key(key_to_int(?x), 4)
-    # key(key_to_int(?(), 0)
-    # key(key_to_int(?f), 4)
-    # key(key_to_int(?f), 4)
-    # key(key_to_int(?x), 4)
-    # key(key_to_int(?)), 0)
-    # key(key_to_int(?x), 4)
-    # key(key_to_int(?e), 0)
-    # # 
-    # key(key_to_int(?u), 4)
-    # key(key_to_int(?.), 4)
-    # key(key_to_int(?5), 4)
-    # key(key_to_int(?x), 4)
-    # key(key_to_int(?v), 4)
-    # # 
-    # key(key_to_int(?>), 4, choose_fd.call)
-    # key(key_to_int(?i), 4, choose_fd.call)
-    # key(key_to_int(?<), 4, choose_fd.call)
-    # key(key_to_int(?i), 4, choose_fd.call)
-    # key(key_to_int(?>), 0, choose_fd.call)
-    # key(key_to_int(?i), 4, choose_fd.call)
-    # key(key_to_int(?<), 0, choose_fd.call)
-    # key(key_to_int(?i), 4, choose_fd.call)
-    # key(key_to_int(?a), 4, choose_fd.call)
-    # key(key_to_int(?i), 4, choose_fd.call)
-    # key(key_to_int(?e), 4, choose_fd.call)
-    # key(key_to_int(?i), 4, choose_fd.call)
-    # key(key_to_int(?b), 4, choose_fd.call)
-    # key(key_to_int(?i), 4, choose_fd.call)
-    # key(key_to_int(?p), 4, choose_fd.call) unless provided? :snd_gtk
-    # key(key_to_int(?i), 4, choose_fd.call)
-    # key(key_to_int(?n), 4, choose_fd.call)
-    # key(key_to_int(?i), 4, choose_fd.call)
-    # key(key_to_int(?l), 4, choose_fd.call)
-    # if rs(0.5)
-    #   key(key_to_int(?x), 4)
-    #   key(key_to_int(?b), 0)
-    # end
-    # set_cursor(1200, choose_fd.call)
-    # safe_make_selection(1000, 2000, choose_fd.call)
-    # if Snd.regions.length.zero?
-    #   snd_display("safe_make_selection failed?")
-    # else
-    #   if selection? then delete_selection end
-    #   set_cursor(0, choose_fd.call)
-    #   insert_region(cursor, Snd.regions.first, choose_fd.call)
-    # end
-    # revert_sound(choose_fd.call)
-    # key(key_to_int(?m), 4, choose_fd.call)
-    # key(key_to_int(?v), 4, choose_fd.call)
-    # key(key_to_int(?d), 4, choose_fd.call)
-    # key(key_to_int(?z), 4, choose_fd.call)
-    # key(key_to_int(?o), 4, choose_fd.call)
-    # if rs(0.5)
-    #   key(key_to_int(?x), 4)
-    #   key(key_to_int(?u), 0)
-    # end
-    # undo_edit(2, choose_fd.call)
-    # key(key_to_int(?<), 4, choose_fd.call)
-    # key(key_to_int(?i), 4, choose_fd.call)
-    # key(key_to_int(?w), 4, choose_fd.call)
-    # key(key_to_int(?y), 4, choose_fd.call)
-    # key(key_to_int(?q), 4, choose_fd.call) unless provided? :snd_gtk
-    # set_cursor(8000, choose_fd.call)
-    # if rs(0.5)
-    #   key(key_to_int(?x), 4)
-    #   key(key_to_int(?f), 0)
-    #   key(key_to_int(?g), 4)
-    # end
-    # if rs(0.5)
-    #   key(key_to_int(?x), 4)
-    #   key(key_to_int(?i), 0)
-    #   key(key_to_int(?g), 4)
-    # end
-    # if rs(0.5)
-    #   key(key_to_int(?x), 4)
-    #   key(key_to_int(?l), 0)
-    #   key(key_to_int(?g), 4)
-    # end
-    # if rs(0.5)
-    #   key(key_to_int(?x), 4)
-    #   key(key_to_int(?u), 0)
-    # end
-    # if rs(0.5)
-    #   key(key_to_int(?x), 4)
-    #   key(key_to_int(?r), 0)
-    # end
-    # if rs(0.5)
-    #   key(key_to_int(?x), 4)
-    #   key(key_to_int(?v), 0)
-    # end
-    # if rs(0.5)
-    #   key(key_to_int(?x), 4)
-    #   key(key_to_int(?o), 4)
-    # end
-    # if rs(0.5)
-    #   key(key_to_int(?x), 4)
-    #   key(key_to_int(?u), 4)
-    # end
     revert_sound
     select_all
     Snd.catch do
@@ -24003,53 +23731,35 @@ def test14
       cfd = open_files.first
       set_sync(1, cfd)
       open_files.length > 1 and set_sync(1, open_files[1])
-      if rs(0.5)
-        safe_make_selection(1000, 2000, cfd)
-        src_selection(0.5)
-        undo_edit(1, cfd)
-      end
-      if rs(0.5)
-        safe_make_selection(1000, 2000, cfd)
-        src_selection(-1.5)
-        undo_edit(1, cfd)
-      end
-      if rs(0.5)
-        safe_make_selection(1000, 2000, cfd)
-        env_selection([0, 0, 1, 1, 2, 0])
-        undo_edit(1, cfd)
-      end
-      if rs(0.5)
-        safe_make_selection(1000, 2000, cfd)
-        reverse_selection
-        undo_edit(1, cfd)
-      end
-      if rs(0.5)
-        safe_make_selection(1000, 2000, cfd)
-        filter_selection([0, 0, 0.1, 1, 1, 0], 40)
-        undo_edit(1, cfd)
-      end
-      if rs(0.5)
-        safe_make_selection(1000, 2000, cfd)
-        convolve_selection_with("oboe.snd")
-        undo_edit(1, cfd)
-      end
-      if rs(0.5)
-        safe_make_selection(1000, 2000, cfd)
-        smooth_selection
-        undo_edit(1, cfd)
-      end
-      if rs(0.5)
-        safe_make_selection(1000, 2000, cfd)
-        scale_selection_by(0.5)
-        undo_edit(1, cfd)
-      end
-      if rs(0.5)
-        scale_selection_to(0.5)
-        reverse_selection
-        undo_edit(2, cfd)
-        src_selection([0, 0.5, 1, 1])
-        undo_edit
-      end
+      safe_make_selection(1000, 2000, cfd)
+      src_selection(0.5)
+      undo_edit(1, cfd)
+      safe_make_selection(1000, 2000, cfd)
+      src_selection(-1.5)
+      undo_edit(1, cfd)
+      safe_make_selection(1000, 2000, cfd)
+      env_selection([0, 0, 1, 1, 2, 0])
+      undo_edit(1, cfd)
+      safe_make_selection(1000, 2000, cfd)
+      reverse_selection
+      undo_edit(1, cfd)
+      safe_make_selection(1000, 2000, cfd)
+      filter_selection([0, 0, 0.1, 1, 1, 0], 40)
+      undo_edit(1, cfd)
+      safe_make_selection(1000, 2000, cfd)
+      convolve_selection_with("oboe.snd")
+      undo_edit(1, cfd)
+      safe_make_selection(1000, 2000, cfd)
+      smooth_selection
+      undo_edit(1, cfd)
+      safe_make_selection(1000, 2000, cfd)
+      scale_selection_by(0.5)
+      undo_edit(1, cfd)
+      scale_selection_to(0.5)
+      reverse_selection
+      undo_edit(2, cfd)
+      src_selection([0, 0.5, 1, 1])
+      undo_edit
       revert_sound(cfd)
       open_files.length > 1 and revert_sound(open_files[1])
     end
@@ -24252,25 +23962,21 @@ def test14
         snd_display("channel_style: %s %s?", uval, res)
       end
     end
-    if rs(0.5) then src_sound(2.5, 1.0, cfd) end
-    if rs(0.5) then src_sound(-2.5, 1.0, cfd) end
-    if rs(0.5) then src_sound(0.5, 1.0, cfd) end
-    if rs(0.5) then revert_sound(cfd) end
-    if rs(0.5) then src_sound(-0.5, 1.0, cfd) end
-    if rs(0.5) then src_sound([0, 0.5, 1, 1.5], 1.0, cfd) end
-    if rs(0.5)
-      if frames(cfd) > 0
-        src_sound(make_env(:envelope, [0, 0.5, 1, 1.5], :length, frames(cfd)), 1.0, cfd)
-      end
+    src_sound(2.5, 1.0, cfd)
+    src_sound(-2.5, 1.0, cfd)
+    src_sound(0.5, 1.0, cfd)
+    revert_sound(cfd)
+    src_sound(-0.5, 1.0, cfd)
+    src_sound([0, 0.5, 1, 1.5], 1.0, cfd)
+    if frames(cfd) > 0
+      src_sound(make_env(:envelope, [0, 0.5, 1, 1.5], :length, frames(cfd)), 1.0, cfd)
     end
-    if rs(0.5) then revert_sound(cfd) end
-    if rs(0.5) then filter_sound([0, 1, 0.2, 0, 0.5, 1, 1, 0], 20, cfd) end
-    if rs(0.5) then filter_sound([0, 0, 0.1, 0, 0.11, 1, 0.12, 0, 1, 0], 2048, cfd) end
-    if rs(0.5) then env_sound([0, 0, 0.5, 1, 1, 0], 0, frames(cfd), 1.0, cfd) end
-    if rs(0.5)
-      insert_sample(1200, 0.1, cfd)
-      if fneq(res = sample(1200, cfd), 0.1) then snd_display("insert_sample(looped): %s?", res) end
-    end
+    revert_sound(cfd)
+    filter_sound([0, 1, 0.2, 0, 0.5, 1, 1, 0], 20, cfd)
+    filter_sound([0, 0, 0.1, 0, 0.11, 1, 0.12, 0, 1, 0], 2048, cfd)
+    env_sound([0, 0, 0.5, 1, 1, 0], 0, frames(cfd), 1.0, cfd)
+    insert_sample(1200, 0.1, cfd)
+    if fneq(res = sample(1200, cfd), 0.1) then snd_display("insert_sample(looped): %s?", res) end
     revert_sound(cfd)
     #
     cfd = open_sound("obtest.snd")
@@ -24497,22 +24203,14 @@ def test14
     map_chan(echo(0.5, 0.75), 0, 60000)
     $after_transform_hook.reset_hook!
     $lisp_graph_hook.reset_hook!
-    $lisp_graph_hook.add_hook!("snd-test") do |snd, chn|
-      if rs(0.5)
-        graph(vct(0, 1, 2))
-      else
-        graph([vct(0, 1, 2), vct(3, 2, 0)])
-      end
-    end
-    Snd.sounds.each do |snd|
-      if rs(0.5) then set_sync((random(3)), snd) end
-    end
+    $lisp_graph_hook.add_hook!("snd-test") do |snd, chn| graph(vct(0, 1, 2)) end
+    Snd.sounds.each do |snd| set_sync((random(3)), snd) end
     $graph_hook.add_hook!("superimpose_ffts") do |snd, chn, y0, y1|
       superimpose_ffts(snd, chn, y0, y1)
     end
     10.times do |i|
       Snd.sounds.each do |snd|
-        if frames(snd) > 0 and rs(0.5)
+        if frames(snd) > 0
           dur = (frames(snd) / srate(snd).to_f).floor.to_f
           start = [0.0, [dur - 0.1, random(dur)].min].max
           if dur > 0.0
@@ -24630,14 +24328,14 @@ def test14
       index = if index_p then choose_fd.call else false end
       if index
         if minval == false
-          set_snd_func(func, rs(0.5), index)
+          set_snd_func(func, true, index)
         else
           val = minval + (maxval - minval) * random(1.0)
           set_snd_func(func, (integer?(minval) and val.floor or val), index)
         end
       else
         if minval == false
-          set_snd_func(func, rs(0.5))
+          set_snd_func(func, true)
         else
           val = minval + (maxval - minval) * random(1.0)
           set_snd_func(func, (integer?(minval) and val.floor or val))
@@ -25365,7 +25063,7 @@ end
 
 def test0215
   snd1 = open_sound("oboe.snd")
-  snd2 = (open_sound("2.snd") or open_sound("4.aiff"))
+  snd2 = open_sound("2.snd")
   snd3 = open_sound("4.aiff")
   [[:time_graph_type, Graph_as_wavogram],
    [:wavo_hop, 12],
@@ -25507,7 +25205,7 @@ def test0215
   player = make_player(ind, 0)
   len = frames(ind, 0)
   incr = dac_size
-  e = make_env(:envelope, [0, 0, 1, 1], :length, (len.to_f / incr).floor)
+  e = make_env(:envelope, [0, 0, 1, 1], :length, (len.to_f / incr).floor + 1)
   samp = 0
   add_player(player, 0, -1, -1, lambda do |reason|
                $play_hook.reset_hook!
@@ -25522,7 +25220,10 @@ def test0215
     samp += incr
   end
   start_playing(1, srate(ind))
-  if find_sound("1a.snd") then snd_display("stop proc didn\'t close?") end
+  if find_sound("1a.snd")
+    snd_display("stop proc didn\'t close?")
+    Snd.catch do close_sound(ind) end
+  end
   set_with_background_processes(old_bp)
   #
   ind = open_sound("pistol.snd")
@@ -26798,7 +26499,7 @@ def test0016
   revert_sound(oboe)
   # INFO: edpos_fnc requires two args; procedure_ok() in snd-xen.c
   # raises an exception only if args > arity, that's why here three
-  # args instead of one
+  # args instead of one. [ms]
   edpos_fnc = lambda do |hi, ho, hu| false end
   [[lambda { scale_channel(2.0, 0, 123, oboe, 0, edpos_fnc) }, :scale_channel],
    [lambda { env_channel(make_env([0, 0, 1, 1], :length, 123), 0, 123, oboe, 0, edpos_fnc)}, :env_channel],
@@ -31965,13 +31666,8 @@ def test0120
       if provided? :xm
         cwid = channel_widgets(ind1, 0).first
         focus_widget(cwid)
-        # FIXME:
-        # Segfault in click_event(); Wed May 13 01:53:38 CEST 2009
-        # 0x2a550158 in XEN_TO_C_Window (val=Variable "val" is not available.)
-        # at /usr/gnu/compile/libxm/xm.c:526
-        # XM_TYPE_PTR(Window, Window)
-        #click_event(cwid, 0, 0, (0.5 * (ax[10] + ax[12])).floor, (0.5 * (ax[11] + ax[13])).floor)
-        #force_event
+        click_event(cwid, 0, 0, (0.5 * (ax[10] + ax[12])).floor, (0.5 * (ax[11] + ax[13])).floor)
+        force_event
       end
     end
   end
@@ -31989,13 +31685,8 @@ def test0120
       if provided? :xm
         cwid = channel_widgets(ind1, 0).first
         focus_widget(cwid)
-        # FIXME:
-        # Segfault in click_event(); Wed May 13 01:53:38 CEST 2009
-        # 0x2a550158 in XEN_TO_C_Window (val=Variable "val" is not available.)
-        # at /usr/gnu/compile/libxm/xm.c:526
-        # XM_TYPE_PTR(Window, Window)
-        #click_event(cwid, 0, 0, (0.5 * (ax[10] + ax[12])).floor, (0.5 * (ax[11] + ax[13])).floor)
-        #force_event
+        click_event(cwid, 0, 0, (0.5 * (ax[10] + ax[12])).floor, (0.5 * (ax[11] + ax[13])).floor)
+        force_event
       end
     end
   end
@@ -34555,7 +34246,7 @@ def test0223
   file = with_sound(:clm, false) do fm_violin(0, 4, 440, 0.1) end.output
   ind = find_sound(file)
   if fneq(res = amp_control(ind), 0.5) then snd_display("update ws amp: %s?", res) end
-	# INFO: x-bounds here [1.333, 2,667]
+  # INFO: x-bounds here [1.333, 2,667] [ms]
   if fneq(x_bounds(ind, 0).car, 1.0) or fneq(x_bounds(ind, 0).cadr, 2.0)
     snd_display("update ws bounds: %s?", x_bounds(ind, 0))
   end
@@ -34816,15 +34507,7 @@ Procs =
    :vct2string, :clm_channel, :env_channel, :map_channel_with_base, :map_channel,
    :scan_channel, :play_channel,
    :reverse_channel, :seconds2samples, :samples2seconds, :vct2channel,
-   # FIXME
-   # :smooth_channel (snd-sig.c, 3051):
-   # smooth_channel(cp=0x8926c00, beg=0, dur=125304833, edpos=10)
-   # dur is too big and malloc returns NULL for data!
-   # 
-   # :channel2vct (snd-edits.c, 8873):
-   # samples_to_vct_1(samp_0=161320000, samps=2656526, snd_n=2656526, chn_n=2656526,
-   #                  edpos=2656526, caller=0x828e66c "channel->vct")
-   # len is too big and malloc returns NULL for fvals!
+   :smooth_channel, :channel2vct,
    :src_channel, :scale_channel, :ramp_channel, :pad_channel, :normalize_channel,
    :cursor_position, :clear_listener, :mus_sound_prune, :mus_sound_forget, :xramp_channel,
    :ptree_channel, :snd2sample, :snd2sample?, :make_snd2sample, :make_scalar_mixer,
@@ -35430,15 +35113,15 @@ def test0128
   end
   [:enved_filter_order, :enved_filter, :filter_control_waveform_color,
    :ask_before_overwrite, :auto_resize, :auto_update, :axis_label_font,
-   :axis_numbers_font, :basic_color, :bind_key, :channel_style, :color_cutoff,
-   :color_orientation_dialog, :color_inverted, :color_scale, :cursor_color,
+   :axis_numbers_font, :basic_color, :channel_style, :color_cutoff,
+   :color_inverted, :color_scale, :cursor_color,
    :dac_combines_channels, :dac_size, :clipping, :data_color,
    :default_output_chans, :default_output_data_format, :default_output_srate,
    :default_output_header_type, :enved_envelope, :enved_base, :enved_clip?,
-   :enved_in_dB, :enved_dialog, :enved_style, :enved_power, :enved_target,
+   :enved_in_dB, :enved_style, :enved_power, :enved_target,
    :enved_waveform_color, :enved_wave?, :eps_file, :eps_left_margin,
    :eps_bottom_margin, :eps_size, :foreground_color, :graph_color, :graph_cursor,
-   :highlight_color, :just_sounds, :key_binding, :listener_color, :listener_font,
+   :highlight_color, :just_sounds, :listener_color, :listener_font,
    :listener_prompt, :listener_text_color, :max_regions,
    :minibuffer_history_length, :mix_waveform_height, :region_graph_style,
    :position_color, :time_graph_style, :lisp_graph_style, :transform_graph_style,
@@ -35448,19 +35131,16 @@ def test0128
    :selected_data_color, :selected_graph_color, :selected_sound,
    :selection_creates_region, :show_backtrace, :show_controls, :show_indices,
    :show_listener, :show_selection_transform, :sinc_width, :temp_dir,
-   :text_focus_color, :tiny_font, :trap_segfault, :with_file_monitor, :optimization, :unbind_key,
+   :text_focus_color, :tiny_font, :trap_segfault, :with_file_monitor, :optimization,
    :with_verbose_cursor, :window_height,
    :beats_per_measure, :window_width, :window_x, :window_y, :with_gl,
    :with_mix_tags, :x_axis_style, :beats_per_minute, :zoom_color, :mix_tag_height,
-   :mix_tag_width, :with_relative_panes, :run_safety, :clm_table_size,
+   :mix_tag_width, :with_relative_panes, :clm_table_size,
    :mark_tag_width, :mark_tag_height, :quit_button_color, :help_button_color,
-   :reset_button_color, :doit_button_color, :doit_again_button_color].each_with_index do |n, i|
-    case n
-    when :bind_key, :color_orientation_dialog, :enved_dialog, :key_binding, :unbind_key
-      next
-    end
-    if (tag = Snd.catch do set_snd_func(n, $vct_3) end).first != :wrong_type_arg
-      snd_display("%d: misc procs %s: %s", i, n, tag)
+   :reset_button_color, :doit_button_color, :doit_again_button_color].each do |n|
+    tag = Snd.catch do set_snd_func(n, $vct_3) end
+    if tag.first != :wrong_type_arg and tag.first != :mus_error
+      snd_display("misc procs %s: %s", n, tag.inspect)
     end
   end
   [:after_graph_hook, :lisp_graph_hook, :before_transform_hook,
@@ -35546,19 +35226,14 @@ def test0228
   check_error_tag(:out_of_range) do set_default_output_header_type(Mus_soundfont) end
   check_error_tag(:mus_error) do mus_sound_chans($sf_dir + "bad_location.nist") end
   check_error_tag(:mus_error) do mus_sound_chans($sf_dir + "bad_field.nist") end
-  # FIXME:
-  # Segfault on Wed May 13 02:57:14 CEST 2009
-  # 0x081ad046 in g_widget_text_w (self=685029700, Arg=706691900)
-  # at /usr/gnu/cvs/snd/snd-draw.c:967
-  # w = (widget_t)(XEN_UNWRAP_WIDGET(wid));
-  #if provided? :snd_motif
-    #check_error_tag(:no_such_widget) do widget_position([:Widget, 0]) end
-    #check_error_tag(:no_such_widget) do widget_size([:Widget, 0]) end
-    #check_error_tag(:no_such_widget) do widget_text([:Widget, 0]) end
-    #check_error_tag(:no_such_widget) do set_widget_position([:Widget, 0], [0, 0]) end
-    #check_error_tag(:no_such_widget) do set_widget_size([:Widget, 0], [10, 10]) end
-    #check_error_tag(:no_such_widget) do set_widget_text([:Widget, 0], "hiho") end
-  #end
+  if provided? :snd_motif
+    check_error_tag(:no_such_widget) do widget_position([:Widget, 0]) end
+    check_error_tag(:no_such_widget) do widget_size([:Widget, 0]) end
+    check_error_tag(:no_such_widget) do widget_text([:Widget, 0]) end
+    check_error_tag(:no_such_widget) do set_widget_position([:Widget, 0], [0, 0]) end
+    check_error_tag(:no_such_widget) do set_widget_size([:Widget, 0], [10, 10]) end
+    check_error_tag(:no_such_widget) do set_widget_text([:Widget, 0], "hiho") end
+  end
   check_error_tag(:no_such_menu) do main_menu(-1) end
   check_error_tag(:no_such_menu) do main_menu(111) end
   check_error_tag(:out_of_range) do new_sound("hiho", 123) end
@@ -35680,14 +35355,12 @@ def test0228
   check_error_tag(:no_such_axis) do x2position(100, ind, 0, 1234) end
   check_error_tag(:no_such_axis) do y2position(100, ind, 0, 1234) end
   check_error_tag(:no_such_axis) do axis_info(ind, 0, 1234) end
-  # FIXME: (see above)
-  # Segfault on Wed May 13 02:57:14 CEST 2009
-  #check_error_tag(:out_of_range) do
-  #  draw_axes(channel_widgets.car, snd_gcs.car, "hiho", 0.0, 1.0, -1.0, 1.0, X_axis_in_seconds,1234)
-  #end
-  #check_error_tag(:out_of_range) do
-  #  draw_axes(channel_widgets.car, snd_gcs.car, "hiho", 0.0, 1.0, -1.0, 1.0, 1234)
-  #end
+  check_error_tag(:out_of_range) do
+    draw_axes(channel_widgets.car, snd_gcs.car, "hiho", 0.0, 1.0, -1.0, 1.0, X_axis_in_seconds,1234)
+  end
+  check_error_tag(:out_of_range) do
+    draw_axes(channel_widgets.car, snd_gcs.car, "hiho", 0.0, 1.0, -1.0, 1.0, 1234)
+  end
   check_error_tag(:no_such_channel) do axis_info(ind, 1234) end
   check_error_tag(:no_such_sound) do axis_info(1234) end
   set_time_graph_type(Graph_once)
@@ -35762,7 +35435,6 @@ def test0228
   end
   check_error_tag(:out_of_range) do set_reverb_control_length_bounds([0.1, 0.01], ind) end
   check_error_tag(:out_of_range) do set_reverb_control_scale_bounds([0.1, 0.01], ind) end
-  check_error_tag(:wrong_type_arg) do undo_edit(log0) end
   check_error_tag(:wrong_type_arg) do scale_by(false) end
   check_error_tag(:wrong_type_arg) do scale_by(make_mixer(2, 0.1, 0.1, 0.2, 0.2)) end
   check_error_tag(:wrong_type_arg) do src_sound(3.0, 1.0, true) end
@@ -35887,16 +35559,14 @@ def test0228
   check_error_tag(:no_such_mix) do mix_properties(mix_sync_max + 1) end
   check_error_tag(:no_such_mix) do set_mix_properties(mix_sync_max + 1, 1) end
   check_error_tag(:no_such_mix) do play_mix(mix_sync_max + 1) end
-  # FIXME: (see above)
-  # Segfault on Wed May 13 02:57:14 CEST 2009
-  #if provided? :snd_motif
-  #  [:widget_position, :widget_size, :widget_text,
-  #    :hide_widget, :show_widget, :focus_widget].each do |n|
-  #    if (tag = Snd.catch do snd_func(n, [:Widget, 0]) end).first != :no_such_widget
-  #      snd_display("%s of null widget: %s", n, tag)
-  #    end
-  #  end
-  #end
+  if provided? :snd_motif
+    [:widget_position, :widget_size, :widget_text,
+      :hide_widget, :show_widget, :focus_widget].each do |n|
+      if (tag = Snd.catch do snd_func(n, [:Widget, 0]) end).first != :no_such_widget
+        snd_display("%s of null widget: %s", n, tag)
+      end
+    end
+  end
 end
 
 def test0328
@@ -35928,7 +35598,7 @@ def test0328
   $clm_srate = old_clm_srate
   # now try everything! (all we care about here is that Snd keeps running)
   random_args = [1.5, "/hiho", [0, 1], 1234, $vct_3, :wave,
-    -1, 0, 1, false, true, [], $vector_0, 12345678901234567890, log0]
+    -1, 0, 1, false, true, [], $vector_0, 12345678901234567890]
   #
   # key args
   #
@@ -35976,7 +35646,7 @@ def test0328
   [1.5, "/hiho", [0, 1], 1234, $vct_3, $color_95, :mus_error, sqrt(-1.0), $delay_32,
     lambda do | | true end, $sound_data_23, :order, 0, 1, -1, $a_hook, false, true,
     ?c, 0.0, 1.0, -1.0, [], 4, 2, 8, 16, 32, 64, -64, $vector_0, 2.0 ** 21.5, 2.0 ** -18.0,
-    $car_main, $cadr_main, 12345678901234567890, log0].each do |arg|
+    $car_main, $cadr_main, 12345678901234567890].each do |arg|
     Procs1.each do |n|
       if (tag = Snd.catch do snd_func(n, arg) end).first == :wrong_number_of_args
         snd_display("procs1: %s %s\n# %s", tag, n, snd_help(n))
@@ -35991,10 +35661,10 @@ def test0328
     args = [1.5, "/hiho", [0, 1], 1234, $vct_3, $color_95, :mus_error, sqrt(-1.0), $delay_32,
       lambda do | | true end, $sound_data_23, :order, 0, 1, -1, $a_hook, false, true, ?c,
       0.0, 1.0, -1.0, [], 3, 4, 2, 8, 16, 32, 64, -64, $vector_0, 2.0 ** 21.5, 2.0 ** -18.0,
-      $car_main, $cadr_main, 12345678901234567890, log0]
+      $car_main, $cadr_main, 12345678901234567890]
   else
     args = [1.5, "/hiho", [0, 1], 1234, $vct_3, $color_95, sqrt(-1.0), $delay_32, :feedback,
-      0, 1, 64, -64, false, true, [], $vector_0, 12345678901234567890, log0]
+      0, 1, 64, -64, false, true, [], $vector_0, 12345678901234567890]
   end
   args.each do |arg1|
     args.each do |arg2|
@@ -36013,11 +35683,11 @@ def test0328
     args = [1.5, "/hiho", [0, 1], 1234, $vct_3, $color_95, :mus_error, sqrt(-1.0), $delay_32,
             lambda do | | true end, $sound_data_23, :order, 0, 1, -1, $a_hook, false, true,
             ?c, 0.0, 1.0, -1.0, [], 3, 4, 2, 8, 16, 32, 64, -64, $vector_0,
-            2.0 ** 21.5, 2.0 ** -18.0, $car_main, $cadr_main, 12345678901234567890, log0]
+            2.0 ** 21.5, 2.0 ** -18.0, $car_main, $cadr_main, 12345678901234567890]
   else
     args = [1.5, "/hiho", [0, 1], 1234, $vct_3, $color_95, :mus_error, sqrt(-1.0), $delay_32,
             lambda do | | true end, $sound_data_23, :order, 0, 1, -1, 64, -64, $a_hook,
-            false, true, [], $vector_0, 12345678901234567890, log0]
+            false, true, [], $vector_0, 12345678901234567890]
   end
   args.each do |val|
     Set_procs0.each do |n|
@@ -36038,11 +35708,11 @@ def test0328
     args = [1.5, "/hiho", [0, 1], 1234, $vct_3, $color_95, :mus_error, sqrt(-1.0), $delay_32,
             lambda do | | true end, $sound_data_23, :order, 0, 1, -1, $a_hook, false, true,
             ?c, 0.0, 1.0, -1.0, [], 3, 4, 2, 8, 16, 32, 64, -64, $vector_0,
-            2.0 ** 21.5, 2.0 ** -18.0, $car_main, $cadr_main, 12345678901234567890, log0]
+            2.0 ** 21.5, 2.0 ** -18.0, $car_main, $cadr_main, 12345678901234567890]
   else
     args = [1.5, "/hiho", [0, 1], 1234, $vct_3, $color_95, :mus_error, sqrt(-1.0), $delay_32,
             lambda do | | true end, $sound_data_23, :order, 0, 1, -1, 64, -64, $a_hook,
-            false, true, [], $vector_0, 12345678901234567890, log0]
+            false, true, [], $vector_0, 12345678901234567890]
   end
   args.each do |arg1|
     args.each do |arg2|
@@ -36061,11 +35731,11 @@ def test0328
     args = [1.5, "/hiho", [0, 1], 1234, $vct_3, $color_95, :mus_error, sqrt(-1.0), $delay_32,
             lambda do | | true end, $sound_data_23, :order, 0, 1, -1, $a_hook,
             false, true, ?c, 0.0, 1.0, -1.0, [], 3, 4, 2, 8, 16, 32, 64, -64, $vector_0,
-            2.0 ** 21.5, 2.0 ** -18.0, $car_main, $cadr_main, 12345678901234567890, log0]
+            2.0 ** 21.5, 2.0 ** -18.0, $car_main, $cadr_main, 12345678901234567890]
   else
     args = [1.5, "/hiho", [0, 1], 1234, $vct_3, $color_95, :mus_error, sqrt(-1.0), $delay_32,
             lambda do | | true end, $sound_data_23, :order, 0, 1, -1, 64, -64, $a_hook,
-            false, true, [], $vector_0, 12345678901234567890, log0]
+            false, true, [], $vector_0, 12345678901234567890]
   end
   args.each do |arg1|
     args.each do |arg2|
@@ -36087,7 +35757,7 @@ def test0328
     #
     args = [1.5, "/hiho", [0, 1], 1234, $vct_3, $color_95, :mus_error, sqrt(-1.0), $delay_32,
             lambda do | | true end, $sound_data_23, :order, 0, 1, -1, 64, -64, $a_hook,
-            false, true, [], $vector_0, 12345678901234567890, log0]
+            false, true, [], $vector_0, 12345678901234567890]
     args.each do |arg1|
       args.each do |arg2|
         args.each do |arg3|
@@ -36107,7 +35777,7 @@ def test0328
     #
     args = [1.5, "/hiho", [0, 1], 1234, $vct_3, $color_95, :mus_error, sqrt(-1.0), $delay_32,
             lambda do | | true end, $sound_data_23, :order, 0, 1, -1, 64, -64, $a_hook,
-            false, true, [], $vector_0, 12345678901234567890, log0]
+            false, true, [], $vector_0, 12345678901234567890]
     args.each do |arg1|
       args.each do |arg2|
         args.each do |arg3|
@@ -36129,7 +35799,7 @@ def test0328
     #
     args = [1.5, "/hiho", [0, 1], 1234, $vct_3, $color_95, :mus_error, sqrt(-1.0), $delay_32,
             lambda do | | true end, $sound_data_23, :order, 0, 1, -1, 64, -64, $a_hook,
-            false, true, [], $vector_0, 12345678901234567890, log0]
+            false, true, [], $vector_0, 12345678901234567890]
     args.each do |arg1|
       args.each do |arg2|
         args.each do |arg3|
@@ -36151,7 +35821,7 @@ def test0328
     #
     args = [1.5, "/hiho", [0, 1], 1234, $vct_3, $color_95, :mus_error, sqrt(-1.0), $delay_32,
             lambda do | | true end, $sound_data_23, :order, 0, 1, -1, 64, -64, $a_hook,
-            false, true, [], $vector_0, 12345678901234567890, log0]
+            false, true, [], $vector_0, 12345678901234567890]
     args.each do |arg1|
       args.each do |arg2|
         args.each do |arg3|
@@ -36176,7 +35846,7 @@ def test0328
     # 5 Args
     #
     args = [1.5, "/hiho", 1234, $vct_3, sqrt(-1.0), 1, -1, 64, -64,
-            false, true, 12345678901234567890, log0]
+            false, true, 12345678901234567890]
     args.each do |arg1|
       args.each do |arg2|
         args.each do |arg3|
@@ -36343,20 +36013,18 @@ def test28
   if $test28
     $before_test_hook.call(28)
     set_with_background_processes(true)
-    if true # $all_args
-      snd_display("procs  prcs/set-prcs")
-      snd_display("====================")
-      snd_display("proc00: %3d/%3d", Procs0.length, Set_procs0.length)
-      snd_display("proc01: %3d/%3d", Procs1.length, Set_procs1.length)
-      snd_display("proc02: %3d/%3d", Procs2.length, Set_procs2.length)
-      snd_display("proc03: %3d/%3d", Procs3.length, Set_procs3.length)
-      snd_display("proc04: %3d/%3d", Procs4.length, Set_procs4.length)
-      snd_display("proc05: %3d", Procs5.length)
-      snd_display("proc06: %3d", Procs6.length)
-      snd_display("proc07: %3d", Procs7.length)
-      snd_display("proc08: %3d", Procs8.length)
-      snd_display("proc10: %3d", Procs10.length)
-    end
+    snd_display("procs  prcs/set-prcs")
+    snd_display("====================")
+    snd_display("proc00: %3d/%3d", Procs0.length, Set_procs0.length)
+    snd_display("proc01: %3d/%3d", Procs1.length, Set_procs1.length)
+    snd_display("proc02: %3d/%3d", Procs2.length, Set_procs2.length)
+    snd_display("proc03: %3d/%3d", Procs3.length, Set_procs3.length)
+    snd_display("proc04: %3d/%3d", Procs4.length, Set_procs4.length)
+    snd_display("proc05: %3d", Procs5.length)
+    snd_display("proc06: %3d", Procs6.length)
+    snd_display("proc07: %3d", Procs7.length)
+    snd_display("proc08: %3d", Procs8.length)
+    snd_display("proc10: %3d", Procs10.length)
     reset_almost_all_hooks
     test0028
     test0128

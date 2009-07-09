@@ -2,7 +2,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sat Aug 05 00:09:28 CEST 2006
-\ Changed: Mon Jun 29 21:19:35 CEST 2009
+\ Changed: Thu Jul 09 03:30:25 CEST 2009
 
 \ Commentary:
 \
@@ -60,10 +60,9 @@ reset-all-hooks
 #f value my-snd-error-hook
 #f value my-mus-error-hook
 
-save-dir "/home/bil/zap/snd" || 		  value original-save-dir
-temp-dir "/home/bil/zap/tmp" || 		  value original-temp-dir
+save-dir "/home/bil/zap/snd" ||   value original-save-dir
+temp-dir "/home/bil/zap/tmp" ||   value original-temp-dir
 listener-prompt        		  value original-prompt
-300                    		  value sample-reader-tests
 1024 8 *               		  value default-file-buffer-size
 "HOME" getenv          		  value home-dir
 "/home/bil/sf1/"       		  value sf-dir
@@ -192,7 +191,6 @@ mus-audio-playback-amp value original-audio-amp
   { a b }
   b zero? b fzero? || if a else a b b/ then
 ;
-: log0 ( -- #<inf> ) 0.0 flog ;
 : make-color-with-catch ( c1 c2 c3 -- color )
   <'> make-color 'no-such-color #t fth-catch if stack-reset 1 0 0 make-color then
 ;
@@ -2839,9 +2837,6 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   0 #f #f #f #f #f <'> noop 0 make-proc <'> play        'wrong-type-arg   check-error-tag
   #( 0.1 0.01 ) ind          <'> set-reverb-control-length-bounds 'out-of-range check-error-tag
   #( 0.1 0.01 ) ind          <'> set-reverb-control-scale-bounds  'out-of-range check-error-tag
-  edits { eds }
-  log0 <'> undo #t nil fth-catch stack-reset
-  edits eds equal? unless $" undo -inf: %s" #( #f #f edits ) snd-display then
   #f                         <'> scale-by                'wrong-type-arg  check-error-tag
   2 0.1 0.1 0.2 0.2 make-mixer <'> scale-by              'wrong-type-arg  check-error-tag
   3.0 1.0 #t                 <'> src-sound               'wrong-type-arg  check-error-tag
@@ -3120,8 +3115,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
     $" procs08: %3d"     #( procs08 length )                    clm-message
     $" procs10: %3d"     #( procs10 length )                    clm-message
   then
-  #( 1.5 "/hiho" #( 0 1 ) 1234 vct-3 :wave -1 0 1 #f #t '() vector-0
-     12345678901234567890 log0 nan ) { vals }
+  #( 1.5 "/hiho" #( 0 1 ) 1234 vct-3 :wave -1 0 1 #f #t '() vector-0 12345678901234567890 ) { vals }
   nil nil nil nil nil nil nil { arg1 arg2 arg3 arg4 tm prc tag }
   "keyargs-2-args" #() clm-message
   keyargs each to arg1
@@ -3168,12 +3162,11 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   #( 1.5 "/hiho" #( 0 1 ) 1234 vct-3 color-95  #( 0 1 ) 3/4 'mus-error -1.0 csqrt
      <'> noop 0 make-proc vct-5 sound-data-23 :order 0 1 -1 a-hook #f #t <char> c 0.0 1.0 -1.0 
      '() '3 2 8 64 -64 vector-0 2.0 21.5 f** 2.0 -18.0 f** car-main cadr-main 
-     12345678901234567890 log0 nan <'> noop 1 make-proc ) { main-args }
+     12345678901234567890 <'> noop 1 make-proc ) { main-args }
   #( 1.5 "/hiho" #( 0 1 ) 1234 vct-3 color-95 #( 0 1 ) 3/4 -1.0
-     -1.0 csqrt :feedback -1 0 1 3 64 -64 #f #t '() vector-0 12345678901234567890
-     log0 nan ) { few-args }
+     -1.0 csqrt :feedback -1 0 1 3 64 -64 #f #t '() vector-0 12345678901234567890 ) { few-args }
   #( "/hiho" 1234 vct-3 -1.0 -1.0 csqrt
-     -1 0 1 #f #t #() 12345678901234567890 log0 ) { fewer-args }
+     -1 0 1 #f #t #() 12345678901234567890 ) { fewer-args }
   all-args if main-args else few-args then { less-args }
   \ 1 arg
   "1-arg" #() clm-message
@@ -3361,7 +3354,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
 	#( 1.5 "/hiho" -1234 0 vct-3 -1 #f #t ) each to arg3
 	  #( 1.5 "/hiho" -1234 0 vct-3 #f #t ) each to arg4
 	    #( 1.5 "/hiho" -1234 0 vct-5 #f #t ) each to arg5
-	      #( 1.5 "/hiho" -1234 -1 0 #f #t #() vct-3 log0 ) each to arg6
+	      #( 1.5 "/hiho" -1234 -1 0 #f #t #() vct-3 ) each to arg6
 		procs06 each to prc
 		  arg1 arg2 arg3 arg4 arg5 arg6 prc #t nil fth-catch to tag
 		  stack-reset
@@ -3381,7 +3374,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
     \ 8 args
     "8-args" #() clm-message
     tm start-timer
-    #( 1.5 -1 1234 #f #() log0 ) each to arg1
+    #( 1.5 -1 1234 #f #() ) each to arg1
       #( "/hiho" -1 1234 #() vct-5 ) each to arg2
 	#( #t #f -1 1234 #() vct-3 ) each to arg3
 	  #( -1.0 csqrt  1234 0 -1 #() ) each to arg4
@@ -3457,16 +3450,15 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
 : 30-test
   32 make-delay { delay-32 }
   #( 1.5 "/hiho" #( 0 1 ) 1234 vct-3 :wave -1 0 1 #f #t
-     '() vector-0 1234567890 log0 nan ) { vals }
+     '() vector-0 1234567890 ) { vals }
   #( 1.5 "/hiho" #( 0 1 ) 1234 vct-3 color-95  #( 0 1 ) 3/4 'mus-error -1.0 csqrt ( delay-32 )
      <'> noop 0 make-proc vct-5 sound-data-23 :order 0 1 -1 a-hook #f #t <char> c 0.0 1.0 -1.0 
      '() '3 2 8 64 -64 vector-0 2.0 21.5 f** 2.0 -18.0 f** car-main cadr-main 
-     1234567890 log0 nan <'> noop 1 make-proc ) { main-args }
+     1234567890 <'> noop 1 make-proc ) { main-args }
   #( 1.5 "/hiho" #( 0 1 ) 1234 vct-3 color-95 #( 0 1 ) 3/4 -1.0
-     -1.0 csqrt ( delay-32 ) :feedback -1 0 1 3 64 -64 #f #t '() vector-0 1234567890
-     log0 nan ) { few-args }
+     -1.0 csqrt ( delay-32 ) :feedback -1 0 1 3 64 -64 #f #t '() vector-0 1234567890 ) { few-args }
   #( "/hiho" 1234 vct-3 -1.0 -1.0 csqrt ( delay-32 )
-     -1 0 1 #f #t #() 1234567890 log0 ) { fewer-args }
+     -1 0 1 #f #t #() 1234567890 ) { fewer-args }
   fewer-args { less-args }
   fewer-args to vals
   fewer-args to few-args

@@ -97,7 +97,6 @@
  * would it simplify variable handling to store everything as xen_value?
  *
  * TODO: run does not work in guile 1.9 (can't find func args any more)
- * TODO: (let ((pr (cons 1 2))) (run (lambda () (if pr 1 2)))) -> if: bad selector? pr
  * TODO: run doesn't always warn about a closure (explicit gen basically) -- if it's used directly,
  *         there's no warning, but it doesn't handle the closed-over variables correctly
  * TODO: vector<->vct
@@ -4272,15 +4271,22 @@ static xen_value *if_form(ptree *prog, XEN form, walk_result_t need_result)
 
   has_false = (XEN_LIST_LENGTH(form) == 4);
   if_value = walk(prog, XEN_CADR(form), NEED_ANY_RESULT);                                      /* walk selector */
+
   if (if_value == NULL) 
     {
-      xen_value *rv;
-      char *temp = NULL;
-      rv = run_warn("if: bad selector? %s", temp = XEN_AS_STRING(XEN_CADR(form)));
+      if (run_warned) /* must have been some error in walk, passing it back to us */
+	{
+	  xen_value *rv;
+	  char *temp = NULL;
+	  rv = run_warn("if: bad selector? %s", temp = XEN_AS_STRING(XEN_CADR(form)));
 #if HAVE_S7
-      if (temp) free(temp);
+	  if (temp) free(temp);
 #endif
-      return(rv);
+	  return(rv);
+	}
+      /* else whatever it is, it has to be true? */
+      /*      (let ((pr (cons 1 2))) (run (lambda () (if pr 1 2)))) */
+      if_value = make_xen_value(R_BOOL, add_int_to_ptree(prog, true), R_CONSTANT);
     }
 
   if (if_value->type != R_BOOL) /* all ints are true */

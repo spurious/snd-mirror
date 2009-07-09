@@ -6863,6 +6863,8 @@ taking input from the readin generator 'reader'.  The output data is available v
 	   make-tanhsin make-moving-fft
 	   )))
 
+;;; we could autotest the methods via (for example) (tanhsin-methods) -> ((name getter setter)...)
+
 
 ;;; --------------------------------------------------------------------------------
 
