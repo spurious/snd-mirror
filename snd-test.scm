@@ -1,35 +1,35 @@
 ;;; Snd tests
 ;;;
-;;;  test 0: constants                           [590]
-;;;  test 1: defaults                            [1176]
-;;;  test 2: headers                             [1377]
-;;;  test 3: variables                           [1694]
-;;;  test 4: sndlib                              [2329]
-;;;  test 5: simple overall checks               [5007]
-;;;  test 6: vcts                                [13930]
-;;;  test 7: colors                              [14256]
-;;;  test 8: clm                                 [14753]
-;;;  test 9: mix                                 [26702]
-;;;  test 10: marks                              [28921]
-;;;  test 11: dialogs                            [29882]
-;;;  test 12: extensions                         [30123]
-;;;  test 13: menus, edit lists, hooks, etc      [30394]
-;;;  test 14: all together now                   [32049]
-;;;  test 15: chan-local vars                    [33026]
-;;;  test 16: regularized funcs                  [34671]
-;;;  test 17: dialogs and graphics               [39739]
-;;;  test 18: enved                              [39831]
-;;;  test 19: save and restore                   [39850]
-;;;  test 20: transforms                         [41625]
-;;;  test 21: new stuff                          [43757]
-;;;  test 22: run                                [45763]
-;;;  test 23: with-sound                         [52507]
-;;;  test 25: X/Xt/Xm                            [56978]
-;;;  test 26: Gtk                                [60750]
-;;;  test 27: GL                                 [64334]
-;;;  test 28: errors                             [64458]
-;;;  test all done                               [66964]
-;;;  test the end                                [67211]
+;;;  test 0: constants                           [567]
+;;;  test 1: defaults                            [1153]
+;;;  test 2: headers                             [1354]
+;;;  test 3: variables                           [1671]
+;;;  test 4: sndlib                              [2306]
+;;;  test 5: simple overall checks               [4943]
+;;;  test 6: vcts                                [13866]
+;;;  test 7: colors                              [14192]
+;;;  test 8: clm                                 [14689]
+;;;  test 9: mix                                 [26632]
+;;;  test 10: marks                              [28851]
+;;;  test 11: dialogs                            [29812]
+;;;  test 12: extensions                         [30053]
+;;;  test 13: menus, edit lists, hooks, etc      [30324]
+;;;  test 14: all together now                   [31939]
+;;;  test 15: chan-local vars                    [32888]
+;;;  test 16: regularized funcs                  [34533]
+;;;  test 17: dialogs and graphics               [39601]
+;;;  test 18: enved                              [39693]
+;;;  test 19: save and restore                   [39712]
+;;;  test 20: transforms                         [41487]
+;;;  test 21: new stuff                          [43619]
+;;;  test 22: run                                [45625]
+;;;  test 23: with-sound                         [52387]
+;;;  test 25: X/Xt/Xm                            [56921]
+;;;  test 26: Gtk                                [60694]
+;;;  test 27: GL                                 [64253]
+;;;  test 28: errors                             [64377]
+;;;  test all done                               [66879]
+;;;  test the end                                [67126]
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs))
 
@@ -56713,6 +56713,78 @@ EDITS: 1
 	   
 	   make-funcs funcs pfuncs names methods))
 	
+
+	(for-each
+	 (lambda (name maker methods isit)
+	   (let ((gen (maker)))
+	     (if (not (isit gen))
+		 (format #t "~A is not a ~A?" gen name)
+		 (let* ((funcs (methods)))
+		   (if (null? funcs)
+		       (format #t "A has no methods?" name)
+		       (for-each
+			(lambda (method)
+			  (let ((method-name (car method)))
+			    (catch #t
+				   (lambda ()
+				     (let ((curval (if (not (eq? method-name 'mus-run)) ((cadr method) gen) #f)))
+				       (if (not (null? (cddr method)))
+					   (begin
+					     (if (eq? method-name 'mus-name)
+						 (set! (mus-name gen) "hiho")
+						 (if (eq? method-name 'mus-n)
+						     (set! (mus-n gen) 1)
+						     ((caddr method) gen 10.0)))))))
+				   (lambda args
+				     (format #t "error in ~A~%" (car method))
+				     #f))))
+			funcs))))))
+	 
+	 (list 'nssb 'nxysin 'nxycos 'nxy1cos 'nxy1sin 'noddsin 'noddcos 'noddssb 'ncos2 'npcos
+	       nrsin 'nrcos 'nrssb 'nkssb 'nsincos 'rcos 'rssb 'rxysin 'rxycos
+	       rxyk!sin 'rxyk!cos 'ercos 'erssb 'eoddcos 'rkcos 'rksin 'rkssb
+	       rk!cos 'rk!ssb 'r2k!cos 'k2sin 'k2cos 'k2ssb 'dblsum 'rkoddssb 'krksin
+	       abcos 'absin 'r2k2cos 'bess 'jjcos 'j0evencos 'j2cos 'jpcos 'jncos
+	       j0j1cos 'jycos 'blackman 'fmssb 'k3sin 'izcos 'nchoosekcos 'n1cos
+	       adjustable-square-wave 'adjustable-triangle-wave 'adjustable-sawtooth-wave 'adjustable-oscil
+	       round-interp 'sinc-train 'pink-noise 'green-noise 'brown-noise 'green-noise-interp
+	       moving-max 'moving-sum 'moving-rms 'moving-length 'weighted-moving-average 'exponentially-weighted-moving-average
+	       tanhsin 'moving-fft 'moving-scentroid 'moving-autocorrelation 'moving-pitch)
+	 
+	 (list make-nssb make-nxysin make-nxycos make-nxy1cos make-nxy1sin make-noddsin make-noddcos make-noddssb make-ncos2 make-npcos
+	       make-nrsin make-nrcos make-nrssb make-nkssb make-nsincos make-rcos make-rssb make-rxysin make-rxycos
+	       make-rxyk!sin make-rxyk!cos make-ercos make-erssb make-eoddcos make-rkcos make-rksin make-rkssb
+	       make-rk!cos make-rk!ssb make-r2k!cos make-k2sin make-k2cos make-k2ssb make-dblsum make-rkoddssb make-krksin
+	       make-abcos make-absin make-r2k2cos make-bess make-jjcos make-j0evencos make-j2cos make-jpcos make-jncos
+	       make-j0j1cos make-jycos make-blackman make-fmssb make-k3sin make-izcos make-nchoosekcos make-n1cos
+	       make-adjustable-square-wave make-adjustable-triangle-wave make-adjustable-sawtooth-wave make-adjustable-oscil
+	       make-round-interp make-sinc-train make-pink-noise make-green-noise make-brown-noise make-green-noise-interp
+	       make-moving-max make-moving-sum make-moving-rms make-moving-length make-weighted-moving-average make-exponentially-weighted-moving-average 
+	       make-tanhsin make-moving-fft make-moving-scentroid make-moving-autocorrelation make-moving-pitch)
+	 
+	 (list nssb-methods nxysin-methods nxycos-methods nxy1cos-methods nxy1sin-methods noddsin-methods noddcos-methods noddssb-methods ncos2-methods npcos-methods
+	       nrsin-methods nrcos-methods nrssb-methods nkssb-methods nsincos-methods rcos-methods rssb-methods rxysin-methods rxycos-methods
+	       rxyk!sin-methods rxyk!cos-methods ercos-methods erssb-methods eoddcos-methods rkcos-methods rksin-methods rkssb-methods
+	       rk!cos-methods rk!ssb-methods r2k!cos-methods k2sin-methods k2cos-methods k2ssb-methods dblsum-methods rkoddssb-methods krksin-methods
+	       abcos-methods absin-methods r2k2cos-methods bess-methods jjcos-methods j0evencos-methods j2cos-methods jpcos-methods jncos-methods
+	       j0j1cos-methods jycos-methods blackman-methods fmssb-methods k3sin-methods izcos-methods nchoosekcos-methods n1cos-methods
+	       adjustable-square-wave-methods adjustable-triangle-wave-methods adjustable-sawtooth-wave-methods adjustable-oscil-methods
+	       round-interp-methods sinc-train-methods pink-noise-methods green-noise-methods brown-noise-methods green-noise-interp-methods
+	       moving-max-methods moving-sum-methods moving-rms-methods moving-length-methods weighted-moving-average-methods exponentially-weighted-moving-average-methods
+	       tanhsin-methods moving-fft-methods moving-scentroid-methods moving-autocorrelation-methods moving-pitch-methods)
+	 
+	 (list nssb? nxysin? nxycos? nxy1cos? nxy1sin? noddsin? noddcos? noddssb? ncos2? npcos? 
+	       nrsin? nrcos? nrssb? nkssb? nsincos? rcos? rssb? rxysin? rxycos? 
+	       rxyk!sin? rxyk!cos? ercos? erssb? eoddcos? rkcos? rksin? rkssb? 
+	       rk!cos? rk!ssb? r2k!cos? k2sin? k2cos? k2ssb? dblsum? rkoddssb? krksin? 
+	       abcos? absin? r2k2cos? bess? jjcos? j0evencos? j2cos? jpcos? jncos? 
+	       j0j1cos? jycos? blackman? fmssb? k3sin? izcos? nchoosekcos? n1cos? 
+	       adjustable-square-wave? adjustable-triangle-wave? adjustable-sawtooth-wave? adjustable-oscil? 
+	       round-interp? sinc-train? pink-noise? green-noise? brown-noise? green-noise-interp? 
+	       moving-max? moving-sum? moving-rms? moving-length? weighted-moving-average? exponentially-weighted-moving-average? 
+	       tanhsin? moving-fft? moving-scentroid? moving-autocorrelation? moving-pitch? )
+	 )
+
 	
 	(let ((gen1 (make-oscil 440.0))
 	      (gen2 (make-oscil 440.0)))

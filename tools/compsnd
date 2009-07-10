@@ -160,6 +160,38 @@ make allclean
 rm -f snd
 rm -f config.cache
 
+echo ' '
+echo ' '
+echo ' -------------------------------------------------------------------------------- '
+echo ' -----                --with-no-gui --with-oss                              ----  '
+echo ' -------------------------------------------------------------------------------- '
+./configure --quiet LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include" --with-no-gui --with-oss
+make
+echo ' '
+echo ' '
+./snd --version
+./snd -noinit --features "'clm 'snd-nogui 'oss"
+
+make allclean
+rm -f snd
+rm -f config.cache
+
+echo ' '
+echo ' '
+echo ' -------------------------------------------------------------------------------- '
+echo ' -----                --with-no-gui --with-esd                              ----  '
+echo ' -------------------------------------------------------------------------------- '
+./configure --quiet LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include" --with-no-gui --with-esd
+make
+echo ' '
+echo ' '
+./snd --version
+./snd -noinit --features "'clm 'snd-nogui 'esd"
+
+make allclean
+rm -f snd
+rm -f config.cache
+
 echo ' -------------------------------------------------------------------------------- '
 echo ' -----                --with-no-gui --with-gmp                              ----  '
 echo ' -------------------------------------------------------------------------------- '

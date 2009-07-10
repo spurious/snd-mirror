@@ -647,9 +647,9 @@ struct s7_scheme {
   #define vector_ndims(p)             ((p)->object.vector.dim_info->ndims)
   #define vector_offset(p, i)         ((p)->object.vector.dim_info->offsets[i])
   #define vector_is_multidimensional(p) ((p)->object.vector.dim_info)
-  #define VECTOR_REST_ARGS true
+  #define VECTOR_REST_ARGS            true
 #else
-  #define VECTOR_REST_ARGS false
+  #define VECTOR_REST_ARGS            false
 #endif
 
 #define small_int(Sc, Val)            (Sc)->small_ints[Val]
@@ -10950,9 +10950,8 @@ s7_pointer s7_hash_table_set(s7_scheme *sc, s7_pointer table, const char *name, 
   return(value);
 }
 
-/* SOMEDAY: hash mp nums? */
 
-#define HASHED_INTEGER_BUFFER_SIZE 32
+#define HASHED_INTEGER_BUFFER_SIZE 64
 
 static char *s7_hashed_integer_name(s7_Int key, char *intbuf) /* not const here because snprintf is declared char* */
 {
@@ -11841,7 +11840,7 @@ static const char *s7_type_name(s7_pointer arg)
 	  }
       }
     }
-  return("unknown");
+  return("messed up object");
 }
 
 
@@ -11850,15 +11849,20 @@ s7_pointer s7_wrong_type_arg_error(s7_scheme *sc, const char *caller, int arg_n,
   int len, slen;
   char *errmsg;
   s7_pointer x;
+  const char *typ, *a_or_an = "a";
+
+  typ = s7_type_name(arg);
+  if ((typ[0] == 'a') || (typ[0] == 'e') || (typ[0] == 'i') || (typ[0] == 'o') || (typ[0] == 'u'))
+    a_or_an = "an";
 
   len = safe_strlen(descr) + safe_strlen(caller) + 64;
   errmsg = (char *)malloc(len * sizeof(char));
   if (arg_n == 0)
-    slen = snprintf(errmsg, len, "%s: argument ~A has wrong type (%s, expected %s)", caller, s7_type_name(arg), descr);
+    slen = snprintf(errmsg, len, "%s argument ~A is %s %s, but should be %s", caller, a_or_an, typ, descr);
   else
     {
       if (arg_n < 0) arg_n = 1;
-      slen = snprintf(errmsg, len, "%s: argument %d, ~A, has wrong type (%s, expected %s)", caller, arg_n, s7_type_name(arg), descr);
+      slen = snprintf(errmsg, len, "%s argument %d, ~A, is %s %s, but should be %s", caller, arg_n, a_or_an, typ, descr);
     }
   x = make_list_2(sc, s7_make_string_with_length(sc, errmsg, slen), arg);
   free(errmsg);
@@ -11876,7 +11880,7 @@ s7_pointer s7_out_of_range_error(s7_scheme *sc, const char *caller, int arg_n, s
   len = safe_strlen(descr) + safe_strlen(caller) + 64;
   errmsg = (char *)malloc(len * sizeof(char));
   if (arg_n <= 0) arg_n = 1;
-  slen = snprintf(errmsg, len, "%s: argument %d is out of range (%s)", caller, arg_n, descr);
+  slen = snprintf(errmsg, len, "%s argument %d is out of range (%s)", caller, arg_n, descr);
   x = make_list_2(sc, s7_make_string_with_length(sc, errmsg, slen), arg);
   free(errmsg);
 
@@ -13442,8 +13446,20 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      }
 	    sc->z = sc->NIL;
 #endif
+	    
+	    if (sc->stack_top != 0)
+	      pop_stack(sc);
+	    else return(sc->F);
 
-	    pop_stack(sc);
+	    /* this is trying to get around an existing, but very well-hidden bug:
+	     *  (defgenerator tanhsin (frequency 100.0))
+	     *  (define (tanhsin gen) #f)
+	     *  (define (crash) (let ((hi (make-tanhsin))) (catch #t (lambda () (mus-run hi 0.0)) (lambda args #f))))
+	     *  (crash)
+	     * and we pop_stack once too often somewhere.  I'd put a guard OP_QUIT at the start, but 
+	     *   reset_stack would need to be changed and so on.
+	     */
+
 	    goto START;
 	  }
 	  

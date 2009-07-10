@@ -14,7 +14,7 @@
 
 /* if icons do not get displayed, check the system preferences menu+toolbar dialog */
 
-/* PERHAPS: move to the gtk file chooser -- it doesn't look so bad anymore, and I think it has a FAM equivalent */
+/* PERHAPS: move to the gtk file chooser -- it doesn't look so bad anymore, and I think it has a FAM equivalent (but how to implement "just sounds" button?) */
 
 /* ---------------- file selector replacement ---------------- */
 

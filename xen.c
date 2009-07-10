@@ -449,9 +449,6 @@ void xen_initialize(void)
 
 /* ------------------------------ RUBY ------------------------------ */
 
-/* TODO: ruby 1.9.1 is very broken...
- */
-
 #if HAVE_RUBY
 
 #define S_add_help "add_help"

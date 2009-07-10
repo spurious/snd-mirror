@@ -208,7 +208,7 @@
 			       (list
 				(list 'mus-run
 				      (lambda (g arg1 arg2)
-					(,(string->symbol sname) g arg1))))
+					(,(string->symbol sname) g arg1)))) ; this assumes the run-time function takes two args
 			       (list))
 			   
 			   (if ,(not (method-exists? 'mus-reset))
@@ -6364,7 +6364,9 @@ index 10 (so 10/2 is the bes-jn arg):
 			 (list 'mus-xcoeffs
 			       (lambda (g) (moving-fft-rl g)))
 			 (list 'mus-ycoeffs
-			       (lambda (g) (moving-fft-im g)))))
+			       (lambda (g) (moving-fft-im g)))
+			 (list 'mus-run
+			       (lambda (g arg1 arg2) (moving-fft g)))))
   (input #f :type clm) (n 512 :type int) (hop 128 :type int) (outctr 0 :type int)
   (rl #f :type vct) (im #f :type vct) (data #f :type vct) 
   (window #f :type vct))
@@ -6651,6 +6653,8 @@ the phases as mus-ycoeffs, and the current input data as mus-data."
 				 (set! (moving-autocorrelation-outctr g) (+ n 1)) ; first time fill flag
 				 g))
 	       :methods (list
+			 (list 'mus-run
+			       (lambda (g arg1 arg2) (moving-autocorrelation g)))
 			 (list 'mus-data
 			       (lambda (g) (moving-autocorrelation-rl g)))))
   (input #f :type clm) (n 512 :type int) (hop 128 :type int) (outctr 0 :type int)
@@ -6705,7 +6709,11 @@ taking input from the readin generator 'reader'.  The output data is available v
 							  (moving-pitch-input g)
 							  (moving-pitch-n g)
 							  (moving-pitch-hop g)))
-			       g))
+			       g)
+	       :methods (list
+			 (list 'mus-run
+			       (lambda (g arg1 arg2) (moving-pitch g)))))
+
   (input #f :type clm) (n 512 :type int) (hop 128 :type int)
   (ac #f :type clm) (val 0.0))
 
@@ -6849,7 +6857,7 @@ taking input from the readin generator 'reader'.  The output data is available v
 		adjustable-square-wave adjustable-triangle-wave adjustable-sawtooth-wave adjustable-oscil 
 		round-interp sinc-train pink-noise green-noise brown-noise green-noise-interp
 		moving-max moving-sum moving-rms moving-length weighted-moving-average exponentially-weighted-moving-average 
-		tanhsin moving-fft
+		tanhsin moving-fft moving-scentroid moving-autocorrelation moving-pitch
 		))
      (list make-nssb make-nxysin make-nxycos make-nxy1cos make-nxy1sin make-noddsin make-noddcos make-noddssb make-ncos2 make-npcos
 	   make-nrsin make-nrcos make-nrssb make-nkssb make-nsincos make-rcos make-rssb make-rxysin make-rxycos
@@ -6860,10 +6868,9 @@ taking input from the readin generator 'reader'.  The output data is available v
 	   make-adjustable-square-wave make-adjustable-triangle-wave make-adjustable-sawtooth-wave make-adjustable-oscil
 	   make-round-interp make-sinc-train make-pink-noise make-green-noise make-brown-noise make-green-noise-interp
 	   make-moving-max make-moving-sum make-moving-rms make-moving-length make-weighted-moving-average make-exponentially-weighted-moving-average 
-	   make-tanhsin make-moving-fft
+	   make-tanhsin make-moving-fft make-moving-scentroid make-moving-autocorrelation make-moving-pitch
 	   )))
 
-;;; we could autotest the methods via (for example) (tanhsin-methods) -> ((name getter setter)...)
 
 
 ;;; --------------------------------------------------------------------------------

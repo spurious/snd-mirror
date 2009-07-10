@@ -7,9 +7,11 @@
  *              filter is defined in srfi-1 so we need protection against that
  *
  *   In Guile, frame? is %frame?
- *             we redefine guile's random to accept 0 or 0.0 as its 1st argument
+ *             we redefine random to accept 0 or 0.0 as its 1st argument
  *             we redefine log to take a 2nd arg.
+ *
  *   In Ruby, rand is kernel_rand.
+ *
  *   In Forth, Snd's exit is named snd-exit.
  */
 
@@ -2281,6 +2283,11 @@ static XEN g_yn(XEN order, XEN x)
   return(C_TO_XEN_DOUBLE(gsl_sf_bessel_Yn(XEN_TO_C_INT(order), XEN_TO_C_DOUBLE(x))));
 }
 
+/* SOMEDAY: big_i1, _in, _k*  factorial-divide (/!?) binomial = 3 args
+ *            (exp (- (gammln num) (gammln den)))
+ *            (defmacro binomial (n m) `(exp (- (gammln (1+ ,n)) (+ (gammln (1+ ,m)) (gammln (- ,n ,m -1))))))
+ *            see lgamma (mpfr)
+ */
 
 #define S_bes_i1 "bes-i1"
 #define S_bes_in "bes-in"
@@ -3340,6 +3347,22 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
 
 #if HAVE_ALSA
   XEN_YES_WE_HAVE("alsa");
+#endif
+
+#if HAVE_OSS
+  XEN_YES_WE_HAVE("oss");
+#endif
+
+#if MUS_ESD
+  XEN_YES_WE_HAVE("esd");
+#endif
+
+#if MUS_PULSEAUDIO
+  XEN_YES_WE_HAVE("pulse-audio");
+#endif
+
+#if MUS_JACK
+  XEN_YES_WE_HAVE("jack");
 #endif
 
 #if HAVE_GSL

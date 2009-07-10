@@ -7555,7 +7555,8 @@ the 2nd from 0.0 to 2*pi, graphing the resulting peak amplitude, we get:
 <img src="pix/sum2.png" hspace=20 alt="n=2 case">
 
 <p>The graph on the left is the 2nd harmonic's initial phase vs the peak amplitude.  Since 0.0
-appears to be a minimum, we can solve for the peak at that point using calculus: differentiate
+appears to be a minimum (we can show that it is via simultaneous non-linear equations; see peak-phases.scm), 
+we can solve for the peak at that point using calculus: differentiate
 sin(x) + sin(2x) to get cos(x) + 2cos(2x) = 4cos^2(x) + cos(x) -2, a quadratic equation
 in cos(x).  Let y=cos(x), solve for y: (sqrt(33)-1)/8.  Plug that back into the original
 equation (x=acos(y) = 0.93592945566133), and get 1.7601725930461.  Looking back at the
@@ -7608,9 +7609,6 @@ a function of the initial-phase ("phi" below) is (very nearly):
 	  (set! i (+ i 1)))))))))
 -->
 <p>
-I believe the non-linearity is real, not some sort of computational artifact:
-changing the granularity of the computation by a factor of 1000 does not
-change the result at all.  
 We can reduce the peak difference below .00000002 by using:
 </p>
 <pre>
