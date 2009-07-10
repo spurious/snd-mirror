@@ -25,12 +25,12 @@
 ;;    and (+ (sin 0.61547970867039) (sin (* 3 0.61547970867039))) is 1.539600717839 and
 ;;    1.5396 + 0.4604 * sin(initial-phase) is very close.
 ;;
-;; we can show that phase=0 is the global min by using simultaneous non-linear equations:
-;; sin(0.9359) + sin(2*0.9359 + phase) < 1.7601
-;; so sin(1.8718 + phase) < 0.9551, but that means phase >= 0 (sin is going down at this point)
-;; sin(-0.9359) + sin(2*(-0.9359) + phase) > -1.7601
-;; so sin(-1.8718 + phase) > -0.9551, so phase <= 0 (sin is going up)
-;; so phase must be 0
+;; we can show that phase=0 is the global min by using simultaneous non-linear equations (using abbreviated names for the stuff above):
+;;   sin(0.9359) + sin(2*0.9359 + phase) < 1.7601
+;;   so sin(1.8718 + phase) < 0.9551, but that means phase >= 0 (sin is going down at this point)
+;;   sin(-0.9359) + sin(2*(-0.9359) + phase) > -1.7601
+;;   so sin(-1.8718 + phase) > -0.9551, so phase <= 0 (sin is going up)
+;;   so phase must be 0
 
 
 ;;; 3 all --------------------------------------------------------------------------------

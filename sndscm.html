@@ -8328,22 +8328,30 @@ phase to 0.0).
 
 <table border=0 hspace=40><tr><td>
 <pre>
-(definstrument (sine-wave start dur freq amp)
+(definstrument (sine-wave start dur freq phase)
   (let* ((beg (seconds-&gt;samples start))
 	 (end (+ beg (seconds-&gt;samples dur)))
-	 (osc (make-oscil freq)))
+	 (osc (make-oscil freq phase)))
     (run 
      (lambda ()
        (do ((i beg (+ 1 i))) 
 	   ((= i end))
-	 (outa i (* amp (oscil osc))))))))
+	 (outa i (oscil osc)))))))
 
-(with-mixed-sound (:srate 10000)
-  (sine-wave 0 1 10.0 1.0)
-  (sine-wave 0 1 20.0 1.0)
-  (sine-wave 0 1 30.0 1.0))
+;; #(0.000 1.410 1.684) is one of the minima
 
-(add-hook! mix-drag-hook   ; report the current maxamp as we drag a component
+(with-mixed-sound (:srate 12000)
+  (sine-wave 0 1 10.0 0.0)
+  (sine-wave 0 1 20.0 (* pi 1.410))
+  (sine-wave 0 1 30.0 (* pi 1.684)))
+
+(let ((ms (caar (mixes))))     ; separate the mix tags
+  (set! (mix-tag-y (cadr ms)) 30)
+  (set! (mix-tag-y (caddr ms)) 60)) 
+
+(set! (y-bounds) (list -3 3))  ; fixup the y bounds so we don't clip the waveform
+
+(add-hook! mix-drag-hook       ; report the current maxamp as we drag a component
   (lambda (id x y) 
     (report-in-minibuffer (format #f "maxamp: ~A" (maxamp)))))
 </pre>

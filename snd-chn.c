@@ -4,6 +4,9 @@
 
 /* TODO: the per-chan attributes (y-bounds, graph-type etc) are a mess when update, unite, sync etc happen
  * TODO: the default should be to show the full y-bounds if possible
+ *   it might be nice to show the waveform(s) as-read-so-far updating as we get new points from the disk
+ *   (with blank space after current read end point) -- peak_env_usable[snd-snd.c] and peak_env_graph
+ *   would need to be smarter? or use peak_env_partial_graph?
  */
 
 bool graph_style_p(int grf)

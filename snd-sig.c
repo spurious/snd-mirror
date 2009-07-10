@@ -5679,7 +5679,7 @@ that give a minimum peak amplitude when the signals are added together."
   #include <sys/time.h>
 #endif
 
-#define S_find_min_peak_phases_via_sa "find-min-peak-phases-via-sa"
+#define S_fpsa "fpsa"
 
 typedef struct {
   Float pk;
@@ -5687,9 +5687,9 @@ typedef struct {
 } pk_data;
 
 
-static XEN g_find_min_peak_phases_via_sa(XEN x_choice, XEN x_n, XEN x_size, XEN x_increment, XEN x_counts, XEN x_file, XEN x_just_best)
+static XEN g_fpsa(XEN x_choice, XEN x_n, XEN x_size, XEN x_increment, XEN x_counts, XEN x_file, XEN x_just_best)
 {
-  #define H_find_min_peak_phases_via_sa "(" S_find_min_peak_phases_via_sa " choice n (size 1000) (increment 1.0) (counts 50) output-file report-best) searches \
+  #define H_fpsa "(" S_fpsa " choice n (size 1000) (increment 1.0) (counts 50) output-file report-best) searches \
 for a peak-amp minimum using a simulated annealing form of the genetic algorithm.  choice: 0=all, 1=odd, 2=even, 3=prime."
 
   #define FFT_MULT 128
@@ -5705,7 +5705,7 @@ for a peak-amp minimum using a simulated annealing form of the genetic algorithm
   #define EVEN 2
   #define PRIME 3
 
-  /* (find-min-peak-phases-via-sa 0 8 1024 1.0 1000) */
+  /* (fpsa 0 8 1024 1.0 1000) */
 
   int choice, n, size, counts = 0, day_counter = 0, days = 0, years = 0, free_top = 0, fft_size = 0;
   off_t ffts = 0;
@@ -6037,7 +6037,6 @@ for a peak-amp minimum using a simulated annealing form of the genetic algorithm
   return(XEN_FALSE);
 }
 
-
 #endif
 
 
@@ -6084,7 +6083,7 @@ XEN_NARGIFY_1(g_set_sinc_width_w, g_set_sinc_width)
 XEN_ARGIFY_9(g_ptree_channel_w, g_ptree_channel)
 #if HAVE_NESTED_FUNCTIONS
 XEN_VARGIFY(g_find_min_peak_phases_w, g_find_min_peak_phases)
-XEN_ARGIFY_7(g_find_min_peak_phases_via_sa_w, g_find_min_peak_phases_via_sa)
+XEN_ARGIFY_7(g_fpsa_w, g_fpsa)
 #endif
 #else
 #define g_scan_chan_w g_scan_chan
@@ -6128,7 +6127,7 @@ XEN_ARGIFY_7(g_find_min_peak_phases_via_sa_w, g_find_min_peak_phases_via_sa)
 #define g_ptree_channel_w g_ptree_channel
 #if HAVE_NESTED_FUNCTIONS
 #define g_find_min_peak_phases_w g_find_min_peak_phases
-#define g_find_min_peak_phases_via_sa_w g_find_min_peak_phases_via_sa
+#define g_fpsa_w g_fpsa
 #endif
 #endif
 
@@ -6220,7 +6219,7 @@ void g_init_sig(void)
 				   S_setB S_sinc_width, g_set_sinc_width_w,  0, 0, 1, 0);
 #if HAVE_NESTED_FUNCTIONS
   XEN_DEFINE_PROCEDURE(S_find_min_peak_phases, g_find_min_peak_phases_w, 0, 0, 1, H_find_min_peak_phases);
-  XEN_DEFINE_PROCEDURE(S_find_min_peak_phases_via_sa, g_find_min_peak_phases_via_sa_w, 2, 5, 0, H_find_min_peak_phases_via_sa);
+  XEN_DEFINE_PROCEDURE(S_fpsa, g_fpsa_w, 2, 5, 0, H_fpsa);
 #endif
 }
 

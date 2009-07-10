@@ -13449,12 +13449,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    
 	    if (sc->stack_top != 0)
 	      pop_stack(sc);
-	    else return(sc->F);
+	    else return(sc->value); /* or perhaps sc->F? */
 
 	    /* this is trying to get around an existing, but very well-hidden bug:
 	     *  (defgenerator tanhsin (frequency 100.0))
 	     *  (define (tanhsin gen) #f)
-	     *  (define (crash) (let ((hi (make-tanhsin))) (catch #t (lambda () (mus-run hi 0.0)) (lambda args #f))))
+	     *  (define (crash) (let ((hi (make-tanhsin))) (catch #t (lambda () (mus-run hi 0.0)) (lambda args 123))))
 	     *  (crash)
 	     * and we pop_stack once too often somewhere.  I'd put a guard OP_QUIT at the start, but 
 	     *   reset_stack would need to be changed and so on.
