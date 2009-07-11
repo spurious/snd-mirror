@@ -1189,6 +1189,23 @@ static XEN mus_xen_apply(s7_scheme *sc, XEN gen, XEN args)
     arg2 = XEN_TO_C_DOUBLE(XEN_CADR(args));
   return(C_TO_XEN_DOUBLE(mus_run(XEN_TO_MUS_ANY(gen), arg1, arg2)));
 }
+
+static XEN g_frame_set(XEN uf1, XEN uchan, XEN val);
+static XEN g_mixer_set(XEN uf1, XEN in, XEN out, XEN val);
+
+static XEN s7_mus_set(s7_scheme *sc, XEN obj, XEN args)
+{
+  mus_any *g;
+  g = XEN_TO_MUS_ANY(obj);
+
+  if (mus_frame_p(g))
+    return(g_frame_set(obj, XEN_CAR(args), XEN_CADR(args)));
+  if (mus_mixer_p(g))
+    return(g_mixer_set(obj, XEN_CAR(args), XEN_CADR(args), XEN_CADDR(args)));
+  XEN_ASSERT_TYPE(false, obj, XEN_ARG_1, "generalized set!", "a frame or mixer");
+  return(XEN_FALSE);
+}
+
 #endif
 
 XEN mus_xen_to_object(mus_xen *gn) /* global for user-defined gens */
@@ -8547,10 +8564,18 @@ static void mus_xen_init(void)
 #endif
 
 #if HAVE_S7
-  mus_xen_tag = XEN_MAKE_OBJECT_TYPE("<mus>", print_mus_xen, free_mus_xen, s7_equalp_mus_xen, mark_mus_xen, mus_xen_apply, NULL);
+  mus_xen_tag = XEN_MAKE_OBJECT_TYPE("<mus>", print_mus_xen, free_mus_xen, s7_equalp_mus_xen, mark_mus_xen, mus_xen_apply, s7_mus_set);
 #else
   mus_xen_tag = XEN_MAKE_OBJECT_TYPE("Mus", sizeof(mus_xen));
 #endif
+
+  /* (let ((sd (make-sound-data 2 2))) (set! (sd 0 0) 1.0)) */
+  /* (let ((fr (make-frame 2 .1 .2))) (set! (fr 1) .3) fr) */
+  /* (let ((mx (make-mixer 2 .1 .2 .3 .4))) (set! (mx 0 0) 1.0) mx) */
+  /* TODO: run support for these (ref/set sound-data frame mixer) */
+  /* TODO: add ref/set tests to snd-test */
+  /* TODO: others: colormap locsig locsig-reverb */
+  /* what about (set! ((mus-data gen) 123) .1)? */
 
 #if HAVE_GUILE
   scm_set_smob_mark(mus_xen_tag, mark_mus_xen);

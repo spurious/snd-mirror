@@ -1885,6 +1885,13 @@ static XEN sound_data_apply(s7_scheme *sc, XEN obj, XEN args)
 {
   return(g_sound_data_ref(obj, XEN_CAR(args), XEN_CADR(args)));
 }
+
+static XEN g_sound_data_set(XEN obj, XEN chan, XEN frame_num, XEN val);
+static XEN s7_sound_data_set(s7_scheme *sc, XEN obj, XEN args)
+{
+  return(g_sound_data_set(obj, XEN_CAR(args), XEN_CADR(args), XEN_CADDR(args)));
+}
+
 #endif
 
 
@@ -2702,13 +2709,10 @@ void mus_sndlib_xen_initialize(void)
   mus_sound_initialize();
 
 #if HAVE_S7
-  sound_data_tag = XEN_MAKE_OBJECT_TYPE("<sound-data>", print_sound_data, free_sound_data, s7_equalp_sound_data, NULL, sound_data_apply, NULL);
+  sound_data_tag = XEN_MAKE_OBJECT_TYPE("<sound-data>", print_sound_data, free_sound_data, s7_equalp_sound_data, NULL, sound_data_apply, s7_sound_data_set);
 #else
   sound_data_tag = XEN_MAKE_OBJECT_TYPE("SoundData", sizeof(sound_data));
 #endif
-
-  /* (let ((sd (make-sound-data 2 2))) (set! (sd 0 0) 1.0)) */
-  /* TODO: set case for sound-data frame mixer in s7 (also vct if needed) also run support for these */
 
 #if HAVE_GUILE
   scm_set_smob_print(sound_data_tag, print_sound_data);
