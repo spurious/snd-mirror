@@ -75,7 +75,7 @@
  *   things I ought to add/change:
  *        length should work on vectors and strings [fill!, copy, reverse! null?]
  *          also for new-types -- would need length field and copy/fill
- *          (what about files?)
+ *          (what about files? numbers? -- integer-length, bignum-precision etc)
  *        get rid of values and call-with-values
  *        strings/lists should be (set-)applicable (*-ref|set! are ugly and pointless), hash-tables?
  *        need external access to define* 

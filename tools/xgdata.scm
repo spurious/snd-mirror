@@ -6949,3 +6949,30 @@
 (CFNC-2173 "void gtk_status_icon_set_title GtkStatusIcon* status_icon gchar* title")
 (CFNC-2173 "gchar* gtk_status_icon_get_title GtkStatusIcon* status_icon")
 
+
+;;; 2.17.4:
+
+(CLNG-2173 "GTK_ENTRY_BUFFER_MAX_SIZE")
+(CLNG-2173 "GTK_TYPE_ENTRY_BUFFER")
+(CCAST-2173 "GTK_ENTRY_BUFFER(obj)" "GtkEntryBuffer*")
+(CCHK-2173 "GTK_IS_ENTRY_BUFFER(obj)" "GtkEntryBuffer*")
+
+(CFNC-2173 "GtkWidget* gtk_entry_new_with_buffer GtkEntryBuffer* buffer")
+(CFNC-2173 "GtkEntryBuffer* gtk_entry_get_buffer GtkEntry* entry")
+(CFNC-2173 "void gtk_entry_set_buffer GtkEntry* entry GtkEntryBuffer* buffer")
+(CFNC-2173 "void gtk_label_set_track_visited_links GtkLabel* label gboolean track_links")
+(CFNC-2173 "gboolean gtk_label_get_track_visited_links GtkLabel* label")
+(CFNC-2173 "void gtk_print_operation_set_embed_page_setup GtkPrintOperation* op gboolean embed")
+(CFNC-2173 "gboolean gtk_print_operation_get_embed_page_setup GtkPrintOperation* op")
+(CFNC-2173 "GtkEntryBuffer* gtk_entry_buffer_new gchar* initial_chars gint n_initial_chars")
+(CFNC-2173 "gsize gtk_entry_buffer_get_bytes GtkEntryBuffer* buffer")
+(CFNC-2173 "guint gtk_entry_buffer_get_length GtkEntryBuffer* buffer")
+(CFNC-2173 "gchar* gtk_entry_buffer_get_text GtkEntryBuffer* buffer" 'const)
+(CFNC-2173 "void gtk_entry_buffer_set_text GtkEntryBuffer* buffer gchar* chars gint n_chars")
+(CFNC-2173 "void gtk_entry_buffer_set_max_length GtkEntryBuffer* buffer guint max_length")
+(CFNC-2173 "guint gtk_entry_buffer_get_max_length GtkEntryBuffer* buffer")
+(CFNC-2173 "guint gtk_entry_buffer_insert_text GtkEntryBuffer* buffer guint position gchar* chars gint n_chars")
+(CFNC-2173 "guint gtk_entry_buffer_delete_text GtkEntryBuffer* buffer guint position gint n_chars")
+(CFNC-2173 "void gtk_entry_buffer_emit_inserted_text GtkEntryBuffer* buffer guint position gchar* chars guint n_chars")
+(CFNC-2173 "void gtk_entry_buffer_emit_deleted_text GtkEntryBuffer* buffer guint position guint n_chars")
+

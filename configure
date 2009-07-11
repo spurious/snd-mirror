@@ -17347,7 +17347,7 @@ _ACEOF
 
 fi
 
-	# for 2.17.3
+	# for 2.17.3|4
 	{ $as_echo "$as_me:$LINENO: checking for gtk_status_icon_get_title in -lm" >&5
 $as_echo_n "checking for gtk_status_icon_get_title in -lm... " >&6; }
 if test "${ac_cv_lib_m_gtk_status_icon_get_title+set}" = set; then

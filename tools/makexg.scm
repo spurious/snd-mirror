@@ -154,6 +154,7 @@
 (define types-2173 '())
 (define casts-2173 '())
 (define checks-2173 '())
+(define ulongs-2173 '())
 
 (define cairo-funcs '())
 (define cairo-png-funcs '())
@@ -1570,6 +1571,14 @@
 	(set! ulongs-211 (cons (list name type spec-name) ulongs-211))
 	(set! names (cons (cons name 'ulong) names)))))
 
+(define* (CLNG-2173 name :optional type spec-name)
+  (save-declared-type type)
+  (if (assoc name names)
+      (no-way "~A CLNG-2173~%" name)
+      (begin
+	(set! ulongs-2173 (cons (list name type spec-name) ulongs-2173))
+	(set! names (cons (cons name 'ulong) names)))))
+
 (define* (CINT name :optional type)
   (save-declared-type type)
   (if (assoc name names)
@@ -1803,6 +1812,13 @@
 	(set! casts-2172 (cons (list name type) casts-2172))
 	(set! names (cons (cons name 'def) names)))))
 
+(define (CCAST-2173 name type)
+  (if (assoc name names)
+      (no-way "~A CCAST-2173~%" name)
+      (begin
+	(set! casts-2173 (cons (list name type) casts-2173))
+	(set! names (cons (cons name 'def) names)))))
+
 (define (CCHK name type)
   (if (assoc name names)
       (no-way "~A CCHK~%" name)
@@ -1871,6 +1887,13 @@
       (no-way "~A CCHK-2172~%" name)
       (begin
 	(set! checks-2172 (cons (list name type) checks-2172))
+	(set! names (cons (cons name 'def) names)))))
+
+(define (CCHK-2173 name type)
+  (if (assoc name names)
+      (no-way "~A CCHK-2173~%" name)
+      (begin
+	(set! checks-2173 (cons (list name type) checks-2173))
 	(set! names (cons (cons name 'def) names)))))
 
 
@@ -3816,6 +3839,8 @@
     (with-2134 hey (lambda () (for-each (lambda (vals) (let ((val (car vals))) (hey "  DEFINE_ULONG(~A);~%" val))) (reverse ulongs-2134)))))
 (if (not (null? ulongs-2150))
     (with-2150 hey (lambda () (for-each (lambda (vals) (let ((val (car vals))) (hey "  DEFINE_ULONG(~A);~%" val))) (reverse ulongs-2150)))))
+(if (not (null? ulongs-2173))
+    (with-2173 hey (lambda () (for-each (lambda (vals) (let ((val (car vals))) (hey "  DEFINE_ULONG(~A);~%" val))) (reverse ulongs-2173)))))
      
 
 (hey "}~%~%")
