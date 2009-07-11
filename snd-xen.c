@@ -2049,7 +2049,7 @@ static s7_pointer bignum_fft(s7_scheme *sc, s7_pointer args)
 #if HAVE_SPECIAL_FUNCTIONS && (!HAVE_GSL)
 static XEN g_j0(XEN x)
 {
-  #define H_j0 "(" S_bes_j0 " x): returns the regular cylindrical bessel function J0(x)"
+  #define H_j0 "(" S_bes_j0 " x): returns the regular cylindrical bessel function value J0(x)"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ONLY_ARG, S_bes_j0, " a number");
 
 #if HAVE_S7 && WITH_GMP
@@ -2064,7 +2064,7 @@ static XEN g_j0(XEN x)
 
 static XEN g_j1(XEN x)
 {
-  #define H_j1 "(" S_bes_j1 " x): returns the regular cylindrical bessel function J1(x)"
+  #define H_j1 "(" S_bes_j1 " x): returns the regular cylindrical bessel function value J1(x)"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ONLY_ARG, S_bes_j1, " a number");
 
 #if HAVE_S7 && WITH_GMP
@@ -2079,7 +2079,7 @@ static XEN g_j1(XEN x)
 
 static XEN g_jn(XEN order, XEN x)
 {
-  #define H_jn "(" S_bes_jn " n x): returns the regular cylindrical bessel function Jn(x)"
+  #define H_jn "(" S_bes_jn " n x): returns the regular cylindrical bessel function value Jn(x)"
   XEN_ASSERT_TYPE(XEN_INTEGER_P(order), x, XEN_ARG_1, S_bes_jn, " an int");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ARG_2, S_bes_jn, " a number");
 
@@ -2095,7 +2095,7 @@ static XEN g_jn(XEN order, XEN x)
 
 static XEN g_y0(XEN x)
 {
-  #define H_y0 "(" S_bes_y0 " x): returns the irregular cylindrical bessel function Y0(x)"
+  #define H_y0 "(" S_bes_y0 " x): returns the irregular cylindrical bessel function value Y0(x)"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ONLY_ARG, S_bes_y0, " a number");
 #if HAVE_S7 && WITH_GMP
   if ((s7_is_bignum(x)) &&
@@ -2109,7 +2109,7 @@ static XEN g_y0(XEN x)
 
 static XEN g_y1(XEN x)
 {
-  #define H_y1 "(" S_bes_y1 " x): returns the irregular cylindrical bessel function Y1(x)"
+  #define H_y1 "(" S_bes_y1 " x): returns the irregular cylindrical bessel function value Y1(x)"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ONLY_ARG, S_bes_y1, " a number");
 #if HAVE_S7 && WITH_GMP
   if ((s7_is_bignum(x)) &&
@@ -2123,7 +2123,7 @@ static XEN g_y1(XEN x)
 
 static XEN g_yn(XEN order, XEN x)
 {
-  #define H_yn "(" S_bes_yn " n x): returns the irregular cylindrical bessel function Yn(x)"
+  #define H_yn "(" S_bes_yn " n x): returns the irregular cylindrical bessel function value Yn(x)"
   XEN_ASSERT_TYPE(XEN_INTEGER_P(order), x, XEN_ARG_1, S_bes_yn, " an int");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ARG_2, S_bes_yn, " a number");
 #if HAVE_S7 && WITH_GMP
@@ -2177,7 +2177,7 @@ static XEN g_lgamma(XEN x)
 
 static XEN g_i0(XEN x)
 {
-  #define H_i0 "(" S_bes_i0 " x): returns the modified cylindrical bessel function I0(x)"
+  #define H_i0 "(" S_bes_i0 " x): returns the modified cylindrical bessel function value I0(x)"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ONLY_ARG, S_bes_i0, " a number");
 #if HAVE_S7 && WITH_GMP
   if ((s7_is_bignum(x)) &&
@@ -2197,7 +2197,7 @@ static XEN g_i0(XEN x)
 
 static XEN g_j0(XEN x)
 {
-  #define H_j0 "(" S_bes_j0 " x): returns the regular cylindrical bessel function J0(x)"
+  #define H_j0 "(" S_bes_j0 " x): returns the regular cylindrical bessel function value J0(x)"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ONLY_ARG, S_bes_j0, " a number");
 
 #if HAVE_S7 && WITH_GMP
@@ -2212,7 +2212,7 @@ static XEN g_j0(XEN x)
 
 static XEN g_j1(XEN x)
 {
-  #define H_j1 "(" S_bes_j1 " x): returns the regular cylindrical bessel function J1(x)"
+  #define H_j1 "(" S_bes_j1 " x): returns the regular cylindrical bessel function value J1(x)"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ONLY_ARG, S_bes_j1, " a number");
 
 #if HAVE_S7 && WITH_GMP
@@ -2227,7 +2227,7 @@ static XEN g_j1(XEN x)
 
 static XEN g_jn(XEN order, XEN x)
 {
-  #define H_jn "(" S_bes_jn " n x): returns the regular cylindrical bessel function Jn(x)"
+  #define H_jn "(" S_bes_jn " n x): returns the regular cylindrical bessel function value Jn(x)"
   XEN_ASSERT_TYPE(XEN_INTEGER_P(order), x, XEN_ARG_1, S_bes_jn, " an int");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ARG_2, S_bes_jn, " a number");
 
@@ -2243,7 +2243,7 @@ static XEN g_jn(XEN order, XEN x)
 
 static XEN g_y0(XEN x)
 {
-  #define H_y0 "(" S_bes_y0 " x): returns the irregular cylindrical bessel function Y0(x)"
+  #define H_y0 "(" S_bes_y0 " x): returns the irregular cylindrical bessel function value Y0(x)"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ONLY_ARG, S_bes_y0, " a number");
 #if HAVE_S7 && WITH_GMP
   if ((s7_is_bignum(x)) &&
@@ -2257,7 +2257,7 @@ static XEN g_y0(XEN x)
 
 static XEN g_y1(XEN x)
 {
-  #define H_y1 "(" S_bes_y1 " x): returns the irregular cylindrical bessel function Y1(x)"
+  #define H_y1 "(" S_bes_y1 " x): returns the irregular cylindrical bessel function value Y1(x)"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ONLY_ARG, S_bes_y1, " a number");
 #if HAVE_S7 && WITH_GMP
   if ((s7_is_bignum(x)) &&
@@ -2271,7 +2271,7 @@ static XEN g_y1(XEN x)
 
 static XEN g_yn(XEN order, XEN x)
 {
-  #define H_yn "(" S_bes_yn " n x): returns the irregular cylindrical bessel function Yn(x)"
+  #define H_yn "(" S_bes_yn " n x): returns the irregular cylindrical bessel function value Yn(x)"
   XEN_ASSERT_TYPE(XEN_INTEGER_P(order), x, XEN_ARG_1, S_bes_yn, " an int");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ARG_2, S_bes_yn, " a number");
 #if HAVE_S7 && WITH_GMP
@@ -2283,12 +2283,6 @@ static XEN g_yn(XEN order, XEN x)
   return(C_TO_XEN_DOUBLE(gsl_sf_bessel_Yn(XEN_TO_C_INT(order), XEN_TO_C_DOUBLE(x))));
 }
 
-/* SOMEDAY: big_i1, _in, _k*  factorial-divide (/!?) binomial = 3 args
- *            (exp (- (gammln num) (gammln den)))
- *            (defmacro binomial (n m) `(exp (- (gammln (1+ ,n)) (+ (gammln (1+ ,m)) (gammln (- ,n ,m -1))))))
- *            see lgamma (mpfr)
- */
-
 #define S_bes_i1 "bes-i1"
 #define S_bes_in "bes-in"
 #define S_bes_k0 "bes-k0"
@@ -2297,7 +2291,7 @@ static XEN g_yn(XEN order, XEN x)
 
 static XEN g_i1(XEN x)
 {
-  #define H_i1 "(" S_bes_i1 " x): returns the regular cylindrical bessel function I1(x)"
+  #define H_i1 "(" S_bes_i1 " x): returns the regular cylindrical bessel function value I1(x)"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ONLY_ARG, S_bes_i1, " a number");
   return(C_TO_XEN_DOUBLE(gsl_sf_bessel_I1(XEN_TO_C_DOUBLE(x))));
 }
@@ -2305,7 +2299,7 @@ static XEN g_i1(XEN x)
 
 static XEN g_in(XEN order, XEN x)
 {
-  #define H_in "(" S_bes_in " n x): returns the regular cylindrical bessel function In(x)"
+  #define H_in "(" S_bes_in " n x): returns the regular cylindrical bessel function value In(x)"
   XEN_ASSERT_TYPE(XEN_INTEGER_P(order), x, XEN_ARG_1, S_bes_in, " an int");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ARG_2, S_bes_in, " a number");
   return(C_TO_XEN_DOUBLE(gsl_sf_bessel_In(XEN_TO_C_INT(order), XEN_TO_C_DOUBLE(x))));
@@ -2314,7 +2308,7 @@ static XEN g_in(XEN order, XEN x)
 
 static XEN g_k0(XEN x)
 {
-  #define H_k0 "(" S_bes_k0 " x): returns the irregular cylindrical bessel function K0(x)"
+  #define H_k0 "(" S_bes_k0 " x): returns the irregular cylindrical bessel function value K0(x)"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ONLY_ARG, S_bes_k0, " a number");
   return(C_TO_XEN_DOUBLE(gsl_sf_bessel_K0(XEN_TO_C_DOUBLE(x))));
 }
@@ -2322,7 +2316,7 @@ static XEN g_k0(XEN x)
 
 static XEN g_k1(XEN x)
 {
-  #define H_k1 "(" S_bes_k1 " x): returns the irregular cylindrical bessel function K1(x)"
+  #define H_k1 "(" S_bes_k1 " x): returns the irregular cylindrical bessel function value K1(x)"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ONLY_ARG, S_bes_k1, " a number");
   return(C_TO_XEN_DOUBLE(gsl_sf_bessel_K1(XEN_TO_C_DOUBLE(x))));
 }
@@ -2330,7 +2324,7 @@ static XEN g_k1(XEN x)
 
 static XEN g_kn(XEN order, XEN x)
 {
-  #define H_kn "(" S_bes_kn " n x): returns the irregular cylindrical bessel function Kn(x)"
+  #define H_kn "(" S_bes_kn " n x): returns the irregular cylindrical bessel function value Kn(x)"
   XEN_ASSERT_TYPE(XEN_INTEGER_P(order), x, XEN_ARG_1, S_bes_kn, " an int");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ARG_2, S_bes_kn, " a number");
   return(C_TO_XEN_DOUBLE(gsl_sf_bessel_Kn(XEN_TO_C_INT(order), XEN_TO_C_DOUBLE(x))));
@@ -2354,7 +2348,7 @@ static XEN g_erf(XEN x)
 
 static XEN g_erfc(XEN x)
 {
-  #define H_erfc "(erfc x): returns the complementary error function erfc(x)"
+  #define H_erfc "(erfc x): returns the complementary error function value erfc(x)"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ONLY_ARG, "erfc", " a number");
 #if HAVE_S7 && WITH_GMP
   if ((s7_is_bignum(x)) &&

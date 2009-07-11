@@ -582,6 +582,17 @@
 		 (do ((chan 0 (+ 1 chan)))
 		     ((= chan (channels outsnd)))
 		   (set! (squelch-update outsnd chan) #f)
+		   ;; fixup y bounds to show waveform unclipped
+		   (let ((mx (ceiling (maxamp outsnd chan))))
+		     (set! (y-bounds outsnd chan) (list (- mx) mx)))
+		   ;; fixup mix tags so they overlap less often
+		   (let ((mxs (mixes outsnd chan)))
+		     (let ((hgt 0))
+		       (for-each
+			(lambda (m)
+			  (set! (mix-tag-y m) hgt)
+			  (set! hgt (modulo (+ hgt 30) 100)))
+			mxs)))
 		   (update-time-graph outsnd chan))))))
      output))
 

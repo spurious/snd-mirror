@@ -2707,6 +2707,9 @@ void mus_sndlib_xen_initialize(void)
   sound_data_tag = XEN_MAKE_OBJECT_TYPE("SoundData", sizeof(sound_data));
 #endif
 
+  /* (let ((sd (make-sound-data 2 2))) (set! (sd 0 0) 1.0)) */
+  /* TODO: set case for sound-data frame mixer in s7 (also vct if needed) also run support for these */
+
 #if HAVE_GUILE
   scm_set_smob_print(sound_data_tag, print_sound_data);
   scm_set_smob_free(sound_data_tag, free_sound_data);

@@ -43,9 +43,11 @@
 
 (if (defined? 'run-clear-counts) (run-clear-counts))
 
-(if (and (provided? 'snd-guile) (provided? 'snd-s7)) (display ";both switches are on?"))
+(define with-guile (provided? 'snd-guile))
+(define with-s7 (provided? 'snd-s7))
+(if (and with-guile with-s7) (display ";both switches are on?"))
 
-(if (provided? 'snd-s7)
+(if with-s7
     (begin
       (define O_RDWR 2)
       (define O_APPEND 1024)
@@ -205,7 +207,7 @@
 (set! (mus-audio-playback-amp) playback-amp)
 
 (define sample-reader-tests 300)
-(if (provided? 'snd-guile) (debug-set! stack 0))
+(if with-guile (debug-set! stack 0))
 (debug-enable 'debug 'backtrace)
 (read-enable 'positions)
 
@@ -491,7 +493,7 @@
 
 (define (arity-ok func args)
   "func accepts args"
-  (let ((arity (if (not (provided? 'snd-s7))
+  (let ((arity (if (not with-s7)
 		   (or (procedure-property func 'arity)
 		       (ref func 'arity))
 		   (procedure-arity func))))
@@ -503,7 +505,7 @@
 
 (define (set-arity-ok func args)
   "set proc accepts args"
-  (let ((arity (if (not (provided? 'snd-s7))
+  (let ((arity (if (not with-s7)
 		   (if (procedure-with-setter? func)
 		       (procedure-property (setter func) 'arity)
 		       (procedure-property func 'arity))
@@ -550,7 +552,7 @@
 
 (if (not (provided? 'snd-snd7.scm)) (load "snd7.scm")) ; forward-graph
 (if (not (provided? 'snd-snd8.scm)) (load "snd8.scm")) ; samples->sound-data
-(if (not (provided? 'snd-snd9.scm)) (load "snd9.scm")) ; make-ppolar|zpolar, various generators later moved (and renamed) to generators.scm
+(if (not (provided? 'snd-snd9.scm)) (load "snd9.scm")) ; make-ppolar|zpolar, various generators later moved to generators.scm
 (if (not (provided? 'snd-snd10.scm)) (load "snd10.scm")) ; sum-of-sines etc
 
 					;(define widvardpy (make-variable-display "do-loop" "i*2" 'graph))
@@ -4788,7 +4790,7 @@
       (delete-file "test space.marks")))
 
     (if (and (provided? 'snd-threads)
-	     (provided? 'snd-s7))
+	     with-s7)
 	(let ((old-file-buffer-size *clm-file-buffer-size*))
 	  
 	  (let* ((result (with-threaded-sound ()
@@ -10119,7 +10121,7 @@ EDITS: 5
 	  (close-sound ind2))
 	
 	(let* ((ind (open-sound "now.snd")))
-	  (if (provided? 'snd-guile)
+	  (if with-guile
 	      (if (not (= now-snd-index ind)) 
 		  (snd-display ";*snd-opened-sound*: ~A ~A ~A" *snd-opened-sound* ind now-snd-index)))
 	  ;; that is in now.snd.scm, but there's no reason to assume the define becomes a global
@@ -14066,7 +14068,7 @@ EDITS: 2
 	      (snd-display ";apply-controls srate -1.0 samples: ~A ~A" (maxamp) (sample 9327)))
 	  (if (fneq (speed-control ind) 1.0) (snd-display ";apply-controls -1.0 -> ~A?" (speed-control ind)))
 
-	  (if (provided? 'snd-guile)
+	  (if with-guile
 	      (begin
 		(add-hook! dac-hook (lambda (data) 
 				      (set! ctr (+ 1 ctr))
@@ -14192,7 +14194,7 @@ EDITS: 2
 ;;; ---------------- test 7: colors ----------------
 
 (if (not (provided? 'snd-rgb.scm)) 
-    (if (not (provided? 'snd-s7))
+    (if (not with-s7)
 	(catch 'no-such-color 
 	       (lambda () 
 		 (load "rgb.scm")) 
@@ -14696,7 +14698,7 @@ EDITS: 2
 (if (not (provided? 'snd-bird.scm)) (load "bird.scm"))
 (if (not (provided? 'snd-v.scm)) (load "v.scm"))
 (if (not (provided? 'snd-numerics.scm)) (load "numerics.scm"))
-(if (not (provided? 'snd-generators.scm)) (load "generators.scm"))
+(if (not with-guile) (if (not (provided? 'snd-generators.scm)) (load "generators.scm")))
 
 (def-clm-struct sa1 (freq 0.0 :type float) (coscar #f :type clm) (sincar #f :type clm) (dly #f :type clm) (hlb #f :type clm))
 
@@ -17013,7 +17015,7 @@ EDITS: 2
       (if (not (eq? (car var) 'wrong-type-arg))
 	  (snd-display ";polynomial empty coeffs: ~A" var)))
     
-    (if (provided? 'snd-s7)
+    (if with-s7
 	(begin
 	  (do ((i 0 (+ i 1)))
 	      ((= i 100))
@@ -17153,7 +17155,7 @@ EDITS: 2
     (let ((vals (poly-gcd (vct 2 -2 -1 1) (vct -2.5 1))))
       (if (not (vequal vals (vct 0.000))) (snd-display ";poly-gcd 7: ~A" vals)))
     
-    (if (provided? 'snd-s7) (poly-roots-tests))
+    (if with-s7 (poly-roots-tests))
     
     (let ((val (poly-as-vector-resultant (vector -1 0 1) (vector 1 -2 1))))
       (if (fneq val 0.0) (snd-display ";poly-resultant 0: ~A" val)))
@@ -23692,7 +23694,7 @@ EDITS: 2
 	    (snd-display ";rand not so random? ~A (chi)" vr))))
     
     (if (and (defined? 'sort)
-	     (not (provided? 'snd-s7)))  ; this use of sort assumes it can sort vectors
+	     (not with-s7))  ; this use of sort assumes it can sort vectors
 	(let ((v2 (lambda (n) ; Kolmogorov-Smirnov
 		    (let ((vals (make-vector n 0.0))
 			  (sn (sqrt n)))
@@ -26605,7 +26607,7 @@ EDITS: 2
        (list 1.0 0.1 0.1 0.333)))
 
     (if (and all-args
-	     (provided? 'snd-s7))
+	     with-s7)
 	(let ((maxerr 0.0)
 	      (max-case #f)
 	      (cases 0))
@@ -29925,7 +29927,7 @@ EDITS: 2
 	    (if (defined? (string->symbol (car (list-ref vals i))))
 		(snd-help (car (list-ref vals i)) #f)))
 	  (if (and with-gui
-		   (not (provided? 'snd-s7)))
+		   (not with-s7))
 	      (begin
 		(do ((i 0 (+ 1 i)))
 		    ((= i 25)) ; need to cycle the 8's
@@ -52151,13 +52153,13 @@ EDITS: 1
       (if (sound? ind)
 	  (close-sound ind)))
     
-    (if (provided? 'snd-s7)
+    (if with-s7
 	(let ((hie (lambda* ((a 0.0)) (declare (a float)) (+ a 1.0))))
 	  (if (fneq (run (lambda () (hie 1.0))) 2.0) (snd-display ";run opt args 0"))
 	  (if (fneq (run (lambda () (hie))) 1.0) (snd-display ";run opt args 1"))
 	  (if (fneq (run (lambda () (+ (hie) (hie 1.0)))) 3.0) (snd-display ";run opt args 2"))))
 
-    (if (provided? 'snd-s7)
+    (if with-s7
 	(let ((hi (lambda* ((a 0.0) :optional (b 0.0)) (declare (a float) (b float)) (+ a b))))
 	  (if (fneq (run (lambda () (hi 1.0))) 1.0) (snd-display ";run opt args 3"))
 	  (if (fneq (run (lambda () (hi 1.0 2.0))) 3.0) (snd-display ";run opt args 4"))
@@ -59937,7 +59939,7 @@ EDITS: 1
 			   (list .widget 'Widget '.widget #f) (list .doit 'Boolean '.doit))
 		     )))
 	       
-	       (if (not (provided? 'snd-s7))
+	       (if (not with-s7)
 		   (for-each
 		    (lambda (call)
 		      (let ((struct ((car call)))
@@ -64473,7 +64475,7 @@ EDITS: 1
   
   (set! (with-background-processes) #t)
   
-  (if (and (provided? 'snd-s7)
+  (if (and with-s7
 	   (provided? 'gmp))
       (begin
 	(load "s7test.scm")
@@ -64482,7 +64484,7 @@ EDITS: 1
 
   (if (and (provided? 'gsl)
 	   (provided? 'gmp)
-	   (provided? 'snd-s7))
+	   with-s7)
       (begin
 
 	;; from GSL
@@ -65745,7 +65747,7 @@ EDITS: 1
 			  (list mouse-click-hook 'mouse-click-hook)
 			  (list enved-hook 'enved-hook)))
 	  
-	  (if (not (provided? 'snd-s7))
+	  (if (not with-s7)
 	      (for-each (lambda (n)
 			  (let* ((hook (car n))
 				 (hook-name (cadr n))
@@ -67117,7 +67119,6 @@ EDITS: 1
        (sort symbols (lambda (a b)
 		       (string< (symbol->string (car a)) 
 				(symbol->string (car b))))))))
-
 
 (if (defined? 'run-report-counts) (run-report-counts))
 

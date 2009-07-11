@@ -72,9 +72,16 @@
  *        random for any numeric type and any numeric argument
  *        optional multidimensional and applicable vectors
  *
- *   things I ought to change:
- *        length should work on vectors and strings [fill!, copy, reverse! null? ?]
+ *   things I ought to add/change:
+ *        length should work on vectors and strings [fill!, copy, reverse! null?]
+ *          also for new-types -- would need length field and copy/fill
+ *          (what about files?)
  *        get rid of values and call-with-values
+ *        strings/lists should be (set-)applicable (*-ref|set! are ugly and pointless), hash-tables?
+ *        need external access to define* 
+ *        "!" factorial op?
+ *        all the math ops applied to vectors = linear algebra, but maybe that's asking for bugs
+ *          (and do we treat vect * vect as convolution?)
  *
  *
  * Mike Scholz provided the FreeBSD support (complex trig funcs, etc)
@@ -301,7 +308,6 @@ typedef struct num {
     } complex_value;
     
     unsigned long ul_value; /* these two are for uninterpreted C pointers -- not used by s7 in any way */
-
     unsigned long long ull_value;
 
   } value;
@@ -11809,6 +11815,7 @@ static const char *s7_type_name(s7_pointer arg)
     case T_DYNAMIC_WIND: return("dynamic-wind");
     case T_HASH_TABLE:   return("hash-table");
     case T_S7_OBJECT:    return(object_types[arg->object.fobj.type].name);
+      /* PERHAPS: nicer would be a function in the type struct (could be mus_name for clm etc) */
 
     case T_INPUT_PORT:
       {
@@ -20048,4 +20055,3 @@ s7_scheme *s7_init(void)
 
 /* unicode is probably do-able if it is sequestered in the s7 strings 
  */
-

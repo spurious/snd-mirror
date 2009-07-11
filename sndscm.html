@@ -8340,16 +8340,10 @@ phase to 0.0).
 
 ;; #(0.000 1.410 1.684) is one of the minima
 
-(with-mixed-sound (:srate 12000)
+(with-mixed-sound ()
   (sine-wave 0 1 10.0 0.0)
   (sine-wave 0 1 20.0 (* pi 1.410))
   (sine-wave 0 1 30.0 (* pi 1.684)))
-
-(let ((ms (caar (mixes))))     ; separate the mix tags
-  (set! (mix-tag-y (cadr ms)) 30)
-  (set! (mix-tag-y (caddr ms)) 60)) 
-
-(set! (y-bounds) (list -3 3))  ; fixup the y bounds so we don't clip the waveform
 
 (add-hook! mix-drag-hook       ; report the current maxamp as we drag a component
   (lambda (id x y) 
