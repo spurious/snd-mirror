@@ -6429,8 +6429,6 @@ static int free_frame(mus_any *pt)
 }
 
 
-#define S_frame "frame"
-
 static char *describe_frame(mus_any *ptr)
 {
   mus_frame *gen = (mus_frame *)ptr;
@@ -6687,8 +6685,6 @@ static void mixer_reset(mus_any *ptr)
     mus_clear_array(gen->vals[i], gen->chans);
 }
 
-
-#define S_mixer "mixer"
 
 static char *describe_mixer(mus_any *ptr)
 {

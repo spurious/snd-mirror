@@ -7410,6 +7410,7 @@ sound data input and output.
 <table cellspacing=0 cellpadding=0 hspace=40>
 <tr><td><a class=def name="make-frame">make-frame</a><code> chans :rest args</code></td><td width=20></td><td>create frame and load it with args</td></tr>
 <tr><td><a class=def name="make-frame!">make-frame!</a><code> chans :rest args</code></td><td width=20></td><td>create frame of any size and load it with args</td></tr>
+<tr><td><a class=def name="frame1">frame</a><code> :rest args</code></td><td width=20></td><td>create frame and load it with args</td></tr>
 <tr><td><a class=def name="frame?">frame?</a><code> obj</code></td><td></td><td>is obj a frame</td></tr>
 <tr><td><a class=def name="frame-ref">frame-ref</a><code> f1 chan</code></td><td></td><td>return f1[chan]</td></tr>
 <tr><td><a class=def name="frame-set!">frame-set!</a><code> f1 chan val</code></td><td></td><td>f1[chan] = val (also set! with frame-ref)</td></tr>
@@ -7418,6 +7419,7 @@ sound data input and output.
 <tr><td><br></td><td></td><td></td></tr>
 <tr><td><a class=def name="make-mixer">make-mixer</a><code> chans :rest args</code></td><td></td><td>create a mixer and load it with args</td></tr>
 <tr><td><a class=def name="make-mixer!">make-mixer!</a><code> chans :rest args</code></td><td></td><td>create a mixer of any size and load it with args</td></tr>
+<tr><td><a class=def name="mixer1">mixer</a><code> :rest args</code></td><td></td><td>create a mixer and load it with args</td></tr>
 <tr><td><a class=def name="make-scalar-mixer">make-scalar-mixer</a><code> chans scl</code></td><td></td><td>create a mixer with scl on the diagonal</td></tr>
 <tr><td><a class=def name="mixer?">mixer?</a><code> obj</code></td><td></td><td>is obj a mixer</td></tr>
 <tr><td><a class=def name="mixer-ref">mixer-ref</a><code> m1 in out</code></td><td></td><td>m1[in,out] (use set! to change)</td></tr>
@@ -7500,7 +7502,7 @@ In Ruby, frame* is frame_multiply, frame+ is frame_add, and mixer* is mixer_mult
 </pre>
 
 <p>make-mixer! (with the exclamation point) overrides an internal size check.  Since the size
-is interpreted normally as the number of channels, the make-mixer (no excl) max size is pretty
+is interpreted normally as the number of channels, make-mixer (without the trailing "!") imposes a maximum size that is pretty
 low (128 when last checked).  If you're using mixers as honest matrices, you'll often want large
 mixers.  Here's a curious example that takes the "wavogram" view of a sound (as a sequence
 of equal length traces), loads it into a mixer, inverts the mixer (via matrix inversion, <a href="sndscm.html#invertmatrix">invert-matrix</a>), then
@@ -7533,8 +7535,15 @@ writes out the new "sound":
     (vct-&gt;channel samps 0 (* size size) nsnd)))
 </pre>
 
-<p>Can you predict what this will sound like (suitably scaled, of course)?
+<p>In s7, mixers and frames are "applicable objects", like vcts, so mixer-ref and frame-ref are
+unnecessary, and mixer-set! and frame-set! can be replaced with set!:
 </p>
+<pre>
+    <em class=listener>&gt;</em><em class=typing>(let ((fr (frame .1 .2)))
+       (set! (fr 1) .3)
+       (fr 1))</em>
+    <em class=listener>0.3</em>
+</pre>
 
 <br><br>
 

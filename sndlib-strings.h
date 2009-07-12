@@ -143,6 +143,7 @@
 #define S_mus_unsupported               "mus-unsupported"
 #define S_mus_voc                       "mus-voc"
 #define S_new_sound_hook                "new-sound-hook"
+#define S_sound_data                    "sound-data"
 #define S_sound_data_addB               "sound-data-add!"
 #define S_sound_data_chans              "sound-data-chans"
 #define S_sound_data_copy               "sound-data-copy"

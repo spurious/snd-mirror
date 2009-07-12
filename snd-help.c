@@ -548,6 +548,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+12-Jul:  frame, mixer, and sound-data objects are set-applicable.\n\
 6-Jul:   Snd 10.7\n\
 2-Jul:   default audio in Linux is now ALSA.\n\
 28-May:  Snd 10.6\n\

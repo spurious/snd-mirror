@@ -153,7 +153,7 @@ bool xen_integer_p(XEN a)
 
 int xen_to_c_int(XEN a)
 {
-  /* Scheme integer (possible inexact) to C int without errors */
+  /* Scheme integer (possibly inexact) to C int without errors */
 #if HAVE_SCM_TO_SIGNED_INTEGER
     if ((SCM_INEXACTP(a)) || (SCM_FRACTIONP(a))) /* avoid error if inexact integer! SCM_INUMP deprecated in 1.7 */
       {

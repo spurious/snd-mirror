@@ -2110,7 +2110,7 @@
 		       'finish-progress-report 'fir-filter 'fir-filter? 'flat-top-window 'focus-widget 'foreground-color
 		       'forget-region 'formant 'formant-bank 'formant? 'firmant 'firmant? 
 		       'fourier-transform
-		       'frame* 'frame+ 'frame->file 'frame->file?
+		       'frame 'frame* 'frame+ 'frame->file 'frame->file?
 		       'frame->frame 'frame->list 'frame->sample 'frame-ref 'frame-set!
 		       'frame? 'frames 'free-player
 		       'free-sample-reader 'gaussian-window 'gc-off 'gc-on
@@ -2155,7 +2155,7 @@
 		       'mix-name 'mix-position 'mix-properties 'mix-region 'mix-release-hook 'mix-sync 'mix-sync-max
 		       'mix-sample-reader? 'mix-selection 'mix-speed 'mix-tag-height
 		       'mix-tag-width 'mix-tag-y
-		       'mix-vct 'mix-waveform-height 'mix? 'mixer*
+		       'mix-vct 'mix-waveform-height 'mix? 'mixer 'mixer*
 		       'mixer+ 'mixer-ref 'mixer-set! 'mixer?
 		       'mixes 'mouse-click-hook 'mouse-drag-hook 'mouse-enter-graph-hook
 		       'mouse-enter-label-hook 'mouse-enter-listener-hook 'mouse-enter-text-hook 'mouse-leave-graph-hook 'mouse-leave-label-hook
@@ -20278,6 +20278,61 @@ EDITS: 2
       (let ((mxadd (mixer* mx1 mx1 mx2)))
 	(if (not (equal? mx2 mxadd)) (snd-display ";mixer* with res frame: ~A ~A" mx2 mxadd))
 	(if (fneq (mixer-ref mx2 0 0) .01) (snd-display ";mixer* res: ~A" mx2))))
+    
+
+    (let ((fr1 (frame .1 .2))
+	  (fr2 (make-frame 2 .1 .2)))
+      (if (not (equal? fr1 fr2))
+	  (snd-display ";frame...: ~A ~A" fr1 fr2)))
+    
+    (let ((fr1 (frame .1)))
+      (if (fneq (fr1 0) .1) (snd-display ";frame gen ref (.1): ~A" (fr1 0)))
+      (set! (fr1 0) .2)
+      (if (fneq (fr1 0) .2) (snd-display ";frame gen ref (.2): ~A" (fr1 0)))
+      (if (not (equal? fr1 (frame .2)))
+	  (snd-display ";frame gen set! (.2): ~A" fr1)))
+    
+    (let ((fr1 (frame .1 .2 .3 .4)))
+      (set! (fr1 2) (+ (fr1 1) (fr1 2)))
+      (if (fneq (fr1 2) .5) (snd-display ";frame gen ref/set (.5): ~A" (fr1 2))))
+    
+    (let ((fr1 (frame)))
+      (if (or (not (frame? fr1))
+	      (not (equal? fr1 (make-frame 1 0.0))))
+	  (snd-display ";frame no args: ~A" fr1))
+      (set! (fr1 0) .5)
+      (if (fneq (fr1 0) .5) (snd-display ";frame ref/set no args: ~A" (fr1 0))))
+    
+    (let ((fr1 (make-frame 2 .1)))
+      (if (not (equal? fr1 (frame .1 0.0)))
+	  (snd-display ";make-frame missing arg: ~A" fr1)))
+    
+    
+    (let ((mx (mixer .1 .2 .3 .4)))
+      (if (fneq (mx 0 0) .1) (snd-display ";mixer gen ref (.1): ~A" (mx 0 0)))
+      (if (not (equal? mx (make-mixer 2 .1 .2 .3 .4))) (snd-display ";mixer...: ~A" mx))
+      (set! (mx 0 0) .5)
+      (if (fneq (mx 0 0) .5) (snd-display ";mixer gen set (.5): ~A" (mx 0 0)))
+      (if (not (equal? mx (make-mixer 2 .5 .2 .3 .4))) (snd-display ";mixer... (after set): ~A" mx))
+      (if (fneq (mx 1 0) .3) (snd-display ";mixer gen ref (.3): ~A" (mx 1 0)))
+      (set! (mx 0 1) .5)
+      (if (fneq (mx 0 1) .5) (snd-display ";mixer (0 1) gen set (.5): ~A" (mx 0 1)))
+      (if (not (equal? mx (make-mixer 2 .5 .5 .3 .4))) (snd-display ";mixer... (after set 1): ~A" mx)))
+    
+    (let ((mx (mixer .1)))
+      (if (not (equal? mx (make-mixer 1 .1))) (snd-display ";mixer .1: ~A" mx))
+      (if (fneq (mx 0 0) .1) (snd-display ";mixer (1) gen ref (.1): ~A" (mx 0 0)))  
+      (set! (mx 0 0) .5)
+      (if (fneq (mx 0 0) .5) (snd-display ";mixer (1) gen set (.5): ~A" (mx 0 0))))
+    
+    (let ((mx (mixer .1 .2 .3)))
+      (if (not (equal? mx (make-mixer 2 .1 .2 .3 0.0))) (snd-display ";mixer .1 .2 .3: ~A" mx))
+      (set! (mx 1 1) .5)
+      (if (fneq (mx 1 1) .5) (snd-display ";mixer (1 1) gen set (.5): ~A" (mx 1 1))))
+    
+    (let ((mx (mixer)))
+      (if (not (equal? mx (make-mixer 1 0.0))) (snd-display ";(mixer): ~A" mx)))
+    
     
     (for-each 
      (lambda (chans)
@@ -64796,12 +64851,12 @@ EDITS: 1
 		     granulate granulate? hz->radians iir-filter iir-filter? linear->db locsig ; in-any ina inb (sound-data arg troubles)
 		     locsig-ref locsig-reverb-ref locsig-reverb-set! locsig-set!  locsig? make-all-pass make-asymmetric-fm
 		     make-comb make-filtered-comb make-convolve make-delay make-env make-fft-window make-file->frame
-		     make-file->sample make-filter make-fir-filter make-formant make-firmant make-frame make-frame->file make-granulate
+		     make-file->sample make-filter make-fir-filter make-formant make-firmant frame make-frame make-frame->file make-granulate
 		     make-iir-filter make-locsig move-locsig make-mixer make-notch make-one-pole make-one-zero make-oscil
 		     make-pulse-train make-rand make-rand-interp make-readin make-sample->file make-sawtooth-wave
 		     make-nrxysin make-nrxycos make-square-wave make-src make-ncos 
 		     make-nsin make-ssb-am make-table-lookup make-triangle-wave
-		     make-two-pole make-two-zero make-wave-train mixer* mixer-ref mixer-set! mixer? mixer+
+		     make-two-pole make-two-zero make-wave-train mixer mixer* mixer-ref mixer-set! mixer? mixer+
 		     move-sound make-move-sound move-sound? mus-float-equal-fudge-factor
 		     multiply-arrays mus-array-print-length mus-channel mus-channels make-polyshape polyshape polyshape? make-polywave polywave polywave?
 		     mus-close mus-data mus-feedback mus-feedforward mus-fft mus-frequency

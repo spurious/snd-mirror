@@ -68,6 +68,7 @@
 #define S_formant                    "formant"
 #define S_formant_bank               "formant-bank"
 #define S_formant_p                  "formant?"
+#define S_frame                      "frame"
 #define S_frame_to_file              "frame->file"
 #define S_frame_to_file_p            "frame->file?"
 #define S_frame_to_frame             "frame->frame"
@@ -153,6 +154,7 @@
 #define S_make_two_pole              "make-two-pole"
 #define S_make_two_zero              "make-two-zero"
 #define S_make_wave_train            "make-wave-train"
+#define S_mixer                      "mixer"
 #if HAVE_RUBY
   #define S_mixer_multiply           "mixer_multiply"
   #define S_mixer_add                "mixer_add"

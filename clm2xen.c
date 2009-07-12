@@ -3719,6 +3719,33 @@ static XEN g_firmant(XEN gen, XEN input, XEN freq)
 /* this needs to be a reasonably small number -- user can override the size check using "!" as in make-mixer!
  */
 
+static XEN g_make_frame_2(int len, XEN args)
+{
+  mus_any *ge;
+  ge = (mus_any *)mus_make_empty_frame((len == 0) ? 1 : len);
+  if (ge)
+    {
+      if (len > 0)
+	{
+	  Float *vals;
+	  XEN lst;
+	  int i;
+	  vals = mus_data(ge);
+	  for (i = 0, lst = XEN_COPY_ARG(args); (i < len) && (XEN_NOT_NULL_P(lst)); i++, lst = XEN_CDR(lst))
+	    if (XEN_NUMBER_P(XEN_CAR(lst)))
+	      vals[i] = XEN_TO_C_DOUBLE(XEN_CAR(lst));
+	    else
+	      {
+		mus_free(ge);
+		XEN_WRONG_TYPE_ARG_ERROR(S_make_frame, i, XEN_CAR(lst), "a number");
+	      }
+	}
+      return(mus_xen_to_object(mus_any_to_mus_xen_with_vct(ge, xen_make_vct_wrapper(mus_length(ge), mus_data(ge)))));
+    }
+  return(xen_return_first(XEN_FALSE, args));
+}
+
+
 static XEN g_make_frame_1(XEN arglist, bool check_size)
 {
   #if HAVE_SCHEME
@@ -3735,16 +3762,13 @@ static XEN g_make_frame_1(XEN arglist, bool check_size)
 with chans samples, each sample set from the trailing arguments (defaulting to 0.0):\n  " make_frame_example
 
   /* make_empty_frame from first of arglist, then if more args, load vals */
-  mus_any *ge;
-  XEN cararg, lst;
-  int size = 0, i, len = 0;
+  int len = 0, size = 0;
 
   XEN_ASSERT_TYPE((XEN_LIST_P_WITH_LENGTH(arglist, len)) && (len >= 0), arglist, XEN_ARG_1, S_make_frame, "a list");
 
-  if (len == 0)
-    size = 1;
-  else
+  if (len > 0)
     {
+      XEN cararg;
       cararg = XEN_CAR(arglist);
       XEN_ASSERT_TYPE(XEN_NUMBER_P(cararg), cararg, XEN_ARG_1, S_make_frame, "a number");
       size = XEN_TO_C_INT_OR_ELSE(cararg, 0);
@@ -3757,36 +3781,29 @@ with chans samples, each sample set from the trailing arguments (defaulting to 0
 	XEN_OUT_OF_RANGE_ERROR(S_make_frame, XEN_ARG_1, C_TO_XEN_INT(size), "size ~A too big");
     }
 
-  ge = (mus_any *)mus_make_empty_frame(size);
-  if (ge)
-    {
-      if (len > 1)
-	{
-	  Float *vals;
-	  vals = mus_data(ge);
-	  for (i = 1, lst = XEN_CDR(XEN_COPY_ARG(arglist)); i < len; i++, lst = XEN_CDR(lst))
-	    if (XEN_NUMBER_P(XEN_CAR(lst)))
-	      vals[i - 1] = XEN_TO_C_DOUBLE(XEN_CAR(lst));
-	    else
-	      {
-		mus_free(ge);
-		XEN_WRONG_TYPE_ARG_ERROR(S_make_frame, i, XEN_CAR(lst), "a number");
-	      }
-	}
-      return(mus_xen_to_object(mus_any_to_mus_xen_with_vct(ge, xen_make_vct_wrapper(mus_length(ge), mus_data(ge)))));
-    }
-  return(xen_return_first(XEN_FALSE, arglist));
+  return(g_make_frame_2(size, (len == 1) ? XEN_EMPTY_LIST : XEN_CDR(arglist)));
 }
+
 
 static XEN g_make_frame(XEN arglist)
 {
   return(g_make_frame_1(arglist, true));
 }
 
+
 static XEN g_make_frame_unchecked(XEN arglist)
 {
   return(g_make_frame_1(arglist, false));
 }
+
+
+static XEN g_frame(XEN args) 
+{
+  #define H_frame "(" S_frame " args...): returns a new frame with args as its contents: (frame .1 .2)"
+  return(g_make_frame_2(XEN_LIST_LENGTH(args), args));
+}
+
+
 
 
 static XEN g_frame_p(XEN obj) 
@@ -4120,6 +4137,46 @@ with 'chans' channels, and 'val' along the diagonal"
 }
 
 
+static XEN g_make_mixer_2(int len, XEN args)
+{
+  mus_any *ge;
+  ge = (mus_any *)mus_make_empty_mixer((len == 0) ? 1 : len);
+  if (ge)
+    {
+      if (len > 0)
+	{
+	  XEN lst;
+	  int i, j, k, size;
+	  Float **vals;
+	  size = len * len;
+	  vals = (Float **)mus_data(ge);
+	  j = 0;
+	  k = 0;
+	  for (i = 0, lst = XEN_COPY_ARG(args); (i < size) && (XEN_NOT_NULL_P(lst)); i++, lst = XEN_CDR(lst))
+	    {
+	      if (XEN_NUMBER_P(XEN_CAR(lst)))
+		vals[j][k] = XEN_TO_C_DOUBLE(XEN_CAR(lst));
+	      else
+		{
+		  mus_free(ge);
+		  XEN_WRONG_TYPE_ARG_ERROR(S_make_mixer, i, XEN_CAR(lst), "a number");
+		}
+	      k++;
+	      if (k == len)
+		{
+		  k = 0;
+		  j++;
+		  if (j >= len) break;
+		}
+	    }
+	}
+      return(mus_xen_to_object(mus_any_to_mus_xen(ge)));
+    }
+  return(xen_return_first(XEN_FALSE, args));
+
+}
+
+
 static XEN g_make_mixer_1(XEN arglist, bool check_size)
 {
   #if HAVE_SCHEME
@@ -4139,7 +4196,6 @@ with chans inputs and outputs, initializing the scalars from the rest of the arg
 
   /* make_empty_mixer from first of arglist, then if more args, load vals */
 
-  mus_any *ge;
   XEN cararg;
   int size = 0, len = 0;
 
@@ -4158,49 +4214,28 @@ with chans inputs and outputs, initializing the scalars from the rest of the arg
   if (len > (size * size + 1)) 
     clm_error(S_make_mixer, "extra trailing args?", arglist);
 
-  ge = (mus_any *)mus_make_empty_mixer(size);
-  if (ge)
-    {
-      if (len > 1)
-	{
-	  XEN lst;
-	  int i, j, k;
-	  Float **vals;
-	  vals = (Float **)mus_data(ge);
-	  j = 0;
-	  k = 0;
-	  for (i = 1, lst = XEN_CDR(XEN_COPY_ARG(arglist)); (i < len) && (XEN_NOT_NULL_P(lst)); i++, lst = XEN_CDR(lst))
-	    {
-	      if (XEN_NUMBER_P(XEN_CAR(lst)))
-		vals[j][k] = XEN_TO_C_DOUBLE(XEN_CAR(lst));
-	      else
-		{
-		  mus_free(ge);
-		  XEN_WRONG_TYPE_ARG_ERROR(S_make_mixer, i, XEN_CAR(lst), "a number");
-		}
-	      k++;
-	      if (k == size)
-		{
-		  k = 0;
-		  j++;
-		  if (j >= size) break;
-		}
-	    }
-	}
-      return(mus_xen_to_object(mus_any_to_mus_xen(ge)));
-    }
-  return(xen_return_first(XEN_FALSE, arglist));
+  return(g_make_mixer_2(size, (len == 1) ? XEN_EMPTY_LIST : XEN_CDR(arglist)));
 }
+
 
 static XEN g_make_mixer(XEN arglist)
 {
   return(g_make_mixer_1(arglist, true));
 }
 
+
 static XEN g_make_mixer_unchecked(XEN arglist)
 {
   return(g_make_mixer_1(arglist, false));
 }
+
+
+static XEN g_mixer(XEN args) 
+{
+  #define H_mixer "(" S_mixer " args...): returns a new mixer with args as its contents: (mixer .1 .2 .3 .4)"
+  return(g_make_mixer_2((int)ceil(sqrt(XEN_LIST_LENGTH(args))), args));
+}
+
 
 
 
@@ -8084,6 +8119,7 @@ XEN_ARGIFY_3(g_firmant_w, g_firmant)
 XEN_NARGIFY_3(g_set_formant_radius_and_frequency_w, g_set_formant_radius_and_frequency)
 XEN_VARGIFY(g_make_frame_w, g_make_frame)
 XEN_VARGIFY(g_make_frame_unchecked_w, g_make_frame_unchecked)
+XEN_VARGIFY(g_frame_w, g_frame)
 XEN_NARGIFY_1(g_frame_p_w, g_frame_p)
 XEN_ARGIFY_3(g_frame_add_w, g_frame_add)
 XEN_ARGIFY_3(g_frame_multiply_w, g_frame_multiply)
@@ -8091,6 +8127,7 @@ XEN_NARGIFY_2(g_frame_ref_w, g_frame_ref)
 XEN_NARGIFY_3(g_frame_set_w, g_frame_set)
 XEN_VARGIFY(g_make_mixer_w, g_make_mixer)
 XEN_VARGIFY(g_make_mixer_unchecked_w, g_make_mixer_unchecked)
+XEN_VARGIFY(g_mixer_w, g_mixer)
 XEN_NARGIFY_1(g_mixer_p_w, g_mixer_p)
 XEN_ARGIFY_3(g_mixer_multiply_w, g_mixer_multiply)
 XEN_ARGIFY_3(g_mixer_add_w, g_mixer_add)
@@ -8394,6 +8431,7 @@ XEN_NARGIFY_1(g_mus_irandom_w, g_mus_irandom)
 #define g_set_formant_radius_and_frequency_w g_set_formant_radius_and_frequency
 #define g_make_frame_w g_make_frame
 #define g_make_frame_unchecked_w g_make_frame_unchecked
+#define g_frame_w g_frame
 #define g_frame_p_w g_frame_p
 #define g_frame_add_w g_frame_add
 #define g_frame_multiply_w g_frame_multiply
@@ -8401,6 +8439,7 @@ XEN_NARGIFY_1(g_mus_irandom_w, g_mus_irandom)
 #define g_frame_set_w g_frame_set
 #define g_make_mixer_w g_make_mixer
 #define g_make_mixer_unchecked_w g_make_mixer_unchecked
+#define g_mixer_w g_mixer
 #define g_mixer_p_w g_mixer_p
 #define g_mixer_multiply_w g_mixer_multiply
 #define g_mixer_add_w g_mixer_add
@@ -8569,13 +8608,6 @@ static void mus_xen_init(void)
   mus_xen_tag = XEN_MAKE_OBJECT_TYPE("Mus", sizeof(mus_xen));
 #endif
 
-  /* (let ((sd (make-sound-data 2 2))) (set! (sd 0 0) 1.0)) */
-  /* (let ((fr (make-frame 2 .1 .2))) (set! (fr 1) .3) fr) */
-  /* (let ((mx (make-mixer 2 .1 .2 .3 .4))) (set! (mx 0 0) 1.0) mx) */
-  /* TODO: run support for these (ref/set sound-data frame mixer) */
-  /* TODO: add ref/set tests to snd-test */
-  /* TODO: others: colormap locsig locsig-reverb */
-  /* what about (set! ((mus-data gen) 123) .1)? */
 
 #if HAVE_GUILE
   scm_set_smob_mark(mus_xen_tag, mark_mus_xen);
@@ -8875,8 +8907,10 @@ static void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_wave_train,      g_wave_train_w,      1, 1, 0, H_wave_train);
   XEN_DEFINE_PROCEDURE(S_wave_train_p,    g_wave_train_p_w,    1, 0, 0, H_wave_train_p);
 
-  XEN_DEFINE_PROCEDURE(S_make_frame,     g_make_frame_w,          0, 0, 1, H_make_frame);
-  XEN_DEFINE_PROCEDURE(S_make_frame "!", g_make_frame_unchecked_w,0, 0, 1, H_make_frame);
+  XEN_DEFINE_PROCEDURE(S_make_frame,     g_make_frame_w,            0, 0, 1, H_make_frame);
+  XEN_DEFINE_PROCEDURE(S_make_frame "!", g_make_frame_unchecked_w,  0, 0, 1, H_make_frame);
+  XEN_DEFINE_PROCEDURE(S_frame,          g_frame_w,                 0, 0, 1, H_frame);
+
 #if HAVE_GUILE
   XEN_EVAL_C_STRING("(define %frame? frame?)"); /* protect the original meaning */
   /* frame? is defined in guile stacks.c scm_frame_p, but doesn't appear to be used in ice-9 */
@@ -8895,6 +8929,7 @@ static void mus_xen_init(void)
 
   XEN_DEFINE_PROCEDURE(S_make_mixer,        g_make_mixer_w,           0, 0, 1, H_make_mixer);
   XEN_DEFINE_PROCEDURE(S_make_mixer "!",    g_make_mixer_unchecked_w, 0, 0, 1, H_make_mixer);
+  XEN_DEFINE_PROCEDURE(S_mixer,             g_mixer_w,                0, 0, 1, H_mixer);
   XEN_DEFINE_PROCEDURE(S_mixer_p,           g_mixer_p_w,              1, 0, 0, H_mixer_p);
   XEN_DEFINE_PROCEDURE(S_mixer_multiply,    g_mixer_multiply_w,       2, 1, 0, H_mixer_multiply);
   XEN_DEFINE_PROCEDURE(S_mixer_add,         g_mixer_add_w,            2, 1, 0, H_mixer_add);
@@ -9201,6 +9236,7 @@ static void mus_xen_init(void)
 	       S_formant_p,
 	       S_frame_add,
 	       S_frame_multiply,
+	       S_frame,
 	       S_frame_p,
 	       S_frame_ref,
 	       S_frame_set,
@@ -9288,6 +9324,7 @@ static void mus_xen_init(void)
 	       S_make_wave_train,
 	       S_mixer_add,
 	       S_mixer_multiply,
+	       S_mixer,
 	       S_mixer_p,
 	       S_mixer_ref,
 	       S_mixer_set,
