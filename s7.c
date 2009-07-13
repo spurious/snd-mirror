@@ -85,7 +85,7 @@
  *
  *
  * Mike Scholz provided the FreeBSD support (complex trig funcs, etc)
- * Rick Taube provided the MS Visual C++ support
+ * Rick Taube and Andrew Burnson provided the MS Visual C++ support
  *
  *
  * Documentation is in s7.h.  A "regression test" is s7test.scm in the Snd tarball,
@@ -1834,7 +1834,7 @@ s7_pointer s7_make_closure(s7_scheme *sc, s7_pointer c, s7_pointer e)
 }
 
 
-s7_pointer s7_make_closure_star(s7_scheme *sc, s7_pointer c, s7_pointer e) 
+static s7_pointer s7_make_closure_star(s7_scheme *sc, s7_pointer c, s7_pointer e) 
 {
   return(make_closure(sc, c, e, T_CLOSURE_STAR));
 }

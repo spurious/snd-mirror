@@ -96,7 +96,10 @@
  *
  * would it simplify variable handling to store everything as xen_value?
  *
- * TODO: run does not work in guile 1.9 (can't find func args any more)
+ * run does not work in guile 1.9 (can't find func args any more)
+ *
+ * this doesn't get optimized yet: (set! ((mus-data gen) 123) .1)
+ *
  * TODO: run doesn't always warn about a closure (explicit gen basically) -- if it's used directly,
  *         there's no warning, but it doesn't handle the closed-over variables correctly
  * TODO: vector<->vct
@@ -5192,25 +5195,21 @@ static xen_value *generalized_set_form(ptree *prog, XEN form)
 	  in_v0 = walk(prog, XEN_CADR(settee), NEED_ANY_RESULT);
 	  if ((in_v0) &&
 	      (in_v0->type != R_UNSPECIFIED))
-
 	    {
-	      if (in_v0->constant != R_CONSTANT)
+	      if (XEN_NOT_NULL_P(XEN_CDDR(settee)))
 		{
-		  if (XEN_NOT_NULL_P(XEN_CDDR(settee)))
+		  in_v1 = walk(prog, XEN_CADDR(settee), NEED_ANY_RESULT);
+		  if ((in_v1) &&
+		      (in_v1->type != R_UNSPECIFIED))
 		    {
-		      in_v1 = walk(prog, XEN_CADDR(settee), NEED_ANY_RESULT);
-		      if ((in_v1) &&
-			  (in_v1->type != R_UNSPECIFIED))
+		      if (XEN_NOT_NULL_P(XEN_CDDDR(settee)))
 			{
-			  if (XEN_NOT_NULL_P(XEN_CDDDR(settee)))
-			    {
-			      in_v2 = walk(prog, XEN_CADDDR(settee), NEED_ANY_RESULT);
-			      if ((in_v2) &&
-				  (in_v2->type != R_UNSPECIFIED))
-				return(lookup_generalized_set(prog, in_settee, in_v0, in_v1, in_v2, v));
-			    }
-			  else return(lookup_generalized_set(prog, in_settee, in_v0, in_v1, NULL, v));
+			  in_v2 = walk(prog, XEN_CADDDR(settee), NEED_ANY_RESULT);
+			  if ((in_v2) &&
+			      (in_v2->type != R_UNSPECIFIED))
+			    return(lookup_generalized_set(prog, in_settee, in_v0, in_v1, in_v2, v));
 			}
+		      else return(lookup_generalized_set(prog, in_settee, in_v0, in_v1, NULL, v));
 		    }
 		  else return(lookup_generalized_set(prog, in_settee, in_v0, NULL, NULL, v));
 		}
@@ -10786,6 +10785,20 @@ static xen_value *sound_data_ref_1(ptree *prog, xen_value **args, int num_args)
 }
 
 
+static void sound_data_nf(int *args, ptree *pt) {FLOAT_RESULT = SOUND_DATA_ARG_1->data[INT_ARG_2][INT_ARG_3];}
+
+
+static xen_value *sound_data_n(ptree *prog, xen_value **args, int num_args, xen_value *sf)
+{
+  /* this is handling the sound-data-as-applicable-func stuff */
+  /* (let ((sd (make-sound-data 2 2))) (run (lambda () (sd 0 0)))) */
+  if (args[0]) free(args[0]);
+  args[0] = make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, 0.0), R_VARIABLE);
+  add_triple_to_ptree(prog, va_make_triple(sound_data_nf, "sound_data_nf", 4, args[0], sf, args[1], args[2]));
+  return(args[0]);
+}
+
+
 static void sound_data_set_f(int *args, ptree *pt) 
 {
   SOUND_DATA_ARG_1->data[INT_ARG_2][INT_ARG_3] = FLOAT_ARG_4;
@@ -12584,6 +12597,64 @@ FRAME_OP(mus_mixer_multiply, mixer*, mus_mixer_scale)
 FRAME_OP(mus_mixer_add, mixer+, mus_mixer_offset)
 
 
+static void frame_v(int *args, ptree *pt) 
+{
+  int i;
+  mus_any *v;
+  if (CLM_RESULT) {mus_free(CLM_RESULT); CLM_RESULT = NULL;}
+  v = mus_make_frame(INT_ARG_1);
+  for (i = 0; i < INT_ARG_1; i++)
+    mus_frame_set(v, i, pt->dbls[args[i + 2]]);
+  CLM_RESULT = v;
+}
+
+
+static xen_value *frame_1(ptree *prog, xen_value **args, int num_args)
+{
+  xen_value *rtn;
+  float_all_args(prog, num_args, args, true);
+  rtn = package_n(prog, R_CLM, frame_v, "frame_v", args, num_args);
+  add_obj_to_gcs(prog, R_CLM, rtn->addr);
+  return(rtn);
+}
+
+
+static void mixer_v(int *args, ptree *pt) 
+{
+  int len;
+  mus_any *v;
+  if (CLM_RESULT) {mus_free(CLM_RESULT); CLM_RESULT = NULL;}
+  len = (int)ceil(sqrt(INT_ARG_1));
+  v = mus_make_empty_mixer((len == 0) ? 1 : len);
+  if (len > 0)
+    {
+      int i, j = 0, k = 0;
+      for (i = 0; i < INT_ARG_1; i++)
+	{
+	  mus_mixer_set(v, j, k, pt->dbls[args[i + 2]]);
+	  k++;
+	  if (k == len)
+	    {
+	      j++;
+	      k = 0;
+	    }
+	}
+    }
+  CLM_RESULT = v;
+}
+
+
+static xen_value *mixer_1(ptree *prog, xen_value **args, int num_args)
+{
+  xen_value *rtn;
+  float_all_args(prog, num_args, args, true);
+  rtn = package_n(prog, R_CLM, mixer_v, "mixer_v", args, num_args);
+  add_obj_to_gcs(prog, R_CLM, rtn->addr);
+  return(rtn);
+}
+
+
+
 
 /* ---------------- frame->frame ---------------- */
 
@@ -13554,6 +13625,34 @@ static xen_value *clm_n(ptree *prog, xen_value **args, int num_args, xen_value *
     }
   return(args[0]);
 }
+
+
+static void clm_set_f(int *args, ptree *pt) 
+{
+  if (CLM_ARG_1)
+    {
+      if (mus_frame_p(CLM_ARG_1))
+	mus_frame_set(CLM_ARG_1, INT_ARG_2, FLOAT_ARG_4);
+      else
+	{
+	  if (mus_mixer_p(CLM_ARG_1))
+	    mus_mixer_set(CLM_ARG_1, INT_ARG_2, INT_ARG_3, FLOAT_ARG_4);
+	}
+    }
+  FLOAT_RESULT = FLOAT_ARG_4;
+}
+
+static void clm_set_1(ptree *prog, xen_value *in_v, xen_value *in_v1, xen_value *in_v2, xen_value *v)
+{
+  xen_var *var;
+  var = find_var_in_ptree_via_addr(prog, in_v->type, in_v->addr);
+  if (var) var->unclean = true;
+  /* v->type known to be R_FLOAT (generalized set insists) */
+  add_triple_to_ptree(prog, va_make_triple(clm_set_f, "clm_set_f", 5, NULL, in_v, in_v1, in_v2, v));
+}
+
+
+
 
 
 /* ---------------- spectrum ---------------- */
@@ -15557,6 +15656,7 @@ static xen_value *walk(ptree *prog, XEN form, walk_result_t walk_result)
 #endif
 		case R_CLM:          
 		  res = clm_n(prog, args, num_args, v); 
+		  /* this calls mus_run so it also handles (in a kludgey way) frame and mixer refs */
 		  break;
 
 		case R_BOOL:
@@ -15571,6 +15671,10 @@ static xen_value *walk(ptree *prog, XEN form, walk_result_t walk_result)
 		case R_VCT:
 		case R_FLOAT_VECTOR:
 		  res = vct_n(prog, args, num_args, v);
+		  break;
+
+		case R_SOUND_DATA:
+		  res = sound_data_n(prog, args, num_args, v);
 		  break;
 
 		  /* fall through here if unknown function encountered (will give up later) */
@@ -15853,16 +15957,46 @@ static xen_value *lookup_generalized_set(ptree *prog, XEN acc_form, xen_value *i
 	}
     }
 
-  { /* (let ((v (vct 1.0 2.0 3.0))) (run (lambda () (set! (v 1) 0.5)))) */
+  { 
     xen_value *val;
     val = walk(prog, acc_form, DONT_NEED_RESULT);
+    /*
+    fprintf(stderr, "val: %s, v: %s, in_v: %s, in_v1: %s, in_v2: %s\n", 
+	    (val) ? describe_xen_value(val, prog) : "null", 
+	    (v) ? describe_xen_value(v, prog) : "null", 
+	    (in_v) ? describe_xen_value(in_v, prog) : "null", 
+	    (in_v1) ? describe_xen_value(in_v1, prog) : "null", 
+	    (in_v2) ? describe_xen_value(in_v2, prog) : "null");
+    */
+    /* val is the gen, v is the new value, in_v is the 1st index, in_v1 is 2nd index if it exists */
     if (val)
       {
 	if ((val->type == R_VCT) ||
 	    (val->type == R_FLOAT_VECTOR))
 	  {
+	    /* (let ((v (vct 1.0 2.0 3.0))) (run (lambda () (set! (v 1) 0.5)))) */
 	    vct_set_1(prog, val, in_v, NULL, v);
+	    /* TODO: in_v1 here for multidim vect? */
 	    happy = 1;
+	  }
+	else
+	  {
+	    if (val->type == R_SOUND_DATA)
+	      {
+		/* (let ((sd (make-sound-data 2 2))) (run (lambda () (set! (sd 1 0) 1.0))) sd) */
+		sound_data_set_1(prog, val, in_v, in_v1, v);
+		happy = 1;
+	      }
+	    else
+	      {
+		if (val->type == R_CLM)
+		  {
+		    /* (let ((mx (make-mixer 2))) (run (lambda () (set! (mx 0 1) 1.0))) mx) */
+		    /* (let ((fr (make-frame 2))) (run (lambda () (set! (fr 1) 1.0))) fr) */
+		    clm_set_1(prog, val, in_v, in_v1, v);
+		    happy = 1;
+		  }
+	      }
 	  }
 	free(val);
       }
@@ -16581,6 +16715,7 @@ static void init_walkers(void)
 #endif
   INIT_WALKER(S_frame_ref,      make_walker(frame_ref_0, NULL, frame_set_1, 2, 2, R_FLOAT, false, 2, R_CLM, R_INT));
   INIT_WALKER(S_frame_set,      make_walker(frame_set_2, NULL, NULL, 3, 3, R_FLOAT, false, 3, R_CLM, R_INT, R_NUMBER));
+  INIT_WALKER(S_frame,          make_walker(frame_1, NULL, NULL, 1, UNLIMITED_ARGS, R_CLM, false, 1, -R_NUMBER));
   INIT_WALKER(S_wave_train,     make_walker(wave_train_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
   INIT_WALKER(S_polyshape,      make_walker(polyshape_1, NULL, NULL, 1, 3, R_FLOAT, false, 3, R_CLM, R_NUMBER, R_NUMBER));
   INIT_WALKER(S_polywave,       make_walker(polywave_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
@@ -16598,6 +16733,7 @@ static void init_walkers(void)
   INIT_WALKER(S_mus_set_formant_radius_and_frequency, make_walker(set_formant_radius_and_frequency_1, NULL, NULL, 3, 3, R_FLOAT, false, 3, R_CLM, R_NUMBER, R_NUMBER));
   INIT_WALKER(S_mixer_set,            make_walker(mixer_set_2, NULL, NULL, 4, 4, R_FLOAT, false, 4, R_CLM, R_INT, R_INT, R_NUMBER));
   INIT_WALKER(S_mixer_ref,            make_walker(mixer_ref_1, NULL, mixer_set_1, 3, 3, R_FLOAT, false, 3, R_CLM, R_INT, R_INT));
+  INIT_WALKER(S_mixer,                make_walker(mixer_1, NULL, NULL, 1, UNLIMITED_ARGS, R_CLM, false, 1, -R_NUMBER));
   INIT_WALKER(S_locsig_ref,           make_walker(locsig_ref_0, NULL, locsig_set_1, 2, 2, R_FLOAT, false, 2, R_CLM, R_INT));
   INIT_WALKER(S_locsig_reverb_ref,    make_walker(locsig_reverb_ref_0, NULL, locsig_reverb_set_1, 2, 2, R_FLOAT, false, 2, R_CLM, R_INT));
   INIT_WALKER(S_locsig_set,           make_walker(locsig_set_2, NULL, NULL, 3, 3, R_FLOAT, false, 3, R_CLM, R_INT, R_NUMBER));

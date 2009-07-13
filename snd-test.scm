@@ -1,35 +1,35 @@
 ;;; Snd tests
 ;;;
-;;;  test 0: constants                           [567]
-;;;  test 1: defaults                            [1153]
-;;;  test 2: headers                             [1354]
-;;;  test 3: variables                           [1671]
-;;;  test 4: sndlib                              [2306]
-;;;  test 5: simple overall checks               [4943]
-;;;  test 6: vcts                                [13866]
-;;;  test 7: colors                              [14192]
-;;;  test 8: clm                                 [14689]
-;;;  test 9: mix                                 [26632]
-;;;  test 10: marks                              [28851]
-;;;  test 11: dialogs                            [29812]
-;;;  test 12: extensions                         [30053]
-;;;  test 13: menus, edit lists, hooks, etc      [30324]
-;;;  test 14: all together now                   [31939]
-;;;  test 15: chan-local vars                    [32888]
-;;;  test 16: regularized funcs                  [34533]
-;;;  test 17: dialogs and graphics               [39601]
-;;;  test 18: enved                              [39693]
-;;;  test 19: save and restore                   [39712]
-;;;  test 20: transforms                         [41487]
-;;;  test 21: new stuff                          [43619]
-;;;  test 22: run                                [45625]
-;;;  test 23: with-sound                         [52387]
-;;;  test 25: X/Xt/Xm                            [56921]
-;;;  test 26: Gtk                                [60694]
-;;;  test 27: GL                                 [64253]
-;;;  test 28: errors                             [64377]
-;;;  test all done                               [66879]
-;;;  test the end                                [67126]
+;;;  test 0: constants                           [569]
+;;;  test 1: defaults                            [1155]
+;;;  test 2: headers                             [1356]
+;;;  test 3: variables                           [1673]
+;;;  test 4: sndlib                              [2308]
+;;;  test 5: simple overall checks               [4966]
+;;;  test 6: vcts                                [13889]
+;;;  test 7: colors                              [14215]
+;;;  test 8: clm                                 [14712]
+;;;  test 9: mix                                 [26710]
+;;;  test 10: marks                              [28929]
+;;;  test 11: dialogs                            [29890]
+;;;  test 12: extensions                         [30131]
+;;;  test 13: menus, edit lists, hooks, etc      [30402]
+;;;  test 14: all together now                   [32017]
+;;;  test 15: chan-local vars                    [32966]
+;;;  test 16: regularized funcs                  [34611]
+;;;  test 17: dialogs and graphics               [39679]
+;;;  test 18: enved                              [39771]
+;;;  test 19: save and restore                   [39790]
+;;;  test 20: transforms                         [41565]
+;;;  test 21: new stuff                          [43697]
+;;;  test 22: run                                [45703]
+;;;  test 23: with-sound                         [52524]
+;;;  test 25: X/Xt/Xm                            [57058]
+;;;  test 26: Gtk                                [60831]
+;;;  test 27: GL                                 [64390]
+;;;  test 28: errors                             [64514]
+;;;  test all done                               [67016]
+;;;  test the end                                [67262]
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs))
 
@@ -3488,6 +3488,27 @@
 	    (if (not (eq? tag 'out-of-range))
 		(snd-display ";sound-data->sound-data frames: ~A" tag))))
 	
+
+	(let ((sd (make-sound-data 1 1)))
+	  (if (fneq (sd 0 0) 0.0) (snd-display ";sound-data ref: ~A" (sd 0 0)))
+	  (set! (sd 0 0) 1.0)
+	  (if (fneq (sd 0 0) 1.0) (snd-display ";sound-data set: ~A" (sd 0 0)))
+	  (if (not (equal? sd (let ((sd1 (make-sound-data 1 1))) (sound-data-set! sd1 0 0 1.0) sd1)))
+	      (snd-display ";sound-data set not equal: ~A" sd)))
+	
+	(let ((sd (make-sound-data 2 3)))
+	  (if (fneq (sd 0 0) 0.0) (snd-display ";sound-data ref (1): ~A" (sd 0 0)))
+	  (set! (sd 1 0) 1.0)
+	  (if (fneq (sd 1 0) 1.0) (snd-display ";sound-data set (1 0): ~A" (sd 1 0)))
+	  (set! (sd 1 2) 2.0)
+	  (if (fneq (sd 1 2) 2.0) (snd-display ";sound-data set (1 2): ~A" (sd 1 2)))
+	  (if (not (equal? sd (let ((sd1 (make-sound-data 2 3)))
+				(sound-data-set! sd1 1 0 1.0)
+				(sound-data-set! sd1 1 2 2.0)
+				sd1)))
+	      (snd-display ";sound-data set (3) not equal: ~A" sd)))
+
+
 	(for-each 
 	 (lambda (chans)
 	   (for-each 
@@ -49172,6 +49193,65 @@ EDITS: 1
 	      (fneq (mixer-ref val 0 1) 33.0)
 	      (fneq (mixer-ref val 1 1) 3))
 	  (snd-display ";mixer-set int opt: ~A" val)))
+    
+    (let ((fr1 (run (lambda () (frame .1 .2))))
+	  (fr2 (make-frame 2 .1 .2)))
+      (if (not (equal? fr1 fr2))
+	  (snd-display ";frame...: ~A ~A" fr1 fr2)))
+    
+    (let ((fr1 (frame .1)))
+      (if (fneq (run (lambda () (fr1 0))) .1) (snd-display ";frame gen ref (.1): ~A" (fr1 0)))
+      (run (lambda () (set! (fr1 0) .2)))
+      (if (fneq (fr1 0) .2) (snd-display ";frame gen ref (.2): ~A" (fr1 0)))
+      (if (not (equal? fr1 (frame .2)))
+	  (snd-display ";frame gen set! (.2): ~A" fr1)))
+    
+    (let ((fr1 (frame .1 .2 .3 .4)))
+      (run (lambda () (set! (fr1 2) (+ (fr1 1) (fr1 2)))))
+      (if (fneq (fr1 2) .5) (snd-display ";frame gen ref/set (.5): ~A" (fr1 2))))
+    
+    
+    (let ((mx (run (lambda () (mixer .1 .2 .3 .4)))))
+      (if (fneq (mx 0 0) .1) (snd-display ";mixer gen ref (.1): ~A" (mx 0 0)))
+      (if (not (equal? mx (make-mixer 2 .1 .2 .3 .4))) (snd-display ";mixer...: ~A" mx))
+      (run (lambda () (set! (mx 0 0) .5)))
+      (if (fneq (mx 0 0) .5) (snd-display ";mixer gen set (.5): ~A" (mx 0 0)))
+      (if (not (equal? mx (make-mixer 2 .5 .2 .3 .4))) (snd-display ";mixer... (after set): ~A" mx))
+      (if (fneq (mx 1 0) .3) (snd-display ";mixer gen ref (.3): ~A" (mx 1 0)))
+      (run (lambda () (set! (mx 0 1) .5)))
+      (if (fneq (mx 0 1) .5) (snd-display ";mixer (0 1) gen set (.5): ~A" (mx 0 1)))
+      (if (not (equal? mx (make-mixer 2 .5 .5 .3 .4))) (snd-display ";mixer... (after set 1): ~A" mx)))
+    
+    (let ((mx (mixer .1)))
+      (if (not (equal? mx (make-mixer 1 .1))) (snd-display ";mixer .1: ~A" mx))
+      (if (fneq (run (lambda () (mx 0 0))) .1) (snd-display ";mixer (1) gen ref (.1): ~A" (mx 0 0)))  
+      (run (lambda () (set! (mx 0 0) .5)))
+      (if (fneq (run (lambda () (mx 0 0))) .5) (snd-display ";mixer (1) gen set (.5): ~A" (mx 0 0))))
+    
+    (let ((mx (run (lambda () (mixer .1 .2 .3)))))
+      (if (not (equal? mx (make-mixer 2 .1 .2 .3 0.0))) (snd-display ";mixer .1 .2 .3: ~A" mx))
+      (run (lambda () (set! (mx 1 1) .5)))
+      (if (fneq (run (lambda () (mx 1 1))) .5) (snd-display ";mixer (1 1) gen set (.5): ~A" (mx 1 1))))
+    
+    
+    (let ((sd (make-sound-data 1 1)))
+      (if (fneq (run (lambda () (sd 0 0))) 0.0) (snd-display ";sound-data ref: ~A" (sd 0 0)))
+      (run (lambda () (set! (sd 0 0) 1.0)))
+      (if (fneq (sd 0 0) 1.0) (snd-display ";sound-data set: ~A" (sd 0 0)))
+      (if (not (equal? sd (let ((sd1 (make-sound-data 1 1))) (sound-data-set! sd1 0 0 1.0) sd1)))
+	  (snd-display ";sound-data set not equal: ~A" sd)))
+    
+    (let ((sd (make-sound-data 2 3)))
+      (if (fneq (sd 0 0) 0.0) (snd-display ";sound-data ref (1): ~A" (sd 0 0)))
+      (run (lambda () (set! (sd 1 0) 1.0)))
+      (if (fneq (run (lambda () (sd 1 0))) 1.0) (snd-display ";sound-data set (1 0): ~A" (sd 1 0)))
+      (run (lambda () (set! (sd 1 2) 2.0)))
+      (if (fneq (run (lambda () (sd 1 2))) 2.0) (snd-display ";sound-data set (1 2): ~A" (sd 1 2)))
+      (if (not (equal? sd (let ((sd1 (make-sound-data 2 3)))
+			    (sound-data-set! sd1 1 0 1.0)
+			    (sound-data-set! sd1 1 2 2.0)
+			    sd1)))
+	  (snd-display ";sound-data set (3) not equal: ~A" sd)))
     
     (let ((val (run-eval '(let ((loc (make-locsig :channels 2)))
 			    (locsig-set! loc 0 32)

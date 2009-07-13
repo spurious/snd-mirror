@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "1.19"
-#define S7_DATE "29-Jun-09"
+#define S7_VERSION "1.20"
+#define S7_DATE "14-Jul-09"
 
 
 typedef long long int s7_Int;
@@ -437,6 +437,7 @@ bool s7_is_function(s7_pointer p);
 s7_pointer s7_make_function(s7_scheme *sc, const char *name, s7_function fnc, int required_args, int optional_args, bool rest_arg, const char *doc);
 void s7_define_function(s7_scheme *sc, const char *name, s7_function fnc, int required_args, int optional_args, bool rest_arg, const char *doc);
 s7_pointer s7_apply_function(s7_scheme *sc, s7_pointer fnc, s7_pointer args);
+s7_pointer s7_make_closure(s7_scheme *sc, s7_pointer c, s7_pointer e);
 
   /* s7_make_function creates a scheme function object from the s7_function 'fnc'.
    *   Its name (for s7_describe_object) is 'name', it requires 'required_args' arguments,
@@ -460,23 +461,7 @@ s7_pointer s7_apply_function(s7_scheme *sc, s7_pointer fnc, s7_pointer args);
    * s7_apply_function applies the function (the result of s7_make_function) to the arguments.
    */
 
-s7_pointer s7_call(s7_scheme *sc, s7_pointer func, s7_pointer args);
-  
-  /* s7_call takes a scheme function (e.g. g_car above), and applies it to 'args' (a list of arguments)
-   *   returning the result.
-   *   
-   *   s7_integer(s7_call(s7, g_car, s7_cons(s7, s7_make_integer(sc, 123), s7_NIL(s7))));
-   *  
-   *   returns 123.
-   */
-
-s7_pointer s7_make_closure(s7_scheme *sc, s7_pointer c, s7_pointer e);
-s7_pointer s7_make_closure_star(s7_scheme *sc, s7_pointer c, s7_pointer e);
-
-  /* these create closures with 'c' as the function, and 'e' as the environment (arglist)
-   *   closure_star corresponds to define* and lambda*
-   *
-   * In s7, (define* (name . args) body) or (define name (lambda* args body))
+  /* In s7, (define* (name . args) body) or (define name (lambda* args body))
    *   define a function that takes optional (keyword) named arguments.
    *   The keywords :key and :optional are ok, but they are ignored --
    *   they exist to be compatible with other define* implementations.  
@@ -500,10 +485,16 @@ s7_pointer s7_make_closure_star(s7_scheme *sc, s7_pointer c, s7_pointer e);
    *
    *   and so on.  :rest causes its argument to be bound to the rest
    *   of the arguments at that point.
-   *
-   *   The point of s7_make_closure_star is that you can create
-   *   your own define* funcs in C -- I'll make a simpler way to do this
-   *   eventually.
+   */
+
+s7_pointer s7_call(s7_scheme *sc, s7_pointer func, s7_pointer args);
+  
+  /* s7_call takes a scheme function (e.g. g_car above), and applies it to 'args' (a list of arguments)
+   *   returning the result.
+   *   
+   *   s7_integer(s7_call(s7, g_car, s7_cons(s7, s7_make_integer(sc, 123), s7_NIL(s7))));
+   *  
+   *   returns 123.
    */
 
 bool s7_is_procedure_with_setter(s7_pointer obj);
@@ -1282,6 +1273,7 @@ int main(int argc, char **argv)
  * 
  *        s7 changes
  *
+ * 14-Jul:    removed s7_make_closure_star -- this needs a different approach.
  * 29-Jun:    s7_format declaration.
  * 12-May:    s7_is_constant.
  * 20-Apr:    changed rationalize to be both r5rs-acceptable and fast.

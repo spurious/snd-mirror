@@ -3652,7 +3652,11 @@ sound-data-peak returns the overall maximum element in sd.
 <!-- sound-data-ref -->
 <tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="sounddataref">sound-data-ref</a> (sd chan frame)</code>
 </td></tr><tr><td></td><td>
-sound-data-ref returns (as a float) the sample in channel chan at location frame.
+sound-data-ref returns (as a float) the sample in channel chan at location frame.  In s7 you can omit the "sound-data-ref":
+<pre>
+    <em class=listener>&gt;</em><em class=typing>(let ((sd (make-sound-data 1 1))) (sd 0 0))</em>
+    <em class=listener>0.0</em>
+</pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -3685,6 +3689,12 @@ sound-data-scale! multiplies each sample in sd by scaler.
 <tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="sounddataset">sound-data-set!</a> (sd chan frame val)</code>
 </td></tr><tr><td></td><td>
 sound-data-set! sets sd's sample at 'frame' in channel 'chan' to val.
+In s7 you can use generalized set:
+<pre>
+    <em class=listener>&gt;</em><em class=typing>(let ((sd (make-sound-data 1 1))) (set! (sd 0 0) 1.0) (sd 0 0))</em>
+    <em class=listener>1.0</em>
+</pre>
+
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
