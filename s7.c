@@ -1833,11 +1833,12 @@ s7_pointer s7_make_closure(s7_scheme *sc, s7_pointer c, s7_pointer e)
   return(make_closure(sc, c, e, T_CLOSURE));
 }
 
-
+#if 0
 static s7_pointer s7_make_closure_star(s7_scheme *sc, s7_pointer c, s7_pointer e) 
 {
   return(make_closure(sc, c, e, T_CLOSURE_STAR));
 }
+#endif
 
 
 s7_pointer s7_global_environment(s7_scheme *sc) 
@@ -10196,6 +10197,37 @@ void s7_define_function(s7_scheme *sc, const char *name, s7_function fnc, int re
 }
 
 
+void s7_define_function_star(s7_scheme *sc, const char *name, s7_function fnc, const char *arglist, const char *doc)
+{
+  /* make an internal function of any args that calls fnc, then wrap it in define* and use eval_c_string */
+  char *internal_function, *internal_arglist;
+  int name_len, arglist_len, len, args;
+  const char *local_sym;
+  s7_pointer local_args;
+  
+  arglist_len = safe_strlen(arglist);
+  internal_arglist = (char *)calloc(arglist_len + 64, sizeof(char));
+  snprintf(internal_arglist, arglist_len + 64, "(map (lambda (arg) (if (symbol? arg) arg (car arg))) '(%s))", arglist);
+  local_args = s7_eval_c_string(sc, internal_arglist);
+  args = s7_list_length(sc, local_args);
+  internal_arglist = s7_object_to_c_string(sc, local_args);
+  /* this has an opening paren which we don't want */
+  internal_arglist[0] = ' ';
+
+  local_sym = symbol_name(s7_gensym(sc, "define*"));
+  s7_define_function(sc, local_sym, fnc, args, 0, 0, NULL);
+
+  name_len = safe_strlen(name) + safe_strlen(local_sym);
+  len = 32 + name_len + 2 * arglist_len;
+  internal_function = (char *)calloc(len, sizeof(char));
+  snprintf(internal_function, len, "(define* (%s %s) (%s %s)", name, arglist, local_sym, internal_arglist);
+  s7_eval_c_string(sc, internal_function);
+
+  free(internal_function);
+  free(internal_arglist);
+}
+
+
 const char *s7_procedure_documentation(s7_scheme *sc, s7_pointer x)
 {
   if (s7_is_symbol(x))
@@ -13549,7 +13581,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    else add_to_current_environment(sc, car(sc->z), sc->F);
 		  }
 	      }
-	    if (s7_is_symbol(sc->z)) /* dotted arg? -- make sure its name exists in the current environment */
+	    if (s7_is_symbol(sc->z))                                  /* dotted (last) arg? -- make sure its name exists in the current environment */
 	      add_to_current_environment(sc, sc->z, sc->F);
 	    
 	    /* now get the current args, re-setting args that have explicit values */
@@ -13637,15 +13669,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    sc->args = sc->NIL;
 	    goto BEGIN;
 	  }
-
-	  /* for C level define*, we need to make the arg list from the current values in the environment, then 
-	   *     sc ->value = function_call(sc->code)(sc, sc->args);
-	   *     pop_stack(sc);
-	   *     goto START;
-	   * (assuming sc->code was saved across the arg setup stuff)
-	   * the c-define* object would need to have the arg template somewhere accessible
-	   *   then somehow share the merging code. T_S7_FUNCTION_STAR?
-	   */
 		
 	case T_CONTINUATION:	                  /* -------- continuation ("call-with-continuation") -------- */
 	  {

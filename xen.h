@@ -11,11 +11,12 @@
  */
 
 #define XEN_MAJOR_VERSION 2
-#define XEN_MINOR_VERSION 29
-#define XEN_VERSION "2.29"
+#define XEN_MINOR_VERSION 30
+#define XEN_VERSION "2.30"
 
 /* HISTORY:
  *
+ *  14-Jul:    s7_define_function_star via XEN_DEFINE_PROCEDURE_STAR.
  *  6-Jul:     cleaned up XEN_WRAP_C_POINTER et al (Mike Scholz).
  *  29-Jun:    some fth changes.
  *  30-Mar:    added a bunch of file-oriented functions for s7 (xen.c).
@@ -1964,8 +1965,12 @@ extern XEN xen_false, xen_true, xen_nil, xen_undefined;
     return(InName(args)); \
   }
 
+
 #define XEN_DEFINE_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc) \
   s7_define_function(s7, Name, Func, ReqArg, OptArg, RstArg, Doc)
+
+#define XEN_DEFINE_PROCEDURE_STAR(Name, Func, Args, Doc) \
+  s7_define_function_star(s7, Name, Func, Args, Doc)
 
 #define XEN_DEFINE_PROCEDURE_WITH_SETTER(Get_Name, Get_Func, Get_Help, Set_Name, Set_Func, Get_Req, Get_Opt, Set_Req, Set_Opt) \
   s7_define_variable(s7, Get_Name, s7_make_procedure_with_setter(s7, Get_Name, Get_Func, Get_Req, Get_Opt, Set_Func, Set_Req, Set_Opt, Get_Help))

@@ -99,6 +99,7 @@
  * run does not work in guile 1.9 (can't find func args any more)
  *
  * this doesn't get optimized yet: (set! ((mus-data gen) 123) .1)
+ *   but the ref side does work: (let ((fr (frame .1 .2 .3))) (run (lambda () ((mus-data fr) 0))))
  *
  * TODO: run doesn't always warn about a closure (explicit gen basically) -- if it's used directly,
  *         there's no warning, but it doesn't handle the closed-over variables correctly
@@ -15976,7 +15977,7 @@ static xen_value *lookup_generalized_set(ptree *prog, XEN acc_form, xen_value *i
 	  {
 	    /* (let ((v (vct 1.0 2.0 3.0))) (run (lambda () (set! (v 1) 0.5)))) */
 	    vct_set_1(prog, val, in_v, NULL, v);
-	    /* TODO: in_v1 here for multidim vect? */
+	    /* SOMEDAY: in_v1 here for multidim vect? but the latter aren't accepted because vcts are 1-dim */
 	    happy = 1;
 	  }
 	else

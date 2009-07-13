@@ -436,6 +436,7 @@ bool s7_is_constant(s7_pointer p);
 bool s7_is_function(s7_pointer p); 
 s7_pointer s7_make_function(s7_scheme *sc, const char *name, s7_function fnc, int required_args, int optional_args, bool rest_arg, const char *doc);
 void s7_define_function(s7_scheme *sc, const char *name, s7_function fnc, int required_args, int optional_args, bool rest_arg, const char *doc);
+void s7_define_function_star(s7_scheme *sc, const char *name, s7_function fnc, const char *arglist, const char *doc);
 s7_pointer s7_apply_function(s7_scheme *sc, s7_pointer fnc, s7_pointer args);
 s7_pointer s7_make_closure(s7_scheme *sc, s7_pointer c, s7_pointer e);
 
@@ -485,6 +486,12 @@ s7_pointer s7_make_closure(s7_scheme *sc, s7_pointer c, s7_pointer e);
    *
    *   and so on.  :rest causes its argument to be bound to the rest
    *   of the arguments at that point.
+   *
+   * The C connection to this takes the function name, the C function to call, the argument 
+   *   list as written in Scheme, and the documentation string.  s7 makes sure the arguments
+   *   are ordered correctly and have the specified defaults before calling the C function.
+   *     s7_define_function_star(sc, "a-func", a_func, "arg1 (arg2 32)", "an example of C define*");
+   *   Now (a-func :arg1 2) calls the C function a_func(2, 32). See the example program below.
    */
 
 s7_pointer s7_call(s7_scheme *sc, s7_pointer func, s7_pointer args);
@@ -1270,10 +1277,69 @@ int main(int argc, char **argv)
 
 
 /* --------------------------------------------------------------------------------
+ *
+ * an example of C-side define* (s7_define_function_star)
+ */
+
+#if 0 
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+
+#include "s7.h"
+
+static s7_pointer plus(s7_scheme *sc, s7_pointer args)
+{
+  /* (define* (plus (red 32) blue) (+ (* 2 red) blue)) */
+  return(s7_make_integer(sc, 2 * s7_integer(s7_car(args)) + s7_integer(s7_car(s7_cdr(args)))));
+}
+
+int main(int argc, char **argv)
+{
+  s7_scheme *s7;
+  char buffer[512];
+  char response[1024];
+
+  s7 = s7_init();
+  s7_define_function_star(s7, "plus", plus, "(red 32) blue", "an example of define* from C");
+
+  while (1)
+    {
+      fprintf(stdout, "\n> ");
+      fgets(buffer, 512, stdin);
+
+      if ((buffer[0] != '\n') || 
+	  (strlen(buffer) > 1))
+	{                            
+	  sprintf(response, "(write %s)", buffer);
+	  s7_eval_c_string(s7, response);
+	}
+    }
+}
+
+/* 
+ * > (plus 2 3)
+ * 7
+ * > (plus :blue 3)
+ * 67
+ * > (plus :blue 1 :red 4)
+ * 9
+ * > (plus 2 :blue 3)
+ * 7
+ * > (plus :blue 3 :red 1)
+ * 5
+ */
+
+#endif
+
+
+
+/* --------------------------------------------------------------------------------
  * 
  *        s7 changes
  *
- * 14-Jul:    removed s7_make_closure_star -- this needs a different approach.
+ * 14-Jul:    replaced s7_make_closure_star with s7_define_function_star.
  * 29-Jun:    s7_format declaration.
  * 12-May:    s7_is_constant.
  * 20-Apr:    changed rationalize to be both r5rs-acceptable and fast.
