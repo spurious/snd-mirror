@@ -40,6 +40,7 @@
 ;(show-ptree 1)
 ;(debug-enable 'warn-deprecated)
 ;(gc-verbose #t)
+(define profiling #f)
 
 (if (defined? 'run-clear-counts) (run-clear-counts))
 
@@ -67256,6 +67257,11 @@ EDITS: 1
 				(symbol->string (car b))))))))
 
 (if (defined? 'run-report-counts) (run-report-counts))
+
+(if profiling
+    (begin
+      (load "gad218.scm")
+      (profile)))
 
 (if with-exit (exit))
 

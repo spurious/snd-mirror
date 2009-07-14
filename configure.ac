@@ -77,6 +77,7 @@ AC_DEFINE_UNQUOTED(SND_HOST, "$host")
 #   --with-midi           include sndlib midi module
 #   --with-cairo          use cairo for Gtk graphics, if possible
 #   --with-pulseaudio     use PulseAudio
+#   --with-profiling      add code to keep profiling stats (s7)
 #   GUILE_CONFIG_path     where to look for guile-config
 #   GUILE_CONFIG_name     Fink (OSX) includes guile-config under funny names
 #   GUILE_name            same problem
@@ -110,6 +111,7 @@ AC_ARG_WITH(doubles,     [  --with-doubles	  use doubles throughout])
 AC_ARG_WITH(float-samples, [  --with-float-samples	  use floats (or doubles) as the internal sample respresentation, default=yes])
 AC_ARG_WITH(cairo,	 [  --with-cairo		  use cairo for graphics in Gtk -- not currently very usable])
 AC_ARG_WITH(pulseaudio,  [  --with-pulseaudio 		  use PulseAudio, default=no])
+AC_ARG_WITH(profiling,   [  --with-profiling		  add code to keep profiling stats (s7 only)]
 
 # these are primarily for testing
 AC_ARG_WITH(gsl,         [  --with-gsl		  use GSL, default=yes])
@@ -2225,6 +2227,11 @@ AC_ARG_ENABLE(snd-debug,
     RANDOM_FEATURES="$RANDOM_FEATURES debugging"
     VL_PROG_CC_WARNINGS()
   fi)
+
+if test "$with_profiling" = yes ; then
+  AC_DEFINE(WITH_PROFILING)
+fi
+
 
 
 #--------------------------------------------------------------------------------

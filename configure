@@ -818,6 +818,7 @@ with_save_dir
 with_doc_dir
 with_snd_as_widget
 with_snd_as_pd_external
+with_profiling
 with_rt
 with_threads
 enable_threads
@@ -1513,21 +1514,11 @@ Optional Packages:
   --with-float-samples	  use floats (or doubles) as the internal sample respresentation, default=yes
   --with-cairo		  use cairo for graphics in Gtk -- not currently very usable
   --with-pulseaudio 		  use PulseAudio, default=no
-  --with-gsl		  use GSL, default=yes
-  --with-fftw		  use fftw, default=yes
-  --with-xpm		  use xpm, default=yes
-  --with-xp		  use xp, default=no
-  --with-fam		  use libfam (Gamin), default=yes
-  --with-gmp		  include multiprecision arithmetic via gmp, mpfr, and mpc, default=no
-  --with-s7  	          use S7, default=yes
-  --with-extension-language	use some extension language, default=yes
-  --with-sample-width=N   use N bits of samples
-  --with-motif-prefix=PFX where Motif is installed
-  --with-temp-dir	  directory to use for temp files
-  --with-save-dir	  directory to use for saved-state files
-  --with-doc-dir	  directory to search for documentation
-  --with-snd-as-widget	  make Snd a loadable widget, not a standalone program
-  --with-snd-as-pd-external	  make Snd a loadable pd external, not a standalone program
+  --with-profiling		  add code to keep profiling stats (s7 only)
+
+# these are primarily for testing
+
+  --with-gsl		  use GSL
   --with-rt	  makes Snd capable of running Snd-Rt
   --with-threads	  include pthread support, same as --enable-threads
   --with-gnu-ld           assume the C compiler uses GNU ld default=no
@@ -3773,6 +3764,7 @@ _ACEOF
 #   --with-midi           include sndlib midi module
 #   --with-cairo          use cairo for Gtk graphics, if possible
 #   --with-pulseaudio     use PulseAudio
+#   --with-profiling      add code to keep profiling stats (s7)
 #   GUILE_CONFIG_path     where to look for guile-config
 #   GUILE_CONFIG_name     Fink (OSX) includes guile-config under funny names
 #   GUILE_name            same problem
@@ -3937,220 +3929,27 @@ if test "${with_pulseaudio+set}" = set; then
 fi
 
 
-# these are primarily for testing
-
+# Check whether --with-profiling was given.
+if test "${with_profiling+set}" = set; then
+  withval=$with_profiling; default=yes
 # Check whether --with-gsl was given.
 if test "${with_gsl+set}" = set; then
   withval=$with_gsl;
 fi
 
 
+  --with-fftw		  use fftw
+else
+  default=yes
 # Check whether --with-fftw was given.
 if test "${with_fftw+set}" = set; then
   withval=$with_fftw;
 fi
 
 
-# Check whether --with-xpm was given.
-if test "${with_xpm+set}" = set; then
-  withval=$with_xpm;
+  --with-xpm		  use xpm
 fi
 
-
-# Check whether --with-xp was given.
-if test "${with_xp+set}" = set; then
-  withval=$with_xp;
-fi
-
-
-# Check whether --with-fam was given.
-if test "${with_fam+set}" = set; then
-  withval=$with_fam;
-fi
-
-
-# Check whether --with-gmp was given.
-if test "${with_gmp+set}" = set; then
-  withval=$with_gmp;
-fi
-
-
-
-# Check whether --with-s7 was given.
-if test "${with_s7+set}" = set; then
-  withval=$with_s7;
-fi
-
-
-# Check whether --with-extension-language was given.
-if test "${with_extension_language+set}" = set; then
-  withval=$with_extension_language;
-fi
-
-
-
-# -------- internal sample data type --------
-
-# sample-width only applies to the int case (ignored if float)
-LOCAL_SNDLIB_BITS="24"
-
-# Check whether --with-sample-width was given.
-if test "${with_sample_width+set}" = set; then
-  withval=$with_sample_width; { $as_echo "$as_me:$LINENO: result: Using $with_sample_width bit samples" >&5
-$as_echo "Using $with_sample_width bit samples" >&6; }
-	 cat >>confdefs.h <<_ACEOF
-#define MUS_SAMPLE_BITS $with_sample_width
-_ACEOF
-
-         LOCAL_SNDLIB_BITS=$with_sample_width
-
-else
-  cat >>confdefs.h <<\_ACEOF
-#define MUS_SAMPLE_BITS 24
-_ACEOF
-
-
-fi
-
-
-if test "$with_float_samples" != no ; then
-  cat >>confdefs.h <<\_ACEOF
-#define SNDLIB_USE_FLOATS 1
-_ACEOF
-
-  if test "$with_doubles" = yes ; then
-    LOCAL_SNDLIB_BITS="8"
-  else
-    LOCAL_SNDLIB_BITS="4"
-  fi
-else
-  cat >>confdefs.h <<\_ACEOF
-#define SNDLIB_USE_FLOATS 0
-_ACEOF
-
-fi
-
-if test "$with_doubles" = yes ; then
-  cat >>confdefs.h <<\_ACEOF
-#define Float double
-_ACEOF
-
-  cat >>confdefs.h <<\_ACEOF
-#define WITH_DOUBLES 1
-_ACEOF
-
-else
-  cat >>confdefs.h <<\_ACEOF
-#define Float float
-_ACEOF
-
-fi
-
-if test "$with_hobbit" = yes ; then
-  cat >>confdefs.h <<\_ACEOF
-#define WITH_HOBBIT 1
-_ACEOF
-
-  RANDOM_FEATURES="$RANDOM_FEATURES hobbit"
-fi
-
-if test "$with_builtin_gtkrc" != no; then
-  cat >>confdefs.h <<\_ACEOF
-#define WITH_BUILTIN_GTKRC 1
-_ACEOF
-
-fi
-
-if test "$with_static_xg" = yes ; then
-  with_static_xm=yes
-fi
-
-
-# Check whether --with-motif-prefix was given.
-if test "${with_motif_prefix+set}" = set; then
-  withval=$with_motif_prefix; motif_prefix="$withval"
-else
-  motif_prefix=""
-fi
-
-
-if test "$with_static_motif" = yes ; then
-  with_motif=yes
-fi
-
-
-# Check whether --with-temp-dir was given.
-if test "${with_temp_dir+set}" = set; then
-  withval=$with_temp_dir; cat >>confdefs.h <<_ACEOF
-#define MUS_DEFAULT_TEMP_DIR "${withval}"
-_ACEOF
-
-
-fi
-
-
-
-# Check whether --with-save-dir was given.
-if test "${with_save_dir+set}" = set; then
-  withval=$with_save_dir; cat >>confdefs.h <<_ACEOF
-#define MUS_DEFAULT_SAVE_DIR "${withval}"
-_ACEOF
-
-
-fi
-
-
-
-# Check whether --with-doc-dir was given.
-if test "${with_doc_dir+set}" = set; then
-  withval=$with_doc_dir; cat >>confdefs.h <<_ACEOF
-#define MUS_DEFAULT_DOC_DIR "${withval}"
-_ACEOF
-
-
-fi
-
-
-
-# Check whether --with-snd-as-widget was given.
-if test "${with_snd_as_widget+set}" = set; then
-  withval=$with_snd_as_widget; if test "$with_snd_as_widget" = yes ; then
-	   cat >>confdefs.h <<\_ACEOF
-#define SND_AS_WIDGET 1
-_ACEOF
-
-	   MAKE_TARGET=widget
-	fi
-fi
-
-
-
-# Check whether --with-snd-as-pd-external was given.
-if test "${with_snd_as_pd_external+set}" = set; then
-  withval=$with_snd_as_pd_external; if test "$with_snd_as_pd_external" = yes ; then
-
-	   if test "$with_motif" = yes || test "$with_gtk" = yes ; then
-	      { { $as_echo "$as_me:$LINENO: error: When making snd as a pd external" >&5
-$as_echo "$as_me: error: When making snd as a pd external" >&2;}
-   { (exit motif or gtk can not be used.); exit motif or gtk can not be used.; }; }
-	   fi
-	   if test "$with_ruby" = yes ; then
-	      { { $as_echo "$as_me:$LINENO: error: When making snd as a pd external" >&5
-$as_echo "$as_me: error: When making snd as a pd external" >&2;}
-   { (exit ruby can not be used as extension language.); exit ruby can not be used as extension language.; }; }
-	   fi
-
-	   CFLAGS="$CFLAGS -DSND_PD_PATH=\\\"`pwd`\\\""
-	   with_jack=yes
-	   cat >>confdefs.h <<\_ACEOF
-#define SND_AS_PD_EXTERNAL 1
-_ACEOF
-
-	   MAKE_TARGET=external
-           RANDOM_FEATURES="$RANDOM_FEATURES pd-external"
-
-    	   case "$host" in
-             *-apple-*)
 # 	       CFLAGS="$CFLAGS -DPD -I. -bundle -undefined suppress -flat_namespace"
 	       CFLAGS="$CFLAGS -DPD -I. -undefined suppress -flat_namespace"
  	     ;;
@@ -24543,6 +24342,14 @@ fi
 $as_echo "$vl_cv_prog_cc_warnings" >&6; }
 
   fi
+fi
+
+
+if test "$with_profiling" = yes ; then
+  cat >>confdefs.h <<\_ACEOF
+#define WITH_PROFILING 1
+_ACEOF
+
 fi
 
 

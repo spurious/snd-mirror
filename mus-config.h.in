@@ -270,6 +270,7 @@
 #undef CLM_DISABLE_DEPRECATED
 #undef SNDLIB_DISABLE_DEPRECATED
 #undef XEN_DISABLE_DEPRECATED
+#undef WITH_PROFILING
 
 #undef HAVE_OGG
 #undef PATH_OGGDEC
@@ -299,6 +300,7 @@
 
 #ifdef _MSC_VER
   typedef long off_t;
+  #define ssize_t int 
   #define snprintf _snprintf 
   #define strtoll strtol
   #if _MSC_VER > 1200
