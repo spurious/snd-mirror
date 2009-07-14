@@ -78,10 +78,6 @@
  *          (what about files? numbers? -- integer-length, bignum-precision etc)
  *        get rid of values and call-with-values
  *        strings/lists should be (set-)applicable (*-ref|set! are ugly and pointless), hash-tables?
- *        need external access to define* 
- *        "!" factorial op?
- *        all the math ops applied to vectors = linear algebra, but maybe that's asking for bugs
- *          (and do we treat vect * vect as convolution?)
  *
  *
  * Mike Scholz provided the FreeBSD support (complex trig funcs, etc)
@@ -1832,13 +1828,6 @@ s7_pointer s7_make_closure(s7_scheme *sc, s7_pointer c, s7_pointer e)
 {
   return(make_closure(sc, c, e, T_CLOSURE));
 }
-
-#if 0
-static s7_pointer s7_make_closure_star(s7_scheme *sc, s7_pointer c, s7_pointer e) 
-{
-  return(make_closure(sc, c, e, T_CLOSURE_STAR));
-}
-#endif
 
 
 s7_pointer s7_global_environment(s7_scheme *sc) 
@@ -10200,6 +10189,7 @@ void s7_define_function(s7_scheme *sc, const char *name, s7_function fnc, int re
 void s7_define_function_star(s7_scheme *sc, const char *name, s7_function fnc, const char *arglist, const char *doc)
 {
   /* make an internal function of any args that calls fnc, then wrap it in define* and use eval_c_string */
+  /* should (does) this ignore :key and other such noise? */
   char *internal_function, *internal_arglist;
   int name_len, arglist_len, len, args;
   const char *local_sym;
