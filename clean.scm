@@ -4,13 +4,6 @@
 (provide 'snd-clean.scm)
 
 (load "dsp.scm")
-;(load "t.scm")
-
-(define (without-graphics thunk)
-  (set! (squelch-update) #t)
-  (let ((val (catch #t thunk (lambda args (car args)))))
-    (set! (squelch-update) #f)
-    val))
 
 (define* (goertzel-channel freq :optional beg dur snd chn)
   "(goertzel-channel freq :optional beg dur snd chn) returns the amplitude of the 'freq' spectral component"

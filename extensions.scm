@@ -1145,7 +1145,8 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 	  v))
     
     (helper 0 (- (vector-length v) 1)))
-  
+
+  ;; find all functions, write out each one's number of calls, sorted first by calls, then alphabetically 
   (let ((st (symbol-table))
 	(calls (make-vector 50000 #f))
 	(call 0))

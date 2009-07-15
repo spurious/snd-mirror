@@ -111,7 +111,7 @@ AC_ARG_WITH(doubles,     [  --with-doubles	  use doubles throughout])
 AC_ARG_WITH(float-samples, [  --with-float-samples	  use floats (or doubles) as the internal sample respresentation, default=yes])
 AC_ARG_WITH(cairo,	 [  --with-cairo		  use cairo for graphics in Gtk -- not currently very usable])
 AC_ARG_WITH(pulseaudio,  [  --with-pulseaudio 		  use PulseAudio, default=no])
-AC_ARG_WITH(profiling,   [  --with-profiling		  add code to keep profiling stats (s7 only)]
+AC_ARG_WITH(profiling,   [  --with-profiling		  add code to keep profiling stats (s7 only)])
 
 # these are primarily for testing
 AC_ARG_WITH(gsl,         [  --with-gsl		  use GSL, default=yes])

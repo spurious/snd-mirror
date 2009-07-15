@@ -1,35 +1,35 @@
 ;;; Snd tests
 ;;;
-;;;  test 0: constants                           [569]
-;;;  test 1: defaults                            [1155]
-;;;  test 2: headers                             [1356]
-;;;  test 3: variables                           [1673]
-;;;  test 4: sndlib                              [2308]
-;;;  test 5: simple overall checks               [4966]
-;;;  test 6: vcts                                [13889]
-;;;  test 7: colors                              [14215]
-;;;  test 8: clm                                 [14712]
-;;;  test 9: mix                                 [26710]
-;;;  test 10: marks                              [28929]
-;;;  test 11: dialogs                            [29890]
-;;;  test 12: extensions                         [30131]
-;;;  test 13: menus, edit lists, hooks, etc      [30402]
-;;;  test 14: all together now                   [32017]
-;;;  test 15: chan-local vars                    [32966]
-;;;  test 16: regularized funcs                  [34611]
-;;;  test 17: dialogs and graphics               [39679]
-;;;  test 18: enved                              [39771]
-;;;  test 19: save and restore                   [39790]
-;;;  test 20: transforms                         [41565]
-;;;  test 21: new stuff                          [43697]
-;;;  test 22: run                                [45703]
-;;;  test 23: with-sound                         [52524]
-;;;  test 25: X/Xt/Xm                            [57058]
-;;;  test 26: Gtk                                [60831]
-;;;  test 27: GL                                 [64390]
-;;;  test 28: errors                             [64514]
-;;;  test all done                               [67016]
-;;;  test the end                                [67262]
+;;;  test 0: constants                           [574]
+;;;  test 1: defaults                            [1160]
+;;;  test 2: headers                             [1361]
+;;;  test 3: variables                           [1678]
+;;;  test 4: sndlib                              [2313]
+;;;  test 5: simple overall checks               [5009]
+;;;  test 6: vcts                                [13952]
+;;;  test 7: colors                              [14278]
+;;;  test 8: clm                                 [14775]
+;;;  test 9: mix                                 [26775]
+;;;  test 10: marks                              [28994]
+;;;  test 11: dialogs                            [29955]
+;;;  test 12: extensions                         [30196]
+;;;  test 13: menus, edit lists, hooks, etc      [30467]
+;;;  test 14: all together now                   [32082]
+;;;  test 15: chan-local vars                    [33034]
+;;;  test 16: regularized funcs                  [34679]
+;;;  test 17: dialogs and graphics               [39747]
+;;;  test 18: enved                              [39839]
+;;;  test 19: save and restore                   [39858]
+;;;  test 20: transforms                         [41633]
+;;;  test 21: new stuff                          [43765]
+;;;  test 22: run                                [45771]
+;;;  test 23: with-sound                         [52592]
+;;;  test 25: X/Xt/Xm                            [57126]
+;;;  test 26: Gtk                                [60899]
+;;;  test 27: GL                                 [64458]
+;;;  test 28: errors                             [64582]
+;;;  test all done                               [67084]
+;;;  test the end                                [67332]
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs))
 
@@ -42,17 +42,8 @@
 ;(gc-verbose #t)
 (define profiling #f)
 
-;;; profiling returns these untested:
-;;;   without-graphics vector-synthesis vct->sound-file
-;;;   stretch-sound-via-dft snap-mark-to-beat snap-mix-to-beat
-;;;   set-current-output|input|error-port set-backtrace-length semitones->ratio semitones-envelope save-mark-properties
-;;;   save-region|selection|sound-dialog sample->file+ report-mark-names ratio->semitones
-;;;   protect-region port-line-number port-filename
-;;;   make-frame! make-big* load-verbose list-line-number
-;;;   legendre goertzel-channel global-environment gc-verbose getenv getpid
-;;;   filter-selection-and-smooth file-is-directory?
-;;;   delete-file-sorter delete-file-filter db-envelope cursor-follows-play current-error-port clear-backtrace
-;;;   clean-channel|sound
+;;; TODO: sample->file+[used in ws.scm] make-big* legendre[numerics.scm] filter-selection-and-smooth[selection.scm]
+
 
 (if (defined? 'run-clear-counts) (run-clear-counts))
 
@@ -1222,6 +1213,7 @@
       'contrast-control-amp (contrast-control-amp) 1.0
       'contrast-control-bounds (cadr (contrast-control-bounds)) 10.0
       'contrast-control? (without-errors (contrast-control?)) 'no-such-sound
+      'cursor-follows-play (cursor-follows-play) #f
       'cursor-location-offset (cursor-location-offset) 0
       'cursor-size (cursor-size) 15
       'cursor-style (cursor-style) cursor-cross
@@ -4968,6 +4960,44 @@
 	  (set! *clm-file-buffer-size* old-file-buffer-size)
 	  (set! (mus-file-buffer-size) old-file-buffer-size)
 	  (for-each (lambda (snd) (close-sound snd)) (sounds))
+	  ))
+
+    (if (file-is-directory? "oboe.snd") (snd-display ";file-is-directory? oboe.snd!"))
+    (if (not (file-is-directory? ".")) (snd-display ";file-is-directory? . #f!"))
+    (if (not (getenv "PATH")) (snd-display ";getenv: no PATH?"))
+    (if (not (number? (getpid))) (snd-display ";getpid: ~A" (getpid)))
+
+    (if with-s7
+	(begin
+	  (if (not (number? (list-line-number (list 1 2 3)))) (snd-display ";list-line-number: ~A" (list-line-number (list 1 2 3))))
+	  (if (not (list? (global-environment))) (snd-display ";global-environment not a list?: ~A" (global-environment)))
+	  (gc-verbose #t)
+	  (gc-verbose #f)
+	  (load-verbose #t)
+	  (load-verbose #f)
+	  (if (port-filename (current-output-port)) 
+	      (snd-display ";port-filename output: ~A" (port-filename (current-output-port))))
+	  (if (not (string? (port-filename (current-input-port)))) 
+	      (snd-display ";port-filename input: ~A" (port-filename (current-input-port))))
+	  (if (string? (port-line-number (current-input-port)))
+	      (snd-display ";port-line-number input: ~A" (port-line-number (current-input-port))))
+	  (set-backtrace-length 17)
+	  (clear-backtrace)
+
+	  (let ((ip (current-input-port)))
+	    (let ((tag (catch #t (lambda () (set-current-input-port "hiho!")) (lambda args (car args)))))
+	      (if (not (eq? tag 'wrong-type-arg)) (snd-display ";set-current-input-port tag: ~A" tag))
+	      (if (not (equal? ip (current-input-port))) (snd-display ";set-current-input-port clobbered port? ~A ~A" ip (current-input-port)))))
+
+	  (let ((ip (current-output-port)))
+	    (let ((tag (catch #t (lambda () (set-current-output-port "hiho!")) (lambda args (car args)))))
+	      (if (not (eq? tag 'wrong-type-arg)) (snd-display ";set-current-output-port tag: ~A" tag))
+	      (if (not (equal? ip (current-output-port))) (snd-display ";set-current-output-port clobbered port? ~A ~A" ip (current-output-port)))))
+
+	  (let ((ip (current-error-port)))
+	    (let ((tag (catch #t (lambda () (set-current-error-port "hiho!")) (lambda args (car args)))))
+	      (if (not (eq? tag 'wrong-type-arg)) (snd-display ";set-current-error-port tag: ~A" tag))
+	      (if (not (equal? ip (current-error-port))) (snd-display ";set-current-error-port clobbered port? ~A ~A" ip (current-error-port)))))
 	  ))
     
     ))
@@ -10810,6 +10840,7 @@ EDITS: 5
 	    
 	    (set! (show-sonogram-cursor) #t) 
 	    (set! (cursor-follows-play) #t) 
+	    (if (not (cursor-follows-play)) (snd-display ";cursor-follows-play set to #t: ~A" (cursor-follows-play)))
 
 	    (set! (transform-graph-type) graph-as-sonogram) 
 	    (play-and-wait)
@@ -20204,6 +20235,14 @@ EDITS: 2
 	(if (or (fneq (frame-ref val 0) 0.1)
 		(fneq (frame-ref val 1) 0.2))
 	    (snd-display ";8 frame-copy a: ~A" val))))
+
+    (let ((fr (make-frame! 3))
+	  (fr1 (make-frame 3)))
+      (if (not (equal? fr fr1)) (snd-display ";make-frame!: ~A ~A" fr fr1)))
+    (let ((fr (make-frame! 3 .1 .2 .3))
+	  (fr1 (make-frame 3 .1 .2 .3)))
+      (if (not (equal? fr fr1)) (snd-display ";make-frame! (args): ~A ~A" fr fr1)))
+    
     
     (let* ((mx1 (make-mixer 2 1 2 3 4))
 	   (mx2 (mixer* mx1 2.0)))
@@ -25738,6 +25777,15 @@ EDITS: 2
 					;(play-and-wait 0 nind)
       (revert-sound nind)
       (close-sound nind))
+
+    (if all-args
+	(let* ((ind (open-sound "1a.snd"))
+	       (len (frames ind 0)))
+	  (stretch-sound-via-dft 2.0 ind 0)
+	  (let ((new-len (frames ind 0)))
+	    (if (> (abs (- (* 2 len) new-len)) 10)
+		(snd-display ";stretch-sound-via-dft: ~A ~A" len new-len)))
+	  (close-sound ind)))
     
     (let ((make-mix-output (lambda (name i)
 			     (if (or (= i 0) (= i 1)) 
@@ -32040,6 +32088,10 @@ EDITS: 2
 	  (close-sound index)))
       (set! (clipping) old-clip)
       (set! (mus-clipping) old-mus-clip))
+    
+    (if (not (= (ratio->semitones 2) 12)) (snd-display ";ratio->semitones 2: ~A" (ratio->semitones 2)))
+    (if (not (= (ratio->semitones 2/3) -7)) (snd-display ";ratio->semitones 2/3: ~A" (ratio->semitones 2/3)))
+    (if (fneq (semitones->ratio 12) 2.0) (snd-display ";semitones->ratio 12: ~A" (semitones->ratio 12)))
     
     ))
 
@@ -45730,6 +45782,12 @@ EDITS: 1
 	
 	(close-sound ind0)
 	(close-sound ind1))
+
+      (let ((ind (open-sound "oboe.snd")))
+	(let ((g550 (goertzel-channel 550.0))
+	      (g1700 (goertzel-channel 1700.0)))
+	  (if (> (* 1000 g1700) g550) (snd-display ";goertzel-channel oboe: ~A ~A" g550 g1700))
+	  (close-sound ind)))
       
       )))
 
@@ -53169,6 +53227,18 @@ EDITS: 1
     (close-sound (find-sound "test.snd"))
     (delete-file "test.snd")
     )
+
+  (vector-synthesis (let ((ctr 0) (file 0)) 
+		    (lambda (files bufsize)
+		      (if (> ctr 4)
+			  (begin
+			    (set! file (+ 1 file))
+			    (set! ctr 0)
+			    (if (>= file files)
+				(set! file 0)))
+			  (set! ctr (+ 1 ctr)))
+		      file))
+		  (list "oboe.snd" "pistol.snd") #t)
 
   (if (and (provided? 'snd-threads)
 	   (provided? 's7))
@@ -67248,50 +67318,9 @@ EDITS: 1
 	       vfs)))))
 (gc)(gc)
 
-(if #f
-    (let ((total 0)
-	  (no-help 0)
-	  (help 0)
-	  (outside-help 0)
-	  (snd-test-help 0)
-	  (symbols '()))
-      (module-for-each 
-       (lambda (sym var) 
-	 (if (and (variable-bound? var) 
-		  (procedure? (variable-ref var)))
-	     (let ((value (variable-ref var)))
-	       (set! total (+ 1 total))
-	       (if (and (not (procedure-documentation value))
-			(not (procedure-property value 'documentation))
-			(or (not (procedure-with-setter? value))
-			    (not (procedure-documentation (procedure value)))))
-		   (let ((its-help (snd-help sym)))
-		     (if its-help
-			 (set! outside-help (+ 1 outside-help))
-			 (set! no-help (+ 1 no-help)))
-		     (if (or (not its-help)
-			     (and (not (string-contains its-help "snd-test.scm"))
-				  (not (string-contains its-help "definstrument"))))
-			 (set! symbols (cons (list sym its-help) symbols))
-			 (set! snd-test-help (+ 1 snd-test-help))))
-		   (set! help (+ 1 help))))))
-       (current-module))
-      
-      (snd-display (format #f "total: ~D, help: ~D, no-help: ~D, found help: ~D (~D in snd-test)" 
-			   total help no-help outside-help snd-test-help))
-      
-      ;; total: 4055, help: 3641, no-help: 109, found help: 305 (109 in snd-test)
-
-      (for-each
-       (lambda (lst)
-	 (snd-display "-------- ~A --------~%~A~%" (car lst) (cadr lst)))
-       (sort symbols (lambda (a b)
-		       (string< (symbol->string (car a)) 
-				(symbol->string (car b))))))))
-
 (if (defined? 'run-report-counts) (run-report-counts))
 
-(if profiling (profile))
+(if (and profiling with-s7) (profile))
 
 (if with-exit (exit))
 

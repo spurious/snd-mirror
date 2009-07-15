@@ -13457,9 +13457,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	}
 
 #if WITH_PROFILING
-      /* if profiling, function_name(sc->code) -- perhaps tick function_calls()? set timer? */
-      /*   also apply_object, vector app, func* app, macro? in all these cases sc->code is the thing we're applying */
-      /*   if timer, would need to be stackable? */
       symbol_calls(sc->code)++;
 #endif
 
