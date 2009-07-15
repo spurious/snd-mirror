@@ -1340,6 +1340,7 @@ int main(int argc, char **argv)
  *        s7 changes
  *
  * 14-Jul:    replaced s7_make_closure_star with s7_define_function_star.
+ *            profiling added on WITH_PROFILING switch (symbol-calls).
  * 29-Jun:    s7_format declaration.
  * 12-May:    s7_is_constant.
  * 20-Apr:    changed rationalize to be both r5rs-acceptable and fast.

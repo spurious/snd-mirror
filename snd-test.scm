@@ -42,6 +42,18 @@
 ;(gc-verbose #t)
 (define profiling #f)
 
+;;; profiling returns these untested:
+;;;   without-graphics vector-synthesis vct->sound-file
+;;;   stretch-sound-via-dft snap-mark-to-beat snap-mix-to-beat
+;;;   set-current-output|input|error-port set-backtrace-length semitones->ratio semitones-envelope save-mark-properties
+;;;   save-region|selection|sound-dialog sample->file+ report-mark-names ratio->semitones
+;;;   protect-region port-line-number port-filename
+;;;   make-frame! make-big* load-verbose list-line-number
+;;;   legendre goertzel-channel global-environment gc-verbose getenv getpid
+;;;   filter-selection-and-smooth file-is-directory?
+;;;   delete-file-sorter delete-file-filter db-envelope cursor-follows-play current-error-port clear-backtrace
+;;;   clean-channel|sound
+
 (if (defined? 'run-clear-counts) (run-clear-counts))
 
 (define with-guile (provided? 'snd-guile))
@@ -264,10 +276,6 @@
 (define (fffneq a b) 
   "float equal within .1"
   (> (abs (- a b)) .1))
-
-(define (fneqerr val true-val err) 
-  "float equal within err"
-  (> (abs (- val true-val)) err))
 
 (define (cneq a b)
   "complex equal within .001"
@@ -9521,6 +9529,26 @@ EDITS: 5
 	    (set! newmaxa (maxamp index))
 	    (if (fneq newmaxa (* 2.0 maxa)) (snd-display ";scale-selection-by: ~A?" newmaxa))
 	    (revert-sound index)
+	    (with-temporary-selection (lambda () (scale-selection-by 2.0)) 0 (frames) index 0)
+	    (set! newmaxa (maxamp index))
+	    (if (fneq newmaxa (* 2.0 maxa)) (snd-display ";with-temporary-selection: ~A?" newmaxa))
+	    (revert-sound index)
+	    (let ((samp999 (sample 999 index 0))
+		  (samp1001 (sample 1001 index 0)))
+	      (with-temporary-selection (lambda () (scale-selection-to 2.0)) 1000 1 index 0)
+	      (if (fneq (sample 1000 index 0) 2.0) (snd-display ";with-temporary-selection 1000: ~A" (sample 1000 index 0)))
+	      (if (fneq (sample 999 index 0) samp999) (snd-display ";with-temporary-selection 999: ~A from ~A" (sample 999 index 0) samp999))
+	      (if (fneq (sample 1001 index 0) samp1001) (snd-display ";with-temporary-selection 1001: ~A from ~A" (sample 1001 index 0) samp1001)))
+	    (revert-sound index)
+	    (make-selection 100 199 index 0)
+	    (let ((old-start (selection-position index 0))
+		  (old-len (selection-frames index 0)))
+	      (with-temporary-selection (lambda () (scale-selection-to 2.0)) 1000 1 index 0)
+	      (if (not (selection?)) (snd-display ";with-temporary-selection restore?"))
+	      (if (not (selection-member? index 0)) (snd-display ";with-temporary-selection not member?"))
+	      (if (not (= (selection-position index 0) old-start)) (snd-display ";with-temporary-selection start: ~A" (selection-position index 0)))
+	      (if (not (= (selection-frames index 0) old-len)) (snd-display ";with-temporary-selection len: ~A" (selection-frames index 0))))
+	    (revert-sound index)
 	    (select-all index) 
 	    (let ((rread (make-region-sample-reader 0 (car (regions))))
 		  (sread (make-sample-reader 0 index))
@@ -17187,6 +17215,8 @@ EDITS: 2
       (if (fneq val 0.0) (snd-display ";poly-resultant 2: ~A" val)))
     (let ((val (poly-as-vector-resultant (vector -1 0 1) (vector 2 1))))
       (if (fneq val 3.0) (snd-display ";poly-resultant 3: ~A" val)))
+    (let ((val (poly-resultant (vct -1 0 1) (vct 1 -2 1))))
+      (if (fneq val 0.0) (snd-display ";poly-resultant 0: ~A" val)))
     
     (let ((val (poly-as-vector-discriminant (vector -1 0 1))))
       (if (fneq val -4.0) (snd-display ";poly-discriminant 0: ~A" val)))
@@ -32279,18 +32309,21 @@ EDITS: 2
 	      ))
 	  
 	  (revert-sound)
-	  (select-all)
-	  (without-errors
-	   (if (and (region? 0) (selection?))
-	       ;; these are not necessarily coupled any more
-	       (let ((r1 (region-rms (car (regions))))
-		     (r2 (selection-rms))
-		     (r3 (selection-rms-1))
-		     (r4 (region-rms-1 (car (regions)))))
-		 (if (fneq r1 r4)
-		     (snd-display ";region rms: ~A ~A?" r1 r4))
-		 (if (fneq r2 r3)
-		     (snd-display ";selection rms: ~A ~A?" r2 r3)))))
+	  (let ((old-setting (selection-creates-region)))
+	    (set! (selection-creates-region) #t)
+	    (let ((reg (select-all)))
+	      (without-errors
+	       (if (and (region? reg) 
+			(selection?))
+		   (let ((r1 (region-rms (car (regions))))
+			 (r2 (selection-rms))
+			 (r3 (selection-rms-1))
+			 (r4 (region-rms-1 (car (regions)))))
+		     (if (fneq r1 r4)
+			 (snd-display ";region rms: ~A ~A?" r1 r4))
+		     (if (fneq r2 r3)
+			 (snd-display ";selection rms: ~A ~A?" r2 r3))))))
+	    (set! (selection-creates-region) old-setting))
 	  
 	  (forward-graph (choose-fd))
 	  (backward-graph (choose-fd))
@@ -67258,10 +67291,7 @@ EDITS: 1
 
 (if (defined? 'run-report-counts) (run-report-counts))
 
-(if profiling
-    (begin
-      (load "gad218.scm")
-      (profile)))
+(if profiling (profile))
 
 (if with-exit (exit))
 

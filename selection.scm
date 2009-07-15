@@ -186,11 +186,11 @@ to end of channel, beg defaults to 0, snd defaults to the currently selected sou
 		      (car (selection-members)))))
     (if (selection?)
 	(set! seldata (append seldata (list (selection-position) (selection-frames)))))
-    (make-selection beg (+ beg dur) snd chn)
+    (make-selection beg (- (+ beg dur) 1) snd chn)
     (let ((result (thunk)))
       (if seldata
 	  (make-selection (caddr seldata) 
-			  (+ (caddr seldata) (cadddr seldata))
+			  (- (+ (caddr seldata) (cadddr seldata)) 1)
 			  (car seldata)
 			  (cadr seldata))
 	  (clear-selection))

@@ -71,6 +71,7 @@
  *        format (only the simple directives)
  *        random for any numeric type and any numeric argument
  *        optional multidimensional and applicable vectors
+ *        symbol-calls if profiling is enabled
  *
  *   things I ought to add/change:
  *        length should work on vectors and strings [fill!, copy, reverse! null?]
@@ -78,6 +79,8 @@
  *          (what about files? numbers? -- integer-length, bignum-precision etc)
  *        get rid of values and call-with-values
  *        strings/lists should be (set-)applicable (*-ref|set! are ugly and pointless), hash-tables?
+ *
+ * TODO: doc profiling
  *
  *
  * Mike Scholz provided the FreeBSD support (complex trig funcs, etc)
@@ -394,6 +397,9 @@ typedef struct s7_cell {
       struct s7_cell *car;
       struct s7_cell *cdr;
       int line;
+#if WITH_PROFILING
+      long long int calls;
+#endif
     } cons;
     
     struct {
@@ -637,6 +643,9 @@ struct s7_scheme {
 #define symbol_name_length(p)         string_length(car(p))
 #define symbol_value(Sym)             cdr(Sym)
 #define set_symbol_value(Sym, Val)    cdr(Sym) = (Val)
+#if WITH_PROFILING
+  #define symbol_calls(p)             (p)->object.cons.calls
+#endif
 
 #define string_value(p)               ((p)->object.string.svalue)
 #define string_length(p)              ((p)->object.string.length)
@@ -1667,6 +1676,18 @@ void s7_provide(s7_scheme *sc, const char *feature)
   s7_eval_c_string(sc, expr);
   free(expr);
 }
+
+
+#if WITH_PROFILING
+static s7_pointer eval_symbol(s7_scheme *sc, s7_pointer sym);
+static s7_pointer g_symbol_calls(s7_scheme *sc, s7_pointer args)
+{
+  #define H_symbol_calls "(symbol-calls sym) returns the number of times sym was called (applied)"
+  if (!s7_is_symbol(car(args)))
+    return(s7_wrong_type_arg_error(sc, "symbol-calls", 0, car(args), "a symbol"));    
+  return(s7_make_integer(sc, symbol_calls(eval_symbol(sc, car(args)))));
+}
+#endif
 
 
 
@@ -13434,6 +13455,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  add_backtrace_entry(sc, sc->code, sc->args, sc->saved_line_number);
 	  sc->saved_line_number = 0;
 	}
+
+#if WITH_PROFILING
+      /* if profiling, function_name(sc->code) -- perhaps tick function_calls()? set timer? */
+      /*   also apply_object, vector app, func* app, macro? in all these cases sc->code is the thing we're applying */
+      /*   if timer, would need to be stackable? */
+      symbol_calls(sc->code)++;
+#endif
+
       check_stack_size(sc);
 
       switch (type(sc->code))
@@ -13455,7 +13484,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			      make_list_3(sc, 
 					  s7_make_string_with_length(sc, "~A: too many arguments: ~A", 26),
 					  sc->code, sc->args)));
-	    
+
 	    sc->value = function_call(sc->code)(sc, sc->args);
 
 #if 0
@@ -19693,6 +19722,9 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "symbol->string",          g_symbol_to_string,        1, 0, false, H_symbol_to_string);
   s7_define_function(sc, "string->symbol",          g_string_to_symbol,        1, 0, false, H_string_to_symbol);
   s7_define_function(sc, "symbol->value",           g_symbol_to_value,         1, 0, false, H_symbol_to_value);
+#if WITH_PROFILING
+  s7_define_function(sc, "symbol-calls",            g_symbol_calls,            1, 0, false, H_symbol_calls);
+#endif
   
   s7_define_function(sc, "global-environment",      g_global_environment,      0, 0, false, H_global_environment);
   s7_define_function(sc, "current-environment",     g_current_environment,     0, 1, false, H_current_environment);

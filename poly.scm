@@ -222,9 +222,9 @@
    (if (vct? p1) (vct->vector p1) p1)))
 
 
-;;; (poly-as-vector-resultant (vector -1 0 1) (vector 1 -2 1))  0.0
+;;; (poly-as-vector-resultant (vector -1 0 1) (vector 1 -2 1))  0.0 (x=1 is the intersection)
 ;;; (poly-as-vector-resultant (vector -1 0 2) (vector 1 -2 1))   1.0
-;;; (poly-as-vector-resultant (vector -1 0 1) (vector 1 1))      0.0
+;;; (poly-as-vector-resultant (vector -1 0 1) (vector 1 1))      0.0 (x=-1 is the intersection)
 ;;; (poly-as-vector-resultant (vector -1 0 1) (vector 2 1))      3.0
 
 ;;; (poly-as-vector-discriminant (vector -1 0 1)) -4.0
