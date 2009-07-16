@@ -128,6 +128,7 @@
 ;;; (originally in extensions.scm)
 
 (define (clear-selection)
+  "(clear-selection) unselects any currently selected samples."
   (if (selection?)
       (for-each
        (lambda (s)
@@ -182,6 +183,11 @@ to end of channel, beg defaults to 0, snd defaults to the currently selected sou
 ;;; (originally in extensions.scm)
 
 (define (with-temporary-selection thunk beg dur snd chn)
+
+  "(with-temporary-selection thunk beg dur snd chn) saves the current selection placement, makes a new selection \
+of the data from sample beg to beg + dur in the given channel.  It then calls thunk, and
+restores the previous selection (if any).  It returns whatever 'thunk' returned."
+
   (let ((seldata (and (selection?) 
 		      (car (selection-members)))))
     (if (selection?)
@@ -232,21 +238,20 @@ to end of channel, beg defaults to 0, snd defaults to the currently selected sou
 	(report-in-minibuffer "no selection")))
   #t)
 
-(define eval-over-selection 
-  (lambda (func)
-    "(eval-over-selection func) evaluates func on each sample in the current selection"
-    (if (and (procedure? func) 
-	     (selection?))
-	(let* ((beg (selection-position))
-	       (len (selection-frames)))
-	  (apply map (lambda (snd chn)
-		       (if (selection-member? snd chn)
-			   (let ((new-data (make-vct len))
-				 (old-data (channel->vct beg len snd chn)))
-			     (do ((k 0 (+ 1 k))) ;here we're applying our function to each sample in the currently selected portion
-				 ((= k len) (vct->channel new-data beg len snd chn))
-			       (vct-set! new-data k (func (vct-ref old-data k)))))))
-		 (all-chans))))))
+(define (eval-over-selection func)
+  "(eval-over-selection func) evaluates func on each sample in the current selection"
+  (if (and (procedure? func) 
+	   (selection?))
+      (let* ((beg (selection-position))
+	     (len (selection-frames)))
+	(apply map (lambda (snd chn)
+		     (if (selection-member? snd chn)
+			 (let ((new-data (make-vct len))
+			       (old-data (channel->vct beg len snd chn)))
+			   (do ((k 0 (+ 1 k))) ;here we're applying our function to each sample in the currently selected portion
+			       ((= k len) (vct->channel new-data beg len snd chn))
+			     (vct-set! new-data k (func (vct-ref old-data k)))))))
+	       (all-chans)))))
 
 ;;; the same idea can be used to apply a function between two marks (see eval-between-marks in marks.scm)
 

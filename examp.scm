@@ -2326,7 +2326,9 @@ a sort of play list: (region-play-list (list (list 0.0 0) (list 0.5 1) (list 1.0
 ;;; -------- re-order channels 
 
 (define (scramble-channels . new-order)
-  ;; (scramble-channels 3 2 0 1) means chan 3 goes to 0, etc
+
+  "scramble-channels can arbitrarily re-order a sound's channels. The new channel order is \
+passed as the arguments so to end with channel 3 in channel 0, 2 in 1, 0 in 2, and 1 in 3, (scramble-channels 3 2 0 1)"
   
   (define (find-chan chans chan len)
     (let ((pos #f))

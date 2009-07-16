@@ -2411,17 +2411,17 @@ s7_scheme *s7_xen_initialize(s7_scheme *sc)
 
   /* these are for compatibility with Guile */
   XEN_EVAL_C_STRING("(defmacro use-modules (arg . args) #f)");
-  XEN_EVAL_C_STRING("(define (debug-enable . args) #f)");
-  XEN_EVAL_C_STRING("(define (read-enable . args) #f)");
+  XEN_EVAL_C_STRING("(define (debug-enable . args) \"guile compatibility, a no-op in s7\" #f)");
+  XEN_EVAL_C_STRING("(define (read-enable . args) \"guile compatibility, a no-op in s7\" #f)");
   XEN_EVAL_C_STRING("(define-macro (debug-set! . args) #f)"); /* needs to be a macro so that its arguments are not evaluated */
-  XEN_EVAL_C_STRING("(define (make-soft-port . args) #f)");
-  XEN_EVAL_C_STRING("(define (current-module) (current-environment))");
+  XEN_EVAL_C_STRING("(define (make-soft-port . args) \"guile compatibility, a no-op in s7\" #f)");
+  XEN_EVAL_C_STRING("(define (current-module) \"synonym for current-environment\" (current-environment))");
   XEN_EVAL_C_STRING("(define load-from-path load)");
   XEN_EVAL_C_STRING("(define shell system)"); /* backwards compatibility (no longer in examp.scm) */
-  XEN_EVAL_C_STRING("(define (1+ x) (+ x 1))");
-  XEN_EVAL_C_STRING("(define (1- x) (- x 1))");
+  XEN_EVAL_C_STRING("(define (1+ x) \"add 1 to arg\" (+ x 1))");
+  XEN_EVAL_C_STRING("(define (1- x) \"subtract 1 from arg\" (- x 1))");
   XEN_EVAL_C_STRING("(defmacro while (cond . body) `(do () ((not ,cond)) ,@body))");
-  XEN_EVAL_C_STRING("(define (identity x) x)");                    /* popup.scm uses this */
+  XEN_EVAL_C_STRING("(define (identity x) \"return arg\" x)");                    /* popup.scm uses this */
   XEN_EVAL_C_STRING("(define (throw . args) (apply error args))"); /* selection.scm uses this */
 
   return(s7);

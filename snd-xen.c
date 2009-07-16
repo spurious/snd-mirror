@@ -1662,6 +1662,7 @@ static XEN g_mus_audio_describe(void)
 
 static XEN g_dlopen(XEN name)
 {
+  #define H_dlopen "(dlopen lib) loads the dynamic library 'lib' and returns a handle for it (for dlinit and dlclose)"
   void *handle;
   const char *cname;
   XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ONLY_ARG, "dlopen", "a string (filename)");
@@ -1692,18 +1693,21 @@ static XEN g_dlopen(XEN name)
 
 static XEN g_dlclose(XEN handle)
 {
+  #define H_dlclose "(dlclose handle) may close the library referred to by 'handle'."
   return(C_TO_XEN_INT(dlclose((void *)(XEN_UNWRAP_C_POINTER(handle)))));
 }
 
 
 static XEN g_dlerror(void)
 {
+  #define H_dlerror "(dlerror) returns a string describing the last dlopen/dlinit/dlclose error"
   return(C_TO_XEN_STRING(dlerror()));
 }
 
 
 static XEN g_dlinit(XEN handle, XEN func)
 {
+  #define H_dlinit "(dlinit handle func) calls 'func' from the library referred to by 'handle'."
   typedef void *(*snd_dl_func)(void);
   void *proc;
   proc = dlsym((void *)(XEN_UNWRAP_C_POINTER(handle)), XEN_TO_C_STRING(func));
@@ -3074,10 +3078,10 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
 #endif
 
 #if HAVE_SCHEME && HAVE_DLFCN_H
-  XEN_DEFINE_PROCEDURE("dlopen",  g_dlopen_w,  1, 0 ,0, "");
-  XEN_DEFINE_PROCEDURE("dlclose", g_dlclose_w, 1, 0 ,0, "");
-  XEN_DEFINE_PROCEDURE("dlerror", g_dlerror_w, 0, 0 ,0, "");
-  XEN_DEFINE_PROCEDURE("dlinit",  g_dlinit_w,  2, 0 ,0, "");
+  XEN_DEFINE_PROCEDURE("dlopen",  g_dlopen_w,  1, 0 ,0, H_dlopen);
+  XEN_DEFINE_PROCEDURE("dlclose", g_dlclose_w, 1, 0 ,0, H_dlclose);
+  XEN_DEFINE_PROCEDURE("dlerror", g_dlerror_w, 0, 0 ,0, H_dlerror);
+  XEN_DEFINE_PROCEDURE("dlinit",  g_dlinit_w,  2, 0 ,0, H_dlinit);
 #endif
 
 #if HAVE_LADSPA && HAVE_EXTENSION_LANGUAGE && HAVE_DLFCN_H && HAVE_DIRENT_H
@@ -3243,8 +3247,9 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   XEN_EVAL_C_STRING("(define *snd-loaded-files* '())");
   XEN_EVAL_C_STRING("(define *snd-remember-paths* #t)");
 
-  XEN_EVAL_C_STRING("(define (symbol-append . args) (string->symbol (apply string-append (map symbol->string args))))");
-  /* taken from guile/ice-9/boot9.scm, used by KM's stuff (gui.scm etc) */
+  XEN_EVAL_C_STRING("(define (symbol-append . args) \"(symbol-append . args) makes a new symbol from its args\"\
+                       (string->symbol (apply string-append (map symbol->string args))))");
+  /* taken from guile ice-9/boot9.scm, used by KM's stuff (gui.scm etc) */
 
   /* from ice-9/r4rs.scm but with output to snd listener */
   XEN_EVAL_C_STRING("\
@@ -3313,7 +3318,8 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
 #endif
 
 #if HAVE_SCHEME
-  XEN_EVAL_C_STRING("(define (clm-print . args) (snd-print (apply format #f args)))");
+  XEN_EVAL_C_STRING("(define (clm-print . args) \"(clm-print . args) applies format to args and prints the result via snd-print\" \
+                       (snd-print (apply format #f args)))");
 #endif
 
 

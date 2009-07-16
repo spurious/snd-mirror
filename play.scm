@@ -15,7 +15,12 @@
 (use-modules (ice-9 format) (ice-9 optargs))
 (provide 'snd-play.scm)
 
-(if (not (provided? 'snd-snd8.scm)) (load-from-path "snd8.scm")) ; samples->sound-data
+
+(define* (samples->sound-data :optional (beg 0) num snd chn obj pos (sd-chan 0))
+  (vct->sound-data 
+   (channel->vct beg num snd chn pos) 
+   (or obj (make-sound-data 1 (or num (frames snd chn))))
+   sd-chan))
 
 
 (define* (open-play-output :optional out-chans out-srate out-format out-bufsize)

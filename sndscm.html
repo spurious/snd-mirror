@@ -9032,15 +9032,22 @@ to each sample in the selection.
 </td></tr><tr><td></td><td>
 filter-selection-and-smooth filters the current selection with flt, then mixes it back into the original using
 ramp-dur to set how long the cross-fade ramps are.
+<pre>
+    (filter-selection-and-smooth .01 (vct .25 .5 .5 .5 .25))
+</pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
 <!-- make-selection -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
-<a class=def name="makeselection">make-selection</a> <code>(beg end snd chn)</code>
+<a class=def name="makeselection">make-selection</a> <code>(:optional beg end snd chn)</code>
 </td></tr><tr><td></td><td>
 make-selection makes a selection, like <a href="extsnd.html#makeregion">make-region</a> but without creating
-a region.  It selects the 'dur' samples starting at 'beg' in the given channel.
+a region.  make-selection follows snd's sync field, and applies to all snd's channels if chn is not specified. end defaults
+to end of channel, beg defaults to 0, and snd defaults to the currently selected sound.
+<pre>
+    (make-selection 1000 2000)
+</pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 

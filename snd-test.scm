@@ -1,35 +1,35 @@
 ;;; Snd tests
 ;;;
-;;;  test 0: constants                           [574]
-;;;  test 1: defaults                            [1160]
-;;;  test 2: headers                             [1361]
-;;;  test 3: variables                           [1678]
-;;;  test 4: sndlib                              [2313]
-;;;  test 5: simple overall checks               [5009]
-;;;  test 6: vcts                                [13952]
-;;;  test 7: colors                              [14278]
-;;;  test 8: clm                                 [14775]
-;;;  test 9: mix                                 [26775]
-;;;  test 10: marks                              [28994]
-;;;  test 11: dialogs                            [29955]
-;;;  test 12: extensions                         [30196]
-;;;  test 13: menus, edit lists, hooks, etc      [30467]
-;;;  test 14: all together now                   [32082]
-;;;  test 15: chan-local vars                    [33034]
-;;;  test 16: regularized funcs                  [34679]
-;;;  test 17: dialogs and graphics               [39747]
-;;;  test 18: enved                              [39839]
-;;;  test 19: save and restore                   [39858]
-;;;  test 20: transforms                         [41633]
-;;;  test 21: new stuff                          [43765]
-;;;  test 22: run                                [45771]
-;;;  test 23: with-sound                         [52592]
-;;;  test 25: X/Xt/Xm                            [57126]
-;;;  test 26: Gtk                                [60899]
-;;;  test 27: GL                                 [64458]
-;;;  test 28: errors                             [64582]
-;;;  test all done                               [67084]
-;;;  test the end                                [67332]
+;;;  test 0: constants                           [566]
+;;;  test 1: defaults                            [1152]
+;;;  test 2: headers                             [1354]
+;;;  test 3: variables                           [1671]
+;;;  test 4: sndlib                              [2306]
+;;;  test 5: simple overall checks               [5002]
+;;;  test 6: vcts                                [13954]
+;;;  test 7: colors                              [14280]
+;;;  test 8: clm                                 [14777]
+;;;  test 9: mix                                 [26804]
+;;;  test 10: marks                              [29023]
+;;;  test 11: dialogs                            [29984]
+;;;  test 12: extensions                         [30225]
+;;;  test 13: menus, edit lists, hooks, etc      [30496]
+;;;  test 14: all together now                   [32115]
+;;;  test 15: chan-local vars                    [33067]
+;;;  test 16: regularized funcs                  [34712]
+;;;  test 17: dialogs and graphics               [39780]
+;;;  test 18: enved                              [39872]
+;;;  test 19: save and restore                   [39891]
+;;;  test 20: transforms                         [41666]
+;;;  test 21: new stuff                          [43798]
+;;;  test 22: run                                [45810]
+;;;  test 23: with-sound                         [52631]
+;;;  test 25: X/Xt/Xm                            [57177]
+;;;  test 26: Gtk                                [60950]
+;;;  test 27: GL                                 [64509]
+;;;  test 28: errors                             [64633]
+;;;  test all done                               [67135]
+;;;  test the end                                [67342]
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs))
 
@@ -16659,14 +16659,15 @@ EDITS: 2
 	  (list 0 1 2 3 4 5 6)))
        (list 2.0 0.5 0.1 -0.5 3.0 0.8)))
 
-    (let ((index (with-sound (:scaled-to 0.5) 
+    (let ((snd (with-sound (:scaled-to 0.5) 
 		   (do ((i 0 (+ 1 i)) 
 			(x 0.0 (+ x .02))) 
 		       ((= i 100)) 
 		     (outa i (legendre 20 (cos x)))))))
-      (if (fneq (sample 0 index 0) 0.5) (snd-display ";legendre(cos(x)) 0: ~A" (sample 0 index 0)))
-      (if (fneq (sample 50 index 0) 0.062572978) (snd-display ";legendre(cos(x)) 50: ~A" (sample 50 index 0)))
-      (close-sound index))
+      (let ((index (find-sound snd)))
+	(if (fneq (sample 0 index 0) 0.5) (snd-display ";legendre(cos(x)) 0: ~A" (sample 0 index 0)))
+	(if (fneq (sample 50 index 0) 0.062572978) (snd-display ";legendre(cos(x)) 50: ~A" (sample 50 index 0)))
+	(close-sound index)))
 						     
 
     (let ((h0 (lambda (x) 1.0))
@@ -67336,6 +67337,21 @@ EDITS: 1
 (if (defined? 'run-report-counts) (run-report-counts))
 
 (if (and profiling with-s7) (profile))
+
+#|
+(let ((st (symbol-table)))
+  (do ((i 0 (+ i 1))) 
+      ((= i (vector-length st)))
+    (let ((lst (vector-ref st i)))
+      (for-each 
+       (lambda (sym)
+	 (if (defined? sym)
+	     (let ((val (symbol->value sym)))
+	       (if (and (procedure? val)
+			(string=? "" (procedure-documentation val)))
+		   (format #t "~A " sym)))))
+       lst))))
+|#
 
 (if with-exit (exit))
 

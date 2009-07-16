@@ -6449,9 +6449,7 @@ s7_pointer s7_make_string_with_length(s7_scheme *sc, const char *str, int len)
   s7_pointer x;
   x = new_cell(sc);
   set_type(x, T_STRING | T_ATOM | T_FINALIZABLE | T_SIMPLE | T_DONT_COPY);
-  if (str)
-    string_value(x) = s7_strdup(str);
-  else string_value(x) = NULL;
+  string_value(x) = s7_strdup(str);
   string_length(x) = len;
   return(x);
 }
@@ -10210,7 +10208,7 @@ void s7_define_function_star(s7_scheme *sc, const char *name, s7_function fnc, c
   /* make an internal function of any args that calls fnc, then wrap it in define* and use eval_c_string */
   /* should (does) this ignore :key and other such noise? */
   char *internal_function, *internal_arglist;
-  int name_len, arglist_len, len, args;
+  int arglist_len, len, args;
   const char *local_sym;
   s7_pointer local_args;
   
@@ -10226,10 +10224,9 @@ void s7_define_function_star(s7_scheme *sc, const char *name, s7_function fnc, c
   local_sym = symbol_name(s7_gensym(sc, "define*"));
   s7_define_function(sc, local_sym, fnc, args, 0, 0, NULL);
 
-  name_len = safe_strlen(name) + safe_strlen(local_sym);
-  len = 32 + name_len + 2 * arglist_len;
+  len = 32 + 2 * arglist_len + safe_strlen(doc) + safe_strlen(name) + safe_strlen(local_sym);
   internal_function = (char *)calloc(len, sizeof(char));
-  snprintf(internal_function, len, "(define* (%s %s) (%s %s)", name, arglist, local_sym, internal_arglist);
+  snprintf(internal_function, len, "(define* (%s %s) \"%s\" (%s %s)", name, arglist, doc, local_sym, internal_arglist);
   s7_eval_c_string(sc, internal_function);
 
   free(internal_function);
@@ -10252,7 +10249,7 @@ const char *s7_procedure_documentation(s7_scheme *sc, s7_pointer x)
   if (s7_is_procedure_with_setter(x))
     return(pws_documentation(x));
   
-  return(NULL);
+  return(""); /* not NULL here so that (string=? "" (procedure-documentation no-doc-func)) -> #t */
 }
 
 

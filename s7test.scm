@@ -1485,6 +1485,11 @@
 (test (string-length "\"") 1)
 (test (string-length (make-string 100 #\a)) 100)
 
+(test (string=? (string) "") #t)
+(test (string=? (string) (make-string 0)) #t)
+(test (string=? (string-copy (string)) (make-string 0)) #t)
+(test (string=? "" (make-string 0)) #t)
+(test (string=? "" (string-append)) #t)
 
 
 
@@ -2819,6 +2824,10 @@
 	       (read)))))
   (if (not (equal? val lists))
       (begin (display "read/write lists returned ") (display val) (newline))))
+
+(if with-open-input-string-and-friends
+    (if (not (string=? "" (with-output-to-string (lambda () (display "")))))
+	(begin (display "with-output-to-string null string?"))))
 
 (if with-open-input-string-and-friends
     (let ((str (with-output-to-string

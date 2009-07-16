@@ -415,6 +415,23 @@ void s7_for_each_symbol(s7_scheme *sc, bool (*symbol_func)(const char *symbol_na
    *   the current binding.
    */
 
+  /* in Scheme, you can use the symbol-table function.  In the next example, we scan the symbol table
+   *   for any function that doesn't have documentation:
+   *
+       (let ((st (symbol-table)))
+         (do ((i 0 (+ i 1))) 
+             ((= i (vector-length st)))
+           (let ((lst (vector-ref st i)))
+             (for-each 
+               (lambda (sym)
+       	         (if (defined? sym)
+	             (let ((val (symbol->value sym)))
+	               (if (and (procedure? val)
+			        (string=? "" (procedure-documentation val)))
+		           (format #t "~A " sym)))))
+               lst))))
+  */
+
 
 void s7_define(s7_scheme *sc, s7_pointer env, s7_pointer symbol, s7_pointer value);
 void s7_define_variable(s7_scheme *sc, const char *name, s7_pointer value);
