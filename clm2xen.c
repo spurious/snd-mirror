@@ -5970,7 +5970,7 @@ handled by the output generator 'obj', in channel 'chan' at frame 'samp'"
 
 static XEN g_sample_to_file_add(XEN obj1, XEN obj2)
 {
-  #define H_sample_to_file_add "(" S_sample_to_file_add " obj1 obj2): mixes obj2 into obj1"
+  #define H_sample_to_file_add "(" S_sample_to_file_add " obj1 obj2): mixes obj2 (an output generator) into obj1 (also an output generator)"
 
 #if HAVE_S7 && HAVE_PTHREADS
   if (s7_is_thread_variable(obj2))

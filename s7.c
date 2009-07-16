@@ -80,8 +80,6 @@
  *        get rid of values and call-with-values
  *        strings/lists should be (set-)applicable (*-ref|set! are ugly and pointless), hash-tables?
  *
- * TODO: doc profiling
- *
  *
  * Mike Scholz provided the FreeBSD support (complex trig funcs, etc)
  * Rick Taube and Andrew Burnson provided the MS Visual C++ support

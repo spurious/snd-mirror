@@ -59,6 +59,7 @@ typedef double s7_Double;
    *    procedure-arity         a list describing the arglist of a function: '(required-args optional-args rest-arg)
    *    procedure-source        returns the source (a list) of a procedure
    *    help                    tries to find a help string associated with its argument
+   *    symbol-calls            if profiling is enabled, this returns the number of times its argument (a symbol) has been called
    *
    * and various others mentioned at the start of s7.c -- nearly every Scheme implementation includes
    * stuff like logior, sinh, read-line, format, define*, etc.  See also the start of s7.c for choices

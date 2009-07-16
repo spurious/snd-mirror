@@ -42,9 +42,6 @@
 ;(gc-verbose #t)
 (define profiling #f)
 
-;;; TODO: sample->file+[used in ws.scm] make-big* legendre[numerics.scm] filter-selection-and-smooth[selection.scm]
-
-
 (if (defined? 'run-clear-counts) (run-clear-counts))
 
 (define with-guile (provided? 'snd-guile))
@@ -9743,6 +9740,14 @@ EDITS: 5
 	(close-sound index)
 	(delete-file "fmv.snd")
 	
+	(let ((ind (open-sound "1a.snd")))
+	  (scale-to 1.0 ind 0)
+	  (make-selection 1000 2000 ind 0)
+	  (filter-selection-and-smooth .01 (vct .25 .5 .5 .5 .25))
+	  (if (fneq (sample 1500 ind 0) -0.0045776) (snd-display ";filter-selection-and-smooth: ~A" (sample 1500 ind 0)))
+	  (revert-sound ind)
+	  (close-sound ind))
+
 	(set! index (new-sound "fmv.snd" mus-ircam mus-bshort 22050 1 "this is a comment"))
 	(let ((v0 (make-vct 128)))
 	  (vct-set! v0 64 .5)
@@ -16653,6 +16658,16 @@ EDITS: 2
 		  (snd-display ";~A ^ ~A = ~A ~A?" x pow lv sv))))
 	  (list 0 1 2 3 4 5 6)))
        (list 2.0 0.5 0.1 -0.5 3.0 0.8)))
+
+    (let ((index (with-sound (:scaled-to 0.5) 
+		   (do ((i 0 (+ 1 i)) 
+			(x 0.0 (+ x .02))) 
+		       ((= i 100)) 
+		     (outa i (legendre 20 (cos x)))))))
+      (if (fneq (sample 0 index 0) 0.5) (snd-display ";legendre(cos(x)) 0: ~A" (sample 0 index 0)))
+      (if (fneq (sample 50 index 0) 0.062572978) (snd-display ";legendre(cos(x)) 50: ~A" (sample 50 index 0)))
+      (close-sound index))
+						     
 
     (let ((h0 (lambda (x) 1.0))
 	  (h1 (lambda (x) (* 2 x)))

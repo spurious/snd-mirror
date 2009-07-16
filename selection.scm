@@ -285,6 +285,8 @@ to end of channel, beg defaults to 0, snd defaults to the currently selected sou
 ;;; -------- filter-selection-and-smooth
 
 (define* (filter-selection-and-smooth ramp-dur flt :optional order)
+  "(filter-selection-and-smooth ramp-dur flt :optional order) applies 'flt' (via filter-sound) to \
+the selection, the smooths the edges with a ramp whose duration is 'ramp-dur' (in seconds)"
   (let ((temp-file (snd-tempnam)))
     (save-selection temp-file)
     (let ((selsnd (open-sound temp-file)))
@@ -297,5 +299,4 @@ to end of channel, beg defaults to 0, snd defaults to the currently selected sou
 	(env-selection (list 0 1  ramp-dur 0  (- tmp-dur ramp-dur) 0  tmp-dur 1))))
     (mix temp-file (selection-position) #t #f #f #f #f)))
 
-
-
+;;; (filter-selection-and-smooth .01 (vct .25 .5 .5 .5 .25))
