@@ -335,10 +335,6 @@ enum {MUS_NO_ERROR, MUS_NO_FREQUENCY, MUS_NO_PHASE, MUS_NO_GEN, MUS_NO_LENGTH,
 
 #define MUS_LOOP_INFO_SIZE 8
 
-#ifndef Float
-  #define Float float
-#endif
-
 #ifdef __cplusplus
 extern "C" {
 #endif

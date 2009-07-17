@@ -32,10 +32,6 @@
   #define S_vct_plus     "vct+"
 #endif
 
-#ifndef Float
-  #define Float float
-#endif
-
 typedef struct {
   off_t length;
   Float *data;

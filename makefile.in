@@ -103,17 +103,17 @@ NO_FILES =
 
 main_target: @MAKE_TARGET@
 
-snd: $(SNDLIB_HEADERS) $(SND_HEADERS) $(GX_HEADERS) $(S7_O_FILES) $(SNDLIB_FILES) $(MIDI_FILES) $(O_FILES) $(GX_FILES) $(GL_FILES)
+snd: $(SNDLIB_HEADERS) $(SND_HEADERS) $(GX_HEADERS) $(S7_HEADERS) $(S7_O_FILES) $(SNDLIB_FILES) $(MIDI_FILES) $(O_FILES) $(GX_FILES) $(GL_FILES)
 	(cd po && $(MAKE))
 	$(CC) $(LDFLAGS) $(CFLAGS) $(S7_O_FILES) $(SNDLIB_FILES) $(MIDI_FILES) $(O_FILES) $(GX_FILES) $(GL_FILES) -o snd $(SNDLIB_LIB) $(XEN_LIBS) $(GTK_LIBS) $(GL_LIBS) $(MOTIF_LIBS) $(JACK_LIBS) $(RT_LIBS) $(AUDIO_LIB) $(FFTW_LIBS) $(GSL_LIBS) $(FAM_LIB) $(GMP_LIBS) $(LIBS)
 
-xm: 	xen.h mus-config.h
+xm: 	xen.h mus-config.h $(S7_HEADERS)
 	rm -f xen.o
 	$(CC) -c xen.c -DUSE_SND=0 $(DEFS) $(SO_FLAGS) $(GTK_CFLAGS) $(CAIRO_CFLAGS) $(CFLAGS) $(XEN_CFLAGS) $(MOTIF_FLAGS) $(GSL_FLAGS) $(JACK_FLAGS) $(GL_FLAGS)
 	$(CC) -c xm.c -DUSE_SND=0 $(DEFS) $(SO_FLAGS) $(GTK_CFLAGS) $(CAIRO_CFLAGS) $(CFLAGS) $(XEN_CFLAGS) $(MOTIF_FLAGS) $(GSL_FLAGS) $(JACK_FLAGS) $(GL_FLAGS)
 	$(SO_LD) xen.o $(GM_FILES) -o $(GM_SO_FILE) $(SO_FLAGS) $(LDSO_FLAGS) $(ORIGINAL_LDFLAGS) $(LD_XM_LIBS) $(GL_LIBS) $(MOTIF_LIBS) $(FAM_LIB) $(GMP_LIBS) $(LIBS)
 
-xg: 	xen.h mus-config.h
+xg: 	xen.h mus-config.h $(S7_HEADERS)
 	rm -f xen.o
 	$(CC) -c xen.c -DUSE_SND=0 $(DEFS) $(SO_FLAGS) $(GTK_CFLAGS) $(CAIRO_CFLAGS) $(CFLAGS) $(XEN_CFLAGS) $(MOTIF_FLAGS) $(GSL_FLAGS) $(JACK_FLAGS) $(GL_FLAGS)
 	$(CC) -c xg.c -DUSE_SND=0 $(DEFS) $(SO_FLAGS) $(GTK_CFLAGS) $(CAIRO_CFLAGS) $(CFLAGS) $(XEN_CFLAGS) $(MOTIF_FLAGS) $(GSL_FLAGS) $(JACK_FLAGS) $(GL_FLAGS)
@@ -121,19 +121,19 @@ xg: 	xen.h mus-config.h
 
 widget: snd_widget.o
 
-snd_widget.o: $(SNDLIB_HEADERS) $(SND_HEADERS) $(GX_HEADERS) $(SNDLIB_FILES) $(MIDI_FILES) $(O_FILES) $(GX_FILES) $(GL_FILES)
+snd_widget.o: $(SNDLIB_HEADERS) $(SND_HEADERS) $(GX_HEADERS) $(S7_HEADERS) $(SNDLIB_FILES) $(MIDI_FILES) $(O_FILES) $(GX_FILES) $(GL_FILES)
 	$(LD) -r $(LDFLAGS) $(SNDLIB_FILES) $(MIDI_FILES) $(O_FILES) $(GX_FILES) $(GL_FILES) -o snd_widget.o
 
-external: $(SNDLIB_HEADERS) $(SND_HEADERS) $(GX_HEADERS) $(SNDLIB_FILES) $(MIDI_FILES) $(O_FILES) $(GX_FILES) $(GL_FILES)  snd_pd_external.o
+external: $(SNDLIB_HEADERS) $(SND_HEADERS) $(GX_HEADERS) $(S7_HEADERS) $(SNDLIB_FILES) $(MIDI_FILES) $(O_FILES) $(GX_FILES) $(GL_FILES)  snd_pd_external.o
 	$(CC) -shared -o snd.pd_linux $(LDFLAGS) $(SNDLIB_FILES) $(MIDI_FILES) $(O_FILES)  $(GX_FILES) $(SNDLIB_LIB) $(XEN_LIBS) $(JACK_LIBS) $(RT_LIBS) $(AUDIO_LIB) $(FFTW_LIBS) $(GSL_LIBS) $(FAM_LIB) $(GMP_LIBS) $(LIBS) snd_pd_external.o
 	strip --strip-unneeded snd.pd_linux
 	ln -sf snd-10/snd.pd_linux ..
 
-$(SNDLIB_O_FILES): $(SNDLIB_HEADERS) $(SND_HEADERS)
-$(MIDI_O_FILES): $(SNDLIB_HEADERS) $(SND_HEADERS)
-$(O_FILES): $(SNDLIB_HEADERS) $(SND_HEADERS) $(SND_X_HEADERS)
-$(X_O_FILES): $(SNDLIB_HEADERS) $(SND_HEADERS) $(SND_X_HEADERS)
-$(G_O_FILES): $(SNDLIB_HEADERS) $(SND_HEADERS) $(SND_G_HEADERS)
+$(SNDLIB_O_FILES): $(SNDLIB_HEADERS) $(SND_HEADERS) $(S7_HEADERS)
+$(MIDI_O_FILES): $(SNDLIB_HEADERS) $(SND_HEADERS) $(S7_HEADERS)
+$(O_FILES): $(SNDLIB_HEADERS) $(SND_HEADERS) $(SND_X_HEADERS) $(S7_HEADERS)
+$(X_O_FILES): $(SNDLIB_HEADERS) $(SND_HEADERS) $(SND_X_HEADERS) $(S7_HEADERS)
+$(G_O_FILES): $(SNDLIB_HEADERS) $(SND_HEADERS) $(SND_G_HEADERS) $(S7_HEADERS)
 $(S7_O_FILES): $(S7_HEADERS) $(S7_FILES)
 
 clean:
@@ -164,7 +164,7 @@ allclean:
 	rm -f *.a
 	rm -f snd sndplay audinfo sndrecord sndinfo
 
-sndplay: $(SNDLIB_HEADERS)
+sndplay: $(SNDLIB_HEADERS) $(S7_HEADERS)
 	$(CC) -c $(DEFS) $(CFLAGS) -DUSE_SND=0 headers.c
 	$(CC) -c $(DEFS) $(CFLAGS) -DUSE_SND=0 io.c
 	$(CC) -c $(DEFS) $(CFLAGS) -DUSE_SND=0 audio.c
@@ -172,7 +172,7 @@ sndplay: $(SNDLIB_HEADERS)
 	$(CC) -c $(DEFS) $(CFLAGS) -DUSE_SND=0 sndplay.c
 	$(CC) $(LDFLAGS) $(CFLAGS) headers.o io.o audio.o sound.o sndplay.o -o sndplay $(JACK_LIBS) $(AUDIO_LIB) $(LIBS)
 
-sndrecord: $(SNDLIB_HEADERS)
+sndrecord: $(SNDLIB_HEADERS) $(S7_HEADERS)
 	$(CC) -c $(DEFS) $(CFLAGS) -DUSE_SND=0 headers.c
 	$(CC) -c $(DEFS) $(CFLAGS) -DUSE_SND=0 io.c
 	$(CC) -c $(DEFS) $(CFLAGS) -DUSE_SND=0 audio.c
@@ -180,7 +180,7 @@ sndrecord: $(SNDLIB_HEADERS)
 	$(CC) -c $(DEFS) $(CFLAGS) -DUSE_SND=0 sndrecord.c
 	$(CC) $(LDFLAGS) $(CFLAGS) headers.o io.o audio.o sound.o sndrecord.o -o sndrecord $(JACK_LIBS) $(AUDIO_LIB) $(LIBS)
 
-sndinfo: $(SNDLIB_HEADERS)
+sndinfo: $(SNDLIB_HEADERS) $(S7_HEADERS)
 	$(CC) -c $(DEFS) $(CFLAGS) -DUSE_SND=0 headers.c
 	$(CC) -c $(DEFS) $(CFLAGS) -DUSE_SND=0 io.c
 	$(CC) -c $(DEFS) $(CFLAGS) -DUSE_SND=0 audio.c
@@ -188,7 +188,7 @@ sndinfo: $(SNDLIB_HEADERS)
 	$(CC) -c $(DEFS) $(CFLAGS) -DUSE_SND=0 sndinfo.c
 	$(CC) $(LDFLAGS) $(CFLAGS) headers.o io.o audio.o sound.o sndinfo.o -o sndinfo $(JACK_LIBS) $(AUDIO_LIB) $(LIBS)
 
-audinfo: $(SNDLIB_HEADERS)
+audinfo: $(SNDLIB_HEADERS) $(S7_HEADERS)
 	$(CC) -c $(DEFS) $(CFLAGS) -DUSE_SND=0 headers.c
 	$(CC) -c $(DEFS) $(CFLAGS) -DUSE_SND=0 io.c
 	$(CC) -c $(DEFS) $(CFLAGS) -DUSE_SND=0 audio.c

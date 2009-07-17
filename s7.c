@@ -11881,7 +11881,7 @@ static const char *s7_type_name(s7_pointer arg)
 	  case NUM_RATIO: return("ratio");
 	  case NUM_REAL:  
 	  case NUM_REAL2: return("real");
-	  default:        return("complex");
+	  default:        return("complex number"); /* "a complex" doesn't sound right */
 	  }
       }
     }

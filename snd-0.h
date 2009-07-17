@@ -33,10 +33,6 @@
 #define CANNOT_SAVE      XEN_ERROR_TYPE("cannot-save")
 #define CANT_UPDATE_FILE XEN_ERROR_TYPE("cant-update-file")
 
-#ifndef Float
-  #define Float float
-#endif
-
 #ifndef STRFTIME_FORMAT
   #define STRFTIME_FORMAT "%a %d-%b-%Y %H:%M %Z"
 #endif
