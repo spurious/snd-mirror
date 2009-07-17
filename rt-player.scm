@@ -130,6 +130,7 @@ rt-player.scm
 
 (eval-c (<-> "-I" snd-header-files-path)
 	"#include <xen.h>"
+        "#include <_sndlib.h>"
 	"#include <vct.h>"
 	
 	"extern Float protected_next_sample(void *sf)"

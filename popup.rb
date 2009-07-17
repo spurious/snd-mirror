@@ -2,7 +2,7 @@
 
 # Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Thu Sep 05 22:28:49 CEST 2002
-# Changed: Sun Mar 01 15:01:33 CET 2009
+# Changed: Fri Jul 17 22:08:22 CEST 2009
 
 # Commentary:
 #
@@ -124,12 +124,14 @@ end")
 # calls all hook-procs as long as they return true
 class Hook
   def run_hook_bool(*args)
-    callcc do |ret|
-      self.run_hook do |prc|
-        if prc.call(*args) != true then ret.call(false) end
+    ret = true
+    self.run_hook do |prc|
+      if prc.call(*args) != true
+        ret = false
+        break
       end
-      true
     end
+    ret
   end
 end
 

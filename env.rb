@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Sat Sep 20 23:24:17 CEST 2003
-# Changed: Wed Mar 05 00:56:48 CET 2008
+# Changed: Fri Jul 17 21:25:28 CEST 2009
 
 # Commentary:
 #
@@ -723,7 +723,8 @@ class Peak_env
 
   # intended as an $initial_graph_hook_function
   def restore_info_upon_open(snd, chn, dur)
-    if (not (peak_info = @saved_peak_info[file_name(snd)])) or
+    peak_info = @saved_peak_info[file_name(snd)]
+    if (not peak_info) or
         (data_format(snd) == peak_info[:data_format] and channels(snd) == peak_info[:channels])
       peak_file = mus_expand_filename(info_file_name(snd, chn))
       if File.exist?(peak_file) and

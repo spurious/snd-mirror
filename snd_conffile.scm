@@ -5,21 +5,19 @@
 (define srfi-loaded #f)
 (define common-list-loaded #f)
 
-(define (atleast1.8.0?)
+(define (atleast-version a b c)
   (let ((version (map string->number (string-split (version) #\.))))
-    (or (> (car version) 1)
-	(and (= 1 (car version))
-	     (or (> (cadr version) 8)
-		 (and (= 8 (cadr version))
-		      (>= (caddr version) 0)))))))
+    (or (> (car version) a)
+	(and (= (car version) a)
+	     (or (> (cadr version) b)
+		 (and (= b (cadr version))
+		      (>= (caddr version) c))))))) 
+ 
+(define (atleast1.8.0?)
+  (atleast-version 1 8 0))
 
 (define (atleast1.6.4?)	 	
-   (let ((version (map string->number (string-split (version) #\.))))	 	
-     (or (> (car version) 1)	 	
-         (and (= 1 (car version))	 	
-              (or (> (cadr version) 6)	 	
-                  (and (= 6 (cadr version))	 	
-                       (>= (caddr version) 4)))))))	 	
+  (atleast-version 1 6 4))
 
 (if (not (atleast1.6.4?))
     (begin

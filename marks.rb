@@ -2,7 +2,7 @@
 
 # Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Wed Mar 23 02:08:47 CET 2005
-# Changed: Tue Nov 20 02:32:31 CET 2007
+# Changed: Fri Jul 17 22:28:33 CEST 2009
 
 # Commentary:
 #
@@ -58,16 +58,16 @@ module Mark
   add_help(:mark_name2id,
            "mark_name2id(name) is like find-mark but searches all currently accessible channels")
   def mark_name2id(name)
-    callcc do |ret|
-      Snd.sounds.each do |snd|
-        channels(snd).times do |chn|
-          if mark?(m = find_mark(name, snd, chn))
-            ret.call(m)
-          end
+    ret = :no_such_mark
+    Snd.sounds.each do |snd|
+      channels(snd).times do |chn|
+        if mark?(m = find_mark(name, snd, chn))
+          ret = m
+          break
         end
       end
-      :no_such_mark
     end
+    ret
   end
 
   # move_syncd_marks moves all syncd marks together
@@ -237,14 +237,14 @@ plays the portion between the marks (searching for plausible default marks)")
            mark1
          else
            if ms = marks(snd, chn)
-             callcc do |ret|
-               ms.each do |m|
-                 if mark_sample(m) >= left_sample(snd, chn)
-                   ret.call(m)
-                 end
+             ret = false
+             ms.each do |m|
+               if mark_sample(m) >= left_sample(snd, chn)
+                 ret = m
+                 break
                end
-               false
              end
+             ret
            else
              Snd.display("no marks in current window?")
              false
@@ -255,13 +255,14 @@ plays the portion between the marks (searching for plausible default marks)")
              mark2
            else
              if ms = marks(snd, chn)
-               callcc do |ret|
-                 ms.each do |m|
-                   if mark_sample(m) > mark_sample(m1)
-                     ret.call(m)
-                   end
+               ret = false
+               ms.each do |m|
+                 if mark_sample(m) > mark_sample(m1)
+                   ret = m
+                   break
                  end
                end
+               ret
              else
                Snd.display("no second mark?")
                false

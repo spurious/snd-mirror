@@ -1364,6 +1364,8 @@ old bus.
         (else
          (* 8.17579891564 (exp (* .0577622650 freq))))))
 
+(define-stalin midi-to-hz midi-to-freq)
+
 (add-stalin-ec 'midi_eventnum '(<int> midi_eventnum 0))
 (add-stalin-ec 'midi_control '(<int> midi_control[500] {0}))
 (add-stalin-ec 'midi_data1 '(<int> midi_data1[500] {0}))

@@ -106,7 +106,7 @@
 (definstrument (p start  :key (duration 1.0)
 		  (keyNum 60.0)                    ; middleC=60: can use fractional part to detune
 		  (strike-velocity 0.5)            ; corresponding normalized velocities (range: 0.0--1.0)
-		  (pedal-down #f)                  ; set to t for sustain pedal down...pedal-down-times not yet impl.
+		  (pedal-down #f)                  ; set to #t for sustain pedal down...pedal-down-times not yet implemented
 		  (release-time-margin 0.75)       ; extra compute time allowed beyond duration
 		  (amp .5)                         ; amp scale of noise inputs...
 		  
@@ -237,8 +237,8 @@
 	 (detuning2 (or detuning2 (envelope-interp keyNum detuning2-table)))
 	 (detuning3 (or detuning3 (envelope-interp keyNum detuning3-table)))
 	 (stiffnessCoefficient (or stiffnessCoefficient (envelope-interp keyNum stiffnessCoefficient-table)))
-	 (singleStringDecayRate (or singleStringDecayRate (envelope-interp keyNum singleStringDecayRate-table)))
-	 (singleStringDecayRate (* singleStringDecayRateFactor singleStringDecayRate))
+	 (singleStringDecayRate-1 (or singleStringDecayRate (envelope-interp keyNum singleStringDecayRate-table)))
+	 (singleStringDecayRate (* singleStringDecayRateFactor singleStringDecayRate-1))
 	 (singleStringZero (or singleStringZero (envelope-interp keyNum singleStringZero-table)))
 	 (singleStringPole (or singleStringPole (envelope-interp keyNum singleStringPole-table)))
 	 

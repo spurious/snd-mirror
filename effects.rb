@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Fri Feb 07 23:56:21 CET 2003
-# Changed: Sat Nov 17 00:53:47 CET 2007
+# Changed: Fri Jul 17 23:20:57 CEST 2009
 
 # Commentary:
 #
@@ -511,7 +511,22 @@ module Effects
               if with_env
                 env_sound(with_env, pts[0], pts[1] - pts[0])
               else
-                scale_by(@amount, pts[0], pts[1] - pts[0])
+                pos = false
+                len = false
+                if selection?
+                  pos = selection_position
+                  len = selection_frames
+                end
+                set_selection_member?(false)
+                set_selection_position(pts[0])
+                set_selection_frames(pts[1] - pts[0])
+                scale_selection_by(@amount)
+                if integer?(pos)
+                  set_selection_position(pos)
+                  set_selection_frames(len)
+                else
+                  set_selection_member?(false)
+                end
               end
             end
           end
@@ -567,7 +582,22 @@ Move the slider to change the scaling amount.",
             selection? ? scale_selection_to(@amount) : snd_warning("no selection")
           else
             if pts = plausible_mark_samples
-              scale_to(@amount, pts[0], pts[1] - pts[0])
+              pos = false
+              len = false
+              if selection?
+                pos = selection_position
+                len = selection_frames
+              end
+              set_selection_member?(false)
+              set_selection_position(pts[0])
+              set_selection_frames(pts[1] - pts[0])
+              scale_selection_to(@amount)
+              if integer?(pos)
+                set_selection_position(pos)
+                set_selection_frames(len)
+              else
+                set_selection_member?(false)
+              end
             end
           end
         end
@@ -2035,9 +2065,11 @@ to be cross_synthesized, the synthesis amplitude, the FFT size, and the radius v
                                              RXmNvalueChangedCallback,
                                              [lambda do |w, c, i| @fft_size = c if Rset(i) end, s],
                                              RXmNset, (s == @fft_size)])
-            @default_fft_widget = button if s == @fft_size
+            if s == @fft_size
+              @default_fft_widget = button
+            end
           end
-          end
+        end
         @dlg.add_target() do |t| @target = t end
       end
       activate_dialog(@dlg.dialog)
@@ -2339,27 +2371,27 @@ unless defined? $__private_snd_menu__ and $__private_snd_menu__
         samps = make_vct(10)
         len = frames()
         samps_ctr = 0
-        callcc do |ret|
-          ctr = loc
-          until c_g? or ctr == len
-            samp0, samp1 = samp1, samp2
-            samp2 = next_sample(reader)
-            samps[samps_ctr] = samp0
-            if samps_ctr < 9
-              samps_ctr += 1
-            else
-              samps_ctr = 0
-            end
-            local_max = [0.1, vct_peak(samps)].max
-            if ((samp0 - samp1).abs > local_max) and
-                ((samp1 - samp2).abs > local_max) and
-                ((samp0 - samp2).abs < (local_max / 2))
-              ret.call(ctr - 1)
-            end
-            ctr += 1
+        ret = false
+        ctr = loc
+        until c_g? or ctr == len
+          samp0, samp1 = samp1, samp2
+          samp2 = next_sample(reader)
+          samps[samps_ctr] = samp0
+          if samps_ctr < 9
+            samps_ctr += 1
+          else
+            samps_ctr = 0
           end
-          false
+          local_max = [0.1, vct_peak(samps)].max
+          if ((samp0 - samp1).abs > local_max) and
+              ((samp1 - samp2).abs > local_max) and
+              ((samp0 - samp2).abs < (local_max / 2))
+            ret = ctr - 1
+            break
+          end
+          ctr += 1
         end
+        ret
       end
       remove_click = lambda do |loc|
         if click = find_click.call(loc) and (not c_g?)

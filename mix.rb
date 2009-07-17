@@ -1,8 +1,8 @@
 # mix.rb -- mix.scm --> mix.rb -*- snd-ruby -*-
 
-# Translator: Michael Scholz <scholz-micha@gmx.de>
+# Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Tue Feb 22 13:40:33 CET 2005
-# Changed: Thu Jul 05 22:19:55 CEST 2007
+# Changed: Fri Jul 17 22:32:58 CEST 2009
 
 # Commentary:
 #
@@ -223,18 +223,18 @@ is a $mix_click_hook function that describes a mix and its properties.")
   add_help(:mix_name2id,
            "mix_name2id(name)  returns the mix id associated with NAME.")
   def mix_name2id(name)
-    callcc do |ret|
-      Snd.sounds.each do |snd|
-        channels(snd).times do |chn|
-          mixes(snd, chn).each do |m|
-            if mix_name(m) == name
-              ret.call(m)
-            end
+    ret = :no_such_mix
+    Snd.sounds.each do |snd|
+      channels(snd).times do |chn|
+        mixes(snd, chn).each do |m|
+          if mix_name(m) == name
+            ret = m
+            break
           end
         end
       end
-      :no_such_mix
     end
+    ret
   end
 
   # ;;; ---------------- backwards compatibilty
@@ -403,11 +403,17 @@ module Mixer_matrix
         else
           mx2
         end
-    a == b or callcc do |flag|
-      a.to_a.zip(b.to_a) do |a1, b1|
-        flag.call(false) unless vequal(a1, b1)
-      end
+    if a == b
       true
+    else
+      flag = true
+      a.to_a.zip(b.to_a) do |a1, b1|
+        unless vequal(a1, b1)
+          flag = false
+          break
+        end
+      end
+      flag
     end
   end
 
@@ -415,14 +421,16 @@ module Mixer_matrix
     if mx.length == 1
       true
     else
-      callcc do |flag|
-        mx.channels.times do |i|
-          mx.channels.times do |j|
-            flag.call(false) if i != j and mixer_ref(mx, i, j).nonzero?
+      flag = true
+      mx.channels.times do |i|
+        mx.channels.times do |j|
+          if i != j and mixer_ref(mx, i, j).nonzero?
+            flag = false
+            break
           end
         end
-        true
       end
+      ret
     end
   end
 

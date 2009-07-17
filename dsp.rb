@@ -2,7 +2,7 @@
 
 # Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Mon Mar 07 13:50:44 CET 2005
-# Changed: Mon May 11 23:15:07 CEST 2009
+# Changed: Fri Jul 17 22:05:57 CEST 2009
 
 # Commentary:
 #
@@ -524,18 +524,18 @@ tries to determine the current pitch: spot_freq(left_sample)")
     data = autocorrelate(channel2vct(samp, fftlen, snd, chn))
     cor_peak = vct_peak(data)
     cor_peak2 = 2.0 * cor_peak
-    callcc do |ret|
-      (1...fftlen - 2).each do |i|
-        if data[i] < data[i + 1] and data[i + 2] < data[i + 1]
-          logla = log10((cor_peak + data[i])     / cor_peak2)
-          logca = log10((cor_peak + data[i + 1]) / cor_peak2)
-          logra = log10((cor_peak + data[i + 2]) / cor_peak2)
-          offset = (0.5 * (logla - logra)) / (logla + logra + -2.0 * logca)
-          ret.call(srate(snd) / (2 * (i + 1 + offset)))
-        end
+    ret = 0.0
+    (1...fftlen - 2).each do |i|
+      if data[i] < data[i + 1] and data[i + 2] < data[i + 1]
+        logla = log10((cor_peak + data[i])     / cor_peak2)
+        logca = log10((cor_peak + data[i + 1]) / cor_peak2)
+        logra = log10((cor_peak + data[i + 2]) / cor_peak2)
+        offset = (0.5 * (logla - logra)) / (logla + logra + -2.0 * logca)
+        ret = srate(snd) / (2.0 * (i + 1 + offset))
+        break
       end
-      0.0
     end
+    ret
   end
   # $graph_hook.add_hook!("examp-left-sample-hook") do |snd, chn, y0, y1|
   #   report_in_minibuffer(format("(freq: %.3f)", spot_freq(left_sample(snd, chn))))

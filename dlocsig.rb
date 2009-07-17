@@ -1,10 +1,8 @@
 # dlocsig.rb -- CLM -> Snd/Ruby translation of dlocsig.lisp -*- snd-ruby -*-
 
-# Copyright (C) 2003--2005 Michael Scholz
-
-# Translator/Author: Michael Scholz <scholz-micha@gmx.de>
+# Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Tue Mar 25 23:21:37 CET 2003
-# Last: Thu May 19 19:43:43 CEST 2005
+# Changed: Fri Jul 17 21:43:46 CEST 2009
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -604,8 +602,8 @@ module DL
     raa = ra * ra
     sn = sin(-angle)
     omcs = 1 - cos(-angle)
-    raa = raa.map do |x| omcs * x end
-    ra = ra.map do |x| sn * x end
+    raa = raa.map do |xx| omcs * xx end
+    ra = ra.map do |xx| sn * xx end
     (ri + ra + raa)
   end
 
@@ -871,7 +869,7 @@ module DL
       end
       if @render_using == B_format_ambisonics and
           @rev_channels.nonzero? and
-          (not (@rev_channels == 1 or @rev_channels == 4))
+          (@rev_channels != 1 and @rev_channels != 4)
         dl_error("B_format_ambisonics accepts only 0, 1 or 4 rev_channels")
       end
       if @rev_channels > @out_channels
@@ -1916,7 +1914,7 @@ module DL
       @ry = ry
       @rz = rz
       tf = times[-1]
-      @rt = times.map do |ti| ti / tf end
+      @rt = times.map do |tii| tii / tf end
       reset_transformation()
     end
 
@@ -2224,7 +2222,7 @@ module DL
         end
       end
       tf = times[-1]
-      @rt = times.map do |ti| ti / tf end 
+      @rt = times.map do |tii| tii / tf end 
       reset_transformation()
     end
   end

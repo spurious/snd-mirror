@@ -1100,7 +1100,7 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 
 ;;; -------- profiling
 
-(define* (profile (file "sort.data"))
+(define* (profile :optional (file "sort.data"))
 
   (define (sort-vector v less?)
     ;; vector sort taken from the Larceny benchmarks

@@ -1,17 +1,14 @@
 # poly.rb -- polynomial-related stuff; poly.scm --> poly.rb -*- snd-ruby -*-
 
-# Translator: Michael Scholz <scholz-micha@gmx.de>
+# Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Sat Apr 09 23:55:07 CEST 2005
-# Changed: Sat Dec 02 00:21:59 CET 2006
+# Changed: Fri Jul 17 21:31:31 CEST 2009
 
 # Commentary: (see poly.scm)
 #
 # class Complex
 #  to_f
 #  to_f_or_c
-#  
-# class Numeric
-#  to_c
 #  
 # class Poly < Vec
 #  inspect
@@ -69,12 +66,6 @@ class Complex
 
   def to_f_or_c
     self.image.zero? ? self.to_f : self
-  end
-end
-
-class Numeric
-  def to_c
-    self.to_f + Complex::I
   end
 end
 

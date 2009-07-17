@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Sat Jan 03 17:30:23 CET 2004
-# Changed: Wed May 13 02:37:33 CEST 2009
+# Changed: Fri Jul 17 21:26:56 CEST 2009
 
 # Commentary:
 # 
@@ -571,7 +571,8 @@ sets selection from mono files (from external program)")
   end
 
   def back_or_forth_mark(count, snd, chn)
-    if count.nonzero? and (not (mk = Snd.marks(snd, chn)).empty?)
+    mk = Snd.marks(snd, chn)
+    if count.nonzero? and (not mk.empty?)
       if mk.length == 1
         set_cursor(mark_sample(mk.first), snd, chn)
         mk.first

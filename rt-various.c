@@ -136,7 +136,7 @@ int rt_mus_error(int type,const char* fmt,...){
 
 void* clm_calloc_atomic(int num,size_t size,const char* what){
   if(clm_tar_heap==NULL || mainpid==0 || getpid()==mainpid){
-    return CALLOC(num,size);
+    return calloc(num,size);
   }else{
     void *ret=tar_alloc_atomic(clm_tar_heap,num*size);
     if(ret==NULL){
@@ -150,7 +150,7 @@ void* clm_calloc_atomic(int num,size_t size,const char* what){
 
 void* clm_calloc(int num,size_t size,const char* what){
   if(clm_tar_heap==NULL || mainpid==0 || getpid()==mainpid){
-    return CALLOC(num,size);
+    return calloc(num,size);
   }else{
     void *ret=tar_alloc(clm_tar_heap,num*size);
     if(ret==NULL){
@@ -162,7 +162,7 @@ void* clm_calloc(int num,size_t size,const char* what){
 
 void* clm_malloc_atomic(size_t size,const char* what){
   if(clm_tar_heap==NULL || mainpid==0 || getpid()==mainpid){
-    return MALLOC(size);
+    return malloc(size);
   }else{
     void *ret=tar_alloc_atomic(clm_tar_heap,size);
     if(ret==NULL){
@@ -174,7 +174,7 @@ void* clm_malloc_atomic(size_t size,const char* what){
 
 void* clm_malloc(size_t size,const char* what){
   if(clm_tar_heap==NULL || mainpid==0 || getpid()==mainpid){
-    return MALLOC(size);
+    return malloc(size);
   }else{
     void *ret=tar_alloc(clm_tar_heap,size);
     if(ret==NULL){
@@ -186,7 +186,7 @@ void* clm_malloc(size_t size,const char* what){
 
 void* clm_realloc(void* old,size_t newsize){
   if(clm_tar_heap==NULL || mainpid==0 || getpid()==mainpid){
-    return REALLOC(old,newsize);
+    return realloc(old,newsize);
   }else{
     return memcpy(clm_malloc(newsize,"realloc"),old,newsize);
   }
@@ -195,7 +195,7 @@ void* clm_realloc(void* old,size_t newsize){
 
 void clm_free(void* p){
   if(clm_tar_heap==NULL || mainpid==0 || getpid()==mainpid){
-    FREE(p);
+    free(p);
   }
 }
 

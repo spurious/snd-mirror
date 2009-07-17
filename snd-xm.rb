@@ -2,7 +2,7 @@
 
 # Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Wed Feb 25 05:31:02 CET 2004
-# Changed: Sun Mar 01 22:08:00 CET 2009
+# Changed: Fri Jul 17 22:34:55 CEST 2009
 
 # Commentary:
 #
@@ -390,14 +390,17 @@ module Snd_XM
            "find_child(widget, name)  \
 returns a widget named 'name', if one can be found in the widget hierarchy beneath 'widget'")
   def find_child(widget, name)
-    callcc do |ret|
-      each_child(widget) do |child|
-        if widget_name(child) == name
-          ret.call(child)
-        end
+    ret = false
+    each_child(widget) do |child|
+      if widget_name(child) == name
+        ret = child
+        break
       end
+    end
+    unless ret
       Snd.raise(:no_such_widget, name)
     end
+    ret
   end
 
   def set_label_sensitive(widget, name, set_p = false)
@@ -1293,28 +1296,30 @@ adds a label to the minibuffer area showing the current free space (for use with
   add_help(:menu_option,
            "menu_option(name)  finds the widget associated with a given menu item name")
   def menu_option(name)
-    callcc do |ret|
-      menu_widgets.cdr.each do |top_menu|
-        each_child(top_menu) do |w|
-          option_holder = RXtGetValues(w, [RXmNsubMenuId, 0]).cadr
-          each_child(option_holder) do |menu|
-            if name == RXtName(menu)
-              ret.call(menu)
-            else
-              if RXmIsCascadeButton(menu)
-                options = RXtGetValues(menu, [RXmNsubMenuId, 0]).cadr
-                each_child(options) do |inner_menu|
-                  if name == RXtName(inner_menu)
-                    ret.call(inner_menu)
-                  end
+    ret = false
+    menu_widgets.cdr.each do |top_menu|
+      each_child(top_menu) do |w|
+        option_holder = RXtGetValues(w, [RXmNsubMenuId, 0]).cadr
+        each_child(option_holder) do |menu|
+          if name == RXtName(menu)
+            ret = menu
+            break
+          else
+            if RXmIsCascadeButton(menu)
+              options = RXtGetValues(menu, [RXmNsubMenuId, 0]).cadr
+              each_child(options) do |inner_menu|
+                if name == RXtName(inner_menu)
+                  ret = inner_menu
+                  break
                 end
               end
-            end 
-          end
+            end
+          end 
         end
       end
-      Snd.raise(:no_such_menu, name)
     end
+    Snd.raise(:no_such_menu, name) unless ret
+    ret
   end
 
   add_help(:set_main_color_of_widget,

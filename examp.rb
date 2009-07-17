@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Wed Sep 04 18:34:00 CEST 2002
-# Changed: Tue May 12 21:05:58 CEST 2009
+# Changed: Fri Jul 17 22:23:35 CEST 2009
 
 # Commentary:
 #
@@ -2474,7 +2474,8 @@ class Snd
       end
       
       def open_from_path(fname)
-        find_sound(snd_file = Snd.fullname(fname)) or open_sound(snd_file)
+        snd_file = Snd.fullname(fname)
+        find_sound(snd_file) or open_sound(snd_file)
       end
       
       def find_from_path(fname)
@@ -2491,12 +2492,17 @@ class Snd
         fname
       else
         f = File.basename(fname)
-        callcc do |brk|
-          Snd_path.each do |path|
-            File.exist?(path + "/" + f) and brk.call(path + "/" + f)
+        brk = false
+        Snd_path.each do |path|
+          if File.exist?(path + "/" + f)
+            brk = path + "/" + f
+            break
           end
+        end
+        unless brk
           Snd.raise(:no_such_file, fname)
         end
+        brk
       end
     end
     
@@ -4216,33 +4222,29 @@ turns a vocal sound into whispering: voiced2unvoiced(1.0, 256, 2.0, 2.0)")
     out_data = make_vct([len, outlen].max)
     formants = make_array(freq_inc) do |i| make_formant(i * bin, radius) end
     old_peak_amp = new_peak_amp = 0.0
-    callcc do |brk|
-      outlen.times do |i|
-        if ctr == freq_inc
-          if c_g?
-            brk.call("interrupted")
-          end
-          fdr = channel2vct(inctr, fftsize, snd, chn)
-          if (pk = vct_peak(fdr)) > old_peak_amp
-            old_peak_amp = pk
-          end
-          spectrum(fdr, fdi, false, 2)
-          inctr += hop
-          vct_subtract!(fdr, spectr)
-          vct_scale!(fdr, 1.0 / freq_inc)
-          ctr = 0
+    outlen.times do |i|
+      break if c_g?
+      if ctr == freq_inc
+        fdr = channel2vct(inctr, fftsize, snd, chn)
+        if (pk = vct_peak(fdr)) > old_peak_amp
+          old_peak_amp = pk
         end
-        ctr += 1
-        vct_add!(spectr, fdr)
-        if (outval = formant_bank(spectr, formants, rand(noi))).abs > new_peak_amp
-          new_peak_amp = outval.abs
-        end
-        out_data[i] = outval
+        spectrum(fdr, fdi, false, 2)
+        inctr += hop
+        vct_subtract!(fdr, spectr)
+        vct_scale!(fdr, 1.0 / freq_inc)
+        ctr = 0
       end
-      vct_scale!(out_data, amp * (old_peak_amp / new_peak_amp))
-      vct2channel(out_data, 0, [len, outlen].max, snd, chn, false,
-                  format("%s(%s, %s, %s, %s", get_func_name, amp, fftsize, r, tempo))
+      ctr += 1
+      vct_add!(spectr, fdr)
+      if (outval = formant_bank(spectr, formants, rand(noi))).abs > new_peak_amp
+        new_peak_amp = outval.abs
+      end
+      out_data[i] = outval
     end
+    vct_scale!(out_data, amp * (old_peak_amp / new_peak_amp))
+    vct2channel(out_data, 0, [len, outlen].max, snd, chn, false,
+                format("%s(%s, %s, %s, %s", get_func_name, amp, fftsize, r, tempo))
   end
 
   # very similar but use sum-of-cosines (glottal pulse train?) instead of white noise
@@ -4264,29 +4266,27 @@ uses sum-of-cosines to manipulate speech sounds")
     out_data = make_vct(len)
     old_peak_amp = new_peak_amp = 0.0
     formants = make_array(freq_inc) do |i| make_formant(i * bin, radius) end
-    callcc do |brk|
-      out_data.map do |i|
-        outval = 0.0
-        if ctr == freq_inc
-          if c_g? then brk.call("interrupted") end
-          fdr = channel2vct(inctr, fftsize, snd, chn)
-          pk = vct_peak(fdr)
-          if pk > old_peak_amp then old_peak_amp = pk end
-          spectrum(fdr, fdi, false, 2)
-          inctr += freq_inc
-          vct_subtract!(fdr, spectr)
-          vct_scale!(fdr, 1.0 / freq_inc)
-          ctr = 0
-        end
-        ctr += 1
-        vct_add!(spectr, fdr)
-        outval = formant_bank(spectr, formants, sum_of_cosines(pulse))
-        if outval.abs > new_peak_amp then new_peak_amp = outval.abs end
-        outval
+    out_data.map do |i|
+      break if c_g?
+      outval = 0.0
+      if ctr == freq_inc
+        fdr = channel2vct(inctr, fftsize, snd, chn)
+        pk = vct_peak(fdr)
+        if pk > old_peak_amp then old_peak_amp = pk end
+        spectrum(fdr, fdi, false, 2)
+        inctr += freq_inc
+        vct_subtract!(fdr, spectr)
+        vct_scale!(fdr, 1.0 / freq_inc)
+        ctr = 0
       end
-      vct_scale!(out_data, amp * (old_peak_amp / new_peak_amp))
-      vct2channel(out_data, 0, len, snd, chn)
+      ctr += 1
+      vct_add!(spectr, fdr)
+      outval = formant_bank(spectr, formants, sum_of_cosines(pulse))
+      if outval.abs > new_peak_amp then new_peak_amp = outval.abs end
+      outval
     end
+    vct_scale!(out_data, amp * (old_peak_amp / new_peak_amp))
+    vct2channel(out_data, 0, len, snd, chn)
   end
   # pulse_voice(80,   20.0, 1.0, 1024, 0.01)
   # pulse_voice(80,  120.0, 1.0, 1024, 0.2)
@@ -4321,16 +4321,17 @@ convolves snd0 and snd1, scaling by amp, returns new max amp: cnvtest(0, 1, 0.1)
            "swap_selection_channels) swaps the currently selected data's channels")
   def swap_selection_channels
     find_selection_sound = lambda do |not_this|
-      callcc do |ret|
-        Snd.sounds.each do |snd|
-          channels(snd).times do |chn|
-            if selection_member?(snd, chn) and
-                (not_this.empty? or snd != not_this[0] or chn != not_this[1])
-              ret.call([snd, chn])
-            end
+      ret = false
+      Snd.sounds.each do |snd|
+        channels(snd).times do |chn|
+          if selection_member?(snd, chn) and
+              (not_this.empty? or snd != not_this[0] or chn != not_this[1])
+            ret = [snd, chn]
+            break
           end
         end
       end
+      ret
     end
     if selection?
       if selection_chans == 2
@@ -4635,27 +4636,26 @@ end")
       prompt_in_minibuffer(prompt,
                            lambda do |response|
                              width, heigth = widget_size(sound_widgets(@current_buffer[0])[0])
-                             callcc do |give_up|
-                               if (not string?(response)) or response.empty?
-                                 temp = @current_buffer
-                                 if @last_buffer
-                                   @current_buffer = @last_buffer
-                                 else
-                                   index = new_sound()
-                                   @current_buffer = [index, 0]
-                                 end
-                                 @last_buffer = temp
+                             if (not string?(response)) or response.empty?
+                               temp = @current_buffer
+                               if @last_buffer
+                                 @current_buffer = @last_buffer
                                else
-                                 if index = find_sound(response)
-                                   @last_buffer, @current_buffer = @current_buffer, [index, 0]
-                                 else
-                                   give_up.call(report_in_minibuffer("can't find " + response))
-                                 end
+                                 index = new_sound()
+                                 @current_buffer = [index, 0]
                                end
-                               close_all_buffers
-                               report_in_minibuffer("")
-                               open_current_buffer(width, heigth)
+                               @last_buffer = temp
+                             else
+                               if index = find_sound(response)
+                                 @last_buffer, @current_buffer = @current_buffer, [index, 0]
+                               else
+                                 report_in_minibuffer("can't find " + response)
+                                 return
+                               end
                              end
+                             close_all_buffers
+                             report_in_minibuffer("")
+                             open_current_buffer(width, heigth)
                            end)
     end
 
@@ -4725,25 +4725,28 @@ end")
     samps = make_vct(10)
     len = frames()
     samps_ctr = 0
-    callcc do |ret|
-      (loc...len).each do |ctr|
-        ret.call(ctr) if c_g?
-        samp0, samp1, samp2 = samp1, samp2, next_sample(reader)
-        samps[samps_ctr] = samp0
-        if samps_ctr < 9
-          samps_ctr += 1
-        else
-          samps_ctr = 0
-        end
-        local_max = [0.1, vct_peak(samps)].max
-        if ((samp0 - samp1).abs > local_max) and
-            ((samp1 - samp2).abs > local_max) and
-            ((samp0 - samp2).abs < (local_max / 2))
-          ret.call(ctr - 1)
-        end
+    ret = false
+    (loc...len).each do |ctr|
+      if c_g?
+        ret = ctr
+        break
       end
-      false
+      samp0, samp1, samp2 = samp1, samp2, next_sample(reader)
+      samps[samps_ctr] = samp0
+      if samps_ctr < 9
+        samps_ctr += 1
+      else
+        samps_ctr = 0
+      end
+      local_max = [0.1, vct_peak(samps)].max
+      if ((samp0 - samp1).abs > local_max) and
+          ((samp1 - samp2).abs > local_max) and
+          ((samp0 - samp2).abs < (local_max / 2))
+        ret = ctr - 1
+        break
+      end
     end
+    ret
   end
 
   add_help(:remove_clicks, "remove_clicks() tries to find and smooth-over clicks")
@@ -4979,14 +4982,15 @@ turns the currently selected soundfont file into a bunch of files of the form sa
     def find_next_file
       choose_next = @last_file_opened.empty?
       just_filename = File.basename(@last_file_opened)
-      f = callcc do |ret|
-        @current_sorted_files.each do |file|
-          ret.call(file) if choose_next
-          if file == just_filename
-            choose_next = true
-          end
+      f = @current_sorted_files[0]
+      @current_sorted_files.each do |file|
+        if choose_next
+          f = file
+          break
         end
-        @current_sorted_files[0] # wrapped around
+        if file == just_filename
+          choose_next = true
+        end
       end
       @current_directory + "/" + f
     end
