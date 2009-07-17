@@ -9667,7 +9667,7 @@ static s7_pointer g_vector_fill(s7_scheme *sc, s7_pointer args)
 s7_pointer s7_vector_ref(s7_scheme *sc, s7_pointer vec, int index) 
 {
   if (index >= vector_length(vec))
-    return(s7_out_of_range_error(sc, "vector-ref", 2, s7_make_integer(sc, index), "index is too high"));
+    return(s7_out_of_range_error(sc, "vector-ref", 2, s7_make_integer(sc, index), "less than vector length"));
 
   return(vector_element(vec, index));
 }
@@ -9679,7 +9679,7 @@ s7_pointer s7_vector_set(s7_scheme *sc, s7_pointer vec, int index, s7_pointer a)
    *   (let ((v (make-vector 2))) (vector-set! v 0 v) v)
    */
   if (index >= vector_length(vec))
-    return(s7_out_of_range_error(sc, "vector-set!", 2, s7_make_integer(sc, index), "index is too high"));
+    return(s7_out_of_range_error(sc, "vector-set!", 2, s7_make_integer(sc, index), "less than vector length"));
 
   vector_element(vec, index) = a;
   return(a);
@@ -11925,7 +11925,7 @@ s7_pointer s7_out_of_range_error(s7_scheme *sc, const char *caller, int arg_n, s
   len = safe_strlen(descr) + safe_strlen(caller) + 64;
   errmsg = (char *)malloc(len * sizeof(char));
   if (arg_n <= 0) arg_n = 1;
-  slen = snprintf(errmsg, len, "%s argument %d is out of range (%s)", caller, arg_n, descr);
+  slen = snprintf(errmsg, len, "%s argument %d is out of range (it should be %s)", caller, arg_n, descr);
   x = make_list_2(sc, s7_make_string_with_length(sc, errmsg, slen), arg);
   free(errmsg);
 
@@ -18149,7 +18149,7 @@ static s7_pointer big_ash(s7_scheme *sc, s7_pointer args)
       if (is_object(p1))
 	{
 	  if (!mpz_fits_sint_p(S7_BIG_INTEGER(p1)))
-	    return(s7_out_of_range_error(sc, "ash", 2, p1, "shift must fit in a 32-bit int"));
+	    return(s7_out_of_range_error(sc, "ash", 2, p1, "a 32-bit int after shifting"));
 	  shift = mpz_get_si(S7_BIG_INTEGER(p1));
 	}
       else shift = s7_integer(p1);

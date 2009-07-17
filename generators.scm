@@ -362,7 +362,7 @@
     (let ((mid (/ (+ lo hi) 2)))
       (let ((ylo (ns lo n))
 	    (yhi (ns hi n)))
-	(if (< (abs (- ylo yhi)) 1e-100)
+	(if (< (abs (- ylo yhi)) nearly-zero) ; was e-100 but that hangs if not using doubles
 	    (ns mid n)
 	    (if (> ylo yhi)
 		(find-mid-max n lo mid)
@@ -372,7 +372,7 @@
     (let ((mid (/ (+ lo hi) 2)))
       (let ((ylo (nodds lo n))
 	    (yhi (nodds hi n)))
-	(if (< (abs (- ylo yhi)) 1e-100)
+	(if (< (abs (- ylo yhi)) nearly-zero)
 	    (nodds mid n)
 	    (if (> ylo yhi)
 		(find-nodds-mid-max n lo mid)

@@ -32105,9 +32105,11 @@ EDITS: 2
       (set! (clipping) old-clip)
       (set! (mus-clipping) old-mus-clip))
     
-    (if (not (= (ratio->semitones 2) 12)) (snd-display ";ratio->semitones 2: ~A" (ratio->semitones 2)))
-    (if (not (= (ratio->semitones 2/3) -7)) (snd-display ";ratio->semitones 2/3: ~A" (ratio->semitones 2/3)))
-    (if (fneq (semitones->ratio 12) 2.0) (snd-display ";semitones->ratio 12: ~A" (semitones->ratio 12)))
+    (if (not (provided? 'snd-nogui))
+	(begin
+	  (if (not (= (ratio->semitones 2) 12)) (snd-display ";ratio->semitones 2: ~A" (ratio->semitones 2)))
+	  (if (not (= (ratio->semitones 2/3) -7)) (snd-display ";ratio->semitones 2/3: ~A" (ratio->semitones 2/3)))
+	  (if (fneq (semitones->ratio 12) 2.0) (snd-display ";semitones->ratio 12: ~A" (semitones->ratio 12)))))
     
     ))
 
@@ -41578,59 +41580,60 @@ EDITS: 1
 	  (if (not (= (filter-control-order ind) order)) (snd-display ";controls->channel filter: ~A" (filter-control-order ind)))))
       
 
-      ;; ---- mix stuff
-      (let ((id (make-v-mix ind 0)))
-	;; ---- mix-position
-	(if (number? (mix? id))
-	    (begin
-	      (set! (mix-position id) 200)
-	      (if (not (= (mix-position id) 200)) (snd-display ";edit-list->function mix off to a bad start: ~A" (mix-position id)))
-	      (let ((func (edit-list->function)))
-		(if (not (procedure? func)) 
-		    (snd-display ";edit-list->function mix 1: ~A" func))
-		(if (not (string=? (object->string (procedure-source func))
-					(format #f "(lambda (snd chn) (let ((-mix-~D ~D)) (set! -mix-~D (mix-vct (vct 0.1 0.2 0.3) 100 snd chn)) (set! (mix-position -mix-~D) 200)))"
-						id id id id)))
-		    (snd-display ";edit-list->function mix 1: ~A" (object->string (procedure-source func))))
-		(revert-sound ind)
-		(func ind 0)
-		(if (or (null? (mixes ind 0))
-			(not (member 200 (map (lambda (m) (and (number? (mix? m)) (mix-position m))) (mixes ind 0)))))
-		    (snd-display ";edit-list->function mix 1 repos: ~A ~A" 
-				 (mixes ind 0) (map (lambda (m) (and (number? (mix? m)) (mix-position m))) (mixes ind 0)))))))
-	(revert-sound ind)
-	
-	;; ---- mix-amp
-	(set! id (make-v-mix ind 0))
-	(if (number? (mix? id))
-	    (begin
-	      (set! (mix-amp id) 0.5)
-	      (let ((func (edit-list->function)))
-		(if (not (procedure? func)) 
-		    (snd-display ";edit-list->function mix 4: ~A" func))
-		(if (not (string=? (object->string (procedure-source func))
-					(format #f "(lambda (snd chn) (let ((-mix-~D ~D)) (set! -mix-~D (mix-vct (vct 0.1 0.2 0.3) 100 snd chn)) (set! (mix-amp -mix-~D) 0.5)))"
-						id id id id)))
-		    (snd-display ";edit-list->function mix 4: ~A" (object->string (procedure-source func))))
-		(revert-sound ind)
-		(func ind 0))))
-	(revert-sound ind)
-	
-	;; ---- mix-speed
-	(if (number? (mix? id))
-	    (begin
-	      (set! id (make-v-mix ind 0))
-	      (set! (mix-speed id) 0.5)
-	      (let ((func (edit-list->function)))
-		(if (not (procedure? func)) 
-		    (snd-display ";edit-list->function mix 5: ~A" func))
-		(if (not (string=? (object->string (procedure-source func))
-					(format #f "(lambda (snd chn) (let ((-mix-~D ~D)) (set! -mix-~D (mix-vct (vct 0.1 0.2 0.3) 100 snd chn)) (set! (mix-speed -mix-~D) 0.5)))"
-						id id id id)))
-		    (snd-display ";edit-list->function mix 5: ~A" (object->string (procedure-source func))))
-		(revert-sound ind)
-		(func ind 0))))
-	(revert-sound ind))
+      (if (not (provided? 'snd-nogui))
+	  ;; ---- mix stuff
+	  (let ((id (make-v-mix ind 0)))
+	    ;; ---- mix-position
+	    (if (number? (mix? id))
+		(begin
+		  (set! (mix-position id) 200)
+		  (if (not (= (mix-position id) 200)) (snd-display ";edit-list->function mix off to a bad start: ~A" (mix-position id)))
+		  (let ((func (edit-list->function)))
+		    (if (not (procedure? func)) 
+			(snd-display ";edit-list->function mix 1: ~A" func))
+		    (if (not (string=? (object->string (procedure-source func))
+				       (format #f "(lambda (snd chn) (let ((-mix-~D ~D)) (set! -mix-~D (mix-vct (vct 0.1 0.2 0.3) 100 snd chn)) (set! (mix-position -mix-~D) 200)))"
+					       id id id id)))
+			(snd-display ";edit-list->function mix 1: ~A" (object->string (procedure-source func))))
+		    (revert-sound ind)
+		    (func ind 0)
+		    (if (or (null? (mixes ind 0))
+			    (not (member 200 (map (lambda (m) (and (number? (mix? m)) (mix-position m))) (mixes ind 0)))))
+			(snd-display ";edit-list->function mix 1 repos: ~A ~A" 
+				     (mixes ind 0) (map (lambda (m) (and (number? (mix? m)) (mix-position m))) (mixes ind 0)))))))
+	    (revert-sound ind)
+	    
+	    ;; ---- mix-amp
+	    (set! id (make-v-mix ind 0))
+	    (if (number? (mix? id))
+		(begin
+		  (set! (mix-amp id) 0.5)
+		  (let ((func (edit-list->function)))
+		    (if (not (procedure? func)) 
+			(snd-display ";edit-list->function mix 4: ~A" func))
+		    (if (not (string=? (object->string (procedure-source func))
+				       (format #f "(lambda (snd chn) (let ((-mix-~D ~D)) (set! -mix-~D (mix-vct (vct 0.1 0.2 0.3) 100 snd chn)) (set! (mix-amp -mix-~D) 0.5)))"
+					       id id id id)))
+			(snd-display ";edit-list->function mix 4: ~A" (object->string (procedure-source func))))
+		    (revert-sound ind)
+		    (func ind 0))))
+	    (revert-sound ind)
+	    
+	    ;; ---- mix-speed
+	    (if (number? (mix? id))
+		(begin
+		  (set! id (make-v-mix ind 0))
+		  (set! (mix-speed id) 0.5)
+		  (let ((func (edit-list->function)))
+		    (if (not (procedure? func)) 
+			(snd-display ";edit-list->function mix 5: ~A" func))
+		    (if (not (string=? (object->string (procedure-source func))
+				       (format #f "(lambda (snd chn) (let ((-mix-~D ~D)) (set! -mix-~D (mix-vct (vct 0.1 0.2 0.3) 100 snd chn)) (set! (mix-speed -mix-~D) 0.5)))"
+					       id id id id)))
+			(snd-display ";edit-list->function mix 5: ~A" (object->string (procedure-source func))))
+		    (revert-sound ind)
+		    (func ind 0))))
+	    (revert-sound ind)))
 
       (close-sound ind))
     
@@ -56789,6 +56792,8 @@ EDITS: 1
 	  (run (lambda () (set! (mus-hop g) f)))
 	  (if (not (= (mus-hop g) 32)) (snd-display ";osc329 set mus-hop: ~A" (mus-hop g))))
 	
+	(if (not (provided? 'gmp))
+	    (set! nearly-zero 1.0e-8)) ; in case floats
 	(let ((test-zero-stability 
 	       (lambda (make-func run-func zero)
 		 (let ((gen (make-func)))

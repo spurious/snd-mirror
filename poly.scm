@@ -1,6 +1,8 @@
 ;;; polynomial-related stuff
 ;;;
 ;;; poly+ poly* poly/ poly-gcd poly-reduce poly-roots poly-derivative poly-resultant poly-discriminant
+;;;
+;;; this file really needs doubles (--with-doubles in configure, double as s7_Double in s7.h)
 
 (provide 'snd-poly.scm)
 (if (not (provided? 'snd-mixer.scm)) (load-from-path "mixer.scm")) ; need matrix determinant for poly-resultant
@@ -339,7 +341,9 @@
 						   (- (* a1 a3) (* 4 a0))
 						   (- a2)
 						   1.0))))
-	 (if yroot
+	 (if (and yroot
+		  (list? yroot)
+		  (= (length yroot) 4))
 	     (do ((i 0 (+ i 1)))
 		 ((= i 3))
 	       (let* ((y1 (list-ref yroot i))
@@ -495,7 +499,7 @@
     (for-each
      (lambda (q)
        (let ((dx (magnitude (poly-as-vector-eval v1 q))))
-	 (if (> dx poly-roots-epsilon) (snd-display ";~A at ~A: ~A" v1 q dx))))
+	 (if (> dx poly-roots-epsilon) (snd-display ";(poly-roots ~A) numerical trouble (polynomial root is not very good): ~A at ~A: ~A" p1 v1 q dx))))
      roots)
     roots))
 
