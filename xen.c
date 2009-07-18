@@ -1073,20 +1073,27 @@ XEN xen_rb_funcall_0(XEN func)
 }
 
 
-#if (!HAVE_RB_ARY_DUP)
 XEN xen_rb_copy_list(XEN val) 
 { 
-  /* if this is considered bad form, we could fall back on flatten (rb_ary_dup?) */ 
-  long len, i; 
-  VALUE collect; 
-  len = RB_ARRAY_LEN(val); 
-  collect = rb_ary_new2(len); 
-  for (i = 0; i < len; i++) 
-    RB_ARRAY_PTR(collect)[i] = RB_ARRAY_PTR(val)[i]; 
-  RB_ARRAY_LEN(collect) = len; 
-  return(collect); 
+  if ((val == XEN_EMPTY_LIST) || (!XEN_CONS_P(val)))
+    return XEN_EMPTY_LIST; 
+
+#if (!HAVE_RB_ARY_DUP) 
+  { 
+    /* if this is considered bad form, we could fall back on flatten (rb_ary_dup?) */ 
+    long len, i; 
+    VALUE collect; 
+    len = RB_ARRAY_LEN(val); 
+    collect = rb_ary_new2(len); 
+    for (i = 0; i < len; i++) 
+      RB_ARRAY_PTR(collect)[i] = RB_ARRAY_PTR(val)[i]; 
+    RB_ARRAY_LEN(collect) = len; 
+    return(collect); 
+  } 
+#else 
+  return rb_ary_dup(val); 
+#endif 
 } 
-#endif
 
 
 XEN xen_rb_str_new2(char *arg)

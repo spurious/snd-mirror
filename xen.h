@@ -851,11 +851,7 @@ char *xen_guile_to_c_string_with_eventual_free(XEN str);
 #define XEN_LIST_7(a, b, c, d, e, f, g) rb_ary_new3(7, a, b, c, d, e, f, g)
 #define XEN_LIST_8(a, b, c, d, e, f, g, h) rb_ary_new3(8, a, b, c, d, e, f, g, h)
 #define XEN_LIST_9(a, b, c, d, e, f, g, h, i) rb_ary_new3(9, a, b, c, d, e, f, g, h, i)
-#if HAVE_RB_ARY_DUP
-  #define XEN_COPY_ARG(Lst)             rb_ary_dup(Lst)
-#else
-  #define XEN_COPY_ARG(Lst)             xen_rb_copy_list(Lst)
-#endif
+#define XEN_COPY_ARG(Lst)               xen_rb_copy_list(Lst) 
 #define XEN_LIST_REF(Lst, Num)          xen_rb_list_ref(Lst, Num)
 #define XEN_LIST_SET(Lst, Num, Val)     xen_rb_list_set(Lst, Num, Val)
 #define XEN_APPEND(X, Y)                rb_ary_concat(X, Y)
@@ -1259,9 +1255,7 @@ XEN xen_rb_ary_new_with_initial_element(long num, XEN element);
 XEN xen_rb_apply(XEN func, XEN args);
 XEN xen_rb_funcall_0(XEN func);
 int xen_rb_required_args(XEN val);
-#if (!HAVE_RB_ARY_DUP)
 XEN xen_rb_copy_list(XEN val);
-#endif
 XEN xen_rb_str_new2(char *arg);
 void xen_add_help(char *name, const char *help);
 char *xen_help(char *name);

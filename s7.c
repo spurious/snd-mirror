@@ -4723,7 +4723,10 @@ static s7_pointer g_log(s7_scheme *sc, s7_pointer args)
   if ((s7_is_real(x)) &&
       (s7_is_positive(x)))
     return(s7_make_real(sc, log(num_to_real(x->object.number))));
+
   /* if < 0 use log(-x) + pi*i */
+  /* PERHAPS: if not WITH_COMPLEX provide this fallback? */
+
   return(s7_from_c_complex(sc, clog(s7_complex(x))));
 }
 
@@ -5176,11 +5179,11 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
       y = num_to_real(pw->object.number);
       if (y == 0.0)
 	return(s7_make_real(sc, 1.0));
-      if (((x > 0.0) && (y >= 0.0)) ||
+      if ((x > 0.0) ||
 	  ((y - floor(y)) < 1.0e-16))
 	return(s7_make_real(sc, pow(x, y)));
     }
-  
+
   return(s7_from_c_complex(sc, cpow(s7_complex(n), s7_complex(pw))));
 }
 
