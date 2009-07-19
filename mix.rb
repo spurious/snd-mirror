@@ -2,7 +2,7 @@
 
 # Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Tue Feb 22 13:40:33 CET 2005
-# Changed: Fri Jul 17 22:32:58 CEST 2009
+# Changed: Sat Jul 18 23:10:03 CEST 2009
 
 # Commentary:
 #
@@ -37,23 +37,26 @@
 #  save_mixes(mix_list, filename)
 #
 # module Mixer_matrix (see mixer.scm)
-#  mixer2matrix(mx)
-#  matrix2mixer(mat)
-#  mixer_equal?(mx1, mx2)
+#  mixer_copy(mx)
+#  make_zero_mixer(n)
 #  mixer_diagonal?(mx)
-#  mixer_symmetric?(mx)
-#  mixer_hermitian?(mx)
-#  mixer_determinant(mx)
 #  mixer_transpose(mx)
-#  mixer_inverse(mx)
+#  sub_matrix(mx, row, col)
+#  mixer_determinant(mx)
 #  mixer_poly(mx, *coeffs)
+#  mixer_trace(mx)
+#  invert_matrix(mx, b, zero)
+#  mixer_solve(a, b)
+#  mixer_inverse(mx)
+#
+#  mixer_equal?(mx1, mx2)
 #  mixer_normal?(mx)
 #  mixer_orthogonal?(mx)
 #  mixer_unitary?(mx)
-#  mixer_trace(mx)
-#  mixer_solve(a, b)
+#  mixer_symmetric?(mx)
+#  mixer_hermitian?(mx)
+#
 #  frame_reverse(fr)
-#  make_zero_mixer(n)
 #  
 
 # Code:
@@ -343,114 +346,90 @@ include Mix
 # 
 # === MIXER.SCM ===
 # 
-with_silence do
-  require "matrix"
-end
-
-class Matrix
-  with_silence do
-    # local variable rows renamed to rs
-    def Matrix.diagonal(*values)
-      size = values.size
-      rs = (0...size).collect do |j|
-        row = Array.new(size).fill(0, 0, size)
-        row[j] = values[j]
-        row
-      end
-      rows(rs, false)
-    end
-    # private :init_rows doesn't work any longer
-    public :init_rows
-  end
-end
-
 module Mixer_matrix
-  def mixer2matrix(mx)
-    if mixer?(mx)
-      a = make_array(mx.channels) do |i|
-        make_array(mx.channels) do |j|
-          mixer_ref(mx, i, j)
-        end
+  def mixer_copy(mx)
+    nmx = make_mixer(mx.length)
+    mx.length.times do |i|
+      mx.length.times do |j|
+        mixer_set!(nmx, i, j, mixer_ref(mx, i, j))
       end
-      Matrix.columns(a)
-    else
-      false
     end
+    nmx
   end
 
-  def matrix2mixer(mat)
-    if mat.kind_of?(Matrix)
-      mx = make_mixer(mat.row_size)
-      mat.to_a.each_with_index do |row, i|
-        row.each_with_index do |val, j|
-          mixer_set!(mx, j, i, val)
-        end
-      end
-      mx
-    else
-      false
-    end
-  end
-
-  def mixer_equal?(mx1, mx2)
-    a = if mixer?(mx1)
-          mixer2matrix(mx1)
-        else
-          mx1
-        end
-    b = if mixer?(mx2)
-          mixer2matrix(mx2)
-        else
-          mx2
-        end
-    if a == b
-      true
-    else
-      flag = true
-      a.to_a.zip(b.to_a) do |a1, b1|
-        unless vequal(a1, b1)
-          flag = false
-          break
-        end
-      end
-      flag
-    end
-  end
+  alias make_zero_mixer make_mixer
 
   def mixer_diagonal?(mx)
     if mx.length == 1
       true
     else
-      flag = true
-      mx.channels.times do |i|
-        mx.channels.times do |j|
+      mx.length.times do |i|
+        mx.length.times do |j|
           if i != j and mixer_ref(mx, i, j).nonzero?
-            flag = false
-            break
+            return false
           end
         end
       end
-      ret
+      true
     end
   end
 
-  def mixer_symmetric?(mx)
-    mixer_equal?(mx, mixer_transpose(mx))
-  end
-  alias mixer_hermitian? mixer_symmetric?
-
-  def mixer_determinant(mx)
-    mixer2matrix(mx).determinant
-  end
-
   def mixer_transpose(mx)
-    matrix2mixer(mixer2matrix(mx).transpose)
+    nmx = make_zero_mixer(mx.length)
+    mx.length.times do |i|
+      mx.length.times do |j|
+        mixer_set!(nmx, j, i, mixer_ref(mx, i, j))
+      end
+    end
+    nmx
   end
 
-  def mixer_inverse(mx)
-    matrix2mixer(mixer2matrix(mx).inverse)
-  rescue
-    false
+  def sub_matrix(mx, row, col)
+    nmx = make_zero_mixer(mx.length - 1)
+    ni = 0
+    mx.length.times do |i|
+      if i != row
+        nj = 0
+        mx.length.times do |j|
+          if j != col
+            mixer_set!(nmx, ni, nj, mixer_ref(mx, i, j))
+            nj += 1
+          end
+        end
+        ni += 1
+      end
+    end
+    nmx
+  end
+  
+  def mixer_determinant(mx)
+    if mx.length == 1
+      mixer_ref(mx, 0, 0)
+    else
+      if mx.length == 2
+        mixer_ref(mx, 0, 0) * mixer_ref(mx, 1, 1) - mixer_ref(mx, 0, 1) * mixer_ref(mx, 1, 0)
+      else
+        if mx.length == 3
+          ((mixer_ref(mx, 0, 0) * mixer_ref(mx, 1, 1) * mixer_ref(mx, 2, 2) +
+            mixer_ref(mx, 0, 1) * mixer_ref(mx, 1, 2) * mixer_ref(mx, 2, 0) +
+            mixer_ref(mx, 0, 2) * mixer_ref(mx, 1, 0) * mixer_ref(mx, 2, 1)) -
+           (mixer_ref(mx, 0, 0) * mixer_ref(mx, 1, 2) * mixer_ref(mx, 2, 1) +
+            mixer_ref(mx, 0, 1) * mixer_ref(mx, 1, 0) * mixer_ref(mx, 2, 2) +
+            mixer_ref(mx, 0, 2) * mixer_ref(mx, 1, 1) * mixer_ref(mx, 2, 0)))
+        else
+          sum = 0.0
+          sign = 1
+          mx.length.times do |i|
+            mult = mixer_ref(mx, 0, i)
+            if mult != 0.0
+              sum = sum + sign * mult * mixer_determinant(sub_matrix(mx, 0, i))
+            end
+            sign = -sign
+          end
+          sum
+        end
+      end
+    end
   end
 
   def mixer_poly(mx, *coeffs)
@@ -464,6 +443,116 @@ module Mixer_matrix
     nmx
   end
 
+  def mixer_trace(mx)
+    sum = 0.0
+    mx.length.times do |i| sum += mixer_ref(mx, i, i) end
+    sum
+  end
+
+  def invert_matrix(mx, b = nil, zero = 1.0e-7)
+    # ;; translated from Numerical Recipes (gaussj)
+    cols = make_array(mx.length, 0)
+    rows = make_array(mx.length, 0)
+    pivots = make_array(mx.length, 0)
+    mx.length.times do |i|
+      biggest = 0.0
+      col = 0
+      row = 0
+      mx.length.times do |j|
+        if pivots[j] != 1
+          mx.length.times do |k|
+            if pivots[k] == 0
+              val = mixer_ref(mx, j, k).abs
+              if val > biggest
+                col = k
+                row = j
+                biggest = val
+              else
+                if pivots[k] == 1
+                  return false
+                end
+              end
+            end
+          end
+        end
+      end
+      pivots[col] += 1
+      if row != col
+        temp = (b ? frame_ref(b, row) : 0.0)
+        if b
+          frame_set!(b, row, frame_ref(b, col))
+          frame_set!(b, col, temp)
+        end
+        mx.length.times do |k|
+          temp = mixer_ref(mx, row, k)
+          mixer_set!(mx, row, k, mixer_ref(mx, col, k))
+          mixer_set!(mx, col, k, temp)
+        end
+      end
+      cols[i] = col
+      rows[i] = row
+      if mixer_ref(mx, col, col).abs < zero
+        return false
+      end
+      inverse_pivot = 1.0 / mixer_ref(mx, col, col)
+      mixer_set!(mx, col, col, 1.0)
+      mx.length.times do |k|
+        mixer_set!(mx, col, k, inverse_pivot * mixer_ref(mx, col, k))
+      end
+      if b
+        frame_set!(b, col, inverse_pivot * frame_ref(b, col))
+      end
+      mx.length.times do |k|
+        if k != col
+          scl = mixer_ref(mx, k, col)
+          mixer_set!(mx, k, col, 0.0)
+          mx.length.times do |m|
+            mixer_set!(mx, k, m, mixer_ref(mx, k, m) - scl * mixer_ref(mx, col, m))
+          end
+          if b
+            frame_set!(b, k, frame_ref(b, k) - scl * frame_ref(b, col))
+          end
+        end
+      end
+    end
+    (mx.length - 1).downto(0) do |i|
+      if rows[i] != cols[i]
+        mx.length.times do |k|
+          temp = mixer_ref(mx, k, rows[i])
+          mixer_set!(mx, k, rows[i], mixer_ref(mx, k, cols[i]))
+          mixer_set!(mx, k, cols[i], temp)
+        end
+      end
+    end
+    [mx, b]
+  end
+
+  # Ax=b where A is mixer and b is frame, returns frame
+  def mixer_solve(a, b)
+    val = invert_matrix(a, b)
+    val and val[1]
+  end
+
+  def mixer_inverse(mx)
+    val = invert_matrix(mx)
+    val and val[0]
+  end
+
+  def mixer_equal?(mx1, mx2)
+    if mx1.length == mx2.length
+      mx1.length.times do |i|
+        mx2.length.times do |j|
+          if (mixer_ref(mx1, i, j) - mixer_ref(mx2, i, j)).abs > 0.001
+            return false
+          end
+        end
+      end
+      true
+    else
+      false
+    end
+  end
+
   def mixer_normal?(mx)
     mixer_equal?(mixer_multiply(mx, mixer_transpose(mx)),
                  mixer_multiply(mixer_transpose(mx), mx))
@@ -475,26 +564,10 @@ module Mixer_matrix
   end
   alias mixer_unitary? mixer_orthogonal?
 
-  def mixer_trace(mx)
-    mixer2matrix(mx).trace
+  def mixer_symmetric?(mx)
+    mixer_equal?(mx, mixer_transpose(mx))
   end
-
-  # Ax=b where A is mixer and b is frame, returns frame
-  def mixer_solve(a, b)
-    if a.length == 1
-      if mixer_ref(a, 0, 0) != 0.0
-        make_frame(1, frame_ref(b, 0) / mixer_ref(a, 0, 0))
-      else
-        false
-      end
-    else
-      if mixer?(imx = mixer_inverse(a))
-        frame2frame(imx, b)
-      else
-        false
-      end
-    end
-  end
+  alias mixer_hermitian? mixer_symmetric?
 
   def frame_reverse(fr)
     len = fr.length
@@ -514,18 +587,6 @@ module Mixer_matrix
     len.times do |i| frame_set!(nfr, i, frame_ref(fr, i)) end
     nfr
   end
-
-  def mixer_copy(mx)
-    len = mx.length
-    nmx = make_mixer(len)
-    len.times do |i|
-      len.times do |j|
-        mixer_set!(nmx, i, j, mixer_ref(mx, i, j))
-      end
-    end
-    nmx
-  end
-  alias make_zero_mixer make_mixer
 end
 
 # mix.rb ends here

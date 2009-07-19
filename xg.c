@@ -31649,6 +31649,198 @@ guint position, guint n_chars)"
   return(XEN_FALSE);
 }
 
+static XEN gxg_gtk_cell_renderer_set_alignment(XEN cell, XEN xalign, XEN yalign)
+{
+  #define H_gtk_cell_renderer_set_alignment "void gtk_cell_renderer_set_alignment(GtkCellRenderer* cell, \
+gfloat xalign, gfloat yalign)"
+  XEN_ASSERT_TYPE(XEN_GtkCellRenderer__P(cell), cell, 1, "gtk_cell_renderer_set_alignment", "GtkCellRenderer*");
+  XEN_ASSERT_TYPE(XEN_gfloat_P(xalign), xalign, 2, "gtk_cell_renderer_set_alignment", "gfloat");
+  XEN_ASSERT_TYPE(XEN_gfloat_P(yalign), yalign, 3, "gtk_cell_renderer_set_alignment", "gfloat");
+  gtk_cell_renderer_set_alignment(XEN_TO_C_GtkCellRenderer_(cell), XEN_TO_C_gfloat(xalign), XEN_TO_C_gfloat(yalign));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_cell_renderer_get_alignment(XEN cell, XEN ignore_xalign, XEN ignore_yalign)
+{
+  #define H_gtk_cell_renderer_get_alignment "void gtk_cell_renderer_get_alignment(GtkCellRenderer* cell, \
+gfloat* [xalign], gfloat* [yalign])"
+  gfloat ref_xalign;
+  gfloat ref_yalign;
+  XEN_ASSERT_TYPE(XEN_GtkCellRenderer__P(cell), cell, 1, "gtk_cell_renderer_get_alignment", "GtkCellRenderer*");
+  gtk_cell_renderer_get_alignment(XEN_TO_C_GtkCellRenderer_(cell), &ref_xalign, &ref_yalign);
+  return(XEN_LIST_2(C_TO_XEN_gfloat(ref_xalign), C_TO_XEN_gfloat(ref_yalign)));
+}
+
+static XEN gxg_gtk_cell_renderer_set_padding(XEN cell, XEN xpad, XEN ypad)
+{
+  #define H_gtk_cell_renderer_set_padding "void gtk_cell_renderer_set_padding(GtkCellRenderer* cell, \
+gint xpad, gint ypad)"
+  XEN_ASSERT_TYPE(XEN_GtkCellRenderer__P(cell), cell, 1, "gtk_cell_renderer_set_padding", "GtkCellRenderer*");
+  XEN_ASSERT_TYPE(XEN_gint_P(xpad), xpad, 2, "gtk_cell_renderer_set_padding", "gint");
+  XEN_ASSERT_TYPE(XEN_gint_P(ypad), ypad, 3, "gtk_cell_renderer_set_padding", "gint");
+  gtk_cell_renderer_set_padding(XEN_TO_C_GtkCellRenderer_(cell), XEN_TO_C_gint(xpad), XEN_TO_C_gint(ypad));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_cell_renderer_get_padding(XEN cell, XEN ignore_xpad, XEN ignore_ypad)
+{
+  #define H_gtk_cell_renderer_get_padding "void gtk_cell_renderer_get_padding(GtkCellRenderer* cell, \
+gint* [xpad], gint* [ypad])"
+  gint ref_xpad;
+  gint ref_ypad;
+  XEN_ASSERT_TYPE(XEN_GtkCellRenderer__P(cell), cell, 1, "gtk_cell_renderer_get_padding", "GtkCellRenderer*");
+  gtk_cell_renderer_get_padding(XEN_TO_C_GtkCellRenderer_(cell), &ref_xpad, &ref_ypad);
+  return(XEN_LIST_2(C_TO_XEN_gint(ref_xpad), C_TO_XEN_gint(ref_ypad)));
+}
+
+static XEN gxg_gtk_cell_renderer_set_visible(XEN cell, XEN visible)
+{
+  #define H_gtk_cell_renderer_set_visible "void gtk_cell_renderer_set_visible(GtkCellRenderer* cell, \
+gboolean visible)"
+  XEN_ASSERT_TYPE(XEN_GtkCellRenderer__P(cell), cell, 1, "gtk_cell_renderer_set_visible", "GtkCellRenderer*");
+  XEN_ASSERT_TYPE(XEN_gboolean_P(visible), visible, 2, "gtk_cell_renderer_set_visible", "gboolean");
+  gtk_cell_renderer_set_visible(XEN_TO_C_GtkCellRenderer_(cell), XEN_TO_C_gboolean(visible));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_cell_renderer_get_visible(XEN cell)
+{
+  #define H_gtk_cell_renderer_get_visible "gboolean gtk_cell_renderer_get_visible(GtkCellRenderer* cell)"
+  XEN_ASSERT_TYPE(XEN_GtkCellRenderer__P(cell), cell, 1, "gtk_cell_renderer_get_visible", "GtkCellRenderer*");
+  return(C_TO_XEN_gboolean(gtk_cell_renderer_get_visible(XEN_TO_C_GtkCellRenderer_(cell))));
+}
+
+static XEN gxg_gtk_cell_renderer_set_sensitive(XEN cell, XEN sensitive)
+{
+  #define H_gtk_cell_renderer_set_sensitive "void gtk_cell_renderer_set_sensitive(GtkCellRenderer* cell, \
+gboolean sensitive)"
+  XEN_ASSERT_TYPE(XEN_GtkCellRenderer__P(cell), cell, 1, "gtk_cell_renderer_set_sensitive", "GtkCellRenderer*");
+  XEN_ASSERT_TYPE(XEN_gboolean_P(sensitive), sensitive, 2, "gtk_cell_renderer_set_sensitive", "gboolean");
+  gtk_cell_renderer_set_sensitive(XEN_TO_C_GtkCellRenderer_(cell), XEN_TO_C_gboolean(sensitive));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_cell_renderer_get_sensitive(XEN cell)
+{
+  #define H_gtk_cell_renderer_get_sensitive "gboolean gtk_cell_renderer_get_sensitive(GtkCellRenderer* cell)"
+  XEN_ASSERT_TYPE(XEN_GtkCellRenderer__P(cell), cell, 1, "gtk_cell_renderer_get_sensitive", "GtkCellRenderer*");
+  return(C_TO_XEN_gboolean(gtk_cell_renderer_get_sensitive(XEN_TO_C_GtkCellRenderer_(cell))));
+}
+
+static XEN gxg_gtk_cell_renderer_toggle_get_activatable(XEN toggle)
+{
+  #define H_gtk_cell_renderer_toggle_get_activatable "gboolean gtk_cell_renderer_toggle_get_activatable(GtkCellRendererToggle* toggle)"
+  XEN_ASSERT_TYPE(XEN_GtkCellRendererToggle__P(toggle), toggle, 1, "gtk_cell_renderer_toggle_get_activatable", "GtkCellRendererToggle*");
+  return(C_TO_XEN_gboolean(gtk_cell_renderer_toggle_get_activatable(XEN_TO_C_GtkCellRendererToggle_(toggle))));
+}
+
+static XEN gxg_gtk_cell_renderer_toggle_set_activatable(XEN toggle, XEN setting)
+{
+  #define H_gtk_cell_renderer_toggle_set_activatable "void gtk_cell_renderer_toggle_set_activatable(GtkCellRendererToggle* toggle, \
+gboolean setting)"
+  XEN_ASSERT_TYPE(XEN_GtkCellRendererToggle__P(toggle), toggle, 1, "gtk_cell_renderer_toggle_set_activatable", "GtkCellRendererToggle*");
+  XEN_ASSERT_TYPE(XEN_gboolean_P(setting), setting, 2, "gtk_cell_renderer_toggle_set_activatable", "gboolean");
+  gtk_cell_renderer_toggle_set_activatable(XEN_TO_C_GtkCellRendererToggle_(toggle), XEN_TO_C_gboolean(setting));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_widget_set_can_focus(XEN widget, XEN can_focus)
+{
+  #define H_gtk_widget_set_can_focus "void gtk_widget_set_can_focus(GtkWidget* widget, gboolean can_focus)"
+  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_widget_set_can_focus", "GtkWidget*");
+  XEN_ASSERT_TYPE(XEN_gboolean_P(can_focus), can_focus, 2, "gtk_widget_set_can_focus", "gboolean");
+  gtk_widget_set_can_focus(XEN_TO_C_GtkWidget_(widget), XEN_TO_C_gboolean(can_focus));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_widget_get_can_focus(XEN widget)
+{
+  #define H_gtk_widget_get_can_focus "gboolean gtk_widget_get_can_focus(GtkWidget* widget)"
+  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_widget_get_can_focus", "GtkWidget*");
+  return(C_TO_XEN_gboolean(gtk_widget_get_can_focus(XEN_TO_C_GtkWidget_(widget))));
+}
+
+static XEN gxg_gtk_widget_has_focus(XEN widget)
+{
+  #define H_gtk_widget_has_focus "gboolean gtk_widget_has_focus(GtkWidget* widget)"
+  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_widget_has_focus", "GtkWidget*");
+  return(C_TO_XEN_gboolean(gtk_widget_has_focus(XEN_TO_C_GtkWidget_(widget))));
+}
+
+static XEN gxg_gtk_widget_set_can_default(XEN widget, XEN can_default)
+{
+  #define H_gtk_widget_set_can_default "void gtk_widget_set_can_default(GtkWidget* widget, gboolean can_default)"
+  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_widget_set_can_default", "GtkWidget*");
+  XEN_ASSERT_TYPE(XEN_gboolean_P(can_default), can_default, 2, "gtk_widget_set_can_default", "gboolean");
+  gtk_widget_set_can_default(XEN_TO_C_GtkWidget_(widget), XEN_TO_C_gboolean(can_default));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_widget_get_can_default(XEN widget)
+{
+  #define H_gtk_widget_get_can_default "gboolean gtk_widget_get_can_default(GtkWidget* widget)"
+  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_widget_get_can_default", "GtkWidget*");
+  return(C_TO_XEN_gboolean(gtk_widget_get_can_default(XEN_TO_C_GtkWidget_(widget))));
+}
+
+static XEN gxg_gtk_widget_has_default(XEN widget)
+{
+  #define H_gtk_widget_has_default "gboolean gtk_widget_has_default(GtkWidget* widget)"
+  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_widget_has_default", "GtkWidget*");
+  return(C_TO_XEN_gboolean(gtk_widget_has_default(XEN_TO_C_GtkWidget_(widget))));
+}
+
+static XEN gxg_gtk_widget_get_state(XEN widget)
+{
+  #define H_gtk_widget_get_state "GtkStateType gtk_widget_get_state(GtkWidget* widget)"
+  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_widget_get_state", "GtkWidget*");
+  return(C_TO_XEN_GtkStateType(gtk_widget_get_state(XEN_TO_C_GtkWidget_(widget))));
+}
+
+static XEN gxg_gtk_widget_get_sensitive(XEN widget)
+{
+  #define H_gtk_widget_get_sensitive "gboolean gtk_widget_get_sensitive(GtkWidget* widget)"
+  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_widget_get_sensitive", "GtkWidget*");
+  return(C_TO_XEN_gboolean(gtk_widget_get_sensitive(XEN_TO_C_GtkWidget_(widget))));
+}
+
+static XEN gxg_gtk_widget_is_sensitive(XEN widget)
+{
+  #define H_gtk_widget_is_sensitive "gboolean gtk_widget_is_sensitive(GtkWidget* widget)"
+  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_widget_is_sensitive", "GtkWidget*");
+  return(C_TO_XEN_gboolean(gtk_widget_is_sensitive(XEN_TO_C_GtkWidget_(widget))));
+}
+
+static XEN gxg_gtk_widget_set_has_window(XEN widget, XEN has_window)
+{
+  #define H_gtk_widget_set_has_window "void gtk_widget_set_has_window(GtkWidget* widget, gboolean has_window)"
+  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_widget_set_has_window", "GtkWidget*");
+  XEN_ASSERT_TYPE(XEN_gboolean_P(has_window), has_window, 2, "gtk_widget_set_has_window", "gboolean");
+  gtk_widget_set_has_window(XEN_TO_C_GtkWidget_(widget), XEN_TO_C_gboolean(has_window));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_widget_get_has_window(XEN widget)
+{
+  #define H_gtk_widget_get_has_window "gboolean gtk_widget_get_has_window(GtkWidget* widget)"
+  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_widget_get_has_window", "GtkWidget*");
+  return(C_TO_XEN_gboolean(gtk_widget_get_has_window(XEN_TO_C_GtkWidget_(widget))));
+}
+
+static XEN gxg_gtk_widget_get_app_paintable(XEN widget)
+{
+  #define H_gtk_widget_get_app_paintable "gboolean gtk_widget_get_app_paintable(GtkWidget* widget)"
+  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_widget_get_app_paintable", "GtkWidget*");
+  return(C_TO_XEN_gboolean(gtk_widget_get_app_paintable(XEN_TO_C_GtkWidget_(widget))));
+}
+
+static XEN gxg_gtk_widget_get_double_buffered(XEN widget)
+{
+  #define H_gtk_widget_get_double_buffered "gboolean gtk_widget_get_double_buffered(GtkWidget* widget)"
+  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_widget_get_double_buffered", "GtkWidget*");
+  return(C_TO_XEN_gboolean(gtk_widget_get_double_buffered(XEN_TO_C_GtkWidget_(widget))));
+}
+
 #endif
 
 #if HAVE_CAIRO_CREATE
@@ -37964,6 +38156,29 @@ XEN_NARGIFY_4(gxg_gtk_entry_buffer_insert_text_w, gxg_gtk_entry_buffer_insert_te
 XEN_NARGIFY_3(gxg_gtk_entry_buffer_delete_text_w, gxg_gtk_entry_buffer_delete_text)
 XEN_NARGIFY_4(gxg_gtk_entry_buffer_emit_inserted_text_w, gxg_gtk_entry_buffer_emit_inserted_text)
 XEN_NARGIFY_3(gxg_gtk_entry_buffer_emit_deleted_text_w, gxg_gtk_entry_buffer_emit_deleted_text)
+XEN_NARGIFY_3(gxg_gtk_cell_renderer_set_alignment_w, gxg_gtk_cell_renderer_set_alignment)
+XEN_ARGIFY_3(gxg_gtk_cell_renderer_get_alignment_w, gxg_gtk_cell_renderer_get_alignment)
+XEN_NARGIFY_3(gxg_gtk_cell_renderer_set_padding_w, gxg_gtk_cell_renderer_set_padding)
+XEN_ARGIFY_3(gxg_gtk_cell_renderer_get_padding_w, gxg_gtk_cell_renderer_get_padding)
+XEN_NARGIFY_2(gxg_gtk_cell_renderer_set_visible_w, gxg_gtk_cell_renderer_set_visible)
+XEN_NARGIFY_1(gxg_gtk_cell_renderer_get_visible_w, gxg_gtk_cell_renderer_get_visible)
+XEN_NARGIFY_2(gxg_gtk_cell_renderer_set_sensitive_w, gxg_gtk_cell_renderer_set_sensitive)
+XEN_NARGIFY_1(gxg_gtk_cell_renderer_get_sensitive_w, gxg_gtk_cell_renderer_get_sensitive)
+XEN_NARGIFY_1(gxg_gtk_cell_renderer_toggle_get_activatable_w, gxg_gtk_cell_renderer_toggle_get_activatable)
+XEN_NARGIFY_2(gxg_gtk_cell_renderer_toggle_set_activatable_w, gxg_gtk_cell_renderer_toggle_set_activatable)
+XEN_NARGIFY_2(gxg_gtk_widget_set_can_focus_w, gxg_gtk_widget_set_can_focus)
+XEN_NARGIFY_1(gxg_gtk_widget_get_can_focus_w, gxg_gtk_widget_get_can_focus)
+XEN_NARGIFY_1(gxg_gtk_widget_has_focus_w, gxg_gtk_widget_has_focus)
+XEN_NARGIFY_2(gxg_gtk_widget_set_can_default_w, gxg_gtk_widget_set_can_default)
+XEN_NARGIFY_1(gxg_gtk_widget_get_can_default_w, gxg_gtk_widget_get_can_default)
+XEN_NARGIFY_1(gxg_gtk_widget_has_default_w, gxg_gtk_widget_has_default)
+XEN_NARGIFY_1(gxg_gtk_widget_get_state_w, gxg_gtk_widget_get_state)
+XEN_NARGIFY_1(gxg_gtk_widget_get_sensitive_w, gxg_gtk_widget_get_sensitive)
+XEN_NARGIFY_1(gxg_gtk_widget_is_sensitive_w, gxg_gtk_widget_is_sensitive)
+XEN_NARGIFY_2(gxg_gtk_widget_set_has_window_w, gxg_gtk_widget_set_has_window)
+XEN_NARGIFY_1(gxg_gtk_widget_get_has_window_w, gxg_gtk_widget_get_has_window)
+XEN_NARGIFY_1(gxg_gtk_widget_get_app_paintable_w, gxg_gtk_widget_get_app_paintable)
+XEN_NARGIFY_1(gxg_gtk_widget_get_double_buffered_w, gxg_gtk_widget_get_double_buffered)
 #endif
 
 #if HAVE_CAIRO_CREATE
@@ -41892,6 +42107,29 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gtk_entry_buffer_delete_text_w gxg_gtk_entry_buffer_delete_text
 #define gxg_gtk_entry_buffer_emit_inserted_text_w gxg_gtk_entry_buffer_emit_inserted_text
 #define gxg_gtk_entry_buffer_emit_deleted_text_w gxg_gtk_entry_buffer_emit_deleted_text
+#define gxg_gtk_cell_renderer_set_alignment_w gxg_gtk_cell_renderer_set_alignment
+#define gxg_gtk_cell_renderer_get_alignment_w gxg_gtk_cell_renderer_get_alignment
+#define gxg_gtk_cell_renderer_set_padding_w gxg_gtk_cell_renderer_set_padding
+#define gxg_gtk_cell_renderer_get_padding_w gxg_gtk_cell_renderer_get_padding
+#define gxg_gtk_cell_renderer_set_visible_w gxg_gtk_cell_renderer_set_visible
+#define gxg_gtk_cell_renderer_get_visible_w gxg_gtk_cell_renderer_get_visible
+#define gxg_gtk_cell_renderer_set_sensitive_w gxg_gtk_cell_renderer_set_sensitive
+#define gxg_gtk_cell_renderer_get_sensitive_w gxg_gtk_cell_renderer_get_sensitive
+#define gxg_gtk_cell_renderer_toggle_get_activatable_w gxg_gtk_cell_renderer_toggle_get_activatable
+#define gxg_gtk_cell_renderer_toggle_set_activatable_w gxg_gtk_cell_renderer_toggle_set_activatable
+#define gxg_gtk_widget_set_can_focus_w gxg_gtk_widget_set_can_focus
+#define gxg_gtk_widget_get_can_focus_w gxg_gtk_widget_get_can_focus
+#define gxg_gtk_widget_has_focus_w gxg_gtk_widget_has_focus
+#define gxg_gtk_widget_set_can_default_w gxg_gtk_widget_set_can_default
+#define gxg_gtk_widget_get_can_default_w gxg_gtk_widget_get_can_default
+#define gxg_gtk_widget_has_default_w gxg_gtk_widget_has_default
+#define gxg_gtk_widget_get_state_w gxg_gtk_widget_get_state
+#define gxg_gtk_widget_get_sensitive_w gxg_gtk_widget_get_sensitive
+#define gxg_gtk_widget_is_sensitive_w gxg_gtk_widget_is_sensitive
+#define gxg_gtk_widget_set_has_window_w gxg_gtk_widget_set_has_window
+#define gxg_gtk_widget_get_has_window_w gxg_gtk_widget_get_has_window
+#define gxg_gtk_widget_get_app_paintable_w gxg_gtk_widget_get_app_paintable
+#define gxg_gtk_widget_get_double_buffered_w gxg_gtk_widget_get_double_buffered
 #endif
 
 #if HAVE_CAIRO_CREATE
@@ -45827,6 +46065,29 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_entry_buffer_delete_text, gxg_gtk_entry_buffer_delete_text_w, 3, 0, 0, H_gtk_entry_buffer_delete_text);
   XG_DEFINE_PROCEDURE(gtk_entry_buffer_emit_inserted_text, gxg_gtk_entry_buffer_emit_inserted_text_w, 4, 0, 0, H_gtk_entry_buffer_emit_inserted_text);
   XG_DEFINE_PROCEDURE(gtk_entry_buffer_emit_deleted_text, gxg_gtk_entry_buffer_emit_deleted_text_w, 3, 0, 0, H_gtk_entry_buffer_emit_deleted_text);
+  XG_DEFINE_PROCEDURE(gtk_cell_renderer_set_alignment, gxg_gtk_cell_renderer_set_alignment_w, 3, 0, 0, H_gtk_cell_renderer_set_alignment);
+  XG_DEFINE_PROCEDURE(gtk_cell_renderer_get_alignment, gxg_gtk_cell_renderer_get_alignment_w, 1, 2, 0, H_gtk_cell_renderer_get_alignment);
+  XG_DEFINE_PROCEDURE(gtk_cell_renderer_set_padding, gxg_gtk_cell_renderer_set_padding_w, 3, 0, 0, H_gtk_cell_renderer_set_padding);
+  XG_DEFINE_PROCEDURE(gtk_cell_renderer_get_padding, gxg_gtk_cell_renderer_get_padding_w, 1, 2, 0, H_gtk_cell_renderer_get_padding);
+  XG_DEFINE_PROCEDURE(gtk_cell_renderer_set_visible, gxg_gtk_cell_renderer_set_visible_w, 2, 0, 0, H_gtk_cell_renderer_set_visible);
+  XG_DEFINE_PROCEDURE(gtk_cell_renderer_get_visible, gxg_gtk_cell_renderer_get_visible_w, 1, 0, 0, H_gtk_cell_renderer_get_visible);
+  XG_DEFINE_PROCEDURE(gtk_cell_renderer_set_sensitive, gxg_gtk_cell_renderer_set_sensitive_w, 2, 0, 0, H_gtk_cell_renderer_set_sensitive);
+  XG_DEFINE_PROCEDURE(gtk_cell_renderer_get_sensitive, gxg_gtk_cell_renderer_get_sensitive_w, 1, 0, 0, H_gtk_cell_renderer_get_sensitive);
+  XG_DEFINE_PROCEDURE(gtk_cell_renderer_toggle_get_activatable, gxg_gtk_cell_renderer_toggle_get_activatable_w, 1, 0, 0, H_gtk_cell_renderer_toggle_get_activatable);
+  XG_DEFINE_PROCEDURE(gtk_cell_renderer_toggle_set_activatable, gxg_gtk_cell_renderer_toggle_set_activatable_w, 2, 0, 0, H_gtk_cell_renderer_toggle_set_activatable);
+  XG_DEFINE_PROCEDURE(gtk_widget_set_can_focus, gxg_gtk_widget_set_can_focus_w, 2, 0, 0, H_gtk_widget_set_can_focus);
+  XG_DEFINE_PROCEDURE(gtk_widget_get_can_focus, gxg_gtk_widget_get_can_focus_w, 1, 0, 0, H_gtk_widget_get_can_focus);
+  XG_DEFINE_PROCEDURE(gtk_widget_has_focus, gxg_gtk_widget_has_focus_w, 1, 0, 0, H_gtk_widget_has_focus);
+  XG_DEFINE_PROCEDURE(gtk_widget_set_can_default, gxg_gtk_widget_set_can_default_w, 2, 0, 0, H_gtk_widget_set_can_default);
+  XG_DEFINE_PROCEDURE(gtk_widget_get_can_default, gxg_gtk_widget_get_can_default_w, 1, 0, 0, H_gtk_widget_get_can_default);
+  XG_DEFINE_PROCEDURE(gtk_widget_has_default, gxg_gtk_widget_has_default_w, 1, 0, 0, H_gtk_widget_has_default);
+  XG_DEFINE_PROCEDURE(gtk_widget_get_state, gxg_gtk_widget_get_state_w, 1, 0, 0, H_gtk_widget_get_state);
+  XG_DEFINE_PROCEDURE(gtk_widget_get_sensitive, gxg_gtk_widget_get_sensitive_w, 1, 0, 0, H_gtk_widget_get_sensitive);
+  XG_DEFINE_PROCEDURE(gtk_widget_is_sensitive, gxg_gtk_widget_is_sensitive_w, 1, 0, 0, H_gtk_widget_is_sensitive);
+  XG_DEFINE_PROCEDURE(gtk_widget_set_has_window, gxg_gtk_widget_set_has_window_w, 2, 0, 0, H_gtk_widget_set_has_window);
+  XG_DEFINE_PROCEDURE(gtk_widget_get_has_window, gxg_gtk_widget_get_has_window_w, 1, 0, 0, H_gtk_widget_get_has_window);
+  XG_DEFINE_PROCEDURE(gtk_widget_get_app_paintable, gxg_gtk_widget_get_app_paintable_w, 1, 0, 0, H_gtk_widget_get_app_paintable);
+  XG_DEFINE_PROCEDURE(gtk_widget_get_double_buffered, gxg_gtk_widget_get_double_buffered_w, 1, 0, 0, H_gtk_widget_get_double_buffered);
 #endif
 
 #if HAVE_CAIRO_CREATE
@@ -48389,7 +48650,7 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("11-Jul-09"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("18-Jul-09"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

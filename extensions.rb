@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Sat Jan 03 17:30:23 CET 2004
-# Changed: Fri Jul 17 21:26:56 CEST 2009
+# Changed: Sun Jul 19 00:19:58 CEST 2009
 
 # Commentary:
 # 
@@ -1713,7 +1713,11 @@ connects env's dots with x^2 curves")
                     else
                       data[0] = angle - incr
                     end
-                    y * (data[2] + exp(log(angle) * data[4]) * data[3])
+                    begin
+                      y * (data[2] + exp(log(angle) * data[4]) * data[3])
+                    rescue
+                      0.0
+                    end
                   }, beg, dur, snd, chn, edpos, true,
                   lambda { |frag_beg, frag_dur|
                     frag_beg = frag_beg.to_f

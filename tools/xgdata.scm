@@ -6950,7 +6950,7 @@
 (CFNC-2173 "gchar* gtk_status_icon_get_title GtkStatusIcon* status_icon")
 
 
-;;; 2.17.4:
+;;; 2.17.4
 
 (CLNG-2173 "GTK_ENTRY_BUFFER_MAX_SIZE")
 (CLNG-2173 "GTK_TYPE_ENTRY_BUFFER")
@@ -6976,3 +6976,29 @@
 (CFNC-2173 "void gtk_entry_buffer_emit_inserted_text GtkEntryBuffer* buffer guint position gchar* chars guint n_chars")
 (CFNC-2173 "void gtk_entry_buffer_emit_deleted_text GtkEntryBuffer* buffer guint position guint n_chars")
 
+
+;;; 2.17.5
+
+(CFNC-2173 "void gtk_cell_renderer_set_alignment GtkCellRenderer* cell gfloat xalign gfloat yalign")
+(CFNC-2173 "void gtk_cell_renderer_get_alignment GtkCellRenderer* cell gfloat* [xalign] gfloat* [yalign]")
+(CFNC-2173 "void gtk_cell_renderer_set_padding GtkCellRenderer* cell gint xpad gint ypad")
+(CFNC-2173 "void gtk_cell_renderer_get_padding GtkCellRenderer* cell gint* [xpad] gint* [ypad]")
+(CFNC-2173 "void gtk_cell_renderer_set_visible GtkCellRenderer* cell gboolean visible")
+(CFNC-2173 "gboolean gtk_cell_renderer_get_visible GtkCellRenderer* cell")
+(CFNC-2173 "void gtk_cell_renderer_set_sensitive GtkCellRenderer* cell gboolean sensitive")
+(CFNC-2173 "gboolean gtk_cell_renderer_get_sensitive GtkCellRenderer* cell")
+(CFNC-2173 "gboolean gtk_cell_renderer_toggle_get_activatable GtkCellRendererToggle* toggle")
+(CFNC-2173 "void gtk_cell_renderer_toggle_set_activatable GtkCellRendererToggle* toggle gboolean setting")
+(CFNC-2173 "void gtk_widget_set_can_focus GtkWidget* widget gboolean can_focus")
+(CFNC-2173 "gboolean gtk_widget_get_can_focus GtkWidget* widget")
+(CFNC-2173 "gboolean gtk_widget_has_focus GtkWidget* widget")
+(CFNC-2173 "void gtk_widget_set_can_default GtkWidget* widget gboolean can_default")
+(CFNC-2173 "gboolean gtk_widget_get_can_default GtkWidget* widget")
+(CFNC-2173 "gboolean gtk_widget_has_default GtkWidget* widget")
+(CFNC-2173 "GtkStateType gtk_widget_get_state GtkWidget* widget")
+(CFNC-2173 "gboolean gtk_widget_get_sensitive GtkWidget* widget")
+(CFNC-2173 "gboolean gtk_widget_is_sensitive GtkWidget* widget")
+(CFNC-2173 "void gtk_widget_set_has_window GtkWidget* widget gboolean has_window")
+(CFNC-2173 "gboolean gtk_widget_get_has_window GtkWidget* widget")
+(CFNC-2173 "gboolean gtk_widget_get_app_paintable GtkWidget* widget")
+(CFNC-2173 "gboolean gtk_widget_get_double_buffered GtkWidget* widget")

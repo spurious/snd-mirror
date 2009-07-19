@@ -2,7 +2,10 @@
 #
 # Commentary:
 #
-# Tested with ruby 1.8.7 (2009-04-08 patchlevel 160)
+# Tested with:
+# ruby 1.8.7 (2009-04-08 patchlevel 160)
+# ruby 1.9.1p129 (2009-05-12 revision 23412)
+
 #
 # Reads an init file ./.sndtest.rb or ~/.sndtest.rb where you may set
 # global variables or hooks.
@@ -361,14 +364,12 @@ def vcneql(a, b)
   if a.length != b.length
     true
   else
-    flag = false
     a.each_with_index do |x, i|
       if cneq(x, b[i])
-        flag = true
-        break
+        return true
       end
     end
-    flag
+    false
   end
 end
 
@@ -997,14 +998,12 @@ module Test_event
         if vals[0].zero?
           false
         else
-          callcc do |ret|
-            vals[3].each do |win|
-              if RWindow?(val = find_window.call(dpy, win, natom))
-                ret.call(val)
-              end
+          vals[3].each do |win|
+            if RWindow?(val = find_window.call(dpy, win, natom))
+              return val
             end
-            false
           end
+          false
         end
       end
     end
@@ -8797,42 +8796,40 @@ def peak_env_equal?(name, index, e, diff)
   samps_per_bin = (frames(index) / e_size.to_f).ceil
   mins, maxs = e[0, 2]
   max_diff = 0.0
-  callcc do |ret|
-    e_bin = 0
-    samp = 0
-    mx = -10.0
-    mn = 10.0
-    until e_bin == e_size
-      if samp >= samps_per_bin.floor
-        mxdiff = (mx - maxs[e_bin]).abs
-        mndiff = (mn - mins[e_bin]).abs
-        if mxdiff > max_diff
-          max_diff = mxdiff
-        end
-        if mndiff > max_diff
-          max_diff = mndiff
-        end
-        if mxdiff > diff or mndiff > diff
-          snd_display("%s: peak_env_equal? [bin %d of %d]: %s %s %s?",
-                      name, e_bin, e_size, mn, mx, [mxdiff, mndiff].max)
-          ret.call(false)
-        end
-        samp = 0
-        mx = -10.0
-        mn = 10.0
-        e_bin += 1
+  e_bin = 0
+  samp = 0
+  mx = -10.0
+  mn = 10.0
+  until e_bin == e_size
+    if samp >= samps_per_bin.floor
+      mxdiff = (mx - maxs[e_bin]).abs
+      mndiff = (mn - mins[e_bin]).abs
+      if mxdiff > max_diff
+        max_diff = mxdiff
       end
-      val = next_sample(rd)
-      if val < mn
-        mn = val
+      if mndiff > max_diff
+        max_diff = mndiff
       end
-      if val > mx
-        mx = val
+      if mxdiff > diff or mndiff > diff
+        snd_display("%s: peak_env_equal? [bin %d of %d]: %s %s %s?",
+                    name, e_bin, e_size, mn, mx, [mxdiff, mndiff].max)
+        return false
       end
-      samp += 1
-      true
+      samp = 0
+      mx = -10.0
+      mn = 10.0
+      e_bin += 1
     end
+    val = next_sample(rd)
+    if val < mn
+      mn = val
+    end
+    if val > mx
+      mx = val
+    end
+    samp += 1
   end
+  true
 end
 
 def test225
@@ -12235,14 +12232,12 @@ end
 
 def frame_equal?(f1, f2)
   if f1 and f2 and (len = f1.length) == f2.length
-    callcc do |ret|
-      len.times do |chn|
-        if fneq(frame_ref(f1, chn), frame_ref(f2, chn))
-          ret.call(false)
-        end
+    len.times do |chn|
+      if fneq(frame_ref(f1, chn), frame_ref(f2, chn))
+        return false
       end
-      true
     end
+    true
   else
     false
   end
@@ -12795,7 +12790,7 @@ def test008
   if fneq(res = poly(-1, 0, 1).resultant([2, 1]), 3.0)
     snd_display("poly_resultant 3: %s?", res)
   end
-  # 
+  
   if fneq(poly(-1, 0, 1).discriminant, -4.0)
     snd_display("poly_discriminat 0: %s?", res)
   end
@@ -17499,32 +17494,32 @@ def test148
     snd_display("locsig 24(8): %s?", locsig_data.call(gen))
   end
   #
-  [0, 1, 2, 4].each do |rev_chans|
-    locsig_scalers = lambda do |chans, degree, type|
-      if chans == 1
-        vct(1.0)
+  locsig_scalers = lambda do |chans, degree, type|
+    if chans == 1
+      vct(1.0)
+    else
+      deg = chans == 2 ? [0.0, [90.0, degree].min].max : degree.divmod(360.0)[1]
+      degs_per_chan = chans == 2 ? 90.0 : (360.0 / chans)
+      pos = deg / degs_per_chan
+      left = pos.floor
+      right = (left + 1) % chans
+      frac = pos - left
+      v = make_vct(chans)
+      if type == Mus_interp_linear
+        v[left] = 1.0 - frac
+        v[right] = frac
       else
-        deg = chans == 2 ? [0.0, [90.0, degree].min].max : degree.divmod(360.0)[1]
-        degs_per_chan = chans == 2 ? 90.0 : (360.0 / chans)
-        pos = deg / degs_per_chan
-        left = pos.floor
-        right = (left + 1) % chans
-        frac = pos - left
-        v = make_vct(chans)
-        if type == Mus_interp_linear
-          v[left] = 1.0 - frac
-          v[right] = frac
-        else
-          ldeg = HALF_PI * (0.5 - frac)
-          norm = sqrt(2.0) * 0.5
-          c = cos(ldeg)
-          s = sin(ldeg)
-          v[left] = norm * (c + s)
-          v[right] = norm * (c - s)
-        end
-        v
+        ldeg = HALF_PI * (0.5 - frac)
+        norm = sqrt(2.0) * 0.5
+        c = cos(ldeg)
+        s = sin(ldeg)
+        v[left] = norm * (c + s)
+        v[right] = norm * (c - s)
       end
+      v
     end
+  end
+  [0, 1, 2, 4].each do |rev_chans|
     delete_file("test.reverb")
     revfile = if rev_chans > 0
                 make_frame2file("test.reverb", rev_chans, Mus_bshort, Mus_next)
@@ -17534,71 +17529,69 @@ def test148
     [Mus_interp_linear, Mus_interp_sinusoidal].each do |type|
       set_locsig_type(type)
       snd_display("locsig_type: %s %s?", type, locsig_type) if locsig_type != type
-      callcc do |quit|
+      [0.0, 45.0, 90.0, 1234.0].each do |deg|
+        gen = make_locsig(deg, :channels, 1, :revout, revfile, :reverb, 0.1, :distance, 2.0)
+        revs = revfile ? locsig_scalers.call(rev_chans, deg, type) : []
+        if gen.channels != 1 then snd_display("locsig %s: %s?", deg, gen) end
+        if fneq(locsig_ref(gen, 0), 0.5)
+          snd_display("locsig scaler[%d] %s: %s?", type, deg, locsig_ref(gen, 0))
+        end
+        revs.each_with_index do |val, i|
+          if fneq(res1 = locsig_reverb_ref(gen, i), res2 = ((0.1 / sqrt(2.0)) * val))
+            snd_display("mono locrev[%d] %s at %s: %s %s?", type, gen, deg, res1, res2)
+            break
+          end
+        end
+      end
+      [Mus_interp_linear, Mus_interp_sinusoidal].each do |ltype|
         [0.0, 45.0, 90.0, 1234.0].each do |deg|
-          gen = make_locsig(deg, :channels, 1, :revout, revfile, :reverb, 0.1, :distance, 2.0)
-          revs = revfile ? locsig_scalers.call(rev_chans, deg, type) : []
+          gen = make_locsig(deg, :channels, 1, :type, ltype)
           if gen.channels != 1 then snd_display("locsig %s: %s?", deg, gen) end
-          if fneq(locsig_ref(gen, 0), 0.5)
-            snd_display("locsig scaler[%d] %s: %s?", type, deg, locsig_ref(gen, 0))
+          if fneq(res = locsig_ref(gen, 0), 1.0)
+            snd_display("locsig[%d] scaler %s: %s?", ltype, deg, res)
           end
-          revs.each_with_index do |val, i|
-            if fneq(res1 = locsig_reverb_ref(gen, i), res2 = ((0.1 / sqrt(2.0)) * val))
-              snd_display("mono locrev[%d] %s at %s: %s %s?", type, gen, deg, res1, res2)
-              quit.call
+        end
+      end
+      [2, 3, 4, 5, 8, 12, 16, 24].each do |chans|
+        [0.0, 45.0, 90.0, 120.0, 180.0, 275.0, 315.0, 300.0, 15.0, 1234.0].each do |deg|
+          gen = make_locsig(deg, :channels, chans, :revout, revfile, :reverb, 0.1)
+          if gen.channels != chans
+            snd_display("multi locsig %s: %s?", deg, gen)
+            break
+          end
+          locsig_scalers.call(chans, deg, type).each_with_index do |val, i|
+            if fneq(res = locsig_ref(gen, i), val)
+              snd_display("locrev[%d] %s at %s: %s %s?", type, gen, deg, res, val)
+              break
+            end
+          end
+          (revfile ? locsig_scalers.call(rev_chans, deg, type) : []).each_with_index do |val, i|
+            if fneq(res1 = locsig_reverb_ref(gen, i), res2 = 0.1 * val)
+              snd_display("locrev[%d] %s at %s: %s %s?", type, gen, deg, res1, res2)
+              break
             end
           end
         end
+      end
+      [2, 3, 4, 5, 8, 12, 16, 24].each do |chans|
         [Mus_interp_linear, Mus_interp_sinusoidal].each do |ltype|
-          [0.0, 45.0, 90.0, 1234.0].each do |deg|
-            gen = make_locsig(deg, :channels, 1, :type, ltype)
-            if gen.channels != 1 then snd_display("locsig %s: %s?", deg, gen) end
-            if fneq(res = locsig_ref(gen, 0), 1.0)
-              snd_display("locsig[%d] scaler %s: %s?", ltype, deg, res)
-            end
-          end
-        end
-        [2, 3, 4, 5, 8, 12, 16, 24].each do |chans|
           [0.0, 45.0, 90.0, 120.0, 180.0, 275.0, 315.0, 300.0, 15.0, 1234.0].each do |deg|
-            gen = make_locsig(deg, :channels, chans, :revout, revfile, :reverb, 0.1)
+            gen = make_locsig(deg, :channels, chans, :type, ltype,
+                              :revout, revfile, :reverb, 0.1)
             if gen.channels != chans
-              snd_display("multi locsig %s: %s?", deg, gen)
-              quit.call
+              snd_display("stereo locsig %s: %s?", deg, gen)
+              break
             end
-            locsig_scalers.call(chans, deg, type).each_with_index do |val, i|
+            locsig_scalers.call(chans, deg, ltype).each_with_index do |val, i|
               if fneq(res = locsig_ref(gen, i), val)
-                snd_display("locrev[%d] %s at %s: %s %s?", type, gen, deg, res, val)
-                quit.call
+                snd_display("locrev[%d] %s at %s: %s %s?", ltype, gen, deg, res, val)
+                break
               end
             end
-            (revfile ? locsig_scalers.call(rev_chans, deg, type) : []).each_with_index do |val, i|
+            (revfile ? locsig_scalers.call(rev_chans,deg,ltype): []).each_with_index do |val, i|
               if fneq(res1 = locsig_reverb_ref(gen, i), res2 = 0.1 * val)
-                snd_display("locrev[%d] %s at %s: %s %s?", type, gen, deg, res1, res2)
-                quit.call
-              end
-            end
-          end
-        end
-        [2, 3, 4, 5, 8, 12, 16, 24].each do |chans|
-          [Mus_interp_linear, Mus_interp_sinusoidal].each do |ltype|
-            [0.0, 45.0, 90.0, 120.0, 180.0, 275.0, 315.0, 300.0, 15.0, 1234.0].each do |deg|
-              gen = make_locsig(deg, :channels, chans, :type, ltype,
-                                :revout, revfile, :reverb, 0.1)
-              if gen.channels != chans
-                snd_display("stereo locsig %s: %s?", deg, gen)
-                quit.call
-              end
-              locsig_scalers.call(chans, deg, ltype).each_with_index do |val, i|
-                if fneq(res = locsig_ref(gen, i), val)
-                  snd_display("locrev[%d] %s at %s: %s %s?", ltype, gen, deg, res, val)
-                  quit.call
-                end
-              end
-              (revfile ? locsig_scalers.call(rev_chans,deg,ltype): []).each_with_index do |val, i|
-                if fneq(res1 = locsig_reverb_ref(gen, i), res2 = 0.1 * val)
-                  snd_display("locrev[%d] %s at %s: %s %s?", ltype, gen, deg, res1, res2)
-                  quit.call
-                end
+                snd_display("locrev[%d] %s at %s: %s %s?", ltype, gen, deg, res1, res2)
+                break
               end
             end
           end
@@ -25938,15 +25931,13 @@ end
 
 def undo_env(snd, chn)
   if (len = (edits(snd, chn) or []).first) > 0
-    callcc do |ret|
-      1.upto(len) do |i|
-        if (ed = edit_fragment(i, snd, chn)) and (ed[1] == "env" or ed[1] == "ptree")
-          set_edit_position(i - 1, snd, chn)
-          ret.call(true)
-        end
+    1.upto(len) do |i|
+      if (ed = edit_fragment(i, snd, chn)) and (ed[1] == "env" or ed[1] == "ptree")
+        set_edit_position(i - 1, snd, chn)
+        return true
       end
-      false
     end
+    false
   else
     false
   end
@@ -26270,75 +26261,71 @@ def amp_envs_equal?(snd, chn, pos0, pos1, df)
   env1 = channel_amp_envs(snd, chn, pos1)
   len0 = (env0 and list_p(env0) and env0.length == 2 and env0[1].length)
   len1 = (env1 and list_p(env1) and env1.length == 2 and env1[1].length)
-  callcc do |ret|
-    if len0 and len1
-      minlen = [len0, len1].min
-      inc0 = len0 / minlen
-      inc1 = len1 / minlen
-      e0 = env0[1]
-      e1 = env1[1]
-      if integer?(inc0) and integer?(inc1)
-        minlen.times do |i|
-          max0 = -1.0
-          max1 = -1.0
-          if inc0 == 1
-            max0 = e0[i]
-          else
-            inc0.times do |j|
-              if e0[j + inc0 * i] > max0
-                max0 = e0[j + inc0 * i]
-              end
+  if len0 and len1
+    minlen = [len0, len1].min
+    inc0 = len0 / minlen
+    inc1 = len1 / minlen
+    e0 = env0[1]
+    e1 = env1[1]
+    if integer?(inc0) and integer?(inc1)
+      minlen.times do |i|
+        max0 = -1.0
+        max1 = -1.0
+        if inc0 == 1
+          max0 = e0[i]
+        else
+          inc0.times do |j|
+            if e0[j + inc0 * i] > max0
+              max0 = e0[j + inc0 * i]
             end
           end
-          if inc1 == 1
-            max1 = e1[i]
-          else
-            inc1.times do |j|
-              if e1[j + inc1 * i] > max1
-                max1 = e1[j + inc1 * i]
-              end
-            end
-          end
-          if (max0 - max1).abs > df
-            snd_display("amp_env %d: %s %s?", i, max0, max1)
-            ret.call(false)
-          end
-          max0 = -1.0
-          max1 = -1.0
         end
-      else
-        snd_display("lens: %s %s?", len0, len1)
+        if inc1 == 1
+          max1 = e1[i]
+        else
+          inc1.times do |j|
+            if e1[j + inc1 * i] > max1
+              max1 = e1[j + inc1 * i]
+            end
+          end
+        end
+        if (max0 - max1).abs > df
+          snd_display("amp_env %d: %s %s?", i, max0, max1)
+          return false
+        end
+        max0 = -1.0
+        max1 = -1.0
       end
+    else
+      snd_display("lens: %s %s?", len0, len1)
     end
-    true
   end
+  true
 end
 
 def vequal_at(v0, v1)
-  callcc do |ret|
-    v0.each_with_index do |val, i|
-      if fneq_err(val, v1[i], 0.0001) then ret.call([i, val, v1[i]]) end
+  v0.each_with_index do |val, i|
+    if fneq_err(val, v1[i], 0.0001)
+      return [i, val, v1[i]]
     end
-    false
   end
+  false
 end
 
 def edits_not_equal?(tl0, tl1)
-  callcc do |ret|
-    tl0.each_with_index do |t0, i|
-      t1 = tl1[i]
-      if t0[0] != t1[0] or
-          t0[1] != t1[1] or
-          t0[2] != t1[2] or
-          t0[3] != t1[3] or
-          fneq(t0[4], t1[4]) or
-          fneq(t0[5], t1[5]) or
-          fneq(t0[6], t1[6])
-        ret.call([i, t0, t1])
-      end
+  tl0.each_with_index do |t0, i|
+    t1 = tl1[i]
+    if t0[0] != t1[0] or
+        t0[1] != t1[1] or
+        t0[2] != t1[2] or
+        t0[3] != t1[3] or
+        fneq(t0[4], t1[4]) or
+        fneq(t0[5], t1[5]) or
+        fneq(t0[6], t1[6])
+      return [i, t0, t1]
     end
-    false
   end
+  false
 end
 
 def check_edit_tree(expected_tree, expected_vals, name)
@@ -26896,24 +26883,22 @@ def test0116
   end
   reader = make_sample_reader(0)
   preader = make_sample_reader(0, ind, 0, 1, 0)
-  callcc do |ret|
-    1000.times do |i|
-      if fneq(res = reader.call, 0.0)
-        snd_display("clm_channel overlap delayed[%d]: %s?", i, res)
-        ret.call
-      end
+  1000.times do |i|
+    if fneq(res = reader.call, 0.0)
+      snd_display("clm_channel overlap delayed[%d]: %s?", i, res)
+      break
     end
-    len.times do |i|
-      if fneq(res1 = reader.call, res2 = preader.call)
-        snd_display("clm_channel overlap main[%d]: %s %s?", i + 1000, res1, res2)
-        ret.call
-      end
+  end
+  len.times do |i|
+    if fneq(res1 = reader.call, res2 = preader.call)
+      snd_display("clm_channel overlap main[%d]: %s %s?", i + 1000, res1, res2)
+      break
     end
-    1000.times do |i|
-      if fneq(res = reader.call, 0.0)
-        snd_display("clm_channel overlap trailing garbage[%d]: %s?", i, res)
-        ret.call
-      end
+  end
+  1000.times do |i|
+    if fneq(res = reader.call, 0.0)
+      snd_display("clm_channel overlap trailing garbage[%d]: %s?", i, res)
+      break
     end
   end
   close_sound(ind)
@@ -26974,7 +26959,7 @@ def check_env(name, r, e, dur)
   dur.times do |i|
     if fneq(rv = r.call, ev = e.call)
       snd_display("%s env check [%d]: %s %s?", name, i, rv, ev)
-      break
+      return
     end
   end
 end
@@ -30711,7 +30696,12 @@ end
 def test_lgamma
   10.times do
     x = random(100.0)
-    if fneq(res1 = lgamma(x), res2 = gammln(x))
+    res1 = lgamma(x)
+    res2 = gammln(x)
+    if array?(res1)
+      res1 = res1[0]            # INFO: ruby 1.9.1 returns and array.
+    end
+    if fneq(res1, res2)
       snd_display("lgamma(%s) -> %s %s?", x, res1, res2)
     end
   end
@@ -30723,7 +30713,9 @@ def test_erf
   if fneq(res = erf(1.0), 0.8427007) then snd_display("erf(1.0): %s?", res) end
   10.times do
     val = random(2.0)
-    if fneq(res1 = erf(val) + res2 = erfc(val), 1.0)
+    res1 = erf(val)
+    res2 = erfc(val)
+    if fneq(res1 + res2, 1.0)
       snd_display("erf+erfc: %s (%s + %s)?", res1 + res2, res1, res2)
     end
   end
@@ -31092,176 +31084,186 @@ def test0020
   unless vequal(d1, save_d1)
     snd_display("mus_fft d1 saved: %s %s?", d1, saved_d1)
   end
-  [8, 16].each do |size|
-    d0 = Vct.new(size)
-    d0[0] = 1.0
-    dcopy = d0.dup
-    d1 = snd_spectrum(d0, Rectangular_window, size)
-    unless vequal(d0, dcopy)
-      snd_display("snd_specrum not in-place?: %s %s?", d0, dcopy)
-    end
-    (size / 2).times do |i|
-      if fneq(d1[i], 1.0)
-        snd_display("snd_spectrum (1.0) [%d: %d]: %s?", i, size, d1[i])
+  catch(:done) do
+    [8, 16].each do |size|
+      d0 = Vct.new(size)
+      d0[0] = 1.0
+      dcopy = d0.dup
+      d1 = snd_spectrum(d0, Rectangular_window, size)
+      unless vequal(d0, dcopy)
+        snd_display("snd_specrum not in-place?: %s %s?", d0, dcopy)
       end
-    end
-    d0 = Vct.new(size, 1.0)
-    d1 = snd_spectrum(d0, Rectangular_window)
-    if fneq(d1[0], 1.0)
-      snd_display("snd_spectrum back (1.0 %d): %s?", size, d1[0])
-    end
-    (1...(size / 2)).each do |i|
-      if fneq(d1[i], 0.0)
-        snd_display("snd_spectrum (0.0) [%d: %d]: %s?", i, size, d1[i])
-        break
+      (size / 2).times do |i|
+        if fneq(d1[i], 1.0)
+          snd_display("snd_spectrum (1.0) [%d: %d]: %s?", i, size, d1[i])
+        end
       end
-    end
-    d0 = Vct.new(size)
-    d0[0] = 1.0
-    d1 = snd_spectrum(d0, Rectangular_window, size, false) # dB (0.0 = max)
-    (size / 2).times do |i|
-      if fneq(d1[i], 0.0)
-        snd_display("snd_spectrum dB (0.0) [%d: %d]: %s?", i, size, d1[i])
-        break
+      d0 = Vct.new(size, 1.0)
+      d1 = snd_spectrum(d0, Rectangular_window)
+      if fneq(d1[0], 1.0)
+        snd_display("snd_spectrum back (1.0 %d): %s?", size, d1[0])
       end
-    end
-    d0 = Vct.new(size, 1.0)
-    d1 = snd_spectrum(d0, Rectangular_window, size, false)
-    if fneq(d1[0], 0.0)
-      snd_display("snd_spectrum dB back (0.0 %d): %s?", size, d1[0])
-    end
-    (1...(size / 2)).each do |i|
-      if fneq(d1[i], -90.0)     # currently ignores min-dB (snd-sig.c 5023)
-        snd_display("snd_spectrum dB (1.0) [%d: %d]): %s?", i, size, d1[i])
-        break
+      (1...(size / 2)).each do |i|
+        if fneq(d1[i], 0.0)
+          snd_display("snd_spectrum (0.0) [%d: %d]: %s?", i, size, d1[i])
+          throw(:done)
+        end
       end
-    end
-    d0 = Vct.new(size)
-    d0[0] = 1.0
-    dcopy = d0.dup
-    d1 = snd_spectrum(d0, Rectangular_window, size, true, 1.0, true) # in-place
-    if vequal(d0, dcopy)
-      snd_display("snd_spectrum in-place: %s %s?", d0, dcopy)
-    end
-    unless vequal(d0, d1)
-      snd_display("snd_spectrum returns in-place: %s %s?", d0, d1)
-    end
-    (size / 2).times do |i|
-      if fneq(d1[i], 1.0)
-        snd_display("snd_spectrum dB (1.0 true) [%d: %d]: %s?", i, size, d1[i])
-        break
+      d0 = Vct.new(size)
+      d0[0] = 1.0
+      d1 = snd_spectrum(d0, Rectangular_window, size, false) # dB (0.0 = max)
+      (size / 2).times do |i|
+        if fneq(d1[i], 0.0)
+          snd_display("snd_spectrum dB (0.0) [%d: %d]: %s?", i, size, d1[i])
+          throw(:done)
+        end
       end
-    end
-    d0 = Vct.new(size)
-    d0[0] = 1.0
-    dcopy = d0.dup
-    d1 = snd_spectrum(d0, Rectangular_window, size, false, 1.0, true) # in-place dB
-    if vequal(d0, dcopy)
-      snd_display("snd_spectrum dB in-place: %s %s?", d0, dcopy)
-    end
-    unless vequal(d0, d1)
-      snd_display("snd_spectrum returns dB in-place: %s %s?", d0, d1)
-    end
-    (size / 2).times do |i|
-      if fneq(d1[i], 0.0)
-        snd_display("snd_spectrum dB (1.0 true) [%d: %d]: %s?", i, size, d1[i])
-        break
+      d0 = Vct.new(size, 1.0)
+      d1 = snd_spectrum(d0, Rectangular_window, size, false)
+      if fneq(d1[0], 0.0)
+        snd_display("snd_spectrum dB back (0.0 %d): %s?", size, d1[0])
       end
-    end
-    d0 = Vct.new(size, 1.0)
-    d1 = snd_spectrum(d0, Rectangular_window, size, true, 0.0, false, false) # linear (in-place)
-    if fneq(d1[0], size.to_f)
-      snd_display("snd_spectrum no more 0: %s?", d1)
-    end
-    (1...(size / 2)).each do |i|
-      if fneq(d1[i], 0.0)
-        snd_display("snd_spectrum no more (0.0) [%d: %d]: %s?", i, size, d1[i])
-        break
+      (1...(size / 2)).each do |i|
+        if fneq(d1[i], -90.0)     # currently ignores min-dB (snd-sig.c 5023)
+          snd_display("snd_spectrum dB (1.0) [%d: %d]): %s?", i, size, d1[i])
+          throw(:done)
+        end
       end
-    end
-    d0 = Vct.new(size, 1.0)
-    d1 = snd_spectrum(d0, Blackman2_window, size)
-    if (not vequal(d1, vct(1.000, 0.721, 0.293, 0.091))) and
-        (not vequal(d1, vct(1.000, 0.647, 0.173, 0.037, 0.024, 0.016, 0.011, 0.005)))
-      snd_display("blackman2 snd_spectrum: %s?", d1)
-    end
-    d0 = Vct.new(size, 1.0)
-    d1 = snd_spectrum(d0, Gaussian_window, size, true, 0.5)
-    if (not vequal(d1, vct(1.000, 0.900, 0.646, 0.328))) and
-        (not vequal(d1, vct(1.000, 0.870, 0.585, 0.329, 0.177, 0.101, 0.059, 0.028)))
-      snd_display("gaussian 0.5  snd_spectrum: %s?", d1)
-    end
-    d0 = Vct.new(size, 1.0)
-    d1 = snd_spectrum(d0, Gaussian_window, size, true, 0.85)
-    if (not vequal(d1, vct(1.000, 0.924, 0.707, 0.383))) and
-        (not vequal(d1, vct(1.000, 0.964, 0.865, 0.725, 0.566, 0.409, 0.263, 0.128)))
-      snd_display("gaussian 0.85 snd_spectrum: %s?", d1)
+      d0 = Vct.new(size)
+      d0[0] = 1.0
+      dcopy = d0.dup
+      d1 = snd_spectrum(d0, Rectangular_window, size, true, 1.0, true) # in-place
+      if vequal(d0, dcopy)
+        snd_display("snd_spectrum in-place: %s %s?", d0, dcopy)
+      end
+      unless vequal(d0, d1)
+        snd_display("snd_spectrum returns in-place: %s %s?", d0, d1)
+      end
+      (size / 2).times do |i|
+        if fneq(d1[i], 1.0)
+          snd_display("snd_spectrum dB (1.0 true) [%d: %d]: %s?", i, size, d1[i])
+          throw(:done)
+        end
+      end
+      d0 = Vct.new(size)
+      d0[0] = 1.0
+      dcopy = d0.dup
+      d1 = snd_spectrum(d0, Rectangular_window, size, false, 1.0, true) # in-place dB
+      if vequal(d0, dcopy)
+        snd_display("snd_spectrum dB in-place: %s %s?", d0, dcopy)
+      end
+      unless vequal(d0, d1)
+        snd_display("snd_spectrum returns dB in-place: %s %s?", d0, d1)
+      end
+      (size / 2).times do |i|
+        if fneq(d1[i], 0.0)
+          snd_display("snd_spectrum dB (1.0 true) [%d: %d]: %s?", i, size, d1[i])
+          throw(:done)
+        end
+      end
+      d0 = Vct.new(size, 1.0)
+      d1 = snd_spectrum(d0, Rectangular_window, size, true, 0.0, false, false) # linear (in-place)
+      if fneq(d1[0], size.to_f)
+        snd_display("snd_spectrum no more 0: %s?", d1)
+      end
+      (1...(size / 2)).each do |i|
+        if fneq(d1[i], 0.0)
+          snd_display("snd_spectrum no more (0.0) [%d: %d]: %s?", i, size, d1[i])
+          throw(:done)
+        end
+      end
+      d0 = Vct.new(size, 1.0)
+      d1 = snd_spectrum(d0, Blackman2_window, size)
+      if (not vequal(d1, vct(1.000, 0.721, 0.293, 0.091))) and
+          (not vequal(d1, vct(1.000, 0.647, 0.173, 0.037, 0.024, 0.016, 0.011, 0.005)))
+        snd_display("blackman2 snd_spectrum: %s?", d1)
+      end
+      d0 = Vct.new(size, 1.0)
+      d1 = snd_spectrum(d0, Gaussian_window, size, true, 0.5)
+      if (not vequal(d1, vct(1.000, 0.900, 0.646, 0.328))) and
+          (not vequal(d1, vct(1.000, 0.870, 0.585, 0.329, 0.177, 0.101, 0.059, 0.028)))
+        snd_display("gaussian 0.5  snd_spectrum: %s?", d1)
+      end
+      d0 = Vct.new(size, 1.0)
+      d1 = snd_spectrum(d0, Gaussian_window, size, true, 0.85)
+      if (not vequal(d1, vct(1.000, 0.924, 0.707, 0.383))) and
+          (not vequal(d1, vct(1.000, 0.964, 0.865, 0.725, 0.566, 0.409, 0.263, 0.128)))
+        snd_display("gaussian 0.85 snd_spectrum: %s?", d1)
+      end
     end
   end
   #
-  [16, 128, 512, 1024].each do |len|
-    rl = Vct.new(len, 1.0)
-    xrl = Vct.new(len, 1.0)
-    len2 = len / 2
-    snd_transform(Fourier_transform, rl)
-    snd_transform(Fourier_transform, xrl, true)
-    len2.times do |i|
-      if fneq(rl[i], xrl[i])
-        snd_display("flat fft: %d at %d: %s %s?", len, i, rl[i], xrl[i])
-        break
+  catch(:done) do
+    [16, 128, 512, 1024].each do |len|
+      rl = Vct.new(len, 1.0)
+      xrl = Vct.new(len, 1.0)
+      len2 = len / 2
+      snd_transform(Fourier_transform, rl)
+      snd_transform(Fourier_transform, xrl, true)
+      len2.times do |i|
+        if fneq(rl[i], xrl[i])
+          snd_display("flat fft: %d at %d: %s %s?", len, i, rl[i], xrl[i])
+          throw(:done)
+        end
       end
+      if fneq(rl[0], len * len.to_f) then snd_display("%d at 0: %s?", len, rl[0]) end
+      rl[0] = 0.0
+      if rl.peak > 0.001 then snd_display("%d impulse: %s?", len, rl.peak) end
     end
-    if fneq(rl[0], len * len.to_f) then snd_display("%d at 0: %s?", len, rl[0]) end
-    rl[0] = 0.0
-    if rl.peak > 0.001 then snd_display("%d impulse: %s?", len, rl.peak) end
   end
-  [16, 128, 512, 1024].each do |len|
-    rl = Vct.new(len)
-    xrl = Vct.new(len)
-    len2 = len / 2
-    rl[len2] = 1.0
-    xrl[len2] = 1.0
-    snd_transform(Fourier_transform, rl)
-    snd_transform(Fourier_transform, xrl, true)
-    len2.times do |i|
-      if fneq(rl[i], xrl[i])
-        snd_display("impulse fft: %d at %d: %s %s?", len, i, rl[i], xrl[i])
-        break
+  catch(:done) do
+    [16, 128, 512, 1024].each do |len|
+      rl = Vct.new(len)
+      xrl = Vct.new(len)
+      len2 = len / 2
+      rl[len2] = 1.0
+      xrl[len2] = 1.0
+      snd_transform(Fourier_transform, rl)
+      snd_transform(Fourier_transform, xrl, true)
+      len2.times do |i|
+        if fneq(rl[i], xrl[i])
+          snd_display("impulse fft: %d at %d: %s %s?", len, i, rl[i], xrl[i])
+          throw(:done)
+        end
       end
-    end
-    if fneq(rl[0], 1.0) then snd_display("flat %d at 0: %s?", len, rl[0]) end
+      if fneq(rl[0], 1.0) then snd_display("flat %d at 0: %s?", len, rl[0]) end
+    end  
   end  
-  [16, 128, 512, 1024, 4096].each do |len|
-    rl = Vct.new(len)
-    xrl = Vct.new(len) do |i| rl[i] = random(1.0) end
-    len2 = len / 2
-    rl[len2] = 1.0
-    xrl[len2] = 1.0
-    snd_transform(Fourier_transform, rl)
-    rl.scale!(1.0 / len)
-    snd_transform(Fourier_transform, xrl, true)
-    xrl.scale!(1.0 / len)
-    len2.times do |i|
-      if fneq(rl[i], xrl[i])
-        snd_display("random fft: %d at %d: %s %s?", len, i, rl[i], xrl[i])
-        break
+  catch(:done) do
+    [16, 128, 512, 1024, 4096].each do |len|
+      rl = Vct.new(len)
+      xrl = Vct.new(len) do |i| rl[i] = random(1.0) end
+      len2 = len / 2
+      rl[len2] = 1.0
+      xrl[len2] = 1.0
+      snd_transform(Fourier_transform, rl)
+      rl.scale!(1.0 / len)
+      snd_transform(Fourier_transform, xrl, true)
+      xrl.scale!(1.0 / len)
+      len2.times do |i|
+        if fneq(rl[i], xrl[i])
+          snd_display("random fft: %d at %d: %s %s?", len, i, rl[i], xrl[i])
+          throw(:done)
+        end
       end
-    end
+    end  
   end  
-  [16, 128, 512, 1024, 4096].each do |len|
-    rl = Vct.new(len)
-    xrl = Vct.new(len) do |i| rl[i] = sin((TWO_PI * 10.0 * i) / len) end
-    len2 = len / 2
-    rl[len2] = 1.0
-    xrl[len2] = 1.0
-    snd_transform(Fourier_transform, rl)
-    rl.scale!(1.0 / len)
-    snd_transform(Fourier_transform, xrl, true)
-    xrl.scale!(1.0 / len)
-    len2.times do |i|
-      if fneq(rl[i], xrl[i])
-        snd_display("sin fft: %d at %d: %s %s?", len, i, rl[i], xrl[i])
-        break
+  catch(:done) do
+    [16, 128, 512, 1024, 4096].each do |len|
+      rl = Vct.new(len)
+      xrl = Vct.new(len) do |i| rl[i] = sin((TWO_PI * 10.0 * i) / len) end
+      len2 = len / 2
+      rl[len2] = 1.0
+      xrl[len2] = 1.0
+      snd_transform(Fourier_transform, rl)
+      rl.scale!(1.0 / len)
+      snd_transform(Fourier_transform, xrl, true)
+      xrl.scale!(1.0 / len)
+      len2.times do |i|
+        if fneq(rl[i], xrl[i])
+          snd_display("sin fft: %d at %d: %s %s?", len, i, rl[i], xrl[i])
+          throw(:done)
+        end
       end
     end
   end
@@ -31305,66 +31307,70 @@ def test0020
     snd_display("autocorrelate/corr: %s?", rl1, nr)
   end
   #
-  [16, 64, 256, 512].each do |len|
-    rl = Vct.new(len)
-    rla = Vct.new(len)
-    xim = Vct.new(len)
-    xrl = Vct.new(len)
-    len2 = len / 2
-    rl[0] = 1.0
-    rl[4] = 1.0
-    snd_transform(Autocorrelation, rl, 0)
-    if fneq(rl[0], 2.0) then snd_display("autocorrelation %d 0: %s?", len, rl[0]) end
-    if fneq(rl[4], 1.0) then snd_display("autocorrelation %d 4: %s?", len, rl[0]) end
-    rla[0] = 1.0
-    rla[4] = 1.0
-    autocorrelate(rla)
-    if fneq(rla[0], 2.0) then snd_display("autocorrelate %d 0: %s?", len, rla[0]) end
-    if fneq(rla[4], 1.0) then snd_display("autocorrelate %d 4: %s?", len, rla[0]) end
-    xrl[0] = 1.0
-    xrl[4] = 1.0
-    mus_fft(xrl, xim, len, 1)
-    xrl.map_with_index! do |val, i| val * val + xim[i] * xim[i] end
-    xim.scale! 0.0
-    mus_fft(xrl, xim, len, -1)
-    xrl.scale! 1.0 / len
-    len2.times do |i|
-      if fneq(rl[i], xrl[i])
-        snd_display("%d at %d: %s %s?", len, i, rl[i], xrl[i])
-        break
+  catch(:done) do
+    [16, 64, 256, 512].each do |len|
+      rl = Vct.new(len)
+      rla = Vct.new(len)
+      xim = Vct.new(len)
+      xrl = Vct.new(len)
+      len2 = len / 2
+      rl[0] = 1.0
+      rl[4] = 1.0
+      snd_transform(Autocorrelation, rl, 0)
+      if fneq(rl[0], 2.0) then snd_display("autocorrelation %d 0: %s?", len, rl[0]) end
+      if fneq(rl[4], 1.0) then snd_display("autocorrelation %d 4: %s?", len, rl[0]) end
+      rla[0] = 1.0
+      rla[4] = 1.0
+      autocorrelate(rla)
+      if fneq(rla[0], 2.0) then snd_display("autocorrelate %d 0: %s?", len, rla[0]) end
+      if fneq(rla[4], 1.0) then snd_display("autocorrelate %d 4: %s?", len, rla[0]) end
+      xrl[0] = 1.0
+      xrl[4] = 1.0
+      mus_fft(xrl, xim, len, 1)
+      xrl.map_with_index! do |val, i| val * val + xim[i] * xim[i] end
+      xim.scale! 0.0
+      mus_fft(xrl, xim, len, -1)
+      xrl.scale! 1.0 / len
+      len2.times do |i|
+        if fneq(rl[i], xrl[i])
+          snd_display("%d at %d: %s %s?", len, i, rl[i], xrl[i])
+          throw(:done)
+        end
       end
+      rl[0] = 0.0
+      rl[4] = 0.0
+      (len / 2).upto(len - 1) do |i| rl[i] = 0.0 end
+      if rl.peak > 0.001 then snd_display("autocorrelate peak: %s?", rl.peak) end
     end
-    rl[0] = 0.0
-    rl[4] = 0.0
-    (len / 2).upto(len - 1) do |i| rl[i] = 0.0 end
-    if rl.peak > 0.001 then snd_display("autocorrelate peak: %s?", rl.peak) end
   end
-  [16, 64, 256, 512].each do |len|
-    rl = Vct.new(len)
-    xim = Vct.new(len)
-    xrl = Vct.new(len)
-    len2 = len / 2
-    ones = [2, random(len2)].max
-    ones.times do
-      ind = random(len)
-      rl[ind] = xrl[ind] = random(1.0)
-    end
-    snd_transform(Autocorrelation, rl, 0)
-    mus_fft(xrl, xim, len, 1)
-    xrl[0] *= xrl[0]
-    xrl[len2] *= xrl[len2]
-    j = len - 1
-    (1...len2).each do |i|
-      xrl[j] = xrl[i] = xrl[i] * xrl[i] + xim[j] * xim[j]
-      j -= 1
-    end
-    xim.scale! 0.0
-    mus_fft(xrl, xim, len, -1)
-    xrl.scale! 1.0 / len
-    len2.times do |i|
-      if fneq(rl[i], xrl[i])
-        snd_display("random %d at %d: %s %s?", len, i, rl[i], xrl[i])
-        break
+  catch(:done) do
+    [16, 64, 256, 512].each do |len|
+      rl = Vct.new(len)
+      xim = Vct.new(len)
+      xrl = Vct.new(len)
+      len2 = len / 2
+      ones = [2, random(len2)].max
+      ones.times do
+        ind = random(len)
+        rl[ind] = xrl[ind] = random(1.0)
+      end
+      snd_transform(Autocorrelation, rl, 0)
+      mus_fft(xrl, xim, len, 1)
+      xrl[0] *= xrl[0]
+      xrl[len2] *= xrl[len2]
+      j = len - 1
+      (1...len2).each do |i|
+        xrl[j] = xrl[i] = xrl[i] * xrl[i] + xim[j] * xim[j]
+        j -= 1
+      end
+      xim.scale! 0.0
+      mus_fft(xrl, xim, len, -1)
+      xrl.scale! 1.0 / len
+      len2.times do |i|
+        if fneq(rl[i], xrl[i])
+          snd_display("random %d at %d: %s %s?", len, i, rl[i], xrl[i])
+          throw(:done)
+        end
       end
     end
   end
@@ -31385,32 +31391,34 @@ def test0020
                          0.039, 0.041, 0.048, 0.061, 0.082, 0.122, 0.203, 0.452))
     snd_display("cepstrum 16 by ones: %s?", nrl)
   end
-  [16, 64, 256, 512].each do |len|
-    rl = Vct.new(len)
-    xim = Vct.new(len)
-    xrl = Vct.new(len)
-    rl[0] = 1.0
-    rl[4] = 1.0
-    snd_transform(Cepstrum, rl, 0)
-    xrl[0] = 1.0
-    xrl[4] = 1.0
-    mus_fft(xrl, xim, len, 1)
-    xrl.map_with_index! do |xval, i|
-      if (val = xval * xval + xim[i] * xim[i]) > 0.0000001
-        log(sqrt(val))
-      else
-        -10.0
+  catch(:done) do
+    [16, 64, 256, 512].each do |len|
+      rl = Vct.new(len)
+      xim = Vct.new(len)
+      xrl = Vct.new(len)
+      rl[0] = 1.0
+      rl[4] = 1.0
+      snd_transform(Cepstrum, rl, 0)
+      xrl[0] = 1.0
+      xrl[4] = 1.0
+      mus_fft(xrl, xim, len, 1)
+      xrl.map_with_index! do |xval, i|
+        if (val = xval * xval + xim[i] * xim[i]) > 0.0000001
+          log(sqrt(val))
+        else
+          -10.0
+        end
       end
-    end
-    xim.scale! 0.0
-    mus_fft(xrl, xim, len, -1)
-    fscl = 0.0
-    xrl.each do |val| fscl = [fscl, val.abs].max end
-    xrl.scale! 1.0 / fscl
-    rl.each_with_index do |val, i|
-      if fneq(val, xrl[i])
-        snd_display("%d at %d: %s %s?", len, i, val, xrl[i])
-        break
+      xim.scale! 0.0
+      mus_fft(xrl, xim, len, -1)
+      fscl = 0.0
+      xrl.each do |val| fscl = [fscl, val.abs].max end
+      xrl.scale! 1.0 / fscl
+      rl.each_with_index do |val, i|
+        if fneq(val, xrl[i])
+          snd_display("%d at %d: %s %s?", len, i, val, xrl[i])
+          throw(:done)
+        end
       end
     end
   end

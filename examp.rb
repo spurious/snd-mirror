@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Wed Sep 04 18:34:00 CEST 2002
-# Changed: Fri Jul 17 22:23:35 CEST 2009
+# Changed: Sun Jul 19 01:01:06 CEST 2009
 
 # Commentary:
 #
@@ -476,11 +476,11 @@ def features(all = nil)
 end
 
 def make_polar(r, theta)
-  Complex.new(cos(theta) * r, sin(theta) * r)
+  Complex(cos(theta) * r, sin(theta) * r)
 end
 
 def make_rectangular(re, im = 1.0)
-  Complex.new(re, im)
+  Complex(re, im)
 end
 
 def array?(obj)
@@ -665,6 +665,7 @@ class Object
   end
   
   # Float(nil) ==> 0.0 like Integer(nil) ==> 0
+  alias old_Float Float
   def new_Float(numb)
     if numb.kind_of?(NilClass)
       0.0
@@ -672,7 +673,6 @@ class Object
       old_Float(numb)
     end
   end
-  alias old_Float Float
   alias Float new_Float
 
   def snd_func(name, *rest, &body)
@@ -1112,12 +1112,14 @@ a: 2
       when Proc, Method
         self.map do |item| func.call(*rest + [item]) end
       when Symbol, String
-        if body and self.methods.member?(func.to_s)
+        meths = self.methods
+        if body and (meths.member?(func.to_s) or meths.member?(func.to_sym))
           # map, each, ...
           self.send(func, *rest, &body)
         else
           receiver = self.compact.first
-          if receiver and receiver.methods.member?(func.to_s)
+          meths = receiver.methods
+          if receiver and (meths.member?(func.to_s) or meths.member?(func.to_sym))
             # methods
             case func.to_sym
             when :+, :-, :*
@@ -1495,6 +1497,12 @@ class Float
       end
     end
     alias * new_float_times
+  end
+  
+  unless defined? 0.0.image
+    def image
+      0.0
+    end
   end
 end
 

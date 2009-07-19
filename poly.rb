@@ -2,7 +2,7 @@
 
 # Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Sat Apr 09 23:55:07 CEST 2005
-# Changed: Fri Jul 17 21:31:31 CEST 2009
+# Changed: Sat Jul 18 22:59:40 CEST 2009
 
 # Commentary: (see poly.scm)
 #
@@ -184,16 +184,18 @@ class Poly < Vec
   include Mixer_matrix
   def resultant(other)
     m = self.length
+    m1 = m - 1
     n = other.length
-    mat = make_mixer(n + m + -2)
-    (0...n - 1).each do |i|
+    n1 = n - 1
+    mat = make_mixer(n1 + m1)
+    n1.times do |i|
       m.times do |j|
-        mixer_set!(mat, i, i + j, self[m - j - 1])
+        mixer_set!(mat, i, i + j, self[m1 - j])
       end
     end
-    (0...m - 1).each do |i|
+    m1.times do |i|
       n.times do |j|
-        mixer_set!(mat, i + n + -1, i + j, other[n - j - 1])
+        mixer_set!(mat, i + n1, i + j, other[n1 - j])
       end
     end
     mixer_determinant(mat)
