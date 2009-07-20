@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Wed Sep 04 18:34:00 CEST 2002
-# Changed: Sun Jul 19 01:01:06 CEST 2009
+# Changed: Sun Jul 19 18:05:33 CEST 2009
 
 # Commentary:
 #
@@ -454,6 +454,10 @@
 
 unless defined? $LOADED_FEATURES then alias $LOADED_FEATURES $" end
 
+# Ruby 1.9.x moved Continuation to 'continuation'!
+# (See ruby/ChangeLog Tue Jan 20 16:17:12 2009.)
+unless defined? Kernel.callcc then require 'continuation' end
+
 def provided?(feature)
   assert_type((symbol?(feature) or string?(feature)), feature, 0, "a symbol or a string")
   $LOADED_FEATURES.map do |f| File.basename(f) end.member?(feature.to_s.tr("_", "-"))
@@ -862,6 +866,62 @@ end unless defined? print_length
 def set_print_length(val)
   $array_print_length = val
 end unless defined? set_print_length
+
+module Enumerable
+  def map_with_index
+    i = -1
+    self.map do |x| yield(x, i += 1) end
+  end
+
+  def map_with_index!
+    i = -1
+    self.map! do |x| yield(x, i += 1) end
+  end
+  
+  def clm_cycle
+    unless defined? @clm_cycle_index then @clm_cycle_index = 0 end
+    val = self[@clm_cycle_index % self.length]
+    @clm_cycle_index += 1
+    if @clm_cycle_index == self.length then @clm_cycle_index = 0 end
+    val
+  end
+
+  def clm_cycle=(val)
+    unless defined? @clm_cycle_index then @clm_cycle_index = 0 end
+    self[@clm_cycle_index % self.length] = val
+    @clm_cycle_index += 1
+    if @clm_cycle_index == self.length then @clm_cycle_index = 0 end
+    val
+  end
+  attr_accessor :clm_cycle_index
+
+  # backward compatibility methods
+  def each_index
+    self.each_with_index do |val, i| yield(i) end
+  end unless vct(0).respond_to?(:each_index)
+  
+  # Enumerable#zip, new in ruby core since 19-Nov-2002.
+  # a = [4, 5, 6]
+  # b = [7, 8, 9]
+  # [1, 2, 3].zip(a, b) --> [[1, 4, 7], [2, 5, 8], [3, 6, 9]]
+  # [1, 2].zip(a, b)    --> [[1, 4, 7], [2, 5, 8]]
+  # a.zip([1, 2],[8])   --> [[4, 1, 8], [5, 2, nil], [6, nil, nil]]
+  def clm_zip(*objs)
+    args = objs.map do |obj| obj.to_a end
+    res = self.to_a
+    res.each_with_index do |val, i|
+      ary = [val]
+      args.each do |obj| ary.push(obj[i]) end
+      if block_given?
+        yield(*ary)
+      else
+        res[i] = ary
+      end
+    end
+    res
+  end
+  alias zip clm_zip unless [].respond_to?(:zip)
+end
 
 # Older Ruby versions lack Array.new(10) do |i| ... end
 # make_array
@@ -1432,6 +1492,9 @@ class Vct
     end
   end
   # alias [] vct_ref_extend
+
+  # This is required since Ruby 1.9.
+  alias zip clm_zip if [].respond_to?(:zip)
 end
 
 class Fixnum
@@ -1499,10 +1562,11 @@ class Float
     alias * new_float_times
   end
   
-  unless defined? 0.0.image
-    def image
+  unless defined? 0.0.imag
+    def imag
       0.0
     end
+    alias image imag
   end
 end
 
@@ -1792,61 +1856,6 @@ class Range
   def step(n = 1, &body)
     self.to_a.step(n, &body)
   end unless defined? Range.new(0, 1).step
-end
-
-module Enumerable
-  def map_with_index
-    i = -1
-    self.map do |x| yield(x, i += 1) end
-  end
-
-  def map_with_index!
-    i = -1
-    self.map! do |x| yield(x, i += 1) end
-  end
-  
-  def clm_cycle
-    unless defined? @clm_cycle_index then @clm_cycle_index = 0 end
-    val = self[@clm_cycle_index % self.length]
-    @clm_cycle_index += 1
-    if @clm_cycle_index == self.length then @clm_cycle_index = 0 end
-    val
-  end
-
-  def clm_cycle=(val)
-    unless defined? @clm_cycle_index then @clm_cycle_index = 0 end
-    self[@clm_cycle_index % self.length] = val
-    @clm_cycle_index += 1
-    if @clm_cycle_index == self.length then @clm_cycle_index = 0 end
-    val
-  end
-  attr_accessor :clm_cycle_index
-
-  # backward compatibility methods
-  def each_index
-    self.each_with_index do |val, i| yield(i) end
-  end unless vct(0).respond_to?(:each_index)
-  
-  # Enumerable#zip, new in ruby core since 19-Nov-2002.
-  # a = [4, 5, 6]
-  # b = [7, 8, 9]
-  # [1, 2, 3].zip(a, b) --> [[1, 4, 7], [2, 5, 8], [3, 6, 9]]
-  # [1, 2].zip(a, b)    --> [[1, 4, 7], [2, 5, 8]]
-  # a.zip([1, 2],[8])   --> [[4, 1, 8], [5, 2, nil], [6, nil, nil]]
-  def zip(*objs)
-    args = objs.map do |obj| obj.to_a end
-    res = self.to_a
-    res.each_with_index do |val, i|
-      ary = [val]
-      args.each do |obj| ary.push(obj[i]) end
-      if block_given?
-        yield(*ary)
-      else
-        res[i] = ary
-      end
-    end
-    res
-  end unless [].respond_to?(:zip)
 end
 
 def as_one_edit_rb(*origin, &body)
@@ -2500,17 +2509,12 @@ class Snd
         fname
       else
         f = File.basename(fname)
-        brk = false
         Snd_path.each do |path|
           if File.exist?(path + "/" + f)
-            brk = path + "/" + f
-            break
+            return path + "/" + f
           end
         end
-        unless brk
-          Snd.raise(:no_such_file, fname)
-        end
-        brk
+        Snd.raise(:no_such_file, fname)
       end
     end
     
@@ -4329,17 +4333,17 @@ convolves snd0 and snd1, scaling by amp, returns new max amp: cnvtest(0, 1, 0.1)
            "swap_selection_channels) swaps the currently selected data's channels")
   def swap_selection_channels
     find_selection_sound = lambda do |not_this|
-      ret = false
-      Snd.sounds.each do |snd|
-        channels(snd).times do |chn|
-          if selection_member?(snd, chn) and
-              (not_this.empty? or snd != not_this[0] or chn != not_this[1])
-            ret = [snd, chn]
-            break
+      callcc do |ret|
+        Snd.sounds.each do |snd|
+          channels(snd).times do |chn|
+            if selection_member?(snd, chn) and
+                (not_this.empty? or snd != not_this[0] or chn != not_this[1])
+              ret.call([snd, chn])
+            end
           end
         end
+        false
       end
-      ret
     end
     if selection?
       if selection_chans == 2
@@ -4644,26 +4648,27 @@ end")
       prompt_in_minibuffer(prompt,
                            lambda do |response|
                              width, heigth = widget_size(sound_widgets(@current_buffer[0])[0])
-                             if (not string?(response)) or response.empty?
-                               temp = @current_buffer
-                               if @last_buffer
-                                 @current_buffer = @last_buffer
+                             callcc do |give_up|
+                               if (not string?(response)) or response.empty?
+                                 temp = @current_buffer
+                                 if @last_buffer
+                                   @current_buffer = @last_buffer
+                                 else
+                                   index = new_sound()
+                                   @current_buffer = [index, 0]
+                                 end
+                                 @last_buffer = temp
                                else
-                                 index = new_sound()
-                                 @current_buffer = [index, 0]
+                                 if index = find_sound(response)
+                                   @last_buffer, @current_buffer = @current_buffer, [index, 0]
+                                 else
+                                   give_up.call(report_in_minibuffer("can't find " + response))
+                                 end
                                end
-                               @last_buffer = temp
-                             else
-                               if index = find_sound(response)
-                                 @last_buffer, @current_buffer = @current_buffer, [index, 0]
-                               else
-                                 report_in_minibuffer("can't find " + response)
-                                 return
-                               end
+                               close_all_buffers
+                               report_in_minibuffer("")
+                               open_current_buffer(width, heigth)
                              end
-                             close_all_buffers
-                             report_in_minibuffer("")
-                             open_current_buffer(width, heigth)
                            end)
     end
 
@@ -4733,12 +4738,8 @@ end")
     samps = make_vct(10)
     len = frames()
     samps_ctr = 0
-    ret = false
     (loc...len).each do |ctr|
-      if c_g?
-        ret = ctr
-        break
-      end
+      return ctr if c_g?
       samp0, samp1, samp2 = samp1, samp2, next_sample(reader)
       samps[samps_ctr] = samp0
       if samps_ctr < 9
@@ -4750,11 +4751,10 @@ end")
       if ((samp0 - samp1).abs > local_max) and
           ((samp1 - samp2).abs > local_max) and
           ((samp0 - samp2).abs < (local_max / 2))
-        ret = ctr - 1
-        break
+        return ctr - 1
       end
     end
-    ret
+    false
   end
 
   add_help(:remove_clicks, "remove_clicks() tries to find and smooth-over clicks")
@@ -4990,15 +4990,14 @@ turns the currently selected soundfont file into a bunch of files of the form sa
     def find_next_file
       choose_next = @last_file_opened.empty?
       just_filename = File.basename(@last_file_opened)
-      f = @current_sorted_files[0]
-      @current_sorted_files.each do |file|
-        if choose_next
-          f = file
-          break
+      f = callcc do |ret|
+        @current_sorted_files.each do |file|
+          ret.call(file) if choose_next
+          if file == just_filename
+            choose_next = true
+          end
         end
-        if file == just_filename
-          choose_next = true
-        end
+        @current_sorted_files[0] # wrapped around
       end
       @current_directory + "/" + f
     end

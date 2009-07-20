@@ -2,7 +2,7 @@
 
 # Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Wed Feb 25 05:31:02 CET 2004
-# Changed: Fri Jul 17 22:34:55 CEST 2009
+# Changed: Sun Jul 19 14:33:13 CEST 2009
 
 # Commentary:
 #
@@ -390,17 +390,12 @@ module Snd_XM
            "find_child(widget, name)  \
 returns a widget named 'name', if one can be found in the widget hierarchy beneath 'widget'")
   def find_child(widget, name)
-    ret = false
     each_child(widget) do |child|
       if widget_name(child) == name
-        ret = child
-        break
+        return child
       end
     end
-    unless ret
-      Snd.raise(:no_such_widget, name)
-    end
-    ret
+    Snd.raise(:no_such_widget, name)
   end
 
   def set_label_sensitive(widget, name, set_p = false)
@@ -1296,21 +1291,18 @@ adds a label to the minibuffer area showing the current free space (for use with
   add_help(:menu_option,
            "menu_option(name)  finds the widget associated with a given menu item name")
   def menu_option(name)
-    ret = false
     menu_widgets.cdr.each do |top_menu|
       each_child(top_menu) do |w|
         option_holder = RXtGetValues(w, [RXmNsubMenuId, 0]).cadr
         each_child(option_holder) do |menu|
           if name == RXtName(menu)
-            ret = menu
-            break
+            return menu
           else
             if RXmIsCascadeButton(menu)
               options = RXtGetValues(menu, [RXmNsubMenuId, 0]).cadr
               each_child(options) do |inner_menu|
                 if name == RXtName(inner_menu)
-                  ret = inner_menu
-                  break
+                  return inner_menu
                 end
               end
             end
@@ -1318,8 +1310,7 @@ adds a label to the minibuffer area showing the current free space (for use with
         end
       end
     end
-    Snd.raise(:no_such_menu, name) unless ret
-    ret
+    Snd.raise(:no_such_menu, name)
   end
 
   add_help(:set_main_color_of_widget,

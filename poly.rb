@@ -2,7 +2,7 @@
 
 # Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Sat Apr 09 23:55:07 CEST 2005
-# Changed: Sat Jul 18 22:59:40 CEST 2009
+# Changed: Sun Jul 19 16:18:56 CEST 2009
 
 # Commentary: (see poly.scm)
 #
@@ -57,7 +57,7 @@ require "examp"
 require "mix"
 
 class Complex
-  attr_writer :real, :image
+  attr_writer :real, :imag
   with_silence do
     def to_f
       self.real.to_f
@@ -65,7 +65,7 @@ class Complex
   end
 
   def to_f_or_c
-    self.image.zero? ? self.to_f : self
+    self.imag.zero? ? self.to_f : self
   end
 end
 
@@ -314,7 +314,7 @@ class Poly < Vec
                       end
                       x = x - self.eval(x) / pp.eval(x)
                       x = x - self.eval(x) / pp.eval(x)
-                      if x.image < Poly_roots_epsilon
+                      if x.imag < Poly_roots_epsilon
                         q = q.poly_div(poly(-x.real, 1.0))
                         n -= 1
                       else
@@ -433,7 +433,7 @@ class Poly < Vec
 
   Poly_roots_epsilon2 = 1.0e-6
   def simplify_complex(a)
-    if a.image.abs < Poly_roots_epsilon2
+    if a.imag.abs < Poly_roots_epsilon2
       (a.real.abs < Poly_roots_epsilon2) ? 0.0 : a.real.to_f
     else
       if a.real.abs < Poly_roots_epsilon2 then a.real = 0.0 end

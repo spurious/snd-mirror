@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Sat Jan 03 17:30:23 CET 2004
-# Changed: Sun Jul 19 00:19:58 CEST 2009
+# Changed: Mon Jul 20 00:18:13 CEST 2009
 
 # Commentary:
 # 
@@ -86,7 +86,6 @@
 #    each do |k, v| ... end
 #    delete_if do |k, v| ... end
 #    contents
-#    reorganize
 #    help
 #  
 #  add_comment(samp, comm, snd, chn)
@@ -944,7 +943,6 @@ sets 'key-val' pair in the given sound's property list and returns 'val'.")
 #   each do |file, value| ... end
 #   delete_if do |file, value| ... end
 #   contents
-#   reorganize
 #   help           (alias info and description)
 #
 # Usage:
@@ -966,19 +964,15 @@ sets 'key-val' pair in the given sound's property list and returns 'val'.")
 #   file =~ /test/
 # end                        # deletes all files containing the string \"test\"
 # rsp.contents               # prints all filenames in database
-# rsp.reorganize             # reorganizes the GDBM database
 # rsp.each do |file, value|
 #   Snd.display(file)
-# end                        # the same as rsp.contents
-# rsp.with_db do |db|
-#   db.reorganize
-# end                        # the same as rsp.reorganize")
+# end                        # the same as rsp.contents")
 
     include Enumerable
     include Info
     with_silence do
-      unless defined? GDBM.open
-        require "gdbm"
+      unless defined? DBM.open
+        require "dbm"
       end
     end
     
@@ -1004,7 +998,7 @@ sets 'key-val' pair in the given sound's property list and returns 'val'.")
     end
 
     def with_db
-      db = GDBM.open(@database)
+      db = DBM.open(@database)
       ret = yield(db)
       db.close
       ret
@@ -1098,12 +1092,6 @@ sets 'key-val' pair in the given sound's property list and returns 'val'.")
         end
       end
       nil
-    end
-
-    def reorganize
-      with_db do |db|
-        db.reorganize
-      end
     end
   
     private

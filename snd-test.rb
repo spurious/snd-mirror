@@ -354,7 +354,7 @@ end
 
 def cneq(a, b)
   if number?(a) and number?(b)
-    fneq(a.real, b.real) or fneq(a.image, b.image)
+    fneq(a.real, b.real) or fneq(a.imag, b.imag)
   else
     true
   end
@@ -6965,7 +6965,6 @@ def test105
   if provided?(:xm) and (!dialog_widgets[20] or !RXtIsManaged(dialog_widgets[20]))
     snd_display("peaks but no help?")
   end
-  dismiss_all_dialogs
   num_transforms = 6
   num_transform_graph_types = 3
   set_transform_graph?(true, ind, 0)
@@ -10058,10 +10057,7 @@ def test05
     test075
     test085
     test095
-    # INFO on test105: [ms]
-    # snd_nogui: no set_x_axis_label
-    # snd_gtk: BadWindow (invalid Window parameter)
-    test105 if provided?(:snd_motif)
+    test105 unless provided?(:snd_nogui) # no set_x_axis_label [ms]
     test115
     test125
     test135
@@ -23176,7 +23172,7 @@ def test0213
                [:xramp_channel, lambda { | | xramp_channel(0.5, 1.0, 32.0, 123, 456, ind, 0) }]]
   # 
   all_tests.each do |name, func|
-    func.call
+    Snd.catch do func.call end
     if (res = edit_position(ind, 0)) != 0
       snd_display("%s: blocked edit: %s?", name, res)
     end
@@ -30699,7 +30695,7 @@ def test_lgamma
     res1 = lgamma(x)
     res2 = gammln(x)
     if array?(res1)
-      res1 = res1[0]            # INFO: ruby 1.9.1 returns and array.
+      res1 = res1[0]            # INFO: Ruby 1.9 returns an array [ms]
     end
     if fneq(res1, res2)
       snd_display("lgamma(%s) -> %s %s?", x, res1, res2)
@@ -30851,7 +30847,7 @@ def automorph(a, b, c, d, snd = false, chn = false)
   c1 = Complex(rl[0], im[0])
   val = (a * c1 + b) / (c * c1 + d)
   rval = val.real
-  ival = val.image
+  ival = val.imag
   rl[0] = rval
   im[0] = ival
   k = fftlen - 1
@@ -30859,7 +30855,7 @@ def automorph(a, b, c, d, snd = false, chn = false)
     c1 = Complex(rl[i], im[i])
     val = (a * c1 + b) / (c * c1 + d)
     rval = val.real
-    ival = val.image
+    ival = val.imag
     rl[i] = rval
     im[i] = ival
     rl[k] = rval
@@ -31960,7 +31956,7 @@ def test0220
   vals = z_transform(d0, 8, exp(make_rectangular(0.0, 0.25 * PI)))
   vals.each_with_index do |val, i|
     d0[i] = val.real
-    d1[i] = val.image
+    d1[i] = val.imag
   end
   if (not vequal(d0, vct(1, 0, -1, 0, 1, 0, -1, 0))) or
       (not vequal(d1, vct(0, 1, 0, -1, 0, 1, 0, -1)))

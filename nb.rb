@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Tue Dec 10 22:08:15 CET 2002
-# Changed: Wed Apr 16 00:11:17 CEST 2008
+# Changed: Mon Jul 20 00:19:14 CEST 2009
 
 # Commentary:
 #
@@ -50,9 +50,8 @@ nb.help                      # this help
 require "examp"
 require "hooks"
 with_silence do
-  # dbm replaced by gdbm (August 2006).
-  unless defined? GDBM.open
-    require "gdbm"
+  unless defined? DBM.open
+    require "dbm"
   end
 end
 
@@ -136,7 +135,7 @@ class NB
 
   def with_dbm(&body)
     ret = nil
-    db = GDBM.open(@nb_database)
+    db = DBM.open(@nb_database)
     ret = body.call(db)
     db.close
     ret

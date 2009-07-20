@@ -2,7 +2,7 @@
 
 # Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Wed Mar 23 02:08:47 CET 2005
-# Changed: Fri Jul 17 22:28:33 CEST 2009
+# Changed: Sun Jul 19 14:41:33 CEST 2009
 
 # Commentary:
 #
@@ -58,16 +58,14 @@ module Mark
   add_help(:mark_name2id,
            "mark_name2id(name) is like find-mark but searches all currently accessible channels")
   def mark_name2id(name)
-    ret = :no_such_mark
     Snd.sounds.each do |snd|
       channels(snd).times do |chn|
         if mark?(m = find_mark(name, snd, chn))
-          ret = m
-          break
+          return m
         end
       end
     end
-    ret
+    :no_such_mark
   end
 
   # move_syncd_marks moves all syncd marks together
@@ -86,7 +84,9 @@ returns a description of the movements of mark id over the channel's edit histor
   def describe_mark(id)
     if (mark_setting = Snd.catch do mark_home(id) end.first) == :no_such_mark
       Snd.sounds.each do |snd|
+        break if array?(mark_setting)
         channels(snd).times do |chn|
+          break if array?(mark_setting)
           max_edits = 0
           edits(snd, chn).each do |n| max_edits += n end
           0.upto(max_edits) do |ed|
@@ -339,7 +339,7 @@ evaluates func between the leftmost marks; func takes one arg, the original samp
       end
       if array?(mlist = marks(snd, chn)) and mlist.length > 1
         left_samp = left_sample(snd, chn)
-        winl = []
+        winl = false
         mlist.each_with_index do |n, i|
           if mark_sample(n) > left_samp
             winl = mlist[i..-1]

@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Tue Mar 25 23:21:37 CET 2003
-# Changed: Fri Jul 17 21:43:46 CEST 2009
+# Changed: Sun Jul 19 16:27:53 CEST 2009
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -710,9 +710,9 @@ module DL
         evec = cis((e / @one_turn) * TWO_PI)
         dxy = evec.real
         avec = cis((a / @one_turn) * TWO_PI)
-        x = (dxy * avec.image)
+        x = (dxy * avec.imag)
         y = (dxy * avec.real)
-        z = evec.image
+        z = evec.imag
         mag = distance(x, y, z)
         [x / mag, y / mag, z / mag]
       end
@@ -1723,8 +1723,8 @@ module DL
           evec = cis((e / @one_turn) * TWO_PI)
           dxy = d * evec.real
           avec = cis((a / @one_turn) * TWO_PI)
-          z << (d * evec.image)
-          x << (dxy * avec.image)
+          z << (d * evec.imag)
+          x << (dxy * avec.imag)
           y << (dxy * avec.real)
           v << (d3 ? p[3] : p[2])
         end
@@ -1739,8 +1739,8 @@ module DL
             evec = cis((e / @one_turn) * TWO_PI)
             dxy = (d * evec.real)
             avec = cis((a / @one_turn) * TWO_PI)
-            z << (d * evec.image)
-            x << (dxy * avec.image)
+            z << (d * evec.imag)
+            x << (dxy * avec.imag)
             y << (dxy * avec.real)
           end
           [x, y, z, x.map do |i| nil end]
@@ -1750,7 +1750,7 @@ module DL
           0.step(points.length - 1, 2) do |i|
             d, a = points[i, 2]
             avec = cis((a / @one_turn) * TWO_PI)
-            x << (d * avec.image)
+            x << (d * avec.imag)
             y << (d * avec.real)
           end
           [x, y, x.map do |i| 0.0 end, x.map do |i| nil end]
@@ -2251,7 +2251,7 @@ module DL
       z = []
       (total / step).round.abs.times do
         xy = cis(start)
-        x << (10.0 * xy.image)
+        x << (10.0 * xy.imag)
         y << (10.0 * xy.real)
         z << 0.0
         start += step

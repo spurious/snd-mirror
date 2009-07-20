@@ -654,6 +654,7 @@ void s7_mark_object(s7_pointer p);
  *   add a new type and procedure-with-setters
  *   redirect display/write output to a C procedure
  *   extend a built-in operator ("+" in this case)
+ *   use C-side define* (s7_define_function_star)
  */
 
 

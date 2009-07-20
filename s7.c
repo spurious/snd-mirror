@@ -187,6 +187,13 @@
    */
 #endif
 
+#ifndef WITH_PROFILING
+  #define WITH_PROFILING 0
+  /* this includes a simple profiler -- see the profile function in Snd's extensions.scm 
+   *   added function: symbol-calls
+   */
+#endif
+
 
 
 /* -------------------------------------------------------------------------------- */
@@ -13460,6 +13467,21 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       check_stack_size(sc);
 
+      /* PERHAPS: we could also add a hook here (evalhook?) for tracing etc:
+       *   *apply-hook* -- a function of 2 args, a before-function and an after-function
+       *     (before-function func args)
+       *     (after-function result)
+       *   if set, we call the before-function here, and the after-function below each time sc->value is set
+       *   this might be done by pushing OP_APPLY with the after-function and result, and OP_APPLY with the before-function?
+       *
+       *   set! hook also (via func in symbol-table entry?) -- *symbol-table-hook*? *gc-hook* *load-hook* etc
+       *   will need no-lookup access to current value -- can we save the symbol-table entry and use cdr safely?
+       *     (there won't be any shadowing in this case)
+       *     define the variable, then save the s7_pointer s7_find_symbol_in_environment
+       *     then its current value is always (cdr that-pointer)
+       *   (and we'd want to turn this off while evaluating the trace functions!)
+       */
+
       switch (type(sc->code))
 	{
 	case T_S7_FUNCTION: 	                  /* -------- C-based function -------- */
@@ -14506,7 +14528,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_CATCH:
       pop_stack(sc);
       goto START;
-      break;
       
       
     case OP_READ_LIST: 

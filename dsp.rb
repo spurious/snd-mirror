@@ -2,7 +2,7 @@
 
 # Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Mon Mar 07 13:50:44 CET 2005
-# Changed: Fri Jul 17 22:05:57 CEST 2009
+# Changed: Sun Jul 19 16:19:43 CEST 2009
 
 # Commentary:
 #
@@ -234,7 +234,7 @@ using 'gamma' as the window parameter.")
     n.times do |i|
       val = den * cos(n * acos(alpha * cos(phase)))
       rl[i] = val.real
-      im[i] = val.image
+      im[i] = val.imag
       phase += freq
     end
     fft(rl, im, -1)

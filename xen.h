@@ -3,8 +3,8 @@
 
 /* macros for extension language support 
  *
- * Guile:     covers 1.3.4 to present (1.9.0)
- * Ruby:      covers 1.6 to present (1.9, but avoid the latter!)
+ * Guile:     covers 1.3.4 to present (1.9.n)
+ * Ruby:      covers 1.6 to present (1.9.n)
  * Forth:     covers 1.0 to present
  * S7:        all versions
  * None:      all versions

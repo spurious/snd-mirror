@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Tue Aug 01 22:58:31 CEST 2006
-# Changed: Tue Nov 20 00:16:45 CET 2007
+# Changed: Sun Jul 19 16:27:05 CEST 2009
 
 # Commentary:
 #
@@ -450,7 +450,7 @@ FL and FH are edge freqs (srate = 1.0): make_bessel_bandstop(8, 0.1, 0.2)")
         cv[j + 1] = cn
         cv[j + 2] = dn
         z = Complex(0.0, -1.0) / (sqrt(m) * sn)
-        pz = (z * make_rectangular(z.real, -z.image)).real
+        pz = (z * make_rectangular(z.real, -z.imag)).real
         g /= pz
         num[j + 0] = 1.0
         num[j + 1] = -2.0 * z.real
@@ -467,7 +467,7 @@ FL and FH are edge freqs (srate = 1.0): make_bessel_bandstop(8, 0.1, 0.2)")
       0.step(n - 1, 2) do |i|
         p = -(cv[j + 1] * cv[j + 2] * sn * cn + (Complex(0.0, 1.0) * cv[j + 0] * dn)) /
           (1.0 - (cv[j + 2] * sn * cv[j + 2] * sn))
-        pp = (p * make_rectangular(p.real, -p.image)).real
+        pp = (p * make_rectangular(p.real, -p.imag)).real
         g *= pp
         den[j + 0] = 1.0
         den[j + 1] = -2.0 * p.real
@@ -521,7 +521,6 @@ FL and FH are edge freqs (srate = 1.0): make_elliptic_bandstop(6, 0.1, 0.2, 0.1,
       hp = make_elliptic_highpass(n, fh, ripple, loss_dB)
       lambda do |y| filter(lp, y) + filter(hp, y) end
     end
-
   end
 end
 
