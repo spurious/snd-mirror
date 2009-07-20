@@ -170,6 +170,10 @@
 #define INITIAL_BACKTRACE_SIZE 16
 /* this is the number of entries in the backtrace printout of previous evaluations */
 
+#define INITIAL_TRACE_LIST_SIZE 2
+/* a list of currently-traced functions */
+
+
 
 /* ---------------- scheme choices ---------------- */
 
@@ -277,7 +281,7 @@
 
 typedef enum {OP_READ_INTERNAL, OP_EVAL, OP_EVAL_ARGS0, OP_EVAL_ARGS1, OP_APPLY, OP_DOMACRO, OP_LAMBDA, OP_QUOTE, 
 	      OP_DEFINE0, OP_DEFINE1, OP_BEGIN, OP_IF0, OP_IF1, OP_SET0, OP_SET1, OP_SET2, 
-	      OP_LET0, OP_LET1, OP_LET2, OP_LET_STAR0, OP_LET_STAR1, OP_LET_STAR2, 
+	      OP_LET0, OP_LET1, OP_LET2, OP_LET_STAR0, OP_LET_STAR1, 
 	      OP_LETREC0, OP_LETREC1, OP_LETREC2, OP_COND0, OP_COND1, OP_MAKE_PROMISE, OP_AND0, OP_AND1, 
 	      OP_OR0, OP_OR1, OP_DEFMACRO, OP_MACRO0, OP_MACRO1, OP_DEFINE_MACRO,
 	      OP_CASE0, OP_CASE1, OP_CASE2, OP_READ_LIST, OP_READ_DOT, OP_READ_QUOTE, 
@@ -286,7 +290,7 @@ typedef enum {OP_READ_INTERNAL, OP_EVAL, OP_EVAL_ARGS0, OP_EVAL_ARGS1, OP_APPLY,
 	      OP_LOAD_RETURN_IF_EOF, OP_LOAD_CLOSE_AND_POP_IF_EOF, OP_EVAL_STRING, OP_EVAL_STRING_DONE, 
 	      OP_QUIT, OP_CATCH, OP_DYNAMIC_WIND, OP_FOR_EACH, OP_MAP, OP_DEFINE_CONSTANT0, OP_DEFINE_CONSTANT1, 
 	      OP_DO, OP_DO_END0, OP_DO_END1, OP_DO_STEP0, OP_DO_STEP1, OP_DO_STEP2, OP_DO_INIT,
-	      OP_DEFINE_STAR, OP_LAMBDA_STAR, OP_ERROR_QUIT, OP_UNWIND_INPUT, OP_UNWIND_OUTPUT,
+	      OP_DEFINE_STAR, OP_LAMBDA_STAR, OP_ERROR_QUIT, OP_UNWIND_INPUT, OP_UNWIND_OUTPUT, OP_TRACE_RETURN,
 	      OP_MAX_DEFINED} opcode_t;
 
 typedef enum {TOKEN_EOF, TOKEN_LEFT_PAREN, TOKEN_RIGHT_PAREN, TOKEN_DOT, TOKEN_ATOM, TOKEN_QUOTE, TOKEN_DOUBLE_QUOTE, 
@@ -476,11 +480,12 @@ struct s7_scheme {
   s7_pointer output_port;             /* current-output-port (nil = stderr) */
   s7_pointer error_port;              /* current-error-port (nil = stderr) */
   
-  /* these 5 are pointers so that all thread refs are to the same thing */
+  /* these 6 are pointers so that all thread refs are to the same thing */
   bool *gc_off;                       /* if true, the GC won't run */
   bool *gc_verbose;                   /* if gc_verbose is true, print gc status */
   bool *load_verbose;                 /* if load_verbose is true, print file names as they are loaded */
   bool *backtracing;                  /* if backtracing, errors print a backtrace */
+  bool *tracing;                      /* if tracing, each function on the *trace* list prints its args upon application */
   long *gensym_counter;
   
   #define INITIAL_STRBUF_SIZE 1024
@@ -523,6 +528,9 @@ struct s7_scheme {
   int thread_id;
   int *thread_ids; /* global current top thread_id */
 #endif
+
+  s7_pointer *trace_list;
+  int trace_list_size, trace_top;
 
   void *default_rng;
 #if WITH_GMP
@@ -11842,6 +11850,73 @@ static s7_pointer g_set_backtrace_length(s7_scheme *sc, s7_pointer args)
 }
 
 
+/* -------- trace -------- */
+
+static s7_pointer g_trace(s7_scheme *sc, s7_pointer args)
+{
+  #define H_trace "(trace . args) adds each function in its argument list to the trace list."
+
+  /* if arg is symbol, use car?  if function, use name to get sym? */
+
+  int i;
+  s7_pointer x;
+
+#if HAVE_PTHREADS
+  sc = sc->orig_sc;
+#endif
+
+  if (args == sc->NIL) return(sc->F);
+  
+  for (i = 0, x = args; x != sc->NIL; i++, x = cdr(x)) 
+    if ((!s7_is_symbol(car(x))) &&
+	(!s7_is_procedure(car(x))))
+      return(s7_wrong_type_arg_error(sc, "trace", i + 1, car(x), "a symbol or a function"));
+
+  for (i = 0, x = args; x != sc->NIL; i++, x = cdr(x)) 
+    {
+    }
+
+  return(sc->T);
+}
+
+
+static s7_pointer g_untrace(s7_scheme *sc, s7_pointer args)
+{
+  #define H_untrace "(untrace . args) removes each function in its arg list from the trace list. \
+If untrace is called with no arguments, all functions are removed, turning off all tracing."
+
+#if HAVE_PTHREADS
+  sc = sc->orig_sc;
+#endif
+
+}
+
+
+static void trace_apply(s7_scheme *sc)
+{
+  /* where is depth? how cleared if error? */
+  /* push new OP to print value and pop */
+
+  /* if this were treated as standard func, user could override or specialize it */
+
+
+  /* if on list...
+  push_stack(sc, OP_TRACE_RETURN, sc->code, sc->NIL);
+
+  catch and unwind report also? call/cc? error?
+  */
+  
+}
+
+
+static void trace_return(s7_scheme *sc)
+{
+}
+
+
+
+/* -------- error handlers -------- */
+
 static const char *s7_type_name(s7_pointer arg)
 {
   switch (type(arg))
@@ -13224,7 +13299,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       sc->code = car(sc->args); /* saved at the start */
       sc->args = cdr(sc->args); /* init values */
       sc->envir = new_frame_in_env(sc, sc->envir); 
-      
+
       sc->value = sc->NIL;
       for (sc->x = car(sc->code), sc->y = sc->args; sc->y != sc->NIL; sc->x = cdr(sc->x), sc->y = cdr(sc->y)) 
 	sc->value = s7_cons(sc, add_to_current_environment(sc, caar(sc->x), car(sc->y)), sc->value);
@@ -13301,6 +13376,16 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	   *    and only matters once in a blue moon (closure over enclosed lambda referring to a do var)
 	   *    and the caller can easily mimic the correct behavior in that case by adding a let,
 	   *    making the rebinding explicit.
+	   *
+	   * Hmmm... I'll leave this alone, but there are other less cut-and-dried cases:
+	   *   is it 6 or 3:
+	   *
+	   *   (let ((j (lambda () 0))
+	   *         (k 0))
+	   *     (do ((i (j) (j))
+	   *          (j (lambda () 1) (lambda () (+ i 1)))) ; bind here hits different "i" than reset
+	   *         ((= i 3) k)
+	   *       (set! k (+ k i))))
 	   */
 	  
 	  sc->value = sc->NIL;
@@ -13459,6 +13544,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	{
 	  add_backtrace_entry(sc, sc->code, sc->args, sc->saved_line_number);
 	  sc->saved_line_number = 0;
+
+	  if (*(sc->tracing)) 
+	    trace_apply(sc);
 	}
 
 #if WITH_PROFILING
@@ -13466,21 +13554,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 #endif
 
       check_stack_size(sc);
-
-      /* PERHAPS: we could also add a hook here (evalhook?) for tracing etc:
-       *   *apply-hook* -- a function of 2 args, a before-function and an after-function
-       *     (before-function func args)
-       *     (after-function result)
-       *   if set, we call the before-function here, and the after-function below each time sc->value is set
-       *   this might be done by pushing OP_APPLY with the after-function and result, and OP_APPLY with the before-function?
-       *
-       *   set! hook also (via func in symbol-table entry?) -- *symbol-table-hook*? *gc-hook* *load-hook* etc
-       *   will need no-lookup access to current value -- can we save the symbol-table entry and use cdr safely?
-       *     (there won't be any shadowing in this case)
-       *     define the variable, then save the s7_pointer s7_find_symbol_in_environment
-       *     then its current value is always (cdr that-pointer)
-       *   (and we'd want to turn this off while evaluating the trace functions!)
-       */
 
       switch (type(sc->code))
 	{
@@ -14009,6 +14082,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  if (!(s7_is_symbol(caar(sc->x))))
 	    return(eval_error(sc, "bad variable ~A in let bindings", car(sc->code)));
 
+	  /* check for name collisions -- not sure this is required by Scheme */
+	  if (s7_find_symbol_in_environment(sc, sc->envir, caar(sc->x), false) != sc->NIL)
+	    return(eval_error(sc, "duplicate identifier in let", caar(sc->x)));
+
 	  add_to_current_environment(sc, caar(sc->x), car(sc->y)); 
 	}
       if (s7_is_symbol(car(sc->code))) 
@@ -14049,19 +14126,26 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto EVAL;
       
       
-    case OP_LET_STAR1:    /* let* -- make new frame */
-      sc->envir = new_frame_in_env(sc, sc->envir); 
-      
-      
-    case OP_LET_STAR2:    /* let* -- calculate parameters */
+    case OP_LET_STAR1:    /* let* -- calculate parameters */
       if (!(s7_is_symbol(caar(sc->code))))
 	return(eval_error(sc, "bad variable ~A in let* bindings", car(sc->code)));
+
+      sc->envir = new_frame_in_env(sc, sc->envir); 
+      /* we can't skip this new frame -- we have to imitate a nested let, otherwise
+       *
+       *   (let ((f1 (lambda (arg) (+ arg 1))))
+       *     (let* ((x 32)
+       *            (f1 (lambda (arg) (f1 (+ x arg)))))
+       *       (f1 1)))
+       *
+       * will hang.
+       */
 
       add_to_current_environment(sc, caar(sc->code), sc->value); 
       sc->code = cdr(sc->code);
       if (is_pair(sc->code)) 
 	{ 
-	  push_stack(sc, OP_LET_STAR2, sc->args, sc->code);
+	  push_stack(sc, OP_LET_STAR1, sc->args, sc->code);
 	  sc->code = cadar(sc->code);
 	  sc->args = sc->NIL;
 	  goto EVAL;
@@ -14526,6 +14610,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
 
     case OP_CATCH:
+      pop_stack(sc);
+      goto START;
+
+
+    case OP_TRACE_RETURN:
+      trace_return(sc);
       pop_stack(sc);
       goto START;
       
@@ -15074,7 +15164,7 @@ static s7_scheme *clone_s7(s7_scheme *sc, s7_pointer vect)
   new_sc = (s7_scheme *)malloc(sizeof(s7_scheme));
   memcpy((void *)new_sc, (void *)sc, sizeof(s7_scheme));
   
-  /* share the heap, symbol table and global environment, all the startup stuff, and the backtrace info,
+  /* share the heap, symbol table and global environment, protected objects list, all the startup stuff, and the backtrace info (all via the memcpy),
    *   but have separate stacks and eval locals
    */
   
@@ -19603,11 +19693,16 @@ s7_scheme *s7_init(void)
   sc->load_verbose = (bool *)calloc(1, sizeof(bool));
   sc->gensym_counter = (long *)calloc(1, sizeof(long));
   sc->backtracing = (bool *)calloc(1, sizeof(bool));
+  sc->tracing = (bool *)calloc(1, sizeof(bool));
 
   sc->backtrace_ops = NULL;
   sc->backtrace_args = NULL;
   sc->backtrace_lines = NULL;
   make_backtrace_buffer(sc, INITIAL_BACKTRACE_SIZE);
+
+  sc->trace_list = (s7_pointer *)calloc(INITIAL_TRACE_LIST_SIZE, sizeof(s7_pointer));
+  sc->trace_list_size = INITIAL_TRACE_LIST_SIZE;
+  sc->trace_top = 0;
 
 #if HAVE_PTHREADS
   sc->thread_ids = (int *)calloc(1, sizeof(int));
@@ -20026,6 +20121,9 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "clear-backtrace",         g_clear_backtrace,         0, 0, false, H_clear_backtrace);
   s7_define_function(sc, "set-backtrace-length",    g_set_backtrace_length,    1, 0, false, H_set_backtrace_length);
   s7_define_function(sc, "backtracing",             g_backtracing,             1, 0, false, H_backtracing);
+  s7_define_function(sc, "trace",                   g_trace,                   0, 0, true,  H_trace);
+  s7_define_function(sc, "untrace",                 g_untrace,                 0, 0, true,  H_untrace);
+
   s7_define_function(sc, "gc",                      g_gc,                      0, 1, false, H_gc);
   s7_define_function(sc, "quit",                    g_quit,                    0, 0, false, H_quit);
 

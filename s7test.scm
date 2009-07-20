@@ -4022,6 +4022,158 @@
 (test (let* ((x 1) (x (+ x 1)) (x (+ x 2))) x) 4)
 (test (let ((.. 2) (.... 4) (..... +)) (..... .. ....)) 6)
 
+(test ((let ((x 2))
+	 (let ((x 3))
+	   (lambda (arg) (+ arg x))))
+       1)
+      4)
+
+(test ((let ((x 2))
+	 (define (inner arg) (+ arg x))
+	 (let ((x 32))
+	   (lambda (arg) (inner (+ arg x)))))
+       1)
+      35)
+
+(test ((let ((inner (lambda (arg) (+ arg 1))))
+	 (let ((inner (lambda (arg) (inner (+ arg 2)))))
+	   inner))
+       3)
+      6)
+
+(test ((let ()
+	 (define (inner arg) (+ arg 1))
+	 (let ((inner (lambda (arg) (inner (+ arg 2)))))
+	   inner))
+       3)
+      6)
+
+(test ((let ((x 11))
+	 (define (inner arg) (+ arg x))
+	 (let ((inner (lambda (arg) (inner (+ (* 2 arg) x)))))
+	   inner))
+       3)
+      28)
+
+(test ((let ((x 11))
+	 (define (inner arg) (+ arg x))
+	 (let ((x 2))
+	   (lambda (arg) (inner (+ (* 2 arg) x)))))
+       3)
+      19)
+
+(test (let ((f1 (lambda (arg) (+ arg 1))))
+	(let ((f1 (lambda (arg) (f1 (+ arg 2)))))
+	  (f1 1)))
+      4)
+
+(test (let ((f1 (lambda (arg) (+ arg 1))))
+	(let* ((f1 (lambda (arg) (f1 (+ arg 2)))))
+	  (f1 1)))
+      4)
+
+(test (let ((f1 (lambda (arg) (+ arg 1))))
+	(let* ((x 32)
+	       (f1 (lambda (arg) (f1 (+ x arg)))))
+	  (f1 1)))
+      34)
+
+(test ((let ((x 11))
+	 (define (inner arg) (+ arg x))
+	 (let ((x 2)
+	       (inner (lambda (arg) (inner (+ (* 2 arg) x)))))
+	   inner))
+       3)
+      28)
+
+(test ((let ((x 11))
+	 (define (inner arg) (+ arg x))
+	 (let* ((x 2)
+		(inner (lambda (arg) (inner (+ (* 2 arg) x)))))
+	   inner))
+       3)
+      19)
+
+(test (let ((x 1))
+	(let* ((f1 (lambda (arg) (+ x arg)))
+	       (x 32))
+	  (f1 1)))
+      2)
+
+(test (let ((inner (lambda (arg) (+ arg 1))))
+	(let ((inner (lambda (arg) (+ (inner arg) 1))))
+	  (inner 1)))
+      3)
+(test (let ((inner (lambda (arg) (+ arg 1))))
+	(let* ((inner (lambda (arg) (+ (inner arg) 1))))
+	  (inner 1)))
+      3)
+
+(test (let ((caller #f)) (let ((inner (lambda (arg) (+ arg 1)))) (set! caller inner)) (caller 1)) 2)
+(test (let ((caller #f)) (let ((x 11)) (define (inner arg) (+ arg x)) (set! caller inner)) (caller 1)) 12)
+
+(test (let ((caller #f)) 
+	(let ((x 11)) 
+	  (define (inner arg) 
+	    (+ arg x)) 
+	  (let ((y 12))
+	    (let ((inner (lambda (arg) 
+			   (+ (inner x) y arg)))) ; 11 + 11 + 12 + arg
+	      (set! caller inner))))
+	(caller 1))
+      35)
+
+(test (let ((caller #f)) 
+	(let ((x 11)) 
+	  (define (inner arg) 
+	    (+ arg x)) 
+	  (let* ((y 12) 
+		 (inner (lambda (arg) 
+			  (+ (inner x) y arg)))) ; 11 + 11 + 12 + arg
+	    (set! caller inner))) 
+	(caller 1))
+      35)
+
+
+(test (let* ((f1 3) (f1 4)) f1) 4)
+(test (let ((f1 (lambda () 4))) (define (f1) 3) (f1)) 3)
+
+(test (let ((j -1)
+	    (k 0))
+	(do ((i 0 (+ i j))
+	     (j 1))
+	    ((= i 3) k)
+	  (set! k (+ k i))))
+      3)
+
+(test (let ((j (lambda () -1))
+	    (k 0))
+	(do ((i 0 (+ i (j)))
+	     (j (lambda () 1)))
+	    ((= i 3) k)
+	  (set! k (+ k i))))
+      3)
+
+(test (let ((j (lambda () 0))
+	    (k 0))
+	(do ((i (j) (j))
+	     (j (lambda () 1) (lambda () (+ i 1))))
+	    ((= i 3) k)
+	  (set! k (+ k i))))
+      6) ; or is it 3?
+
+(test (let ((k 0)) (do ((i 0 (+ i 1)) (j 0 (+ j i))) ((= i 3) k) (set! k (+ k j)))) 1)
+
+(test (let ((j (lambda () 0))
+	    (i 2)
+	    (k 0))
+	(do ((i (j) (j))
+	     (j (lambda () i) (lambda () (+ i 1))))
+	    ((= i 3) k)
+	  (set! k (+ k i))))
+      3) ; or 2?
+
+
 (for-each
  (lambda (arg)
    (test (let ((x arg)) x) arg))
@@ -35639,12 +35791,14 @@
 					;(test (let ((x 32)) (letrec ((y (apply list `(* ,x 2))) (x 1)) y)) 'error)
       (test (letrec) 'error)
       (test (let ((x . 1)) x) 'error)
-					;(test (let ((x 1) (x 2)) x) 'error)
+
       (test (let (((x 1)) 2) 3) 'error)
       (test (let ((#f 1)) #f) 'error)
       (test (let (()) #f) 'error)
       (test (let (lambda () ) #f) 'error)
-      
+      (test (let ((f1 3) (f1 4)) f1) 'error) ; not sure about this
+;;   (let () (define (f1) 3) (define (f1) 4) (f1))
+
       
       (test (call/cc (lambda () 0)) 'error)
       (test (call/cc (lambda (a) 0) 123) 'error)
