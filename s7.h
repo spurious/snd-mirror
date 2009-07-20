@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "1.20"
-#define S7_DATE "14-Jul-09"
+#define S7_VERSION "1.21"
+#define S7_DATE "20-Jul-09"
 
 
 typedef long long int s7_Int;
@@ -60,6 +60,7 @@ typedef double s7_Double;
    *    procedure-source        returns the source (a list) of a procedure
    *    help                    tries to find a help string associated with its argument
    *    symbol-calls            if profiling is enabled, this returns the number of times its argument (a symbol) has been called
+   *    trace and untrace       add or subtract functions from the trace list
    *
    * and various others mentioned at the start of s7.c -- nearly every Scheme implementation includes
    * stuff like logior, sinh, read-line, format, define*, etc.  See also the start of s7.c for choices
@@ -1358,6 +1359,7 @@ int main(int argc, char **argv)
  * 
  *        s7 changes
  *
+ * 20-Jul:    trace and untrace.
  * 14-Jul:    replaced s7_make_closure_star with s7_define_function_star.
  *            profiling added on WITH_PROFILING switch (symbol-calls).
  * 29-Jun:    s7_format declaration.

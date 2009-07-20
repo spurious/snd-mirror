@@ -72,6 +72,7 @@
  *        random for any numeric type and any numeric argument
  *        optional multidimensional and applicable vectors
  *        symbol-calls if profiling is enabled
+ *        trace and untrace
  *
  *   things I ought to add/change:
  *        length should work on vectors and strings [fill!, copy, reverse! null?]
@@ -530,7 +531,7 @@ struct s7_scheme {
 #endif
 
   s7_pointer *trace_list;
-  int trace_list_size, trace_top;
+  int trace_list_size, trace_top, trace_depth;
 
   void *default_rng;
 #if WITH_GMP
@@ -797,6 +798,7 @@ static bool s7_is_applicable_object(s7_pointer x);
 static s7_pointer make_list_1(s7_scheme *sc, s7_pointer a);
 static s7_pointer make_list_2(s7_scheme *sc, s7_pointer a, s7_pointer b);
 static void write_string(s7_scheme *sc, const char *s, s7_pointer pt);
+static s7_pointer eval_symbol(s7_scheme *sc, s7_pointer sym);
 
 
 
@@ -1692,7 +1694,6 @@ void s7_provide(s7_scheme *sc, const char *feature)
 
 
 #if WITH_PROFILING
-static s7_pointer eval_symbol(s7_scheme *sc, s7_pointer sym);
 static s7_pointer g_symbol_calls(s7_scheme *sc, s7_pointer args)
 {
   #define H_symbol_calls "(symbol-calls sym) returns the number of times sym was called (applied)"
@@ -11854,9 +11855,8 @@ static s7_pointer g_set_backtrace_length(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_trace(s7_scheme *sc, s7_pointer args)
 {
-  #define H_trace "(trace . args) adds each function in its argument list to the trace list."
-
-  /* if arg is symbol, use car?  if function, use name to get sym? */
+  #define H_trace "(trace . args) adds each function in its argument list to the trace list.\
+Tracing only works if backtracing is turned on."
 
   int i;
   s7_pointer x;
@@ -11874,7 +11874,17 @@ static s7_pointer g_trace(s7_scheme *sc, s7_pointer args)
 
   for (i = 0, x = args; x != sc->NIL; i++, x = cdr(x)) 
     {
+      if (s7_is_symbol(car(x)))
+	sc->trace_list[sc->trace_top++] = eval_symbol(sc, car(x));
+      else sc->trace_list[sc->trace_top++] = car(x);
+      if (sc->trace_top >= sc->trace_list_size)
+	{
+	  sc->trace_list_size *= 2;
+	  sc->trace_list = (s7_pointer *)realloc(sc->trace_list, sc->trace_list_size * sizeof(s7_pointer));
+	}
     }
+
+  (*(sc->tracing)) = (sc->trace_top > 0);
 
   return(sc->T);
 }
@@ -11889,28 +11899,88 @@ If untrace is called with no arguments, all functions are removed, turning off a
   sc = sc->orig_sc;
 #endif
 
+  if (args == sc->NIL)
+    sc->trace_top = 0;
+  else
+    {
+      int i, j;
+      s7_pointer x;
+      for (x = args; x != sc->NIL; x = cdr(x)) 
+	{
+	  s7_pointer value;
+	  if (s7_is_symbol(car(x)))
+	    value = eval_symbol(sc, car(x));
+	  else value = car(x);
+
+	  for (i = 0; i < sc->trace_top; i++)
+	    if (value == sc->trace_list[i])
+	      sc->trace_list[i] = sc->NIL;
+	}
+      /* now reset collapse list and reset trace_top (and possibly tracing) */
+      for (i = 0, j = 0; i < sc->trace_top; i++)
+	if (sc->trace_list[i] != sc->NIL)
+	  sc->trace_list[j++] = sc->trace_list[i];
+
+      sc->trace_top = j;
+    }
+
+  (*(sc->tracing)) = (sc->trace_top > 0);
+
+  return(sc->T);
 }
 
 
 static void trace_apply(s7_scheme *sc)
 {
-  /* where is depth? how cleared if error? */
-  /* push new OP to print value and pop */
+  int i;
 
-  /* if this were treated as standard func, user could override or specialize it */
+  /* TODO: call/cc unwind catch fixup depth? */
+  /* TODO: how to trace setter (or getter for that matter), applicable object, macro, continuation etc */
 
+#if HAVE_PTHREADS
+  int id;
+  id = sc->thread_id;
+  sc = sc->orig_sc;
+#endif
 
-  /* if on list...
-  push_stack(sc, OP_TRACE_RETURN, sc->code, sc->NIL);
-
-  catch and unwind report also? call/cc? error?
-  */
-  
+  for (i = 0; i < sc->trace_top; i++)
+    if (sc->code == sc->trace_list[i])
+      {
+	int k;
+	char *tmp1, *tmp2;
+	push_stack(sc, OP_TRACE_RETURN, sc->code, sc->NIL);
+	tmp1 = s7_object_to_c_string(sc, sc->code);
+	tmp2 = s7_object_to_c_string(sc, sc->args);
+	tmp2[0] = ' ';
+	tmp2[strlen(tmp2) - 1] = ']';
+	for (k = 0; k < sc->trace_depth; k++) fprintf(stderr, " ");
+	fprintf(stderr, "[%s%s", tmp1, tmp2);
+#if HAVE_PTHREADS
+	if (id != 0) /* main thread */
+	  fprintf(stderr, " (thread %d)", id);
+#endif
+	fprintf(stderr, "\n");
+	free(tmp1);
+	free(tmp2);
+	sc->trace_depth++;
+	break;
+      }
 }
 
 
 static void trace_return(s7_scheme *sc)
 {
+  int k;
+  char *tmp;
+
+#if HAVE_PTHREADS
+  sc = sc->orig_sc;
+#endif
+	
+  for (k = 0; k < sc->trace_depth; k++) fprintf(stderr, " ");
+  fprintf(stderr, "%s\n", tmp = s7_object_to_c_string(sc, sc->value));
+  free(tmp);
+  sc->trace_depth--;
 }
 
 
@@ -19703,6 +19773,7 @@ s7_scheme *s7_init(void)
   sc->trace_list = (s7_pointer *)calloc(INITIAL_TRACE_LIST_SIZE, sizeof(s7_pointer));
   sc->trace_list_size = INITIAL_TRACE_LIST_SIZE;
   sc->trace_top = 0;
+  sc->trace_depth = 0;
 
 #if HAVE_PTHREADS
   sc->thread_ids = (int *)calloc(1, sizeof(int));
