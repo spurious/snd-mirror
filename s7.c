@@ -7866,11 +7866,18 @@ static s7_pointer g_load_verbose(s7_scheme *sc, s7_pointer a)
 
 static s7_pointer g_eval_string(s7_scheme *sc, s7_pointer args)
 {
-  #define H_eval_string "(eval-string str) returns the result of evaluating the string str as Scheme code"
+  #define H_eval_string "(eval-string str :optional env) returns the result of evaluating the string str as Scheme code"
   s7_pointer port;
   if (!s7_is_string(car(args)))
     return(s7_wrong_type_arg_error(sc, "eval-string", 0, car(args), "a string"));
   
+  if (cdr(args) != sc->NIL)
+    {
+      if (!is_pair(cadr(args)))
+	return(s7_wrong_type_arg_error(sc, "eval", 2, cadr(args), "an environment"));
+      sc->envir = cadr(args);
+    }
+
   port = s7_open_input_string(sc, s7_string(car(args)));
   push_input_port(sc, port);
   push_stack(sc, OP_EVAL_STRING, sc->args, sc->code);
@@ -7891,7 +7898,7 @@ s7_pointer s7_eval_c_string(s7_scheme *sc, const char *str)
     return(g_eval_string(sc, make_list_1(sc, s7_make_string(sc, str))));
   
   stack_reset(sc); 
-  sc->envir = sc->global_env;
+  sc->envir = sc->global_env; /* PERHAPS pass optional env here? */
   port = s7_open_input_string(sc, str);
   push_input_port(sc, port);
   push_stack(sc, OP_EVAL_STRING, sc->NIL, sc->NIL);
@@ -12608,7 +12615,14 @@ static s7_pointer g_apply(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_eval(s7_scheme *sc, s7_pointer args)
 {
   #define H_eval "(eval code :optional env) evaluates code in the environment env. 'env' \
-defaults to the current environment; to load into the top-level environment instead, pass (global-environment)."
+defaults to the current environment; to evaluate something in the top-level environment instead, \
+pass (global-environment):\n\
+\n\
+  (define x 32) \n\
+  (let ((x 3))\n\
+    (eval 'x (global-environment)))\n\
+\n\
+  returns 32"
   
   if (cdr(args) != sc->NIL)
     {
@@ -20237,7 +20251,7 @@ s7_scheme *s7_init(void)
 
   s7_define_function(sc, "load",                    g_load,                    1, 1, false, H_load);
   s7_define_function(sc, "eval",                    g_eval,                    1, 1, false, H_eval);
-  s7_define_function(sc, "eval-string",             g_eval_string,             1, 0, false, H_eval_string);
+  s7_define_function(sc, "eval-string",             g_eval_string,             1, 1, false, H_eval_string);
   s7_define_function(sc, "apply",                   g_apply,                   1, 0, true,  H_apply);
   s7_define_function(sc, "force",                   g_force,                   1, 0, false, H_force);
 

@@ -380,15 +380,19 @@ void command_return(widget_t w, int last_prompt)
   int i, j;
   XEN form = XEN_UNDEFINED;
   GUI_TEXT_POSITION_TYPE end_of_text = 0, start_of_text = 0, last_position = 0, current_position = 0;
+
 #if (!HAVE_RUBY && !HAVE_FORTH)
   int parens;
 #endif
+
   full_str = GUI_TEXT(w);
   current_position = GUI_TEXT_INSERTION_POSITION(w);
   start_of_text = current_position;
   end_of_text = current_position;
   last_position = GUI_TEXT_END(w);
   add_listener_position(last_position);
+
+#if (!HAVE_S7)
   if (XEN_HOOKED(read_hook))
     {
       XEN result;
@@ -409,14 +413,19 @@ void command_return(widget_t w, int last_prompt)
 	    }
 	}
     }
+#endif
+
   prompt = listener_prompt(ss);
+
   /* first look for a form just before the current mouse location,
    *   independent of everything (i.e. user may have made changes
    *   in a form included in a comment, then typed return, expecting
    *   us to use the new version, but the check_balance procedure
    *   tries to ignore comments).
    */
+
   str = NULL;
+
 #if HAVE_RUBY || HAVE_FORTH
   {
     int k, len, start, full_len;
@@ -446,6 +455,7 @@ void command_return(widget_t w, int last_prompt)
 	  parens = 0;
 	  start_of_text = i;
 	  end_of_text = -1;
+
 	  for (i = current_position; i > start_of_text; i--)
 	    if (full_str[i] == ')')
 	      {
@@ -459,6 +469,7 @@ void command_return(widget_t w, int last_prompt)
 		  parens++;
 		  start_of_text = i;
 		}
+
 	  if ((parens == 0) && (end_of_text != -1))
 	    {
 	      str = (char *)calloc(end_of_text - start_of_text + 2, sizeof(char));
@@ -472,6 +483,7 @@ void command_return(widget_t w, int last_prompt)
 	    }
 	  break;
 	}
+
   if (str == NULL)
     {
       if (last_position > end_of_text)
@@ -484,6 +496,7 @@ void command_return(widget_t w, int last_prompt)
 		break;
 	      }
 	}
+
       if (start_of_text > 0)
 	{
 	  for (i = end_of_text; i >= 0; i--)
@@ -493,6 +506,7 @@ void command_return(widget_t w, int last_prompt)
 		break;
 	      }
 	}
+
       if (end_of_text > start_of_text)
 	{
 	  int slen;
@@ -507,6 +521,7 @@ void command_return(widget_t w, int last_prompt)
 	    }
 	  str[end_of_text - start_of_text + 1] = 0;
 	  end_of_text = mus_strlen(str);
+
 	  if (parens)
 	    {
 	      end_of_text = check_balance(str, 0, (int)end_of_text, true); /* last-arg->we are in the listener */
@@ -556,6 +571,7 @@ void command_return(widget_t w, int last_prompt)
 	}
     }
 #endif
+
   if (full_str) GUI_FREE(full_str);
   if (str)
     {
@@ -563,8 +579,10 @@ void command_return(widget_t w, int last_prompt)
 	GUI_LISTENER_TEXT_INSERT(w, GUI_TEXT_END(w), str);
       GUI_SET_CURSOR(w, ss->sgx->wait_cursor);
       GUI_UPDATE(w); /* not sure about this... */
+
       if ((mus_strlen(str) > 1) || (str[0] != '\n'))
 	remember_listener_string(str);
+
       /* 
        * the division into a read, a free, then an eval is needed to handle continuations correctly:
        *   
@@ -601,7 +619,11 @@ void command_return(widget_t w, int last_prompt)
 	  if (old_port != xen_nil) 
 	    gc_loc = s7_gc_protect(s7, old_port);
 
-	  form = XEN_EVAL_C_STRING(str);
+	  if (XEN_HOOKED(read_hook))
+	    form = run_or_hook(read_hook, 
+			       XEN_LIST_1(C_TO_XEN_STRING(str)),
+			       S_read_hook);
+	  else form = XEN_EVAL_C_STRING(str);
 
 	  errmsg = mus_strdup(s7_get_output_string(s7, s7_current_error_port(s7)));
 	  s7_close_output_port(s7, s7_current_error_port(s7));
@@ -630,6 +652,7 @@ void command_return(widget_t w, int last_prompt)
       new_eot = GUI_TEXT_END(w);
       GUI_LISTENER_TEXT_INSERT(w, new_eot, listener_prompt_with_cr());
     }
+
   cmd_eot = GUI_TEXT_END(w);
   add_listener_position(cmd_eot);
   GUI_TEXT_GOTO(w, cmd_eot - 1);

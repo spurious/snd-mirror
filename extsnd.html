@@ -2439,21 +2439,7 @@ in some other way &mdash; I should rewrite this part of Snd.
 <code><a class=def name="readhook">read-hook</a> (text)</code> [<b>or</b>]
 </td></tr><tr><td></td><td colspan=2>
 This hook is called each time a line is typed into the listener (it is triggered by the carriage return).
-If its function returns #t, Snd assumes you've dealt with the text yourself, and does not try to evaluate it.
-This is intended to make it possible to read user-typing in the listener.
-
-<table border=0 cellpadding=5 vspace=10><tr><td><pre>
-(define (read-listener-line prompt)
-  "(read-listener-line prompt) prompts for input and returns it in Snd's listener"
-  (let ((res #f))
-    (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_add_hook_tip)">add-hook!</a> <em class=red>read-hook</em> (lambda (str) (set! res str) #t))
-    (<a class=quiet href="#resetlistenercursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_resetlistenercursor_tip)">reset-listener-cursor</a>)
-    (<a class=quiet href="#sndprint" onmouseout="UnTip()" onmouseover="Tip(extsnd_sndprint_tip)">snd-print</a> #\newline)
-    (<a class=quiet href="#sndprint" onmouseout="UnTip()" onmouseover="Tip(extsnd_sndprint_tip)">snd-print</a> prompt)
-    (do () ((or (<a class=quiet href="#cgp" onmouseout="UnTip()" onmouseover="Tip(extsnd_cgp_tip)">c-g?</a>) res)))
-    (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_reset_hook_tip)">reset-hook!</a> <em class=red>read-hook</em>)
-    res))
-</pre></td></tr></table></td></tr><tr><td></td><td colspan=2></td></tr>
+</td></tr><tr><td></td><td colspan=2></td></tr>
 
 
 <!-- save-hook -->
