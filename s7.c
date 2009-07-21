@@ -220,7 +220,7 @@
  *    objects and functions
  *    eq and such
  *    format
- *    error handlers
+ *    error handlers, backtrace, trace
  *    sundry leftovers
  *    eval
  *    quasiquote
@@ -2075,7 +2075,9 @@ static void check_for_dynamic_winds(s7_scheme *sc, continuation *c)
   for (i = sc->stack_top - 1; i > 0; i -= 4)
     {
       s7_pointer x;
-      if ((opcode_t)s7_integer(vector_element(sc->stack, i)) == OP_DYNAMIC_WIND)
+      opcode_t op;
+      op = (opcode_t)s7_integer(vector_element(sc->stack, i));
+      if (op == OP_DYNAMIC_WIND)
 	{
 	  int j;
 	  x = vector_element(sc->stack, i - 3);
@@ -2093,6 +2095,11 @@ static void check_for_dynamic_winds(s7_scheme *sc, continuation *c)
 	  
 	  if (dynamic_wind_state(x) == DWIND_BODY)
 	    s7_call(sc, dynamic_wind_out(x), sc->NIL);
+	}
+      else
+	{
+	  if (op == OP_TRACE_RETURN)
+	    sc->trace_depth--;
 	}
     }
   
@@ -11853,10 +11860,27 @@ static s7_pointer g_set_backtrace_length(s7_scheme *sc, s7_pointer args)
 
 /* -------- trace -------- */
 
+/* 
+    (define (hiho arg) (if (> arg 0) (+ 1 (hiho (- arg 1))) 0))
+    (trace hiho)
+    (hiho 3)
+
+    [hiho 3]
+     [hiho 2]
+      [hiho 1]
+       [hiho 0]
+        0
+       1
+      2
+     3
+*/
+
 static s7_pointer g_trace(s7_scheme *sc, s7_pointer args)
 {
   #define H_trace "(trace . args) adds each function in its argument list to the trace list.\
-Tracing only works if backtracing is turned on."
+The arguments can be functions, symbols, or applicable objects: (trace abs '+ v) where v is a vct \
+prints out data about any call on abs or +, and any reference to the vct v. Trace output is sent \
+to the current-output-port. Tracing only works if backtracing is turned on."
 
   int i;
   s7_pointer x;
@@ -11916,7 +11940,8 @@ If untrace is called with no arguments, all functions are removed, turning off a
 	    if (value == sc->trace_list[i])
 	      sc->trace_list[i] = sc->NIL;
 	}
-      /* now reset collapse list and reset trace_top (and possibly tracing) */
+
+      /* now collapse list and reset trace_top (and possibly tracing) */
       for (i = 0, j = 0; i < sc->trace_top; i++)
 	if (sc->trace_list[i] != sc->NIL)
 	  sc->trace_list[j++] = sc->trace_list[i];
@@ -11934,8 +11959,8 @@ static void trace_apply(s7_scheme *sc)
 {
   int i;
 
-  /* TODO: call/cc unwind catch fixup depth? */
-  /* TODO: how to trace setter (or getter for that matter), applicable object, macro, continuation etc */
+  /* TODO: how to trace setter, macro["not a symbol or a function"], continuation etc */
+  /* TODO: trace tests */
 
 #if HAVE_PTHREADS
   int id;
@@ -11946,22 +11971,40 @@ static void trace_apply(s7_scheme *sc)
   for (i = 0; i < sc->trace_top; i++)
     if (sc->code == sc->trace_list[i])
       {
-	int k;
-	char *tmp1, *tmp2;
+	int k, len;
+	char *tmp1, *tmp2, *str;
 	push_stack(sc, OP_TRACE_RETURN, sc->code, sc->NIL);
 	tmp1 = s7_object_to_c_string(sc, sc->code);
 	tmp2 = s7_object_to_c_string(sc, sc->args);
+	len = safe_strlen(tmp2);
 	tmp2[0] = ' ';
-	tmp2[strlen(tmp2) - 1] = ']';
-	for (k = 0; k < sc->trace_depth; k++) fprintf(stderr, " ");
-	fprintf(stderr, "[%s%s", tmp1, tmp2);
-#if HAVE_PTHREADS
-	if (id != 0) /* main thread */
-	  fprintf(stderr, " (thread %d)", id);
-#endif
-	fprintf(stderr, "\n");
+	tmp2[len - 1] = ']';
+
+	len += (safe_strlen(tmp1) + sc->trace_depth + 64);
+	str = (char *)calloc(len, sizeof(char));
+
+	for (k = 0; k < sc->trace_depth; k++) str[k] = ' ';
+	str[k] = '[';
+	strcat(str, tmp1);
+	strcat(str, tmp2);
 	free(tmp1);
 	free(tmp2);
+
+#if HAVE_PTHREADS
+	if (id != 0) /* main thread */
+	  {
+	    char *tmp3;
+	    tmp3 = (char *)calloc(64, sizeof(char));
+	    snprintf(tmp3, 64, " (thread %d)", id);
+	    strcat(str, tmp3);
+	    free(tmp3);
+	  }
+#endif
+	strcat(str, "\n");
+
+	write_string(sc, str, sc->output_port);
+	free(str);
+
 	sc->trace_depth++;
 	break;
       }
@@ -11970,16 +12013,26 @@ static void trace_apply(s7_scheme *sc)
 
 static void trace_return(s7_scheme *sc)
 {
-  int k;
-  char *tmp;
+  int k, len;
+  char *str, *tmp;
 
 #if HAVE_PTHREADS
   sc = sc->orig_sc;
 #endif
-	
-  for (k = 0; k < sc->trace_depth; k++) fprintf(stderr, " ");
-  fprintf(stderr, "%s\n", tmp = s7_object_to_c_string(sc, sc->value));
+
+  tmp = s7_object_to_c_string(sc, sc->value);  
+
+  len = sc->trace_depth + safe_strlen(tmp) + 2;
+  str = (char *)calloc(len, sizeof(char));
+
+  for (k = 0; k < sc->trace_depth; k++) str[k] = ' ';
+  strcat(str, tmp);
+  strcat(str, "\n");
   free(tmp);
+
+  write_string(sc, str, sc->output_port);
+  free(str);
+
   sc->trace_depth--;
 }
 
@@ -12239,6 +12292,10 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
 	  x = vector_element(sc->stack, i - 1); /* "args" = port that we shadowed, if not #f */
 	  if (x != sc->F)
 	    sc->input_port = x;
+	  break;
+
+	case OP_TRACE_RETURN:
+	  sc->trace_depth--;
 	  break;
 
 	default:
@@ -13448,7 +13505,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	   *    making the rebinding explicit.
 	   *
 	   * Hmmm... I'll leave this alone, but there are other less cut-and-dried cases:
-	   *   is it 6 or 3:
 	   *
 	   *   (let ((j (lambda () 0))
 	   *         (k 0))
@@ -13456,6 +13512,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	   *          (j (lambda () 1) (lambda () (+ i 1)))) ; bind here hits different "i" than reset
 	   *         ((= i 3) k)
 	   *       (set! k (+ k i))))
+	   *
+	   *   is it 6 or 3?
 	   */
 	  
 	  sc->value = sc->NIL;
@@ -13463,8 +13521,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  goto DO_END0;
 	}
       push_stack(sc, OP_DO_STEP2, sc->args, sc->code);
-      /* here sc->args is a list like (((i . 0) (1+ i)) ...)
-       *   so sc->code becomes (1+ i) in this case 
+      /* here sc->args is a list like (((i . 0) (+ i 1)) ...)
+       *   so sc->code becomes (+ i 1) in this case 
        */
       sc->code = cadar(sc->args);
       sc->args = sc->NIL;
@@ -13876,11 +13934,18 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    /* look for dynamic-wind in the stack section that we are jumping out of */
 	    for (i = sc->stack_top - 1; i > new_stack_top; i -= 4)
 	      {
-		if ((opcode_t)s7_integer(vector_element(sc->stack, i)) == OP_DYNAMIC_WIND)
+		opcode_t op;
+		op = (opcode_t)s7_integer(vector_element(sc->stack, i));
+		if (op == OP_DYNAMIC_WIND)
 		  {
 		    sc->z = vector_element(sc->stack, i - 3);
 		    if (dynamic_wind_state(sc->z) == DWIND_BODY)
 		      s7_call(sc, dynamic_wind_out(sc->z), sc->NIL);
+		  }
+		else
+		  {
+		    if (op == OP_TRACE_RETURN)
+		      sc->trace_depth--;
 		  }
 	      }
 	    
