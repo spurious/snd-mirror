@@ -24,6 +24,12 @@
 
 ;;; this is provided directly in s7
 
+(define (find-if pred l)
+  (cond ((null? l) #f)
+	((pred (car l)) (car l))
+	(else (find-if pred (cdr l)))))
+
+
 
 (defmacro defgenerator (struct-name . fields)
 
@@ -76,11 +82,6 @@
 						     'float))))
 				     'float)))
 			   fields))
-
-	 (find-if (lambda (pred l)
-		    (cond ((null? l) #f)
-			  ((pred (car l)) (car l))
-			  (else (find-if pred (cdr l))))))
 
 	 (original-methods (or (and (list? struct-name)
 				    (or (and (> (length struct-name) 2)
