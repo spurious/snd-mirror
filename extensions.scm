@@ -1180,3 +1180,41 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 
 
 
+;;; a first stab at a break point handler
+
+(define-macro (break . body)
+  `(let ((old-prompt (listener-prompt))
+	 (envir (current-environment))
+	 (go-on (lambda () ,@body)))
+     (set! (listener-prompt) "break>")
+     (add-hook! read-hook 
+		(lambda (str)
+		  (if (string=? str "(ok)")
+		      (begin
+			(reset-hook! read-hook)
+			(set! (listener-prompt) old-prompt)
+			(go-on))
+		     (eval-string str envir))))
+     '>))
+
+#|    
+(define (hiho arg)
+  (let ((x 32)
+	(y "a string")
+	(z (vct .1 .2 .3)))
+    (break
+     (display y)
+     (+ x (string-length y) (vct-ref z 1)))))
+
+:(hiho 1)
+break>
+>
+break>arg
+1
+break>y
+"a string"
+break>(ok)
+:
+40.2
+
+|#

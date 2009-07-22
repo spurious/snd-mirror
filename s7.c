@@ -4743,12 +4743,12 @@ static s7_pointer g_log(s7_scheme *sc, s7_pointer args)
       return(s7_from_c_complex(sc, clog(s7_complex(x)) / clog(s7_complex(y))));
     }
 
-  if ((s7_is_real(x)) &&
-      (s7_is_positive(x)))
-    return(s7_make_real(sc, log(num_to_real(x->object.number))));
-
-  /* if < 0 use log(-x) + pi*i */
-  /* PERHAPS: if not WITH_COMPLEX provide this fallback? */
+  if (s7_is_real(x))
+    {
+      if (s7_is_positive(x))
+	return(s7_make_real(sc, log(num_to_real(x->object.number))));
+      return(s7_make_complex(sc, log(-num_to_real(x->object.number)), M_PI));
+    }
 
   return(s7_from_c_complex(sc, clog(s7_complex(x))));
 }
@@ -12068,7 +12068,6 @@ static const char *s7_type_name(s7_pointer arg)
     case T_DYNAMIC_WIND: return("dynamic-wind");
     case T_HASH_TABLE:   return("hash-table");
     case T_S7_OBJECT:    return(object_types[arg->object.fobj.type].name);
-      /* PERHAPS: nicer would be a function in the type struct (could be mus_name for clm etc) */
 
     case T_INPUT_PORT:
       {
