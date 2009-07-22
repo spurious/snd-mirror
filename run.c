@@ -170,9 +170,9 @@
  *       ((= i 10000)) 
  *     (fm-violin (* i .001) .01 440 .001)))
  *
- * (with-sound (:channels 2)                                         283        220
+ * (with-sound (:channels 2)                                         283        220    [1st case in clm-ins.scm:   12201   1138]
  *   (fullmix "pistol.snd" 0 2 0 #f .5)  
- *   (fullmix "oboe.snd" 1 2 0 (list (list .1 (make-env '(0 0 1 1) :duration 2 :scaler .5))))) 
+ *   (fullmix "oboe.snd" 1 2 0 (list (list .1 (make-env '(0 0 1 1) :duration 2 :scaler .5)))))
  */
 
 #define WITH_COUNTERS 0

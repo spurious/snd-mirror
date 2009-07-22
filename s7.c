@@ -467,7 +467,7 @@ struct s7_scheme {
   s7_pointer global_env;              /* global environment */
   
   s7_pointer LAMBDA, LAMBDA_STAR, QUOTE, QUASIQUOTE, UNQUOTE, UNQUOTE_SPLICING;        
-  s7_pointer APPLY, VECTOR, CONS, APPEND, CDR, VECTOR_FUNCTION, VALUES, ELSE;
+  s7_pointer APPLY, VECTOR, CONS, APPEND, CDR, VECTOR_FUNCTION, VALUES, ELSE, SET;
   s7_pointer ERROR, WRONG_TYPE_ARG, OUT_OF_RANGE, FORMAT_ERROR, WRONG_NUMBER_OF_ARGS;
   s7_pointer KEY_KEY, KEY_OPTIONAL, KEY_REST;
   s7_pointer FEED_TO;                 /* => */
@@ -11885,7 +11885,7 @@ static s7_pointer g_set_backtrace_length(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_trace(s7_scheme *sc, s7_pointer args)
 {
   #define H_trace "(trace . args) adds each function in its argument list to the trace list.\
-The arguments can be functions, symbols, or applicable objects: (trace abs '+ v) where v is a vct \
+Each argument can be a function, symbol, macro, or any applicable object: (trace abs '+ v) where v is a vct \
 prints out data about any call on abs or +, and any reference to the vct v. Trace output is sent \
 to the current-output-port. Tracing only works if backtracing is turned on."
 
@@ -11900,8 +11900,10 @@ to the current-output-port. Tracing only works if backtracing is turned on."
   
   for (i = 0, x = args; x != sc->NIL; i++, x = cdr(x)) 
     if ((!s7_is_symbol(car(x))) &&
-	(!s7_is_procedure(car(x))))
-      return(s7_wrong_type_arg_error(sc, "trace", i + 1, car(x), "a symbol or a function"));
+	(!s7_is_procedure(car(x))) &&
+	(!is_macro(car(x))) &&
+	(!is_promise(car(x))))
+      return(s7_wrong_type_arg_error(sc, "trace", i + 1, car(x), "a symbol, a function, or some other applicable object"));
 
   for (i = 0, x = args; x != sc->NIL; i++, x = cdr(x)) 
     {
@@ -11966,7 +11968,7 @@ static void trace_apply(s7_scheme *sc)
 {
   int i;
 
-  /* TODO: how to trace setter, macro["not a symbol or a function"], continuation etc */
+  /* TODO: how to trace setter [s7_object_set?] */
   /* TODO: trace tests */
 
 #if HAVE_PTHREADS
@@ -14115,13 +14117,19 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       sc->code = s7_cons(sc, s7_cons(sc, sc->value, sc->args), sc->code);
 
       
-    case OP_SET0:
+    case OP_SET0:                                             /* entry for set! */
       if (s7_is_immutable(car(sc->code)))
 	return(eval_error(sc, "set!: unable to alter immutable variable: ~A", car(sc->code)));
       
       if ((cdr(sc->code) == sc->NIL) ||
 	  (cddr(sc->code) != sc->NIL))
 	return(eval_error(sc, "~A: wrong number of args to set!", sc->code));
+
+      if (*(sc->backtracing)) 
+	{
+	  add_backtrace_entry(sc, sc->SET, sc->code, sc->saved_line_number);
+	  sc->saved_line_number = 0;
+	}
       
       if (is_pair(car(sc->code))) /* has accessor */
 	{
@@ -19974,7 +19982,9 @@ s7_scheme *s7_init(void)
   
   sc->KEY_REST = s7_make_keyword(sc, "rest");
   typeflag(sc->KEY_REST) |= T_DONT_COPY; 
-  
+
+  sc->SET = s7_make_symbol(sc, "set!");
+  typeflag(sc->SET) |= T_DONT_COPY; 
 
   s7_define_function(sc, "gensym",                  g_gensym,                  0, 1, false, H_gensym);
   s7_define_function(sc, "symbol-table",            g_symbol_table,            0, 0, false, H_symbol_table);

@@ -5088,6 +5088,7 @@
   (let* ((mx1 0.0) (mxn1 0)
 	 (mx2 0.0) (mxn2 0)
 	 (mx3 0.0) (mxn3 0)
+	 (mx4 0.0) (mxn4 0)
 	 (last (car (get-best choice 10)))
 	 (this (car (get-best choice 11)))
 	 (next (car (get-best choice 12))))
@@ -5096,23 +5097,30 @@
       (let ((curdiff (+ (- this last) (- this next)))) ; not abs -- we want worse (not really good)
 	(if (> curdiff mx1)
 	    (begin
+	      (set! mx4 mx3) (set! mxn4 mxn3)
 	      (set! mx3 mx2) (set! mxn3 mxn2)
 	      (set! mx1 mx1) (set! mxn2 mxn1)
 	      (set! mx1 curdiff)
 	      (set! mxn1 (- i 2)))
 	    (if (> curdiff mx2)
 		(begin
+		  (set! mx4 mx3) (set! mxn4 mxn3)
 		  (set! mx3 mx2) (set! mxn3 mxn2)
 		  (set! mx2 curdiff)
 		  (set! mxn2 (- i 2)))
 		(if (> curdiff mx3)
 		    (begin
+		      (set! mx4 mx3) (set! mxn4 mxn3)
 		      (set! mx3 curdiff)
-		      (set! mxn3 (- i 2))))))
+		      (set! mxn3 (- i 2)))
+		    (if (> curdiff mx4)
+			(begin
+			  (set! mx4 curdiff)
+			  (set! mxn4 (- i 2)))))))
 	(set! last this)
 	(set! this next)
 	(set! next (car (get-best choice i)))))
-    (list mxn1 mx1 mxn2 mx2 mxn3 mx3)))
+    (list mxn1 mx1 mxn2 mx2 mxn3 mx3 mxn4 mx4)))
 
 
 

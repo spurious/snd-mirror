@@ -2604,10 +2604,9 @@ mjkoskin@sci.fi
 		       rmx)
 		     #f))
 	 (revframe (if rev-mx (make-frame 1) #f))
-	 (file (if (and (or (not srate) (= srate 1.0))
-			(not rev-mx))
+	 (file (if (or (not srate) (= srate 1.0))
 		   (make-file->frame in-file)
-		   (let ((vect (make-vector in-chans)))
+		   (let ((vect (make-vector in-chans #f)))
 		     (do ((i 0 (+ i 1)))
 			 ((= i in-chans))
 		       (vector-set! vect i (make-readin in-file i inloc)))
@@ -2617,7 +2616,8 @@ mjkoskin@sci.fi
     (if matrix
 	(begin
 	  (if (list? matrix) ; matrix is list of scalers, envelopes (lists), or env gens
-	      (do ((inp 0 (+ 1 inp)))
+	      (do ((inp 0 (+ 1 inp))
+		   (off 0 (+ off out-chans)))
 		  ((= inp in-chans))
 		(let ((inlist (list-ref matrix inp)))
 		  (do ((outp 0 (+ 1 outp)))
@@ -2630,82 +2630,54 @@ mjkoskin@sci.fi
 				      (list? outn))
 				  (begin
 				    (if (not envs)
-					(begin
-					  (set! envs (make-vector in-chans))
-					  (do ((i 0 (+ i 1)))
-					      ((= i in-chans))
-					    (vector-set! envs i (make-vector out-chans #f)))))
+					(set! envs (make-vector (* in-chans out-chans) #f)))
 				    (if (env? outn)
-					(vector-set! (vector-ref envs inp) outp outn)
-					(vector-set! (vector-ref envs inp) outp (make-env outn :duration dur))))
+					(vector-set! envs (+ off outp) outn)
+					(vector-set! envs (+ off outp) (make-env outn :duration dur))))
 				  (snd-warning (format #f "unknown element in matrix: ~A" outn)))))))))
 	      (do ((inp 0 (+ 1 inp))) ; matrix is a number in this case (a global scaler)
 		  ((= inp in-chans))
 		(if (< inp out-chans)
 		    (mixer-set! mx inp inp matrix))))))
 
-    (if (and (or (not srate)
-		 (= srate 1.0))
-	     (not rev-mx))
-	;; -------- no reverb, no src
-	(mus-mix *output* file st samps inloc mx envs)
+    (if (or (not srate)
+	    (= srate 1.0))
+	(begin
+	  ;; -------- no src
+	  (mus-mix *output* file st samps inloc mx (if envs
+						       (let ((v (make-vector in-chans)))
+							 (do ((i 0 (+ i 1))
+							      (off 0 (+ off out-chans)))
+							     ((= i in-chans))
+							   (let ((vo (make-vector out-chans #f)))
+							     (vector-set! v i vo)
+							     (do ((j 0 (+ j 1)))
+								 ((= j out-chans))
+							       (vector-set! vo j (vector-ref envs (+ off j))))))
+							 v)
+						       envs))
+	  (if rev-mx
+	      (mus-mix *reverb* file st samps inloc rev-mx #f)))
 
-	(if (or (not srate)
-		(= srate 1.0))
-	    ;; -------- no src
-	    (let* ((inframe (make-frame in-chans))
-		   (outframe (make-frame out-chans)))
-	      ;; "file" is a vector of readin gens in this case
-	      (if envs 
-		  (do ((i st (+ i 1)))
-		      ((= i nd))
-		    (do ((inp 0 (+ 1 inp)))
-			((= inp in-chans))
-		      (do ((outp 0 (+ 1 outp)))
-			  ((= outp out-chans))
-			(if (and (vector-ref envs inp)
-				 (env? (vector-ref (vector-ref envs inp) outp)))
-			    (mixer-set! mx inp outp (env (vector-ref (vector-ref envs inp) outp))))))
-		    (do ((inp 0 (+ 1 inp)))
-			((= inp in-chans))
-		      (frame-set! inframe inp (readin (vector-ref file inp))))
-		    (frame->file *output* i (frame->frame inframe mx outframe))
-		    (if rev-mx (frame->file *reverb* i (frame->frame inframe rev-mx revframe))))
-		  
-		  ;; no envs
-		  (run 
-		   (lambda ()
-		     (do ((i st (+ i 1)))
-			 ((= i nd))
-		       (do ((inp 0 (+ 1 inp)))
-			   ((= inp in-chans))
-			 (frame-set! inframe inp (readin (vector-ref file inp))))
-		       (frame->file *output* i (frame->frame inframe mx outframe))
-		       (if rev-mx (frame->file *reverb* i (frame->frame inframe rev-mx revframe))))))))
-	    
 	;; -------- with src
 	;; unroll the loops if 1 chan input
 	(if (= in-chans 1)
 	    (let ((sr (make-src :input (vector-ref file 0) :srate srate))
 		  (outframe (make-frame out-chans)))
 	      (if envs
-		  (let ((out-envs (make-vector out-chans)))
-		    (do ((i 0 (+ i 1)))
-			((= i out-chans))
-		      (vector-set! out-envs i (vector-ref (vector-ref envs 0) i)))
-		    (run 
-		     (lambda ()
-		       (declare (out-envs clm-vector))
-		       (do ((i st (+ i 1)))
-			   ((= i nd))
-			 (do ((outp 0 (+ 1 outp)))
-			     ((= outp out-chans))
-			   (if (env? (vector-ref out-ens outp))
-			       (mixer-set! mx 0 outp (env (vector-ref out-envs outp)))))
-			 (let ((inframe (src sr)))
-			   (frame->file *output* i (sample->frame mx inframe outframe))
-			   (if rev-mx (frame->file *reverb* i (sample->frame rev-mx inframe revframe))))))))
-
+		  (run 
+		   (lambda ()
+		     (declare (envs clm-vector))
+		     (do ((i st (+ i 1)))
+			 ((= i nd))
+		       (do ((outp 0 (+ 1 outp)))
+			   ((= outp out-chans))
+			 (if (env? (vector-ref envs outp))
+			     (mixer-set! mx 0 outp (env (vector-ref envs outp)))))
+		       (let ((inframe (src sr)))
+			 (frame->file *output* i (sample->frame mx inframe outframe))
+			 (if rev-mx (frame->file *reverb* i (sample->frame rev-mx inframe revframe)))))))
+		  
 		  ;; no envs
 		  (run 
 		   (lambda ()
@@ -2714,7 +2686,7 @@ mjkoskin@sci.fi
 		       (let ((inframe (src sr)))
 			 (frame->file *output* i (sample->frame mx inframe outframe))
 			 (if rev-mx (frame->file *reverb* i (sample->frame rev-mx inframe revframe)))))))))
-
+	    
 	    ;; more than 1 chan input
 	    (let* ((inframe (make-frame in-chans))
 		   (outframe (make-frame out-chans))
@@ -2723,21 +2695,24 @@ mjkoskin@sci.fi
 		  ((= inp in-chans))
 		(vector-set! srcs inp (make-src :input (vector-ref file inp) :srate srate)))
 	      
-	      (if envs ; a vector of vectors of env gens, which is not currently run-optimizable
-		  (do ((i st (+ i 1)))
-		      ((= i nd))
-		    (do ((inp 0 (+ 1 inp)))
-			((= inp in-chans))
-		      (do ((outp 0 (+ 1 outp)))
-			  ((= outp out-chans))
-			(if (and (vector-ref envs inp)
-				 (env? (vector-ref (vector-ref envs inp) outp)))
-			    (mixer-set! mx inp outp (env (vector-ref (vector-ref envs inp) outp))))))
-		    (do ((inp 0 (+ 1 inp)))
-			((= inp in-chans))
-		      (frame-set! inframe inp (src (vector-ref srcs inp))))
-		    (frame->file *output* i (frame->frame inframe mx outframe))
-		    (if rev-mx (frame->file *reverb* i (frame->frame inframe rev-mx revframe))))
+	      (if envs 
+		  (run
+		   (lambda ()
+		     (declare (envs clm-vector))
+		     (do ((i st (+ i 1)))
+			 ((= i nd))
+		       (do ((inp 0 (+ 1 inp))
+			    (off 0 (+ off out-chans)))
+			   ((= inp in-chans))
+			 (do ((outp 0 (+ 1 outp)))
+			     ((= outp out-chans))
+			   (if (env? (vector-ref envs (+ off outp)))
+			       (mixer-set! mx inp outp (env (vector-ref envs (+ off outp)))))))
+		       (do ((inp 0 (+ 1 inp)))
+			   ((= inp in-chans))
+			 (frame-set! inframe inp (src (vector-ref srcs inp))))
+		       (frame->file *output* i (frame->frame inframe mx outframe))
+		       (if rev-mx (frame->file *reverb* i (frame->frame inframe rev-mx revframe))))))
 		  
 		  ;; no envs
 		  (run 
@@ -2748,13 +2723,39 @@ mjkoskin@sci.fi
 			   ((= inp in-chans))
 			 (frame-set! inframe inp (src (vector-ref srcs inp))))
 		       (frame->file *output* i (frame->frame inframe mx outframe))
-		       (if rev-mx (frame->file *reverb* i (frame->frame inframe rev-mx revframe)))))))))))))
+		       (if rev-mx (frame->file *reverb* i (frame->frame inframe rev-mx revframe))))))))))))
   
 #|
-  (with-sound (:channels 2 :statistics #t)
-    (fullmix "pistol.snd")
-    (fullmix "oboe.snd" 1 2 0 (list (list .1 (make-env '(0 0 1 1) :duration 2 :scaler .5)))))
+(with-sound (:channels 2 :statistics #t)
+  (fullmix "pistol.snd")
+  (fullmix "2.snd" .5 1)
+  (fullmix "2.snd" 1.5 1 0 #f 2.0)
+  (fullmix "oboe.snd" 1 2 0 (list (list .1 (make-env '(0 0 1 1) :duration 2 :scaler .5))))
+  (fullmix "pistol.snd" 2 1 0 #f .5)
+  (fullmix "2.snd" 0 2 0 (list (list .1 .2) (list .3 .4)) 2.0)
+  (fullmix "oboe.snd" 3 2 0 (list (list .1 (make-env '(0 0 1 1) :duration 2 :scaler .5))) .25)
+  (let ((e0->0 (make-env '(0 0 1 1) :duration 2))
+	(e0->1 (make-env '(0 1 1 0) :duration 2))
+	(e1->0 (make-env '(0 1 1 0) :duration 2))
+	(e1->1 (make-env '(0 0 1 1) :duration 2)))
+    (fullmix "2.snd" 4 2 0 (list (list e0->0 e0->1) (list e1->0 e1->1))))
+  (let ((e0->0 (make-env '(0 0 1 1) :duration 2))
+	(e0->1 (make-env '(0 1 1 0) :duration 2))
+	(e1->0 (make-env '(0 1 1 0) :duration 2))
+	(e1->1 (make-env '(0 0 1 1) :duration 2)))
+    (fullmix "2.snd" 6 2 0 (list (list e0->0 e0->1) (list e1->0 e1->1)) 2.0)))
 
+(with-sound (:channels 2 :statistics #t)
+  (fullmix "2.snd" 0 2 0 (list (list .1 .2) (list .3 .4)) 2.0))
+
+(with-sound (:channels 2)
+  (let ((e0->0 (make-env '(0 0 1 1) :duration 2))
+	(e0->1 (make-env '(0 1 1 0) :duration 2))
+	(e1->0 (make-env '(0 1 1 0) :duration 2))
+	(e1->1 (make-env '(0 0 1 1) :duration 2)))
+    (fullmix "2.snd" 6 2 0 (list (list e0->0 e0->1) (list e1->0 e1->1))) 2.0))
+
+  
 (with-sound () (fullmix "pistol.snd"))
 (with-sound () (fullmix "pistol.snd" 1))
 (with-sound () (fullmix "pistol.snd" 1 1))

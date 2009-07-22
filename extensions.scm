@@ -423,7 +423,7 @@ If 'check' is #f, the hooks are removed."
 	  (remove-hook! open-hook remember-sound-at-start)
 	  (remove-hook! before-exit-hook remember-sound-at-exit)
 	  (if (file-exists? remember-sound-filename)
-	      (delele-file remember-sound-filename))))
+	      (delete-file remember-sound-filename))))
 
     (if (not (= choice 0))
 	(begin
