@@ -1182,18 +1182,20 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 
 ;;; a second stab at a break point handler
 
+(define break-ok #f)
+
 (define-macro (break)
   `(let ((old-prompt (listener-prompt))
 	 (envir (current-environment)))
      (set! (listener-prompt) "break>")
      (call/cc
       (lambda (return)
-	(set! ok return)            ; save current program loc so "(ok)" continues from the "break"
+	(set! break-ok return)      ; save current program loc so "(break-ok)" continues from the "break"
 	(add-hook! read-hook        ; anything typed in the listener is evaluated in the environment of the break call
 		   (lambda (str)
 		     (eval-string str envir)))
 	(throw 'snd-top-level)))    ; jump back to the top level (it will say "break>")
-     (reset-hook! read-hook)        ; we get here if "ok" is called
+     (reset-hook! read-hook)        ; we get here if "break-ok" is called
      (set! (listener-prompt) old-prompt)))
 
     
@@ -1215,7 +1217,7 @@ break>x
 32
 break>arg
 1
-break>(ok)
+break>(break-ok)
 :
 40.2
 :x
