@@ -472,7 +472,7 @@ struct s7_scheme {
   s7_pointer LAMBDA, LAMBDA_STAR, QUOTE, QUASIQUOTE, UNQUOTE, UNQUOTE_SPLICING;        
   s7_pointer APPLY, VECTOR, CONS, APPEND, CDR, VECTOR_FUNCTION, VALUES, ELSE, SET;
   s7_pointer ERROR, WRONG_TYPE_ARG, OUT_OF_RANGE, FORMAT_ERROR, WRONG_NUMBER_OF_ARGS;
-  s7_pointer KEY_KEY, KEY_OPTIONAL, KEY_REST;
+  s7_pointer KEY_KEY, KEY_OPTIONAL, KEY_REST, __FUNC__;
   s7_pointer FEED_TO;                 /* => */
   s7_pointer OBJECT_SET;              /* applicable object set method */
 #if WITH_MULTIDIMENSIONAL_VECTORS
@@ -563,6 +563,8 @@ struct s7_scheme {
 #define T_CATCH        18
 #define T_DYNAMIC_WIND 19
 #define T_HASH_TABLE   20
+#define T_BOOLEAN      21
+#define BUILT_IN_TYPES 22
 
 #define TYPE_BITS                     16
 #define T_MASKTYPE                    0xffff
@@ -715,6 +717,9 @@ struct s7_scheme {
 #define is_closure(p)                 (type(p) == T_CLOSURE)
 #define is_closure_star(p)            (type(p) == T_CLOSURE_STAR)
 #define closure_source(Obj)           car(Obj)
+#define closure_args(Obj)             car(closure_source(Obj))
+#define closure_body(Obj)             cdr(closure_source(Obj))
+#define closure_environment(Obj)      cdr(Obj)
 
 #define is_catch(p)                   (type(p) == T_CATCH)
 #define catch_tag(p)                  (p)->object.catcher->tag
@@ -8134,15 +8139,14 @@ static char *s7_atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
 {
   switch (type(obj))
     {
+    case T_BOOLEAN:
+      if (obj == sc->T)
+	return(s7_strdup("#t"));
+      return(s7_strdup("#f"));
+
     case T_NIL_TYPE:
       if (obj == sc->NIL) 
 	return(s7_strdup("()"));
-  
-      if (obj == sc->T)
-	return(s7_strdup("#t"));
-  
-      if (obj == sc->F) 
-	return(s7_strdup("#f"));
   
       if (obj == sc->EOF_OBJECT)
 	return(s7_strdup("#<eof>"));
@@ -8260,15 +8264,15 @@ static char *s7_atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
 
   {
     char *buf;
-    const char *type_names[21] = {"none", "nil", "string", "number", "symbol", "pair", "closure",
-				  "closure*", "continuation", "function", "character", "input port",
-				  "vector", "macro", "promise", "object", "goto","output port",
-				  "catch", "dynamic-wind", "hash-table"};
+    const char *type_names[BUILT_IN_TYPES] = {"none", "nil", "string", "number", "symbol", "pair", "closure",
+					      "closure*", "continuation", "function", "character", "input port",
+					      "vector", "macro", "promise", "object", "goto","output port",
+					      "catch", "dynamic-wind", "hash-table", "boolean"};
 
     buf = (char *)calloc(512, sizeof(char));
     snprintf(buf, 512, "<unknown object! type: %d (%s), flags: %x%s%s%s%s%s%s%s%s%s%s%s>", 
 	     type(obj), 
-	     (type(obj) < 22) ? type_names[type(obj)] : "none",
+	     (type(obj) < BUILT_IN_TYPES) ? type_names[type(obj)] : "none",
 	     typeflag(obj),
 	     is_simple(obj) ? " simple" : "",
 	     is_atom(obj) ? " atom" : "",
@@ -10225,7 +10229,7 @@ static s7_pointer g_procedure_source(s7_scheme *sc, s7_pointer args)
 
 s7_pointer s7_procedure_environment(s7_pointer p)    
 { 
-  return(cdr(p));
+  return(closure_environment(p));
 }
 
 
@@ -11971,7 +11975,8 @@ static void trace_apply(s7_scheme *sc)
 {
   int i;
 
-  /* TODO: how to trace setter [s7_object_set?] */
+  /* TODO: how to trace setter [s7_object_set?] mus-srate for example */
+  /*          scheme-defined pws setters are traced, but the function name is missing, and an explicit indication that it's a setter */
   /* TODO: trace tests */
 
 #if HAVE_PTHREADS
@@ -12057,6 +12062,7 @@ static const char *s7_type_name(s7_pointer arg)
   switch (type(arg))
     {
     case T_NIL_TYPE:     return("nil");
+    case T_BOOLEAN:      return("boolean");
     case T_STRING:       return("string");
     case T_SYMBOL:       return("symbol");
     case T_PAIR:         return("pair");
@@ -13760,10 +13766,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	case T_CLOSURE:
 	case T_MACRO:
 	case T_PROMISE:             	          /* -------- normal function (lambda), macro, or delay -------- */
-	  sc->envir = new_frame_in_env(sc, s7_procedure_environment(sc->code)); 
+	  sc->envir = new_frame_in_env(sc, closure_environment(sc->code)); 
 	  
 	  /* load up the current args into the ((args) (lambda)) layout [via the current environment] */
-	  for (sc->x = car(closure_source(sc->code)), sc->y = sc->args; is_pair(sc->x); sc->x = cdr(sc->x), sc->y = cdr(sc->y)) 
+	  for (sc->x = closure_args(sc->code), sc->y = sc->args; is_pair(sc->x); sc->x = cdr(sc->x), sc->y = cdr(sc->y)) 
 	    {
 	      if (sc->y == sc->NIL)
 		return(s7_error(sc, 
@@ -13793,15 +13799,15 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  else return(eval_error(sc, "~A: undefined argument to function?", sc->x));
 		}
 	    }
-	  sc->code = cdr(closure_source(sc->code));
+	  sc->code = closure_body(sc->code);
 	  sc->args = sc->NIL;
 	  goto BEGIN;
 	  
 	case T_CLOSURE_STAR:	                  /* -------- define* (lambda*) -------- */
 	  { 
-	    sc->envir = new_frame_in_env(sc, s7_procedure_environment(sc->code)); 
+	    sc->envir = new_frame_in_env(sc, closure_environment(sc->code)); 
 	    
-	    /* here the car(closure_source) is the uninterpreted argument list:
+	    /* sc->code is a closure: ((args body) envir)
 	     * (define* (hi a (b 1)) (+ a b))
 	     * (procedure-source hi) -> (lambda* (a (b 1)) (+ a b))
 	     *
@@ -13821,7 +13827,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	     */
 	    
 	    /* set all default values */
-	    for (sc->z = car(closure_source(sc->code)); is_pair(sc->z); sc->z = cdr(sc->z))
+	    for (sc->z = closure_args(sc->code); is_pair(sc->z); sc->z = cdr(sc->z))
 	      {
 		/* bind all the args to something (default value or #f or maybe #undefined) */
 		if (!((car(sc->z) == sc->KEY_KEY) ||
@@ -13840,7 +13846,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      add_to_current_environment(sc, sc->z, sc->F);
 	    
 	    /* now get the current args, re-setting args that have explicit values */
-	    sc->x = car(closure_source(sc->code));
+	    sc->x = closure_args(sc->code);
 	    sc->y = sc->args; 
 	    sc->z = sc->NIL;
 	    while ((is_pair(sc->x)) &&
@@ -13920,7 +13926,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      }
 
 	    /* evaluate the function body */
-	    sc->code = cdr(closure_source(sc->code));
+	    sc->code = closure_body(sc->code);
 	    sc->args = sc->NIL;
 	    goto BEGIN;
 	  }
@@ -13975,7 +13981,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	case T_S7_OBJECT:	                  /* -------- applicable object -------- */
 	  sc ->value = s7_apply_object(sc, sc->code, sc->args);
-	  pop_stack(sc);
+	  if (sc->stack_top > 0)
+	    pop_stack(sc);
 	  goto START;
 
 #if WITH_MULTIDIMENSIONAL_VECTORS
@@ -14096,7 +14103,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	}
       if (!s7_is_symbol(sc->x))
 	return(eval_error(sc, "define a non-symbol? ~A", sc->x));
-      
+
       push_stack(sc, OP_DEFINE1, sc->NIL, sc->x);
       goto EVAL;
       
@@ -14107,6 +14114,15 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        *   so the doc string if any is (cadr (car value))
        *   and the arg list gives the number of required args up to the dot
        */
+
+      if ((is_closure(sc->value)) || 
+	  (is_closure_star(sc->value)))
+	closure_environment(sc->value) = s7_immutable_cons(sc, 
+					   s7_immutable_cons(sc, 
+					     s7_immutable_cons(sc, sc->__FUNC__, sc->code), 
+                                             sc->NIL), 
+					   closure_environment(sc->value));
+
       sc->x = s7_find_symbol_in_environment(sc, sc->envir, sc->code, false);
       if (sc->x != sc->NIL) 
 	set_symbol_value(sc->x, sc->value); 
@@ -19777,10 +19793,10 @@ s7_scheme *s7_init(void)
   set_type(sc->NIL, T_NIL_TYPE | T_ATOM | T_GC_MARK | T_IMMUTABLE | T_SIMPLE | T_DONT_COPY);
   car(sc->NIL) = cdr(sc->NIL) = sc->UNSPECIFIED;
   
-  set_type(sc->T, T_NIL_TYPE | T_ATOM | T_GC_MARK | T_IMMUTABLE | T_SIMPLE | T_DONT_COPY);
+  set_type(sc->T, T_BOOLEAN | T_ATOM | T_GC_MARK | T_IMMUTABLE | T_SIMPLE | T_DONT_COPY);
   car(sc->T) = cdr(sc->T) = sc->UNSPECIFIED;
   
-  set_type(sc->F, T_NIL_TYPE | T_ATOM | T_GC_MARK | T_IMMUTABLE | T_SIMPLE | T_DONT_COPY);
+  set_type(sc->F, T_BOOLEAN | T_ATOM | T_GC_MARK | T_IMMUTABLE | T_SIMPLE | T_DONT_COPY);
   car(sc->F) = cdr(sc->F) = sc->UNSPECIFIED;
   
   set_type(sc->EOF_OBJECT, T_NIL_TYPE | T_ATOM | T_GC_MARK | T_IMMUTABLE | T_SIMPLE | T_DONT_COPY);
@@ -19985,6 +20001,9 @@ s7_scheme *s7_init(void)
   
   sc->KEY_REST = s7_make_keyword(sc, "rest");
   typeflag(sc->KEY_REST) |= T_DONT_COPY; 
+
+  sc->__FUNC__ = s7_make_symbol(sc, "__func__");
+  typeflag(sc->__FUNC__) |= T_DONT_COPY; 
 
   sc->SET = s7_make_symbol(sc, "set!");
   typeflag(sc->SET) |= T_DONT_COPY; 

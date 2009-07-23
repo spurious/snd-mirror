@@ -1187,7 +1187,7 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 (define-macro (break)
   `(let ((old-prompt (listener-prompt))
 	 (envir (current-environment)))
-     (set! (listener-prompt) "break>")
+     (set! (listener-prompt) (format #f "~A>" (if (defined? __func__) __func__ "break")))
      (call/cc
       (lambda (return)
 	(set! break-ok return)      ; save current program loc so "(break-ok)" continues from the "break"
@@ -1209,15 +1209,15 @@ connects them with 'func', and applies the result as an amplitude envelope to th
     (+ x (string-length y) (vct-ref z 1))))
 
 :(hiho 1)
-break>
+hiho>
 snd-top-level
-break>(+ 1 2)
+hiho>(+ 1 2)
 3
-break>x
+hiho>x
 32
-break>arg
+hiho>arg
 1
-break>(break-ok)
+hiho>(break-ok)
 :
 40.2
 :x
