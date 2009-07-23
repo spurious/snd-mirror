@@ -1180,41 +1180,45 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 
 
 
-;;; a first stab at a break point handler
+;;; a second stab at a break point handler
 
-(define-macro (break . body)
+(define-macro (break)
   `(let ((old-prompt (listener-prompt))
-	 (envir (current-environment))
-	 (go-on (lambda () ,@body)))
+	 (envir (current-environment)))
      (set! (listener-prompt) "break>")
-     (add-hook! read-hook 
-		(lambda (str)
-		  (if (string=? str "(ok)")
-		      (begin
-			(reset-hook! read-hook)
-			(set! (listener-prompt) old-prompt)
-			(go-on))
-		     (eval-string str envir))))
-     '>))
+     (call/cc
+      (lambda (return)
+	(set! ok return)            ; save current program loc so "(ok)" continues from the "break"
+	(add-hook! read-hook        ; anything typed in the listener is evaluated in the environment of the break call
+		   (lambda (str)
+		     (eval-string str envir)))
+	(throw 'snd-top-level)))    ; jump back to the top level (it will say "break>")
+     (reset-hook! read-hook)        ; we get here if "ok" is called
+     (set! (listener-prompt) old-prompt)))
 
-#|    
+    
+#|
 (define (hiho arg)
   (let ((x 32)
 	(y "a string")
 	(z (vct .1 .2 .3)))
-    (break
-     (display y)
-     (+ x (string-length y) (vct-ref z 1)))))
+    (break)
+    (display y)
+    (+ x (string-length y) (vct-ref z 1))))
 
 :(hiho 1)
 break>
->
+snd-top-level
+break>(+ 1 2)
+3
+break>x
+32
 break>arg
 1
-break>y
-"a string"
 break>(ok)
 :
 40.2
+:x
+;x: unbound variable
 
 |#
