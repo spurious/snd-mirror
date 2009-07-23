@@ -80,6 +80,9 @@
  *          (what about files? numbers? -- integer-length, bignum-precision etc)
  *        get rid of values and call-with-values
  *        strings/lists should be (set-)applicable (*-ref|set! are ugly and pointless), hash-tables?
+ *        perhaps (current-)function-name -- i.e. access to name of function being applied (for the break macro...) -- does this have a standard Lisp name? also args?
+ *          also access to current file/line etc -- do port-line-number and port-filename work here?
+ *        perhaps trace-hook (evaluated in the traced function's environment), or specializable trace apply/return
  *
  *
  * Mike Scholz provided the FreeBSD support (complex trig funcs, etc)

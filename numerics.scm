@@ -759,6 +759,37 @@
     (format #t " position = ~D~% fraction = ~,15F~% hex digits =  ~S~%" id pid chx)))
   
 
+#|
+;;; from the CL bboard, perhaps written by Justin Grant
+;;;   requires gmp (bignums)
+
+(define (machin-pi digits)
+
+  (define (arccot-minus xsq n xpower)
+    (let ((term (floor (/ xpower n))))
+      (if (= term 0)
+        0
+        (- (arccot-plus xsq (+ n 2) (floor (/ xpower xsq)))
+           term))))       
+
+  (define (arccot-plus xsq n xpower)
+    (let ((term (floor (/ xpower n))))
+      (if (= term 0)
+        0
+        (+ (arccot-minus xsq (+ n 2) (floor (/ xpower xsq)))
+           term))))
+
+  (define (arccot x unity)
+    (let ((xpower (floor (/ unity x))))
+      (arccot-plus (* x x) 1 xpower)))
+
+  (let* ((unity (expt 10 (+ digits 10)))
+         (thispi (* 4 (- (* 4 (arccot 5 unity)) (arccot 239 unity)))))
+    (floor (/ thispi (expt 10 10)))))
+|#
+
+
+
 ;;; --------------------------------------------------------------------------------
 
 (define* (sin-nx-peak n :optional (error 1e-12))
