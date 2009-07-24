@@ -81,9 +81,7 @@
  *        get rid of values and call-with-values
  *        strings/lists should be (set-)applicable (*-ref|set! are ugly and pointless), hash-tables?
  *        perhaps *trace-function*
- *        defmacro* define-macro* (kinda ugly code):
- *          (defmacro define-macro* (args . body) `(define* (,(car args) ,@(cdr args)) (eval ((lambda () ,@body)))))
- *          (defmacro defmacro* (name args . body) `(define* (,name ,@args) (eval ((lambda () ,@body)))))
+ *        defmacro* define-macro*
  *        perhaps procedure-environment
  *
  *
