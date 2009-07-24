@@ -80,8 +80,11 @@
  *          (what about files? numbers? -- integer-length, bignum-precision etc)
  *        get rid of values and call-with-values
  *        strings/lists should be (set-)applicable (*-ref|set! are ugly and pointless), hash-tables?
- *        #__file__ and #__line__
- *        perhaps trace-hook (evaluated in the traced function's environment), or specializable trace apply/return
+ *        perhaps *trace-function*
+ *        defmacro* define-macro* (kinda ugly code):
+ *          (defmacro define-macro* (args . body) `(define* (,(car args) ,@(cdr args)) (eval ((lambda () ,@body)))))
+ *          (defmacro defmacro* (name args . body) `(define* (,name ,@args) (eval ((lambda () ,@body)))))
+ *        perhaps procedure-environment
  *
  *
  * Mike Scholz provided the FreeBSD support (complex trig funcs, etc)
@@ -713,6 +716,7 @@ struct s7_scheme {
 #define is_goto(p)                    (type(p) == T_GOTO)
 #define is_macro(p)                   (type(p) == T_MACRO)
 #define is_promise(p)                 (type(p) == T_PROMISE)
+
 #define is_closure(p)                 (type(p) == T_CLOSURE)
 #define is_closure_star(p)            (type(p) == T_CLOSURE_STAR)
 #define closure_source(Obj)           car(Obj)
@@ -2004,7 +2008,7 @@ static s7_pointer copy_object(s7_scheme *sc, s7_pointer obj)
       (is_macro(obj)) || 
       (is_promise(obj)) ||
       (s7_is_function(obj)))
-    cdr(nobj) = cdr(obj); /* the environment of the closure */
+    cdr(nobj) = closure_environment(obj);
   else cdr(nobj) = copy_object(sc, cdr(obj));
   
   return(nobj);
@@ -4029,10 +4033,6 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top)
   if (len < 2)          /* #<any other char> (except ':', sigh) is an error in this scheme */
     return(sc->NIL);
       
-  /* PERHAPS: if "#file" and is_file_port(sc->input_port) replace with string: port_filename(sc->input_port)
-   *          if "#line" and same, replace with port_line_number
-   */
-
   switch (name[0])
     {
     case 'o':   /* #o (octal) */
@@ -7913,7 +7913,7 @@ s7_pointer s7_eval_c_string(s7_scheme *sc, const char *str)
     return(g_eval_string(sc, make_list_1(sc, s7_make_string(sc, str))));
   
   stack_reset(sc); 
-  sc->envir = sc->global_env; /* PERHAPS pass optional env here? */
+  sc->envir = sc->global_env; 
   port = s7_open_input_string(sc, str);
   push_input_port(sc, port);
   push_stack(sc, OP_EVAL_STRING, sc->NIL, sc->NIL);
@@ -10197,9 +10197,9 @@ s7_pointer s7_procedure_source(s7_scheme *sc, s7_pointer p)
 		     s7_append(sc, 
 			       make_list_2(sc, 
 					   (is_closure_star(p)) ? sc->LAMBDA_STAR : sc->LAMBDA, 
-					   car(car(p))),
-			       cdr(car(p))),
-		     cdr(p)));
+					   closure_args(p)),
+			       closure_body(p)),
+		     closure_environment(p)));
     }
   
   if (s7_is_procedure_with_setter(p))
@@ -10225,8 +10225,8 @@ static s7_pointer g_procedure_source(s7_scheme *sc, s7_pointer args)
     return(s7_append(sc, 
 		     make_list_2(sc, 
 				 (is_closure_star(p)) ? sc->LAMBDA_STAR : sc->LAMBDA, 
-				 car(car(p))),
-		     cdr(car(p))));
+				 closure_args(p)),
+		     closure_body(p)));
 
   if (s7_is_procedure_with_setter(p))
     return(pws_source(sc, p));
@@ -10290,8 +10290,8 @@ const char *s7_procedure_documentation(s7_scheme *sc, s7_pointer x)
     return((char *)function_documentation(x));
   
   if (((is_closure(x)) || (is_closure_star(x))) &&
-      (s7_is_string(cadar(x))))
-    return(s7_string(cadar(x)));
+      (s7_is_string(car(closure_body(x)))))
+       return(s7_string(car(closure_body(x))));
   
   if (s7_is_procedure_with_setter(x))
     return(pws_documentation(x));
@@ -10332,9 +10332,9 @@ s7_pointer s7_procedure_arity(s7_scheme *sc, s7_pointer x)
 	len = s7_list_length(sc, car(x));
       else 
 	{
-	  if (s7_is_symbol(caar(x)))
+	  if (s7_is_symbol(closure_args(x)))
 	    return(make_list_3(sc, small_int(sc, 0), small_int(sc, 0), sc->T));
-	  len = s7_list_length(sc, caar(x));
+	  len = s7_list_length(sc, closure_args(x));
 	}
       
       if (len >= 0)
@@ -10674,13 +10674,13 @@ occurs as the object of set!."
   f->scheme_getter = getter;
   if ((is_closure(getter)) ||
       (is_closure_star(getter)))
-    f->get_req_args = s7_list_length(sc, caaar(args));
+    f->get_req_args = s7_list_length(sc, closure_args(getter));
   else f->get_req_args = s7_list_length(sc, caar(args));
   
   f->scheme_setter = setter;
   if ((is_closure(setter)) ||
       (is_closure_star(setter)))
-    f->set_req_args = s7_list_length(sc, caaadr(args));
+    f->set_req_args = s7_list_length(sc, closure_args(setter));
   else f->set_req_args = s7_list_length(sc, caadr(args));
   
   return(p);
@@ -10768,8 +10768,8 @@ static s7_pointer pws_source(s7_scheme *sc, s7_pointer x)
     return(s7_append(sc, 
 		     make_list_2(sc,
 				 (is_closure(f->scheme_getter)) ? sc->LAMBDA : sc->LAMBDA_STAR,
-				 car(car(f->scheme_getter))),
-		     cdr(car(f->scheme_getter))));
+				 closure_args(f->scheme_getter)),
+		     closure_body(f->scheme_getter)));
   return(sc->NIL);
 }
 
@@ -11658,6 +11658,18 @@ static int remember_file_name(const char *file)
 }
 
 
+static const char *input_filename(s7_scheme *sc)
+{
+  if (port_filename(sc->input_port))
+    return(port_filename(sc->input_port));
+  if ((port_file_number(sc->input_port) >= 0) &&
+      (file_names[port_file_number(sc->input_port)]))
+    return(file_names[port_file_number(sc->input_port)]);
+  return(NULL);
+}
+
+
+
 /* -------- backtrace -------- */
 
 #if HAVE_PTHREADS
@@ -11984,7 +11996,6 @@ static void trace_apply(s7_scheme *sc)
 
   /* TODO: how to trace setter [s7_object_set?] mus-srate for example */
   /*          scheme-defined pws setters are traced, but the function name is missing, and an explicit indication that it's a setter */
-  /* TODO: trace and __func__ tests */
 
 #if HAVE_PTHREADS
   int id;
@@ -12029,6 +12040,14 @@ static void trace_apply(s7_scheme *sc)
 	write_string(sc, str, sc->output_port);
 	free(str);
 
+	/* PERHAPS: if *trace-function* is a thunk, evaluate it in the current env? */
+	/* func = eval_symbol(sc->TRACE_FUNCTION); */
+#if 0
+	push_stack(sc, OP_EVAL_STRING_DONE, sc->args, sc->code);
+	sc->args = sc->NIL;
+	sc->code = func; 
+	eval(sc, OP_APPLY);
+#endif
 	sc->trace_depth++;
 	break;
       }
@@ -12392,15 +12411,7 @@ GOT_CATCH:
 	  const char *filename = NULL;
 	  int line;
 
-	  if (port_filename(sc->input_port))
-	    filename = port_filename(sc->input_port);
-	  else
-	    {
-	      if ((port_file_number(sc->input_port) >= 0) &&
-		  (file_names[port_file_number(sc->input_port)]))
-		filename = file_names[port_file_number(sc->input_port)];
-	    }
-
+	  filename = input_filename(sc);
 	  line = port_line_number(sc->input_port);
     
 	  if (filename)

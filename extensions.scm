@@ -1180,7 +1180,8 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 
 
 
-;;; a second stab at a break point handler
+;;; a second stab at a break point handler for s7
+;;;    this does not work in Guile (current-environment needs some replacement)
 
 (define break-ok #f)
 
@@ -1198,7 +1199,7 @@ connects them with 'func', and applies the result as an amplitude envelope to th
      (reset-hook! read-hook)        ; we get here if "break-ok" is called
      (set! (listener-prompt) old-prompt)))
 
-;(define (break-exit) (reset-hook! read-hook)) -- also need to reset the prompt
+;(define (break-exit) (reset-hook! read-hook)) -- also needs to reset the prompt
     
 #|
 (define (outer arg1)

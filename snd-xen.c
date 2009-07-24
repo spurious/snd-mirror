@@ -3247,6 +3247,9 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   XEN_EVAL_C_STRING("(define *snd-loaded-files* '())");
   XEN_EVAL_C_STRING("(define *snd-remember-paths* #t)");
 
+  XEN_EVAL_C_STRING("(defmacro define-macro* (args . body) `(define* (,(car args) ,@(cdr args)) (eval ((lambda () ,@body)))))");
+  XEN_EVAL_C_STRING("(defmacro defmacro* (name args . body) `(define* (,name ,@args) (eval ((lambda () ,@body)))))");
+
   XEN_EVAL_C_STRING("(define (symbol-append . args) \"(symbol-append . args) makes a new symbol from its args\"\
                        (string->symbol (apply string-append (map symbol->string args))))");
   /* taken from guile ice-9/boot9.scm, used by KM's stuff (gui.scm etc) */
