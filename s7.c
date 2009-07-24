@@ -72,7 +72,7 @@
  *        random for any numeric type and any numeric argument
  *        optional multidimensional and applicable vectors
  *        symbol-calls if profiling is enabled
- *        trace and untrace
+ *        trace and untrace, __func__ (active if backtracing is on)
  *
  *   things I ought to add/change:
  *        length should work on vectors and strings [fill!, copy, reverse! null?]
@@ -80,8 +80,7 @@
  *          (what about files? numbers? -- integer-length, bignum-precision etc)
  *        get rid of values and call-with-values
  *        strings/lists should be (set-)applicable (*-ref|set! are ugly and pointless), hash-tables?
- *        perhaps (current-)function-name -- i.e. access to name of function being applied (for the break macro...) -- does this have a standard Lisp name? also args?
- *          also access to current file/line etc -- do port-line-number and port-filename work here?
+ *        #__file__ and #__line__
  *        perhaps trace-hook (evaluated in the traced function's environment), or specializable trace apply/return
  *
  *
@@ -4030,6 +4029,10 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top)
   if (len < 2)          /* #<any other char> (except ':', sigh) is an error in this scheme */
     return(sc->NIL);
       
+  /* PERHAPS: if "#file" and is_file_port(sc->input_port) replace with string: port_filename(sc->input_port)
+   *          if "#line" and same, replace with port_line_number
+   */
+
   switch (name[0])
     {
     case 'o':   /* #o (octal) */
@@ -4227,8 +4230,6 @@ static s7_Double string_to_double_with_radix(char *str, int radix)
     }
 
   /* (string->number "1.1e1" 2) */
-  /* fprintf(stderr, "int: %lld, frac: %lld, exp: %lld, radix: %d\n", int_part, frac_part, exponent, radix); */
-
   if (frac_part > 0)
     return(sign * (int_part + ((s7_Double)frac_part / pow((s7_Double)radix, (s7_Double)flen))) * pow((s7_Double)radix, (s7_Double)exponent));
   if (exponent != 0)
@@ -7713,7 +7714,13 @@ static s7_pointer load_file(s7_scheme *sc, FILE *fp, const char *name)
       content = (char *)malloc((size + 1) * sizeof(char));
       bytes = fread(content, sizeof(char), size, fp);
       if (bytes != (size_t)size)
-	fprintf(stderr, "(load \"%s\") read %ld bytes of an expected %ld?", name, (long)bytes, size);
+	{
+	  char *tmp;
+	  tmp = (char *)calloc(256, sizeof(char));
+	  snprintf(tmp, 256, "(load \"%s\") read %ld bytes of an expected %ld?", name, (long)bytes, size);
+	  write_string(sc, tmp, sc->output_port);
+	  free(tmp);
+	}
       content[size] = '\0';
     }
   else
@@ -11977,7 +11984,7 @@ static void trace_apply(s7_scheme *sc)
 
   /* TODO: how to trace setter [s7_object_set?] mus-srate for example */
   /*          scheme-defined pws setters are traced, but the function name is missing, and an explicit indication that it's a setter */
-  /* TODO: trace tests */
+  /* TODO: trace and __func__ tests */
 
 #if HAVE_PTHREADS
   int id;
@@ -14115,14 +14122,17 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        *   and the arg list gives the number of required args up to the dot
        */
 
-      if ((is_closure(sc->value)) || 
-	  (is_closure_star(sc->value)))
+      /* if we're defining a function, add its symbol to the new function's environment under the name __func__ */
+      if ((*(sc->backtracing)) &&
+	  ((is_closure(sc->value)) || 
+	   (is_closure_star(sc->value))))
 	closure_environment(sc->value) = s7_immutable_cons(sc, 
 					   s7_immutable_cons(sc, 
 					     s7_immutable_cons(sc, sc->__FUNC__, sc->code), 
                                              sc->NIL), 
 					   closure_environment(sc->value));
 
+      /* add the newly defined thing to the current environment */
       sc->x = s7_find_symbol_in_environment(sc, sc->envir, sc->code, false);
       if (sc->x != sc->NIL) 
 	set_symbol_value(sc->x, sc->value); 
@@ -14605,13 +14615,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  (caaddr(sc->code) == sc->QUASIQUOTE) &&
 	  (cdddr(sc->code) == sc->NIL))            /* protect against (defmacro hi (a) `(+ ,a 1) #f) */
 	{
-	  /*
-	    fprintf(stderr, "cdr(code): %s\n", s7_object_to_c_string(sc, cdr(sc->code)));
-	    fprintf(stderr, "quasi: %s, cadr: %s -> %s\n", 
-	                    s7_object_to_c_string(sc, caddr(sc->code)), 
-			    s7_object_to_c_string(sc, cadr(caddr(sc->code))), 
-			    s7_object_to_c_string(sc, g_quasiquote_1(sc, 0, cadr(caddr(sc->code)))));
-	  */
 	  sc->z = s7_cons(sc,
 			  cadr(sc->code),
 			  s7_cons(sc,
@@ -19180,10 +19183,6 @@ static s7_pointer big_greater(s7_scheme *sc, s7_pointer args)
 
 	case T_BIG_REAL:
 	  if (mpfr_cmp(S7_BIG_REAL(previous), S7_BIG_REAL(current)) <= 0) return(sc->F);
-	  break;
-
-	default:
-	  fprintf(stderr, "oops -- bignum greater than got a complex arg?\n");
 	  break;
 	}
       previous = current;

@@ -1187,7 +1187,7 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 (define-macro (break)
   `(let ((old-prompt (listener-prompt))
 	 (envir (current-environment)))
-     (set! (listener-prompt) (format #f "~A>" (if (defined? __func__) __func__ "break")))
+     (set! (listener-prompt) (format #f "~A>" (if (defined? __func__) __func__ 'break)))
      (call/cc
       (lambda (return)
 	(set! break-ok return)      ; save current program loc so "(break-ok)" continues from the "break"
@@ -1198,29 +1198,39 @@ connects them with 'func', and applies the result as an amplitude envelope to th
      (reset-hook! read-hook)        ; we get here if "break-ok" is called
      (set! (listener-prompt) old-prompt)))
 
+;(define (break-exit) (reset-hook! read-hook)) -- also need to reset the prompt
     
 #|
-(define (hiho arg)
-  (let ((x 32)
-	(y "a string")
-	(z (vct .1 .2 .3)))
+(define (outer arg1)
+  (let ((y 123))
+    (define (hiho arg)
+      (let ((x 32)
+	    (y "a string")
+	    (z (vct .1 .2 .3)))
+	(break)
+	(display y)
+	(+ x (string-length y) (vct-ref z 1))))
+    (hiho 1)
     (break)
-    (display y)
-    (+ x (string-length y) (vct-ref z 1))))
+    (* y 2)))
 
-:(hiho 1)
+:(outer 456)
 hiho>
 snd-top-level
-hiho>(+ 1 2)
-3
 hiho>x
 32
 hiho>arg
 1
+hiho>y
+"a string"
 hiho>(break-ok)
 :
-40.2
-:x
-;x: unbound variable
+outer>
+snd-top-level
+outer>y
+123
+outer>(break-ok)
+:
+246
 
 |#
