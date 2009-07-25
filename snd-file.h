@@ -21,9 +21,9 @@ typedef struct {
   int *selected_files;
   int selected_files_size;
   int currently_selected_files;
-  Float amp;
+  mus_float_t amp;
   vf_location_t location_choice;
-  Float speed;
+  mus_float_t speed;
   axis_context *env_ax;
   env_editor *spf;
   env *amp_env;
@@ -31,7 +31,7 @@ typedef struct {
   bool error_p;
   int sort_items_size;
   speed_style_t speed_style;
-  off_t beg;
+  mus_long_t beg;
 
   int dirs_size;
   fam_info **dirs;
@@ -96,7 +96,7 @@ void vf_unhighlight_row(widget_t nm, widget_t rw);
 void vf_highlight_row(widget_t nm, widget_t rw);
 void vf_post_info(view_files_info *vdat, int pos);
 void vf_unpost_info(view_files_info *vdat);
-off_t vf_location(view_files_info *vdat);
+mus_long_t vf_location(view_files_info *vdat);
 void vf_post_error(const char *error_msg, view_files_info *data);
 void redirect_vf_post_error(const char *error_msg, void *data);
 void redirect_vf_post_location_error(const char *error_msg, void *data);
@@ -108,8 +108,8 @@ void vf_reflect_sort_choice_in_menu(view_files_info *vdat);
 vf_row *view_files_make_row(view_files_info *vdat, widget_t last_row);
 void vf_flash_row(vf_row *r);
 
-void vf_set_amp(view_files_info *vdat, Float val);
-void vf_set_speed(view_files_info *vdat, Float val);
+void vf_set_amp(view_files_info *vdat, mus_float_t val);
+void vf_set_speed(view_files_info *vdat, mus_float_t val);
 void vf_set_amp_env(view_files_info *vdat, env *new_e);
 
 void view_files_display_list(view_files_info *vdat);
@@ -156,7 +156,7 @@ void raw_data_dialog_to_file_info(const char *filename, char *title, char *info,
 
 typedef struct {
   time_t time;
-  off_t samps;
+  mus_long_t samps;
   char *filename, *full_filename;
 } sort_info;
 

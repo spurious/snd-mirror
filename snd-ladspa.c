@@ -22,7 +22,7 @@
  * 1-Aug-03  added direct struct readers for LADSPA_Descriptor
  * 6-Jan-03  use free, not free.
  * 21-Nov-02 better checks for C-g interrupt.
- * 2-May-02  use off_t for sample number.
+ * 2-May-02  use mus_long_t for sample number.
  * 14-Dec-01 various C++ cleanups.
  * 28-Nov-01 input chans need not equal output chans now.
  * 15-Oct-01 added some error returns (rather than snd_error).  multichannel plugin support.
@@ -560,7 +560,7 @@ Information about parameters can be acquired using " S_analyse_ladspa "."
   const char *pcLabel, *pcTmp;
   LADSPA_Handle *psHandle;
   unsigned long lSampleRate, lPortIndex, lBlockSize, lSampleIndex;
-  off_t lAt;
+  mus_long_t lAt;
   unsigned long lParameterCount;
   XEN xenParameters;
   LADSPA_PortDescriptor iPortDescriptor;
@@ -569,7 +569,7 @@ Information about parameters can be acquired using " S_analyse_ladspa "."
   snd_info *sp;
   char *ofile, *msg;
   int i, j, ofd, datumb, err = 0, inchans = 1, readers = 0, outchans = 1;
-  off_t num;
+  mus_long_t num;
   snd_fd **sf = NULL;
   file_info *hdr;
   XEN errmsg;
@@ -855,7 +855,7 @@ Information about parameters can be acquired using " S_analyse_ladspa "."
 	remember_temp(ofile, outchans);
       for (i = 0, j = 0; i < outchans; i++)
 	{
-	  off_t beg;
+	  mus_long_t beg;
 	  if ((cp_from_reader) && (sf) && (sf[j]))
 	    {
 	      ncp = sf[j]->cp;
@@ -1168,7 +1168,7 @@ static XEN g_ladspa_set_run_adding_gain(XEN desc, XEN ptr, XEN gain)
 }
 
 #if WITH_DOUBLES
-static float *double_to_float(Float *data, int data_size)
+static float *double_to_float(mus_float_t *data, int data_size)
 {
   float *ldata;
   int i;

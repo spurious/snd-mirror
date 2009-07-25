@@ -3138,7 +3138,7 @@ and run simple lisp[4] functions.
   (<rt-func> 'not '<int> '(<float>))
   
   
-  ;; Float operations
+  ;; mus_float_t operations
   (for-each (lambda (func)
 	      (primitive-eval `(<rt-func> ',func '<float> '(<float>))))
 	    `(sin cos tan acos asin atan exp log log10 sqrt
@@ -5825,9 +5825,9 @@ and run simple lisp[4] functions.
   <void-*> buffer ;; Pointer to struct buffer.
   <int> channel
   <int> channels
-  <off_t> location
+  <mus_long_t> location
   <float> increment
-  <off_t> length
+  <mus_long_t> length
   <mus_any-*> readin
   <SCM> scm_readin)
 
@@ -9414,7 +9414,7 @@ old syntax: (not very nice)
 						"typedef struct {
                                                    mus_any_class *core;
                                                    int chans;
-                                                   Float *vals;
+                                                   mus_float_t *vals;
                                                    bool data_allocated;
                                                  } mus_frame"
 						
@@ -9423,11 +9423,11 @@ old syntax: (not very nice)
 						  mus_any *outn_writer;
 						  mus_any *revn_writer;
 						  mus_frame *outf, *revf;
-						  Float *outn;
-						  Float *revn;
+						  mus_float_t *outn;
+						  mus_float_t *revn;
 						  int chans, rev_chans;
 						  mus_interp_t type;
-						  Float reverb;
+						  mus_float_t reverb;
 						} locs;"
 
 						)

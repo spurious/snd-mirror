@@ -1226,6 +1226,7 @@ static void multifile_completer(widget_t w, void *data)
   watch_filename_change(w, (XtPointer)data, NULL);
 }
 
+#define FILE_DIALOG_WIDTH 450
 
 static file_dialog_info *make_file_dialog(read_only_t read_only, char *title, char *select_title, 
 					  XtCallbackProc file_ok_proc, XtCallbackProc file_help_proc)
@@ -1278,7 +1279,8 @@ static file_dialog_info *make_file_dialog(read_only_t read_only, char *title, ch
   XtSetArg(args[n], XmNfileFilterStyle, XmFILTER_HIDDEN_FILES); n++;      /* the dot files mostly just get in the way */
   XtSetArg(args[n], XmNcancelLabelString, cancel_label); n++;
   XtSetArg(args[n], XmNuserData, (XtPointer)(fd->fp)); n++;
-  XtSetArg(args[n], XmNfileSearchProc, snd_directory_reader); n++;        /* over-ride Motif's directory reader altogether */      
+  XtSetArg(args[n], XmNfileSearchProc, snd_directory_reader); n++;        /* over-ride Motif's directory reader altogether */  
+  XtSetArg(args[n], XmNwidth, FILE_DIALOG_WIDTH); n++;
 
   fd->dialog = XmCreateFileSelectionDialog(w, title, args, n);
   fd->fp->dialog = fd->dialog;
@@ -1625,6 +1627,7 @@ widget_t make_open_file_dialog(read_only_t read_only, bool managed)
     }
   if ((managed) && (!(XtIsManaged(odat->dialog))))
     XtManageChild(odat->dialog);
+
   return(odat->dialog);
 }
 
@@ -1884,7 +1887,7 @@ void reflect_just_sounds(void)
 #define NUM_VISIBLE_HEADERS 5
 
 char *get_file_dialog_sound_attributes(file_data *fdat, 
-				       int *srate, int *chans, int *type, int *format, off_t *location, off_t *samples, 
+				       int *srate, int *chans, int *type, int *format, mus_long_t *location, mus_long_t *samples, 
 				       int min_chan)
 {
   char *str;
@@ -1929,7 +1932,7 @@ char *get_file_dialog_sound_attributes(file_data *fdat,
       fdat->scanf_widget = DATA_LOCATION_WIDGET;
       if ((str) && (*str))
 	{
-	  (*location) = string_to_off_t(str, 0, "data location"); 
+	  (*location) = string_to_mus_long_t(str, 0, "data location"); 
 	  XtFree(str);
 	}
       else snd_error_without_format("no data location?");
@@ -1941,7 +1944,7 @@ char *get_file_dialog_sound_attributes(file_data *fdat,
       fdat->scanf_widget = SAMPLES_WIDGET;
       if ((str) && (*str))
 	{
-	  (*samples) = string_to_off_t(str, 0, "samples"); 
+	  (*samples) = string_to_mus_long_t(str, 0, "samples"); 
 	  XtFree(str);
 	}
       else snd_error_without_format("no samples?");
@@ -1994,7 +1997,7 @@ char *get_file_dialog_sound_attributes(file_data *fdat,
 #define IGNORE_HEADER_TYPE -1
 
 static void set_file_dialog_sound_attributes(file_data *fdat, 
-					     int type, int format, int srate, int chans, off_t location, off_t samples, char *comment)
+					     int type, int format, int srate, int chans, mus_long_t location, mus_long_t samples, char *comment)
 {
   int i;
   const char **fl = NULL;
@@ -2040,11 +2043,11 @@ static void set_file_dialog_sound_attributes(file_data *fdat,
 
   if ((location != IGNORE_DATA_LOCATION) && 
       (fdat->location_text))
-    widget_off_t_to_text(fdat->location_text, location);
+    widget_mus_long_t_to_text(fdat->location_text, location);
 
   if ((samples != IGNORE_SAMPLES) && 
       (fdat->samples_text))
-    widget_off_t_to_text(fdat->samples_text, samples);
+    widget_mus_long_t_to_text(fdat->samples_text, samples);
 }
 
 
@@ -2837,7 +2840,7 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
   /* get output file attributes */
   redirect_snd_error_to(post_file_panel_error, (void *)(sd->panel_data));
   {
-    off_t location = 28, samples = 0;
+    mus_long_t location = 28, samples = 0;
     int chans = 1;
     if (saving)
       comment = get_file_dialog_sound_attributes(sd->panel_data, &srate, &chans, &type, &format, &location, &samples, 0);
@@ -3559,7 +3562,7 @@ void save_file_dialog_state(FILE *fd)
 
 static Widget new_file_dialog = NULL;
 static file_data *ndat = NULL;
-static off_t initial_samples = 1;
+static mus_long_t initial_samples = 1;
 static Widget new_file_text = NULL;
 static char *new_file_filename = NULL;
 static fam_info *new_file_watcher = NULL;
@@ -3625,7 +3628,7 @@ static void watch_new_file(struct fam_info *fp, FAMEvent *fe)
 
 static void new_file_ok_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  off_t loc;
+  mus_long_t loc;
   char *comment = NULL, *newer_name = NULL, *msg;
   int header_type, data_format, srate, chans;
   newer_name = XmTextGetString(new_file_text);
@@ -4359,7 +4362,7 @@ void save_edit_header_dialog_state(FILE *fd)
 
 typedef struct raw_info {
   Widget dialog;
-  off_t location;
+  mus_long_t location;
   file_data *rdat;
   read_only_t read_only;
   bool selected;
@@ -5256,9 +5259,9 @@ static void view_files_remove_selected_callback(Widget w, XtPointer context, XtP
 }
 
 
-off_t vf_location(view_files_info *vdat)
+mus_long_t vf_location(view_files_info *vdat)
 {
-  off_t pos = 0;
+  mus_long_t pos = 0;
   snd_info *sp;
   chan_info *cp;
   char *str;
@@ -5298,7 +5301,7 @@ off_t vf_location(view_files_info *vdat)
       str = XmTextGetString(vdat->at_sample_text);
       if ((str) && (*str))
 	{
-	  pos = string_to_off_t(str, 0, "sample"); 
+	  pos = string_to_mus_long_t(str, 0, "sample"); 
 	  XtFree(str);
 	  /* pos already checked for lower bound */
 	}
@@ -5530,7 +5533,7 @@ static void view_files_at_mark_callback(Widget w, XtPointer context, XtPointer i
 
 /* -------- speed -------- */
 
-static int vf_speed_to_scroll(Float minval, Float val, Float maxval)
+static int vf_speed_to_scroll(mus_float_t minval, mus_float_t val, mus_float_t maxval)
 {
   if (val <= minval) return(0);
   if (val >= maxval) return((int)(0.9 * SCROLLBAR_MAX));
@@ -5538,7 +5541,7 @@ static int vf_speed_to_scroll(Float minval, Float val, Float maxval)
 }
 
 
-void vf_set_speed(view_files_info *vdat, Float val)
+void vf_set_speed(view_files_info *vdat, mus_float_t val)
 {
   char speed_number_buffer[6];
   vdat->speed = speed_changed(val,
@@ -5607,7 +5610,7 @@ static void vf_speed_drag_callback(Widget w, XtPointer context, XtPointer info)
 
 /* -------- amp -------- */
 
-static Float vf_scroll_to_amp(int val)
+static mus_float_t vf_scroll_to_amp(int val)
 {
   if (val <= 0) 
     return(amp_control_min(ss));
@@ -5619,13 +5622,13 @@ static Float vf_scroll_to_amp(int val)
 }
 
 
-static int vf_amp_to_scroll(Float amp)
+static int vf_amp_to_scroll(mus_float_t amp)
 {
   return(amp_to_scroll(amp_control_min(ss), amp, amp_control_max(ss)));
 }
 
 
-void vf_set_amp(view_files_info *vdat, Float val)
+void vf_set_amp(view_files_info *vdat, mus_float_t val)
 {
   char sfs[6];
   vdat->amp = val;
@@ -5714,13 +5717,13 @@ static void vf_drawer_button_motion(Widget w, XtPointer context, XEvent *event, 
 {
   view_files_info *vdat = (view_files_info *)context;
   XMotionEvent *ev = (XMotionEvent *)event;
-  Float pos;
+  mus_float_t pos;
 
 #ifdef MUS_MAC_OSX
   if ((press_x == ev->x) && (press_y == ev->y)) return;
 #endif
 
-  pos = (Float)(ev->x) / (Float)widget_width(w);
+  pos = (mus_float_t)(ev->x) / (mus_float_t)widget_width(w);
   env_editor_button_motion(vdat->spf, ev->x, ev->y, ev->time, vdat->amp_env);
   vf_amp_env_resize(w, context, NULL);
 }
@@ -5730,14 +5733,14 @@ static void vf_drawer_button_press(Widget w, XtPointer context, XEvent *event, B
 {
   view_files_info *vdat = (view_files_info *)context;
   XButtonEvent *ev = (XButtonEvent *)event;
-  Float pos;
+  mus_float_t pos;
 
 #ifdef MUS_MAC_OSX
   press_x = ev->x;
   press_y = ev->y;
 #endif
 
-  pos = (Float)(ev->x) / (Float)widget_width(w);
+  pos = (mus_float_t)(ev->x) / (mus_float_t)widget_width(w);
   if (env_editor_button_press(vdat->spf, ev->x, ev->y, ev->time, vdat->amp_env))
     vf_amp_env_resize(w, context, NULL);
 }
@@ -5747,9 +5750,9 @@ static void vf_drawer_button_release(Widget w, XtPointer context, XEvent *event,
 {
   view_files_info *vdat = (view_files_info *)context;
   XButtonEvent *ev = (XButtonEvent *)event;
-  Float pos;
+  mus_float_t pos;
 
-  pos = (Float)(ev->x) / (Float)widget_width(w);
+  pos = (mus_float_t)(ev->x) / (mus_float_t)widget_width(w);
   env_editor_button_release(vdat->spf, vdat->amp_env);
   vf_amp_env_resize(w, context, NULL);
 }

@@ -12,23 +12,23 @@ typedef struct {
   mus_any *gen;
   struct dac_info *dp;
   bool speeding;
-  Float sr;
+  mus_float_t sr;
 } spd_info;
 
 typedef enum {DAC_NOTHING, DAC_CHANNEL, DAC_REGION, DAC_MIX, DAC_XEN} dac_source_t;
 
 typedef struct dac_info {
   dac_source_t type;
-  Float cur_index;
-  Float cur_amp;
-  Float cur_srate;
-  Float cur_exp;
-  Float cur_rev;       /* rev scaler -- len is set at initialization */
-  Float contrast_amp;
+  mus_float_t cur_index;
+  mus_float_t cur_amp;
+  mus_float_t cur_srate;
+  mus_float_t cur_exp;
+  mus_float_t cur_rev;       /* rev scaler -- len is set at initialization */
+  mus_float_t contrast_amp;
   bool expanding, reverbing, filtering; /* these need lots of preparation, so they're noticed only at the start */
   int audio_chan;      /* where channel's output is going (wrap-around if not enough audio output channels) */
   int slot;
-  Float *a;            /* filter coeffs */
+  mus_float_t *a;            /* filter coeffs */
   int a_size;          /* user can change filter order while playing (sigh...) */
   snd_fd *chn_fd;      /* sample reader, null if DAC_XEN */
   spd_info *spd;
@@ -40,25 +40,25 @@ typedef struct dac_info {
   chan_info *cp;
   bool never_sped;
   int expand_ring_frames;
-  off_t end;
+  mus_long_t end;
   XEN stop_procedure;
   int stop_procedure_gc_loc;
   XEN func;
   int func_gc_loc, direction;
-  Float (*dac_sample)(struct dac_info *dp);
+  mus_float_t (*dac_sample)(struct dac_info *dp);
 } dac_info;
 
 #define AMP_CONTROL(sp, dp) ((dp->cp->amp_control) ? (dp->cp->amp_control[0]) : sp->amp_control)
 /* an experiment */
 
 
-static Float dac_read_sample(struct dac_info *dp)
+static mus_float_t dac_read_sample(struct dac_info *dp)
 {
   return(read_sample(dp->chn_fd));
 }
 
 
-static Float dac_xen_sample(struct dac_info *dp)
+static mus_float_t dac_xen_sample(struct dac_info *dp)
 {
   XEN result;
   result = XEN_CALL_0_NO_CATCH(dp->func);
@@ -73,11 +73,11 @@ static Float dac_xen_sample(struct dac_info *dp)
 
 /* -------- filter -------- */
 
-static mus_any *make_flt(dac_info *dp, int order, Float *env)
+static mus_any *make_flt(dac_info *dp, int order, mus_float_t *env)
 {
   if (order <= 0) return(NULL);
   dp->a_size = order;
-  dp->a = (Float *)calloc(order, sizeof(Float));
+  dp->a = (mus_float_t *)calloc(order, sizeof(mus_float_t));
   if (env) mus_make_fir_coeffs(order, env, dp->a);
   return(mus_make_fir_filter(order, dp->a, NULL));
 }
@@ -85,7 +85,7 @@ static mus_any *make_flt(dac_info *dp, int order, Float *env)
 
 /* -------- sample-rate conversion -------- */
 
-static Float dac_src_input_as_needed(void *arg, int direction) 
+static mus_float_t dac_src_input_as_needed(void *arg, int direction) 
 {
   dac_info *dp = (dac_info *)arg;
   if ((direction != dp->direction) && 
@@ -98,7 +98,7 @@ static Float dac_src_input_as_needed(void *arg, int direction)
 }
 
 
-static Float speed(dac_info *dp, Float sr)
+static mus_float_t speed(dac_info *dp, mus_float_t sr)
 {
   if (dp->never_sped)
     return((*(dp->dac_sample))(dp));
@@ -111,7 +111,7 @@ static Float speed(dac_info *dp, Float sr)
 
 /* -------- granular synthesis -------- */
 
-static Float expand_input_as_needed(void *arg, int dir) 
+static mus_float_t expand_input_as_needed(void *arg, int dir) 
 {
   spd_info *spd = (spd_info *)arg;
   dac_info *dp;
@@ -130,7 +130,7 @@ static int max_expand_control_len(snd_info *sp)
 }
 
 
-static void *make_expand(snd_info *sp, Float initial_ex, dac_info *dp)
+static void *make_expand(snd_info *sp, mus_float_t initial_ex, dac_info *dp)
 {
   spd_info *spd;
   spd = (spd_info *)calloc(1, sizeof(spd_info));
@@ -158,7 +158,7 @@ static void free_expand(void *ur_spd)
 }
 
 
-static Float expand(dac_info *dp, Float sr, Float ex)
+static mus_float_t expand(dac_info *dp, mus_float_t sr, mus_float_t ex)
 {
   /* from mixer.sai, used in "Leviathan", 1986 */
   bool speeding;
@@ -218,9 +218,9 @@ typedef struct {
 
 static rev_info *global_rev = NULL;
 
-static void nrev(rev_info *r, Float *rins, Float *routs, int chans)
+static void nrev(rev_info *r, mus_float_t *rins, mus_float_t *routs, int chans)
 {
-  Float rout, rin = 0.0;
+  mus_float_t rout, rin = 0.0;
   int i;
   for (i = 0; i < chans; i++) rin += rins[i];
   rout = mus_all_pass(r->allpasses[3],
@@ -239,10 +239,10 @@ static void nrev(rev_info *r, Float *rins, Float *routs, int chans)
 }
 
 
-static Float *r_ins, *r_outs;
+static mus_float_t *r_ins, *r_outs;
 static int reverb_chans = 0;
 
-static void reverb(rev_info *r, Float **rins, mus_sample_t **outs, int ind)
+static void reverb(rev_info *r, mus_float_t **rins, mus_sample_t **outs, int ind)
 {
   int i, chans;
   chans = reverb_chans;
@@ -285,7 +285,7 @@ static void free_reverb(void)
 }
 
 
-static Float *comb_factors = NULL;
+static mus_float_t *comb_factors = NULL;
 
 static rev_info *make_nrev(snd_info *sp, int chans) 
 {
@@ -294,8 +294,8 @@ static rev_info *make_nrev(snd_info *sp, int chans)
   static int base_dly_len[BASE_DLY_LEN] = {1433, 1601, 1867, 2053, 2251, 2399, 347, 113, 37, 59, 43, 37, 29, 19};
   static int dly_len[BASE_DLY_LEN];
   #define NREV_COMBS 6
-  static Float nrev_comb_factors[NREV_COMBS] = {0.822, 0.802, 0.773, 0.753, 0.753, 0.733};
-  Float srscale;
+  static mus_float_t nrev_comb_factors[NREV_COMBS] = {0.822, 0.802, 0.773, 0.753, 0.753, 0.733};
+  mus_float_t srscale;
   int i, j, len;
   rev_info *r;
   if (sp == NULL) return(NULL);
@@ -308,7 +308,7 @@ static rev_info *make_nrev(snd_info *sp, int chans)
   r->num_allpasses = 4 + chans;
   r->allpasses = (mus_any **)calloc(r->num_allpasses, sizeof(mus_any *));
   if (comb_factors) free(comb_factors);
-  comb_factors = (Float *)calloc(r->num_combs, sizeof(Float));
+  comb_factors = (mus_float_t *)calloc(r->num_combs, sizeof(mus_float_t));
   for (i = 0; i < r->num_combs; i++) 
     {
       comb_factors[i] = nrev_comb_factors[i];
@@ -335,7 +335,7 @@ static void make_reverb(snd_info *sp, int chans)
 }
 
 
-static void set_reverb_filter_coeff(Float newval)
+static void set_reverb_filter_coeff(mus_float_t newval)
 {
   if (global_rev)
     {
@@ -345,7 +345,7 @@ static void set_reverb_filter_coeff(Float newval)
 }
 
 
-static void set_reverb_comb_factors(Float val)
+static void set_reverb_comb_factors(mus_float_t val)
 {
   int j;
   if (global_rev)
@@ -356,7 +356,7 @@ static void set_reverb_comb_factors(Float val)
 
 /* -------- contrast-enhancement -------- */
 
-static Float contrast (dac_info *dp, Float amp, Float index, Float inval)
+static mus_float_t contrast (dac_info *dp, mus_float_t amp, mus_float_t index, mus_float_t inval)
 {
   return(amp * mus_contrast_enhancement(dp->contrast_amp * inval, index));
 }
@@ -373,15 +373,15 @@ static void local_mus_error(int type, char *msg)
 }
 
 
-Float *sample_linear_env(env *e, int order)
+mus_float_t *sample_linear_env(env *e, int order)
 {
   /* used only for filter coeffs (env here is the frequency response curve) */
   mus_any *ge;
   int ordp;
-  Float *data = NULL;
-  Float last_x, step, x;
+  mus_float_t *data = NULL;
+  mus_float_t last_x, step, x;
   last_x = e->data[(e->pts - 1) * 2];
-  step = 2 * last_x / ((Float)order - 1);
+  step = 2 * last_x / ((mus_float_t)order - 1);
   ordp = e->pts; 
   if (ordp < order) ordp = order;
   got_local_error = false;
@@ -391,7 +391,7 @@ Float *sample_linear_env(env *e, int order)
   if (!got_local_error)
     {
       int i, j;
-      data = (Float *)calloc(order, sizeof(Float));
+      data = (mus_float_t *)calloc(order, sizeof(mus_float_t));
       for (i = 0, x = 0.0; i < order / 2; i++, x += step) 
 	data[i] = mus_env_interp(x, ge);
       for (j = order / 2 - 1, i = order / 2; (i < order) && (j >= 0); i++, j--) 
@@ -443,7 +443,7 @@ static int max_active_slot = -1;
 typedef enum {DAC_EXPAND, DAC_EXPAND_RAMP, DAC_EXPAND_LENGTH, DAC_EXPAND_HOP, DAC_EXPAND_SCALER, 
 	      DAC_CONTRAST_AMP, DAC_REVERB_FEEDBACK, DAC_REVERB_LOWPASS} dac_field_t;
 
-static void dac_set_field(snd_info *sp, Float newval, dac_field_t field)
+static void dac_set_field(snd_info *sp, mus_float_t newval, dac_field_t field)
 {
   /* if sp == NULL, sets globally */
   if (play_list)
@@ -517,14 +517,14 @@ static void dac_set_field(snd_info *sp, Float newval, dac_field_t field)
 }
 
 
-void dac_set_expand(snd_info *sp, Float newval) {dac_set_field(sp, newval, DAC_EXPAND);}
-void dac_set_expand_length(snd_info *sp, Float newval) {dac_set_field(sp, newval, DAC_EXPAND_LENGTH);}
-void dac_set_expand_ramp(snd_info *sp, Float newval) {dac_set_field(sp, newval, DAC_EXPAND_RAMP);}
-void dac_set_expand_hop(snd_info *sp, Float newval) {dac_set_field(sp, newval, DAC_EXPAND_HOP);}
-/* static void dac_set_expand_scaler(snd_info *sp, Float newval) {dac_set_field(sp, newval, DAC_EXPAND_SCALER);} */ /* not currently accessible */
-void dac_set_contrast_amp(snd_info *sp, Float newval) {dac_set_field(sp, newval, DAC_CONTRAST_AMP);}
-void dac_set_reverb_feedback(snd_info *sp, Float newval) {dac_set_field(sp, newval, DAC_REVERB_FEEDBACK);}
-void dac_set_reverb_lowpass(snd_info *sp, Float newval) {dac_set_field(sp, newval, DAC_REVERB_LOWPASS);}
+void dac_set_expand(snd_info *sp, mus_float_t newval) {dac_set_field(sp, newval, DAC_EXPAND);}
+void dac_set_expand_length(snd_info *sp, mus_float_t newval) {dac_set_field(sp, newval, DAC_EXPAND_LENGTH);}
+void dac_set_expand_ramp(snd_info *sp, mus_float_t newval) {dac_set_field(sp, newval, DAC_EXPAND_RAMP);}
+void dac_set_expand_hop(snd_info *sp, mus_float_t newval) {dac_set_field(sp, newval, DAC_EXPAND_HOP);}
+/* static void dac_set_expand_scaler(snd_info *sp, mus_float_t newval) {dac_set_field(sp, newval, DAC_EXPAND_SCALER);} */ /* not currently accessible */
+void dac_set_contrast_amp(snd_info *sp, mus_float_t newval) {dac_set_field(sp, newval, DAC_CONTRAST_AMP);}
+void dac_set_reverb_feedback(snd_info *sp, mus_float_t newval) {dac_set_field(sp, newval, DAC_REVERB_FEEDBACK);}
+void dac_set_reverb_lowpass(snd_info *sp, mus_float_t newval) {dac_set_field(sp, newval, DAC_REVERB_LOWPASS);}
 
 
 
@@ -538,7 +538,7 @@ typedef struct {
   int *chans_per_device;    /* channels sent to each active device */
   int out_format;           /* output data format */
   int slice;                /* background process state (i.e. starting, running, quitting) */
-  off_t reverb_ring_frames; /* how long the reverb rings after the end (if reverb, of course) */
+  mus_long_t reverb_ring_frames; /* how long the reverb rings after the end (if reverb, of course) */
 
 } dac_state;
 
@@ -869,7 +869,7 @@ static int find_slot_to_play(void)
 }
 
 
-static dac_info *make_dac_info(int slot, chan_info *cp, snd_info *sp, snd_fd *fd, off_t end, int out_chan, dac_source_t type, XEN func)
+static dac_info *make_dac_info(int slot, chan_info *cp, snd_info *sp, snd_fd *fd, mus_long_t end, int out_chan, dac_source_t type, XEN func)
 {
   dac_info *dp;
 
@@ -928,7 +928,7 @@ static dac_info *make_dac_info(int slot, chan_info *cp, snd_info *sp, snd_fd *fd
 	    dp->filtering = false;
 	  else
 	    {
-	      Float *data = NULL;
+	      mus_float_t *data = NULL;
 	      data = sample_linear_env(sp->filter_control_envelope, sp->filter_control_order);
 	      if (data)
 		{
@@ -959,7 +959,7 @@ static dac_info *make_dac_info(int slot, chan_info *cp, snd_info *sp, snd_fd *fd
 }
 
 
-static void start_dac(int srate, int channels, play_process_t background, Float decay)
+static void start_dac(int srate, int channels, play_process_t background, mus_float_t decay)
 {
   int i;
   /* look for channel folding cases etc */
@@ -999,7 +999,7 @@ static void start_dac(int srate, int channels, play_process_t background, Float 
 	snd_dacp->frames = dac_size(ss);
       else snd_dacp->frames = 256;
       snd_dacp->devices = 1;  /* just a first guess */
-      snd_dacp->reverb_ring_frames = (off_t)(srate * decay);
+      snd_dacp->reverb_ring_frames = (mus_long_t)(srate * decay);
       if (background == IN_BACKGROUND) 
 	dac_work_proc = BACKGROUND_ADD(dac_in_background, NULL);
       else
@@ -1014,12 +1014,12 @@ static void start_dac(int srate, int channels, play_process_t background, Float 
 
 /*  pos = to_c_edit_position(cp, edpos, caller, arg_pos); */
 
-static dac_info *add_channel_to_play_list(chan_info *cp, snd_info *sp, off_t start, off_t end, int pos, int out_chan)
+static dac_info *add_channel_to_play_list(chan_info *cp, snd_info *sp, mus_long_t start, mus_long_t end, int pos, int out_chan)
 {
   /* if not sp, control panel is ignored */
   int slot;
   read_direction_t direction = READ_FORWARD;
-  off_t beg = 0;
+  mus_long_t beg = 0;
   snd_fd *sf;
   if (pos == AT_CURRENT_EDIT_POSITION) pos = cp->edit_ctr;
   if (sp)
@@ -1035,7 +1035,7 @@ static dac_info *add_channel_to_play_list(chan_info *cp, snd_info *sp, off_t sta
 	  direction = READ_BACKWARD;
 	  if (start < end)
 	    {
-	      off_t tmp;
+	      mus_long_t tmp;
 	      tmp = start;
 	      start = end;
 	      end = tmp;
@@ -1073,7 +1073,7 @@ static dac_info *add_channel_to_play_list(chan_info *cp, snd_info *sp, off_t sta
 }
 
 
-static dac_info *add_region_channel_to_play_list(int region, int chan, off_t beg, off_t end, int out_chan)
+static dac_info *add_region_channel_to_play_list(int region, int chan, mus_long_t beg, mus_long_t end, int out_chan)
 {
   int slot;
   snd_fd *fd;
@@ -1124,7 +1124,7 @@ void play_region(int region, play_process_t background)
 }
 
 
-bool add_mix_to_play_list(mix_state *ms, chan_info *cp, off_t beg_within_mix)
+bool add_mix_to_play_list(mix_state *ms, chan_info *cp, mus_long_t beg_within_mix)
 {
   int slot;
   slot = find_slot_to_play();
@@ -1203,7 +1203,7 @@ static bool call_start_playing_selection_hook(void)
 }
 
 
-static dac_info *play_channel_1(chan_info *cp, off_t start, off_t end, play_process_t background, 
+static dac_info *play_channel_1(chan_info *cp, mus_long_t start, mus_long_t end, play_process_t background, 
 				int pos, XEN stop_proc, int out_chan)
 {
   /* just plays one channel (ignores possible sync), includes start-hook */
@@ -1225,13 +1225,13 @@ static dac_info *play_channel_1(chan_info *cp, off_t start, off_t end, play_proc
 }
 
 
-void play_channel(chan_info *cp, off_t start, off_t end)
+void play_channel(chan_info *cp, mus_long_t start, mus_long_t end)
 {
   play_channel_1(cp, start, end, IN_BACKGROUND, AT_CURRENT_EDIT_POSITION, XEN_FALSE, cp->chan);
 }
 
 
-static dac_info *play_sound_1(snd_info *sp, off_t start, off_t end, play_process_t background, 
+static dac_info *play_sound_1(snd_info *sp, mus_long_t start, mus_long_t end, play_process_t background, 
 			      XEN edpos, XEN stop_proc, const char *caller, int arg_pos)
 {
   /* just plays one sound (ignores possible sync) */
@@ -1261,20 +1261,20 @@ static dac_info *play_sound_1(snd_info *sp, off_t start, off_t end, play_process
 }
 
 
-void play_sound(snd_info *sp, off_t start, off_t end)
+void play_sound(snd_info *sp, mus_long_t start, mus_long_t end)
 {
   play_sound_1(sp, start, end, IN_BACKGROUND, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), XEN_FALSE, NULL, 0);
 }
 
 
-static dac_info *play_channels_1(chan_info **cps, int chans, off_t *starts, off_t *ur_ends, play_process_t background, 
+static dac_info *play_channels_1(chan_info **cps, int chans, mus_long_t *starts, mus_long_t *ur_ends, play_process_t background, 
 				 XEN edpos, bool selection, XEN stop_proc, const char *caller, int arg_pos)
 {
   /* ends can be NULL */
   int i, pos;
   snd_info *sp = NULL;
   dac_info *dp = NULL, *rtn_dp = NULL;
-  off_t *ends;
+  mus_long_t *ends;
   if ((background == NOT_IN_BACKGROUND) && 
       (play_list_members > 0)) 
     return(NULL);
@@ -1291,7 +1291,7 @@ static dac_info *play_channels_1(chan_info **cps, int chans, off_t *starts, off_
     ends = ur_ends;
   else
     {
-      ends = (off_t *)calloc(chans, sizeof(off_t));
+      ends = (mus_long_t *)calloc(chans, sizeof(mus_long_t));
       for (i = 0; i < chans; i++) 
 	ends[i] = NO_END_SPECIFIED;
     }
@@ -1319,7 +1319,7 @@ static dac_info *play_channels_1(chan_info **cps, int chans, off_t *starts, off_
 }
 
 
-void play_channels(chan_info **cps, int chans, off_t *starts, off_t *ur_ends, 
+void play_channels(chan_info **cps, int chans, mus_long_t *starts, mus_long_t *ur_ends, 
 		   play_process_t background, XEN edpos, bool selection, const char *caller, int arg_pos)
 {
   play_channels_1(cps, chans, starts, ur_ends, background, edpos, selection, XEN_FALSE, caller, arg_pos);
@@ -1337,8 +1337,8 @@ static dac_info *play_selection_1(play_process_t background, XEN stop_proc)
       if (si)
 	{
 	  int i;
-	  off_t *ends;
-	  ends = (off_t *)calloc(si->chans, sizeof(off_t));
+	  mus_long_t *ends;
+	  ends = (mus_long_t *)calloc(si->chans, sizeof(mus_long_t));
 	  for (i = 0; i < si->chans; i++) 
 	    {
 	      snd_info *sp;
@@ -1401,7 +1401,7 @@ static int audio_bytes_devices = 0;
 static mus_sample_t **dac_buffers = NULL;
 static int dac_buffer_size = 0;
 static int dac_buffer_chans = 0; /* chans allocated */
-static Float **rev_ins;
+static mus_float_t **rev_ins;
 
 #define WRITE_TO_DAC 1
 #define WRITE_TO_FILE 0
@@ -1432,8 +1432,8 @@ static int fill_dac_buffers(int write_ok)
   int i, j;
   bool cursor_change = false;
   int bytes, frames;
-  Float *revin;
-  Float amp, incr, sr, sincr, ind, indincr, ex, exincr, rev, revincr, fval;
+  mus_float_t *revin;
+  mus_float_t amp, incr, sr, sincr, ind, indincr, ex, exincr, rev, revincr, fval;
   dac_info *dp;
   snd_info *sp;
   mus_sample_t *buf;
@@ -1446,7 +1446,7 @@ static int fill_dac_buffers(int write_ok)
     memset(dac_buffers[i], 0, frames * sizeof(mus_sample_t));
   if (global_rev)
     for (i = 0; i < snd_dacp->channels; i++) 
-      memset(rev_ins[i], 0, frames * sizeof(Float));
+      memset(rev_ins[i], 0, frames * sizeof(mus_float_t));
 
   if (dac_pausing) 
     cursor_change = false;
@@ -1494,7 +1494,7 @@ static int fill_dac_buffers(int write_ok)
 		  (!(dp->chn_fd->at_eof)) &&
 		  (dp->chn_fd->cb))
 		{
-		  off_t loc;
+		  mus_long_t loc;
 		  bool old_just_zero;
 		  old_just_zero = dp->cp->just_zero;
 		  dp->cp->just_zero = true;
@@ -1521,7 +1521,7 @@ static int fill_dac_buffers(int write_ok)
 		case JUST_AMP:
 		  /* AMP_CONTROL(sp, dp) is current UI value, dp->cur_amp is current local value */
 		  amp = dp->cur_amp;
-		  incr = (AMP_CONTROL(sp, dp) - amp) / (Float)(frames);
+		  incr = (AMP_CONTROL(sp, dp) - amp) / (mus_float_t)(frames);
 		  for (j = 0; j < frames; j++, amp += incr) 
 		    buf[j] += (mus_sample_t)(amp * (*(dp->dac_sample))(dp));
 		  dp->cur_amp = amp;
@@ -1532,9 +1532,9 @@ static int fill_dac_buffers(int write_ok)
 		  /* sp->speed_control is current UI value, dp->cur_srate is current local value */
 		  dp->never_sped = false;
 		  amp = dp->cur_amp;
-		  incr = (AMP_CONTROL(sp, dp) - amp) / (Float)(frames);
+		  incr = (AMP_CONTROL(sp, dp) - amp) / (mus_float_t)(frames);
 		  sr = dp->cur_srate;
-		  sincr = (sp->speed_control * sp->speed_control_direction - sr) / (Float)(frames);
+		  sincr = (sp->speed_control * sp->speed_control_direction - sr) / (mus_float_t)(frames);
 		  if ((sr != 0.0) || (sincr != 0.0))
 		    {
 		      for (j = 0; j < frames; j++, amp += incr, sr += sincr) 
@@ -1546,17 +1546,17 @@ static int fill_dac_buffers(int write_ok)
 
 		case ALL_CHANGES:
 		  amp = dp->cur_amp;
-		  incr = (AMP_CONTROL(sp, dp) - amp) / (Float)(frames);
+		  incr = (AMP_CONTROL(sp, dp) - amp) / (mus_float_t)(frames);
 		  sr = dp->cur_srate;
-		  sincr = (sp->speed_control * sp->speed_control_direction - sr) / (Float)(frames);
+		  sincr = (sp->speed_control * sp->speed_control_direction - sr) / (mus_float_t)(frames);
 		  if ((sincr != 0.0) || (!(snd_feq(sr, 1.0)))) dp->never_sped = false;
 		  ind = dp->cur_index;
-		  indincr = (sp->contrast_control - ind) / (Float)(frames);
+		  indincr = (sp->contrast_control - ind) / (mus_float_t)(frames);
 		  rev = dp->cur_rev;
-		  revincr = (sp->reverb_control_scale - rev) / (Float)(frames);
+		  revincr = (sp->reverb_control_scale - rev) / (mus_float_t)(frames);
 		  if ((dp->filtering) && (sp->filter_control_changed))
 		    {
-		      Float *data = NULL;
+		      mus_float_t *data = NULL;
 		      data = sample_linear_env(sp->filter_control_envelope, sp->filter_control_order);
 		      if (data)
 			{
@@ -1574,7 +1574,7 @@ static int fill_dac_buffers(int write_ok)
 				    {
 				      free(ndp->a);
 				      ndp->a_size = sp->filter_control_order;
-				      ndp->a = (Float *)calloc(ndp->a_size, sizeof(Float));
+				      ndp->a = (mus_float_t *)calloc(ndp->a_size, sizeof(mus_float_t));
 				    }
 				  mus_make_fir_coeffs(sp->filter_control_order, data, ndp->a);      /* fill dp->a with new coeffs */
 				  mus_filter_set_xcoeffs(ndp->flt, ndp->a);                         /* tell gen about them */
@@ -1589,7 +1589,7 @@ static int fill_dac_buffers(int write_ok)
 		  if (dp->expanding)
 		    {
 		      ex = dp->cur_exp;
-		      exincr = (sp->expand_control - ex) / (Float)(frames);
+		      exincr = (sp->expand_control - ex) / (mus_float_t)(frames);
 		      for (j = 0; j < frames; j++, amp += incr, sr += sincr, ind += indincr, ex += exincr, rev += revincr) 
 			{
 			  fval = expand(dp, sr, ex);
@@ -1732,7 +1732,7 @@ static int fill_dac_buffers(int write_ok)
 	  {
 	    sound_data *sd;
 	    int j;
-	    off_t i;
+	    mus_long_t i;
 	    sdobj = make_sound_data(snd_dacp->channels, snd_dacp->frames);
 	    sdobj_loc = snd_protect(sdobj);
 	    sd = XEN_TO_SOUND_DATA(sdobj);
@@ -1864,18 +1864,18 @@ static void make_dac_buffers(void)
 	  free(rev_ins);
 	}
       dac_buffers = (mus_sample_t **)calloc(snd_dacp->channels, sizeof(mus_sample_t *));
-      rev_ins = (Float **)calloc(snd_dacp->channels, sizeof(Float *));
+      rev_ins = (mus_float_t **)calloc(snd_dacp->channels, sizeof(mus_float_t *));
       for (i = 0; i < snd_dacp->channels; i++) 
 	{
 	  dac_buffers[i] = (mus_sample_t *)calloc(snd_dacp->frames, sizeof(mus_sample_t));
-	  rev_ins[i] = (Float *)calloc(snd_dacp->frames, sizeof(Float));
+	  rev_ins[i] = (mus_float_t *)calloc(snd_dacp->frames, sizeof(mus_float_t));
 	}
       dac_buffer_chans = snd_dacp->channels;
       dac_buffer_size = snd_dacp->frames;
       if (r_outs) free(r_outs);
       if (r_ins) free(r_ins);
-      r_outs = (Float *)calloc(snd_dacp->channels, sizeof(Float));
-      r_ins = (Float *)calloc(snd_dacp->channels, sizeof(Float));
+      r_outs = (mus_float_t *)calloc(snd_dacp->channels, sizeof(mus_float_t));
+      r_ins = (mus_float_t *)calloc(snd_dacp->channels, sizeof(mus_float_t));
     }
   bytes = snd_dacp->channels * dac_buffer_size * mus_bytes_per_sample(snd_dacp->out_format);
   if ((audio_bytes_size < bytes) || 
@@ -2441,7 +2441,7 @@ static idle_func_t dac_in_background(any_pointer_t ptr)
 
 /* ---------------- support for Apply button (snd-apply.c) ---------------- */
 
-void initialize_apply(snd_info *sp, int chans, off_t beg, off_t dur)
+void initialize_apply(snd_info *sp, int chans, mus_long_t beg, mus_long_t dur)
 {
   int curchan = 0;
   stop_playing_all_sounds_without_hook(PLAY_APPLY);
@@ -2466,7 +2466,7 @@ void initialize_apply(snd_info *sp, int chans, off_t beg, off_t dur)
   snd_dacp->devices = 1;
   snd_dacp->chans_per_device = (int *)calloc(1, sizeof(int));
   snd_dacp->chans_per_device[0] = chans;
-  snd_dacp->reverb_ring_frames = (off_t)(snd_dacp->srate * sp->reverb_control_decay);
+  snd_dacp->reverb_ring_frames = (mus_long_t)(snd_dacp->srate * sp->reverb_control_decay);
   make_dac_buffers();
   switch (ss->apply_choice)
     {
@@ -2522,9 +2522,9 @@ static XEN g_play_1(XEN samp_n, XEN snd_n, XEN chn_n, bool back, bool syncd, XEN
   sync_info *si = NULL;
   static char *play_name = NULL;
   int i;
-  off_t samp = 0;
-  off_t end = NO_END_SPECIFIED;
-  off_t *ends = NULL;
+  mus_long_t samp = 0;
+  mus_long_t end = NO_END_SPECIFIED;
+  mus_long_t *ends = NULL;
   play_process_t background;
 
   if (XEN_PROCEDURE_P(samp_n))
@@ -2592,7 +2592,7 @@ static XEN g_play_1(XEN samp_n, XEN snd_n, XEN chn_n, bool back, bool syncd, XEN
 	  si = snd_sync(sp->sync);
 	  if (end != NO_END_SPECIFIED)
 	    {
-	      ends = (off_t *)calloc(si->chans, sizeof(off_t));
+	      ends = (mus_long_t *)calloc(si->chans, sizeof(mus_long_t));
 	      for (i = 0; i < si->chans; i++) ends[i] = end;
 	    }
 	  for (i = 0; i < si->chans; i++) si->begs[i] = samp;
@@ -2652,7 +2652,7 @@ play snd or snd's channel chn starting at beg for dur samps."
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(beg), beg, XEN_ARG_1, S_play_channel, "a number");
   if (XEN_INTEGER_P(dur))
     {
-      off_t len;
+      mus_long_t len;
       len = XEN_TO_C_OFF_T(dur);
       if (len <= 0) return(XEN_FALSE);
       end = C_TO_XEN_OFF_T(beg_to_sample(beg, S_play_channel) + len);
@@ -3105,7 +3105,7 @@ static XEN g_cursor_update_interval(void) {return(C_TO_XEN_DOUBLE(cursor_update_
 
 static XEN g_set_cursor_update_interval(XEN val) 
 {
-  Float ctime;
+  mus_float_t ctime;
   #define H_cursor_update_interval "(" S_cursor_update_interval "): time (seconds) between cursor updates if " S_with_tracking_cursor "."
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_setB S_cursor_update_interval, "a number"); 
   ctime = XEN_TO_C_DOUBLE(val);

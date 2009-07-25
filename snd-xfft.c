@@ -14,7 +14,7 @@ static Widget error_frame, error_label;
 #define NUM_TRANSFORM_SIZES 14
 static const char *transform_size_names[NUM_TRANSFORM_SIZES] = 
   {"32", "64", "128", "256", "512", "1024", "2048", "4096", "8192", "16384", "65536", "262144", "1048576", "4194304    "};
-static off_t transform_sizes[NUM_TRANSFORM_SIZES] = 
+static mus_long_t transform_sizes[NUM_TRANSFORM_SIZES] = 
   {32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 65536, 262144, 1048576, 4194304};
 
 
@@ -24,13 +24,13 @@ static off_t transform_sizes[NUM_TRANSFORM_SIZES] =
 static GC gc, fgc;
 
 #define GRAPH_SIZE 128
-static Float graph_data[GRAPH_SIZE]; /* fft window graph in transform options dialog */
-static Float graph_fftr[GRAPH_SIZE * 2];
-static Float graph_ffti[GRAPH_SIZE * 2];
+static mus_float_t graph_data[GRAPH_SIZE]; /* fft window graph in transform options dialog */
+static mus_float_t graph_fftr[GRAPH_SIZE * 2];
+static mus_float_t graph_ffti[GRAPH_SIZE * 2];
 /* I goofed around with making the graph size dependent on the drawer's width, but there's really nothing gained */
 /*   also tried linear/db+min-dB distinction, but linear looks dumb and min-dB is a bother */
 
-static Float fp_dB(Float py)
+static mus_float_t fp_dB(mus_float_t py)
 {
   return((py <= ss->lin_dB) ? 0.0 : (1.0 - (20.0 * log10(py) / min_dB(ss))));
 }
@@ -44,7 +44,7 @@ static int local_grf_x(double val, axis_info *ap)
 }
 
 
-static int local_grf_y(Float val, axis_info *ap)
+static int local_grf_y(mus_float_t val, axis_info *ap)
 {
   if (val >= ap->y1) return(ap->y_axis_y1);
   if (val <= ap->y0) return(ap->y_axis_y0);
@@ -58,7 +58,7 @@ static void graph_redisplay(void)
 {
   /* fft_window(ss) is the current choice */
   int ix0, iy0, ix1, iy1, i;
-  Float xincr, x;
+  mus_float_t xincr, x;
   axis_context *ax;
 
   if (axis_ap == NULL) 
@@ -111,7 +111,7 @@ static void graph_redisplay(void)
 
   ix1 = local_grf_x(0.0, axis_ap);
   iy1 = local_grf_y(graph_data[0], axis_ap);
-  xincr = 1.0 / (Float)GRAPH_SIZE;
+  xincr = 1.0 / (mus_float_t)GRAPH_SIZE;
 
   for (i = 1, x = xincr; i < GRAPH_SIZE; i++, x += xincr)
     {
@@ -125,7 +125,7 @@ static void graph_redisplay(void)
   ax->gc = fgc;
   ix1 = local_grf_x(0.0, axis_ap);
   iy1 = local_grf_y(graph_fftr[0], axis_ap);
-  xincr = 1.0 / (Float)GRAPH_SIZE;
+  xincr = 1.0 / (mus_float_t)GRAPH_SIZE;
 
   for (i = 1, x = xincr; i < GRAPH_SIZE; i++, x += xincr)
     {
@@ -146,16 +146,16 @@ static void get_fft_window_data(void)
   mus_make_fft_window_with_window(fft_window(ss), GRAPH_SIZE, 
 				  fft_window_beta(ss) * fft_beta_max(fft_window(ss)), 
 				  fft_window_alpha(ss), graph_data);
-  memset((void *)graph_fftr, 0, GRAPH_SIZE * 2 * sizeof(Float));
-  memset((void *)graph_ffti, 0, GRAPH_SIZE * 2 * sizeof(Float));
-  memcpy((void *)graph_fftr, (void *)graph_data, GRAPH_SIZE * sizeof(Float));
+  memset((void *)graph_fftr, 0, GRAPH_SIZE * 2 * sizeof(mus_float_t));
+  memset((void *)graph_ffti, 0, GRAPH_SIZE * 2 * sizeof(mus_float_t));
+  memcpy((void *)graph_fftr, (void *)graph_data, GRAPH_SIZE * sizeof(mus_float_t));
   mus_spectrum(graph_fftr, graph_ffti, NULL, GRAPH_SIZE * 2, MUS_SPECTRUM_IN_DB);
   for (i = 0; i < GRAPH_SIZE; i++)
     graph_fftr[i] = (graph_fftr[i] + 80.0) / 80.0; /* min dB here is -80 */
 }
 
 
-static void widget_float_to_text(Widget w, Float val)
+static void widget_float_to_text(Widget w, mus_float_t val)
 {
   char *str;
   str = (char *)calloc(16, sizeof(char));
@@ -206,7 +206,7 @@ static void errors_to_fft_text(const char *msg, void *data)
 
 /* ---------------- transform size ---------------- */
 
-static void chans_transform_size(chan_info *cp, off_t size)
+static void chans_transform_size(chan_info *cp, mus_long_t size)
 {
   cp->transform_size = size;
   if (cp->fft) 
@@ -214,11 +214,11 @@ static void chans_transform_size(chan_info *cp, off_t size)
 }
 
 
-void set_transform_size(off_t val)
+void set_transform_size(mus_long_t val)
 {
   for_each_chan(force_fft_clear);
   in_set_transform_size(val);
-  for_each_chan_with_off_t(chans_transform_size, val);
+  for_each_chan_with_mus_long_t(chans_transform_size, val);
   if (transform_dialog)
     {
       int i;
@@ -239,7 +239,7 @@ static void size_browse_callback(Widget w, XtPointer context, XtPointer info)
   ASSERT_WIDGET_TYPE(XmIsList(w), w);
   for_each_chan(force_fft_clear);
   in_set_transform_size(transform_sizes[cbs->item_position - 1]);
-  for_each_chan_with_off_t(chans_transform_size, transform_size(ss));
+  for_each_chan_with_mus_long_t(chans_transform_size, transform_size(ss));
   for_each_chan(calculate_fft);
   set_label(graph_label, mus_fft_window_name(fft_window(ss)));
 }
@@ -570,9 +570,9 @@ static void min_db_activate_callback(Widget w, XtPointer context, XtPointer info
   str = XmTextFieldGetString(w);
   if ((str) && (*str))
     {
-      Float new_db;
+      mus_float_t new_db;
       redirect_errors_to(errors_to_fft_text, NULL);
-      new_db = string_to_Float(str, -10000.0, "dB");
+      new_db = string_to_mus_float_t(str, -10000.0, "dB");
       redirect_errors_to(NULL, NULL);
       if (new_db < 0.0)
 	set_min_db(new_db);
@@ -628,9 +628,9 @@ static void log_freq_start_activate_callback(Widget w, XtPointer context, XtPoin
   str = XmTextFieldGetString(w);
   if ((str) && (*str))
     {
-      Float new_lfb;
+      mus_float_t new_lfb;
       redirect_errors_to(errors_to_fft_text, NULL);
-      new_lfb = string_to_Float(str, 0.0, "log freq start");
+      new_lfb = string_to_mus_float_t(str, 0.0, "log freq start");
       redirect_errors_to(NULL, NULL);
       if (new_lfb > 0.0)
 	set_log_freq_start(new_lfb);
@@ -734,7 +734,7 @@ void set_fft_with_phases(bool val)
 static void alpha_drag_callback(Widget w, XtPointer context, XtPointer info) 
 {
   char alpha_number_buffer[11];
-  Float alpha;
+  mus_float_t alpha;
   ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
   
   alpha = (((XmScrollBarCallbackStruct *)info)->value) / 90.0;
@@ -753,7 +753,7 @@ static void alpha_drag_callback(Widget w, XtPointer context, XtPointer info)
     }
 }
 
-static void set_alpha_scale(Float val)
+static void set_alpha_scale(mus_float_t val)
 {
   char alpha_number_buffer[11];
   XtVaSetValues(alpha_scale, XmNvalue, (int)(val * 90), NULL);
@@ -762,7 +762,7 @@ static void set_alpha_scale(Float val)
 }
 
 
-void set_fft_window_alpha(Float val)
+void set_fft_window_alpha(mus_float_t val)
 {
   in_set_fft_window_alpha(val);
   chans_field(FCP_ALPHA, val);
@@ -784,7 +784,7 @@ void set_fft_window_alpha(Float val)
 static void beta_drag_callback(Widget w, XtPointer context, XtPointer info) 
 {
   char beta_number_buffer[11];
-  Float beta;
+  mus_float_t beta;
   ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
   
   beta = (((XmScrollBarCallbackStruct *)info)->value) / 90.0;
@@ -804,7 +804,7 @@ static void beta_drag_callback(Widget w, XtPointer context, XtPointer info)
 }
 
 
-static void set_beta_scale(Float val)
+static void set_beta_scale(mus_float_t val)
 {
   char beta_number_buffer[11];
   XtVaSetValues(beta_scale, XmNvalue, (int)(val * 90), NULL);
@@ -813,7 +813,7 @@ static void set_beta_scale(Float val)
 }
 
 
-void set_fft_window_beta(Float val)
+void set_fft_window_beta(mus_float_t val)
 {
   in_set_fft_window_beta(val);
   chans_field(FCP_BETA, val);
@@ -838,7 +838,7 @@ static void chans_spectrum_changed(chan_info *cp)
   update_graph(cp);
 }
 
-static void set_spectrum_start_scale(Float val)
+static void set_spectrum_start_scale(mus_float_t val)
 {
   char start_number_buffer[11];
   XtVaSetValues(start_scale, XmNvalue, (int)(val * 90), NULL);
@@ -847,7 +847,7 @@ static void set_spectrum_start_scale(Float val)
 }
 
 
-static void check_spectrum_start(Float end)
+static void check_spectrum_start(mus_float_t end)
 {
   /* don't display chans, but do reset if necessary */
   if (spectrum_start(ss) > end)
@@ -859,9 +859,9 @@ static void check_spectrum_start(Float end)
     }
 }
 
-static void check_spectrum_end(Float start);
+static void check_spectrum_end(mus_float_t start);
 
-void set_spectrum_start(Float val) 
+void set_spectrum_start(mus_float_t val) 
 {
   if (transform_dialog)
     set_spectrum_start_scale(val);
@@ -875,7 +875,7 @@ void set_spectrum_start(Float val)
 static void start_drag_callback(Widget w, XtPointer context, XtPointer info) 
 {
   char start_number_buffer[11];
-  Float start;
+  mus_float_t start;
   ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
   
   start = (((XmScrollBarCallbackStruct *)info)->value) / 90.0;
@@ -889,7 +889,7 @@ static void start_drag_callback(Widget w, XtPointer context, XtPointer info)
 }
 
 
-static void set_spectrum_end_scale(Float val)
+static void set_spectrum_end_scale(mus_float_t val)
 {
   char end_number_buffer[11];
   XtVaSetValues(end_scale, XmNvalue, (int)(val * 90), NULL);
@@ -897,7 +897,7 @@ static void set_spectrum_end_scale(Float val)
   set_label(end_number, end_number_buffer);
 }
 
-static void check_spectrum_end(Float start)
+static void check_spectrum_end(mus_float_t start)
 {
   /* don't display chans, but do reset if necessary */
   if (spectrum_end(ss) < start)
@@ -910,7 +910,7 @@ static void check_spectrum_end(Float start)
 }
 
 
-void set_spectrum_end(Float val)
+void set_spectrum_end(mus_float_t val)
 {
   if (transform_dialog)
     set_spectrum_end_scale(val);
@@ -924,7 +924,7 @@ void set_spectrum_end(Float val)
 static void end_drag_callback(Widget w, XtPointer context, XtPointer info) 
 {
   char end_number_buffer[11];
-  Float end;
+  mus_float_t end;
   ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
 
   end = (((XmScrollBarCallbackStruct *)info)->value) / 90.0;

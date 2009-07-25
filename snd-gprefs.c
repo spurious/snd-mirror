@@ -28,7 +28,7 @@ typedef struct prefs_info {
   const char *var_name, *saved_label;
   const char **values;
   int num_values, num_buttons;
-  Float scale_max;
+  mus_float_t scale_max;
   GtkSizeGroup *color_texts, *color_scales;
   void (*toggle_func)(struct prefs_info *prf);
   void (*toggle2_func)(struct prefs_info *prf);
@@ -918,7 +918,7 @@ static void prefs_scale_callback(GtkWidget *w, gpointer context)
 
 
 static prefs_info *prefs_row_with_scale(const char *label, const char *varname, 
-					Float max_val, Float current_value,
+					mus_float_t max_val, mus_float_t current_value,
 					GtkWidget *box,
 					void (*scale_func)(prefs_info *prf),
 					void (*text_func)(prefs_info *prf))
@@ -1159,7 +1159,7 @@ static void scale_set_color(prefs_info *prf, color_t pixel)
 
 static void reflect_color(prefs_info *prf)
 {
-  Float r, g, b;
+  mus_float_t r, g, b;
   color_info *current_color;
 
   r = ADJUSTMENT_VALUE(prf->radj);
@@ -1213,7 +1213,7 @@ static void prefs_r_callback(GtkWidget *w, gpointer context)
   float r = 0.0;
   str = (char *)gtk_entry_get_text(GTK_ENTRY(w));
   redirect_errors_to(errors_to_color_text, context);
-  r = (float)string_to_Float(str, 0.0, "red amount");
+  r = (float)string_to_mus_float_t(str, 0.0, "red amount");
   redirect_errors_to(NULL, NULL);
   if (!(prf->got_error))
     {
@@ -1230,7 +1230,7 @@ static void prefs_g_callback(GtkWidget *w, gpointer context)
   float r = 0.0;
   str = (char *)gtk_entry_get_text(GTK_ENTRY(w));
   redirect_errors_to(errors_to_color_text, context);
-  r = (float)string_to_Float(str, 0.0, "green amount");
+  r = (float)string_to_mus_float_t(str, 0.0, "green amount");
   redirect_errors_to(NULL, NULL);
   if (!(prf->got_error))
     {
@@ -1247,7 +1247,7 @@ static void prefs_b_callback(GtkWidget *w, gpointer context)
   float r = 0.0;
   str = (char *)gtk_entry_get_text(GTK_ENTRY(w));
   redirect_errors_to(errors_to_color_text, context);
-  r = (float)string_to_Float(str, 0.0, "blue amount");
+  r = (float)string_to_mus_float_t(str, 0.0, "blue amount");
   redirect_errors_to(NULL, NULL);
   if (!(prf->got_error))
     {

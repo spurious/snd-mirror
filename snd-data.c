@@ -307,7 +307,7 @@ void initialize_control_panel(snd_info *sp)
   sp->filter_control_in_dB = filter_control_in_dB(ss);
   sp->filter_control_in_hz = filter_control_in_hz(ss);
   if (sp->filter_control_in_hz)
-    sp->filter_control_xmax = (Float)(SND_SRATE(sp) / 2);
+    sp->filter_control_xmax = (mus_float_t)(SND_SRATE(sp) / 2);
   else sp->filter_control_xmax = 1.0;
   sp->filter_control_changed = false;
   sp->saved_controls = NULL;
@@ -528,7 +528,7 @@ void for_each_chan_with_int(void (*func)(chan_info *ncp, int val), int value)
 }
 
 
-void for_each_chan_with_off_t(void (*func)(chan_info *ncp, off_t val), off_t value)
+void for_each_chan_with_mus_long_t(void (*func)(chan_info *ncp, mus_long_t val), mus_long_t value)
 {
   int i, j;
   for (i = 0; i < ss->max_sounds; i++)
@@ -560,7 +560,7 @@ void for_each_chan_with_bool(void (*func)(chan_info *ncp, bool val), bool value)
 }
 
 
-void for_each_chan_with_float(void (*func)(chan_info *ncp, Float val), Float value)
+void for_each_chan_with_float(void (*func)(chan_info *ncp, mus_float_t val), mus_float_t value)
 {
   int i, j;
   for (i = 0; i < ss->max_sounds; i++)
@@ -988,7 +988,7 @@ sync_info *snd_sync(int sync)
     {
       sync_info *si;
       si = (sync_info *)calloc(1, sizeof(sync_info));
-      si->begs = (off_t *)calloc(chans, sizeof(off_t));
+      si->begs = (mus_long_t *)calloc(chans, sizeof(mus_long_t));
       si->cps = (chan_info **)calloc(chans, sizeof(chan_info *));
       si->chans = chans;
       j = 0;
@@ -1005,14 +1005,14 @@ sync_info *snd_sync(int sync)
 }
 
 
-sync_info *make_simple_sync(chan_info *cp, off_t beg)
+sync_info *make_simple_sync(chan_info *cp, mus_long_t beg)
 {
   sync_info *si;
   si = (sync_info *)calloc(1, sizeof(sync_info));
   si->chans = 1;
   si->cps = (chan_info **)calloc(1, sizeof(chan_info *));
   si->cps[0] = cp;
-  si->begs = (off_t *)calloc(1, sizeof(off_t));
+  si->begs = (mus_long_t *)calloc(1, sizeof(mus_long_t));
   si->begs[0] = beg;
   return(si);
 }
@@ -1056,11 +1056,11 @@ static char *display_maxamps(const char *filename, int chans)
   char *ampstr;
   int i, len;
   mus_sample_t *vals;
-  off_t *times;
+  mus_long_t *times;
   len = chans * 32;
   ampstr = (char *)calloc(len, sizeof(char));
   vals = (mus_sample_t *)calloc(chans, sizeof(mus_sample_t));
-  times = (off_t *)calloc(chans, sizeof(off_t));
+  times = (mus_long_t *)calloc(chans, sizeof(mus_long_t));
   mus_snprintf(ampstr, len, _("\nmax amp: "));
   mus_sound_maxamps(filename, chans, vals, times);
   for (i = 0; i < chans; i++)
@@ -1101,8 +1101,8 @@ void display_info(snd_info *sp)
 		       _("srate: %d\nchans: %d\nlength: %.3f (" OFF_TD " %s)\ntype: %s\nformat: %s\nwritten: %s%s%s%s\n"),
 		       hdr->srate,
 		       hdr->chans,
-		       (Float)((double)(hdr->samples) / (Float)(hdr->chans * hdr->srate)),
-		       (off_t)((hdr->samples) / (hdr->chans)),
+		       (mus_float_t)((double)(hdr->samples) / (mus_float_t)(hdr->chans * hdr->srate)),
+		       (mus_long_t)((hdr->samples) / (hdr->chans)),
 		       (hdr->chans == 1) ? _("samples") : _("frames"),
 		       mus_header_type_name(hdr->type),
 		       mus_data_format_name(hdr->format),

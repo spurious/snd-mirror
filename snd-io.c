@@ -124,7 +124,7 @@ io_error_t copy_file(const char *oldname, const char *newname)
 {
   /* make newname a copy of oldname */
   int ifd, ofd;
-  off_t bytes, wb, total;
+  mus_long_t bytes, wb, total;
   char *buf = NULL;
   total = 0;
   ifd = OPEN(oldname, O_RDONLY, 0);
@@ -175,10 +175,10 @@ static void c_io_bufclr(snd_io *io, int beg)
 }
 
 
-static void reposition_file_buffers_1(off_t loc, snd_io *io)
+static void reposition_file_buffers_1(mus_long_t loc, snd_io *io)
 {
   /* called when loc is outside the current in-core frame for the file pointed to by io */
-  off_t frames;
+  mus_long_t frames;
   /* local frames is buffer-local, not a sample number. */
   frames = io->frames - loc;
   if (frames > io->bufsize) frames = io->bufsize;
@@ -189,7 +189,7 @@ static void reposition_file_buffers_1(off_t loc, snd_io *io)
     }
   else
     {
-      off_t seek_loc;
+      mus_long_t seek_loc;
       int err;
       seek_loc = mus_file_seek_frame(io->fd, loc);
       io->beg = loc;
@@ -205,7 +205,7 @@ static void reposition_file_buffers_1(off_t loc, snd_io *io)
 }
 
 
-static void reposition_file_buffers(snd_data *sd, off_t index)
+static void reposition_file_buffers(snd_data *sd, mus_long_t index)
 {
   int fd = 0;
   bool reclose = false;
@@ -245,11 +245,11 @@ static void reposition_file_buffers(snd_data *sd, off_t index)
 }
 
 
-snd_io *make_file_state(int fd, file_info *hdr, int chan, off_t beg, int suggested_bufsize)
+snd_io *make_file_state(int fd, file_info *hdr, int chan, mus_long_t beg, int suggested_bufsize)
 {
   snd_io *io;
   int bufsize;
-  off_t chansize;
+  mus_long_t chansize;
   bufsize = suggested_bufsize;
   chansize = (hdr->samples / hdr->chans); /* this can be bogus if the header is messed up */
   if ((chansize > 0) && 
@@ -269,7 +269,7 @@ snd_io *make_file_state(int fd, file_info *hdr, int chan, off_t beg, int suggest
 }
 
 
-void file_buffers_forward(off_t ind0, off_t ind1, off_t indx, snd_fd *sf, snd_data *cur_snd)
+void file_buffers_forward(mus_long_t ind0, mus_long_t ind1, mus_long_t indx, snd_fd *sf, snd_data *cur_snd)
 {
   /* need to track in-core buffer and file-relative index */
   if ((indx < cur_snd->io->beg) ||
@@ -285,7 +285,7 @@ void file_buffers_forward(off_t ind0, off_t ind1, off_t indx, snd_fd *sf, snd_da
 }
 
 
-void file_buffers_back(off_t ind0, off_t ind1, off_t indx, snd_fd *sf, snd_data *cur_snd)
+void file_buffers_back(mus_long_t ind0, mus_long_t ind1, mus_long_t indx, snd_fd *sf, snd_data *cur_snd)
 {
   if ((indx > cur_snd->io->end) || 
       (indx < cur_snd->io->beg)) 
@@ -429,7 +429,7 @@ io_error_t sndlib_error_to_snd(int sndlib_err)
 }
 
 
-int snd_file_open_descriptors(int fd, const char *name, int format, off_t location, int chans, int type)
+int snd_file_open_descriptors(int fd, const char *name, int format, mus_long_t location, int chans, int type)
 {
   int sl_err = MUS_NO_ERROR;
   sl_err = mus_file_open_descriptors(fd, name, format, mus_bytes_per_sample(format), location, chans, type);
@@ -440,7 +440,7 @@ int snd_file_open_descriptors(int fd, const char *name, int format, off_t locati
 
 
 io_error_t snd_write_header(const char *name, int type, int srate, int chans,
-			    off_t samples, int format, const char *comment,
+			    mus_long_t samples, int format, const char *comment,
 			    int *loops)
 {
   int err; /* sndlib-style error */
@@ -611,7 +611,7 @@ snd_data *make_snd_data_file(const char *name, snd_io *io, file_info *hdr, file_
 }
 
 
-snd_data *copy_snd_data(snd_data *sd, off_t beg, int bufsize)
+snd_data *copy_snd_data(snd_data *sd, mus_long_t beg, int bufsize)
 {
   snd_data *sf;
   snd_io *io;
@@ -777,7 +777,7 @@ int open_temp_file(const char *ofile, int chans, file_info *hdr, io_error_t *err
 }
 
 
-io_error_t close_temp_file(const char *filename, int ofd, int type, off_t bytes)
+io_error_t close_temp_file(const char *filename, int ofd, int type, mus_long_t bytes)
 {
   int err;
   err = mus_file_close(ofd);

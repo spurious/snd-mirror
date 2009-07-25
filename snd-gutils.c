@@ -510,7 +510,7 @@ void set_mix_color(color_info *color)
 }
 
 
-color_t rgb_to_color(Float r, Float g, Float b)
+color_t rgb_to_color(mus_float_t r, mus_float_t g, mus_float_t b)
 {
   color_info *ccolor;
 #if USE_CAIRO
@@ -890,7 +890,7 @@ void widget_int_to_text(GtkWidget *w, int val)
 }
 
 #if 0
-void widget_float_to_text(GtkWidget *w, Float val)
+void widget_float_to_text(GtkWidget *w, mus_float_t val)
 {
   char *str;
   str = (char *)calloc(8, sizeof(char));
@@ -901,7 +901,7 @@ void widget_float_to_text(GtkWidget *w, Float val)
 #endif
 
 
-void widget_off_t_to_text(GtkWidget *w, off_t val)
+void widget_mus_long_t_to_text(GtkWidget *w, mus_long_t val)
 {
   char *str;
   str = (char *)calloc(8, sizeof(char));

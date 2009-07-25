@@ -19,7 +19,7 @@ static env *dialog_env = NULL;
 static bool dragging = false;
 static int edpos_before_drag;
 static with_hook_t hookable_before_drag;
-static off_t drag_beg = 0, drag_end = 0;
+static mus_long_t drag_beg = 0, drag_end = 0;
 
 static void start_dragging(int mix_id) 
 {
@@ -57,7 +57,7 @@ static void stop_dragging(int mix_id)
 static Widget w_speed_number, w_speed_label, w_speed;
 static speed_style_t xmix_speed_control_style = SPEED_CONTROL_AS_FLOAT;
 
-static int speed_to_scrollbar(Float minval, Float val, Float maxval)
+static int speed_to_scrollbar(mus_float_t minval, mus_float_t val, mus_float_t maxval)
 {
   if (val <= minval) return(0);
   if (val >= maxval) return((int)(0.9 * SCROLLBAR_MAX));
@@ -65,10 +65,10 @@ static int speed_to_scrollbar(Float minval, Float val, Float maxval)
 }
 
 
-static Float set_speed_label(Widget speed_number, int ival)
+static mus_float_t set_speed_label(Widget speed_number, int ival)
 {
   char speed_number_buffer[6];
-  Float speed;
+  mus_float_t speed;
   speed = speed_changed(exp((ival * (log(speed_control_max(ss)) - log(speed_control_min(ss))) / (0.9 * SCROLLBAR_MAX)) + log(speed_control_min(ss))),
 			speed_number_buffer,
 			xmix_speed_control_style,
@@ -146,7 +146,7 @@ static void speed_valuechanged_callback(Widget w, XtPointer context, XtPointer i
 
 static Widget w_amp_number, w_amp_label, w_amp;
 
-static Float scrollbar_to_amp(int val)
+static mus_float_t scrollbar_to_amp(int val)
 {
   if (val <= 0) 
     return(amp_control_min(ss));
@@ -158,7 +158,7 @@ static Float scrollbar_to_amp(int val)
 }
 
 
-static int amp_to_scrollbar(Widget amp_number, Float amp)
+static int amp_to_scrollbar(Widget amp_number, mus_float_t amp)
 {
   char sfs[6];
   mus_snprintf(sfs, 6, "%.2f", amp);
@@ -167,7 +167,7 @@ static int amp_to_scrollbar(Widget amp_number, Float amp)
 }
 
 
-static void change_mix_amp(int mix_id, Float val)
+static void change_mix_amp(int mix_id, mus_float_t val)
 {
   char sfs[6];
   mix_set_amp_edit(mix_id, val);
@@ -395,14 +395,14 @@ static void beg_activated(void)
     {
       chan_info *cp;
       char *up_to_colon;
-      Float beg;
+      mus_float_t beg;
       cp = mix_chan_info_from_id(mix_dialog_id);
       up_to_colon = string_to_colon(val);
       redirect_errors_to(errors_to_mix_text, NULL);
-      beg = string_to_Float(up_to_colon, 0.0, "begin time");
+      beg = string_to_mus_float_t(up_to_colon, 0.0, "begin time");
       redirect_errors_to(NULL, NULL);
       if (beg >= 0.0)
-	mix_set_position_edit(mix_dialog_id, (off_t)(beg * SND_SRATE(cp->sound)));
+	mix_set_position_edit(mix_dialog_id, (mus_long_t)(beg * SND_SRATE(cp->sound)));
       after_mix_edit(mix_dialog_id);
       free(up_to_colon);
       XtFree(val);
@@ -948,7 +948,7 @@ void reflect_mix_change(int mix_id)
 
       if ((mix_id == mix_dialog_id) || (mix_id == ANY_MIX_ID))
 	{
-	  Float val;
+	  mus_float_t val;
 	  set_sensitive(nextb, (next_mix_id(mix_dialog_id) != INVALID_MIX_ID));
 	  set_sensitive(previousb, (previous_mix_id(mix_dialog_id) != INVALID_MIX_ID));
 	  
@@ -956,7 +956,7 @@ void reflect_mix_change(int mix_id)
 	  if (mix_exists(mix_dialog_id))
 	    {
 	      chan_info *cp = NULL;
-	      off_t beg, len;
+	      mus_long_t beg, len;
 	      char lab[LABEL_BUFFER_SIZE];
 	      
 	      cp = mix_chan_info_from_id(mix_dialog_id);

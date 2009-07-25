@@ -32104,13 +32104,6 @@ EDITS: 2
 	  (close-sound index)))
       (set! (clipping) old-clip)
       (set! (mus-clipping) old-mus-clip))
-    
-    (if (not (provided? 'snd-nogui))
-	(begin
-	  (if (not (= (ratio->semitones 2) 12)) (snd-display ";ratio->semitones 2: ~A" (ratio->semitones 2)))
-	  (if (not (= (ratio->semitones 2/3) -7)) (snd-display ";ratio->semitones 2/3: ~A" (ratio->semitones 2/3)))
-	  (if (fneq (semitones->ratio 12) 2.0) (snd-display ";semitones->ratio 12: ~A" (semitones->ratio 12)))))
-    
     ))
 
 

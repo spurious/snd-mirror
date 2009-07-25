@@ -1860,7 +1860,7 @@ void set_open_file_play_button(bool val)
 
 /* ---------------- file data panel ---------------- */
 
-char *get_file_dialog_sound_attributes(file_data *fdat, int *srate, int *chans, int *type, int *format, off_t *location, off_t *samples, int min_chan)
+char *get_file_dialog_sound_attributes(file_data *fdat, int *srate, int *chans, int *type, int *format, mus_long_t *location, mus_long_t *samples, int min_chan)
 {
   char *str;
   int res;
@@ -1895,7 +1895,7 @@ char *get_file_dialog_sound_attributes(file_data *fdat, int *srate, int *chans, 
       str = (char *)gtk_entry_get_text(GTK_ENTRY(fdat->location_text)); 
       fdat->scanf_widget = DATA_LOCATION_WIDGET;
       if ((str) && (*str))
-	(*location) = string_to_off_t(str, 0, "data location"); 
+	(*location) = string_to_mus_long_t(str, 0, "data location"); 
       else snd_error_without_format("no data location?");
     }
 
@@ -1904,7 +1904,7 @@ char *get_file_dialog_sound_attributes(file_data *fdat, int *srate, int *chans, 
       str = (char *)gtk_entry_get_text(GTK_ENTRY(fdat->samples_text)); 
       fdat->scanf_widget = SAMPLES_WIDGET;
       if ((str) && (*str))
-	(*samples) = string_to_off_t(str, 0, "samples"); 
+	(*samples) = string_to_mus_long_t(str, 0, "samples"); 
       else snd_error_without_format("no samples?");
     }
   fdat->scanf_widget = SAMPLES_WIDGET;
@@ -1952,7 +1952,7 @@ char *get_file_dialog_sound_attributes(file_data *fdat, int *srate, int *chans, 
 #define IGNORE_SRATE -1
 #define IGNORE_HEADER_TYPE -1
 
-static void set_file_dialog_sound_attributes(file_data *fdat, int type, int format, int srate, int chans, off_t location, off_t samples, char *comment)
+static void set_file_dialog_sound_attributes(file_data *fdat, int type, int format, int srate, int chans, mus_long_t location, mus_long_t samples, char *comment)
 {
   int i;
   const char **fl = NULL;
@@ -2002,11 +2002,11 @@ static void set_file_dialog_sound_attributes(file_data *fdat, int type, int form
 
   if ((location != IGNORE_DATA_LOCATION) && 
       (fdat->location_text))
-    widget_off_t_to_text(fdat->location_text, location);
+    widget_mus_long_t_to_text(fdat->location_text, location);
 
   if ((samples != IGNORE_SAMPLES) && 
       (fdat->samples_text))
-    widget_off_t_to_text(fdat->samples_text, samples);
+    widget_mus_long_t_to_text(fdat->samples_text, samples);
 }
 
 
@@ -2610,7 +2610,7 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
   int type = MUS_NEXT, format = DEFAULT_OUTPUT_DATA_FORMAT, srate = DEFAULT_OUTPUT_SRATE, chans = DEFAULT_OUTPUT_CHANS;
   int output_type, chan = 0, extractable_chans = 0;
   bool file_exists = false;
-  off_t location = 28, samples = 0;
+  mus_long_t location = 28, samples = 0;
   io_error_t io_err = IO_NO_ERROR;
 
   clear_dialog_error(sd->panel_data);
@@ -3242,7 +3242,7 @@ void save_file_dialog_state(FILE *fd)
 
 typedef struct raw_info {
   GtkWidget *dialog;
-  off_t location;
+  mus_long_t location;
   file_data *rdat;
   read_only_t read_only;
   bool selected;
@@ -3531,7 +3531,7 @@ void raw_data_dialog_to_file_info(const char *filename, char *title, char *info,
 
 static GtkWidget *new_file_dialog = NULL, *new_file_text = NULL, *new_file_ok_button = NULL;
 static file_data *ndat = NULL;
-static off_t initial_samples = 1;
+static mus_long_t initial_samples = 1;
 static char *new_file_filename = NULL;
 static fam_info *new_file_watcher = NULL;
 
@@ -3597,7 +3597,7 @@ static void watch_new_file(struct fam_info *fp, FAMEvent *fe)
 
 static void new_file_ok_callback(GtkWidget *w, gpointer context) 
 {
-  off_t loc;
+  mus_long_t loc;
   char *comment = NULL, *newer_name = NULL, *msg;
   int header_type, data_format, srate, chans;
   newer_name = (char *)gtk_entry_get_text(GTK_ENTRY(new_file_text));
@@ -4693,9 +4693,9 @@ static void view_files_remove_selected_callback(GtkWidget *w, gpointer context)
 }
 
 
-off_t vf_location(view_files_info *vdat)
+mus_long_t vf_location(view_files_info *vdat)
 {
-  off_t pos = 0;
+  mus_long_t pos = 0;
   snd_info *sp;
   chan_info *cp;
   char *str;
@@ -4739,7 +4739,7 @@ off_t vf_location(view_files_info *vdat)
       str = (char *)gtk_entry_get_text(GTK_ENTRY(vdat->at_sample_text));
       if ((str) && (*str))
 	{
-	  pos = string_to_off_t(str, 0, "sample"); 
+	  pos = string_to_mus_long_t(str, 0, "sample"); 
 	  /* pos already checked for lower bound */
 	}
       else snd_error_without_format("no sample number?");
@@ -4932,7 +4932,7 @@ static void view_files_at_mark_callback(GtkWidget *w, gpointer context)
 
 static bool speed_pressed = false, speed_dragged = false;
 
-static Float vf_speed_to_scroll(Float minval, Float val, Float maxval)
+static mus_float_t vf_speed_to_scroll(mus_float_t minval, mus_float_t val, mus_float_t maxval)
 {
   if (val <= minval) return(0.0);
   if (val >= maxval) return(0.9);
@@ -4940,13 +4940,13 @@ static Float vf_speed_to_scroll(Float minval, Float val, Float maxval)
 }
 
 
-static Float vf_scroll_to_speed(Float scroll)
+static mus_float_t vf_scroll_to_speed(mus_float_t scroll)
 {
   return(exp((scroll * (log(speed_control_max(ss)) - log(speed_control_min(ss))) / 0.9) + log(speed_control_min(ss))));
 }
 
 
-static void vf_set_speed_label(view_files_info *vdat, Float val)
+static void vf_set_speed_label(view_files_info *vdat, mus_float_t val)
 {
   char speed_number_buffer[6];
   vdat->speed = speed_changed(val,
@@ -4958,7 +4958,7 @@ static void vf_set_speed_label(view_files_info *vdat, Float val)
 }
 
 
-void vf_set_speed(view_files_info *vdat, Float val)
+void vf_set_speed(view_files_info *vdat, mus_float_t val)
 {
   vf_set_speed_label(vdat, val);
   ADJUSTMENT_SET_VALUE(vdat->speed_adj, vf_speed_to_scroll(speed_control_min(ss), vdat->speed, speed_control_max(ss)));
@@ -5027,7 +5027,7 @@ static gboolean vf_speed_press_callback(GtkWidget *w, GdkEventButton *ev, gpoint
 
 static bool amp_pressed = false, amp_dragged = false;
 
-static Float vf_scroll_to_amp(Float val)
+static mus_float_t vf_scroll_to_amp(mus_float_t val)
 {
   if (val <= 0.0) 
     return(amp_control_min(ss));
@@ -5039,13 +5039,13 @@ static Float vf_scroll_to_amp(Float val)
 }
 
 
-static Float vf_amp_to_scroll(Float amp)
+static mus_float_t vf_amp_to_scroll(mus_float_t amp)
 {
   return(amp_to_scroll(amp_control_min(ss), amp, amp_control_max(ss)));
 }
 
 
-void vf_set_amp(view_files_info *vdat, Float val)
+void vf_set_amp(view_files_info *vdat, mus_float_t val)
 {
   char sfs[6];
   vdat->amp = val;
@@ -5067,7 +5067,7 @@ static gboolean vf_amp_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer
 
 static gboolean vf_amp_motion_callback(GtkWidget *w, GdkEventMotion *ev, gpointer data)
 {
-  Float scrollval;
+  mus_float_t scrollval;
   char sfs[6];
   view_files_info *vdat = (view_files_info *)data;
 
@@ -5085,7 +5085,7 @@ static gboolean vf_amp_motion_callback(GtkWidget *w, GdkEventMotion *ev, gpointe
 
 static gboolean vf_amp_release_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
-  Float scrollval;
+  mus_float_t scrollval;
   char sfs[6];
   view_files_info *vdat = (view_files_info *)data;
 

@@ -247,7 +247,7 @@ static void reflect_sample_change_in_axis(chan_info *cp)
   ap = cp->axis;
   if (ap)
     {
-      off_t samps;
+      mus_long_t samps;
       samps = CURRENT_SAMPLES(cp);
       ap->xmax = (double)samps / (double)SND_SRATE(cp->sound);
       ap->x_ambit = ap->xmax - ap->xmin;
@@ -402,9 +402,9 @@ typedef struct {
 /* fragment ptree info */
 
 typedef struct {
-  Float scl;                                /* scales the arg to the ptree */
+  mus_float_t scl;                                /* scales the arg to the ptree */
   short loc;                                /* index into the cp->ptrees array */
-  off_t pos,                                /* segment position within original at time of ptree edit */
+  mus_long_t pos,                                /* segment position within original at time of ptree edit */
         dur;                                /* original (unfragmented) segment length */
 } ptree_state;
 
@@ -427,10 +427,10 @@ typedef struct {
 typedef struct ed_fragment {               /* this name is necessary even in straight C */
   short typ,                               /* code for accessor choice (ED_SIMPLE etc) */
         snd;                               /* either an index into the cp->sounds array (snd_data structs) or EDIT_LIST_END|ZERO_MARK */
-  off_t out,                               /* running segment location within current overall edited data */
+  mus_long_t out,                               /* running segment location within current overall edited data */
         beg,                               /* index into the associated data => start point of data used in current segment */
         end;                               /* index into the associated data => end point of data used in current segment */
-  Float scl;                               /* segment scaler */
+  mus_float_t scl;                               /* segment scaler */
   ed_ramps *ramps;
   ed_ptrees *ptrees;
   ed_mixes *mixes; 
@@ -460,8 +460,8 @@ typedef struct {
   double *incrs, *vals;
   short xramps;
   double *xincrs, *xvals;
-  Float (*rampf)(struct snd_fd *sf);
-  Float (*rev_rampf)(struct snd_fd *sf);
+  mus_float_t (*rampf)(struct snd_fd *sf);
+  mus_float_t (*rev_rampf)(struct snd_fd *sf);
 } reader_ramps;
 
 
@@ -629,35 +629,35 @@ typedef struct {
 
 /* -------------------------------- fragment accessors -------------------------------- */
 
-static Float next_ramp1_value(snd_fd *sf)
+static mus_float_t next_ramp1_value(snd_fd *sf)
 {
-  Float val;
+  mus_float_t val;
   val = READER_VAL(sf, 0);
   READER_VAL(sf, 0) += READER_INCR(sf, 0);
   return(val);
 }
 
-static Float previous_ramp1_value(snd_fd *sf)
+static mus_float_t previous_ramp1_value(snd_fd *sf)
 {
-  Float val;
+  mus_float_t val;
   val = READER_VAL(sf, 0);
   READER_VAL(sf, 0) -= READER_INCR(sf, 0);
   return(val);
 }
 
 
-static Float next_ramp2_value(snd_fd *sf)
+static mus_float_t next_ramp2_value(snd_fd *sf)
 {
-  Float val;
+  mus_float_t val;
   val = READER_VAL(sf, 0) * READER_VAL(sf, 1);
   READER_VAL(sf, 0) += READER_INCR(sf, 0);
   READER_VAL(sf, 1) += READER_INCR(sf, 1);
   return(val);
 }
 
-static Float previous_ramp2_value(snd_fd *sf)
+static mus_float_t previous_ramp2_value(snd_fd *sf)
 {
-  Float val;
+  mus_float_t val;
   val = READER_VAL(sf, 0) * READER_VAL(sf, 1);
   READER_VAL(sf, 0) -= READER_INCR(sf, 0);
   READER_VAL(sf, 1) -= READER_INCR(sf, 1);
@@ -665,9 +665,9 @@ static Float previous_ramp2_value(snd_fd *sf)
 }
 
 
-static Float next_ramp_value(snd_fd *sf)
+static mus_float_t next_ramp_value(snd_fd *sf)
 {
-  Float val = 1.0;
+  mus_float_t val = 1.0;
   int i;
   for (i = 0; i < READER_RAMPS(sf); i++)
     {
@@ -677,9 +677,9 @@ static Float next_ramp_value(snd_fd *sf)
   return(val);
 }
 
-static Float previous_ramp_value(snd_fd *sf)
+static mus_float_t previous_ramp_value(snd_fd *sf)
 {
-  Float val = 1.0;
+  mus_float_t val = 1.0;
   int i;
   for (i = 0; i < READER_RAMPS(sf); i++)
     {
@@ -690,9 +690,9 @@ static Float previous_ramp_value(snd_fd *sf)
 }
 
 
-static Float next_xramp1_value(snd_fd *sf)
+static mus_float_t next_xramp1_value(snd_fd *sf)
 {
-  Float val;
+  mus_float_t val;
   val = (READER_XRAMP_OFFSET(sf, 0) + (READER_XRAMP_SCALER(sf, 0) * READER_XVAL(sf, 0)));
   READER_XVAL(sf, 0) *= READER_XINCR(sf, 0);
   return(val);
@@ -702,19 +702,19 @@ static Float next_xramp1_value(snd_fd *sf)
  *   but then we'd need a fixup when the reader changes direction -- probably not worth the complexity.
  */
 
-static Float previous_xramp1_value(snd_fd *sf)
+static mus_float_t previous_xramp1_value(snd_fd *sf)
 {
-  Float val;
+  mus_float_t val;
   val = (READER_XRAMP_OFFSET(sf, 0) + (READER_XRAMP_SCALER(sf, 0) * READER_XVAL(sf, 0)));
   READER_XVAL(sf, 0) /= READER_XINCR(sf, 0);
   return(val);
 }
 
 
-static Float next_xramp_value(snd_fd *sf)
+static mus_float_t next_xramp_value(snd_fd *sf)
 {
   int i;
-  Float val = 1.0;
+  mus_float_t val = 1.0;
   for (i = 0; i < READER_XRAMPS(sf); i++)
     {
       val *= (READER_XRAMP_OFFSET(sf, i) + (READER_XRAMP_SCALER(sf, i) * READER_XVAL(sf, i)));
@@ -723,10 +723,10 @@ static Float next_xramp_value(snd_fd *sf)
   return(val);
 }
 
-static Float previous_xramp_value(snd_fd *sf)
+static mus_float_t previous_xramp_value(snd_fd *sf)
 {
   int i;
-  Float val = 1.0;
+  mus_float_t val = 1.0;
   for (i = 0; i < READER_XRAMPS(sf); i++)
     {
       val *= (READER_XRAMP_OFFSET(sf, i) + (READER_XRAMP_SCALER(sf, i) * READER_XVAL(sf, i)));
@@ -736,32 +736,32 @@ static Float previous_xramp_value(snd_fd *sf)
 }
 
 
-static Float next_xramp_ramp_value(snd_fd *sf)
+static mus_float_t next_xramp_ramp_value(snd_fd *sf)
 {
   return(next_xramp_value(sf) * next_ramp_value(sf));
 }
 
-static Float previous_xramp_ramp_value(snd_fd *sf)
+static mus_float_t previous_xramp_ramp_value(snd_fd *sf)
 {
   return(previous_xramp_value(sf) * previous_ramp_value(sf));
 }
 
 
-static Float previous_sound(snd_fd *sf);
-static Float next_sound(snd_fd *sf);
+static mus_float_t previous_sound(snd_fd *sf);
+static mus_float_t next_sound(snd_fd *sf);
 
 
-static Float end_sample_value(snd_fd *ignore) {return(0.0);}
+static mus_float_t end_sample_value(snd_fd *ignore) {return(0.0);}
 
 
-static Float next_sample_value(snd_fd *sf) 
+static mus_float_t next_sample_value(snd_fd *sf) 
 {
   if (sf->loc > sf->last) 
     return(next_sound(sf)); 
   else return(sf->data[sf->loc++] * sf->fscaler);
 }
 
-static Float previous_sample_value(snd_fd *sf) 
+static mus_float_t previous_sample_value(snd_fd *sf) 
 {
   if (sf->loc < sf->first) 
     return(previous_sound(sf)); 
@@ -769,14 +769,14 @@ static Float previous_sample_value(snd_fd *sf)
 }
 
 
-static Float next_sample_value_unscaled(snd_fd *sf) 
+static mus_float_t next_sample_value_unscaled(snd_fd *sf) 
 {
   if (sf->loc > sf->last) 
     return(next_sound(sf)); 
   else return(sf->data[sf->loc++]);
 }
 
-static Float previous_sample_value_unscaled(snd_fd *sf) 
+static mus_float_t previous_sample_value_unscaled(snd_fd *sf) 
 {
   if (sf->loc < sf->first) 
     return(previous_sound(sf)); 
@@ -784,14 +784,14 @@ static Float previous_sample_value_unscaled(snd_fd *sf)
 }
 
 
-static Float next_zero(snd_fd *sf)
+static mus_float_t next_zero(snd_fd *sf)
 {
   if (sf->loc > sf->last) return(next_sound(sf));
   sf->loc++;
   return(0.0);
 }
 
-static Float previous_zero(snd_fd *sf)
+static mus_float_t previous_zero(snd_fd *sf)
 {
   if (sf->loc < sf->first) return(previous_sound(sf));
   sf->loc--;
@@ -799,26 +799,26 @@ static Float previous_zero(snd_fd *sf)
 }
 
 
-static Float next_ramp1(snd_fd *sf)
+static mus_float_t next_ramp1(snd_fd *sf)
 {
   if (sf->loc > sf->last)
      return(next_sound(sf));
   else 
     {
-      Float val;
+      mus_float_t val;
       val = sf->data[sf->loc++] * READER_VAL(sf, 0) * MUS_FIX_TO_FLOAT;
       READER_VAL(sf, 0) += READER_INCR(sf, 0);
       return(val);
     }
 }
 
-static Float previous_ramp1(snd_fd *sf)
+static mus_float_t previous_ramp1(snd_fd *sf)
 {
   if (sf->loc < sf->first)
     return(previous_sound(sf));
   else
     {
-      Float val;
+      mus_float_t val;
       val = sf->data[sf->loc--] * READER_VAL(sf, 0) * MUS_FIX_TO_FLOAT;
       READER_VAL(sf, 0) -= READER_INCR(sf, 0);
       return(val);
@@ -826,14 +826,14 @@ static Float previous_ramp1(snd_fd *sf)
 }
 
 
-static Float next_ramp_f(snd_fd *sf)
+static mus_float_t next_ramp_f(snd_fd *sf)
 {
   if (sf->loc > sf->last) 
     return(next_sound(sf)); 
   else return(MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc++] * (*(READER_RAMPF(sf)))(sf)));
 }
 
-static Float previous_ramp_f(snd_fd *sf)
+static mus_float_t previous_ramp_f(snd_fd *sf)
 {
   if (sf->loc < sf->first)
     return(previous_sound(sf)); 
@@ -841,14 +841,14 @@ static Float previous_ramp_f(snd_fd *sf)
 }
 
 
-static Float next_ramp(snd_fd *sf) 
+static mus_float_t next_ramp(snd_fd *sf) 
 {
   if (sf->loc > sf->last)
     return(next_sound(sf)); 
   else return(MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc++] * next_ramp_value(sf)));
 }
 
-static Float previous_ramp(snd_fd *sf) 
+static mus_float_t previous_ramp(snd_fd *sf) 
 {
   if (sf->loc < sf->first) 
     return(previous_sound(sf)); 
@@ -856,14 +856,14 @@ static Float previous_ramp(snd_fd *sf)
 }
 
 
-static Float next_xramp1(snd_fd *sf)
+static mus_float_t next_xramp1(snd_fd *sf)
 {
   if (sf->loc > sf->last) 
     return(next_sound(sf)); 
   else return(MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc++] * READER_SCALER(sf) * next_xramp1_value(sf)));
 }
 
-static Float previous_xramp1(snd_fd *sf)
+static mus_float_t previous_xramp1(snd_fd *sf)
 {
   if (sf->loc < sf->first) 
     return(previous_sound(sf)); 
@@ -871,14 +871,14 @@ static Float previous_xramp1(snd_fd *sf)
 }
 
 
-static Float next_xramp(snd_fd *sf)
+static mus_float_t next_xramp(snd_fd *sf)
 {
   if (sf->loc > sf->last) 
     return(next_sound(sf)); 
   else return(MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc++] * READER_SCALER(sf) * next_xramp_value(sf)));
 }
 
-static Float previous_xramp(snd_fd *sf)
+static mus_float_t previous_xramp(snd_fd *sf)
 {
   if (sf->loc < sf->first) 
     return(previous_sound(sf)); 
@@ -889,11 +889,11 @@ static Float previous_xramp(snd_fd *sf)
 
 /* mix readers */
 
-static Float read_mix_list_samples(snd_fd *sf)
+static mus_float_t read_mix_list_samples(snd_fd *sf)
 {
   reader_mixes *m;
   int i;
-  Float sum = 0.0;
+  mus_float_t sum = 0.0;
   m = (reader_mixes *)(sf->mixes);
   for (i = 0; i < m->size; i++)
     sum += read_sample(m->sfs[i]);
@@ -901,7 +901,7 @@ static Float read_mix_list_samples(snd_fd *sf)
 }
 
 
-static Float next_mix(snd_fd *sf)
+static mus_float_t next_mix(snd_fd *sf)
 {
   /* read_sample here would call runf => next_mix => infinite recursion */
   if (sf->loc > sf->last) return(next_sound(sf)); /* next_sound here refers to whatever follows the mixed portion */
@@ -912,21 +912,21 @@ static Float next_mix(snd_fd *sf)
  *   and mixes can be added after subsequent scaling, so we're constrained to use the mix-amps
  */
 
-static Float previous_mix(snd_fd *sf)
+static mus_float_t previous_mix(snd_fd *sf)
 {
   if (sf->loc < sf->first) return(previous_sound(sf));
   return((sf->data[sf->loc--] * sf->fscaler) + read_mix_list_samples(sf));
 }
 
 
-static Float next_mix_zero(snd_fd *sf)
+static mus_float_t next_mix_zero(snd_fd *sf)
 {
   if (sf->loc > sf->last) return(next_sound(sf)); /* next_sound here refers to whatever follows the mixed portion */
   sf->loc++;
   return(read_mix_list_samples(sf));
 }
 
-static Float previous_mix_zero(snd_fd *sf)
+static mus_float_t previous_mix_zero(snd_fd *sf)
 {
   if (sf->loc < sf->first) return(previous_sound(sf));
   sf->loc--;
@@ -934,27 +934,27 @@ static Float previous_mix_zero(snd_fd *sf)
 }
 
 
-static Float next_one_mix(snd_fd *sf)
+static mus_float_t next_one_mix(snd_fd *sf)
 {
   if (sf->loc > sf->last) return(next_sound(sf)); /* next_sound here refers to whatever follows the mixed portion */
   return((sf->data[sf->loc++] * sf->fscaler) + read_sample(((reader_mixes *)(sf->mixes))->sfs[0]));
 }
 
-static Float previous_one_mix(snd_fd *sf)
+static mus_float_t previous_one_mix(snd_fd *sf)
 {
   if (sf->loc < sf->first) return(previous_sound(sf));
   return((sf->data[sf->loc--] * sf->fscaler) + read_sample(((reader_mixes *)(sf->mixes))->sfs[0]));
 }
 
 
-static Float next_one_mix_zero(snd_fd *sf)
+static mus_float_t next_one_mix_zero(snd_fd *sf)
 {
   if (sf->loc > sf->last) return(next_sound(sf)); /* next_sound here refers to whatever follows the mixed portion */
   sf->loc++;
   return(read_sample(((reader_mixes *)(sf->mixes))->sfs[0]));
 }
 
-static Float previous_one_mix_zero(snd_fd *sf)
+static mus_float_t previous_one_mix_zero(snd_fd *sf)
 {
   if (sf->loc < sf->first) return(previous_sound(sf));
   sf->loc--;
@@ -962,14 +962,14 @@ static Float previous_one_mix_zero(snd_fd *sf)
 }
 
 
-static Float next_mix_ramp1(snd_fd *sf)
+static mus_float_t next_mix_ramp1(snd_fd *sf)
 {
   if (sf->loc > sf->last) 
     return(next_sound(sf));
   return((MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc++] * next_ramp1_value(sf))) + read_mix_list_samples(sf));
 }
 
-static Float previous_mix_ramp1(snd_fd *sf)
+static mus_float_t previous_mix_ramp1(snd_fd *sf)
 {
   if (sf->loc < sf->first)
     return(previous_sound(sf));
@@ -977,14 +977,14 @@ static Float previous_mix_ramp1(snd_fd *sf)
 }
 
 
-static Float next_mix_ramp2(snd_fd *sf)
+static mus_float_t next_mix_ramp2(snd_fd *sf)
 {
   if (sf->loc > sf->last) 
     return(next_sound(sf));
   return((MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc++] * next_ramp2_value(sf))) + read_mix_list_samples(sf));
 }
 
-static Float previous_mix_ramp2(snd_fd *sf)
+static mus_float_t previous_mix_ramp2(snd_fd *sf)
 {
   if (sf->loc < sf->first) 
     return(previous_sound(sf));
@@ -992,14 +992,14 @@ static Float previous_mix_ramp2(snd_fd *sf)
 }
 
 
-static Float next_mix_ramp(snd_fd *sf)
+static mus_float_t next_mix_ramp(snd_fd *sf)
 {
   if (sf->loc > sf->last) 
     return(next_sound(sf));
   return((MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc++] * next_ramp_value(sf))) + read_mix_list_samples(sf));
 }
 
-static Float previous_mix_ramp(snd_fd *sf)
+static mus_float_t previous_mix_ramp(snd_fd *sf)
 {
   if (sf->loc < sf->first) 
     return(previous_sound(sf));
@@ -1007,14 +1007,14 @@ static Float previous_mix_ramp(snd_fd *sf)
 }
 
 
-static Float next_mix_xramp1(snd_fd *sf)
+static mus_float_t next_mix_xramp1(snd_fd *sf)
 {
   if (sf->loc > sf->last) 
     return(next_sound(sf));
   return((MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc++] * READER_SCALER(sf) * next_xramp1_value(sf))) + read_mix_list_samples(sf));
 }
 
-static Float previous_mix_xramp1(snd_fd *sf)
+static mus_float_t previous_mix_xramp1(snd_fd *sf)
 {
   if (sf->loc < sf->first) 
     return(previous_sound(sf));
@@ -1022,14 +1022,14 @@ static Float previous_mix_xramp1(snd_fd *sf)
 }
 
 
-static Float next_mix_xramp(snd_fd *sf)
+static mus_float_t next_mix_xramp(snd_fd *sf)
 {
   if (sf->loc > sf->last)
     return(next_sound(sf));
   return((MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc++] * READER_SCALER(sf) * next_xramp_value(sf))) + read_mix_list_samples(sf));
 }
 
-static Float previous_mix_xramp(snd_fd *sf)
+static mus_float_t previous_mix_xramp(snd_fd *sf)
 {
   if (sf->loc < sf->first)
     return(previous_sound(sf));
@@ -1037,14 +1037,14 @@ static Float previous_mix_xramp(snd_fd *sf)
 }
 
 
-static Float next_mix_xramp_f_ramp_f(snd_fd *sf)
+static mus_float_t next_mix_xramp_f_ramp_f(snd_fd *sf)
 {
   if (sf->loc > sf->last)
     return(next_sound(sf));
   return((MUS_SAMPLE_TO_FLOAT(sf->data[sf->loc++] * (*(READER_RAMPF(sf)))(sf))) + read_mix_list_samples(sf));
 }
 
-static Float previous_mix_xramp_f_ramp_f(snd_fd *sf)
+static mus_float_t previous_mix_xramp_f_ramp_f(snd_fd *sf)
 {
   if (sf->loc < sf->first) 
     return(previous_sound(sf));
@@ -1053,9 +1053,9 @@ static Float previous_mix_xramp_f_ramp_f(snd_fd *sf)
 
 
 
-static Float next_ptree_value(snd_fd *sf)
+static mus_float_t next_ptree_value(snd_fd *sf)
 {
-  Float val1 = 0.0;
+  mus_float_t val1 = 0.0;
   int i;
   if (!(READER_PTREE_ZERO(sf)))
     val1 = sf->data[sf->loc];
@@ -1067,9 +1067,9 @@ static Float next_ptree_value(snd_fd *sf)
   return(val1);
 }
 
-static Float previous_ptree_value(snd_fd *sf)
+static mus_float_t previous_ptree_value(snd_fd *sf)
 {
-  Float val1 = 0.0;
+  mus_float_t val1 = 0.0;
   int i;
   if (!(READER_PTREE_ZERO(sf)))
     val1 = sf->data[sf->loc];
@@ -1082,14 +1082,14 @@ static Float previous_ptree_value(snd_fd *sf)
 }
 
 
-static Float next_ptree(snd_fd *sf)
+static mus_float_t next_ptree(snd_fd *sf)
 {
   if (sf->loc > sf->last) 
     return(next_sound(sf)); 
   else return(READER_SCALER(sf) * next_ptree_value(sf));
 }
 
-static Float previous_ptree(snd_fd *sf)
+static mus_float_t previous_ptree(snd_fd *sf)
 {
   if (sf->loc < sf->first) 
     return(previous_sound(sf)); 
@@ -1097,14 +1097,14 @@ static Float previous_ptree(snd_fd *sf)
 }
 
 
-static Float next_mix_ptree(snd_fd *sf)
+static mus_float_t next_mix_ptree(snd_fd *sf)
 {
   if (sf->loc > sf->last) 
     return(next_sound(sf)); 
   return((READER_SCALER(sf) * next_ptree_value(sf)) + read_mix_list_samples(sf));
 }
 
-static Float previous_mix_ptree(snd_fd *sf)
+static mus_float_t previous_mix_ptree(snd_fd *sf)
 {
   if (sf->loc < sf->first) 
     return(previous_sound(sf)); 
@@ -1112,9 +1112,9 @@ static Float previous_mix_ptree(snd_fd *sf)
 }
 
 
-static Float next_ptree_ramp_f_value(snd_fd *sf)
+static mus_float_t next_ptree_ramp_f_value(snd_fd *sf)
 {
-  Float val1;
+  mus_float_t val1;
   int i;
   val1 = mus_run_evaluate_ptreec(READER_PTREE(sf, 0), 
 				 (*(READER_RAMPF(sf)))(sf) * sf->data[sf->loc++], 
@@ -1126,9 +1126,9 @@ static Float next_ptree_ramp_f_value(snd_fd *sf)
   return(val1);
 }
 
-static Float previous_ptree_ramp_f_value(snd_fd *sf)
+static mus_float_t previous_ptree_ramp_f_value(snd_fd *sf)
 {
-  Float val1;
+  mus_float_t val1;
   int i;
   val1 = mus_run_evaluate_ptreec(READER_PTREE(sf, 0), 
 				 (*(READER_REV_RAMPF(sf)))(sf) * sf->data[sf->loc--], 
@@ -1141,14 +1141,14 @@ static Float previous_ptree_ramp_f_value(snd_fd *sf)
 }
 
 
-static Float next_ptree_ramp_f(snd_fd *sf)
+static mus_float_t next_ptree_ramp_f(snd_fd *sf)
 {
   if (sf->loc > sf->last) 
     return(next_sound(sf)); 
   else return(READER_SCALER(sf) * next_ptree_ramp_f_value(sf));
 }
 
-static Float previous_ptree_ramp_f(snd_fd *sf)
+static mus_float_t previous_ptree_ramp_f(snd_fd *sf)
 {
   if (sf->loc < sf->first) 
     return(previous_sound(sf)); 
@@ -1156,14 +1156,14 @@ static Float previous_ptree_ramp_f(snd_fd *sf)
 }
 
 
-static Float next_mix_ptree_ramp_f(snd_fd *sf)
+static mus_float_t next_mix_ptree_ramp_f(snd_fd *sf)
 {
   if (sf->loc > sf->last) 
     return(next_sound(sf));
   return((READER_SCALER(sf) * next_ptree_ramp_f_value(sf)) + read_mix_list_samples(sf));
 }
 
-static Float previous_mix_ptree_ramp_f(snd_fd *sf)
+static mus_float_t previous_mix_ptree_ramp_f(snd_fd *sf)
 {
   if (sf->loc < sf->first) 
     return(previous_sound(sf)); 
@@ -1171,9 +1171,9 @@ static Float previous_mix_ptree_ramp_f(snd_fd *sf)
 }
 
 
-static Float next_ptree_xramp_value(snd_fd *sf)
+static mus_float_t next_ptree_xramp_value(snd_fd *sf)
 {
-  Float val1;
+  mus_float_t val1;
   int i;
   val1 = mus_run_evaluate_ptreec(READER_PTREE(sf, 0), 
 				 sf->data[sf->loc++] * READER_PTREE_SCALER(sf, 0) * next_xramp_value(sf), 
@@ -1185,9 +1185,9 @@ static Float next_ptree_xramp_value(snd_fd *sf)
   return(val1);
 }
 
-static Float previous_ptree_xramp_value(snd_fd *sf)
+static mus_float_t previous_ptree_xramp_value(snd_fd *sf)
 {
-  Float val1;
+  mus_float_t val1;
   int i;
   val1 = mus_run_evaluate_ptreec(READER_PTREE(sf, 0), 
 				 sf->data[sf->loc--] * READER_PTREE_SCALER(sf, 0) * previous_xramp_value(sf), 
@@ -1200,14 +1200,14 @@ static Float previous_ptree_xramp_value(snd_fd *sf)
 }
 
 
-static Float next_ptree_xramp(snd_fd *sf)
+static mus_float_t next_ptree_xramp(snd_fd *sf)
 {
   if (sf->loc > sf->last) 
     return(next_sound(sf)); 
   else return(READER_SCALER(sf) * next_ptree_xramp_value(sf));
 }
 
-static Float previous_ptree_xramp(snd_fd *sf)
+static mus_float_t previous_ptree_xramp(snd_fd *sf)
 {
   if (sf->loc < sf->first) 
     return(previous_sound(sf)); 
@@ -1215,14 +1215,14 @@ static Float previous_ptree_xramp(snd_fd *sf)
 }
 
 
-static Float next_mix_ptree_xramp(snd_fd *sf)
+static mus_float_t next_mix_ptree_xramp(snd_fd *sf)
 {
   if (sf->loc > sf->last) 
     return(next_sound(sf)); 
   else return((READER_SCALER(sf) * next_ptree_xramp_value(sf)) + read_mix_list_samples(sf));
 }
 
-static Float previous_mix_ptree_xramp(snd_fd *sf)
+static mus_float_t previous_mix_ptree_xramp(snd_fd *sf)
 {
   if (sf->loc < sf->first) 
     return(previous_sound(sf)); 
@@ -1230,14 +1230,14 @@ static Float previous_mix_ptree_xramp(snd_fd *sf)
 }
 
 
-static Float next_ramp_f_ptree(snd_fd *sf)
+static mus_float_t next_ramp_f_ptree(snd_fd *sf)
 {
   if (sf->loc > sf->last) 
     return(next_sound(sf)); 
   else return((*(READER_RAMPF(sf)))(sf) * next_ptree_value(sf));
 }
 
-static Float previous_ramp_f_ptree(snd_fd *sf)
+static mus_float_t previous_ramp_f_ptree(snd_fd *sf)
 {
   if (sf->loc < sf->first) 
     return(previous_sound(sf)); 
@@ -1245,14 +1245,14 @@ static Float previous_ramp_f_ptree(snd_fd *sf)
 }
 
 
-static Float next_mix_ramp_f_ptree(snd_fd *sf)
+static mus_float_t next_mix_ramp_f_ptree(snd_fd *sf)
 {
   if (sf->loc > sf->last) 
     return(next_sound(sf)); 
   return(((*(READER_RAMPF(sf)))(sf) * next_ptree_value(sf)) + read_mix_list_samples(sf));
 }
 
-static Float previous_mix_ramp_f_ptree(snd_fd *sf)
+static mus_float_t previous_mix_ramp_f_ptree(snd_fd *sf)
 {
   if (sf->loc < sf->first) 
     return(previous_sound(sf)); 
@@ -1260,14 +1260,14 @@ static Float previous_mix_ramp_f_ptree(snd_fd *sf)
 }
 
 
-static Float next_xramp_ptree(snd_fd *sf)
+static mus_float_t next_xramp_ptree(snd_fd *sf)
 {
   if (sf->loc > sf->last) 
     return(next_sound(sf)); 
   else return(next_xramp_value(sf) * READER_SCALER(sf) * next_ptree_value(sf));
 }
 
-static Float previous_xramp_ptree(snd_fd *sf)
+static mus_float_t previous_xramp_ptree(snd_fd *sf)
 {
   if (sf->loc < sf->first) 
     return(previous_sound(sf)); 
@@ -1275,14 +1275,14 @@ static Float previous_xramp_ptree(snd_fd *sf)
 }
 
 
-static Float next_mix_xramp_ptree(snd_fd *sf)
+static mus_float_t next_mix_xramp_ptree(snd_fd *sf)
 {
   if (sf->loc > sf->last) 
     return(next_sound(sf)); 
   else return((next_xramp_value(sf) * READER_SCALER(sf) * next_ptree_value(sf)) + read_mix_list_samples(sf));
 }
 
-static Float previous_mix_xramp_ptree(snd_fd *sf)
+static mus_float_t previous_mix_xramp_ptree(snd_fd *sf)
 {
   if (sf->loc < sf->first) 
     return(previous_sound(sf)); 
@@ -1292,9 +1292,9 @@ static Float previous_mix_xramp_ptree(snd_fd *sf)
 
 
 
-static Float next_ramp_to_split_value(snd_fd *sf)
+static mus_float_t next_ramp_to_split_value(snd_fd *sf)
 {
-  Float val = 1.0;
+  mus_float_t val = 1.0;
   int i;
   for (i = 0; i < READER_RSPLIT(sf); i++)
     {
@@ -1304,9 +1304,9 @@ static Float next_ramp_to_split_value(snd_fd *sf)
   return(val);
 }
 
-static Float previous_ramp_to_split_value(snd_fd *sf)
+static mus_float_t previous_ramp_to_split_value(snd_fd *sf)
 {
-  Float val = 1.0;
+  mus_float_t val = 1.0;
   int i;
   for (i = 0; i < READER_RSPLIT(sf); i++)
     {
@@ -1317,9 +1317,9 @@ static Float previous_ramp_to_split_value(snd_fd *sf)
 }
 
 
-static Float next_ramp_from_split_value(snd_fd *sf)
+static mus_float_t next_ramp_from_split_value(snd_fd *sf)
 {
-  Float val = 1.0;
+  mus_float_t val = 1.0;
   int i;
   for (i = READER_RSPLIT(sf); i < READER_RAMPS(sf); i++)
     {
@@ -1329,9 +1329,9 @@ static Float next_ramp_from_split_value(snd_fd *sf)
   return(val);
 }
 
-static Float previous_ramp_from_split_value(snd_fd *sf)
+static mus_float_t previous_ramp_from_split_value(snd_fd *sf)
 {
-  Float val = 1.0;
+  mus_float_t val = 1.0;
   int i;
   for (i = READER_RSPLIT(sf); i < READER_RAMPS(sf); i++)
     {
@@ -1342,10 +1342,10 @@ static Float previous_ramp_from_split_value(snd_fd *sf)
 }
 
 
-static Float next_xramp_to_split_value(snd_fd *sf)
+static mus_float_t next_xramp_to_split_value(snd_fd *sf)
 {
   int i;
-  Float val = READER_PTREE_SCALER(sf, 0);
+  mus_float_t val = READER_PTREE_SCALER(sf, 0);
   for (i = 0; i < READER_XSPLIT(sf); i++)
     {
       val *= (READER_XRAMP_OFFSET(sf, i) + (READER_XRAMP_SCALER(sf, i) * READER_XVAL(sf, i)));
@@ -1354,10 +1354,10 @@ static Float next_xramp_to_split_value(snd_fd *sf)
   return(val);
 }
 
-static Float previous_xramp_to_split_value(snd_fd *sf)
+static mus_float_t previous_xramp_to_split_value(snd_fd *sf)
 {
   int i;
-  Float val = READER_PTREE_SCALER(sf, 0);
+  mus_float_t val = READER_PTREE_SCALER(sf, 0);
   for (i = 0; i < READER_XSPLIT(sf); i++)
     {
       val *= (READER_XRAMP_OFFSET(sf, i) + (READER_XRAMP_SCALER(sf, i) * READER_XVAL(sf, i)));
@@ -1367,10 +1367,10 @@ static Float previous_xramp_to_split_value(snd_fd *sf)
 }
 
 
-static Float next_unscaled_xramp_to_split_value(snd_fd *sf)
+static mus_float_t next_unscaled_xramp_to_split_value(snd_fd *sf)
 {
   int i;
-  Float val = 1.0;
+  mus_float_t val = 1.0;
   for (i = 0; i < READER_XSPLIT(sf); i++)
     {
       val *= (READER_XRAMP_OFFSET(sf, i) + (READER_XRAMP_SCALER(sf, i) * READER_XVAL(sf, i)));
@@ -1379,10 +1379,10 @@ static Float next_unscaled_xramp_to_split_value(snd_fd *sf)
   return(val);
 }
 
-static Float previous_unscaled_xramp_to_split_value(snd_fd *sf)
+static mus_float_t previous_unscaled_xramp_to_split_value(snd_fd *sf)
 {
   int i;
-  Float val = 1.0;
+  mus_float_t val = 1.0;
   for (i = 0; i < READER_XSPLIT(sf); i++)
     {
       val *= (READER_XRAMP_OFFSET(sf, i) + (READER_XRAMP_SCALER(sf, i) * READER_XVAL(sf, i)));
@@ -1392,10 +1392,10 @@ static Float previous_unscaled_xramp_to_split_value(snd_fd *sf)
 }
 
 
-static Float next_xramp_from_split_value(snd_fd *sf)
+static mus_float_t next_xramp_from_split_value(snd_fd *sf)
 {
   int i;
-  Float val = 1.0;
+  mus_float_t val = 1.0;
   for (i = READER_XSPLIT(sf); i < READER_XRAMPS(sf); i++)
     {
       val *= (READER_XRAMP_OFFSET(sf, i) + (READER_XRAMP_SCALER(sf, i) * READER_XVAL(sf, i)));
@@ -1404,10 +1404,10 @@ static Float next_xramp_from_split_value(snd_fd *sf)
   return(val);
 }
 
-static Float previous_xramp_from_split_value(snd_fd *sf)
+static mus_float_t previous_xramp_from_split_value(snd_fd *sf)
 {
   int i;
-  Float val = 1.0;
+  mus_float_t val = 1.0;
   for (i = READER_XSPLIT(sf); i < READER_XRAMPS(sf); i++)
     {
       val *= (READER_XRAMP_OFFSET(sf, i) + (READER_XRAMP_SCALER(sf, i) * READER_XVAL(sf, i)));
@@ -1417,48 +1417,48 @@ static Float previous_xramp_from_split_value(snd_fd *sf)
 }
 
 
-static Float next_xramp_ramp_to_split_value(snd_fd *sf)
+static mus_float_t next_xramp_ramp_to_split_value(snd_fd *sf)
 {
   return(next_xramp_to_split_value(sf) * next_ramp_to_split_value(sf));
 }
 
-static Float previous_xramp_ramp_to_split_value(snd_fd *sf)
+static mus_float_t previous_xramp_ramp_to_split_value(snd_fd *sf)
 {
   return(previous_xramp_to_split_value(sf) * previous_ramp_to_split_value(sf));
 }
 
 
-static Float next_unscaled_xramp_ramp_to_split_value(snd_fd *sf)
+static mus_float_t next_unscaled_xramp_ramp_to_split_value(snd_fd *sf)
 {
   return(next_unscaled_xramp_to_split_value(sf) * next_ramp_to_split_value(sf));
 }
 
-static Float previous_unscaled_xramp_ramp_to_split_value(snd_fd *sf)
+static mus_float_t previous_unscaled_xramp_ramp_to_split_value(snd_fd *sf)
 {
   return(previous_unscaled_xramp_to_split_value(sf) * previous_ramp_to_split_value(sf));
 }
 
 
-static Float next_xramp_ramp_from_split_value(snd_fd *sf)
+static mus_float_t next_xramp_ramp_from_split_value(snd_fd *sf)
 {
   return(next_xramp_from_split_value(sf) * next_ramp_from_split_value(sf));
 }
 
-static Float previous_xramp_ramp_from_split_value(snd_fd *sf)
+static mus_float_t previous_xramp_ramp_from_split_value(snd_fd *sf)
 {
   return(previous_xramp_from_split_value(sf) * previous_ramp_from_split_value(sf));
 }
 
 
 
-static Float next_ramp_ptree_ramp_f(snd_fd *sf)
+static mus_float_t next_ramp_ptree_ramp_f(snd_fd *sf)
 {
   if (sf->loc > sf->last) 
     return(next_sound(sf)); 
   else return(next_ramp_from_split_value(sf) * next_ptree_ramp_f_value(sf));
 }
 
-static Float previous_ramp_ptree_ramp_f(snd_fd *sf)
+static mus_float_t previous_ramp_ptree_ramp_f(snd_fd *sf)
 {
   if (sf->loc < sf->first) 
     return(previous_sound(sf)); 
@@ -1466,14 +1466,14 @@ static Float previous_ramp_ptree_ramp_f(snd_fd *sf)
 }
 
 
-static Float next_xramp_ptree_ramp_f(snd_fd *sf)
+static mus_float_t next_xramp_ptree_ramp_f(snd_fd *sf)
 {
   if (sf->loc > sf->last) 
     return(next_sound(sf)); 
   else return(next_xramp_from_split_value(sf) * READER_SCALER(sf) * next_ptree_ramp_f_value(sf));
 }
 
-static Float previous_xramp_ptree_ramp_f(snd_fd *sf)
+static mus_float_t previous_xramp_ptree_ramp_f(snd_fd *sf)
 {
   if (sf->loc < sf->first) 
     return(previous_sound(sf)); 
@@ -1481,14 +1481,14 @@ static Float previous_xramp_ptree_ramp_f(snd_fd *sf)
 }
 
 
-static Float next_xramp_ramp_ptree_ramp_f(snd_fd *sf)
+static mus_float_t next_xramp_ramp_ptree_ramp_f(snd_fd *sf)
 {
   if (sf->loc > sf->last) 
     return(next_sound(sf)); 
   else return(next_xramp_ramp_from_split_value(sf) * next_ptree_ramp_f_value(sf));
 }
 
-static Float previous_xramp_ramp_ptree_ramp_f(snd_fd *sf)
+static mus_float_t previous_xramp_ramp_ptree_ramp_f(snd_fd *sf)
 {
   if (sf->loc < sf->first) 
     return(previous_sound(sf)); 
@@ -1497,9 +1497,9 @@ static Float previous_xramp_ramp_ptree_ramp_f(snd_fd *sf)
 
 
 
-static Float next_ptree_to_split_value(snd_fd *sf)
+static mus_float_t next_ptree_to_split_value(snd_fd *sf)
 {
-  Float val1 = 0.0;
+  mus_float_t val1 = 0.0;
   int i;
   if (!(READER_PTREE_ZERO(sf)))
     val1 = sf->data[sf->loc];
@@ -1511,9 +1511,9 @@ static Float next_ptree_to_split_value(snd_fd *sf)
   return(val1);
 }
 
-static Float previous_ptree_to_split_value(snd_fd *sf)
+static mus_float_t previous_ptree_to_split_value(snd_fd *sf)
 {
-  Float val1 = 0.0;
+  mus_float_t val1 = 0.0;
   int i;
   if (!(READER_PTREE_ZERO(sf)))
     val1 = sf->data[sf->loc];
@@ -1526,7 +1526,7 @@ static Float previous_ptree_to_split_value(snd_fd *sf)
 }
 
 
-static Float next_ptree_from_split_value(snd_fd *sf, Float val1)
+static mus_float_t next_ptree_from_split_value(snd_fd *sf, mus_float_t val1)
 {
   int i;
   for (i = READER_PSPLIT(sf); (i < READER_PTREE_LIST_SIZE(sf)) && (READER_PTREE(sf, i)); i++)
@@ -1536,7 +1536,7 @@ static Float next_ptree_from_split_value(snd_fd *sf, Float val1)
   return(val1);
 }
 
-static Float previous_ptree_from_split_value(snd_fd *sf, Float val1)
+static mus_float_t previous_ptree_from_split_value(snd_fd *sf, mus_float_t val1)
 {
   int i;
   for (i = READER_PSPLIT(sf); (i < READER_PTREE_LIST_SIZE(sf)) && (READER_PTREE(sf, i)); i++)
@@ -1547,7 +1547,7 @@ static Float previous_ptree_from_split_value(snd_fd *sf, Float val1)
 }
 
 
-static Float next_ptree_ramp_f_ptree(snd_fd *sf)
+static mus_float_t next_ptree_ramp_f_ptree(snd_fd *sf)
 {
   if (sf->loc > sf->last) 
     return(next_sound(sf)); 
@@ -1555,7 +1555,7 @@ static Float next_ptree_ramp_f_ptree(snd_fd *sf)
 	      next_ptree_from_split_value(sf, (*(READER_RAMPF(sf)))(sf) * next_ptree_to_split_value(sf)));
 }
 
-static Float previous_ptree_ramp_f_ptree(snd_fd *sf)
+static mus_float_t previous_ptree_ramp_f_ptree(snd_fd *sf)
 {
   if (sf->loc < sf->first) 
     return(previous_sound(sf)); 
@@ -1565,9 +1565,9 @@ static Float previous_ptree_ramp_f_ptree(snd_fd *sf)
 
 
 
-static Float next_ptree_to_split_ramp_f_value(snd_fd *sf)
+static mus_float_t next_ptree_to_split_ramp_f_value(snd_fd *sf)
 {
-  Float val1;
+  mus_float_t val1;
   int i;
   val1 = mus_run_evaluate_ptreec(READER_PTREE(sf, 0), 
 				 (*(READER_RAMPF(sf)))(sf) * READER_PTREE_SCALER(sf, 0) * sf->data[sf->loc++], 
@@ -1579,9 +1579,9 @@ static Float next_ptree_to_split_ramp_f_value(snd_fd *sf)
   return(val1);
 }
 
-static Float previous_ptree_to_split_ramp_f_value(snd_fd *sf)
+static mus_float_t previous_ptree_to_split_ramp_f_value(snd_fd *sf)
 {
-  Float val1;
+  mus_float_t val1;
   int i;
   val1 = mus_run_evaluate_ptreec(READER_PTREE(sf, 0), 
 				 (*(READER_REV_RAMPF(sf)))(sf) * READER_PTREE_SCALER(sf, 0) * sf->data[sf->loc--], 
@@ -1594,7 +1594,7 @@ static Float previous_ptree_to_split_ramp_f_value(snd_fd *sf)
 }
 
 
-static Float next_ptree_ramp_ptree_ramp_f(snd_fd *sf)
+static mus_float_t next_ptree_ramp_ptree_ramp_f(snd_fd *sf)
 {
   if (sf->loc > sf->last) 
     return(next_sound(sf)); 
@@ -1602,7 +1602,7 @@ static Float next_ptree_ramp_ptree_ramp_f(snd_fd *sf)
 	      next_ptree_from_split_value(sf, next_ramp_from_split_value(sf) * next_ptree_to_split_ramp_f_value(sf)));
 }
 
-static Float previous_ptree_ramp_ptree_ramp_f(snd_fd *sf)
+static mus_float_t previous_ptree_ramp_ptree_ramp_f(snd_fd *sf)
 {
   if (sf->loc < sf->first) 
     return(previous_sound(sf)); 
@@ -1611,7 +1611,7 @@ static Float previous_ptree_ramp_ptree_ramp_f(snd_fd *sf)
 }
 
 
-static Float next_ptree_xramp_ptree_ramp_f(snd_fd *sf)
+static mus_float_t next_ptree_xramp_ptree_ramp_f(snd_fd *sf)
 {
   if (sf->loc > sf->last) 
     return(next_sound(sf)); 
@@ -1619,7 +1619,7 @@ static Float next_ptree_xramp_ptree_ramp_f(snd_fd *sf)
 	      next_ptree_from_split_value(sf, next_xramp_from_split_value(sf) * next_ptree_to_split_ramp_f_value(sf)));
 }
 
-static Float previous_ptree_xramp_ptree_ramp_f(snd_fd *sf)
+static mus_float_t previous_ptree_xramp_ptree_ramp_f(snd_fd *sf)
 {
   if (sf->loc < sf->first) 
     return(previous_sound(sf)); 
@@ -1628,7 +1628,7 @@ static Float previous_ptree_xramp_ptree_ramp_f(snd_fd *sf)
 }
 
 
-static Float next_ptree_xramp_ramp_ptree_ramp_f(snd_fd *sf)
+static mus_float_t next_ptree_xramp_ramp_ptree_ramp_f(snd_fd *sf)
 {
   if (sf->loc > sf->last) 
     return(next_sound(sf)); 
@@ -1636,7 +1636,7 @@ static Float next_ptree_xramp_ramp_ptree_ramp_f(snd_fd *sf)
 	      next_ptree_from_split_value(sf, next_xramp_ramp_from_split_value(sf) * next_ptree_to_split_ramp_f_value(sf)));
 }
 
-static Float previous_ptree_xramp_ramp_ptree_ramp_f(snd_fd *sf)
+static mus_float_t previous_ptree_xramp_ramp_ptree_ramp_f(snd_fd *sf)
 {
   if (sf->loc < sf->first) 
     return(previous_sound(sf)); 
@@ -1646,7 +1646,7 @@ static Float previous_ptree_xramp_ramp_ptree_ramp_f(snd_fd *sf)
 
 
 
-static Float next_xramp_ramp_ptree_xramp_ramp_ptree(snd_fd *sf)
+static mus_float_t next_xramp_ramp_ptree_xramp_ramp_ptree(snd_fd *sf)
 {
   if (sf->loc > sf->last) 
     return(next_sound(sf)); 
@@ -1655,7 +1655,7 @@ static Float next_xramp_ramp_ptree_xramp_ramp_ptree(snd_fd *sf)
 	      next_ptree_from_split_value(sf, next_unscaled_xramp_ramp_to_split_value(sf) * next_ptree_to_split_value(sf)));
 }
 
-static Float previous_xramp_ramp_ptree_xramp_ramp_ptree(snd_fd *sf)
+static mus_float_t previous_xramp_ramp_ptree_xramp_ramp_ptree(snd_fd *sf)
 {
   if (sf->loc < sf->first) 
     return(previous_sound(sf)); 
@@ -1739,10 +1739,10 @@ typedef struct {
   bool ptrees, ramps, zero, mixes; /* zero = no underlying data (mix, ptree, etc), mixes = involves virtual mixes in some way */
   int scale_op;
   const char *name;
-  Float (*next)(struct snd_fd *sf);  
-  Float (*previous)(struct snd_fd *sf);  
-  Float (*rampf)(struct snd_fd *sf);  
-  Float (*rev_rampf)(struct snd_fd *sf);  
+  mus_float_t (*next)(struct snd_fd *sf);  
+  mus_float_t (*previous)(struct snd_fd *sf);  
+  mus_float_t (*rampf)(struct snd_fd *sf);  
+  mus_float_t (*rev_rampf)(struct snd_fd *sf);  
 } fragment_type_info;
 
 
@@ -2212,7 +2212,7 @@ static void check_type_info_entry(int op, int expected_ramps, int expected_xramp
 
 static void swap_readers(snd_fd *sf)
 {
-  Float (*rrunf)(struct snd_fd *sf);
+  mus_float_t (*rrunf)(struct snd_fd *sf);
   rrunf = sf->runf;
   sf->runf = sf->rev_runf;
   sf->rev_runf = rrunf;
@@ -2231,7 +2231,7 @@ void read_sample_change_direction(snd_fd *sf, read_direction_t dir1) /* can't us
 }
 
 
-Float protected_next_sample(snd_fd *sf)
+mus_float_t protected_next_sample(snd_fd *sf)
 {
   if (sf->direction == READ_BACKWARD) 
     read_sample_change_direction(sf, READ_FORWARD);
@@ -2239,7 +2239,7 @@ Float protected_next_sample(snd_fd *sf)
 }
 
 
-Float protected_previous_sample(snd_fd *sf)
+mus_float_t protected_previous_sample(snd_fd *sf)
 {
   if (sf->direction == READ_FORWARD) 
     read_sample_change_direction(sf, READ_BACKWARD);
@@ -2470,7 +2470,7 @@ static void setup_ramps(snd_fd *sf, int typ)
 }
 
 
-static void scale_ramp(snd_fd *sf, int rmp, Float scl)
+static void scale_ramp(snd_fd *sf, int rmp, mus_float_t scl)
 {
   READER_INCR(sf, rmp) *= scl;
   READER_VAL(sf, rmp) *= scl;
@@ -2687,13 +2687,13 @@ static void display_ed_list(chan_info *cp, FILE *outp, int i, ed_list *ed, bool 
 }
 
 
-off_t edit_changes_begin_at(chan_info *cp, int edpos)
+mus_long_t edit_changes_begin_at(chan_info *cp, int edpos)
 {
   return(cp->edits[edpos]->beg);
 }
 
 
-off_t edit_changes_end_at(chan_info *cp, int edpos)
+mus_long_t edit_changes_end_at(chan_info *cp, int edpos)
 {
   /* the env code assumes a deletion passes in the number deleted so that the copy knows where to start in the old env */
   return(cp->edits[edpos]->beg + cp->edits[edpos]->len);
@@ -2743,13 +2743,13 @@ static void display_edits(chan_info *cp, FILE *outp, bool with_source)
 }
 
 
-static io_error_t snd_make_file(const char *ofile, int chans, file_info *hdr, snd_fd **sfs, off_t length, bool report_ok)
+static io_error_t snd_make_file(const char *ofile, int chans, file_info *hdr, snd_fd **sfs, mus_long_t length, bool report_ok)
 {
   /* create ofile, fill it by following sfs, use hdr for srate/type/format decisions */
   int ofd;
   int i, j, datumb;
   bool reporting = false;
-  off_t len, total = 0;
+  mus_long_t len, total = 0;
   chan_info *cp = NULL;
   mus_sample_t **obufs;
   io_error_t io_err = IO_NO_ERROR;
@@ -2786,7 +2786,7 @@ static io_error_t snd_make_file(const char *ofile, int chans, file_info *hdr, sn
 		  if (reporting)
 		    {
 		      total += FILE_BUFFER_SIZE;
-		      progress_report(cp, (Float)((double)total / (double)length));
+		      progress_report(cp, (mus_float_t)((double)total / (double)length));
 		    }
 		  /* this is a dangerous time to check for an event -- if in lock_affected_mixes,
 		   *   the current edit is in progress, so any attempt to display will segfault
@@ -2816,7 +2816,7 @@ static io_error_t snd_make_file(const char *ofile, int chans, file_info *hdr, sn
 	      if (reporting)
 		{
 		  total += FILE_BUFFER_SIZE;
-		  progress_report(cp, (Float)((double)total / (double)length));
+		  progress_report(cp, (mus_float_t)((double)total / (double)length));
 		}
 	    }
 	}
@@ -2841,7 +2841,7 @@ static io_error_t snd_make_file(const char *ofile, int chans, file_info *hdr, sn
 }
 
 
-static io_error_t channel_to_file_with_bounds(chan_info *cp, const char *ofile, int edpos, off_t beg, off_t len, file_info *hdr, bool report_ok)
+static io_error_t channel_to_file_with_bounds(chan_info *cp, const char *ofile, int edpos, mus_long_t beg, mus_long_t len, file_info *hdr, bool report_ok)
 {
   snd_info *sp;
   snd_fd **sf;
@@ -3020,7 +3020,7 @@ void edit_history_to_file(FILE *fd, chan_info *cp, bool with_save_state_hook)
 	       * override the entire current sound with a saved file.
 	       */
 	      char *nfile = NULL, *ofile = NULL;
-	      off_t len;
+	      mus_long_t len;
 	      io_error_t io_err;
 	      if (with_save_state_hook)
 		{
@@ -3941,7 +3941,7 @@ static ed_list *make_ed_list(int size)
 }
 
 
-void set_ed_maxamp(chan_info *cp, int edpos, Float val)
+void set_ed_maxamp(chan_info *cp, int edpos, mus_float_t val)
 {
   ed_list *ed;
   ed = cp->edits[edpos];
@@ -3949,7 +3949,7 @@ void set_ed_maxamp(chan_info *cp, int edpos, Float val)
 }
 
 
-Float ed_maxamp(chan_info *cp, int edpos)
+mus_float_t ed_maxamp(chan_info *cp, int edpos)
 {
   ed_list *ed;
   ed = cp->edits[edpos];
@@ -3957,7 +3957,7 @@ Float ed_maxamp(chan_info *cp, int edpos)
 }
 
 
-void set_ed_maxamp_position(chan_info *cp, int edpos, off_t val)
+void set_ed_maxamp_position(chan_info *cp, int edpos, mus_long_t val)
 {
   ed_list *ed;
   ed = cp->edits[edpos];
@@ -3965,7 +3965,7 @@ void set_ed_maxamp_position(chan_info *cp, int edpos, off_t val)
 }
 
 
-off_t ed_maxamp_position(chan_info *cp, int edpos)
+mus_long_t ed_maxamp_position(chan_info *cp, int edpos)
 {
   ed_list *ed;
   ed = cp->edits[edpos];
@@ -3973,7 +3973,7 @@ off_t ed_maxamp_position(chan_info *cp, int edpos)
 }
 
 
-void set_ed_selection_maxamp(chan_info *cp, Float val)
+void set_ed_selection_maxamp(chan_info *cp, mus_float_t val)
 {
   ed_list *ed;
   ed = cp->edits[cp->edit_ctr];
@@ -3981,7 +3981,7 @@ void set_ed_selection_maxamp(chan_info *cp, Float val)
 }
 
 
-Float ed_selection_maxamp(chan_info *cp)
+mus_float_t ed_selection_maxamp(chan_info *cp)
 {
   ed_list *ed;
   ed = cp->edits[cp->edit_ctr];
@@ -3989,7 +3989,7 @@ Float ed_selection_maxamp(chan_info *cp)
 }
 
 
-void set_ed_selection_maxamp_position(chan_info *cp, off_t val)
+void set_ed_selection_maxamp_position(chan_info *cp, mus_long_t val)
 {
   ed_list *ed;
   ed = cp->edits[cp->edit_ctr];
@@ -3997,7 +3997,7 @@ void set_ed_selection_maxamp_position(chan_info *cp, off_t val)
 }
 
 
-off_t ed_selection_maxamp_position(chan_info *cp)
+mus_long_t ed_selection_maxamp_position(chan_info *cp)
 {
   ed_list *ed;
   ed = cp->edits[cp->edit_ctr];
@@ -4086,7 +4086,7 @@ void backup_edit_list(chan_info *cp)
 {
   int cur, i;
   ed_list *old_ed, *new_ed;
-  off_t old_end, new_end;
+  mus_long_t old_end, new_end;
   cur = cp->edit_ctr;
   if (cur <= 0) return;
   new_ed = cp->edits[cur];
@@ -4140,7 +4140,7 @@ void free_edit_list(chan_info *cp)
 }
 
 
-ed_list *initial_ed_list(off_t beg, off_t end)
+ed_list *initial_ed_list(mus_long_t beg, mus_long_t end)
 {
   ed_list *ed;
   ed = make_ed_list(2);
@@ -4254,9 +4254,9 @@ static void new_before_ramp(ed_fragment *new_before, ed_fragment *old_before)
 }
 
 
-static void new_after_ramp(ed_fragment *new_after, ed_fragment *old_after, off_t samp)
+static void new_after_ramp(ed_fragment *new_after, ed_fragment *old_after, mus_long_t samp)
 {
-  off_t dur;
+  mus_long_t dur;
   double d_dur;
 
   dur = samp - ED_GLOBAL_POSITION(old_after);
@@ -4294,11 +4294,11 @@ static void new_after_ramp(ed_fragment *new_after, ed_fragment *old_after, off_t
 }
 
 
-static void ripple_mixes(chan_info *cp, off_t beg, off_t change);
-static void ripple_mixes_with_scale(chan_info *cp, off_t beg, off_t len, Float scl);
-static ed_list *change_samples_in_list(off_t beg, off_t num, int pos, chan_info *cp, ed_fragment **rtn, const char *origin);
+static void ripple_mixes(chan_info *cp, mus_long_t beg, mus_long_t change);
+static void ripple_mixes_with_scale(chan_info *cp, mus_long_t beg, mus_long_t len, mus_float_t scl);
+static ed_list *change_samples_in_list(mus_long_t beg, mus_long_t num, int pos, chan_info *cp, ed_fragment **rtn, const char *origin);
 
-static void ripple_all(chan_info *cp, off_t beg, off_t samps)
+static void ripple_all(chan_info *cp, mus_long_t beg, mus_long_t samps)
 {
   ripple_marks(cp, beg, samps);
   ripple_mixes(cp, beg, samps);
@@ -4306,7 +4306,7 @@ static void ripple_all(chan_info *cp, off_t beg, off_t samps)
 }
 
 
-static bool lock_affected_mixes(chan_info *cp, int edpos, off_t beg, off_t end)
+static bool lock_affected_mixes(chan_info *cp, int edpos, mus_long_t beg, mus_long_t end)
 {
   /* if a deletion, insertion, or change takes place on top of any part of
    *   a virtual mix, we have to write the mix+underlying stuff out as a
@@ -4319,7 +4319,7 @@ static bool lock_affected_mixes(chan_info *cp, int edpos, off_t beg, off_t end)
   ed_list *ed;
   int i;
   bool changed = false;
-  off_t change_beg = -1, change_end = -1, possible_beg = -1, fragment_beg, fragment_end;
+  mus_long_t change_beg = -1, change_end = -1, possible_beg = -1, fragment_beg, fragment_end;
 
   ed = cp->edits[edpos];
 
@@ -4357,7 +4357,7 @@ static bool lock_affected_mixes(chan_info *cp, int edpos, off_t beg, off_t end)
       /* now make the change edit, and make sure the affected mixes are removed from the mixes arrays */
       char *temp_file_name;
       io_error_t err;
-      off_t cur_len, cur_cursor;
+      mus_long_t cur_len, cur_cursor;
       
       cur_len = ed->samples;
       cur_cursor = ed->cursor;
@@ -4415,7 +4415,7 @@ static bool lock_affected_mixes(chan_info *cp, int edpos, off_t beg, off_t end)
 
 /* -------------------------------- insert samples -------------------------------- */
 
-static ed_list *insert_section_into_list(off_t samp, off_t num, ed_list *current_state, ed_fragment **rtn, const char *origin, Float scaler)
+static ed_list *insert_section_into_list(mus_long_t samp, mus_long_t num, ed_list *current_state, ed_fragment **rtn, const char *origin, mus_float_t scaler)
 {
   int cur_len, cur_i, new_i;
   ed_fragment *cur_f, *new_f, *inserted_f = NULL;
@@ -4494,7 +4494,7 @@ static ed_list *insert_section_into_list(off_t samp, off_t num, ed_list *current
 }
 
 
-static ed_list *insert_samples_into_list(off_t samp, off_t num, int pos, chan_info *cp, ed_fragment **rtn, const char *origin, Float scaler)
+static ed_list *insert_samples_into_list(mus_long_t samp, mus_long_t num, int pos, chan_info *cp, ed_fragment **rtn, const char *origin, mus_float_t scaler)
 {
   ed_list *new_state;
   new_state = insert_section_into_list(samp, num, cp->edits[pos], rtn, origin, scaler);
@@ -4512,9 +4512,9 @@ static ed_list *insert_samples_into_list(off_t samp, off_t num, int pos, chan_in
 }
 
 
-static bool insert_zeros(chan_info *cp, off_t beg, off_t num, int edpos)
+static bool insert_zeros(chan_info *cp, mus_long_t beg, mus_long_t num, int edpos)
 {
-  off_t len, new_len;
+  mus_long_t len, new_len;
   ed_fragment *cb;
   ed_list *ed, *old_ed;
   bool backup = false;
@@ -4557,12 +4557,12 @@ static bool insert_zeros(chan_info *cp, off_t beg, off_t num, int edpos)
 }
 
 
-bool extend_with_zeros(chan_info *cp, off_t beg, off_t num, int edpos, const char *origin)
+bool extend_with_zeros(chan_info *cp, mus_long_t beg, mus_long_t num, int edpos, const char *origin)
 {
   /* this can also be called when beg is within the current sound -> insert a block of zeros */
 
   int i;
-  off_t len, new_len;
+  mus_long_t len, new_len;
   ed_fragment *cb;
   ed_list *new_ed, *old_ed;
 
@@ -4623,9 +4623,9 @@ bool extend_with_zeros(chan_info *cp, off_t beg, off_t num, int edpos, const cha
 }
 
 
-bool file_insert_samples(off_t beg, off_t num, const char *inserted_file, chan_info *cp, int chan, file_delete_t auto_delete, const char *origin, int edpos)
+bool file_insert_samples(mus_long_t beg, mus_long_t num, const char *inserted_file, chan_info *cp, int chan, file_delete_t auto_delete, const char *origin, int edpos)
 {
-  off_t len;
+  mus_long_t len;
   ed_fragment *cb;
   file_info *hdr;
   ed_list *ed;
@@ -4695,9 +4695,9 @@ bool file_insert_samples(off_t beg, off_t num, const char *inserted_file, chan_i
 }
 
 
-bool insert_samples(off_t beg, off_t num, mus_sample_t *vals, chan_info *cp, const char *origin, int edpos)
+bool insert_samples(mus_long_t beg, mus_long_t num, mus_sample_t *vals, chan_info *cp, const char *origin, int edpos)
 {
-  off_t len;
+  mus_long_t len;
   ed_fragment *cb;
   ed_list *ed;
   int backup = 0;
@@ -4750,7 +4750,7 @@ bool insert_samples(off_t beg, off_t num, mus_sample_t *vals, chan_info *cp, con
 }
 
 
-bool insert_complete_file(snd_info *sp, const char *str, off_t chan_beg, file_delete_t auto_delete)
+bool insert_complete_file(snd_info *sp, const char *str, mus_long_t chan_beg, file_delete_t auto_delete)
 {
   int nc;
   bool ok = false;
@@ -4759,7 +4759,7 @@ bool insert_complete_file(snd_info *sp, const char *str, off_t chan_beg, file_de
   nc = mus_sound_chans(filename);
   if (nc > 0)
     {
-      off_t len;
+      mus_long_t len;
       len = mus_sound_frames(filename);
       if (len == 0)
 	snd_warning(_("%s has no data"), str);
@@ -4806,11 +4806,11 @@ bool insert_complete_file_at_cursor(snd_info *sp, const char *filename)
 
 /* -------------------------------- delete samples -------------------------------- */
 
-static ed_list *delete_section_from_list(off_t beg, off_t num, ed_list *current_state)
+static ed_list *delete_section_from_list(mus_long_t beg, mus_long_t num, ed_list *current_state)
 {
   int cur_len, cur_i, new_i;
   ed_fragment *cur_f, *new_f;
-  off_t end, next_pos;
+  mus_long_t end, next_pos;
   ed_list *new_state;
   if (num <= 0) return(NULL);
   cur_len = current_state->size;
@@ -4891,9 +4891,9 @@ static ed_list *delete_section_from_list(off_t beg, off_t num, ed_list *current_
 }
 
 
-bool delete_samples(off_t beg, off_t num, chan_info *cp, int edpos)
+bool delete_samples(mus_long_t beg, mus_long_t num, chan_info *cp, int edpos)
 {
-  off_t len;
+  mus_long_t len;
   if (num <= 0) return(true);
   len = cp->edits[edpos]->samples;
   if ((beg < len) && (beg >= 0))
@@ -4950,12 +4950,12 @@ bool delete_samples(off_t beg, off_t num, chan_info *cp, int edpos)
 
 /* -------------------------------- change samples -------------------------------- */
 
-static ed_list *change_samples_in_list(off_t beg, off_t num, int pos, chan_info *cp, ed_fragment **rtn, const char *origin)
+static ed_list *change_samples_in_list(mus_long_t beg, mus_long_t num, int pos, chan_info *cp, ed_fragment **rtn, const char *origin)
 {
   /* delete + insert -- already checked that beg < cur end */
   ed_list *new_state;
   ed_list *del_state;
-  off_t del_num, cur_end;
+  mus_long_t del_num, cur_end;
   ed_fragment *changed_f;
 
   if (num <= 0) return(NULL);
@@ -4986,14 +4986,14 @@ static ed_list *change_samples_in_list(off_t beg, off_t num, int pos, chan_info 
 }
 
 
-bool file_change_samples(off_t beg, off_t num, const char *tempfile, chan_info *cp, int chan, file_delete_t auto_delete, const char *origin, int edpos)
+bool file_change_samples(mus_long_t beg, mus_long_t num, const char *tempfile, chan_info *cp, int chan, file_delete_t auto_delete, const char *origin, int edpos)
 {
   file_info *hdr;
   hdr = make_file_info(tempfile, FILE_READ_ONLY, FILE_NOT_SELECTED);
   if (hdr)
     {
       ed_list *ed;
-      off_t prev_len, new_len;
+      mus_long_t prev_len, new_len;
       ed_fragment *cb;
       int fd;
       int backup = 0;
@@ -5066,7 +5066,7 @@ bool file_change_samples(off_t beg, off_t num, const char *tempfile, chan_info *
 }
 
 
-bool file_override_samples(off_t num, const char *tempfile, chan_info *cp, int chan, file_delete_t auto_delete, const char *origin)
+bool file_override_samples(mus_long_t num, const char *tempfile, chan_info *cp, int chan, file_delete_t auto_delete, const char *origin)
 {
   file_info *hdr;
   hdr = make_file_info(tempfile, FILE_READ_ONLY, FILE_NOT_SELECTED);
@@ -5120,9 +5120,9 @@ bool file_override_samples(off_t num, const char *tempfile, chan_info *cp, int c
 }
 
 
-bool change_samples(off_t beg, off_t num, mus_sample_t *vals, chan_info *cp, const char *origin, int edpos)
+bool change_samples(mus_long_t beg, mus_long_t num, mus_sample_t *vals, chan_info *cp, const char *origin, int edpos)
 {
-  off_t prev_len, new_len;
+  mus_long_t prev_len, new_len;
   ed_fragment *cb;
   ed_list *ed;
   int backup = 0;
@@ -5176,17 +5176,17 @@ bool change_samples(off_t beg, off_t num, mus_sample_t *vals, chan_info *cp, con
 
 /* -------------------------------- ramp/scale/ptree -------------------------------- */
 
-bool unrampable(chan_info *cp, off_t beg, off_t dur, int pos, bool is_xramp)
+bool unrampable(chan_info *cp, mus_long_t beg, mus_long_t dur, int pos, bool is_xramp)
 {
   /* from enveloper (snd-sig.c) */
   ed_list *ed;
   int i;
-  off_t end;
+  mus_long_t end;
   ed = cp->edits[pos];
   end = beg + dur - 1;
   for (i = 0; i < ed->size - 1; i++) 
     {
-      off_t loc, next_loc;
+      mus_long_t loc, next_loc;
       int typ;
       if (FRAGMENT_SOUND(ed, i) == EDIT_LIST_END_MARK) return(false);
       loc = FRAGMENT_GLOBAL_POSITION(ed, i);
@@ -5205,17 +5205,17 @@ bool unrampable(chan_info *cp, off_t beg, off_t dur, int pos, bool is_xramp)
 }
 
 
-bool unptreeable(chan_info *cp, off_t beg, off_t dur, int pos)
+bool unptreeable(chan_info *cp, mus_long_t beg, mus_long_t dur, int pos)
 {
   /* from ptree-channel (snd-sig.c) check for pre-existing ptree-channel */
   ed_list *ed;
   int i;
-  off_t end;
+  mus_long_t end;
   ed = cp->edits[pos];
   end = beg + dur - 1;
   for (i = 0; i < ed->size - 1; i++) 
     {
-      off_t loc, next_loc;
+      mus_long_t loc, next_loc;
       if (FRAGMENT_SOUND(ed, i) == EDIT_LIST_END_MARK) return(false);
       loc = FRAGMENT_GLOBAL_POSITION(ed, i);
       if (loc > end) return(false);
@@ -5286,14 +5286,14 @@ static bool found_virtual_mix(chan_info *cp, int edpos)
 }
 
 
-static bool found_unmixable_ptreed_op(chan_info *cp, int edpos, off_t beg, off_t end)
+static bool found_unmixable_ptreed_op(chan_info *cp, int edpos, mus_long_t beg, mus_long_t end)
 {
   ed_list *ed;
   int i;
   ed = cp->edits[edpos];
   for (i = 0; i < ed->size - 1; i++) 
     {
-      off_t loc, next_loc;
+      mus_long_t loc, next_loc;
       if (FRAGMENT_SOUND(ed, i) == EDIT_LIST_END_MARK) return(false);
       loc = FRAGMENT_GLOBAL_POSITION(ed, i);
       if (loc > end) return(false);
@@ -5312,14 +5312,14 @@ static bool found_unmixable_ptreed_op(chan_info *cp, int edpos, off_t beg, off_t
 }
 
 
-static bool found_unmixable_ramped_op(chan_info *cp, int edpos, off_t beg, off_t end, bool is_xramp)
+static bool found_unmixable_ramped_op(chan_info *cp, int edpos, mus_long_t beg, mus_long_t end, bool is_xramp)
 {
   ed_list *ed;
   int i;
   ed = cp->edits[edpos];
   for (i = 0; i < ed->size - 1; i++) 
     {
-      off_t loc, next_loc;
+      mus_long_t loc, next_loc;
       if (FRAGMENT_SOUND(ed, i) == EDIT_LIST_END_MARK) return(false);
       loc = FRAGMENT_GLOBAL_POSITION(ed, i);
       if (loc > end) return(false);
@@ -5340,17 +5340,17 @@ static bool found_unmixable_ramped_op(chan_info *cp, int edpos, off_t beg, off_t
 }
 
 
-static bool section_is_zero(chan_info *cp, off_t beg, off_t dur, int pos)
+static bool section_is_zero(chan_info *cp, mus_long_t beg, mus_long_t dur, int pos)
 {
   ed_list *ed;
   int i;
-  off_t end;
+  mus_long_t end;
 
   ed = cp->edits[pos];
   end = beg + dur - 1;
   for (i = 0; i < ed->size - 1; i++) 
     {
-      off_t loc, next_loc;
+      mus_long_t loc, next_loc;
       int typ;
       if (FRAGMENT_SOUND(ed, i) == EDIT_LIST_END_MARK) return(true);
       loc = FRAGMENT_GLOBAL_POSITION(ed, i);
@@ -5366,9 +5366,9 @@ static bool section_is_zero(chan_info *cp, off_t beg, off_t dur, int pos)
 }
 
 
-static ed_list *copy_and_split_list(off_t beg, off_t num, ed_list *current_state)
+static ed_list *copy_and_split_list(mus_long_t beg, mus_long_t num, ed_list *current_state)
 {
-  off_t end, next_pos;
+  mus_long_t end, next_pos;
   int cur_len, cur_i, new_i;
   ed_list *new_state;
   ed_fragment *new_f, *cur_f, *mid_f = NULL;
@@ -5446,13 +5446,13 @@ static ed_list *copy_and_split_list(off_t beg, off_t num, ed_list *current_state
 			{
 			  if (ED_RAMPS(split_front_f))
 			    {
-			      Float *ramp_begs = NULL, *xramp_begs = NULL;
+			      mus_float_t *ramp_begs = NULL, *xramp_begs = NULL;
 			      int i, rmps, xrmps;
 			      
 			      rmps = ED_RAMP_LIST_SIZE(split_front_f);
 			      xrmps = ED_XRAMP_LIST_SIZE(split_front_f);
-			      if (rmps > 0) ramp_begs = (Float *)calloc(rmps, sizeof(Float));
-			      if (xrmps > 0) xramp_begs = (Float *)calloc(xrmps, sizeof(Float));
+			      if (rmps > 0) ramp_begs = (mus_float_t *)calloc(rmps, sizeof(mus_float_t));
+			      if (xrmps > 0) xramp_begs = (mus_float_t *)calloc(xrmps, sizeof(mus_float_t));
 
 			      for (i = 0; i < rmps; i++)
 				ramp_begs[i] = ED_RAMP_START(split_front_f, i);
@@ -5487,10 +5487,10 @@ static ed_list *copy_and_split_list(off_t beg, off_t num, ed_list *current_state
 }
 
 
-bool scale_channel_with_origin(chan_info *cp, Float scl, off_t beg, off_t num, int pos, bool in_as_one_edit, const char *origin)
+bool scale_channel_with_origin(chan_info *cp, mus_float_t scl, mus_long_t beg, mus_long_t num, int pos, bool in_as_one_edit, const char *origin)
 {
   /* copy current ed-list and reset scalers */
-  off_t len = 0;
+  mus_long_t len = 0;
   int i;
   ed_list *new_ed, *old_ed;
   bool backup = false;
@@ -5614,13 +5614,13 @@ bool scale_channel_with_origin(chan_info *cp, Float scl, off_t beg, off_t num, i
 }
 
 
-bool scale_channel(chan_info *cp, Float scl, off_t beg, off_t num, int pos, bool in_as_one_edit)
+bool scale_channel(chan_info *cp, mus_float_t scl, mus_long_t beg, mus_long_t num, int pos, bool in_as_one_edit)
 {
   return(scale_channel_with_origin(cp, scl, beg, num, pos, in_as_one_edit, NULL));
 }
 
 
-static void add_ramp_to_fragment(ed_list *new_ed, int i, double start, double incr, Float scaler, Float offset, bool is_xramp)
+static void add_ramp_to_fragment(ed_list *new_ed, int i, double start, double incr, mus_float_t scaler, mus_float_t offset, bool is_xramp)
 {
   ed_fragment *ed;
   int rmps = 0, xrmps = 0, loc, typ;
@@ -5674,10 +5674,10 @@ static void add_ramp_to_fragment(ed_list *new_ed, int i, double start, double in
 
 
 static bool all_ramp_channel(chan_info *cp, double start, double incr, double scaler, double offset, 
-			     off_t beg, off_t num, int pos, bool in_as_one_edit, const char *origin, 
+			     mus_long_t beg, mus_long_t num, int pos, bool in_as_one_edit, const char *origin, 
 			     bool is_xramp, mus_any *e, int xramp_seg_loc)
 {
-  off_t len = 0;
+  mus_long_t len = 0;
   int i;
   ed_list *new_ed, *old_ed;
   bool backup = false;
@@ -5702,7 +5702,7 @@ static bool all_ramp_channel(chan_info *cp, double start, double incr, double sc
 
   if (found_virtual_mix(cp, pos))
     {
-      off_t lock_beg, lock_end;
+      mus_long_t lock_beg, lock_end;
       if (found_unmixable_ramped_op(cp, pos, beg, beg + num, is_xramp))
 	{
 	  lock_beg = 0;
@@ -5765,7 +5765,7 @@ static bool all_ramp_channel(chan_info *cp, double start, double incr, double sc
   new_ed->sound_location = 0;
   if (!is_xramp)
     {
-      Float rmp0, rmp1;
+      mus_float_t rmp0, rmp1;
       rmp0 = rstart;
       rmp1 = rstart + incr * (num -1); /* want end point */
 #if HAVE_FORTH
@@ -5782,7 +5782,7 @@ static bool all_ramp_channel(chan_info *cp, double start, double incr, double sc
     }
   else
     {
-      Float *data;
+      mus_float_t *data;
       data = mus_data(e);
 #if HAVE_FORTH
       if (num == len)
@@ -5815,20 +5815,20 @@ static bool all_ramp_channel(chan_info *cp, double start, double incr, double sc
 }
 
 
-bool ramp_channel(chan_info *cp, double start, double incr, off_t beg, off_t num, int pos, bool in_as_one_edit)
+bool ramp_channel(chan_info *cp, double start, double incr, mus_long_t beg, mus_long_t num, int pos, bool in_as_one_edit)
 {
   return(all_ramp_channel(cp, start, incr, 0.0, 0.0, beg, num, pos, in_as_one_edit, S_ramp_channel, false, NULL, 0));
 }
 
 
 bool xramp_channel(chan_info *cp, double start, double incr, double scaler, double offset, 
-		   off_t beg, off_t num, int pos, bool in_as_one_edit, mus_any *e, int xramp_seg_loc)
+		   mus_long_t beg, mus_long_t num, int pos, bool in_as_one_edit, mus_any *e, int xramp_seg_loc)
 {
   return(all_ramp_channel(cp, start, incr, scaler, offset, beg, num, pos, in_as_one_edit, S_xramp_channel, true, e, xramp_seg_loc));
 }
 
 
-static void add_ptree_to_fragment(ed_list *new_ed, int i, int ptree_loc, off_t beg, off_t num)
+static void add_ptree_to_fragment(ed_list *new_ed, int i, int ptree_loc, mus_long_t beg, mus_long_t num)
 {
   int typ, tree;
   ed_fragment *ed;
@@ -5868,9 +5868,9 @@ static void add_ptree_to_fragment(ed_list *new_ed, int i, int ptree_loc, off_t b
 }
 
 
-void ptree_channel(chan_info *cp, struct ptree *tree, off_t beg, off_t num, int pos, bool env_it, XEN init_func, const char *origin)
+void ptree_channel(chan_info *cp, struct ptree *tree, mus_long_t beg, mus_long_t num, int pos, bool env_it, XEN init_func, const char *origin)
 {
-  off_t len;
+  mus_long_t len;
   int i, ptree_loc = 0;
   ed_list *new_ed, *old_ed;
   bool backup = false;
@@ -5914,7 +5914,7 @@ void ptree_channel(chan_info *cp, struct ptree *tree, off_t beg, off_t num, int 
    */
   if (found_virtual_mix(cp, pos))
     {
-      off_t lock_beg, lock_end;
+      mus_long_t lock_beg, lock_end;
       if (found_unmixable_ptreed_op(cp, pos, beg, beg + num))
 	{
 	  lock_beg = 0;
@@ -6101,7 +6101,7 @@ snd_fd *free_snd_fd(snd_fd *sf)
 }
 
 
-off_t current_location(snd_fd *sf) 
+mus_long_t current_location(snd_fd *sf) 
 {
   /* only used by moving cursor code in snd-dac.c [and sample-reader-position] */
   if (sf->current_sound)
@@ -6110,13 +6110,13 @@ off_t current_location(snd_fd *sf)
 }
 
 
-static snd_fd *init_sample_read_any_with_bufsize(off_t samp, chan_info *cp, read_direction_t direction, int edit_position, int bufsize)
+static snd_fd *init_sample_read_any_with_bufsize(mus_long_t samp, chan_info *cp, read_direction_t direction, int edit_position, int bufsize)
 {
   snd_fd *sf;
   snd_info *sp;
   ed_list *ed;
   int len, i;
-  off_t curlen;
+  mus_long_t curlen;
   snd_data *first_snd = NULL;
 
   if (cp->active < CHANNEL_HAS_EDIT_LIST) return(NULL);
@@ -6178,7 +6178,7 @@ static snd_fd *init_sample_read_any_with_bufsize(off_t samp, chan_info *cp, read
       if ((ED_GLOBAL_POSITION(cb) > samp) || 
 	  (ED_SOUND(cb) == EDIT_LIST_END_MARK))             /* i.e. we went one too far */
 	{
-	  off_t ind0, ind1, indx;
+	  mus_long_t ind0, ind1, indx;
 	  sf->cb = FRAGMENT(ed, i - 1);                     /* so back up one */
 	  sf->cbi = i - 1;
 	  sf->frag_pos = samp - READER_GLOBAL_POSITION(sf);
@@ -6240,22 +6240,22 @@ static snd_fd *init_sample_read_any_with_bufsize(off_t samp, chan_info *cp, read
 }
 
 
-snd_fd *init_sample_read_any(off_t samp, chan_info *cp, read_direction_t direction, int edit_position)
+snd_fd *init_sample_read_any(mus_long_t samp, chan_info *cp, read_direction_t direction, int edit_position)
 {
   return(init_sample_read_any_with_bufsize(samp, cp, direction, edit_position, MIX_FILE_BUFFER_SIZE));
 }
 
 
-snd_fd *init_sample_read(off_t samp, chan_info *cp, read_direction_t direction)
+snd_fd *init_sample_read(mus_long_t samp, chan_info *cp, read_direction_t direction)
 {
   return(init_sample_read_any_with_bufsize(samp, cp, direction, cp->edit_ctr, MIX_FILE_BUFFER_SIZE));
 }
 
 
-Float chn_sample(off_t samp, chan_info *cp, int pos)
+mus_float_t chn_sample(mus_long_t samp, chan_info *cp, int pos)
 { 
   snd_fd *sf;
-  Float val = 0.0;
+  mus_float_t val = 0.0;
 
   /* pos is assumed to be right here, not AT_CURRENT_EDIT_POSITION for example */
   if ((cp->active < CHANNEL_HAS_EDIT_LIST) || 
@@ -6287,7 +6287,7 @@ Float chn_sample(off_t samp, chan_info *cp, int pos)
 
 static void previous_sound_1(snd_fd *sf) 
 {
-  off_t ind0, ind1, indx;
+  mus_long_t ind0, ind1, indx;
   bool at_start;
   if ((sf->cp) && 
       (sf->cp->active < CHANNEL_HAS_EDIT_LIST))
@@ -6369,7 +6369,7 @@ static void previous_sound_1(snd_fd *sf)
 }
 
 
-static Float previous_sound(snd_fd *sf)
+static mus_float_t previous_sound(snd_fd *sf)
 {
   previous_sound_1(sf);
   return(read_sample(sf));
@@ -6378,7 +6378,7 @@ static Float previous_sound(snd_fd *sf)
 
 static void next_sound_1(snd_fd *sf)
 {
-  off_t ind0, ind1, indx;
+  mus_long_t ind0, ind1, indx;
   bool at_end = false;
 
   if ((sf->cp) && 
@@ -6465,7 +6465,7 @@ static void next_sound_1(snd_fd *sf)
 }
 
 
-static Float next_sound(snd_fd *sf)
+static mus_float_t next_sound(snd_fd *sf)
 {
   next_sound_1(sf);
   return(read_sample(sf));
@@ -6583,8 +6583,8 @@ io_error_t save_edits_and_update_display(snd_info *sp)
   /* read_only already checked */
   char *ofile = NULL;
   int i;
-  off_t samples = 0;
-  off_t *old_cursors = NULL;
+  mus_long_t samples = 0;
+  mus_long_t *old_cursors = NULL;
   chan_info *cp;
   void *ms, *sa;
   file_info *sphdr = NULL;
@@ -6627,7 +6627,7 @@ io_error_t save_edits_and_update_display(snd_info *sp)
   sphdr = sp->hdr;
   sphdr->samples = samples * sp->nchans;
   ms = (void *)sound_store_marks(sp);
-  old_cursors = (off_t *)calloc(sp->nchans, sizeof(off_t));
+  old_cursors = (mus_long_t *)calloc(sp->nchans, sizeof(mus_long_t));
   for (i = 0; i < sp->nchans; i++)
     {
       cp = sp->chans[i];
@@ -6687,7 +6687,7 @@ io_error_t save_edits_without_display(snd_info *sp, const char *new_name, int ty
    */
   file_info *hdr;
   snd_fd **sf;
-  off_t frames = 0;
+  mus_long_t frames = 0;
   int i;
   file_info *ohdr;
   io_error_t err = IO_NO_ERROR;
@@ -7046,7 +7046,7 @@ static void make_mix_fragment(ed_list *new_ed, int i, mix_state *ms)
 }
 
 
-static ed_list *make_mix_edit(ed_list *old_ed, off_t beg, off_t len, mix_state *ms, bool full_fragment)
+static ed_list *make_mix_edit(ed_list *old_ed, mus_long_t beg, mus_long_t len, mix_state *ms, bool full_fragment)
 {
   ed_list *new_ed;
   int i;
@@ -7084,9 +7084,9 @@ static ed_list *make_mix_edit(ed_list *old_ed, off_t beg, off_t len, mix_state *
 }
 
 
-int mix_file_with_tag(chan_info *cp, const char *filename, int chan, off_t beg, file_delete_t auto_delete, const char *origin)
+int mix_file_with_tag(chan_info *cp, const char *filename, int chan, mus_long_t beg, file_delete_t auto_delete, const char *origin)
 {
-  off_t file_len, old_len, new_len;
+  mus_long_t file_len, old_len, new_len;
   int edpos;
   int fd, mix_loc;
   ed_list *new_ed, *old_ed;
@@ -7153,10 +7153,10 @@ int mix_file_with_tag(chan_info *cp, const char *filename, int chan, off_t beg, 
 }
 
 
-int mix_buffer_with_tag(chan_info *cp, mus_sample_t *data, off_t beg, off_t buf_len, const char *origin)
+int mix_buffer_with_tag(chan_info *cp, mus_sample_t *data, mus_long_t beg, mus_long_t buf_len, const char *origin)
 {
   int edpos, mix_loc;
-  off_t old_len, new_len;
+  mus_long_t old_len, new_len;
   ed_list *old_ed, *new_ed;
   bool backup = false;
   mix_state *ms;
@@ -7260,7 +7260,7 @@ void remix(chan_info *cp, mix_state *ms)
 }
 
 
-static void ripple_mixes_1(chan_info *cp, off_t beg, off_t len, off_t change, Float scl)
+static void ripple_mixes_1(chan_info *cp, mus_long_t beg, mus_long_t len, mus_long_t change, mus_float_t scl)
 {
   /* this is where most of the time goes in mixing! */
   if ((cp) &&
@@ -7321,23 +7321,23 @@ static void ripple_mixes_1(chan_info *cp, off_t beg, off_t len, off_t change, Fl
 }
 
 
-static void ripple_mixes(chan_info *cp, off_t beg, off_t change)
+static void ripple_mixes(chan_info *cp, mus_long_t beg, mus_long_t change)
 {
   ripple_mixes_1(cp, beg, 0, change, 1.0);
 }
 
 
-static void ripple_mixes_with_scale(chan_info *cp, off_t beg, off_t len, Float scl)
+static void ripple_mixes_with_scale(chan_info *cp, mus_long_t beg, mus_long_t len, mus_float_t scl)
 {
   ripple_mixes_1(cp, beg, len, 0, scl);
 }
 
 
-snd_fd *make_virtual_mix_reader(chan_info *cp, off_t beg, off_t len, int index, Float scl, read_direction_t direction)
+snd_fd *make_virtual_mix_reader(chan_info *cp, mus_long_t beg, mus_long_t len, int index, mus_float_t scl, read_direction_t direction)
 {
   snd_fd *sf;
   snd_data *first_snd = NULL;
-  off_t ind0, ind1, indx;
+  mus_long_t ind0, ind1, indx;
 
   sf = (snd_fd *)calloc(1, sizeof(snd_fd));
 
@@ -7408,11 +7408,11 @@ snd_fd *make_virtual_mix_reader(chan_info *cp, off_t beg, off_t len, int index, 
 }
 
 
-bool begin_mix_op(chan_info *cp, off_t old_beg, off_t old_len, off_t new_beg, off_t new_len, int edpos, const char *caller)
+bool begin_mix_op(chan_info *cp, mus_long_t old_beg, mus_long_t old_len, mus_long_t new_beg, mus_long_t new_len, int edpos, const char *caller)
 {
   int i;
   ed_list *new_ed, *old_ed, *temp_ed;
-  off_t new_samples;
+  mus_long_t new_samples;
 
   old_ed = cp->edits[edpos];
   if (!(prepare_edit_list(cp, edpos, caller))) 
@@ -7423,7 +7423,7 @@ bool begin_mix_op(chan_info *cp, off_t old_beg, off_t old_len, off_t new_beg, of
   if (new_samples > old_ed->samples)
     {
       ed_fragment *cb;
-      off_t old_pos;
+      mus_long_t old_pos;
       cb = make_ed_fragment();
 
       old_pos = FRAGMENT_GLOBAL_POSITION(old_ed, old_ed->size - 1);
@@ -7460,7 +7460,7 @@ bool begin_mix_op(chan_info *cp, off_t old_beg, off_t old_len, off_t new_beg, of
     }
   else 
     {
-      off_t old_end, new_end;
+      mus_long_t old_end, new_end;
       new_ed = copy_and_split_list(new_beg, new_len, temp_ed);
       if (temp_ed != old_ed)
 	{
@@ -7497,7 +7497,7 @@ bool begin_mix_op(chan_info *cp, off_t old_beg, off_t old_len, off_t new_beg, of
 }
 
 
-static int check_splice_at(ed_list *new_ed, off_t beg, int start)
+static int check_splice_at(ed_list *new_ed, mus_long_t beg, int start)
 {
   int i;  
   for (i = start; i < new_ed->size; i++)
@@ -7523,7 +7523,7 @@ static int check_splice_at(ed_list *new_ed, off_t beg, int start)
 }
 
 
-void end_mix_op(chan_info *cp, off_t old_beg, off_t old_len)
+void end_mix_op(chan_info *cp, mus_long_t old_beg, mus_long_t old_len)
 {
   /* if beg != 0, try to remove old splice points */
   if (old_beg > 0)
@@ -7555,7 +7555,7 @@ static XEN g_display_edits(XEN snd, XEN chn, XEN edpos, XEN with_source)
   chan_info *cp;
   int fd, pos = AT_CURRENT_EDIT_POSITION;
   bool include_source = true;
-  off_t len;
+  mus_long_t len;
   XEN res;
   ssize_t bytes;
 
@@ -7654,7 +7654,7 @@ the edit lists '((global-pos data-num local-pos local-end scaler rmp0 rmp1 type-
   for (i = len - 1; i >= 0; i--)
     {
       ed_fragment *ed;
-      Float rbeg, rend;
+      mus_float_t rbeg, rend;
       ed = FRAGMENT(eds, i);
       if ((ED_RAMPS(ed)) && (ED_RAMP_LIST_SIZE(ed) > 0))
 	{
@@ -7960,7 +7960,7 @@ snd can be a filename, or a sound index number."
   chan_info *cp;
   const char *filename;
   snd_info *loc_sp = NULL;
-  off_t beg;
+  mus_long_t beg;
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samp_n), samp_n, XEN_ARG_1, S_make_sample_reader, "a number");
   XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(dir1), dir1, XEN_ARG_4, S_make_sample_reader, "an integer");
   if (XEN_STRING_P(snd))
@@ -8015,7 +8015,7 @@ return a reader ready to access region's channel chn data starting at start-samp
 
   snd_fd *fd = NULL;
   int reg_n, chn_n;
-  off_t beg;
+  mus_long_t beg;
   int direction = 1;
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samp_n), samp_n, XEN_ARG_1, S_make_region_sample_reader, "a number");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(reg), reg, XEN_ARG_2, S_make_region_sample_reader, "an integer");
@@ -8417,9 +8417,9 @@ static XEN g_scale_channel(XEN scl, XEN beg, XEN num, XEN snd, XEN chn, XEN edpo
   #define H_scale_channel "(" S_scale_channel " scaler :optional (beg 0) (dur len) snd chn edpos): \
 scale samples in the given sound/channel between beg and beg + num by scaler."
 
-  Float scaler;
+  mus_float_t scaler;
   chan_info *cp;
-  off_t samp;
+  mus_long_t samp;
   int pos;
   XEN_ASSERT_TYPE(XEN_NUMBER_P(scl), scl, XEN_ARG_1, S_scale_channel, "a number");
   ASSERT_SAMPLE_TYPE(S_scale_channel, beg, XEN_ARG_2);
@@ -8440,9 +8440,9 @@ static XEN g_normalize_channel(XEN scl, XEN beg, XEN num, XEN snd, XEN chn, XEN 
   #define H_normalize_channel "(" S_normalize_channel " norm :optional (beg 0) (dur len) snd chn edpos): \
 scale samples in the given sound/channel between beg and beg + num to norm."
 
-  Float norm, cur_max;
+  mus_float_t norm, cur_max;
   chan_info *cp;
-  off_t samp, samps;
+  mus_long_t samp, samps;
   int pos;
   char *origin = NULL;
 
@@ -8490,11 +8490,11 @@ scale samples in the given sound/channel between beg and beg + num to norm."
 }			  
 
 
-Float channel_local_maxamp(chan_info *cp, off_t beg, off_t num, int edpos, off_t *maxpos)
+mus_float_t channel_local_maxamp(chan_info *cp, mus_long_t beg, mus_long_t num, int edpos, mus_long_t *maxpos)
 {
   snd_fd *sf;
-  Float ymax, mval;
-  off_t i, mpos = -1;
+  mus_float_t ymax, mval;
+  mus_long_t i, mpos = -1;
   int j = 0;
 
   sf = init_sample_read_any(beg, cp, READ_FORWARD, edpos);
@@ -8597,7 +8597,7 @@ static XEN g_sample(XEN samp_n, XEN snd_n, XEN chn_n, XEN pos_n)
 {
   #define H_sample "(" S_sample " samp :optional snd chn edpos): \
 return sample samp in snd's channel chn (this is a slow access -- use sample-readers for speed)"
-  off_t beg;
+  mus_long_t beg;
   int pos;
   chan_info *cp;
 
@@ -8643,8 +8643,8 @@ static XEN g_set_sample(XEN samp_n, XEN val, XEN snd_n, XEN chn_n, XEN edpos)
   chan_info *cp;
   int pos;
   char *origin;
-  off_t beg;
-  Float fval;
+  mus_long_t beg;
+  mus_float_t fval;
   mus_sample_t ival[1];
 
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samp_n), samp_n, XEN_ARG_1, S_setB S_sample, "a number");
@@ -8759,7 +8759,7 @@ start-samp can be beyond current data end; if truncate is " PROC_TRUE " and star
 the new data's end."
 
   chan_info *cp;
-  off_t len = 0, beg;
+  mus_long_t len = 0, beg;
   bool override = false;
   int pos;
   const char *caller;
@@ -8788,7 +8788,7 @@ the new data's end."
     {
       int inchan = 0;
       file_delete_t delete_file = DONT_DELETE_ME;
-      off_t curlen;
+      mus_long_t curlen;
       const char *fname;
 
       curlen = cp->edits[pos]->samples;
@@ -8830,7 +8830,7 @@ the new data's end."
 	  ivals = g_floats_to_samples(vect, &ilen, caller, 3);
 	  if (ivals)
 	    {
-	      change_samples(beg, (off_t)ilen, ivals, cp, caller, pos);
+	      change_samples(beg, (mus_long_t)ilen, ivals, cp, caller, pos);
 	      free(ivals);
 	    }
 	}
@@ -8853,7 +8853,7 @@ void check_saved_temp_file(const char *type, XEN filename, XEN date_and_length)
 {
   const char *file;
   time_t old_time, new_time;
-  off_t old_bytes, new_bytes;
+  mus_long_t old_bytes, new_bytes;
 
   file = XEN_TO_C_STRING(filename);
   if (mus_file_probe(file))
@@ -8921,8 +8921,8 @@ static XEN samples_to_vct_1(XEN samp_0, XEN samps, XEN snd_n, XEN chn_n, XEN edp
 {
   chan_info *cp;
   snd_fd *sf;
-  Float *fvals;
-  off_t i, len, beg;
+  mus_float_t *fvals;
+  mus_long_t i, len, beg;
   int pos, num_to_read = MIX_FILE_BUFFER_SIZE;
 
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samp_0) || XEN_FALSE_P(samp_0), samp_0, XEN_ARG_1, caller, "a number");
@@ -8935,7 +8935,7 @@ static XEN samples_to_vct_1(XEN samp_0, XEN samps, XEN snd_n, XEN chn_n, XEN edp
   len = XEN_TO_C_OFF_T_OR_ELSE(samps, cp->edits[pos]->samples - beg);
   if ((beg == 0) && (len == 0)) return(XEN_FALSE); /* empty file (channel) possibility */
   if (len <= 0) XEN_OUT_OF_RANGE_ERROR(caller, 2, samps, "samples ~A <= 0?");
-  fvals = (Float *)malloc(len * sizeof(Float));
+  fvals = (mus_float_t *)malloc(len * sizeof(mus_float_t));
   if (len < num_to_read) num_to_read = (int)len; /* we often want fewer than 2048 samps (MIX_FILE_BUFFER_SIZE) */
                                                  /* but this has less effect than I thought -- affects only copy case */
 
@@ -9066,7 +9066,7 @@ static XEN g_change_samples_with_origin(XEN samp_0, XEN samps, XEN origin, XEN v
 {
   chan_info *cp;
   int pos;
-  off_t beg, len;
+  mus_long_t beg, len;
 
   XEN_ASSERT_TYPE(XEN_OFF_T_P(samp_0), samp_0, XEN_ARG_1, S_change_samples_with_origin, "an integer");
   XEN_ASSERT_TYPE(XEN_OFF_T_P(samps), samps, XEN_ARG_2, S_change_samples_with_origin, "an integer");
@@ -9111,7 +9111,7 @@ position.\n  " insert_sound_example "\ninserts all of oboe.snd starting at sampl
   int nc, i;
   char *origin;
   file_delete_t delete_file = DONT_DELETE_ME;
-  off_t beg = 0, len;
+  mus_long_t beg = 0, len;
 
   XEN_ASSERT_TYPE(XEN_STRING_P(file), file, XEN_ARG_1, S_insert_sound, "a string");
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(ubeg), ubeg, XEN_ARG_2, S_insert_sound, "a number");
@@ -9197,8 +9197,8 @@ static XEN g_insert_sample(XEN samp_n, XEN val, XEN snd_n, XEN chn_n, XEN edpos)
   chan_info *cp;
   char *origin;
   int pos;
-  off_t beg;
-  Float fval;
+  mus_long_t beg;
+  mus_float_t fval;
   mus_sample_t ival[1];
 
   XEN_ASSERT_TYPE(XEN_NUMBER_P(samp_n), samp_n, XEN_ARG_1, S_insert_sample, "a number");
@@ -9231,7 +9231,7 @@ insert data (either a vct, a list of samples, or a filename) into snd's channel 
   int pos;
   char *origin = NULL;
   file_delete_t delete_file = DONT_DELETE_ME;
-  off_t beg, len = 0;
+  mus_long_t beg, len = 0;
 
   XEN_ASSERT_TYPE(XEN_NUMBER_P(samp), samp, XEN_ARG_1, S_insert_samples, "a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(samps), samps, XEN_ARG_2, S_insert_samples, "a number");
@@ -9289,7 +9289,7 @@ insert data (either a vct, a list of samples, or a filename) into snd's channel 
 	  if (ivals)
 	    {
 	      if (!origin) origin = mus_strdup(TO_PROC_NAME(S_insert_samples));
-	      insert_samples(beg, (off_t)ilen, ivals, cp, origin, pos);
+	      insert_samples(beg, (mus_long_t)ilen, ivals, cp, origin, pos);
 	      free(ivals);
 	    }
 	}
@@ -9304,7 +9304,7 @@ static XEN g_insert_samples_with_origin(XEN samp, XEN samps, XEN origin, XEN vec
 {
   chan_info *cp;
   int pos;
-  off_t beg, len;
+  mus_long_t beg, len;
 
   XEN_ASSERT_TYPE(XEN_INTEGER_P(samp), samp, XEN_ARG_1, S_insert_samples_with_origin, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(samps), samps, XEN_ARG_2, S_insert_samples_with_origin, "an integer");
@@ -9331,7 +9331,7 @@ static XEN g_delete_sample(XEN samp_n, XEN snd_n, XEN chn_n, XEN edpos)
 {
   #define H_delete_sample "(" S_delete_sample " samp :optional snd chn edpos): delete sample 'samp' from snd's channel chn"
   chan_info *cp;
-  off_t samp;
+  mus_long_t samp;
   int pos;
   XEN_ASSERT_TYPE(XEN_NUMBER_P(samp_n), samp_n, XEN_ARG_1, S_delete_sample, "a number");
   ASSERT_CHANNEL(S_delete_sample, snd_n, chn_n, 2);
@@ -9357,7 +9357,7 @@ delete 'samps' samples from snd's channel chn starting at 'start-samp'"
 
   chan_info *cp;
   int pos;
-  off_t samp, len;
+  mus_long_t samp, len;
   XEN_ASSERT_TYPE(XEN_NUMBER_P(samp_n), samp_n, XEN_ARG_1, S_delete_samples, "a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(samps), samps, XEN_ARG_2, S_delete_samples, "a number");
   ASSERT_CHANNEL(S_delete_samples, snd_n, chn_n, 3);
@@ -9384,7 +9384,7 @@ typedef struct {
   snd_info *sp;
   snd_fd **sfs;
   int chans;
-  off_t *samps;
+  mus_long_t *samps;
 } snd_to_sample;
 
 bool snd_to_sample_p(mus_any *ptr) {return((ptr) && ((ptr->core)->type == SND_TO_SAMPLE));}
@@ -9393,11 +9393,11 @@ static bool snd_to_sample_equalp(mus_any *p1, mus_any *p2) {return(p1 == p2);}
 
 static int snd_to_sample_channels(mus_any *ptr) {return(((snd_to_sample *)ptr)->chans);}
 
-static off_t snd_to_sample_location(mus_any *ptr) {return(((snd_to_sample *)ptr)->samps[0]);}
+static mus_long_t snd_to_sample_location(mus_any *ptr) {return(((snd_to_sample *)ptr)->samps[0]);}
 
 static char *snd_to_sample_file_name(mus_any *ptr) {return(((snd_to_sample *)ptr)->sp->filename);}
 
-static off_t snd_to_sample_length(mus_any *ptr) {return(CURRENT_SAMPLES(((snd_to_sample *)ptr)->sp->chans[0]));}
+static mus_long_t snd_to_sample_length(mus_any *ptr) {return(CURRENT_SAMPLES(((snd_to_sample *)ptr)->sp->chans[0]));}
 
 static int snd_to_sample_free(mus_any *ptr)
 {
@@ -9472,10 +9472,10 @@ static char *snd_to_sample_describe(mus_any *ptr)
 }
 
 
-Float snd_to_sample_read(mus_any *ptr, off_t frame, int chan) 
+mus_float_t snd_to_sample_read(mus_any *ptr, mus_long_t frame, int chan) 
 {
   snd_to_sample *spl = (snd_to_sample *)ptr;
-  off_t diff, i;
+  mus_long_t diff, i;
   if (!(spl->sfs)) 
     spl->sfs = (snd_fd **)calloc(spl->chans, sizeof(snd_fd *));
   if (!(spl->sfs[chan])) 
@@ -9524,7 +9524,7 @@ static mus_any_class SND_TO_SAMPLE_CLASS = {
   &snd_to_sample_file_name,
   0,
   &snd_to_sample_location,
-  0,  /* set location (ptr, off_t loc) */
+  0,  /* set location (ptr, mus_long_t loc) */
   0,
   0, 0, 0, 0, 0, 0, 0, 0, 0
 };
@@ -9538,7 +9538,7 @@ static mus_any *make_snd_to_sample(snd_info *sp)
   gen->core->type = SND_TO_SAMPLE;
   gen->chans = sp->nchans;
   gen->sp = sp;
-  gen->samps = (off_t *)calloc(sp->nchans, sizeof(off_t));
+  gen->samps = (mus_long_t *)calloc(sp->nchans, sizeof(mus_long_t));
   gen->sfs = NULL; /* created as needed */
   return((mus_any *)gen);
 }
@@ -9815,7 +9815,7 @@ If the hook returns a string, it is treated as the new temp filename.  This hook
 keep track of which files are in a given saved state batch, and a way to rename or redirect those files."
 
   save_state_hook = XEN_DEFINE_HOOK(S_save_state_hook, 1, H_save_state_hook);      /* arg = temp-filename */
-  empty_closure = xen_make_vct(1, (Float *)calloc(1, sizeof(Float)));
+  empty_closure = xen_make_vct(1, (mus_float_t *)calloc(1, sizeof(mus_float_t)));
   XEN_PROTECT_FROM_GC(empty_closure);
 
   SND_TO_SAMPLE = mus_make_class_tag();

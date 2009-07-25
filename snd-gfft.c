@@ -21,18 +21,18 @@ static bool ignore_callbacks;
 static const char *transform_size_names[NUM_TRANSFORM_SIZES] = 
   {"32", "64", "128", "256", "512", "1024", "2048", "4096", "8192", "16384", "65536", "262144", "1048576", "4194304    "};
 
-static off_t transform_sizes[NUM_TRANSFORM_SIZES] = 
+static mus_long_t transform_sizes[NUM_TRANSFORM_SIZES] = 
   {32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 65536, 262144, 1048576, 4194304};
 
 
 /* ---------------- window graphs ---------------- */
 
 #define GRAPH_SIZE 128
-static Float graph_data[GRAPH_SIZE]; /* fft window graph in transform options dialog */
-static Float graph_fftr[GRAPH_SIZE * 2];
-static Float graph_ffti[GRAPH_SIZE * 2];
+static mus_float_t graph_data[GRAPH_SIZE]; /* fft window graph in transform options dialog */
+static mus_float_t graph_fftr[GRAPH_SIZE * 2];
+static mus_float_t graph_ffti[GRAPH_SIZE * 2];
 
-static Float fp_dB(Float py)
+static mus_float_t fp_dB(mus_float_t py)
 {
   return((py <= ss->lin_dB) ? 0.0 : (1.0 - (20.0 * log10(py) / min_dB(ss))));
 }
@@ -44,7 +44,7 @@ static void graph_redisplay(void)
 {
   GdkDrawable *wn;
   int ix0, iy0, ix1, iy1, i;
-  Float xincr, x;
+  mus_float_t xincr, x;
   axis_context *ax;
 
   if (!(transform_dialog_is_active())) return;
@@ -106,7 +106,7 @@ static void graph_redisplay(void)
   ax->gc = gc;
   ix1 = grf_x(0.0, axis_ap);
   iy1 = grf_y(graph_data[0], axis_ap);
-  xincr = 1.0 / (Float)GRAPH_SIZE;
+  xincr = 1.0 / (mus_float_t)GRAPH_SIZE;
 
   for (i = 1, x = xincr; i < GRAPH_SIZE; i++, x += xincr)
     {
@@ -119,7 +119,7 @@ static void graph_redisplay(void)
   ax->gc = fgc;
   ix1 = grf_x(0.0, axis_ap);
   iy1 = grf_y(graph_fftr[0], axis_ap);
-  xincr = 1.0 / (Float)GRAPH_SIZE;
+  xincr = 1.0 / (mus_float_t)GRAPH_SIZE;
 
   for (i = 1, x = xincr; i < GRAPH_SIZE; i++, x += xincr)
     {
@@ -144,9 +144,9 @@ static void get_fft_window_data(void)
   mus_make_fft_window_with_window(fft_window(ss), GRAPH_SIZE, 
 				  fft_window_beta(ss) * fft_beta_max(fft_window(ss)), 
 				  fft_window_alpha(ss), graph_data);
-  memset((void *)graph_fftr, 0, GRAPH_SIZE * 2 * sizeof(Float));
-  memset((void *)graph_ffti, 0, GRAPH_SIZE * 2 * sizeof(Float));
-  memcpy((void *)graph_fftr, (void *)graph_data, GRAPH_SIZE * sizeof(Float));
+  memset((void *)graph_fftr, 0, GRAPH_SIZE * 2 * sizeof(mus_float_t));
+  memset((void *)graph_ffti, 0, GRAPH_SIZE * 2 * sizeof(mus_float_t));
+  memcpy((void *)graph_fftr, (void *)graph_data, GRAPH_SIZE * sizeof(mus_float_t));
   mus_spectrum(graph_fftr, graph_ffti, NULL, GRAPH_SIZE * 2, MUS_SPECTRUM_IN_DB);
   for (i = 0; i < GRAPH_SIZE; i++)
     graph_fftr[i] = (graph_fftr[i] + 80.0) / 80.0; /* min dB -80.0 */
@@ -155,7 +155,7 @@ static void get_fft_window_data(void)
 
 /* ---------------- transform size ---------------- */
 
-static void chans_transform_size(chan_info *cp, off_t size)
+static void chans_transform_size(chan_info *cp, mus_long_t size)
 {
   cp->transform_size = size;
   if (cp->fft) cp->fft->size = size;
@@ -174,7 +174,7 @@ static void size_browse_callback(const char *name, int row, void *data)
 {
   for_each_chan(force_fft_clear);
   in_set_transform_size(transform_sizes[row]);
-  for_each_chan_with_off_t(chans_transform_size, transform_size(ss));
+  for_each_chan_with_mus_long_t(chans_transform_size, transform_size(ss));
   for_each_chan(calculate_fft);
   if (graph_frame) 
     sg_frame_set_label(GTK_FRAME(graph_frame), 
@@ -182,11 +182,11 @@ static void size_browse_callback(const char *name, int row, void *data)
 }
 
 
-void set_transform_size(off_t val)
+void set_transform_size(mus_long_t val)
 {
   for_each_chan(force_fft_clear);
   in_set_transform_size(val);
-  for_each_chan_with_off_t(chans_transform_size, val);
+  for_each_chan_with_mus_long_t(chans_transform_size, val);
   if (transform_dialog)
     {
       int i;
@@ -478,7 +478,7 @@ static void db_callback(GtkWidget *w, gpointer context)
 
 static void min_db_callback(GtkWidget *w, gpointer data)
 {
-  Float new_db;
+  mus_float_t new_db;
   new_db = gtk_spin_button_get_value(GTK_SPIN_BUTTON(data));
   set_min_db(-new_db);
 }
@@ -514,7 +514,7 @@ static void logfreq_callback(GtkWidget *w, gpointer context)
 
 static void log_freq_callback(GtkWidget *w, gpointer data)
 {
-  Float new_lfb;
+  mus_float_t new_lfb;
   new_lfb = gtk_spin_button_get_value(GTK_SPIN_BUTTON(data));
   set_log_freq_start(new_lfb);
 }
@@ -631,8 +631,8 @@ void set_fft_with_phases(bool val)
 
 static void beta_callback(GtkAdjustment *adj, gpointer context)
 {
-  in_set_fft_window_beta((Float)(ADJUSTMENT_VALUE(adj)));
-  chans_field(FCP_BETA, (Float)(ADJUSTMENT_VALUE(adj)));
+  in_set_fft_window_beta((mus_float_t)(ADJUSTMENT_VALUE(adj)));
+  chans_field(FCP_BETA, (mus_float_t)(ADJUSTMENT_VALUE(adj)));
   if (fft_window_beta_in_use(fft_window(ss)))
     {
       get_fft_window_data();
@@ -643,7 +643,7 @@ static void beta_callback(GtkAdjustment *adj, gpointer context)
 } 
 
 
-void set_fft_window_beta(Float val)
+void set_fft_window_beta(mus_float_t val)
 {
   in_set_fft_window_beta(val);
   chans_field(FCP_BETA, val);
@@ -663,8 +663,8 @@ void set_fft_window_beta(Float val)
 
 static void alpha_callback(GtkAdjustment *adj, gpointer context)
 {
-  in_set_fft_window_alpha((Float)(ADJUSTMENT_VALUE(adj)));
-  chans_field(FCP_ALPHA, (Float)(ADJUSTMENT_VALUE(adj)));
+  in_set_fft_window_alpha((mus_float_t)(ADJUSTMENT_VALUE(adj)));
+  chans_field(FCP_ALPHA, (mus_float_t)(ADJUSTMENT_VALUE(adj)));
   if (fft_window_alpha_in_use(fft_window(ss)))
     {
       get_fft_window_data();
@@ -675,7 +675,7 @@ static void alpha_callback(GtkAdjustment *adj, gpointer context)
 } 
 
 
-void set_fft_window_alpha(Float val)
+void set_fft_window_alpha(mus_float_t val)
 {
   in_set_fft_window_alpha(val);
   chans_field(FCP_ALPHA, val);
@@ -699,19 +699,19 @@ static void chans_spectrum_changed(chan_info *cp)
 }
 
 
-static void set_spectrum_start_scale(Float val)
+static void set_spectrum_start_scale(mus_float_t val)
 {
   ADJUSTMENT_SET_VALUE(spectrum_start_adj, val);
 }
 
 
-static void set_spectrum_end_scale(Float val)
+static void set_spectrum_end_scale(mus_float_t val)
 {
   ADJUSTMENT_SET_VALUE(spectrum_end_adj, val);
 }
 
 
-static void check_spectrum_start(Float end)
+static void check_spectrum_start(mus_float_t end)
 {
   /* don't display chans, but do reset if necessary */
   if (spectrum_start(ss) > end)
@@ -724,7 +724,7 @@ static void check_spectrum_start(Float end)
 }
 
 
-static void check_spectrum_end(Float start)
+static void check_spectrum_end(mus_float_t start)
 {
   /* don't display chans, but do reset if necessary */
   if (spectrum_end(ss) < start)
@@ -737,7 +737,7 @@ static void check_spectrum_end(Float start)
 }
 
 
-void set_spectrum_start(Float val) 
+void set_spectrum_start(mus_float_t val) 
 {
   if (transform_dialog)
     set_spectrum_start_scale(val);
@@ -748,7 +748,7 @@ void set_spectrum_start(Float val)
 }
 
 
-void set_spectrum_end(Float val)
+void set_spectrum_end(mus_float_t val)
 {
   if (transform_dialog)
     set_spectrum_end_scale(val);
@@ -761,7 +761,7 @@ void set_spectrum_end(Float val)
 
 static void spectrum_start_callback(GtkAdjustment *adj, gpointer context)
 {
-  Float start;
+  mus_float_t start;
   start = ADJUSTMENT_VALUE(adj);
   in_set_spectrum_start(start);
   check_spectrum_end(start);
@@ -773,7 +773,7 @@ static void spectrum_start_callback(GtkAdjustment *adj, gpointer context)
 
 static void spectrum_end_callback(GtkAdjustment *adj, gpointer context)
 {
-  Float end;
+  mus_float_t end;
   end = ADJUSTMENT_VALUE(adj);
   in_set_spectrum_end(end);
   check_spectrum_start(end);

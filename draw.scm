@@ -294,7 +294,7 @@ whenever they're in the current view."
 	       (x-offset (inexact->exact (- grf-width width)))
 	       (grf-height (- (list-ref axinf 11) (list-ref axinf 13)))
 	       (height (inexact->exact (round (* inset-height grf-height))))
-	       (chan-offset (- (list-ref axinf 13) 10))
+	       (chan-offset (- (list-ref axinf 13) 6))
 	       (y-offset (+ chan-offset (inexact->exact (round (/ height 2)))))
 	       (grf-chn (if (= (channel-style snd) channels-separate) chn 0))
 	       (new-peaks (list-ref axinf 19))

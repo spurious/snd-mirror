@@ -29,16 +29,16 @@ void set_sono_rectangle(int j, int color, int x, int y, int width, int height);
 void draw_sono_rectangles(axis_context *ax, int color, int jmax);
 void draw_colored_lines(chan_info *cp, axis_context *ax, point_t *points, int num, int *colors, int axis_y0, color_t default_color);
 widget_t start_color_orientation_dialog(bool managed);
-void set_color_scale(Float val);
+void set_color_scale(mus_float_t val);
 void set_color_inverted(bool val);
-void set_color_cutoff(Float val);
+void set_color_cutoff(mus_float_t val);
 void set_spectro_hop(int val);
-void set_spectro_x_angle(Float val);
-void set_spectro_y_angle(Float val);
-void set_spectro_z_angle(Float val);
-void set_spectro_x_scale(Float val);
-void set_spectro_y_scale(Float val);
-void set_spectro_z_scale(Float val);
+void set_spectro_x_angle(mus_float_t val);
+void set_spectro_y_angle(mus_float_t val);
+void set_spectro_z_angle(mus_float_t val);
+void set_spectro_x_scale(mus_float_t val);
+void set_spectro_y_scale(mus_float_t val);
+void set_spectro_z_scale(mus_float_t val);
 bool color_orientation_dialog_is_active(void);
 void reflect_spectro(void);
 void set_with_gl(bool val, bool dpys);
@@ -86,9 +86,9 @@ void save_colors(FILE *Fp);
 
 /* -------- snd-xfft.c -------- */
 
-void set_fft_window_beta(Float val);
-void set_fft_window_alpha(Float val);
-void set_transform_size(off_t val);
+void set_fft_window_beta(mus_float_t val);
+void set_fft_window_alpha(mus_float_t val);
+void set_transform_size(mus_long_t val);
 void set_fft_window(mus_fft_window_t val);
 void set_wavelet_type(int val);
 int fire_up_transform_dialog(bool managed);
@@ -102,8 +102,8 @@ void set_transform_normalization(fft_normalize_t val);
 void set_show_selection_transform(bool show);
 void set_transform_graph_type(graph_type_t val);
 
-void set_spectrum_start(Float val);
-void set_spectrum_end(Float val);
+void set_spectrum_start(mus_float_t val);
+void set_spectrum_end(mus_float_t val);
 
 void reflect_peaks_in_transform_dialog(void);
 void reflect_log_freq_start_in_transform_dialog(void);
@@ -161,9 +161,9 @@ int channel_w(chan_info *cp);
 int channel_f(chan_info *cp);
 int channel_graph(chan_info *cp);
 bool channel_graph_is_visible(chan_info *cp);
-void change_gzy(Float val, chan_info *cp);
-Float gsy_value(chan_info *cp);
-Float gsy_size(chan_info *cp);
+void change_gzy(mus_float_t val, chan_info *cp);
+mus_float_t gsy_value(chan_info *cp);
+mus_float_t gsy_size(chan_info *cp);
 void initialize_scrollbars(chan_info *cp);
 void set_z_scrollbars(chan_info *cp, axis_info *ap);
 void resize_sx(chan_info *cp);
@@ -196,12 +196,12 @@ void set_minibuffer_string(snd_info *sp, const char *str, bool update);
 void set_minibuffer_cursor_position(snd_info *sp, int pos);
 char *get_minibuffer_string(snd_info *sp);
 void snd_info_cleanup(snd_info *sp);
-void set_amp(snd_info *sp, Float val);
-void set_expand(snd_info *sp, Float val);
-void set_contrast(snd_info *sp, Float val);
-void set_speed(snd_info *sp, Float val);
-void set_revlen(snd_info *sp, Float val);
-void set_revscl(snd_info *sp, Float val);
+void set_amp(snd_info *sp, mus_float_t val);
+void set_expand(snd_info *sp, mus_float_t val);
+void set_contrast(snd_info *sp, mus_float_t val);
+void set_speed(snd_info *sp, mus_float_t val);
+void set_revlen(snd_info *sp, mus_float_t val);
+void set_revscl(snd_info *sp, mus_float_t val);
 void set_filter_order(snd_info *sp, int val);
 void set_filter_text(snd_info *sp, const char *str);
 void display_filter_env(snd_info *sp);
@@ -229,7 +229,7 @@ void hide_controls(snd_info *sp);
 bool showing_controls(snd_info *sp);
 void start_progress_report(chan_info *cp);
 void finish_progress_report(chan_info *cp);
-void progress_report(chan_info *cp, Float pct);
+void progress_report(chan_info *cp, mus_float_t pct);
 void reflect_sound_selection(snd_info *sp);
 void display_minibuffer_error(snd_info *sp, const char *str);
 void clear_minibuffer_error(snd_info *sp);
@@ -237,7 +237,7 @@ void clear_minibuffer_error(snd_info *sp);
 
 /* -------- snd-xfile.c -------- */
 
-char *get_file_dialog_sound_attributes(file_data *fdat, int *srate, int *chans, int *type, int *format, off_t *location, off_t *samples, int min_chan);
+char *get_file_dialog_sound_attributes(file_data *fdat, int *srate, int *chans, int *type, int *format, mus_long_t *location, mus_long_t *samples, int min_chan);
 void alert_new_file(void);
 widget_t make_new_file_dialog(bool managed);
 int edit_header(snd_info *sp);
@@ -261,7 +261,7 @@ void save_file_dialog_state(FILE *fd);
 /* -------- snd-xenv.c -------- */
 
 axis_info *enved_make_axis(const char *name, axis_context *ax, int ex0, int ey0, int width, int height, 
-			   Float xmin, Float xmax, Float ymin, Float ymax, printing_t printing);
+			   mus_float_t xmin, mus_float_t xmax, mus_float_t ymin, mus_float_t ymax, printing_t printing);
 void display_enved_env_with_selection(env *e, const char *name, int x0, int y0, int width, int height, bool dots, printing_t printing);
 void set_enved_redo_sensitive(bool val);
 void set_enved_revert_sensitive(bool val);
@@ -277,7 +277,7 @@ void update_enved_background_waveform(chan_info *cp);
 int create_envelope_editor(void);
 void set_enved_clip_p(bool val);
 void reflect_enved_style(void);
-void set_enved_base(Float val);
+void set_enved_base(mus_float_t val);
 void set_enved_target(enved_target_t val);
 void set_enved_wave_p(bool val);
 void set_enved_in_dB(bool val);

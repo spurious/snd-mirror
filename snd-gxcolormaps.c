@@ -6,7 +6,7 @@ typedef struct {
   rgb_t *r, *g, *b;
   XEN lambda;
   int gc_loc;
-  Float** (*make_rgb)(int size, XEN func);
+  mus_float_t **(*make_rgb)(int size, XEN func);
   void (*get_rgb)(float x, rgb_t *r, rgb_t *g, rgb_t *b);
 } cmap;
 
@@ -61,7 +61,7 @@ static cmap *delete_cmap(int index)
 }
 
 
-static rgb_t *Floats_to_rgb_t(int size, Float *data)
+static rgb_t *mus_float_ts_to_rgb_t(int size, mus_float_t *data)
 {
   int i;
   rgb_t *new_data;
@@ -74,7 +74,7 @@ static rgb_t *Floats_to_rgb_t(int size, Float *data)
 
 static void rebuild_colormap(cmap *c)
 {
-  Float **rgb;
+  mus_float_t **rgb;
   int i;
   /* release old colormap data */
   if (c->r) free(c->r);
@@ -83,9 +83,9 @@ static void rebuild_colormap(cmap *c)
   c->size = color_map_size(ss);
   /* make new data */
   rgb = (*(c->make_rgb))(c->size, c->lambda);
-  c->r = Floats_to_rgb_t(c->size, rgb[0]);
-  c->g = Floats_to_rgb_t(c->size, rgb[1]);
-  c->b = Floats_to_rgb_t(c->size, rgb[2]);
+  c->r = mus_float_ts_to_rgb_t(c->size, rgb[0]);
+  c->g = mus_float_ts_to_rgb_t(c->size, rgb[1]);
+  c->b = mus_float_ts_to_rgb_t(c->size, rgb[2]);
   for (i = 0; i < 3; i++) free(rgb[i]);
   free(rgb);
 }
@@ -160,7 +160,7 @@ rgb_t *color_map_blues(int index)
 
 
 
-static cmap *new_cmap(const char *name, int size, Float **rgb)
+static cmap *new_cmap(const char *name, int size, mus_float_t **rgb)
 {
   cmap *c = NULL;
   c = (cmap *)calloc(1, sizeof(cmap));
@@ -168,9 +168,9 @@ static cmap *new_cmap(const char *name, int size, Float **rgb)
   c->size = size;
   if (rgb)
     {
-      c->r = Floats_to_rgb_t(size, rgb[0]);
-      c->g = Floats_to_rgb_t(size, rgb[1]);
-      c->b = Floats_to_rgb_t(size, rgb[2]);
+      c->r = mus_float_ts_to_rgb_t(size, rgb[0]);
+      c->g = mus_float_ts_to_rgb_t(size, rgb[1]);
+      c->b = mus_float_ts_to_rgb_t(size, rgb[2]);
     }
   c->lambda = XEN_FALSE;
   c->gc_loc = NOT_A_GC_LOC;
@@ -179,10 +179,10 @@ static cmap *new_cmap(const char *name, int size, Float **rgb)
 
 
 static cmap *make_builtin_cmap(int size, const char *name, 
-			       Float** (*make_rgb)(int size, XEN ignored),
+			       mus_float_t **(*make_rgb)(int size, XEN ignored),
 			       void (*get_rgb)(float x, rgb_t *r, rgb_t *g, rgb_t *b))
 {
-  Float **rgb = NULL;
+  mus_float_t **rgb = NULL;
   cmap *c = NULL;
   if ((make_rgb) && (!get_rgb))
     rgb = make_rgb(size, XEN_FALSE);
@@ -199,12 +199,12 @@ static cmap *make_builtin_cmap(int size, const char *name,
 }
 
 
-static Float **make_base_rgb(int size)
+static mus_float_t **make_base_rgb(int size)
 {
-  Float **rgb;
+  mus_float_t **rgb;
   int i;
-  rgb = (Float **)calloc(3, sizeof(Float *));
-  for (i = 0; i < 3; i++) rgb[i] = (Float *)calloc(size, sizeof(Float));
+  rgb = (mus_float_t **)calloc(3, sizeof(mus_float_t *));
+  for (i = 0; i < 3; i++) rgb[i] = (mus_float_t *)calloc(size, sizeof(mus_float_t));
   return(rgb);
 }
 
@@ -219,10 +219,10 @@ static void add_colormap_func_error(const char *msg, void *data)
 }
 
 
-static Float **make_xen_colormap(int size, XEN lambda)
+static mus_float_t **make_xen_colormap(int size, XEN lambda)
 {
   XEN xrgb;
-  Float **rgb = NULL;
+  mus_float_t **rgb = NULL;
   add_colormap_func_hit_error = false;
   redirect_xen_error_to(add_colormap_func_error, NULL);
   xrgb = XEN_CALL_1(lambda,
@@ -283,7 +283,7 @@ static Float **make_xen_colormap(int size, XEN lambda)
 static int add_colormap(const char *name, XEN func)
 {
   cmap *c;
-  Float **rgb;
+  mus_float_t **rgb;
   int index = -1, i, loc;
   for (i = 0; i < cmaps_size; i++)
     if (!(cmaps[i]))
@@ -311,7 +311,7 @@ static int add_colormap(const char *name, XEN func)
 }
 
 
-static Float **make_black_and_white_colormap(int size, XEN ignored)
+static mus_float_t **make_black_and_white_colormap(int size, XEN ignored)
 {
   /* (r 0) (g 0) (b 0) */
   return(make_base_rgb(size));
@@ -332,14 +332,14 @@ static void black_and_white_rgb(float n, rgb_t *r, rgb_t *g, rgb_t *b)
 
 /* colormap functions taken mostly from (GPL) octave-forge code written by Kai Habel <kai.habel@gmx.de> */
 
-static Float **make_gray_colormap(int size, XEN ignored)
+static mus_float_t **make_gray_colormap(int size, XEN ignored)
 {
   /* (r x) (g x) (b x) */
-  Float **rgb;
+  mus_float_t **rgb;
   int i;
-  Float x, incr;
+  mus_float_t x, incr;
   rgb = make_base_rgb(size);
-  incr = 1.0 / (Float)size;
+  incr = 1.0 / (mus_float_t)size;
   for (i = 0, x = 0.0; i < size; i++, x += incr)
     {
       rgb[0][i] = x;
@@ -362,14 +362,14 @@ static void gray_rgb(float n, rgb_t *r, rgb_t *g, rgb_t *b)
 #endif
 
 
-static Float **make_autumn_colormap(int size, XEN ignored)
+static mus_float_t **make_autumn_colormap(int size, XEN ignored)
 {
   /* (r 1.0) (g x) (b 0.0) */
-  Float **rgb;
+  mus_float_t **rgb;
   int i;
-  Float x, incr;
+  mus_float_t x, incr;
   rgb = make_base_rgb(size);
-  incr = 1.0 / (Float)size;
+  incr = 1.0 / (mus_float_t)size;
   for (i = 0, x = 0.0; i < size; i++, x += incr)
     {
       rgb[0][i] = 1.0;
@@ -392,14 +392,14 @@ static void autumn_rgb(float n, rgb_t *r, rgb_t *g, rgb_t *b)
 #endif
 
 
-static Float **make_spring_colormap(int size, XEN ignored)
+static mus_float_t **make_spring_colormap(int size, XEN ignored)
 {
   /* (r 1.0) (g x) (b (- 1.0 x)) */
-  Float **rgb;
+  mus_float_t **rgb;
   int i;
-  Float x, incr;
+  mus_float_t x, incr;
   rgb = make_base_rgb(size);
-  incr = 1.0 / (Float)size;
+  incr = 1.0 / (mus_float_t)size;
   for (i = 0, x = 0.0; i < size; i++, x += incr)
     {
       rgb[0][i] = 1.0;
@@ -422,14 +422,14 @@ static void spring_rgb(float n, rgb_t *r, rgb_t *g, rgb_t *b)
 #endif
 
 
-static Float **make_winter_colormap(int size, XEN ignored)
+static mus_float_t **make_winter_colormap(int size, XEN ignored)
 {
   /* (r 0.0) (g x) (b (- 1.0 (/ x 2))) */
-  Float **rgb;
+  mus_float_t **rgb;
   int i;
-  Float x, incr;
+  mus_float_t x, incr;
   rgb = make_base_rgb(size);
-  incr = 1.0 / (Float)size;
+  incr = 1.0 / (mus_float_t)size;
   for (i = 0, x = 0.0; i < size; i++, x += incr)
     {
       rgb[0][i] = 0.0;
@@ -452,14 +452,14 @@ static void winter_rgb(float n, rgb_t *r, rgb_t *g, rgb_t *b)
 #endif
 
 
-static Float **make_summer_colormap(int size, XEN ignored)
+static mus_float_t **make_summer_colormap(int size, XEN ignored)
 {
   /* (r x) (g (+ 0.5 (/ x 2))) (b 0.4) */
-  Float **rgb;
+  mus_float_t **rgb;
   int i;
-  Float x, incr;
+  mus_float_t x, incr;
   rgb = make_base_rgb(size);
-  incr = 1.0 / (Float)size;
+  incr = 1.0 / (mus_float_t)size;
   for (i = 0, x = 0.0; i < size; i++, x += incr)
     {
       rgb[0][i] = x;
@@ -482,14 +482,14 @@ static void summer_rgb(float n, rgb_t *r, rgb_t *g, rgb_t *b)
 #endif
 
 
-static Float **make_cool_colormap(int size, XEN ignored)
+static mus_float_t **make_cool_colormap(int size, XEN ignored)
 {
   /* (r x) (g (- 1.0 x)) (b 1.0) */
-  Float **rgb;
+  mus_float_t **rgb;
   int i;
-  Float x, incr;
+  mus_float_t x, incr;
   rgb = make_base_rgb(size);
-  incr = 1.0 / (Float)size;
+  incr = 1.0 / (mus_float_t)size;
   for (i = 0, x = 0.0; i < size; i++, x += incr)
     {
       rgb[0][i] = x;
@@ -512,14 +512,14 @@ static void cool_rgb(float n, rgb_t *r, rgb_t *g, rgb_t *b)
 #endif
 
 
-static Float **make_copper_colormap(int size, XEN ignored)
+static mus_float_t **make_copper_colormap(int size, XEN ignored)
 {
   /* (r (if (< x 4/5) (* 5/4 x) 1.0)) (g (* 4/5 x)) (b (* 1/2 x)) */
-  Float **rgb;
+  mus_float_t **rgb;
   int i;
-  Float x, incr;
+  mus_float_t x, incr;
   rgb = make_base_rgb(size);
-  incr = 1.0 / (Float)size;
+  incr = 1.0 / (mus_float_t)size;
   for (i = 0, x = 0.0; i < size; i++, x += incr)
     {
       rgb[0][i] = (x < 0.8) ? (1.25 * x) : 1.0;
@@ -542,10 +542,10 @@ static void copper_rgb(float x, rgb_t *r, rgb_t *g, rgb_t *b)
 #endif
 
 
-static Float **make_flag_colormap(int size, XEN ignored)
+static mus_float_t **make_flag_colormap(int size, XEN ignored)
 {
   /* (r (if (or (= k 0) (= k 1)) 1.0 0.0)) (g (if (= k 1) 1.0 0.0)) (b (if (or (= k 1) (= k 2)) 1.0 0.0)) */
-  Float **rgb;
+  mus_float_t **rgb;
   int i, k = 0;
   rgb = make_base_rgb(size);
   for (i = 0; i < size; i++)
@@ -574,14 +574,14 @@ static void flag_rgb(float x, rgb_t *r, rgb_t *g, rgb_t *b)
 #endif
 
 
-static Float **make_prism_colormap(int size, XEN ignored)
+static mus_float_t **make_prism_colormap(int size, XEN ignored)
 {
   /* (r (list-ref (list 1 1 1 0 0 2/3) k)) (g (list-ref (list 0 1/2 1 1 0 0) k)) (b (list-ref (list 0 0 0 0 1 1) k)) */
-  Float **rgb;
+  mus_float_t **rgb;
   int i, k = 0;
-  Float rs[6] = {1.0, 1.0, 1.0, 0.0, 0.0, 0.6667};
-  Float gs[6] = {0.0, 0.5, 1.0, 1.0, 0.0, 0.0};
-  Float bs[6] = {0.0, 0.0, 0.0, 0.0, 1.0, 1.0};
+  mus_float_t rs[6] = {1.0, 1.0, 1.0, 0.0, 0.0, 0.6667};
+  mus_float_t gs[6] = {0.0, 0.5, 1.0, 1.0, 0.0, 0.0};
+  mus_float_t bs[6] = {0.0, 0.0, 0.0, 0.0, 1.0, 1.0};
   rgb = make_base_rgb(size);
   for (i = 0; i < size; i++)
     {
@@ -600,9 +600,9 @@ static void prism_rgb(float x, rgb_t *r, rgb_t *g, rgb_t *b)
 {
   int k;
   k = ((int)(x * color_map_size(ss))) % 6;
-  Float rs[6] = {1.0, 1.0, 1.0, 0.0, 0.0, 0.6667};
-  Float gs[6] = {0.0, 0.5, 1.0, 1.0, 0.0, 0.0};
-  Float bs[6] = {0.0, 0.0, 0.0, 0.0, 1.0, 1.0};
+  mus_float_t rs[6] = {1.0, 1.0, 1.0, 0.0, 0.0, 0.6667};
+  mus_float_t gs[6] = {0.0, 0.5, 1.0, 1.0, 0.0, 0.0};
+  mus_float_t bs[6] = {0.0, 0.0, 0.0, 0.0, 1.0, 1.0};
   (*r) = rs[k];
   (*g) = gs[k];
   (*b) = bs[k];
@@ -612,17 +612,17 @@ static void prism_rgb(float x, rgb_t *r, rgb_t *g, rgb_t *b)
 #endif
 
 
-static Float **make_bone_colormap(int size, XEN ignored)
+static mus_float_t **make_bone_colormap(int size, XEN ignored)
 {
   /* (r (if (< x 3/4) (* 7/8 x) (- (* 11/8 x) 3/8)))
      (g (if (< x 3/8) (* 7/8 x) (if (< x 3/4) (- (* 29/24 x) 1/8) (+ (* 7/8 x) 1/8))))
      (b (if (< x 3/8) (* 29/24 x) (+ (* 7/8 x) 1/8)))
   */
-  Float **rgb;
+  mus_float_t **rgb;
   int i;
-  Float x, incr;
+  mus_float_t x, incr;
   rgb = make_base_rgb(size);
-  incr = 1.0 / (Float)size;
+  incr = 1.0 / (mus_float_t)size;
   for (i = 0, x = 0.0; i < size; i++, x += incr)
     {
       rgb[0][i] = (x < .75) ? (x * .875) : ((x * 11.0 / 8.0) - .375);
@@ -645,18 +645,18 @@ static void bone_rgb(float x, rgb_t *r, rgb_t *g, rgb_t *b)
 #endif
 
 
-static Float **make_hot_colormap(int size, XEN ignored)
+static mus_float_t **make_hot_colormap(int size, XEN ignored)
 {
   /* (mimicking matlab here, not octave)
      (r (if (< x 3/8) (* 8/3 x) 1.0))
      (g (if (< x 3/8) 0.0 (if (< x 3/4) (- (* 8/3 x) 1.0) 1.0)))
      (b (if (< x 3/4) 0.0 (- (* 4 x) 3)))
   */
-  Float **rgb;
+  mus_float_t **rgb;
   int i;
-  Float x, incr;
+  mus_float_t x, incr;
   rgb = make_base_rgb(size);
-  incr = 1.0 / (Float)size;
+  incr = 1.0 / (mus_float_t)size;
   for (i = 0, x = 0.0; i < size; i++, x += incr)
     {
       rgb[0][i] = (x < .375) ? (x * 8.0 / 3.0) : 1.0;
@@ -679,18 +679,18 @@ static void hot_rgb(float x, rgb_t *r, rgb_t *g, rgb_t *b)
 #endif
 
 
-static Float **make_jet_colormap(int size, XEN ignored)
+static mus_float_t **make_jet_colormap(int size, XEN ignored)
 {
   /* 
      (r (if (< x 3/8) 0.0 (if (< x 5/8) (- (* 4 x) 3/2) (if (< x 7/8) 1.0 (+ (* -4 x) 9/2)))))
      (g (if (< x 1/8) 0.0 (if (< x 3/8)	(- (* 4 x) 1/2)	(if (< x 5/8) 1.0 (if (< x 7/8)	(+ (* -4 x) 7/2) 0.0)))))
      (b (if (< x 1/8) (+ (* 4 x) 1/2) (if (< x 3/8) 1.0	(if (< x 5/8) (+ (* -4 x) 5/2) 0.0))))
   */
-  Float **rgb;
+  mus_float_t **rgb;
   int i;
-  Float x, incr;
+  mus_float_t x, incr;
   rgb = make_base_rgb(size);
-  incr = 1.0 / (Float)size;
+  incr = 1.0 / (mus_float_t)size;
   for (i = 0, x = 0.0; i < size; i++, x += incr)
     {
       rgb[0][i] = (x < .375) ? 0.0 : ((x < .625) ? ((x * 4.0) - 1.5) : ((x < .875) ? 1.0 : ((x * -4.0) + 4.5)));
@@ -713,18 +713,18 @@ static void jet_rgb(float x, rgb_t *r, rgb_t *g, rgb_t *b)
 #endif
 
 
-static Float **make_pink_colormap(int size, XEN ignored)
+static mus_float_t **make_pink_colormap(int size, XEN ignored)
 {
   /* matlab uses log here, or something like that -- this version is quite different
      (r (if (< x 3/8) (* 14/9 x) (+ (* 2/3 x) 1/3)))
      (g (if (< x 3/8) (* 2/3 x) (if (< x 3/4) (- (* 14/9 x) 1/3) (+ (* 2/3 x) 1/3))))
      (b (if (< x 3/4) (* 2/3 x) (- (* 2 x) 1)))			
   */
-  Float **rgb;
+  mus_float_t **rgb;
   int i;
-  Float x, incr;
+  mus_float_t x, incr;
   rgb = make_base_rgb(size);
-  incr = 1.0 / (Float)size;
+  incr = 1.0 / (mus_float_t)size;
   for (i = 0, x = 0.0; i < size; i++, x += incr)
     {
       rgb[0][i] = (x < .375) ? (x * 14.0 / 9.0) : ((x * 2.0 / 3.0) + 1.0 / 3.0);
@@ -747,18 +747,18 @@ static void pink_rgb(float x, rgb_t *r, rgb_t *g, rgb_t *b)
 #endif
 
 
-static Float **make_rainbow_colormap(int size, XEN ignored)
+static mus_float_t **make_rainbow_colormap(int size, XEN ignored)
 {
   /* 
      (r (if (< x 2/5) 1.0 (if (< x 3/5) (+ (* -5 x) 3) (if (< x 4/5) 0.0 (- (* 10/3 x) 8/3)))))
      (g (if (< x 2/5) (* 5/2 x) (if (< x 3/5) 1.0 (if (< x 4/5) (+ (* -5 x) 4) 0.0))))
      (b (if (< x 3/5) 0.0 (if (< x 4/5)	(- (* 5 x) 3) 1.0)))
   */
-  Float **rgb;
+  mus_float_t **rgb;
   int i;
-  Float x, incr;
+  mus_float_t x, incr;
   rgb = make_base_rgb(size);
-  incr = 1.0 / (Float)size;
+  incr = 1.0 / (mus_float_t)size;
   for (i = 0, x = 0.0; i < size; i++, x += incr)
     {
       rgb[0][i] = (x < .4) ? 1.0 : ((x < .6) ? ((x * -5.0) + 3.0) : ((x < .8) ? 0.0 : ((x * 10.0 / 3.0) - 8.0 / 3.0)));
@@ -781,14 +781,14 @@ static void rainbow_rgb(float x, rgb_t *r, rgb_t *g, rgb_t *b)
 #endif
 
 
-static Float **make_phases_colormap(int size, XEN ignored)
+static mus_float_t **make_phases_colormap(int size, XEN ignored)
 {
   /* 0 and pi: blue->green, pi/2 and 3pi/2: red->black */
-  Float **rgb;
+  mus_float_t **rgb;
   int i;
-  Float x, incr;
+  mus_float_t x, incr;
   rgb = make_base_rgb(size);
-  incr = (2.0 * M_PI) / (Float)size;
+  incr = (2.0 * M_PI) / (mus_float_t)size;
   for (i = 0, x = 0.0; i < size; i++, x += incr)
     {
       if (x <= 0.5 * M_PI)
@@ -874,7 +874,7 @@ void phases_rgb(float x, rgb_t *r, rgb_t *g, rgb_t *b)
 static XEN g_colormap_ref(XEN map, XEN pos)
 {
   int index;
-  Float x;
+  mus_float_t x;
   #define H_colormap_ref "(" S_colormap_ref " index pos): (list r g b). Index is the colormap \
 index (the value of " S_colormap " for example).  Pos is between 0.0 and 1.0."
   rgb_t r = 0, g = 0, b = 0;

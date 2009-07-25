@@ -23,15 +23,15 @@
  *
  * exported:
  *      (static struct ptree *form_to_ptree(XEN code) parse code, returning pointer to tree (a list) or null if code has something we can't handle)
- *   struct ptree *form_to_ptree_1_f(XEN code) -- (1 arg) adds type check that result is Float
- *   struct ptree *form_to_ptree_0_f(XEN code) -- (no args) adds type check that result is Float
+ *   struct ptree *form_to_ptree_1_f(XEN code) -- (1 arg) adds type check that result is mus_float_t
+ *   struct ptree *form_to_ptree_0_f(XEN code) -- (no args) adds type check that result is mus_float_t
  *   struct ptree *form_to_ptree_1_b(XEN code) -- (1 arg) adds type check that result is boolean
- *   Float evaluate_ptree_1f2f(struct ptree *tree, Float arg)
- *     evaluate ptree passing it the single Float arg, returning a Float result
- *   Float evaluate_ptree_0f2f(struct ptree *tree, Float arg)
- *     evaluate ptree (no args), returning a Float result
- *   Float evaluate_ptree_1f2b(struct ptree *tree, Float arg)
- *     evaluate ptree passing it the single Float arg, returning a boolean result
+ *   mus_float_t evaluate_ptree_1f2f(struct ptree *tree, mus_float_t arg)
+ *     evaluate ptree passing it the single mus_float_t arg, returning a mus_float_t result
+ *   mus_float_t evaluate_ptree_0f2f(struct ptree *tree, mus_float_t arg)
+ *     evaluate ptree (no args), returning a mus_float_t result
+ *   mus_float_t evaluate_ptree_1f2b(struct ptree *tree, mus_float_t arg)
+ *     evaluate ptree passing it the single mus_float_t arg, returning a boolean result
  *   void free_ptree(struct ptree *pt)
  *     release resources allocated to ptree
  *
@@ -304,7 +304,7 @@ static int current_optimization = 0;
 
 #if WITH_RUN
 
-#define Int off_t
+#define Int mus_long_t
 #define R_C_TO_XEN_INT C_TO_XEN_OFF_T
 #define R_XEN_TO_C_INT XEN_TO_C_OFF_T
 #define Double double
@@ -1698,7 +1698,7 @@ static vct *vector_to_vct(XEN vectr)
   v = mus_vct_make(len);
   for (i = 0; i < len; i++) 
     if (XEN_DOUBLE_P(XEN_VECTOR_REF(vectr, i)))
-      v->data[i] = (Float)XEN_TO_C_DOUBLE(XEN_VECTOR_REF(vectr, i));
+      v->data[i] = (mus_float_t)XEN_TO_C_DOUBLE(XEN_VECTOR_REF(vectr, i));
     else return(mus_vct_free(v));
   return(v);
 }
@@ -2961,7 +2961,7 @@ static void erase_goto(ptree *prog, const char *name)
 
 #define COUNTER_NUM 1024
 static int top_counter = 1;
-static off_t counts[COUNTER_NUM][COUNTER_NUM];
+static mus_long_t counts[COUNTER_NUM][COUNTER_NUM];
 
 typedef void (*trip_func)(int *args, ptree *pt);
 static trip_func funcs[COUNTER_NUM];
@@ -2993,11 +2993,11 @@ static int get_func_loc(trip_func func, const char *name)
 static XEN g_report_counts(void)
 {
   int i, j, rpt, imax, jmax;
-  off_t cmax;
-  off_t *totals;
+  mus_long_t cmax;
+  mus_long_t *totals;
 
   fprintf(stderr, "most used:\n");
-  totals = (off_t *)calloc(top_counter, sizeof(off_t));
+  totals = (mus_long_t *)calloc(top_counter, sizeof(mus_long_t));
   for (i = 0; i < top_counter; i++)
     for (j = 0; j < top_counter; j++)
       totals[j] += counts[i][j];
@@ -7460,7 +7460,7 @@ static xen_value *seconds_to_samples_1(ptree *prog, xen_value **args, int num_ar
   if (prog->constants == 1)
     {
       if (args[1]->type == R_INT)
-	return(make_xen_value(R_INT, add_int_to_ptree(prog, mus_seconds_to_samples((Float)(prog->ints[args[1]->addr]))), R_CONSTANT));
+	return(make_xen_value(R_INT, add_int_to_ptree(prog, mus_seconds_to_samples((mus_float_t)(prog->ints[args[1]->addr]))), R_CONSTANT));
       return(make_xen_value(R_INT, add_int_to_ptree(prog, mus_seconds_to_samples(prog->dbls[args[1]->addr])), R_CONSTANT));
     }
 
@@ -7709,7 +7709,7 @@ static xen_value *inexact2exact_1(ptree *prog, xen_value **args, int num_args)
 
 static Int c_mod(Int x, Int y)
 {
-  off_t z;
+  mus_long_t z;
   if (y == 0) return(x); /* else arithmetic exception */
   z = x % y;
   if (((y < 0) && (z > 0)) ||
@@ -7718,11 +7718,11 @@ static Int c_mod(Int x, Int y)
   return(z);
 }
 
-static off_t c_gcd(off_t a, off_t b)
+static mus_long_t c_gcd(mus_long_t a, mus_long_t b)
 {
   while (b != 0)
     {
-      off_t temp;
+      mus_long_t temp;
       temp = b;
       b = a % b;
       a = temp;
@@ -9161,8 +9161,8 @@ static char *r_temp_dir(void) {return(temp_dir(ss));}
 static char *r_save_dir(void) {return(save_dir(ss));}
 STR_VOID_OP(r_temp_dir);
 STR_VOID_OP(r_save_dir);
-off_t r_mark_sync(int n);
-off_t r_mark_sample(int n);
+mus_long_t r_mark_sync(int n);
+mus_long_t r_mark_sample(int n);
 INT_INT_OP(r_mark_sync);
 INT_INT_OP(r_mark_sample);
 INT_INT_OP(mix_position_from_id);
@@ -9723,7 +9723,7 @@ static void mus_audio_write_0(int *args, ptree *pt)
   {
     mus_sample_t **sdata;
     int i;
-    off_t j;
+    mus_long_t j;
     sdata = (mus_sample_t **)calloc(sd->chans, sizeof(mus_sample_t *));
     for (i = 0; i < sd->chans; i++) 
       sdata[i] = (mus_sample_t *)calloc(sd->length, sizeof(mus_sample_t));
@@ -10390,7 +10390,7 @@ static void vct_constant_set_3(int *args, ptree *pt) {VCT_ARG_1->data[3] = FLOAT
 static void vct_set_f(int *args, ptree *pt) {VCT_ARG_1->data[INT_ARG_2] = FLOAT_ARG_3; FLOAT_RESULT = FLOAT_ARG_3;}
 
 
-static void vct_set_i(int *args, ptree *pt) {VCT_ARG_1->data[INT_ARG_2] = (Float)INT_ARG_3; FLOAT_RESULT = (Double)INT_ARG_3;}
+static void vct_set_i(int *args, ptree *pt) {VCT_ARG_1->data[INT_ARG_2] = (mus_float_t)INT_ARG_3; FLOAT_RESULT = (Double)INT_ARG_3;}
 
 
 static void vct_set_1(ptree *prog, xen_value *in_v, xen_value *in_v1, xen_value *in_v2, xen_value *v)
@@ -10452,7 +10452,7 @@ static void make_vct_v(int *args, ptree *pt)
 static void make_vct_v2(int *args, ptree *pt) 
 {
   vct *v;
-  off_t i;
+  mus_long_t i;
   if (VCT_RESULT) mus_vct_free(VCT_RESULT);
   v = mus_vct_make(INT_ARG_1);
   VCT_RESULT = v;
@@ -10466,7 +10466,7 @@ static void make_int_vector(int *args, ptree *pt)
   if (VECT_RESULT) free_vect(VECT_RESULT, R_INT_VECTOR);
   if (INT_ARG_1 > 0)
     {
-      off_t i;
+      mus_long_t i;
       v = (vect *)calloc(1, sizeof(vect));
       v->length = INT_ARG_1;
       v->data.ints = (Int *)calloc(v->length, sizeof(Int));
@@ -10509,7 +10509,7 @@ static xen_value *make_vector_1(ptree *prog, xen_value **args, int num_args)
 
 static void vct_v(int *args, ptree *pt) 
 {
-  off_t i;
+  mus_long_t i;
   vct *v;
   if (VCT_RESULT) VCT_RESULT = mus_vct_free(VCT_RESULT);
   v = mus_vct_make(INT_ARG_1);
@@ -10549,7 +10549,7 @@ static xen_value *vct_copy_1(ptree *prog, xen_value **args, int num_args)
 #define VCT_OP_1(SName, CName, COp) \
 static void vct_ ## CName ## _f(int *args, ptree *pt) \
 { \
-  off_t i; \
+  mus_long_t i; \
   vct *v = VCT_ARG_1; \
   if (v) for (i = 0; i < v->length; i++) v->data[i] COp FLOAT_ARG_2; \
   VCT_RESULT = VCT_ARG_1; \
@@ -10574,7 +10574,7 @@ VCT_OP_1(offset!, offset, +=)
 #define VCT_OP_2(SName, CName, COp) \
 static void vct_ ## CName ## _f(int *args, ptree *pt) \
 { \
-  off_t i, len; \
+  mus_long_t i, len; \
   vct *v0 = VCT_ARG_1; \
   vct *v1 = VCT_ARG_2; \
   if ((v0) && (v1)) \
@@ -10595,14 +10595,14 @@ VCT_OP_2(multiply!, multiply, *=)
 VCT_OP_2(subtract!, subtract, -=)
 
 
-static void vct_reverse_v(vct *v, off_t len)
+static void vct_reverse_v(vct *v, mus_long_t len)
 {
-  off_t i, j;
+  mus_long_t i, j;
   if ((v) && (len > 1))
     {
       for (i = 0, j = len - 1; i < j; i++, j--)
 	{
-	  Float temp;
+	  mus_float_t temp;
 	  temp = v->data[i];
 	  v->data[i] = v->data[j];
 	  v->data[j] = temp;
@@ -10673,7 +10673,7 @@ static xen_value *vct_plus_1(ptree *prog, xen_value **args, int num_args)
 static void vct_move_0(int *args, ptree *pt) 
 {
   vct *v;
-  off_t i, j;
+  mus_long_t i, j;
   v = VCT_ARG_1;
   for (i = INT_ARG_2, j = INT_ARG_3; (j < v->length) && (i < v->length); i++, j++) 
     v->data[i] = v->data[j];
@@ -10692,14 +10692,14 @@ static xen_value *vct_move_3(ptree *prog, xen_value **args, int num_args)
 
 static void vct_peak_v(int *args, ptree *pt) 
 {
-  off_t i;
+  mus_long_t i;
   Double val = 0.0;
   vct *v;
   v = VCT_ARG_1;
   val = fabs(v->data[0]); 
   for (i = 1; i < v->length; i++) 
     {
-      Float absv;
+      mus_float_t absv;
       absv = fabs(v->data[i]); 
       if (absv > val) val = absv;
     }
@@ -10722,7 +10722,7 @@ static void vct_to_channel_v(int *args, ptree *pt)
   if (cp)
     {
       vct *v;
-      off_t beg, dur;
+      mus_long_t beg, dur;
       v = VCT_ARG_1;
       beg = INT_ARG_2;
       dur = INT_ARG_3;
@@ -10730,7 +10730,7 @@ static void vct_to_channel_v(int *args, ptree *pt)
       change_samples(beg, dur, v->data, cp, S_vct_to_channel, cp->edit_ctr);
 #else
       {
-	off_t i;
+	mus_long_t i;
 	mus_sample_t *data;
 	data = (mus_sample_t *)calloc(dur, sizeof(mus_sample_t));
 	for (i = 0; i < dur; i++) data[i] = MUS_FLOAT_TO_SAMPLE(v->data[i]);
@@ -10843,7 +10843,7 @@ static void sound_data_set_f(int *args, ptree *pt)
 
 static void sound_data_set_i(int *args, ptree *pt) 
 {
-  SOUND_DATA_ARG_1->data[INT_ARG_2][INT_ARG_3] = (Float)INT_ARG_4;
+  SOUND_DATA_ARG_1->data[INT_ARG_2][INT_ARG_3] = (mus_float_t)INT_ARG_4;
   FLOAT_RESULT = (Double)INT_ARG_4;
 }
 
@@ -10989,14 +10989,14 @@ static void sound_data_to_vct_v(int *args, ptree *pt)
   vct *v;
   sound_data *sd;
   int chan;
-  off_t len;
+  mus_long_t len;
   v = VCT_ARG_3;
   sd = SOUND_DATA_ARG_1;
   chan = INT_ARG_2;
   if (sd->length < v->length) 
     len = sd->length; 
   else len = v->length;
-  memcpy((void *)(v->data), (void *)(sd->data[chan]), len * sizeof(Float));
+  memcpy((void *)(v->data), (void *)(sd->data[chan]), len * sizeof(mus_float_t));
   VCT_RESULT = v;
 }
 
@@ -11011,14 +11011,14 @@ static void vct_to_sound_data_v(int *args, ptree *pt)
   vct *v;
   sound_data *sd;
   int chan;
-  off_t len;
+  mus_long_t len;
   v = VCT_ARG_1;
   sd = SOUND_DATA_ARG_2;
   chan = INT_ARG_3;
   if (sd->length < v->length) 
     len = sd->length; 
   else len = v->length;
-  memcpy((void *)(sd->data[chan]), (void *)(v->data), len * sizeof(Float));
+  memcpy((void *)(sd->data[chan]), (void *)(v->data), len * sizeof(mus_float_t));
   SOUND_DATA_RESULT = sd;
 }
 
@@ -11335,7 +11335,7 @@ static xen_value *firmant_1(ptree *prog, xen_value **args, int num_args)
 
 static bool env_is_constant(mus_any *e)
 {
-  Float *data;
+  mus_float_t *data;
   if (mus_env_breakpoints(e) == 1) return(true);
   if (mus_env_breakpoints(e) > 2) return(false);
   data = mus_data(e);
@@ -11778,7 +11778,7 @@ static void mixer_set_0(int *args, ptree *pt)
 
 static void mixer_set_i(int *args, ptree *pt) 
 {
-  mus_mixer_set(CLM_ARG_1, INT_ARG_2, INT_ARG_3, (Float)INT_ARG_4);
+  mus_mixer_set(CLM_ARG_1, INT_ARG_2, INT_ARG_3, (mus_float_t)INT_ARG_4);
 }
 
 static xen_value *mixer_set_2(ptree *prog, xen_value **args, int num_args)
@@ -11809,7 +11809,7 @@ REF_GEN0(locsig_reverb_ref, locsig)
 
 #define SET_GEN0(Name, SName) \
   static void Name ## _0r(int *args, ptree *pt) {mus_ ## Name (CLM_ARG_1, INT_ARG_2, FLOAT_ARG_3);} \
-  static void Name ## _ir(int *args, ptree *pt) {mus_ ## Name (CLM_ARG_1, INT_ARG_2, (Float)(INT_ARG_3));} \
+  static void Name ## _ir(int *args, ptree *pt) {mus_ ## Name (CLM_ARG_1, INT_ARG_2, (mus_float_t)(INT_ARG_3));} \
   static xen_value * Name ## _2(ptree *prog, xen_value **args, int num_args) \
   { \
     if (args[3]->type == R_FLOAT) \
@@ -12544,10 +12544,10 @@ static xen_value *env_interp_1(ptree *prog, xen_value **args, int num_args)
 #if (!HAVE_NESTED_FUNCTIONS) || __cplusplus
 static ptree *env_any_outer_pt, *env_any_connect_pt;
 
-static Float env_any_connect(Float y)
+static mus_float_t env_any_connect(mus_float_t y)
 {
   ptree *outer, *inner;
-  Float result;
+  mus_float_t result;
 
   outer = env_any_outer_pt;
   inner = env_any_connect_pt;
@@ -12575,8 +12575,8 @@ static void env_any_2(int *args, ptree *pt)
 
 static void env_any_2(int *args, ptree *pt) 
 {
-  auto Float env_any_connect(Float y); /* see comment in clm2xen */
-  Float env_any_connect(Float y)
+  auto mus_float_t env_any_connect(mus_float_t y); /* see comment in clm2xen */
+  mus_float_t env_any_connect(mus_float_t y)
   {
     pt->dbls[FNC_ARG_2->args[0]] = y;
     eval_embedded_ptree(FNC_ARG_2, pt);
@@ -12870,7 +12870,7 @@ static void out_f_3(int *args, ptree *pt) {FLOAT_RESULT = FLOAT_ARG_2;}
 static void out_any_f_4(int *args, ptree *pt) {FLOAT_RESULT = FLOAT_ARG_2;}
 
 
-static Float call_out_any_function(ptree *pt, Int loc, Float val, Int chan, ptree *function)
+static mus_float_t call_out_any_function(ptree *pt, Int loc, mus_float_t val, Int chan, ptree *function)
 {
   pt->ints[function->args[0]] = loc;
   pt->dbls[function->args[1]] = val;
@@ -13449,7 +13449,7 @@ static void in_any_sound_data_3(int *args, ptree *pt)
 }
 
 
-static Float call_in_any_function(ptree *pt, Int loc, Int chan, ptree *function)
+static mus_float_t call_in_any_function(ptree *pt, Int loc, Int chan, ptree *function)
 {
   pt->ints[function->args[0]] = loc;
   pt->ints[function->args[1]] = chan; 
@@ -13737,13 +13737,13 @@ static xen_value *mus_spectrum_1(ptree *prog, xen_value **args, int num_args)
 
 /* ---------------- partials->polynomial ---------------- */
 
-/* (partials->polynomial amps kind) which doesn't match the C level mus_partials_to_polynomial(int npartials, Float *partials, mus_polynomial_t kind)
+/* (partials->polynomial amps kind) which doesn't match the C level mus_partials_to_polynomial(int npartials, mus_float_t *partials, mus_polynomial_t kind)
  */
 
 static void partials_to_polynomial_n(int *args, ptree *pt, mus_polynomial_t kind) 
 {
   int npartials = 0, error = 0;
-  Float *partials = NULL;
+  mus_float_t *partials = NULL;
   vct *v;
   if (VCT_RESULT) mus_vct_free(VCT_RESULT);
   partials = mus_vct_to_partials(VCT_ARG_1, &npartials, &error);
@@ -13842,7 +13842,7 @@ GEN_P(convolve)
 GEN_P(granulate)
 GEN_P(phase_vocoder)
 
-static Float src_input(void *arg, int direction)
+static mus_float_t src_input(void *arg, int direction)
 {
   mus_xen *gn = (mus_xen *)arg;
   ptree *pt, *outer;
@@ -14008,7 +14008,7 @@ static xen_value *granulate_1(ptree *prog, xen_value **args, int num_args)
 
 /* ---------------- phase-vocoder ---------------- */
 
-static bool pv_analyze(void *arg, Float (*input)(void *arg1, int direction))
+static bool pv_analyze(void *arg, mus_float_t (*input)(void *arg1, int direction))
 {
   mus_xen *gn = (mus_xen *)arg;
   ptree *pt, *outer;
@@ -14020,7 +14020,7 @@ static bool pv_analyze(void *arg, Float (*input)(void *arg1, int direction))
   return(outer->ints[pt->result->addr]);
 }
 
-static Float pv_synthesize(void *arg)
+static mus_float_t pv_synthesize(void *arg)
 {
   mus_xen *gn = (mus_xen *)arg;
   ptree *pt, *outer;
@@ -16248,7 +16248,7 @@ struct ptree *mus_run_form_to_ptree_1_b_without_env(XEN code)
 
 /* ---------------- various evaluator wrappers ---------------- */
 
-Float mus_run_evaluate_ptree_1f2f(struct ptree *pt, Float arg)
+mus_float_t mus_run_evaluate_ptree_1f2f(struct ptree *pt, mus_float_t arg)
 {
   pt->dbls[pt->args[0]] = arg;
   eval_ptree(pt);
@@ -16256,7 +16256,7 @@ Float mus_run_evaluate_ptree_1f2f(struct ptree *pt, Float arg)
 }
 
 
-Float mus_run_evaluate_ptree_1f1v1b2f(struct ptree *pt, Float arg, vct *v, bool dir)
+mus_float_t mus_run_evaluate_ptree_1f1v1b2f(struct ptree *pt, mus_float_t arg, vct *v, bool dir)
 {
   pt->dbls[pt->args[0]] = arg;
   pt->vcts[pt->args[1]] = v;
@@ -16266,14 +16266,14 @@ Float mus_run_evaluate_ptree_1f1v1b2f(struct ptree *pt, Float arg, vct *v, bool 
 }
 
 
-Float mus_run_evaluate_ptree_0f2f(struct ptree *pt)
+mus_float_t mus_run_evaluate_ptree_0f2f(struct ptree *pt)
 {
   eval_ptree(pt);
   return(pt->dbls[pt->result->addr]);
 }
 
 
-int mus_run_evaluate_ptree_1f2b(struct ptree *pt, Float arg)
+int mus_run_evaluate_ptree_1f2b(struct ptree *pt, mus_float_t arg)
 {
   pt->dbls[pt->args[0]] = arg;
   eval_ptree(pt);
@@ -16281,7 +16281,7 @@ int mus_run_evaluate_ptree_1f2b(struct ptree *pt, Float arg)
 }
 
 
-Float mus_run_evaluate_ptreec(struct ptree *pt, Float arg, XEN object, bool dir, int type)
+mus_float_t mus_run_evaluate_ptreec(struct ptree *pt, mus_float_t arg, XEN object, bool dir, int type)
 {
   /* set the "val" (current sample) arg */
 
@@ -17146,14 +17146,14 @@ struct ptree *mus_run_form_to_ptree_1_b(XEN code) {return(NULL);}
 struct ptree *mus_run_form_to_ptree_3_f(XEN code) {return(NULL);}
 struct ptree *mus_run_form_to_ptree_1_b_without_env(XEN code) {return(NULL);}
 struct ptree *mus_run_form_to_ptree_1_f(XEN code) {return(NULL);}
-Float mus_run_evaluate_ptree_1f1v1b2f(struct ptree *pt, Float arg, vct *v, bool dir) {return(0.0);}
-Float mus_run_evaluate_ptree_0f2f(struct ptree *pt) {return(0.0);}
+mus_float_t mus_run_evaluate_ptree_1f1v1b2f(struct ptree *pt, mus_float_t arg, vct *v, bool dir) {return(0.0);}
+mus_float_t mus_run_evaluate_ptree_0f2f(struct ptree *pt) {return(0.0);}
 struct ptree *mus_run_form_to_ptree_0_f(XEN code) {return(NULL);}
-Float mus_run_evaluate_ptree_1f2f(struct ptree *pt, Float arg) {return(0.0);}
-int mus_run_evaluate_ptree_1f2b(struct ptree *pt, Float arg) {return(0);}
+mus_float_t mus_run_evaluate_ptree_1f2f(struct ptree *pt, mus_float_t arg) {return(0.0);}
+int mus_run_evaluate_ptree_1f2b(struct ptree *pt, mus_float_t arg) {return(0);}
 void mus_run_free_ptree(struct ptree *pt) {}
 XEN mus_run_ptree_code(struct ptree *pt) {return(XEN_FALSE);}
-Float mus_run_evaluate_ptreec(struct ptree *pt, Float arg, XEN object, bool dir, int type) {return(0.0);}
+mus_float_t mus_run_evaluate_ptreec(struct ptree *pt, mus_float_t arg, XEN object, bool dir, int type) {return(0.0);}
 int mus_run_xen_to_run_type(XEN val) {return(0);}
 #endif
 /* endif WITH_RUN */

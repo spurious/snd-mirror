@@ -69,7 +69,7 @@ static void set_volume(mus_sample_t **buf, int chans, int length, double volume)
 static int main_not_alsa(int argc, char *argv[])
 {
   int fd, afd, i, j, n, k, chans, srate;
-  off_t frames, m;
+  mus_long_t frames, m;
   mus_sample_t **bufs;
   OutSample *obuf;
   int use_multi_card_code = 0, use_volume = 0;
@@ -77,7 +77,7 @@ static int main_not_alsa(int argc, char *argv[])
   mus_sample_t **qbufs;
   short *obuf0, *obuf1;
   char *name = NULL;
-  off_t start = 0, end = 0;
+  mus_long_t start = 0, end = 0;
   double begin_time = 0.0, end_time = 0.0, volume = 1.0;
   int mutate = 1, include_mutate = 0;
 
@@ -183,11 +183,11 @@ static int main_not_alsa(int argc, char *argv[])
       srate = mus_sound_srate(name);
       frames = mus_sound_frames(name);
       sample_size = mus_bytes_per_sample(MUS_AUDIO_COMPATIBLE_FORMAT);
-      start = (off_t)(begin_time * srate);
+      start = (mus_long_t)(begin_time * srate);
       if (start > 0)
 	mus_file_seek_frame(fd, start);
       if (end_time > 0.0)
-	end = (off_t)(end_time * srate);
+	end = (mus_long_t)(end_time * srate);
       else end = frames;
       if ((end - start) < frames)
 	frames = end - start;
@@ -324,7 +324,7 @@ static int use_one_device = 1;
 static int main_alsa(int argc, char *argv[])
 {
   int fd, i, chans, srate;
-  off_t frames, ioff;
+  mus_long_t frames, ioff;
   mus_sample_t **read_bufs;
   int afd[MAX_SLOTS];
   short *out_buf[MAX_SLOTS];
@@ -344,7 +344,7 @@ static int main_alsa(int argc, char *argv[])
   int min_chans[MAX_SLOTS];
   int max_chans[MAX_SLOTS];
   int alloc_chans;
-  off_t start = 0, end = 0;
+  mus_long_t start = 0, end = 0;
   double begin_time = 0.0, end_time = 0.0, volume = 1.0;
   int use_volume = 0;
 
@@ -523,11 +523,11 @@ static int main_alsa(int argc, char *argv[])
       srate = mus_sound_srate(name);
       frames = mus_sound_frames(name);
       base = 0;
-      start = (off_t)(begin_time * srate);
+      start = (mus_long_t)(begin_time * srate);
       if (start > 0)
 	mus_file_seek_frame(fd, start);
       if (end_time > 0.0)
-	end = (off_t)(end_time * srate);
+	end = (mus_long_t)(end_time * srate);
       else end = frames;
       if ((end - start) < frames)
 	frames = end - start;

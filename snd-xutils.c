@@ -585,7 +585,7 @@ void widget_int_to_text(Widget w, int val)
 }
 
 
-void widget_off_t_to_text(Widget w, off_t val)
+void widget_mus_long_t_to_text(Widget w, mus_long_t val)
 {
   char *str;
   str = (char *)calloc(32, sizeof(char));
@@ -595,14 +595,14 @@ void widget_off_t_to_text(Widget w, off_t val)
 }
 
 
-static Pixmap rotate_text(Widget w, const char *str, XFontStruct *font, Float angle_in_degrees, int *nw, int *nh, Pixel bg, Pixel fg, GC d_gc)
+static Pixmap rotate_text(Widget w, const char *str, XFontStruct *font, mus_float_t angle_in_degrees, int *nw, int *nh, Pixel bg, Pixel fg, GC d_gc)
 {
   /* rotate clockwise by angle_in_degrees degrees (i.e. 45 points text south-east), 
    * new bounding box (text centered in it) returned in nw and nh
    * bg = background color, fg = foreground (text) color) 
    */
-  Float matrix[4];
-  Float angle_in_radians;
+  mus_float_t matrix[4];
+  mus_float_t angle_in_radians;
   XImage *before, *after;
   Pixmap pix, rotpix;
   unsigned int width, height, depth, nwidth, nheight, x, y, nx, ny, tx, ty, depth_bytes;

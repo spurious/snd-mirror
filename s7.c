@@ -82,7 +82,6 @@
  *        strings/lists should be (set-)applicable (*-ref|set! are ugly and pointless), hash-tables?
  *        perhaps *trace-function*
  *        defmacro* define-macro*
- *        perhaps procedure-environment
  *
  *
  * Mike Scholz provided the FreeBSD support (complex trig funcs, etc)

@@ -131,19 +131,19 @@ static int reflect_y(axis_info *ap, int y)
 }
 
 
-static Float *xpts = NULL;
-static Float *ypts = NULL;
-static Float *ypts1 = NULL;
+static mus_float_t *xpts = NULL;
+static mus_float_t *ypts = NULL;
+static mus_float_t *ypts1 = NULL;
 
 void ps_allocate_grf_points(void)
 {
-  if (!xpts) xpts = (Float *)calloc(POINT_BUFFER_SIZE, sizeof(Float));
-  if (!ypts) ypts = (Float *)calloc(POINT_BUFFER_SIZE, sizeof(Float));
-  if (!ypts1) ypts1 = (Float *)calloc(POINT_BUFFER_SIZE, sizeof(Float));
+  if (!xpts) xpts = (mus_float_t *)calloc(POINT_BUFFER_SIZE, sizeof(mus_float_t));
+  if (!ypts) ypts = (mus_float_t *)calloc(POINT_BUFFER_SIZE, sizeof(mus_float_t));
+  if (!ypts1) ypts1 = (mus_float_t *)calloc(POINT_BUFFER_SIZE, sizeof(mus_float_t));
 }
 
 
-void ps_set_grf_points(double x, int j, Float ymin, Float ymax) 
+void ps_set_grf_points(double x, int j, mus_float_t ymin, mus_float_t ymax) 
 {
   xpts[j] = x;
   ypts[j] = ymin;
@@ -151,26 +151,26 @@ void ps_set_grf_points(double x, int j, Float ymin, Float ymax)
 }
 
 
-void ps_set_grf_point(double x, int j, Float y) 
+void ps_set_grf_point(double x, int j, mus_float_t y) 
 {
   xpts[j] = x;
   ypts[j] = y;
 }
 
 
-static Float ps_grf_x(axis_info *ap, Float val)
+static mus_float_t ps_grf_x(axis_info *ap, mus_float_t val)
 {
   return(ap->x_axis_x0 + bx0 + (val - ap->x0) * ap->x_scale);
 }
 
 
-static Float ps_grf_y(axis_info *ap, Float val)
+static mus_float_t ps_grf_y(axis_info *ap, mus_float_t val)
 {
   return(by0 + ap->height - (ap->y_axis_y0 + (val - ap->y0) * ap->y_scale));
 }
 
 
-static void ps_draw_lines(axis_info *ap, int j, Float *xpts, Float *ypts)
+static void ps_draw_lines(axis_info *ap, int j, mus_float_t *xpts, mus_float_t *ypts)
 {
   int i;
   mus_snprintf(pbuf, PRINT_BUFFER_SIZE, " %.2f %.2f moveto\n", ps_grf_x(ap, xpts[0]), ps_grf_y(ap, ypts[0]));
@@ -185,10 +185,10 @@ static void ps_draw_lines(axis_info *ap, int j, Float *xpts, Float *ypts)
 }
 
 
-static void ps_draw_dots(axis_info *ap, int j, Float *xpts, Float *ypts, int dot_size)
+static void ps_draw_dots(axis_info *ap, int j, mus_float_t *xpts, mus_float_t *ypts, int dot_size)
 {
   int i;
-  Float arc_size;
+  mus_float_t arc_size;
   arc_size = .5 * dot_size; /* radius here, diameter in X */
   for (i = 0; i < j; i++)
     {
@@ -198,7 +198,7 @@ static void ps_draw_dots(axis_info *ap, int j, Float *xpts, Float *ypts, int dot
 }
 
 
-static void ps_fill_polygons(axis_info *ap, int j, Float *xpts, Float *ypts, Float y0)
+static void ps_fill_polygons(axis_info *ap, int j, mus_float_t *xpts, mus_float_t *ypts, mus_float_t y0)
 {
   int i;
   for (i = 1; i < j; i++)
@@ -217,7 +217,7 @@ static void ps_fill_polygons(axis_info *ap, int j, Float *xpts, Float *ypts, Flo
 }
 
 
-void ps_draw_grf_points(axis_info *ap, int j, Float y0, graph_style_t graph_style, int dot_size) 
+void ps_draw_grf_points(axis_info *ap, int j, mus_float_t y0, graph_style_t graph_style, int dot_size) 
 {
   switch (graph_style)
     {
@@ -322,7 +322,7 @@ void ps_draw_both_grf_points(axis_info *ap, int j, graph_style_t graph_style, in
 
 static int last_color = -1;
 
-void ps_draw_sono_rectangle(axis_info *ap, int color, Float x, Float y, Float width, Float height)
+void ps_draw_sono_rectangle(axis_info *ap, int color, mus_float_t x, mus_float_t y, mus_float_t width, mus_float_t height)
 {
   rgb_t r, g, b;
   if (last_color != color)
@@ -442,7 +442,7 @@ void ps_draw_line(axis_info *ap, int x0, int y0, int x1, int y1)
 }
 
 
-void ps_draw_spectro_line(axis_info *ap, int color, Float x0, Float y0, Float x1, Float y1)
+void ps_draw_spectro_line(axis_info *ap, int color, mus_float_t x0, mus_float_t y0, mus_float_t x1, mus_float_t y1)
 {
   /* these are in local coords */
   rgb_t r, g, b;

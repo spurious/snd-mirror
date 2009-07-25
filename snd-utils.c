@@ -1,7 +1,7 @@
 #include "snd.h"
 
 
-int snd_round(double x) /* needs to be double here (not Float) for x axis calcs */
+int snd_round(double x) /* needs to be double here (not mus_float_t) for x axis calcs */
 {
   int i;
   i = (int)x;
@@ -10,16 +10,16 @@ int snd_round(double x) /* needs to be double here (not Float) for x axis calcs 
 }
 
 
-off_t snd_round_off_t(double x)
+mus_long_t snd_round_mus_long_t(double x)
 {
-  off_t i;
-  i = (off_t)x;
+  mus_long_t i;
+  i = (mus_long_t)x;
   if ((x - i) > 0.5) return(i + 1);
   return(i);
 }
 
 
-off_t snd_abs_off_t(off_t val)
+mus_long_t snd_abs_mus_long_t(mus_long_t val)
 {
   /* div is also limited to int */
   return((val < 0) ? -val : val);
@@ -37,12 +37,12 @@ int snd_int_pow2(int n)
 }
 
 
-off_t snd_off_t_pow2(int n)
+mus_long_t snd_mus_long_t_pow2(int n)
 {
   if ((n < 0) || (n > 46)) return(0);
   if (n < POW2_SIZE)
-    return((off_t)ipow2s[n]);
-  return((off_t)ipow2s[16] * (off_t)ipow2s[n - 16]);  /* can't store an array as above -- compiler complaints */
+    return((mus_long_t)ipow2s[n]);
+  return((mus_long_t)ipow2s[16] * (mus_long_t)ipow2s[n - 16]);  /* can't store an array as above -- compiler complaints */
 }
 
 
@@ -70,7 +70,7 @@ int snd_int_log2(int n)
 
 #define MAX_FLOAT_DIFF_FOR_EQUAL 0.0000001
 
-bool snd_feq(Float val1, Float val2)
+bool snd_feq(mus_float_t val1, mus_float_t val2)
 {
   /* if some float can be affected by a widget, we can easily get float inaccuracies that confuse "==" (in gtk in particular) */
   if (val1 == val2) return(true);
@@ -80,7 +80,7 @@ bool snd_feq(Float val1, Float val2)
 
 
 #if !(defined(__GNUC__) && (!(defined(__cplusplus))))
-Float in_dB(Float min_dB, Float lin_dB, Float val)
+mus_float_t in_dB(mus_float_t min_dB, mus_float_t lin_dB, mus_float_t val)
 {
   return((val <= lin_dB) ? min_dB : (20.0 * log10(val)));
 }
@@ -246,9 +246,9 @@ char *vstr(const char *format, va_list ap)
 }
 
 
-disk_space_t disk_space_p(off_t bytes, const char *filename)
+disk_space_t disk_space_p(mus_long_t bytes, const char *filename)
 {
-  off_t kfree, kneeded;
+  mus_long_t kfree, kneeded;
   kfree = disk_kspace(filename);
   if (kfree < 0) 
     {

@@ -1,5 +1,10 @@
 #include "snd.h"
 
+/* TODO: in motif 2.3.2 (mar 09) the listener comes out in the top pane,
+ *           and the edit history pane is permanently inactive.
+ *           if -horizontal, listener is ok??
+ */
+
 #define FALLBACK_FONT "fixed"
 #define DEFAULT_FONTLIST "9x15"
 
@@ -63,8 +68,8 @@
                                 /* this number is only a first approximation -- we try not to expand below the screen */
                                 /* if too small (i.e. 100), the scrollbars are sometimes messed up on the initial layout */
 
-#define SASH_SIZE 14
-#define SASH_INDENT -6
+#define SASH_SIZE 16
+#define SASH_INDENT -20
 #define AUTO_RESIZE_DEFAULT 1
 
 /* /usr/lib/X11/rgb.txt, /usr/lib/X11/fonts/Type1/fonts.dir, /usr/lib/X11/fonts/misc */

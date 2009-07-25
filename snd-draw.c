@@ -76,7 +76,7 @@ void draw_both_grf_points(int dot_size, axis_context *ax, int j, graph_style_t g
 }
 
 
-void draw_grf_points(int dot_size, axis_context *ax, int j, axis_info *ap, Float y0, graph_style_t graph_style)
+void draw_grf_points(int dot_size, axis_context *ax, int j, axis_info *ap, mus_float_t y0, graph_style_t graph_style)
 {
   int i, gy0;
   switch (graph_style)
@@ -1242,13 +1242,13 @@ static XEN g_snd_font(XEN choice)
 
 
 #if HAVE_GL
-static Float gl_currents[6] = {DEFAULT_SPECTRO_X_ANGLE, DEFAULT_SPECTRO_Y_ANGLE, DEFAULT_SPECTRO_Z_ANGLE, 
+static mus_float_t gl_currents[6] = {DEFAULT_SPECTRO_X_ANGLE, DEFAULT_SPECTRO_Y_ANGLE, DEFAULT_SPECTRO_Z_ANGLE, 
 			       DEFAULT_SPECTRO_X_SCALE, DEFAULT_SPECTRO_Y_SCALE, DEFAULT_SPECTRO_Z_SCALE};
-static Float x_currents[6] = {90.0, 0.0, 358.0, 1.0, 1.0, 0.1};
+static mus_float_t x_currents[6] = {90.0, 0.0, 358.0, 1.0, 1.0, 0.1};
 
 void sgl_save_currents(void)
 {
-  Float *vals;
+  mus_float_t *vals;
   if (with_gl(ss)) vals = gl_currents; else vals = x_currents;
   vals[0] = spectro_x_angle(ss);
   vals[1] = spectro_y_angle(ss);
@@ -1261,7 +1261,7 @@ void sgl_save_currents(void)
 
 void sgl_set_currents(bool with_dialogs)
 {
-  Float *vals;
+  mus_float_t *vals;
   if (with_gl(ss)) vals = gl_currents; else vals = x_currents;
   in_set_spectro_x_angle(vals[0]);
   in_set_spectro_y_angle(vals[1]);
@@ -1290,9 +1290,9 @@ static XEN g_color_p(XEN obj)
 }
 
 
-Float check_color_range(const char *caller, XEN val)
+mus_float_t check_color_range(const char *caller, XEN val)
 {
-  Float rf;
+  mus_float_t rf;
   rf = XEN_TO_C_DOUBLE(val);
   if ((rf > 1.0) || (rf < 0.0))
     XEN_OUT_OF_RANGE_ERROR(caller, 1, val, "value ~A must be between 0.0 and 1.0");
@@ -2124,7 +2124,7 @@ a new set of channel or sound widgets is created."
 /* no gui */
 void set_grf_points(int xi, int j, int ymin, int ymax) {}
 void set_grf_point(int xi, int j, int yi) {}
-void draw_grf_points(int dot_size, axis_context *ax, int j, axis_info *ap, Float y0, graph_style_t graph_style) {}
+void draw_grf_points(int dot_size, axis_context *ax, int j, axis_info *ap, mus_float_t y0, graph_style_t graph_style) {}
 void draw_both_grf_points(int dot_size, axis_context *ax, int j, graph_style_t graph_style) {}
 void draw_cursor(chan_info *cp) {}
 void show_mark(chan_info *cp, axis_info *ap, mark *mp, bool show) {}

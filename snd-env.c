@@ -28,8 +28,8 @@ env *copy_env(env *e)
       ne = (env *)calloc(1, sizeof(env));
       ne->pts = e->pts;
       ne->data_size = e->pts * 2;
-      ne->data = (Float *)malloc(ne->data_size * sizeof(Float));
-      memcpy((void *)(ne->data), (void *)(e->data), ne->data_size * sizeof(Float));
+      ne->data = (mus_float_t *)malloc(ne->data_size * sizeof(mus_float_t));
+      memcpy((void *)(ne->data), (void *)(e->data), ne->data_size * sizeof(mus_float_t));
       ne->base = e->base;
       return(ne);
     }
@@ -103,14 +103,14 @@ char *env_to_string(env *e)
 }
 
 
-env *make_envelope_with_offset_and_scaler(Float *env_buffer, int len, Float offset, Float scaler)
+env *make_envelope_with_offset_and_scaler(mus_float_t *env_buffer, int len, mus_float_t offset, mus_float_t scaler)
 {
   env *e;
   int i, flen;
   if (len < 4) flen = 4; else flen = len;
   if (flen & 1) flen++;
   e = (env *)calloc(1, sizeof(env));
-  e->data = (Float *)calloc(flen, sizeof(Float));
+  e->data = (mus_float_t *)calloc(flen, sizeof(mus_float_t));
   e->data_size = flen;
   e->pts = flen / 2;
   for (i = 0; i < len; i += 2) 
@@ -128,19 +128,19 @@ env *make_envelope_with_offset_and_scaler(Float *env_buffer, int len, Float offs
 }
 
 
-static env *make_envelope(Float *env_buffer, int len)
+static env *make_envelope(mus_float_t *env_buffer, int len)
 {
   return(make_envelope_with_offset_and_scaler(env_buffer, len, 0.0, 1.0));
 }
 
 
-static void add_point(env *e, int pos, Float x, Float y)
+static void add_point(env *e, int pos, mus_float_t x, mus_float_t y)
 {
   int i, j;
   if (e->pts * 2 == e->data_size)
     {
       e->data_size += 16;
-      e->data = (Float *)realloc(e->data, (e->data_size) * sizeof(Float));
+      e->data = (mus_float_t *)realloc(e->data, (e->data_size) * sizeof(mus_float_t));
     }
   for (i = e->pts - 1, j = (e->pts - 1) * 2; i >= pos; i--, j -= 2)
     {
@@ -153,7 +153,7 @@ static void add_point(env *e, int pos, Float x, Float y)
 }
 
 
-static void move_point(env *e, int pos, Float x, Float y)
+static void move_point(env *e, int pos, mus_float_t x, mus_float_t y)
 {
   e->data[pos * 2] = x;
   e->data[pos * 2 + 1] = y;
@@ -172,7 +172,7 @@ static void delete_point(env *e, int pos)
 }
 
 
-static int place_point(int *cxs, int points, int x, env *e, Float bx)
+static int place_point(int *cxs, int points, int x, env *e, mus_float_t bx)
 {
   int i;
   for (i = 0; i < points; i++)
@@ -221,11 +221,11 @@ static int hit_point(int *cxs, int *cys, int points, int x, int y)
 }
 
 
-env *default_env(Float x1, Float y)
+env *default_env(mus_float_t x1, mus_float_t y)
 {
   env *e;
   e = (env *)calloc(1, sizeof(env));
-  e->data = (Float *)calloc(4, sizeof(Float));
+  e->data = (mus_float_t *)calloc(4, sizeof(mus_float_t));
   e->data_size = 4;
   e->pts = 2;
   e->data[0] = 0.0; 
@@ -279,7 +279,7 @@ static void env_editor_set_current_point(env_editor *edp, int pos, int x, int y)
 }
 
 
-static short env_editor_grf_y_dB(env_editor *edp, Float val)
+static short env_editor_grf_y_dB(env_editor *edp, mus_float_t val)
 {
   if (edp->in_dB)
     return(grf_y(in_dB(min_dB(ss), ss->lin_dB, val), edp->axis));
@@ -287,7 +287,7 @@ static short env_editor_grf_y_dB(env_editor *edp, Float val)
 }
 
 
-static Float un_dB(Float py)
+static mus_float_t un_dB(mus_float_t py)
 {
   return((py <= min_dB(ss)) ? 0.0 : pow(10.0, py * .05));
 }
@@ -304,7 +304,7 @@ double env_editor_ungrf_y_dB(env_editor *edp, int y)
 #define EXP_SEGLEN 4
 typedef enum {ENVED_ADD_POINT, ENVED_DELETE_POINT, ENVED_MOVE_POINT} enved_point_t;
 
-static bool check_enved_hook(env *e, int pos, Float x, Float y, enved_point_t reason);
+static bool check_enved_hook(env *e, int pos, mus_float_t x, mus_float_t y, enved_point_t reason);
 
 /* enved display can call mus_make_env which can throw 'mus-error, so we need local protection */
 static mus_error_handler_t *old_error_handler;
@@ -319,9 +319,9 @@ void env_editor_display_env(env_editor *edp, env *e, axis_context *ax, const cha
 			    int x0, int y0, int width, int height, printing_t printing)
 {
   int i, j, k;
-  Float ex0, ey0, ex1, ey1, val;
+  mus_float_t ex0, ey0, ex1, ey1, val;
   int ix0, ix1, iy0, iy1, lx0, lx1, ly0, ly1, index = 0;
-  Float env_val, curx, xincr;
+  mus_float_t env_val, curx, xincr;
   int dur;
   axis_info *ap;
   if (e)
@@ -409,14 +409,14 @@ void env_editor_display_env(env_editor *edp, env *e, axis_context *ax, const cha
 		  else
 		    {
 		      /* interpolate so the display looks closer to dB */
-		      Float yval, yincr;
+		      mus_float_t yval, yincr;
 		      dur = (ix1 - ix0) / EXP_SEGLEN;
-		      xincr = (e->data[i] - e->data[i - 2]) / (Float)dur;
+		      xincr = (e->data[i] - e->data[i - 2]) / (mus_float_t)dur;
 		      curx = e->data[i - 2] + xincr;
 		      lx1 = ix0;
 		      ly1 = iy0;
 		      yval = e->data[i - 1];
-		      yincr = (e->data[i + 1] - yval) / (Float)dur;
+		      yincr = (e->data[i + 1] - yval) / (mus_float_t)dur;
 		      yval += yincr;
 		      for (k = 1; k < dur; k++, curx += xincr, yval += yincr)
 			{
@@ -489,7 +489,7 @@ void env_editor_display_env(env_editor *edp, env *e, axis_context *ax, const cha
 	      env_val = mus_env(ce);
 	      ix1 = grf_x(0.0, ap);
 	      iy1 = env_editor_grf_y_dB(edp, env_val);
-	      xincr = (ex1 - ex0) / (Float)dur;
+	      xincr = (ex1 - ex0) / (mus_float_t)dur;
 	      j = 1;
 	      for (i = 1, curx = ex0 + xincr; i < dur; i++, curx += xincr)
 		{
@@ -525,10 +525,10 @@ void env_editor_display_env(env_editor *edp, env *e, axis_context *ax, const cha
 }
 
 
-void env_editor_button_motion_with_xy(env_editor *edp, int evx, int evy, oclock_t motion_time, env *e, Float *new_x, Float *new_y)
+void env_editor_button_motion_with_xy(env_editor *edp, int evx, int evy, oclock_t motion_time, env *e, mus_float_t *new_x, mus_float_t *new_y)
 {
   axis_info *ap;
-  Float x0, x1, x, y;
+  mus_float_t x0, x1, x, y;
   if ((e == NULL) || (edp == NULL)) return;
   if ((motion_time - edp->down_time) < ss->click_time) return;
   edp->env_dragged = true;
@@ -542,7 +542,7 @@ void env_editor_button_motion_with_xy(env_editor *edp, int evx, int evy, oclock_
     x1 = e->data[edp->env_pos * 2 + 2]; /* looking for next point on right to avoid crossing it */
   else x1 = e->data[e->pts * 2 - 2];
   {
-    Float dist = 0.0001;
+    mus_float_t dist = 0.0001;
     if ((x1 - x0) <= dist)
       dist = (x1 - x0) / 2.0;
     if (x <= x0) x = x0 + dist;
@@ -575,7 +575,7 @@ void env_editor_button_motion(env_editor *edp, int evx, int evy, oclock_t motion
 bool env_editor_button_press(env_editor *edp, int evx, int evy, oclock_t time, env *e)
 {
   int pos;
-  Float x, y;
+  mus_float_t x, y;
   axis_info *ap;
   ap = edp->axis;
   edp->down_time = time;
@@ -651,7 +651,7 @@ static int all_envs_top = 0;     /* one past pointer to last entry in this array
 
 
 void init_env_axes(axis_info *ap, const char *name, int x_offset, int ey0, int width, int height, 
-		   Float xmin, Float xmax, Float ymin, Float ymax, printing_t printing)
+		   mus_float_t xmin, mus_float_t xmax, mus_float_t ymin, mus_float_t ymax, printing_t printing)
 {
   if (ap->xlabel) free(ap->xlabel);
   ap->xmin = xmin;
@@ -682,8 +682,8 @@ void view_envs(int env_window_width, int env_window_height, printing_t printing)
   int cols, rows, i, j, width, height, x, y, k;
   if (all_envs_top > 1)
     {
-      cols = snd_round(sqrt((Float)(all_envs_top * env_window_width) / (Float)env_window_height));
-      rows = snd_round((Float)all_envs_top / (Float)cols);
+      cols = snd_round(sqrt((mus_float_t)(all_envs_top * env_window_width) / (mus_float_t)env_window_height));
+      rows = snd_round((mus_float_t)all_envs_top / (mus_float_t)cols);
       if ((rows * cols) < all_envs_top) rows++;
     }
   else
@@ -691,8 +691,8 @@ void view_envs(int env_window_width, int env_window_height, printing_t printing)
       cols = 1;
       rows = 1;
     }
-  width = (int)((Float)env_window_width / (Float)cols);
-  height = (int)((Float)env_window_height / (Float)rows);
+  width = (int)((mus_float_t)env_window_width / (mus_float_t)cols);
+  height = (int)((mus_float_t)env_window_height / (mus_float_t)rows);
   k = 0;
   for (i = 0, x = 0; i < cols; i++, x += width)
     for (j = 0, y = 0; j < rows; j++, y += height)
@@ -715,11 +715,11 @@ int hit_env(int xe, int ye, int env_window_width, int env_window_height)
       else
 	{
 	  int cols, rows, i, j, width, height, x, y, k;
-	  cols = snd_round(sqrt((Float)(all_envs_top * env_window_width) / (Float)env_window_height));
-	  rows = snd_round((Float)all_envs_top / (Float)cols);
+	  cols = snd_round(sqrt((mus_float_t)(all_envs_top * env_window_width) / (mus_float_t)env_window_height));
+	  rows = snd_round((mus_float_t)all_envs_top / (mus_float_t)cols);
 	  if ((rows * cols) < all_envs_top) rows++;
-	  width = (int)((Float)env_window_width / (Float)cols);
-	  height = (int)((Float)env_window_height / (Float)rows);
+	  width = (int)((mus_float_t)env_window_width / (mus_float_t)cols);
+	  height = (int)((mus_float_t)env_window_height / (mus_float_t)rows);
 	  k = 0;
 	  for (i = 0, x = width; i < cols; i++, x += width)
 	    if (x > xe)
@@ -925,7 +925,7 @@ void reflect_enved_fft_change(chan_info *cp)
 
 
 #define DEFAULT_ENVED_MAX_FFT_SIZE 1048576
-static off_t enved_max_fft_size = DEFAULT_ENVED_MAX_FFT_SIZE;
+static mus_long_t enved_max_fft_size = DEFAULT_ENVED_MAX_FFT_SIZE;
 
 
 static enved_fft *make_enved_spectrum(chan_info *cp)
@@ -939,8 +939,8 @@ static enved_fft *make_enved_spectrum(chan_info *cp)
   if ((ef) && 
       (ef->size == 0)) /* otherwise it is presumably already available */
     {
-      off_t i, data_len;
-      Float data_max = 0.0;
+      mus_long_t i, data_len;
+      mus_float_t data_max = 0.0;
       snd_fd *sf;
 
       data_len = cp->axis->hisamp - cp->axis->losamp;
@@ -952,7 +952,7 @@ static enved_fft *make_enved_spectrum(chan_info *cp)
       if (sf == NULL) return(NULL);
 
       ef->size = snd_to_int_pow2(data_len);
-      ef->data = (Float *)malloc(ef->size * sizeof(Float));
+      ef->data = (mus_float_t *)malloc(ef->size * sizeof(mus_float_t));
       if (ef->data == NULL) return(NULL);
 
       fourier_spectrum(sf, ef->data, ef->size, data_len, NULL, NULL);
@@ -970,10 +970,10 @@ static void display_enved_spectrum(chan_info *cp, enved_fft *ef, axis_info *ap)
 {
   if (ef)
     {
-      Float incr, x = 0.0;
+      mus_float_t incr, x = 0.0;
       int i = 0, j = 0;
-      off_t hisamp;
-      Float samples_per_pixel, xf = 0.0, ina, ymax;
+      mus_long_t hisamp;
+      mus_float_t samples_per_pixel, xf = 0.0, ina, ymax;
       ap->losamp = 0;
       ap->hisamp = ef->size - 1;
       ap->y0 = 0.0;
@@ -982,8 +982,8 @@ static void display_enved_spectrum(chan_info *cp, enved_fft *ef, axis_info *ap)
       ap->x1 = SND_SRATE(cp->sound) / 2;
       init_axis_scales(ap);
       hisamp = ef->size / 2;
-      incr = (Float)SND_SRATE(cp->sound) / (Float)(ef->size);
-      samples_per_pixel = (Float)((double)hisamp / (Float)(ap->x_axis_x1 - ap->x_axis_x0));
+      incr = (mus_float_t)SND_SRATE(cp->sound) / (mus_float_t)(ef->size);
+      samples_per_pixel = (mus_float_t)((double)hisamp / (mus_float_t)(ap->x_axis_x1 - ap->x_axis_x0));
       if ((samples_per_pixel < 4.0) &&
 	  (hisamp < POINT_BUFFER_SIZE))
 	{
@@ -1017,7 +1017,7 @@ void enved_show_background_waveform(axis_info *ap, axis_info *gray_ap, bool appl
 {
   int srate, pts = 0;
   graph_type_t old_time_graph_type = GRAPH_ONCE;
-  off_t samps;
+  mus_long_t samps;
   printing_t old_printing;
   bool two_sided = false;
   axis_info *active_ap = NULL;
@@ -1202,12 +1202,12 @@ env *xen_to_env(XEN res)
       if (len > 0)
 	{
 	  int i;
-	  Float *data = NULL;
+	  mus_float_t *data = NULL;
 	  XEN lst;
 	  
 	  if (XEN_NUMBER_P(XEN_CAR(res)))
 	    {
-	      data = (Float *)calloc(len, sizeof(Float));
+	      data = (mus_float_t *)calloc(len, sizeof(mus_float_t));
 	      for (i = 0, lst = XEN_COPY_ARG(res); i < len; i++, lst = XEN_CDR(lst))
 		{
 		  XEN el;
@@ -1221,7 +1221,7 @@ env *xen_to_env(XEN res)
 	      if (XEN_LIST_P(XEN_CAR(res)))
 		{
 		  len *= 2;
-		  data = (Float *)calloc(len, sizeof(Float));
+		  data = (mus_float_t *)calloc(len, sizeof(mus_float_t));
 		  for (i = 0, lst = XEN_COPY_ARG(res); i < len; i += 2, lst = XEN_CDR(lst))
 		    {
 		      XEN el;
@@ -1246,12 +1246,12 @@ static bool x_increases(XEN res)
 {
   int i, len;
   XEN lst;
-  Float x;
+  mus_float_t x;
   len = XEN_LIST_LENGTH(res);
   x = XEN_TO_C_DOUBLE(XEN_CAR(res));
   for (i = 2, lst = XEN_CDDR(XEN_COPY_ARG(res)); i < len; i += 2, lst = XEN_CDDR(lst))
     {
-      Float nx;
+      mus_float_t nx;
       nx = XEN_TO_C_DOUBLE(XEN_CAR(lst));
       if (x >= nx) return(false);
       x = nx;
@@ -1263,7 +1263,7 @@ static bool x_increases(XEN res)
 #if (!HAVE_EXTENSION_LANGUAGE)
   #define ENV_BUFFER_SIZE 128
   static int env_buffer_size = 0;
-  static Float *env_buffer = NULL;
+  static mus_float_t *env_buffer = NULL;
   static char env_white_space[5] = {' ', '(', ')', '\t', '\''};
 #endif
 
@@ -1299,7 +1299,7 @@ env *string_to_env(const char *str)
       if (env_buffer_size == 0)
 	{
 	  env_buffer_size = ENV_BUFFER_SIZE;
-	  env_buffer = (Float *)calloc(ENV_BUFFER_SIZE, sizeof(Float));
+	  env_buffer = (mus_float_t *)calloc(ENV_BUFFER_SIZE, sizeof(mus_float_t));
 	}
       if ((*tmp) == '\'') tmp++;
       if ((*tmp) == '(') tmp++;
@@ -1311,12 +1311,12 @@ env *string_to_env(const char *str)
 	      snd_error("%s in env list is not a number", tok);
 	      return(NULL);
 	    }
-	  env_buffer[i] = (Float)f;
+	  env_buffer[i] = (mus_float_t)f;
 	  i++;
 	  if (i == env_buffer_size)
 	    {
 	      env_buffer_size *= 2;
-	      env_buffer = (Float *)realloc(env_buffer, env_buffer_size * sizeof(Float));
+	      env_buffer = (mus_float_t *)realloc(env_buffer, env_buffer_size * sizeof(mus_float_t));
 	    }
 	  tok = strtok(NULL, env_white_space);
 	}
@@ -1519,7 +1519,7 @@ static XEN g_save_envelopes(XEN filename)
 
 static XEN enved_hook;
 
-static bool check_enved_hook(env *e, int pos, Float x, Float y, enved_point_t reason)
+static bool check_enved_hook(env *e, int pos, mus_float_t x, mus_float_t y, enved_point_t reason)
 {
   bool env_changed = false;
   if (XEN_HOOKED(enved_hook))
@@ -1560,7 +1560,7 @@ static bool check_enved_hook(env *e, int pos, Float x, Float y, enved_point_t re
 	      if (len > e->data_size)
 		{
 		  free(e->data);
-		  e->data = (Float *)calloc(len, sizeof(Float));
+		  e->data = (mus_float_t *)calloc(len, sizeof(mus_float_t));
 		  e->data_size = len;
 		}
 	      e->pts = len / 2;

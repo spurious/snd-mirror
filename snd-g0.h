@@ -199,7 +199,7 @@ typedef struct {
   unsigned int fft_pix_width, fft_pix_height;
   int fft_pix_x0, fft_pix_y0;
   bool fft_pix_ready;
-  Float fft_pix_cutoff;
+  mus_float_t fft_pix_cutoff;
   int current_hourglass;
 #if USE_CAIRO
   GdkPixbuf *cursor_pix;
@@ -210,7 +210,7 @@ typedef struct {
   unsigned int sono_cursor_pix_width, sono_cursor_pix_height;
   int sono_cursor_pix_x0, sono_cursor_pix_y0;
   bool sono_cursor_pix_ready;
-  Float progress_pct;
+  mus_float_t progress_pct;
 #endif
 } chan_context;
 
@@ -278,7 +278,7 @@ typedef struct {
   int num_dialogs, dialogs_size;
   bool graph_is_active;
   GtkWidget *requestor_dialog;
-  Float bg_gradient;
+  mus_float_t bg_gradient;
   
   GdkCursor *arrow_cursor, *wait_cursor, *graph_cursor;
   gint fam_port;

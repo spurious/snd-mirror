@@ -45,7 +45,7 @@ static void fixup_axis_context(axis_context *ax, GtkWidget *w, gc_t *gc)
 
 axis_info *enved_make_axis(const char *name, axis_context *ax, 
 			   int ex0, int ey0, int width, int height, 
-			   Float xmin, Float xmax, Float ymin, Float ymax,
+			   mus_float_t xmin, mus_float_t xmax, mus_float_t ymin, mus_float_t ymax,
 			   printing_t printing)
 {
   /* conjure up minimal context for axis drawer in snd-axis.c */
@@ -476,7 +476,7 @@ static void clear_point_label(void)
 
 static char brkpt_buf[LABEL_BUFFER_SIZE];
 
-static void enved_display_point_label(Float x, Float y)
+static void enved_display_point_label(mus_float_t x, mus_float_t y)
 {
   if ((enved_in_dB(ss)) && (min_dB(ss) < -60))
     mus_snprintf(brkpt_buf, LABEL_BUFFER_SIZE, "%.3f : %.5f", x, y);
@@ -514,7 +514,7 @@ static gboolean drawer_button_motion(GtkWidget *w, GdkEventMotion *ev, gpointer 
   else return(false);
   if (!showing_all_envs)
     {
-      Float x, y;
+      mus_float_t x, y;
       env_editor_button_motion_with_xy(ss->enved, evx, evy, motion_time, active_env, &x, &y);
       enved_display_point_label(x, y);
       env_redisplay();
@@ -797,7 +797,7 @@ static void lin_button_pressed(GtkWidget *w, gpointer context)
 }
 
 
-static void make_base_label(Float bval)
+static void make_base_label(mus_float_t bval)
 {
   char *sfs, *buf;
   int i, len, scale_len;
@@ -821,9 +821,9 @@ static void make_base_label(Float bval)
 }
 
 
-static void base_changed(Float val)
+static void base_changed(mus_float_t val)
 {
-  Float bval;
+  mus_float_t bval;
   if (val == 0) 
     bval = 0.0;
   else 
@@ -843,9 +843,9 @@ static void base_changed(Float val)
 }
 
 
-static void reflect_changed_base(Float val)
+static void reflect_changed_base(mus_float_t val)
 {
-  Float ival;
+  mus_float_t ival;
   if (val <= 0.0) 
     ival = 0.0;
   else
@@ -1256,7 +1256,7 @@ void set_enved_in_dB(bool val)
 }
 
 
-void set_enved_base(Float val) 
+void set_enved_base(mus_float_t val) 
 {
   in_set_enved_base(val); 
   if (enved_dialog) reflect_changed_base(val);

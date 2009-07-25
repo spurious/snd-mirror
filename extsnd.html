@@ -6340,7 +6340,7 @@ treats it as signed by default, so to make one of the unsigned-byte files playab
 <pre>
     (set! (data-format) <a class=quiet href="#dataformat" onmouseout="UnTip()" onmouseover="Tip(extsnd_dataformat_tip)">mus-ubyte</a>)
 </pre>
-Float data is another source of confusion;
+mus_float_t data is another source of confusion;
 there is apparently no agreement on whether the data is between -1.0 and 1.0, or -32768.0 and 32767.0 or anything else.
 In this case, Snd assumes -1.0 to 1.0 (except in one special case involving IRCAM headers), and you may have to 
 set <a class=quiet href="#ybounds" onmouseout="UnTip()" onmouseover="Tip(extsnd_ybounds_tip)">y-bounds</a> to see the actual data.

@@ -38,7 +38,7 @@ static ssize_t snd_checked_write(int fd, unsigned char *buf, ssize_t bytes, cons
   /* io.c checked_write assumes its file descriptors are around */
   /* can't call mus_error here because we need to clean up first in case of error */
   ssize_t bytes_written;
-  off_t kfree;
+  mus_long_t kfree;
   kfree = disk_kspace(filename);
   if (kfree < 0) 
     {
@@ -767,7 +767,7 @@ static int read_ibm_adpcm(const char *oldname, const char *newname, char *hdr)
   int i, j, k, fs = -1, fd = -1;
   unsigned char *buf = NULL;
   short *buf1;
-  off_t loc;
+  mus_long_t loc;
   short XHAT1 = 0, delndec, del1dec = 8, ln1dec, temp;
   float M[16] = {0.909, 0.909, 0.909, 0.909, 1.21, 1.4641, 1.771561, 2.143589, 0.909, 0.909, 0.909, 0.909, 1.21, 1.4641, 1.771561, 2.143589};
   float del_table[16] = {0.0, 0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 0.0, -0.25, -0.5, -0.75, -1.0, -1.25, -1.5, -1.75};
@@ -889,7 +889,7 @@ static int read_dvi_adpcm(const char *oldname, const char *newname, char *hdr, i
 {
   int fs = -1, fd = -1, chans, srate, blksiz, samps, samps_read;
   unsigned char *buf = NULL;
-  off_t loc;
+  mus_long_t loc;
   loc = mus_sound_data_location(oldname);
   chans = mus_sound_chans(oldname);
   blksiz = mus_sound_block_align(oldname);
@@ -972,7 +972,7 @@ static int read_oki_adpcm(const char *oldname, const char *newname, char *hdr)
   int fs = -1, fd = -1, i, j, chans, srate, blksiz, samps, samps_read;
   ssize_t totalin;
   unsigned char *buf = NULL;
-  off_t loc;
+  mus_long_t loc;
   short *buf1;
   struct oki_adpcm_status stat;
   chans = mus_sound_chans(oldname);
@@ -1035,7 +1035,7 @@ static int read_12bit(const char *oldname, const char *newname, char *hdr)
   ssize_t totalin;
   unsigned char *buf = NULL;
   short *buf1;
-  off_t loc, samps;
+  mus_long_t loc, samps;
   loc = mus_sound_data_location(oldname);
   chans = mus_sound_chans(oldname);
   samps = mus_sound_samples(oldname);
@@ -1358,7 +1358,7 @@ static int read_g72x_adpcm(const char *oldname, const char *newname, char *hdr, 
 {
   int fs = -1, j, chans, srate, dec_bits = 0, err = MUS_NO_ERROR;
   FILE *fd;
-  off_t loc;
+  mus_long_t loc;
   unsigned char code;
   short *buf = NULL;
   size_t bytes;

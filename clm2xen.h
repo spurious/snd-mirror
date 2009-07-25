@@ -5,7 +5,7 @@
 
 typedef struct mus_xen {
   mus_any *gen;
-  XEN *vcts; /* one for each accessible Float array (wrapped up here in a vct) */
+  XEN *vcts; /* one for each accessible mus_float_t array (wrapped up here in a vct) */
   int nvcts;
   bool dont_free_gen;
   struct ptree *input_ptree; /* added 24-Apr-02 for run optimizer */
@@ -23,7 +23,7 @@ typedef struct mus_xen {
 extern "C" {
 #endif
 
-MUS_EXPORT off_t clm_default_table_size_c(void);
+MUS_EXPORT mus_long_t clm_default_table_size_c(void);
 MUS_EXPORT double clm_default_frequency_c(void);
 
 MUS_EXPORT bool mus_xen_p(XEN obj);
@@ -32,15 +32,15 @@ MUS_EXPORT XEN mus_xen_to_object(mus_xen *gn);
 MUS_EXPORT XEN mus_xen_to_object_with_vct(mus_xen *gn, XEN v);
 MUS_EXPORT mus_any *mus_optkey_to_mus_any(XEN key, const char *caller, int n, mus_any *def);
 MUS_EXPORT int mus_optkey_unscramble(const char *caller, int nkeys, XEN *keys, XEN *args, int *orig);
-MUS_EXPORT Float mus_optkey_to_float(XEN key, const char *caller, int n, Float def);
+MUS_EXPORT mus_float_t mus_optkey_to_float(XEN key, const char *caller, int n, mus_float_t def);
 MUS_EXPORT int mus_optkey_to_int(XEN key, const char *caller, int n, int def);
-MUS_EXPORT off_t mus_optkey_to_off_t(XEN key, const char *caller, int n, off_t def);
+MUS_EXPORT mus_long_t mus_optkey_to_mus_long_t(XEN key, const char *caller, int n, mus_long_t def);
 MUS_EXPORT const char *mus_optkey_to_string(XEN key, const char *caller, int n, char *def);
 MUS_EXPORT vct *mus_optkey_to_vct(XEN key, const char *caller, int n, vct *def);
 MUS_EXPORT XEN mus_optkey_to_procedure(XEN key, const char *caller, int n, XEN def, int required_args, const char *err);
 MUS_EXPORT mus_xen *mus_any_to_mus_xen(mus_any *ge);
-MUS_EXPORT Float mus_locsig_or_move_sound_to_vct_or_sound_data(mus_xen *ms, mus_any *loc_gen, off_t pos, Float fval, bool from_locsig);
-MUS_EXPORT Float *mus_vct_to_partials(vct *v, int *npartials, int *error_code);
+MUS_EXPORT mus_float_t mus_locsig_or_move_sound_to_vct_or_sound_data(mus_xen *ms, mus_any *loc_gen, mus_long_t pos, mus_float_t fval, bool from_locsig);
+MUS_EXPORT mus_float_t *mus_vct_to_partials(vct *v, int *npartials, int *error_code);
 MUS_EXPORT XEN mus_clm_output(void);
 MUS_EXPORT XEN mus_clm_reverb(void);
 

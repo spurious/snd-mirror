@@ -244,7 +244,7 @@ static void stop_sign_click_callback(Widget w, XtPointer context, XtPointer info
 
 /* ---------------- AMP-CONTROL ---------------- */
 
-int amp_to_scroll(Float minval, Float val, Float maxval)
+int amp_to_scroll(mus_float_t minval, mus_float_t val, mus_float_t maxval)
 {
   if (val <= minval) return(0);
   if (val >= maxval) return((int)(0.9 * SCROLLBAR_MAX));
@@ -276,7 +276,7 @@ static int scroll_to_amp(snd_info *sp, int val)
 }
 
 
-void set_amp(snd_info *sp, Float val)
+void set_amp(snd_info *sp, mus_float_t val)
 {
   if (IS_PLAYER(sp))
     sp->amp_control = val;
@@ -332,7 +332,7 @@ XmString initial_speed_label(speed_style_t style)
 }
 
 
-static int speed_to_scroll(Float minval, Float val, Float maxval)
+static int speed_to_scroll(mus_float_t minval, mus_float_t val, mus_float_t maxval)
 {
   if (val <= minval) return(0);
   if (val >= maxval) return((int)(0.9 * SCROLLBAR_MAX));
@@ -356,7 +356,7 @@ static int scroll_to_speed(snd_info *sp, int ival)
 }
 
 
-void set_speed(snd_info *sp, Float val)
+void set_speed(snd_info *sp, mus_float_t val)
 {
   if (IS_PLAYER(sp))
     sp->speed_control = val;
@@ -449,7 +449,7 @@ void toggle_direction_arrow(snd_info *sp, bool state)
 
 /* ---------------- EXPAND-CONTROL ---------------- */
 
-static int expand_to_scroll(Float minval, Float val, Float maxval)
+static int expand_to_scroll(mus_float_t minval, mus_float_t val, mus_float_t maxval)
 {
   if (val <= minval) return(0);
   if (val >= maxval) return((int)(0.9 * SCROLLBAR_MAX));
@@ -477,7 +477,7 @@ static int scroll_to_expand(snd_info *sp, int val)
 }
 
 
-void set_expand(snd_info *sp, Float val)
+void set_expand(snd_info *sp, mus_float_t val)
 {
   if (IS_PLAYER(sp))
     sp->expand_control = val;
@@ -545,7 +545,7 @@ void toggle_expand_button(snd_info *sp, bool state)
 
 /* ---------------- CONTRAST-CONTROL ---------------- */
 
-static int contrast_to_scroll(Float minval, Float val, Float maxval)
+static int contrast_to_scroll(mus_float_t minval, mus_float_t val, mus_float_t maxval)
 {
   if (val <= minval) return(0);
   if (val >= maxval) return((int)(0.9 * SCROLLBAR_MAX));
@@ -563,7 +563,7 @@ static int scroll_to_contrast(snd_info *sp, int val)
 }
 
 
-void set_contrast(snd_info *sp, Float val)
+void set_contrast(snd_info *sp, mus_float_t val)
 {
   if (IS_PLAYER(sp))
     sp->contrast_control = val;
@@ -631,7 +631,7 @@ void toggle_contrast_button(snd_info *sp, bool state)
 
 /* ---------------- REVERB-CONTROL-SCALE ---------------- */
 
-static int revscl_to_scroll(Float minval, Float val, Float maxval)
+static int revscl_to_scroll(mus_float_t minval, mus_float_t val, mus_float_t maxval)
 {
   if (val <= minval) return(0);
   if (val >= maxval) return((int)(0.9 * SCROLLBAR_MAX));
@@ -639,7 +639,7 @@ static int revscl_to_scroll(Float minval, Float val, Float maxval)
 }
 
 
-static Float cube(Float a) {return(a*a*a);}
+static mus_float_t cube(mus_float_t a) {return(a*a*a);}
 
 
 static int scroll_to_revscl(snd_info *sp, int val)
@@ -663,7 +663,7 @@ static int scroll_to_revscl(snd_info *sp, int val)
 }
 
 
-void set_revscl(snd_info *sp, Float val)
+void set_revscl(snd_info *sp, mus_float_t val)
 {
   if (IS_PLAYER(sp))
     sp->reverb_control_scale = val;
@@ -710,7 +710,7 @@ static void revscl_valuechanged_callback(Widget w, XtPointer context, XtPointer 
 
 /* ---------------- REVERB-CONTROL-LENGTH ---------------- */
 
-static int revlen_to_scroll(Float minval, Float val, Float maxval)
+static int revlen_to_scroll(mus_float_t minval, mus_float_t val, mus_float_t maxval)
 {
   if (val <= minval) return(0);
   if (val >= maxval) return((int)(0.9 * SCROLLBAR_MAX));
@@ -723,14 +723,14 @@ static int scroll_to_revlen(snd_info *sp, int val)
   char revlen_number_buffer[5];
 
   sp->reverb_control_length = sp->reverb_control_length_min + 
-    (sp->reverb_control_length_max - sp->reverb_control_length_min) * (Float)val / (0.9 * SCROLLBAR_MAX);
+    (sp->reverb_control_length_max - sp->reverb_control_length_min) * (mus_float_t)val / (0.9 * SCROLLBAR_MAX);
   mus_snprintf(revlen_number_buffer, 5, "%.2f", sp->reverb_control_length);
   set_label(REVLEN_LABEL(sp), revlen_number_buffer);
   return(val);
 }
 
 
-void set_revlen(snd_info *sp, Float val)
+void set_revlen(snd_info *sp, mus_float_t val)
 {
   if (IS_PLAYER(sp))
     sp->reverb_control_length = val;
@@ -854,7 +854,7 @@ void display_filter_env(snd_info *sp)
   edp->with_dots = true;
 
   if (sp->filter_control_in_hz)
-    sp->filter_control_xmax = (Float)(SND_SRATE(sp) / 2);
+    sp->filter_control_xmax = (mus_float_t)(SND_SRATE(sp) / 2);
   else sp->filter_control_xmax = 1.0;
 
   if (sp->filter_control_envelope == NULL) 
@@ -961,7 +961,7 @@ static void new_in_hz(snd_info *sp, bool val)
 {
   sp->filter_control_in_hz = val;
   if (val)
-    sp->filter_control_xmax = (Float)(SND_SRATE(sp) / 2);
+    sp->filter_control_xmax = (mus_float_t)(SND_SRATE(sp) / 2);
   else sp->filter_control_xmax = 1.0;
   if (sp->filter_control_envelope) free_env(sp->filter_control_envelope);
   sp->filter_control_envelope = default_env(sp->filter_control_xmax, 1.0);
@@ -1964,7 +1964,25 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
 
       if (sound_style(ss) == SOUNDS_IN_SEPARATE_WINDOWS)
 	SND_PANE(sp) = XtCreateManagedWidget("snd-pane", xmPanedWindowWidgetClass, sx->dialog, args, n);
-      else SND_PANE(sp) = XtCreateManagedWidget("snd-pane", xmPanedWindowWidgetClass, SOUND_PANE(ss), args, n);
+      else 
+	{
+	  unsigned int i;
+	  CompositeWidget cw = (CompositeWidget)SOUND_PANE(ss);
+	  SND_PANE(sp) = XtCreateManagedWidget("snd-pane", xmPanedWindowWidgetClass, SOUND_PANE(ss), args, n);
+
+	  /* try to make the division between sounds more obvious */
+	  for (i = 0; i < cw->composite.num_children; i++)
+	    {
+	      Widget child;
+	      child = cw->composite.children[i];
+	      if (((XtIsWidget(child))|| (XmIsGadget(child))) &&
+		  (XtIsManaged(child)) && 
+		  ((XmIsSeparator(child)) || (XmIsSeparatorGadget(child))))
+		XtVaSetValues(child, XmNseparatorType, XmDOUBLE_LINE, 
+			      XmNbackground, ss->sgx->white,
+			      NULL);
+	    }
+	}
 
       XtAddEventHandler(SND_PANE(sp), KeyPressMask, false, graph_key_press, (XtPointer)sp);
       /* if user clicks in controls, then starts typing, try to send key events to current active channel */
@@ -2857,6 +2875,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
 
       for (k = 0; k < nchans; k++) 
 	add_channel_window(sp, k, chan_min_y, 0, NULL, WITH_FW_BUTTONS, WITH_EVENTS);
+
       set_button_label(NAME_LABEL(sp), shortname_indexed(sp));
       XtVaSetValues(SND_PANE(sp), XmNuserData, sp->index, NULL);
 
@@ -3082,7 +3101,7 @@ int control_panel_height(snd_info *sp)
 
 /* since threads can be acting on all chans at once, it's probably useful to show a progress bar for each */
 
-void progress_report(chan_info *cp, Float pct)
+void progress_report(chan_info *cp, mus_float_t pct)
 {
   int which;
   snd_info *sp;

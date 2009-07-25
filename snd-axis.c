@@ -35,7 +35,7 @@ typedef struct tick_descriptor {
   int tens;
   int maj_tick_len, min_tick_len, min_label_width, max_label_width;
   char *min_label, *max_label;
-  Float grid_scale;
+  mus_float_t grid_scale;
 } tick_descriptor;
 
 
@@ -51,7 +51,7 @@ static tick_descriptor *free_tick_descriptor(tick_descriptor *td)
 }
 
 
-static tick_descriptor *describe_ticks(tick_descriptor *gd_td, double lo, double hi, int max_ticks, Float grid_scale)
+static tick_descriptor *describe_ticks(tick_descriptor *gd_td, double lo, double hi, int max_ticks, mus_float_t grid_scale)
 {
   /* given absolute (unchangeable) axis bounds lo and hi, and maximum number of ticks to use, find a "pretty" tick placement */
   /* much of the work here involves floating point rounding problems.  We assume the tick labeller will round as well */
@@ -309,7 +309,7 @@ int grf_x(double val, axis_info *ap)
 }
 
 
-int grf_y(Float val, axis_info *ap)
+int grf_y(mus_float_t val, axis_info *ap)
 {
   if (val >= ap->y1) return(ap->y_axis_y1);
   if (val <= ap->y0) return(ap->y_axis_y0);
@@ -325,8 +325,8 @@ void init_axis_scales(axis_info *ap)
   ap->x_base = (double)(ap->x_axis_x0 - ap->x0 * ap->x_scale);
   if ((ap->y_axis_y0 == ap->y_axis_y1) || (ap->y0 == ap->y1))
     ap->y_scale = 0.0;
-  else ap->y_scale = (Float)(ap->y_axis_y1 - ap->y_axis_y0) / (ap->y1 - ap->y0);
-  ap->y_base = (Float)(ap->y_axis_y0 - ap->y0 * ap->y_scale);
+  else ap->y_scale = (mus_float_t)(ap->y_axis_y1 - ap->y_axis_y0) / (ap->y1 - ap->y0);
+  ap->y_base = (mus_float_t)(ap->y_axis_y0 - ap->y0 * ap->y_scale);
 }
 
 
@@ -596,7 +596,7 @@ static void set_labels_font(axis_context *ax, printing_t printing, bool use_tiny
 
 
 void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t axes, printing_t printing, 
-		 with_x_axis_t show_x_axis, with_grid_t with_grid, log_axis_t log_axes, Float grid_scale)
+		 with_x_axis_t show_x_axis, with_grid_t with_grid, log_axis_t log_axes, mus_float_t grid_scale)
 {
   int width, height;
   int axis_thickness, left_border_width, bottom_border_width, top_border_width, right_border_width, inner_border_width;
@@ -609,7 +609,7 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
   int curx, cury;
   axis_context *ax;
 #if HAVE_GL
-  Float xthick, ythick, xmajorlen, xminorlen, ymajorlen, yminorlen;
+  mus_float_t xthick, ythick, xmajorlen, xminorlen, ymajorlen, yminorlen;
 #endif
 
   ax = ap->ax;
@@ -669,12 +669,12 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
     }
   axis_thickness = 2;
 #if HAVE_GL
-  xthick = (Float)(2 * axis_thickness) / (Float)height;
-  ythick = (Float)(2 * axis_thickness) / (Float)width;
-  xmajorlen = (Float)(2 * major_tick_length) / (Float)height;
-  xminorlen = (Float)(2 * minor_tick_length) / (Float)height;
-  ymajorlen = (Float)(2 * major_tick_length) / (Float)width;
-  yminorlen = (Float)(2 * minor_tick_length) / (Float)width;
+  xthick = (mus_float_t)(2 * axis_thickness) / (mus_float_t)height;
+  ythick = (mus_float_t)(2 * axis_thickness) / (mus_float_t)width;
+  xmajorlen = (mus_float_t)(2 * major_tick_length) / (mus_float_t)height;
+  xminorlen = (mus_float_t)(2 * minor_tick_length) / (mus_float_t)height;
+  ymajorlen = (mus_float_t)(2 * major_tick_length) / (mus_float_t)width;
+  yminorlen = (mus_float_t)(2 * minor_tick_length) / (mus_float_t)width;
 #endif
   
   if (show_x_axis)
@@ -846,7 +846,7 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 	case X_AXIS_IN_MEASURES:
 	  if (ap->cp) /* cp==null probably can't happen -- ap->cp is null (only?) if we're called from the envelope editor */
 	    {
-	      Float beats_per_second;
+	      mus_float_t beats_per_second;
 	      beats_per_second = ap->cp->beats_per_minute / 60.0;
 	      tdx = describe_ticks(ap->x_ticks, 
 				   ap->x0 * beats_per_second,
@@ -934,8 +934,8 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 #if HAVE_GL
       if (ap->use_gl)
 	{
-	  Float yl;
-	  yl = -0.5 - xthick - ((Float)(4 * major_tick_length + x_label_height) / (Float)height);
+	  mus_float_t yl;
+	  yl = -0.5 - xthick - ((mus_float_t)(4 * major_tick_length + x_label_height) / (mus_float_t)height);
 	  glColor3f(0.0, 0.0, 0.0);
 	  glRasterPos3f(-0.1, 0.0, yl);
 	  glListBase(label_base);
@@ -1030,8 +1030,8 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 #if HAVE_GL
       if (ap->use_gl)
 	{
-	  Float xl;
-	  xl = -0.5 - ythick - ((Float)(3 * tdy->maj_tick_len + tdy->min_label_width + inner_border_width) / (Float)width);
+	  mus_float_t xl;
+	  xl = -0.5 - ythick - ((mus_float_t)(3 * tdy->maj_tick_len + tdy->min_label_width + inner_border_width) / (mus_float_t)width);
 	  glRasterPos3f(xl, 0.0, (tdy->mlo - ap->y0) / (ap->y1 - ap->y0) - 0.51);
 	  glListBase(number_base);
   #if MUS_WITH_GL2PS
@@ -1039,7 +1039,7 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
   #endif
 	  glCallLists(mus_strlen(tdy->min_label), GL_UNSIGNED_BYTE, (GLubyte *)(tdy->min_label));
 	  
-	  xl = -0.5 - ythick - ((Float)(3 * tdy->maj_tick_len + tdy->max_label_width + inner_border_width) / (Float)width);
+	  xl = -0.5 - ythick - ((mus_float_t)(3 * tdy->maj_tick_len + tdy->max_label_width + inner_border_width) / (mus_float_t)width);
 	  glRasterPos3f(xl, 0.0, (tdy->mhi - ap->y0) / (ap->y1 - ap->y0) - 0.51);
 	  glListBase(number_base);
   #if MUS_WITH_GL2PS
@@ -1077,8 +1077,8 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 #if HAVE_GL
 	  if (ap->use_gl)
 	    {
-	      Float yl;
-	      yl = -0.5 - xthick - ((Float)(3 * major_tick_length + x_number_height + inner_border_width) / (Float)height);
+	      mus_float_t yl;
+	      yl = -0.5 - xthick - ((mus_float_t)(3 * major_tick_length + x_number_height + inner_border_width) / (mus_float_t)height);
 	      glRasterPos3f((tdx->mlo - ap->x0) / (ap->x1 - ap->x0) - 0.53, 0.0, yl);
 	      glListBase(number_base);
   #if MUS_WITH_GL2PS
@@ -1102,8 +1102,8 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 #if HAVE_GL
 	  if (ap->use_gl)
 	    {
-	      Float yl;
-	      yl = -0.5 - xthick - ((Float)(3 * major_tick_length + x_number_height + inner_border_width) / (Float)height);
+	      mus_float_t yl;
+	      yl = -0.5 - xthick - ((mus_float_t)(3 * major_tick_length + x_number_height + inner_border_width) / (mus_float_t)height);
 	      glRasterPos3f((tdx->mhi - ap->x0) / (ap->x1 - ap->x0) - 0.53, 0.0, yl);
 	      glListBase(number_base);
   #if MUS_WITH_GL2PS
@@ -1133,7 +1133,7 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 #if HAVE_GL
       if (ap->use_gl)
 	{
-	  Float ypos;
+	  mus_float_t ypos;
 	  ypos = (fy - ap->y0) / (ap->y1 - ap->y0) - 0.5;
 	  glBegin(GL_LINES);
 	  glVertex3f(-0.50 - ymajorlen, 0.0, ypos);
@@ -1161,7 +1161,7 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 #if HAVE_GL
 	  if (ap->use_gl)
 	    {
-	      Float ypos;
+	      mus_float_t ypos;
 	      ypos = (fy - ap->y0) / (ap->y1 - ap->y0) - 0.5;
 	      glBegin(GL_LINES);
 	      glVertex3f(-0.50 - ((x == majx) ? ymajorlen : yminorlen), 0.0, ypos);
@@ -1191,7 +1191,7 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 #if HAVE_GL
 	  if (ap->use_gl)
 	    {
-	      Float ypos;
+	      mus_float_t ypos;
 	      ypos = (fy - ap->y0) / (ap->y1 - ap->y0) - 0.5;
 	      glBegin(GL_LINES);
 	      glVertex3f(-0.50 - ((x == majx) ? ymajorlen : yminorlen), 0.0, ypos);
@@ -1220,13 +1220,13 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
       
       if ((ap->cp) && 
 	  (x_style == X_AXIS_IN_MEASURES) &&
-	  ((tdx->tenstep * tdx->step) <= ((60.0 * ap->cp->beats_per_measure) / (Float)(ap->cp->beats_per_minute))))
+	  ((tdx->tenstep * tdx->step) <= ((60.0 * ap->cp->beats_per_measure) / (mus_float_t)(ap->cp->beats_per_minute))))
 	major_tick_is_less_than_measure = true;
       
 #if HAVE_GL
       if (ap->use_gl)
 	{
-	  Float xpos;
+	  mus_float_t xpos;
 	  xpos = (fx - ap->x0) / (ap->x1 - ap->x0) - 0.5;
 	  glBegin(GL_LINES);
 	  glVertex3f(xpos, 0.0, -0.50 - xmajorlen);
@@ -1256,7 +1256,7 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 #if HAVE_GL
 	  if (ap->use_gl)
 	    {
-	      Float xpos;
+	      mus_float_t xpos;
 	      xpos = (fx - ap->x0) / (ap->x1 - ap->x0) - 0.5;
 	      glBegin(GL_LINES);
 	      glVertex3f(xpos, 0.0, -0.50 - ((y == majy) ? xmajorlen : xminorlen));
@@ -1290,7 +1290,7 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 #if HAVE_GL
 	  if (ap->use_gl)
 	    {
-	      Float xpos;
+	      mus_float_t xpos;
 	      xpos = (fx - ap->x0) / (ap->x1 - ap->x0) - 0.5;
 	      glBegin(GL_LINES);
 	      glVertex3f(xpos, 0.0, -0.50 - ((y == majy) ? xmajorlen : xminorlen));
@@ -1317,11 +1317,11 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
       (include_x_ticks))
     {
       double min_freq, max_freq;
-      Float minlx = 0.0, maxlx, fap_range, log_range, lscale = 1.0, curlx;
+      mus_float_t minlx = 0.0, maxlx, fap_range, log_range, lscale = 1.0, curlx;
       int logx;
       int y0, majy, miny, i;
       const char *label = NULL;
-      Float freq = 0.0, freq10 = 0.0;
+      mus_float_t freq = 0.0, freq10 = 0.0;
       /* get min (log-freq or spectro-start), max, add major ticks and brief labels, then if room add log-style minor ticks (100's, 1000's) */
       y0 = ap->x_axis_y0;
       majy = y0 + major_tick_length;
@@ -1379,11 +1379,11 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
       (include_y_ticks))
     {
       double min_freq, max_freq;
-      Float minlx = 0.0, maxlx, fap_range, log_range, lscale = 1.0, curly;
+      mus_float_t minlx = 0.0, maxlx, fap_range, log_range, lscale = 1.0, curly;
       int logy;
       int x0, majx, minx, i;
       const char *label = NULL;
-      Float freq = 0.0, freq10 = 0.0;
+      mus_float_t freq = 0.0, freq10 = 0.0;
       /* get min (log-freq or spectro-start), max, add major ticks and brief labels, then if room add log-style minor ticks (100's, 1000's) */
       x0 = ap->y_axis_x0;
       majx = x0 - major_tick_length;
@@ -1445,8 +1445,8 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 }
 
 
-axis_info *make_axis_info (chan_info *cp, double xmin, double xmax, Float ymin, Float ymax, 
-			   const char *xlabel, double x0, double x1, Float y0, Float y1, axis_info *old_ap)
+axis_info *make_axis_info (chan_info *cp, double xmin, double xmax, mus_float_t ymin, mus_float_t ymax, 
+			   const char *xlabel, double x0, double x1, mus_float_t y0, mus_float_t y1, axis_info *old_ap)
 {
   axis_info *ap;
   if (old_ap) 
@@ -1610,7 +1610,7 @@ Returns actual (pixel) axis bounds -- a list (x0 y0 x1 y1)."
 
   XEN val, xwid, xgc, xx0, xx1, xy0, xy1, xstyle, xaxes, label_ref;
   double x0 = 0.0, x1 = 1.0; 
-  Float y0 = -1.0, y1 = 1.0; 
+  mus_float_t y0 = -1.0, y1 = 1.0; 
   x_axis_style_t x_style = X_AXIS_IN_SECONDS;
   show_axes_t axes = SHOW_ALL_AXES;
   axis_context *ax;

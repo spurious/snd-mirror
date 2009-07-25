@@ -9,7 +9,7 @@ static env *dialog_env = NULL;
 static bool dragging = false;
 static int edpos_before_drag;
 static with_hook_t hookable_before_drag;
-static off_t drag_beg = 0, drag_end = 0;
+static mus_long_t drag_beg = 0, drag_end = 0;
 
 static void start_dragging(int mix_id) 
 {
@@ -53,7 +53,7 @@ static bool speed_pressed = false, speed_dragged = false;
 static speed_style_t gmix_speed_control_style = SPEED_CONTROL_AS_FLOAT;
 static axis_context *mix_play_ax = NULL;
 
-static Float speed_to_scrollbar(Float minval, Float val, Float maxval)
+static mus_float_t speed_to_scrollbar(mus_float_t minval, mus_float_t val, mus_float_t maxval)
 {
   if (val <= minval) return(0.0);
   if (val >= maxval) return(0.9);
@@ -61,15 +61,15 @@ static Float speed_to_scrollbar(Float minval, Float val, Float maxval)
 }
 
 
-static Float scrollbar_to_speed(Float scroll)
+static mus_float_t scrollbar_to_speed(mus_float_t scroll)
 {
   return(exp((scroll * (log(speed_control_max(ss)) - log(speed_control_min(ss))) / 0.9) + log(speed_control_min(ss))));
 }
 
 
-static Float set_speed_label(GtkWidget *label, Float in_speed)
+static mus_float_t set_speed_label(GtkWidget *label, mus_float_t in_speed)
 {
-  Float speed;
+  mus_float_t speed;
   char speed_number_buffer[6];
   speed = speed_changed(in_speed,
 			speed_number_buffer,
@@ -81,7 +81,7 @@ static Float set_speed_label(GtkWidget *label, Float in_speed)
 }
 
 
-static void reflect_mix_speed(Float speed)
+static void reflect_mix_speed(mus_float_t speed)
 {
   ADJUSTMENT_SET_VALUE(w_speed_adj, speed_to_scrollbar(speed_control_min(ss), set_speed_label(w_speed_number, speed), speed_control_max(ss)));
   /* gtk_adjustment_value_changed(GTK_ADJUSTMENT(w_speed_adj)); */
@@ -159,7 +159,7 @@ static gboolean speed_press_callback(GtkWidget *w, GdkEventButton *ev, gpointer 
 static GtkWidget *w_amp, *w_amp_label, *w_amp_number, *w_amp_event, *w_amp_form;
 static GtkObject *w_amp_adj;
 
-static Float scrollbar_to_amp(Float val)
+static mus_float_t scrollbar_to_amp(mus_float_t val)
 {
   if (val <= 0.0) 
     return(amp_control_min(ss));
@@ -173,7 +173,7 @@ static Float scrollbar_to_amp(Float val)
 
 static bool amp_pressed = false, amp_dragged = false;
 
-static void reflect_mix_amp(Float val)
+static void reflect_mix_amp(mus_float_t val)
 {
   char sfs[6];
   ADJUSTMENT_SET_VALUE(w_amp_adj, amp_to_scroll(amp_control_min(ss), val, amp_control_max(ss)));
@@ -199,7 +199,7 @@ static gboolean amp_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer da
 
 static gboolean amp_motion_callback(GtkWidget *w, GdkEventMotion *ev, gpointer data)
 {
-  Float scrollval;
+  mus_float_t scrollval;
   if (!amp_pressed) {amp_dragged = false; return(false);}
   amp_dragged = true;
   if (!(mix_is_active(mix_dialog_id))) return(false);
@@ -216,7 +216,7 @@ static gboolean amp_motion_callback(GtkWidget *w, GdkEventMotion *ev, gpointer d
 
 static gboolean amp_release_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
-  Float scrollval;
+  mus_float_t scrollval;
   dragging = false;
   amp_pressed = false;
   amp_dragged = false;
@@ -429,15 +429,15 @@ static void beg_activated(GtkWidget *w, gpointer context)
   if (val)
     {
       chan_info *cp;
-      Float beg;
+      mus_float_t beg;
       char *up_to_colon;
       up_to_colon = string_to_colon(val);
       cp = mix_chan_info_from_id(mix_dialog_id);
       redirect_errors_to(errors_to_mix_text, NULL);
-      beg = string_to_Float(up_to_colon, 0.0, "begin time");
+      beg = string_to_mus_float_t(up_to_colon, 0.0, "begin time");
       redirect_errors_to(NULL, NULL);
       if (beg >= 0.0)
-	mix_set_position_edit(mix_dialog_id, (off_t)(beg * SND_SRATE(cp->sound)));
+	mix_set_position_edit(mix_dialog_id, (mus_long_t)(beg * SND_SRATE(cp->sound)));
       after_mix_edit(mix_dialog_id);
       free(up_to_colon);
     }
@@ -880,7 +880,7 @@ void reflect_mix_change(int mix_id)
 
       if ((mix_id == mix_dialog_id) || (mix_id == ANY_MIX_ID))
 	{
-	  Float val;
+	  mus_float_t val;
 	  set_sensitive(nextb, (next_mix_id(mix_dialog_id) != INVALID_MIX_ID));
 	  set_sensitive(previousb, (previous_mix_id(mix_dialog_id) != INVALID_MIX_ID));
 
@@ -889,7 +889,7 @@ void reflect_mix_change(int mix_id)
 	    {
 	      char lab[LABEL_BUFFER_SIZE];
 	      chan_info *cp;
-	      off_t beg, len;
+	      mus_long_t beg, len;
 
 	      cp = mix_chan_info_from_id(mix_dialog_id);
 

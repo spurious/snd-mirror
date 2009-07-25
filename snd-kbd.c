@@ -167,7 +167,7 @@ void save_macro_state (FILE *fd)
 }
 
 
-static bool execute_named_macro_1(chan_info *cp, const char *name, off_t count)
+static bool execute_named_macro_1(chan_info *cp, const char *name, mus_long_t count)
 {
   int k;
   for (k = 0; k < named_macro_ctr; k++)
@@ -175,7 +175,7 @@ static bool execute_named_macro_1(chan_info *cp, const char *name, off_t count)
       if (mus_strcmp(name, named_macros[k]->name))
 	{
 	  int i;
-	  off_t j;
+	  mus_long_t j;
 	  named_macro *nm;
 	  nm = named_macros[k];
 	  for (j = 0; j < count; j++)
@@ -197,7 +197,7 @@ static bool execute_named_macro_1(chan_info *cp, const char *name, off_t count)
 }
 
 
-static void execute_named_macro(chan_info *cp, char *name, off_t count)
+static void execute_named_macro(chan_info *cp, char *name, mus_long_t count)
 {
   if (!(execute_named_macro_1(cp, name, count)))
     /* not a macro...*/
@@ -1281,7 +1281,7 @@ void save_edits_with_prompt(snd_info *sp)
 
 /* ---------------- key response ---------------- */
 
-static off_t get_count_1(char *number_buffer, int number_ctr, bool dot_seen, chan_info *cp)
+static mus_long_t get_count_1(char *number_buffer, int number_ctr, bool dot_seen, chan_info *cp)
 {
   /* allow floats here = secs */
   int i;
@@ -1305,7 +1305,7 @@ static off_t get_count_1(char *number_buffer, int number_ctr, bool dot_seen, cha
 	  snd_error("invalid number: %s", number_buffer);
 	  return(0);
 	}
-      return((off_t)(f * SND_SRATE(cp->sound)));
+      return((mus_long_t)(f * SND_SRATE(cp->sound)));
     }
   if (!(sscanf(number_buffer, "%d", &i)))
     {
@@ -1316,9 +1316,9 @@ static off_t get_count_1(char *number_buffer, int number_ctr, bool dot_seen, cha
 }
 
 
-static off_t get_count(char *number_buffer, int number_ctr, bool dot_seen, chan_info *cp, bool mark_wise)
+static mus_long_t get_count(char *number_buffer, int number_ctr, bool dot_seen, chan_info *cp, bool mark_wise)
 {
-  off_t val, old_cursor;
+  mus_long_t val, old_cursor;
   val = get_count_1(number_buffer, number_ctr, dot_seen, cp);
   if (!mark_wise) return(val);
   old_cursor = CURSOR(cp);
@@ -1332,9 +1332,9 @@ static off_t get_count(char *number_buffer, int number_ctr, bool dot_seen, chan_
 
 #define NUMBER_BUFFER_SIZE 12
 
-static Float state_amount(int state)
+static mus_float_t state_amount(int state)
 {
-  Float amount;
+  mus_float_t amount;
   amount = 1.0;
   if (state & snd_ControlMask) amount *= 0.5;
   if (state & snd_MetaMask) amount *= 0.5;
@@ -1411,14 +1411,14 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
   /* keysym has Shift taken into account already (see snd-xchn.c XKeycodeToKeysym, and same snd-xsnd.c) */
   static bool u_count = false;
   static char number_buffer[NUMBER_BUFFER_SIZE];
-  static off_t count = 1;
+  static mus_long_t count = 1;
   static bool got_count = false;
   static bool m = false;
   int shift = 0;
   bool dont_clear_minibuffer = false, cursor_searching = false, clear_search = true;
   int hashloc, i, state;
-  off_t loc;
-  static off_t ext_count = 1;
+  mus_long_t loc;
+  static mus_long_t ext_count = 1;
   static bool got_ext_count = false;
   snd_info *sp;
   axis_info *ap;
@@ -1488,7 +1488,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 	    {
 	    case snd_K_A: case snd_K_a: 
 	      cp->cursor_on = true; 
-	      loc = (off_t)(ap->x0 * SND_SRATE(sp)); 
+	      loc = (mus_long_t)(ap->x0 * SND_SRATE(sp)); 
 	      if ((loc + 1) == ap->losamp) loc = ap->losamp; /* handle dumb rounding problem */
 	      cursor_moveto(cp, loc); 
 	      break;
@@ -1505,7 +1505,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 
 	    case snd_K_E: case snd_K_e:
 	      cp->cursor_on = true; 
-	      loc = (off_t)(ap->x1 * (double)SND_SRATE(sp));
+	      loc = (mus_long_t)(ap->x1 * (double)SND_SRATE(sp));
 	      if ((loc + 1) == ap->hisamp) loc = ap->hisamp;
 	      cursor_moveto(cp, loc); 
 	      break;
@@ -1642,7 +1642,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 	    case snd_K_V: case snd_K_v:
 	      cp->cursor_on = true;
 	      /* in emacs this is move ahead one window, but for some reason in Snd it's center cursor?? */
-	      cursor_moveto(cp, (off_t)((ap->losamp + ap->hisamp) / 2));
+	      cursor_moveto(cp, (mus_long_t)((ap->losamp + ap->hisamp) / 2));
 	      break;
 
 	    case snd_K_W: case snd_K_w: 
@@ -2113,7 +2113,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 		case snd_K_L: case snd_K_l: 
 		  cp->cursor_on = true;
 		  if (selection_is_active_in_channel(cp))
-		    cursor_moveto(cp, (off_t)(selection_beg(cp) + 0.5 * selection_len()));
+		    cursor_moveto(cp, (mus_long_t)(selection_beg(cp) + 0.5 * selection_len()));
 		  else string_to_minibuffer(sp, _("no active selection"));
 		  handle_cursor_with_sync(cp, CURSOR_IN_MIDDLE);
 		  break;

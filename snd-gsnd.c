@@ -325,7 +325,7 @@ static GdkDrawable *sound_pix_wn(chan_info *cp)
 }
 
 
-static void show_happy_face(GdkDrawable *wn, Float pct)
+static void show_happy_face(GdkDrawable *wn, mus_float_t pct)
 {
   cairo_t *cr;
   cr = gdk_cairo_create(wn);
@@ -751,7 +751,7 @@ static gboolean name_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer d
 
 /* -------- AMP CALLBACKS -------- */
 
-Float amp_to_scroll(Float minval, Float val, Float maxval)
+mus_float_t amp_to_scroll(mus_float_t minval, mus_float_t val, mus_float_t maxval)
 {
   if (val <= minval) return(0.0);
   if (val >= maxval) return(0.9);
@@ -761,7 +761,7 @@ Float amp_to_scroll(Float minval, Float val, Float maxval)
 }
 
 
-static Float scroll_to_amp(snd_info *sp, Float val)
+static mus_float_t scroll_to_amp(snd_info *sp, mus_float_t val)
 {
   char amp_number_buffer[6];
   if (val <= 0.0) 
@@ -783,13 +783,13 @@ static Float scroll_to_amp(snd_info *sp, Float val)
 }
 
 
-void set_amp(snd_info *sp, Float amp) 
+void set_amp(snd_info *sp, mus_float_t amp) 
 {
   if (IS_PLAYER(sp))
     sp->amp_control = amp;
   else 
     {
-      Float scrollval;
+      mus_float_t scrollval;
       GtkObject *adj;
       scroll_to_amp(sp, scrollval = amp_to_scroll(sp->amp_control_min, amp, sp->amp_control_max));
       adj = AMP_ADJUSTMENT(sp);
@@ -813,7 +813,7 @@ static gboolean amp_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer da
 
 static void amp_changed_callback(GtkAdjustment *adj, gpointer data)
 {
-  scroll_to_amp((snd_info *)data, (Float)(ADJUSTMENT_VALUE(adj)));
+  scroll_to_amp((snd_info *)data, (mus_float_t)(ADJUSTMENT_VALUE(adj)));
 }
 
 
@@ -828,7 +828,7 @@ static gboolean amp_release_callback(GtkWidget *w, GdkEventButton *ev, gpointer 
 
 /* -------- SPEED CALLBACKS -------- */
 
-static Float speed_to_scroll(Float minval, Float val, Float maxval)
+static mus_float_t speed_to_scroll(mus_float_t minval, mus_float_t val, mus_float_t maxval)
 {
   if (val <= minval) return(0.0);
   if (val >= maxval) return(0.9);
@@ -836,7 +836,7 @@ static Float speed_to_scroll(Float minval, Float val, Float maxval)
 }
 
 
-static Float scroll_to_speed(snd_info *sp, Float ival)
+static mus_float_t scroll_to_speed(snd_info *sp, mus_float_t ival)
 {
   char speed_number_buffer[6];
   sp->speed_control = speed_changed(exp((ival * (log(sp->speed_control_max) - log(sp->speed_control_min)) / 0.9) + log(sp->speed_control_min)),
@@ -851,7 +851,7 @@ static Float scroll_to_speed(snd_info *sp, Float ival)
 
 static bool ignore_callback = false;
 
-void set_speed(snd_info *sp, Float val)
+void set_speed(snd_info *sp, mus_float_t val)
 {
   if (IS_PLAYER(sp))
     sp->speed_control = val;
@@ -959,7 +959,7 @@ void toggle_direction_arrow(snd_info *sp, bool state)
 
 /* -------- EXPAND CALLBACKS -------- */
 
-static Float expand_to_scroll(Float minval, Float val, Float maxval)
+static mus_float_t expand_to_scroll(mus_float_t minval, mus_float_t val, mus_float_t maxval)
 {
   if (val <= minval) return(0.0);
   if (val >= maxval) return(0.9);
@@ -967,7 +967,7 @@ static Float expand_to_scroll(Float minval, Float val, Float maxval)
 }
 
 
-static Float scroll_to_expand(snd_info *sp, Float val)
+static mus_float_t scroll_to_expand(snd_info *sp, mus_float_t val)
 {
   char expand_number_buffer[6];
   if (val <= 0.0) 
@@ -985,7 +985,7 @@ static Float scroll_to_expand(snd_info *sp, Float val)
 }
 
 
-void set_expand(snd_info *sp, Float val) 
+void set_expand(snd_info *sp, mus_float_t val) 
 {
   if (IS_PLAYER(sp))
     sp->expand_control = val;
@@ -1048,7 +1048,7 @@ void toggle_expand_button(snd_info *sp, bool state)
 
 /* -------- CONTRAST CALLBACKS -------- */
 
-static Float contrast_to_scroll(Float minval, Float val, Float maxval)
+static mus_float_t contrast_to_scroll(mus_float_t minval, mus_float_t val, mus_float_t maxval)
 {
   if (val <= minval) return(0.0);
   if (val >= maxval) return(0.9);
@@ -1056,7 +1056,7 @@ static Float contrast_to_scroll(Float minval, Float val, Float maxval)
 }
 
 
-static Float scroll_to_contrast(snd_info *sp, Float val)
+static mus_float_t scroll_to_contrast(snd_info *sp, mus_float_t val)
 {
   char contrast_number_buffer[6];
   sp->contrast_control = sp->contrast_control_min + val * (sp->contrast_control_max - sp->contrast_control_min) / 0.9;
@@ -1066,7 +1066,7 @@ static Float scroll_to_contrast(snd_info *sp, Float val)
 }
 
 
-void set_contrast(snd_info *sp, Float val) 
+void set_contrast(snd_info *sp, mus_float_t val) 
 {
   if (IS_PLAYER(sp))
     sp->contrast_control = val;
@@ -1128,7 +1128,7 @@ void toggle_contrast_button(snd_info *sp, bool state)
 
 /* -------- REVERB CALLBACKS -------- */
 
-static Float revscl_to_scroll(Float minval, Float val, Float maxval)
+static mus_float_t revscl_to_scroll(mus_float_t minval, mus_float_t val, mus_float_t maxval)
 {
   if (val <= minval) return(0.0);
   if (val >= maxval) return(0.9);
@@ -1136,10 +1136,10 @@ static Float revscl_to_scroll(Float minval, Float val, Float maxval)
 }
 
 
-static Float cube(Float a) {return(a*a*a);}
+static mus_float_t cube(mus_float_t a) {return(a*a*a);}
 
 
-static Float scroll_to_revscl(snd_info *sp, Float val)
+static mus_float_t scroll_to_revscl(snd_info *sp, mus_float_t val)
 {
   char revscl_number_buffer[7];
   if (val <= 0.0) 
@@ -1157,7 +1157,7 @@ static Float scroll_to_revscl(snd_info *sp, Float val)
 }
 
 
-void set_revscl(snd_info *sp, Float val) 
+void set_revscl(snd_info *sp, mus_float_t val) 
 {
   if (IS_PLAYER(sp))
     sp->reverb_control_scale = val;
@@ -1201,7 +1201,7 @@ static gboolean revscl_release_callback(GtkWidget *w, GdkEventButton *ev, gpoint
 }
 
 
-static Float revlen_to_scroll(Float minval, Float val, Float maxval)
+static mus_float_t revlen_to_scroll(mus_float_t minval, mus_float_t val, mus_float_t maxval)
 {
   if (val <= minval) return(0.0);
   if (val >= maxval) return(0.9);
@@ -1209,18 +1209,18 @@ static Float revlen_to_scroll(Float minval, Float val, Float maxval)
 }
 
 
-static Float scroll_to_revlen(snd_info *sp, Float val)
+static mus_float_t scroll_to_revlen(snd_info *sp, mus_float_t val)
 {
   char revlen_number_buffer[5];
   sp->reverb_control_length = sp->reverb_control_length_min + 
-    (sp->reverb_control_length_max - sp->reverb_control_length_min) * (Float)val / 0.9;
+    (sp->reverb_control_length_max - sp->reverb_control_length_min) * (mus_float_t)val / 0.9;
   mus_snprintf(revlen_number_buffer, 5, "%.2f", sp->reverb_control_length);
   gtk_label_set_text(GTK_LABEL(REVLEN_LABEL(sp)), revlen_number_buffer);
   return(val);
 }
 
 
-void set_revlen(snd_info *sp, Float val)
+void set_revlen(snd_info *sp, mus_float_t val)
 {
   if (IS_PLAYER(sp))
     sp->reverb_control_length = val;
@@ -1443,7 +1443,7 @@ static void new_in_hz(snd_info *sp, bool val)
 {
   sp->filter_control_in_hz = val;
   if (val)
-    sp->filter_control_xmax = (Float)(SND_SRATE(sp) / 2);
+    sp->filter_control_xmax = (mus_float_t)(SND_SRATE(sp) / 2);
   else sp->filter_control_xmax = 1.0;
   if (sp->filter_control_envelope) free_env(sp->filter_control_envelope);
   sp->filter_control_envelope = default_env(sp->filter_control_xmax, 1.0);
@@ -2267,7 +2267,7 @@ int control_panel_height(snd_info *sp)
 GdkDrawable *enved_pix_wn(void);
 #endif
 
-void progress_report(chan_info *cp, Float pct)
+void progress_report(chan_info *cp, mus_float_t pct)
 {
   snd_info *sp;
   sp = cp->sound;

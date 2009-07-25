@@ -43,9 +43,9 @@ static GtkObject *zy_adj(chan_info *cp)            {return(cp->cgx->chan_adjs[W_
 static GtkObject *zx_adj(chan_info *cp)            {return(cp->cgx->chan_adjs[W_zx_adj]);}
 
 
-static Float sqr(Float a) {return(a * a);}
+static mus_float_t sqr(mus_float_t a) {return(a * a);}
 
-static Float cube(Float a) {return(a * a * a);}
+static mus_float_t cube(mus_float_t a) {return(a * a * a);}
 
 
 bool channel_graph_is_visible(chan_info *cp)
@@ -93,7 +93,7 @@ static void sx_changed(float value, chan_info *cp)
 static void zy_changed(float value, chan_info *cp)
 { 
   axis_info *ap;
-  Float old_zy;
+  mus_float_t old_zy;
   ap = cp->axis;
   if (value < .01) value = .01;
   old_zy = ap->zy;
@@ -132,7 +132,7 @@ static void zx_changed(float value, chan_info *cp)
 }
 
 
-static void set_scrollbar(GtkObject *adj, Float position, Float range) /* position and range 0 to 1.0 */
+static void set_scrollbar(GtkObject *adj, mus_float_t position, mus_float_t range) /* position and range 0 to 1.0 */
 {
   ADJUSTMENT_SET_PAGE_SIZE(adj, range);
   ADJUSTMENT_SET_VALUE(adj, position);
@@ -141,7 +141,7 @@ static void set_scrollbar(GtkObject *adj, Float position, Float range) /* positi
 
 /* restore_axes_data (snd-file.c) assumes change_gzy also fixes gsy */
 
-void change_gzy(Float val, chan_info *cp)
+void change_gzy(mus_float_t val, chan_info *cp)
 {
   /* from snd_update */
   ADJUSTMENT_SET_PAGE_SIZE(gsy_adj(cp), 1.0 - val); 
@@ -150,13 +150,13 @@ void change_gzy(Float val, chan_info *cp)
 }
 
 
-Float gsy_value(chan_info *cp)
+mus_float_t gsy_value(chan_info *cp)
 {
   return(1.0 - (cp->gsy + ADJUSTMENT_PAGE_SIZE(gsy_adj(cp))));
 }
 
 
-Float gsy_size(chan_info *cp)
+mus_float_t gsy_size(chan_info *cp)
 {
   return(ADJUSTMENT_PAGE_SIZE(gsy_adj(cp)));
 }
@@ -193,7 +193,7 @@ void initialize_scrollbars(chan_info *cp)
   if ((sp->nchans > 1) && (cp->chan == 0) && (gsy_adj(cp)))
     {
       set_scrollbar(gsy_adj(cp), 0.0, 1.0);
-      set_scrollbar(gzy_adj(cp), 0.0, 1.0 / (Float)(sp->nchans));
+      set_scrollbar(gzy_adj(cp), 0.0, 1.0 / (mus_float_t)(sp->nchans));
     }
 }
 
@@ -205,7 +205,7 @@ void resize_sy(chan_info *cp)
   ap = cp->axis;
   if (ap->y_ambit != 0.0)
     {
-      Float size;
+      mus_float_t size;
       size = (ap->y1 - ap->y0) / ap->y_ambit;
       set_scrollbar(sy_adj(cp), 
 		    1.0 - ((ap->y0 - ap->ymin) / ap->y_ambit + size), 
@@ -1390,7 +1390,7 @@ static XEN g_make_color(XEN r, XEN g, XEN b)
 {
   #define H_make_color "(" S_make_color " r g b): return a color object with the indicated rgb values"
   color_info *ccolor;
-  Float rf, gf, bf;
+  mus_float_t rf, gf, bf;
 
   XEN_ASSERT_TYPE(XEN_NUMBER_P(r), r, XEN_ARG_1, S_make_color, "a number");
   /* someday accept a list as r */

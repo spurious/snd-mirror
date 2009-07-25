@@ -6,7 +6,11 @@ enum {W_top, W_form, W_main_window, W_edhist, W_wf_buttons, W_f, W_w, W_left_scr
 };
 
 
-#define DEFAULT_EDIT_HISTORY_WIDTH 1
+#if ((XmVERSION >= 2) && (XmREVISION >= 3))
+  #define DEFAULT_EDIT_HISTORY_WIDTH 2
+#else
+  #define DEFAULT_EDIT_HISTORY_WIDTH 1
+#endif
 
 
 Widget channel_main_pane(chan_info *cp)
@@ -47,24 +51,24 @@ bool channel_graph_is_visible(chan_info *cp)
 #define EDIT_HISTORY_LIST(Cp) (Cp->cgx)->chan_widgets[W_edhist]
 
 
-static Float sqr(Float a) {return(a * a);}
+static mus_float_t sqr(mus_float_t a) {return(a * a);}
 
-static Float cube(Float a) {return(a * a * a);}
+static mus_float_t cube(mus_float_t a) {return(a * a * a);}
 
 
-static Float get_scrollbar(Widget w, int val, int scrollbar_max)
+static mus_float_t get_scrollbar(Widget w, int val, int scrollbar_max)
 {
   int size;
   if (val == 0) return(0.0);
   XtVaGetValues(w, XmNsliderSize, &size, NULL);
-  return((Float)val / (Float)(scrollbar_max - size));
+  return((mus_float_t)val / (mus_float_t)(scrollbar_max - size));
 }
 
 
 static void sy_changed(int value, chan_info *cp)
 {
   axis_info *ap;
-  Float low;
+  mus_float_t low;
   ap = cp->axis;
   low = get_scrollbar(channel_sy(cp), value, SCROLLBAR_MAX);
   ap->sy = (1.0 - ap->zy) * low;
@@ -87,7 +91,7 @@ static void sx_changed(int value, chan_info *cp)
 static void zy_changed(int value, chan_info *cp)
 { 
   axis_info *ap;
-  Float old_zy;
+  mus_float_t old_zy;
   ap = cp->axis;
   if (value < 1) value = 1;
   old_zy = ap->zy;
@@ -129,7 +133,7 @@ static void zx_changed(int value, chan_info *cp)
 }
 
 
-static void set_scrollbar(Widget w, Float position, Float range, int scrollbar_max) /* position and range 0 to 1.0 */
+static void set_scrollbar(Widget w, mus_float_t position, mus_float_t range, int scrollbar_max) /* position and range 0 to 1.0 */
 {
   int size, val;
   size = (int)(scrollbar_max * range);
@@ -146,11 +150,11 @@ static void set_scrollbar(Widget w, Float position, Float range, int scrollbar_m
 }
 
 
-static void change_gzy_1(Float val, chan_info *cp)
+static void change_gzy_1(mus_float_t val, chan_info *cp)
 {
-  Float chan_frac, new_gsy, new_size;
+  mus_float_t chan_frac, new_gsy, new_size;
   cp->gzy = val;
-  chan_frac = 1.0 / ((Float)(((snd_info *)(cp->sound))->nchans));
+  chan_frac = 1.0 / ((mus_float_t)(((snd_info *)(cp->sound))->nchans));
   new_size = chan_frac + ((1.0 - chan_frac) * cp->gzy);
   if ((cp->gsy + new_size) > 1.0) 
     new_gsy = 1.0 - new_size; 
@@ -167,39 +171,39 @@ static void gzy_changed(int value, chan_info *cp)
 }
 
 
-void change_gzy(Float val, chan_info *cp)
+void change_gzy(mus_float_t val, chan_info *cp)
 {
   change_gzy_1(val, cp);
-  set_scrollbar(channel_gzy(cp), val, 1.0 / (Float)(cp->sound->nchans), SCROLLBAR_MAX);
+  set_scrollbar(channel_gzy(cp), val, 1.0 / (mus_float_t)(cp->sound->nchans), SCROLLBAR_MAX);
 }
 
 
 static void gsy_changed(int value, chan_info *cp)
 {
-  Float low;
+  mus_float_t low;
   low = get_scrollbar(channel_gsy(cp), value, SCROLLBAR_MAX);
   cp->gsy = (1.0 - cp->gzy) * low;
   for_each_sound_chan(cp->sound, update_graph_or_warn);
 }
 
 
-Float gsy_value(chan_info *cp)
+mus_float_t gsy_value(chan_info *cp)
 {
   Widget wcp;
   int ival;
   wcp = channel_gsy(cp);
   XtVaGetValues(wcp, XmNvalue, &ival, NULL);
-  return((Float)ival / (Float)(SCROLLBAR_MAX));
+  return((mus_float_t)ival / (mus_float_t)(SCROLLBAR_MAX));
 }
 
 
-Float gsy_size(chan_info *cp)
+mus_float_t gsy_size(chan_info *cp)
 {
   Widget wcp;
   int ival;
   wcp = channel_gsy(cp);
   XtVaGetValues(wcp, XmNsliderSize, &ival, NULL);
-  return((Float)ival / (Float)(SCROLLBAR_MAX));
+  return((mus_float_t)ival / (mus_float_t)(SCROLLBAR_MAX));
 }
 
 
@@ -238,7 +242,7 @@ void initialize_scrollbars(chan_info *cp)
       (channel_gsy(cp)))
     {
       set_scrollbar(channel_gsy(cp), 1.0, 1.0, SCROLLBAR_MAX);
-      set_scrollbar(channel_gzy(cp), 1.0, 1.0 / (Float)(sp->nchans), SCROLLBAR_MAX);
+      set_scrollbar(channel_gzy(cp), 1.0, 1.0 / (mus_float_t)(sp->nchans), SCROLLBAR_MAX);
     }
 }
 
@@ -934,7 +938,7 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Wid
 
 	  n = 0;
 	  XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
-	  n = no_padding(args, n);
+	  /* n = no_padding(args, n); */
 	  n = attach_all_sides(args, n);
 	  XtSetArg(args[n], XmNsashIndent, 2); n++;
 	  XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
@@ -1636,7 +1640,7 @@ static XEN g_make_color(XEN r, XEN g, XEN b)
   Colormap cmap;
   XColor tmp_color;
   Display *dpy;
-  Float rf, gf, bf;
+  mus_float_t rf, gf, bf;
 
   XEN_ASSERT_TYPE(XEN_NUMBER_P(r), r, XEN_ARG_1, S_make_color, "a number");
   /* someday accept a list as r */

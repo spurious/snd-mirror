@@ -20,7 +20,7 @@
  * 9-Oct:      various thread-related internal changes.
  * 14-Jul:     mus_data_format_zero.
  * 12-Jul:     mus_interp_type_p and mus_fft_window_p for C++'s benefit.
- * 1-July:     mus-safety and various ints changed to off_t.
+ * 1-July:     mus-safety and various ints changed to mus_long_t.
  * 20-Jun:     support for pthreads.
  * 16-Jun:     changed init_mus_module to mus_initialize.
  * 30-May:     changed polyshape to use cos and added cheby_choice arg to mus_make_polyshape.
@@ -58,7 +58,7 @@
  * 6-Aug:      mus_autocorrelate, mus_correlate.
  * 3-Aug:      blackman5..10 and Rife-Vincent (RV2..4 fft), mlt-sine windows.
  * 16-July:    removed start arg from mus_make_env (see mus_make_env_with_start).
- * 5-July:     changed some Floats to doubles in env funcs.
+ * 5-July:     changed some mus_float_ts to doubles in env funcs.
  *               exp envs now use repeated multiplies rather than direct exp call.
  * 19-June:    mus-increment on gens with a notion of frequency (phase increment); 
  *               to make room for this, asymmetric-fm ratio and sine-summation b moved to mus-offset.
@@ -134,7 +134,7 @@
  * 5-Jan-04:   env_interp bugfix.
  * --------
  * 29-Sep:     removed length arg from spectrum in clm2xen.
- * 24-Aug:     changed mus_length|ramp|hop type to off_t.
+ * 24-Aug:     changed mus_length|ramp|hop type to mus_long_t.
  * 21-Aug:     export MUS_INPUT and friends (needed for specialized INA handlers).
  * 11-Aug:     int -> bool.
  * 7-Aug:      removed mus_type.
@@ -143,7 +143,7 @@
  * 27-June:    mus_samples_to_seconds and mus_seconds_to_samples.
  * 9-June:     mus_mix_with_reader_and_writer.
  * 27-May:     bugfix: interpolating all-pass ("zall-pass") had an extra delay.
- * 25-Apr:     mus_spectrum and mus_convolution now return Float*.
+ * 25-Apr:     mus_spectrum and mus_convolution now return mus_float_t*.
  * 9-Apr:      removed MUS_HANNING_WINDOW (use MUS_HANN_WINDOW).
  * 3-Mar:      mus_delay_line_p for tap error checking.
  * 27-Feb:     mus_length for env -> original duration in samples.
@@ -168,7 +168,7 @@
  * 10-Jul:     mus_file_name.
  * 7-Jun:      fftw support added(mus_fftw).
  * 31-May:     changed mus_any_class.
- * 3-May:      many int->off_t changes for large files.
+ * 3-May:      many int->mus_long_t changes for large files.
  * 8-Apr:      off-by-1 env bug(Lisp/C are now identical), env_interp of exp env beyond end bugfix.
  * 1-Apr:      sine-summation n=0 bugfix.
  * 27-Mar:     negative degree locsig bugfix.
@@ -264,43 +264,43 @@ typedef struct mus_any_class {
   int (*release)(mus_any *ptr);
   char *(*describe)(mus_any *ptr);                            /* caller should free the string */
   bool (*equalp)(mus_any *gen1, mus_any *gen2);
-  Float *(*data)(mus_any *ptr);
-  Float *(*set_data)(mus_any *ptr, Float *new_data);
-  off_t (*length)(mus_any *ptr);
-  off_t (*set_length)(mus_any *ptr, off_t new_length);
-  Float (*frequency)(mus_any *ptr);
-  Float (*set_frequency)(mus_any *ptr, Float new_freq);
-  Float (*phase)(mus_any *ptr); 
-  Float (*set_phase)(mus_any *ptr, Float new_phase);
-  Float (*scaler)(mus_any *ptr);
-  Float (*set_scaler)(mus_any *ptr, Float val);
-  Float (*increment)(mus_any *ptr);
-  Float (*set_increment)(mus_any *ptr, Float val);
-  Float (*run)(mus_any *gen, Float arg1, Float arg2);
+  mus_float_t *(*data)(mus_any *ptr);
+  mus_float_t *(*set_data)(mus_any *ptr, mus_float_t *new_data);
+  mus_long_t (*length)(mus_any *ptr);
+  mus_long_t (*set_length)(mus_any *ptr, mus_long_t new_length);
+  mus_float_t (*frequency)(mus_any *ptr);
+  mus_float_t (*set_frequency)(mus_any *ptr, mus_float_t new_freq);
+  mus_float_t (*phase)(mus_any *ptr); 
+  mus_float_t (*set_phase)(mus_any *ptr, mus_float_t new_phase);
+  mus_float_t (*scaler)(mus_any *ptr);
+  mus_float_t (*set_scaler)(mus_any *ptr, mus_float_t val);
+  mus_float_t (*increment)(mus_any *ptr);
+  mus_float_t (*set_increment)(mus_any *ptr, mus_float_t val);
+  mus_float_t (*run)(mus_any *gen, mus_float_t arg1, mus_float_t arg2);
   mus_clm_extended_t extended_type;
   void *(*closure)(mus_any *gen);
   int (*channels)(mus_any *ptr);
-  Float (*offset)(mus_any *ptr);
-  Float (*set_offset)(mus_any *ptr, Float val);
-  Float (*width)(mus_any *ptr);
-  Float (*set_width)(mus_any *ptr, Float val);
-  Float (*xcoeff)(mus_any *ptr, int index);
-  Float (*set_xcoeff)(mus_any *ptr, int index, Float val);
-  off_t (*hop)(mus_any *ptr);
-  off_t (*set_hop)(mus_any *ptr, off_t new_length);
-  off_t (*ramp)(mus_any *ptr);
-  off_t (*set_ramp)(mus_any *ptr, off_t new_length);
-  Float (*read_sample)(mus_any *ptr, off_t samp, int chan);
-  Float (*write_sample)(mus_any *ptr, off_t samp, int chan, Float data);
+  mus_float_t (*offset)(mus_any *ptr);
+  mus_float_t (*set_offset)(mus_any *ptr, mus_float_t val);
+  mus_float_t (*width)(mus_any *ptr);
+  mus_float_t (*set_width)(mus_any *ptr, mus_float_t val);
+  mus_float_t (*xcoeff)(mus_any *ptr, int index);
+  mus_float_t (*set_xcoeff)(mus_any *ptr, int index, mus_float_t val);
+  mus_long_t (*hop)(mus_any *ptr);
+  mus_long_t (*set_hop)(mus_any *ptr, mus_long_t new_length);
+  mus_long_t (*ramp)(mus_any *ptr);
+  mus_long_t (*set_ramp)(mus_any *ptr, mus_long_t new_length);
+  mus_float_t (*read_sample)(mus_any *ptr, mus_long_t samp, int chan);
+  mus_float_t (*write_sample)(mus_any *ptr, mus_long_t samp, int chan, mus_float_t data);
   char *(*file_name)(mus_any *ptr);
   int (*end)(mus_any *ptr);
-  off_t (*location)(mus_any *ptr);
-  off_t (*set_location)(mus_any *ptr, off_t loc);
+  mus_long_t (*location)(mus_any *ptr);
+  mus_long_t (*set_location)(mus_any *ptr, mus_long_t loc);
   int (*channel)(mus_any *ptr);
-  Float (*ycoeff)(mus_any *ptr, int index);
-  Float (*set_ycoeff)(mus_any *ptr, int index, Float val);
-  Float *(*xcoeffs)(mus_any *ptr);
-  Float *(*ycoeffs)(mus_any *ptr);
+  mus_float_t (*ycoeff)(mus_any *ptr, int index);
+  mus_float_t (*set_ycoeff)(mus_any *ptr, int index, mus_float_t val);
+  mus_float_t *(*xcoeffs)(mus_any *ptr);
+  mus_float_t *(*ycoeffs)(mus_any *ptr);
   void *original_class; /* class chain perhaps */
   void (*reset)(mus_any *ptr);
   void *(*set_closure)(mus_any *gen, void *e);
@@ -343,40 +343,40 @@ extern "C" {
 MUS_EXPORT void mus_initialize(void);
 
 MUS_EXPORT int mus_make_class_tag(void);
-MUS_EXPORT Float mus_radians_to_hz(Float radians);
-MUS_EXPORT Float mus_hz_to_radians(Float hz);
-MUS_EXPORT Float mus_degrees_to_radians(Float degrees);
-MUS_EXPORT Float mus_radians_to_degrees(Float radians);
-MUS_EXPORT Float mus_db_to_linear(Float x);
-MUS_EXPORT Float mus_linear_to_db(Float x);
+MUS_EXPORT mus_float_t mus_radians_to_hz(mus_float_t radians);
+MUS_EXPORT mus_float_t mus_hz_to_radians(mus_float_t hz);
+MUS_EXPORT mus_float_t mus_degrees_to_radians(mus_float_t degrees);
+MUS_EXPORT mus_float_t mus_radians_to_degrees(mus_float_t radians);
+MUS_EXPORT mus_float_t mus_db_to_linear(mus_float_t x);
+MUS_EXPORT mus_float_t mus_linear_to_db(mus_float_t x);
 
-MUS_EXPORT Float mus_srate(void);
-MUS_EXPORT Float mus_set_srate(Float val);
-MUS_EXPORT off_t mus_seconds_to_samples(Float secs);
-MUS_EXPORT Float mus_samples_to_seconds(off_t samps);
+MUS_EXPORT mus_float_t mus_srate(void);
+MUS_EXPORT mus_float_t mus_set_srate(mus_float_t val);
+MUS_EXPORT mus_long_t mus_seconds_to_samples(mus_float_t secs);
+MUS_EXPORT mus_float_t mus_samples_to_seconds(mus_long_t samps);
 MUS_EXPORT int mus_array_print_length(void);
 MUS_EXPORT int mus_set_array_print_length(int val);
-MUS_EXPORT Float mus_float_equal_fudge_factor(void);
-MUS_EXPORT Float mus_set_float_equal_fudge_factor(Float val);
+MUS_EXPORT mus_float_t mus_float_equal_fudge_factor(void);
+MUS_EXPORT mus_float_t mus_set_float_equal_fudge_factor(mus_float_t val);
 
-MUS_EXPORT Float mus_ring_modulate(Float s1, Float s2);
-MUS_EXPORT Float mus_amplitude_modulate(Float s1, Float s2, Float s3);
-MUS_EXPORT Float mus_contrast_enhancement(Float sig, Float index);
-MUS_EXPORT Float mus_dot_product(Float *data1, Float *data2, off_t size);
+MUS_EXPORT mus_float_t mus_ring_modulate(mus_float_t s1, mus_float_t s2);
+MUS_EXPORT mus_float_t mus_amplitude_modulate(mus_float_t s1, mus_float_t s2, mus_float_t s3);
+MUS_EXPORT mus_float_t mus_contrast_enhancement(mus_float_t sig, mus_float_t index);
+MUS_EXPORT mus_float_t mus_dot_product(mus_float_t *data1, mus_float_t *data2, mus_long_t size);
 #if HAVE_COMPLEX_TRIG
-MUS_EXPORT complex double mus_edot_product(complex double freq, complex double *data, off_t size);
+MUS_EXPORT complex double mus_edot_product(complex double freq, complex double *data, mus_long_t size);
 #endif
 
-MUS_EXPORT void mus_clear_array(Float *arr, off_t size);
-MUS_EXPORT bool mus_arrays_are_equal(Float *arr1, Float *arr2, Float fudge, off_t len);
-MUS_EXPORT Float mus_polynomial(Float *coeffs, Float x, int ncoeffs);
-MUS_EXPORT void mus_multiply_arrays(Float *data, Float *window, off_t len);
-MUS_EXPORT void mus_rectangular_to_polar(Float *rl, Float *im, off_t size);
-MUS_EXPORT void mus_rectangular_to_magnitudes(Float *rl, Float *im, off_t size);
-MUS_EXPORT void mus_polar_to_rectangular(Float *rl, Float *im, off_t size);
-MUS_EXPORT Float mus_array_interp(Float *wave, Float phase, off_t size);
-MUS_EXPORT double mus_bessi0(Float x);
-MUS_EXPORT Float mus_interpolate(mus_interp_t type, Float x, Float *table, off_t table_size, Float y);
+MUS_EXPORT void mus_clear_array(mus_float_t *arr, mus_long_t size);
+MUS_EXPORT bool mus_arrays_are_equal(mus_float_t *arr1, mus_float_t *arr2, mus_float_t fudge, mus_long_t len);
+MUS_EXPORT mus_float_t mus_polynomial(mus_float_t *coeffs, mus_float_t x, int ncoeffs);
+MUS_EXPORT void mus_multiply_arrays(mus_float_t *data, mus_float_t *window, mus_long_t len);
+MUS_EXPORT void mus_rectangular_to_polar(mus_float_t *rl, mus_float_t *im, mus_long_t size);
+MUS_EXPORT void mus_rectangular_to_magnitudes(mus_float_t *rl, mus_float_t *im, mus_long_t size);
+MUS_EXPORT void mus_polar_to_rectangular(mus_float_t *rl, mus_float_t *im, mus_long_t size);
+MUS_EXPORT mus_float_t mus_array_interp(mus_float_t *wave, mus_float_t phase, mus_long_t size);
+MUS_EXPORT double mus_bessi0(mus_float_t x);
+MUS_EXPORT mus_float_t mus_interpolate(mus_interp_t type, mus_float_t x, mus_float_t *table, mus_long_t table_size, mus_float_t y);
 MUS_EXPORT bool mus_interp_type_p(int val);
 MUS_EXPORT bool mus_fft_window_p(int val);
 
@@ -388,265 +388,265 @@ MUS_EXPORT int mus_data_format_zero(int format);
 MUS_EXPORT int mus_free(mus_any *ptr);
 MUS_EXPORT char *mus_describe(mus_any *gen);
 MUS_EXPORT bool mus_equalp(mus_any *g1, mus_any *g2);
-MUS_EXPORT Float mus_phase(mus_any *gen);
-MUS_EXPORT Float mus_set_phase(mus_any *gen, Float val);
-MUS_EXPORT Float mus_set_frequency(mus_any *gen, Float val);
-MUS_EXPORT Float mus_frequency(mus_any *gen);
-MUS_EXPORT Float mus_run(mus_any *gen, Float arg1, Float arg2);
-MUS_EXPORT off_t mus_length(mus_any *gen);
-MUS_EXPORT off_t mus_set_length(mus_any *gen, off_t len);
-MUS_EXPORT off_t mus_order(mus_any *gen);
-MUS_EXPORT Float *mus_data(mus_any *gen);
-MUS_EXPORT Float *mus_set_data(mus_any *gen, Float *data);
+MUS_EXPORT mus_float_t mus_phase(mus_any *gen);
+MUS_EXPORT mus_float_t mus_set_phase(mus_any *gen, mus_float_t val);
+MUS_EXPORT mus_float_t mus_set_frequency(mus_any *gen, mus_float_t val);
+MUS_EXPORT mus_float_t mus_frequency(mus_any *gen);
+MUS_EXPORT mus_float_t mus_run(mus_any *gen, mus_float_t arg1, mus_float_t arg2);
+MUS_EXPORT mus_long_t mus_length(mus_any *gen);
+MUS_EXPORT mus_long_t mus_set_length(mus_any *gen, mus_long_t len);
+MUS_EXPORT mus_long_t mus_order(mus_any *gen);
+MUS_EXPORT mus_float_t *mus_data(mus_any *gen);
+MUS_EXPORT mus_float_t *mus_set_data(mus_any *gen, mus_float_t *data);
 MUS_EXPORT const char *mus_name(mus_any *ptr);
 MUS_EXPORT const char *mus_set_name(mus_any *ptr, const char *new_name);
-MUS_EXPORT Float mus_scaler(mus_any *gen);
-MUS_EXPORT Float mus_set_scaler(mus_any *gen, Float val);
-MUS_EXPORT Float mus_offset(mus_any *gen);
-MUS_EXPORT Float mus_set_offset(mus_any *gen, Float val);
-MUS_EXPORT Float mus_width(mus_any *gen);
-MUS_EXPORT Float mus_set_width(mus_any *gen, Float val);
+MUS_EXPORT mus_float_t mus_scaler(mus_any *gen);
+MUS_EXPORT mus_float_t mus_set_scaler(mus_any *gen, mus_float_t val);
+MUS_EXPORT mus_float_t mus_offset(mus_any *gen);
+MUS_EXPORT mus_float_t mus_set_offset(mus_any *gen, mus_float_t val);
+MUS_EXPORT mus_float_t mus_width(mus_any *gen);
+MUS_EXPORT mus_float_t mus_set_width(mus_any *gen, mus_float_t val);
 MUS_EXPORT char *mus_file_name(mus_any *ptr);
 MUS_EXPORT void mus_reset(mus_any *ptr);
-MUS_EXPORT Float *mus_xcoeffs(mus_any *ptr);
-MUS_EXPORT Float *mus_ycoeffs(mus_any *ptr);
-MUS_EXPORT Float mus_xcoeff(mus_any *ptr, int index);
-MUS_EXPORT Float mus_set_xcoeff(mus_any *ptr, int index, Float val);
-MUS_EXPORT Float mus_ycoeff(mus_any *ptr, int index);
-MUS_EXPORT Float mus_set_ycoeff(mus_any *ptr, int index, Float val);
-MUS_EXPORT Float mus_increment(mus_any *rd);
-MUS_EXPORT Float mus_set_increment(mus_any *rd, Float dir);
-MUS_EXPORT off_t mus_location(mus_any *rd);
-MUS_EXPORT off_t mus_set_location(mus_any *rd, off_t loc);
+MUS_EXPORT mus_float_t *mus_xcoeffs(mus_any *ptr);
+MUS_EXPORT mus_float_t *mus_ycoeffs(mus_any *ptr);
+MUS_EXPORT mus_float_t mus_xcoeff(mus_any *ptr, int index);
+MUS_EXPORT mus_float_t mus_set_xcoeff(mus_any *ptr, int index, mus_float_t val);
+MUS_EXPORT mus_float_t mus_ycoeff(mus_any *ptr, int index);
+MUS_EXPORT mus_float_t mus_set_ycoeff(mus_any *ptr, int index, mus_float_t val);
+MUS_EXPORT mus_float_t mus_increment(mus_any *rd);
+MUS_EXPORT mus_float_t mus_set_increment(mus_any *rd, mus_float_t dir);
+MUS_EXPORT mus_long_t mus_location(mus_any *rd);
+MUS_EXPORT mus_long_t mus_set_location(mus_any *rd, mus_long_t loc);
 MUS_EXPORT int mus_channel(mus_any *rd);
 MUS_EXPORT int mus_channels(mus_any *ptr);
 MUS_EXPORT int mus_position(mus_any *ptr); /* only C, envs (snd-env.c), shares slot with mus_channels */
 MUS_EXPORT int mus_interp_type(mus_any *ptr);
-MUS_EXPORT off_t mus_ramp(mus_any *ptr);
-MUS_EXPORT off_t mus_set_ramp(mus_any *ptr, off_t val);
-MUS_EXPORT off_t mus_hop(mus_any *ptr);
-MUS_EXPORT off_t mus_set_hop(mus_any *ptr, off_t val);
-MUS_EXPORT Float mus_feedforward(mus_any *gen);
-MUS_EXPORT Float mus_set_feedforward(mus_any *gen, Float val);
-MUS_EXPORT Float mus_feedback(mus_any *rd);
-MUS_EXPORT Float mus_set_feedback(mus_any *rd, Float dir);
+MUS_EXPORT mus_long_t mus_ramp(mus_any *ptr);
+MUS_EXPORT mus_long_t mus_set_ramp(mus_any *ptr, mus_long_t val);
+MUS_EXPORT mus_long_t mus_hop(mus_any *ptr);
+MUS_EXPORT mus_long_t mus_set_hop(mus_any *ptr, mus_long_t val);
+MUS_EXPORT mus_float_t mus_feedforward(mus_any *gen);
+MUS_EXPORT mus_float_t mus_set_feedforward(mus_any *gen, mus_float_t val);
+MUS_EXPORT mus_float_t mus_feedback(mus_any *rd);
+MUS_EXPORT mus_float_t mus_set_feedback(mus_any *rd, mus_float_t dir);
 MUS_EXPORT int mus_safety(mus_any *gen);
 MUS_EXPORT int mus_set_safety(mus_any *gen, int val);
 
 
 /* -------- generators -------- */
 
-MUS_EXPORT Float mus_oscil(mus_any *o, Float fm, Float pm);
-MUS_EXPORT Float mus_oscil_unmodulated(mus_any *ptr);
-MUS_EXPORT Float mus_oscil_fm(mus_any *ptr, Float fm);
-MUS_EXPORT Float mus_oscil_pm(mus_any *ptr, Float pm);
+MUS_EXPORT mus_float_t mus_oscil(mus_any *o, mus_float_t fm, mus_float_t pm);
+MUS_EXPORT mus_float_t mus_oscil_unmodulated(mus_any *ptr);
+MUS_EXPORT mus_float_t mus_oscil_fm(mus_any *ptr, mus_float_t fm);
+MUS_EXPORT mus_float_t mus_oscil_pm(mus_any *ptr, mus_float_t pm);
 MUS_EXPORT bool mus_oscil_p(mus_any *ptr);
-MUS_EXPORT mus_any *mus_make_oscil(Float freq, Float phase);
+MUS_EXPORT mus_any *mus_make_oscil(mus_float_t freq, mus_float_t phase);
 
-MUS_EXPORT mus_any *mus_make_ncos(Float freq, int n);
-MUS_EXPORT Float mus_ncos(mus_any *ptr, Float fm);
+MUS_EXPORT mus_any *mus_make_ncos(mus_float_t freq, int n);
+MUS_EXPORT mus_float_t mus_ncos(mus_any *ptr, mus_float_t fm);
 MUS_EXPORT bool mus_ncos_p(mus_any *ptr);
 
-MUS_EXPORT mus_any *mus_make_nsin(Float freq, int n);
-MUS_EXPORT Float mus_nsin(mus_any *ptr, Float fm);
+MUS_EXPORT mus_any *mus_make_nsin(mus_float_t freq, int n);
+MUS_EXPORT mus_float_t mus_nsin(mus_any *ptr, mus_float_t fm);
 MUS_EXPORT bool mus_nsin_p(mus_any *ptr);
 
 #ifndef CLM_DISABLE_DEPRECATED
 /* previous forms (changed 12-Feb-08) */
-MUS_EXPORT mus_any *mus_make_sum_of_cosines(int cosines, Float freq, Float phase);
+MUS_EXPORT mus_any *mus_make_sum_of_cosines(int cosines, mus_float_t freq, mus_float_t phase);
 #define mus_sum_of_cosines(Gen, Fm) mus_ncos(Gen, Fm)
 #define mus_sum_of_cosines_p(Ptr) mus_ncos_p(Ptr)
 
-MUS_EXPORT mus_any *mus_make_sum_of_sines(int sines, Float freq, Float phase);
+MUS_EXPORT mus_any *mus_make_sum_of_sines(int sines, mus_float_t freq, mus_float_t phase);
 #define mus_sum_of_sines(Gen, Fm) mus_nsin(Gen, Fm)
 #define mus_sum_of_sines_p(Ptr) mus_nsin_p(Ptr)
 #endif
 
-MUS_EXPORT mus_any *mus_make_nrxysin(Float frequency, Float y_over_x, int n, Float r);
-MUS_EXPORT Float mus_nrxysin(mus_any *ptr, Float fm);
+MUS_EXPORT mus_any *mus_make_nrxysin(mus_float_t frequency, mus_float_t y_over_x, int n, mus_float_t r);
+MUS_EXPORT mus_float_t mus_nrxysin(mus_any *ptr, mus_float_t fm);
 MUS_EXPORT bool mus_nrxysin_p(mus_any *ptr);
 
-MUS_EXPORT mus_any *mus_make_nrxycos(Float frequency, Float y_over_x, int n, Float r);
-MUS_EXPORT Float mus_nrxycos(mus_any *ptr, Float fm);
+MUS_EXPORT mus_any *mus_make_nrxycos(mus_float_t frequency, mus_float_t y_over_x, int n, mus_float_t r);
+MUS_EXPORT mus_float_t mus_nrxycos(mus_any *ptr, mus_float_t fm);
 MUS_EXPORT bool mus_nrxycos_p(mus_any *ptr);
 
 #ifndef CLM_DISABLE_DEPRECATED
 /* previous form (15-Feb-08) */
-MUS_EXPORT mus_any *mus_make_sine_summation(Float frequency, Float phase, int n, Float a, Float ratio);
+MUS_EXPORT mus_any *mus_make_sine_summation(mus_float_t frequency, mus_float_t phase, int n, mus_float_t a, mus_float_t ratio);
 #define mus_sine_summation(Obj, Fm) mus_nrxysin(Obj, Fm)
 #define mus_sine_summation_p(Obj) mus_nrxysin_p(Obj)
 #endif
 
-MUS_EXPORT Float mus_delay(mus_any *gen, Float input, Float pm);
-MUS_EXPORT Float mus_delay_unmodulated(mus_any *ptr, Float input);
-MUS_EXPORT Float mus_tap(mus_any *gen, Float loc);
-MUS_EXPORT Float mus_tap_unmodulated(mus_any *gen);
-MUS_EXPORT mus_any *mus_make_delay(int size, Float *line, int line_size, mus_interp_t type);
+MUS_EXPORT mus_float_t mus_delay(mus_any *gen, mus_float_t input, mus_float_t pm);
+MUS_EXPORT mus_float_t mus_delay_unmodulated(mus_any *ptr, mus_float_t input);
+MUS_EXPORT mus_float_t mus_tap(mus_any *gen, mus_float_t loc);
+MUS_EXPORT mus_float_t mus_tap_unmodulated(mus_any *gen);
+MUS_EXPORT mus_any *mus_make_delay(int size, mus_float_t *line, int line_size, mus_interp_t type);
 MUS_EXPORT bool mus_delay_p(mus_any *ptr);
 MUS_EXPORT bool mus_delay_line_p(mus_any *gen); /* added 2-Mar-03 for tap error checks */
-MUS_EXPORT Float mus_delay_tick(mus_any *ptr, Float input);
-MUS_EXPORT Float mus_delay_tick_noz(mus_any *ptr, Float input);
-MUS_EXPORT Float mus_delay_unmodulated_noz(mus_any *ptr, Float input);
+MUS_EXPORT mus_float_t mus_delay_tick(mus_any *ptr, mus_float_t input);
+MUS_EXPORT mus_float_t mus_delay_tick_noz(mus_any *ptr, mus_float_t input);
+MUS_EXPORT mus_float_t mus_delay_unmodulated_noz(mus_any *ptr, mus_float_t input);
 
-MUS_EXPORT Float mus_comb(mus_any *gen, Float input, Float pm);
-MUS_EXPORT Float mus_comb_unmodulated(mus_any *gen, Float input);
-MUS_EXPORT mus_any *mus_make_comb(Float scaler, int size, Float *line, int line_size, mus_interp_t type);
+MUS_EXPORT mus_float_t mus_comb(mus_any *gen, mus_float_t input, mus_float_t pm);
+MUS_EXPORT mus_float_t mus_comb_unmodulated(mus_any *gen, mus_float_t input);
+MUS_EXPORT mus_any *mus_make_comb(mus_float_t scaler, int size, mus_float_t *line, int line_size, mus_interp_t type);
 MUS_EXPORT bool mus_comb_p(mus_any *ptr);
-MUS_EXPORT Float mus_comb_unmodulated_noz(mus_any *ptr, Float input);
+MUS_EXPORT mus_float_t mus_comb_unmodulated_noz(mus_any *ptr, mus_float_t input);
 
-MUS_EXPORT Float mus_notch(mus_any *gen, Float input, Float pm);
-MUS_EXPORT Float mus_notch_unmodulated(mus_any *gen, Float input);
-MUS_EXPORT mus_any *mus_make_notch(Float scaler, int size, Float *line, int line_size, mus_interp_t type);
+MUS_EXPORT mus_float_t mus_notch(mus_any *gen, mus_float_t input, mus_float_t pm);
+MUS_EXPORT mus_float_t mus_notch_unmodulated(mus_any *gen, mus_float_t input);
+MUS_EXPORT mus_any *mus_make_notch(mus_float_t scaler, int size, mus_float_t *line, int line_size, mus_interp_t type);
 MUS_EXPORT bool mus_notch_p(mus_any *ptr);
-MUS_EXPORT Float mus_notch_unmodulated_noz(mus_any *ptr, Float input);
+MUS_EXPORT mus_float_t mus_notch_unmodulated_noz(mus_any *ptr, mus_float_t input);
 
-MUS_EXPORT Float mus_all_pass(mus_any *gen, Float input, Float pm);
-MUS_EXPORT Float mus_all_pass_unmodulated(mus_any *gen, Float input);
-MUS_EXPORT mus_any *mus_make_all_pass(Float backward, Float forward, int size, Float *line, int line_size, mus_interp_t type);
+MUS_EXPORT mus_float_t mus_all_pass(mus_any *gen, mus_float_t input, mus_float_t pm);
+MUS_EXPORT mus_float_t mus_all_pass_unmodulated(mus_any *gen, mus_float_t input);
+MUS_EXPORT mus_any *mus_make_all_pass(mus_float_t backward, mus_float_t forward, int size, mus_float_t *line, int line_size, mus_interp_t type);
 MUS_EXPORT bool mus_all_pass_p(mus_any *ptr);
-MUS_EXPORT Float mus_all_pass_unmodulated_noz(mus_any *ptr, Float input);
+MUS_EXPORT mus_float_t mus_all_pass_unmodulated_noz(mus_any *ptr, mus_float_t input);
 
-MUS_EXPORT mus_any *mus_make_moving_average(int size, Float *line);
+MUS_EXPORT mus_any *mus_make_moving_average(int size, mus_float_t *line);
 MUS_EXPORT bool mus_moving_average_p(mus_any *ptr);
-MUS_EXPORT Float mus_moving_average(mus_any *ptr, Float input);
+MUS_EXPORT mus_float_t mus_moving_average(mus_any *ptr, mus_float_t input);
 
-MUS_EXPORT Float mus_table_lookup(mus_any *gen, Float fm);
-MUS_EXPORT Float mus_table_lookup_unmodulated(mus_any *gen);
-MUS_EXPORT mus_any *mus_make_table_lookup(Float freq, Float phase, Float *wave, off_t wave_size, mus_interp_t type);
+MUS_EXPORT mus_float_t mus_table_lookup(mus_any *gen, mus_float_t fm);
+MUS_EXPORT mus_float_t mus_table_lookup_unmodulated(mus_any *gen);
+MUS_EXPORT mus_any *mus_make_table_lookup(mus_float_t freq, mus_float_t phase, mus_float_t *wave, mus_long_t wave_size, mus_interp_t type);
 MUS_EXPORT bool mus_table_lookup_p(mus_any *ptr);
-MUS_EXPORT Float *mus_partials_to_wave(Float *partial_data, int partials, Float *table, off_t table_size, bool normalize);
-MUS_EXPORT Float *mus_phase_partials_to_wave(Float *partial_data, int partials, Float *table, off_t table_size, bool normalize);
+MUS_EXPORT mus_float_t *mus_partials_to_wave(mus_float_t *partial_data, int partials, mus_float_t *table, mus_long_t table_size, bool normalize);
+MUS_EXPORT mus_float_t *mus_phase_partials_to_wave(mus_float_t *partial_data, int partials, mus_float_t *table, mus_long_t table_size, bool normalize);
 
-MUS_EXPORT Float mus_sawtooth_wave(mus_any *gen, Float fm);
-MUS_EXPORT mus_any *mus_make_sawtooth_wave(Float freq, Float amp, Float phase);
+MUS_EXPORT mus_float_t mus_sawtooth_wave(mus_any *gen, mus_float_t fm);
+MUS_EXPORT mus_any *mus_make_sawtooth_wave(mus_float_t freq, mus_float_t amp, mus_float_t phase);
 MUS_EXPORT bool mus_sawtooth_wave_p(mus_any *gen);
 
-MUS_EXPORT Float mus_square_wave(mus_any *gen, Float fm);
-MUS_EXPORT mus_any *mus_make_square_wave(Float freq, Float amp, Float phase);
+MUS_EXPORT mus_float_t mus_square_wave(mus_any *gen, mus_float_t fm);
+MUS_EXPORT mus_any *mus_make_square_wave(mus_float_t freq, mus_float_t amp, mus_float_t phase);
 MUS_EXPORT bool mus_square_wave_p(mus_any *gen);
 
-MUS_EXPORT Float mus_triangle_wave(mus_any *gen, Float fm);
-MUS_EXPORT mus_any *mus_make_triangle_wave(Float freq, Float amp, Float phase);
+MUS_EXPORT mus_float_t mus_triangle_wave(mus_any *gen, mus_float_t fm);
+MUS_EXPORT mus_any *mus_make_triangle_wave(mus_float_t freq, mus_float_t amp, mus_float_t phase);
 MUS_EXPORT bool mus_triangle_wave_p(mus_any *gen);
 
-MUS_EXPORT Float mus_pulse_train(mus_any *gen, Float fm);
-MUS_EXPORT mus_any *mus_make_pulse_train(Float freq, Float amp, Float phase);
+MUS_EXPORT mus_float_t mus_pulse_train(mus_any *gen, mus_float_t fm);
+MUS_EXPORT mus_any *mus_make_pulse_train(mus_float_t freq, mus_float_t amp, mus_float_t phase);
 MUS_EXPORT bool mus_pulse_train_p(mus_any *gen);
 
 MUS_EXPORT void mus_set_rand_seed(unsigned long seed);
 MUS_EXPORT unsigned long mus_rand_seed(void);
-MUS_EXPORT Float mus_random(Float amp);
-MUS_EXPORT Float mus_frandom(Float amp);
-MUS_EXPORT Float mus_random_no_input(void);
-MUS_EXPORT Float mus_frandom_no_input(void);
+MUS_EXPORT mus_float_t mus_random(mus_float_t amp);
+MUS_EXPORT mus_float_t mus_frandom(mus_float_t amp);
+MUS_EXPORT mus_float_t mus_random_no_input(void);
+MUS_EXPORT mus_float_t mus_frandom_no_input(void);
 MUS_EXPORT int mus_irandom(int amp);
 
-MUS_EXPORT Float mus_rand(mus_any *gen, Float fm);
-MUS_EXPORT mus_any *mus_make_rand(Float freq, Float base);
+MUS_EXPORT mus_float_t mus_rand(mus_any *gen, mus_float_t fm);
+MUS_EXPORT mus_any *mus_make_rand(mus_float_t freq, mus_float_t base);
 MUS_EXPORT bool mus_rand_p(mus_any *ptr);
-MUS_EXPORT mus_any *mus_make_rand_with_distribution(Float freq, Float base, Float *distribution, int distribution_size);
+MUS_EXPORT mus_any *mus_make_rand_with_distribution(mus_float_t freq, mus_float_t base, mus_float_t *distribution, int distribution_size);
 
-MUS_EXPORT Float mus_rand_interp(mus_any *gen, Float fm);
-MUS_EXPORT mus_any *mus_make_rand_interp(Float freq, Float base);
+MUS_EXPORT mus_float_t mus_rand_interp(mus_any *gen, mus_float_t fm);
+MUS_EXPORT mus_any *mus_make_rand_interp(mus_float_t freq, mus_float_t base);
 MUS_EXPORT bool mus_rand_interp_p(mus_any *ptr);
-MUS_EXPORT mus_any *mus_make_rand_interp_with_distribution(Float freq, Float base, Float *distribution, int distribution_size);
+MUS_EXPORT mus_any *mus_make_rand_interp_with_distribution(mus_float_t freq, mus_float_t base, mus_float_t *distribution, int distribution_size);
 
-MUS_EXPORT Float mus_asymmetric_fm(mus_any *gen, Float index, Float fm);
-MUS_EXPORT Float mus_asymmetric_fm_unmodulated(mus_any *gen, Float index);
-MUS_EXPORT Float mus_asymmetric_fm_no_input(mus_any *gen);
-MUS_EXPORT mus_any *mus_make_asymmetric_fm(Float freq, Float phase, Float r, Float ratio);
+MUS_EXPORT mus_float_t mus_asymmetric_fm(mus_any *gen, mus_float_t index, mus_float_t fm);
+MUS_EXPORT mus_float_t mus_asymmetric_fm_unmodulated(mus_any *gen, mus_float_t index);
+MUS_EXPORT mus_float_t mus_asymmetric_fm_no_input(mus_any *gen);
+MUS_EXPORT mus_any *mus_make_asymmetric_fm(mus_float_t freq, mus_float_t phase, mus_float_t r, mus_float_t ratio);
 MUS_EXPORT bool mus_asymmetric_fm_p(mus_any *ptr);
 
-MUS_EXPORT Float mus_one_zero(mus_any *gen, Float input);
-MUS_EXPORT mus_any *mus_make_one_zero(Float a0, Float a1);
+MUS_EXPORT mus_float_t mus_one_zero(mus_any *gen, mus_float_t input);
+MUS_EXPORT mus_any *mus_make_one_zero(mus_float_t a0, mus_float_t a1);
 MUS_EXPORT bool mus_one_zero_p(mus_any *gen);
 
-MUS_EXPORT Float mus_one_pole(mus_any *gen, Float input);
-MUS_EXPORT mus_any *mus_make_one_pole(Float a0, Float b1);
+MUS_EXPORT mus_float_t mus_one_pole(mus_any *gen, mus_float_t input);
+MUS_EXPORT mus_any *mus_make_one_pole(mus_float_t a0, mus_float_t b1);
 MUS_EXPORT bool mus_one_pole_p(mus_any *gen);
 
-MUS_EXPORT Float mus_two_zero(mus_any *gen, Float input);
-MUS_EXPORT mus_any *mus_make_two_zero(Float a0, Float a1, Float a2);
+MUS_EXPORT mus_float_t mus_two_zero(mus_any *gen, mus_float_t input);
+MUS_EXPORT mus_any *mus_make_two_zero(mus_float_t a0, mus_float_t a1, mus_float_t a2);
 MUS_EXPORT bool mus_two_zero_p(mus_any *gen);
-MUS_EXPORT mus_any *mus_make_two_zero_from_frequency_and_radius(Float frequency, Float radius);
+MUS_EXPORT mus_any *mus_make_two_zero_from_frequency_and_radius(mus_float_t frequency, mus_float_t radius);
 
-MUS_EXPORT Float mus_two_pole(mus_any *gen, Float input);
-MUS_EXPORT mus_any *mus_make_two_pole(Float a0, Float b1, Float b2);
+MUS_EXPORT mus_float_t mus_two_pole(mus_any *gen, mus_float_t input);
+MUS_EXPORT mus_any *mus_make_two_pole(mus_float_t a0, mus_float_t b1, mus_float_t b2);
 MUS_EXPORT bool mus_two_pole_p(mus_any *gen);
-MUS_EXPORT mus_any *mus_make_two_pole_from_frequency_and_radius(Float frequency, Float radius);
+MUS_EXPORT mus_any *mus_make_two_pole_from_frequency_and_radius(mus_float_t frequency, mus_float_t radius);
 
-MUS_EXPORT Float mus_formant(mus_any *ptr, Float input); 
-MUS_EXPORT mus_any *mus_make_formant(Float frequency, Float radius);
+MUS_EXPORT mus_float_t mus_formant(mus_any *ptr, mus_float_t input); 
+MUS_EXPORT mus_any *mus_make_formant(mus_float_t frequency, mus_float_t radius);
 MUS_EXPORT bool mus_formant_p(mus_any *ptr);
-MUS_EXPORT void mus_set_formant_radius_and_frequency(mus_any *ptr, Float radius, Float frequency);
-MUS_EXPORT Float mus_formant_with_frequency(mus_any *ptr, Float input, Float freq_in_radians);
-MUS_EXPORT Float mus_formant_bank(Float *amps, mus_any **formants, Float inval, int size);
+MUS_EXPORT void mus_set_formant_radius_and_frequency(mus_any *ptr, mus_float_t radius, mus_float_t frequency);
+MUS_EXPORT mus_float_t mus_formant_with_frequency(mus_any *ptr, mus_float_t input, mus_float_t freq_in_radians);
+MUS_EXPORT mus_float_t mus_formant_bank(mus_float_t *amps, mus_any **formants, mus_float_t inval, int size);
 
-MUS_EXPORT Float mus_firmant(mus_any *ptr, Float input);
-MUS_EXPORT mus_any *mus_make_firmant(Float frequency, Float radius);
+MUS_EXPORT mus_float_t mus_firmant(mus_any *ptr, mus_float_t input);
+MUS_EXPORT mus_any *mus_make_firmant(mus_float_t frequency, mus_float_t radius);
 MUS_EXPORT bool mus_firmant_p(mus_any *ptr);
-MUS_EXPORT Float mus_firmant_with_frequency(mus_any *ptr, Float input, Float freq_in_radians);
+MUS_EXPORT mus_float_t mus_firmant_with_frequency(mus_any *ptr, mus_float_t input, mus_float_t freq_in_radians);
 
-MUS_EXPORT Float mus_filter(mus_any *ptr, Float input);
-MUS_EXPORT mus_any *mus_make_filter(int order, Float *xcoeffs, Float *ycoeffs, Float *state);
+MUS_EXPORT mus_float_t mus_filter(mus_any *ptr, mus_float_t input);
+MUS_EXPORT mus_any *mus_make_filter(int order, mus_float_t *xcoeffs, mus_float_t *ycoeffs, mus_float_t *state);
 MUS_EXPORT bool mus_filter_p(mus_any *ptr);
 
-MUS_EXPORT Float mus_fir_filter(mus_any *ptr, Float input);
-MUS_EXPORT mus_any *mus_make_fir_filter(int order, Float *xcoeffs, Float *state);
+MUS_EXPORT mus_float_t mus_fir_filter(mus_any *ptr, mus_float_t input);
+MUS_EXPORT mus_any *mus_make_fir_filter(int order, mus_float_t *xcoeffs, mus_float_t *state);
 MUS_EXPORT bool mus_fir_filter_p(mus_any *ptr);
 
-MUS_EXPORT Float mus_iir_filter(mus_any *ptr, Float input);
-MUS_EXPORT mus_any *mus_make_iir_filter(int order, Float *ycoeffs, Float *state);
+MUS_EXPORT mus_float_t mus_iir_filter(mus_any *ptr, mus_float_t input);
+MUS_EXPORT mus_any *mus_make_iir_filter(int order, mus_float_t *ycoeffs, mus_float_t *state);
 MUS_EXPORT bool mus_iir_filter_p(mus_any *ptr);
-MUS_EXPORT Float *mus_make_fir_coeffs(int order, Float *env, Float *aa);
+MUS_EXPORT mus_float_t *mus_make_fir_coeffs(int order, mus_float_t *env, mus_float_t *aa);
 
-MUS_EXPORT Float *mus_filter_set_xcoeffs(mus_any *ptr, Float *new_data);
-MUS_EXPORT Float *mus_filter_set_ycoeffs(mus_any *ptr, Float *new_data);
+MUS_EXPORT mus_float_t *mus_filter_set_xcoeffs(mus_any *ptr, mus_float_t *new_data);
+MUS_EXPORT mus_float_t *mus_filter_set_ycoeffs(mus_any *ptr, mus_float_t *new_data);
 MUS_EXPORT int mus_filter_set_order(mus_any *ptr, int order);
 
-MUS_EXPORT Float mus_filtered_comb(mus_any *ptr, Float input, Float pm);
-MUS_EXPORT Float mus_filtered_comb_unmodulated(mus_any *ptr, Float input);
+MUS_EXPORT mus_float_t mus_filtered_comb(mus_any *ptr, mus_float_t input, mus_float_t pm);
+MUS_EXPORT mus_float_t mus_filtered_comb_unmodulated(mus_any *ptr, mus_float_t input);
 MUS_EXPORT bool mus_filtered_comb_p(mus_any *ptr);
-MUS_EXPORT mus_any *mus_make_filtered_comb(Float scaler, int size, Float *line, int line_size, mus_interp_t type, mus_any *filt);
+MUS_EXPORT mus_any *mus_make_filtered_comb(mus_float_t scaler, int size, mus_float_t *line, int line_size, mus_interp_t type, mus_any *filt);
 
-MUS_EXPORT Float mus_wave_train(mus_any *gen, Float fm);
-MUS_EXPORT Float mus_wave_train_unmodulated(mus_any *gen);
-MUS_EXPORT mus_any *mus_make_wave_train(Float freq, Float phase, Float *wave, off_t wsize, mus_interp_t type);
+MUS_EXPORT mus_float_t mus_wave_train(mus_any *gen, mus_float_t fm);
+MUS_EXPORT mus_float_t mus_wave_train_unmodulated(mus_any *gen);
+MUS_EXPORT mus_any *mus_make_wave_train(mus_float_t freq, mus_float_t phase, mus_float_t *wave, mus_long_t wsize, mus_interp_t type);
 MUS_EXPORT bool mus_wave_train_p(mus_any *gen);
 
-MUS_EXPORT Float *mus_partials_to_polynomial(int npartials, Float *partials, mus_polynomial_t kind);
-MUS_EXPORT Float *mus_normalize_partials(int num_partials, Float *partials);
+MUS_EXPORT mus_float_t *mus_partials_to_polynomial(int npartials, mus_float_t *partials, mus_polynomial_t kind);
+MUS_EXPORT mus_float_t *mus_normalize_partials(int num_partials, mus_float_t *partials);
 
-MUS_EXPORT mus_any *mus_make_polyshape(Float frequency, Float phase, Float *coeffs, int size, int cheby_choice);
-MUS_EXPORT Float mus_polyshape(mus_any *ptr, Float index, Float fm);
+MUS_EXPORT mus_any *mus_make_polyshape(mus_float_t frequency, mus_float_t phase, mus_float_t *coeffs, int size, int cheby_choice);
+MUS_EXPORT mus_float_t mus_polyshape(mus_any *ptr, mus_float_t index, mus_float_t fm);
 #define mus_polyshape_fm(Obj, Fm) mus_polyshape(Obj, 1.0, Fm)
-MUS_EXPORT Float mus_polyshape_unmodulated(mus_any *ptr, Float index);
+MUS_EXPORT mus_float_t mus_polyshape_unmodulated(mus_any *ptr, mus_float_t index);
 #define mus_polyshape_no_input(Obj) mus_polyshape(Obj, 1.0, 0.0)
 MUS_EXPORT bool mus_polyshape_p(mus_any *ptr);
 
-MUS_EXPORT mus_any *mus_make_polywave(Float frequency, Float *coeffs, int n, int cheby_choice);
+MUS_EXPORT mus_any *mus_make_polywave(mus_float_t frequency, mus_float_t *coeffs, int n, int cheby_choice);
 MUS_EXPORT bool mus_polywave_p(mus_any *ptr);
-MUS_EXPORT Float mus_polywave_unmodulated(mus_any *ptr);
-MUS_EXPORT Float mus_polywave(mus_any *ptr, Float fm);
-MUS_EXPORT Float mus_chebyshev_t_sum(Float x, int n, Float *tn);
-MUS_EXPORT Float mus_chebyshev_u_sum(Float x, int n, Float *un);
-MUS_EXPORT Float mus_chebyshev_tu_sum(Float x, int n, Float *tn, Float *un);
+MUS_EXPORT mus_float_t mus_polywave_unmodulated(mus_any *ptr);
+MUS_EXPORT mus_float_t mus_polywave(mus_any *ptr, mus_float_t fm);
+MUS_EXPORT mus_float_t mus_chebyshev_t_sum(mus_float_t x, int n, mus_float_t *tn);
+MUS_EXPORT mus_float_t mus_chebyshev_u_sum(mus_float_t x, int n, mus_float_t *un);
+MUS_EXPORT mus_float_t mus_chebyshev_tu_sum(mus_float_t x, int n, mus_float_t *tn, mus_float_t *un);
 #define mus_polywave_type(Obj) mus_channel(Obj)
 
-MUS_EXPORT Float mus_env(mus_any *ptr);
-MUS_EXPORT mus_any *mus_make_env(Float *brkpts, int npts, double scaler, double offset, double base, double duration, off_t end, Float *odata);
+MUS_EXPORT mus_float_t mus_env(mus_any *ptr);
+MUS_EXPORT mus_any *mus_make_env(mus_float_t *brkpts, int npts, double scaler, double offset, double base, double duration, mus_long_t end, mus_float_t *odata);
 MUS_EXPORT bool mus_env_p(mus_any *ptr);
 MUS_EXPORT double mus_env_interp(double x, mus_any *env);
-MUS_EXPORT off_t *mus_env_passes(mus_any *gen);        /* for Snd */
+MUS_EXPORT mus_long_t *mus_env_passes(mus_any *gen);        /* for Snd */
 MUS_EXPORT double *mus_env_rates(mus_any *gen);        /* for Snd */
 MUS_EXPORT double mus_env_offset(mus_any *gen);        /* for Snd */
 MUS_EXPORT double mus_env_scaler(mus_any *gen);        /* for Snd */
 MUS_EXPORT double mus_env_initial_power(mus_any *gen); /* for Snd */
 MUS_EXPORT int mus_env_breakpoints(mus_any *gen);      /* for Snd */
-MUS_EXPORT Float mus_env_any(mus_any *e, Float (*connect_points)(Float val));
+MUS_EXPORT mus_float_t mus_env_any(mus_any *e, mus_float_t (*connect_points)(mus_float_t val));
 #define mus_make_env_with_length(Brkpts, Pts, Scaler, Offset, Base, Length) mus_make_env(Brkpts, Pts, Scaler, Offset, Base, 0.0, (Length) - 1, NULL)
-MUS_EXPORT Float mus_env_linear(mus_any *ptr);
-MUS_EXPORT Float mus_env_exponential(mus_any *ptr);
+MUS_EXPORT mus_float_t mus_env_linear(mus_any *ptr);
+MUS_EXPORT mus_float_t mus_env_exponential(mus_any *ptr);
 MUS_EXPORT mus_env_t mus_env_type(mus_any *ptr);
 
 MUS_EXPORT bool mus_frame_p(mus_any *ptr);
@@ -654,94 +654,94 @@ MUS_EXPORT mus_any *mus_make_empty_frame(int chans);
 MUS_EXPORT mus_any *mus_make_frame(int chans, ...);
 MUS_EXPORT mus_any *mus_frame_add(mus_any *f1, mus_any *f2, mus_any *res);
 MUS_EXPORT mus_any *mus_frame_multiply(mus_any *f1, mus_any *f2, mus_any *res);
-MUS_EXPORT mus_any *mus_frame_scale(mus_any *uf1, Float scl, mus_any *ures);
-MUS_EXPORT mus_any *mus_frame_offset(mus_any *uf1, Float offset, mus_any *ures);
-MUS_EXPORT Float mus_frame_ref(mus_any *f, int chan);
-MUS_EXPORT Float mus_frame_set(mus_any *f, int chan, Float val);
+MUS_EXPORT mus_any *mus_frame_scale(mus_any *uf1, mus_float_t scl, mus_any *ures);
+MUS_EXPORT mus_any *mus_frame_offset(mus_any *uf1, mus_float_t offset, mus_any *ures);
+MUS_EXPORT mus_float_t mus_frame_ref(mus_any *f, int chan);
+MUS_EXPORT mus_float_t mus_frame_set(mus_any *f, int chan, mus_float_t val);
 
 MUS_EXPORT bool mus_mixer_p(mus_any *ptr);
 MUS_EXPORT mus_any *mus_make_empty_mixer(int chans);
 MUS_EXPORT mus_any *mus_make_identity_mixer(int chans);
 MUS_EXPORT mus_any *mus_make_mixer(int chans, ...);
-MUS_EXPORT Float mus_mixer_ref(mus_any *f, int in, int out);
-MUS_EXPORT Float mus_mixer_set(mus_any *f, int in, int out, Float val);
+MUS_EXPORT mus_float_t mus_mixer_ref(mus_any *f, int in, int out);
+MUS_EXPORT mus_float_t mus_mixer_set(mus_any *f, int in, int out, mus_float_t val);
 MUS_EXPORT mus_any *mus_frame_to_frame(mus_any *f, mus_any *in, mus_any *out);
-MUS_EXPORT mus_any *mus_sample_to_frame(mus_any *f, Float in, mus_any *out);
-MUS_EXPORT Float mus_frame_to_sample(mus_any *f, mus_any *in);
+MUS_EXPORT mus_any *mus_sample_to_frame(mus_any *f, mus_float_t in, mus_any *out);
+MUS_EXPORT mus_float_t mus_frame_to_sample(mus_any *f, mus_any *in);
 MUS_EXPORT mus_any *mus_mixer_multiply(mus_any *f1, mus_any *f2, mus_any *res);
 MUS_EXPORT mus_any *mus_mixer_add(mus_any *f1, mus_any *f2, mus_any *res);
-MUS_EXPORT mus_any *mus_mixer_scale(mus_any *uf1, Float scaler, mus_any *ures);
-MUS_EXPORT mus_any *mus_mixer_offset(mus_any *uf1, Float offset, mus_any *ures);
-MUS_EXPORT mus_any *mus_make_scalar_mixer(int chans, Float scalar);
+MUS_EXPORT mus_any *mus_mixer_scale(mus_any *uf1, mus_float_t scaler, mus_any *ures);
+MUS_EXPORT mus_any *mus_mixer_offset(mus_any *uf1, mus_float_t offset, mus_any *ures);
+MUS_EXPORT mus_any *mus_make_scalar_mixer(int chans, mus_float_t scalar);
 MUS_EXPORT mus_any *mus_frame_to_frame_mono(mus_any *frame, mus_any *mix, mus_any *out);
 MUS_EXPORT mus_any *mus_frame_to_frame_stereo(mus_any *frame, mus_any *mix, mus_any *out);
 MUS_EXPORT mus_any *mus_frame_to_frame_mono_to_stereo(mus_any *frame, mus_any *mix, mus_any *out);
 
 MUS_EXPORT bool mus_file_to_sample_p(mus_any *ptr);
 MUS_EXPORT mus_any *mus_make_file_to_sample(const char *filename);
-MUS_EXPORT mus_any *mus_make_file_to_sample_with_buffer_size(const char *filename, off_t buffer_size);
-MUS_EXPORT Float mus_file_to_sample(mus_any *ptr, off_t samp, int chan);
-MUS_EXPORT Float mus_in_any_from_file(mus_any *ptr, off_t samp, int chan);
+MUS_EXPORT mus_any *mus_make_file_to_sample_with_buffer_size(const char *filename, mus_long_t buffer_size);
+MUS_EXPORT mus_float_t mus_file_to_sample(mus_any *ptr, mus_long_t samp, int chan);
+MUS_EXPORT mus_float_t mus_in_any_from_file(mus_any *ptr, mus_long_t samp, int chan);
 
-MUS_EXPORT Float mus_readin(mus_any *rd);
-MUS_EXPORT mus_any *mus_make_readin_with_buffer_size(const char *filename, int chan, off_t start, int direction, off_t buffer_size);
+MUS_EXPORT mus_float_t mus_readin(mus_any *rd);
+MUS_EXPORT mus_any *mus_make_readin_with_buffer_size(const char *filename, int chan, mus_long_t start, int direction, mus_long_t buffer_size);
 #define mus_make_readin(Filename, Chan, Start, Direction) mus_make_readin_with_buffer_size(Filename, Chan, Start, Direction, mus_file_buffer_size())
 MUS_EXPORT bool mus_readin_p(mus_any *ptr);
 
 MUS_EXPORT bool mus_output_p(mus_any *ptr);
 MUS_EXPORT bool mus_input_p(mus_any *ptr);
-MUS_EXPORT Float mus_in_any(off_t frame, int chan, mus_any *IO);
+MUS_EXPORT mus_float_t mus_in_any(mus_long_t frame, int chan, mus_any *IO);
 
 MUS_EXPORT mus_any *mus_make_file_to_frame(const char *filename);
 MUS_EXPORT bool mus_file_to_frame_p(mus_any *ptr);
-MUS_EXPORT mus_any *mus_file_to_frame(mus_any *ptr, off_t samp, mus_any *f);
-MUS_EXPORT mus_any *mus_make_file_to_frame_with_buffer_size(const char *filename, off_t buffer_size);
+MUS_EXPORT mus_any *mus_file_to_frame(mus_any *ptr, mus_long_t samp, mus_any *f);
+MUS_EXPORT mus_any *mus_make_file_to_frame_with_buffer_size(const char *filename, mus_long_t buffer_size);
 
 MUS_EXPORT bool mus_sample_to_file_p(mus_any *ptr);
 MUS_EXPORT mus_any *mus_make_sample_to_file_with_comment(const char *filename, int out_chans, int out_format, int out_type, const char *comment);
 #define mus_make_sample_to_file(Filename, Chans, OutFormat, OutType) mus_make_sample_to_file_with_comment(Filename, Chans, OutFormat, OutType, NULL)
-MUS_EXPORT Float mus_sample_to_file(mus_any *ptr, off_t samp, int chan, Float val);
+MUS_EXPORT mus_float_t mus_sample_to_file(mus_any *ptr, mus_long_t samp, int chan, mus_float_t val);
 MUS_EXPORT mus_any *mus_continue_sample_to_file(const char *filename);
 MUS_EXPORT int mus_close_file(mus_any *ptr);
 MUS_EXPORT mus_any *mus_sample_to_file_add(mus_any *out1, mus_any *out2);
 
-MUS_EXPORT Float mus_out_any(off_t frame, Float val, int chan, mus_any *IO);
-MUS_EXPORT Float mus_out_any_to_file(mus_any *ptr, off_t samp, int chan, Float val);
+MUS_EXPORT mus_float_t mus_out_any(mus_long_t frame, mus_float_t val, int chan, mus_any *IO);
+MUS_EXPORT mus_float_t mus_out_any_to_file(mus_any *ptr, mus_long_t samp, int chan, mus_float_t val);
 MUS_EXPORT bool mus_frame_to_file_p(mus_any *ptr);
-MUS_EXPORT mus_any *mus_frame_to_file(mus_any *ptr, off_t samp, mus_any *data);
+MUS_EXPORT mus_any *mus_frame_to_file(mus_any *ptr, mus_long_t samp, mus_any *data);
 MUS_EXPORT mus_any *mus_make_frame_to_file_with_comment(const char *filename, int chans, int out_format, int out_type, const char *comment);
 #define mus_make_frame_to_file(Filename, Chans, OutFormat, OutType) mus_make_frame_to_file_with_comment(Filename, Chans, OutFormat, OutType, NULL)
 MUS_EXPORT mus_any *mus_continue_frame_to_file(const char *filename);
 
-MUS_EXPORT Float mus_locsig(mus_any *ptr, off_t loc, Float val);
-MUS_EXPORT mus_any *mus_make_locsig(Float degree, Float distance, Float reverb, int chans, mus_any *output, int rev_chans, mus_any *revput, mus_interp_t type);
+MUS_EXPORT mus_float_t mus_locsig(mus_any *ptr, mus_long_t loc, mus_float_t val);
+MUS_EXPORT mus_any *mus_make_locsig(mus_float_t degree, mus_float_t distance, mus_float_t reverb, int chans, mus_any *output, int rev_chans, mus_any *revput, mus_interp_t type);
 MUS_EXPORT bool mus_locsig_p(mus_any *ptr);
-MUS_EXPORT Float mus_locsig_ref(mus_any *ptr, int chan);
-MUS_EXPORT Float mus_locsig_set(mus_any *ptr, int chan, Float val);
-MUS_EXPORT Float mus_locsig_reverb_ref(mus_any *ptr, int chan);
-MUS_EXPORT Float mus_locsig_reverb_set(mus_any *ptr, int chan, Float val);
-MUS_EXPORT void mus_move_locsig(mus_any *ptr, Float degree, Float distance);
+MUS_EXPORT mus_float_t mus_locsig_ref(mus_any *ptr, int chan);
+MUS_EXPORT mus_float_t mus_locsig_set(mus_any *ptr, int chan, mus_float_t val);
+MUS_EXPORT mus_float_t mus_locsig_reverb_ref(mus_any *ptr, int chan);
+MUS_EXPORT mus_float_t mus_locsig_reverb_set(mus_any *ptr, int chan, mus_float_t val);
+MUS_EXPORT void mus_move_locsig(mus_any *ptr, mus_float_t degree, mus_float_t distance);
 MUS_EXPORT mus_any *mus_locsig_outf(mus_any *ptr);
 MUS_EXPORT mus_any *mus_locsig_revf(mus_any *ptr);
 MUS_EXPORT void *mus_locsig_closure(mus_any *ptr);
 
   /* these are for the optimizer (run.c) */
-MUS_EXPORT void mus_locsig_mono_no_reverb(mus_any *ptr, off_t loc, Float val);
-MUS_EXPORT void mus_locsig_mono(mus_any *ptr, off_t loc, Float val);
-MUS_EXPORT void mus_locsig_stereo_no_reverb(mus_any *ptr, off_t loc, Float val);
-MUS_EXPORT void mus_locsig_stereo(mus_any *ptr, off_t loc, Float val);
-MUS_EXPORT void mus_locsig_safe_mono_no_reverb(mus_any *ptr, off_t loc, Float val);
-MUS_EXPORT void mus_locsig_safe_mono(mus_any *ptr, off_t loc, Float val);
-MUS_EXPORT void mus_locsig_safe_stereo_no_reverb(mus_any *ptr, off_t loc, Float val);
-MUS_EXPORT void mus_locsig_safe_stereo(mus_any *ptr, off_t loc, Float val);
+MUS_EXPORT void mus_locsig_mono_no_reverb(mus_any *ptr, mus_long_t loc, mus_float_t val);
+MUS_EXPORT void mus_locsig_mono(mus_any *ptr, mus_long_t loc, mus_float_t val);
+MUS_EXPORT void mus_locsig_stereo_no_reverb(mus_any *ptr, mus_long_t loc, mus_float_t val);
+MUS_EXPORT void mus_locsig_stereo(mus_any *ptr, mus_long_t loc, mus_float_t val);
+MUS_EXPORT void mus_locsig_safe_mono_no_reverb(mus_any *ptr, mus_long_t loc, mus_float_t val);
+MUS_EXPORT void mus_locsig_safe_mono(mus_any *ptr, mus_long_t loc, mus_float_t val);
+MUS_EXPORT void mus_locsig_safe_stereo_no_reverb(mus_any *ptr, mus_long_t loc, mus_float_t val);
+MUS_EXPORT void mus_locsig_safe_stereo(mus_any *ptr, mus_long_t loc, mus_float_t val);
 MUS_EXPORT int mus_locsig_channels(mus_any *ptr);
 MUS_EXPORT int mus_locsig_reverb_channels(mus_any *ptr);
 MUS_EXPORT int mus_locsig_safety(mus_any *ptr);
 
 
 MUS_EXPORT bool mus_move_sound_p(mus_any *ptr);
-MUS_EXPORT Float mus_move_sound(mus_any *ptr, off_t loc, Float val);
-MUS_EXPORT mus_any *mus_make_move_sound(off_t start, off_t end, int out_channels, int rev_channels,
+MUS_EXPORT mus_float_t mus_move_sound(mus_any *ptr, mus_long_t loc, mus_float_t val);
+MUS_EXPORT mus_any *mus_make_move_sound(mus_long_t start, mus_long_t end, int out_channels, int rev_channels,
 					mus_any *doppler_delay, mus_any *doppler_env, mus_any *rev_env,
 					mus_any **out_delays, mus_any **out_envs, mus_any **rev_envs,
 					int *out_map, mus_any *output, mus_any *revput, bool free_arrays, bool free_gens);
@@ -749,77 +749,77 @@ MUS_EXPORT mus_any *mus_move_sound_outf(mus_any *ptr);
 MUS_EXPORT mus_any *mus_move_sound_revf(mus_any *ptr);
 MUS_EXPORT void *mus_move_sound_closure(mus_any *ptr);
 
-MUS_EXPORT mus_any *mus_make_src(Float (*input)(void *arg, int direction), Float srate, int width, void *closure);
-MUS_EXPORT Float mus_src(mus_any *srptr, Float sr_change, Float (*input)(void *arg, int direction));
+MUS_EXPORT mus_any *mus_make_src(mus_float_t (*input)(void *arg, int direction), mus_float_t srate, int width, void *closure);
+MUS_EXPORT mus_float_t mus_src(mus_any *srptr, mus_float_t sr_change, mus_float_t (*input)(void *arg, int direction));
 MUS_EXPORT bool mus_src_p(mus_any *ptr);
-MUS_EXPORT Float mus_src_20(mus_any *srptr, Float (*input)(void *arg, int direction));
-MUS_EXPORT Float mus_src_05(mus_any *srptr, Float (*input)(void *arg, int direction));
+MUS_EXPORT mus_float_t mus_src_20(mus_any *srptr, mus_float_t (*input)(void *arg, int direction));
+MUS_EXPORT mus_float_t mus_src_05(mus_any *srptr, mus_float_t (*input)(void *arg, int direction));
 
 MUS_EXPORT bool mus_convolve_p(mus_any *ptr);
-MUS_EXPORT Float mus_convolve(mus_any *ptr, Float (*input)(void *arg, int direction));
-MUS_EXPORT mus_any *mus_make_convolve(Float (*input)(void *arg, int direction), Float *filter, int fftsize, int filtersize, void *closure);
+MUS_EXPORT mus_float_t mus_convolve(mus_any *ptr, mus_float_t (*input)(void *arg, int direction));
+MUS_EXPORT mus_any *mus_make_convolve(mus_float_t (*input)(void *arg, int direction), mus_float_t *filter, int fftsize, int filtersize, void *closure);
 
-MUS_EXPORT Float *mus_spectrum(Float *rdat, Float *idat, Float *window, off_t n, mus_spectrum_t type);
-MUS_EXPORT void mus_fft(Float *rl, Float *im, int n, int is);
-MUS_EXPORT void mus_big_fft(Float *rl, Float *im, off_t n, int is);
+MUS_EXPORT mus_float_t *mus_spectrum(mus_float_t *rdat, mus_float_t *idat, mus_float_t *window, mus_long_t n, mus_spectrum_t type);
+MUS_EXPORT void mus_fft(mus_float_t *rl, mus_float_t *im, int n, int is);
+MUS_EXPORT void mus_big_fft(mus_float_t *rl, mus_float_t *im, mus_long_t n, int is);
 #if HAVE_FFTW || HAVE_FFTW3
-MUS_EXPORT void mus_fftw(Float *rl, int n, int dir);
+MUS_EXPORT void mus_fftw(mus_float_t *rl, int n, int dir);
 #endif
-MUS_EXPORT Float *mus_make_fft_window(mus_fft_window_t type, off_t size, Float beta);
-MUS_EXPORT Float *mus_make_fft_window_with_window(mus_fft_window_t type, off_t size, Float beta, Float mu, Float *window);
+MUS_EXPORT mus_float_t *mus_make_fft_window(mus_fft_window_t type, mus_long_t size, mus_float_t beta);
+MUS_EXPORT mus_float_t *mus_make_fft_window_with_window(mus_fft_window_t type, mus_long_t size, mus_float_t beta, mus_float_t mu, mus_float_t *window);
 MUS_EXPORT const char *mus_fft_window_name(mus_fft_window_t win);
 MUS_EXPORT const char **mus_fft_window_names(void);
 
-MUS_EXPORT Float *mus_autocorrelate(Float *data, int n);
-MUS_EXPORT Float *mus_correlate(Float *data1, Float *data2, int n);
-MUS_EXPORT Float *mus_convolution(Float *rl1, Float *rl2, int n);
-MUS_EXPORT void mus_convolve_files(const char *file1, const char *file2, Float maxamp, const char *output_file);
-MUS_EXPORT Float *mus_cepstrum(Float *data, int n);
+MUS_EXPORT mus_float_t *mus_autocorrelate(mus_float_t *data, int n);
+MUS_EXPORT mus_float_t *mus_correlate(mus_float_t *data1, mus_float_t *data2, int n);
+MUS_EXPORT mus_float_t *mus_convolution(mus_float_t *rl1, mus_float_t *rl2, int n);
+MUS_EXPORT void mus_convolve_files(const char *file1, const char *file2, mus_float_t maxamp, const char *output_file);
+MUS_EXPORT mus_float_t *mus_cepstrum(mus_float_t *data, int n);
 
 MUS_EXPORT bool mus_granulate_p(mus_any *ptr);
-MUS_EXPORT Float mus_granulate(mus_any *ptr, Float (*input)(void *arg, int direction));
-MUS_EXPORT Float mus_granulate_with_editor(mus_any *ptr, Float (*input)(void *arg, int direction), int (*edit)(void *closure));
-MUS_EXPORT mus_any *mus_make_granulate(Float (*input)(void *arg, int direction), 
-				       Float expansion, Float length, Float scaler, 
-				       Float hop, Float ramp, Float jitter, int max_size, 
+MUS_EXPORT mus_float_t mus_granulate(mus_any *ptr, mus_float_t (*input)(void *arg, int direction));
+MUS_EXPORT mus_float_t mus_granulate_with_editor(mus_any *ptr, mus_float_t (*input)(void *arg, int direction), int (*edit)(void *closure));
+MUS_EXPORT mus_any *mus_make_granulate(mus_float_t (*input)(void *arg, int direction), 
+				       mus_float_t expansion, mus_float_t length, mus_float_t scaler, 
+				       mus_float_t hop, mus_float_t ramp, mus_float_t jitter, int max_size, 
 				       int (*edit)(void *closure),
 				       void *closure);
 MUS_EXPORT int mus_granulate_grain_max_length(mus_any *ptr);
 MUS_EXPORT void mus_granulate_set_edit_function(mus_any *ptr, int (*edit)(void *closure));
 
-MUS_EXPORT off_t mus_set_file_buffer_size(off_t size);
-MUS_EXPORT off_t mus_file_buffer_size(void);
+MUS_EXPORT mus_long_t mus_set_file_buffer_size(mus_long_t size);
+MUS_EXPORT mus_long_t mus_file_buffer_size(void);
 
-MUS_EXPORT void mus_mix(const char *outfile, const char *infile, off_t out_start, off_t out_samps, off_t in_start, mus_any *mx, mus_any ***envs);
-MUS_EXPORT void mus_mix_with_reader_and_writer(mus_any *outf, mus_any *inf, off_t out_start, off_t out_frames, off_t in_start, mus_any *umx, mus_any ***envs);
-MUS_EXPORT Float mus_apply(mus_any *gen, Float f1, Float f2);
+MUS_EXPORT void mus_mix(const char *outfile, const char *infile, mus_long_t out_start, mus_long_t out_samps, mus_long_t in_start, mus_any *mx, mus_any ***envs);
+MUS_EXPORT void mus_mix_with_reader_and_writer(mus_any *outf, mus_any *inf, mus_long_t out_start, mus_long_t out_frames, mus_long_t in_start, mus_any *umx, mus_any ***envs);
+MUS_EXPORT mus_float_t mus_apply(mus_any *gen, mus_float_t f1, mus_float_t f2);
 
 MUS_EXPORT bool mus_phase_vocoder_p(mus_any *ptr);
-MUS_EXPORT mus_any *mus_make_phase_vocoder(Float (*input)(void *arg, int direction), 
+MUS_EXPORT mus_any *mus_make_phase_vocoder(mus_float_t (*input)(void *arg, int direction), 
 					   int fftsize, int overlap, int interp,
-					   Float pitch,
-					   bool (*analyze)(void *arg, Float (*input)(void *arg1, int direction)),
+					   mus_float_t pitch,
+					   bool (*analyze)(void *arg, mus_float_t (*input)(void *arg1, int direction)),
 					   int (*edit)(void *arg), /* return value is ignored (int return type is intended to be consistent with granulate) */
-					   Float (*synthesize)(void *arg), 
+					   mus_float_t (*synthesize)(void *arg), 
 					   void *closure);
-MUS_EXPORT Float mus_phase_vocoder(mus_any *ptr, Float (*input)(void *arg, int direction));
-MUS_EXPORT Float mus_phase_vocoder_with_editors(mus_any *ptr, 
-						Float (*input)(void *arg, int direction),
-						bool (*analyze)(void *arg, Float (*input)(void *arg1, int direction)),
+MUS_EXPORT mus_float_t mus_phase_vocoder(mus_any *ptr, mus_float_t (*input)(void *arg, int direction));
+MUS_EXPORT mus_float_t mus_phase_vocoder_with_editors(mus_any *ptr, 
+						mus_float_t (*input)(void *arg, int direction),
+						bool (*analyze)(void *arg, mus_float_t (*input)(void *arg1, int direction)),
 						int (*edit)(void *arg), 
-						Float (*synthesize)(void *arg));
+						mus_float_t (*synthesize)(void *arg));
 
-MUS_EXPORT Float *mus_phase_vocoder_amp_increments(mus_any *ptr);
-MUS_EXPORT Float *mus_phase_vocoder_amps(mus_any *ptr);
-MUS_EXPORT Float *mus_phase_vocoder_freqs(mus_any *ptr);
-MUS_EXPORT Float *mus_phase_vocoder_phases(mus_any *ptr);
-MUS_EXPORT Float *mus_phase_vocoder_phase_increments(mus_any *ptr);
+MUS_EXPORT mus_float_t *mus_phase_vocoder_amp_increments(mus_any *ptr);
+MUS_EXPORT mus_float_t *mus_phase_vocoder_amps(mus_any *ptr);
+MUS_EXPORT mus_float_t *mus_phase_vocoder_freqs(mus_any *ptr);
+MUS_EXPORT mus_float_t *mus_phase_vocoder_phases(mus_any *ptr);
+MUS_EXPORT mus_float_t *mus_phase_vocoder_phase_increments(mus_any *ptr);
 
 
-MUS_EXPORT mus_any *mus_make_ssb_am(Float freq, int order);
+MUS_EXPORT mus_any *mus_make_ssb_am(mus_float_t freq, int order);
 MUS_EXPORT bool mus_ssb_am_p(mus_any *ptr);
-MUS_EXPORT Float mus_ssb_am_unmodulated(mus_any *ptr, Float insig);
-MUS_EXPORT Float mus_ssb_am(mus_any *ptr, Float insig, Float fm);
+MUS_EXPORT mus_float_t mus_ssb_am_unmodulated(mus_any *ptr, mus_float_t insig);
+MUS_EXPORT mus_float_t mus_ssb_am(mus_any *ptr, mus_float_t insig, mus_float_t fm);
 
 MUS_EXPORT void mus_clear_sinc_tables(void);
 MUS_EXPORT void *mus_environ(mus_any *gen);
@@ -827,8 +827,8 @@ MUS_EXPORT void *mus_set_environ(mus_any *gen, void *e);
 
 
 /* used only in run.lisp */
-MUS_EXPORT mus_any *mus_make_frame_with_data(int chans, Float *data);
-MUS_EXPORT mus_any *mus_make_mixer_with_data(int chans, Float *data);
+MUS_EXPORT mus_any *mus_make_frame_with_data(int chans, mus_float_t *data);
+MUS_EXPORT mus_any *mus_make_mixer_with_data(int chans, mus_float_t *data);
 
 
 #ifndef CLM_DISABLE_DEPRECATED

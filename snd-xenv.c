@@ -41,7 +41,7 @@ static void fixup_axis_context(axis_context *ax, Widget w, GC gc)
 
 axis_info *enved_make_axis(const char *name, axis_context *ax, 
 			   int ex0, int ey0, int width, int height, 
-			   Float xmin, Float xmax, Float ymin, Float ymax,
+			   mus_float_t xmin, mus_float_t xmax, mus_float_t ymin, mus_float_t ymax,
 			   printing_t printing)
 {
   /* conjure up minimal context for axis drawer in snd-axis.c */
@@ -513,7 +513,7 @@ static void clear_point_label(void)
 }
 
 
-static void enved_display_point_label(Float x, Float y)
+static void enved_display_point_label(mus_float_t x, mus_float_t y)
 {
   char brkpt_buf[LABEL_BUFFER_SIZE];
   if ((enved_in_dB(ss)) && (min_dB(ss) < -60))
@@ -534,7 +534,7 @@ static void drawer_button_motion(Widget w, XtPointer context, XEvent *event, Boo
 
   if (!showing_all_envs)
     {
-      Float x, y;
+      mus_float_t x, y;
 #ifdef MUS_MAC_OSX
       if ((ev->x == press_x) && (ev->y == press_y)) return;
 #endif
@@ -802,7 +802,7 @@ static void lin_button_callback(Widget w, XtPointer context, XtPointer info)
 #define BASE_MID 200
 /* these two just set the granularity of the scale widget, not the user-visible bounds */
 
-static void make_base_label(Float bval)
+static void make_base_label(mus_float_t bval)
 {
   char *sfs, *buf;
   int i, len, scale_len;
@@ -831,7 +831,7 @@ static void make_base_label(Float bval)
 
 static void base_changed(int val)
 {
-  Float bval;
+  mus_float_t bval;
   if (val == 0) 
     bval = 0.0;
   else 
@@ -841,9 +841,9 @@ static void base_changed(int val)
       else
 	{
 	  if (val > BASE_MID)
-	    bval = pow(1.0 + (10.0 * ((Float)(val - BASE_MID) / (Float)BASE_MID)), enved_power(ss));  
+	    bval = pow(1.0 + (10.0 * ((mus_float_t)(val - BASE_MID) / (mus_float_t)BASE_MID)), enved_power(ss));  
 	  else 
-	    bval = pow(((Float)val / (Float)BASE_MID), enved_power(ss) - 1.0);
+	    bval = pow(((mus_float_t)val / (mus_float_t)BASE_MID), enved_power(ss) - 1.0);
 	}
     }
   make_base_label(bval);
@@ -852,7 +852,7 @@ static void base_changed(int val)
 }
 
 
-static void reflect_changed_base(Float val)
+static void reflect_changed_base(mus_float_t val)
 {
   int ival;
   if (val <= 0.0) 
@@ -1571,7 +1571,7 @@ void set_enved_in_dB(bool val)
 }
 
 
-void set_enved_base(Float val) 
+void set_enved_base(mus_float_t val) 
 {
   in_set_enved_base(val); 
   if (enved_dialog) 

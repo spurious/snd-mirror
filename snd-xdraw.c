@@ -460,21 +460,21 @@ void set_color_inverted(bool val)
 
 static void scale_color_callback(Widget w, XtPointer context, XtPointer info)
 {
-  Float val;
+  mus_float_t val;
   int scale_val;
   XmScaleCallbackStruct *cbs = (XmScaleCallbackStruct *)info;
   ASSERT_WIDGET_TYPE(XmIsScale(w), w);
   scale_val = cbs->value;
   if (scale_val <= 50) 
-    val = (Float)(scale_val + 1) / 51.0;
-  else val = 1.0 + (Float)((scale_val - 50) * (scale_val - 50)) / 12.5;
+    val = (mus_float_t)(scale_val + 1) / 51.0;
+  else val = 1.0 + (mus_float_t)((scale_val - 50) * (scale_val - 50)) / 12.5;
   in_set_color_scale(val);
   check_color_hook();
   for_each_chan(update_graph_setting_fft_changed);
 }
 
 
-static void reflect_color_scale(Float val)
+static void reflect_color_scale(mus_float_t val)
 {
   if (val < 0.02)
     XmScaleSetValue(ccd_scale, 0);
@@ -487,7 +487,7 @@ static void reflect_color_scale(Float val)
 }
 
 
-void set_color_scale(Float val)
+void set_color_scale(mus_float_t val)
 {
   in_set_color_scale(val);
   if (ccd_dialog) 
@@ -521,7 +521,7 @@ void set_color_map(int val)
 }
 
 
-static XmString fscale_label(const char *orig_label, Float value)
+static XmString fscale_label(const char *orig_label, mus_float_t value)
 {
   XmString x;
   char *lab;
@@ -532,7 +532,7 @@ static XmString fscale_label(const char *orig_label, Float value)
 }
 
 
-static void fscale_set_label(const char *orig_label, Widget w, Float value)
+static void fscale_set_label(const char *orig_label, Widget w, mus_float_t value)
 {
   XmString x;
   char *lab;
@@ -549,14 +549,14 @@ static void cutoff_color_callback(Widget w, XtPointer context, XtPointer info) /
   /* cutoff point for color chooser */
   XmScaleCallbackStruct *cbs = (XmScaleCallbackStruct *)info;
   ASSERT_WIDGET_TYPE(XmIsScale(w), w);
-  in_set_color_cutoff((Float)(cbs->value) / 1000.0);
+  in_set_color_cutoff((mus_float_t)(cbs->value) / 1000.0);
   fscale_set_label("data cutoff", w, color_cutoff(ss));
   check_color_hook();
   for_each_chan(update_graph_setting_fft_changed);
 }
 
 
-void set_color_cutoff(Float val)
+void set_color_cutoff(mus_float_t val)
 {
   in_set_color_cutoff(val);
   if (ccd_dialog) 
@@ -656,14 +656,14 @@ static void ax_orientation_callback(Widget w, XtPointer context, XtPointer info)
   XmScaleCallbackStruct *cbs = (XmScaleCallbackStruct *)info;
   ASSERT_WIDGET_TYPE(XmIsScale(w), w);
   scale_set_label("x angle", w, cbs->value, false);
-  in_set_spectro_x_angle((Float)(cbs->value));
-  chans_field(FCP_X_ANGLE, (Float)(cbs->value));
+  in_set_spectro_x_angle((mus_float_t)(cbs->value));
+  chans_field(FCP_X_ANGLE, (mus_float_t)(cbs->value));
   check_orientation_hook();
   for_each_chan(update_graph);
 }
 
 
-void set_spectro_x_angle(Float val)
+void set_spectro_x_angle(mus_float_t val)
 {
   if (val < 0.0) val += 360.0; else if (val >= 360.0) val = fmod(val, 360.0);
   in_set_spectro_x_angle(val);
@@ -684,14 +684,14 @@ static void ay_orientation_callback(Widget w, XtPointer context, XtPointer info)
   XmScaleCallbackStruct *cbs = (XmScaleCallbackStruct *)info;
   ASSERT_WIDGET_TYPE(XmIsScale(w), w);
   scale_set_label("y angle", w, cbs->value, false);
-  in_set_spectro_y_angle((Float)(cbs->value));
-  chans_field(FCP_Y_ANGLE, (Float)(cbs->value));
+  in_set_spectro_y_angle((mus_float_t)(cbs->value));
+  chans_field(FCP_Y_ANGLE, (mus_float_t)(cbs->value));
   check_orientation_hook();
   for_each_chan(update_graph);
 }
 
 
-void set_spectro_y_angle(Float val)
+void set_spectro_y_angle(mus_float_t val)
 {
   if (val < 0.0) val += 360.0; else if (val >= 360.0) val = fmod(val, 360.0);
   in_set_spectro_y_angle(val);
@@ -712,14 +712,14 @@ static void az_orientation_callback(Widget w, XtPointer context, XtPointer info)
   XmScaleCallbackStruct *cbs = (XmScaleCallbackStruct *)info;
   ASSERT_WIDGET_TYPE(XmIsScale(w), w);
   scale_set_label("z angle", w, cbs->value, false);
-  in_set_spectro_z_angle((Float)(cbs->value));
-  chans_field(FCP_Z_ANGLE, (Float)(cbs->value));
+  in_set_spectro_z_angle((mus_float_t)(cbs->value));
+  chans_field(FCP_Z_ANGLE, (mus_float_t)(cbs->value));
   check_orientation_hook();
   for_each_chan(update_graph);
 }
 
 
-void set_spectro_z_angle(Float val)
+void set_spectro_z_angle(mus_float_t val)
 {
   if (val < 0.0) val += 360.0; else if (val >= 360.0) val = fmod(val, 360.0);
   in_set_spectro_z_angle(val);
@@ -740,14 +740,14 @@ static void sx_orientation_callback(Widget w, XtPointer context, XtPointer info)
   XmScaleCallbackStruct *cbs = (XmScaleCallbackStruct *)info;
   ASSERT_WIDGET_TYPE(XmIsScale(w), w);
   scale_set_label("x scale", w, cbs->value, true);
-  in_set_spectro_x_scale((Float)(cbs->value) * 0.01);
-  chans_field(FCP_X_SCALE, (Float)(cbs->value) * 0.01);
+  in_set_spectro_x_scale((mus_float_t)(cbs->value) * 0.01);
+  chans_field(FCP_X_SCALE, (mus_float_t)(cbs->value) * 0.01);
   check_orientation_hook();
   for_each_chan(update_graph);
 }
 
 
-void set_spectro_x_scale(Float val)
+void set_spectro_x_scale(mus_float_t val)
 {
   in_set_spectro_x_scale(val);
   if (ccd_dialog) 
@@ -769,14 +769,14 @@ static void sy_orientation_callback(Widget w, XtPointer context, XtPointer info)
   XmScaleCallbackStruct *cbs = (XmScaleCallbackStruct *)info;
   ASSERT_WIDGET_TYPE(XmIsScale(w), w);
   scale_set_label("y scale", w, cbs->value, true);
-  in_set_spectro_y_scale((Float)(cbs->value) * 0.01);
-  chans_field(FCP_Y_SCALE, (Float)(cbs->value) * 0.01);
+  in_set_spectro_y_scale((mus_float_t)(cbs->value) * 0.01);
+  chans_field(FCP_Y_SCALE, (mus_float_t)(cbs->value) * 0.01);
   check_orientation_hook();
   for_each_chan(update_graph);
 }
 
 
-void set_spectro_y_scale(Float val)
+void set_spectro_y_scale(mus_float_t val)
 {
   in_set_spectro_y_scale(val);
   if (ccd_dialog) 
@@ -798,14 +798,14 @@ static void sz_orientation_callback(Widget w, XtPointer context, XtPointer info)
   XmScaleCallbackStruct *cbs = (XmScaleCallbackStruct *)info;
   ASSERT_WIDGET_TYPE(XmIsScale(w), w);
   scale_set_label("z scale", w, cbs->value, true);
-  in_set_spectro_z_scale((Float)(cbs->value) * 0.01);
-  chans_field(FCP_Z_SCALE, (Float)(cbs->value) * 0.01);
+  in_set_spectro_z_scale((mus_float_t)(cbs->value) * 0.01);
+  chans_field(FCP_Z_SCALE, (mus_float_t)(cbs->value) * 0.01);
   check_orientation_hook();
   for_each_chan(update_graph);
 }
 
 
-void set_spectro_z_scale(Float val)
+void set_spectro_z_scale(mus_float_t val)
 {
   in_set_spectro_z_scale(val);
   if (ccd_dialog) 
@@ -862,7 +862,7 @@ void set_spectro_hop(int val)
 }
 
 
-static int fixup_angle(Float ang)
+static int fixup_angle(mus_float_t ang)
 {
   int na;
   na = (int)ang;

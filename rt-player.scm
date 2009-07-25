@@ -133,8 +133,8 @@ rt-player.scm
         "#include <_sndlib.h>"
 	"#include <vct.h>"
 	
-	"extern Float protected_next_sample(void *sf)"
-	"extern Float protected_previous_sample(void *sf)"
+	"extern mus_float_t protected_next_sample(void *sf)"
+	"extern mus_float_t protected_previous_sample(void *sf)"
 	
 	(public
 	 (<void> sample-reader->vct (lambda ((<SCM> scm_reader)

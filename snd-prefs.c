@@ -10,7 +10,7 @@ static void int_to_textfield(widget_t w, int val)
 }
 
 
-static void off_t_to_textfield(widget_t w, off_t val)
+static void mus_long_t_to_textfield(widget_t w, mus_long_t val)
 {
   char *str;
   str = (char *)calloc(32, sizeof(char));
@@ -20,7 +20,7 @@ static void off_t_to_textfield(widget_t w, off_t val)
 }
 
 
-static void float_to_textfield(widget_t w, Float val)
+static void float_to_textfield(widget_t w, mus_float_t val)
 {
   char *str;
   str = (char *)calloc(12, sizeof(char));
@@ -30,7 +30,7 @@ static void float_to_textfield(widget_t w, Float val)
 }
 
 
-static void float_1_to_textfield(widget_t w, Float val)
+static void float_1_to_textfield(widget_t w, mus_float_t val)
 {
   char *str;
   str = (char *)calloc(12, sizeof(char));
@@ -1938,7 +1938,7 @@ static void dac_size_text(prefs_info *prf)
 
 /* ---------------- min-dB ---------------- */
 
-static Float rts_min_dB = DEFAULT_MIN_DB;
+static mus_float_t rts_min_dB = DEFAULT_MIN_DB;
 
 static void reflect_min_dB(prefs_info *prf) {float_1_to_textfield(prf->text, min_dB(ss));}
 static void revert_min_dB(prefs_info *prf) {set_min_dB(rts_min_dB);}
@@ -1954,7 +1954,7 @@ static void min_dB_text(prefs_info *prf)
       float value = 0.0;
 
       redirect_errors_to(any_error_to_text, (void *)prf);
-      value = (float)string_to_Float(str, -100000.0, "min dB");
+      value = (float)string_to_mus_float_t(str, -100000.0, "min dB");
       redirect_errors_to(NULL, NULL);
 
       if ((!(prf->got_error)) && (value < 0.0))
@@ -1967,7 +1967,7 @@ static void min_dB_text(prefs_info *prf)
 
 /* ---------------- fft-window-beta ---------------- */
 
-static Float rts_fft_window_beta = DEFAULT_FFT_WINDOW_BETA;
+static mus_float_t rts_fft_window_beta = DEFAULT_FFT_WINDOW_BETA;
 
 static void reflect_fft_window_beta(prefs_info *prf)
 {
@@ -1990,7 +1990,7 @@ static void fft_window_beta_text_callback(prefs_info *prf)
       float value = 0.0;
 
       redirect_errors_to(any_error_to_text, (void *)prf);
-      value = (float)string_to_Float(str, 0.0, "fft beta");
+      value = (float)string_to_mus_float_t(str, 0.0, "fft beta");
       redirect_errors_to(NULL, NULL);
 
       if ((!(prf->got_error)) && (value <= prf->scale_max))
@@ -2005,7 +2005,7 @@ static void fft_window_beta_text_callback(prefs_info *prf)
 
 /* ---------------- grid-density ---------------- */
 
-static Float rts_grid_density = DEFAULT_GRID_DENSITY;
+static mus_float_t rts_grid_density = DEFAULT_GRID_DENSITY;
 
 static void reflect_grid_density(prefs_info *prf)
 {
@@ -2028,7 +2028,7 @@ static void grid_density_text_callback(prefs_info *prf)
       float value = 0.0;
 
       redirect_errors_to(any_error_to_text, (void *)prf);
-      value = (float)string_to_Float(str, 0.0, "grid density");
+      value = (float)string_to_mus_float_t(str, 0.0, "grid density");
       redirect_errors_to(NULL, NULL);
 
       if ((!(prf->got_error)) && (value <= prf->scale_max))
@@ -2776,7 +2776,7 @@ static void dot_size_from_text(prefs_info *prf)
 
 /* ---------------- fft-size ---------------- */
 
-static off_t rts_fft_size = DEFAULT_TRANSFORM_SIZE;
+static mus_long_t rts_fft_size = DEFAULT_TRANSFORM_SIZE;
 
 #define MAX_TRANSFORM_SIZE 1073741824
 #define MIN_TRANSFORM_SIZE 2
@@ -2787,7 +2787,7 @@ static void save_fft_size(prefs_info *prf, FILE *ignore) {rts_fft_size = transfo
 
 static void reflect_fft_size(prefs_info *prf)
 {
-  off_t_to_textfield(prf->text, transform_size(ss));
+  mus_long_t_to_textfield(prf->text, transform_size(ss));
   SET_SENSITIVE(prf->arrow_up, transform_size(ss) < MAX_TRANSFORM_SIZE);
   SET_SENSITIVE(prf->arrow_down, transform_size(ss) > MIN_TRANSFORM_SIZE);
 }
@@ -2795,29 +2795,29 @@ static void reflect_fft_size(prefs_info *prf)
 
 static void fft_size_up(prefs_info *prf)
 {
-  off_t size;
+  mus_long_t size;
   size = transform_size(ss) * 2;
   if (size >= MAX_TRANSFORM_SIZE) SET_SENSITIVE(prf->arrow_up, false);
   if (size > MIN_TRANSFORM_SIZE) SET_SENSITIVE(prf->arrow_down, true);
   in_set_transform_size(size);
-  off_t_to_textfield(prf->text, transform_size(ss));
+  mus_long_t_to_textfield(prf->text, transform_size(ss));
 }
 
 
 static void fft_size_down(prefs_info *prf)
 {
-  off_t size;
+  mus_long_t size;
   size = transform_size(ss) / 2;
   if (size <= MIN_TRANSFORM_SIZE) SET_SENSITIVE(prf->arrow_down, false);
   if (size < MAX_TRANSFORM_SIZE) SET_SENSITIVE(prf->arrow_up, true);
   in_set_transform_size(size);
-  off_t_to_textfield(prf->text, transform_size(ss));
+  mus_long_t_to_textfield(prf->text, transform_size(ss));
 }
 
 
 static void fft_size_from_text(prefs_info *prf)
 {
-  off_t size;
+  mus_long_t size;
   char *str;
   str = GET_TEXT(prf->text);
   if ((str) && (*str))
@@ -2825,7 +2825,7 @@ static void fft_size_from_text(prefs_info *prf)
       prf->got_error = false;
 
       redirect_errors_to(redirect_post_prefs_error, (void *)prf);
-      size = string_to_off_t(str, MIN_TRANSFORM_SIZE, "size"); 
+      size = string_to_mus_long_t(str, MIN_TRANSFORM_SIZE, "size"); 
       redirect_errors_to(NULL, NULL);
 
       free_TEXT(str);
@@ -2847,7 +2847,7 @@ static void fft_size_from_text(prefs_info *prf)
 /* ---------------- with-tracking-cursor ---------------- */
 
 static tracking_cursor_t rts_with_tracking_cursor = DEFAULT_WITH_TRACKING_CURSOR;
-static Float rts_cursor_update_interval = DEFAULT_CURSOR_UPDATE_INTERVAL;
+static mus_float_t rts_cursor_update_interval = DEFAULT_CURSOR_UPDATE_INTERVAL;
 static int rts_cursor_location_offset = DEFAULT_CURSOR_LOCATION_OFFSET;
 
 
@@ -2890,7 +2890,7 @@ static void cursor_location_text(prefs_info *prf)
       float interval = DEFAULT_CURSOR_UPDATE_INTERVAL;
 
       redirect_errors_to(any_error_to_text, (void *)prf);
-      interval = (float)string_to_Float(str, 0.0, "cursor offset");
+      interval = (float)string_to_mus_float_t(str, 0.0, "cursor offset");
       redirect_errors_to(NULL, NULL);
 
       if (!(prf->got_error))
@@ -4986,7 +4986,7 @@ static void load_path_text(prefs_info *prf)
 
 /* ---------------- initial bounds ---------------- */
 
-static Float rts_initial_beg = 0.0, rts_initial_dur = 0.1;
+static mus_float_t rts_initial_beg = 0.0, rts_initial_dur = 0.1;
 static bool rts_full_duration = false;
 static bool include_duration = false;
 
@@ -4996,13 +4996,13 @@ static bool full_duration(void)
 }
 
 
-static Float initial_beg(void)
+static mus_float_t initial_beg(void)
 {
   return(XEN_TO_C_DOUBLE_OR_ELSE(prefs_variable_get("prefs-initial-beg"), 0.0));
 }
 
 
-static Float initial_dur(void)
+static mus_float_t initial_dur(void)
 {
   return(XEN_TO_C_DOUBLE_OR_ELSE(prefs_variable_get("prefs-initial-dur"), 0.1));
 }
@@ -5032,8 +5032,8 @@ static void save_initial_bounds(prefs_info *prf, FILE *fd)
     {
       float a = 0.0, b = 0.0;
       sscanf(str, "%f : %f", &a, &b);  /* these can be doubles -- need conversion to fit all cases */
-      rts_initial_beg = (Float)a;
-      rts_initial_dur = (Float)b;
+      rts_initial_beg = (mus_float_t)a;
+      rts_initial_dur = (mus_float_t)b;
       free_TEXT(str);
     }
   else

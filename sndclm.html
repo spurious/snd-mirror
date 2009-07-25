@@ -864,7 +864,7 @@ instrument: forth-bird { f: start f: dur f: freq f: freq-skew f: amp freqenv amp
 void c_bird(double start, double dur, double frequency, double freqskew, double amplitude, 
 	    double *freqdata, int freqpts, double *ampdata, int amppts, mus_any *output)
 {
-  off_t beg, end, i;
+  mus_long_t beg, end, i;
   mus_any *amp_env, *freq_env, *osc;
   beg = start * mus_srate();
   end = start + dur * mus_srate();

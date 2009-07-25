@@ -124,13 +124,13 @@ In each case the argument to the function is the full file
 name of the sound file.
 </p>
 <pre>
-  off_t mus_sound_samples (const char *arg)        /* samples of sound according to header */
-  off_t mus_sound_frames (const char *arg)         /* samples per channel */
+  mus_long_t mus_sound_samples (const char *arg)        /* samples of sound according to header */
+  mus_long_t mus_sound_frames (const char *arg)         /* samples per channel */
   float mus_sound_duration (const char *arg)       /* sound duration in seconds */
-  off_t mus_sound_length (const char *arg)         /* true file length in bytes */
+  mus_long_t mus_sound_length (const char *arg)         /* true file length in bytes */
 
   int mus_sound_datum_size (const char *arg)       /* bytes per sample */
-  off_t mus_sound_data_location (const char *arg)  /* location of first sample (bytes) */
+  mus_long_t mus_sound_data_location (const char *arg)  /* location of first sample (bytes) */
   int mus_sound_bits_per_sample(const char *arg)   /* bits per sample */
   int mus_bytes_per_sample(int format)             /* bytes per sample */
 
@@ -143,8 +143,8 @@ name of the sound file.
   int mus_sound_type_specifier (const char *arg)   /* original header type identifier */
 
   char *mus_sound_comment (const char *arg)        /* comment if any */
-  off_t mus_sound_comment_start (const char *arg)  /* comment start (bytes) if any */
-  off_t mus_sound_comment_end (const char *arg)    /* comment end (bytes) */
+  mus_long_t mus_sound_comment_start (const char *arg)  /* comment start (bytes) if any */
+  mus_long_t mus_sound_comment_end (const char *arg)    /* comment end (bytes) */
   int *mus_sound_loop_info(const char *arg)        /* 8 loop vals (mode,start,end) then base-detune and base-note  (empty list if no loop info found) */
 
   int mus_sound_write_date (const char *arg)       /* bare (uninterpreted) file write date */
@@ -192,12 +192,12 @@ sound file data:</p>
 <pre>
   int mus_sound_open_input (const char *arg) 
   int mus_sound_open_output (const char *arg, int srate, int chans, int data_format, int header_type, const char *comment)
-  int mus_sound_reopen_output (const char *arg, int type, int format, off_t data_loc)
+  int mus_sound_reopen_output (const char *arg, int type, int format, mus_long_t data_loc)
   int mus_sound_close_input (int fd) 
-  int mus_sound_close_output (int fd, off_t bytes_of_data) 
+  int mus_sound_close_output (int fd, mus_long_t bytes_of_data) 
   int mus_sound_read (int fd, int beg, int end, int chans, mus_sample_t **bufs) 
   int mus_sound_write (int fd, int beg, int end, int chans, mus_sample_t **bufs) 
-  off_t mus_sound_seek_frame (int fd, off_t frame)
+  mus_long_t mus_sound_seek_frame (int fd, mus_long_t frame)
 </pre>
 <p>mus_sample_t defaults to float, but can also be int.  It is set when
 sndlib is built, and refers to Sndlib's internal representation of sample values.  
@@ -539,8 +539,8 @@ it through a mixer (a matrix, the operation being a matrix multiply).
 <li>void mus_convolution(float* rl1, float* rl2, int n, int ipow)
 <li>float *mus_partials_to_wave(float *partial_data, int partials, float *table, int table_size, int normalize)
 <li>float *mus_phase_partials_to_wave(float *partial_data, int partials, float *table, int table_size, int normalize)
-<li>float mus_samples_to_seconds(off_t samps)
-<li>off_t mus_seconds_to_samples(float secs)
+<li>float mus_samples_to_seconds(mus_long_t samps)
+<li>mus_long_t mus_seconds_to_samples(float secs)
 </ul>
 <p>and various others: see clm.h.</p>
 
@@ -579,7 +579,7 @@ through mus_error which can be redirected or muffled.  See clm2xen.c for an exam
 int main(int argc, char *argv[])
 {
   int fd, chans, srate;
-  off_t samples;
+  mus_long_t samples;
   float length;
   time_t date;
   char *comment;
@@ -618,7 +618,7 @@ int main(int argc, char *argv[])
 int main(int argc, char *argv[])
 {
   int fd, afd, i, j, n, k, chans, srate, outbytes;
-  off_t frames;
+  mus_long_t frames;
   mus_sample_t **bufs;
   short *obuf;
   mus_sound_initialize();	
@@ -907,7 +907,7 @@ cc v.c -o vc -O3 -lm io.o headers.o audio.o sound.o clm.o -DLINUX
 <p>For generators such as src that take a function for "as-needed" input,
 you can use something like:</p>
 <pre>
-static Float input_as_needed(void *arg, int dir) {/* get input here &mdash; arg is "sf" passed below */}
+static mus_float_t input_as_needed(void *arg, int dir) {/* get input here &mdash; arg is "sf" passed below */}
 
 static SCM call_phase-vocoder(void)
 {

@@ -51,7 +51,7 @@ typedef struct prefs_info {
   timeout_result_t help_id, power_id;
   const char *var_name, *saved_label;
   int num_buttons;
-  Float scale_max;
+  mus_float_t scale_max;
   void (*toggle_func)(struct prefs_info *prf);
   void (*toggle2_func)(struct prefs_info *prf);
   void (*scale_func)(struct prefs_info *prf);
@@ -74,7 +74,7 @@ static void save_key_binding(prefs_info *prf, FILE *fd, char *(*binder)(char *ke
 static void key_bind(prefs_info *prf, char *(*binder)(char *key, bool c, bool m, bool x));
 static void clear_prefs_dialog_error(void);
 static void scale_set_color(prefs_info *prf, color_t pixel);
-static color_t rgb_to_color(Float r, Float g, Float b);
+static color_t rgb_to_color(mus_float_t r, mus_float_t g, mus_float_t b);
 static void post_prefs_error(const char *msg, prefs_info *data);
 #ifdef __GNUC__
   static void va_post_prefs_error(const char *msg, prefs_info *data, ...) __attribute__ ((format (printf, 1, 0)));
@@ -940,7 +940,7 @@ static void prefs_scale_callback(Widget w, XtPointer context, XtPointer info)
 
 
 static prefs_info *prefs_row_with_scale(const char *label, const char *varname, 
-					Float max_val, Float current_value,
+					mus_float_t max_val, mus_float_t current_value,
 					Widget box, Widget top_widget, 
 					void (*scale_func)(prefs_info *prf),
 					void (*text_func)(prefs_info *prf))
@@ -1216,7 +1216,7 @@ static prefs_info *prefs_row_with_list(const char *label, const char *varname, c
 
 /* ---------------- color selector row(s) ---------------- */
 
-static XColor *rgb_to_color_1(Float r, Float g, Float b)
+static XColor *rgb_to_color_1(mus_float_t r, mus_float_t g, mus_float_t b)
 {
   Display *dpy;
   XColor *new_color;
@@ -1235,7 +1235,7 @@ static XColor *rgb_to_color_1(Float r, Float g, Float b)
 #define COLOR_MAXF 90.0
 #define COLOR_MARGIN 1
 
-static color_t rgb_to_color(Float r, Float g, Float b)
+static color_t rgb_to_color(mus_float_t r, mus_float_t g, mus_float_t b)
 {
   color_t temp;
   XColor *color;
@@ -1275,7 +1275,7 @@ static void XmScrollBarSetValue(Widget w, int val)
 static void reflect_color(prefs_info *prf)
 {
   int ir = 0, ig = 0, ib = 0;
-  Float r, g, b;
+  mus_float_t r, g, b;
   XColor *current_color;
   Pixel pixel;
 
@@ -1335,7 +1335,7 @@ static void prefs_r_callback(Widget w, XtPointer context, XtPointer info)
   float r = 0.0;
   str = XmTextFieldGetString(w);
   redirect_errors_to(errors_to_color_text, (void *)prf);
-  r = (float)string_to_Float(str, 0.0, "red amount");
+  r = (float)string_to_mus_float_t(str, 0.0, "red amount");
   redirect_errors_to(NULL, NULL);
 
   XmScrollBarSetValue(prf->rscl, mus_iclamp(0, (int)(COLOR_MAX * r), COLOR_MAX));
@@ -1352,7 +1352,7 @@ static void prefs_g_callback(Widget w, XtPointer context, XtPointer info)
   float r = 0.0;
   str = XmTextFieldGetString(w);
   redirect_errors_to(errors_to_color_text, (void *)prf);
-  r = (float)string_to_Float(str, 0.0, "green amount");
+  r = (float)string_to_mus_float_t(str, 0.0, "green amount");
   redirect_errors_to(NULL, NULL);
 
   XmScrollBarSetValue(prf->gscl, mus_iclamp(0, (int)(COLOR_MAX * r), COLOR_MAX));
@@ -1369,7 +1369,7 @@ static void prefs_b_callback(Widget w, XtPointer context, XtPointer info)
   float r = 0.0;
   str = XmTextFieldGetString(w);
   redirect_errors_to(errors_to_color_text, (void *)prf);
-  r = (float)string_to_Float(str, 0.0, "blue amount");
+  r = (float)string_to_mus_float_t(str, 0.0, "blue amount");
   redirect_errors_to(NULL, NULL);
 
   XmScrollBarSetValue(prf->bscl, mus_iclamp(0, (int)(COLOR_MAX * r), COLOR_MAX));

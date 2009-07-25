@@ -150,10 +150,10 @@ else
 fi
 
 if test "$with_doubles" = yes ; then
-  AC_DEFINE(Float,double)
+  AC_DEFINE(mus_float_t, double)
   AC_DEFINE(WITH_DOUBLES)
 else
-  AC_DEFINE(Float,float)
+  AC_DEFINE(mus_float_t, float)
 fi
 
 if test "$with_hobbit" = yes ; then

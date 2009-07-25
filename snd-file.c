@@ -25,7 +25,7 @@
 #if (!USE_STATVFS)
 
 #if USE_STATFS
-off_t disk_kspace(const char *filename)
+mus_long_t disk_kspace(const char *filename)
 {
   struct statfs buf;
   int err;
@@ -34,30 +34,30 @@ off_t disk_kspace(const char *filename)
     {
       if (buf.f_bsize == 1024) 
 	return(buf.f_bavail);
-      return((off_t)(buf.f_bsize * ((double)(buf.f_bavail) / 1024.0)));
+      return((mus_long_t)(buf.f_bsize * ((double)(buf.f_bavail) / 1024.0)));
     }
   return(err);
 }
 #else
-off_t disk_kspace(const char *filename) {return(1234567);}
+mus_long_t disk_kspace(const char *filename) {return(1234567);}
 #endif
 
 #else
 
-off_t disk_kspace(const char *filename)
+mus_long_t disk_kspace(const char *filename)
 {
 #if MUS_SUN
   statvfs_t buf; /* else dumb compiler complaint */
 #else
   struct statvfs buf;
 #endif
-  off_t err = -1;
+  mus_long_t err = -1;
   err = statvfs(filename, &buf);
   if (err == 0)
     {
       if (buf.f_frsize == 1024) 
 	return(buf.f_bfree);
-      return((off_t)(buf.f_frsize * ((double)(buf.f_bfree) / 1024.0)));
+      return((mus_long_t)(buf.f_frsize * ((double)(buf.f_bfree) / 1024.0)));
     }
   return(err);
 }
@@ -100,13 +100,13 @@ static bool empty_file_p(const char *filename)
 #if HAVE_LSTAT
   struct stat statbuf;
   if (lstat(filename, &statbuf) >= 0) 
-    return(statbuf.st_size == (off_t)0);
+    return(statbuf.st_size == (mus_long_t)0);
 #endif
   return(false);
 }
 
 
-static off_t file_bytes(const char *filename)
+static mus_long_t file_bytes(const char *filename)
 {
 #if HAVE_LSTAT
   struct stat statbuf;
@@ -115,7 +115,7 @@ static off_t file_bytes(const char *filename)
   return(0);
 #else
   int chan;
-  off_t bytes;
+  mus_long_t bytes;
   chan = mus_file_open_read(filename);
   if (chan == -1) return(0);
   bytes = lseek(chan, 0L, SEEK_END);
@@ -1054,7 +1054,7 @@ static file_info *open_raw_sound(const char *fullname, read_only_t read_only, bo
   int res_loc = NOT_A_GC_LOC;
   XEN procs;
   int len, srate, chans, data_format;
-  off_t data_location, bytes;
+  mus_long_t data_location, bytes;
 
   if (ss->reloading_updated_file != 0)
     {
@@ -1258,7 +1258,7 @@ file_info *make_file_info(const char *fullname, read_only_t read_only, bool sele
 }
 
 
-file_info *make_temp_header(const char *fullname, int srate, int chans, off_t samples, const char *caller)
+file_info *make_temp_header(const char *fullname, int srate, int chans, mus_long_t samples, const char *caller)
 {
   file_info *hdr;
   hdr = (file_info *)calloc(1, sizeof(file_info));
@@ -1711,7 +1711,7 @@ snd_info *make_sound_readable(const char *filename, bool post_close)
   file_info *hdr = NULL;
   snd_data *sd;
   int i, fd;
-  off_t len;
+  mus_long_t len;
   /* we've already checked that filename exists */
 
   hdr = make_file_info_1(filename);
@@ -1840,13 +1840,13 @@ void *make_axes_data(snd_info *sp)
 }
 
 
-void restore_axes_data(snd_info *sp, void *usa, Float new_duration, bool need_edit_history_update)
+void restore_axes_data(snd_info *sp, void *usa, mus_float_t new_duration, bool need_edit_history_update)
 {
   axes_data *sa = (axes_data *)usa;
   int i, j;
   for (i = 0, j = 0; i < sp->nchans; i++)
     {
-      Float old_duration;
+      mus_float_t old_duration;
       chan_info *cp;
       axis_info *ap;
       int loc;
@@ -2049,7 +2049,7 @@ snd_info *snd_update(snd_info *sp)
   void *ms;
   snd_info *saved_sp;
   struct ctrl_state *saved_controls;
-  off_t *old_cursors;
+  mus_long_t *old_cursors;
   fam_info *old_file_watcher;
   sp_watcher **old_watchers;
   int old_watchers_size;
@@ -2118,7 +2118,7 @@ snd_info *snd_update(snd_info *sp)
   saved_controls = sp->saved_controls;
   sp->saved_controls = NULL;
   saved_sp = sound_store_chan_info(sp);
-  old_cursors = (off_t *)calloc(sp_chans, sizeof(off_t));
+  old_cursors = (mus_long_t *)calloc(sp_chans, sizeof(mus_long_t));
 
   /* peak-env code saves the current peak-envs on exit (snd_close), but in this case, that
    *   data is known to be out-of-date.  Since we'll be freeing it eventually anyway, we
@@ -2818,7 +2818,7 @@ bool edit_header_callback(snd_info *sp, file_data *edit_header_data,
 {
   /* this just changes the header -- it does not actually reformat the data or whatever */
 
-  off_t loc, samples;
+  mus_long_t loc, samples;
   char *comment, *original_comment = NULL;
   file_info *hdr;
   int chans, srate, type, format;
@@ -2899,9 +2899,9 @@ static int swap_int(int n)
 }
 
 
-static off_t swap_off_t(off_t n)
+static mus_long_t swap_mus_long_t(mus_long_t n)
 {
-  off_t o;
+  mus_long_t o;
   unsigned char *inp, *outp; 
   inp = (unsigned char *)&n; 
   outp = (unsigned char *)&o;
@@ -2932,7 +2932,7 @@ static short swap_short(short n)
 static char *raw_data_explanation(const char *filename, file_info *hdr, char **info)
 {
   char *reason_str, *tmp_str, *file_string;
-  off_t nsamp;
+  mus_long_t nsamp;
   bool ok;
   int ns, better_srate = 0, better_chans = 0, len;
   reason_str = (char *)calloc(PRINT_BUFFER_SIZE, sizeof(char));
@@ -2998,7 +2998,7 @@ static char *raw_data_explanation(const char *filename, file_info *hdr, char **i
 	       hdr->samples,
 	       mus_sound_length(filename));
   reason_str = mus_strcat(reason_str, tmp_str, &len);
-  nsamp = swap_off_t(hdr->samples);
+  nsamp = swap_mus_long_t(hdr->samples);
   if (nsamp < mus_sound_length(filename))
     {
       mus_snprintf(tmp_str, LABEL_BUFFER_SIZE, " (swapped: " OFF_TD , nsamp);
@@ -3016,7 +3016,7 @@ static char *raw_data_explanation(const char *filename, file_info *hdr, char **i
   /* data location */
   mus_snprintf(tmp_str, LABEL_BUFFER_SIZE, "\ndata location: " OFF_TD, hdr->data_location);
   reason_str = mus_strcat(reason_str, tmp_str, &len);
-  nsamp = swap_off_t(hdr->data_location);
+  nsamp = swap_mus_long_t(hdr->data_location);
   if ((nsamp > 0) && 
       (nsamp <= 1024)) 
     {
@@ -4318,7 +4318,7 @@ void view_files_insert_selected_files(widget_t w, view_files_info *vdat)
 }
 
 
-static Float view_files_amp(widget_t dialog)
+static mus_float_t view_files_amp(widget_t dialog)
 {
   view_files_info *vdat;
   vdat = vf_dialog_to_info(dialog);
@@ -4328,7 +4328,7 @@ static Float view_files_amp(widget_t dialog)
 }
 
 
-static Float view_files_set_amp(widget_t dialog, Float new_amp)
+static mus_float_t view_files_set_amp(widget_t dialog, mus_float_t new_amp)
 {
   view_files_info *vdat;
   vdat = vf_dialog_to_info(dialog);
@@ -4338,7 +4338,7 @@ static Float view_files_set_amp(widget_t dialog, Float new_amp)
 }
 
 
-static Float view_files_speed(widget_t dialog)
+static mus_float_t view_files_speed(widget_t dialog)
 {
   view_files_info *vdat;
   vdat = vf_dialog_to_info(dialog);
@@ -4348,7 +4348,7 @@ static Float view_files_speed(widget_t dialog)
 }
 
 
-static Float view_files_set_speed(widget_t dialog, Float new_speed)
+static mus_float_t view_files_set_speed(widget_t dialog, mus_float_t new_speed)
 {
   view_files_info *vdat;
   vdat = vf_dialog_to_info(dialog);
@@ -5543,7 +5543,7 @@ static XEN g_auto_update_interval(void) {return(C_TO_XEN_DOUBLE(auto_update_inte
 
 static XEN g_set_auto_update_interval(XEN val) 
 {
-  Float ctime, old_time;
+  mus_float_t ctime, old_time;
   #define H_auto_update_interval "(" S_auto_update_interval "): time (seconds) between background checks for changed file on disk (default: 60). \
 This value only matters if " S_auto_update " is " PROC_TRUE
 

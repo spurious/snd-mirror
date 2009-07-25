@@ -7,7 +7,7 @@ typedef struct
   int n; 
   read_direction_t direction; 
   int chans; 
-  off_t inc, dur; 
+  mus_long_t inc, dur; 
   chan_info **cps; 
   snd_fd **fds;
 } gfd;
@@ -18,7 +18,7 @@ typedef struct
 static void prepare_global_search(chan_info *cp, void *g0)
 {
   gfd *g = (gfd *)g0;
-  off_t this_dur;
+  mus_long_t this_dur;
   read_direction_t direction;
   direction = g->direction;
   g->cps[g->n] = cp;
@@ -49,7 +49,7 @@ static bool run_global_search(gfd *g)
 	{
 	  if (g->cps[i])
 	    {
-	      Float samp;
+	      mus_float_t samp;
 	      XEN res;
 	      snd_fd *sf;
 	      if (!((g->cps[i])->sound)) return(STOP_SEARCHING);
@@ -242,10 +242,10 @@ static void send_find_errors_to_minibuffer(const char *msg, void *data)
 }
 
 
-static off_t cursor_find_forward(snd_info *sp, chan_info *cp, int count)
+static mus_long_t cursor_find_forward(snd_info *sp, chan_info *cp, int count)
 {
   int passes = 0, tick = 0;
-  off_t i = 0, end, start;
+  mus_long_t i = 0, end, start;
   snd_fd *sf = NULL;
   XEN res = XEN_FALSE;
   bool progress_displayed = false;
@@ -337,9 +337,9 @@ static off_t cursor_find_forward(snd_info *sp, chan_info *cp, int count)
 }
 
 
-static off_t cursor_find_backward(snd_info *sp, chan_info *cp, int count)
+static mus_long_t cursor_find_backward(snd_info *sp, chan_info *cp, int count)
 {
-  off_t i = 0, start, tick = 0;
+  mus_long_t i = 0, start, tick = 0;
   int passes = 0;
   snd_fd *sf = NULL;
   XEN res = XEN_FALSE;
@@ -452,7 +452,7 @@ void cursor_search(chan_info *cp, int count)
     {
       if (sp->search_count != 0)
 	{
-	  off_t samp;
+	  mus_long_t samp;
 	  if ((!(XEN_PROCEDURE_P(sp->search_proc))) && 
 	      (sp->search_tree == NULL)) 
 	    {

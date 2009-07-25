@@ -23,7 +23,7 @@ bool graph_style_p(int grf)
 
 typedef struct lisp_grf {
   int *len;
-  Float **data;
+  mus_float_t **data;
   int graphs;
   axis_info *axis;
   int env_data;
@@ -79,7 +79,7 @@ static XEN after_lisp_graph_hook;
 static XEN time_graph_hook;
 
 
-static void after_transform(chan_info *cp, Float scaler)
+static void after_transform(chan_info *cp, mus_float_t scaler)
 {
   if (XEN_HOOKED(after_transform_hook))
     run_hook(after_transform_hook,
@@ -158,7 +158,7 @@ void set_wavo_trace(int uval)
 }
 
 
-static void set_beats_per_minute(Float val) 
+static void set_beats_per_minute(mus_float_t val) 
 {
   if (val > 0.0) 
     {
@@ -225,13 +225,13 @@ static void set_show_grid(with_grid_t val)
 }
 
 
-static void chans_grid_density(chan_info *cp, Float value)
+static void chans_grid_density(chan_info *cp, mus_float_t value)
 {
   cp->grid_density = value;
   update_graph(cp);
 }
 
-static void set_grid_density(Float val)
+static void set_grid_density(mus_float_t val)
 {
   in_set_grid_density(val);
   for_each_chan_with_float(chans_grid_density, val);
@@ -319,7 +319,7 @@ void in_set_fft_window(mus_fft_window_t val)
 }
 
 
-void chans_field(fcp_t field, Float val)
+void chans_field(fcp_t field, mus_float_t val)
 {
   int i;
   for (i = 0; i < ss->max_sounds; i++)
@@ -591,9 +591,9 @@ static void update_graph_1(chan_info *cp, bool warn)
   if (ap)
     {
       cur_srate = (double)(SND_SRATE(sp));
-      ap->losamp = snd_round_off_t(ap->x0 * cur_srate); 
+      ap->losamp = snd_round_mus_long_t(ap->x0 * cur_srate); 
       if (ap->losamp < 0) ap->losamp = 0;
-      ap->hisamp = (off_t)(ap->x1 * cur_srate);
+      ap->hisamp = (mus_long_t)(ap->x1 * cur_srate);
     }
 
   if (!(cp->cgx->ax->wn)) 
@@ -636,11 +636,11 @@ void update_graph_or_warn(chan_info *cp)
 
 static XEN initial_graph_hook;
 
-void add_channel_data_1(chan_info *cp, int srate, off_t frames, channel_graph_t graphed)
+void add_channel_data_1(chan_info *cp, int srate, mus_long_t frames, channel_graph_t graphed)
 {
   /* initialize channel, including edit/sound lists */
   axis_info *ap;
-  Float ymin = 0.0, ymax = 0.0, y0, y1;
+  mus_float_t ymin = 0.0, ymax = 0.0, y0, y1;
   double xmax, x0, x1, dur, gdur;
   const char *label = NULL;
   char *hook_label = NULL;
@@ -797,7 +797,7 @@ void start_peak_env(chan_info *cp)
 void add_channel_data(char *filename, chan_info *cp, channel_graph_t graphed)
 {
   int chn = 0;
-  off_t frames;
+  mus_long_t frames;
   snd_info *sp;
   file_info *chdr, *hdr;
 
@@ -836,7 +836,7 @@ void add_channel_data(char *filename, chan_info *cp, channel_graph_t graphed)
 
 static void set_y_bounds(axis_info *ap)
 {
-  Float range;
+  mus_float_t range;
   range = ap->zy * ap->y_ambit;
   ap->y0 = ap->ymin + ap->sy * ap->y_ambit;
   ap->y1 = (ap->y0 + range);
@@ -885,7 +885,7 @@ void apply_y_axis_change(axis_info *ap, chan_info *cp)
   if (sp->channel_style != CHANNELS_SEPARATE)
     {
       int i;
-      Float zy, sy;
+      mus_float_t zy, sy;
       sy = ap->sy;
       zy = ap->zy;
       for (i = 0; i < sp->nchans; i++)
@@ -934,7 +934,7 @@ void set_x_axis_x0x1(chan_info *cp, double x0, double x1)
 }
 
 
-static void set_x_axis_x0(chan_info *cp, off_t left)
+static void set_x_axis_x0(chan_info *cp, mus_long_t left)
 {
   if (cp)
     {
@@ -954,7 +954,7 @@ static void set_x_axis_x0(chan_info *cp, off_t left)
 }
 
 
-static void set_x_axis_x1(chan_info *cp, off_t right)
+static void set_x_axis_x1(chan_info *cp, mus_long_t right)
 {
   if (cp)
     {
@@ -1033,7 +1033,7 @@ void apply_x_axis_change(axis_info *ap, chan_info *cp)
 
 #define NO_ZOOM_FOCUS_LOCATION -1
 
-static off_t zoom_focus_location(chan_info *cp)
+static mus_long_t zoom_focus_location(chan_info *cp)
 {
   if (cp->cursor_visible)
     return(CURSOR(cp));
@@ -1045,10 +1045,10 @@ static off_t zoom_focus_location(chan_info *cp)
      * So, return something in the current window related to the current selection.
      */
     {
-      off_t beg, end, mid, left, right;
+      mus_long_t beg, end, mid, left, right;
       beg = selection_beg(cp);
       end = beg + selection_len();
-      mid = (off_t)(0.5 * (beg + end));
+      mid = (mus_long_t)(0.5 * (beg + end));
       left = cp->axis->losamp;
       right = cp->axis->hisamp;
       if ((mid > left) &&
@@ -1060,11 +1060,11 @@ static off_t zoom_focus_location(chan_info *cp)
       if ((end > left) &&
 	  (end < right))
 	return(end);
-      /* return((off_t)(0.5 * (left + right))); */
+      /* return((mus_long_t)(0.5 * (left + right))); */
     }
 
   {
-    off_t pos;
+    mus_long_t pos;
     pos = zoom_focus_mix_in_channel_to_position(cp);
     if (pos >= 0)
       return(pos);
@@ -1099,7 +1099,7 @@ void focus_x_axis_change(axis_info *ap, chan_info *cp, int focus_style)
   if (focus_style != ZOOM_FOCUS_LEFT)
     {
       chan_info *ncp;
-      off_t newf;
+      mus_long_t newf;
       switch (focus_style)
 	{
 	case ZOOM_FOCUS_PROC:
@@ -1200,7 +1200,7 @@ void sx_incremented(chan_info *cp, double amount)
 void zx_incremented(chan_info *cp, double amount)
 { /* kbd arrows etc -- needs to be able to return to original */
   axis_info *ap;
-  off_t samps;
+  mus_long_t samps;
   samps = CURRENT_SAMPLES(cp);
   ap = cp->axis;
   if ((amount >= 1.0) || ((samps > 0) && ((ap->zx * (double)samps) > (amount / 2.0))))
@@ -1238,7 +1238,7 @@ int move_axis(chan_info *cp, axis_info *ap, int x)
 }
 
 
-void set_axes(chan_info *cp, double x0, double x1, Float y0, Float y1)
+void set_axes(chan_info *cp, double x0, double x1, mus_float_t y0, mus_float_t y1)
 {
   /* use to change channel_style to channels_separate, and restore axes upon update */
   axis_info *ap;
@@ -1271,7 +1271,7 @@ static int local_grf_x(double val, axis_info *ap)
   return((int)(ap->x_base + val * ap->x_scale));
 }
 
-static int local_grf_y(Float val, axis_info *ap)
+static int local_grf_y(mus_float_t val, axis_info *ap)
 {
   if (val >= ap->y1) return(ap->y_axis_y1);
   if (val <= ap->y0) return(ap->y_axis_y0);
@@ -1402,10 +1402,10 @@ static int make_graph_1(chan_info *cp, double cur_srate, bool normal, bool *two_
 {
   snd_info *sp;
   int j = 0;
-  off_t samps;
+  mus_long_t samps;
   int xi;
   axis_info *ap;
-  Float samples_per_pixel, xf, pinc = 0.0;
+  mus_float_t samples_per_pixel, xf, pinc = 0.0;
   double x, incr;  
 
   /* in long files with small windows we can run into floating point errors that accumulate
@@ -1450,9 +1450,9 @@ static int make_graph_1(chan_info *cp, double cur_srate, bool normal, bool *two_
 
   if (normal)
     {
-      ap->losamp = snd_round_off_t(ap->x0 * cur_srate); /* was ceil??? */
+      ap->losamp = snd_round_mus_long_t(ap->x0 * cur_srate); /* was ceil??? */
       if (ap->losamp < 0) ap->losamp = 0;
-      ap->hisamp = (off_t)((ap->x1 * cur_srate) + 0.5); /* + 0.5 for 1-sample case */
+      ap->hisamp = (mus_long_t)((ap->x1 * cur_srate) + 0.5); /* + 0.5 for 1-sample case */
       if ((ap->losamp == 0) && (ap->hisamp == 0)) return(0);
     }
 
@@ -1465,7 +1465,7 @@ static int make_graph_1(chan_info *cp, double cur_srate, bool normal, bool *two_
   if (pixels >= POINT_BUFFER_SIZE) pixels = POINT_BUFFER_SIZE - 1;
   if ((x_start == x_end) || (samps <= 1))
     samples_per_pixel = 0.01; /* any non-zero value < 1.0 should be ok here */
-  else samples_per_pixel = (Float)((double)(samps - 1) / (double)pixels);
+  else samples_per_pixel = (mus_float_t)((double)(samps - 1) / (double)pixels);
 
   if (cp->printing) ps_allocate_grf_points();
 
@@ -1496,7 +1496,7 @@ static int make_graph_1(chan_info *cp, double cur_srate, bool normal, bool *two_
 	{
 	  for (j = 0, x = ((double)(ap->losamp) / cur_srate); j < grfpts; j++, x += incr)
 	    {
-	      Float fsamp;
+	      mus_float_t fsamp;
 	      fsamp = read_sample(sf);
 	      set_grf_point(local_grf_x(x, ap), j, local_grf_y(fsamp, ap));
 	      ps_set_grf_point(x, j, fsamp);
@@ -1522,8 +1522,8 @@ static int make_graph_1(chan_info *cp, double cur_srate, bool normal, bool *two_
 	j = peak_env_graph(cp, ap, samples_per_pixel, (normal) ? ((int)SND_SRATE(sp)) : 1);
       else
 	{
-	  Float ymin, ymax;
-	  off_t ioff;
+	  mus_float_t ymin, ymax;
+	  mus_long_t ioff;
 	  if ((ap->hisamp - ap->losamp) > (CURRENT_SAMPLES(cp) / 4))
 	    {    
                                              /* we're trying to view a large portion of the (large) sound */
@@ -1533,7 +1533,7 @@ static int make_graph_1(chan_info *cp, double cur_srate, bool normal, bool *two_
 		{                            /* is peak-env background process is still working on it */
 		  peak_env_info *ep;
 		  ep = cp->edits[cp->edit_ctr]->peak_env;
-		  if ((ep) && samples_per_pixel >= (Float)(ep->samps_per_bin))
+		  if ((ep) && samples_per_pixel >= (mus_float_t)(ep->samps_per_bin))
 		    {                        /* and it will be useful when it finishes */
 		      cp->waiting_to_make_graph = true;
 		      return(0);             /* so don't run two enormous data readers in parallel */
@@ -1553,7 +1553,7 @@ static int make_graph_1(chan_info *cp, double cur_srate, bool normal, bool *two_
 	  ss->stopped_explicitly = false;
 	  for (ioff = ap->losamp, xf = 0.0; ioff <= ap->hisamp; ioff++)
 	    {
-	      Float samp;
+	      mus_float_t samp;
 	      samp = read_sample(sf);
 	      if (samp > ymax) ymax = samp;
 	      if (samp < ymin) ymin = samp;
@@ -1624,15 +1624,15 @@ int make_background_graph(chan_info *cp, int srate, bool *two_sided) /* (for env
 }
 
 
-void make_partial_graph(chan_info *cp, off_t beg, off_t end)
+void make_partial_graph(chan_info *cp, mus_long_t beg, mus_long_t end)
 {
   /* assume here that everything is already checked and set up */
   snd_info *sp;
   int j = 0;
-  off_t samps;
+  mus_long_t samps;
   int xi;
   axis_info *ap;
-  Float samples_per_pixel, xf;
+  mus_float_t samples_per_pixel, xf;
   double x, incr, cur_srate, beg_in_seconds, end_in_seconds;
   int pixels;
   snd_fd *sf = NULL;
@@ -1655,7 +1655,7 @@ void make_partial_graph(chan_info *cp, off_t beg, off_t end)
   if (pixels >= POINT_BUFFER_SIZE) pixels = POINT_BUFFER_SIZE - 1;
   if ((x_start == x_end) || (samps <= 1))
     samples_per_pixel = 0.01; /* any non-zero value < 1.0 should be ok here */
-  else samples_per_pixel = (Float)((double)(samps - 1) / (double)pixels);
+  else samples_per_pixel = (mus_float_t)((double)(samps - 1) / (double)pixels);
 
   if (beg < ap->losamp) beg = ap->losamp;
   if (end > ap->hisamp) end = ap->hisamp;
@@ -1687,8 +1687,8 @@ void make_partial_graph(chan_info *cp, off_t beg, off_t end)
 	j = peak_env_partial_graph(cp, ap, beg, end, samples_per_pixel, (int)SND_SRATE(sp));
       else
 	{
-	  Float ymin, ymax;
-	  off_t ioff;
+	  mus_float_t ymin, ymax;
+	  mus_long_t ioff;
 	  if ((end - beg) > (CURRENT_SAMPLES(cp) / 4))
 	    {    
                                              /* we're trying to view a large portion of the (large) sound */
@@ -1698,7 +1698,7 @@ void make_partial_graph(chan_info *cp, off_t beg, off_t end)
 		{                            /* is peak-env background process is still working on it */
 		  peak_env_info *ep;
 		  ep = cp->edits[cp->edit_ctr]->peak_env;
-		  if ((ep) && samples_per_pixel >= (Float)(ep->samps_per_bin))
+		  if ((ep) && samples_per_pixel >= (mus_float_t)(ep->samps_per_bin))
 		    {                        /* and it will be useful when it finishes */
 		      cp->waiting_to_make_graph = true;
 		      return;               /* so don't run two enormous data readers in parallel */
@@ -1716,7 +1716,7 @@ void make_partial_graph(chan_info *cp, off_t beg, off_t end)
 	  ap->changed = false;
 	  for (ioff = beg, xf = 0.0; ioff <= end; ioff++)
 	    {
-	      Float samp;
+	      mus_float_t samp;
 	      samp = read_sample(sf);
 	      if (samp > ymax) ymax = samp;
 	      if (samp < ymin) ymin = samp;
@@ -1759,16 +1759,16 @@ void make_partial_graph(chan_info *cp, off_t beg, off_t end)
  *   to the second cp -- allow arbitrary overlapping etc).
  */
 
-XEN make_graph_data(chan_info *cp, int edit_pos, off_t losamp, off_t hisamp)
+XEN make_graph_data(chan_info *cp, int edit_pos, mus_long_t losamp, mus_long_t hisamp)
 {
   int i, j = 0;
-  off_t samps, ioff;
+  mus_long_t samps, ioff;
   axis_info *ap;
-  Float samples_per_pixel, xf;
+  mus_float_t samples_per_pixel, xf;
   int pixels;
   snd_fd *sf = NULL;
   int x_start, x_end;
-  Float *data = NULL, *data1 = NULL;
+  mus_float_t *data = NULL, *data1 = NULL;
   int data_size = 0;
 
   ap = cp->axis;
@@ -1782,7 +1782,7 @@ XEN make_graph_data(chan_info *cp, int edit_pos, off_t losamp, off_t hisamp)
   if (pixels >= POINT_BUFFER_SIZE) pixels = POINT_BUFFER_SIZE - 1;
   if ((x_start == x_end) || (samps <= 1))
     samples_per_pixel = 0.01;
-  else samples_per_pixel = (Float)((double)(samps - 1) / (double)pixels);
+  else samples_per_pixel = (mus_float_t)((double)(samps - 1) / (double)pixels);
 
   if ((samples_per_pixel < 1.0) ||
       ((samples_per_pixel < 5.0) && 
@@ -1791,7 +1791,7 @@ XEN make_graph_data(chan_info *cp, int edit_pos, off_t losamp, off_t hisamp)
       data_size = (int)samps;
       sf = init_sample_read_any(losamp, cp, READ_FORWARD, edit_pos);
       if (sf == NULL) return(XEN_FALSE); /* should this throw an error? (CHANNEL_BEING_DEALLOCATED) */
-      data = (Float *)malloc(data_size * sizeof(Float));
+      data = (mus_float_t *)malloc(data_size * sizeof(mus_float_t));
       for (i = 0; i < data_size; i++)
 	data[i] = read_sample(sf);
     }
@@ -1800,15 +1800,15 @@ XEN make_graph_data(chan_info *cp, int edit_pos, off_t losamp, off_t hisamp)
       if (peak_env_usable(cp, samples_per_pixel, hisamp, false, edit_pos, true)) 
 	{
 	  double step, xk;
-	  Float ymin, ymax;
+	  mus_float_t ymin, ymax;
 	  int k, kk;
 	  peak_env_info *ep;
 
 	  data_size = pixels + 1;
-	  data = (Float *)calloc(data_size, sizeof(Float));
-	  data1 = (Float *)calloc(data_size, sizeof(Float));
+	  data = (mus_float_t *)calloc(data_size, sizeof(mus_float_t));
+	  data1 = (mus_float_t *)calloc(data_size, sizeof(mus_float_t));
 	  ep = cp->edits[edit_pos]->peak_env;
-	  step = samples_per_pixel / (Float)(ep->samps_per_bin);
+	  step = samples_per_pixel / (mus_float_t)(ep->samps_per_bin);
 	  xf = (double)(losamp) / (double)(ep->samps_per_bin);
 	  j = 0;
 	  ioff = losamp;
@@ -1829,7 +1829,7 @@ XEN make_graph_data(chan_info *cp, int edit_pos, off_t losamp, off_t hisamp)
 		  if (ep->data_max[k] > ymax) ymax = ep->data_max[k];
 		}
 	      xk += samples_per_pixel;
-	      ioff = (off_t)xk;
+	      ioff = (mus_long_t)xk;
 	      data[j] = ymin;
 	      data1[j] = ymax;
 	      j++;
@@ -1839,13 +1839,13 @@ XEN make_graph_data(chan_info *cp, int edit_pos, off_t losamp, off_t hisamp)
 	}
       else
 	{
-	  Float ymin, ymax, samp;
+	  mus_float_t ymin, ymax, samp;
 
 	  data_size = pixels + 1;
 	  sf = init_sample_read_any(losamp, cp, READ_FORWARD, edit_pos);
 	  if (sf == NULL) return(XEN_FALSE);
-	  data = (Float *)calloc(data_size, sizeof(Float));
-	  data1 = (Float *)calloc(data_size, sizeof(Float));
+	  data = (mus_float_t *)calloc(data_size, sizeof(mus_float_t));
+	  data1 = (mus_float_t *)calloc(data_size, sizeof(mus_float_t));
 	  j = 0;      /* graph point counter */
 	  ymin = 100.0;
 	  ymax = -100.0;
@@ -1887,9 +1887,9 @@ XEN make_graph_data(chan_info *cp, int edit_pos, off_t losamp, off_t hisamp)
 }
 
 
-void draw_graph_data(chan_info *cp, off_t losamp, off_t hisamp, int data_size, Float *data, Float *data1, axis_context *ax, graph_style_t style)
+void draw_graph_data(chan_info *cp, mus_long_t losamp, mus_long_t hisamp, int data_size, mus_float_t *data, mus_float_t *data1, axis_context *ax, graph_style_t style)
 {
-  off_t i, samps;
+  mus_long_t i, samps;
   int xi;
   axis_info *ap;
   snd_info *sp;
@@ -1903,10 +1903,10 @@ void draw_graph_data(chan_info *cp, off_t losamp, off_t hisamp, int data_size, F
 
       cur_srate = (double)SND_SRATE(sp);
       if (losamp == -1)
-	losamp = snd_round_off_t(ap->x0 * cur_srate);
+	losamp = snd_round_mus_long_t(ap->x0 * cur_srate);
       start_time = (double)(losamp) / cur_srate;
       if (hisamp == -1)
-	hisamp = (off_t)(ap->x1 * cur_srate);
+	hisamp = (mus_long_t)(ap->x1 * cur_srate);
       samps = hisamp - losamp + 1;
       if (samps <= 0) return;
       if (samps > data_size) samps = data_size;
@@ -1948,14 +1948,14 @@ static char ampstr[LABEL_BUFFER_SIZE];
 #define AMP_ROOM 45
 #define AMP_ROOM_CUTOFF 3.0
 
-static void display_peaks(chan_info *cp, axis_info *fap, Float *data, 
+static void display_peaks(chan_info *cp, axis_info *fap, mus_float_t *data, 
 			  int start, int end, 
 			  int losamp, int hisamp, 
-			  Float samps_per_pixel, bool fft_data, Float fft_scale /* fourier scale factor or 0.0 */)
+			  mus_float_t samps_per_pixel, bool fft_data, mus_float_t fft_scale /* fourier scale factor or 0.0 */)
 {
   int num_peaks, row, frq_col, frq_strlen, tens, i, amp_col, amp_strlen, row_height = 15, samps;
   bool with_amps;
-  Float amp0;
+  mus_float_t amp0;
   axis_context *ax;
   fft_peak *peak_freqs = NULL;
   fft_peak *peak_amps = NULL;
@@ -2052,7 +2052,7 @@ static void display_peaks(chan_info *cp, axis_info *fap, Float *data,
 	  if (peak_freqs[i].amp >= amp0)
 	    {
 	      char *fstr;
-	      Float px;
+	      mus_float_t px;
 
 	      px = peak_freqs[i].freq;
 	      fstr = prettyf(px * end, tens);
@@ -2091,7 +2091,7 @@ static void display_peaks(chan_info *cp, axis_info *fap, Float *data,
     {
       if (peak_freqs[i].amp < amp0)
 	{
-	  Float px;
+	  mus_float_t px;
 	  char *fstr;
 
 	  px = peak_freqs[i].freq;
@@ -2127,15 +2127,15 @@ static void make_fft_graph(chan_info *cp, axis_info *fap, axis_context *ax, with
   /* since the fft size menu callback can occur while we are calculating the next fft, we have to lock the current size until the graph goes out */
   fft_info *fp;
   snd_info *sp;
-  Float *data;
-  Float incr, x, scale;
+  mus_float_t *data;
+  mus_float_t incr, x, scale;
   int i, j = 0, hisamp, losamp = 0, lines_to_draw = 0;
-  Float samples_per_pixel, xf, ina, ymax;
+  mus_float_t samples_per_pixel, xf, ina, ymax;
   int logx, logy;
-  Float pslogx, pslogy;
-  Float saved_data = 0.0;
-  Float minlx = 0.0, curlx = 0.0, fap_range, log_range, lscale = 1.0;
-  Float *fft_phases = NULL;
+  mus_float_t pslogx, pslogy;
+  mus_float_t saved_data = 0.0;
+  mus_float_t minlx = 0.0, curlx = 0.0, fap_range, log_range, lscale = 1.0;
+  mus_float_t *fft_phases = NULL;
   bool free_phases = false;
 
   sp = cp->sound;
@@ -2150,9 +2150,9 @@ static void make_fft_graph(chan_info *cp, axis_info *fap, axis_context *ax, with
       hisamp = (int)(fp->current_size * cp->spectrum_end / 2);
       if ((cp->fft_log_frequency) && 
 	  ((SND_SRATE(sp) * 0.5 * cp->spectrum_start) < log_freq_start(ss)))
-	losamp = (int)(ceil(fp->current_size * log_freq_start(ss) / (Float)SND_SRATE(sp)));
+	losamp = (int)(ceil(fp->current_size * log_freq_start(ss) / (mus_float_t)SND_SRATE(sp)));
       else losamp = (int)(fp->current_size * cp->spectrum_start / 2);
-      incr = (Float)SND_SRATE(sp) / (Float)(fp->current_size);
+      incr = (mus_float_t)SND_SRATE(sp) / (mus_float_t)(fp->current_size);
     }
   else
     {
@@ -2166,12 +2166,12 @@ static void make_fft_graph(chan_info *cp, axis_info *fap, axis_context *ax, with
   /* no scaling etc here!! see snd_display_fft in snd-fft.c */
   scale = fp->scale;
   if (cp->printing) ps_allocate_grf_points();
-  samples_per_pixel = (Float)((double)(hisamp - losamp) / (Float)(fap->x_axis_x1 - fap->x_axis_x0));
+  samples_per_pixel = (mus_float_t)((double)(hisamp - losamp) / (mus_float_t)(fap->x_axis_x1 - fap->x_axis_x0));
   if (cp->printing) ps_fg(cp, ax);
 
   if (cp->fft_log_frequency)
     {
-      Float maxlx, max_data;
+      mus_float_t maxlx, max_data;
       fap_range = fap->x1 - fap->x0;
       if (fap->x0 > 1.0) minlx = log(fap->x0); else minlx = 0.0;
       maxlx = log(fap->x1);
@@ -2210,8 +2210,8 @@ static void make_fft_graph(chan_info *cp, axis_info *fap, axis_context *ax, with
 	    {
 	      int size;
 	      size = hisamp - losamp + 1;
-	      fft_phases = (Float *)malloc(size * sizeof(Float));
-	      memcpy((void *)fft_phases, (void *)(&(fp->phases[losamp])), size * sizeof(Float));
+	      fft_phases = (mus_float_t *)malloc(size * sizeof(mus_float_t));
+	      memcpy((void *)fft_phases, (void *)(&(fp->phases[losamp])), size * sizeof(mus_float_t));
 	      free_phases = true;
 	    
 	    }
@@ -2225,7 +2225,7 @@ static void make_fft_graph(chan_info *cp, axis_info *fap, axis_context *ax, with
 	    {
 	      for (i = 0, x = 0.0; i < hisamp; i++, x += incr)
 		{
-		  Float scaled_data;
+		  mus_float_t scaled_data;
 		  scaled_data = data[i] * scale;
 		  set_grf_point(local_grf_x(x, fap), i, local_grf_y(scaled_data, fap));
 		  if (cp->printing) 
@@ -2236,7 +2236,7 @@ static void make_fft_graph(chan_info *cp, axis_info *fap, axis_context *ax, with
 	    {
 	      for (i = losamp, x = fap->x0; i < hisamp; i++, x += incr)
 		{
-		  Float scaled_data;
+		  mus_float_t scaled_data;
 		  scaled_data = data[i] * scale;
 		  set_grf_point(local_grf_x(x, fap), 
 				i - losamp, 
@@ -2251,7 +2251,7 @@ static void make_fft_graph(chan_info *cp, axis_info *fap, axis_context *ax, with
 	  /* either log freq or log magnitude or both */
 	  for (i = losamp, x = fap->x0; i < hisamp; i++, x += incr)
 	    {
-	      Float scaled_data;
+	      mus_float_t scaled_data;
 	      scaled_data = data[i] * scale;
 
 	      if (cp->fft_log_frequency) 
@@ -2287,7 +2287,7 @@ static void make_fft_graph(chan_info *cp, axis_info *fap, axis_context *ax, with
 	  (fp->phases) &&
 	  (cp->transform_type == FOURIER))
 	{
-	  fft_phases = (Float *)malloc(POINT_BUFFER_SIZE * sizeof(Float));
+	  fft_phases = (mus_float_t *)malloc(POINT_BUFFER_SIZE * sizeof(mus_float_t));
 	  free_phases = true;
 	}
 
@@ -2314,7 +2314,7 @@ static void make_fft_graph(chan_info *cp, axis_info *fap, axis_context *ax, with
 	      i++;
 	      if (xf > samples_per_pixel)
 		{
-		  Float scaled_data;
+		  mus_float_t scaled_data;
 		  scaled_data = ymax * scale;
 
 		  set_grf_point(local_grf_x(x, fap), j, local_grf_y(scaled_data, fap));
@@ -2345,7 +2345,7 @@ static void make_fft_graph(chan_info *cp, axis_info *fap, axis_context *ax, with
 	      i++;
 	      if (xf > samples_per_pixel)
 		{
-		  Float scaled_data;
+		  mus_float_t scaled_data;
 		  scaled_data = ymax * scale;
 
 		  if (cp->fft_log_frequency) 
@@ -2446,9 +2446,9 @@ static void make_fft_graph(chan_info *cp, axis_info *fap, axis_context *ax, with
 }
 
 
-static int skew_color(Float x)
+static int skew_color(mus_float_t x)
 {
-  Float base, val;
+  mus_float_t base, val;
   int pos;
   if (x < color_cutoff(ss)) return(NO_COLOR);
   if (color_inverted(ss))   
@@ -2480,11 +2480,11 @@ static void make_sonogram(chan_info *cp)
       int i, slice, fwidth, fheight, j, bins;
       int rectw, recth;
       axis_info *fap;
-      Float xf, xfincr, yf, yfincr, frectw, frecth, xscl, scl = 1.0;
-      Float *hfdata;
+      mus_float_t xf, xfincr, yf, yfincr, frectw, frecth, xscl, scl = 1.0;
+      mus_float_t *hfdata;
       int *hidata;
       axis_context *ax;
-      Float minlx = 0.0, curlx = 0.0, lscale = 1.0;
+      mus_float_t minlx = 0.0, curlx = 0.0, lscale = 1.0;
 
       ax = copy_context(cp);
       fap = cp->fft->axis;
@@ -2526,29 +2526,29 @@ static void make_sonogram(chan_info *cp)
       allocate_color_map(color_map(ss));
 
       scl = si->scale; 
-      frectw = (Float)fwidth / (Float)(si->target_slices);
-      frecth = (Float)fheight / (Float)bins;
-      xscl = (Float)(fap->x1 - fap->x0) / (Float)(si->target_slices);
+      frectw = (mus_float_t)fwidth / (mus_float_t)(si->target_slices);
+      frecth = (mus_float_t)fheight / (mus_float_t)bins;
+      xscl = (mus_float_t)(fap->x1 - fap->x0) / (mus_float_t)(si->target_slices);
       rectw = (int)(ceil(frectw));
       recth = (int)(ceil(frecth));
       if (rectw == 0) rectw = 1;
       if (recth == 0) recth = 1;
 
-      hfdata = (Float *)malloc((bins + 1) * sizeof(Float));
+      hfdata = (mus_float_t *)malloc((bins + 1) * sizeof(mus_float_t));
       hidata = (int *)malloc((bins + 1) * sizeof(int));
 
       if (cp->transform_type == FOURIER)
 	{
 	  if (cp->fft_log_frequency)
 	    {
-	      Float maxlx, fap_range, log_range;
+	      mus_float_t maxlx, fap_range, log_range;
 	      fap_range = fap->y1 - fap->y0;
 	      if (fap->y0 > 1.0) minlx = log(fap->y0); else minlx = 0.0;
 	      maxlx = log(fap->y1);
 	      log_range = (maxlx - minlx);
 	      lscale = fap_range / log_range;
 	    }
-	  yfincr = cp->spectrum_end * (Float)SND_SRATE(cp->sound) * 0.5 / (Float)bins;
+	  yfincr = cp->spectrum_end * (mus_float_t)SND_SRATE(cp->sound) * 0.5 / (mus_float_t)bins;
 	}
       else yfincr = 1.0;
 
@@ -2570,20 +2570,20 @@ static void make_sonogram(chan_info *cp)
 	    }
 	}
 
-      xfincr = ((Float)fwidth / (Float)(si->target_slices));
+      xfincr = ((mus_float_t)fwidth / (mus_float_t)(si->target_slices));
       xf = 2 + fap->x_axis_x0;
       ss->stopped_explicitly = false;
 
       for (slice = 0; slice < si->active_slices; slice++, xf += xfincr)
 	{
-	  Float *fdata;
+	  mus_float_t *fdata;
 
 	  memset((void *)sono_js, 0, color_map_size(ss) * sizeof(int));
 	  fdata = si->data[slice];
 
 	  for (i = 0; i < bins; i++)
 	    {
-	      Float binval;
+	      mus_float_t binval;
 	      /* above is fdata[i-1], left is si->data[slice-1][i] */
 	      binval = fdata[i] / scl;
 	      if (cp->fft_log_magnitude) binval = 1.0 - (in_dB(cp->min_dB, cp->lin_dB, binval)) / cp->min_dB;
@@ -2634,11 +2634,11 @@ static void make_sonogram(chan_info *cp)
 }
 
 
-static void rotate_matrix(Float xangle, Float yangle, Float zangle, Float xscl, Float yscl, Float zscl, Float *mat)
+static void rotate_matrix(mus_float_t xangle, mus_float_t yangle, mus_float_t zangle, mus_float_t xscl, mus_float_t yscl, mus_float_t zscl, mus_float_t *mat)
 {
   /* return rotation matrix for rotation through angles xangle, yangle, then zangle with scaling by xscl, yscl, zscl */
-  Float sinx, siny, sinz, cosx, cosy, cosz, deg;
-  Float x, y, z;
+  mus_float_t sinx, siny, sinz, cosx, cosy, cosz, deg;
+  mus_float_t x, y, z;
   deg = 2.0 * M_PI / 360.0;
   x = xangle * deg;
   y = yangle * deg;
@@ -2661,9 +2661,9 @@ static void rotate_matrix(Float xangle, Float yangle, Float zangle, Float xscl, 
 }
 
 
-static void rotate(Float *xyz, Float *mat)
+static void rotate(mus_float_t *xyz, mus_float_t *mat)
 { /* use rotation/scaling matrix set up by rotate_matrix to rotate and scale the vector xyz */
-  Float x, y, z;
+  mus_float_t x, y, z;
   x = xyz[0];
   y = xyz[1];
   z = xyz[2];
@@ -2799,11 +2799,11 @@ static void gl_display(chan_info *cp)
 #endif
 
 
-static void gl_spectrogram(sono_info *si, int gl_fft_list, Float cutoff, bool use_dB, Float min_dB,
+static void gl_spectrogram(sono_info *si, int gl_fft_list, mus_float_t cutoff, bool use_dB, mus_float_t min_dB,
 			   rgb_t br, rgb_t bg, rgb_t bb)
 {
-  Float lin_dB = 0.0;
-  Float xincr, yincr, x0, y0, x1, y1;
+  mus_float_t lin_dB = 0.0;
+  mus_float_t xincr, yincr, x0, y0, x1, y1;
   int bins = 0, slice, i, j;
   float inv_scl;
   int **js = NULL;
@@ -2844,7 +2844,7 @@ static void gl_spectrogram(sono_info *si, int gl_fft_list, Float cutoff, bool us
       for (i = 0; i < bins - 1; i++)
 	{
 	  rgb_t r, g, b;
-	  Float val00, val01, val11, val10;
+	  mus_float_t val00, val01, val11, val10;
 
 	  glBegin(GL_POLYGON);
 
@@ -3045,16 +3045,16 @@ static bool make_spectrogram(chan_info *cp)
   sono_info *si;
   axis_info *fap;
   axis_context *ax;
-  Float *fdata;
-  Float matrix[9];
-  Float xyz[3];
-  Float xoff, yoff, x, y, xincr, yincr, x0, y0, binval, scl = 1.0;
-  Float fwidth, fheight, zscl, yval, xval;
+  mus_float_t *fdata;
+  mus_float_t matrix[9];
+  mus_float_t xyz[3];
+  mus_float_t xoff, yoff, x, y, xincr, yincr, x0, y0, binval, scl = 1.0;
+  mus_float_t fwidth, fheight, zscl, yval, xval;
   int bins = 0, slice, i, j, xx = 0, yy = 0;
   bool old_with_gl = false;
   snd_info *sp;
 
-  Float minlx = 0.0, lscale = 0.0, fap_incr = 0.0;
+  mus_float_t minlx = 0.0, lscale = 0.0, fap_incr = 0.0;
 
   if (chan_fft_in_progress(cp)) return(false);
   si = cp->sonogram_data;
@@ -3078,8 +3078,8 @@ static bool make_spectrogram(chan_info *cp)
   bins = (int)(si->target_bins * cp->spectrum_end);
   fwidth = (fap->x_axis_x1 - fap->x_axis_x0);
   fheight = (fap->y_axis_y1 - fap->y_axis_y0); /* negative! */
-  xincr = fwidth / (Float)bins;
-  yincr = fheight / (Float)si->active_slices;
+  xincr = fwidth / (mus_float_t)bins;
+  yincr = fheight / (mus_float_t)si->active_slices;
   x0 = (fap->x_axis_x0 + fap->x_axis_x1) * 0.5;
   y0 = (fap->y_axis_y0 + fap->y_axis_y1) * 0.5;
 
@@ -3122,10 +3122,10 @@ static bool make_spectrogram(chan_info *cp)
       
       for (i = 0; i < bins; i++, x += xincr)
 	{
-	  Float logx;
+	  mus_float_t logx;
 	  if (cp->fft_log_frequency) 
 	    {
-	      Float fx, curlx;
+	      mus_float_t fx, curlx;
 	      fx = fap->x0 +  fap_incr * i;
 	      if (fx > 1.0) curlx = log(fx); else curlx = 0.0;
 	      logx = fap->x_axis_x0 + (curlx - minlx) * lscale;
@@ -3202,20 +3202,20 @@ static bool make_spectrogram(chan_info *cp)
 typedef struct wavogram_state {
   int hop, trace, width, height, graph_x0, cmap, cmap_size, edit_ctr;
   bool inverted;
-  Float scale, cutoff;
-  off_t losamp;
-  Float x_scale, y_scale, z_scale, z_angle, x_angle, y_angle; /* only used in non-GL case */
+  mus_float_t scale, cutoff;
+  mus_long_t losamp;
+  mus_float_t x_scale, y_scale, z_scale, z_angle, x_angle, y_angle; /* only used in non-GL case */
 } wavogram_state;
 
    
 static int make_wavogram(chan_info *cp)
 {
   snd_info *sp;
-  Float xoff, x, y, x0, y0, xincr;
-  Float width, height, zscl, yval, xval, binval;
+  mus_float_t xoff, x, y, x0, y0, xincr;
+  mus_float_t width, height, zscl, yval, xval, binval;
   int i, j, points = 0, yincr, yoff, xx, yy;
-  Float matrix[9];
-  Float xyz[3];
+  mus_float_t matrix[9];
+  mus_float_t xyz[3];
   axis_info *ap;
   axis_context *ax;
   snd_fd *sf = NULL;
@@ -3227,7 +3227,7 @@ static int make_wavogram(chan_info *cp)
 
   sp = cp->sound;
   ap = cp->axis;
-  if (sp) ap->losamp = (off_t)(ap->x0 * SND_SRATE(sp));
+  if (sp) ap->losamp = (mus_long_t)(ap->x0 * SND_SRATE(sp));
 
 #if HAVE_GL
   if (((sp->nchans == 1) || (sp->channel_style == CHANNELS_SEPARATE)) &&
@@ -3299,10 +3299,10 @@ static int make_wavogram(chan_info *cp)
 #if HAVE_GL
   if (use_gl)
     {
-      Float **samps = NULL;
+      mus_float_t **samps = NULL;
       int **js = NULL;
       float x0, x1, y0, y1, x5inc, y5inc;
-      Float xinc, yinc;
+      mus_float_t xinc, yinc;
       rgb_t *rs = NULL, *gs = NULL, *bs = NULL;
       /* each line is wavo_trace samps, there are (height / wave_hop) of these? */
       int lines = 0, len = 0;
@@ -3315,11 +3315,11 @@ static int make_wavogram(chan_info *cp)
 	  lines = (int)(ap->height / cp->wavo_hop);
 	  if (lines == 0) return(0);
 	  len = cp->wavo_trace;
-	  samps = (Float **)calloc(lines, sizeof(Float *));
+	  samps = (mus_float_t **)calloc(lines, sizeof(mus_float_t *));
 	  js = (int **)calloc(lines, sizeof(int *));
 	  for (i = 0; i < lines; i++)
 	    {
-	      samps[i] = (Float *)calloc(len, sizeof(Float));
+	      samps[i] = (mus_float_t *)calloc(len, sizeof(mus_float_t));
 	      js[i] = (int *)calloc(len, sizeof(int));
 	      for (j = 0; j < len; j++)
 		{
@@ -3362,8 +3362,8 @@ static int make_wavogram(chan_info *cp)
 	  cp->gl_wavo_list = (int)glGenLists(1);
 	}
 
-      xinc = 2.0 / (Float)len;
-      yinc = 2.0 / (Float)lines;
+      xinc = 2.0 / (mus_float_t)len;
+      yinc = 2.0 / (mus_float_t)lines;
       x5inc = 1.25 * xinc;
       y5inc = 1.25 * yinc;
       
@@ -3374,7 +3374,7 @@ static int make_wavogram(chan_info *cp)
       if (rs)
 	{
 	  int len1, lines1;
-	  Float xf, yf;
+	  mus_float_t xf, yf;
 
 	  gs = color_map_greens(color_map(ss));
 	  bs = color_map_blues(color_map(ss));
@@ -3481,7 +3481,7 @@ static int make_wavogram(chan_info *cp)
   width = (ap->x_axis_x1 - ap->x_axis_x0);
   height = (ap->y_axis_y1 - ap->y_axis_y0); /* negative! */
 
-  xincr = width / (Float)(cp->wavo_trace);
+  xincr = width / (mus_float_t)(cp->wavo_trace);
   yincr = -(cp->wavo_hop);
   if (yincr > 0) yincr = -yincr;
   if (yincr == 0) yincr = -1;
@@ -3637,7 +3637,7 @@ static void make_lisp_graph(chan_info *cp, XEN pixel_list)
     {
       int j, graph, pixel_len = -1;
       color_t old_color = 0;
-      Float x, y, samples_per_pixel = 1.0;
+      mus_float_t x, y, samples_per_pixel = 1.0;
       if (XEN_LIST_P(pixel_list))
 	pixel_len = XEN_LIST_LENGTH(pixel_list);
       if (up->graphs > 1) 
@@ -3661,16 +3661,16 @@ static void make_lisp_graph(chan_info *cp, XEN pixel_list)
 		}
 	    }
 	  /* check for up->len[graph] > pixels available and use ymin ymax if needed */
-	  samples_per_pixel = (Float)(up->len[graph]) / (Float)(uap->x_axis_x1 - uap->x_axis_x0);
+	  samples_per_pixel = (mus_float_t)(up->len[graph]) / (mus_float_t)(uap->x_axis_x1 - uap->x_axis_x0);
 	  if (samples_per_pixel < 4.0)
 	    {
-	      Float start_x, xinc;
+	      mus_float_t start_x, xinc;
 	      int grf_len;
 	      grf_len = up->len[graph];
 	      start_x = uap->x0;
 	      if (grf_len <= 1) 
 		xinc = 1.0;
-	      else xinc = (uap->x1 - uap->x0) / (Float)(grf_len - 1);
+	      else xinc = (uap->x1 - uap->x0) / (mus_float_t)(grf_len - 1);
 	      for (i = 0, x = start_x; i < grf_len; i++, x += xinc)
 		{
 		  y = up->data[graph][i];
@@ -3686,12 +3686,12 @@ static void make_lisp_graph(chan_info *cp, XEN pixel_list)
 	  else
 	    {
 	      int xi;
-	      Float ymin, ymax, pinc, xf;
+	      mus_float_t ymin, ymax, pinc, xf;
 	      j = 0;
 	      i = 0;
 	      xf = 0.0;
 	      x = 0.0;
-	      pinc = samples_per_pixel / (Float)(up->len[graph]);
+	      pinc = samples_per_pixel / (mus_float_t)(up->len[graph]);
 	      xi = local_grf_x(0.0, uap);
 	      ymin = 32768.0;
 	      ymax = -32768.0;
@@ -3937,7 +3937,7 @@ static void display_channel_data_with_size(chan_info *cp,
 	      if (ap->y_axis_y0 == ap->y_axis_y1) 
 		make_axes(cp, ap, cp->x_axis_style, DONT_CLEAR_GRAPH, cp->show_grid, WITH_LINEAR_AXES, cp->show_axes); /* first time needs setup */
 	      ap->y0 = ap->x0;
-	      ap->y1 = ap->y0 + (Float)(cp->wavo_trace * (ap->y_axis_y0 - ap->y_axis_y1)) / ((Float)(cp->wavo_hop) * SND_SRATE(sp));
+	      ap->y1 = ap->y0 + (mus_float_t)(cp->wavo_trace * (ap->y_axis_y0 - ap->y_axis_y1)) / ((mus_float_t)(cp->wavo_hop) * SND_SRATE(sp));
 	      ap->x1 = ap->x0 + (double)(cp->wavo_trace) / (double)SND_SRATE(sp);
 	      points = make_wavogram(cp);
 	    }
@@ -3984,8 +3984,8 @@ static void display_channel_data_with_size(chan_info *cp,
 	  
       if ((!with_time) || (just_fft))
 	{ /* make_graph does this -- sets losamp needed by fft to find its starting point */
-	  ap->losamp = (off_t)(ap->x0 * (double)SND_SRATE(sp));
-	  ap->hisamp = (off_t)(ap->x1 * (double)SND_SRATE(sp));
+	  ap->losamp = (mus_long_t)(ap->x0 * (double)SND_SRATE(sp));
+	  ap->hisamp = (mus_long_t)(ap->x1 * (double)SND_SRATE(sp));
 	}
 
       switch (cp->transform_graph_type)
@@ -4028,8 +4028,8 @@ static void display_channel_data_with_size(chan_info *cp,
       XEN pixel_list = XEN_FALSE;
       if ((just_lisp) || ((!with_time) && (!(with_fft))))
 	{
-	  ap->losamp = (off_t)(ap->x0 * (double)SND_SRATE(sp));
-	  ap->hisamp = (off_t)(ap->x1 * (double)SND_SRATE(sp));
+	  ap->losamp = (mus_long_t)(ap->x0 * (double)SND_SRATE(sp));
+	  ap->hisamp = (mus_long_t)(ap->x1 * (double)SND_SRATE(sp));
 	}
       if ((cp->hookable == WITH_HOOK) &&
 	  (!(ss->lisp_graph_hook_active)) &&
@@ -4134,14 +4134,14 @@ static void display_channel_data_1(chan_info *cp, bool just_fft, bool just_lisp,
       else
 	{
 	  int offset, full_height, y0, y1, bottom, top;
-	  Float val, size, chan_height;
+	  mus_float_t val, size, chan_height;
 	  axis_info *ap;
 
 	  /* CHANNELS_COMBINED case */
 	  val = gsy_value(sp->chans[0]);
 	  size = gsy_size(sp->chans[0]);
-	  full_height = (int)((Float)height / size);
-	  chan_height = (Float)full_height / (Float)(sp->nchans);
+	  full_height = (int)((mus_float_t)height / size);
+	  chan_height = (mus_float_t)full_height / (mus_float_t)(sp->nchans);
 	  bottom = (int)(full_height * val);
 	  top = (int)(full_height * (val + size));
 	  y1 = (int)((sp->nchans - cp->chan) * chan_height);
@@ -4288,7 +4288,7 @@ static void draw_sonogram_cursor(chan_info *cp)
 
 kbd_cursor_t cursor_decision(chan_info *cp)
 {
-  off_t len;
+  mus_long_t len;
   len = CURRENT_SAMPLES(cp);
   if (CURSOR(cp) >= len) CURSOR(cp) = len - 1; /* zero based, but in 0-length files, len = 0 */
   if (CURSOR(cp) < 0) CURSOR(cp) = 0;          /* perhaps the cursor should be forced off in empty files? */
@@ -4392,7 +4392,7 @@ void handle_cursor_with_sync(chan_info *cp, kbd_cursor_t redisplay)
 }
 
 
-void cursor_moveto(chan_info *cp, off_t samp)
+void cursor_moveto(chan_info *cp, mus_long_t samp)
 {
   snd_info *sp;
   sp = cp->sound;
@@ -4418,13 +4418,13 @@ void cursor_moveto(chan_info *cp, off_t samp)
 }
 
 
-void cursor_move(chan_info *cp, off_t samps)
+void cursor_move(chan_info *cp, mus_long_t samps)
 {
   cursor_moveto(cp, CURSOR(cp) + samps);
 }
 
 
-void cursor_moveto_without_verbosity(chan_info *cp, off_t samp)
+void cursor_moveto_without_verbosity(chan_info *cp, mus_long_t samp)
 {
   bool old_verbose;
   int old_sync;
@@ -4438,12 +4438,12 @@ void cursor_moveto_without_verbosity(chan_info *cp, off_t samp)
 }
 
 
-void cursor_moveto_with_window(chan_info *cp, off_t samp, off_t left_samp, off_t window_size)
+void cursor_moveto_with_window(chan_info *cp, mus_long_t samp, mus_long_t left_samp, mus_long_t window_size)
 {
   /* restore old window and cursor as much as possible */
   double gx;
   snd_info *sp;
-  off_t current_window_size;
+  mus_long_t current_window_size;
   axis_info *ap;
 
   sp = cp->sound;
@@ -4461,7 +4461,7 @@ void cursor_moveto_with_window(chan_info *cp, off_t samp, off_t left_samp, off_t
 
   CURSOR(cp) = samp;
   current_window_size = ap->hisamp - ap->losamp;
-  if (snd_abs_off_t(current_window_size - window_size) < (off_t)(0.1 * (double)window_size))
+  if (snd_abs_mus_long_t(current_window_size - window_size) < (mus_long_t)(0.1 * (double)window_size))
     gx = (double)(left_samp) / (double)SND_SRATE(sp);
   else gx = (double)(samp) / (double)SND_SRATE(sp) - ap->zx * 0.5 * ap->x_ambit; 
   if (gx < 0.0) gx = 0.0;
@@ -4470,7 +4470,7 @@ void cursor_moveto_with_window(chan_info *cp, off_t samp, off_t left_samp, off_t
 }
 
 
-void sync_cursors(chan_info *cp, off_t samp)
+void sync_cursors(chan_info *cp, mus_long_t samp)
 {
   snd_info *sp;
   sp = cp->sound;
@@ -4492,9 +4492,9 @@ void show_cursor_info(chan_info *cp)
 {
   char *expr_str;
   snd_info *sp;
-  Float y, absy;
+  mus_float_t y, absy;
   int digits, i, len;
-  off_t samp;
+  mus_long_t samp;
   char *s1, *s2;
 
   sp = cp->sound;
@@ -4645,7 +4645,7 @@ static click_loc_t within_graph(chan_info *cp, int x, int y)
 
 static char *describe_fft_point(chan_info *cp, int x, int y)
 {
-  Float xf, yf;
+  mus_float_t xf, yf;
   axis_info *ap;
   fft_info *fp;
   sono_info *si;
@@ -4657,7 +4657,7 @@ static char *describe_fft_point(chan_info *cp, int x, int y)
     return(mus_strdup("?"));
 
   x = mus_iclamp(ap->x_axis_x0, x, ap->x_axis_x1);
-  xf = ap->x0 + (ap->x1 - ap->x0) * (Float)(x - ap->x_axis_x0) / (Float)(ap->x_axis_x1 - ap->x_axis_x0);
+  xf = ap->x0 + (ap->x1 - ap->x0) * (mus_float_t)(x - ap->x_axis_x0) / (mus_float_t)(ap->x_axis_x1 - ap->x_axis_x0);
 
   digits = (int)ceil(fabs(cp->min_dB) / 20);
   if (digits < 2) digits = 2;
@@ -4668,12 +4668,12 @@ static char *describe_fft_point(chan_info *cp, int x, int y)
 	{
 	  if (cp->fft_log_frequency)
 	    {
-	      Float minlx = 0.0;
+	      mus_float_t minlx = 0.0;
 	      if (ap->x0 > 1.0) minlx = log(ap->x0); else minlx = 0.0;
 	      xf = exp(minlx + ((xf - ap->x0) * (log(ap->x1) - minlx) / (ap->x1 - ap->x0)));
-	      ind = (int)((fp->current_size * xf) / (Float)SND_SRATE(cp->sound));
+	      ind = (int)((fp->current_size * xf) / (mus_float_t)SND_SRATE(cp->sound));
 	    }
-	  else ind = (int)((fp->current_size * xf) / (Float)SND_SRATE(cp->sound));
+	  else ind = (int)((fp->current_size * xf) / (mus_float_t)SND_SRATE(cp->sound));
 	}
       else ind = (int)xf;
       if (ind >= fp->current_size) ind = fp->current_size - 1;
@@ -4705,23 +4705,23 @@ static char *describe_fft_point(chan_info *cp, int x, int y)
       if (cp->transform_graph_type == GRAPH_AS_SONOGRAM)
 	{
 	  y = mus_iclamp(ap->y_axis_y1, y, ap->y_axis_y0);
-	  yf = ap->y0 + (ap->y1 - ap->y0) * (Float)(y - ap->y_axis_y0) / (Float)(ap->y_axis_y1 - ap->y_axis_y0);
+	  yf = ap->y0 + (ap->y1 - ap->y0) * (mus_float_t)(y - ap->y_axis_y0) / (mus_float_t)(ap->y_axis_y1 - ap->y_axis_y0);
 
 	  si = cp->sonogram_data;
 	  if (cp->transform_type == FOURIER)
 	    {
 	      if (cp->fft_log_frequency)
 		{
-		  Float minlx = 0.0;
+		  mus_float_t minlx = 0.0;
 		  if (ap->y0 > 1.0) minlx = log(ap->y0); else minlx = 0.0;
 		  yf = exp(minlx + ((yf - ap->y0) * (log(ap->y1) - minlx) / (ap->y1 - ap->y0)));
-		  ind = (int)((fp->current_size * yf) / (Float)SND_SRATE(cp->sound));
+		  ind = (int)((fp->current_size * yf) / (mus_float_t)SND_SRATE(cp->sound));
 		}
-	      else ind = (int)((fp->current_size * yf) / (Float)SND_SRATE(cp->sound));
+	      else ind = (int)((fp->current_size * yf) / (mus_float_t)SND_SRATE(cp->sound));
 	    }
 	  else ind = (int)yf;
 	  if (ind >= si->total_bins) ind = si->total_bins - 1;
-	  time = (int)(si->target_slices * (Float)(x - ap->x_axis_x0) / (Float)(ap->x_axis_x1 - ap->x_axis_x0));
+	  time = (int)(si->target_slices * (mus_float_t)(x - ap->x_axis_x0) / (mus_float_t)(ap->x_axis_x1 - ap->x_axis_x0));
 	  if (time >= si->total_slices) time = si->total_slices - 1;
 	  return(mus_format(_("(time: %.2f, freq: %.1f, val: %.*f%s (raw: %.*f))"),
 			    xf, yf,
@@ -4900,13 +4900,13 @@ chan_info *which_channel(snd_info *sp, int y)
 }
 
 
-static Float fft_axis_extent(chan_info *cp)
+static mus_float_t fft_axis_extent(chan_info *cp)
 {
   axis_info *ap;
   ap = cp->fft->axis;
   if (cp->transform_graph_type != GRAPH_AS_SONOGRAM)
-    return((Float)(ap->x_axis_x1 - ap->x_axis_x0));
-  else return((Float)(ap->y_axis_y0 - ap->y_axis_y1));
+    return((mus_float_t)(ap->x_axis_x1 - ap->x_axis_x0));
+  else return((mus_float_t)(ap->y_axis_y0 - ap->y_axis_y1));
 }
 
 
@@ -4923,7 +4923,7 @@ static mark *play_mark = NULL;
 static click_loc_t click_within_graph = CLICK_NOGRAPH;
 static int fft_axis_start = 0;
 #if HAVE_GL
-  static Float fft_faxis_start = 0.0;
+  static mus_float_t fft_faxis_start = 0.0;
 #endif
 static int mix_tag = NO_MIX_TAG;
 static chan_info *dragged_cp;
@@ -5073,7 +5073,7 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 		{
 		  cp->cursor_on = true;
 		  cursor_moveto(cp, 
-				snd_round_off_t(ungrf_x(cp->axis, x) * 
+				snd_round_mus_long_t(ungrf_x(cp->axis, x) * 
 						(double)SND_SRATE(sp)));
 		  paste_region(region_list_position_to_id(0), cp);
 		}
@@ -5081,7 +5081,7 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 		{
 		  if (key_state & (snd_ShiftMask | snd_ControlMask | snd_MetaMask))
 		    {
-		      off_t samps;
+		      mus_long_t samps;
 		      axis_info *ap;
 		      /* zoom request -> each added key zooms closer, as does each successive click */
 		      ap = cp->axis;
@@ -5104,7 +5104,7 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 		    {
 		      cp->cursor_on = true;
 		      cursor_moveto(cp, 
-				    snd_round_off_t(ungrf_x(cp->axis, x) * 
+				    snd_round_mus_long_t(ungrf_x(cp->axis, x) * 
 						    (double)SND_SRATE(sp)));
 		      if (mouse_mark)
 			{
@@ -5201,7 +5201,7 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 
 
 static oclock_t first_time = 0;
-static off_t mouse_cursor = 0;
+static mus_long_t mouse_cursor = 0;
 static XEN mark_drag_triangle_hook;
 
 
@@ -5263,7 +5263,7 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, oclock_t time)
 	    }
 	  else
 	    {
-	      off_t samps;
+	      mus_long_t samps;
 	      oclock_t time_interval;
 	      time_interval = mouse_time - first_time;
 	      first_time = mouse_time;
@@ -5271,14 +5271,14 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, oclock_t time)
 	      if (!(XEN_TRUE_P(drag_res)))
 		{
 		  if (time_interval != 0)
-		    sp->speed_control = (Float)((double)(samps * 1000) / (double)(time_interval * SND_SRATE(sp)));
+		    sp->speed_control = (mus_float_t)((double)(samps * 1000) / (double)(time_interval * SND_SRATE(sp)));
 		  else sp->speed_control = 0.0;
 		}
 	    }
 	}
       else
 	{
-	  Float old_cutoff;
+	  mus_float_t old_cutoff;
 	  switch (click_within_graph)
 	    {
 	    case CLICK_WAVE:
@@ -5289,10 +5289,10 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, oclock_t time)
 		  return;
 		}
 	      if (!dragged) 
-		start_selection_creation(cp, snd_round_off_t(ungrf_x(cp->axis, x) * SND_SRATE(sp)));
+		start_selection_creation(cp, snd_round_mus_long_t(ungrf_x(cp->axis, x) * SND_SRATE(sp)));
 	      else 
 		{
-		  update_possible_selection_in_progress(snd_round_off_t(ungrf_x(cp->axis, x) * SND_SRATE(sp)));
+		  update_possible_selection_in_progress(snd_round_mus_long_t(ungrf_x(cp->axis, x) * SND_SRATE(sp)));
 		  move_selection(cp, x);
 		}
 	      dragged = true;
@@ -5302,7 +5302,7 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, oclock_t time)
 	      {
 		/* change spectrum_end(ss) and redisplay fft */
 		/*   changed 25-Oct-07 -- follow sync and separate chan */
-		Float new_cutoff;
+		mus_float_t new_cutoff;
 		old_cutoff = cp->spectrum_end;
 		if (cp->transform_graph_type != GRAPH_AS_SONOGRAM)
 		  {
@@ -5310,19 +5310,19 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, oclock_t time)
 		    if ((cp->transform_graph_type == GRAPH_AS_SPECTROGRAM) &&
 			(cp->fft->axis->used_gl))
 		      {
-			Float ny;
+			mus_float_t ny;
 			ny = unproject_to_y(x, y);
 			new_cutoff = cp->spectrum_end + (fft_faxis_start - ny);
 			fft_faxis_start = ny;
 		      }
 		    else
 #endif 
-		      new_cutoff = cp->spectrum_end + ((Float)(fft_axis_start - x) / fft_axis_extent(cp));
+		      new_cutoff = cp->spectrum_end + ((mus_float_t)(fft_axis_start - x) / fft_axis_extent(cp));
 		    fft_axis_start = x;
 		  }
 		else 
 		  {
-		    new_cutoff = cp->spectrum_end + ((Float)(y - fft_axis_start) / fft_axis_extent(cp));
+		    new_cutoff = cp->spectrum_end + ((mus_float_t)(y - fft_axis_start) / fft_axis_extent(cp));
 		    fft_axis_start = y;
 		  }
 		if (new_cutoff > 1.0) new_cutoff = 1.0;
@@ -5730,9 +5730,9 @@ static int g_imin(int mn, XEN val, int def)
 }
 
 
-static int g_omin(off_t mn, XEN val, off_t def)
+static int g_omin(mus_long_t mn, XEN val, mus_long_t def)
 {
-  off_t nval;
+  mus_long_t nval;
   nval = XEN_TO_C_OFF_T_OR_ELSE(val, def);
   if (nval >= mn) return(nval);
   return(mn);
@@ -5765,10 +5765,10 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, cp_field_t fld, const char 
   bool bval = false;
   snd_info *sp;
   int i;
-  off_t curlen = 0, newlen = 0;
+  mus_long_t curlen = 0, newlen = 0;
   char *error = NULL;
-  Float curamp;
-  Float newamp[1];
+  mus_float_t curamp;
+  mus_float_t newamp[1];
   XEN res = XEN_EMPTY_LIST, errstr;
   if (XEN_TRUE_P(snd_n))
     {
@@ -5836,7 +5836,7 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, cp_field_t fld, const char 
     case CP_EDPOS_CURSOR:
       {
 	int pos;
-	off_t cpos;
+	mus_long_t cpos;
 	pos = to_c_edit_position(cp, cp_edpos, caller, 3);
 	cpos = beg_to_sample(on, caller);
 	if (pos == cp->edit_ctr)
@@ -6789,7 +6789,7 @@ static XEN g_min_dB(XEN snd, XEN chn)
   return(C_TO_XEN_DOUBLE(min_dB(ss)));
 }
 
-static void update_db_graph(chan_info *cp, Float new_db)
+static void update_db_graph(chan_info *cp, mus_float_t new_db)
 {
   cp->min_dB = new_db;
   cp->lin_dB = pow(10.0, cp->min_dB * 0.05); 
@@ -6804,7 +6804,7 @@ static void update_db_graph(chan_info *cp, Float new_db)
   calculate_fft(cp);
 }
 
-void set_min_db(Float db)
+void set_min_db(mus_float_t db)
 {
   set_min_dB(db);
   ss->lin_dB = pow(10.0, db * 0.05);
@@ -6818,7 +6818,7 @@ static XEN g_set_min_dB(XEN val, XEN snd, XEN chn)
     return(channel_set(snd, chn, val, CP_MIN_DB, S_setB S_min_dB));
   else
     {
-      Float db;
+      mus_float_t db;
       db = XEN_TO_C_DOUBLE(val);
       if (db < 0.0)
 	{
@@ -6844,7 +6844,7 @@ static XEN g_fft_window_beta(XEN snd, XEN chn)
 
 static XEN g_set_fft_window_beta(XEN val, XEN snd, XEN chn) 
 {
-  Float beta;
+  mus_float_t beta;
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_1, S_setB S_fft_window_beta, "a number"); 
   beta = XEN_TO_C_DOUBLE(val);
   if ((beta < 0.0) || (beta > 1.0))
@@ -6869,7 +6869,7 @@ static XEN g_fft_window_alpha(XEN snd, XEN chn)
 
 static XEN g_set_fft_window_alpha(XEN val, XEN snd, XEN chn) 
 {
-  Float alpha;
+  mus_float_t alpha;
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_1, S_setB S_fft_window_alpha, "a number"); 
   alpha = XEN_TO_C_DOUBLE(val);
   if ((alpha < 0.0) || (alpha > 10.0))
@@ -6894,7 +6894,7 @@ static XEN g_spectrum_end(XEN snd, XEN chn)
 
 static XEN g_set_spectrum_end(XEN val, XEN snd, XEN chn) 
 {
-  Float cutoff;
+  mus_float_t cutoff;
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_1, S_setB S_spectrum_end, "a number"); 
   cutoff = XEN_TO_C_DOUBLE(val);
   if ((cutoff < 0.0) || (cutoff > 1.0))
@@ -6919,7 +6919,7 @@ static XEN g_spectrum_start(XEN snd, XEN chn)
 
 static XEN g_set_spectrum_start(XEN val, XEN snd, XEN chn) 
 {
-  Float start;
+  mus_float_t start;
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_1, S_setB S_spectrum_start, "a number"); 
   start = XEN_TO_C_DOUBLE(val);
   if ((start < 0.0) || (start > 1.0))
@@ -7377,14 +7377,14 @@ static XEN g_transform_size(XEN snd, XEN chn)
 
 static XEN g_set_transform_size(XEN val, XEN snd, XEN chn)
 {
-  off_t len;
+  mus_long_t len;
 
   XEN_ASSERT_TYPE(XEN_OFF_T_P(val), val, XEN_ARG_1, S_setB S_transform_size, "an integer"); 
   len = XEN_TO_C_OFF_T(val);
   if (len <= 0)
     XEN_OUT_OF_RANGE_ERROR(S_setB S_transform_size, 1, val, "size ~A, but must be > 0");
   if (!(POWER_OF_2_P(len)))
-    len = snd_off_t_pow2((int)(log(len + 1) / log(2.0))); /* actually rounds down, despite appearances */
+    len = snd_mus_long_t_pow2((int)(log(len + 1) / log(2.0))); /* actually rounds down, despite appearances */
   if (len <= 0) return(XEN_FALSE);
   if (XEN_BOUND_P(snd))
     return(channel_set(snd, chn, val, CP_TRANSFORM_SIZE, S_setB S_transform_size));
@@ -7782,7 +7782,7 @@ static XEN g_set_beats_per_minute(XEN beats, XEN snd, XEN chn)
     return(channel_set(snd, chn, beats, CP_BEATS_PER_MINUTE, S_setB S_beats_per_minute));
   else
     {
-      Float val;
+      mus_float_t val;
       val = XEN_TO_C_DOUBLE(beats);
       if (val > 0.0)
 	set_beats_per_minute(val);
@@ -7897,13 +7897,13 @@ static void write_transform_peaks(FILE *fd, chan_info *ucp)
 	  fap = fp->axis;
 	  if ((fap) && (fap->graph_active))
 	    {
-	      Float srate2;
+	      mus_float_t srate2;
 	      axis_info *ap;
 	      fft_peak *peak_freqs = NULL;
 	      fft_peak *peak_amps = NULL;
-	      Float *data;
+	      mus_float_t *data;
 	      int num_peaks,samps, cutoff_samps, tens, srate, digits = 5;
-	      Float samples_per_pixel, cutoff;
+	      mus_float_t samples_per_pixel, cutoff;
 
 	      ap = cp->axis;
 	      sp = cp->sound;
@@ -7911,10 +7911,10 @@ static void write_transform_peaks(FILE *fd, chan_info *ucp)
 	      cutoff = cp->spectrum_end;
 	      samps = (int)(fp->current_size * 0.5);
 	      cutoff_samps = (int)(samps * cutoff);
-	      samples_per_pixel = (Float)cutoff_samps / (Float)(fap->x_axis_x1 - fap->x_axis_x0);
+	      samples_per_pixel = (mus_float_t)cutoff_samps / (mus_float_t)(fap->x_axis_x1 - fap->x_axis_x0);
 
 	      srate = SND_SRATE(sp);
-	      srate2 = (Float)srate * .5;
+	      srate2 = (mus_float_t)srate * .5;
 	      if (samps > (5 * srate)) 
 		tens = 2; 
 	      else 
@@ -8150,7 +8150,7 @@ static XEN g_set_x_bounds(XEN bounds, XEN snd_n, XEN chn_n)
   if (!cp) return(XEN_FALSE);
   if (cp->time_graph_type == GRAPH_ONCE) 
     {
-      Float x0, x1;
+      mus_float_t x0, x1;
       x0 = XEN_TO_C_DOUBLE(XEN_CAR(bounds));
       x1 = XEN_TO_C_DOUBLE(XEN_CADR(bounds));
       if (x1 > x0)
@@ -8193,7 +8193,7 @@ static XEN g_y_bounds(XEN snd_n, XEN chn_n)
 static XEN g_set_y_bounds(XEN bounds, XEN snd_n, XEN chn_n)
 {
   chan_info *cp;
-  Float low, hi;
+  mus_float_t low, hi;
   int len = 0;
   XEN y0 = XEN_UNDEFINED, y1 = XEN_UNDEFINED;
 
@@ -8271,7 +8271,7 @@ If 'data' is a list of numbers, it is treated as an envelope."
   vct *v = NULL;
   int i, len = 0, graph, graphs;
   bool need_update = false;
-  Float ymin, ymax, val;
+  mus_float_t ymin, ymax, val;
   double nominal_x0, nominal_x1;
   int old_height = 0, old_width = 0, ww = 0;
   int old_y_offset = 0, gx0 = 0;
@@ -8339,7 +8339,7 @@ If 'data' is a list of numbers, it is treated as an envelope."
       cp->lisp_info = lg;
       lg->len = (int *)calloc(graphs, sizeof(int));
       lg->graphs = graphs;
-      lg->data = (Float **)calloc(graphs, sizeof(Float *));
+      lg->data = (mus_float_t **)calloc(graphs, sizeof(mus_float_t *));
       need_update = true;
     }
   
@@ -8361,7 +8361,7 @@ If 'data' is a list of numbers, it is treated as an envelope."
       if (lg->len[0] != len)
 	{
 	  if (lg->data[0]) free(lg->data[0]);
-	  lg->data[0] = (Float *)calloc(len, sizeof(Float));
+	  lg->data[0] = (mus_float_t *)calloc(len, sizeof(mus_float_t));
 	  lg->len[0] = len;
 	}
       for (i = 0, lst = XEN_COPY_ARG(ldata); i < len; i++, lst = XEN_CDR(lst))
@@ -8393,10 +8393,10 @@ If 'data' is a list of numbers, it is treated as an envelope."
 	  if (lg->len[graph] != len)
 	    {
 	      if (lg->data[graph]) free(lg->data[graph]);
-	      lg->data[graph] = (Float *)calloc(len, sizeof(Float));
+	      lg->data[graph] = (mus_float_t *)calloc(len, sizeof(mus_float_t));
 	      lg->len[graph] = len;
 	    }
-	  memcpy((void *)(lg->data[graph]), (void *)(v->data), len * sizeof(Float));
+	  memcpy((void *)(lg->data[graph]), (void *)(v->data), len * sizeof(mus_float_t));
 	  if ((!XEN_NUMBER_P(y0)) || 
 	      (!XEN_NUMBER_P(y1)))
 	    {
@@ -8461,7 +8461,7 @@ data and passes it to openGL.  See snd-gl.scm for an example."
 
   si = (sono_info *)calloc(1, sizeof(sono_info));
   si->active_slices = XEN_VECTOR_LENGTH(data);
-  si->data = (Float **)calloc(si->active_slices, sizeof(Float *));
+  si->data = (mus_float_t **)calloc(si->active_slices, sizeof(mus_float_t *));
   v = xen_to_vct(XEN_VECTOR_REF(data, 0));
   si->target_bins = v->length;
   si->scale = XEN_TO_C_DOUBLE(scale);
@@ -8505,7 +8505,7 @@ given channel.  Currently, this must be a channel (sound) created by " S_make_va
      */
     XEN result;
     sound_data *sd;
-    off_t i;
+    mus_long_t i;
     int loc;
     result = make_sound_data(1, cp->edits[0]->samples); /* need actual gc-able object here */
     loc = snd_protect(result);

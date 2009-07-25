@@ -38,18 +38,18 @@ void set_sono_rectangle(int j, int color, int x, int y, int width, int height) {
 void draw_sono_rectangles(axis_context *ax, int color, int jmax) {}
 void draw_colored_lines(chan_info *cp, axis_context *ax, point_t *points, int num, int *colors, int axis_y0, color_t default_color) {}
 widget_t start_color_orientation_dialog(bool managed) {return(0);}
-void set_color_scale(Float val) {}
+void set_color_scale(mus_float_t val) {}
 void set_color_inverted(bool val) {}
-void set_color_cutoff(Float val) {}
+void set_color_cutoff(mus_float_t val) {}
 void set_spectro_hop(int val) {}
-void set_spectro_x_angle(Float val) {}
-void set_spectro_y_angle(Float val) {}
-void set_spectro_z_angle(Float val) {}
-void set_spectro_x_scale(Float val) {}
-void set_spectro_y_scale(Float val) {}
-void set_spectro_z_scale(Float val) {}
-void set_spectrum_end(Float val) {}
-void set_spectrum_start(Float val) {}
+void set_spectro_x_angle(mus_float_t val) {}
+void set_spectro_y_angle(mus_float_t val) {}
+void set_spectro_z_angle(mus_float_t val) {}
+void set_spectro_x_scale(mus_float_t val) {}
+void set_spectro_y_scale(mus_float_t val) {}
+void set_spectro_z_scale(mus_float_t val) {}
+void set_spectrum_end(mus_float_t val) {}
+void set_spectrum_start(mus_float_t val) {}
 bool color_orientation_dialog_is_active(void) {return(false);}
 void reflect_spectro(void) {}
 void reflect_peaks_in_transform_dialog(void) {}
@@ -119,9 +119,9 @@ int channel_w(chan_info *cp) {return(0);}
 int channel_f(chan_info *cp) {return(0);}
 int channel_graph(chan_info *cp) {return(0);}
 bool channel_graph_is_visible(chan_info *cp) {return(false);} /* maybe this should be true? */
-void change_gzy(Float val, chan_info *cp) {}
-Float gsy_value(chan_info *cp) {return(0.0);}
-Float gsy_size(chan_info *cp) {return(0.0);}
+void change_gzy(mus_float_t val, chan_info *cp) {}
+mus_float_t gsy_value(chan_info *cp) {return(0.0);}
+mus_float_t gsy_size(chan_info *cp) {return(0.0);}
 void initialize_scrollbars(chan_info *cp) {}
 void set_z_scrollbars(chan_info *cp, axis_info *ap) {}
 void resize_sx(chan_info *cp) {}
@@ -171,8 +171,8 @@ void hide_controls(snd_info *sp) {}
 bool showing_controls(snd_info *sp) {return(false);}
 void start_progress_report(chan_info *cp) {}
 void finish_progress_report(chan_info *cp) {}
-void progress_report(chan_info *cp, Float pct) {}
-char *get_file_dialog_sound_attributes(file_data *fdat, int *srate, int *chans, int *type, int *format, off_t *location, off_t *samples, int min_chan) {return(NULL);}
+void progress_report(chan_info *cp, mus_float_t pct) {}
+char *get_file_dialog_sound_attributes(file_data *fdat, int *srate, int *chans, int *type, int *format, mus_long_t *location, mus_long_t *samples, int min_chan) {return(NULL);}
 void alert_new_file(void) {}
 widget_t make_new_file_dialog(bool managed) {return(0);}
 int edit_header(snd_info *sp) {return(0);}
@@ -185,7 +185,7 @@ widget_t make_sound_save_as_dialog(bool managed) {return(0);}
 widget_t make_file_print_dialog(bool managed, bool direct_to_printer) {return(0);}
 void save_print_dialog_state(FILE *fd) {}
 axis_info *enved_make_axis(const char *name, axis_context *ax, int ex0, int ey0, int width, int height, 
-			   Float xmin, Float xmax, Float ymin, Float ymax, printing_t printing) {return(NULL);}
+			   mus_float_t xmin, mus_float_t xmax, mus_float_t ymin, mus_float_t ymax, printing_t printing) {return(NULL);}
 void display_enved_env_with_selection(env *e, const char *name, int x0, int y0, int width, int height, bool dots, printing_t printing) {}
 void set_enved_redo_sensitive(bool val) {}
 void set_enved_revert_sensitive(bool val) {}
@@ -201,7 +201,7 @@ void update_enved_background_waveform(chan_info *cp) {}
 int create_envelope_editor(void) {return(0);}
 void set_enved_clip_p(bool val) {}
 void reflect_enved_style(void) {}
-void set_enved_base(Float val) {}
+void set_enved_base(mus_float_t val) {}
 void set_enved_target(enved_target_t val) {}
 void set_enved_wave_p(bool val) {}
 void set_enved_in_dB(bool val) {}
@@ -222,20 +222,20 @@ void reflect_mix_play_stop(void) {}
 void set_mix_color(int color) {}
 int mix_dialog_mix(void) {return(0);}
 void mix_dialog_set_mix(int id) {}
-void set_fft_window_alpha(Float val) {in_set_fft_window_alpha(val);}
-void set_fft_window_beta(Float val) {in_set_fft_window_beta(val);}
-void set_transform_size(off_t val) {in_set_transform_size(val);}
+void set_fft_window_alpha(mus_float_t val) {in_set_fft_window_alpha(val);}
+void set_fft_window_beta(mus_float_t val) {in_set_fft_window_beta(val);}
+void set_transform_size(mus_long_t val) {in_set_transform_size(val);}
 void set_fft_window(mus_fft_window_t val) {in_set_fft_window(val);}
 void set_transform_type(int val) {in_set_transform_type(val);}
 void set_wavelet_type(int val) {in_set_wavelet_type(val);}
 void make_transform_type_list(void) {}
 void set_transform_graph_type(graph_type_t val) {in_set_transform_graph_type(val);}
-void set_amp(snd_info *sp, Float val) {sp->amp_control = val;}
-void set_expand(snd_info *sp, Float val) {sp->expand_control = val;}
-void set_contrast(snd_info *sp, Float val) {sp->contrast_control = val;}
-void set_speed(snd_info *sp, Float val) {sp->speed_control = val;}
-void set_revlen(snd_info *sp, Float val) {sp->reverb_control_length = val;}
-void set_revscl(snd_info *sp, Float val) {sp->reverb_control_scale = val;}
+void set_amp(snd_info *sp, mus_float_t val) {sp->amp_control = val;}
+void set_expand(snd_info *sp, mus_float_t val) {sp->expand_control = val;}
+void set_contrast(snd_info *sp, mus_float_t val) {sp->contrast_control = val;}
+void set_speed(snd_info *sp, mus_float_t val) {sp->speed_control = val;}
+void set_revlen(snd_info *sp, mus_float_t val) {sp->reverb_control_length = val;}
+void set_revscl(snd_info *sp, mus_float_t val) {sp->reverb_control_scale = val;}
 void set_filter_order(snd_info *sp, int val) {sp->filter_control_order = val;}
 void set_filter_in_dB(snd_info *sp, bool val) {sp->filter_control_in_dB = val;}
 void set_filter_in_hz(snd_info *sp, bool val) {sp->filter_control_in_hz = val;}
@@ -246,7 +246,7 @@ void vf_highlight_row(widget_t nm, widget_t rw) {}
 void vf_post_info(view_files_info *vdat, int pos) {}
 void vf_unpost_info(view_files_info *vdat) {}
 void vf_flash_row(vf_row *r) {}
-off_t vf_location(view_files_info *vdat) {return(0);}
+mus_long_t vf_location(view_files_info *vdat) {return(0);}
 void vf_post_error(const char *error_msg, view_files_info *data) {}
 void redirect_vf_post_error(const char *error_msg, void *data) {}
 void redirect_vf_post_location_error(const char *error_msg, void *data) {}
@@ -255,8 +255,8 @@ widget_t start_view_files_dialog_1(view_files_info *vdat, bool managed) {return(
 void vf_post_selected_files_list(view_files_info *vdat) {}
 void view_files_add_file_or_directory(view_files_info *vdat, const char *file_or_dir) {}
 void vf_reflect_sort_choice_in_menu(view_files_info *vdat) {}
-void vf_set_amp(view_files_info *vdat, Float val) {}
-void vf_set_speed(view_files_info *vdat, Float val) {}
+void vf_set_amp(view_files_info *vdat, mus_float_t val) {}
+void vf_set_speed(view_files_info *vdat, mus_float_t val) {}
 void vf_set_amp_env(view_files_info *vdat, env *new_e) {}
 void ensure_scrolled_window_row_visible(widget_t list, int pos, int num_rows) {}
 widget_t start_preferences_dialog(void) {return(NULL_WIDGET);}

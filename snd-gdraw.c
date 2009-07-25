@@ -126,7 +126,7 @@ void erase_rectangle(chan_info *cp, axis_context *ax, int x0, int y0, int width,
     }
   else
     {
-      Float grad;
+      mus_float_t grad;
       grad = ss->sgx->bg_gradient;
       /* try gradient background: looks ok, but display is slow */
       cairo_pattern_t *pat;
@@ -676,7 +676,7 @@ void draw_colored_lines(chan_info *cp, axis_context *ax, point_t *points, int nu
       g = default_color->green; 
       b = default_color->blue; 
     }
-  else phases_rgb((Float)(colors[prev]) / (Float)color_map_size(ss), &r, &g, &b);
+  else phases_rgb((mus_float_t)(colors[prev]) / (mus_float_t)color_map_size(ss), &r, &g, &b);
   cairo_set_source_rgb(ax->cr, r, g, b);
 
   for (i = 1; i < num; i++)
@@ -701,7 +701,7 @@ void draw_colored_lines(chan_info *cp, axis_context *ax, point_t *points, int nu
 	      g = default_color->green; 
 	      b = default_color->blue; 
 	    }
-	  else phases_rgb((Float)(colors[cur]) / (Float)color_map_size(ss), &r, &g, &b);
+	  else phases_rgb((mus_float_t)(colors[cur]) / (mus_float_t)color_map_size(ss), &r, &g, &b);
 	  cairo_set_source_rgb(ax->cr, r, g, b);
 	  prev = cur;
 	}
@@ -776,15 +776,15 @@ static void scale_color_callback(GtkAdjustment *adj, gpointer context)
   gfloat scale_val, val;
   scale_val = ADJUSTMENT_VALUE(adj);
   if (scale_val <= 50) 
-    val = (Float)(scale_val + 1) / 51.0;
-  else val = 1.0 + (Float)(scale_val - 50) * 20.0;
+    val = (mus_float_t)(scale_val + 1) / 51.0;
+  else val = 1.0 + (mus_float_t)(scale_val - 50) * 20.0;
   in_set_color_scale(val);
   check_color_hook();
   for_each_chan(update_graph_setting_fft_changed);
 }
 
 
-static void reflect_color_scale(Float val)
+static void reflect_color_scale(mus_float_t val)
 {
   gfloat new_val;
   if (val < 0.02)
@@ -799,7 +799,7 @@ static void reflect_color_scale(Float val)
 }
 
 
-void set_color_scale(Float val)
+void set_color_scale(mus_float_t val)
 {
   in_set_color_scale(val);
   if (ccd_dialog) reflect_color_scale(color_scale(ss));
@@ -833,7 +833,7 @@ static void cutoff_color_callback(GtkAdjustment *adj, gpointer context)
 }
 
 
-void set_color_cutoff(Float val)
+void set_color_cutoff(mus_float_t val)
 {
   in_set_color_cutoff(val);
   if (ccd_dialog) ADJUSTMENT_SET_VALUE(ccd_cutoff_adj, val);
@@ -893,14 +893,14 @@ static GtkObject *oid_ax_adj, *oid_az_adj, *oid_ay_adj, *oid_sx_adj, *oid_sz_adj
 
 static void ax_orientation_callback(GtkAdjustment *adj, gpointer context) 
 {
-  in_set_spectro_x_angle((Float)(ADJUSTMENT_VALUE(adj)));
-  chans_field(FCP_X_ANGLE, (Float)(ADJUSTMENT_VALUE(adj)));
+  in_set_spectro_x_angle((mus_float_t)(ADJUSTMENT_VALUE(adj)));
+  chans_field(FCP_X_ANGLE, (mus_float_t)(ADJUSTMENT_VALUE(adj)));
   check_orientation_hook();
   for_each_chan(update_graph);
 }
 
 
-void set_spectro_x_angle(Float val)
+void set_spectro_x_angle(mus_float_t val)
 {
   in_set_spectro_x_angle(val);
   if (oid_dialog) ADJUSTMENT_SET_VALUE(oid_ax_adj, val);
@@ -912,14 +912,14 @@ void set_spectro_x_angle(Float val)
 
 static void ay_orientation_callback(GtkAdjustment *adj, gpointer context) 
 {
-  in_set_spectro_y_angle((Float)(ADJUSTMENT_VALUE(adj)));
-  chans_field(FCP_Y_ANGLE, (Float)(ADJUSTMENT_VALUE(adj)));
+  in_set_spectro_y_angle((mus_float_t)(ADJUSTMENT_VALUE(adj)));
+  chans_field(FCP_Y_ANGLE, (mus_float_t)(ADJUSTMENT_VALUE(adj)));
   check_orientation_hook();
   for_each_chan(update_graph);
 }
 
 
-void set_spectro_y_angle(Float val)
+void set_spectro_y_angle(mus_float_t val)
 {
   in_set_spectro_y_angle(val);
   if (oid_dialog) ADJUSTMENT_SET_VALUE(oid_ay_adj, val);
@@ -931,14 +931,14 @@ void set_spectro_y_angle(Float val)
 
 static void az_orientation_callback(GtkAdjustment *adj, gpointer context) 
 {
-  in_set_spectro_z_angle((Float)(ADJUSTMENT_VALUE(adj)));
-  chans_field(FCP_Z_ANGLE, (Float)(ADJUSTMENT_VALUE(adj)));
+  in_set_spectro_z_angle((mus_float_t)(ADJUSTMENT_VALUE(adj)));
+  chans_field(FCP_Z_ANGLE, (mus_float_t)(ADJUSTMENT_VALUE(adj)));
   check_orientation_hook();
   for_each_chan(update_graph);
 }
 
 
-void set_spectro_z_angle(Float val)
+void set_spectro_z_angle(mus_float_t val)
 {
   in_set_spectro_z_angle(val);
   if (oid_dialog) ADJUSTMENT_SET_VALUE(oid_az_adj, val);
@@ -950,14 +950,14 @@ void set_spectro_z_angle(Float val)
 
 static void sx_orientation_callback(GtkAdjustment *adj, gpointer context) 
 {
-  in_set_spectro_x_scale((Float)(ADJUSTMENT_VALUE(adj)));
-  chans_field(FCP_X_SCALE, (Float)(ADJUSTMENT_VALUE(adj)));
+  in_set_spectro_x_scale((mus_float_t)(ADJUSTMENT_VALUE(adj)));
+  chans_field(FCP_X_SCALE, (mus_float_t)(ADJUSTMENT_VALUE(adj)));
   check_orientation_hook();
   for_each_chan(update_graph);
 }
 
 
-void set_spectro_x_scale(Float val)
+void set_spectro_x_scale(mus_float_t val)
 {
   in_set_spectro_x_scale(val);
   if (oid_dialog) ADJUSTMENT_SET_VALUE(oid_sx_adj, val);
@@ -969,14 +969,14 @@ void set_spectro_x_scale(Float val)
 
 static void sy_orientation_callback(GtkAdjustment *adj, gpointer context) 
 {
-  in_set_spectro_y_scale((Float)(ADJUSTMENT_VALUE(adj)));
-  chans_field(FCP_Y_SCALE, (Float)(ADJUSTMENT_VALUE(adj)));
+  in_set_spectro_y_scale((mus_float_t)(ADJUSTMENT_VALUE(adj)));
+  chans_field(FCP_Y_SCALE, (mus_float_t)(ADJUSTMENT_VALUE(adj)));
   check_orientation_hook();
   for_each_chan(update_graph);
 }
 
 
-void set_spectro_y_scale(Float val)
+void set_spectro_y_scale(mus_float_t val)
 {
   in_set_spectro_y_scale(val);
   if (oid_dialog) ADJUSTMENT_SET_VALUE(oid_sy_adj, val);
@@ -988,14 +988,14 @@ void set_spectro_y_scale(Float val)
 
 static void sz_orientation_callback(GtkAdjustment *adj, gpointer context) 
 {
-  in_set_spectro_z_scale((Float)(ADJUSTMENT_VALUE(adj)));
-  chans_field(FCP_Z_SCALE, (Float)(ADJUSTMENT_VALUE(adj)));
+  in_set_spectro_z_scale((mus_float_t)(ADJUSTMENT_VALUE(adj)));
+  chans_field(FCP_Z_SCALE, (mus_float_t)(ADJUSTMENT_VALUE(adj)));
   check_orientation_hook();
   for_each_chan(update_graph);
 }
 
 
-void set_spectro_z_scale(Float val)
+void set_spectro_z_scale(mus_float_t val)
 {
   in_set_spectro_z_scale(val);
   if (oid_dialog) ADJUSTMENT_SET_VALUE(oid_sz_adj, val);
@@ -1035,7 +1035,7 @@ void set_spectro_hop(int val)
 }
 
 
-static int fixup_angle(Float ang)
+static int fixup_angle(mus_float_t ang)
 {
   int na;
   na = (int)ang;

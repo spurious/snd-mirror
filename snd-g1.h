@@ -31,17 +31,17 @@ void draw_rotated_axis_label(chan_info *cp, axis_context *ax, const char *text, 
 void draw_dot(axis_context *ax, int x, int y, int size);
 void draw_colored_lines(chan_info *cp, axis_context *ax, point_t *points, int num, int *colors, int axis_y0, color_t default_color);
 void setup_axis_context(chan_info *cp, axis_context *ax);
-void set_color_scale(Float val);
+void set_color_scale(mus_float_t val);
 void set_color_inverted(bool val);
-void set_color_cutoff(Float val);
+void set_color_cutoff(mus_float_t val);
 void set_color_map(int val);
 void set_spectro_hop(int val);
-void set_spectro_x_angle(Float val);
-void set_spectro_y_angle(Float val);
-void set_spectro_z_angle(Float val);
-void set_spectro_x_scale(Float val);
-void set_spectro_y_scale(Float val);
-void set_spectro_z_scale(Float val);
+void set_spectro_x_angle(mus_float_t val);
+void set_spectro_y_angle(mus_float_t val);
+void set_spectro_z_angle(mus_float_t val);
+void set_spectro_x_scale(mus_float_t val);
+void set_spectro_y_scale(mus_float_t val);
+void set_spectro_z_scale(mus_float_t val);
 void view_color_orientation_callback(GtkWidget * w, gpointer info);
 bool color_orientation_dialog_is_active(void);
 GtkWidget *start_color_orientation_dialog(bool managed);
@@ -111,9 +111,9 @@ GtkWidget *get_help_menu_widget(void);
 
 /* -------- snd-gfft.c -------- */
 
-void set_fft_window_beta(Float val);
-void set_fft_window_alpha(Float val);
-void set_transform_size(off_t val);
+void set_fft_window_beta(mus_float_t val);
+void set_fft_window_alpha(mus_float_t val);
+void set_transform_size(mus_long_t val);
 void set_fft_window(mus_fft_window_t val);
 void set_wavelet_type(int val);
 GtkWidget *fire_up_transform_dialog(bool managed);
@@ -121,8 +121,8 @@ bool transform_dialog_is_active(void);
 
 void set_transform_type(int val);
 void make_transform_type_list(void);
-void set_spectrum_start(Float val);
-void set_spectrum_end(Float val);
+void set_spectrum_start(mus_float_t val);
+void set_spectrum_end(mus_float_t val);
 
 void set_show_transform_peaks(bool val);
 void set_fft_log_magnitude(bool val);
@@ -217,9 +217,9 @@ void resize_sy_and_zy(chan_info *cp);
 void resize_sx_and_zx(chan_info *cp);
 void initialize_scrollbars(chan_info *cp);
 void set_z_scrollbars(chan_info *cp, axis_info *ap);
-void change_gzy(Float val, chan_info *cp);
-Float gsy_value(chan_info *cp);
-Float gsy_size(chan_info *cp);
+void change_gzy(mus_float_t val, chan_info *cp);
+mus_float_t gsy_value(chan_info *cp);
+mus_float_t gsy_size(chan_info *cp);
 bool fixup_cp_cgx_ax_wn(chan_info *cp);
 void reflect_edit_history_change(chan_info *cp);
 void reflect_edit_counter_change(chan_info *cp);
@@ -303,7 +303,7 @@ void set_mix_color(color_info *color);
 void widget_modify_bg(GtkWidget *w, GtkStateType type, color_t color);
 void widget_modify_fg(GtkWidget *w, GtkStateType type, color_t color);
 void widget_modify_base(GtkWidget *w, GtkStateType type, color_t color);
-color_t rgb_to_color(Float r, Float g, Float b);
+color_t rgb_to_color(mus_float_t r, mus_float_t g, mus_float_t b);
 #if USE_CAIRO
   GdkColor *rgb_to_gdk_color(color_t col);
 #endif
@@ -343,7 +343,7 @@ void info_widget_display(GtkWidget *w, const char *message);
 void info_widget_set_size(GtkWidget *w, int size);
 GtkWidget *snd_gtk_highlight_label_new(const char *label);
 void widget_int_to_text(GtkWidget *w, int val);
-void widget_off_t_to_text(GtkWidget *w, off_t val);
+void widget_mus_long_t_to_text(GtkWidget *w, mus_long_t val);
 void ensure_scrolled_window_row_visible(widget_t list, int pos, int num_rows);
 
 slist *slist_new_with_title_and_table_data(const char *title,
@@ -379,13 +379,13 @@ void make_minibuffer_label(snd_info *sp, const char *str);
 void set_play_button(snd_info *sp, bool val);
 void play_button_pause(bool pausing);
 void syncb(snd_info *sp, int on);
-void set_amp(snd_info *sp, Float val);
-Float amp_to_scroll(Float minval, Float val, Float maxval);
-void set_expand(snd_info *sp, Float val);
-void set_contrast(snd_info *sp, Float val);
-void set_speed(snd_info *sp, Float val);
-void set_revlen(snd_info *sp, Float val);
-void set_revscl(snd_info *sp, Float val);
+void set_amp(snd_info *sp, mus_float_t val);
+mus_float_t amp_to_scroll(mus_float_t minval, mus_float_t val, mus_float_t maxval);
+void set_expand(snd_info *sp, mus_float_t val);
+void set_contrast(snd_info *sp, mus_float_t val);
+void set_speed(snd_info *sp, mus_float_t val);
+void set_revlen(snd_info *sp, mus_float_t val);
+void set_revscl(snd_info *sp, mus_float_t val);
 void set_filter_order(snd_info *sp, int order);
 void set_filter_text(snd_info *sp, const char *str);
 void display_filter_env(snd_info *sp);
@@ -408,7 +408,7 @@ void show_all_controls(void);
 void hide_all_controls(void);
 void start_progress_report(chan_info *cp);
 void finish_progress_report(chan_info *cp);
-void progress_report(chan_info *cp, Float pct);
+void progress_report(chan_info *cp, mus_float_t pct);
 void g_init_gxsnd(void);
 void reflect_sound_selection(snd_info *sp);
 void display_minibuffer_error(snd_info *sp, const char *str);
@@ -428,7 +428,7 @@ void make_speaker_icons_transparent(const char *bg_line);
 /* -------- snd-genv.c -------- */
 
 axis_info *enved_make_axis(const char *name, axis_context *ax, int ex0, int ey0, int width, int height, 
-			   Float xmin, Float xmax, Float ymin, Float ymax, printing_t printing);
+			   mus_float_t xmin, mus_float_t xmax, mus_float_t ymin, mus_float_t ymax, printing_t printing);
 void display_enved_env_with_selection(env *e, const char *name, int x0, int y0, int width, int height, bool dots, printing_t printing);
 void set_enved_redo_sensitive(bool val);
 void set_enved_revert_sensitive(bool val);
@@ -445,7 +445,7 @@ void enved_print(char *name);
 GtkWidget *create_envelope_editor(void);
 void set_enved_clip_p(bool val);
 void reflect_enved_style(void);
-void set_enved_base(Float val);
+void set_enved_base(mus_float_t val);
 void set_enved_target(enved_target_t val);
 void set_enved_wave_p(bool val);
 void set_enved_in_dB(bool val);
@@ -464,7 +464,7 @@ widget_t record_file(void);
 
 /* -------- snd-gfile.c -------- */
 
-char *get_file_dialog_sound_attributes(file_data *fdat, int *srate, int *chans, int *type, int *format, off_t *location, off_t *samples, int min_chan);
+char *get_file_dialog_sound_attributes(file_data *fdat, int *srate, int *chans, int *type, int *format, mus_long_t *location, mus_long_t *samples, int min_chan);
 void alert_new_file(void);
 widget_t make_open_file_dialog(read_only_t read_only, bool managed);
 widget_t make_sound_save_as_dialog(bool managed);

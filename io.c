@@ -41,8 +41,8 @@ void mus_bint_to_char(unsigned char *j, int x);
 int mus_char_to_bint(const unsigned char *inp);
 void mus_lint_to_char(unsigned char *j, int x);
 int mus_char_to_lint(const unsigned char *inp);
-off_t mus_char_to_loff_t(const unsigned char *inp);
-off_t mus_char_to_boff_t(const unsigned char *inp);
+mus_long_t mus_char_to_llong(const unsigned char *inp);
+mus_long_t mus_char_to_blong(const unsigned char *inp);
 int mus_char_to_uninterpreted_int(const unsigned char *inp);
 void mus_bfloat_to_char(unsigned char *j, float x);
 float mus_char_to_bfloat(const unsigned char *inp);
@@ -57,22 +57,22 @@ unsigned short mus_char_to_ulshort(const unsigned char *inp);
 double mus_char_to_ldouble(const unsigned char *inp);
 double mus_char_to_bdouble(const unsigned char *inp);
 void mus_bdouble_to_char(unsigned char *j, double x);
-void mus_boff_t_to_char(unsigned char *j, off_t x);
-void mus_loff_t_to_char(unsigned char *j, off_t x);
+void mus_blong_to_char(unsigned char *j, mus_long_t x);
+void mus_llong_to_char(unsigned char *j, mus_long_t x);
 unsigned int mus_char_to_ubint(const unsigned char *inp);
 unsigned int mus_char_to_ulint(const unsigned char *inp);
 /* ---------------------------------------- */
 
 
 
-static off_t mus_maximum_malloc = MUS_MAX_MALLOC_DEFAULT;
+static mus_long_t mus_maximum_malloc = MUS_MAX_MALLOC_DEFAULT;
 
-off_t mus_max_malloc(void)
+mus_long_t mus_max_malloc(void)
 {
   return(mus_maximum_malloc);
 }
 
-off_t mus_set_max_malloc(off_t new_max)
+mus_long_t mus_set_max_malloc(mus_long_t new_max)
 {
   mus_maximum_malloc = new_max;
   return(new_max);
@@ -80,14 +80,14 @@ off_t mus_set_max_malloc(off_t new_max)
 
 
 
-static off_t mus_maximum_table_size = MUS_MAX_TABLE_SIZE_DEFAULT;
+static mus_long_t mus_maximum_table_size = MUS_MAX_TABLE_SIZE_DEFAULT;
 
-off_t mus_max_table_size(void)
+mus_long_t mus_max_table_size(void)
 {
   return(mus_maximum_table_size);
 }
 
-off_t mus_set_max_table_size(off_t new_max)
+mus_long_t mus_set_max_table_size(mus_long_t new_max)
 {
   mus_maximum_table_size = new_max;
   return(new_max);
@@ -143,7 +143,7 @@ int mus_char_to_lint(const unsigned char *inp)
 }
 
 
-void mus_boff_t_to_char(unsigned char *j, off_t x)
+void mus_blong_to_char(unsigned char *j, mus_long_t x)
 {
   unsigned char *ox = (unsigned char *)&x;
 #if (!MUS_LITTLE_ENDIAN)
@@ -154,9 +154,9 @@ void mus_boff_t_to_char(unsigned char *j, off_t x)
 }
 
 
-off_t mus_char_to_boff_t(const unsigned char *inp)
+mus_long_t mus_char_to_blong(const unsigned char *inp)
 {
-  off_t o;
+  mus_long_t o;
   unsigned char *outp = (unsigned char *)&o;
 #if MUS_LITTLE_ENDIAN
   outp[0] = inp[7]; outp[1] = inp[6]; outp[2] = inp[5]; outp[3] = inp[4]; outp[4] = inp[3]; outp[5] = inp[2]; outp[6] = inp[1]; outp[7] = inp[0];
@@ -167,7 +167,7 @@ off_t mus_char_to_boff_t(const unsigned char *inp)
 }
 
 
-void mus_loff_t_to_char(unsigned char *j, off_t x)
+void mus_llong_to_char(unsigned char *j, mus_long_t x)
 {
   unsigned char *ox = (unsigned char *)&x;
 #if (MUS_LITTLE_ENDIAN)
@@ -178,9 +178,9 @@ void mus_loff_t_to_char(unsigned char *j, off_t x)
 }
 
 
-off_t mus_char_to_loff_t(const unsigned char *inp)
+mus_long_t mus_char_to_llong(const unsigned char *inp)
 {
-  off_t o;
+  mus_long_t o;
   unsigned char *outp = (unsigned char *)&o;
 #if (!MUS_LITTLE_ENDIAN)
   outp[0] = inp[7]; outp[1] = inp[6]; outp[2] = inp[5]; outp[3] = inp[4]; outp[4] = inp[3]; outp[5] = inp[2]; outp[6] = inp[1]; outp[7] = inp[0];
@@ -530,17 +530,17 @@ bool mus_clipping(void) {return(clipping_default);}
 bool mus_set_clipping(bool new_value) {clipping_default = new_value; return(new_value);}
 
 
-static Float prescaler_default = 1.0;
-Float mus_prescaler(void) {return(prescaler_default);}
-Float mus_set_prescaler(Float new_value) {prescaler_default = new_value; return(new_value);}
+static mus_float_t prescaler_default = 1.0;
+mus_float_t mus_prescaler(void) {return(prescaler_default);}
+mus_float_t mus_set_prescaler(mus_float_t new_value) {prescaler_default = new_value; return(new_value);}
 
 
 typedef struct {
   char *name;
   int data_format, bytes_per_sample, chans, header_type;
   bool clipping;
-  off_t data_location;
-  Float prescaler;
+  mus_long_t data_location;
+  mus_float_t prescaler;
 } io_fd;
 
 static int io_fd_size = 0;
@@ -552,7 +552,7 @@ static io_fd **io_fds = NULL;
 #endif
 
 
-int mus_file_open_descriptors(int tfd, const char *name, int format, int size /* datum size */, off_t location, int chans, int type)
+int mus_file_open_descriptors(int tfd, const char *name, int format, int size /* datum size */, mus_long_t location, int chans, int type)
 {
   int err = MUS_NO_ERROR;
 
@@ -643,7 +643,7 @@ int mus_file_header_type(int tfd)
 }
 
 
-Float mus_file_prescaler(int tfd) 
+mus_float_t mus_file_prescaler(int tfd) 
 {
   io_fd *fd;
   if ((io_fds == NULL) || (tfd >= io_fd_size) || (tfd < 0) || (io_fds[tfd] == NULL)) return(0.0);
@@ -652,7 +652,7 @@ Float mus_file_prescaler(int tfd)
 }
 
 
-Float mus_file_set_prescaler(int tfd, Float val) 
+mus_float_t mus_file_set_prescaler(int tfd, mus_float_t val) 
 {
   io_fd *fd;
   if ((io_fds == NULL) || (tfd >= io_fd_size) || (tfd < 0) || (io_fds[tfd] == NULL)) return(0.0);
@@ -782,7 +782,7 @@ int mus_file_close(int fd)
 
 /* ---------------- seek ---------------- */
 
-off_t mus_file_seek_frame(int tfd, off_t frame)
+mus_long_t mus_file_seek_frame(int tfd, mus_long_t frame)
 {
   io_fd *fd;
   if (io_fds == NULL) 
@@ -912,10 +912,10 @@ static const int mulaw[256] = {
 #endif
 
 
-static off_t mus_read_any_1(int tfd, off_t beg, int chans, off_t nints, mus_sample_t **bufs, mus_sample_t **cm, char *inbuf)
+static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t nints, mus_sample_t **bufs, mus_sample_t **cm, char *inbuf)
 {
   int format, siz, siz_chans;
-  off_t bytes, j, lim, leftover, total_read, k, loc, oldloc, buflim;
+  mus_long_t bytes, j, lim, leftover, total_read, k, loc, oldloc, buflim;
   unsigned char *jchar;
   char *charbuf = NULL;
   mus_sample_t *buffer;
@@ -1036,7 +1036,7 @@ static off_t mus_read_any_1(int tfd, off_t beg, int chans, off_t nints, mus_samp
 	      buffer = (mus_sample_t *)(bufs[k]);
 	      if (buffer)
 		{
-		  off_t loclim;
+		  mus_long_t loclim;
 
 		  loc = oldloc;
 		  loclim = loc + lim;
@@ -1183,27 +1183,27 @@ static off_t mus_read_any_1(int tfd, off_t beg, int chans, off_t nints, mus_samp
 }
 
 
-off_t mus_file_read_any(int tfd, off_t beg, int chans, off_t nints, mus_sample_t **bufs, mus_sample_t **cm)
+mus_long_t mus_file_read_any(int tfd, mus_long_t beg, int chans, mus_long_t nints, mus_sample_t **bufs, mus_sample_t **cm)
 {
   return(mus_read_any_1(tfd, beg, chans, nints, bufs, cm, NULL));
 }
 
 
-off_t mus_file_read_file(int tfd, off_t beg, int chans, off_t nints, mus_sample_t **bufs)
+mus_long_t mus_file_read_file(int tfd, mus_long_t beg, int chans, mus_long_t nints, mus_sample_t **bufs)
 {
   return(mus_read_any_1(tfd, beg, chans, nints, bufs, NULL, NULL));
 }
 
 
-off_t mus_file_read_buffer(int charbuf_data_format, off_t beg, int chans, off_t nints, mus_sample_t **bufs, char *charbuf)
+mus_long_t mus_file_read_buffer(int charbuf_data_format, mus_long_t beg, int chans, mus_long_t nints, mus_sample_t **bufs, char *charbuf)
 {
   return(mus_read_any_1(charbuf_data_format, beg, chans, nints, bufs, NULL, charbuf)); 
 }
 
 
-off_t mus_file_read(int tfd, off_t beg, off_t end, int chans, mus_sample_t **bufs)
+mus_long_t mus_file_read(int tfd, mus_long_t beg, mus_long_t end, int chans, mus_sample_t **bufs)
 {
-  off_t num, rtn, k;
+  mus_long_t num, rtn, k;
   num = (end - beg + 1);
   rtn = mus_read_any_1(tfd, beg, chans, num, bufs, NULL, NULL);
   if (rtn == MUS_ERROR) return(MUS_ERROR);
@@ -1211,7 +1211,7 @@ off_t mus_file_read(int tfd, off_t beg, off_t end, int chans, mus_sample_t **buf
     /* this zeroing can be fooled if the file is chunked and has trailing, non-data chunks */
     for (k = 0; k < chans; k++)
       {
-	off_t i;
+	mus_long_t i;
 	mus_sample_t *buffer;
 	buffer = bufs[k];
 	i = rtn + beg;
@@ -1222,10 +1222,10 @@ off_t mus_file_read(int tfd, off_t beg, off_t end, int chans, mus_sample_t **buf
 }
 
 
-off_t mus_file_read_chans(int tfd, off_t beg, off_t end, int chans, mus_sample_t **bufs, mus_sample_t **cm)
+mus_long_t mus_file_read_chans(int tfd, mus_long_t beg, mus_long_t end, int chans, mus_sample_t **bufs, mus_sample_t **cm)
 {
   /* an optimization of mus_file_read -- just reads the desired channels */
-  off_t num, rtn, k;
+  mus_long_t num, rtn, k;
   num = (end - beg + 1);
   rtn = mus_read_any_1(tfd, beg, chans, num, bufs, cm, NULL);
   if (rtn == MUS_ERROR) return(MUS_ERROR);
@@ -1233,7 +1233,7 @@ off_t mus_file_read_chans(int tfd, off_t beg, off_t end, int chans, mus_sample_t
     for (k = 0; k < chans; k++)
       if ((cm == NULL) || (cm[k]))
 	{
-	  off_t i;
+	  mus_long_t i;
 	  mus_sample_t *buffer;
 	  buffer = bufs[k];
 	  i = rtn + beg;
@@ -1245,7 +1245,7 @@ off_t mus_file_read_chans(int tfd, off_t beg, off_t end, int chans, mus_sample_t
 
 /* ---------------- write ---------------- */
 
-static int checked_write(int tfd, char *buf, off_t chars)
+static int checked_write(int tfd, char *buf, mus_long_t chars)
 {
   ssize_t bytes;
   bytes = write(tfd, buf, chars);
@@ -1280,10 +1280,10 @@ mus_clip_handler_t *mus_clip_set_handler(mus_clip_handler_t *new_clip_handler)
 }
 
 
-static int mus_write_1(int tfd, off_t beg, off_t end, int chans, mus_sample_t **bufs, char *inbuf, bool clipped)
+static int mus_write_1(int tfd, mus_long_t beg, mus_long_t end, int chans, mus_sample_t **bufs, char *inbuf, bool clipped)
 {
   int err, siz, siz_chans, data_format, val;
-  off_t bytes, j, k, lim, leftover, loc, oldloc, buflim, cliploc;
+  mus_long_t bytes, j, k, lim, leftover, loc, oldloc, buflim, cliploc;
   bool clipping = false;
   unsigned char *jchar;
   char *charbuf = NULL;
@@ -1350,7 +1350,7 @@ static int mus_write_1(int tfd, off_t beg, off_t end, int chans, mus_sample_t **
 
       for (k = 0; k < chans; k++)
 	{
-	  off_t loclim;
+	  mus_long_t loclim;
 
 	  if (bufs[k] == NULL) continue;
 	  loc = oldloc;
@@ -1496,7 +1496,7 @@ static int mus_write_1(int tfd, off_t beg, off_t end, int chans, mus_sample_t **
 	    case MUS_B24INT: 
 	      {
 		int c3;
-		off_t bk;
+		mus_long_t bk;
 		bk = (k * 3);
 		c3 = chans * 3;
 		for (; loc < loclim; loc++, bk += c3) 
@@ -1512,7 +1512,7 @@ static int mus_write_1(int tfd, off_t beg, off_t end, int chans, mus_sample_t **
 	    case MUS_L24INT:   
 	      {
 		int c3;
-		off_t bk;
+		mus_long_t bk;
 		bk = (k * 3);
 		c3 = chans * 3;
 		for (; loc < loclim; loc++, bk += c3)
@@ -1541,19 +1541,19 @@ static int mus_write_1(int tfd, off_t beg, off_t end, int chans, mus_sample_t **
 }
 
 
-int mus_file_write(int tfd, off_t beg, off_t end, int chans, mus_sample_t **bufs)
+int mus_file_write(int tfd, mus_long_t beg, mus_long_t end, int chans, mus_sample_t **bufs)
 {
   return(mus_write_1(tfd, beg, end, chans, bufs, NULL, false));
 }
 
 
-int mus_file_write_file(int tfd, off_t beg, off_t end, int chans, mus_sample_t **bufs)
+int mus_file_write_file(int tfd, mus_long_t beg, mus_long_t end, int chans, mus_sample_t **bufs)
 {
   return(mus_write_1(tfd, beg, end, chans, bufs, NULL, false));
 }
 
 
-int mus_file_write_buffer(int charbuf_data_format, off_t beg, off_t end, int chans, mus_sample_t **bufs, char *charbuf, bool clipped)
+int mus_file_write_buffer(int charbuf_data_format, mus_long_t beg, mus_long_t end, int chans, mus_sample_t **bufs, char *charbuf, bool clipped)
 {
   return(mus_write_1(charbuf_data_format, beg, end, chans, bufs, charbuf, clipped));
 }
@@ -1767,7 +1767,7 @@ char *mus_format(const char *format, ...)
 }
 
 
-Float mus_fclamp(Float lo, Float val, Float hi) 
+mus_float_t mus_fclamp(mus_float_t lo, mus_float_t val, mus_float_t hi) 
 {
   if (val > hi) 
     return(hi); 
@@ -1789,7 +1789,7 @@ int mus_iclamp(int lo, int val, int hi)
 }
 
 
-off_t mus_oclamp(off_t lo, off_t val, off_t hi) 
+mus_long_t mus_oclamp(mus_long_t lo, mus_long_t val, mus_long_t hi) 
 {
   if (val > hi) 
     return(hi); 
@@ -1808,7 +1808,7 @@ off_t mus_oclamp(off_t lo, off_t val, off_t hi)
 
 #define SHORT_BYTES 2
 
-static void min_max_shorts(unsigned char *data, int bytes, int chan, int chans, Float *min_samp, Float *max_samp)
+static void min_max_shorts(unsigned char *data, int bytes, int chan, int chans, mus_float_t *min_samp, mus_float_t *max_samp)
 {
   short cur_min, cur_max;
   short *sbuf;
@@ -1826,12 +1826,12 @@ static void min_max_shorts(unsigned char *data, int bytes, int chan, int chans, 
       else if (sbuf[i] > cur_max) cur_max = sbuf[i];
     }
 
-  (*min_samp) = (Float)cur_min / (Float)(1 << 15);
-  (*max_samp) = (Float)cur_max / (Float)(1 << 15);
+  (*min_samp) = (mus_float_t)cur_min / (mus_float_t)(1 << 15);
+  (*max_samp) = (mus_float_t)cur_max / (mus_float_t)(1 << 15);
 }
 
 
-static void min_max_switch_shorts(unsigned char *data, int bytes, int chan, int chans, Float *min_samp, Float *max_samp)
+static void min_max_switch_shorts(unsigned char *data, int bytes, int chan, int chans, mus_float_t *min_samp, mus_float_t *max_samp)
 {
   short cur_min, cur_max;
   /* frame based */
@@ -1860,14 +1860,14 @@ static void min_max_switch_shorts(unsigned char *data, int bytes, int chan, int 
       else if (val > cur_max) cur_max = val;
     }
 
-  (*min_samp) = (Float)cur_min / (Float)(1 << 15);
-  (*max_samp) = (Float)cur_max / (Float)(1 << 15);
+  (*min_samp) = (mus_float_t)cur_min / (mus_float_t)(1 << 15);
+  (*max_samp) = (mus_float_t)cur_max / (mus_float_t)(1 << 15);
 }
 
 
 /* ---------------- unsigned short ---------------- */
 
-static void min_max_ushorts(unsigned char *data, int bytes, int chan, int chans, Float *min_samp, Float *max_samp)
+static void min_max_ushorts(unsigned char *data, int bytes, int chan, int chans, mus_float_t *min_samp, mus_float_t *max_samp)
 {
   unsigned short cur_min, cur_max;
   unsigned short *sbuf;
@@ -1885,12 +1885,12 @@ static void min_max_ushorts(unsigned char *data, int bytes, int chan, int chans,
       else if (sbuf[i] > cur_max) cur_max = sbuf[i];
     }
 
-  (*min_samp) = (Float)(cur_min - USHORT_ZERO) / (Float)(1 << 15);
-  (*max_samp) = (Float)(cur_max - USHORT_ZERO) / (Float)(1 << 15);
+  (*min_samp) = (mus_float_t)(cur_min - USHORT_ZERO) / (mus_float_t)(1 << 15);
+  (*max_samp) = (mus_float_t)(cur_max - USHORT_ZERO) / (mus_float_t)(1 << 15);
 }
 
 
-static void min_max_switch_ushorts(unsigned char *data, int bytes, int chan, int chans, Float *min_samp, Float *max_samp)
+static void min_max_switch_ushorts(unsigned char *data, int bytes, int chan, int chans, mus_float_t *min_samp, mus_float_t *max_samp)
 {
   unsigned short cur_min, cur_max;
   /* frame based */
@@ -1919,8 +1919,8 @@ static void min_max_switch_ushorts(unsigned char *data, int bytes, int chan, int
       else if (val > cur_max) cur_max = val;
     }
 
-  (*min_samp) = (Float)(cur_min - USHORT_ZERO) / (Float)(1 << 15);
-  (*max_samp) = (Float)(cur_max - USHORT_ZERO) / (Float)(1 << 15);
+  (*min_samp) = (mus_float_t)(cur_min - USHORT_ZERO) / (mus_float_t)(1 << 15);
+  (*max_samp) = (mus_float_t)(cur_max - USHORT_ZERO) / (mus_float_t)(1 << 15);
 }
 
 
@@ -1928,7 +1928,7 @@ static void min_max_switch_ushorts(unsigned char *data, int bytes, int chan, int
 
 #define INT_BYTES 4
 
-static void min_max_ints(unsigned char *data, int bytes, int chan, int chans, Float *min_samp, Float *max_samp, bool standard)
+static void min_max_ints(unsigned char *data, int bytes, int chan, int chans, mus_float_t *min_samp, mus_float_t *max_samp, bool standard)
 {
   int cur_min, cur_max;
   int *sbuf;
@@ -1946,20 +1946,20 @@ static void min_max_ints(unsigned char *data, int bytes, int chan, int chans, Fl
       else if (sbuf[i] > cur_max) cur_max = sbuf[i];
     }
   
-  (*min_samp) = (Float)cur_min / (Float)(1 << 23);
-  (*max_samp) = (Float)cur_max / (Float)(1 << 23);
+  (*min_samp) = (mus_float_t)cur_min / (mus_float_t)(1 << 23);
+  (*max_samp) = (mus_float_t)cur_max / (mus_float_t)(1 << 23);
 
   if (!standard)
     {
-      (*min_samp) = (Float)(*min_samp) / (Float)(1 << 8);
-      (*max_samp) = (Float)(*max_samp) / (Float)(1 << 8);
+      (*min_samp) = (mus_float_t)(*min_samp) / (mus_float_t)(1 << 8);
+      (*max_samp) = (mus_float_t)(*max_samp) / (mus_float_t)(1 << 8);
     }
 }
 
 /* (with-sound (:data-format mus-lintn :statistics #t) (fm-violin 0 1 440 .1)) */
 
 
-static void min_max_switch_ints(unsigned char *data, int bytes, int chan, int chans, Float *min_samp, Float *max_samp, bool standard)
+static void min_max_switch_ints(unsigned char *data, int bytes, int chan, int chans, mus_float_t *min_samp, mus_float_t *max_samp, bool standard)
 {
   int cur_min, cur_max;
   /* frame based */
@@ -1988,13 +1988,13 @@ static void min_max_switch_ints(unsigned char *data, int bytes, int chan, int ch
       else if (val > cur_max) cur_max = val;
     }
 
-  (*min_samp) = (Float)cur_min / (Float)(1 << 23);
-  (*max_samp) = (Float)cur_max / (Float)(1 << 23);
+  (*min_samp) = (mus_float_t)cur_min / (mus_float_t)(1 << 23);
+  (*max_samp) = (mus_float_t)cur_max / (mus_float_t)(1 << 23);
 
   if (!standard)
     {
-      (*min_samp) = (Float)(*min_samp) / (Float)(1 << 8);
-      (*max_samp) = (Float)(*max_samp) / (Float)(1 << 8);
+      (*min_samp) = (mus_float_t)(*min_samp) / (mus_float_t)(1 << 8);
+      (*max_samp) = (mus_float_t)(*max_samp) / (mus_float_t)(1 << 8);
     }
 }
 
@@ -2004,7 +2004,7 @@ static void min_max_switch_ints(unsigned char *data, int bytes, int chan, int ch
 
 #define FLOAT_BYTES 4
 
-static void min_max_floats(unsigned char *data, int bytes, int chan, int chans, Float *min_samp, Float *max_samp, bool unscaled)
+static void min_max_floats(unsigned char *data, int bytes, int chan, int chans, mus_float_t *min_samp, mus_float_t *max_samp, bool unscaled)
 {
   float cur_min, cur_max;
   float *sbuf;
@@ -2035,7 +2035,7 @@ static void min_max_floats(unsigned char *data, int bytes, int chan, int chans, 
 }
 
 
-static void min_max_switch_floats(unsigned char *data, int bytes, int chan, int chans, Float *min_samp, Float *max_samp, bool unscaled)
+static void min_max_switch_floats(unsigned char *data, int bytes, int chan, int chans, mus_float_t *min_samp, mus_float_t *max_samp, bool unscaled)
 {
   float cur_min, cur_max;
   /* frame based */
@@ -2082,7 +2082,7 @@ static void min_max_switch_floats(unsigned char *data, int bytes, int chan, int 
 
 #define DOUBLE_BYTES 8
 
-static void min_max_doubles(unsigned char *data, int bytes, int chan, int chans, Float *min_samp, Float *max_samp, bool unscaled)
+static void min_max_doubles(unsigned char *data, int bytes, int chan, int chans, mus_float_t *min_samp, mus_float_t *max_samp, bool unscaled)
 {
   double cur_min, cur_max;
   double *sbuf;
@@ -2113,7 +2113,7 @@ static void min_max_doubles(unsigned char *data, int bytes, int chan, int chans,
 }
 
 
-static void min_max_switch_doubles(unsigned char *data, int bytes, int chan, int chans, Float *min_samp, Float *max_samp, bool unscaled)
+static void min_max_switch_doubles(unsigned char *data, int bytes, int chan, int chans, mus_float_t *min_samp, mus_float_t *max_samp, bool unscaled)
 {
   double cur_min, cur_max;
   /* frame based */
@@ -2172,7 +2172,7 @@ static int three_bytes(unsigned char *data, int loc, bool big_endian)
 }
 
 
-static void min_max_24s(unsigned char *data, int bytes, int chan, int chans, Float *min_samp, Float *max_samp, bool big_endian)
+static void min_max_24s(unsigned char *data, int bytes, int chan, int chans, mus_float_t *min_samp, mus_float_t *max_samp, bool big_endian)
 {
   int cur_min, cur_max;
   int i, bytes_per_frame, len, offset;
@@ -2193,15 +2193,15 @@ static void min_max_24s(unsigned char *data, int bytes, int chan, int chans, Flo
       else if (val > cur_max) cur_max = val;
     }
 
-  (*min_samp) = (Float)cur_min / (Float)(1 << 23);
-  (*max_samp) = (Float)cur_max / (Float)(1 << 23);
+  (*min_samp) = (mus_float_t)cur_min / (mus_float_t)(1 << 23);
+  (*max_samp) = (mus_float_t)cur_max / (mus_float_t)(1 << 23);
 }
 
 
 
 /* ---------------- mulaw, alaw, byte ---------------- */
 
-static void min_max_mulaw(unsigned char *data, int bytes, int chan, int chans, Float *min_samp, Float *max_samp)
+static void min_max_mulaw(unsigned char *data, int bytes, int chan, int chans, mus_float_t *min_samp, mus_float_t *max_samp)
 {
   int cur_min, cur_max;
   int i;
@@ -2217,12 +2217,12 @@ static void min_max_mulaw(unsigned char *data, int bytes, int chan, int chans, F
       else if (val > cur_max) cur_max = val;
     }
 
-  (*min_samp) = (Float)cur_min / 32768.0;
-  (*max_samp) = (Float)cur_max / 32768.0;
+  (*min_samp) = (mus_float_t)cur_min / 32768.0;
+  (*max_samp) = (mus_float_t)cur_max / 32768.0;
 }
 
 
-static void min_max_alaw(unsigned char *data, int bytes, int chan, int chans, Float *min_samp, Float *max_samp)
+static void min_max_alaw(unsigned char *data, int bytes, int chan, int chans, mus_float_t *min_samp, mus_float_t *max_samp)
 {
   int cur_min, cur_max;
   int i;
@@ -2238,12 +2238,12 @@ static void min_max_alaw(unsigned char *data, int bytes, int chan, int chans, Fl
       else if (val > cur_max) cur_max = val;
     }
 
-  (*min_samp) = (Float)cur_min / 32768.0;
-  (*max_samp) = (Float)cur_max / 32768.0;
+  (*min_samp) = (mus_float_t)cur_min / 32768.0;
+  (*max_samp) = (mus_float_t)cur_max / 32768.0;
 }
 
 
-static void min_max_bytes(unsigned char *data, int bytes, int chan, int chans, Float *min_samp, Float *max_samp)
+static void min_max_bytes(unsigned char *data, int bytes, int chan, int chans, mus_float_t *min_samp, mus_float_t *max_samp)
 {
   signed char cur_min, cur_max;
   int i;
@@ -2259,12 +2259,12 @@ static void min_max_bytes(unsigned char *data, int bytes, int chan, int chans, F
       else if (val > cur_max) cur_max = val;
     }
 
-  (*min_samp) = (Float)cur_min / (Float)(1 << 7);
-  (*max_samp) = (Float)cur_max / (Float)(1 << 7);
+  (*min_samp) = (mus_float_t)cur_min / (mus_float_t)(1 << 7);
+  (*max_samp) = (mus_float_t)cur_max / (mus_float_t)(1 << 7);
 }
 
 
-static void min_max_ubytes(unsigned char *data, int bytes, int chan, int chans, Float *min_samp, Float *max_samp)
+static void min_max_ubytes(unsigned char *data, int bytes, int chan, int chans, mus_float_t *min_samp, mus_float_t *max_samp)
 {
   unsigned char cur_min, cur_max;
   int i;
@@ -2278,12 +2278,12 @@ static void min_max_ubytes(unsigned char *data, int bytes, int chan, int chans, 
       else if (data[i] > cur_max) cur_max = data[i];
     }
 
-  (*min_samp) = (Float)(cur_min - UBYTE_ZERO) / (Float)(1 << 7);
-  (*max_samp) = (Float)(cur_max - UBYTE_ZERO) / (Float)(1 << 7);
+  (*min_samp) = (mus_float_t)(cur_min - UBYTE_ZERO) / (mus_float_t)(1 << 7);
+  (*max_samp) = (mus_float_t)(cur_max - UBYTE_ZERO) / (mus_float_t)(1 << 7);
 }
 
 
-int mus_samples_bounds(unsigned char *data, int bytes, int chan, int chans, int format, Float *min_samp, Float *max_samp)
+int mus_samples_bounds(unsigned char *data, int bytes, int chan, int chans, int format, mus_float_t *min_samp, mus_float_t *max_samp)
 {
   switch (format)
     {
@@ -2418,12 +2418,12 @@ int mus_samples_bounds(unsigned char *data, int bytes, int chan, int chans, int 
 }
 
 
-int mus_samples_peak(unsigned char *data, int bytes, int chans, int format, Float *maxes)
+int mus_samples_peak(unsigned char *data, int bytes, int chans, int format, mus_float_t *maxes)
 {
   int chan;
   for (chan = 0; chan < chans; chan++)
     {
-      Float cur_min, cur_max;
+      mus_float_t cur_min, cur_max;
       mus_samples_bounds(data, bytes, chan, chans, format, &cur_min, &cur_max);
       if (-cur_min > cur_max)
 	maxes[chan] = -cur_min;

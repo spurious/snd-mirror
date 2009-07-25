@@ -4,7 +4,7 @@ static GtkWidget *recorder = NULL, *meters = NULL, *record_button = NULL, *recor
 static bool reading = false, recording = false;
 static char *recorder_filename = NULL;
 static int recorder_fd = -1, recorder_srate = 44100, recorder_chans = 2, recorder_format = MUS_LFLOAT;
-static off_t recorder_total_bytes = 0;
+static mus_long_t recorder_total_bytes = 0;
 static axis_context *recorder_ax = NULL;
 static int meter_width = 0, meter_height = 0, meters_width = 0;
 static bool meters_in_db = false;
@@ -93,7 +93,7 @@ static void recorder_help(GtkWidget *w, gpointer context)
 }
 
 
-static void display_meters(Float *maxes)
+static void display_meters(mus_float_t *maxes)
 {
   int i, x0 = 0;
   /* if maxes is NULL, assume all 0's */
@@ -111,14 +111,14 @@ static void display_meters(Float *maxes)
     
     for (i = 0; i < recorder_chans; i++, x0 += meter_width)
       {
-	Float cur_max = 0.0;
+	mus_float_t cur_max = 0.0;
 	if (maxes) 
 	  {
 	    if (!meters_in_db)
 	      cur_max = maxes[i];
 	    else
 	      {
-		Float dv;
+		mus_float_t dv;
 		dv = in_dB(min_dB(ss), ss->lin_dB, maxes[i]);
 		cur_max = 1.0 +  ((dv < -30.0) ? -30.0 : dv) / 30.0;
 	      }
@@ -152,7 +152,7 @@ static void display_meters(Float *maxes)
 
   for (i = 0; i < recorder_chans; i++, x0 += meter_width)
     {
-      Float cur_max = 0.0, rads;
+      mus_float_t cur_max = 0.0, rads;
       int xc, yc;
       if (maxes) 
 	{
@@ -160,7 +160,7 @@ static void display_meters(Float *maxes)
 	    cur_max = maxes[i];
 	  else
 	    {
-	      Float dv;
+	      mus_float_t dv;
 	      dv = in_dB(min_dB(ss), ss->lin_dB, maxes[i]);
 	      cur_max = 1.0 +  ((dv < -30.0) ? -30.0 : dv) / 30.0;
 	    }
@@ -214,7 +214,7 @@ static int look_for_format (float *mixer_vals, int format)
 
 static void start_reading(void)
 {
-  Float *maxes;
+  mus_float_t *maxes;
   #define MIXER_SIZE 8
   float mixer_vals[MIXER_SIZE];
   int input_device, buffer_size, err = MUS_NO_ERROR;
@@ -274,7 +274,7 @@ static void start_reading(void)
       return;
     }
 
-  maxes = (Float *)calloc(recorder_chans, sizeof(Float));
+  maxes = (mus_float_t *)calloc(recorder_chans, sizeof(mus_float_t));
   inbuf = (unsigned char *)calloc(buffer_size, sizeof(unsigned char));
 
   reading = true;

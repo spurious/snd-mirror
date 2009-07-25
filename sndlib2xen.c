@@ -138,7 +138,7 @@ static XEN gmus_sound_set(const char *caller, int (*func)(const char *file, int 
 }
 
 
-static XEN glmus_sound(const char *caller, off_t (*func)(const char *file), XEN gfilename)
+static XEN glmus_sound(const char *caller, mus_long_t (*func)(const char *file), XEN gfilename)
 {
   char *str = NULL;
   XEN result;
@@ -151,7 +151,7 @@ static XEN glmus_sound(const char *caller, off_t (*func)(const char *file), XEN 
 }
 
 
-static XEN glmus_sound_set(const char *caller, int (*func)(const char *file, off_t newval), XEN gfilename, XEN val)
+static XEN glmus_sound_set(const char *caller, int (*func)(const char *file, mus_long_t newval), XEN gfilename, XEN val)
 {
   char *str = NULL;
   XEN result;
@@ -597,13 +597,13 @@ static XEN g_mus_sound_maxamp(XEN file)
   chans = mus_sound_chans(filename);
   if (chans > 0)
     {
-      off_t rtn;
+      mus_long_t rtn;
       int i;
       mus_sample_t *vals;
-      off_t *times;
+      mus_long_t *times;
 
       vals = (mus_sample_t *)calloc(chans, sizeof(mus_sample_t));
-      times = (off_t *)calloc(chans, sizeof(off_t));
+      times = (mus_long_t *)calloc(chans, sizeof(mus_long_t));
 
       rtn = mus_sound_maxamps(filename, chans, vals, times);
       if (rtn != MUS_ERROR)
@@ -644,7 +644,7 @@ static XEN g_mus_sound_set_maxamp(XEN file, XEN vals)
       XEN lst;
       int i, j, len;
       mus_sample_t *mvals;
-      off_t *times;
+      mus_long_t *times;
 
       len = XEN_LIST_LENGTH(vals);
       if (len < (chans * 2))
@@ -652,7 +652,7 @@ static XEN g_mus_sound_set_maxamp(XEN file, XEN vals)
       if (len > chans * 2) len = chans * 2;
 
       mvals = (mus_sample_t *)calloc(chans, sizeof(mus_sample_t));
-      times = (off_t *)calloc(chans, sizeof(off_t));
+      times = (mus_long_t *)calloc(chans, sizeof(mus_long_t));
 
       for (i = 0, j = 0, lst = XEN_COPY_ARG(vals); i < len; i += 2, j++, lst = XEN_CDDR(lst))
 	{
@@ -840,7 +840,7 @@ data-location should be retrieved from a previous call to " S_mus_sound_data_loc
 	    }
 	  if (chns > 0)
 	    {
-	      off_t dloc;
+	      mus_long_t dloc;
 	      if (XEN_OFF_T_P(data_loc))
 		dloc = XEN_TO_C_OFF_T(data_loc);
 	      else
@@ -908,7 +908,7 @@ static XEN g_mus_sound_read(XEN fd, XEN beg, XEN end, XEN chans, XEN sv)
 filling sound-data sdata's buffers starting at beg (buffer location), going to end"
 
   sound_data *sd;
-  off_t bg, nd;
+  mus_long_t bg, nd;
 
   XEN_ASSERT_TYPE(XEN_INTEGER_P(fd), fd, XEN_ARG_1, S_mus_sound_read, "an integer");
   XEN_ASSERT_TYPE(XEN_OFF_T_P(beg), beg, XEN_ARG_2, S_mus_sound_read, "an integer");
@@ -931,7 +931,7 @@ filling sound-data sdata's buffers starting at beg (buffer location), going to e
   {
     mus_sample_t **sdata;
     int i;
-    off_t j, result;
+    mus_long_t j, result;
     sdata = (mus_sample_t **)calloc(sd->chans, sizeof(mus_sample_t *));
     for (i = 0; i < sd->chans; i++) sdata[i] = (mus_sample_t *)calloc(sd->length, sizeof(mus_sample_t));
     result = mus_file_read(XEN_TO_C_INT(fd), bg, nd, XEN_TO_C_INT(chans), sdata);
@@ -953,7 +953,7 @@ static XEN g_mus_sound_write(XEN fd, XEN beg, XEN end, XEN chans, XEN sv)
 starting at beg (buffer location), going to end"
 
   sound_data *sd;
-  off_t bg, nd;
+  mus_long_t bg, nd;
 
   XEN_ASSERT_TYPE(XEN_INTEGER_P(fd), fd, XEN_ARG_1, S_mus_sound_write, "an integer");
   XEN_ASSERT_TYPE(XEN_OFF_T_P(beg), beg, XEN_ARG_2, S_mus_sound_write, "an integer");
@@ -977,7 +977,7 @@ starting at beg (buffer location), going to end"
   {
     mus_sample_t **sdata;
     int i;
-    off_t j, result;
+    mus_long_t j, result;
     sdata = (mus_sample_t **)calloc(sd->chans, sizeof(mus_sample_t *));
     for (i = 0; i < sd->chans; i++)
       sdata[i] = (mus_sample_t *)calloc(sd->length, sizeof(mus_sample_t));
@@ -1179,7 +1179,7 @@ to the audio line from sound-data sdata."
   char *obuf;
   sound_data *sd;
   int outbytes, val, fmt, fd;
-  off_t frms;
+  mus_long_t frms;
 
   XEN_ASSERT_TYPE(XEN_INTEGER_P(line), line, XEN_ARG_1, S_mus_audio_write, "an integer");
   XEN_ASSERT_TYPE(sound_data_p(sdata), sdata, XEN_ARG_2, S_mus_audio_write, "a sound-data object");
@@ -1200,7 +1200,7 @@ to the audio line from sound-data sdata."
   {
     mus_sample_t **sdata;
     int i;
-    off_t j;
+    mus_long_t j;
     sdata = (mus_sample_t **)calloc(sd->chans, sizeof(mus_sample_t *));
     for (i = 0; i < sd->chans; i++) 
       sdata[i] = (mus_sample_t *)calloc(sd->length, sizeof(mus_sample_t));
@@ -1227,7 +1227,7 @@ from the audio line into sound-data sdata."
   char *inbuf;
   sound_data *sd;
   int val, inbytes, fd, fmt;
-  off_t frms;
+  mus_long_t frms;
 
   XEN_ASSERT_TYPE(XEN_INTEGER_P(line), line, XEN_ARG_1, S_mus_audio_read, "an integer");
   XEN_ASSERT_TYPE(sound_data_p(sdata), sdata, XEN_ARG_2, S_mus_audio_read, "a sound-data object");
@@ -1246,7 +1246,7 @@ from the audio line into sound-data sdata."
   {
     mus_sample_t **sdata;
     int i;
-    off_t j;
+    mus_long_t j;
     sdata = (mus_sample_t **)calloc(sd->chans, sizeof(mus_sample_t *));
     for (i = 0; i < sd->chans; i++) sdata[i] = (mus_sample_t *)calloc(sd->length, sizeof(mus_sample_t));
     mus_file_read_buffer(fmt, 0, sd->chans, frms, sdata, inbuf);
@@ -1476,7 +1476,7 @@ srate and channels.  'len' samples are written."
    *   handled through interleaving.  But that means extensive changes to the Lisp code...
    */
 
-  off_t olen, samps;
+  mus_long_t olen, samps;
   vct *v;
 
   XEN_ASSERT_TYPE(XEN_STRING_P(filename), filename, XEN_ARG_1, S_array_to_file, "a string");
@@ -1508,7 +1508,7 @@ static XEN g_file_to_array(XEN filename, XEN chan, XEN start, XEN samples, XEN d
 at frame 'start' and reading 'samples' samples altogether."
 
   int chn;
-  off_t samps;
+  mus_long_t samps;
   vct *v;
   const char *name = NULL;
 
@@ -1721,7 +1721,7 @@ static XEN g_sound_data_chans(XEN obj)
 }
 
 
-sound_data *c_make_sound_data(int chans, off_t frames)
+sound_data *c_make_sound_data(int chans, mus_long_t frames)
 {
   int i;
   sound_data *sd;
@@ -1730,14 +1730,14 @@ sound_data *c_make_sound_data(int chans, off_t frames)
   sd->length = frames;
   sd->chans = chans;
   sd->wrapped = false;
-  sd->data = (Float **)calloc(chans, sizeof(Float *));
+  sd->data = (mus_float_t **)calloc(chans, sizeof(mus_float_t *));
   for (i = 0; i < chans; i++)
-    sd->data[i] = (Float *)calloc(frames, sizeof(Float));
+    sd->data[i] = (mus_float_t *)calloc(frames, sizeof(mus_float_t));
   return(sd);
 }
 
 
-XEN make_sound_data(int chans, off_t frames)
+XEN make_sound_data(int chans, mus_long_t frames)
 {
   #define H_make_sound_data "(" S_make_sound_data " chans frames): return a new sound-data object with 'chans' channels, each having 'frames' samples"
   sound_data *sd;
@@ -1746,7 +1746,7 @@ XEN make_sound_data(int chans, off_t frames)
 }
 
 
-XEN wrap_sound_data(int chans, off_t frames, Float **data)
+XEN wrap_sound_data(int chans, mus_long_t frames, mus_float_t **data)
 {
   sound_data *sd;
   sd = (sound_data *)malloc(sizeof(sound_data));
@@ -1761,7 +1761,7 @@ XEN wrap_sound_data(int chans, off_t frames, Float **data)
 static XEN g_make_sound_data(XEN chans, XEN frames)
 {
   int chns;
-  off_t frms;
+  mus_long_t frms;
 
   XEN_ASSERT_TYPE(XEN_INTEGER_P(chans), chans, XEN_ARG_1, S_make_sound_data, "an integer");
   XEN_ASSERT_TYPE(XEN_OFF_T_P(frames), frames, XEN_ARG_2, S_make_sound_data, "an integer");
@@ -1776,7 +1776,7 @@ static XEN g_make_sound_data(XEN chans, XEN frames)
   if (frms <= 0)
     XEN_OUT_OF_RANGE_ERROR(S_make_sound_data, 2, frames, "frames ~A <= 0?");
   if ((frms > mus_max_malloc()) ||
-      (((off_t)(frms * sizeof(Float))) > mus_max_malloc()))
+      (((mus_long_t)(frms * sizeof(mus_float_t))) > mus_max_malloc()))
     XEN_OUT_OF_RANGE_ERROR(S_make_sound_data, 2, frames, "frames arg ~A too large (see mus-max-malloc)");
 
   return(make_sound_data(chns, frms));
@@ -1788,7 +1788,7 @@ static XEN g_sound_data_ref(XEN obj, XEN chan, XEN frame_num)
 {
   #define H_sound_data_ref "(" S_sound_data_ref " sd chan i): sample in channel chan at location i of sound-data sd: sd[chan][i]"
   sound_data *sd;
-  off_t loc;
+  mus_long_t loc;
   int chn;
 
   XEN_ASSERT_TYPE(SOUND_DATA_P(obj), obj, XEN_ARG_1, S_sound_data_ref, "a sound-data object");
@@ -1824,7 +1824,7 @@ static XEN g_sound_data_maxamp(XEN obj)
   #define H_sound_data_maxamp "(" S_sound_data_maxamp " sd): list of maxamps of data in sd"
   sound_data *sd;
   int i, chans;
-  off_t j, len;
+  mus_long_t j, len;
 
   XEN lst = XEN_EMPTY_LIST;
   XEN_ASSERT_TYPE(SOUND_DATA_P(obj), obj, XEN_ARG_1, S_sound_data_maxamp, "a sound-data object");
@@ -1835,8 +1835,8 @@ static XEN g_sound_data_maxamp(XEN obj)
 
   for (i = chans - 1; i >= 0; i--)
     {
-      Float mx;
-      Float *buf;
+      mus_float_t mx;
+      mus_float_t *buf;
       mx = -10000.0;
       buf = sd->data[i];
       for (j = 0; j < len; j++)
@@ -1853,11 +1853,11 @@ static XEN g_sound_data_maxamp(XEN obj)
 }
 
 
-Float sound_data_peak(sound_data *sd)
+mus_float_t sound_data_peak(sound_data *sd)
 {
   int chn;
-  off_t i;
-  Float mx = 0.0;
+  mus_long_t i;
+  mus_float_t mx = 0.0;
   for (chn = 0; chn < sd->chans; chn++)
     for (i = 0; i < sd->length; i++) 
       if (fabs(sd->data[chn][i]) > mx)
@@ -1900,7 +1900,7 @@ static XEN g_sound_data_set(XEN obj, XEN chan, XEN frame_num, XEN val)
   #define H_sound_data_setB "(" S_sound_data_setB " sd chan i val): set sound-data sd's i-th element in channel chan to val: sd[chan][i] = val"
   sound_data *sd;
   int chn;
-  off_t loc;
+  mus_long_t loc;
 
   XEN_ASSERT_TYPE(SOUND_DATA_P(obj), obj, XEN_ARG_1, S_sound_data_setB, "a sound-data object");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(chan), chan, XEN_ARG_2, S_sound_data_setB, "an integer");
@@ -1931,10 +1931,10 @@ static XEN g_sound_data_set(XEN obj, XEN chan, XEN frame_num, XEN val)
 }
 
 
-sound_data *sound_data_scale(sound_data *sd, Float scaler)
+sound_data *sound_data_scale(sound_data *sd, mus_float_t scaler)
 {
   int chn;
-  off_t i;
+  mus_long_t i;
   if (scaler == 0.0)
     {
       for (chn = 0; chn < sd->chans; chn++)
@@ -1963,10 +1963,10 @@ static XEN g_sound_data_scaleB(XEN sdobj, XEN scl)
 }
 
 
-sound_data *sound_data_fill(sound_data *sd, Float scaler)
+sound_data *sound_data_fill(sound_data *sd, mus_float_t scaler)
 {
   int chn;
-  off_t i;
+  mus_long_t i;
   if (scaler == 0.0)
     {
       for (chn = 0; chn < sd->chans; chn++)
@@ -2000,7 +2000,7 @@ sound_data *sound_data_copy(sound_data *sd)
   sound_data *sdnew;
   sdnew = c_make_sound_data(sd->chans, sd->length);
   for (i = 0; i < sd->chans; i++)
-    memcpy((void *)(sdnew->data[i]), (void *)(sd->data[i]), sd->length * sizeof(Float));
+    memcpy((void *)(sdnew->data[i]), (void *)(sd->data[i]), sd->length * sizeof(mus_float_t));
   return(sdnew);
 }
 
@@ -2020,12 +2020,12 @@ static XEN g_sound_data_copy(XEN obj)
 sound_data *sound_data_reverse(sound_data *sd)
 {
   int chn;
-  off_t i, j;
+  mus_long_t i, j;
 
   for (chn = 0; chn < sd->chans; chn++)
     for (i = 0, j = sd->length - 1; i < j; i++, j--)
       {
-	Float tmp;
+	mus_float_t tmp;
 	tmp = sd->data[chn][i];
 	sd->data[chn][i] = sd->data[chn][j];
 	sd->data[chn][j] = tmp;
@@ -2048,7 +2048,7 @@ static XEN g_sound_data_reverseB(XEN obj)
 sound_data *sound_data_add(sound_data *sd1, sound_data *sd2)
 {
   int i, chns;
-  off_t j, len;
+  mus_long_t j, len;
 
   chns = sd1->chans;
   if (chns > sd2->chans) chns = sd2->chans;
@@ -2078,7 +2078,7 @@ static XEN g_sound_data_addB(XEN obj1, XEN obj2)
 sound_data *sound_data_multiply(sound_data *sd1, sound_data *sd2)
 {
   int i, chns;
-  off_t j, len;
+  mus_long_t j, len;
 
   chns = sd1->chans;
   if (chns > sd2->chans) chns = sd2->chans;
@@ -2105,12 +2105,12 @@ static XEN g_sound_data_multiplyB(XEN obj1, XEN obj2)
 }
 
 
-sound_data *sound_data_offset(sound_data *sd, Float off)
+sound_data *sound_data_offset(sound_data *sd, mus_float_t off)
 {
   if (off != 0.0)
     {
       int i;
-      off_t j;
+      mus_long_t j;
       for (i = 0; i < sd->chans; i++)
 	for (j = 0; j < sd->length; j++)
 	  sd->data[i][j] += off;
@@ -2176,7 +2176,7 @@ static XEN g_sound_data_to_vct(XEN sdobj, XEN chan, XEN vobj)
   vct *v;
   sound_data *sd;
   int chn;
-  off_t len;
+  mus_long_t len;
 
   XEN_ASSERT_TYPE(SOUND_DATA_P(sdobj), sdobj, XEN_ARG_1, S_sound_data_to_vct, "a sound-data object");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chan), chan, XEN_ARG_2, S_sound_data_to_vct, "an integer");
@@ -2193,14 +2193,14 @@ static XEN g_sound_data_to_vct(XEN sdobj, XEN chan, XEN vobj)
 			 XEN_LIST_2(chan, C_TO_XEN_INT(sd->chans))));
 
   if (!(MUS_VCT_P(vobj))) 
-    vobj = xen_make_vct(sd->length, (Float *)calloc(sd->length, sizeof(Float)));
+    vobj = xen_make_vct(sd->length, (mus_float_t *)calloc(sd->length, sizeof(mus_float_t)));
   v = XEN_TO_VCT(vobj);
 
   if (sd->length < v->length) 
     len = sd->length; 
   else len = v->length;
 
-  memcpy((void *)(v->data), (void *)(sd->data[chn]), len * sizeof(Float));
+  memcpy((void *)(v->data), (void *)(sd->data[chn]), len * sizeof(mus_float_t));
 
   return(vobj);
 }
@@ -2213,7 +2213,7 @@ static XEN g_vct_to_sound_data(XEN vobj, XEN sdobj, XEN chan)
   sound_data *sd;
   XEN obj = XEN_FALSE;
   int chn;
-  off_t len;
+  mus_long_t len;
 
   XEN_ASSERT_TYPE(MUS_VCT_P(vobj), vobj, XEN_ARG_1, S_vct_to_sound_data, "a vct");
   XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(sdobj) || SOUND_DATA_P(sdobj), sdobj, XEN_ARG_2, S_vct_to_sound_data, "a sound-data object");
@@ -2243,12 +2243,12 @@ static XEN g_vct_to_sound_data(XEN vobj, XEN sdobj, XEN chan)
   if (sd->length < v->length) 
     len = sd->length; 
   else len = v->length;
-  memcpy((void *)(sd->data[chn]), (void *)(v->data), len * sizeof(Float));
+  memcpy((void *)(sd->data[chn]), (void *)(v->data), len * sizeof(mus_float_t));
   return(obj);
 }
 
 
-static void *off_t_memmove(char *dest, const char *source, off_t length)
+static void *mus_long_t_memmove(char *dest, const char *source, mus_long_t length)
 {
   /* not void, as in gnulib, because that makes C++ unhappy! */
   char *d0 = dest;
@@ -2276,7 +2276,7 @@ copies sound-data sd-in's data from 0 for 'frames' frames into 'sd-out' starting
 
   sound_data *sdi, *sdo;
   int i, chans;
-  off_t j = 0, len, beg, olen, ilen, cycle;
+  mus_long_t j = 0, len, beg, olen, ilen, cycle;
 
   XEN_ASSERT_TYPE(SOUND_DATA_P(sd_in), sd_in, XEN_ARG_1, S_sound_data_to_sound_data, "a sound-data object");
   XEN_ASSERT_TYPE(SOUND_DATA_P(sd_out), sd_out, XEN_ARG_2, S_sound_data_to_sound_data, "a sound-data object");
@@ -2316,14 +2316,14 @@ copies sound-data sd-in's data from 0 for 'frames' frames into 'sd-out' starting
   if ((beg + len) < cycle)
     {
       for (i = 0; i < chans; i++)
-	off_t_memmove((char *)(sdo->data[i] + beg), (const char *)(sdi->data[i]), len * sizeof(Float));
+	mus_long_t_memmove((char *)(sdo->data[i] + beg), (const char *)(sdi->data[i]), len * sizeof(mus_float_t));
       j = beg + len;
     }
   else
     {
       for (i = 0; i < chans; i++)
 	{
-	  off_t k;
+	  mus_long_t k;
 	  j = beg;
 	  for (k = 0; k < len; k++)
 	    {
@@ -2362,7 +2362,7 @@ returns a vector of length sd->chans containing all channels of sound-data sd as
 static XEN sound_data_each(XEN obj)
 {
   int j;
-  off_t i;
+  mus_long_t i;
   sound_data *sd;
   sd = XEN_TO_SOUND_DATA(obj);
   for (j = 0; j < sd->chans; j++)
@@ -2374,7 +2374,7 @@ static XEN sound_data_each(XEN obj)
 
 static XEN sound_data_compare(XEN vr1, XEN vr2)
 {
-  off_t i, len;
+  mus_long_t i, len;
   int j;
   sound_data *v1, *v2;
   if ((SOUND_DATA_P(vr1)) && (SOUND_DATA_P(vr2)))

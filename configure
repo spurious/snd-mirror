@@ -4041,7 +4041,7 @@ fi
 
 if test "$with_doubles" = yes ; then
   cat >>confdefs.h <<\_ACEOF
-#define Float double
+#define mus_float_t double
 _ACEOF
 
   cat >>confdefs.h <<\_ACEOF
@@ -4050,7 +4050,7 @@ _ACEOF
 
 else
   cat >>confdefs.h <<\_ACEOF
-#define Float float
+#define mus_float_t float
 _ACEOF
 
 fi

@@ -1449,11 +1449,11 @@ void check_features_list(const char *features)
 }
 
 
-Float string_to_Float(const char *str, Float lo, const char *field_name)
+mus_float_t string_to_mus_float_t(const char *str, mus_float_t lo, const char *field_name)
 {
 #if HAVE_EXTENSION_LANGUAGE
   XEN res;
-  Float f;
+  mus_float_t f;
   res = snd_catch_any(eval_str_wrapper, (void *)str, "string->float");
   if (XEN_NUMBER_P(res))
     {
@@ -1465,7 +1465,7 @@ Float string_to_Float(const char *str, Float lo, const char *field_name)
   else snd_error(_("%s is not a number"), str);
   return(0.0);
 #else
-  Float res = 0.0;
+  mus_float_t res = 0.0;
   if (str) 
     {
       if (!(sscanf(str, "%f", &res)))
@@ -1513,14 +1513,14 @@ int string_to_int(const char *str, int lo, const char *field_name)
 }
 
 
-off_t string_to_off_t(const char *str, off_t lo, const char *field_name)
+mus_long_t string_to_mus_long_t(const char *str, mus_long_t lo, const char *field_name)
 {
 #if HAVE_EXTENSION_LANGUAGE
   XEN res;
-  res = snd_catch_any(eval_str_wrapper, (void *)str, "string->off_t");
+  res = snd_catch_any(eval_str_wrapper, (void *)str, "string->mus_long_t");
   if (XEN_NUMBER_P(res))
     {
-      off_t val;
+      mus_long_t val;
       val = XEN_TO_C_OFF_T(res);
       if (val < lo)
 	snd_error(_("%s: " OFF_TD " is invalid"), field_name, val);
@@ -1529,7 +1529,7 @@ off_t string_to_off_t(const char *str, off_t lo, const char *field_name)
   else snd_error(_("%s: %s is not a number"), field_name, str);
   return(0);
 #else
-  off_t res = 0;
+  mus_long_t res = 0;
   if (str) 
     {
       if (!(sscanf(str, OFF_TD , &res)))
@@ -2474,7 +2474,7 @@ static XEN g_gsl_eigenvectors(XEN matrix)
 {
   double *data;
   mus_any *u1;
-  Float *vals;
+  mus_float_t *vals;
   int i, j, len;
   XEN values = XEN_FALSE, vectors = XEN_FALSE;
 
