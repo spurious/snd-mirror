@@ -41,7 +41,7 @@ char *xen_strdup(const char *str)
 
 #if HAVE_GUILE
 
-mus_long_t xen_to_c_mus_long_t_or_else(XEN obj, mus_long_t fallback)
+off_t xen_to_c_off_t_or_else(XEN obj, off_t fallback)
 {
   if ((XEN_NOT_FALSE_P(scm_integer_p(obj))) && XEN_EXACT_P(obj))
 #if (defined(SIZEOF_OFF_T) && (SIZEOF_OFF_T > 4)) || (defined(_FILE_OFFSET_BITS) && (_FILE_OFFSET_BITS == 64))
@@ -51,12 +51,12 @@ mus_long_t xen_to_c_mus_long_t_or_else(XEN obj, mus_long_t fallback)
 #endif
   else
     if (XEN_NUMBER_P(obj))
-      return((mus_long_t)XEN_TO_C_DOUBLE(obj));
+      return((off_t)XEN_TO_C_DOUBLE(obj));
   return(fallback);
 }
 
 
-mus_long_t xen_to_c_mus_long_t(XEN obj)
+off_t xen_to_c_off_t(XEN obj)
 {
   if (XEN_EXACT_P(obj))
 #if (defined(SIZEOF_OFF_T) && (SIZEOF_OFF_T > 4)) || (defined(_FILE_OFFSET_BITS) && (_FILE_OFFSET_BITS == 64))
@@ -64,11 +64,11 @@ mus_long_t xen_to_c_mus_long_t(XEN obj)
 #else
     return(XEN_TO_C_INT(obj));
 #endif
-  return((mus_long_t)XEN_TO_C_DOUBLE(obj)); /* inexact integer squeezed through somewhere */
+  return((off_t)XEN_TO_C_DOUBLE(obj)); /* inexact integer squeezed through somewhere */
 }
 
 
-XEN c_to_xen_mus_long_t(mus_long_t val)
+XEN c_to_xen_off_t(off_t val)
 {
 #if (defined(SIZEOF_OFF_T) && (SIZEOF_OFF_T > 4)) || (defined(_FILE_OFFSET_BITS) && (_FILE_OFFSET_BITS == 64))
     return(C_TO_XEN_LONG_LONG(val));
@@ -508,7 +508,7 @@ void xen_initialize(void)
 }
 
 
-mus_long_t xen_to_c_mus_long_t_or_else(XEN obj, mus_long_t fallback)
+off_t xen_to_c_off_t_or_else(XEN obj, off_t fallback)
 {
   if (XEN_OFF_T_P(obj))
 #if (defined(SIZEOF_OFF_T) && (SIZEOF_OFF_T > 4)) || (defined(_FILE_OFFSET_BITS) && (_FILE_OFFSET_BITS == 64))
@@ -518,12 +518,12 @@ mus_long_t xen_to_c_mus_long_t_or_else(XEN obj, mus_long_t fallback)
 #endif
   else
     if (XEN_NUMBER_P(obj))
-      return((mus_long_t)XEN_TO_C_DOUBLE(obj));
+      return((off_t)XEN_TO_C_DOUBLE(obj));
   return(fallback);
 }
 
 
-mus_long_t xen_to_c_mus_long_t(XEN obj)
+off_t xen_to_c_off_t(XEN obj)
 {
 #if (defined(SIZEOF_OFF_T) && (SIZEOF_OFF_T > 4)) || (defined(_FILE_OFFSET_BITS) && (_FILE_OFFSET_BITS == 64))
   return(XEN_TO_C_LONG_LONG(obj));
@@ -533,7 +533,7 @@ mus_long_t xen_to_c_mus_long_t(XEN obj)
 }
 
 
-XEN c_to_xen_mus_long_t(mus_long_t val)
+XEN c_to_xen_off_t(off_t val)
 {
 #if (defined(SIZEOF_OFF_T) && (SIZEOF_OFF_T > 4)) || (defined(_FILE_OFFSET_BITS) && (_FILE_OFFSET_BITS == 64))
     return(C_TO_XEN_LONG_LONG(val));
@@ -1661,7 +1661,7 @@ void xen_repl(int argc, char **argv)
 }
 
 
-mus_long_t xen_to_c_mus_long_t_or_else(XEN obj, mus_long_t fallback)
+off_t xen_to_c_off_t_or_else(XEN obj, off_t fallback)
 {
   if (XEN_NUMBER_P(obj))
     return(fth_long_long_ref(obj));
@@ -1669,13 +1669,13 @@ mus_long_t xen_to_c_mus_long_t_or_else(XEN obj, mus_long_t fallback)
 }
 
 
-mus_long_t xen_to_c_mus_long_t(XEN obj)
+off_t xen_to_c_off_t(XEN obj)
 {
   return(fth_long_long_ref(obj));
 }
 
 
-XEN c_to_xen_mus_long_t(mus_long_t obj)
+XEN c_to_xen_off_t(off_t obj)
 {
   return(fth_make_long_long(obj));
 }
@@ -1754,13 +1754,13 @@ double xen_to_c_double(XEN a)
 }
 
 
-mus_long_t xen_to_c_int(XEN a) 
+off_t xen_to_c_int(XEN a) 
 {
   if (s7_is_integer(a))
-    return((mus_long_t)s7_integer(a));
+    return((off_t)s7_integer(a));
   if (s7_is_rational(a))
-    return((mus_long_t)(s7_numerator(a) / s7_denominator(a)));
-  return((mus_long_t)s7_real(a));
+    return((off_t)(s7_numerator(a) / s7_denominator(a)));
+  return((off_t)s7_real(a));
 }
 
 
@@ -2485,19 +2485,19 @@ int xen_to_c_int_or_else(XEN obj, int fallback)
 }
 
 
-mus_long_t xen_to_c_mus_long_t_or_else(XEN obj, mus_long_t fallback)
+off_t xen_to_c_off_t_or_else(XEN obj, off_t fallback)
 {
   return(0);
 }
 
 
-mus_long_t xen_to_c_mus_long_t(XEN obj)
+off_t xen_to_c_off_t(XEN obj)
 {
   return(0);
 }
 
 
-XEN c_to_xen_mus_long_t(mus_long_t val)
+XEN c_to_xen_off_t(off_t val)
 {
   return(XEN_ZERO);
 }

@@ -3,8 +3,8 @@
 
 /* macros for extension language support 
  *
- * Guile:     covers 1.3.4 to present (1.9.n)
- * Ruby:      covers 1.6 to present (1.9.n)
+ * Guile:     covers 1.3.4 to present (1.9.0)
+ * Ruby:      covers 1.6 to present (1.9, but avoid the latter!)
  * Forth:     covers 1.0 to present
  * S7:        all versions
  * None:      all versions
@@ -28,7 +28,7 @@
  *  1-Nov-08:  changed s7 and Guile C_TO_XEN_STRING slightly.
  *  16-Oct-08: removed Gauche support.
  *  10-Aug-08: S7, a TinyScheme derivative.
- *             changed XEN_NUMERATOR and XEN_DENOMINATOR to return mus_long_t not XEN.
+ *             changed XEN_NUMERATOR and XEN_DENOMINATOR to return off_t not XEN.
  *  23-Jul-08: be more careful about wrapping POINTERs (they say 64-bit MS C void* == unsigned long long, but not unsigned long).
  *  30-Jun-08: XEN_OFF_T_IF_BOUND_P.
  *  19-May-08: more const char* arg declarations.
@@ -66,7 +66,7 @@
  *  24-Mar-05: Ruby properties (Mike Scholz).
  *  8-Mar-05:  Ruby improvements in keywords and hooks (Mike Scholz).
  *  7-Mar-05:  C99 complex number changes (creal, _Complex_I) (Steve Bankowitz).
- *  2-Mar-05:  Ruby support for mus_long_t (Mike Scholz).
+ *  2-Mar-05:  Ruby support for off_t (Mike Scholz).
  *  4-Jan-05:  more guile changes, deprecated XEN_VECTOR_ELEMENTS.
  *  --------
  *  31-Dec-04: removed "caller" arg from *_NO_CATCH.
@@ -103,8 +103,8 @@
  *  --------
  *  19-Dec-02: proc arg checks for Ruby (to make sure XEN_[N|V]ARGIFY|DEFINE_PROCEDURE[etc] agree)
  *  29-Jul-02: SCM_WRITABLE_VELTS for current CVS Guile
- *  28-May-02: mus_long_t equivalents in Ruby 1.7
- *  6-May-02:  mus_long_t (long long) macros.
+ *  28-May-02: off_t equivalents in Ruby 1.7
+ *  6-May-02:  off_t (long long) macros.
  *  29-Apr-02: XEN_EXACT_P
  *  2-Jan-02:  removed TIMING and MCHECK debugging stuff, VARIABLE_REF -> XEN_VARIABLE_REF
  *  --------
@@ -247,7 +247,7 @@
 
 #define XEN_ULONG_LONG_P(Arg)        XEN_ULONG_P(Arg) 
 #define XEN_TO_C_ULONG_LONG(Arg)     XEN_TO_C_OFF_T(a) 
-#define C_TO_XEN_ULONG_LONG(Arg)     C_TO_XEN_OFF_T((mus_long_t)a) 
+#define C_TO_XEN_ULONG_LONG(Arg)     C_TO_XEN_OFF_T((off_t)a) 
 
 #if HAVE_SCM_NAN_P
   #define XEN_NAN_P(Arg)             XEN_TRUE_P(scm_nan_p(Arg))
@@ -882,7 +882,7 @@ char *xen_guile_to_c_string_with_eventual_free(XEN str);
   #define C_TO_XEN_ULONG(a)             UINT2NUM((unsigned long)a)
 #endif
 
-/* mus_long_t support added in 1.8.0, I think */
+/* off_t support added in 1.8.0, I think */
 #ifndef OFFT2NUM
   #define OFFT2NUM(a)                   INT2NUM(a)
 #endif
@@ -894,7 +894,7 @@ char *xen_guile_to_c_string_with_eventual_free(XEN str);
 
 #define XEN_ULONG_LONG_P(Arg)           XEN_ULONG_P(Arg) 
 #define XEN_TO_C_ULONG_LONG(Arg)        XEN_TO_C_OFF_T(a) 
-#define C_TO_XEN_ULONG_LONG(Arg)        C_TO_XEN_OFF_T((mus_long_t)a) 
+#define C_TO_XEN_ULONG_LONG(Arg)        C_TO_XEN_OFF_T((off_t)a) 
 
 /* ---- strings ---- */
 #define XEN_STRING_P(Arg)               ((TYPE(Arg) == T_STRING) && (!SYMBOL_P(Arg)))
@@ -1658,7 +1658,7 @@ extern XEN xen_false, xen_true, xen_nil, xen_undefined;
 #define C_TO_XEN_LONG_LONG(Arg)                    C_TO_XEN_OFF_T(Arg)
 #define XEN_TO_C_LONG_LONG(Arg)                    XEN_TO_C_OFF_T(Arg)
 
-#define XEN_OFF_T_P(Arg)                           XEN_INTEGER_P(Arg) /* I'm going to use mus_long_t's throughout */
+#define XEN_OFF_T_P(Arg)                           XEN_INTEGER_P(Arg) /* I'm going to use off_t's throughout */
 #define XEN_TO_C_OFF_T_OR_ELSE(Arg, Def)           XEN_TO_C_INT_OR_ELSE(Arg, Def)
 #define C_TO_XEN_OFF_T(Arg)                        C_TO_XEN_INT(Arg)
 #define XEN_TO_C_OFF_T(Arg)                        XEN_TO_C_INT(Arg)
@@ -2045,7 +2045,7 @@ XEN xen_define_variable(const char *name, XEN value);
 void xen_s7_ignore(s7_function func); /* squelch compiler warnings */
 const char *xen_s7_object_help(XEN sym);
 double xen_to_c_double(XEN a);
-mus_long_t xen_to_c_int(XEN a);
+off_t xen_to_c_int(XEN a);
 double xen_to_c_double_or_else(XEN a, double b);
 s7_scheme *s7_xen_initialize(s7_scheme *sc);
 void xen_s7_set_repl_prompt(const char *new_prompt);
@@ -2305,9 +2305,9 @@ void xen_no_ext_lang_check_args(const char *name, int args, int req_args, int op
 /* 10 is the limit in Guile (SCM_GSUBR_MAX in gsubr.h), no limit in S7, not sure about Ruby or Forth */
 
 #if (!HAVE_S7)
-#define XEN_TO_C_OFF_T_OR_ELSE(a, b)  xen_to_c_mus_long_t_or_else(a, b)
-#define C_TO_XEN_OFF_T(a)             c_to_xen_mus_long_t(a)
-#define XEN_TO_C_OFF_T(a)             xen_to_c_mus_long_t(a)
+#define XEN_TO_C_OFF_T_OR_ELSE(a, b)  xen_to_c_off_t_or_else(a, b)
+#define C_TO_XEN_OFF_T(a)             c_to_xen_off_t(a)
+#define XEN_TO_C_OFF_T(a)             xen_to_c_off_t(a)
 #define XEN_AS_STRING(form)           XEN_TO_C_STRING(XEN_TO_STRING(form))
 #else
 #define XEN_AS_STRING(form)           s7_object_to_c_string(s7, form)
@@ -2337,7 +2337,7 @@ void xen_no_ext_lang_check_args(const char *name, int args, int req_args, int op
  #define XEN_WRAP_C_POINTER(a)         ((XEN)(C_TO_XEN_ULONG((unsigned long)a))) 
  #define XEN_UNWRAP_C_POINTER(a)       XEN_TO_C_ULONG(a) 
 #else 
- #define XEN_WRAP_C_POINTER(a)         C_TO_XEN_OFF_T((mus_long_t)(a)) 
+ #define XEN_WRAP_C_POINTER(a)         C_TO_XEN_OFF_T((off_t)(a)) 
  #define XEN_UNWRAP_C_POINTER(a)       XEN_TO_C_OFF_T(a) 
 #endif 
 
@@ -2358,9 +2358,9 @@ char *xen_strdup(const char *str);
 
 #if (!HAVE_S7)
 int xen_to_c_int_or_else(XEN obj, int fallback);
-mus_long_t xen_to_c_mus_long_t_or_else(XEN obj, mus_long_t fallback);
-mus_long_t xen_to_c_mus_long_t(XEN obj);
-XEN c_to_xen_mus_long_t(mus_long_t val);
+off_t xen_to_c_off_t_or_else(XEN obj, off_t fallback);
+off_t xen_to_c_off_t(XEN obj);
+XEN c_to_xen_off_t(off_t val);
 #endif
 char *xen_version(void);
 void xen_repl(int argc, char **argv);

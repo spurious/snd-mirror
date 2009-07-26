@@ -2,10 +2,11 @@
 #define CLM_H
 
 #define MUS_VERSION 4
-#define MUS_REVISION 25
-#define MUS_DATE "15-June-09"
+#define MUS_REVISION 26
+#define MUS_DATE "27-July-09"
 
 /*
+ * 27-Jul:     mus_float_t for Float, and mus_long_t for off_t.
  * 15-Jun:     mus_rectangular_to_magnitudes (polar, but ignore phases).
  * 11-Jun:     mus_cepstrum.
  * 11-May:     MUS_ENV_LINEAR and friends, also mus_env_linear|exponential.

@@ -57937,11 +57937,11 @@ EDITS: 1
 			   (XSetPlaneMask dpy sgc 0)
 			   (XSetDashes dpy sgc 0 '(3 4 3 1))
 			   (XSetClipRectangles dpy sgc 0 0 (list (XRectangle 0 0 10 10) (XRectangle 10 10 100 100)) 2 Unsorted)
-			   (let ((err (XWriteBitmapFile dpy "test.data" pix 16 12 -1 -1)))
+			   (let ((err (XWriteBitmapFile dpy "testx.data" pix 16 12 -1 -1)))
 			     (if (not (= BitmapSuccess err)) (snd-display ";XWriteBitmapFile: ~A" err)))
-					;(let ((vals (XReadBitmapFile dpy (XtWindow (cadr (main-widgets))) "test.data")))
+					;(let ((vals (XReadBitmapFile dpy (XtWindow (cadr (main-widgets))) "testx.data")))
 					;  (if (not (= (car vals BitmapSuccess))) (snd-display ";XReadBitmapFile: ~A" vals)))
-					;(let ((vals (XReadBitmapFileData "test.data")))
+					;(let ((vals (XReadBitmapFileData "testx.data")))
 					;  (if (not (= (car vals BitmapSuccess))) (snd-display ";XReadBitmapFileData: ~A" vals)))
 			   
 			   (let* ((fid (XLoadFont dpy "cursor"))
@@ -67265,7 +67265,7 @@ EDITS: 1
   "test-2.snd"
   "test-macros.scm"
   "test.aiff"
-  "test.data"
+  "testx.data"
   "test.output"
   "test.rev"
   "test.reverb"
