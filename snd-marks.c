@@ -2431,20 +2431,20 @@ static mark *save_mark(chan_info *cp, mark *m, void *info)
 
 #if HAVE_SCHEME
   if (m->name)
-    fprintf(sv->fd, "(add-mark! " OFF_TD " sfile %d \"%s\" %s)\n", m->samp, cp->chan, m->name, mapped_sync);
-  else fprintf(sv->fd, "(add-mark! " OFF_TD " sfile %d #f %s)\n", m->samp, cp->chan, mapped_sync);
+    fprintf(sv->fd, "(add-mark! " MUS_LD " sfile %d \"%s\" %s)\n", m->samp, cp->chan, m->name, mapped_sync);
+  else fprintf(sv->fd, "(add-mark! " MUS_LD " sfile %d #f %s)\n", m->samp, cp->chan, mapped_sync);
 #endif
 
 #if HAVE_RUBY
   if (m->name)
-    fprintf(sv->fd, "add_mark!(" OFF_TD ", sfile, %d, \"%s\", %s)\n", m->samp, cp->chan, m->name, mapped_sync);
-  else fprintf(sv->fd, "add_mark!(" OFF_TD ", sfile, %d, false, %s)\n", m->samp, cp->chan, mapped_sync);
+    fprintf(sv->fd, "add_mark!(" MUS_LD ", sfile, %d, \"%s\", %s)\n", m->samp, cp->chan, m->name, mapped_sync);
+  else fprintf(sv->fd, "add_mark!(" MUS_LD ", sfile, %d, false, %s)\n", m->samp, cp->chan, mapped_sync);
 #endif
 
 #if HAVE_FORTH
   if (m->name)
-    fprintf(sv->fd, OFF_TD " sfile %d \"%s\" %s add-mark! drop\n", m->samp, cp->chan, m->name, mapped_sync);
-  else fprintf(sv->fd, OFF_TD " sfile %d #f %s add-mark! drop\n", m->samp, cp->chan, mapped_sync);
+    fprintf(sv->fd, MUS_LD " sfile %d \"%s\" %s add-mark! drop\n", m->samp, cp->chan, m->name, mapped_sync);
+  else fprintf(sv->fd, MUS_LD " sfile %d #f %s add-mark! drop\n", m->samp, cp->chan, mapped_sync);
 #endif
 
   free(mapped_sync);

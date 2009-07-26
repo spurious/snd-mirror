@@ -2043,19 +2043,19 @@ static bool apply_controls(apply_state *ap)
 	      else filterstr = mus_strdup(PROC_FALSE);
 #if HAVE_FORTH
 	      if (orig_apply_dur == 0)
-	      ap->origin = mus_format(" '( %s %s %s %s %s %s ) " OFF_TD PROC_SEP PROC_FALSE " %s", 
+	      ap->origin = mus_format(" '( %s %s %s %s %s %s ) " MUS_LD PROC_SEP PROC_FALSE " %s", 
 				      ampstr, speedstr, contraststr, expandstr, reverbstr, filterstr, 
 				      apply_beg, S_controls_to_channel);
-	      else ap->origin = mus_format(" '( %s %s %s %s %s %s ) " OFF_TD PROC_SEP OFF_TD " %s",
+	      else ap->origin = mus_format(" '( %s %s %s %s %s %s ) " MUS_LD PROC_SEP MUS_LD " %s",
 					   ampstr, speedstr, contraststr, expandstr, reverbstr, filterstr,
 					   apply_beg, apply_dur, S_controls_to_channel);
 #else
 	      if (orig_apply_dur == 0)
-	      ap->origin = mus_format("%s" PROC_OPEN LIST_OPEN "%s" PROC_SEP "%s" PROC_SEP "%s" PROC_SEP "%s" PROC_SEP "%s" PROC_SEP "%s" LIST_CLOSE PROC_SEP OFF_TD PROC_SEP PROC_FALSE, 
+	      ap->origin = mus_format("%s" PROC_OPEN LIST_OPEN "%s" PROC_SEP "%s" PROC_SEP "%s" PROC_SEP "%s" PROC_SEP "%s" PROC_SEP "%s" LIST_CLOSE PROC_SEP MUS_LD PROC_SEP PROC_FALSE, 
 				      TO_PROC_NAME(S_controls_to_channel),
 				      ampstr, speedstr, contraststr, expandstr, reverbstr, filterstr, 
 				      apply_beg);
-	      else ap->origin = mus_format("%s" PROC_OPEN LIST_OPEN "%s" PROC_SEP "%s" PROC_SEP "%s" PROC_SEP "%s" PROC_SEP "%s" PROC_SEP "%s" LIST_CLOSE PROC_SEP OFF_TD PROC_SEP OFF_TD,
+	      else ap->origin = mus_format("%s" PROC_OPEN LIST_OPEN "%s" PROC_SEP "%s" PROC_SEP "%s" PROC_SEP "%s" PROC_SEP "%s" PROC_SEP "%s" LIST_CLOSE PROC_SEP MUS_LD PROC_SEP MUS_LD,
 					   TO_PROC_NAME(S_controls_to_channel),
 					   ampstr, speedstr, contraststr, expandstr, reverbstr, filterstr,
 					   apply_beg, apply_dur);
@@ -4784,22 +4784,22 @@ where each inner list entry can also be " PROC_FALSE "."
 #if HAVE_EXTENSION_LANGUAGE
 #if HAVE_FORTH
       if (!(XEN_NUMBER_P(dur)))
-	ap->origin = mus_format("%s " OFF_TD PROC_SEP PROC_FALSE " %s", 
+	ap->origin = mus_format("%s " MUS_LD PROC_SEP PROC_FALSE " %s", 
 				XEN_AS_STRING(settings), 
 				apply_beg, S_controls_to_channel);
-      else ap->origin = mus_format("%s " PROC_SEP OFF_TD PROC_SEP OFF_TD " %s", 
+      else ap->origin = mus_format("%s " PROC_SEP MUS_LD PROC_SEP MUS_LD " %s", 
 				   XEN_AS_STRING(settings), 
 				   apply_beg, apply_dur, S_controls_to_channel);
 #else
       {
 	char *temp = NULL;
 	if (!(XEN_NUMBER_P(dur)))
-	  ap->origin = mus_format("%s" PROC_OPEN "%s%s" PROC_SEP OFF_TD PROC_SEP PROC_FALSE, 
+	  ap->origin = mus_format("%s" PROC_OPEN "%s%s" PROC_SEP MUS_LD PROC_SEP PROC_FALSE, 
 				  TO_PROC_NAME(S_controls_to_channel), 
 				  PROC_QUOTE,
 				  temp = XEN_AS_STRING(settings), 
 				  apply_beg);
-	else ap->origin = mus_format("%s" PROC_OPEN "%s%s" PROC_SEP OFF_TD PROC_SEP OFF_TD, 
+	else ap->origin = mus_format("%s" PROC_OPEN "%s%s" PROC_SEP MUS_LD PROC_SEP MUS_LD, 
 				     TO_PROC_NAME(S_controls_to_channel), 
 				     PROC_QUOTE,
 				     temp = XEN_AS_STRING(settings), 

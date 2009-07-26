@@ -1641,7 +1641,7 @@ char *sound_data_to_string(sound_data *sd)
   chans = sd->chans;
   buf = (char *)calloc(64 + len * 24 * chans, sizeof(char));
 
-  sprintf(buf, "#<sound-data[chans=%d, length=" OFF_TD "]:", sd->chans, sd->length);
+  sprintf(buf, "#<sound-data[chans=%d, length=" MUS_LD "]:", sd->chans, sd->length);
   if (len > 0)
     {
       int i, chn;

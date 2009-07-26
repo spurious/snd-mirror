@@ -2360,7 +2360,7 @@ widget_t start_preferences_dialog(void)
     fft_label = make_top_level_label("transform options", fft_box);
 
     rts_fft_size = transform_size(ss);
-    str = mus_format(OFF_TD, rts_fft_size);
+    str = mus_format(MUS_LD, rts_fft_size);
     prf = prefs_row_with_number("size", S_transform_size,
 				str, 12, 
 				fft_box,

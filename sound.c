@@ -525,7 +525,7 @@ static void display_sound_file_entry(FILE *fp, const char *name, sound_file *sf)
     }
   else sprintf(timestr, "(date cleared)");
 
-  fprintf(fp, "  %s: %s, chans: %d, srate: %d, type: %s, format: %s, samps: " OFF_TD,
+  fprintf(fp, "  %s: %s, chans: %d, srate: %d, type: %s, format: %s, samps: " MUS_LD,
 	  name,
 	  timestr,
 	  sf->chans,

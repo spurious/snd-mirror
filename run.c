@@ -8300,7 +8300,7 @@ static char *vect_to_string(vect *v, int type)
 
 	    case R_VCT_VECTOR:	  
 	      if (v->data.vcts[i])
-		mus_snprintf(flt, VECT_STRING_SIZE, " #<vct[len=" OFF_TD "]>", (v->data.vcts[i])->length);
+		mus_snprintf(flt, VECT_STRING_SIZE, " #<vct[len=" MUS_LD "]>", (v->data.vcts[i])->length);
 	      else mus_snprintf(flt, VECT_STRING_SIZE, " %s", PROC_FALSE);
 	      break;
 

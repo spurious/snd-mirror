@@ -2978,7 +2978,7 @@ static char *describe_wt(mus_any *ptr)
 {
   char *describe_buffer;
   describe_buffer = (char *)clm_malloc(DESCRIBE_BUFFER_SIZE, "describe buffer");
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s freq: %.3fHz, phase: %.3f, size: " OFF_TD ", interp: %s",
+  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s freq: %.3fHz, phase: %.3f, size: " MUS_LD ", interp: %s",
 	       mus_name(ptr),
 	       mus_frequency(ptr), 
 	       mus_phase(ptr), 
@@ -6070,7 +6070,7 @@ static char *describe_env(mus_any *ptr)
   seg *e = (seg *)ptr;
   char *describe_buffer;
   describe_buffer = (char *)clm_malloc(DESCRIBE_BUFFER_SIZE, "describe buffer");
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s %s, pass: " OFF_TD " (dur: " OFF_TD "), index: %d, scaler: %.4f, offset: %.4f, data: %s",
+  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s %s, pass: " MUS_LD " (dur: " MUS_LD "), index: %d, scaler: %.4f, offset: %.4f, data: %s",
 	       mus_name(ptr),
 	       ((e->style == MUS_ENV_LINEAR) ? "linear" : ((e->style == MUS_ENV_EXPONENTIAL) ? "exponential" : "step")),
 	       e->loc, 
@@ -7427,7 +7427,7 @@ mus_any *mus_make_file_to_sample_with_buffer_size(const char *filename, mus_long
 
       gen->file_end = mus_sound_frames(gen->file_name);
       if (gen->file_end < 0) 
-	mus_error(MUS_NO_LENGTH, "%s frames: " OFF_TD, filename, gen->file_end);
+	mus_error(MUS_NO_LENGTH, "%s frames: " MUS_LD, filename, gen->file_end);
 
       return((mus_any *)gen);
     }
@@ -7459,7 +7459,7 @@ static char *describe_readin(mus_any *ptr)
   rdin *gen = (rdin *)ptr;
   char *describe_buffer;
   describe_buffer = (char *)clm_malloc(DESCRIBE_BUFFER_SIZE, "describe buffer");
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s %s[chan %d], loc: " OFF_TD ", dir: %d", 
+  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s %s[chan %d], loc: " MUS_LD ", dir: %d", 
 	       mus_name(ptr),
 	       gen->file_name, gen->chan, gen->loc, gen->dir);
   return(describe_buffer);
@@ -7842,7 +7842,7 @@ static void flush_buffers(rdout *gen)
 	     *   and it might fail on the next call (if more chans), so we'll throw an error.  We could get
 	     *   say 1024 samps per chan, then run through a loop outputting the current buffer, but geez...
 	     */
-	    mus_error(MUS_MEMORY_ALLOCATION_FAILED, S_mus_file_buffer_size " (" OFF_TD ") is too large: we can't allocate the output buffers!", clm_file_buffer_size);
+	    mus_error(MUS_MEMORY_ALLOCATION_FAILED, S_mus_file_buffer_size " (" MUS_LD ") is too large: we can't allocate the output buffers!", clm_file_buffer_size);
 	    return;
 	  }
       }
@@ -7857,7 +7857,7 @@ static void flush_buffers(rdout *gen)
        */
       if (frames_to_add >= clm_file_buffer_size) 
 	{
-	  mus_print("clm-file-buffer-size changed? " OFF_TD " <= " OFF_TD " (start: " OFF_TD ", end: " OFF_TD ", " OFF_TD ")",
+	  mus_print("clm-file-buffer-size changed? " MUS_LD " <= " MUS_LD " (start: " MUS_LD ", end: " MUS_LD ", " MUS_LD ")",
 		    clm_file_buffer_size, frames_to_add, gen->data_start, gen->data_end, gen->out_end);
 
 	  frames_to_add = clm_file_buffer_size - 1;
@@ -8826,7 +8826,7 @@ static char *describe_move_sound(mus_any *ptr)
   char *allstr = NULL;
   int len;
 
-  starts = mus_format("%s start: " OFF_TD ", end: " OFF_TD ", out chans %d, rev chans: %d",
+  starts = mus_format("%s start: " MUS_LD ", end: " MUS_LD ", out chans %d, rev chans: %d",
 		      mus_name(ptr),
 		      gen->start, 
 		      gen->end, 

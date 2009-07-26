@@ -740,10 +740,10 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 	  m = add_mark(sp->marking - 1, str, active_chan);
 	  if (m)
 	    {
-	      report_in_minibuffer(sp, _("%s placed at sample " OFF_TD), str, sp->marking - 1);
+	      report_in_minibuffer(sp, _("%s placed at sample " MUS_LD), str, sp->marking - 1);
 	      display_channel_marks(active_chan);
 	    }
-	  else report_in_minibuffer(sp, _("There is already a mark at sample " OFF_TD), sp->marking - 1);
+	  else report_in_minibuffer(sp, _("There is already a mark at sample " MUS_LD), sp->marking - 1);
 	  sp->marking = 0;
 	}	
       else 
@@ -1560,7 +1560,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 		else 
 		  {
 		    if (!(delete_mark_samp(CURSOR(cp), cp)))
-		      report_in_minibuffer(cp->sound, _("no mark at sample " OFF_TD), CURSOR(cp));
+		      report_in_minibuffer(cp->sound, _("no mark at sample " MUS_LD), CURSOR(cp));
 		  }
 		if ((keysym == snd_K_M) && 
 		    (cp->sound->sync != 0))
@@ -1585,7 +1585,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 			  else 
 			    {
 			      if (!(delete_mark_samp(CURSOR(cp), si->cps[i])))
-				report_in_minibuffer(cp->sound, _("no mark at sample " OFF_TD), CURSOR(cp));
+				report_in_minibuffer(cp->sound, _("no mark at sample " MUS_LD), CURSOR(cp));
 			    }
 			}
 		    si = free_sync_info(si);
@@ -1706,7 +1706,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 	      if (count > 0)
 		{
 		  start_selection_creation(cp, CURSOR(cp));
-		  report_in_minibuffer(sp, _("selection starts at " OFF_TD), CURSOR(cp));
+		  report_in_minibuffer(sp, _("selection starts at " MUS_LD), CURSOR(cp));
 		  clear_search = false;
 		}
 	      break;

@@ -1523,7 +1523,7 @@ mus_long_t string_to_mus_long_t(const char *str, mus_long_t lo, const char *fiel
       mus_long_t val;
       val = XEN_TO_C_OFF_T(res);
       if (val < lo)
-	snd_error(_("%s: " OFF_TD " is invalid"), field_name, val);
+	snd_error(_("%s: " MUS_LD " is invalid"), field_name, val);
       else return(val);
     }
   else snd_error(_("%s: %s is not a number"), field_name, str);
@@ -1532,12 +1532,12 @@ mus_long_t string_to_mus_long_t(const char *str, mus_long_t lo, const char *fiel
   mus_long_t res = 0;
   if (str) 
     {
-      if (!(sscanf(str, OFF_TD , &res)))
+      if (!(sscanf(str, MUS_LD , &res)))
 	snd_error(_("%s: %s is not a number"), field_name, str);
       else
 	{
 	  if (res < lo)
-	    snd_error(_("%s: " OFF_TD " is invalid"), field_name, res);
+	    snd_error(_("%s: " MUS_LD " is invalid"), field_name, res);
 	}
     }
   return(res);

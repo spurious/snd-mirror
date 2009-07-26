@@ -1098,7 +1098,7 @@ void display_info(snd_info *sp)
 	    ampstr = display_maxamps(sp->filename, sp->nchans);
 	  buffer = (char *)calloc(INFO_BUFFER_SIZE, sizeof(char));
 	  mus_snprintf(buffer, INFO_BUFFER_SIZE, 
-		       _("srate: %d\nchans: %d\nlength: %.3f (" OFF_TD " %s)\ntype: %s\nformat: %s\nwritten: %s%s%s%s\n"),
+		       _("srate: %d\nchans: %d\nlength: %.3f (" MUS_LD " %s)\ntype: %s\nformat: %s\nwritten: %s%s%s%s\n"),
 		       hdr->srate,
 		       hdr->chans,
 		       (mus_float_t)((double)(hdr->samples) / (mus_float_t)(hdr->chans * hdr->srate)),

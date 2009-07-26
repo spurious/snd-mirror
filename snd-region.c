@@ -624,9 +624,9 @@ static int paste_region_1(int n, chan_info *cp, bool add, mus_long_t beg, io_err
       else 
 	{
 #if HAVE_FORTH
-	  origin = mus_format(OFF_TD " %d %s drop", beg, n, S_mix_region);
+	  origin = mus_format(MUS_LD " %d %s drop", beg, n, S_mix_region);
 #else
-	  origin = mus_format("%s" PROC_OPEN OFF_TD PROC_SEP "%d", TO_PROC_NAME(S_mix_region), beg, n);
+	  origin = mus_format("%s" PROC_OPEN MUS_LD PROC_SEP "%d", TO_PROC_NAME(S_mix_region), beg, n);
 #endif
 	  if (si->chans > 1)
 	    remember_temp(newname, si->chans);
@@ -656,9 +656,9 @@ static int paste_region_1(int n, chan_info *cp, bool add, mus_long_t beg, io_err
 	      remember_temp(tempfile, r->chans);
 	}
 #if HAVE_FORTH
-      origin = mus_format(OFF_TD " %d %s drop", beg, n, S_insert_region);
+      origin = mus_format(MUS_LD " %d %s drop", beg, n, S_insert_region);
 #else
-      origin = mus_format("%s" PROC_OPEN OFF_TD PROC_SEP "%d", TO_PROC_NAME(S_insert_region), beg, n);
+      origin = mus_format("%s" PROC_OPEN MUS_LD PROC_SEP "%d", TO_PROC_NAME(S_insert_region), beg, n);
 #endif
       for (i = 0; ((i < r->chans) && (i < si->chans)); i++)
 	{
@@ -1064,25 +1064,25 @@ void save_regions(FILE *fd)
 	  else
 	    {
 #if HAVE_RUBY
-	      fprintf(fd, "%s(%d, %d, " OFF_TD ", %d, %.4f, \"%s\", \"%s\", \"%s\", ",
+	      fprintf(fd, "%s(%d, %d, " MUS_LD ", %d, %.4f, \"%s\", \"%s\", \"%s\", ",
 		      "restore_region", i, r->chans, r->frames, r->srate, r->maxamp, r->name, r->start, r->end);
-	      fprintf(fd, " \"%s\", [%d, " OFF_TD "])\n",
+	      fprintf(fd, " \"%s\", [%d, " MUS_LD "])\n",
 		      newname,
 		      (int)mus_sound_write_date(newname),
 		      mus_sound_length(newname));
 #endif
 #if HAVE_SCHEME
-	      fprintf(fd, "(%s %d %d " OFF_TD " %d %.4f \"%s\" \"%s\" \"%s\"",
+	      fprintf(fd, "(%s %d %d " MUS_LD " %d %.4f \"%s\" \"%s\" \"%s\"",
 		      S_restore_region, i, r->chans, r->frames, r->srate, r->maxamp, r->name, r->start, r->end);
-	      fprintf(fd, " \"%s\" (list %d " OFF_TD "))\n",
+	      fprintf(fd, " \"%s\" (list %d " MUS_LD "))\n",
 		      newname,
 		      (int)mus_sound_write_date(newname),
 		      mus_sound_length(newname));
 #endif
 #if HAVE_FORTH
-	  fprintf(fd, "%d %d " OFF_TD " %d %.4f \"%s\" \"%s\" \"%s\"",
+	  fprintf(fd, "%d %d " MUS_LD " %d %.4f \"%s\" \"%s\" \"%s\"",
 	          i, r->chans, r->frames, r->srate, r->maxamp, r->name, r->start, r->end);
- 	  fprintf(fd, " \"%s\" '( %d " OFF_TD " ) %s drop\n",
+ 	  fprintf(fd, " \"%s\" '( %d " MUS_LD " ) %s drop\n",
  		  newname,
  		  (int)mus_sound_write_date(newname),
  		  mus_sound_length(newname),
@@ -1254,7 +1254,7 @@ io_error_t save_region(int rg, const char *name, int type, int format, const cha
 	      for (i = 0; i < chans; i++) bufs[i] = (mus_sample_t *)calloc(FILE_BUFFER_SIZE, sizeof(mus_sample_t));
 
 	      if (((frames * chans * mus_sound_datum_size(r->filename)) >> 10) > disk_kspace(name))
-		snd_warning(_("not enough space to save region? -- need " OFF_TD " bytes"),
+		snd_warning(_("not enough space to save region? -- need " MUS_LD " bytes"),
 			    frames * chans * mus_sound_datum_size(r->filename));
 	      err = 0;
 

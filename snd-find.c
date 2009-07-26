@@ -214,7 +214,7 @@ char *global_search(read_direction_t direction)
 	      else cursor_move(cp, -fd->inc);
 	      /* now in its own info window show find state, and update graph if needed */
 	      show_cursor_info(cp);
-	      mus_snprintf(search_message, PRINT_BUFFER_SIZE, "found at " OFF_TD, CURSOR(cp));
+	      mus_snprintf(search_message, PRINT_BUFFER_SIZE, "found at " MUS_LD, CURSOR(cp));
 	    }
 	}
       ss->stopped_explicitly = false;
@@ -512,7 +512,7 @@ void cursor_search(chan_info *cp, int count)
 		  char *s1, *s2, *msg;
 		  s1 = prettyf(chn_sample(samp, cp, cp->edit_ctr), 2);
 		  s2 = x_axis_location_to_string(cp, (double)samp / (double)SND_SRATE(sp));
-		  msg = mus_format("%s at %s (" OFF_TD ")", s1, s2, samp);
+		  msg = mus_format("%s at %s (" MUS_LD ")", s1, s2, samp);
 		  display_minibuffer_error(sp, msg);
 		  free(s1);
 		  free(s2);

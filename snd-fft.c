@@ -1518,7 +1518,7 @@ static bool memory_available_p(mus_long_t slices, mus_long_t bins)
 	  if (check_alloc[i] == NULL)
 	    {
 	      int j;
-	      snd_warning("can't allocate enough memory to run this set of FFTS: " OFF_TD " bytes needed", bytes_needed);
+	      snd_warning("can't allocate enough memory to run this set of FFTS: " MUS_LD " bytes needed", bytes_needed);
 	      for (j = 0; j < i; j++)
 		free(check_alloc[j]);
 	      return(false);

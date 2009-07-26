@@ -2993,7 +2993,7 @@ static char *raw_data_explanation(const char *filename, file_info *hdr, char **i
   reason_str = mus_strcat(reason_str, tmp_str, &len);
 
   /* samples */
-  mus_snprintf(tmp_str, LABEL_BUFFER_SIZE, "\nlength: %.3f (" OFF_TD " samples, " OFF_TD " bytes total)",
+  mus_snprintf(tmp_str, LABEL_BUFFER_SIZE, "\nlength: %.3f (" MUS_LD " samples, " MUS_LD " bytes total)",
 	       (float)((double)(hdr->samples) / (float)(hdr->chans * hdr->srate)),
 	       hdr->samples,
 	       mus_sound_length(filename));
@@ -3001,7 +3001,7 @@ static char *raw_data_explanation(const char *filename, file_info *hdr, char **i
   nsamp = swap_mus_long_t(hdr->samples);
   if (nsamp < mus_sound_length(filename))
     {
-      mus_snprintf(tmp_str, LABEL_BUFFER_SIZE, " (swapped: " OFF_TD , nsamp);
+      mus_snprintf(tmp_str, LABEL_BUFFER_SIZE, " (swapped: " MUS_LD , nsamp);
       reason_str = mus_strcat(reason_str, tmp_str, &len);
       if ((better_chans) && (better_srate))
 	{
@@ -3014,13 +3014,13 @@ static char *raw_data_explanation(const char *filename, file_info *hdr, char **i
     }
 
   /* data location */
-  mus_snprintf(tmp_str, LABEL_BUFFER_SIZE, "\ndata location: " OFF_TD, hdr->data_location);
+  mus_snprintf(tmp_str, LABEL_BUFFER_SIZE, "\ndata location: " MUS_LD, hdr->data_location);
   reason_str = mus_strcat(reason_str, tmp_str, &len);
   nsamp = swap_mus_long_t(hdr->data_location);
   if ((nsamp > 0) && 
       (nsamp <= 1024)) 
     {
-      mus_snprintf(tmp_str, LABEL_BUFFER_SIZE, " (swapped: " OFF_TD ")", nsamp);
+      mus_snprintf(tmp_str, LABEL_BUFFER_SIZE, " (swapped: " MUS_LD ")", nsamp);
       reason_str = mus_strcat(reason_str, tmp_str, &len);
     }
   (*info) = reason_str;
@@ -4223,8 +4223,8 @@ void view_files_mix_selected_files(widget_t w, view_files_info *vdat)
 	{
 	  char *msg;
 	  if (vdat->currently_selected_files == 1)
-	    msg = mus_format(_("%s mixed in at " OFF_TD), vdat->names[vdat->selected_files[0]], vdat->beg);
-	  else msg = mus_format(_("selected files mixed in at " OFF_TD), vdat->beg);
+	    msg = mus_format(_("%s mixed in at " MUS_LD), vdat->names[vdat->selected_files[0]], vdat->beg);
+	  else msg = mus_format(_("selected files mixed in at " MUS_LD), vdat->beg);
 	  vf_post_error(msg, vdat);
 	  vdat->error_p = false;
 	  free(msg);
@@ -4307,8 +4307,8 @@ void view_files_insert_selected_files(widget_t w, view_files_info *vdat)
 	{
 	  char *msg;
 	  if (vdat->currently_selected_files == 1)
-	    msg = mus_format(_("%s inserted at " OFF_TD), vdat->names[vdat->selected_files[0]], vdat->beg);
-	  else msg = mus_format(_("selected files inserted at " OFF_TD), vdat->beg);
+	    msg = mus_format(_("%s inserted at " MUS_LD), vdat->names[vdat->selected_files[0]], vdat->beg);
+	  else msg = mus_format(_("selected files inserted at " MUS_LD), vdat->beg);
 	  vf_post_error(msg, vdat);
 	  vdat->error_p = false;
 	  free(msg);

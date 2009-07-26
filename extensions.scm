@@ -1184,10 +1184,16 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 ;;;    this does not work in Guile (current-environment needs some replacement)
 
 (define break-ok #f)
+(define saved-listener-prompt (listener-prompt)) ; what we want is a shared environment!
+
+(define (break-exit) 
+  (reset-hook! read-hook)
+  (set! (listener-prompt) saved-listener-prompt)
+  #f)
 
 (define-macro (break)
-  `(let ((old-prompt (listener-prompt))
-	 (envir (current-environment)))
+  `(let ((envir (current-environment)))
+     (set! saved-listener-prompt (listener-prompt))
      (set! (listener-prompt) (format #f "~A>" (if (defined? __func__) __func__ 'break)))
      (call/cc
       (lambda (return)
@@ -1196,10 +1202,8 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 		   (lambda (str)
 		     (eval-string str envir)))
 	(throw 'snd-top-level)))    ; jump back to the top level (it will say "break>")
-     (reset-hook! read-hook)        ; we get here if "break-ok" is called
-     (set! (listener-prompt) old-prompt)))
+     (break-exit)))                 ; we get here if "break-ok" is called
 
-;(define (break-exit) (reset-hook! read-hook)) -- also needs to reset the prompt
     
 #|
 (define (outer arg1)

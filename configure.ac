@@ -337,6 +337,7 @@ AC_CHECK_SIZEOF(unsigned long long)
 AC_CHECK_SIZEOF(unsigned long)
 AC_CHECK_SIZEOF(void *)
 AC_CHECK_SIZEOF(int)
+AC_CHECK_SIZEOF(int64_t)
 AC_CHECK_SIZEOF(ssize_t)
 
 AC_CHECK_FUNCS(getcwd getwd strerror readlink setlocale access opendir sleep signal statvfs statfs getline difftime gettimeofday)

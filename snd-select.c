@@ -432,9 +432,9 @@ static int mix_selection(chan_info *cp, sync_info *si_out, mus_long_t beg, io_er
   if (io_err == IO_NO_ERROR)
     {
 #if HAVE_FORTH
-      origin = mus_format(OFF_TD " snd chn %s", beg, S_mix_selection);
+      origin = mus_format(MUS_LD " snd chn %s", beg, S_mix_selection);
 #else
-      origin = mus_format("%s" PROC_OPEN OFF_TD, TO_PROC_NAME(S_mix_selection), beg);
+      origin = mus_format("%s" PROC_OPEN MUS_LD, TO_PROC_NAME(S_mix_selection), beg);
 #endif
       if (si_out->chans > 1)
 	remember_temp(tempfile, si_out->chans);
@@ -506,9 +506,9 @@ static io_error_t insert_selection(chan_info *cp, sync_info *si_out, mus_long_t 
 	      cp_in = si_in->cps[i];   /* selection chan to paste in (no wrap-around here) */
 	      len = cp_selection_len(cp_in, NULL);
 #if HAVE_FORTH
-	      origin = mus_format(OFF_TD " %s", beg, S_insert_selection);
+	      origin = mus_format(MUS_LD " %s", beg, S_insert_selection);
 #else
-	      origin = mus_format("%s" PROC_OPEN OFF_TD, TO_PROC_NAME(S_insert_selection), beg);
+	      origin = mus_format("%s" PROC_OPEN MUS_LD, TO_PROC_NAME(S_insert_selection), beg);
 #endif
 	      if (file_insert_samples(beg, len,
 				      tempfile, cp_out, i,

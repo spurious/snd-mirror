@@ -905,7 +905,7 @@ void widget_mus_long_t_to_text(GtkWidget *w, mus_long_t val)
 {
   char *str;
   str = (char *)calloc(8, sizeof(char));
-  mus_snprintf(str, 8, OFF_TD, val);
+  mus_snprintf(str, 8, MUS_LD, val);
   gtk_entry_set_text(GTK_ENTRY(w), str);
   free(str);
 }

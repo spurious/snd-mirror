@@ -1348,7 +1348,7 @@ static void display_selection_transform_size(chan_info *cp, axis_info *fap)
   y0 = fap->height + fap->y_offset + SELECTION_FFT_LABEL_OFFSET;
   x0 = fap->x_axis_x0 + 20;
   mus_snprintf(chn_id_str, LABEL_BUFFER_SIZE, 
-	       _("(len: " OFF_TD "/" OFF_TD ")"), 
+	       _("(len: " MUS_LD "/" MUS_LD ")"), 
 	       selection_len(), 
 	       cp->selection_transform_size);
   draw_string(copy_context(cp), x0, y0, chn_id_str, strlen(chn_id_str));
@@ -4510,14 +4510,14 @@ void show_cursor_info(chan_info *cp)
   expr_str = (char *)calloc(len, sizeof(char));
 
   if (sp->nchans == 1)
-    mus_snprintf(expr_str, PRINT_BUFFER_SIZE, _("cursor at %s (sample " OFF_TD ") = %s"),
+    mus_snprintf(expr_str, PRINT_BUFFER_SIZE, _("cursor at %s (sample " MUS_LD ") = %s"),
 		 s1 = x_axis_location_to_string(cp, (double)samp / (double)SND_SRATE(sp)),
 		 samp,
 		 s2 = prettyf(y, digits));
   else
     {
       if (sp->sync == 0)
-	mus_snprintf(expr_str, PRINT_BUFFER_SIZE, _("chan %d, cursor at %s (sample " OFF_TD ") = %s"),
+	mus_snprintf(expr_str, PRINT_BUFFER_SIZE, _("chan %d, cursor at %s (sample " MUS_LD ") = %s"),
 		     cp->chan + 1,
 		     s1 = x_axis_location_to_string(cp, (double)samp / (double)SND_SRATE(sp)),
 		     samp,
@@ -4526,7 +4526,7 @@ void show_cursor_info(chan_info *cp)
 	{
 	  /* in this case, assume we show all on chan 0 and ignore the call otherwise (see above) */
 	  /* "cursor at..." then list of values */
-	  mus_snprintf(expr_str, PRINT_BUFFER_SIZE, _("cursor at %s (sample " OFF_TD "): %s"),
+	  mus_snprintf(expr_str, PRINT_BUFFER_SIZE, _("cursor at %s (sample " MUS_LD "): %s"),
 		       s1 = x_axis_location_to_string(cp, (double)samp / (double)SND_SRATE(sp)),
 		       samp,
 		       s2 = prettyf(y, digits));
@@ -5114,7 +5114,7 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 						 XEN_LIST_1(C_TO_XEN_INT(mouse_mark->id)),
 						 S_mark_click_hook);
 			  if (!(XEN_TRUE_P(res)))
-			    report_in_minibuffer(sp, _("mark %d at sample " OFF_TD), 
+			    report_in_minibuffer(sp, _("mark %d at sample " MUS_LD), 
 						 mouse_mark->id, 
 						 mouse_mark->samp);
 			}
@@ -7937,7 +7937,7 @@ static void write_transform_peaks(FILE *fd, chan_info *ucp)
 		{
 		  fprintf(fd, sp->short_filename);
 		  if (sp->nchans > 1) fprintf(fd, _(": chan %d"), cp->chan);
-		  fprintf(fd, _(", fft " OFF_TD " points beginning at sample " OFF_TD " (%.3f secs), %s\n\n"),
+		  fprintf(fd, _(", fft " MUS_LD " points beginning at sample " MUS_LD " (%.3f secs), %s\n\n"),
 			  fp->current_size, 
 			  ap->losamp, 
 			  (float)((double)(ap->losamp) / (double)srate),
