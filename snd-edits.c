@@ -2284,13 +2284,13 @@ static void get_sf_closure(snd_fd *sf, int pt)
     {
       if (sf->cp->init_args[READER_PTREE_INDEX(sf, pt)] == 3)
 	READER_PTREE_CLOSURE(sf, pt) = XEN_CALL_3(proc,
-						  C_TO_XEN_OFF_T(sf->frag_pos + READER_PTREE_POSITION(sf, pt)),
-						  C_TO_XEN_OFF_T(READER_PTREE_DUR(sf, pt)),	/* ptree_dur is the original (full) ptree-channel duration */
+						  C_TO_XEN_INT64_T(sf->frag_pos + READER_PTREE_POSITION(sf, pt)),
+						  C_TO_XEN_INT64_T(READER_PTREE_DUR(sf, pt)),	/* ptree_dur is the original (full) ptree-channel duration */
 						  C_TO_XEN_BOOLEAN(sf->direction == READ_FORWARD),
 						  S_ptree_channel " init func");
       else READER_PTREE_CLOSURE(sf, pt) = XEN_CALL_2(proc,
-						     C_TO_XEN_OFF_T(sf->frag_pos + READER_PTREE_POSITION(sf, pt)),
-						     C_TO_XEN_OFF_T(READER_PTREE_DUR(sf, pt)),	/* ptree_dur is the original (full) ptree-channel duration */
+						     C_TO_XEN_INT64_T(sf->frag_pos + READER_PTREE_POSITION(sf, pt)),
+						     C_TO_XEN_INT64_T(READER_PTREE_DUR(sf, pt)),	/* ptree_dur is the original (full) ptree-channel duration */
 						     S_ptree_channel " init func");
       if (XEN_BOUND_P(READER_PTREE_CLOSURE(sf, pt)))
 	{
@@ -7625,8 +7625,8 @@ associated with snd's channel chn; the returned value is a list (origin type sta
       if (ed) 
 	return(XEN_LIST_4(C_TO_XEN_STRING(ed->origin),
 			  C_TO_XEN_STRING(edit_names[(int)(ed->edit_type)]),
-			  C_TO_XEN_OFF_T(ed->beg),
-			  C_TO_XEN_OFF_T(ed->len)));
+			  C_TO_XEN_INT64_T(ed->beg),
+			  C_TO_XEN_INT64_T(ed->len)));
     }
   XEN_ERROR(NO_SUCH_EDIT,
 	    XEN_LIST_4(C_TO_XEN_STRING(S_edit_fragment),
@@ -7667,10 +7667,10 @@ the edit lists '((global-pos data-num local-pos local-end scaler rmp0 rmp1 type-
 	  rbeg = 0.0;
 	  rend = 0.0;
 	}
-      res = XEN_CONS(XEN_LIST_8(C_TO_XEN_OFF_T(ED_GLOBAL_POSITION(ed)),
+      res = XEN_CONS(XEN_LIST_8(C_TO_XEN_INT64_T(ED_GLOBAL_POSITION(ed)),
 				C_TO_XEN_INT(ED_SOUND(ed)),
-				C_TO_XEN_OFF_T(ED_LOCAL_POSITION(ed)),
-				C_TO_XEN_OFF_T(ED_LOCAL_END(ed)),
+				C_TO_XEN_INT64_T(ED_LOCAL_POSITION(ed)),
+				C_TO_XEN_INT64_T(ED_LOCAL_END(ed)),
 				C_TO_XEN_DOUBLE(ED_SCALER(ed)),
 				C_TO_XEN_DOUBLE(rbeg),
 				C_TO_XEN_DOUBLE(rend),
@@ -7903,8 +7903,8 @@ static XEN g_sample_reader_position(XEN obj)
 	  (fd->cp->sound))
 	{
 	  if (fd->type == SAMPLE_READER)
-	    return(C_TO_XEN_OFF_T(current_location(fd)));
-	  return(C_TO_XEN_OFF_T(region_current_location(fd)));
+	    return(C_TO_XEN_INT64_T(current_location(fd)));
+	  return(C_TO_XEN_INT64_T(region_current_location(fd)));
 	}
     }
   if (mix_sample_reader_p(obj))
@@ -8093,12 +8093,12 @@ static XEN g_copy_sample_reader(XEN obj)
 	  (fd->cp->sound))
 	{
 	  if (fd->type == SAMPLE_READER)
-	    return(g_make_sample_reader(C_TO_XEN_OFF_T(current_location(fd)),
+	    return(g_make_sample_reader(C_TO_XEN_INT64_T(current_location(fd)),
 					C_TO_XEN_INT(fd->cp->sound->index),
 					C_TO_XEN_INT(fd->cp->chan),
 					C_TO_XEN_INT((fd->direction == READ_FORWARD) ? 1 : -1), /* Scheme side is different from C side */
 					C_TO_XEN_INT(fd->edit_ctr)));
-	  return(g_make_region_sample_reader(C_TO_XEN_OFF_T(region_current_location(fd)),
+	  return(g_make_region_sample_reader(C_TO_XEN_INT64_T(region_current_location(fd)),
 					     C_TO_XEN_INT(fd->region),
 					     C_TO_XEN_INT(fd->cp->chan),
 					     C_TO_XEN_INT((fd->direction == READ_FORWARD) ? 1 : -1)));
@@ -8859,7 +8859,7 @@ void check_saved_temp_file(const char *type, XEN filename, XEN date_and_length)
   if (mus_file_probe(file))
     {
       old_time = (time_t)XEN_TO_C_ULONG(XEN_CAR(date_and_length));
-      old_bytes = XEN_TO_C_OFF_T(XEN_CADR(date_and_length));
+      old_bytes = XEN_TO_C_INT64_T(XEN_CADR(date_and_length));
       new_time = mus_sound_write_date(file);
       new_bytes = mus_sound_length(file);
       if ((new_time != old_time) || (new_bytes != old_bytes))
@@ -8932,7 +8932,7 @@ static XEN samples_to_vct_1(XEN samp_0, XEN samps, XEN snd_n, XEN chn_n, XEN edp
   if (!cp) return(XEN_FALSE);
   pos = to_c_edit_position(cp, edpos, caller, 6);
   beg = beg_to_sample(samp_0, caller);
-  len = XEN_TO_C_OFF_T_OR_ELSE(samps, cp->edits[pos]->samples - beg);
+  len = XEN_TO_C_INT64_T_OR_ELSE(samps, cp->edits[pos]->samples - beg);
   if ((beg == 0) && (len == 0)) return(XEN_FALSE); /* empty file (channel) possibility */
   if (len <= 0) XEN_OUT_OF_RANGE_ERROR(caller, 2, samps, "samples ~A <= 0?");
   fvals = (mus_float_t *)malloc(len * sizeof(mus_float_t));
@@ -9068,15 +9068,15 @@ static XEN g_change_samples_with_origin(XEN samp_0, XEN samps, XEN origin, XEN v
   int pos;
   mus_long_t beg, len;
 
-  XEN_ASSERT_TYPE(XEN_OFF_T_P(samp_0), samp_0, XEN_ARG_1, S_change_samples_with_origin, "an integer");
-  XEN_ASSERT_TYPE(XEN_OFF_T_P(samps), samps, XEN_ARG_2, S_change_samples_with_origin, "an integer");
+  XEN_ASSERT_TYPE(XEN_INT64_T_P(samp_0), samp_0, XEN_ARG_1, S_change_samples_with_origin, "an integer");
+  XEN_ASSERT_TYPE(XEN_INT64_T_P(samps), samps, XEN_ARG_2, S_change_samples_with_origin, "an integer");
   XEN_ASSERT_TYPE(XEN_STRING_P(origin), origin, XEN_ARG_3, S_change_samples_with_origin, "a string");
   XEN_ASSERT_TYPE(XEN_STRING_P(vect), vect, XEN_ARG_4, S_change_samples_with_origin, "a filename");
   ASSERT_CHANNEL(S_change_samples_with_origin, snd_n, chn_n, 5);
   cp = get_cp(snd_n, chn_n, S_change_samples_with_origin);
   if (!cp) return(XEN_FALSE);
   beg = beg_to_sample(samp_0, S_change_samples_with_origin);
-  len = XEN_TO_C_OFF_T_OR_ELSE(samps, 0);
+  len = XEN_TO_C_INT64_T_OR_ELSE(samps, 0);
   if (len <= 0) return(XEN_FALSE);
   pos = to_c_edit_position(cp, edpos, S_change_samples_with_origin, 7);
   check_saved_temp_file("sound", vect, date);
@@ -9140,7 +9140,7 @@ position.\n  " insert_sound_example "\ninserts all of oboe.snd starting at sampl
     }
 
   len = mus_sound_frames(filename);
-  if (len <= 0) return(C_TO_XEN_OFF_T(len));
+  if (len <= 0) return(C_TO_XEN_INT64_T(len));
 
   if (XEN_NUMBER_P(ubeg))
     beg = beg_to_sample(ubeg, S_insert_sound);
@@ -9161,7 +9161,7 @@ position.\n  " insert_sound_example "\ninserts all of oboe.snd starting at sampl
 				  to_c_edit_position(cp, edpos, S_insert_sound, 6)))
 	    update_graph(cp);
 	  free(origin);
-	  return(C_TO_XEN_OFF_T(len));
+	  return(C_TO_XEN_INT64_T(len));
 	}
       else return(snd_no_such_channel_error(S_insert_sound, file, file_chn));	
     }
@@ -9185,7 +9185,7 @@ position.\n  " insert_sound_example "\ninserts all of oboe.snd starting at sampl
 	    update_graph(sp->chans[i]);
 	  free(origin);
 	}
-      return(C_TO_XEN_OFF_T(len));
+      return(C_TO_XEN_INT64_T(len));
     }
   return(XEN_FALSE); /* not reached */
 }
@@ -9241,7 +9241,7 @@ insert data (either a vct, a list of samples, or a filename) into snd's channel 
   if (!cp) return(XEN_FALSE);
 
   beg = beg_to_sample(samp, S_insert_samples);
-  len = XEN_TO_C_OFF_T_OR_ELSE(samps, 0);
+  len = XEN_TO_C_INT64_T_OR_ELSE(samps, 0);
   if (len <= 0) return(samps);
   pos = to_c_edit_position(cp, edpos, S_insert_samples, 6);
 
@@ -9296,7 +9296,7 @@ insert data (either a vct, a list of samples, or a filename) into snd's channel 
     }
   if (origin) free(origin);
   update_graph(cp);
-  return(C_TO_XEN_OFF_T(len));
+  return(C_TO_XEN_INT64_T(len));
 }
 
 
@@ -9316,14 +9316,14 @@ static XEN g_insert_samples_with_origin(XEN samp, XEN samps, XEN origin, XEN vec
   if (!cp) return(XEN_FALSE);
 
   beg = beg_to_sample(samp, S_insert_samples_with_origin);
-  len = XEN_TO_C_OFF_T_OR_ELSE(samps, 0);
+  len = XEN_TO_C_INT64_T_OR_ELSE(samps, 0);
   if (len <= 0) return(samps);
 
   pos = to_c_edit_position(cp, edpos, S_insert_samples_with_origin, 7);
   check_saved_temp_file("sound", vect, date);
   file_insert_samples(beg, len, XEN_TO_C_STRING(vect), cp, 0, DONT_DELETE_ME, XEN_TO_C_STRING(origin), pos);
   update_graph(cp);
-  return(xen_return_first(C_TO_XEN_OFF_T(len), vect));
+  return(xen_return_first(C_TO_XEN_INT64_T(len), vect));
 }
 
 
@@ -9365,7 +9365,7 @@ delete 'samps' samples from snd's channel chn starting at 'start-samp'"
   if (!cp) return(XEN_FALSE);
   pos = to_c_edit_position(cp, edpos, S_delete_samples, 6);
   samp = beg_to_sample(samp_n, S_delete_samples);
-  len = XEN_TO_C_OFF_T_OR_ELSE(samps, 0);
+  len = XEN_TO_C_INT64_T_OR_ELSE(samps, 0);
   if (len <= 0) return(XEN_FALSE);
   if (delete_samples(samp, len, cp, pos))
     update_graph(cp);
@@ -9559,7 +9559,7 @@ static XEN g_snd_to_sample(XEN os, XEN frame, XEN chan)
   XEN_ASSERT_TYPE(XEN_NUMBER_P(frame), frame, XEN_ARG_2, S_snd_to_sample, "a number");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chan), chan, XEN_ARG_3, S_snd_to_sample, "an integer");
   return(C_TO_XEN_DOUBLE(snd_to_sample_read((mus_any *)XEN_TO_MUS_ANY(os), 
-					    XEN_TO_C_OFF_T(frame), 
+					    XEN_TO_C_INT64_T(frame), 
 					    XEN_TO_C_INT_OR_ELSE(chan, 0))));
 }
 

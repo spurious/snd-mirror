@@ -187,7 +187,7 @@ mus_long_t mus_optkey_to_mus_long_t(XEN key, const char *caller, int n, mus_long
   if (!(XEN_KEYWORD_P(key)))
     {
       XEN_ASSERT_TYPE(XEN_NUMBER_P(key), key, n, caller, "a sample number");
-      return(XEN_TO_C_OFF_T_OR_ELSE(key, def));
+      return(XEN_TO_C_INT64_T_OR_ELSE(key, def));
     }
   return(def);
 }
@@ -357,19 +357,19 @@ static mus_long_t clm_table_size = MUS_CLM_DEFAULT_TABLE_SIZE;
 
 mus_long_t clm_default_table_size_c(void) {return(clm_table_size);}
 
-static XEN g_clm_table_size(void) {return(C_TO_XEN_OFF_T(clm_table_size));}
+static XEN g_clm_table_size(void) {return(C_TO_XEN_INT64_T(clm_table_size));}
 
 static XEN g_set_clm_table_size(XEN val) 
 {
   mus_long_t size;
   #define H_clm_table_size "(" S_clm_table_size "): the default table size for most generators (512)"
-  XEN_ASSERT_TYPE(XEN_OFF_T_P(val), val, XEN_ONLY_ARG, S_setB S_clm_table_size, "an integer");
-  size = XEN_TO_C_OFF_T(val);
+  XEN_ASSERT_TYPE(XEN_INT64_T_P(val), val, XEN_ONLY_ARG, S_setB S_clm_table_size, "an integer");
+  size = XEN_TO_C_INT64_T(val);
   if ((size <= 0) || 
       (size > mus_max_table_size()))
     XEN_OUT_OF_RANGE_ERROR(S_setB S_clm_table_size, XEN_ARG_1, val, "invalid size: ~A (see mus-max-table-size)");
   clm_table_size = size;
-  return(C_TO_XEN_OFF_T(clm_table_size));
+  return(C_TO_XEN_INT64_T(clm_table_size));
 }
 
 
@@ -459,15 +459,15 @@ static XEN g_seconds_to_samples(XEN val)
 {
   #define H_seconds_to_samples "(" S_seconds_to_samples " secs): use " S_mus_srate " to convert seconds to samples"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_seconds_to_samples, "a number");
-  return(C_TO_XEN_OFF_T(mus_seconds_to_samples(XEN_TO_C_DOUBLE(val))));
+  return(C_TO_XEN_INT64_T(mus_seconds_to_samples(XEN_TO_C_DOUBLE(val))));
 }
 
 
 static XEN g_samples_to_seconds(XEN val) 
 {
   #define H_samples_to_seconds "(" S_samples_to_seconds " samps): use " S_mus_srate " to convert samples to seconds"
-  XEN_ASSERT_TYPE(XEN_OFF_T_P(val), val, XEN_ONLY_ARG, S_samples_to_seconds, "a number");
-  return(C_TO_XEN_DOUBLE(mus_samples_to_seconds(XEN_TO_C_OFF_T(val))));
+  XEN_ASSERT_TYPE(XEN_INT64_T_P(val), val, XEN_ONLY_ARG, S_samples_to_seconds, "a number");
+  return(C_TO_XEN_DOUBLE(mus_samples_to_seconds(XEN_TO_C_INT64_T(val))));
 }
 
 
@@ -573,13 +573,13 @@ static XEN g_dot_product(XEN val1, XEN val2, XEN size)
 
   XEN_ASSERT_TYPE(MUS_VCT_P(val1), val1, XEN_ARG_1, S_dot_product, "a vct");
   XEN_ASSERT_TYPE(MUS_VCT_P(val2), val2, XEN_ARG_2, S_dot_product, "a vct");
-  XEN_ASSERT_TYPE(XEN_OFF_T_IF_BOUND_P(size), size, XEN_ARG_3, S_dot_product, "an integer");
+  XEN_ASSERT_TYPE(XEN_INT64_T_IF_BOUND_P(size), size, XEN_ARG_3, S_dot_product, "an integer");
 
   v1 = XEN_TO_VCT(val1);
   v2 = XEN_TO_VCT(val2);
-  if (XEN_OFF_T_P(size))
+  if (XEN_INT64_T_P(size))
     {
-      len = XEN_TO_C_OFF_T(size);
+      len = XEN_TO_C_INT64_T(size);
       if (len == 0) return(C_TO_XEN_DOUBLE(0.0));
       if (len < 0)
 	XEN_OUT_OF_RANGE_ERROR(S_dot_product, 3, size, "size ~A < 0?");
@@ -646,13 +646,13 @@ static XEN g_fft_window_1(xclm_window_t choice, XEN val1, XEN val2, XEN ulen, co
 
   XEN_ASSERT_TYPE(MUS_VCT_P(val1), val1, XEN_ARG_1, caller, "a vct");
   XEN_ASSERT_TYPE(MUS_VCT_P(val2), val2, XEN_ARG_2, caller, "a vct");
-  XEN_ASSERT_TYPE(XEN_OFF_T_IF_BOUND_P(ulen), ulen, XEN_ARG_3, caller, "an integer");
+  XEN_ASSERT_TYPE(XEN_INT64_T_IF_BOUND_P(ulen), ulen, XEN_ARG_3, caller, "an integer");
 
   v1 = XEN_TO_VCT(val1);
   v2 = XEN_TO_VCT(val2);
-  if (XEN_OFF_T_P(ulen))
+  if (XEN_INT64_T_P(ulen))
     {
-      len = XEN_TO_C_OFF_T(ulen);
+      len = XEN_TO_C_INT64_T(ulen);
       if (len == 0) return(XEN_FALSE);
       if (len < 0)
 	XEN_OUT_OF_RANGE_ERROR(caller, 3, ulen, "size ~A < 0?");
@@ -724,9 +724,9 @@ the real and imaginary parts of the data; len should be a power of 2, dir = 1 fo
     sign = XEN_TO_C_INT(usign); 
   else sign = 1;
 
-  if (XEN_OFF_T_P(len)) 
+  if (XEN_INT64_T_P(len)) 
     {
-      n = XEN_TO_C_OFF_T(len); 
+      n = XEN_TO_C_INT64_T(len); 
       if (n <= 0)
 	XEN_OUT_OF_RANGE_ERROR(S_mus_fft, 3, len, "size ~A <= 0?");
       if (n > mus_max_malloc())
@@ -778,12 +778,12 @@ is the window family parameter, if any:\n  " make_window_example
   mus_float_t *data;
 
   XEN_ASSERT_TYPE(XEN_INTEGER_P(type), type, XEN_ARG_1, S_make_fft_window, "an integer (window type)");
-  XEN_ASSERT_TYPE(XEN_OFF_T_P(size), size, XEN_ARG_2, S_make_fft_window, "an integer");
+  XEN_ASSERT_TYPE(XEN_INT64_T_P(size), size, XEN_ARG_2, S_make_fft_window, "an integer");
 
   if (XEN_NUMBER_P(ubeta)) beta = XEN_TO_C_DOUBLE(ubeta);
   if (XEN_NUMBER_P(ualpha)) alpha = XEN_TO_C_DOUBLE(ualpha);
 
-  n = XEN_TO_C_OFF_T(size);
+  n = XEN_TO_C_INT64_T(size);
   if (n <= 0)
     XEN_OUT_OF_RANGE_ERROR(S_make_fft_window, 2, size, "size ~A <= 0?");
   if (n > mus_max_malloc())
@@ -953,12 +953,12 @@ taking into account wrap-around (size is size of data), with linear interpolatio
 
   XEN_ASSERT_TYPE(MUS_VCT_P(obj), obj, XEN_ARG_1, S_array_interp, "a vct");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(phase), phase, XEN_ARG_2, S_array_interp, "a number");
-  XEN_ASSERT_TYPE(XEN_OFF_T_IF_BOUND_P(size), size, XEN_ARG_3, S_array_interp, "an integer");
+  XEN_ASSERT_TYPE(XEN_INT64_T_IF_BOUND_P(size), size, XEN_ARG_3, S_array_interp, "an integer");
 
   v = XEN_TO_VCT(obj);
   if (XEN_BOUND_P(size)) 
     {
-      len = XEN_TO_C_OFF_T(size); 
+      len = XEN_TO_C_INT64_T(size); 
       if (len <= 0)
 	XEN_OUT_OF_RANGE_ERROR(S_array_interp, 3, size, "size ~A <= 0?");
       if (len > v->length) 
@@ -983,7 +983,7 @@ data ('v' is a vct) using interpolation 'type', such as " S_mus_interp_linear ".
   XEN_ASSERT_TYPE(XEN_INTEGER_P(type), type, XEN_ARG_1, S_mus_interpolate, "an integer (interp type such as " S_mus_interp_all_pass ")");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ARG_2, S_mus_interpolate, "a number");
   XEN_ASSERT_TYPE(MUS_VCT_P(obj), obj, XEN_ARG_3, S_mus_interpolate, "a vct");
-  XEN_ASSERT_TYPE(XEN_OFF_T_IF_BOUND_P(size), size, XEN_ARG_4, S_mus_interpolate, "an integer");
+  XEN_ASSERT_TYPE(XEN_INT64_T_IF_BOUND_P(size), size, XEN_ARG_4, S_mus_interpolate, "an integer");
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(yn1), yn1, XEN_ARG_5, S_mus_interpolate, "a number");
 
   itype = XEN_TO_C_INT(type);
@@ -994,7 +994,7 @@ data ('v' is a vct) using interpolation 'type', such as " S_mus_interp_linear ".
 
   if (XEN_BOUND_P(size)) 
     {
-      len = XEN_TO_C_OFF_T(size); 
+      len = XEN_TO_C_INT64_T(size); 
       if (len <= 0)
 	XEN_OUT_OF_RANGE_ERROR(S_mus_interpolate, 4, size, "size ~A <= 0?");
       if (len > v->length) 
@@ -1596,7 +1596,7 @@ static XEN g_mus_length(XEN gen)
   #define H_mus_length "(" S_mus_length " gen): gen's length, if any"
   if (XEN_LIST_P(gen)) return(call_get_method(gen, S_mus_length));
   if (MUS_XEN_P(gen))
-    return(C_TO_XEN_OFF_T(mus_length(XEN_TO_MUS_ANY(gen))));
+    return(C_TO_XEN_INT64_T(mus_length(XEN_TO_MUS_ANY(gen))));
   if (MUS_VCT_P(gen))
     return(C_TO_XEN_INT((XEN_TO_VCT(gen))->length));
   if (sound_data_p(gen))
@@ -1617,7 +1617,7 @@ static XEN g_mus_set_length(XEN gen, XEN val)
   XEN_ASSERT_TYPE(MUS_XEN_P(gen), gen, XEN_ARG_1, S_setB S_mus_length, "a generator");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, S_setB S_mus_length, "a number");
 
-  len = XEN_TO_C_OFF_T_OR_ELSE(val, 0);
+  len = XEN_TO_C_INT64_T_OR_ELSE(val, 0);
   if (len <= 0)
     XEN_OUT_OF_RANGE_ERROR(S_setB S_mus_length, XEN_ONLY_ARG, val, "must be > 0");
 
@@ -1638,7 +1638,7 @@ static XEN g_mus_set_length(XEN gen, XEN val)
 	    }
 	}
     }
-  return(C_TO_XEN_OFF_T(mus_set_length(ptr, len)));
+  return(C_TO_XEN_INT64_T(mus_set_length(ptr, len)));
 }
 
 
@@ -1647,7 +1647,7 @@ static XEN g_mus_order(XEN gen)
   #define H_mus_order "(" S_mus_order " gen): gen's order, if any"
   if (XEN_LIST_P(gen)) return(call_get_method(gen, S_mus_order));
   XEN_ASSERT_TYPE(MUS_XEN_P(gen), gen, XEN_ONLY_ARG, S_mus_order, "a generator");
-  return(C_TO_XEN_OFF_T(mus_order(XEN_TO_MUS_ANY(gen))));
+  return(C_TO_XEN_INT64_T(mus_order(XEN_TO_MUS_ANY(gen))));
 }
 
 
@@ -5629,7 +5629,7 @@ static XEN g_in_any_1(const char *caller, XEN frame, XEN chan, XEN inp)
   XEN_ASSERT_TYPE(XEN_NUMBER_P(frame), frame, XEN_ARG_1, caller, "a number");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(chan), chan, XEN_ARG_2, caller, "an integer");
 
-  pos = XEN_TO_C_OFF_T(frame);
+  pos = XEN_TO_C_INT64_T(frame);
   if (pos < 0) 
     XEN_OUT_OF_RANGE_ERROR(caller, XEN_ARG_1, frame, "must be >= 0");    
 
@@ -5709,7 +5709,7 @@ static XEN g_out_any_1(const char *caller, XEN frame, XEN chan, XEN val, XEN out
   if (chn < 0)
     XEN_OUT_OF_RANGE_ERROR(caller, XEN_ARG_3, chan, "must be >= 0");    
 
-  pos = XEN_TO_C_OFF_T_OR_ELSE(frame, 0);
+  pos = XEN_TO_C_INT64_T_OR_ELSE(frame, 0);
   if (pos < 0) 
     XEN_OUT_OF_RANGE_ERROR(caller, XEN_ARG_1, frame, "must be >= 0");    
 
@@ -5837,7 +5837,7 @@ static XEN g_make_file_to_sample(XEN name, XEN buffer_size)
   mus_long_t size;
 
   XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_1, S_make_file_to_sample, "a string");
-  XEN_ASSERT_TYPE(XEN_OFF_T_IF_BOUND_P(buffer_size), buffer_size, XEN_ARG_2, S_make_file_to_sample, "an integer");
+  XEN_ASSERT_TYPE(XEN_INT64_T_IF_BOUND_P(buffer_size), buffer_size, XEN_ARG_2, S_make_file_to_sample, "an integer");
 
   if (!(mus_file_probe(XEN_TO_C_STRING(name))))
     XEN_ERROR(NO_SUCH_FILE,
@@ -5845,9 +5845,9 @@ static XEN g_make_file_to_sample(XEN name, XEN buffer_size)
 			 name,
 			 C_TO_XEN_STRING(STRERROR(errno))));
 
-  if (XEN_OFF_T_P(buffer_size))
+  if (XEN_INT64_T_P(buffer_size))
     {
-      size = XEN_TO_C_OFF_T(buffer_size);
+      size = XEN_TO_C_INT64_T(buffer_size);
       if (size <= 0)
 	XEN_OUT_OF_RANGE_ERROR(S_make_file_to_sample, XEN_ARG_2, buffer_size, "must be > 0");
     }
@@ -5878,7 +5878,7 @@ static XEN g_file_to_sample(XEN obj, XEN samp, XEN chan)
       channel = XEN_TO_C_INT(chan);
     }
   return(C_TO_XEN_DOUBLE(mus_file_to_sample(XEN_TO_MUS_ANY(obj),
-					    XEN_TO_C_OFF_T_OR_ELSE(samp, 0),
+					    XEN_TO_C_INT64_T_OR_ELSE(samp, 0),
 					    channel)));
 }
 
@@ -5962,7 +5962,7 @@ handled by the output generator 'obj', in channel 'chan' at frame 'samp'"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_4, S_sample_to_file, "a number");
 
   return(C_TO_XEN_DOUBLE(mus_sample_to_file(XEN_TO_MUS_ANY(obj),
-					    XEN_TO_C_OFF_T_OR_ELSE(samp, 0),
+					    XEN_TO_C_INT64_T_OR_ELSE(samp, 0),
 					    XEN_TO_C_INT(chan),
 					    XEN_TO_C_DOUBLE(val))));
 }
@@ -5993,16 +5993,16 @@ static XEN g_make_file_to_frame(XEN name, XEN buffer_size)
   mus_long_t size;
 
   XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_1, S_make_file_to_frame, "a string");
-  XEN_ASSERT_TYPE(XEN_OFF_T_IF_BOUND_P(buffer_size), buffer_size, XEN_ARG_2, S_make_file_to_frame, "an integer");
+  XEN_ASSERT_TYPE(XEN_INT64_T_IF_BOUND_P(buffer_size), buffer_size, XEN_ARG_2, S_make_file_to_frame, "an integer");
 
   if (!(mus_file_probe(XEN_TO_C_STRING(name))))
     XEN_ERROR(NO_SUCH_FILE,
 	      XEN_LIST_3(C_TO_XEN_STRING(S_make_file_to_frame),
 			 name,
 			 C_TO_XEN_STRING(STRERROR(errno))));
-  if (XEN_OFF_T_P(buffer_size))
+  if (XEN_INT64_T_P(buffer_size))
     {
-      size = XEN_TO_C_OFF_T(buffer_size);
+      size = XEN_TO_C_INT64_T(buffer_size);
       if (size <= 0)
 	XEN_OUT_OF_RANGE_ERROR(S_make_file_to_frame, XEN_ARG_2, buffer_size, "must be > 0");
     }
@@ -6025,7 +6025,7 @@ static XEN g_file_to_frame(XEN obj, XEN samp, XEN outfr)
       (mus_frame_p(XEN_TO_MUS_ANY(outfr)))) 
     res = (mus_any *)XEN_TO_MUS_ANY(outfr);
 
-  nf = mus_file_to_frame(XEN_TO_MUS_ANY(obj), XEN_TO_C_OFF_T_OR_ELSE(samp, 0), res);
+  nf = mus_file_to_frame(XEN_TO_MUS_ANY(obj), XEN_TO_C_INT64_T_OR_ELSE(samp, 0), res);
   if (res)
     return(outfr);
   return(mus_xen_to_object(mus_any_to_mus_xen_with_vct(nf, xen_make_vct_wrapper(mus_length(nf), mus_data(nf)))));
@@ -6093,7 +6093,7 @@ handled by the output generator 'obj' at frame 'samp'"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(samp), samp, XEN_ARG_2, S_frame_to_file, "a number");
   XEN_ASSERT_TYPE((MUS_XEN_P(val)) && (mus_frame_p(XEN_TO_MUS_ANY(val))), val, XEN_ARG_3, S_frame_to_file, "a frame");
   mus_frame_to_file(XEN_TO_MUS_ANY(obj),
-		    XEN_TO_C_OFF_T_OR_ELSE(samp, 0),
+		    XEN_TO_C_INT64_T_OR_ELSE(samp, 0),
 		    (mus_any *)XEN_TO_MUS_ANY(val));
   return(val);
 }
@@ -6102,18 +6102,18 @@ handled by the output generator 'obj' at frame 'samp'"
 static XEN g_mus_file_buffer_size(void)
 {
   #define H_mus_file_buffer_size "(" S_mus_file_buffer_size "): current CLM IO buffer size (default is 8192)"
-  return(C_TO_XEN_OFF_T(mus_file_buffer_size()));
+  return(C_TO_XEN_INT64_T(mus_file_buffer_size()));
 }
 
 
 static XEN g_mus_set_file_buffer_size(XEN val)
 {
   mus_long_t len;
-  XEN_ASSERT_TYPE(XEN_OFF_T_P(val), val, XEN_ONLY_ARG, S_setB S_mus_file_buffer_size, "an integer");
-  len = XEN_TO_C_OFF_T(val);
+  XEN_ASSERT_TYPE(XEN_INT64_T_P(val), val, XEN_ONLY_ARG, S_setB S_mus_file_buffer_size, "an integer");
+  len = XEN_TO_C_INT64_T(val);
   if (len <= 0) 
     XEN_OUT_OF_RANGE_ERROR(S_setB S_mus_file_buffer_size, XEN_ONLY_ARG, val, "must be > 0");
-  return(C_TO_XEN_OFF_T(mus_set_file_buffer_size(len)));
+  return(C_TO_XEN_INT64_T(mus_set_file_buffer_size(len)));
 }
 
 
@@ -6251,7 +6251,7 @@ static XEN g_mus_location(XEN obj)
   #define H_mus_location "(" S_mus_location " gen): gen's " S_mus_location " field, if any"
   if (XEN_LIST_P(obj)) return(call_get_method(obj, S_mus_location));
   XEN_ASSERT_TYPE(MUS_XEN_P(obj), obj, XEN_ONLY_ARG, S_mus_location, "a generator");
-  return(C_TO_XEN_OFF_T(mus_location(XEN_TO_MUS_ANY(obj))));
+  return(C_TO_XEN_INT64_T(mus_location(XEN_TO_MUS_ANY(obj))));
 }
 
 
@@ -6260,7 +6260,7 @@ static XEN g_mus_set_location(XEN obj, XEN val)
   if (XEN_LIST_P(obj)) return(call_set_method(obj, val, S_mus_location));
   XEN_ASSERT_TYPE(MUS_XEN_P(obj), obj, XEN_ARG_1, S_setB S_mus_location, "a generator");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, S_setB S_mus_location, "a number");
-  return(C_TO_XEN_OFF_T(mus_set_location(XEN_TO_MUS_ANY(obj), XEN_TO_C_OFF_T_OR_ELSE(val, 0))));
+  return(C_TO_XEN_INT64_T(mus_set_location(XEN_TO_MUS_ANY(obj), XEN_TO_C_INT64_T_OR_ELSE(val, 0))));
 }
 
 
@@ -6382,7 +6382,7 @@ mus_float_t mus_locsig_or_move_sound_to_vct_or_sound_data(mus_xen *ms, mus_any *
 	      if (XEN_PROCEDURE_P(output))
 		{
 		  XEN_CALL_3(output, 
-			     C_TO_XEN_OFF_T(pos), 
+			     C_TO_XEN_INT64_T(pos), 
 			     C_TO_XEN_DOUBLE(fval), 
 			     C_TO_XEN_INT(0), 
 			     (from_locsig) ? S_locsig : S_move_sound);
@@ -6418,7 +6418,7 @@ mus_float_t mus_locsig_or_move_sound_to_vct_or_sound_data(mus_xen *ms, mus_any *
 	      if (XEN_PROCEDURE_P(reverb))
 		{
 		  XEN_CALL_3(reverb, 
-			     C_TO_XEN_OFF_T(pos), 
+			     C_TO_XEN_INT64_T(pos), 
 			     C_TO_XEN_DOUBLE(fval), 
 			     C_TO_XEN_INT(0), 
 			     (from_locsig) ? S_locsig : S_move_sound);
@@ -6445,7 +6445,7 @@ static XEN g_locsig(XEN xobj, XEN xpos, XEN xval)
   XEN_ASSERT_TYPE(XEN_NUMBER_P(xpos), xpos, XEN_ARG_2, S_locsig, "a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(xval), xval, XEN_ARG_3, S_locsig, "a number");
 
-  pos = XEN_TO_C_OFF_T_OR_ELSE(xpos, 0);
+  pos = XEN_TO_C_INT64_T_OR_ELSE(xpos, 0);
   if (pos < 0) 
     XEN_OUT_OF_RANGE_ERROR(S_locsig, XEN_ARG_2, xpos, "must be >= 0");    
   fval = XEN_TO_C_DOUBLE(xval);
@@ -6717,7 +6717,7 @@ static XEN g_move_sound(XEN obj, XEN loc, XEN val)
   XEN_ASSERT_TYPE(XEN_NUMBER_P(loc), loc, XEN_ARG_2, S_move_sound, "a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_3, S_move_sound, "a number");
 
-  pos = XEN_TO_C_OFF_T_OR_ELSE(loc, 0);
+  pos = XEN_TO_C_INT64_T_OR_ELSE(loc, 0);
   if (pos < 0) 
     XEN_OUT_OF_RANGE_ERROR(S_move_sound, XEN_ARG_2, loc, "must be >= 0");    
   fval = XEN_TO_C_DOUBLE(val);
@@ -6814,12 +6814,12 @@ static XEN g_make_move_sound(XEN dloc_list, XEN outp, XEN revp)
     }
 
   ref = XEN_LIST_REF(dloc_list, 0);
-  XEN_ASSERT_TYPE(XEN_OFF_T_P(ref), ref, XEN_ARG_1, S_make_move_sound, "dlocsig list[0] (start): a sample number");
-  start = XEN_TO_C_OFF_T(ref);
+  XEN_ASSERT_TYPE(XEN_INT64_T_P(ref), ref, XEN_ARG_1, S_make_move_sound, "dlocsig list[0] (start): a sample number");
+  start = XEN_TO_C_INT64_T(ref);
 
   ref = XEN_LIST_REF(dloc_list, 1);
-  XEN_ASSERT_TYPE(XEN_OFF_T_P(ref), ref, XEN_ARG_1, S_make_move_sound, "dlocsig list[1] (end): a sample number");
-  end = XEN_TO_C_OFF_T(ref);
+  XEN_ASSERT_TYPE(XEN_INT64_T_P(ref), ref, XEN_ARG_1, S_make_move_sound, "dlocsig list[1] (end): a sample number");
+  end = XEN_TO_C_INT64_T(ref);
 
   ref = XEN_LIST_REF(dloc_list, 2);
   XEN_ASSERT_TYPE(XEN_INTEGER_P(ref), ref, XEN_ARG_1, S_make_move_sound, "dlocsig list[2] (outchans): an integer");
@@ -7104,7 +7104,7 @@ static XEN g_mus_ramp(XEN obj)
   #define H_mus_ramp "(" S_mus_ramp " gen): granulate generator's " S_mus_ramp " field"
   if (XEN_LIST_P(obj)) return(call_get_method(obj, S_mus_ramp));
   XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_granulate_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ONLY_ARG, S_mus_ramp, "a granulate generator");
-  return(C_TO_XEN_OFF_T(mus_ramp(XEN_TO_MUS_ANY(obj))));
+  return(C_TO_XEN_INT64_T(mus_ramp(XEN_TO_MUS_ANY(obj))));
 }
 
 
@@ -7113,7 +7113,7 @@ static XEN g_mus_set_ramp(XEN obj, XEN val)
   if (XEN_LIST_P(obj)) return(call_set_method(obj, val, S_mus_ramp));
   XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_granulate_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ARG_1, S_setB S_mus_ramp, "a granulate generator");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, S_setB S_mus_ramp, "a number");
-  return(C_TO_XEN_OFF_T(mus_set_ramp(XEN_TO_MUS_ANY(obj), XEN_TO_C_OFF_T_OR_ELSE(val, 0))));
+  return(C_TO_XEN_INT64_T(mus_set_ramp(XEN_TO_MUS_ANY(obj), XEN_TO_C_INT64_T_OR_ELSE(val, 0))));
 }
 
 
@@ -7670,7 +7670,7 @@ static XEN g_mus_hop(XEN obj)
   #define H_mus_hop "(" S_mus_hop " gen): gen's " S_mus_hop " field"
   if (XEN_LIST_P(obj)) return(call_get_method(obj, S_mus_hop));
   XEN_ASSERT_TYPE(MUS_XEN_P(obj), obj, XEN_ONLY_ARG, S_mus_hop, "a generator");
-  return(C_TO_XEN_OFF_T(mus_hop(XEN_TO_MUS_ANY(obj))));
+  return(C_TO_XEN_INT64_T(mus_hop(XEN_TO_MUS_ANY(obj))));
 }
 
 
@@ -7679,7 +7679,7 @@ static XEN g_mus_set_hop(XEN obj, XEN val)
   if (XEN_LIST_P(obj)) return(call_set_method(obj, val, S_mus_hop));
   XEN_ASSERT_TYPE(MUS_XEN_P(obj), obj, XEN_ARG_1, S_setB S_mus_hop, "a generator");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, S_setB S_mus_hop, "a number");
-  return(C_TO_XEN_OFF_T(mus_set_hop(XEN_TO_MUS_ANY(obj), XEN_TO_C_OFF_T_OR_ELSE(val, 0))));
+  return(C_TO_XEN_INT64_T(mus_set_hop(XEN_TO_MUS_ANY(obj), XEN_TO_C_INT64_T_OR_ELSE(val, 0))));
 }
 
 
@@ -7713,8 +7713,8 @@ it in conjunction with mixer to scale/envelope all the various ins and outs. \
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(ist), ist, XEN_ARG_5, S_mus_mix, "a number");
   XEN_ASSERT_TYPE((XEN_NOT_BOUND_P(mx)) || (XEN_FALSE_P(mx)) || ((MUS_XEN_P(mx)) && (mus_mixer_p(XEN_TO_MUS_ANY(mx)))), mx, XEN_ARG_6, S_mus_mix, "a mixer");
   XEN_ASSERT_TYPE((XEN_NOT_BOUND_P(envs)) || (XEN_FALSE_P(envs)) || (XEN_VECTOR_P(envs)), envs, XEN_ARG_7, S_mus_mix, "an env gen or vector of envs");
-  if (XEN_BOUND_P(ost)) ostart = XEN_TO_C_OFF_T_OR_ELSE(ost, 0);
-  if (XEN_BOUND_P(ist)) istart = XEN_TO_C_OFF_T_OR_ELSE(ist, 0);
+  if (XEN_BOUND_P(ost)) ostart = XEN_TO_C_INT64_T_OR_ELSE(ost, 0);
+  if (XEN_BOUND_P(ist)) istart = XEN_TO_C_INT64_T_OR_ELSE(ist, 0);
   if ((XEN_BOUND_P(mx)) && (MUS_XEN_P(mx))) mx1 = (mus_any *)XEN_TO_MUS_ANY(mx);
   if (XEN_STRING_P(out)) 
     {
@@ -7762,7 +7762,7 @@ it in conjunction with mixer to scale/envelope all the various ins and outs. \
 
 
   if (XEN_BOUND_P(olen)) 
-    osamps = XEN_TO_C_OFF_T_OR_ELSE(olen, 0); 
+    osamps = XEN_TO_C_INT64_T_OR_ELSE(olen, 0); 
   else 
     {
       if (XEN_STRING_P(in))

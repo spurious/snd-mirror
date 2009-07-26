@@ -6,10 +6,11 @@
 #include <mus-config.h>
 #include <stdlib.h>
 
-#define XM_DATE "24-Feb-09"
+#define XM_DATE "27-Jul-09"
 
 /* HISTORY: 
  *
+ *   27-Jul:    changed OFF_T to INT64_T.
  *   24-Feb:    and then changed some back to ULONGs!
  *   16-Jan:    changed some ULONG's to C_POINTER's
  *   12-Jan-09: changed strdup to xen_strdup.
@@ -2111,9 +2112,9 @@ static Arg *XEN_TO_C_Args(XEN inargl)
 	    XtSetArg(args[i], name, (XtArgVal)(XEN_TO_C_STRING(value)));
 	  /* these are bare pointers -- we can't assume they can be "unwrapped" in xen jargon */
 	  else if (XEN_LIST_P(value))
-	    XtSetArg(args[i], name, (XtArgVal)(XEN_TO_C_OFF_T(XEN_CADR(value))));  /* all tagged types */
+	    XtSetArg(args[i], name, (XtArgVal)(XEN_TO_C_INT64_T(XEN_CADR(value))));  /* all tagged types */
 	  else 
-	    XtSetArg(args[i], name, (XtArgVal)(XEN_TO_C_OFF_T(value)));
+	    XtSetArg(args[i], name, (XtArgVal)(XEN_TO_C_INT64_T(value)));
 	  break;
 	}
     }
@@ -15704,10 +15705,10 @@ new source of events, which is usually file input but can also be file output."
   gc_loc = xm_protect(descr);
   id = XtAppAddInput(XEN_TO_C_XtAppContext(arg1), 
 		     XEN_TO_C_INT(arg2), 
-#if (SIZEOF_OFF_T != SIZEOF_VOID_P)
+#if (SIZEOF_INT64_T != SIZEOF_VOID_P)
 		     (XtPointer)((int)XEN_TO_C_ULONG(arg3)),
 #else
-		     (XtPointer)XEN_TO_C_OFF_T(arg3),
+		     (XtPointer)XEN_TO_C_INT64_T(arg3),
 #endif
 		     gxm_XtInputCallbackProc, 
 		     (XtPointer)descr);

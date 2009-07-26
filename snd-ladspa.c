@@ -609,7 +609,7 @@ Information about parameters can be acquired using " S_analyse_ladspa "."
 		  XEN_ARG_3,
 		  S_apply_ladspa, "a number");
   /* Get sample count. */
-  num = XEN_TO_C_OFF_T(samples);
+  num = XEN_TO_C_INT64_T(samples);
   if (num <= 0) return(XEN_FALSE);
 
   /* The fourth parameter is a tag to identify the edit. */

@@ -305,8 +305,8 @@ static int current_optimization = 0;
 #if WITH_RUN
 
 #define Int mus_long_t
-#define R_C_TO_XEN_INT C_TO_XEN_OFF_T
-#define R_XEN_TO_C_INT XEN_TO_C_OFF_T
+#define R_C_TO_XEN_INT C_TO_XEN_INT64_T
+#define R_XEN_TO_C_INT XEN_TO_C_INT64_T
 #define Double double
 
 #define DONT_OPTIMIZE 0
@@ -986,7 +986,7 @@ XEN mus_run_ptree_code(struct ptree *pt)
 }
 
 
-#if (SIZEOF_OFF_T == SIZEOF_LONG)
+#if (SIZEOF_INT64_T == SIZEOF_LONG)
   #define INT_PT  "i%d(%ld)"
   #define INT_STR "%ld"
 #else
@@ -2584,7 +2584,7 @@ static vect *read_int_vector(XEN vectr)
     {
       XEN datum;
       datum = XEN_VECTOR_REF(vectr, i);
-      if (XEN_OFF_T_P(datum))
+      if (XEN_INT64_T_P(datum))
 	v->data.ints[i] = R_XEN_TO_C_INT(datum);
       else
 	{
@@ -2718,7 +2718,7 @@ int mus_run_xen_to_run_type(XEN val)
 {
   if (XEN_NUMBER_P(val))
     {
-      if ((XEN_EXACT_P(val)) && (XEN_OFF_T_P(val)))
+      if ((XEN_EXACT_P(val)) && (XEN_INT64_T_P(val)))
 	return(R_INT);
       else return(R_FLOAT);
     }
@@ -4655,7 +4655,7 @@ static xen_value *case_form(ptree *prog, XEN form, walk_result_t need_result)
 	  for (j = 0; j < num_keys; j++, keys = XEN_CDR(keys))
 	    {
 	      key = XEN_CAR(keys);
-	      if (!(XEN_OFF_T_P(key)))
+	      if (!(XEN_INT64_T_P(key)))
 		{
 		  char *temp = NULL;
 		  run_warn("case only accepts integer selectors: %s", temp = XEN_AS_STRING(key));

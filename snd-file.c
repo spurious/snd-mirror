@@ -1103,8 +1103,8 @@ static file_info *open_raw_sound(const char *fullname, read_only_t read_only, bo
 	  df = XEN_LIST_REF(res, 2);
 	  data_format = XEN_TO_C_INT(df);
 	}
-      if (len > 3) data_location = XEN_TO_C_OFF_T(XEN_LIST_REF(res, 3)); else data_location = 0;
-      if (len > 4) bytes = XEN_TO_C_OFF_T(XEN_LIST_REF(res, 4)); else bytes = mus_sound_length(fullname) - data_location;
+      if (len > 3) data_location = XEN_TO_C_INT64_T(XEN_LIST_REF(res, 3)); else data_location = 0;
+      if (len > 4) bytes = XEN_TO_C_INT64_T(XEN_LIST_REF(res, 4)); else bytes = mus_sound_length(fullname) - data_location;
 
       mus_header_set_raw_defaults(srate, chans, data_format);
       mus_sound_override_header(fullname, 
@@ -5267,7 +5267,7 @@ static XEN g_disk_kspace(XEN name)
 {
   #define H_disk_kspace "(" S_disk_kspace " filename): kbytes of space available on partition containing 'filename'"
   XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ONLY_ARG, S_disk_kspace, "a string");
-  return(C_TO_XEN_OFF_T(disk_kspace(XEN_TO_C_STRING(name))));
+  return(C_TO_XEN_INT64_T(disk_kspace(XEN_TO_C_STRING(name))));
 }
 
 

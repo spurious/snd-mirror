@@ -10,12 +10,13 @@
  * None:      all versions
  */
 
-#define XEN_MAJOR_VERSION 2
-#define XEN_MINOR_VERSION 30
-#define XEN_VERSION "2.30"
+#define XEN_MAJOR_VERSION 3
+#define XEN_MINOR_VERSION 0
+#define XEN_VERSION "3.0"
 
 /* HISTORY:
  *
+ *  27-Jul:    INT64_T cases paralleling OFF_T (the latter may go away someday).
  *  14-Jul:    s7_define_function_star via XEN_DEFINE_PROCEDURE_STAR.
  *  6-Jul:     cleaned up XEN_WRAP_C_POINTER et al (Mike Scholz).
  *  29-Jun:    some fth changes.
@@ -221,6 +222,7 @@
   #define XEN_BOOLEAN_P(Arg)         ((bool)scm_is_bool(Arg))
   #define XEN_NUMBER_P(Arg)          ((bool)scm_is_real(Arg))
   #define XEN_OFF_T_P(Arg)           ((bool)scm_is_integer(Arg))
+  #define XEN_INT64_T_P(Arg)         ((bool)scm_is_integer(Arg))
 #else
   #define C_TO_XEN_INT(a)            scm_long2num((long)a)
   #define XEN_DOUBLE_P(Arg)          (XEN_NOT_FALSE_P(scm_real_p(Arg)))
@@ -243,11 +245,12 @@
   #define XEN_BOOLEAN_P(Arg)         (SCM_BOOLP(Arg))
   #define XEN_NUMBER_P(Arg)          (XEN_NOT_FALSE_P(scm_real_p(Arg)))
   #define XEN_OFF_T_P(Arg)           (XEN_NOT_FALSE_P(scm_integer_p(Arg)))
+  #define XEN_INT64_T_P(Arg)         (XEN_NOT_FALSE_P(scm_integer_p(Arg)))
 #endif
 
 #define XEN_ULONG_LONG_P(Arg)        XEN_ULONG_P(Arg) 
-#define XEN_TO_C_ULONG_LONG(Arg)     XEN_TO_C_OFF_T(a) 
-#define C_TO_XEN_ULONG_LONG(Arg)     C_TO_XEN_OFF_T((off_t)a) 
+#define XEN_TO_C_ULONG_LONG(Arg)     XEN_TO_C_INT64_T(a) 
+#define C_TO_XEN_ULONG_LONG(Arg)     C_TO_XEN_INT64_T((int64_t)a) 
 
 #if HAVE_SCM_NAN_P
   #define XEN_NAN_P(Arg)             XEN_TRUE_P(scm_nan_p(Arg))
@@ -285,8 +288,8 @@
 
 #if HAVE_SCM_MAKE_RATIO || HAVE_SCM_C_MAKE_RECTANGULAR
   #define XEN_HAVE_RATIOS                     1
-  #define XEN_NUMERATOR(Arg)                  XEN_TO_C_OFF_T(scm_numerator(Arg))
-  #define XEN_DENOMINATOR(Arg)                XEN_TO_C_OFF_T(scm_denominator(Arg))
+  #define XEN_NUMERATOR(Arg)                  XEN_TO_C_INT64_T(scm_numerator(Arg))
+  #define XEN_DENOMINATOR(Arg)                XEN_TO_C_INT64_T(scm_denominator(Arg))
   #define XEN_RATIONALIZE(Arg1, Arg2)         scm_rationalize(scm_inexact_to_exact(Arg1), scm_inexact_to_exact(Arg2))
   #define XEN_RATIO_P(Arg)                    SCM_FRACTIONP(Arg)
   #if HAVE_SCM_C_MAKE_RECTANGULAR
@@ -811,6 +814,7 @@ char *xen_guile_to_c_string_with_eventual_free(XEN str);
   #define XEN_INTEGER_P(Arg)            ({ int _xen_h_9_ = TYPE(Arg);  ((_xen_h_9_ == T_FIXNUM) || (_xen_h_9_ == T_BIGNUM)); })
   #define XEN_PROCEDURE_P(Arg)          ({ XEN _xen_h_10_ = Arg;       (XEN_BOUND_P(_xen_h_10_) && (rb_obj_is_kind_of(_xen_h_10_, rb_cProc))); })
   #define XEN_OFF_T_P(Arg)              ({ int _xen_h_11_ = TYPE(Arg); ((_xen_h_11_ == T_FIXNUM) || (_xen_h_11_ == T_BIGNUM)); })
+  #define XEN_INT64_T_P(Arg)            ({ int _xen_h_11_ = TYPE(Arg); ((_xen_h_11_ == T_FIXNUM) || (_xen_h_11_ == T_BIGNUM)); })
   #define XEN_KEYWORD_P(Obj)            ({ XEN _xen_h_12_ = Obj;       (XEN_BOUND_P(_xen_h_12_) && SYMBOL_P(_xen_h_12_)); })
 #else
   #define XEN_BOOLEAN_P(Arg)            (XEN_TRUE_P(Arg) || XEN_FALSE_P(Arg))
@@ -818,6 +822,7 @@ char *xen_guile_to_c_string_with_eventual_free(XEN str);
   #define XEN_INTEGER_P(Arg)            ((TYPE(Arg) == T_FIXNUM) || (TYPE(Arg) == T_BIGNUM))
   #define XEN_PROCEDURE_P(Arg)          (XEN_BOUND_P(Arg) && (rb_obj_is_kind_of(Arg, rb_cProc)))
   #define XEN_OFF_T_P(Arg)              ((TYPE(Arg) == T_FIXNUM) || (TYPE(Arg) == T_BIGNUM))
+  #define XEN_INT64_T_P(Arg)            ((TYPE(Arg) == T_FIXNUM) || (TYPE(Arg) == T_BIGNUM))
   #define XEN_KEYWORD_P(Obj)            (XEN_BOUND_P(Obj) && SYMBOL_P(Obj))
 #endif
 
@@ -882,7 +887,6 @@ char *xen_guile_to_c_string_with_eventual_free(XEN str);
   #define C_TO_XEN_ULONG(a)             UINT2NUM((unsigned long)a)
 #endif
 
-/* off_t support added in 1.8.0, I think */
 #ifndef OFFT2NUM
   #define OFFT2NUM(a)                   INT2NUM(a)
 #endif
@@ -893,8 +897,8 @@ char *xen_guile_to_c_string_with_eventual_free(XEN str);
 #define XEN_TO_C_LONG_LONG(a)           NUM2OFFT(a)
 
 #define XEN_ULONG_LONG_P(Arg)           XEN_ULONG_P(Arg) 
-#define XEN_TO_C_ULONG_LONG(Arg)        XEN_TO_C_OFF_T(a) 
-#define C_TO_XEN_ULONG_LONG(Arg)        C_TO_XEN_OFF_T((off_t)a) 
+#define XEN_TO_C_ULONG_LONG(Arg)        XEN_TO_C_INT64_T(a) 
+#define C_TO_XEN_ULONG_LONG(Arg)        C_TO_XEN_INT64_T((int64_t)a) 
 
 /* ---- strings ---- */
 #define XEN_STRING_P(Arg)               ((TYPE(Arg) == T_STRING) && (!SYMBOL_P(Arg)))
@@ -1351,6 +1355,7 @@ XEN xen_rb_add_to_load_path(char *path);
 #define C_TO_XEN_ULONG_LONG(Arg)        fth_make_ulong_long((unsigned long long)Arg) 
 
 #define XEN_OFF_T_P(Arg)                FTH_LONG_LONG_P(Arg)
+#define XEN_INT64_T_P(Arg)              FTH_LONG_LONG_P(Arg)
 #define C_TO_XEN_LONG_LONG(a)           fth_make_long_long(a)
 #define XEN_TO_C_LONG_LONG(a)           fth_long_long_ref(a)
 
@@ -1374,8 +1379,8 @@ XEN xen_rb_add_to_load_path(char *path);
 # define XEN_HAVE_RATIOS                    true
 # define XEN_RATIO_P(Arg)               FTH_RATIO_P(Arg)
 # define XEN_MAKE_RATIO(Num, Den)       fth_make_ratio(Num, Den)
-# define XEN_NUMERATOR(Arg)             XEN_TO_C_OFF_T(fth_numerator(Arg))
-# define XEN_DENOMINATOR(Arg)           XEN_TO_C_OFF_T(fth_denominator(Arg))
+# define XEN_NUMERATOR(Arg)             XEN_TO_C_INT64_T(fth_numerator(Arg))
+# define XEN_DENOMINATOR(Arg)           XEN_TO_C_INT64_T(fth_denominator(Arg))
 # define XEN_RATIONALIZE(Arg1, Arg2)    fth_rationalize(Arg1, Arg2)
 #endif
 
@@ -1655,13 +1660,17 @@ extern XEN xen_false, xen_true, xen_nil, xen_undefined;
 #define XEN_TO_C_ULONG_LONG(Arg)                   s7_ulong_long(Arg) 
 #define C_TO_XEN_ULONG_LONG(Arg)                   s7_make_ulong_long(s7, (unsigned long long)Arg) 
 
-#define C_TO_XEN_LONG_LONG(Arg)                    C_TO_XEN_OFF_T(Arg)
-#define XEN_TO_C_LONG_LONG(Arg)                    XEN_TO_C_OFF_T(Arg)
+#define C_TO_XEN_LONG_LONG(Arg)                    C_TO_XEN_INT64_T(Arg)
+#define XEN_TO_C_LONG_LONG(Arg)                    XEN_TO_C_INT64_T(Arg)
 
-#define XEN_OFF_T_P(Arg)                           XEN_INTEGER_P(Arg) /* I'm going to use off_t's throughout */
+#define XEN_OFF_T_P(Arg)                           XEN_INTEGER_P(Arg)
+#define XEN_INT64_T_P(Arg)                         XEN_INTEGER_P(Arg)
 #define XEN_TO_C_OFF_T_OR_ELSE(Arg, Def)           XEN_TO_C_INT_OR_ELSE(Arg, Def)
 #define C_TO_XEN_OFF_T(Arg)                        C_TO_XEN_INT(Arg)
 #define XEN_TO_C_OFF_T(Arg)                        XEN_TO_C_INT(Arg)
+#define XEN_TO_C_INT64_T_OR_ELSE(Arg, Def)         XEN_TO_C_INT_OR_ELSE(Arg, Def)
+#define C_TO_XEN_INT64_T(Arg)                      C_TO_XEN_INT(Arg)
+#define XEN_TO_C_INT64_T(Arg)                      XEN_TO_C_INT(Arg)
 
 #define XEN_NUMBER_P(Arg)                          s7_is_real(Arg) /* !! throughout xen, we're assuming no complex number! -- s7_is_number(Arg) */
 #define XEN_EXACT_P(Arg)                           s7_is_exact(Arg)
@@ -1689,7 +1698,7 @@ extern XEN xen_false, xen_true, xen_nil, xen_undefined;
   #define XEN_DENOMINATOR(Arg)                     s7_denominator(Arg)
   #define XEN_RATIONALIZE(Arg1, Arg2)              s7_rationalize(s7, XEN_TO_C_DOUBLE(Arg1), XEN_TO_C_DOUBLE(Arg2))
   #define XEN_RATIO_P(Arg)                         s7_is_ratio(Arg)
-  #define XEN_MAKE_RATIO(Num, Den)                 s7_make_ratio(s7, XEN_TO_C_OFF_T(Num), XEN_TO_C_OFF_T(Den))
+  #define XEN_MAKE_RATIO(Num, Den)                 s7_make_ratio(s7, XEN_TO_C_INT64_T(Num), XEN_TO_C_INT64_T(Den))
 #endif
 
 #define C_STRING_TO_XEN_FORM(Str)                  s7_eval_c_string(s7, Str)
@@ -2045,7 +2054,7 @@ XEN xen_define_variable(const char *name, XEN value);
 void xen_s7_ignore(s7_function func); /* squelch compiler warnings */
 const char *xen_s7_object_help(XEN sym);
 double xen_to_c_double(XEN a);
-off_t xen_to_c_int(XEN a);
+int64_t xen_to_c_int(XEN a);
 double xen_to_c_double_or_else(XEN a, double b);
 s7_scheme *s7_xen_initialize(s7_scheme *sc);
 void xen_s7_set_repl_prompt(const char *new_prompt);
@@ -2126,6 +2135,7 @@ const char *xen_s7_constant_help(const char *name);
 #define XEN_ZERO 0
 #define XEN_NUMBER_P(Arg) 0
 #define XEN_OFF_T_P(Arg) 0
+#define XEN_INT64_T_P(Arg) 0
 #define XEN_DOUBLE_P(Arg) 0
 #define XEN_TO_C_DOUBLE(a) 0.0
 #define XEN_TO_C_DOUBLE_OR_ELSE(a, b) b
@@ -2273,6 +2283,7 @@ void xen_no_ext_lang_check_args(const char *name, int args, int req_args, int op
   #define XEN_BOOLEAN_IF_BOUND_P(Arg)            ({ XEN _xen_h_14_ = Arg; ((XEN_BOOLEAN_P(_xen_h_14_))   || (XEN_NOT_BOUND_P(_xen_h_14_))); })
   #define XEN_INTEGER_IF_BOUND_P(Arg)            ({ XEN _xen_h_15_ = Arg; ((XEN_NOT_BOUND_P(_xen_h_15_)) || (XEN_INTEGER_P(_xen_h_15_))); })
   #define XEN_OFF_T_IF_BOUND_P(Arg)              ({ XEN _xen_h_15_ = Arg; ((XEN_NOT_BOUND_P(_xen_h_15_)) || (XEN_OFF_T_P(_xen_h_15_))); })
+  #define XEN_INT64_T_IF_BOUND_P(Arg)            ({ XEN _xen_h_15_ = Arg; ((XEN_NOT_BOUND_P(_xen_h_15_)) || (XEN_INT64_T_P(_xen_h_15_))); })
   #define XEN_NUMBER_IF_BOUND_P(Arg)             ({ XEN _xen_h_16_ = Arg; ((XEN_NOT_BOUND_P(_xen_h_16_)) || (XEN_NUMBER_P(_xen_h_16_))); })
   #define XEN_STRING_IF_BOUND_P(Arg)             ({ XEN _xen_h_17_ = Arg; ((XEN_NOT_BOUND_P(_xen_h_17_)) || (XEN_STRING_P(_xen_h_17_))); })
   #define XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(Arg) ({ XEN _xen_h_18_ = Arg; ((XEN_BOOLEAN_P(_xen_h_18_))   || (XEN_NOT_BOUND_P(_xen_h_18_)) || (XEN_INTEGER_P(_xen_h_18_))); })
@@ -2281,6 +2292,7 @@ void xen_no_ext_lang_check_args(const char *name, int args, int req_args, int op
   #define XEN_BOOLEAN_IF_BOUND_P(Arg)            ((XEN_BOOLEAN_P(Arg))   || (XEN_NOT_BOUND_P(Arg)))
   #define XEN_INTEGER_IF_BOUND_P(Arg)            ((XEN_NOT_BOUND_P(Arg)) || (XEN_INTEGER_P(Arg)))
   #define XEN_OFF_T_IF_BOUND_P(Arg)              ((XEN_NOT_BOUND_P(Arg)) || (XEN_OFF_T_P(Arg)))
+  #define XEN_INT64_T_IF_BOUND_P(Arg)            ((XEN_NOT_BOUND_P(Arg)) || (XEN_INT64_T_P(Arg)))
   #define XEN_NUMBER_IF_BOUND_P(Arg)             ((XEN_NOT_BOUND_P(Arg)) || (XEN_NUMBER_P(Arg)))
   #define XEN_STRING_IF_BOUND_P(Arg)             ((XEN_NOT_BOUND_P(Arg)) || (XEN_STRING_P(Arg)))
   #define XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(Arg) ((XEN_BOOLEAN_P(Arg))   || (XEN_NOT_BOUND_P(Arg)) || (XEN_INTEGER_P(Arg)))
@@ -2305,9 +2317,12 @@ void xen_no_ext_lang_check_args(const char *name, int args, int req_args, int op
 /* 10 is the limit in Guile (SCM_GSUBR_MAX in gsubr.h), no limit in S7, not sure about Ruby or Forth */
 
 #if (!HAVE_S7)
-#define XEN_TO_C_OFF_T_OR_ELSE(a, b)  xen_to_c_off_t_or_else(a, b)
+#define XEN_TO_C_OFF_T_OR_ELSE(a, b)   xen_to_c_off_t_or_else(a, b)
+#define XEN_TO_C_INT64_T_OR_ELSE(a, b) xen_to_c_int64_t_or_else(a, b)
 #define C_TO_XEN_OFF_T(a)             c_to_xen_off_t(a)
+#define C_TO_XEN_INT64_T(a)           C_TO_XEN_LONG_LONG(a)
 #define XEN_TO_C_OFF_T(a)             xen_to_c_off_t(a)
+#define XEN_TO_C_INT64_T(a)           xen_to_c_int64_t(a)
 #define XEN_AS_STRING(form)           XEN_TO_C_STRING(XEN_TO_STRING(form))
 #else
 #define XEN_AS_STRING(form)           s7_object_to_c_string(s7, form)
@@ -2337,8 +2352,8 @@ void xen_no_ext_lang_check_args(const char *name, int args, int req_args, int op
  #define XEN_WRAP_C_POINTER(a)         ((XEN)(C_TO_XEN_ULONG((unsigned long)a))) 
  #define XEN_UNWRAP_C_POINTER(a)       XEN_TO_C_ULONG(a) 
 #else 
- #define XEN_WRAP_C_POINTER(a)         C_TO_XEN_OFF_T((off_t)(a)) 
- #define XEN_UNWRAP_C_POINTER(a)       XEN_TO_C_OFF_T(a) 
+ #define XEN_WRAP_C_POINTER(a)         C_TO_XEN_INT64_T((int64_t)(a)) 
+ #define XEN_UNWRAP_C_POINTER(a)       XEN_TO_C_INT64_T(a) 
 #endif 
 
 #if HAVE_GUILE
@@ -2361,7 +2376,11 @@ int xen_to_c_int_or_else(XEN obj, int fallback);
 off_t xen_to_c_off_t_or_else(XEN obj, off_t fallback);
 off_t xen_to_c_off_t(XEN obj);
 XEN c_to_xen_off_t(off_t val);
+int64_t xen_to_c_int64_t_or_else(XEN obj, int64_t fallback);
+int64_t xen_to_c_int64_t(XEN obj);
+
 #endif
+
 char *xen_version(void);
 void xen_repl(int argc, char **argv);
 void xen_initialize(void);

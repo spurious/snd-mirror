@@ -78,6 +78,26 @@ XEN c_to_xen_off_t(off_t val)
 }
 
 
+int64_t xen_to_c_int64_t_or_else(XEN obj, int64_t fallback)
+{
+  if ((XEN_NOT_FALSE_P(scm_integer_p(obj))) && XEN_EXACT_P(obj))
+    return(XEN_TO_C_LONG_LONG(obj));
+  else
+    if (XEN_NUMBER_P(obj))
+      return((int64_t)XEN_TO_C_DOUBLE(obj));
+  return(fallback);
+}
+
+
+int64_t xen_to_c_int64_t(XEN obj)
+{
+  if (XEN_EXACT_P(obj))
+    return(XEN_TO_C_LONG_LONG(obj));
+  return((int64_t)XEN_TO_C_DOUBLE(obj)); /* inexact integer squeezed through somewhere */
+}
+
+
+
 char *xen_version(void)
 {
   char *buf;
@@ -540,6 +560,23 @@ XEN c_to_xen_off_t(off_t val)
 #else
     return(C_TO_XEN_INT(val));
 #endif
+}
+
+
+int64_t xen_to_c_int64_t_or_else(XEN obj, int64_t fallback)
+{
+  if (XEN_INT64_T_P(obj))
+    return(XEN_TO_C_LONG_LONG(obj));
+  else
+    if (XEN_NUMBER_P(obj))
+      return((int64_t)XEN_TO_C_DOUBLE(obj));
+  return(fallback);
+}
+
+
+int64_t xen_to_c_int64_t(XEN obj)
+{
+  return(XEN_TO_C_LONG_LONG(obj));
 }
 
 
@@ -1681,6 +1718,20 @@ XEN c_to_xen_off_t(off_t obj)
 }
 
 
+int64_t xen_to_c_int64_t_or_else(XEN obj, int64_t fallback)
+{
+  if (XEN_NUMBER_P(obj))
+    return(fth_long_long_ref(obj));
+  return(fallback);
+}
+
+
+int64_t xen_to_c_int64_t(XEN obj)
+{
+  return(fth_long_long_ref(obj));
+}
+
+
 static ficlWord *snd_exit_xt; 
 
 static void fth_snd_exit(int n) 
@@ -1754,13 +1805,13 @@ double xen_to_c_double(XEN a)
 }
 
 
-off_t xen_to_c_int(XEN a) 
+int64_t xen_to_c_int(XEN a) 
 {
   if (s7_is_integer(a))
-    return((off_t)s7_integer(a));
+    return((int64_t)s7_integer(a));
   if (s7_is_rational(a))
-    return((off_t)(s7_numerator(a) / s7_denominator(a)));
-  return((off_t)s7_real(a));
+    return((int64_t)(s7_numerator(a) / s7_denominator(a)));
+  return((int64_t)s7_real(a));
 }
 
 
@@ -2500,6 +2551,18 @@ off_t xen_to_c_off_t(XEN obj)
 XEN c_to_xen_off_t(off_t val)
 {
   return(XEN_ZERO);
+}
+
+
+int64_t xen_to_c_int64_t_or_else(XEN obj, int64_t fallback)
+{
+  return(0);
+}
+
+
+int64_t xen_to_c_int64_t(XEN obj)
+{
+  return(0);
 }
 
 

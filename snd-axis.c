@@ -1542,8 +1542,8 @@ x0 y0 x1 y1 xmin ymin xmax ymax pix_x0 pix_y0 pix_x1 pix_y1 y_offset xscale ysca
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ap_id), ap_id, XEN_ARG_3, S_axis_info, S_time_graph ", " S_transform_graph ", or " S_lisp_graph);
   ap = TO_C_AXIS_INFO(snd, chn, ap_id, S_axis_info);
   if (ap == NULL) return(XEN_EMPTY_LIST);
-  return(XEN_CONS(C_TO_XEN_OFF_T(ap->losamp),
-	  XEN_CONS(C_TO_XEN_OFF_T(ap->hisamp),
+  return(XEN_CONS(C_TO_XEN_INT64_T(ap->losamp),
+	  XEN_CONS(C_TO_XEN_INT64_T(ap->hisamp),
 	   XEN_CONS(C_TO_XEN_DOUBLE(ap->x0),
 	    XEN_CONS(C_TO_XEN_DOUBLE(ap->y0),
 	     XEN_CONS(C_TO_XEN_DOUBLE(ap->x1),

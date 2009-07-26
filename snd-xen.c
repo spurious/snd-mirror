@@ -1521,7 +1521,7 @@ mus_long_t string_to_mus_long_t(const char *str, mus_long_t lo, const char *fiel
   if (XEN_NUMBER_P(res))
     {
       mus_long_t val;
-      val = XEN_TO_C_OFF_T(res);
+      val = XEN_TO_C_INT64_T(res);
       if (val < lo)
 	snd_error(_("%s: " MUS_LD " is invalid"), field_name, val);
       else return(val);

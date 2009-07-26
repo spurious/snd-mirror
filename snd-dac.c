@@ -2530,7 +2530,7 @@ static XEN g_play_1(XEN samp_n, XEN snd_n, XEN chn_n, bool back, bool syncd, XEN
   if (XEN_PROCEDURE_P(samp_n))
     return(C_TO_XEN_BOOLEAN(add_xen_to_play_list(samp_n)));
 
-  if (XEN_OFF_T_P(end_n)) end = XEN_TO_C_OFF_T(end_n);
+  if (XEN_INT64_T_P(end_n)) end = XEN_TO_C_INT64_T(end_n);
 #if USE_NO_GUI
   background = NOT_IN_BACKGROUND;
 #else
@@ -2573,7 +2573,7 @@ static XEN g_play_1(XEN samp_n, XEN snd_n, XEN chn_n, bool back, bool syncd, XEN
       sp->short_filename = filename_without_directory(play_name);
       sp->filename = NULL;
       sp->delete_me = (struct dialog_play_info *)1;
-      if (XEN_OFF_T_P(chn_n)) end = XEN_TO_C_OFF_T(chn_n);
+      if (XEN_INT64_T_P(chn_n)) end = XEN_TO_C_INT64_T(chn_n);
       play_sound_1(sp, samp, end, background, edpos, stop_proc, caller, arg_pos);
     }
   else
@@ -2653,9 +2653,9 @@ play snd or snd's channel chn starting at beg for dur samps."
   if (XEN_INTEGER_P(dur))
     {
       mus_long_t len;
-      len = XEN_TO_C_OFF_T(dur);
+      len = XEN_TO_C_INT64_T(dur);
       if (len <= 0) return(XEN_FALSE);
-      end = C_TO_XEN_OFF_T(beg_to_sample(beg, S_play_channel) + len);
+      end = C_TO_XEN_INT64_T(beg_to_sample(beg, S_play_channel) + len);
     }
   return(g_play_1(beg, snd_n, chn_n, true, false, end, edpos, S_play_channel, 5, stop_proc, out_chan));
 }
@@ -2936,7 +2936,7 @@ channel number in the sound that contains the channel being played."
       dp = add_channel_to_play_list(cp,
 				    sp, /* this is not cp->sound! */
 				    beg_to_sample(start, S_add_player),
-				    XEN_TO_C_OFF_T_OR_ELSE(end, NO_END_SPECIFIED),
+				    XEN_TO_C_INT64_T_OR_ELSE(end, NO_END_SPECIFIED),
 				    pos,
 				    ochan);
       if (dp == NULL) return(XEN_FALSE);
@@ -3015,7 +3015,7 @@ static XEN g_player_p(XEN snd_chn)
 }
 
 
-/* player-position? -- need quick way from index to dp to its sample-reader, then C_TO_XEN_OFF_T(current_location(fd)) */
+/* player-position? -- need quick way from index to dp to its sample-reader, then C_TO_XEN_INT64_T(current_location(fd)) */
 
 static XEN g_players(void)
 {

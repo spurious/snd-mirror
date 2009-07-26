@@ -475,9 +475,6 @@ char *version_info(void)
 #if SND_AS_WIDGET
 	  _("\n    compiled as a widget"),
 #endif
-#if (!((defined(SIZEOF_OFF_T) && (SIZEOF_OFF_T > 4)) || (defined(_FILE_OFFSET_BITS) && (_FILE_OFFSET_BITS == 64))))
-	  _("\n    without large file support"),
-#endif
 #if ENABLE_NLS && HAVE_GETTEXT
 	  _("\n    with gettext: "),
 	  setlocale(LC_ALL, NULL),

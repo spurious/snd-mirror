@@ -1184,16 +1184,20 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 ;;;    this does not work in Guile (current-environment needs some replacement)
 
 (define break-ok #f)
-(define saved-listener-prompt (listener-prompt)) ; what we want is a shared environment!
+(define break-exit #f)  ; a kludge to get 2 funcs to share a local variable
+(define break-enter #f)
 
-(define (break-exit) 
-  (reset-hook! read-hook)
-  (set! (listener-prompt) saved-listener-prompt)
-  #f)
+(let ((saved-listener-prompt (listener-prompt)))
+  (set! break-exit (lambda ()
+		     (reset-hook! read-hook)
+		     (set! (listener-prompt) saved-listener-prompt)
+		     #f))
+  (set! break-enter (lambda ()
+		      (set! saved-listener-prompt (listener-prompt)))))
 
 (define-macro (break)
   `(let ((envir (current-environment)))
-     (set! saved-listener-prompt (listener-prompt))
+     (break-enter)
      (set! (listener-prompt) (format #f "~A>" (if (defined? __func__) __func__ 'break)))
      (call/cc
       (lambda (return)

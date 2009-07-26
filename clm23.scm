@@ -1440,11 +1440,11 @@
     (do ((i 0 (+ i 1)))
 	((= i 100))
       (set! (vct-ref arr i) (double (* amp (+ -.5 (* i .01))))))
-    (array->file "test.data" arr 100 22050 1)
+    (array->file "testx.data" arr 100 22050 1)
     (do ((i 0 (+ i 1)))
 	((= i 100))
       (set! (vct-ref arr i) (double 0.0)))
-    (file->array "test.data" 0 0 100 arr)
+    (file->array "testx.data" 0 0 100 arr)
     (run
      (lambda ()
        (do ((i start (+ i 1))) ((= i end))

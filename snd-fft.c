@@ -879,7 +879,7 @@ static void apply_fft(fft_state *fs)
 					  C_TO_XEN_INT(cp->chan)),
 			       S_before_transform_hook);
 	  if (XEN_NUMBER_P(res))
-	    ind0 = XEN_TO_C_OFF_T_OR_ELSE(res, 0) + fs->beg;
+	    ind0 = XEN_TO_C_INT64_T_OR_ELSE(res, 0) + fs->beg;
 	  else ind0 = cp->axis->losamp + fs->beg;
 	}
       else
