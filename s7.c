@@ -67,7 +67,7 @@
  *        gc, gc-verbose, load-verbose, quit
  *        backtrace, set-backtrace-length, clear-backtrace, backtracing
  *        *features*, *load-path*, *vector-print-length*
- *        define-constant, pi, most-positive-fixnum, most-negative-fixnum
+ *        define-constant, pi, most-positive-fixnum, most-negative-fixnum, constant?
  *        format (only the simple directives)
  *        random for any numeric type and any numeric argument
  *        optional multidimensional and applicable vectors
@@ -75,7 +75,7 @@
  *        trace and untrace, __func__ (active if backtracing is on)
  *
  *   things I ought to add/change:
- *        length should work on vectors and strings [fill!, copy, reverse! null?]
+ *        length should work on vectors and strings [fill!, copy, reverse! null? find(-if) etc from CL?]
  *          also for new-types -- would need length field and copy/fill
  *          (what about files? numbers? -- integer-length, bignum-precision etc)
  *        get rid of values and call-with-values
@@ -99,7 +99,7 @@
 
 /* 
  * Your config file goes here, or just replace that #include line with the defines you need.
- * The only compile-time switches involve booleans, threads, complex numbers, and multiprecision arithmetic.
+ * The compile-time switches involve booleans, threads, complex numbers, multiprecision arithmetic, and profiling.
  * Currently we assume we have setjmp.h (used by the error handlers).
  *
  * If pthreads are available:
@@ -171,7 +171,7 @@
 /* the number of recent objects that are temporarily gc-protected; 512 is too small in the threads case (generators.scm) */
 
 #define INITIAL_BACKTRACE_SIZE 16
-/* this is the number of entries in the backtrace printout of previous evaluations */
+/* this is the number of entries in the backtrace printout */
 
 #define INITIAL_TRACE_LIST_SIZE 2
 /* a list of currently-traced functions */
@@ -892,12 +892,6 @@ static bool s7_is_immutable(s7_pointer p)
 }
 
 
-bool s7_is_constant(s7_pointer p) 
-{ 
-  return((typeflag(p) & T_IMMUTABLE) != 0);
-}
-
-
 static s7_pointer s7_set_immutable(s7_pointer p) 
 { 
   typeflag(p) |= T_IMMUTABLE;
@@ -911,6 +905,24 @@ static void set_pair_line_number(s7_pointer p, int n)
       (is_pair(p)))
     pair_line_number(p) = n;
 }
+
+
+bool s7_is_constant(s7_pointer p) 
+{ 
+  /* this means "not settable": numbers, characters, strings, keywords, quoted anything, #f #t pi etc */
+  /*   so to be non-constant, it has to be a symbol with the immutable bit not set, I think */
+  
+  return((type(p) != T_SYMBOL) ||
+	 ((typeflag(p) & T_IMMUTABLE) != 0));
+}
+
+
+static s7_pointer g_is_constant(s7_scheme *sc, s7_pointer args)
+{
+  #define H_is_constant "(constant? obj) returns #t if obj is a constant (unsettable)"
+  return(s7_make_boolean(sc, s7_is_constant(car(args))));
+}
+
 
 
 
@@ -14156,7 +14168,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
     case OP_SET0:                                             /* entry for set! */
       if (s7_is_immutable(car(sc->code)))
-	return(eval_error(sc, "set!: unable to alter immutable variable: ~A", car(sc->code)));
+	return(eval_error(sc, "set!: unable to alter immutable object: ~A", car(sc->code)));
       
       if ((cdr(sc->code) == sc->NIL) ||
 	  (cddr(sc->code) != sc->NIL))
@@ -20030,6 +20042,8 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "provided?",               g_is_provided,             1, 0, false, H_is_provided);
   s7_define_function(sc, "provide",                 g_provide,                 1, 0, false, H_provide);
   s7_define_function(sc, "defined?",                g_is_defined,              1, 1, false, H_is_defined);
+  s7_define_function(sc, "constant?",               g_is_constant,             1, 0, false, H_is_constant);
+
   
   s7_define_function(sc, "keyword?",                g_is_keyword,              1, 0, false, H_is_keyword);
   s7_define_function(sc, "make-keyword",            g_make_keyword,            1, 0, false, H_make_keyword);

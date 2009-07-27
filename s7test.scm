@@ -1949,6 +1949,37 @@
 
 (test (cadr ''foo) 'foo)
 
+(test (caar '((a) b c)) 'a)
+(test (cadr '(a b c)) 'b)
+(test (cdar '((a . aa) b c)) 'aa)
+(test (cddr '(a b . c)) 'c)
+(test (caaar '(((a)) b c)) 'a)
+(test (caadr '(a (b) c)) 'b)
+(test (cadar '((a aa) b c)) 'aa)
+(test (caddr '(a b c)) 'c)
+(test (cdaar '(((a . aa)) b c)) 'aa)
+(test (cdadr '(a (b . bb) c)) 'bb)
+(test (cddar '((a aa . aaa) b c)) 'aaa)
+(test (cdddr '(a b c . d)) 'd)
+(test (caaaar '((((a))) b c)) 'a)
+(test (caaadr '(a ((b)) c)) 'b)
+(test (caadar '((a (aa)) b c)) 'aa)
+(test (caaddr '(a b (c))) 'c)
+(test (cadaar '(((a aa)) b c)) 'aa)
+(test (cadadr '(a (b bb) c)) 'bb)
+(test (caddar '((a aa aaa) b c)) 'aaa)
+(test (cadddr '(a b c d)) 'd)
+(test (cdaaar '((((a . aa))) b c)) 'aa)
+(test (cdaadr '(a ((b . bb)) c)) 'bb)
+(test (cdadar '((a (aa . aaa)) b c)) 'aaa)
+(test (cdaddr '(a b (c . cc))) 'cc)
+(test (cddaar '(((a aa . aaa)) b c)) 'aaa)
+(test (cddadr '(a (b bb . bbb) c)) 'bbb)
+(test (cdddar '((a aa aaa . aaaa) b c)) 'aaaa)
+(test (cddddr '(a b c d . e)) 'e)
+
+
+
 
 (test (length (list 'a 'b 'c 'd 'e 'f)) 6)
 (test (length (list 'a 'b 'c 'd)) 4)
@@ -2379,7 +2410,9 @@
 (test (assoc 'a '((b c) ((a) u) (a i))) '(a i))
 (test (assoc (list 'a) '(((a)) ((b)) ((c))))  '((a)))
 (test (assoc 5 '((2 3) (5 7) (11 13))) '(5 7))
-
+(test (assoc 'key '()) #f)
+(test (assoc 'key '(() ())) #f)
+(test (assoc '() '()) #f)
 
 (test (append '(a b c) '()) '(a b c))
 (test (append '() '(a b c)) '(a b c))
@@ -2436,7 +2469,11 @@
 (test (member car (list abs car modulo)) (list car modulo))
 (test (member do (list quote map do)) (list do))
 (test (member 5/2 (list 1/3 2/4 5/2)) '(5/2))
-
+(test (member 'a '(a b c d)) '(a b c d))
+(test (member 'b '(a b c d)) '(b c d))
+(test (member 'c '(a b c d)) '(c d))
+(test (member 'd '(a b c d)) '(d))
+(test (member 'e '(a b c d)) #f)
 
 
 
@@ -4181,6 +4218,8 @@
 
 (test (let ((x 1)) (= 1 (let ((y 2)) (set! x y) x)) (+ x 1)) 3)
 (test (let ((x 1)) (let ((xx (lambda (a) (set! x a) a))) (= 1 (xx 2))) (+ x 1)) 3)
+(test (let ((x 32)) (begin (define x 123) (define (hi a) (+ a 1))) (hi x)) 124)
+(test (let () (begin (define x 123) (define (hi a) (+ a 1))) (hi x)) 124)
 
 
 ;(let ((initial-chars "aA!$%&*/:<=>?^_~")
@@ -35661,6 +35700,9 @@
       (test (set!) 'error)
       (test (set! #t #f) 'error)
       (test (set! (call/cc (lambda (a) a)) #f) 'error)
+      (test (set! 3 1) 'error)
+      (test (set! 3.14 1) 'error)
+      (test (set! #\a 12) 'error)
       
       (test (let ((a (lambda (x) (set! a 3) x))) (list (a 1) a)) 'error)
       (test (let ((a (let ((b 1)) (set! a 3) b))) a) 'error)            

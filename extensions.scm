@@ -1195,6 +1195,19 @@ connects them with 'func', and applies the result as an amplitude envelope to th
   (set! break-enter (lambda ()
 		      (set! saved-listener-prompt (listener-prompt)))))
 
+#|
+I think Scheme should support stuff like:
+
+(let ((local-var 32))
+  (define (proc1 arg)
+    (+ local-var arg))
+  (define (proc2 arg)
+    (- local-var arg)))
+
+which gives shared local variables without the annoying set! two-step
+|#
+
+
 (define-macro (break)
   `(let ((envir (current-environment)))
      (break-enter)
