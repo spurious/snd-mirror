@@ -909,11 +909,12 @@ static void set_pair_line_number(s7_pointer p, int n)
 
 bool s7_is_constant(s7_pointer p) 
 { 
-  /* this means "not settable": numbers, characters, strings, keywords, quoted anything, #f #t pi etc */
-  /*   so to be non-constant, it has to be a symbol with the immutable bit not set, I think */
+  /* this means "not settable": numbers, characters, strings, keywords, #f #t pi etc */
+  /*   so to be non-constant, it has to be a non-keyword symbol with the immutable bit not set, I think */
   
   return((type(p) != T_SYMBOL) ||
-	 ((typeflag(p) & T_IMMUTABLE) != 0));
+	 ((typeflag(p) & T_IMMUTABLE) != 0) ||
+	 (s7_is_keyword(p)));
 }
 
 
@@ -1768,6 +1769,9 @@ static s7_pointer s7_find_symbol_in_environment(s7_scheme *sc, s7_pointer env, s
 
 static s7_pointer add_to_current_environment(s7_scheme *sc, s7_pointer variable, s7_pointer value) 
 { 
+  if (is_immutable(variable))
+    return(s7_error(sc, sc->ERROR, make_list_2(sc, s7_make_string(sc, "can't bind or set an immutable object: ~A"), variable)));
+
   return(add_to_environment(sc, sc->envir, variable, value)); 
 } 
 
@@ -10913,7 +10917,7 @@ s7_pointer s7_make_keyword(s7_scheme *sc, const char *key)
   
   x = s7_find_symbol_in_environment(sc, sc->envir, sym, true); /* is it already defined? */
   if (x == sc->NIL) 
-    add_to_current_environment(sc, sym, sym); /* its value is itself */
+    add_to_environment(sc, sc->envir, sym, sym); /* its value is itself, skip the immutable check in add_to_current_environment */
   
   return(sym);
 }
@@ -12677,7 +12681,7 @@ static void assign_syntax(s7_scheme *sc, const char *name, opcode_t op)
 {
   s7_pointer x;
   x = symbol_table_add_by_name(sc, name); 
-  typeflag(x) |= (T_SYNTAX | T_IMMUTABLE | T_DONT_COPY); 
+  typeflag(x) |= (T_SYNTAX | T_DONT_COPY); 
   clear_finalizable(x);
   syntax_opcode(x) = small_int(sc, (int)op);
 }
@@ -13481,9 +13485,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       sc->value = sc->NIL;
       for (sc->x = car(sc->code), sc->y = sc->args; sc->y != sc->NIL; sc->x = cdr(sc->x), sc->y = cdr(sc->y)) 
 	sc->value = s7_cons(sc, add_to_current_environment(sc, caar(sc->x), car(sc->y)), sc->value);
-      
+
       /* now we've set up the environment, next set up for loop */
-      
+
       sc->y = safe_reverse_in_place(sc, sc->value);
       sc->args = sc->NIL;
       for (sc->x = car(sc->code); sc->y != sc->NIL; sc->x = cdr(sc->x), sc->y = cdr(sc->y))       
@@ -14168,7 +14172,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
     case OP_SET0:                                             /* entry for set! */
       if (s7_is_immutable(car(sc->code)))
-	return(eval_error(sc, "set!: unable to alter immutable object: ~A", car(sc->code)));
+	return(eval_error(sc, "set!: can't alter immutable object: ~A", car(sc->code)));
       
       if ((cdr(sc->code) == sc->NIL) ||
 	  (cddr(sc->code) != sc->NIL))
@@ -14380,6 +14384,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	{
 	  if (!(s7_is_symbol(caar(sc->x))))
 	    return(eval_error(sc, "bad variable ~A in letrec bindings", car(sc->x)));
+
 	  add_to_current_environment(sc, caar(sc->x), sc->UNDEFINED);
 	}
 
@@ -19878,7 +19883,7 @@ s7_scheme *s7_init(void)
   
   /* keep the symbol table out of the heap */
   sc->symbol_table = (s7_pointer)calloc(1, sizeof(s7_cell));
-  set_type(sc->symbol_table, T_VECTOR | T_FINALIZABLE | T_DONT_COPY | T_IMMUTABLE);
+  set_type(sc->symbol_table, T_VECTOR | T_FINALIZABLE | T_DONT_COPY);
   vector_length(sc->symbol_table) = SYMBOL_TABLE_SIZE;
   sc->symbol_table->object.vector.elements = (s7_pointer *)malloc(SYMBOL_TABLE_SIZE * sizeof(s7_pointer));
   s7_vector_fill(sc, sc->symbol_table, sc->NIL);
@@ -19950,25 +19955,25 @@ s7_scheme *s7_init(void)
   assign_syntax(sc, "do",              OP_DO);
   
   sc->LAMBDA = s7_make_symbol(sc, "lambda");
-  typeflag(sc->LAMBDA) |= (T_IMMUTABLE | T_DONT_COPY); 
+  typeflag(sc->LAMBDA) |= T_DONT_COPY; 
   
   sc->LAMBDA_STAR = s7_make_symbol(sc, "lambda*");
-  typeflag(sc->LAMBDA_STAR) |= (T_IMMUTABLE | T_DONT_COPY); 
+  typeflag(sc->LAMBDA_STAR) |= T_DONT_COPY; 
   
   sc->QUOTE = s7_make_symbol(sc, "quote");
-  typeflag(sc->QUOTE) |= (T_IMMUTABLE | T_DONT_COPY); 
+  typeflag(sc->QUOTE) |= T_DONT_COPY; 
   
   sc->QUASIQUOTE = s7_make_symbol(sc, "quasiquote");
-  typeflag(sc->QUASIQUOTE) |= (T_IMMUTABLE | T_DONT_COPY); 
+  typeflag(sc->QUASIQUOTE) |= T_DONT_COPY;  /* add the immutable bit later */
   
   sc->UNQUOTE = s7_make_symbol(sc, "unquote");
-  typeflag(sc->UNQUOTE) |= (T_IMMUTABLE | T_DONT_COPY); 
+  typeflag(sc->UNQUOTE) |= T_DONT_COPY; 
   
   sc->UNQUOTE_SPLICING = s7_make_symbol(sc, "unquote-splicing");
-  typeflag(sc->UNQUOTE_SPLICING) |= (T_IMMUTABLE | T_DONT_COPY); 
+  typeflag(sc->UNQUOTE_SPLICING) |= T_DONT_COPY; 
   
   sc->FEED_TO = s7_make_symbol(sc, "=>");
-  typeflag(sc->FEED_TO) |= (T_IMMUTABLE | T_DONT_COPY); 
+  typeflag(sc->FEED_TO) |= T_DONT_COPY; 
   
   #define object_set_name "(generalized set!)"
   sc->OBJECT_SET = s7_make_symbol(sc, object_set_name);   /* will call g_object_set */
@@ -20404,6 +20409,7 @@ s7_scheme *s7_init(void)
 
   (*(sc->gc_off)) = false;
   s7_eval_c_string(sc, "(macro quasiquote (lambda (l) (_quasiquote_ 0 (cadr l))))");
+  typeflag(sc->QUASIQUOTE) |= T_IMMUTABLE;
 
 #if WITH_GMP
   s7_gmp_init(sc);

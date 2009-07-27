@@ -3286,6 +3286,49 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
 	             (apropos-1 (vector-ref frame i))))\
 	         (apropos-1 frame)))\
            (current-environment)))");
+
+
+  /* a second stab at a break point handler for s7 
+
+     I think Scheme should support stuff like:
+
+     (let ((local-var 32))
+       (define (proc1 arg)
+         (+ local-var arg))
+       (define (proc2 arg)
+         (- local-var arg)))
+
+     which gives shared local variables without the annoying set! two-step
+  */
+
+  XEN_EVAL_C_STRING("\
+(define break-ok #f)\
+(define break-exit #f)  ; a kludge to get 2 funcs to share a local variable\n\
+(define break-enter #f)\
+\
+(let ((saved-listener-prompt (listener-prompt)))\
+  (set! break-exit (lambda ()\
+		     (reset-hook! read-hook)\
+		     (set! (listener-prompt) saved-listener-prompt)\
+		     #f))\
+  (set! break-enter (lambda ()\
+		      (set! saved-listener-prompt (listener-prompt)))))\
+\
+(define-macro (break)\
+  `(let ((envir (current-environment)))\
+     (break-enter)\
+     (set! (listener-prompt) (format #f \"~A>\" (if (defined? __func__) __func__ 'break)))\
+     (call/cc\
+      (lambda (return)\
+	(set! break-ok return)      ; save current program loc so (break-ok) continues from the break\n\
+	(add-hook! read-hook        ; anything typed in the listener is evaluated in the environment of the break call\n\
+		   (lambda (str)\
+		     (eval-string str envir)))\
+	(throw 'snd-top-level)))    ; jump back to the top level\n\
+     (break-exit)))                 ; we get here if break-ok is called\n\
+");
+
+
 #endif
 
 #if HAVE_SCHEME && USE_GTK && (!HAVE_GTK_ADJUSTMENT_GET_UPPER)

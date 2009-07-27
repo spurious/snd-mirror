@@ -5089,12 +5089,14 @@
 	 (mx2 0.0) (mxn2 0)
 	 (mx3 0.0) (mxn3 0)
 	 (mx4 0.0) (mxn4 0)
+	 (total 0.0)
 	 (last (car (get-best choice 10)))
 	 (this (car (get-best choice 11)))
 	 (next (car (get-best choice 12))))
     (do ((i 13 (+ i 1)))
 	((= i 128))
       (let ((curdiff (+ (- this last) (- this next)))) ; not abs -- we want worse (not really good)
+	(set! total (+ total (abs (- this last))))
 	(if (> curdiff mx1)
 	    (begin
 	      (set! mx4 mx3) (set! mxn4 mxn3)
@@ -5120,7 +5122,7 @@
 	(set! last this)
 	(set! this next)
 	(set! next (car (get-best choice i)))))
-    (list mxn1 mx1 mxn2 mx2 mxn3 mx3 mxn4 mx4)))
+    (list (list mxn1 mx1 mxn2 mx2 mxn3 mx3 mxn4 mx4) total)))
 
 
 

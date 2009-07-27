@@ -12101,6 +12101,54 @@ See edit123.scm, snd_conffile.scm, and snd_frg.scm for many more examples of bin
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
+<!-- break -->
+<tr><td colspan=2 bgcolor="#f2f4ff">
+<code><a class=def name="break">break</a> ()</code>
+</td></tr><tr><td></td><td>
+<p>In s7, this places a breakpoint at the current code location.
+If you hit the breakpoint, the listener prompt reflects the current
+function name (if any), and any typing at that point is evaluated
+in the local environment (so you have access to function arguments and
+local variables).  To continue from the breakpoint, (break-ok).  To
+exit back to the top level, (break-exit):
+</p>
+<pre>
+    <em class=typing>(define (outer arg1)
+      (let ((y 123))
+        (define (hiho arg)
+          (let ((x 32)
+	        (y "a string")
+	        (z (vct .1 .2 .3)))
+	    (break)
+	    (display y)
+	    (+ x (string-length y) (vct-ref z 1))))
+        (hiho 1)
+        (break)
+        (* y 2)))</em>
+
+    <em class=listener>&gt;</em> <em class=typing>(outer 456)</em>
+    <em class=listener>hiho&gt;</em>
+    <em class=listener>snd-top-level</em>
+    <em class=listener>hiho&gt;</em> <em class=typing>x</em>
+    <em class=listener>32</em>
+    <em class=listener>hiho&gt;</em> <em class=typing>arg</em>
+    <em class=listener>1</em>
+    <em class=listener>hiho&gt;</em> <em class=typing>y</em>
+    <em class=listener>"a string"</em>
+    <em class=listener>hiho&gt;</em> <em class=typing>(break-ok)</em>
+    <em class=listener>&gt;</em>
+    <em class=listener>outer&gt;</em> 
+    <em class=listener>snd-top-level</em>
+    <em class=listener>outer&gt;</em> <em class=typing>y</em>
+    <em class=listener>123</em>
+    <em class=listener>outer&gt;</em> <em class=typing>(break-ok)</em>
+    <em class=listener>&gt;</em>
+    <em class=listener>246</em>
+</pre>
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+
 <!-- c-g? -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
 <code><a class=def name="cgp">c-g?</a> ()</code>
