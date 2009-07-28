@@ -1782,6 +1782,8 @@ s7_pointer s7_symbol_value(s7_scheme *sc, s7_pointer sym) /* was searching just 
   x = s7_find_symbol_in_environment(sc, sc->envir, sym, true);
   if (x != sc->NIL)
     return(symbol_value(x));
+  if (s7_is_keyword(sym))
+    return(sym);
   return(sc->UNDEFINED);
 }
 
@@ -14108,18 +14110,15 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_DEFINE_STAR:
     case OP_DEFINE0:
       if (!is_pair(sc->code))
-	return(eval_error(sc, "define: nothing to define? ~A", sc->code));
+	return(eval_error(sc, "define: nothing to define? ~A", sc->code));   /* (define) */
 
       if (!is_pair(cdr(sc->code)))
-	return(eval_error(sc, "define: no value? ~A", sc->code));
+	return(eval_error(sc, "define: no value? ~A", sc->code));            /* (define var) */
 
       if ((!is_pair(car(sc->code))) &&
 	  (is_pair(cddr(sc->code))))
-	return(eval_error(sc, "define: more than 1 value? ~A", sc->code));
+	return(eval_error(sc, "define: more than 1 value? ~A", sc->code));   /* (define var 1 2) */
 
-      if (s7_is_immutable(car(sc->code)))
-	return(eval_error(sc, "define: can't alter immutable object: ~A", car(sc->code)));
-      
       if (is_pair(car(sc->code))) 
 	{
 	  sc->x = caar(sc->code);
@@ -14132,9 +14131,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  sc->x = car(sc->code);
 	  sc->code = cadr(sc->code);
 	}
-      if (!s7_is_symbol(sc->x))
+      if (!s7_is_symbol(sc->x))                                             /* (define (3 a) a) */
 	return(eval_error(sc, "define a non-symbol? ~A", sc->x));
 
+      if (s7_is_immutable(sc->x))                                           /* (define pi 3) or (define (pi a) a) */
+	return(eval_error(sc, "define: can't redefine immutable object: ~A", sc->x));
+      
       push_stack(sc, OP_DEFINE1, sc->NIL, sc->x);
       goto EVAL;
       
@@ -14623,6 +14625,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if (!s7_is_symbol(sc->x))
 	return(eval_error(sc, "defmacro macro name is not a symbol?", sc->x));
 
+      /* TODO: check here and below for immutable object */
+
       /* (defmacro hi (a) `(+ ,a 1))
        *   cdr(sc->code): ((a) (quasiquote (+ (unquote a) 1)))
        *   caddr(sc->code):    (quasiquote (+ (unquote a) 1))
@@ -14647,6 +14651,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 				  sc->NIL));
 	}
       else sc->z = cdr(sc->code);
+
+      /* TODO: could defmacro* simply use LAMBDA_STAR here? */
 	
       sc->code = s7_cons(sc, 
 			 sc->LAMBDA,
