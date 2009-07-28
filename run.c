@@ -3356,10 +3356,10 @@ static void store_true(int *args, ptree *pt) {BOOL_RESULT = (Int)true;}
 static void store_b_b(int *args, ptree *pt) {BOOL_RESULT = BOOL_ARG_1;}
 
 
-static void store_b_clm(int *args, ptree *pt) {BOOL_RESULT = (bool)(CLM_ARG_1);}
+static void store_b_clm(int *args, ptree *pt) {BOOL_RESULT = (bool)(CLM_ARG_1 != NULL);} /* != NULLs are for MS C++ */
 
 
-static void store_b_vct(int *args, ptree *pt) {BOOL_RESULT = (bool)(VCT_ARG_1);}
+static void store_b_vct(int *args, ptree *pt) {BOOL_RESULT = (bool)(VCT_ARG_1 != NULL);} 
 
 #if USE_SND
 static void store_b_reader(int *args, ptree *pt) {BOOL_RESULT = (bool)(READER_ARG_1);}
@@ -3368,7 +3368,7 @@ static void store_b_reader(int *args, ptree *pt) {BOOL_RESULT = (bool)(READER_AR
 static void store_b_mix_reader(int *args, ptree *pt) {BOOL_RESULT = (bool)(MIX_READER_ARG_1);}
 #endif
 
-static void store_b_sd(int *args, ptree *pt) {BOOL_RESULT = (bool)(SOUND_DATA_ARG_1);}
+static void store_b_sd(int *args, ptree *pt) {BOOL_RESULT = (bool)(SOUND_DATA_ARG_1 != NULL);}
 
 
 static void store_c(int *args, ptree *pt) {CHAR_RESULT = (int)CHAR_ARG_1;}

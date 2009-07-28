@@ -14135,7 +14135,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	return(eval_error(sc, "define a non-symbol? ~A", sc->x));
 
       if (s7_is_immutable(sc->x))                                           /* (define pi 3) or (define (pi a) a) */
-	return(eval_error(sc, "define: can't redefine immutable object: ~A", sc->x));
+	return(eval_error(sc, "define: ~A is immutable", sc->x));
       
       push_stack(sc, OP_DEFINE1, sc->NIL, sc->x);
       goto EVAL;
@@ -14623,9 +14623,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       sc->y = s7_gensym(sc, "defmac");
       sc->x = car(sc->code);
       if (!s7_is_symbol(sc->x))
-	return(eval_error(sc, "defmacro macro name is not a symbol?", sc->x));
+	return(eval_error(sc, "defmacro: ~A is not a symbol?", sc->x)); /* (defmacro 3 (a) #f) */
 
-      /* TODO: check here and below for immutable object */
+      if (is_immutable(sc->x))
+	return(eval_error(sc, "defmacro: ~A is immutable", sc->x));     /* (defmacro pi (a) `(+ ,a 1)) */
 
       /* (defmacro hi (a) `(+ ,a 1))
        *   cdr(sc->code): ((a) (quasiquote (+ (unquote a) 1)))
@@ -14652,7 +14653,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	}
       else sc->z = cdr(sc->code);
 
-      /* TODO: could defmacro* simply use LAMBDA_STAR here? */
+      /* TODO: could defmacro* simply use LAMBDA_STAR here and CLOSURE_STAR later? */
 	
       sc->code = s7_cons(sc, 
 			 sc->LAMBDA,
@@ -14683,9 +14684,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       sc->y = s7_gensym(sc, "defmac");
       if (!is_pair(car(sc->code)))
 	return(s7_wrong_type_arg_error(sc, "define-macro", 1, car(sc->code), "a list (name ...)"));
+
       sc->x = caar(sc->code);
       if (!s7_is_symbol(sc->x))
-	return(eval_error(sc, "define-macro macro name is not a symbol?", sc->x));
+	return(eval_error(sc, "define-macro: ~A is not a symbol?", sc->x));
+
+      if (is_immutable(sc->x))
+	return(eval_error(sc, "define-macro: ~A is immutable", sc->x));
 
       /* (define-macro (hi a) `(+ ,a 1))
        *   cdr(sc->code): ((quasiquote (+ (unquote a) 1)))

@@ -30,6 +30,10 @@
   #include <pthread.h>
 #endif
 
+#ifdef _MSC_VER
+  #include <direct.h>
+#endif
+
 #include <sys/stat.h>
 
 #include "_sndlib.h"
@@ -1600,7 +1604,11 @@ char *mus_getcwd(void)
     {
       if (pwd) free(pwd);
       pwd = (char *)calloc(i, sizeof(char));
+#ifdef _MSC_VER
+      res = _getcwd(pwd, i);
+#else
       res = getcwd(pwd, i);
+#endif
       if (res) break;    /* NULL is returned if failure, but what about success? should I check errno=ERANGE? */
     }
 #else

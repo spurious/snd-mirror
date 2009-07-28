@@ -2309,13 +2309,21 @@ static XEN g_delete_file(XEN name)
 }
 
 
+#ifdef _MSC_VER
+  #include <direct.h>
+#endif
+
 static XEN g_getcwd(void)
 {
   #define H_getcwd "(getcwd) returns the name of the current working directory"
   char *buf;
   XEN result = XEN_FALSE;
   buf = (char *)calloc(1024, sizeof(char));
+#ifdef _MSC_VER
+  if (_getcwd(buf, 1024) != NULL)
+#else
   if (getcwd(buf, 1024) != NULL)
+#endif
     result = C_TO_XEN_STRING(buf);
   free(buf);
   return(result);

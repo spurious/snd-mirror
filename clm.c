@@ -8245,7 +8245,7 @@ static bool locsig_equalp(mus_any *p1, mus_any *p2)
 	 (g1->core->type == g2->core->type) &&
 	 (g1->chans == g2->chans) &&
 	 (clm_arrays_are_equal(g1->outn, g2->outn, g1->chans)) &&
-	 (((bool)(g1->revn)) == ((bool)(g2->revn))) &&
+	 (((bool)(g1->revn != NULL)) == ((bool)(g2->revn != NULL))) &&
 	 ((!(g1->revn)) || (clm_arrays_are_equal(g1->revn, g2->revn, g1->rev_chans))));
 }
 
