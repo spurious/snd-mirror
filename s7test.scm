@@ -10,7 +10,7 @@
 ;;;   gambit test suite
 ;;;   Kent Dybvig's "The Scheme Programming Language"
 ;;;   Brad Lucier (who also pointed out many bugs)
-;;;   Snd's numtst.c
+;;;   numtst.c
 ;;;   GSL tests
 ;;;   Abramowitz and Stegun, "Handbook of Mathematical Functions"
 ;;;   Weisstein, "Encyclopedia of Mathematics"
@@ -5918,6 +5918,51 @@
       (format (current-output-port) " output-port: ~D! (this is testing output ports)~%" 2)
       ;; for float formats, assume s7 for now -- use our-pi and most-positive-fixnum
       ;; (format with 18 digits is enough to tell what s7_Double is via built-in pi)
+
+      ;; from slib/formatst.scm
+      (test (string=? (format #f "abc") "abc") #t)
+      (test (string=? (format #f "~a" 10) "10") #t)
+      (test (string=? (format #f "~a" -1.2) "-1.2") #t)
+      (test (string=? (format #f "~a" 'a) "a") #t)
+      (test (string=? (format #f "~a" #t) "#t") #t)
+      (test (string=? (format #f "~a" #f) "#f") #t)
+      (test (string=? (format #f "~a" "abc") "abc") #t)
+      (test (string=? (format #f "~a" '#(1 2 3)) "#(1 2 3)") #t)
+      (test (string=? (format #f "~a" '()) "()") #t)
+      (test (string=? (format #f "~a" '(a)) "(a)") #t)
+      (test (string=? (format #f "~a" '(a b)) "(a b)") #t)
+      (test (string=? (format #f "~a" '(a (b c) d)) "(a (b c) d)") #t)
+      (test (string=? (format #f "~a" '(a . b)) "(a . b)") #t)
+      (test (string=? (format #f "~a ~a" 10 20) "10 20") #t)
+      (test (string=? (format #f "~a abc ~a def" 10 20) "10 abc 20 def") #t)
+      (test (string=? (format #f "~d" 100) "100") #t)
+      (test (string=? (format #f "~x" 100) "64") #t)
+      (test (string=? (format #f "~o" 100) "144") #t)
+      (test (string=? (format #f "~b" 100) "1100100") #t)
+      (test (string=? (format #f "~10d" 100) "       100") #t)
+      (test (string=? (format #f "~10,'*d" 100) "*******100") #t)
+      (test (string=? (format #f "~c" #\a) "a") #t)
+      (test (string=? (format #f "~~~~") "~~") #t)
+      (test (string=? (format #f "~s" "abc") "\"abc\"") #t)
+      (test (string=? (format #f "~s" "abc \\ abc") "\"abc \\\\ abc\"") #t)
+      (test (string=? (format #f "~a" "abc \\ abc") "abc \\ abc") #t)
+      (test (string=? (format #f "~s" "abc \" abc") "\"abc \\\" abc\"") #t)
+      (test (string=? (format #f "~a" "abc \" abc") "abc \" abc") #t)
+      (test (string=? (format #f "~s" #\space) "#\\space") #t)
+      (test (string=? (format #f "~s" #\newline) "#\\newline") #t)
+      (test (string=? (format #f "~s" #\a) "#\\a") #t)
+      (test (string=? (format #f "~a" '(a "b" c)) "(a \"b\" c)") #t)
+      (test (string=? (format #f "abc~
+         123") "abc123") #t)
+      (test (string=? (format #f "abc~
+123") "abc123") #t)
+      (test (string=? (format #f "abc~
+") "abc") #t)
+      (test (string=? (format #f "~{ ~a ~}" '(a b c)) " a  b  c ") #t)
+      (test (string=? (format #f "~{ ~a ~}" '()) "") #t)
+      (test (string=? (format #f "~{ ~a,~a ~}" '(a 1 b 2 c 3)) " a,1  b,2  c,3 ") #t)
+      (test (string=? (format #f "abc ~^ xyz") "abc ") #t)
+
       ))
 
 
@@ -39579,7 +39624,7 @@ expt error > 1e-6 around 2^-46.506993328423
 			      ((= i len))
 			    (set! lsts (cons (car (choose-list 0)) lsts)))
 			  lsts)))
-		
+
 		;; --------------------------------------------------------------------------------
 		
 		
@@ -39603,12 +39648,25 @@ expt error > 1e-6 around 2^-46.506993328423
 	    (if (= (modulo i 1000) 0) (format #t "."))
 	    (let* ((data (choose-op))
 		   (args ((caddr data)))
-		   (op (car data))) 
+		   (op (car data))
+		   (checker (cadr data)))
 					;	(format #t "(~A ~A)~%" op args)
-	      (let ((result (catch #t (lambda () (apply op args)) (lambda args (display args) (newline) 'error))))
-		((cadr data) args result)
-		(set! result (catch #t (lambda () (test-eval (cons op (quotify args))))  (lambda args (display args) (newline) 'error)))
-		((cadr data) args result))))))
+	      (let ((result (catch #t 
+				   (lambda () 
+				     (apply op args)) 
+				   (lambda args 
+				     (display args) 
+				     (newline) 
+				     'error))))
+		(checker args result)
+		(set! result (catch #t 
+				    (lambda () 
+				      (test-eval (cons op (quotify args))))  
+				    (lambda args 
+				      (display args) 
+				      (newline) 
+				      'error)))
+		(checker args result))))))
       ))
 ;;; I made a fancier version that created nested expressions, but it didn't hit any new
 ;;;   bugs, and it was too complicated.  
@@ -39651,26 +39709,18 @@ expt error > 1e-6 around 2^-46.506993328423
 		   string>=? string-ci=? string-ci<? string-ci>? string-ci<=? string-ci>=? string-append
 		   string-fill! string-copy substring string list->string string->list object->string format
 		   null? list? pair? reverse 
-					;reverse! 
-		   cons car cdr 
-					;set-car! set-cdr! 
-		   caar cadr cdar cddr
+					;reverse! set-car! set-cdr! 
+		   cons car cdr caar cadr cdar cddr
 		   caaar caadr cadar cdaar caddr cdddr cdadr cddar caaaar caaadr caadar cadaar caaddr cadddr
 		   cadadr caddar cdaaar cdaadr cdadar cddaar cdaddr cddddr cddadr cdddar length assq assv
 		   assoc memq memv member append list list-ref 
-					;list-set! 
-		   list-tail list-line-number vector?
-		   vector->list list->vector vector-fill! vector vector-length vector-ref 
-					;vector-set! 
-		   make-vector
-					;call/cc call-with-current-continuation call-with-exit 
+					;list-set! vector-set! 
+		   list-tail vector? sort!
+		   vector->list list->vector vector-fill! vector vector-length vector-ref make-vector
+					;call/cc call-with-current-continuation call-with-exit load
 		   continuation? eval eval-string apply
-					;load
 		   force for-each map values call-with-values dynamic-wind catch error 
-					;gc-verbose load-verbose
-					;backtrace -- too confusing!  it looks like an error has occurred
-		   clear-backtrace set-backtrace-length backtracing 
-					;quit gc
+					;quit gc gc-verbose load-verbose
 		   procedure? procedure-documentation
 		   help procedure-arity procedure-source make-procedure-with-setter procedure-with-setter? 
 		   procedure-with-setter-setter-arity not boolean? eq? eqv? equal? s7-version)))

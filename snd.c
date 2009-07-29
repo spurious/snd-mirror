@@ -35,7 +35,9 @@ void mus_error_to_snd(int type, char *msg)
       fprintf(stderr, msg);
       return;
     }
+
   call_ss_watchers(SS_MUS_ERROR_WATCHER, SS_MUS_ERROR);
+
   if (!(ignore_mus_error(type, msg)))
     {
       if (ss->catch_exists)
@@ -71,12 +73,15 @@ static void mus_print_to_snd(char *msg)
 	int i, len;
 	listener_append(";");
 	len = strlen(msg);
+
 	for (i = 1; i < len - 1; i++)
 	  if ((msg[i] == '\n') && (msg[i + 1] == ' '))
 	    msg[i + 1] = ';';
+
 	if (msg[0] == '\n')
 	  listener_append((char *)(msg + 1));
 	else listener_append(msg);
+
 	if (msg[strlen(msg) - 1] != '\n')
 	  listener_append("\n");
       }
@@ -93,10 +98,12 @@ static void initialize_load_path(void)
       /* colon-separated list of directory names, pushed on load-path in reverse order (hopefully = search order) */
       int i, len, dirs = 1, curdir = 0, start = 0;
       char **dirnames;
+
       len = strlen(path);
       for (i = 0; i < len; i++)
 	if (path[i] == ':')
 	  dirs++;
+
       dirnames = (char **)calloc(dirs, sizeof(char *));
       for (i = 0; i < len; i++)
 	{
@@ -107,18 +114,22 @@ static void initialize_load_path(void)
 		{
 		  int j, lim;
 		  char *tmp;
+
 		  if (i == (len - 1))
 		    lim = i + 1;
 		  else lim = i;
+
 		  tmp = (char *)calloc(lim - start + 1, sizeof(char));
 		  for (j = start; j < lim; j++)
 		    tmp[j - start] = path[j];
+
 		  dirnames[curdir++] = mus_expand_filename(tmp);
 		  start = i + 1;
 		  free(tmp);
 		}
 	    }
 	}
+
       for (i = curdir - 1; i >= 0; i--)
 	{
 	  XEN_ADD_TO_LOAD_PATH(dirnames[i]);

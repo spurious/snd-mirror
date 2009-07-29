@@ -69,36 +69,7 @@
 	    (string-set! newstr i (char-downcase (string-ref str i))))
 	  newstr))
 
-      (define sort!
-	;; http://www.math.grin.edu/~stone/events/scheme-workshop/quicksort.html
-	(lambda (ls . opt)
-	  (let* ((precedes? (if (null? opt) < (car opt)))
-
-		 (partition
-		  (lambda (ls pivot)
-		    (let loop ((rest ls)
-			       (smalls '())
-			       (larges '()))
-		      (if (null? rest)
-			  (cons smalls larges)
-			  (let ((fore (car rest))
-				(aft (cdr rest)))
-			    (if (precedes? fore pivot)
-				(loop aft (cons fore smalls) larges)
-				(loop aft smalls (cons fore larges)))))))))
-
-	    (let qs ((rest ls))
-	      (if (or (null? rest)
-		      (null? (cdr rest)))
-		  rest
-		  (let* ((pivot (car rest))
-			 (parts (partition (cdr rest) pivot))
-			 (smalls (car parts))
-			 (larges (cdr parts)))
-		    (append (qs smalls)
-			    (cons pivot (qs larges)))))))))
-
-      (define (sort lst . opt) (sort! (append lst '()) (if (null? opt) < (car opt))))
+      (define (sort lst . opt) (sort! lst (if (null? opt) < (car opt))))
       ))
 
 (if (not (defined? 'snd-test)) (define snd-test -1))
@@ -4966,7 +4937,6 @@
 
     (if with-s7
 	(begin
-	  (if (not (number? (list-line-number (list 1 2 3)))) (snd-display ";list-line-number: ~A" (list-line-number (list 1 2 3))))
 	  (if (not (list? (global-environment))) (snd-display ";global-environment not a list?: ~A" (global-environment)))
 	  (gc-verbose #t)
 	  (gc-verbose #f)
@@ -4978,8 +4948,6 @@
 	      (snd-display ";port-filename input: ~A" (port-filename (current-input-port))))
 	  (if (string? (port-line-number (current-input-port)))
 	      (snd-display ";port-line-number input: ~A" (port-line-number (current-input-port))))
-	  (set-backtrace-length 17)
-	  (clear-backtrace)
 
 	  (let ((ip (current-input-port)))
 	    (let ((tag (catch #t (lambda () (set-current-input-port "hiho!")) (lambda args (car args)))))

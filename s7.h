@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "1.22"
-#define S7_DATE "23-Jul-09"
+#define S7_VERSION "1.23"
+#define S7_DATE "30-Jul-09"
 
 
 typedef long long int s7_Int;
@@ -33,7 +33,6 @@ typedef double s7_Double;
    *    *vector-print-length*   how many elements of a vector are printed (initially 8)
    *    *features*              a list of symbols describing what is current available (initially '(s7))
    *    __func__                equivalent to C's __func__.  The symbol of the function currently being defined.
-   *                              (__func__ is active if (backtracing) below is #t).
    *
    * s7 constants:
    *
@@ -53,17 +52,13 @@ typedef double s7_Double;
    *    quit                    exits s7
    *    call-with-exit          just like call/cc but no jump back into a context
    *    continuation?           #t if its argument is a continuation (as opposed to an ordinary procedure)
-   *    backtrace               prints the "evaluation history"
-   *    clear-backtrace         clears the evaluation history
-   *    set-backtrace-length    sets how many entries are saved in the evaluation history
-   *    backtracing             if argument is #t, error messages include a backtrace printout,
-   *                              and other debugging stuff is activated (trace, __func__)
    *    procedure-documentation doc string associated with a procedure
    *    procedure-arity         a list describing the arglist of a function: '(required-args optional-args rest-arg)
    *    procedure-source        returns the source (a list) of a procedure
    *    help                    tries to find a help string associated with its argument
    *    symbol-calls            if profiling is enabled, this returns the number of times its argument (a symbol) has been called
-   *    trace and untrace       add or subtract functions from the trace list. (tracing is activated by backtracing above)
+   *    trace and untrace       add or subtract functions from the trace list.
+   *    stacktrace              show a stack trace
    *
    * and various others mentioned at the start of s7.c -- nearly every Scheme implementation includes
    * stuff like logior, sinh, read-line, format, define*, etc.  See also the start of s7.c for choices
@@ -158,7 +153,7 @@ void s7_set_error_exiter(s7_scheme *sc, void (*error_exiter)(void));
    *  evaluates 'thunk'.  If an error occurs, and the type matches 'tag' (or if 'tag' is #t),
    *  the handler is called, passing it the arguments (including the type) passed to the
    *  error function.  If no handler is found, the default error handler is called,
-   *  normally printing the error arguments and a backtrace to current-error-port.
+   *  normally printing the error arguments to current-error-port.
    */
 
 
@@ -1362,6 +1357,7 @@ int main(int argc, char **argv)
  * 
  *        s7 changes
  *
+ * 30-Jul:    changed backtrace handling: removed backtrace stuff, added stacktrace macro.
  * 23-Jul:    __func__.
  * 20-Jul:    trace and untrace.
  * 14-Jul:    replaced s7_make_closure_star with s7_define_function_star.
