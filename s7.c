@@ -142,7 +142,7 @@
  * To get multiprecision arithmetic, set WITH_GMP to 1.
  *   You'll also need libgmp, libmpfr, and libmpc (version 0.5.2 or later)
  *
- * To get sort!, your C compiler needs to support nested functions.  define HAVE_NESTED_FUNCTIONS if so.
+ * If your C compiler supports nested functions, define HAVE_NESTED_FUNCTIONS.
  */
 
 
@@ -626,8 +626,8 @@ struct s7_scheme {
 #define set_type(p, f)                typeflag(p) = ((f) | T_OBJECT)
 #endif
 
-#define is_true(p)                    ((p) != sc->F)
-#define is_false(p)                   ((p) == sc->F)
+#define is_true(Sc, p)                ((p) != Sc->F)
+#define is_false(Sc, p)               ((p) == Sc->F)
 #ifdef _MSC_VER
   #define make_boolean(sc, Val)       (((Val) &0xff) ? sc->T : sc->F)
 #else
@@ -858,7 +858,7 @@ s7_pointer s7_EOF_OBJECT(s7_scheme *sc)
 static s7_pointer g_not(s7_scheme *sc, s7_pointer args)
 {
   #define H_not "(not obj) returns #t if obj is #f, otherwise #t"
-  return(make_boolean(sc, is_false(car(args))));
+  return(make_boolean(sc, is_false(sc, car(args))));
 }
 
 
@@ -10100,47 +10100,66 @@ static s7_pointer g_vector_dimensions(s7_scheme *sc, s7_pointer args)
 #endif
 
 
-#if HAVE_NESTED_FUNCTIONS
+/* -------- sort! --------
+ *
+ *   this is much prettier code if the C compiler supports nested functions
+ */
+#if (!HAVE_NESTED_FUNCTIONS)
+  static s7_pointer compare_proc, compare_proc_args;
+  static s7_scheme *compare_sc; /* ugh */
 
-/* TODO: if not nested functions, make some kludgey sort fallback, then remove from *.scm (and sort?) */
+  static int vector_compare(const void *v1, const void *v2)
+  {
+    car(compare_proc_args) = (*(s7_pointer *)v1);
+    cadr(compare_proc_args) = (*(s7_pointer *)v2);
+    if (is_true(compare_sc, s7_call(compare_sc, compare_proc, compare_proc_args)))
+      return(-1);
+    return(1);
+  }
+#endif
 
 static s7_pointer g_sort_in_place(s7_scheme *sc, s7_pointer args)
 {
   #define H_sort_in_place "(sort! list-or-vector func) sorts in place list-or-vector using func to compare elements"
 
-  s7_pointer vect, proc, proc_args;
   int gc_loc;
+  s7_pointer vect;
+
+#if HAVE_NESTED_FUNCTIONS
+  s7_pointer compare_proc, compare_proc_args;
   auto int vector_compare(const void *v1, const void *v2);
 
   int vector_compare(const void *v1, const void *v2)
   {
-    car(proc_args) = (*(s7_pointer *)v1);
-    cadr(proc_args) = (*(s7_pointer *)v2);
-    if (is_true(s7_call(sc, proc, proc_args)))
+    car(compare_proc_args) = (*(s7_pointer *)v1);
+    cadr(compare_proc_args) = (*(s7_pointer *)v2);
+    if (is_true(sc, s7_call(sc, compare_proc, compare_proc_args)))
       return(-1);
     return(1);
   }
+#else
+  compare_sc = sc;
+#endif
 
   vect = car(args);
-  proc = cadr(args);
+  compare_proc = cadr(args);
 
   if (s7_is_list(sc, vect))
-    return(s7_vector_to_list(sc, g_sort_in_place(sc, make_list_2(sc, g_list_to_vector(sc, make_list_1(sc, vect)), proc))));
+    return(s7_vector_to_list(sc, g_sort_in_place(sc, make_list_2(sc, g_list_to_vector(sc, make_list_1(sc, vect)), compare_proc))));
 
   if (!s7_is_vector(vect))
     return(s7_wrong_type_arg_error(sc, "sort!", 1, vect, "a vector or a list"));
-  if (!s7_is_procedure(proc))
-    return(s7_wrong_type_arg_error(sc, "sort!", 2, proc, "a procedure"));
+  if (!s7_is_procedure(compare_proc))
+    return(s7_wrong_type_arg_error(sc, "sort!", 2, compare_proc, "a procedure"));
   
-  proc_args = make_list_2(sc, sc->F, sc->F);
-  gc_loc = s7_gc_protect(sc, proc_args);
+  compare_proc_args = make_list_2(sc, sc->F, sc->F);
+  gc_loc = s7_gc_protect(sc, compare_proc_args);
 
   qsort((void *)s7_vector_elements(vect), vector_length(vect), sizeof(s7_pointer), vector_compare);
 
   s7_gc_unprotect_at(sc, gc_loc);
   return(vect);
 }
-#endif
 
 
 
@@ -13564,7 +13583,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
     case OP_DO_END1:
       /* sc->value should be result of endtest evaluation */
-      if (is_true(sc->value))
+      if (is_true(sc, sc->value))
 	{
 	  /* we're done -- deal with result exprs */
 	  sc->code = cddr(sc->args);
@@ -14294,7 +14313,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       
     case OP_IF1:
-      if (is_true(sc->value))
+      if (is_true(sc, sc->value))
 	sc->code = car(sc->code);
       else
 	sc->code = cadr(sc->code);  /* (if #f 1) ==> #<unspecified> because car(sc->NIL) = sc->UNSPECIFIED */
@@ -14469,7 +14488,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       
     case OP_COND1:
-      if (is_true(sc->value))     /* got a hit */
+      if (is_true(sc, sc->value))     /* got a hit */
 	{
 	  sc->code = cdar(sc->code);
 	  if (sc->code == sc->NIL)
@@ -14548,7 +14567,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       
     case OP_AND1:
-      if ((is_false(sc->value)) ||
+      if ((is_false(sc, sc->value)) ||
 	  (sc->code == sc->NIL))
 	{
 	  pop_stack(sc);
@@ -14573,7 +14592,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       
     case OP_OR1:
-      if ((is_true(sc->value)) ||
+      if ((is_true(sc, sc->value)) ||
 	  (sc->code == sc->NIL))
 	{
 	  pop_stack(sc);
@@ -14826,7 +14845,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       
     case OP_CASE2: 
-      if (is_true(sc->value)) 
+      if (is_true(sc, sc->value)) 
 	goto BEGIN;
       sc->value = sc->NIL;
       pop_stack(sc);
@@ -20354,10 +20373,9 @@ s7_scheme *s7_init(void)
 #if WITH_MULTIDIMENSIONAL_VECTORS
   s7_define_function(sc, "vector-dimensions",       g_vector_dimensions,       1, 0, false, H_vector_dimensions);
 #endif
-#if HAVE_NESTED_FUNCTIONS
-    s7_define_function(sc, "sort!",                 g_sort_in_place,           2, 0, false, H_sort_in_place);
-#endif
+  s7_define_function(sc, "sort!",                   g_sort_in_place,           2, 0, false, H_sort_in_place);
   
+
   s7_define_function(sc, "call/cc",                 g_call_cc,                 1, 0, false, H_call_cc);
   s7_define_function(sc, "call-with-current-continuation", g_call_cc,          1, 0, false, H_call_cc);
   s7_define_function(sc, "call-with-exit",          g_call_with_exit,          1, 0, false, H_call_with_exit);

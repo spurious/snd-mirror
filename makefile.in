@@ -78,7 +78,7 @@ SND_G_HEADERS = snd-g0.h snd-g1.h
 SNDLIB_O_FILES = headers.o audio.o io.o sound.o clm.o xen.o vct.o sndlib2xen.o clm2xen.o
 MIDI_O_FILES = midi.o
 
-S7_HEADERS = s7.h
+S7_HEADERS = s7.h mus-config.h
 S7_FILES = s7.c
 S7_O_FILES = @S7_LIB@
 
