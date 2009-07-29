@@ -3,7 +3,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Mon Dec 06 17:23:22 CET 2004
-\ Changed: Fri May 29 01:16:29 CEST 2009
+\ Changed: Sun Jul 26 04:49:29 CEST 2009
 
 \ Commentary:
 
@@ -23,7 +23,7 @@ require clm
 #t   	    	   to *clm-play*
 #t   	    	   to *clm-statistics*
 #t   	    	   to *clm-verbose*
-22050  	    	   to *clm-srate*
+44100  	    	   to *clm-srate*
 2      	    	   to *clm-channels*
 2           	   to *clm-reverb-channels*
 #t          	   to *clm-delete-reverb*

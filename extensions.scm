@@ -1101,52 +1101,8 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 ;;; -------- profiling
 
 (define* (profile :optional (file "sort.data"))
-
-  (define (sort-vector v less?)
-    ;; vector sort taken from the Larceny benchmarks
-    
-    (define (partition v left right less?)
-      (let ((mid (vector-ref v right)))
-	
-	(define (uploop i)
-	  (let ((i (+ i 1)))
-	    (if (and (< i right) (less? (vector-ref v i) mid))
-		(uploop i)
-		i)))
-	
-	(define (downloop j)
-	  (let ((j (- j 1)))
-	    (if (and (> j left) (less? mid (vector-ref v j)))
-		(downloop j)
-		j)))
-	
-	(define (ploop i j)
-	  (let* ((i (uploop i))
-		 (j (downloop j)))
-	    (let ((tmp (vector-ref v i)))
-	      (vector-set! v i (vector-ref v j))
-	      (vector-set! v j tmp)
-	      (if (< i j)
-		  (ploop i j)
-		  (begin (vector-set! v j (vector-ref v i))
-			 (vector-set! v i (vector-ref v right))
-			 (vector-set! v right tmp)
-			 i)))))
-	(ploop (- left 1) right)))
-    
-    (define (helper left right)
-      (if (< left right)
-	  (let ((median (partition v left right less?)))
-	    (if (< (- median left) (- right median))
-		(begin (helper left (- median 1))
-		       (helper (+ median 1) right))
-		(begin (helper (+ median 1) right)
-		       (helper left (- median 1)))))
-	  v))
-    
-    (helper 0 (- (vector-length v) 1)))
-
   ;; find all functions, write out each one's number of calls, sorted first by calls, then alphabetically 
+
   (let ((st (symbol-table))
 	(calls (make-vector 50000 #f))
 	(call 0))
@@ -1165,7 +1121,7 @@ connects them with 'func', and applies the result as an amplitude envelope to th
       (do ((i 0 (+ i 1)))
 	  ((= i call))
 	(vector-set! new-calls i (vector-ref calls i)))
-      (let ((sorted-calls (sort-vector new-calls 
+      (let ((sorted-calls (sort! new-calls 
 			    (lambda (a b) 
 			      (or (> (cadr a) (cadr b))
 				  (and (= (cadr a) (cadr b))

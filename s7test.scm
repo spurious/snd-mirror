@@ -50,6 +50,7 @@
 (define with-large-powers #t)                                  ; for Gauche
 (define with-rationalize #t)                                   ; test rationalize
 (define with-full-fledged-random #t)                           ; random exists and can take any kind of numeric args, also make-random-state
+(define with-sort! #t)                                         ; sort! exists for both lists and vectors
 
 
 (define our-pi 3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117067982148086513282306647093844609550582231725359408128481117450284102701938521105559644622948954930382)
@@ -5562,6 +5563,36 @@
       
       ))
 
+
+(if with-sort!
+    (begin
+
+      (test (equal? (sort! (list 3 4 8 2 0 1 5 9 7 6) <) (list 0 1 2 3 4 5 6 7 8 9)) #t)
+      (test (equal? (sort! (list 3 4 8 2 0 1 5 9 7 6) (lambda (a b) (< a b))) (list 0 1 2 3 4 5 6 7 8 9)) #t)
+      (test (equal? (sort! (list) <) '()) #t)
+      (test (equal? (sort! (list 1) <) '(1)) #t)
+      (test (equal? (sort! (list 1 1 1) <) '(1 1 1)) #t)
+      (test (equal? (sort! (list 0 1 2 3 4 5 6 7 8 9) <) '(0 1 2 3 4 5 6 7 8 9)) #t)
+      (test (equal? (sort! (list #\a #\l #\o #\h #\a) char<?) '(#\a #\a #\h #\l #\o)) #t)
+      (test (equal? (sort! (list "tic" "tac" "toe") string<?) '("tac" "tic" "toe")) #t)
+      (test (equal? (sort! (list 3 4 8 2 0 1 5 9 7 6) >) (reverse (list 0 1 2 3 4 5 6 7 8 9))) #t)
+      (test (equal? (sort! '((3 . 1) (2 . 8) (5 . 9) (4 . 7) (6 . 0)) (lambda (a b) (< (car a) (car b)))) '((2 . 8) (3 . 1) (4 . 7) (5 . 9) (6 . 0))) #t)
+      (test (equal? (sort! '((3 . 1) (2 . 8) (5 . 9) (4 . 7) (6 . 0)) (lambda (a b) (< (cdr a) (cdr b)))) '((6 . 0) (3 . 1) (4 . 7) (2 . 8) (5 . 9))) #t)
+      (test (equal? (sort! (list (list 1 2) (list 4 3 2) (list) (list 1 2 3 4)) (lambda (a b) (>= (length a) (length b)))) '((1 2 3 4) (4 3 2) (1 2) ())) #t)
+      (test (equal? (sort! '((1 2 3) (4 5 6) (7 8 9)) (lambda (a b) (> (car a) (car b)))) '((7 8 9) (4 5 6) (1 2 3))) #t)
+      (test (equal? (sort! (list #\b #\A #\B #\a #\c #\C) char<?) '(#\A #\B #\C #\a #\b #\c)) #t)
+      (test (equal? (sort! (list (list 'u 2) (list 'i 1) (list 'a 7) (list 'k 3) (list 'c 4) (list 'b 6))
+			   (lambda (a b) (< (cadr a) (cadr b))))
+		    '((i 1) (u 2) (k 3) (c 4) (b 6) (a 7)))
+	    #t)
+      (test (equal? (sort! (sort! '(1 2 3) >) <) '(1 2 3)) #t)
+
+      (test (equal? (sort! (vector 3 4 8 2 0 1 5 9 7 6) <) (vector 0 1 2 3 4 5 6 7 8 9)) #t)
+      (test (equal? (sort! '#() <) '#()) #t)
+      
+      ))
+
+
 (if with-gensym
     (begin
 
@@ -6079,6 +6110,7 @@
       (test (let () (define-macro (hiho) `(+ 3 1)) (hiho 1)) 'error)
       (test (let () (define-macro (hi a) `(+ ,@a)) (hi (1 2 3))) 6)
       (test (let () (define-macro (hi a) `(+ ,a 1) #f) (hi 2)) #f)
+      (test (let () (define-macro (mac1 a) `',a) (equal? (mac1 (+ 1 2)) '(+ 1 2))) #t)
 
       (test (string=? (let ((hi (lambda (b) (+ b 1)))) (object->string hi)) "hi") #t)
       (test (string=? (object->string 32) "32") #t)

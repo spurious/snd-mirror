@@ -3,40 +3,22 @@
 
 ;; Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 ;; Created: Tue Jun 24 19:05:06 CEST 2003
-;; Changed: Thu May 28 17:30:51 CEST 2009
+;; Changed: Sun Jul 26 04:46:55 CEST 2009
 
 ;; This file is part of Sndins.
 
 ;; Try (do-agn)
 
-(if (defined? 'gauche-version)
-    ;; Gauche
-    (begin
-      (use file.util)
-      ;; (load file) looks for "./file" in the specified dir,
-      ;; otherwise it looks in *load-path*.  It seems not to look for
-      ;; "file.name" in the current dir.
-      (if (not (member "." *load-path*))
-	  (add-load-path "."))
-      (if (not (provided? 'sndlib))
-	  (dynamic-load "sndlib" :init-function "Init_sndlib" :export-symbols #t))
-      (if (not (provided? 'sndins))
-	  (dynamic-load "sndins" :init-function "Init_sndins" :export-symbols #t)))
-    ;; Guile
-    (begin
-      (use-modules (ice-9 format) (ice-9 optargs))
-      (begin
-	(if (not (provided? 'sndlib))
-	    (let ((hsndlib (dlopen "libsndlib.so")))
-	      (if (string? hsndlib)
-		  (snd-error (format #f "script needs the sndlib module: ~A" hsndlib))
-		  (dlinit hsndlib "Init_sndlib"))))
-	
-	(if (not (provided? 'sndins))
-	    (let ((hsndins (dlopen "libsndins.so")))
-	      (if (string? hsndins)
-		  (snd-error (format #f "script needs the sndins module: ~A" hsndins))
-		  (dlinit hsndins "Init_sndins")))))))
+(if (not (provided? 'sndlib))
+    (let ((hsndlib (dlopen "libsndlib.so")))
+      (if (string? hsndlib)
+	  (snd-error (format #f "script needs the sndlib module: ~A" hsndlib))
+	  (dlinit hsndlib "Init_sndlib"))))
+(if (not (provided? 'sndins))
+    (let ((hsndins (dlopen "libsndins.so")))
+      (if (string? hsndins)
+	  (snd-error (format #f "script needs the sndins module: ~A" hsndins))
+	  (dlinit hsndins "Init_sndins"))))
 
 (if (not (provided? 'snd-ws.scm)) (load-from-path "ws"))
 (if (not (provided? 'snd-env.scm)) (load-from-path "env"))

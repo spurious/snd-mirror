@@ -30,14 +30,14 @@
  * fcomb functions (sndscm.html)
  * instruments: fm-violin, jc-reverb, nrev, freeverb
  * 
- * mus_any *mus_make_fcomb(Float scaler, int size, Float a0, Float a1);
+ * mus_any *mus_make_fcomb(mus_float_t scaler, int size, mus_float_t a0, mus_float_t a1);
  * int mus_fcomb_p(mus_any *ptr);
- * Float mus_fcomb(mus_any *ptr, Float input, Float ignored);
+ * mus_float_t mus_fcomb(mus_any *ptr, mus_float_t input, mus_float_t ignored);
  *
- * off_t ins_fm_violin(Float start, Float dur, [...]);
- * off_t ins_jc_reverb(Float start, Float dur, [...]);
- * off_t ins_nrev(Float start, Float dur, [...]);
- * off_t ins_freeverb(Float start, Float dur, [...]);
+ * off_t ins_fm_violin(mus_float_t start, mus_float_t dur, [...]);
+ * off_t ins_jc_reverb(mus_float_t start, mus_float_t dur, [...]);
+ * off_t ins_nrev(mus_float_t start, mus_float_t dur, [...]);
+ * off_t ins_freeverb(mus_float_t start, mus_float_t dur, [...]);
  *
  * void Init_sndins(void);
  */
@@ -170,8 +170,8 @@ get_global_int(const char *name, int def)
   return def;
 }
 
-static Float
-get_global_float(const char *name, Float def)
+static mus_float_t
+get_global_float(const char *name, mus_float_t def)
 {
   if (XEN_DEFINED_P(name))
     {
@@ -184,20 +184,20 @@ get_global_float(const char *name, Float def)
 }
 
 /*
- * Returns a Float array initialized with contents of XEN list.
+ * Returns a mus_float_t array initialized with contents of XEN list.
  * (mus_make_env())
  */
 
-static Float *
+static mus_float_t *
 xen_list2array(XEN list)
 {
   int i = 0;
   int len = XEN_LIST_LENGTH(list);
-  Float *flist = NULL;
+  mus_float_t *flist = NULL;
   XEN lst;
 
   if (len == 0) return NULL;
-  if (!(flist = (Float *)malloc(len * sizeof(Float))))
+  if (!(flist = (mus_float_t *)malloc(len * sizeof(mus_float_t))))
     INS_NO_MEMORY_ERROR(c__FUNCTION__, "cannot allocate memory");
   for (i = 0, lst = XEN_COPY_ARG(list); i < len; i++, lst = XEN_CDR(lst))
     flist[i] = XEN_TO_C_DOUBLE_OR_ELSE(XEN_CAR(lst), 0.0);
@@ -226,30 +226,30 @@ xen_list2iarray(XEN list)
 }
 
 /*
- * Returns a Float array initialized with contents of Float list.
+ * Returns a mus_float_t array initialized with contents of mus_float_t list.
  * (mus_make_env())
  */
 
-static Float *
-array2array(Float *list, int len)
+static mus_float_t *
+array2array(mus_float_t *list, int len)
 {
   int i = 0;
-  Float *flist = NULL;
+  mus_float_t *flist = NULL;
 
   if (len == 0) return NULL;
-  if (!(flist = (Float *)malloc(len * sizeof(Float))))
+  if (!(flist = (mus_float_t *)malloc(len * sizeof(mus_float_t))))
     INS_NO_MEMORY_ERROR(c__FUNCTION__, "cannot allocate memory");
-  for (i = 0; i < len; i++) flist[i] = (Float)list[i];
+  for (i = 0; i < len; i++) flist[i] = (mus_float_t)list[i];
   return flist;
 }
 
 vct *
-array2vct(Float *list, int len)
+array2vct(mus_float_t *list, int len)
 {
   int i = 0;
   vct *v = mus_vct_make(len);
 
-  for (i = 0; i < len; i++) v->data[i] = (Float)list[i];
+  for (i = 0; i < len; i++) v->data[i] = (mus_float_t)list[i];
   return v;
 }
 
@@ -273,7 +273,7 @@ int_array2array(int *list, int len)
 
 /* ins_fm_violin: easy_case */
 static bool
-array_equal_p(Float *env1, int len1, Float *env2, int len2)
+array_equal_p(mus_float_t *env1, int len1, mus_float_t *env2, int len2)
 {
   if (env1 && env2 && len1 == len2)
     {
@@ -327,7 +327,7 @@ ins_message(const char *fmt, ...)
 }
 
 static int
-feq(Float x, int i)
+feq(mus_float_t x, int i)
 {
   return(fabs(x - i) < 0.00001);
 }
@@ -351,7 +351,7 @@ prime_p(off_t x)
 }
 
 static char *
-format_array(Float *line, int size)
+format_array(mus_float_t *line, int size)
 {
   int i, lim = size;
   char *str = (char *)calloc(2048, sizeof(char));
@@ -389,16 +389,16 @@ static int MUS_FCOMB = 0; /* this will be our fcomb type identifier */
 typedef struct {
   mus_any_class *core;
   int loc, size;
-  Float *line;
-  Float xs[3];			/* a0, a1 (mus_xcoeff(gen, idx)) */
-  Float xscl, x1;
+  mus_float_t *line;
+  mus_float_t xs[3];			/* a0, a1 (mus_xcoeff(gen, idx)) */
+  mus_float_t xscl, x1;
 } fcomb;
 
 /* each CLM-in-C generator has mus_any_class *core as the first thing in its structure.
  *   it defines most of the built-in "generic" functions like mus-describe.
  * The next set of functions implement the core functions/
  *   The address of the function is stored in the class's core struct.
- *   For example, the scaler method is defined as Float (*scaler)(void *ptr);
+ *   For example, the scaler method is defined as mus_float_t (*scaler)(void *ptr);
  *   in the mus_any_class declaration (clm.h); for fcomb it will correspond
  *   to the fcomb_scaler function below; it is invoked via mus_scaler(gen)
  *   where gen is an fcomb generator (the actual call is (*((gen->core)->scaler))(gen)).
@@ -456,39 +456,39 @@ fcomb_length(mus_any *ptr)
   return ((fcomb *)ptr)->size;
 }
 
-static Float *
+static mus_float_t *
 fcomb_data(mus_any *ptr)
 {
   return ((fcomb *)ptr)->line;
 }
 
-static Float
+static mus_float_t
 fcomb_scaler(mus_any *ptr)
 {
   return ((fcomb *)ptr)->xscl;
 }
 
-static Float
-set_fcomb_scaler(mus_any *ptr, Float val)
+static mus_float_t
+set_fcomb_scaler(mus_any *ptr, mus_float_t val)
 {
   ((fcomb *)ptr)->xscl = val;
   return val;
 }
 
-static Float
+static mus_float_t
 fcomb_xcoeff(mus_any *ptr, int index)
 {
   return ((fcomb *)ptr)->xs[index];
 }
 
-static Float
-set_fcomb_xcoeff(mus_any *ptr, int index, Float val)
+static mus_float_t
+set_fcomb_xcoeff(mus_any *ptr, int index, mus_float_t val)
 {
   ((fcomb *)ptr)->xs[index] = val;
   return val;
 }
 
-static Float *
+static mus_float_t *
 fcomb_xcoeffs(mus_any *ptr)
 {
   return ((fcomb *)ptr)->xs;
@@ -517,11 +517,11 @@ free_fcomb(mus_any *uptr)
 /* now the actual run-time code executed by fcomb
    the extra "ignored" argument is for the run method */
 
-Float
-mus_fcomb(mus_any *ptr, Float input, Float ignored __attribute__ ((unused)))
+mus_float_t
+mus_fcomb(mus_any *ptr, mus_float_t input, mus_float_t ignored __attribute__ ((unused)))
 {
   fcomb *gen = (fcomb *)ptr;
-  Float tap_result, filter_result;
+  mus_float_t tap_result, filter_result;
     
   tap_result = gen->line[gen->loc];
   filter_result = (gen->xs[0] * tap_result) + (gen->xs[1] * gen->x1);
@@ -568,7 +568,7 @@ static mus_any_class FCOMB_CLASS = {
 /* now a function to make a new generator */
 
 mus_any *
-mus_make_fcomb(Float scaler, int size, Float a0, Float a1)
+mus_make_fcomb(mus_float_t scaler, int size, mus_float_t a0, mus_float_t a1)
 {
   fcomb *gen = NULL;
 
@@ -589,11 +589,11 @@ mus_make_fcomb(Float scaler, int size, Float a0, Float a1)
       gen->xs[0] = a0;
       gen->xs[1] = a1;
       gen->size = size;
-      gen->line = (Float *)calloc(size, sizeof(Float));
+      gen->line = (mus_float_t *)calloc(size, sizeof(mus_float_t));
       if (gen->line == NULL) 
 	mus_error(MUS_MEMORY_ALLOCATION_FAILED, 
 		  "cannot allocate %d bytes for fcomb delay line in mus_make_fcomb!",
-		  (int)(size * sizeof(Float)));
+		  (int)(size * sizeof(mus_float_t)));
     }
   return (mus_any *)gen;
 }
@@ -629,7 +629,7 @@ c_make_fcomb(XEN args)
 {
 #define FCOMB_LAST_KEY 4
   int i, keyn, argn = 0, vals = 0, lst_len = XEN_LIST_LENGTH(args), size = 1;
-  Float scaler = 1.0, a0 = 0.0, a1 = 0.0;
+  mus_float_t scaler = 1.0, a0 = 0.0, a1 = 0.0;
   XEN kargs[FCOMB_LAST_KEY * 2], keys[FCOMB_LAST_KEY];
   int orig_arg[FCOMB_LAST_KEY] = {0};
   mus_xen *gn = NULL;
@@ -723,42 +723,42 @@ c_fcomb(XEN gen, XEN input)
 #define S_freeverb   "freeverb"
 
 off_t
-ins_fm_violin(Float start,
-	      Float dur,
-	      Float freq,
-	      Float amp,
-	      Float fm_index,
-	      Float *amp_env,
+ins_fm_violin(mus_float_t start,
+	      mus_float_t dur,
+	      mus_float_t freq,
+	      mus_float_t amp,
+	      mus_float_t fm_index,
+	      mus_float_t *amp_env,
 	      int amp_len,
-	      Float periodic_vibrato_rate,
-	      Float periodic_vibrato_amp,
-	      Float random_vibrato_rate,
-	      Float random_vibrato_amp,
-	      Float noise_freq,
-	      Float noise_amount,
-	      Float ind_noise_freq,
-	      Float ind_noise_amount,
-	      Float amp_noise_freq,
-	      Float amp_noise_amount,
-	      Float *gliss_env,
+	      mus_float_t periodic_vibrato_rate,
+	      mus_float_t periodic_vibrato_amp,
+	      mus_float_t random_vibrato_rate,
+	      mus_float_t random_vibrato_amp,
+	      mus_float_t noise_freq,
+	      mus_float_t noise_amount,
+	      mus_float_t ind_noise_freq,
+	      mus_float_t ind_noise_amount,
+	      mus_float_t amp_noise_freq,
+	      mus_float_t amp_noise_amount,
+	      mus_float_t *gliss_env,
 	      int gliss_len,
-	      Float gliss_amount,
-	      Float *fm1_env,
+	      mus_float_t gliss_amount,
+	      mus_float_t *fm1_env,
 	      int fm1_len,
-	      Float *fm2_env,
+	      mus_float_t *fm2_env,
 	      int fm2_len,
-	      Float *fm3_env,
+	      mus_float_t *fm3_env,
 	      int fm3_len,
-	      Float fm1_rat,
-	      Float fm2_rat,
-	      Float fm3_rat,
-	      Float fm1_index,
-	      Float fm2_index,
-	      Float fm3_index,
-	      Float base,
-	      Float degree,
-	      Float distance,
-	      Float reverb_amount,
+	      mus_float_t fm1_rat,
+	      mus_float_t fm2_rat,
+	      mus_float_t fm3_rat,
+	      mus_float_t fm1_index,
+	      mus_float_t fm2_index,
+	      mus_float_t fm3_index,
+	      mus_float_t base,
+	      mus_float_t degree,
+	      mus_float_t distance,
+	      mus_float_t reverb_amount,
 	      bool index_type,
 	      bool no_waveshaping,
 	      mus_any *out,
@@ -768,10 +768,10 @@ ins_fm_violin(Float start,
   off_t i, beg, len;
   int out_chans = 1, rev_chans = 0;
   bool vln = true, easy_case = false, modulate = false;
-  Float frq_scl = 0.0, maxdev = 0.0, index1 = 0.0, index2 = 0.0, index3 = 0.0, vib = 0.0;
-  Float logfrq = 0.0, sqrtfrq = 0.0, norm = 0.0, mod = 0.0;
-  Float *partials = NULL;
-  Float fuzz = 0.0, ind_fuzz = 1.0, amp_fuzz = 1.0;
+  mus_float_t frq_scl = 0.0, maxdev = 0.0, index1 = 0.0, index2 = 0.0, index3 = 0.0, vib = 0.0;
+  mus_float_t logfrq = 0.0, sqrtfrq = 0.0, norm = 0.0, mod = 0.0;
+  mus_float_t *partials = NULL;
+  mus_float_t fuzz = 0.0, ind_fuzz = 1.0, amp_fuzz = 1.0;
   mus_any *carrier = NULL, *fmosc1 = NULL, *fmosc2 = NULL, *fmosc3 = NULL;
   mus_any *ampf = NULL, *indf1 = NULL, *indf2 = NULL, *indf3 = NULL, *pervib = NULL;
   mus_any *fm_noi = NULL, *ind_noi = NULL, *amp_noi = NULL, *ranvib = NULL, *frqf = NULL;
@@ -835,7 +835,7 @@ ins_fm_violin(Float start,
 	  if ((int)floor(fm2_rat) > nparts) nparts = (int)floor(fm2_rat);
 	  if ((int)floor(fm3_rat) > nparts) nparts = (int)floor(fm3_rat);
 	  nparts++;
-	  partials = (Float *)calloc(nparts, sizeof(Float));
+	  partials = (mus_float_t *)calloc(nparts, sizeof(mus_float_t));
 	  partials[(int)(fm1_rat)] = index1;
 	  partials[(int)(fm2_rat)] = index2;
 	  partials[(int)(fm3_rat)] = index3;
@@ -921,16 +921,16 @@ ins_fm_violin(Float start,
 }
 
 off_t
-ins_jc_reverb(Float start,
-	      Float dur,
-	      Float volume,
+ins_jc_reverb(mus_float_t start,
+	      mus_float_t dur,
+	      mus_float_t volume,
 	      bool low_pass,
 	      bool doubled,
-	      Float delay1,
-	      Float delay2,
-	      Float delay3,
-	      Float delay4,
-	      Float *amp_env,
+	      mus_float_t delay1,
+	      mus_float_t delay2,
+	      mus_float_t delay3,
+	      mus_float_t delay4,
+	      mus_float_t *amp_env,
 	      int amp_len,
 	      mus_any *out,
 	      mus_any *rev)
@@ -938,8 +938,8 @@ ins_jc_reverb(Float start,
   off_t i, beg, len;
   int del_len = 0, chans = 0, rev_chans = 0;
   bool chan2 = false, chan4 = false;
-  Float delA = 0.0, delB = 0.0;
-  Float allpass_sum = 0.0, comb_sum = 0.0, comb_sum_1 = 0.0, comb_sum_2 = 0.0, all_sums = 0.0;
+  mus_float_t delA = 0.0, delB = 0.0;
+  mus_float_t allpass_sum = 0.0, comb_sum = 0.0, comb_sum_1 = 0.0, comb_sum_2 = 0.0, all_sums = 0.0;
   mus_any *allpass1 = NULL, *allpass2 = NULL, *allpass3 = NULL;
   mus_any *comb1 = NULL, *comb2 = NULL, *comb3 = NULL, *comb4 = NULL;
   mus_any *outdel1 = NULL, *outdel2 = NULL, *outdel3 = NULL, *outdel4 = NULL;
@@ -995,7 +995,7 @@ ins_jc_reverb(Float start,
   for (i = beg; i < len; i++)
     {
       int j;
-      Float ho;
+      mus_float_t ho;
 
       for (j = 0, ho = 0.0; j < rev_chans; j++) ho += mus_in_any(i, j, rev);
       allpass_sum = mus_all_pass_unmodulated(allpass3,
@@ -1049,14 +1049,14 @@ ins_jc_reverb(Float start,
 }
 
 off_t
-ins_nrev(Float start,
-	 Float dur,
-	 Float reverb_factor,
-	 Float lp_coeff,
-	 Float lp_out_coeff,
-	 Float output_scale,
-	 Float volume,
-	 Float *amp_env,
+ins_nrev(mus_float_t start,
+	 mus_float_t dur,
+	 mus_float_t reverb_factor,
+	 mus_float_t lp_coeff,
+	 mus_float_t lp_out_coeff,
+	 mus_float_t output_scale,
+	 mus_float_t volume,
+	 mus_float_t *amp_env,
 	 int amp_len,
 	 mus_any *out,
 	 mus_any *rev)
@@ -1064,9 +1064,9 @@ ins_nrev(Float start,
   off_t i, beg, len;
   int chans = 0, rev_chans = 0, val = 0;
   int dly_len[15] = {1433, 1601, 1867, 2053, 2251, 2399, 347, 113, 37, 59, 53, 43, 37, 29, 19};
-  Float srscale = mus_srate() / 25641.0;
-  Float sample_a = 0.0, sample_b = 0.0, sample_c = 0.0, sample_d = 0.0;
-  Float inrev = 0.0, outrev = 0.0;
+  mus_float_t srscale = mus_srate() / 25641.0;
+  mus_float_t sample_a = 0.0, sample_b = 0.0, sample_c = 0.0, sample_d = 0.0;
+  mus_float_t inrev = 0.0, outrev = 0.0;
   mus_any *allpass1 = NULL, *allpass2 = NULL, *allpass3 = NULL, *allpass4 = NULL;
   mus_any *allpass5 = NULL, *allpass6 = NULL, *allpass7 = NULL, *allpass8 = NULL;
   mus_any *comb1 = NULL, *comb2 = NULL, *comb3 = NULL;
@@ -1126,7 +1126,7 @@ ins_nrev(Float start,
   for (i = beg; i < len; i++)
     {
       int j;
-      Float ho;
+      mus_float_t ho;
       
       for (j = 0, ho = 0.0; j < rev_chans; j++) ho += mus_in_any(i, j, rev);
       inrev = volume * mus_env(env_a) * ho;
@@ -1190,17 +1190,17 @@ ins_nrev(Float start,
 }
 
 off_t
-ins_freeverb(Float start,
-	     Float dur,
-	     Float room_decay,
-	     Float damping,
-	     Float global,
-	     Float predelay,
-	     Float output_gain,
-	     Float scale_room_decay,
-	     Float offset_room_decay,
-	     Float scale_damping,
-	     Float stereo_spread,
+ins_freeverb(mus_float_t start,
+	     mus_float_t dur,
+	     mus_float_t room_decay,
+	     mus_float_t damping,
+	     mus_float_t global,
+	     mus_float_t predelay,
+	     mus_float_t output_gain,
+	     mus_float_t scale_room_decay,
+	     mus_float_t offset_room_decay,
+	     mus_float_t scale_damping,
+	     mus_float_t stereo_spread,
 	     int *combtuning,
 	     int comb_len,
 	     int *allpasstuning,
@@ -1211,9 +1211,9 @@ ins_freeverb(Float start,
 {
   off_t i, beg, len;
   int out_chans = 0, in_chans = 0;
-  Float srate_scale = mus_srate() / 44100.0;
-  Float local_gain = 0.0, global_gain = 0.0;
-  Float tmp;
+  mus_float_t srate_scale = mus_srate() / 44100.0;
+  mus_float_t local_gain = 0.0, global_gain = 0.0;
+  mus_float_t tmp;
   mus_any *out_mix = NULL, *out_buf = NULL, *f_out = NULL, *f_in = NULL;
 
   beg = mus_seconds_to_samples(start);
@@ -1243,7 +1243,7 @@ ins_freeverb(Float start,
 	    
 	  for (j = 0; j < out_chans; j++)
 	    mus_mixer_set(out_mix, i, j,
-			  (Float)((output_gain *
+			  (mus_float_t)((output_gain *
 				   ((i == j) ? local_gain : global_gain)) / out_chans));
 	}
     }
@@ -1251,7 +1251,7 @@ ins_freeverb(Float start,
     mus_any **predelays = (mus_any **)malloc(in_chans * sizeof(mus_any *));
     mus_any ***allpasses = (mus_any ***)malloc(out_chans * sizeof(mus_any **));
     mus_any ***combs = (mus_any ***)malloc(out_chans * sizeof(mus_any **));
-    Float room_decay_val = room_decay * scale_room_decay + offset_room_decay;
+    mus_float_t room_decay_val = room_decay * scale_room_decay + offset_room_decay;
     int j, k, size;
 
     for (i = 0; i < out_chans; i++)
@@ -1272,7 +1272,7 @@ ins_freeverb(Float start,
 	/* comb filters */
 	for (j = 0; j < comb_len; j++)
 	  {
-	    Float dmp = scale_damping * damping;
+	    mus_float_t dmp = scale_damping * damping;
 	    
 	    size = (int)floor(srate_scale * combtuning[j]);
 	    if (i % 2) size += (int)floor(srate_scale * stereo_spread);
@@ -1419,19 +1419,19 @@ c_fm_violin(XEN args)
   int amp_len = 8, gls_len = 4, fm1_len = 8, fm2_len = 8, fm3_len = 8;
   bool index_type = (bool)XEN_V_INS_VIOLIN, no_waveshaping = false;
   bool amp_del = false, gls_del = false, fm1_del = false, fm2_del = false, fm3_del = false;
-  Float start = 0.0, dur = 1.0, freq = 440.0, amp = 0.5, fm_index = 1.0;
-  Float tamp_env[8] = {0.0, 0.0, 25.0, 1.0, 75.0, 1.0, 100.0, 0.0};
-  Float periodic_vibrato_rate = 5.0, periodic_vibrato_amp = 0.0025;
-  Float random_vibrato_rate = 16.0, random_vibrato_amp = 0.005;
-  Float noise_freq = 1000.0, noise_amount = 0.0;
-  Float ind_noise_freq = 10.0, ind_noise_amount = 0.0;
-  Float amp_noise_freq = 20.0, amp_noise_amount = 0.0;
-  Float tgliss_env[4] = {0.0, 0.0, 100.0, 0.0}, gliss_amount = 0.0;
-  Float tfm_env[8] = {0.0, 1.0, 25.0, 0.4, 75.0, 0.6, 100.0, 0.0};
-  Float fm1_rat = 1.0, fm2_rat = 3.0, fm3_rat = 4.0;
-  Float fm1_index = 0.0, fm2_index = 0.0, fm3_index = 0.0, base = 1.0;
-  Float degree = 0.0, distance = 1.0, reverb_amount = 0.01;
-  Float *amp_env = NULL, *gliss_env = NULL, *fm1_env = NULL, *fm2_env = NULL, *fm3_env = NULL;
+  mus_float_t start = 0.0, dur = 1.0, freq = 440.0, amp = 0.5, fm_index = 1.0;
+  mus_float_t tamp_env[8] = {0.0, 0.0, 25.0, 1.0, 75.0, 1.0, 100.0, 0.0};
+  mus_float_t periodic_vibrato_rate = 5.0, periodic_vibrato_amp = 0.0025;
+  mus_float_t random_vibrato_rate = 16.0, random_vibrato_amp = 0.005;
+  mus_float_t noise_freq = 1000.0, noise_amount = 0.0;
+  mus_float_t ind_noise_freq = 10.0, ind_noise_amount = 0.0;
+  mus_float_t amp_noise_freq = 20.0, amp_noise_amount = 0.0;
+  mus_float_t tgliss_env[4] = {0.0, 0.0, 100.0, 0.0}, gliss_amount = 0.0;
+  mus_float_t tfm_env[8] = {0.0, 1.0, 25.0, 0.4, 75.0, 0.6, 100.0, 0.0};
+  mus_float_t fm1_rat = 1.0, fm2_rat = 3.0, fm3_rat = 4.0;
+  mus_float_t fm1_index = 0.0, fm2_index = 0.0, fm3_index = 0.0, base = 1.0;
+  mus_float_t degree = 0.0, distance = 1.0, reverb_amount = 0.01;
+  mus_float_t *amp_env = NULL, *gliss_env = NULL, *fm1_env = NULL, *fm2_env = NULL, *fm3_env = NULL;
   mus_any *out = NULL, *rev = NULL;
   XEN kargs[V_LAST_KEY * 2], keys[V_LAST_KEY];
   int orig_arg[V_LAST_KEY] = {0};
@@ -1680,8 +1680,8 @@ c_jc_reverb(XEN args)
   off_t result;
   int vals = 0, lst_len = XEN_LIST_LENGTH(args), amp_len = 0;
   bool low_pass = false, doubled = false;
-  Float volume = 1.0, delay1 = 0.013, delay2 = 0.011, delay3 = 0.015, delay4 = 0.017;
-  Float *amp_env = NULL;
+  mus_float_t volume = 1.0, delay1 = 0.013, delay2 = 0.011, delay3 = 0.015, delay4 = 0.017;
+  mus_float_t *amp_env = NULL;
   mus_any *out = NULL, *rev = NULL;
   int orig_arg[JC_LAST_KEY] = {0};
   XEN kargs[JC_LAST_KEY * 2], keys[JC_LAST_KEY];
@@ -1788,10 +1788,10 @@ c_nrev(XEN args)
   off_t result;
   int vals = 0, lst_len = XEN_LIST_LENGTH(args), amp_len = 4;
   bool amp_del = false;
-  Float lp_coeff = 0.7, lp_out_coeff = 0.85;
-  Float output_scale = 1.0, reverb_factor = 1.09, volume = 1.0;
-  Float tamp_env[4] = {0, 1, 1, 1};
-  Float *amp_env = NULL;
+  mus_float_t lp_coeff = 0.7, lp_out_coeff = 0.85;
+  mus_float_t output_scale = 1.0, reverb_factor = 1.09, volume = 1.0;
+  mus_float_t tamp_env[4] = {0, 1, 1, 1};
+  mus_float_t *amp_env = NULL;
   mus_any *out = NULL, *rev = NULL;
   int orig_arg[N_LAST_KEY] = {0};
   XEN kargs[N_LAST_KEY * 2], keys[N_LAST_KEY];
@@ -1901,9 +1901,9 @@ c_freeverb(XEN args)
   int tallpass[4] = {556, 441, 341, 225};
   int *combtuning = NULL, *allpasstuning = NULL;
   bool comb_del = false, allpass_del = false;
-  Float room_decay = 0.5, global = 0.3, damping = 0.5;
-  Float predelay = 0.03, output_gain = 1.0, scale_room_decay = 0.28;
-  Float offset_room_decay = 0.7, scale_damping = 0.4, stereo_spread = 23.0;
+  mus_float_t room_decay = 0.5, global = 0.3, damping = 0.5;
+  mus_float_t predelay = 0.03, output_gain = 1.0, scale_room_decay = 0.28;
+  mus_float_t offset_room_decay = 0.7, scale_damping = 0.4, stereo_spread = 23.0;
   mus_any *output_mixer = NULL, *out = NULL, *rev = NULL;
   int orig_arg[F_LAST_KEY] = {0};
   XEN kargs[F_LAST_KEY * 2], keys[F_LAST_KEY];

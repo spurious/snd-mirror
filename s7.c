@@ -31,6 +31,8 @@
  *        no invidious distinction between built-in and "foreign"
  *          (this makes it easy to extend built-in operators like "+" -- see s7.h for a simple example)
  *        threads (optional)
+ *        multidimensional and applicable vectors (optional)
+ *        format
  *
  *   many minor changes!
  *
@@ -55,30 +57,27 @@
  *           However, the exponent itself is always in base 10 (this follows gmp usage).
  *
  *   other additions: 
+ *        random for any numeric type and any numeric argument
+ *        sinh, cosh, tanh, asinh, acosh, atanh
+ *        read-line, read-byte, write-byte
+ *        logior, logxor, logand, lognot, ash, integer-length
  *        procedure-source, procedure-arity, procedure-documentation, help
  *        symbol-table, symbol->value, global-environment, current-environment
  *        provide, provided?, defined?
  *        port-line-number, port-filename
- *        read-line, read-byte, write-byte
- *        logior, logxor, logand, lognot, ash, integer-length
- *        sinh, cosh, tanh, asinh, acosh, atanh
  *        object->string, eval-string
- *        reverse!, list-set!
+ *        reverse!, list-set! sort!
  *        gc, gc-verbose, load-verbose, quit
- *        backtrace, set-backtrace-length, clear-backtrace, backtracing
  *        *features*, *load-path*, *vector-print-length*
  *        define-constant, pi, most-positive-fixnum, most-negative-fixnum, constant?
- *        format (only the simple directives)
- *        random for any numeric type and any numeric argument
- *        optional multidimensional and applicable vectors
  *        symbol-calls if profiling is enabled
+ *        backtrace, set-backtrace-length, clear-backtrace, backtracing
  *        trace and untrace, __func__ (active if backtracing is on)
  *
  *   things I ought to add/change:
- *        length should work on vectors and strings [fill!, copy, reverse! null? find(-if) etc from CL?]
+ *        length should work on vectors and strings [fill!, copy, reverse! null? find(-if) etc from CL? for-each|map over vectors?]
  *          also for new-types -- would need length field and copy/fill
  *          (what about files? numbers? -- integer-length, bignum-precision etc)
- *        get rid of values and call-with-values
  *        strings/lists should be (set-)applicable (*-ref|set! are ugly and pointless), hash-tables?
  *        perhaps *trace-function*
  *        defmacro* define-macro*
@@ -99,7 +98,7 @@
 
 /* 
  * Your config file goes here, or just replace that #include line with the defines you need.
- * The compile-time switches involve booleans, threads, complex numbers, multiprecision arithmetic, and profiling.
+ * The compile-time switches involve booleans, threads, complex numbers, multiprecision arithmetic, profiling, and sort!.
  * Currently we assume we have setjmp.h (used by the error handlers).
  *
  * If pthreads are available:
@@ -142,6 +141,8 @@
  *
  * To get multiprecision arithmetic, set WITH_GMP to 1.
  *   You'll also need libgmp, libmpfr, and libmpc (version 0.5.2 or later)
+ *
+ * To get sort!, your C compiler needs to support nested functions.  define HAVE_NESTED_FUNCTIONS if so.
  */
 
 
@@ -10099,6 +10100,49 @@ static s7_pointer g_vector_dimensions(s7_scheme *sc, s7_pointer args)
 #endif
 
 
+#if HAVE_NESTED_FUNCTIONS
+
+/* TODO: if not nested functions, make some kludgey sort fallback, then remove from *.scm (and sort?) */
+
+static s7_pointer g_sort_in_place(s7_scheme *sc, s7_pointer args)
+{
+  #define H_sort_in_place "(sort! list-or-vector func) sorts in place list-or-vector using func to compare elements"
+
+  s7_pointer vect, proc, proc_args;
+  int gc_loc;
+  auto int vector_compare(const void *v1, const void *v2);
+
+  int vector_compare(const void *v1, const void *v2)
+  {
+    car(proc_args) = (*(s7_pointer *)v1);
+    cadr(proc_args) = (*(s7_pointer *)v2);
+    if (is_true(s7_call(sc, proc, proc_args)))
+      return(-1);
+    return(1);
+  }
+
+  vect = car(args);
+  proc = cadr(args);
+
+  if (s7_is_list(sc, vect))
+    return(s7_vector_to_list(sc, g_sort_in_place(sc, make_list_2(sc, g_list_to_vector(sc, make_list_1(sc, vect)), proc))));
+
+  if (!s7_is_vector(vect))
+    return(s7_wrong_type_arg_error(sc, "sort!", 1, vect, "a vector or a list"));
+  if (!s7_is_procedure(proc))
+    return(s7_wrong_type_arg_error(sc, "sort!", 2, proc, "a procedure"));
+  
+  proc_args = make_list_2(sc, sc->F, sc->F);
+  gc_loc = s7_gc_protect(sc, proc_args);
+
+  qsort((void *)s7_vector_elements(vect), vector_length(vect), sizeof(s7_pointer), vector_compare);
+
+  s7_gc_unprotect_at(sc, gc_loc);
+  return(vect);
+}
+#endif
+
+
 
 
 /* -------------------------------- objects and functions --------------------------------
@@ -14173,11 +14217,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       
     case OP_SET0:                                             /* entry for set! */
-      if (s7_is_immutable(car(sc->code)))
+      if (s7_is_immutable(car(sc->code)))                     /* (set! pi 3) */
 	return(eval_error(sc, "set!: can't alter immutable object: ~A", car(sc->code)));
       
       if ((cdr(sc->code) == sc->NIL) ||
-	  (cddr(sc->code) != sc->NIL))
+	  (cddr(sc->code) != sc->NIL))                        /* (set! var) */
 	return(eval_error(sc, "~A: wrong number of args to set!", sc->code));
 
       if (*(sc->backtracing)) 
@@ -14215,8 +14259,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	}
       else 
 	{
-	  if (!s7_is_symbol(car(sc->code)))
-	    return(eval_error(sc, "trying to set! ~A", car(sc->code)));
+	  if (!s7_is_symbol(car(sc->code)))                  /* (set! 12345 1) */
+	    return(eval_error(sc, "set! can't change ~A", car(sc->code)));
 	  
 	  push_stack(sc, OP_SET1, sc->NIL, car(sc->code));
 	  sc->code = cadr(sc->code);
@@ -14653,7 +14697,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	}
       else sc->z = cdr(sc->code);
 
-      /* TODO: could defmacro* simply use LAMBDA_STAR here and CLOSURE_STAR later? */
+      /* TODO: could defmacro* simply use LAMBDA_STAR here and CLOSURE_STAR later? no, we get there as T_MACRO */
 	
       sc->code = s7_cons(sc, 
 			 sc->LAMBDA,
@@ -20310,7 +20354,9 @@ s7_scheme *s7_init(void)
 #if WITH_MULTIDIMENSIONAL_VECTORS
   s7_define_function(sc, "vector-dimensions",       g_vector_dimensions,       1, 0, false, H_vector_dimensions);
 #endif
-  
+#if HAVE_NESTED_FUNCTIONS
+    s7_define_function(sc, "sort!",                 g_sort_in_place,           2, 0, false, H_sort_in_place);
+#endif
   
   s7_define_function(sc, "call/cc",                 g_call_cc,                 1, 0, false, H_call_cc);
   s7_define_function(sc, "call-with-current-continuation", g_call_cc,          1, 0, false, H_call_cc);

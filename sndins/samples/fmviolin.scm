@@ -9,40 +9,25 @@
 ;; Type (short-example)
 ;; or   (long-example)
 
-(if (defined? 'gauche-version)
-    ;; Gauche
-    (begin
-      (use file.util)
-      (if (not (provided? 'sndlib))
-	  (dynamic-load "sndlib" :init-function "Init_sndlib" :export-symbols #t))
-      (if (not (provided? 'sndins))
-	  (dynamic-load "sndins" :init-function "Init_sndins" :export-symbols #t)))
-    ;; Guile
-    (begin
-      (use-modules (ice-9 format) (ice-9 optargs))
-      (begin
-	(if (not (provided? 'sndlib))
-	    (let ((hsndlib (dlopen "libsndlib.so")))
-	      (if (string? hsndlib)
-		  (snd-error (format #f "script needs the sndlib module: ~A" hsndlib))
-		  (dlinit hsndlib "Init_sndlib"))))
-	
-	(if (not (provided? 'sndins))
-	    (let ((hsndins (dlopen "libsndins.so")))
-	      (if (string? hsndins)
-		  (snd-error (format #f "script needs the sndins module: ~A" hsndins))
-		  (dlinit hsndins "Init_sndins")))))))
+(if (not (provided? 'sndlib))
+    (let ((hsndlib (dlopen "libsndlib.so")))
+      (if (string? hsndlib)
+	  (snd-error (format #f "script needs the sndlib module: ~A" hsndlib))
+	  (dlinit hsndlib "Init_sndlib"))))
+(if (not (provided? 'sndins))
+    (let ((hsndins (dlopen "libsndins.so")))
+      (if (string? hsndins)
+	  (snd-error (format #f "script needs the sndins module: ~A" hsndins))
+	  (dlinit hsndins "Init_sndins"))))
 
 (if (not (provided? 'snd-ws.scm)) (load-from-path "ws"))
 
 (define *clm-file-name* "test-ins-g.snd")
 (define *clm-play* #t)
-(define *clm-verbose* #t)
 (define *clm-statistics* #t)
-(define *clm-srate* 22050)
+(define *clm-verbose* #t)
+(define *clm-srate* 44100)
 (define *clm-channels* 2)
-(define *clm-reverb* freeverb)
-(define *clm-reverb-data* '(:room-decay 0.8))
 (define *clm-reverb-channels* 2)
 (define *clm-delete-reverb* #t)
 

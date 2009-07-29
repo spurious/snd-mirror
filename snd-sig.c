@@ -5350,17 +5350,22 @@ applies an FIR filter to snd's channel chn. 'env' is the frequency response enve
   XEN_ASSERT_TYPE(XEN_LIST_P(e) || MUS_VCT_P(e), e, XEN_ARG_1, S_filter_channel, "an envelope or a vct");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(order), order, XEN_ARG_2, S_filter_channel, "an integer");
   XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(origin), origin, XEN_ARG_9, S_filter_channel, "a string");
+
   if (XEN_INTEGER_P(order)) order_1 = XEN_TO_C_INT(order);
   ASSERT_CHANNEL(S_filter_channel, snd_n, chn_n, 5);
   cp = get_cp(snd_n, chn_n, S_filter_channel);
   if (!cp) return(XEN_FALSE);
+
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(truncate), truncate, XEN_ARG_8, S_filter_channel, "boolean");
   if (XEN_BOOLEAN_P(truncate)) truncate_1 = XEN_TO_C_BOOLEAN(truncate);
+
   ASSERT_SAMPLE_TYPE(S_filter_channel, beg, XEN_ARG_3);
   ASSERT_SAMPLE_TYPE(S_filter_channel, dur, XEN_ARG_4);
+
   beg_1 = beg_to_sample(beg, S_filter_channel);
   edpos_1 = to_c_edit_position(cp, edpos, S_filter_channel, 7);
   dur_1 = dur_to_samples(dur, beg_1, cp, edpos_1, 4, S_filter_channel);
+
   if (XEN_LIST_P(e))
     {
       e_1 = get_env(e, S_filter_channel);
@@ -5375,7 +5380,9 @@ applies an FIR filter to snd's channel chn. 'env' is the frequency response enve
     }
   if (XEN_STRING_P(origin))
     caller = XEN_TO_C_STRING(origin);
+
   errstr = filter_channel(cp, order_1, e_1, beg_1, dur_1, edpos_1, caller, truncate_1, coeffs);
+
   if (e_1) free_env(e_1);
   if (errstr)
     {
@@ -5689,7 +5696,7 @@ typedef struct {
 
 static XEN g_fpsa(XEN x_choice, XEN x_n, XEN x_size, XEN x_increment, XEN x_counts, XEN x_file, XEN x_just_best)
 {
-  #define H_fpsa "(" S_fpsa " choice n (size 1000) (increment 1.0) (counts 50) output-file report-best) searches \
+  #define H_fpsa "(" S_fpsa " choice n (size 2000) (increment 1.0) (counts 50) (output-file \"test.data\") (report-best #t)) searches \
 for a peak-amp minimum using a simulated annealing form of the genetic algorithm.  choice: 0=all, 1=odd, 2=even, 3=prime."
 
   #define FFT_MULT 128
@@ -5932,7 +5939,7 @@ for a peak-amp minimum using a simulated annealing form of the genetic algorithm
 
   if (XEN_INTEGER_P(x_size))
     size = XEN_TO_C_INT(x_size);
-  else size = 1000;
+  else size = 2000;
 
   if (XEN_INTEGER_P(x_counts))
     counts = XEN_TO_C_INT(x_counts);
@@ -5946,9 +5953,11 @@ for a peak-amp minimum using a simulated annealing form of the genetic algorithm
 
   if (XEN_STRING_P(x_file))
     file = XEN_TO_C_STRING(x_file);
+  else file = "test.data";
 
   if (XEN_BOOLEAN_P(x_just_best))
     just_best = XEN_TO_C_BOOLEAN(x_just_best);
+  else just_best = true;
 
   min_phases = (mus_float_t *)calloc(n, sizeof(mus_float_t));
   overall_min = saved_min(choice, n);

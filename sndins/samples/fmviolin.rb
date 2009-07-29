@@ -4,7 +4,7 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Fri Oct 18 11:29:08 CEST 2002
-# Changed: Thu May 28 17:20:42 CEST 2009
+# Changed: Sun Jul 26 04:47:41 CEST 2009
 
 # This file is part of Sndins.
 
@@ -27,7 +27,7 @@ $clm_file_name = "test-ins-r.snd"
 $clm_play = true
 $clm_statistics = true
 $clm_verbose = true
-$clm_srate = 22050
+$clm_srate = 44100
 $clm_channels = 2
 $clm_reverb_channels = 2
 $clm_delete_reverb = true
