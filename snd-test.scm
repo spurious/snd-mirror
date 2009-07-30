@@ -39,7 +39,6 @@
 (define test-at-random 0)
 ;(show-ptree 1)
 ;(debug-enable 'warn-deprecated)
-;(gc-verbose #t)
 (define profiling #f)
 
 (if (defined? 'run-clear-counts) (run-clear-counts))
@@ -4938,10 +4937,6 @@
     (if with-s7
 	(begin
 	  (if (not (list? (global-environment))) (snd-display ";global-environment not a list?: ~A" (global-environment)))
-	  (gc-verbose #t)
-	  (gc-verbose #f)
-	  (load-verbose #t)
-	  (load-verbose #f)
 	  (if (port-filename (current-output-port)) 
 	      (snd-display ";port-filename output: ~A" (port-filename (current-output-port))))
 	  (if (not (string? (port-filename (current-input-port)))) 

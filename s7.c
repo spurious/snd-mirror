@@ -62,12 +62,12 @@
  *        read-line, read-byte, write-byte
  *        logior, logxor, logand, lognot, ash, integer-length
  *        procedure-source, procedure-arity, procedure-documentation, help
- *        symbol-table, symbol->value, global-environment, current-environment
+ *        symbol-table, symbol->value, global-environment, current-environment, stack
  *        provide, provided?, defined?
  *        port-line-number, port-filename
  *        object->string, eval-string
  *        reverse!, list-set! sort!
- *        gc, gc-verbose, load-verbose, quit
+ *        gc, quit, *load-hook*
  *        *features*, *load-path*, *vector-print-length*
  *        define-constant, pi, most-positive-fixnum, most-negative-fixnum, constant?
  *        symbol-calls if profiling is enabled
@@ -78,8 +78,7 @@
  *          also for new-types -- would need length field and copy/fill
  *          (what about files? numbers? -- integer-length, bignum-precision etc)
  *        strings/lists should be (set-)applicable (*-ref|set! are ugly and pointless), hash-tables?
- *        perhaps *trace-function*
- *        defmacro* define-macro*
+ *        defmacro* define-macro* s7_define_macro (C-side define-macro)
  *
  *
  * Mike Scholz provided the FreeBSD support (complex trig funcs, etc)
@@ -482,8 +481,6 @@ struct s7_scheme {
   
   /* these 6 are pointers so that all thread refs are to the same thing */
   bool *gc_off;                       /* if true, the GC won't run */
-  bool *gc_verbose;                   /* if gc_verbose is true, print gc status */
-  bool *load_verbose;                 /* if load_verbose is true, print file names as they are loaded */
   bool *tracing;                      /* if tracing, each function on the *trace* list prints its args upon application */
   long *gensym_counter;
   
@@ -527,6 +524,7 @@ struct s7_scheme {
 };
 
 
+#define T_UNTYPED       0
 #define T_NIL_TYPE      1
 #define T_STRING        2
 #define T_NUMBER        3
@@ -821,6 +819,7 @@ s7_pointer s7_UNDEFINED(s7_scheme *sc)
 }
 
 
+/* PERHAPS: s7_UNSPECIFIED and friends lower cased */
 s7_pointer s7_UNSPECIFIED(s7_scheme *sc) 
 {
   return(sc->UNSPECIFIED);
@@ -1187,9 +1186,6 @@ static int gc(s7_scheme *sc)
 {
   int i, old_free_heap_top;
   
-  if (*(sc->gc_verbose))
-    write_string(sc, "gc...", s7_current_output_port(sc));
-  
   /* mark all live objects (the symbol table is in permanent memory, not the heap) */
   S7_MARK(sc->global_env);
   S7_MARK(sc->args);
@@ -1240,15 +1236,6 @@ static int gc(s7_scheme *sc)
 	  }
       }
   }
-  
-  if (*(sc->gc_verbose))
-    {
-      char *msg;
-      msg = (char *)malloc(128 * sizeof(char));
-      snprintf(msg, 128, "done: %d heap were recovered, total heap: %d\n", sc->free_heap_top - old_free_heap_top, sc->heap_size);
-      write_string(sc, msg, s7_current_output_port(sc));
-      free(msg);
-    }
   
   return(sc->free_heap_top - old_free_heap_top); /* needed by cell allocator to decide when to increase heap size */
 }
@@ -1357,16 +1344,6 @@ static s7_pointer new_cell(s7_scheme *sc)
 #endif
   
   return(p);
-}
-
-
-static s7_pointer g_gc_verbose(s7_scheme *sc, s7_pointer a)
-{
-  #define H_gc_verbose "(gc-verbose bool) turns GC reportage on or off"
-  s7_pointer old_val;
-  old_val = (*(sc->gc_verbose)) ? sc->T : sc->F;
-  (*(sc->gc_verbose)) = (car(a) != sc->F);
-  return(old_val);
 }
 
 
@@ -7764,6 +7741,16 @@ static s7_pointer load_file(s7_scheme *sc, FILE *fp, const char *name)
 }
 
 
+static void run_load_hook(s7_scheme *sc, const char *filename)
+{
+  /* (set! *load-hook* (lambda (name) (format #t "loading ~A~%" name))) */
+  s7_pointer load_hook;
+  load_hook = s7_symbol_value(sc, s7_make_symbol(sc, "*load-hook*"));
+  if (is_procedure(load_hook))
+    s7_call(sc, load_hook, make_list_1(sc, s7_make_string(sc, filename)));
+}
+
+
 s7_pointer s7_load(s7_scheme *sc, const char *filename)
 {
   bool old_longjmp;
@@ -7775,17 +7762,8 @@ s7_pointer s7_load(s7_scheme *sc, const char *filename)
     fp = search_load_path(sc, filename);
   if (!fp)
     return(s7_file_error(sc, "open-input-file", "can't open", filename));
-  
-  if (*(sc->load_verbose))
-    {
-      char *msg;
-      int len;
-      len = safe_strlen(filename) + 32;
-      msg = (char *)malloc(len * sizeof(char));
-      snprintf(msg, len, "s7_load(\"%s\")\n", filename);
-      write_string(sc, msg, s7_current_output_port(sc));
-      free(msg);
-    }
+
+  run_load_hook(sc, filename);
 
   port = load_file(sc, fp, filename);
   port_file_number(port) = remember_file_name(filename);
@@ -7845,17 +7823,8 @@ defaults to the global environment; to load into the current environment instead
   if (!fp)
     return(s7_file_error(sc, "open-input-file", "can't open", fname));
   
-  if (*(sc->load_verbose))
-    {
-      char *msg;
-      int len;
-      len = safe_strlen(fname) + 32;
-      msg = (char *)malloc(len * sizeof(char));
-      snprintf(msg, len, "(load \"%s\")\n", fname);
-      write_string(sc, msg, s7_current_output_port(sc));
-      free(msg);
-    }
-  
+  run_load_hook(sc, fname);
+
   port = load_file(sc, fp, fname);
   port_file_number(port) = remember_file_name(fname);
   push_input_port(sc, port);
@@ -7891,15 +7860,6 @@ s7_pointer s7_add_to_load_path(s7_scheme *sc, const char *dir)
   return(s7_load_path(sc));
 }
 
-
-static s7_pointer g_load_verbose(s7_scheme *sc, s7_pointer a)
-{
-  #define H_load_verbose "(load-verbose bool) if #t prints out file names as they are loaded"
-  s7_pointer old_val;
-  old_val = (*(sc->load_verbose)) ? sc->T : sc->F;
-  (*(sc->load_verbose)) = (car(a) != sc->F);
-  return(old_val);
-}
 
 
 
@@ -8176,9 +8136,9 @@ static char *s7_atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
       return(s7_strdup("#f"));
 
     case T_NIL_TYPE:
-      if (obj == sc->NIL) 
-	return(s7_strdup("()"));
+      return(s7_strdup("()"));
   
+    case T_UNTYPED:
       if (obj == sc->EOF_OBJECT)
 	return(s7_strdup("#<eof>"));
   
@@ -8187,7 +8147,6 @@ static char *s7_atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
   
       if (obj == sc->UNSPECIFIED) 
 	return(s7_strdup("#<unspecified>"));
-
       break;
 
     case T_INPUT_PORT:
@@ -11906,19 +11865,11 @@ static void trace_apply(s7_scheme *sc)
 	    free(tmp3);
 	  }
 #endif
-	strcat(str, "\n");
 
+	strcat(str, "\n");
 	write_string(sc, str, sc->output_port);
 	free(str);
 
-	/* PERHAPS: if *trace-function* is a thunk, evaluate it in the current env? */
-	/* func = eval_symbol(sc->TRACE_FUNCTION); */
-#if 0
-	push_stack(sc, OP_EVAL_STRING_DONE, sc->args, sc->code);
-	sc->args = sc->NIL;
-	sc->code = func; 
-	eval(sc, OP_APPLY);
-#endif
 	sc->trace_depth++;
 	break;
       }
@@ -11959,6 +11910,7 @@ static const char *s7_type_name(s7_pointer arg)
   switch (type(arg))
     {
     case T_NIL_TYPE:     return("nil");
+    case T_UNTYPED:      return("untyped");
     case T_BOOLEAN:      return("boolean");
     case T_STRING:       return("string");
     case T_SYMBOL:       return("symbol");
@@ -12016,20 +11968,22 @@ s7_pointer s7_wrong_type_arg_error(s7_scheme *sc, const char *caller, int arg_n,
   int len, slen;
   char *errmsg;
   s7_pointer x;
-  const char *typ, *a_or_an = "a";
+  const char *typ, *a_or_an = "a ";
 
   typ = s7_type_name(arg);
   if ((typ[0] == 'a') || (typ[0] == 'e') || (typ[0] == 'i') || (typ[0] == 'o') || (typ[0] == 'u'))
-    a_or_an = "an";
+    a_or_an = "an ";
+  if ((type(arg) == T_NIL_TYPE) || (type(arg) == T_UNTYPED))
+    a_or_an = "";
 
   len = safe_strlen(descr) + safe_strlen(caller) + 64;
   errmsg = (char *)malloc(len * sizeof(char));
   if (arg_n == 0)
-    slen = snprintf(errmsg, len, "%s argument ~A is %s %s, but should be %s", caller, a_or_an, typ, descr);
+    slen = snprintf(errmsg, len, "%s argument ~A is %s%s, but should be %s", caller, a_or_an, typ, descr);
   else
     {
       if (arg_n < 0) arg_n = 1;
-      slen = snprintf(errmsg, len, "%s argument %d, ~A, is %s %s, but should be %s", caller, arg_n, a_or_an, typ, descr);
+      slen = snprintf(errmsg, len, "%s argument %d, ~A, is %s%s, but should be %s", caller, arg_n, a_or_an, typ, descr);
     }
   x = make_list_2(sc, s7_make_string_with_length(sc, errmsg, slen), arg);
   free(errmsg);
@@ -19667,13 +19621,13 @@ s7_scheme *s7_init(void)
   set_type(sc->F, T_BOOLEAN | T_ATOM | T_GC_MARK | T_IMMUTABLE | T_SIMPLE | T_DONT_COPY);
   car(sc->F) = cdr(sc->F) = sc->UNSPECIFIED;
   
-  set_type(sc->EOF_OBJECT, T_NIL_TYPE | T_ATOM | T_GC_MARK | T_IMMUTABLE | T_SIMPLE | T_DONT_COPY);
+  set_type(sc->EOF_OBJECT, T_UNTYPED | T_ATOM | T_GC_MARK | T_IMMUTABLE | T_SIMPLE | T_DONT_COPY);
   car(sc->EOF_OBJECT) = cdr(sc->EOF_OBJECT) = sc->UNSPECIFIED;
   
-  set_type(sc->UNSPECIFIED, T_NIL_TYPE | T_ATOM | T_GC_MARK | T_IMMUTABLE | T_SIMPLE | T_DONT_COPY);
+  set_type(sc->UNSPECIFIED, T_UNTYPED | T_ATOM | T_GC_MARK | T_IMMUTABLE | T_SIMPLE | T_DONT_COPY);
   car(sc->UNSPECIFIED) = cdr(sc->UNSPECIFIED) = sc->UNSPECIFIED;
   
-  set_type(sc->UNDEFINED, T_NIL_TYPE | T_ATOM | T_GC_MARK | T_IMMUTABLE | T_SIMPLE | T_DONT_COPY);
+  set_type(sc->UNDEFINED, T_UNTYPED | T_ATOM | T_GC_MARK | T_IMMUTABLE | T_SIMPLE | T_DONT_COPY);
   car(sc->UNDEFINED) = cdr(sc->UNDEFINED) = sc->UNSPECIFIED;
   
   sc->input_port = sc->NIL;
@@ -19732,8 +19686,6 @@ s7_scheme *s7_init(void)
   sc->symbol_table->object.vector.elements = (s7_pointer *)malloc(SYMBOL_TABLE_SIZE * sizeof(s7_pointer));
   s7_vector_fill(sc, sc->symbol_table, sc->NIL);
   
-  sc->gc_verbose = (bool *)calloc(1, sizeof(bool));
-  sc->load_verbose = (bool *)calloc(1, sizeof(bool));
   sc->gensym_counter = (long *)calloc(1, sizeof(long));
   sc->tracing = (bool *)calloc(1, sizeof(bool));
 
@@ -20160,8 +20112,6 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "catch",                   g_catch,                   3, 0, false, H_catch);
   s7_define_function(sc, "error",                   g_error,                   0, 0, true,  H_error);
   
-  s7_define_function(sc, "gc-verbose",              g_gc_verbose,              1, 0, false, H_gc_verbose);
-  s7_define_function(sc, "load-verbose",            g_load_verbose,            1, 0, false, H_load_verbose);
   s7_define_function(sc, "trace",                   g_trace,                   0, 0, true,  H_trace);
   s7_define_function(sc, "untrace",                 g_untrace,                 0, 0, true,  H_untrace);
   s7_define_function(sc, "stack",                   g_stack,                   0, 1, false, H_stack);
@@ -20194,6 +20144,7 @@ s7_scheme *s7_init(void)
   s7_define_variable(sc, "*features*", sc->NIL);
   s7_define_variable(sc, "*load-path*", sc->NIL);
   s7_define_variable(sc, "*vector-print-length*", sc->small_ints[8]);
+  s7_define_variable(sc, "*load-hook*", sc->NIL);
   
   g_provide(sc, make_list_1(sc, s7_make_symbol(sc, "s7")));
 
@@ -20257,6 +20208,9 @@ s7_scheme *s7_init(void)
                         (define (set-backtrace-length val) #f) \n\
                         (define (clear-backtrace) #f) \n\
                         (define (backtrace) #f)");
+  s7_eval_c_string(sc, "(define (gc-verbose val) #f) \n\
+                        (define (load-verbose val) #f)");
+
 
   /* stacktrace -- move this into C eventually */
   s7_eval_c_string(sc, "\n\

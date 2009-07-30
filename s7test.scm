@@ -2879,6 +2879,22 @@
 	  (begin (display "with string ports: \"") (display str) (display "\"?") (newline)))))
 
 (if with-open-input-string-and-friends
+    (begin
+      (if (not (eof-object? (with-input-from-string "" (lambda () (read-char)))))
+	  (begin (display ";input from null string not #<eof>?") (newline))
+	  (let ((EOF (with-input-from-string "" (lambda () (read-char)))))
+	    (if (not (eq? (with-input-from-string "" (lambda () (read-char)))
+			  (with-input-from-string "" (lambda () (read-char)))))
+		(begin (display "#<eof> is not eq? to itself?") (newline)))
+	    (if (char? EOF)
+		(do ((c 0 (+ c 1)))
+		    ((= c 256))
+		  (if (char=? EOF (integer->char c))
+		      (begin
+			(display "#<eof> is char=? to ") (display (integer->char c)) (newline)))))))))
+
+
+(if with-open-input-string-and-friends
     (let ((str (with-output-to-string
 		 (lambda ()
 		   (with-input-from-string "hiho123"
@@ -35483,7 +35499,13 @@
 		  (begin 
 		    (display "(") (display op) (display " ") (display arg) (display ") returned ")
 		    (display val) (display " but expected 'error") (newline)))))
-	  (list "hi" '() #\a (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs #t (lambda (a) (+ a 1)))))
+	  (list "hi" '() #\a (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs #t (lambda (a) (+ a 1))
+		(if (and with-open-input-string-and-friends
+			 (eof-object? (with-input-from-string "" (lambda () (read-char)))))
+		    (with-input-from-string "" (lambda () (read-char)))
+		    :key)
+		(vector-fill! (vector 0) 0))))
+
        (list exact? inexact? zero? positive? negative? even? odd? quotient remainder modulo truncate floor ceiling round
 	     abs max min gcd lcm expt exact->inexact inexact->exact rationalize numerator denominator imag-part real-part
 	     magnitude angle make-polar make-rectangular sqrt exp log sin cos tan asin acos atan number->string))
@@ -39720,13 +39742,13 @@ expt error > 1e-6 around 2^-46.506993328423
 					;call/cc call-with-current-continuation call-with-exit load
 		   continuation? eval eval-string apply
 		   force for-each map values call-with-values dynamic-wind catch error 
-					;quit gc gc-verbose load-verbose
+					;quit gc
 		   procedure? procedure-documentation
 		   help procedure-arity procedure-source make-procedure-with-setter procedure-with-setter? 
 		   procedure-with-setter-setter-arity not boolean? eq? eqv? equal? s7-version)))
     
     (let ((argls (list #t #f 
-		       -1 0 1 1.5 1.0+1.0i 3/4 
+		       -1 0 1 1.5 1.0+1.0i 3/4 (if with-bignums (expt 2 100) (expt 2 30))
 		       (list 1 2) (cons 1 2) '() '((1 2) (3 4)) '((1 (2)) (((3) 4)))
 		       '#(1 2) (vector 1 #\a '(3)) (make-vector 0)
 		       (let ((x 3)) (lambda (y) (+ x y))) abs
@@ -39735,6 +39757,9 @@ expt error > 1e-6 around 2^-46.506993328423
 		       #\a #\newline 
 		       (call/cc (lambda (a) a))
 		       (make-hash-table 256)
+		       (symbol->value '_?__undefined__?_)                  ; -> #<undefined> hopefully
+		       (vector-fill! (vector 0) 0)                         ; -> #<unspecified>?
+		       (with-input-from-string "" (lambda () (read-char))) ; -> #<eof>?
 		       (make-random-state 1234))))
       
 					;(display "no args") (newline)

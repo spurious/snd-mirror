@@ -33,6 +33,7 @@ typedef double s7_Double;
    *    *vector-print-length*   how many elements of a vector are printed (initially 8)
    *    *features*              a list of symbols describing what is current available (initially '(s7))
    *    __func__                equivalent to C's __func__.  The symbol of the function currently being defined.
+   *    *load-hook*             called before a file is loaded.
    *
    * s7 constants:
    *
@@ -42,8 +43,6 @@ typedef double s7_Double;
    *
    * s7 non-standard functions:
    *
-   *    load-verbose            if argument is #t, "load" prints out the name of the file it is loading
-   *    gc-verbose              if argument is #t, the garbage collector reports on its activities
    *    provided?               checks the *features* list for a symbol
    *    provide                 adds a symbol to the *features* list
    *    port-line-number        current line during loading
@@ -58,7 +57,7 @@ typedef double s7_Double;
    *    help                    tries to find a help string associated with its argument
    *    symbol-calls            if profiling is enabled, this returns the number of times its argument (a symbol) has been called
    *    trace and untrace       add or subtract functions from the trace list.
-   *    stacktrace              show a stack trace
+   *    stacktrace              show a stack trace (in error handler, use (stacktrace), at break point use (stacktrace break-continuation))
    *
    * and various others mentioned at the start of s7.c -- nearly every Scheme implementation includes
    * stuff like logior, sinh, read-line, format, define*, etc.  See also the start of s7.c for choices
@@ -1358,6 +1357,7 @@ int main(int argc, char **argv)
  *        s7 changes
  *
  * 30-Jul:    changed backtrace handling: removed backtrace stuff, added stacktrace.
+ *            removed gc-verbose and load-verbose replaced by *load-hook*.
  * 23-Jul:    __func__.
  * 20-Jul:    trace and untrace.
  * 14-Jul:    replaced s7_make_closure_star with s7_define_function_star.
