@@ -1357,7 +1357,7 @@ int main(int argc, char **argv)
  * 
  *        s7 changes
  *
- * 30-Jul:    changed backtrace handling: removed backtrace stuff, added stacktrace macro.
+ * 30-Jul:    changed backtrace handling: removed backtrace stuff, added stacktrace.
  * 23-Jul:    __func__.
  * 20-Jul:    trace and untrace.
  * 14-Jul:    replaced s7_make_closure_star with s7_define_function_star.

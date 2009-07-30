@@ -3315,7 +3315,7 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
 		      (set! saved-listener-prompt (listener-prompt)))))\
 \
 (define-macro (break)\
-  `(let ((envir (current-environment)))\
+  `(let ((__break__ (current-environment)))\
      (break-enter)\
      (set! (listener-prompt) (format #f \"~A>\" (if (defined? __func__) __func__ 'break)))\
      (call/cc\
@@ -3323,7 +3323,7 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
 	(set! break-ok return)      ; save current program loc so (break-ok) continues from the break\n\
 	(add-hook! read-hook        ; anything typed in the listener is evaluated in the environment of the break call\n\
 		   (lambda (str)\
-		     (eval-string str envir)))\
+		     (eval-string str __break__)))\
 	(throw 'snd-top-level)))    ; jump back to the top level\n\
      (break-exit)))                 ; we get here if break-ok is called\n\
 ");

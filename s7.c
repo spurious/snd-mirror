@@ -1448,6 +1448,25 @@ static void check_stack_size(s7_scheme *sc)
 } 
 
 
+static s7_pointer g_stack(s7_scheme *sc, s7_pointer args)
+{
+  #define H_stack "(stack :optional continuation) returns a list containing the current stack top (an integer) and the stack itself (a vector).\
+Each stack frame has 4 entries, the function, the current environment, the function arguments, and an op code used \
+internally by the evaluator.  If a continuation is passed, its stack and stack-top are returned."
+
+  /* TODO: what about threads? */
+
+  if (s7_is_continuation(car(args)))
+    {
+      continuation *c;
+      c = car(args)->object.cc;
+      return(make_list_2(sc, s7_make_integer(sc, c->cc_stack_top), c->cc_stack));
+    }
+  return(make_list_2(sc, s7_make_integer(sc, sc->stack_top), sc->stack));
+}
+
+
+
 
 /* -------------------------------- symbols -------------------------------- */
 
@@ -1779,10 +1798,21 @@ s7_pointer s7_symbol_local_value(s7_scheme *sc, s7_pointer sym, s7_pointer local
 
 static s7_pointer g_symbol_to_value(s7_scheme *sc, s7_pointer args)
 {
-  #define H_symbol_to_value "(symbol->value sym) returns the current binding of (the value associated with) the symbol sym"
+  #define H_symbol_to_value "(symbol->value sym :optional env) returns the binding of (the value associated with) the symbol sym in the given environment"
+  s7_pointer local_env;
+
   if (!s7_is_symbol(car(args)))
-    return(s7_wrong_type_arg_error(sc, "symbol->value", 0, car(args), "a symbol"));
-  return(s7_symbol_value(sc, car(args)));
+    return(s7_wrong_type_arg_error(sc, "symbol->value", 1, car(args), "a symbol"));
+
+  if (cdr(args) != sc->NIL)
+    {
+      if (!is_pair(cadr(args)))
+	return(s7_wrong_type_arg_error(sc, "symbol->value", 2, cadr(args), "an environment"));
+      local_env = cadr(args);
+    }
+  else local_env = sc->envir;
+
+  return(s7_symbol_local_value(sc, car(args), local_env));
 }
 
 
@@ -1896,7 +1926,7 @@ static s7_pointer g_is_defined(s7_scheme *sc, s7_pointer args)
   if (cdr(args) != sc->NIL)
     {
       if (!is_pair(cadr(args)))
-	return(s7_wrong_type_arg_error(sc, "defined?", 2, cadr(args), "an enivronment"));
+	return(s7_wrong_type_arg_error(sc, "defined?", 2, cadr(args), "an environment"));
       x = cadr(args);
     }
   else x = sc->envir;
@@ -10093,7 +10123,8 @@ static pthread_mutex_t sort_lock = PTHREAD_MUTEX_INITIALIZER;
 
 static s7_pointer g_sort_in_place(s7_scheme *sc, s7_pointer args)
 {
-  #define H_sort_in_place "(sort! list-or-vector func) sorts in place list-or-vector using func to compare elements"
+  #define H_sort_in_place "(sort! list-or-vector func) sorts a list or vector using func to compare elements.\
+If its first argument is a list, the list is copied (despite the '!')."
 
   int gc_loc;
   s7_pointer vect;
@@ -19844,7 +19875,7 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "symbol?",                 g_is_symbol,               1, 0, false, H_is_symbol);
   s7_define_function(sc, "symbol->string",          g_symbol_to_string,        1, 0, false, H_symbol_to_string);
   s7_define_function(sc, "string->symbol",          g_string_to_symbol,        1, 0, false, H_string_to_symbol);
-  s7_define_function(sc, "symbol->value",           g_symbol_to_value,         1, 0, false, H_symbol_to_value);
+  s7_define_function(sc, "symbol->value",           g_symbol_to_value,         1, 1, false, H_symbol_to_value);
 #if WITH_PROFILING
   s7_define_function(sc, "symbol-calls",            g_symbol_calls,            1, 0, false, H_symbol_calls);
 #endif
@@ -20133,6 +20164,7 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "load-verbose",            g_load_verbose,            1, 0, false, H_load_verbose);
   s7_define_function(sc, "trace",                   g_trace,                   0, 0, true,  H_trace);
   s7_define_function(sc, "untrace",                 g_untrace,                 0, 0, true,  H_untrace);
+  s7_define_function(sc, "stack",                   g_stack,                   0, 1, false, H_stack);
 
   s7_define_function(sc, "gc",                      g_gc,                      0, 1, false, H_gc);
   s7_define_function(sc, "quit",                    g_quit,                    0, 0, false, H_quit);
@@ -20226,32 +20258,40 @@ s7_scheme *s7_init(void)
                         (define (clear-backtrace) #f) \n\
                         (define (backtrace) #f)");
 
-  /* this is a temporary placeholder */
-  s7_eval_c_string(sc, "                                                     \n\
-(define-macro (stacktrace)                                                   \n\
-  `(let ((e (current-environment))                                           \n\
-	(args '()))                                                          \n\
-    (for-each                                                                \n\
-     (lambda (frame)                                                         \n\
-       (if (and (list? frame)                                                \n\
-		(not (null? frame))                                          \n\
-		(pair? (car frame)))                                         \n\
-	   (if (equal? (caar frame) '__func__)                               \n\
-	       (let* ((ce (reverse args))                                    \n\
-		      (arity (procedure-arity (cdar frame)))                 \n\
-		      (true-args (+ (car arity) (cadr arity)))               \n\
-		      (rest-arg (caddr arity)))                              \n\
-		 (snd-print (format #t \"~%(~A\" (cdar frame)))              \n\
-		 (do ((arg 0 (+ arg 1)))                                     \n\
-		     ((= arg true-args))                                     \n\
-		   (snd-print (format #t \" ~A\" (list-ref ce arg))))        \n\
-		 (if rest-arg                                                \n\
-		     (snd-print (format #t \" ~A\" (list-ref ce true-args))))\n\
-		 (snd-print (format #t \")\")))                              \n\
-	       (set! args frame))))                                          \n\
-     e)                                                                      \n\
-    #f))");
-
+  /* stacktrace -- move this into C eventually */
+  s7_eval_c_string(sc, "\n\
+(define* (stacktrace cont)\n\
+  (let* ((stk (stack cont))\n\
+	 (top (car stk))\n\
+	 (frames (cadr stk)))\n\
+      (do ((i (- top 3) (- i 4)))\n\
+	  ((<= i 0))\n\
+	(let* ((envir (vector-ref frames i))\n\
+	       (cur-env (car envir)))\n\
+	  (if (and (not (vector? cur-env))\n\
+		   (not (null? cur-env))\n\
+		   ;; look for __func__ in 2nd entry, args then in 1st\n\
+		   (> (length envir) 2))\n\
+	      (let ((args (car envir))\n\
+		    (op (cadr envir)))\n\
+		(if (and (not (null? op))\n\
+			 (pair? (car op))\n\
+			 (not (null? (car op)))\n\
+			 (equal? (caar op) '__func__))\n\
+		    (let ((proc (symbol->value (cdar op) envir)))\n\
+		      (if (procedure? proc)\n\
+			  (let* ((arity (procedure-arity proc))\n\
+				 (true-args (+ (car arity) (cadr arity)))\n\
+				 (rest-arg (caddr arity))\n\
+				 (local-env (reverse args)))\n\
+			    (format #t \"(~A\" (cdar op))\n\
+			    (do ((arg 0 (+ arg 1)))\n\
+				((= arg true-args))\n\
+			      (format #t \" ~A\" (list-ref local-env arg)))\n\
+			    (if rest-arg\n\
+				(format #t \" ~A\" (list-ref local-env true-args)))\n\
+			    (format #t \")~%\"))\n\
+			  (format #t \"(~A~{~^ ~A~})~%\" (cdar op) (reverse args)))))))))))");
 
   return(sc);
 }

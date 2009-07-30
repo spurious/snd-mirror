@@ -1,7 +1,5 @@
 ;;; a script to search for allocation mismatches and unterminated XtVa args 
 
-      (define (sort lst . opt) (sort! lst (if (null? opt) < (car opt))))
-
 (define xtva-ctr 0)
 
 (define (for-each-file func files)
@@ -152,7 +150,7 @@
 		(begin
 		  (display (format #f "~A has /r (~A)~%" file count))
 		  (return)))))))))
- (sort (grep
+ (sort! (grep
 	(format #f "\\.(~{~A~^|~})$" (list "scm" "rb"))
 	(directory->list "."))
        string<?))
