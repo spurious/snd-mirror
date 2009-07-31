@@ -67,7 +67,7 @@
  *        port-line-number, port-filename
  *        object->string, eval-string
  *        reverse!, list-set! sort!
- *        gc, quit, *load-hook*
+ *        gc, quit, *load-hook*, *error-hook*
  *        *features*, *load-path*, *vector-print-length*
  *        define-constant, pi, most-positive-fixnum, most-negative-fixnum, constant?
  *        symbol-calls if profiling is enabled
@@ -289,7 +289,8 @@ typedef enum {OP_READ_INTERNAL, OP_EVAL, OP_EVAL_ARGS0, OP_EVAL_ARGS1, OP_APPLY,
 	      OP_LOAD_RETURN_IF_EOF, OP_LOAD_CLOSE_AND_POP_IF_EOF, OP_EVAL_STRING, OP_EVAL_STRING_DONE, 
 	      OP_QUIT, OP_CATCH, OP_DYNAMIC_WIND, OP_FOR_EACH, OP_MAP, OP_DEFINE_CONSTANT0, OP_DEFINE_CONSTANT1, 
 	      OP_DO, OP_DO_END0, OP_DO_END1, OP_DO_STEP0, OP_DO_STEP1, OP_DO_STEP2, OP_DO_INIT,
-	      OP_DEFINE_STAR, OP_LAMBDA_STAR, OP_ERROR_QUIT, OP_UNWIND_INPUT, OP_UNWIND_OUTPUT, OP_TRACE_RETURN,
+	      OP_DEFINE_STAR, OP_LAMBDA_STAR, OP_ERROR_QUIT, OP_UNWIND_INPUT, OP_UNWIND_OUTPUT, 
+	      OP_TRACE_RETURN, OP_ERROR_HOOK_QUIT,
 	      OP_MAX_DEFINED} opcode_t;
 
 typedef enum {TOKEN_EOF, TOKEN_LEFT_PAREN, TOKEN_RIGHT_PAREN, TOKEN_DOT, TOKEN_ATOM, TOKEN_QUOTE, TOKEN_DOUBLE_QUOTE, 
@@ -467,7 +468,7 @@ struct s7_scheme {
   s7_pointer LAMBDA, LAMBDA_STAR, QUOTE, QUASIQUOTE, UNQUOTE, UNQUOTE_SPLICING;        
   s7_pointer APPLY, VECTOR, CONS, APPEND, CDR, VECTOR_FUNCTION, VALUES, ELSE, SET;
   s7_pointer ERROR, WRONG_TYPE_ARG, OUT_OF_RANGE, FORMAT_ERROR, WRONG_NUMBER_OF_ARGS;
-  s7_pointer KEY_KEY, KEY_OPTIONAL, KEY_REST, __FUNC__;
+  s7_pointer KEY_KEY, KEY_OPTIONAL, KEY_REST, __FUNC__, ERROR_HOOK;
   s7_pointer FEED_TO;                 /* => */
   s7_pointer OBJECT_SET;              /* applicable object set method */
 #if WITH_MULTIDIMENSIONAL_VECTORS
@@ -12186,83 +12187,104 @@ GOT_CATCH:
     }
   else
     {
-      /* if info is not a list, send object->string to current error port,
-       *   else assume car(info) is a format control string, and cdr(info) are its args
-       */
-      if ((!s7_is_list(sc, info)) ||
-	  (!s7_is_string(car(info))))
-	format_to_output(sc, 
-			 s7_current_error_port(sc), 
-			 "\n;~A ~A",
-			 make_list_2(sc, type, info));
+      /* (set! *error-hook* (lambda (tag args) (apply format (cons #t args)))) */
+      s7_pointer error_hook, error_hook_binding;
+
+      error_hook_binding = s7_find_symbol_in_environment(sc, sc->envir, sc->ERROR_HOOK, true);
+      if ((error_hook_binding != sc->NIL) &&
+	  (is_procedure(symbol_value(error_hook_binding))))
+	{
+	  error_hook = symbol_value(error_hook_binding);
+	  set_symbol_value(error_hook_binding, sc->NIL);
+	  /* if the *error-hook* function triggers an error, we had better not have *error-hook* still set! */
+
+	  push_stack(sc, OP_ERROR_HOOK_QUIT, sc->NIL, error_hook); /* restore *error-hook* upon successful evaluation */
+
+	  sc->args = make_list_2(sc, type, info);
+	  sc->code = error_hook;
+	  sc->op = OP_APPLY;
+	}
       else
 	{
-	  const char *carstr;
-	  int i, len;
-	  bool use_format = false;
+	  /* if info is not a list, send object->string to current error port,
+	   *   else assume car(info) is a format control string, and cdr(info) are its args
+	   */
 
-	  /* it's possible that the error string is just a string -- not intended for format */
-	  carstr = s7_string(car(info));
-	  len = string_length(car(info));
-	  for (i = 0; i < len; i++)
-	    if (carstr[i] == '~')
-	      {
-		use_format = true;
-		break;
-	      }
-
-	  if (use_format)
-	    {
-	      char *errstr;
-	      len += 8;
-	      errstr = (char *)malloc(len * sizeof(char));
-	      snprintf(errstr, len, "\n;%s", s7_string(car(info)));
-	      format_to_output(sc,
-			       s7_current_error_port(sc), 
-			       errstr,
-			       cdr(info));
-	      free(errstr);
-	    }
-	  else format_to_output(sc, 
-				s7_current_error_port(sc), 
-				"\n;~A ~A",
-				make_list_2(sc, type, info));
-	}
-
-      /* now display location and \n at end */
-
-      if (is_input_port(sc->input_port))
-	{
-	  const char *filename = NULL;
-	  int line;
-
-	  filename = input_filename(sc);
-	  line = port_line_number(sc->input_port);
-    
-	  if (filename)
-	    format_to_output(sc,
+	  if ((!s7_is_list(sc, info)) ||
+	      (!s7_is_string(car(info))))
+	    format_to_output(sc, 
 			     s7_current_error_port(sc), 
-			     ", ~A[~D]",
-			     make_list_2(sc, s7_make_string(sc, filename), s7_make_integer(sc, line)));
-	  else 
+			     "\n;~A ~A",
+			     make_list_2(sc, type, info));
+	  else
 	    {
-	      if (line > 0)
+	      const char *carstr;
+	      int i, len;
+	      bool use_format = false;
+	      
+	      /* it's possible that the error string is just a string -- not intended for format */
+	      carstr = s7_string(car(info));
+	      len = string_length(car(info));
+	      for (i = 0; i < len; i++)
+		if (carstr[i] == '~')
+		  {
+		    use_format = true;
+		    break;
+		  }
+	      
+	      if (use_format)
+		{
+		  char *errstr;
+		  len += 8;
+		  errstr = (char *)malloc(len * sizeof(char));
+		  snprintf(errstr, len, "\n;%s", s7_string(car(info)));
+		  format_to_output(sc,
+				   s7_current_error_port(sc), 
+				   errstr,
+				   cdr(info));
+		  free(errstr);
+		}
+	      else format_to_output(sc, 
+				    s7_current_error_port(sc), 
+				    "\n;~A ~A",
+				    make_list_2(sc, type, info));
+	    }
+	  
+	  /* now display location and \n at end */
+	  
+	  if (is_input_port(sc->input_port))
+	    {
+	      const char *filename = NULL;
+	      int line;
+	      
+	      filename = input_filename(sc);
+	      line = port_line_number(sc->input_port);
+	      
+	      if (filename)
 		format_to_output(sc,
 				 s7_current_error_port(sc), 
-				 ", line ~D", 
-				 make_list_1(sc, s7_make_integer(sc, line)));
+				 ", ~A[~D]",
+				 make_list_2(sc, s7_make_string(sc, filename), s7_make_integer(sc, line)));
+	      else 
+		{
+		  if (line > 0)
+		    format_to_output(sc,
+				     s7_current_error_port(sc), 
+				     ", line ~D", 
+				     make_list_1(sc, s7_make_integer(sc, line)));
+		}
 	    }
+	  
+	  s7_newline(sc, s7_current_error_port(sc));
+	  
+	  if ((exit_eval) &&
+	      (sc->error_exiter))
+	    (*(sc->error_exiter))();
+	  
+	  sc->value = type;
+	  stack_reset(sc);
+	  sc->op = OP_ERROR_QUIT;
 	}
-
-      s7_newline(sc, s7_current_error_port(sc));
-      
-      if ((exit_eval) &&
-	  (sc->error_exiter))
-	(*(sc->error_exiter))();
-      
-      sc->value = type;
-      stack_reset(sc);
-      sc->op = OP_ERROR_QUIT;
     }
   
   if (sc->longjmp_ok)
@@ -12363,7 +12385,14 @@ static s7_pointer g_error(s7_scheme *sc, s7_pointer args)
 {
   #define H_error "(error type ...) signals an error"
   if (args != sc->NIL)
-    return(s7_error(sc, car(args), cdr(args)));
+    {
+      if (s7_is_string(car(args)))                    /* CL-style error? -- use tag = 'no-catch */
+	{
+	  s7_error(sc, s7_make_symbol(sc, "no-catch"), args);
+	  return(sc->UNSPECIFIED);
+	}
+      return(s7_error(sc, car(args), cdr(args)));
+    }
   return(s7_error(sc, sc->NIL, sc->NIL));
 }
 
@@ -14584,6 +14613,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto START;
       
       
+    case OP_ERROR_HOOK_QUIT:
+      s7_symbol_set_value(sc, sc->ERROR_HOOK, sc->code);
+      return(sc->UNSPECIFIED);
+      break;
+
+
     case OP_ERROR_QUIT:
     case OP_QUIT:
     case OP_UNWIND_OUTPUT:
@@ -19819,6 +19854,9 @@ s7_scheme *s7_init(void)
   sc->__FUNC__ = s7_make_symbol(sc, "__func__");
   typeflag(sc->__FUNC__) |= T_DONT_COPY; 
 
+  sc->ERROR_HOOK = s7_make_symbol(sc, "*error-hook*");
+  typeflag(sc->ERROR_HOOK) |= T_DONT_COPY; 
+
   sc->SET = s7_make_symbol(sc, "set!");
   typeflag(sc->SET) |= T_DONT_COPY; 
 
@@ -20145,6 +20183,7 @@ s7_scheme *s7_init(void)
   s7_define_variable(sc, "*load-path*", sc->NIL);
   s7_define_variable(sc, "*vector-print-length*", sc->small_ints[8]);
   s7_define_variable(sc, "*load-hook*", sc->NIL);
+  s7_define_variable(sc, "*error-hook*", sc->NIL);
   
   g_provide(sc, make_list_1(sc, s7_make_symbol(sc, "s7")));
 

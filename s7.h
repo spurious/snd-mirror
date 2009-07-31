@@ -34,6 +34,7 @@ typedef double s7_Double;
    *    *features*              a list of symbols describing what is current available (initially '(s7))
    *    __func__                equivalent to C's __func__.  The symbol of the function currently being defined.
    *    *load-hook*             called before a file is loaded.
+   *    *error-hook*            called upon error.
    *
    * s7 constants:
    *
@@ -1356,6 +1357,7 @@ int main(int argc, char **argv)
  * 
  *        s7 changes
  *
+ * 31-Jul:    *error-hook*.
  * 30-Jul:    changed backtrace handling: removed backtrace stuff, added stacktrace.
  *            removed gc-verbose and load-verbose replaced by *load-hook*.
  * 23-Jul:    __func__.
