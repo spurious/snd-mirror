@@ -4080,6 +4080,9 @@
 (test (let* ((x 1) (x (+ x 1)) (x (+ x 2))) x) 4)
 (test (let ((.. 2) (.... 4) (..... +)) (..... .. ....)) 6)
 
+(test (let () (begin (define x 1)) x) 1)
+(test (let ((y 1)) (begin (define x 1)) (+ x y)) 2)
+
 (test ((let ((x 2))
 	 (let ((x 3))
 	   (lambda (arg) (+ arg x))))
@@ -4230,6 +4233,16 @@
 	    ((= i 3) k)
 	  (set! k (+ k i))))
       3) ; or 2?
+
+(test (let ((f #f))
+	(do ((i 0 (+ i 1)))
+	    ((= i 3))
+	  (let ()
+	    (define (x) i)
+	    (if (= i 1) (set! f x))))
+	(f))
+      1)
+
 
 
 (for-each
@@ -32650,7 +32663,9 @@
 	    ;; maxima's sqrt(2.0) is not very accurate!  use arprec: 
 	    (num-test (magnitude 14142135623730950488.0168872420969+14142135623730950488.0168872420969i) 1.9999999999999999999999999999999885751772054578776001965575456E19)
 	    
-	    
+	    (num-test (cos 100000000000000000000000000000000)   -9.207313839241906875982573440296245746235E-1)
+	    (num-test (cos 100000000000000000000000000000000.0) -9.207313839241906875982573440296245746235E-1)
+
 	    ;; these can be checked against arprec -- get tables of the others as well
 	    ;;	(num-test (sin 31415926535897932384626433832795028841.971693993751058209749445) 6.8290634690588564658126265428876656461078982456442870201741792E-24)
 	    ;; this test requires 500 bits of precision
@@ -34935,7 +34950,7 @@
       (test (string-ref) 'error)
       (test (string-ref 2) 'error)
       (test (string-ref "\"\\\"" 3) 'error)
-      (test (string-ref "" 0) 'error)  ; guile returns #\nul here?
+      (test (string-ref "" 0) 'error)  ; guile returns #\nul here? [fixed 1.9]
       (test (string-ref "" 1) 'error)
       
       (for-each
@@ -34950,7 +34965,7 @@
       
       (test (let ((hi (string-copy "hi"))) (string-set! hi 2 #\H) hi) 'error)
       (test (let ((hi (string-copy "hi"))) (string-set! hi -1 #\H) hi) 'error)
-      (test (let ((g (lambda () "***"))) (string-set! (g) 0 #\?)) 'error) ; guile is happy here and below
+      (test (let ((g (lambda () "***"))) (string-set! (g) 0 #\?)) 'error) ; guile is happy here and below [fixed 1.9]
       (test (string-set! "" 0 #\a) 'error)
       (test (string-set! "" 1 #\a) 'error)
       (test (string-set! (string) 0 #\a) 'error)
@@ -35895,7 +35910,7 @@
 					;(test (begin . 1) 'error)
 					;(test (let () (begin . 1)) 'error)
       
-					;(test (let ((x 0)) (set! x (+ x 1)) (begin (define y 1)) (+ x y)) 'error) ; is this correct?
+					;(test (let ((x 0)) (set! x (+ x 1)) (begin (define y 1)) (+ x y)) 'error)
       
       
       (test (apply + #f) 'error)
@@ -36113,7 +36128,7 @@
 	    
 	    (test (format #f "asb~{~A asd" '(1 2 3)) 'error)
 	    (test (format #f "~{~A~}" 1 2 3) 'error)
-	    (test (format #f "asb~{~}asd" '(1 2 3)) 'error) ; this apparently makes the format.scm in Guile hang?
+	    (test (format #f "asb~{~}asd" '(1 2 3)) 'error) ; this apparently makes the format.scm in Guile hang? [fixed]
 	    (test (format #f "asb~{ ~}asd" '(1 2 3)) 'error)
 	    (test (format #f "asb~{ hiho~~~}asd" '(1 2 3)) 'error)
 	    
@@ -39838,3 +39853,14 @@ expt error > 1e-6 around 2^-46.506993328423
 	  argls))
        ops)
       )))
+
+
+;;; trouble: [bignum-precision = 128]
+;;;   (= (string->number (number->string 100000000000000000000000000000000.0)) 100000000000000000000000000000000.0) -> #f
+;;;   even with gmp
+;;;   (string->number "100000000000000000000000000000000.0") -> 1.000E32
+;;;   (= 1.000E32 100000000000000000000000000000000.0) -> #f
+;;;   (format #f "~40F" 32.0) -> "                               32.000000"
+;;;   (format #f "~40F" 100000000000000000000000000000000.0) -> "1.000E32"
+;;; but:
+;;;   (cos (bignum "1.0000000000000000000000000000000000e32")) gets the right answer, so who truncates?

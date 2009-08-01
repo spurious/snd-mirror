@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "1.23"
-#define S7_DATE "30-Jul-09"
+#define S7_VERSION "1.24"
+#define S7_DATE "1-Aug-09"
 
 
 typedef long long int s7_Int;
@@ -106,6 +106,14 @@ s7_pointer s7_UNSPECIFIED(s7_scheme *sc);                            /* #<unspec
 bool s7_is_unspecified(s7_scheme *sc, s7_pointer val);               /*     returns true if val is #<unspecified> */
 s7_pointer s7_EOF_OBJECT(s7_scheme *sc);                             /* #<eof> */
 
+  /* same but lower-case -- I'll probably remove the upper-case versions someday */
+s7_pointer s7_f(s7_scheme *sc);                                      /* #f */
+s7_pointer s7_t(s7_scheme *sc);                                      /* #t */
+s7_pointer s7_nil(s7_scheme *sc);                                    /* () */
+s7_pointer s7_undefined(s7_scheme *sc);                              /* #<undefined> */
+s7_pointer s7_unspecified(s7_scheme *sc);                            /* #<unspecified> */
+s7_pointer s7_eof_object(s7_scheme *sc);                             /* #<eof> */
+
   /* these are the scheme constants; they do not change in value during a run, and
    *   are the same across all threads, so they can be safely assigned to C global variables if desired. 
    */
@@ -180,7 +188,7 @@ s7_pointer s7_gc_on(s7_scheme *sc, bool on);
    *
    *    s7_cons(s7, s7_make_real(s7, 3.14), 
    *                s7_cons(s7, s7_make_integer(s7, 123), 
-   *                            s7_NIL(s7)));
+   *                            s7_nil(s7)));
    */
 
 
@@ -516,7 +524,7 @@ s7_pointer s7_call(s7_scheme *sc, s7_pointer func, s7_pointer args);
   /* s7_call takes a scheme function (e.g. g_car above), and applies it to 'args' (a list of arguments)
    *   returning the result.
    *   
-   *   s7_integer(s7_call(s7, g_car, s7_cons(s7, s7_make_integer(sc, 123), s7_NIL(s7))));
+   *   s7_integer(s7_call(s7, g_car, s7_cons(s7, s7_make_integer(sc, 123), s7_nil(s7))));
    *  
    *   returns 123.
    */
@@ -675,7 +683,7 @@ static s7_pointer our_exit(s7_scheme *sc, s7_pointer args)
 				       *   s7_car(args) is the 1st arg, etc 
 				       */
   exit(1);
-  return(s7_NIL(sc));                 /* just to be pedantic */
+  return(s7_nil(sc));                 /* just to be pedantic */
 }
 
 int main(int argc, char **argv)
@@ -743,7 +751,7 @@ int main(int argc, char **argv)
 static s7_pointer our_exit(s7_scheme *sc, s7_pointer args)
 {
   exit(1);
-  return(s7_NIL(sc));
+  return(s7_nil(sc));
 }
 
 static s7_pointer add1(s7_scheme *sc, s7_pointer args)
@@ -826,7 +834,7 @@ int main(int argc, char **argv)
   fprintf(stderr, "(add1 2): %d\n", 
 	  s7_integer(s7_call(s7, 
 			     s7_name_to_value(s7, "add1"), 
-			     s7_cons(s7, s7_make_integer(s7, 2), s7_NIL(s7)))));
+			     s7_cons(s7, s7_make_integer(s7, 2), s7_nil(s7)))));
 }
 
 /*
@@ -898,7 +906,7 @@ int main(int argc, const char* argv[])
 static s7_pointer our_exit(s7_scheme *sc, s7_pointer args)
 {
   exit(1);
-  return(s7_NIL(sc));
+  return(s7_nil(sc));
 }
 
 /* the next functions are needed for either with-sound or many standard instruments, like fm-violin */
@@ -1003,7 +1011,7 @@ int main(int argc, char **argv)
 static s7_pointer our_exit(s7_scheme *sc, s7_pointer args)
 {
   exit(1);
-  return(s7_NIL(sc));
+  return(s7_nil(sc));
 }
 
 
@@ -1065,9 +1073,9 @@ static s7_pointer make_dax(s7_scheme *sc, s7_pointer args)
   dax *o;
   o = (dax *)malloc(sizeof(dax));
   o->x = s7_real(s7_car(args));
-  if (s7_cdr(args) != s7_NIL(sc))
+  if (s7_cdr(args) != s7_nil(sc))
     o->data = s7_car(s7_cdr(args));
-  else o->data = s7_NIL(sc);
+  else o->data = s7_nil(sc);
   return(s7_make_object(sc, dax_type_tag, (void *)o));
 }
 
@@ -1357,6 +1365,7 @@ int main(int argc, char **argv)
  * 
  *        s7 changes
  *
+ * 1-Aug:     lower-case versions of s7_T and friends.
  * 31-Jul:    *error-hook*.
  * 30-Jul:    changed backtrace handling: removed backtrace stuff, added stacktrace.
  *            removed gc-verbose and load-verbose replaced by *load-hook*.

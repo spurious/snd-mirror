@@ -66,7 +66,7 @@
  *        provide, provided?, defined?
  *        port-line-number, port-filename
  *        object->string, eval-string
- *        reverse!, list-set! sort!
+ *        reverse!, list-set!, sort!
  *        gc, quit, *load-hook*, *error-hook*
  *        *features*, *load-path*, *vector-print-length*
  *        define-constant, pi, most-positive-fixnum, most-negative-fixnum, constant?
@@ -278,7 +278,7 @@
   #define M_PI 3.1415926535897932384626433832795029L
 #endif
 
-typedef enum {OP_READ_INTERNAL, OP_EVAL, OP_EVAL_ARGS0, OP_EVAL_ARGS1, OP_APPLY, OP_DOMACRO, OP_LAMBDA, OP_QUOTE, 
+typedef enum {OP_READ_INTERNAL, OP_EVAL, OP_EVAL_ARGS0, OP_EVAL_ARGS1, OP_APPLY, OP_EVAL_MACRO, OP_LAMBDA, OP_QUOTE, 
 	      OP_DEFINE0, OP_DEFINE1, OP_BEGIN, OP_IF0, OP_IF1, OP_SET0, OP_SET1, OP_SET2, 
 	      OP_LET0, OP_LET1, OP_LET2, OP_LET_STAR0, OP_LET_STAR1, 
 	      OP_LETREC0, OP_LETREC1, OP_LETREC2, OP_COND0, OP_COND1, OP_MAKE_PROMISE, OP_AND0, OP_AND1, 
@@ -297,7 +297,7 @@ typedef enum {TOKEN_EOF, TOKEN_LEFT_PAREN, TOKEN_RIGHT_PAREN, TOKEN_DOT, TOKEN_A
 	      TOKEN_BACK_QUOTE, TOKEN_COMMA, TOKEN_AT_MARK, TOKEN_SHARP_CONST, TOKEN_VECTOR} token_t;
 
 
-typedef struct num {
+typedef struct s7_num_t {
   char type;
   union {
     
@@ -319,12 +319,12 @@ typedef struct num {
     unsigned long long ull_value;
 
   } value;
-} num;
+} s7_num_t;
 
 
 typedef enum {FILE_PORT, STRING_PORT, FUNCTION_PORT} port_type_t;
 
-typedef struct rport {
+typedef struct s7_port_t {
   bool is_closed;
   port_type_t type;
   bool needs_free;
@@ -335,43 +335,45 @@ typedef struct rport {
   char *value;
   int size, point;
   void (*function)(s7_scheme *sc, char c, s7_pointer port);
-} rport;
+} s7_port_t;
 
 
-typedef struct continuation {
+typedef struct s7_continuation_t {
   int cc_stack_size, cc_stack_top;
   s7_pointer cc_stack;
-} continuation;
+} s7_continuation_t;
 
 
-typedef struct ffunc {
+typedef struct s7_func_t {
   s7_function ff;
   const char *name;
   char *doc;
   int required_args, optional_args, all_args;
   bool rest_arg;
-} ffunc;
+} s7_func_t;
 
 
-typedef struct rcatch {
+typedef struct s7_catch_t {
   int goto_loc;
   s7_pointer tag;
   s7_pointer handler;
-} rcatch;
+} s7_catch_t;
 
 
 typedef enum {DWIND_INIT, DWIND_BODY, DWIND_FINISH} dwind_t;
 
-typedef struct dwind {
+typedef struct s7_dynwind_t {
   dwind_t state;
   s7_pointer in, out, body;
-} dwind;
+} s7_dynwind_t;
 
 
-typedef struct vdims {
+#if WITH_MULTIDIMENSIONAL_VECTORS
+typedef struct s7_vdims_t {
   int ndims;
   int *dims, *offsets;
-} vdims;
+} s7_vdims_t;
+#endif
 
 
 /* cell structure */
@@ -384,9 +386,9 @@ typedef struct s7_cell {
       int  length;
     } string;
     
-    num number;
+    s7_num_t number;
     
-    rport *port;
+    s7_port_t *port;
     
     unsigned char cvalue;
     
@@ -396,11 +398,11 @@ typedef struct s7_cell {
       int length;
       s7_pointer *elements;
 #if WITH_MULTIDIMENSIONAL_VECTORS
-      vdims *dim_info;
+      s7_vdims_t *dim_info;
 #endif
     } vector;
     
-    ffunc *ffptr;
+    s7_func_t *ffptr;
     
     struct {
       struct s7_cell *car;
@@ -416,13 +418,13 @@ typedef struct s7_cell {
       void *value;
     } fobj;
     
-    continuation *cc;
+    s7_continuation_t *cc;
     
     int goto_loc;
     
-    rcatch *catcher;
+    s7_catch_t *catcher;
     
-    dwind *winder;
+    s7_dynwind_t *winder;
     
   } object;
 } s7_cell;
@@ -496,7 +498,7 @@ struct s7_scheme {
   s7_pointer value;
   opcode_t op;
   s7_pointer x, y, z;            /* evaluator local vars */
-  num v;
+  s7_num_t v;
 
   s7_pointer *temps;             /* short-term gc protection */
   int temps_ctr, temps_size;
@@ -820,7 +822,6 @@ s7_pointer s7_UNDEFINED(s7_scheme *sc)
 }
 
 
-/* PERHAPS: s7_UNSPECIFIED and friends lower cased */
 s7_pointer s7_UNSPECIFIED(s7_scheme *sc) 
 {
   return(sc->UNSPECIFIED);
@@ -834,6 +835,43 @@ bool s7_is_unspecified(s7_scheme *sc, s7_pointer val)
 
 
 s7_pointer s7_EOF_OBJECT(s7_scheme *sc) 
+{
+  return(sc->EOF_OBJECT);
+}
+
+
+/* lower case versions -- I'll probably remove the upper case versions someday */
+s7_pointer s7_f(s7_scheme *sc) 
+{
+  return(sc->F);
+}
+
+
+s7_pointer s7_t(s7_scheme *sc) 
+{
+  return(sc->T);
+}
+
+
+s7_pointer s7_nil(s7_scheme *sc) 
+{
+  return(sc->NIL);
+}
+
+
+s7_pointer s7_undefined(s7_scheme *sc) 
+{
+  return(sc->UNDEFINED);
+}
+
+
+s7_pointer s7_unspecified(s7_scheme *sc) 
+{
+  return(sc->UNSPECIFIED);
+}
+
+
+s7_pointer s7_eof_object(s7_scheme *sc) 
 {
   return(sc->EOF_OBJECT);
 }
@@ -1432,11 +1470,9 @@ static s7_pointer g_stack(s7_scheme *sc, s7_pointer args)
 Each stack frame has 4 entries, the function, the current environment, the function arguments, and an op code used \
 internally by the evaluator.  If a continuation is passed, its stack and stack-top are returned."
 
-  /* TODO: what about threads? */
-
   if (s7_is_continuation(car(args)))
     {
-      continuation *c;
+      s7_continuation_t *c;
       c = car(args)->object.cc;
       return(make_list_2(sc, s7_make_integer(sc, c->cc_stack_top), c->cc_stack));
     }
@@ -2057,7 +2093,7 @@ static s7_pointer s7_make_goto(s7_scheme *sc)
 
 static s7_pointer s7_make_continuation(s7_scheme *sc) 
 {
-  continuation *c;
+  s7_continuation_t *c;
   s7_pointer x;
 
   if (sc->free_heap_top < sc->heap_size / 4)
@@ -2069,7 +2105,7 @@ static s7_pointer s7_make_continuation(s7_scheme *sc)
 
   x = new_cell(sc);
   set_type(x, T_CONTINUATION | T_FINALIZABLE | T_DONT_COPY | T_PROCEDURE);
-  c = (continuation *)calloc(1, sizeof(continuation));
+  c = (s7_continuation_t *)calloc(1, sizeof(s7_continuation_t));
   
   /* save current state */
   c->cc_stack_top = sc->stack_top;
@@ -2081,7 +2117,7 @@ static s7_pointer s7_make_continuation(s7_scheme *sc)
 }
 
 
-static void check_for_dynamic_winds(s7_scheme *sc, continuation *c)
+static void check_for_dynamic_winds(s7_scheme *sc, s7_continuation_t *c)
 {
   int i, s_base = 0, c_base = -1;
   
@@ -2483,7 +2519,7 @@ bool s7_is_inexact(s7_pointer p)
 }
 
 
-static num nvalue(s7_pointer p)       
+static s7_num_t nvalue(s7_pointer p)       
 { 
   return((p)->object.number);
 }
@@ -2695,7 +2731,7 @@ s7_pointer s7_rationalize(s7_scheme *sc, s7_Double x, s7_Double error)
 }
 
 
-static s7_Double num_to_real(num n)
+static s7_Double num_to_real(s7_num_t n)
 {
   if (n.type >= NUM_REAL)
     return(real(n));
@@ -2705,7 +2741,7 @@ static s7_Double num_to_real(num n)
 }
 
 
-static s7_Int num_to_numerator(num n)
+static s7_Int num_to_numerator(s7_num_t n)
 {
   if (n.type == NUM_RATIO)
     return(numerator(n));
@@ -2713,7 +2749,7 @@ static s7_Int num_to_numerator(num n)
 }
 
 
-static s7_Int num_to_denominator(num n)
+static s7_Int num_to_denominator(s7_num_t n)
 {
   if (n.type == NUM_RATIO)
     return(denominator(n));
@@ -2721,7 +2757,7 @@ static s7_Int num_to_denominator(num n)
 }
 
 
-static s7_Double num_to_real_part(num n)
+static s7_Double num_to_real_part(s7_num_t n)
 {
   switch (n.type)
     {
@@ -2734,7 +2770,7 @@ static s7_Double num_to_real_part(num n)
 }
 
 
-static s7_Double num_to_imag_part(num n)
+static s7_Double num_to_imag_part(s7_num_t n)
 {
   if (n.type >= NUM_COMPLEX)
     return(imag_part(n));
@@ -2742,9 +2778,9 @@ static s7_Double num_to_imag_part(num n)
 }
 
 
-static num make_ratio(s7_Int numer, s7_Int denom)
+static s7_num_t make_ratio(s7_Int numer, s7_Int denom)
 {
-  num ret;
+  s7_num_t ret;
   s7_Int divisor;
 
   if (numer == 0)
@@ -2782,18 +2818,18 @@ static num make_ratio(s7_Int numer, s7_Int denom)
 }
 
 
-static num make_real(s7_Double rl)
+static s7_num_t make_real(s7_Double rl)
 {
-  num ret;
+  s7_num_t ret;
   ret.type = NUM_REAL;
   real(ret) = rl;
   return(ret);
 }
 
 
-static num make_complex(s7_Double rl, s7_Double im)
+static s7_num_t make_complex(s7_Double rl, s7_Double im)
 {
-  num ret;
+  s7_num_t ret;
   if (im == 0.0)
     return(make_real(rl));
 
@@ -2861,7 +2897,7 @@ s7_pointer s7_make_ratio(s7_scheme *sc, s7_Int a, s7_Int b)
 {
   /* make_number calls us, so we can't call it as a convenience! */
   
-  num ret;
+  s7_num_t ret;
   s7_pointer x;
 
   if (b == 0)
@@ -2884,7 +2920,7 @@ s7_pointer s7_make_ratio(s7_scheme *sc, s7_Int a, s7_Int b)
 }
 
 
-static s7_pointer make_number(s7_scheme *sc, num n) 
+static s7_pointer make_number(s7_scheme *sc, s7_num_t n) 
 {
   switch (num_type(n))
     {
@@ -2987,9 +3023,9 @@ static s7_pointer s7_from_c_complex(s7_scheme *sc, s7_Complex z)
 }
 
 
-static num num_max(num a, num b) 
+static s7_num_t num_max(s7_num_t a, s7_num_t b) 
 {
-  num ret;
+  s7_num_t ret;
   ret.type = a.type | b.type;
   
   switch (num_type(ret))
@@ -3032,9 +3068,9 @@ static num num_max(num a, num b)
 }
 
 
-static num num_min(num a, num b) 
+static s7_num_t num_min(s7_num_t a, s7_num_t b) 
 {
-  num ret;
+  s7_num_t ret;
   ret.type = a.type | b.type;
   
   switch (num_type(ret))
@@ -3111,9 +3147,9 @@ static int integer_length(s7_Int a)
 
 static int s7_int_max = 0, s7_int_min = 0, s7_int_bits = 0, s7_int_digits = 0; /* initialized later */
 
-static num num_add(num a, num b) 
+static s7_num_t num_add(s7_num_t a, s7_num_t b) 
 {
-  num ret;
+  s7_num_t ret;
   ret.type = a.type | b.type;
   
   switch (num_type(ret))
@@ -3165,9 +3201,9 @@ static num num_add(num a, num b)
 }
 
 
-static num num_negate(num a)
+static s7_num_t num_negate(s7_num_t a)
 {
-  num ret;
+  s7_num_t ret;
   ret.type = a.type;
   
   switch (num_type(ret))
@@ -3195,9 +3231,9 @@ static num num_negate(num a)
 }
 
 
-static num num_sub(num a, num b) 
+static s7_num_t num_sub(s7_num_t a, s7_num_t b) 
 {
-  num ret;
+  s7_num_t ret;
   ret.type = a.type | b.type;
   
   switch (num_type(ret))
@@ -3249,9 +3285,9 @@ static num num_sub(num a, num b)
 }
 
 
-static num num_mul(num a, num b) 
+static s7_num_t num_mul(s7_num_t a, s7_num_t b) 
 {
-  num ret;
+  s7_num_t ret;
   ret.type = a.type | b.type;
   
   switch (num_type(ret))
@@ -3301,7 +3337,7 @@ static num num_mul(num a, num b)
   return(ret);
 }
 
-static num num_invert(num a)
+static s7_num_t num_invert(s7_num_t a)
 {
   switch (num_type(a))
     {
@@ -3328,9 +3364,9 @@ static num num_invert(num a)
 }
 
 
-static num num_div(num a, num b) 
+static s7_num_t num_div(s7_num_t a, s7_num_t b) 
 {
-  num ret;
+  s7_num_t ret;
   ret.type = a.type | b.type;
   
   switch (num_type(ret))
@@ -3397,10 +3433,10 @@ static s7_Int s7_truncate(s7_Double xf)
 }
 
 
-static num num_quotient(num a, num b) 
+static s7_num_t num_quotient(s7_num_t a, s7_num_t b) 
 {
   /* (define (quo x1 x2) (truncate (/ x1 x2))) ; slib */
-  num ret;
+  s7_num_t ret;
   ret.type = NUM_INT;
   if ((a.type | b.type) == NUM_INT)
     integer(ret) = integer(a) / integer(b);
@@ -3409,10 +3445,10 @@ static num num_quotient(num a, num b)
 }
 
 
-static num num_rem(num a, num b) 
+static s7_num_t num_rem(s7_num_t a, s7_num_t b) 
 {
   /* (define (rem x1 x2) (- x1 (* x2 (quo x1 x2)))) ; slib */
-  num ret;
+  s7_num_t ret;
   ret.type = a.type | b.type;
   switch (ret.type)
     {
@@ -3434,10 +3470,10 @@ static num num_rem(num a, num b)
 }
 
 
-static num num_mod(num a, num b) 
+static s7_num_t num_mod(s7_num_t a, s7_num_t b) 
 {
   /* (define (mod x1 x2) (- x1 (* x2 (floor (/ x1 x2))))) ; slib */
-  num ret;
+  s7_num_t ret;
   ret.type = a.type | b.type;
   switch (ret.type)
     {
@@ -3459,7 +3495,7 @@ static num num_mod(num a, num b)
 }
 
 
-static bool num_eq(num a, num b) 
+static bool num_eq(s7_num_t a, s7_num_t b) 
 {
   switch (num_type(a))
     {
@@ -3533,7 +3569,7 @@ static bool num_eq(num a, num b)
 }
 
 
-static bool num_gt(num a, num b) 
+static bool num_gt(s7_num_t a, s7_num_t b) 
 {
   /* the ">" operator here is a problem.
    *   we get different results depending on the gcc optimization level for cases like (< 1234/11 1234/11)
@@ -3541,7 +3577,7 @@ static bool num_gt(num a, num b)
    *   :(> 0 most-negative-fixnum)
    *   #f
    */
-  num val;
+  s7_num_t val;
   if ((num_type(a) == NUM_INT) && 
       (num_type(b) == NUM_INT))
     return(integer(a) > integer(b));
@@ -3564,9 +3600,9 @@ static bool num_gt(num a, num b)
 }
 
 
-static bool num_lt(num a, num b) 
+static bool num_lt(s7_num_t a, s7_num_t b) 
 {
-  num val;
+  s7_num_t val;
   if ((num_type(a) == NUM_INT) && 
       (num_type(b) == NUM_INT))
     return(integer(a) < integer(b));
@@ -3581,13 +3617,13 @@ static bool num_lt(num a, num b)
 }
 
 
-static bool num_ge(num a, num b) 
+static bool num_ge(s7_num_t a, s7_num_t b) 
 {
   return(!num_lt(a, b));
 }
 
 
-static bool num_le(num a, num b) 
+static bool num_le(s7_num_t a, s7_num_t b) 
 {
   return(!num_gt(a, b));
 }
@@ -5715,7 +5751,7 @@ static s7_pointer compare_numbers(s7_scheme *sc, compare_t op, s7_pointer args)
 {
   int i;
   s7_pointer x;
-  bool (*comp_func)(num a, num b) = NULL;
+  bool (*comp_func)(s7_num_t a, s7_num_t b) = NULL;
   bool (*arg_checker)(s7_pointer x) = NULL;
   const char *arg_type = NULL, *op_name = NULL;
 
@@ -6077,7 +6113,7 @@ static s7_pointer g_ash(s7_scheme *sc, s7_pointer args)
 
 typedef struct {
   unsigned long long int ran_seed, ran_carry;
-} rng;
+} s7_rng_t;
 
 static int rng_tag = 0;
 
@@ -6088,7 +6124,7 @@ static int big_rng_tag = 0;
 static char *print_rng(s7_scheme *sc, void *val)
 {
   char *buf;
-  rng *r = (rng *)val;
+  s7_rng_t *r = (s7_rng_t *)val;
   buf = (char *)malloc(64 * sizeof(char));
   snprintf(buf, 64, "#<rng %d %d>", (unsigned int)(r->ran_seed), (unsigned int)(r->ran_carry));
   return(buf);
@@ -6110,8 +6146,8 @@ static bool equal_rng(void *val1, void *val2)
 static s7_pointer g_make_random_state(s7_scheme *sc, s7_pointer args)
 {
   #define H_make_random_state "(make-random-state seed) returns a new random number state initialized with 'seed'"
-  rng *r;
-  r = (rng *)calloc(1, sizeof(rng));
+  s7_rng_t *r;
+  r = (s7_rng_t *)calloc(1, sizeof(s7_rng_t));
   r->ran_seed = s7_integer(car(args));
   r->ran_carry = 1675393560;  /* should this be dependent on the seed? */
   return(s7_make_object(sc, rng_tag, (void *)r));
@@ -6123,7 +6159,7 @@ static pthread_mutex_t rng_lock = PTHREAD_MUTEX_INITIALIZER;
 #endif
   
 
-static double next_random(rng *r)
+static double next_random(s7_rng_t *r)
 {
   /* The multiply-with-carry generator for 32-bit integers: 
    *        x(n)=a*x(n-1) + carry mod 2^32 
@@ -6157,15 +6193,15 @@ static double next_random(rng *r)
 }
 
 
-static rng *s7_default_rng(s7_scheme *sc)
+static s7_rng_t *s7_default_rng(s7_scheme *sc)
 {
   if (!sc->default_rng)
     {
-      sc->default_rng = (rng *)calloc(1, sizeof(rng));
-      ((rng *)(sc->default_rng))->ran_seed = (unsigned int)time(NULL);
-      ((rng *)(sc->default_rng))->ran_carry = 1675393560;
+      sc->default_rng = (s7_rng_t *)calloc(1, sizeof(s7_rng_t));
+      ((s7_rng_t *)(sc->default_rng))->ran_seed = (unsigned int)time(NULL);
+      ((s7_rng_t *)(sc->default_rng))->ran_carry = 1675393560;
     }
-  return((rng *)(sc->default_rng));
+  return((s7_rng_t *)(sc->default_rng));
 }
 
 
@@ -6180,7 +6216,7 @@ static s7_pointer g_random(s7_scheme *sc, s7_pointer args)
 {
   #define H_random "(random num :optional state) returns a random number between 0 and num (0 if num=0)."
   s7_pointer num, state;
-  rng *r;
+  s7_rng_t *r;
   double dnum;
   
   num = car(args);
@@ -6194,7 +6230,7 @@ static s7_pointer g_random(s7_scheme *sc, s7_pointer args)
 	return(s7_wrong_type_arg_error(sc, "random", 2, state, "a random state as returned by make-random-state"));
 
       if (object_type(state) == rng_tag)
-	r = (rng *)s7_object_value(state);
+	r = (s7_rng_t *)s7_object_value(state);
       else
 	{
 #if WITH_GMP
@@ -7288,7 +7324,7 @@ static s7_pointer s7_make_input_file(s7_scheme *sc, const char *name, FILE *fp)
   set_type(x, T_INPUT_PORT | T_ATOM | T_FINALIZABLE | T_SIMPLE | T_DONT_COPY);
   
   /* set up the port struct */
-  x->object.port = (rport *)calloc(1, sizeof(rport));
+  x->object.port = (s7_port_t *)calloc(1, sizeof(s7_port_t));
   port_file(x) = fp;
   port_type(x) = FILE_PORT;
   port_is_closed(x) = false;
@@ -7342,7 +7378,7 @@ s7_pointer s7_open_output_file(s7_scheme *sc, const char *name, const char *mode
   x = new_cell(sc);
   set_type(x, T_OUTPUT_PORT | T_ATOM | T_FINALIZABLE | T_SIMPLE | T_DONT_COPY);
   
-  x->object.port = (rport *)calloc(1, sizeof(rport));
+  x->object.port = (s7_port_t *)calloc(1, sizeof(s7_port_t));
   port_type(x) = FILE_PORT;
   port_is_closed(x) = false;
   port_filename(x) = s7_strdup(name);
@@ -7376,7 +7412,7 @@ s7_pointer s7_open_input_string(s7_scheme *sc, const char *input_string)
   x = new_cell(sc);
   set_type(x, T_INPUT_PORT | T_ATOM | T_FINALIZABLE | T_SIMPLE | T_DONT_COPY);
   
-  x->object.port = (rport *)calloc(1, sizeof(rport));
+  x->object.port = (s7_port_t *)calloc(1, sizeof(s7_port_t));
   port_type(x) = STRING_PORT;
   port_is_closed(x) = false;
   port_string(x) = (char *)input_string;
@@ -7408,7 +7444,7 @@ s7_pointer s7_open_output_string(s7_scheme *sc)
   x = new_cell(sc);
   set_type(x, T_OUTPUT_PORT | T_ATOM | T_FINALIZABLE | T_SIMPLE | T_DONT_COPY);
   
-  x->object.port = (rport *)calloc(1, sizeof(rport));
+  x->object.port = (s7_port_t *)calloc(1, sizeof(s7_port_t));
   port_type(x) = STRING_PORT;
   port_is_closed(x) = false;
   port_string_length(x) = STRING_PORT_INITIAL_LENGTH;
@@ -7449,7 +7485,7 @@ s7_pointer s7_open_output_function(s7_scheme *sc, void (*function)(s7_scheme *sc
   x = new_cell(sc);
   set_type(x, T_OUTPUT_PORT | T_ATOM | T_FINALIZABLE | T_SIMPLE | T_DONT_COPY);
   
-  x->object.port = (rport *)calloc(1, sizeof(rport));
+  x->object.port = (s7_port_t *)calloc(1, sizeof(s7_port_t));
   port_type(x) = FUNCTION_PORT;
   port_is_closed(x) = false;
   port_needs_free(x) = false;
@@ -7703,7 +7739,7 @@ static s7_pointer load_file(s7_scheme *sc, FILE *fp, const char *name)
 
   port = new_cell(sc);
   set_type(port, T_INPUT_PORT | T_ATOM | T_FINALIZABLE | T_SIMPLE | T_DONT_COPY);
-  port->object.port = (rport *)calloc(1, sizeof(rport));
+  port->object.port = (s7_port_t *)calloc(1, sizeof(s7_port_t));
   port_type(port) = STRING_PORT;
   port_is_closed(port) = false;
 
@@ -10000,9 +10036,9 @@ returns a 2 dimensional vector of 6 total elements, all initialized to 1.0."
     {
       int i, offset = 1;
       s7_pointer y;
-      vdims *v;
+      s7_vdims_t *v;
 
-      v = (vdims *)malloc(sizeof(vdims));
+      v = (s7_vdims_t *)malloc(sizeof(s7_vdims_t));
       v->ndims = safe_list_length(sc, x);
       v->dims = (int *)malloc(v->ndims * sizeof(int));
       v->offsets = (int *)malloc(v->ndims * sizeof(int));
@@ -10169,7 +10205,7 @@ bool s7_is_object(s7_pointer p)
 
 s7_pointer s7_make_function(s7_scheme *sc, const char *name, s7_function f, int required_args, int optional_args, bool rest_arg, const char *doc)
 {
-  ffunc *ptr;
+  s7_func_t *ptr;
   s7_pointer x = new_cell(sc);
 
   /* these are normally not gc'd (C-level function defs), but they can be in a few cases
@@ -10179,7 +10215,7 @@ s7_pointer s7_make_function(s7_scheme *sc, const char *name, s7_function f, int 
    *   then new_cell.
    */
 
-  ptr = (ffunc *)calloc(1, sizeof(ffunc));
+  ptr = (s7_func_t *)calloc(1, sizeof(s7_func_t));
   set_type(x, T_S7_FUNCTION | T_ATOM | T_SIMPLE | T_FINALIZABLE | T_DONT_COPY | T_PROCEDURE);
   /* these guys can be freed -- in Snd, for example, "random" is defined in C, but then later redefined in snd-test.scm */
 
@@ -10445,10 +10481,10 @@ typedef struct {
   void (*gc_mark)(void *val);
   s7_pointer (*apply)(s7_scheme *sc, s7_pointer obj, s7_pointer args);
   s7_pointer (*set)(s7_scheme *sc, s7_pointer obj, s7_pointer args);
-} fobject;
+} s7_fobject_t;
 
 
-static fobject *object_types = NULL;
+static s7_fobject_t *object_types = NULL;
 static int object_types_size = 0;
 static int num_types = 0;
 
@@ -10468,12 +10504,12 @@ int s7_new_type(const char *name,
       if (object_types_size == 0)
 	{
 	  object_types_size = 8;
-	  object_types = (fobject *)calloc(object_types_size, sizeof(fobject));
+	  object_types = (s7_fobject_t *)calloc(object_types_size, sizeof(s7_fobject_t));
 	}
       else
 	{
 	  object_types_size = tag + 8;
-	  object_types = (fobject *)realloc((void *)object_types, object_types_size * sizeof(fobject));
+	  object_types = (s7_fobject_t *)realloc((void *)object_types, object_types_size * sizeof(s7_fobject_t));
 	}
     }
   object_types[tag].type = tag;
@@ -10611,7 +10647,7 @@ typedef struct {
   s7_pointer scheme_setter;
   char *documentation;
   char *name;
-} pws;
+} s7_pws_t;
 
 
 s7_pointer s7_make_procedure_with_setter(s7_scheme *sc, 
@@ -10622,9 +10658,9 @@ s7_pointer s7_make_procedure_with_setter(s7_scheme *sc,
 					 int set_req_args, int set_opt_args,
 					 const char *documentation)
 {
-  pws *f;
+  s7_pws_t *f;
   s7_pointer obj;
-  f = (pws *)calloc(1, sizeof(pws));
+  f = (s7_pws_t *)calloc(1, sizeof(s7_pws_t));
   f->getter = getter;
   f->get_req_args = get_req_args;
   f->get_opt_args = get_opt_args;
@@ -10647,7 +10683,7 @@ s7_pointer s7_make_procedure_with_setter(s7_scheme *sc,
 
 static char *pws_print(s7_scheme *sc, void *obj)
 {
-  pws *f = (pws *)obj;
+  s7_pws_t *f = (s7_pws_t *)obj;
   if (f->name)
     return(s7_strdup(f->name));
   return(s7_strdup((char *)"#<procedure-with-setter>"));
@@ -10656,7 +10692,7 @@ static char *pws_print(s7_scheme *sc, void *obj)
 
 static void pws_free(void *obj)
 {
-  pws *f = (pws *)obj;
+  s7_pws_t *f = (s7_pws_t *)obj;
   if (f)
     {
       if (f->documentation)
@@ -10670,7 +10706,7 @@ static void pws_free(void *obj)
 
 static void pws_mark(void *val)
 {
-  pws *f = (pws *)val;
+  s7_pws_t *f = (s7_pws_t *)val;
   S7_MARK(f->scheme_getter);
   S7_MARK(f->scheme_setter);
 }
@@ -10685,8 +10721,8 @@ static bool pws_equal(void *obj1, void *obj2)
 static s7_pointer pws_apply(s7_scheme *sc, s7_pointer obj, s7_pointer args)
 {
   /* this is called as the pws object apply method, not as the actual getter */
-  pws *f;
-  f = (pws *)s7_object_value(obj);
+  s7_pws_t *f;
+  f = (s7_pws_t *)s7_object_value(obj);
   if (f->getter != NULL)
     return((*(f->getter))(sc, args));
   return(s7_call(sc, f->scheme_getter, args));
@@ -10696,8 +10732,8 @@ static s7_pointer pws_apply(s7_scheme *sc, s7_pointer obj, s7_pointer args)
 static s7_pointer pws_set(s7_scheme *sc, s7_pointer obj, s7_pointer args)
 {
   /* this is the pws set method, not the actual setter */
-  pws *f;
-  f = (pws *)s7_object_value(obj);
+  s7_pws_t *f;
+  f = (s7_pws_t *)s7_object_value(obj);
   if (f->setter != NULL)
     return((*(f->setter))(sc, args));
   return(s7_call(sc, f->scheme_setter, args));
@@ -10711,7 +10747,7 @@ two function arguments as a procedure-with-setter.  The 'getter' is called unles
 occurs as the object of set!."
 
   s7_pointer p, getter, setter;
-  pws *f;
+  s7_pws_t *f;
   /* the two args should be functions, the setter taking one more arg than the getter */
 
   getter = car(args);
@@ -10722,7 +10758,7 @@ occurs as the object of set!."
     return(s7_wrong_type_arg_error(sc, "make-procedure-with-setter", 2, setter, "a procedure"));
 
   p = s7_make_procedure_with_setter(sc, NULL, NULL, -1, 0, NULL, -1, 0, NULL);
-  f = (pws *)s7_object_value(p);
+  f = (s7_pws_t *)s7_object_value(p);
 
   f->scheme_getter = getter;
   if ((is_closure(getter)) ||
@@ -10749,16 +10785,16 @@ bool s7_is_procedure_with_setter(s7_pointer obj)
 
 s7_pointer s7_procedure_with_setter_getter(s7_pointer obj)
 {
-  pws *f;
-  f = (pws *)s7_object_value(obj);
+  s7_pws_t *f;
+  f = (s7_pws_t *)s7_object_value(obj);
   return(f->scheme_getter);
 }
 
 
 s7_pointer s7_procedure_with_setter_setter(s7_pointer obj)
 {
-  pws *f;
-  f = (pws *)s7_object_value(obj);
+  s7_pws_t *f;
+  f = (s7_pws_t *)s7_object_value(obj);
   return(f->scheme_setter);
 }
 
@@ -10772,39 +10808,39 @@ static s7_pointer g_is_procedure_with_setter(s7_scheme *sc, s7_pointer args)
 
 static char *pws_documentation(s7_pointer x)
 {
-  pws *f = (pws *)s7_object_value(x);
+  s7_pws_t *f = (s7_pws_t *)s7_object_value(x);
   return(f->documentation);
 }
 
 
 static char *pws_name(s7_pointer x)
 {
-  pws *f = (pws *)s7_object_value(x);
+  s7_pws_t *f = (s7_pws_t *)s7_object_value(x);
   return(f->name);
 }
 
 
 static int pws_get_req_args(s7_pointer x)
 {
-  pws *f = (pws *)s7_object_value(x);
+  s7_pws_t *f = (s7_pws_t *)s7_object_value(x);
   return(f->get_req_args);
 }
 
 
 static int pws_get_opt_args(s7_pointer x)
 {
-  pws *f = (pws *)s7_object_value(x);
+  s7_pws_t *f = (s7_pws_t *)s7_object_value(x);
   return(f->get_opt_args);
 }
 
 
 static s7_pointer g_procedure_with_setter_setter_arity(s7_scheme *sc, s7_pointer args)
 {
-  pws *f;
+  s7_pws_t *f;
   if (!s7_is_procedure_with_setter(car(args)))
     return(s7_wrong_type_arg_error(sc, "procedure-with-setter-setter-arity", 0, car(args), "a procedure-with-setter"));
 
-  f = (pws *)s7_object_value(car(args));
+  f = (s7_pws_t *)s7_object_value(car(args));
   return(make_list_3(sc,
 		     s7_make_integer(sc, f->set_req_args),
 		     s7_make_integer(sc, f->set_opt_args),
@@ -10814,8 +10850,8 @@ static s7_pointer g_procedure_with_setter_setter_arity(s7_scheme *sc, s7_pointer
 
 static s7_pointer pws_source(s7_scheme *sc, s7_pointer x)
 {
-  pws *f;
-  f = (pws *)s7_object_value(x);
+  s7_pws_t *f;
+  f = (s7_pws_t *)s7_object_value(x);
   if ((is_closure(f->scheme_getter)) ||
       (is_closure_star(f->scheme_getter)))
     return(s7_append(sc, 
@@ -12059,7 +12095,7 @@ static s7_pointer g_dynamic_wind(s7_scheme *sc, s7_pointer args)
   #define H_dynamic_wind "(dynamic-wind init body finish) calls init, then body, then finish, \
 each a function of no arguments, guaranteeing that finish is called even if body is exited"
   s7_pointer p;
-  dwind *dw;
+  s7_dynwind_t *dw;
 
   if (!is_procedure(car(args)))
     return(s7_wrong_type_arg_error(sc, "dynamic-wind", 1, car(args), "a procedure"));
@@ -12068,7 +12104,7 @@ each a function of no arguments, guaranteeing that finish is called even if body
   if (!is_procedure(caddr(args)))
     return(s7_wrong_type_arg_error(sc, "dynamic-wind", 3, caddr(args), "a procedure"));
   
-  dw = (dwind *)calloc(1, sizeof(dwind));
+  dw = (s7_dynwind_t *)calloc(1, sizeof(s7_dynwind_t));
   dw->in = car(args);
   dw->body = cadr(args);
   dw->out = caddr(args);
@@ -12077,7 +12113,7 @@ each a function of no arguments, guaranteeing that finish is called even if body
   p = new_cell(sc);
   set_type(p, T_DYNAMIC_WIND | T_ATOM | T_FINALIZABLE | T_DONT_COPY); /* atom -> don't mark car/cdr, don't copy */
   p->object.winder = dw;
-  push_stack(sc, OP_DYNAMIC_WIND, sc->NIL, p);          /* args will be the saved result, code = dwind obj */
+  push_stack(sc, OP_DYNAMIC_WIND, sc->NIL, p);          /* args will be the saved result, code = s7_dynwind_t obj */
   
   sc->args = sc->NIL;
   sc->code = dw->in;
@@ -12090,14 +12126,14 @@ static s7_pointer g_catch(s7_scheme *sc, s7_pointer args)
 {
   #define H_catch "(catch tag thunk handler) evaluates thunk; if an error occurs that matches tag (#t matches all), the handler is called"
   s7_pointer p;
-  rcatch *c;
+  s7_catch_t *c;
 
   if (!is_procedure(cadr(args)))
     return(s7_wrong_type_arg_error(sc, "catch", 2, cadr(args), "a procedure"));
   if (!is_procedure(caddr(args)))
     return(s7_wrong_type_arg_error(sc, "catch", 3, caddr(args), "a procedure"));
   
-  c = (rcatch *)calloc(1, sizeof(rcatch));
+  c = (s7_catch_t *)calloc(1, sizeof(s7_catch_t));
   c->tag = car(args);
   c->goto_loc = sc->stack_top;
   c->handler = caddr(args);
@@ -13271,11 +13307,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
     case OP_DO: 
       /* setup is very similar to let */
-      if (!s7_is_list(sc, car(sc->code))) /* (do 123) */
-	return(eval_error(sc, "do var list is not a list: ~A", sc->code));
+      if (!s7_is_list(sc, car(sc->code)))      /* (do 123) */
+	return(eval_error(sc, "do: var list is not a list: ~A", sc->code));
 
-      if (!s7_is_list(sc, cadr(sc->code))) /* (do ((i 0)) 123) */
-	return(eval_error(sc, "do end-test and end-value list is not a list: ~A", sc->code));
+      if (!s7_is_list(sc, cadr(sc->code)))     /* (do ((i 0)) 123) */
+	return(eval_error(sc, "do: end-test and end-value list is not a list: ~A", sc->code));
 
       if (car(sc->code) == sc->NIL)            /* (do () ...) */
 	{
@@ -13299,13 +13335,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  /* here sc->code is a list like: ((i 0 (+ i 1)) ...)
 	   *   so cadar gets the init value
 	   */
-	  if (!(is_pair(car(sc->code))))
-	    return(eval_error(sc, "do var slot is empty? ~A", sc->code));
+	  if (!(is_pair(car(sc->code))))          /* (do (4) (= 3)) */
+	    return(eval_error(sc, "do: variable name missing? ~A", sc->code));
 
 	  if ((is_pair(cdar(sc->code))) &&
 	      (is_pair(cddar(sc->code))) && 
 	      (cdr(cddar(sc->code)) != sc->NIL))  /* (do ((i 0 1 (+ i 1))) ...) */
-	    return(eval_error(sc, "do var has extra stuff after the increment expression: ~A", sc->code));
+	    return(eval_error(sc, "do: variable info has extra stuff after the increment: ~A", sc->code));
 
 	  push_stack(sc, OP_DO_INIT, sc->args, cdr(sc->code));
 	  sc->code = cadar(sc->code);
@@ -13313,8 +13349,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  goto EVAL;
 	}
 
-      if (sc->code != sc->NIL)
-	return(eval_error(sc, "do var list is improper: ~A", sc->code));
+      if (sc->code != sc->NIL)                    /* (do ((i 0 i) . 1) ((= i 1))) */
+	return(eval_error(sc, "do: list of variables is improper: ~A", sc->code));
       
       /* all done */
       sc->args = safe_reverse_in_place(sc, sc->args);
@@ -13409,6 +13445,19 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	   *       (set! k (+ k i))))
 	   *
 	   *   is it 6 or 3?
+	   *
+	   * if we had a way to tell that there were no lambdas in the do expression, would that
+	   *   guarantee that set was ok?  Here's a bad case:
+	   *
+	   *   (let ((f #f))
+	   *     (do ((i 0 (+ i 1)))
+	   *         ((= i 3))
+	   *       (let () ; so that the define is ok
+	   *         (define (x) i)
+	   *         (if (= i 1) (set! f x))))
+	   *    (f))
+	   *
+	   * s7 says 3, guile says 1.
 	   */
 	  
 	  sc->value = sc->NIL;
@@ -13434,7 +13483,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_BEGIN:
       if (!is_pair(sc->code)) 
 	{
-	  if (sc->code != sc->NIL)
+	  if (sc->code != sc->NIL)            /* (begin . 1) */
 	    return(eval_error(sc, "unexpected dot at end of body?", sc->code));
 
 	  sc->value = sc->code;
@@ -13481,7 +13530,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if (is_macro(sc->value)) 
 	{    
 	  /* macro expansion */
-	  push_stack(sc, OP_DOMACRO, sc->NIL, sc->NIL);
+	  push_stack(sc, OP_EVAL_MACRO, sc->NIL, sc->NIL);
 	  sc->args = make_list_1(sc, sc->code);
 	  sc->code = sc->value;
 	  goto APPLY;
@@ -13797,7 +13846,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		
 	case T_CONTINUATION:	                  /* -------- continuation ("call-with-continuation") -------- */
 	  {
-	    continuation *c;
+	    s7_continuation_t *c;
 	    c = sc->code->object.cc;
 	    check_for_dynamic_winds(sc, c);
 	    sc->stack = copy_stack(sc, c->cc_stack, c->cc_stack_top);
@@ -13863,7 +13912,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       /* ---------------- end OP_APPLY ---------------- */
 
       
-    case OP_DOMACRO:    /* macro after args are gathered */
+    case OP_EVAL_MACRO:    /* macro after args are gathered */
       sc->code = sc->value;
       goto EVAL;
       
@@ -14083,7 +14132,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
     case OP_LET0:
       if ((!is_pair(sc->code)) ||
-	  (!is_pair(cdr(sc->code))))
+	  (!is_pair(cdr(sc->code))))          /* (let) */
 	return(eval_error(sc, "let syntax error: ~A", sc->code));
       
       sc->args = sc->NIL;
@@ -14142,7 +14191,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       
     case OP_LET_STAR0:
-      if (!is_pair(cdr(sc->code)))
+      if (!is_pair(cdr(sc->code)))           /* (let*) */
 	return(eval_error(sc, "let* syntax error: ~A", sc->code));
       
       if (car(sc->code) == sc->NIL) 
@@ -14192,7 +14241,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       
     case OP_LETREC0:
-      if (!is_pair(cdr(sc->code)))
+      if (!is_pair(cdr(sc->code)))               /* (letrec) */
 	return(eval_error(sc, "letrec syntax error: ~A", sc->code));
       
       /* get all local vars and set to #undefined
@@ -19307,13 +19356,13 @@ static s7_pointer g_set_precision(s7_scheme *sc, s7_pointer args)
 
 typedef struct {
   gmp_randstate_t state;
-} big_rng;
+} s7_big_rng_t;
 
 
 static char *print_big_rng(s7_scheme *sc, void *val)
 {
   char *buf;
-  big_rng *r = (big_rng *)val;
+  s7_big_rng_t *r = (s7_big_rng_t *)val;
   buf = (char *)malloc(64 * sizeof(char));
   snprintf(buf, 64, "#<big-rng %p>", r);
   return(buf);
@@ -19322,7 +19371,7 @@ static char *print_big_rng(s7_scheme *sc, void *val)
 
 static void free_big_rng(void *val)
 {
-  big_rng *r = (big_rng *)val;
+  s7_big_rng_t *r = (s7_big_rng_t *)val;
   gmp_randclear(r->state);
   free(r);
 }
@@ -19337,7 +19386,7 @@ static bool equal_big_rng(void *val1, void *val2)
 static s7_pointer make_big_random_state(s7_scheme *sc, s7_pointer args)
 {
   #define H_make_random_state "(make-random-state seed) returns a new random number state initialized with 'seed'"
-  big_rng *r;
+  s7_big_rng_t *r;
   s7_pointer seed;
 
   seed = car(args);
@@ -19346,7 +19395,7 @@ static s7_pointer make_big_random_state(s7_scheme *sc, s7_pointer args)
 
   if (is_object(seed))
     {
-      r = (big_rng *)calloc(1, sizeof(big_rng));
+      r = (s7_big_rng_t *)calloc(1, sizeof(s7_big_rng_t));
       gmp_randinit_default(r->state);
       gmp_randseed(r->state, S7_BIG_INTEGER(seed));
       return(s7_make_object(sc, big_rng_tag, (void *)r));
@@ -19379,7 +19428,7 @@ static s7_pointer big_random(s7_scheme *sc, s7_pointer args)
        *   promote num if bignum state was passed but num is not a bignum
        *   if num==0, just return 0 (above) since gmp otherwise throws an arithmetic exception
        */
-      big_rng *r = NULL;
+      s7_big_rng_t *r = NULL;
 
       if (state == sc->NIL)
 	{
@@ -19388,14 +19437,14 @@ static s7_pointer big_random(s7_scheme *sc, s7_pointer args)
 	  if (!sc->default_big_rng)
 	    {
 	      mpz_t seed;
-	      r = (big_rng *)calloc(1, sizeof(big_rng));
+	      r = (s7_big_rng_t *)calloc(1, sizeof(s7_big_rng_t));
 	      mpz_init_set_ui(seed, (unsigned int)time(NULL));
 	      gmp_randinit_default(r->state);
 	      gmp_randseed(r->state, seed);
 	      mpz_clear(seed);
 	      sc->default_big_rng = (void *)r;
 	    }
-	  else r = (big_rng *)(sc->default_big_rng);
+	  else r = (s7_big_rng_t *)(sc->default_big_rng);
 	}
       else
 	{
@@ -19420,7 +19469,7 @@ static s7_pointer big_random(s7_scheme *sc, s7_pointer args)
 		}
 	      return(g_random(sc, make_list_2(sc, num, state)));
 	    }
-	  r = (big_rng *)s7_object_value(state);
+	  r = (s7_big_rng_t *)s7_object_value(state);
 	}
 
       if (!is_object(num))
@@ -20263,7 +20312,7 @@ s7_scheme *s7_init(void)
 	       (cur-env (car envir)))\n\
 	  (if (and (not (vector? cur-env))\n\
 		   (not (null? cur-env))\n\
-		   ;; look for __func__ in 2nd entry, args then in 1st\n\
+		   ;; look for __func__ in 2nd entry, then args in 1st\n\
 		   (> (length envir) 2))\n\
 	      (let ((args (car envir))\n\
 		    (op (cadr envir)))\n\

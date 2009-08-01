@@ -2044,7 +2044,7 @@ static s7_pointer bignum_fft(s7_scheme *sc, s7_pointer args)
       mpfr_div_ui(angle, angle, 2, GMP_RNDN);   /* angle *= 0.5 */
       m <<= 1;
     }
-  return(s7_F(sc));
+  return(s7_f(sc));
 }
 
 #endif

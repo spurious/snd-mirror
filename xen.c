@@ -2443,10 +2443,10 @@ s7_scheme *s7_xen_initialize(s7_scheme *sc)
     }
   else s7 = sc;
 
-  xen_false = s7_F(s7);
-  xen_true = s7_T(s7);
-  xen_nil = s7_NIL(s7);
-  xen_undefined = s7_UNDEFINED(s7);
+  xen_false = s7_f(s7);
+  xen_true = s7_t(s7);
+  xen_nil = s7_nil(s7);
+  xen_undefined = s7_undefined(s7);
 
   ghook_tag = XEN_MAKE_OBJECT_TYPE("<hook>", print_hook, free_hook, equalp_hook, mark_hook, NULL, NULL);
 

@@ -14826,7 +14826,7 @@ static void open_output_file_s1(int *args, ptree *pt)
 
 static xen_value *open_output_file_1(ptree *prog, xen_value **args, int num_args)
 {
-  args[0] = make_xen_value(R_XEN, add_xen_to_ptree(prog, s7_NIL(s7)), R_VARIABLE);
+  args[0] = make_xen_value(R_XEN, add_xen_to_ptree(prog, s7_nil(s7)), R_VARIABLE);
   if (num_args == 1)
     add_triple_to_ptree(prog, va_make_triple(open_output_file_s1, "open_output_file_s1", 2, args[0], args[1]));
   else add_triple_to_ptree(prog, va_make_triple(open_output_file_s2, "open_output_file_s2", 3, args[0], args[1], args[2]));
@@ -14887,7 +14887,7 @@ static void current_output_port_x(int *args, ptree *pt)
 
 static xen_value *current_output_port_1(ptree *prog, xen_value **args, int num_args)
 {
-  args[0] = make_xen_value(R_XEN, add_xen_to_ptree(prog, s7_NIL(s7)), R_VARIABLE);
+  args[0] = make_xen_value(R_XEN, add_xen_to_ptree(prog, s7_nil(s7)), R_VARIABLE);
   add_triple_to_ptree(prog, va_make_triple(current_output_port_x, "current_output_port_x", 1, args[0]));
   return(args[0]);
 }
@@ -14900,7 +14900,7 @@ static void current_input_port_x(int *args, ptree *pt)
 
 static xen_value *current_input_port_1(ptree *prog, xen_value **args, int num_args)
 {
-  args[0] = make_xen_value(R_XEN, add_xen_to_ptree(prog, s7_NIL(s7)), R_VARIABLE);
+  args[0] = make_xen_value(R_XEN, add_xen_to_ptree(prog, s7_nil(s7)), R_VARIABLE);
   add_triple_to_ptree(prog, va_make_triple(current_input_port_x, "current_input_port_x", 1, args[0]));
   return(args[0]);
 }
@@ -14913,7 +14913,7 @@ static void current_error_port_x(int *args, ptree *pt)
 
 static xen_value *current_error_port_1(ptree *prog, xen_value **args, int num_args)
 {
-  args[0] = make_xen_value(R_XEN, add_xen_to_ptree(prog, s7_NIL(s7)), R_VARIABLE);
+  args[0] = make_xen_value(R_XEN, add_xen_to_ptree(prog, s7_nil(s7)), R_VARIABLE);
   add_triple_to_ptree(prog, va_make_triple(current_error_port_x, "current_error_port_x", 1, args[0]));
   return(args[0]);
 }

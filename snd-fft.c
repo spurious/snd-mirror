@@ -769,11 +769,18 @@ static double hypot(double r, double i) {return(sqrt(r * r + i * i));}
 #endif
 
 
-void fourier_spectrum(snd_fd *sf, mus_float_t *fft_data, mus_long_t fft_size_1, mus_long_t data_len_1, mus_float_t *window, chan_info *cp)
+static void big_fourier_spectrum(snd_fd *sf, mus_float_t *fft_data, mus_long_t fft_size, mus_long_t data_len, mus_float_t *window, chan_info *cp)
 {
-  int i, fft_size, data_len;
-  fft_size = (int)fft_size_1;
-  data_len = (int)data_len_1;
+  mus_long_t i;
+  mus_float_t *idata;
+
+  idata = (mus_float_t *)calloc(fft_size, sizeof(mus_float_t));
+  if (idata == NULL)
+    {
+      XEN_OUT_OF_RANGE_ERROR("fft", 1, C_TO_XEN_INT64_T(fft_size), "not enough memory for this fft size: ~A");
+      return;
+    }
+
   if (window)
     {
       for (i = 0; i < data_len; i++)
@@ -784,8 +791,53 @@ void fourier_spectrum(snd_fd *sf, mus_float_t *fft_data, mus_long_t fft_size_1, 
       for (i = 0; i < data_len; i++)
 	fft_data[i] = read_sample(sf);
     }
+
   if (data_len < fft_size) 
     memset((void *)(fft_data + data_len), 0, (fft_size - data_len) * sizeof(mus_float_t));
+
+  mus_big_fft(fft_data, idata, fft_size, 1);
+
+  if ((cp) && (cp->fft_with_phases))
+    {
+      for (i = 0; i < fft_size; i++)
+	{
+	  cp->fft->phases[i] = -atan2(idata[i], fft_data[i]);
+	  fft_data[i] = hypot(fft_data[i], idata[i]);
+	}
+    }
+  else
+    {
+      for (i = 0; i < fft_size; i++) 
+	fft_data[i] = hypot(fft_data[i], idata[i]);
+    }
+  free(idata);
+}
+
+
+void fourier_spectrum(snd_fd *sf, mus_float_t *fft_data, mus_long_t fft_size_1, mus_long_t data_len_1, mus_float_t *window, chan_info *cp)
+{
+  int i, fft_size, data_len;
+
+  if (fft_size_1 >= INT_MAX)
+    return(big_fourier_spectrum(sf, fft_data, fft_size_1, data_len_1, window, cp));
+
+  fft_size = (int)fft_size_1;
+  data_len = (int)data_len_1;
+
+  if (window)
+    {
+      for (i = 0; i < data_len; i++)
+	fft_data[i] = window[i] * read_sample(sf);
+    }
+  else
+    {
+      for (i = 0; i < data_len; i++)
+	fft_data[i] = read_sample(sf);
+    }
+
+  if (data_len < fft_size) 
+    memset((void *)(fft_data + data_len), 0, (fft_size - data_len) * sizeof(mus_float_t));
+
 #if HAVE_FFTW || HAVE_FFTW3
   {
     int j;
