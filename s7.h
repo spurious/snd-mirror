@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "1.24"
-#define S7_DATE "1-Aug-09"
+#define S7_VERSION "1.25"
+#define S7_DATE "3-Aug-09"
 
 
 typedef long long int s7_Int;
@@ -464,6 +464,7 @@ void s7_define_function(s7_scheme *sc, const char *name, s7_function fnc, int re
 void s7_define_function_star(s7_scheme *sc, const char *name, s7_function fnc, const char *arglist, const char *doc);
 s7_pointer s7_apply_function(s7_scheme *sc, s7_pointer fnc, s7_pointer args);
 s7_pointer s7_make_closure(s7_scheme *sc, s7_pointer c, s7_pointer e);
+void s7_define_macro(s7_scheme *sc, const char *name, s7_function fnc, int required_args, int optional_args, bool rest_arg, const char *doc);
 
   /* s7_make_function creates a scheme function object from the s7_function 'fnc'.
    *   Its name (for s7_describe_object) is 'name', it requires 'required_args' arguments,
@@ -485,6 +486,10 @@ s7_pointer s7_make_closure(s7_scheme *sc, s7_pointer c, s7_pointer e);
    *
    * s7_is_function returns true if its argument is a function defined in this manner.
    * s7_apply_function applies the function (the result of s7_make_function) to the arguments.
+   *
+   * s7_define_macro defines a scheme macro; its arguments are not evaluated (unlike a function),
+   *   but its returned value (assumed to be some sort of scheme expression) is evaluated.
+   *   See the example below.
    */
 
   /* In s7, (define* (name . args) body) or (define name (lambda* args body))
@@ -662,6 +667,7 @@ void s7_mark_object(s7_pointer p);
  *   redirect display/write output to a C procedure
  *   extend a built-in operator ("+" in this case)
  *   use C-side define* (s7_define_function_star)
+ *   use C-side define-macro (s7_define_macro)
  */
 
 
@@ -1360,12 +1366,69 @@ int main(int argc, char **argv)
 #endif
 
 
+/* --------------------------------------------------------------------------------
+ *
+ * an example of C-side define-macro (s7_define_macro)
+ */
+
+#if 0 
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+
+#include "s7.h"
+
+static s7_pointer plus(s7_scheme *sc, s7_pointer args)
+{
+  /* (define-macro (plus a b) `(+ ,a ,b)) */
+  s7_pointer a, b;
+  a = s7_car(args);
+  b = s7_car(s7_cdr(args));
+  return(s7_cons(sc, s7_make_symbol(sc, "+"),        /* we are forming the list `(+ ,a ,b) */
+	   s7_cons(sc, a,
+	     s7_cons(sc, b, s7_nil(sc)))));
+}
+
+int main(int argc, char **argv)
+{
+  s7_scheme *s7;
+  char buffer[512];
+  char response[1024];
+
+  s7 = s7_init();
+  s7_define_macro(s7, "plus", plus, 2, 0, false, "plus adds its two arguments");
+
+  while (1)
+    {
+      fprintf(stdout, "\n> ");
+      fgets(buffer, 512, stdin);
+
+      if ((buffer[0] != '\n') || 
+	  (strlen(buffer) > 1))
+	{                            
+	  sprintf(response, "(write %s)", buffer);
+	  s7_eval_c_string(s7, response);
+	}
+    }
+}
+
+/* 
+ * > (plus 2 3)
+ * 5
+ */
+
+#endif
+
+
+
 
 /* --------------------------------------------------------------------------------
  * 
  *        s7 changes
  *
  * 1-Aug:     lower-case versions of s7_T and friends.
+ *            s7_define_macro.
  * 31-Jul:    *error-hook*.
  * 30-Jul:    changed backtrace handling: removed backtrace stuff, added stacktrace.
  *            removed gc-verbose and load-verbose replaced by *load-hook*.

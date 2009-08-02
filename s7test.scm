@@ -39864,3 +39864,4 @@ expt error > 1e-6 around 2^-46.506993328423
 ;;;   (format #f "~40F" 100000000000000000000000000000000.0) -> "1.000E32"
 ;;; but:
 ;;;   (cos (bignum "1.0000000000000000000000000000000000e32")) gets the right answer, so who truncates?
+;;; I think this is a bug in mpfr
