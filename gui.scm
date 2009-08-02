@@ -1638,7 +1638,7 @@
 	    (g_signal_connect_closure_by_id (GPOINTER adj)
 					    (g_signal_lookup "value_changed" (G_OBJECT_TYPE (GTK_OBJECT adj))) 0
 					    (g_cclosure_new (lambda (w d) 
-							      (define val (1- (scale-linear->log low (.value (GTK_ADJUSTMENT adj)) high)))
+							      (define val (1- (scale-linear->log low (gtk_adjustment_get_value (GTK_ADJUSTMENT adj)) high)))
 							      (func val)
 							      (change-label label (get-slider-text val))
 							      )
@@ -1646,7 +1646,7 @@
 					    #f)
 	    (g_signal_connect_closure_by_id (GPOINTER adj)
 					    (g_signal_lookup "value_changed" (G_OBJECT_TYPE (GTK_OBJECT adj))) 0
-					    (g_cclosure_new (lambda (w d) (func (.value (GTK_ADJUSTMENT adj)))) #f #f)
+					    (g_cclosure_new (lambda (w d) (func (gtk_adjustment_get_value (GTK_ADJUSTMENT adj)))) #f #f)
 					    #f))
 	(set! slider adj))
       (let* ((mainform (if (isdialog? parent) (-> parent getbox1) parent))

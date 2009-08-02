@@ -7111,7 +7111,7 @@ old syntax: (not very nice)
                                                                ,*tar-nonatomic-heap-size*
                                                                ,*tar-max-mem-size*
                                                                ,(jack_client_real_time_priority (-> *rt-jack-engine* get-client))
-                                                               1.0f))))
+                                                               (cast <float> 1.0))))) ;; work-around for bug in guile.
   (set! *tar-is-started* #t))
 
 

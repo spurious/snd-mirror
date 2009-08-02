@@ -522,6 +522,10 @@ void s7_define_macro(s7_scheme *sc, const char *name, s7_function fnc, int requi
    *   are ordered correctly and have the specified defaults before calling the C function.
    *     s7_define_function_star(sc, "a-func", a_func, "arg1 (arg2 32)", "an example of C define*");
    *   Now (a-func :arg1 2) calls the C function a_func(2, 32). See the example program below.
+   *
+   * In s7 scheme, define* can be used just for its optional arguments feature, but that is
+   *   included in s7_define_function.  s7_define_function_star implements keyword arguments
+   *   for C-level functions (as well as optional/rest arguments).
    */
 
 s7_pointer s7_call(s7_scheme *sc, s7_pointer func, s7_pointer args);
@@ -1428,7 +1432,7 @@ int main(int argc, char **argv)
  *        s7 changes
  *
  * 1-Aug:     lower-case versions of s7_T and friends.
- *            s7_define_macro.
+ *            s7_define_macro. macroexpand.
  * 31-Jul:    *error-hook*.
  * 30-Jul:    changed backtrace handling: removed backtrace stuff, added stacktrace.
  *            removed gc-verbose and load-verbose replaced by *load-hook*.

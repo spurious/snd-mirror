@@ -78,7 +78,7 @@
  *          also for new-types -- would need length field and copy/fill
  *          (what about files? numbers? -- integer-length, bignum-precision etc)
  *        strings/lists should be (set-)applicable (*-ref|set! are ugly and pointless), hash-tables?
- *        defmacro* define-macro* macroexpand [just return macro result, no eval]
+ *        defmacro* define-macro*
  *
  *
  * Mike Scholz provided the FreeBSD support (complex trig funcs, etc)
@@ -10320,8 +10320,9 @@ static s7_pointer g_procedure_source(s7_scheme *sc, s7_pointer args)
   if (s7_is_symbol(car(args)))
     p = s7_symbol_value(sc, car(args));
   else p = car(args);
-  if (!is_procedure(p))
-    return(s7_wrong_type_arg_error(sc, "procedure-source", 0, p, "a procedure"));
+  if ((!is_procedure(p)) &&
+      (!is_macro(p)))
+    return(s7_wrong_type_arg_error(sc, "procedure-source", 0, p, "a procedure or a macro"));
 
   if (is_closure(p) || is_closure_star(p) || is_macro(p) || is_promise(p)) 
     return(s7_append(sc, 
@@ -10395,10 +10396,12 @@ const char *s7_procedure_documentation(s7_scheme *sc, s7_pointer x)
   if (s7_is_symbol(x))
     x = s7_symbol_value(sc, x); /* this is needed by Snd */
 
-  if (s7_is_function(x))
+  if ((s7_is_function(x)) ||
+      (is_c_macro(x)))
     return((char *)c_function_documentation(x));
   
-  if (((is_closure(x)) || (is_closure_star(x))) &&
+  if (((is_closure(x)) || 
+       (is_closure_star(x))) &&
       (s7_is_string(car(closure_body(x)))))
        return(s7_string(car(closure_body(x))));
   
@@ -12429,8 +12432,9 @@ static s7_pointer read_error(s7_scheme *sc, const char *errmsg)
   write_string(sc, msg, s7_current_error_port(sc)); /* make sure we complain ... */
   s7_newline(sc, s7_current_error_port(sc));
 
-  result = make_list_2(sc, 
+  result = make_list_3(sc, 
 		       s7_symbol_value(sc, sc->ERROR), 
+		       sc->ERROR, 
 		       s7_make_string_with_length(sc, msg, len));
 
   free(msg);
@@ -20338,6 +20342,9 @@ s7_scheme *s7_init(void)
                         (define (backtrace) #f)");
   s7_eval_c_string(sc, "(define (gc-verbose val) #f) \n\
                         (define (load-verbose val) #f)");
+
+  /* macroexpand */
+  s7_eval_c_string(sc, "(define-macro (macroexpand mac) `(,(procedure-source (car mac)) (append (list ',(car mac)) ',(cdr mac))))");
 
 
   /* stacktrace -- move this into C eventually */
