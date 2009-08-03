@@ -25,7 +25,8 @@
  *        ratios and complex numbers (and ints are 64-bit by default)
  *          optional multiprecision arithmetic for all numeric types and functions
  *        generalized set!, procedure-with-setter, applicable objects
- *        defmacro and define-macro, keywords, hash tables, block comments, define*
+ *        defmacro and define-macro
+ *        keywords, hash tables, block comments, define*
  *        error handling using error and catch
  *        in sndlib, the run macro works giving S7 a (somewhat limited) byte compiler
  *        no invidious distinction between built-in and "foreign"
@@ -71,13 +72,14 @@
  *        *features*, *load-path*, *vector-print-length*
  *        define-constant, pi, most-positive-fixnum, most-negative-fixnum, constant?
  *        symbol-calls if profiling is enabled
- *        stacktrace, trace and untrace, __func__
+ *        stacktrace, trace and untrace, __func__, macroexpand
+ *        strings are set-applicable (like vectors)
  *
  *   things I ought to add/change:
  *        length should work on vectors and strings [fill!, copy, reverse! null? find(-if) etc from CL? for-each|map over vectors?]
  *          also for new-types -- would need length field and copy/fill
  *          (what about files? numbers? -- integer-length, bignum-precision etc)
- *        strings/lists should be (set-)applicable (*-ref|set! are ugly and pointless), hash-tables?
+ *        lists should be (set-)applicable (*-ref|set! are ugly and pointless)
  *        defmacro* define-macro*
  *
  *
@@ -470,7 +472,7 @@ struct s7_scheme {
   s7_pointer LAMBDA, LAMBDA_STAR, QUOTE, QUASIQUOTE, UNQUOTE, UNQUOTE_SPLICING;        
   s7_pointer APPLY, VECTOR, CONS, APPEND, CDR, VECTOR_FUNCTION, VALUES, ELSE, SET;
   s7_pointer ERROR, WRONG_TYPE_ARG, OUT_OF_RANGE, FORMAT_ERROR, WRONG_NUMBER_OF_ARGS;
-  s7_pointer KEY_KEY, KEY_OPTIONAL, KEY_REST, __FUNC__, ERROR_HOOK;
+  s7_pointer KEY_KEY, KEY_OPTIONAL, KEY_REST, __FUNC__, ERROR_HOOK, STRING_SET;
   s7_pointer FEED_TO;                 /* => */
   s7_pointer OBJECT_SET;              /* applicable object set method */
 #if WITH_MULTIDIMENSIONAL_VECTORS
@@ -13628,7 +13630,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  sc->code = car(sc->args);
 
 	  if ((!is_procedure(sc->code)) &&
-	      (!s7_is_vector(sc->code)))
+	      (!s7_is_vector(sc->code)) &&
+	      (!s7_is_string(sc->code)))
 	    return(eval_error(sc, "attempt to apply ~A?\n", sc->code));
 	  
 	  sc->args = cdr(sc->args);
@@ -13950,6 +13953,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  goto START;
 #endif
 
+	case T_STRING:
+	  sc->value = g_string_ref(sc, make_list_2(sc, sc->code, car(sc->args)));
+	  pop_stack(sc);
+	  goto START;
+
 	default:
 	  return(eval_error(sc, "~A: apply of non-function?", sc->code));
 	}
@@ -14127,7 +14135,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		}
 	      else
 #endif
-	      return(eval_error(sc, "no generalized set for ~A", caar(sc->code)));
+		{
+		  if (type(sc->x) == T_STRING)
+		    {
+		      sc->code = s7_cons(sc, sc->STRING_SET, s7_append(sc, car(sc->code), cdr(sc->code))); 
+		    }
+		  else  return(eval_error(sc, "no generalized set for ~A", caar(sc->code)));
+		}
 	    }
 	}
       else 
@@ -19953,6 +19967,7 @@ s7_scheme *s7_init(void)
   sc->SET = s7_make_symbol(sc, "set!");
   typeflag(sc->SET) |= T_DONT_COPY; 
 
+
   s7_define_function(sc, "gensym",                  g_gensym,                  0, 1, false, H_gensym);
   s7_define_function(sc, "symbol-table",            g_symbol_table,            0, 0, false, H_symbol_table);
   s7_define_function(sc, "symbol?",                 g_is_symbol,               1, 0, false, H_is_symbol);
@@ -20308,6 +20323,9 @@ s7_scheme *s7_init(void)
   g_provide(sc, make_list_1(sc, s7_make_symbol(sc, "multidimensional-vectors")));
 #endif
 
+  sc->STRING_SET = s7_symbol_value(sc, s7_make_symbol(sc, "string-set!"));
+  typeflag(sc->STRING_SET) |= T_DONT_COPY; 
+
   {
     int top;
     top = sizeof(s7_Int);
@@ -20326,6 +20344,7 @@ s7_scheme *s7_init(void)
   }
 
   (*(sc->gc_off)) = false;
+
   s7_eval_c_string(sc, "(macro quasiquote (lambda (l) (_quasiquote_ 0 (cadr l))))");
   typeflag(sc->QUASIQUOTE) |= T_IMMUTABLE;
 
@@ -20387,3 +20406,4 @@ s7_scheme *s7_init(void)
 
 /* unicode is probably do-able if it is sequestered in the s7 strings 
  */
+  

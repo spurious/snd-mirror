@@ -17,7 +17,7 @@
 ;;;   the arprec package of David Bailey et al
 ;;;   Maxima, William Schelter et al
 ;;;   H Cohen, "A Course in Computational Algebraic Number Theory"
-;;;   various mailing lists
+;;;   various mailing lists and websites (see individual cases below)
 
 
 (define with-bignums (provided? 'gmp))                         ; scheme integer has any number of bits
@@ -4671,6 +4671,15 @@
 	x)
       3)
 
+(test (let ((x 0)
+	    (xx 0))
+	(let ((cont #f))
+	  (call/cc (lambda (c) (set! xx x) (set! cont c)))
+	  (set! x (+ x 1))
+	  (if (< x 3)	(cont))
+	  xx))
+      0)
+
 (test (call/cc procedure?) #t)
 (test (procedure? (call/cc (lambda (a) a))) #t)
 
@@ -5065,6 +5074,15 @@
 (if with-delay
     (begin
 
+      (test (let ((count 0))
+	      (let ((p1 (delay (* 2 3 (let () (set! count (+ count 1)) count)))))
+		(let ((val1 (force p1))
+		      (val2 (force p1))
+		      (val3 (force p1)))
+		  (and (= val1 val2 val3 6)
+		       (= count 1)))))
+	    #t)
+
       (test (let ((stream-car (lambda (s) (car (force s))))
 		  (stream-cdr (lambda (s) (cdr (force s))))
 		  (counters (let next ((n 1)) (delay (cons n (next (+ n 1)))))))
@@ -5191,11 +5209,77 @@
 	 (test (force (delay arg)) arg))
        (list "hi" -1 #\a 1 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i #t (list 1 2 3) '(1 . 2)))
 
+      (test
+       (let ()
+	 ;; j bartlett
+	 
+	 (define (square x) (* x x))
+	 
+	 (define (calculate-statistics-1 the-series)
+	   (let* ((size (length the-series))
+		  (sum (apply + the-series))
+		  (mean (/ sum size))
+		  (variance (let* ((variance-list (map (lambda (x) (square (- x mean))) the-series)))
+			      (/ (apply + variance-list) size)))
+		  (standard-deviation (sqrt variance)))
+	     (vector mean variance standard-deviation)))
+	 
+	 (define (calculate-statistics the-series)
+	   (let* ((size (delay (length the-series)))
+		  (mean (delay (/ (apply + the-series) (force size))))
+		  (variance (delay (let* ((variance-list (map (lambda (x) (square (- x (force mean)))) the-series)))
+				     (/ (apply + variance-list) (force size)))))
+		  (standard-deviation (delay (sqrt (force variance)))))
+	     (vector mean variance standard-deviation)))
+	 
+	 (let* ((stats1 (calculate-statistics-1 '(2 6 4 3 7 4 3 6 7 8 43 4 3 2 36 75 3)))
+		(stats (calculate-statistics '(2 6 4 3 7 4 3 6 7 8 43 4 3 2 36 75 3)))
+		(mean (force (vector-ref stats 0)))
+		(variance (force (vector-ref stats 1)))
+		(stddev (force (vector-ref stats 2))))
+	   (and (equal? (vector-ref stats1 0) mean)
+		(equal? (vector-ref stats1 1) variance)
+		(< (abs (- (vector-ref stats1 2) stddev)) 1.0e-6))))
+       #t)
+
+      (test 
+       (let ()
+	 ;; j bartlett
+	 (define (flatten x)
+	   (define (does-flatten x)
+	     (if (not (pair? x)) x
+		 (cond
+		  ((null? (car x)) (does-flatten (cdr x)))
+		  ((not (pair? (car x)))
+		   (cons (car x) (delay (does-flatten (cdr x)))))
+		  (else
+		   (does-flatten
+		    (cons (caar x) (cons (cdar x) (cdr x))))))))
+	   (delay (does-flatten x)))
+	 
+	 (let ((lst '((1 2) 3 ((4) 5)))
+	       (newlst '()))
+	   (do ((i 0 (+ i 1))
+		(p (force (flatten lst)) (force (cdr p))))
+	       ((= i 5) (reverse newlst))
+	     (set! newlst (cons (car p) newlst)))))
+       (list 1 2 3 4 5))
+
+      
       ))
 
 
 (if with-delay-named-make-promise
     (begin
+
+      (test (let ((count 0))
+	      (let ((p1 (make-promise (* 2 3 (let () (set! count (+ count 1)) count)))))
+		(let ((val1 (force p1))
+		      (val2 (force p1))
+		      (val3 (force p1)))
+		  (and (= val1 val2 val3 6)
+		       (= count 1)))))
+	    #t)
 
       (test (let ((stream-car (lambda (s) (car (force s))))
 		  (stream-cdr (lambda (s) (cdr (force s))))
@@ -5323,10 +5407,66 @@
 	 (test (force (make-promise arg)) arg))
        (list "hi" -1 #\a 1 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i #t (list 1 2 3) '(1 . 2)))
 
+      (test
+       (let ()
+	 
+	 (define (square x) (* x x))
+	 
+	 (define (calculate-statistics-1 the-series)
+	   (let* ((size (length the-series))
+		  (sum (apply + the-series))
+		  (mean (/ sum size))
+		  (variance (let* ((variance-list (map (lambda (x) (square (- x mean))) the-series)))
+			      (/ (apply + variance-list) size)))
+		  (standard-deviation (sqrt variance)))
+	     (vector mean variance standard-deviation)))
+	 
+	 (define (calculate-statistics the-series)
+	   (let* ((size (make-promise (length the-series)))
+		  (mean (make-promise (/ (apply + the-series) (force size))))
+		  (variance (make-promise (let* ((variance-list (map (lambda (x) (square (- x (force mean)))) the-series)))
+					    (/ (apply + variance-list) (force size)))))
+		  (standard-deviation (make-promise (sqrt (force variance)))))
+	     (vector mean variance standard-deviation)))
+	 
+	 (let* ((stats1 (calculate-statistics-1 '(2 6 4 3 7 4 3 6 7 8 43 4 3 2 36 75 3)))
+		(stats (calculate-statistics '(2 6 4 3 7 4 3 6 7 8 43 4 3 2 36 75 3)))
+		(mean (force (vector-ref stats 0)))
+		(variance (force (vector-ref stats 1)))
+		(stddev (force (vector-ref stats 2))))
+	   (and (equal? (vector-ref stats1 0) mean)
+		(equal? (vector-ref stats1 1) variance)
+		(< (abs (- (vector-ref stats1 2) stddev)) 1.0e-6))))
+       #t)
+
+      (test 
+       (let ()
+
+	 (define (flatten x)
+	   (define (does-flatten x)
+	     (if (not (pair? x)) x
+		 (cond
+		  ((null? (car x)) (does-flatten (cdr x)))
+		  ((not (pair? (car x)))
+		   (cons (car x) (make-promise (does-flatten (cdr x)))))
+		  (else
+		   (does-flatten
+		    (cons (caar x) (cons (cdar x) (cdr x))))))))
+	   (make-promise (does-flatten x)))
+	 
+	 (let ((lst '((1 2) 3 ((4) 5)))
+	       (newlst '()))
+	   (do ((i 0 (+ i 1))
+		(p (force (flatten lst)) (force (cdr p))))
+	       ((= i 5) (reverse newlst))
+	     (set! newlst (cons (car p) newlst)))))
+       (list 1 2 3 4 5))
+       
+       
       ))
-
-
-
+    
+    
+    
 ;;; -------- quasiquote --------
 
 (test `(1 2 3) '(1 2 3))
@@ -35926,7 +36066,7 @@
       (for-each
        (lambda (arg)
 	 (test (apply arg '(1)) 'error))
-       (list "hi" -1 #\a 1 'a-symbol 3.14 3/4 1.0+1.0i #t (list 1 2 3) '(1 . 2)))
+       (list -1 #\a 1 'a-symbol 3.14 3/4 1.0+1.0i #t (list 1 2 3) '(1 . 2))) ; "hi" works here because it is applicable in s7
       
       (test (let ((x (list 1 2))) (set-cdr! x x) (apply + x)) 'error)
       (test (apply + '(1 2 . 3)) 'error)

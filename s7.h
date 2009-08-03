@@ -1433,6 +1433,7 @@ int main(int argc, char **argv)
  *
  * 1-Aug:     lower-case versions of s7_T and friends.
  *            s7_define_macro. macroexpand.
+ *            strings are set-applicable (like vectors).
  * 31-Jul:    *error-hook*.
  * 30-Jul:    changed backtrace handling: removed backtrace stuff, added stacktrace.
  *            removed gc-verbose and load-verbose replaced by *load-hook*.
