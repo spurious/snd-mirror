@@ -199,6 +199,12 @@
    */
 #endif
 
+#ifndef WITH_ENCAPSULATION
+  #define WITH_ENCAPSULATION 0
+/* an experiment */
+/* valgrind timing tests indicate this adds less than .01% in non-encap cases (i.e. 2 of 31000) */
+#endif
+
 
 
 /* -------------------------------------------------------------------------------- */
@@ -294,6 +300,9 @@ typedef enum {OP_READ_INTERNAL, OP_EVAL, OP_EVAL_ARGS0, OP_EVAL_ARGS1, OP_APPLY,
 	      OP_DEFINE_STAR, OP_LAMBDA_STAR, OP_ERROR_QUIT, OP_UNWIND_INPUT, OP_UNWIND_OUTPUT, 
 	      OP_TRACE_RETURN, OP_ERROR_HOOK_QUIT,
 	      OP_MAX_DEFINED} opcode_t;
+
+#define NUM_SMALL_INTS 256
+/* this needs to be at least OP_MAX_DEFINED */
 
 typedef enum {TOKEN_EOF, TOKEN_LEFT_PAREN, TOKEN_RIGHT_PAREN, TOKEN_DOT, TOKEN_ATOM, TOKEN_QUOTE, TOKEN_DOUBLE_QUOTE, 
 	      TOKEN_BACK_QUOTE, TOKEN_COMMA, TOKEN_AT_MARK, TOKEN_SHARP_CONST, TOKEN_VECTOR} token_t;
@@ -488,6 +497,10 @@ struct s7_scheme {
   bool *gc_off;                       /* if true, the GC won't run */
   bool *tracing;                      /* if tracing, each function on the *trace* list prints its args upon application */
   long *gensym_counter;
+
+#if WITH_ENCAPSULATION
+  bool *encapsulating;
+#endif
   
   #define INITIAL_STRBUF_SIZE 1024
   int strbuf_size;
@@ -583,6 +596,11 @@ struct s7_scheme {
  *   the size increase is more important.
  */
 
+#if WITH_ENCAPSULATION
+#define T_SETTER                      (1 << (TYPE_BITS + 5))
+#define is_setter(p)                  ((typeflag(p) & T_SETTER) != 0)
+#endif
+
 #define T_OBJECT                      (1 << (TYPE_BITS + 6))
 
 #define T_FINALIZABLE                 (1 << (TYPE_BITS + 7))
@@ -605,7 +623,7 @@ struct s7_scheme {
 #define is_eternal(p)                 ((typeflag(p) & T_ETERNAL) != 0)
 /* an eternal object is a cons whose "line_number" is actually the global environment vector location (i.e. a symbol table entry) */
 
-#define UNUSED_BITS                   (0xf0000000 | (1 << (TYPE_BITS + 5)))
+#define UNUSED_BITS                   0xf0000000
 
 #if HAVE_PTHREADS
 #define set_type(p, f)                typeflag(p) = ((typeflag(p) & T_GC_MARK) | (f) | T_OBJECT)
@@ -732,6 +750,9 @@ struct s7_scheme {
 #define is_c_object(p)                (type(p) == T_C_OBJECT)
 #define c_object_type(p)              p->object.fobj.type
 
+#if WITH_ENCAPSULATION
+#define is_encapsulating(Sc)          (*((Sc)->encapsulating))
+#endif
 
 #define NUM_INT      0
 #define NUM_RATIO    1
@@ -1754,7 +1775,7 @@ static s7_pointer g_symbol_calls(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer new_frame_in_env(s7_scheme *sc, s7_pointer old_env) 
 { 
-  return(s7_immutable_cons(sc, sc->NIL, old_env));
+  return(s7_cons(sc, sc->NIL, old_env));
 } 
 
 
@@ -1764,7 +1785,7 @@ static s7_pointer add_to_environment(s7_scheme *sc, s7_pointer env, s7_pointer v
   slot = s7_immutable_cons(sc, variable, value); 
   if (s7_is_vector(car(env))) 
     vector_element(car(env), symbol_location(variable)) = s7_immutable_cons(sc, slot, vector_element(car(env), symbol_location(variable)));
-  else car(env) = s7_immutable_cons(sc, slot, car(env));
+  else car(env) = s7_cons(sc, slot, car(env));
   return(slot);
 } 
 
@@ -2855,7 +2876,7 @@ static s7_num_t make_complex(s7_Double rl, s7_Double im)
 s7_pointer s7_make_integer(s7_scheme *sc, s7_Int n) 
 {
   s7_pointer x;
-  if ((n >= 0) && (n < OP_MAX_DEFINED))
+  if ((n >= 0) && (n < NUM_SMALL_INTS))
     return(small_int(sc, n));
   /* there are ca 6300 -1's in s7test (14500 small negative ints) -- if like sc->real_zero (64000), this would gain us .2% overall speed */
 
@@ -6297,12 +6318,16 @@ static s7_pointer g_integer_to_char(s7_scheme *sc, s7_pointer args)
 {
   #define H_integer_to_char "(integer->char i) converts the non-negative integer i to a character"
   s7_pointer x;
+  int ind;
   x = car(args);
-  if ((!s7_is_integer(x)) || 
-      (s7_integer(x) < 0) ||
-      (s7_integer(x) > 255))
+
+  if (!s7_is_integer(x))
+    return(s7_wrong_type_arg_error(sc, "integer->char", 0, x, "an integer"));
+  ind = s7_integer(x);
+  if ((ind < 0) || (ind > 255))
     return(s7_wrong_type_arg_error(sc, "integer->char", 0, x, "an integer between 0 and 255"));
-  return(s7_make_character(sc, (char)s7_integer(x)));
+
+  return(s7_make_character(sc, (char)ind));
 }
 
 
@@ -6633,18 +6658,24 @@ static s7_pointer g_string_ref(s7_scheme *sc, s7_pointer args)
   
   s7_pointer index;
   char *str;
+  int ind;
+
   index = cadr(args);
   
   if (!s7_is_string(car(args)))
     return(s7_wrong_type_arg_error(sc, "string-ref", 1, car(args), "a string"));
-  
-  if ((!s7_is_integer(index)) || (s7_integer(index) < 0))
+  if (!s7_is_integer(index))
+    return(s7_wrong_type_arg_error(sc, "string-ref", 2, index, "an integer"));
+
+  ind = s7_integer(index);
+
+  if (ind < 0)
     return(s7_wrong_type_arg_error(sc, "string-ref", 2, index, "a non-negative integer"));
-  if (s7_integer(index) >= string_length(car(args)))
+  if (ind >= string_length(car(args)))
     return(s7_out_of_range_error(sc, "string-ref", 2, index, "less than string length"));
   
   str = string_value(car(args));
-  return(s7_make_character(sc, ((unsigned char *)str)[s7_integer(index)]));
+  return(s7_make_character(sc, ((unsigned char *)str)[ind]));
 }
 
 
@@ -6654,6 +6685,7 @@ static s7_pointer g_string_set(s7_scheme *sc, s7_pointer args)
   
   s7_pointer x, index;
   char *str;
+  int ind;
 
   x = car(args);
   index = cadr(args);
@@ -6662,14 +6694,17 @@ static s7_pointer g_string_set(s7_scheme *sc, s7_pointer args)
     return(s7_wrong_type_arg_error(sc, "string-set!", 1, x, "a string"));
   if (!s7_is_character(caddr(args)))
     return(s7_wrong_type_arg_error(sc, "string-set!", 3, caddr(args), "a character"));
-  
-  if ((!s7_is_integer(index)) || (s7_integer(index) < 0))
-    return(s7_wrong_type_arg_error(sc, "string-set!", 2, index, "a non-negative integer"));
-  if (s7_integer(index) >= string_length(x))
-    return(s7_out_of_range_error(sc, "string-set!", 2, index, "less than string length"));
-  
   if (s7_is_immutable(x))
     return(s7_wrong_type_arg_error(sc, "string-set!", 1, x, "a mutable string"));
+  if (!s7_is_integer(index))
+    return(s7_wrong_type_arg_error(sc, "string-set!", 2, index, "an integer"));
+
+  ind = s7_integer(index);
+
+  if (ind < 0)
+    return(s7_wrong_type_arg_error(sc, "string-set!", 2, index, "a non-negative integer"));
+  if (ind >= string_length(x))
+    return(s7_out_of_range_error(sc, "string-set!", 2, index, "less than string length"));
   
   /* I believe this does not need a lock in the multithread case -- local vars are specific
    *   to each thread, and it should be obvious to anyone writing such code that a global
@@ -6677,7 +6712,7 @@ static s7_pointer g_string_set(s7_scheme *sc, s7_pointer args)
    *   caller's (scheme) variables.
    */
   str = string_value(x);
-  str[s7_integer(index)] = (char)s7_character(caddr(args));
+  str[ind] = (char)s7_character(caddr(args));
   return(x);
 }
 
@@ -9732,6 +9767,7 @@ static s7_pointer g_vector_fill(s7_scheme *sc, s7_pointer args)
   #define H_vector_fill "(vector-fill! v val) sets all elements of the vector v to val"
   if (!s7_is_vector(car(args)))
     return(s7_wrong_type_arg_error(sc, "vector-fill!", 1, car(args), "a vector"));
+
   s7_vector_fill(sc, car(args), cadr(args));
   return(sc->UNSPECIFIED);
 }
@@ -12495,6 +12531,7 @@ static s7_pointer missing_close_paren_error(s7_scheme *sc)
 static s7_pointer g_quit(s7_scheme *sc, s7_pointer args)
 {
   #define H_quit "(quit) returns from the evaluator"
+
   push_stack(sc, OP_QUIT, sc->NIL, sc->NIL);
   return(sc->NIL);
 }
@@ -13671,6 +13708,17 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 					  s7_make_string_with_length(sc, "~A: too many arguments: ~A", 26),
 					  sc->code, sc->args)));
 
+#if WITH_ENCAPSULATION
+	    /* this is 99% of the encapsulation cost when not using that feature --
+	     *   perhaps T_C_SET_FUNCTION? that slows down is_c_function which isn't actually used currently
+	     */
+
+	    if ((is_encapsulating(sc)) &&
+		(is_setter(sc->code)))
+	      {
+		fprintf(stderr, "encap apply");
+	      }
+#endif
 	    sc->value = c_function_call(sc->code)(sc, sc->args);
 	    
 	    if (sc->stack_top != 0)
@@ -14083,8 +14131,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       /* if we're defining a function, add its symbol to the new function's environment under the name __func__ */
       if ((is_closure(sc->value)) || 
 	  (is_closure_star(sc->value)))
-	closure_environment(sc->value) = s7_immutable_cons(sc, 
-					   s7_immutable_cons(sc, 
+	closure_environment(sc->value) = s7_cons(sc, 
+					   s7_cons(sc, 
 					     s7_immutable_cons(sc, sc->__FUNC__, sc->code), 
                                              sc->NIL), 
 					   closure_environment(sc->value));
@@ -14120,6 +14168,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      goto EVAL;
 	    }
 	  
+#if WITH_ENCAPSULATION
+	  if (is_encapsulating(sc))
+	    {
+	      fprintf(stderr, "encap generalized set");
+	    }
+#endif
 	  sc->x = s7_symbol_value(sc, caar(sc->code));
 	  if ((is_c_object(sc->x)) &&
 	      (object_set_function(sc->x)))
@@ -14155,7 +14209,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto EVAL;
       
       
-    case OP_SET1:      
+    case OP_SET1:     
+#if WITH_ENCAPSULATION
+      if (is_encapsulating(sc))
+	{
+	  fprintf(stderr, "encap op set1");
+	}
+#endif
       sc->y = s7_find_symbol_in_environment(sc, sc->envir, sc->code, true);
       if (sc->y != sc->NIL) 
 	{
@@ -19831,6 +19891,10 @@ s7_scheme *s7_init(void)
   sc->gensym_counter = (long *)calloc(1, sizeof(long));
   sc->tracing = (bool *)calloc(1, sizeof(bool));
 
+#if WITH_ENCAPSULATION
+  sc->encapsulating = (bool *)calloc(1, sizeof(bool));
+#endif
+
   sc->trace_list = (s7_pointer *)calloc(INITIAL_TRACE_LIST_SIZE, sizeof(s7_pointer));
   sc->trace_list_size = INITIAL_TRACE_LIST_SIZE;
   sc->trace_top = 0;
@@ -19846,8 +19910,8 @@ s7_scheme *s7_init(void)
   sc->envir = sc->global_env;
   
   /* keep the small_ints out of the heap */
-  sc->small_ints = (s7_pointer *)malloc((OP_MAX_DEFINED + 1) * sizeof(s7_pointer));
-  for (i = 0; i <= OP_MAX_DEFINED; i++) 
+  sc->small_ints = (s7_pointer *)malloc((NUM_SMALL_INTS + 1) * sizeof(s7_pointer));
+  for (i = 0; i <= NUM_SMALL_INTS; i++) 
     {
       s7_pointer p;
       p = (s7_pointer)calloc(1, sizeof(s7_cell));
@@ -20365,7 +20429,6 @@ s7_scheme *s7_init(void)
   /* macroexpand */
   s7_eval_c_string(sc, "(define-macro (macroexpand mac) `(,(procedure-source (car mac)) (append (list ',(car mac)) ',(cdr mac))))");
 
-
   /* stacktrace -- move this into C eventually */
   s7_eval_c_string(sc, "                                                                       \n\
 (define* (stacktrace cont)                                                                     \n\
@@ -20407,3 +20470,44 @@ s7_scheme *s7_init(void)
 /* unicode is probably do-able if it is sequestered in the s7 strings 
  */
   
+/* encapsulate:
+
+   open-encapsulator, close-encapsulator, (obj) to reset, here's an encapsulate macro:
+ 
+   (define-macro (encapsulate . body) 
+      (let ((encap (gensym)))
+        `(let ((,encap (open-encapsulator)))
+           (dynamic-wind
+              (lambda () 
+	        #f)
+              (lambda () 
+	        ,@body)
+              (lambda () 
+	        (,encap) 
+                (close-encapsulator ,encap))))))
+ 
+    We want to run some code,  then return variables global to that code to their prior state.
+    We might simpy coply the entire current environment, but that is slow (there are easily 
+    10000 variables in Snd), and requires huge amounts of space (vectors need to be copied 
+    for example), and usually in such a situation, only one or two variables actually need to 
+    be restored.  My first thought was fluid-let, but "fluid-let" is a bad name; it is not a 
+    "let" because it uses set! rather than making a new binding, and what is "fluid" about it?  
+    It's also a bad idea because it puts a dumb bookkeeping burden on the programmer -- he has 
+    to maintain a list of the variables he wants to protect -- that's asking for bugs!  Finally, 
+    it's restricted to protecting the body of the not-really-a-let, but in a REPL, for example, 
+    you'd want to return to a known state without being in any obvious let form.  That is, we
+    actually want a sort of data-side call/cc. In this system (open|close-encapsulator, to be
+    able to return to a given (data) state, open an encapsulator, then later call it to restore 
+    all variables global to that object.  close-encapsulator says I'm done with it -- the
+    normal case is that calling the object restores all its stored values, then (if not closed)
+    it starts saving values again -- this way we can repeatedly return to a clean state without
+    opening a new encapsulator every time.
+
+    notes...
+    set! string-set! list-set! vector-set! vector-fill! generalized-set! string-fill! (reverse! sort! set-car!) [*load-path* et al]
+    if in encap, keep alist with old values if not member current-env and not already member saved-values
+    pop out of encap, restore all.  
+    nesting is a problem, as are cleanups upon errors etc (GC), maybe handled like trace-return
+    threads are a problem! -- each needs its own such stack, but we'll get crosstalk.
+    also what about stuff like vct-set, also the sets above as funcs are too late -- we need the symbol
+ */

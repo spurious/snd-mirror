@@ -170,6 +170,36 @@ writing one period later[1]: bus[n]=v
 
 
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;; Garbage collector ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define *tar-is-started* (defined? '*tar-is-started*))
+
+(define (start-rollendurchmesserzeitsammler client)
+  (when (not *tar-is-started*)
+    (primitive-eval `(eval-c (<-> "-I" snd-header-files-path)
+			     "#include <rt-various.h>"
+			     (run-now
+			      (init_rollendurchmesserzeitsammler ,*tar-atomic-heap-size*
+								 ,*tar-nonatomic-heap-size*
+								 ,*tar-max-mem-size*
+								 ,(jack_client_real_time_priority client)
+								 (cast <float> 1.0)))))
+    (set! *tar-is-started* #t)))
+
+(eval-c ""
+	(proto->public "void tar_bench_print(tar_heap_t *heap)")
+	(proto->public "void tar_touch_heaps(tar_heap_t *heap)")
+	)
+
+
+
+
+
+
 
 
 
@@ -421,6 +451,8 @@ size_t jack_ringbuffer_write_space(const jack_ringbuffer_t *rb);
 		  (begin
 		    (c-display "Could not create jack client with name \"" name "\".")
 		    (return #f)))
+
+	      (start-rollendurchmesserzeitsammler client)
 
 	      (set! *rt-block-size* (jack_get_buffer_size client))
 

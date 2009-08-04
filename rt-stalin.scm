@@ -4119,6 +4119,7 @@ had to be put into macroexpand instead.
            (run-now
             (fprintf stderr (string "new heap start\\n"))
             (set! heap (tar_create_heap))
+	    (scm_gc_register_collectable_memory heap ,(+ (* *tar-nonatomic-heap-size* 2) (* *tar-max-mem-size* 4)) (string "rollendurch/stalin heap"))
             (fprintf stderr (string "new heap end\\n"))
             
             (if (== 0 (tar_get_dynamic_roots_for (cast <char*> &heap) &start_dyn &end_dyn))
@@ -4316,9 +4317,11 @@ had to be put into macroexpand instead.
                                        (when (== 1 do_I_free_questionmark)
                                          (fprintf stderr (string "Hepp, freeing stalin\\n"))
                                          (co_delete dsp_coroutine)
-                                         (if (> rt_engine->num_procfuncs 0)
-                                             (tar_delete_heap heap true)
-                                             (tar_delete_heap heap false))
+					 (scm_gc_unregister_collectable_memory heap ,(+ (* *tar-nonatomic-heap-size* 2) (* *tar-max-mem-size* 4)) (string "rollendurch/stalin heap"))
+					 (tar_delete_heap heap true) ;; tar_init_block is always called
+                                         ;;(if (> rt_engine->num_procfuncs 0)
+                                         ;;    (tar_delete_heap heap true)
+                                         ;;    (tar_delete_heap heap false))
                                          (free sounddata)
                                          )))
            

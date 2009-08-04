@@ -400,6 +400,20 @@ s7_pointer s7_current_environment(s7_scheme *sc);                           /* (
 	         (apropos-1 frame)))
            (current-environment)))
    *
+   * It's also possible to change the current environment by hand:
+   *
+   *   (define (extend-environment e binding)
+   *     (if (vector? (car e))
+   *         (begin
+   *           (set-cdr! e (list (car e)))
+   *           (set-car! e (list binding)))
+   *         (set-car! e (cons binding (car e)))))
+   *
+   *   (let ((x 3)) 
+   *     (extend-environment (current-environment) (cons 'hi 21)) 
+   *     (+ x hi))
+   *
+   * which returns 24, but I don't recommend this sort of thing!
    */
 
 s7_pointer s7_name_to_value(s7_scheme *sc, const char *name);

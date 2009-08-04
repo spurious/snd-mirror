@@ -1738,7 +1738,7 @@ int fgetc (FILE
 
 ;;;;;;;;;;;;;;;;;; Cache
 
-(define eval-c-generation 8) ;;Cached code with different generation can not be used, and file is automatically deleted.
+(define eval-c-generation 9) ;;Cached code with different generation can not be used, and file is automatically deleted.
 
 (define eval-c-cache-dir (<-> (getenv "HOME") "/snd-eval-c-cache"))
 
@@ -1772,7 +1772,7 @@ int fgetc (FILE
 		      (lambda x
 			(set! itsokey #f)
 			(c-display x)
-			(c-display "Suspicious cached file detected:" filename "(you should probably delete this one)")))
+			(c-display "Suspicious cached file detected:" filename "(this file should be deleted)")))
 	       (if itsokey
 		   (if (or (not (string=? (cadr eval-c-cached-code) (snd-version)))
 			   (not (string=? (caddr eval-c-cached-code) (version)))

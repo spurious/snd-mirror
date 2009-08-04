@@ -7095,25 +7095,6 @@ old syntax: (not very nice)
 
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;; Garbage collector ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(define *tar-is-started* (defined? '*tar-is-started*))
-
-(when (not *tar-is-started*)
-  (primitive-eval `(eval-c (<-> "-I" snd-header-files-path)
-                           "#include <rt-various.h>"
-                           (run-now
-                            (init_rollendurchmesserzeitsammler ,*tar-atomic-heap-size*
-                                                               ,*tar-nonatomic-heap-size*
-                                                               ,*tar-max-mem-size*
-                                                               ,(jack_client_real_time_priority (-> *rt-jack-engine* get-client))
-                                                               (cast <float> 1.0))))) ;; work-around for bug in guile.
-  (set! *tar-is-started* #t))
-
 
 
 
@@ -8579,19 +8560,19 @@ old syntax: (not very nice)
 			   publicargs)))
 
 	  ;;(c-display "busnames" busnames)
-	  (rt-print "publicargs" publicargs)
-	  (rt-print "orgargs" orgargs)
-	  (rt-print "mainfuncargs" mainfuncargs)
+	  ;;(rt-print "publicargs" publicargs)
+	  ;;(rt-print "orgargs" orgargs)
+	  ;;(rt-print "mainfuncargs" mainfuncargs)
 	  ;;(rt-print "types" types)
 
 	  ;;(c-display "extnumbers-writing" extnumbers-writing)
 	  ;;(c-display "extpointers" extpointers)
 	  ;;(c-display "extnumbers" extnumbers)
 	  ;;(c-display "orgargs" orgargs)
-	  (c-display "publicargs" publicargs)
-	  (c-display "globalvars" globalvars)
+	  ;;(c-display "publicargs" publicargs)
+	  ;;(c-display "globalvars" globalvars)
 
-	  (rt-print2 "term" term)
+	  ;;(rt-print2 "term" term)
 	  (newline)
 	  
 	  (list funcname             ; 0
@@ -8886,15 +8867,18 @@ old syntax: (not very nice)
 					    (return 0)))
 
 		   (<void> free_globals_func (lambda ((<struct-RT_Globals-*> rt_globals)
-                                                      (<int> do_I_free_questionmark))
+                                                      (<int> do_I_free_questionmark)) ;; free_globals_func is called two times. if do_I_free_questionmark is 0, it is called from the relatime thread immediately after being removed from the list of instruments.
                                                (if do_I_free_questionmark
                                                    (begin
-                                                     (fprintf stderr (string "hepp, deleting rt_globals %p %p\\n") rt_globals rt_globals->main_coroutine.co)
+                                                     (fprintf stderr (string "hepp, deleting rt_globals: %p, heap: %p, coroutine: %p\\n")
+							      rt_globals rt_globals->heap rt_globals->main_coroutine.co)
                                                      (free rt_globals->queue)
                                                      (free rt_globals->block_queue)
-                                                     (if (> rt_globals->engine->num_procfuncs 0)
-                                                         (tar_delete_heap rt_globals->heap true)
-                                                         (tar_delete_heap rt_globals->heap false))
+						     (scm_gc_unregister_collectable_memory rt_globals->heap ,(+ (* *tar-nonatomic-heap-size* 2) (* *tar-max-mem-size* 4)) (string "rollendurch/stalin heap"))
+						     (tar_delete_heap rt_globals->heap true) ;; tar_init_block is always called!
+                                                     ;(if (> rt_globals->engine->num_procfuncs 0)
+                                                     ;    (tar_delete_heap rt_globals->heap true)
+                                                     ;    (tar_delete_heap rt_globals->heap false))
                                                      (free rt_globals)
                                                      )
                                                    (begin ;; In case the scheduler in rt_engine has removed us, the coroutines will be freed here. (this can be quite heavy...)
@@ -8935,9 +8919,10 @@ old syntax: (not very nice)
 								   (set! rt_globals->queue[i] &dummy_coroutine)
 								   (set! rt_globals->block_queue[i] &dummy_coroutine))))
 
-                                                     (fprintf stderr (string "new heap start %p\\n") &dummy_coroutine)
+                                                     ;;(fprintf stderr (string "new heap start %p\\n") &dummy_coroutine)
                                                      (set! rt_globals->heap (tar_create_heap))
-                                                     (fprintf stderr (string "new heap end %p %p\\n") start_dyn end_dyn)
+						     (scm_gc_register_collectable_memory rt_globals->heap ,(+ (* *tar-nonatomic-heap-size* 2) (* *tar-max-mem-size* 4)) (string "rollendurch heap"))
+                                                     ;;(fprintf stderr (string "new heap end %p %p\\n") start_dyn end_dyn)
 
 						     (return rt_globals))))
 		   
@@ -9014,35 +8999,32 @@ old syntax: (not very nice)
 
                                                   (if (== (tar_after_using_heap heap) true)
                                                       (when (== 0 rt_globals->remove_me)
-                                                        (rt_debug (string "data: %d, stack: %d %d %d, used mem: %d, used atomic mem: %d")
-                                                                  (abs (- end_dyn start_dyn))
-                                                                  -1 -1 -1
-								  ;;(abs (- stack_top stack_bot))
-                                                                  ;;stack_bot
-                                                                  ;;stack_top
-                                                                  (tar_get_used_mem heap)
-                                                                  (tar_get_used_atomic_mem heap)
-                                                                  )
+                                                        ;;(rt_debug (string "data: %d, stack: %d %d %d, used mem: %d, used atomic mem: %d")
+                                                        ;;          (abs (- end_dyn start_dyn))
+                                                        ;;          -1 -1 -1
+							;;		  ;;(abs (- stack_top stack_bot))
+							;;                  ;;stack_bot
+							;;                  ;;stack_top
+							;;                  (tar_get_used_mem heap)
+							;;                  (tar_get_used_atomic_mem heap)
+							;;                  )
                                                 
                                                         (tar_add_root_concurrently heap start_dyn end_dyn) ; static data
-                                                        
                                                         (for-each 0 rt_globals->queue_size
                                                                   (lambda (i)
-                                                                    (<struct-rt_coroutine*> coroutine rt_globals->queue[i])
+                                                                    (<struct-rt_coroutine*> coroutine rt_globals->queue[i+1])
                                                                     (tar_add_root_concurrently heap coroutine->stack_low coroutine->stack_high) ;stacks
-                                                                    (tar_add_root_concurrently heap coroutine (+ (cast <char*> coroutine)   ;registerss
-                                                                                                                  (EC_MAX (sizeof <ucontext_t>)
-                                                                                                                          (sizeof <jmp_buf>))))))
+                                                                    (tar_add_root_concurrently heap coroutine->co (+ (cast <char*> coroutine->co)   ;registerss
+														     (EC_MAX (sizeof <ucontext_t>)
+															     (sizeof <jmp_buf>))))))
                                                         (for-each 0 rt_globals->block_queue_size
                                                                   (lambda (i)
-                                                                    (<struct-rt_coroutine*> coroutine rt_globals->block_queue[i])
+                                                                    (<struct-rt_coroutine*> coroutine rt_globals->block_queue[i+1])
                                                                     (tar_add_root_concurrently heap coroutine->stack_low coroutine->stack_high) ;stacks
-                                                                    (tar_add_root_concurrently heap coroutine (+ (cast <char*> coroutine)   ;registerss
-                                                                                                                 (EC_MAX (sizeof <ucontext_t>)
-                                                                                                                         (sizeof <jmp_buf>))))))
-                                                        
+                                                                    (tar_add_root_concurrently heap coroutine->co (+ (cast <char*> coroutine->co)   ;registerss
+														     (EC_MAX (sizeof <ucontext_t>)
+															     (sizeof <jmp_buf>))))))
                                                         (tar_add_root_concurrently heap rt_globals (+ (cast <char*> rt_globals) (sizeof <struct-RT_Globals>))) ;; dynamic data
-                                                        
                                                         (tar_start_gc heap)
 
                                                         ))
