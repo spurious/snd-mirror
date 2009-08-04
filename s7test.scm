@@ -51,6 +51,7 @@
 (define with-rationalize #t)                                   ; test rationalize
 (define with-full-fledged-random #t)                           ; random exists and can take any kind of numeric args, also make-random-state
 (define with-sort! #t)                                         ; sort! exists for both lists and vectors
+(define with-generic-length #t)                                ; length accepts things other than lists
 
 
 (define our-pi 3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117067982148086513282306647093844609550582231725359408128481117450284102701938521105559644622948954930382)
@@ -35205,7 +35206,13 @@
        
        (list reverse cons car cdr set-car! set-cdr! caar cadr cdar cddr caaar caadr cadar cdaar caddr cdddr cdadr cddar 
 	     caaaar caaadr caadar cadaar caaddr cadddr cadadr caddar cdaaar cdaadr cdadar cddaar cdaddr cddddr cddadr cdddar
-	     length assq assv assoc memq memv member list-ref list-tail))
+	     assq assv assoc memq memv member list-ref list-tail))
+
+      (if (not with-generic-length)
+	  (for-each
+	   (lambda (arg)
+	     (test (length arg) 'error))
+	   (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f #t (lambda (a) (+ a 1)))))
       
       (test (cons 1 . 2) 'error)
       (test (car (list)) 'error)
@@ -39084,7 +39091,7 @@ expt error > 1e-6 around 2^-46.506993328423
 		
 		(list list?
 		      (lambda (nlst v)
-			(let ((chrp (catch #t (lambda () (integer? (length (car nlst)))) (lambda args #f))))
+			(let ((chrp (catch #t (lambda () (let ((hi (or (null? (car nlst)) (list-ref (car nlst) 0)))) #t)) (lambda args #f))))
 			  (if (or (not (boolean? v))
 				  (not (eq? v chrp)))
 			      (format #t "(list? ~A) -> ~A~%" (car nlst) v))))

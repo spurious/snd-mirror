@@ -74,9 +74,10 @@
  *        symbol-calls if profiling is enabled
  *        stacktrace, trace and untrace, __func__, macroexpand
  *        strings are set-applicable (like vectors)
+ *        length accepts vectors, strings, hash-tables
  *
  *   things I ought to add/change:
- *        length should work on vectors and strings [fill!, copy, reverse! null? find(-if) etc from CL? for-each|map over vectors?]
+ *        generic: fill!, copy, reverse! null? find(-if) etc from CL? for-each|map over vectors?
  *          also for new-types -- would need length field and copy/fill
  *          (what about files? numbers? -- integer-length, bignum-precision etc)
  *        lists should be (set-)applicable (*-ref|set! are ugly and pointless)
@@ -231,6 +232,7 @@
  *    eval
  *    quasiquote
  *    threads
+ *    encapsulators
  *    gmp, mpfr, mpc support
  *    s7 init
  */
@@ -499,7 +501,7 @@ struct s7_scheme {
   long *gensym_counter;
 
 #if WITH_ENCAPSULATION
-  bool *encapsulating;
+  s7_pointer encapsulators;
 #endif
   
   #define INITIAL_STRBUF_SIZE 1024
@@ -751,7 +753,7 @@ struct s7_scheme {
 #define c_object_type(p)              p->object.fobj.type
 
 #if WITH_ENCAPSULATION
-#define is_encapsulating(Sc)          (*((Sc)->encapsulating))
+#define is_encapsulating(Sc)          ((Sc)->encapsulators != sc->NIL)
 #endif
 
 #define NUM_INT      0
@@ -1273,6 +1275,10 @@ static int gc(s7_scheme *sc)
   S7_MARK(sc->input_port_stack);
   S7_MARK(sc->output_port);
   S7_MARK(sc->error_port);
+
+#if WITH_ENCAPSULATION
+  S7_MARK(sc->encapsulators);
+#endif
   
   S7_MARK(sc->protected_objects);
   {
@@ -9573,9 +9579,12 @@ s7_pointer s7_remv(s7_scheme *sc, s7_pointer a, s7_pointer obj)
 }
 
 
+static s7_pointer g_vector_length(s7_scheme *sc, s7_pointer args);
+static s7_pointer g_hash_table_size(s7_scheme *sc, s7_pointer args);
+
 static s7_pointer g_length(s7_scheme *sc, s7_pointer args)
 {
-  #define H_length "(length lst) returns the length of the list lst"
+  #define H_length "(length obj) returns the length of obj, which can be a list, vector, string, or hash-table"
   
   int len;
   s7_pointer lst = car(args);
@@ -9584,13 +9593,21 @@ static s7_pointer g_length(s7_scheme *sc, s7_pointer args)
     return(small_int(sc, 0));
   
   if (!is_pair(lst)) 
-    return(s7_wrong_type_arg_error(sc, "length", 0, lst, "a list"));
+    {
+      if (s7_is_vector(lst))
+	return(g_vector_length(sc, args));
+      if (s7_is_string(lst))
+	return(g_string_length(sc, args));
+      if (s7_is_hash_table(lst))
+	return(g_hash_table_size(sc, args));
+
+      return(s7_wrong_type_arg_error(sc, "length", 0, lst, "a list, vector, string, or hash-table"));
+    }
   
   len = s7_list_length(sc, lst);
   
   if (len < 0) 
     return(s7_wrong_type_arg_error(sc, "length:", 0, lst, "a proper (not a dotted) list"));
-  
   if (len == 0)
     return(s7_wrong_type_arg_error(sc, "length:", 0, lst, "a proper (not a circular) list"));
   
@@ -10544,6 +10561,9 @@ typedef struct {
   s7_pointer (*set)(s7_scheme *sc, s7_pointer obj, s7_pointer args);
 } s7_c_object_t;
 
+/* TODO: length copy fill, s7_new_type_extended? or a way to set these fields one at a time
+ */
+
 
 static s7_c_object_t *object_types = NULL;
 static int object_types_size = 0;
@@ -11121,7 +11141,7 @@ static s7_pointer g_is_hash_table(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_hash_table_size(s7_scheme *sc, s7_pointer args)
 {
-  #define H_hash_table_size "(hash-table-size obj) returnsthe size of the hash-table obj"
+  #define H_hash_table_size "(hash-table-size obj) returns the size of the hash-table obj"
   if (!s7_is_hash_table(car(args)))
     return(s7_wrong_type_arg_error(sc, "hash-table-size", 0, car(args), "a hash-table"));
   return(s7_make_integer(sc, vector_length(car(args))));
@@ -13208,6 +13228,9 @@ static s7_pointer read_expression(s7_scheme *sc)
 
 
 static s7_pointer g_quasiquote_1(s7_scheme *sc, int level, s7_pointer form);
+#if WITH_ENCAPSULATION
+  static void encapsulate(s7_scheme *sc, s7_pointer sym);
+#endif
 
 
 /* -------------------------------- eval -------------------------------- */
@@ -13716,7 +13739,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    if ((is_encapsulating(sc)) &&
 		(is_setter(sc->code)))
 	      {
-		fprintf(stderr, "encap apply");
+		encapsulate(sc, car(sc->args));
 	      }
 #endif
 	    sc->value = c_function_call(sc->code)(sc, sc->args);
@@ -14171,7 +14194,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 #if WITH_ENCAPSULATION
 	  if (is_encapsulating(sc))
 	    {
-	      fprintf(stderr, "encap generalized set");
+	      encapsulate(sc, caar(sc->code));
 	    }
 #endif
 	  sc->x = s7_symbol_value(sc, caar(sc->code));
@@ -14210,15 +14233,15 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       
     case OP_SET1:     
-#if WITH_ENCAPSULATION
-      if (is_encapsulating(sc))
-	{
-	  fprintf(stderr, "encap op set1");
-	}
-#endif
       sc->y = s7_find_symbol_in_environment(sc, sc->envir, sc->code, true);
       if (sc->y != sc->NIL) 
 	{
+#if WITH_ENCAPSULATION
+	  if (is_encapsulating(sc))
+	    {
+	      encapsulate(sc, sc->code);
+	    }
+#endif
 	  set_symbol_value(sc->y, sc->value); 
 	  pop_stack(sc);
 	  goto START;
@@ -15396,6 +15419,10 @@ static s7_scheme *clone_s7(s7_scheme *sc, s7_pointer vect)
   new_sc->code = new_sc->NIL;
   new_sc->args = new_sc->NIL;
   new_sc->value = new_sc->NIL;
+
+#if WITH_ENCAPSULATION
+  new_sc->encapsulators = sc->NIL;
+#endif
   
   new_sc->temps_size = GC_TEMPS_SIZE;
   new_sc->temps_ctr = 0;
@@ -15449,6 +15476,222 @@ static void mark_s7(s7_scheme *sc)
 }
 
 #endif
+
+
+
+
+/* -------------------------------- encapsulation -------------------------------- */
+
+/* encapsulate:
+
+   open-encapsulator, close-encapsulator, (obj) to restore, here's an encapsulate macro:
+ 
+   (define-macro (encapsulate . body) 
+      (let ((encap (gensym)))
+        `(let ((,encap (open-encapsulator)))
+           (dynamic-wind
+              (lambda () 
+	        #f)
+              (lambda () 
+	        ,@body)
+              (lambda () 
+	        ((,encap))
+                (close-encapsulator ,encap))))))
+ 
+    We want to run some code,  then return variables global to that code to their prior state.
+    We might simpy coply the entire current environment, but that is slow (there are easily 
+    10000 variables in Snd), and requires huge amounts of space (vectors need to be copied 
+    for example), and usually in such a situation, only one or two variables actually need to 
+    be restored.  My first thought was fluid-let, but "fluid-let" is a bad name; it is not a 
+    "let" because it uses set! rather than making a new binding, and what is "fluid" about it?  
+    It's also a bad idea because it puts a dumb bookkeeping burden on the programmer -- he has 
+    to maintain a list of the variables he wants to protect -- that's asking for bugs!  Finally, 
+    it's restricted to protecting the body of the not-really-a-let, but in a REPL, for example, 
+    you'd want to return to a known state without being in any obvious let form.  That is, we
+    actually want a sort of data-side call/cc. In this system (open|close-encapsulator), to be
+    able to return to a given (data) state, open an encapsulator, then later call it to restore 
+    all variables global to that object.  close-encapsulator says I'm done with it -- the
+    normal case is that calling the object restores all its stored values, then (if not closed)
+    it starts saving values again -- this way we can repeatedly return to a clean state without
+    opening a new encapsulator every time.
+
+    notes...
+    set! string-set! list-set! vector-set! vector-fill! generalized-set! string-fill! (reverse! sort! set-car!) [*load-path* et al]
+    if in encap, keep alist with old values if not member current-env and not already member saved-values
+    pop out of encap, restore all.  
+    nesting is a problem, as are cleanups upon errors etc (GC), maybe handled like trace-return
+    threads are a problem! -- each needs its own such stack, but we'll get crosstalk -- a non-encapsulated
+      section in one thread changes a variable that has been saved in an encapsulated section of another thread...
+    also what about stuff like vct-set, also the sets above as funcs are too late -- we need the symbol
+    will eventually need to add s7_define_setter or something for the s7_define_function T_SETTER case
+ */
+
+#if WITH_ENCAPSULATION
+
+typedef struct {
+  s7_pointer bindings;
+  s7_pointer envir;
+} encap_t;
+
+static int encapsulator_tag = 0;
+
+
+static char *encapsulator_print(s7_scheme *sc, void *obj)
+{
+  /* show vars? */
+  char *buf;
+  encap_t *p = (encap_t *)obj;
+  buf = (char *)malloc(32 * sizeof(char));
+  snprintf(buf, 32, "#<encapsulator>");
+  return(buf);
+}
+
+
+static void encapsulator_free(void *obj)
+{
+  if (obj) free(obj);
+}
+
+
+static void encapsulator_mark(void *val)
+{
+  encap_t *f = (encap_t *)val;
+  if ((f) && (f->bindings)) /* possibly still in open_encapsulator */
+    {
+      S7_MARK(f->bindings);
+    }
+}
+
+
+static bool encapsulator_equal(void *obj1, void *obj2)
+{
+  return(obj1 == obj2);
+}
+
+
+static s7_pointer g_open_encapsulator(s7_scheme *sc, s7_pointer args)
+{
+  #define H_open_encapsulator "(open-encapsulator) opens an encapsulator; until it is closed, it will save variable values."
+
+  /* create object, add to s7 list */
+  encap_t *e;
+  s7_pointer obj;
+  e = (encap_t *)malloc(sizeof(encap_t));
+  e->bindings = sc->NIL;
+  e->envir = sc->envir;
+  obj = s7_make_object(sc, encapsulator_tag, (void *)e);  
+  sc->encapsulators = s7_cons(sc, obj, sc->encapsulators);
+  return(obj);
+}
+
+
+static s7_pointer g_close_encapsulator(s7_scheme *sc, s7_pointer args)
+{
+  #define H_close_encapsulator "(close-encapsulator obj) closes an encapsulator; it will no longer try to protect anything."
+
+  /* remove from s7 list */
+  encap_t *e;
+  s7_pointer x, obj;
+  
+  obj = car(args);
+  if ((!is_c_object(obj)) ||
+      (c_object_type(obj) != encapsulator_tag))
+    return(s7_wrong_type_arg_error(sc, "close-encapsulator", 0, obj, "an encapsulator"));
+
+  e = (encap_t *)s7_object_value(obj);
+  e->bindings = sc->NIL;
+  e->envir = sc->NIL;
+
+  if (obj == car(sc->encapsulators))
+    sc->encapsulators = cdr(sc->encapsulators);
+  else
+    {
+      for (x = sc->encapsulators; is_pair(x); x = cdr(x))
+	{
+	  s7_pointer y;
+	  y = cdr(x);
+	  if (obj == car(y))
+	    {
+	      cdr(x) = cdr(y);
+	      break;
+	    }
+	}
+    }
+  return(sc->UNSPECIFIED);
+}
+
+
+static s7_pointer g_is_encapsulator(s7_scheme *sc, s7_pointer args)
+{
+  #define H_is_encapsulator "(encapsulator? obj) returns #t if obj is an encapsulator"
+  return(make_boolean(sc, (is_c_object(car(args))) && (c_object_type(car(args)) == encapsulator_tag)));
+}
+
+
+static s7_pointer encapsulator_apply(s7_scheme *sc, s7_pointer obj, s7_pointer args)
+{
+  encap_t *e;
+  e = (encap_t *)s7_object_value(obj);
+
+  if (args == sc->NIL)
+    {
+      /* no args, restore all values */
+      s7_pointer x, y;
+      for (x = e->bindings; is_pair(x); x = cdr(x)) 
+	{
+	  y = s7_find_symbol_in_environment(sc, sc->envir, caar(x), true);
+	  if (y != sc->NIL)
+	    set_symbol_value(y, cdar(x));
+	}
+    }
+  else
+    {
+      if (s7_is_symbol(car(args)))
+	{
+	  /* find symbol in this encapsulation, return its value */
+	  s7_pointer y, sym;
+	  sym = car(args);
+	  for (y = e->bindings; is_pair(y); y = cdr(y)) 
+	    if (sym == car(y))
+	      return(cdr(y));
+	  
+	  return(sc->UNDEFINED);
+	}
+      else return(s7_wrong_type_arg_error(sc, "encapsulator", 0, car(args), "a symbol"));
+    }
+  return(obj);
+}
+
+
+static void encapsulate(s7_scheme *sc, s7_pointer sym)
+{
+  s7_pointer x;
+  for (x = sc->encapsulators; is_pair(x); x = cdr(x))
+    {
+      encap_t *e;
+      s7_pointer y;
+      bool ok = false;
+
+      e = (encap_t *)s7_object_value(car(x));
+
+      for (y = e->bindings; is_pair(y); y = cdr(y)) 
+	if (sym == car(y))
+	  {
+	    ok = true;
+	    break;
+	  }
+
+      if (!ok)
+	{
+	  y = s7_find_symbol_in_environment(sc, e->envir, sym, true);
+	  if (y != sc->NIL)
+	    e->bindings = s7_cons(sc, s7_cons(sc, sym, symbol_value(y)), e->bindings); /* will need copy object here eventually */
+	}
+    }
+}
+#endif
+
+
 
 
 /* -------------------------------- gmp/mpfr/mpc -------------------------------- */
@@ -19892,7 +20135,7 @@ s7_scheme *s7_init(void)
   sc->tracing = (bool *)calloc(1, sizeof(bool));
 
 #if WITH_ENCAPSULATION
-  sc->encapsulating = (bool *)calloc(1, sizeof(bool));
+  sc->encapsulators = sc->NIL;
 #endif
 
   sc->trace_list = (s7_pointer *)calloc(INITIAL_TRACE_LIST_SIZE, sizeof(s7_pointer));
@@ -20380,6 +20623,13 @@ s7_scheme *s7_init(void)
   g_provide(sc, make_list_1(sc, s7_make_symbol(sc, "threads")));
 #endif
 
+#if WITH_ENCAPSULATION
+  encapsulator_tag = s7_new_type("<encapsulator>",  encapsulator_print, encapsulator_free, encapsulator_equal, encapsulator_mark, encapsulator_apply, NULL);
+  s7_define_function(sc, "open-encapsulator",       g_open_encapsulator,       0, 0, false, H_open_encapsulator);
+  s7_define_function(sc, "close-encapsulator",      g_close_encapsulator,      1, 0, false, H_close_encapsulator);
+  s7_define_function(sc, "encapsulator?",           g_is_encapsulator,         1, 0, false, H_is_encapsulator);
+#endif
+
 #if WITH_MULTIDIMENSIONAL_VECTORS
   sc->VECTOR_SET = s7_symbol_value(sc, s7_make_symbol(sc, "vector-set!"));
   typeflag(sc->VECTOR_SET) |= T_DONT_COPY; 
@@ -20470,44 +20720,3 @@ s7_scheme *s7_init(void)
 /* unicode is probably do-able if it is sequestered in the s7 strings 
  */
   
-/* encapsulate:
-
-   open-encapsulator, close-encapsulator, (obj) to reset, here's an encapsulate macro:
- 
-   (define-macro (encapsulate . body) 
-      (let ((encap (gensym)))
-        `(let ((,encap (open-encapsulator)))
-           (dynamic-wind
-              (lambda () 
-	        #f)
-              (lambda () 
-	        ,@body)
-              (lambda () 
-	        (,encap) 
-                (close-encapsulator ,encap))))))
- 
-    We want to run some code,  then return variables global to that code to their prior state.
-    We might simpy coply the entire current environment, but that is slow (there are easily 
-    10000 variables in Snd), and requires huge amounts of space (vectors need to be copied 
-    for example), and usually in such a situation, only one or two variables actually need to 
-    be restored.  My first thought was fluid-let, but "fluid-let" is a bad name; it is not a 
-    "let" because it uses set! rather than making a new binding, and what is "fluid" about it?  
-    It's also a bad idea because it puts a dumb bookkeeping burden on the programmer -- he has 
-    to maintain a list of the variables he wants to protect -- that's asking for bugs!  Finally, 
-    it's restricted to protecting the body of the not-really-a-let, but in a REPL, for example, 
-    you'd want to return to a known state without being in any obvious let form.  That is, we
-    actually want a sort of data-side call/cc. In this system (open|close-encapsulator, to be
-    able to return to a given (data) state, open an encapsulator, then later call it to restore 
-    all variables global to that object.  close-encapsulator says I'm done with it -- the
-    normal case is that calling the object restores all its stored values, then (if not closed)
-    it starts saving values again -- this way we can repeatedly return to a clean state without
-    opening a new encapsulator every time.
-
-    notes...
-    set! string-set! list-set! vector-set! vector-fill! generalized-set! string-fill! (reverse! sort! set-car!) [*load-path* et al]
-    if in encap, keep alist with old values if not member current-env and not already member saved-values
-    pop out of encap, restore all.  
-    nesting is a problem, as are cleanups upon errors etc (GC), maybe handled like trace-return
-    threads are a problem! -- each needs its own such stack, but we'll get crosstalk.
-    also what about stuff like vct-set, also the sets above as funcs are too late -- we need the symbol
- */
