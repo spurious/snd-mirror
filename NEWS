@@ -1,27 +1,105 @@
-Snd 10.7
+Snd 10.8
 
-Mike made many improvements throughout Snd.
+Rick fixed the windows build process for sndlib; added sndlib.sln.
 
-generators.scm: moving-fft, moving-scentroid, moving-autocorrelation, moving-pitch.
+Kjetil and Mike made numerous improvements.  In particular, ruby 1.9
+  is working.
 
-dlocsig.scm works now in s7, but not guile 1.9.0.
 
-clm: added rectangular->magnitudes (ignores phases)
+in s7, sound-data, frame, mixer objects are set-applicable (like vectors and vcts)
 
-ALSA is now the default audio choice in Linux (this affects CLM/Sndlib also).
-  This is a slight problem in Clisp because there's no way to tell that 
-  we're in Linux, so in that case, push :alsa on *features* before loading
-  all.lisp.  I've noticed playback can hang or simply fail if the pulseaudio
-  server is running.  Linux audio is a never-ending pain.
+added frame and mixer, paralleling functions like vct and list
+  (frame .1 .2) = (make-frame 2 .1 .2) etc
 
-New configure switch --with-oss.
+s7_define_function_star: define* at C-level, handling keywords, argument order, etc.
+s7_define_macro: define a macro at C-level.  Also macroexpand.
+s7_new_type_x: extendeded version of the C-level new type creator (length, copy, etc).
 
-Checked: gtk 2.17.1|2, sbcl 1.0.29, Fedora Core 11, guile 1.9.0
+added profiling option (--with-profiling in configure) to s7.  profile
+  function in extensions.scm.  This could be greatly elaborated, if
+  it's of interest.
 
-in the new guile, %delay and %filter are not defined, and there are many changes
-  due to the guile compiler, so debug.scm has been removed, as well as the with-sound
-  debugging stuff (ws.scm) that depended on it.  1.9.0 doesn't handle off_t cleanly,
-  so you'll actually need 1.9.1.  Due to new restrictions in the syntax it accepts,
-  this version of guile also can't handle generators.scm. And run doesn't work.
+added trace, untrace, break and __func__ to s7. The __func__ info made it possible
+  to remove the backtrace facility altogether: backtracing, backtrace, set-backtrace-length,
+  clear-backtrace, and list-line-number have been removed.  These are replaced by
+  the stacktrace function, callable from within a break or error handler.
 
-Thanks!: Mike Scholz, Jose Padovani, Kjetil Matheussen, Rick Taube.
+in s7, removed gc-verbose and load-verbose replaced by *load-hook*.  Error handling can
+  be specialized via *error-hook*.
+
+added sort! to s7, and lower-case versions of s7_T and friends.
+  I'll probably remove the upper-case versions someday.
+
+strings are set-applicable (like vectors).  This has the somewhat strange side effect
+  that (apply "hi" '(1)) returns #\i, since strings are applicable, but the up side
+  (no need for noise words like string-ref and vector-ref) seems more important to me.
+
+read-hook (in s7-Snd) has changed (the other cases are not changed).
+
+the ubiquitous Float type is now named mus_float_t (new sndlib major version: 21),
+  and off_t has been changed to mus_long_t.  Wherever possible I'm using either 
+  int64_t or long long int, rather than off_t.
+
+added all the non-Snd-specific instrument files to the sndlib tarball:
+  analog-filter.scm|rb, animals.scm, bird.scm|rb|fsm, clm.fs, clm-ins.scm|rb|fs, dlocsig.scm|rb,
+  fade.scm, freeverb.scm|rb, generators.scm, grani.scm, jcrev.scm, jcvoi.scm,
+  maraca.scm|rb, maxf.scm|rb, moog.scm, noise.scm|rb, piano.scm|rb, prc95.scm|rb,
+  pvoc.scm|rb, singer.scm|rb, sndwarp.scm, spectr.scm|rb|fs, stochastic.scm, strad.scm|rb,
+  v.scm|rb.  Also split out expandn, fullmix, and nrev from clm-ins.scm into separate files.
+  Mike brought the sndins directory up to date.
+
+s7 length is generic, also added generic copy.
+
+added "encapsulators" to s7:
+   open-encapsulator, close-encapsulator, (obj) to restore, encapsulator-bindings
+ 
+   (define-macro (encapsulate . body) 
+      (let ((encap (gensym)))
+        `(let ((,encap (open-encapsulator)))
+           (dynamic-wind
+              (lambda () 
+	        #f)
+              (lambda () 
+	        ,@body)
+              (lambda () 
+	        ((,encap))  ; restore saved vars
+                (close-encapsulator ,encap))))))
+ 
+    We want to run some code,  then return variables global to that code to their prior state.
+    We might simpy coply the entire current environment, but that is slow (there are easily 
+    10000 variables in Snd), and requires huge amounts of space (vectors need to be copied 
+    for example), and usually in such a situation, only one or two variables actually need to 
+    be restored.  fluid-let is not what we want.  First "fluid-let" is a bad name; it is not a 
+    "let" because it uses set! rather than making a new binding, and what is "fluid" about it?  
+    Second, fluid-let puts a dumb bookkeeping burden on the programmer -- he has 
+    to maintain a list of the variables he wants to protect -- that's asking for bugs!  Finally, 
+    it's restricted to protecting the body of the fluid-let, but in a REPL, for example, 
+    we want to return to a known state without being in any obvious let form.  That is, we
+    actually want a sort of data-side call/cc. In this system (open|close-encapsulator), to
+    be able to return to a given (data) state, open an encapsulator, then later call it to restore 
+    all variables global to that object.  close-encapsulator says I'm done with it -- the
+    normal case is that calling the object restores all its stored values, then (if not closed)
+    it starts saving values again -- this way we can repeatedly return to a clean state without
+    opening a new encapsulator every time.  Also, if we trace the encapsulator, we'll see every set!
+
+    This is not perfect yet -- I'm still working on the Snd/CLM objects, and I don't know
+    how to deal with something like (string-set! (vector-ref ...)) -- should I save upon vector|list-ref
+    as well as -set!?, so there are a few cases that aren't currently restored.  But a simple example:
+
+        > (define global-x 32)
+        global-x
+        > (encapsulate (set! global-x 123) (format #f "x: ~A" global-x))
+        "x: 123"
+        > global-x
+        32
+
+
+cmn works in ECL 9.7.1.
+
+Checked: gtk 2.17.3|4|5|6, fth 1.2.5|6, fftw 3.2.2, guile 1.9.1, openmotif 2.3.2, clisp 2.48,
+         autoconf 2.64, sbcl 1.0.30, ecl 9.7.1
+
+  (in guile 1.9.n, the run macro does not work, nor do ws.scm and generators.scm)
+  (in the new motif, the listener is at the top for some reason)
+
+Thanks!: Mike Scholz, Rick Taube, Kjetil Matheussen, Markus Eichhoff, W Andrew Burnson

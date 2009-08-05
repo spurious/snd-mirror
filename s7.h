@@ -593,6 +593,17 @@ int s7_new_type(const char *name,
 		s7_pointer (*apply)(s7_scheme *sc, s7_pointer obj, s7_pointer args),
 		s7_pointer (*set)(s7_scheme *sc, s7_pointer obj, s7_pointer args));
 
+int s7_new_type_x(const char *name, 
+		  char *(*print)(s7_scheme *sc, void *value), 
+		  void (*free)(void *value), 
+		  bool (*equal)(void *val1, void *val2),
+		  void (*gc_mark)(void *val),
+		  s7_pointer (*apply)(s7_scheme *sc, s7_pointer obj, s7_pointer args),
+		  s7_pointer (*set)(s7_scheme *sc, s7_pointer obj, s7_pointer args),
+		  s7_pointer (*length)(s7_scheme *sc, s7_pointer obj),
+		  s7_pointer (*copy)(s7_scheme *sc, s7_pointer obj),
+		  s7_pointer (*fill)(s7_scheme *sc, s7_pointer obj, s7_pointer args));
+
 bool s7_is_object(s7_pointer p);
 int s7_object_type(s7_pointer obj);
 void *s7_object_value(s7_pointer obj);
@@ -614,7 +625,12 @@ void s7_mark_object(s7_pointer p);
    *   set:     a function that is called whenever an object of this type occurs as
    *            the target of a generalized set!
    *
-   *   s7_new_type returns an integer that identifies the new type for the other functions.
+   * in the extended version (s7_new_type_x), you can also set the following:
+   *   length:  the function called when the object is asked what its length is.
+   *   copy:    the function called when a copy of the object is needed.
+   *   fill:    the function called to fill the object with some value.
+   *
+   *   s7_new_type and s7_new_typ_x return an integer that identifies the new type for the other functions.
    *
    * s7_is_object returns true if 'p' holds a value of a type created by s7_new_type.
    * s7_object_type returns the object's type
@@ -1452,7 +1468,8 @@ int main(int argc, char **argv)
  * 
  *        s7 changes
  *
- * 6-Aug:     encapsulation.  s7_define_set_function.
+ * 6-Aug:     encapsulation.  s7_define_set_function.  s7_new_type_x.  
+ *            generic function: copy, and length is generic.
  * 1-Aug:     lower-case versions of s7_T and friends.
  *            s7_define_macro. macroexpand.
  *            strings are set-applicable (like vectors).

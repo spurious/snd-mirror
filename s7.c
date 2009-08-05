@@ -75,7 +75,7 @@
  *        symbol-calls if profiling is enabled
  *        stacktrace, trace and untrace, __func__, macroexpand
  *        strings are set-applicable (like vectors)
- *        length accepts vectors, strings, hash-tables
+ *        length is generic, added generic copy
  *
  *   things I ought to add/change:
  *        generic: fill!, copy, reverse! null? find(-if) etc from CL? for-each|map over vectors?
@@ -625,7 +625,10 @@ struct s7_scheme {
 #define is_eternal(p)                 ((typeflag(p) & T_ETERNAL) != 0)
 /* an eternal object is a cons whose "line_number" is actually the global environment vector location (i.e. a symbol table entry) */
 
-#define UNUSED_BITS                   0xf0000000
+#define T_ANY_MACRO                   (1 << (TYPE_BITS + 12))
+#define is_any_macro(p)               ((typeflag(p) & T_ANY_MACRO) != 0)
+
+#define UNUSED_BITS                   0xe0000000
 
 #if HAVE_PTHREADS
 #define set_type(p, f)                typeflag(p) = ((typeflag(p) & T_GC_MARK) | (f) | T_OBJECT)
@@ -8353,7 +8356,7 @@ static char *s7_atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
 					      "catch", "dynamic-wind", "hash-table", "boolean", "macro"};
 
     buf = (char *)calloc(512, sizeof(char));
-    snprintf(buf, 512, "<unknown object! type: %d (%s), flags: %x%s%s%s%s%s%s%s%s%s%s%s>", 
+    snprintf(buf, 512, "<unknown object! type: %d (%s), flags: %x%s%s%s%s%s%s%s%s%s%s%s%s%s>", 
 	     type(obj), 
 	     (type(obj) < BUILT_IN_TYPES) ? type_names[type(obj)] : "none",
 	     typeflag(obj),
@@ -8367,6 +8370,8 @@ static char *s7_atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
 	     dont_copy(obj) ? " dont-copy" : "",
 	     ((typeflag(obj) & T_OBJECT) != 0) ? " obj" : "",
 	     is_finalizable(obj) ? " gc-finalize" : "",
+	     is_setter(obj) ? " setter" : "",
+	     is_any_macro(obj) ? " (anymac)" : "",
 	     ((typeflag(obj) & UNUSED_BITS) != 0) ? " bad bits at top" : "");
     return(buf);
   }
@@ -9581,6 +9586,7 @@ s7_pointer s7_remv(s7_scheme *sc, s7_pointer a, s7_pointer obj)
 
 static s7_pointer g_vector_length(s7_scheme *sc, s7_pointer args);
 static s7_pointer g_hash_table_size(s7_scheme *sc, s7_pointer args);
+static s7_pointer s7_object_length(s7_scheme *sc, s7_pointer obj);
 
 static s7_pointer g_length(s7_scheme *sc, s7_pointer args)
 {
@@ -9600,6 +9606,8 @@ static s7_pointer g_length(s7_scheme *sc, s7_pointer args)
 	return(g_string_length(sc, args));
       if (s7_is_hash_table(lst))
 	return(g_hash_table_size(sc, args));
+      if (is_c_object(lst))
+	return(s7_object_length(sc, lst));
 
       return(s7_wrong_type_arg_error(sc, "length", 0, lst, "a list, vector, string, or hash-table"));
     }
@@ -9777,6 +9785,24 @@ void s7_vector_fill(s7_scheme *sc, s7_pointer vec, s7_pointer obj)
     tp[i] = obj;
 }
 #endif
+
+
+static s7_pointer s7_vector_copy(s7_scheme *sc, s7_pointer old_vect)
+{
+  int i, len;
+  s7_pointer *old_v, *new_v;
+  s7_pointer new_vect;
+
+  len = vector_length(old_vect);
+  new_vect = s7_make_vector(sc, len);
+
+  old_v = (s7_pointer *)(old_vect->object.vector.elements);
+  new_v = (s7_pointer *)(new_vect->object.vector.elements);
+
+  for (i = 0; i < len; i++) 
+    new_v[i] = old_v[i];
+  return(new_vect);
+}
 
 
 static s7_pointer g_vector_fill(s7_scheme *sc, s7_pointer args)
@@ -10419,7 +10445,7 @@ void s7_define_macro(s7_scheme *sc, const char *name, s7_function fnc, int requi
 {
   s7_pointer func;
   func = s7_make_function(sc, name, fnc, required_args, optional_args, rest_arg, doc);
-  set_type(func, T_C_MACRO | T_ATOM | T_SIMPLE | T_FINALIZABLE | T_DONT_COPY | T_PROCEDURE);
+  set_type(func, T_C_MACRO | T_ATOM | T_SIMPLE | T_FINALIZABLE | T_DONT_COPY | T_PROCEDURE | T_ANY_MACRO);
   s7_define(sc, s7_global_environment(sc), s7_make_symbol(sc, name), func);
 }
 
@@ -10568,10 +10594,11 @@ typedef struct {
   void (*gc_mark)(void *val);
   s7_pointer (*apply)(s7_scheme *sc, s7_pointer obj, s7_pointer args);
   s7_pointer (*set)(s7_scheme *sc, s7_pointer obj, s7_pointer args);
+  s7_pointer (*length)(s7_scheme *sc, s7_pointer obj);
+  s7_pointer (*copy)(s7_scheme *sc, s7_pointer obj);
+  s7_pointer (*fill)(s7_scheme *sc, s7_pointer obj, s7_pointer args);
 } s7_c_object_t;
 
-/* TODO: length copy fill, s7_new_type_extended? or a way to set these fields one at a time
- */
 
 
 static s7_c_object_t *object_types = NULL;
@@ -10610,6 +10637,29 @@ int s7_new_type(const char *name,
   object_types[tag].gc_mark = gc_mark;
   object_types[tag].apply = apply;
   object_types[tag].set = set;
+  object_types[tag].length = NULL;
+  object_types[tag].copy = NULL;
+  object_types[tag].fill = NULL;
+  return(tag);
+}
+
+
+int s7_new_type_x(const char *name, 
+		  char *(*print)(s7_scheme *sc, void *value), 
+		  void (*free)(void *value), 
+		  bool (*equal)(void *val1, void *val2),
+		  void (*gc_mark)(void *val),
+		  s7_pointer (*apply)(s7_scheme *sc, s7_pointer obj, s7_pointer args),
+		  s7_pointer (*set)(s7_scheme *sc, s7_pointer obj, s7_pointer args),
+		  s7_pointer (*length)(s7_scheme *sc, s7_pointer obj),
+		  s7_pointer (*copy)(s7_scheme *sc, s7_pointer obj),
+		  s7_pointer (*fill)(s7_scheme *sc, s7_pointer obj, s7_pointer args))
+{
+  int tag;
+  tag = s7_new_type(name, print, free, equal, gc_mark, apply, set);
+  object_types[tag].length = length;
+  object_types[tag].copy = copy;
+  object_types[tag].fill = fill;
   return(tag);
 }
 
@@ -10721,6 +10771,27 @@ s7_pointer s7_make_object(s7_scheme *sc, int type, void *value)
     typeflag(x) |= T_PROCEDURE;
   return(x);
 }
+
+
+static s7_pointer s7_object_length(s7_scheme *sc, s7_pointer obj)
+{
+  int tag;
+  tag = obj->object.fobj.type;
+  if (object_types[tag].length)
+    return((*(object_types[tag].length))(sc, obj));
+  return(sc->UNSPECIFIED); /* not sure this is the right thing */
+}
+
+
+static s7_pointer s7_object_copy(s7_scheme *sc, s7_pointer obj)
+{
+  int tag;
+  tag = obj->object.fobj.type;
+  if (object_types[tag].copy)
+    return((*(object_types[tag].copy))(sc, obj));
+  return(obj);
+}
+
 
 
 
@@ -11884,7 +11955,7 @@ to the current-output-port."
   for (i = 0, x = args; x != sc->NIL; i++, x = cdr(x)) 
     if ((!s7_is_symbol(car(x))) &&
 	(!s7_is_procedure(car(x))) &&
-	(!is_macro(car(x))) &&
+	(!is_macro(car(x))) &&             /* TODO: is any macro here? */
 	(!is_promise(car(x))))
       return(s7_wrong_type_arg_error(sc, "trace", i + 1, car(x), "a symbol, a function, or some other applicable object"));
 
@@ -13623,8 +13694,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       
     case OP_EVAL_ARGS0:
-      if ((is_macro(sc->value)) ||
-	  (is_c_macro(sc->value)))
+      if (is_any_macro(sc->value))
 	{    
 	  /* macro expansion */
 	  if (!(is_c_macro(sc->value)))
@@ -13638,14 +13708,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	{
 	  /* here sc->value is the func, sc->code is the entire expression */
 #if WITH_ENCAPSULATION
-	  /* this is 99% of the encapsulation cost when not using that feature --
-	   *   perhaps T_C_SET_FUNCTION? that slows down is_c_function which isn't actually used currently
-	   */
-
 	  if ((is_encapsulating(sc)) &&
 	      (cdr(sc->code) != sc->NIL) &&
 	      (is_setter(sc->value)))
 	    {
+	      /* fprintf(stderr, "encap: %s\n", s7_object_to_c_string(sc, sc->code)); */
 	      encapsulate(sc, cadr(sc->code));
 	    }
 #endif
@@ -13710,12 +13777,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	  sc->args = safe_reverse_in_place(sc, sc->args); 
 	  sc->code = car(sc->args);
-
-	  if ((!is_procedure(sc->code)) &&
-	      (!s7_is_vector(sc->code)) &&
-	      (!s7_is_string(sc->code)))
-	    return(eval_error(sc, "attempt to apply ~A?\n", sc->code));
-	  
 	  sc->args = cdr(sc->args);
 	  /* goto APPLY;  */
 	}
@@ -14041,7 +14102,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  goto START;
 
 	default:
-	  return(eval_error(sc, "~A: apply of non-function?", sc->code));
+	  return(eval_error(sc, "attempt to apply ~A?", sc->code));
 	}
       /* ---------------- end OP_APPLY ---------------- */
 
@@ -14202,12 +14263,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      goto EVAL;
 	    }
 	  
-#if WITH_ENCAPSULATION
-	  if (is_encapsulating(sc))
-	    {
-	      encapsulate(sc, caar(sc->code));
-	    }
-#endif
 	  sc->x = s7_symbol_value(sc, caar(sc->code));
 	  if ((is_c_object(sc->x)) &&
 	      (object_set_function(sc->x)))
@@ -14617,7 +14672,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if (!s7_is_symbol(sc->code))
 	return(eval_error(sc, "macro name is not a symbol?", sc->code));
 	
-      set_type(sc->value, T_MACRO);
+      set_type(sc->value, T_MACRO | T_ANY_MACRO);
       
       /* find name in environment, and define it */
       sc->x = s7_find_symbol_in_environment(sc, sc->envir, sc->code, false); 
@@ -15489,6 +15544,41 @@ static void mark_s7(s7_scheme *sc)
 #endif
 
 
+static s7_pointer s7_list_copy(s7_scheme *sc, s7_pointer obj)
+{
+  if (is_pair(obj))
+    return(s7_cons(sc, car(obj), s7_list_copy(sc, cdr(obj))));
+  return(obj);
+}
+
+
+static s7_pointer s7_copy(s7_scheme *sc, s7_pointer obj)
+{
+  switch (type(obj))
+    {
+    case T_STRING:
+      return(s7_make_string_with_length(sc, s7_strdup(string_value(obj)), string_length(obj)));
+
+    case T_C_OBJECT:
+      return(s7_object_copy(sc, obj));
+
+    case T_HASH_TABLE:
+    case T_VECTOR:
+      return(s7_vector_copy(sc, obj));
+
+    case T_PAIR:
+      return(s7_list_copy(sc, obj));
+    }
+  return(obj);
+}
+
+
+static s7_pointer g_copy(s7_scheme *sc, s7_pointer args)
+{
+  #define H_copy "(copy obj) returns a copy of obj"
+  return(s7_copy(sc, car(args)));
+}
+
 
 
 /* -------------------------------- encapsulation -------------------------------- */
@@ -15510,26 +15600,9 @@ static void mark_s7(s7_scheme *sc)
 	        ((,encap))  ; restore saved vars
                 (close-encapsulator ,encap))))))
  
-    We want to run some code,  then return variables global to that code to their prior state.
-    We might simpy coply the entire current environment, but that is slow (there are easily 
-    10000 variables in Snd), and requires huge amounts of space (vectors need to be copied 
-    for example), and usually in such a situation, only one or two variables actually need to 
-    be restored.  fluid-let is not what we want.  First "fluid-let" is a bad name; it is not a 
-    "let" because it uses set! rather than making a new binding, and what is "fluid" about it?  
-    Second, fluid-let puts a dumb bookkeeping burden on the programmer -- he has 
-    to maintain a list of the variables he wants to protect -- that's asking for bugs!  Finally, 
-    it's restricted to protecting the body of the fluid-let, but in a REPL, for example, 
-    you'd want to return to a known state without being in any obvious let form.  That is, we
-    actually want a sort of data-side call/cc. In this system (open|close-encapsulator), to
-    return to a given (data) state, open an encapsulator, then later call it to restore 
-    all variables global to that object.  close-encapsulator says I'm done with it -- the
-    normal case is that calling the object restores all its stored values, then (if not closed)
-    it starts saving values again -- this way we can repeatedly return to a clean state without
-    opening a new encapsulator every time.  Also, if we trace the encapsulator, we'll see every set!
-
-    notes...
-    {set! string-set! list-set! vector-set! vector-fill! generalized-set! string-fill! reverse!} 
-    unhandled: sort! set-car!) [vct-set][*load-path* et al]
+    TODO: unhandled: sort!(a special case) set-car!) [vct-set][*load-path* et al]
+    TODO: how to handle sort! add _x cases in Snd, mus_copy for all gens? also local direct sets (doc/test/changelogs)
+    TODO: what about stuff like (string-set! (vector-ref ...))? copy vector/list upon ref?
 */
 
 #if WITH_ENCAPSULATION
@@ -15709,7 +15782,9 @@ static void encapsulate(s7_scheme *sc, s7_pointer sym)
 	{
 	  y = s7_find_symbol_in_environment(sc, e->envir, sym, true);
 	  if (y != sc->NIL)
-	    e->bindings = s7_cons(sc, s7_cons(sc, sym, symbol_value(y)), e->bindings); /* will need copy object here eventually */
+	    e->bindings = s7_cons(sc, 
+                            s7_cons(sc, sym, s7_copy(sc, symbol_value(y))), 
+                            e->bindings); 
 	}
     }
 }
@@ -20326,7 +20401,7 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "hash-table?",             g_is_hash_table,           1, 0, false, H_is_hash_table);
   s7_define_function(sc, "make-hash-table",         g_make_hash_table,         0, 1, false, H_make_hash_table);
   s7_define_function(sc, "hash-table-ref",          g_hash_table_ref,          2, 0, false, H_hash_table_ref);
-  s7_define_function(sc, "hash-table-set!",         g_hash_table_set,          3, 0, false, H_hash_table_set);
+  s7_define_set_function(sc, "hash-table-set!",     g_hash_table_set,          3, 0, false, H_hash_table_set);
   s7_define_function(sc, "hash-table-size",         g_hash_table_size,         1, 0, false, H_hash_table_size);
   
   
@@ -20539,7 +20614,6 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "cddddr",                  g_cddddr,                  1, 0, false, H_cddddr);
   s7_define_function(sc, "cddadr",                  g_cddadr,                  1, 0, false, H_cddadr);
   s7_define_function(sc, "cdddar",                  g_cdddar,                  1, 0, false, H_cdddar);
-  s7_define_function(sc, "length",                  g_length,                  1, 0, false, H_length);
   s7_define_function(sc, "assq",                    g_assq,                    2, 0, false, H_assq);
   s7_define_function(sc, "assv",                    g_assv,                    2, 0, false, H_assv);
   s7_define_function(sc, "assoc",                   g_assoc,                   2, 0, false, H_assoc);
@@ -20551,6 +20625,9 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "list-ref",                g_list_ref,                2, 0, false, H_list_ref);
   s7_define_set_function(sc, "list-set!",           g_list_set,                3, 0, false, H_list_set);
   s7_define_function(sc, "list-tail",               g_list_tail,               2, 0, false, H_list_tail);
+
+  s7_define_function(sc, "length",                  g_length,                  1, 0, false, H_length);
+  s7_define_function(sc, "copy",                    g_copy,                    1, 0, false, H_copy);
   
   
   s7_define_function(sc, "vector?",                 g_is_vector,               1, 0, false, H_is_vector);
@@ -20615,7 +20692,7 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "equal?",                  g_is_equal,                2, 0, false, H_is_equal);
   
   s7_define_function(sc, "s7-version",              g_s7_version,              0, 0, false, H_s7_version);
-  s7_define_function(sc, object_set_name,           g_object_set,              1, 0, true, "internal setter redirection");
+  s7_define_set_function(sc, object_set_name,       g_object_set,              1, 0, true, "internal setter redirection");
   s7_define_function(sc, "_quasiquote_",            g_quasiquote,              2, 0, false, "internal quasiquote handler");
   
   s7_define_variable(sc, "*features*", sc->NIL);
