@@ -600,10 +600,8 @@ struct s7_scheme {
  *   the size increase is more important.
  */
 
-#if WITH_ENCAPSULATION
 #define T_SETTER                      (1 << (TYPE_BITS + 5))
 #define is_setter(p)                  ((typeflag(p) & T_SETTER) != 0)
-#endif
 
 #define T_OBJECT                      (1 << (TYPE_BITS + 6))
 
@@ -13638,6 +13636,19 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	} 
       else 
 	{
+	  /* here sc->value is the func, sc->code is the entire expression */
+#if WITH_ENCAPSULATION
+	  /* this is 99% of the encapsulation cost when not using that feature --
+	   *   perhaps T_C_SET_FUNCTION? that slows down is_c_function which isn't actually used currently
+	   */
+
+	  if ((is_encapsulating(sc)) &&
+	      (cdr(sc->code) != sc->NIL) &&
+	      (is_setter(sc->value)))
+	    {
+	      encapsulate(sc, cadr(sc->code));
+	    }
+#endif
 	  sc->code = cdr(sc->code);
 
 	  /* here [after the cdr] sc->args is nil, sc->value is the operator (car of list), sc->code is the rest -- the args.
@@ -13742,17 +13753,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 					  s7_make_string_with_length(sc, "~A: too many arguments: ~A", 26),
 					  sc->code, sc->args)));
 
-#if WITH_ENCAPSULATION
-	    /* this is 99% of the encapsulation cost when not using that feature --
-	     *   perhaps T_C_SET_FUNCTION? that slows down is_c_function which isn't actually used currently
-	     */
-
-	    if ((is_encapsulating(sc)) &&
-		(is_setter(sc->code)))
-	      {
-		encapsulate(sc, car(sc->args));
-	      }
-#endif
 	    sc->value = c_function_call(sc->code)(sc, sc->args);
 	    
 	    if (sc->stack_top != 0)
@@ -15666,6 +15666,7 @@ static s7_pointer encapsulator_apply(s7_scheme *sc, s7_pointer obj, s7_pointer a
 	  if (y != sc->NIL)
 	    set_symbol_value(y, cdar(x));
 	}
+      e->bindings = sc->NIL;
     }
   else
     {
@@ -15675,8 +15676,8 @@ static s7_pointer encapsulator_apply(s7_scheme *sc, s7_pointer obj, s7_pointer a
 	  s7_pointer y, sym;
 	  sym = car(args);
 	  for (y = e->bindings; is_pair(y); y = cdr(y)) 
-	    if (sym == car(y))
-	      return(cdr(y));
+	    if (sym == caar(y))
+	      return(cdar(y));
 	  
 	  return(sc->UNDEFINED);
 	}
