@@ -12,7 +12,8 @@ typedef double s7_Double;
 /* similarly for doubles (reals in scheme) -- only "double" works in C++ */
 
 
-  /* s7 itself is based on the types and functions in this file, so the first place to look for examples
+  /* --------------------------------------------------------------------------------
+   * s7 itself is based on the types and functions in this file, so the first place to look for examples
    *   is s7.c.  There are also a few variations on a REPL at the end of this file.  s7test.scm (in the
    *   Snd tarball) or r5rstest.scm (at the ccrma ftp site) are regression tests for s7 -- they still
    *   turn up a few problems.  More tests are certainly welcome!  Extended examples of s7 usage
@@ -60,9 +61,21 @@ typedef double s7_Double;
    *    trace and untrace       add or subtract functions from the trace list.
    *    stacktrace              show a stack trace (in error handler, use (stacktrace), at break point use (stacktrace break-continuation))
    *
-   * and various others mentioned at the start of s7.c -- nearly every Scheme implementation includes
-   * stuff like logior, sinh, read-line, format, define*, etc.  See also the start of s7.c for choices
-   * such as multiprecision arithmetic, multidimensional vectors, initial heap and stack size, etc.
+   *    and various others mentioned at the start of s7.c -- nearly every Scheme implementation includes
+   *    stuff like logior, sinh, read-line, format, define*, etc.  See also the start of s7.c for choices
+   *    such as multiprecision arithmetic, multidimensional vectors, initial heap and stack size, etc.
+   *
+   *    Also length is generic, and a generic copy function is provided.
+   *
+   * s7 non-standard object:
+   *  
+   *    encapsulator           a data "continuation" -- save the current environment for later restoration.
+   *       open-encapsulator        this returns an encapsulation that when called as a thunk restores the current environment
+   *       close-encapsulator       this closes (retires, puts an end to) an encapsulation
+   *       encapsulator-bindings    these are the currently saved bindings awaiting restoration
+   *       encapsulator?            #t if its argument is an encapsulator
+   * 
+   * --------------------------------------------------------------------------------
    */
 
 

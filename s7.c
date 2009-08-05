@@ -78,11 +78,11 @@
  *        length is generic, added generic copy
  *
  *   things I ought to add/change:
- *        generic: fill!, copy, reverse! null? find(-if) etc from CL? for-each|map over vectors?
- *          also for new-types -- would need length field and copy/fill
+ *        generic: fill!, reverse! null? find(-if) etc from CL? for-each|map over vectors?
  *          (what about files? numbers? -- integer-length, bignum-precision etc)
  *        lists should be (set-)applicable (*-ref|set! are ugly and pointless)
  *        defmacro* define-macro*
+ *        settable numerator denominator?
  *
  *
  * Mike Scholz provided the FreeBSD support (complex trig funcs, etc)
@@ -15567,7 +15567,7 @@ static s7_pointer s7_copy(s7_scheme *sc, s7_pointer obj)
       return(s7_vector_copy(sc, obj));
 
     case T_PAIR:
-      return(s7_list_copy(sc, obj));
+      return(s7_list_copy(sc, obj)); /* should vector/list copy the objects as well as the container? */
     }
   return(obj);
 }
@@ -15600,7 +15600,7 @@ static s7_pointer g_copy(s7_scheme *sc, s7_pointer args)
 	        ((,encap))  ; restore saved vars
                 (close-encapsulator ,encap))))))
  
-    TODO: unhandled: sort!(a special case) set-car!) [vct-set][*load-path* et al]
+    TODO: unhandled: [vct-set][*load-path* et al]
     TODO: how to handle sort! add _x cases in Snd, mus_copy for all gens? also local direct sets (doc/test/changelogs)
     TODO: what about stuff like (string-set! (vector-ref ...))? copy vector/list upon ref?
 */

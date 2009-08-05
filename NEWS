@@ -13,7 +13,7 @@ added frame and mixer, paralleling functions like vct and list
 
 s7_define_function_star: define* at C-level, handling keywords, argument order, etc.
 s7_define_macro: define a macro at C-level.  Also macroexpand.
-s7_new_type_x: extendeded version of the C-level new type creator (length, copy, etc).
+s7_new_type_x: extended version of the C-level new type creator (length, copy, etc).
 
 added profiling option (--with-profiling in configure) to s7.  profile
   function in extensions.scm.  This could be greatly elaborated, if
@@ -31,8 +31,8 @@ added sort! to s7, and lower-case versions of s7_T and friends.
   I'll probably remove the upper-case versions someday.
 
 strings are set-applicable (like vectors).  This has the somewhat strange side effect
-  that (apply "hi" '(1)) returns #\i, since strings are applicable, but the up side
-  (no need for noise words like string-ref and vector-ref) seems more important to me.
+  that (apply "hi" '(1)) returns #\i, since strings are applicable, but the up side,
+  no need for noise words like string-ref and vector-ref, seems more important to me.
 
 read-hook (in s7-Snd) has changed (the other cases are not changed).
 
@@ -65,8 +65,8 @@ added "encapsulators" to s7:
 	        ((,encap))  ; restore saved vars
                 (close-encapsulator ,encap))))))
  
-    We want to run some code,  then return variables global to that code to their prior state.
-    We might simpy coply the entire current environment, but that is slow (there are easily 
+    We want to run some code, then return variables global to that code to their prior state.
+    We might simpy copy the entire current environment, but that is slow (there are easily 
     10000 variables in Snd), and requires huge amounts of space (vectors need to be copied 
     for example), and usually in such a situation, only one or two variables actually need to 
     be restored.  fluid-let is not what we want.  First "fluid-let" is a bad name; it is not a 
@@ -88,7 +88,9 @@ added "encapsulators" to s7:
 
         > (define global-x 32)
         global-x
-        > (encapsulate (set! global-x 123) (format #f "x: ~A" global-x))
+        > (encapsulate 
+            (set! global-x 123) 
+            (format #f "x: ~A" global-x))
         "x: 123"
         > global-x
         32
