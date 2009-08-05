@@ -34,6 +34,7 @@
  *        threads (optional)
  *        multidimensional and applicable vectors (optional)
  *        format
+ *        encapsulation
  *
  *   many minor changes!
  *
@@ -203,6 +204,7 @@
 #ifndef WITH_ENCAPSULATION
   #define WITH_ENCAPSULATION 0
 /* an experiment */
+/* adds open-encapsulator, close-encapsulator, encapsulator?, and encapsulator-bindings */
 /* valgrind timing tests indicate this adds less than .01% in non-encap cases (i.e. 2 of 31000) */
 #endif
 
@@ -10406,6 +10408,15 @@ void s7_define_function(s7_scheme *sc, const char *name, s7_function fnc, int re
 }
 
 
+void s7_define_set_function(s7_scheme *sc, const char *name, s7_function fnc, int required_args, int optional_args, bool rest_arg, const char *doc)
+{
+  s7_pointer func;
+  func = s7_make_function(sc, name, fnc, required_args, optional_args, rest_arg, doc);
+  set_type(func, T_C_FUNCTION | T_ATOM | T_SIMPLE | T_FINALIZABLE | T_DONT_COPY | T_PROCEDURE | T_SETTER);
+  s7_define(sc, s7_global_environment(sc), s7_make_symbol(sc, name), func);
+}
+
+
 void s7_define_macro(s7_scheme *sc, const char *name, s7_function fnc, int required_args, int optional_args, bool rest_arg, const char *doc)
 {
   s7_pointer func;
@@ -15484,7 +15495,8 @@ static void mark_s7(s7_scheme *sc)
 
 /* encapsulate:
 
-   open-encapsulator, close-encapsulator, (obj) to restore, here's an encapsulate macro:
+   open-encapsulator, close-encapsulator, (obj) to restore, encapsulator-bindings
+   here's an encapsulate macro:
  
    (define-macro (encapsulate . body) 
       (let ((encap (gensym)))
@@ -15495,36 +15507,30 @@ static void mark_s7(s7_scheme *sc)
               (lambda () 
 	        ,@body)
               (lambda () 
-	        ((,encap))
+	        ((,encap))  ; restore saved vars
                 (close-encapsulator ,encap))))))
  
     We want to run some code,  then return variables global to that code to their prior state.
     We might simpy coply the entire current environment, but that is slow (there are easily 
     10000 variables in Snd), and requires huge amounts of space (vectors need to be copied 
     for example), and usually in such a situation, only one or two variables actually need to 
-    be restored.  My first thought was fluid-let, but "fluid-let" is a bad name; it is not a 
+    be restored.  fluid-let is not what we want.  First "fluid-let" is a bad name; it is not a 
     "let" because it uses set! rather than making a new binding, and what is "fluid" about it?  
-    It's also a bad idea because it puts a dumb bookkeeping burden on the programmer -- he has 
+    Second, fluid-let puts a dumb bookkeeping burden on the programmer -- he has 
     to maintain a list of the variables he wants to protect -- that's asking for bugs!  Finally, 
-    it's restricted to protecting the body of the not-really-a-let, but in a REPL, for example, 
+    it's restricted to protecting the body of the fluid-let, but in a REPL, for example, 
     you'd want to return to a known state without being in any obvious let form.  That is, we
-    actually want a sort of data-side call/cc. In this system (open|close-encapsulator), to be
-    able to return to a given (data) state, open an encapsulator, then later call it to restore 
+    actually want a sort of data-side call/cc. In this system (open|close-encapsulator), to
+    return to a given (data) state, open an encapsulator, then later call it to restore 
     all variables global to that object.  close-encapsulator says I'm done with it -- the
     normal case is that calling the object restores all its stored values, then (if not closed)
     it starts saving values again -- this way we can repeatedly return to a clean state without
-    opening a new encapsulator every time.
+    opening a new encapsulator every time.  Also, if we trace the encapsulator, we'll see every set!
 
     notes...
-    set! string-set! list-set! vector-set! vector-fill! generalized-set! string-fill! (reverse! sort! set-car!) [*load-path* et al]
-    if in encap, keep alist with old values if not member current-env and not already member saved-values
-    pop out of encap, restore all.  
-    nesting is a problem, as are cleanups upon errors etc (GC), maybe handled like trace-return
-    threads are a problem! -- each needs its own such stack, but we'll get crosstalk -- a non-encapsulated
-      section in one thread changes a variable that has been saved in an encapsulated section of another thread...
-    also what about stuff like vct-set, also the sets above as funcs are too late -- we need the symbol
-    will eventually need to add s7_define_setter or something for the s7_define_function T_SETTER case
- */
+    {set! string-set! list-set! vector-set! vector-fill! generalized-set! string-fill! reverse!} 
+    unhandled: sort! set-car!) [vct-set][*load-path* et al]
+*/
 
 #if WITH_ENCAPSULATION
 
@@ -15625,6 +15631,23 @@ static s7_pointer g_is_encapsulator(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_encapsulator "(encapsulator? obj) returns #t if obj is an encapsulator"
   return(make_boolean(sc, (is_c_object(car(args))) && (c_object_type(car(args)) == encapsulator_tag)));
+}
+
+
+static s7_pointer g_encapsulator_bindings(s7_scheme *sc, s7_pointer args)
+{
+  #define H_encapsulator_bindings "(encapsulator-bindings obj) returns the values currently awaiting restoration in an encapsulator."
+
+  encap_t *e;
+  s7_pointer obj;
+  
+  obj = car(args);
+  if ((!is_c_object(obj)) ||
+      (c_object_type(obj) != encapsulator_tag))
+    return(s7_wrong_type_arg_error(sc, "encapsulator-bindings", 0, obj, "an encapsulator"));
+
+  e = (encap_t *)s7_object_value(obj);
+  return(e->bindings);
 }
 
 
@@ -20453,7 +20476,7 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "make-string",             g_make_string,             1, 1, false, H_make_string);
   s7_define_function(sc, "string-length",           g_string_length,           1, 0, false, H_string_length);
   s7_define_function(sc, "string-ref",              g_string_ref,              2, 0, false, H_string_ref);
-  s7_define_function(sc, "string-set!",             g_string_set,              3, 0, false, H_string_set);
+  s7_define_set_function(sc, "string-set!",         g_string_set,              3, 0, false, H_string_set);
   
   s7_define_function(sc, "string=?",                g_strings_are_equal,       2, 0, true,  H_strings_are_equal);
   s7_define_function(sc, "string<?",                g_strings_are_less,        2, 0, true,  H_strings_are_less);
@@ -20467,7 +20490,7 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "string-ci>=?",            g_strings_are_ci_geq,      2, 0, true,  H_strings_are_ci_geq);
   
   s7_define_function(sc, "string-append",           g_string_append,           0, 0, true,  H_string_append);
-  s7_define_function(sc, "string-fill!",            g_string_fill,             2, 0, false, H_string_fill);
+  s7_define_set_function(sc, "string-fill!",        g_string_fill,             2, 0, false, H_string_fill);
   s7_define_function(sc, "string-copy",             g_string_copy,             1, 0, false, H_string_copy);
   s7_define_function(sc, "substring",               g_substring,               2, 1, false, H_substring);
   s7_define_function(sc, "string",                  g_string,                  0, 0, true,  H_string);
@@ -20481,7 +20504,7 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "list?",                   g_is_list,                 1, 0, false, H_is_list);
   s7_define_function(sc, "pair?",                   g_is_pair,                 1, 0, false, H_is_pair);
   s7_define_function(sc, "reverse",                 g_reverse,                 1, 0, false, H_reverse);
-  s7_define_function(sc, "reverse!",                g_reverse_in_place,        1, 0, false, H_reverse_in_place); /* used by Snd code */
+  s7_define_set_function(sc, "reverse!",            g_reverse_in_place,        1, 0, false, H_reverse_in_place); /* used by Snd code */
   s7_define_function(sc, "cons",                    g_cons,                    2, 0, false, H_cons);
   s7_define_function(sc, "car",                     g_car,                     1, 0, false, H_car);
   s7_define_function(sc, "cdr",                     g_cdr,                     1, 0, false, H_cdr);
@@ -20525,18 +20548,18 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "append",                  g_append,                  0, 0, true,  H_append);
   s7_define_function(sc, "list",                    g_list,                    0, 0, true,  H_list);
   s7_define_function(sc, "list-ref",                g_list_ref,                2, 0, false, H_list_ref);
-  s7_define_function(sc, "list-set!",               g_list_set,                3, 0, false, H_list_set);
+  s7_define_set_function(sc, "list-set!",           g_list_set,                3, 0, false, H_list_set);
   s7_define_function(sc, "list-tail",               g_list_tail,               2, 0, false, H_list_tail);
   
   
   s7_define_function(sc, "vector?",                 g_is_vector,               1, 0, false, H_is_vector);
   s7_define_function(sc, "vector->list",            g_vector_to_list,          1, 0, false, H_vector_to_list);
   s7_define_function(sc, "list->vector",            g_list_to_vector,          1, 0, false, H_list_to_vector);
-  s7_define_function(sc, "vector-fill!",            g_vector_fill,             2, 0, false, H_vector_fill);
+  s7_define_set_function(sc, "vector-fill!",        g_vector_fill,             2, 0, false, H_vector_fill);
   s7_define_function(sc, "vector",                  g_vector,                  0, 0, true,  H_vector);
   s7_define_function(sc, "vector-length",           g_vector_length,           1, 0, false, H_vector_length);
   s7_define_function(sc, "vector-ref",              g_vector_ref,              2, 0, VECTOR_REST_ARGS, H_vector_ref);
-  s7_define_function(sc, "vector-set!",             g_vector_set,              3, 0, VECTOR_REST_ARGS, H_vector_set);
+  s7_define_set_function(sc, "vector-set!",         g_vector_set,              3, 0, VECTOR_REST_ARGS, H_vector_set);
   s7_define_function(sc, "make-vector",             g_make_vector,             1, 1, false, H_make_vector);
 #if WITH_MULTIDIMENSIONAL_VECTORS
   s7_define_function(sc, "vector-dimensions",       g_vector_dimensions,       1, 0, false, H_vector_dimensions);
@@ -20628,6 +20651,7 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "open-encapsulator",       g_open_encapsulator,       0, 0, false, H_open_encapsulator);
   s7_define_function(sc, "close-encapsulator",      g_close_encapsulator,      1, 0, false, H_close_encapsulator);
   s7_define_function(sc, "encapsulator?",           g_is_encapsulator,         1, 0, false, H_is_encapsulator);
+  s7_define_function(sc, "encapsulator-bindings",   g_encapsulator_bindings,   1, 0, false, H_encapsulator_bindings);
 #endif
 
 #if WITH_MULTIDIMENSIONAL_VECTORS

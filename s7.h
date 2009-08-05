@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "1.25"
-#define S7_DATE "3-Aug-09"
+#define S7_VERSION "1.26"
+#define S7_DATE "6-Aug-09"
 
 
 typedef long long int s7_Int;
@@ -474,10 +474,14 @@ bool s7_is_constant(s7_pointer p);
 
 bool s7_is_function(s7_pointer p); 
 s7_pointer s7_make_function(s7_scheme *sc, const char *name, s7_function fnc, int required_args, int optional_args, bool rest_arg, const char *doc);
+
 void s7_define_function(s7_scheme *sc, const char *name, s7_function fnc, int required_args, int optional_args, bool rest_arg, const char *doc);
+void s7_define_set_function(s7_scheme *sc, const char *name, s7_function fnc, int required_args, int optional_args, bool rest_arg, const char *doc);
 void s7_define_function_star(s7_scheme *sc, const char *name, s7_function fnc, const char *arglist, const char *doc);
+
 s7_pointer s7_apply_function(s7_scheme *sc, s7_pointer fnc, s7_pointer args);
 s7_pointer s7_make_closure(s7_scheme *sc, s7_pointer c, s7_pointer e);
+
 void s7_define_macro(s7_scheme *sc, const char *name, s7_function fnc, int required_args, int optional_args, bool rest_arg, const char *doc);
 
   /* s7_make_function creates a scheme function object from the s7_function 'fnc'.
@@ -497,6 +501,9 @@ void s7_define_macro(s7_scheme *sc, const char *name, s7_function fnc, int requi
    *
    *     s7_define_function(sc, "car", g_car, 1, 0, false, "(car obj)");
    *                                          one required arg, no optional arg, no "rest" arg
+   *
+   * s7_define_set_function is the same as s7_define_function, but also informs the encapsulation
+   *   mechanism that the function sets something.
    *
    * s7_is_function returns true if its argument is a function defined in this manner.
    * s7_apply_function applies the function (the result of s7_make_function) to the arguments.
@@ -1445,6 +1452,7 @@ int main(int argc, char **argv)
  * 
  *        s7 changes
  *
+ * 6-Aug:     encapsulation.  s7_define_set_function.
  * 1-Aug:     lower-case versions of s7_T and friends.
  *            s7_define_macro. macroexpand.
  *            strings are set-applicable (like vectors).
