@@ -2280,7 +2280,7 @@
 (hey "static void define_xm_obj(void)~%")
 (hey "{~%")
 (hey "#if HAVE_S7~%")
-(hey " xm_obj_tag = XEN_MAKE_OBJECT_TYPE(\"<XmObj>\", NULL, xm_obj_free, s7_equalp_xm, NULL, NULL, NULL);~%")
+(hey " xm_obj_tag = XEN_MAKE_OBJECT_TYPE(\"<XmObj>\", NULL, xm_obj_free, s7_equalp_xm, NULL, NULL, NULL, NULL, NULL, NULL);~%")
 (hey "#else~%")
 (hey "  xm_obj_tag = XEN_MAKE_OBJECT_TYPE(\"XmObj\", sizeof(void *));~%")
 (hey "#endif~%")

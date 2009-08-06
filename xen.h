@@ -11,11 +11,12 @@
  */
 
 #define XEN_MAJOR_VERSION 3
-#define XEN_MINOR_VERSION 0
-#define XEN_VERSION "3.0"
+#define XEN_MINOR_VERSION 1
+#define XEN_VERSION "3.1"
 
 /* HISTORY:
  *
+ *  7-Aug:     use s7_new_type_x in XEN_MAKE_OBJECT_TYPE.
  *  27-Jul:    INT64_T cases paralleling OFF_T (the latter may go away someday).
  *  14-Jul:    s7_define_function_star via XEN_DEFINE_PROCEDURE_STAR.
  *  6-Jul:     cleaned up XEN_WRAP_C_POINTER et al (Mike Scholz).
@@ -2012,7 +2013,7 @@ typedef XEN (*XEN_CATCH_BODY_TYPE)                                    (void *dat
 #define XEN_NAME_AS_C_STRING_TO_VARIABLE(a)                           s7_make_symbol(s7, a)
 
 #define XEN_MARK_OBJECT_TYPE                                           void
-#define XEN_MAKE_OBJECT_TYPE(Name, Print, Free, Equal, Gc_Mark, Apply, Set) s7_new_type(Name, Print, Free, Equal, Gc_Mark, Apply, Set)
+#define XEN_MAKE_OBJECT_TYPE(Name, Print, Free, Equal, Gc_Mark, Apply, Set, Length, Copy, Fill) s7_new_type_x(Name, Print, Free, Equal, Gc_Mark, Apply, Set, Length, Copy, Fill)
 
 #define XEN_MAKE_OBJECT_FREE_PROCEDURE(Type, Wrapped_Free, Original_Free) \
   static void Wrapped_Free(void *obj) \

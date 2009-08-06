@@ -27,14 +27,14 @@
  *        generalized set!, procedure-with-setter, applicable objects
  *        defmacro and define-macro
  *        keywords, hash tables, block comments, define*
+ *        threads (optional)
+ *        multidimensional and applicable vectors (optional)
+ *        format
+ *        encapsulation (optional)
  *        error handling using error and catch
  *        in sndlib, the run macro works giving S7 a (somewhat limited) byte compiler
  *        no invidious distinction between built-in and "foreign"
  *          (this makes it easy to extend built-in operators like "+" -- see s7.h for a simple example)
- *        threads (optional)
- *        multidimensional and applicable vectors (optional)
- *        format
- *        encapsulation
  *
  *   many minor changes!
  *
@@ -75,14 +75,16 @@
  *        symbol-calls if profiling is enabled
  *        stacktrace, trace and untrace, __func__, macroexpand
  *        strings are set-applicable (like vectors)
- *        length is generic, added generic copy
+ *        length is generic, added generic copy and fill!
  *
  *   things I ought to add/change:
- *        generic: fill!, reverse! null? find(-if) etc from CL? for-each|map over vectors?
- *          (what about files? numbers? -- integer-length, bignum-precision etc)
- *        lists should be (set-)applicable (*-ref|set! are ugly and pointless)
+ *        perhaps find(-if) etc from CL?
+ *        lists should be (set-)applicable
  *        defmacro* define-macro*
- *        settable numerator denominator?
+ *
+ *   scheme funcs s7 does not need: 
+ *        string-set! string-ref vector-set! vector-ref inexact? exact? values call-with-values
+ *        vector-length string-length string-copy string-fill! vector-fill!
  *
  *
  * Mike Scholz provided the FreeBSD support (complex trig funcs, etc)
@@ -203,9 +205,8 @@
 
 #ifndef WITH_ENCAPSULATION
   #define WITH_ENCAPSULATION 0
-/* an experiment */
-/* adds open-encapsulator, close-encapsulator, encapsulator?, and encapsulator-bindings */
-/* valgrind timing tests indicate this adds less than .01% in non-encap cases (i.e. 2 of 31000) */
+  /* this include open-encapsulator, close-encapsulator, encapsulator?, and encapsulator-bindings
+   */
 #endif
 
 
@@ -227,14 +228,15 @@
  *    lists
  *    vectors
  *    objects and functions
- *    eq and such
+ *    eq, keywords
+ *    hash tables, length, copy
+ *    encapsulators
  *    format
  *    error handlers, stacktrace, trace
  *    sundry leftovers
  *    eval
  *    quasiquote
  *    threads
- *    encapsulators
  *    gmp, mpfr, mpc support
  *    s7 init
  */
@@ -683,6 +685,8 @@ struct s7_scheme {
 
 #define vector_length(p)              ((p)->object.vector.length)
 #define vector_element(p, i)          ((p)->object.vector.elements[i])
+#define vector_elements(p)            (p)->object.vector.elements
+
 #if WITH_MULTIDIMENSIONAL_VECTORS
   #define vector_dimension(p, i)      ((p)->object.vector.dim_info->dims[i])
   #define vector_ndims(p)             ((p)->object.vector.dim_info->ndims)
@@ -753,7 +757,8 @@ struct s7_scheme {
 #define dynamic_wind_body(p)          (p)->object.winder->body
 
 #define is_c_object(p)                (type(p) == T_C_OBJECT)
-#define c_object_type(p)              p->object.fobj.type
+#define c_object_type(p)              (p)->object.fobj.type
+#define c_object_value(p)             (p)->object.fobj.value
 
 #if WITH_ENCAPSULATION
 #define is_encapsulating(Sc)          ((Sc)->encapsulators != sc->NIL)
@@ -768,11 +773,13 @@ struct s7_scheme {
 #define NO_NUM_SHIFT 3
 #define IS_NUM(n)    (n < NO_NUM)
 
+#define number_type(p)                ((p)->object.number.type)
 #define num_type(n)                   (n.type)
-#define object_number_type(p)         (p->object.number.type)
+
 #define numerator(n)                  n.value.fraction_value.numerator
 #define denominator(n)                n.value.fraction_value.denominator
 #define fraction(n)                   (((s7_Double)numerator(n)) / ((s7_Double)denominator(n)))
+
 #define real_part(n)                  n.value.complex_value.real
 #define imag_part(n)                  n.value.complex_value.imag
 #define integer(n)                    n.value.integer_value
@@ -830,6 +837,7 @@ static s7_pointer make_list_1(s7_scheme *sc, s7_pointer a);
 static s7_pointer make_list_2(s7_scheme *sc, s7_pointer a, s7_pointer b);
 static void write_string(s7_scheme *sc, const char *s, s7_pointer pt);
 static s7_pointer eval_symbol(s7_scheme *sc, s7_pointer sym);
+static void encapsulate(s7_scheme *sc, s7_pointer sym);
 
 
 
@@ -1029,10 +1037,10 @@ int s7_gc_protect(s7_scheme *sc, s7_pointer x)
   
   loc = (*(sc->protected_objects_size));
   new_size = 2 * (*(sc->protected_objects_size));
-  sc->protected_objects->object.vector.elements = (s7_pointer *)realloc(sc->protected_objects->object.vector.elements, new_size * sizeof(s7_pointer));
+  vector_elements(sc->protected_objects) = (s7_pointer *)realloc(vector_elements(sc->protected_objects), new_size * sizeof(s7_pointer));
   for (i = (*(sc->protected_objects_size)) + 1; i < new_size; i++)
     vector_element(sc->protected_objects, i) = sc->NIL;
-  sc->protected_objects->object.vector.length = new_size;
+  vector_length(sc->protected_objects) = new_size;
   (*(sc->protected_objects_size)) = new_size;
   vector_element(sc->protected_objects, loc) = x;
   
@@ -1151,7 +1159,7 @@ static void finalize_s7_cell(s7_scheme *sc, s7_pointer a)
     case T_HASH_TABLE:
       if (vector_length(a) > 0)
 	{
-	  free(a->object.vector.elements);
+	  free(vector_elements(a));
 #if WITH_MULTIDIMENSIONAL_VECTORS
 	  if (vector_is_multidimensional(a))
 	    {
@@ -1199,7 +1207,7 @@ static void mark_vector(s7_pointer p, int top)
 
   set_mark(p); /* might be called outside s7_mark_object */
 
-  tp = (s7_pointer *)(p->object.vector.elements);
+  tp = (s7_pointer *)(vector_elements(p));
   for (i = 0; i < top; i++) 
     S7_MARK(tp[i]);
 }
@@ -1471,7 +1479,7 @@ static void pop_stack(s7_scheme *sc)
   /* avoid "if..then" here and in push_stack -- these 2 are called a zillion times */
   s7_pointer *vel;
   sc->stack_top -= 4;
-  vel = (s7_pointer *)(sc->stack->object.vector.elements + sc->stack_top);
+  vel = (s7_pointer *)(vector_elements(sc->stack) + sc->stack_top);
   sc->code =  vel[0];
   sc->envir = vel[1];
   sc->args =  vel[2];
@@ -1482,7 +1490,7 @@ static void pop_stack(s7_scheme *sc)
 static void push_stack(s7_scheme *sc, opcode_t op, s7_pointer args, s7_pointer code)
 { 
   s7_pointer *vel;
-  vel = (s7_pointer *)(sc->stack->object.vector.elements + sc->stack_top);
+  vel = (s7_pointer *)(vector_elements(sc->stack) + sc->stack_top);
   vel[0] = code;
   vel[1] = sc->envir;
   vel[2] = args;
@@ -1497,10 +1505,10 @@ static void check_stack_size(s7_scheme *sc)
     {
       int i, new_size;
       new_size = sc->stack_size * 2;
-      sc->stack->object.vector.elements = (s7_pointer *)realloc(sc->stack->object.vector.elements, new_size * sizeof(s7_pointer));
+      vector_elements(sc->stack) = (s7_pointer *)realloc(vector_elements(sc->stack), new_size * sizeof(s7_pointer));
       for (i = sc->stack_size; i < new_size; i++)
 	vector_element(sc->stack, i) = sc->NIL;
-      sc->stack->object.vector.length = new_size;
+      vector_length(sc->stack) = new_size;
       sc->stack_size = new_size;
     }
 } 
@@ -2103,8 +2111,8 @@ static s7_pointer copy_stack(s7_scheme *sc, s7_pointer old_v, int top)
   len = vector_length(old_v);
   new_v = s7_make_vector(sc, len);
 
-  nv = new_v->object.vector.elements;
-  ov = old_v->object.vector.elements;
+  nv = vector_elements(new_v);
+  ov = vector_elements(old_v);
   
   (*(sc->gc_off)) = true;
 
@@ -2509,7 +2517,7 @@ bool s7_is_integer(s7_pointer p)
   if (!(s7_is_number(p)))
     return(false);
   
-  return(object_number_type(p) == NUM_INT);
+  return(number_type(p) == NUM_INT);
 }
 
 
@@ -2518,7 +2526,7 @@ bool s7_is_real(s7_pointer p)
   if (!(s7_is_number(p)))
     return(false);
   
-  return(object_number_type(p) < NUM_COMPLEX);
+  return(number_type(p) < NUM_COMPLEX);
 }
 
 
@@ -2527,7 +2535,7 @@ bool s7_is_rational(s7_pointer p)
   if (!(s7_is_number(p)))
     return(false);
   
-  return(object_number_type(p) <= NUM_RATIO);
+  return(number_type(p) <= NUM_RATIO);
 }
 
 
@@ -2536,7 +2544,7 @@ bool s7_is_ratio(s7_pointer p)
   if (!(s7_is_number(p)))
     return(false);
   
-  return(object_number_type(p) == NUM_RATIO);
+  return(number_type(p) == NUM_RATIO);
 }
 
 
@@ -2892,7 +2900,7 @@ s7_pointer s7_make_integer(s7_scheme *sc, s7_Int n)
   x = new_cell(sc);
   set_type(x, T_NUMBER | T_ATOM | T_SIMPLE | T_DONT_COPY);
   
-  x->object.number.type = NUM_INT;
+  number_type(x) = NUM_INT;
   integer(x->object.number) = n;
   
   return(x);
@@ -2908,7 +2916,7 @@ s7_pointer s7_make_real(s7_scheme *sc, s7_Double n)
   x = new_cell(sc);
   set_type(x, T_NUMBER | T_ATOM | T_SIMPLE | T_DONT_COPY);
   
-  x->object.number.type = NUM_REAL;
+  number_type(x) = NUM_REAL;
   real(x->object.number) = n;
   
   return(x);
@@ -2922,12 +2930,12 @@ s7_pointer s7_make_complex(s7_scheme *sc, s7_Double a, s7_Double b)
   set_type(x, T_NUMBER | T_ATOM | T_SIMPLE | T_DONT_COPY);
   if (b == 0.0)
     {
-      x->object.number.type = NUM_REAL;
+      number_type(x) = NUM_REAL;
       real(x->object.number) = a;
     }
   else
     {
-      x->object.number.type = NUM_COMPLEX;
+      number_type(x) = NUM_COMPLEX;
       real_part(x->object.number) = a;
       imag_part(x->object.number) = b;
     }
@@ -2950,7 +2958,7 @@ s7_pointer s7_make_ratio(s7_scheme *sc, s7_Int a, s7_Int b)
 
   ret = make_ratio(a, b);
   
-  x->object.number.type = ret.type;
+  number_type(x) = ret.type;
   if (ret.type == NUM_INT)
     integer(x->object.number) = numerator(ret);
   else
@@ -3001,7 +3009,7 @@ static s7_pointer inexact_to_exact(s7_scheme *sc, s7_pointer x)
 #if (!WITH_GMP)
 s7_Double s7_number_to_real(s7_pointer x)
 {
-  switch (object_number_type(x))
+  switch (number_type(x))
     {
     case NUM_INT:   return((s7_Double)s7_integer(x));
     case NUM_RATIO: return((s7_Double)s7_numerator(x) / (s7_Double)s7_denominator(x));
@@ -3014,7 +3022,7 @@ s7_Double s7_number_to_real(s7_pointer x)
 
 s7_Int s7_numerator(s7_pointer x)
 {
-  if (x->object.number.type == NUM_RATIO)
+  if (number_type(x) == NUM_RATIO)
     return(numerator(x->object.number));
   return(integer(x->object.number));
 }
@@ -3022,7 +3030,7 @@ s7_Int s7_numerator(s7_pointer x)
 
 s7_Int s7_denominator(s7_pointer x)
 {
-  if (x->object.number.type == NUM_RATIO)
+  if (number_type(x) == NUM_RATIO)
     return(denominator(x->object.number));
   return(1);
 }
@@ -3687,7 +3695,7 @@ static s7_Double round_per_R5RS(s7_Double x)
 
 static bool s7_is_negative(s7_pointer obj)
 {
-  switch (object_number_type(obj))
+  switch (number_type(obj))
     {
     case NUM_INT:   return(s7_integer(obj) < 0);
     case NUM_RATIO: return(s7_numerator(obj) < 0);
@@ -3698,7 +3706,7 @@ static bool s7_is_negative(s7_pointer obj)
 
 static bool s7_is_positive(s7_pointer x)
 {
-  switch (object_number_type(x))
+  switch (number_type(x))
     {
     case NUM_INT:   return(s7_integer(x) > 0);
     case NUM_RATIO: return(s7_numerator(x) > 0);
@@ -3709,7 +3717,7 @@ static bool s7_is_positive(s7_pointer x)
 
 static bool s7_is_zero(s7_pointer x)
 {
-  switch (object_number_type(x))
+  switch (number_type(x))
     {
     case NUM_INT:   return(s7_integer(x) == 0);
     case NUM_REAL2:
@@ -3784,7 +3792,7 @@ static char *s7_number_to_string_base_10(s7_pointer obj, int width, int precisio
     return(big_number_to_string_with_radix(obj, 10));
 #endif
 
-  switch (object_number_type(obj))
+  switch (number_type(obj))
     {
     case NUM_INT:
       p = (char *)malloc(64 * sizeof(char));
@@ -3870,7 +3878,7 @@ static char *s7_number_to_string_with_radix(s7_scheme *sc, s7_pointer obj, int r
   if (radix == 10)
     return(s7_number_to_string_base_10(obj, width, precision, float_choice));
 
-  switch (object_number_type(obj))
+  switch (number_type(obj))
     {
     case NUM_INT:
       p = (char *)malloc(128 * sizeof(char));
@@ -3961,12 +3969,12 @@ static s7_pointer g_number_to_string(s7_scheme *sc, s7_pointer args)
   if (!s7_is_number(x))
     return(s7_wrong_type_arg_error(sc, "number->string", 1, x, "a number"));
 
-  if (object_number_type(x) > NUM_RATIO)
+  if (number_type(x) > NUM_RATIO)
     {
       /* if size = 20, (number->string .1) gives "0.10000000000000000555", but if it's less than 20,
        *    large numbers (or very small numbers) mess up the less significant digits.
        */
-      if (object_number_type(x) < NUM_COMPLEX)
+      if (number_type(x) < NUM_COMPLEX)
 	{
 	  s7_Double val;
 	  val = s7_Double_abs(s7_real(x));
@@ -4641,10 +4649,10 @@ static s7_pointer g_string_to_number(s7_scheme *sc, s7_pointer args)
 
 static bool numbers_are_eqv(s7_pointer a, s7_pointer b)
 {
-  if (object_number_type(a) != object_number_type(b)) /* (eqv? 1 1.0) -> #f! */
+  if (number_type(a) != number_type(b)) /* (eqv? 1 1.0) -> #f! */
     return(false);
 
-  switch (object_number_type(a))
+  switch (number_type(a))
     {
     case NUM_INT:
       return((integer(a->object.number) == integer(b->object.number)));
@@ -4746,7 +4754,7 @@ static s7_pointer g_angle(s7_scheme *sc, s7_pointer args)
     return(s7_make_real(sc, atan2(s7_imag_part(x), s7_real_part(x))));
   if (num_to_real(x->object.number) < 0.0)
     return(s7_make_real(sc, M_PI));
-  if (object_number_type(x) <= NUM_RATIO)
+  if (number_type(x) <= NUM_RATIO)
     return(small_int(sc, 0));
   return(sc->real_zero);
 }
@@ -5206,14 +5214,14 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
    * syntax by itself is ambiguous (does (expt 2 2 3) = 256 or 64?)
    */
   
-  if (object_number_type(pw) == NUM_INT)
+  if (number_type(pw) == NUM_INT)
     {
       s7_Int y;
       y = s7_integer(pw);
       if (y == 0)
 	return(small_int(sc, 1));
 
-      if (object_number_type(n) == NUM_INT)
+      if (number_type(n) == NUM_INT)
 	{
 	  s7_Int x;
 	  x = s7_integer(n);
@@ -5236,7 +5244,7 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
 	}
       else
 	{
-	  if (object_number_type(n) == NUM_RATIO)
+	  if (number_type(n) == NUM_RATIO)
 	    {
 	      s7_Int nm, dn;
 	      
@@ -5275,7 +5283,7 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
     {
       s7_Double x, y;
 
-      if ((object_number_type(pw) == NUM_RATIO) &&
+      if ((number_type(pw) == NUM_RATIO) &&
 	  (numerator(pw->object.number) == 1))
 	{
 	  if (denominator(pw->object.number) == 2)
@@ -5309,7 +5317,7 @@ static s7_pointer g_floor(s7_scheme *sc, s7_pointer args)
   if (!s7_is_real(x))
     return(s7_wrong_type_arg_error(sc, "floor", 0, x, "a real"));
 
-  switch (object_number_type(x))
+  switch (number_type(x))
     {
     case NUM_INT:   
       return(x);
@@ -5340,7 +5348,7 @@ static s7_pointer g_ceiling(s7_scheme *sc, s7_pointer args)
   if (!s7_is_real(x))
     return(s7_wrong_type_arg_error(sc, "ceiling", 0, x, "a real"));
 
-  switch (object_number_type(x))
+  switch (number_type(x))
     {
     case NUM_INT:   
       return(x);
@@ -5369,7 +5377,7 @@ static s7_pointer g_truncate(s7_scheme *sc, s7_pointer args)
   if (!s7_is_real(x))
     return(s7_wrong_type_arg_error(sc, "truncate", 0, x, "a real"));
 
-  switch (object_number_type(x))
+  switch (number_type(x))
     {
     case NUM_INT: 
       return(x);
@@ -5392,7 +5400,7 @@ static s7_pointer g_round(s7_scheme *sc, s7_pointer args)
   if (!s7_is_real(x))
     return(s7_wrong_type_arg_error(sc, "round", 0, x, "a real"));
 
-  switch (object_number_type(x))
+  switch (number_type(x))
     {
     case NUM_INT: 
       return(x);
@@ -5434,7 +5442,7 @@ static s7_pointer g_lcm(s7_scheme *sc, s7_pointer args)
   for (i = 1, x = args; x != sc->NIL; i++, x = cdr(x)) 
     if (!s7_is_rational(car(x)))
       return(s7_wrong_type_arg_error(sc, "lcm", i, car(x), "an integer or ratio"));
-    else rats = ((rats) || (object_number_type(car(x)) == NUM_RATIO));
+    else rats = ((rats) || (number_type(car(x)) == NUM_RATIO));
 
   if (!rats)
     {
@@ -5477,7 +5485,7 @@ static s7_pointer g_gcd(s7_scheme *sc, s7_pointer args)
   for (i = 1, x = args; x != sc->NIL; i++, x = cdr(x)) 
     if (!s7_is_rational(car(x)))
       return(s7_wrong_type_arg_error(sc, "gcd", i, car(x), "an integer"));
-    else rats = ((rats) || (object_number_type(car(x)) == NUM_RATIO));
+    else rats = ((rats) || (number_type(car(x)) == NUM_RATIO));
   
   if (!rats)
     {
@@ -5863,7 +5871,7 @@ static s7_pointer g_real_part(s7_scheme *sc, s7_pointer args)
   p = car(args);
   if (!s7_is_number(p))
     return(s7_wrong_type_arg_error(sc, "real-part", 0, p, "a number"));
-  if (object_number_type(p) < NUM_COMPLEX)
+  if (number_type(p) < NUM_COMPLEX)
     return(p);                                      /* if num is real, real-part should return it as is (not exact->inexact) */
   return(s7_make_real(sc, real_part(p->object.number)));
 }
@@ -5876,7 +5884,7 @@ static s7_pointer g_imag_part(s7_scheme *sc, s7_pointer args)
   p = car(args);
   if (!s7_is_number(p))
     return(s7_wrong_type_arg_error(sc, "imag-part", 0, p, "a number"));
-  if (object_number_type(p) < NUM_REAL)
+  if (number_type(p) < NUM_REAL)
     return(small_int(sc, 0));                /* try to maintain exactness throughout expressions */
   return(s7_make_real(sc, s7_imag_part(p)));
 }
@@ -6036,7 +6044,7 @@ s7_pointer s7_make_ulong(s7_scheme *sc, unsigned long n)
   x = new_cell(sc);
   set_type(x, T_NUMBER | T_ATOM | T_SIMPLE | T_DONT_COPY);
   
-  x->object.number.type = NUM_INT;
+  number_type(x) = NUM_INT;
   x->object.number.value.ul_value = n;
   return(x);
 }
@@ -6060,7 +6068,7 @@ s7_pointer s7_make_ulong_long(s7_scheme *sc, unsigned long long n)
   x = new_cell(sc);
   set_type(x, T_NUMBER | T_ATOM | T_SIMPLE | T_DONT_COPY);
   
-  x->object.number.type = NUM_INT;
+  number_type(x) = NUM_INT;
   x->object.number.value.ull_value = n;
   return(x);
 }
@@ -6286,7 +6294,7 @@ static s7_pointer g_random(s7_scheme *sc, s7_pointer args)
 
   dnum = s7_number_to_real(num);
 
-  switch (object_number_type(num))
+  switch (number_type(num))
     {
     case NUM_INT:
       return(s7_make_integer(sc, (s7_Int)(dnum * next_random(r))));
@@ -7945,11 +7953,18 @@ s7_pointer s7_load_path(s7_scheme *sc)
 
 s7_pointer s7_add_to_load_path(s7_scheme *sc, const char *dir)
 {
+  s7_pointer load_path;
+  load_path = s7_make_symbol(sc, "*load-path*");
+
+#if WITH_ENCAPSULATION
+  if (is_encapsulating(sc)) encapsulate(sc, load_path);
+#endif
+
   s7_symbol_set_value(sc, 
-		      s7_make_symbol(sc, "*load-path*"),
+		      load_path,
 		      s7_cons(sc, 
 			      s7_make_string(sc, dir), 
-			      s7_load_path(sc)));
+			      s7_symbol_value(sc, load_path)));
   return(s7_load_path(sc));
 }
 
@@ -9584,45 +9599,6 @@ s7_pointer s7_remv(s7_scheme *sc, s7_pointer a, s7_pointer obj)
 }
 
 
-static s7_pointer g_vector_length(s7_scheme *sc, s7_pointer args);
-static s7_pointer g_hash_table_size(s7_scheme *sc, s7_pointer args);
-static s7_pointer s7_object_length(s7_scheme *sc, s7_pointer obj);
-
-static s7_pointer g_length(s7_scheme *sc, s7_pointer args)
-{
-  #define H_length "(length obj) returns the length of obj, which can be a list, vector, string, or hash-table"
-  
-  int len;
-  s7_pointer lst = car(args);
-  
-  if (lst == sc->NIL)
-    return(small_int(sc, 0));
-  
-  if (!is_pair(lst)) 
-    {
-      if (s7_is_vector(lst))
-	return(g_vector_length(sc, args));
-      if (s7_is_string(lst))
-	return(g_string_length(sc, args));
-      if (s7_is_hash_table(lst))
-	return(g_hash_table_size(sc, args));
-      if (is_c_object(lst))
-	return(s7_object_length(sc, lst));
-
-      return(s7_wrong_type_arg_error(sc, "length", 0, lst, "a list, vector, string, or hash-table"));
-    }
-  
-  len = s7_list_length(sc, lst);
-  
-  if (len < 0) 
-    return(s7_wrong_type_arg_error(sc, "length:", 0, lst, "a proper (not a dotted) list"));
-  if (len == 0)
-    return(s7_wrong_type_arg_error(sc, "length:", 0, lst, "a proper (not a circular) list"));
-  
-  return(s7_make_integer(sc, len));
-}
-
-
 static s7_pointer g_assq_1(s7_scheme *sc, s7_pointer args, const char *name, bool (*eq_func)(s7_pointer a, s7_pointer b))
 {
   #define H_assq "(assq obj alist) returns the key-value pair associated (via eq?) with the key obj in the association list alist"
@@ -9694,13 +9670,22 @@ static s7_pointer g_is_provided(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_provide(s7_scheme *sc, s7_pointer args)
 {
   #define H_provide "(provide sym) adds sym to the *features* list"
+  s7_pointer features;
+
   if (!s7_is_symbol(car(args)))
     return(s7_wrong_type_arg_error(sc, "provide", 1, car(args), "a symbol"));
+
+  features = s7_make_symbol(sc, "*features*");
+
+#if WITH_ENCAPSULATION
+  if (is_encapsulating(sc)) encapsulate(sc, features);
+#endif
+
   s7_symbol_set_value(sc, 
-		      s7_make_symbol(sc, "*features*"),
+		      features,
 		      s7_cons(sc, 
 			      car(args), 
-			      s7_name_to_value(sc, "*features*")));
+			      s7_symbol_value(sc, features)));
   return(car(args));
 }
 
@@ -9757,10 +9742,10 @@ s7_pointer s7_make_vector(s7_scheme *sc, int len)
   vector_length(x) = len;
   if (len > 0)
     {
-      x->object.vector.elements = (s7_pointer *)malloc(len * sizeof(s7_pointer));
+      vector_elements(x) = (s7_pointer *)malloc(len * sizeof(s7_pointer));
       s7_vector_fill(sc, x, sc->NIL);
     }
-  else x->object.vector.elements = NULL;
+  else vector_elements(x) = NULL;
 #if WITH_MULTIDIMENSIONAL_VECTORS
   x->object.vector.dim_info = NULL;
 #endif
@@ -9780,7 +9765,7 @@ void s7_vector_fill(s7_scheme *sc, s7_pointer vec, s7_pointer obj)
   int i, len;
   s7_pointer *tp;
   len = vector_length(vec);
-  tp = (s7_pointer *)(vec->object.vector.elements);
+  tp = (s7_pointer *)(vector_elements(vec));
   for (i = 0; i < len; i++) 
     tp[i] = obj;
 }
@@ -9796,8 +9781,8 @@ static s7_pointer s7_vector_copy(s7_scheme *sc, s7_pointer old_vect)
   len = vector_length(old_vect);
   new_vect = s7_make_vector(sc, len);
 
-  old_v = (s7_pointer *)(old_vect->object.vector.elements);
-  new_v = (s7_pointer *)(new_vect->object.vector.elements);
+  old_v = (s7_pointer *)(vector_elements(old_vect));
+  new_v = (s7_pointer *)(vector_elements(new_vect));
 
   for (i = 0; i < len; i++) 
     new_v[i] = old_v[i];
@@ -9840,7 +9825,7 @@ s7_pointer s7_vector_set(s7_scheme *sc, s7_pointer vec, int index, s7_pointer a)
 
 s7_pointer *s7_vector_elements(s7_pointer vec)
 {
-  return(vec->object.vector.elements);
+  return(vector_elements(vec));
 }
 
 
@@ -10189,10 +10174,12 @@ static s7_pointer g_vector_dimensions(s7_scheme *sc, s7_pointer args)
 #endif
 
 
+
 /* -------- sort! --------
  *
  *   this is much prettier code if the C compiler supports nested functions
  */
+
 #if (!HAVE_NESTED_FUNCTIONS)
   static s7_pointer compare_proc, compare_proc_args;
   static s7_scheme *compare_sc; /* ugh */
@@ -10653,7 +10640,7 @@ int s7_new_type_x(const char *name,
 		  s7_pointer (*set)(s7_scheme *sc, s7_pointer obj, s7_pointer args),
 		  s7_pointer (*length)(s7_scheme *sc, s7_pointer obj),
 		  s7_pointer (*copy)(s7_scheme *sc, s7_pointer obj),
-		  s7_pointer (*fill)(s7_scheme *sc, s7_pointer obj, s7_pointer args))
+		  s7_pointer (*fill)(s7_scheme *sc, s7_pointer obj, s7_pointer val))
 {
   int tag;
   tag = s7_new_type(name, print, free, equal, gc_mark, apply, set);
@@ -10667,9 +10654,9 @@ int s7_new_type_x(const char *name,
 static char *s7_describe_object(s7_scheme *sc, s7_pointer a)
 {
   int tag;
-  tag = a->object.fobj.type;
+  tag = c_object_type(a);
   if (object_types[tag].print)
-    return((*(object_types[tag].print))(sc, a->object.fobj.value)); /* assume allocation here (so we'll free the string later) */
+    return((*(object_types[tag].print))(sc, c_object_value(a))); /* assume allocation here (so we'll free the string later) */
   return(s7_strdup(object_types[tag].name));
 }
 
@@ -10677,9 +10664,9 @@ static char *s7_describe_object(s7_scheme *sc, s7_pointer a)
 static void s7_free_object(s7_pointer a)
 {
   int tag;
-  tag = a->object.fobj.type;
+  tag = c_object_type(a);
   if (object_types[tag].free)
-    (*(object_types[tag].free))(a->object.fobj.value);
+    (*(object_types[tag].free))(c_object_value(a));
 }
 
 
@@ -10687,12 +10674,12 @@ static bool s7_equalp_objects(s7_pointer a, s7_pointer b)
 {
   if ((is_c_object(a)) &&
       (is_c_object(b)) &&
-      (a->object.fobj.type == b->object.fobj.type))
+      (c_object_type(a) == c_object_type(b)))
     {
       int tag;
-      tag = a->object.fobj.type;
+      tag = c_object_type(a);
       if (object_types[tag].equal)
-	return((*(object_types[tag].equal))(a->object.fobj.value, b->object.fobj.value));
+	return((*(object_types[tag].equal))(c_object_value(a), c_object_value(b)));
       return(a == b);
     }
   return(false);
@@ -10702,11 +10689,11 @@ static bool s7_equalp_objects(s7_pointer a, s7_pointer b)
 static void s7_mark_embedded_objects(s7_pointer a) /* called by gc, calls fobj's mark func */
 {
   int tag;
-  tag = a->object.fobj.type;
+  tag = c_object_type(a);
   if (tag < num_types)
     {
       if (object_types[tag].gc_mark)
-	(*(object_types[tag].gc_mark))(a->object.fobj.value);
+	(*(object_types[tag].gc_mark))(c_object_value(a));
     }
 }
 
@@ -10714,26 +10701,26 @@ static void s7_mark_embedded_objects(s7_pointer a) /* called by gc, calls fobj's
 static bool s7_is_applicable_object(s7_pointer x)
 {
   return((is_c_object(x)) &&
-	 (object_types[x->object.fobj.type].apply));
+	 (object_types[c_object_type(x)].apply));
 }
 
 
 static s7_pointer s7_apply_object(s7_scheme *sc, s7_pointer obj, s7_pointer args)
 {
   int tag;
-  tag = obj->object.fobj.type;
+  tag = c_object_type(obj);
   if (object_types[tag].apply)
     return((*(object_types[tag].apply))(sc, obj, args));
   return(sc->F);
 }
 
 
-#define object_set_function(Obj) object_types[(Obj)->object.fobj.type].set
+#define object_set_function(Obj) object_types[c_object_type(Obj)].set
 
 static s7_pointer s7_object_set(s7_scheme *sc, s7_pointer obj, s7_pointer args)
 {
   int tag;
-  tag = obj->object.fobj.type;
+  tag = c_object_type(obj);
   if (object_types[tag].set)
     return((*(object_types[tag].set))(sc, obj, args));
   return(sc->UNSPECIFIED);
@@ -10750,7 +10737,7 @@ static s7_pointer g_object_set(s7_scheme *sc, s7_pointer args)
 
 void *s7_object_value(s7_pointer obj)
 {
-  return(obj->object.fobj.value);
+  return(c_object_value(obj));
 }
 
 
@@ -10765,8 +10752,8 @@ s7_pointer s7_make_object(s7_scheme *sc, int type, void *value)
   s7_pointer x;
   x = new_cell(sc);
   set_type(x, T_C_OBJECT | T_ATOM | T_FINALIZABLE | T_DONT_COPY);
-  x->object.fobj.type = type;
-  x->object.fobj.value = value;
+  c_object_type(x) = type;
+  c_object_value(x) = value;
   if (object_types[type].apply)
     typeflag(x) |= T_PROCEDURE;
   return(x);
@@ -10776,7 +10763,7 @@ s7_pointer s7_make_object(s7_scheme *sc, int type, void *value)
 static s7_pointer s7_object_length(s7_scheme *sc, s7_pointer obj)
 {
   int tag;
-  tag = obj->object.fobj.type;
+  tag = c_object_type(obj);
   if (object_types[tag].length)
     return((*(object_types[tag].length))(sc, obj));
   return(sc->UNSPECIFIED); /* not sure this is the right thing */
@@ -10786,12 +10773,21 @@ static s7_pointer s7_object_length(s7_scheme *sc, s7_pointer obj)
 static s7_pointer s7_object_copy(s7_scheme *sc, s7_pointer obj)
 {
   int tag;
-  tag = obj->object.fobj.type;
+  tag = c_object_type(obj);
   if (object_types[tag].copy)
     return((*(object_types[tag].copy))(sc, obj));
   return(obj);
 }
 
+
+static s7_pointer s7_object_fill(s7_scheme *sc, s7_pointer obj, s7_pointer val)
+{
+  int tag;
+  tag = c_object_type(obj);
+  if (object_types[tag].fill)
+    return((*(object_types[tag].fill))(sc, obj, val));
+  return(obj);
+}
 
 
 
@@ -10974,11 +10970,13 @@ static char *pws_documentation(s7_pointer x)
 }
 
 
+#if 0
 static char *pws_name(s7_pointer x)
 {
   s7_pws_t *f = (s7_pws_t *)s7_object_value(x);
   return(f->name);
 }
+#endif
 
 
 static int pws_get_req_args(s7_pointer x)
@@ -11022,6 +11020,15 @@ static s7_pointer pws_source(s7_scheme *sc, s7_pointer x)
 		     closure_body(f->scheme_getter)));
   return(sc->NIL);
 }
+
+
+#if WITH_GMP
+static void s7_define_function_with_setter(s7_scheme *sc, const char *name, s7_function get_fnc, s7_function set_fnc, int req_args, int opt_args, const char *doc)
+{
+  s7_define_variable(sc, name, 
+    s7_make_procedure_with_setter(sc, name, get_fnc, req_args, opt_args, set_fnc, req_args + 1, opt_args, doc));
+}
+#endif
 
 
 
@@ -11379,6 +11386,346 @@ static s7_pointer g_hash_table_set(s7_scheme *sc, s7_pointer args)
   
   return(s7_hash_table_set(sc, table, name, caddr(args)));
 }
+
+
+
+/* ---------------------------------------- length, copy, fill ---------------------------------------- */
+
+static s7_pointer g_length(s7_scheme *sc, s7_pointer args)
+{
+  #define H_length "(length obj) returns the length of obj, which can be a list, vector, string, or hash-table"
+  
+  s7_pointer lst = car(args);
+  
+  if (lst == sc->NIL)
+    return(small_int(sc, 0));
+
+  switch (type(lst))
+    {
+    case T_PAIR:
+      {
+	int len;
+	len = s7_list_length(sc, lst);
+  
+	if (len < 0) 
+	  return(s7_wrong_type_arg_error(sc, "length:", 0, lst, "a proper (not a dotted) list"));
+	if (len == 0)
+	  return(s7_wrong_type_arg_error(sc, "length:", 0, lst, "a proper (not a circular) list"));
+	
+	return(s7_make_integer(sc, len));
+      }
+
+    case T_VECTOR:
+      return(g_vector_length(sc, args));
+
+    case T_STRING:
+      return(g_string_length(sc, args));
+
+    case T_HASH_TABLE:
+      return(g_hash_table_size(sc, args));
+
+    case T_C_OBJECT:
+      return(s7_object_length(sc, lst));
+
+    default:
+      return(s7_wrong_type_arg_error(sc, "length", 0, lst, "a list, vector, string, or hash-table"));
+    }
+  
+  return(small_int(sc, 0));
+}
+
+
+static s7_pointer s7_list_copy(s7_scheme *sc, s7_pointer obj)
+{
+  if (is_pair(obj))
+    return(s7_cons(sc, car(obj), s7_list_copy(sc, cdr(obj))));
+  return(obj);
+}
+
+
+static s7_pointer s7_copy(s7_scheme *sc, s7_pointer obj)
+{
+  switch (type(obj))
+    {
+    case T_STRING:
+      return(s7_make_string_with_length(sc, s7_strdup(string_value(obj)), string_length(obj)));
+
+    case T_C_OBJECT:
+      return(s7_object_copy(sc, obj));
+
+    case T_HASH_TABLE:
+    case T_VECTOR:
+      return(s7_vector_copy(sc, obj));
+
+    case T_PAIR:
+      return(s7_list_copy(sc, obj)); /* should vector/list copy the objects as well as the container? */
+    }
+  return(obj);
+}
+
+
+static s7_pointer g_copy(s7_scheme *sc, s7_pointer args)
+{
+  #define H_copy "(copy obj) returns a copy of obj"
+  return(s7_copy(sc, car(args)));
+}
+
+
+static s7_pointer s7_list_fill(s7_scheme *sc, s7_pointer obj, s7_pointer val)
+{
+  if (is_pair(obj))
+    {
+      if (is_pair(car(obj)))
+	s7_list_fill(sc, car(obj), val);
+      else car(obj) = val;
+
+      if (is_pair(cdr(obj)))
+	s7_list_fill(sc, cdr(obj), val);
+      else
+	{
+	  if (cdr(obj) != sc->NIL)
+	    cdr(obj) = val;
+	}
+    }
+  return(obj);
+}
+
+
+static s7_pointer g_fill(s7_scheme *sc, s7_pointer args)
+{
+  #define H_fill "(fill obj val) fills obj with the value val"
+
+  switch (type(car(args)))
+    {
+    case T_STRING:
+      return(g_string_fill(sc, args));
+
+    case T_HASH_TABLE:
+    case T_VECTOR:
+      return(g_vector_fill(sc, args));
+
+    case T_C_OBJECT:
+      return(s7_object_fill(sc, car(args), cadr(args)));
+
+    case T_PAIR:
+      return(s7_list_fill(sc, car(args), cadr(args)));
+      
+    }
+  return(cadr(args));
+}
+
+/* TODO: test/doc copy fill generic length */
+
+
+
+/* -------------------------------- encapsulation -------------------------------- */
+
+/* encapsulate:
+
+   open-encapsulator, close-encapsulator, (obj) to restore, encapsulator-bindings
+ 
+   (define-macro (encapsulate . body) 
+      (let ((encap (gensym)))
+        `(let ((,encap (open-encapsulator)))
+           (dynamic-wind
+              (lambda () 
+	        #f)
+              (lambda () 
+	        ,@body)
+              (lambda () 
+	        ((,encap))  ; restore saved vars
+                (close-encapsulator ,encap))))))
+ 
+    TODO: how to handle sort! mus_copy for all gens? also snd/clm-local direct sets (doc/test/changelogs)
+    TODO: what about stuff like (string-set! (vector-ref ...))? copy vector/list upon ref?
+    TODO: tests for copy, new length and fill
+    TODO: set procs: vct-set! sound-data-set! frame-set! mixer-set! built-in pws cases
+*/
+
+#if WITH_ENCAPSULATION
+
+typedef struct {
+  s7_pointer bindings;
+  s7_pointer envir;
+} encap_t;
+
+static int encapsulator_tag = 0;
+
+
+static char *encapsulator_print(s7_scheme *sc, void *obj)
+{
+  /* show vars? */
+  char *buf;
+  buf = (char *)malloc(32 * sizeof(char));
+  snprintf(buf, 32, "#<encapsulator>");
+  return(buf);
+}
+
+
+static void encapsulator_free(void *obj)
+{
+  if (obj) free(obj);
+}
+
+
+static void encapsulator_mark(void *val)
+{
+  encap_t *f = (encap_t *)val;
+  if ((f) && (f->bindings)) /* possibly still in open_encapsulator */
+    {
+      S7_MARK(f->bindings);
+    }
+}
+
+
+static bool encapsulator_equal(void *obj1, void *obj2)
+{
+  return(obj1 == obj2);
+}
+
+
+static s7_pointer g_open_encapsulator(s7_scheme *sc, s7_pointer args)
+{
+  #define H_open_encapsulator "(open-encapsulator) opens an encapsulator; until it is closed, it will save variable values."
+
+  /* create object, add to s7 list */
+  encap_t *e;
+  s7_pointer obj;
+  e = (encap_t *)malloc(sizeof(encap_t));
+  e->bindings = sc->NIL;
+  e->envir = sc->envir;
+  obj = s7_make_object(sc, encapsulator_tag, (void *)e);  
+  sc->encapsulators = s7_cons(sc, obj, sc->encapsulators);
+  return(obj);
+}
+
+
+static s7_pointer g_close_encapsulator(s7_scheme *sc, s7_pointer args)
+{
+  #define H_close_encapsulator "(close-encapsulator obj) closes an encapsulator; it will no longer try to protect anything."
+
+  /* remove from s7 list */
+  encap_t *e;
+  s7_pointer x, obj;
+  
+  obj = car(args);
+  if ((!is_c_object(obj)) ||
+      (c_object_type(obj) != encapsulator_tag))
+    return(s7_wrong_type_arg_error(sc, "close-encapsulator", 0, obj, "an encapsulator"));
+
+  e = (encap_t *)s7_object_value(obj);
+  e->bindings = sc->NIL;
+  e->envir = sc->NIL;
+
+  if (obj == car(sc->encapsulators))
+    sc->encapsulators = cdr(sc->encapsulators);
+  else
+    {
+      for (x = sc->encapsulators; is_pair(x); x = cdr(x))
+	{
+	  s7_pointer y;
+	  y = cdr(x);
+	  if (obj == car(y))
+	    {
+	      cdr(x) = cdr(y);
+	      break;
+	    }
+	}
+    }
+  return(sc->UNSPECIFIED);
+}
+
+
+static s7_pointer g_is_encapsulator(s7_scheme *sc, s7_pointer args)
+{
+  #define H_is_encapsulator "(encapsulator? obj) returns #t if obj is an encapsulator"
+  return(make_boolean(sc, (is_c_object(car(args))) && (c_object_type(car(args)) == encapsulator_tag)));
+}
+
+
+static s7_pointer g_encapsulator_bindings(s7_scheme *sc, s7_pointer args)
+{
+  #define H_encapsulator_bindings "(encapsulator-bindings obj) returns the values currently awaiting restoration in an encapsulator."
+
+  encap_t *e;
+  s7_pointer obj;
+  
+  obj = car(args);
+  if ((!is_c_object(obj)) ||
+      (c_object_type(obj) != encapsulator_tag))
+    return(s7_wrong_type_arg_error(sc, "encapsulator-bindings", 0, obj, "an encapsulator"));
+
+  e = (encap_t *)s7_object_value(obj);
+  return(e->bindings);
+}
+
+
+static s7_pointer encapsulator_apply(s7_scheme *sc, s7_pointer obj, s7_pointer args)
+{
+  encap_t *e;
+  e = (encap_t *)s7_object_value(obj);
+
+  if (args == sc->NIL)
+    {
+      /* no args, restore all values */
+      s7_pointer x, y;
+      for (x = e->bindings; is_pair(x); x = cdr(x)) 
+	{
+	  y = s7_find_symbol_in_environment(sc, sc->envir, caar(x), true);
+	  if (y != sc->NIL)
+	    set_symbol_value(y, cdar(x));
+	}
+      e->bindings = sc->NIL;
+    }
+  else
+    {
+      if (s7_is_symbol(car(args)))
+	{
+	  /* find symbol in this encapsulation, return its value */
+	  s7_pointer y, sym;
+	  sym = car(args);
+	  for (y = e->bindings; is_pair(y); y = cdr(y)) 
+	    if (sym == caar(y))
+	      return(cdar(y));
+	  
+	  return(sc->UNDEFINED);
+	}
+      else return(s7_wrong_type_arg_error(sc, "encapsulator", 0, car(args), "a symbol"));
+    }
+  return(obj);
+}
+
+
+static void encapsulate(s7_scheme *sc, s7_pointer sym)
+{
+  s7_pointer x;
+  for (x = sc->encapsulators; is_pair(x); x = cdr(x))
+    {
+      encap_t *e;
+      s7_pointer y;
+      bool ok = false;
+
+      e = (encap_t *)s7_object_value(car(x));
+
+      for (y = e->bindings; is_pair(y); y = cdr(y)) 
+	if (sym == caar(y))
+	  {
+	    ok = true;
+	    break;
+	  }
+
+      if (!ok)
+	{
+	  y = s7_find_symbol_in_environment(sc, e->envir, sym, true);
+	  if (y != sc->NIL)
+	    e->bindings = s7_cons(sc, 
+                            s7_cons(sc, sym, s7_copy(sc, symbol_value(y))), 
+                            e->bindings); 
+	}
+    }
+}
+#endif
+
 
 
 
@@ -11825,32 +12172,6 @@ const char *s7_format(s7_scheme *sc, s7_pointer args)
 
 /* -------------------------------- errors -------------------------------- */
 
-static char *no_outer_parens(char *str)
-{
-  int len;
-  len = safe_strlen(str);
-  if (len > 1)
-    {
-      int i, stop = 0;
-      for (i = 0; i < len; i++)
-	if (str[i] == '(')
-	  {
-	    stop = i;
-	    str[i] = ' ';
-	    break;
-	  }
-      if (i < len)
-	for (i = len - 1; i > stop; i--)
-	  if (str[i] == ')')
-	    {
-	      str[i] = ' ';
-	      break;
-	    }
-    }
-  return(str);
-}
-
-
 /* debugging (error reporting) info */
 
 #define INITIAL_FILE_NAMES_SIZE 8
@@ -12126,7 +12447,7 @@ static const char *s7_type_name(s7_pointer arg)
     case T_CATCH:        return("catch");
     case T_DYNAMIC_WIND: return("dynamic-wind");
     case T_HASH_TABLE:   return("hash-table");
-    case T_C_OBJECT:     return(object_types[arg->object.fobj.type].name);
+    case T_C_OBJECT:     return(object_types[c_object_type(arg)].name);
 
     case T_INPUT_PORT:
       {
@@ -12148,7 +12469,7 @@ static const char *s7_type_name(s7_pointer arg)
       
     case T_NUMBER: 
       {
-	switch (object_number_type(arg))
+	switch (number_type(arg))
 	  {
 	  case NUM_INT:   return("integer");
 	  case NUM_RATIO: return("ratio");
@@ -13308,9 +13629,6 @@ static s7_pointer read_expression(s7_scheme *sc)
 
 
 static s7_pointer g_quasiquote_1(s7_scheme *sc, int level, s7_pointer form);
-#if WITH_ENCAPSULATION
-  static void encapsulate(s7_scheme *sc, s7_pointer sym);
-#endif
 
 
 /* -------------------------------- eval -------------------------------- */
@@ -13711,10 +14029,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  if ((is_encapsulating(sc)) &&
 	      (cdr(sc->code) != sc->NIL) &&
 	      (is_setter(sc->value)))
-	    {
-	      /* fprintf(stderr, "encap: %s\n", s7_object_to_c_string(sc, sc->code)); */
-	      encapsulate(sc, cadr(sc->code));
-	    }
+	    encapsulate(sc, cadr(sc->code));
 #endif
 	  sc->code = cdr(sc->code);
 
@@ -14304,9 +14619,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	{
 #if WITH_ENCAPSULATION
 	  if (is_encapsulating(sc))
-	    {
-	      encapsulate(sc, sc->code);
-	    }
+	    encapsulate(sc, sc->code);
 #endif
 	  set_symbol_value(sc->y, sc->value); 
 	  pop_stack(sc);
@@ -15544,255 +15857,6 @@ static void mark_s7(s7_scheme *sc)
 #endif
 
 
-static s7_pointer s7_list_copy(s7_scheme *sc, s7_pointer obj)
-{
-  if (is_pair(obj))
-    return(s7_cons(sc, car(obj), s7_list_copy(sc, cdr(obj))));
-  return(obj);
-}
-
-
-static s7_pointer s7_copy(s7_scheme *sc, s7_pointer obj)
-{
-  switch (type(obj))
-    {
-    case T_STRING:
-      return(s7_make_string_with_length(sc, s7_strdup(string_value(obj)), string_length(obj)));
-
-    case T_C_OBJECT:
-      return(s7_object_copy(sc, obj));
-
-    case T_HASH_TABLE:
-    case T_VECTOR:
-      return(s7_vector_copy(sc, obj));
-
-    case T_PAIR:
-      return(s7_list_copy(sc, obj)); /* should vector/list copy the objects as well as the container? */
-    }
-  return(obj);
-}
-
-
-static s7_pointer g_copy(s7_scheme *sc, s7_pointer args)
-{
-  #define H_copy "(copy obj) returns a copy of obj"
-  return(s7_copy(sc, car(args)));
-}
-
-
-
-/* -------------------------------- encapsulation -------------------------------- */
-
-/* encapsulate:
-
-   open-encapsulator, close-encapsulator, (obj) to restore, encapsulator-bindings
-   here's an encapsulate macro:
- 
-   (define-macro (encapsulate . body) 
-      (let ((encap (gensym)))
-        `(let ((,encap (open-encapsulator)))
-           (dynamic-wind
-              (lambda () 
-	        #f)
-              (lambda () 
-	        ,@body)
-              (lambda () 
-	        ((,encap))  ; restore saved vars
-                (close-encapsulator ,encap))))))
- 
-    TODO: unhandled: [vct-set][*load-path* et al]
-    TODO: how to handle sort! add _x cases in Snd, mus_copy for all gens? also local direct sets (doc/test/changelogs)
-    TODO: what about stuff like (string-set! (vector-ref ...))? copy vector/list upon ref?
-*/
-
-#if WITH_ENCAPSULATION
-
-typedef struct {
-  s7_pointer bindings;
-  s7_pointer envir;
-} encap_t;
-
-static int encapsulator_tag = 0;
-
-
-static char *encapsulator_print(s7_scheme *sc, void *obj)
-{
-  /* show vars? */
-  char *buf;
-  encap_t *p = (encap_t *)obj;
-  buf = (char *)malloc(32 * sizeof(char));
-  snprintf(buf, 32, "#<encapsulator>");
-  return(buf);
-}
-
-
-static void encapsulator_free(void *obj)
-{
-  if (obj) free(obj);
-}
-
-
-static void encapsulator_mark(void *val)
-{
-  encap_t *f = (encap_t *)val;
-  if ((f) && (f->bindings)) /* possibly still in open_encapsulator */
-    {
-      S7_MARK(f->bindings);
-    }
-}
-
-
-static bool encapsulator_equal(void *obj1, void *obj2)
-{
-  return(obj1 == obj2);
-}
-
-
-static s7_pointer g_open_encapsulator(s7_scheme *sc, s7_pointer args)
-{
-  #define H_open_encapsulator "(open-encapsulator) opens an encapsulator; until it is closed, it will save variable values."
-
-  /* create object, add to s7 list */
-  encap_t *e;
-  s7_pointer obj;
-  e = (encap_t *)malloc(sizeof(encap_t));
-  e->bindings = sc->NIL;
-  e->envir = sc->envir;
-  obj = s7_make_object(sc, encapsulator_tag, (void *)e);  
-  sc->encapsulators = s7_cons(sc, obj, sc->encapsulators);
-  return(obj);
-}
-
-
-static s7_pointer g_close_encapsulator(s7_scheme *sc, s7_pointer args)
-{
-  #define H_close_encapsulator "(close-encapsulator obj) closes an encapsulator; it will no longer try to protect anything."
-
-  /* remove from s7 list */
-  encap_t *e;
-  s7_pointer x, obj;
-  
-  obj = car(args);
-  if ((!is_c_object(obj)) ||
-      (c_object_type(obj) != encapsulator_tag))
-    return(s7_wrong_type_arg_error(sc, "close-encapsulator", 0, obj, "an encapsulator"));
-
-  e = (encap_t *)s7_object_value(obj);
-  e->bindings = sc->NIL;
-  e->envir = sc->NIL;
-
-  if (obj == car(sc->encapsulators))
-    sc->encapsulators = cdr(sc->encapsulators);
-  else
-    {
-      for (x = sc->encapsulators; is_pair(x); x = cdr(x))
-	{
-	  s7_pointer y;
-	  y = cdr(x);
-	  if (obj == car(y))
-	    {
-	      cdr(x) = cdr(y);
-	      break;
-	    }
-	}
-    }
-  return(sc->UNSPECIFIED);
-}
-
-
-static s7_pointer g_is_encapsulator(s7_scheme *sc, s7_pointer args)
-{
-  #define H_is_encapsulator "(encapsulator? obj) returns #t if obj is an encapsulator"
-  return(make_boolean(sc, (is_c_object(car(args))) && (c_object_type(car(args)) == encapsulator_tag)));
-}
-
-
-static s7_pointer g_encapsulator_bindings(s7_scheme *sc, s7_pointer args)
-{
-  #define H_encapsulator_bindings "(encapsulator-bindings obj) returns the values currently awaiting restoration in an encapsulator."
-
-  encap_t *e;
-  s7_pointer obj;
-  
-  obj = car(args);
-  if ((!is_c_object(obj)) ||
-      (c_object_type(obj) != encapsulator_tag))
-    return(s7_wrong_type_arg_error(sc, "encapsulator-bindings", 0, obj, "an encapsulator"));
-
-  e = (encap_t *)s7_object_value(obj);
-  return(e->bindings);
-}
-
-
-static s7_pointer encapsulator_apply(s7_scheme *sc, s7_pointer obj, s7_pointer args)
-{
-  encap_t *e;
-  e = (encap_t *)s7_object_value(obj);
-
-  if (args == sc->NIL)
-    {
-      /* no args, restore all values */
-      s7_pointer x, y;
-      for (x = e->bindings; is_pair(x); x = cdr(x)) 
-	{
-	  y = s7_find_symbol_in_environment(sc, sc->envir, caar(x), true);
-	  if (y != sc->NIL)
-	    set_symbol_value(y, cdar(x));
-	}
-      e->bindings = sc->NIL;
-    }
-  else
-    {
-      if (s7_is_symbol(car(args)))
-	{
-	  /* find symbol in this encapsulation, return its value */
-	  s7_pointer y, sym;
-	  sym = car(args);
-	  for (y = e->bindings; is_pair(y); y = cdr(y)) 
-	    if (sym == caar(y))
-	      return(cdar(y));
-	  
-	  return(sc->UNDEFINED);
-	}
-      else return(s7_wrong_type_arg_error(sc, "encapsulator", 0, car(args), "a symbol"));
-    }
-  return(obj);
-}
-
-
-static void encapsulate(s7_scheme *sc, s7_pointer sym)
-{
-  s7_pointer x;
-  for (x = sc->encapsulators; is_pair(x); x = cdr(x))
-    {
-      encap_t *e;
-      s7_pointer y;
-      bool ok = false;
-
-      e = (encap_t *)s7_object_value(car(x));
-
-      for (y = e->bindings; is_pair(y); y = cdr(y)) 
-	if (sym == car(y))
-	  {
-	    ok = true;
-	    break;
-	  }
-
-      if (!ok)
-	{
-	  y = s7_find_symbol_in_environment(sc, e->envir, sym, true);
-	  if (y != sc->NIL)
-	    e->bindings = s7_cons(sc, 
-                            s7_cons(sc, sym, s7_copy(sc, symbol_value(y))), 
-                            e->bindings); 
-	}
-    }
-}
-#endif
-
-
-
-
 /* -------------------------------- gmp/mpfr/mpc -------------------------------- */
 
 #if WITH_GMP
@@ -15899,7 +15963,7 @@ bool s7_is_number(s7_pointer p)
 bool s7_is_integer(s7_pointer p) 
 { 
   return(((type(p) == T_NUMBER) && 
-	  (object_number_type(p) == NUM_INT)) ||
+	  (number_type(p) == NUM_INT)) ||
 	 ((is_c_object(p)) && 
 	  (c_object_type(p) == big_integer_tag)));
 }
@@ -15908,7 +15972,7 @@ bool s7_is_integer(s7_pointer p)
 bool s7_is_real(s7_pointer p) 
 { 
   return(((type(p) == T_NUMBER) && 
-	  (object_number_type(p) < NUM_COMPLEX)) ||
+	  (number_type(p) < NUM_COMPLEX)) ||
 	 ((is_c_object(p)) && 
 	  ((c_object_type(p) == big_integer_tag) ||
 	   (c_object_type(p) == big_ratio_tag) ||
@@ -15919,7 +15983,7 @@ bool s7_is_real(s7_pointer p)
 bool s7_is_rational(s7_pointer p)
 {
   return(((type(p) == T_NUMBER) && 
-	  (object_number_type(p) <= NUM_RATIO)) ||
+	  (number_type(p) <= NUM_RATIO)) ||
 	 ((is_c_object(p)) && 
 	  ((c_object_type(p) == big_integer_tag) ||
 	   (c_object_type(p) == big_ratio_tag))));
@@ -15929,7 +15993,7 @@ bool s7_is_rational(s7_pointer p)
 bool s7_is_ratio(s7_pointer p)
 {
   return(((type(p) == T_NUMBER) && 
-	  (object_number_type(p) == NUM_RATIO)) ||
+	  (number_type(p) == NUM_RATIO)) ||
 	 ((is_c_object(p)) && 
 	   (c_object_type(p) == big_ratio_tag)));
 }
@@ -16169,7 +16233,7 @@ static s7_pointer s7_number_to_big_real(s7_scheme *sc, s7_pointer p)
 {
   mpfr_t *n;
   n = (mpfr_t *)malloc(sizeof(mpfr_t));
-  switch (object_number_type(p))
+  switch (number_type(p))
     {
     case NUM_INT: 
       {
@@ -16241,7 +16305,7 @@ static s7_pointer s7_number_to_big_complex(s7_scheme *sc, s7_pointer p)
   mpc_t *n;
   n = (mpc_t *)malloc(sizeof(mpc_t));
   mpc_init(*n);
-  switch (object_number_type(p))
+  switch (number_type(p))
     {
     case NUM_INT: 
       {
@@ -16420,7 +16484,7 @@ s7_Double s7_number_to_real(s7_pointer x)
 	return((s7_Double)((double)big_integer_to_s7_Int(mpq_numref(S7_BIG_RATIO(x))) / (double)big_integer_to_s7_Int(mpq_denref(S7_BIG_RATIO(x)))));
     }
 
-  switch (object_number_type(x))
+  switch (number_type(x))
     {
     case NUM_INT:   return((s7_Double)s7_integer(x));
     case NUM_RATIO: return((s7_Double)s7_numerator(x) / (s7_Double)s7_denominator(x));
@@ -16440,7 +16504,7 @@ s7_Int s7_numerator(s7_pointer x)
       if (c_object_type(x) == big_integer_tag)
 	return(big_integer_to_s7_Int(S7_BIG_INTEGER(x)));
     }
-  if (x->object.number.type == NUM_RATIO)
+  if (number_type(x) == NUM_RATIO)
     return(numerator(x->object.number));
   return(integer(x->object.number));
 }
@@ -16454,7 +16518,7 @@ s7_Int s7_denominator(s7_pointer x)
 	return(1);
       return(big_integer_to_s7_Int(mpq_denref(S7_BIG_RATIO(x))));
     }
-  if (x->object.number.type == NUM_RATIO)
+  if (number_type(x) == NUM_RATIO)
     return(denominator(x->object.number));
   return(1);
 }
@@ -16626,8 +16690,8 @@ static bool big_numbers_are_eqv(s7_pointer a, s7_pointer b)
 	}
       else
 	{
-	  if ((object_number_type(b) != NUM_REAL) &&
-	      (object_number_type(b) != NUM_REAL2))
+	  if ((number_type(b) != NUM_REAL) &&
+	      (number_type(b) != NUM_REAL2))
 	    return(false);
 	}
 
@@ -16668,7 +16732,7 @@ static bool big_numbers_are_eqv(s7_pointer a, s7_pointer b)
 	}
       else
 	{
-	  if (object_number_type(b) < NUM_COMPLEX)
+	  if (number_type(b) < NUM_COMPLEX)
 	    return(false);
 	}
 
@@ -16929,7 +16993,7 @@ static s7_pointer promote_number_1(s7_scheme *sc, int type, s7_pointer x, bool c
 	    }
 	  return(mpz_to_big_ratio(sc, S7_BIG_INTEGER(x)));
 	}
-      if (object_number_type(x) == NUM_INT)
+      if (number_type(x) == NUM_INT)
 	return(s7_ratio_to_big_ratio(sc, s7_integer(x), 1));
       return(s7_ratio_to_big_ratio(sc, s7_numerator(x), s7_denominator(x)));
       break;
@@ -16986,7 +17050,7 @@ void s7_vector_fill(s7_scheme *sc, s7_pointer vec, s7_pointer obj)
   int i, len;
   s7_pointer *tp;
   len = vector_length(vec);
-  tp = (s7_pointer *)(vec->object.vector.elements);
+  tp = (s7_pointer *)(vector_elements(vec));
 
   /* if the same bignum object is assigned to each element, different vector elements
    *    are actually the same -- we need to make a copy of obj for each one
@@ -17029,7 +17093,7 @@ static s7_pointer g_bignum(s7_scheme *sc, s7_pointer args)
   p = g_string_to_number(sc, args);
   if (is_c_object(p)) return(p);
 
-  switch (object_number_type(p))
+  switch (number_type(p))
     {
     case NUM_INT:   return(promote_number(sc, T_BIG_INTEGER, p));
     case NUM_RATIO: return(promote_number(sc, T_BIG_RATIO, p));
@@ -17076,7 +17140,7 @@ static s7_pointer big_add(s7_scheme *sc, s7_pointer args)
 	    return(s7_wrong_type_arg_error(sc, "+", i, p, "a number"));
 	  else result_type |= SHIFT_BIGNUM_TYPE(c_object_type(p));
 	}
-      else result_type |= object_number_type(p);
+      else result_type |= number_type(p);
     }
 
   if (IS_NUM(result_type))
@@ -17190,7 +17254,7 @@ static s7_pointer big_subtract(s7_scheme *sc, s7_pointer args)
 	    return(s7_wrong_type_arg_error(sc, "-", i, p, "a number"));
 	  else result_type |= SHIFT_BIGNUM_TYPE(c_object_type(p));
 	}
-      else result_type |= object_number_type(p);
+      else result_type |= number_type(p);
     }
 
   if (IS_NUM(result_type))
@@ -17256,7 +17320,7 @@ static s7_pointer big_multiply(s7_scheme *sc, s7_pointer args)
 	    return(s7_wrong_type_arg_error(sc, "*", i, p, "a number"));
 	  else result_type |= SHIFT_BIGNUM_TYPE(c_object_type(p));
 	}
-      else result_type |= object_number_type(p);
+      else result_type |= number_type(p);
     }
 
   if (IS_NUM(result_type))
@@ -17398,7 +17462,7 @@ static s7_pointer big_divide(s7_scheme *sc, s7_pointer args)
 	    return(s7_wrong_type_arg_error(sc, "/", i, p, "a number"));
 	  else result_type |= SHIFT_BIGNUM_TYPE(c_object_type(p));
 	}
-      else result_type |= object_number_type(p);
+      else result_type |= number_type(p);
     }
 
   if (IS_NUM(result_type))
@@ -19338,7 +19402,7 @@ static int big_real_scan_args(s7_scheme *sc, s7_pointer args)
 	return(-i);
       if (IS_BIG(p))
 	result_type |= SHIFT_BIGNUM_TYPE(c_object_type(p));
-      else result_type |= object_number_type(p);
+      else result_type |= number_type(p);
     }
   return(result_type);
 }
@@ -19611,7 +19675,7 @@ static s7_pointer big_equal(s7_scheme *sc, s7_pointer args)
 	    return(s7_wrong_type_arg_error(sc, "=", i, p, "a number"));
 	  else result_type |= SHIFT_BIGNUM_TYPE(c_object_type(p));
 	}
-      else result_type |= object_number_type(p);
+      else result_type |= number_type(p);
     }
 
   if (IS_NUM(result_type))
@@ -19934,7 +19998,7 @@ static s7_pointer big_random(s7_scheme *sc, s7_pointer args)
 
       if (!is_c_object(num))
 	{
-	  switch (object_number_type(num))
+	  switch (number_type(num))
 	    {
 	    case NUM_INT:
 	      num = promote_number(sc, T_BIG_INTEGER, num);
@@ -20108,8 +20172,7 @@ static void s7_gmp_init(s7_scheme *sc)
 
   s7_define_function(sc, "bignum",              g_bignum,             1, 0, false, H_bignum);
   s7_define_function(sc, "bignum?",             g_is_bignum,          1, 0, false, H_is_bignum);
-  s7_define_variable(sc, "bignum-precision", 
-		     s7_make_procedure_with_setter(sc, "bignum-precision", g_get_precision, 0, 0, g_set_precision, 1, 0, H_bignum_precision));
+  s7_define_function_with_setter(sc, "bignum-precision", g_get_precision, g_set_precision, 0, 0, H_bignum_precision);
 
   add_max = (1 << (s7_int_bits - 1));
   mpfr_set_default_prec((mp_prec_t)128); 
@@ -20227,7 +20290,7 @@ s7_scheme *s7_init(void)
   sc->symbol_table = (s7_pointer)calloc(1, sizeof(s7_cell));
   set_type(sc->symbol_table, T_VECTOR | T_FINALIZABLE | T_DONT_COPY);
   vector_length(sc->symbol_table) = SYMBOL_TABLE_SIZE;
-  sc->symbol_table->object.vector.elements = (s7_pointer *)malloc(SYMBOL_TABLE_SIZE * sizeof(s7_pointer));
+  vector_elements(sc->symbol_table) = (s7_pointer *)malloc(SYMBOL_TABLE_SIZE * sizeof(s7_pointer));
   s7_vector_fill(sc, sc->symbol_table, sc->NIL);
   
   sc->gensym_counter = (long *)calloc(1, sizeof(long));
@@ -20258,14 +20321,14 @@ s7_scheme *s7_init(void)
       s7_pointer p;
       p = (s7_pointer)calloc(1, sizeof(s7_cell));
       p->flag = T_OBJECT | T_IMMUTABLE | T_ATOM | T_NUMBER | T_SIMPLE | T_DONT_COPY;
-      p->object.number.type = NUM_INT;
+      number_type(p) = NUM_INT;
       integer(p->object.number) = (s7_Int)i;
       sc->small_ints[i] = p;
     }
   
   sc->real_zero = (s7_pointer)calloc(1, sizeof(s7_cell));
   sc->real_zero->flag = T_OBJECT | T_IMMUTABLE | T_ATOM | T_NUMBER | T_SIMPLE | T_DONT_COPY;
-  sc->real_zero->object.number.type = NUM_REAL;
+  number_type(sc->real_zero) = NUM_REAL;
   real(sc->real_zero->object.number) = (s7_Double)0.0;
   
   /* initialization of global pointers to special symbols */
@@ -20373,6 +20436,15 @@ s7_scheme *s7_init(void)
   sc->SET = s7_make_symbol(sc, "set!");
   typeflag(sc->SET) |= T_DONT_COPY; 
 
+  (*(sc->gc_off)) = false;
+
+
+  /* pws first so that make-procedure-with-setter has a type tag */
+  s7_define_function(sc, "make-procedure-with-setter",         g_make_procedure_with_setter,         2, 0, false, H_make_procedure_with_setter);
+  s7_define_function(sc, "procedure-with-setter?",             g_is_procedure_with_setter,           1, 0, false, H_is_procedure_with_setter);
+  s7_define_function(sc, "procedure-with-setter-setter-arity", g_procedure_with_setter_setter_arity, 1, 0, false, "kludge to get setter's arity");
+  pws_tag = s7_new_type("<procedure-with-setter>", pws_print, pws_free,	pws_equal, pws_mark, pws_apply,	pws_set);
+  
 
   s7_define_function(sc, "gensym",                  g_gensym,                  0, 1, false, H_gensym);
   s7_define_function(sc, "symbol-table",            g_symbol_table,            0, 0, false, H_symbol_table);
@@ -20455,6 +20527,10 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "make-rectangular",        g_make_rectangular,        2, 0, false, H_make_rectangular);
   s7_define_function(sc, "magnitude",               g_magnitude,               1, 0, false, H_magnitude);
   s7_define_function(sc, "angle",                   g_angle,                   1, 0, false, H_angle);
+  s7_define_function(sc, "real-part",               g_real_part,               1, 0, false, H_real_part);
+  s7_define_function(sc, "imag-part",               g_imag_part,               1, 0, false, H_imag_part);
+  s7_define_function(sc, "numerator",               g_numerator,               1, 0, false, H_numerator);
+  s7_define_function(sc, "denominator",             g_denominator,             1, 0, false, H_denominator);
   s7_define_function(sc, "rationalize",             g_rationalize,             1, 1, false, H_rationalize);
   s7_define_function(sc, "abs",                     g_abs,                     1, 0, false, H_abs);
   s7_define_function(sc, "exp",                     g_exp,                     1, 0, false, H_exp);
@@ -20503,10 +20579,6 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "zero?",                   g_is_zero,                 1, 0, false, H_is_zero);
   s7_define_function(sc, "positive?",               g_is_positive,             1, 0, false, H_is_positive);
   s7_define_function(sc, "negative?",               g_is_negative,             1, 0, false, H_is_negative);
-  s7_define_function(sc, "real-part",               g_real_part,               1, 0, false, H_real_part);
-  s7_define_function(sc, "imag-part",               g_imag_part,               1, 0, false, H_imag_part);
-  s7_define_function(sc, "numerator",               g_numerator,               1, 0, false, H_numerator);
-  s7_define_function(sc, "denominator",             g_denominator,             1, 0, false, H_denominator);
   s7_define_function(sc, "inexact->exact",          g_inexact_to_exact,        1, 0, false, H_inexact_to_exact);
   s7_define_function(sc, "exact->inexact",          g_exact_to_inexact,        1, 0, false, H_exact_to_inexact);
   s7_define_function(sc, "exact?",                  g_is_exact,                1, 0, false, H_is_exact);
@@ -20628,6 +20700,7 @@ s7_scheme *s7_init(void)
 
   s7_define_function(sc, "length",                  g_length,                  1, 0, false, H_length);
   s7_define_function(sc, "copy",                    g_copy,                    1, 0, false, H_copy);
+  s7_define_set_function(sc, "fill!",               g_fill,                    2, 0, false, H_fill);
   
   
   s7_define_function(sc, "vector?",                 g_is_vector,               1, 0, false, H_is_vector);
@@ -20678,11 +20751,6 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "help",                    g_procedure_documentation, 1, 0, false, H_procedure_documentation);
   s7_define_function(sc, "procedure-arity",         g_procedure_arity,         1, 0, false, H_procedure_arity);
   s7_define_function(sc, "procedure-source",        g_procedure_source,        1, 0, false, H_procedure_source);
-  
-  s7_define_function(sc, "make-procedure-with-setter",         g_make_procedure_with_setter,         2, 0, false, H_make_procedure_with_setter);
-  s7_define_function(sc, "procedure-with-setter?",             g_is_procedure_with_setter,           1, 0, false, H_is_procedure_with_setter);
-  s7_define_function(sc, "procedure-with-setter-setter-arity", g_procedure_with_setter_setter_arity, 1, 0, false, "kludge to get setter's arity");
-  pws_tag = s7_new_type("<procedure-with-setter>", pws_print, pws_free,	pws_equal, pws_mark, pws_apply,	pws_set);
   
   
   s7_define_function(sc, "not",                     g_not,                     1, 0, false, H_not);
@@ -20759,8 +20827,6 @@ s7_scheme *s7_init(void)
     /* for s7_Double, float gives about 9 digits, double 18, long Double claims 28 but I don't see more than about 22? */
   }
 
-  (*(sc->gc_off)) = false;
-
   s7_eval_c_string(sc, "(macro quasiquote (lambda (l) (_quasiquote_ 0 (cadr l))))");
   typeflag(sc->QUASIQUOTE) |= T_IMMUTABLE;
 
@@ -20815,6 +20881,21 @@ s7_scheme *s7_init(void)
 				(format #t \" ~A\" (list-ref local-env true-args)))            \n\
 			    (format #t \")~%\"))                                               \n\
 			  (format #t \"(~A~{~^ ~A~})~%\" (cdar op) (reverse args)))))))))))");
+
+#if WITH_ENCAPSULATION
+  s7_eval_c_string(sc, "                                 \n\
+      (define-macro (encapsulate . body)                 \n\
+	(let ((encap (gensym)))                          \n\
+	  `(let ((,encap (open-encapsulator)))           \n\
+	     (dynamic-wind                               \n\
+		 (lambda ()                              \n\
+		   #f)                                   \n\
+		 (lambda ()                              \n\
+		   ,@body)                               \n\
+		 (lambda ()                              \n\
+		   ((,encap))                            \n\
+		   (close-encapsulator ,encap))))))");
+#endif
 
   return(sc);
 }

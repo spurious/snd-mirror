@@ -13,7 +13,7 @@ added frame and mixer, paralleling functions like vct and list
 
 s7_define_function_star: define* at C-level, handling keywords, argument order, etc.
 s7_define_macro: define a macro at C-level.  Also macroexpand.
-s7_new_type_x: extended version of the C-level new type creator (length, copy, etc).
+s7_new_type_x: extended version of the C-level new type creator (length, copy, fill).
 
 added profiling option (--with-profiling in configure) to s7.  profile
   function in extensions.scm.  This could be greatly elaborated, if
@@ -48,7 +48,7 @@ added all the non-Snd-specific instrument files to the sndlib tarball:
   v.scm|rb.  Also split out expandn, fullmix, and nrev from clm-ins.scm into separate files.
   Mike brought the sndins directory up to date.
 
-s7 length is generic, also added generic copy.
+s7 length is generic, also added generic copy and fill!.
 
 added "encapsulators" to s7:
    open-encapsulator, close-encapsulator, (obj) to restore, encapsulator-bindings

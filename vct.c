@@ -233,13 +233,16 @@ bool mus_vct_equalp(vct *v1, vct *v2)
 }
 
 #if (HAVE_S7)
+static XEN g_vct_ref(XEN obj, XEN pos);
+static XEN g_vct_set(XEN obj, XEN pos, XEN val);
+static XEN g_vct_length(XEN obj);
+static XEN g_vct_copy(XEN obj);
+static XEN g_vct_fill(XEN obj, XEN val);
+
 static bool s7_mus_vct_equalp(void *uv1, void *uv2)
 {
   return(mus_vct_equalp((vct *)uv1, (vct *)uv2));
 }
-
-static XEN g_vct_ref(XEN obj, XEN pos);
-static XEN g_vct_set(XEN obj, XEN pos, XEN val);
 
 static XEN s7_mus_vct_apply(s7_scheme *sc, XEN obj, XEN args)
 {
@@ -249,6 +252,21 @@ static XEN s7_mus_vct_apply(s7_scheme *sc, XEN obj, XEN args)
 static XEN s7_mus_vct_set(s7_scheme *sc, XEN obj, XEN args)
 {
   return(g_vct_set(obj, XEN_CAR(args), XEN_CADR(args)));
+}
+
+static XEN s7_mus_vct_length(s7_scheme *sc, XEN obj)
+{
+  return(g_vct_length(obj));
+}
+
+static XEN s7_mus_vct_copy(s7_scheme *sc, XEN obj)
+{
+  return(g_vct_copy(obj));
+}
+
+static XEN s7_mus_vct_fill(s7_scheme *sc, XEN obj, XEN val)
+{
+  return(g_vct_fill(obj, val));
 }
 #endif
 
@@ -1183,7 +1201,9 @@ void mus_vct_init(void)
 {
 
 #if HAVE_S7
-  vct_tag = XEN_MAKE_OBJECT_TYPE("<vct>", print_vct, free_vct, s7_mus_vct_equalp, NULL, s7_mus_vct_apply, s7_mus_vct_set);
+  vct_tag = XEN_MAKE_OBJECT_TYPE("<vct>", print_vct, free_vct, s7_mus_vct_equalp, NULL, 
+				 s7_mus_vct_apply, s7_mus_vct_set, s7_mus_vct_length, 
+				 s7_mus_vct_copy, s7_mus_vct_fill);
 #else
   vct_tag = XEN_MAKE_OBJECT_TYPE("Vct", sizeof(vct));
 #endif

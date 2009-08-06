@@ -6,10 +6,11 @@
 #include <mus-config.h>
 #include <stdlib.h>
 
-#define XM_DATE "27-Jul-09"
+#define XM_DATE "7-Aug-09"
 
 /* HISTORY: 
  *
+ *   7-Aug:     s7 extended type change.
  *   27-Jul:    changed OFF_T to INT64_T.
  *   24-Feb:    and then changed some back to ULONGs!
  *   16-Jan:    changed some ULONG's to C_POINTER's
@@ -413,7 +414,7 @@ static XEN make_xm_obj(void *ptr)
 static void define_xm_obj(void)
 {
 #if HAVE_S7
-  xm_obj_tag = XEN_MAKE_OBJECT_TYPE("<XmObj>", NULL, xm_obj_free, s7_equalp_xm, NULL, NULL, NULL);
+  xm_obj_tag = XEN_MAKE_OBJECT_TYPE("<XmObj>", NULL, xm_obj_free, s7_equalp_xm, NULL, NULL, NULL, NULL, NULL, NULL);
 #else
   xm_obj_tag = XEN_MAKE_OBJECT_TYPE("XmObj", sizeof(void *));
 #endif

@@ -1176,6 +1176,10 @@ static XEN mus_xen_apply(XEN gen, XEN arg1, XEN arg2)
 #endif
 
 #if HAVE_S7
+static XEN g_frame_set(XEN uf1, XEN uchan, XEN val);
+static XEN g_mixer_set(XEN uf1, XEN in, XEN out, XEN val);
+static XEN g_mus_length(XEN gen);
+
 static XEN mus_xen_apply(s7_scheme *sc, XEN gen, XEN args)
 {
   mus_float_t arg1 = 0.0, arg2 = 0.0;
@@ -1190,9 +1194,6 @@ static XEN mus_xen_apply(s7_scheme *sc, XEN gen, XEN args)
   return(C_TO_XEN_DOUBLE(mus_run(XEN_TO_MUS_ANY(gen), arg1, arg2)));
 }
 
-static XEN g_frame_set(XEN uf1, XEN uchan, XEN val);
-static XEN g_mixer_set(XEN uf1, XEN in, XEN out, XEN val);
-
 static XEN s7_mus_set(s7_scheme *sc, XEN obj, XEN args)
 {
   mus_any *g;
@@ -1206,6 +1207,23 @@ static XEN s7_mus_set(s7_scheme *sc, XEN obj, XEN args)
   return(XEN_FALSE);
 }
 
+static XEN s7_mus_length(s7_scheme *sc, XEN obj)
+{
+  return(g_mus_length(obj));
+}
+
+static XEN s7_mus_copy(s7_scheme *sc, XEN obj)
+{
+  /* mus_copy in clm.c first */
+  return(XEN_FALSE);
+}
+
+static XEN s7_mus_fill(s7_scheme *sc, XEN obj, XEN val)
+{
+  /* frame mixer, perhaps anything with an array? mus_fill method? */
+  return(XEN_FALSE);
+}
+/* TODO: clm2xen length (of defgen -- it's a list!) copy fill */
 #endif
 
 XEN mus_xen_to_object(mus_xen *gn) /* global for user-defined gens */
@@ -8625,7 +8643,8 @@ static void mus_xen_init(void)
 #endif
 
 #if HAVE_S7
-  mus_xen_tag = XEN_MAKE_OBJECT_TYPE("<mus>", print_mus_xen, free_mus_xen, s7_equalp_mus_xen, mark_mus_xen, mus_xen_apply, s7_mus_set);
+  mus_xen_tag = XEN_MAKE_OBJECT_TYPE("<mus>", print_mus_xen, free_mus_xen, s7_equalp_mus_xen, mark_mus_xen, 
+				     mus_xen_apply, s7_mus_set, s7_mus_length, s7_mus_copy, s7_mus_fill);
 #else
   mus_xen_tag = XEN_MAKE_OBJECT_TYPE("Mus", sizeof(mus_xen));
 #endif
