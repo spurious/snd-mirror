@@ -143,6 +143,7 @@ s7_pointer s7_add_to_load_path(s7_scheme *sc, const char *dir);      /* (set! *l
 
   /* the load path is a list of directories to search if load can't find the file passed as its argument.
    */
+void s7_quit(s7_scheme *sc);
 
 void s7_provide(s7_scheme *sc, const char *feature);                 /* add feature (as a symbol) to the *features* list */
 
@@ -725,6 +726,7 @@ void s7_mark_object(s7_pointer p);
  *   extend a built-in operator ("+" in this case)
  *   use C-side define* (s7_define_function_star)
  *   use C-side define-macro (s7_define_macro)
+ *   signal handling (C-C to break out of an infinite loop)
  */
 
 
@@ -1479,12 +1481,80 @@ int main(int argc, char **argv)
 
 
 
+/* --------------------------------------------------------------------------------
+ *
+ * an example of signal handling (C-C to break out of an infinite loop)
+ */
+
+#if 0 
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <signal.h>
+
+#include "s7.h"
+
+static s7_scheme *s7;
+struct sigaction new_act, old_act;  
+  
+static void handle_sigint(int ignored)  
+{  
+  fprintf(stderr, "interrupted!\n");
+  sigaction(SIGINT, &new_act, NULL);  
+  s7_quit(s7);                /* get out of the eval loop if possible */
+}  
+
+int main(int argc, char **argv)
+{
+  char buffer[512];
+  char response[1024];
+
+  s7 = s7_init();
+
+  sigaction(SIGINT, NULL, &old_act);
+  if (old_act.sa_handler != SIG_IGN)
+    {
+      memset(&new_act, 0, sizeof(new_act));  
+      new_act.sa_handler = &handle_sigint;  
+      sigaction(SIGINT, &new_act, NULL);  
+    }
+
+  while (1)
+    {
+      fprintf(stderr, "\n> ");
+      fgets(buffer, 512, stdin);
+
+      if ((buffer[0] != '\n') || 
+	  (strlen(buffer) > 1))
+	{                            
+	  sprintf(response, "(write %s)", buffer);
+	  s7_eval_c_string(s7, response);
+	}
+    }
+}
+
+/* 
+ * > (do ((i 0 (+ i 1))) ((= i -1)) )
+ * ;;; now type Ctrl-C to stop this loop
+ * ^Cinterrupted!
+ * > (+ 1 2)
+ * 3
+ * > (do ((i 0 (+ i 1))) ((= i -1)) )
+ * ^Cinterrupted!
+ * >
+ * etc
+ */
+#endif
+
+
+
 
 /* --------------------------------------------------------------------------------
  * 
  *        s7 changes
  *
- * 7-Aug:     s7_define_function_with_setter.
+ * 7-Aug:     s7_define_function_with_setter. 
+ *            s7_quit and example of signal handling.
  * 6-Aug:     encapsulation.  s7_define_set_function.  s7_new_type_x.  
  *            generic function: copy, and length is generic.
  * 1-Aug:     lower-case versions of s7_T and friends.

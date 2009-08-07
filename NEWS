@@ -45,7 +45,7 @@ added trace, untrace, break and __func__ to s7. The __func__ info made it possib
 in s7, removed gc-verbose and load-verbose replaced by *load-hook*.  Error handling can
   be specialized via *error-hook*.
 
-sort!
+sort! for lists or vectors.
   
 read-hook (in s7-Snd) has changed (the other cases are not changed).
 
@@ -106,7 +106,7 @@ added "encapsulators" to s7:
     opening a new encapsulator every time.  Also, if we trace the encapsulator, we'll see every set!
     This is not perfect yet -- I'm still working on the Snd/CLM objects, and I haven't decided yet
     how to deal with something like (string-set! (vector-ref ...)). Also C-side variables accessed
-    through procedure-with-setters are not restored.
+    through procedure-with-setters are not (yet?) restored.
 
 
 cmn works in ECL 9.7.1.

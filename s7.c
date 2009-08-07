@@ -46,7 +46,6 @@
  *            the rectangular form, and are both real and imaginary parts included? -- why can't they be separate?)
  *           In s7, exact? is a synonym for rational?
  *           Also, why isn't 1e2 considered exact?  The e2 business is 10^2 -- not a float!
- *           
  *        '#' does not stand for an unknown digit, and the '@' complex number notation is ignored
  *           I also choose not to include numbers such as +i (= 0+i) -- include the real part!
  *
@@ -60,7 +59,7 @@
  *           However, the exponent itself is always in base 10 (this follows gmp usage).
  *
  *   other additions: 
- *        random for any numeric type and any numeric argument
+ *        random for any numeric type and any numeric argument, including 0 ferchrissake!
  *        sinh, cosh, tanh, asinh, acosh, atanh
  *        read-line, read-byte, write-byte
  *        logior, logxor, logand, lognot, ash, integer-length
@@ -73,19 +72,21 @@
  *        gc, quit, *load-hook*, *error-hook*
  *        *features*, *load-path*, *vector-print-length*
  *        define-constant, pi, most-positive-fixnum, most-negative-fixnum, constant?
+ *            a constant is really constant -- it can't be bound or set.
  *        symbol-calls if profiling is enabled
  *        stacktrace, trace and untrace, __func__, macroexpand
- *        strings are set-applicable (like vectors)
- *        length is generic, added generic copy and fill!
+ *            as in C, __func__ is the name of the function currently being defined.
+ *        length is generic, also added generic copy and fill!
  *
  *   things I ought to add/change:
  *        perhaps find(-if) etc from CL?
- *        lists should be (set-)applicable
  *        defmacro* define-macro*
+ *        perhaps settable numerator denominator imag-part real-part angle magnitude
  *
  *   scheme funcs s7 does not need: 
  *        string-set! string-ref vector-set! vector-ref inexact? exact? values call-with-values
- *        vector-length string-length string-copy string-fill! vector-fill! list-ref list-set!
+ *        vector-length string-length string-copy string-fill! vector-fill! list-ref (and list-set!)
+ *        (and hash-table-ref hash-table-set! hash-table-size, but they are extensions)
  *
  *
  * Mike Scholz provided the FreeBSD support (complex trig funcs, etc)
@@ -1824,7 +1825,7 @@ static s7_pointer s7_find_symbol_in_environment(s7_scheme *sc, s7_pointer env, s
 static s7_pointer add_to_current_environment(s7_scheme *sc, s7_pointer variable, s7_pointer value) 
 { 
   if (is_immutable(variable))
-    return(s7_error(sc, sc->ERROR, make_list_2(sc, s7_make_string(sc, "can't bind or set an immutable object: ~A"), variable)));
+    return(s7_error(sc, sc->ERROR, make_list_2(sc, s7_make_string(sc, "can't bind or set an immutable object: ~S"), variable)));
 
   return(add_to_environment(sc, sc->envir, variable, value)); 
 } 
@@ -12867,6 +12868,13 @@ static s7_pointer g_quit(s7_scheme *sc, s7_pointer args)
 }
 
 
+void s7_quit(s7_scheme *sc)
+{
+  stack_reset(sc);
+  push_stack(sc, OP_QUIT, sc->NIL, sc->NIL);
+}
+
+
 static s7_pointer g_force(s7_scheme *sc, s7_pointer args)
 {
   #define H_force "(force obj) lazily evaluates obj"
@@ -13702,7 +13710,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_DO: 
       /* setup is very similar to let */
       if (!s7_is_list(sc, car(sc->code)))      /* (do 123) */
-	return(eval_error(sc, "do: var list is not a list: ~A", sc->code));
+	return(eval_error(sc, "do: var list is not a list: ~S", sc->code));
 
       if (!s7_is_list(sc, cadr(sc->code)))     /* (do ((i 0)) 123) */
 	return(eval_error(sc, "do: end-test and end-value list is not a list: ~A", sc->code));
@@ -14335,7 +14343,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 
 	default:
-	  return(eval_error(sc, "attempt to apply ~A?", sc->code));
+	  return(eval_error(sc, "attempt to apply ~S?", sc->code));
 	}
       /* ---------------- end OP_APPLY ---------------- */
 
@@ -14354,7 +14362,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if (!s7_is_list(sc, car(sc->code)))
 	{
 	  if (!s7_is_symbol(car(sc->code)))                        /* (lambda "hi" ...) */
-	    return(eval_error(sc, "lambda parameter ~A is not a symbol", car(sc->code)));
+	    return(eval_error(sc, "lambda parameter ~S is not a symbol", car(sc->code)));
 	}
       else
 	{
@@ -14362,7 +14370,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    if ((!s7_is_symbol(sc->x)) &&                          /* (lambda (a . b) 0) */
 		((!is_pair(sc->x)) ||                              /* (lambda (a . 0.0) a) */
 		 (!s7_is_symbol(car(sc->x)))))                     /* (lambda ("a") a) or (lambda (a "a") a) */
-	      return(eval_error(sc, "lambda parameter ~A is not a symbol", sc->x));
+	      return(eval_error(sc, "lambda parameter ~S is not a symbol", sc->x));
 	}
       sc->value = make_closure(sc, sc->code, sc->envir, T_CLOSURE);
       pop_stack(sc);
@@ -14377,7 +14385,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if (!s7_is_list(sc, car(sc->code)))
 	{
 	  if (!s7_is_symbol(car(sc->code)))                        /* (lambda* "hi" ...) */
-	    return(eval_error(sc, "lambda* parameter ~A is not a symbol", car(sc->code)));
+	    return(eval_error(sc, "lambda* parameter ~S is not a symbol", car(sc->code)));
 	}
       else
 	{ 
@@ -14389,7 +14397,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		   (!s7_is_symbol(caar(sc->x))) ||
 		   (cdar(sc->x) == sc->NIL) ||
 		   (cddar(sc->x) != sc->NIL)))))
-	      return(eval_error(sc, "lambda* parameter ~A is confused", sc->x));
+	      return(eval_error(sc, "lambda* parameter ~S is confused", sc->x));
 	}
       sc->value = make_closure(sc, sc->code, sc->envir, T_CLOSURE_STAR);
       pop_stack(sc);
@@ -14440,10 +14448,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  sc->code = cadr(sc->code);
 	}
       if (!s7_is_symbol(sc->x))                                             /* (define (3 a) a) */
-	return(eval_error(sc, "define a non-symbol? ~A", sc->x));
+	return(eval_error(sc, "define a non-symbol? ~S", sc->x));
 
       if (s7_is_immutable(sc->x))                                           /* (define pi 3) or (define (pi a) a) */
-	return(eval_error(sc, "define: ~A is immutable", sc->x));
+	return(eval_error(sc, "define: ~S is immutable", sc->x));
       
       push_stack(sc, OP_DEFINE1, sc->NIL, sc->x);
       goto EVAL;
@@ -14481,7 +14489,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
     case OP_SET0:                                             /* entry for set! */
       if (s7_is_immutable(car(sc->code)))                     /* (set! pi 3) */
-	return(eval_error(sc, "set!: can't alter immutable object: ~A", car(sc->code)));
+	return(eval_error(sc, "set!: can't alter immutable object: ~S", car(sc->code)));
       
       if ((cdr(sc->code) == sc->NIL) ||
 	  (cddr(sc->code) != sc->NIL))                        /* (set! var) */
@@ -14530,7 +14538,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       else 
 	{
 	  if (!s7_is_symbol(car(sc->code)))                  /* (set! 12345 1) */
-	    return(eval_error(sc, "set! can't change ~A", car(sc->code)));
+	    return(eval_error(sc, "set! can't change ~S", car(sc->code)));
 	  
 	  push_stack(sc, OP_SET1, sc->NIL, car(sc->code));
 	  sc->code = cadr(sc->code);
@@ -14609,7 +14617,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       for (sc->x = s7_is_symbol(car(sc->code)) ? cadr(sc->code) : car(sc->code), sc->y = sc->args; sc->y != sc->NIL; sc->x = cdr(sc->x), sc->y = cdr(sc->y)) 
 	{
 	  if (!(s7_is_symbol(caar(sc->x))))
-	    return(eval_error(sc, "bad variable ~A in let bindings", car(sc->code)));
+	    return(eval_error(sc, "bad variable ~S in let bindings", car(sc->code)));
 
 	  /* check for name collisions -- not sure this is required by Scheme */
 	  if (s7_find_symbol_in_environment(sc, sc->envir, caar(sc->x), false) != sc->NIL)
@@ -14657,7 +14665,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
     case OP_LET_STAR1:    /* let* -- calculate parameters */
       if (!(s7_is_symbol(caar(sc->code))))
-	return(eval_error(sc, "bad variable ~A in let* bindings", car(sc->code)));
+	return(eval_error(sc, "bad variable ~S in let* bindings", car(sc->code)));
 
       sc->envir = new_frame_in_env(sc, sc->envir); 
       /* we can't skip this new frame -- we have to imitate a nested let, otherwise
@@ -14703,7 +14711,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       for (sc->x = sc->code; sc->x != sc->NIL; sc->x = cdr(sc->x))
 	{
 	  if (!(s7_is_symbol(caar(sc->x))))
-	    return(eval_error(sc, "bad variable ~A in letrec bindings", car(sc->x)));
+	    return(eval_error(sc, "bad variable ~S in letrec bindings", car(sc->x)));
 
 	  add_to_current_environment(sc, caar(sc->x), sc->UNDEFINED);
 	}
@@ -14885,7 +14893,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  sc->code = cadr(sc->code);
 	}
       if (!s7_is_symbol(sc->x)) 
-	return(eval_error(sc, "~A: variable is not a symbol", sc->x));
+	return(eval_error(sc, "~S: variable is not a symbol", sc->x));
 
       push_stack(sc, OP_MACRO1, sc->NIL, sc->x);   /* sc->x (the name symbol) will be sc->code when we pop to OP_MACRO1 */
       goto EVAL;
@@ -14941,10 +14949,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       sc->y = s7_gensym(sc, "defmac");
       sc->x = car(sc->code);
       if (!s7_is_symbol(sc->x))
-	return(eval_error(sc, "defmacro: ~A is not a symbol?", sc->x)); /* (defmacro 3 (a) #f) */
+	return(eval_error(sc, "defmacro: ~S is not a symbol?", sc->x)); /* (defmacro 3 (a) #f) */
 
       if (is_immutable(sc->x))
-	return(eval_error(sc, "defmacro: ~A is immutable", sc->x));     /* (defmacro pi (a) `(+ ,a 1)) */
+	return(eval_error(sc, "defmacro: ~S is immutable", sc->x));     /* (defmacro pi (a) `(+ ,a 1)) */
 
       /* (defmacro hi (a) `(+ ,a 1))
        *   cdr(sc->code): ((a) (quasiquote (+ (unquote a) 1)))
@@ -15005,10 +15013,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       sc->x = caar(sc->code);
       if (!s7_is_symbol(sc->x))
-	return(eval_error(sc, "define-macro: ~A is not a symbol?", sc->x));
+	return(eval_error(sc, "define-macro: ~S is not a symbol?", sc->x));
 
       if (is_immutable(sc->x))
-	return(eval_error(sc, "define-macro: ~A is immutable", sc->x));
+	return(eval_error(sc, "define-macro: ~S is immutable", sc->x));
 
       /* (define-macro (hi a) `(+ ,a 1))
        *   cdr(sc->code): ((quasiquote (+ (unquote a) 1)))
