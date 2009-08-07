@@ -28,13 +28,14 @@
  *        defmacro and define-macro
  *        keywords, hash tables, block comments, define*
  *        threads (optional)
- *        multidimensional and applicable vectors (optional)
+ *        multidimensional vectors (optional)
  *        format
  *        encapsulation (optional)
  *        error handling using error and catch
  *        in sndlib, the run macro works giving S7 a (somewhat limited) byte compiler
  *        no invidious distinction between built-in and "foreign"
  *          (this makes it easy to extend built-in operators like "+" -- see s7.h for a simple example)
+ *        lists, strings, vectors, and hash-tables are (set-)applicable objects
  *
  *   many minor changes!
  *
@@ -84,7 +85,7 @@
  *
  *   scheme funcs s7 does not need: 
  *        string-set! string-ref vector-set! vector-ref inexact? exact? values call-with-values
- *        vector-length string-length string-copy string-fill! vector-fill!
+ *        vector-length string-length string-copy string-fill! vector-fill! list-ref list-set!
  *
  *
  * Mike Scholz provided the FreeBSD support (complex trig funcs, etc)
@@ -185,7 +186,7 @@
 
 #ifndef WITH_MULTIDIMENSIONAL_VECTORS
   #define WITH_MULTIDIMENSIONAL_VECTORS 1
-  /* this includes both the multidimension vector support and vectors as (set)applicable objects.
+  /* this includes the multidimension vector support
    *   added function: vector-dimensions returns a list of dimensions
    */
 #endif
@@ -480,12 +481,10 @@ struct s7_scheme {
   s7_pointer LAMBDA, LAMBDA_STAR, QUOTE, QUASIQUOTE, UNQUOTE, UNQUOTE_SPLICING;        
   s7_pointer APPLY, VECTOR, CONS, APPEND, CDR, VECTOR_FUNCTION, VALUES, ELSE, SET;
   s7_pointer ERROR, WRONG_TYPE_ARG, OUT_OF_RANGE, FORMAT_ERROR, WRONG_NUMBER_OF_ARGS;
-  s7_pointer KEY_KEY, KEY_OPTIONAL, KEY_REST, __FUNC__, ERROR_HOOK, STRING_SET;
+  s7_pointer KEY_KEY, KEY_OPTIONAL, KEY_REST, __FUNC__, ERROR_HOOK;
   s7_pointer FEED_TO;                 /* => */
   s7_pointer OBJECT_SET;              /* applicable object set method */
-#if WITH_MULTIDIMENSIONAL_VECTORS
-  s7_pointer VECTOR_SET;              /* applicable vector set method */
-#endif
+  s7_pointer VECTOR_SET, STRING_SET, LIST_SET, HASH_TABLE_SET;
   
   s7_pointer input_port;              /* current-input-port (nil = stdin) */
   s7_pointer input_port_stack;        /*   input port stack (load and read internally) */
@@ -11517,11 +11516,8 @@ static s7_pointer g_fill(s7_scheme *sc, s7_pointer args)
                 (close-encapsulator ,encap))))))
  
     TODO: mus_copy for all gens? also snd/clm-local direct sets (doc/test/changelogs)
-    TODO: what about stuff like (string-set! (vector-ref ...))? copy vector/list upon ref?
-    TODO: set procs: frame-set! mixer-set! built-in pws cases: gets the symbol?? 
-    :(set! (transform-size) 512)
-    :(encapsulator-bindings e1)
-    ((transform-size . transform-size))
+    TODO: what about stuff like (string-set! (vector-ref ...))? copy vector/list upon ref?  or keep chain of refs and copy to that depth
+    TODO: set procs: frame-set! mixer-set!
     TODO: run for generics, also run set! of globals?
 */
 
@@ -11705,10 +11701,7 @@ static void encapsulate(s7_scheme *sc, s7_pointer sym)
                             s7_cons(sc, sym, s7_copy(sc, symbol_value(y))), 
                             e->bindings); 
 
-	  /* TODO: here a pws value is the func: (symbol->value 'transform-size) -> transform-size.
-	   *   but we want the associated value: ((symbol->value 'transform-size)) -> 512.
-	   *   we need to know that this is from object_set.
-	   */
+	  /* a C-side procedure-with-setter becomes a no-op here -- accessing the underlying value is too tricky */
 	}
     }
 }
@@ -14319,18 +14312,27 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    pop_stack(sc);
 	  goto START;
 
-#if WITH_MULTIDIMENSIONAL_VECTORS
 	case T_VECTOR:                            /* -------- vector as applicable object -------- */
 	  /* sc->code is the vector, sc->args is the list of dimensions */
 	  sc->value = vector_ref_1(sc, sc->code, sc->args);
 	  pop_stack(sc);
 	  goto START;
-#endif
 
-	case T_STRING:
+	case T_STRING:                            /* -------- string as applicable object -------- */
 	  sc->value = g_string_ref(sc, make_list_2(sc, sc->code, car(sc->args)));
 	  pop_stack(sc);
 	  goto START;
+
+	case T_PAIR:                              /* -------- list as applicable object -------- */
+	  sc->value = g_list_ref(sc, make_list_2(sc, sc->code, car(sc->args)));
+	  pop_stack(sc);
+	  goto START;
+
+	case T_HASH_TABLE:                        /* -------- hash-table as applicable object -------- */
+	  sc->value = g_hash_table_ref(sc, make_list_2(sc, sc->code, car(sc->args)));
+	  pop_stack(sc);
+	  goto START;
+
 
 	default:
 	  return(eval_error(sc, "attempt to apply ~A?", sc->code));
@@ -14500,21 +14502,28 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    sc->code = s7_cons(sc, sc->OBJECT_SET, s7_append(sc, car(sc->code), cdr(sc->code)));   /* use set method (append flattens the lists) */
 	  else 
 	    {
-#if WITH_MULTIDIMENSIONAL_VECTORS
-	      if (type(sc->x) == T_VECTOR)
+	      switch (type(sc->x))
 		{
+		case T_VECTOR:
 		  /* sc->x is the vector, sc->code is expr without the set! */
 		  /*  args have not been evaluated! */
-		  sc->code = s7_cons(sc, sc->VECTOR_SET, s7_append(sc, car(sc->code), cdr(sc->code))); 
-		}
-	      else
-#endif
-		{
-		  if (type(sc->x) == T_STRING)
-		    {
-		      sc->code = s7_cons(sc, sc->STRING_SET, s7_append(sc, car(sc->code), cdr(sc->code))); 
-		    }
-		  else  return(eval_error(sc, "no generalized set for ~A", caar(sc->code)));
+		  sc->code = s7_cons(sc, sc->VECTOR_SET, s7_append(sc, car(sc->code), cdr(sc->code)));
+		  break;
+		  
+		case T_STRING:
+		  sc->code = s7_cons(sc, sc->STRING_SET, s7_append(sc, car(sc->code), cdr(sc->code))); 
+		  break;
+
+		case T_PAIR:
+		  sc->code = s7_cons(sc, sc->LIST_SET, s7_append(sc, car(sc->code), cdr(sc->code))); 
+		  break;
+
+		case T_HASH_TABLE:
+		  sc->code = s7_cons(sc, sc->HASH_TABLE_SET, s7_append(sc, car(sc->code), cdr(sc->code))); 
+		  break;
+
+		default:
+		  return(eval_error(sc, "no generalized set for ~A", caar(sc->code)));
 		}
 	    }
 	}
@@ -20717,11 +20726,17 @@ s7_scheme *s7_init(void)
 #endif
 
 #if WITH_MULTIDIMENSIONAL_VECTORS
+  g_provide(sc, make_list_1(sc, s7_make_symbol(sc, "multidimensional-vectors")));
+#endif
+
   sc->VECTOR_SET = s7_symbol_value(sc, s7_make_symbol(sc, "vector-set!"));
   typeflag(sc->VECTOR_SET) |= T_DONT_COPY; 
 
-  g_provide(sc, make_list_1(sc, s7_make_symbol(sc, "multidimensional-vectors")));
-#endif
+  sc->LIST_SET = s7_symbol_value(sc, s7_make_symbol(sc, "list-set!"));
+  typeflag(sc->LIST_SET) |= T_DONT_COPY; 
+
+  sc->HASH_TABLE_SET = s7_symbol_value(sc, s7_make_symbol(sc, "hash-table-set!"));
+  typeflag(sc->HASH_TABLE_SET) |= T_DONT_COPY; 
 
   sc->STRING_SET = s7_symbol_value(sc, s7_make_symbol(sc, "string-set!"));
   typeflag(sc->STRING_SET) |= T_DONT_COPY; 

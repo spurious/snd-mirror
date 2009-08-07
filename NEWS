@@ -8,12 +8,30 @@ Kjetil and Mike made numerous improvements.  In particular, ruby 1.9
 
 in s7, sound-data, frame, mixer objects are set-applicable (like vectors and vcts)
 
+also strings, lists, and hash-tables are set-applicable.  This has the somewhat 
+  strange side effect that (apply "hi" '(1)) returns #\i, since strings are applicable.
+  I think the syntax is pretty:
+
+      (let ((lst (list 1 2 3)))
+        (set! (lst 1) 32)
+        (list (lst 0) (lst 1)))
+      -> '(1 32)
+
+      (let ((hash (make-hash-table)))
+        (set! (hash 'hi) 32)
+        (hash 'hi))
+      -> 32
+
+  but even better, vector arithmetic is almost readable, and you can write (for example)
+  a generic FFT that can take vectors, vcts, frames, lists, etc.
+
 added frame and mixer, paralleling functions like vct and list
   (frame .1 .2) = (make-frame 2 .1 .2) etc
 
 s7_define_function_star: define* at C-level, handling keywords, argument order, etc.
 s7_define_macro: define a macro at C-level.  Also macroexpand.
 s7_new_type_x: extended version of the C-level new type creator (length, copy, fill).
+lower-case versions of s7_T and friends (I'll probably remove the upper-case versions someday).
 
 added profiling option (--with-profiling in configure) to s7.  profile
   function in extensions.scm.  This could be greatly elaborated, if
@@ -27,13 +45,8 @@ added trace, untrace, break and __func__ to s7. The __func__ info made it possib
 in s7, removed gc-verbose and load-verbose replaced by *load-hook*.  Error handling can
   be specialized via *error-hook*.
 
-added sort! to s7, and lower-case versions of s7_T and friends.
-  I'll probably remove the upper-case versions someday.
-
-strings are set-applicable (like vectors).  This has the somewhat strange side effect
-  that (apply "hi" '(1)) returns #\i, since strings are applicable, but the up side,
-  no need for noise words like string-ref and vector-ref, seems more important to me.
-
+sort!
+  
 read-hook (in s7-Snd) has changed (the other cases are not changed).
 
 the ubiquitous Float type is now named mus_float_t (new sndlib major version: 21),
