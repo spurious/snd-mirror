@@ -16,7 +16,7 @@
 
 /* HISTORY:
  *
- *  7-Aug:     use s7_new_type_x in XEN_MAKE_OBJECT_TYPE.
+ *  7-Aug:     use s7_new_type_x in XEN_MAKE_OBJECT_TYPE.  XEN_DEFINE_SET_PROCEDURE.
  *  27-Jul:    INT64_T cases paralleling OFF_T (the latter may go away someday).
  *  14-Jul:    s7_define_function_star via XEN_DEFINE_PROCEDURE_STAR.
  *  6-Jul:     cleaned up XEN_WRAP_C_POINTER et al (Mike Scholz).
@@ -1973,6 +1973,9 @@ extern XEN xen_false, xen_true, xen_nil, xen_undefined;
 #define XEN_DEFINE_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc) \
   s7_define_function(s7, Name, Func, ReqArg, OptArg, RstArg, Doc)
 
+#define XEN_DEFINE_SET_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc) \
+  s7_define_set_function(s7, Name, Func, ReqArg, OptArg, RstArg, Doc)
+
 #define XEN_DEFINE_PROCEDURE_STAR(Name, Func, Args, Doc) \
   s7_define_function_star(s7, Name, Func, Args, Doc)
 
@@ -2379,7 +2382,7 @@ off_t xen_to_c_off_t(XEN obj);
 XEN c_to_xen_off_t(off_t val);
 int64_t xen_to_c_int64_t_or_else(XEN obj, int64_t fallback);
 int64_t xen_to_c_int64_t(XEN obj);
-
+#define XEN_DEFINE_SET_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc) XEN_DEFINE_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc)
 #endif
 
 char *xen_version(void);

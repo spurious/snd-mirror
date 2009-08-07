@@ -4979,7 +4979,7 @@ and run simple lisp[4] functions.
    #:feedforward
    #:size
    #:initial-contents
-   (#:initial-element 0.0)
+   ;;(#:initial-element 0.0)
    #:max-size
    (#:type mus-interp-linear))
  (make-asymmetric-fm
@@ -4991,7 +4991,7 @@ and run simple lisp[4] functions.
    #:scaler
    #:size
    #:initial-contents
-   (#:initial-element 0.0)
+   ;;(#:initial-element 0.0)
    #:max-size
    (#:type mus-interp-linear))
  (make-convolve #:input #:filter #:fft-size)

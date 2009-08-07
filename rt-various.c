@@ -142,7 +142,6 @@ void* clm_calloc_atomic(int num,size_t size,const char* what){
     if(ret==NULL){
       rt_mus_error(0,"clm.c: out of memory. (%s)",what);
     }
-    memset(ret,0,num*size);
     return ret;
   }
 }

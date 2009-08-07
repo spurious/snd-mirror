@@ -66,25 +66,6 @@ added "encapsulators" to s7:
                 (close-encapsulator ,encap))))))
  
     We want to run some code, then return variables global to that code to their prior state.
-    We might simpy copy the entire current environment, but that is slow (there are easily 
-    10000 variables in Snd), and requires huge amounts of space (vectors need to be copied 
-    for example), and usually in such a situation, only one or two variables actually need to 
-    be restored.  fluid-let is not what we want.  First "fluid-let" is a bad name; it is not a 
-    "let" because it uses set! rather than making a new binding, and what is "fluid" about it?  
-    Second, fluid-let puts a dumb bookkeeping burden on the programmer -- he has 
-    to maintain a list of the variables he wants to protect -- that's asking for bugs!  Finally, 
-    it's restricted to protecting the body of the fluid-let, but in a REPL, for example, 
-    we want to return to a known state without being in any obvious let form.  That is, we
-    actually want a sort of data-side call/cc. In this system (open|close-encapsulator), to
-    be able to return to a given (data) state, open an encapsulator, then later call it to restore 
-    all variables global to that object.  close-encapsulator says I'm done with it -- the
-    normal case is that calling the object restores all its stored values, then (if not closed)
-    it starts saving values again -- this way we can repeatedly return to a clean state without
-    opening a new encapsulator every time.  Also, if we trace the encapsulator, we'll see every set!
-
-    This is not perfect yet -- I'm still working on the Snd/CLM objects, and I don't know
-    how to deal with something like (string-set! (vector-ref ...)) -- should I save upon vector|list-ref
-    as well as -set!?, so there are a few cases that aren't currently restored.  But a simple example:
 
         > (define global-x 32)
         global-x
@@ -94,6 +75,25 @@ added "encapsulators" to s7:
         "x: 123"
         > global-x
         32
+
+    We might simpy copy the entire current environment, but that is slow (there are easily 
+    1000 variables in Snd), and requires huge amounts of space (vectors need to be copied 
+    for example), and usually in such a situation, only one or two variables actually need to 
+    be restored.  fluid-let is not what we want.  First "fluid-let" is a bad name; it is not a 
+    "let" because it uses set! rather than making a new binding, and what is "fluid" about it?  
+    Second, fluid-let puts the bookkeeping burden on the programmer -- he has 
+    to maintain a list of the variables he wants to protect -- that's asking for bugs.  Finally, 
+    it's restricted to protecting the body of the fluid-let, but in a REPL, for example, 
+    we want to return to a known state without being in any obvious let form.  That is, we
+    actually want a sort of data-side call/cc. In this system (using encapsulators), to
+    be able to return to a given data state, open an encapsulator, then later call it to restore 
+    all variables global to that object.  close-encapsulator says I'm done with it -- the
+    normal case is that calling the object restores all its stored values, then (if not closed)
+    it starts saving values again -- this way we can repeatedly return to a clean state without
+    opening a new encapsulator every time.  Also, if we trace the encapsulator, we'll see every set!
+    This is not perfect yet -- I'm still working on the Snd/CLM objects, and I haven't decided yet
+    how to deal with something like (string-set! (vector-ref ...)). Also C-side variables accessed
+    through procedure-with-setters are not restored.
 
 
 cmn works in ECL 9.7.1.

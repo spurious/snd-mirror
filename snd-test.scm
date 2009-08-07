@@ -67318,3 +67318,17 @@ EDITS: 1
 
 ;;; ---------------- test the end
 
+
+#|
+valgrind test 23 6-Aug-09:
+
+39,032,814,374  /home/bil/snd-10/io.c:mus_read_any_1 [/home/bil/snd-10/snd]
+20,772,525,729  /home/bil/snd-10/s7.c:eval_symbol [/home/bil/snd-10/snd]
+17,746,630,056  /home/bil/snd-10/snd-edits.c:next_sample_value_unscaled [/home/bil/snd-10/snd]
+15,014,697,124  /home/bil/snd-10/io.c:mus_write_1 [/home/bil/snd-10/snd]
+14,386,551,225  /home/bil/snd-10/snd-sig.c:direct_filter [/home/bil/snd-10/snd]
+13,917,957,078  /home/bil/snd-10/snd-edits.c:channel_local_maxamp [/home/bil/snd-10/snd]
+12,475,299,147  /home/bil/snd-10/s7.c:s7_mark_object_1'2 [/home/bil/snd-10/snd]
+ 8,719,747,420  /home/bil/snd-10/s7.c:eval [/home/bil/snd-10/snd]
+ 8,546,890,750  /home/bil/snd-10/s7.c:gc [/home/bil/snd-10/snd]
+|#

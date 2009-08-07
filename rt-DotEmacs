@@ -307,6 +307,22 @@
        nil t))))
 (font-lock-add-keywords
  'scheme-mode
+ '(("(\\(where\\)\\>\\s-*(?\\(\\sw+\\)?"
+    (1 font-lock-keyword-face
+       nil t))))
+(font-lock-add-keywords
+ 'scheme-mode
+ '(("(\\(compose\\)\\>\\s-*(?\\(\\sw+\\)?"
+    (1 font-lock-keyword-face
+       nil t))))
+(font-lock-add-keywords
+ 'scheme-mode
+ '(("(\\(send\\)\\>\\s-*(?\\(\\sw+\\)?"
+    (1 font-lock-keyword-face
+       nil t))))
+
+(font-lock-add-keywords
+ 'scheme-mode
  '(("(\\(new\\)\\>\\s-*(?\\(\\sw+\\)?"
     (1 font-lock-keyword-face
        nil t))))

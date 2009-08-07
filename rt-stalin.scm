@@ -298,6 +298,12 @@
 
 (define* (stalin-macroexpand expr :key (include-make-coroutine #f))
   (schemecodeparser expr
+		    :symbolfunc
+		    (lambda (sym)
+		      (if (and (assq sym extra-coroutine-slots)
+			       (not (memq sym (schemecodeparser-get-varlist))))
+			  (stalin-macroexpand `(=> coroutine:_current-coroutine ,(symbol->keyword sym)) :include-make-coroutine include-make-coroutine)
+			  sym))
 		    :elsefunc (lambda (expr)
                                 ;;(when (and (eq? 'set! (car expr))
                                 ;;           (not (pair? (cadr expr)))
@@ -305,11 +311,19 @@
                                 ;;  (c-display "Bindings defined using define-stalin can not be set!:"
                                 ;;             expr)
                                 ;;  (throw 'compilation-error))
-                                (cond ((and (eq? 'set! (car expr))
-                                            (pair? (cadr expr)))
-                                       (stalin-macroexpand
-                                        `( ,(<_> 'setter!- (car (cadr expr))) ,@(cdr (cadr expr)) 
-                                           ,(caddr expr))))
+                                (cond ((eq? 'set! (car expr))
+				       (let ((name (cadr expr))
+					     (val (caddr expr)))
+					 (cond ((and (symbol? name)
+						     (assq name extra-coroutine-slots)
+						     (not (memq name (schemecodeparser-get-varlist))))
+						(stalin-macroexpand `(set! (=> coroutine:_current-coroutine ,(symbol->keyword name)) ,val)))
+					       ((pair? name)
+						(stalin-macroexpand
+						 `( ,(<_> 'setter!- (car name)) ,@(cdr (cadr expr)) 
+						    ,val)))
+					       (else
+						`(set! ,name ,(stalin-macroexpand val))))))
                                       ((and (not include-make-coroutine)
                                             (eq? 'make-coroutine (car expr))) ;; make-coroutine is redefined after macroexpand.
                                        `(make-coroutine ,@(map (lambda (entry)
@@ -476,6 +490,8 @@
   l)
 
 
+(define-stalin-ec <void*> get_NULL_ (lambda ()
+				      (return NULL)))
 
 (define-stalin-ec <void> lowlevel_remove_me (lambda ()
                                               (myexit)))
@@ -888,7 +904,7 @@ old bus.
          (* (=> adsr-data :vol) (env (=> adsr-data :out))))
         ((=> adsr-data :do-in)
          (cond ((= (=> adsr-data :time)) (=> adsr-data :a+d)
-                (set! (=> adsr-data :do-in) #f)
+                (set! (=> sadsr-data :do-in) #f)
                 (set! (=> adsr-data :vol) s))
                (else
                 (set! (=> adsr-data :vol) (env (=> adsr-data :in)))))
@@ -956,6 +972,7 @@ old bus.
 
 (cdr (assq 'documentation (procedure-properties make-oscil)))
 (cdr (assq 'documentation (procedure-properties make-env)))
+(cdr (assq 'documentation (procedure-properties make-all-pass)))
 (procedure-properties make-env)
 
 (define *rt-temp-filename* (let ((ret (tmpnam)))
@@ -1017,6 +1034,7 @@ old bus.
                                   (not (defined? name)))
                                 all-clm-constructor-names))))
 
+(get-clm-proto make-all-pass)
 
 
 
@@ -1077,34 +1095,77 @@ old bus.
 ;;
 ;; This is just a quick get-up-and-running implementation. More work is needed.
 (for-each (lambda (clm-def)
-            ;;(c-display "clm-def" clm-def)
+	    (define (to-symbol s) (if (symbol? s) s (keyword->symbol s)))
             (let* ((name (car clm-def)) ;; make-oscil
-                   (gen-name (string->symbol (substring (symbol->string name) 5 (string-length (symbol->string name))))) ;; oscil
-                   (args (cdr clm-def))
+                   (gen-name (string->symbol (substring (symbol->string name) 5 (string-length (symbol->string name))))) ;; oscil / all-pass
+		   (gen-c-name (string->symbol (list->string (map (lambda (c) (if (char=? c #\-) #\_ c)) (string->list (symbol->string gen-name)))))) ;; oscil / all_pass
+                   (args (remove (lambda (arg) (equal? :optional arg)) (cdr clm-def)))
+		   (typedefaults (map (lambda (arg)
+					(define name #f)
+					(define default #f)
+					(cond ((and (pair? arg)
+						    (null? (cdr arg)))
+					       (set! name (to-symbol (car arg))))
+					      ((pair? arg)
+					       (set! name (to-symbol (car arg)))
+					       (set! default (cadr arg)))
+					      (else
+					       (set! name (to-symbol arg))))
+					(let ((type (cond ((memq name '(size fft-size max-size type))
+							   '<int>)
+							  ((memq name '(initial-contents))
+							   '<void*>)
+							  (else
+							   '<float>))))
+					  (set! default (or default
+							    (case type
+							      ((<int>) 0)
+							      ((<void*>) ''(get_NULL_))
+							      ((<float>) 0.0))))
+					  (list name type default)))
+				      args))
+		   (names (map car typedefaults))
+		   (types (map cadr typedefaults))
+		   (defaults (map caddr typedefaults))
                    (argnames (map (lambda x (rt-gensym)) (iota (length args))))
-                   (fixed-args-list (map (lambda (arg)
-                                           (let ((def 0)
-                                                 (n #f))
-                                             (if (pair? arg)
-                                                 (begin
-                                                   (set! n (car arg))
-                                                   (if (not (null? (cdr arg)))
-                                                       (set! def (primitive-eval (cadr arg)))))
-                                                 (set! n arg))
-                                             (if (keyword? n)
-                                                 (set! n (keyword->symbol n)))
-                                             (list n def)))
+                   (fixed-args-list (map (lambda (default arg)
+                                           (let ((argname #f))
+					     (if (eq? name 'make-comb)
+						 (c-display default arg))
+                                             (cond ((pair? arg)
+						    (begin
+						      (set! argname (car arg))
+						      (if (not (null? (cdr arg)))
+							  (set! default (primitive-eval (cadr arg))))))
+						   ((equal? :max-size arg)
+						    (set! argname arg)
+						    (set! default -1))
+						   (else
+						    (set! argname arg)))
+                                             (if (keyword? argname)
+                                                 (set! argname (keyword->symbol argname)))
+                                             (list argname default)))
+					 defaults
                                          args))
                    )
-
+	      (if (eq? name 'make-comb)
+		  (c-display "fixed args" fixed-args-list))
               (supereval
                (lambda (out)
 
-                 (out "(define-stalin-ec <void*> make_" gen-name "_ (lambda (")
-                 (for-each (lambda (arg)
-                             (out `(<float> ,arg)))
+                 (out "(define-stalin-ec <void*> make_" gen-c-name "_ (lambda (")
+                 (for-each (lambda (type arg)
+                             (out `(,type ,arg)))
+			   types
                            argnames)
-                 (out ")(return (mus_make_" gen-name " ")
+                 (out ")")
+		 ;;(c-display "names" names argnames (zip names argnames))
+		 (if (and (memq 'max-size names)
+			  (memq 'size names))
+		     (let ((maxname (cadr (assq 'max-size (zip names argnames))))
+			   (sizename (cadr (assq 'size (zip names argnames)))))
+		       (out "  (if (== -1 " maxname ") (set! " maxname " " sizename "))")))
+		 (out "(return (mus_make_" gen-c-name " ")
                  (for-each (lambda (arg)
                              (out " " arg))
                            argnames)
@@ -1115,13 +1176,14 @@ old bus.
                              (out arg " "))
                            fixed-args-list)
                  (out ")\n")
-                 (out "  `(" 'make_ gen-name "_ ")
+		 (out "  `(" 'make_ gen-c-name "_ ")
                  (for-each (lambda (arg)
                              (out "," (car arg) " "))
                            fixed-args-list)
                  (out "))\n")))))
           clm-constructor-protos)
 #!
+(stalin-macroexpand '(make-comb :scaler 0.742 :size 9601))
 (pretty-print (get-stalin-macro 'make-waveshape))
 (stalin-macroexpand-1 '(make-waveshape))
 (stalin-macroexpand '(make-waveshape))
@@ -1146,26 +1208,42 @@ old bus.
 (for-each (lambda (clm-gen)
             ;;(c-display "gen" clm-gen)
             (let* ((name (car clm-gen)) ;; oscil
+		   (c-name (string->symbol (list->string (map (lambda (c) (if (char=? c #\-) #\_ c)) (string->list (symbol->string name)))))) ;; oscil / all_pass
                    (args (cadr clm-gen))
                    (argnames (map (lambda x (rt-gensym)) (iota (length args))))
                    )
               ;;(c-display (<_> name '_))
-              (define-stalin-ec-do '<float> (<_> name '_)
+              (define-stalin-ec-do '<float> (<_> c-name '_)
                 `(lambda ,(cons '(<void*> generator)
                                 (map (lambda (argname)
                                        `(<float> ,argname))
                                      argnames))
-                   (return (,(<_> 'mus_ name) (cast <mus_any*> generator) ,@argnames))))
+                   (return (,(<_> 'mus_ c-name) (cast <mus_any*> generator) ,@argnames))))
               ))
           rt-clm-generators)
 
+(define (stalin-internal-split-args args)
+  (let* ((gen-args '())
+	 (con-args (let loop ((args args))
+		     (cond ((null? args)
+			    '())
+			   ((keyword? (car args))
+			    (append (list (car args)
+					  (cadr args))
+				    (loop (cddr args))))
+			   (else
+			    (set! gen-args args)
+			    '())))))
+    (list gen-args con-args)))
+
 (for-each (lambda (clm-gen)
-            (let* ((name (car clm-gen)) ;; oscil
+            (let* ((name (car clm-gen)) ;; oscil / all-pass
+		   (c-name (string->symbol (list->string (map (lambda (c) (if (char=? c #\-) #\_ c)) (string->list (symbol->string name)))))) ;; oscil / all_pass
                    (args (cadr clm-gen))                   
                    (argnames (map (lambda x (rt-gensym)) (iota (length args)))))
               (supereval
                (lambda (out)
-                 (out "(define-stalin-macro (" name " generator ")
+                 (out "(define-stalin-macro (" name "_internal generator ")
                  (for-each (lambda (must-arg)
                              (out must-arg " "))
                            (remove pair? args))
@@ -1175,13 +1253,20 @@ old bus.
                                (out opt-arg " "))
                              (%filter pair? args)))
                  (out ")\n")
-                 (out "`(" name "_ ,generator ")
+                 (out "`(" c-name "_ ,generator ")
                  (for-each (lambda (arg)
                              (if (pair? arg)
                                  (out " ," (car arg))
                                  (out " ," arg)))
                            args)
-                 (out "))")))))
+                 (out "))")
+		 (out "(define-stalin-macro (" name " :rest rest :allow-other-keys)")
+		 (out "  (if (or (null? rest)")
+		 (out "          (not (keyword? (car rest))))")
+		 (out "      `(" name "_internal ,@rest)")
+		 (out "      (let ((args (stalin-internal-split-args rest)))")
+		 (out "        `(" name "_internal (co-var (make-" name " ,@(cadr args))) ,@(car args)))))")))))
+	  
           rt-clm-generators)
 
 #!
@@ -1552,16 +1637,16 @@ old bus.
   )
 
 (define coroutine-slots 
-  (let ((ret '(
-  :time 0
-  :stop-me #f
-  :continuation neverending-scheduling
-  :soundholder (=> coroutine:_current-coroutine :soundholder)
-  :parent _sound-coroutine ;; Only used when traversing the sound graph. Allways points to a sound coroutine.
-  :soundfunc (lambda ()) ;; Not a continuation.
-  :bus (=> coroutine:_current-coroutine :bus)
-  :is-sound #f
-  )))
+  (let ()
+    (define ret '(:time 0
+	          :stop-me #f
+		  :continuation neverending-scheduling
+		  :soundholder (=> coroutine:_current-coroutine :soundholder)
+		  :parent _sound-coroutine ;; Only used when traversing the sound graph. Allways points to a sound coroutine.
+		  :soundfunc (lambda ()) ;; Not a continuation.
+		  :bus (=> coroutine:_current-coroutine :bus)
+		  :is-sound #f
+		  ))
     (primitive-eval `(define-stalin-struct coroutine ,@ret))
     ret))
 
@@ -1574,13 +1659,26 @@ old bus.
 
 (define (redefine-coroutine-struct!)
   (c-display "coroutine struct redefined" extra-coroutine-slots)
-  (primitive-eval `(define-stalin-struct coroutine ,@coroutine-slots ,@extra-coroutine-slots))
+  (primitive-eval `(define-stalin-struct coroutine 
+		     ,@coroutine-slots 
+		     ,@(let loop ((slots extra-coroutine-slots))
+			 (if (null? slots)
+			     '()
+			     (let ((slot (car slots)))
+			       (append (list (symbol->keyword (car slot))
+					     (cadr slot))
+				       (loop (cdr slots))))))))
   #t)
 
 (define (add-coroutine-slot name default)
   (c-display "add-coroutine-slot" name default)
-  (push! default extra-coroutine-slots)
-  (push! name extra-coroutine-slots))
+  (set! name (keyword->symbol name))
+  (if (assq name extra-coroutine-slots)
+      (when (not (equal? default (cadr (assq name extra-coroutine-slots))))
+	(c-display "WARNING. Default value for " (symbol->keyword name) " is redefined.")
+	(set-cdr! (assq name extra-coroutine-slots)
+		  (list default)))
+      (push! (list name default) extra-coroutine-slots)))
 
 #!
 (define-stalin-macro (hepp)
@@ -1589,6 +1687,7 @@ old bus.
 (<rt-stalin>
  (hepp))
 !#
+
 
                                
 ;; Make sure gcc does tail call optimization.
@@ -2114,7 +2213,7 @@ old bus.
   (add-coroutine-slot this-soundholderk #f)
 
   `(let ((coroutine _current-coroutine))
-     (when (= _time (=> coroutine :time)) ;; must check if this-busk exist as well. Here.
+     (when (= _time (=> coroutine :time))
 
        (when (not (=> coroutine ,this-busk))
          (set! (=> coroutine ,this-busk) (make-bus))
@@ -2491,6 +2590,27 @@ old bus.
 
 
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;; Extra coroutine variables ;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+(define-stalin-macro (co-var arg1 :optkey arg2)
+  (define name #f)
+  (define val #f)
+  (cond (arg2
+	 (set! name arg1)
+	 (set! val arg2))
+	(else
+	 (set! name (rt-gensym))
+	 (set! val arg1)))
+  (c-display arg1 arg2)
+  (c-display name val)
+  (add-coroutine-slot (symbol->keyword name) val)
+  name)
+
+#!
+!#
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;; Generate stalin code ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -3869,16 +3989,19 @@ had to be put into macroexpand instead.
   
   (let* ((expanded (stalin-super-generate code))
          (no-use (begin  ;; coroutine-suff!
-                   (redefine-coroutine-struct!)                  
+		   (redefine-coroutine-struct!)
                    (set! expanded (stalin-macroexpand expanded :include-make-coroutine #t))
                    ;;(pretty-print expanded)
                    ))
          (dependencies
           (delete-duplicates (delete #f (find-dependencies '() expanded) eq?)
                              eq?)))
-    ;;(pretty-print dependencies)
-    (append (map get-expanded-code dependencies)
-            expanded)))
+    (pretty-print dependencies)
+    (c-display "NOW IM HERE")
+    (let ((ret (append (map get-expanded-code dependencies)
+		       expanded)))
+      
+      ret)))
 
 
 #!
@@ -3892,8 +4015,9 @@ had to be put into macroexpand instead.
 
 (define (generate-stalin-code code)
   (define lotsofcode (stalin-uniqify-variables
-                      (stalin-fix-internal-defines
-                       (generate-stalin-code0 code))))
+		       (stalin-fix-internal-defines
+			(generate-stalin-code0
+			 code))))
   (stalin-add-health-checks
    (stalin-remove-dead-code-recursively ;; Second call. stalin-remove-call/cc might have added dead code
     (stalin-remove-call/cc-recursively
@@ -3923,7 +4047,7 @@ had to be put into macroexpand instead.
 
 
 ;; Add: -copt -freg-struct-return ?
-;; The stalin optino "-df" must be added to ensure proper tail calls.
+;; The stalin option "-df" must be added to ensure proper tail calls.
 (define (compile-stalin-file basename)
   ;;(define command (<-> "stalin -On -no-clone-size-limit  -split-even-if-no-widening  -Ob -Om -Or -Ot -c " basename ".scm"))
   ;;(define command (<-> "stalin -On -no-clone-size-limit  -Ob -Om -Or -Ot -c " basename ".scm"))
@@ -4165,10 +4289,14 @@ had to be put into macroexpand instead.
                             (<char*> function_name))
                      (rt_debug (string "%d: %s") num function_name)))
 
+	   (<int> cpu_check_counter 1)
+
            (<int> check_health_internal
                   (lambda ()
                     (<char*> das_stack_bot (cast <char*> (rt_get_stack_address)))
-                    
+		    (if (== cpu_check_counter (* 2 4096)) ;; (jack_get_time) sometimes takes a lot of time. Can't call it that often.
+			(set! cpu_check_counter 0)
+			cpu_check_counter++)
                     (cond ((and ,(if *rt-opt-stack-checks* 1 0)
                                 (< das_stack_bot
                                    (- stack_top ,*stalin-stack-limit*)))
@@ -4177,6 +4305,7 @@ had to be put into macroexpand instead.
                            (return 1))
                           ((and ,(if *rt-opt-cpu-checks* 1 0)
                                 (> block_enter_time 0)
+				(== cpu_check_counter 0)
                                 (> (jack_get_time)
                                    (+ block_enter_time ,(c-integer (* 1
                                                                       (/ (* 1000000 *rt-block-size*)
@@ -4323,6 +4452,7 @@ had to be put into macroexpand instead.
                                          ;;    (tar_delete_heap heap true)
                                          ;;    (tar_delete_heap heap false))
                                          (free sounddata)
+                                         (fprintf stderr (string "Hepp, stalin freed\\n"))
                                          )))
            
            (public

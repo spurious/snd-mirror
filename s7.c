@@ -154,19 +154,13 @@
 
 #define INITIAL_HEAP_SIZE 128000
 /* the heap grows as needed, this is its initial size.
- * in Snd, there are about 10000 permanent objects sitting in the heap, so the bigger the size, the less
- *    often we mark these objects -- the GC is more efficient as the heap size increases.  Each object
- *    is about 20 bytes, so even 256K is nothing in modern memory sizes.  The heaps grows as needed,
- *    so any number > 0 is ok.  The smaller the heap, the smaller the initial run-time memory footprint.
- *    The bigger the heap, the faster s7 runs.
  */
 
 #define SYMBOL_TABLE_SIZE 9601
-/* names are hashed into the symbol table (a vector) and collisions are chained as lists; was 461, then 4603.
- *   setting it to 100043 did improve performance.  Max list size (at 9601) in snd-test.scm is 6.
+/* names are hashed into the symbol table (a vector) and collisions are chained as lists.
  */
 
-#define INITIAL_STACK_SIZE 10000            
+#define INITIAL_STACK_SIZE 4000            
 /* the stack grows as needed, each frame takes 4 entries, this is its initial size */
 
 #define INITIAL_PROTECTED_OBJECTS_SIZE 16  
@@ -348,7 +342,6 @@ typedef struct s7_port_t {
   FILE *file;
   int line_number;
   char *filename;
-  int file_number;
   char *value;
   int size, point;
   void (*function)(s7_scheme *sc, char c, s7_pointer port);
@@ -706,7 +699,6 @@ struct s7_scheme {
 #define is_function_port(p)           ((p)->object.port->type == FUNCTION_PORT)
 #define port_type(p)                  (p)->object.port->type
 #define port_line_number(p)           (p)->object.port->line_number
-#define port_file_number(p)           (p)->object.port->file_number
 #define port_filename(p)              (p)->object.port->filename
 #define port_file(p)                  (p)->object.port->file
 #define port_is_closed(p)             (p)->object.port->is_closed
@@ -773,7 +765,8 @@ struct s7_scheme {
 #define NO_NUM_SHIFT 3
 #define IS_NUM(n)    (n < NO_NUM)
 
-#define number_type(p)                ((p)->object.number.type)
+#define number(p)                     (p)->object.number
+#define number_type(p)                (p)->object.number.type
 #define num_type(n)                   (n.type)
 
 #define numerator(n)                  n.value.fraction_value.numerator
@@ -826,7 +819,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op);
 static s7_pointer s7_division_by_zero_error(s7_scheme *sc, const char *caller, s7_pointer arg);
 static s7_pointer s7_file_error(s7_scheme *sc, const char *caller, const char *descr, const char *name);
 static void s7_free_function(s7_pointer a);
-static int remember_file_name(const char *file);
 static s7_pointer safe_reverse_in_place(s7_scheme *sc, s7_pointer list);
 static s7_pointer s7_immutable_cons(s7_scheme *sc, s7_pointer a, s7_pointer b);
 static void s7_free_object(s7_pointer a);
@@ -967,11 +959,12 @@ static s7_pointer s7_set_immutable(s7_pointer p)
 }
 
 
-static void set_pair_line_number(s7_pointer p, int n)
+static s7_pointer set_pair_line_number(s7_pointer p, int n)
 {
   if ((!is_eternal(p)) &&
       (is_pair(p)))
     pair_line_number(p) = n;
+  return(p);
 }
 
 
@@ -1483,7 +1476,7 @@ static void pop_stack(s7_scheme *sc)
   sc->code =  vel[0];
   sc->envir = vel[1];
   sc->args =  vel[2];
-  sc->op =    (opcode_t)integer(vel[3]->object.number);
+  sc->op =    (opcode_t)integer(number(vel[3]));
 } 
 
 
@@ -1818,13 +1811,13 @@ static s7_pointer s7_find_symbol_in_environment(s7_scheme *sc, s7_pointer env, s
 	y = vector_element(car(x), symbol_location(hdl));
       else y = car(x); 
       
-      for ( ; is_pair(y); y = cdr(y)) 
+      for (; is_pair(y); y = cdr(y))
 	if (caar(y) == hdl)
 	  return(car(y));
 
       if (!all_envirs) 
 	return(sc->NIL); 
-    } 
+    }
   return(sc->NIL); 
 } 
 
@@ -2569,12 +2562,6 @@ bool s7_is_inexact(s7_pointer p)
 }
 
 
-static s7_num_t nvalue(s7_pointer p)       
-{ 
-  return((p)->object.number);
-}
-
-
 static s7_Int c_mod(s7_Int x, s7_Int y)
 {
   s7_Int z;
@@ -2901,7 +2888,7 @@ s7_pointer s7_make_integer(s7_scheme *sc, s7_Int n)
   set_type(x, T_NUMBER | T_ATOM | T_SIMPLE | T_DONT_COPY);
   
   number_type(x) = NUM_INT;
-  integer(x->object.number) = n;
+  integer(number(x)) = n;
   
   return(x);
 }
@@ -2917,7 +2904,7 @@ s7_pointer s7_make_real(s7_scheme *sc, s7_Double n)
   set_type(x, T_NUMBER | T_ATOM | T_SIMPLE | T_DONT_COPY);
   
   number_type(x) = NUM_REAL;
-  real(x->object.number) = n;
+  real(number(x)) = n;
   
   return(x);
 }
@@ -2931,13 +2918,13 @@ s7_pointer s7_make_complex(s7_scheme *sc, s7_Double a, s7_Double b)
   if (b == 0.0)
     {
       number_type(x) = NUM_REAL;
-      real(x->object.number) = a;
+      real(number(x)) = a;
     }
   else
     {
       number_type(x) = NUM_COMPLEX;
-      real_part(x->object.number) = a;
-      imag_part(x->object.number) = b;
+      real_part(number(x)) = a;
+      imag_part(number(x)) = b;
     }
   return(x);
 }
@@ -2960,11 +2947,11 @@ s7_pointer s7_make_ratio(s7_scheme *sc, s7_Int a, s7_Int b)
   
   number_type(x) = ret.type;
   if (ret.type == NUM_INT)
-    integer(x->object.number) = numerator(ret);
+    integer(number(x)) = numerator(ret);
   else
     {
-      numerator(x->object.number) = numerator(ret);
-      denominator(x->object.number) = denominator(ret);
+      numerator(number(x)) = numerator(ret);
+      denominator(number(x)) = denominator(ret);
     }
   return(x);
 }
@@ -3023,47 +3010,47 @@ s7_Double s7_number_to_real(s7_pointer x)
 s7_Int s7_numerator(s7_pointer x)
 {
   if (number_type(x) == NUM_RATIO)
-    return(numerator(x->object.number));
-  return(integer(x->object.number));
+    return(numerator(number(x)));
+  return(integer(number(x)));
 }
 
 
 s7_Int s7_denominator(s7_pointer x)
 {
   if (number_type(x) == NUM_RATIO)
-    return(denominator(x->object.number));
+    return(denominator(number(x)));
   return(1);
 }
 
 
 s7_Double s7_real_part(s7_pointer x)
 {
-  return(num_to_real_part(x->object.number));
+  return(num_to_real_part(number(x)));
 }
 
 
 s7_Double s7_imag_part(s7_pointer x)
 {
-  return(num_to_imag_part(x->object.number));
+  return(num_to_imag_part(number(x)));
 }
 
 
 s7_Int s7_integer(s7_pointer p)
 {
-  return(integer(p->object.number));
+  return(integer(number(p)));
 }
 
 
 s7_Double s7_real(s7_pointer p)
 {
-  return(real(p->object.number));
+  return(real(number(p)));
 }
 #endif
 
 
 static s7_Complex s7_complex(s7_pointer p)
 {
-  return(num_to_real_part(p->object.number) + num_to_imag_part(p->object.number) * _Complex_I);
+  return(num_to_real_part(number(p)) + num_to_imag_part(number(p)) * _Complex_I);
 }
 
 
@@ -4655,19 +4642,19 @@ static bool numbers_are_eqv(s7_pointer a, s7_pointer b)
   switch (number_type(a))
     {
     case NUM_INT:
-      return((integer(a->object.number) == integer(b->object.number)));
+      return((integer(number(a)) == integer(number(b))));
   
     case NUM_RATIO:
-      return((numerator(a->object.number) == numerator(b->object.number)) &&
-	     (denominator(a->object.number) == denominator(b->object.number)));
+      return((numerator(number(a)) == numerator(number(b))) &&
+	     (denominator(number(a)) == denominator(number(b))));
 
     case NUM_REAL:
     case NUM_REAL2:
-      return(real(a->object.number) == real(b->object.number));
+      return(real(number(a)) == real(number(b)));
   
     default:
-      return((real_part(a->object.number) == real_part(b->object.number)) &&
-	     (imag_part(a->object.number) == imag_part(b->object.number)));
+      return((real_part(number(a)) == real_part(number(b))) &&
+	     (imag_part(number(a)) == imag_part(number(b))));
     }
   
   return(false);
@@ -4684,8 +4671,8 @@ static s7_pointer g_make_polar(s7_scheme *sc, s7_pointer args)
   if (!s7_is_real(cadr(args)))
     return(s7_wrong_type_arg_error(sc, "make-polar", 2, cadr(args), "a real"));
   
-  mag = num_to_real((car(args))->object.number);
-  ang = num_to_real((cadr(args))->object.number);
+  mag = num_to_real(number(car(args)));
+  ang = num_to_real(number(cadr(args)));
   if (ang == 0.0)
     return(s7_make_real(sc, mag));
   if (ang == M_PI)
@@ -4704,8 +4691,8 @@ static s7_pointer g_make_rectangular(s7_scheme *sc, s7_pointer args)
     return(s7_wrong_type_arg_error(sc, "make-rectangular", 2, cadr(args), "a real"));
   
   return(s7_make_complex(sc, 
-			 num_to_real((car(args))->object.number), 
-			 num_to_real((cadr(args))->object.number)));
+			 num_to_real(number(car(args))), 
+			 num_to_real(number(cadr(args)))));
 }
 
 
@@ -4714,7 +4701,7 @@ static s7_pointer g_abs(s7_scheme *sc, s7_pointer args)
   #define H_abs "(abs x) returns the absolute value of the real number x"
   if (!s7_is_real(car(args)))
     return(s7_wrong_type_arg_error(sc, "abs", 0, car(args), "a real"));
-  sc->v = nvalue(car(args));
+  sc->v = number(car(args));
   if (num_type(sc->v) >= NUM_REAL)
     real(sc->v) = s7_Double_abs(real(sc->v));
   else
@@ -4733,7 +4720,7 @@ static s7_pointer g_magnitude(s7_scheme *sc, s7_pointer args)
   if (!s7_is_number(car(args)))
     return(s7_wrong_type_arg_error(sc, "magnitude", 0, car(args), "a number"));
 
-  sc->v = nvalue(car(args));
+  sc->v = number(car(args));
   if (num_type(sc->v) < NUM_COMPLEX)
     return(g_abs(sc, args));
   
@@ -4752,7 +4739,7 @@ static s7_pointer g_angle(s7_scheme *sc, s7_pointer args)
 
   if (!s7_is_real(x))
     return(s7_make_real(sc, atan2(s7_imag_part(x), s7_real_part(x))));
-  if (num_to_real(x->object.number) < 0.0)
+  if (num_to_real(number(x)) < 0.0)
     return(s7_make_real(sc, M_PI));
   if (number_type(x) <= NUM_RATIO)
     return(small_int(sc, 0));
@@ -4795,7 +4782,7 @@ static s7_pointer g_exp(s7_scheme *sc, s7_pointer args)
     return(s7_wrong_type_arg_error(sc, "exp", 0, x, "a number"));
 
   if (s7_is_real(x))
-    return(s7_make_real(sc, exp(num_to_real(x->object.number))));
+    return(s7_make_real(sc, exp(num_to_real(number(x)))));
   return(s7_from_c_complex(sc, cexp(s7_complex(x))));
 }
 
@@ -4829,13 +4816,13 @@ static s7_pointer g_log(s7_scheme *sc, s7_pointer args)
 	    {
 	      s7_Double res;
 	      s7_Int ires;
-	      res = log(num_to_real(x->object.number)) / log(num_to_real(y->object.number));
+	      res = log(num_to_real(number(x))) / log(num_to_real(number(y)));
 	      ires = (s7_Int)res;
 	      if (res - ires == 0.0)
 		return(s7_make_integer(sc, ires));
 	      return(s7_make_real(sc, res));
 	    }
-	  return(s7_make_real(sc, log(num_to_real(x->object.number)) / log(num_to_real(y->object.number))));
+	  return(s7_make_real(sc, log(num_to_real(number(x))) / log(num_to_real(number(y)))));
 	}
       return(s7_from_c_complex(sc, clog(s7_complex(x)) / clog(s7_complex(y))));
     }
@@ -4843,8 +4830,8 @@ static s7_pointer g_log(s7_scheme *sc, s7_pointer args)
   if (s7_is_real(x))
     {
       if (s7_is_positive(x))
-	return(s7_make_real(sc, log(num_to_real(x->object.number))));
-      return(s7_make_complex(sc, log(-num_to_real(x->object.number)), M_PI));
+	return(s7_make_real(sc, log(num_to_real(number(x)))));
+      return(s7_make_complex(sc, log(-num_to_real(number(x))), M_PI));
     }
 
   return(s7_from_c_complex(sc, clog(s7_complex(x))));
@@ -4861,7 +4848,7 @@ static s7_pointer g_sin(s7_scheme *sc, s7_pointer args)
     return(s7_wrong_type_arg_error(sc, "sin", 0, x, "a number"));
 
   if (s7_is_real(x))
-    return(s7_make_real(sc, sin(num_to_real(x->object.number))));
+    return(s7_make_real(sc, sin(num_to_real(number(x)))));
   return(s7_from_c_complex(sc, csin(s7_complex(x))));
 }
 
@@ -4876,7 +4863,7 @@ static s7_pointer g_cos(s7_scheme *sc, s7_pointer args)
     return(s7_wrong_type_arg_error(sc, "cos", 0, x, "a number"));
 
   if (s7_is_real(x))
-    return(s7_make_real(sc, cos(num_to_real(x->object.number))));
+    return(s7_make_real(sc, cos(num_to_real(number(x)))));
   return(s7_from_c_complex(sc, ccos(s7_complex(x))));
 }
 
@@ -4891,7 +4878,7 @@ static s7_pointer g_tan(s7_scheme *sc, s7_pointer args)
     return(s7_wrong_type_arg_error(sc, "tan", 0, x, "a number"));
 
   if (s7_is_real(x))
-    return(s7_make_real(sc, tan(num_to_real(x->object.number))));
+    return(s7_make_real(sc, tan(num_to_real(number(x)))));
 
   if (s7_imag_part(x) > 350.0)
     return(s7_make_complex(sc, 0.0, 1.0));
@@ -4915,7 +4902,7 @@ static s7_pointer g_asin(s7_scheme *sc, s7_pointer args)
     {
       s7_Double x, absx, recip;
       s7_Complex result;
-      x = num_to_real(n->object.number);
+      x = num_to_real(number(n));
       absx = s7_Double_abs(x);
       if (absx <= 1.0)
 	return(s7_make_real(sc, asin(x)));
@@ -4964,7 +4951,7 @@ static s7_pointer g_acos(s7_scheme *sc, s7_pointer args)
     {
       s7_Double x, absx, recip;
       s7_Complex result;
-      x = num_to_real(n->object.number);
+      x = num_to_real(number(n));
       absx = s7_Double_abs(x);
       if (absx <= 1.0)
 	return(s7_make_real(sc, acos(x)));
@@ -5010,7 +4997,7 @@ static s7_pointer g_atan(s7_scheme *sc, s7_pointer args)
       if (!s7_is_number(x))
 	return(s7_wrong_type_arg_error(sc, "atan", 1, x, "a number"));
       if (s7_is_real(x))
-	return(s7_make_real(sc, atan(num_to_real(x->object.number))));
+	return(s7_make_real(sc, atan(num_to_real(number(x)))));
       return(s7_from_c_complex(sc, catan(s7_complex(x))));
     } 
 
@@ -5020,8 +5007,8 @@ static s7_pointer g_atan(s7_scheme *sc, s7_pointer args)
   if (!s7_is_real(y))
     return(s7_wrong_type_arg_error(sc, "atan", 2, y, "a real"));
 
-  return(s7_make_real(sc, atan2(num_to_real(x->object.number), 
-				num_to_real(y->object.number))));
+  return(s7_make_real(sc, atan2(num_to_real(number(x)), 
+				num_to_real(number(y)))));
 }  
 
 
@@ -5035,7 +5022,7 @@ static s7_pointer g_sinh(s7_scheme *sc, s7_pointer args)
     return(s7_wrong_type_arg_error(sc, "sinh", 0, x, "a number"));
 
   if (s7_is_real(x))
-    return(s7_make_real(sc, sinh(num_to_real(x->object.number))));
+    return(s7_make_real(sc, sinh(num_to_real(number(x)))));
   return(s7_from_c_complex(sc, csinh(s7_complex(x))));
 }
 
@@ -5050,7 +5037,7 @@ static s7_pointer g_cosh(s7_scheme *sc, s7_pointer args)
     return(s7_wrong_type_arg_error(sc, "cosh", 0, x, "a number"));
 
   if (s7_is_real(x))
-    return(s7_make_real(sc, cosh(num_to_real(x->object.number))));
+    return(s7_make_real(sc, cosh(num_to_real(number(x)))));
   return(s7_from_c_complex(sc, ccosh(s7_complex(x))));
 }
 
@@ -5065,7 +5052,7 @@ static s7_pointer g_tanh(s7_scheme *sc, s7_pointer args)
     return(s7_wrong_type_arg_error(sc, "tanh", 0, x, "a number"));
 
   if (s7_is_real(x))
-    return(s7_make_real(sc, tanh(num_to_real(x->object.number))));
+    return(s7_make_real(sc, tanh(num_to_real(number(x)))));
   if (s7_real_part(x) > 350.0)
     return(s7_make_real(sc, 1.0));  /* closer than 0.0 which is what ctanh is about to return! */
   if (s7_real_part(x) < -350.0)
@@ -5085,7 +5072,7 @@ static s7_pointer g_asinh(s7_scheme *sc, s7_pointer args)
     return(s7_wrong_type_arg_error(sc, "asinh", 0, x, "a number"));
 
   if (s7_is_real(x))
-    return(s7_make_real(sc, asinh(num_to_real(x->object.number))));
+    return(s7_make_real(sc, asinh(num_to_real(number(x)))));
   return(s7_from_c_complex(sc, casinh(s7_complex(x))));
 }
 
@@ -5100,8 +5087,8 @@ static s7_pointer g_acosh(s7_scheme *sc, s7_pointer args)
     return(s7_wrong_type_arg_error(sc, "acosh", 0, x, "a number"));
 
   if ((s7_is_real(x)) &&
-      (num_to_real(x->object.number) >= 1.0))
-    return(s7_make_real(sc, acosh(num_to_real(x->object.number))));
+      (num_to_real(number(x)) >= 1.0))
+    return(s7_make_real(sc, acosh(num_to_real(number(x)))));
   return(s7_from_c_complex(sc, cacosh(s7_complex(x))));
 }
 
@@ -5116,8 +5103,8 @@ static s7_pointer g_atanh(s7_scheme *sc, s7_pointer args)
     return(s7_wrong_type_arg_error(sc, "atanh", 0, x, "a number"));
 
   if ((s7_is_real(x)) &&
-      (s7_Double_abs(num_to_real(x->object.number)) < 1.0))
-    return(s7_make_real(sc, atanh(num_to_real(x->object.number))));
+      (s7_Double_abs(num_to_real(number(x))) < 1.0))
+    return(s7_make_real(sc, atanh(num_to_real(number(x)))));
   return(s7_from_c_complex(sc, catanh(s7_complex(x))));
 }
 
@@ -5134,7 +5121,7 @@ static s7_pointer g_sqrt(s7_scheme *sc, s7_pointer args)
   if (s7_is_real(n))
     {
       s7_Double x, sqx;
-      x = num_to_real(n->object.number);
+      x = num_to_real(number(n));
       if (x >= 0.0)
 	{
 	  sqx = sqrt(x);
@@ -5142,7 +5129,7 @@ static s7_pointer g_sqrt(s7_scheme *sc, s7_pointer args)
 	    {
 	      s7_Int ix;
 	      ix = (s7_Int)sqx;
-	      if ((ix * ix) == integer(n->object.number))
+	      if ((ix * ix) == integer(number(n)))
 		return(s7_make_integer(sc, ix));
 	    }
 	  if (s7_is_ratio(n))
@@ -5248,8 +5235,8 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
 	    {
 	      s7_Int nm, dn;
 	      
-	      nm = numerator(n->object.number);
-	      dn = denominator(n->object.number);
+	      nm = numerator(number(n));
+	      dn = denominator(number(n));
 
 	      if ((int_pow_ok(nm, s7_Int_abs(y))) &&
 		  (int_pow_ok(dn, s7_Int_abs(y))))
@@ -5284,19 +5271,19 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
       s7_Double x, y;
 
       if ((number_type(pw) == NUM_RATIO) &&
-	  (numerator(pw->object.number) == 1))
+	  (numerator(number(pw)) == 1))
 	{
-	  if (denominator(pw->object.number) == 2)
+	  if (denominator(number(pw)) == 2)
 	    return(g_sqrt(sc, args));
-	  if (denominator(pw->object.number) == 3)
-	    return(s7_make_real(sc, cbrt(num_to_real(n->object.number))));
+	  if (denominator(number(pw)) == 3)
+	    return(s7_make_real(sc, cbrt(num_to_real(number(n)))));
 	  /* and 4 -> sqrt(sqrt...) etc? */
 	}
 
-      x = num_to_real(n->object.number);
+      x = num_to_real(number(n));
       if (x == 0.0)
 	return(sc->real_zero);
-      y = num_to_real(pw->object.number);
+      y = num_to_real(number(pw));
       if (y == 0.0)
 	return(s7_make_real(sc, 1.0));
       if ((x > 0.0) ||
@@ -5325,16 +5312,16 @@ static s7_pointer g_floor(s7_scheme *sc, s7_pointer args)
     case NUM_RATIO: 
       {
 	s7_Int val;
-	val = numerator(x->object.number) / denominator(x->object.number); 
+	val = numerator(number(x)) / denominator(number(x)); 
 	/* C "/" truncates? -- C spec says "truncation toward 0" */
 	/* we're avoiding "floor" here because the int->double conversion introduces inaccuracies for big numbers */
-	if (numerator(x->object.number) < 0) /* not "val" because it might be truncated to 0 */
+	if (numerator(number(x)) < 0) /* not "val" because it might be truncated to 0 */
 	  return(s7_make_integer(sc, val - 1));
 	return(s7_make_integer(sc, val));
       }
 
     default:        
-      return(s7_make_integer(sc, (s7_Int)floor(real(x->object.number)))); 
+      return(s7_make_integer(sc, (s7_Int)floor(real(number(x))))); 
     }
 }
 
@@ -5356,14 +5343,14 @@ static s7_pointer g_ceiling(s7_scheme *sc, s7_pointer args)
     case NUM_RATIO:
       {
 	s7_Int val;
-	val = numerator(x->object.number) / denominator(x->object.number);
-	if (numerator(x->object.number) < 0)
+	val = numerator(number(x)) / denominator(number(x));
+	if (numerator(number(x)) < 0)
 	  return(s7_make_integer(sc, val));
 	return(s7_make_integer(sc, val + 1));
       }
 
     default:        
-      return(s7_make_integer(sc, (s7_Int)ceil(real(x->object.number)))); 
+      return(s7_make_integer(sc, (s7_Int)ceil(real(number(x))))); 
     }
 }
 
@@ -5383,10 +5370,10 @@ static s7_pointer g_truncate(s7_scheme *sc, s7_pointer args)
       return(x);
 
     case NUM_RATIO: 
-      return(s7_make_integer(sc, (s7_Int)(numerator(x->object.number) / denominator(x->object.number)))); /* C "/" already truncates */
+      return(s7_make_integer(sc, (s7_Int)(numerator(number(x)) / denominator(number(x))))); /* C "/" already truncates */
 
     default: 
-      return(s7_make_integer(sc, s7_truncate(real(x->object.number)))); 
+      return(s7_make_integer(sc, s7_truncate(real(number(x))))); 
     }
 }
 
@@ -5410,15 +5397,15 @@ static s7_pointer g_round(s7_scheme *sc, s7_pointer args)
 	s7_Int truncated, remains;
 	long double frac;
 
-	truncated = numerator(x->object.number) / denominator(x->object.number);
-	remains = numerator(x->object.number) % denominator(x->object.number);
-	frac = s7_fabsl((long double)remains / (long double)denominator(x->object.number));
+	truncated = numerator(number(x)) / denominator(number(x));
+	remains = numerator(number(x)) % denominator(number(x));
+	frac = s7_fabsl((long double)remains / (long double)denominator(number(x)));
 
 	if ((frac > 0.5) ||
 	    ((frac == 0.5) &&
 	     (truncated % 2 != 0)))
 	  {
-	    if (numerator(x->object.number) < 0)
+	    if (numerator(number(x)) < 0)
 	      return(s7_make_integer(sc, truncated - 1));
 	    return(s7_make_integer(sc, truncated + 1));
 	  }
@@ -5426,7 +5413,7 @@ static s7_pointer g_round(s7_scheme *sc, s7_pointer args)
       }
 
     default: 
-      return(s7_make_integer(sc, (s7_Int)round_per_R5RS(num_to_real(x->object.number)))); 
+      return(s7_make_integer(sc, (s7_Int)round_per_R5RS(num_to_real(number(x))))); 
     }
 }
 
@@ -5511,7 +5498,7 @@ static s7_pointer g_add_unchecked(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer x;
 
-  sc->v = nvalue(car(args));
+  sc->v = number(car(args));
   for (x = cdr(args); x != sc->NIL; x = cdr(x)) 
     {
 #if WITH_GMP
@@ -5531,7 +5518,7 @@ static s7_pointer g_add_unchecked(s7_scheme *sc, s7_pointer args)
 	  break;
 	}
 #endif
-      sc->v = num_add(sc->v, nvalue(car(x)));
+      sc->v = num_add(sc->v, number(car(x)));
     }
   return(make_number(sc, sc->v));
 }
@@ -5558,7 +5545,7 @@ static s7_pointer g_subtract_unchecked(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer x;
 
-  sc->v = nvalue(car(args));
+  sc->v = number(car(args));
   for (x = cdr(args); x != sc->NIL; x = cdr(x)) 
     {
 #if WITH_GMP
@@ -5578,7 +5565,7 @@ static s7_pointer g_subtract_unchecked(s7_scheme *sc, s7_pointer args)
 	  break;
 	}
 #endif
-      sc->v = num_sub(sc->v, nvalue(car(x)));
+      sc->v = num_sub(sc->v, number(car(x)));
     }
   return(make_number(sc, sc->v));
 }
@@ -5595,7 +5582,7 @@ static s7_pointer g_subtract(s7_scheme *sc, s7_pointer args)
       return(s7_wrong_type_arg_error(sc, "-", i, car(x), "a number"));
   
   if (cdr(args) == sc->NIL) 
-    return(make_number(sc, num_negate(nvalue(car(args)))));
+    return(make_number(sc, num_negate(number(car(args)))));
 
   return(g_subtract_unchecked(sc, args));
 }
@@ -5605,7 +5592,7 @@ static s7_pointer g_multiply_unchecked(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer x;
 
-  sc->v = nvalue(car(args));
+  sc->v = number(car(args));
   for (x = cdr(args); x != sc->NIL; x = cdr(x)) 
     {
 #if WITH_GMP
@@ -5625,7 +5612,7 @@ static s7_pointer g_multiply_unchecked(s7_scheme *sc, s7_pointer args)
 	  break;
 	}
 #endif
-      sc->v = num_mul(sc->v, nvalue(car(x)));
+      sc->v = num_mul(sc->v, number(car(x)));
     }
   return(make_number(sc, sc->v));
 }
@@ -5653,7 +5640,7 @@ static s7_pointer g_divide_unchecked(s7_scheme *sc, s7_pointer args)
   /* "unchecked" => we're sure they're numbers, but the divisor needs to be checked for 0 */
   s7_pointer x;
 
-  sc->v = nvalue(car(args));
+  sc->v = number(car(args));
   for (x = cdr(args); x != sc->NIL; x = cdr(x))
     {
       if (s7_is_zero(car(x)))
@@ -5675,7 +5662,7 @@ static s7_pointer g_divide_unchecked(s7_scheme *sc, s7_pointer args)
 	  break;
 	}
 #endif
-      sc->v = num_div(sc->v, nvalue(car(x)));
+      sc->v = num_div(sc->v, number(car(x)));
     }
   return(make_number(sc, sc->v));
 }
@@ -5695,7 +5682,7 @@ static s7_pointer g_divide(s7_scheme *sc, s7_pointer args)
     {
       if (s7_is_zero(car(args)))
 	return(s7_division_by_zero_error(sc, "/", args));
-      return(make_number(sc, num_invert(nvalue(car(args)))));
+      return(make_number(sc, num_invert(number(car(args)))));
     }
 
   return(g_divide_unchecked(sc, args));
@@ -5712,12 +5699,12 @@ static s7_pointer g_max(s7_scheme *sc, s7_pointer args)
 
   if (!s7_is_real(car(args)))
     return(s7_wrong_type_arg_error(sc, "max", 1, car(args), "a real"));
-  sc->v = nvalue(car(args));
+  sc->v = number(car(args));
   for (i = 2, x = cdr(args); x != sc->NIL; i++, x = cdr(x)) 
     {
       if (!s7_is_real(car(x)))
 	return(s7_wrong_type_arg_error(sc, "max", i, car(x), "a real"));
-      sc->v = num_max(sc->v, nvalue(car(x)));
+      sc->v = num_max(sc->v, number(car(x)));
     }
   return(make_number(sc, sc->v));
 }
@@ -5731,12 +5718,12 @@ static s7_pointer g_min(s7_scheme *sc, s7_pointer args)
 
   if (!s7_is_real(car(args)))
     return(s7_wrong_type_arg_error(sc, "min", 1, car(args), "a real"));
-  sc->v = nvalue(car(args));
+  sc->v = number(car(args));
   for (i = 2, x = cdr(args); x != sc->NIL; i++, x = cdr(x)) 
     {
       if (!s7_is_real(car(x)))
 	return(s7_wrong_type_arg_error(sc, "min", i, car(x), "a real"));
-      sc->v = num_min(sc->v, nvalue(car(x)));
+      sc->v = num_min(sc->v, number(car(x)));
     }
   return(make_number(sc, sc->v));
 }
@@ -5751,9 +5738,9 @@ static s7_pointer g_quotient(s7_scheme *sc, s7_pointer args)
   if (!s7_is_real(cadr(args)))
     return(s7_wrong_type_arg_error(sc, "quotient", 2, cadr(args), "a real"));
   
-  sc->v = nvalue(car(args));
+  sc->v = number(car(args));
   if (!s7_is_zero(cadr(args)))
-    sc->v = num_quotient(sc->v, nvalue(cadr(args)));
+    sc->v = num_quotient(sc->v, number(cadr(args)));
   else return(s7_division_by_zero_error(sc, "quotient", args));
   return(make_number(sc, sc->v));
 }
@@ -5768,9 +5755,9 @@ static s7_pointer g_remainder(s7_scheme *sc, s7_pointer args)
   if (!s7_is_real(cadr(args)))
     return(s7_wrong_type_arg_error(sc, "remainder", 2, cadr(args), "a real"));
   
-  sc->v = nvalue(car(args));
+  sc->v = number(car(args));
   if (!s7_is_zero(cadr(args)))
-    sc->v = num_rem(sc->v, nvalue(cadr(args)));
+    sc->v = num_rem(sc->v, number(cadr(args)));
   else return(s7_division_by_zero_error(sc, "remainder", args));
   return(make_number(sc, sc->v));
 }
@@ -5787,8 +5774,8 @@ static s7_pointer g_modulo(s7_scheme *sc, s7_pointer args)
   
   if (!s7_is_zero(cadr(args)))
     {
-      sc->v = nvalue(car(args));
-      sc->v = num_mod(sc->v, nvalue(cadr(args)));
+      sc->v = number(car(args));
+      sc->v = num_mod(sc->v, number(cadr(args)));
       return(make_number(sc, sc->v));
     }
   return(car(args)); /* (mod x 0) = x according to "Concrete Mathematics" */
@@ -5818,12 +5805,12 @@ static s7_pointer compare_numbers(s7_scheme *sc, compare_t op, s7_pointer args)
     if (!arg_checker(car(x)))
       s7_wrong_type_arg_error(sc, op_name, i, car(x), arg_type);
   
-  sc->v = nvalue(car(args));
+  sc->v = number(car(args));
   for (x = cdr(args); x != sc->NIL; x = cdr(x)) 
     {
-      if (!comp_func(sc->v, nvalue(car(x)))) 
+      if (!comp_func(sc->v, number(car(x)))) 
 	return(sc->F);
-      sc->v = nvalue(car(x));
+      sc->v = number(car(x));
     }
   return(sc->T);
 }
@@ -5873,7 +5860,7 @@ static s7_pointer g_real_part(s7_scheme *sc, s7_pointer args)
     return(s7_wrong_type_arg_error(sc, "real-part", 0, p, "a number"));
   if (number_type(p) < NUM_COMPLEX)
     return(p);                                      /* if num is real, real-part should return it as is (not exact->inexact) */
-  return(s7_make_real(sc, real_part(p->object.number)));
+  return(s7_make_real(sc, real_part(number(p))));
 }
 
 
@@ -5895,7 +5882,7 @@ static s7_pointer g_numerator(s7_scheme *sc, s7_pointer args)
   #define H_numerator "(numerator rat) returns the numerator of the rational number rat"
   if (!s7_is_rational(car(args)))
     return(s7_wrong_type_arg_error(sc, "numerator", 0, car(args), "a rational"));
-  return(s7_make_integer(sc, num_to_numerator((car(args))->object.number)));
+  return(s7_make_integer(sc, num_to_numerator(number(car(args)))));
 }
 
 
@@ -5904,7 +5891,7 @@ static s7_pointer g_denominator(s7_scheme *sc, s7_pointer args)
   #define H_denominator "(denominator rat) returns the denominator of the rational number rat"
   if (!s7_is_rational(car(args)))
     return(s7_wrong_type_arg_error(sc, "denominator", 0, car(args), "a rational"));
-  return(s7_make_integer(sc, num_to_denominator((car(args))->object.number)));
+  return(s7_make_integer(sc, num_to_denominator(number(car(args)))));
 }
 
 
@@ -6034,7 +6021,7 @@ bool s7_is_ulong(s7_pointer arg)
 
 unsigned long s7_ulong(s7_pointer p) 
 {
-  return(p->object.number.value.ul_value);
+  return(number(p).value.ul_value);
 }
 
 
@@ -6045,7 +6032,7 @@ s7_pointer s7_make_ulong(s7_scheme *sc, unsigned long n)
   set_type(x, T_NUMBER | T_ATOM | T_SIMPLE | T_DONT_COPY);
   
   number_type(x) = NUM_INT;
-  x->object.number.value.ul_value = n;
+  number(x).value.ul_value = n;
   return(x);
 }
 
@@ -6058,7 +6045,7 @@ bool s7_is_ulong_long(s7_pointer arg)
 
 unsigned long long s7_ulong_long(s7_pointer p) 
 {
-  return(p->object.number.value.ull_value);
+  return(number(p).value.ull_value);
 }
 
 
@@ -6069,7 +6056,7 @@ s7_pointer s7_make_ulong_long(s7_scheme *sc, unsigned long long n)
   set_type(x, T_NUMBER | T_ATOM | T_SIMPLE | T_DONT_COPY);
   
   number_type(x) = NUM_INT;
-  x->object.number.value.ull_value = n;
+  number(x).value.ull_value = n;
   return(x);
 }
 
@@ -7483,7 +7470,6 @@ s7_pointer s7_open_input_string(s7_scheme *sc, const char *input_string)
   port_string_length(x) = safe_strlen(input_string);
   port_string_point(x) = 0;
   port_filename(x) = NULL;
-  port_file_number(x) = -1;
   port_needs_free(x) = false;
   return(x);
 }
@@ -7835,7 +7821,7 @@ static s7_pointer load_file(s7_scheme *sc, FILE *fp, const char *name)
   port_string_length(port) = size;
   port_string_point(port) = 0;
   port_line_number(port) = 1;
-  port_filename(port) = NULL;
+  port_filename(port) = s7_strdup(name); /* for missing close paren error etc */
   port_needs_free(port) = true;
 
   return(port);
@@ -7867,7 +7853,6 @@ s7_pointer s7_load(s7_scheme *sc, const char *filename)
   run_load_hook(sc, filename);
 
   port = load_file(sc, fp, filename);
-  port_file_number(port) = remember_file_name(filename);
   push_input_port(sc, port);
   
   /* it's possible to call this recursively (s7_load is XEN_LOAD_FILE which can be invoked via s7_call)
@@ -7927,7 +7912,6 @@ defaults to the global environment; to load into the current environment instead
   run_load_hook(sc, fname);
 
   port = load_file(sc, fp, fname);
-  port_file_number(port) = remember_file_name(fname);
   push_input_port(sc, port);
 
   if (cdr(args) != sc->NIL) 
@@ -11022,13 +11006,11 @@ static s7_pointer pws_source(s7_scheme *sc, s7_pointer x)
 }
 
 
-#if WITH_GMP
-static void s7_define_function_with_setter(s7_scheme *sc, const char *name, s7_function get_fnc, s7_function set_fnc, int req_args, int opt_args, const char *doc)
+void s7_define_function_with_setter(s7_scheme *sc, const char *name, s7_function get_fnc, s7_function set_fnc, int req_args, int opt_args, const char *doc)
 {
   s7_define_variable(sc, name, 
     s7_make_procedure_with_setter(sc, name, get_fnc, req_args, opt_args, set_fnc, req_args + 1, opt_args, doc));
 }
-#endif
 
 
 
@@ -11514,8 +11496,6 @@ static s7_pointer g_fill(s7_scheme *sc, s7_pointer args)
   return(cadr(args));
 }
 
-/* TODO: test/doc copy fill generic length */
-
 
 
 /* -------------------------------- encapsulation -------------------------------- */
@@ -11536,10 +11516,13 @@ static s7_pointer g_fill(s7_scheme *sc, s7_pointer args)
 	        ((,encap))  ; restore saved vars
                 (close-encapsulator ,encap))))))
  
-    TODO: how to handle sort! mus_copy for all gens? also snd/clm-local direct sets (doc/test/changelogs)
+    TODO: mus_copy for all gens? also snd/clm-local direct sets (doc/test/changelogs)
     TODO: what about stuff like (string-set! (vector-ref ...))? copy vector/list upon ref?
-    TODO: tests for copy, new length and fill
-    TODO: set procs: vct-set! sound-data-set! frame-set! mixer-set! built-in pws cases
+    TODO: set procs: frame-set! mixer-set! built-in pws cases: gets the symbol?? 
+    :(set! (transform-size) 512)
+    :(encapsulator-bindings e1)
+    ((transform-size . transform-size))
+    TODO: run for generics, also run set! of globals?
 */
 
 #if WITH_ENCAPSULATION
@@ -11721,6 +11704,11 @@ static void encapsulate(s7_scheme *sc, s7_pointer sym)
 	    e->bindings = s7_cons(sc, 
                             s7_cons(sc, sym, s7_copy(sc, symbol_value(y))), 
                             e->bindings); 
+
+	  /* TODO: here a pws value is the func: (symbol->value 'transform-size) -> transform-size.
+	   *   but we want the associated value: ((symbol->value 'transform-size)) -> 512.
+	   *   we need to know that this is from object_set.
+	   */
 	}
     }
 }
@@ -12172,74 +12160,6 @@ const char *s7_format(s7_scheme *sc, s7_pointer args)
 
 /* -------------------------------- errors -------------------------------- */
 
-/* debugging (error reporting) info */
-
-#define INITIAL_FILE_NAMES_SIZE 8
-static char **file_names = NULL;
-static int file_names_size = 0;
-static int file_names_top = -1;
-
-#if HAVE_PTHREADS
-static pthread_mutex_t remember_files_lock = PTHREAD_MUTEX_INITIALIZER;
-#endif
-
-#define remembered_line_number(Line) (Line & 0xfffff)
-#define remembered_file_name(Line)   (((Line >> 20) <= file_names_top) ? file_names[Line >> 20] : "?")
-/* this gives room for 4000 files each of 1000000 lines */
-
-static s7_pointer remember_line(s7_scheme *sc, s7_pointer obj)
-{
-  if (sc->input_port != sc->NIL)
-    set_pair_line_number(obj, port_line_number(sc->input_port) | (port_file_number(sc->input_port) << 20));
-  return(obj);
-}
-
-
-static int remember_file_name(const char *file)
-{
-#if HAVE_PTHREADS
-  pthread_mutex_lock(&remember_files_lock);
-#endif
-
-  file_names_top++;
-  if (file_names_top >= file_names_size)
-    {
-      if (file_names_size == 0)
-	{
-	  file_names_size = INITIAL_FILE_NAMES_SIZE;
-	  file_names = (char **)calloc(file_names_size, sizeof(char *));
-	}
-      else
-	{
-	  int i, old_size;
-	  old_size = file_names_size;
-	  file_names_size *= 2;
-	  file_names = (char **)realloc(file_names, file_names_size * sizeof(char *));
-	  for (i = old_size; i < file_names_size; i++)
-	    file_names[i] = NULL;
-	}
-    }
-  file_names[file_names_top] = s7_strdup(file);
-
-#if HAVE_PTHREADS
-  pthread_mutex_unlock(&remember_files_lock);
-#endif
-
-  return(file_names_top);
-}
-
-
-static const char *input_filename(s7_scheme *sc)
-{
-  if (port_filename(sc->input_port))
-    return(port_filename(sc->input_port));
-  if ((port_file_number(sc->input_port) >= 0) &&
-      (file_names[port_file_number(sc->input_port)]))
-    return(file_names[port_file_number(sc->input_port)]);
-  return(NULL);
-}
-
-
 /* -------- trace -------- */
 
 /* 
@@ -12276,7 +12196,7 @@ to the current-output-port."
   for (i = 0, x = args; x != sc->NIL; i++, x = cdr(x)) 
     if ((!s7_is_symbol(car(x))) &&
 	(!s7_is_procedure(car(x))) &&
-	(!is_macro(car(x))) &&             /* TODO: is any macro here? */
+	(!is_any_macro(car(x))) &&
 	(!is_promise(car(x))))
       return(s7_wrong_type_arg_error(sc, "trace", i + 1, car(x), "a symbol, a function, or some other applicable object"));
 
@@ -12499,11 +12419,11 @@ s7_pointer s7_wrong_type_arg_error(s7_scheme *sc, const char *caller, int arg_n,
   len = safe_strlen(descr) + safe_strlen(caller) + 64;
   errmsg = (char *)malloc(len * sizeof(char));
   if (arg_n == 0)
-    slen = snprintf(errmsg, len, "%s argument ~A is %s%s, but should be %s", caller, a_or_an, typ, descr);
+    slen = snprintf(errmsg, len, "%s argument ~S is %s%s, but should be %s", caller, a_or_an, typ, descr);
   else
     {
       if (arg_n < 0) arg_n = 1;
-      slen = snprintf(errmsg, len, "%s argument %d, ~A, is %s%s, but should be %s", caller, arg_n, a_or_an, typ, descr);
+      slen = snprintf(errmsg, len, "%s argument %d, ~S, is %s%s, but should be %s", caller, arg_n, a_or_an, typ, descr);
     }
   x = make_list_2(sc, s7_make_string_with_length(sc, errmsg, slen), arg);
   free(errmsg);
@@ -12776,7 +12696,7 @@ GOT_CATCH:
 	      const char *filename = NULL;
 	      int line;
 	      
-	      filename = input_filename(sc);
+	      filename = port_filename(sc->input_port);
 	      line = port_line_number(sc->input_port);
 	      
 	      if (filename)
@@ -12926,20 +12846,16 @@ static s7_pointer missing_close_paren_error(s7_scheme *sc)
   line = pair_line_number(x);
   if (line > 0)
     {
-      if ((remembered_line_number(line) != 0) &&
-	  (remembered_file_name(line)))
-	{
-	  s7_pointer result;
-	  char *str1;
-	  int len;
-	  len = 64 + safe_strlen(remembered_file_name(line));
-	  str1 = (char *)malloc(len * sizeof(char));
-	  len = snprintf(str1, len, "missing close paren, list started around line %d of %s: ~A", 
-			 remembered_line_number(line), remembered_file_name(line));
-	  result = s7_make_string_with_length(sc, str1, len);
-	  free(str1);
-	  return(s7_error(sc, sc->ERROR, make_list_2(sc, result, safe_reverse_in_place(sc, sc->args))));
-	}
+      s7_pointer result;
+      char *str1;
+      int len;
+      len = 64 + safe_strlen(port_filename(sc->input_port)); 
+      str1 = (char *)malloc(len * sizeof(char));
+      len = snprintf(str1, len, "missing close paren, list started around line %d of %s: ~A", 
+		     pair_line_number(x), port_filename(sc->input_port));
+      result = s7_make_string_with_length(sc, str1, len);
+      free(str1);
+      return(s7_error(sc, sc->ERROR, make_list_2(sc, result, safe_reverse_in_place(sc, sc->args))));
     }
   return(read_error(sc, "missing close paren"));
 }
@@ -13991,7 +13907,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  if (is_syntax(sc->x))
 	    {     
 	      sc->code = cdr(sc->code);
-	      sc->op = (opcode_t)integer(syntax_opcode(sc->x)->object.number);
+	      sc->op = (opcode_t)integer(number(syntax_opcode(sc->x)));
 	      goto START;
 	    } 
 	  push_stack(sc, OP_EVAL_ARGS0, sc->NIL, sc->code);
@@ -15234,11 +15150,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       
     case OP_READ_LIST: 
-      /* if args is nil, we've started reading a list, so try to remember where we are
+      /* if args is nil, we've started reading a list, so try to remember where we are (via set_pair_line_number)
        *   for a subsequent "missing close paren" error.
        */
       if (sc->args == sc->NIL)
-	sc->args = remember_line(sc, s7_cons(sc, sc->value, sc->NIL));
+	sc->args = set_pair_line_number(s7_cons(sc, sc->value, sc->NIL), port_line_number(sc->input_port));
       else sc->args = s7_cons(sc, sc->value, sc->args);
       sc->tok = token(sc, sc->input_port);
 
@@ -15250,7 +15166,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    c = inchar(sc, sc->input_port);
 	    if ((c != '\n') && (c != EOF))
 	      backchar(sc, c, sc->input_port);
-	    sc->value = remember_line(sc, safe_reverse_in_place(sc, sc->args));
+	    sc->value = set_pair_line_number(safe_reverse_in_place(sc, sc->args), port_line_number(sc->input_port));
 	  }
 	  break;
 
@@ -16246,7 +16162,7 @@ static s7_pointer s7_number_to_big_real(s7_scheme *sc, s7_pointer p)
       break;
 
     case NUM_RATIO:
-      mpfr_init_set_d(*n, fraction(p->object.number), GMP_RNDN);
+      mpfr_init_set_d(*n, fraction(number(p)), GMP_RNDN);
       break;
 
     default:
@@ -16318,7 +16234,7 @@ static s7_pointer s7_number_to_big_complex(s7_scheme *sc, s7_pointer p)
       break;
 
     case NUM_RATIO:
-      mpc_set_d(*n, fraction(p->object.number), MPC_RNDNN);
+      mpc_set_d(*n, fraction(number(p)), MPC_RNDNN);
       break;
 
     case NUM_REAL:
@@ -16505,8 +16421,8 @@ s7_Int s7_numerator(s7_pointer x)
 	return(big_integer_to_s7_Int(S7_BIG_INTEGER(x)));
     }
   if (number_type(x) == NUM_RATIO)
-    return(numerator(x->object.number));
-  return(integer(x->object.number));
+    return(numerator(number(x)));
+  return(integer(number(x)));
 }
 
 
@@ -16519,7 +16435,7 @@ s7_Int s7_denominator(s7_pointer x)
       return(big_integer_to_s7_Int(mpq_denref(S7_BIG_RATIO(x))));
     }
   if (number_type(x) == NUM_RATIO)
-    return(denominator(x->object.number));
+    return(denominator(number(x)));
   return(1);
 }
 
@@ -16540,7 +16456,7 @@ s7_Double s7_real_part(s7_pointer x)
       if (c_object_type(x) == big_ratio_tag)
 	return((s7_Double)((double)big_integer_to_s7_Int(mpq_numref(S7_BIG_RATIO(x))) / (double)big_integer_to_s7_Int(mpq_denref(S7_BIG_RATIO(x)))));
     }
-  return(num_to_real_part(x->object.number));
+  return(num_to_real_part(number(x)));
 }
 
 
@@ -16552,7 +16468,7 @@ s7_Double s7_imag_part(s7_pointer x)
 	return((s7_Double)mpfr_get_d(MPC_IM(S7_BIG_COMPLEX(x)), GMP_RNDN));
       return(0.0);
     }
-  return(num_to_imag_part(x->object.number));
+  return(num_to_imag_part(number(x)));
 }
 
 
@@ -16560,7 +16476,7 @@ s7_Int s7_integer(s7_pointer p)
 {
   if (is_c_object(p))
     return(big_integer_to_s7_Int(S7_BIG_INTEGER(p)));
-  return(integer(p->object.number));
+  return(integer(number(p)));
 }
 
 
@@ -16568,7 +16484,7 @@ s7_Double s7_real(s7_pointer p)
 {
   if (is_c_object(p))
     return((s7_Double)mpfr_get_d(S7_BIG_REAL(p), GMP_RNDN));
-  return(real(p->object.number));
+  return(real(number(p)));
 }
 
 
@@ -18267,13 +18183,13 @@ static s7_pointer big_expt(s7_scheme *sc, s7_pointer args)
     }
 
   if ((s7_is_ratio(y)) &&
-      (numerator(y->object.number) == 1))
+      (numerator(number(y)) == 1))
     {
-      if (denominator(y->object.number) == 2)
+      if (denominator(number(y)) == 2)
 	return(big_sqrt(sc, args));
 
       if ((s7_is_real(x)) &&
-	  (denominator(y->object.number) == 3))
+	  (denominator(number(y)) == 3))
 	{
 	  if (IS_BIG(x))
 	    {
@@ -18283,7 +18199,7 @@ static s7_pointer big_expt(s7_scheme *sc, s7_pointer args)
 	      mpfr_cbrt(*z, *z, GMP_RNDN);
 	      return(s7_make_object(sc, big_real_tag, (void *)z));
 	    }
-	  else return(s7_make_real(sc, cbrt(num_to_real(x->object.number))));
+	  else return(s7_make_real(sc, cbrt(num_to_real(number(x)))));
 	}
     }
 
@@ -20322,14 +20238,14 @@ s7_scheme *s7_init(void)
       p = (s7_pointer)calloc(1, sizeof(s7_cell));
       p->flag = T_OBJECT | T_IMMUTABLE | T_ATOM | T_NUMBER | T_SIMPLE | T_DONT_COPY;
       number_type(p) = NUM_INT;
-      integer(p->object.number) = (s7_Int)i;
+      integer(number(p)) = (s7_Int)i;
       sc->small_ints[i] = p;
     }
   
   sc->real_zero = (s7_pointer)calloc(1, sizeof(s7_cell));
   sc->real_zero->flag = T_OBJECT | T_IMMUTABLE | T_ATOM | T_NUMBER | T_SIMPLE | T_DONT_COPY;
   number_type(sc->real_zero) = NUM_REAL;
-  real(sc->real_zero->object.number) = (s7_Double)0.0;
+  real(number(sc->real_zero)) = (s7_Double)0.0;
   
   /* initialization of global pointers to special symbols */
   assign_syntax(sc, "lambda",          OP_LAMBDA);
@@ -20715,7 +20631,7 @@ s7_scheme *s7_init(void)
 #if WITH_MULTIDIMENSIONAL_VECTORS
   s7_define_function(sc, "vector-dimensions",       g_vector_dimensions,       1, 0, false, H_vector_dimensions);
 #endif
-  s7_define_function(sc, "sort!",                   g_sort_in_place,           2, 0, false, H_sort_in_place);
+  s7_define_set_function(sc, "sort!",               g_sort_in_place,           2, 0, false, H_sort_in_place);
   
 
   s7_define_function(sc, "call/cc",                 g_call_cc,                 1, 0, false, H_call_cc);
@@ -20903,3 +20819,5 @@ s7_scheme *s7_init(void)
 /* unicode is probably do-able if it is sequestered in the s7 strings 
  */
   
+/* TODO: figure out a relatively clean way to break out of infinite loops -- an s7.h example
+ */
