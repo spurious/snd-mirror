@@ -221,7 +221,7 @@ read, even if not playing.  'files' is a list of files to be played."
 	       (reading #t)
 	       (out-port (mus-audio-open-output mus-audio-default srate chans mus-lshort (* bufsize 2))))
 	  (if (< out-port 0)
-	      (snd-error "can't open audio port! ~A" out-port)
+	      (snd-error (format #f "can't open audio port! ~A" out-port))
 	      (begin
 		(do ((i 0 (+ 1 i)))
 		    ((= i files-len))

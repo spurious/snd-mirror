@@ -838,7 +838,7 @@ color name, an xm Pixel, a snd color, or a list of rgb values (as in Snd's make-
 		    (cmap (DefaultColormap dpy scr))
 		    (col (XColor)))
 	       (if (= (XAllocNamedColor dpy cmap new-color col col) 0)
-		   (snd-error "can't allocate ~S" new-color)
+		   (snd-error (format #f "can't allocate ~S" new-color))
 		   (.pixel col)))
 	     (if (color? new-color)
 		 new-color

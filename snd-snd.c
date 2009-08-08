@@ -339,6 +339,7 @@ static bool tick_peak_env(chan_info *cp, env_state *es)
 	      (cp->sound->inuse == SOUND_NORMAL) &&
 	      (cp->sound->hdr) &&
 	      (cp->sounds) &&
+	      (cp->sounds[0] != NULL) &&
 	      (cp->sounds[0]->io) &&
 	      (mus_file_prescaler(cp->sounds[0]->io->fd) == 1.0))
 	    {

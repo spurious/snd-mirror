@@ -82,6 +82,7 @@
  *        perhaps find(-if) etc from CL?
  *        defmacro* define-macro*
  *        perhaps settable numerator denominator imag-part real-part angle magnitude
+ *        perhaps do*
  *
  *   scheme funcs s7 does not need: 
  *        string-set! string-ref vector-set! vector-ref inexact? exact? values call-with-values
@@ -624,6 +625,7 @@ struct s7_scheme {
 #define is_any_macro(p)               ((typeflag(p) & T_ANY_MACRO) != 0)
 
 #define UNUSED_BITS                   0xe0000000
+/* there are actually more unused bits -- the TYPE_BITS macro could be as small as 5, freeing another 11 bits */
 
 #if HAVE_PTHREADS
 #define set_type(p, f)                typeflag(p) = ((typeflag(p) & T_GC_MARK) | (f) | T_OBJECT)
@@ -829,7 +831,9 @@ static s7_pointer make_list_1(s7_scheme *sc, s7_pointer a);
 static s7_pointer make_list_2(s7_scheme *sc, s7_pointer a, s7_pointer b);
 static void write_string(s7_scheme *sc, const char *s, s7_pointer pt);
 static s7_pointer eval_symbol(s7_scheme *sc, s7_pointer sym);
-static void encapsulate(s7_scheme *sc, s7_pointer sym);
+#if WITH_ENCAPSULATION
+  static void encapsulate(s7_scheme *sc, s7_pointer sym);
+#endif
 
 
 
@@ -1795,7 +1799,16 @@ static s7_pointer add_to_environment(s7_scheme *sc, s7_pointer env, s7_pointer v
   slot = s7_immutable_cons(sc, variable, value); 
   if (s7_is_vector(car(env))) 
     vector_element(car(env), symbol_location(variable)) = s7_immutable_cons(sc, slot, vector_element(car(env), symbol_location(variable)));
+
+  /* TODO: here also establish the global direct pointer at symbol_location
+           if it's taken, clear and set a marker saying don't ever set this
+	   sc->UNSPECIFIED to start, sc->UNDEFINED to lock out
+   */
+
   else car(env) = s7_cons(sc, slot, car(env));
+
+  /* TODO: here is global[loc] lock it */
+
   return(slot);
 } 
 
@@ -1804,6 +1817,8 @@ static s7_pointer s7_find_symbol_in_environment(s7_scheme *sc, s7_pointer env, s
 { 
   s7_pointer x, y;
   /* this is a list (of alists, each representing a frame) ending with a vector (the global environment) */
+
+  /* TODO: if is_pair(x = global[symbol_location]) return that */
 
   for (x = env; is_pair(x); x = cdr(x)) 
     { 
@@ -20841,6 +20856,6 @@ s7_scheme *s7_init(void)
 
 /* unicode is probably do-able if it is sequestered in the s7 strings 
  */
-  
-/* TODO: figure out a relatively clean way to break out of infinite loops -- an s7.h example
- */
+/* stacktrace using arbitrary env? */
+/* TODO: error reports should show a lot more info -- the entire call, a stacktrace, file and line number */
+/* TODO: example of s7 as emacs subjob */

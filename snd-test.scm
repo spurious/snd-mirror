@@ -3456,25 +3456,25 @@
 	    (if (not (eq? tag 'out-of-range))
 		(snd-display ";sound-data->sound-data frames: ~A" tag))))
 	
-
-	(let ((sd (make-sound-data 1 1)))
-	  (if (fneq (sd 0 0) 0.0) (snd-display ";sound-data ref: ~A" (sd 0 0)))
-	  (set! (sd 0 0) 1.0)
-	  (if (fneq (sd 0 0) 1.0) (snd-display ";sound-data set: ~A" (sd 0 0)))
-	  (if (not (equal? sd (let ((sd1 (make-sound-data 1 1))) (sound-data-set! sd1 0 0 1.0) sd1)))
-	      (snd-display ";sound-data set not equal: ~A" sd)))
-	
-	(let ((sd (make-sound-data 2 3)))
-	  (if (fneq (sd 0 0) 0.0) (snd-display ";sound-data ref (1): ~A" (sd 0 0)))
-	  (set! (sd 1 0) 1.0)
-	  (if (fneq (sd 1 0) 1.0) (snd-display ";sound-data set (1 0): ~A" (sd 1 0)))
-	  (set! (sd 1 2) 2.0)
-	  (if (fneq (sd 1 2) 2.0) (snd-display ";sound-data set (1 2): ~A" (sd 1 2)))
-	  (if (not (equal? sd (let ((sd1 (make-sound-data 2 3)))
-				(sound-data-set! sd1 1 0 1.0)
-				(sound-data-set! sd1 1 2 2.0)
-				sd1)))
-	      (snd-display ";sound-data set (3) not equal: ~A" sd)))
+	(if (provided? 'snd-s7)
+	    (let ((sd (make-sound-data 1 1)))
+	      (if (fneq (sd 0 0) 0.0) (snd-display ";sound-data ref: ~A" (sd 0 0)))
+	      (set! (sd 0 0) 1.0)
+	      (if (fneq (sd 0 0) 1.0) (snd-display ";sound-data set: ~A" (sd 0 0)))
+	      (if (not (equal? sd (let ((sd1 (make-sound-data 1 1))) (sound-data-set! sd1 0 0 1.0) sd1)))
+		  (snd-display ";sound-data set not equal: ~A" sd))))
+	(if (provided? 'snd-s7)
+	    (let ((sd (make-sound-data 2 3)))
+	      (if (fneq (sd 0 0) 0.0) (snd-display ";sound-data ref (1): ~A" (sd 0 0)))
+	      (set! (sd 1 0) 1.0)
+	      (if (fneq (sd 1 0) 1.0) (snd-display ";sound-data set (1 0): ~A" (sd 1 0)))
+	      (set! (sd 1 2) 2.0)
+	      (if (fneq (sd 1 2) 2.0) (snd-display ";sound-data set (1 2): ~A" (sd 1 2)))
+	      (if (not (equal? sd (let ((sd1 (make-sound-data 2 3)))
+				    (sound-data-set! sd1 1 0 1.0)
+				    (sound-data-set! sd1 1 2 2.0)
+				    sd1)))
+		  (snd-display ";sound-data set (3) not equal: ~A" sd))))
 
 
 	(for-each 
@@ -4961,6 +4961,8 @@
 	  ))
     
     ))
+
+
 
 ;;; ---------------- test 5: simple overall checks ----------------
 
@@ -10384,8 +10386,8 @@ EDITS: 5
 		     (lambda (snd) (clm-channel (make-one-zero :a0 0.5 :a1 0.0))) 'clm-channel ind1)
 	  (test-orig (lambda (snd) (clm-channel (make-one-pole :a0 2.0 :b1 0.0)))
 		     (lambda (snd) (clm-channel (make-one-pole :a0 0.5 :b1 0.0))) 'clm-channel ind1)
-	  (test-orig (lambda (snd) (filter-sound (make-one-zero :a0 2.0 :a1 0.0) 0 ind1 0)) 
-		     (lambda (snd) (filter-sound (make-one-zero :a0 0.5 :a1 0.0)) 0 ind1 0) 'filter-sound ind1)
+	  (test-orig (lambda (snd) (filter-sound (make-one-zero :a0 2.0 :a1 0.0) 2 ind1 0)) 
+		     (lambda (snd) (filter-sound (make-one-zero :a0 0.5 :a1 0.0)) 2 ind1 0) 'filter-sound ind1)
 	  
 	  (let ((var (catch #t (lambda () (src-sound '(0 0 1 1))) (lambda args args))))
 	    (if (not (eq? (car var) 'out-of-range))
@@ -20355,55 +20357,57 @@ EDITS: 2
       (if (not (equal? fr1 fr2))
 	  (snd-display ";frame...: ~A ~A" fr1 fr2)))
     
-    (let ((fr1 (frame .1)))
-      (if (fneq (fr1 0) .1) (snd-display ";frame gen ref (.1): ~A" (fr1 0)))
-      (set! (fr1 0) .2)
-      (if (fneq (fr1 0) .2) (snd-display ";frame gen ref (.2): ~A" (fr1 0)))
-      (if (not (equal? fr1 (frame .2)))
-	  (snd-display ";frame gen set! (.2): ~A" fr1)))
-    
-    (let ((fr1 (frame .1 .2 .3 .4)))
-      (set! (fr1 2) (+ (fr1 1) (fr1 2)))
-      (if (fneq (fr1 2) .5) (snd-display ";frame gen ref/set (.5): ~A" (fr1 2))))
-    
-    (let ((fr1 (frame)))
-      (if (or (not (frame? fr1))
-	      (not (equal? fr1 (make-frame 1 0.0))))
-	  (snd-display ";frame no args: ~A" fr1))
-      (set! (fr1 0) .5)
-      (if (fneq (fr1 0) .5) (snd-display ";frame ref/set no args: ~A" (fr1 0))))
-    
-    (let ((fr1 (make-frame 2 .1)))
-      (if (not (equal? fr1 (frame .1 0.0)))
-	  (snd-display ";make-frame missing arg: ~A" fr1)))
-    
-    
-    (let ((mx (mixer .1 .2 .3 .4)))
-      (if (fneq (mx 0 0) .1) (snd-display ";mixer gen ref (.1): ~A" (mx 0 0)))
-      (if (not (equal? mx (make-mixer 2 .1 .2 .3 .4))) (snd-display ";mixer...: ~A" mx))
-      (set! (mx 0 0) .5)
-      (if (fneq (mx 0 0) .5) (snd-display ";mixer gen set (.5): ~A" (mx 0 0)))
-      (if (not (equal? mx (make-mixer 2 .5 .2 .3 .4))) (snd-display ";mixer... (after set): ~A" mx))
-      (if (fneq (mx 1 0) .3) (snd-display ";mixer gen ref (.3): ~A" (mx 1 0)))
-      (set! (mx 0 1) .5)
-      (if (fneq (mx 0 1) .5) (snd-display ";mixer (0 1) gen set (.5): ~A" (mx 0 1)))
-      (if (not (equal? mx (make-mixer 2 .5 .5 .3 .4))) (snd-display ";mixer... (after set 1): ~A" mx)))
-    
-    (let ((mx (mixer .1)))
-      (if (not (equal? mx (make-mixer 1 .1))) (snd-display ";mixer .1: ~A" mx))
-      (if (fneq (mx 0 0) .1) (snd-display ";mixer (1) gen ref (.1): ~A" (mx 0 0)))  
-      (set! (mx 0 0) .5)
-      (if (fneq (mx 0 0) .5) (snd-display ";mixer (1) gen set (.5): ~A" (mx 0 0))))
-    
-    (let ((mx (mixer .1 .2 .3)))
-      (if (not (equal? mx (make-mixer 2 .1 .2 .3 0.0))) (snd-display ";mixer .1 .2 .3: ~A" mx))
-      (set! (mx 1 1) .5)
-      (if (fneq (mx 1 1) .5) (snd-display ";mixer (1 1) gen set (.5): ~A" (mx 1 1))))
-    
-    (let ((mx (mixer)))
-      (if (not (equal? mx (make-mixer 1 0.0))) (snd-display ";(mixer): ~A" mx)))
-    
-    
+    (if (provided? 'snd-s7)
+	(begin
+	  (let ((fr1 (frame .1)))
+	    (if (fneq (fr1 0) .1) (snd-display ";frame gen ref (.1): ~A" (fr1 0)))
+	    (set! (fr1 0) .2)
+	    (if (fneq (fr1 0) .2) (snd-display ";frame gen ref (.2): ~A" (fr1 0)))
+	    (if (not (equal? fr1 (frame .2)))
+		(snd-display ";frame gen set! (.2): ~A" fr1)))
+	  
+	  (let ((fr1 (frame .1 .2 .3 .4)))
+	    (set! (fr1 2) (+ (fr1 1) (fr1 2)))
+	    (if (fneq (fr1 2) .5) (snd-display ";frame gen ref/set (.5): ~A" (fr1 2))))
+	  
+	  (let ((fr1 (frame)))
+	    (if (or (not (frame? fr1))
+		    (not (equal? fr1 (make-frame 1 0.0))))
+		(snd-display ";frame no args: ~A" fr1))
+	    (set! (fr1 0) .5)
+	    (if (fneq (fr1 0) .5) (snd-display ";frame ref/set no args: ~A" (fr1 0))))
+	  
+	  (let ((fr1 (make-frame 2 .1)))
+	    (if (not (equal? fr1 (frame .1 0.0)))
+		(snd-display ";make-frame missing arg: ~A" fr1)))
+	  
+	  
+	  (let ((mx (mixer .1 .2 .3 .4)))
+	    (if (fneq (mx 0 0) .1) (snd-display ";mixer gen ref (.1): ~A" (mx 0 0)))
+	    (if (not (equal? mx (make-mixer 2 .1 .2 .3 .4))) (snd-display ";mixer...: ~A" mx))
+	    (set! (mx 0 0) .5)
+	    (if (fneq (mx 0 0) .5) (snd-display ";mixer gen set (.5): ~A" (mx 0 0)))
+	    (if (not (equal? mx (make-mixer 2 .5 .2 .3 .4))) (snd-display ";mixer... (after set): ~A" mx))
+	    (if (fneq (mx 1 0) .3) (snd-display ";mixer gen ref (.3): ~A" (mx 1 0)))
+	    (set! (mx 0 1) .5)
+	    (if (fneq (mx 0 1) .5) (snd-display ";mixer (0 1) gen set (.5): ~A" (mx 0 1)))
+	    (if (not (equal? mx (make-mixer 2 .5 .5 .3 .4))) (snd-display ";mixer... (after set 1): ~A" mx)))
+	  
+	  (let ((mx (mixer .1)))
+	    (if (not (equal? mx (make-mixer 1 .1))) (snd-display ";mixer .1: ~A" mx))
+	    (if (fneq (mx 0 0) .1) (snd-display ";mixer (1) gen ref (.1): ~A" (mx 0 0)))  
+	    (set! (mx 0 0) .5)
+	    (if (fneq (mx 0 0) .5) (snd-display ";mixer (1) gen set (.5): ~A" (mx 0 0))))
+	  
+	  (let ((mx (mixer .1 .2 .3)))
+	    (if (not (equal? mx (make-mixer 2 .1 .2 .3 0.0))) (snd-display ";mixer .1 .2 .3: ~A" mx))
+	    (set! (mx 1 1) .5)
+	    (if (fneq (mx 1 1) .5) (snd-display ";mixer (1 1) gen set (.5): ~A" (mx 1 1))))
+	  
+	  (let ((mx (mixer)))
+	    (if (not (equal? mx (make-mixer 1 0.0))) (snd-display ";(mixer): ~A" mx)))))
+	  
+	  
     (for-each 
      (lambda (chans)
        (let ((m1 (make-mixer chans)))

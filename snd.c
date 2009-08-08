@@ -3,6 +3,8 @@
  * originally intended as a re-implementation of my much-missed dpysnd -- the Foonly/SAIL/E/Mus10/Grnlib sound editor from ca 1983.
  */
 
+/* TODO: use emacs as the listener via the xembed protocol? */
+
 #include "snd.h"
 
 snd_state *ss = NULL;
@@ -347,6 +349,7 @@ static void snd_sigusr1(int ignored)
    *    return to the listener prompt by getting the Snd process number and
    *      kill -10 6141
    *    to send process 6141 (Snd presumably) the SIGUSR1 signal.
+   * or better -- try C-\ below.
    */
   XEN_ERROR(XEN_ERROR_TYPE("snd-top-level"), XEN_EMPTY_LIST);
 }
@@ -356,6 +359,19 @@ static void jump_to_top_level(void)
 {
   top_level_catch(1);
 }
+
+#if defined(SIGQUIT)
+/* C-\ in the terminal controlling Snd should break out of any evaluator infinite loop. */
+
+struct sigaction new_act, old_act;  
+  
+static void handle_sigquit(int ignored)  
+{  
+  fprintf(stderr, "interrupted!\n");
+  sigaction(SIGQUIT, &new_act, NULL);  
+  s7_quit(s7);                /* get out of the eval loop if possible */
+}  
+#endif
 #endif
 #endif
 
@@ -504,6 +520,16 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
 
 #if HAVE_SETJMP_H
   signal(SIGUSR1, snd_sigusr1);
+#endif
+
+#if HAVE_S7 && defined(SIGQUIT)
+  sigaction(SIGQUIT, NULL, &old_act);
+  if (old_act.sa_handler != SIG_IGN)
+    {
+      memset(&new_act, 0, sizeof(new_act));  
+      new_act.sa_handler = &handle_sigquit;  
+      sigaction(SIGQUIT, &new_act, NULL);  
+    }
 #endif
 
 #ifdef SND_AS_PD_EXTERNAL

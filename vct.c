@@ -232,12 +232,13 @@ bool mus_vct_equalp(vct *v1, vct *v2)
 			       v1->length)));
 }
 
+static XEN g_vct_fill(XEN obj, XEN val);
+
 #if (HAVE_S7)
 static XEN g_vct_ref(XEN obj, XEN pos);
 static XEN g_vct_set(XEN obj, XEN pos, XEN val);
 static XEN g_vct_length(XEN obj);
 static XEN g_vct_copy(XEN obj);
-static XEN g_vct_fill(XEN obj, XEN val);
 
 static bool s7_mus_vct_equalp(void *uv1, void *uv2)
 {
@@ -343,8 +344,6 @@ XEN xen_make_vct_wrapper(mus_long_t len, mus_float_t *data)
   XEN_MAKE_AND_RETURN_OBJECT(vct_tag, new_vct, 0, free_vct);
 }
 
-
-static XEN g_vct_fill(XEN obj1, XEN obj2);
 
 static XEN g_make_vct(XEN len, XEN filler)
 {

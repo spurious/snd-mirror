@@ -3817,7 +3817,7 @@ with chans samples, each sample set from the trailing arguments (defaulting to 0
 	XEN_OUT_OF_RANGE_ERROR(S_make_frame, XEN_ARG_1, C_TO_XEN_INT(size), "size ~A too big");
     }
 
-  return(g_make_frame_2(size, (len == 1) ? XEN_EMPTY_LIST : XEN_CDR(arglist)));
+  return(g_make_frame_2(size, (len <= 1) ? XEN_EMPTY_LIST : XEN_CDR(arglist)));
 }
 
 

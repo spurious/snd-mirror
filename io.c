@@ -1286,8 +1286,8 @@ mus_clip_handler_t *mus_clip_set_handler(mus_clip_handler_t *new_clip_handler)
 
 static int mus_write_1(int tfd, mus_long_t beg, mus_long_t end, int chans, mus_sample_t **bufs, char *inbuf, bool clipped)
 {
-  int err, siz, siz_chans, data_format, val;
-  mus_long_t bytes, j, k, lim, leftover, loc, oldloc, buflim, cliploc;
+  int err, siz, siz_chans, data_format, val, cliploc;
+  mus_long_t bytes, k, lim, leftover, loc, oldloc, buflim;
   bool clipping = false;
   unsigned char *jchar;
   char *charbuf = NULL;
@@ -1359,32 +1359,39 @@ static int mus_write_1(int tfd, mus_long_t beg, mus_long_t end, int chans, mus_s
 	  if (bufs[k] == NULL) continue;
 	  loc = oldloc;
 	  buffer = (mus_sample_t *)(bufs[k]);
+
 	  if (clipping)
 	    {
-	      cliploc = oldloc;
-	      for (j = 0; j < lim; j++, cliploc++)
-		if (buffer[cliploc] > MUS_SAMPLE_MAX)
-		  {
-		    if (mus_clip_handler)
-		      buffer[cliploc] = (*mus_clip_handler)(buffer[cliploc]);
-		    else buffer[cliploc] = MUS_SAMPLE_MAX;
-		  }
-		else
-		  if (buffer[cliploc] < MUS_SAMPLE_MIN)
-		    {
-		      if (mus_clip_handler)
-			buffer[cliploc] = (*mus_clip_handler)(buffer[cliploc]);
-		      else buffer[cliploc] = MUS_SAMPLE_MIN;
-		    }
-
-	      if ((data_format == MUS_OUT_FORMAT) && 
-		  (chans == 1) && 
-		  (beg == 0))
+	      int clipend;
+	      clipend = oldloc + lim;
+	      if (mus_clip_handler)
 		{
-		  bytes = (end + 1) * siz;
-		  return(checked_write(tfd, (char *)(bufs[0]), bytes));
+		  for (cliploc = oldloc; cliploc < clipend; cliploc++)
+		    if (buffer[cliploc] > MUS_SAMPLE_MAX)
+		      buffer[cliploc] = (*mus_clip_handler)(buffer[cliploc]);
+		    else
+		      if (buffer[cliploc] < MUS_SAMPLE_MIN)
+			buffer[cliploc] = (*mus_clip_handler)(buffer[cliploc]);
+		}
+	      else
+		{
+		  for (cliploc = oldloc; cliploc < clipend; cliploc++)
+		    if (buffer[cliploc] > MUS_SAMPLE_MAX)
+			buffer[cliploc] = MUS_SAMPLE_MAX;
+		    else
+		      if (buffer[cliploc] < MUS_SAMPLE_MIN)
+			buffer[cliploc] = MUS_SAMPLE_MIN;
 		}
 	    }
+
+	  if ((data_format == MUS_OUT_FORMAT) && 
+	      (chans == 1) && 
+	      (beg == 0))
+	    {
+	      bytes = (end + 1) * siz;
+	      return(checked_write(tfd, (char *)(bufs[0]), bytes));
+	    }
+
 	  loclim = loc + lim;
 	  if (!charbuf)
 	    {

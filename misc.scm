@@ -243,7 +243,7 @@
                     (cmap (DefaultColormap dpy scr))
                     (col (XColor)))
                (if (= (XAllocNamedColor dpy cmap new-color col col) 0)
-                   (snd-error "can't allocate ~S" new-color)
+                   (snd-error (format #f "can't allocate ~S" new-color))
                    (.pixel col)))
              (if (color? new-color)
                      new-color
@@ -264,7 +264,7 @@
                     (cmap (DefaultColormap dpy scr))
                     (col (XColor)))
                (if (= (XAllocNamedColor dpy cmap new-color col col) 0)
-                   (snd-error "can't allocate ~S" new-color)
+                   (snd-error (format #f "can't allocate ~S" new-color))
                    (.pixel col)))
              (if (color? new-color)
                      new-color

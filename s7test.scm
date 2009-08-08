@@ -6601,7 +6601,21 @@
 		    (close-encapsulator e2))
 		  (test g2 32)
 		  (test g1 1)
-		  (close-encapsulator e1))))))
+		  (close-encapsulator e1))))
+
+	    (let ((g1 321))
+	      (define (set-g1 val) (set! g1 val))
+	      (let ((e (open-encapsulator)))
+		(set-g1 1)
+		(e)
+		(test g1 321)
+		(set-g1 2)
+		(test g1 2)
+		(e)
+		(test g1 321)
+		(close-encapsulator e)))
+
+	    ))
 		
 
       ;; generic length/copy/fill!
@@ -6633,6 +6647,27 @@
       (let ((cn (cons 1 2)))
 	(fill! cn 100)
 	(test cn (cons 100 100)))
+
+      ;; try some applicable stuff
+      (test (let ((lst (list 1 2 3)))
+	      (set! (lst 1) 32)
+	      (list (lst 0) (lst 1)))
+	    (list 1 32))
+
+      (test (let ((hash (make-hash-table)))
+	      (set! (hash 'hi) 32)
+	      (hash 'hi))
+	    32)
+
+      (test (let ((str (string #\1 #\2 #\3)))
+	      (set! (str 1) #\a)
+	      (str 1))
+	    #\a)
+
+      (test (let ((v (vector 1 2 3)))
+	      (set! (v 1) 0)
+	      (v 1))
+	    0)
 
       ))
 
@@ -34978,11 +35013,16 @@
 	     (test (= (+ most-negative-fixnum 1) (- most-positive-fixnum)) #t)
 	     (test (= (abs (+ most-negative-fixnum 1)) most-positive-fixnum) #t)
 	     (test (= (+ most-negative-fixnum most-positive-fixnum) -1) #t)
+	     (test (= (- most-negative-fixnum (- most-positive-fixnum)) -1) #t)
 	     (test (even? most-positive-fixnum) #f)
 	     (test (odd? most-positive-fixnum) #t)
 	     (test (even? most-negative-fixnum) #t)
 	     (test (odd? most-negative-fixnum) #f)
 	     (test (integer? most-negative-fixnum) #t)
+	     (test (= (* most-positive-fixnum -1) (+ most-negative-fixnum 1)) #t)
+	     (test (= (* most-negative-fixnum 1) (- (* -1 most-positive-fixnum) 1)) #t)
+	     (if with-bignums
+		 (test (= most-positive-fixnum (- (/ most-negative-fixnum -1) 1)) #t))
 	     ))
 
 
@@ -36167,7 +36207,7 @@
       (for-each
        (lambda (arg)
 	 (test (apply arg '(1)) 'error))
-       (list -1 #\a 1 'a-symbol 3.14 3/4 1.0+1.0i #t (list 1 2 3) '(1 . 2))) ; "hi" works here because it is applicable in s7
+       (list -1 #\a 1 'a-symbol 3.14 3/4 1.0+1.0i #t)) ; "hi" and (list 1 2 3) work here because they are applicable in s7
       
       (test (let ((x (list 1 2))) (set-cdr! x x) (apply + x)) 'error)
       (test (apply + '(1 2 . 3)) 'error)

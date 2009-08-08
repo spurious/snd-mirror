@@ -49,6 +49,8 @@ sort! for lists or vectors.
   
 read-hook (in s7-Snd) has changed (the other cases are not changed).
 
+C-\ in the Snd terminal breaks out of evaluator infinite loops (s7).
+
 the ubiquitous Float type is now named mus_float_t (new sndlib major version: 21),
   and off_t has been changed to mus_long_t.  Wherever possible I'm using either 
   int64_t or long long int, rather than off_t.
