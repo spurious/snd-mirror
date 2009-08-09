@@ -25761,7 +25761,7 @@ EDITS: 2
       (revert-sound nind)
       (close-sound nind))
 
-    (if all-args
+    (if (and all-args (defined? 'edot-product))
 	(let* ((ind (open-sound "1a.snd"))
 	       (len (frames ind 0)))
 	  (stretch-sound-via-dft 2.0 ind 0)

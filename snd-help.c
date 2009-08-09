@@ -545,12 +545,11 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+9-Aug:   Snd 10.8.\n\
 12-Jul:  frame, mixer, and sound-data objects are set-applicable.\n\
          added frame and mixer functions like vct: (frame .1 .2)\n\
 6-Jul:   Snd 10.7\n\
 2-Jul:   default audio in Linux is now ALSA.\n\
-28-May:  Snd 10.6\n\
-17-Apr:  Snd 10.5\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*:\n    '", features, "\n\n",
