@@ -41,6 +41,8 @@
 ;(debug-enable 'warn-deprecated)
 (define profiling #f)
 
+;(if (provided? 'snd-s7) (set! *load-hook* (lambda (name) (format #t "load ~S~%" name))))
+
 (if (defined? 'run-clear-counts) (run-clear-counts))
 
 (define with-guile (provided? 'snd-guile))
@@ -64699,7 +64701,8 @@ EDITS: 1
 	   (provided? 'gmp))
       (begin
 	(load "s7test.scm")
-	(if all-args (s7-test-at-random))))
+	(if (and all-args (not (provided? 'gmp)))
+	    (s7-test-at-random))))
 
 
   (if (and (provided? 'gsl)
