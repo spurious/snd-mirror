@@ -337,6 +337,7 @@
 			  (memv :when expr)))
 		    :customsymbolhandler
 		    (lambda (expr)
+		      (define rev-expr (reverse expr))
 		      (cond ((eq? 'lambda (car expr))
 			     (stalin-macroexpand `(lambda ,(cadr expr)
 						    (begin
@@ -348,8 +349,8 @@
 						      ,@(cddr expr)))
 						 :include-make-coroutine include-make-coroutine))
 			    (else
-			     (let ((key (let ((where (memv :where expr))
-					      (when (memv :when expr)))
+			     (let ((key (let ((where (memv :where rev-expr))
+					      (when (memv :when rev-expr)))
 					  (cond ((and where when
 						      (> (length where) (length when)))
 						 :where)
@@ -359,18 +360,21 @@
 						 :where)
 						(else
 						 :when)))))
-				   
+			       
 			       (call-with-values (lambda () (break (lambda (t) (eqv? key t))
-								   expr))
-				 (lambda (before after)
+								   rev-expr))
+				 (lambda (before_ after_)
+				   (define before (reverse after_))
+				   (define after (reverse before_))
+				   ;;(c-display "rev" rev-expr)
+				   ;;(c-display "before" before)
+				   ;;(c-display "after" after "\n")
 				   (if (eqv? key :where)
-				       (stalin-macroexpand `(let ((,(cadr after) ,(caddr after)))
-							      (,@before
-							       ,@(cdddr after)))
+				       (stalin-macroexpand `(let ((,(car after) ,(cadr after)))
+							      (,@(butlast before 1)))
 							   :include-make-coroutine include-make-coroutine)
-				       (stalin-macroexpand `(if ,(cadr after)
-								(,@before)
-								,@(cddr after))
+				       (stalin-macroexpand `(if ,(car after)
+								(,@(butlast before 1)))
 							   :include-make-coroutine include-make-coroutine))))))))
 		      
 		    :elsefunc (lambda (expr)
@@ -411,6 +415,9 @@
 (stalin-macroexpand '(+ a b
 			:where c 9
 			:where d 10))
+
+(stalin-macroexpand '(stop :when a :when #f))
+
 ;; Never used.
 (define (stalin-macroexpand-make-coroutine code)
   (c-display "stalin-macroexpand-make-coroutine entry")
@@ -2730,13 +2737,12 @@ old bus.
   (c-display name val)
   (cond (default-false
 	  (add-coroutine-slot (symbol->keyword name) default-false)
-	  `(begin
-	     (cond ((,check-if-default-is-false-func ,name)
-		    (let ((,ret ,val))
-		      (set! ,name ,ret)
-		      ,ret))
-		   (else
-		    ,name))))
+	  `(cond ((,check-if-default-is-false-func ,name)
+		  (let ((,ret ,val))
+		    (set! ,name ,ret)
+		    ,ret))
+		 (else
+		  ,name)))
 	(else
 	 (add-coroutine-slot (symbol->keyword name) val)
 	 name)))
