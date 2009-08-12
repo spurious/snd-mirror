@@ -293,7 +293,7 @@ typedef enum {OP_READ_INTERNAL, OP_EVAL, OP_EVAL_ARGS0, OP_EVAL_ARGS1, OP_APPLY,
 	      OP_DEFINE0, OP_DEFINE1, OP_BEGIN, OP_IF0, OP_IF1, OP_SET0, OP_SET1, OP_SET2, 
 	      OP_LET0, OP_LET1, OP_LET2, OP_LET_STAR0, OP_LET_STAR1, 
 	      OP_LETREC0, OP_LETREC1, OP_LETREC2, OP_COND0, OP_COND1, OP_MAKE_PROMISE, OP_AND0, OP_AND1, 
-	      OP_OR0, OP_OR1, OP_DEFMACRO, OP_MACRO0, OP_MACRO1, OP_DEFINE_MACRO,
+	      OP_OR0, OP_OR1, OP_DEFMACRO, OP_MACRO0, OP_MACRO1, OP_DEFINE_MACRO, OP_DEFINE_EXPANSION, 
 	      OP_CASE0, OP_CASE1, OP_CASE2, OP_READ_LIST, OP_READ_DOT, OP_READ_QUOTE, 
 	      OP_READ_QUASIQUOTE, OP_READ_QUASIQUOTE_VECTOR, OP_READ_UNQUOTE, OP_READ_UNQUOTE_SPLICING, 
 	      OP_READ_VECTOR, OP_FORCE, OP_READ_RETURN_EXPRESSION, OP_READ_POP_AND_RETURN_EXPRESSION, 
@@ -458,6 +458,9 @@ struct s7_scheme {
   
   s7_pointer protected_objects;       /* a vector of gc-protected objects */
   int *protected_objects_size, *protected_objects_loc; /* pointers so they're global across threads */
+
+  s7_pointer *expanders;              /* a list of read-time macros */
+  int expanders_top, expanders_size;
   
   struct s7_cell _NIL;
   s7_pointer NIL;                     /* empty list */
@@ -480,7 +483,7 @@ struct s7_scheme {
   s7_pointer symbol_table;            /* symbol table */
   s7_pointer global_env;              /* global environment */
   
-  s7_pointer LAMBDA, LAMBDA_STAR, QUOTE, QUASIQUOTE, UNQUOTE, UNQUOTE_SPLICING;
+  s7_pointer LAMBDA, LAMBDA_STAR, QUOTE, QUASIQUOTE, UNQUOTE, UNQUOTE_SPLICING, MACROEXPAND;
   s7_pointer APPLY, VECTOR, CONS, APPEND, CDR, VECTOR_FUNCTION, VALUES, ELSE, SET;
   s7_pointer ERROR, WRONG_TYPE_ARG, OUT_OF_RANGE, FORMAT_ERROR, WRONG_NUMBER_OF_ARGS;
   s7_pointer KEY_KEY, KEY_OPTIONAL, KEY_REST, __FUNC__, ERROR_HOOK;
@@ -1527,11 +1530,11 @@ internally by the evaluator.  If a continuation is passed, its stack and stack-t
 }
 
 
-#if 1
+#if 0
 static void show_stack(s7_scheme *sc)
 {
   const char *ops[OP_MAX_DEFINED] = 
-    {"read_internal", "eval", "eval_args0", "eval_args1", "apply", "eval_macro", "lambda", "quote", "define0", "define1", "begin", "if0", "if1", "set0", "set1", "set2", "let0", "let1", "let2", "let_star0", "let_star1", "letrec0", "letrec1", "letrec2", "cond0", "cond1", "make_promise", "and0", "and1", "or0", "or1", "defmacro", "macro0", "macro1", "define_macro", "case0", "case1", "case2", "read_list", "read_dot", "read_quote", "read_quasiquote", "read_quasiquote_vector", "read_unquote", "read_unquote_splicing", "read_vector", "force", "read_return_expression", "read_pand_return_expression", "load_return_if_eof", "load_close_and_pop_if_eof", "eval_string", "eval_string_done", "quit", "catch", "dynamic_wind", "for_each", "map", "define_constant0", "define_constant1", "do", "do_end0", "do_end1", "do_step0", "do_step1", "do_step2", "do_init", "define_star", "lambda_star", "error_quit", "unwind_input", "unwind_output", "trace_return", "error_hook_quit"};
+    {"read_internal", "eval", "eval_args0", "eval_args1", "apply", "eval_macro", "lambda", "quote", "define0", "define1", "begin", "if0", "if1", "set0", "set1", "set2", "let0", "let1", "let2", "let_star0", "let_star1", "letrec0", "letrec1", "letrec2", "cond0", "cond1", "make_promise", "and0", "and1", "or0", "or1", "defmacro", "macro0", "macro1", "define_macro", "define_expansion", "case0", "case1", "case2", "read_list", "read_dot", "read_quote", "read_quasiquote", "read_quasiquote_vector", "read_unquote", "read_unquote_splicing", "read_vector", "force", "read_return_expression", "read_pand_return_expression", "load_return_if_eof", "load_close_and_pop_if_eof", "eval_string", "eval_string_done", "quit", "catch", "dynamic_wind", "for_each", "map", "define_constant0", "define_constant1", "do", "do_end0", "do_end1", "do_step0", "do_step1", "do_step2", "do_init", "define_star", "lambda_star", "error_quit", "unwind_input", "unwind_output", "trace_return", "error_hook_quit"};
 
   int i;
   for (i = sc->stack_top - 4; i >= 0; i -= 4)
@@ -13325,6 +13328,29 @@ static void back_up_stack(s7_scheme *sc)
 }
 
 
+static void add_expander(s7_scheme *sc, s7_pointer sym)
+{
+  sc->expanders[sc->expanders_top++] = sym;
+  if (sc->expanders_top >= sc->expanders_size)
+    {
+      sc->expanders_size *= 2;
+      sc->expanders = (s7_pointer *)realloc(sc->expanders, sc->expanders_size * sizeof(s7_pointer));
+    }
+}
+
+
+static bool is_expander(s7_scheme *sc, s7_pointer sym)
+{
+  int i;
+  for (i = 0; i < sc->expanders_top; i++)
+    if (sym == sc->expanders[i])
+      return(true);
+  return(false);
+}
+
+
+
+
 /* ---------------- reader funcs for eval ---------------- */
 
 static token_t token(s7_scheme *sc, s7_pointer pt)
@@ -15108,7 +15134,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        *    
        *    end up with name as sc->x, args and body as sc->z going to OP_MACRO1, ((gensym) (lambda (args) body)) going to eval
        */
-      sc->y = s7_gensym(sc, "defmac");
+
       sc->x = car(sc->code);
       if (!s7_is_symbol(sc->x))
 	return(eval_error(sc, "defmacro: ~S is not a symbol?", sc->x)); /* (defmacro 3 (a) #f) */
@@ -15126,6 +15152,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        *   always precompute quasiquotes, but this change takes care of 99% of the cases.
        */
 
+      sc->y = s7_gensym(sc, "defmac");
       if ((is_pair(cdr(sc->code))) &&
 	  (is_pair(cddr(sc->code))) &&
 	  (is_pair(caddr(sc->code))) &&
@@ -15166,10 +15193,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       push_stack(sc, OP_MACRO1, sc->NIL, sc->x);   /* sc->x (the name symbol) will be sc->code when we pop to OP_MACRO1 */
       goto EVAL;
       
-      
-    case OP_DEFINE_MACRO:
 
-      sc->y = s7_gensym(sc, "defmac");
+    case OP_DEFINE_EXPANSION:
+      /* read-time macros, suggested by Rick */
+      add_expander(sc, caar(sc->code));             /* caar(sc->code) is the macro name */
+      /* drop into define-macro */
+
+
+    case OP_DEFINE_MACRO:
       if (!is_pair(car(sc->code)))
 	return(s7_wrong_type_arg_error(sc, "define-macro", 1, car(sc->code), "a list (name ...)"));
 
@@ -15185,6 +15216,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        *   so in this case we want cadr, not caddr of defmacro
        */
 
+      sc->y = s7_gensym(sc, "defmac");
       if ((is_pair(cdr(sc->code))) &&
 	  (is_pair(cadr(sc->code))) &&
 	  (s7_is_symbol(caadr(sc->code))) &&
@@ -15368,7 +15400,30 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	     *    '(hi 3) or (macroexpand (hi 3) or (quote (hi 3))
 	     *
 	     * and those are only the problems I noticed!
+	     *
+	     * The hardest of these problems involve shadowing, so Rick asked for "define-expansion"
+	     *   which is just like define-macro, but the programmer guarantees that the macro
+	     *   name will not be shadowed.  So I'll also assume that the other funny cases are
+	     *   being avoided -- see what happens!
+	     *
+	     *   (define-expansion (hi a) `(+ ,a 1))
+	     *   (define (ho b) (+ 1 (hi b)))
+	     *   (procedure-source ho) -> (lambda (b) (+ 1 (+ b 1)))
 	     */
+
+	    if ((sc->value != sc->NIL) &&
+		(is_expander(sc, car(sc->value))) &&
+		(sc->stack_top >= 4) &&
+		((int)integer(number(vector_element(sc->stack, sc->stack_top - 1))) != OP_READ_QUOTE) && /* '(hi 1) for example */
+		(car(vector_element(sc->stack, sc->stack_top - 2)) != sc->QUOTE) &&                      /* (quote (hi 1)) */
+		(car(vector_element(sc->stack, sc->stack_top - 2)) != sc->MACROEXPAND))                  /* (macroexpand (hi 1)) */
+	      {
+		s7_pointer x;
+		x = symbol_value(s7_find_symbol_in_environment(sc, sc->envir, car(sc->value), true));
+		sc->args = make_list_1(sc, sc->value); 
+		sc->code = x;
+		goto APPLY;
+	      }
 	  }
 	  break;
 
@@ -20462,30 +20517,36 @@ s7_scheme *s7_init(void)
   sc->real_zero->flag = T_OBJECT | T_IMMUTABLE | T_ATOM | T_NUMBER | T_SIMPLE | T_DONT_COPY;
   number_type(sc->real_zero) = NUM_REAL;
   real(number(sc->real_zero)) = (s7_Double)0.0;
+
+  #define INITIAL_EXPANDER_LIST_SIZE 8
+  sc->expanders = (s7_pointer *)malloc(INITIAL_EXPANDER_LIST_SIZE * sizeof(s7_pointer));
+  sc->expanders_top = 0;
+  sc->expanders_size = INITIAL_EXPANDER_LIST_SIZE;
   
   /* initialization of global pointers to special symbols */
-  assign_syntax(sc, "lambda",          OP_LAMBDA);
-  assign_syntax(sc, "lambda*",         OP_LAMBDA_STAR);
-  assign_syntax(sc, "quote",           OP_QUOTE);
-  assign_syntax(sc, "define",          OP_DEFINE0);
-  assign_syntax(sc, "define*",         OP_DEFINE_STAR);
-  assign_syntax(sc, "def-optkey-fun",  OP_DEFINE_STAR); /* for CLM */
-  assign_syntax(sc, "define-constant", OP_DEFINE_CONSTANT0);
-  assign_syntax(sc, "if",              OP_IF0);
-  assign_syntax(sc, "begin",           OP_BEGIN);
-  assign_syntax(sc, "set!",            OP_SET0);
-  assign_syntax(sc, "let",             OP_LET0);
-  assign_syntax(sc, "let*",            OP_LET_STAR0);
-  assign_syntax(sc, "letrec",          OP_LETREC0);
-  assign_syntax(sc, "cond",            OP_COND0);
-  assign_syntax(sc, "make-promise",    OP_MAKE_PROMISE);
-  assign_syntax(sc, "and",             OP_AND0);
-  assign_syntax(sc, "or",              OP_OR0);
-  assign_syntax(sc, "macro",           OP_MACRO0);
-  assign_syntax(sc, "case",            OP_CASE0);
-  assign_syntax(sc, "defmacro",        OP_DEFMACRO);
-  assign_syntax(sc, "define-macro",    OP_DEFINE_MACRO);
-  assign_syntax(sc, "do",              OP_DO);
+  assign_syntax(sc, "lambda",            OP_LAMBDA);
+  assign_syntax(sc, "lambda*",           OP_LAMBDA_STAR);
+  assign_syntax(sc, "quote",             OP_QUOTE);
+  assign_syntax(sc, "define",            OP_DEFINE0);
+  assign_syntax(sc, "define*",           OP_DEFINE_STAR);
+  assign_syntax(sc, "def-optkey-fun",    OP_DEFINE_STAR); /* for CLM */
+  assign_syntax(sc, "define-constant",   OP_DEFINE_CONSTANT0);
+  assign_syntax(sc, "if",                OP_IF0);
+  assign_syntax(sc, "begin",             OP_BEGIN);
+  assign_syntax(sc, "set!",              OP_SET0);
+  assign_syntax(sc, "let",               OP_LET0);
+  assign_syntax(sc, "let*",              OP_LET_STAR0);
+  assign_syntax(sc, "letrec",            OP_LETREC0);
+  assign_syntax(sc, "cond",              OP_COND0);
+  assign_syntax(sc, "make-promise",      OP_MAKE_PROMISE);
+  assign_syntax(sc, "and",               OP_AND0);
+  assign_syntax(sc, "or",                OP_OR0);
+  assign_syntax(sc, "macro",             OP_MACRO0);
+  assign_syntax(sc, "case",              OP_CASE0);
+  assign_syntax(sc, "defmacro",          OP_DEFMACRO);
+  assign_syntax(sc, "define-macro",      OP_DEFINE_MACRO);
+  assign_syntax(sc, "define-expansion",  OP_DEFINE_EXPANSION);
+  assign_syntax(sc, "do",                OP_DO);
   
   sc->LAMBDA = s7_make_symbol(sc, "lambda");
   typeflag(sc->LAMBDA) |= T_DONT_COPY; 
@@ -20504,6 +20565,9 @@ s7_scheme *s7_init(void)
   
   sc->UNQUOTE_SPLICING = s7_make_symbol(sc, "unquote-splicing");
   typeflag(sc->UNQUOTE_SPLICING) |= T_DONT_COPY; 
+  
+  sc->MACROEXPAND = s7_make_symbol(sc, "macroexpand");
+  typeflag(sc->MACROEXPAND) |= T_DONT_COPY; 
   
   sc->FEED_TO = s7_make_symbol(sc, "=>");
   typeflag(sc->FEED_TO) |= T_DONT_COPY; 
@@ -20985,8 +21049,6 @@ s7_scheme *s7_init(void)
 
   /* macroexpand */
   s7_eval_c_string(sc, "(define-macro (macroexpand mac) `(,(procedure-source (car mac)) ',mac))");
-  /* s7_eval_c_string(sc, "(define-macro (macroexpand mac) `(,(procedure-source (car mac)) (append (list ',(car mac)) ',(cdr mac))))"); */
-
 
   /* stacktrace -- move this into C eventually */
   s7_eval_c_string(sc, "                                                                       \n\
@@ -21047,9 +21109,9 @@ s7_scheme *s7_init(void)
 /* TODO: error reports should show a lot more info -- the entire call, a stacktrace, file and line number */
 /* TODO: example of s7 as emacs subjob */
 
-/* TODO: are macros expanded on every function call? */
 /* TODO: cmn-glyphs.scm from musglyphs.scm -- there are setf's that probably don't work 
  *  (define-macro (setf a b) `(set! ,a ,b)) ??
  */
 
 /* TODO: define! and maybe env-let */
+/* PERHAPS: push|pop-environment beneath define! (push-environment e alist) */
