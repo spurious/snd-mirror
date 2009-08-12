@@ -139,6 +139,8 @@
     (set! defvar define)
     (defmacro defvar (name value) `(define ,name ,value)))
 
+(define-macro (setf a b) `(set! ,a ,b))
+
 (defmacro defun (name ignored-args . body)
   ;; in cmn-glyphs every defun has two args, the "score" and an optional "style"
   `(define ,name (lambda args 

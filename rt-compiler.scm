@@ -3548,7 +3548,7 @@ and run simple lisp[4] functions.
 
   (rt-ec-private-function <void-*> rt_alloc_zero (lambda (,rt-globalvardecl (<int> size))
 						   (let* ((ret <void-*> (rt_alloc_atomic rt_globals size)))
-						     (memset ret 0 size)
+						     ;;(memset ret 0 size)
 						     (return ret))))
   
   )
@@ -7626,7 +7626,6 @@ old syntax: (not very nice)
                                               (floats <float-*> (cast <float-*> (+ ret 1))))
                                          (set! ret->length length)
                                          (set! ret->data floats)
-                                         (memset floats 0 (* (sizeof <float>) length))
                                          (return ret))))
 
 

@@ -11666,9 +11666,6 @@ static s7_pointer g_fill(s7_scheme *sc, s7_pointer args)
 	        ((,encap))  ; restore saved vars
                 (close-encapsulator ,encap))))))
  
-    TODO: mus_copy for all gens? also snd/clm-local direct sets (doc/test/changelogs)
-    TODO: what about stuff like (string-set! (vector-ref ...))? copy vector/list upon ref?  or keep chain of refs and copy to that depth
-    TODO: set procs: frame-set! mixer-set!
     TODO: run for generics, also run set! of globals?
 */
 
@@ -11829,6 +11826,7 @@ static s7_pointer encapsulator_apply(s7_scheme *sc, s7_pointer obj, s7_pointer a
 static void encapsulate(s7_scheme *sc, s7_pointer sym)
 {
   s7_pointer x;
+
   for (x = sc->encapsulators; is_pair(x); x = cdr(x))
     {
       encap_t *e;
@@ -14117,8 +14115,24 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 #if WITH_ENCAPSULATION
 	  if ((is_encapsulating(sc)) &&
 	      (cdr(sc->code) != sc->NIL) &&
-	      (is_setter(sc->value)))
+	      (is_setter(sc->value)) &&
+	      (s7_is_symbol(cadr(sc->code))))
 	    encapsulate(sc, cadr(sc->code));
+	  
+	  /* we currently ignore any case that involves an accessor such as (string-set! (vector-ref ...)).
+	   *   In cases that don't involve set-applicable objects, we can say (for example) that the vector itself is not
+	   *   being changed, and it is impossible to handle multi-level cases because we have to save both the values
+	   *   and the accessor-paths to those values: 
+	   *
+	   *     (let* ((s (make-string 8 #\x)) (v (vector s))) (encapsulate (string-set! (vector-ref v 0) 1 #\a)))
+	   *
+	   *   here both the vector string value, and its reference back to the string variable need to be saved,
+	   *   else a later string-set! is ambiguous (if a new string holds the original string value, "s" won't change
+	   *   in the post-encapsulated new string-set! case, but would have changed without the encapsulation).  The set-applicable 
+	   *   object case ought to be do-able, but then the check above becomes very messy -- we have to make sure 
+	   *   it's a single level reference, eval_symbol caadr(?), save, but then restore becomes problematic.
+	   * This has become trickier than I expected.
+	   */
 #endif
 	  sc->code = cdr(sc->code);
 
@@ -20525,11 +20539,11 @@ s7_scheme *s7_init(void)
   
   /* initialization of global pointers to special symbols */
   assign_syntax(sc, "lambda",            OP_LAMBDA);
-  assign_syntax(sc, "lambda*",           OP_LAMBDA_STAR);
+  assign_syntax(sc, "lambda*",           OP_LAMBDA_STAR);      /* part of define* */
   assign_syntax(sc, "quote",             OP_QUOTE);
   assign_syntax(sc, "define",            OP_DEFINE0);
   assign_syntax(sc, "define*",           OP_DEFINE_STAR);
-  assign_syntax(sc, "def-optkey-fun",    OP_DEFINE_STAR); /* for CLM */
+  assign_syntax(sc, "def-optkey-fun",    OP_DEFINE_STAR);      /* for CLM */
   assign_syntax(sc, "define-constant",   OP_DEFINE_CONSTANT0);
   assign_syntax(sc, "if",                OP_IF0);
   assign_syntax(sc, "begin",             OP_BEGIN);
@@ -20538,14 +20552,14 @@ s7_scheme *s7_init(void)
   assign_syntax(sc, "let*",              OP_LET_STAR0);
   assign_syntax(sc, "letrec",            OP_LETREC0);
   assign_syntax(sc, "cond",              OP_COND0);
-  assign_syntax(sc, "make-promise",      OP_MAKE_PROMISE);
+  assign_syntax(sc, "make-promise",      OP_MAKE_PROMISE);     /* "delay" in standard scheme */
   assign_syntax(sc, "and",               OP_AND0);
   assign_syntax(sc, "or",                OP_OR0);
-  assign_syntax(sc, "macro",             OP_MACRO0);
   assign_syntax(sc, "case",              OP_CASE0);
-  assign_syntax(sc, "defmacro",          OP_DEFMACRO);
-  assign_syntax(sc, "define-macro",      OP_DEFINE_MACRO);
-  assign_syntax(sc, "define-expansion",  OP_DEFINE_EXPANSION);
+  assign_syntax(sc, "macro",             OP_MACRO0);           /* r4rs macro syntax, I think */
+  assign_syntax(sc, "defmacro",          OP_DEFMACRO);         /* CL-style macro syntax */
+  assign_syntax(sc, "define-macro",      OP_DEFINE_MACRO);     /* Scheme-style macro syntax */
+  assign_syntax(sc, "define-expansion",  OP_DEFINE_EXPANSION); /* read-time (immediate) macro expansion */
   assign_syntax(sc, "do",                OP_DO);
   
   sc->LAMBDA = s7_make_symbol(sc, "lambda");
@@ -21108,10 +21122,6 @@ s7_scheme *s7_init(void)
 /* stacktrace using arbitrary env? */
 /* TODO: error reports should show a lot more info -- the entire call, a stacktrace, file and line number */
 /* TODO: example of s7 as emacs subjob */
-
-/* TODO: cmn-glyphs.scm from musglyphs.scm -- there are setf's that probably don't work 
- *  (define-macro (setf a b) `(set! ,a ,b)) ??
- */
 
 /* TODO: define! and maybe env-let */
 /* PERHAPS: push|pop-environment beneath define! (push-environment e alist) */

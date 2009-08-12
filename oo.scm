@@ -109,16 +109,10 @@
 ;; Snd has its own filter function (a clm function) overriding the guile filter function. This affects
 ;; remove, because remove is based on filter. Redefine remove:
 (define (remove pred list)
-  (if (null? list)
-      '()
-      (if (pred (car list))
-	  (remove pred (cdr list))
-	  (cons (car list) (remove pred (cdr list))))))
+  (%filter (lambda (e) (not (pred e)))
+	   list))
 
-;; Snd has its own filter function (a clm function) overriding the guile filter function.
-(define (filter-org pred list)
-  (remove (lambda (e) (not (pred e)))
-	  list))
+(define filter-org %filter)
 
 (define <-> string-append)
 (define <_> symbol-append)
@@ -380,7 +374,6 @@
                  (cdr optkeys*)
                  (cdr keyargs*)))))
 
-  ;;(c-display "keyargs" keyargs)
   ;;(c-display "res" res)
 
   ;; Parse key args and build rest.

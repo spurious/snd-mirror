@@ -239,6 +239,32 @@
 (define stalin-macros (make-hash-table 219))
 
 (define (define-stalin-macro-do def body)
+  (define keys (let loop ((def def)
+			  (keys-found #f))
+		 (cond ((null? def)
+			'())
+		       ((not (pair? def))
+			'())
+		       ((keyword? (car def))
+			(loop (cdr def)
+			      #t))
+		       ((not keys-found)
+			(loop (cdr def)
+			      #f))
+		       ((pair? (car def))
+			(cons (caar def)
+			      (loop (cdr def)
+				    #t)))
+		       (else
+			(cons (car def)
+			      (loop (cdr def)
+				    #t))))))
+  (when (memq 'where keys)
+    (c-display "Error in define-stalin-macro. :where is a reserved keyword")
+    (throw 'compilation-error))
+  (when (memq 'when keys)
+    (c-display "Error in define-stalin-macro. :when is a reserved keyword")
+    (throw 'compilation-error))
   (if (pair? def)
       (hashq-set! stalin-macros (car def) (primitive-eval `(labamba-onymous ,(symbol->string (car def))
                                                                             ,(cdr def)
@@ -304,6 +330,49 @@
 			       (not (memq sym (schemecodeparser-get-varlist))))
 			  (stalin-macroexpand `(=> coroutine:_current-coroutine ,(symbol->keyword sym)) :include-make-coroutine include-make-coroutine)
 			  sym))
+
+		    :use-customsymbolhandler?
+		    (lambda (expr)
+		      (or (memv :where expr)
+			  (memv :when expr)))
+		    :customsymbolhandler
+		    (lambda (expr)
+		      (cond ((eq? 'lambda (car expr))
+			     (stalin-macroexpand `(lambda ,(cadr expr)
+						    (begin
+						      ,@(cddr expr)))
+						 :include-make-coroutine include-make-coroutine))
+			    ((eq? 'define (car expr))
+			     (stalin-macroexpand `(define ,(cadr expr)
+						    (begin
+						      ,@(cddr expr)))
+						 :include-make-coroutine include-make-coroutine))
+			    (else
+			     (let ((key (let ((where (memv :where expr))
+					      (when (memv :when expr)))
+					  (cond ((and where when
+						      (> (length where) (length when)))
+						 :where)
+						((and where when)
+						 :when)
+						(where
+						 :where)
+						(else
+						 :when)))))
+				   
+			       (call-with-values (lambda () (break (lambda (t) (eqv? key t))
+								   expr))
+				 (lambda (before after)
+				   (if (eqv? key :where)
+				       (stalin-macroexpand `(let ((,(cadr after) ,(caddr after)))
+							      (,@before
+							       ,@(cdddr after)))
+							   :include-make-coroutine include-make-coroutine)
+				       (stalin-macroexpand `(if ,(cadr after)
+								(,@before)
+								,@(cddr after))
+							   :include-make-coroutine include-make-coroutine))))))))
+		      
 		    :elsefunc (lambda (expr)
                                 ;;(when (and (eq? 'set! (car expr))
                                 ;;           (not (pair? (cadr expr)))
@@ -338,6 +407,11 @@
                                              `(,(car expr) ,@(map stalin-macroexpand (cdr expr)))
                                              (stalin-macroexpand topexpand))))))))
 
+#!
+(stalin-macroexpand '(+ a b
+			:where c 9
+			:where d 10))
+;; Never used.
 (define (stalin-macroexpand-make-coroutine code)
   (c-display "stalin-macroexpand-make-coroutine entry")
   (if #f
@@ -353,6 +427,7 @@
                                                                                    (symbol->keyword (cadr entry))
                                                                                    entry))
                                                                              (cdr expr))))))))))
+!#
 
 #!
 (stalin-macroexpand '(quasiquote ((unqoute a) 0)))
@@ -492,6 +567,10 @@
 
 (define-stalin-ec <void*> get_NULL_ (lambda ()
 				      (return NULL)))
+(define-stalin-ec <int> is_NULL_ (lambda ((<void*> arg))
+				   (return arg==NULL)))
+(define-stalin (is_NULL arg)
+  (= 1 (is_NULL_ arg)))
 
 (define-stalin-ec <void> lowlevel_remove_me (lambda ()
                                               (myexit)))
@@ -553,7 +632,43 @@
   (lambda ((<unsigned-long> address))
     (return (cast <void*> address))))
 
+#!
+(compose (+ 2) (+ 3))
+->
+(lambda (a) (+ 2 (+ 3 a)))
+!#
 
+(define-stalin-macro (compose . args)
+  (define lambda-arg (rt-gensym))
+  `(lambda (,lambda-arg)
+     ,(let loop ((args args))
+	(cond ((null? args)
+	       lambda-arg)
+	      ((pair? (car args))
+	       `(,@(car args) ,(loop (cdr args))))
+	      (else
+	       `(,(car args) ,(loop (cdr args))))))))
+
+
+#!
+(pretty-print (stalin-macroexpand '(compose (+ 2) (+ 3))))
+(pretty-print (stalin-macroexpand '(compose + -)))
+!#
+
+(define-stalin-macro (send a :rest through :allow-other-keys)
+  (let loop ((args (cdr through)))
+    (cond ((null? args)
+	   a)
+	  ((pair? (car args))
+	   `(,@(car args) ,(loop (cdr args))))
+	  (else
+	   `(,(car args) ,(loop (cdr args)))))))
+
+#!
+(pretty-print (stalin-macroexpand '(out a :where a 5)))
+(pretty-print (stalin-macroexpand '(send 9 :through add subtract)))
+(pretty-print (stalin-macroexpand '(out a :where a (send 9 :through +))))
+!#
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; structures (providing same structure syntax for rt-stalin as guile and snd-rt)
@@ -634,8 +749,8 @@
         ))))
 
 (define-macro (define-stalin-struct_internal name . das-slots)
-  (define name-name (rt-gensym))
-  (define val-name (rt-gensym))
+  (define name-name (rt-gensym2))
+  (define val-name (rt-gensym2))
   (define slots '())
   
   (for-each (lambda (slot)
@@ -678,8 +793,8 @@
        )))
 
 (define-macro (define-stalin-struct name . das-slots)
-  (define name-name (rt-gensym))
-  (define val-name (rt-gensym))
+  (define name-name (rt-gensym2))
+  (define val-name (rt-gensym2))
   (define make-name (<_> 'make- name))
   (define internal-make-name (<_> 'make- name '-internal))
   (define slots '())
@@ -835,6 +950,39 @@ old bus.
   (define do-in #t)
   (define vol 0.0)
   (define time 0)
+  (lambda (command)
+    (case command
+      ((next)
+       (inc! time 1)
+       (cond (do-out
+	      (* vol (env out)))
+	     (do-in
+	      (cond ((= time (+ a d))
+		     (set! do-in #f)
+		     (set! vol s))
+		    (else
+		     (set! vol (env in))))
+	      vol)
+	     (else
+	      vol)))
+      ((is-finished)
+       (and do-out
+	    (>= time r)))
+      ((stop)
+       (set! time 0)
+       (set! do-out #t)))))
+
+#!
+
+;; old one
+(define-stalin (make-adsr-do a d s r)
+  (define in (rt_make_env (vct 0 0 a 1 (+ a d) s) (+ a d))) ;; Small optimization.
+  ;;(define in (make-env `((0 0)(,a 1)(,(+ a d) ,s)) :dur (+ a d)))
+  (define out (make-env '((0 1)(1 0)) :dur r))
+  (define do-out #f)
+  (define do-in #t)
+  (define vol 0.0)
+  (define time 0)
   (lambda cut
     (inc! time 1)
     (cond ((not (null? cut))
@@ -853,37 +1001,6 @@ old bus.
            vol)
           (else
            vol))))
-
-#!
-(define-stalin (make-adsr-do a d s r)
-  (define in (rt_make_env (vct 0 0 a 1 (+ a d) s) (+ a d))) ;; Small optimization.
-  ;;(define in (make-env `((0 0)(,a 1)(,(+ a d) ,s)) :dur (+ a d)))
-  (define out (make-env '((0 1)(1 0)) :dur r))
-  (define do-out #f)
-  (define do-in #t)
-  (define vol 0.0)
-  (define time 0)
-  (lambda (command)
-    (case command
-      ('run (lambda ()
-              (inc! time 1)
-              (cond (do-out
-                     (* vol (env out)))
-                    (do-in
-                     (cond ((= time (+ a d))
-                            (set! do-in #f)
-                            (set! vol s))
-                           (else
-                            (set! vol (env in))))
-                     vol)
-                    (else
-                     vol))))
-      ('stopped? (lambda ()
-                   (and do-out
-                        (>= time r))))
-      ('stop (lambda ()
-               (set! time 0)
-               (set! do-out #t))))))
 
 (define-stalin-struct adsr-data
   :in (make-env)
@@ -1127,7 +1244,7 @@ old bus.
 		   (names (map car typedefaults))
 		   (types (map cadr typedefaults))
 		   (defaults (map caddr typedefaults))
-                   (argnames (map (lambda x (rt-gensym)) (iota (length args))))
+                   (argnames (map (lambda x (rt-gensym2)) (iota (length args))))
                    (fixed-args-list (map (lambda (default arg)
                                            (let ((argname #f))
 					     (if (eq? name 'make-comb)
@@ -1210,7 +1327,7 @@ old bus.
             (let* ((name (car clm-gen)) ;; oscil
 		   (c-name (string->symbol (list->string (map (lambda (c) (if (char=? c #\-) #\_ c)) (string->list (symbol->string name)))))) ;; oscil / all_pass
                    (args (cadr clm-gen))
-                   (argnames (map (lambda x (rt-gensym)) (iota (length args))))
+                   (argnames (map (lambda x (rt-gensym2)) (iota (length args))))
                    )
               ;;(c-display (<_> name '_))
               (define-stalin-ec-do '<float> (<_> c-name '_)
@@ -1240,7 +1357,7 @@ old bus.
             (let* ((name (car clm-gen)) ;; oscil / all-pass
 		   (c-name (string->symbol (list->string (map (lambda (c) (if (char=? c #\-) #\_ c)) (string->list (symbol->string name)))))) ;; oscil / all_pass
                    (args (cadr clm-gen))                   
-                   (argnames (map (lambda x (rt-gensym)) (iota (length args)))))
+                   (argnames (map (lambda x (rt-gensym2)) (iota (length args)))))
               (supereval
                (lambda (out)
                  (out "(define-stalin-macro (" name "_internal generator ")
@@ -1265,7 +1382,7 @@ old bus.
 		 (out "          (not (keyword? (car rest))))")
 		 (out "      `(" name "_internal ,@rest)")
 		 (out "      (let ((args (stalin-internal-split-args rest)))")
-		 (out "        `(" name "_internal (co-var (make-" name " ,@(cadr args))) ,@(car args)))))")))))
+		 (out "        `(" name "_internal (co-var ,(rt-gensym) (make-" name " ,@(cadr args)) (get_NULL_) is_NULL) ,@(car args)))))")))))
 	  
           rt-clm-generators)
 
@@ -1310,7 +1427,6 @@ old bus.
            (floats <float-*> (cast <float-*> (+ ret 1))))
       (set! ret->length length)
       (set! ret->data floats)
-      (memset floats 0 (* (sizeof <float>) length))
       (return ret))))
 
 (define-stalin (make-vct len)
@@ -2152,6 +2268,12 @@ old bus.
 
 (define-stalin _all-buses '())
 
+;; clear-bus can be avoided by replacing the old bus with a new and freshly allocated bus. But since the buses are stored
+;; in various places, the bus struct needs to be transformed into a pointer to a pointer, which
+;; is not very nice since it requires two allocations (one of them non-atomic), and could degrade performance in other ways too.
+;; Furthermore, the increased number of garbage collections this could trigger could hurt more than the increased
+;; performance it would give to the audio thread.
+;; On the other hand, it might be necessary to change the _all-buses thing anyway.
 (define-stalin-ec <void> clear_bus_
   (lambda ((<void*> bus))
     (memset bus 0 (* (sizeof <float>) ,*rt-block-size*))))
@@ -2161,7 +2283,6 @@ old bus.
 (define-stalin-ec <void*> make_bus_
   (lambda ()
     (<void*> bus (tar_alloc_atomic heap (* (sizeof <float>) ,*rt-block-size*)))
-    (clear_bus_ bus)
     (return bus)))
 
 (define-stalin (make-bus)
@@ -2595,7 +2716,8 @@ old bus.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
-(define-stalin-macro (co-var arg1 :optkey arg2)
+(define-stalin-macro (co-var arg1 :optkey arg2 default-false check-if-default-is-false-func)
+  (define ret (rt-gensym))
   (define name #f)
   (define val #f)
   (cond (arg2
@@ -2606,8 +2728,18 @@ old bus.
 	 (set! val arg1)))
   (c-display arg1 arg2)
   (c-display name val)
-  (add-coroutine-slot (symbol->keyword name) val)
-  name)
+  (cond (default-false
+	  (add-coroutine-slot (symbol->keyword name) default-false)
+	  `(begin
+	     (cond ((,check-if-default-is-false-func ,name)
+		    (let ((,ret ,val))
+		      (set! ,name ,ret)
+		      ,ret))
+		   (else
+		    ,name))))
+	(else
+	 (add-coroutine-slot (symbol->keyword name) val)
+	 name)))
 
 #!
 !#
@@ -3971,31 +4103,30 @@ had to be put into macroexpand instead.
                        expanded)
                 ret))))))
   
-  (define (find-dependencies trace code)
-    (define funcs (find-stalin-funcs code))
-    ;;(c-display "find" code)
-    ;;(c-display "funcs" funcs)
-    (if (null? funcs)
-        '(#f)
-        (flatten (map (lambda (func)
-                        (if (memq func trace)
-                            '(#f) ;; cyclic dependency
-                            (list (find-dependencies (cons func trace)
-                                                     (get-expanded-code func))
-                                  func)))
-                      funcs))))
+  (define (find-dependencies funcs dependencies)
+    (cond ((null? funcs)
+	   dependencies)
+	  ((not (memq (car funcs) dependencies))
+	   (find-dependencies (append (find-stalin-funcs (get-expanded-code (car funcs)))
+				      (cdr funcs))
+			      (cons (car funcs)
+				    dependencies)))
+	  (else
+	   (find-dependencies (cdr funcs)
+			      dependencies))))
+		      
 
   (reset-coroutine-struct!) ;; coroutine-suff!
-  
-  (let* ((expanded (stalin-super-generate code))
+
+  (let* ((expanded (stalin-super-generate code ));(append (map get-stalin-func (find-dependencies (find-stalin-funcs code) '()))
+						  ;code)))
          (no-use (begin  ;; coroutine-suff!
 		   (redefine-coroutine-struct!)
                    (set! expanded (stalin-macroexpand expanded :include-make-coroutine #t))
                    ;;(pretty-print expanded)
                    ))
-         (dependencies
-          (delete-duplicates (delete #f (find-dependencies '() expanded) eq?)
-                             eq?)))
+         (dependencies (find-dependencies (find-stalin-funcs expanded) '())))
+
     (pretty-print dependencies)
     (c-display "NOW IM HERE")
     (let ((ret (append (map get-expanded-code dependencies)
@@ -4013,11 +4144,10 @@ had to be put into macroexpand instead.
 !#
   
 
-(define (generate-stalin-code code)
+(define (generate-stalin-code expanded-code)
   (define lotsofcode (stalin-uniqify-variables
 		       (stalin-fix-internal-defines
-			(generate-stalin-code0
-			 code))))
+			expanded-code)))
   (stalin-add-health-checks
    (stalin-remove-dead-code-recursively ;; Second call. stalin-remove-call/cc might have added dead code
     (stalin-remove-call/cc-recursively
@@ -4092,11 +4222,23 @@ had to be put into macroexpand instead.
     (fix-stalin-c-source inname outname)
     (c-display "inname" inname)
     (cont basename
-          outname)))
+          outname
+	  )))
 
 #!
 (get-stalin-c-file (schemecode->file (generate-stalin-code0 '((display (+ 2 3))(newline)))))
 !#
+
+(define *cached-stalin-c-files* (make-hash-table 997))
+
+(define (add-cached-stalin-c-file expanded-code basename c-file ec-funcs)
+  (hash-set! *cached-stalin-c-files* expanded-code (list basename c-file ec-funcs)))
+
+(define (get-cached-stalin-c-file expanded-code cont)
+  (define cached (hash-ref *cached-stalin-c-files* expanded-code))
+  (if cached
+      (apply cont cached)
+      #f))
 
 #!
 (define (link-stalin-file c-file)
@@ -4143,11 +4285,11 @@ had to be put into macroexpand instead.
   <void*> freefunc)
 
 
-(define (link-stalin-file basename c-file program)
+(define (link-stalin-file basename c-file ec-funcs)
   (c-display "c-file:" c-file)
   (apply eval-c-non-macro
          `(,(<-> "-I" snd-header-files-path " -fno-strict-aliasing -I/home/kjetil/site/include" " -lpcl")
-           #f
+           #f ;c-file
 
            "#include <jack/jack.h>"
            "#include <jack/ringbuffer.h>"
@@ -4277,7 +4419,7 @@ had to be put into macroexpand instead.
                                               (set! gc_uncollectable_mem ret)
                                               (return ret+1)))
            
-           ,@(get-stalin-ec-funcs program)
+           ,@ec-funcs
            
            (<void> health_exit (lambda ()
                                  (rt_debug (string ,(<-> "Scheme file: \\\"" basename ".scm\\\"")))
@@ -4447,7 +4589,7 @@ had to be put into macroexpand instead.
                                          (fprintf stderr (string "Hepp, freeing stalin\\n"))
                                          (co_delete dsp_coroutine)
 					 (scm_gc_unregister_collectable_memory heap ,(+ (* *tar-nonatomic-heap-size* 2) (* *tar-max-mem-size* 4)) (string "rollendurch/stalin heap"))
-					 (tar_delete_heap heap true) ;; tar_init_block is always called
+					 ;;(tar_delete_heap heap true) ;; tar_init_block is always called
                                          ;;(if (> rt_engine->num_procfuncs 0)
                                          ;;    (tar_delete_heap heap true)
                                          ;;    (tar_delete_heap heap false))
@@ -4484,30 +4626,47 @@ had to be put into macroexpand instead.
 (define last-stalin #f)
 
 (define (<rt-stalin-do> code)
+
   (set! last-stalin code)
+  (rt-gensym-reset)
+
   (catch 'compilation-error
          (lambda ()
            (fix-defines
-            (define generated (generate-stalin-code
-                               `( (spawn
-                                    ,@code)
-                                  (insert-coroutine-in-queue! _sound-coroutine
-                                                              _next-scheduled-time
-                                                              3) ;; block priority. (lowest)
-                                  ((=> coroutine:_current-coroutine :continuation)))))
-            
-            ;;(c-display "generated" generated)
-            ;;(check-stalin-syntax generated)
-            (get-stalin-c-file (schemecode->file generated)
-                               (lambda (basename c-file)
-                                 (define funcs (link-stalin-file basename c-file generated))
-                                 (if funcs
-                                     (let ()
-                                       (define realtime (<realtime> (car funcs) (cadr funcs) '()))
-                                       (-> realtime play)
-                                       realtime)
-                                     #f)
-                                 ))))
+
+	    (define expanded-code 
+	      (generate-stalin-code0
+	       `( (spawn
+		    ,@code)
+		  (insert-coroutine-in-queue! _sound-coroutine
+					      _next-scheduled-time
+					      3) ;; block priority. (lowest)
+		  ((=> coroutine:_current-coroutine :continuation)))))
+
+	    (call/cc
+	     (lambda (return)
+
+	       (define (link-and-run basename c-file ec-funcs)
+		 (define funcs (link-stalin-file basename c-file ec-funcs))
+		 (return (if funcs
+			     (let ()
+			       (define realtime (<realtime> (car funcs) (cadr funcs) '()))
+			       (-> realtime play)
+			       realtime)
+			     #f)))
+	       
+	       (get-cached-stalin-c-file expanded-code link-and-run)
+
+	       (let ()
+		 (define generated (generate-stalin-code expanded-code))
+		 ;;(c-display "generated" generated)
+		 ;;(check-stalin-syntax generated)
+		 (get-stalin-c-file (schemecode->file generated)
+				    (lambda (basename c-file)
+				      (define ec-funcs (get-stalin-ec-funcs generated))
+				      (add-cached-stalin-c-file expanded-code basename c-file ec-funcs)
+				      (link-and-run basename c-file ec-funcs))))))))
+
          (lambda x
            #f)))
 

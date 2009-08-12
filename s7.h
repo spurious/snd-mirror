@@ -427,7 +427,7 @@ s7_pointer s7_current_environment(s7_scheme *sc);                           /* (
    *     (extend-environment (current-environment) (cons 'hi 21)) 
    *     (+ x hi))
    *
-   * which returns 24, but I don't recommend this sort of thing!
+   * which returns 24.  Then define! can be a macro (begin (define...) (extend-env...) ...)?
    */
 
 s7_pointer s7_name_to_value(s7_scheme *sc, const char *name);
