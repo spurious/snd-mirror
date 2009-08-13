@@ -466,6 +466,7 @@
 (test (equal? "abs" 'abc) #f)
 (test (equal? "hi" '(hi)) #f)
 (test (equal? "()" '()) #f)
+(test (equal? '(()) '(() . ())) #t)
 (test (equal? #\a #\b) #f)
 (test (equal? #\a #\a) #t)
 (test (let ((x (string-ref "hi" 0))) (equal? x x)) #t)
@@ -2112,6 +2113,7 @@
 (test (list? '(())) #t)
 (test (list? '(1 2 . 3)) #f)
 (test (list? (cons 1 (cons 2 3))) #f)
+(test (list? '(1 . ())) #t)
 
 (for-each
  (lambda (arg)
@@ -36034,6 +36036,9 @@
       (test (if #f 1 else 2) 'error)
       (test (if) 'error)
       (test ('+ '1 '2) 'error)
+      (test (if 1 . 2) 'error)
+      (test (if 1 2 . 3) 'error)
+      (test (if . 1) 'error)
       
       (test (for-each (lambda (x) (display "for-each should not have called this"))) 'error)
       (test (for-each (lambda () 1) '()) 'error)
@@ -36098,6 +36103,7 @@
       
 					;(test (do '() ('() '())) 'error) ; ?? -- isn't this the same as before?
       (test (do '() (#t 1)) 'error)
+      (test (do . 1) 'error)
       (test (do ((i i i)) (i i)) 'error)
       (test (do ((i 0 i (+ i 1))) (i i)) 'error)
 					;(test (do ((i)) (#t i)) 'error) ; there's some disagreement about this?
@@ -36107,10 +36113,13 @@
       (test (do ((i 1) . 1) (#t 1) 1) 'error)
 					;(test (do ((i 0 j) (i 0 j) (j 1 (+ j 1))) ((= j 3) i)) 'error) ; ??
       (test (do ((i 1) ()) (= i 1)) 'error)
+      (test (do ((i 0 . 1)) ((= i 1)) i) 'error)
       
-      
+
       (test (let ((a 1)) (set! a)) 'error)
       (test (let ((a 1)) (set! a 2 3)) 'error)
+      (test (let ((a 1)) (set! a . 2)) 'error)
+      (test (let ((a 1)) (set! a 1 . 2)) 'error)
       (test (set! "hi" 1) 'error)
       (test (set! 'a 1) 'error)
       (test (set! 1 1) 'error)
@@ -36146,6 +36155,7 @@
       (test (cond 1 2 3) 'error)
       (test (cond 1 2 3 4) 'error)
       (test (cond (1 => (lambda (x y) #t))) 'error)
+      (test (cond . 1) 'error)
       
       
       (test (case 1) 'error)
@@ -36155,6 +36165,7 @@
       (test (case 1 (else #f) ((1) #t)) 'error)
       (test (case "hi" (("hi" "ho") 123) ("ha" 321)) 'error)
       (test (case) 'error)
+      (test (case . 1) 'error)
       (test (case 1 (#t #f) ((1) #t)) 'error)
       (test (case 1 (#t #f)) 'error)
       (test (case -1 ((-1) => abs)) 'error)
@@ -36193,7 +36204,6 @@
       
 					;(test (let ((x 0)) (set! x (+ x 1)) (begin (define y 1)) (+ x y)) 'error)
       
-      
       (test (apply + #f) 'error)
       (test (apply #f '(2 3)) 'error)
       (test (apply make-vector '(1 2 3)) 'error)
@@ -36220,6 +36230,9 @@
       (test (define (x 1)) 'error)
       (test (define 1 2) 'error)
       (test (define "hi" 2) 'error)
+      (test (define x 1 2) 'error)
+      (test (define x 1 . 2) 'error)
+      (test (define x . 1) 'error)
 					;(test (define 'hi 1) 'error) ; this redefines quote, which maybe isn't an error
       (test (let () (define . 1) 1) 'error)
       (test (let ((hi (lambda (a 0.0) (b 0.0) (+ a b)))) (hi)) 'error)
@@ -36233,7 +36246,16 @@
        (list "hi" -1 #\a 1 'a-symbol 3.14 3/4 1.0+1.0i #t (list 1 2 3) '(1 . 2)))
       
       
-      (test (let 1) 'error)
+      (test (let ((x 1 2 3)) x) 'error)
+      (test (let ((+ 1 2)) 2) 'error)
+      (test (let* ((x 1 2)) x) 'error)
+      (test (letrec ((x 1 2)) x) 'error)
+      (test (let ((x 1 . 2)) x) 'error)
+      (test (let ((x 1 , 2)) x) 'error)
+      (test (let ((x . 1)) x) 'error)
+      (test (let* ((x . 1)) x) 'error)
+      (test (letrec ((x . 1)) x) 'error)
+
       (test (let . 1) 'error)
       (test (let* (x)) 'error)
       (test (let (x) 1) 'error)
@@ -40027,7 +40049,7 @@ expt error > 1e-6 around 2^-46.506993328423
 		   string>=? string-ci=? string-ci<? string-ci>? string-ci<=? string-ci>=? string-append
 		   string-fill! string-copy substring string list->string string->list object->string format
 		   null? list? pair? reverse 
-					;reverse! set-car! set-cdr! 
+					;reverse! set-car! set-cdr! sort!
 		   cons car cdr caar cadr cdar cddr
 		   caaar caadr cadar cdaar caddr cdddr cdadr cddar caaaar caaadr caadar cadaar caaddr cadddr
 		   cadadr caddar cdaaar cdaadr cdadar cddaar cdaddr cddddr cddadr cdddar length assq assv

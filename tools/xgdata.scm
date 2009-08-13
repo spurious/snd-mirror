@@ -7002,3 +7002,20 @@
 (CFNC-2173 "gboolean gtk_widget_get_has_window GtkWidget* widget")
 (CFNC-2173 "gboolean gtk_widget_get_app_paintable GtkWidget* widget")
 (CFNC-2173 "gboolean gtk_widget_get_double_buffered GtkWidget* widget")
+
+
+#|
+;;; 2.17.7
+
+(CFNC-2177 "GdkCursor* gdk_window_get_cursor GdkWindow* window")
+(CFNC-2177 "void gtk_file_chooser_set_create_folders GtkFileChooser* chooser gboolean create_folders")
+(CFNC-2177 "gboolean gtk_file_chooser_get_create_folders GtkFileChooser* chooser")
+(CFNC-2177 "void gtk_icon_view_set_item_padding GtkIconView* icon_view gint item_padding")
+(CFNC-2177 "gint gtk_icon_view_get_item_padding GtkIconView* icon_view")
+(CFNC-2177 "gboolean gtk_widget_has_grab GtkWidget* widget")
+(CFNC-2177 "void gtk_widget_set_visible GtkWidget* widget gboolean visible")
+(CFNC-2177 "gboolean gtk_widget_get_visible GtkWidget* widget")
+(CFNC-2177 "void gtk_widget_get_allocation GtkWidget* widget GtkAllocation* [allocation]")
+
+(CINT-2177 "GTK_FILE_CHOOSER_PROP_CREATE_FOLDERS" "GtkFileChooserProp")
+|#

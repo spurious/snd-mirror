@@ -79,7 +79,7 @@
  *        length is generic, also added generic copy and fill!
  *
  *   things I ought to add/change:
- *        perhaps find(-if) etc from CL?
+ *        perhaps find(-if), remove etc from CL?
  *        defmacro* define-macro*
  *        perhaps settable numerator denominator imag-part real-part angle magnitude
  *        define!
@@ -293,7 +293,7 @@ typedef enum {OP_READ_INTERNAL, OP_EVAL, OP_EVAL_ARGS0, OP_EVAL_ARGS1, OP_APPLY,
 	      OP_DEFINE0, OP_DEFINE1, OP_BEGIN, OP_IF0, OP_IF1, OP_SET0, OP_SET1, OP_SET2, 
 	      OP_LET0, OP_LET1, OP_LET2, OP_LET_STAR0, OP_LET_STAR1, 
 	      OP_LETREC0, OP_LETREC1, OP_LETREC2, OP_COND0, OP_COND1, OP_MAKE_PROMISE, OP_AND0, OP_AND1, 
-	      OP_OR0, OP_OR1, OP_DEFMACRO, OP_MACRO0, OP_MACRO1, OP_DEFINE_MACRO, OP_DEFINE_EXPANSION, 
+	      OP_OR0, OP_OR1, OP_DEFMACRO, OP_MACRO0, OP_MACRO1, OP_DEFINE_MACRO, OP_DEFINE_EXPANSION, OP_EXPANSION,
 	      OP_CASE0, OP_CASE1, OP_CASE2, OP_READ_LIST, OP_READ_DOT, OP_READ_QUOTE, 
 	      OP_READ_QUASIQUOTE, OP_READ_QUASIQUOTE_VECTOR, OP_READ_UNQUOTE, OP_READ_UNQUOTE_SPLICING, 
 	      OP_READ_VECTOR, OP_FORCE, OP_READ_RETURN_EXPRESSION, OP_READ_POP_AND_RETURN_EXPRESSION, 
@@ -459,9 +459,6 @@ struct s7_scheme {
   s7_pointer protected_objects;       /* a vector of gc-protected objects */
   int *protected_objects_size, *protected_objects_loc; /* pointers so they're global across threads */
 
-  s7_pointer *expanders;              /* a list of read-time macros */
-  int expanders_top, expanders_size;
-  
   struct s7_cell _NIL;
   s7_pointer NIL;                     /* empty list */
   
@@ -627,7 +624,10 @@ struct s7_scheme {
 #define T_ANY_MACRO                   (1 << (TYPE_BITS + 12))
 #define is_any_macro(p)               ((typeflag(p) & T_ANY_MACRO) != 0)
 
-#define UNUSED_BITS                   0xe0000000
+#define T_EXPANSION                   (1 << (TYPE_BITS + 13))
+#define is_expansion(p)               ((typeflag(p) & T_EXPANSION) != 0)
+
+#define UNUSED_BITS                   0xc0000000
 /* there are actually more unused bits -- the TYPE_BITS macro could be as small as 5, freeing another 11 bits */
 
 #if HAVE_PTHREADS
@@ -1534,7 +1534,7 @@ internally by the evaluator.  If a continuation is passed, its stack and stack-t
 static void show_stack(s7_scheme *sc)
 {
   const char *ops[OP_MAX_DEFINED] = 
-    {"read_internal", "eval", "eval_args0", "eval_args1", "apply", "eval_macro", "lambda", "quote", "define0", "define1", "begin", "if0", "if1", "set0", "set1", "set2", "let0", "let1", "let2", "let_star0", "let_star1", "letrec0", "letrec1", "letrec2", "cond0", "cond1", "make_promise", "and0", "and1", "or0", "or1", "defmacro", "macro0", "macro1", "define_macro", "define_expansion", "case0", "case1", "case2", "read_list", "read_dot", "read_quote", "read_quasiquote", "read_quasiquote_vector", "read_unquote", "read_unquote_splicing", "read_vector", "force", "read_return_expression", "read_pand_return_expression", "load_return_if_eof", "load_close_and_pop_if_eof", "eval_string", "eval_string_done", "quit", "catch", "dynamic_wind", "for_each", "map", "define_constant0", "define_constant1", "do", "do_end0", "do_end1", "do_step0", "do_step1", "do_step2", "do_init", "define_star", "lambda_star", "error_quit", "unwind_input", "unwind_output", "trace_return", "error_hook_quit"};
+    {"read_internal", "eval", "eval_args0", "eval_args1", "apply", "eval_macro", "lambda", "quote", "define0", "define1", "begin", "if0", "if1", "set0", "set1", "set2", "let0", "let1", "let2", "let_star0", "let_star1", "letrec0", "letrec1", "letrec2", "cond0", "cond1", "make_promise", "and0", "and1", "or0", "or1", "defmacro", "macro0", "macro1", "define_macro", "define_expansion", "expansion", "case0", "case1", "case2", "read_list", "read_dot", "read_quote", "read_quasiquote", "read_quasiquote_vector", "read_unquote", "read_unquote_splicing", "read_vector", "force", "read_return_expression", "read_pand_return_expression", "load_return_if_eof", "load_close_and_pop_if_eof", "eval_string", "eval_string_done", "quit", "catch", "dynamic_wind", "for_each", "map", "define_constant0", "define_constant1", "do", "do_end0", "do_end1", "do_step0", "do_step1", "do_step2", "do_init", "define_star", "lambda_star", "error_quit", "unwind_input", "unwind_output", "trace_return", "error_hook_quit"};
 
   int i;
   for (i = sc->stack_top - 4; i >= 0; i -= 4)
@@ -8380,7 +8380,7 @@ static char *s7_atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
 					      "catch", "dynamic-wind", "hash-table", "boolean", "macro"};
 
     buf = (char *)calloc(512, sizeof(char));
-    snprintf(buf, 512, "<unknown object! type: %d (%s), flags: %x%s%s%s%s%s%s%s%s%s%s%s%s%s>", 
+    snprintf(buf, 512, "<unknown object! type: %d (%s), flags: %x%s%s%s%s%s%s%s%s%s%s%s%s%s%s>", 
 	     type(obj), 
 	     (type(obj) < BUILT_IN_TYPES) ? type_names[type(obj)] : "none",
 	     typeflag(obj),
@@ -8396,6 +8396,7 @@ static char *s7_atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
 	     is_finalizable(obj) ? " gc-finalize" : "",
 	     is_setter(obj) ? " setter" : "",
 	     is_any_macro(obj) ? " (anymac)" : "",
+	     is_expansion(obj) ? " (expansion)" : "",
 	     ((typeflag(obj) & UNUSED_BITS) != 0) ? " bad bits at top" : "");
     return(buf);
   }
@@ -13326,28 +13327,6 @@ static void back_up_stack(s7_scheme *sc)
 }
 
 
-static void add_expander(s7_scheme *sc, s7_pointer sym)
-{
-  sc->expanders[sc->expanders_top++] = sym;
-  if (sc->expanders_top >= sc->expanders_size)
-    {
-      sc->expanders_size *= 2;
-      sc->expanders = (s7_pointer *)realloc(sc->expanders, sc->expanders_size * sizeof(s7_pointer));
-    }
-}
-
-
-static bool is_expander(s7_scheme *sc, s7_pointer sym)
-{
-  int i;
-  for (i = 0; i < sc->expanders_top; i++)
-    if (sym == sc->expanders[i])
-      return(true);
-  return(false);
-}
-
-
-
 
 /* ---------------- reader funcs for eval ---------------- */
 
@@ -13879,10 +13858,15 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
     case OP_DO: 
       /* setup is very similar to let */
-      if (!s7_is_list(sc, car(sc->code)))      /* (do 123) */
+      /* sc->code is the stuff after "do" */
+
+      if ((!is_pair(sc->code)) ||            /* (do . 1) */
+	  ((!is_pair(car(sc->code))) &&      /* (do 123) */
+	   (car(sc->code) != sc->NIL)))      /* (do () ...) is ok */
 	return(eval_error(sc, "do: var list is not a list: ~S", sc->code));
 
-      if (!s7_is_list(sc, cadr(sc->code)))     /* (do ((i 0)) 123) */
+      if ((!is_pair(cadr(sc->code))) &&      /* (do ((i 0)) 123) */
+	  (cadr(sc->code) != sc->NIL))       /* no end-test? */
 	return(eval_error(sc, "do: end-test and end-value list is not a list: ~A", sc->code));
 
       if (car(sc->code) == sc->NIL)            /* (do () ...) */
@@ -13910,10 +13894,16 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  if (!(is_pair(car(sc->code))))          /* (do (4) (= 3)) */
 	    return(eval_error(sc, "do: variable name missing? ~A", sc->code));
 
-	  if ((is_pair(cdar(sc->code))) &&
-	      (is_pair(cddar(sc->code))) && 
-	      (cdr(cddar(sc->code)) != sc->NIL))  /* (do ((i 0 1 (+ i 1))) ...) */
-	    return(eval_error(sc, "do: variable info has extra stuff after the increment: ~A", sc->code));
+	  if (is_pair(cdar(sc->code)))
+	    {
+	      if ((!is_pair(cddar(sc->code))) &&
+		  (cddar(sc->code) != sc->NIL))       /* (do ((i 0 . 1)) ...) */
+		return(eval_error(sc, "do: variable info is an improper list?: ~A", sc->code));
+
+	      if ((is_pair(cddar(sc->code))) && 
+		  (cdr(cddar(sc->code)) != sc->NIL))  /* (do ((i 0 1 (+ i 1))) ...) */
+		return(eval_error(sc, "do: variable info has extra stuff after the increment: ~A", sc->code));
+	    }
 
 	  push_stack(sc, OP_DO_INIT, sc->args, cdr(sc->code));
 	  sc->code = cadar(sc->code);
@@ -14056,7 +14046,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if (!is_pair(sc->code)) 
 	{
 	  if (sc->code != sc->NIL)            /* (begin . 1) */
-	    return(eval_error(sc, "unexpected dot at end of body?", sc->code));
+	    return(eval_error(sc, "unexpected dot or '() at end of body?", sc->code));
 
 	  sc->value = sc->code;
 	  pop_stack(sc);
@@ -14626,7 +14616,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	return(eval_error(sc, "define: no value? ~A", sc->code));            /* (define var) */
 
       if ((!is_pair(car(sc->code))) &&
-	  (is_pair(cddr(sc->code))))
+	  (cddr(sc->code) != sc->NIL))                                       /* (define var 1 . 2) */
 	return(eval_error(sc, "define: more than 1 value? ~A", sc->code));   /* (define var 1 2) */
 
       if (is_pair(car(sc->code))) 
@@ -14669,11 +14659,19 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       /* if we're defining a function, add its symbol to the new function's environment under the name __func__ */
       if ((is_closure(sc->value)) || 
 	  (is_closure_star(sc->value)))
-	closure_environment(sc->value) = s7_cons(sc, 
-						 s7_cons(sc, 
+	closure_environment(sc->value) = 
+	  s7_cons(sc, 
+		  s7_cons(sc, 
+			  port_filename(sc->input_port) ? s7_immutable_cons(sc, 
+									   sc->__FUNC__, 									       
+									   make_list_3(sc, 
+										       sc->code,
+										       s7_make_string(sc, port_filename(sc->input_port)),
+										       s7_make_integer(sc, port_line_number(sc->input_port)))) :
 							 s7_immutable_cons(sc, sc->__FUNC__, sc->code), 
-							 sc->NIL), 
-						 closure_environment(sc->value));
+			  sc->NIL), 
+		  closure_environment(sc->value));
+
 
       /* add the newly defined thing to the current environment */
       sc->x = s7_find_symbol_in_environment(sc, sc->envir, sc->code, false);
@@ -14764,13 +14762,20 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       
     case OP_IF0:
-      if (sc->code == sc->NIL)
+      if (!is_pair(sc->code))                               /* (if) or (if . 1) */
 	return(eval_error(sc, "(if): if needs at least 2 expressions", sc->code));
-      if (cdr(sc->code) == sc->NIL)
+
+      if (!is_pair(cdr(sc->code)))                          /* (if 1) */
 	return(eval_error(sc, "(if ~A): if needs another clause", car(sc->code)));
-      if ((cddr(sc->code) != sc->NIL) && 
-	  (cdddr(sc->code) != sc->NIL))
+      
+      if ((!is_pair(cddr(sc->code))) &&
+	  (cddr(sc->code) != sc->NIL))                      /* (if 1 2 . 3) */
+	return(eval_error(sc, "if: ~A has improper list?", sc->code));
+
+      if ((is_pair(cddr(sc->code))) && 
+	  (cdddr(sc->code) != sc->NIL))                     /* (if 1 2 3 4) */
 	return(eval_error(sc, "too many clauses for if: ~A", sc->code));
+      
       
       push_stack(sc, OP_IF1, sc->NIL, cdr(sc->code));
       sc->code = car(sc->code);
@@ -14799,9 +14804,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       sc->args = s7_cons(sc, sc->value, sc->args);
       if (is_pair(sc->code)) 
 	{ 
-	  if ((!is_pair(car(sc->code))) ||
-	      (!(is_pair(cdar(sc->code)))))   /* (let ((x . 1))...) */
+	  if (!is_pair(car(sc->code)))          /* (let ((x)) ...) */
+	    return(eval_error(sc, "let syntax error (no value?): ~A", car(sc->code)));
+
+	  if (!(is_pair(cdar(sc->code))))       /* (let ((x . 1))...) */
 	    return(eval_error(sc, "let syntax error (not a proper list?): ~A", car(sc->code)));
+
+	  if (cddar(sc->code) != sc->NIL)       /* (let ((x 1 2 3)) ...) */
+	    return(eval_error(sc, "let syntax error (more than one value?): ~A", car(sc->code)));
 
 	  push_stack(sc, OP_LET1, sc->args, cdr(sc->code));
 	  sc->code = cadar(sc->code);
@@ -14856,8 +14866,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  goto BEGIN;
 	}
       
-      if ((!is_pair(car(sc->code))) ||
-	  (!is_pair(caar(sc->code))))
+      if ((!is_pair(car(sc->code))) ||            /* (let* x ... ) */
+	  (!is_pair(caar(sc->code))) ||           /* (let* (x) ...) */
+	  (!is_pair(cdaar(sc->code))))            /* (let* ((x . 1)) ...) */
 	return(eval_error(sc, "let* variable list syntax error: ~A", sc->code));
       
       push_stack(sc, OP_LET_STAR1, cdr(sc->code), car(sc->code));
@@ -14868,6 +14879,15 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_LET_STAR1:    /* let* -- calculate parameters */
       if (!(s7_is_symbol(caar(sc->code))))
 	return(eval_error(sc, "bad variable ~S in let* bindings", car(sc->code)));
+
+      if (!is_pair(car(sc->code)))          /* (let* ((x)) ...) */
+	return(eval_error(sc, "let* syntax error (no value?): ~A", car(sc->code)));
+
+      if (!(is_pair(cdar(sc->code))))       /* (let* ((x . 1))...) */
+	return(eval_error(sc, "let* syntax error (not a proper list?): ~A", car(sc->code)));
+
+      if (cddar(sc->code) != sc->NIL)       /* (let* ((x 1 2 3)) ...) */
+	return(eval_error(sc, "let* syntax error (more than one value?): ~A", car(sc->code)));
 
       sc->envir = new_frame_in_env(sc, sc->envir); 
       /* we can't skip this new frame -- we have to imitate a nested let, otherwise
@@ -14923,6 +14943,15 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       sc->args = s7_cons(sc, sc->value, sc->args);
       if (is_pair(sc->code)) 
 	{ 
+	  if (!is_pair(car(sc->code)))          /* (letrec ((x)) x) -- perhaps this is legal? */
+	    return(eval_error(sc, "letrec syntax error (no value?): ~A", car(sc->code)));
+
+	  if (!(is_pair(cdar(sc->code))))       /* (letrec ((x . 1))...) */
+	    return(eval_error(sc, "letrec syntax error (not a proper list?): ~A", car(sc->code)));
+
+	  if (cddar(sc->code) != sc->NIL)       /* (letrec ((x 1 2 3)) ...) */
+	    return(eval_error(sc, "letrec syntax error (more than one value?): ~A", car(sc->code)));
+
 	  push_stack(sc, OP_LETREC1, sc->args, cdr(sc->code));
 	  sc->code = cadar(sc->code);
 	  sc->args = sc->NIL;
@@ -15129,6 +15158,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       else add_to_current_environment(sc, sc->code, sc->value); 
       
       /* pop back to wherever the macro call was */
+      sc->x = sc->value;
       sc->value = sc->code;
       pop_stack(sc);
       goto START;
@@ -15206,11 +15236,19 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        */
       push_stack(sc, OP_MACRO1, sc->NIL, sc->x);   /* sc->x (the name symbol) will be sc->code when we pop to OP_MACRO1 */
       goto EVAL;
-      
+
+
+    case OP_EXPANSION:
+      /* sc->x is the value (sc->value right now is sc->code, the macro name symbol) */
+      set_type(sc->x, T_MACRO | T_ANY_MACRO | T_EXPANSION);
+      set_type(sc->value, type(sc->value) | T_EXPANSION);
+      pop_stack(sc);
+      goto START;
+
 
     case OP_DEFINE_EXPANSION:
       /* read-time macros, suggested by Rick */
-      add_expander(sc, caar(sc->code));             /* caar(sc->code) is the macro name */
+      push_stack(sc, OP_EXPANSION, sc->NIL, sc->NIL);
       /* drop into define-macro */
 
 
@@ -15325,8 +15363,22 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
     case OP_ERROR_HOOK_QUIT:
       s7_symbol_set_value(sc, sc->ERROR_HOOK, sc->code);
-      return(sc->UNSPECIFIED);
-      break;
+
+      /* now mimic the end of the normal error handler.  Since this error hook evaluation can happen
+       *   in an arbitrarily s7_call nesting, we can't just return from the current evaluation --
+       *   we have to jump to the original (top-level) call.  Otherwise '#<unspecified> or whatever
+       *   is simply treated as the (non-error) return value, and the higher level evaluations
+       *   get confused.
+       */
+      stack_reset(sc);
+      sc->op = OP_ERROR_QUIT;
+
+      sc->value = sc->UNSPECIFIED;
+      if (sc->longjmp_ok)
+	{
+	  longjmp(sc->goto_start, 1);
+	}
+      return(sc->UNSPECIFIED); /* not executed I hope */
 
 
     case OP_ERROR_QUIT:
@@ -15402,7 +15454,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	     * 
 	     * but... first we can't tell for sure at this point that "hi" really is a macro
 	     *
-	     *   (letrec ((hi ... (hi...))) will be confused about the 2nd hi.
+	     *   (letrec ((hi ... (hi...))) will be confused about the 2nd hi,
+	     *   or (call/cc (lambda (hi) (hi 1))) etc.
 	     *
 	     * second, figuring out that we're quoted is not easy -- we have to march all the
 	     * way to the bottom of the stack looking for op_read_quote or op_read_vector
@@ -15426,7 +15479,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	     */
 
 	    if ((sc->value != sc->NIL) &&
-		(is_expander(sc, car(sc->value))) &&
+		(is_expansion(car(sc->value))) &&
 		(sc->stack_top >= 4) &&
 		((int)integer(number(vector_element(sc->stack, sc->stack_top - 1))) != OP_READ_QUOTE) && /* '(hi 1) for example */
 		(car(vector_element(sc->stack, sc->stack_top - 2)) != sc->QUOTE) &&                      /* (quote (hi 1)) */
@@ -20143,7 +20196,13 @@ static s7_pointer big_random(s7_scheme *sc, s7_pointer args)
     return(num);
 
   if (cdr(args) != sc->NIL)
-    state = cadr(args);
+    {
+      state = cadr(args);
+      if ((!is_c_object(state)) ||
+	  ((c_object_type(state) != big_rng_tag) &&
+	   (c_object_type(state) != rng_tag)))
+	return(s7_wrong_type_arg_error(sc, "random", 2, state, "a random-state object, if anything"));
+    }
 
   if ((is_c_object(num)) ||
       ((is_c_object(state)) &&
@@ -20532,11 +20591,6 @@ s7_scheme *s7_init(void)
   number_type(sc->real_zero) = NUM_REAL;
   real(number(sc->real_zero)) = (s7_Double)0.0;
 
-  #define INITIAL_EXPANDER_LIST_SIZE 8
-  sc->expanders = (s7_pointer *)malloc(INITIAL_EXPANDER_LIST_SIZE * sizeof(s7_pointer));
-  sc->expanders_top = 0;
-  sc->expanders_size = INITIAL_EXPANDER_LIST_SIZE;
-  
   /* initialization of global pointers to special symbols */
   assign_syntax(sc, "lambda",            OP_LAMBDA);
   assign_syntax(sc, "lambda*",           OP_LAMBDA_STAR);      /* part of define* */
@@ -21066,38 +21120,44 @@ s7_scheme *s7_init(void)
 
   /* stacktrace -- move this into C eventually */
   s7_eval_c_string(sc, "                                                                       \n\
-(define* (stacktrace cont)                                                                     \n\
-  (let* ((stk (stack cont))                                                                    \n\
-	 (top (car stk))                                                                       \n\
-	 (frames (cadr stk)))                                                                  \n\
-      (do ((i (- top 3) (- i 4)))                                                              \n\
-	  ((<= i 0))                                                                           \n\
-	(let* ((envir (vector-ref frames i))                                                   \n\
-	       (cur-env (car envir)))                                                          \n\
-	  (if (and (not (vector? cur-env))                                                     \n\
-		   (not (null? cur-env))                                                       \n\
-		   ;; look for __func__ in 2nd entry, then args in 1st                         \n\
-		   (> (length envir) 2))                                                       \n\
-	      (let ((args (car envir))                                                         \n\
-		    (op (cadr envir)))                                                         \n\
-		(if (and (not (null? op))                                                      \n\
-			 (pair? (car op))                                                      \n\
-			 (not (null? (car op)))                                                \n\
-			 (equal? (caar op) '__func__))                                         \n\
-		    (let ((proc (symbol->value (cdar op) envir)))                              \n\
-		      (if (procedure? proc)                                                    \n\
-			  (let* ((arity (procedure-arity proc))                                \n\
-				 (true-args (+ (car arity) (cadr arity)))                      \n\
-				 (rest-arg (caddr arity))                                      \n\
-				 (local-env (reverse args)))                                   \n\
-			    (format #t \"(~A\" (cdar op))                                      \n\
-			    (do ((arg 0 (+ arg 1)))                                            \n\
-				((= arg true-args))                                            \n\
-			      (format #t \" ~A\" (list-ref local-env arg)))                    \n\
-			    (if rest-arg                                                       \n\
-				(format #t \" ~A\" (list-ref local-env true-args)))            \n\
-			    (format #t \")~%\"))                                               \n\
-			  (format #t \"(~A~{~^ ~A~})~%\" (cdar op) (reverse args)))))))))))");
+(define* (stacktrace cont)                                   \n\
+  (let* ((stk (stack cont))                                  \n\
+	 (top (car stk))                                    \n\
+	 (frames (cadr stk)))                                 \n\
+    (do ((i (- top 3) (- i 4)))                               \n\
+	((<= i 0))                                      \n\
+      (let* ((envir (vector-ref frames i))                          \n\
+	     (cur-env (car envir)))                             \n\
+	(if (and (not (vector? cur-env))                           \n\
+		 (not (null? cur-env))                            \n\
+		 ;; look for __func__ in 2nd entry, then args in 1st             \n\
+		 (> (length envir) 2))                            \n\
+	    (let ((args (car envir))                             \n\
+		  (op (cadr envir)))                             \n\
+	      (if (and (not (null? op))                           \n\
+		       (pair? (car op))                           \n\
+		       (not (null? (car op)))                        \n\
+		       (equal? (caar op) '__func__))                     \n\
+		  (let* ((lst (car op)) \n\
+			 (sym (if (symbol? (cdr lst)) (cdr lst) (cadr lst)))               \n\
+			 (proc (symbol->value sym envir))) \n\
+		    (if (procedure? proc)                          \n\
+			(let* ((arity (procedure-arity proc))                \n\
+			       (true-args (+ (car arity) (cadr arity)))           \n\
+			       (rest-arg (caddr arity))                   \n\
+			       (local-env (reverse args))                  \n\
+			       (filename (and (not (symbol? (cdr lst))) (caddr lst))) \n\
+			       (line (and filename (cadddr lst))))       \n\
+			  (format #t \"(~A\" sym)                   \n\
+			  (do ((arg 0 (+ arg 1)))                      \n\
+			      ((= arg true-args))                      \n\
+			    (format #t \" ~A\" (list-ref local-env arg)))          \n\
+			  (if rest-arg                            \n\
+			      (format #t \" ~A\" (list-ref local-env true-args)))      \n\
+			  (if filename \n\
+			      (format #t \") [~S ~D]~%\" filename line)                       \n\
+			      (format #t \")~%\")))                       \n\
+			(format #t \"(~A~{~^ ~A~})~%\" (cdr lst) (reverse args)))))))))))");
 
 #if WITH_ENCAPSULATION
   s7_eval_c_string(sc, "                                 \n\
@@ -21119,9 +21179,9 @@ s7_scheme *s7_init(void)
 
 /* unicode is probably do-able if it is sequestered in the s7 strings 
  */
-/* stacktrace using arbitrary env? */
-/* TODO: error reports should show a lot more info -- the entire call, a stacktrace, file and line number */
-/* TODO: example of s7 as emacs subjob */
 
-/* TODO: define! and maybe env-let */
+/* TODO: error reports should show a lot more info -- the entire call, a stacktrace, file and (current) line number */
+/* TODO: example of s7 as emacs subjob */
+/* PERHAPS: encap frame|mixer-set! */
+/* PERHAPS: define! and maybe env-let */
 /* PERHAPS: push|pop-environment beneath define! (push-environment e alist) */

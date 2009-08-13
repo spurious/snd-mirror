@@ -64701,9 +64701,8 @@ EDITS: 1
 	   (provided? 'gmp))
       (begin
 	(load "s7test.scm")
-	(if (and all-args (not (provided? 'gmp)))
+	(if all-args
 	    (s7-test-at-random))))
-
 
   (if (and (provided? 'gsl)
 	   (provided? 'gmp)
