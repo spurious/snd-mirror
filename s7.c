@@ -297,11 +297,11 @@ typedef enum {OP_READ_INTERNAL, OP_EVAL, OP_EVAL_ARGS0, OP_EVAL_ARGS1, OP_APPLY,
 	      OP_CASE0, OP_CASE1, OP_CASE2, OP_READ_LIST, OP_READ_DOT, OP_READ_QUOTE, 
 	      OP_READ_QUASIQUOTE, OP_READ_QUASIQUOTE_VECTOR, OP_READ_UNQUOTE, OP_READ_UNQUOTE_SPLICING, 
 	      OP_READ_VECTOR, OP_FORCE, OP_READ_RETURN_EXPRESSION, OP_READ_POP_AND_RETURN_EXPRESSION, 
-	      OP_LOAD_RETURN_IF_EOF, OP_LOAD_CLOSE_AND_POP_IF_EOF, OP_EVAL_STRING, OP_EVAL_STRING_DONE, 
+	      OP_LOAD_RETURN_IF_EOF, OP_LOAD_CLOSE_AND_POP_IF_EOF, OP_EVAL_STRING, OP_EVAL_STRING_DONE, OP_EVAL_DONE,
 	      OP_QUIT, OP_CATCH, OP_DYNAMIC_WIND, OP_FOR_EACH, OP_MAP, OP_DEFINE_CONSTANT0, OP_DEFINE_CONSTANT1, 
 	      OP_DO, OP_DO_END0, OP_DO_END1, OP_DO_STEP0, OP_DO_STEP1, OP_DO_STEP2, OP_DO_INIT,
 	      OP_DEFINE_STAR, OP_LAMBDA_STAR, OP_ERROR_QUIT, OP_UNWIND_INPUT, OP_UNWIND_OUTPUT, 
-	      OP_TRACE_RETURN, OP_ERROR_HOOK_QUIT,
+	      OP_TRACE_RETURN, OP_ERROR_HOOK_QUIT, OP_CALL_WITH_VALUES,
 	      OP_MAX_DEFINED} opcode_t;
 
 #define NUM_SMALL_INTS 256
@@ -834,6 +834,7 @@ static s7_pointer make_list_1(s7_scheme *sc, s7_pointer a);
 static s7_pointer make_list_2(s7_scheme *sc, s7_pointer a, s7_pointer b);
 static void write_string(s7_scheme *sc, const char *s, s7_pointer pt);
 static s7_pointer eval_symbol(s7_scheme *sc, s7_pointer sym);
+static bool is_thunk(s7_scheme *sc, s7_pointer x);
 #if WITH_ENCAPSULATION
   static void encapsulate(s7_scheme *sc, s7_pointer sym);
 #endif
@@ -1534,7 +1535,7 @@ internally by the evaluator.  If a continuation is passed, its stack and stack-t
 static void show_stack(s7_scheme *sc)
 {
   const char *ops[OP_MAX_DEFINED] = 
-    {"read_internal", "eval", "eval_args0", "eval_args1", "apply", "eval_macro", "lambda", "quote", "define0", "define1", "begin", "if0", "if1", "set0", "set1", "set2", "let0", "let1", "let2", "let_star0", "let_star1", "letrec0", "letrec1", "letrec2", "cond0", "cond1", "make_promise", "and0", "and1", "or0", "or1", "defmacro", "macro0", "macro1", "define_macro", "define_expansion", "expansion", "case0", "case1", "case2", "read_list", "read_dot", "read_quote", "read_quasiquote", "read_quasiquote_vector", "read_unquote", "read_unquote_splicing", "read_vector", "force", "read_return_expression", "read_pand_return_expression", "load_return_if_eof", "load_close_and_pop_if_eof", "eval_string", "eval_string_done", "quit", "catch", "dynamic_wind", "for_each", "map", "define_constant0", "define_constant1", "do", "do_end0", "do_end1", "do_step0", "do_step1", "do_step2", "do_init", "define_star", "lambda_star", "error_quit", "unwind_input", "unwind_output", "trace_return", "error_hook_quit"};
+    {"read_internal", "eval", "eval_args0", "eval_args1", "apply", "eval_macro", "lambda", "quote", "define0", "define1", "begin", "if0", "if1", "set0", "set1", "set2", "let0", "let1", "let2", "let_star0", "let_star1", "letrec0", "letrec1", "letrec2", "cond0", "cond1", "make_promise", "and0", "and1", "or0", "or1", "defmacro", "macro0", "macro1", "define_macro", "define_expansion", "expansion", "case0", "case1", "case2", "read_list", "read_dot", "read_quote", "read_quasiquote", "read_quasiquote_vector", "read_unquote", "read_unquote_splicing", "read_vector", "force", "read_return_expression", "read_pand_return_expression", "load_return_if_eof", "load_close_and_pop_if_eof", "eval_string", "eval_string_done", "eval_done", "quit", "catch", "dynamic_wind", "for_each", "map", "define_constant0", "define_constant1", "do", "do_end0", "do_end1", "do_step0", "do_step1", "do_step2", "do_init", "define_star", "lambda_star", "error_quit", "unwind_input", "unwind_output", "trace_return", "error_hook_quit", "call_with_values"};
 
   int i;
   for (i = sc->stack_top - 4; i >= 0; i -= 4)
@@ -2211,7 +2212,12 @@ static void check_for_dynamic_winds(s7_scheme *sc, s7_continuation_t *c)
 	    break;	  
 	  
 	  if (dynamic_wind_state(x) == DWIND_BODY)
-	    s7_call(sc, dynamic_wind_out(x), sc->NIL);
+	    {
+	      push_stack(sc, OP_EVAL_DONE, sc->args, sc->code); 
+	      sc->args = sc->NIL;
+	      sc->code = dynamic_wind_out(x);
+	      eval(sc, OP_APPLY);
+	    }
 	}
       else
 	{
@@ -2225,7 +2231,10 @@ static void check_for_dynamic_winds(s7_scheme *sc, s7_continuation_t *c)
       {
 	s7_pointer x;
 	x = vector_element(c->cc_stack, i - 3);
-	s7_call(sc, dynamic_wind_in(x), sc->NIL);
+	push_stack(sc, OP_EVAL_DONE, sc->args, sc->code); 
+	sc->args = sc->NIL;
+	sc->code = dynamic_wind_in(x);
+	eval(sc, OP_APPLY);
 	dynamic_wind_state(x) = DWIND_BODY;
       }
 }
@@ -7859,7 +7868,12 @@ static void run_load_hook(s7_scheme *sc, const char *filename)
   s7_pointer load_hook;
   load_hook = s7_symbol_value(sc, s7_make_symbol(sc, "*load-hook*"));
   if (is_procedure(load_hook))
-    s7_call(sc, load_hook, make_list_1(sc, s7_make_string(sc, filename)));
+    {
+      push_stack(sc, OP_EVAL_DONE, sc->args, sc->code); 
+      sc->args = make_list_1(sc, s7_make_string(sc, filename));
+      sc->code = load_hook;
+      eval(sc, OP_APPLY);
+    }
 }
 
 
@@ -8099,7 +8113,7 @@ static s7_pointer g_with_input_from_string(s7_scheme *sc, s7_pointer args)
   
   if (!s7_is_string(car(args)))
     return(s7_wrong_type_arg_error(sc, "with-input-from-string", 1, car(args), "a string"));
-  if (!is_procedure(cadr(args)))
+  if (!is_thunk(sc, cadr(args)))
     return(s7_wrong_type_arg_error(sc, "with-input-from-string", 2, cadr(args), "a thunk"));
   
   return(with_input(sc, s7_open_input_string(sc, s7_string(car(args))), args));
@@ -8112,7 +8126,7 @@ static s7_pointer g_with_input_from_file(s7_scheme *sc, s7_pointer args)
   
   if (!s7_is_string(car(args)))
     return(s7_wrong_type_arg_error(sc, "with-input-from-file", 1, car(args), "a string (a filename)"));
-  if (!is_procedure(cadr(args)))
+  if (!is_thunk(sc, cadr(args)))
     return(s7_wrong_type_arg_error(sc, "with-input-from-file", 2, cadr(args), "a thunk"));
   
   return(with_input(sc, s7_open_input_file(sc, s7_string(car(args)), "r"), args));
@@ -8800,7 +8814,7 @@ static s7_pointer g_with_output_to_string(s7_scheme *sc, s7_pointer args)
   #define H_with_output_to_string "(with-output-to-string thunk) opens a string as a temporary current-output-port, calls thunk, then returns the collected output"
   s7_pointer old_output_port, result;
 
-  if (!is_procedure(car(args)))
+  if (!is_thunk(sc, car(args)))
     return(s7_wrong_type_arg_error(sc, "with-output-to-string", 1, car(args), "a thunk"));
   
   old_output_port = sc->output_port;
@@ -8823,7 +8837,7 @@ static s7_pointer g_with_output_to_file(s7_scheme *sc, s7_pointer args)
   
   if (!s7_is_string(car(args)))
     return(s7_wrong_type_arg_error(sc, "with-output-to-file", 1, car(args), "a string (a filename)"));
-  if (!is_procedure(cadr(args)))
+  if (!is_thunk(sc, cadr(args)))
     return(s7_wrong_type_arg_error(sc, "with-output-to-file", 2, cadr(args), "a thunk"));
   
   old_output_port = sc->output_port;
@@ -10323,7 +10337,12 @@ static s7_pointer g_vector_dimensions(s7_scheme *sc, s7_pointer args)
   {
     car(compare_proc_args) = (*(s7_pointer *)v1);
     cadr(compare_proc_args) = (*(s7_pointer *)v2);
-    if (is_true(compare_sc, s7_call(compare_sc, compare_proc, compare_proc_args)))
+
+    push_stack(sc, OP_EVAL_DONE, sc->args, sc->code); 
+    sc->args = compare_proc_args;
+    sc->code = compare_proc;
+    eval(sc, OP_APPLY);
+    if (is_true(sc, sc->value))
       return(-1);
     return(1);
   }
@@ -10349,7 +10368,13 @@ If its first argument is a list, the list is copied (despite the '!')."
   {
     car(compare_proc_args) = (*(s7_pointer *)v1);
     cadr(compare_proc_args) = (*(s7_pointer *)v2);
-    if (is_true(sc, s7_call(sc, compare_proc, compare_proc_args)))
+
+    /* if (is_true(sc, s7_call(sc, compare_proc, compare_proc_args))) return(-1); */
+    push_stack(sc, OP_EVAL_DONE, sc->args, sc->code); 
+    sc->args = compare_proc_args;
+    sc->code = compare_proc;
+    eval(sc, OP_APPLY);
+    if (is_true(sc, sc->value))
       return(-1);
     return(1);
   }
@@ -11017,7 +11042,12 @@ static s7_pointer pws_apply(s7_scheme *sc, s7_pointer obj, s7_pointer args)
   f = (s7_pws_t *)s7_object_value(obj);
   if (f->getter != NULL)
     return((*(f->getter))(sc, args));
-  return(s7_call(sc, f->scheme_getter, args));
+
+  push_stack(sc, OP_EVAL_DONE, sc->args, sc->code); 
+  sc->args = args;
+  sc->code = f->scheme_getter;
+  eval(sc, OP_APPLY);
+  return(sc->value);
 }
 
 
@@ -11028,7 +11058,12 @@ static s7_pointer pws_set(s7_scheme *sc, s7_pointer obj, s7_pointer args)
   f = (s7_pws_t *)s7_object_value(obj);
   if (f->setter != NULL)
     return((*(f->setter))(sc, args));
-  return(s7_call(sc, f->scheme_setter, args));
+
+  push_stack(sc, OP_EVAL_DONE, sc->args, sc->code); 
+  sc->args = args;
+  sc->code = f->scheme_setter;
+  eval(sc, OP_APPLY);
+  return(sc->value);
 }
 
 
@@ -12643,11 +12678,11 @@ each a function of no arguments, guaranteeing that finish is called even if body
   s7_pointer p;
   s7_dynwind_t *dw;
 
-  if (!is_procedure(car(args)))
+  if (!is_thunk(sc, car(args)))
     return(s7_wrong_type_arg_error(sc, "dynamic-wind", 1, car(args), "a procedure"));
-  if (!is_procedure(cadr(args)))
+  if (!is_thunk(sc, cadr(args)))
     return(s7_wrong_type_arg_error(sc, "dynamic-wind", 2, cadr(args), "a procedure"));
-  if (!is_procedure(caddr(args)))
+  if (!is_thunk(sc, caddr(args)))
     return(s7_wrong_type_arg_error(sc, "dynamic-wind", 3, caddr(args), "a procedure"));
   
   dw = (s7_dynwind_t *)calloc(1, sizeof(s7_dynwind_t));
@@ -12674,8 +12709,8 @@ static s7_pointer g_catch(s7_scheme *sc, s7_pointer args)
   s7_pointer p;
   s7_catch_t *c;
 
-  if (!is_procedure(cadr(args)))
-    return(s7_wrong_type_arg_error(sc, "catch", 2, cadr(args), "a procedure"));
+  if (!is_thunk(sc, cadr(args)))
+    return(s7_wrong_type_arg_error(sc, "catch", 2, cadr(args), "a procedure of 0 args"));
   if (!is_procedure(caddr(args)))
     return(s7_wrong_type_arg_error(sc, "catch", 3, caddr(args), "a procedure"));
   
@@ -12714,8 +12749,12 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
 	case OP_DYNAMIC_WIND:
 	  x = vector_element(sc->stack, i - 3);
 	  if (dynamic_wind_state(x) == DWIND_BODY)
-	    s7_call(sc, dynamic_wind_out(x), sc->NIL);
-	  /* TODO: if an error happens in this call, we can get an infinite loop -- need to just get back to top-level */
+	    {
+	      push_stack(sc, OP_EVAL_DONE, sc->args, sc->code); 
+	      sc->args = sc->NIL;
+	      sc->code = dynamic_wind_out(x);
+	      eval(sc, OP_APPLY);
+	    }
 	  break;
 
 	case OP_CATCH:
@@ -12781,6 +12820,13 @@ GOT_CATCH:
 	  /* if the *error-hook* function triggers an error, we had better not have *error-hook* still set! */
 
 	  push_stack(sc, OP_ERROR_HOOK_QUIT, sc->NIL, error_hook); /* restore *error-hook* upon successful evaluation */
+	  /* PERHAPS: ideally I think we'd save the goto_start addr on the stack also --
+	   *   if the caller's error-hook function calls s7_call in some form, that jump address
+	   *   probably gets pushed on the C stack (recursive s7_calls), and could I suppose
+	   *   get confused in some way.
+	   *   s7_make_ulong[_long](sc, (sc->longjmp_ok) ? sc->goto_start : 0) for sc->NIL above
+	   *   and after pop_stack, s7_ulong[_long](sc->args)? (and set args=sc->NIL)
+	   */
 
 	  sc->args = make_list_2(sc, type, info);
 	  sc->code = error_hook;
@@ -13273,14 +13319,13 @@ static s7_pointer g_values(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_call_with_values(s7_scheme *sc, s7_pointer args)
 {
   #define H_call_with_values "(call-with-values producer consumer) applies consumer to the multiple values returned by producer"
-  s7_pointer result;
-  result = s7_call(sc, car(args), sc->NIL);
-  
-  if ((is_pair(result)) &&
-      (s7_is_eq(car(result), sc->VALUES)))
-    return(s7_call(sc, cadr(args), cdr(result)));
-  
-  return(s7_call(sc, cadr(args), make_list_1(sc, result)));
+
+  push_stack(sc, OP_EVAL_DONE, sc->args, sc->code); 
+  push_stack(sc, OP_CALL_WITH_VALUES, sc->NIL, cadr(args));
+  sc->args = sc->NIL;
+  sc->code = car(args);
+  eval(sc, OP_APPLY);
+  return(sc->value);
 }
 
 
@@ -13800,6 +13845,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto EVAL;
       
       
+    case OP_EVAL_DONE:
     case OP_EVAL_STRING_DONE:
      return(sc->F);
       
@@ -14482,7 +14528,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  {
 		    sc->z = vector_element(sc->stack, i - 3);
 		    if (dynamic_wind_state(sc->z) == DWIND_BODY)
-		      s7_call(sc, dynamic_wind_out(sc->z), sc->NIL);
+		      {
+			push_stack(sc, OP_EVAL_DONE, sc->args, sc->code); 
+			sc->args = sc->NIL;
+			sc->code = dynamic_wind_out(sc->z);
+			eval(sc, OP_APPLY);
+		      }
 		  }
 		else
 		  {
@@ -14791,10 +14842,21 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       
     case OP_LET0:
-      if ((!is_pair(sc->code)) ||
-	  (!is_pair(cdr(sc->code))))          /* (let) */
+      /* sc->code is everything after the let: (let ((a 1)) a) so sc->code is (((a 1)) a) */
+      /*   car it can be either a list or a symbol ("named let") */
+
+      if ((!is_pair(sc->code)) ||            /* (let . 1) */
+	  (!is_pair(cdr(sc->code))) ||       /* (let) */
+	  ((!is_pair(car(sc->code))) &&      /* (let 1 ...) */
+	   (car(sc->code) != sc->NIL) &&
+	   (!s7_is_symbol(car(sc->code)))))
 	return(eval_error(sc, "let syntax error: ~A", sc->code));
-      
+
+      if ((s7_is_symbol(car(sc->code))) &&
+	  ((!is_pair(cadr(sc->code))) &&    /* (let hi #t) */
+	   (cadr(sc->code) != sc->NIL)))
+      	return(eval_error(sc, "named let syntax error: ~A", sc->code));
+
       sc->args = sc->NIL;
       sc->value = sc->code;
       sc->code = s7_is_symbol(car(sc->code)) ? cadr(sc->code) : car(sc->code);
@@ -14856,7 +14918,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       
     case OP_LET_STAR0:
-      if (!is_pair(cdr(sc->code)))           /* (let*) */
+      if ((!is_pair(cdr(sc->code))) ||           /* (let*) */
+	  ((!is_pair(car(sc->code))) &&          /* (let* 1 ...), also there's no named let* */
+	   (car(sc->code) != sc->NIL)))
 	return(eval_error(sc, "let* syntax error: ~A", sc->code));
       
       if (car(sc->code) == sc->NIL) 
@@ -14916,7 +14980,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       
     case OP_LETREC0:
-      if (!is_pair(cdr(sc->code)))               /* (letrec) */
+      if ((!is_pair(cdr(sc->code))) ||            /* (letrec) */
+	  ((!is_pair(car(sc->code))) &&           /* (letrec 1 ...) */
+	   (car(sc->code) != sc->NIL)))
 	return(eval_error(sc, "letrec syntax error: ~A", sc->code));
       
       /* get all local vars and set to #undefined
@@ -14932,7 +14998,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       for (sc->x = sc->code; sc->x != sc->NIL; sc->x = cdr(sc->x))
 	{
-	  if (!(s7_is_symbol(caar(sc->x))))
+	  if ((!is_pair(car(sc->x))) ||             /* (letrec (1 2) #t) */
+	      (!(s7_is_symbol(caar(sc->x)))))
 	    return(eval_error(sc, "bad variable ~S in letrec bindings", car(sc->x)));
 
 	  add_to_current_environment(sc, caar(sc->x), sc->UNDEFINED);
@@ -15318,6 +15385,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_CASE1: 
       for (sc->x = sc->code; sc->x != sc->NIL; sc->x = cdr(sc->x)) 
 	{
+	  if ((!is_pair(sc->x)) ||
+	      (!is_pair(car(sc->x))))
+	    return(eval_error(sc, "case clause ~A messed up", sc->x));	 
+   
 	  sc->y = caar(sc->x);
 	  if (!is_pair(sc->y))
 	    {
@@ -15365,20 +15436,20 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       s7_symbol_set_value(sc, sc->ERROR_HOOK, sc->code);
 
       /* now mimic the end of the normal error handler.  Since this error hook evaluation can happen
-       *   in an arbitrarily s7_call nesting, we can't just return from the current evaluation --
+       *   in an arbitrary s7_call nesting, we can't just return from the current evaluation --
        *   we have to jump to the original (top-level) call.  Otherwise '#<unspecified> or whatever
        *   is simply treated as the (non-error) return value, and the higher level evaluations
        *   get confused.
        */
       stack_reset(sc);
       sc->op = OP_ERROR_QUIT;
-
       sc->value = sc->UNSPECIFIED;
       if (sc->longjmp_ok)
 	{
 	  longjmp(sc->goto_start, 1);
 	}
       return(sc->UNSPECIFIED); /* not executed I hope */
+      /* TODO: add *error-hook* tests to s7test.scm */
 
 
     case OP_ERROR_QUIT:
@@ -15515,6 +15586,16 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	}
       pop_stack(sc);
       goto START;
+
+      
+    case OP_CALL_WITH_VALUES:
+      /* sc->code should be the "consumer", sc->value the args (from the producer) */
+      /* fprintf(stderr, "cwv: code: %s, args: %s\n", s7_object_to_c_string(sc, sc->code), s7_object_to_c_string(sc, sc->value)); */
+      if ((is_pair(sc->value)) &&
+	  (s7_is_eq(car(sc->value), sc->VALUES)))
+	sc->args = cdr(sc->value);
+      else sc->args = make_list_1(sc, sc->value);
+      goto APPLY;
 
       
     case OP_READ_DOT:

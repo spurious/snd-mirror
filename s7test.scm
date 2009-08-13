@@ -4030,6 +4030,28 @@
 (test (let ((a (values 1))) a) 1)
 
 (test (call-with-values (lambda () 2) (lambda (x) x)) 2)
+(test (call-with-values (lambda () -1) abs) 1)
+(test (call-with-values (lambda () (values -1)) abs) 1)
+(test (call-with-values (lambda () (values -1)) (lambda (a) (abs a))) 1)
+
+(test (call-with-values 
+	  (lambda ()
+	    (values
+	     (call-with-values (lambda () (values 1 2 3)) +)
+	     (call-with-values (lambda () (values 1 2 3 4)) *)))
+	(lambda (a b)
+	  (- a b)))
+      -18)
+
+(test (call-with-values 
+	  (lambda ()
+	    (values
+	     (call-with-values (lambda () (values 1 2 3)) +)
+	     (call-with-values (lambda () (values 1 2 3 4)) *)))
+	(lambda (a b)
+	  (+ (* a (call-with-values (lambda () (values 1 2 3)) +))
+	     (* b (call-with-values (lambda () (values 1 2 3 4)) *)))))
+      612)
 
 
 
@@ -6542,6 +6564,21 @@
       ;;   or ... (let ((:asdf 3)) :asdf) and worse (let ((:key 1)) :key) or even worse (let ((:3 1)) 1)
       ;;   (let ((x 32)) (let () (define-constant x 3) x) (set! x 31) x) says can't alter x!
       
+
+      (test (let ((local 123))
+	      (define pws-test (make-procedure-with-setter
+				(lambda () local)
+				(lambda (val) (set! local val))))
+	      (pws-test))
+	    123)
+
+      (test (let ((local 123))
+	      (define pws-test (make-procedure-with-setter
+				(lambda () local)
+				(lambda (val) (set! local val))))
+	      (set! (pws-test) 321)
+	      (pws-test))
+	    321)
 
       (if (defined? 'open-encapsulator) 
 	  (begin
@@ -36244,7 +36281,8 @@
        (lambda (arg)
 	 (test (call-with-values arg arg) 'error))
        (list "hi" -1 #\a 1 'a-symbol 3.14 3/4 1.0+1.0i #t (list 1 2 3) '(1 . 2)))
-      
+      (test (call-with-values (lambda () (values -1 2)) abs) 'error)
+
       
       (test (let ((x 1 2 3)) x) 'error)
       (test (let ((+ 1 2)) 2) 'error)
@@ -36449,6 +36487,15 @@
 	    (test (format #f "~D") 'error)
 	    
 	    ))
+      
+      (test (let "" 1) 'error)
+      (test (let "hi" 1) 'error)
+      (test (let #(1) 1) 'error)
+      (test (let __hi__ #t) 'error)
+      (test (let* hi () 1) 'error)
+      (test (letrec (1 2) #t) 'error)
+      (test (call/cc abs) 'error)
+      (test (case #t ((1 2) (3 4)) -1) 'error)
 
       (let ((d 3.14)
 	    (i 32)
@@ -40168,3 +40215,10 @@ expt error > 1e-6 around 2^-46.506993328423
 ;;; but:
 ;;;   (cos (bignum "1.0000000000000000000000000000000000e32")) gets the right answer, so who truncates?
 ;;; I think this is a bug in mpfr
+
+
+
+
+;;; TODO: pws tests
+;;; TODO: cwv recursive
+;;; check <eof> equality etc
