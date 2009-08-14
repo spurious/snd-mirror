@@ -1947,18 +1947,23 @@ static s7_pointer g_global_environment(s7_scheme *sc, s7_pointer ignore)
 #if HAVE_PTHREADS
 static s7_pointer g_is_thread(s7_scheme *sc, s7_pointer args);
 static s7_pointer thread_environment(s7_scheme *sc, s7_pointer obj);
+#define CURRENT_ENVIRONMENT_OPTARGS 1
+#else
+#define CURRENT_ENVIRONMENT_OPTARGS 0
 #endif
 
 static s7_pointer g_current_environment(s7_scheme *sc, s7_pointer args)
 {
-  #define H_current_environment "(current-environment :optional thread) returns the current definitions (symbol bindings)"
 #if HAVE_PTHREADS
+  #define H_current_environment "(current-environment :optional thread) returns the current definitions (symbol bindings)"
   if (args != sc->NIL)
     {
       if (g_is_thread(sc, args) == sc->F)
 	return(s7_wrong_type_arg_error(sc, "current-environment", 0, car(args), "a thread object"));
       return(thread_environment(sc, car(args)));
     }
+#else
+  #define H_current_environment "(current-environment) returns the current definitions (symbol bindings)"
 #endif
   return(sc->envir);
 }
@@ -9911,7 +9916,7 @@ int s7_vector_length(s7_pointer vec)
 #if (!WITH_GMP)
 void s7_vector_fill(s7_scheme *sc, s7_pointer vec, s7_pointer obj) 
 {
-  int i, len;
+  int i, len;  /* this restricts the vector filled size to 31 bits */
   s7_pointer *tp;
   len = vector_length(vec);
   tp = (s7_pointer *)(vector_elements(vec));
@@ -20812,7 +20817,7 @@ s7_scheme *s7_init(void)
 #endif
   
   s7_define_function(sc, "global-environment",      g_global_environment,      0, 0, false, H_global_environment);
-  s7_define_function(sc, "current-environment",     g_current_environment,     0, 1, false, H_current_environment);
+  s7_define_function(sc, "current-environment",     g_current_environment,     0, CURRENT_ENVIRONMENT_OPTARGS, false, H_current_environment);
   s7_define_function(sc, "provided?",               g_is_provided,             1, 0, false, H_is_provided);
   s7_define_function(sc, "provide",                 g_provide,                 1, 0, false, H_provide);
   s7_define_function(sc, "defined?",                g_is_defined,              1, 1, false, H_is_defined);

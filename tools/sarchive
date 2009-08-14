@@ -4,7 +4,7 @@ date > /home/bil/cl/hi
 echo ' ' >> /home/bil/cl/hi
 
 chdir /home/bil/dist/snd
-foreach file (*.h *.c *.cl *.el *.clm *.html makefile.* make.* *.gtkrc *.in *.scm *.lisp *.fs *.js *.Snd Snd.ad snd.1 configure.ac *.rb *.m4 config.guess config.sub NEWS *.tex COPYING DotEmacs rt-DotEmacs *.f music5-examples)
+foreach file (*.h *.c *.cl *.el *.clm *.html makefile.* make.* *.gtkrc *.in *.scm *.lisp *.fs *.fsm *.js *.Snd Snd.ad snd.1 configure.ac *.rb *.m4 config.guess config.sub NEWS *.tex COPYING DotEmacs rt-DotEmacs *.f music5-examples)
   if (-e /home/bil/cl/$file) then
     diff -bcw /home/bil/cl/$file /home/bil/dist/snd/$file >> /home/bil/cl/hi
     find /home/bil/cl/$file -newer /home/bil/dist/snd/$file -exec echo ' updating ' $file \;

@@ -36504,6 +36504,15 @@
       (test (quote . 1) 'error)
       (test (quote . (1 2)) 'error)
 
+      ;; I think these are correct, but they look odd
+      (test (eq? (if #f #t) (if #f 3)) #t)
+      (test (if . (1 2)) 2)
+      (test (begin . (1 2)) 2)
+      (test (cond . ((1 2) ((3 4)))) 2)
+      (test (and . (1 2)) 2)
+      (test (or . (1 2)) 1)
+      ;; --------
+
       (let ((d 3.14)
 	    (i 32)
 	    (r 2/3)
@@ -40395,13 +40404,5 @@ expt error > 1e-6 around 2^-46.506993328423
 ;;; I think this is a bug in mpfr
 
 
-#|
-;;; I think these are correct, but they look odd
 
-(test (eq? (if #f #t) (if #f 3)) #t)
-(test (if . (1 2)) 2)
-(test (begin . (1 2)) 2)
-(test (cond . ((1 2) ((3 4)))) 2)
-(test (and . (1 2)) 2)
-(test (or . (1 2)) 1)
-|#
+
