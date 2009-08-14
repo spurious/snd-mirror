@@ -31843,6 +31843,73 @@ static XEN gxg_gtk_widget_get_double_buffered(XEN widget)
 
 #endif
 
+#if HAVE_GTK_WIDGET_GET_VISIBLE
+static XEN gxg_gdk_window_get_cursor(XEN window)
+{
+  #define H_gdk_window_get_cursor "GdkCursor* gdk_window_get_cursor(GdkWindow* window)"
+  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 1, "gdk_window_get_cursor", "GdkWindow*");
+  return(C_TO_XEN_GdkCursor_(gdk_window_get_cursor(XEN_TO_C_GdkWindow_(window))));
+}
+
+static XEN gxg_gtk_file_chooser_set_create_folders(XEN chooser, XEN create_folders)
+{
+  #define H_gtk_file_chooser_set_create_folders "void gtk_file_chooser_set_create_folders(GtkFileChooser* chooser, \
+gboolean create_folders)"
+  XEN_ASSERT_TYPE(XEN_GtkFileChooser__P(chooser), chooser, 1, "gtk_file_chooser_set_create_folders", "GtkFileChooser*");
+  XEN_ASSERT_TYPE(XEN_gboolean_P(create_folders), create_folders, 2, "gtk_file_chooser_set_create_folders", "gboolean");
+  gtk_file_chooser_set_create_folders(XEN_TO_C_GtkFileChooser_(chooser), XEN_TO_C_gboolean(create_folders));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_file_chooser_get_create_folders(XEN chooser)
+{
+  #define H_gtk_file_chooser_get_create_folders "gboolean gtk_file_chooser_get_create_folders(GtkFileChooser* chooser)"
+  XEN_ASSERT_TYPE(XEN_GtkFileChooser__P(chooser), chooser, 1, "gtk_file_chooser_get_create_folders", "GtkFileChooser*");
+  return(C_TO_XEN_gboolean(gtk_file_chooser_get_create_folders(XEN_TO_C_GtkFileChooser_(chooser))));
+}
+
+static XEN gxg_gtk_icon_view_set_item_padding(XEN icon_view, XEN item_padding)
+{
+  #define H_gtk_icon_view_set_item_padding "void gtk_icon_view_set_item_padding(GtkIconView* icon_view, \
+gint item_padding)"
+  XEN_ASSERT_TYPE(XEN_GtkIconView__P(icon_view), icon_view, 1, "gtk_icon_view_set_item_padding", "GtkIconView*");
+  XEN_ASSERT_TYPE(XEN_gint_P(item_padding), item_padding, 2, "gtk_icon_view_set_item_padding", "gint");
+  gtk_icon_view_set_item_padding(XEN_TO_C_GtkIconView_(icon_view), XEN_TO_C_gint(item_padding));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_icon_view_get_item_padding(XEN icon_view)
+{
+  #define H_gtk_icon_view_get_item_padding "gint gtk_icon_view_get_item_padding(GtkIconView* icon_view)"
+  XEN_ASSERT_TYPE(XEN_GtkIconView__P(icon_view), icon_view, 1, "gtk_icon_view_get_item_padding", "GtkIconView*");
+  return(C_TO_XEN_gint(gtk_icon_view_get_item_padding(XEN_TO_C_GtkIconView_(icon_view))));
+}
+
+static XEN gxg_gtk_widget_has_grab(XEN widget)
+{
+  #define H_gtk_widget_has_grab "gboolean gtk_widget_has_grab(GtkWidget* widget)"
+  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_widget_has_grab", "GtkWidget*");
+  return(C_TO_XEN_gboolean(gtk_widget_has_grab(XEN_TO_C_GtkWidget_(widget))));
+}
+
+static XEN gxg_gtk_widget_set_visible(XEN widget, XEN visible)
+{
+  #define H_gtk_widget_set_visible "void gtk_widget_set_visible(GtkWidget* widget, gboolean visible)"
+  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_widget_set_visible", "GtkWidget*");
+  XEN_ASSERT_TYPE(XEN_gboolean_P(visible), visible, 2, "gtk_widget_set_visible", "gboolean");
+  gtk_widget_set_visible(XEN_TO_C_GtkWidget_(widget), XEN_TO_C_gboolean(visible));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_widget_get_visible(XEN widget)
+{
+  #define H_gtk_widget_get_visible "gboolean gtk_widget_get_visible(GtkWidget* widget)"
+  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_widget_get_visible", "GtkWidget*");
+  return(C_TO_XEN_gboolean(gtk_widget_get_visible(XEN_TO_C_GtkWidget_(widget))));
+}
+
+#endif
+
 #if HAVE_CAIRO_CREATE
 static XEN gxg_cairo_create(XEN target)
 {
@@ -38181,6 +38248,17 @@ XEN_NARGIFY_1(gxg_gtk_widget_get_app_paintable_w, gxg_gtk_widget_get_app_paintab
 XEN_NARGIFY_1(gxg_gtk_widget_get_double_buffered_w, gxg_gtk_widget_get_double_buffered)
 #endif
 
+#if HAVE_GTK_WIDGET_GET_VISIBLE
+XEN_NARGIFY_1(gxg_gdk_window_get_cursor_w, gxg_gdk_window_get_cursor)
+XEN_NARGIFY_2(gxg_gtk_file_chooser_set_create_folders_w, gxg_gtk_file_chooser_set_create_folders)
+XEN_NARGIFY_1(gxg_gtk_file_chooser_get_create_folders_w, gxg_gtk_file_chooser_get_create_folders)
+XEN_NARGIFY_2(gxg_gtk_icon_view_set_item_padding_w, gxg_gtk_icon_view_set_item_padding)
+XEN_NARGIFY_1(gxg_gtk_icon_view_get_item_padding_w, gxg_gtk_icon_view_get_item_padding)
+XEN_NARGIFY_1(gxg_gtk_widget_has_grab_w, gxg_gtk_widget_has_grab)
+XEN_NARGIFY_2(gxg_gtk_widget_set_visible_w, gxg_gtk_widget_set_visible)
+XEN_NARGIFY_1(gxg_gtk_widget_get_visible_w, gxg_gtk_widget_get_visible)
+#endif
+
 #if HAVE_CAIRO_CREATE
 XEN_NARGIFY_1(gxg_cairo_create_w, gxg_cairo_create)
 XEN_NARGIFY_0(gxg_cairo_version_w, gxg_cairo_version)
@@ -42130,6 +42208,17 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gtk_widget_get_has_window_w gxg_gtk_widget_get_has_window
 #define gxg_gtk_widget_get_app_paintable_w gxg_gtk_widget_get_app_paintable
 #define gxg_gtk_widget_get_double_buffered_w gxg_gtk_widget_get_double_buffered
+#endif
+
+#if HAVE_GTK_WIDGET_GET_VISIBLE
+#define gxg_gdk_window_get_cursor_w gxg_gdk_window_get_cursor
+#define gxg_gtk_file_chooser_set_create_folders_w gxg_gtk_file_chooser_set_create_folders
+#define gxg_gtk_file_chooser_get_create_folders_w gxg_gtk_file_chooser_get_create_folders
+#define gxg_gtk_icon_view_set_item_padding_w gxg_gtk_icon_view_set_item_padding
+#define gxg_gtk_icon_view_get_item_padding_w gxg_gtk_icon_view_get_item_padding
+#define gxg_gtk_widget_has_grab_w gxg_gtk_widget_has_grab
+#define gxg_gtk_widget_set_visible_w gxg_gtk_widget_set_visible
+#define gxg_gtk_widget_get_visible_w gxg_gtk_widget_get_visible
 #endif
 
 #if HAVE_CAIRO_CREATE
@@ -46090,6 +46179,17 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_widget_get_double_buffered, gxg_gtk_widget_get_double_buffered_w, 1, 0, 0, H_gtk_widget_get_double_buffered);
 #endif
 
+#if HAVE_GTK_WIDGET_GET_VISIBLE
+  XG_DEFINE_PROCEDURE(gdk_window_get_cursor, gxg_gdk_window_get_cursor_w, 1, 0, 0, H_gdk_window_get_cursor);
+  XG_DEFINE_PROCEDURE(gtk_file_chooser_set_create_folders, gxg_gtk_file_chooser_set_create_folders_w, 2, 0, 0, H_gtk_file_chooser_set_create_folders);
+  XG_DEFINE_PROCEDURE(gtk_file_chooser_get_create_folders, gxg_gtk_file_chooser_get_create_folders_w, 1, 0, 0, H_gtk_file_chooser_get_create_folders);
+  XG_DEFINE_PROCEDURE(gtk_icon_view_set_item_padding, gxg_gtk_icon_view_set_item_padding_w, 2, 0, 0, H_gtk_icon_view_set_item_padding);
+  XG_DEFINE_PROCEDURE(gtk_icon_view_get_item_padding, gxg_gtk_icon_view_get_item_padding_w, 1, 0, 0, H_gtk_icon_view_get_item_padding);
+  XG_DEFINE_PROCEDURE(gtk_widget_has_grab, gxg_gtk_widget_has_grab_w, 1, 0, 0, H_gtk_widget_has_grab);
+  XG_DEFINE_PROCEDURE(gtk_widget_set_visible, gxg_gtk_widget_set_visible_w, 2, 0, 0, H_gtk_widget_set_visible);
+  XG_DEFINE_PROCEDURE(gtk_widget_get_visible, gxg_gtk_widget_get_visible_w, 1, 0, 0, H_gtk_widget_get_visible);
+#endif
+
 #if HAVE_CAIRO_CREATE
   XG_DEFINE_PROCEDURE(cairo_create, gxg_cairo_create_w, 1, 0, 0, H_cairo_create);
   XG_DEFINE_PROCEDURE(cairo_version, gxg_cairo_version_w, 0, 0, 0, H_cairo_version);
@@ -48650,7 +48750,7 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("06-Aug-09"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("13-Aug-09"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

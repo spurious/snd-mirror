@@ -36496,6 +36496,13 @@
       (test (letrec (1 2) #t) 'error)
       (test (call/cc abs) 'error)
       (test (case #t ((1 2) (3 4)) -1) 'error)
+      (test (quote . -1) 'error)
+      (test (set! . -1) 'error)
+      (test (and . #t) 'error)
+      (test (and 1 . 2) 'error)
+      (test (quote 1 1) 'error)
+      (test (quote . 1) 'error)
+      (test (quote . (1 2)) 'error)
 
       (let ((d 3.14)
 	    (i 32)
@@ -40201,8 +40208,179 @@ expt error > 1e-6 around 2^-46.506993328423
 		argls))
 	     argls))
 	  argls))
-       ops)
-      )))
+       ops)))
+
+  (let ((ops (list 'lambda 'define 'quote 'if 'begin 'set! 'let 'let* 'letrec 'cond 'case 'and 'or 'do
+		   'call/cc 'apply 'for-each 'map 'values 'call-with-values 'dynamic-wind))
+
+	(args (list #t #f 
+		    -1 0 1 1.5 1.0+1.0i 3/4 (expt 2 30)
+		    (list 1 2) (cons 1 2) '() '((1 2) (3 4)) '((1 (2)) (((3) 4)))
+		    '#(1 2) (vector 1 #\a '(3)) (make-vector 0)
+		    (let ((x 3)) (lambda (y) (+ x y))) abs (lambda args args)
+		    "hi" "" 
+		    'hi :hi 
+		    #\a #\newline 
+		    (call/cc (lambda (a) a))
+		    (make-hash-table 256)
+		    (symbol->value '_?__undefined__?_)                  ; -> #<undefined> hopefully
+		    (vector-fill! (vector 0) 0)                         ; -> #<unspecified>?
+		    (with-input-from-string "" (lambda () (read-char))) ; -> #<eof>?
+		    (make-random-state 1234))))
+    (for-each
+     (lambda (op)
+       (for-each
+	(lambda (arg)
+	  (catch #t
+		 (lambda () 
+		   (eval (list op arg)))
+		 (lambda args
+		   #f)))
+	
+	args))
+     ops)
+    
+    (for-each
+     (lambda (op)
+       (for-each
+	(lambda (arg1)
+	  (for-each
+	   (lambda (arg2)
+	     (catch #t
+		    (lambda () 
+		      (eval (list op arg1 arg2)))
+		    (lambda args
+		      #f)))
+	   args))
+	args))
+     ops)
+    
+    (for-each
+     (lambda (op)
+       (for-each
+	(lambda (arg)
+	  (catch #t
+		 (lambda () 
+		   (eval (cons op arg)))
+		 (lambda args
+		   #f)))
+	args))
+     ops)
+
+    (for-each
+     (lambda (op)
+       (for-each
+	(lambda (arg1)
+	  (for-each
+	   (lambda (arg2)
+	     (catch #t
+		    (lambda () 
+		      (eval (list op (cons arg1 arg2))))
+		    (lambda args
+		      #f)))
+	   args))
+	args))
+     ops)
+
+    (for-each
+     (lambda (op)
+       (for-each
+	(lambda (arg1)
+	  (for-each
+	   (lambda (arg2)
+	     (for-each
+	      (lambda (arg3)
+		(catch #t
+		       (lambda () 
+			 (eval (list op arg1 arg2 arg3)))
+		       (lambda args
+			 #f)))
+	      args))
+	   args))
+	args))
+     ops)
+    
+    (for-each
+     (lambda (op)
+       (for-each
+	(lambda (arg1)
+	  (for-each
+	   (lambda (arg2)
+	     (for-each
+	      (lambda (arg3)
+		(catch #t
+		       (lambda () 
+			 (eval (list op (list arg1 arg2 arg3))))
+		       (lambda args
+			 #f)))
+	      args))
+	   args))
+	ops))
+     ops)
+    
+    (for-each
+     (lambda (op)
+       (for-each
+	(lambda (arg1)
+	  (for-each
+	   (lambda (arg2)
+	     (for-each
+	      (lambda (arg3)
+		(catch #t
+		       (lambda () 
+			 (eval (list op arg1 (list arg2 arg3))))
+		       (lambda args
+			 #f)))
+	      args))
+	   ops))
+	args))
+     ops)
+    
+    (for-each
+     (lambda (op)
+       (for-each
+	(lambda (arg1)
+	  (for-each
+	   (lambda (arg2)
+	     (for-each
+	      (lambda (arg3)
+		(for-each
+		 (lambda (arg4)
+		   (catch #t
+			  (lambda () 
+			    (eval (list op arg1 arg2 arg3 arg4)))
+			  (lambda args
+			    #f)))
+		 args))
+	      args))
+	   args))
+	args))
+     ops)
+    
+    (for-each
+     (lambda (op)
+       (for-each
+	(lambda (arg1)
+	  (for-each
+	   (lambda (arg2)
+	     (for-each
+	      (lambda (arg3)
+		(for-each
+		 (lambda (arg4)
+		   (catch #t
+			  (lambda () 
+			    (eval (list op arg1 (list arg2 arg3) arg4)))
+			  (lambda args
+			    #f)))
+		 args))
+	      args))
+	   ops))
+	args))
+     ops)
+    
+    ))
+
+
 
 
 ;;; trouble: [bignum-precision = 128]
@@ -40217,8 +40395,13 @@ expt error > 1e-6 around 2^-46.506993328423
 ;;; I think this is a bug in mpfr
 
 
+#|
+;;; I think these are correct, but they look odd
 
-
-;;; TODO: pws tests
-;;; TODO: cwv recursive
-;;; check <eof> equality etc
+(test (eq? (if #f #t) (if #f 3)) #t)
+(test (if . (1 2)) 2)
+(test (begin . (1 2)) 2)
+(test (cond . ((1 2) ((3 4)))) 2)
+(test (and . (1 2)) 2)
+(test (or . (1 2)) 1)
+|#

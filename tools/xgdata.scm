@@ -7004,7 +7004,6 @@
 (CFNC-2173 "gboolean gtk_widget_get_double_buffered GtkWidget* widget")
 
 
-#|
 ;;; 2.17.7
 
 (CFNC-2177 "GdkCursor* gdk_window_get_cursor GdkWindow* window")
@@ -7015,7 +7014,8 @@
 (CFNC-2177 "gboolean gtk_widget_has_grab GtkWidget* widget")
 (CFNC-2177 "void gtk_widget_set_visible GtkWidget* widget gboolean visible")
 (CFNC-2177 "gboolean gtk_widget_get_visible GtkWidget* widget")
-(CFNC-2177 "void gtk_widget_get_allocation GtkWidget* widget GtkAllocation* [allocation]")
+;(CFNC-2177 "void gtk_widget_get_allocation GtkWidget* widget GtkAllocation* [allocation]")
+; the struct arg is a problem for makexg.scm
 
-(CINT-2177 "GTK_FILE_CHOOSER_PROP_CREATE_FOLDERS" "GtkFileChooserProp")
-|#
+;;; (CINT-2177 "GTK_FILE_CHOOSER_PROP_CREATE_FOLDERS" "GtkFileChooserProp")
+

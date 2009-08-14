@@ -1145,8 +1145,10 @@ else
 	AC_CHECK_LIB(m, gtk_scale_add_mark, [AC_DEFINE(HAVE_GTK_SCALE_ADD_MARK)], ,$GTK_LIBS)
 	# for 2.15.1 up to 2.17.2
 	AC_CHECK_LIB(m, gtk_info_bar_new, [AC_DEFINE(HAVE_GTK_INFO_BAR_NEW)], ,$GTK_LIBS)	
-	# for 2.17.3|4
+	# for 2.17.3|4|5|6
 	AC_CHECK_LIB(m, gtk_status_icon_get_title, [AC_DEFINE(HAVE_GTK_STATUS_ICON_GET_TITLE)], ,$GTK_LIBS)
+	# for 2.17.7
+	AC_CHECK_LIB(m, gtk_widget_get_visible, [AC_DEFINE(HAVE_GTK_WIDGET_GET_VISIBLE)], ,$GTK_LIBS)
 
 	# for gdk|pango_cairo 
 	AC_CHECK_LIB(m, gdk_cairo_create, 

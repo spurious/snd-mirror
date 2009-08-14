@@ -10338,11 +10338,11 @@ static s7_pointer g_vector_dimensions(s7_scheme *sc, s7_pointer args)
     car(compare_proc_args) = (*(s7_pointer *)v1);
     cadr(compare_proc_args) = (*(s7_pointer *)v2);
 
-    push_stack(sc, OP_EVAL_DONE, sc->args, sc->code); 
-    sc->args = compare_proc_args;
-    sc->code = compare_proc;
-    eval(sc, OP_APPLY);
-    if (is_true(sc, sc->value))
+    push_stack(compare_sc, OP_EVAL_DONE, compare_sc->args, compare_sc->code); 
+    compare_sc->args = compare_proc_args;
+    compare_sc->code = compare_proc;
+    eval(compare_sc, OP_APPLY);
+    if (is_true(compare_sc, compare_sc->value))
       return(-1);
     return(1);
   }
@@ -11701,8 +11701,6 @@ static s7_pointer g_fill(s7_scheme *sc, s7_pointer args)
               (lambda () 
 	        ((,encap))  ; restore saved vars
                 (close-encapsulator ,encap))))))
- 
-    TODO: run for generics, also run set! of globals?
 */
 
 #if WITH_ENCAPSULATION
@@ -12440,9 +12438,6 @@ If untrace is called with no arguments, all functions are removed, turning off a
 static void trace_apply(s7_scheme *sc)
 {
   int i;
-
-  /* TODO: how to trace setter [s7_object_set?] mus-srate for example */
-  /*          scheme-defined pws setters are traced, but the function name is missing, and an explicit indication that it's a setter */
 
 #if HAVE_PTHREADS
   int id;
@@ -14640,6 +14635,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       
     case OP_QUOTE:
+      if ((!is_pair(sc->code)) ||                /* (quote . -1) */
+	  (cdr(sc->code) != sc->NIL))            /* (quote . (1 2)) or (quote 1 1) */
+	return(eval_error(sc, "quote syntax error ~A", sc->code));
+
       sc->value = car(sc->code);
       pop_stack(sc);
       goto START;
@@ -14738,12 +14737,15 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       sc->code = s7_cons(sc, s7_cons(sc, sc->value, sc->args), sc->code);
 
       
-    case OP_SET0:                                             /* entry for set! */
-      if (s7_is_immutable(car(sc->code)))                     /* (set! pi 3) */
+    case OP_SET0:                                                 /* entry for set! */
+      if (!is_pair(sc->code))
+	return(eval_error(sc, "set! syntax error ~A", sc->code)); /* set! . 1) */
+
+      if (s7_is_immutable(car(sc->code)))                         /* (set! pi 3) */
 	return(eval_error(sc, "set!: can't alter immutable object: ~S", car(sc->code)));
       
       if ((cdr(sc->code) == sc->NIL) ||
-	  (cddr(sc->code) != sc->NIL))                        /* (set! var) */
+	  (cddr(sc->code) != sc->NIL))                            /* (set! var) */
 	return(eval_error(sc, "~A: wrong number of args to set!", sc->code));
 
       if (is_pair(car(sc->code))) /* has accessor */
@@ -14918,7 +14920,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       
     case OP_LET_STAR0:
-      if ((!is_pair(cdr(sc->code))) ||           /* (let*) */
+      if ((!is_pair(sc->code)) ||                /* (let* . 1) */
+	  (!is_pair(cdr(sc->code))) ||           /* (let*) */
 	  ((!is_pair(car(sc->code))) &&          /* (let* 1 ...), also there's no named let* */
 	   (car(sc->code) != sc->NIL)))
 	return(eval_error(sc, "let* syntax error: ~A", sc->code));
@@ -14980,7 +14983,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       
     case OP_LETREC0:
-      if ((!is_pair(cdr(sc->code))) ||            /* (letrec) */
+      if ((!is_pair(sc->code)) ||                 /* (letrec . 1) */
+	  (!is_pair(cdr(sc->code))) ||            /* (letrec) */
 	  ((!is_pair(car(sc->code))) &&           /* (letrec 1 ...) */
 	   (car(sc->code) != sc->NIL)))
 	return(eval_error(sc, "letrec syntax error: ~A", sc->code));
@@ -15122,6 +15126,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  pop_stack(sc);
 	  goto START;
 	}
+      if (!is_pair(sc->code))
+	return(eval_error(sc, "and: syntax error: ~A", sc->code));
       push_stack(sc, OP_AND1, sc->NIL, cdr(sc->code));
       sc->code = car(sc->code);
       goto EVAL;
@@ -15134,6 +15140,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  pop_stack(sc);
 	  goto START;
 	}
+      if (!is_pair(sc->code))
+	return(eval_error(sc, "and: syntax error: ~A", sc->code));
+
       if (cdr(sc->code) != sc->NIL)
 	push_stack(sc, OP_AND1, sc->NIL, cdr(sc->code));
       sc->code = car(sc->code);
@@ -15147,6 +15156,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  pop_stack(sc);
 	  goto START;
 	}
+      if (!is_pair(sc->code))
+	return(eval_error(sc, "or: syntax error: ~A", sc->code));
       push_stack(sc, OP_OR1, sc->NIL, cdr(sc->code));
       sc->code = car(sc->code);
       goto EVAL;
@@ -15159,6 +15170,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  pop_stack(sc);
 	  goto START;
 	}
+      if (!is_pair(sc->code))
+	return(eval_error(sc, "and: syntax error: ~A", sc->code));
+
       if (cdr(sc->code) != sc->NIL)
 	push_stack(sc, OP_OR1, sc->NIL, cdr(sc->code));
       sc->code = car(sc->code);
@@ -15279,8 +15293,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	}
       else sc->z = cdr(sc->code);
 
-      /* TODO: could defmacro* simply use LAMBDA_STAR here and CLOSURE_STAR later? no, we get there as T_MACRO */
-	
       sc->code = s7_cons(sc, 
 			 sc->LAMBDA,
 			 s7_cons(sc, 
@@ -15449,7 +15461,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  longjmp(sc->goto_start, 1);
 	}
       return(sc->UNSPECIFIED); /* not executed I hope */
-      /* TODO: add *error-hook* tests to s7test.scm */
 
 
     case OP_ERROR_QUIT:
@@ -21266,3 +21277,8 @@ s7_scheme *s7_init(void)
 /* PERHAPS: encap frame|mixer-set! */
 /* PERHAPS: define! and maybe env-let */
 /* PERHAPS: push|pop-environment beneath define! (push-environment e alist) */
+/* TODO: run for generics, also run set! of globals? */
+/* TODO: how to trace setter [s7_object_set?] mus-srate for example */
+/*          scheme-defined pws setters are traced, but the function name is missing, and an explicit indication that it's a setter */
+/* TODO: add *error-hook* tests to s7test.scm */
+
