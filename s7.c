@@ -9888,7 +9888,7 @@ bool s7_is_vector(s7_pointer p)
 }
 
 
-s7_pointer s7_make_vector(s7_scheme *sc, int len) 
+static s7_pointer s7_make_vector_1(s7_scheme *sc, int len, bool filled) 
 {
   s7_pointer x;
   x = new_cell(sc);
@@ -9896,14 +9896,31 @@ s7_pointer s7_make_vector(s7_scheme *sc, int len)
   vector_length(x) = len;
   if (len > 0)
     {
+      if (len >= (1 << (8 * sizeof(size_t) - sizeof(s7_pointer))))
+	/* malloc len arg is size_t (bytes), sizeof(size_t)=4 on 32-bit, 8 on 64-bit */
+	{
+	  if (sizeof(size_t) == 4)
+	    return(s7_out_of_range_error(sc, "make-vector", 1, s7_make_integer(sc, len), "less than about 2^28 probably"));
+	  return(s7_out_of_range_error(sc, "make-vector", 1, s7_make_integer(sc, len), "less than about 2^56 probably"));
+	}
+
       vector_elements(x) = (s7_pointer *)malloc(len * sizeof(s7_pointer));
-      s7_vector_fill(sc, x, sc->NIL);
+      if (!(vector_elements(x)))
+	return(s7_error(sc, s7_make_symbol(sc, "out-of-memory"), s7_make_string(sc, "make-vector allocation failed!")));
+
+      if (filled) s7_vector_fill(sc, x, sc->NIL);
     }
   else vector_elements(x) = NULL;
 #if WITH_MULTIDIMENSIONAL_VECTORS
   x->object.vector.dim_info = NULL;
 #endif
   return(x);
+}
+
+
+s7_pointer s7_make_vector(s7_scheme *sc, int len)
+{
+  return(s7_make_vector_1(sc, len, true));
 }
 
 
@@ -9933,7 +9950,7 @@ static s7_pointer s7_vector_copy(s7_scheme *sc, s7_pointer old_vect)
   s7_pointer new_vect;
 
   len = vector_length(old_vect);
-  new_vect = s7_make_vector(sc, len);
+  new_vect = s7_make_vector_1(sc, len, false);
 
   old_v = (s7_pointer *)(vector_elements(old_vect));
   new_v = (s7_pointer *)(vector_elements(new_vect));
@@ -10038,7 +10055,7 @@ static bool vectors_equal(s7_pointer x, s7_pointer y)
 s7_pointer s7_make_and_fill_vector(s7_scheme *sc, int len, s7_pointer fill)
 {
   s7_pointer vect;
-  vect = s7_make_vector(sc, len);
+  vect = s7_make_vector_1(sc, len, false);
   if (fill != sc->NIL)
     s7_vector_fill(sc, vect, fill);
   return(vect);
@@ -10055,7 +10072,7 @@ static s7_pointer g_vector(s7_scheme *sc, s7_pointer args)
   if (len < 0) 
     return(s7_wrong_type_arg_error(sc, "vector", 1, car(args), "a proper list"));
   
-  vec = s7_make_vector(sc, len);
+  vec = s7_make_vector_1(sc, len, false);
   if (len > 0)
     {
       s7_pointer x;
@@ -10259,9 +10276,8 @@ returns a 2 dimensional vector of 6 total elements, all initialized to 1.0."
   if (cdr(args) != sc->NIL) 
     fill = cadr(args);
 
-  vec = s7_make_vector(sc, len);
-  if (fill != sc->NIL)
-    s7_vector_fill(sc, vec, fill);
+  vec = s7_make_vector_1(sc, len, false);
+  s7_vector_fill(sc, vec, fill);
 
 #if WITH_MULTIDIMENSIONAL_VECTORS
   if ((is_pair(x)) &&
@@ -12820,14 +12836,6 @@ GOT_CATCH:
 	  /* if the *error-hook* function triggers an error, we had better not have *error-hook* still set! */
 
 	  push_stack(sc, OP_ERROR_HOOK_QUIT, sc->NIL, error_hook); /* restore *error-hook* upon successful evaluation */
-	  /* PERHAPS: ideally I think we'd save the goto_start addr on the stack also --
-	   *   if the caller's error-hook function calls s7_call in some form, that jump address
-	   *   probably gets pushed on the C stack (recursive s7_calls), and could I suppose
-	   *   get confused in some way.
-	   *   s7_make_ulong[_long](sc, (sc->longjmp_ok) ? sc->goto_start : 0) for sc->NIL above
-	   *   and after pop_stack, s7_ulong[_long](sc->args)? (and set args=sc->NIL)
-	   */
-
 	  sc->args = make_list_2(sc, type, info);
 	  sc->code = error_hook;
 	  sc->op = OP_APPLY;
@@ -21278,7 +21286,6 @@ s7_scheme *s7_init(void)
  */
 
 /* TODO: error reports should show a lot more info -- the entire call, a stacktrace, file and (current) line number */
-/* TODO: example of s7 as emacs subjob */
 /* PERHAPS: encap frame|mixer-set! */
 /* PERHAPS: define! and maybe env-let */
 /* PERHAPS: push|pop-environment beneath define! (push-environment e alist) */

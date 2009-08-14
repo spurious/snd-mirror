@@ -371,10 +371,12 @@
 				   ;;(c-display "after" after "\n")
 				   (if (eqv? key :where)
 				       (stalin-macroexpand `(let ((,(car after) ,(cadr after)))
-							      (,@(butlast before 1)))
+							      (,@(butlast before 1)
+							       ,@(cddr after)))
 							   :include-make-coroutine include-make-coroutine)
 				       (stalin-macroexpand `(if ,(car after)
-								(,@(butlast before 1)))
+								(,@(butlast before 1)
+								 ,@(cdr after)))
 							   :include-make-coroutine include-make-coroutine))))))))
 		      
 		    :elsefunc (lambda (expr)
@@ -1562,7 +1564,6 @@ old bus.
 
 
 
-
 ;;;;; Alsa midi
 
 ;; midi-to-freq made by looking at the pd source
@@ -1572,7 +1573,11 @@ old bus.
         (else
          (* 8.17579891564 (exp (* .0577622650 freq))))))
 
-(define-stalin midi-to-hz midi-to-freq)
+(define-stalin midi->hz midi-to-freq)
+
+(define-stalin (midi->radians midi)
+  (hz->radians (midi->hz midi)))
+
 
 (add-stalin-ec 'midi_eventnum '(<int> midi_eventnum 0))
 (add-stalin-ec 'midi_control '(<int> midi_control[500] {0}))
@@ -4455,15 +4460,18 @@ had to be put into macroexpand instead.
                                 (> block_enter_time 0)
 				(== cpu_check_counter 0)
                                 (> (jack_get_time)
-                                   (+ block_enter_time ,(c-integer (* 1
-                                                                      (/ (* 1000000 *rt-block-size*)
-                                                                         (rte-samplerate)))))))
-                           (rt_debug (string
-                                      ,(<-> "Using too much CPU. Stopping instrument in case this is an endless loop."
-                                            "In case not, use the :runtime-checks option to turn off off safety checks,\\n"
-                                            "programs usually runs magnitudes faster when doing so.\\n\\nLast visited: (newest->oldest)")))
-                           (return 2))
-                          (else
+                                   (+ block_enter_time 1000000)));,(c-integer (* 1
+                                                                  ;    (/ (* 1000000 *rt-block-size*)
+                                                                   ;      (rte-samplerate)))))))
+			   (rt_debug (string
+                                      ,(<-> "Using too much CPU. (%fms-%fms=%fms) Stopping instrument in case this is an endless loop."
+                                            "In case not, it might help to turn off runtime checks using the :runtime-checks option for <rt-stalin.\\n"))
+				     (cast <float> (/ (cast <double> (jack_get_time)) 1000.0))
+				     (cast <float> (/ (cast <double> block_enter_time) 1000.0))
+				     (- (cast <float> (/ (cast <double> (jack_get_time)) 1000.0))
+					(cast <float> (/ (cast <double> block_enter_time) 1000.0))))
+			   (return 2))
+			  (else
                            (return 0)))))
            
            "#define fprintf(a,...) rt_debug(__VA_ARGS__)"
