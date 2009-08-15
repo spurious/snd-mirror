@@ -80,14 +80,8 @@
  *
  *   things I ought to add/change:
  *        perhaps find(-if), remove etc from CL?
- *        defmacro* define-macro*
+ *        defmacro* define-macro* 
  *        perhaps settable numerator denominator imag-part real-part angle magnitude
- *        define!
- *
- *   scheme funcs s7 does not need: 
- *        string-set! string-ref vector-set! vector-ref inexact? exact? values call-with-values
- *        vector-length string-length string-copy string-fill! vector-fill! list-ref (and list-set!)
- *        (and hash-table-ref hash-table-set! hash-table-size, but they are extensions)
  *
  *
  * Mike Scholz provided the FreeBSD support (complex trig funcs, etc)
@@ -1818,7 +1812,7 @@ static s7_pointer add_to_environment(s7_scheme *sc, s7_pointer env, s7_pointer v
   s7_pointer slot;
   slot = s7_immutable_cons(sc, variable, value); 
   if (s7_is_vector(car(env))) 
-    vector_element(car(env), symbol_location(variable)) = s7_immutable_cons(sc, slot, vector_element(car(env), symbol_location(variable)));
+    vector_element(car(env), symbol_location(variable)) = s7_cons(sc, slot, vector_element(car(env), symbol_location(variable)));
   else car(env) = s7_cons(sc, slot, car(env));
   return(slot);
 } 
@@ -9914,6 +9908,7 @@ static s7_pointer s7_make_vector_1(s7_scheme *sc, int len, bool filled)
 #if WITH_MULTIDIMENSIONAL_VECTORS
   x->object.vector.dim_info = NULL;
 #endif
+
   return(x);
 }
 
@@ -10056,8 +10051,7 @@ s7_pointer s7_make_and_fill_vector(s7_scheme *sc, int len, s7_pointer fill)
 {
   s7_pointer vect;
   vect = s7_make_vector_1(sc, len, false);
-  if (fill != sc->NIL)
-    s7_vector_fill(sc, vect, fill);
+  s7_vector_fill(sc, vect, fill);
   return(vect);
 }
 
@@ -13203,7 +13197,7 @@ s7_pointer s7_call(s7_scheme *sc, s7_pointer func, s7_pointer args)
       return(sc->value);
     }
 
-  push_stack(sc, OP_EVAL_STRING_DONE, sc->args, sc->code); /* this saves the current evaluation and will eventually finish this (possibly) nested call */
+  push_stack(sc, OP_EVAL_DONE, sc->args, sc->code); /* this saves the current evaluation and will eventually finish this (possibly) nested call */
   sc->args = args; 
   sc->code = func; 
   eval(sc, OP_APPLY);
@@ -13770,15 +13764,24 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     {
     case OP_READ_INTERNAL:
       sc->tok = token(sc, sc->input_port);
-      if (sc->tok == TOKEN_EOF) 
+      switch (sc->tok)
 	{
+	case TOKEN_EOF:
+	  pop_stack(sc);
+	  goto START;
+
+	case TOKEN_RIGHT_PAREN:
+	  return(read_error(sc, "unexpected close paren"));
+
+	case TOKEN_COMMA:
+	  return(read_error(sc, "unexpected comma"));
+
+	default:
+	  sc->value = read_expression(sc);
 	  pop_stack(sc);
 	  goto START;
 	}
-      sc->value = read_expression(sc);
-      pop_stack(sc);
-      goto START;
-      
+
       
       /* g_read(p) from C 
        *   read one expr, return it, let caller deal with input port setup 
@@ -14734,7 +14737,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 							 s7_immutable_cons(sc, sc->__FUNC__, sc->code), 
 			  sc->NIL), 
 		  closure_environment(sc->value));
-
+      else
+	{
+	  if (s7_is_procedure_with_setter(sc->value))
+	    {
+	      s7_pws_t *f = (s7_pws_t *)s7_object_value(sc->value);
+	      f->name = s7_strdup(symbol_name(sc->code));
+	    }
+	}
 
       /* add the newly defined thing to the current environment */
       sc->x = s7_find_symbol_in_environment(sc, sc->envir, sc->code, false);
@@ -14881,7 +14891,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       sc->args = s7_cons(sc, sc->value, sc->args);
       if (is_pair(sc->code)) 
 	{ 
-	  if (!is_pair(car(sc->code)))          /* (let ((x)) ...) */
+	  if (!is_pair(car(sc->code)))          /* (let ((x)) ...) or (let ((x 1) . (y 2)) ...) */
 	    return(eval_error(sc, "let syntax error (no value?): ~A", car(sc->code)));
 
 	  if (!(is_pair(cdar(sc->code))))       /* (let ((x . 1))...) */
@@ -15602,10 +15612,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  return(missing_close_paren_error(sc));
 
 	default:
-	  /* fprintf(stderr, "op_read_list %s\n", s7_object_to_c_string(sc, sc->args)); */
 	  push_stack(sc, OP_READ_LIST, sc->args, sc->NIL);
 	  sc->value = read_expression(sc);
-	  /* fprintf(stderr, "op_read_list %s\n", s7_object_to_c_string(sc, sc->value)); */
 	  break;
 	}
       pop_stack(sc);
@@ -15614,7 +15622,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
     case OP_CALL_WITH_VALUES:
       /* sc->code should be the "consumer", sc->value the args (from the producer) */
-      /* fprintf(stderr, "cwv: code: %s, args: %s\n", s7_object_to_c_string(sc, sc->code), s7_object_to_c_string(sc, sc->value)); */
       if ((is_pair(sc->value)) &&
 	  (s7_is_eq(car(sc->value), sc->VALUES)))
 	sc->args = cdr(sc->value);
@@ -20676,7 +20683,7 @@ s7_scheme *s7_init(void)
   sc->key_values = sc->NIL;
 #endif
   
-  sc->global_env = s7_immutable_cons(sc, s7_make_vector(sc, SYMBOL_TABLE_SIZE), sc->NIL);
+  sc->global_env = s7_cons(sc, s7_make_vector(sc, SYMBOL_TABLE_SIZE), sc->NIL);
   sc->envir = sc->global_env;
   
   /* keep the small_ints out of the heap */
@@ -21287,10 +21294,8 @@ s7_scheme *s7_init(void)
 
 /* TODO: error reports should show a lot more info -- the entire call, a stacktrace, file and (current) line number */
 /* PERHAPS: encap frame|mixer-set! */
-/* PERHAPS: define! and maybe env-let */
-/* PERHAPS: push|pop-environment beneath define! (push-environment e alist) */
 /* TODO: run for generics, also run set! of globals? */
 /* TODO: how to trace setter [s7_object_set?] mus-srate for example */
-/*          scheme-defined pws setters are traced, but the function name is missing, and an explicit indication that it's a setter */
 /* TODO: add *error-hook* tests to s7test.scm */
 
+/* SOMEDAY: add xg example of emacs embedded */

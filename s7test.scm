@@ -4268,7 +4268,24 @@
 	(f))
       1)
 
+(let ((x 123))
+  (define (hi b) (+ b x))
+  (let ((x 321))
+    (test (hi 1) 124)
+    (set! x 322)
+    (test (hi 1) 124))
+  (set! x 124)
+  (test (hi 1) 125)
+  (let ((x 321)
+	(y (hi 1)))
+    (test y 125))
+  (let* ((x 321)
+	 (y (hi 1)))
+    (test y 125))
+  (test (hi 1) 125))
 
+(test (let ((x 123)) (begin (define x 0)) x) 0) ; this strikes me as weird, since (let ((x 123) (x 0)) x) is illegal, so...
+(test (let ((x 123)) (begin (define (hi a) (+ x a)) (define x 0)) (hi 1)) 1) ; is non-lexical reference?
 
 (for-each
  (lambda (arg)
@@ -6350,6 +6367,22 @@
       (test (let () (define-macro (hi a) `(+ ,@a)) (hi (1 2 3))) 6)
       (test (let () (define-macro (hi a) `(+ ,a 1) #f) (hi 2)) #f)
       (test (let () (define-macro (mac1 a) `',a) (equal? (mac1 (+ 1 2)) '(+ 1 2))) #t)
+
+      (begin
+	(define-macro (hi a) `(+ ,a 1))
+	(test (hi 2) 3)
+	(let ()
+	  (define (ho b) (+ 1 (hi b)))
+	  (test (ho 1) 3))
+	(let ((hi 32))
+	  (test (+ hi 1) 33))
+	(letrec ((hi (lambda (a) (if (= a 0) 0 (+ 2 (hi (- a 1)))))))
+	  (test (hi 3) 6))
+	(test (equal? '(hi 1) (quote (hi 1))) #t)
+	(test (list? '(hi 1)) #t)
+	(test (list? '(((hi 1)))) #t)
+	(test (equal? (vector (hi 1)) '#(2)) #t)
+	(test (symbol? (vector-ref '#(hi) 0)) #t))
 
       (test (string=? (let ((hi (lambda (b) (+ b 1)))) (object->string hi)) "hi") #t)
       (test (string=? (object->string 32) "32") #t)
@@ -35878,6 +35911,14 @@
 		(list "hi" '() #\a (list 1) '(1 . 2) '#(0) #f 'a-symbol (make-vector 3) abs #t (lambda (a) (+ a 1)))))
 	     (list cosh sinh tanh acosh asinh atanh))
 	    ))
+
+;      (if with-procedure-arity
+;	  (begin
+;	    (test (eval-string ",") 'error)
+;	    (test (eval-string ")") 'error)
+;	    (test (eval-string "{") 'error)
+;	    ))
+
       
       (test (string->number) 'error)
       (test (string->number 'symbol) 'error)
@@ -36512,6 +36553,10 @@
       (test (and . (1 2)) 2)
       (test (or . (1 2)) 1)
       ;; --------
+
+
+      (test (let ((!@$%^&*~|}{?><.,/`_-+=:! 1)) (+ !@$%^&*~|}{?><.,/`_-+=:! 1)) 2)
+	    
 
       (let ((d 3.14)
 	    (i 32)
@@ -40402,7 +40447,3 @@ expt error > 1e-6 around 2^-46.506993328423
 ;;; but:
 ;;;   (cos (bignum "1.0000000000000000000000000000000000e32")) gets the right answer, so who truncates?
 ;;; I think this is a bug in mpfr
-
-
-
-

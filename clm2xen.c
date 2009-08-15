@@ -1215,16 +1215,34 @@ static XEN s7_mus_length(s7_scheme *sc, XEN obj)
 static XEN s7_mus_copy(s7_scheme *sc, XEN obj)
 {
   /* mus_copy in clm.c first */
+
+  mus_any *g;
+  g = XEN_TO_MUS_ANY(obj);
+
+  if (mus_frame_p(g))
+    return(mus_xen_to_object(mus_any_to_mus_xen(mus_frame_copy(g))));
+  if (mus_mixer_p(g))
+    return(mus_xen_to_object(mus_any_to_mus_xen(mus_mixer_copy(g))));
+
   return(XEN_FALSE);
 }
 
 static XEN s7_mus_fill(s7_scheme *sc, XEN obj, XEN val)
 {
   /* frame mixer, perhaps anything with an array? mus_fill method? */
+
+  mus_any *g;
+  g = XEN_TO_MUS_ANY(obj);
+
+  if (mus_frame_p(g))
+    return(C_TO_XEN_DOUBLE(mus_frame_fill(g, XEN_TO_C_DOUBLE(val))));
+  if (mus_mixer_p(g))
+    return(C_TO_XEN_DOUBLE(mus_mixer_fill(g, XEN_TO_C_DOUBLE(val))));
+  
   return(XEN_FALSE);
 }
-/* TODO: clm2xen length (of defgen -- it's a list!) copy fill */
 #endif
+
 
 XEN mus_xen_to_object(mus_xen *gn) /* global for user-defined gens */
 {

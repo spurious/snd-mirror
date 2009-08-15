@@ -6648,6 +6648,27 @@ mus_float_t mus_frame_set(mus_any *uf, int chan, mus_float_t val)
 }
 
 
+mus_any *mus_frame_copy(mus_any *uf)
+{
+  mus_frame *f = (mus_frame *)uf;
+  mus_frame *nf;
+  nf = (mus_frame *)mus_make_empty_frame(f->chans);
+  memcpy((void *)(nf->vals), (void *)(f->vals), f->chans * sizeof(mus_float_t));
+  return((mus_any *)nf);
+}
+
+
+mus_float_t mus_frame_fill(mus_any *uf, mus_float_t val)
+{
+  int i;
+  mus_frame *f = (mus_frame *)uf;
+  for (i = 0; i < f->chans; i++)
+    f->vals[i] = val;
+  return(val);
+}
+
+
+
 /* ---------------- mixer ---------------- */
 
 typedef struct {
@@ -6855,6 +6876,30 @@ mus_any *mus_make_mixer(int chans, ...)
 	}
     }
   return((mus_any *)mx);
+}
+
+
+mus_any *mus_mixer_copy(mus_any *uf)
+{
+  int i, j;
+  mus_mixer *f = (mus_mixer *)uf;
+  mus_mixer *nf;
+  nf = (mus_mixer *)mus_make_empty_mixer(f->chans);
+  for (i = 0; i < f->chans; i++)
+    for (j = 0; j < f->chans; j++)
+      nf->vals[i][j] = f->vals[i][j];
+  return((mus_any *)nf);
+}
+
+
+mus_float_t mus_mixer_fill(mus_any *uf, mus_float_t val)
+{
+  int i, j;
+  mus_mixer *f = (mus_mixer *)uf;
+  for (i = 0; i < f->chans; i++)
+    for (j = 0; j < f->chans; j++)
+      f->vals[i][j] = val;
+  return(val);
 }
 
 

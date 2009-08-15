@@ -321,6 +321,7 @@ s7_pointer s7_hash_table_set(s7_scheme *sc, s7_pointer table, const char *name, 
    *   use vector-ref and cdr down the lists.  An entry defaults to '() -- see "apropos" below
    */
 
+
 bool s7_is_input_port(s7_scheme *sc, s7_pointer p);                         /* (input-port? p) */
 bool s7_is_output_port(s7_scheme *sc, s7_pointer p);                        /* (output-port? p) */
 s7_pointer s7_current_input_port(s7_scheme *sc);                            /* (current-input-port) */
@@ -414,20 +415,28 @@ s7_pointer s7_current_environment(s7_scheme *sc);                           /* (
 	         (apropos-1 frame)))
            (current-environment)))
    *
-   * It's also possible to change the current environment by hand:
+   * It's also possible to change the current environment:
    *
-   *   (define (extend-environment e binding)
-   *     (if (vector? (car e))
-   *         (begin
-   *           (set-cdr! e (list (car e)))
-   *           (set-car! e (list binding)))
-   *         (set-car! e (cons binding (car e)))))
-   *
+      (define (push-environment e binding)
+        (if (vector? (car e))
+            (begin
+              (set-cdr! e (list (car e)))
+              (set-car! e (list binding)))
+            (set-car! e (cons binding (car e)))))
+   
+      (define (pop-environment e)
+        (if (not (vector? (car e)))
+            (begin
+              (set-car! e (cadr e))
+              (set-cdr! e (cddr e)))))
+   
+      (define-macro (define! e var val) 
+        `(push-environment ,e (cons ',var ,val)))
+
    *   (let ((x 3)) 
-   *     (extend-environment (current-environment) (cons 'hi 21)) 
+   *     (define! (current-environment) hi 21)
    *     (+ x hi))
-   *
-   * which returns 24.  Then define! can be a macro (begin (define...) (extend-env...) ...)?
+   *   -> 24
    */
 
 s7_pointer s7_name_to_value(s7_scheme *sc, const char *name);
@@ -1553,6 +1562,7 @@ int main(int argc, char **argv)
  * 
  *        s7 changes
  *
+ * 14-Aug:    define-expansion.
  * 7-Aug:     s7_define_function_with_setter. 
  *            s7_quit and example of signal handling.
  * 6-Aug:     encapsulation.  s7_define_set_function.  s7_new_type_x.  

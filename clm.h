@@ -2,10 +2,11 @@
 #define CLM_H
 
 #define MUS_VERSION 4
-#define MUS_REVISION 26
-#define MUS_DATE "27-July-09"
+#define MUS_REVISION 27
+#define MUS_DATE "17-Aug-09"
 
 /*
+ * 17-Aug:     mus_frame|mixer_copy|fill.
  * 27-Jul:     mus_float_t for Float, and mus_long_t for off_t.
  * 15-Jun:     mus_rectangular_to_magnitudes (polar, but ignore phases).
  * 11-Jun:     mus_cepstrum.
@@ -659,6 +660,8 @@ MUS_EXPORT mus_any *mus_frame_scale(mus_any *uf1, mus_float_t scl, mus_any *ures
 MUS_EXPORT mus_any *mus_frame_offset(mus_any *uf1, mus_float_t offset, mus_any *ures);
 MUS_EXPORT mus_float_t mus_frame_ref(mus_any *f, int chan);
 MUS_EXPORT mus_float_t mus_frame_set(mus_any *f, int chan, mus_float_t val);
+MUS_EXPORT mus_any *mus_frame_copy(mus_any *uf);
+MUS_EXPORT mus_float_t mus_frame_fill(mus_any *uf, mus_float_t val);
 
 MUS_EXPORT bool mus_mixer_p(mus_any *ptr);
 MUS_EXPORT mus_any *mus_make_empty_mixer(int chans);
@@ -674,6 +677,9 @@ MUS_EXPORT mus_any *mus_mixer_add(mus_any *f1, mus_any *f2, mus_any *res);
 MUS_EXPORT mus_any *mus_mixer_scale(mus_any *uf1, mus_float_t scaler, mus_any *ures);
 MUS_EXPORT mus_any *mus_mixer_offset(mus_any *uf1, mus_float_t offset, mus_any *ures);
 MUS_EXPORT mus_any *mus_make_scalar_mixer(int chans, mus_float_t scalar);
+MUS_EXPORT mus_any *mus_mixer_copy(mus_any *uf);
+MUS_EXPORT mus_float_t mus_mixer_fill(mus_any *uf, mus_float_t val);
+
 MUS_EXPORT mus_any *mus_frame_to_frame_mono(mus_any *frame, mus_any *mix, mus_any *out);
 MUS_EXPORT mus_any *mus_frame_to_frame_stereo(mus_any *frame, mus_any *mix, mus_any *out);
 MUS_EXPORT mus_any *mus_frame_to_frame_mono_to_stereo(mus_any *frame, mus_any *mix, mus_any *out);
