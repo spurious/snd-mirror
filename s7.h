@@ -32,10 +32,13 @@ typedef double s7_Double;
    *
    *    *load-path*             a list of directory names that "load" searches for scheme input files (initially '())
    *    *vector-print-length*   how many elements of a vector are printed (initially 8)
-   *    *features*              a list of symbols describing what is current available (initially '(s7))
+   *    *features*              a list of symbols describing what is current available (initially '(s7)).
+   *                               "provide" adds a symbol to the list, 
+   *                               "provided?" returns #t if its symbol arg is in the list.
    *    __func__                equivalent to C's __func__.  The symbol of the function currently being defined.
-   *    *load-hook*             called before a file is loaded.
-   *    *error-hook*            called upon error.
+   *    *load-hook*             called before a file is loaded, a function of one arg, the name of the file.
+   *    *error-hook*            called upon error, a function of two args, 
+   *                               the error type (a symbol), and the info about it (a list).
    *
    * s7 constants:
    *
@@ -57,9 +60,10 @@ typedef double s7_Double;
    *    procedure-arity         a list describing the arglist of a function: '(required-args optional-args rest-arg)
    *    procedure-source        returns the source (a list) of a procedure
    *    help                    tries to find a help string associated with its argument
-   *    symbol-calls            if profiling is enabled, this returns the number of times its argument (a symbol) has been called
+   *    symbol-calls            if profiling is enabled, returns the number of times its argument (a symbol) has been called
    *    trace and untrace       add or subtract functions from the trace list.
-   *    stacktrace              show a stack trace (in error handler, use (stacktrace), at break point use (stacktrace break-continuation))
+   *    stacktrace              show a stack trace (in error handler, use (stacktrace), 
+   *                               at break point use (stacktrace break-continuation))
    *
    *    and various others mentioned at the start of s7.c -- nearly every Scheme implementation includes
    *    stuff like logior, sinh, read-line, format, define*, etc.  See also the start of s7.c for choices
@@ -111,20 +115,12 @@ s7_scheme *s7_init(void);
 typedef s7_pointer (*s7_function)(s7_scheme *sc, s7_pointer args);   /* obj = func(s7, args) -- args is a list of arguments */
 
 
-s7_pointer s7_F(s7_scheme *sc);                                      /* #f */
-s7_pointer s7_T(s7_scheme *sc);                                      /* #t */
-s7_pointer s7_NIL(s7_scheme *sc);                                    /* () */
-s7_pointer s7_UNDEFINED(s7_scheme *sc);                              /* #<undefined> */
-s7_pointer s7_UNSPECIFIED(s7_scheme *sc);                            /* #<unspecified> */
-bool s7_is_unspecified(s7_scheme *sc, s7_pointer val);               /*     returns true if val is #<unspecified> */
-s7_pointer s7_EOF_OBJECT(s7_scheme *sc);                             /* #<eof> */
-
-  /* same but lower-case -- I'll probably remove the upper-case versions someday */
 s7_pointer s7_f(s7_scheme *sc);                                      /* #f */
 s7_pointer s7_t(s7_scheme *sc);                                      /* #t */
 s7_pointer s7_nil(s7_scheme *sc);                                    /* () */
 s7_pointer s7_undefined(s7_scheme *sc);                              /* #<undefined> */
 s7_pointer s7_unspecified(s7_scheme *sc);                            /* #<unspecified> */
+bool s7_is_unspecified(s7_scheme *sc, s7_pointer val);               /*     returns true if val is #<unspecified> */
 s7_pointer s7_eof_object(s7_scheme *sc);                             /* #<eof> */
 
   /* these are the scheme constants; they do not change in value during a run, and
@@ -493,6 +489,7 @@ bool s7_is_constant(s7_pointer p);
    *
    * s7_define_variable is simply s7_define with string->symbol and the global environment.
    * s7_define_constant is s7_define_variable but makes its "definee" immutable.
+   * s7_define is equivalent to define! in scheme (see below).
    */
 
 bool s7_is_function(s7_pointer p); 
@@ -1554,6 +1551,16 @@ int main(int argc, char **argv)
  * etc
  */
 #endif
+
+
+
+  /* backwards compatibility... */
+#define s7_F(Sc) s7_f(Sc)
+#define s7_T(Sc) s7_t(Sc)
+#define s7_NIL(Sc) s7_nil(Sc)
+#define s7_UNDEFINED(Sc) s7_undefined(Sc)
+#define s7_UNSPECIFIED(Sc) s7_unspecified(Sc)
+#define s7_EOF_OBJECT(Sc) s7_eof_object(Sc)
 
 
 

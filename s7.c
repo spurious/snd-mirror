@@ -69,7 +69,7 @@
  *        port-line-number, port-filename
  *        object->string, eval-string
  *        reverse!, list-set!, sort!
- *        gc, quit, *load-hook*, *error-hook*
+ *        gc, quit, *load-hook*, *error-hook*, *error-info*
  *        *features*, *load-path*, *vector-print-length*
  *        define-constant, pi, most-positive-fixnum, most-negative-fixnum, constant?
  *            a constant is really constant -- it can't be bound or set.
@@ -338,6 +338,7 @@ typedef struct s7_port_t {
   bool needs_free;
   FILE *file;
   int line_number;
+  int file_number;
   char *filename;
   char *value;
   int size, point;
@@ -443,7 +444,7 @@ struct s7_scheme {
   
   s7_pointer args;                    /* arguments of current function */
   s7_pointer envir;                   /* current environment */
-  s7_pointer code;                    /* current code */
+  s7_pointer code, cur_code;          /* current code */
   
   s7_pointer stack;                   /* stack is a vector */
   int stack_size, stack_top;
@@ -486,6 +487,7 @@ struct s7_scheme {
   s7_pointer input_port_stack;        /*   input port stack (load and read internally) */
   s7_pointer output_port;             /* current-output-port (nil = stderr) */
   s7_pointer error_port;              /* current-error-port (nil = stderr) */
+  s7_pointer error_info;              /* the vector bound to *error-info* */
   
   /* these 6 are pointers so that all thread refs are to the same thing */
   bool *gc_off;                       /* if true, the GC won't run */
@@ -561,8 +563,8 @@ struct s7_scheme {
 #define T_C_MACRO      22
 #define BUILT_IN_TYPES 23
 
-#define TYPE_BITS                     16
-#define T_MASKTYPE                    0xffff
+#define TYPE_BITS                     8
+#define T_MASKTYPE                    0xff
 
 #define typeflag(p)                   ((p)->flag)
 #define type(p)                       (typeflag(p) & T_MASKTYPE)
@@ -592,8 +594,10 @@ struct s7_scheme {
 
 #define T_SETTER                      (1 << (TYPE_BITS + 5))
 #define is_setter(p)                  ((typeflag(p) & T_SETTER) != 0)
+/* this marks a function that sets something (for the encapsulator) */
 
 #define T_OBJECT                      (1 << (TYPE_BITS + 6))
+/* debugging sanity check */
 
 #define T_FINALIZABLE                 (1 << (TYPE_BITS + 7))
 #define is_finalizable(p)             ((typeflag(p) & T_FINALIZABLE) != 0)
@@ -617,12 +621,13 @@ struct s7_scheme {
 
 #define T_ANY_MACRO                   (1 << (TYPE_BITS + 12))
 #define is_any_macro(p)               ((typeflag(p) & T_ANY_MACRO) != 0)
+/* this marks scheme and C-defined macros */
 
 #define T_EXPANSION                   (1 << (TYPE_BITS + 13))
 #define is_expansion(p)               ((typeflag(p) & T_EXPANSION) != 0)
+/* this marks macros from define-expansion */
 
-#define UNUSED_BITS                   0xc0000000
-/* there are actually more unused bits -- the TYPE_BITS macro could be as small as 5, freeing another 11 bits */
+#define UNUSED_BITS                   0xffc00000
 
 #if HAVE_PTHREADS
 #define set_type(p, f)                typeflag(p) = ((typeflag(p) & T_GC_MARK) | (f) | T_OBJECT)
@@ -661,6 +666,7 @@ struct s7_scheme {
 #define cddddr(p)                     cdr(cdr(cdr(cdr(p))))
 #define caddar(p)                     car(cdr(cdr(car(p))))
 #define pair_line_number(p)           (p)->object.cons.line
+#define port_file_number(p)           (p)->object.port->file_number
 
 #define symbol_location(p)            (p)->object.cons.line
 #define symbol_name(p)                string_value(car(p))
@@ -829,6 +835,7 @@ static s7_pointer make_list_2(s7_scheme *sc, s7_pointer a, s7_pointer b);
 static void write_string(s7_scheme *sc, const char *s, s7_pointer pt);
 static s7_pointer eval_symbol(s7_scheme *sc, s7_pointer sym);
 static bool is_thunk(s7_scheme *sc, s7_pointer x);
+static int remember_file_name(const char *file);
 #if WITH_ENCAPSULATION
   static void encapsulate(s7_scheme *sc, s7_pointer sym);
 #endif
@@ -837,49 +844,6 @@ static bool is_thunk(s7_scheme *sc, s7_pointer x);
 
 /* -------------------------------- constants -------------------------------- */
 
-s7_pointer s7_F(s7_scheme *sc) 
-{
-  return(sc->F);
-}
-
-
-s7_pointer s7_T(s7_scheme *sc) 
-{
-  return(sc->T);
-}
-
-
-s7_pointer s7_NIL(s7_scheme *sc) 
-{
-  return(sc->NIL);
-}
-
-
-s7_pointer s7_UNDEFINED(s7_scheme *sc) 
-{
-  return(sc->UNDEFINED);
-}
-
-
-s7_pointer s7_UNSPECIFIED(s7_scheme *sc) 
-{
-  return(sc->UNSPECIFIED);
-}
-
-
-bool s7_is_unspecified(s7_scheme *sc, s7_pointer val)
-{
-  return(val == sc->UNSPECIFIED);
-}
-
-
-s7_pointer s7_EOF_OBJECT(s7_scheme *sc) 
-{
-  return(sc->EOF_OBJECT);
-}
-
-
-/* lower case versions -- I'll probably remove the upper case versions someday */
 s7_pointer s7_f(s7_scheme *sc) 
 {
   return(sc->F);
@@ -907,6 +871,12 @@ s7_pointer s7_undefined(s7_scheme *sc)
 s7_pointer s7_unspecified(s7_scheme *sc) 
 {
   return(sc->UNSPECIFIED);
+}
+
+
+bool s7_is_unspecified(s7_scheme *sc, s7_pointer val)
+{
+  return(val == sc->UNSPECIFIED);
 }
 
 
@@ -1271,6 +1241,7 @@ static int gc(s7_scheme *sc)
   S7_MARK(sc->args);
   S7_MARK(sc->envir);
   S7_MARK(sc->code);
+  S7_MARK(sc->cur_code);
   mark_vector(sc->stack, sc->stack_top);
   S7_MARK(sc->x);
   S7_MARK(sc->y);
@@ -1967,6 +1938,12 @@ static s7_pointer make_closure(s7_scheme *sc, s7_pointer c, s7_pointer e, int ty
 {
   /* c is code. e is environment */
   /* this is called every time a lambda form is evaluated, or during letrec, etc */
+
+  /* one idea for optimization (taken from Guile) would be to scan the body for globals, and
+   *   copy them into the top frame, reducing the search time.  Another is to put a direct
+   *   pointer to the binding in place of the symbol.  Currently symbol lookup is about 
+   *   equal to the GC in percentage of total run time.
+   */
 
   s7_pointer x = new_cell(sc);
   set_type(x, type | T_PROCEDURE);
@@ -7503,6 +7480,7 @@ s7_pointer s7_open_input_string(s7_scheme *sc, const char *input_string)
   port_string_length(x) = safe_strlen(input_string);
   port_string_point(x) = 0;
   port_filename(x) = NULL;
+  port_file_number(x) = -1;
   port_needs_free(x) = false;
   return(x);
 }
@@ -7891,6 +7869,7 @@ s7_pointer s7_load(s7_scheme *sc, const char *filename)
   run_load_hook(sc, filename);
 
   port = load_file(sc, fp, filename);
+  port_file_number(port) = remember_file_name(filename);
   push_input_port(sc, port);
   
   /* it's possible to call this recursively (s7_load is XEN_LOAD_FILE which can be invoked via s7_call)
@@ -7950,6 +7929,7 @@ defaults to the global environment; to load into the current environment instead
   run_load_hook(sc, fname);
 
   port = load_file(sc, fp, fname);
+  port_file_number(port) = remember_file_name(fname);
   push_input_port(sc, port);
 
   if (cdr(args) != sc->NIL) 
@@ -12741,11 +12721,176 @@ static s7_pointer g_catch(s7_scheme *sc, s7_pointer args)
 }
 
 
+/* error reporting info -- save filename and line number */
+
+#define INITIAL_FILE_NAMES_SIZE 8
+static char **file_names = NULL;
+static int file_names_size = 0;
+static int file_names_top = -1;
+
+#if HAVE_PTHREADS
+static pthread_mutex_t remember_files_lock = PTHREAD_MUTEX_INITIALIZER;
+#endif
+
+#define remembered_line_number(Line) (Line & 0xfffff)
+#define remembered_file_name(Line)   (((Line >> 20) <= file_names_top) ? file_names[Line >> 20] : "?")
+/* this gives room for 4000 files each of 1000000 lines */
+
+static s7_pointer remember_line(s7_scheme *sc, s7_pointer obj)
+{
+  if (sc->input_port != sc->NIL)
+    set_pair_line_number(obj, port_line_number(sc->input_port) | (port_file_number(sc->input_port) << 20));
+  return(obj);
+}
+
+
+static int remember_file_name(const char *file)
+{
+#if HAVE_PTHREADS
+  pthread_mutex_lock(&remember_files_lock);
+#endif
+
+  file_names_top++;
+  if (file_names_top >= file_names_size)
+    {
+      if (file_names_size == 0)
+	{
+	  file_names_size = INITIAL_FILE_NAMES_SIZE;
+	  file_names = (char **)calloc(file_names_size, sizeof(char *));
+	}
+      else
+	{
+	  int i, old_size;
+	  old_size = file_names_size;
+	  file_names_size *= 2;
+	  file_names = (char **)realloc(file_names, file_names_size * sizeof(char *));
+	  for (i = old_size; i < file_names_size; i++)
+	    file_names[i] = NULL;
+	}
+    }
+  file_names[file_names_top] = s7_strdup(file);
+
+#if HAVE_PTHREADS
+  pthread_mutex_unlock(&remember_files_lock);
+#endif
+
+  return(file_names_top);
+}
+
+
+#define ERROR_INFO_DEFAULT sc->F
+#define ERROR_TYPE 0
+#define ERROR_DATA 1
+#define ERROR_CODE 2
+#define ERROR_CODE_LINE 3
+#define ERROR_CODE_FILE 4
+#define ERROR_ENVIRONMENT 5
+#define ERROR_INFO_SIZE (6 + 8)
+
+/* *error-info* is a vector of 6 elements:
+ *    0: the error type or tag ('division-by-zero)
+ *    1: the message or information passed by the error function
+ *    2: if not #f, the code that s7 thinks triggered the error
+ *    3: if not #f, the line number of that code
+ *    4: if not #f, the file name of that code
+ *    5: the environment at the point of the error
+ *    6..top: stack enviroment pointers (giving enough info to reconstruct the current call stack), ending in #f
+ * 
+ * to find a variable's value at the point of the error:
+ *    (symbol->value var (vector-ref *error-info* 5))
+ *
+ * to print the stack at the point of the error:
+ *
+(define (error-stack)
+  (let ((done #f))
+  (do ((pc 5 (+ pc 1)))
+      ((or done
+	   (>= pc 14)))
+    (let ((envir (*error-info* pc)))
+      (if (not envir)
+	  (set! done #t)
+	  (let ((cur-env (car envir)))
+      (if (and (not (vector? cur-env))                           
+	       (not (null? cur-env))                            
+	       ;; look for __func__ in 2nd entry, then args in 1st             
+	       (> (length envir) 2))                            
+	  (let ((args (car envir))                             
+		(op (cadr envir)))                             
+	    (if (and (not (null? op))                           
+		     (pair? (car op))                           
+		     (not (null? (car op)))                        
+		     (equal? (caar op) '__func__))                     
+		(let* ((lst (car op)) 
+		       (sym (if (symbol? (cdr lst)) (cdr lst) (cadr lst)))               
+		       (proc (symbol->value sym envir))) 
+		  (if (procedure? proc)                          
+		      (let* ((arity (procedure-arity proc))                
+			     (true-args (+ (car arity) (cadr arity)))           
+			     (rest-arg (caddr arity))                   
+			     (local-env (reverse args))                  
+			     (filename (and (not (symbol? (cdr lst))) (caddr lst))) 
+			     (line (and filename (cadddr lst))))       
+			(format #t "(~A" sym)                   
+			(do ((arg 0 (+ arg 1)))                      
+			    ((= arg true-args))                      
+			  (format #t " ~A" (list-ref local-env arg)))          
+			(if rest-arg                            
+			    (format #t " ~A" (list-ref local-env true-args)))      
+			(if filename 
+			    (format #t ") [~S ~D]~%" filename line)                       
+			    (format #t ")~%")))                       
+		      (format #t "(~A~{~^ ~A~})~%" (cdr lst) (reverse args)))))))))))))
+ *    
+ */
+
+
 static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bool exit_eval)
 {
   int i;
   s7_pointer catcher;
   catcher = sc->F;
+
+  vector_element(sc->error_info, ERROR_TYPE) = type;
+  vector_element(sc->error_info, ERROR_DATA) = info;
+  vector_element(sc->error_info, ERROR_CODE) = sc->cur_code;
+  vector_element(sc->error_info, ERROR_CODE_LINE) = ERROR_INFO_DEFAULT;
+  vector_element(sc->error_info, ERROR_CODE_FILE) = ERROR_INFO_DEFAULT;
+  vector_element(sc->error_info, ERROR_ENVIRONMENT) = sc->envir;
+
+  /* (let ((x 32)) (define (h1 a) (* a "hi")) (define (h2 b) (+ b (h1 b))) (h2 1)) */
+
+  if (is_pair(sc->cur_code))
+    {
+      int line, j, top;
+      line = pair_line_number(sc->cur_code);
+      if ((line > 0) &&
+	  (remembered_line_number(line) != 0) &&
+	  (remembered_file_name(line)))
+	{
+	  vector_element(sc->error_info, ERROR_CODE_LINE) = s7_make_integer(sc, remembered_line_number(line));
+	  vector_element(sc->error_info, ERROR_CODE_FILE) = s7_make_string(sc, remembered_file_name(line));	  
+	}
+
+      j = ERROR_ENVIRONMENT + 1;
+      for (top = sc->stack_top; (top > 0) && (j < ERROR_INFO_SIZE); top -= 4)
+	{
+	  s7_pointer frame_env;
+	  frame_env = vector_element(sc->stack, top - 3);
+	  if ((is_pair(frame_env)) &&
+	      (is_pair(cdr(frame_env))) &&
+	      (is_pair(cadr(frame_env))) &&
+	      (is_pair(caadr(frame_env))) &&
+	      (caaadr(frame_env) == sc->__FUNC__))
+	    {
+	      vector_element(sc->error_info, j) = frame_env;
+	      j++;
+	    }
+	}
+      if (j < ERROR_INFO_SIZE)
+	vector_element(sc->error_info, j) = ERROR_INFO_DEFAULT;
+    }
+
+  sc->cur_code = ERROR_INFO_DEFAULT;
 
   /* top is 1 past actual top, top - 1 is op, if op = OP_CATCH, top - 4 is the cell containing the catch struct */
   for (i = sc->stack_top - 1; i >= 3; i -= 4)
@@ -12830,7 +12975,7 @@ GOT_CATCH:
 	  /* if the *error-hook* function triggers an error, we had better not have *error-hook* still set! */
 
 	  push_stack(sc, OP_ERROR_HOOK_QUIT, sc->NIL, error_hook); /* restore *error-hook* upon successful evaluation */
-	  sc->args = make_list_2(sc, type, info);
+	  sc->args = make_list_2(sc, type, info); /* TODO: add file/line to info */
 	  sc->code = error_hook;
 	  sc->op = OP_APPLY;
 	}
@@ -12839,7 +12984,6 @@ GOT_CATCH:
 	  /* if info is not a list, send object->string to current error port,
 	   *   else assume car(info) is a format control string, and cdr(info) are its args
 	   */
-
 	  if ((!s7_is_list(sc, info)) ||
 	      (!s7_is_string(car(info))))
 	    format_to_output(sc, 
@@ -12904,8 +13048,27 @@ GOT_CATCH:
 				     make_list_1(sc, s7_make_integer(sc, line)));
 		}
 	    }
-	  
 	  s7_newline(sc, s7_current_error_port(sc));
+
+	  if (is_pair(vector_element(sc->error_info, ERROR_CODE)))
+	    {
+	      format_to_output(sc, 
+			       s7_current_error_port(sc), 
+			       ";    ~A", 
+			       make_list_1(sc, vector_element(sc->error_info, ERROR_CODE)));
+	      s7_newline(sc, s7_current_error_port(sc));
+
+	      if (s7_is_string(vector_element(sc->error_info, ERROR_CODE_FILE)))
+		{
+		  format_to_output(sc,
+				   s7_current_error_port(sc), 
+				   ";    [~S, line ~D]",
+				   make_list_2(sc, 
+					       vector_element(sc->error_info, ERROR_CODE_FILE), 
+					       vector_element(sc->error_info, ERROR_CODE_LINE)));
+		  s7_newline(sc, s7_current_error_port(sc));
+		}
+	    }
 	  
 	  if ((exit_eval) &&
 	      (sc->error_exiter))
@@ -13043,7 +13206,7 @@ static s7_pointer missing_close_paren_error(s7_scheme *sc)
       len = 64 + safe_strlen(port_filename(sc->input_port)); 
       str1 = (char *)malloc(len * sizeof(char));
       len = snprintf(str1, len, "missing close paren, list started around line %d of %s: ~A", 
-		     pair_line_number(x), port_filename(sc->input_port));
+		     remembered_line_number(line), port_filename(sc->input_port));
       result = s7_make_string_with_length(sc, str1, len);
       free(str1);
       return(s7_error(sc, sc->ERROR, make_list_2(sc, result, safe_reverse_in_place(sc, sc->args))));
@@ -13751,6 +13914,7 @@ static s7_pointer g_quasiquote_1(s7_scheme *sc, int level, s7_pointer form);
 
 static s7_pointer eval(s7_scheme *sc, opcode_t first_op) 
 {
+  sc->cur_code = ERROR_INFO_DEFAULT;
   sc->op = first_op;
   
   /* this procedure can be entered recursively (via s7_call for example), so it's no place for a setjmp
@@ -14114,6 +14278,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	push_stack(sc, OP_BEGIN, sc->NIL, cdr(sc->code));
       
       sc->code = car(sc->code);
+      sc->cur_code = sc->code;
+      /* fprintf(stderr, "cur: %s\n", s7_object_to_c_string(sc, sc->cur_code)); */
       /* goto EVAL; */
       
 
@@ -15532,11 +15698,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       
     case OP_READ_LIST: 
-      /* if args is nil, we've started reading a list, so try to remember where we are (via set_pair_line_number)
-       *   for a subsequent "missing close paren" error.
-       */
       if (sc->args == sc->NIL)
-	sc->args = set_pair_line_number(s7_cons(sc, sc->value, sc->NIL), port_line_number(sc->input_port));
+	sc->args = s7_cons(sc, sc->value, sc->NIL);
       else sc->args = s7_cons(sc, sc->value, sc->args);
       sc->tok = token(sc, sc->input_port);
 
@@ -15548,7 +15711,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    c = inchar(sc, sc->input_port);
 	    if ((c != '\n') && (c != EOF))
 	      backchar(sc, c, sc->input_port);
-	    sc->value = set_pair_line_number(safe_reverse_in_place(sc, sc->args), port_line_number(sc->input_port));
+	    sc->value = remember_line(sc, safe_reverse_in_place(sc, sc->args));
 
 	    /* read-time macro expansion
 	     *
@@ -16152,6 +16315,7 @@ static s7_scheme *clone_s7(s7_scheme *sc, s7_pointer vect)
   new_sc->code = new_sc->NIL;
   new_sc->args = new_sc->NIL;
   new_sc->value = new_sc->NIL;
+  new_sc->cur_code = ERROR_INFO_DEFAULT;
 
 #if WITH_ENCAPSULATION
   new_sc->encapsulators = sc->NIL;
@@ -20615,6 +20779,7 @@ s7_scheme *s7_init(void)
   sc->error_port = sc->NIL;
   
   sc->code = sc->NIL;
+  sc->cur_code = ERROR_INFO_DEFAULT;
   sc->args = sc->NIL;
   sc->value = sc->NIL;
   sc->x = sc->NIL;
@@ -21142,7 +21307,10 @@ s7_scheme *s7_init(void)
   s7_define_variable(sc, "*load-path*", sc->NIL);
   s7_define_variable(sc, "*vector-print-length*", sc->small_ints[8]);
   s7_define_variable(sc, "*load-hook*", sc->NIL);
+
   s7_define_variable(sc, "*error-hook*", sc->NIL);
+  sc->error_info = s7_make_and_fill_vector(sc, ERROR_INFO_SIZE, ERROR_INFO_DEFAULT);
+  s7_define_constant(sc, "*error-info*", sc->error_info);
   
   g_provide(sc, make_list_1(sc, s7_make_symbol(sc, "s7")));
 
@@ -21293,9 +21461,6 @@ s7_scheme *s7_init(void)
  */
 
 /* TODO: error reports should show a lot more info -- the entire call, a stacktrace, file and (current) line number */
-/* PERHAPS: encap frame|mixer-set! */
 /* TODO: run for generics, also run set! of globals? */
 /* TODO: how to trace setter [s7_object_set?] mus-srate for example */
-/* TODO: add *error-hook* tests to s7test.scm */
-
 /* SOMEDAY: add xg example of emacs embedded */
