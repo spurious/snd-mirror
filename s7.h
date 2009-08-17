@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "1.27"
-#define S7_DATE "7-Aug-09"
+#define S7_VERSION "1.28"
+#define S7_DATE "17-Aug-09"
 
 
 typedef long long int s7_Int;
@@ -39,6 +39,7 @@ typedef double s7_Double;
    *    *load-hook*             called before a file is loaded, a function of one arg, the name of the file.
    *    *error-hook*            called upon error, a function of two args, 
    *                               the error type (a symbol), and the info about it (a list).
+   *    *error-info*            data describing last error (see below).
    *
    * s7 constants:
    *
@@ -174,6 +175,21 @@ void s7_set_error_exiter(s7_scheme *sc, void (*error_exiter)(void));
    *  normally printing the error arguments to current-error-port.
    */
 
+  /* *error-info* is a vector of 6 or more elements:
+   *    0: the error type or tag ('division-by-zero)
+   *    1: the message or information passed by the error function
+   *    2: if not #f, the code that s7 thinks triggered the error
+   *    3: if not #f, the line number of that code
+   *    4: if not #f, the file name of that code
+   *    5: the environment at the point of the error
+   *    6..top: stack enviroment pointers (giving enough info to reconstruct the current call stack), ending in #f
+   * 
+   * to find a variable's value at the point of the error:
+   *    (symbol->value var (vector-ref *error-info* 5))
+   *
+   * to print the stack at the point of the error:
+   *    (stacktrace *error-info*)
+   */
 
 int s7_gc_protect(s7_scheme *sc, s7_pointer x);
 void s7_gc_unprotect(s7_scheme *sc, s7_pointer x);
@@ -1569,6 +1585,7 @@ int main(int argc, char **argv)
  * 
  *        s7 changes
  *
+ * 17-Aug:    *error-info*.
  * 14-Aug:    define-expansion.
  * 7-Aug:     s7_define_function_with_setter. 
  *            s7_quit and example of signal handling.

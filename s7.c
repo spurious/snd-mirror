@@ -438,6 +438,15 @@ typedef struct s7_cell {
 } s7_cell;
 
 
+#if HAVE_PTHREADS
+typedef struct {
+  s7_scheme *sc;
+  s7_pointer func;
+  pthread_t *thread;
+} thred;
+#endif
+
+
 struct s7_scheme {  
   s7_cell **heap, **free_heap;
   int heap_size, free_heap_top;
@@ -838,6 +847,9 @@ static bool is_thunk(s7_scheme *sc, s7_pointer x);
 static int remember_file_name(const char *file);
 #if WITH_ENCAPSULATION
   static void encapsulate(s7_scheme *sc, s7_pointer sym);
+#endif
+#if HAVE_PTHREADS
+  static s7_pointer g_is_thread(s7_scheme *sc, s7_pointer args);
 #endif
 
 
@@ -1482,7 +1494,7 @@ static void check_stack_size(s7_scheme *sc)
 
 static s7_pointer g_stack(s7_scheme *sc, s7_pointer args)
 {
-  #define H_stack "(stack :optional continuation) returns a list containing the current stack top (an integer) and the stack itself (a vector).\
+  #define H_stack "(stack :optional continuation-or-thread) returns a list containing the current stack top (an integer) and the stack itself (a vector).\
 Each stack frame has 4 entries, the function, the current environment, the function arguments, and an op code used \
 internally by the evaluator.  If a continuation is passed, its stack and stack-top are returned."
 
@@ -1492,6 +1504,16 @@ internally by the evaluator.  If a continuation is passed, its stack and stack-t
       c = car(args)->object.cc;
       return(make_list_2(sc, s7_make_integer(sc, c->cc_stack_top), c->cc_stack));
     }
+
+#if HAVE_PTHREADS
+  if (g_is_thread(sc, args) != sc->F)
+    {
+      thred *f;
+      f = (thred *)s7_object_value(car(args));
+      return(make_list_2(sc, s7_make_integer(sc, f->sc->stack_top), f->sc->stack));
+    }
+#endif	    
+
   return(make_list_2(sc, s7_make_integer(sc, sc->stack_top), sc->stack));
 }
 
@@ -1910,7 +1932,6 @@ static s7_pointer g_global_environment(s7_scheme *sc, s7_pointer ignore)
 
 
 #if HAVE_PTHREADS
-static s7_pointer g_is_thread(s7_scheme *sc, s7_pointer args);
 static s7_pointer thread_environment(s7_scheme *sc, s7_pointer obj);
 #define CURRENT_ENVIRONMENT_OPTARGS 1
 #else
@@ -12785,9 +12806,10 @@ static int remember_file_name(const char *file)
 #define ERROR_CODE_LINE 3
 #define ERROR_CODE_FILE 4
 #define ERROR_ENVIRONMENT 5
-#define ERROR_INFO_SIZE (6 + 8)
+#define ERROR_STACK_SIZE 8
+#define ERROR_INFO_SIZE (6 + ERROR_STACK_SIZE)
 
-/* *error-info* is a vector of 6 elements:
+/* *error-info* is a vector of 6 or more elements:
  *    0: the error type or tag ('division-by-zero)
  *    1: the message or information passed by the error function
  *    2: if not #f, the code that s7 thinks triggered the error
@@ -12795,54 +12817,7 @@ static int remember_file_name(const char *file)
  *    4: if not #f, the file name of that code
  *    5: the environment at the point of the error
  *    6..top: stack enviroment pointers (giving enough info to reconstruct the current call stack), ending in #f
- * 
- * to find a variable's value at the point of the error:
- *    (symbol->value var (vector-ref *error-info* 5))
- *
- * to print the stack at the point of the error:
- *
-(define (error-stack)
-  (let ((done #f))
-  (do ((pc 5 (+ pc 1)))
-      ((or done
-	   (>= pc 14)))
-    (let ((envir (*error-info* pc)))
-      (if (not envir)
-	  (set! done #t)
-	  (let ((cur-env (car envir)))
-      (if (and (not (vector? cur-env))                           
-	       (not (null? cur-env))                            
-	       ;; look for __func__ in 2nd entry, then args in 1st             
-	       (> (length envir) 2))                            
-	  (let ((args (car envir))                             
-		(op (cadr envir)))                             
-	    (if (and (not (null? op))                           
-		     (pair? (car op))                           
-		     (not (null? (car op)))                        
-		     (equal? (caar op) '__func__))                     
-		(let* ((lst (car op)) 
-		       (sym (if (symbol? (cdr lst)) (cdr lst) (cadr lst)))               
-		       (proc (symbol->value sym envir))) 
-		  (if (procedure? proc)                          
-		      (let* ((arity (procedure-arity proc))                
-			     (true-args (+ (car arity) (cadr arity)))           
-			     (rest-arg (caddr arity))                   
-			     (local-env (reverse args))                  
-			     (filename (and (not (symbol? (cdr lst))) (caddr lst))) 
-			     (line (and filename (cadddr lst))))       
-			(format #t "(~A" sym)                   
-			(do ((arg 0 (+ arg 1)))                      
-			    ((= arg true-args))                      
-			  (format #t " ~A" (list-ref local-env arg)))          
-			(if rest-arg                            
-			    (format #t " ~A" (list-ref local-env true-args)))      
-			(if filename 
-			    (format #t ") [~S ~D]~%" filename line)                       
-			    (format #t ")~%")))                       
-		      (format #t "(~A~{~^ ~A~})~%" (cdr lst) (reverse args)))))))))))))
- *    
  */
-
 
 static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bool exit_eval)
 {
@@ -12871,21 +12846,8 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
 	  vector_element(sc->error_info, ERROR_CODE_FILE) = s7_make_string(sc, remembered_file_name(line));	  
 	}
 
-      j = ERROR_ENVIRONMENT + 1;
-      for (top = sc->stack_top; (top > 0) && (j < ERROR_INFO_SIZE); top -= 4)
-	{
-	  s7_pointer frame_env;
-	  frame_env = vector_element(sc->stack, top - 3);
-	  if ((is_pair(frame_env)) &&
-	      (is_pair(cdr(frame_env))) &&
-	      (is_pair(cadr(frame_env))) &&
-	      (is_pair(caadr(frame_env))) &&
-	      (caaadr(frame_env) == sc->__FUNC__))
-	    {
-	      vector_element(sc->error_info, j) = frame_env;
-	      j++;
-	    }
-	}
+      for (top = sc->stack_top, j = ERROR_ENVIRONMENT + 1; (top > 0) && (j < ERROR_INFO_SIZE); top -= 4, j++)
+	vector_element(sc->error_info, j) = vector_element(sc->stack, top - 3);
       if (j < ERROR_INFO_SIZE)
 	vector_element(sc->error_info, j) = ERROR_INFO_DEFAULT;
     }
@@ -13214,6 +13176,107 @@ static s7_pointer missing_close_paren_error(s7_scheme *sc)
   return(read_error(sc, "missing close paren"));
 }
 
+
+static void display_frame(s7_scheme *sc, s7_pointer envir)
+{
+  if ((is_pair(envir)) &&
+      (is_pair(cdr(envir))))
+    {
+      s7_pointer args, op;
+      args = car(envir);
+      op = cadr(envir);
+      if ((is_pair(op)) &&
+	  (is_pair(car(op))) &&
+	  (caar(op) == sc->__FUNC__))
+	{
+	  s7_pointer lst, sym, proc;
+	  lst = car(op);
+	  if (s7_is_symbol(cdr(lst)))
+	    sym = cdr(lst);
+	  else sym = cadr(lst);
+	  proc = s7_symbol_local_value(sc, sym, envir);
+	  if (is_procedure(proc))
+	    {
+	      s7_pointer local_env, file_info = sc->F;
+	      local_env = s7_reverse(sc, args);
+	      if (!s7_is_symbol(cdr(lst)))
+		file_info = cddr(lst);
+	      
+	      format_to_output(sc, s7_current_output_port(sc), "(~A~{ ~A~})", make_list_2(sc, sym, local_env));
+	      if (is_pair(file_info))
+		format_to_output(sc, s7_current_output_port(sc), "    [~S ~D]", file_info);
+	    }
+          else
+	    format_to_output(sc, s7_current_output_port(sc), "(~A~{~^ ~A~})", make_list_2(sc, cdr(lst), s7_reverse(sc, args)));
+          s7_newline(sc, s7_current_output_port(sc));
+	}
+    }
+}
+
+
+static s7_pointer g_stacktrace(s7_scheme *sc, s7_pointer args)
+{
+  /* 4 cases currently: 
+   *    if args=nil, show current stack
+   *           =thread obj, show its stack
+   *           =vector, assume it is a vector of envs from *error-info*
+   *           =continuation, show its stack
+   */
+  #define H_stacktrace "(stacktrace :optional obj) displays a stacktrace.  If obj is not \
+given, the current stack is displayed, if obj is a thread object, its stack is displayed, \
+if obj is *error-info*, the stack at the point of the error is displayed, and if obj \
+is a continuation, its stack is displayed."
+
+  int i, top = 0;
+  s7_pointer stk = sc->F;
+
+  /* *error-info* is the special case here */
+  if (s7_is_vector(car(args)))
+    {
+      for (i = ERROR_ENVIRONMENT; i < ERROR_INFO_SIZE; i++)
+	{
+	  if (vector_element(car(args), i) == ERROR_INFO_DEFAULT)
+	    break;
+	  display_frame(sc, vector_element(car(args), i));
+	}
+      return(sc->UNSPECIFIED);
+    }
+
+  if (args == sc->NIL)
+    {
+      top = sc->stack_top;
+      stk = sc->stack;
+    }
+  else
+    {
+      if (s7_is_continuation(car(args)))
+	{
+	  s7_continuation_t *c;
+	  c = car(args)->object.cc;
+	  top = c->cc_stack_top;
+	  stk = c->cc_stack;
+	}
+#if HAVE_PTHREADS
+      else
+	{
+	  if (g_is_thread(sc, args) != sc->F)
+	    {
+	      thred *f;
+	      f = (thred *)s7_object_value(car(args));
+	      top = f->sc->stack_top;
+	      stk = f->sc->stack;
+	    }
+	}
+#endif	    
+    }
+  if (stk == sc->F)
+    return(s7_wrong_type_arg_error(sc, "stacktrace", 0, car(args), "a vector, thread object, or continuation"));
+  
+  for (i = top; i > 0; i -= 4)
+    display_frame(sc, vector_element(stk, i - 3));
+
+  return(sc->UNSPECIFIED);
+}
 
 
 
@@ -15980,12 +16043,6 @@ static s7_scheme *clone_s7(s7_scheme *sc, s7_pointer vect);
 static s7_scheme *close_s7(s7_scheme *sc);
 static void mark_s7(s7_scheme *sc);
 
-
-typedef struct {
-  s7_scheme *sc;
-  s7_pointer func;
-  pthread_t *thread;
-} thred;
 
 static int thread_tag = 0;
 
@@ -21282,6 +21339,7 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "trace",                   g_trace,                   0, 0, true,  H_trace);
   s7_define_function(sc, "untrace",                 g_untrace,                 0, 0, true,  H_untrace);
   s7_define_function(sc, "stack",                   g_stack,                   0, 1, false, H_stack);
+  s7_define_function(sc, "stacktrace",              g_stacktrace,              0, 1, false, H_stacktrace);
 
   s7_define_function(sc, "gc",                      g_gc,                      0, 1, false, H_gc);
   s7_define_function(sc, "quit",                    g_quit,                    0, 0, false, H_quit);
@@ -21398,47 +21456,6 @@ s7_scheme *s7_init(void)
   /* macroexpand */
   s7_eval_c_string(sc, "(define-macro (macroexpand mac) `(,(procedure-source (car mac)) ',mac))");
 
-  /* stacktrace -- move this into C eventually */
-  s7_eval_c_string(sc, "                                                                       \n\
-(define* (stacktrace cont)                                   \n\
-  (let* ((stk (stack cont))                                  \n\
-	 (top (car stk))                                    \n\
-	 (frames (cadr stk)))                                 \n\
-    (do ((i (- top 3) (- i 4)))                               \n\
-	((<= i 0))                                      \n\
-      (let* ((envir (vector-ref frames i))                          \n\
-	     (cur-env (car envir)))                             \n\
-	(if (and (not (vector? cur-env))                           \n\
-		 (not (null? cur-env))                            \n\
-		 ;; look for __func__ in 2nd entry, then args in 1st             \n\
-		 (> (length envir) 2))                            \n\
-	    (let ((args (car envir))                             \n\
-		  (op (cadr envir)))                             \n\
-	      (if (and (not (null? op))                           \n\
-		       (pair? (car op))                           \n\
-		       (not (null? (car op)))                        \n\
-		       (equal? (caar op) '__func__))                     \n\
-		  (let* ((lst (car op)) \n\
-			 (sym (if (symbol? (cdr lst)) (cdr lst) (cadr lst)))               \n\
-			 (proc (symbol->value sym envir))) \n\
-		    (if (procedure? proc)                          \n\
-			(let* ((arity (procedure-arity proc))                \n\
-			       (true-args (+ (car arity) (cadr arity)))           \n\
-			       (rest-arg (caddr arity))                   \n\
-			       (local-env (reverse args))                  \n\
-			       (filename (and (not (symbol? (cdr lst))) (caddr lst))) \n\
-			       (line (and filename (cadddr lst))))       \n\
-			  (format #t \"(~A\" sym)                   \n\
-			  (do ((arg 0 (+ arg 1)))                      \n\
-			      ((= arg true-args))                      \n\
-			    (format #t \" ~A\" (list-ref local-env arg)))          \n\
-			  (if rest-arg                            \n\
-			      (format #t \" ~A\" (list-ref local-env true-args)))      \n\
-			  (if filename \n\
-			      (format #t \") [~S ~D]~%\" filename line)                       \n\
-			      (format #t \")~%\")))                       \n\
-			(format #t \"(~A~{~^ ~A~})~%\" (cdr lst) (reverse args)))))))))))");
-
 #if WITH_ENCAPSULATION
   s7_eval_c_string(sc, "                                 \n\
       (define-macro (encapsulate . body)                 \n\
@@ -21460,7 +21477,7 @@ s7_scheme *s7_init(void)
 /* unicode is probably do-able if it is sequestered in the s7 strings 
  */
 
-/* TODO: error reports should show a lot more info -- the entire call, a stacktrace, file and (current) line number */
 /* TODO: run for generics, also run set! of globals? */
 /* TODO: how to trace setter [s7_object_set?] mus-srate for example */
 /* SOMEDAY: add xg example of emacs embedded */
+
