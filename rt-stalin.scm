@@ -265,6 +265,9 @@
   (when (memq 'when keys)
     (c-display "Error in define-stalin-macro. :when is a reserved keyword")
     (throw 'compilation-error))
+  (when (memq 'by keys)
+    (c-display "Error in define-stalin-macro. :by is a reserved keyword")
+    (throw 'compilation-error))
   (if (pair? def)
       (hashq-set! stalin-macros (car def) (primitive-eval `(labamba-onymous ,(symbol->string (car def))
                                                                             ,(cdr def)
@@ -334,7 +337,8 @@
 		    :use-customsymbolhandler?
 		    (lambda (expr)
 		      (or (memv :where expr)
-			  (memv :when expr)))
+			  (memv :when expr)
+			  (memv :by expr)))
 		    :customsymbolhandler
 		    (lambda (expr)
 		      (define rev-expr (reverse expr))
@@ -349,17 +353,12 @@
 						      ,@(cddr expr)))
 						 :include-make-coroutine include-make-coroutine))
 			    (else
-			     (let ((key (let ((where (memv :where rev-expr))
-					      (when (memv :when rev-expr)))
-					  (cond ((and where when
-						      (> (length where) (length when)))
-						 :where)
-						((and where when)
-						 :when)
-						(where
-						 :where)
+			     (let ((key (let loop ((expr rev-expr))
+					  (cond ((eqv? :where (car expr)) :where)
+						((eqv? :when (car expr)) :when)
+						((eqv? :by (car expr)) :by)
 						(else
-						 :when)))))
+						 (loop (cdr expr)))))))
 			       
 			       (call-with-values (lambda () (break (lambda (t) (eqv? key t))
 								   rev-expr))
@@ -369,15 +368,22 @@
 				   ;;(c-display "rev" rev-expr)
 				   ;;(c-display "before" before)
 				   ;;(c-display "after" after "\n")
-				   (if (eqv? key :where)
-				       (stalin-macroexpand `(let ((,(car after) ,(cadr after)))
-							      (,@(butlast before 1)
-							       ,@(cddr after)))
-							   :include-make-coroutine include-make-coroutine)
-				       (stalin-macroexpand `(if ,(car after)
+				   (cond ((eqv? key :where)
+					  (stalin-macroexpand `(let ((,(car after) ,(cadr after)))
+								 (,@(butlast before 1)
+								  ,@(cddr after)))
+							      :include-make-coroutine include-make-coroutine))
+					 ((eqv? key :when)
+					  (stalin-macroexpand `(if ,(car after)
+								   (,@(butlast before 1)
+								    ,@(cdr after)))
+							      :include-make-coroutine include-make-coroutine))
+					 (else ;; :why
+					  (stalin-macroexpand `(,(car after)
 								(,@(butlast before 1)
 								 ,@(cdr after)))
-							   :include-make-coroutine include-make-coroutine))))))))
+							      :include-make-coroutine include-make-coroutine)))))))))
+
 		      
 		    :elsefunc (lambda (expr)
                                 ;;(when (and (eq? 'set! (car expr))

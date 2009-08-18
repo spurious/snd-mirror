@@ -85,9 +85,6 @@
 		 (apply format #f args))))
     (newline) 
     (display str)
-    (if (and with-s7
-	     (string? (vector-ref *error-info* 4)))
-	(format #t "   [~S: ~D]" (vector-ref *error-info* 4) (vector-ref *error-info* 3)))
     (if (not (provided? 'snd-nogui))
 	(begin
 	  (snd-print #\newline)

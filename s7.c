@@ -14394,7 +14394,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      goto START;
 	    } 
 	  push_stack(sc, OP_EVAL_ARGS0, sc->NIL, sc->code);
-	  sc->code = car(sc->code);
+	  sc->code = sc->x;
 	  goto EVAL;
 	} 
 
@@ -15830,7 +15830,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       
     case OP_READ_LIST: 
-      sc->args = s7_cons(sc, sc->value, sc->args); /* expansion here doesn't save much time (3M) */
+      sc->args = s7_cons(sc, sc->value, sc->args); /* expansion here doesn't save much time (3M), sc->args is sc->NIL at first */
       sc->tok = token(sc, sc->input_port);
 
       switch (sc->tok)
