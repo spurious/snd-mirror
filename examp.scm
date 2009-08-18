@@ -8,7 +8,6 @@
 ;;; set transform-size based on current time domain window size
 ;;; superimpose spectra of sycn'd sounds
 ;;; example of c-g?
-;;; make a system call
 ;;; translate mpeg input to 16-bit linear and read into Snd
 ;;; read and write OGG files
 ;;; make dot size dependent on number of samples being displayed

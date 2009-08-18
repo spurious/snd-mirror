@@ -1633,3 +1633,43 @@ Reverb-feedback sets the scaler on the feedback.
     (cairo_destroy cr))
 
 |#
+
+
+
+#|
+;;; this doesn't actually work yet, but the simpler C case below almost works
+(define (emacs)
+  (let ((emacs-pane (gtk_vbox_new #t 0)))
+    (gtk_box_pack_start (GTK_BOX (list-ref (main-widgets) 5)) emacs-pane #f #f 4)
+    (gtk_widget_show emacs-pane)
+    (let ((socket (gtk_socket_new)))
+      (gtk_container_add (GTK_CONTAINER emacs-pane) socket)
+      (gtk_widget_show socket)
+      (gtk_widget_realize socket)
+      (let ((id (gtk_socket_get_id (GTK_SOCKET socket))))
+	(system (format #f "/home/bil/test/emacs-23.1/src/emacs --parent-id=~D" id))))))
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <signal.h>
+#include <gtk/gtk.h>
+int main(int argc, char *argv)
+{
+  GtkWidget *parent, *window;
+  gtk_init (&argc, &argv);
+  window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
+  parent = gtk_vbox_new (FALSE, 0);
+  gtk_container_add (GTK_CONTAINER (window), parent);
+  {
+    GtkWidget *socket = gtk_socket_new ();
+    gtk_widget_show (socket);
+    gtk_container_add (GTK_CONTAINER (parent), socket);
+    gtk_widget_realize (socket);
+    g_print ("The ID of the sockets window is %ld\n", gtk_socket_get_id (socket));
+  }
+  gtk_widget_show_all (window);
+  gtk_main ();
+  return(0);
+}
+|#

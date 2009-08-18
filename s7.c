@@ -164,7 +164,7 @@
 /* a vector of objects that are (semi-permanently) protected from the GC, grows as needed */
 
 #define GC_TEMPS_SIZE 4096
-/* the number of recent objects that are temporarily gc-protected; 512 is too small in the threads case (generators.scm) */
+/* the number of recent objects that are temporarily gc-protected; 512 is too small */
 
 #define INITIAL_TRACE_LIST_SIZE 2
 /* a list of currently-traced functions */
@@ -456,7 +456,7 @@ struct s7_scheme {
   s7_pointer code, cur_code;          /* current code */
   
   s7_pointer stack;                   /* stack is a vector */
-  int stack_size, stack_top;
+  int stack_size, stack_top, stack_size2;
   s7_pointer *small_ints;             /* permanent numbers for opcode entries in the stack */
   s7_pointer real_zero;
   
@@ -738,6 +738,7 @@ struct s7_scheme {
 #define c_macro_required_args(f)      (f)->object.ffptr->required_args
 #define c_macro_all_args(f)           (f)->object.ffptr->all_args
 
+#define continuation(p)               (p)->object.cc
 #define continuation_cc_stack(p)      (p)->object.cc->cc_stack
 
 #define is_goto(p)                    (type(p) == T_GOTO)
@@ -752,11 +753,13 @@ struct s7_scheme {
 #define closure_environment(Obj)      cdr(Obj)
 
 #define is_catch(p)                   (type(p) == T_CATCH)
+#define catch(p)                      (p)->object.catcher
 #define catch_tag(p)                  (p)->object.catcher->tag
 #define catch_goto_loc(p)             (p)->object.catcher->goto_loc
 #define catch_handler(p)              (p)->object.catcher->handler
 
 #define is_dynamic_wind(p)            (type(p) == T_DYNAMIC_WIND)
+#define dynamic_wind(p)               (p)->object.winder
 #define dynamic_wind_state(p)         (p)->object.winder->state
 #define dynamic_wind_in(p)            (p)->object.winder->in
 #define dynamic_wind_out(p)           (p)->object.winder->out
@@ -1149,16 +1152,16 @@ static void finalize_s7_cell(s7_scheme *sc, s7_pointer a)
       break;
       
     case T_CONTINUATION:
-      if (a->object.cc)
-	free(a->object.cc);
+      if (continuation(a))
+	free(continuation(a));
       break;
       
     case T_CATCH:
-      free(a->object.catcher);
+      free(catch(a));
       break;
       
     case T_DYNAMIC_WIND:
-      free(a->object.winder);
+      free(dynamic_wind(a));
       break;
       
     default:
@@ -1479,7 +1482,7 @@ static void push_stack(s7_scheme *sc, opcode_t op, s7_pointer args, s7_pointer c
 
 static void check_stack_size(s7_scheme *sc)
 {
-  if (sc->stack_top >= (sc->stack_size / 2))
+  if (sc->stack_top >= sc->stack_size2)
     {
       int i, new_size;
       new_size = sc->stack_size * 2;
@@ -1487,6 +1490,7 @@ static void check_stack_size(s7_scheme *sc)
       for (i = sc->stack_size; i < new_size; i++)
 	vector_element(sc->stack, i) = sc->NIL;
       vector_length(sc->stack) = new_size;
+      sc->stack_size2 = sc->stack_size;
       sc->stack_size = new_size;
     }
 } 
@@ -1501,7 +1505,7 @@ internally by the evaluator.  If a continuation is passed, its stack and stack-t
   if (s7_is_continuation(car(args)))
     {
       s7_continuation_t *c;
-      c = car(args)->object.cc;
+      c = continuation(car(args));
       return(make_list_2(sc, s7_make_integer(sc, c->cc_stack_top), c->cc_stack));
     }
 
@@ -1806,7 +1810,25 @@ static s7_pointer add_to_environment(s7_scheme *sc, s7_pointer env, s7_pointer v
   slot = s7_immutable_cons(sc, variable, value); 
   if (s7_is_vector(car(env))) 
     vector_element(car(env), symbol_location(variable)) = s7_cons(sc, slot, vector_element(car(env), symbol_location(variable)));
-  else car(env) = s7_cons(sc, slot, car(env));
+
+  /* else car(env) = s7_cons(sc, slot, car(env)); */
+  /*   this expansion doesn't actually make much difference */
+  else
+    {
+      s7_pointer x;
+#if HAVE_PTHREADS
+      x = new_cell(sc); 
+#else
+      if (sc->free_heap_top > 0)
+	x = sc->free_heap[--(sc->free_heap_top)];
+      else x = new_cell(sc);
+#endif
+      car(x) = slot;
+      cdr(x) = car(env);
+      set_type(x, T_PAIR);
+      car(env) = x;
+    }
+
   return(slot);
 } 
 
@@ -2177,7 +2199,7 @@ static s7_pointer s7_make_continuation(s7_scheme *sc)
   c->cc_stack_top = sc->stack_top;
   c->cc_stack_size = sc->stack_size;
   c->cc_stack = copy_stack(sc, sc->stack, sc->stack_top);
-  x->object.cc = c;
+  continuation(x) = c;
   
   return(x);
 }
@@ -8869,7 +8891,20 @@ static s7_pointer s7_immutable_cons(s7_scheme *sc, s7_pointer a, s7_pointer b)
 s7_pointer s7_cons(s7_scheme *sc, s7_pointer a, s7_pointer b) 
 {
   s7_pointer x;
+
+#if HAVE_PTHREADS
   x = new_cell(sc); /* might trigger gc */
+#else
+  /* expand new_cell for speed */
+  if (sc->free_heap_top > 0)
+    {
+      x = sc->free_heap[--(sc->free_heap_top)];
+      sc->temps[sc->temps_ctr++] = x;
+      if (sc->temps_ctr >= sc->temps_size)
+	sc->temps_ctr = 0;
+    }
+  else x = new_cell(sc);
+#endif
   car(x) = a;
   cdr(x) = b;
   set_type(x, T_PAIR);
@@ -8897,13 +8932,13 @@ bool s7_is_pair(s7_pointer p)
 
 s7_pointer s7_car(s7_pointer p)           
 {
-  return((p)->object.cons.car);
+  return(car(p));
 }
 
 
 s7_pointer s7_cdr(s7_pointer p)           
 {
-  return((p)->object.cons.cdr);
+  return(cdr(p));
 }
 
 
@@ -12704,7 +12739,7 @@ each a function of no arguments, guaranteeing that finish is called even if body
   
   p = new_cell(sc);
   set_type(p, T_DYNAMIC_WIND | T_ATOM | T_FINALIZABLE | T_DONT_COPY); /* atom -> don't mark car/cdr, don't copy */
-  p->object.winder = dw;
+  dynamic_wind(p) = dw;
   push_stack(sc, OP_DYNAMIC_WIND, sc->NIL, p);          /* args will be the saved result, code = s7_dynwind_t obj */
   
   sc->args = sc->NIL;
@@ -12732,7 +12767,7 @@ static s7_pointer g_catch(s7_scheme *sc, s7_pointer args)
   
   p = new_cell(sc);
   set_type(p, T_CATCH | T_ATOM | T_FINALIZABLE | T_DONT_COPY); /* atom -> don't mark car/cdr, don't copy */
-  p->object.catcher = c;
+  catch(p) = c;
   push_stack(sc, OP_CATCH, sc->NIL, p);
   
   sc->args = sc->NIL;
@@ -12937,7 +12972,7 @@ GOT_CATCH:
 	  /* if the *error-hook* function triggers an error, we had better not have *error-hook* still set! */
 
 	  push_stack(sc, OP_ERROR_HOOK_QUIT, sc->NIL, error_hook); /* restore *error-hook* upon successful evaluation */
-	  sc->args = make_list_2(sc, type, info); /* TODO: add file/line to info */
+	  sc->args = make_list_2(sc, type, info);
 	  sc->code = error_hook;
 	  sc->op = OP_APPLY;
 	}
@@ -13252,7 +13287,7 @@ is a continuation, its stack is displayed."
       if (s7_is_continuation(car(args)))
 	{
 	  s7_continuation_t *c;
-	  c = car(args)->object.cc;
+	  c = continuation(car(args));
 	  top = c->cc_stack_top;
 	  stk = c->cc_stack;
 	}
@@ -13577,6 +13612,7 @@ static s7_pointer eval_symbol(s7_scheme *sc, s7_pointer sym)
     return(eval_error(sc, "unquote (',') occurred outside quasiquote", sc->NIL));
   if (sym == sc->UNQUOTE_SPLICING)
     return(eval_error(sc, "unquote-splicing (',@') occurred outside quasiquote", sc->NIL));
+
   return(eval_error(sc, "~A: unbound variable", sym));
 }
 
@@ -14364,7 +14400,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       if (s7_is_symbol(sc->code))
 	{
-	  sc->value = eval_symbol(sc, sc->code);
+	  /* expand eval_symbol here to speed it up by a lot */
+	  s7_pointer x;
+	  x = s7_find_symbol_in_environment(sc, sc->envir, sc->code, true);
+	  if (x != sc->NIL) 
+	    sc->value = symbol_value(x);
+	  else sc->value = eval_symbol(sc, sc->code);
 	  pop_stack(sc);
 	  goto START;
 	}
@@ -14432,23 +14473,48 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     EVAL_ARGS:
     case OP_EVAL_ARGS1:
       /* this is where most of s7's compute time goes */
-      sc->args = s7_cons(sc, sc->value, sc->args);
+      /*    sc->args = s7_cons(sc, sc->value, sc->args); */
+      /* expanding the function calls (s7_cons and new_cell) in place seems to speed up s7 by a noticeable amount! */
+      {
+        s7_pointer x;
+#if HAVE_PTHREADS
+	x = new_cell(sc); 
+#else
+	if (sc->free_heap_top > 0)
+	  x = sc->free_heap[--(sc->free_heap_top)];
+	else x = new_cell(sc);
+#endif
+	car(x) = sc->value;
+	cdr(x) = sc->args;
+	set_type(x, T_PAIR);
+	sc->args = x;
+      }
 
-      /* 1st time, value = op, args=nil (only e0 entry is from op_eval above), code is full list (at e0) */
+      /* 1st time, value = op, args = nil (only e0 entry is from op_eval above), code is full list (at e0) */
       if (is_pair(sc->code))  /* evaluate current arg */
 	{ 
 	  int typ;
-	  typ = type(car(sc->code));
+	  s7_pointer car_code;
+	  car_code = car(sc->code);
+	  typ = type(car_code);
 	  if (typ == T_PAIR)
 	    {
 	      push_stack(sc, OP_EVAL_ARGS1, sc->args, cdr(sc->code));
-	      sc->code = car(sc->code);
+	      sc->code = car_code;
 	      sc->args = sc->NIL;
 	      goto EVAL;
 	    }
 	  if (typ == T_SYMBOL)
-	    sc->value = eval_symbol(sc, car(sc->code));
-	  else sc->value = car(sc->code);
+	    {
+	      /* expand eval_symbol here to speed it up */
+	      s7_pointer x;
+	      x = s7_find_symbol_in_environment(sc, sc->envir, car_code, true);
+	      if (x != sc->NIL) 
+		sc->value = symbol_value(x);
+	      else sc->value = eval_symbol(sc, car_code);
+	    }
+	  /* sc->value = eval_symbol(sc, car(sc->code)); */
+	  else sc->value = car_code;
 	  sc->code = cdr(sc->code);
 	  goto EVAL_ARGS;
 	}
@@ -14738,10 +14804,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	case T_CONTINUATION:	                  /* -------- continuation ("call-with-continuation") -------- */
 	  {
 	    s7_continuation_t *c;
-	    c = sc->code->object.cc;
+	    c = continuation(sc->code);
 	    check_for_dynamic_winds(sc, c);
 	    sc->stack = copy_stack(sc, c->cc_stack, c->cc_stack_top);
 	    sc->stack_size = c->cc_stack_size;
+	    sc->stack_size2 = sc->stack_size / 2;
 	    sc->stack_top = c->cc_stack_top;
 	    if (sc->args == sc->NIL)
 	      sc->value = sc->NIL;
@@ -15481,7 +15548,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       if (!s7_is_symbol(sc->code))
 	return(eval_error(sc, "macro name is not a symbol?", sc->code));
-	
+
       set_type(sc->value, T_MACRO | T_ANY_MACRO);
       
       /* find name in environment, and define it */
@@ -15529,7 +15596,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        *   always precompute quasiquotes, but this change takes care of 99% of the cases.
        */
 
-      sc->y = s7_gensym(sc, "defmac");
       if ((is_pair(cdr(sc->code))) &&
 	  (is_pair(cddr(sc->code))) &&
 	  (is_pair(caddr(sc->code))) &&
@@ -15545,6 +15611,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	}
       else sc->z = cdr(sc->code);
 
+      sc->x = car(sc->code);            /* just in case g_quasiquote stepped on sc->x */
+      sc->y = s7_gensym(sc, "defmac");
       sc->code = s7_cons(sc, 
 			 sc->LAMBDA,
 			 s7_cons(sc, 
@@ -15599,7 +15667,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        *   so in this case we want cadr, not caddr of defmacro
        */
 
-      sc->y = s7_gensym(sc, "defmac");
       if ((is_pair(cdr(sc->code))) &&
 	  (is_pair(cadr(sc->code))) &&
 	  (s7_is_symbol(caadr(sc->code))) &&
@@ -15612,6 +15679,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	}
       else sc->z = cdr(sc->code);
 
+      sc->x = caar(sc->code); /* just in case g_quasiquote stepped on sc->x */
+      sc->y = s7_gensym(sc, "defmac");
       sc->code = s7_cons(sc,
 			 sc->LAMBDA,
 			 s7_cons(sc, 
@@ -15761,9 +15830,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       
     case OP_READ_LIST: 
-      if (sc->args == sc->NIL)
-	sc->args = s7_cons(sc, sc->value, sc->NIL);
-      else sc->args = s7_cons(sc, sc->value, sc->args);
+      sc->args = s7_cons(sc, sc->value, sc->args); /* expansion here doesn't save much time (3M) */
       sc->tok = token(sc, sc->input_port);
 
       switch (sc->tok)
@@ -16365,6 +16432,7 @@ static s7_scheme *clone_s7(s7_scheme *sc, s7_pointer vect)
   new_sc->stack_top = 0;
   new_sc->stack = vect;
   new_sc->stack_size = INITIAL_STACK_SIZE;
+  new_sc->stack_size2 = new_sc->stack_size / 2;
   
   new_sc->x = new_sc->NIL;
   new_sc->y = new_sc->NIL;
@@ -20879,6 +20947,7 @@ s7_scheme *s7_init(void)
   sc->stack_top = 0;
   sc->stack = s7_make_vector(sc, INITIAL_STACK_SIZE);
   sc->stack_size = INITIAL_STACK_SIZE;
+  sc->stack_size2 = sc->stack_size / 2;
   
   /* keep the symbol table out of the heap */
   sc->symbol_table = (s7_pointer)calloc(1, sizeof(s7_cell));
@@ -21437,7 +21506,6 @@ s7_scheme *s7_init(void)
   }
 
   s7_eval_c_string(sc, "(macro quasiquote (lambda (l) (_quasiquote_ 0 (cadr l))))");
-  typeflag(sc->QUASIQUOTE) |= T_IMMUTABLE;
 
 #if WITH_GMP
   s7_gmp_init(sc);
@@ -21479,5 +21547,3 @@ s7_scheme *s7_init(void)
 
 /* TODO: run for generics, also run set! of globals? */
 /* TODO: how to trace setter [s7_object_set?] mus-srate for example */
-/* SOMEDAY: add xg example of emacs embedded */
-
