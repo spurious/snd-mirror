@@ -636,7 +636,12 @@ struct s7_scheme {
 #define is_expansion(p)               ((typeflag(p) & T_EXPANSION) != 0)
 /* this marks macros from define-expansion */
 
-#define UNUSED_BITS                   0xffc00000
+#define T_LOCAL                       (1 << (TYPE_BITS + 14))
+#define is_not_local(p)               ((typeflag(p) & T_LOCAL) == 0)
+#define set_local(p)                  typeflag(p) |= T_LOCAL
+/* this marks a symbol that has been used at some time as a local variable */
+
+#define UNUSED_BITS                   0xff800000
 
 #if HAVE_PTHREADS
 #define set_type(p, f)                typeflag(p) = ((typeflag(p) & T_GC_MARK) | (f) | T_OBJECT)
@@ -1918,6 +1923,7 @@ static s7_pointer add_to_environment(s7_scheme *sc, s7_pointer env, s7_pointer v
       cdr(x) = e;
       set_type(x, T_PAIR);
       car(env) = x;
+      set_local(variable);
     }
 
   return(slot);
@@ -14551,7 +14557,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	{
 	  /* expand eval_symbol here to speed it up by a lot */
 	  s7_pointer x;
-	  x = s7_find_symbol_in_environment(sc, sc->envir, sc->code, true);
+	  if (is_not_local(sc->code))
+	    x = symbol_global_slot(sc->code);
+	  else x = s7_find_symbol_in_environment(sc, sc->envir, sc->code, true);
 	  if (x != sc->NIL) 
 	    sc->value = symbol_value(x);
 	  else sc->value = eval_symbol(sc, sc->code);
@@ -14646,6 +14654,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  s7_pointer car_code;
 	  car_code = car(sc->code);
 	  typ = type(car_code);
+
 	  if (typ == T_PAIR)
 	    {
 	      push_stack(sc, OP_EVAL_ARGS1, sc->args, cdr(sc->code));
@@ -14653,11 +14662,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      sc->args = sc->NIL;
 	      goto EVAL;
 	    }
+
 	  if (typ == T_SYMBOL)
 	    {
 	      /* expand eval_symbol here to speed it up */
 	      s7_pointer x;
-	      x = s7_find_symbol_in_environment(sc, sc->envir, car_code, true);
+	      if (is_not_local(car_code))
+		x = symbol_global_slot(car_code);
+	      else x = s7_find_symbol_in_environment(sc, sc->envir, car_code, true);
 	      if (x != sc->NIL) 
 		sc->value = symbol_value(x);
 	      else sc->value = eval_symbol(sc, car_code);
