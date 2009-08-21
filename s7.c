@@ -836,6 +836,17 @@ static char *s7_strdup(const char *str)
 }
 
 
+static char *s7_strdup_with_len(const char *str, int len)
+{
+  char *newstr;
+  if (!str) return(NULL);
+  newstr = (char *)malloc(len * sizeof(char));
+  if (!newstr) return(NULL);
+  memcpy((void *)newstr, (void *)str, len);
+  return(newstr);
+}
+
+
 
 static void s7_mark_embedded_objects(s7_pointer a); /* called by gc, calls fobj's mark func */
 static s7_pointer eval(s7_scheme *sc, opcode_t first_op);
@@ -1939,9 +1950,8 @@ static s7_pointer s7_find_symbol_in_environment(s7_scheme *sc, s7_pointer env, s
     { 
       if (s7_is_vector(car(x)))
 	return(symbol_global_slot(hdl));
-      else y = car(x); 
       
-      for (; is_pair(y); y = cdr(y))
+      for (y = car(x); is_pair(y); y = cdr(y))
 	if (caar(y) == hdl)
 	  return(car(y));
 
@@ -2142,7 +2152,7 @@ void s7_define(s7_scheme *sc, s7_pointer envir, s7_pointer symbol, s7_pointer va
   x = s7_find_symbol_in_environment(sc, envir, symbol, false);
   if (x != sc->NIL) 
     set_symbol_value(x, value); 
-  else add_to_environment(sc, envir, symbol, value); 
+  else add_to_environment(sc, envir, symbol, value); /* I think this means C code can override "constant" defs */
 }
 
 
@@ -2220,9 +2230,6 @@ static s7_pointer copy_object(s7_scheme *sc, s7_pointer obj)
 {
   s7_pointer nobj;
 
-  if (dont_copy(obj))
-    return(obj);
-  
   {
     int nloc;
     nobj = new_cell(sc);
@@ -2231,13 +2238,17 @@ static s7_pointer copy_object(s7_scheme *sc, s7_pointer obj)
     nobj->hloc = nloc;
   }
   
-  car(nobj) = copy_object(sc, car(obj));
-  if ((is_closure(obj)) ||
+  if (dont_copy(car(obj)))
+    car(nobj) = car(obj);
+  else car(nobj) = copy_object(sc, car(obj));
+
+  if ((dont_copy(cdr(obj))) ||
+      (is_closure(obj)) ||
       (is_closure_star(obj)) ||
       (is_macro(obj)) || 
       (is_promise(obj)) ||
       (s7_is_function(obj)))
-    cdr(nobj) = closure_environment(obj);
+    cdr(nobj) = cdr(obj); /* closure_environment in func cases */
   else cdr(nobj) = copy_object(sc, cdr(obj));
   
   return(nobj);
@@ -2259,7 +2270,9 @@ static s7_pointer copy_stack(s7_scheme *sc, s7_pointer old_v, int top)
 
   for (i = 0; i < top; i += 4)
     {
-      nv[i + 0] = copy_object(sc, ov[i + 0]); /* code */
+      if (dont_copy(ov[i]))
+	nv[i] = ov[i];
+      else nv[i] = copy_object(sc, ov[i]);    /* code */
       nv[i + 1] = ov[i + 1];                  /* environment pointer */
       if (is_pair(ov[i + 2]))                 /* args need not be a list (it can be a port or #f, etc) */
 	nv[i + 2] = copy_list(sc, ov[i + 2]); /* args (copy is needed -- see s7test.scm) */
@@ -2296,7 +2309,7 @@ static s7_pointer s7_make_continuation(s7_scheme *sc)
 
   x = new_cell(sc);
   set_type(x, T_CONTINUATION | T_FINALIZABLE | T_DONT_COPY | T_PROCEDURE);
-  c = (s7_continuation_t *)calloc(1, sizeof(s7_continuation_t));
+  c = (s7_continuation_t *)malloc(sizeof(s7_continuation_t));
   
   /* save current state */
   c->cc_stack_top = sc->stack_top;
@@ -4659,7 +4672,7 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
       if (q[len - 1] != 'i')
 	return((want_symbol) ? s7_make_symbol(sc, q) : sc->F);
 
-      saved_q = s7_strdup(q);
+      saved_q = s7_strdup_with_len(q, len + 1);
 
       /* look for cases like 1+i */
       if ((q[len - 2] == '+') || (q[len - 2] == '-'))
@@ -4701,13 +4714,9 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
 #else
       result = string_to_either_complex(sc, q, slash1, ex1, has_dec_point1, plus, slash2, ex2, has_dec_point2, radix, has_plus_or_minus);
 #endif
-      {
-	int i;
-	for (i = 0; i < len; i++)
-	  q[i] = saved_q[i];
-	free(saved_q);
-      }
-      
+
+      memcpy((void *)q, (void *)saved_q, len);
+      free(saved_q);
       return(result);
     }
 
@@ -6735,7 +6744,7 @@ s7_pointer s7_make_string_with_length(s7_scheme *sc, const char *str, int len)
   s7_pointer x;
   x = new_cell(sc);
   set_type(x, T_STRING | T_ATOM | T_FINALIZABLE | T_SIMPLE | T_DONT_COPY);
-  string_value(x) = s7_strdup(str);
+  string_value(x) = s7_strdup_with_len(str, len + 1);
   string_length(x) = len;
   return(x);
 }
@@ -6746,9 +6755,11 @@ static s7_pointer make_empty_string(s7_scheme *sc, int len, char fill)
   s7_pointer x;
   x = new_cell(sc);
   set_type(x, T_STRING | T_ATOM | T_FINALIZABLE | T_SIMPLE | T_DONT_COPY);
-  string_value(x) = (char *)calloc(len + 1, sizeof(char));
-  if (fill != 0)
-    memset((void *)(string_value(x)), fill, len);
+  
+  string_value(x) = (char *)malloc((len + 1) * sizeof(char));
+  memset((void *)(string_value(x)), fill, len);
+  string_value(x)[len] = 0;
+
   string_length(x) = len;
   return(x);
 }
@@ -6769,8 +6780,8 @@ s7_pointer s7_make_permanent_string(const char *str)
   set_type(x, T_STRING | T_ATOM | T_SIMPLE | T_IMMUTABLE | T_DONT_COPY);
   if (str)
     {
-      string_value(x) = s7_strdup(str);
       string_length(x) = strlen(str);
+      string_value(x) = s7_strdup_with_len(str, string_length(x) + 1);
     }
   else 
     {
@@ -8103,7 +8114,7 @@ defaults to the global environment; to load into the current environment instead
     }
   else sc->envir = s7_global_environment(sc);
 
-  push_stack(sc, OP_LOAD_CLOSE_AND_POP_IF_EOF, sc->args, sc->code);
+  push_stack(sc, OP_LOAD_CLOSE_AND_POP_IF_EOF, sc->NIL, sc->NIL);  /* was pushing args and code, but I don't think they're used later */
   push_stack(sc, OP_READ_INTERNAL, sc->NIL, sc->NIL);
   
   return(sc->UNSPECIFIED);
@@ -8433,7 +8444,7 @@ static char *s7_atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
       if (string_length(obj) > 0)
 	{
 	  if (!use_write) 
-	    return(s7_strdup(string_value(obj)));
+	    return(s7_strdup_with_len(string_value(obj), string_length(obj) + 1));
 	  return(slashify_string(string_value(obj)));
 	}
       if (!use_write)
@@ -9000,7 +9011,7 @@ static s7_pointer g_with_output_to_file(s7_scheme *sc, s7_pointer args)
 static s7_pointer s7_immutable_cons(s7_scheme *sc, s7_pointer a, s7_pointer b)
 {
   s7_pointer x;
-  x = new_cell(sc); /* might trigger gc */
+  x = new_cell(sc); /* might trigger gc, expansion here does not help */
   car(x) = a;
   cdr(x) = b;
   set_type(x, T_PAIR | T_IMMUTABLE);
@@ -9201,7 +9212,7 @@ static s7_pointer s7_reverse_in_place(s7_scheme *sc, s7_pointer term, s7_pointer
 }
 
 
-static s7_pointer safe_reverse_in_place(s7_scheme *sc, s7_pointer list) 
+static s7_pointer safe_reverse_in_place(s7_scheme *sc, s7_pointer list) /* "safe" here means we guarantee this list is unproblematic */
 {
   s7_pointer p = list, result, q;
   result = sc->NIL;
@@ -11815,7 +11826,7 @@ static s7_pointer s7_copy(s7_scheme *sc, s7_pointer obj)
   switch (type(obj))
     {
     case T_STRING:
-      return(s7_make_string_with_length(sc, s7_strdup(string_value(obj)), string_length(obj)));
+      return(s7_make_string_with_length(sc, s7_strdup_with_len(string_value(obj), string_length(obj) + 1), string_length(obj)));
 
     case T_C_OBJECT:
       return(s7_object_copy(sc, obj));
@@ -12879,7 +12890,7 @@ each a function of no arguments, guaranteeing that finish is called even if body
   if (!is_thunk(sc, caddr(args)))
     return(s7_wrong_type_arg_error(sc, "dynamic-wind", 3, caddr(args), "a procedure"));
   
-  dw = (s7_dynwind_t *)calloc(1, sizeof(s7_dynwind_t));
+  dw = (s7_dynwind_t *)malloc(sizeof(s7_dynwind_t));
   dw->in = car(args);
   dw->body = cadr(args);
   dw->out = caddr(args);
@@ -12908,7 +12919,7 @@ static s7_pointer g_catch(s7_scheme *sc, s7_pointer args)
   if (!is_procedure(caddr(args)))
     return(s7_wrong_type_arg_error(sc, "catch", 3, caddr(args), "a procedure"));
   
-  c = (s7_catch_t *)calloc(1, sizeof(s7_catch_t));
+  c = (s7_catch_t *)malloc(sizeof(s7_catch_t));
   c->tag = car(args);
   c->goto_loc = sc->stack_top;
   c->handler = caddr(args);
@@ -14243,7 +14254,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_LOAD_CLOSE_AND_POP_IF_EOF:
       if (sc->tok != TOKEN_EOF)
 	{
-	  push_stack(sc, OP_LOAD_CLOSE_AND_POP_IF_EOF, sc->args, sc->code);
+	  push_stack(sc, OP_LOAD_CLOSE_AND_POP_IF_EOF, sc->NIL, sc->NIL); /* was push args, code */
 	  push_stack(sc, OP_READ_INTERNAL, sc->NIL, sc->NIL);
 	  sc->code = sc->value;
 	  goto EVAL;             /* we read an expression, now evaluate it, and return to read the next */
@@ -14538,7 +14549,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
     EVAL:
     case OP_EVAL:       /* main part of evaluation */
-      if (is_pair(sc->code)) 
+      if (is_pair(sc->code))                /* switching type check order here slows us down */
 	{
 	  /* using a local s7_pointer for sc->x here drastically slows things down?!? */
 	  sc->x = car(sc->code);
@@ -14631,7 +14642,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_EVAL_ARGS1:
       /* this is where most of s7's compute time goes */
       /*    sc->args = s7_cons(sc, sc->value, sc->args); */
-      /* expanding the function calls (s7_cons and new_cell) in place seems to speed up s7 by a noticeable amount! */
+      /* expanding the function calls (s7_cons, new_cell, and eval_symbol) in place seems to speed up s7 by a noticeable amount! */
       {
         s7_pointer x;
 #if HAVE_PTHREADS
@@ -14736,7 +14747,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 					  sc->code, sc->args)));
 
 	    sc->value = c_function_call(sc->code)(sc, sc->args);
-	    
+	    /* this works, but slows things down a bit
+	    sc->code = sc->NIL;
+	    sc->args = sc->NIL;
+	    */
+
 	    if (sc->stack_top != 0)
 	      pop_stack(sc);
 	    else return(sc->value); /* or perhaps sc->F? */
@@ -14802,7 +14817,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 					    s7_make_string_with_length(sc, "~A: not enough arguments: ~A", 28),
 					    g_procedure_source(sc, make_list_1(sc, sc->code)), 
 					    sc->args)));
-	      add_to_current_environment(sc, car(sc->x), car(sc->y));
+	      {
+		/* add_to_current_environment(sc, car(sc->x), car(sc->y)); */ /* expand this for speed */
+		if (is_immutable(car(sc->x)))
+		  return(s7_error(sc, sc->ERROR, make_list_2(sc, s7_make_string(sc, "can't bind or set an immutable object: ~S"), car(sc->x))));
+
+		add_to_environment(sc, sc->envir, car(sc->x), car(sc->y));
+	      }
 	    }
 	  
 	  if (sc->x == sc->NIL) 
@@ -15379,7 +15400,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  if (s7_find_symbol_in_environment(sc, sc->envir, caar(sc->x), false) != sc->NIL)
 	    return(eval_error(sc, "duplicate identifier in let", caar(sc->x)));
 
-	  add_to_current_environment(sc, caar(sc->x), car(sc->y)); 
+	  add_to_current_environment(sc, caar(sc->x), car(sc->y)); /* expansion here does not help */
 	}
       if (s7_is_symbol(car(sc->code))) 
 	{    /* named let */
