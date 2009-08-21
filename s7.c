@@ -525,7 +525,7 @@ struct s7_scheme {
 
   #define CIRCULAR_REFS_SIZE 8
   s7_pointer *circular_refs;     /* printer circular list/vector checks */
-  
+
   jmp_buf goto_start;
   bool longjmp_ok;
   void (*error_exiter)(void);
@@ -745,7 +745,8 @@ struct s7_scheme {
 #define c_macro_all_args(f)           (f)->object.ffptr->all_args
 
 #define continuation(p)               (p)->object.cc
-#define continuation_cc_stack(p)      (p)->object.cc->cc_stack
+#define continuation_stack(p)         (p)->object.cc->cc_stack
+#define continuation_stack_top(p)     (p)->object.cc->cc_stack_top
 
 #define is_goto(p)                    (type(p) == T_GOTO)
 #define is_macro(p)                   (type(p) == T_MACRO)
@@ -823,29 +824,22 @@ static int safe_strlen(const char *str)
 }
 
 
-static char *s7_strdup(const char *str)
-{
-  int len;
-  char *newstr;
-  if (!str) return(NULL);
-  len = strlen(str) + 1;
-  newstr = (char *)malloc(len * sizeof(char));
-  if (!newstr) return(NULL);
-  memcpy((void *)newstr, (void *)str, len);
-  return(newstr);
-}
-
-
 static char *s7_strdup_with_len(const char *str, int len)
 {
   char *newstr;
   if (!str) return(NULL);
-  newstr = (char *)malloc(len * sizeof(char));
+  newstr = (char *)malloc((len + 1) * sizeof(char));
   if (!newstr) return(NULL);
   memcpy((void *)newstr, (void *)str, len);
+  newstr[len] = 0;
   return(newstr);
 }
 
+
+static char *s7_strdup(const char *str)
+{
+  return(s7_strdup_with_len(str, safe_strlen(str)));
+}
 
 
 static void s7_mark_embedded_objects(s7_pointer a); /* called by gc, calls fobj's mark func */
@@ -866,6 +860,7 @@ static void write_string(s7_scheme *sc, const char *s, s7_pointer pt);
 static s7_pointer eval_symbol(s7_scheme *sc, s7_pointer sym);
 static bool is_thunk(s7_scheme *sc, s7_pointer x);
 static int remember_file_name(const char *file);
+static s7_pointer s7_make_vector_1(s7_scheme *sc, int len, bool filled);
 #if WITH_ENCAPSULATION
   static void encapsulate(s7_scheme *sc, s7_pointer sym);
 #endif
@@ -1229,7 +1224,7 @@ static void s7_mark_object_1(s7_pointer p)
       return;
 
     case T_CONTINUATION:
-      S7_MARK(continuation_cc_stack(p));
+      mark_vector(continuation_stack(p), continuation_stack_top(p));
       return;
 
     case T_CATCH:
@@ -2261,7 +2256,7 @@ static s7_pointer copy_stack(s7_scheme *sc, s7_pointer old_v, int top)
   s7_pointer new_v;
   s7_pointer *nv, *ov;
   len = vector_length(old_v);
-  new_v = s7_make_vector(sc, len);
+  new_v = s7_make_vector_1(sc, len, false);
 
   nv = vector_elements(new_v);
   ov = vector_elements(old_v);
@@ -4672,7 +4667,7 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
       if (q[len - 1] != 'i')
 	return((want_symbol) ? s7_make_symbol(sc, q) : sc->F);
 
-      saved_q = s7_strdup_with_len(q, len + 1);
+      saved_q = s7_strdup_with_len(q, len);
 
       /* look for cases like 1+i */
       if ((q[len - 2] == '+') || (q[len - 2] == '-'))
@@ -6744,7 +6739,7 @@ s7_pointer s7_make_string_with_length(s7_scheme *sc, const char *str, int len)
   s7_pointer x;
   x = new_cell(sc);
   set_type(x, T_STRING | T_ATOM | T_FINALIZABLE | T_SIMPLE | T_DONT_COPY);
-  string_value(x) = s7_strdup_with_len(str, len + 1);
+  string_value(x) = s7_strdup_with_len(str, len);
   string_length(x) = len;
   return(x);
 }
@@ -6781,7 +6776,7 @@ s7_pointer s7_make_permanent_string(const char *str)
   if (str)
     {
       string_length(x) = strlen(str);
-      string_value(x) = s7_strdup_with_len(str, string_length(x) + 1);
+      string_value(x) = s7_strdup_with_len(str, string_length(x));
     }
   else 
     {
@@ -8444,7 +8439,7 @@ static char *s7_atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
       if (string_length(obj) > 0)
 	{
 	  if (!use_write) 
-	    return(s7_strdup_with_len(string_value(obj), string_length(obj) + 1));
+	    return(s7_strdup_with_len(string_value(obj), string_length(obj)));
 	  return(slashify_string(string_value(obj)));
 	}
       if (!use_write)
@@ -10125,6 +10120,7 @@ void s7_vector_fill(s7_scheme *sc, s7_pointer vec, s7_pointer obj)
 {
   int i, len;  /* this restricts the vector filled size to 31 bits */
   s7_pointer *tp;
+
   len = vector_length(vec);
   tp = (s7_pointer *)(vector_elements(vec));
   for (i = 0; i < len; i++) 
@@ -10135,18 +10131,13 @@ void s7_vector_fill(s7_scheme *sc, s7_pointer vec, s7_pointer obj)
 
 static s7_pointer s7_vector_copy(s7_scheme *sc, s7_pointer old_vect)
 {
-  int i, len;
-  s7_pointer *old_v, *new_v;
+  int len;
   s7_pointer new_vect;
 
   len = vector_length(old_vect);
   new_vect = s7_make_vector_1(sc, len, false);
+  memcpy((void *)(vector_elements(new_vect)), (void *)(vector_elements(old_vect)), len * sizeof(s7_pointer));
 
-  old_v = (s7_pointer *)(vector_elements(old_vect));
-  new_v = (s7_pointer *)(vector_elements(new_vect));
-
-  for (i = 0; i < len; i++) 
-    new_v[i] = old_v[i];
   return(new_vect);
 }
 
@@ -11826,7 +11817,7 @@ static s7_pointer s7_copy(s7_scheme *sc, s7_pointer obj)
   switch (type(obj))
     {
     case T_STRING:
-      return(s7_make_string_with_length(sc, s7_strdup_with_len(string_value(obj), string_length(obj) + 1), string_length(obj)));
+      return(s7_make_string_with_length(sc, s7_strdup_with_len(string_value(obj), string_length(obj)), string_length(obj)));
 
     case T_C_OBJECT:
       return(s7_object_copy(sc, obj));
