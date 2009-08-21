@@ -17314,5 +17314,16 @@ You can often slightly rewrite the form to make run happy."
 #endif
   init_walkers();
   init_type_names();
+
+#if HAVE_S7
+  {
+    int i;
+    s7_pointer *vals;
+    vals = s7_vector_elements(walker_hash_table);
+    for (i = 0; i < s7_vector_length(walker_hash_table); i++)
+      s7_remove_from_heap(s7, vals[i]);
+    /* removing the hash table itself is problematic because (for example) add_clm_field adds new entries */
+  }
+#endif
 #endif
 }

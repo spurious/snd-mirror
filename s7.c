@@ -150,12 +150,10 @@
 /* ---------------- initial sizes ---------------- */
 
 #define INITIAL_HEAP_SIZE 128000
-/* the heap grows as needed, this is its initial size.
- */
+/* the heap grows as needed, this is its initial size. */
 
 #define SYMBOL_TABLE_SIZE 9601
-/* names are hashed into the symbol table (a vector) and collisions are chained as lists.
- */
+/* names are hashed into the symbol table (a vector) and collisions are chained as lists. */
 
 #define INITIAL_STACK_SIZE 4000            
 /* the stack grows as needed, each frame takes 4 entries, this is its initial size */
@@ -163,8 +161,8 @@
 #define INITIAL_PROTECTED_OBJECTS_SIZE 16  
 /* a vector of objects that are (semi-permanently) protected from the GC, grows as needed */
 
-#define GC_TEMPS_SIZE 4096
-/* the number of recent objects that are temporarily gc-protected; 512 is too small */
+#define GC_TEMPS_SIZE 128
+/* the number of recent objects that are temporarily gc-protected; 8 works for s7test and snd-test */
 
 #define INITIAL_TRACE_LIST_SIZE 2
 /* a list of currently-traced functions */
@@ -387,11 +385,13 @@ typedef struct s7_vdims_t {
 /* cell structure */
 typedef struct s7_cell {
   unsigned int flag;
+  int hloc;
   union {
     
     struct {
-      char *svalue;
       int  length;
+      char *svalue;
+      s7_pointer global_slot; /* for strings that represent symbol names, this is the current global environment (symbol value) cons */
     } string;
     
     s7_num_t number;
@@ -458,7 +458,7 @@ struct s7_scheme {
   s7_pointer stack;                   /* stack is a vector */
   int stack_size, stack_top, stack_size2;
   s7_pointer *small_ints;             /* permanent numbers for opcode entries in the stack */
-  s7_pointer real_zero;
+  s7_pointer real_zero, real_one;
   
   s7_pointer protected_objects;       /* a vector of gc-protected objects */
   int *protected_objects_size, *protected_objects_loc; /* pointers so they're global across threads */
@@ -677,6 +677,10 @@ struct s7_scheme {
 #define pair_line_number(p)           (p)->object.cons.line
 #define port_file_number(p)           (p)->object.port->file_number
 
+#define string_value(p)               ((p)->object.string.svalue)
+#define string_length(p)              ((p)->object.string.length)
+#define character(p)                  ((p)->object.cvalue)
+
 #define symbol_location(p)            (p)->object.cons.line
 #define symbol_name(p)                string_value(car(p))
 #define symbol_name_length(p)         string_length(car(p))
@@ -685,10 +689,7 @@ struct s7_scheme {
 #if WITH_PROFILING
   #define symbol_calls(p)             (p)->object.cons.calls
 #endif
-
-#define string_value(p)               ((p)->object.string.svalue)
-#define string_length(p)              ((p)->object.string.length)
-#define character(p)                  ((p)->object.cvalue)
+#define symbol_global_slot(p)         (car(p))->object.string.global_slot
 
 #define vector_length(p)              ((p)->object.vector.length)
 #define vector_element(p, i)          ((p)->object.vector.elements[i])
@@ -844,6 +845,7 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
 static bool s7_is_applicable_object(s7_pointer x);
 static s7_pointer make_list_1(s7_scheme *sc, s7_pointer a);
 static s7_pointer make_list_2(s7_scheme *sc, s7_pointer a, s7_pointer b);
+static s7_pointer s7_permanent_cons(s7_pointer a, s7_pointer b, int type);
 static void write_string(s7_scheme *sc, const char *s, s7_pointer pt);
 static s7_pointer eval_symbol(s7_scheme *sc, s7_pointer sym);
 static bool is_thunk(s7_scheme *sc, s7_pointer x);
@@ -1233,11 +1235,8 @@ static void s7_mark_object_1(s7_pointer p)
   if (is_atom(p))
     return;
   
-  if (car(p))
-    S7_MARK(car(p));
-  
-  if (cdr(p))
-    S7_MARK(cdr(p));
+  S7_MARK(car(p));
+  S7_MARK(cdr(p));
 }
 
 
@@ -1294,7 +1293,7 @@ static int gc(s7_scheme *sc)
 
 	if (typeflag(p) != 0) /* an already-free object? */
 	  {
-	    if (is_marked(p)) 
+	    if (is_marked(p)) /* it's marginally faster to switch the order of these checks */
 	      clear_mark(p);
 	    else 
 	      {
@@ -1306,6 +1305,8 @@ static int gc(s7_scheme *sc)
 	  }
       }
   }
+
+  /* fprintf(stderr, "gc: %d of %d\n", sc->free_heap_top - old_free_heap_top, sc->heap_size); */
   
   return(sc->free_heap_top - old_free_heap_top); /* needed by cell allocator to decide when to increase heap size */
 }
@@ -1376,6 +1377,7 @@ static s7_pointer new_cell(s7_scheme *sc)
 	    {
 	      sc->heap[k] = (s7_cell *)calloc(1, sizeof(s7_cell));
 	      sc->free_heap[sc->free_heap_top++] = sc->heap[k];
+	      sc->heap[k]->hloc = k;
 	    }
 	  sc->heap[sc->heap_size] = NULL; /* end mark for GC loop */
 	}
@@ -1443,6 +1445,80 @@ s7_pointer s7_gc_on(s7_scheme *sc, bool on)
 {
   (*(sc->gc_off)) = !on;
   return(s7_make_boolean(sc, on));
+}
+
+
+#define NOT_IN_HEAP -1
+
+void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
+{
+  int loc;
+  /* global functions are very rarely redefined, so we can remove the function body from
+   *   the heap when it is defined.  If redefined, we currently lose the memory held by the
+   *   old definition.  If this memory leak becomes a problem, we could notice the redefinition 
+   *   in add_to_environment, and GC the old body by hand.
+   */
+
+  switch (type(x))
+    {
+    case T_PAIR:
+      s7_remove_from_heap(sc, car(x));
+      s7_remove_from_heap(sc, cdr(x));
+      break;
+
+    case T_UNTYPED:
+    case T_NIL_TYPE:
+    case T_BOOLEAN:
+      return;
+
+    case T_STRING:
+    case T_NUMBER:
+    case T_CHARACTER:
+      break;
+
+    case T_SYMBOL:
+      /* here hloc is always NOT_IN_HEAP already, but cdr(x) can be an int (syntax_opcode) */
+      return;
+
+    case T_CLOSURE:
+    case T_CLOSURE_STAR:
+    case T_MACRO:
+    case T_PROMISE:
+      s7_remove_from_heap(sc, closure_source(x));
+      break;
+
+      /* not sure any of these can exist as code-level constants */
+    case T_CONTINUATION:
+    case T_GOTO:
+    case T_INPUT_PORT:
+    case T_OUTPUT_PORT:
+    case T_CATCH:
+    case T_DYNAMIC_WIND:
+      break;
+
+    case T_C_OBJECT:
+    case T_C_FUNCTION:
+    case T_C_MACRO:
+      break;
+
+    case T_HASH_TABLE:
+    case T_VECTOR:
+      {
+	int i;
+	for (i = 0; i < vector_length(x); i++)
+	  s7_remove_from_heap(sc, vector_element(x, i));
+      }
+      break;
+    }
+
+  loc = x->hloc;
+  if (loc != NOT_IN_HEAP)
+    {
+      x->hloc = NOT_IN_HEAP;
+      sc->heap[loc] = (s7_cell *)calloc(1, sizeof(s7_cell));
+      sc->free_heap[sc->free_heap_top++] = sc->heap[loc];
+      sc->heap[loc]->hloc = loc;
+    }
 }
 
 
@@ -1557,8 +1633,6 @@ static int hash_fn(const char *key, int table_size)
 static pthread_mutex_t symtab_lock = PTHREAD_MUTEX_INITIALIZER;
 #endif
 
-static s7_pointer s7_permanent_cons(s7_pointer a, s7_pointer b, int type);
-
 static s7_pointer symbol_table_add_by_name_at_location(s7_scheme *sc, const char *name, int location) 
 { 
   s7_pointer x, str; 
@@ -1566,6 +1640,7 @@ static s7_pointer symbol_table_add_by_name_at_location(s7_scheme *sc, const char
   str = s7_make_permanent_string(name);
   x = s7_permanent_cons(str, sc->NIL, T_SYMBOL | T_ATOM | T_SIMPLE | T_DONT_COPY | T_ETERNAL);
   symbol_location(x) = location;
+  symbol_global_slot(x) = sc->NIL;
 
 #if HAVE_PTHREADS
   pthread_mutex_lock(&symtab_lock);
@@ -1806,13 +1881,29 @@ static s7_pointer new_frame_in_env(s7_scheme *sc, s7_pointer old_env)
 
 static s7_pointer add_to_environment(s7_scheme *sc, s7_pointer env, s7_pointer variable, s7_pointer value) 
 { 
-  s7_pointer slot;
-  slot = s7_immutable_cons(sc, variable, value); 
-  if (s7_is_vector(car(env))) 
-    vector_element(car(env), symbol_location(variable)) = s7_cons(sc, slot, vector_element(car(env), symbol_location(variable)));
+  s7_pointer slot, e;
 
-  /* else car(env) = s7_cons(sc, slot, car(env)); */
-  /*   this expansion doesn't actually make much difference */
+  e = car(env);
+  slot = s7_immutable_cons(sc, variable, value);
+
+  if (s7_is_vector(e))
+    {
+      int loc;
+
+      if (is_c_function(value))
+	s7_remove_from_heap(sc, value);
+      else
+	{
+	  if ((is_closure(value)) ||
+	      (is_closure_star(value)) ||
+	      (is_macro(value)))
+	    s7_remove_from_heap(sc, closure_source(value));
+	}
+
+      loc = symbol_location(variable);
+      vector_element(e, loc) = s7_cons(sc, slot, vector_element(e, loc));
+      symbol_global_slot(variable) = slot;
+    }
   else
     {
       s7_pointer x;
@@ -1824,7 +1915,7 @@ static s7_pointer add_to_environment(s7_scheme *sc, s7_pointer env, s7_pointer v
       else x = new_cell(sc);
 #endif
       car(x) = slot;
-      cdr(x) = car(env);
+      cdr(x) = e;
       set_type(x, T_PAIR);
       car(env) = x;
     }
@@ -1840,8 +1931,8 @@ static s7_pointer s7_find_symbol_in_environment(s7_scheme *sc, s7_pointer env, s
 
   for (x = env; is_pair(x); x = cdr(x)) 
     { 
-      if (s7_is_vector(car(x))) 
-	y = vector_element(car(x), symbol_location(hdl));
+      if (s7_is_vector(car(x)))
+	return(symbol_global_slot(hdl));
       else y = car(x); 
       
       for (; is_pair(y); y = cdr(y))
@@ -1987,11 +2078,12 @@ static s7_pointer make_closure(s7_scheme *sc, s7_pointer c, s7_pointer e, int ty
    *   pointer to the binding in place of the symbol.  Currently symbol lookup is about 
    *   equal to the GC in percentage of total run time.
    */
-
-  s7_pointer x = new_cell(sc);
-  set_type(x, type | T_PROCEDURE);
+  
+  s7_pointer x;
+  x = new_cell(sc); /* expansion here doesn't save much */
   car(x) = c;
   cdr(x) = e;
+  set_type(x, type | T_PROCEDURE);
   return(x);
 }
 
@@ -2125,8 +2217,13 @@ static s7_pointer copy_object(s7_scheme *sc, s7_pointer obj)
   if (dont_copy(obj))
     return(obj);
   
-  nobj = new_cell(sc);
-  memcpy((void *)nobj, (void *)obj, sizeof(s7_cell));
+  {
+    int nloc;
+    nobj = new_cell(sc);
+    nloc = nobj->hloc;
+    memcpy((void *)nobj, (void *)obj, sizeof(s7_cell));
+    nobj->hloc = nloc;
+  }
   
   car(nobj) = copy_object(sc, car(obj));
   if ((is_closure(obj)) ||
@@ -2929,13 +3026,13 @@ static s7_num_t make_complex(s7_Double rl, s7_Double im)
   return(ret);
 }
 
-
 s7_pointer s7_make_integer(s7_scheme *sc, s7_Int n) 
 {
   s7_pointer x;
   if ((n >= 0) && (n < NUM_SMALL_INTS))
     return(small_int(sc, n));
   /* there are ca 6300 -1's in s7test (14500 small negative ints) -- if like sc->real_zero (64000), this would gain us .2% overall speed */
+  /*   similarly, between 256 and 512, 8200 or so */
 
   x = new_cell(sc);
   set_type(x, T_NUMBER | T_ATOM | T_SIMPLE | T_DONT_COPY);
@@ -2952,6 +3049,8 @@ s7_pointer s7_make_real(s7_scheme *sc, s7_Double n)
   s7_pointer x;
   if (n == 0.0)
     return(sc->real_zero);
+  if (n == 1.0)
+    return(sc->real_one);
 
   x = new_cell(sc);
   set_type(x, T_NUMBER | T_ATOM | T_SIMPLE | T_DONT_COPY);
@@ -5107,7 +5206,7 @@ static s7_pointer g_tanh(s7_scheme *sc, s7_pointer args)
   if (s7_is_real(x))
     return(s7_make_real(sc, tanh(num_to_real(number(x)))));
   if (s7_real_part(x) > 350.0)
-    return(s7_make_real(sc, 1.0));  /* closer than 0.0 which is what ctanh is about to return! */
+    return(sc->real_one);           /* closer than 0.0 which is what ctanh is about to return! */
   if (s7_real_part(x) < -350.0)
     return(s7_make_real(sc, -1.0)); /* closer than -0.0 which is what ctanh is about to return! */
 
@@ -5338,7 +5437,7 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
 	return(sc->real_zero);
       y = num_to_real(number(pw));
       if (y == 0.0)
-	return(s7_make_real(sc, 1.0));
+	return(sc->real_one);
       if ((x > 0.0) ||
 	  ((y - floor(y)) < 1.0e-16))
 	return(s7_make_real(sc, pow(x, y)));
@@ -5835,28 +5934,49 @@ static s7_pointer g_modulo(s7_scheme *sc, s7_pointer args)
 }
 
 
-typedef enum {N_EQUAL, N_LESS, N_GREATER, N_LESS_OR_EQUAL, N_GREATER_OR_EQUAL} compare_t;
+static s7_pointer g_equal(s7_scheme *sc, s7_pointer args)
+{
+  #define H_equal "(= z1 ...) returns #t if all its arguments are equal"
+  /* return(compare_numbers(sc, N_EQUAL, args)); */
+  int i;
+  s7_pointer x;
+
+  for (i = 1, x = args; x != sc->NIL; i++, x = cdr(x))
+    if (!s7_is_number(car(x)))
+      return(s7_wrong_type_arg_error(sc, "=", i, car(x), "a number"));
+  
+  sc->v = number(car(args));
+  for (x = cdr(args); x != sc->NIL; x = cdr(x)) 
+    {
+      if (!num_eq(sc->v, number(car(x)))) 
+	return(sc->F);
+      sc->v = number(car(x));
+    }
+  return(sc->T);
+
+}
+
+
+typedef enum {N_LESS, N_GREATER, N_LESS_OR_EQUAL, N_GREATER_OR_EQUAL} compare_t;
 
 static s7_pointer compare_numbers(s7_scheme *sc, compare_t op, s7_pointer args)
 {
   int i;
   s7_pointer x;
   bool (*comp_func)(s7_num_t a, s7_num_t b) = NULL;
-  bool (*arg_checker)(s7_pointer x) = NULL;
-  const char *arg_type = NULL, *op_name = NULL;
+  const char *op_name = NULL;
 
   switch (op)
     {
-    case N_EQUAL:            comp_func = num_eq; arg_checker = s7_is_number; arg_type = "number"; op_name = "=";  break;
-    case N_LESS:             comp_func = num_lt; arg_checker = s7_is_real;   arg_type = "real";   op_name = "<";  break;
-    case N_GREATER:          comp_func = num_gt; arg_checker = s7_is_real;   arg_type = "real";   op_name = ">";  break;
-    case N_LESS_OR_EQUAL:    comp_func = num_le; arg_checker = s7_is_real;   arg_type = "real";   op_name = "<="; break;
-    case N_GREATER_OR_EQUAL: comp_func = num_ge; arg_checker = s7_is_real;   arg_type = "real";   op_name = ">="; break;
+    case N_LESS:             comp_func = num_lt; op_name = "<";  break;
+    case N_GREATER:          comp_func = num_gt; op_name = ">";  break;
+    case N_LESS_OR_EQUAL:    comp_func = num_le; op_name = "<="; break;
+    case N_GREATER_OR_EQUAL: comp_func = num_ge; op_name = ">="; break;
     }
   
   for (i = 1, x = args; x != sc->NIL; i++, x = cdr(x))
-    if (!arg_checker(car(x)))
-      s7_wrong_type_arg_error(sc, op_name, i, car(x), arg_type);
+    if (!s7_is_real(car(x)))
+      return(s7_wrong_type_arg_error(sc, op_name, i, car(x), "a real"));
   
   sc->v = number(car(args));
   for (x = cdr(args); x != sc->NIL; x = cdr(x)) 
@@ -5866,13 +5986,6 @@ static s7_pointer compare_numbers(s7_scheme *sc, compare_t op, s7_pointer args)
       sc->v = number(car(x));
     }
   return(sc->T);
-}
-
-
-static s7_pointer g_equal(s7_scheme *sc, s7_pointer args)
-{
-  #define H_equal "(= z1 ...) returns #t if all its arguments are equal"
-  return(compare_numbers(sc, N_EQUAL, args));
 }
 
 
@@ -6645,7 +6758,8 @@ s7_pointer s7_make_permanent_string(const char *str)
 {
   /* for the symbol table which is never GC'd */
   s7_pointer x;
-  x = (s7_cell *)malloc(sizeof(s7_cell));
+  x = (s7_cell *)calloc(1, sizeof(s7_cell));
+  x->hloc = NOT_IN_HEAP;
   set_type(x, T_STRING | T_ATOM | T_SIMPLE | T_IMMUTABLE | T_DONT_COPY);
   if (str)
     {
@@ -8917,6 +9031,7 @@ static s7_pointer s7_permanent_cons(s7_pointer a, s7_pointer b, int type)
   /* for the symbol table which is never GC'd (and its contents aren't marked) */
   s7_pointer x;
   x = (s7_cell *)calloc(1, sizeof(s7_cell));
+  x->hloc = NOT_IN_HEAP;
   car(x) = a;
   cdr(x) = b;
   set_type(x, type);
@@ -8960,9 +9075,9 @@ static s7_pointer make_list_1(s7_scheme *sc, s7_pointer a)
 {
   s7_pointer x;
   x = new_cell(sc);
-  set_type(x, T_PAIR);
   car(x) = a;
   cdr(x) = sc->NIL;
+  set_type(x, T_PAIR);
   return(x);
 }
 
@@ -8971,13 +9086,13 @@ static s7_pointer make_list_2(s7_scheme *sc, s7_pointer a, s7_pointer b)
 {
   s7_pointer x, y;
   y = new_cell(sc);
-  set_type(y, T_PAIR);
   car(y) = b;
   cdr(y) = sc->NIL;
+  set_type(y, T_PAIR);
   x = new_cell(sc); /* order matters because the GC will see "y" and expect it to have legit car/cdr */
-  set_type(x, T_PAIR);
   car(x) = a;
   cdr(x) = y;
+  set_type(x, T_PAIR);
   return(x);
 }
 
@@ -8986,17 +9101,17 @@ static s7_pointer make_list_3(s7_scheme *sc, s7_pointer a, s7_pointer b, s7_poin
 {
   s7_pointer x, y, z;
   z = new_cell(sc);
-  set_type(z, T_PAIR);
   car(z) = c;
   cdr(z) = sc->NIL;
+  set_type(z, T_PAIR);
   y = new_cell(sc);
-  set_type(y, T_PAIR);
   car(y) = b;
   cdr(y) = z;
+  set_type(y, T_PAIR);
   x = new_cell(sc);
-  set_type(x, T_PAIR);
   car(x) = a;
   cdr(x) = y;
+  set_type(x, T_PAIR);
   return(x);
 }
 
@@ -9315,7 +9430,27 @@ static s7_pointer g_cons(s7_scheme *sc, s7_pointer args)
    * this is not safe -- it changes a variable's value directly:
    *   (let ((lst (list 1 2))) (list (apply cons lst) lst)) -> '((1 . 2) (1 . 2))
    */
-  return(s7_cons(sc, car(args), cadr(args)));
+  s7_pointer x;
+
+#if HAVE_PTHREADS
+  x = new_cell(sc); /* might trigger gc */
+#else
+  /* expand new_cell for speed */
+  if (sc->free_heap_top > 0)
+    {
+      x = sc->free_heap[--(sc->free_heap_top)];
+      sc->temps[sc->temps_ctr++] = x;
+      if (sc->temps_ctr >= sc->temps_size)
+	sc->temps_ctr = 0;
+    }
+  else x = new_cell(sc);
+#endif
+  car(x) = car(args);
+  cdr(x) = cadr(args);
+  set_type(x, T_PAIR);
+  return(x);
+
+  /* return(s7_cons(sc, car(args), cadr(args))); */
 }
 
 
@@ -9926,12 +10061,19 @@ static s7_pointer s7_make_vector_1(s7_scheme *sc, int len, bool filled)
   vector_length(x) = len;
   if (len > 0)
     {
-      if (len >= (1 << (8 * sizeof(size_t) - sizeof(s7_pointer))))
-	/* malloc len arg is size_t (bytes), sizeof(size_t)=4 on 32-bit, 8 on 64-bit */
+      /* len is an "int" currently */
+      float ilog2;
+
+      ilog2 = log((double)len) / log(2.0);
+      if (sizeof(size_t) > 4)
 	{
-	  if (sizeof(size_t) == 4)
+	  if (ilog2 > 56.0)
+	    return(s7_out_of_range_error(sc, "make-vector", 1, s7_make_integer(sc, len), "less than about 2^56 probably"));
+	}
+      else
+	{
+	  if (ilog2 > 28.0)
 	    return(s7_out_of_range_error(sc, "make-vector", 1, s7_make_integer(sc, len), "less than about 2^28 probably"));
-	  return(s7_out_of_range_error(sc, "make-vector", 1, s7_make_integer(sc, len), "less than about 2^56 probably"));
 	}
 
       vector_elements(x) = (s7_pointer *)malloc(len * sizeof(s7_pointer));
@@ -13832,14 +13974,20 @@ static char *read_string_upto(s7_scheme *sc, int start)
     {
       if (port_string(pt))
 	{
-	  do
-	    {
-	      c = port_string(pt)[port_string_point(pt)++];
-	      sc->strbuf[i++] = c;
-	      if (i >= sc->strbuf_size)
-		resize_strbuf(sc);
-	    }
-	  while (string_delimiter_table[c]);
+	  int k = 0;
+	  char *orig_str, *str;
+
+	  str = (char *)(port_string(pt) + port_string_point(pt));
+	  orig_str = str;
+	  do {c = (int)(*str++);} while (string_delimiter_table[c]);
+
+	  k = str - orig_str;
+	  port_string_point(pt) += k;
+	  i += k;
+	  if (i >= sc->strbuf_size)
+	    resize_strbuf(sc);
+
+	  memcpy((void *)(sc->strbuf + start), (void *)orig_str, k);
 
 	  if ((i == 2) && 
 	      (sc->strbuf[0] == '\\'))
@@ -14003,7 +14151,7 @@ static s7_pointer read_expression(s7_scheme *sc)
 }
 
       
-static s7_pointer g_quasiquote_1(s7_scheme *sc, int level, s7_pointer form);
+static s7_pointer g_quasiquote_2(s7_scheme *sc, int level, s7_pointer form);
 
 
 /* -------------------------------- eval -------------------------------- */
@@ -14386,6 +14534,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_EVAL:       /* main part of evaluation */
       if (is_pair(sc->code)) 
 	{
+	  /* using a local s7_pointer for sc->x here drastically slows things down?!? */
 	  sc->x = car(sc->code);
 	  if (is_syntax(sc->x))
 	    {     
@@ -15424,7 +15573,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
     case OP_FORCE:     /* Save forced value replacing promise */
 
-      memcpy(sc->code, sc->value, sizeof(s7_cell));
+      {
+	int cloc;
+	cloc = sc->code->hloc;
+	memcpy(sc->code, sc->value, sizeof(s7_cell));
+	sc->code->hloc = cloc;
+      }
 
       /* memcpy is trouble:
        * if, for example, sc->value is a string, after memcpy we have two (string) objects in the heap
@@ -15590,7 +15744,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        *   cdr(sc->code): ((a) (quasiquote (+ (unquote a) 1)))
        *   caddr(sc->code):    (quasiquote (+ (unquote a) 1))
        *   cadr(caddr(sc->code):           (+ (unquote a) 1)
-       *   g_quasiquote_1(sc, 0, ^):       (cons (quote +) (cons a (cons 1 (quote ()))))
+       *   g_quasiquote_2(sc, 0, ^):       (cons (quote +) (cons a (cons 1 (quote ()))))
        *
        * so the quasiquote can be evaluated immediately.  It's possible that we could
        *   always precompute quasiquotes, but this change takes care of 99% of the cases.
@@ -15606,7 +15760,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  sc->z = s7_cons(sc,
 			  cadr(sc->code),
 			  s7_cons(sc,
-				  g_quasiquote_1(sc, 0, cadr(caddr(sc->code))),
+				  g_quasiquote_2(sc, 0, cadr(caddr(sc->code))),
 				  sc->NIL));
 	}
       else sc->z = cdr(sc->code);
@@ -15674,7 +15828,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  (cddr(sc->code) == sc->NIL))
 	{
 	  sc->z = s7_cons(sc,
-			  g_quasiquote_1(sc, 0, cadr(cadr(sc->code))),
+			  g_quasiquote_2(sc, 0, cadr(cadr(sc->code))),
 			  sc->NIL);
 	}
       else sc->z = cdr(sc->code);
@@ -16092,12 +16246,23 @@ static s7_pointer g_quasiquote_1(s7_scheme *sc, int level, s7_pointer form)
   }
 }
 
+static s7_pointer g_quasiquote_2(s7_scheme *sc, int level, s7_pointer form)
+{
+  /* the lists built up by quasiquote can be arbitrarily large, and it would be a nightmare to locally GC-protect,
+   *   then later unprotect every cons, so we turn off the GC until we're done.
+   */
+  s7_pointer x;
+  if (sc->free_heap_top < 4096) gc(sc);
+  s7_gc_on(sc, false);
+  x = g_quasiquote_1(sc, level, form);
+  s7_gc_on(sc, true);
+  return(x);
+}
 
 static s7_pointer g_quasiquote(s7_scheme *sc, s7_pointer args)
 {
-  return(g_quasiquote_1(sc, s7_integer(car(args)), cadr(args)));
-}
-  
+  return(g_quasiquote_2(sc, s7_integer(car(args)), cadr(args)));
+}  
 
 
 
@@ -18718,7 +18883,7 @@ static s7_pointer big_trig(s7_scheme *sc, s7_pointer args, s7_function g_trig,
 	  if (tan_case == TRIG_TANH_CHECK)
 	    {
 	      if ((MPC_INEX_RE(mpc_cmp_si_si(S7_BIG_COMPLEX(p), 350, 1))) > 0)
-		return(s7_make_real(sc, 1.0));
+		return(sc->real_one);
 	      if ((MPC_INEX_RE(mpc_cmp_si_si(S7_BIG_COMPLEX(p), -350, 1))) < 0)
 		return(s7_make_real(sc, -1.0));
 	    }
@@ -18808,7 +18973,7 @@ static s7_pointer big_expt(s7_scheme *sc, s7_pointer args)
 	{
 	  if (s7_is_rational(x))
 	    return(small_int(sc, 1));
-	  return(s7_make_real(sc, 1.0));
+	  return(sc->real_one);
 	}
 
       if (yval == 1)
@@ -20923,6 +21088,7 @@ s7_scheme *s7_init(void)
       {
 	sc->heap[i] = (s7_cell *)calloc(1, sizeof(s7_cell));
 	sc->free_heap[i] = sc->heap[i];
+	sc->heap[i]->hloc = i;
       }
     sc->heap[sc->heap_size] = NULL;
   }
@@ -20955,6 +21121,7 @@ s7_scheme *s7_init(void)
   vector_length(sc->symbol_table) = SYMBOL_TABLE_SIZE;
   vector_elements(sc->symbol_table) = (s7_pointer *)malloc(SYMBOL_TABLE_SIZE * sizeof(s7_pointer));
   s7_vector_fill(sc, sc->symbol_table, sc->NIL);
+  sc->symbol_table->hloc = NOT_IN_HEAP;
   
   sc->gensym_counter = (long *)calloc(1, sizeof(long));
   sc->tracing = (bool *)calloc(1, sizeof(bool));
@@ -20984,6 +21151,7 @@ s7_scheme *s7_init(void)
       s7_pointer p;
       p = (s7_pointer)calloc(1, sizeof(s7_cell));
       p->flag = T_OBJECT | T_IMMUTABLE | T_ATOM | T_NUMBER | T_SIMPLE | T_DONT_COPY;
+      p->hloc = NOT_IN_HEAP;
       number_type(p) = NUM_INT;
       integer(number(p)) = (s7_Int)i;
       sc->small_ints[i] = p;
@@ -20991,8 +21159,15 @@ s7_scheme *s7_init(void)
   
   sc->real_zero = (s7_pointer)calloc(1, sizeof(s7_cell));
   sc->real_zero->flag = T_OBJECT | T_IMMUTABLE | T_ATOM | T_NUMBER | T_SIMPLE | T_DONT_COPY;
+  sc->real_zero->hloc = NOT_IN_HEAP;
   number_type(sc->real_zero) = NUM_REAL;
   real(number(sc->real_zero)) = (s7_Double)0.0;
+
+  sc->real_one = (s7_pointer)calloc(1, sizeof(s7_cell));
+  sc->real_one->flag = T_OBJECT | T_IMMUTABLE | T_ATOM | T_NUMBER | T_SIMPLE | T_DONT_COPY;
+  sc->real_one->hloc = NOT_IN_HEAP;
+  number_type(sc->real_one) = NUM_REAL;
+  real(number(sc->real_one)) = (s7_Double)1.0;
 
   /* initialization of global pointers to special symbols */
   assign_syntax(sc, "lambda",            OP_LAMBDA);

@@ -3,7 +3,7 @@
  * originally intended as a re-implementation of my much-missed dpysnd -- the Foonly/SAIL/E/Mus10/Grnlib sound editor from ca 1983.
  */
 
-/* TODO: use emacs as the listener via the xembed protocol? */
+/* SOMEDAY: use emacs as the listener via the xembed protocol? (this connection is not quite ready) */
 
 #include "snd.h"
 

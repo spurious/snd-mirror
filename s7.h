@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "1.28"
-#define S7_DATE "17-Aug-09"
+#define S7_VERSION "1.29"
+#define S7_DATE "20-Aug-09"
 
 
 typedef long long int s7_Int;
@@ -196,6 +196,7 @@ void s7_gc_unprotect(s7_scheme *sc, s7_pointer x);
 void s7_gc_unprotect_at(s7_scheme *sc, int loc);
 s7_pointer s7_gc_protected_at(s7_scheme *sc, int loc);
 s7_pointer s7_gc_on(s7_scheme *sc, bool on);
+void s7_remove_from_heap(s7_scheme *sc, s7_pointer x);
 
   /* any s7_pointer object held in C (as a local variable for example) needs to be
    *   protected from garbage collection if there is any chance the GC may run without
@@ -1585,6 +1586,7 @@ int main(int argc, char **argv)
  * 
  *        s7 changes
  *
+ * 20-Aug:    s7_remove_from_heap.
  * 17-Aug:    *error-info*.
  * 14-Aug:    define-expansion.
  * 7-Aug:     s7_define_function_with_setter. 

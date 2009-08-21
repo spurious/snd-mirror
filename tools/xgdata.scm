@@ -7019,3 +7019,6 @@
 
 ;;; (CINT-2177 "GTK_FILE_CHOOSER_PROP_CREATE_FOLDERS" "GtkFileChooserProp")
 
+;;; 2.17.8
+;(CFNC-2177 "void gtk_widget_set_allocation GtkWidget* widget GtkAllocation* allocation")
+
