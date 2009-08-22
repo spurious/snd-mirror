@@ -6336,6 +6336,7 @@
       (test (string? (s7-version)) #t)
       (test (eval-string "(+ 1 2)") 3)
       (test (eval '(+ 1 2)) 3)
+      (test (eval-string (string-append "(list 1 2 3)" (string #\newline) (string #\newline))) (list 1 2 3))
 
       (test (string=? (procedure-documentation abs) "(abs x) returns the absolute value of the real number x") #t)
       (test (string=? (procedure-documentation 'abs) "(abs x) returns the absolute value of the real number x") #t)
