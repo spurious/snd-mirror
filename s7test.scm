@@ -71,41 +71,13 @@
 ;   (define (catch tag l1 l2) (l1))
 
 
-(if #t ; s7
-    (begin
-      (if (and (defined? 'current-time) ; in Snd
-	       (defined? 'mus-rand-seed))
-	  (set! (mus-rand-seed) (current-time)))
-      (define (test-eval expr) (eval expr)))) ; (current-environment)))))
 
-(if #f ; guile (but you'll need to move these statements to top-level)
-    (begin
-      (use-modules (ice-9 format))
-      (define (test-eval expr) (eval expr (interaction-environment)))
-      (define old-random random)
-      (define (random x) (if (zero? x) 0 (old-random x)))))
+(if (and (defined? 'current-time) ; in Snd
+	 (defined? 'mus-rand-seed))
+    (set! (mus-rand-seed) (current-time)))
 
-(if #f ; gauche
-    (begin
-      (define-syntax defmacro
-	(syntax-rules ()
-	  ((_ name params . body) (define-macro (name . params) . body))))
+(define test-eval eval)
 
-      (define (catch tag body error-handler)
-	(guard (err (else (apply error-handler (if (list? err) err (list err)))))
-	       (body)))
-
-      (load "/usr/local/share/gauche/0.8.14/lib/srfi-29/format.scm")
-
-      (use math.mt-random)
-      (define m (make <mersenne-twister>))
-      (define (random n)
-	(if (= n 0) 
-	    0
-	    (if (exact? n)
-		(mt-random-integer m n)
-		(exact->inexact (/ (mt-random-integer m (inexact->exact (* n n))) (+ 1 (mt-random-integer m (inexact->exact n))))))))
-      ))
 
 
 ;;;--------------------------------------------------------------------------------
@@ -2193,6 +2165,8 @@
 (test (let ((x '(1 . 2))) (set-car! x x) (list? x)) #f)
 (test (let ((x (list 1))) (set-car! x '()) x) '(()))
 (test (let ((x '(((1 2) . 3) 4))) (set-car! x 1) x) '(1 4))
+(test (let ((lst (cons 1 (cons 2 3)))) (set-car! (cdr lst) 4) lst) (cons 1 (cons 4 3)))
+(test (let ((lst (cons 1 (cons 2 3)))) (set-car! lst 4) lst) (cons 4 (cons 2 3)))
 
 
 (test (let ((x (cons 1 2))) (set-cdr! x 3) x) (cons 1 3))
@@ -2207,7 +2181,7 @@
 (test (let ((x '(1 . 2))) (set-cdr! x x) (list? x)) #f)
 (test (let ((x (list 1))) (set-cdr! x '()) x) (list 1))
 (test (let ((x '(1 . (2 . (3 (4 5)))))) (set-cdr! x 4) x) '(1 . 4))
-
+(test (let ((lst (cons 1 (cons 2 3)))) (set-cdr! (cdr lst) 4) lst) (cons 1 (cons 2 4)))
 
 
 (test (list-ref (list 1 2) 1) 2)
@@ -2621,6 +2595,13 @@
 
 ;(let ((str "hi") (v (make-vector 3))) (vector-fill! v str) (string-set! (vector-ref v 0) 1 #\a) str) -> mutable string error
 ;(let ((lst (list 1 2)) (v (make-vector 3))) (vector-fill! v lst) (list-set! (vector-ref v 0) 1 #\a) lst) -> '(1 #\a)
+
+;;; TODO: are these legal? [they are in guile!]
+;(vector-set! '#(1 2) 0 2) -- (set! #(1 2) '#(2 3)) gets error
+;(vector-fill! '#(1 2) 0)
+;(string-fill! "hi" #\a)  -- string-set! is illegal here, as also (set! "hi" "h")
+;(set-car! '(1 . 2) 3)
+
 
 
 (if (provided? 'multidimensional-vectors)
@@ -3436,6 +3417,7 @@
 (test (call/cc (lambda (r) (do () (#f) (r 1)))) 1)
 (test (let ((hi (lambda (x) (+ x 1)))) (do ((i 0 (hi i))) ((= i 3) i))) 3)
 (test (do ((i 0 (+ i 1))) (list 1) ((= i 3) #t)) 1) ; a typo originally -- Guile and Gauche are happy with it
+(test (do () (1 2) 3) 2)
 
 
 
@@ -3545,6 +3527,7 @@
 ;;; -------- cond --------
 
 (test (cond ('a)) 'a)
+(test (cond (3)) 3)
 (test (cond (#f 'a) ('b)) 'b)
 (test (cond (#t 'a) (#t 'b)) 'a)
 (test (cond ((> 3 2) 'greater) ((< 3 2) 'less)) 'greater)
@@ -3558,6 +3541,7 @@
 (test (cond ('() 1)) 1)
 ;(test (cond (1 2) '()) 2)
 (test (cond (1 2 3)) 3)
+(test (cond (1 2) (3 4)) 2)
 (test (cond ((= 1 2) 3) ((+ 3 4))) 7)
 (test (cond ((= 1 1) (abs -1) (+ 2 3) (* 10 2)) (else 123)) 20)
 (test (let ((a 1)) (cond ((= a 1) (set! a 2) (+ a 3)))) 5)
@@ -6337,6 +6321,10 @@
       (test (eval-string "(+ 1 2)") 3)
       (test (eval '(+ 1 2)) 3)
       (test (eval-string (string-append "(list 1 2 3)" (string #\newline) (string #\newline))) (list 1 2 3))
+      (eval-string (string-append "(define evalstr_1 32)" (string #\newline) "(define evalstr_2 2)"))
+      (test (eval-string "(+ evalstr_1 evalstr_2)") 34)
+      (eval-string (string-append "(set! evalstr_1 3)" "(set! evalstr_2 12)"))
+      (test (eval-string "(+ evalstr_1 evalstr_2)") 15)
 
       (test (string=? (procedure-documentation abs) "(abs x) returns the absolute value of the real number x") #t)
       (test (string=? (procedure-documentation 'abs) "(abs x) returns the absolute value of the real number x") #t)
@@ -6385,6 +6373,42 @@
 	(test (equal? (vector (hi 1)) '#(2)) #t)
 	(test (symbol? (vector-ref '#(hi) 0)) #t))
 
+      (test (let () (define-constant __c1__ 32) __c1__) 32)
+      (test (let () __c1__) 'error)
+      (test (let ((__c1__ 3)) __c1__) 'error)
+      (test (let* ((__c1__ 3)) __c1__) 'error)
+      (test (letrec ((__c1__ 3)) __c1__) 'error)
+      (test (let () (define (__c1__ a) a) (__c1__ 3)) 'error)
+      (test (let () (set! __c1__ 3)) 'error)
+      (test (constant? '__c1__) #t)
+      (test (constant? 'abs) #f)
+      (test (constant? '*features*) #f)
+
+      (test (defined? 'pi) #t)
+      (test (defined? 'pi (global-environment)) #t)
+      (test (defined? 'abs (global-environment)) #t)
+      (test (defined? 'abs (current-environment)) #t)
+      (test (let ((__c2__ 32)) (defined? '__c2__)) #t)
+      (test (let ((__c2__ 32)) (defined? '__c2__ (current-environment))) #t)
+      (test (let ((__c2__ 32)) (defined? '__c3__ (current-environment))) #f)
+      (test (let ((__c2__ 32)) (defined? '__c2__ (global-environment))) #f)
+      (test (let ((__c2__ 32)) (defined? '__c3__ (global-environment))) #f)
+
+      (test (call-with-exit (lambda (c) (0 (c 1)))) 1)
+      (test (call-with-exit (lambda (k) (k "foo"))) "foo")
+      (test (call-with-exit (lambda (k) "foo")) "foo")
+      (test (call-with-exit (lambda (k) (k "foo") "oops")) "foo")
+      (test (let ((memb (lambda (x ls)
+			  (call-with-exit
+			   (lambda (break)
+			     (do ((ls ls (cdr ls)))
+				 ((null? ls) #f)
+			       (if (equal? x (car ls))
+				   (break ls))))))))
+	      (list (memb 'd '(a b c))
+		    (memb 'b '(a b c))))
+	    '(#f (b c)))
+
       (test (string=? (let ((hi (lambda (b) (+ b 1)))) (object->string hi)) "hi") #t)
       (test (string=? (object->string 32) "32") #t)
       (test (string=? (object->string 32.5) "32.5") #t)
@@ -6396,10 +6420,43 @@
       (test (string=? (object->string '#(1 2 3)) "#(1 2 3)") #t)
       (test (string=? (object->string +) "+") #t)
 
-      (test (let ((l (list 1 2))) (list-set! l 0 l) (string=? (object->string l) "([circular list] 2)")) #t)
-      (test (let ((v (vector 1 2))) (vector-set! v 0 v) (string=? (object->string v) "#([circular vector] 2)")) #t)
-      (test (let* ((l1 (list 1 2)) (l2 (list l1))) (list-set! l1 0 l1) (string=? (object->string l2) "(([circular list] 2))")) #t)
-      (test (let* ((v1 (vector 1 2)) (v2 (vector v1))) (vector-set! v1 1 v1) (string=? (object->string v2) "#(#(1 [circular vector]))")) #t)
+      (test (let ((l (list 1 2))) 
+	      (list-set! l 0 l) 
+	      (string=? (object->string l) "([circular list] 2)")) 
+	    #t)
+      (test (let ((lst (cons 1 2))) 
+	      (set-cdr! lst lst)
+	      (string=? (object->string lst) "[circular list]"))
+	    #t)
+      (test (let ((lst (cons 1 2))) 
+	      (set-car! lst lst)
+	      (string=? (object->string lst) "([circular list] . 2)"))
+	    #t)
+      (test (let ((lst (cons (cons 1 2) 3))) 
+	      (set-car! (car lst) lst)
+	      (string=? (object->string lst) "(([circular list] . 2) . 3)"))
+	    #t)
+      (test (let ((v (vector 1 2))) 
+	      (vector-set! v 0 v) 
+	      (string=? (object->string v) "#([circular vector] 2)")) 
+	    #t)
+      (test (let* ((l1 (list 1 2)) (l2 (list l1))) 
+	      (list-set! l1 0 l1) 
+	      (string=? (object->string l2) "(([circular list] 2))")) 
+	    #t)
+      (test (let* ((v1 (vector 1 2)) (v2 (vector v1))) 
+	      (vector-set! v1 1 v1) 
+	      (string=? (object->string v2) "#(#(1 [circular vector]))")) 
+	    #t)
+      (test (let ((v1 (make-vector 3 1))) 
+	      (vector-set! v1 0 (cons 3 v1)) 
+	      (string=? (object->string v1) "#((3 . [circular vector]) 1 1)")) 
+	    #t)
+      (test (let ((h1 (make-hash-table 11))) 
+	      (hash-table-set! h1 'hi h1)
+	      (string=? (object->string h1) "#(() () () () ((\"hi\" . [circular hash-table])) () () () () () ())"))
+	    #t)
+		 
 
       (test (let* ((l1 (list 1 2))
 		   (v1 (vector 1 2))
@@ -6576,6 +6633,9 @@
 	(test (set! (v3 1 2) 3) 'error)
 	(test (vector-ref v3 1 2) 'error)
 	(test (vector-set! v3 1 2 32) 'error))
+
+      (test (#(1 2) 1) 2)
+      (test (#(1 2) 1 2) 'error)
       
       (test (constant? pi) #t)
       (test (constant? 'pi) #t) ; take that, Clisp!
@@ -35840,6 +35900,9 @@
       (test (log) 'error)
       (test (log "hi") 'error)
       (test (log 1.0+23.0i 1.0+23.0i 1.0+23.0i) 'error)
+      (test (log "hi" (expt 2 30)) 'error)
+      (test (log (expt 2 30) #t) 'error)
+      (test (expt #t 0) 'error)
       (test (sin) 'error)
       (test (sin "hi") 'error)
       (test (sin 1.0+23.0i 1.0+23.0i) 'error)
@@ -36147,6 +36210,10 @@
        (lambda (arg)
 	 (test (for-each (lambda (a) a) arg) 'error))
        (list "hi" -1 #\a 1 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i #f #t '(1 . 2)))
+
+      (test (for-each abs '() abs) 'error)
+      (test (for-each abs '() '#(1)) 'error)
+      (test (map abs '() abs) 'error)
       
       
       (test (map (lambda (x) (display "map should not have called this"))) 'error)
@@ -36210,6 +36277,7 @@
       (test (set! 3 1) 'error)
       (test (set! 3.14 1) 'error)
       (test (set! #\a 12) 'error)
+      (test (set! (1 2) #t) 'error)
       
       (test (let ((a (lambda (x) (set! a 3) x))) (list (a 1) a)) 'error)
       (test (let ((a (let ((b 1)) (set! a 3) b))) a) 'error)            
@@ -40338,6 +40406,42 @@ expt error > 1e-6 around 2^-46.506993328423
      ops)
 
     (for-each
+     (lambda (arg1)
+       (for-each
+	(lambda (arg2)
+	  (catch #t
+		 (lambda () 
+		   (eval (list 'set! (list arg1) arg2)))
+		 (lambda args
+		   #f)))
+	args))
+     args)
+
+    (for-each
+     (lambda (arg1)
+       (for-each
+	(lambda (arg2)
+	  (catch #t
+		 (lambda () 
+		   (eval (list 'set! (list arg1) arg2)))
+		 (lambda args
+		   #f)))
+	ops))
+     args)
+
+    (for-each
+     (lambda (arg1)
+       (for-each
+	(lambda (arg2)
+	  (catch #t
+		 (lambda () 
+		   (eval (list 'set! (cons arg1 arg2) arg1)))
+		 (lambda args
+		   #f)))
+	args))
+     args)
+
+    (for-each
      (lambda (op)
        (for-each
 	(lambda (arg1)
@@ -40346,7 +40450,7 @@ expt error > 1e-6 around 2^-46.506993328423
 	     (for-each
 	      (lambda (arg3)
 		(catch #t
-		       (lambda () 
+		       (lambda () (format #t "~A~%" (list op arg1 arg2 arg3))
 			 (eval (list op arg1 arg2 arg3)))
 		       (lambda args
 			 #f)))
@@ -40448,3 +40552,4 @@ expt error > 1e-6 around 2^-46.506993328423
 ;;; but:
 ;;;   (cos (bignum "1.0000000000000000000000000000000000e32")) gets the right answer, so who truncates?
 ;;; I think this is a bug in mpfr
+

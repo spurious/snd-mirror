@@ -858,6 +858,7 @@ static s7_pointer make_list_2(s7_scheme *sc, s7_pointer a, s7_pointer b);
 static s7_pointer s7_permanent_cons(s7_pointer a, s7_pointer b, int type);
 static void write_string(s7_scheme *sc, const char *s, s7_pointer pt);
 static s7_pointer eval_symbol(s7_scheme *sc, s7_pointer sym);
+static s7_pointer eval_error(s7_scheme *sc, const char *errmsg, s7_pointer obj);
 static bool is_thunk(s7_scheme *sc, s7_pointer x);
 static int remember_file_name(const char *file);
 static s7_pointer s7_make_vector_1(s7_scheme *sc, int len, bool filled);
@@ -1613,7 +1614,16 @@ internally by the evaluator.  If a continuation is passed, its stack and stack-t
 static void show_stack(s7_scheme *sc)
 {
   const char *ops[OP_MAX_DEFINED] = 
-    {"read_internal", "eval", "eval_args0", "eval_args1", "apply", "eval_macro", "lambda", "quote", "define0", "define1", "begin", "if0", "if1", "set0", "set1", "set2", "let0", "let1", "let2", "let_star0", "let_star1", "letrec0", "letrec1", "letrec2", "cond0", "cond1", "make_promise", "and0", "and1", "or0", "or1", "defmacro", "macro0", "macro1", "define_macro", "define_expansion", "expansion", "case0", "case1", "case2", "read_list", "read_dot", "read_quote", "read_quasiquote", "read_quasiquote_vector", "read_unquote", "read_unquote_splicing", "read_vector", "force", "read_return_expression", "read_pand_return_expression", "load_return_if_eof", "load_close_and_pop_if_eof", "eval_string", "eval_string_done", "eval_done", "quit", "catch", "dynamic_wind", "for_each", "map", "define_constant0", "define_constant1", "do", "do_end0", "do_end1", "do_step0", "do_step1", "do_step2", "do_init", "define_star", "lambda_star", "error_quit", "unwind_input", "unwind_output", "trace_return", "error_hook_quit", "call_with_values"};
+    {"read_internal", "eval", "eval_args0", "eval_args1", "apply", "eval_macro", "lambda", "quote", 
+     "define0", "define1", "begin", "if0", "if1", "set0", "set1", "set2", "let0", "let1", "let2", 
+     "let_star0", "let_star1", "letrec0", "letrec1", "letrec2", "cond0", "cond1", "make_promise", 
+     "and0", "and1", "or0", "or1", "defmacro", "macro0", "macro1", "define_macro", "define_expansion", "expansion", 
+     "case0", "case1", "case2", "read_list", "read_dot", "read_quote", "read_quasiquote", "read_quasiquote_vector", 
+     "read_unquote", "read_unquote_splicing", "read_vector", "force", "read_return_expression", 
+     "read_and_return_expression", "load_return_if_eof", "load_close_and_pop_if_eof", "eval_string", 
+     "eval_string_done", "eval_done", "quit", "catch", "dynamic_wind", "for_each", "map", "define_constant0", 
+     "define_constant1", "do", "do_end0", "do_end1", "do_step0", "do_step1", "do_step2", "do_init", "define_star", 
+     "lambda_star", "error_quit", "unwind_input", "unwind_output", "trace_return", "error_hook_quit", "call_with_values"};
 
   int i;
   for (i = sc->stack_top - 4; i >= 0; i -= 4)
@@ -2296,14 +2306,14 @@ static s7_pointer s7_make_continuation(s7_scheme *sc)
    *   in successive copy_stack's below, causing s7 to core up until it runs out of memory.
    */
 
-  x = new_cell(sc);
-  set_type(x, T_CONTINUATION | T_FINALIZABLE | T_DONT_COPY | T_PROCEDURE);
   c = (s7_continuation_t *)malloc(sizeof(s7_continuation_t));
-  
   /* save current state */
   c->cc_stack_top = sc->stack_top;
   c->cc_stack_size = sc->stack_size;
   c->cc_stack = copy_stack(sc, sc->stack, sc->stack_top);
+
+  x = new_cell(sc);
+  set_type(x, T_CONTINUATION | T_FINALIZABLE | T_DONT_COPY | T_PROCEDURE);
   continuation(x) = c;
   
   return(x);
@@ -8533,6 +8543,9 @@ static char *s7_atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
   
     case T_C_OBJECT:
       return(s7_describe_object(sc, obj)); /* this allocates already */
+
+    default:
+      break;
     }
 
   {
@@ -8543,7 +8556,7 @@ static char *s7_atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
 					      "catch", "dynamic-wind", "hash-table", "boolean", "macro"};
 
     buf = (char *)calloc(512, sizeof(char));
-    snprintf(buf, 512, "<unknown object! type: %d (%s), flags: %x%s%s%s%s%s%s%s%s%s%s%s%s%s%s>", 
+    snprintf(buf, 512, "<unknown object! type: %d (%s), flags: %x%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s>", 
 	     type(obj), 
 	     (type(obj) < BUILT_IN_TYPES) ? type_names[type(obj)] : "none",
 	     typeflag(obj),
@@ -8560,6 +8573,7 @@ static char *s7_atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
 	     is_setter(obj) ? " setter" : "",
 	     is_any_macro(obj) ? " (anymac)" : "",
 	     is_expansion(obj) ? " (expansion)" : "",
+	     (!is_not_local(obj)) ? " (local)" : "",
 	     ((typeflag(obj) & UNUSED_BITS) != 0) ? " bad bits at top" : "");
     return(buf);
   }
@@ -8594,6 +8608,8 @@ static char *object_to_c_string_with_circle_check(s7_scheme *sc, s7_pointer vr, 
       {
 	if (s7_is_vector(vr))
 	  return(s7_strdup("[circular vector]"));
+	if (s7_is_hash_table(vr))
+	  return(s7_strdup("[circular hash-table]"));
 	return(s7_strdup("[circular list]"));
       }
 
@@ -8713,7 +8729,7 @@ static char *s7_list_to_c_string(s7_scheme *sc, s7_pointer lst, int depth)
     {
       if (s7_is_eq(x, lst))
 	elements[i] = s7_strdup("[circular list]");
-      elements[i] = s7_object_to_c_string(sc, x);
+      elements[i] = object_to_c_string_with_circle_check(sc, x, depth);
       bufsize += safe_strlen(elements[i]);
     }
   
@@ -9442,6 +9458,10 @@ static s7_pointer g_cdr(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_cons(s7_scheme *sc, s7_pointer args)
 {
+  /* n-ary cons could be the equivalent of CL's list*? */
+  /*   it would be neater to have a single cons cell able to contain (directly) any number of elements */
+  /*   (set! (cadr (cons 1 2 3)) 4) -> (1 4 . 3) */
+
   #define H_cons "(cons a b) returns a pair containing a and b"
   
   /* cdr(args) = cadr(args);
@@ -9480,7 +9500,12 @@ static s7_pointer g_set_car(s7_scheme *sc, s7_pointer args)
   if (s7_is_immutable(car(args))) return(s7_wrong_type_arg_error(sc, "set-car!", 1, car(args), "a mutable pair"));
   
   caar(args) = cadr(args);
-  return(args);
+  /* return(args);
+   * (set-car! (cdr (cons 1 (cons 2 3))) 4) -> ((4 . 3) 4)?? 
+   *    perhaps this should return #<unspecified> instead since:
+   * (let ((lst (cons 1 (cons 2 3)))) (set-car! (cdr lst) 4) lst) -> (1 4 . 3)
+   */
+  return(sc->UNSPECIFIED);
 }
 
 
@@ -9492,7 +9517,7 @@ static s7_pointer g_set_cdr(s7_scheme *sc, s7_pointer args)
   if (s7_is_immutable(car(args))) return(s7_wrong_type_arg_error(sc, "set-cdr!", 1, car(args), "a mutable pair"));
   
   cdar(args) = cadr(args);
-  return(args);
+  return(sc->UNSPECIFIED); /* see above */
 }
 
 
@@ -10074,9 +10099,6 @@ bool s7_is_vector(s7_pointer p)
 static s7_pointer s7_make_vector_1(s7_scheme *sc, int len, bool filled) 
 {
   s7_pointer x;
-  x = new_cell(sc);
-  set_type(x, T_VECTOR | T_FINALIZABLE | T_DONT_COPY);
-  vector_length(x) = len;
   if (len > 0)
     {
       /* len is an "int" currently */
@@ -10093,10 +10115,20 @@ static s7_pointer s7_make_vector_1(s7_scheme *sc, int len, bool filled)
 	  if (ilog2 > 28.0)
 	    return(s7_out_of_range_error(sc, "make-vector", 1, s7_make_integer(sc, len), "less than about 2^28 probably"));
 	}
+    }
 
+  /* this has to follow the error checks!  (else garbage in temps array confuses GC when "vector" is finalized) */
+  x = new_cell(sc);
+  set_type(x, T_VECTOR | T_FINALIZABLE | T_DONT_COPY);
+  vector_length(x) = len;
+  if (len > 0)
+    {
       vector_elements(x) = (s7_pointer *)malloc(len * sizeof(s7_pointer));
       if (!(vector_elements(x)))
-	return(s7_error(sc, s7_make_symbol(sc, "out-of-memory"), s7_make_string(sc, "make-vector allocation failed!")));
+	{
+	  vector_length(x) = 0;
+	  return(s7_error(sc, s7_make_symbol(sc, "out-of-memory"), s7_make_string(sc, "make-vector allocation failed!")));
+	}
 
       if (filled) s7_vector_fill(sc, x, sc->NIL);
     }
@@ -10319,6 +10351,9 @@ static s7_pointer vector_ref_1(s7_scheme *sc, s7_pointer vect, s7_pointer indice
       /* (let ((hi (make-vector 3 0.0)) (sum 0.0)) (do ((i 0 (+ i 1))) ((= i 3)) (set! sum (+ sum (hi i)))) sum) */
       if (!s7_is_integer(car(indices)))
 	return(s7_wrong_type_arg_error(sc, "vector ref", 2, car(indices), "an integer"));
+      if (cdr(indices) != sc->NIL)                            /* (#(1 2) 1 2) */
+	return(s7_wrong_number_of_args_error(sc, "vector ref", indices));
+
       index = s7_integer(car(indices));
       if ((index < 0) ||
 	  (index >= vector_length(vect)))
@@ -10590,7 +10625,9 @@ If its first argument is a list, the list is copied (despite the '!')."
   vect = car(args);
 
   if (s7_is_list(sc, vect))
-    return(s7_vector_to_list(sc, g_sort_in_place(sc, make_list_2(sc, g_list_to_vector(sc, make_list_1(sc, vect)), cadr(args)))));
+    return(s7_vector_to_list(sc, 
+             g_sort_in_place(sc, make_list_2(sc, 
+               g_list_to_vector(sc, make_list_1(sc, vect)), cadr(args)))));
 
   if (!s7_is_vector(vect))
     return(s7_wrong_type_arg_error(sc, "sort!", 1, vect, "a vector or a list"));
@@ -11078,7 +11115,8 @@ static s7_pointer s7_apply_object(s7_scheme *sc, s7_pointer obj, s7_pointer args
   tag = c_object_type(obj);
   if (object_types[tag].apply)
     return((*(object_types[tag].apply))(sc, obj, args));
-  return(sc->F);
+
+  return(eval_error(sc, "attempt to apply ~A?", obj));
 }
 
 
@@ -11090,7 +11128,8 @@ static s7_pointer s7_object_set(s7_scheme *sc, s7_pointer obj, s7_pointer args)
   tag = c_object_type(obj);
   if (object_types[tag].set)
     return((*(object_types[tag].set))(sc, obj, args));
-  return(sc->UNSPECIFIED);
+
+  return(eval_error(sc, "attempt to set ~A?", obj));
 }
 
 
@@ -11133,7 +11172,8 @@ static s7_pointer s7_object_length(s7_scheme *sc, s7_pointer obj)
   tag = c_object_type(obj);
   if (object_types[tag].length)
     return((*(object_types[tag].length))(sc, obj));
-  return(sc->UNSPECIFIED); /* not sure this is the right thing */
+
+  return(eval_error(sc, "attempt to get length of ~A?", obj));
 }
 
 
@@ -11143,7 +11183,8 @@ static s7_pointer s7_object_copy(s7_scheme *sc, s7_pointer obj)
   tag = c_object_type(obj);
   if (object_types[tag].copy)
     return((*(object_types[tag].copy))(sc, obj));
-  return(obj);
+
+  return(eval_error(sc, "attempt to copy ~A?", obj));
 }
 
 
@@ -11153,7 +11194,8 @@ static s7_pointer s7_object_fill(s7_scheme *sc, s7_pointer obj, s7_pointer val)
   tag = c_object_type(obj);
   if (object_types[tag].fill)
     return((*(object_types[tag].fill))(sc, obj, val));
-  return(obj);
+
+  return(eval_error(sc, "attempt to fill ~A?", obj));
 }
 
 
@@ -11634,6 +11676,7 @@ static s7_pointer g_make_hash_table(s7_scheme *sc, s7_pointer args)
 	}
       else return(s7_wrong_type_arg_error(sc, "make-hash-table", 0, car(args), "an integer"));
     }
+  
   return(s7_make_hash_table(sc, size));
 }
 
@@ -13642,8 +13685,15 @@ static s7_pointer g_for_each(s7_scheme *sc, s7_pointer args)
   sc->code = car(args);
   lists = cdr(args);
   if (car(lists) == sc->NIL)
+    {
+      /* if any non-nil lists (or not-lists) follow, there's an error even in this no-op */
+      for (i = 2, y = lists; y != sc->NIL; i++, y = cdr(y))
+	if (car(y) != sc->NIL)
+	  return(s7_wrong_type_arg_error(sc, "for-each", i, car(y), "a nil list (first list was nil)"));
+      
     return(sc->NIL); /* not a bug -- (for-each (lambda (x) x) '()) -> no-op */
-  
+    }
+
   sc->x = sc->NIL;
   
   /* get car of each arg list making the current proc arglist */
@@ -13690,8 +13740,15 @@ static s7_pointer g_map(s7_scheme *sc, s7_pointer args)
   sc->code = car(args);
   lists = cdr(args);
   if (car(lists) == sc->NIL)
+    {
+      /* if any non-nil lists (or not-lists) follow, there's an error even in this no-op */
+      for (i = 2, y = lists; y != sc->NIL; i++, y = cdr(y))
+	if (car(y) != sc->NIL)
+	  return(s7_wrong_type_arg_error(sc, "map", i, car(y), "a nil list (first list was nil)"));
+      
     return(sc->NIL);
-  
+    }
+
   sc->x = sc->NIL;
   
   /* get car of each arg list making the current proc arglist */
@@ -13804,9 +13861,13 @@ static token_t token(s7_scheme *sc, s7_pointer pt)
     }
   else 
     {
-      while (isspace(c = port_string(pt)[port_string_point(pt)++]))
+      char *orig_str, *str;
+      str = (char *)(port_string(pt) + port_string_point(pt));
+      orig_str = str;
+      while (isspace(c = (*str++)))
 	if (c == '\n')
 	  port_line_number(pt)++;
+      port_string_point(pt) += (str - orig_str);
     }
 
   switch (c) 
@@ -14062,11 +14123,6 @@ static s7_pointer read_string_constant(s7_scheme *sc, s7_pointer pt)
     }
 }
 
-
-/* it should be possible to remove this from the eval table -- the read-ops happen
- *   only here, and make minimal use of the stack (which slows them down). 
- * read_expression is always followed by pop_stack+goto START, sets sc->value to return val(??)
- */
 
 static s7_pointer read_expression(s7_scheme *sc)
 {
@@ -15256,6 +15312,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      goto EVAL;
 	    }
 	  
+	  if (!s7_is_symbol(caar(sc->code)))                      /* (set! (1 2) #t) */
+	    return(eval_error(sc, "~A: non-symbol as generalized set! accessor?", sc->code)); 
+
 	  sc->x = s7_symbol_value(sc, caar(sc->code));
 	  if ((is_c_object(sc->x)) &&
 	      (object_set_function(sc->x)))
@@ -15542,9 +15601,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       
     case OP_COND0:
-      if ((!is_pair(sc->code)) ||
-	  (!is_pair(car (sc->code)))) /* (cond 1) */
+      if (!is_pair(sc->code))
 	return(eval_error(sc, "syntax error in cond: ~A", sc->code));
+      for (sc->x = sc->code; sc->x != sc->NIL; sc->x = cdr(sc->x))
+	if (!is_pair(car(sc->x)))    /* (cond 1) or (cond (#t 1) 3) */
+	  return(eval_error(sc, "every clause in cond must be a list: ~A", car(sc->x)));
 
       push_stack(sc, OP_COND1, sc->NIL, sc->code);
       sc->code = caar(sc->code);
@@ -18696,9 +18757,17 @@ static s7_pointer big_log(s7_scheme *sc, s7_pointer args)
 {
   /* either arg can be big, 2nd is optional */
   s7_pointer p0, p1 = NULL;
+
   p0 = car(args);
+  if (!s7_is_number(p0))
+    return(s7_wrong_type_arg_error(sc, "log", 1, p0, "a number"));
+
   if (cdr(args) != sc->NIL)
-    p1 = cadr(args);
+    {
+      p1 = cadr(args);
+      if (!s7_is_number(p1))
+	return(s7_wrong_type_arg_error(sc, "log", 2, p1, "a number"));
+    }
 
   if ((IS_BIG(p0)) ||
       ((p1) && (IS_BIG(p1))))
@@ -19001,7 +19070,12 @@ static s7_pointer big_expt(s7_scheme *sc, s7_pointer args)
    */
 
   x = car(args);
+  if (!s7_is_number(x))
+    return(s7_wrong_type_arg_error(sc, "expt", 1, x, "a number"));
+
   y = cadr(args);
+  if (!s7_is_number(y))
+    return(s7_wrong_type_arg_error(sc, "expt", 2, y, "a number"));
 
   if (s7_is_integer(y))
     {
@@ -21389,7 +21463,7 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "display",                 g_display,                 1, 1, false, H_display);
   s7_define_function(sc, "read-byte",               g_read_byte,               0, 1, false, H_read_byte);
   s7_define_function(sc, "write-byte",              g_write_byte,              1, 1, false, H_write_byte);
-  s7_define_function(sc, "read-line",               g_read_line,               0, 0, true,  H_read_line);
+  s7_define_function(sc, "read-line",               g_read_line,               0, 1, false, H_read_line);
   
   s7_define_function(sc, "call-with-input-string",  g_call_with_input_string,  2, 0, false, H_call_with_input_string);
   s7_define_function(sc, "call-with-input-file",    g_call_with_input_file,    2, 0, false, H_call_with_input_file);
