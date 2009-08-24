@@ -3880,9 +3880,19 @@ static bool s7_is_zero(s7_pointer x)
     case NUM_INT:   return(s7_integer(x) == 0);
     case NUM_REAL2:
     case NUM_REAL:  return(s7_real(x) == 0.0);
-    case NUM_RATIO: return(s7_numerator(x) == 0);
-    default:        return((s7_real_part(x) == 0.0) &&
-			   (s7_imag_part(x) == 0.0));
+    default:        return(false); /* ratios and complex numbers here are already collapsed into integers and reals */
+    }
+}
+
+
+static bool s7_is_one(s7_pointer x)
+{
+  switch (number_type(x))
+    {
+    case NUM_INT:   return(s7_integer(x) == 1);
+    case NUM_REAL2:
+    case NUM_REAL:  return(s7_real(x) == 1.0);
+    default:        return(false);
     }
 }
 
@@ -4965,8 +4975,10 @@ static s7_pointer g_log(s7_scheme *sc, s7_pointer args)
   s7_pointer x;
   
   x = car(args);
+
   if (!s7_is_number(x))
     return(s7_wrong_type_arg_error(sc, "log", 1, x, "a number"));
+
   if ((is_pair(cdr(args))) &&
       (!(s7_is_number(cadr(args)))))
     return(s7_wrong_type_arg_error(sc, "log", 2, cadr(args), "a number"));
@@ -4974,9 +4986,10 @@ static s7_pointer g_log(s7_scheme *sc, s7_pointer args)
   if (is_pair(cdr(args)))
     {
       s7_pointer y;
+
       y = cadr(args);
-      if (s7_is_zero(y))
-	return(s7_out_of_range_error(sc, "log", 2, y, "not zero"));
+      if ((s7_is_zero(y)) || (s7_is_one(y)))
+	return(s7_out_of_range_error(sc, "log", 2, y, "not 0.0 or 1.0"));
       
       if ((s7_is_real(x)) &&
 	  (s7_is_real(y)) &&
@@ -5372,19 +5385,45 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
    * but it's unusual in scheme to process args in reverse order, and the
    * syntax by itself is ambiguous (does (expt 2 2 3) = 256 or 64?)
    */
+
+  if (s7_is_zero(n))
+    {
+      if (s7_is_zero(pw))
+	{
+	  if ((s7_is_integer(n)) && (s7_is_integer(pw)))       /* (expt 0 0) -> 1 */
+	    return(s7_make_integer(sc, 1));
+	  return(sc->real_one);
+	}
+      if ((s7_is_integer(n)) && (s7_is_integer(pw)))
+	return(s7_make_integer(sc, 0));
+      return(sc->real_zero);
+    }
+
+  if (s7_is_one(pw))
+    {
+      if (s7_is_integer(pw))
+	return(n);
+      if (number_type(n) <= NUM_RATIO)
+	return(s7_make_real(sc, num_to_real(number(n))));
+      return(n);
+    }
   
   if (number_type(pw) == NUM_INT)
     {
       s7_Int y;
       y = s7_integer(pw);
       if (y == 0)
-	return(small_int(sc, 1));
+	{
+	  if ((number_type(n) == NUM_INT) || (number_type(n) == NUM_RATIO))
+	    return(small_int(sc, 1));
+	  return(sc->real_one);
+	}
 
       if (number_type(n) == NUM_INT)
 	{
 	  s7_Int x;
 	  x = s7_integer(n);
-	  if ((x == 0) || (x == 1))
+	  if (x == 1)
 	    return(n);
 	  
 	  if (x == -1)
@@ -5453,8 +5492,6 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
 	}
 
       x = num_to_real(number(n));
-      if (x == 0.0)
-	return(sc->real_zero);
       y = num_to_real(number(pw));
       if (y == 0.0)
 	return(sc->real_one);
@@ -6919,7 +6956,7 @@ static s7_pointer g_string_append_1(s7_scheme *sc, s7_pointer args, const char *
   s7_pointer x, newstr;
   char *pos;
   
-  if (car(args) == sc->NIL)
+  if (args == sc->NIL)
     return(s7_make_string_with_length(sc, "", 0));
   
   /* get length for new string */
@@ -6949,7 +6986,7 @@ static s7_pointer g_string_append(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_string_copy(s7_scheme *sc, s7_pointer args)
 {
   #define H_string_copy "(string-copy str) returns a copy of its string argument"
-  if (car(args) == sc->NIL)
+  if (args == sc->NIL)
     return(s7_wrong_type_arg_error(sc, "string-copy", 0, car(args), "a string"));
   
   return(g_string_append_1(sc, args, "string-copy"));
@@ -7221,9 +7258,13 @@ static s7_pointer g_strings_are_ci_leq(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_string_fill(s7_scheme *sc, s7_pointer args)
 {
   #define H_string_fill "(string-fill! str chr) fills the string str with the character chr"
-  
-  if (!s7_is_string(car(args)))
-    return(s7_wrong_type_arg_error(sc, "string-fill", 1, car(args), "a string"));
+  s7_pointer x;
+  x = car(args);
+
+  if (!s7_is_string(x))
+    return(s7_wrong_type_arg_error(sc, "string-fill", 1, x, "a string"));
+  if (s7_is_immutable(x))
+    return(s7_wrong_type_arg_error(sc, "string-fill!", 1, x, "a mutable string"));
   if (!s7_is_character(cadr(args)))
     return(s7_wrong_type_arg_error(sc, "string-fill", 2, cadr(args), "a character"));
 
@@ -7233,8 +7274,8 @@ static s7_pointer g_string_fill(s7_scheme *sc, s7_pointer args)
    *         char *str; char c; str = string_value(car(args)); c = character(cadr(args));
    *         int i, len = 0; if (str) len = strlen(str); if (len > 0) for (i = 0; i < len; i++) str[i] = c; 
    */
-  memset((void *)(string_value(car(args))), (int)character(cadr(args)), string_length(car(args))); /* presumably memset can fill 0 bytes if empty string */
-  return(car(args)); /* or perhaps sc->UNSPECIFIED */
+  memset((void *)(string_value(x)), (int)character(cadr(args)), string_length(x)); /* presumably memset can fill 0 bytes if empty string */
+  return(x); /* or perhaps sc->UNSPECIFIED */
 }
 
 
@@ -7259,7 +7300,7 @@ static s7_pointer g_string_1(s7_scheme *sc, s7_pointer args, const char *name)
 static s7_pointer g_string(s7_scheme *sc, s7_pointer args)
 {
   #define H_string "(string chr...) appends all its character arguments into one string"
-  if (car(args) == sc->NIL)
+  if (args == sc->NIL)                                /* (string) but not (string '()) */
     return(s7_make_string_with_length(sc, "", 0));
   return(g_string_1(sc, args, "string"));
 }
@@ -10183,10 +10224,15 @@ static s7_pointer s7_vector_copy(s7_scheme *sc, s7_pointer old_vect)
 static s7_pointer g_vector_fill(s7_scheme *sc, s7_pointer args)
 {
   #define H_vector_fill "(vector-fill! v val) sets all elements of the vector v to val"
-  if (!s7_is_vector(car(args)))
-    return(s7_wrong_type_arg_error(sc, "vector-fill!", 1, car(args), "a vector"));
+  s7_pointer x;
+  x = car(args);
 
-  s7_vector_fill(sc, car(args), cadr(args));
+  if (!s7_is_vector(x))
+    return(s7_wrong_type_arg_error(sc, "vector-fill!", 1, x, "a vector"));
+  if (s7_is_immutable(x))
+    return(s7_wrong_type_arg_error(sc, "vector-fill!", 1, x, "a mutable vector"));
+
+  s7_vector_fill(sc, x, cadr(args));
   return(sc->UNSPECIFIED);
 }
 
@@ -10477,15 +10523,17 @@ returns a 2 dimensional vector of 6 total elements, all initialized to 1.0."
       if (!s7_is_integer(car(x)))
 	return(s7_wrong_type_arg_error(sc, "make-vector", 1, car(x), "each dimension should be an integer"));
 
-      if (!is_pair(cdr(x)))
+      if (cdr(x) == sc->NIL)
 	len = s7_integer(car(x));
       else
 	{
 	  int i;
 	  for (i = 1, len = 1, y = x; y != sc->NIL; y = cdr(y), i++)
 	    {
+	      if (!is_pair(y))
+		return(s7_wrong_type_arg_error(sc, "make-vector", 1, x, "a proper list of dimensions"));
 	      if (!s7_is_integer(car(y)))
-		return(s7_wrong_type_arg_error(sc, "make-vector", i, car(y), "each dimension should be an integer"));
+		return(s7_wrong_type_arg_error(sc, "make-vector", i, car(y), "an integer"));
 	      len *= s7_integer(car(y));
 	      if (len < 0)
 		return(s7_wrong_type_arg_error(sc, "make-vector", i, car(y), "a non-negative integer"));
@@ -15104,16 +15152,22 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  goto START;
 
 	case T_STRING:                            /* -------- string as applicable object -------- */
+	  if (cdr(sc->args) != sc->NIL)
+	    return(s7_wrong_number_of_args_error(sc, "string ref (via string as applicable object)", sc->args));
 	  sc->value = g_string_ref(sc, make_list_2(sc, sc->code, car(sc->args)));
 	  pop_stack(sc);
 	  goto START;
 
 	case T_PAIR:                              /* -------- list as applicable object -------- */
+	  if (cdr(sc->args) != sc->NIL)
+	    return(s7_wrong_number_of_args_error(sc, "list ref (via list as applicable object)", sc->args));
 	  sc->value = g_list_ref(sc, make_list_2(sc, sc->code, car(sc->args)));
 	  pop_stack(sc);
 	  goto START;
 
 	case T_HASH_TABLE:                        /* -------- hash-table as applicable object -------- */
+	  if (cdr(sc->args) != sc->NIL)
+	    return(s7_wrong_number_of_args_error(sc, "hash-table ref (via hash-table as applicable object)", sc->args));
 	  sc->value = g_hash_table_ref(sc, make_list_2(sc, sc->code, car(sc->args)));
 	  pop_stack(sc);
 	  goto START;
@@ -15188,6 +15242,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	return(eval_error(sc, "quote syntax error ~A", sc->code));
 
       sc->value = car(sc->code);
+      /* should this be immutable? (set-car! '(1 . 2) 3) */
       pop_stack(sc);
       goto START;
 
@@ -15413,8 +15468,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	return(eval_error(sc, "let syntax error: ~A", sc->code));
 
       if ((s7_is_symbol(car(sc->code))) &&
-	  ((!is_pair(cadr(sc->code))) &&    /* (let hi #t) */
-	   (cadr(sc->code) != sc->NIL)))
+	  (((!is_pair(cadr(sc->code))) &&    /* (let hi #t) */
+	    (cadr(sc->code) != sc->NIL)) ||
+	   (cddr(sc->code) == sc->NIL)))     /* (let hi ()) */
       	return(eval_error(sc, "named let syntax error: ~A", sc->code));
 
       sc->args = sc->NIL;
@@ -16233,6 +16289,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
     case OP_READ_VECTOR:
       sc->value = g_vector(sc, sc->value);
+      set_immutable(sc->value); /* a vector constant should be immutable? */
       pop_stack(sc);
       goto START;
 
@@ -18780,13 +18837,16 @@ static s7_pointer big_log(s7_scheme *sc, s7_pointer args)
 	  if (p1) 
 	    {
 	      if ((!is_c_object(p1)) &&
-		  (s7_is_zero(p1)))
-		return(s7_out_of_range_error(sc, "log", 2, p1, "not zero"));
+		  ((s7_is_zero(p1)) || (s7_is_one(p1))))
+		return(s7_out_of_range_error(sc, "log", 2, p1, "not 0.0 or 1.0"));
 
 	      p1 = promote_number(sc, T_BIG_REAL, p1);
 	      p1_cmp = (mpfr_cmp_ui(S7_BIG_REAL(p1), 0));
 	      if (p1_cmp == 0)
-		return(s7_out_of_range_error(sc, "log", 2, p1, "not zero"));
+		return(s7_out_of_range_error(sc, "log", 2, p1, "not 0.0"));
+	      p1_cmp = (mpfr_cmp_ui(S7_BIG_REAL(p1), 1));
+	      if (p1_cmp == 0)
+		return(s7_out_of_range_error(sc, "log", 2, p1, "not 1.0"));
 	    }
 	  if ((mpfr_cmp_ui(S7_BIG_REAL(p0), 0) > 0) &&
 	      ((!p1) || (p1_cmp > 0)))
@@ -18847,6 +18907,17 @@ static s7_pointer big_log(s7_scheme *sc, s7_pointer args)
 	mpc_log(base, base, MPC_RNDNN);
 	mpc_div(*n, *n, base, MPC_RNDNN);
 	mpc_clear(base);
+
+	if (mpfr_cmp_ui(MPC_IM(*n), 0) == 0)    /* (log -1.0 -1.0) */
+	  {
+	    mpfr_t *x;
+	    x = (mpfr_t *)malloc(sizeof(mpfr_t));
+	    mpfr_init_set(*x, MPC_RE(*n), GMP_RNDN);
+	    mpc_clear(*n);
+	    free(n);
+	    return(s7_make_object(sc, big_real_tag, (void *)x));
+	  }
+
 	return(s7_make_object(sc, big_complex_tag, (void *)n));
       }
     }
@@ -19095,9 +19166,7 @@ static s7_pointer big_expt(s7_scheme *sc, s7_pointer args)
 
       if (!is_c_object(x))
 	{
-	  if ((s7_is_zero(x)) ||
-	      ((s7_is_integer(x)) &&
-	       (s7_integer(x) == 1)))
+	  if ((s7_is_one(x)) || (s7_is_zero(x)))
 	    return(x);
 	}
 
@@ -20872,9 +20941,6 @@ static s7_pointer big_random(s7_scheme *sc, s7_pointer args)
   if (!s7_is_number(num))
     return(s7_wrong_type_arg_error(sc, "random", 1, num, "a number"));
 
-  if (big_is_zero(sc, args) == sc->T)
-    return(num);
-
   if (cdr(args) != sc->NIL)
     {
       state = cadr(args);
@@ -20883,6 +20949,9 @@ static s7_pointer big_random(s7_scheme *sc, s7_pointer args)
 	   (c_object_type(state) != rng_tag)))
 	return(s7_wrong_type_arg_error(sc, "random", 2, state, "a random-state object, if anything"));
     }
+
+  if (big_is_zero(sc, args) == sc->T)
+    return(num);
 
   if ((is_c_object(num)) ||
       ((is_c_object(state)) &&

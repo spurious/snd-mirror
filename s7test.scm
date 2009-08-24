@@ -1596,6 +1596,7 @@
 	(and (string=? str "abc")
 	     (equal? lst (list #\a #\b #\c))))
       #t)
+(test (list->string '()) "")
 
 (test (list->string (list #\a #\b #\c)) "abc")
 (test (list->string (list)) "")
@@ -2168,6 +2169,8 @@
 (test (let ((lst (cons 1 (cons 2 3)))) (set-car! (cdr lst) 4) lst) (cons 1 (cons 4 3)))
 (test (let ((lst (cons 1 (cons 2 3)))) (set-car! lst 4) lst) (cons 4 (cons 2 3)))
 
+;(set-car! '(1 . 2) 3)  ??
+
 
 (test (let ((x (cons 1 2))) (set-cdr! x 3) x) (cons 1 3))
 (test (let ((x (list 1 2))) (set-cdr! x 3) x) (cons 1 3))
@@ -2424,6 +2427,11 @@
 (test (append '() '() '() #f) #f)
 (test (append '(1 2) '(3 4) '(5 6) #f) '(1 2 3 4 5 6 . #f))
 
+(test (append 0) 0) ; is this correct?
+(test (append '() 0) 0)
+(test (append '() '() 0) 0)
+
+
 
 (test (memq 'a '(a b c)) '(a b c))
 (test (memq 'b '(a b c)) '(b c))
@@ -2596,12 +2604,6 @@
 ;(let ((str "hi") (v (make-vector 3))) (vector-fill! v str) (string-set! (vector-ref v 0) 1 #\a) str) -> mutable string error
 ;(let ((lst (list 1 2)) (v (make-vector 3))) (vector-fill! v lst) (list-set! (vector-ref v 0) 1 #\a) lst) -> '(1 #\a)
 
-;;; TODO: are these legal? [they are in guile!]
-;(vector-set! '#(1 2) 0 2) -- (set! #(1 2) '#(2 3)) gets error
-;(vector-fill! '#(1 2) 0)
-;(string-fill! "hi" #\a)  -- string-set! is illegal here, as also (set! "hi" "h")
-;(set-car! '(1 . 2) 3)
-
 
 
 (if (provided? 'multidimensional-vectors)
@@ -2637,7 +2639,9 @@
       (vector-set! v1 0 0 0 32)
       (num-test (v1 0 0 0) 32)
       (set! (v1 0 1 1) 3)
-      (num-test (v1 0 1 1) 3)))
+      (num-test (v1 0 1 1) 3)
+
+      (test (make-vector (1 . 2) "hi") 'error)))
 
 
 (set! lists '())
@@ -3353,6 +3357,10 @@
 (num-test (do ((i 0 (- i 1/2))) ((< i -2) i)) -5/2)
 (num-test (do ((i 0+i (+ i 0+i))) ((> (magnitude i) 2) i)) 0+3i)
 
+(test (do () (/ 0)) 0)
+(test (do () (+)) '())
+(test (do () (+ +) *) +)
+
 (if with-bignums
     (begin
       (num-test (do ((i 24444516448431392447461 (+ i 1))
@@ -3554,6 +3562,7 @@
 (test (cond ('() 3) (#t 4)) 3)
 (test (cond ((list) 3) (#t 4)) 3)
 ;;; (cond (1 1) (asdf 3)) -- should this be an error?
+(test (cond (+ 0)) 0)
 
 (for-each
  (lambda (arg)
@@ -4091,6 +4100,7 @@
 
 (test (let () (begin (define x 1)) x) 1)
 (test (let ((y 1)) (begin (define x 1)) (+ x y)) 2)
+(test (let ((: 0)) (- :)) 0)
 
 (test ((let ((x 2))
 	 (let ((x 3))
@@ -6652,6 +6662,16 @@
       (test (let ((a 3)) (constant? 'a)) #f)
       (test (constant? 'abs) #f)
       (test (constant? abs) #t)
+
+      (test (apply "hi" '(1 2)) 'error)
+      (test ("hi" 1 2) 'error)
+      (test (apply '(1 2) '(1 2)) 'error)
+      (test ((list 1 2 3) 1 2) 'error)
+
+      (test (apply "hi" '(1)) #\i)
+      (test ("hi" 1) #\i)
+      (test (apply '(1 2) '(1)) 2)
+      (test ((list 1 2 3) 1) 2)
       
       ;; (test (let ((pi 3)) pi) 'error)
       
@@ -6801,6 +6821,15 @@
 	      (set! (v 1) 0)
 	      (v 1))
 	    0)
+
+      (num-test (log 8 2) 3)
+      (num-test (log -1 -1) 1.0)
+      (num-test (log 1 1) 'error)
+      (num-test (log 1 -1) 0.0)
+      (num-test (log 1.5 -1) 0-0.12906355241341i)
+
+      (test (random 0 #t) 'error)
+      (test (random 0.0 #(1 2)) 'error)
 
       ))
 
@@ -14457,6 +14486,28 @@
 (test (expt 3 2) 9 )
 (test (expt -3 2) 9 )
 
+;; a few picky ones
+(num-test (expt 3 1) 3)
+(num-test (expt 3/4 1) 3/4)
+(num-test (expt 3.0 1) 3.0)
+(num-test (expt 1+i 1) 1+i)
+(num-test (expt 3 1.0) 3.0)
+(num-test (expt 3/4 1.0) 0.75)
+(num-test (expt 3.0 1.0) 3.0)
+(num-test (expt 1+i 1.0) 1.0+i)
+(num-test (expt 0 1) 0)
+(num-test (expt 0.0 1) 0.0)
+(num-test (expt 1 0) 1)
+(num-test (expt 1.0 0) 1.0)
+(num-test (expt 1 0.0) 1.0)
+(num-test (expt 1.0 0.0) 1.0)
+(num-test (expt 3/4 0) 1)
+(num-test (expt 3/4 0.0) 1.0)
+(num-test (expt 3.0 0) 1.0)
+(num-test (expt 3.0 0.0) 1.0)
+(num-test (expt 0 0) 1)
+
+
 (let ((x-10 (lambda (n) (- (expt n 10) (* n n n n n n n n n n)))))
   (let ((happy #t)
 	(lim (if with-bignums 100
@@ -14786,6 +14837,7 @@
 	    ))
 
       (num-test (rationalize 0.5 0.02) 1/2)
+      (num-test (rationalize 1073741824 1) 1073741823) ; perverse
       ))
 
 
@@ -35394,6 +35446,9 @@
 	 (test (string-set! "hiho" 0 arg) 'error))
        (list 1 "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (lambda (a) (+ a 1))))
       
+      (test (string-fill! "" #\a) 'error)
+      (test (string-fill! "hiho" #\a) 'error)
+      (test (let ((g (lambda () "***"))) (string-fill! (g) #\?)) 'error)
       
       (test (substring "ab" 0 3) 'error)
       (test (substring "ab" 3 3) 'error)
@@ -35421,6 +35476,9 @@
        (lambda (arg)
 	 (test (string-append "hiho" arg) 'error))
        (list #\a 1 '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (lambda (a) (+ a 1))))
+
+      (test (string-append '()) 'error)
+      (test (string '()) 'error)
       
       (for-each
        (lambda (arg)
@@ -35745,7 +35803,9 @@
 					;(test (vector-set! '#(0 1 2) 1 "doe") 'error)
       (test (let ((v (vector 1 2 3))) (vector-set! v -1 0)) 'error)
       (test (let ((v (vector 1 2 3))) (vector-set! v 3 0)) 'error)
-      
+      (test (vector-set! '#(1 2) 0 2) 'error)
+      (test (vector-fill! '#(1 2) 2) 'error)
+
       (let ((v (vector 1 2 3)))
 	(for-each
 	 (lambda (arg)
@@ -35854,6 +35914,8 @@
       (test (expt 1.0+23.0i) 'error)
       (test (expt "hi" "hi") 'error)
       ;(test (expt 1.0+23.0i 1.0+23.0i 1.0+23.0i) 'error) ; this is ok in s7
+      ;(test (expt 0 -1) 'error)
+      ;(test (expt 0.0 -1.0) 'error)
       (test (exact->inexact) 'error)
       (test (exact->inexact "hi") 'error)
       (test (exact->inexact 1.0+23.0i 1.0+23.0i) 'error)
@@ -36403,6 +36465,7 @@
       (test (let ((x . 1)) x) 'error)
       (test (let* ((x . 1)) x) 'error)
       (test (letrec ((x . 1)) x) 'error)
+      (test (let hi ()) 'error)
 
       (test (let . 1) 'error)
       (test (let* (x)) 'error)
@@ -36595,7 +36658,8 @@
 	     (list #\a '#(1 2 3) "hi" '() 'hi abs (lambda () 1) '#(()) (list 1 2 3) '(1 . 2)))
 	    
 	    (test (format #f "~D") 'error)
-	    
+;	    (test (format () "hi") "hi") ; not sure this is a good idea
+
 	    ))
       
       (test (let "" 1) 'error)
@@ -36621,6 +36685,7 @@
       (test (cond . ((1 2) ((3 4)))) 2)
       (test (and . (1 2)) 2)
       (test (or . (1 2)) 1)
+
       ;; --------
 
 
@@ -40552,4 +40617,7 @@ expt error > 1e-6 around 2^-46.506993328423
 ;;; but:
 ;;;   (cos (bignum "1.0000000000000000000000000000000000e32")) gets the right answer, so who truncates?
 ;;; I think this is a bug in mpfr
+
+
+
 
