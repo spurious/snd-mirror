@@ -861,7 +861,6 @@ static s7_pointer eval_symbol(s7_scheme *sc, s7_pointer sym);
 static s7_pointer eval_error(s7_scheme *sc, const char *errmsg, s7_pointer obj);
 static bool is_thunk(s7_scheme *sc, s7_pointer x);
 static int remember_file_name(const char *file);
-static s7_pointer s7_make_vector_1(s7_scheme *sc, int len, bool filled);
 #if WITH_ENCAPSULATION
   static void encapsulate(s7_scheme *sc, s7_pointer sym);
 #endif
@@ -2256,11 +2255,15 @@ static s7_pointer copy_object(s7_scheme *sc, s7_pointer obj)
 
 static s7_pointer copy_stack(s7_scheme *sc, s7_pointer old_v, int top)
 {
-  int i, len;
+  int i;
   s7_pointer new_v;
   s7_pointer *nv, *ov;
-  len = vector_length(old_v);
-  new_v = s7_make_vector_1(sc, len, false);
+
+  new_v = s7_make_vector(sc, vector_length(old_v));
+  /* we can't leave the upper stuff simply malloc-garbage because this object is in the
+   *   temps array for a nanosecond or two, and we're sure to call the GC at that moment.
+   *   We also can't just copy the vector since that seems to confuse the gc mark process.
+   */
 
   nv = vector_elements(new_v);
   ov = vector_elements(old_v);
@@ -3916,15 +3919,17 @@ static void s7_Int_to_string(char *p, s7_Int n, int radix, int width)
   sign = (n < 0);
   n = s7_Int_abs(n); /* most-negative-fixnum loses... */
 
+  /* the previous version that counted up to n, rather than dividing down below n, as here,
+   *   could be confused by large ints on 64 bit machines
+   */
+  pown = n;
   for (i = 1; i < 100; i++)
     {
-      if ((pown > n) || (pown <= (s7_Int)0))
+      if (pown < radix)
 	break;
-      pown *= (s7_Int)radix;
+      pown /= (s7_Int)radix;
     }
-
-  len = i - 2;
-  /* len = (int)(floor(log((s7_Double)n) / log((s7_Double)radix))); */
+  len = i - 1;
 
   if (sign) len++;
 
@@ -4167,7 +4172,7 @@ static s7_pointer g_number_to_string(s7_scheme *sc, s7_pointer args)
       if (s7_is_integer(cadr(args)))
 	radix = s7_integer(cadr(args));
       if ((radix < 2) || (radix > 16))
-	return(s7_out_of_range_error(sc, "number->string", 2, cadr(args), "between 2 and 16"));
+	return(s7_out_of_range_error(sc, "number->string", 2, cadr(args), "radix should be between 2 and 16"));
 
       res = s7_number_to_string_with_radix(sc, x, radix, 0, (radix == 10) ? size : 20, 'g');
     }
@@ -4803,7 +4808,7 @@ static s7_pointer g_string_to_number(s7_scheme *sc, s7_pointer args)
 	radix = s7_integer(cadr(args));
       if ((radix < 2) ||              /* what about negative int as base (Knuth), reals such as phi, and some complex like -1+i */
 	  (radix > 36))               /* the only problem here is printing the number; perhaps put each digit in "()" in base 10: (123)(0)(34) */
-	return(s7_out_of_range_error(sc, "string->number", 2, cadr(args), "between 2 and 36"));
+	return(s7_out_of_range_error(sc, "string->number", 2, cadr(args), "radix should be between 2 and 36"));
     }
   else radix = 10;
 
@@ -4989,7 +4994,7 @@ static s7_pointer g_log(s7_scheme *sc, s7_pointer args)
 
       y = cadr(args);
       if ((s7_is_zero(y)) || (s7_is_one(y)))
-	return(s7_out_of_range_error(sc, "log", 2, y, "not 0.0 or 1.0"));
+	return(s7_out_of_range_error(sc, "log", 2, y, "base can't be 0.0 or 1.0"));
       
       if ((s7_is_real(x)) &&
 	  (s7_is_real(y)) &&
@@ -6905,7 +6910,7 @@ static s7_pointer g_string_ref(s7_scheme *sc, s7_pointer args)
   if (ind < 0)
     return(s7_wrong_type_arg_error(sc, "string-ref", 2, index, "a non-negative integer"));
   if (ind >= string_length(car(args)))
-    return(s7_out_of_range_error(sc, "string-ref", 2, index, "less than string length"));
+    return(s7_out_of_range_error(sc, "string-ref", 2, index, "index should be less than string length"));
   
   str = string_value(car(args));
   return(s7_make_character(sc, ((unsigned char *)str)[ind]));
@@ -6937,7 +6942,7 @@ static s7_pointer g_string_set(s7_scheme *sc, s7_pointer args)
   if (ind < 0)
     return(s7_wrong_type_arg_error(sc, "string-set!", 2, index, "a non-negative integer"));
   if (ind >= string_length(x))
-    return(s7_out_of_range_error(sc, "string-set!", 2, index, "less than string length"));
+    return(s7_out_of_range_error(sc, "string-set!", 2, index, "index should be less than string length"));
   
   /* I believe this does not need a lock in the multithread case -- local vars are specific
    *   to each thread, and it should be obvious to anyone writing such code that a global
@@ -9412,12 +9417,12 @@ static s7_pointer g_list_ref(s7_scheme *sc, s7_pointer args)
   
   index = s7_integer(cadr(args));
   if (index < 0)
-    return(s7_out_of_range_error(sc, "list-ref", 2, cadr(args), "non-negative"));
+    return(s7_out_of_range_error(sc, "list-ref", 2, cadr(args), "index should be non-negative"));
   
   for (i = 0, p = car(args); (i < index) && is_pair(p); i++, p = cdr(p)) {}
   
   if (p == sc->NIL)
-    return(s7_out_of_range_error(sc, "list-ref", 2, cadr(args), "less than list length"));
+    return(s7_out_of_range_error(sc, "list-ref", 2, cadr(args), "index should be less than list length"));
   if (!is_pair(p))
     return(s7_wrong_type_arg_error(sc, "list-ref", i, p, "a proper list"));
   
@@ -9440,12 +9445,12 @@ static s7_pointer g_list_set(s7_scheme *sc, s7_pointer args)
   
   index = s7_integer(cadr(args));
   if (index < 0)
-    return(s7_out_of_range_error(sc, "list-set!", 2, cadr(args), "non-negative"));
+    return(s7_out_of_range_error(sc, "list-set!", 2, cadr(args), "index should be non-negative"));
   
   for (i = 0, p = car(args); (i < index) && is_pair(p); i++, p = cdr(p)) {}
   
   if (p == sc->NIL)
-    return(s7_out_of_range_error(sc, "list-set!", 2, cadr(args), "less than list length"));
+    return(s7_out_of_range_error(sc, "list-set!", 2, cadr(args), "index should be less than list length"));
   if (!is_pair(p))
     return(s7_wrong_type_arg_error(sc, "list-set!", i, p, "a proper list"));
   
@@ -9468,12 +9473,12 @@ static s7_pointer g_list_tail(s7_scheme *sc, s7_pointer args)
   
   index = s7_integer(cadr(args));
   if (index < 0)
-    return(s7_out_of_range_error(sc, "list-tail", 2, cadr(args), "non-negative"));
+    return(s7_out_of_range_error(sc, "list-tail", 2, cadr(args), "index should be non-negative"));
   
   for (i = 0, p = car(args); (i < index) && is_pair(p); i++, p = cdr(p)) {}
   
   if (i < index)
-    return(s7_out_of_range_error(sc, "list-tail", 2, cadr(args), "less than list length"));
+    return(s7_out_of_range_error(sc, "list-tail", 2, cadr(args), "index should be less than list length"));
   
   return(p);
 }
@@ -10149,12 +10154,12 @@ static s7_pointer s7_make_vector_1(s7_scheme *sc, int len, bool filled)
       if (sizeof(size_t) > 4)
 	{
 	  if (ilog2 > 56.0)
-	    return(s7_out_of_range_error(sc, "make-vector", 1, s7_make_integer(sc, len), "less than about 2^56 probably"));
+	    return(s7_out_of_range_error(sc, "make-vector", 1, s7_make_integer(sc, len), "length should be less than about 2^56 probably"));
 	}
       else
 	{
 	  if (ilog2 > 28.0)
-	    return(s7_out_of_range_error(sc, "make-vector", 1, s7_make_integer(sc, len), "less than about 2^28 probably"));
+	    return(s7_out_of_range_error(sc, "make-vector", 1, s7_make_integer(sc, len), "length should be less than about 2^28 probably"));
 	}
     }
 
@@ -10240,7 +10245,7 @@ static s7_pointer g_vector_fill(s7_scheme *sc, s7_pointer args)
 s7_pointer s7_vector_ref(s7_scheme *sc, s7_pointer vec, int index) 
 {
   if (index >= vector_length(vec))
-    return(s7_out_of_range_error(sc, "vector-ref", 2, s7_make_integer(sc, index), "less than vector length"));
+    return(s7_out_of_range_error(sc, "vector-ref", 2, s7_make_integer(sc, index), "index should be less than vector length"));
 
   return(vector_element(vec, index));
 }
@@ -10252,7 +10257,7 @@ s7_pointer s7_vector_set(s7_scheme *sc, s7_pointer vec, int index, s7_pointer a)
    *   (let ((v (make-vector 2))) (vector-set! v 0 v) v)
    */
   if (index >= vector_length(vec))
-    return(s7_out_of_range_error(sc, "vector-set!", 2, s7_make_integer(sc, index), "less than vector length"));
+    return(s7_out_of_range_error(sc, "vector-set!", 2, s7_make_integer(sc, index), "index should be less than vector length"));
 
   vector_element(vec, index) = a;
   return(a);
@@ -10384,7 +10389,7 @@ static s7_pointer vector_ref_1(s7_scheme *sc, s7_pointer vect, s7_pointer indice
 	  n = s7_integer(car(x));
 	  if ((n < 0) || 
 	      (n >= vector_dimension(vect, i)))
-	    return(s7_out_of_range_error(sc, "vector ref", i + 2, car(x), "between 0 and the dimension size"));
+	    return(s7_out_of_range_error(sc, "vector ref", i + 2, car(x), "index should be between 0 and the dimension size"));
 	  index += n * vector_offset(vect, i);
 	}
       if ((x != sc->NIL) ||
@@ -10403,7 +10408,7 @@ static s7_pointer vector_ref_1(s7_scheme *sc, s7_pointer vect, s7_pointer indice
       index = s7_integer(car(indices));
       if ((index < 0) ||
 	  (index >= vector_length(vect)))
-	return(s7_out_of_range_error(sc, "vector ref", 2, s7_make_integer(sc, index), "between 0 and the vector length"));
+	return(s7_out_of_range_error(sc, "vector ref", 2, s7_make_integer(sc, index), "index should be between 0 and the vector length"));
     }
 
   return(vector_element(vect, index));
@@ -10461,7 +10466,7 @@ can also use 'set!' instead of 'vector-set!': (set! (v ...) val) -- I find this 
 	  n = s7_integer(car(x));
 	  if ((n < 0) || 
 	      (n >= vector_dimension(vec, i)))
-	    return(s7_out_of_range_error(sc, "vector-set!", i, car(x), "between 0 and the dimension size"));
+	    return(s7_out_of_range_error(sc, "vector-set!", i, car(x), "index should be between 0 and the dimension size"));
 	  index += n * vector_offset(vec, i);
 	}
 
@@ -10481,7 +10486,7 @@ can also use 'set!' instead of 'vector-set!': (set! (v ...) val) -- I find this 
       index = s7_integer(cadr(args));
       if ((index < 0) ||
 	  (index >= vector_length(vec)))
-	return(s7_out_of_range_error(sc, "vector-set!", 2, cadr(args), "between 0 and the vector length"));
+	return(s7_out_of_range_error(sc, "vector-set!", 2, cadr(args), "index should be between 0 and the vector length"));
 
       val = caddr(args);
     }
@@ -11720,7 +11725,7 @@ static s7_pointer g_make_hash_table(s7_scheme *sc, s7_pointer args)
 	{
 	  size = s7_integer(car(args));
 	  if (size <= 0)
-	    return(s7_out_of_range_error(sc, "make-hash-table", 0, car(args), "a positive integer"));
+	    return(s7_out_of_range_error(sc, "make-hash-table", 0, car(args), "size should be a positive integer"));
 	}
       else return(s7_wrong_type_arg_error(sc, "make-hash-table", 0, car(args), "an integer"));
     }
@@ -12912,7 +12917,7 @@ s7_pointer s7_out_of_range_error(s7_scheme *sc, const char *caller, int arg_n, s
   len = safe_strlen(descr) + safe_strlen(caller) + 64;
   errmsg = (char *)malloc(len * sizeof(char));
   if (arg_n <= 0) arg_n = 1;
-  slen = snprintf(errmsg, len, "%s argument %d is out of range (it should be %s)", caller, arg_n, descr);
+  slen = snprintf(errmsg, len, "%s argument %d is out of range (%s)", caller, arg_n, descr);
   x = make_list_2(sc, s7_make_string_with_length(sc, errmsg, slen), arg);
   free(errmsg);
 
@@ -15161,6 +15166,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	case T_PAIR:                              /* -------- list as applicable object -------- */
 	  if (cdr(sc->args) != sc->NIL)
 	    return(s7_wrong_number_of_args_error(sc, "list ref (via list as applicable object)", sc->args));
+	  /* 
+	   * I suppose we could take n args here = repeated list-refs
+	   * ((list (list 1 2) 3) 0 0) -> 1 (caar)
+	   */
 	  sc->value = g_list_ref(sc, make_list_2(sc, sc->code, car(sc->args)));
 	  pop_stack(sc);
 	  goto START;
@@ -15171,7 +15180,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  sc->value = g_hash_table_ref(sc, make_list_2(sc, sc->code, car(sc->args)));
 	  pop_stack(sc);
 	  goto START;
-
 
 	default:
 	  return(eval_error(sc, "attempt to apply ~S?", sc->code));
@@ -18838,15 +18846,15 @@ static s7_pointer big_log(s7_scheme *sc, s7_pointer args)
 	    {
 	      if ((!is_c_object(p1)) &&
 		  ((s7_is_zero(p1)) || (s7_is_one(p1))))
-		return(s7_out_of_range_error(sc, "log", 2, p1, "not 0.0 or 1.0"));
+		return(s7_out_of_range_error(sc, "log", 2, p1, "base can't be 0.0 or 1.0"));
 
 	      p1 = promote_number(sc, T_BIG_REAL, p1);
 	      p1_cmp = (mpfr_cmp_ui(S7_BIG_REAL(p1), 0));
 	      if (p1_cmp == 0)
-		return(s7_out_of_range_error(sc, "log", 2, p1, "not 0.0"));
+		return(s7_out_of_range_error(sc, "log", 2, p1, "base can't be 0.0"));
 	      p1_cmp = (mpfr_cmp_ui(S7_BIG_REAL(p1), 1));
 	      if (p1_cmp == 0)
-		return(s7_out_of_range_error(sc, "log", 2, p1, "not 1.0"));
+		return(s7_out_of_range_error(sc, "log", 2, p1, "base can't be 1.0"));
 	    }
 	  if ((mpfr_cmp_ui(S7_BIG_REAL(p0), 0) > 0) &&
 	      ((!p1) || (p1_cmp > 0)))
@@ -19863,7 +19871,7 @@ static s7_pointer big_ash(s7_scheme *sc, s7_pointer args)
       if (is_c_object(p1))
 	{
 	  if (!mpz_fits_sint_p(S7_BIG_INTEGER(p1)))
-	    return(s7_out_of_range_error(sc, "ash", 2, p1, "a 32-bit int after shifting"));
+	    return(s7_out_of_range_error(sc, "ash", 2, p1, "result should be a 32-bit int"));
 	  shift = mpz_get_si(S7_BIG_INTEGER(p1));
 	}
       else shift = s7_integer(p1);

@@ -40301,7 +40301,7 @@ expt error > 1e-6 around 2^-46.506993328423
 		   vector->list list->vector vector-fill! vector vector-length vector-ref make-vector
 					;call/cc call-with-current-continuation call-with-exit load
 		   continuation? eval eval-string apply
-		   force for-each map values call-with-values dynamic-wind catch error 
+		   force for-each map values call-with-values dynamic-wind ;catch error 
 					;quit gc
 		   procedure? procedure-documentation
 		   help procedure-arity procedure-source make-procedure-with-setter procedure-with-setter? 
@@ -40315,7 +40315,7 @@ expt error > 1e-6 around 2^-46.506993328423
 		       "hi" "" 
 		       'hi :hi 
 		       #\a #\newline 
-		       (call/cc (lambda (a) a))
+		       ;;; (call/cc (lambda (a) a)) -- this causes us to start over!
 		       (make-hash-table 256)
 		       (symbol->value '_?__undefined__?_)                  ; -> #<undefined> hopefully
 		       (vector-fill! (vector 0) 0)                         ; -> #<unspecified>?
@@ -40338,7 +40338,11 @@ expt error > 1e-6 around 2^-46.506993328423
 	  (lambda (a)
 	    (catch #t 
 		   (lambda () 
-		     (f a))
+		     (if (or (and (not (eq? f make-string))
+				  (not (eq? f ash)))
+			     (not (>= a (expt 2 30))))
+			 (f a)
+			 #f))
 		   (lambda args #f)))
 	  argls))
        ops)
@@ -40352,7 +40356,13 @@ expt error > 1e-6 around 2^-46.506993328423
 	     (lambda (b)
 	       (catch #t 
 		      (lambda () 
-			(f a b))
+			(if (or (and (not (eq? f expt))
+				     (not (eq? f ash))
+				     (not (eq? f make-string)))
+				(and (not (>= a (expt 2 30)))
+				     (not (>= b (expt 2 30)))))
+			    (f a b)
+			    #f))
 		      (lambda args #f)))
 	     argls))
 	  argls))
@@ -40409,7 +40419,7 @@ expt error > 1e-6 around 2^-46.506993328423
 		    "hi" "" 
 		    'hi :hi 
 		    #\a #\newline 
-		    (call/cc (lambda (a) a))
+		    ;;; (call/cc (lambda (a) a))
 		    (make-hash-table 256)
 		    (symbol->value '_?__undefined__?_)                  ; -> #<undefined> hopefully
 		    (vector-fill! (vector 0) 0)                         ; -> #<unspecified>?
@@ -40421,7 +40431,11 @@ expt error > 1e-6 around 2^-46.506993328423
 	(lambda (arg)
 	  (catch #t
 		 (lambda () 
-		   (eval (list op arg)))
+		   (if (or (and (not (eq? op make-string))
+				(not (eq? op ash)))
+			   (not (>= arg (expt 2 30))))
+		       (eval (list op arg))
+		       #f))
 		 (lambda args
 		   #f)))
 	
@@ -40436,7 +40450,13 @@ expt error > 1e-6 around 2^-46.506993328423
 	   (lambda (arg2)
 	     (catch #t
 		    (lambda () 
-		      (eval (list op arg1 arg2)))
+		      (if (or (and (not (eq? op expt))
+				   (not (eq? op ash))
+				   (not (eq? op make-string)))
+			      (and (not (>= arg1 (expt 2 30)))
+				   (not (>= arg2 (expt 2 30)))))
+			  (eval (list op arg1 arg2))
+			  #f))
 		    (lambda args
 		      #f)))
 	   args))
@@ -40515,7 +40535,7 @@ expt error > 1e-6 around 2^-46.506993328423
 	     (for-each
 	      (lambda (arg3)
 		(catch #t
-		       (lambda () (format #t "~A~%" (list op arg1 arg2 arg3))
+		       (lambda ()
 			 (eval (list op arg1 arg2 arg3)))
 		       (lambda args
 			 #f)))
