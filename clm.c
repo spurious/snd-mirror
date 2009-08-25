@@ -9918,6 +9918,7 @@ static int last_fft_size = 0;
 void mus_fftw(mus_float_t *rl, int n, int dir)
 {
   int i;
+  /* array names are confusing here: rdata = input data, idata = output data */
 
   MUS_LOCK(&fft_lock);
 
@@ -9926,8 +9927,8 @@ void mus_fftw(mus_float_t *rl, int n, int dir)
       if (rdata) {fftw_free(rdata); fftw_free(idata); fftw_destroy_plan(rplan); fftw_destroy_plan(iplan);}
       rdata = (double *)fftw_malloc(n * sizeof(double));
       idata = (double *)fftw_malloc(n * sizeof(double));
-      rplan = fftw_plan_r2r_1d(n, rdata, idata, FFTW_R2HC, FFTW_ESTIMATE); 
-      iplan = fftw_plan_r2r_1d(n, rdata, idata, FFTW_HC2R, FFTW_ESTIMATE);
+      rplan = fftw_plan_r2r_1d(n, rdata, idata, FFTW_FORWARD, FFTW_ESTIMATE); 
+      iplan = fftw_plan_r2r_1d(n, rdata, idata, FFTW_BACKWARD, FFTW_ESTIMATE);
       last_fft_size = n;
     }
   memset((void *)idata, 0, n * sizeof(double));
@@ -9940,9 +9941,59 @@ void mus_fftw(mus_float_t *rl, int n, int dir)
   MUS_UNLOCK(&fft_lock);
 }
 
+
+#if HAVE_COMPLEX_TRIG && (!__cplusplus)
+
+static fftw_complex *c_in_data = NULL, *c_out_data = NULL;
+static fftw_plan c_r_plan, c_i_plan;  
+
+static int last_c_fft_size = 0;   
+#if HAVE_PTHREADS
+  static mus_lock_t c_fft_lock = MUS_LOCK_INITIALIZER;
+#endif
+
+void mus_fftw_with_imag(mus_float_t *rl, mus_float_t *im, int n, int dir)
+{
+  int i;
+
+  MUS_LOCK(&c_fft_lock);
+
+  if (n != last_c_fft_size)
+    {
+      if (c_in_data) 
+	{
+	  fftw_free(c_in_data); 
+	  fftw_free(c_out_data); 
+	  fftw_destroy_plan(c_r_plan); 
+	  fftw_destroy_plan(c_i_plan);
+	}
+      c_in_data = (fftw_complex *)fftw_malloc(n * sizeof(fftw_complex));
+      c_out_data = (fftw_complex *)fftw_malloc(n * sizeof(fftw_complex));
+      c_r_plan = fftw_plan_dft_1d(n, c_in_data, c_out_data, FFTW_FORWARD, FFTW_ESTIMATE); 
+      c_i_plan = fftw_plan_dft_1d(n, c_in_data, c_out_data, FFTW_BACKWARD, FFTW_ESTIMATE);
+      last_c_fft_size = n;
+    }
+  for (i = 0; i < n; i++) 
+    c_in_data[i] = rl[i] + _Complex_I * im[i];
+
+  if (dir == -1) /* TODO: is sign reversed in other cases? */
+    fftw_execute(c_r_plan);
+  else fftw_execute(c_i_plan);
+
+  for (i = 0; i < n; i++) 
+    {
+      rl[i] = creal(c_out_data[i]);
+      im[i] = cimag(c_out_data[i]);
+    }
+
+  MUS_UNLOCK(&c_fft_lock);
+}
+#endif
+
 #else
 
 #if HAVE_FFTW
+
 static fftw_real *rdata = NULL, *idata = NULL;
 static rfftw_plan rplan, iplan;
 static int last_fft_size = 0;
@@ -9979,6 +10030,15 @@ void mus_fftw(mus_float_t *rl, int n, int dir)
 #endif
 #endif
 
+
+#if HAVE_FFTW3 && HAVE_COMPLEX_TRIG && (!__cplusplus)
+void mus_fft(mus_float_t *rl, mus_float_t *im, int n, int is)
+{
+  /* simple timing tests indicate fftw is slightly less than 4 times faster than mus_fft in this context */
+  mus_fftw_with_imag(rl, im, n, is);
+}
+
+#else
 
 static void mus_scramble(mus_float_t *rl, mus_float_t *im, int n)
 {
@@ -10054,6 +10114,7 @@ void mus_fft(mus_float_t *rl, mus_float_t *im, int n, int is)
       m <<= 1;
     }
 }
+#endif
 
 
 void mus_big_fft(mus_float_t *rl, mus_float_t *im, mus_long_t n, int is)

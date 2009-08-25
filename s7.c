@@ -82,6 +82,8 @@
  *        perhaps find(-if), remove etc from CL?
  *        defmacro* define-macro* 
  *        perhaps settable numerator denominator imag-part real-part angle magnitude
+ *        perhaps trailing args to cons -> list*
+ *        perhaps trailing args to list-ref
  *
  *
  * Mike Scholz provided the FreeBSD support (complex trig funcs, etc)

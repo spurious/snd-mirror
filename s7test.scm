@@ -38460,7 +38460,7 @@ expt error > 1e-6 around 2^-46.506993328423
 		      (lambda (nlst v)
 			(ok-string-to-number 'number->string nlst v 
 					     (lambda (n v)
-					       (< (distance n (string->number v)) 1e-5))))
+					       (< (distance n (string->number v)) 1e-4))))
 		      choose-number)
 		
 		(list exact->inexact 

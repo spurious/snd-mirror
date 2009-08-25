@@ -2175,6 +2175,9 @@ return a vct (obj if it's passed), with the current transform data from snd's ch
 
 static XEN g_snd_transform(XEN type, XEN data, XEN hint)
 {
+  #define H_snd_transform "(snd-transform type data choice) calls whatever FFT is being used by the \
+display.  'type': fourier (0), wavelet (1), etc (snd-0.h); 'data' is a vct. In the wavelet case, \
+'choice' is the wavelet to use."
   int trf, i, j, hnt, n2;
   vct *v;
   mus_float_t *dat;
@@ -2188,31 +2191,16 @@ static XEN g_snd_transform(XEN type, XEN data, XEN hint)
     {
     case FOURIER: 
       n2 = v->length / 2;
-#if HAVE_FFTW || HAVE_FFTW3
-      if ((XEN_BOUND_P(hint)) && (XEN_TRUE_P(hint)))
+      dat = (mus_float_t *)calloc(v->length, sizeof(mus_float_t));
+      mus_fft(v->data, dat, v->length, 1);
+      v->data[0] *= v->data[0];
+      v->data[n2] *= v->data[n2];
+      for (i = 1, j = v->length - 1; i < n2; i++, j--)
 	{
-	  mus_fftw(v->data, v->length, 1);
-	  v->data[0] *= v->data[0];
-	  v->data[n2] *= v->data[n2];
-	  for (i = 1, j = v->length - 1; i < n2; i++, j--) 
-	    v->data[i] = v->data[i] * v->data[i] + v->data[j] * v->data[j];
+	  v->data[i] = v->data[i] * v->data[i] + dat[i] * dat[i];
+	  v->data[j] = v->data[i];
 	}
-      else
-	{
-#endif
-	  dat = (mus_float_t *)calloc(v->length, sizeof(mus_float_t));
-	  mus_fft(v->data, dat, v->length, 1);
-	  v->data[0] *= v->data[0];
-	  v->data[n2] *= v->data[n2];
-	  for (i = 1, j = v->length - 1; i < n2; i++, j--)
-	    {
-	      v->data[i] = v->data[i] * v->data[i] + dat[i] * dat[i];
-	      v->data[j] = v->data[i];
-	    }
-	  free(dat);
-#if HAVE_FFTW || HAVE_FFTW3
-	}
-#endif
+      free(dat);
       break;
     case WAVELET:
       hnt = XEN_TO_C_INT(hint);
@@ -2421,7 +2409,7 @@ of a moving mark:\n\
   XEN_DEFINE_PROCEDURE(S_add_transform,        g_add_transform_w,    5, 0, 0, H_add_transform);
   XEN_DEFINE_PROCEDURE(S_transform_p,          g_transform_p_w,      1, 0, 0, H_transform_p);
   XEN_DEFINE_PROCEDURE(S_delete_transform,     g_delete_transform_w, 1, 0, 0, H_delete_transform);
-  XEN_DEFINE_PROCEDURE("snd-transform",        g_snd_transform_w,    2, 1, 0, "call transform code directly");
+  XEN_DEFINE_PROCEDURE("snd-transform",        g_snd_transform_w,    2, 1, 0, H_snd_transform);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_log_freq_start, g_log_freq_start_w, H_log_freq_start,
 				   S_setB S_log_freq_start, g_set_log_freq_start_w,  0, 0, 1, 0);

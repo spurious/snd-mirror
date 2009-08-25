@@ -42449,7 +42449,8 @@ EDITS: 1
 		  (set! happy #f)))))
 	
 	(snd-transform fourier-transform d0 0)
-	(if (fneq (vct-ref d0 0) 256.0)
+	(if (and (fneq (vct-ref d0 0) 256.0)
+		 (fneq (vct-ref d0 0) 361.0)) ; fftw funny length 
 	    (snd-display ";fourier (256.0): ~A?" (vct-ref d0 0)))
 	(let ((happy #t))
 	  (do ((i 1 (+ 1 i)))
@@ -42486,7 +42487,7 @@ EDITS: 1
 	(set! d1 (make-vct 8))
 	(vct-set! d0 2 1.0)
 	(mus-fft d0 d1 8 1)
-	(if (or (not (vequal d0 (vct 1.000 0.000 -1.000 -0.000 1.000 0.000 -1.000 -0.000)))
+	(if (or (not (vequal d0 (vct 1.000 0.000 -1.000 0.000 1.000 0.000 -1.000 0.000)))
 		(not (vequal d1 (vct 0.000 1.000 0.000 -1.000 0.000 1.000 0.000 -1.000))))
 	    (snd-display ";mus-fft 1: ~A ~A?" d0 d1))
 	(mus-fft d0 d1 8 -1)

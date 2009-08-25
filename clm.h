@@ -2,10 +2,11 @@
 #define CLM_H
 
 #define MUS_VERSION 4
-#define MUS_REVISION 27
-#define MUS_DATE "17-Aug-09"
+#define MUS_REVISION 28
+#define MUS_DATE "25-Aug-09"
 
 /*
+ * 25-Aug:     mus_fftw_with_imag (fftw3 only).
  * 17-Aug:     mus_frame|mixer_copy|fill.
  * 27-Jul:     mus_float_t for Float, and mus_long_t for off_t.
  * 15-Jun:     mus_rectangular_to_magnitudes (polar, but ignore phases).
@@ -770,7 +771,10 @@ MUS_EXPORT mus_float_t *mus_spectrum(mus_float_t *rdat, mus_float_t *idat, mus_f
 MUS_EXPORT void mus_fft(mus_float_t *rl, mus_float_t *im, int n, int is);
 MUS_EXPORT void mus_big_fft(mus_float_t *rl, mus_float_t *im, mus_long_t n, int is);
 #if HAVE_FFTW || HAVE_FFTW3
-MUS_EXPORT void mus_fftw(mus_float_t *rl, int n, int dir);
+  MUS_EXPORT void mus_fftw(mus_float_t *rl, int n, int dir);
+  #if HAVE_FFTW3 && HAVE_COMPLEX_TRIG && (!__cplusplus)
+    MUS_EXPORT void mus_fftw_with_imag(mus_float_t *rl, mus_float_t *im, int n, int dir);
+  #endif
 #endif
 MUS_EXPORT mus_float_t *mus_make_fft_window(mus_fft_window_t type, mus_long_t size, mus_float_t beta);
 MUS_EXPORT mus_float_t *mus_make_fft_window_with_window(mus_fft_window_t type, mus_long_t size, mus_float_t beta, mus_float_t mu, mus_float_t *window);

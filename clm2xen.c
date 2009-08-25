@@ -748,9 +748,19 @@ the real and imaginary parts of the data; len should be a power of 2, dir = 1 fo
       n = (mus_long_t)pow(2.0, np);
     }
 
-  if ((n * sizeof(mus_float_t)) < INT_MAX)
+  if (n <= (1 << 29))
     mus_fft(v1->data, v2->data, n, sign);
   else mus_big_fft(v1->data, v2->data, n, sign);
+  /*
+   * in fftw, there's the extra complex array allocation, so for n = 2^29
+   *   (and doubles for vcts as well as fftw), we need 24.6 Gbytes, and the FFT
+   *   takes 144 secs on a 2.4 GHz machine.  (Similarly, 2^28 needs 12.6 Gb
+   *   and takes 61 secs).  So, to squeeze into 48 GBytes, we go to mus_big_fft
+   *   at 2^30, but mus_big_fft takes about 6 times longer than fftw, although less
+   *   space (there's also the problem that the fftw arrays are not deallocated).
+   *   so 2^30 uses 16.6 GBytes and takes ca 35 mins (presumably fftw would have
+   *   taken 49 Gb and ca. 6 mins).
+   */
 
   return(xen_return_first(url, uim));
 }
