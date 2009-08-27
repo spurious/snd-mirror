@@ -303,15 +303,15 @@ s7_Double s7_imag_part(s7_pointer z);                                       /* (
 char *s7_number_to_string(s7_scheme *sc, s7_pointer obj, int radix);        /* (number->string obj radix) */
 
 
-bool s7_is_vector(s7_pointer p);                                            /* (vector? p) */
-void s7_vector_fill(s7_scheme *sc, s7_pointer vec, s7_pointer obj);         /* (vector-fill! vec obj) */
-s7_pointer s7_vector_ref(s7_scheme *sc, s7_pointer vec, int index);         /* (vector-ref vec index) */
-s7_pointer s7_vector_set(s7_scheme *sc, s7_pointer vec, int index, s7_pointer a);  /* (vector-set! vec index a) */
-s7_pointer s7_make_vector(s7_scheme *sc, int len);                          /* (make-vector len) */
-s7_pointer s7_make_and_fill_vector(s7_scheme *sc, int len, s7_pointer fill);/* (make-vector len fill) */
-int s7_vector_length(s7_pointer vec);                                       /* (vector-length vec) */
-s7_pointer s7_vector_to_list(s7_scheme *sc, s7_pointer vect);               /* (vector->list vect) */
-s7_pointer *s7_vector_elements(s7_pointer vec);                             /* a pointer to the array of s7_pointers */
+bool s7_is_vector(s7_pointer p);                                                      /* (vector? p) */
+void s7_vector_fill(s7_scheme *sc, s7_pointer vec, s7_pointer obj);                   /* (vector-fill! vec obj) */
+s7_pointer s7_vector_ref(s7_scheme *sc, s7_pointer vec, s7_Int index);                /* (vector-ref vec index) */
+s7_pointer s7_vector_set(s7_scheme *sc, s7_pointer vec, s7_Int index, s7_pointer a);  /* (vector-set! vec index a) */
+s7_pointer s7_make_vector(s7_scheme *sc, s7_Int len);                                 /* (make-vector len) */
+s7_pointer s7_make_and_fill_vector(s7_scheme *sc, s7_Int len, s7_pointer fill);       /* (make-vector len fill) */
+s7_Int s7_vector_length(s7_pointer vec);                                              /* (vector-length vec) */
+s7_pointer s7_vector_to_list(s7_scheme *sc, s7_pointer vect);                         /* (vector->list vect) */
+s7_pointer *s7_vector_elements(s7_pointer vec);                                       /* a pointer to the array of s7_pointers */
 
   /* if s7 is built with multidimensional and applicable vectors, 
    *
@@ -325,7 +325,7 @@ s7_pointer *s7_vector_elements(s7_pointer vec);                             /* a
 
 
 bool s7_is_hash_table(s7_pointer p);                                        /* (hash-table? p) */
-s7_pointer s7_make_hash_table(s7_scheme *sc, int size);                     /* (make-hash-table size) */
+s7_pointer s7_make_hash_table(s7_scheme *sc, s7_Int size);                  /* (make-hash-table size) */
 s7_pointer s7_hash_table_ref(s7_scheme *sc, s7_pointer table, const char *name);   
                                                                             /* (hash-table-ref table name) */
 s7_pointer s7_hash_table_set(s7_scheme *sc, s7_pointer table, const char *name, s7_pointer value);  
@@ -1586,6 +1586,7 @@ int main(int argc, char **argv)
  * 
  *        s7 changes
  *
+ * 27-Aug:    vector and hash-table sizes are now s7_Ints, rather than ints.
  * 20-Aug:    s7_remove_from_heap.
  * 17-Aug:    *error-info*.
  * 14-Aug:    define-expansion.

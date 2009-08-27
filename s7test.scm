@@ -36876,6 +36876,7 @@
 ;      (test '#( .) 'error)
 ;      (test (car '( .)) 'error)
 ;      (test '#(1 . 2) 'error)
+;      (test (let ((. 3)) .) 'error)
 
 
 ;;; ----------------

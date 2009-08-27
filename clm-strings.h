@@ -9,7 +9,7 @@
 #define S_array_interp               "array-interp"
 #define S_asymmetric_fm              "asymmetric-fm"
 #define S_asymmetric_fm_p            "asymmetric-fm?"
-#define S_autocorrelate                 "autocorrelate"
+#define S_autocorrelate              "autocorrelate"
 #define S_bartlett_window            "bartlett-window"
 #define S_bartlett_hann_window       "bartlett-hann-window"
 #define S_blackman2_window           "blackman2-window"

@@ -346,12 +346,6 @@ typedef struct s7_port_t {
 } s7_port_t;
 
 
-typedef struct s7_continuation_t {
-  int cc_stack_size, cc_stack_top;
-  s7_pointer cc_stack;
-} s7_continuation_t;
-
-
 typedef struct s7_func_t {
   s7_function ff;
   const char *name;
@@ -359,13 +353,6 @@ typedef struct s7_func_t {
   int required_args, optional_args, all_args;
   bool rest_arg;
 } s7_func_t;
-
-
-typedef struct s7_catch_t {
-  int goto_loc;
-  s7_pointer tag;
-  s7_pointer handler;
-} s7_catch_t;
 
 
 typedef enum {DWIND_INIT, DWIND_BODY, DWIND_FINISH} dwind_t;
@@ -379,7 +366,7 @@ typedef struct s7_dynwind_t {
 #if WITH_MULTIDIMENSIONAL_VECTORS
 typedef struct s7_vdims_t {
   int ndims;
-  int *dims, *offsets;
+  s7_Int *dims, *offsets;
 } s7_vdims_t;
 #endif
 
@@ -405,7 +392,7 @@ typedef struct s7_cell {
     opcode_t proc_num;
     
     struct {
-      int length;
+      s7_Int length;
       s7_pointer *elements;
 #if WITH_MULTIDIMENSIONAL_VECTORS
       s7_vdims_t *dim_info;
@@ -428,14 +415,21 @@ typedef struct s7_cell {
       void *value;
     } fobj;
     
-    s7_continuation_t *cc;
+    struct {
+      int stack_size, stack_top;
+      s7_pointer stack;
+    } continuation;
     
     int goto_loc;
     
-    s7_catch_t *catcher;
+    struct {
+      int goto_loc;
+      s7_pointer tag;
+      s7_pointer handler;
+    } catch;
     
-    s7_dynwind_t *winder;
-    
+    s7_dynwind_t *winder; /* this could be embedded in "object" at no cost in 32-bit machines, but it adds 8 bytes (40 total) in 64-bit cases */
+
   } object;
 } s7_cell;
 
@@ -540,6 +534,9 @@ struct s7_scheme {
 
   s7_pointer *trace_list;
   int trace_list_size, trace_top, trace_depth;
+
+  #define BLOCK_VECTOR_SIZE 100
+  s7_pointer *nil_vector, *unspecified_vector;
 
   void *default_rng;
 #if WITH_GMP
@@ -745,9 +742,9 @@ struct s7_scheme {
 #define c_macro_required_args(f)      (f)->object.ffptr->required_args
 #define c_macro_all_args(f)           (f)->object.ffptr->all_args
 
-#define continuation(p)               (p)->object.cc
-#define continuation_stack(p)         (p)->object.cc->cc_stack
-#define continuation_stack_top(p)     (p)->object.cc->cc_stack_top
+#define continuation_stack(p)         (p)->object.continuation.stack
+#define continuation_stack_top(p)     (p)->object.continuation.stack_top
+#define continuation_stack_size(p)    (p)->object.continuation.stack_size
 
 #define is_goto(p)                    (type(p) == T_GOTO)
 #define is_macro(p)                   (type(p) == T_MACRO)
@@ -761,10 +758,9 @@ struct s7_scheme {
 #define closure_environment(Obj)      cdr(Obj)
 
 #define is_catch(p)                   (type(p) == T_CATCH)
-#define catch(p)                      (p)->object.catcher
-#define catch_tag(p)                  (p)->object.catcher->tag
-#define catch_goto_loc(p)             (p)->object.catcher->goto_loc
-#define catch_handler(p)              (p)->object.catcher->handler
+#define catch_tag(p)                  (p)->object.catch.tag
+#define catch_goto_loc(p)             (p)->object.catch.goto_loc
+#define catch_handler(p)              (p)->object.catch.handler
 
 #define is_dynamic_wind(p)            (type(p) == T_DYNAMIC_WIND)
 #define dynamic_wind(p)               (p)->object.winder
@@ -1166,15 +1162,6 @@ static void finalize_s7_cell(s7_scheme *sc, s7_pointer a)
 	}
       break;
       
-    case T_CONTINUATION:
-      if (continuation(a))
-	free(continuation(a));
-      break;
-      
-    case T_CATCH:
-      free(catch(a));
-      break;
-      
     case T_DYNAMIC_WIND:
       free(dynamic_wind(a));
       break;
@@ -1195,16 +1182,25 @@ static void s7_mark_object_1(s7_pointer p);
 /* this is slightly faster than if we first call s7_mark_object, then check the mark bit */
 
 
-static void mark_vector(s7_pointer p, int top)
+static void mark_vector(s7_pointer p, s7_Int top)
 {
-  int i;
   s7_pointer *tp;
-
   set_mark(p); /* might be called outside s7_mark_object */
-
   tp = (s7_pointer *)(vector_elements(p));
-  for (i = 0; i < top; i++) 
-    S7_MARK(tp[i]);
+
+  if (top < INT_MAX)
+    {
+      int j, jlen;
+      jlen = top;
+      for (j = 0; j < jlen; j++) 
+	S7_MARK(tp[j]);
+    }
+  else
+    {
+      s7_Int i;
+      for (i = 0; i < top; i++) 
+	S7_MARK(tp[i]);
+    }
 }
 
 
@@ -1517,7 +1513,7 @@ void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
     case T_HASH_TABLE:
     case T_VECTOR:
       {
-	int i;
+	s7_Int i;
 	for (i = 0; i < vector_length(x); i++)
 	  s7_remove_from_heap(sc, vector_element(x, i));
       }
@@ -1569,19 +1565,16 @@ static void push_stack(s7_scheme *sc, opcode_t op, s7_pointer args, s7_pointer c
 }
 
 
-static void check_stack_size(s7_scheme *sc)
+static void increase_stack_size(s7_scheme *sc)
 {
-  if (sc->stack_top >= sc->stack_size2)
-    {
-      int i, new_size;
-      new_size = sc->stack_size * 2;
-      vector_elements(sc->stack) = (s7_pointer *)realloc(vector_elements(sc->stack), new_size * sizeof(s7_pointer));
-      for (i = sc->stack_size; i < new_size; i++)
-	vector_element(sc->stack, i) = sc->NIL;
-      vector_length(sc->stack) = new_size;
-      sc->stack_size2 = sc->stack_size;
-      sc->stack_size = new_size;
-    }
+  int i, new_size;
+  new_size = sc->stack_size * 2;
+  vector_elements(sc->stack) = (s7_pointer *)realloc(vector_elements(sc->stack), new_size * sizeof(s7_pointer));
+  for (i = sc->stack_size; i < new_size; i++)
+    vector_element(sc->stack, i) = sc->NIL;
+  vector_length(sc->stack) = new_size;
+  sc->stack_size2 = sc->stack_size;
+  sc->stack_size = new_size;
 } 
 
 
@@ -1591,21 +1584,20 @@ static s7_pointer g_stack(s7_scheme *sc, s7_pointer args)
 Each stack frame has 4 entries, the function, the current environment, the function arguments, and an op code used \
 internally by the evaluator.  If a continuation is passed, its stack and stack-top are returned."
 
-  if (s7_is_continuation(car(args)))
+  if (args != sc->NIL)
     {
-      s7_continuation_t *c;
-      c = continuation(car(args));
-      return(make_list_2(sc, s7_make_integer(sc, c->cc_stack_top), c->cc_stack));
-    }
+      if (s7_is_continuation(car(args)))
+	return(make_list_2(sc, s7_make_integer(sc, continuation_stack_top(car(args))), continuation_stack(car(args))));
 
 #if HAVE_PTHREADS
-  if (g_is_thread(sc, args) != sc->F)
-    {
-      thred *f;
-      f = (thred *)s7_object_value(car(args));
-      return(make_list_2(sc, s7_make_integer(sc, f->sc->stack_top), f->sc->stack));
+      if (g_is_thread(sc, args) != sc->F)
+	{
+	  thred *f;
+	  f = (thred *)s7_object_value(car(args));
+	  return(make_list_2(sc, s7_make_integer(sc, f->sc->stack_top), f->sc->stack));
+	}
+#endif	 
     }
-#endif	    
 
   return(make_list_2(sc, s7_make_integer(sc, sc->stack_top), sc->stack));
 }
@@ -2301,7 +2293,6 @@ static s7_pointer s7_make_goto(s7_scheme *sc)
 
 static s7_pointer s7_make_continuation(s7_scheme *sc) 
 {
-  s7_continuation_t *c;
   s7_pointer x;
 
   if (sc->free_heap_top < sc->heap_size / 4)
@@ -2311,21 +2302,16 @@ static s7_pointer s7_make_continuation(s7_scheme *sc)
    *   in successive copy_stack's below, causing s7 to core up until it runs out of memory.
    */
 
-  c = (s7_continuation_t *)malloc(sizeof(s7_continuation_t));
-  /* save current state */
-  c->cc_stack_top = sc->stack_top;
-  c->cc_stack_size = sc->stack_size;
-  c->cc_stack = copy_stack(sc, sc->stack, sc->stack_top);
-
   x = new_cell(sc);
-  set_type(x, T_CONTINUATION | T_FINALIZABLE | T_DONT_COPY | T_PROCEDURE);
-  continuation(x) = c;
-  
+  continuation_stack_top(x) = sc->stack_top;
+  continuation_stack_size(x) = sc->stack_size;
+  continuation_stack(x) = copy_stack(sc, sc->stack, sc->stack_top);
+  set_type(x, T_CONTINUATION | T_DONT_COPY | T_PROCEDURE);
   return(x);
 }
 
 
-static void check_for_dynamic_winds(s7_scheme *sc, s7_continuation_t *c)
+static void check_for_dynamic_winds(s7_scheme *sc, s7_pointer c)
 {
   int i, s_base = 0, c_base = -1;
   
@@ -2338,9 +2324,9 @@ static void check_for_dynamic_winds(s7_scheme *sc, s7_continuation_t *c)
 	{
 	  int j;
 	  x = vector_element(sc->stack, i - 3);
-	  for (j = 3; j < c->cc_stack_top; j += 4)
-	    if (((opcode_t)s7_integer(vector_element(c->cc_stack, j)) == OP_DYNAMIC_WIND) &&
-		(x == vector_element(c->cc_stack, j - 3)))
+	  for (j = 3; j < continuation_stack_top(c); j += 4)
+	    if (((opcode_t)s7_integer(vector_element(continuation_stack(c), j)) == OP_DYNAMIC_WIND) &&
+		(x == vector_element(continuation_stack(c), j - 3)))
 	      {
 		s_base = i;
 		c_base = j;
@@ -2365,11 +2351,11 @@ static void check_for_dynamic_winds(s7_scheme *sc, s7_continuation_t *c)
 	}
     }
   
-  for (i = c_base + 4; i < c->cc_stack_top; i += 4)
-    if ((opcode_t)s7_integer(vector_element(c->cc_stack, i)) == OP_DYNAMIC_WIND)
+  for (i = c_base + 4; i < continuation_stack_top(c); i += 4)
+    if ((opcode_t)s7_integer(vector_element(continuation_stack(c), i)) == OP_DYNAMIC_WIND)
       {
 	s7_pointer x;
-	x = vector_element(c->cc_stack, i - 3);
+	x = vector_element(continuation_stack(c), i - 3);
 	push_stack(sc, OP_EVAL_DONE, sc->args, sc->code); 
 	sc->args = sc->NIL;
 	sc->code = dynamic_wind_in(x);
@@ -4542,6 +4528,7 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
 	{ 
 	  has_dec_point1 = true; 
 	  c = *p++; 
+
 	  if (!ISDIGIT(c, current_radix))
 	    return((want_symbol) ? s7_make_symbol(sc, q) : sc->F); 
 	} 
@@ -8205,6 +8192,7 @@ static s7_pointer g_eval_string(s7_scheme *sc, s7_pointer args)
 {
   #define H_eval_string "(eval-string str :optional env) returns the result of evaluating the string str as Scheme code"
   s7_pointer port;
+
   if (!s7_is_string(car(args)))
     return(s7_wrong_type_arg_error(sc, "eval-string", 0, car(args), "a string"));
   
@@ -8230,7 +8218,7 @@ s7_pointer s7_eval_c_string(s7_scheme *sc, const char *str)
   bool old_longjmp;
   s7_pointer port;
   /* this can be called recursively via s7_call */
-  
+
   if (sc->longjmp_ok)
     return(g_eval_string(sc, make_list_1(sc, s7_make_string(sc, str))));
   
@@ -8667,7 +8655,7 @@ static char *object_to_c_string_with_circle_check(s7_scheme *sc, s7_pointer vr, 
 
 static char *s7_vector_to_c_string(s7_scheme *sc, s7_pointer vect, int depth, bool to_file)
 {
-  int i, len, bufsize = 0;
+  s7_Int i, len, bufsize = 0;
   bool too_long = false;
   char **elements = NULL;
   char *buf;
@@ -10144,7 +10132,7 @@ bool s7_is_vector(s7_pointer p)
 }
 
 
-static s7_pointer s7_make_vector_1(s7_scheme *sc, int len, bool filled) 
+static s7_pointer s7_make_vector_1(s7_scheme *sc, s7_Int len, bool filled) 
 {
   s7_pointer x;
   if (len > 0)
@@ -10189,35 +10177,66 @@ static s7_pointer s7_make_vector_1(s7_scheme *sc, int len, bool filled)
 }
 
 
-s7_pointer s7_make_vector(s7_scheme *sc, int len)
+s7_pointer s7_make_vector(s7_scheme *sc, s7_Int len)
 {
   return(s7_make_vector_1(sc, len, true));
 }
 
 
-int s7_vector_length(s7_pointer vec)
+s7_Int s7_vector_length(s7_pointer vec)
 {
   return(vector_length(vec));
 }
 
 
 #if (!WITH_GMP)
-void s7_vector_fill(s7_scheme *sc, s7_pointer vec, s7_pointer obj) 
+void s7_vector_fill(s7_scheme *sc, s7_pointer vec, s7_pointer obj)
+#else
+static void vector_fill(s7_scheme *sc, s7_pointer vec, s7_pointer obj)
+#endif
 {
-  int i, len;  /* this restricts the vector filled size to 31 bits */
+  s7_Int len;
   s7_pointer *tp;
 
-  len = vector_length(vec);
   tp = (s7_pointer *)(vector_elements(vec));
-  for (i = 0; i < len; i++) 
-    tp[i] = obj;
+  len = vector_length(vec);
+
+  if ((obj == sc->NIL) || (obj == sc->UNSPECIFIED))
+    {
+      s7_Int i;
+      s7_pointer *v_els, *from_els;
+      v_els = vector_elements(vec);
+      if (obj == sc->NIL)
+	from_els = sc->nil_vector;
+      else from_els = sc->unspecified_vector;
+
+      for (i = 0; i < len; i += BLOCK_VECTOR_SIZE)
+	memcpy((void *)(v_els + i),
+	       (void *)from_els,
+	       (((i + BLOCK_VECTOR_SIZE) > len) ? (len - i) : BLOCK_VECTOR_SIZE) * sizeof(s7_pointer));
+      return;
+    }
+
+  /* splitting out the int case saves a lot of compute time */
+  if (len < INT_MAX)
+    {
+      int j, jlen;
+      jlen = len;
+      for (j = 0; j < jlen; j++) 
+	tp[j] = obj;
+    }
+  else
+    {
+      s7_Int i;
+      for (i = 0; i < len; i++) 
+	tp[i] = obj;
+    }
 }
-#endif
 
 
 static s7_pointer s7_vector_copy(s7_scheme *sc, s7_pointer old_vect)
 {
-  int len;
+  s7_Int len;
   s7_pointer new_vect;
 
   len = vector_length(old_vect);
@@ -10244,7 +10263,7 @@ static s7_pointer g_vector_fill(s7_scheme *sc, s7_pointer args)
 }
 
 
-s7_pointer s7_vector_ref(s7_scheme *sc, s7_pointer vec, int index) 
+s7_pointer s7_vector_ref(s7_scheme *sc, s7_pointer vec, s7_Int index) 
 {
   if (index >= vector_length(vec))
     return(s7_out_of_range_error(sc, "vector-ref", 2, s7_make_integer(sc, index), "index should be less than vector length"));
@@ -10253,7 +10272,7 @@ s7_pointer s7_vector_ref(s7_scheme *sc, s7_pointer vec, int index)
 }
 
 
-s7_pointer s7_vector_set(s7_scheme *sc, s7_pointer vec, int index, s7_pointer a) 
+s7_pointer s7_vector_set(s7_scheme *sc, s7_pointer vec, s7_Int index, s7_pointer a) 
 {
   /* it's possible to have a vector that points to itself:
    *   (let ((v (make-vector 2))) (vector-set! v 0 v) v)
@@ -10275,7 +10294,7 @@ s7_pointer *s7_vector_elements(s7_pointer vec)
 s7_pointer s7_vector_to_list(s7_scheme *sc, s7_pointer vect)
 {
   s7_pointer lst = sc->NIL;
-  int i, len;
+  s7_Int i, len;
   len = vector_length(vect);
   for (i = len - 1; i >= 0; i--)
     lst = s7_cons(sc, vector_element(vect, i), lst);
@@ -10294,7 +10313,7 @@ static s7_pointer g_vector_to_list(s7_scheme *sc, s7_pointer args)
 
 static bool vectors_equal(s7_pointer x, s7_pointer y)
 {
-  int i, len;
+  s7_Int i, len;
 
   len = vector_length(x);
   if (len != vector_length(y)) return(false);
@@ -10324,7 +10343,7 @@ static bool vectors_equal(s7_pointer x, s7_pointer y)
 }
 
 
-s7_pointer s7_make_and_fill_vector(s7_scheme *sc, int len, s7_pointer fill)
+s7_pointer s7_make_and_fill_vector(s7_scheme *sc, s7_Int len, s7_pointer fill)
 {
   s7_pointer vect;
   vect = s7_make_vector_1(sc, len, false);
@@ -10336,7 +10355,7 @@ s7_pointer s7_make_and_fill_vector(s7_scheme *sc, int len, s7_pointer fill)
 static s7_pointer g_vector(s7_scheme *sc, s7_pointer args)
 {
   #define H_vector "(vector ...) returns a vector whose elements are the arguments"
-  int i, len;
+  s7_Int i, len;
   s7_pointer vec;
   
   len = s7_list_length(sc, args);
@@ -10377,7 +10396,7 @@ static s7_pointer g_vector_length(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer vector_ref_1(s7_scheme *sc, s7_pointer vect, s7_pointer indices)
 {
-  int index = 0;
+  s7_Int index = 0;
 #if WITH_MULTIDIMENSIONAL_VECTORS
   if (vector_is_multidimensional(vect))
     {
@@ -10385,7 +10404,7 @@ static s7_pointer vector_ref_1(s7_scheme *sc, s7_pointer vect, s7_pointer indice
       s7_pointer x;
       for (x = indices, i = 0; (x != sc->NIL) && (i < vector_ndims(vect)); x = cdr(x), i++)
 	{
-	  int n;
+	  s7_Int n;
 	  if (!s7_is_integer(car(x)))
 	    return(s7_wrong_type_arg_error(sc, "vector ref", i + 2, car(x), "an integer"));
 	  n = s7_integer(car(x));
@@ -10446,7 +10465,7 @@ can also use 'set!' instead of 'vector-set!': (set! (v ...) val) -- I find this 
   #define H_vector_set "(vector-set! v i value) sets the i-th element of vector v to value"
 #endif
   s7_pointer vec, val;
-  int index;
+  s7_Int index;
   
   vec = car(args);
   if (!s7_is_vector(vec))
@@ -10462,7 +10481,7 @@ can also use 'set!' instead of 'vector-set!': (set! (v ...) val) -- I find this 
       index = 0;
       for (x = cdr(args), i = 0; (cdr(x) != sc->NIL) && (i < vector_ndims(vec)); x = cdr(x), i++)
 	{
-	  int n;
+	  s7_Int n;
 	  if (!s7_is_integer(car(x)))
 	    return(s7_wrong_type_arg_error(sc, "vector-set!", i + 2, car(x), "an integer"));
 	  n = s7_integer(car(x));
@@ -10509,7 +10528,7 @@ returns a 2 dimensional vector of 6 total elements, all initialized to 1.0."
   #define H_make_vector "(make-vector len :optional (value #f)) returns a vector of len elements initialized to value"
 #endif
 
-  int len;
+  s7_Int len;
   s7_pointer x, fill, vec;
   fill = sc->UNSPECIFIED;
 
@@ -10559,14 +10578,15 @@ returns a 2 dimensional vector of 6 total elements, all initialized to 1.0."
   if ((is_pair(x)) &&
       (is_pair(cdr(x))))
     {
-      int i, offset = 1;
+      int i;
+      s7_Int offset = 1;
       s7_pointer y;
       s7_vdims_t *v;
 
       v = (s7_vdims_t *)malloc(sizeof(s7_vdims_t));
       v->ndims = safe_list_length(sc, x);
-      v->dims = (int *)malloc(v->ndims * sizeof(int));
-      v->offsets = (int *)malloc(v->ndims * sizeof(int));
+      v->dims = (s7_Int *)malloc(v->ndims * sizeof(s7_Int));
+      v->offsets = (s7_Int *)malloc(v->ndims * sizeof(s7_Int));
 
       for (i = 0, y = x; y != sc->NIL; i++, y = cdr(y))
 	v->dims[i] = s7_integer(car(y));
@@ -10701,7 +10721,7 @@ If its first argument is a list, the list is copied (despite the '!')."
   compare_proc_args = make_list_2(sc, sc->F, sc->F);
   gc_loc = s7_gc_protect(sc, compare_proc_args);
 
-  qsort((void *)s7_vector_elements(vect), vector_length(vect), sizeof(s7_pointer), vector_compare);
+  qsort((void *)s7_vector_elements(vect), vector_length(vect), sizeof(s7_pointer), vector_compare); /* qsort sizes are type size_t */
 
   s7_gc_unprotect_at(sc, gc_loc);
 
@@ -10909,6 +10929,8 @@ void s7_define_function_star(s7_scheme *sc, const char *name, s7_function fnc, c
   internal_arglist = (char *)calloc(arglist_len + 64, sizeof(char));
   snprintf(internal_arglist, arglist_len + 64, "(map (lambda (arg) (if (symbol? arg) arg (car arg))) '(%s))", arglist);
   local_args = s7_eval_c_string(sc, internal_arglist);
+  free(internal_arglist);
+  
   args = s7_list_length(sc, local_args);
   internal_arglist = s7_object_to_c_string(sc, local_args);
   /* this has an opening paren which we don't want */
@@ -11212,9 +11234,9 @@ s7_pointer s7_make_object(s7_scheme *sc, int type, void *value)
 {
   s7_pointer x;
   x = new_cell(sc);
-  set_type(x, T_C_OBJECT | T_ATOM | T_FINALIZABLE | T_DONT_COPY);
   c_object_type(x) = type;
   c_object_value(x) = value;
+  set_type(x, T_C_OBJECT | T_ATOM | T_FINALIZABLE | T_DONT_COPY);
   if (object_types[type].apply)
     typeflag(x) |= T_PROCEDURE;
   return(x);
@@ -11707,7 +11729,7 @@ static s7_pointer g_hash_table_size(s7_scheme *sc, s7_pointer args)
 }
 
 
-s7_pointer s7_make_hash_table(s7_scheme *sc, int size)
+s7_pointer s7_make_hash_table(s7_scheme *sc, s7_Int size)
 {
   s7_pointer table;
   table = s7_make_vector(sc, size);
@@ -11719,7 +11741,7 @@ s7_pointer s7_make_hash_table(s7_scheme *sc, int size)
 static s7_pointer g_make_hash_table(s7_scheme *sc, s7_pointer args)
 {
   #define H_make_hash_table "(make-hash-table :optional size) returns a new hash table"
-  int size = 461;
+  s7_Int size = 461;
 
   if (args != sc->NIL)
     {
@@ -11738,7 +11760,7 @@ static s7_pointer g_make_hash_table(s7_scheme *sc, s7_pointer args)
 
 s7_pointer s7_hash_table_ref(s7_scheme *sc, s7_pointer table, const char *name)
 {
-  int location;
+  s7_Int location;
   s7_pointer x;
   
   location = hash_fn(name, vector_length(table));
@@ -11752,7 +11774,7 @@ s7_pointer s7_hash_table_ref(s7_scheme *sc, s7_pointer table, const char *name)
 
 s7_pointer s7_hash_table_set(s7_scheme *sc, s7_pointer table, const char *name, s7_pointer value)
 {
-  int location;
+  s7_Int location;
   s7_pointer x;
   location = hash_fn(name, vector_length(table)); 
   
@@ -13007,23 +13029,19 @@ static s7_pointer g_catch(s7_scheme *sc, s7_pointer args)
 {
   #define H_catch "(catch tag thunk handler) evaluates thunk; if an error occurs that matches tag (#t matches all), the handler is called"
   s7_pointer p;
-  s7_catch_t *c;
 
   if (!is_thunk(sc, cadr(args)))
     return(s7_wrong_type_arg_error(sc, "catch", 2, cadr(args), "a procedure of 0 args"));
   if (!is_procedure(caddr(args)))
     return(s7_wrong_type_arg_error(sc, "catch", 3, caddr(args), "a procedure"));
   
-  c = (s7_catch_t *)malloc(sizeof(s7_catch_t));
-  c->tag = car(args);
-  c->goto_loc = sc->stack_top;
-  c->handler = caddr(args);
-  
   p = new_cell(sc);
-  set_type(p, T_CATCH | T_ATOM | T_FINALIZABLE | T_DONT_COPY); /* atom -> don't mark car/cdr, don't copy */
-  catch(p) = c;
+  catch_tag(p) = car(args);
+  catch_goto_loc(p) = sc->stack_top;
+  catch_handler(p) = caddr(args);
+  set_type(p, T_CATCH | T_ATOM | T_DONT_COPY); /* atom -> don't mark car/cdr, don't copy */
+
   push_stack(sc, OP_CATCH, sc->NIL, p);
-  
   sc->args = sc->NIL;
   sc->code = cadr(args);
   push_stack(sc, OP_APPLY, sc->args, sc->code);
@@ -13374,8 +13392,8 @@ static s7_pointer read_error(s7_scheme *sc, const char *errmsg)
   if (is_string_port(sc->input_port))
     {
       #define QUOTE_SIZE 12
-      int i, start, end, slen;
-      char *recent_input;
+      int start, end, slen;
+      char *recent_input = NULL;
       
       start = port_string_point(pt) - QUOTE_SIZE;
       if (start < 0) start = 0;
@@ -13384,26 +13402,32 @@ static s7_pointer read_error(s7_scheme *sc, const char *errmsg)
 	end = port_string_length(pt);
       slen = end - start;
 
-      recent_input = (char *)malloc((slen + 8) * sizeof(char));
-      for (i = 0; i < 3; i++) recent_input[i] = '.';
-      recent_input[3] = ' ';
-      for (i = 0; i < slen; i++) recent_input[i + 4] = port_string(pt)[start + i];
-      recent_input[i + 4] = ' ';
-      for (i = 0; i < 3; i++) recent_input[i + slen + 5] = '.';
-      recent_input[7 + slen] = '\0';
+      if (slen > 0)
+	{
+	  int i;
+	  recent_input = (char *)malloc((slen + 8) * sizeof(char));
+	  for (i = 0; i < 3; i++) recent_input[i] = '.';
+	  recent_input[3] = ' ';
+	  for (i = 0; i < slen; i++) recent_input[i + 4] = port_string(pt)[start + i];
+	  recent_input[i + 4] = ' ';
+	  for (i = 0; i < 3; i++) recent_input[i + slen + 5] = '.';
+	  recent_input[7 + slen] = '\0';
+	}
+
       if (port_line_number(pt) > 0)
 	{
-	  len = slen + safe_strlen(errmsg) + safe_strlen(port_filename(pt)) + 32;
+	  len = safe_strlen(recent_input) + safe_strlen(errmsg) + safe_strlen(port_filename(pt)) + 32;
 	  msg = (char *)malloc(len * sizeof(char));
-	  len = snprintf(msg, len, "%s: %s %s[%d]", errmsg, recent_input, port_filename(pt), port_line_number(pt));
+	  len = snprintf(msg, len, "%s: %s %s[%d]", errmsg, (recent_input) ? recent_input : "", port_filename(pt), port_line_number(pt));
 	}
       else
 	{
-	  len = slen + safe_strlen(errmsg) + 32;
+	  len = safe_strlen(recent_input) + safe_strlen(errmsg) + 32;
 	  msg = (char *)malloc(len * sizeof(char));
-	  len = snprintf(msg, len, "%s: %s", errmsg, recent_input);
+	  len = snprintf(msg, len, "%s: %s", errmsg, (recent_input) ? recent_input : "");
 	}
-      free(recent_input);
+      
+      if (recent_input) free(recent_input);
     }
   else
     {
@@ -13540,10 +13564,8 @@ is a continuation, its stack is displayed."
     {
       if (s7_is_continuation(car(args)))
 	{
-	  s7_continuation_t *c;
-	  c = continuation(car(args));
-	  top = c->cc_stack_top;
-	  stk = c->cc_stack;
+	  top = continuation_stack_top(car(args));
+	  stk = continuation_stack(car(args));
 	}
 #if HAVE_PTHREADS
       else
@@ -13897,6 +13919,9 @@ static void back_up_stack(s7_scheme *sc)
       top_op =(opcode_t)s7_integer(vector_element(sc->stack, sc->stack_top - 1));
     }
   if (top_op == OP_READ_QUOTE)
+    pop_stack(sc);
+
+  if (top_op == OP_EVAL_STRING)
     pop_stack(sc);
 }
 
@@ -14296,6 +14321,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     {
     case OP_READ_INTERNAL:
       sc->tok = token(sc, sc->input_port);
+
       switch (sc->tok)
 	{
 	case TOKEN_EOF:
@@ -14377,13 +14403,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        *    needs to be sure to get rid of the trailing white space before checking for EOF
        *    else it tries to eval twice and gets "attempt to apply 1?, line 2"
        */
-      if (sc->tok != TOKEN_EOF)
+      if ((sc->tok != TOKEN_EOF) && 
+	  (port_string_point(sc->input_port) < port_string_length(sc->input_port))) /* ran past end somehow? */
 	{
 	  int c = 0;
 	  while (isspace(c = port_string(sc->input_port)[port_string_point(sc->input_port)++]))
 	    if (c == '\n')
 	      port_line_number(sc->input_port)++;
-	  
+
 	  if ((c != EOF) && (c != 0))
 	    {
 	      backchar(sc, c, sc->input_port);
@@ -14656,7 +14683,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       sc->code = car(sc->code);
       sc->cur_code = sc->code;
-      /* fprintf(stderr, "cur: %s\n", s7_object_to_c_string(sc, sc->cur_code)); */
       /* goto EVAL; */
       
 
@@ -14836,8 +14862,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 #if WITH_PROFILING
       symbol_calls(sc->code)++;
 #endif
-
-      check_stack_size(sc);
+      if (sc->stack_top >= sc->stack_size2)
+	increase_stack_size(sc);
 
       switch (type(sc->code))
 	{
@@ -15094,13 +15120,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		
 	case T_CONTINUATION:	                  /* -------- continuation ("call-with-continuation") -------- */
 	  {
-	    s7_continuation_t *c;
-	    c = continuation(sc->code);
-	    check_for_dynamic_winds(sc, c);
-	    sc->stack = copy_stack(sc, c->cc_stack, c->cc_stack_top);
-	    sc->stack_size = c->cc_stack_size;
+	    check_for_dynamic_winds(sc, sc->code);
+	    sc->stack = copy_stack(sc, continuation_stack(sc->code), continuation_stack_top(sc->code));
+	    sc->stack_size = continuation_stack_size(sc->code);
 	    sc->stack_size2 = sc->stack_size / 2;
-	    sc->stack_top = c->cc_stack_top;
+	    sc->stack_top = continuation_stack_top(sc->code);
 	    if (sc->args == sc->NIL)
 	      sc->value = sc->NIL;
 	    else
@@ -16247,7 +16271,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if (token(sc, sc->input_port) != TOKEN_RIGHT_PAREN)
 	{
 	  back_up_stack(sc);
-	  return(read_error(sc, "stray dot?"));            /* (+ 1 . 2 3) or (list . ) */
+	  sc->value = read_error(sc, "stray dot?");            /* (+ 1 . 2 3) or (list . ) */
+	  goto START;
 	}
       /* args = previously read stuff, value = thing just after the dot and before the ')':
        *   (list 1 2 . 3)
@@ -18023,7 +18048,7 @@ static s7_pointer copy_and_promote_number(s7_scheme *sc, int type, s7_pointer x)
 
 void s7_vector_fill(s7_scheme *sc, s7_pointer vec, s7_pointer obj) 
 {
-  int i, len;
+  s7_Int i, len;
   s7_pointer *tp;
   len = vector_length(vec);
   tp = (s7_pointer *)(vector_elements(vec));
@@ -18053,11 +18078,7 @@ void s7_vector_fill(s7_scheme *sc, s7_pointer vec, s7_pointer obj)
 	    }
 	}
     }
-  else
-    {
-      for (i = 0; i < len; i++) 
-	tp[i] = obj;
-    }
+  else vector_fill(sc, vec, obj);
 }
 
 
@@ -21256,6 +21277,14 @@ s7_scheme *s7_init(void)
   set_type(sc->UNDEFINED, T_UNTYPED | T_ATOM | T_GC_MARK | T_IMMUTABLE | T_SIMPLE | T_DONT_COPY);
   car(sc->UNDEFINED) = cdr(sc->UNDEFINED) = sc->UNSPECIFIED;
   
+  sc->nil_vector = (s7_pointer *)malloc(BLOCK_VECTOR_SIZE * sizeof(s7_pointer));
+  sc->unspecified_vector = (s7_pointer *)malloc(BLOCK_VECTOR_SIZE * sizeof(s7_pointer));
+  for (i = 0; i < BLOCK_VECTOR_SIZE; i++) 
+    {
+      sc->nil_vector[i] = sc->NIL;
+      sc->unspecified_vector[i] = sc->UNSPECIFIED;
+    }
+
   sc->input_port = sc->NIL;
   sc->input_port_stack = sc->NIL;
   sc->output_port = sc->NIL;
@@ -21906,6 +21935,8 @@ s7_scheme *s7_init(void)
 		   ((,encap))                            \n\
 		   (close-encapsulator ,encap))))))");
 #endif
+
+  
 
   return(sc);
 }

@@ -1517,6 +1517,7 @@ mus_long_t string_to_mus_long_t(const char *str, mus_long_t lo, const char *fiel
 {
 #if HAVE_EXTENSION_LANGUAGE
   XEN res;
+
   res = snd_catch_any(eval_str_wrapper, (void *)str, "string->mus_long_t");
   if (XEN_NUMBER_P(res))
     {
@@ -1923,6 +1924,12 @@ static XEN big_i0(XEN ux)
  * this is tricky -- perhaps a bad idea.  vector elements are changed in place which means
  *   they better be unique!  and there are no checks that each element actually is a bignum
  *   which means we'll segfault if a normal real leaks through.
+ *
+ * bignum_fft is say 200 times slower than the same size fftw call, and takes more space than
+ *   I can account for: 2^20 29 secs ~.5 Gb, 2^24 11 mins ~5Gb.  I think there should be
+ *   the vector element (8), the mpfr_t space (16 or 32), the s7_cell (28 or 32), and the value pointer (8),
+ *   and the heap pointer loc (8) so 2^24 should be (* 2 (expt 2 24) (+ 8 8 8 8 32 32)) = 3 Gb, not 5.  2^25 25 min 10.6?
+ *   I think the extra is in the free space in the heap -- it can be adding 1/4 of the total.
  */
 
 static s7_pointer bignum_fft(s7_scheme *sc, s7_pointer args)

@@ -12234,6 +12234,9 @@ void mus_initialize(void)
 
 #if HAVE_FFTW3 || HAVE_FFTW
   last_fft_size = 0;
+  /* is there a problem if the caller built fftw with --enable-threads?  
+   *  TODO: How to tell via configure that we need to initialize the thread stuff in libfftw?
+   */
 #endif
 
   sincs = 0;

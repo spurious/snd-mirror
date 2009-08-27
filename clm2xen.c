@@ -758,8 +758,8 @@ the real and imaginary parts of the data; len should be a power of 2, dir = 1 fo
    *   and takes 61 secs).  So, to squeeze into 48 GBytes, we go to mus_big_fft
    *   at 2^30, but mus_big_fft takes about 6 times longer than fftw, although less
    *   space (there's also the problem that the fftw arrays are not deallocated).
-   *   so 2^30 uses 16.6 GBytes and takes ca 35 mins (presumably fftw would have
-   *   taken 49 Gb and ca. 6 mins).
+   *   so 2^30 uses 16.6 GBytes and takes ca. 35 mins (presumably fftw would have
+   *   taken 49 Gb and ca. 6 mins). 2^31 takes 70 mins at 32.6 Gb.
    */
 
   return(xen_return_first(url, uim));
