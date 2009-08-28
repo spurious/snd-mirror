@@ -2,68 +2,6 @@
 #include "clm2xen.h"
 #include "sndlib2xen.h"
 
-#if WITH_SHARED_SNDLIB
-#if HAVE_FFTW3
-#include <fftw3.h>
-static double *rdata = NULL, *idata = NULL;
-static fftw_plan rplan, iplan;
-static mus_long_t last_fft_size = 0;
-
-void mus_fftw(mus_float_t *rl, int n, int dir)
-{
-  int i;
-  if (n != last_fft_size)
-    {
-      if (rdata) {fftw_free(rdata); fftw_free(idata); fftw_destroy_plan(rplan); fftw_destroy_plan(iplan);}
-      rdata = (double *)fftw_malloc(n * sizeof(double));
-      idata = (double *)fftw_malloc(n * sizeof(double));
-      rplan = fftw_plan_r2r_1d(n, rdata, idata, FFTW_R2HC, FFTW_ESTIMATE); 
-      iplan = fftw_plan_r2r_1d(n, rdata, idata, FFTW_HC2R, FFTW_ESTIMATE);
-      last_fft_size = n;
-    }
-  memset((void *)idata, 0, n * sizeof(double));
-  for (i = 0; i < n; i++) rdata[i] = rl[i];
-  if (dir != -1)
-    fftw_execute(rplan);
-  else fftw_execute(iplan);
-  for (i = 0; i < n; i++) rl[i] = idata[i];
-}
-
-#else
-#if HAVE_FFTW
-/* copied from clm.c -- sndlib configure process does not include fftw, so the
- *   shared sndlib clm.c version does not include mus_fftw.
- */
-#include <rfftw.h>
-/* save old plans both ways */
-static fftw_real *rdata = NULL, *idata = NULL;
-static rfftw_plan rplan, iplan;
-static mus_long_t last_fft_size = 0;
-
-void mus_fftw(mus_float_t *rl, int n, int dir)
-{
-  int i;
-  if (n != last_fft_size)
-    {
-      if (rdata) {free(rdata); free(idata); rfftw_destroy_plan(rplan); rfftw_destroy_plan(iplan);}
-      rplan = rfftw_create_plan(n, FFTW_REAL_TO_COMPLEX, FFTW_ESTIMATE); /* I didn't see any improvement here from using FFTW_MEASURE */
-      iplan = rfftw_create_plan(n, FFTW_COMPLEX_TO_REAL, FFTW_ESTIMATE);
-      last_fft_size = n;
-      rdata = (fftw_real *)calloc(n, sizeof(fftw_real));
-      idata = (fftw_real *)calloc(n, sizeof(fftw_real));
-    }
-  memset((void *)idata, 0, n * sizeof(fftw_real));
-  /* if mus_float_t (default float) == fftw_real (default double) we could forego the data copy */
-  for (i = 0; i < n; i++) rdata[i] = rl[i];
-  if (dir != -1)
-    rfftw_one(rplan, rdata, idata);
-  else rfftw_one(iplan, rdata, idata);
-  for (i = 0; i < n; i++) rl[i] = idata[i];
-}
-#endif
-#endif
-#endif
-
 
 /* -------------------------------- WAVELET TRANSFORM -------------------------------- */
 /* 
@@ -74,18 +12,21 @@ void mus_fftw(mus_float_t *rl, int n, int dir)
  * later stuff from Numerical Recipes
  */
 
-static void wavelet_transform(mus_float_t *data, int num, mus_float_t *cc, int cc_size)
+static void wavelet_transform(mus_float_t *data, mus_long_t num, mus_float_t *cc, mus_long_t cc_size)
 {
   mus_float_t *data1 = NULL;
   mus_float_t sig = -1.0;
   mus_float_t *cr = NULL;
-  int i, j, n, n1, nmod, nh, joff, ii, ni, k, jf;
+  mus_long_t i, j, n, n1, nmod, nh, joff, ii, ni, k, jf;
+
   cr = (mus_float_t *)calloc(cc_size, sizeof(mus_float_t));
+
   for (i = 0, j = cc_size - 1; i < cc_size; i++, j--)
     {
       cr[j] = sig * cc[i];
       sig = -sig;
     }
+
   for (n = num; n >= 4; n /= 2)
     {
       if (data1) free(data1);
@@ -94,6 +35,7 @@ static void wavelet_transform(mus_float_t *data, int num, mus_float_t *cc, int c
       nmod = cc_size * n;
       nh = n >> 1;
       joff = -(cc_size >> 1);
+
       for (ii = 0, i = 1; i <= n; i += 2, ii++)
 	{
 	  ni = i + nmod + joff;
@@ -105,8 +47,8 @@ static void wavelet_transform(mus_float_t *data, int num, mus_float_t *cc, int c
 	    }
 	}
       memcpy((void *)data, (void *)data1, n * sizeof(mus_float_t));
-      /* for (i = 0; i < n; i++) data[i] = data1[i]; */
     }
+
   if (data1) free(data1);
   if (cr) free(cr);
 }
@@ -184,11 +126,13 @@ static const char *wavelet_names_1[NUM_WAVELETS] =
    "daub22", "daub24", "daub26", "daub28", "daub30", "daub32", "daub34", "daub36", "daub38", "daub40",
    "daub42", "daub44", "daub46", "daub48", "daub50", "daub52", "daub54", "daub56", "daub58", "daub60",
    "daub62", "daub64", "daub66", "daub68", "daub70", "daub72", "daub74", "daub76"};
+
 static int wavelet_sizes[NUM_WAVELETS] =
   {4, 6, 8, 10, 12, 14, 16, 18, 20,
    24, 6, 18, 6, 12, 18,
    5, 4, 10, 8, 16,
    22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44, 46, 48, 50, 52, 54, 56, 58, 60, 62, 64, 66, 68, 70, 72, 74, 76};
+
 static mus_float_t *wavelet_data[NUM_WAVELETS] =
   {Daub2, Daub3, Daub4, Daub5, Daub6, Daub7, Daub8, Daub9, Daub10,
    Battle_Lemarie, Burt_Adelson, Beylkin, coif2, coif4, coif6,
@@ -198,6 +142,7 @@ static mus_float_t *wavelet_data[NUM_WAVELETS] =
    Daub31, Daub32, Daub33, Daub34, Daub35, Daub36, Daub37, Daub38};
 
 const char *wavelet_name(int i) {return(wavelet_names_1[i]);}
+
 const char **wavelet_names(void) {return(wavelet_names_1);}
 
 
@@ -207,15 +152,17 @@ const char **wavelet_names(void) {return(wavelet_names_1);}
  * from fxt/haar/haar.cc
  */
 
-static void haar_transform(mus_float_t *f, int n)
+static void haar_transform(mus_float_t *f, mus_long_t n)
 {
-  int m, mh, i, j, k;
+  mus_long_t m, mh, i, j, k;
   mus_float_t s2;
   mus_float_t v = 1.0;
   mus_float_t x, y;
   mus_float_t *g;
+
   s2 = sqrt(0.5);
   g = (mus_float_t *)calloc(n, sizeof(mus_float_t));
+
   for (m = n; m > 1; m >>= 1)
     {
       v *= s2;
@@ -229,6 +176,7 @@ static void haar_transform(mus_float_t *f, int n)
         }
       for (i = m - 1; i >= 0; i--) f[i] = g[i];
     }
+
   f[0] *= v;
   free(g);
 }
@@ -242,12 +190,14 @@ static void haar_transform(mus_float_t *f, int n)
  * fxt.doc appears to say I can use it here (Snd is freeware and I've modified the original to some extent).
  */
 
-static void walsh_transform(mus_float_t *data, int n)
+static void walsh_transform(mus_float_t *data, mus_long_t n)
 {
-  int i, j, m, ipow;
-  int r, t1, t2, mh;
+  mus_long_t i, j, m, r, t1, t2, mh;
+  int ipow;
   mus_float_t u, v;
+
   ipow = (int)((log(n) / log(2)) + .0001); /* added fudge factor 21-Sep-01 -- (int)3.0000 = 2 on PC */
+
   for (i = ipow; i >= 1; --i)
     {
       m = (1 << i);
@@ -274,24 +224,27 @@ static int compare_peaks(const void *pk1, const void *pk2)
   return(-1);
 }
 
-int find_and_sort_peaks(mus_float_t *buf, fft_peak *found, int num_peaks, int losamp, int hisamp)
+int find_and_sort_peaks(mus_float_t *buf, fft_peak *found, int num_peaks, mus_long_t losamp, mus_long_t hisamp)
 { 
   /* in the fft peak finder below we assume data between 0 and 1 */
   /* this procedure is for the list graph -- see below for fft */
 
-  int i, j, pks, minpk;
+  mus_long_t i, j;
+  int pks, minpk;
   mus_float_t minval, la, ra, ca;
   mus_float_t *peaks;
-  int *inds;
+  mus_long_t *inds;
 
   if (num_peaks <= 0) return(0);
   peaks = (mus_float_t *)calloc(num_peaks, sizeof(mus_float_t));
-  inds = (int *)calloc(num_peaks, sizeof(int));
+  inds = (mus_long_t *)calloc(num_peaks, sizeof(mus_long_t));
+
   pks = 0;
   la = 0.0;
   ca = 0.0;
   ra = 0.0;
   minval = 0.00001;
+
   for (i = losamp; i < hisamp; i++)
     {
       la = ca;
@@ -322,6 +275,7 @@ int find_and_sort_peaks(mus_float_t *buf, fft_peak *found, int num_peaks, int lo
 	    }
 	}
     }
+
   for (i = 0; i < pks; i++)
     {
       j = inds[i];
@@ -329,6 +283,7 @@ int find_and_sort_peaks(mus_float_t *buf, fft_peak *found, int num_peaks, int lo
       found[i].amp = buf[j];
       found[i].freq = (mus_float_t)j;
     }
+
   if (pks > 0) qsort((void *)found, pks, sizeof(fft_peak), compare_peaks);
   free(peaks);
   free(inds);
@@ -338,23 +293,24 @@ int find_and_sort_peaks(mus_float_t *buf, fft_peak *found, int num_peaks, int lo
 
 #define MIN_CHECK 0.000001
 
-/* somday: still more ints -> mus_long_ts */
-
-
-int find_and_sort_transform_peaks(mus_float_t *buf, fft_peak *found, int num_peaks, int losamp, int hisamp, mus_float_t samps_per_pixel, mus_float_t fft_scale)
+int find_and_sort_transform_peaks(mus_float_t *buf, fft_peak *found, int num_peaks, 
+				  mus_long_t losamp, mus_long_t hisamp, mus_float_t samps_per_pixel, mus_float_t fft_scale)
 {
   /* we want to reflect the graph as displayed, so each "bin" is samps_per_pixel wide */
-  int i, j, k, pks, minpk, hop, pkj, oldpkj;
+  mus_long_t i, j, k, hop, pkj, oldpkj;
+  int pks, minpk;
   mus_float_t minval, la, ra, ca, logca, logra, logla, offset, fscl, ascl, bscl, fftsize2;
   mus_float_t *peaks;
-  int *inds;
+  mus_long_t *inds;
 
   fftsize2 = (mus_float_t)hisamp;
   peaks = (mus_float_t *)calloc(num_peaks, sizeof(mus_float_t));
-  inds = (int *)calloc(num_peaks, sizeof(int));
+  inds = (mus_long_t *)calloc(num_peaks, sizeof(mus_long_t));
+
   fscl = 1.0 / fftsize2;
-  hop = (int)(samps_per_pixel + 0.5);
+  hop = (mus_long_t)(samps_per_pixel + 0.5);
   if (hop < 1) hop = 1;
+
   pks = 0;
   la = 0.0;
   ca = 0.0;
@@ -369,12 +325,14 @@ int find_and_sort_transform_peaks(mus_float_t *buf, fft_peak *found, int num_pea
       ca = ra;
       oldpkj = pkj;
       ra = 0.0;
+
       for (k = 0; k < hop; k++) 
 	if (buf[i + k] > ra) 
 	  {
 	    pkj = i + k; 
 	    ra = buf[pkj]; /* reflect user's view of the graph */
 	  } 
+
       if ((ca > minval) && (ca > ra) && (ca > la))
 	{
           if (ascl < ca) ascl = ca;
@@ -422,6 +380,7 @@ int find_and_sort_transform_peaks(mus_float_t *buf, fft_peak *found, int num_pea
 	la = buf[j - 1] * ascl; 
       else la = ca;
       ra = buf[j + 1] * ascl; 
+
       if ((la < MIN_CHECK) || (ra < MIN_CHECK))
 	{
 	  found[k].amp = bscl * ca;
@@ -434,6 +393,7 @@ int find_and_sort_transform_peaks(mus_float_t *buf, fft_peak *found, int num_pea
 	  logra = log10(ra);
 	  offset = (0.5 * (logla - logra)) / (logla + logra - 2 * logca); /* this assumes amps < 1.0 (from XJS sms code) */
 	  found[k].amp = bscl * pow(10.0, logca - 0.25 * offset * (logla - logra));
+
 	  if ((found[k].amp > 1.0) && 
 	      (fft_scale > 0.0)) 
 	    found[k].amp = 1.0;
@@ -445,6 +405,7 @@ int find_and_sort_transform_peaks(mus_float_t *buf, fft_peak *found, int num_pea
 
   for (i = k; i < num_peaks; i++) found[i].freq = 1.0; /* move blank case to end of sorted list */
   qsort((void *)found, pks, sizeof(fft_peak), compare_peaks);
+
   free(peaks);
   free(inds);
   return(k);
@@ -769,17 +730,10 @@ static double hypot(double r, double i) {return(sqrt(r * r + i * i));}
 #endif
 
 
-static void big_fourier_spectrum(snd_fd *sf, mus_float_t *fft_data, mus_long_t fft_size, mus_long_t data_len, mus_float_t *window, chan_info *cp)
+void fourier_spectrum(snd_fd *sf, mus_float_t *fft_data, mus_long_t fft_size, mus_long_t data_len, mus_float_t *window, chan_info *cp)
 {
   mus_long_t i;
   mus_float_t *idata;
-
-  idata = (mus_float_t *)calloc(fft_size, sizeof(mus_float_t));
-  if (idata == NULL)
-    {
-      XEN_OUT_OF_RANGE_ERROR("fft", 1, C_TO_XEN_INT64_T(fft_size), "not enough memory for this fft size: ~A");
-      return;
-    }
 
   if (window)
     {
@@ -794,8 +748,9 @@ static void big_fourier_spectrum(snd_fd *sf, mus_float_t *fft_data, mus_long_t f
 
   if (data_len < fft_size) 
     memset((void *)(fft_data + data_len), 0, (fft_size - data_len) * sizeof(mus_float_t));
+  idata = (mus_float_t *)calloc(fft_size, sizeof(mus_float_t));
 
-  mus_big_fft(fft_data, idata, fft_size, 1);
+  mus_fft(fft_data, idata, fft_size, 1);
 
   if ((cp) && (cp->fft_with_phases))
     {
@@ -810,90 +765,8 @@ static void big_fourier_spectrum(snd_fd *sf, mus_float_t *fft_data, mus_long_t f
       for (i = 0; i < fft_size; i++) 
 	fft_data[i] = hypot(fft_data[i], idata[i]);
     }
+
   free(idata);
-}
-
-
-void fourier_spectrum(snd_fd *sf, mus_float_t *fft_data, mus_long_t fft_size_1, mus_long_t data_len_1, mus_float_t *window, chan_info *cp)
-{
-  int i, fft_size, data_len;
-
-  if (fft_size_1 >= INT_MAX)
-    return(big_fourier_spectrum(sf, fft_data, fft_size_1, data_len_1, window, cp));
-
-  fft_size = (int)fft_size_1;
-  data_len = (int)data_len_1;
-
-  if (window)
-    {
-      for (i = 0; i < data_len; i++)
-	fft_data[i] = window[i] * read_sample(sf);
-    }
-  else
-    {
-      for (i = 0; i < data_len; i++)
-	fft_data[i] = read_sample(sf);
-    }
-
-  if (data_len < fft_size) 
-    memset((void *)(fft_data + data_len), 0, (fft_size - data_len) * sizeof(mus_float_t));
-
-#if HAVE_FFTW || HAVE_FFTW3
-  {
-    int j;
-
-    mus_fftw(fft_data, fft_size, 1);
-
-    fft_data[0] = fabs(fft_data[0]);
-    fft_data[fft_size / 2] = fabs(fft_data[fft_size / 2]);
-
-    /* here and in the case below, the DC term is assuming that you're thinking a0/2 + sum an*sin...
-     *   that is, a0 is twice what you'd add as a constant if you were making it by hand.
-     *   When displayed, this doubles the DC term, in a sense -- is this what people expect?
-     *  
-     *    (with-sound () (do ((i 0 (1+ i)) (angle 0.0 (+ angle .1))) ((= i 44100)) (outa i (+ .25 (* .5 (sin angle))) *output*)))
-     *
-     * displays equal amplitude DC and 702Hz components
-     */
-
-    if ((cp) && (cp->fft_with_phases))
-      {
-	cp->fft->phases[0] = 0.0;
-	for (i = 1, j = fft_size - 1; i < fft_size / 2; i++, j--) 
-	  {
-	    cp->fft->phases[i] = -atan2(fft_data[j], fft_data[i]);
-	    fft_data[i] = hypot(fft_data[i], fft_data[j]);
-	  }
-      }
-    else
-      {
-	for (i = 1, j = fft_size - 1; i < fft_size / 2; i++, j--) 
-	  fft_data[i] = hypot(fft_data[i], fft_data[j]);
-      }
-  }
-#else
-  {
-    mus_float_t *idata;
-    idata = (mus_float_t *)calloc(fft_size, sizeof(mus_float_t));
-
-    mus_fft(fft_data, idata, fft_size, 1);
-
-    if ((cp) && (cp->fft_with_phases))
-      {
-	for (i = 0; i < fft_size; i++)
-	  {
-	    cp->fft->phases[i] = -atan2(idata[i], fft_data[i]);
-	    fft_data[i] = hypot(fft_data[i], idata[i]);
-	  }
-      }
-    else
-      {
-	for (i = 0; i < fft_size; i++) 
-	  fft_data[i] = hypot(fft_data[i], idata[i]);
-      }
-    free(idata);
-  }
-#endif
 }
 
 
@@ -901,17 +774,14 @@ static XEN before_transform_hook;
 
 static void apply_fft(fft_state *fs)
 {
-  int i;
-  mus_long_t ind0;
+  mus_long_t i, ind0, data_len;
   mus_float_t *fft_data;
-  mus_long_t data_len;
   snd_fd *sf;
   chan_info *cp;
 
   cp = fs->cp;
   fft_data = fs->data;
   data_len = cp->transform_size;
-  if (data_len > fs->size) data_len = fs->size;
 
   if ((show_selection_transform(ss)) && 
       (selection_is_active_in_channel(cp)) && 
@@ -919,7 +789,7 @@ static void apply_fft(fft_state *fs)
     {
       ind0 = fs->databeg;
       if (cp->transform_graph_type == GRAPH_ONCE) 
-	data_len = (int)(fs->datalen);
+	data_len = fs->datalen;
     }
   else 
     {
@@ -938,6 +808,7 @@ static void apply_fft(fft_state *fs)
 	ind0 = cp->axis->losamp + fs->beg;
     }
 
+  if (data_len > fs->size) data_len = fs->size;
   sf = init_sample_read(ind0, cp, READ_FORWARD);
   if (sf == NULL) return;
 
@@ -986,11 +857,12 @@ static void apply_fft(fft_state *fs)
       {
 	XEN res = XEN_FALSE, sfd;
 	vct *v;
-	int len, gc_loc, sf_loc;
+	int gc_loc, sf_loc;
+	mus_long_t len;
 	sfd = g_c_make_sample_reader(sf);
 	sf_loc = snd_protect(sfd);
 	res = XEN_CALL_2(added_transform_proc(cp->transform_type), 
-			 C_TO_XEN_INT(data_len), 
+			 C_TO_XEN_INT64_T(data_len), 
 			 sfd,
 			 "added transform func");
 	gc_loc = snd_protect(res);
@@ -999,7 +871,6 @@ static void apply_fft(fft_state *fs)
 	    v = XEN_TO_VCT(res);
 	    len = v->length;
 	    memcpy((void *)fft_data, (void *)(v->data), len * sizeof(mus_float_t));
-	    /* for (i = 0; i < len; i++) fft_data[i] = v->data[i]; */
 	  }
 	snd_unprotect_at(gc_loc);
 	snd_unprotect_at(sf_loc);
@@ -1017,14 +888,13 @@ static void display_fft(fft_state *fs)
 {
   fft_info *fp;
   chan_info *cp;
-  int di;
   mus_float_t max_freq = 0.0, min_freq = 0.0, max_val, min_val, data_max = 0.0, scale = 1.0;
   const char *xlabel;
   fft_info *nfp;
   mus_float_t *data, *tdata;
   chan_info *ncp;
   snd_info *sp;
-  int i, j, lo, hi;
+  mus_long_t i, j, lo, hi;
 
   cp = fs->cp;
   if ((cp == NULL) || (cp->active < CHANNEL_HAS_AXES)) return;
@@ -1130,6 +1000,7 @@ static void display_fft(fft_state *fs)
     {
       if (cp->transform_type == FOURIER)
 	{
+	  int di;
 	  scale = 2.0 / (mus_float_t)(fs->size);
 	  di = (int)(10 * data_max * scale + 1);
 	  if (di == 1)
@@ -1243,7 +1114,7 @@ static fft_state *make_fft_state(chan_info *cp, bool force_recalc)
       dlen = selection_len();
       /* these need to be handled at the same time, and not re-examined until the next call */
       /* if we're sweeping the mouse defining the selection, by the time we get to apply_fft, selection_len() can change */
-      fftsize = snd_to_int_pow2(dlen * (1 + cp->zero_pad));
+      fftsize = snd_mus_long_t_pow2(dlen * (1 + cp->zero_pad));
       if (fftsize < 2) fftsize = 2;
       cp->selection_transform_size = fftsize;
     }
@@ -1251,7 +1122,7 @@ static fft_state *make_fft_state(chan_info *cp, bool force_recalc)
     {
       if ((cp->zero_pad == 0) && (POWER_OF_2_P(cp->transform_size)))
 	fftsize = cp->transform_size;
-      else fftsize = snd_int_pow2((int)(ceil(log((mus_float_t)(cp->transform_size * (1 + cp->zero_pad))) / log(2.0))));
+      else fftsize = snd_mus_long_t_pow2((int)(ceil(log((mus_float_t)(cp->transform_size * (1 + cp->zero_pad))) / log(2.0))));
       if (fftsize < 2) fftsize = 2;
       cp->selection_transform_size = 0;
     }
@@ -1863,17 +1734,19 @@ void sono_update(chan_info *cp)
 }
 
 
-static void spectral_multiply(mus_float_t *rl1, mus_float_t *rl2, int n)
+static void spectral_multiply(mus_float_t *rl1, mus_float_t *rl2, mus_long_t n)
 {
-  int j, n2;
+  mus_long_t j, n2;
   mus_float_t invn;
+
   n2 = (int)(n * 0.5);
   invn = 0.25 / n;
   rl1[0] = ((rl1[0] * rl2[0]) / n);
   rl2[0] = 0.0;
+
   for (j = 1; j <= n2; j++)
     {
-      int nn2;
+      mus_long_t nn2;
       mus_float_t rem, rep, aim, aip;
       nn2 = n - j;
       rep = (rl1[j] + rl1[nn2]);
@@ -1888,8 +1761,8 @@ static void spectral_multiply(mus_float_t *rl1, mus_float_t *rl2, int n)
 }
 
 
-void c_convolve(const char *fname, mus_float_t amp, int filec, mus_long_t filehdr, int filterc, mus_long_t filterhdr, int filtersize,
-		int fftsize, int filter_chans, int filter_chan, int data_size, snd_info *gsp)
+void c_convolve(const char *fname, mus_float_t amp, int filec, mus_long_t filehdr, int filterc, mus_long_t filterhdr, mus_long_t filtersize,
+		mus_long_t fftsize, int filter_chans, int filter_chan, mus_long_t data_size, snd_info *gsp)
 {
   int err;
 
@@ -1907,23 +1780,25 @@ void c_convolve(const char *fname, mus_float_t amp, int filec, mus_long_t filehd
       /* get to start point in the two sound files and allocate space */
       lseek(filec, filehdr, SEEK_SET);
       lseek(filterc, filterhdr, SEEK_SET);
+
       rl0 = (mus_float_t *)calloc(fftsize, sizeof(mus_float_t));
       if (rl0) rl1 = (mus_float_t *)calloc(fftsize, sizeof(mus_float_t));
       if (rl1) pbuffer = (mus_sample_t **)calloc(1, sizeof(mus_sample_t *));
       if (pbuffer) pbuffer[0] = (mus_sample_t *)calloc(data_size, sizeof(mus_sample_t));
       fbuffer = (mus_sample_t **)calloc(filter_chans, sizeof(mus_sample_t *));
       if (fbuffer) fbuffer[filter_chan] = (mus_sample_t *)calloc(filtersize, sizeof(mus_sample_t));
+
       if ((rl0 == NULL) || (rl1 == NULL) || 
 	  (pbuffer == NULL) || (pbuffer[0] == NULL) ||
 	  (fbuffer == NULL) || (fbuffer[filter_chan] == NULL))
 	{
-	  snd_error(_("not enough memory for convolve of %s (filter size: %d, fft size: %d)"), 
+	  snd_error(_("not enough memory for convolve of %s (filter size: " MUS_LD ", fft size: " MUS_LD ")"), 
 		    fname, filtersize, fftsize);
 	}
       else
 	{
 	  mus_sample_t *pbuf = NULL;
-	  int i;
+	  mus_long_t i;
 	  mus_float_t scl;
 	  int tempfile;
 	  chan_info *gcp;
@@ -2046,17 +1921,20 @@ and otherwise return a list (spectro-cutoff time-slices fft-bins)"
 
   chan_info *cp;
   sono_info *si;
+
   ASSERT_CHANNEL(S_transform_frames, snd, chn, 1);
   cp = get_cp(snd, chn, S_transform_frames);
   if (!cp) return(XEN_FALSE);
   if (!(cp->graph_transform_p)) 
     return(XEN_ZERO);
+
   if (cp->transform_graph_type == GRAPH_ONCE)
     return(C_TO_XEN_INT(cp->transform_size));
   si = cp->sonogram_data;
+
   if (si) return(XEN_LIST_3(C_TO_XEN_DOUBLE(cp->spectrum_end),
-			    C_TO_XEN_INT(si->active_slices),
-			    C_TO_XEN_INT(si->target_bins)));
+			    C_TO_XEN_INT64_T(si->active_slices),
+			    C_TO_XEN_INT64_T(si->target_bins)));
   return(XEN_ZERO);
 }
 
@@ -2067,28 +1945,31 @@ static XEN g_transform_sample(XEN bin, XEN slice, XEN snd_n, XEN chn_n)
 return the current transform sample at bin and slice in snd channel chn (assuming sonogram or spectrogram)"
 
   chan_info *cp;
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(bin), bin, XEN_ARG_1, S_transform_sample, "an integer");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(slice), slice, XEN_ARG_2, S_transform_sample, "an integer");
+
+  XEN_ASSERT_TYPE(XEN_INT64_T_IF_BOUND_P(bin), bin, XEN_ARG_1, S_transform_sample, "an integer");
+  XEN_ASSERT_TYPE(XEN_INT64_T_IF_BOUND_P(slice), slice, XEN_ARG_2, S_transform_sample, "an integer");
   ASSERT_CHANNEL(S_transform_sample, snd_n, chn_n, 3);
   cp = get_cp(snd_n, chn_n, S_transform_sample);
   if (!cp) return(XEN_FALSE);
+
   if (cp->graph_transform_p)
     {
       fft_info *fp;
-      int fbin;
-      fbin = XEN_TO_C_INT_OR_ELSE(bin, 0);
       fp = cp->fft;
       if (fp)
 	{
+	  mus_long_t fbin;
+	  fbin = XEN_TO_C_INT64_T_OR_ELSE(bin, 0);
+
 	  if (fbin < fp->current_size)
 	    {
 	      if (cp->transform_graph_type == GRAPH_ONCE)
 		return(C_TO_XEN_DOUBLE(fp->data[fbin]));
 	      else 
 		{
-		  int fslice;
+		  mus_long_t fslice;
 		  sono_info *si;
-		  fslice = XEN_TO_C_INT_OR_ELSE(slice, 0);
+		  fslice = XEN_TO_C_INT64_T_OR_ELSE(slice, 0);
 		  si = cp->sonogram_data;
 		  if ((si) && 
 		      (fbin < si->target_bins) && 
@@ -2126,14 +2007,19 @@ static XEN g_transform_to_vct(XEN snd_n, XEN chn_n, XEN v)
 return a vct (obj if it's passed), with the current transform data from snd's channel chn"
 
   chan_info *cp;
-  vct *v1 = xen_to_vct(v);
+  vct *v1;
+  v1 = xen_to_vct(v);
+
   ASSERT_CHANNEL(S_transform_to_vct, snd_n, chn_n, 1);
   cp = get_cp(snd_n, chn_n, S_transform_to_vct);
   if (!cp) return(XEN_FALSE);
-  if ((cp->graph_transform_p) && (cp->fft))
+
+  if ((cp->graph_transform_p) && 
+      (cp->fft))
     {
-      int len;
+      mus_long_t len;
       mus_float_t *fvals;
+
       if (cp->transform_graph_type == GRAPH_ONCE)
 	{
 	  fft_info *fp;
@@ -2151,6 +2037,7 @@ return a vct (obj if it's passed), with the current transform data from snd's ch
 	{
 	  sono_info *si;
 	  si = cp->sonogram_data;
+
 	  if (si)
 	    {
 	      int i, j, k, bins, slices;
@@ -2178,15 +2065,20 @@ static XEN g_snd_transform(XEN type, XEN data, XEN hint)
   #define H_snd_transform "(snd-transform type data choice) calls whatever FFT is being used by the \
 display.  'type': fourier (0), wavelet (1), etc (snd-0.h); 'data' is a vct. In the wavelet case, \
 'choice' is the wavelet to use."
-  int trf, i, j, hnt, n2;
+
+  int trf, hnt;
+  mus_long_t i, j, n2;
   vct *v;
   mus_float_t *dat;
+
   XEN_ASSERT_TYPE(XEN_INTEGER_P(type), type, XEN_ARG_1, "snd-transform", "an integer");
   XEN_ASSERT_TYPE(MUS_VCT_P(data), data, XEN_ARG_2, "snd-transform", "a vct");
+
   trf = XEN_TO_C_INT(type);
   if ((trf < 0) || (trf > HAAR))
     XEN_OUT_OF_RANGE_ERROR("snd-transform", 1, type, "~A: invalid transform choice");
   v = XEN_TO_VCT(data);
+
   switch (trf)
     {
     case FOURIER: 
@@ -2202,20 +2094,25 @@ display.  'type': fourier (0), wavelet (1), etc (snd-0.h); 'data' is a vct. In t
 	}
       free(dat);
       break;
+
     case WAVELET:
       hnt = XEN_TO_C_INT(hint);
       if (hnt < NUM_WAVELETS)
 	wavelet_transform(v->data, v->length, wavelet_data[hnt], wavelet_sizes[hnt]);
       break;
+
     case HAAR:
       haar_transform(v->data, v->length);
       break;
+
     case CEPSTRUM:
       mus_cepstrum(v->data, v->length);
       break;
+
     case WALSH:
       walsh_transform(v->data, v->length);
       break;
+
     case AUTOCORRELATION:
       mus_autocorrelate(v->data, v->length);
       break;

@@ -344,7 +344,7 @@
 	(let ((ndc (goertzel 0.0))
 	      (nsig (goertzel 35.0)))
 	  (if (or (> (/ ndc dc) .1)
-		  (< (/ nsig sig) .5))
+		  (< (/ nsig sig) .4))
 	      (snd-display ";remove-DC: ~A -> ~A (~A), ~A -> ~A (~A)" dc ndc (/ ndc dc) sig nsig (/ nsig sig))))))
     (close-sound test)))
 

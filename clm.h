@@ -2,10 +2,11 @@
 #define CLM_H
 
 #define MUS_VERSION 4
-#define MUS_REVISION 28
-#define MUS_DATE "25-Aug-09"
+#define MUS_REVISION 29
+#define MUS_DATE "28-Aug-09"
 
 /*
+ * 28-Aug:     changed some fft-related sizes from int to mus_long_t.
  * 25-Aug:     mus_fftw_with_imag (fftw3 only).
  * 17-Aug:     mus_frame|mixer_copy|fill.
  * 27-Jul:     mus_float_t for Float, and mus_long_t for off_t.
@@ -765,27 +766,27 @@ MUS_EXPORT mus_float_t mus_src_05(mus_any *srptr, mus_float_t (*input)(void *arg
 
 MUS_EXPORT bool mus_convolve_p(mus_any *ptr);
 MUS_EXPORT mus_float_t mus_convolve(mus_any *ptr, mus_float_t (*input)(void *arg, int direction));
-MUS_EXPORT mus_any *mus_make_convolve(mus_float_t (*input)(void *arg, int direction), mus_float_t *filter, int fftsize, int filtersize, void *closure);
+MUS_EXPORT mus_any *mus_make_convolve(mus_float_t (*input)(void *arg, int direction), mus_float_t *filter, mus_long_t fftsize, mus_long_t filtersize, void *closure);
 
 MUS_EXPORT mus_float_t *mus_spectrum(mus_float_t *rdat, mus_float_t *idat, mus_float_t *window, mus_long_t n, mus_spectrum_t type);
-MUS_EXPORT void mus_fft(mus_float_t *rl, mus_float_t *im, int n, int is);
-MUS_EXPORT void mus_big_fft(mus_float_t *rl, mus_float_t *im, mus_long_t n, int is);
+MUS_EXPORT void mus_fft(mus_float_t *rl, mus_float_t *im, mus_long_t n, int is);
+MUS_EXPORT mus_float_t *mus_make_fft_window(mus_fft_window_t type, mus_long_t size, mus_float_t beta);
+MUS_EXPORT mus_float_t *mus_make_fft_window_with_window(mus_fft_window_t type, mus_long_t size, mus_float_t beta, mus_float_t mu, mus_float_t *window);
+MUS_EXPORT const char *mus_fft_window_name(mus_fft_window_t win);
+MUS_EXPORT const char **mus_fft_window_names(void);
+
 #if HAVE_FFTW || HAVE_FFTW3
   MUS_EXPORT void mus_fftw(mus_float_t *rl, int n, int dir);
   #if HAVE_FFTW3 && HAVE_COMPLEX_TRIG && (!__cplusplus)
     MUS_EXPORT void mus_fftw_with_imag(mus_float_t *rl, mus_float_t *im, int n, int dir);
   #endif
 #endif
-MUS_EXPORT mus_float_t *mus_make_fft_window(mus_fft_window_t type, mus_long_t size, mus_float_t beta);
-MUS_EXPORT mus_float_t *mus_make_fft_window_with_window(mus_fft_window_t type, mus_long_t size, mus_float_t beta, mus_float_t mu, mus_float_t *window);
-MUS_EXPORT const char *mus_fft_window_name(mus_fft_window_t win);
-MUS_EXPORT const char **mus_fft_window_names(void);
 
-MUS_EXPORT mus_float_t *mus_autocorrelate(mus_float_t *data, int n);
-MUS_EXPORT mus_float_t *mus_correlate(mus_float_t *data1, mus_float_t *data2, int n);
-MUS_EXPORT mus_float_t *mus_convolution(mus_float_t *rl1, mus_float_t *rl2, int n);
+MUS_EXPORT mus_float_t *mus_autocorrelate(mus_float_t *data, mus_long_t n);
+MUS_EXPORT mus_float_t *mus_correlate(mus_float_t *data1, mus_float_t *data2, mus_long_t n);
+MUS_EXPORT mus_float_t *mus_convolution(mus_float_t *rl1, mus_float_t *rl2, mus_long_t n);
 MUS_EXPORT void mus_convolve_files(const char *file1, const char *file2, mus_float_t maxamp, const char *output_file);
-MUS_EXPORT mus_float_t *mus_cepstrum(mus_float_t *data, int n);
+MUS_EXPORT mus_float_t *mus_cepstrum(mus_float_t *data, mus_long_t n);
 
 MUS_EXPORT bool mus_granulate_p(mus_any *ptr);
 MUS_EXPORT mus_float_t mus_granulate(mus_any *ptr, mus_float_t (*input)(void *arg, int direction));

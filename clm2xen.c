@@ -600,7 +600,7 @@ static XEN g_dot_product(XEN val1, XEN val2, XEN size)
 static XEN g_edot_product(XEN val1, XEN val2) 
 {
   #define H_edot_product "(" S_edot_product " freq data): sum of (e^freq*i) * data[i]"
-  int i, len;
+  mus_long_t i, len;
   vct *v = NULL;
   complex double freq;
   complex double *vals;
@@ -748,18 +748,12 @@ the real and imaginary parts of the data; len should be a power of 2, dir = 1 fo
       n = (mus_long_t)pow(2.0, np);
     }
 
-  if (n <= (1 << 29))
-    mus_fft(v1->data, v2->data, n, sign);
-  else mus_big_fft(v1->data, v2->data, n, sign);
+  mus_fft(v1->data, v2->data, n, sign);
   /*
    * in fftw, there's the extra complex array allocation, so for n = 2^29
    *   (and doubles for vcts as well as fftw), we need 24.6 Gbytes, and the FFT
    *   takes 144 secs on a 2.4 GHz machine.  (Similarly, 2^28 needs 12.6 Gb
-   *   and takes 61 secs).  So, to squeeze into 48 GBytes, we go to mus_big_fft
-   *   at 2^30, but mus_big_fft takes about 6 times longer than fftw, although less
-   *   space (there's also the problem that the fftw arrays are not deallocated).
-   *   so 2^30 uses 16.6 GBytes and takes ca. 35 mins (presumably fftw would have
-   *   taken 49 Gb and ca. 6 mins). 2^31 takes 70 mins at 32.6 Gb.
+   *   and takes 61 secs).  
    */
 
   return(xen_return_first(url, uim));
@@ -872,7 +866,7 @@ static XEN g_autocorrelate(XEN reals)
 static XEN g_correlate(XEN data1, XEN data2)
 {
   #define H_correlate "(" S_correlate " data1 data2): in place cross-correlation of data1 and data2 (both vcts)"
-  int size;
+  mus_long_t size;
   vct *v1 = NULL, *v2 = NULL;
 
   XEN_ASSERT_TYPE(MUS_VCT_P(data1), data1, XEN_ARG_1, S_correlate, "a vct");
@@ -894,7 +888,7 @@ static XEN g_convolution(XEN url1, XEN url2, XEN un)
   #define H_mus_convolution "(" S_convolution " v1 v2 :optional len): convolution \
 of vcts v1 with v2, using fft of size len (a power of 2), result in v1"
 
-  int n;
+  mus_long_t n;
   vct *v1, *v2;
 
   XEN_ASSERT_TYPE((MUS_VCT_P(url1)), url1, XEN_ARG_1, S_convolution, "a vct");
@@ -905,7 +899,7 @@ of vcts v1 with v2, using fft of size len (a power of 2), result in v1"
 
   if (XEN_INTEGER_P(un)) 
     {
-      n = XEN_TO_C_INT(un); 
+      n = XEN_TO_C_INT64_T(un); 
       if (n <= 0)
 	XEN_OUT_OF_RANGE_ERROR(S_convolution, 3, un, "size ~A <= 0?");
       if (n > mus_max_malloc())
@@ -1967,7 +1961,8 @@ static XEN g_make_delay_1(xclm_delay_t choice, XEN arglist)
   XEN keys[9];
   XEN xen_filt = XEN_FALSE;
   int orig_arg[9] = {0, 0, 0, 0, 0, 0, 0, (int)MUS_INTERP_NONE, 0};
-  int vals, i, argn = 0, len = 0, arglist_len, max_size = -1, size = -1;
+  int vals, i, argn = 0, len = 0, arglist_len;
+  mus_long_t max_size = -1, size = -1;
   int interp_type = (int)MUS_INTERP_NONE;
   mus_float_t *line = NULL;
   mus_float_t scaler = 0.0, feedback = 0.0, feedforward = 0.0;
@@ -2020,7 +2015,7 @@ static XEN g_make_delay_1(xclm_delay_t choice, XEN arglist)
 
       if (!(XEN_KEYWORD_P(keys[size_key])))
 	{
-	  size = mus_optkey_to_int(keys[size_key], caller, orig_arg[size_key], size); /* size can  be 0? -- surely we need a line in any case? */
+	  size = mus_optkey_to_mus_long_t(keys[size_key], caller, orig_arg[size_key], size); /* size can  be 0? -- surely we need a line in any case? */
 	  if (size < 0)
 	    XEN_OUT_OF_RANGE_ERROR(caller, orig_arg[size_key], keys[size_key], "size ~A < 0?");
 	  if (size > mus_max_table_size())
@@ -2030,7 +2025,7 @@ static XEN g_make_delay_1(xclm_delay_t choice, XEN arglist)
 
       if (!(XEN_KEYWORD_P(keys[max_size_key])))
 	{
-	  max_size = mus_optkey_to_int(keys[max_size_key], caller, orig_arg[max_size_key], max_size); /* -1 = unset */
+	  max_size = mus_optkey_to_mus_long_t(keys[max_size_key], caller, orig_arg[max_size_key], max_size); /* -1 = unset */
 	  if (max_size <= 0)
 	    XEN_OUT_OF_RANGE_ERROR(caller, orig_arg[max_size_key], keys[max_size_key], "max-size ~A <= 0?");
 	  if (max_size > mus_max_table_size())
@@ -2139,8 +2134,8 @@ static XEN g_make_delay_1(xclm_delay_t choice, XEN arglist)
   if ((choice == G_MOVING_AVERAGE) && (max_size != size))
     {
       if (size == 0)
-	XEN_OUT_OF_RANGE_ERROR(caller, 0, C_TO_XEN_INT(size), "size = 0 for the " S_moving_average " generator is kinda loony?");
-      else XEN_OUT_OF_RANGE_ERROR(caller, 0, C_TO_XEN_INT(max_size), "max_size is irrelevant to the " S_moving_average " generator");
+	XEN_OUT_OF_RANGE_ERROR(caller, 0, C_TO_XEN_INT64_T(size), "size = 0 for the " S_moving_average " generator is kinda loony?");
+      else XEN_OUT_OF_RANGE_ERROR(caller, 0, C_TO_XEN_INT64_T(max_size), "max_size is irrelevant to the " S_moving_average " generator");
     }
 
   if (initial_contents == NULL)
@@ -2915,7 +2910,7 @@ a new one is created.  If normalize is " PROC_TRUE ", the resulting waveform goe
   XEN table; 
   XEN lst;
   mus_float_t *partial_data = NULL;
-  int len = 0, i;
+  mus_long_t len = 0, i;
   bool partials_allocated = true;
 #if HAVE_S7
   int gc_loc;
@@ -2993,7 +2988,7 @@ static XEN g_phase_partials_to_wave(XEN partials, XEN utable, XEN normalize)
   vct *f;
   XEN table, lst;
   mus_float_t *partial_data = NULL, *wave;
-  int len = 0, i;
+  mus_long_t len = 0, i;
   bool partials_allocated = true;
 #if HAVE_S7
   int gc_loc;
@@ -3089,7 +3084,8 @@ The default table size is 512; use :size to set some other size, or pass your ow
 is the same in effect as " S_make_oscil ".  'type' sets the interpolation choice which defaults to " S_mus_interp_linear "."
 
   mus_any *ge;
-  int vals, i, arglist_len, table_size = clm_table_size;
+  int vals, i, arglist_len;
+  mus_long_t table_size = clm_table_size;
   XEN args[MAX_ARGLIST_LEN]; 
   XEN keys[5];
   int orig_arg[5] = {0, 0, 0, 0, MUS_INTERP_LINEAR};
@@ -3135,7 +3131,7 @@ is the same in effect as " S_make_oscil ".  'type' sets the interpolation choice
 	  table_size = v->length;
 	}
 
-      table_size = mus_optkey_to_int(keys[3], S_make_table_lookup, orig_arg[3], table_size);
+      table_size = mus_optkey_to_mus_long_t(keys[3], S_make_table_lookup, orig_arg[3], table_size);
       if (table_size <= 0)
 	XEN_OUT_OF_RANGE_ERROR(S_make_table_lookup, orig_arg[3], keys[3], "size ~A <= 0?");
       if (table_size > mus_max_table_size())
@@ -4315,7 +4311,8 @@ the repetition rate of the wave found in wave. Successive waves can overlap."
   XEN args[MAX_ARGLIST_LEN]; 
   XEN keys[5];
   int orig_arg[5] = {0, 0, 0, 0, MUS_INTERP_LINEAR};
-  int vals, i, arglist_len, wsize = clm_table_size;
+  int vals, i, arglist_len;
+  mus_long_t wsize = clm_table_size;
   vct *v = NULL;
   XEN orig_v = XEN_FALSE;
   mus_float_t freq, phase = 0.0;
@@ -4360,7 +4357,7 @@ the repetition rate of the wave found in wave. Successive waves can overlap."
 	  wsize = v->length;
 	}
 
-      wsize = mus_optkey_to_int(keys[3], S_make_wave_train, orig_arg[3], wsize);
+      wsize = mus_optkey_to_mus_long_t(keys[3], S_make_wave_train, orig_arg[3], wsize);
       if (wsize <= 0)
 	XEN_OUT_OF_RANGE_ERROR(S_make_wave_train, orig_arg[3], keys[3], "size ~A <= 0?");
       if (wsize > mus_max_table_size())
@@ -6780,10 +6777,12 @@ static XEN g_move_sound(XEN obj, XEN loc, XEN val)
 static mus_any **xen_vector_to_mus_any_array(XEN vect)
 {
   mus_any **gens;
-  int i, len;
+  mus_long_t i, len;
+
   if (!(XEN_VECTOR_P(vect))) return(NULL);
   len = XEN_VECTOR_LENGTH(vect);
   gens = (mus_any **)calloc(len, sizeof(mus_any *));
+
   for (i = 0; i < len; i++)
     if (MUS_XEN_P(XEN_VECTOR_REF(vect, i)))
       gens[i] = XEN_TO_MUS_ANY(XEN_VECTOR_REF(vect, i));
@@ -6794,9 +6793,11 @@ static mus_any **xen_vector_to_mus_any_array(XEN vect)
 static int *xen_vector_to_int_array(XEN vect)
 {
   int *vals;
-  int i, len;
+  mus_long_t i, len;
+
   len = XEN_VECTOR_LENGTH(vect);
   vals = (int *)calloc(len, sizeof(int));
+
   for (i = 0; i < len; i++)
     vals[i] = XEN_TO_C_INT(XEN_VECTOR_REF(vect, i));
   return(vals);
@@ -7313,10 +7314,10 @@ return a new convolution generator which convolves its input with the impulse re
   XEN args[MAX_ARGLIST_LEN]; 
   XEN keys[3];
   int orig_arg[3] = {0, 0, 0};
-  int vals, i, arglist_len, fftlen;
+  int vals, i, arglist_len;
   vct *filter = NULL;
   XEN filt = XEN_UNDEFINED, in_obj = XEN_UNDEFINED;
-  int fft_size = 0;
+  mus_long_t fftlen, fft_size = 0;
 
   keys[0] = kw_input;
   keys[1] = kw_filter;
@@ -7339,7 +7340,7 @@ return a new convolution generator which convolves its input with the impulse re
       filter = mus_optkey_to_vct(keys[1], S_make_convolve, orig_arg[1], NULL);
       if (filter) filt = keys[1];
 
-      fft_size = mus_optkey_to_int(keys[2], S_make_convolve, orig_arg[2], fft_size);
+      fft_size = mus_optkey_to_mus_long_t(keys[2], S_make_convolve, orig_arg[2], fft_size);
       if ((fft_size  < 0) || 
 	  ((fft_size == 0) && (!XEN_KEYWORD_P(keys[2]))) ||
 	  (fft_size > mus_max_malloc()))
@@ -7353,7 +7354,7 @@ return a new convolution generator which convolves its input with the impulse re
 
   if (POWER_OF_2_P(filter->length))
     fftlen = filter->length * 2;
-  else fftlen = (int)pow(2.0, 1 + (int)(log((mus_float_t)(filter->length + 1)) / log(2.0)));
+  else fftlen = (mus_long_t)pow(2.0, 1 + (int)(log((mus_float_t)(filter->length + 1)) / log(2.0)));
   if (fft_size < fftlen) fft_size = fftlen;
 
   gn = (mus_xen *)calloc(1, sizeof(mus_xen));

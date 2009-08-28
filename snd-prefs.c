@@ -3557,7 +3557,7 @@ static void raw_data_format_from_menu(prefs_info *prf, char *value)
 static bool rts_with_sound = false;
 static char *rts_clm_file_name = NULL;
 static mus_long_t rts_clm_file_buffer_size = 65536;
-static int rts_clm_table_size = 512;
+static mus_long_t rts_clm_table_size = 512;
 
 
 static bool with_sound_is_loaded(void) {return(XEN_DEFINED_P("with-sound"));}
@@ -3586,7 +3586,7 @@ static void save_with_sound(prefs_info *prf, FILE *fd)
       if (rts_clm_file_buffer_size != 65536)
 	fprintf(fd, "(set! *clm-file-buffer-size* " MUS_LD ")\n", rts_clm_file_buffer_size);
       if (rts_clm_table_size != 512)
-	fprintf(fd, "(set! *clm-table-size* %d)\n", rts_clm_table_size);
+	fprintf(fd, "(set! *clm-table-size* " MUS_LD ")\n", rts_clm_table_size);
 #endif
 
 #if HAVE_RUBY
@@ -3596,7 +3596,7 @@ static void save_with_sound(prefs_info *prf, FILE *fd)
       if (rts_clm_file_buffer_size != 65536)
 	fprintf(fd, "$clm_file_buffer_size = " MUS_LD "\n", rts_clm_file_buffer_size);
       if (rts_clm_table_size != 512)
-	fprintf(fd, "$clm_table_size = %d\n", rts_clm_table_size);
+	fprintf(fd, "$clm_table_size = " MUS_LD "\n", rts_clm_table_size);
 #endif
 
 #if HAVE_FORTH
@@ -3606,7 +3606,7 @@ static void save_with_sound(prefs_info *prf, FILE *fd)
       if (rts_clm_file_buffer_size != 65536)
 	fprintf(fd, MUS_LD " to *clm-file-buffer-size*\n", rts_clm_file_buffer_size);
       if (rts_clm_table_size != 512)
-	fprintf(fd, "%d to *clm-table-size*\n", rts_clm_table_size);
+	fprintf(fd, MUS_LD " to *clm-table-size*\n", rts_clm_table_size);
 #endif
     }
 }
@@ -3690,9 +3690,9 @@ static void save_clm_file_name(prefs_info *prf, FILE *ignore)
 #define CLM_TABLE_SIZE "*clm-table-size*"
 #define CLM_FILE_BUFFER_SIZE "*clm-file-buffer-size*"
 
-static int find_clm_table_size(void)
+static mus_long_t find_clm_table_size(void)
 {
-  return(XEN_TO_C_INT_OR_ELSE(prefs_variable_get(CLM_TABLE_SIZE), 512));
+  return(XEN_TO_C_INT64_T_OR_ELSE(prefs_variable_get(CLM_TABLE_SIZE), 512));
 }
 
 
@@ -3705,7 +3705,7 @@ static mus_long_t find_clm_file_buffer_size(void)
 static void reflect_clm_sizes(prefs_info *prf)
 {
   rts_clm_table_size = find_clm_table_size();
-  int_to_textfield(prf->text, rts_clm_table_size);
+  mus_long_t_to_textfield(prf->text, rts_clm_table_size);
   rts_clm_file_buffer_size = find_clm_file_buffer_size();
   mus_long_t_to_textfield(prf->rtxt, rts_clm_file_buffer_size);
 }
@@ -3718,10 +3718,10 @@ static void clm_sizes_text(prefs_info *prf)
   str = GET_TEXT(prf->text);
   if ((str) && (*str))
     {
-      int size = 0;
+      mus_long_t size = 0;
       rts_with_sound = true;
       redirect_errors_to(any_error_to_text, (void *)prf);
-      size = string_to_int(str, 1, "table size");
+      size = string_to_mus_long_t(str, 1, "table size");
       redirect_errors_to(NULL, NULL);
       if (!(prf->got_error))
 	rts_clm_table_size = size;
@@ -3754,14 +3754,14 @@ static void help_clm_sizes(prefs_info *prf)
 static void revert_clm_sizes(prefs_info *prf)
 {
   prefs_variable_set(CLM_FILE_BUFFER_SIZE, C_TO_XEN_INT64_T(rts_clm_file_buffer_size));
-  prefs_variable_set(CLM_TABLE_SIZE, C_TO_XEN_INT(rts_clm_table_size));
+  prefs_variable_set(CLM_TABLE_SIZE, C_TO_XEN_INT64_T(rts_clm_table_size));
 }
 
 
 static void clear_clm_sizes(prefs_info *prf)
 {
   prefs_variable_set(CLM_FILE_BUFFER_SIZE, C_TO_XEN_INT64_T(65536));
-  prefs_variable_set(CLM_TABLE_SIZE, C_TO_XEN_INT(512));
+  prefs_variable_set(CLM_TABLE_SIZE, C_TO_XEN_INT64_T(512));
 }
 
 

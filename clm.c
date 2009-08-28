@@ -5750,15 +5750,18 @@ mus_float_t *mus_make_fir_coeffs(int order, mus_float_t *envl, mus_float_t *aa)
   else /* use fft if it's easy to match -- there must be a way to handle odd orders here */
     {
       mus_float_t *rl, *im;
-      int fsize, lim;
+      mus_long_t fsize; 
+      int lim;
       mus_float_t offset;
+
       fsize = 2 * order; /* checked power of 2 above */
       rl = (mus_float_t *)clm_calloc(fsize, sizeof(mus_float_t), "mus_make_fir_coeffs");
       im = (mus_float_t *)clm_calloc(fsize, sizeof(mus_float_t), "mus_make_fir_coeffs");
       lim = order / 2;
       memcpy((void *)rl, (void *)envl, lim * sizeof(mus_float_t));
-      /* for (i = 0; i < lim; i++) rl[i] = envl[i]; */
+
       mus_fft(rl, im, fsize, 1);
+
       scl = 4.0 / fsize;
       offset = -2.0 * envl[0] / fsize;
       for (i = 0; i < fsize; i++) 
@@ -9927,8 +9930,8 @@ void mus_fftw(mus_float_t *rl, int n, int dir)
       if (rdata) {fftw_free(rdata); fftw_free(idata); fftw_destroy_plan(rplan); fftw_destroy_plan(iplan);}
       rdata = (double *)fftw_malloc(n * sizeof(double));
       idata = (double *)fftw_malloc(n * sizeof(double));
-      rplan = fftw_plan_r2r_1d(n, rdata, idata, FFTW_FORWARD, FFTW_ESTIMATE); 
-      iplan = fftw_plan_r2r_1d(n, rdata, idata, FFTW_BACKWARD, FFTW_ESTIMATE);
+      rplan = fftw_plan_r2r_1d(n, rdata, idata, (fftw_r2r_kind)FFTW_FORWARD, FFTW_ESTIMATE); 
+      iplan = fftw_plan_r2r_1d(n, rdata, idata, (fftw_r2r_kind)FFTW_BACKWARD, FFTW_ESTIMATE);
       last_fft_size = n;
     }
   memset((void *)idata, 0, n * sizeof(double));
@@ -10030,12 +10033,15 @@ void mus_fftw(mus_float_t *rl, int n, int dir)
 #endif
 #endif
 
+static void mus_big_fft(mus_float_t *rl, mus_float_t *im, mus_long_t n, int is);
 
 #if HAVE_FFTW3 && HAVE_COMPLEX_TRIG && (!__cplusplus)
-void mus_fft(mus_float_t *rl, mus_float_t *im, int n, int is)
+void mus_fft(mus_float_t *rl, mus_float_t *im, mus_long_t n, int is)
 {
   /* simple timing tests indicate fftw is slightly less than 4 times faster than mus_fft in this context */
-  mus_fftw_with_imag(rl, im, n, is);
+  if (n < (1 << 30))
+    mus_fftw_with_imag(rl, im, n, is);
+  else mus_big_fft(rl, im, n, is);
 }
 
 #else
@@ -10069,7 +10075,7 @@ static void mus_scramble(mus_float_t *rl, mus_float_t *im, int n)
 }
 
 
-void mus_fft(mus_float_t *rl, mus_float_t *im, int n, int is)
+void mus_fft(mus_float_t *rl, mus_float_t *im, mus_long_t n, int is)
 {
   /* standard fft: real part in rl, imaginary in im,
    * rl and im are zero-based.
@@ -10077,6 +10083,13 @@ void mus_fft(mus_float_t *rl, mus_float_t *im, int n, int is)
    */
   int m, j, mh, ldm, lg, i, i2, j2, imh;
   double ur, ui, u, vr, vi, angle, c, s;
+
+  if (n >= (1 << 30))
+    {
+      mus_big_fft(rl, im, n, is);
+      return;
+    }
+
   imh = (int)(log(n + 1) / log(2.0));
   mus_scramble(rl, im, n);
   m = 2;
@@ -10117,7 +10130,7 @@ void mus_fft(mus_float_t *rl, mus_float_t *im, int n, int is)
 #endif
 
 
-void mus_big_fft(mus_float_t *rl, mus_float_t *im, mus_long_t n, int is)
+static void mus_big_fft(mus_float_t *rl, mus_float_t *im, mus_long_t n, int is)
 {
   mus_long_t m, j, mh, ldm, i, i2, j2;
   int imh, lg;
@@ -10956,7 +10969,7 @@ mus_float_t *mus_spectrum(mus_float_t *rdat, mus_float_t *idat, mus_float_t *win
 
   lowest = 0.000001;
   maxa = 0.0;
-  n = (int)(n * 0.5);
+  n = n * 0.5;
   for (i = 0; i < n; i++)
     {
 #if (__linux__ && __PPC__)
@@ -10992,11 +11005,11 @@ mus_float_t *mus_spectrum(mus_float_t *rdat, mus_float_t *idat, mus_float_t *win
 }
 
 
-mus_float_t *mus_autocorrelate(mus_float_t *data, int n)
+mus_float_t *mus_autocorrelate(mus_float_t *data, mus_long_t n)
 {
   mus_float_t *im;
   mus_float_t fscl;
-  int i, n2;
+  mus_long_t i, n2;
 
   n2 = n / 2;
   fscl = 1.0 / (mus_float_t)n;
@@ -11018,10 +11031,10 @@ mus_float_t *mus_autocorrelate(mus_float_t *data, int n)
 }
 
 
-mus_float_t *mus_correlate(mus_float_t *data1, mus_float_t *data2, int n)
+mus_float_t *mus_correlate(mus_float_t *data1, mus_float_t *data2, mus_long_t n)
 {
   mus_float_t *im1, *im2;
-  int i;
+  mus_long_t i;
   mus_float_t fscl;
 
   im1 = (mus_float_t *)clm_calloc_atomic(n, sizeof(mus_float_t), "mus_correlate imaginary data");
@@ -11053,11 +11066,11 @@ mus_float_t *mus_correlate(mus_float_t *data1, mus_float_t *data2, int n)
 }
 
 
-mus_float_t *mus_cepstrum(mus_float_t *data, int n)
+mus_float_t *mus_cepstrum(mus_float_t *data, mus_long_t n)
 {
   mus_float_t *rl, *im;
   mus_float_t fscl = 0.0, lowest;
-  int i;
+  mus_long_t i;
 
   lowest = 0.00000001;
   fscl = 2.0 / (mus_float_t)n;
@@ -11096,7 +11109,7 @@ mus_float_t *mus_cepstrum(mus_float_t *data, int n)
 
 /* ---------------- convolve ---------------- */
 
-mus_float_t *mus_convolution(mus_float_t *rl1, mus_float_t *rl2, int n)
+mus_float_t *mus_convolution(mus_float_t *rl1, mus_float_t *rl2, mus_long_t n)
 {
   /* convolves two real arrays.                                           */
   /* rl1 and rl2 are assumed to be set up correctly for the convolution   */
@@ -11106,7 +11119,7 @@ mus_float_t *mus_convolution(mus_float_t *rl1, mus_float_t *rl2, int n)
   /* the split, scaling, and (complex) spectral multiply in one step.     */
   /* result in rl1                                                        */
 
-  int j, n2;
+  mus_long_t j, n2;
   mus_float_t invn;
 
   mus_fft(rl1, rl2, n, 1);
@@ -11118,7 +11131,7 @@ mus_float_t *mus_convolution(mus_float_t *rl1, mus_float_t *rl2, int n)
 
   for (j = 1; j <= n2; j++)
     {
-      int nn2;
+      mus_long_t nn2;
       mus_float_t rem, rep, aim, aip;
       nn2 = n - j;
       rep = (rl1[j] + rl1[nn2]);
@@ -11140,7 +11153,7 @@ mus_float_t *mus_convolution(mus_float_t *rl1, mus_float_t *rl2, int n)
 typedef struct {
   mus_any_class *core;
   mus_float_t (*feeder)(void *arg, int direction);
-  int fftsize, fftsize2, ctr, filtersize;
+  mus_long_t fftsize, fftsize2, ctr, filtersize;
   mus_float_t *rl1, *rl2, *buf, *filter; 
   void *closure;
 } conv;
@@ -11154,7 +11167,7 @@ static char *describe_convolve(mus_any *ptr)
   conv *gen = (conv *)ptr;
   char *describe_buffer;
   describe_buffer = (char *)clm_malloc(DESCRIBE_BUFFER_SIZE, "describe buffer");
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s size: %d", 
+  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s size: " MUS_LD, 
 	       mus_name(ptr),
 	       gen->fftsize);
   return(describe_buffer);
@@ -11222,7 +11235,7 @@ mus_float_t mus_convolve(mus_any *ptr, mus_float_t (*input)(void *arg, int direc
   mus_float_t result;
   if (gen->ctr >= gen->fftsize2)
     {
-      int i, j;
+      mus_long_t i, j;
       mus_float_t (*conv_input)(void *arg, int direction) = input;
       if (conv_input == NULL) conv_input = gen->feeder;
       for (i = 0, j = gen->fftsize2; i < gen->fftsize2; i++, j++) 
@@ -11235,8 +11248,9 @@ mus_float_t mus_convolve(mus_any *ptr, mus_float_t (*input)(void *arg, int direc
 	  gen->rl2[j] = 0.0;
 	}
       memcpy((void *)(gen->rl2), (void *)(gen->filter), gen->filtersize * sizeof(mus_float_t));
-      /* for (i = 0; i < gen->filtersize; i++) gen->rl2[i] = gen->filter[i]; */
+
       mus_convolution(gen->rl1, gen->rl2, gen->fftsize);
+
       for (i = 0, j = gen->fftsize2; i < gen->fftsize2; i++, j++) 
 	{
 	  gen->buf[i] += gen->rl1[i];
@@ -11257,7 +11271,7 @@ bool mus_convolve_p(mus_any *ptr)
 }
 
 
-mus_any *mus_make_convolve(mus_float_t (*input)(void *arg, int direction), mus_float_t *filter, int fftsize, int filtersize, void *closure)
+mus_any *mus_make_convolve(mus_float_t (*input)(void *arg, int direction), mus_float_t *filter, mus_long_t fftsize, mus_long_t filtersize, void *closure)
 {
   conv *gen = NULL;
   gen = (conv *)clm_calloc(1, sizeof(conv), S_make_convolve);
@@ -11267,7 +11281,7 @@ mus_any *mus_make_convolve(mus_float_t (*input)(void *arg, int direction), mus_f
   gen->filter = filter;
   if (filter)
     {
-      int i;
+      mus_long_t i;
       bool all_zero = true;
       for (i = 0; i < filtersize; i++)
 	if (fabs(filter[i]) != 0.0) /* I'm getting -0.000 != 0.000 */
@@ -11292,11 +11306,11 @@ mus_any *mus_make_convolve(mus_float_t (*input)(void *arg, int direction), mus_f
 void mus_convolve_files(const char *file1, const char *file2, mus_float_t maxamp, const char *output_file)
 {
   mus_long_t file1_len, file2_len, outlen, totallen;
-  int fftlen, file1_chans, file2_chans, output_chans;
+  int file1_chans, file2_chans, output_chans;
   mus_float_t *data1, *data2;
   const char *errmsg = NULL;
   mus_float_t maxval = 0.0;
-  int i;
+  mus_long_t i, fftlen;
 
   file1_len = mus_sound_frames(file1);
   file2_len = mus_sound_frames(file2);
@@ -11309,7 +11323,7 @@ void mus_convolve_files(const char *file1, const char *file2, mus_float_t maxamp
   output_chans = file1_chans; 
   if (file2_chans > output_chans) output_chans = file2_chans;
 
-  fftlen = (int)(pow(2.0, (int)ceil(log(file1_len + file2_len + 1) / log(2.0))));
+  fftlen = (mus_long_t)(pow(2.0, (int)ceil(log(file1_len + file2_len + 1) / log(2.0))));
   outlen = file1_len + file2_len + 1;
   totallen = outlen * output_chans;
 
@@ -11354,7 +11368,7 @@ void mus_convolve_files(const char *file1, const char *file2, mus_float_t maxamp
 
       for (chan = 0; chan < output_chans; chan++)
 	{
-	  int j, k;
+	  mus_long_t j, k;
 
 	  mus_file_to_array(file1, c1, 0, file1_len, samps);
 	  for (k = 0; k < file1_len; k++) data1[k] = MUS_SAMPLE_TO_DOUBLE(samps[k]);

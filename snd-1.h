@@ -966,16 +966,16 @@ void prepare_sound_list(chan_info *cp);
 
 /* -------- snd-fft.c -------- */
 
-int find_and_sort_transform_peaks(mus_float_t *buf, fft_peak *found, int num_peaks, int losamp, int hisamp, mus_float_t samps_per_pixel, mus_float_t fft_scale);
-int find_and_sort_peaks(mus_float_t *buf, fft_peak *found, int num_peaks, int losamp, int hisamp);
+int find_and_sort_transform_peaks(mus_float_t *buf, fft_peak *found, int num_peaks, mus_long_t losamp, mus_long_t hisamp, mus_float_t samps_per_pixel, mus_float_t fft_scale);
+int find_and_sort_peaks(mus_float_t *buf, fft_peak *found, int num_peaks, mus_long_t losamp, mus_long_t hisamp);
 fft_info *free_fft_info(fft_info *fp);
 void free_sonogram_fft_state(void *ptr);
 bool fft_window_beta_in_use(mus_fft_window_t win);
 bool fft_window_alpha_in_use(mus_fft_window_t win);
 void free_sono_info(chan_info *cp);
 void sono_update(chan_info *cp);
-void c_convolve(const char *fname, mus_float_t amp, int filec, mus_long_t filehdr, int filterc, mus_long_t filterhdr, int filtersize,
-		int fftsize, int filter_chans, int filter_chan, int data_size, snd_info *gsp);
+void c_convolve(const char *fname, mus_float_t amp, int filec, mus_long_t filehdr, int filterc, mus_long_t filterhdr, mus_long_t filtersize,
+		mus_long_t fftsize, int filter_chans, int filter_chan, mus_long_t data_size, snd_info *gsp);
 void *make_sonogram_state(chan_info *cp, bool force_recalc);
 void single_fft(chan_info *cp, bool update_display, bool force_recalc);
 idle_func_t sonogram_in_slices(void *sono);
@@ -983,7 +983,6 @@ void clear_transform_edit_ctrs(chan_info *cp);
 void g_init_fft(void);
 mus_float_t fft_beta_max(mus_fft_window_t win);
 void cp_free_fft_state(chan_info *cp);
-void autocorrelation(mus_float_t *data, int n);
 void set_fft_info_xlabel(chan_info *cp, const char *new_label);
 void fourier_spectrum(snd_fd *sf, mus_float_t *data, mus_long_t fft_size, mus_long_t data_len, mus_float_t *window, chan_info *cp);
 const char *wavelet_name(int i);

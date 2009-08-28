@@ -9671,7 +9671,7 @@ static xen_value *autocorrelate_1(ptree *prog, xen_value **args, int num_args)
 
 static void correlate_0(int *args, ptree *pt) 
 {
-  int size;
+  mus_long_t size;
   if (VCT_ARG_1->length < VCT_ARG_2->length)
     size = VCT_ARG_1->length;
   else size = VCT_ARG_2->length;
