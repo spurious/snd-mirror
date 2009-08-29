@@ -10727,6 +10727,12 @@ mus_float_t *mus_make_fft_window_with_window(mus_fft_window_t type, mus_long_t s
 
 	cw = cos(2 * M_PI * beta);
 	n1 = (size - 1) * 0.5;
+	if ((size * size * sizeof(double)) > mus_max_malloc())
+	  {
+	    mus_error(MUS_ARG_OUT_OF_RANGE, "dpss window requires size^2 * 8 bytes, but that exceeds the current mus-max-malloc amount");
+	    return(window);
+	  }
+
 	data = (double *)calloc(size * size, sizeof(double));
 	for (i = 0; i < size; i++)
 	  {

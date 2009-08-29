@@ -17,12 +17,12 @@ static GtkWidget *db_txt, *peaks_txt, *lf_txt;
 static gc_t *gc = NULL, *fgc = NULL;
 static bool ignore_callbacks;
 
-#define NUM_TRANSFORM_SIZES 14
+#define NUM_TRANSFORM_SIZES 15
 static const char *transform_size_names[NUM_TRANSFORM_SIZES] = 
-  {"32", "64", "128", "256", "512", "1024", "2048", "4096", "8192", "16384", "65536", "262144", "1048576", "4194304    "};
+  {"32", "64", "128", "256", "512", "1024", "2048", "4096", "8192", "16384", "65536", "262144", "1048576", "4194304    ", "16777216"};
 
 static mus_long_t transform_sizes[NUM_TRANSFORM_SIZES] = 
-  {32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 65536, 262144, 1048576, 4194304};
+  {32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 65536, 262144, 1048576, 4194304, 16777216};
 
 
 /* ---------------- window graphs ---------------- */

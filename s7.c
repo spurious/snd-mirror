@@ -355,14 +355,6 @@ typedef struct s7_func_t {
 } s7_func_t;
 
 
-typedef enum {DWIND_INIT, DWIND_BODY, DWIND_FINISH} dwind_t;
-
-typedef struct s7_dynwind_t {
-  dwind_t state;
-  s7_pointer in, out, body;
-} s7_dynwind_t;
-
-
 #if WITH_MULTIDIMENSIONAL_VECTORS
 typedef struct s7_vdims_t {
   int ndims;
@@ -426,9 +418,11 @@ typedef struct s7_cell {
       int goto_loc;
       s7_pointer tag;
       s7_pointer handler;
-    } catch;
+    } rcatch; /* C++ reserves "catch" I guess */
     
-    s7_dynwind_t *winder; /* this could be embedded in "object" at no cost in 32-bit machines, but it adds 8 bytes (40 total) in 64-bit cases */
+    struct {
+      s7_pointer in, out, body;
+    } winder;
 
   } object;
 } s7_cell;
@@ -579,7 +573,7 @@ struct s7_scheme {
 
 #define T_SYNTAX                      (1 << (TYPE_BITS + 1))
 #define is_syntax(p)                  ((typeflag(p) & T_SYNTAX) != 0) /* the silly != 0 business is for MS C++'s benefit */
-#define syntax_opcode(x)              cdr(x)
+#define syntax_opcode(x)              ((x)->hloc)
 
 #define T_IMMUTABLE                   (1 << (TYPE_BITS + 2))
 #define is_immutable(p)               ((typeflag(p) & T_IMMUTABLE) != 0)
@@ -639,7 +633,13 @@ struct s7_scheme {
 #define set_local(p)                  typeflag(p) |= T_LOCAL
 /* this marks a symbol that has been used at some time as a local variable */
 
-#define UNUSED_BITS                   0xff800000
+#define T_DWIND_INIT                  (1 << (TYPE_BITS + 15))
+#define T_DWIND_BODY                  (1 << (TYPE_BITS + 16))
+#define T_DWIND_FINISH                (T_DWIND_INIT | T_DWIND_BODY)
+#define DWIND_STATE(p)                (typeflag(p) & T_DWIND_FINISH)
+#define DWIND_SET_STATE(p, n)         typeflag(p) = ((typeflag(p) & (~T_DWIND_FINISH)) | n)
+
+#define UNUSED_BITS                   0xfe000000
 
 #if HAVE_PTHREADS
 #define set_type(p, f)                typeflag(p) = ((typeflag(p) & T_GC_MARK) | (f) | T_OBJECT)
@@ -758,16 +758,16 @@ struct s7_scheme {
 #define closure_environment(Obj)      cdr(Obj)
 
 #define is_catch(p)                   (type(p) == T_CATCH)
-#define catch_tag(p)                  (p)->object.catch.tag
-#define catch_goto_loc(p)             (p)->object.catch.goto_loc
-#define catch_handler(p)              (p)->object.catch.handler
+#define catch_tag(p)                  (p)->object.rcatch.tag
+#define catch_goto_loc(p)             (p)->object.rcatch.goto_loc
+#define catch_handler(p)              (p)->object.rcatch.handler
 
 #define is_dynamic_wind(p)            (type(p) == T_DYNAMIC_WIND)
-#define dynamic_wind(p)               (p)->object.winder
-#define dynamic_wind_state(p)         (p)->object.winder->state
-#define dynamic_wind_in(p)            (p)->object.winder->in
-#define dynamic_wind_out(p)           (p)->object.winder->out
-#define dynamic_wind_body(p)          (p)->object.winder->body
+#define dynamic_wind_state(p)         DWIND_STATE(p)
+#define dynamic_wind_set_state(p, n)  DWIND_SET_STATE(p, n)
+#define dynamic_wind_in(p)            (p)->object.winder.in
+#define dynamic_wind_out(p)           (p)->object.winder.out
+#define dynamic_wind_body(p)          (p)->object.winder.body
 
 #define is_c_object(p)                (type(p) == T_C_OBJECT)
 #define c_object_type(p)              (p)->object.fobj.type
@@ -1162,10 +1162,6 @@ static void finalize_s7_cell(s7_scheme *sc, s7_pointer a)
 	}
       break;
       
-    case T_DYNAMIC_WIND:
-      free(dynamic_wind(a));
-      break;
-      
     default:
       break;
     }
@@ -1486,7 +1482,7 @@ void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
       break;
 
     case T_SYMBOL:
-      /* here hloc is always NOT_IN_HEAP already, but cdr(x) can be an int (syntax_opcode) */
+      /* here hloc is usually NOT_IN_HEAP, but in syntax case can be the syntax op code */
       return;
 
     case T_CLOSURE:
@@ -1939,6 +1935,39 @@ static s7_pointer add_to_environment(s7_scheme *sc, s7_pointer env, s7_pointer v
 } 
 
 
+static s7_pointer add_to_current_environment(s7_scheme *sc, s7_pointer variable, s7_pointer value) 
+{ 
+  if (is_immutable(variable))
+    return(s7_error(sc, sc->ERROR, make_list_2(sc, s7_make_string(sc, "can't bind or set an immutable object: ~S"), variable)));
+
+  return(add_to_environment(sc, sc->envir, variable, value)); 
+} 
+
+
+static s7_pointer add_to_local_environment(s7_scheme *sc, s7_pointer variable, s7_pointer value) 
+{ 
+  /* this is called when it is guaranteed that there is a local environment */
+  s7_pointer x;
+
+  if (is_immutable(variable))
+    return(s7_error(sc, sc->ERROR, make_list_2(sc, s7_make_string(sc, "can't bind or set an immutable object: ~S"), variable)));
+
+#if HAVE_PTHREADS
+  x = new_cell(sc); 
+#else
+  if (sc->free_heap_top > 0)
+    x = sc->free_heap[--(sc->free_heap_top)];
+  else x = new_cell(sc);
+#endif
+  car(x) = s7_immutable_cons(sc, variable, value);
+  cdr(x) = car(sc->envir);
+  car(sc->envir) = x;
+  set_type(x, T_PAIR);
+  set_local(variable);
+  return(car(x));
+} 
+
+
 static s7_pointer s7_find_symbol_in_environment(s7_scheme *sc, s7_pointer env, s7_pointer hdl, bool all_envirs) 
 { 
   s7_pointer x, y;
@@ -1957,15 +1986,6 @@ static s7_pointer s7_find_symbol_in_environment(s7_scheme *sc, s7_pointer env, s
 	return(sc->NIL); 
     }
   return(sc->NIL); 
-} 
-
-
-static s7_pointer add_to_current_environment(s7_scheme *sc, s7_pointer variable, s7_pointer value) 
-{ 
-  if (is_immutable(variable))
-    return(s7_error(sc, sc->ERROR, make_list_2(sc, s7_make_string(sc, "can't bind or set an immutable object: ~S"), variable)));
-
-  return(add_to_environment(sc, sc->envir, variable, value)); 
 } 
 
 
@@ -2336,7 +2356,7 @@ static void check_for_dynamic_winds(s7_scheme *sc, s7_pointer c)
 	  if (s_base != 0)
 	    break;	  
 	  
-	  if (dynamic_wind_state(x) == DWIND_BODY)
+	  if (dynamic_wind_state(x) == T_DWIND_BODY)
 	    {
 	      push_stack(sc, OP_EVAL_DONE, sc->args, sc->code); 
 	      sc->args = sc->NIL;
@@ -2360,7 +2380,7 @@ static void check_for_dynamic_winds(s7_scheme *sc, s7_pointer c)
 	sc->args = sc->NIL;
 	sc->code = dynamic_wind_in(x);
 	eval(sc, OP_APPLY);
-	dynamic_wind_state(x) = DWIND_BODY;
+	dynamic_wind_set_state(x, T_DWIND_BODY);
       }
 }
 
@@ -4176,7 +4196,7 @@ static s7_pointer g_number_to_string(s7_scheme *sc, s7_pointer args)
 
 
 #define CTABLE_SIZE 128
-static bool *dot_table, *atom_delimiter_table, *exponent_table, *slashify_table, *string_delimiter_table;
+static bool *dot_table, *exponent_table, *slashify_table, *string_delimiter_table;
 static int *digits, *char_nums;
 
 static void init_ctables(void)
@@ -4184,7 +4204,6 @@ static void init_ctables(void)
   int i;
 
   dot_table = (bool *)calloc(CTABLE_SIZE, sizeof(bool));
-  atom_delimiter_table = (bool *)calloc(CTABLE_SIZE, sizeof(bool));
   exponent_table = (bool *)calloc(CTABLE_SIZE, sizeof(bool));
   slashify_table = (bool *)calloc(CTABLE_SIZE, sizeof(bool));
   string_delimiter_table = (bool *)calloc(CTABLE_SIZE, sizeof(bool));
@@ -4198,14 +4217,6 @@ static void init_ctables(void)
   dot_table['\\'] = true;
   dot_table['\''] = true;
   
-  atom_delimiter_table['('] = true;
-  atom_delimiter_table[')'] = true;
-  atom_delimiter_table[';'] = true;
-  atom_delimiter_table['\t'] = true;
-  atom_delimiter_table['\n'] = true;
-  atom_delimiter_table['\r'] = true;
-  atom_delimiter_table[' '] = true;
-
   exponent_table['e'] = true; exponent_table['E'] = true;
   exponent_table['s'] = true; exponent_table['S'] = true; 
   exponent_table['f'] = true; exponent_table['F'] = true;
@@ -9523,8 +9534,6 @@ static s7_pointer g_cons(s7_scheme *sc, s7_pointer args)
   cdr(x) = cadr(args);
   set_type(x, T_PAIR);
   return(x);
-
-  /* return(s7_cons(sc, car(args), cadr(args))); */
 }
 
 
@@ -12998,7 +13007,6 @@ static s7_pointer g_dynamic_wind(s7_scheme *sc, s7_pointer args)
   #define H_dynamic_wind "(dynamic-wind init body finish) calls init, then body, then finish, \
 each a function of no arguments, guaranteeing that finish is called even if body is exited"
   s7_pointer p;
-  s7_dynwind_t *dw;
 
   if (!is_thunk(sc, car(args)))
     return(s7_wrong_type_arg_error(sc, "dynamic-wind", 1, car(args), "a procedure"));
@@ -13007,19 +13015,16 @@ each a function of no arguments, guaranteeing that finish is called even if body
   if (!is_thunk(sc, caddr(args)))
     return(s7_wrong_type_arg_error(sc, "dynamic-wind", 3, caddr(args), "a procedure"));
   
-  dw = (s7_dynwind_t *)malloc(sizeof(s7_dynwind_t));
-  dw->in = car(args);
-  dw->body = cadr(args);
-  dw->out = caddr(args);
-  dw->state = DWIND_INIT;
-  
   p = new_cell(sc);
-  set_type(p, T_DYNAMIC_WIND | T_ATOM | T_FINALIZABLE | T_DONT_COPY); /* atom -> don't mark car/cdr, don't copy */
-  dynamic_wind(p) = dw;
+  dynamic_wind_in(p) = car(args);
+  dynamic_wind_body(p) = cadr(args);
+  dynamic_wind_out(p) = caddr(args);
+  set_type(p, T_DYNAMIC_WIND | T_ATOM | T_DWIND_INIT | T_DONT_COPY); /* atom -> don't mark car/cdr, don't copy */
+
   push_stack(sc, OP_DYNAMIC_WIND, sc->NIL, p);          /* args will be the saved result, code = s7_dynwind_t obj */
   
   sc->args = sc->NIL;
-  sc->code = dw->in;
+  sc->code = car(args);
   push_stack(sc, OP_APPLY, sc->args, sc->code);
   return(sc->F);
 }
@@ -13172,7 +13177,7 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
 	{
 	case OP_DYNAMIC_WIND:
 	  x = vector_element(sc->stack, i - 3);
-	  if (dynamic_wind_state(x) == DWIND_BODY)
+	  if (dynamic_wind_state(x) == T_DWIND_BODY)
 	    {
 	      push_stack(sc, OP_EVAL_DONE, sc->args, sc->code); 
 	      sc->args = sc->NIL;
@@ -13692,7 +13697,7 @@ static void assign_syntax(s7_scheme *sc, const char *name, opcode_t op)
   x = symbol_table_add_by_name(sc, name); 
   typeflag(x) |= (T_SYNTAX | T_DONT_COPY); 
   clear_finalizable(x);
-  syntax_opcode(x) = small_int(sc, (int)op);
+  syntax_opcode(x) = (int)op;
 }
 
 
@@ -13929,9 +13934,11 @@ static void back_up_stack(s7_scheme *sc)
 
 /* ---------------- reader funcs for eval ---------------- */
 
-static token_t token(s7_scheme *sc, s7_pointer pt)
+static token_t token(s7_scheme *sc)
 {
   int c = 0;
+  s7_pointer pt;
+  pt = sc->input_port;
 
   if (is_file_port(pt))
     {
@@ -13990,7 +13997,7 @@ static token_t token(s7_scheme *sc, s7_pointer pt)
 	port_line_number(pt)++;
 	if (c == 0)
 	  return(TOKEN_EOF);
-	return(token(sc, pt));
+	return(token(sc));
       }
 
     case '"':
@@ -14048,7 +14055,7 @@ static token_t token(s7_scheme *sc, s7_pointer pt)
 		break;
 	      last_char = c;
 	    }
-	  return(token(sc, pt));
+	  return(token(sc));
 	}
       
       /*   or #| ... |# */
@@ -14063,7 +14070,7 @@ static token_t token(s7_scheme *sc, s7_pointer pt)
 		break;
 	      last_char = c;
 	    }
-	  return(token(sc, pt));
+	  return(token(sc));
 	}
       
       backchar(sc, c, pt);
@@ -14105,7 +14112,7 @@ static char *read_string_upto(s7_scheme *sc, int start)
 	  if (i >= sc->strbuf_size)
 	    resize_strbuf(sc);
 	}
-      while (!((c == EOF) || (atom_delimiter_table[c])));
+      while ((c != EOF) && (string_delimiter_table[c]));
 
       if ((i == 2) && 
 	  (sc->strbuf[0] == '\\'))
@@ -14219,7 +14226,7 @@ static s7_pointer read_expression(s7_scheme *sc)
 	  /* fall through */
 	  
 	case TOKEN_LEFT_PAREN:
-	  sc->tok = token(sc, sc->input_port);
+	  sc->tok = token(sc);
 
 	  if (sc->tok == TOKEN_RIGHT_PAREN)
 	    return(sc->NIL);
@@ -14239,11 +14246,11 @@ static s7_pointer read_expression(s7_scheme *sc)
 	  
 	case TOKEN_QUOTE:
 	  push_stack(sc, OP_READ_QUOTE, sc->NIL, sc->NIL);
-	  sc->tok = token(sc, sc->input_port);
+	  sc->tok = token(sc);
 	  break;
 	  
 	case TOKEN_BACK_QUOTE:
-	  sc->tok = token(sc, sc->input_port);
+	  sc->tok = token(sc);
 	  if (sc->tok == TOKEN_VECTOR) 
 	    {
 	      push_stack(sc, OP_READ_QUASIQUOTE_VECTOR, sc->NIL, sc->NIL);
@@ -14254,12 +14261,12 @@ static s7_pointer read_expression(s7_scheme *sc)
 	  
 	case TOKEN_COMMA:
 	  push_stack(sc, OP_READ_UNQUOTE, sc->NIL, sc->NIL);
-	  sc->tok = token(sc, sc->input_port);
+	  sc->tok = token(sc);
 	  break;
 	  
 	case TOKEN_AT_MARK:
 	  push_stack(sc, OP_READ_UNQUOTE_SPLICING, sc->NIL, sc->NIL);
-	  sc->tok = token(sc, sc->input_port);
+	  sc->tok = token(sc);
 	  break;
 	  
 	case TOKEN_ATOM:
@@ -14293,6 +14300,8 @@ static s7_pointer read_expression(s7_scheme *sc)
 
 	}
     }
+
+  /* we never get here */
   return(sc->NIL);
 }
 
@@ -14320,7 +14329,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
   switch (sc->op) 
     {
     case OP_READ_INTERNAL:
-      sc->tok = token(sc, sc->input_port);
+      sc->tok = token(sc);
 
       switch (sc->tok)
 	{
@@ -14547,7 +14556,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       sc->value = sc->NIL;
       for (sc->x = car(sc->code), sc->y = sc->args; sc->y != sc->NIL; sc->x = cdr(sc->x), sc->y = cdr(sc->y)) 
-	sc->value = s7_cons(sc, add_to_current_environment(sc, caar(sc->x), car(sc->y)), sc->value);
+	sc->value = s7_cons(sc, add_to_local_environment(sc, caar(sc->x), car(sc->y)), sc->value);
 
       /* now we've set up the environment, next set up for loop */
 
@@ -14695,7 +14704,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  if (is_syntax(sc->x))
 	    {     
 	      sc->code = cdr(sc->code);
-	      sc->op = (opcode_t)integer(number(syntax_opcode(sc->x)));
+	      sc->op = (opcode_t)syntax_opcode(sc->x);
 	      goto START;
 	    } 
 	  push_stack(sc, OP_EVAL_ARGS0, sc->NIL, sc->code);
@@ -14952,13 +14961,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 					    s7_make_string_with_length(sc, "~A: not enough arguments: ~A", 28),
 					    g_procedure_source(sc, make_list_1(sc, sc->code)), 
 					    sc->args)));
-	      {
-		/* add_to_current_environment(sc, car(sc->x), car(sc->y)); */ /* expand this for speed */
-		if (is_immutable(car(sc->x)))
-		  return(s7_error(sc, sc->ERROR, make_list_2(sc, s7_make_string(sc, "can't bind or set an immutable object: ~S"), car(sc->x))));
-
-		add_to_environment(sc, sc->envir, car(sc->x), car(sc->y));
-	      }
+	      add_to_local_environment(sc, car(sc->x), car(sc->y));
 	    }
 	  
 	  if (sc->x == sc->NIL) 
@@ -14974,7 +14977,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  else 
 	    {
 	      if (s7_is_symbol(sc->x))
-		add_to_current_environment(sc, sc->x, sc->y); 
+		add_to_local_environment(sc, sc->x, sc->y); 
 	      else 
 		{
 		  if (is_macro(sc->code))
@@ -15019,15 +15022,15 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		      (car(sc->z) == sc->KEY_REST)))                  /* :optional and :key always ignored, :rest dealt with later */
 		  {
 		    if (is_pair(car(sc->z)))                          /* (define* (hi (a mus-next)) a) */
-		      add_to_current_environment(sc,                  /* or (define* (hi (a 'hi)) (list a (eq? a 'hi))) */
-						 caar(sc->z), 
-						 lambda_star_argument_default_value(sc, cadar(sc->z)));
+		      add_to_local_environment(sc,                    /* or (define* (hi (a 'hi)) (list a (eq? a 'hi))) */
+					       caar(sc->z), 
+					       lambda_star_argument_default_value(sc, cadar(sc->z)));
 		                                                      /* mus-next, for example, needs to be evaluated before binding */
-		    else add_to_current_environment(sc, car(sc->z), sc->F);
+		    else add_to_local_environment(sc, car(sc->z), sc->F);
 		  }
 	      }
 	    if (s7_is_symbol(sc->z))                                  /* dotted (last) arg? -- make sure its name exists in the current environment */
-	      add_to_current_environment(sc, sc->z, sc->F);
+	      add_to_local_environment(sc, sc->z, sc->F);
 	    
 	    /* now get the current args, re-setting args that have explicit values */
 	    sc->x = closure_args(sc->code);
@@ -15108,7 +15111,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  {
 		    /* final arg was dotted? */
 		    if (s7_is_symbol(sc->x))
-		      add_to_current_environment(sc, sc->x, sc->y); 
+		      add_to_local_environment(sc, sc->x, sc->y); 
 		  }
 	      }
 
@@ -15149,7 +15152,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		if (op == OP_DYNAMIC_WIND)
 		  {
 		    sc->z = vector_element(sc->stack, i - 3);
-		    if (dynamic_wind_state(sc->z) == DWIND_BODY)
+		    if (dynamic_wind_state(sc->z) == T_DWIND_BODY)
 		      {
 			push_stack(sc, OP_EVAL_DONE, sc->args, sc->code); 
 			sc->args = sc->NIL;
@@ -15547,7 +15550,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  if (s7_find_symbol_in_environment(sc, sc->envir, caar(sc->x), false) != sc->NIL)
 	    return(eval_error(sc, "duplicate identifier in let", caar(sc->x)));
 
-	  add_to_current_environment(sc, caar(sc->x), car(sc->y)); /* expansion here does not help */
+	  add_to_local_environment(sc, caar(sc->x), car(sc->y)); /* expansion here does not help */
 	}
       if (s7_is_symbol(car(sc->code))) 
 	{    /* named let */
@@ -15555,7 +15558,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    sc->args = s7_cons(sc, caar(sc->x), sc->args);
 	  
 	  sc->x = s7_make_closure(sc, s7_cons(sc, safe_reverse_in_place(sc, sc->args), cddr(sc->code)), sc->envir); 
-	  add_to_current_environment(sc, car(sc->code), sc->x); 
+	  add_to_local_environment(sc, car(sc->code), sc->x); 
 	  sc->code = cddr(sc->code);
 	  sc->args = sc->NIL;
 	} 
@@ -15615,7 +15618,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        * will hang.
        */
 
-      add_to_current_environment(sc, caar(sc->code), sc->value); 
+      add_to_local_environment(sc, caar(sc->code), sc->value); 
       sc->code = cdr(sc->code);
       if (is_pair(sc->code)) 
 	{ 
@@ -15654,7 +15657,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      (!(s7_is_symbol(caar(sc->x)))))
 	    return(eval_error(sc, "bad variable ~S in letrec bindings", car(sc->x)));
 
-	  add_to_current_environment(sc, caar(sc->x), sc->UNDEFINED);
+	  add_to_local_environment(sc, caar(sc->x), sc->UNDEFINED);
 	}
 
       
@@ -16129,27 +16132,30 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
 
     case OP_DYNAMIC_WIND:
-      
-      switch (dynamic_wind_state(sc->code))
+      if (dynamic_wind_state(sc->code) == T_DWIND_INIT)
 	{
-	case DWIND_INIT:
-	  dynamic_wind_state(sc->code) = DWIND_BODY;
+	  dynamic_wind_set_state(sc->code, T_DWIND_BODY);
 	  push_stack(sc, OP_DYNAMIC_WIND, sc->NIL, sc->code);
 	  sc->args = sc->NIL;
 	  sc->code = dynamic_wind_body(sc->code);
 	  goto APPLY;
-	  
-	case DWIND_BODY:
-	  dynamic_wind_state(sc->code) = DWIND_FINISH;
-	  push_stack(sc, OP_DYNAMIC_WIND, sc->value, sc->code);
-	  sc->args = sc->NIL;
-	  sc->code = dynamic_wind_out(sc->code);
-	  goto APPLY;
-	  
-	case DWIND_FINISH:
-	  sc->value = sc->args; /* value saved above */
-	  pop_stack(sc); 
-	  goto START;
+	}
+      else
+	{
+	  if (dynamic_wind_state(sc->code) == T_DWIND_BODY)
+	    {
+	      dynamic_wind_set_state(sc->code, T_DWIND_FINISH);
+	      push_stack(sc, OP_DYNAMIC_WIND, sc->value, sc->code);
+	      sc->args = sc->NIL;
+	      sc->code = dynamic_wind_out(sc->code);
+	      goto APPLY;
+	    }
+	  else
+	    {
+	      sc->value = sc->args; /* value saved above */
+	      pop_stack(sc); 
+	      goto START;
+	    }
 	}
       break;
       
@@ -16182,7 +16188,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	set_type(x, T_PAIR);
 	sc->args = x;
       }
-      sc->tok = token(sc, sc->input_port);
+      sc->tok = token(sc);
 
       switch (sc->tok)
 	{
@@ -16239,7 +16245,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	case TOKEN_DOT:
 	  push_stack(sc, OP_READ_DOT, sc->args, sc->NIL);
-	  sc->tok = token(sc, sc->input_port);
+	  sc->tok = token(sc);
 	  sc->value = read_expression(sc);
 	  break;
 
@@ -16268,7 +16274,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       
     case OP_READ_DOT:
-      if (token(sc, sc->input_port) != TOKEN_RIGHT_PAREN)
+      if (token(sc) != TOKEN_RIGHT_PAREN)
 	{
 	  back_up_stack(sc);
 	  sc->value = read_error(sc, "stray dot?");            /* (+ 1 . 2 3) or (list . ) */
