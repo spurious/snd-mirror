@@ -2555,3 +2555,120 @@ the multi-modulator FM case described by the list of modulator frequencies and i
 |#
 
 
+
+#|
+;;; these are standard FFTs for s7 (they won't work in Guile)
+
+(define* (fft! rl im n (dir 1))
+
+  (if (not im)
+      (let ((clear (copy rl)))
+	(fill! clear 0.0)
+	(set! im clear)))
+
+  (if (not n)
+      (set! n (length rl)))
+
+  (do ((i 0 (+ i 1))
+       (j 0))
+      ((= i n))
+    (if (> j i)
+	(let ((tempr (rl j))
+	      (tempi (im j)))
+	  (set! (rl j) (rl i))
+	  (set! (im j) (im i))
+	  (set! (rl i) tempr)
+	  (set! (im i) tempi)))
+    (let ((m (/ n 2)))
+      (do () 
+	  ((or (< m 2) (< j m)))
+	(set! j (- j m))
+	(set! m (/ m 2)))
+      (set! j (+ j m))))
+  
+  (let ((ipow (floor (log n 2)))
+	(prev 1))
+    (do ((lg 0 (+ lg 1))
+	 (mmax 2 (* mmax 2))
+	 (pow (/ n 2) (/ pow 2))
+	 (theta (* pi dir) (* theta 0.5)))
+	((= lg ipow))
+      (let ((wpr (cos theta))
+	    (wpi (sin theta))
+	    (wr 1.0)
+	    (wi 0.0))
+	(do ((ii 0 (+ ii 1)))
+	    ((= ii prev))
+	  (do ((jj 0 (+ jj 1))
+	       (i ii (+ i mmax))
+	       (j (+ ii prev) (+ j mmax)))
+	      ((>= jj pow))
+	    (let ((tempr (- (* wr (rl j)) (* wi (im j))))
+		  (tempi (+ (* wr (im j)) (* wi (rl j)))))
+	      (set! (rl j) (- (rl i) tempr))
+	      (set! (im j) (- (im i) tempi))
+	      (set! (rl i) (+ (rl i) tempr))
+	      (set! (im i) (+ (im i) tempi))))
+	  (let ((wtemp wr))
+	    (set! wr (- (* wr wpr) (* wi wpi)))
+	    (set! wi (+ (* wi wpr) (* wtemp wpi)))))
+	(set! prev mmax))))
+  rl)
+
+
+(define* (cfft! data n (dir 1))
+
+  (if (not n) (set! n (length data)))
+
+  (do ((i 0 (+ i 1))
+       (j 0))
+      ((= i n))
+    (if (> j i)
+	(let ((temp (data j)))
+	  (set! (data j) (data i))
+	  (set! (data i) temp)))
+    (let ((m (/ n 2)))
+      (do () 
+	  ((or (< m 2) (< j m)))
+	(set! j (- j m))
+	(set! m (/ m 2)))
+      (set! j (+ j m))))
+  
+  (let ((ipow (floor (log n 2)))
+	(prev 1))
+    (do ((lg 0 (+ lg 1))
+	 (mmax 2 (* mmax 2))
+	 (pow (/ n 2) (/ pow 2))
+	 (theta (make-rectangular 0.0 (* pi dir)) (* theta 0.5)))
+	((= lg ipow))
+      (let ((wpc (exp theta))
+	    (wc 1.0))
+	(do ((ii 0 (+ ii 1)))
+	    ((= ii prev))
+	  (do ((jj 0 (+ jj 1))
+	       (i ii (+ i mmax))
+	       (j (+ ii prev) (+ j mmax)))
+	      ((>= jj pow))
+	    (let ((tc (* wc (data j))))
+	      (set! (data j) (- (data i) tc))
+	      (set! (data i) (+ (data i) tc))))
+	  (set! wc (* wc wpc)))
+	(set! prev mmax))))
+
+  data)
+
+
+;;; > (cfft! (list 0.0 1+i 0.0 0.0))
+;;; (1+1i -1+1i -1-1i 1-1i)
+;;; 
+;;; > (cfft! (vector 0.0 1+i 0.0 0.0))
+;;; #(1+1i -1+1i -1-1i 1-1i)
+;;; 
+;;; ;; check against built-in FFT
+;;; > (let ((rl (vct 0.0 1.0 0.0 0.0)) 
+;;;         (im (vct 0.0 1.0 0.0 0.0))) 
+;;;     (mus-fft rl im) 
+;;;     (map make-rectangular (vct->list rl) (vct->list im)))
+;;; (1+1i -1+1i -1-1i 1-1i)
+
+|#

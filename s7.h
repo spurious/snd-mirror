@@ -53,9 +53,9 @@ typedef double s7_Double;
    *    provide                 adds a symbol to the *features* list
    *    port-line-number        current line during loading
    *    port-filename           current file name during loading
-   *    gc                      calls the GC, if its argument is #f, the GC is turned off
+   *    gc                      calls the GC. If its argument is #f, the GC is turned off
    *    quit                    exits s7
-   *    call-with-exit          just like call/cc but no jump back into a context
+   *    call-with-exit          just like call/cc but jump back into a context
    *    continuation?           #t if its argument is a continuation (as opposed to an ordinary procedure)
    *    procedure-documentation doc string associated with a procedure
    *    procedure-arity         a list describing the arglist of a function: '(required-args optional-args rest-arg)
@@ -63,14 +63,14 @@ typedef double s7_Double;
    *    help                    tries to find a help string associated with its argument
    *    symbol-calls            if profiling is enabled, returns the number of times its argument (a symbol) has been called
    *    trace and untrace       add or subtract functions from the trace list; (trace abs). 
-   *    stacktrace              show a stack trace, stack at error: (stacktrace *error-info*),
-   *                               at break point: (stacktrace break-continuation)
+   *    stacktrace              show a stack trace, the stack at the point of an error: (stacktrace *error-info*),
+   *                               or the stack at a break point: (stacktrace break-continuation)
    *
    *    and various others mentioned at the start of s7.c -- nearly every Scheme implementation includes
    *    stuff like logior, sinh, read-line, format, define*, etc.  See also the start of s7.c for choices
    *    such as multiprecision arithmetic, multidimensional vectors, initial heap and stack size, etc.
    *
-   *    Also length is generic, and a generic copy function is provided.
+   *    The functions length, copy, and fill! are generic.
    *
    * s7 non-standard object:
    *  
@@ -81,6 +81,15 @@ typedef double s7_Double;
    *       encapsulator?            #t if its argument is an encapsulator
    * 
    * --------------------------------------------------------------------------------
+   *
+   * I think s7 has built-in support for srfi-6 (basic string ports), srfi-17 (generalized-set!), 
+   *   srfi-18 (multithreading), srfi-28 (format, also nearly all of srfi-48), srfi-30 (block comments),
+   *   srfi-88 (keywords(, and srfi-89 (define*).  It also supports the functionality of many others
+   *   but under a slightly different syntax: srfi-69 (hash-tables), srfi-16 (define*), srfi-25 (multidimensional
+   *   arrays).  srfi-98 would be trivial to add, and exists in snd as getenv.
+   * The srfi-1 (lists) and srfi-60 (bitwise ops) reference implementations can be loaded as is. If someone
+   *   is interested, I think syntax-rules et al are implemented in scheme somewhere, and these could be used
+   *   to load many other srfi's.
    */
 
 
@@ -322,7 +331,53 @@ s7_pointer *s7_vector_elements(s7_pointer vec);                                 
    *  (make-vector (list 2 3 4)) returns a 3-dimensional vector with the given dimension sizes
    *  (make-vector '(2 3) 1.0) returns a 2-dim vector with all elements set to 1.0
    */
+  
+  /* since vectors and lists are set-applicable, and length is generic, we can write a
+   *   generic FFT that accepts both types or any other object that follows this syntax.
 
+        (define* (cfft! data n (dir 1)) ; (complex data)
+          (if (not n) (set! n (length data)))
+          (do ((i 0 (+ i 1))
+               (j 0))
+              ((= i n))
+            (if (> j i)
+        	(let ((temp (data j)))
+        	  (set! (data j) (data i))
+        	  (set! (data i) temp)))
+            (let ((m (/ n 2)))
+              (do () 
+        	  ((or (< m 2) (< j m)))
+        	(set! j (- j m))
+        	(set! m (/ m 2)))
+              (set! j (+ j m))))
+          (let ((ipow (floor (log n 2)))
+        	(prev 1))
+            (do ((lg 0 (+ lg 1))
+        	 (mmax 2 (* mmax 2))
+        	 (pow (/ n 2) (/ pow 2))
+        	 (theta (make-rectangular 0.0 (* pi dir)) (* theta 0.5)))
+        	((= lg ipow))
+              (let ((wpc (exp theta))
+        	    (wc 1.0))
+        	(do ((ii 0 (+ ii 1)))
+        	    ((= ii prev))
+        	  (do ((jj 0 (+ jj 1))
+        	       (i ii (+ i mmax))
+        	       (j (+ ii prev) (+ j mmax)))
+        	      ((>= jj pow))
+        	    (let ((tc (* wc (data j))))
+        	      (set! (data j) (- (data i) tc))
+        	      (set! (data i) (+ (data i) tc))))
+        	  (set! wc (* wc wpc)))
+        	(set! prev mmax))))
+          data)
+        
+        > (cfft! (list 0.0 1+i 0.0 0.0))
+        (1+1i -1+1i -1-1i 1-1i)
+        > (cfft! (vector 0.0 1+i 0.0 0.0))
+        #(1+1i -1+1i -1-1i 1-1i)
+  */
+        
 
 bool s7_is_hash_table(s7_pointer p);                                        /* (hash-table? p) */
 s7_pointer s7_make_hash_table(s7_scheme *sc, s7_Int size);                  /* (make-hash-table size) */
@@ -1572,12 +1627,12 @@ int main(int argc, char **argv)
 
 
   /* backwards compatibility... */
-#define s7_F(Sc) s7_f(Sc)
-#define s7_T(Sc) s7_t(Sc)
-#define s7_NIL(Sc) s7_nil(Sc)
-#define s7_UNDEFINED(Sc) s7_undefined(Sc)
+#define s7_F(Sc)           s7_f(Sc)
+#define s7_T(Sc)           s7_t(Sc)
+#define s7_NIL(Sc)         s7_nil(Sc)
+#define s7_UNDEFINED(Sc)   s7_undefined(Sc)
 #define s7_UNSPECIFIED(Sc) s7_unspecified(Sc)
-#define s7_EOF_OBJECT(Sc) s7_eof_object(Sc)
+#define s7_EOF_OBJECT(Sc)  s7_eof_object(Sc)
 
 
 

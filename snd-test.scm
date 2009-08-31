@@ -1,35 +1,35 @@
 ;;; Snd tests
 ;;;
-;;;  test 0: constants                           [566]
-;;;  test 1: defaults                            [1152]
-;;;  test 2: headers                             [1354]
-;;;  test 3: variables                           [1671]
-;;;  test 4: sndlib                              [2306]
-;;;  test 5: simple overall checks               [5002]
-;;;  test 6: vcts                                [13954]
-;;;  test 7: colors                              [14280]
-;;;  test 8: clm                                 [14777]
-;;;  test 9: mix                                 [26804]
-;;;  test 10: marks                              [29023]
-;;;  test 11: dialogs                            [29984]
-;;;  test 12: extensions                         [30225]
-;;;  test 13: menus, edit lists, hooks, etc      [30496]
-;;;  test 14: all together now                   [32115]
-;;;  test 15: chan-local vars                    [33067]
-;;;  test 16: regularized funcs                  [34712]
-;;;  test 17: dialogs and graphics               [39780]
-;;;  test 18: enved                              [39872]
-;;;  test 19: save and restore                   [39891]
-;;;  test 20: transforms                         [41666]
-;;;  test 21: new stuff                          [43798]
-;;;  test 22: run                                [45810]
-;;;  test 23: with-sound                         [52631]
-;;;  test 25: X/Xt/Xm                            [57177]
-;;;  test 26: Gtk                                [60950]
-;;;  test 27: GL                                 [64509]
-;;;  test 28: errors                             [64633]
-;;;  test all done                               [67135]
-;;;  test the end                                [67342]
+;;;  test 0: constants                           [628]
+;;;  test 1: defaults                            [1214]
+;;;  test 2: headers                             [1416]
+;;;  test 3: variables                           [1733]
+;;;  test 4: sndlib                              [2368]
+;;;  test 5: simple overall checks               [5109]
+;;;  test 6: vcts                                [14061]
+;;;  test 7: colors                              [14385]
+;;;  test 8: clm                                 [14882]
+;;;  test 9: mix                                 [26912]
+;;;  test 10: marks                              [29131]
+;;;  test 11: dialogs                            [30092]
+;;;  test 12: extensions                         [30333]
+;;;  test 13: menus, edit lists, hooks, etc      [30604]
+;;;  test 14: all together now                   [32218]
+;;;  test 15: chan-local vars                    [33170]
+;;;  test 16: regularized funcs                  [34817]
+;;;  test 17: dialogs and graphics               [39885]
+;;;  test 18: enved                              [39977]
+;;;  test 19: save and restore                   [39996]
+;;;  test 20: transforms                         [41772]
+;;;  test 21: new stuff                          [43959]
+;;;  test 22: run                                [45969]
+;;;  test 23: with-sound                         [52790]
+;;;  test 25: X/Xt/Xm                            [57338]
+;;;  test 26: Gtk                                [61107]
+;;;  test 27: GL                                 [64666]
+;;;  test 28: errors                             [64790]
+;;;  test all done                               [67292]
+;;;  test the end                                [67520]
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs))
 
@@ -71,6 +71,96 @@
 	  newstr))
 
       (define (sort lst . opt) (sort! lst (if (null? opt) < (car opt))))
+
+      (define* (cfft! data n (dir 1))
+	(if (not n) (set! n (length data)))
+	(do ((i 0 (+ i 1))
+	     (j 0))
+	    ((= i n))
+	  (if (> j i)
+	      (let ((temp (data j)))
+		(set! (data j) (data i))
+		(set! (data i) temp)))
+	  (let ((m (/ n 2)))
+	    (do () 
+		((or (< m 2) (< j m)))
+	      (set! j (- j m))
+	      (set! m (/ m 2)))
+	    (set! j (+ j m))))
+	(let ((ipow (floor (log n 2)))
+	      (prev 1))
+	  (do ((lg 0 (+ lg 1))
+	       (mmax 2 (* mmax 2))
+	       (pow (/ n 2) (/ pow 2))
+	       (theta (make-rectangular 0.0 (* pi dir)) (* theta 0.5)))
+	      ((= lg ipow))
+	    (let ((wpc (exp theta))
+		  (wc 1.0))
+	      (do ((ii 0 (+ ii 1)))
+		  ((= ii prev))
+		(do ((jj 0 (+ jj 1))
+		     (i ii (+ i mmax))
+		     (j (+ ii prev) (+ j mmax)))
+		    ((>= jj pow))
+		  (let ((tc (* wc (data j))))
+		    (set! (data j) (- (data i) tc))
+		    (set! (data i) (+ (data i) tc))))
+		(set! wc (* wc wpc)))
+	      (set! prev mmax))))
+	data)
+      
+      (define* (fft! rl im n (dir 1))
+	(if (not im)
+	    (let ((clear (copy rl)))
+	      (fill! clear 0.0)
+	      (set! im clear)))
+	(if (not n)
+	    (set! n (length rl)))
+	(do ((i 0 (+ i 1))
+	     (j 0))
+	    ((= i n))
+	  (if (> j i)
+	      (let ((tempr (rl j))
+		    (tempi (im j)))
+		(set! (rl j) (rl i))
+		(set! (im j) (im i))
+		(set! (rl i) tempr)
+		(set! (im i) tempi)))
+	  (let ((m (/ n 2)))
+	    (do () 
+		((or (< m 2) (< j m)))
+	      (set! j (- j m))
+	      (set! m (/ m 2)))
+	    (set! j (+ j m))))
+	(let ((ipow (floor (log n 2)))
+	      (prev 1))
+	  (do ((lg 0 (+ lg 1))
+	       (mmax 2 (* mmax 2))
+	       (pow (/ n 2) (/ pow 2))
+	       (theta (* pi dir) (* theta 0.5)))
+	      ((= lg ipow))
+	    (let ((wpr (cos theta))
+		  (wpi (sin theta))
+		  (wr 1.0)
+		  (wi 0.0))
+	      (do ((ii 0 (+ ii 1)))
+		  ((= ii prev))
+		(do ((jj 0 (+ jj 1))
+		     (i ii (+ i mmax))
+		     (j (+ ii prev) (+ j mmax)))
+		    ((>= jj pow))
+		  (let ((tempr (- (* wr (rl j)) (* wi (im j))))
+			(tempi (+ (* wr (im j)) (* wi (rl j)))))
+		    (set! (rl j) (- (rl i) tempr))
+		    (set! (im j) (- (im i) tempi))
+		    (set! (rl i) (+ (rl i) tempr))
+		    (set! (im i) (+ (im i) tempi))))
+		(let ((wtemp wr))
+		  (set! wr (- (* wr wpr) (* wi wpi)))
+		  (set! wi (+ (* wi wpr) (* wtemp wpi)))))
+	      (set! prev mmax))))
+	rl)
+      
       ))
 
 (if (not (defined? 'snd-test)) (define snd-test -1))
@@ -43808,6 +43898,60 @@ EDITS: 1
 	  (close-sound ind))
 	
 	))
+
+    (do ((i 0 (+ i 1)))
+	((= i 10))
+      (let* ((len (expt 2 (+ 2 (random 8))))
+	     (v0 (make-vct len))
+	     (v1 (make-vct len))
+	     (v2 (make-vector len)))
+	(do ((k 0 (+ k 1)))
+	    ((= k len))
+	  (set! (v0 k) (- (random 1.0) 0.5))
+	  (set! (v1 k) (- (random 1.0) 0.5))
+	  (set! (v2 k) (make-rectangular (v0 k) (v1 k))))
+	(let ((res1 (mus-fft v0 v1 len 1))
+	      (res2 (cfft! v2 len 1))
+	      (sum 0.0)
+	      (mx 0.0))
+	  (do ((m 0 (+ m 1)))
+	      ((= m len))
+	    (let ((diffr (abs (- (v0 m) (real-part (v2 m)))))
+		  (diffi (abs (- (v1 m) (imag-part (v2 m))))))
+	      (set! sum (+ sum diffr diffi))
+	      (if (> (max diffr diffi) mx)
+		  (set! mx (max diffr diffi)))))
+	  (if (or (> mx 1e-6)
+		  (> sum 1e-6))
+	      (format #t ";cfft! ~A: ~A ~A~%" len mx sum)))))
+
+    (do ((i 0 (+ i 1)))
+	((= i 10))
+      (let* ((len (expt 2 (+ 2 (random 8))))
+	     (v0 (make-vct len))
+	     (v1 (make-vct len))
+	     (v2 (make-vct len))
+	     (v3 (make-vct len)))
+	(do ((k 0 (+ k 1)))
+	    ((= k len))
+	  (set! (v0 k) (- (random 1.0) 0.5))
+	  (set! (v1 k) (- (random 1.0) 0.5))
+	  (set! (v2 k) (v0 k))
+	  (set! (v3 k) (v1 k)))
+	(let ((res1 (mus-fft v0 v1 len 1))
+	      (res2 (fft! v2 v3 len 1))
+	      (sum 0.0)
+	      (mx 0.0))
+	  (do ((m 0 (+ m 1)))
+	      ((= m len))
+	    (let ((diffr (abs (- (v0 m) (v2 m))))
+		  (diffi (abs (- (v1 m) (v3 m)))))
+	      (set! sum (+ sum diffr diffi))
+	      (if (> (max diffr diffi) mx)
+		  (set! mx (max diffr diffi)))))
+	  (if (or (> mx 1e-6)
+		  (> sum 1e-6))
+	      (format #t ";fft! ~A: ~A ~A~%" len mx sum)))))
     ))
 
 
@@ -52637,7 +52781,22 @@ EDITS: 1
     (bxtst (run (lambda () (equal? "asd" "asd"))) #t)
     (bxtst (run (lambda () (equal? "asd" "dsa"))) #f)
     
-    
+    (let ((len (let ((v (make-vct 32))) (run (lambda () (length v))))))
+      (if (not (= len 32)) (snd-display ";run length vct: ~A" len)))
+    (let ((len (let ((v (make-vector 32 1.0))) (run (lambda () (length v))))))
+      (if (not (= len 32)) (snd-display ";run length vector 1.0: ~A" len)))
+    (let ((len (let ((v (make-vector 32 1))) (run (lambda () (length v))))))
+      (if (not (= len 32)) (snd-display ";run length vector 1: ~A" len)))
+    (let ((len (let ((s (string #\h #\i))) (run (lambda () (length s))))))
+      (if (not (= len 2)) (snd-display ";run length string: ~A" len)))
+    (let ((len (let ((l (list 1 2 3))) (run (lambda () (length l))))))
+      (if (not (= len 3)) (snd-display ";run length list: ~A" len)))
+    (let ((len (let ((f (make-frame 3))) (run (lambda () (length f))))))
+      (if (not (= len 3)) (snd-display ";run length frame: ~A" len)))
+    (let ((len (let ((f (make-mixer 3))) (run (lambda () (length f))))))
+      (if (not (= len 3)) (snd-display ";run length mixer: ~A" len)))
+    (let ((len (let ((f (make-delay 32))) (run (lambda () (length f))))))
+      (if (not (= len 32)) (snd-display ";run length delay: ~A" len)))
     ))
 
 

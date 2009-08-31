@@ -10033,9 +10033,40 @@ static void length_0(int *args, ptree *pt)
 }
 
 
+static xen_value *vector_length_1(ptree *prog, xen_value **args, int num_args);
+static xen_value *vct_length_1(ptree *prog, xen_value **args, int num_args);
+static xen_value *mus_length_0(ptree *prog, xen_value **args, int num_args);
+
 static xen_value *length_1(ptree *prog, xen_value **args, int num_args)
 {
-  return(package(prog, R_INT, length_0, "length", args, 1));
+  switch (args[1]->type)
+    {
+    case R_LIST:
+      return(package(prog, R_INT, length_0, "length", args, 1));
+      break;
+
+    case R_VCT:
+      return(vct_length_1(prog, args, num_args));
+      break;
+
+    case R_FLOAT_VECTOR: 
+    case R_LIST_VECTOR:  
+    case R_INT_VECTOR:  
+    case R_VCT_VECTOR:  
+    case R_CLM_VECTOR:   
+      return(vector_length_1(prog, args, num_args));
+      break;
+
+    case R_STRING:
+      return(string_length_1(prog, args, num_args));
+      break;
+      
+    case R_CLM:
+      return(mus_length_0(prog, args, num_args));
+      break;
+    }
+
+  return(run_warn("unsupported arg type for length"));
 }
 
 
@@ -10087,6 +10118,7 @@ static xen_value *vector_length_1(ptree *prog, xen_value **args, int num_args)
     case R_FLOAT_VECTOR: 
       return(package(prog, R_INT, vector_length_f, "vector_length_f", args, 1));
       break;
+
     case R_LIST_VECTOR:  
     case R_INT_VECTOR:  
     case R_VCT_VECTOR:  
@@ -16570,7 +16602,7 @@ static void init_walkers(void)
   INIT_WALKER("caddr",     make_walker(caddr_1, NULL, NULL, 1, 1, R_ANY, false, 1, R_LIST));
   INIT_WALKER("cadddr",    make_walker(cadddr_1, NULL, NULL, 1, 1, R_ANY, false, 1, R_LIST));
   INIT_WALKER("set-car!",  make_walker(set_car_1, NULL, NULL, 2, 2, R_ANY, false, 1, R_LIST));
-  INIT_WALKER("length",    make_walker(length_1, NULL, NULL, 1, 1, R_INT, false, 1, R_LIST));
+  INIT_WALKER("length",    make_walker(length_1, NULL, NULL, 1, 1, R_INT, false, 1, R_ANY));
   INIT_WALKER("null?",     make_walker(null_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_LIST));
   INIT_WALKER("quote",     make_walker(NULL, quote_form, NULL, 1, 1, R_ANY, false, 0));
 

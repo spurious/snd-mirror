@@ -21577,7 +21577,7 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "display",                 g_display,                 1, 1, false, H_display);
   s7_define_function(sc, "read-byte",               g_read_byte,               0, 1, false, H_read_byte);
   s7_define_function(sc, "write-byte",              g_write_byte,              1, 1, false, H_write_byte);
-  s7_define_function(sc, "read-line",               g_read_line,               0, 1, false, H_read_line);
+  s7_define_function(sc, "read-line",               g_read_line,               0, 1, true, H_read_line); /* rest arg for compatibility with Guile */
   
   s7_define_function(sc, "call-with-input-string",  g_call_with_input_string,  2, 0, false, H_call_with_input_string);
   s7_define_function(sc, "call-with-input-file",    g_call_with_input_file,    2, 0, false, H_call_with_input_file);
@@ -21950,5 +21950,5 @@ s7_scheme *s7_init(void)
 /* unicode is probably do-able if it is sequestered in the s7 strings 
  */
 
-/* TODO: run for generics, also run set! of globals? */
+/* TODO: run for copy and fill! generics, also run set! of globals? */
 /* TODO: how to trace setter [s7_object_set?] mus-srate for example */
