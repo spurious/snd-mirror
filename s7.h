@@ -501,10 +501,17 @@ s7_pointer s7_current_environment(s7_scheme *sc);                           /* (
       (define-macro (define! e var val) 
         `(push-environment ,e (cons ',var ,val)))
 
+      (define (make-environment . initial-bindings)
+         (cons initial-bindings (global-environment)))
+
    *   (let ((x 3)) 
    *     (define! (current-environment) hi 21)
    *     (+ x hi))
    *   -> 24
+   *
+   *   (let ((x 32)) 
+   *     (eval `(+ x y) (make-environment '(x . 2) '(y . 4))))
+   *   -> 6
    */
 
 s7_pointer s7_name_to_value(s7_scheme *sc, const char *name);

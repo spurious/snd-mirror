@@ -341,7 +341,7 @@ typedef struct s7_port_t {
   int file_number;
   char *filename;
   char *value;
-  int size, point;
+  int size, point;   /* PERHAPS: s7_Int? */
   void (*function)(s7_scheme *sc, char c, s7_pointer port);
 } s7_port_t;
 
@@ -370,7 +370,7 @@ typedef struct s7_cell {
   union {
     
     struct {
-      int  length;
+      int  length; /* PERHAPS: s7_Int? */
       char *svalue;
       s7_pointer global_slot; /* for strings that represent symbol names, this is the current global environment (symbol value) cons */
     } string;
@@ -439,7 +439,14 @@ typedef struct {
 
 struct s7_scheme {  
   s7_cell **heap, **free_heap;
-  int heap_size, free_heap_top;
+  unsigned int heap_size, free_heap_top;
+
+  /* "int" or "unsigned int" seems safe here:
+   *      sizeof(s7_cell) = 28 in 32-bit machines, 32 in 64
+   *      so to get more than 2^32 actual objects would require ca 140 GBytes RAM
+   *      vectors might be full of the same object (sc->NIL for example), so there
+   *      we need ca 38 GBytes RAM (8 bytes per pointer).
+   */
   
   s7_pointer args;                    /* arguments of current function */
   s7_pointer envir;                   /* current environment */
@@ -685,6 +692,7 @@ struct s7_scheme {
 #define character(p)                  ((p)->object.cvalue)
 
 #define symbol_location(p)            (p)->object.cons.line
+  /* presumably the symbol table size will fit in an int, so this is safe */
 #define symbol_name(p)                string_value(car(p))
 #define symbol_name_length(p)         string_length(car(p))
 #define symbol_value(Sym)             cdr(Sym)
@@ -1253,7 +1261,8 @@ void s7_mark_object(s7_pointer p)
 
 static int gc(s7_scheme *sc)
 {
-  int i, old_free_heap_top;
+  int i;
+  unsigned int old_free_heap_top;
   
   /* mark all live objects (the symbol table is in permanent memory, not the heap) */
   S7_MARK(sc->global_env);
@@ -1311,7 +1320,7 @@ static int gc(s7_scheme *sc)
       }
   }
 
-  /* fprintf(stderr, "gc: %d of %d\n", sc->free_heap_top - old_free_heap_top, sc->heap_size); */
+  /* fprintf(stderr, "gc: %d of %u\n", sc->free_heap_top - old_free_heap_top, sc->heap_size); */
   
   return(sc->free_heap_top - old_free_heap_top); /* needed by cell allocator to decide when to increase heap size */
 }
@@ -1324,8 +1333,6 @@ static s7_pointer g_dump_heap(s7_scheme *sc, s7_pointer args)
   s7_pointer *tp;
   int i;
 
-  for (i = 0; i < sc->temps_size; i++)
-    sc->temps[i] = sc->NIL;
   gc(sc);
 
   fd = fopen("heap.data", "w");
@@ -1336,8 +1343,13 @@ static s7_pointer g_dump_heap(s7_scheme *sc, s7_pointer args)
       if (typeflag(p) != 0)
 	fprintf(fd, "%s\n", s7_object_to_c_string(sc, p));
     }
-  fclose(fd);
 
+  fprintf(fd, "-------------------------------- temps --------------------------------\n");
+  for (i = 0; i < sc->temps_size; i++)
+    if (typeflag(sc->temps[i]) != 0)
+      fprintf(fd, "%s\n", s7_object_to_c_string(sc, sc->temps[i]));
+
+  fclose(fd);
   return(sc->NIL);
 }
 #endif
@@ -1359,10 +1371,10 @@ static s7_pointer new_cell(s7_scheme *sc)
   sc = nsc->orig_sc;
 #endif
 
-  if (sc->free_heap_top <= 0)
+  if (sc->free_heap_top == 0)
     {
       /* no free heap */
-      int k, old_size, freed_heap = 0;
+      unsigned int k, old_size, freed_heap = 0;
       
       if (!(*(sc->gc_off)))
         freed_heap = gc(sc);
@@ -1439,6 +1451,11 @@ static s7_pointer g_gc(s7_scheme *sc, s7_pointer args)
   gc(sc->orig_sc);
   pthread_mutex_unlock(&alloc_lock);
 #else
+  {
+    int i;
+    for (i = 0; i < sc->temps_size; i++)
+      sc->temps[i] = sc->NIL;
+  }
   gc(sc);
 #endif
   
@@ -1628,14 +1645,26 @@ static void show_stack(s7_scheme *sc)
 
 /* -------------------------------- symbols -------------------------------- */
 
-static int hash_fn(const char *key, int table_size) 
+static s7_Int hash_table_hash(const char *key, s7_Int table_size) 
 { 
   /* I tried several other hash functions, but they gave about the same incidence of collisions */
-  unsigned int hashed = 0; 
+  unsigned long long int hashed = 0; 
   const char *c; 
   for (c = key; *c; c++) 
     hashed = *c + hashed * 37;
   return(hashed % table_size); 
+} 
+
+
+static int symbol_table_hash(const char *key, int table_size) 
+{ 
+  /* I tried several other hash functions, but they gave about the same incidence of collisions */
+  unsigned int hashed = 0;
+  const char *c; 
+  for (c = key; *c; c++) 
+    hashed = *c + hashed * 37;
+  return(hashed % table_size); 
+  /* using ints here is much faster, and the symbol table will not be enormous, so it's worth splitting out this case */
 } 
 
 
@@ -1669,7 +1698,7 @@ static s7_pointer symbol_table_add_by_name_at_location(s7_scheme *sc, const char
 
 static s7_pointer symbol_table_add_by_name(s7_scheme *sc, const char *name) 
 {
-  return(symbol_table_add_by_name_at_location(sc, name, hash_fn(name, vector_length(sc->symbol_table)))); 
+  return(symbol_table_add_by_name_at_location(sc, name, symbol_table_hash(name, vector_length(sc->symbol_table)))); 
 }
 
 
@@ -1762,7 +1791,7 @@ s7_pointer s7_make_symbol(s7_scheme *sc, const char *name)
 { 
   s7_pointer x; 
   int location;
-  location = hash_fn(name, vector_length(sc->symbol_table)); 
+  location = symbol_table_hash(name, vector_length(sc->symbol_table)); 
   x = symbol_table_find_by_name(sc, name, location); 
   if (x != sc->NIL) 
     return(x); 
@@ -1782,7 +1811,7 @@ s7_pointer s7_gensym(s7_scheme *sc, const char *prefix)
   for (; (*(sc->gensym_counter)) < LONG_MAX; ) 
     { 
       snprintf(name, len, "%s-%ld", prefix, (*(sc->gensym_counter))++); 
-      location = hash_fn(name, vector_length(sc->symbol_table)); 
+      location = symbol_table_hash(name, vector_length(sc->symbol_table)); 
       x = symbol_table_find_by_name(sc, name, location); 
       if (x != sc->NIL)
 	{
@@ -2191,7 +2220,6 @@ void s7_define_constant(s7_scheme *sc, const char *name, s7_pointer value)
 
 static s7_pointer s7_find_value_in_environment(s7_scheme *sc, s7_pointer val)
 { 
-  int i, len;
   s7_pointer x, y, vec; 
   for (x = sc->envir; (x != sc->NIL) && (!s7_is_vector(car(x))); x = cdr(x)) 
     for (y = car(x); y != sc->NIL; y = cdr(y)) 
@@ -2200,6 +2228,7 @@ static s7_pointer s7_find_value_in_environment(s7_scheme *sc, s7_pointer val)
   
   if (s7_is_vector(car(x)))
     {
+      int i, len;
       vec = car(x);
       len = vector_length(vec);
       for (i = 0; i < len; i++)
@@ -6309,12 +6338,15 @@ static s7_pointer g_integer_length(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_logior(s7_scheme *sc, s7_pointer args)
 {
   #define H_logior "(logior i1 ...) returns the bitwise OR of its integer arguments"
-  int result = 0, i;
+  s7_Int result = 0;
+  int i; 
   s7_pointer x;
+
   for (i = 0, x = args; x != sc->NIL; i++, x = cdr(x))
     if (!s7_is_integer(car(x)))
       return(s7_wrong_type_arg_error(sc, "logior", i, car(x), "an integer"));
     else result |= s7_integer(car(x));
+
   return(s7_make_integer(sc, result));
 }
 
@@ -6322,12 +6354,15 @@ static s7_pointer g_logior(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_logxor(s7_scheme *sc, s7_pointer args)
 {
   #define H_logxor "(logxor i1 ...) returns the bitwise XOR of its integer arguments"
-  int result = 0, i;
+  s7_Int result = 0;
+  int i;
   s7_pointer x;
+
   for (i = 0, x = args; x != sc->NIL; i++, x = cdr(x))
     if (!s7_is_integer(car(x)))
       return(s7_wrong_type_arg_error(sc, "logxor", i, car(x), "an integer"));
     else result ^= s7_integer(car(x));
+
   return(s7_make_integer(sc, result));
 }
 
@@ -6335,12 +6370,15 @@ static s7_pointer g_logxor(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_logand(s7_scheme *sc, s7_pointer args)
 {
   #define H_logand "(logand i1 ...) returns the bitwise AND of its integer arguments"
-  int result = -1, i;
+  s7_Int result = -1;
+  int i;
   s7_pointer x;
+
   for (i = 0, x = args; x != sc->NIL; i++, x = cdr(x))
     if (!s7_is_integer(car(x)))
       return(s7_wrong_type_arg_error(sc, "logand", i, car(x), "an integer"));
     else result &= s7_integer(car(x));
+
   return(s7_make_integer(sc, result));
 }
 
@@ -6358,6 +6396,7 @@ static s7_pointer g_ash(s7_scheme *sc, s7_pointer args)
 {
   #define H_ash "(ash i1 i2) returns i1 shifted right or left i2 times, i1 << i2"
   s7_Int arg1, arg2;
+
   if (!s7_is_integer(car(args)))
     return(s7_wrong_type_arg_error(sc, "ash", 1, car(args), "an integer"));
   if (!s7_is_integer(cadr(args)))
@@ -11772,7 +11811,7 @@ s7_pointer s7_hash_table_ref(s7_scheme *sc, s7_pointer table, const char *name)
   s7_Int location;
   s7_pointer x;
   
-  location = hash_fn(name, vector_length(table));
+  location = hash_table_hash(name, vector_length(table));
   for (x = vector_element(table, location); x != sc->NIL; x = cdr(x)) 
     if (strcmp(name, string_value(caar(x))) == 0) 
       return(cdar(x)); 
@@ -11785,7 +11824,7 @@ s7_pointer s7_hash_table_set(s7_scheme *sc, s7_pointer table, const char *name, 
 {
   s7_Int location;
   s7_pointer x;
-  location = hash_fn(name, vector_length(table)); 
+  location = hash_table_hash(name, vector_length(table)); 
   
   /* if it exists, update value, else add to table */
   for (x = vector_element(table, location); x != sc->NIL; x = cdr(x)) 
@@ -21947,8 +21986,5 @@ s7_scheme *s7_init(void)
   return(sc);
 }
 
-/* unicode is probably do-able if it is sequestered in the s7 strings 
- */
-
-/* TODO: run for copy and fill! generics, also run set! of globals? */
+/* unicode is probably do-able if it is sequestered in the s7 strings */
 /* TODO: how to trace setter [s7_object_set?] mus-srate for example */

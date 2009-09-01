@@ -2500,15 +2500,18 @@ static xen_value *transfer_value(ptree *prog, xen_value *v)
     case R_FLOAT: 
       return(make_xen_value(v->type, add_dbl_to_ptree(prog, prog->dbls[v->addr]), R_VARIABLE)); 
       break;
+
     case R_STRING: 
       return(make_xen_value(v->type, add_string_to_ptree(prog, mus_strdup(prog->strs[v->addr])), R_VARIABLE)); 
       break;
+
     case R_INT:
     case R_BOOL:
     case R_CHAR:
     case R_GOTO:
       return(make_xen_value(v->type, add_int_to_ptree(prog, prog->ints[v->addr]), R_VARIABLE));      
       break;
+
     default:
       return(make_xen_value(v->type, v->addr, R_VARIABLE)); 
       break;
@@ -10070,6 +10073,13 @@ static xen_value *length_1(ptree *prog, xen_value **args, int num_args)
 }
 
 
+/* TODO fill and copy (and "run set! of globals" whatever I meant by that)
+   static xen_value *string_fill_1(ptree *pt, xen_value **args, int num_args)
+   static xen_value *vct_fill_1(ptree *pt, xen_value **args, int num_args)
+   static xen_value *vector_fill_1(ptree *prog, xen_value **args, int num_args)
+   but no list_fill and clm cases are handled specially
+*/
+
 
 static void null_0(int *args, ptree *pt) 
 {
@@ -15317,10 +15327,12 @@ static int xen_to_addr(ptree *pt, XEN arg, int type, int addr)
 #endif
     case R_SYMBOL:
     case R_KEYWORD:      pt->xens[addr] = arg;                              break;
+
     case R_STRING:
       if (!(pt->strs[addr]))
 	pt->strs[addr] = mus_strdup(XEN_TO_C_STRING(arg)); 
       break;
+
     case R_FLOAT_VECTOR:
       if (!(pt->vcts[addr]))
 	{
@@ -15328,6 +15340,7 @@ static int xen_to_addr(ptree *pt, XEN arg, int type, int addr)
 	  add_obj_to_gcs(pt, R_FLOAT_VECTOR, addr);
 	}
       break;
+
     case R_LIST_VECTOR: 
     case R_INT_VECTOR: 
     case R_VCT_VECTOR:
@@ -15338,6 +15351,7 @@ static int xen_to_addr(ptree *pt, XEN arg, int type, int addr)
 	  add_obj_to_gcs(pt, type, addr);
 	}
       break;
+
     default:
       if ((type == R_LIST) ||
 	  (CLM_STRUCT_P(type)))

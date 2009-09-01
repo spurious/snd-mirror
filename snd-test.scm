@@ -7,29 +7,29 @@
 ;;;  test 4: sndlib                              [2368]
 ;;;  test 5: simple overall checks               [5109]
 ;;;  test 6: vcts                                [14061]
-;;;  test 7: colors                              [14385]
-;;;  test 8: clm                                 [14882]
-;;;  test 9: mix                                 [26912]
-;;;  test 10: marks                              [29131]
-;;;  test 11: dialogs                            [30092]
-;;;  test 12: extensions                         [30333]
-;;;  test 13: menus, edit lists, hooks, etc      [30604]
-;;;  test 14: all together now                   [32218]
-;;;  test 15: chan-local vars                    [33170]
-;;;  test 16: regularized funcs                  [34817]
-;;;  test 17: dialogs and graphics               [39885]
-;;;  test 18: enved                              [39977]
-;;;  test 19: save and restore                   [39996]
-;;;  test 20: transforms                         [41772]
-;;;  test 21: new stuff                          [43959]
-;;;  test 22: run                                [45969]
-;;;  test 23: with-sound                         [52790]
-;;;  test 25: X/Xt/Xm                            [57338]
-;;;  test 26: Gtk                                [61107]
-;;;  test 27: GL                                 [64666]
-;;;  test 28: errors                             [64790]
-;;;  test all done                               [67292]
-;;;  test the end                                [67520]
+;;;  test 7: colors                              [14445]
+;;;  test 8: clm                                 [14942]
+;;;  test 9: mix                                 [26972]
+;;;  test 10: marks                              [29191]
+;;;  test 11: dialogs                            [30152]
+;;;  test 12: extensions                         [30393]
+;;;  test 13: menus, edit lists, hooks, etc      [30664]
+;;;  test 14: all together now                   [32278]
+;;;  test 15: chan-local vars                    [33230]
+;;;  test 16: regularized funcs                  [34877]
+;;;  test 17: dialogs and graphics               [39945]
+;;;  test 18: enved                              [40037]
+;;;  test 19: save and restore                   [40056]
+;;;  test 20: transforms                         [41832]
+;;;  test 21: new stuff                          [44023]
+;;;  test 22: run                                [46033]
+;;;  test 23: with-sound                         [52869]
+;;;  test 25: X/Xt/Xm                            [57417]
+;;;  test 26: Gtk                                [61186]
+;;;  test 27: GL                                 [64745]
+;;;  test 28: errors                             [64869]
+;;;  test all done                               [67371]
+;;;  test the end                                [67599]
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs))
 
@@ -14378,7 +14378,67 @@ EDITS: 2
 		(let ((ho (vct-subseq hi (- (expt 2 31) 3) (+ (expt 2 31) 1))))
 		  (if (not (vequal ho (vct 10.0 1.0 1.0 10.0 1.0)))
 		      (snd-display ";big vct, subseq: ~A" ho)))
-		)))
+		)
+
+	      ;; big vectors/hash-tables also
+	      (gc)
+	      
+	      (let ((size (+ 2 (expt 2 31))))
+		(if (not (= size 2147483650))
+		    (snd-display ";big vector size: ~A (~A ~A)" size 2147483650 (- 2147483650 size)))
+		(let ((hi (make-vector size '())))
+		  (if (not (vector? hi))
+		      (snd-display ";big vector not a vector?? ~A" hi))
+		  (if (not (null? (vector-ref hi (expt 2 31))))
+		      (snd-display ";big vector created at end: ~A" (vector-ref hi (expt 2 31))))
+		  (set! (hi (expt 2 31)) 100)
+		  (if (not (= (vector-ref hi (expt 2 31)) 100))
+		      (snd-display ";big vector set to 100 at end: ~A" (vector-ref hi (expt 2 31))))
+		  (let ((len (vector-length hi)))
+		    (if (not (= len size))
+			(snd-display ";big vector len: ~A" len)))
+		  (vector-fill! hi 2)
+		  (if (not (= (vector-ref hi (expt 2 31)) 2))
+		      (snd-display ";big vector fill: ~A" (vector-ref hi (expt 2 31))))))
+	      
+	      (gc)
+	      
+	      (let ((hi (make-vector (list (+ 2 (expt 2 30)) 2) '())))
+		(if (not (= (vector-length hi) (* 2 (+ 2 (expt 2 30)))))
+		    (snd-display ";big vector 2dim size: ~A ~A" (vector-length hi) (* 2 (+ 2 (expt 2 30)))))
+		(if (not (null? (vector-ref hi (expt 2 30) 0)))
+		    (snd-display ";big vector 2dim created at end (0): ~A" (vector-ref hi (expt 2 30) 0)))
+		(if (not (null? (vector-ref hi (expt 2 30) 1)))
+		    (snd-display ";big vector 2dim created at end (1): ~A" (vector-ref hi (expt 2 30) 1)))
+		(set! (hi (expt 2 30) 1) 100)
+		(if (not (= (vector-ref hi (expt 2 30) 1) 100))
+		    (snd-display ";big vector 2dim set to 100 at end: ~A" (vector-ref hi (expt 2 30) 1)))
+		(vector-fill! hi 2)
+		(if (not (= (vector-ref hi (expt 2 30) 0) 2))
+		    (snd-display ";big vector 2dim fill: ~A" (vector-ref hi (expt 2 30) 0))))
+	      
+	      (gc)
+	      
+	      (let ((hi (make-hash-table (+ 2 (expt 2 31)))))
+		(if (not (= (hash-table-size hi) (+ 2 (expt 2 31))))
+		    (snd-display ";big hash size: ~A ~A" (hash-table-size hi) (+ 2 (expt 2 31))))
+		(if (fneq (let () (hash-table-set! hi 'key 3.14) (hash-table-ref hi 'key)) 3.14)
+		    (snd-display ";big hash 3.14: ~A" (hash-table-ref hi 'key)))
+		(if (not (equal? (let () (hash-table-set! hi 123 "hiho") (hash-table-ref hi 123)) "hiho"))
+		    (snd-display ";big hash 123: ~A" (hash-table-ref hi 123)))
+		(if (not (equal? (let () 
+				   (hash-table-set! hi 'hiho-this-is-a-big-name-to-overflow-32-bits-I-hope "hiho")
+				   (hash-table-ref hi 'hiho-this-is-a-big-name-to-overflow-32-bits-I-hope))
+				 "hiho"))
+		    (snd-display ";big hash big symbol: ~A" (hash-table-ref hi 'hiho-this-is-a-big-name-to-overflow-32-bits-I-hope)))
+		(if (not (equal? (let () 
+				   (hash-table-set! hi 12345678912345 "hiho")
+				   (hash-table-ref hi 12345678912345))
+				 "hiho"))
+		    (snd-display ";big hash big symbol: ~A" (hash-table-ref hi 12345678912345))))
+	      
+	      (gc)
+	      ))
 	))))
 
 
@@ -43924,6 +43984,10 @@ EDITS: 1
 	  (if (or (> mx 1e-6)
 		  (> sum 1e-6))
 	      (format #t ";cfft! ~A: ~A ~A~%" len mx sum)))))
+
+    (let ((val (cfft! (cfft! (cfft! (cfft! (vector 0.0 1+i 0.0 0.0)))))))
+      (if (not (equal? val '#(0.0 16+16i 0.0 0.0)))
+	  (snd-display ";cfft! 4x: ~A" val)))
 
     (do ((i 0 (+ i 1)))
 	((= i 10))

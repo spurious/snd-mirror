@@ -8,6 +8,7 @@
 ;;;   guile test suite
 ;;;   gauche test suite
 ;;;   gambit test suite
+;;;   sacla test suite
 ;;;   Kent Dybvig's "The Scheme Programming Language"
 ;;;   Brad Lucier (who also pointed out many bugs)
 ;;;   numtst.c
@@ -1860,6 +1861,36 @@
 (test (cadr '(1 2 . 3)) 2)
 (test (cddr '(1 2 . 3)) 3)
 
+;; sacla
+(test (caar '((a) b c)) 'a)
+(test (cadr '(a b c)) 'b)
+(test (cdar '((a . aa) b c)) 'aa)
+(test (cddr '(a b . c)) 'c)
+(test (caaar '(((a)) b c)) 'a)
+(test (caadr '(a (b) c)) 'b)
+(test (cadar '((a aa) b c)) 'aa)
+(test (caddr '(a b c)) 'c)
+(test (cdaar '(((a . aa)) b c)) 'aa)
+(test (cdadr '(a (b . bb) c)) 'bb)
+(test (cddar '((a aa . aaa) b c)) 'aaa)
+(test (cdddr '(a b c . d)) 'd)
+(test (caaaar '((((a))) b c)) 'a)
+(test (caaadr '(a ((b)) c)) 'b)
+(test (caadar '((a (aa)) b c)) 'aa)
+(test (caaddr '(a b (c))) 'c)
+(test (cadaar '(((a aa)) b c)) 'aa)
+(test (cadadr '(a (b bb) c)) 'bb)
+(test (caddar '((a aa aaa) b c)) 'aaa)
+(test (cadddr '(a b c d)) 'd)
+(test (cdaaar '((((a . aa))) b c)) 'aa)
+(test (cdaadr '(a ((b . bb)) c)) 'bb)
+(test (cdadar '((a (aa . aaa)) b c)) 'aaa)
+(test (cdaddr '(a b (c . cc))) 'cc)
+(test (cddaar '(((a aa . aaa)) b c)) 'aaa)
+(test (cddadr '(a (b bb . bbb) c)) 'bbb)
+(test (cdddar '((a aa aaa . aaaa) b c)) 'aaaa)
+(test (cddddr '(a b c d . e)) 'e)
+
 (test (caar '(((((1 2 3) 4) 5) (6 7)) (((u v w) x) y) ((q w e) r) (a b c) e f g)) '(((1 2 3) 4) 5))
 (test (cadr '(((((1 2 3) 4) 5) (6 7)) (((u v w) x) y) ((q w e) r) (a b c) e f g)) '(((u v w) x) y))
 (test (cdar '(((((1 2 3) 4) 5) (6 7)) (((u v w) x) y) ((q w e) r) (a b c) e f g)) '((6 7)))
@@ -3426,6 +3457,46 @@
 (test (let ((hi (lambda (x) (+ x 1)))) (do ((i 0 (hi i))) ((= i 3) i))) 3)
 (test (do ((i 0 (+ i 1))) (list 1) ((= i 3) #t)) 1) ; a typo originally -- Guile and Gauche are happy with it
 (test (do () (1 2) 3) 2)
+
+;; from sacla tests
+(test (let ((rev (lambda (list)
+		   (do ((x list (cdr x))
+			(reverse '() (cons (car x) reverse)))
+		       ((null? x) reverse)))))
+	(and (null? (rev '()))
+	     (equal? (rev '(0 1 2 3 4)) '(4 3 2 1 0))))
+      #t)
+
+(test (let ((nrev (lambda (list)
+		    (do ((f1st (if (null? list) '() (cdr list)) (if (null? f1st) '() (cdr f1st)))
+			 (s2nd list f1st)
+			 (t3rd '() s2nd))
+			((null? s2nd) t3rd)
+		      (set-cdr! s2nd t3rd)))))
+	(and (null? (nrev '()))
+	     (equal? (nrev (list 0 1 2 3 4)) '(4 3 2 1 0))))
+      #t)
+
+(test (do ((temp-one 1 (+ temp-one 1))
+	     (temp-two 0 (- temp-two 1)))
+	    ((> (- temp-one temp-two) 5) temp-one))
+	4)
+
+(test (do ((temp-one 1 (+ temp-one 1))
+	     (temp-two 0 (+ temp-one 1)))     
+	 ((= 3 temp-two) temp-one))
+	3)
+
+(let ((vec (vector 0 1 2 3 4 5 6 7 8 9)))
+  (test (do ((i 0 (1+ i))
+	       (n #f)
+	       (j 9 (- j 1)))
+	      ((>= i j) vec)
+	    (set! n (vector-ref vec i))
+	    (vector-set! vec i (vector-ref vec j))
+	    (vector-set! vec j n))
+	  '#(9 8 7 6 5 4 3 2 1 0)))
+
 
 
 
@@ -7226,6 +7297,14 @@
 (num-test (sin 9.42512322775237976202e+00-2.0e+00i) -1.2989619299081657245e-3+3.6268601916692946571e0i)
 (num-test (sin -9.42512322775237976202e+00+2.0e+00i) 1.2989619299081657245e-3-3.6268601916692946571e0i)
 (num-test (sin -9.42512322775237976202e+00-2.0e+00i) 1.2989619299081657245e-3+3.6268601916692946571e0i)
+
+(let ((val1 (sin (/ our-pi 60)))
+      (val2 (* 1/16 (- (* (+ (sqrt 6) (sqrt 2)) (- (sqrt 5) 1)) (* 2 (- (sqrt 3) 1) (sqrt (+ 5 (sqrt 5))))))))
+  (num-test (- val1 val2) 0.0))
+
+(let ((val1 (sin (/ (* 4 our-pi) 15)))
+      (val2 (* 1/8 (+ (sqrt (+ 10 (* 2 (sqrt 5)))) (sqrt 15) (- (sqrt 3))))))
+    (num-test (- val1 val2) 0.0))
 
 
 ;; -------- cos
