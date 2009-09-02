@@ -1,0 +1,427 @@
+<html>
+<!-- documentation for s7 -->
+
+<head>
+<title>s7</title>
+<style type="text/css">
+<!-- 
+	EM.red {color:red; font-style:normal}
+        EM.error {color:chocolate; font-style:normal}
+        EM.typing {color:maroon; font-style: normal}
+        EM.listener {color:darkblue; font-style: normal}
+	EM.emdef {font-weight: bold; font-style: normal}
+	H1 {text-align: center}
+	UL {list-style-type: none}
+
+	A {text-decoration:none}
+	A:hover {text-decoration:underline}
+	A.quiet {color:black; text-decoration:none}
+	A.quiet:hover {text-decoration:underline}
+	A.def {font-weight: bold; font-style: normal; text-decoration:none; text-color:black}
+-->
+
+</style>
+</head>
+<body bgcolor=white>
+
+<br>
+
+<table border=0 bordercolor="lightgreen" width=100% cellpadding=2 cellspacing=0><tr><td bgcolor="lightgreen">
+<A NAME="s7doc"></a>
+<table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>s7</h2></td></tr></table>
+</td></tr></table>
+
+<p>s7 is a Scheme implementation, compatible with r5rs, and intended as an extension language
+for other applications, primarily Snd and Common Music.  It exists as just two files, s7.c and
+s7.h, that want only to disappear into someone else's source tree.  There are no libraries,
+no run-time init files, and no configuration scripts.
+It can be built as a stand-alone
+interpreter, if you insist (see the first example in s7.h).
+</p>
+
+<p>s7 has full continuations, dynamic-wind, sort!, 
+error handling, ratios and complex numbers,
+defmacro and define-macro, keywords, hash-tables, block comments,
+threads, multiprecision arithmetic for all numeric types,
+generalized set!, format, define*, and a host of other
+extensions of r5rs.  It does not have syntax-rules or any of
+its friends, and it does not think there is any such thing
+as an "inexact integer" (what were those guys smoking?).
+</p>
+
+<p>This file assumes you know about Scheme and all its problems,
+and want a quick tour of where s7 is different:
+</p>
+
+<dl>
+<dt>call-with-exit
+<dd><p>This is a continuation without the ability to return (an escape or goto).
+Use call-with-current-continuation or call/cc for a full continuation.
+</p>
+<br>
+
+<dt>make-promise
+<dd><p>This is named "delay" in most Schemes, but that name belongs to CLM.
+</p>
+<br>
+
+<dt><p>multiprecision arithmetic
+<dd>all numeric types are supported, and s7 can be built with multiprecision support
+for all of them,  using the gmp, mpfr, and mpc libraries.  The basic integer and real
+types are defined in s7.h, defaulting to long long int and double.  To get multiprecision
+numbers, build s7 with WITH_GMP set to 1 (see s7.c).  pi is predefined, as are
+most-positive-fixnum and most-negative-fixnum.
+</p>
+<br>
+
+<dt>defmacro and define-macro
+<dd><p>These are the standard macro definers.  </p>
+<pre>
+(define-macro (add-1 arg) `(+ 1 ,arg))
+(defmacro add-1 (arg) `(+ 1 ,arg))
+</pre>
+<br>
+
+<dt>define* and lambda*
+<dd><p>These are extensions of define and lambda that make it easier to
+to deal with optional, keyword, and rest arguments.  
+The syntax is very simple: every argument to define* has a default value
+and is automatically available as a keyword argument.  The default value
+is either #f (if unspecified), or given in a list whose first member is
+the argument name.
+The last argument
+can be preceded by :rest to indicate that all other trailing arguments
+should be packaged as a list under that argument's name.  You can use
+:optional and :key, but they are ignored.  
+</p>
+<pre>
+(define* (hi a (b 32) (c "hi")) (list a b c))
+</pre>
+<p>Here the argument "a" defaults to #f, "b" to 32, etc.
+When the function is called, 
+the argument names are bound to their default values, then the function's
+current argument list is scanned.  Any name that occurs as a keyword (":a")
+sets that argument's new value.  Otherwise, as values occur, they
+are plugged into the actual argument list based on their position.
+This is called an optional-key list in CLM.  So, taking the function
+above as an example:
+</p>
+<pre>
+(hi 1) -&gt; '(1 32 "hi")
+(hi :b 2 :a 3) -&gt; '(3 2 "hi")
+(hi 3 2 1) -&gt; '(3 2 1)
+</pre>
+<br>
+
+<dt>applicable objects and generalized set!
+<dd><p>Lists, strings, vectors, hash-tables, and any cooperating C-defined objects
+are both applicable and settable.  I think the syntax is pretty:
+</p>
+<pre>
+(let ((lst (list 1 2 3)))
+  (set! (lst 1) 32)
+  (list (lst 0) (lst 1)))
+-&gt; '(1 32)
+
+(let ((hash (make-hash-table)))
+  (set! (hash 'hi) 32)
+  (hash 'hi))
+-&gt; 32
+</pre>
+<p>You can use list-ref and friends, of course, but just try to read any serious vector arithmetic code
+when it is buried in vector-refs and vector-set!s! 
+</p>
+<br>
+
+<dt>make-procedure-with-setter
+<dd><p>A procedure-with-setter consists of two functions, the "getter" and the "setter".
+The getter is called when the object is encountered as a function, and the setter when
+it is set:
+</p>
+<pre>
+(define x 32)
+(define xx (make-procedure-with-setter (lambda () x) (lambda (val) (set! x val) x)))
+(xx) -&gt; 32
+(set! (xx) 1)
+(xx) -&gt; 1
+</pre>
+<br>
+
+<dt>block comments in #| ... |# and #! ... !#
+<dd>
+<p>Multi-line comments can be enclosed in either #| and |#, or #! and !# (the latter
+is for compatibility with Guile).
+</p>
+<br>
+
+<dt>hash tables 
+<dd><p>
+<ul>
+<li>make-hash-table
+<li>hash-table-ref
+<li>hash-table-set!
+<li>hash-table?
+<li>hash-table-size
+</ul>
+<p>The hash key can be a symbol, string, integer, or (problematically of course) a real.
+</p>
+<br>
+
+<dt>threads
+<dd><p>If s7 is built with HAVE_PTHREADS set, you get multithreading functions.
+</p>
+<ul>
+<li>(make-thread thunk)
+<li>(join-thread thread)
+<li>(thread? obj)
+<li>(make-lock)
+<li>(grab-lock lock)
+<li>(release-lock lock)
+<li>(lock? obj)
+<li>(make-thread-variable)
+<li>(thread-variable? obj)
+</ul>
+<p>
+Threads in s7 share the heap and symbol table, but have their own local environment, stack,
+and evaluator locals.  I use the term "lock" in place of "mutex", and "thread-variable"
+in place of "pthread_key".  The thread-variable is applicable and settable, so instead
+of pthread_getspecific, simply call it: (var).
+</p>
+<br>
+
+<dt>format
+<dd><p>s7's built-in format function is very close to that in srfi-48.</p>
+<pre>
+(format #f "~A ~D ~F" 'hi 123 3.14)
+-&gt; "hi 123 3.140000"
+</pre>
+<br>
+
+<dt>FFI
+<dd><p>s7 exists only to serve as an extension of some other application, so in a sense
+it is just a foreign function interface.  See s7.h for the API and many examples.
+Here is a bare REPL:
+</p>
+<pre>
+#include &lt;stdlib.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;string.h&gt;
+#include "s7.h"
+
+static s7_pointer our_exit(s7_scheme *sc, s7_pointer args) {exit(1);}
+
+int main(int argc, char **argv)
+{
+  s7_scheme *s7;
+  char buffer[512];
+  char response[1024];
+  s7 = s7_init();                     /* initialize the interpreter */
+  s7_define_function(s7, "exit", our_exit, 0, 0, false, "(exit) exits the program");
+  while (1)                           /* fire up a REPL */
+    {
+      fprintf(stdout, "\n&gt; ");        /* prompt for input */
+      fgets(buffer, 512, stdin);
+      if ((buffer[0] != '\n') || 
+	  (strlen(buffer) &gt; 1))
+	{                            
+	  sprintf(response, "(write %s)", buffer);
+	  s7_eval_c_string(s7, response); /* evaluate input and write the result */
+	}
+    }
+}
+</pre>
+<br>
+
+<dt>error handling via error and catch
+<dd><p>s7's error handling mimics that of (pre-r6rs) Guile.  An error is signalled
+via the error function, and can be trapped and dealt with via catch.
+</p>
+<pre>
+(catch 'wrong-number-of-args
+  (lambda ()     ; code protected by the catch
+    (abs 1 2))
+  (lambda args   ; the error handler
+    (format #t "oops: ~A" args)))
+</pre>
+<br>
+
+<dt>encapsulation
+<dd><p>...</p>
+<br>
+
+<dt>non-standard functions, variables, constants
+<dd><p>
+<ul>
+<li>sinh, cosh, tanh, asinh, acosh, atanh
+<li>logior, logxor, logand, lognot, ash, integer-length
+<li>random for any numeric type and any numeric argument
+<li>pi, most-positive-fixnum, most-negative-fixnum
+<li>read-line, read-byte, write-byte
+<li>procedure-source, procedure-arity, procedure-documentation, help
+<li>symbol-table, symbol->value, global-environment, current-environment, stack
+<li>provide, provided?, defined?
+<li>port-line-number, port-filename
+<li>object->string, eval-string, eval
+<li>reverse!, list-set!, sort!
+<li>gc, quit, *load-hook*, *error-hook*
+<li>*features*, *load-path*, *vector-print-length*
+<li>define-constant, constant?
+<li>stacktrace, trace and untrace, __func__, macroexpand
+<li>symbol-calls if profiling is enabled
+<li>length is generic, also generic copy and fill!
+</ul>
+</p>
+<br>
+
+<dt>other differences from r5rs
+<dd><p>
+<ul>
+<li>exact means integer or ratio, inexact means not exact.
+<li>no syntax-rules or any of its spawn
+<li>"#" does not stand for an unknown digit (who's bright idea was that!?!)
+<li>the "@" complex number notation is not supported
+<li>"+i" is not considered a number; include the real part.
+<li>modulo, remainder, and quotient take integer, ratio, or real args
+<li>lcm and gcd can take integer or ratio args
+<li>continuation? function to distinguish a continuation from a procedure
+<li>log takes an optional 2nd arg (base)
+<li>'.' and an exponent can occur in a number in any base
+</ul>
+</p>
+
+</dl>
+
+
+<!--
+in s7, sound-data, frame, mixer objects are set-applicable (like vectors and vcts).
+Also strings, lists, and hash-tables are set-applicable.  This has the somewhat 
+  strange side effect that (apply "hi" '(1)) returns #\i, since strings are applicable.
+  I think the syntax is pretty:
+
+      (let ((lst (list 1 2 3)))
+        (set! (lst 1) 32)
+        (list (lst 0) (lst 1)))
+      -> '(1 32)
+
+      (let ((hash (make-hash-table)))
+        (set! (hash 'hi) 32)
+        (hash 'hi))
+      -> 32
+
+  but even better, vector arithmetic is almost readable, and you can write (for example)
+  a generic FFT that can take vectors, vcts, frames, lists, etc.  I wonder if I should
+  extend the "setter" idea to things like imag-part or numerator.  One thing I haven't
+  looked into yet: (set! ((lst 0) 0) 1) which I guess is set-caar!
+
+s7 length is generic, also added generic copy and fill!.
+
+added sort! for lists or vectors (it uses C's qsort internally, and list arguments are 
+  always copied -- it's really vector-sort!).
+  
+added profiling option (--with-profiling in configure) to s7.  profile
+  function in extensions.scm.  This could be greatly elaborated, if
+  it's of interest.
+
+added trace, untrace, break and __func__ to s7. The __func__ info made it possible
+  to remove the backtrace facility altogether: backtracing, backtrace, set-backtrace-length,
+  clear-backtrace, and list-line-number have been removed.  These are replaced by
+  the stacktrace function, callable from within a break or error handler.
+  stacktrace (and error position info) still needs a lot of work.
+
+added macroexpand.
+    > (define-macro (hi a) `(+ ,a 1))
+    hi
+    > (macroexpand (hi 32))
+    (+ 32 1)
+
+removed gc-verbose, and load-verbose replaced by *load-hook*.  Error handling can
+  be specialized via *error-hook*.
+
+added "encapsulators" to s7:
+   open-encapsulator, close-encapsulator, (obj) to restore, encapsulator-bindings
+ 
+   (define-macro (encapsulate . body) 
+      (let ((encap (gensym)))
+        `(let ((,encap (open-encapsulator)))
+           (dynamic-wind
+              (lambda () 
+	        #f)
+              (lambda () 
+	        ,@body)
+              (lambda () 
+	        ((,encap))  ; restore saved vars
+                (close-encapsulator ,encap))))))
+ 
+    This evaluates "body", then returns any variables global to that code to their prior value:
+
+        > (define global-x 32)
+        global-x
+        > (encapsulate 
+            (set! global-x 123) 
+            (format #f "x: ~A" global-x))
+        "x: 123"
+        > global-x
+        32
+
+    There are three or maybe four reasons for encapsulators (rather than, say, fluid-let).
+    The main one is that it's a neat idea: a sort of data-side continuation.  open-encapsulator
+    remembers the overall environment at the point it is called, returning an encapuslator
+    object.  Whenever we want to return to that data state, we call that object as a thunk.
+    encapsulator-bindings returns the alist of variables awaiting restoration.  Once called,
+    that list is cleared, and the encapsulator starts saving values again (so repeated calls
+    keep returning you to that data state).  close-encapsulator turns that encapsulator off.
+    In a REPL, for example, you could save the initial state, then return to it at any time,
+    without restarting the interpreter.  fluid-let is not what we want here because it has
+    a body, and requires that you list in advance what variables you want to protect (and
+    besides, it's not really a let (it uses "set!") and I can't see anything fluid about it).
+    By tracing the encapsulator object, we can see every set! within some piece of code.
+    This encapsulation is not complete: I haven't finished making Snd/CLM objects work
+    with it, and some Scheme constructs aren't handled yet: (string-set! (vector-ref...))
+    for example. 
+
+
+    Another idea that strikes me as interesting: define!
+      
+      (define! env var value)
+
+    would bind var to value in the environment env (it changes env, hence the "!").  Currently, 
+    if you want 2 functions to share a local variable, you have to establish the names in the 
+    outer environment by hand:
+
+        (define proc1 #f)
+        (define proc2 #f)
+        (let ((local-var 32))
+          (set! proc1 (lambda () (+ local-var 1)))
+          (set! proc2 (lambda () (- local-var 1))))
+
+    You can't use
+
+        (begin
+          (define local-var 23)
+          (define (proc1) (+ local-var 1))
+          (define (proc2) (- local-var 1)))  
+
+    because local-var is also defined outside the "begin".  With define! you could:
+
+        (let ((e (current-environment))) ; or (global-environment) to make them global
+          (let ((local-var 32))
+            (define! e (proc1) (+ local-var 1))
+            (define! e (proc2) (- local-var 1))))
+
+    This could replace the notions of library and module, I think.  A file could be
+    enclosed in a let, keeping everything local to that file except stuff that is
+    defined via define!.
+
+    Or... (env-let env (...) body) evaluates its bindings and body in the context
+    of the environment env.  Or environments as "first class" objects (see extend-environment
+    in s7.h, for example).  Or...
+
+    One last idea: emacs 23 apparently supports the XEmbed protocol, so I think
+    it is now possible to do what I had hoped to do in 1996: use emacs as the
+    snd listener (within Snd).  To communicate between Snd and Emacs it might still
+    be necessary to treat Snd as an emacs subjob, but the emacs window would be
+    inside the Snd app.
+
+get s7.h stuff too
+-->
+

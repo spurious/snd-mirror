@@ -341,7 +341,7 @@ typedef struct s7_port_t {
   int file_number;
   char *filename;
   char *value;
-  int size, point;   /* PERHAPS: s7_Int? */
+  int size, point; 
   void (*function)(s7_scheme *sc, char c, s7_pointer port);
 } s7_port_t;
 
@@ -370,7 +370,7 @@ typedef struct s7_cell {
   union {
     
     struct {
-      int  length; /* PERHAPS: s7_Int? */
+      int  length;
       char *svalue;
       s7_pointer global_slot; /* for strings that represent symbol names, this is the current global environment (symbol value) cons */
     } string;
@@ -21272,7 +21272,6 @@ static void s7_gmp_init(s7_scheme *sc)
 
 
 
-
 /* -------------------------------- initialization -------------------------------- */
 
 s7_scheme *s7_init(void) 
@@ -21882,7 +21881,6 @@ s7_scheme *s7_init(void)
   s7_define_constant(sc, "*error-info*", sc->error_info);
   
   g_provide(sc, make_list_1(sc, s7_make_symbol(sc, "s7")));
-
 
 #if HAVE_PTHREADS
   thread_tag = s7_new_type("<thread>",          thread_print, thread_free, thread_equal, thread_mark, NULL, NULL);

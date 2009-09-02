@@ -17,7 +17,7 @@ To build Snd, get the sources from
   make install
 
 
-The configure program has several Snd-related arguments:
+The configure script has several Snd-related arguments:
 
    Extension language:
 
@@ -29,7 +29,7 @@ The configure program has several Snd-related arguments:
      --with-guile              use Guile; the path to guile-config
                                  can be set via GUILE_CONFIG_path (see examples below).
   
-     --with-forth              use Forth (FTH) as the extension language.
+     --with-forth              use Forth (Mike Scholz's FTH) as the extension language.
   
 
      To build Snd without any extension language, use --without-extension-language
@@ -66,13 +66,17 @@ The configure program has several Snd-related arguments:
            
    Audio:
 
-     --with-alsa               use ALSA if possible (default is OSS in Linux)
+     --with-alsa               use ALSA if possible (the default in Linux)
        --with-static-alsa      use ALSA statically loaded (for RPM generation)
+
+     --with-oss                use OSS
   
      --with-esd                use the enlightened sound daemon, if possible
   
      --with-jack               use the Jack library (can be used in conjunction
                                  with --with-alsa)
+
+     --with-pulseaudio         use PulseAudio (untested)
   
 
    Numerics:
@@ -123,7 +127,7 @@ If the configure/make process fails, please send me
 created (or updated) by configure.
 
 Snd comes with S7, so if you don't have Guile, Ruby, or 
-Forth, you can use S7.  But if you insist on building Snd without any extension 
+Forth, you can use S7.  If you insist on building Snd without any extension 
 language, you'll find that it's severely limited in what it can do.  
 Snd can also be built without any graphics toolkit.  Without either the GUI 
 or an extension language, however, there's nothing it can do.
@@ -220,20 +224,22 @@ Bill Schottstaedt
 Michael Scholz
 Kjetil S. Matheussen
 
-Dave Phillips:          the tutorial, new-effects.scm, and many other files.
-Fernando Lopez-Lezcano: the current ALSA support.
-Richard W.E. Furse:     the original LADSPA support.
-Nick Bailey:            the ESD support.
+Rick Taube and Andrew Burnson:      C++ and Windows wizardry.
+Dave Phillips:                      the tutorial, new-effects.scm, and many other files.
+Fernando Lopez-Lezcano:             the current ALSA support.
+Richard W.E. Furse:                 the original LADSPA support.
+Nick Bailey:                        the ESD support.
 Volker Kuhlmann and Seppo Ingalsuo: the Solaris port.
-Seppo Ingalsuo:         the HPUX port.
-Juan Reyes:             the DEC Alpha port.
+Seppo Ingalsuo:                     the HPUX port.
+Juan Reyes:                         the DEC Alpha port.
 Guenter Geiger and Stefan Schwandter: the Linux Alpha port.
-Paul Davis:             the original ALSA support.
-Gerd Rausch:            the Sam 9407 support.
-Steven Schultz:         the BSD port.
+Paul Davis:                         the original ALSA support.
+Gerd Rausch:                        the Sam 9407 support.
+Steven Schultz and Mike Scholz:     the *BSD ports.
 Ludger Brummer and Charles Nichols: the Mac-OSX port.
-Thomas Klausner:        the NetBSD port.
-Steve Beet:             minGW
+Thomas Klausner:                    the NetBSD port.
+Steve Beet:                         minGW
+
 Plus many other contributions from
   Fernando Lopez-Lezcano, 
   Tom Roth,
@@ -241,12 +247,13 @@ Plus many other contributions from
   Rick Taube,
   Anders Vinjar,
   Olivier Doare,
-  Ville Koskinen.
+  Ville Koskinen,
+  Andrew Burnson.
 
 
 In terms of number of lines, the languages used in Snd/Sndlib are:
 C, Scheme, Ruby, Forth, m4, Common Lisp, Emacs Lisp, javascript,
-Fortran, expect, and postscript (altogether more than 700,000 lines).
+Fortran, expect, and postscript (altogether about 710,000 lines).
 
 
 To get the German version at run-time, (setlocale LC_ALL "de_DE").

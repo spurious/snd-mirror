@@ -388,7 +388,12 @@ s7_pointer s7_hash_table_set(s7_scheme *sc, s7_pointer table, const char *name, 
   /* a hash-table is a vector of alists '((symbol value)), so to iterate over a hash-table
    *   use vector-ref and cdr down the lists.  An entry defaults to '() -- see "apropos" below
    */
-
+  /* hash-tables are applicable:
+      (let ((hash (make-hash-table)))
+        (set! (hash 'hi) 32)
+        (hash 'hi))
+      -> 32
+  */
 
 bool s7_is_input_port(s7_scheme *sc, s7_pointer p);                         /* (input-port? p) */
 bool s7_is_output_port(s7_scheme *sc, s7_pointer p);                        /* (output-port? p) */

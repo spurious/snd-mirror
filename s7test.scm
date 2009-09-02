@@ -3116,6 +3116,59 @@
 (test (let ((ctr 0)) (call/cc (lambda (exit) (if (let () (exit ctr) (set! ctr 100) ctr) 123 321)))) 0)
 (test (let ((ctr 0)) (if (> 3 2) (call/cc (lambda (exit) (set! ctr (+ ctr 1)) (exit ctr))) #f) ctr) 1)
 
+(test (let ((ctr 0))
+	(do ((x 0 (+ x 1)))
+	    ((= x 12))
+	  (if (> x 0)
+	      (if (> x 1)
+		  (if (> x 2)
+		      (if (> x 3)
+			  (if (> x 4)
+			      (if (> x 5)
+				  (if (> x 6)
+				      (if (> x 7)
+					  (if (> x 8)
+					      (if (> x 9)
+						  (if (> x 10)
+						      (set! ctr (+ ctr 1000))
+						      (set! ctr (- ctr 1)))
+						  (set! ctr (- ctr 2)))
+					      (set! ctr (- ctr 3)))
+					  (set! ctr (- ctr 4)))
+				      (set! ctr (- ctr 5)))
+				  (set! ctr (- ctr 6)))
+			      (set! ctr (- ctr 7)))
+			  (set! ctr (- ctr 8)))
+		      (set! ctr (- ctr 9)))
+		  (set! ctr (- ctr 10)))
+	      (set! ctr (- ctr 11))))
+	ctr)
+      934)
+
+(test (let ((ctr 0))
+	(do ((x 0 (+ x 1)))
+	    ((= x 12))
+	  (if (> x 0)
+	      (if (> x 1)
+		  (if (> x 2)
+		      (if (> x 3)
+			  (if (> x 4)
+			      (if (> x 5)
+				  (if (> x 6)
+				      (if (> x 7)
+					  (if (> x 8)
+					      (if (> x 9)
+						  (if (> x 10)
+						      (set! ctr (+ ctr 1000))
+						      (set! ctr (- ctr 1)))
+						  (set! ctr (- ctr 2)))
+					      (set! ctr (- ctr 3)))
+					  (set! ctr (- ctr 4))))))))
+		  (set! ctr (- ctr 10)))
+	      (set! ctr (- ctr 11))))
+	ctr)
+      969)
+
 
 
 
@@ -3246,6 +3299,24 @@
 ; (let ((cont #f)) (call/cc (lambda (x) (set! cont x))) (for-each cont (list 1 2 3)))
 (test (call/cc (lambda (x) (for-each x (list 1 2 3)))) 1) ; map also gives 1 ... perhaps not actually legal?
 
+(test (let ((ctr 0))
+	(for-each 
+	 (lambda (x)
+	   (for-each
+	    (lambda (x y)
+	      (for-each 
+	       (lambda (x y z)
+		 (set! ctr (+ x y z)))
+	       (list x (+ x 1))
+	       (list y (+ y 2))
+	       (list (+ x y) (- x y))))
+	    (list (+ x 3) (+ x 4) (+ x 5))
+	    (list (- x 3) (- x 4) (- x 5))))
+	 (list 1 2 3 4 5))
+	ctr)
+      23)
+					      
+	  
 
 
 
@@ -3799,7 +3870,7 @@
 (test ((lambda (x) (define y 1) (+ x y)) 2) 3)
 (test ((lambda (a) "this is a doc string" a) 1) 1)
 ;;; ideally ((lambda (a) "hiho" (define x 1) x) 1) -> 1 but I'm not sure it's r5rs-ish
-
+(test (let ((g (lambda () '3))) (= (g) 3)) #t)
 
 (test ((lambda lambda lambda) 'x) '(x))
 ;(test ((lambda (begin) (begin 1 2 3)) (lambda lambda lambda)) '(1 2 3))
@@ -35900,7 +35971,12 @@
 	(test (vector-set! v 0 0) 'error)
 	(test (vector-set! v 1 0) 'error)
 	(test (vector-set! v -1 0) 'error))
-      
+
+      (test (let ((g (lambda () '#(1 2 3)))) (vector-set! (g) 0 #\?) (g)) 'error) ; not an error in Guile
+      ;(test (let ((g (lambda () '(1 . 2)))) (set-car! (g) 123) (g)) 'error) ; should this also be an error?
+      ;(test (let ((g (lambda () '(1 2)))) (list-set! (g) 0 123) (g)) 'error)
+      (test (let ((g (lambda () (symbol->string 'hi)))) (string-set! (g) 1 #\a) (symbol->string 'hi)) 'error)
+
       (for-each
        (lambda (arg)
 	 (test (vector-fill! arg 0) 'error))
