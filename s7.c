@@ -84,6 +84,7 @@
  *        perhaps settable numerator denominator imag-part real-part angle magnitude
  *        perhaps trailing args to cons -> list*
  *        perhaps trailing args to list-ref
+ *        with-environment for macros etc, perhaps __env__ like __func__?
  *
  *
  * Mike Scholz provided the FreeBSD support (complex trig funcs, etc)
@@ -11055,9 +11056,9 @@ s7_pointer s7_procedure_arity(s7_scheme *sc, s7_pointer x)
 	  len = s7_list_length(sc, closure_args(x));
 	}
       
-      if (len >= 0)
-	return(make_list_3(sc, s7_make_integer(sc, len), small_int(sc, 0), sc->F));
-      return(make_list_3(sc, s7_make_integer(sc, abs(len)), small_int(sc, 0), sc->T));
+      if (is_closure_star(x))
+	return(make_list_3(sc, small_int(sc, 0), s7_make_integer(sc, abs(len)), make_boolean(sc, len < 0)));
+      return(make_list_3(sc, s7_make_integer(sc, abs(len)), small_int(sc, 0), make_boolean(sc, len < 0)));
     }
   
   if (s7_is_procedure_with_setter(x))
@@ -15374,7 +15375,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       /* sc->code is the symbol being defined, sc->value is its value
        *   if sc->value is a closure, car is of the form ((args...) body...)
        *   so the doc string if any is (cadr (car value))
-       *   and the arg list gives the number of required args up to the dot
+       *   and the arg list gives the number of optional args up to the dot
        */
 
       /* it's not possible to expand and replace macros at this point without evaluating

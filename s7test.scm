@@ -6454,6 +6454,13 @@
       (test (let ((hi (lambda (a . b) 1))) (procedure-arity hi)) '(1 0 #t))
       (test (let ((hi (lambda a 1))) (procedure-arity hi)) '(0 0 #t))
 
+      (test (let () (define (hi) 1) (procedure-arity hi)) '(0 0 #f))
+      (test (let () (define (hi a) a) (procedure-arity hi)) '(1 0 #f))
+      (test (let () (define* (hi a) a) (procedure-arity hi)) '(0 1 #f))
+      (test (let () (define* (hi a . b) a) (procedure-arity hi)) '(0 1 #t))
+      (test (let () (define* (hi (a 1) (b 2)) a) (procedure-arity hi)) '(0 2 #f))
+      (test (let ((hi (lambda* (a) 1))) (procedure-arity hi)) '(0 1 #f))
+
       (for-each
        (lambda (arg)
 	 (test (procedure-arity arg) 'error))

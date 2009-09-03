@@ -36,7 +36,15 @@ for other applications, primarily Snd and Common Music.  It exists as just two f
 s7.h, that want only to disappear into someone else's source tree.  There are no libraries,
 no run-time init files, and no configuration scripts.
 It can be built as a stand-alone
-interpreter, if you insist (see the first example in s7.h).
+interpreter, if you insist (see below).  There is a regression test for s7: s7test.scm in the
+Snd tarball, or (the same file) r5rstest.scm at ccrma-ftp.  If you're running s7 in a context
+that has getenv, file-exists?, and system (Snd for example), you can use s7-slib-init.scm
+to gain easy access to slib.
+</p>
+<p>
+s7 is the default extension language of Snd and sndlib (http://ccrma.stanford.edu/software/snd/),
+and Rick Taube's Common Music (commonmusic at sourceforge).  There are X, Motif, Gtk, and openGL bindings
+in libxm (in the Snd tarball, or at ftp://ccrma-ftp.stanford.edu/pub/Lisp/libxm.tar.gz).
 </p>
 
 <p>s7 has full continuations, dynamic-wind, sort!, 
@@ -52,37 +60,80 @@ as an "inexact integer" (what were those guys smoking?).
 <p>This file assumes you know about Scheme and all its problems,
 and want a quick tour of where s7 is different:
 </p>
+<br>
 
 <dl>
-<dt>call-with-exit
+<dt><em class=emdef>call-with-exit</em>
 <dd><p>This is a continuation without the ability to return (an escape or goto).
 Use call-with-current-continuation or call/cc for a full continuation.
 </p>
+<pre>
+(define (find-first-even-number arg)
+  (<em class=red>call-with-exit</em>
+   (lambda (return)
+     (for-each
+      (lambda (a)
+	(if (even? a)
+	    (return a)))
+      arg))))
+
+(find-first-even-number (list 1 3 9 13 8 2 4)) -&gt; 8
+</pre>
 <br>
 
-<dt>make-promise
-<dd><p>This is named "delay" in most Schemes, but that name belongs to CLM.
-</p>
-<br>
 
-<dt><p>multiprecision arithmetic
-<dd>all numeric types are supported, and s7 can be built with multiprecision support
-for all of them,  using the gmp, mpfr, and mpc libraries.  The basic integer and real
+<dt><p><em class=emdef>multiprecision arithmetic</em>
+<dd>All numeric types (integers, ratios, reals, complex numbers) are supported.
+s7 can be built with multiprecision support
+for all types,  using the gmp, mpfr, and mpc libraries.  The basic integer and real
 types are defined in s7.h, defaulting to long long int and double.  To get multiprecision
 numbers, build s7 with WITH_GMP set to 1 (see s7.c).  pi is predefined, as are
-most-positive-fixnum and most-negative-fixnum.
+most-positive-fixnum and most-negative-fixnum.  If multiprecision arithmetic is
+enabled, the following functions are included: bignum, bignum?, and bignum-precision.
+bignum-precision, which defaults to 128, sets the number of bits each float takes.
+pi automatically reflects the current bignum-precision:
 </p>
+<pre>
+&gt; pi
+3.141592653589793238462643383279502884195E0
+&gt; (bignum-precision)
+128
+&gt; (set! (bignum-precision) 256)
+256
+&gt; pi
+3.141592653589793238462643383279502884197169399375105820974944592307816406286198E0
+</pre>
+<p>
+bignum? returns #t if its argument is a big number of some type.  To create a big number,
+either include enough digits to overflow the default types, or use the bignum function.
+Its argument is a string representing the desired number:
+</p>
+<pre>
+&gt; (bignum "123456789123456789")
+123456789123456789
+&gt; (bignum "1.123123123123123123123123123")
+1.12312312312312312312312312300000000009E0
+</pre>
 <br>
 
-<dt>defmacro and define-macro
+<dt><em class=emdef>defmacro, define-macro, and macroexpand</em>
 <dd><p>These are the standard macro definers.  </p>
 <pre>
 (define-macro (add-1 arg) `(+ 1 ,arg))
 (defmacro add-1 (arg) `(+ 1 ,arg))
 </pre>
+<p>macroexpand can help debug a macro:
+</p>
+<pre>
+&gt; (define-macro (add-1 arg) `(+ 1 ,arg))
+add-1
+&gt; (macroexpand (add-1 32))
+(+ 1 32)
+</pre>
 <br>
 
-<dt>define* and lambda*
+
+<dt><em class=emdef>define* and lambda*</em>
 <dd><p>These are extensions of define and lambda that make it easier to
 to deal with optional, keyword, and rest arguments.  
 The syntax is very simple: every argument to define* has a default value
@@ -90,12 +141,12 @@ and is automatically available as a keyword argument.  The default value
 is either #f (if unspecified), or given in a list whose first member is
 the argument name.
 The last argument
-can be preceded by :rest to indicate that all other trailing arguments
+can be preceded by :rest or a dot to indicate that all other trailing arguments
 should be packaged as a list under that argument's name.  You can use
 :optional and :key, but they are ignored.  
 </p>
 <pre>
-(define* (hi a (b 32) (c "hi")) (list a b c))
+(<em class=red>define*</em> (hi a (b 32) (c "hi")) (list a b c))
 </pre>
 <p>Here the argument "a" defaults to #f, "b" to 32, etc.
 When the function is called, 
@@ -113,7 +164,7 @@ above as an example:
 </pre>
 <br>
 
-<dt>applicable objects and generalized set!
+<dt><em class=emdef>applicable objects and generalized set!</em>
 <dd><p>Lists, strings, vectors, hash-tables, and any cooperating C-defined objects
 are both applicable and settable.  I think the syntax is pretty:
 </p>
@@ -133,7 +184,7 @@ when it is buried in vector-refs and vector-set!s!
 </p>
 <br>
 
-<dt>make-procedure-with-setter
+<dt><em class=emdef>make-procedure-with-setter</em>
 <dd><p>A procedure-with-setter consists of two functions, the "getter" and the "setter".
 The getter is called when the object is encountered as a function, and the setter when
 it is set:
@@ -147,14 +198,14 @@ it is set:
 </pre>
 <br>
 
-<dt>block comments in #| ... |# and #! ... !#
+<dt><em class=emdef>block comments in #| ... |# and #! ... !#</em>
 <dd>
 <p>Multi-line comments can be enclosed in either #| and |#, or #! and !# (the latter
 is for compatibility with Guile).
 </p>
 <br>
 
-<dt>hash tables 
+<dt><em class=emdef>hash tables </em>
 <dd><p>
 <ul>
 <li>make-hash-table
@@ -167,7 +218,7 @@ is for compatibility with Guile).
 </p>
 <br>
 
-<dt>threads
+<dt><em class=emdef>threads</em>
 <dd><p>If s7 is built with HAVE_PTHREADS set, you get multithreading functions.
 </p>
 <ul>
@@ -189,7 +240,7 @@ of pthread_getspecific, simply call it: (var).
 </p>
 <br>
 
-<dt>format
+<dt><em class=emdef>format</em>
 <dd><p>s7's built-in format function is very close to that in srfi-48.</p>
 <pre>
 (format #f "~A ~D ~F" 'hi 123 3.14)
@@ -197,7 +248,7 @@ of pthread_getspecific, simply call it: (var).
 </pre>
 <br>
 
-<dt>FFI
+<dt><em class=emdef>FFI</em>
 <dd><p>s7 exists only to serve as an extension of some other application, so in a sense
 it is just a foreign function interface.  See s7.h for the API and many examples.
 Here is a bare REPL:
@@ -232,60 +283,358 @@ int main(int argc, char **argv)
 </pre>
 <br>
 
-<dt>error handling via error and catch
+<dt><em class=emdef>error handling via error and catch</em>
 <dd><p>s7's error handling mimics that of (pre-r6rs) Guile.  An error is signalled
 via the error function, and can be trapped and dealt with via catch.
 </p>
 <pre>
-(catch 'wrong-number-of-args
+(<em class=red>catch</em> 'wrong-number-of-args
   (lambda ()     ; code protected by the catch
     (abs 1 2))
   (lambda args   ; the error handler
-    (format #t "oops: ~A" args)))
+    (apply format (append (list #t) (cadr args)))))
+
+-&gt; "abs: too many arguments: (1 2)"
 </pre>
+<p>
+catch has 3 arguments: a tag indicating what error to catch (#t = anything),
+the code (a thunk) that the catch is protecting, and the function to call
+if a matching error occurs during the evaluation of the thunk.  The error handler
+takes a rest argument which will hold whatever the error function chooses to pass it.
+The error function itself takes at least 2 arguments, the error type (a symbol),
+and the error message.  There may also be other arguments describing the error.
+The default action (in the absence of any catch) is to treat the message as
+a format control string, apply format to it and the other arguments, and
+send that info to the current-error-port.
+</p>
+<p>When an error is encountered, the variable *error-info* (a vector) contains
+additional info about that error:
+</p>
+<ul>
+<li>0: the error type or tag (e.g. 'division-by-zero)
+<li>1: the message or information passed by the error function
+<li>2: if not #f, the code that s7 thinks triggered the error
+<li>3: if not #f, the line number of that code
+<li>4: if not #f, the file name of that code
+<li>5: the environment at the point of the error
+<li>6...: stack enviroment pointers (giving enough info to reconstruct the current call stack), ending in #f
+</ul>
+<p>To find a variable's value at the point of the error:
+</p>
+<pre>
+(symbol->value var (vector-ref *error-info* 5))
+</pre>
+<p>To print the stack at the point of the error:
+</p>
+<pre>
+(stacktrace *error-info*)
+</pre>
+
+<!-- also break trace stacktrace etc -->
 <br>
 
-<dt>encapsulation
+<dt><em class=emdef>encapsulation</em>
 <dd><p>...</p>
 <br>
 
-<dt>non-standard functions, variables, constants
+<dt><em class=emdef>math functions</em>
 <dd><p>
+s7 includes:
+</p>
 <ul>
 <li>sinh, cosh, tanh, asinh, acosh, atanh
 <li>logior, logxor, logand, lognot, ash, integer-length
-<li>random for any numeric type and any numeric argument
-<li>pi, most-positive-fixnum, most-negative-fixnum
-<li>read-line, read-byte, write-byte
-<li>procedure-source, procedure-arity, procedure-documentation, help
-<li>symbol-table, symbol->value, global-environment, current-environment, stack
-<li>provide, provided?, defined?
-<li>port-line-number, port-filename
-<li>object->string, eval-string, eval
+<li>random
+</ul>
+<p>
+The random function can take any numeric argument, including 0 (don't get me started...).
+The following constants are predefined: pi, most-positive-fixnum, most-negative-fixnum.
+</p>
+<br>
+
+<dt><em class=emdef>IO functions</em>
+<dd>
+<p>Besides files, ports can also represent strings and functions.  The string port functions
+are:
+</p>
+<ul>
+<li>with-output-to-string
+<li>with-input-from-string
+<li>call-with-output-string
+<li>call-with-input-string,
+<li>open-output-string
+<li>open-input-string
+<li>get-output-string
+</ul>
+<pre>
+(let ((result #f) 
+      (p (open-output-string)))
+  (format p "this ~A ~C test ~D" "is" #\a 3)
+  (set! result (get-output-string p))
+  (close-output-port p)
+  result)
+-&gt; "this is a test 3"
+</pre>
+<p>Other functions:</p>
+<ul>
+<li>read-byte and write-byte (binary IO)
+<li>read-line (line-at-a-time reads)
+</ul>
+<p>The variable *vector-print-length* sets
+the upper limit on how many vector elements are printed by object->string and format.
+</p>
+<br>
+
+<dt><em class=emdef>Generic functions</em>
+<dd><p>length, copy, and fill! are generic functions in the sense that their argument can be
+a list, string, vector, hash-table, or C-define object.  Since vectors and lists are set-applicable, 
+and length is generic, we can write a generic FFT that accepts both types or any other object that follows this syntax:
+</p>
+<pre>
+        (define* (cfft! data n (dir 1)) ; (complex data)
+          (if (not n) (set! n (length data)))
+          (do ((i 0 (+ i 1))
+               (j 0))
+              ((= i n))
+            (if (&gt; j i)
+        	(let ((temp (data j)))
+        	  (set! (data j) (data i))
+        	  (set! (data i) temp)))
+            (let ((m (/ n 2)))
+              (do () 
+        	  ((or (&lt; m 2) (&lt; j m)))
+        	(set! j (- j m))
+        	(set! m (/ m 2)))
+              (set! j (+ j m))))
+          (let ((ipow (floor (log n 2)))
+        	(prev 1))
+            (do ((lg 0 (+ lg 1))
+        	 (mmax 2 (* mmax 2))
+        	 (pow (/ n 2) (/ pow 2))
+        	 (theta (make-rectangular 0.0 (* pi dir)) (* theta 0.5)))
+        	((= lg ipow))
+              (let ((wpc (exp theta))
+        	    (wc 1.0))
+        	(do ((ii 0 (+ ii 1)))
+        	    ((= ii prev))
+        	  (do ((jj 0 (+ jj 1))
+        	       (i ii (+ i mmax))
+        	       (j (+ ii prev) (+ j mmax)))
+        	      ((&gt;= jj pow))
+        	    (let ((tc (* wc (data j))))
+        	      (set! (data j) (- (data i) tc))
+        	      (set! (data i) (+ (data i) tc))))
+        	  (set! wc (* wc wpc)))
+        	(set! prev mmax))))
+          data)
+        
+        &gt; (cfft! (list 0.0 1+i 0.0 0.0))
+        (1+1i -1+1i -1-1i 1-1i)
+        &gt; (cfft! (vector 0.0 1+i 0.0 0.0))
+        #(1+1i -1+1i -1-1i 1-1i)
+</pre>
+<br>
+
+<dt><em class=emdef>multidimensional vectors</em>
+<dd><p>
+If s7 is built with WITH_MULTIDIMENSIONAL_VECTORS set (the default), it supports 
+vectors with any number of dimensions.  It is here, in particular, that the generalized
+set! stuff shines.  make-vector's 2nd argument can be a list of dimensions, rather than
+an integer (the one dimensional case):
+</p>
+<pre>
+(make-vector (list 2 3 4))
+(make-vector '(2 3) 1.0)
+</pre>
+<p>The second example includes the optional default vector element.  Once defined,
+(vect i j k) or (to be very verbose, (vector-ref vect i j k)) returns the given
+element, and (set! (vect i j k) m), (or verbose and unreadable, (vector-set! vect i j k m))
+sets that element.
+</p>
+</br>
+
+<dt><em class=emdef>make-promise</em>
+<dd><p>This is named "delay" in most Schemes, but that name belongs to CLM.
+</p>
+<br>
+
+<dt><em class=emdef>Load additions</em>
+<dd><p>*load-path* is a list of directories to search when loading a file.
+*load-hook* is a function called just before a file is loaded.  Its argument is the filename.
+While loading, port-filename and port-line-number (of the current-input-port) can tell you
+where you are in the file.
+</p>
+<br>
+
+<dt><em class=emdef>GC</em>
+<dd><p>The gc function either calls the GC (if passed no arguments), or turns the GC either on (pass #t)
+or off (pass #f).
+</p>
+<br>
+
+<dt><em class=emdef>*features*</em>
+<dd><p>As in Common Lisp, *features* is a list describing what is currently loaded into s7.  You can
+check it with the provided? function, or add something to it with provide.
+</p>
+<br>
+
+<dt><em class=emdef>procedure info</em>
+<dd><p>procedure-source, procedure-arity, procedure-documentation, and help provide a look into a
+scheme function.
+procedure-documentation returns the documentation string associated with a procedure (the initial string in the
+function's body). procedure-arity returns a list describing the argument list of a function: '(required-args optional-args rest-arg).
+procedure-source returns the source (as a list) of a procedure.
+</p>
+<pre>
+&gt; (define* (add-2 a (b 32)) "add-2 adds its 2 args" (+ a b))
+add-2
+&gt; (procedure-documentation add-2)
+"add-2 adds its 2 args"
+&gt; (procedure-arity add-2)
+(0 2 #f)
+&gt; (procedure-source add-2)
+(lambda* (a (b 32)) "add-2 adds its 2 args" (+ a b))
+</pre>
+<br>
+
+
+<dt><em class=emdef>symbol table info</em>
+<dd><p>(symbol-table) returns the symbol table, a vector of lists of symbols.
+(symbol-&gt;value sym :optional env) returns the binding of 'sym'
+in the given environment which defaults to the current environment.
+(defined? obj :optional env) returns #t if 'obj' has a binding (a value) in the environment 'env'.
+If profiling is enabled (set WITH_PROFILING in s7.c), (symbol-calls sym) returns
+the number of times that symbol's binding has been applied.
+Here we scan the symbol table for any function that doesn't have documentation:
+</p>
+<pre>
+       (let ((st (<em class=red>symbol-table</em>)))
+         (do ((i 0 (+ i 1))) 
+             ((= i (vector-length st)))
+           (let ((lst (vector-ref st i)))
+             (for-each 
+               (lambda (sym)
+       	         (if (defined? sym)
+	             (let ((val (<em class=red>symbol-&gt;value</em> sym)))
+	               (if (and (procedure? val)
+			        (string=? "" (procedure-documentation val)))
+		           (format #t "~A " sym)))))
+               lst))))
+</pre>
+<br>
+
+<dt><em class=emdef>environments</em>
+<dd><p>environments are "first class objects" in s7.  An environment is
+a list of alists ending with a hash-table (the global environment).
+(current-environment :optional thread)
+returns the current environment (symbol bindings).  (global-environment)
+returns the top-level environment.
+Here is an example of "apropos" that accesses both environments:
+</p>
+<pre>
+        (define (apropos name)
+          ;; (apropos "name") prints out a list of all symbols whose name includes "name" as a substring
+
+          (define (substring? subs s) ; from Larceny
+            (let* ((start 0)
+	           (ls (string-length s))
+	           (lu (string-length subs))
+	           (limit (- ls lu)))
+              (let loop ((i start))
+	        (cond ((&gt; i limit) #f)
+	              ((do ((j i (+ j 1))
+	        	    (k 0 (+ k 1)))
+	        	   ((or (= k lu)
+	        		(not (char=? (string-ref subs k) (string-ref s j))))
+	        	    (= k lu))) i)
+	              (else (loop (+ i 1)))))))
+
+          (define (apropos-1 alist)
+            (for-each
+             (lambda (binding)
+               (if (substring? name (symbol-&gt;string (car binding)))
+	           (format (current-output-port) "~A: ~A~%" 
+	        	   (car binding) 
+	        	   (if (procedure? (cdr binding))
+	        	       (procedure-documentation (cdr binding))
+	        	       (cdr binding)))))
+             alist))
+
+          (for-each
+           (lambda (frame)
+             (if (vector? frame) ; the global environment
+	         (let ((len (vector-length frame)))
+	           (do ((i 0 (+ i 1)))
+	               ((= i len))
+	             (apropos-1 (vector-ref frame i))))
+	         (apropos-1 frame)))
+           (<em class=red>current-environment</em>)))
+</pre>
+<p>
+You can change the current environment by hand:
+</p>
+<pre>
+      (define (push-environment e binding)
+        (if (vector? (car e))
+            (begin
+              (set-cdr! e (list (car e)))
+              (set-car! e (list binding)))
+            (set-car! e (cons binding (car e)))))
+   
+      (define (pop-environment e)
+        (if (not (vector? (car e)))
+            (begin
+              (set-car! e (cadr e))
+              (set-cdr! e (cddr e)))))
+   
+      (define-macro (define! e var val) ; define val=val in env e
+        `(push-environment ,e (cons ',var ,val)))
+
+      (define (make-environment . initial-bindings)
+         (cons initial-bindings (global-environment)))
+
+     (let ((x 3)) 
+       (define! (current-environment) hi 21)
+       (+ x hi))
+     -&gt; 24
+     (let ((x 32)) 
+       (eval `(+ x y) (make-environment '(x . 2) '(y . 4))))
+     -&gt; 6
+</pre>
+<br>
+
+<hr>
+
+<dt>
+<dd>
+<ul>
+<li>stack
+<li>object-&gt;string, eval-string, eval
 <li>reverse!, list-set!, sort!
-<li>gc, quit, *load-hook*, *error-hook*
-<li>*features*, *load-path*, *vector-print-length*
+<li>quit, *error-hook*
 <li>define-constant, constant?
-<li>stacktrace, trace and untrace, __func__, macroexpand
-<li>symbol-calls if profiling is enabled
-<li>length is generic, also generic copy and fill!
+<li>stacktrace, trace and untrace, __func__
+<li>define-expansion
 </ul>
 </p>
 <br>
 
-<dt>other differences from r5rs
+
+<dt><em class=emdef>other differences from r5rs</em>
 <dd><p>
 <ul>
 <li>exact means integer or ratio, inexact means not exact.
-<li>no syntax-rules or any of its spawn
-<li>"#" does not stand for an unknown digit (who's bright idea was that!?!)
-<li>the "@" complex number notation is not supported
+<li>floor, ceiling, truncate, and round return (exact) integer results.
+<li>no syntax-rules or any of its friends.
+<li>"#" does not stand for an unknown digit.
+<li>the "@" complex number notation is not supported.
 <li>"+i" is not considered a number; include the real part.
-<li>modulo, remainder, and quotient take integer, ratio, or real args
-<li>lcm and gcd can take integer or ratio args
-<li>continuation? function to distinguish a continuation from a procedure
-<li>log takes an optional 2nd arg (base)
-<li>'.' and an exponent can occur in a number in any base
+<li>modulo, remainder, and quotient take integer, ratio, or real arguments.
+<li>lcm and gcd can take integer or ratio arguments.
+<li>continuation? function to distinguish a continuation from a procedure.
+<li>log takes an optional 2nd arg (the base).
+<li>'.' and an exponent can occur in a number in any base.
+<li>do sets its step variables, rather than rebinding them.
 </ul>
 </p>
 
@@ -293,30 +642,6 @@ via the error function, and can be trapped and dealt with via catch.
 
 
 <!--
-in s7, sound-data, frame, mixer objects are set-applicable (like vectors and vcts).
-Also strings, lists, and hash-tables are set-applicable.  This has the somewhat 
-  strange side effect that (apply "hi" '(1)) returns #\i, since strings are applicable.
-  I think the syntax is pretty:
-
-      (let ((lst (list 1 2 3)))
-        (set! (lst 1) 32)
-        (list (lst 0) (lst 1)))
-      -> '(1 32)
-
-      (let ((hash (make-hash-table)))
-        (set! (hash 'hi) 32)
-        (hash 'hi))
-      -> 32
-
-  but even better, vector arithmetic is almost readable, and you can write (for example)
-  a generic FFT that can take vectors, vcts, frames, lists, etc.  I wonder if I should
-  extend the "setter" idea to things like imag-part or numerator.  One thing I haven't
-  looked into yet: (set! ((lst 0) 0) 1) which I guess is set-caar!
-
-s7 length is generic, also added generic copy and fill!.
-
-added sort! for lists or vectors (it uses C's qsort internally, and list arguments are 
-  always copied -- it's really vector-sort!).
   
 added profiling option (--with-profiling in configure) to s7.  profile
   function in extensions.scm.  This could be greatly elaborated, if
@@ -327,15 +652,6 @@ added trace, untrace, break and __func__ to s7. The __func__ info made it possib
   clear-backtrace, and list-line-number have been removed.  These are replaced by
   the stacktrace function, callable from within a break or error handler.
   stacktrace (and error position info) still needs a lot of work.
-
-added macroexpand.
-    > (define-macro (hi a) `(+ ,a 1))
-    hi
-    > (macroexpand (hi 32))
-    (+ 32 1)
-
-removed gc-verbose, and load-verbose replaced by *load-hook*.  Error handling can
-  be specialized via *error-hook*.
 
 added "encapsulators" to s7:
    open-encapsulator, close-encapsulator, (obj) to restore, encapsulator-bindings
@@ -380,48 +696,41 @@ added "encapsulators" to s7:
     for example. 
 
 
-    Another idea that strikes me as interesting: define!
-      
-      (define! env var value)
 
-    would bind var to value in the environment env (it changes env, hence the "!").  Currently, 
-    if you want 2 functions to share a local variable, you have to establish the names in the 
-    outer environment by hand:
+   * s7 (scheme) variables:
+   *
+   *    *features*              a list of symbols describing what is current available (initially '(s7)).
+   *                               "provide" adds a symbol to the list, 
+   *                               "provided?" returns #t if its symbol arg is in the list.
+   *    __func__                equivalent to C's __func__.  The symbol of the function currently being defined.
+   *    *error-hook*            called upon error, a function of two args, 
+   *                               the error type (a symbol), and the info about it (a list).
 
-        (define proc1 #f)
-        (define proc2 #f)
-        (let ((local-var 32))
-          (set! proc1 (lambda () (+ local-var 1)))
-          (set! proc2 (lambda () (- local-var 1))))
+   *
 
-    You can't use
+   * s7 non-standard functions:
+   *
+   *    quit                    exits s7
+   *    continuation?           #t if its argument is a continuation (as opposed to an ordinary procedure)
+   *    help                    tries to find a help string associated with its argument
+   *    trace and untrace       add or subtract functions from the trace list; (trace abs). 
+   *    stacktrace              show a stack trace, the stack at the point of an error: (stacktrace *error-info*),
+   *                               or the stack at a break point: (stacktrace break-continuation)
+   *
+   *    encapsulator           a data "continuation" -- save the current environment for later restoration.
+   *       open-encapsulator        this returns an encapsulation that when called as a thunk restores the current environment
+   *       close-encapsulator       this closes (retires, puts an end to) an encapsulation
+   *       encapsulator-bindings    these are the currently saved bindings awaiting restoration
+   *       encapsulator?            #t if its argument is an encapsulator
+   * 
+   */
+  */
 
-        (begin
-          (define local-var 23)
-          (define (proc1) (+ local-var 1))
-          (define (proc2) (- local-var 1)))  
+define-expansion
+s7test
+NaN and inf
+keyword funcs
+gensym
 
-    because local-var is also defined outside the "begin".  With define! you could:
-
-        (let ((e (current-environment))) ; or (global-environment) to make them global
-          (let ((local-var 32))
-            (define! e (proc1) (+ local-var 1))
-            (define! e (proc2) (- local-var 1))))
-
-    This could replace the notions of library and module, I think.  A file could be
-    enclosed in a let, keeping everything local to that file except stuff that is
-    defined via define!.
-
-    Or... (env-let env (...) body) evaluates its bindings and body in the context
-    of the environment env.  Or environments as "first class" objects (see extend-environment
-    in s7.h, for example).  Or...
-
-    One last idea: emacs 23 apparently supports the XEmbed protocol, so I think
-    it is now possible to do what I had hoped to do in 1996: use emacs as the
-    snd listener (within Snd).  To communicate between Snd and Emacs it might still
-    be necessary to treat Snd as an emacs subjob, but the emacs window would be
-    inside the Snd app.
-
-get s7.h stuff too
 -->
 
