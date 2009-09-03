@@ -36,8 +36,8 @@ for other applications, primarily Snd and Common Music.  It exists as just two f
 s7.h, that want only to disappear into someone else's source tree.  There are no libraries,
 no run-time init files, and no configuration scripts.
 It can be built as a stand-alone
-interpreter, if you insist (see below).  There is a regression test for s7: s7test.scm in the
-Snd tarball, or (the same file) r5rstest.scm at ccrma-ftp.  If you're running s7 in a context
+interpreter, if you insist (see below).  s7test.scm is a regression test for s7.
+If you're running s7 in a context
 that has getenv, file-exists?, and system (Snd for example), you can use s7-slib-init.scm
 to gain easy access to slib.
 </p>
@@ -63,8 +63,8 @@ and want a quick tour of where s7 is different:
 <br>
 
 <dl>
-<dt><em class=emdef>call-with-exit</em>
-<dd><p>This is a continuation without the ability to return (an escape or goto).
+<dt><em class=emdef>call-with-exit and continuation?</em>
+<dd><p>call-with-exit is a continuation without the ability to return (an escape or goto).
 Use call-with-current-continuation or call/cc for a full continuation.
 </p>
 <pre>
@@ -79,16 +79,21 @@ Use call-with-current-continuation or call/cc for a full continuation.
 
 (find-first-even-number (list 1 3 9 13 8 2 4)) -&gt; 8
 </pre>
+<p>continuation? returns #t if its argument is a continuation,
+as opposed to a normal procedure.
+</p>
 <br>
 
 
 <dt><p><em class=emdef>multiprecision arithmetic</em>
 <dd>All numeric types (integers, ratios, reals, complex numbers) are supported.
-s7 can be built with multiprecision support
-for all types,  using the gmp, mpfr, and mpc libraries.  The basic integer and real
-types are defined in s7.h, defaulting to long long int and double.  To get multiprecision
-numbers, build s7 with WITH_GMP set to 1 (see s7.c).  pi is predefined, as are
-most-positive-fixnum and most-negative-fixnum.  If multiprecision arithmetic is
+The basic integer and real
+types are defined in s7.h, defaulting to long long int and double.  
+pi is predefined, as are
+most-positive-fixnum and most-negative-fixnum.
+s7 can be built with multiprecision support 
+for all types,  using the gmp, mpfr, and mpc libraries (set WITH_GMP to 1 in s7.c).  
+If multiprecision arithmetic is
 enabled, the following functions are included: bignum, bignum?, and bignum-precision.
 bignum-precision, which defaults to 128, sets the number of bits each float takes.
 pi automatically reflects the current bignum-precision:
@@ -116,7 +121,54 @@ Its argument is a string representing the desired number:
 </pre>
 <br>
 
-<dt><em class=emdef>defmacro, define-macro, and macroexpand</em>
+<dt><em class=emdef>math functions</em>
+<dd><p>
+s7 includes:
+</p>
+<ul>
+<li>sinh, cosh, tanh, asinh, acosh, atanh
+<li>logior, logxor, logand, lognot, ash, integer-length
+<li>random
+</ul>
+<p>
+The random function can take any numeric argument, including 0 (don't get me started...).
+The following constants are predefined: pi, most-positive-fixnum, most-negative-fixnum.
+Other math-related differences between s7 and r5rs:
+</p>
+<ul>
+<li>exact means integer or ratio, inexact means not exact.
+<li>rational? is a synonym for exact?.
+<li>floor, ceiling, truncate, and round return (exact) integer results.
+<li>"#" does not stand for an unknown digit.
+<li>the "@" complex number notation is not supported.
+<li>"+i" is not considered a number; include the real part.
+<li>modulo, remainder, and quotient take integer, ratio, or real arguments.
+<li>lcm and gcd can take integer or ratio arguments.
+<li>log takes an optional 2nd arg (the base).
+<li>'.' and an exponent can occur in a number in any base.
+<li>NaN and inf handling is left up to the underlying C or C++.
+</ul>
+<pre>
+&gt; (exact? 1.0)
+#f
+&gt; (floor 1.4)
+1
+&gt; (rational? 1.5)
+#f
+&gt; (modulo 1.4 1.0)
+0.4
+&gt; (lcm 3/4 1/6)
+3/2
+&gt; (log 8 2)
+3
+&gt; (number->string 0.5 2)
+"0.1"
+&gt; (string->number "0.1" 2)
+0.5
+</pre>
+<br>
+
+<dt><em class=emdef>defmacro, define-macro, macroexpand, and gensym</em>
 <dd><p>These are the standard macro definers.  </p>
 <pre>
 (define-macro (add-1 arg) `(+ 1 ,arg))
@@ -129,6 +181,16 @@ Its argument is a string representing the desired number:
 add-1
 &gt; (macroexpand (add-1 32))
 (+ 1 32)
+</pre>
+<p>gensym returns a symbol that is guaranteed to be currently unused.  It takes an optional string argument
+giving the new symbol name's prefix.
+</p>
+<pre>
+(defmacro pop! (sym)
+  (let ((v (<em class=red>gensym</em>)))
+    `(let ((,v (car ,sym)))
+       (set! ,sym (cdr ,sym))
+       ,v)))
 </pre>
 <br>
 
@@ -164,6 +226,34 @@ above as an example:
 </pre>
 <br>
 
+<dt><em class=emdef>define-constant and constant?</em>
+<dd><p>define-constant defines a constant and constant? returns #t if its argument
+is a constant.  A constant in s7 is really constant: it can't be set or rebound.
+</p>
+<pre>
+&gt; (define-constant var 32)
+var
+&gt; (set! var 1)
+;set!: can't alter immutable object: var
+&gt; (let ((var 1)) var)
+;can't bind or set an immutable object: var, line 1
+</pre>
+<br>
+
+<dt><em class=emdef>make-procedure-with-setter</em>
+<dd><p>A procedure-with-setter consists of two functions, the "getter" and the "setter".
+The getter is called when the object is encountered as a function, and the setter when
+it is set:
+</p>
+<pre>
+(define x 32)
+(define xx (make-procedure-with-setter (lambda () x) (lambda (val) (set! x val) x)))
+(xx) -&gt; 32
+(set! (xx) 1)
+(xx) -&gt; 1
+</pre>
+<br>
+
 <dt><em class=emdef>applicable objects and generalized set!</em>
 <dd><p>Lists, strings, vectors, hash-tables, and any cooperating C-defined objects
 are both applicable and settable.  I think the syntax is pretty:
@@ -182,20 +272,6 @@ are both applicable and settable.  I think the syntax is pretty:
 <p>You can use list-ref and friends, of course, but just try to read any serious vector arithmetic code
 when it is buried in vector-refs and vector-set!s! 
 </p>
-<br>
-
-<dt><em class=emdef>make-procedure-with-setter</em>
-<dd><p>A procedure-with-setter consists of two functions, the "getter" and the "setter".
-The getter is called when the object is encountered as a function, and the setter when
-it is set:
-</p>
-<pre>
-(define x 32)
-(define xx (make-procedure-with-setter (lambda () x) (lambda (val) (set! x val) x)))
-(xx) -&gt; 32
-(set! (xx) 1)
-(xx) -&gt; 1
-</pre>
 <br>
 
 <dt><em class=emdef>block comments in #| ... |# and #! ... !#</em>
@@ -240,11 +316,19 @@ of pthread_getspecific, simply call it: (var).
 </p>
 <br>
 
-<dt><em class=emdef>format</em>
+<dt><em class=emdef>format and object-&gt;string</em>
 <dd><p>s7's built-in format function is very close to that in srfi-48.</p>
 <pre>
 (format #f "~A ~D ~F" 'hi 123 3.14)
 -&gt; "hi 123 3.140000"
+</pre>
+<p>object-&gt;string returns the string representation of its argument, like format with ~S:
+</p>
+<pre>
+&gt; (object-&gt;string "hiho")
+"\"hiho\""
+&gt; (format #f "~S" "hiho")
+"\"hiho\""
 </pre>
 <br>
 
@@ -330,25 +414,16 @@ additional info about that error:
 (stacktrace *error-info*)
 </pre>
 
-<!-- also break trace stacktrace etc -->
-<br>
-
-<dt><em class=emdef>encapsulation</em>
-<dd><p>...</p>
-<br>
-
-<dt><em class=emdef>math functions</em>
-<dd><p>
-s7 includes:
+<p>The variable *error-hook* provides a way to specialize error reporting.
+It is a function of 2 arguments, the values passed by the error function
+(the error type and whatever other info accompanies it).
 </p>
-<ul>
-<li>sinh, cosh, tanh, asinh, acosh, atanh
-<li>logior, logxor, logand, lognot, ash, integer-length
-<li>random
-</ul>
-<p>
-The random function can take any numeric argument, including 0 (don't get me started...).
-The following constants are predefined: pi, most-positive-fixnum, most-negative-fixnum.
+<pre>
+(set! *error-hook* (lambda (tag args) (apply format (cons #t args))))
+</pre>
+<p>See also stacktrace and trace below.  There is a break macro defined in Snd (see snd-xen.c)
+which allows you to stop at some point, then evaluate arbitrary expressions in that context.
+</p>
 </p>
 <br>
 
@@ -453,12 +528,7 @@ sets that element.
 </p>
 </br>
 
-<dt><em class=emdef>make-promise</em>
-<dd><p>This is named "delay" in most Schemes, but that name belongs to CLM.
-</p>
-<br>
-
-<dt><em class=emdef>Load additions</em>
+<dt><em class=emdef>*load-path* and *load-hook*</em>
 <dd><p>*load-path* is a list of directories to search when loading a file.
 *load-hook* is a function called just before a file is loaded.  Its argument is the filename.
 While loading, port-filename and port-line-number (of the current-input-port) can tell you
@@ -466,16 +536,23 @@ where you are in the file.
 </p>
 <br>
 
-<dt><em class=emdef>GC</em>
-<dd><p>The gc function either calls the GC (if passed no arguments), or turns the GC either on (pass #t)
-or off (pass #f).
+<dt><em class=emdef>gc</em>
+<dd><p>The gc function either calls the GC (if passed no arguments), or turns the GC either on: (gc #t)
+or off: (gc #f).
 </p>
 <br>
 
-<dt><em class=emdef>*features*</em>
+<dt><em class=emdef>*features*, provide, and provided?</em>
 <dd><p>As in Common Lisp, *features* is a list describing what is currently loaded into s7.  You can
-check it with the provided? function, or add something to it with provide.
+check it with the provided? function, or add something to it with provide.  In my version of Snd,
+at startup *features* is:
 </p>
+<pre>
+&gt; *features*
+(snd10 snd snd-s7 snd-motif gsl alsa xm snd-ladspa run clm4 clm sndlib gmp multidimensional-vectors s7)
+&gt; (provided? 'gmp)
+#t
+</pre>
 <br>
 
 <dt><em class=emdef>procedure info</em>
@@ -603,134 +680,150 @@ You can change the current environment by hand:
 </pre>
 <br>
 
-<hr>
+<dt><em class=emdef>trace and untrace</em>
+<dd><p>These functions provide tracing:
+</p>
+<pre>
+    (define (hiho arg) 
+      (if (> arg 0) 
+          (+ 1 (hiho (- arg 1))) 
+          0))
 
-<dt>
-<dd>
-<ul>
-<li>stack
-<li>object-&gt;string, eval-string, eval
-<li>reverse!, list-set!, sort!
-<li>quit, *error-hook*
-<li>define-constant, constant?
-<li>stacktrace, trace and untrace, __func__
-<li>define-expansion
-</ul>
+    (trace hiho)
+
+    (hiho 3)
+
+    [hiho 3]
+     [hiho 2]
+      [hiho 1]
+       [hiho 0]
+        0
+       1
+      2
+     3
+</pre>
+<p>trace adds a function to the list of functions being traced, and untrace removes it.
+</p>
+<br>
+
+<dt><em class=emdef>stacktrace and stack</em>
+<dd><p>stacktrace prints the stack contents.  Its optional argument
+can be *error-info* to show the stack at the point of the last error,
+a thread object to show that thread's stack, or a continuation to
+show the continuation stack.  Similarly, the stack function returns
+the stack top (an integer) and the stack itself (a vector).  
+Each stack frame has 4 entries, the function, the current environment, the function arguments, and an op code used
+internally by the evaluator. 
+</p>
+<br>
+
+<dt><em class=emdef>quit</em>
+<dd><p>quit exits s7.</p>
+<br>
+
+<dt><em class=emdef>make-promise</em>
+<dd><p>This is named "delay" in most Schemes, but that name belongs to CLM.
 </p>
 <br>
 
 
+<dt><em class=emdef>encapsulation</em>
+<dd><p>encapsulation saves and restores environments.</p>
+<ul>
+<li>open-encapsulator
+<li>close-encapsulator
+<li>encapsulator-bindings
+<li>encapsulator?
+<li>encapsulate
+</ul>
+<p>an encapsulator is 
+a sort of data-side continuation.  open-encapsulator
+remembers the overall environment at the point it is called, returning an encapuslator
+object.  Whenever we want to return to that data state, we call that object as a thunk.
+encapsulator-bindings returns the alist of variables awaiting restoration.  When the encapsulator is called (restoring those bindings),
+the list is cleared, and the encapsulator starts saving values again (so repeated calls
+keep returning you to that data state).  close-encapsulator turns that encapsulator off.
+In a REPL, for example, you could save the initial state, then return to it at any time,
+without restarting the interpreter.  fluid-let is not what we want here because it has
+a body, and requires that you list in advance what variables you want to protect (and
+besides, it's not really a let (it uses "set!") and I can't see anything fluid about it).
+encapsulate is a macro that evaluates its body, then returns any variables global to that code to their prior value.
+<pre>
+&gt; (define global-x 32)
+global-x
+&gt; (encapsulate 
+    (set! global-x 123) 
+    (format #f "x: ~A" global-x))
+  "x: 123"
+&gt; global-x
+32
+</pre>
+<br>
+
+<dt><em class=emdef>eval and eval-string</em>
+<dd><p>
+eval evaluates its argument (a list representing a piece of code).  It takes an optional
+second argument, the environment in which the evaluation should take place.  eval-string
+is similar, but its argument is a string.
+</p>
+<pre>
+&gt; (eval `(+ 1 2))
+3
+&gt; (eval-string "(+ 1 2)")
+3
+</pre>
+<br>
+
+<dt><em class=emdef>reverse!, list-set!, sort!</em>
+<dd><p>reverse! is an in-place version of the built-in function reverse.  That is, 
+it modifies the list passed to it in the process of reversing its contents.
+list-set! sets a member of a list.  sort! sorts a list or a vector using the
+function passed as its second argument to choose the new ordering.
+</p>
+<pre>
+&gt; (sort! (list 3 4 8 2 0 1 5 9 7 6) <)
+(0 1 2 3 4 5 6 7 8 9)
+&gt; (sort! (list (list 'u 1) (list 'i 0) (list 'a 2))
+     (lambda (a b) (< (cadr a) (cadr b))))
+((i 0) (u 1) (a 2))
+</pre>
+<p>Despite the "!" in its name, sort! actually copies any list argument passed it it,
+but vectors are sorted in place.
+</p>
+<br>
+
+<dt><em class=emdef>keywords</em>
+<dd><p>
+Keywords exist mainly for define*'s benefit.  The keyword functions are:
+keyword?, make-keyword, symbol-&gt;keyword, and keyword-&gt;symbol.
+</p>
+<br>
+
+<dt><em class=emdef>help</em>
+<dd><p>
+(help obj) tries to find information about obj.  
+</p>
+<br>
+
+<dt><em class=emdef>define-expansion</em>
+<dd><p>
+This defines read-time macros, which are just dangerous enough that
+I probably shouldn't document them.  It has the same syntax as
+define-macro, and the same result except that the macro is
+dealt with at read time!  (This means it does not respect attempts to
+bind it to something else which is asking for confusion).
+</p>
+<br>
+
 <dt><em class=emdef>other differences from r5rs</em>
 <dd><p>
 <ul>
-<li>exact means integer or ratio, inexact means not exact.
-<li>floor, ceiling, truncate, and round return (exact) integer results.
-<li>no syntax-rules or any of its friends.
-<li>"#" does not stand for an unknown digit.
-<li>the "@" complex number notation is not supported.
-<li>"+i" is not considered a number; include the real part.
-<li>modulo, remainder, and quotient take integer, ratio, or real arguments.
-<li>lcm and gcd can take integer or ratio arguments.
-<li>continuation? function to distinguish a continuation from a procedure.
-<li>log takes an optional 2nd arg (the base).
-<li>'.' and an exponent can occur in a number in any base.
 <li>do sets its step variables, rather than rebinding them.
+<li>no syntax-rules or any of its friends.
 </ul>
 </p>
 
+
 </dl>
-
-
-<!--
-  
-added profiling option (--with-profiling in configure) to s7.  profile
-  function in extensions.scm.  This could be greatly elaborated, if
-  it's of interest.
-
-added trace, untrace, break and __func__ to s7. The __func__ info made it possible
-  to remove the backtrace facility altogether: backtracing, backtrace, set-backtrace-length,
-  clear-backtrace, and list-line-number have been removed.  These are replaced by
-  the stacktrace function, callable from within a break or error handler.
-  stacktrace (and error position info) still needs a lot of work.
-
-added "encapsulators" to s7:
-   open-encapsulator, close-encapsulator, (obj) to restore, encapsulator-bindings
- 
-   (define-macro (encapsulate . body) 
-      (let ((encap (gensym)))
-        `(let ((,encap (open-encapsulator)))
-           (dynamic-wind
-              (lambda () 
-	        #f)
-              (lambda () 
-	        ,@body)
-              (lambda () 
-	        ((,encap))  ; restore saved vars
-                (close-encapsulator ,encap))))))
- 
-    This evaluates "body", then returns any variables global to that code to their prior value:
-
-        > (define global-x 32)
-        global-x
-        > (encapsulate 
-            (set! global-x 123) 
-            (format #f "x: ~A" global-x))
-        "x: 123"
-        > global-x
-        32
-
-    There are three or maybe four reasons for encapsulators (rather than, say, fluid-let).
-    The main one is that it's a neat idea: a sort of data-side continuation.  open-encapsulator
-    remembers the overall environment at the point it is called, returning an encapuslator
-    object.  Whenever we want to return to that data state, we call that object as a thunk.
-    encapsulator-bindings returns the alist of variables awaiting restoration.  Once called,
-    that list is cleared, and the encapsulator starts saving values again (so repeated calls
-    keep returning you to that data state).  close-encapsulator turns that encapsulator off.
-    In a REPL, for example, you could save the initial state, then return to it at any time,
-    without restarting the interpreter.  fluid-let is not what we want here because it has
-    a body, and requires that you list in advance what variables you want to protect (and
-    besides, it's not really a let (it uses "set!") and I can't see anything fluid about it).
-    By tracing the encapsulator object, we can see every set! within some piece of code.
-    This encapsulation is not complete: I haven't finished making Snd/CLM objects work
-    with it, and some Scheme constructs aren't handled yet: (string-set! (vector-ref...))
-    for example. 
-
-
-
-   * s7 (scheme) variables:
-   *
-   *    *features*              a list of symbols describing what is current available (initially '(s7)).
-   *                               "provide" adds a symbol to the list, 
-   *                               "provided?" returns #t if its symbol arg is in the list.
-   *    __func__                equivalent to C's __func__.  The symbol of the function currently being defined.
-   *    *error-hook*            called upon error, a function of two args, 
-   *                               the error type (a symbol), and the info about it (a list).
-
-   *
-
-   * s7 non-standard functions:
-   *
-   *    quit                    exits s7
-   *    continuation?           #t if its argument is a continuation (as opposed to an ordinary procedure)
-   *    help                    tries to find a help string associated with its argument
-   *    trace and untrace       add or subtract functions from the trace list; (trace abs). 
-   *    stacktrace              show a stack trace, the stack at the point of an error: (stacktrace *error-info*),
-   *                               or the stack at a break point: (stacktrace break-continuation)
-   *
-   *    encapsulator           a data "continuation" -- save the current environment for later restoration.
-   *       open-encapsulator        this returns an encapsulation that when called as a thunk restores the current environment
-   *       close-encapsulator       this closes (retires, puts an end to) an encapsulation
-   *       encapsulator-bindings    these are the currently saved bindings awaiting restoration
-   *       encapsulator?            #t if its argument is an encapsulator
-   * 
-   */
-  */
-
-define-expansion
-s7test
-NaN and inf
-keyword funcs
-gensym
-
--->
-
+</body>
+</html>

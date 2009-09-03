@@ -949,7 +949,7 @@
 
 (defun check-all ()
   (html-check '("sndlib.html" "snd.html" "clm.html" "extsnd.html" "grfsnd.html" "sndclm.html"
-		"sndscm.html" "fm.html" "balance.html" "quick.html"
+		"sndscm.html" "fm.html" "balance.html" "quick.html" "s7.html"
 		"xen.html" "libxm.html" "cmn.html" "index.html")))
 
 (defun make-index ()
