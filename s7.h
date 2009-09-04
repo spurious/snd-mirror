@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "1.29"
-#define S7_DATE "20-Aug-09"
+#define S7_VERSION "1.30"
+#define S7_DATE "4-Sep-09"
 
 
 typedef long long int s7_Int;
@@ -161,6 +161,7 @@ s7_pointer s7_wrong_type_arg_error(s7_scheme *sc, const char *caller, int arg_n,
 s7_pointer s7_out_of_range_error(s7_scheme *sc, const char *caller, int arg_n, s7_pointer arg, const char *descr);
 s7_pointer s7_wrong_number_of_args_error(s7_scheme *sc, const char *caller, s7_pointer args);
 void s7_set_error_exiter(s7_scheme *sc, void (*error_exiter)(void));
+s7_pointer s7_stacktrace(s7_scheme *sc, s7_pointer arg);
 
   /* these are equivalent to (error ...) in scheme
    *   the first argument to s7_error is a symbol that can be caught (via (catch tag ...))
@@ -1653,6 +1654,8 @@ int main(int argc, char **argv)
  * 
  *        s7 changes
  *
+ * 3-Sep:     s7.html, s7-slib-init.scm. 
+ *            s7_stacktrace in s7.h.
  * 27-Aug:    vector and hash-table sizes are now s7_Ints, rather than ints.
  * 20-Aug:    s7_remove_from_heap.
  * 17-Aug:    *error-info*.

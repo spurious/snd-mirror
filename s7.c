@@ -84,15 +84,14 @@
  *        perhaps settable numerator denominator imag-part real-part angle magnitude
  *        perhaps trailing args to cons -> list*
  *        perhaps trailing args to list-ref
- *        with-environment for macros etc, perhaps __env__ like __func__?
+ *        with-environment for macros?
  *
  *
  * Mike Scholz provided the FreeBSD support (complex trig funcs, etc)
  * Rick Taube and Andrew Burnson provided the MS Visual C++ support
  *
  *
- * Documentation is in s7.h.  A "regression test" is s7test.scm in the Snd tarball,
- *   or r5rstest.scm (same as s7test.scm) at ccrma-ftp.
+ * Documentation is in s7.h and s7.html.  s7test.scm is a regression test.
  *
  *
  * ---------------- compile time switches ---------------- 
@@ -13632,6 +13631,12 @@ is a continuation, its stack is displayed."
     display_frame(sc, vector_element(stk, i - 3));
 
   return(sc->UNSPECIFIED);
+}
+
+
+s7_pointer s7_stacktrace(s7_scheme *sc, s7_pointer arg)
+{
+  return(g_stacktrace(sc, make_list_1(sc, arg)));
 }
 
 
