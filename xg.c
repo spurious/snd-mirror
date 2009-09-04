@@ -31908,6 +31908,45 @@ static XEN gxg_gtk_widget_get_visible(XEN widget)
   return(C_TO_XEN_gboolean(gtk_widget_get_visible(XEN_TO_C_GtkWidget_(widget))));
 }
 
+static XEN gxg_gtk_range_set_flippable(XEN range, XEN flippable)
+{
+  #define H_gtk_range_set_flippable "void gtk_range_set_flippable(GtkRange* range, gboolean flippable)"
+  XEN_ASSERT_TYPE(XEN_GtkRange__P(range), range, 1, "gtk_range_set_flippable", "GtkRange*");
+  XEN_ASSERT_TYPE(XEN_gboolean_P(flippable), flippable, 2, "gtk_range_set_flippable", "gboolean");
+  gtk_range_set_flippable(XEN_TO_C_GtkRange_(range), XEN_TO_C_gboolean(flippable));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_range_get_flippable(XEN range)
+{
+  #define H_gtk_range_get_flippable "gboolean gtk_range_get_flippable(GtkRange* range)"
+  XEN_ASSERT_TYPE(XEN_GtkRange__P(range), range, 1, "gtk_range_get_flippable", "GtkRange*");
+  return(C_TO_XEN_gboolean(gtk_range_get_flippable(XEN_TO_C_GtkRange_(range))));
+}
+
+static XEN gxg_gtk_widget_is_toplevel(XEN widget)
+{
+  #define H_gtk_widget_is_toplevel "gboolean gtk_widget_is_toplevel(GtkWidget* widget)"
+  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_widget_is_toplevel", "GtkWidget*");
+  return(C_TO_XEN_gboolean(gtk_widget_is_toplevel(XEN_TO_C_GtkWidget_(widget))));
+}
+
+static XEN gxg_gtk_widget_is_drawable(XEN widget)
+{
+  #define H_gtk_widget_is_drawable "gboolean gtk_widget_is_drawable(GtkWidget* widget)"
+  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_widget_is_drawable", "GtkWidget*");
+  return(C_TO_XEN_gboolean(gtk_widget_is_drawable(XEN_TO_C_GtkWidget_(widget))));
+}
+
+static XEN gxg_gtk_widget_set_window(XEN widget, XEN window)
+{
+  #define H_gtk_widget_set_window "void gtk_widget_set_window(GtkWidget* widget, GdkWindow* window)"
+  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_widget_set_window", "GtkWidget*");
+  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 2, "gtk_widget_set_window", "GdkWindow*");
+  gtk_widget_set_window(XEN_TO_C_GtkWidget_(widget), XEN_TO_C_GdkWindow_(window));
+  return(XEN_FALSE);
+}
+
 #endif
 
 #if HAVE_CAIRO_CREATE
@@ -38257,6 +38296,11 @@ XEN_NARGIFY_1(gxg_gtk_icon_view_get_item_padding_w, gxg_gtk_icon_view_get_item_p
 XEN_NARGIFY_1(gxg_gtk_widget_has_grab_w, gxg_gtk_widget_has_grab)
 XEN_NARGIFY_2(gxg_gtk_widget_set_visible_w, gxg_gtk_widget_set_visible)
 XEN_NARGIFY_1(gxg_gtk_widget_get_visible_w, gxg_gtk_widget_get_visible)
+XEN_NARGIFY_2(gxg_gtk_range_set_flippable_w, gxg_gtk_range_set_flippable)
+XEN_NARGIFY_1(gxg_gtk_range_get_flippable_w, gxg_gtk_range_get_flippable)
+XEN_NARGIFY_1(gxg_gtk_widget_is_toplevel_w, gxg_gtk_widget_is_toplevel)
+XEN_NARGIFY_1(gxg_gtk_widget_is_drawable_w, gxg_gtk_widget_is_drawable)
+XEN_NARGIFY_2(gxg_gtk_widget_set_window_w, gxg_gtk_widget_set_window)
 #endif
 
 #if HAVE_CAIRO_CREATE
@@ -42219,6 +42263,11 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gtk_widget_has_grab_w gxg_gtk_widget_has_grab
 #define gxg_gtk_widget_set_visible_w gxg_gtk_widget_set_visible
 #define gxg_gtk_widget_get_visible_w gxg_gtk_widget_get_visible
+#define gxg_gtk_range_set_flippable_w gxg_gtk_range_set_flippable
+#define gxg_gtk_range_get_flippable_w gxg_gtk_range_get_flippable
+#define gxg_gtk_widget_is_toplevel_w gxg_gtk_widget_is_toplevel
+#define gxg_gtk_widget_is_drawable_w gxg_gtk_widget_is_drawable
+#define gxg_gtk_widget_set_window_w gxg_gtk_widget_set_window
 #endif
 
 #if HAVE_CAIRO_CREATE
@@ -46188,6 +46237,11 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_widget_has_grab, gxg_gtk_widget_has_grab_w, 1, 0, 0, H_gtk_widget_has_grab);
   XG_DEFINE_PROCEDURE(gtk_widget_set_visible, gxg_gtk_widget_set_visible_w, 2, 0, 0, H_gtk_widget_set_visible);
   XG_DEFINE_PROCEDURE(gtk_widget_get_visible, gxg_gtk_widget_get_visible_w, 1, 0, 0, H_gtk_widget_get_visible);
+  XG_DEFINE_PROCEDURE(gtk_range_set_flippable, gxg_gtk_range_set_flippable_w, 2, 0, 0, H_gtk_range_set_flippable);
+  XG_DEFINE_PROCEDURE(gtk_range_get_flippable, gxg_gtk_range_get_flippable_w, 1, 0, 0, H_gtk_range_get_flippable);
+  XG_DEFINE_PROCEDURE(gtk_widget_is_toplevel, gxg_gtk_widget_is_toplevel_w, 1, 0, 0, H_gtk_widget_is_toplevel);
+  XG_DEFINE_PROCEDURE(gtk_widget_is_drawable, gxg_gtk_widget_is_drawable_w, 1, 0, 0, H_gtk_widget_is_drawable);
+  XG_DEFINE_PROCEDURE(gtk_widget_set_window, gxg_gtk_widget_set_window_w, 2, 0, 0, H_gtk_widget_set_window);
 #endif
 
 #if HAVE_CAIRO_CREATE
@@ -48750,7 +48804,7 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("13-Aug-09"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("04-Sep-09"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

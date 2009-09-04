@@ -428,7 +428,7 @@ additional info about that error:
 <li>3: if not #f, the line number of that code
 <li>4: if not #f, the file name of that code
 <li>5: the environment at the point of the error
-<li>6...: stack enviroment pointers (giving enough info to reconstruct the current call stack), ending in #f
+<li>6...: stack environment pointers (giving enough info to reconstruct the current call stack), ending in #f
 </ul>
 <p>To find a variable's value at the point of the error:
 </p>
@@ -707,7 +707,7 @@ You can change the current environment by hand:
               (set-car! e (cadr e))
               (set-cdr! e (cddr e)))))
    
-      (define-macro (define! e var val) ; define val=val in env e
+      (define-macro (define! e var val) ; define var=val in env e
         `(push-environment ,e (cons ',var ,val)))
 
       (define (make-environment . initial-bindings)
@@ -717,6 +717,7 @@ You can change the current environment by hand:
        (define! (current-environment) hi 21)
        (+ x hi))
      -&gt; 24
+
      (let ((x 32)) 
        (eval `(+ x y) (make-environment '(x . 2) '(y . 4))))
      -&gt; 6
@@ -841,7 +842,7 @@ function passed as its second argument to choose the new ordering.
      (lambda (a b) (&lt; (cadr a) (cadr b))))
 ((i 0) (u 1) (a 2))
 </pre>
-<p>Despite the "!" in its name, sort! actually copies any list argument passed it it,
+<p>Despite the "!" in its name, sort! actually copies any list argument passed to it,
 but vectors are sorted in place.
 </p>
 </dd>
@@ -868,7 +869,7 @@ This defines read-time macros, which are just dangerous enough that
 I probably shouldn't document them.  It has the same syntax as
 define-macro, and the same result except that the macro is
 dealt with at read time!  (This means it does not respect attempts to
-bind it to something else which is asking for confusion).
+bind it to something else, which is asking for confusion).
 </p>
 </dd>
 <br>

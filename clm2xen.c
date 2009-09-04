@@ -518,16 +518,8 @@ static XEN g_mus_set_array_print_length(XEN val)
   int len;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_mus_array_print_length, "an integer");
   len = XEN_TO_C_INT(val);
-  if (len < 0) 
+  if (len < 0)
     XEN_OUT_OF_RANGE_ERROR(S_setB S_mus_array_print_length, XEN_ONLY_ARG, val, "must be >= 0");
-  /* continuable as 
-     len = XEN_TO_C_INT(XEN_CONTINUABLE_OUT_OF_RANGE_ERROR...)
-     with perhaps goto len decode check
-     xen_continuable error would set jmpbuf, call a scm proc that wraps up a continuation
-       it prompts user, perhaps in debugger, then if returned with new val, passes that
-       to error handler which jumps back into C (nothing can go wrong...) -- ideally
-       scm_make_continuation would work from C.
-  */
   return(C_TO_XEN_INT(mus_set_array_print_length(len)));
 }
 

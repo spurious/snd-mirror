@@ -7022,3 +7022,11 @@
 ;;; 2.17.8
 ;(CFNC-2177 "void gtk_widget_set_allocation GtkWidget* widget GtkAllocation* allocation")
 
+
+;;; 2.17.10
+(CFNC-2177 "void gtk_range_set_flippable GtkRange* range gboolean flippable")
+(CFNC-2177 "gboolean gtk_range_get_flippable GtkRange* range")
+(CFNC-2177 "gboolean gtk_widget_is_toplevel GtkWidget* widget")
+(CFNC-2177 "gboolean gtk_widget_is_drawable GtkWidget* widget")
+(CFNC-2177 "void gtk_widget_set_window GtkWidget* widget GdkWindow* window")
+

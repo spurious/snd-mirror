@@ -17,7 +17,7 @@
  */
 
 
-/* S7, Bill Schottstaedt, Aug-08
+/* s7, Bill Schottstaedt, Aug-08
  *
  *   major changes from tinyScheme:
  *        just two files: s7.c and s7.h, source-level embeddable (no library, no run-time init files)
@@ -4170,7 +4170,8 @@ char *s7_number_to_string(s7_scheme *sc, s7_pointer obj, int radix)
 static s7_pointer g_number_to_string(s7_scheme *sc, s7_pointer args)
 {
   #define H_number_to_string "(number->string num :optional (radix 10)) converts the number num into a string"
-  int radix = 0, size = 20;
+  s7_Int radix = 0;
+  int size = 20;
   char *res;
   s7_pointer x;
 
@@ -4820,7 +4821,7 @@ static s7_pointer s7_string_to_number(s7_scheme *sc, char *str, int radix)
 static s7_pointer g_string_to_number(s7_scheme *sc, s7_pointer args)
 {
   #define H_string_to_number "(string->number str :optional (radix 10)) converts str into a number"
-  int radix = 0;
+  s7_Int radix = 0;
 
   if (!s7_is_string(car(args)))
     return(s7_wrong_type_arg_error(sc, "string->number", 1, car(args), "a string"));
@@ -6592,7 +6593,7 @@ static s7_pointer g_integer_to_char(s7_scheme *sc, s7_pointer args)
 {
   #define H_integer_to_char "(integer->char i) converts the non-negative integer i to a character"
   s7_pointer x;
-  int ind;
+  s7_Int ind;                   /* not int here!  (integer->char (expt 2 32)) -> #\null */
   x = car(args);
 
   if (!s7_is_integer(x))
@@ -6629,6 +6630,10 @@ static s7_pointer g_is_char_alphabetic(s7_scheme *sc, s7_pointer args)
   if (!s7_is_character(car(args)))
     return(s7_wrong_type_arg_error(sc, "char-alphabetic?", 0, car(args), "a character"));
   return(make_boolean(sc, isalpha(character(car(args)))));
+
+  /* isalpha will return #t for (integer->char 226) and others in that range -- should
+   *   we insist on ASCII here? (i.e. less than 128)
+   */
 }
 
 
@@ -6935,7 +6940,7 @@ static s7_pointer g_string_ref(s7_scheme *sc, s7_pointer args)
   
   s7_pointer index;
   char *str;
-  int ind;
+  s7_Int ind;
 
   index = cadr(args);
   
@@ -6962,7 +6967,7 @@ static s7_pointer g_string_set(s7_scheme *sc, s7_pointer args)
   
   s7_pointer x, index;
   char *str;
-  int ind;
+  s7_Int ind;
 
   x = car(args);
   index = cadr(args);
@@ -7042,7 +7047,8 @@ static s7_pointer g_substring(s7_scheme *sc, s7_pointer args)
   #define H_substring "(substring str start :optional end) returns the portion of the string str between start and end"
   
   s7_pointer x, start, end, str;
-  int i0, i1, len;
+  s7_Int i0, i1;
+  int len;
   char *s;
   
   str = car(args);
@@ -9447,8 +9453,10 @@ static s7_pointer g_list_ref(s7_scheme *sc, s7_pointer args)
 {
   #define H_list_ref "(list-ref lst i) returns the i-th element (0-based) of the list"
   
-  int i, index;
+  int i;
+  s7_Int index;
   s7_pointer p;
+
   if (!is_pair(car(args)))
     return(s7_wrong_type_arg_error(sc, "list-ref", 1, car(args), "a pair"));
   if ((!s7_is_integer(cadr(args))) ||
@@ -9474,7 +9482,8 @@ static s7_pointer g_list_set(s7_scheme *sc, s7_pointer args)
 {
   #define H_list_set "(list-set! lst i val) sets the i-th element (0-based) of the list to val"
   
-  int i, index;
+  int i;
+  s7_Int index;
   s7_pointer p;
   
   if (!is_pair(car(args)))
@@ -9503,8 +9512,10 @@ static s7_pointer g_list_tail(s7_scheme *sc, s7_pointer args)
 {
   #define H_list_tail "(list-tail lst i) returns the list from the i-th element on"
   
-  int i, index;
+  int i;
+  s7_Int index;
   s7_pointer p;
+
   if ((!is_pair(car(args))) &&
       (car(args) != sc->NIL))
     return(s7_wrong_type_arg_error(sc, "list-tail", 1, car(args), "a list"));
@@ -13636,6 +13647,8 @@ is a continuation, its stack is displayed."
 
 s7_pointer s7_stacktrace(s7_scheme *sc, s7_pointer arg)
 {
+  if (arg == sc->NIL)
+    return(g_stacktrace(sc, arg));
   return(g_stacktrace(sc, make_list_1(sc, arg)));
 }
 
@@ -19941,7 +19954,7 @@ static s7_pointer big_ash(s7_scheme *sc, s7_pointer args)
       (s7_is_integer(p1)))
     {
       mpz_t *n;
-      int shift;
+      s7_Int shift;
       if (is_c_object(p1))
 	{
 	  if (!mpz_fits_sint_p(S7_BIG_INTEGER(p1)))

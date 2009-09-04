@@ -826,6 +826,7 @@
   (test (char-alphabetic? #\_) #f)
   (test (char-alphabetic? #\^) #f)
   (test (char-alphabetic? #\[) #f)
+;  (test (char-alphabetic? (integer->char 226)) #f)
 
   (for-each
    (lambda (arg)
@@ -840,6 +841,42 @@
 	 (begin
 	   (display "(char-alphabetic? ") (display arg) (display ") returned #f?") (newline))))
    mixed-a-to-z)
+
+  (test 
+   (let ((unhappy '()))
+     (do ((i 0 (+ i 1))) 
+	 ((= i 256)) 
+       (let* ((ch (integer->char i))
+	      (chu (char-upcase ch))
+	      (chd (char-downcase ch)))
+	 (if (or (and (not (char=? ch chu))
+		      (not (char=? ch (char-downcase chu))))
+		 (and (not (char=? ch chd))
+		      (not (char=? ch (char-upcase chd))))
+		 (and (not (char=? ch chd))
+		      (not (char=? ch chu)))
+		 (not (char-ci=? chu chd))
+		 (not (char-ci=? ch chu))
+		 (and (char-alphabetic? ch)
+		      (or (not (char-alphabetic? chd))
+			  (not (char-alphabetic? chu))))
+		 (and (char-numeric? ch)
+		      (or (not (char-numeric? chd))
+			  (not (char-numeric? chu))))
+		 (and (char-whitespace? ch)
+		      (or (not (char-whitespace? chd))
+			  (not (char-whitespace? chu))))
+		 (and (char-alphabetic? ch)
+		      (char-whitespace? ch))
+		 (and (char-numeric? ch)
+		      (char-whitespace? ch))
+		 (and (char-alphabetic? ch)
+		      (char-numeric? ch)))
+	     ;; there are characters that are alphabetic but the result of char-upcase is not an upper-case character
+	     ;; 223 for example, or 186 for lower case
+	     (set! unhappy (cons (format #f "~C: ~C ~C (~D)~%" ch chu chd i) unhappy)))))
+     unhappy)
+   '())
 
 
   (test (char=? #\d #\d) #t)
@@ -4014,8 +4051,8 @@
 (test ((lambda (x) (begin (define x 3)) x) 32) 3)
 (test (let* ((x 32) (y x)) (define x 3) y) 32)
 
-;(test (let ((z 0)) (begin (define x 32)) (begin (define y x)) (set! z y) z) 32) ; so begin is like let*? -- guile uses letrec here = error
-;(test (let ((z 0)) (begin (define x 32) (define y x)) (set! z y) z) 32)         ; similarly here
+(test (let ((z 0)) (begin (define x 32)) (begin (define y x)) (set! z y) z) 32) ; so begin is like let*? -- guile uses letrec here = error
+(test (let ((z 0)) (begin (define x 32) (define y x)) (set! z y) z) 32)         ; similarly here
 ;;; I can't find anything in r5rs.html that mandates letrec here, or that says it's in error
 
 
@@ -5034,6 +5071,61 @@
     (test (gen) 2)
     (test (gen) 1)
     (test (gen) 'you-fell-off-the-end-of-the-list)))
+
+;;; from Ferguson and Duego "call with current continuation patterns"
+(test (let ()
+	(define count-to-n
+	  (lambda (n)
+	    (let ((receiver 
+		   (lambda (exit-procedure)
+		     (let ((count 0))
+		       (letrec ((infinite-loop
+				 (lambda ()
+				   (if (= count n)
+				       (exit-procedure count)
+				       (begin
+					 (set! count (+ count 1))
+					 (infinite-loop))))))
+			 (infinite-loop))))))
+	      (call/cc receiver))))
+	(count-to-n 10))
+      10)
+
+(test (let ()
+	(define product-list
+	  (lambda (nums)
+	    (let ((receiver
+		   (lambda (exit-on-zero)
+		     (letrec ((product
+			       (lambda (nums)
+				 (cond ((null? nums) 1)
+				       ((zero? (car nums)) (exit-on-zero 0))
+				       (else (* (car nums)
+						(product (cdr nums))))))))
+		       (product nums)))))
+	      (call/cc receiver))))
+	(product-list '(1 2 3 0 4 5)))
+      0)
+
+(test (let ()
+	(define product-list
+	  (lambda (nums)
+	    (let ((receiver
+		   (lambda (exit-on-zero)
+		     (letrec ((product
+			       (lambda (nums) 
+				 (cond ((null? nums) 1)
+				       ((number? (car nums))
+					(if (zero? (car nums))
+					    (exit-on-zero 0)
+					    (* (car nums)
+					       (product (cdr nums)))))
+				       (else (* (product (car nums))
+						(product (cdr nums))))))))
+		       (product nums)))))
+	      (call/cc receiver))))
+	(product-list '(1 2 (3 4) ((5)))))
+      120)
 
 
 
@@ -32480,7 +32572,7 @@
 (num-test (/ (expt 2.3 50) (expt 2.3 49)) 2.3)
 (num-test (/ 1e-10 1e10) 1e-20)
 ;(num-test (/ 1e-20 1e300) 1e-321)
-;;; why: (- 1e-2 (expt 10 -2)) = 2.081668171172168513294235909273361692968E-19? in guile it's 0.0
+;;; why: (- 1e-2 (expt 10 -2)) = 2.081668171172168513294235909273361692968E-19? in guile it's 0.0 -- this is mpfr's fault
 (num-test (/ (expt 10 -20) (expt 10 -20)) 1)
 (num-test (/ (expt 10 -200) (expt 10 -200)) 1)
 (num-test (* .000000000000123 .000000000000123) 1.5129e-26)
@@ -32489,6 +32581,9 @@
 
 (if with-bigfloats
     (begin
+
+      (num-test (sqrt (expt 2 32)) 65536)
+      (num-test (/ (log (expt 2 32)) (log 2)) 32.0)
 
       (num-test (/ (sqrt (* 1.2345e-170 1.2345e-170))) 8.100445524503847216161209708816501953798E169)
       (num-test (/ (expt (* 1.2345e-170 1.2345e-170) 1/100)) 2.501325312985302606641508258507698932691E3)
@@ -35151,7 +35246,7 @@
    ("#i1.1" 1.1) ("#i1" 1.0)
    ;; Integers:
    ("1" ,(+ 1 0)) ("23" ,(+ 9 9 5)) ("-1" ,(- 0 1)) 
-   ("-45" ,(- 0 45)) ;("2#" 20.0) ("2##" 200.0) ("12##" 1200.0) ; this # = 0 is about the stupidest thing I've ever seen
+   ("-45" ,(- 0 45))                      ;("2#" 20.0) ("2##" 200.0) ("12##" 1200.0) ; this # = 0 is about the stupidest thing I've ever seen
    ("#b#i100" 4.0) ("#b#e100" 4) ("#i#b100" 4.0) ("#e#b100" 4)
    ("#b#i-100" -4.0) ("#b#e+100" 4) ("#i#b-100" -4.0) ("#e#b+100" 4)
    ("#o#i100" 64.0) ("#o#e100" 64) ("#i#o100" 64.0) ("#e#o100" 64)
@@ -35167,7 +35262,7 @@
    ;; * <uinteger 10> <suffix>
    ("1e2" 100.0) ("1s2" 100.0)
    ("1f2" 100.0) ("1d2" 100.0) 
-   ;("1l2" 100.0) 
+   ("1l2" 100.0) 
    ("1e+2" 100.0) ("1e-2" 0.01)
    ;; * . <digit 10>+ #* <suffix>
    (".1" .1) (".0123456789" 123456789e-10) ;(".16#" 0.16)
@@ -35453,6 +35548,8 @@
       (test (char->integer 33) 'error)
       (test (char->integer) 'error)
       (test (integer->char) 'error)
+      (test (integer->char (expt 2 31)) 'error)
+      (test (integer->char (expt 2 32)) 'error)
       
       (for-each
        (lambda (arg)
@@ -35569,6 +35666,8 @@
       (test (string-ref "\"\\\"" 3) 'error)
       (test (string-ref "" 0) 'error)  ; guile returns #\nul here? [fixed 1.9]
       (test (string-ref "" 1) 'error)
+      (test (string-ref "hiho" (expt 2 32)) 'error)
+      (test (string-set! "hiho" (expt 2 32) #\a) 'error)
       
       (for-each
        (lambda (arg)
@@ -35613,6 +35712,7 @@
       (test (substring "" 0 1) 'error)
       (test (substring "" -1 0) 'error)
       (test (substring "abc" -1 0) 'error)
+      (test (substring "hiho" (expt 2 32) (+ 2 (expt 2 32))) 'error)
       
       (for-each
        (lambda (arg)
@@ -35855,6 +35955,8 @@
       (test (list-ref (list 1 2) 1+2.0i) 'error)
       (test (list-ref (cons 1 2) 1) 'error)
       (test (list-ref (cons 1 2) 2) 'error)
+      (test (list-ref (list 1 2 3) (expt 2 32)) 'error)
+      (test (list-set! (list 1 2 3) (expt 2 32)  0) 'error)
       
       (for-each
        (lambda (arg)
@@ -35885,6 +35987,7 @@
       (test (list-tail (list 1 2) 1+2.0i) 'error)
       (test (list-tail (cons 1 2) 2) 'error)
       (test (list-tail '(1 2 . 3)) 'error)
+      (test (list-tail (list 1 2 3) (+ 1 (expt 2 32))) 'error)
       
       (for-each
        (lambda (arg)
@@ -36075,7 +36178,7 @@
       (test (expt) 'error)
       (test (expt 1.0+23.0i) 'error)
       (test (expt "hi" "hi") 'error)
-      ;(test (expt 1.0+23.0i 1.0+23.0i 1.0+23.0i) 'error) ; this is ok in s7
+      (test (expt 1.0+23.0i 1.0+23.0i 1.0+23.0i) 'error)
       ;(test (expt 0 -1) 'error)
       ;(test (expt 0.0 -1.0) 'error)
       (test (exact->inexact) 'error)
@@ -36145,6 +36248,12 @@
       (test (atan) 'error)
       (test (atan "hi") 'error)
       (test (atan 1.0+23.0i 1.0+23.0i) 'error)
+
+      (if with-bitwise-functions
+	  (test (ash 1 (expt 2 32)) 'error))
+
+      (test (string->number "34.1" (+ 5 (expt 2 32))) 'error)
+      (test (number->string 34.1 (+ 5 (expt 2 32))) 'error)
       
       (for-each
        (lambda (op)
@@ -36557,7 +36666,7 @@
 					;(test ((lambda (x x) x) 1 2) 'error)
       (test (lambda (x "a")) 'error)
       (test ((lambda (x y) (+ x y a)) 1 2) 'error)
-					;(test ((lambda ())) 'error)
+      (test ((lambda ())) 'error)
       (test (lambda (x (y)) x) 'error)
       (test ((lambda (x) x . 5) 2) 'error)
       (test (lambda (1) #f) 'error)

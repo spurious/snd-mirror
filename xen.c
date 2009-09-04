@@ -1777,6 +1777,13 @@ void xen_initialize(void)
 
 #if HAVE_S7
 
+#if HAVE_LIMITS_H
+  #include <limits.h>
+#else
+  #define INT_MAX 2147483647
+  #define INT_MIN (-INT_MAX - 1)
+#endif
+
 #include "s7.h"
 
 s7_scheme *s7;
@@ -1805,10 +1812,29 @@ double xen_to_c_double(XEN a)
 }
 
 
-int64_t xen_to_c_int(XEN a) 
+int xen_to_c_int(XEN a) /* xen_to_c_int is expected to return an int (not an int64_t) */
+{
+  s7_Int val;
+  if (s7_is_integer(a))
+    val = s7_integer(a);
+  else
+    {
+      if (s7_is_rational(a))
+	val = (int64_t)(s7_numerator(a) / s7_denominator(a));
+      else val = (int64_t)s7_real(a);
+    }
+  if (val > INT_MAX)
+    return(INT_MAX);
+  if (val < INT_MIN)
+    return(INT_MIN);
+  return(val);
+}
+
+
+int64_t xen_to_c_int64_t(XEN a)
 {
   if (s7_is_integer(a))
-    return((int64_t)s7_integer(a));
+    return(s7_integer(a));
   if (s7_is_rational(a))
     return((int64_t)(s7_numerator(a) / s7_denominator(a)));
   return((int64_t)s7_real(a));

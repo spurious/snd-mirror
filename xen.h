@@ -1666,12 +1666,12 @@ extern XEN xen_false, xen_true, xen_nil, xen_undefined;
 
 #define XEN_OFF_T_P(Arg)                           XEN_INTEGER_P(Arg)
 #define XEN_INT64_T_P(Arg)                         XEN_INTEGER_P(Arg)
-#define XEN_TO_C_OFF_T_OR_ELSE(Arg, Def)           XEN_TO_C_INT_OR_ELSE(Arg, Def)
+#define XEN_TO_C_OFF_T_OR_ELSE(Arg, Def)           XEN_TO_C_INT64_T_OR_ELSE(Arg, Def)
 #define C_TO_XEN_OFF_T(Arg)                        C_TO_XEN_INT(Arg)
-#define XEN_TO_C_OFF_T(Arg)                        XEN_TO_C_INT(Arg)
-#define XEN_TO_C_INT64_T_OR_ELSE(Arg, Def)         XEN_TO_C_INT_OR_ELSE(Arg, Def)
+#define XEN_TO_C_OFF_T(Arg)                        XEN_TO_C_INT64_T(Arg)
+#define XEN_TO_C_INT64_T_OR_ELSE(Arg, Def)         ((XEN_INTEGER_P(Arg)) ? XEN_TO_C_INT64_T(Arg) : Def)
 #define C_TO_XEN_INT64_T(Arg)                      C_TO_XEN_INT(Arg)
-#define XEN_TO_C_INT64_T(Arg)                      XEN_TO_C_INT(Arg)
+#define XEN_TO_C_INT64_T(Arg)                      xen_to_c_int64_t(Arg)
 
 #define XEN_NUMBER_P(Arg)                          s7_is_real(Arg) /* !! throughout xen, we're assuming no complex number! -- s7_is_number(Arg) */
 #define XEN_EXACT_P(Arg)                           s7_is_exact(Arg)
@@ -2058,7 +2058,8 @@ XEN xen_define_variable(const char *name, XEN value);
 void xen_s7_ignore(s7_function func); /* squelch compiler warnings */
 const char *xen_s7_object_help(XEN sym);
 double xen_to_c_double(XEN a);
-int64_t xen_to_c_int(XEN a);
+int xen_to_c_int(XEN a);
+int64_t xen_to_c_int64_t(XEN a);
 double xen_to_c_double_or_else(XEN a, double b);
 s7_scheme *s7_xen_initialize(s7_scheme *sc);
 void xen_s7_set_repl_prompt(const char *new_prompt);
