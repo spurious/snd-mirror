@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "1.30"
-#define S7_DATE "4-Sep-09"
+#define S7_VERSION "1.31"
+#define S7_DATE "7-Sep-09"
 
 
 typedef long long int s7_Int;
@@ -14,14 +14,13 @@ typedef double s7_Double;
 
   /* --------------------------------------------------------------------------------
    * s7 itself is based on the types and functions in this file, so the first place to look for examples
-   *   is s7.c.  There are also a few variations on a REPL at the end of this file.  s7test.scm (in the
-   *   Snd tarball) or r5rstest.scm (at the ccrma ftp site) are regression tests for s7 -- they still
-   *   turn up a few problems.  More tests are certainly welcome!  Extended examples of s7 usage
-   *   are:
+   *   is s7.c.  There are also a few variations on a REPL at the end of this file.  s7test.scm
+   *   is a regression test for s7 -- it still turns up a few problems.  More tests are certainly welcome!  
+   *   Extended examples of s7 usage are:
    *
    *   Snd: ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-10.tar.gz (a sound editor)
    *     which includes:
-   *       libxm: libxm.tar.gz (Motif and Gtk bindings)
+   *       libxm: libxm.tar.gz (X, Motif, Gtk, and openGL bindings)
    *       sndlib: sndlib.tar.gz (sound file, audio port, and CLM bindings plus an optimizer (run))
    *
    *   Common Music by Rick Taube: http://camil.music.uiuc.edu/Software/grace/downloads/cm3.tar.gz (composition)
@@ -415,7 +414,10 @@ s7_pointer s7_open_input_string(s7_scheme *sc, const char *input_string);
 s7_pointer s7_open_output_string(s7_scheme *sc);                            /* (open-output-string) */
 const char *s7_get_output_string(s7_scheme *sc, s7_pointer out_port);       /* (get-output-string port) -- current contents of output string */
   /*    don't free the string */
-s7_pointer s7_open_output_function(s7_scheme *sc, void (*function)(s7_scheme *sc, char c, s7_pointer port));                                                                            
+
+s7_pointer s7_open_output_function(s7_scheme *sc, void (*function)(s7_scheme *sc, char c, s7_pointer port));  
+s7_pointer s7_open_input_function(s7_scheme *sc, char (*function)(s7_scheme *sc, bool peek, s7_pointer port));
+
 char s7_read_char(s7_scheme *sc, s7_pointer port);                          /* (read-char port) */
 char s7_peek_char(s7_scheme *sc, s7_pointer port);                          /* (peek-char port) */
 s7_pointer s7_read(s7_scheme *sc, s7_pointer port);                         /* (read port) */
@@ -1654,6 +1656,7 @@ int main(int argc, char **argv)
  * 
  *        s7 changes
  *
+ * 5-Sep:     s7_open_input_function.
  * 3-Sep:     s7.html, s7-slib-init.scm. 
  *            s7_stacktrace in s7.h.
  * 27-Aug:    vector and hash-table sizes are now s7_Ints, rather than ints.

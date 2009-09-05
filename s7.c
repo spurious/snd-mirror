@@ -342,7 +342,8 @@ typedef struct s7_port_t {
   char *filename;
   char *value;
   int size, point; 
-  void (*function)(s7_scheme *sc, char c, s7_pointer port);
+  char (*input_function)(s7_scheme *sc, bool peek, s7_pointer port);
+  void (*output_function)(s7_scheme *sc, char c, s7_pointer port);
 } s7_port_t;
 
 
@@ -732,7 +733,8 @@ struct s7_scheme {
 #define port_string_length(p)         (p)->object.port->size
 #define port_string_point(p)          (p)->object.port->point
 #define port_needs_free(p)            (p)->object.port->needs_free
-#define port_function(p)              (p)->object.port->function
+#define port_output_function(p)       (p)->object.port->output_function
+#define port_input_function(p)        (p)->object.port->input_function
 
 #define is_c_function(f)              (type(f) == T_C_FUNCTION)
 #define c_function(f)                 (f)->object.ffptr
@@ -1658,7 +1660,6 @@ static s7_Int hash_table_hash(const char *key, s7_Int table_size)
 
 static int symbol_table_hash(const char *key, int table_size) 
 { 
-  /* I tried several other hash functions, but they gave about the same incidence of collisions */
   unsigned int hashed = 0;
   const char *c; 
   for (c = key; *c; c++) 
@@ -2216,6 +2217,12 @@ void s7_define_constant(s7_scheme *sc, const char *name, s7_pointer value)
   x = s7_find_symbol_in_environment(sc, s7_global_environment(sc), sym, false);
   s7_set_immutable(car(x));
 }
+
+/*        (define (func a) (let ((cvar (+ a 1))) cvar))
+ *        (define-constant cvar 23)
+ *        (func 1)
+ *        ;can't bind or set an immutable object: cvar
+ */
 
 
 static s7_pointer s7_find_value_in_environment(s7_scheme *sc, s7_pointer val)
@@ -7811,6 +7818,21 @@ static s7_pointer g_get_output_string(s7_scheme *sc, s7_pointer args)
 }
 
 
+s7_pointer s7_open_input_function(s7_scheme *sc, char (*function)(s7_scheme *sc, bool peek, s7_pointer port))
+{
+  s7_pointer x;
+  x = new_cell(sc);
+  set_type(x, T_INPUT_PORT | T_ATOM | T_FINALIZABLE | T_SIMPLE | T_DONT_COPY);
+  
+  x->object.port = (s7_port_t *)calloc(1, sizeof(s7_port_t));
+  port_type(x) = FUNCTION_PORT;
+  port_is_closed(x) = false;
+  port_needs_free(x) = false;
+  port_input_function(x) = function;
+  return(x);
+}
+
+
 s7_pointer s7_open_output_function(s7_scheme *sc, void (*function)(s7_scheme *sc, char c, s7_pointer port))
 {
   s7_pointer x;
@@ -7821,7 +7843,7 @@ s7_pointer s7_open_output_function(s7_scheme *sc, void (*function)(s7_scheme *sc
   port_type(x) = FUNCTION_PORT;
   port_is_closed(x) = false;
   port_needs_free(x) = false;
-  port_function(x) = function;
+  port_output_function(x) = function;
   return(x);
 }
 
@@ -7845,6 +7867,9 @@ static s7_pointer pop_input_port(s7_scheme *sc)
   return(sc->input_port);
 }
 
+
+/* TODO: tie in (and test/document) the caller function input port
+ */
 
 static int inchar(s7_scheme *sc, s7_pointer pt)
 {
@@ -7889,6 +7914,10 @@ static char s7_read_char_1(s7_scheme *sc, s7_pointer port, bool peek)
 {
   /* port nil -> as if read-char with no arg -> use current input port */
   int c;
+
+  if (is_function_port(port))
+    return((*(port_input_function(port)))(sc, peek, port));
+
   c = inchar(sc, port);
   if ((peek) && (c != EOF))
     backchar(sc, c, port);
@@ -7924,6 +7953,12 @@ static s7_pointer g_read_char_1(s7_scheme *sc, s7_pointer args, bool peek)
     return(sc->EOF_OBJECT); 
 
   return(s7_make_character(sc, c));
+
+  /* TODO: interactive read-char|line
+   *   we need to have the caller tell us how to handle reads that do not specify the input port
+   *   current-input-port in this case can easily be the string that is being evaluated in
+   *   the caller's context (repl widget), which is not what we want.
+   */
 }
 
 
@@ -7943,15 +7978,22 @@ static s7_pointer g_peek_char(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_read_line(s7_scheme *sc, s7_pointer args)
 {
-  #define H_read_line "(read-line port) returns the next line from port, or #<eof> (use the function eof-object?)."
+  #define H_read_line "(read-line port (with-eol #f)) returns the next line from port, or #<eof> (use the function eof-object?).\
+If 'with-eol' is not #f, include the trailing end-of-line character."
+
   s7_pointer port;
   int i;
+  bool with_eol = false;
 
   if (args != sc->NIL)
     {
       port = car(args);
       if (!s7_is_input_port(sc, port))
 	return(s7_wrong_type_arg_error(sc, "read-line", 0, port, "an input port"));
+
+      if ((cdr(sc->args) != sc->NIL) &&
+	  (cadr(sc->args) != sc->F))
+	with_eol = true;
     }
   else port = sc->input_port;
 
@@ -7970,7 +8012,10 @@ static s7_pointer g_read_line(s7_scheme *sc, s7_pointer args)
 	  sc->read_line_buf = (char *)realloc(sc->read_line_buf, sc->read_line_buf_size * sizeof(char));
 	}
 
-      c = inchar(sc, port);
+      if (is_function_port(port))
+	c = (*(port_input_function(port)))(sc, false, port);
+      else c = inchar(sc, port);
+
       if (c == EOF)
 	{
 	  if (i == 0)
@@ -7982,6 +8027,7 @@ static s7_pointer g_read_line(s7_scheme *sc, s7_pointer args)
       sc->read_line_buf[i] = (char)c;
       if (c == '\n')
 	{
+	  if (!with_eol) i--;
 	  sc->read_line_buf[i + 1] = 0;
 	  return(s7_make_string_with_length(sc, sc->read_line_buf, i + 1));
 	}
@@ -8413,7 +8459,7 @@ static void write_char(s7_scheme *sc, char c, s7_pointer pt)
 	{
 	  if (is_string_port(pt))
 	    char_to_string_port(c, pt);
-	  else (*(port_function(pt)))(sc, c, pt);
+	  else (*(port_output_function(pt)))(sc, c, pt);
 	}
     }
 }
@@ -8442,7 +8488,7 @@ static void write_string(s7_scheme *sc, const char *s, s7_pointer pt)
 	  else 
 	    {
 	      for (; *s; s++)
-		(*(port_function(pt)))(sc, *s, pt);
+		(*(port_output_function(pt)))(sc, *s, pt);
 	    }
 	}
     }
@@ -9001,7 +9047,9 @@ static s7_pointer g_read_byte(s7_scheme *sc, s7_pointer args)
   if ((!is_input_port(port)) ||
       (!is_file_port(port)))
     return(s7_wrong_type_arg_error(sc, "read-byte", 0, port, "an input file port"));
-  return(s7_make_integer(sc, fgetc(port_file(port))));
+  if (is_file_port(port))
+    return(s7_make_integer(sc, fgetc(port_file(port))));
+  return(s7_make_integer(sc, (*(port_input_function(port)))(sc, false, port)));
 }
 
 
@@ -9022,7 +9070,7 @@ static s7_pointer g_write_byte(s7_scheme *sc, s7_pointer args)
   
   if (is_file_port(port))
     fputc((unsigned char)s7_integer(car(args)), port_file(port));
-  else (*(port_function(port)))(sc, (char)s7_integer(car(args)), port);
+  else (*(port_output_function(port)))(sc, (char)s7_integer(car(args)), port);
   return(car(args));
 }
 
@@ -21634,7 +21682,7 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "display",                 g_display,                 1, 1, false, H_display);
   s7_define_function(sc, "read-byte",               g_read_byte,               0, 1, false, H_read_byte);
   s7_define_function(sc, "write-byte",              g_write_byte,              1, 1, false, H_write_byte);
-  s7_define_function(sc, "read-line",               g_read_line,               0, 1, true, H_read_line); /* rest arg for compatibility with Guile */
+  s7_define_function(sc, "read-line",               g_read_line,               0, 2, false, H_read_line);
   
   s7_define_function(sc, "call-with-input-string",  g_call_with_input_string,  2, 0, false, H_call_with_input_string);
   s7_define_function(sc, "call-with-input-file",    g_call_with_input_file,    2, 0, false, H_call_with_input_file);

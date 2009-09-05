@@ -256,6 +256,17 @@ var
 &gt; (let ((var 1)) var)
 ;can't bind or set an immutable object: var, line 1
 </pre>
+<p>This has the possibly surprising side effect that previous uses of the constant name
+become constants:
+</p>
+<pre>
+ (define (func a) (let ((cvar (+ a 1))) cvar))
+ (define-constant cvar 23)
+ (func 1)
+ ;can't bind or set an immutable object: cvar
+</pre>
+<p>So, obviously, choose unique names for your constants, or don't use define-constant.
+</p>
 </dd>
 <br>
 

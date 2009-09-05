@@ -1571,7 +1571,7 @@ typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
 #endif /* end HAVE_FORTH */
 
 
-/* ------------------------------ S7 (a tinyscheme derivative) ------------------------------ */
+/* ------------------------------ s7 ------------------------------ */
 
 #if HAVE_S7
 
