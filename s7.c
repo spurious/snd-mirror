@@ -295,7 +295,7 @@ typedef enum {OP_READ_INTERNAL, OP_EVAL, OP_EVAL_ARGS0, OP_EVAL_ARGS1, OP_APPLY,
 	      OP_QUIT, OP_CATCH, OP_DYNAMIC_WIND, OP_FOR_EACH, OP_MAP, OP_DEFINE_CONSTANT0, OP_DEFINE_CONSTANT1, 
 	      OP_DO, OP_DO_END0, OP_DO_END1, OP_DO_STEP0, OP_DO_STEP1, OP_DO_STEP2, OP_DO_INIT,
 	      OP_DEFINE_STAR, OP_LAMBDA_STAR, OP_ERROR_QUIT, OP_UNWIND_INPUT, OP_UNWIND_OUTPUT, 
-	      OP_TRACE_RETURN, OP_ERROR_HOOK_QUIT, OP_CALL_WITH_VALUES, OP_WITH_ENV0, OP_WITH_ENV1,
+	      OP_TRACE_RETURN, OP_ERROR_HOOK_QUIT, OP_WITH_ENV0, OP_WITH_ENV1,
 	      OP_MAX_DEFINED} opcode_t;
 
 #define NUM_SMALL_INTS 256
@@ -1631,7 +1631,7 @@ static void show_stack(s7_scheme *sc)
      "read_and_return_expression", "load_return_if_eof", "load_close_and_pop_if_eof", "eval_string", 
      "eval_string_done", "eval_done", "quit", "catch", "dynamic_wind", "for_each", "map", "define_constant0", 
      "define_constant1", "do", "do_end0", "do_end1", "do_step0", "do_step1", "do_step2", "do_init", "define_star", 
-     "lambda_star", "error_quit", "unwind_input", "unwind_output", "trace_return", "error_hook_quit", "call_with_values",
+     "lambda_star", "error_quit", "unwind_input", "unwind_output", "trace_return", "error_hook_quit",
      "with_env0", "with_env1"};
 
   int i;
@@ -13972,33 +13972,49 @@ static s7_pointer g_map(s7_scheme *sc, s7_pointer args)
 }
 
 
+static s7_pointer splice_in_values(s7_scheme *sc, s7_pointer args)
+{
+  if (sc->stack_top > 0)
+    {
+      /* code = args yet to eval in order, args = evalled args reversed */
+      s7_pointer *vel;
+      int top;
+      top = sc->stack_top - 4;
+      vel = (s7_pointer *)(vector_elements(sc->stack) + top);
+      /*
+       * code = vel[0]
+       * args = vel[2]
+       * op =   (opcode_t)integer(number(vel[3]))
+      */
+      if ((opcode_t)integer(number(vel[3])) == OP_EVAL_ARGS1)
+	{
+	  s7_pointer x;
+	  /* splice into the caller's arg list, leaving the last for the eval args loop to handle */
+	  for (x = args; cdr(x) != sc->NIL; x = cdr(x))
+	    vel[2] = s7_cons(sc, car(x), vel[2]);
+	  return(car(x));
+	}
+    }
+
+  /* let it meander back up the call chain until someone knows where to splice it
+   *   this involves call/cc dynamic-wind, possibly "delay" etc. (with-output-to-file?)
+   * TODO: check values to delay etc
+   */
+  return(s7_cons(sc, sc->VALUES, args));
+}
+
+
 static s7_pointer g_values(s7_scheme *sc, s7_pointer args)
 {
-  /* I can't see any point to this thing, even in its fancy version (which this is not) */
-  #define H_values "(values obj ...) returns its arguments"
+  #define H_values "(values obj ...) splices its arguments into whatever list (its 'continuation') holds it"
   
   if (args == sc->NIL)
     return(sc->NIL);
   
-  if (s7_list_length(sc, args) == 1)
+  if (cdr(args) == sc->NIL)
     return(car(args));
-  
-  return(s7_append(sc, make_list_1(sc, sc->VALUES), args));
-}
 
-
-/* (call-with-values (lambda () (values 1 2 3)) +) */
-
-static s7_pointer g_call_with_values(s7_scheme *sc, s7_pointer args)
-{
-  #define H_call_with_values "(call-with-values producer consumer) applies consumer to the multiple values returned by producer"
-
-  push_stack(sc, OP_EVAL_DONE, sc->args, sc->code); 
-  push_stack(sc, OP_CALL_WITH_VALUES, sc->NIL, cadr(args));
-  sc->args = sc->NIL;
-  sc->code = car(args);
-  eval(sc, OP_APPLY);
-  return(sc->value);
+  return(splice_in_values(sc, args));
 }
 
 
@@ -15267,7 +15283,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      {
 		if (cdr(sc->args) == sc->NIL)
 		  sc->value = car(sc->args);
-		else sc->value = s7_cons(sc, sc->VALUES, sc->args);
+		else sc->value = splice_in_values(sc, sc->args);
 	      }
 	    pop_stack(sc);
 	    goto START;
@@ -16290,7 +16306,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    }
 	  else
 	    {
-	      sc->value = sc->args; /* value saved above */
+	      /* (+ 1 (dynamic-wind (lambda () #f) (lambda () (values 2 3 4)) (lambda () #f)) 5) */
+	      if ((is_pair(sc->args)) &&
+		  (car(sc->args) == sc->VALUES))
+		sc->value = splice_in_values(sc, cdr(sc->args));
+	      else sc->value = sc->args;                         /* value saved above */ 
 	      pop_stack(sc); 
 	      goto START;
 	    }
@@ -16400,15 +16420,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	}
       pop_stack(sc);
       goto START;
-
-      
-    case OP_CALL_WITH_VALUES:
-      /* sc->code should be the "consumer", sc->value the args (from the producer) */
-      if ((is_pair(sc->value)) &&
-	  (s7_is_eq(car(sc->value), sc->VALUES)))
-	sc->args = cdr(sc->value);
-      else sc->args = make_list_1(sc, sc->value);
-      goto APPLY;
 
       
     case OP_READ_DOT:
@@ -21940,8 +21951,6 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "map",                     g_map,                     2, 0, true,  H_map);
 
   s7_define_function(sc, "values",                  g_values,                  0, 0, true,  H_values);
-  s7_define_function(sc, "call-with-values",        g_call_with_values,        2, 0, false, H_call_with_values);
-
   s7_define_function(sc, "dynamic-wind",            g_dynamic_wind,            3, 0, false, H_dynamic_wind);
   s7_define_function(sc, "catch",                   g_catch,                   3, 0, false, H_catch);
   s7_define_function(sc, "error",                   g_error,                   0, 0, true,  H_error);
@@ -22063,6 +22072,10 @@ s7_scheme *s7_init(void)
 
   /* macroexpand */
   s7_eval_c_string(sc, "(define-macro (macroexpand mac) `(,(procedure-source (car mac)) ',mac))");
+
+  /* call-with-values is almost a no-op in this context */
+  s7_eval_c_string(sc, "(define-macro (call-with-values producer consumer) `(,consumer (,producer)))"); 
+  /* (call-with-values (lambda () (values 1 2 3)) +) */
 
 #if WITH_ENCAPSULATION
   s7_eval_c_string(sc, "                                 \n\

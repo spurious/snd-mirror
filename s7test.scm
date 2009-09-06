@@ -4162,11 +4162,21 @@
 (test (+ (values '1) (values '2)) 3)
 (test (if (values #t) 1 2) 1)
 (test (if (values '#t) 1 2) 1)
-(test (values 1 2 3) (values 1 2 3))
+;;; (test (values 1 2 3) (values 1 2 3))
 ;(test (call-with-values (lambda () (values)) list) '())
 (test (call-with-values (lambda () 4) (lambda (x) x)) 4)
 (test (let () (values 1 2 3) 4) 4)
 (test (apply + (values '())) 0)
+(test (+ (values 1 2 3)) 6)
+(test (let ((f (lambda () (values 1 2 3)))) (+ (f))) 6)
+(test (log (values 8 2)) 3)
+(test (* (values 2 (values 3 4))) 24)
+(test (* (values (+ (values 1 2)) (- (values 3 4)))) -3)
+(test (list (values 1 2) (values 3) 4) '(1 2 3 4))
+(test (let ((f1 (lambda (x) (values x (+ x 1)))) (f2 (lambda () (values 2)))) (+ (f1 3) (* 2 (f2)))) 11)
+(test (+ (let () (values 1 2)) 3) 6)
+(test (let () (values 1 2) 4) 4)
+(test (let () + (values 1 2) 4) 4)
 
 (for-each
  (lambda (arg)
@@ -4182,23 +4192,23 @@
 ;(test (call-with-values values (lambda arg arg)) '())
 (test (string-ref (values "hi") 1) #\i)
 
-(test (letrec ((split (lambda (ls)
-			(if (or (null? ls) (null? (cdr ls)))
-			    (values ls '())
-			    (call-with-values
-				(lambda () (split (cddr ls)))
-			      (lambda (odds evens)
-				(values (cons (car ls) odds)
-					(cons (cadr ls) evens))))))))
-	(split '(a b c d e f)))
-      (values '(a c e) '(b d f)))
+(test (list (letrec ((split (lambda (ls)
+			      (if (or (null? ls) (null? (cdr ls)))
+				  (values ls '())
+				  (call-with-values
+				      (lambda () (split (cddr ls)))
+				    (lambda (odds evens)
+				      (values (cons (car ls) odds)
+					      (cons (cadr ls) evens))))))))
+	      (split '(a b c d e f))))
+      '((a c e) (b d f)))
 
 (test (call-with-values (lambda () (call/cc (lambda (k) (k 2 3)))) (lambda (x y) (list x y))) '(2 3))
-                         ;;; s7: (lambda (x y) (list x y)): not enough arguments: (2)
+(test (+ (call/cc (lambda (return) (return (values 1 2 3)))) 4) 10)
 
 (test (let ((values 3)) (+ 2 values)) 5)
-(test (apply values (list 1 2)) (values 1 2))
-(test (let ((a (values 1 2))) a) (values 1 2))
+;;; (test (apply values (list 1 2)) (values 1 2))
+;;; (test (let ((a (values 1 2))) a) (values 1 2))
 (test (let ((a (values 1))) a) 1)
 
 (test (call-with-values (lambda () 2) (lambda (x) x)) 2)
@@ -5198,6 +5208,7 @@
  (list "hi" -1 #\a 1 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i #t (list 1 2 3) '(1 . 2)))
 
 (test (dynamic-wind (lambda () #f) (lambda () #f) (lambda () #f)) #f)
+(test (+ 1 (dynamic-wind (lambda () #f) (lambda () (values 2 3 4)) (lambda () #f)) 5) 15)
 
 (test (let ((identity (lambda (a) a)))
         (let ((x '())
@@ -5221,11 +5232,11 @@
           (reverse x)))
       '(a b c d e f g b c d e f g h))
 
-(test (dynamic-wind 
-	  (lambda () #f)
-	  (lambda () (values 'a 'b 'c))
-	  (lambda () #f))
-      (values 'a 'b 'c))
+(test (list (dynamic-wind 
+		(lambda () #f)
+		(lambda () (values 'a 'b 'c))
+		(lambda () #f)))
+      (list 'a 'b 'c))
 
 (test (let ((dynamic-wind 1)) (+ dynamic-wind 2)) 3)
 

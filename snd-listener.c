@@ -640,7 +640,7 @@ void listener_return(widget_t w, int last_prompt)
 	      got_error = true;
 	    }
 	}
-      ss->listener_char = 0;
+      /* ss->listener_char = 0; */
 #endif
 
       free(str);
