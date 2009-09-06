@@ -183,7 +183,7 @@ static void listener_completion(int end)
 	  set_save_completions(true);
 	  if (file_text) 
 	    new_text = filename_completer(NULL, file_text, NULL); 
-	  else new_text = command_completer(NULL, old_text, NULL);
+	  else new_text = expression_completer(NULL, old_text, NULL);
 	  if (new_text) 
 	    {
 	      free(new_text); 
@@ -203,7 +203,7 @@ static void listener_completion(int end)
 
 
 
-/* ---------------- command widget replacement ---------------- */
+/* ---------------- listener widget ---------------- */
 
 void listener_append(const char *msg)
 {
@@ -231,10 +231,10 @@ void listener_append_and_prompt(const char *msg)
 }
 
 
-static void command_return_callback(void)
+static void listener_return_callback(void)
 {
   if (!(ss->error_lock))
-    command_return(listener_text, printout_end);
+    listener_return(listener_text, printout_end);
 }
 
 
@@ -546,7 +546,7 @@ static gboolean listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer da
     }
 
   if (EVENT_KEYVAL(event) == GDK_Return)
-    command_return_callback();
+    listener_return_callback();
   else
     {
       if (((EVENT_KEYVAL(event) == snd_K_g) || (EVENT_KEYVAL(event) == snd_K_G)) && 
@@ -645,7 +645,7 @@ static gboolean listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer da
 						    {
 						      if ((EVENT_KEYVAL(event) == snd_K_underscore) && (EVENT_STATE(event) & snd_ControlMask))
 							{
-							  backup_listener_to_previous_command();
+							  backup_listener_to_previous_expression();
 							}
 						      else
 							{
@@ -779,7 +779,7 @@ GtkWidget *snd_entry_new(GtkWidget *container, snd_entry_bg_t with_white_backgro
 }
 
 
-static void make_command_widget(int height)
+static void make_listener_widget(int height)
 {
   if (!listener_text)
     {
@@ -970,7 +970,7 @@ void color_listener_text(color_info *pix)
 void handle_listener(bool open)
 {
   if ((open) && (!listener_text))
-    make_command_widget(100);
+    make_listener_widget(100);
 
   if ((SOUND_PANE(ss)) && /* might be run -separate with no sound open */
       (sound_style(ss) != SOUNDS_IN_SEPARATE_WINDOWS))

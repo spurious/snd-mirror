@@ -2922,6 +2922,79 @@ static char *legalize_path(const char *in_str)
 } 
 
 
+/* -------------------------------------------------------------------------------- */
+
+#if HAVE_S7
+/* an experiment */
+
+/* TODO: needs read-line etc. also minibuffer funcs.
+ */
+
+static s7_pointer listener_read(s7_scheme *sc, s7_read_t read_choice, s7_pointer port)
+{
+  switch (read_choice)
+    {
+    case S7_READ_CHAR:
+      {
+	char c;
+	while (ss->listener_char == 0) check_for_event();
+	c = ss->listener_char;
+	ss->listener_char = 0;
+	return(s7_make_character(s7, c));
+      }
+
+    case S7_IS_CHAR_READY:
+      return((ss->listener_char) ? xen_true : xen_false);
+
+    case S7_PEEK_CHAR:
+      return(s7_make_character(s7, ss->listener_char));
+
+    case S7_READ_LINE:
+    case S7_READ:
+    case S7_READ_BYTE:
+      fprintf(stderr, "can't handle this read choice yet");
+    }
+  return(xen_false);
+}
+
+static void listener_write(s7_scheme *sc, char c, s7_pointer port)
+{
+  char str[2];
+  str[0] = c;
+  str[1] = 0;
+  append_listener_text(-1, str); /* -1 means get eot after append and move cursor to it */
+  ss->listener_char = 0;
+  /* (let () (format (listener-output-port) "~%;a prompt: ") (read-char (listener-input-port))) */
+}
+
+static s7_pointer listener_input_port, listener_output_port;
+
+static s7_pointer g_listener_input_port(s7_scheme *sc, s7_pointer args)
+{
+  return(listener_input_port);
+}
+
+static s7_pointer g_listener_output_port(s7_scheme *sc, s7_pointer args)
+{
+  return(listener_output_port);
+}
+
+static void init_listener_ports(void)
+{
+  listener_input_port = s7_open_input_function(s7, listener_read);
+  s7_gc_protect(s7, listener_input_port);
+
+  listener_output_port = s7_open_output_function(s7, listener_write);
+  s7_gc_protect(s7, listener_output_port);
+
+  s7_define_function(s7, "listener-input-port", g_listener_input_port, 0, 0, false, "(listener-input-port) returns a port to read from the listener text widget");
+  s7_define_function(s7, "listener-output-port", g_listener_output_port, 0, 0, false, "(listener-output-port) returns a port to write to the listener text widget");
+}
+
+#endif
+
+
+/* -------------------------------------------------------------------------------- */
 void g_xen_initialize(void)
 {
   add_source_file_extension(XEN_FILE_EXTENSION);
@@ -3248,6 +3321,8 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
 #endif
 
 #if HAVE_S7
+  init_listener_ports();
+
   XEN_EVAL_C_STRING("(define redo-edit redo)");        /* consistency with Ruby */
   XEN_EVAL_C_STRING("(define undo-edit undo)");
 
@@ -3334,7 +3409,6 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
 	(throw 'snd-top-level)))    ; jump back to the top level\n\
      (break-exit)))                 ; we get here if break-ok is called\n\
 ");
-
 
 #endif
 

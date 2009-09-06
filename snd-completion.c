@@ -270,10 +270,10 @@ bool separator_char_p(char c)
 #endif
 
 
-char *command_completer(widget_t w, const char *original_text, void *data)
+char *expression_completer(widget_t w, const char *original_text, void *data)
 {
   int i, len, beg, matches = 0;
-  /* first back up to some delimiter to get the current command */
+  /* first back up to some delimiter to get the current expression */
 
   current_match = NULL;
   set_completion_matches(0);
@@ -389,7 +389,7 @@ int find_best_completion(char **choices, int num_choices)
 
 
 
-/* ---------------- COMMAND/FILENAME COMPLETIONS ---------------- */
+/* ---------------- EXPRESSION/FILENAME COMPLETIONS ---------------- */
 
 typedef char *(*completer_func)(widget_t w, const char *text, void *data);
 static completer_func *completer_funcs = NULL;
@@ -707,7 +707,7 @@ char *info_completer(widget_t w, const char *text, void *data)
       if (use_sound_filename_completer(sp->filing)) return(sound_filename_completer(w, text, NULL));
       if (sp->loading) return(filename_completer(w, text, NULL));   /* C-x C-l */
 
-      new_text = command_completer(w, text, NULL);
+      new_text = expression_completer(w, text, NULL);
       if (get_completion_matches() == 0)
 	{
 	  int i, beg, parens, len;
@@ -735,7 +735,7 @@ char *info_completer(widget_t w, const char *text, void *data)
 	}
       return(new_text);
     }
-  return(command_completer(w, text, NULL));
+  return(expression_completer(w, text, NULL));
 }
 
 
@@ -839,7 +839,7 @@ char *complete_listener_text(char *old_text, int end, bool *try_completion, char
 	}
       if (isspace((int)(old_text[i]))) break;
     }
-  if (new_text == NULL) new_text = command_completer(NULL_WIDGET, old_text, NULL);
+  if (new_text == NULL) new_text = expression_completer(NULL_WIDGET, old_text, NULL);
   (*try_completion) = true;
   (*to_file_text) = file_text;
   return(new_text);

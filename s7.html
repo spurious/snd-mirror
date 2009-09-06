@@ -496,6 +496,10 @@ are:
 <p>The variable *vector-print-length* sets
 the upper limit on how many vector elements are printed by object-&gt;string and format.
 </p>
+<p>When running s7 behind a GUI, you often want input to come from and output to go to
+arbitrary widgets. The "function ports" provide a way to redirect IO.  See s7.h
+for an example.
+</p>
 </dd>
 <br>
 
@@ -733,6 +737,8 @@ You can change the current environment by hand:
        (eval `(+ x y) (make-environment '(x . 2) '(y . 4))))
      -&gt; 6
 </pre>
+<p>(with-environment env . body) evaluates its body in the environment env.
+</p>
 </dd>
 <br>
 

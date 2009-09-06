@@ -398,6 +398,7 @@ s7_pointer s7_hash_table_set(s7_scheme *sc, s7_pointer table, const char *name, 
 bool s7_is_input_port(s7_scheme *sc, s7_pointer p);                         /* (input-port? p) */
 bool s7_is_output_port(s7_scheme *sc, s7_pointer p);                        /* (output-port? p) */
 s7_pointer s7_current_input_port(s7_scheme *sc);                            /* (current-input-port) */
+s7_pointer s7_set_current_input_port(s7_scheme *sc, s7_pointer p);          /* (set-current-input-port) */
 s7_pointer s7_current_output_port(s7_scheme *sc);                           /* (current-output-port) */
 s7_pointer s7_set_current_output_port(s7_scheme *sc, s7_pointer p);         /* (set-current-output-port) */
 s7_pointer s7_current_error_port(s7_scheme *sc);                            /* (current-error-port) */
@@ -415,8 +416,9 @@ s7_pointer s7_open_output_string(s7_scheme *sc);                            /* (
 const char *s7_get_output_string(s7_scheme *sc, s7_pointer out_port);       /* (get-output-string port) -- current contents of output string */
   /*    don't free the string */
 
+typedef enum {S7_READ, S7_READ_CHAR, S7_READ_LINE, S7_READ_BYTE, S7_PEEK_CHAR, S7_IS_CHAR_READY} s7_read_t;
 s7_pointer s7_open_output_function(s7_scheme *sc, void (*function)(s7_scheme *sc, char c, s7_pointer port));  
-s7_pointer s7_open_input_function(s7_scheme *sc, char (*function)(s7_scheme *sc, bool peek, s7_pointer port));
+s7_pointer s7_open_input_function(s7_scheme *sc, s7_pointer (*function)(s7_scheme *sc, s7_read_t read_choice, s7_pointer port));
 
 char s7_read_char(s7_scheme *sc, s7_pointer port);                          /* (read-char port) */
 char s7_peek_char(s7_scheme *sc, s7_pointer port);                          /* (peek-char port) */
@@ -1337,7 +1339,7 @@ int main(int argc, char **argv)
 
 /* --------------------------------------------------------------------------------
  *
- * an example of redirecting output to a C procedure:
+ * an example of redirecting output (and input) to a C procedure:
  */
 
 #if 0
@@ -1352,6 +1354,11 @@ static void my_print(s7_scheme *sc, char c, s7_pointer port)
   fprintf(stderr, "[%c] ", c);
 }
 
+static s7_pointer my_read(s7_scheme *sc, s7_read_t peek, s7_pointer port)
+{
+  return(s7_make_character(s7, fgetc(stdin)));
+}
+
 int main(int argc, char **argv)
 {
   s7_scheme *s7;
@@ -1361,6 +1368,7 @@ int main(int argc, char **argv)
   s7 = s7_init();  
 
   s7_set_current_output_port(s7, s7_open_output_function(s7, my_print));
+  s7_define_variable(s7, "io-port", s7_open_input_function(s7, my_read));
 
   while (1) 
     {
@@ -1389,6 +1397,9 @@ int main(int argc, char **argv)
  *    [a] [d] [d] [1] 
  *    > (add1 123)
  *    [1] [2] [4] 
+ *    > (read-char io-port)
+ *    a                             ; here I typed "a" in the shell
+ *    [#] [\] [a] 
  */
 
 #endif
@@ -1656,7 +1667,7 @@ int main(int argc, char **argv)
  * 
  *        s7 changes
  *
- * 5-Sep:     s7_open_input_function.
+ * 7-Sep:     s7_open_input_function. with-environment.
  * 3-Sep:     s7.html, s7-slib-init.scm. 
  *            s7_stacktrace in s7.h.
  * 27-Aug:    vector and hash-table sizes are now s7_Ints, rather than ints.

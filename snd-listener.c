@@ -358,7 +358,7 @@ static void add_listener_position(int pos)
 }
 
 
-void backup_listener_to_previous_command(void)
+void backup_listener_to_previous_expression(void)
 {
   if (current_listener_position > 0)
     {
@@ -367,11 +367,11 @@ void backup_listener_to_previous_command(void)
     }
 }
 #else
-void backup_listener_to_previous_command(void) {}
+void backup_listener_to_previous_expression(void) {}
 #endif
 
 
-void command_return(widget_t w, int last_prompt)
+void listener_return(widget_t w, int last_prompt)
 {
 #if (!USE_NO_GUI)
   /* try to find complete form either enclosing current cursor, or just before it */
@@ -575,6 +575,7 @@ void command_return(widget_t w, int last_prompt)
   if (full_str) GUI_FREE(full_str);
   if (str)
     {
+      bool got_error = false;
       if (current_position < (last_position - 2))
 	GUI_LISTENER_TEXT_INSERT(w, GUI_TEXT_END(w), str);
       GUI_SET_CURSOR(w, ss->sgx->wait_cursor);
@@ -636,15 +637,20 @@ void command_return(widget_t w, int last_prompt)
 	      if (*errmsg)
 		snd_display_result(errmsg, NULL);
 	      free(errmsg);
+	      got_error = true;
 	    }
 	}
+      ss->listener_char = 0;
 #endif
 
       free(str);
       str = NULL;
-      snd_report_listener_result(form); /* used to check for unbound form here, but that's no good in Ruby,
-					 *   and doesn't seem sensible in Guile
-					 */
+
+      /* in the Guile case, an error goes to snd_catch_scm_error -> listener_append_and_prompt ultimately */
+      if (!got_error)
+	snd_report_listener_result(form); /* used to check for unbound form here, but that's no good in Ruby,
+					   *   and doesn't seem sensible in Guile
+					   */
       GUI_UNSET_CURSOR(w, ss->sgx->arrow_cursor);
     }
   else
@@ -773,7 +779,7 @@ static XEN g_snd_completion(XEN text)
   char *str, *temp;
   XEN res;
   temp = mus_strdup(XEN_TO_C_STRING(text));
-  str = command_completer(NULL_WIDGET, temp, NULL);
+  str = expression_completer(NULL_WIDGET, temp, NULL);
   res = C_TO_XEN_STRING(str);
   free(str);
   free(temp);

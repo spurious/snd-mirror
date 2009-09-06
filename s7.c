@@ -295,7 +295,7 @@ typedef enum {OP_READ_INTERNAL, OP_EVAL, OP_EVAL_ARGS0, OP_EVAL_ARGS1, OP_APPLY,
 	      OP_QUIT, OP_CATCH, OP_DYNAMIC_WIND, OP_FOR_EACH, OP_MAP, OP_DEFINE_CONSTANT0, OP_DEFINE_CONSTANT1, 
 	      OP_DO, OP_DO_END0, OP_DO_END1, OP_DO_STEP0, OP_DO_STEP1, OP_DO_STEP2, OP_DO_INIT,
 	      OP_DEFINE_STAR, OP_LAMBDA_STAR, OP_ERROR_QUIT, OP_UNWIND_INPUT, OP_UNWIND_OUTPUT, 
-	      OP_TRACE_RETURN, OP_ERROR_HOOK_QUIT, OP_CALL_WITH_VALUES,
+	      OP_TRACE_RETURN, OP_ERROR_HOOK_QUIT, OP_CALL_WITH_VALUES, OP_WITH_ENV0, OP_WITH_ENV1,
 	      OP_MAX_DEFINED} opcode_t;
 
 #define NUM_SMALL_INTS 256
@@ -342,7 +342,7 @@ typedef struct s7_port_t {
   char *filename;
   char *value;
   int size, point; 
-  char (*input_function)(s7_scheme *sc, bool peek, s7_pointer port);
+  s7_pointer (*input_function)(s7_scheme *sc, s7_read_t read_choice, s7_pointer port);
   void (*output_function)(s7_scheme *sc, char c, s7_pointer port);
 } s7_port_t;
 
@@ -1631,7 +1631,8 @@ static void show_stack(s7_scheme *sc)
      "read_and_return_expression", "load_return_if_eof", "load_close_and_pop_if_eof", "eval_string", 
      "eval_string_done", "eval_done", "quit", "catch", "dynamic_wind", "for_each", "map", "define_constant0", 
      "define_constant1", "do", "do_end0", "do_end1", "do_step0", "do_step1", "do_step2", "do_init", "define_star", 
-     "lambda_star", "error_quit", "unwind_input", "unwind_output", "trace_return", "error_hook_quit", "call_with_values"};
+     "lambda_star", "error_quit", "unwind_input", "unwind_output", "trace_return", "error_hook_quit", "call_with_values",
+     "with_env0", "with_env1"};
 
   int i;
   for (i = sc->stack_top - 4; i >= 0; i -= 4)
@@ -7407,7 +7408,7 @@ static char *describe_port(s7_scheme *sc, s7_pointer p)
   char *desc;
   desc = (char *)malloc(64 * sizeof(char));
   snprintf(desc, 64, "<port%s%s%s>",
-  	   (is_file_port(p)) ? " file" : ((is_string_port(p)) ? " string" : "function"),
+  	   (is_file_port(p)) ? " file" : ((is_string_port(p)) ? " string" : " function"),
 	   (is_input_port(p)) ? " input" : " output",
 	   (port_is_closed(p)) ? " (closed)" : "");
   return(desc);
@@ -7485,6 +7486,15 @@ static s7_pointer g_set_current_input_port(s7_scheme *sc, s7_pointer args)
   if (s7_is_input_port(sc, port))
     sc->input_port = port;
   else return(s7_wrong_type_arg_error(sc, "set-current-input-port", 0, port, "an input port or nil"));
+  return(old_port);
+}
+
+
+s7_pointer s7_set_current_input_port(s7_scheme *sc, s7_pointer port)
+{
+  s7_pointer old_port;
+  old_port = sc->input_port;
+  sc->input_port = port;
   return(old_port);
 }
 
@@ -7567,7 +7577,9 @@ static s7_pointer g_is_char_ready(s7_scheme *sc, s7_pointer args)
       s7_pointer pt = car(args);
       if (!s7_is_input_port(sc, pt))
 	return(s7_wrong_type_arg_error(sc, "char-ready?", 0, pt, "an input port"));
-      
+
+      if (is_function_port(pt))
+	return((*(port_input_function(pt)))(sc, S7_IS_CHAR_READY, pt));
       return(make_boolean(sc, is_string_port(pt)));
     }
   return(make_boolean(sc, (is_input_port(sc->input_port)) && (is_string_port(sc->input_port))));
@@ -7817,8 +7829,7 @@ static s7_pointer g_get_output_string(s7_scheme *sc, s7_pointer args)
   return(s7_make_string(sc, s7_get_output_string(sc, p)));
 }
 
-
-s7_pointer s7_open_input_function(s7_scheme *sc, char (*function)(s7_scheme *sc, bool peek, s7_pointer port))
+s7_pointer s7_open_input_function(s7_scheme *sc, s7_pointer (*function)(s7_scheme *sc, s7_read_t read_choice, s7_pointer port))
 {
   s7_pointer x;
   x = new_cell(sc);
@@ -7910,16 +7921,16 @@ static void backchar(s7_scheme *sc, char c, s7_pointer pt)
 }
 
 
-static char s7_read_char_1(s7_scheme *sc, s7_pointer port, bool peek)
+static char s7_read_char_1(s7_scheme *sc, s7_pointer port, s7_read_t read_choice)
 {
   /* port nil -> as if read-char with no arg -> use current input port */
   int c;
 
   if (is_function_port(port))
-    return((*(port_input_function(port)))(sc, peek, port));
+    return(character((*(port_input_function(port)))(sc, read_choice, port)));
 
   c = inchar(sc, port);
-  if ((peek) && (c != EOF))
+  if ((read_choice == S7_PEEK_CHAR) && (c != EOF))
     backchar(sc, c, port);
   return(c);
 }
@@ -7927,13 +7938,13 @@ static char s7_read_char_1(s7_scheme *sc, s7_pointer port, bool peek)
 
 char s7_read_char(s7_scheme *sc, s7_pointer port)
 {
-  return(s7_read_char_1(sc, port, false));
+  return(s7_read_char_1(sc, port, S7_READ_CHAR));
 }
 
 
 char s7_peek_char(s7_scheme *sc, s7_pointer port)
 {
-  return(s7_read_char_1(sc, port, true));
+  return(s7_read_char_1(sc, port, S7_PEEK_CHAR));
 }
 
 
@@ -7948,17 +7959,11 @@ static s7_pointer g_read_char_1(s7_scheme *sc, s7_pointer args, bool peek)
   if (!s7_is_input_port(sc, port))
     return(s7_wrong_type_arg_error(sc, (peek) ? "peek-char" : "read-char", 0, port, "an input port"));
       
-  c = s7_read_char_1(sc, port, peek);
+  c = s7_read_char_1(sc, port, (peek) ? S7_PEEK_CHAR : S7_READ_CHAR);
   if (c == EOF)
     return(sc->EOF_OBJECT); 
 
   return(s7_make_character(sc, c));
-
-  /* TODO: interactive read-char|line
-   *   we need to have the caller tell us how to handle reads that do not specify the input port
-   *   current-input-port in this case can easily be the string that is being evaluated in
-   *   the caller's context (repl widget), which is not what we want.
-   */
 }
 
 
@@ -7997,6 +8002,9 @@ If 'with-eol' is not #f, include the trailing end-of-line character."
     }
   else port = sc->input_port;
 
+  if (is_function_port(port))
+    return((*(port_input_function(port)))(sc, S7_READ_LINE, port));
+
   if (sc->read_line_buf == NULL)
     {
       sc->read_line_buf_size = 256;
@@ -8012,10 +8020,7 @@ If 'with-eol' is not #f, include the trailing end-of-line character."
 	  sc->read_line_buf = (char *)realloc(sc->read_line_buf, sc->read_line_buf_size * sizeof(char));
 	}
 
-      if (is_function_port(port))
-	c = (*(port_input_function(port)))(sc, false, port);
-      else c = inchar(sc, port);
-
+      c = inchar(sc, port);
       if (c == EOF)
 	{
 	  if (i == 0)
@@ -8073,6 +8078,9 @@ static s7_pointer g_read(s7_scheme *sc, s7_pointer args)
      *    should stdin work in that case?
      */
     return(s7_wrong_type_arg_error(sc, "read", 0, port, "an input port"));
+
+  if (is_function_port(port))
+    return((*(port_input_function(port)))(sc, S7_READ, port));
   
   push_input_port(sc, port);
   push_stack(sc, OP_READ_POP_AND_RETURN_EXPRESSION, sc->NIL, sc->NIL); /* this stops the internal read process so we only get one form */
@@ -9044,12 +9052,15 @@ static s7_pointer g_read_byte(s7_scheme *sc, s7_pointer args)
   if (args != sc->NIL)
     port = car(args);
   else port = sc->input_port;
+
   if ((!is_input_port(port)) ||
       (!is_file_port(port)))
     return(s7_wrong_type_arg_error(sc, "read-byte", 0, port, "an input file port"));
+
   if (is_file_port(port))
     return(s7_make_integer(sc, fgetc(port_file(port))));
-  return(s7_make_integer(sc, (*(port_input_function(port)))(sc, false, port)));
+
+  return((*(port_input_function(port)))(sc, S7_READ_BYTE, port));
 }
 
 
@@ -9071,6 +9082,7 @@ static s7_pointer g_write_byte(s7_scheme *sc, s7_pointer args)
   if (is_file_port(port))
     fputc((unsigned char)s7_integer(car(args)), port_file(port));
   else (*(port_output_function(port)))(sc, (char)s7_integer(car(args)), port);
+
   return(car(args));
 }
 
@@ -14780,6 +14792,21 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       sc->args = cdr(sc->args);                               /* go to next */
       goto DO_STEP1;
       
+
+    case OP_WITH_ENV1:
+      sc->envir = sc->args;                              /* restore previous environment */
+      pop_stack(sc);
+      goto START;
+
+
+    case OP_WITH_ENV0:
+      /* (with-environment env . body) */
+      push_stack(sc, OP_WITH_ENV1, sc->envir, sc->NIL);  /* save current env */
+      sc->envir = eval_symbol(sc, car(sc->code));        /* set current env to first arg */
+      /* TODO: eval this thing */
+      sc->code = cdr(sc->code);                          /* treat rest as a body -- use begin */
+      /* goto BEGIN */
+
       
     BEGIN:
     case OP_BEGIN:
@@ -16055,6 +16082,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 				  sc->NIL));
 	}
       else sc->z = cdr(sc->code);
+
+      /* could we make macros safe automatically by doing the symbol lookups right now?
+       *   we'd replace each name with a reference to the current binding cons.  I think
+       *   this is how Guile implements hygenic macros -- is it worth the bother?
+       */
 
       sc->x = car(sc->code);            /* just in case g_quasiquote stepped on sc->x */
       sc->y = s7_gensym(sc, "defmac");
@@ -21526,6 +21558,7 @@ s7_scheme *s7_init(void)
   assign_syntax(sc, "define-macro",      OP_DEFINE_MACRO);     /* Scheme-style macro syntax */
   assign_syntax(sc, "define-expansion",  OP_DEFINE_EXPANSION); /* read-time (immediate) macro expansion */
   assign_syntax(sc, "do",                OP_DO);
+  assign_syntax(sc, "with-environment",  OP_WITH_ENV0);
   
   sc->LAMBDA = s7_make_symbol(sc, "lambda");
   typeflag(sc->LAMBDA) |= T_DONT_COPY; 

@@ -226,7 +226,7 @@ static void make_edit_find_dialog(bool managed)
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-      edit_find_text = make_textfield_widget("text", rc, args, n, ACTIVATABLE, add_completer_func(command_completer, NULL));
+      edit_find_text = make_textfield_widget("text", rc, args, n, ACTIVATABLE, add_completer_func(expression_completer, NULL));
       
       n = 0;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;

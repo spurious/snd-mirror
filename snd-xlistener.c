@@ -194,7 +194,7 @@ static void Listener_completion(Widget w, XEvent *event, char **str, Cardinal *n
 	  set_save_completions(true);
 	  if (file_text) 
 	    new_text = filename_completer(w, file_text, NULL);
-	  else new_text = command_completer(w, old_text, NULL);
+	  else new_text = expression_completer(w, old_text, NULL);
 	  if (new_text) 
 	    {
 	      free(new_text); 
@@ -619,7 +619,7 @@ static void Listener_g(Widget w, XEvent *event, char **str, Cardinal *num)
 
 static void Listener_Backup(Widget w, XEvent *event, char **str, Cardinal *num) 
 {
-  backup_listener_to_previous_command();
+  backup_listener_to_previous_expression();
 }
 
 
@@ -987,7 +987,7 @@ Widget make_text_widget(const char *name, Widget parent, Arg *args, int n)
 }
 
 
-/* ---------------- command widget replacement ---------------- */
+/* ---------------- listener widget ---------------- */
 
 static Widget lisp_window = NULL;
 
@@ -1015,10 +1015,10 @@ void listener_append_and_prompt(const char *msg)
 }
 
 
-static void command_return_callback(Widget w, XtPointer context, XtPointer info)
+static void listener_return_callback(Widget w, XtPointer context, XtPointer info)
 {
   if (!(ss->error_lock))
-    command_return(w, find_prompt(w, XmTextGetInsertionPosition(w)));
+    listener_return(w, find_prompt(w, XmTextGetInsertionPosition(w)));
   /* prompt loc (last prompt pos) used only by read hook */
 }
 
@@ -1078,7 +1078,7 @@ bool highlight_unbalanced_paren(void)
 
 static int last_highlight_position = -1;
 
-static void command_motion_callback(Widget w, XtPointer context, XtPointer info)
+static void listener_motion_callback(Widget w, XtPointer context, XtPointer info)
 {
   XmTextVerifyCallbackStruct *cbs = (XmTextVerifyCallbackStruct *)info;
   int pos;
@@ -1109,7 +1109,7 @@ static void command_motion_callback(Widget w, XtPointer context, XtPointer info)
 }
 
 
-static void command_modify_callback(Widget w, XtPointer context, XtPointer info)
+static void listener_modify_callback(Widget w, XtPointer context, XtPointer info)
 {
   XmTextVerifyCallbackStruct *cbs = (XmTextVerifyCallbackStruct *)info;
 
@@ -1118,6 +1118,11 @@ static void command_modify_callback(Widget w, XtPointer context, XtPointer info)
   if ((completions_pane) &&
       (XtIsManaged(completions_pane)))
     XtUnmanageChild(completions_pane);
+
+#if HAVE_S7
+  if (cbs->text->length == 1)
+    ss->listener_char = cbs->text->ptr[0];
+#endif
 
   if (((cbs->text)->length > 0) || (dont_check_motion))
     cbs->doit = true;
@@ -1156,7 +1161,7 @@ static void listener_unfocus_callback(Widget w, XtPointer context, XEvent *event
 }
 
 
-static void make_command_widget(int height)
+static void make_listener_widget(int height)
 {
   if (!listener_text)
     {
@@ -1196,16 +1201,18 @@ static void make_command_widget(int height)
       if (!transTable4) 
 	transTable4 = XtParseTranslationTable(TextTrans4);
       XtOverrideTranslations(listener_text, transTable4);
-      XtAddCallback(listener_text, XmNactivateCallback, command_return_callback, NULL);
-      XtAddCallback(listener_text, XmNmodifyVerifyCallback, command_modify_callback, NULL);
-      XtAddCallback(listener_text, XmNmotionVerifyCallback, command_motion_callback, NULL);
+      XtAddCallback(listener_text, XmNactivateCallback, listener_return_callback, NULL);
+      XtAddCallback(listener_text, XmNmodifyVerifyCallback, listener_modify_callback, NULL);
+      XtAddCallback(listener_text, XmNmotionVerifyCallback, listener_motion_callback, NULL);
 
       lisp_window = XtParent(listener_text);
       XtAddEventHandler(lisp_window, EnterWindowMask, false, listener_focus_callback, NULL);
       XtAddEventHandler(lisp_window, LeaveWindowMask, false, listener_unfocus_callback, NULL);
 
       XmChangeColor(lisp_window, ss->sgx->basic_color);
-      XtVaGetValues(lisp_window, XmNverticalScrollBar, &wv, XmNhorizontalScrollBar, &wh, NULL);
+      XtVaGetValues(lisp_window, XmNverticalScrollBar, &wv, 
+		                 XmNhorizontalScrollBar, &wh, 
+		                 NULL);
       XmChangeColor(wv, ss->sgx->basic_color);
       XmChangeColor(wh, ss->sgx->basic_color);
       map_over_children(SOUND_PANE(ss), color_sashes);
@@ -1245,7 +1252,7 @@ void handle_listener(bool open)
   if (open)
     {
       if (!listener_text)
-	make_command_widget(100);
+	make_listener_widget(100);
       else 
 	{
 	  XtManageChild(listener_pane);

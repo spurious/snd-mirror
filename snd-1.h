@@ -575,6 +575,9 @@ typedef struct snd_state {
 #if HAVE_GL && MUS_WITH_GL2PS
   bool gl_printing;
 #endif
+#if HAVE_S7
+  char listener_char;
+#endif
 } snd_state;
 
 extern snd_state *ss;
@@ -737,7 +740,7 @@ void redirect_snd_warning_to(void (*handler)(const char *warning_msg, void *ufd)
 
 /* -------- snd-completion.c -------- */
 
-char *command_completer(widget_t w, const char *text, void *data);
+char *expression_completer(widget_t w, const char *text, void *data);
 void preload_best_completions(void);
 void save_completion_choice(const char *selection);
 int find_best_completion(char **choices, int num_choices);
@@ -1505,8 +1508,8 @@ fam_info *fam_unmonitor_directory(const char *filename, fam_info *fp);
 
 /* -------- snd-listener -------- */
 
-void backup_listener_to_previous_command(void);
-void command_return(widget_t w, int last_prompt);
+void backup_listener_to_previous_expression(void);
+void listener_return(widget_t w, int last_prompt);
 bool is_prompt(const char *str, int beg);
 bool within_prompt(const char *str, int beg, int end);
 char *listener_prompt_with_cr(void);

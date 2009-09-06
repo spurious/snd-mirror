@@ -11,7 +11,7 @@
 (use-modules (ice-9 optargs))
 (provide 'snd-strad.scm)
 (if (not (provided? 'snd-ws.scm)) (load-from-path "ws.scm"))
-(if (not (provided? 'snd-jcrev.scm)) (load-from-path "jcrev.scm"))
+;;; (if (not (provided? 'snd-jcrev.scm)) (load-from-path "jcrev.scm"))
 
 
 (definstrument (bow beg dur frq amplitude :key

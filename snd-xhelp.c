@@ -127,7 +127,7 @@ static Widget related_items = NULL;
 
 static char *help_completer(widget_t w, const char *text, void *data) 
 {
-  return(command_completer(w, text, data));
+  return(expression_completer(w, text, data));
   /* might want to look at help topics too */
 } 
 
