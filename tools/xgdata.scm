@@ -1016,7 +1016,7 @@
 (CCHK "GDK_IS_WINDOW(object)" "GdkWindow*")
 ;(CCAST "GDK_WINDOW_OBJECT(object)" "GdkWindowObject*")
 ;;;;;(CFNC "GType gdk_window_object_get_type void")
-;can't find any use for this
+;can't find any use for this -- out 2.17.11
 (CFNC "GdkWindow* gdk_window_new GdkWindow* parent GdkWindowAttr* attributes gint attributes_mask")
 (CFNC "void gdk_window_destroy GdkWindow* window")
 (CFNC "GdkWindowType gdk_window_get_window_type GdkWindow* window")
@@ -7030,3 +7030,9 @@
 (CFNC-2177 "gboolean gtk_widget_is_drawable GtkWidget* widget")
 (CFNC-2177 "void gtk_widget_set_window GtkWidget* widget GdkWindow* window")
 
+
+;;; 2.17.11
+(CFNC-2177 "gboolean gdk_window_is_destroyed GdkWindow* window")
+(CFNC-2177 "void gdk_window_restack GdkWindow* window GdkWindow* sibling gboolean above")
+(CFNC-2177 "void gtk_widget_set_receives_default GtkWidget* widget gboolean receives_default")
+(CFNC-2177 "gboolean gtk_widget_get_receives_default GtkWidget* widget")

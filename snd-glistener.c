@@ -539,6 +539,11 @@ static gboolean listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer da
       return(true); /* don't repeat the keystroke */
     }
 
+#if HAVE_S7
+  /* TODO: set ss->listener_char = char */
+#endif
+
+
   if (EVENT_KEYVAL(event) == GDK_Tab)
     {
       listener_completion(gtk_text_buffer_get_char_count(LISTENER_BUFFER));

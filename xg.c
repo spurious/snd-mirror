@@ -31947,6 +31947,40 @@ static XEN gxg_gtk_widget_set_window(XEN widget, XEN window)
   return(XEN_FALSE);
 }
 
+static XEN gxg_gdk_window_is_destroyed(XEN window)
+{
+  #define H_gdk_window_is_destroyed "gboolean gdk_window_is_destroyed(GdkWindow* window)"
+  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 1, "gdk_window_is_destroyed", "GdkWindow*");
+  return(C_TO_XEN_gboolean(gdk_window_is_destroyed(XEN_TO_C_GdkWindow_(window))));
+}
+
+static XEN gxg_gdk_window_restack(XEN window, XEN sibling, XEN above)
+{
+  #define H_gdk_window_restack "void gdk_window_restack(GdkWindow* window, GdkWindow* sibling, gboolean above)"
+  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 1, "gdk_window_restack", "GdkWindow*");
+  XEN_ASSERT_TYPE(XEN_GdkWindow__P(sibling), sibling, 2, "gdk_window_restack", "GdkWindow*");
+  XEN_ASSERT_TYPE(XEN_gboolean_P(above), above, 3, "gdk_window_restack", "gboolean");
+  gdk_window_restack(XEN_TO_C_GdkWindow_(window), XEN_TO_C_GdkWindow_(sibling), XEN_TO_C_gboolean(above));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_widget_set_receives_default(XEN widget, XEN receives_default)
+{
+  #define H_gtk_widget_set_receives_default "void gtk_widget_set_receives_default(GtkWidget* widget, \
+gboolean receives_default)"
+  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_widget_set_receives_default", "GtkWidget*");
+  XEN_ASSERT_TYPE(XEN_gboolean_P(receives_default), receives_default, 2, "gtk_widget_set_receives_default", "gboolean");
+  gtk_widget_set_receives_default(XEN_TO_C_GtkWidget_(widget), XEN_TO_C_gboolean(receives_default));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_widget_get_receives_default(XEN widget)
+{
+  #define H_gtk_widget_get_receives_default "gboolean gtk_widget_get_receives_default(GtkWidget* widget)"
+  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_widget_get_receives_default", "GtkWidget*");
+  return(C_TO_XEN_gboolean(gtk_widget_get_receives_default(XEN_TO_C_GtkWidget_(widget))));
+}
+
 #endif
 
 #if HAVE_CAIRO_CREATE
@@ -38301,6 +38335,10 @@ XEN_NARGIFY_1(gxg_gtk_range_get_flippable_w, gxg_gtk_range_get_flippable)
 XEN_NARGIFY_1(gxg_gtk_widget_is_toplevel_w, gxg_gtk_widget_is_toplevel)
 XEN_NARGIFY_1(gxg_gtk_widget_is_drawable_w, gxg_gtk_widget_is_drawable)
 XEN_NARGIFY_2(gxg_gtk_widget_set_window_w, gxg_gtk_widget_set_window)
+XEN_NARGIFY_1(gxg_gdk_window_is_destroyed_w, gxg_gdk_window_is_destroyed)
+XEN_NARGIFY_3(gxg_gdk_window_restack_w, gxg_gdk_window_restack)
+XEN_NARGIFY_2(gxg_gtk_widget_set_receives_default_w, gxg_gtk_widget_set_receives_default)
+XEN_NARGIFY_1(gxg_gtk_widget_get_receives_default_w, gxg_gtk_widget_get_receives_default)
 #endif
 
 #if HAVE_CAIRO_CREATE
@@ -42268,6 +42306,10 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gtk_widget_is_toplevel_w gxg_gtk_widget_is_toplevel
 #define gxg_gtk_widget_is_drawable_w gxg_gtk_widget_is_drawable
 #define gxg_gtk_widget_set_window_w gxg_gtk_widget_set_window
+#define gxg_gdk_window_is_destroyed_w gxg_gdk_window_is_destroyed
+#define gxg_gdk_window_restack_w gxg_gdk_window_restack
+#define gxg_gtk_widget_set_receives_default_w gxg_gtk_widget_set_receives_default
+#define gxg_gtk_widget_get_receives_default_w gxg_gtk_widget_get_receives_default
 #endif
 
 #if HAVE_CAIRO_CREATE
@@ -46242,6 +46284,10 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_widget_is_toplevel, gxg_gtk_widget_is_toplevel_w, 1, 0, 0, H_gtk_widget_is_toplevel);
   XG_DEFINE_PROCEDURE(gtk_widget_is_drawable, gxg_gtk_widget_is_drawable_w, 1, 0, 0, H_gtk_widget_is_drawable);
   XG_DEFINE_PROCEDURE(gtk_widget_set_window, gxg_gtk_widget_set_window_w, 2, 0, 0, H_gtk_widget_set_window);
+  XG_DEFINE_PROCEDURE(gdk_window_is_destroyed, gxg_gdk_window_is_destroyed_w, 1, 0, 0, H_gdk_window_is_destroyed);
+  XG_DEFINE_PROCEDURE(gdk_window_restack, gxg_gdk_window_restack_w, 3, 0, 0, H_gdk_window_restack);
+  XG_DEFINE_PROCEDURE(gtk_widget_set_receives_default, gxg_gtk_widget_set_receives_default_w, 2, 0, 0, H_gtk_widget_set_receives_default);
+  XG_DEFINE_PROCEDURE(gtk_widget_get_receives_default, gxg_gtk_widget_get_receives_default_w, 1, 0, 0, H_gtk_widget_get_receives_default);
 #endif
 
 #if HAVE_CAIRO_CREATE
@@ -48804,7 +48850,7 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("04-Sep-09"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("07-Sep-09"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

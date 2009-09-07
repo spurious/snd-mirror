@@ -980,14 +980,39 @@ old bus.
 	      vol)
 	     (else
 	      vol)))
-      ((is-finished)
-       (and do-out
-	    (>= time r)))
+      ((is-running)
+       (or (not do-out)
+	   (< time r)))
       ((stop)
        (set! time 0)
        (set! do-out #t)))))
 
 #!
+Use it like this:
+
+(<rt-stalin>
+  (sound
+    (out (+ (* 0.5 softsynth)
+            (* 0.0953 reverb)
+
+            :where reverb (+ (comb :scaler 0.742 :size  9601 allpass-sum)
+                             (comb :scaler 0.733 :size 10007 allpass-sum)
+                             (comb :scaler 0.715 :size 10799 allpass-sum)
+                             (comb :scaler 0.697 :size 11597 allpass-sum)
+                             :where allpass-sum (send softsynth :through
+                                                      (all-pass :feedback -0.7 :feedforward 0.7)
+                                                      (all-pass :feedback -0.7 :feedforward 0.7)
+                                                      (all-pass :feedback -0.7 :feedforward 0.7)
+                                                      (all-pass :feedback -0.7 :feedforward 0.7)))
+            :where softsynth (in (while #t
+                                   (wait-midi :command note-on
+                                     (sound :while (-> adsr is-running)
+                                       (out (* (-> adsr next) (midi-vol) (oscil :freq (midi-to-freq (midi-note))))))
+                                     (spawn
+                                       (wait-midi :command note-off :note (midi-note)
+                                         (-> adsr stop)))
+                                     :where adsr (make-adsr :a 20:-ms :d 30:-ms :s 0.2 :r 70:-ms))))))))
+
 
 ;; old one
 (define-stalin (make-adsr-do a d s r)
@@ -2150,18 +2175,33 @@ old bus.
 (define-stalin-macro (sound :key
                             dur
                             duration
+			    (while #t)
                             :rest code)
-  (define sound (rt-gensym "sound"))  
+  (define sound (if (eq? while #t)
+		    `(sound-internal_
+		      ,@code)
+		    (let ((soundname (rt-gensym "sound"))
+			  (loop (rt-gensym "loop")))
+		      `(let ((,soundname (sound-internal_
+					  ,@code)))
+			 (spawn
+			   (let ,loop ()
+			     (cond (,while
+				       (wait-synch 1:-b)
+				     (,loop))
+				   (else
+				    (stop ,soundname)))))
+			 ,soundname))))
+		      
   (if (or duration dur)
-      `(let ((,sound (sound-internal_
-                      ,@code)))
-         (spawn
-           (wait (inexact->exact (floor ,(or dur duration))))
-           (stop ,sound))
-         ,sound
-         )
-      `(sound-internal_
-        ,@code)))
+      (let ((soundname (rt-gensym "sound")))
+	`(let ((,soundname ,sound))
+	   (spawn
+	     (wait (inexact->exact (floor ,(or dur duration))))
+	     (debug "stopping it")
+	     (stop ,soundname))
+	   ,soundname))
+      sound))
 
 
 (define-stalin-macro (block :key
@@ -2354,10 +2394,10 @@ old bus.
   `(let ((coroutine _current-coroutine))
      (when (= _time (=> coroutine :time))
 
-       (when (not (=> coroutine ,this-busk))
+       (when (not (=> coroutine ,this-busk)) ;; Code inside this 'when' test runs one time only per coroutine
          (set! (=> coroutine ,this-busk) (make-bus))
          (set! (=> coroutine ,this-soundholderk) (make-soundholder))
-         (let ((outer-bus (=> coroutine :bus))
+         (let ((outer-bus (=> coroutine :bus)) ;; dynamic scoping of bus and soundholder.
                (outer-soundholder (=> coroutine :soundholder)))
            (set! (=> coroutine :bus) (=> coroutine ,this-busk))
            (set! (=> coroutine :soundholder) (=> coroutine ,this-soundholderk))
@@ -4203,6 +4243,7 @@ had to be put into macroexpand instead.
   ;;(define command (<-> "stalin -On -clone-size-limit 0 -no-escaping-continuations -c " basename ".scm"))
   ;;(define command (<-> "stalin -fully-convert-to-CPS -On -clone-size-limit 0 -c " basename ".scm"))
   ;;(define command (<-> "stalin -On -no-clone-size-limit -split-even-if-no-widening  -c " basename ".scm"))
+  ;;(define command (<-> "stalin -df -On -clone-size-limit 0 -c " basename ".scm"))
   (define command (<-> "stalin -df -On -clone-size-limit 0 -c " basename ".scm"))
   (delete-at-exit (<-> basename ".c"))
   (c-display command)
@@ -4248,11 +4289,16 @@ had to be put into macroexpand instead.
 
 (define *cached-stalin-c-files* (make-hash-table 997))
 
+(define (get-cached-stalin-key expanded-code)
+  (list *rt-opt-stack-checks*
+	*rt-opt-cpu-checks*
+	expanded-code))
+
 (define (add-cached-stalin-c-file expanded-code basename c-file ec-funcs)
-  (hash-set! *cached-stalin-c-files* expanded-code (list basename c-file ec-funcs)))
+  (hash-set! *cached-stalin-c-files* (get-cached-stalin-key expanded-code) (list basename c-file ec-funcs)))
 
 (define (get-cached-stalin-c-file expanded-code cont)
-  (define cached (hash-ref *cached-stalin-c-files* expanded-code))
+  (define cached (hash-ref *cached-stalin-c-files* (get-cached-stalin-key expanded-code)))
   (if cached
       (apply cont cached)
       #f))
