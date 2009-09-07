@@ -900,6 +900,11 @@ bind it to something else, which is asking for confusion).
 <li>no scheme-report-environment, null-environment, or interaction-environment (= current-environment?).
 <li>no transcript-on or transcript-off.
 <li>The r5rs section about values makes no sense to me; in s7 (+ (values 1 2 3) 4) is 10.
+  <ul>
+  <li>(string-ref ((lambda () (values "abcd" 2)))) is #\c
+  <li>((lambda (a b) (+ a b)) ((lambda () (values 1 2)))) is 3
+  <li>call-with-values is simply: (define-macro (call-with-values producer consumer) `(,consumer (,producer)))
+  </ul>
 <li>Similarly, (+ (call/cc (lambda (ret) (ret 1 2 3))) 4) is also 10.
 </ul>
 </dd>

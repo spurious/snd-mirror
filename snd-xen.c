@@ -2928,6 +2928,8 @@ static char *legalize_path(const char *in_str)
 /* an experiment */
 
 /* TODO: needs read-line etc. also minibuffer funcs.
+ *          string_to_minbuffer(cp, str)? snd-kbd 1066 snd_minibuffer_activate
+ *       looks like both forms need a flag or something: read_line_waiting
  */
 
 static s7_pointer listener_read(s7_scheme *sc, s7_read_t read_choice, s7_pointer port)
@@ -2935,12 +2937,15 @@ static s7_pointer listener_read(s7_scheme *sc, s7_read_t read_choice, s7_pointer
   switch (read_choice)
     {
     case S7_READ_CHAR:
+    case S7_READ_BYTE:
       {
 	char c;
 	while (ss->listener_char == 0) check_for_event();
 	c = ss->listener_char;
 	ss->listener_char = 0;
-	return(s7_make_character(s7, c));
+	if (read_choice == S7_READ_CHAR)
+	  return(s7_make_character(s7, c));
+	return(s7_make_integer(s7, (s7_Int)c));
       }
 
     case S7_IS_CHAR_READY:
@@ -2951,7 +2956,8 @@ static s7_pointer listener_read(s7_scheme *sc, s7_read_t read_choice, s7_pointer
 
     case S7_READ_LINE:
     case S7_READ:
-    case S7_READ_BYTE:
+      /* wait for activation, if read_line return string else eval it and return value? -- need read-from-string */
+      /*  => (with-input-from-string <line> (lambda () (read))) */
       fprintf(stderr, "can't handle this read choice yet");
     }
   return(xen_false);
