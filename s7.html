@@ -899,6 +899,8 @@ bind it to something else, which is asking for confusion).
 <li>s7-version returns the current s7 version.
 <li>no scheme-report-environment, null-environment, or interaction-environment (= current-environment?).
 <li>no transcript-on or transcript-off.
+<li>The r5rs section about values makes no sense to me; in s7 (+ (values 1 2 3) 4) is 10.
+<li>Similarly, (+ (call/cc (lambda (ret) (ret 1 2 3))) 4) is also 10.
 </ul>
 </dd>
 <br>

@@ -2745,6 +2745,7 @@
 (if with-open-input-string-and-friends
     (test (let ((this-file (open-input-string "(+ 1 2)"))) (let ((res (input-port? this-file))) (close-input-port this-file) res)) #t))
 
+(test (+ 100 (call-with-input-string "123" (lambda (p) (values (read p) 1)))) 224)
 
 
 (test (output-port? (current-output-port)) #t)
@@ -2949,6 +2950,8 @@
 		      (begin
 			(display "#<eof> is char=? to ") (display (integer->char c)) (newline)))))))))
 
+(test (+ 100 (call-with-output-file "tmp.r5rs" (lambda (p) (write "1" p) (values 1 2)))) 103)
+(test (+ 100 (with-output-to-file "tmp.r5rs" (lambda () (write "2") (values 1 2)))) 103)
 
 (if with-open-input-string-and-friends
     (let ((str (with-output-to-string
@@ -3033,6 +3036,9 @@
   (let ((p (open-output-file "tmp1.r5rs")))
     (close-output-port p))
   (load "tmp1.r5rs"))
+
+(if with-open-input-string-and-friends
+    (test (+ 100 (with-input-from-string "123" (lambda () (values (read) 1)))) 224))
 
     
     
@@ -4162,8 +4168,6 @@
 (test (+ (values '1) (values '2)) 3)
 (test (if (values #t) 1 2) 1)
 (test (if (values '#t) 1 2) 1)
-;;; (test (values 1 2 3) (values 1 2 3))
-;(test (call-with-values (lambda () (values)) list) '())
 (test (call-with-values (lambda () 4) (lambda (x) x)) 4)
 (test (let () (values 1 2 3) 4) 4)
 (test (apply + (values '())) 0)
@@ -4177,6 +4181,20 @@
 (test (+ (let () (values 1 2)) 3) 6)
 (test (let () (values 1 2) 4) 4)
 (test (let () + (values 1 2) 4) 4)
+(test (string-ref (values "hiho" 2)) #\h)
+(test (vector-ref (values (vector 1 2 3)) 1) 2)
+(test (+ (values (+ 1 (values 2 3)) 4) 5 (values 6) (values 7 8 (+ (values 9 10) 11))) 66)
+(test (+ (if (values) (values 1 2) (values 3 4)) (if (null? (values)) (values 5 6) (values 7 8))) 14)
+(test (+ (cond (#f (values 1 2)) (#t (values 3 4))) 5) 12)
+(test (apply + (list (values 1 2))) 3)
+(test (apply + (list ((lambda (n) (values n (+ n 1))) 1))) 3)
+(test (+ (do ((i 0 (+ i 1))) ((= i 3) (values i (+ i 1))))) 7)
+(if with-open-input-string-and-friends
+    (test (+ (with-input-from-string "(values 1 2 3)" (lambda () (read))) 2) 8))
+
+(test (+ (force (make-promise (values 1 2 3))) 4) 10)
+;;;       (let ((arg (force (make-promise (values 1 2 3))))) (+ arg 4)) ; this doesn't work yet
+;;;       (apply + (map (lambda (n) (values n (+ n 1))) (list 1 2)))    ; nor does this
 
 (for-each
  (lambda (arg)
@@ -4207,8 +4225,6 @@
 (test (+ (call/cc (lambda (return) (return (values 1 2 3)))) 4) 10)
 
 (test (let ((values 3)) (+ 2 values)) 5)
-;;; (test (apply values (list 1 2)) (values 1 2))
-;;; (test (let ((a (values 1 2))) a) (values 1 2))
 (test (let ((a (values 1))) a) 1)
 
 (test (call-with-values (lambda () 2) (lambda (x) x)) 2)
@@ -6587,6 +6603,9 @@
       (test (eval-string "(+ evalstr_1 evalstr_2)") 34)
       (eval-string (string-append "(set! evalstr_1 3)" "(set! evalstr_2 12)"))
       (test (eval-string "(+ evalstr_1 evalstr_2)") 15)
+
+      (test (+ (eval `(values 1 2 3)) 4) 10)
+      (test (+ (eval-string "(values 1 2 3)") 4) 10)
 
       (test (string=? (procedure-documentation abs) "(abs x) returns the absolute value of the real number x") #t)
       (test (string=? (procedure-documentation 'abs) "(abs x) returns the absolute value of the real number x") #t)

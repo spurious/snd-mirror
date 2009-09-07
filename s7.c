@@ -869,6 +869,8 @@ static s7_pointer eval_symbol(s7_scheme *sc, s7_pointer sym);
 static s7_pointer eval_error(s7_scheme *sc, const char *errmsg, s7_pointer obj);
 static bool is_thunk(s7_scheme *sc, s7_pointer x);
 static int remember_file_name(const char *file);
+static s7_pointer splice_in_values(s7_scheme *sc, s7_pointer args);
+
 #if WITH_ENCAPSULATION
   static void encapsulate(s7_scheme *sc, s7_pointer sym);
 #endif
@@ -8319,6 +8321,11 @@ static s7_pointer g_eval_string(s7_scheme *sc, s7_pointer args)
   eval(sc, OP_READ_INTERNAL);
   pop_input_port(sc);
   s7_close_input_port(sc, port);
+
+  if ((is_pair(sc->value)) &&                 /* (+ 1 (eval-string "(values 2 3)")) */
+      (car(sc->value) == sc->VALUES))
+    sc->value = splice_in_values(sc, cdr(sc->value));
+
   return(sc->value);
 }
 
@@ -8362,6 +8369,11 @@ static s7_pointer call_with_input(s7_scheme *sc, s7_pointer port, s7_pointer arg
   sc->args = make_list_1(sc, port);
   eval(sc, OP_APPLY);
   s7_close_input_port(sc, port);
+
+  if ((is_pair(sc->value)) &&                 /* (+ 100 (call-with-input-string "123" (lambda (p) (values (read p) 1)))) */
+      (car(sc->value) == sc->VALUES))
+    sc->value = splice_in_values(sc, cdr(sc->value));
+
   return(sc->value);
 }
 
@@ -8408,6 +8420,11 @@ static s7_pointer with_input(s7_scheme *sc, s7_pointer port, s7_pointer args)
   
   s7_close_input_port(sc, sc->input_port);
   sc->input_port = old_input_port;
+
+  if ((is_pair(sc->value)) &&                 /* (+ 100 (with-input-from-string "123" (lambda () (values (read) 1)))) */
+      (car(sc->value) == sc->VALUES))
+    sc->value = splice_in_values(sc, cdr(sc->value));
+
   return(sc->value);
 }
 
@@ -9122,6 +9139,11 @@ static s7_pointer g_call_with_output_file(s7_scheme *sc, s7_pointer args)
   sc->args = make_list_1(sc, port);
   eval(sc, OP_APPLY);
   s7_close_output_port(sc, port);
+
+  if ((is_pair(sc->value)) &&                 /* (+ 100 (with-input-from-string "123" (lambda () (values (read) 1)))) */
+      (car(sc->value) == sc->VALUES))
+    sc->value = splice_in_values(sc, cdr(sc->value));
+
   return(sc->value);
 }
 
@@ -9146,6 +9168,8 @@ static s7_pointer g_with_output_to_string(s7_scheme *sc, s7_pointer args)
   return(result);
 }
 
+/* (string-ref (with-output-to-string (lambda () (write "1234") (values (get-output-string) 1)))) */
+
 
 static s7_pointer g_with_output_to_file(s7_scheme *sc, s7_pointer args)
 {
@@ -9165,6 +9189,11 @@ static s7_pointer g_with_output_to_file(s7_scheme *sc, s7_pointer args)
   eval(sc, OP_APPLY);
   s7_close_output_port(sc, sc->output_port);
   sc->output_port = old_output_port;
+
+  if ((is_pair(sc->value)) &&            
+      (car(sc->value) == sc->VALUES))
+    sc->value = splice_in_values(sc, cdr(sc->value));
+
   return(sc->value);
 }
 
@@ -13997,8 +14026,7 @@ static s7_pointer splice_in_values(s7_scheme *sc, s7_pointer args)
     }
 
   /* let it meander back up the call chain until someone knows where to splice it
-   *   this involves call/cc dynamic-wind, possibly "delay" etc. (with-output-to-file?)
-   * TODO: check values to delay etc
+   * TODO: check values to delay
    */
   return(s7_cons(sc, sc->VALUES, args));
 }
@@ -14607,6 +14635,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      return(eval_error(sc, "map args are not the same length", sc->x));
 
 	  sc->value = safe_reverse_in_place(sc, cdr(sc->x));
+	  /* should this expand values objects?
+	   *    (apply + (map (lambda (n) (values n (+ n 1))) (list 1 2)))
+	   */
 	  pop_stack(sc);
 	  goto START;
 	}
@@ -15906,13 +15937,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       
     case OP_FORCE:     /* Save forced value replacing promise */
-
       {
 	int cloc;
 	cloc = sc->code->hloc;
 	memcpy(sc->code, sc->value, sizeof(s7_cell));
 	sc->code->hloc = cloc;
       }
+      /* "values" is trouble here -- I think, since "delay" is a mess to begin with, that I'll ignore that problem */
+      /*    (let ((arg (force (make-promise (values 1 2 3))))) (+ arg 4)) ; this doesn't work yet */
 
       /* memcpy is trouble:
        * if, for example, sc->value is a string, after memcpy we have two (string) objects in the heap
@@ -15921,7 +15953,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        *   We can't just say sc->code = sc->value because we're playing funny games with
        *   self-modifying code here.  So...
        */
+
       clear_finalizable(sc->value); /* make sure GC calls free once */
+
+      if ((is_pair(sc->value)) &&                 /* (+ (force (make-promise (values 1 2 3))) 4) */
+	  (car(sc->value) == sc->VALUES))
+	sc->value = splice_in_values(sc, cdr(sc->value));
+
       pop_stack(sc);
       goto START;
       
