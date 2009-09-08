@@ -294,7 +294,7 @@ typedef enum {OP_READ_INTERNAL, OP_EVAL, OP_EVAL_ARGS0, OP_EVAL_ARGS1, OP_APPLY,
 	      OP_QUIT, OP_CATCH, OP_DYNAMIC_WIND, OP_FOR_EACH, OP_MAP, OP_DEFINE_CONSTANT0, OP_DEFINE_CONSTANT1, 
 	      OP_DO, OP_DO_END0, OP_DO_END1, OP_DO_STEP0, OP_DO_STEP1, OP_DO_STEP2, OP_DO_INIT,
 	      OP_DEFINE_STAR, OP_LAMBDA_STAR, OP_ERROR_QUIT, OP_UNWIND_INPUT, OP_UNWIND_OUTPUT, 
-	      OP_TRACE_RETURN, OP_ERROR_HOOK_QUIT, OP_WITH_ENV0, OP_WITH_ENV1,
+	      OP_TRACE_RETURN, OP_ERROR_HOOK_QUIT, OP_WITH_ENV0, OP_WITH_ENV1, OP_WITH_ENV2,
 	      OP_MAX_DEFINED} opcode_t;
 
 #define NUM_SMALL_INTS 256
@@ -1633,7 +1633,7 @@ static void show_stack(s7_scheme *sc)
      "eval_string_done", "eval_done", "quit", "catch", "dynamic_wind", "for_each", "map", "define_constant0", 
      "define_constant1", "do", "do_end0", "do_end1", "do_step0", "do_step1", "do_step2", "do_init", "define_star", 
      "lambda_star", "error_quit", "unwind_input", "unwind_output", "trace_return", "error_hook_quit",
-     "with_env0", "with_env1"};
+     "with_env0", "with_env1", "with_env2"};
 
   int i;
   for (i = sc->stack_top - 4; i >= 0; i -= 4)
@@ -14857,12 +14857,18 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_WITH_ENV0:
       /* (with-environment env . body) */
       push_stack(sc, OP_WITH_ENV1, sc->envir, sc->NIL);  /* save current env */
-      sc->envir = eval_symbol(sc, car(sc->code));        /* set current env to first arg */
-      /* TODO: eval this thing */
-      sc->code = cdr(sc->code);                          /* treat rest as a body -- use begin */
-      /* goto BEGIN */
+      push_stack(sc, OP_WITH_ENV2, sc->NIL, sc->code);
+      sc->args = sc->NIL;
+      sc->code = car(sc->code);                          /* eval env arg */
+      goto EVAL;
 
       
+    case OP_WITH_ENV2:
+      sc->envir = sc->value;                             /* in new env... */
+      sc->code = cdr(sc->code);                          /*   handle body */
+      /* goto BEGIN; */
+
+
     BEGIN:
     case OP_BEGIN:
       if (!is_pair(sc->code)) 
@@ -16148,6 +16154,21 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       /* could we make macros safe automatically by doing the symbol lookups right now?
        *   we'd replace each name with a reference to the current binding cons.  I think
        *   this is how Guile implements hygenic macros -- is it worth the bother?
+       *
+       * Isn't it just as good to say:
+       *
+       * (define-macro (mac a b) 
+       *   `(with-environment 
+       *      (cons (list (cons 'a ,a) 
+       *                  (cons 'b ,b))
+       *            (global-environment))
+       *      (+ a b)))
+       *
+       * now if we rebind +
+       *
+       * (let ((+ -)) 
+       *   (mac 1 2))
+       * 3
        */
 
       sc->x = car(sc->code);            /* just in case g_quasiquote stepped on sc->x */
@@ -20124,7 +20145,7 @@ static s7_pointer big_ash(s7_scheme *sc, s7_pointer args)
 	  if (!mpz_fits_sint_p(S7_BIG_INTEGER(p1)))
 	    {
 	      if (mpz_cmp_ui(S7_BIG_INTEGER(p1), 0) > 0)
-		return(s7_out_of_range_error(sc, "ash", 2, p1, "shift is too large")); /* TODO: big negative shift ok */
+		return(s7_out_of_range_error(sc, "ash", 2, p1, "shift is too large"));
 	      return(small_int(sc, 0));
 	    }
 	  shift = mpz_get_si(S7_BIG_INTEGER(p1));

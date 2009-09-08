@@ -6950,6 +6950,37 @@
       ;;   (let ((x 32)) (let () (define-constant x 3) x) (set! x 31) x) says can't alter x!
       
 
+      (test (with-environment (current-environment) (let ((x 1)) x)) 1)
+
+      (test (let ((x 12))
+	      (let ((e (current-environment)))
+		(let ((x 32))
+		  (with-environment e (* x 2)))))
+	    24)
+
+      (test (let ()
+	      (define (make-environment . initial-bindings)
+		(cons initial-bindings (global-environment)))
+	      (with-environment (make-environment '(x . 2) '(y . 4))
+		(+ x y)))
+	    6)
+
+      (test (let ((*features* 123))
+	      (let ((e (global-environment)))
+		(with-environment e (list? *features*))))
+	    #t)
+
+      (test (let ()
+        (define-macro (mac a b) 
+          `(with-environment 
+             (cons (list (cons 'a ,a) 
+                         (cons 'b ,b))
+                   (global-environment))
+             (+ a b)))
+	(let ((+ -))
+	  (mac 1 2)))
+	    3)
+
       (test (let ((local 123))
 	      (define pws-test (make-procedure-with-setter
 				(lambda () local)
@@ -14174,6 +14205,10 @@
 (num-test (expt (expt 1 1/123) 123) 1)
 (num-test (expt (expt -1 1/123) 123) -1)
 (num-test (expt -1/8 -3) -512)
+
+(test (= (make-rectangular 1.0 0.0) (make-polar 1.0 0.0) 1.0+0i (* -1.0 -1.0) (/ 1.0) 
+	 (exp 0.0) (abs -1.0) (cos 0.0) (log (exp 1)) (magnitude 1.0+0i) (max 0.0 1.0) (min 1.0 2.0) )
+      #t)
 
 (let ((xs (list 2 3 4 1/2 1/3 1/4 2.5 1+i 2.5+1.5i 2.5-.5i))
       (ys  (list 2 3 4 -2 -3 -4 1/2 1/3 1/4 -1/2 -1/3 -1/4 2.5 -3.5 1+i -1+2i 2.5+1.5i 2.5-.5i)))

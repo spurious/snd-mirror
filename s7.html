@@ -738,7 +738,23 @@ You can change the current environment by hand:
      -&gt; 6
 </pre>
 <p>(with-environment env . body) evaluates its body in the environment env.
+Unless I'm missing something, I think this makes it relatively easy to
+write "hygenic" macros:
 </p>
+<pre>
+        (define-macro (mac a b) 
+          `(with-environment 
+             (cons (list (cons 'a ,a) 
+                         (cons 'b ,b))
+                   (global-environment))
+             (+ a b)))
+</pre>
+<p>now if we rebind +, nothing goes wrong:</p>
+<pre>
+        (let ((+ -)) 
+          (mac 1 2))
+        3
+</pre>
 </dd>
 <br>
 
