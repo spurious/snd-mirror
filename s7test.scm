@@ -826,7 +826,6 @@
   (test (char-alphabetic? #\_) #f)
   (test (char-alphabetic? #\^) #f)
   (test (char-alphabetic? #\[) #f)
-;  (test (char-alphabetic? (integer->char 226)) #f)
 
   (for-each
    (lambda (arg)
@@ -4173,7 +4172,7 @@
 (test (apply + (values '())) 0)
 (test (+ (values 1 2 3)) 6)
 (test (let ((f (lambda () (values 1 2 3)))) (+ (f))) 6)
-(test (log (values 8 2)) 3)
+(num-test (log (values 8 2)) 3)
 (test (* (values 2 (values 3 4))) 24)
 (test (* (values (+ (values 1 2)) (- (values 3 4)))) -3)
 (test (list (values 1 2) (values 3) 4) '(1 2 3 4))
@@ -4209,6 +4208,7 @@
 (test (call-with-values (lambda () (values "hi" 1 3/2 'a)) (lambda (a b c d) (+ b c))) 5/2)
 ;(test (call-with-values values (lambda arg arg)) '())
 (test (string-ref (values "hi") 1) #\i)
+(test ((lambda (a b) (+ a b)) ((lambda () (values 1 2)))) 3)
 
 (test (list (letrec ((split (lambda (ls)
 			      (if (or (null? ls) (null? (cdr ls)))
@@ -13985,12 +13985,32 @@
 (num-test (expt 1 1234) 1)
 (num-test (expt -1 1234) 1)
 (num-test (expt 1 -1234) 1)
+(num-test (expt -0 -0) 1)
+(num-test (expt -0.0 0) 0.0)
+(num-test (expt 1 -0) 1)
 
 (if with-large-powers 
     (begin
       (num-test (expt 0 1234000000) 0)
       (num-test (expt 0 500029) 0)
       (num-test (expt 0 362880) 0)
+      (num-test (expt 0 (expt 2 32)) 0)
+      (num-test (expt 0 (expt 2 31)) 0)
+      (num-test (expt 0 (expt 2 33)) 0)
+      (num-test (expt 0 (expt 2 63)) 0)
+      (num-test (expt 0 (expt 2 64)) 0)
+      (num-test (expt 0 (expt 2 65)) 0)
+      (num-test (expt 0.0 (expt 2 32)) 0.0)
+      (num-test (expt 0.0 (expt 2 31)) 0.0)
+      (num-test (expt 0.0 (expt 2 33)) 0.0)
+      (num-test (expt 0.0 (expt 2 63)) 0.0)
+      (num-test (expt 0.0 (expt 2 64)) 0.0)
+      (num-test (expt 0.0 (expt 2 65)) 0.0)
+      (num-test (expt 1 (expt 2 32)) 1)
+      (num-test (expt 1 (- (expt 2 32))) 1)
+      (num-test (expt -1 (expt 2 32)) 1)
+      (num-test (expt -1 (- (expt 2 32))) 1)
+      (num-test (expt -1 (+ 1 (expt 2 32))) -1)
       (num-test (expt 1 1234000000) 1)
       (num-test (expt -1 1234000000) 1)
       (num-test (expt 1 -1234000000) 1)
@@ -14743,15 +14763,11 @@
 (num-test (expt 1/2 -10) 1024)
 (num-test (expt 2718/1000 617/5) 3.858179469787681136058424024656091858698003418770850904916305853631035158956514884526199288e53) ; not an int!
 (num-test (expt 2/3 -5) (/ 1 (* 2/3 2/3 2/3 2/3 2/3)))
-;(num-test (expt 0 0.0) 0.0) ; ?? -- guile returns 1.0
 (num-test (expt 0 1.0+i) 0.0) ; ??
-;(num-test (expt 0 -1.0+i) 0.0) ; ?? guile says +inf.0+nan.0i
 (num-test (expt 0 1.0) 0.0)
-;(num-test (expt 0 -1.0) 0.0) ; ?? guile says inf
 (test (expt 0 0) 1 )
 (test (expt 0 1) 0 )
 (test (expt 0 256) 0 )
-;(test (expt 0 -255) 0 )
 (test (expt -1 256) 1 )
 (test (expt -1 255) -1 )
 (test (expt -1 -256) 1 )
@@ -14785,6 +14801,9 @@
 (num-test (expt 3.0 0) 1.0)
 (num-test (expt 3.0 0.0) 1.0)
 (num-test (expt 0 0) 1)
+(num-test (expt 0.0 0) 0.0)
+(num-test (expt 0 0.0) 0.0)
+(num-test (expt 0.0 0.0) 0.0)
 
 
 (let ((x-10 (lambda (n) (- (expt n 10) (* n n n n n n n n n n)))))
@@ -35386,27 +35405,38 @@
 
 
 
-       (test (ash 0 1) 0)
-       (test (ash 1 10) 1024)
-       (test (ash 1024 -8) 4)
-       (test (ash -1 8) -256)
-       (test (ash -1 30) -1073741824)
-       (test (ash -1 -8) -1)
-       (test (ash -1 -12)  -1)
-       (test (ash -1 0) -1)
-       (test (ash 123 0) 123)
-       (test (ash #b-1100 -2) -3)
-       (test (ash #b-1100 2) -48)
-       (test (ash 1234 6) 78976)
-       (test (ash 1234 -6) 19)
-       (test (ash 12341234 6) 789838976)
-       (test (ash 12341234 -16) 188)
-       (test (ash 1 -1) 0)
-       (test (ash 2 -2) 0)
-       (test (ash 2 -1) 1)
-       (test (ash 1 -100) 0)
-       (test (ash 0 100) 0)
+       (num-test (ash 0 1) 0)
+       (num-test (ash 1 10) 1024)
+       (num-test (ash 1024 -8) 4)
+       (num-test (ash -1 8) -256)
+       (num-test (ash -1 30) -1073741824)
+       (num-test (ash -1 -8) -1)
+       (num-test (ash -1 -12)  -1)
+       (num-test (ash -1 0) -1)
+       (num-test (ash 123 0) 123)
+       (num-test (ash #b-1100 -2) -3)
+       (num-test (ash #b-1100 2) -48)
+       (num-test (ash 1234 6) 78976)
+       (num-test (ash 1234 -6) 19)
+       (num-test (ash 12341234 6) 789838976)
+       (num-test (ash 12341234 -16) 188)
+       (num-test (ash 1 -1) 0)
+       (num-test (ash 2 -2) 0)
+       (num-test (ash 2 -1) 1)
+       (num-test (ash 1 -100) 0)
+       (num-test (ash 0 100) 0)
+       (num-test (ash 0 (expt 2 32)) 0)
+       (num-test (ash (ash 1 31) -31) 1)
+       (test (> (ash 1 30) 1) #t)
+       (num-test (ash 1 31) 2147483648)
+       (num-test (ash 1 (- (expt 2 31))) 0)
+       (num-test (ash (expt 2 31) (- (expt 2 31))) 0)
 
+       (if with-64-bit-ints
+	   (begin
+	     (num-test (ash 1 32) 4294967296)
+	     (num-test (ash 1 (- (expt 2 32))) 0)
+	     (test (> (ash 1 62) 1) #t)))
 
        (num-test (integer-length 0) 0)
        (num-test (integer-length 1) 1)
@@ -36209,8 +36239,16 @@
       (test (expt 1.0+23.0i) 'error)
       (test (expt "hi" "hi") 'error)
       (test (expt 1.0+23.0i 1.0+23.0i 1.0+23.0i) 'error)
-      ;(test (expt 0 -1) 'error)
-      ;(test (expt 0.0 -1.0) 'error)
+
+      (test (expt 0 -1) 'error)
+      (test (expt 0.0 -1.0) 'error)
+      
+      (test (expt 0 -1.0) 'error)
+;      (test (expt 0 -1.0+i) 'error)
+;      (test (expt 0 0-i) 0.0) ; sbcl and clisp say division by 0 here
+      (test (expt 0 -255) 'error)
+      (test (expt 0 (- (expt 2 32))) 'error)
+
       (test (exact->inexact) 'error)
       (test (exact->inexact "hi") 'error)
       (test (exact->inexact 1.0+23.0i 1.0+23.0i) 'error)
@@ -36219,7 +36257,6 @@
       (test (inexact->exact 1.0+23.0i 1.0+23.0i) 'error)
       (if with-rationalize (begin
       (test (rationalize) 'error)
-;      (test (rationalize 1.23) 'error)
       (test (rationalize 1.23+1.0i 1.23+1.0i) 'error)
       (test (rationalize 1.23 1.23 1.23) 'error)))
       (test (numerator) 'error)
@@ -36482,8 +36519,8 @@
       (num-test (lcm 0 "hi") 'error)
       (num-test (* 1 0.0 #\a) 'error)
       
-					;(num-test (< 3 3.0 3 3.0+1.0i) 'error)
-					;(num-test (> 3 3.0 3 3.0+1.0i) 'error)
+      (num-test (< 3 3.0 3 3.0+1.0i) 'error)
+      (num-test (> 3 3.0 3 3.0+1.0i) 'error)
       (num-test (log 3 0) 'error)
       
       (for-each
@@ -36499,7 +36536,10 @@
       (test (+ 1 #t) 'error)
       (test (+ 1 #f) 'error)
       
-      ;(test (/ 0) 'error)
+      (test (/ 0) 'error)
+      (test (/ -0) 'error)
+      (test (/ 0.0) 'error)
+      (test (/ 1.0 0) 'error)
       
       (if with-bitwise-functions
 	  (begin

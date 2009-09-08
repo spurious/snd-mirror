@@ -906,6 +906,16 @@ bind it to something else, which is asking for confusion).
   <li>call-with-values is simply: (define-macro (call-with-values producer consumer) `(,consumer (,producer)))
   </ul>
 <li>Similarly, (+ (call/cc (lambda (ret) (ret 1 2 3))) 4) is also 10.
+<li>__func__ is the name of the function currently being defined (as in C).
+</ul>
+</dd>
+<br>
+
+<dt><em class=emdef>changes I'll probably get to someday</em></dt>
+<dd>
+<ul>
+<li>define-macro* defmacro*
+<li>settable numerator denominator imag-part real-part angle magnitude
 </ul>
 </dd>
 <br>

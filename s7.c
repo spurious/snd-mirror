@@ -84,7 +84,6 @@
  *        perhaps settable numerator denominator imag-part real-part angle magnitude
  *        perhaps trailing args to cons -> list*
  *        perhaps trailing args to list-ref
- *        with-environment for macros?
  *
  *
  * Mike Scholz provided the FreeBSD support (complex trig funcs, etc)
@@ -5439,7 +5438,11 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
 	    return(s7_make_integer(sc, 1));
 	  return(sc->real_one);
 	}
-      if ((s7_is_integer(n)) && (s7_is_integer(pw)))
+
+      if ((s7_is_real(pw)) && (s7_is_negative(pw)))
+	return(s7_division_by_zero_error(sc, "expt", args));   /* what about (expt 0 -1+i)? */
+
+      if ((s7_is_integer(n)) && (s7_is_integer(pw))) 
 	return(s7_make_integer(sc, 0));
       return(sc->real_zero);
     }
@@ -6414,7 +6417,14 @@ static s7_pointer g_ash(s7_scheme *sc, s7_pointer args)
     return(s7_wrong_type_arg_error(sc, "ash", 2, cadr(args), "an integer"));
   
   arg1 = s7_integer(car(args));
+  if (arg1 == 0) return(small_int(sc, 0));
+
   arg2 = s7_integer(cadr(args));
+  if (arg2 >= s7_int_bits)
+    return(s7_out_of_range_error(sc, "ash", 2, cadr(args), "shift is too large"));
+  if (arg2 < -s7_int_bits)
+    return(small_int(sc, 0));
+
   if (arg2 >= 0)
     return(s7_make_integer(sc, arg1 << arg2));
   return(s7_make_integer(sc, arg1 >> -arg2));
@@ -14025,9 +14035,7 @@ static s7_pointer splice_in_values(s7_scheme *sc, s7_pointer args)
 	}
     }
 
-  /* let it meander back up the call chain until someone knows where to splice it
-   * TODO: check values to delay
-   */
+  /* let it meander back up the call chain until someone knows where to splice it */
   return(s7_cons(sc, sc->VALUES, args));
 }
 
@@ -19372,12 +19380,31 @@ static s7_pointer big_expt(s7_scheme *sc, s7_pointer args)
   if (!s7_is_number(y))
     return(s7_wrong_type_arg_error(sc, "expt", 2, y, "a number"));
 
+  if (big_is_zero_1(sc, x) == sc->T)
+    {
+      if ((s7_is_integer(x)) && 
+	  (s7_is_integer(y)) &&
+	  (big_is_zero_1(sc, y) == sc->T))
+	return(small_int(sc, 1));
+
+      if ((s7_is_real(y)) && (s7_is_negative(y)))
+	return(s7_division_by_zero_error(sc, "expt", args));
+
+      if ((s7_is_rational(x)) && 
+	  (s7_is_rational(y)))
+	return(small_int(sc, 0));
+
+      return(sc->real_zero);
+    }
+
   if (s7_is_integer(y))
     {
       s7_Int yval;
+
       if (!is_c_object(y))
 	yval = s7_integer(y);
-      else yval = (s7_Int)mpz_get_si(S7_BIG_INTEGER(y));
+      else yval = big_integer_to_s7_Int(S7_BIG_INTEGER(y));
+
       if (yval == 0)
 	{
 	  if (s7_is_rational(x))
@@ -20074,20 +20101,32 @@ static s7_pointer big_integer_length(s7_scheme *sc, s7_pointer args)
 static s7_pointer big_ash(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer p0, p1;
+
   p0 = car(args);
   p1 = cadr(args);
   /* here, as in expt, there are cases like (ash 1 63) which need to be handled as bignums
    *   so there's no way to tell when it's safe to drop into g_ash instead.
    */
-  if ((s7_is_integer(p0)) && 
+  if ((s7_is_integer(p0)) && /* this includes bignum ints... */
       (s7_is_integer(p1)))
     {
       mpz_t *n;
       s7_Int shift;
+
+      if (((is_c_object(p0)) &&
+	   (mpz_cmp_ui(S7_BIG_INTEGER(p0), 0) == 0)) || 
+	  ((!is_c_object(p0)) &&
+	   (s7_integer(p0) == 0)))
+	return(small_int(sc, 0));
+	
       if (is_c_object(p1))
 	{
 	  if (!mpz_fits_sint_p(S7_BIG_INTEGER(p1)))
-	    return(s7_out_of_range_error(sc, "ash", 2, p1, "result should be a 32-bit int"));
+	    {
+	      if (mpz_cmp_ui(S7_BIG_INTEGER(p1), 0) > 0)
+		return(s7_out_of_range_error(sc, "ash", 2, p1, "shift is too large")); /* TODO: big negative shift ok */
+	      return(small_int(sc, 0));
+	    }
 	  shift = mpz_get_si(S7_BIG_INTEGER(p1));
 	}
       else shift = s7_integer(p1);
@@ -20642,7 +20681,7 @@ static s7_pointer big_max(s7_scheme *sc, s7_pointer args)
   
   result_type = big_real_scan_args(sc, args);
   if (result_type < 0)
-    return(s7_wrong_type_arg_error(sc, "max", -result_type, args, "a real number"));
+    return(s7_wrong_type_arg_error(sc, "max", -result_type, s7_list_ref(sc, args, -1 - result_type), "a real number"));
 
   if (IS_NUM(result_type))
     return(g_max(sc, args));
@@ -20692,7 +20731,7 @@ static s7_pointer big_min(s7_scheme *sc, s7_pointer args)
   
   result_type = big_real_scan_args(sc, args);
   if (result_type < 0)
-    return(s7_wrong_type_arg_error(sc, "min", -result_type, args, "a real number"));
+    return(s7_wrong_type_arg_error(sc, "min", -result_type, s7_list_ref(sc, args, -1 - result_type), "a real number"));
 
   if (IS_NUM(result_type))
     return(g_min(sc, args));
@@ -20742,7 +20781,7 @@ static s7_pointer big_less(s7_scheme *sc, s7_pointer args)
   
   result_type = big_real_scan_args(sc, args);
   if (result_type < 0)
-    return(s7_wrong_type_arg_error(sc, "<", -result_type, args, "a real number"));
+    return(s7_wrong_type_arg_error(sc, "<", -result_type, s7_list_ref(sc, args, -1 - result_type), "a real number"));
 
   if (IS_NUM(result_type))
     return(g_less(sc, args));
@@ -20780,7 +20819,7 @@ static s7_pointer big_less_or_equal(s7_scheme *sc, s7_pointer args)
   
   result_type = big_real_scan_args(sc, args);
   if (result_type < 0)
-    return(s7_wrong_type_arg_error(sc, "<=", -result_type, args, "a real number"));
+    return(s7_wrong_type_arg_error(sc, "<=", -result_type, s7_list_ref(sc, args, -1 - result_type), "a real number"));
 
   if (IS_NUM(result_type))
     return(g_less_or_equal(sc, args));
@@ -20818,7 +20857,7 @@ static s7_pointer big_greater(s7_scheme *sc, s7_pointer args)
 
   result_type = big_real_scan_args(sc, args);
   if (result_type < 0)
-    return(s7_wrong_type_arg_error(sc, ">", -result_type, args, "a real number"));
+    return(s7_wrong_type_arg_error(sc, ">", -result_type, s7_list_ref(sc, args, -1 - result_type), "a real number"));
 
   if (IS_NUM(result_type))
     return(g_greater(sc, args));
@@ -20856,7 +20895,7 @@ static s7_pointer big_greater_or_equal(s7_scheme *sc, s7_pointer args)
   
   result_type = big_real_scan_args(sc, args);
   if (result_type < 0)
-    return(s7_wrong_type_arg_error(sc, ">=", -result_type, args, "a real number"));
+    return(s7_wrong_type_arg_error(sc, ">=", -result_type, s7_list_ref(sc, args, -1 - result_type), "a real number"));
 
   if (IS_NUM(result_type))
     return(g_greater_or_equal(sc, args));
