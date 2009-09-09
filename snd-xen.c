@@ -2930,6 +2930,9 @@ static char *legalize_path(const char *in_str)
 /* TODO: needs read-line etc. also minibuffer funcs.
  *          string_to_minbuffer(cp, str)? snd-kbd 1066 snd_minibuffer_activate
  *       looks like both forms need a flag or something: read_line_waiting
+ *
+ * (read-char (minibuffer-input-port index))
+ * (let ((port (minibuffer-input-port index))) (read-char port)).
  */
 
 static s7_pointer listener_read(s7_scheme *sc, s7_read_t read_choice, s7_pointer port)
@@ -2972,6 +2975,19 @@ static void listener_write(s7_scheme *sc, char c, s7_pointer port)
   ss->listener_char = 0;
   /* (let () (format (listener-output-port) "~%;a prompt: ") (read-char (listener-input-port))) */
 }
+
+
+#if 0
+static void minibuffer_write(s7_scheme *sc, char c, s7_pointer port)
+{
+  int index;
+  index = (int)s7_port_data(port);
+  /* need open at snd pane creation, s7_port_set_data(port, (void *)(snd->index))
+   * need minibuffer_append
+   */
+}
+#endif
+
 
 static s7_pointer listener_input_port, listener_output_port;
 

@@ -738,7 +738,7 @@ You can change the current environment by hand:
      -&gt; 6
 </pre>
 <p>(with-environment env . body) evaluates its body in the environment env.
-Unless I'm missing something, I think this makes it relatively easy to
+Unless I'm missing something, I think this makes it possible to
 write "hygenic" macros:
 </p>
 <pre>
@@ -908,23 +908,31 @@ bind it to something else, which is asking for confusion).
 <br>
 
 <dt><em class=emdef>other differences from r5rs</em></dt>
-<dd>
+<dd><br>
 <ul>
 <li>do sets its step variables, rather than rebinding them.
 <li>no syntax-rules or any of its friends.
+</ul><br>
+<ul>
 <li>s7-version returns the current s7 version.
 <li>no scheme-report-environment, null-environment, or interaction-environment (= current-environment?).
 <li>no transcript-on or transcript-off.
+</ul><br>
+<ul>
 <li>The r5rs section about values makes no sense to me; in s7 (+ (values 1 2 3) 4) is 10.
   <ul>
   <li>(string-ref ((lambda () (values "abcd" 2)))) is #\c
   <li>((lambda (a b) (+ a b)) ((lambda () (values 1 2)))) is 3
-  <li>call-with-values is simply: (define-macro (call-with-values producer consumer) `(,consumer (,producer)))
+  <li>call-with-values: (define-macro (call-with-values producer consumer) `(,consumer (,producer)))
+  <li>receive: (define-macro (receive formals expression . body) `((lambda ,formals ,@body) ,expression))
   </ul>
 <li>Similarly, (+ (call/cc (lambda (ret) (ret 1 2 3))) 4) is also 10.
+</ul><br>
+<ul>
 <li>__func__ is the name of the function currently being defined (as in C).
 </ul>
 </dd>
+<br>
 <br>
 
 <dt><em class=emdef>changes I'll probably get to someday</em></dt>

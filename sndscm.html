@@ -854,7 +854,7 @@ those are just one sample clicks that can easily be smoothed over", so
 
 <table border=0 cellpadding=5 hspace=20><tr><td>
 <pre>
-(define* (count-clips :optional snd chn)
+(define* (count-clips snd chn)
   (let ((y0 0.0))
     (<a class=quiet href="extsnd.html#countmatches" onmouseout="UnTip()" onmouseover="Tip(extsnd_countmatches_tip)">count-matches</a> 
      (lambda (y) (let ((val (and (or (&gt; y0 .9999) (&lt; y0 -.9999))
@@ -872,7 +872,7 @@ time for perfection...):
 </p>
 
 <table border=0 cellpadding=5 hspace=20><tr><td><pre>
-(define* (list-clips :optional snd chn)
+(define* (list-clips snd chn)
   (let* ((max-clips (count-clips snd chn))
 	 (clip-data (make-vector (* 2 max-clips) 0))
 	 (clip-ctr 0)

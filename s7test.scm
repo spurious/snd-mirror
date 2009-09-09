@@ -33,7 +33,6 @@
 (define with-list-set! #t)                                     ; test list-set!
 (define with-reverse! #t)                                      ; test reverse!
 (define with-open-input-string-and-friends #t)                 ; string IO, as well as file
-(define with-syntax-rules #f)                                  ;   only lightly tested
 (define with-delay #f)                                         ; delay and force 
 (define with-delay-named-make-promise #t)                      ;   same but "delay" -> "make-promise" ("delay" belongs to CLM)
 (define with-bitwise-functions #t)                             ; logand|or|xor|ior, ash
@@ -62,26 +61,14 @@
 
 ; we're assuming call/cc is defined
 ;    (define call/cc call-with-current-continuation)
-;
-;    (define-syntax defmacro
-;      (syntax-rules ()
-;	((_ name params . body) (define-macro (name . params) . body))))
-;
 ; we also assume there's a "catch" macro trapping all errors
 ;   if you're not expecting any errors, catch can be:
 ;   (define (catch tag l1 l2) (l1))
-
-
 
 (if (and (defined? 'current-time) ; in Snd
 	 (defined? 'mus-rand-seed))
     (set! (mus-rand-seed) (current-time)))
 
-(define test-eval eval)
-
-
-
-;;;--------------------------------------------------------------------------------
 
 (define (ok? tst result expected)
   (if (not (equal? result expected))
@@ -3151,8 +3138,6 @@
 (test (let ((ctr 0)) (if (let ((ctr 123)) (set! ctr (+ ctr 1)) (= ctr 124)) (let () (set! ctr (+ ctr 100)) ctr) (let () (set! ctr (+ ctr 1000)) ctr)) ctr) 100)
 (test (if (let ((if 3)) (> 2 if)) 4 5) 5)
 
-;(test (test-eval '(if (> 3 2) 1 2)) 1)
-
 (test (let ((ctr 0)) (call/cc (lambda (exit) (if (> 3 2) (let () (exit ctr) (set! ctr 100) ctr) #f)))) 0)
 (test (let ((ctr 0)) (call/cc (lambda (exit) (if (< 3 2) #f (let () (exit ctr) (set! ctr 100) ctr))))) 0)
 (test (let ((ctr 0)) (call/cc (lambda (exit) (if (let () (exit ctr) (set! ctr 100) ctr) 123 321)))) 0)
@@ -4006,7 +3991,6 @@
 (test ((case '+ ((-) -) (else +)) 3 2) 5)
 (test ((call/cc (lambda (return) (dynamic-wind (lambda () #f) (lambda () (return +)) (lambda () #f)))) 3 2) 5)
 (test (+ 1 ((call/cc (lambda (return) (dynamic-wind (lambda () #f) (lambda () (return +)) (lambda () #f)))) 3 2) 2) 8)
-
 
 
 ;;; -------- begin --------
@@ -5902,42 +5886,6 @@
 
 
 
-
-;;; -------- syntax-rules --------
-
-(if with-syntax-rules
-    (begin
-
-      (test (let-syntax ((foo
-			  (syntax-rules ()
-			    ((_ expr) (+ expr 1)))))
-	      (let ((+ *))
-		(foo 3)))
-	    4)
-
-      (test (let-syntax ((foo (syntax-rules ()
-				((_ var) (define var 1)))))
-	      (let ((x 2))
-		(begin (define foo +))
-		(cond (else (foo x))) 
-		x))
-	    2)
-
-      (test (let ((x 1))
-	      (let-syntax
-		  ((foo (syntax-rules ()
-			  ((_ y) (let-syntax
-				     ((bar (syntax-rules ()
-					     ((_) (let ((x 2)) y)))))
-				   (bar))))))
-		(foo x)))
-	    1)
-      ))
-
-
-
-
-
 (if with-hash-tables
     (begin
 
@@ -6368,6 +6316,32 @@
 	    (begin 
 	      (display "call-with-input-file + format to \"tmp1.r5rs\" ... expected \"this is a test 3\", but got \"")
 	      (display res) (display "\"?") (newline))))
+
+      (if with-open-input-string-and-friends
+	  (let ((val (format #f "line 1~%line 2~%line 3")))
+	    (with-input-from-string val
+	      (lambda ()
+		(let ((line1 (read-line)))
+		  (test (string=? line1 "line 1") #t))
+		(let ((line2 (read-line)))
+		  (test (string=? line2 "line 2") #t))
+		(let ((line3 (read-line)))
+		  (test (string=? line3 "line 3") #t))
+		(let ((eof (read-line)))
+		  (test (eof-object? eof) #t))))))
+
+      (if with-open-input-string-and-friends
+	  (let ((val (format #f "line 1~%line 2~%line 3")))
+	    (call-with-input-string val
+	      (lambda (p)
+		(let ((line1 (read-line p #t)))
+		  (test (string=? line1 (string-append "line 1" (string #\newline))) #t))
+		(let ((line2 (read-line p #t)))
+		  (test (string=? line2 (string-append "line 2" (string #\newline))) #t))
+		(let ((line3 (read-line p #t)))
+		  (test (string=? line3 "line 3") #t))
+		(let ((eof (read-line p #t)))
+		  (test (eof-object? eof) #t))))))
       
       (if with-open-input-string-and-friends
 	  (let ((res #f)) 
@@ -6748,6 +6722,11 @@
 	      (string=? (object->string v2) "#((1 (1 [circular list] 2)) #([circular vector] 2) (1 (1 [circular list]) 2))"))
 	    #t)
 
+      (test (receive (a b) (values 1 2) (+ a b)) 3)
+      (test (receive (a) 1 a) 1)
+      (test (receive (a . rest) (values 1 2 3) (+ a (apply + rest))) 6)
+      (test (receive a (values 1 2 3) a) '(1 2 3))
+
       (test (call-with-input-file "tmp1.r5rs" (lambda (p) (integer->char (read-byte p)))) #\t)
 
       (if (and (defined? 'provided?)
@@ -6944,10 +6923,9 @@
       (test (apply '(1 2) '(1)) 2)
       (test ((list 1 2 3) 1) 2)
       
-      ;; (test (let ((pi 3)) pi) 'error)
-      
+      (test (let ((pi 3)) pi) 'error)
       ;;   or ... (let ((:asdf 3)) :asdf) and worse (let ((:key 1)) :key) or even worse (let ((:3 1)) 1)
-      ;;   (let ((x 32)) (let () (define-constant x 3) x) (set! x 31) x) says can't alter x!
+      (test (let ((x_x_x 32)) (let () (define-constant x_x_x 3) x_x_x) (set! x_x_x 31) x_x_x) 'error)
       
 
       (test (with-environment (current-environment) (let ((x 1)) x)) 1)
@@ -36376,6 +36354,21 @@
        (list exact? inexact? zero? positive? negative? even? odd? quotient remainder modulo truncate floor ceiling round
 	     abs max min gcd lcm expt exact->inexact inexact->exact rationalize numerator denominator imag-part real-part
 	     magnitude angle make-polar make-rectangular sqrt exp log sin cos tan asin acos atan number->string))
+
+      (for-each
+       (lambda (op)
+	 (for-each
+	  (lambda (arg) ;(format #t "(~A ~A)~%" op arg)
+	    (test (op arg) 'error))
+	  (list (integer->char 65) 1 0 -1 (list 1) (cons 1 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f #t (lambda (a) (+ a 1)))))
+       (list char-ready? set-current-output-port set-current-input-port set-current-error-port
+	     close-input-port close-output-port open-input-file open-output-file
+	     read-char peek-char read 
+	     (lambda (arg) (write-char #\a arg))
+	     (lambda (arg) (write "hi" arg))
+	     (lambda (arg) (display "hi" arg))
+	     call-with-input-file with-input-from-file call-with-output-file with-output-to-file))
+
       
       (if with-hyperbolic-functions 
 	  (begin
@@ -40620,7 +40613,7 @@ expt error > 1e-6 around 2^-46.506993328423
 		(checker args result)
 		(set! result (catch #t 
 				    (lambda () 
-				      (test-eval (cons op (quotify args))))  
+				      (eval (cons op (quotify args))))  
 				    (lambda args 
 				      (display args) 
 				      (newline) 

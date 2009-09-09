@@ -81,7 +81,7 @@ typedef double s7_Double;
    * 
    * --------------------------------------------------------------------------------
    *
-   * I think s7 has built-in support for srfi-6 (basic string ports), srfi-17 (generalized-set!), 
+   * I think s7 has built-in support for srfi-6 (basic string ports), srfi-8 (receive), srfi-17 (generalized-set!), 
    *   srfi-18 (multithreading), srfi-28 (format, also nearly all of srfi-48), srfi-30 (block comments),
    *   srfi-88 (keywords(, and srfi-89 (define*).  It also supports the functionality of many others
    *   but under a slightly different syntax: srfi-69 (hash-tables), srfi-16 (define*), srfi-25 (multidimensional
@@ -419,6 +419,8 @@ const char *s7_get_output_string(s7_scheme *sc, s7_pointer out_port);       /* (
 typedef enum {S7_READ, S7_READ_CHAR, S7_READ_LINE, S7_READ_BYTE, S7_PEEK_CHAR, S7_IS_CHAR_READY} s7_read_t;
 s7_pointer s7_open_output_function(s7_scheme *sc, void (*function)(s7_scheme *sc, char c, s7_pointer port));  
 s7_pointer s7_open_input_function(s7_scheme *sc, s7_pointer (*function)(s7_scheme *sc, s7_read_t read_choice, s7_pointer port));
+void *s7_port_data(s7_pointer port);
+void *s7_port_set_data(s7_pointer port, void *stuff);
 
 char s7_read_char(s7_scheme *sc, s7_pointer port);                          /* (read-char port) */
 char s7_peek_char(s7_scheme *sc, s7_pointer port);                          /* (peek-char port) */
@@ -1667,7 +1669,7 @@ int main(int argc, char **argv)
  * 
  *        s7 changes
  *
- * 7-Sep:     s7_open_input_function. with-environment.
+ * 7-Sep:     s7_open_input_function. with-environment. receive.
  * 3-Sep:     s7.html, s7-slib-init.scm. 
  *            s7_stacktrace in s7.h.
  * 27-Aug:    vector and hash-table sizes are now s7_Ints, rather than ints.

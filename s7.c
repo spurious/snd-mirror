@@ -343,6 +343,7 @@ typedef struct s7_port_t {
   int size, point; 
   s7_pointer (*input_function)(s7_scheme *sc, s7_read_t read_choice, s7_pointer port);
   void (*output_function)(s7_scheme *sc, char c, s7_pointer port);
+  void *data;
 } s7_port_t;
 
 
@@ -734,6 +735,7 @@ struct s7_scheme {
 #define port_needs_free(p)            (p)->object.port->needs_free
 #define port_output_function(p)       (p)->object.port->output_function
 #define port_input_function(p)        (p)->object.port->input_function
+#define port_data(p)                  (p)->object.port->data
 
 #define is_c_function(f)              (type(f) == T_C_FUNCTION)
 #define c_function(f)                 (f)->object.ffptr
@@ -2150,6 +2152,10 @@ static s7_pointer make_closure(s7_scheme *sc, s7_pointer c, s7_pointer e, int ty
 
 s7_pointer s7_make_closure(s7_scheme *sc, s7_pointer c, s7_pointer e)
 {
+  /* c is a list: args code, so 
+   *   (define (proc a b) (+ a b)) becomes
+   *   make_closure ((a b) (+ a b)) e
+   */
   return(make_closure(sc, c, e, T_CLOSURE));
 }
 
@@ -7868,6 +7874,19 @@ s7_pointer s7_open_output_function(s7_scheme *sc, void (*function)(s7_scheme *sc
   port_needs_free(x) = false;
   port_output_function(x) = function;
   return(x);
+}
+
+
+void *s7_port_data(s7_pointer port)
+{
+  return(port_data(port));
+}
+
+
+void *s7_port_set_data(s7_pointer port, void *stuff)
+{
+  port_data(port) = stuff;
+  return(stuff);
 }
 
 
@@ -22174,6 +22193,8 @@ s7_scheme *s7_init(void)
   /* call-with-values is almost a no-op in this context */
   s7_eval_c_string(sc, "(define-macro (call-with-values producer consumer) `(,consumer (,producer)))"); 
   /* (call-with-values (lambda () (values 1 2 3)) +) */
+  s7_eval_c_string(sc, "(define-macro (receive formals expression . body) `((lambda ,formals ,@body) ,expression))");
+  /* (receive (a b) (values 1 2) (+ a b)) */
 
 #if WITH_ENCAPSULATION
   s7_eval_c_string(sc, "                                 \n\
