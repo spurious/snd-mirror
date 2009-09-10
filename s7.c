@@ -15185,7 +15185,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		return(s7_error(sc, 
 				sc->WRONG_NUMBER_OF_ARGS, 
 				make_list_3(sc, 
-					    s7_make_string_with_length(sc, "~A: too many arguments: ~A", 22), 
+					    s7_make_string_with_length(sc, "~A: too many arguments: ~A", 26), 
 					    g_procedure_source(sc, make_list_1(sc, sc->code)), 
 					    sc->args)));
 	    } 
