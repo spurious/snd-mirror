@@ -133,7 +133,6 @@
 
     continuation? eval eval-string [s7_eval_c_string] apply
     load [s7_load] force for-each map values call-with-values dynamic-wind catch error 
-    gc-verbose load-verbose backtrace clear-backtrace set-backtrace-length backtracing 
     gc procedure? [s7_is_procedure] procedure-documentation [s7]
     procedure-arity [s7] procedure-source [s7] [make-procedure-with-setter procedure-with-setter? procedure-with-setter-setter-arity]
 

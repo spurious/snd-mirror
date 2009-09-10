@@ -1411,6 +1411,8 @@ var snd_html_tip = "basic Snd user-interface documentation";
 
 var libxm_html_tip = "library that ties Motif and Gtk into Snd";
 
+var s7_html_tip = "a Scheme implementation that comes with Snd";
+
 var index_html_tip = "overall index";
 
 

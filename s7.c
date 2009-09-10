@@ -84,6 +84,8 @@
  *        perhaps settable numerator denominator imag-part real-part angle magnitude
  *        perhaps trailing args to cons -> list*
  *        perhaps trailing args to list-ref
+ *        symbol names in ||?
+ *        hooks?
  *
  *
  * Mike Scholz provided the FreeBSD support (complex trig funcs, etc)

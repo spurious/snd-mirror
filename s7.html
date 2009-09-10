@@ -64,8 +64,7 @@ and want a quick tour of where s7 is different:
 
 <dl>
 <dt><em class=emdef>call-with-exit and continuation?</em></dt>
-<dd><p>call-with-exit is a continuation without the ability to return (an escape or goto).
-Use call-with-current-continuation or call/cc for a full continuation.
+<dd><p>call-with-exit is call/cc without the ability to return (an escape or goto).
 </p>
 <pre>
 (define (find-first-even-number arg)
@@ -113,7 +112,8 @@ pi automatically reflects the current bignum-precision:
 3.141592653589793238462643383279502884197169399375105820974944592307816406286198E0
 </pre>
 <p>
-bignum? returns #t if its argument is a big number of some type.  To create a big number,
+bignum? returns #t if its argument is a big number of some type (that is, I use "bignum" 
+for any big number, not just integers).  To create a big number,
 either include enough digits to overflow the default types, or use the bignum function.
 Its argument is a string representing the desired number:
 </p>
@@ -317,13 +317,13 @@ is for compatibility with Guile).
 <dt><em class=emdef>hash tables </em></dt>
 <dd>
 <ul>
-<li>make-hash-table
-<li>hash-table-ref
-<li>hash-table-set!
-<li>hash-table?
-<li>hash-table-size
+<li>(make-hash-table (size 461))
+<li>(hash-table-ref ht obj)
+<li>(hash-table-set! ht obj val)
+<li>(hash-table? obj)
+<li>(hash-table-size ht)
 </ul>
-<p>The hash key can be a symbol, string, integer, or (problematically of course) a real.
+<p>The hashed object can be a symbol, string, integer, or (problematically of course) a real.
 </p>
 </dd>
 <br>
@@ -811,11 +811,11 @@ internally by the evaluator.
 <dt><em class=emdef>encapsulation</em></dt>
 <dd><p>encapsulation saves and restores environments.</p>
 <ul>
-<li>open-encapsulator
-<li>close-encapsulator
-<li>encapsulator-bindings
-<li>encapsulator?
-<li>encapsulate
+<li>(open-encapsulator)
+<li>(close-encapsulator encap)
+<li>(encapsulator-bindings encap)
+<li>(encapsulator? obj)
+<li>(encapsulate . body)
 </ul>
 <p>An encapsulator is 
 a sort of data-side continuation.  open-encapsulator
@@ -885,6 +885,9 @@ but vectors are sorted in place.
 <dd><p>
 Keywords exist mainly for define*'s benefit.  The keyword functions are:
 keyword?, make-keyword, symbol-&gt;keyword, and keyword-&gt;symbol.
+A keyword is a symbol that starts or ends with a colon. The colon
+is considered to be a part of the symbol name (unlike CL where it
+signals that the symbol is in the Package-With-No-Name [offstage: harmonica, tubular bells...]).
 </p>
 </dd>
 <br>
@@ -940,6 +943,7 @@ bind it to something else, which is asking for confusion).
 <ul>
 <li>define-macro* defmacro*
 <li>settable numerator denominator imag-part real-part angle magnitude
+<li>hooks
 </ul>
 </dd>
 <br>

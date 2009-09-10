@@ -264,8 +264,7 @@
 				       (real? result)
 				       (> (abs (- result expected)) 1.0e-12))
 				  (format #t ", rational results but diff > 1e-12: ~A" (> (abs (- result expected)) 1.0e-12))
-				  (if (> (op-error (car tst) result expected) 1.0e-6)
-				      (format #t ", op-error ~A is > 1e-6" (op-error (car tst) result expected))
+				  (if (< (op-error (car tst) result expected) 1.0e-6)
 				      (let ((n result))
 					(format #t ", result not internally consistent")
 					(if (and (integer? n) 
@@ -1654,7 +1653,12 @@
 (test (let ((sym0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789 32))
 	(+ sym0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789 1))
       33)
-      
+
+(test (symbol->string (string->symbol "hi there")) "hi there")
+(test (symbol->string (string->symbol "Hi There")) "Hi There")
+(test (symbol->string (string->symbol "HI THERE")) "HI THERE")
+(test (symbol->string (string->symbol "")) "")
+(test (symbol? (string->symbol "(weird name for a symbol!)")) #t)      
 
 
 
