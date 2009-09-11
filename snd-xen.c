@@ -10,9 +10,8 @@
  *           (if (not (null? sounds))
  *               (values (or (selected-sound) (car (sounds)))
  *                       (or (selected-channel) 0))
- *               (values 0 0)))
+ *               (values #f 0)))
  *         and similarly in other such cases. [end chn edpos]
- *            (It would be great if this could be stored in a variable, expanding upon reference)
  *         This is incompatible with Guile.
  */
 
@@ -71,7 +70,7 @@
  * stklos:      (Scheme) doesn't build libstklos yet, and has many non-unique names in its headers (checked 0.98):
  *                         stklos.h includes the stklos config file, so we collide with PACKAGE, VERSION (easy to hack around).
  *                         As with others, it looks like the boot process assumes stklos is the main program.
- *                         Other than that, this looks complete and not too hard.
+ *                         Other than that, this looks complete and not too hard (but is apparently dead).
  * tinyscheme   (Scheme) now this is very interesting... (this has become s7, Snd's default extension language).
  *
  * there are a number of "extension languages" which are "call-out only"; that is, they allow you to extend
@@ -3537,7 +3536,7 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
 
 #if HAVE_RUBY
   XEN_YES_WE_HAVE("snd-ruby");
-  /* we need to set up the search path so that load and require will work as in the program Ruby */
+  /* we need to set up the search path so that load and require will work as in the program irb */
   #ifdef RUBY_SEARCH_PATH
     {
       /* this code stolen from ruby.c */

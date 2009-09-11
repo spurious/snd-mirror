@@ -1,5 +1,11 @@
 #include "snd.h"
 
+/* PERHAPS: in s7, it is possible to call s7_make_continuation in the error handler,
+ *            passing that back to the caller in some way (a variable?), so that
+ *            it is possible to go on from the error -- perhaps continuable errors
+ *            could use XEN_CERROR?
+ */
+
 static const char *io_error_names[IO_ERROR_NUM] = {"no error", "save-hook cancellation", "bad channel",
 						   "can't reopen file", "too many open files", "unknown sndlib error", 
 						   "no memory", "can't open", "no filename", "bad data format", "bad header type", "sndlib uninitialized", 

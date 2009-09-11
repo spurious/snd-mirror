@@ -3860,6 +3860,13 @@
 (test ((lambda (f x) (f x x)) + 11) 22)
 (test ((lambda () (+ 2 3))) 5)
 
+(test (letrec ((f (lambda (x) (g x)))
+	       (g (lambda (x) x)))
+	(let ((top (f 1)))
+	  (set! g (lambda (x) (- x)))
+	  (+ top (f 1))))
+      0)
+
 (for-each
  (lambda (arg)
    (test ((lambda (x) x) arg) arg))
@@ -4178,6 +4185,7 @@
 (test (+ (do ((i 0 (+ i 1))) ((= i 3) (values i (+ i 1))))) 7)
 (if with-open-input-string-and-friends
     (test (+ (with-input-from-string "(values 1 2 3)" (lambda () (read))) 2) 8))
+(test (< (values 1 2 3)) #t)
 
 (test (+ (force (make-promise (values 1 2 3))) 4) 10)
 ;;;       (let ((arg (force (make-promise (values 1 2 3))))) (+ arg 4)) ; this doesn't work yet
@@ -6726,10 +6734,16 @@
 	      (string=? (object->string v2) "#((1 (1 [circular list] 2)) #([circular vector] 2) (1 (1 [circular list]) 2))"))
 	    #t)
 
-      (test (receive (a b) (values 1 2) (+ a b)) 3)
-      (test (receive (a) 1 a) 1)
-      (test (receive (a . rest) (values 1 2 3) (+ a (apply + rest))) 6)
-      (test (receive a (values 1 2 3) a) '(1 2 3))
+      (test (multiple-value-bind (a b) (values 1 2) (+ a b)) 3)
+      (test (multiple-value-bind (a) 1 a) 1)
+      (test (multiple-value-bind (a . rest) (values 1 2 3) (+ a (apply + rest))) 6)
+      (test (multiple-value-bind a (values 1 2 3) a) '(1 2 3))
+
+      (test (let ((a 1)
+		  (b 2))
+	      (multiple-value-set! (a b) (values 32 64))
+	      (+ a b))
+	    96)
 
       (test (call-with-input-file "tmp1.r5rs" (lambda (p) (integer->char (read-byte p)))) #\t)
 

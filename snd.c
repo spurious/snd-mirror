@@ -367,6 +367,8 @@ struct sigaction new_act, old_act;
   
 static void handle_sigquit(int ignored)  
 {  
+  /* PERHAPS: add a variable to hold the interrupt continuation */
+
   fprintf(stderr, "interrupted!\n");
   sigaction(SIGQUIT, &new_act, NULL);  
   s7_quit(s7);                /* get out of the eval loop if possible */

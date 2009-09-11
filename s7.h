@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "1.31"
-#define S7_DATE "7-Sep-09"
+#define S7_VERSION "1.32"
+#define S7_DATE "14-Sep-09"
 
 
 typedef long long int s7_Int;
@@ -437,8 +437,17 @@ s7_pointer s7_procedure_source(s7_scheme *sc, s7_pointer p);                /* (
 s7_pointer s7_procedure_environment(s7_pointer p);
 const char *s7_procedure_documentation(s7_scheme *sc, s7_pointer p);        /* (procedure-documentation x) if any (don't free the string) */
 s7_pointer s7_procedure_arity(s7_scheme *sc, s7_pointer x);                 /* (procedure-arity x) -- returns a list (required optional rest?) */
-bool s7_is_continuation(s7_pointer p);                                      /* (continuation? p) */
 
+bool s7_is_continuation(s7_pointer p);                                      /* (continuation? p) */
+s7_pointer s7_make_continuation(s7_scheme *sc);                             /* call/cc... (see example below) */
+
+s7_pointer s7_values(s7_scheme *sc, int num_values, ...);                   /* (values ...) */
+
+  /* for example:
+   *      return(s7_values(sc, 3, s7_make_integer(sc, 1), s7_make_integer(sc, 2), s7_make_integer(sc, 3)));
+   * now call this "v" and:
+   * (+ 1 (v) 2) => 9
+   */
 
 bool s7_is_symbol(s7_pointer p);                                            /* (symbol? p) */
 const char *s7_symbol_name(s7_pointer p);                                   /* (symbol->string p) -- don't free the string */
@@ -1589,7 +1598,8 @@ int main(int argc, char **argv)
 
 /* --------------------------------------------------------------------------------
  *
- * an example of signal handling (C-C to break out of an infinite loop)
+ * an example of signal handling (C-C to break out of an infinite loop), s7_make_continuation
+ *    to pick up where we were interrupted (or get a stacktrace, etc).
  */
 
 #if 0 
@@ -1606,9 +1616,24 @@ struct sigaction new_act, old_act;
 static void handle_sigint(int ignored)  
 {  
   fprintf(stderr, "interrupted!\n");
+  s7_symbol_set_value(s7, s7_make_symbol(s7, "*interrupt*"), s7_make_continuation(s7)); /* save where we were interrupted */
   sigaction(SIGINT, &new_act, NULL);  
-  s7_quit(s7);                /* get out of the eval loop if possible */
+  s7_quit(s7);                             /* get out of the eval loop if possible */
 }  
+
+static s7_pointer our_exit(s7_scheme *sc, s7_pointer args)
+{ 
+  /* this is really needed if we are trapping C-C! */
+  exit(1);
+  return(s7_f(sc));
+}
+
+static s7_pointer our_sleep(s7_scheme *sc, s7_pointer args)
+{
+  /* slow down out infinite loop for demo purposes */
+  sleep(1);
+  return(s7_f(sc));
+}
 
 int main(int argc, char **argv)
 {
@@ -1616,6 +1641,10 @@ int main(int argc, char **argv)
   char response[1024];
 
   s7 = s7_init();
+  s7_define_function(s7, "exit", our_exit, 0, 0, false, "(exit) exits");
+  s7_define_function(s7, "sleep", our_sleep, 0, 0, false, "(sleep) sleeps");
+  s7_define_variable(s7, "*interrupt*", s7_f(s7)); 
+  /* scheme variable *interrupt* holds the continuation at the point of the interrupt */
 
   sigaction(SIGINT, NULL, &old_act);
   if (old_act.sa_handler != SIG_IGN)
@@ -1639,16 +1668,17 @@ int main(int argc, char **argv)
     }
 }
 
-/* 
- * > (do ((i 0 (+ i 1))) ((= i -1)) )
- * ;;; now type Ctrl-C to stop this loop
- * ^Cinterrupted!
+/*
+ * > (do ((i 0 (+ i 1))) ((= i -1)) (format #t "~D " i) (sleep))
+ *   ;;; now type C-C to break out of this loop
+ * 0 1 2 ^Cinterrupted!
+ *   ;;; call the continuation to continue from where we were interrupted
+ * > (*interrupt*)
+ * 3 4 5 ^Cinterrupted!
+ * > *interrupt*
+ * #<continuation>
  * > (+ 1 2)
  * 3
- * > (do ((i 0 (+ i 1))) ((= i -1)) )
- * ^Cinterrupted!
- * >
- * etc
  */
 #endif
 
@@ -1669,6 +1699,7 @@ int main(int argc, char **argv)
  * 
  *        s7 changes
  *
+ * 14-Sep:    s7_values, s7_make_continuation, and a better interrupt example.
  * 7-Sep:     s7_open_input_function. with-environment. receive.
  * 3-Sep:     s7.html, s7-slib-init.scm. 
  *            s7_stacktrace in s7.h.

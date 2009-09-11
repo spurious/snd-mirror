@@ -153,6 +153,7 @@ Other math-related differences between s7 and r5rs:
 <li>log takes an optional 2nd arg (the base).
 <li>'.' and an exponent can occur in a number in any base.
 <li>NaN and inf handling is left up to the underlying C or C++.
+<li>rationalize returns a ratio! 
 </ul>
 <pre>
 &gt; (exact? 1.0)
@@ -178,6 +179,9 @@ Other math-related differences between s7 and r5rs:
 
 &gt; (string->number "0.1" 2)
 0.5
+
+&gt; (rationalize 1.5)
+3/2
 </pre>
 </dd>
 <br>

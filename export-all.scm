@@ -258,7 +258,6 @@ samples->seconds
 sawtooth-wave
 sawtooth-wave?
 seconds->samples
-sine-bank
 sine-summation
 sine-summation?
 spectrum
@@ -488,7 +487,6 @@ autocorrelation
 axis-info
 axis-label-font
 axis-numbers-font
-background-gradient
 bad-header-hook
 basic-color
 beats-per-measure
@@ -523,7 +521,6 @@ clm-channel
 close-hook
 close-sound
 color-cutoff
-color-dialog
 color-hook
 color-inverted
 color?
@@ -829,7 +826,6 @@ open-raw-sound-hook
 open-sound
 optimization
 optimization-hook
-orientation-dialog
 orientation-hook
 output-comment-hook
 output-name-hook
@@ -1173,8 +1169,6 @@ snd-transform
 data-clipped
 analyze-ladspa
 mus-file-data-clipped
-restore-marks
-run-internal
 run-eval
 cursor-follows-play
 continuation?

@@ -258,6 +258,7 @@
 #include <sys/types.h>
 #include <errno.h>
 #include <time.h>
+#include <stdarg.h>
 
 #if __cplusplus
   #include <cmath>
@@ -2358,7 +2359,7 @@ static s7_pointer s7_make_goto(s7_scheme *sc)
 }
 
 
-static s7_pointer s7_make_continuation(s7_scheme *sc) 
+s7_pointer s7_make_continuation(s7_scheme *sc) 
 {
   s7_pointer x;
 
@@ -14064,7 +14065,7 @@ static s7_pointer splice_in_values(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_values(s7_scheme *sc, s7_pointer args)
 {
-  #define H_values "(values obj ...) splices its arguments into whatever list (its 'continuation') holds it"
+  #define H_values "(values obj ...) splices its arguments into whatever list holds it (its 'continuation')"
   
   if (args == sc->NIL)
     return(sc->NIL);
@@ -14073,6 +14074,24 @@ static s7_pointer g_values(s7_scheme *sc, s7_pointer args)
     return(car(args));
 
   return(splice_in_values(sc, args));
+}
+
+
+s7_pointer s7_values(s7_scheme *sc, int num_values, ...)
+{
+  s7_pointer args = sc->NIL;
+  int i;
+  va_list ap;
+  
+  if (num_values == 0)
+    return(sc->NIL);
+
+  va_start(ap, num_values);
+  for (i = 0; i < num_values; i++)
+    args = s7_cons(sc, va_arg(ap, s7_pointer), args);
+  va_end(ap);
+
+  return(g_values(sc, s7_reverse(sc, args)));
 }
 
 
