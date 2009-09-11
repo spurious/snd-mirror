@@ -1075,13 +1075,6 @@ them); if you're not using regions anyway, this switch can turn them off.
 </td></tr><tr><td colspan=3 height=16></td></tr>
 
 
-<!-- show-backtrace -->
-<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="showbacktrace">show-backtrace</a></code></td>
-<td bgcolor="#f2f4ff"><code>#f</code></td></tr><tr><td></td><td colspan=2>
-If show-backtrace is #t, any error will display a backtrace automatically.
-</td></tr><tr><td colspan=3 height=16></td></tr>
-
-
 <!-- show-indices -->
 <tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="showindices">show-indices</a></code></td>
 <td bgcolor="#f2f4ff"><code>#f</code></td></tr><tr><td></td><td colspan=2>
@@ -12791,7 +12784,6 @@ To get backtraces,
 <pre>
     (read-enable 'positions)
     (debug-enable 'debug 'backtrace)
-    (set! (show-backtrace) #t)
 </pre>
 <p>If you're getting a stack overflow, and you're sure it's not a case
 of infinite recursion,

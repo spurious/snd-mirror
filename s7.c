@@ -36,6 +36,7 @@
  *        no invidious distinction between built-in and "foreign"
  *          (this makes it easy to extend built-in operators like "+" -- see s7.h for a simple example)
  *        lists, strings, vectors, and hash-tables are (set-)applicable objects
+ *        true multiple-values, multiple-value-bind, multiple-value-set!
  *
  *   many minor changes!
  *
@@ -22195,8 +22196,14 @@ s7_scheme *s7_init(void)
   /* call-with-values is almost a no-op in this context */
   s7_eval_c_string(sc, "(define-macro (call-with-values producer consumer) `(,consumer (,producer)))"); 
   /* (call-with-values (lambda () (values 1 2 3)) +) */
-  s7_eval_c_string(sc, "(define-macro (receive formals expression . body) `((lambda ,formals ,@body) ,expression))");
-  /* (receive (a b) (values 1 2) (+ a b)) */
+
+  s7_eval_c_string(sc, "(define-macro (multiple-value-bind vars expression . body) `((lambda ,vars ,@body) ,expression))");
+  /* (multiple-value-bind (a b) (values 1 2) (+ a b)) */
+  /*   named "receive" in srfi-8 which strikes me as perverse */
+
+  s7_eval_c_string(sc, "(define-macro (multiple-value-set! vars expr . body)\n\
+                          (let ((local-vars (map (lambda (n) (gensym)) vars)))\n\
+                            `((lambda ,local-vars ,@(map (lambda (n ln) `(set! ,n ,ln)) vars local-vars) ,@body) ,expr)))");
 
 #if WITH_ENCAPSULATION
   s7_eval_c_string(sc, "                                 \n\

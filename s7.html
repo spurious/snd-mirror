@@ -899,6 +899,55 @@ signals that the symbol is in the Package-With-No-Name [offstage: harmonica, tub
 </dd>
 <br>
 
+<dt><em class=emdef>multiple-values</em></dt>
+<dd><p>
+The r5rs section about values makes no sense to me;  why have
+multiple values at all if you're simply going to throw away all
+but the first value?
+In s7 (+ (values 1 2 3) 4) is 10.  Similarly,
+
+<pre>
+  (string-ref ((lambda () (values "abcd" 2))))
+  -&gt; #\c
+
+  ((lambda (a b) (+ a b)) 
+   ((lambda () (values 1 2))))
+  -&gt; 3
+
+  ;; call-with-values: 
+  (define-macro (call-with-values producer consumer) 
+    `(,consumer (,producer)))
+
+  ;; multiple-value-bind ("receive"):
+  (define-macro (multiple-value-bind vars expr . body)
+    `((lambda ,vars ,@body) ,expr))
+
+  ;; multiple-value-set!:
+  (define-macro (multiple-value-set! vars expr . body)
+    (let ((local-vars (map (lambda (n) (gensym)) vars)))
+      `((lambda ,local-vars ,@(map (lambda (n ln) `(set! ,n ,ln)) vars local-vars) ,@body) ,expr)))
+
+  ;; call/cc returns multiple values:
+  (+ (call/cc (lambda (ret) (ret 1 2 3))) 4)
+  -&gt; 10
+</pre>
+<p>
+In Snd many functions take the same trailing arguments: sound-index, channel-number, and edit-position;
+we can package these up in a values call:
+</p>
+<pre>
+   ;; say we have those arguments in snd, chn, edpos
+   (defmacro sce () `(values ,snd ,chn ,edpos))
+   (maxamp (sce))
+</pre>
+</dd>
+<br>
+
+<!-- should this work? (let ((var (values (values 1 2 3)))) (+ var 4)) 
+     currently you need: (let ((var (values (values 1 2 3)))) (+ (eval var) 4)) -> 10
+-->
+
+
 <dt><em class=emdef>define-expansion</em></dt>
 <dd><p>
 This defines read-time macros, which are just dangerous enough that
@@ -910,28 +959,15 @@ bind it to something else, which is asking for confusion).
 </dd>
 <br>
 
+
 <dt><em class=emdef>other differences from r5rs</em></dt>
 <dd><br>
 <ul>
 <li>do sets its step variables, rather than rebinding them.
 <li>no syntax-rules or any of its friends.
-</ul><br>
-<ul>
 <li>s7-version returns the current s7 version.
 <li>no scheme-report-environment, null-environment, or interaction-environment (= current-environment?).
 <li>no transcript-on or transcript-off.
-</ul><br>
-<ul>
-<li>The r5rs section about values makes no sense to me; in s7 (+ (values 1 2 3) 4) is 10.
-  <ul>
-  <li>(string-ref ((lambda () (values "abcd" 2)))) is #\c
-  <li>((lambda (a b) (+ a b)) ((lambda () (values 1 2)))) is 3
-  <li>call-with-values: (define-macro (call-with-values producer consumer) `(,consumer (,producer)))
-  <li>receive: (define-macro (receive formals expression . body) `((lambda ,formals ,@body) ,expression))
-  </ul>
-<li>Similarly, (+ (call/cc (lambda (ret) (ret 1 2 3))) 4) is also 10.
-</ul><br>
-<ul>
 <li>__func__ is the name of the function currently being defined (as in C).
 </ul>
 </dd>

@@ -2828,13 +2828,6 @@ widget_t start_preferences_dialog(void)
 			      listener_prompt_text);
     remember_pref(prf, reflect_listener_prompt, save_listener_prompt, NULL, NULL, revert_listener_prompt);
 
-    current_sep = make_inter_variable_separator(prg_box, prf->label);
-    prf = prefs_row_with_toggle("include backtrace in error report", S_show_backtrace,
-				rts_show_backtrace = show_backtrace(ss),
-				prg_box, current_sep,
-				show_backtrace_toggle);
-    remember_pref(prf, reflect_show_backtrace, save_show_backtrace, NULL, NULL, revert_show_backtrace);
-
 #if HAVE_GUILE
     current_sep = make_inter_variable_separator(prg_box, prf->label);
     prf = prefs_row_with_toggle("include debugging aids", "snd-break",

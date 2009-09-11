@@ -1,6 +1,21 @@
 #include "snd.h"
 #include "clm2xen.h"
 
+/* TODO: we often use the pair (selected-sound) (selected-channel) or whatever,
+ *         and these are always paired in the argument lists, so if we had a
+ *         C function that returned both as a (scheme) multiple-value, we
+ *         could simply plug that in wherever the other 2 were wanted.
+ *         Actually, this should work as well:
+ *         (define (sc)
+ *           (if (not (null? sounds))
+ *               (values (or (selected-sound) (car (sounds)))
+ *                       (or (selected-channel) 0))
+ *               (values 0 0)))
+ *         and similarly in other such cases. [end chn edpos]
+ *            (It would be great if this could be stored in a variable, expanding upon reference)
+ *         This is incompatible with Guile.
+ */
+
 /* Snd defines its own exit, delay, and frame? clobbering (presumably) the Guile version, (filter is another such collision)
  *
  *   In Scheme, delay is protected in clm2xen.c as make-promise
@@ -470,32 +485,8 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
   if (XEN_NOT_FALSE_P(stack)) 
     {
       stack_gc_loc = snd_protect(stack);
-      if (show_backtrace(ss))
-	{
-	  XEN_PUTS("\n", port);
-	  scm_display_backtrace(stack, port, XEN_UNDEFINED, XEN_UNDEFINED);
-	}
-      else
-	{
-	  XEN current_frame, source;
-	  int frame_gc_loc, source_gc_loc;
-	  current_frame = scm_stack_ref(stack, XEN_ZERO);
-	  frame_gc_loc = snd_protect(current_frame);
-	  if (XEN_NOT_FALSE_P(current_frame))
-	    {
-	      source = scm_frame_source(current_frame);
-	      if (XEN_NOT_FALSE_P(source))
-		{
-		  source_gc_loc = snd_protect(source);
-		  XEN_PUTS("\n", port);
-		  XEN_PUTS(XEN_AS_STRING(scm_source_property(source, scm_sym_filename)), port);
-		  XEN_PUTS(": line ", port);
-		  XEN_PUTS(XEN_AS_STRING(scm_source_property(source, scm_sym_line)), port);
-		  snd_unprotect_at(source_gc_loc);
-		}
-	    }
-	  snd_unprotect_at(frame_gc_loc);
-	}
+      XEN_PUTS("\n", port);
+      scm_display_backtrace(stack, port, XEN_UNDEFINED, XEN_UNDEFINED);
       snd_unprotect_at(stack_gc_loc);
     }
   else
@@ -592,19 +583,16 @@ void snd_rb_raise(XEN tag, XEN throw_args)
 	}
     }
 
-  if (show_backtrace(ss)) 
-    {
-      XEN bt = rb_funcall(err, rb_intern("caller"), 0); 
+  XEN bt = rb_funcall(err, rb_intern("caller"), 0); 
 
-      if (XEN_VECTOR_P(bt) && XEN_VECTOR_LENGTH(bt) > 0) 
-	{
-	  int i; 
+  if (XEN_VECTOR_P(bt) && XEN_VECTOR_LENGTH(bt) > 0) 
+    {
+      int i; 
+      msg = mus_strcat(msg, "\n", &size); 
+      for (i = 0; i < XEN_VECTOR_LENGTH(bt); i++) 
+	{ 
+	  msg = mus_strcat(msg, XEN_TO_C_STRING(XEN_VECTOR_REF(bt, i)), &size); 
 	  msg = mus_strcat(msg, "\n", &size); 
-	  for (i = 0; i < XEN_VECTOR_LENGTH(bt); i++) 
-	    { 
-	      msg = mus_strcat(msg, XEN_TO_C_STRING(XEN_VECTOR_REF(bt, i)), &size); 
-	      msg = mus_strcat(msg, "\n", &size); 
-	    } 
 	} 
     }
 

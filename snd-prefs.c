@@ -714,15 +714,6 @@ static void revert_fft_log_frequency(prefs_info *prf) {in_set_fft_log_frequency(
 static void save_fft_log_frequency(prefs_info *prf, FILE *ignore) {rts_fft_log_frequency = fft_log_frequency(ss);}
 
 
-/* ---------------- show-backtrace ---------------- */
-
-static bool rts_show_backtrace = DEFAULT_SHOW_BACKTRACE;
-static void reflect_show_backtrace(prefs_info *prf) {SET_TOGGLE(prf->toggle, show_backtrace(ss));}
-static void show_backtrace_toggle(prefs_info *prf) {set_show_backtrace(GET_TOGGLE(prf->toggle));}
-static void revert_show_backtrace(prefs_info *prf) {set_show_backtrace(rts_show_backtrace);}
-static void save_show_backtrace(prefs_info *prf, FILE *ignore) {rts_show_backtrace = show_backtrace(ss);}
-
-
 /* ---------------- dac-combines-channels ---------------- */
 
 static bool rts_dac_combines_channels = DEFAULT_DAC_COMBINES_CHANNELS;

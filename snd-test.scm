@@ -246,7 +246,6 @@
 
 ;;(setlocale LC_ALL "de_DE")
 (set! (with-background-processes) #f)
-(set! (show-backtrace) #t)
 (define max-optimization 6)
 
 ;; start-playing-hook is only called when an indexed sound is played, not if play-mix etc -- need a way to hit all possible playback
@@ -493,7 +492,6 @@
 			      (vector-set! timings n (real-time))
 			      (snd-display ";test ~D" n)
 			      (gc)(gc)
-			      (set! (show-backtrace) #t) ; #f??
 			      ))
 
 
@@ -1043,9 +1041,6 @@
     (set! (show-indices) (show-indices))
     (if (not (equal? (show-indices)  #f)) 
 	(snd-display ";show-indices set def: ~A" (show-indices)))
-    (set! (show-backtrace) (show-backtrace))
-    (if (not (equal? (show-backtrace)  #f)) 
-	(snd-display ";show-backtrace set def: ~A" (show-backtrace)))
     (set! (show-marks) (show-marks))
     (if (not (equal? (show-marks)  #t )) 
 	(snd-display ";show-marks set def: ~A" (show-marks)))
@@ -1356,7 +1351,6 @@
       'save-state-file (save-state-file) "saved-snd.scm" 
       'selection-creates-region (selection-creates-region) #t 
       'show-axes (show-axes) 1
-      'show-backtrace (show-backtrace) #f
       'show-controls (show-controls) #f
       'show-grid (show-grid) #f 
       'show-indices (show-indices) #f
@@ -1952,7 +1946,6 @@
 	(list 'show-axes show-axes 1 0)
 	(list 'show-transform-peaks show-transform-peaks #f #t)
 	(list 'show-indices show-indices #f #t)
-	(list 'show-backtrace show-backtrace #f #t)
 	(list 'show-marks show-marks #t #f)
 	(list 'show-mix-waveforms show-mix-waveforms #t #f)
 	(list 'show-selection-transform show-selection-transform #f #t)
@@ -2304,7 +2297,7 @@
 		       'selection-frames 'selection-maxamp 'selection-maxamp-position 'selection-member? 'selection-position
 		       'selection-srate 'selection? 'send-mozilla
 		       'short-file-name 'show-all-axes 'show-all-axes-unlabelled 'show-bare-x-axis
-		       'show-axes 'show-backtrace 'show-controls 'show-grid 'show-indices
+		       'show-axes 'show-controls 'show-grid 'show-indices
 		       'show-listener 'show-marks 'show-mix-waveforms 'show-no-axes 'show-selection-transform
 		       'show-sonogram-cursor 'show-transform-peaks 'show-widget 'show-x-axis 'show-x-axis-unlabelled
 		       'show-y-zero 'sinc-width 'nrxysin 'nrxysin? 'nrxycos 'nrxycos?
@@ -33162,7 +33155,6 @@ EDITS: 2
 	      (list 'show-axes show-axes #f 0 2)
 	      (list 'show-transform-peaks show-transform-peaks #f #f #t)
 	      (list 'show-indices show-indices #f #f #t)
-	      (list 'show-backtrace show-backtrace #f #f #t)
 	      (list 'show-marks show-marks #f #f #t)
 	      (list 'show-mix-waveforms show-mix-waveforms #t #f #t)
 	      (list 'show-selection-transform show-selection-transform #f #f #t)
@@ -65244,7 +65236,7 @@ EDITS: 1
 		     scan-chan search-procedure select-all select-channel select-sound
 		     selected-channel selected-data-color selected-graph-color selected-sound
 		     selection-position selection-color selection-creates-region selection-frames selection-member? selection?
-		     short-file-name show-axes show-backtrace show-controls show-transform-peaks show-indices show-listener
+		     short-file-name show-axes show-controls show-transform-peaks show-indices show-listener
 		     show-marks show-mix-waveforms show-selection-transform show-y-zero sinc-width show-grid show-sonogram-cursor grid-density
 		     smooth-sound smooth-selection snd-print snd-spectrum snd-tempnam snd-version sound-files-in-directory
 		     sound-loop-info sound-widgets soundfont-info sound? sounds spectrum-end spectro-hop spectrum-start
@@ -65359,7 +65351,7 @@ EDITS: 1
 			 region-graph-style reverb-control-decay reverb-control-feedback
 			 reverb-control-length reverb-control-lowpass reverb-control-scale time-graph-style lisp-graph-style transform-graph-style
 			 reverb-control? sash-color ladspa-dir save-dir save-state-file selected-data-color selected-graph-color
-			 selection-color selection-creates-region show-axes show-backtrace show-controls
+			 selection-color selection-creates-region show-axes show-controls
 			 show-transform-peaks show-indices show-marks show-mix-waveforms show-selection-transform show-listener
 			 show-y-zero show-grid show-sonogram-cursor sinc-width spectrum-end spectro-hop spectrum-start spectro-x-angle  grid-density
 			 spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle spectro-z-scale speed-control
@@ -66156,7 +66148,7 @@ EDITS: 1
 			    time-graph-style lisp-graph-style transform-graph-style peaks-font bold-peaks-font
 			    view-files-sort print-length pushed-button-color sash-color ladspa-dir save-dir save-state-file
 			    selected-channel selected-data-color selected-graph-color 
-			    selected-sound selection-creates-region show-backtrace show-controls show-indices show-listener
+			    selected-sound selection-creates-region show-controls show-indices show-listener
 			    show-selection-transform sinc-width temp-dir text-focus-color tiny-font
 			    trap-segfault with-file-monitor optimization unbind-key with-verbose-cursor window-height beats-per-measure
 			    window-width window-x window-y with-gl with-mix-tags x-axis-style beats-per-minute zoom-color mix-tag-height

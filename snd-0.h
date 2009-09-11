@@ -544,7 +544,7 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define optimization(ss) ss->Optimization
 #define set_optimization(a) ss->Optimization = a
-#define DEFAULT_OPTIMIZATION 0
+#define DEFAULT_OPTIMIZATION 6
 
 #define dot_size(ss) ss->Dot_Size
 #define in_set_dot_size(a) ss->Dot_Size = a

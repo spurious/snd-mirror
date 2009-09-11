@@ -689,7 +689,6 @@ make_hook("$before_test_hook", 1, "snd-test") do |n|
   set_mus_clipping(false)
   $timings.push([n, Snd_test_time.new])
   snd_info("test %d", n)
-  set_show_backtrace(false)
 end
 
 make_hook("$after_test_hook", 1, "snd-test") do |n|
@@ -1340,7 +1339,6 @@ def test00
             [:save_state_file, "saved-snd.rb"],
             [:selection_creates_region, true],
             [:show_axes, 1],
-            [:show_backtrace, false],
             [:show_grid, false],
             [:show_indices, false],
             [:show_marks, true],
@@ -1537,7 +1535,6 @@ def test01
                 [:save_state_file, "saved-snd.rb"],
                 [:selection_creates_region, true],
                 [:show_axes, 1],
-                [:show_backtrace, false],
                 [:show_controls, false],
                 [:show_grid, false],
                 [:show_indices, false],
@@ -2069,7 +2066,6 @@ def test03
       [:show_axes, 1, 0],
       [:show_transform_peaks, false, true],
       [:show_indices, false, true],
-      [:show_backtrace, false, true],
       [:show_marks, true, false],
       [:show_mix_waveforms, true, false],
       [:show_selection_transform, false, true],
@@ -24283,7 +24279,6 @@ def test14
      [:show_axes, false, 0, 2],
      [:show_transform_peaks, false, false, true],
      [:show_indices, false, false, true],
-     [:show_backtrace, false, false, true],
      [:show_marks, false, false, true],
      [:show_mix_waveforms, true, false, true],
      [:show_selection_transform, false, false, true],
@@ -34436,7 +34431,7 @@ Procs =
    :scan_chan, :search_procedure, :select_all, :select_channel, :select_sound, :selected_channel,
    :selected_data_color, :selected_graph_color, :selected_sound, :selection_position,
    :selection_color, :selection_creates_region, :selection_frames, :selection_member?,
-   :selection?, :short_file_name, :show_axes, :show_backtrace, :show_controls,
+   :selection?, :short_file_name, :show_axes, :show_controls,
    :show_transform_peaks, :show_indices, :show_listener, :show_marks, :show_mix_waveforms,
    :show_selection_transform, :show_y_zero, :sinc_width, :show_grid, :show_sonogram_cursor,
    :grid_density, :smooth_sound, :smooth_selection, :snd_print, :snd_spectrum, :snd_tempnam,
@@ -34566,7 +34561,7 @@ Set_procs =
    :reverb_control_scale, :time_graph_style, :lisp_graph_style, :transform_graph_style,
    :reverb_control?, :sash_color, :ladspa_dir, :save_dir, :save_state_file, :selected_data_color,
    :selected_graph_color, :selection_color, :selection_creates_region, :show_axes,
-   :show_backtrace, :show_controls, :show_transform_peaks, :show_indices, :show_marks,
+   :show_controls, :show_transform_peaks, :show_indices, :show_marks,
    :show_mix_waveforms, :show_selection_transform, :show_listener, :show_y_zero, :show_grid,
    :show_sonogram_cursor, :sinc_width, :spectrum_end, :spectro_hop, :spectrum_start,
    :spectro_x_angle, :grid_density, :spectro_x_scale, :spectro_y_angle, :spectro_y_scale,
@@ -35133,7 +35128,7 @@ def test0128
    :pushed_button_color,
    :sash_color, :ladspa_dir, :save_dir, :save_state_file, :selected_channel,
    :selected_data_color, :selected_graph_color, :selected_sound,
-   :selection_creates_region, :show_backtrace, :show_controls, :show_indices,
+   :selection_creates_region, :show_controls, :show_indices,
    :show_listener, :show_selection_transform, :sinc_width, :temp_dir,
    :text_focus_color, :tiny_font, :trap_segfault, :with_file_monitor, :optimization,
    :with_verbose_cursor, :window_height,

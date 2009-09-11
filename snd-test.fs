@@ -286,7 +286,6 @@ mus-audio-playback-amp value original-audio-amp
   audio-amp-zero set-mus-audio-playback-amp
   #f  set-with-background-processes drop
   #f  set-trap-segfault  	    drop
-  #t  set-show-backtrace 	    drop
   600 set-window-x       	    drop
   10  set-window-y       	    drop
   #t  show-listener      	    drop
@@ -1767,7 +1766,7 @@ include bird.fsm
    <'> select-sound <'> selected-channel
    <'> selected-sound <'> selection-position <'> selection-creates-region
    <'> selection-frames <'> selection-member? <'> selection? <'> short-file-name
-   <'> show-axes <'> show-backtrace <'> show-controls <'> show-transform-peaks
+   <'> show-axes <'> show-controls <'> show-transform-peaks
    <'> show-indices <'> show-listener <'> show-marks <'> show-mix-waveforms
    <'> show-selection-transform <'> show-y-zero <'> sinc-width <'> show-grid
    <'> show-sonogram-cursor <'> grid-density <'> smooth-sound <'> smooth-selection
@@ -1924,7 +1923,7 @@ include bird.fsm
    <'> reverb-control-lowpass <'> reverb-control-scale <'> time-graph-style <'> lisp-graph-style
    <'> transform-graph-style <'> reverb-control? <'> ladspa-dir
    <'> save-dir <'> save-state-file
-   <'> selection-creates-region <'> show-axes <'> show-backtrace
+   <'> selection-creates-region <'> show-axes 
    <'> show-controls <'> show-transform-peaks <'> show-indices <'> show-marks
    <'> show-mix-waveforms <'> show-selection-transform <'> show-listener <'> show-y-zero
    <'> show-grid <'> show-sonogram-cursor <'> sinc-width <'> spectrum-end
@@ -2565,7 +2564,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
      <'> view-files-sort <'> print-length
      <'> ladspa-dir <'> save-dir
      <'> save-state-file <'> selected-channel
-     <'> selected-sound <'> selection-creates-region <'> show-backtrace <'> show-controls
+     <'> selected-sound <'> selection-creates-region <'> show-controls
      <'> show-indices <'> show-listener <'> show-selection-transform <'> sinc-width
      <'> temp-dir <'> trap-segfault
      <'> with-file-monitor <'> optimization <'> with-verbose-cursor

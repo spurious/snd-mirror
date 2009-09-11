@@ -296,7 +296,7 @@ static int safe_strcasecmp(const char *s1, const char *s2)
 static XEN optimization_hook;
 
 #if WITH_RUN || (!USE_SND)
-static int current_optimization = 0;
+static int current_optimization = MAX_OPTIMIZATION;
 #define S_optimization_hook "optimization-hook"
 #endif
 
@@ -17210,7 +17210,7 @@ static XEN g_optimization(void) {return(C_TO_XEN_INT(optimization(ss)));}
 
 static XEN g_set_optimization(XEN val) 
 {
-  #define H_optimization "(" S_optimization "): the current 'run' optimization level (default 0 = off, max is 6)"
+  #define H_optimization "(" S_optimization "): the current 'run' optimization level (default 6 is the max, 0 = no optimization)"
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_optimization, "an integer");
   set_optimization(mus_iclamp(0, XEN_TO_C_INT(val), MAX_OPTIMIZATION));
   return(C_TO_XEN_INT(optimization(ss)));
@@ -17224,7 +17224,7 @@ static XEN g_optimization(void) {return(C_TO_XEN_INT(current_optimization));}
 
 static XEN g_set_optimization(XEN val) 
 {
-  #define H_optimization "(" S_optimization "): the current 'run' optimization level (default 0 = off, max is 6)"
+  #define H_optimization "(" S_optimization "): the current 'run' optimization level (default 6 is the max, 0 = no optimization)"
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_optimization, "an integer");
   current_optimization = mus_iclamp(0, XEN_TO_C_INT(val), MAX_OPTIMIZATION);
   return(C_TO_XEN_INT(current_optimization));

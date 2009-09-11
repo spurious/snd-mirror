@@ -557,7 +557,6 @@ static void save_options(FILE *fd)
   if (cursor_location_offset(ss) != DEFAULT_CURSOR_LOCATION_OFFSET) pss_sd(fd, S_cursor_location_offset, cursor_location_offset(ss));
   if (verbose_cursor(ss) != DEFAULT_VERBOSE_CURSOR) pss_ss(fd, S_with_verbose_cursor, b2s(verbose_cursor(ss)));
   if (show_indices(ss) != DEFAULT_SHOW_INDICES) pss_ss(fd, S_show_indices, b2s(show_indices(ss)));
-  if (show_backtrace(ss) != DEFAULT_SHOW_BACKTRACE) pss_ss(fd, S_show_backtrace, b2s(show_backtrace(ss)));
   if (show_transform_peaks(ss) != DEFAULT_SHOW_TRANSFORM_PEAKS) pss_ss(fd, S_show_transform_peaks, b2s(show_transform_peaks(ss)));
   if (show_y_zero(ss) != DEFAULT_SHOW_Y_ZERO) pss_ss(fd, S_show_y_zero, b2s(show_y_zero(ss)));
   if (show_grid(ss) != DEFAULT_SHOW_GRID) pss_ss(fd, S_show_grid, b2s((bool)show_grid(ss)));
@@ -2136,15 +2135,11 @@ static XEN g_set_show_indices(XEN val)
 }
 
 
-static XEN g_show_backtrace(void) {return(C_TO_XEN_BOOLEAN(show_backtrace(ss)));}
-
-static XEN g_set_show_backtrace(XEN val) 
-{
-  #define H_show_backtrace "(" S_show_backtrace "): " PROC_TRUE " to show backtrace automatically upon error"
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(val), val, XEN_ONLY_ARG, S_setB S_show_backtrace, "a boolean");
-  set_show_backtrace(XEN_TO_C_BOOLEAN(val));
-  return(C_TO_XEN_BOOLEAN(show_backtrace(ss)));
-}
+/* backwards compatibility */
+#define H_show_backtrace "an obsolete no-op"
+#define S_show_backtrace "show-backtrace"
+static XEN g_show_backtrace(void) {return(XEN_TRUE);}
+static XEN g_set_show_backtrace(XEN val) {return(XEN_TRUE);}
 
 
 static XEN g_trap_segfault(void) {return(C_TO_XEN_BOOLEAN(trap_segfault(ss)));}

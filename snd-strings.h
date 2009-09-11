@@ -521,7 +521,6 @@
 #define S_show_all_axes                 "show-all-axes"
 #define S_show_all_axes_unlabelled      "show-all-axes-unlabelled"
 #define S_show_axes                     "show-axes"
-#define S_show_backtrace                "show-backtrace"
 #define S_show_bare_x_axis              "show-bare-x-axis"
 #define S_show_controls                 "show-controls"
 #define S_show_grid                     "show-grid"
