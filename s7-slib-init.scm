@@ -1,13 +1,10 @@
-;;; s7-slib.init
-;;;
-;;;   This actually assumes s7 as embedded in Snd or Sndlib.
-;;;   (s7 does not exist as a stand-alone program)
-
-
-;;; "Template.scm" configuration template of slib:features for Scheme -*-scheme-*-
+;;; "s7.init" Initialization for SLIB for S7        -*-scheme-*-
 ;;; Author: Aubrey Jaffer
 ;;;
 ;;; This code is in the public domain.
+
+;;; S7 is embedded in Snd or Sndlib;
+;;; It does not exist as a stand-alone program.
 
 ;;@ (software-type) should be set to the generic operating system type.
 ;;; unix, vms, macos, amiga and ms-dos are supported.
@@ -20,7 +17,8 @@
 ;;@ (scheme-implementation-home-page) should return a (string) URI
 ;;; (Uniform Resource Identifier) for this scheme implementation's home
 ;;; page; or false if there isn't one.
-(define (scheme-implementation-home-page) "http://ccrma.stanford.edu/software/snd/")
+(define (scheme-implementation-home-page)
+  "http://ccrma.stanford.edu/software/snd/")
 
 ;;@ (scheme-implementation-version) should return a string describing
 ;;; the version the scheme implementation loading this file.
@@ -30,7 +28,14 @@
 ;;; the directory where any auxillary files to your Scheme
 ;;; implementation reside.
 (define implementation-vicinity
-  (lambda () ""))
+  (let ((impl-path
+	 (or (getenv "S7_IMPLEMENTATION_PATH")
+	     (case (software-type)
+	       ((unix) "/usr/local/share/snd/")
+	       ((vms) "scheme$src:")
+	       ((ms-dos) "C:\\Program Files\\snd\\")
+	       (else "")))))
+    (lambda () impl-path)))
 
 ;;@ (library-vicinity) should be defined to be the pathname of the
 ;;; directory where files of Scheme library functions reside.
@@ -44,14 +49,22 @@
 	  (case (software-type)
 	    ((unix) "/usr/local/lib/slib/")
 	    ((vms) "lib$scheme:")
-	    ((ms-dos) "C:\\SLIB\\")
+	    ((ms-dos) "C:\\Program Files\\slib\\")
 	    (else "")))))
     (lambda () library-path)))
 
 ;;@ (home-vicinity) should return the vicinity of the user's HOME
 ;;; directory, the directory which typically contains files which
 ;;; customize a computer environment for a user.
-(define (home-vicinity) (string-append (getenv "HOME") "/"))
+(define (home-vicinity)
+  (let ((home (getenv "HOME")))
+    (and home
+	 (case (software-type)
+	   ((unix coherent ms-dos)	;V7 unix has a / on HOME
+	    (if (eqv? #\/ (string-ref home (+ -1 (string-length home))))
+		home
+		(string-append home "/")))
+	   (else home)))))
 
 ;@
 (define in-vicinity string-append)
@@ -62,7 +75,7 @@
     ((vms)	"[.]")
     (else	"")))
 
-(define *load-pathname* #f)                             ; *load-path* is a list of dirs in s7
+(define *load-pathname* #f)	 ; *load-path* is a list of dirs in s7
 
 ;@
 (define vicinity:suffix?
@@ -126,38 +139,38 @@
 ;;@ SLIB:FEATURES is a list of symbols naming the (SLIB) features
 ;;; initially supported by this implementation.
 (define slib:features
-      '(
-	source				;can load scheme source files
+  '(
+    source				;can load scheme source files
 					;(SLIB:LOAD-SOURCE "filename")
 ;;;	compiled			;can load compiled files
 					;(SLIB:LOAD-COMPILED "filename")
-	vicinity
-	srfi-59
-	srfi-96
+    vicinity
+    srfi-59
+    srfi-96
 
-		       ;; Scheme report features
-   ;; R5RS-compliant implementations should provide all 9 features.
+    ;; Scheme report features
+    ;; R5RS-compliant implementations should provide all 9 features.
 
 ;;;	r5rs				;conforms to
-	eval				;R5RS two-argument eval
-	values				;R5RS multiple values
-	dynamic-wind			;R5RS dynamic-wind
-	macro				;R5RS high level macros
+    eval				;R5RS two-argument eval
+    values				;R5RS multiple values
+    dynamic-wind			;R5RS dynamic-wind
+    macro				;R5RS high level macros
 
 ;;;	delay				;has DELAY and FORCE
 ;;; "delay" is named "make-promise" in s7
 
-	multiarg-apply			;APPLY can take more than 2 args.
-	char-ready?
-	rev4-optional-procedures	;LIST-TAIL, STRING-COPY,
+    multiarg-apply		     ;APPLY can take more than 2 args.
+    char-ready?
+    rev4-optional-procedures	       ;LIST-TAIL, STRING-COPY,
 					;STRING-FILL!, and VECTOR-FILL!
 
-      ;; These four features are optional in both R4RS and R5RS
+    ;; These four features are optional in both R4RS and R5RS
 
-	multiarg/and-			;/ and - can take more than 2 args.
-	rationalize
+    multiarg/and-		   ;/ and - can take more than 2 args.
+    rationalize
 ;;;	transcript			;TRANSCRIPT-ON and TRANSCRIPT-OFF
-	with-file			;has WITH-INPUT-FROM-FILE and
+    with-file				;has WITH-INPUT-FROM-FILE and
 					;WITH-OUTPUT-TO-FILE
 
 ;;;	r4rs				;conforms to
@@ -175,13 +188,13 @@
 					;-1+, <?, <=?, =?, >?, >=?
 ;;;	object-hash			;has OBJECT-HASH
 
-	full-continuation		;can return multiple times
+    full-continuation			;can return multiple times
 ;;;	ieee-floating-point		;conforms to IEEE Standard 754-1985
 					;IEEE Standard for Binary
 					;Floating-Point Arithmetic.
 ;;; if this means all the NaN and inf stuff, then s7 does not conform
 
-			;; Other common features
+    ;; Other common features
 
 ;;;	srfi-0				;srfi-0, COND-EXPAND finds all srfi-*
 ;;;	sicp				;runs code from Structure and
@@ -189,31 +202,31 @@
 					;Programs by Abelson and Sussman.
 ;;; ?? never tried to run it
 
-	defmacro			;has Common Lisp DEFMACRO
+    defmacro				;has Common Lisp DEFMACRO
 ;;;	syntax-case			;has syncase:eval and syncase:load
 ;;;	record				;has user defined data structures
-	string-port			;has CALL-WITH-INPUT-STRING and
+    string-port			    ;has CALL-WITH-INPUT-STRING and
 					;CALL-WITH-OUTPUT-STRING
 ;;;	sort
 ;;; s7 has sort! but not merge etc
 
 ;;;	pretty-print
-	object->string
-	format				;Common-lisp output formatting
+    object->string
+    format				;Common-lisp output formatting
 ;;;	trace				;has macros: TRACE and UNTRACE
 ;;; s7 does have these functions, but not "print-call-stack"
 
 ;;;	compiler			;has (COMPILER)
 ;;;	ed				;(ED) is editor
-	system				;posix (system <string>)
-	getenv				;posix (getenv <string>)
+    system				;posix (system <string>)
+    getenv				;posix (getenv <string>)
 ;;;	program-arguments		;returns list of strings (argv)
 ;;;	current-time			;returns time in seconds since 1/1/1970
 
-		  ;; Implementation Specific features
-	random
+    ;; Implementation Specific features
+    random
 
-	))
+    ))
 
 ;;@ (FILE-POSITION <port> . <k>)
 (define (file-position . args) #f)

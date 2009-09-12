@@ -42,8 +42,19 @@ int find_matching_paren(const char *str, int parens, int pos, int *highlight_pos
     {
       if (is_prompt(str, i))
 	break;
-      if ((str[i] == '\"') && (str[i - 1] != '\\'))
-	quoting = !quoting;
+      if (str[i] == '\"')
+	{
+	  /* there could be any number of slashified slashes before this quote. */
+	  int k, slashes = 0;
+	  for (k = i - 1; k >= 0; k--)
+	    {
+	      if (str[k] == '\\')
+		slashes++;
+	      else break;
+	    }
+	  if ((slashes & 1) == 0)
+	    quoting = !quoting;
+	}
       if (!quoting)
 	{
 	  if ((i <= 1) || (str[i - 1] != '\\') || (str[i - 2] != '#'))
@@ -133,7 +144,8 @@ int check_balance(const char *expr, int start, int end, bool in_listener)
 	      /* skip past ", ignoring \" */
 	      do {
 		i++;
-		if ((i < (end - 1)) && (expr[i] =='\\') && (expr[i + 1] == '\"'))
+		if ((i < (end - 1)) && (expr[i] =='\\') && 
+		    ((expr[i + 1] == '\\') || (expr[i + 1] == '\"')))
 		  i += 2;
 	      } while ((i < end) && (expr[i] != '\"'));
 	      i++;

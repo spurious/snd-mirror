@@ -39,7 +39,7 @@ It can be built as a stand-alone
 interpreter, if you insist (see below).  s7test.scm is a regression test for s7.
 If you're running s7 in a context
 that has getenv, file-exists?, and system (Snd for example), you can use s7-slib-init.scm
-to gain easy access to slib.
+to gain easy access to slib (this init file is named "s7.init" in the slib distribution).
 </p>
 <p>
 s7 is the default extension language of Snd and sndlib (http://ccrma.stanford.edu/software/snd/),
@@ -469,6 +469,45 @@ which allows you to stop at some point, then evaluate arbitrary expressions in t
 </dd>
 <br>
 
+<dt><em class=emdef>trace and untrace</em></dt>
+<dd><p>These functions provide tracing:
+</p>
+<pre>
+    (define (hiho arg) 
+      (if (&gt; arg 0) 
+          (+ 1 (hiho (- arg 1))) 
+          0))
+
+    (trace hiho)
+
+    (hiho 3)
+
+    [hiho 3]
+     [hiho 2]
+      [hiho 1]
+       [hiho 0]
+        0
+       1
+      2
+     3
+</pre>
+<p>trace adds a function to the list of functions being traced, and untrace removes it.
+</p>
+</dd>
+<br>
+
+<dt><em class=emdef>stacktrace and stack</em></dt>
+<dd><p>stacktrace prints the stack contents.  Its optional argument
+can be *error-info* to show the stack at the point of the last error,
+a thread object to show that thread's stack, or a continuation to
+show the continuation stack.  Similarly, the stack function returns
+the stack top (an integer) and the stack itself (a vector).  
+Each stack frame has 4 entries, the function, the current environment, the function arguments, and an op code used
+internally by the evaluator. 
+</p>
+</dd>
+<br>
+
 <dt><em class=emdef>IO functions</em></dt>
 <dd>
 <p>Besides files, ports can also represent strings and functions.  The string port functions
@@ -494,7 +533,7 @@ are:
 </pre>
 <p>Other functions:</p>
 <ul>
-<li>read-byte and write-byte (binary IO)
+<li>read-byte and write-byte (binary IO) (named "read-u8" and "write-u8" in r6rs, I think)
 <li>read-line (line-at-a-time reads)
 </ul>
 <p>The variable *vector-print-length* sets
@@ -503,6 +542,8 @@ the upper limit on how many vector elements are printed by object-&gt;string and
 <p>When running s7 behind a GUI, you often want input to come from and output to go to
 arbitrary widgets. The "function ports" provide a way to redirect IO.  See s7.h
 for an example.
+</p>
+<p>s7 also includes current-error-port and set-current-error-port.
 </p>
 </dd>
 <br>
@@ -587,13 +628,6 @@ where you are in the file.
 <pre>
 (set! *load-hook* (lambda (name) (format #t "loading ~S...~%" name)))
 </pre>
-</dd>
-<br>
-
-<dt><em class=emdef>gc</em></dt>
-<dd><p>The gc function either calls the GC (if passed no arguments), or turns the GC either on: (gc #t)
-or off: (gc #f).
-</p>
 </dd>
 <br>
 
@@ -762,55 +796,6 @@ write "hygenic" macros:
 </dd>
 <br>
 
-<dt><em class=emdef>trace and untrace</em></dt>
-<dd><p>These functions provide tracing:
-</p>
-<pre>
-    (define (hiho arg) 
-      (if (&gt; arg 0) 
-          (+ 1 (hiho (- arg 1))) 
-          0))
-
-    (trace hiho)
-
-    (hiho 3)
-
-    [hiho 3]
-     [hiho 2]
-      [hiho 1]
-       [hiho 0]
-        0
-       1
-      2
-     3
-</pre>
-<p>trace adds a function to the list of functions being traced, and untrace removes it.
-</p>
-</dd>
-<br>
-
-<dt><em class=emdef>stacktrace and stack</em></dt>
-<dd><p>stacktrace prints the stack contents.  Its optional argument
-can be *error-info* to show the stack at the point of the last error,
-a thread object to show that thread's stack, or a continuation to
-show the continuation stack.  Similarly, the stack function returns
-the stack top (an integer) and the stack itself (a vector).  
-Each stack frame has 4 entries, the function, the current environment, the function arguments, and an op code used
-internally by the evaluator. 
-</p>
-</dd>
-<br>
-
-<dt><em class=emdef>quit</em></dt>
-<dd><p>quit exits s7.</p>
-<br>
-
-<dt><em class=emdef>make-promise</em></dt>
-<dd><p>This is named "delay" in most Schemes, but that name belongs to CLM.
-</p>
-</dd>
-<br>
-
 
 <dt><em class=emdef>encapsulation</em></dt>
 <dd><p>encapsulation saves and restores environments.</p>
@@ -922,7 +907,7 @@ In s7 (+ (values 1 2 3) 4) is 10.  Similarly,
   (define-macro (call-with-values producer consumer) 
     `(,consumer (,producer)))
 
-  ;; multiple-value-bind ("receive"):
+  ;; multiple-value-bind ("receive" in srfi-8):
   (define-macro (multiple-value-bind vars expr . body)
     `((lambda ,vars ,@body) ,expr))
 
@@ -934,6 +919,8 @@ In s7 (+ (values 1 2 3) 4) is 10.  Similarly,
   ;; call/cc returns multiple values:
   (+ (call/cc (lambda (ret) (ret 1 2 3))) 4)
   -&gt; 10
+
+  ;; let*-values is defined as a macro at the end of s7.c (commented out)
 </pre>
 <p>
 In Snd many functions take the same trailing arguments: sound-index, channel-number, and edit-position;
@@ -950,6 +937,24 @@ we can package these up in a values call:
 <!-- should this work? (let ((var (values (values 1 2 3)))) (+ var 4)) 
      currently you need: (let ((var (values (values 1 2 3)))) (+ (eval var) 4)) -> 10
 -->
+
+
+<dt><em class=emdef>quit</em></dt>
+<dd><p>quit exits s7.</p>
+<br>
+
+<dt><em class=emdef>make-promise</em></dt>
+<dd><p>This is named "delay" in most Schemes, but that name belongs to CLM.
+</p>
+</dd>
+<br>
+
+<dt><em class=emdef>gc</em></dt>
+<dd><p>The gc function either calls the GC (if passed no arguments), or turns the GC either on: (gc #t)
+or off: (gc #f).
+</p>
+</dd>
+<br>
 
 
 <dt><em class=emdef>define-expansion</em></dt>
@@ -984,6 +989,8 @@ bind it to something else, which is asking for confusion).
 <li>define-macro* defmacro*
 <li>settable numerator denominator imag-part real-part angle magnitude
 <li>hooks
+<li>cerror ("error/cc"?)
+<li>string|vector|hash-table-for-each|map (generic map|for-each?)
 </ul>
 </dd>
 <br>

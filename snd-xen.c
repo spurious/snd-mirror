@@ -3010,6 +3010,7 @@ void g_xen_initialize(void)
 #if HAVE_SCHEME
   add_source_file_extension("cl");
   add_source_file_extension("lisp");
+  add_source_file_extension("init");  /* for slib */
 #endif
 #if HAVE_FORTH
   add_source_file_extension("fth");

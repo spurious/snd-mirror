@@ -87,6 +87,8 @@
  *        perhaps trailing args to list-ref
  *        symbol names in ||?
  *        hooks?
+ *        cerror ("error/cc"?)
+ *        string|vector|hash-table-for-each|map (generic map|for-each?)
  *
  *
  * Mike Scholz provided the FreeBSD support (complex trig funcs, etc)
@@ -13301,6 +13303,8 @@ static int remember_file_name(const char *file)
  *    4: if not #f, the file name of that code
  *    5: the environment at the point of the error
  *    6..top: stack enviroment pointers (giving enough info to reconstruct the current call stack), ending in #f
+ *
+ * PERHAPS: include the continuation? 
  */
 
 static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bool exit_eval)
@@ -14327,7 +14331,7 @@ static char *read_string_upto(s7_scheme *sc, int start)
 
       if ((i == 2) && 
 	  (sc->strbuf[0] == '\\'))
-	sc->strbuf[i] = 0;
+	sc->strbuf[i] = '\0';
       else 
 	{
 	  if (c != EOF)
@@ -14360,7 +14364,7 @@ static char *read_string_upto(s7_scheme *sc, int start)
 
 	  if ((i == 2) && 
 	      (sc->strbuf[0] == '\\'))
-	    sc->strbuf[i] = 0;
+	    sc->strbuf[i] = '\0';
 	  else 
 	    {
 	      if (c != 0)
@@ -22223,6 +22227,25 @@ s7_scheme *s7_init(void)
   s7_eval_c_string(sc, "(define-macro (multiple-value-set! vars expr . body)\n\
                           (let ((local-vars (map (lambda (n) (gensym)) vars)))\n\
                             `((lambda ,local-vars ,@(map (lambda (n ln) `(set! ,n ,ln)) vars local-vars) ,@body) ,expr)))");
+
+#if 0
+(define-macro (let*-values vals . body)
+  (let ((args '())
+	(exprs '()))
+    (for-each
+     (lambda (arg+expr)
+       (set! args (cons (car arg+expr) args))
+       (set! exprs (cons (cadr arg+expr) exprs)))
+     vals)
+    (let ((form `((lambda ,(car args) ,@body) ,(car exprs))))
+      (if (not (null? (cdr args)))
+	  (for-each
+	   (lambda (arg expr)
+	     (set! form `((lambda ,arg ,form) ,expr)))
+	   (cdr args)
+	   (cdr exprs)))
+      form)))
+#endif
 
 #if WITH_ENCAPSULATION
   s7_eval_c_string(sc, "                                 \n\

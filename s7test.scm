@@ -1481,7 +1481,13 @@
 (test (string-length (string #\newline)) 1)
 (test (string-length "hi there") 8)
 (test (string-length "\"") 1)
+(test (string-length "\\") 1)
+(test (string-length "\n") 1)
 (test (string-length (make-string 100 #\a)) 100)
+(test (string-length "1\\2") 3)
+(test (string-length "1\\") 2)
+(test (string-length "hi\\") 3)
+(test (string-length "\\\\\\\"") 4)
 
 (test (string=? (string) "") #t)
 (test (string=? (string) (make-string 0)) #t)
