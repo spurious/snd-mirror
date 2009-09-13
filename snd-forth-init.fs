@@ -188,7 +188,6 @@ output-comment-hook lambda: <{ str1 -- str2 }>
 "/usr/gnu/cvs/snd"             set-html-dir                 drop
 "firefox"                      set-html-program             drop
 #f                	       set-trap-segfault            drop
-#t                	       set-show-backtrace           drop
 #t                	       set-show-indices             drop
 0.0               	       set-auto-update-interval     drop
 #f  			       set-verbose-cursor           drop

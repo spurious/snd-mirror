@@ -88,7 +88,7 @@
  *        symbol names in ||?
  *        hooks?
  *        cerror ("error/cc"?)
- *        string|vector|hash-table-for-each|map (generic map|for-each?)
+ *        string|vector|hash-table-for-each|map (generic map|for-each? -- expansion to C-objs? if it has a length, does that mean its indexable?)
  *
  *
  * Mike Scholz provided the FreeBSD support (complex trig funcs, etc)
@@ -215,24 +215,25 @@
  *    stacks
  *    symbols
  *    environments
+ *    keywords
  *    continuations
  *    numbers
  *    characters
  *    strings
  *    ports
  *    lists
- *    vectors
+ *    vectors and hash-tables
  *    objects and functions
- *    eq, keywords
- *    hash tables, length, copy
+ *    eq?
+ *    generic length, copy, fill!
  *    encapsulators
  *    format
  *    error handlers, stacktrace, trace
  *    sundry leftovers
+ *    multiple-values, quasiquote
  *    eval
- *    quasiquote
  *    threads
- *    gmp, mpfr, mpc support
+ *    multiprecision arithmetic
  *    s7 init
  */
 
@@ -2260,6 +2261,92 @@ static s7_pointer s7_find_value_in_environment(s7_scheme *sc, s7_pointer val)
     }
   return(sc->F); 
 } 
+
+
+
+/* -------- keywords -------- */
+
+bool s7_keyword_eq_p(s7_pointer obj1, s7_pointer obj2)
+{
+  return(obj1 == obj2);
+}
+
+
+bool s7_is_keyword(s7_pointer obj)
+{
+  return((s7_is_symbol(obj)) &&
+	 ((symbol_name(obj)[0] == ':') ||
+	  (symbol_name(obj)[symbol_name_length(obj) - 1] == ':')));
+}
+
+
+static s7_pointer g_is_keyword(s7_scheme *sc, s7_pointer args)
+{
+  #define H_is_keyword "(keyword? obj) returns #t if obj is a keyword"
+  return(make_boolean(sc, s7_is_keyword(car(args))));
+}
+
+
+s7_pointer s7_make_keyword(s7_scheme *sc, const char *key)
+{
+  s7_pointer sym, x;
+  char *name;
+  
+  name = (char *)malloc((safe_strlen(key) + 2) * sizeof(char));
+  sprintf(name, ":%s", key);                     /* prepend ":" */
+  sym = s7_make_symbol(sc, name);
+  typeflag(sym) |= (T_IMMUTABLE | T_DONT_COPY); 
+  free(name);
+  
+  x = s7_find_symbol_in_environment(sc, sc->envir, sym, true); /* is it already defined? */
+  if (x == sc->NIL) 
+    add_to_environment(sc, sc->envir, sym, sym); /* its value is itself, skip the immutable check in add_to_current_environment */
+  
+  return(sym);
+}
+
+
+static s7_pointer g_make_keyword(s7_scheme *sc, s7_pointer args)
+{
+  #define H_make_keyword "(make-keyword str) prepends ':' to str and defines that as a keyword"
+  if (!s7_is_string(car(args)))
+    return(s7_wrong_type_arg_error(sc, "make-keyword", 0, car(args), "a string"));
+  return(s7_make_keyword(sc, string_value(car(args))));
+}
+
+
+static s7_pointer g_keyword_to_symbol(s7_scheme *sc, s7_pointer args)
+{
+  #define H_keyword_to_symbol "(keyword->symbol key) returns a symbol with the same name as key but no prepended colon"
+  const char *name;
+
+  if (!s7_is_keyword(car(args)))
+    return(s7_wrong_type_arg_error(sc, "keyword->symbol", 0, car(args), "a keyword"));
+
+  name = s7_symbol_name(car(args));
+  if (name[0] == ':')
+    return(s7_make_symbol(sc, (const char *)(name + 1)));
+
+  /* else it ends in ":", (keyword->symbol foo:) */
+  {
+    char *temp;
+    s7_pointer res;
+    temp = s7_strdup(name);
+    temp[strlen(temp) - 1] = '\0';
+    res = s7_make_symbol(sc, (const char *)temp);
+    free(temp);
+    return(res);
+  }
+}
+
+
+static s7_pointer g_symbol_to_keyword(s7_scheme *sc, s7_pointer args)
+{
+  #define H_symbol_to_keyword "(symbol->keyword sym) returns a keyword with the same name as sym, but with a colon prepended"
+  if (!s7_is_symbol(car(args)))
+    return(s7_wrong_type_arg_error(sc, "symbol->keyword", 0, car(args), "a symbol"));
+  return(s7_make_keyword(sc, s7_symbol_name(car(args))));
+}
 
 
 
@@ -10823,6 +10910,34 @@ static s7_pointer g_vector_dimensions(s7_scheme *sc, s7_pointer args)
 #endif
 
 
+static s7_pointer g_vector_for_each(s7_scheme *sc, s7_pointer args)
+{
+  /* TODO: vector-for-each help, tests, doc, multidim case, multi vect case */
+
+  #define H_vector_for_each "(vector-for-each func vector1 ...) applies func to each element of the vectors traversed in parallel"
+  int i, len;
+  s7_pointer vect, code, arg;
+
+  /* check that all args are vectors of same size, that proc takes that many args */
+
+  code = car(args);
+  vect = cadr(args);
+  len = vector_length(vect);
+  arg = s7_cons(sc, sc->NIL, sc->NIL);
+
+  for (i = 0; i < len; i++)
+    {
+      car(arg) = vector_element(vect, i);
+      push_stack(sc, OP_EVAL_DONE, arg, args); /* gc protect arg */
+      sc->args = arg;
+      sc->code = code;
+      eval(sc, OP_APPLY);
+    }
+
+  return(sc->UNSPECIFIED);
+}
+
+
 
 /* -------- sort! --------
  *
@@ -10913,6 +11028,185 @@ If its first argument is a list, the list is copied (despite the '!')."
 #endif
 
   return(vect);
+}
+
+
+
+/* -------- hash tables -------- */
+
+bool s7_is_hash_table(s7_pointer p)
+{
+  return(type(p) == T_HASH_TABLE);
+}
+
+
+static s7_pointer g_is_hash_table(s7_scheme *sc, s7_pointer args)
+{
+  #define H_is_hash_table "(hash-table? obj) returns #t if obj is a hash-table"
+  return(make_boolean(sc, s7_is_hash_table(car(args))));
+}
+
+
+static s7_pointer g_hash_table_size(s7_scheme *sc, s7_pointer args)
+{
+  #define H_hash_table_size "(hash-table-size obj) returns the size of the hash-table obj"
+  if (!s7_is_hash_table(car(args)))
+    return(s7_wrong_type_arg_error(sc, "hash-table-size", 0, car(args), "a hash-table"));
+  return(s7_make_integer(sc, vector_length(car(args))));
+}
+
+
+s7_pointer s7_make_hash_table(s7_scheme *sc, s7_Int size)
+{
+  s7_pointer table;
+  table = s7_make_vector(sc, size);
+  set_type(table, T_HASH_TABLE | T_FINALIZABLE | T_DONT_COPY);
+  return(table);
+}
+
+
+static s7_pointer g_make_hash_table(s7_scheme *sc, s7_pointer args)
+{
+  #define H_make_hash_table "(make-hash-table :optional size) returns a new hash table"
+  s7_Int size = 461;
+
+  if (args != sc->NIL)
+    {
+      if (s7_is_integer(car(args)))
+	{
+	  size = s7_integer(car(args));
+	  if (size <= 0)
+	    return(s7_out_of_range_error(sc, "make-hash-table", 0, car(args), "size should be a positive integer"));
+	}
+      else return(s7_wrong_type_arg_error(sc, "make-hash-table", 0, car(args), "an integer"));
+    }
+  
+  return(s7_make_hash_table(sc, size));
+}
+
+
+s7_pointer s7_hash_table_ref(s7_scheme *sc, s7_pointer table, const char *name)
+{
+  s7_Int location;
+  s7_pointer x;
+  
+  location = hash_table_hash(name, vector_length(table));
+  for (x = vector_element(table, location); x != sc->NIL; x = cdr(x)) 
+    if (strcmp(name, string_value(caar(x))) == 0) 
+      return(cdar(x)); 
+  
+  return(sc->F);
+}
+
+
+s7_pointer s7_hash_table_set(s7_scheme *sc, s7_pointer table, const char *name, s7_pointer value)
+{
+  s7_Int location;
+  s7_pointer x;
+  location = hash_table_hash(name, vector_length(table)); 
+  
+  /* if it exists, update value, else add to table */
+  for (x = vector_element(table, location); x != sc->NIL; x = cdr(x)) 
+    if (strcmp(name, string_value(caar(x))) == 0)
+      {
+	cdar(x) = value;
+	return(value);
+      }
+  vector_element(table, location) = s7_cons(sc, 
+					    s7_cons(sc, 
+						    s7_make_string(sc, name), 
+						    value),
+					    vector_element(table, location)); 
+  return(value);
+}
+
+
+#define HASHED_INTEGER_BUFFER_SIZE 64
+
+static char *s7_hashed_integer_name(s7_Int key, char *intbuf) /* not const here because snprintf is declared char* */
+{
+  snprintf(intbuf, HASHED_INTEGER_BUFFER_SIZE, "\b%lld\b", (long long int)key);
+  return(intbuf);
+}
+
+
+static char *s7_hashed_real_name(s7_Double key, char *intbuf)
+{
+  /* this is actually not safe due to the challenges faced by %f */
+  snprintf(intbuf, HASHED_INTEGER_BUFFER_SIZE, "\b%.20f\b", key); /* default precision is not enough */
+  return(intbuf);
+}
+
+
+static s7_pointer g_hash_table_ref(s7_scheme *sc, s7_pointer args)
+{
+  /* basically the same layout as the global symbol table */
+  #define H_hash_table_ref "(hash-table-ref table key) returns the value associated with key (a string or symbol) in the hash table"
+  const char *name;
+  char intbuf[HASHED_INTEGER_BUFFER_SIZE];
+  s7_pointer table, key;
+
+  table = car(args);
+  key = cadr(args);
+  
+  if (!s7_is_hash_table(table))
+    return(s7_wrong_type_arg_error(sc, "hash-table-ref", 1, table, "a hash-table"));
+
+  if (s7_is_string(key))
+    name = string_value(key);
+  else 
+    {
+      if (s7_is_symbol(key))
+	name = s7_symbol_name(key);
+      else
+	{
+	  if (s7_is_integer(key))
+	    name = s7_hashed_integer_name(s7_integer(key), intbuf);
+	  else
+	    {
+	      if ((s7_is_real(key)) && (!s7_is_ratio(key)))
+		name = s7_hashed_real_name(s7_real(key), intbuf);
+	      else return(s7_wrong_type_arg_error(sc, "hash-table-ref", 2, key, "a string, symbol, integer, or (non-ratio) real"));
+	    }
+	}
+    }
+  return(s7_hash_table_ref(sc, table, name));
+}
+
+
+static s7_pointer g_hash_table_set(s7_scheme *sc, s7_pointer args)
+{
+  #define H_hash_table_set "(hash-table-set! table key value) sets the value associated with key (a string or symbol) in the hash table to value"
+  const char *name;
+  char intbuf[HASHED_INTEGER_BUFFER_SIZE];
+  s7_pointer table, key;
+
+  table = car(args);
+  key = cadr(args);
+  
+  if (!s7_is_hash_table(table))
+    return(s7_wrong_type_arg_error(sc, "hash-table-set!", 1, table, "a hash-table"));
+
+  if (s7_is_string(key))
+    name = string_value(key);
+  else 
+    {
+      if (s7_is_symbol(key))
+	name = s7_symbol_name(key);
+      else
+	{
+	  if (s7_is_integer(key))
+	    name = s7_hashed_integer_name(s7_integer(key), intbuf);
+	  else
+	    {
+	      if ((s7_is_real(key)) && (!s7_is_ratio(key)))
+		name = s7_hashed_real_name(s7_real(key), intbuf);
+	      else return(s7_wrong_type_arg_error(sc, "hash-table-set!", 2, key, "a string, symbol, integer, or (non-ratio) real"));
+	    }
+	}
+    }
+  
+  return(s7_hash_table_set(sc, table, name, caddr(args)));
 }
 
 
@@ -11798,271 +12092,6 @@ static s7_pointer g_is_equal(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_equal "(equal? obj1 obj2) returns #t if obj1 is equal to obj2"
   return(make_boolean(sc, s7_is_equal(car(args), cadr(args))));
-}
-
-
-
-/* -------- keywords -------- */
-
-bool s7_keyword_eq_p(s7_pointer obj1, s7_pointer obj2)
-{
-  return(obj1 == obj2);
-}
-
-
-bool s7_is_keyword(s7_pointer obj)
-{
-  return((s7_is_symbol(obj)) &&
-	 ((symbol_name(obj)[0] == ':') ||
-	  (symbol_name(obj)[symbol_name_length(obj) - 1] == ':')));
-}
-
-
-static s7_pointer g_is_keyword(s7_scheme *sc, s7_pointer args)
-{
-  #define H_is_keyword "(keyword? obj) returns #t if obj is a keyword"
-  return(make_boolean(sc, s7_is_keyword(car(args))));
-}
-
-
-s7_pointer s7_make_keyword(s7_scheme *sc, const char *key)
-{
-  s7_pointer sym, x;
-  char *name;
-  
-  name = (char *)malloc((safe_strlen(key) + 2) * sizeof(char));
-  sprintf(name, ":%s", key);                     /* prepend ":" */
-  sym = s7_make_symbol(sc, name);
-  typeflag(sym) |= (T_IMMUTABLE | T_DONT_COPY); 
-  free(name);
-  
-  x = s7_find_symbol_in_environment(sc, sc->envir, sym, true); /* is it already defined? */
-  if (x == sc->NIL) 
-    add_to_environment(sc, sc->envir, sym, sym); /* its value is itself, skip the immutable check in add_to_current_environment */
-  
-  return(sym);
-}
-
-
-static s7_pointer g_make_keyword(s7_scheme *sc, s7_pointer args)
-{
-  #define H_make_keyword "(make-keyword str) prepends ':' to str and defines that as a keyword"
-  if (!s7_is_string(car(args)))
-    return(s7_wrong_type_arg_error(sc, "make-keyword", 0, car(args), "a string"));
-  return(s7_make_keyword(sc, string_value(car(args))));
-}
-
-
-static s7_pointer g_keyword_to_symbol(s7_scheme *sc, s7_pointer args)
-{
-  #define H_keyword_to_symbol "(keyword->symbol key) returns a symbol with the same name as key but no prepended colon"
-  const char *name;
-
-  if (!s7_is_keyword(car(args)))
-    return(s7_wrong_type_arg_error(sc, "keyword->symbol", 0, car(args), "a keyword"));
-
-  name = s7_symbol_name(car(args));
-  if (name[0] == ':')
-    return(s7_make_symbol(sc, (const char *)(name + 1)));
-
-  /* else it ends in ":", (keyword->symbol foo:) */
-  {
-    char *temp;
-    s7_pointer res;
-    temp = s7_strdup(name);
-    temp[strlen(temp) - 1] = '\0';
-    res = s7_make_symbol(sc, (const char *)temp);
-    free(temp);
-    return(res);
-  }
-}
-
-
-static s7_pointer g_symbol_to_keyword(s7_scheme *sc, s7_pointer args)
-{
-  #define H_symbol_to_keyword "(symbol->keyword sym) returns a keyword with the same name as sym, but with a colon prepended"
-  if (!s7_is_symbol(car(args)))
-    return(s7_wrong_type_arg_error(sc, "symbol->keyword", 0, car(args), "a symbol"));
-  return(s7_make_keyword(sc, s7_symbol_name(car(args))));
-}
-
-
-
-/* -------- hash tables -------- */
-
-bool s7_is_hash_table(s7_pointer p)
-{
-  return(type(p) == T_HASH_TABLE);
-}
-
-
-static s7_pointer g_is_hash_table(s7_scheme *sc, s7_pointer args)
-{
-  #define H_is_hash_table "(hash-table? obj) returns #t if obj is a hash-table"
-  return(make_boolean(sc, s7_is_hash_table(car(args))));
-}
-
-
-static s7_pointer g_hash_table_size(s7_scheme *sc, s7_pointer args)
-{
-  #define H_hash_table_size "(hash-table-size obj) returns the size of the hash-table obj"
-  if (!s7_is_hash_table(car(args)))
-    return(s7_wrong_type_arg_error(sc, "hash-table-size", 0, car(args), "a hash-table"));
-  return(s7_make_integer(sc, vector_length(car(args))));
-}
-
-
-s7_pointer s7_make_hash_table(s7_scheme *sc, s7_Int size)
-{
-  s7_pointer table;
-  table = s7_make_vector(sc, size);
-  set_type(table, T_HASH_TABLE | T_FINALIZABLE | T_DONT_COPY);
-  return(table);
-}
-
-
-static s7_pointer g_make_hash_table(s7_scheme *sc, s7_pointer args)
-{
-  #define H_make_hash_table "(make-hash-table :optional size) returns a new hash table"
-  s7_Int size = 461;
-
-  if (args != sc->NIL)
-    {
-      if (s7_is_integer(car(args)))
-	{
-	  size = s7_integer(car(args));
-	  if (size <= 0)
-	    return(s7_out_of_range_error(sc, "make-hash-table", 0, car(args), "size should be a positive integer"));
-	}
-      else return(s7_wrong_type_arg_error(sc, "make-hash-table", 0, car(args), "an integer"));
-    }
-  
-  return(s7_make_hash_table(sc, size));
-}
-
-
-s7_pointer s7_hash_table_ref(s7_scheme *sc, s7_pointer table, const char *name)
-{
-  s7_Int location;
-  s7_pointer x;
-  
-  location = hash_table_hash(name, vector_length(table));
-  for (x = vector_element(table, location); x != sc->NIL; x = cdr(x)) 
-    if (strcmp(name, string_value(caar(x))) == 0) 
-      return(cdar(x)); 
-  
-  return(sc->F);
-}
-
-
-s7_pointer s7_hash_table_set(s7_scheme *sc, s7_pointer table, const char *name, s7_pointer value)
-{
-  s7_Int location;
-  s7_pointer x;
-  location = hash_table_hash(name, vector_length(table)); 
-  
-  /* if it exists, update value, else add to table */
-  for (x = vector_element(table, location); x != sc->NIL; x = cdr(x)) 
-    if (strcmp(name, string_value(caar(x))) == 0)
-      {
-	cdar(x) = value;
-	return(value);
-      }
-  vector_element(table, location) = s7_cons(sc, 
-					    s7_cons(sc, 
-						    s7_make_string(sc, name), 
-						    value),
-					    vector_element(table, location)); 
-  return(value);
-}
-
-
-#define HASHED_INTEGER_BUFFER_SIZE 64
-
-static char *s7_hashed_integer_name(s7_Int key, char *intbuf) /* not const here because snprintf is declared char* */
-{
-  snprintf(intbuf, HASHED_INTEGER_BUFFER_SIZE, "\b%lld\b", (long long int)key);
-  return(intbuf);
-}
-
-
-static char *s7_hashed_real_name(s7_Double key, char *intbuf)
-{
-  /* this is actually not safe due to the challenges faced by %f */
-  snprintf(intbuf, HASHED_INTEGER_BUFFER_SIZE, "\b%.20f\b", key); /* default precision is not enough */
-  return(intbuf);
-}
-
-
-static s7_pointer g_hash_table_ref(s7_scheme *sc, s7_pointer args)
-{
-  /* basically the same layout as the global symbol table */
-  #define H_hash_table_ref "(hash-table-ref table key) returns the value associated with key (a string or symbol) in the hash table"
-  const char *name;
-  char intbuf[HASHED_INTEGER_BUFFER_SIZE];
-  s7_pointer table, key;
-
-  table = car(args);
-  key = cadr(args);
-  
-  if (!s7_is_hash_table(table))
-    return(s7_wrong_type_arg_error(sc, "hash-table-ref", 1, table, "a hash-table"));
-
-  if (s7_is_string(key))
-    name = string_value(key);
-  else 
-    {
-      if (s7_is_symbol(key))
-	name = s7_symbol_name(key);
-      else
-	{
-	  if (s7_is_integer(key))
-	    name = s7_hashed_integer_name(s7_integer(key), intbuf);
-	  else
-	    {
-	      if ((s7_is_real(key)) && (!s7_is_ratio(key)))
-		name = s7_hashed_real_name(s7_real(key), intbuf);
-	      else return(s7_wrong_type_arg_error(sc, "hash-table-ref", 2, key, "a string, symbol, integer, or (non-ratio) real"));
-	    }
-	}
-    }
-  return(s7_hash_table_ref(sc, table, name));
-}
-
-
-static s7_pointer g_hash_table_set(s7_scheme *sc, s7_pointer args)
-{
-  #define H_hash_table_set "(hash-table-set! table key value) sets the value associated with key (a string or symbol) in the hash table to value"
-  const char *name;
-  char intbuf[HASHED_INTEGER_BUFFER_SIZE];
-  s7_pointer table, key;
-
-  table = car(args);
-  key = cadr(args);
-  
-  if (!s7_is_hash_table(table))
-    return(s7_wrong_type_arg_error(sc, "hash-table-set!", 1, table, "a hash-table"));
-
-  if (s7_is_string(key))
-    name = string_value(key);
-  else 
-    {
-      if (s7_is_symbol(key))
-	name = s7_symbol_name(key);
-      else
-	{
-	  if (s7_is_integer(key))
-	    name = s7_hashed_integer_name(s7_integer(key), intbuf);
-	  else
-	    {
-	      if ((s7_is_real(key)) && (!s7_is_ratio(key)))
-		name = s7_hashed_real_name(s7_real(key), intbuf);
-	      else return(s7_wrong_type_arg_error(sc, "hash-table-set!", 2, key, "a string, symbol, integer, or (non-ratio) real"));
-	    }
-	}
-    }
-  
-  return(s7_hash_table_set(sc, table, name, caddr(args)));
 }
 
 
@@ -13875,16 +13904,6 @@ pass (global-environment):\n\
 }
 
 
-static void assign_syntax(s7_scheme *sc, const char *name, opcode_t op) 
-{
-  s7_pointer x;
-  x = symbol_table_add_by_name(sc, name); 
-  typeflag(x) |= (T_SYNTAX | T_DONT_COPY); 
-  clear_finalizable(x);
-  syntax_opcode(x) = (int)op;
-}
-
-
 s7_pointer s7_call(s7_scheme *sc, s7_pointer func, s7_pointer args)
 { 
   bool old_longjmp;
@@ -13940,7 +13959,7 @@ static s7_pointer g_s7_version(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_for_each(s7_scheme *sc, s7_pointer args)
 {
-  #define H_for_each "(for-each proc lst . lists) applies proc to a list made up of the car of each arg list"
+  #define H_for_each "(for-each proc lst . lists) applies proc to each element of the lists traversed in parallel"
   s7_pointer lists, y;
   int i;
 
@@ -14038,6 +14057,8 @@ static s7_pointer g_map(s7_scheme *sc, s7_pointer args)
 }
 
 
+/* -------------------------------- multiple-values -------------------------------- */
+
 static s7_pointer splice_in_values(s7_scheme *sc, s7_pointer args)
 {
   if (sc->stack_top > 0)
@@ -14099,30 +14120,129 @@ s7_pointer s7_values(s7_scheme *sc, int num_values, ...)
 }
 
 
-static s7_pointer eval_symbol(s7_scheme *sc, s7_pointer sym)
+/* -------------------------------- quasiquote -------------------------------- */
+
+static s7_pointer g_quasiquote_1(s7_scheme *sc, int level, s7_pointer form)
 {
-  s7_pointer x;
+  if (!is_pair(form))
+    {
+      if ((s7_is_number(form)) ||
+	  (s7_is_string(form)) ||
+	  (s7_is_procedure(form)))
+	return(form);
+      return(make_list_2(sc, sc->QUOTE, form));
+    }
+  /* from here, form is a pair */
 
-  x = s7_find_symbol_in_environment(sc, sc->envir, sym, true);
+  if (car(form) == sc->QUASIQUOTE)
+    {
+      s7_pointer r;
+      r = g_quasiquote_1(sc, level + 1, cdr(form));
+      if ((is_pair(r)) &&
+	  (car(r) == sc->QUOTE) &&
+	  (car(cdr(r)) == cdr(form)))
+	return(make_list_2(sc, sc->QUOTE, form));
+      return(make_list_3(sc, sc->CONS, make_list_2(sc, sc->QUOTE, sc->QUASIQUOTE), r));
+    }
 
-  if (x != sc->NIL) 
-    return(symbol_value(x));
+  if (level == 0)
+    {
+      if (car(form) == sc->UNQUOTE)
+	return(car(cdr(form)));
+	      
+      if (car(form) == sc->UNQUOTE_SPLICING)
+	return(form);
+	      
+      if ((is_pair(car(form))) &&
+	  (caar(form) == sc->UNQUOTE_SPLICING))
+	{
+	  s7_pointer l, r;
+	  l = car(cdr(car(form)));
+	  if (cdr(form) == sc->NIL)
+	    return(l);
 
-  if (s7_is_keyword(sym))
-    return(sym);
-	  
-  x = symbol_table_find_by_name(sc, symbol_name(sym), symbol_location(sym));
-  if (is_syntax(x))
-    return(x);
+	  r = g_quasiquote_1(sc, level, cdr(form));
 
-  if (sym == sc->UNQUOTE)
-    return(eval_error(sc, "unquote (',') occurred outside quasiquote", sc->NIL));
-  if (sym == sc->UNQUOTE_SPLICING)
-    return(eval_error(sc, "unquote-splicing (',@') occurred outside quasiquote", sc->NIL));
+	  if ((is_pair(r)) &&
+	      (car(r) == sc->QUOTE) &&
+	      (car(cdr(r)) == sc->NIL))
+	    return(l);
+	  return(make_list_3(sc, sc->APPEND, l, r));
+	}
+      
+      goto MCONS;
+    }
 
-  return(eval_error(sc, "~A: unbound variable", sym));
+  /* level != 0 */
+  if (car(form) == sc->UNQUOTE)
+    {
+      s7_pointer r;
+      r = g_quasiquote_1(sc, level - 1, cdr(form));
+
+      if ((is_pair(r)) &&
+	  (car(r) == sc->QUOTE) &&
+	  (car(cdr(r)) == cdr(form)))
+	return(make_list_2(sc, sc->QUOTE, form));
+
+      return(make_list_3(sc, sc->CONS, make_list_2(sc, sc->QUOTE, sc->UNQUOTE), r));
+    }
+  
+  if (car(form) == sc->UNQUOTE_SPLICING)
+    {
+      s7_pointer r;
+      r = g_quasiquote_1(sc, level - 1, cdr(form));
+
+      if ((is_pair(r)) &&
+	  (car(r) == sc->QUOTE) &&
+	  (car(cdr(r)) == cdr(form)))
+	return(make_list_2(sc, sc->QUOTE, form));
+
+      return(make_list_3(sc, sc->CONS, make_list_2(sc, sc->QUOTE, sc->UNQUOTE_SPLICING), r));
+    }
+	      
+ MCONS:
+  {
+    s7_pointer l, r;
+
+    l = g_quasiquote_1(sc, level, car(form));
+    r = g_quasiquote_1(sc, level, cdr(form));
+
+    if ((is_pair(r)) &&
+	(is_pair(l)) &&
+	(car(r) == sc->QUOTE) &&
+	(car(l) == car(r)) &&
+	(car(cdr(r)) == cdr(form)) &&
+	(car(cdr(l)) == car(form)))
+      return(make_list_2(sc, sc->QUOTE, form));
+
+    if (l == sc->VECTOR_FUNCTION)
+      return(g_vector(sc, make_list_1(sc, r))); /* eval? */
+
+    return(make_list_3(sc, sc->CONS, l, r));
+  }
 }
 
+static s7_pointer g_quasiquote_2(s7_scheme *sc, int level, s7_pointer form)
+{
+  /* the lists built up by quasiquote can be arbitrarily large, and it would be a nightmare to locally GC-protect,
+   *   then later unprotect every cons, so we turn off the GC until we're done.
+   */
+  s7_pointer x;
+  if (sc->free_heap_top < 4096) gc(sc);
+  s7_gc_on(sc, false);
+  x = g_quasiquote_1(sc, level, form);
+  s7_gc_on(sc, true);
+  return(x);
+}
+
+static s7_pointer g_quasiquote(s7_scheme *sc, s7_pointer args)
+{
+  return(g_quasiquote_2(sc, s7_integer(car(args)), cadr(args)));
+}  
+
+
+
+/* ---------------- reader funcs for eval ---------------- */
 
 static void back_up_stack(s7_scheme *sc)
 {
@@ -14145,9 +14265,6 @@ static void back_up_stack(s7_scheme *sc)
     pop_stack(sc);
 }
 
-
-
-/* ---------------- reader funcs for eval ---------------- */
 
 static token_t token(s7_scheme *sc)
 {
@@ -14520,8 +14637,44 @@ static s7_pointer read_expression(s7_scheme *sc)
   return(sc->NIL);
 }
 
-      
-static s7_pointer g_quasiquote_2(s7_scheme *sc, int level, s7_pointer form);
+
+
+
+static s7_pointer eval_symbol(s7_scheme *sc, s7_pointer sym)
+{
+  s7_pointer x;
+
+  x = s7_find_symbol_in_environment(sc, sc->envir, sym, true);
+
+  if (x != sc->NIL) 
+    return(symbol_value(x));
+
+  if (s7_is_keyword(sym))
+    return(sym);
+	  
+  x = symbol_table_find_by_name(sc, symbol_name(sym), symbol_location(sym));
+  if (is_syntax(x))
+    return(x);
+
+  if (sym == sc->UNQUOTE)
+    return(eval_error(sc, "unquote (',') occurred outside quasiquote", sc->NIL));
+  if (sym == sc->UNQUOTE_SPLICING)
+    return(eval_error(sc, "unquote-splicing (',@') occurred outside quasiquote", sc->NIL));
+
+  return(eval_error(sc, "~A: unbound variable", sym));
+}
+
+
+static void assign_syntax(s7_scheme *sc, const char *name, opcode_t op) 
+{
+  s7_pointer x;
+  x = symbol_table_add_by_name(sc, name); 
+  typeflag(x) |= (T_SYNTAX | T_DONT_COPY); 
+  clear_finalizable(x);
+  syntax_opcode(x) = (int)op;
+}
+
+
 
 
 /* -------------------------------- eval -------------------------------- */
@@ -16601,129 +16754,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     }
   return(sc->F);
 }
-
-
-
-/* -------------------------------- quasiquote -------------------------------- */
-
-static s7_pointer g_quasiquote_1(s7_scheme *sc, int level, s7_pointer form)
-{
-  if (!is_pair(form))
-    {
-      if ((s7_is_number(form)) ||
-	  (s7_is_string(form)) ||
-	  (s7_is_procedure(form)))
-	return(form);
-      return(make_list_2(sc, sc->QUOTE, form));
-    }
-  /* from here, form is a pair */
-
-  if (car(form) == sc->QUASIQUOTE)
-    {
-      s7_pointer r;
-      r = g_quasiquote_1(sc, level + 1, cdr(form));
-      if ((is_pair(r)) &&
-	  (car(r) == sc->QUOTE) &&
-	  (car(cdr(r)) == cdr(form)))
-	return(make_list_2(sc, sc->QUOTE, form));
-      return(make_list_3(sc, sc->CONS, make_list_2(sc, sc->QUOTE, sc->QUASIQUOTE), r));
-    }
-
-  if (level == 0)
-    {
-      if (car(form) == sc->UNQUOTE)
-	return(car(cdr(form)));
-	      
-      if (car(form) == sc->UNQUOTE_SPLICING)
-	return(form);
-	      
-      if ((is_pair(car(form))) &&
-	  (caar(form) == sc->UNQUOTE_SPLICING))
-	{
-	  s7_pointer l, r;
-	  l = car(cdr(car(form)));
-	  if (cdr(form) == sc->NIL)
-	    return(l);
-
-	  r = g_quasiquote_1(sc, level, cdr(form));
-
-	  if ((is_pair(r)) &&
-	      (car(r) == sc->QUOTE) &&
-	      (car(cdr(r)) == sc->NIL))
-	    return(l);
-	  return(make_list_3(sc, sc->APPEND, l, r));
-	}
-      
-      goto MCONS;
-    }
-
-  /* level != 0 */
-  if (car(form) == sc->UNQUOTE)
-    {
-      s7_pointer r;
-      r = g_quasiquote_1(sc, level - 1, cdr(form));
-
-      if ((is_pair(r)) &&
-	  (car(r) == sc->QUOTE) &&
-	  (car(cdr(r)) == cdr(form)))
-	return(make_list_2(sc, sc->QUOTE, form));
-
-      return(make_list_3(sc, sc->CONS, make_list_2(sc, sc->QUOTE, sc->UNQUOTE), r));
-    }
-  
-  if (car(form) == sc->UNQUOTE_SPLICING)
-    {
-      s7_pointer r;
-      r = g_quasiquote_1(sc, level - 1, cdr(form));
-
-      if ((is_pair(r)) &&
-	  (car(r) == sc->QUOTE) &&
-	  (car(cdr(r)) == cdr(form)))
-	return(make_list_2(sc, sc->QUOTE, form));
-
-      return(make_list_3(sc, sc->CONS, make_list_2(sc, sc->QUOTE, sc->UNQUOTE_SPLICING), r));
-    }
-	      
- MCONS:
-  {
-    s7_pointer l, r;
-
-    l = g_quasiquote_1(sc, level, car(form));
-    r = g_quasiquote_1(sc, level, cdr(form));
-
-    if ((is_pair(r)) &&
-	(is_pair(l)) &&
-	(car(r) == sc->QUOTE) &&
-	(car(l) == car(r)) &&
-	(car(cdr(r)) == cdr(form)) &&
-	(car(cdr(l)) == car(form)))
-      return(make_list_2(sc, sc->QUOTE, form));
-
-    if (l == sc->VECTOR_FUNCTION)
-      return(g_vector(sc, make_list_1(sc, r))); /* eval? */
-
-    return(make_list_3(sc, sc->CONS, l, r));
-  }
-}
-
-static s7_pointer g_quasiquote_2(s7_scheme *sc, int level, s7_pointer form)
-{
-  /* the lists built up by quasiquote can be arbitrarily large, and it would be a nightmare to locally GC-protect,
-   *   then later unprotect every cons, so we turn off the GC until we're done.
-   */
-  s7_pointer x;
-  if (sc->free_heap_top < 4096) gc(sc);
-  s7_gc_on(sc, false);
-  x = g_quasiquote_1(sc, level, form);
-  s7_gc_on(sc, true);
-  return(x);
-}
-
-static s7_pointer g_quasiquote(s7_scheme *sc, s7_pointer args)
-{
-  return(g_quasiquote_2(sc, s7_integer(car(args)), cadr(args)));
-}  
-
 
 
 
@@ -22076,6 +22106,7 @@ s7_scheme *s7_init(void)
 #if WITH_MULTIDIMENSIONAL_VECTORS
   s7_define_function(sc, "vector-dimensions",       g_vector_dimensions,       1, 0, false, H_vector_dimensions);
 #endif
+  s7_define_function(sc, "vector-for-each",         g_vector_for_each,         2, 0, true,  H_vector_for_each);
   s7_define_set_function(sc, "sort!",               g_sort_in_place,           2, 0, false, H_sort_in_place);
   
 
@@ -22216,6 +22247,7 @@ s7_scheme *s7_init(void)
   /* macroexpand */
   s7_eval_c_string(sc, "(define-macro (macroexpand mac) `(,(procedure-source (car mac)) ',mac))");
 
+  /* multiple values */
   /* call-with-values is almost a no-op in this context */
   s7_eval_c_string(sc, "(define-macro (call-with-values producer consumer) `(,consumer (,producer)))"); 
   /* (call-with-values (lambda () (values 1 2 3)) +) */
@@ -22229,6 +22261,7 @@ s7_scheme *s7_init(void)
                             `((lambda ,local-vars ,@(map (lambda (n ln) `(set! ,n ,ln)) vars local-vars) ,@body) ,expr)))");
 
 #if 0
+  /*
 (define-macro (let*-values vals . body)
   (let ((args '())
 	(exprs '()))
@@ -22245,6 +22278,7 @@ s7_scheme *s7_init(void)
 	   (cdr args)
 	   (cdr exprs)))
       form)))
+  */
 #endif
 
 #if WITH_ENCAPSULATION
