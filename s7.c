@@ -77,7 +77,8 @@
  *        symbol-calls if profiling is enabled
  *        stacktrace, trace and untrace, __func__, macroexpand
  *            as in C, __func__ is the name of the function currently being defined.
- *        length is generic, also added generic copy and fill!
+ *        length is generic, also added generic copy, fill!, map, for-each
+ *        vector-for-each, vector-map, string-for-each
  *
  *   things I ought to add/change:
  *        perhaps find(-if), remove etc from CL?
@@ -88,7 +89,7 @@
  *        symbol names in ||?
  *        hooks?
  *        cerror ("error/cc"?)
- *        string|vector|hash-table-for-each|map (generic map|for-each? -- expansion to C-objs? if it has a length, does that mean its indexable?)
+ *        string|hash-table|obj|-for-each|map
  *
  *
  * Mike Scholz provided the FreeBSD support (complex trig funcs, etc)
@@ -298,14 +299,15 @@ typedef enum {OP_READ_INTERNAL, OP_EVAL, OP_EVAL_ARGS0, OP_EVAL_ARGS1, OP_APPLY,
 	      OP_READ_QUASIQUOTE, OP_READ_QUASIQUOTE_VECTOR, OP_READ_UNQUOTE, OP_READ_UNQUOTE_SPLICING, 
 	      OP_READ_VECTOR, OP_FORCE, OP_READ_RETURN_EXPRESSION, OP_READ_POP_AND_RETURN_EXPRESSION, 
 	      OP_LOAD_RETURN_IF_EOF, OP_LOAD_CLOSE_AND_POP_IF_EOF, OP_EVAL_STRING, OP_EVAL_STRING_DONE, OP_EVAL_DONE,
-	      OP_QUIT, OP_CATCH, OP_DYNAMIC_WIND, OP_FOR_EACH, OP_MAP, OP_DEFINE_CONSTANT0, OP_DEFINE_CONSTANT1, 
+	      OP_QUIT, OP_CATCH, OP_DYNAMIC_WIND, OP_LIST_FOR_EACH, OP_LIST_MAP, OP_DEFINE_CONSTANT0, OP_DEFINE_CONSTANT1, 
 	      OP_DO, OP_DO_END0, OP_DO_END1, OP_DO_STEP0, OP_DO_STEP1, OP_DO_STEP2, OP_DO_INIT,
 	      OP_DEFINE_STAR, OP_LAMBDA_STAR, OP_ERROR_QUIT, OP_UNWIND_INPUT, OP_UNWIND_OUTPUT, 
 	      OP_TRACE_RETURN, OP_ERROR_HOOK_QUIT, OP_WITH_ENV0, OP_WITH_ENV1, OP_WITH_ENV2,
+	      OP_VECTOR_FOR_EACH, OP_VECTOR_MAP0, OP_VECTOR_MAP1, OP_STRING_FOR_EACH, OP_HASH_TABLE_FOR_EACH,
 	      OP_MAX_DEFINED} opcode_t;
 
 #define NUM_SMALL_INTS 256
-/* this needs to be at least OP_MAX_DEFINED */
+/* this needs to be at least OP_MAX_DEFINED = 85 */
 
 typedef enum {TOKEN_EOF, TOKEN_LEFT_PAREN, TOKEN_RIGHT_PAREN, TOKEN_DOT, TOKEN_ATOM, TOKEN_QUOTE, TOKEN_DOUBLE_QUOTE, 
 	      TOKEN_BACK_QUOTE, TOKEN_COMMA, TOKEN_AT_MARK, TOKEN_SHARP_CONST, TOKEN_VECTOR} token_t;
@@ -530,7 +532,7 @@ struct s7_scheme {
   #define CIRCULAR_REFS_SIZE 8
   s7_pointer *circular_refs;     /* printer circular list/vector checks */
 
-  jmp_buf goto_start;
+  jmp_buf goto_start, goto_qsort_end;
   bool longjmp_ok;
   void (*error_exiter)(void);
   
@@ -1639,10 +1641,10 @@ static void show_stack(s7_scheme *sc)
      "case0", "case1", "case2", "read_list", "read_dot", "read_quote", "read_quasiquote", "read_quasiquote_vector", 
      "read_unquote", "read_unquote_splicing", "read_vector", "force", "read_return_expression", 
      "read_and_return_expression", "load_return_if_eof", "load_close_and_pop_if_eof", "eval_string", 
-     "eval_string_done", "eval_done", "quit", "catch", "dynamic_wind", "for_each", "map", "define_constant0", 
+     "eval_string_done", "eval_done", "quit", "catch", "dynamic_wind", "for_list_each", "list_map", "define_constant0", 
      "define_constant1", "do", "do_end0", "do_end1", "do_step0", "do_step1", "do_step2", "do_init", "define_star", 
      "lambda_star", "error_quit", "unwind_input", "unwind_output", "trace_return", "error_hook_quit",
-     "with_env0", "with_env1", "with_env2"};
+     "with_env0", "with_env1", "with_env2", "vector_for_each", "vector_map0", "vector_map1", "string_for_each", "hash_table_for_each"};
 
   int i;
   for (i = sc->stack_top - 4; i >= 0; i -= 4)
@@ -3206,6 +3208,17 @@ s7_pointer s7_make_integer(s7_scheme *sc, s7_Int n)
   number_type(x) = NUM_INT;
   integer(number(x)) = n;
   
+  return(x);
+}
+
+
+static s7_pointer make_mutable_integer(s7_scheme *sc, s7_Int n)
+{
+  s7_pointer x;
+  x = new_cell(sc);
+  set_type(x, T_NUMBER | T_ATOM | T_SIMPLE | T_DONT_COPY);
+  number_type(x) = NUM_INT;
+  integer(number(x)) = n;
   return(x);
 }
 
@@ -5535,15 +5548,15 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
 	{
 	  if ((s7_is_integer(n)) && (s7_is_integer(pw)))       /* (expt 0 0) -> 1 */
 	    return(s7_make_integer(sc, 1));
-	  return(sc->real_one);
+	  return(sc->real_zero);                               /* (expt 0.0 0) -> 0.0 */
 	}
 
-      if ((s7_is_real(pw)) && (s7_is_negative(pw)))
+      if ((s7_is_real(pw)) && (s7_is_negative(pw)))            /* (expt 0 -1) */
 	return(s7_division_by_zero_error(sc, "expt", args));   /* what about (expt 0 -1+i)? */
 
-      if ((s7_is_integer(n)) && (s7_is_integer(pw))) 
+      if ((s7_is_integer(n)) && (s7_is_integer(pw)))           /* pw != 0, (expt 0 2312) */
 	return(s7_make_integer(sc, 0));
-      return(sc->real_zero);
+      return(sc->real_zero);                                   /* (expt 0.0 123123) */
     }
 
   if (s7_is_one(pw))
@@ -7508,6 +7521,47 @@ static s7_pointer g_string_to_list(s7_scheme *sc, s7_pointer args)
     lst = s7_cons(sc, s7_make_character(sc, str[i]), lst);
 
   return(safe_reverse_in_place(sc, lst));
+}
+
+
+static s7_pointer g_string_for_each(s7_scheme *sc, s7_pointer args)
+{
+  /* (string-for-each (lambda (n) (format #t "~A " n)) "hiho" "1234") */
+  #define H_string_for_each "(string-for-each func string1 ...) applies func to each element of the strings traversed in parallel"
+  int i, len;
+  s7_pointer str, x, fargs;
+
+  sc->code = car(args);
+  if (!is_procedure(sc->code))
+    return(s7_wrong_type_arg_error(sc, "string-for-each", 1, sc->code, "a procedure"));
+
+  str = cadr(args);
+  if (!s7_is_string(str))
+    return(s7_wrong_type_arg_error(sc, "string-for-each", 2, str, "a string"));
+
+  len = string_length(str);
+  fargs = s7_cons(sc, sc->NIL, sc->NIL);
+
+  if (cddr(args) != sc->NIL)
+    {
+      for (i = 3, x = cddr(args); x != sc->NIL; x = cdr(x), i++)
+	{
+	  if (!s7_is_string(car(x)))
+	    return(s7_wrong_type_arg_error(sc, "string-for-each", i, car(x), "a string"));
+	  if (len != string_length(car(x)))
+	    return(s7_wrong_type_arg_error(sc, "string-for-each", i, car(x), "a string whose length matches the other strings"));
+	  fargs = s7_cons(sc, sc->NIL, fargs);
+	}
+    }
+  /* during the loop we need the string list (cdddr(sc->args)), the function (sc->code), 
+   *   the (mutable) loop counter (car(sc->args)) and end (cadr(sc->args)), and the current function arg list (caddr(sc->args)).
+   */
+
+  sc->args = s7_cons(sc, make_mutable_integer(sc, 0), 
+               s7_cons(sc, s7_make_integer(sc, len), 
+                 s7_cons(sc, fargs, cdr(args))));
+  push_stack(sc, OP_STRING_FOR_EACH, sc->args, sc->code);
+  return(sc->UNSPECIFIED);
 }
 
 
@@ -10912,37 +10966,97 @@ static s7_pointer g_vector_dimensions(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_vector_for_each(s7_scheme *sc, s7_pointer args)
 {
-  /* TODO: vector-for-each help, tests, doc, multidim case, multi vect case */
-
+  /* (vector-for-each (lambda (n) (format #t "~A " n)) (vector 1 2 3)) */
   #define H_vector_for_each "(vector-for-each func vector1 ...) applies func to each element of the vectors traversed in parallel"
   int i, len;
-  s7_pointer vect, code, arg;
+  s7_pointer vect, x, fargs;
 
-  /* check that all args are vectors of same size, that proc takes that many args */
+  sc->code = car(args);
+  if (!is_procedure(sc->code))
+    return(s7_wrong_type_arg_error(sc, "vector-for-each", 1, sc->code, "a procedure"));
 
-  code = car(args);
   vect = cadr(args);
-  len = vector_length(vect);
-  arg = s7_cons(sc, sc->NIL, sc->NIL);
+  if (!s7_is_vector(vect))
+    return(s7_wrong_type_arg_error(sc, "vector-for-each", 2, vect, "a vector"));
 
-  for (i = 0; i < len; i++)
+  len = vector_length(vect);
+  fargs = s7_cons(sc, sc->NIL, sc->NIL);
+
+  if (cddr(args) != sc->NIL)
     {
-      car(arg) = vector_element(vect, i);
-      push_stack(sc, OP_EVAL_DONE, arg, args); /* gc protect arg */
-      sc->args = arg;
-      sc->code = code;
-      eval(sc, OP_APPLY);
+      for (i = 3, x = cddr(args); x != sc->NIL; x = cdr(x), i++)
+	{
+	  if (!s7_is_vector(car(x)))
+	    return(s7_wrong_type_arg_error(sc, "vector-for-each", i, car(x), "a vector"));
+	  if (len != vector_length(car(x)))
+	    return(s7_wrong_type_arg_error(sc, "vector-for-each", i, car(x), "a vector whose length matches the other vectors"));
+	  fargs = s7_cons(sc, sc->NIL, fargs);
+	}
     }
 
+  /* the actual loop has to be done in the evaluator else (for example) call/cc won't work right */
+  /* (call/cc (lambda (return) (vector-for-each (lambda (n) (display n) (if (even? n) (return n))) (vector 1 3 8 7 9 10)))) */
+  
+  /* during the loop we need the vector list (cdddr(sc->args)), the function (sc->code), 
+   *   the (mutable) loop counter (car(sc->args)) and end (cadr(sc->args)), and the current function arg list (caddr(sc->args)).
+   */
+
+  sc->args = s7_cons(sc, make_mutable_integer(sc, 0), 
+               s7_cons(sc, s7_make_integer(sc, len), 
+                 s7_cons(sc, fargs, cdr(args))));
+  push_stack(sc, OP_VECTOR_FOR_EACH, sc->args, sc->code);
+  return(sc->UNSPECIFIED);
+}
+
+
+static s7_pointer g_vector_map(s7_scheme *sc, s7_pointer args)
+{
+  /* (vector-map (lambda (n) (+ n 1)) (vector 1 2 3)) */
+  #define H_vector_map "(vector-map func vector1 ...) applies func to each element of the vectors traversed in parallel, returning the results in a new vector"
+  int i, len;
+  s7_pointer vect, x, fargs;
+
+  sc->code = car(args);
+  if (!is_procedure(sc->code))
+    return(s7_wrong_type_arg_error(sc, "vector-map", 1, sc->code, "a procedure"));
+
+  vect = cadr(args);
+  if (!s7_is_vector(vect))
+    return(s7_wrong_type_arg_error(sc, "vector-map", 2, vect, "a vector"));
+
+  len = vector_length(vect);
+  fargs = s7_cons(sc, sc->NIL, sc->NIL);
+
+  if (cddr(args) != sc->NIL)
+    {
+      for (i = 3, x = cddr(args); x != sc->NIL; x = cdr(x), i++)
+	{
+	  if (!s7_is_vector(car(x)))
+	    return(s7_wrong_type_arg_error(sc, "vector-map", i, car(x), "a vector"));
+	  if (len != vector_length(car(x)))
+	    return(s7_wrong_type_arg_error(sc, "vector-map", i, car(x), "a vector whose length matches the other vectors"));
+	  fargs = s7_cons(sc, sc->NIL, fargs);
+	}
+    }
+
+  /* the actual loop has to be done in the evaluator else (for example) call/cc won't work right */
+  /* (call/cc (lambda (return) (vector-for-each (lambda (n) (display n) (if (even? n) (return n))) (vector 1 3 8 7 9 10)))) */
+  
+  /* during the loop we need the vector list (cddddr(sc->args)), the function (sc->code), the new vector (car(sc->args)),
+   *   the (mutable) loop counter (cadr(sc->args)) and end (caddr(sc->args)), and the current function arg list (cadddr(sc->args)).
+   */
+
+  sc->args = s7_cons(sc, s7_make_vector(sc, len),
+               s7_cons(sc, make_mutable_integer(sc, 0), 
+                 s7_cons(sc, s7_make_integer(sc, len), 
+		   s7_cons(sc, fargs, cdr(args)))));
+  push_stack(sc, OP_VECTOR_MAP0, sc->args, sc->code);
   return(sc->UNSPECIFIED);
 }
 
 
 
-/* -------- sort! --------
- *
- *   this is much prettier code if the C compiler supports nested functions
- */
+/* -------- sort! -------- */
 
 #if (!HAVE_NESTED_FUNCTIONS)
   static s7_pointer compare_proc, compare_proc_args;
@@ -10950,18 +11064,25 @@ static s7_pointer g_vector_for_each(s7_scheme *sc, s7_pointer args)
 
   static int vector_compare(const void *v1, const void *v2)
   {
+    int start;
     car(compare_proc_args) = (*(s7_pointer *)v1);
     cadr(compare_proc_args) = (*(s7_pointer *)v2);
 
+    start = compare_sc->stack_top; /* see note below */
     push_stack(compare_sc, OP_EVAL_DONE, compare_sc->args, compare_sc->code); 
     compare_sc->args = compare_proc_args;
     compare_sc->code = compare_proc;
     eval(compare_sc, OP_APPLY);
+
+    if (compare_sc->stack_top < start)
+      longjmp(compare_sc->goto_qsort_end, 1);
+
     if (is_true(compare_sc, compare_sc->value))
       return(-1);
     return(1);
   }
 #endif
+
 
 #if HAVE_PTHREADS
 static pthread_mutex_t sort_lock = PTHREAD_MUTEX_INITIALIZER;
@@ -10981,14 +11102,24 @@ If its first argument is a list, the list is copied (despite the '!')."
 
   int vector_compare(const void *v1, const void *v2)
   {
+    int start;
     car(compare_proc_args) = (*(s7_pointer *)v1);
     cadr(compare_proc_args) = (*(s7_pointer *)v2);
 
-    /* if (is_true(sc, s7_call(sc, compare_proc, compare_proc_args))) return(-1); */
+    start = sc->stack_top;
+    /* qsort is a large and complex function (250 lines in libc), so we can't easily
+     *   expand it in our eval loop, but we may want to jump out of the sort via call/cc,
+     *   so we look for the stack being unwound past the start point -- this is a kludge!
+     */
+
     push_stack(sc, OP_EVAL_DONE, sc->args, sc->code); 
     sc->args = compare_proc_args;
     sc->code = compare_proc;
     eval(sc, OP_APPLY);
+
+    if (sc->stack_top < start)
+      longjmp(sc->goto_qsort_end, 1);
+
     if (is_true(sc, sc->value))
       return(-1);
     return(1);
@@ -10998,9 +11129,14 @@ If its first argument is a list, the list is copied (despite the '!')."
   vect = car(args);
 
   if (s7_is_list(sc, vect))
-    return(s7_vector_to_list(sc, 
-             g_sort_in_place(sc, make_list_2(sc, 
-               g_list_to_vector(sc, make_list_1(sc, vect)), cadr(args)))));
+    {
+      s7_pointer val;
+      val = g_sort_in_place(sc, make_list_2(sc, 
+              g_list_to_vector(sc, make_list_1(sc, vect)), cadr(args)));
+      if (s7_is_vector(val))
+	return(s7_vector_to_list(sc, val));
+      return(val);
+    }
 
   if (!s7_is_vector(vect))
     return(s7_wrong_type_arg_error(sc, "sort!", 1, vect, "a vector or a list"));
@@ -11020,6 +11156,9 @@ If its first argument is a list, the list is copied (despite the '!')."
   gc_loc = s7_gc_protect(sc, compare_proc_args);
 
   qsort((void *)s7_vector_elements(vect), vector_length(vect), sizeof(s7_pointer), vector_compare); /* qsort sizes are type size_t */
+
+  if (setjmp(sc->goto_qsort_end) != 0)
+    vect = sc->value;
 
   s7_gc_unprotect_at(sc, gc_loc);
 
@@ -13957,9 +14096,9 @@ static s7_pointer g_s7_version(s7_scheme *sc, s7_pointer args)
 }
 
 
-static s7_pointer g_for_each(s7_scheme *sc, s7_pointer args)
+static s7_pointer g_list_for_each(s7_scheme *sc, s7_pointer args)
 {
-  #define H_for_each "(for-each proc lst . lists) applies proc to each element of the lists traversed in parallel"
+  #define H_list_for_each "(for-each proc lst . lists) applies proc to each element of the lists traversed in parallel"
   s7_pointer lists, y;
   int i;
 
@@ -14006,15 +14145,15 @@ static s7_pointer g_for_each(s7_scheme *sc, s7_pointer args)
     }
   
   /* set up for repeated call walking down the lists of args */
-  push_stack(sc, OP_FOR_EACH, sc->x, sc->code);
+  push_stack(sc, OP_LIST_FOR_EACH, sc->x, sc->code);
   push_stack(sc, OP_APPLY, sc->args, sc->code);
   return(sc->NIL);
 }
 
 
-static s7_pointer g_map(s7_scheme *sc, s7_pointer args)
+static s7_pointer g_list_map(s7_scheme *sc, s7_pointer args)
 {
-  #define H_map "(map proc lst . lists) applies proc to a list made up of the car of each arg list, returning a list of the values returned by proc"
+  #define H_list_map "(map proc lst . lists) applies proc to a list made up of the car of each arg list, returning a list of the values returned by proc"
   s7_pointer lists, y;
   int i;
   
@@ -14051,10 +14190,41 @@ static s7_pointer g_map(s7_scheme *sc, s7_pointer args)
   sc->x = safe_reverse_in_place(sc, sc->x);
   
   /* set up for repeated call walking down the lists of args, values list is cdr, current args is car */
-  push_stack(sc, OP_MAP, make_list_1(sc, sc->x), sc->code);
+  push_stack(sc, OP_LIST_MAP, make_list_1(sc, sc->x), sc->code);
   push_stack(sc, OP_APPLY, sc->args, sc->code);
   return(sc->NIL);
 }
+
+
+static s7_pointer g_for_each(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer fargs;
+  fargs = cdr(args);
+  if ((fargs == sc->NIL) || (s7_is_list(sc, car(fargs))))
+    return(g_list_for_each(sc, args));
+  if (s7_is_vector(car(fargs)))
+    return(g_vector_for_each(sc, args));
+  if (s7_is_string(car(fargs)))
+    return(g_string_for_each(sc, args));
+  
+  /* TODO: hash-table any C object */
+
+  return(s7_wrong_type_arg_error(sc, "for-each", 2, car(fargs), "a list, a string, or a vector"));
+}
+
+
+static s7_pointer g_map(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer fargs;
+  fargs = cdr(args);
+  if ((fargs == sc->NIL) || (s7_is_list(sc, car(fargs))))
+    return(g_list_map(sc, args));
+  if (s7_is_vector(car(fargs)))
+    return(g_vector_map(sc, args));
+  
+  return(s7_wrong_type_arg_error(sc, "map", 2, car(fargs), "a list or a vector"));
+}
+
 
 
 /* -------------------------------- multiple-values -------------------------------- */
@@ -14806,7 +14976,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
      return(sc->F);
       
 
-    case OP_FOR_EACH:
+    case OP_LIST_FOR_EACH:
       sc->x = sc->args; /* save lists */
       sc->args = sc->NIL;
       for (sc->y = sc->x; sc->y != sc->NIL; sc->y = cdr(sc->y))
@@ -14825,11 +14995,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      return(eval_error(sc, "for-each args are not the same length", sc->x));
 	  goto APPLY;
 	}
-      push_stack(sc, OP_FOR_EACH, sc->x, sc->code);
+      push_stack(sc, OP_LIST_FOR_EACH, sc->x, sc->code);
       goto APPLY;
       
       
-    case OP_MAP:
+    case OP_LIST_MAP:
       /* car of args incoming is arglist, cdr is values list (nil to start) */
       sc->x = sc->args;
       cdr(sc->x) = s7_cons(sc, sc->value, cdr(sc->x));       /* add current value to list */
@@ -14857,10 +15027,97 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  car(sc->y) = cdar(sc->y);
 	}
       sc->args = safe_reverse_in_place(sc, sc->args);
-      push_stack(sc, OP_MAP, sc->x, sc->code);
+      push_stack(sc, OP_LIST_MAP, sc->x, sc->code);
       goto APPLY;
+
+
+    case OP_VECTOR_FOR_EACH:
+      /* func = sc->code, func-args = caddr(sc->args), counter = car(sc->args), len = cadr(sc->args), vector(s) = cdddr(sc->args) */
+      if (s7_integer(car(sc->args)) < s7_integer(cadr(sc->args)))
+	{
+	  s7_pointer x, y, vargs, fargs;
+	  int loc;
+	  /* next loop iteration */
+
+	  vargs = cdddr(sc->args);
+	  fargs = caddr(sc->args);
+	  loc = s7_integer(car(sc->args));
+	  for (x = fargs, y = vargs; x != sc->NIL; x = cdr(x), y = cdr(y))
+	    car(x) = vector_element(car(y), loc);
+
+	  integer(number(car(sc->args))) = loc + 1;
+	  push_stack(sc, OP_VECTOR_FOR_EACH, sc->args, sc->code);
+	  sc->args = fargs;
+	  goto APPLY;
+	}
+      
+      /* loop done */
+      sc->value = sc->UNSPECIFIED;
+      pop_stack(sc);
+      goto START;
+      
+
+    case OP_VECTOR_MAP1:
+      {
+	int loc;
+	loc = s7_integer(cadr(sc->args));
+	integer(number(cadr(sc->args))) = loc + 1;
+	vector_element(car(sc->args), loc) = sc->value;
+      }
+      /* goto OP_VECTOR_MAP0 */
+
+      
+    case OP_VECTOR_MAP0:
+      /* func = sc->code, new-vector = car(sc->args), func-args = cadddr(sc->args), counter = cadr(sc->args), len = caddr(sc->args), vector(s) = cddddr(sc->args) */
+      if (s7_integer(cadr(sc->args)) < s7_integer(caddr(sc->args)))
+	{
+	  s7_pointer x, y, vargs, fargs;
+	  int loc;
+	  /* next loop iteration */
+
+	  vargs = cddddr(sc->args);
+	  fargs = cadddr(sc->args);
+	  loc = s7_integer(cadr(sc->args));
+	  for (x = fargs, y = vargs; x != sc->NIL; x = cdr(x), y = cdr(y))
+	    car(x) = vector_element(car(y), loc);
+
+	  push_stack(sc, OP_VECTOR_MAP1, sc->args, sc->code);
+	  sc->args = fargs;
+	  goto APPLY;
+	}
+      
+      /* loop done */
+      sc->value = car(sc->args);
+      pop_stack(sc);
+      goto START;
       
       
+    case OP_STRING_FOR_EACH:
+      /* func = sc->code, func-args = caddr(sc->args), counter = car(sc->args), len = cadr(sc->args), string(s) = cdddr(sc->args) */
+      if (s7_integer(car(sc->args)) < s7_integer(cadr(sc->args)))
+	{
+	  s7_pointer x, y, vargs, fargs;
+	  int loc;
+	  /* next loop iteration */
+
+	  vargs = cdddr(sc->args);
+	  fargs = caddr(sc->args);
+	  loc = s7_integer(car(sc->args));
+	  for (x = fargs, y = vargs; x != sc->NIL; x = cdr(x), y = cdr(y))
+	    car(x) = s7_make_character(sc, string_value(car(y))[loc]);
+
+	  integer(number(car(sc->args))) = loc + 1;
+	  push_stack(sc, OP_STRING_FOR_EACH, sc->args, sc->code);
+	  sc->args = fargs;
+	  goto APPLY;
+	}
+      
+      /* loop done */
+      sc->value = sc->UNSPECIFIED;
+      pop_stack(sc);
+      goto START;
+      
+
     case OP_DO: 
       /* setup is very similar to let */
       /* sc->code is the stuff after "do" */
@@ -22037,7 +22294,8 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "string->list",            g_string_to_list,          1, 0, false, H_string_to_list);
   s7_define_function(sc, "object->string",          g_object_to_string,        1, 0, false, H_object_to_string);
   s7_define_function(sc, "format",                  g_format,                  1, 0, true,  H_format);
-  
+  s7_define_function(sc, "string-for-each",         g_string_for_each,         2, 0, true,  H_string_for_each);  
+
 
   s7_define_function(sc, "null?",                   g_is_null,                 1, 0, false, H_is_null);
   s7_define_function(sc, "list?",                   g_is_list,                 1, 0, false, H_is_list);
@@ -22107,6 +22365,7 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "vector-dimensions",       g_vector_dimensions,       1, 0, false, H_vector_dimensions);
 #endif
   s7_define_function(sc, "vector-for-each",         g_vector_for_each,         2, 0, true,  H_vector_for_each);
+  s7_define_function(sc, "vector-map",              g_vector_map,              2, 0, true,  H_vector_map);
   s7_define_set_function(sc, "sort!",               g_sort_in_place,           2, 0, false, H_sort_in_place);
   
 
@@ -22121,8 +22380,8 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "apply",                   g_apply,                   1, 0, true,  H_apply);
   s7_define_function(sc, "force",                   g_force,                   1, 0, false, H_force);
 
-  s7_define_function(sc, "for-each",                g_for_each,                2, 0, true,  H_for_each);
-  s7_define_function(sc, "map",                     g_map,                     2, 0, true,  H_map);
+  s7_define_function(sc, "for-each",                g_for_each,                2, 0, true,  H_list_for_each);
+  s7_define_function(sc, "map",                     g_map,                     2, 0, true,  H_list_map);
 
   s7_define_function(sc, "values",                  g_values,                  0, 0, true,  H_values);
   s7_define_function(sc, "dynamic-wind",            g_dynamic_wind,            3, 0, false, H_dynamic_wind);
@@ -22295,8 +22554,6 @@ s7_scheme *s7_init(void)
 		   ((,encap))                            \n\
 		   (close-encapsulator ,encap))))))");
 #endif
-
-  
 
   return(sc);
 }

@@ -52,6 +52,7 @@
 (define with-full-fledged-random #t)                           ; random exists and can take any kind of numeric args, also make-random-state
 (define with-sort! #t)                                         ; sort! exists for both lists and vectors
 (define with-generic-length #t)                                ; length accepts things other than lists
+(define with-vector-for-each #t)                               ; vector-for-each and vector-map are defined
 
 
 (define our-pi 3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117067982148086513282306647093844609550582231725359408128481117450284102701938521105559644622948954930382)
@@ -1599,7 +1600,30 @@
 (test (let ((str (make-string 0))) (string-fill! str #\a) str) "")
 (test (let ((hi (make-string 8 (integer->char 0)))) (string-fill! hi #\a) hi) "aaaaaaaa") ; is this result widely accepted?
 
+(if with-vector-for-each
+    (begin
+      (test (let ((str (make-string 4 #\x))
+		  (ctr 0))
+	      (string-for-each
+	       (lambda (c)
+		 (string-set! str ctr c)
+		 (set! ctr (+ ctr 1)))
+	       "1234")
+	      str)
+	    "1234")
 
+      (test (let ((str (make-string 8 #\x))
+		  (ctr 0))
+	      (string-for-each
+	       (lambda (c1 c2)
+		 (string-set! str ctr c1)
+		 (string-set! str (+ ctr 1) c2)
+		 (set! ctr (+ ctr 2)))
+	       "1234"
+	       "hiho")
+	      str)
+	    "1h2i3h4o")
+      ))
 
 (test (string-copy "ab") "ab")
 (test (string-copy "") "")
@@ -2669,6 +2693,25 @@
 ;(let ((lst (list 1 2)) (v (make-vector 3))) (vector-fill! v lst) (list-set! (vector-ref v 0) 1 #\a) lst) -> '(1 #\a)
 
 
+(if with-vector-for-each
+    (begin
+      (test (let ((sum 0)) (vector-for-each (lambda (n) (set! sum (+ sum n))) (vector 1 2 3)) sum) 6)
+      (test (let ((sum 0)) (vector-for-each (lambda (n m) (set! sum (+ sum n (- m)))) (vector 1 2 3) (vector 4 5 6)) sum) -9)
+      (test (let () (vector-for-each (lambda (n) (error "oops")) (vector)) #f) #f)
+      (test (let ((sum 0)) (vector-for-each (lambda (n m p) (set! sum (+ sum n (- m) (* 2 p)))) (vector 1 2 3) (vector 4 5 6) (vector 6 7 8)) sum) 33)
+      (test (let ((sum 0)) (vector-for-each (lambda (n) (vector-for-each (lambda (m) (set! sum (+ sum (* m n)))) (vector 1 2 3))) (vector 4 5 6)) sum) 90)
+      (test (call/cc (lambda (return) (vector-for-each (lambda (n) (return "oops")) (vector 1 2 3)))) "oops")
+      (test (call/cc (lambda (return) (vector-for-each (lambda (n) (if (even? n) (return n))) (vector 1 3 8 7 9 10)))) 8)
+
+
+      (test (vector-map (lambda (n) (+ 1 n)) (vector 1 2 3)) '#(2 3 4))
+      (test (vector-map (lambda (n m) (- n m)) (vector 1 2 3) (vector 4 5 6)) '#(-3 -3 -3))
+      (test (vector-map (lambda (n m p) (+ n m p)) (vector 1 2 3) (vector 4 5 6) (vector 6 7 8)) '#(11 14 17))
+      (test (vector-map (lambda (n) (vector-map (lambda (m) (* m n)) (vector 1 2 3))) (vector 4 5 6)) '#(#(4 8 12) #(5 10 15) #(6 12 18)))
+      (test (call/cc (lambda (return) (vector-map (lambda (n) (return "oops")) (vector 1 2 3)))) "oops")
+      (test (call/cc (lambda (return) (vector-map (lambda (n) (if (even? n) (return n))) (vector 1 3 8 7 9 10)))) 8)
+      ))
+
 
 (if (provided? 'multidimensional-vectors)
     (let ((v1 (make-vector 3 1)))
@@ -2704,6 +2747,14 @@
       (num-test (v1 0 0 0) 32)
       (set! (v1 0 1 1) 3)
       (num-test (v1 0 1 1) 3)
+
+      (if with-vector-for-each
+	  (test (let ((v1 (make-vector '(3 2) 1))
+		      (v2 (make-vector '(3 2) 2))
+		      (sum 0))
+		  (vector-for-each (lambda (n m) (set! sum (+ sum n m))) v1 v2)
+		  sum)
+		18))
 
       (test (make-vector (1 . 2) "hi") 'error)))
 
@@ -4197,6 +4248,12 @@
 ;;;       (let ((arg (force (make-promise (values 1 2 3))))) (+ arg 4)) ; this doesn't work yet
 ;;;       (apply + (map (lambda (n) (values n (+ n 1))) (list 1 2)))    ; nor does this
 
+
+(test (let ((sum 0)) (for-each (lambda (n m p) (set! sum (+ sum n m p))) (values (list 1 2 3) (list 4 5 6) (list 7 8 9)))) 45)
+(test (map (lambda (n m p) (+ n m p)) (values (list 1 2 3) (list 4 5 6) (list 7 8 9))) '(12 15 18))
+(test (string-append (values "123" "4" "5") "6" (values "78" "90")) "1234567890")
+(test (+ (dynamic-wind (lambda () #f) (lambda () (values 1 2 3)) (lambda () #f)) 4) 10)
+
 (for-each
  (lambda (arg)
    (test (values arg) arg))
@@ -4693,6 +4750,9 @@
 (test (call/cc (lambda (k) (k "foo"))) "foo")
 (test (call/cc (lambda (k) "foo")) "foo")
 (test (call/cc (lambda (k) (k "foo") "oops")) "foo")
+(test (call/cc (lambda (return) (catch #t (lambda () (error 'hi "")) (lambda args (return "oops"))))) "oops")
+(test (call/cc (lambda (return) (catch #t (lambda () (return 1)) (lambda args (return "oops"))))) 1)
+(test (catch #t (lambda () (call/cc (lambda (return) (return "oops")))) (lambda arg 1)) "oops")
 
 (test (let ((listindex (lambda (e l)
 			 (call/cc (lambda (not_found)
@@ -6021,7 +6081,8 @@
 
       (test (equal? (sort! (vector 3 4 8 2 0 1 5 9 7 6) <) (vector 0 1 2 3 4 5 6 7 8 9)) #t)
       (test (equal? (sort! '#() <) '#()) #t)
-      
+
+      (test (call/cc (lambda (return) (sort! '(1 2 3) (lambda (a b) (return "oops"))))) "oops")
       ))
 
 
@@ -6371,6 +6432,12 @@
 		(begin 
 		  (display "open-output-string + format ... expected \"this is a test 3\", but got \"")
 		  (display res) (display "\"?") (newline)))))
+
+      (if with-open-input-string-and-friends
+	  (test (call/cc (lambda (return) (let ((val (format #f "line 1~%line 2~%line 3")))
+					    (call-with-input-string val
+					      (lambda (p) (return "oops"))))))
+		"oops"))
 
       (format #t "format #t: ~D" 1)
       (format (current-output-port) " output-port: ~D! (this is testing output ports)~%" 2)
@@ -6990,6 +7057,19 @@
 	      (pws-test))
 	    123)
 
+      (test (call/cc (lambda (return) (let ((local 123))
+					(define pws-test (make-procedure-with-setter
+							  (lambda () (return "oops"))
+							  (lambda (val) (set! local val))))
+					(pws-test))))
+	    "oops")
+      (test (call/cc (lambda (return) (let ((local 123))
+					(define pws-test (make-procedure-with-setter
+							  (lambda () 123)
+							  (lambda (val) (return "oops"))))
+					(set! (pws-test) 1))))
+	    "oops")
+
       (test (let ((local 123))
 	      (define pws-test (make-procedure-with-setter
 				(lambda () local)
@@ -7104,6 +7184,10 @@
       (let ((cn (cons 1 2)))
 	(fill! cn 100)
 	(test cn (cons 100 100)))
+
+      ;; generic for-each/map
+      (test (let ((sum 0)) (for-each (lambda (n) (set! sum (+ sum n))) (vector 1 2 3)) sum) 6)      
+      (test (map (lambda (n) (+ n 1)) (vector 1 2 3)) '#(2 3 4))
 
       ;; try some applicable stuff
       (test (let ((lst (list 1 2 3)))
@@ -35469,6 +35553,15 @@
        (num-test (ash 1 (- (expt 2 31))) 0)
        (num-test (ash (expt 2 31) (- (expt 2 31))) 0)
 
+       (do ((i 0 (+ i 1))) 
+	   ((= i 15)) 
+	 (test (= (expt (ash 1 i) 2)
+		  (ash 1 (* 2 i)) 
+		  (expt 2 (* 2 i))
+		  (* (- (expt 2 i)) (- (ash 1 i)))
+		  (ash 2 (- (* i 2) 1)))
+	       #t))
+
        (if with-64-bit-ints
 	   (begin
 	     (num-test (ash 1 32) 4294967296)
@@ -36664,7 +36757,7 @@
       (for-each
        (lambda (arg)
 	 (test (for-each (lambda (a) a) arg) 'error))
-       (list "hi" -1 #\a 1 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i #f #t '(1 . 2)))
+       (list "hi" -1 #\a 1 'a-symbol 3.14 3/4 1.0+1.0i #f #t '(1 . 2)))
 
       (test (for-each abs '() abs) 'error)
       (test (for-each abs '() '#(1)) 'error)
@@ -36700,7 +36793,7 @@
       (for-each
        (lambda (arg)
 	 (test (map (lambda (a) a) arg) 'error))
-       (list "hi" -1 #\a 1 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i #f #t '(1 . 2)))
+       (list "hi" -1 #\a 1 'a-symbol 3.14 3/4 1.0+1.0i #f #t '(1 . 2)))
       
 					;(test (do '() ('() '())) 'error) ; ?? -- isn't this the same as before?
       (test (do '() (#t 1)) 'error)
