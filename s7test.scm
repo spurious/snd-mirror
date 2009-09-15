@@ -50,7 +50,7 @@
 (define with-large-powers #t)                                  ; for Gauche
 (define with-rationalize #t)                                   ; test rationalize
 (define with-full-fledged-random #t)                           ; random exists and can take any kind of numeric args, also make-random-state
-(define with-sort! #t)                                         ; sort! exists for both lists and vectors
+(define with-sort! #t)                                         ; sort! exists for both lists and vectors (needs random)
 (define with-generic-length #t)                                ; length accepts things other than lists
 (define with-vector-for-each #t)                               ; vector-for-each and vector-map are defined
 
@@ -6083,6 +6083,35 @@
       (test (equal? (sort! '#() <) '#()) #t)
 
       (test (call/cc (lambda (return) (sort! '(1 2 3) (lambda (a b) (return "oops"))))) "oops")
+      
+      (let ((v (make-vector 10000)))
+	(do ((i 0 (+ i 1)))
+	    ((= i 10000))
+	  (vector-set! v i (random 100.0)))
+	(sort! v <)
+	(call/cc
+	 (lambda (return)
+	   (do ((i 0 (+ i 1)))
+	       ((< i 9999))
+	     (if (not (< (vector-ref v i) (vector-ref v (+ i 1))))
+		 (return #f)))
+	   #t)))
+
+      (let ((v '()))
+	(do ((i 0 (+ i 1)))
+	    ((= i 10000))
+	  (set! v (cons (random 100.0) v)))
+	(set! v (sort! v >))
+	(call/cc
+	 (lambda (return)
+	   (let ((val (car v)))
+	     (do ((lst (cdr v) (cdr lst)))
+		 ((null? (cdr lst)))
+	       (if (not (> val (car lst)))
+		   (return #f))
+	       (set! val (car lst))))
+	   #t)))
+
       ))
 
 
@@ -36757,7 +36786,7 @@
       (for-each
        (lambda (arg)
 	 (test (for-each (lambda (a) a) arg) 'error))
-       (list "hi" -1 #\a 1 'a-symbol 3.14 3/4 1.0+1.0i #f #t '(1 . 2)))
+       (list -1 #\a 1 'a-symbol 3.14 3/4 1.0+1.0i #f #t '(1 . 2)))
 
       (test (for-each abs '() abs) 'error)
       (test (for-each abs '() '#(1)) 'error)

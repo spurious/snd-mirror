@@ -88,8 +88,10 @@
  *        perhaps trailing args to list-ref
  *        symbol names in ||?
  *        hooks?
- *        cerror ("error/cc"?)
- *        string|hash-table|obj|-for-each|map
+ *        cerror ("error/cc"?) -- tag = continuation in this case,
+ *          and error handler makes it accessible (as well as error context) for eval
+ *        perhaps string-map, hash-table-for-each, hash-table-map, and C obj map and for-each
+ *          (follow slib: hash-table-map proc takes key value args, returns new value for new hash table)
  *
  *
  * Mike Scholz provided the FreeBSD support (complex trig funcs, etc)
@@ -2421,7 +2423,7 @@ static s7_pointer copy_stack(s7_scheme *sc, s7_pointer old_v, int top)
   nv = vector_elements(new_v);
   ov = vector_elements(old_v);
   
-  (*(sc->gc_off)) = true;
+  s7_gc_on(sc, false);
 
   for (i = 0; i < top; i += 4)
     {
@@ -2435,7 +2437,7 @@ static s7_pointer copy_stack(s7_scheme *sc, s7_pointer old_v, int top)
       nv[i + 3] = ov[i + 3];                  /* op (constant int) */
     }
   
-  (*(sc->gc_off)) = false;
+  s7_gc_on(sc, true);
   return(new_v);
 }
 
@@ -11075,8 +11077,10 @@ static s7_pointer g_vector_map(s7_scheme *sc, s7_pointer args)
     eval(compare_sc, OP_APPLY);
 
     if (compare_sc->stack_top < start)
-      longjmp(compare_sc->goto_qsort_end, 1);
-
+      {
+	s7_gc_on(sc, true);
+	longjmp(compare_sc->goto_qsort_end, 1);
+      }
     if (is_true(compare_sc, compare_sc->value))
       return(-1);
     return(1);
@@ -11118,8 +11122,10 @@ If its first argument is a list, the list is copied (despite the '!')."
     eval(sc, OP_APPLY);
 
     if (sc->stack_top < start)
-      longjmp(sc->goto_qsort_end, 1);
-
+      {
+	s7_gc_on(sc, true);
+	longjmp(sc->goto_qsort_end, 1);
+      }
     if (is_true(sc, sc->value))
       return(-1);
     return(1);
@@ -11131,10 +11137,14 @@ If its first argument is a list, the list is copied (despite the '!')."
   if (s7_is_list(sc, vect))
     {
       s7_pointer val;
+      if (sc->free_heap_top < 4096) gc(sc);
+      s7_gc_on(sc, false);
       val = g_sort_in_place(sc, make_list_2(sc, 
-              g_list_to_vector(sc, make_list_1(sc, vect)), cadr(args)));
+					    g_list_to_vector(sc, make_list_1(sc, vect)), 
+					    cadr(args)));
       if (s7_is_vector(val))
-	return(s7_vector_to_list(sc, val));
+	val = s7_vector_to_list(sc, val);
+      s7_gc_on(sc, true);
       return(val);
     }
 
@@ -13510,6 +13520,8 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
 
   sc->cur_code = ERROR_INFO_DEFAULT;
 
+  /* if (!s7_is_continuation(type))... */
+
   /* top is 1 past actual top, top - 1 is op, if op = OP_CATCH, top - 4 is the cell containing the catch struct */
   for (i = sc->stack_top - 1; i >= 3; i -= 4)
     {
@@ -13691,7 +13703,10 @@ GOT_CATCH:
 	  if ((exit_eval) &&
 	      (sc->error_exiter))
 	    (*(sc->error_exiter))();
-	  
+
+	  /* if (s7_is_continuation(type))
+	   *   go into repl here with access to continuation?  Or expect *error-handler* to deal with it?
+	   */
 	  sc->value = type;
 	  stack_reset(sc);
 	  sc->op = OP_ERROR_QUIT;
@@ -15064,11 +15079,17 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	integer(number(cadr(sc->args))) = loc + 1;
 	vector_element(car(sc->args), loc) = sc->value;
       }
-      /* goto OP_VECTOR_MAP0 */
+      /* drop into VECTOR_MAP0 */
 
       
     case OP_VECTOR_MAP0:
-      /* func = sc->code, new-vector = car(sc->args), func-args = cadddr(sc->args), counter = cadr(sc->args), len = caddr(sc->args), vector(s) = cddddr(sc->args) */
+      /* func = sc->code, 
+       * new-vector = car(sc->args), 
+       * func-args = cadddr(sc->args), 
+       * counter = cadr(sc->args), 
+       * len = caddr(sc->args), 
+       * vector(s) = cddddr(sc->args) 
+       */
       if (s7_integer(cadr(sc->args)) < s7_integer(caddr(sc->args)))
 	{
 	  s7_pointer x, y, vargs, fargs;

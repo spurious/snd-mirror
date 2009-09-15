@@ -1700,6 +1700,7 @@ int main(int argc, char **argv)
  *        s7 changes
  *
  * 14-Sep:    s7_values, s7_make_continuation, and a better interrupt example.
+ *            vector-for-each, vector-map, string-for-each.
  * 7-Sep:     s7_open_input_function. with-environment. receive.
  * 3-Sep:     s7.html, s7-slib-init.scm. 
  *            s7_stacktrace in s7.h.
