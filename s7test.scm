@@ -2518,6 +2518,9 @@
 (test (append 0) 0) ; is this correct?
 (test (append '() 0) 0)
 (test (append '() '() 0) 0)
+(test (let* ((x '(1 2 3)) (y (append x '()))) (eq? x y)) #f) ; check that append returns a new list
+(test (let* ((x '(1 2 3)) (y (append x '()))) (equal? x y)) #t)
+(test (let* ((x (list 1 2 3)) (y (append x (list)))) (eq? x y)) #f) 
 
 
 
@@ -2527,6 +2530,9 @@
 (test (memq (list 'a) '(b (a) c))  #f)
 (test (memq 'a '(b a c a d a)) '(a c a d a))
 (let ((v (vector 'a))) (test (memq v (list 'a 1.2 v "hi")) (list v "hi")))
+(test (memq #f '(1 a #t "hi" #f 2)) '(#f 2))
+(test (memq eq? (list 2 eqv? 1 eq?)) (list eq?))
+(test (memq eq? (list 2 eqv? 2)) #f)
 
 
 (test (memv 101 '(100 101 102)) '(101 102))
@@ -4112,6 +4118,9 @@
 (test (let ((z 0)) (begin (define x 32) (define y x)) (set! z y) z) 32)         ; similarly here
 ;;; I can't find anything in r5rs.html that mandates letrec here, or that says it's in error
 
+; (test (begin (define b 1) (begin (define a b) (define b 3)) a) 1) ; ?? if a 1st => "b unbound", but guile returns #f
+; (begin (begin (define a 1) (begin (define a b) (define b 3))) a) ; guile says 3, s7 says error
+;;; begin is a mess...
 
 
 
@@ -4134,7 +4143,7 @@
 (test (apply apply (list list 1 2 '(3))) (list 1 2 3))
 (test (vector? (apply make-vector '(1))) #t)
 (test (apply make-vector '(1 1)) '#(1))
-(test (let* ((x '(1 2 3)) (y (apply list x))) (not (eq? x y))) #t) ; is this standard?
+;(test (let* ((x '(1 2 3)) (y (apply list x))) (not (eq? x y))) #t) ; is this standard?
 (test (apply min '(1 2 3 5 4 0 9)) 0)
 (test (apply min 1 2 4 3 '(4 0 9)) 0)
 (test (apply vector 1 2 '(3)) '#(1 2 3))
@@ -36765,6 +36774,8 @@
       (test (let ((ctr 0)) (for-each (lambda (x y z) (set! ctr (+ ctr x y z))) '(0 1) '(2 3) '(4 5 6)) ctr) 'error)
       (test (for-each (lambda (a b) (+ a b)) (list 1)) 'error)
       (test (for-each (lambda (a b) (+ a b)) (list 1) (list)) 'error)
+      (test (for-each (lambda (a b) (+ a b)) (list 1)) 'error)
+      (test (for-each (lambda (a b) (+ a b)) (list 1) (list 2) (list 3)) 'error)
       (test (for-each (lambda (a b) (+ a b)) (list 1) (list 1 2)) 'error)
       (test (for-each (lambda (a b) (+ a b)) (list 1 2) (list 1)) 'error)
       (test (for-each (lambda (a b) (+ a b)) (list 1 2) (list 1 2 3)) 'error)
@@ -36782,6 +36793,10 @@
        (lambda (arg)
 	 (test (for-each arg (list 1)) 'error))
        (list "hi" -1 #\a 1 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i #f #t (list 1 2 3) '(1 . 2)))
+      (for-each
+       (lambda (arg)
+	 (test (for-each (lambda (n m) n) (list 1) arg) 'error))
+       (list "hi" -1 #\a 1 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i #f #t '() (list 1 2 3) '(1 . 2)))
       
       (for-each
        (lambda (arg)
@@ -36801,6 +36816,8 @@
       (test (map (lambda (a b) (+ a b)) (list 1)) 'error)
       (test (map (lambda (a b) (+ a b)) (list 1) (list)) 'error)
       (test (map (lambda (a b) (+ a b)) (list 1) (list 2)) (list 3))
+      (test (map (lambda (a b) (+ a b)) (list 1)) 'error)
+      (test (map (lambda (a b) (+ a b)) (list 1) (list 2) (list 3)) 'error)
       (test (map (lambda (a b) (+ a b)) (list 1) (list 1 2)) 'error)
       (test (map (lambda (a b) (+ a b)) (list 1 2) (list 1)) 'error)
       (test (map (lambda (a b) (+ a b)) (list 1 2) (list 1 2 3)) 'error)
@@ -36817,6 +36834,10 @@
       (for-each
        (lambda (arg)
 	 (test (map arg (list 1)) 'error))
+       (list "hi" -1 #\a 1 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i #f #t (list 1 2 3) '(1 . 2)))
+      (for-each
+       (lambda (arg)
+	 (test (map (lambda (n m) n) (list 1) arg) 'error))
        (list "hi" -1 #\a 1 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i #f #t (list 1 2 3) '(1 . 2)))
       
       (for-each

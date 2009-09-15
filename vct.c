@@ -45,8 +45,6 @@
  * the Snd package; others can be found in the CLM package (clm2xen.c).
  */
 
-/* PERHAPS: vct-for-each|map (new vct in latter case), frame|mixer-for-each|map */
-
 #include <mus-config.h>
 
 #if USE_SND

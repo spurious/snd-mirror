@@ -78,7 +78,7 @@
  *        stacktrace, trace and untrace, __func__, macroexpand
  *            as in C, __func__ is the name of the function currently being defined.
  *        length is generic, also added generic copy, fill!, map, for-each
- *        vector-for-each, vector-map, string-for-each
+ *        vector-for-each, vector-map, string-for-each, for-each of any applicable object
  *
  *   things I ought to add/change:
  *        perhaps find(-if), remove etc from CL?
@@ -90,8 +90,6 @@
  *        hooks?
  *        cerror ("error/cc"?) -- tag = continuation in this case,
  *          and error handler makes it accessible (as well as error context) for eval
- *        perhaps string-map, hash-table-for-each, hash-table-map, and C obj map and for-each
- *          (follow slib: hash-table-map proc takes key value args, returns new value for new hash table)
  *
  *
  * Mike Scholz provided the FreeBSD support (complex trig funcs, etc)
@@ -305,7 +303,7 @@ typedef enum {OP_READ_INTERNAL, OP_EVAL, OP_EVAL_ARGS0, OP_EVAL_ARGS1, OP_APPLY,
 	      OP_DO, OP_DO_END0, OP_DO_END1, OP_DO_STEP0, OP_DO_STEP1, OP_DO_STEP2, OP_DO_INIT,
 	      OP_DEFINE_STAR, OP_LAMBDA_STAR, OP_ERROR_QUIT, OP_UNWIND_INPUT, OP_UNWIND_OUTPUT, 
 	      OP_TRACE_RETURN, OP_ERROR_HOOK_QUIT, OP_WITH_ENV0, OP_WITH_ENV1, OP_WITH_ENV2,
-	      OP_VECTOR_FOR_EACH, OP_VECTOR_MAP0, OP_VECTOR_MAP1, OP_STRING_FOR_EACH, OP_HASH_TABLE_FOR_EACH,
+	      OP_VECTOR_FOR_EACH, OP_VECTOR_MAP0, OP_VECTOR_MAP1, OP_STRING_FOR_EACH, OP_OBJECT_FOR_EACH,
 	      OP_MAX_DEFINED} opcode_t;
 
 #define NUM_SMALL_INTS 256
@@ -1646,7 +1644,8 @@ static void show_stack(s7_scheme *sc)
      "eval_string_done", "eval_done", "quit", "catch", "dynamic_wind", "for_list_each", "list_map", "define_constant0", 
      "define_constant1", "do", "do_end0", "do_end1", "do_step0", "do_step1", "do_step2", "do_init", "define_star", 
      "lambda_star", "error_quit", "unwind_input", "unwind_output", "trace_return", "error_hook_quit",
-     "with_env0", "with_env1", "with_env2", "vector_for_each", "vector_map0", "vector_map1", "string_for_each", "hash_table_for_each"};
+     "with_env0", "with_env1", "with_env2", "vector_for_each", "vector_map0", "vector_map1", "string_for_each", 
+     "object_for_each"};
 
   int i;
   for (i = sc->stack_top - 4; i >= 0; i -= 4)
@@ -11078,7 +11077,7 @@ static s7_pointer g_vector_map(s7_scheme *sc, s7_pointer args)
 
     if (compare_sc->stack_top < start)
       {
-	s7_gc_on(sc, true);
+	s7_gc_on(compare_sc, true);
 	longjmp(compare_sc->goto_qsort_end, 1);
       }
     if (is_true(compare_sc, compare_sc->value))
@@ -11900,6 +11899,42 @@ static s7_pointer s7_object_fill(s7_scheme *sc, s7_pointer obj, s7_pointer val)
 
   return(eval_error(sc, "attempt to fill ~A?", obj));
 }
+
+
+static s7_pointer g_object_for_each(s7_scheme *sc, s7_pointer args)
+{
+  /* (for-each (lambda (n) (format #t "~A " n)) (vct 1.0 2.0 3.0)) */
+  int i, len;
+  s7_pointer obj, x, fargs;
+
+  sc->code = car(args);
+  if (!is_procedure(sc->code))
+    return(s7_wrong_type_arg_error(sc, "for-each", 1, sc->code, "a procedure"));
+
+  obj = cadr(args); /* already checked */
+  len = s7_integer(s7_object_length(sc, obj));
+  fargs = s7_cons(sc, sc->NIL, sc->NIL);
+
+  if (cddr(args) != sc->NIL)
+    {
+      for (i = 3, x = cddr(args); x != sc->NIL; x = cdr(x), i++)
+	{
+	  if (!s7_is_applicable_object(car(x)))
+	    return(s7_wrong_type_arg_error(sc, "for-each", i, car(x), "an applicable object"));
+	  if (len != s7_integer(s7_object_length(sc, car(x))))
+	    return(s7_wrong_type_arg_error(sc, "for-each", i, car(x), "an object whose length matches the other objects"));
+	  fargs = s7_cons(sc, sc->NIL, fargs);
+	}
+    }
+
+  sc->args = s7_cons(sc, make_mutable_integer(sc, 0), 
+               s7_cons(sc, s7_make_integer(sc, len), 
+                 s7_cons(sc, fargs, cdr(args))));
+  push_stack(sc, OP_OBJECT_FOR_EACH, sc->args, sc->code);
+  return(sc->UNSPECIFIED);
+}
+
+
 
 
 
@@ -14215,16 +14250,23 @@ static s7_pointer g_for_each(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer fargs;
   fargs = cdr(args);
+
   if ((fargs == sc->NIL) || (s7_is_list(sc, car(fargs))))
     return(g_list_for_each(sc, args));
+
   if (s7_is_vector(car(fargs)))
     return(g_vector_for_each(sc, args));
+
   if (s7_is_string(car(fargs)))
     return(g_string_for_each(sc, args));
-  
-  /* TODO: hash-table any C object */
 
-  return(s7_wrong_type_arg_error(sc, "for-each", 2, car(fargs), "a list, a string, or a vector"));
+  if (s7_is_applicable_object(car(fargs)))
+    return(g_object_for_each(sc, args));
+  
+  /* hash-table? -- this seems special because one arg->2, and only one ht arg? */
+  /*    these will currently work because they are vectors, but the func arg = alist */
+
+  return(s7_wrong_type_arg_error(sc, "for-each", 2, car(fargs), "an applicable object"));
 }
 
 
@@ -15058,7 +15100,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  fargs = caddr(sc->args);
 	  loc = s7_integer(car(sc->args));
 	  for (x = fargs, y = vargs; x != sc->NIL; x = cdr(x), y = cdr(y))
-	    car(x) = vector_element(car(y), loc);
+	    car(x) = vector_element(car(y), loc);   /* make func's arglist */
 
 	  integer(number(car(sc->args))) = loc + 1;
 	  push_stack(sc, OP_VECTOR_FOR_EACH, sc->args, sc->code);
@@ -15119,7 +15161,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	{
 	  s7_pointer x, y, vargs, fargs;
 	  int loc;
-	  /* next loop iteration */
 
 	  vargs = cdddr(sc->args);
 	  fargs = caddr(sc->args);
@@ -15133,7 +15174,32 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  goto APPLY;
 	}
       
-      /* loop done */
+      sc->value = sc->UNSPECIFIED;
+      pop_stack(sc);
+      goto START;
+      
+
+    case OP_OBJECT_FOR_EACH:
+      /* func = sc->code, func-args = caddr(sc->args), counter = car(sc->args), len = cadr(sc->args), object(s) = cdddr(sc->args) */
+      if (s7_integer(car(sc->args)) < s7_integer(cadr(sc->args)))
+	{
+	  s7_pointer x, y, vargs, fargs;
+	  int loc;
+
+	  vargs = cdddr(sc->args);
+	  fargs = caddr(sc->args);
+	  loc = s7_integer(car(sc->args));
+	  sc->x = s7_cons(sc, car(sc->args), sc->NIL);
+
+	  for (x = fargs, y = vargs; x != sc->NIL; x = cdr(x), y = cdr(y))
+	    car(x) = (*(object_types[c_object_type(car(y))].apply))(sc, car(y), sc->x);
+
+	  integer(number(car(sc->args))) = loc + 1;
+	  push_stack(sc, OP_OBJECT_FOR_EACH, sc->args, sc->code);
+	  sc->args = fargs;
+	  goto APPLY;
+	}
+      
       sc->value = sc->UNSPECIFIED;
       pop_stack(sc);
       goto START;
@@ -22579,5 +22645,4 @@ s7_scheme *s7_init(void)
   return(sc);
 }
 
-/* unicode is probably do-able if it is sequestered in the s7 strings */
 /* TODO: how to trace setter [s7_object_set?] mus-srate for example */
