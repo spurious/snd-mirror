@@ -609,8 +609,6 @@ var extsnd_reportinminibuffer_tip = "<code>(report-in-minibuffer msg :optional s
                                     " display msg in snd's minibuffer.<br>" +
                                     " If 'as-error' is #t, place the message in the minibuffer's error label.";
 
-var extsnd_resetlistenercursor_tip = "<code>(reset-listener-cursor)</code>: reset listener cursor to the default pointer";
-
 var extsnd_restorecontrols_tip = "<code>(restore-controls :optional snd)</code>: restore the previously saved control panel settings";
 
 var extsnd_reversesound_tip = "<code>(reverse-sound :optional snd chn edpos)</code>: reverse snd's channel chn";

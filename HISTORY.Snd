@@ -1,5 +1,6 @@
 Snd change log
 
+ 17-Sep:    Snd 10.9.
  10-Sep:    removed show-backtrace (it is #t now). default optimization is now 6.
  9-Aug:     Snd 10.8.
  6-Jul:     Snd 10.7.

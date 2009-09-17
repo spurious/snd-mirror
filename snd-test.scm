@@ -3638,7 +3638,8 @@
 	 (list 1 2 4 8))
 	
 	;; big sound-data objects (needs 32 Gbytes):
-	(if (string=? (getenv "HOSTNAME") "fatty8")
+	(if (and (string? (getenv "HOSTNAME"))
+		 (string=? (getenv "HOSTNAME") "fatty8"))
 	    (let ((size (+ 2 (expt 2 31))))
 	      (if (not (= size 2147483650))
 		  (snd-display ";big sd, size: ~A (~A ~A)" size 2147483650 (- 2147483650 size)))
@@ -14321,7 +14322,8 @@ EDITS: 2
 	      (snd-display ";vct-add + offset: ~A" v0)))
 
 	;; a test of big vcts (needs 16 Gbytes):
-	(if (string=? (getenv "HOSTNAME") "fatty8")
+	(if (and (string? (getenv "HOSTNAME"))
+		 (string=? (getenv "HOSTNAME") "fatty8"))
 	    (let ((size (+ 2 (expt 2 31))))
 	      (if (not (= size 2147483650))
 		  (snd-display ";big vct, size: ~A (~A ~A)" size 2147483650 (- 2147483650 size)))
@@ -53473,17 +53475,20 @@ EDITS: 1
     (delete-file "test.snd")
     )
 
-  (vector-synthesis (let ((ctr 0) (file 0)) 
-		    (lambda (files bufsize)
-		      (if (> ctr 4)
-			  (begin
-			    (set! file (+ 1 file))
-			    (set! ctr 0)
-			    (if (>= file files)
-				(set! file 0)))
-			  (set! ctr (+ 1 ctr)))
-		      file))
-		  (list "oboe.snd" "pistol.snd") #t)
+  (catch #t
+	 (lambda ()
+	   (vector-synthesis (let ((ctr 0) (file 0)) 
+			       (lambda (files bufsize)
+				 (if (> ctr 4)
+				     (begin
+				       (set! file (+ 1 file))
+				       (set! ctr 0)
+				       (if (>= file files)
+					   (set! file 0)))
+				     (set! ctr (+ 1 ctr)))
+				 file))
+			     (list "oboe.snd" "pistol.snd") #t))
+	 (lambda args (display args)))
 
   (if (and (provided? 'snd-threads)
 	   (provided? 's7))
@@ -58736,7 +58741,7 @@ EDITS: 1
 		   (XmTabListFree tabl)))
 	       
 	       (let ((hname (host-name))) ; from snd-motif.scm
-		 (if (not (string=? hname (getenv "HOSTNAME")))
+		 (if (not (equal? hname (getenv "HOSTNAME")))
 		     (snd-display ";host name appears to be ~A or maybe ~A" hname (getenv "HOSTNAME"))))
 	       (let ((blu (x->snd-color "blue")))
 		 (if (not (Pixel? blu)) (snd-display ";x->snd-color can't find blue! ~A" blu))
@@ -61173,6 +61178,7 @@ EDITS: 1
 	   (show-sounds-in-directory)
 					;(show-all-atoms)
      )))
+
 
 
 ;;; ---------------- test 26: Gtk --------------------
@@ -64652,7 +64658,7 @@ EDITS: 1
 			   (car args))))
 		gtk-procs1))
 	     (list 1.5 "/hiho" (list 0 1) 1234  '#(0 1) 3/4 'mus-error (sqrt -1.0) (make-delay 32)
-		   (lambda () #t) (make-sound-data 2 3) :order 0 1 -1 (make-hook 2) #f #t '() (make-vector 0) 12345678901234567890))
+		   (lambda () #t) (make-sound-data 2 3) :order 0 1 -1 (make-hook 2) #f #t '() (make-vector 0)))
 	    
 	    ;; ---------------- 2 Args
 	    (for-each 
@@ -64670,9 +64676,9 @@ EDITS: 1
 			      (car args))))
 		   gtk-procs2))
 		(list 1.5 "/hiho" (list 0 1) 1234  '#(0 1) 3/4 
-		      (sqrt -1.0) (make-delay 32) :feedback -1 0 #f #t '() (make-vector 0) 12345678901234567890)))
+		      (sqrt -1.0) (make-delay 32) :feedback -1 0 #f #t '() (make-vector 0))))
 	     (list 1.5 "/hiho" (list 0 1) 1234  '#(0 1) 3/4 
-		   (sqrt -1.0) (make-delay 32) :frequency -1 0 #f #t '() (make-vector 0) 12345678901234567890))
+		   (sqrt -1.0) (make-delay 32) :frequency -1 0 #f #t '() (make-vector 0)))
 	    
 	    (if all-args
 		(begin
@@ -64693,9 +64699,9 @@ EDITS: 1
 				       (n arg1 arg2 arg3))
 				     (lambda args (car args))))
 			    gtk-procs3))
-			 (list 1.5 "/hiho" (list 0 1) 1234 '#(0 1) (sqrt -1.0)  :start -1 0 #f #t '() 12345678901234567890)))
-		      (list 1.5 "/hiho" (list 0 1) 1234 '#(0 1) (sqrt -1.0) :phase -1 0 #f #t '() 12345678901234567890)))
-		   (list 1.5 "/hiho" (list 0 1) 1234 '#(0 1) (sqrt -1.0) :channels -1 0 #f #t '() 12345678901234567890))
+			 (list 1.5 "/hiho" (list 0 1) 1234 '#(0 1) (sqrt -1.0)  :start -1 0 #f #t '())))
+		      (list 1.5 "/hiho" (list 0 1) 1234 '#(0 1) (sqrt -1.0) :phase -1 0 #f #t '())))
+		   (list 1.5 "/hiho" (list 0 1) 1234 '#(0 1) (sqrt -1.0) :channels -1 0 #f #t '()))
 		  
 		  ;; ---------------- 4 Args
 		  (for-each 
@@ -64715,10 +64721,10 @@ EDITS: 1
 					  (n arg1 arg2 arg3 arg4))
 					(lambda args (car args))))
 			       gtk-procs4))
-			    (list 1.5 "/hiho" (list 0 1) 1234 '#(0 1) (sqrt -1.0) :start -1 0 #f #t '() 12345678901234567890)))
-			 (list 1.5 "/hiho" (list 0 1) 1234 '#(0 1) (sqrt -1.0) :phase -1 0 #f #t '() 12345678901234567890)))
-		      (list 1.5 "/hiho" (list 0 1) 1234 '#(0 1) (sqrt -1.0) :channels -1 0 #f #t '() 12345678901234567890)))
-		   (list 1.5 "/hiho" (list 0 1) 1234 '#(0 1) (sqrt -1.0) :channels -1 0 #f #t '() 12345678901234567890))
+			    (list 1.5 "/hiho" (list 0 1) 1234 '#(0 1) (sqrt -1.0) :start -1 0 #f #t '())))
+			 (list 1.5 "/hiho" (list 0 1) 1234 '#(0 1) (sqrt -1.0) :phase -1 0 #f #t '())))
+		      (list 1.5 "/hiho" (list 0 1) 1234 '#(0 1) (sqrt -1.0) :channels -1 0 #f #t '())))
+		   (list 1.5 "/hiho" (list 0 1) 1234 '#(0 1) (sqrt -1.0) :channels -1 0 #f #t '()))
 		  
 		  ))
 	    
@@ -64962,7 +64968,8 @@ EDITS: 1
       (begin
 	(load "s7test.scm")
 	(if all-args
-	    (s7-test-at-random))))
+	    (s7-test-at-random))
+	))
 
   (if (and (provided? 'gsl)
 	   (provided? 'gmp)
@@ -65455,7 +65462,6 @@ EDITS: 1
 ;	(snd-display ";8: ~A~%;10: ~A" procs8 procs10)
 	
 	(reset-almost-all-hooks)
-	
 	
 	(do ((test-28 0 (+ 1 test-28)))
 	    ((= test-28 tests))
@@ -66623,6 +66629,7 @@ EDITS: 1
 	  
 	  (if (and all-args (= test-28 0))
 	      (begin
+
 		(for-each
 		 (lambda (arg1)
 		   (for-each 

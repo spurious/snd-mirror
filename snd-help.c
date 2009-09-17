@@ -545,11 +545,12 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+17-Sep:  Snd 10.9.\n\
+10-Sep:    removed show-backtrace (it is #t now). default optimization is now 6.\n\
 9-Aug:   Snd 10.8.\n\
 12-Jul:  frame, mixer, and sound-data objects are set-applicable.\n\
          added frame and mixer functions like vct: (frame .1 .2)\n\
 6-Jul:   Snd 10.7\n\
-2-Jul:   default audio in Linux is now ALSA.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*:\n    '", features, "\n\n",
@@ -3498,6 +3499,7 @@ char *word_wrap(const char *text, int widget_len)
   bool move_paren = false;
   int in_paren = 0;
 #endif
+
   old_len = mus_strlen(text);
   new_len = old_len + 64;
   desired_len = (int)(widget_len * .8);

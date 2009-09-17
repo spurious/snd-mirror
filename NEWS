@@ -1,172 +1,25 @@
-Snd 10.8
+Snd 10.9
 
-Rick fixed the windows build process for sndlib; added sndlib.sln.
+Kjetil improved the rt stuff.
+added env.scm to sndlib (for jcvoi.scm).
+optimization now defaults to 6.
+show-backtrace removed.
 
-Kjetil and Mike made numerous improvements.
+s7: *error-info* for better error reporting. 
+    vector-for-each, vector-map, string-for-each
+    generic map, for-each
 
+added s7-slib-init.scm: slib support.  It assumes getenv, file-exists?, and system
+  are provided elsewhere (this is the case if s7 is running in Snd or sndlib).
 
-in s7, sound-data, frame, mixer objects are set-applicable (like vectors and vcts).
-Also strings, lists, and hash-tables are set-applicable.  This has the somewhat 
-  strange side effect that (apply "hi" '(1)) returns #\i, since strings are applicable.
-  I think the syntax is pretty:
+added s7.html
+  s7: with-environment, true multiple-values, vectors can have > 2^31 elements (you'll 
+      need a lot of memory).  multiple-value-bind and multiple-value-set!.
 
-      (let ((lst (list 1 2 3)))
-        (set! (lst 1) 32)
-        (list (lst 0) (lst 1)))
-      -> '(1 32)
+checked:  gtk 2.17.7|8|9|10|11, guile 1.9.2|3, sbcl 1.0.31, gsl 1.13
 
-      (let ((hash (make-hash-table)))
-        (set! (hash 'hi) 32)
-        (hash 'hi))
-      -> 32
+  in sbcl, something has changed in the double float array handling, so functions
+  like convolution can't be called from lisp.  The instruments seem to be ok.
+  (The two use the same calling sequence so I'm a bit mystified).
 
-  but even better, vector arithmetic is almost readable, and you can write (for example)
-  a generic FFT that can take vectors, vcts, frames, lists, etc.  I wonder if I should
-  extend the "setter" idea to things like imag-part or numerator.  One thing I haven't
-  looked into yet: (set! ((lst 0) 0) 1) which I guess is set-caar!
-
-s7 length is generic, also added generic copy and fill!.
-
-added sort! for lists or vectors (it uses C's qsort internally, and list arguments are 
-  always copied -- it's really vector-sort!).
-  
-added frame and mixer, paralleling functions like vct and list:
-  (frame .1 .2) = (make-frame 2 .1 .2) etc
-
-added profiling option (--with-profiling in configure) to s7.  profile
-  function in extensions.scm.  This could be greatly elaborated, if
-  it's of interest.
-
-added trace, untrace, break and __func__ to s7. The __func__ info made it possible
-  to remove the backtrace facility altogether: backtracing, backtrace, set-backtrace-length,
-  clear-backtrace, and list-line-number have been removed.  These are replaced by
-  the stacktrace function, callable from within a break or error handler.
-  stacktrace (and error position info) still needs a lot of work.
-
-added macroexpand.
-    > (define-macro (hi a) `(+ ,a 1))
-    hi
-    > (macroexpand (hi 32))
-    (+ 32 1)
-
-removed gc-verbose, and load-verbose replaced by *load-hook*.  Error handling can
-  be specialized via *error-hook*.
-
-C-\ in the Snd terminal breaks out of evaluator infinite loops (s7 only).
-
-In the s7 C API: 
-  s7_define_function_star: define* at C-level, handling keywords, argument order, etc.
-  s7_define_macro: define a macro at C-level.  
-  s7_new_type_x: extended version of the C-level new type creator (length, copy, fill).
-  lower-case versions of s7_T and friends (I'll probably remove the upper-case versions someday).
-
-read-hook (in s7-Snd) has changed (the other cases are not changed).
-
-the ubiquitous Float type is now named mus_float_t (new sndlib major version: 21),
-  and off_t has been changed to mus_long_t.  Wherever possible I'm using either 
-  int64_t or long long int, rather than off_t.
-
-added all the non-Snd-specific instrument files to the sndlib tarball:
-  analog-filter.scm|rb, animals.scm, bird.scm|rb|fsm, clm.fs, clm-ins.scm|rb|fs, dlocsig.scm|rb,
-  fade.scm, freeverb.scm|rb, generators.scm, grani.scm, jcrev.scm, jcvoi.scm,
-  maraca.scm|rb, maxf.scm|rb, moog.scm, noise.scm|rb, piano.scm|rb, prc95.scm|rb,
-  pvoc.scm|rb, singer.scm|rb, sndwarp.scm, spectr.scm|rb|fs, stochastic.scm, strad.scm|rb,
-  v.scm|rb.  Also split out expandn, fullmix, and nrev from clm-ins.scm into separate files.
-  Mike brought the sndins directory up to date.
-
-added "encapsulators" to s7:
-   open-encapsulator, close-encapsulator, (obj) to restore, encapsulator-bindings
- 
-   (define-macro (encapsulate . body) 
-      (let ((encap (gensym)))
-        `(let ((,encap (open-encapsulator)))
-           (dynamic-wind
-              (lambda () 
-	        #f)
-              (lambda () 
-	        ,@body)
-              (lambda () 
-	        ((,encap))  ; restore saved vars
-                (close-encapsulator ,encap))))))
- 
-    This evaluates "body", then returns any variables global to that code to their prior value:
-
-        > (define global-x 32)
-        global-x
-        > (encapsulate 
-            (set! global-x 123) 
-            (format #f "x: ~A" global-x))
-        "x: 123"
-        > global-x
-        32
-
-    There are three or maybe four reasons for encapsulators (rather than, say, fluid-let).
-    The main one is that it's a neat idea: a sort of data-side continuation.  open-encapsulator
-    remembers the overall environment at the point it is called, returning an encapuslator
-    object.  Whenever we want to return to that data state, we call that object as a thunk.
-    encapsulator-bindings returns the alist of variables awaiting restoration.  Once called,
-    that list is cleared, and the encapsulator starts saving values again (so repeated calls
-    keep returning you to that data state).  close-encapsulator turns that encapsulator off.
-    In a REPL, for example, you could save the initial state, then return to it at any time,
-    without restarting the interpreter.  fluid-let is not what we want here because it has
-    a body, and requires that you list in advance what variables you want to protect (and
-    besides, it's not really a let (it uses "set!") and I can't see anything fluid about it).
-    By tracing the encapsulator object, we can see every set! within some piece of code.
-    This encapsulation is not complete: I haven't finished making Snd/CLM objects work
-    with it, and some Scheme constructs aren't handled yet: (string-set! (vector-ref...))
-    for example. 
-
-
-    Another idea that strikes me as interesting: define!
-      
-      (define! env var value)
-
-    would bind var to value in the environment env (it changes env, hence the "!").  Currently, 
-    if you want 2 functions to share a local variable, you have to establish the names in the 
-    outer environment by hand:
-
-        (define proc1 #f)
-        (define proc2 #f)
-        (let ((local-var 32))
-          (set! proc1 (lambda () (+ local-var 1)))
-          (set! proc2 (lambda () (- local-var 1))))
-
-    You can't use
-
-        (begin
-          (define local-var 23)
-          (define (proc1) (+ local-var 1))
-          (define (proc2) (- local-var 1)))  
-
-    because local-var is also defined outside the "begin".  With define! you could:
-
-        (let ((e (current-environment))) ; or (global-environment) to make them global
-          (let ((local-var 32))
-            (define! e (proc1) (+ local-var 1))
-            (define! e (proc2) (- local-var 1))))
-
-    This could replace the notions of library and module, I think.  A file could be
-    enclosed in a let, keeping everything local to that file except stuff that is
-    defined via define!.
-
-    Or... (env-let env (...) body) evaluates its bindings and body in the context
-    of the environment env.  Or environments as "first class" objects (see extend-environment
-    in s7.h, for example).  Or...
-
-    One last idea: emacs 23 apparently supports the XEmbed protocol, so I think
-    it is now possible to do what I had hoped to do in 1996: use emacs as the
-    snd listener (within Snd).  To communicate between Snd and Emacs it might still
-    be necessary to treat Snd as an emacs subjob, but the emacs window would be
-    inside the Snd app.
-
-
-cmn works in ECL 9.7.1.
-ruby 1.9 works as Snd's extension language.
-guile 1.9 works, but is not very useful: the run macro does not work, nor does ws.scm.
-using Motif 2.3.2 (CVS at sourceforge), the listener is at the top for some reason.
-
-
-Checked: gtk 2.17.3|4|5|6, fth 1.2.5|6, fftw 3.2.2, guile 1.9.1, openmotif 2.3.2, clisp 2.48,
-         autoconf 2.64, sbcl 1.0.30, ecl 9.7.1
-
-Thanks!: Mike Scholz, Rick Taube, Kjetil Matheussen, Markus Eichhoff, W Andrew Burnson
+Thanks!: Rick Taube, Ralf Mattes, Kjetil Matheussen, Mike Scholz

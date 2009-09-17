@@ -1401,8 +1401,14 @@ static s7_pointer new_cell(s7_scheme *sc)
 	  if (sc->heap_size < 512000)
 	    sc->heap_size *= 2;
 	  else sc->heap_size += 512000;
+
 	  sc->heap = (s7_cell **)realloc(sc->heap, (sc->heap_size + 1) * sizeof(s7_cell *));
+	  if (!(sc->heap))
+	    fprintf(stderr, "heap reallocation failed! tried to get %d bytes\n", (sc->heap_size + 1) * sizeof(s7_cell *));
+
 	  sc->free_heap = (s7_cell **)realloc(sc->free_heap, sc->heap_size * sizeof(s7_cell *));
+	  if (!(sc->heap))
+	    fprintf(stderr, "free heap reallocation failed! tried to get %d bytes\n", sc->heap_size * sizeof(s7_cell *));	  
 
 	  for (k = old_size; k < sc->heap_size; k++)
 	    {
@@ -19623,6 +19629,7 @@ static s7_pointer big_sqrt(s7_scheme *sc, s7_pointer args)
 		  return(s7_make_object(sc, big_integer_tag, (void *)n));
 		}
 	      free(n);
+	      mpz_clear(rem);
 	      p = promote_number(sc, T_BIG_REAL, p);
 	    }
 	}
@@ -19656,6 +19663,9 @@ static s7_pointer big_sqrt(s7_scheme *sc, s7_pointer args)
 		      return(s7_make_object(sc, big_ratio_tag, (void *)n));
 		    }
 		}
+	      mpz_clear(n1);
+	      mpz_clear(rem);
+
 	      p = promote_number(sc, T_BIG_REAL, p);
 	    }
 	}
