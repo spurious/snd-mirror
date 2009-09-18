@@ -1,10 +1,7 @@
 Snd
 
 Snd is a sound editor.  It currently runs on nearly all
-Unix-based systems, including Mac OSX and Cygwin.  It might
-even run on others if the GUI support is omitted.
-
-
+Unix-based systems, including Mac OSX and Cygwin.
 To build Snd, get the sources from
 
   ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-10.tar.gz
@@ -17,7 +14,7 @@ To build Snd, get the sources from
   make install
 
 
-The configure script has several Snd-related arguments:
+The configure script has a bunch of arguments:
 
    Extension language:
 
@@ -82,6 +79,7 @@ The configure script has several Snd-related arguments:
    Numerics:
 
      --with-doubles            use doubles throughout (default is floats)
+
      --with-gmp                use gmp, mpfr, and mpc to implement multiprecision arithmetic
 
      --with-float-samples      represent samples internally as floats (default=yes)
@@ -722,10 +720,13 @@ ordinary shell, use the open-x11 command:
 
   open-x11 snd
 
+or (in later versions of OSX) just start snd, and X should start automatically.
+
 To install X11, first, install the X11SDK and X11User packages.  
 The first is in one of the Installer directories, the second (in 10.4) 
 is on the first install disk under System/Installation/Packages/X11User.pkg 
 or some such name.  These give you the X11 server and its header files.
+
 
 There are several ways to go from here; the simplest is probably
 to use Darwin Ports as outlined by Hans Fugal:
@@ -747,7 +748,9 @@ If you get some complaint about identifiers that look like they come
 from libSM or libICE, add -lICE -lSM to the end of the library
 list in the makefile.
 
-You might also need to fixup the guile portion of the makefile:
+
+If you're using Guile, you might also need to fixup the guile 
+portion of the makefile:
 
 XEN_LIBS = -L/usr/local/lib -lguile -lm -lguile-ltdl -ldl
 
@@ -755,6 +758,7 @@ or, in the fink case:
 
 XEN_LIBS = -L/sw/lib -lguile -lm /sw/lib/libguile.a
 XEN_CFLAGS = -I/sw/include/
+
 
 
 If C-f (and other such commands) doesn't work, either try toggling
@@ -765,7 +769,7 @@ to your initialization file:
 (focus-follows-mouse)
 
 
-If the openmotif package forgot to include libXm.a, a version is
+If the openmotif package forgot to include libXm.a (Motif), a version is
 at ccrma-ftp.  If the Mac loader complains that it it out of date,
 run ranlib: ranlib libXm.a (you may need to admin privileges to do this).
 
@@ -920,3 +924,7 @@ MOTIF_LIBS =  -L/usr/X11/lib -R/usr/X11/lib  -lSM -lICE -lXft -lXmu -lfontconfig
 
 (the X11R6-old business came about because I didn't remake libXm, but the OSX installation
 process moved the previous X11R6 directory to X11R6 1, which is untypable).
+
+
+(s7 has replaced guile -- if I were building Snd on a Mac, I'd just
+ignore all the guile stuff above).

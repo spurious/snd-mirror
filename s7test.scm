@@ -2521,7 +2521,7 @@
 (test (let* ((x '(1 2 3)) (y (append x '()))) (eq? x y)) #f) ; check that append returns a new list
 (test (let* ((x '(1 2 3)) (y (append x '()))) (equal? x y)) #t)
 (test (let* ((x (list 1 2 3)) (y (append x (list)))) (eq? x y)) #f) 
-
+(test (append '(1) 2) '(1 . 2))
 
 
 (test (memq 'a '(a b c)) '(a b c))
@@ -4612,6 +4612,42 @@
         (+ x (let* ((x 8) (y x) )(+ x y (let* ((x 9) (y x) (z y) )(+ x ))))))))))))))))))))
       49)
 
+(test (let func ((a 1) (b 2)) (set! b a) (if (> b 0) (func (- a 1) b)) b) 1)
+(test (let func ((a 1) (b 2)) (set! b a) (if (> b 0) (func (- a 1) b) b)) 0)
+(test (let loop ((numbers '(3 -2 1 6 -5))
+           (nonneg '())
+           (neg '()))
+  (cond ((null? numbers) (list nonneg neg))
+        ((>= (car numbers) 0)
+         (loop (cdr numbers)
+               (cons (car numbers) nonneg)
+               neg))
+        ((< (car numbers) 0)
+         (loop (cdr numbers)
+               nonneg
+               (cons (car numbers) neg)))))   
+      '((6 1 3) (-5 -2)))
+(test (let ((b '(1 2 3)))
+  (let* ((a b)
+         (b (cons 0 a)))
+    (let b ((a b))
+      (if (null? a)
+           'done
+            (b (cdr a))))))
+      'done)
+(test (let lp ((x 1000))
+            (if (positive? x)
+                (lp (- x 1))
+                x))
+      0)
+(test (let func ((a 1) (b 2) (c 3)) (+ a b c (if (> a 1) (func (- a 1) (- b 1) (- c 1)) 0))) 6)
+(test (let func ((a 1) (b 2) (c 3)) (+ a b c (if (> a 0) (func (- a 1) (- b 1) (- c 1)) 0))) 9)
+(test (let func () 1) 1)
+(test (let ((a 1)) (let func () (if (> a 1) (begin (set! a (- a 1)) (func)) 0))) 0)
+(test (let func1 ((a 1)) (+ (let func2 ((a 2)) a) a)) 3)
+(test (let func1 ((a 1)) (+ (if (> a 0) (func1 (- a 1)) (let func2 ((a 2)) (if (> a 0) (func2 (- a 1)) 0))) a)) 1)
+(test (let func ((a (let func ((a 1)) a))) a) 1)
+
 
 
 
@@ -4755,6 +4791,18 @@
 	      (list r s))))
       '((1 2 3 4 5 6 7 8) (1 2 3 4 -1 6 7 8)))
 
+(test (let ((count 0))
+        (let ((first-time? #t)
+              (k (call/cc values)))
+          (if first-time?
+              (begin
+                (set! first-time? #f)
+                (set! count (+ count 1))
+                (k values))
+              (void)))
+        count)
+      2)
+
 (test (call/cc (lambda (c) (0 (c 1)))) 1)
 (test (call/cc (lambda (k) (k "foo"))) "foo")
 (test (call/cc (lambda (k) "foo")) "foo")
@@ -4805,14 +4853,6 @@
 		(c 0))
 	      (+ x y))))
       0)
-
-(test (letrec ((x (call/cc list)) 
-	       (y (call/cc list)))
-	(cond ((procedure? x) (x (pair? y)))
-	      ((procedure? y) (y (pair? x))))
-	(let ((x (car x)) (y (car y)))
-	  (and (call/cc x) (call/cc y) (call/cc x))))
-      #t)
 
 (test (letrec ((x (call-with-current-continuation
 		   (lambda (c)
@@ -6676,6 +6716,7 @@
       (test (let () (define* (hi a . b) a) (procedure-arity hi)) '(0 1 #t))
       (test (let () (define* (hi (a 1) (b 2)) a) (procedure-arity hi)) '(0 2 #f))
       (test (let ((hi (lambda* (a) 1))) (procedure-arity hi)) '(0 1 #f))
+      (test (call/cc (lambda (func) (procedure-arity func))) '(0 0 #t))
 
       (for-each
        (lambda (arg)
@@ -36025,6 +36066,7 @@
 	   (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f #t (lambda (a) (+ a 1)))))
       
       (test (cons 1 . 2) 'error)
+;      (test '(1 . 2 . 3) 'error) ; gets reader error which is inconvenient
       (test (car (list)) 'error)
       (test (car '()) 'error)
       (test (cdr (list)) 'error)
@@ -37036,6 +37078,13 @@
       (test (let ('a 3) 1) 'error)
       (test (let 'a 1) 'error)
       ;; what about: (let ('1 ) 1)
+
+      (test (let func ((a 1) . b) a) 'error)
+      (test (let func ((a 1) . b) (if (> a 0) (func (- a 1) 2 3) b)) 'error)
+      (test (let func ((a . 1)) a) 'error)
+      (test (let func (a . 1) a) 'error)
+      (test (let ((a 1) . b) a) 'error)
+      (test (let* ((a 1) . b) a) 'error)
       
       (test (call/cc (lambda () 0)) 'error)
       (test (call/cc (lambda (a) 0) 123) 'error)
@@ -40946,7 +40995,7 @@ expt error > 1e-6 around 2^-46.506993328423
        ops)))
 
   (let ((ops (list 'lambda 'define 'quote 'if 'begin 'set! 'let 'let* 'letrec 'cond 'case 'and 'or 'do
-		   'call/cc 'apply 'for-each 'map 'values 'call-with-values 'dynamic-wind))
+		   'call/cc 'apply 'for-each 'map 'values 'dynamic-wind))
 
 	(args (list #t #f 
 		    -1 0 1 1.5 1.0+1.0i 3/4 (expt 2 30)
@@ -41176,5 +41225,9 @@ expt error > 1e-6 around 2^-46.506993328423
 ;;; I think this is a bug in mpfr
 
 
-
-
+;;; guile/s7 accept: (call/cc (lambda (a . b) (a 1))) -> 1
+;;; same:            (call/cc (lambda (a b c) (a 1))) -> too many args
+;;; same:            (call/cc (lambda (a b) (a 1))) -> same
+;;; same:            (call/cc (lambda arg ((car arg) 1))) -> 1
+;;; (call/cc (lambda () 1)) -> error?
+;;; this should work I think: (begin (define (hi) (call/cc func)) (define (func a) (a 1)))

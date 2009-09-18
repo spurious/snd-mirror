@@ -1393,6 +1393,8 @@ Reverb-feedback sets the scaler on the feedback.
 (define color-selector-dialog #f)
 (define color-selectors '())
 
+;; this doesn't work in the --with-cairo Snd -- needs conversion from GdkColor* to color_t
+
 (define (make-color-selector-dialog)
   (if (not color-selector-dialog)
       (let ((dismiss-button (gtk_button_new_with_label "Go Away"))

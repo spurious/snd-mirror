@@ -45,7 +45,7 @@
  *        no inexact integer or ratio (so, for example, truncate returns an exact integer), no exact complex or exact real
  *           (exact? has no obvious meaning in regard to complex numbers anyway -- are we referring to the polar or
  *            the rectangular form, and are both real and imaginary parts included? -- why can't they be separate?)
- *           In s7, exact? is a synonym for rational?
+ *           In s7, exact? is a synonym for rational?, inexact->exact is a synonym for rationalize.
  *           Also, why isn't 1e2 considered exact?  The e2 business is 10^2 -- not a float!
  *        '#' does not stand for an unknown digit, and the '@' complex number notation is ignored
  *           I also choose not to include numbers such as +i (= 0+i) -- include the real part!
@@ -77,7 +77,7 @@
  *        symbol-calls if profiling is enabled
  *        stacktrace, trace and untrace, __func__, macroexpand
  *            as in C, __func__ is the name of the function currently being defined.
- *        length is generic, also added generic copy, fill!, map, for-each
+ *        length, copy, fill!, map, for-each are generic
  *        vector-for-each, vector-map, string-for-each, for-each of any applicable object
  *
  *   things I ought to add/change:
@@ -90,6 +90,7 @@
  *        hooks?
  *        cerror ("error/cc"?) -- tag = continuation in this case,
  *          and error handler makes it accessible (as well as error context) for eval
+ *        promise? (also force -> some name matching the notion of a promise)
  *
  *
  * Mike Scholz provided the FreeBSD support (complex trig funcs, etc)
@@ -557,7 +558,7 @@ struct s7_scheme {
 
 
 #define T_UNTYPED       0
-#define T_NIL_TYPE      1
+#define T_NIL           1
 #define T_STRING        2
 #define T_NUMBER        3
 #define T_SYMBOL        4
@@ -1509,7 +1510,7 @@ void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
       break;
 
     case T_UNTYPED:
-    case T_NIL_TYPE:
+    case T_NIL:
     case T_BOOLEAN:
       return;
 
@@ -2534,6 +2535,20 @@ static void check_for_dynamic_winds(s7_scheme *sc, s7_pointer c)
 static s7_pointer g_call_cc(s7_scheme *sc, s7_pointer args)
 {
   #define H_call_cc "(call-with-current-continuation ...) needs more than a one sentence explanation"
+  s7_pointer proc_args;
+
+  /* car(args) is the procedure passed to call/cc */
+  
+  if (!is_procedure(car(args)))                      /* this includes continuations */
+    return(s7_wrong_type_arg_error(sc, "call/cc", 1, car(args), "a procedure"));
+
+  proc_args = s7_procedure_arity(sc, car(args));
+  if ((s7_integer(car(proc_args)) > 1) ||
+      ((s7_integer(car(proc_args)) == 0) &&
+       (s7_integer(cadr(proc_args)) == 0) &&
+       (caddr(proc_args) == sc->F)))
+    return(s7_error(sc, sc->ERROR, make_list_2(sc, s7_make_string(sc, "call/cc procedure should take one argument"), car(args))));
+
   sc->code = car(args);
   sc->args = make_list_1(sc, s7_make_continuation(sc));
   push_stack(sc, OP_APPLY, sc->args, sc->code);
@@ -2546,7 +2561,11 @@ static s7_pointer g_call_with_exit(s7_scheme *sc, s7_pointer args)
   #define H_call_with_exit "(call-with-exit ...) is a simplified call/cc"
   
   /* (call-with-exit (lambda (return) ...)) */
+  /* perhaps "call/exit"? */
   
+  if (!is_procedure(car(args)))                      /* this includes continuations */
+    return(s7_wrong_type_arg_error(sc, "call-with-exit", 1, car(args), "a procedure"));
+
   sc->code = car(args);                              /* the lambda form */
   sc->args = make_list_1(sc, s7_make_goto(sc));      /*   the argument to the lambda (the goto = "return" above) */
   push_stack(sc, OP_APPLY, sc->args, sc->code);      /* apply looks at sc->code to decide what to do (it will see the lambda) */
@@ -8771,7 +8790,7 @@ static char *s7_atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
 	return(s7_strdup("#t"));
       return(s7_strdup("#f"));
 
-    case T_NIL_TYPE:
+    case T_NIL:
       return(s7_strdup("()"));
   
     case T_UNTYPED:
@@ -11649,8 +11668,10 @@ s7_pointer s7_procedure_arity(s7_scheme *sc, s7_pointer x)
 		       s7_make_integer(sc, pws_get_opt_args(x)),
 		       sc->F));
   
-  if (s7_is_applicable_object(x))
+  if ((s7_is_applicable_object(x)) ||
+      (s7_is_continuation(x)))
     return(make_list_3(sc, small_int(sc, 0), small_int(sc, 0), sc->T));
+
   return(sc->NIL);
 }
 
@@ -13250,7 +13271,7 @@ static const char *s7_type_name(s7_pointer arg)
 {
   switch (type(arg))
     {
-    case T_NIL_TYPE:     return("nil");
+    case T_NIL:          return("nil");
     case T_UNTYPED:      return("untyped");
     case T_BOOLEAN:      return("boolean");
     case T_STRING:       return("string");
@@ -13315,7 +13336,7 @@ s7_pointer s7_wrong_type_arg_error(s7_scheme *sc, const char *caller, int arg_n,
   typ = s7_type_name(arg);
   if ((typ[0] == 'a') || (typ[0] == 'e') || (typ[0] == 'i') || (typ[0] == 'o') || (typ[0] == 'u'))
     a_or_an = "an ";
-  if ((type(arg) == T_NIL_TYPE) || (type(arg) == T_UNTYPED))
+  if ((type(arg) == T_NIL) || (type(arg) == T_UNTYPED))
     a_or_an = "";
 
   len = safe_strlen(descr) + safe_strlen(caller) + 64;
@@ -16276,6 +16297,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  goto EVAL;
 	} 
 
+      if (sc->code != sc->NIL)                  /* (let* ((a 1) . b) a) */
+	return(eval_error(sc, "let var list improper?: ~A", sc->code));
+
       sc->args = safe_reverse_in_place(sc, sc->args);
       sc->code = car(sc->args);
       sc->args = cdr(sc->args);
@@ -16369,6 +16393,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  sc->args = sc->NIL;
 	  goto EVAL;
 	} 
+
+      if (sc->code != sc->NIL)                    /* (let* ((a 1) . b) a) */
+	return(eval_error(sc, "let* var list improper?: ~A", sc->code));
 
       sc->code = sc->args;
       sc->args = sc->NIL;
@@ -17505,7 +17532,9 @@ static void mark_s7(s7_scheme *sc)
 #endif
 
 
-/* -------------------------------- gmp/mpfr/mpc -------------------------------- */
+
+
+/* -------------------------------- multiprecision arithmetic -------------------------------- */
 
 #if WITH_GMP
 
@@ -17514,6 +17543,7 @@ static void mark_s7(s7_scheme *sc)
  *
  * mpc changed a lot in version 0.6, so we need to provide backwards compatibility (without any autoconf switches) 
  *   they also left a dangling declaration of mpc_default_prec, so we have to provide a different name
+ * in 0.7 they removed MPC_IM and MPC_RE, and replaced them with mpc_imagref and mpc_realref.
  */
 
 #if defined(MPC_VERSION_MAJOR) && defined(MPC_VERSION_MINOR)
@@ -17548,6 +17578,11 @@ static void mpc_init_set_ui_ui(mpc_ptr z, unsigned long int x, unsigned long int
 #else
 #define TRIG_TYPE void
 #define mpc_set_default_precision(Prec) mpc_set_default_prec(Prec)
+#endif
+
+#ifndef MPC_IM
+#define MPC_IM(x) mpc_imagref(x)
+#define MPC_RE(x) mpc_realref(x)
 #endif
 
 /* -------------------------------------------------------------------------------- */
@@ -21940,7 +21975,7 @@ s7_scheme *s7_init(void)
   sc->UNSPECIFIED = &sc->_UNSPECIFIED;  
   sc->UNDEFINED = &sc->_UNDEFINED;
 
-  set_type(sc->NIL, T_NIL_TYPE | T_ATOM | T_GC_MARK | T_IMMUTABLE | T_SIMPLE | T_DONT_COPY);
+  set_type(sc->NIL, T_NIL | T_ATOM | T_GC_MARK | T_IMMUTABLE | T_SIMPLE | T_DONT_COPY);
   car(sc->NIL) = cdr(sc->NIL) = sc->UNSPECIFIED;
   
   set_type(sc->T, T_BOOLEAN | T_ATOM | T_GC_MARK | T_IMMUTABLE | T_SIMPLE | T_DONT_COPY);

@@ -546,7 +546,7 @@ void about_snd_help(void)
 		"\nRecent changes include:\n\
 \n\
 17-Sep:  Snd 10.9.\n\
-10-Sep:    removed show-backtrace (it is #t now). default optimization is now 6.\n\
+10-Sep:  removed show-backtrace (it is #t now). default optimization is now 6.\n\
 9-Aug:   Snd 10.8.\n\
 12-Jul:  frame, mixer, and sound-data objects are set-applicable.\n\
          added frame and mixer functions like vct: (frame .1 .2)\n\
