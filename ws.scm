@@ -1166,7 +1166,9 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 	     (do ((chn 0 (+ 1 chn)))
 		 ((= chn chns))
 	       (let ((lchn chn))
-		 (set! threads (cons (make-thread (lambda () (func snd lchn))) threads))))
+		 (set! threads (cons (make-thread (lambda () 
+						    (func snd lchn))) 
+				     threads))))
 	     (for-each 
 	      (lambda (expr) 
 		(join-thread expr))

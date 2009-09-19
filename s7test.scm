@@ -6744,6 +6744,7 @@
 
       (test (+ (eval `(values 1 2 3)) 4) 10)
       (test (+ (eval-string "(values 1 2 3)") 4) 10)
+      (test (+ 1 (eval-string "(+ 2 3)") 4) 10)
 
       (test (string=? (procedure-documentation abs) "(abs x) returns the absolute value of the real number x") #t)
       (test (string=? (procedure-documentation 'abs) "(abs x) returns the absolute value of the real number x") #t)
@@ -6791,6 +6792,13 @@
 	(test (list? '(((hi 1)))) #t)
 	(test (equal? (vector (hi 1)) '#(2)) #t)
 	(test (symbol? (vector-ref '#(hi) 0)) #t))
+
+      (test (promise? (make-promise (+ 1 2))) #t)
+      (for-each
+       (lambda (arg)
+	 (test (promise? arg) #f))
+       (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi '#(()) (list 1 2 3) '(1 . 2) "hi"))
+      (test (let ((p (make-promise (+ 1 2)))) (force p) (promise? p)) #f) ; force! might be a more accurate name
 
       (test (let () (define-constant __c1__ 32) __c1__) 32)
       (test (let () __c1__) 'error)
@@ -14353,6 +14361,7 @@
 (num-test (expt (expt 0+i -1/3) -3) 0+i)
 (num-test (expt (expt 0+i -1/4) -4) 0+i)
 (num-test (expt 0+i 2) -1)
+(num-test (expt 0+i 0+i) 2.078795763507619085469556198349787700342E-1)
 (num-test (expt 0-i 2) -1)
 (num-test (expt (expt 2 0+i) (/ 0+i)) 2)
 (num-test (expt -1 1/2) 0+i)

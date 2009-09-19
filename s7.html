@@ -703,7 +703,8 @@ Here we scan the symbol table for any function that doesn't have documentation:
 a list of alists ending with a hash-table (the global environment).
 (current-environment :optional thread)
 returns the current environment (symbol bindings).  (global-environment)
-returns the top-level environment.
+returns the top-level environment.  (procedure-environment proc) returns
+the procedure proc's environment.
 Here is an example of "apropos" that accesses both environments:
 </p>
 <pre>
@@ -783,11 +784,8 @@ write "hygenic" macros:
 </p>
 <pre>
         (define-macro (mac a b) 
-          `(with-environment 
-             (cons (list (cons 'a ,a) 
-                         (cons 'b ,b))
-                   (global-environment))
-             (+ a b)))
+          `(with-environment (global-environment)
+             (+ ,a ,b)))
 </pre>
 <p>now if we rebind +, nothing goes wrong:</p>
 <pre>
@@ -947,6 +945,7 @@ we can package these up in a values call:
 
 <dt><em class=emdef>make-promise</em></dt>
 <dd><p>This is named "delay" in most Schemes, but that name belongs to CLM.
+There is also promise? which returns #t if its argument is a promise.
 </p>
 </dd>
 <br>

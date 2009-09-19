@@ -53,7 +53,7 @@
  *   deliberate difference from r5rs:
  *        modulo, remainder, and quotient take integer, ratio, or real args 
  *        lcm and gcd can take integer or ratio args
- *        delay is renamed make-promise to avoid collisions in CLM
+ *        delay is renamed make-promise to avoid collisions in CLM, also promise?
  *        continuation? function to distinguish a continuation from a procedure
  *        log takes an optional 2nd arg (base)
  *        '.' and an exponent can occur in a number in any base -- they do not mean "base 10"!  
@@ -8518,17 +8518,11 @@ static s7_pointer g_eval_string(s7_scheme *sc, s7_pointer args)
     }
 
   port = s7_open_input_string(sc, s7_string(car(args)));
+  push_stack(sc, OP_EVAL_STRING_DONE, sc->input_port, port);
   push_input_port(sc, port);
-  push_stack(sc, OP_EVAL_STRING, sc->args, sc->code);
-  eval(sc, OP_READ_INTERNAL);
-  pop_input_port(sc);
-  s7_close_input_port(sc, port);
-
-  if ((is_pair(sc->value)) &&                 /* (+ 1 (eval-string "(values 2 3)")) */
-      (car(sc->value) == sc->VALUES))
-    sc->value = splice_in_values(sc, cdr(sc->value));
-
-  return(sc->value);
+  push_stack(sc, OP_EVAL_STRING, sc->NIL, sc->NIL);
+  push_stack(sc, OP_READ_INTERNAL, sc->NIL, sc->NIL);
+  return(sc->UNSPECIFIED);
 }
 
 
@@ -8545,6 +8539,7 @@ s7_pointer s7_eval_c_string(s7_scheme *sc, const char *str)
   sc->envir = sc->global_env; 
   port = s7_open_input_string(sc, str);
   push_input_port(sc, port);
+  push_stack(sc, OP_EVAL_DONE, sc->NIL, sc->NIL);
   push_stack(sc, OP_EVAL_STRING, sc->NIL, sc->NIL);
   
   old_longjmp = sc->longjmp_ok;
@@ -11540,6 +11535,24 @@ s7_pointer s7_procedure_environment(s7_pointer p)
 }
 
 
+static s7_pointer g_procedure_environment(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer p;
+  
+  #define H_procedure_environment "(procedure-environment func) tries to return func's environment"
+  
+  if (s7_is_symbol(car(args)))
+    p = s7_symbol_value(sc, car(args));
+  else p = car(args);
+  if (!is_procedure(p))
+    return(s7_wrong_type_arg_error(sc, "procedure-environment", 0, p, "a procedure"));
+
+  if (is_closure(p) || is_closure_star(p) || is_promise(p)) 
+    return(closure_environment(p));
+  return(sc->global_env);
+}
+
+
 void s7_define_function(s7_scheme *sc, const char *name, s7_function fnc, int required_args, int optional_args, bool rest_arg, const char *doc)
 {
   s7_pointer func;
@@ -12304,6 +12317,14 @@ static s7_pointer g_is_equal(s7_scheme *sc, s7_pointer args)
   #define H_is_equal "(equal? obj1 obj2) returns #t if obj1 is equal to obj2"
   return(make_boolean(sc, s7_is_equal(car(args), cadr(args))));
 }
+
+
+static s7_pointer g_is_promise(s7_scheme *sc, s7_pointer args)
+{
+  #define H_is_promise "(promise? obj1) returns #t if obj1 is a promise (from make-promise = 'delay' in other schemes)"
+  return(make_boolean(sc, type(car(args)) == T_PROMISE));
+}
+
 
 
 
@@ -13624,6 +13645,7 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
 	  break;
 
 	case OP_UNWIND_INPUT:
+	case OP_EVAL_STRING_DONE:
 	  x = vector_element(sc->stack, i - 3); /* "code" = port that we opened */
 	  s7_close_input_port(sc, x);
 	  x = vector_element(sc->stack, i - 1); /* "args" = port that we shadowed, if not #f */
@@ -14515,7 +14537,7 @@ static void back_up_stack(s7_scheme *sc)
   if (top_op == OP_READ_QUOTE)
     pop_stack(sc);
 
-  if (top_op == OP_EVAL_STRING)
+  if (top_op == OP_EVAL_STRING) /* ?? */
     pop_stack(sc);
 }
 
@@ -15034,6 +15056,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        *    needs to be sure to get rid of the trailing white space before checking for EOF
        *    else it tries to eval twice and gets "attempt to apply 1?, line 2"
        */
+      /*
+	  fprintf(stderr, "%s, point: %d, len: %d (%c)\n", 
+		  s7_object_to_c_string(sc, sc->value),
+		  port_string_point(sc->input_port), port_string_length(sc->input_port),
+		  port_string(sc->input_port)[port_string_point(sc->input_port)]);
+      */
       if ((sc->tok != TOKEN_EOF) && 
 	  (port_string_point(sc->input_port) < port_string_length(sc->input_port))) /* ran past end somehow? */
 	{
@@ -15048,17 +15076,29 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      push_stack(sc, OP_EVAL_STRING, sc->NIL, sc->value);
 	      push_stack(sc, OP_READ_INTERNAL, sc->NIL, sc->NIL);
 	    }
-	  else push_stack(sc, OP_EVAL_STRING_DONE, sc->NIL, sc->value);
 	}
-      else push_stack(sc, OP_EVAL_STRING_DONE, sc->NIL, sc->value);
+
       sc->code = sc->value;
       goto EVAL;
+
+      /* (catch #t (lambda () (eval-string ".")) (lambda args args)) */
       
       
-    case OP_EVAL_DONE:
     case OP_EVAL_STRING_DONE:
-     return(sc->F);
-      
+      pop_input_port(sc);
+      s7_close_input_port(sc, sc->code);          /* set in g_eval_string push_stack as sc->code */
+
+      if ((is_pair(sc->value)) &&                 /* (+ 1 (eval-string "(values 2 3)")) */
+	  (car(sc->value) == sc->VALUES))
+	sc->value = splice_in_values(sc, cdr(sc->value));
+
+      pop_stack(sc);
+      goto START;
+
+
+    case OP_EVAL_DONE:
+      return(sc->F);
+
 
     case OP_LIST_FOR_EACH:
       sc->x = sc->args; /* save lists */
@@ -22511,6 +22551,7 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "eval-string",             g_eval_string,             1, 1, false, H_eval_string);
   s7_define_function(sc, "apply",                   g_apply,                   1, 0, true,  H_apply);
   s7_define_function(sc, "force",                   g_force,                   1, 0, false, H_force);
+  s7_define_function(sc, "promise?",                g_is_promise,              1, 0, false, H_is_promise);
 
   s7_define_function(sc, "for-each",                g_for_each,                2, 0, true,  H_list_for_each);
   s7_define_function(sc, "map",                     g_map,                     2, 0, true,  H_list_map);
@@ -22533,6 +22574,7 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "help",                    g_procedure_documentation, 1, 0, false, H_procedure_documentation);
   s7_define_function(sc, "procedure-arity",         g_procedure_arity,         1, 0, false, H_procedure_arity);
   s7_define_function(sc, "procedure-source",        g_procedure_source,        1, 0, false, H_procedure_source);
+  s7_define_function(sc, "procedure-environment",   g_procedure_environment,   1, 0, false, H_procedure_environment);
   
   
   s7_define_function(sc, "not",                     g_not,                     1, 0, false, H_not);
