@@ -66,7 +66,7 @@
  *        logior, logxor, logand, lognot, ash, integer-length
  *        procedure-source, procedure-arity, procedure-documentation, help
  *        symbol-table, symbol->value, global-environment, current-environment, stack
- *        provide, provided?, defined?
+ *        provide, provided?, defined?, promise?
  *        port-line-number, port-filename
  *        object->string, eval-string
  *        reverse!, list-set!, sort!
@@ -90,7 +90,7 @@
  *        hooks?
  *        cerror ("error/cc"?) -- tag = continuation in this case,
  *          and error handler makes it accessible (as well as error context) for eval
- *        promise? (also force -> some name matching the notion of a promise)
+ *        rename "force" to some name matching the notion of a promise ("delay" and "force" are about as bad as names can get)
  *
  *
  * Mike Scholz provided the FreeBSD support (complex trig funcs, etc)
@@ -1414,12 +1414,16 @@ static s7_pointer new_cell(s7_scheme *sc)
 	  if (!(sc->heap))
 	    fprintf(stderr, "free heap reallocation failed! tried to get %d bytes\n", sc->heap_size * sizeof(s7_cell *));	  
 
-	  for (k = old_size; k < sc->heap_size; k++)
-	    {
-	      sc->heap[k] = (s7_cell *)calloc(1, sizeof(s7_cell));
-	      sc->free_heap[sc->free_heap_top++] = sc->heap[k];
-	      sc->heap[k]->hloc = k;
-	    }
+	  { 
+	    /* optimization suggested by K Matheussen */
+	    s7_cell *cells = (s7_cell *)calloc(sc->heap_size - old_size, sizeof(s7_cell));
+	    for (k = old_size; k < sc->heap_size; k++)
+	      {
+		sc->heap[k] = &cells[k - old_size];
+		sc->free_heap[sc->free_heap_top++] = sc->heap[k];
+		sc->heap[k]->hloc = k;
+	      }
+	  }
 	  sc->heap[sc->heap_size] = NULL; /* end mark for GC loop */
 	}
     }
@@ -22064,11 +22068,12 @@ s7_scheme *s7_init(void)
   sc->free_heap = (s7_cell **)malloc(sc->heap_size * sizeof(s7_cell *));
   sc->free_heap_top = INITIAL_HEAP_SIZE;
   {
+    s7_cell *cells = (s7_cell *)calloc(INITIAL_HEAP_SIZE, sizeof(s7_cell));
     for (i = 0; i < INITIAL_HEAP_SIZE; i++)
       {
-	sc->heap[i] = (s7_cell *)calloc(1, sizeof(s7_cell));
-	sc->free_heap[i] = sc->heap[i];
-	sc->heap[i]->hloc = i;
+	sc->heap[i] = &cells[i];
+ 	sc->free_heap[i] = sc->heap[i];
+ 	sc->heap[i]->hloc = i;
       }
     sc->heap[sc->heap_size] = NULL;
   }
