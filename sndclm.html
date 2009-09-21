@@ -7851,7 +7851,8 @@ position "loc".
 The "output" argument can be a vct, a sound-data object, or a function, as well as the more usual frame-&gt;file object.
 or any output-capable CLM generator.
 In with-sound, the current output is *output* and the reverb output is *reverb*.
-outa is the same as out-any with a channel of 0.
+outa is the same as out-any with a channel of 0.  It is not an error to try to write to a channel that doesn't exist;
+the function simply returns.
 </p>
 
 <p>in-any returns the sample at position "loc" in

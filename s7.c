@@ -1231,6 +1231,9 @@ static void s7_mark_object_1(s7_pointer p)
   
   switch (type(p))
     {
+    case T_UNTYPED: /* 0 actually -- a cell still being set up when the GC was triggered */
+      return;
+
     case T_VECTOR:
     case T_HASH_TABLE:
       mark_vector(p, vector_length(p));
@@ -1422,14 +1425,8 @@ static s7_pointer new_cell(s7_scheme *sc)
     }
 
   p = sc->free_heap[--(sc->free_heap_top)];
-  
-  /* originally I tried to mark each temporary value until I was done with it, but
-   *   that way madness lies... By delaying GC of _every_ %$^#%@ pointer, I can dispense
-   *   with hundreds of individual protections.
-   */
 
 #if HAVE_PTHREADS
-
   set_type(p, T_SIMPLE);
   /* currently the overall allocation of an object is not locked, so we could
    *   return a new cell from new_cell without its fields set yet, set_type to
@@ -1438,20 +1435,26 @@ static s7_pointer new_cell(s7_scheme *sc)
    *   tries to mark its cdr (for example) which is probably 0 (not a valid
    *   scheme object).  So set the type temporarily to T_SIMPLE to avoid that.
    *   Ideally, I think, we'd set the type last in all the allocations.
+   *
+   * I think this is no longer needed.
    */
+
   nsc->temps[nsc->temps_ctr++] = p;
   if (nsc->temps_ctr >= nsc->temps_size)
     nsc->temps_ctr = 0;
-
   pthread_mutex_unlock(&alloc_lock);
-
 #else
-
   sc->temps[sc->temps_ctr++] = p;
   if (sc->temps_ctr >= sc->temps_size)
     sc->temps_ctr = 0;
-
 #endif
+  /* originally I tried to mark each temporary value until I was done with it, but
+   *   that way madness lies... By delaying GC of _every_ %$^#%@ pointer, I can dispense
+   *   with hundreds of individual protections.  Using this array of temps is much faster
+   *   than using a type bit to say "newly allocated" because that protects so many cells
+   *   betweeen gc calls that we end up calling the gc twice as often overall.
+   */
+
   
   return(p);
 }
@@ -2012,8 +2015,8 @@ static s7_pointer add_to_local_environment(s7_scheme *sc, s7_pointer variable, s
 #endif
   car(x) = s7_immutable_cons(sc, variable, value);
   cdr(x) = car(sc->envir);
-  car(sc->envir) = x;
   set_type(x, T_PAIR);
+  car(sc->envir) = x;
   set_local(variable);
   return(car(x));
 } 
@@ -7963,6 +7966,7 @@ s7_pointer s7_open_input_string(s7_scheme *sc, const char *input_string)
   port_filename(x) = NULL;
   port_file_number(x) = -1;
   port_needs_free(x) = false;
+
   return(x);
 }
 
@@ -8500,8 +8504,6 @@ s7_pointer s7_add_to_load_path(s7_scheme *sc, const char *dir)
 }
 
 
-
-
 static s7_pointer g_eval_string(s7_scheme *sc, s7_pointer args)
 {
   #define H_eval_string "(eval-string str :optional env) returns the result of evaluating the string str as Scheme code"
@@ -8513,14 +8515,14 @@ static s7_pointer g_eval_string(s7_scheme *sc, s7_pointer args)
   if (cdr(args) != sc->NIL)
     {
       if (!is_pair(cadr(args)))
-	return(s7_wrong_type_arg_error(sc, "eval", 2, cadr(args), "an environment"));
+	return(s7_wrong_type_arg_error(sc, "eval-string", 2, cadr(args), "an environment"));
       sc->envir = cadr(args);
     }
 
   port = s7_open_input_string(sc, s7_string(car(args)));
   push_stack(sc, OP_EVAL_STRING_DONE, sc->input_port, port);
   push_input_port(sc, port);
-  push_stack(sc, OP_EVAL_STRING, sc->NIL, sc->NIL);
+  push_stack(sc, OP_EVAL_STRING, args, sc->NIL); /* gc protection */
   push_stack(sc, OP_READ_INTERNAL, sc->NIL, sc->NIL);
   return(sc->UNSPECIFIED);
 }
@@ -8530,16 +8532,17 @@ s7_pointer s7_eval_c_string(s7_scheme *sc, const char *str)
 {
   bool old_longjmp;
   s7_pointer port;
+
   /* this can be called recursively via s7_call */
 
   if (sc->longjmp_ok)
-    return(g_eval_string(sc, make_list_1(sc, s7_make_string(sc, str))));
+    return(g_eval_string(sc, sc->args = make_list_1(sc, s7_make_string(sc, str))));
   
   stack_reset(sc); 
   sc->envir = sc->global_env; 
   port = s7_open_input_string(sc, str);
   push_input_port(sc, port);
-  push_stack(sc, OP_EVAL_DONE, sc->NIL, sc->NIL);
+  push_stack(sc, OP_EVAL_DONE, sc->NIL, sc->NIL); 
   push_stack(sc, OP_EVAL_STRING, sc->NIL, sc->NIL);
   
   old_longjmp = sc->longjmp_ok;
@@ -8561,7 +8564,7 @@ s7_pointer s7_eval_c_string(s7_scheme *sc, const char *str)
 
 static s7_pointer call_with_input(s7_scheme *sc, s7_pointer port, s7_pointer args)
 {
-  push_stack(sc, OP_UNWIND_INPUT, sc->F, port);
+  push_stack(sc, OP_UNWIND_INPUT, sc->input_port, port);
   sc->code = cadr(args);
   sc->args = make_list_1(sc, port);
   eval(sc, OP_APPLY);
@@ -13644,13 +13647,14 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
 	    sc->output_port = x;
 	  break;
 
-	case OP_UNWIND_INPUT:
 	case OP_EVAL_STRING_DONE:
-	  x = vector_element(sc->stack, i - 3); /* "code" = port that we opened */
-	  s7_close_input_port(sc, x);
-	  x = vector_element(sc->stack, i - 1); /* "args" = port that we shadowed, if not #f */
-	  if (x != sc->F)
-	    sc->input_port = x;
+	  s7_close_input_port(sc, vector_element(sc->stack, i - 3)); /* "code" = port that we opened */
+	  pop_input_port(sc);
+	  break;
+
+	case OP_UNWIND_INPUT:
+	  s7_close_input_port(sc, vector_element(sc->stack, i - 3)); /* "code" = port that we opened */
+	  sc->input_port = vector_element(sc->stack, i - 1); /* "args" = port that we shadowed */
 	  break;
 
 	case OP_TRACE_RETURN:
@@ -15056,12 +15060,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        *    needs to be sure to get rid of the trailing white space before checking for EOF
        *    else it tries to eval twice and gets "attempt to apply 1?, line 2"
        */
-      /*
-	  fprintf(stderr, "%s, point: %d, len: %d (%c)\n", 
-		  s7_object_to_c_string(sc, sc->value),
-		  port_string_point(sc->input_port), port_string_length(sc->input_port),
-		  port_string(sc->input_port)[port_string_point(sc->input_port)]);
-      */
       if ((sc->tok != TOKEN_EOF) && 
 	  (port_string_point(sc->input_port) < port_string_length(sc->input_port))) /* ran past end somehow? */
 	{
@@ -15077,7 +15075,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      push_stack(sc, OP_READ_INTERNAL, sc->NIL, sc->NIL);
 	    }
 	}
-
       sc->code = sc->value;
       goto EVAL;
 
@@ -16566,6 +16563,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       
     case OP_FORCE:     /* Save forced value replacing promise */
+      /* in g_force, code = car(args) == the promise
+       *   it then calls apply, and then pops to here, so value == promise's value, code = promise object
+       */
       {
 	int cloc;
 	cloc = sc->code->hloc;
@@ -16583,7 +16583,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        *   self-modifying code here.  So...
        */
 
-      clear_finalizable(sc->value); /* make sure GC calls free once */
+      clear_finalizable(sc->code);                /* make sure GC calls free once */
 
       if ((is_pair(sc->value)) &&                 /* (+ (force (make-promise (values 1 2 3))) 4) */
 	  (car(sc->value) == sc->VALUES))
@@ -19716,12 +19716,13 @@ static s7_pointer big_sqrt(s7_scheme *sc, s7_pointer args)
 	    p = promote_number(sc, T_BIG_COMPLEX, p);
 	  else
 	    {
-	      mpz_t n1, d1, rem;
+	      mpz_t n1, rem;
 	      mpz_init(rem);
 	      mpz_init_set(n1, mpq_numref(S7_BIG_RATIO(p)));
 	      mpz_sqrtrem(n1, rem, n1);
 	      if (mpz_cmp_ui(rem, 0) == 0)
 		{
+		  mpz_t d1;
 		  mpz_init_set(d1, mpq_denref(S7_BIG_RATIO(p)));
 		  mpz_sqrtrem(d1, rem, d1);
 		  if (mpz_cmp_ui(rem, 0) == 0)
@@ -19737,6 +19738,7 @@ static s7_pointer big_sqrt(s7_scheme *sc, s7_pointer args)
 		      mpz_clear(rem);
 		      return(s7_make_object(sc, big_ratio_tag, (void *)n));
 		    }
+		  mpz_clear(d1);
 		}
 	      mpz_clear(n1);
 	      mpz_clear(rem);

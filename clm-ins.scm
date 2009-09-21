@@ -462,7 +462,6 @@ is a physical model of a flute:
 	 (beg (seconds->samples start))
 	 (len (seconds->samples dur))
 	 (end (+ beg len))
-	 (chns (mus-channels *output*))
 	 (flowf (make-env :envelope flow-envelope 
 			  :scaler flow 
 			  :duration (- dur decay)))
@@ -488,7 +487,6 @@ is a physical model of a flute:
 	 (set! current-difference 
 	       (+  (+ current-flow (* noise (* current-flow (rand breath))))
 		   (* fbk-scl1 delay-sig)))
-	 ;(set! current-excitation (cubic-polynomial emb-sig))
 	 (set! current-excitation (- emb-sig (* emb-sig emb-sig emb-sig)))
 	 (set! out-sig (one-pole reflection-lowpass-filter 
 				 (+ current-excitation (* fbk-scl2 delay-sig))))
@@ -498,7 +496,7 @@ is a physical model of a flute:
 	 (set! dc-blocked-a (+ (- out-sig previous-out-sig) (* 0.995 previous-dc-blocked-a)))
 	 (set! dc-blocked-b (+ (- tap-sig previous-tap-sig) (* 0.995 previous-dc-blocked-b)))
 	 (outa i (* out-scl dc-blocked-a))
-	 (if (> chns 1) (outb i (* out-scl dc-blocked-b)))
+	 (outb i (* out-scl dc-blocked-b))
 	 (set! previous-out-sig out-sig)
 	 (set! previous-dc-blocked-a dc-blocked-a)
 	 (set! previous-tap-sig tap-sig)
@@ -1168,9 +1166,8 @@ is a physical model of a flute:
 	 (comb2 (make-comb 0.733 10007))
 	 (comb3 (make-comb 0.715 10799))
 	 (comb4 (make-comb 0.697 11597))
-	 (chns (mus-channels *output*))
 	 (outdel1 (make-delay (seconds->samples .013)))
-	 (outdel2 (if (> chns 1) (make-delay (seconds->samples .011)) #f))
+	 (outdel2 (make-delay (seconds->samples .011)))
 	 (comb-sum 0.0)
 	 (comb-sum-1 0.0)
 	 (comb-sum-2 0.0)
@@ -1191,7 +1188,7 @@ is a physical model of a flute:
 		    (comb comb3 allpass-sum)
 		    (comb comb4 allpass-sum)))
 	   (outa i (delay outdel1 comb-sum))
-	   (if (> chns 1) (outb i (delay outdel2 comb-sum)))))))))
+	   (outb i (delay outdel2 comb-sum))))))))
 
 
 (definstrument (gran-synth start-time duration audio-freq grain-dur grain-interval amp)

@@ -8009,6 +8009,9 @@ mus_float_t mus_out_any_to_file(mus_any *ptr, mus_long_t samp, int chan, mus_flo
 {
   rdout *gen = (rdout *)ptr;
   
+  if ((chan >= gen->chans) || (!(gen->obufs)))
+    return(val);
+
   if (gen->safety == 1)
     {
       gen->obufs[chan][samp] += MUS_FLOAT_TO_SAMPLE(val);
@@ -8017,8 +8020,6 @@ mus_float_t mus_out_any_to_file(mus_any *ptr, mus_long_t samp, int chan, mus_flo
       return(val);
     }
 
-  if ((chan >= gen->chans) || (!(gen->obufs)))
-    return(val);
   if ((samp <= gen->data_end) &&
       (samp >= gen->data_start))
     gen->obufs[chan][samp - gen->data_start] += MUS_FLOAT_TO_SAMPLE(val);

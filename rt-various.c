@@ -30,7 +30,13 @@ int fix_stalin_c_source(char* infile, char *outfile){
        || (!isalpha(temp[0]))
        )
       if(!strcmp("#include <gc.h>\n",temp))
-        fputs("#include <rt-various.h>\n",out);
+        fputs("#include <rt-various.h>\n"
+	      "#define GC_malloc_atomic(size) tar_alloc(heap,size)\n"
+	      "#define GC_malloc(size) tar_alloc(heap,size)\n"
+	      "#define GC_malloc_atomic_uncollectable(size) tar_alloc(heap,size)\n"
+	      "#define GC_malloc_uncollectable(size) tar_alloc_uncollectable(size)\n"
+	      "#define GC_free(mem) /* */\n"
+	      ,out);
       else
         fputs(temp,out);
     else{
