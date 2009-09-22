@@ -64,7 +64,7 @@ and want a quick tour of where s7 is different:
 
 <dl>
 <dt><em class=emdef>call-with-exit and continuation?</em></dt>
-<dd><p>call-with-exit is call/cc without the ability to return (an escape or goto).
+<dd><p>call-with-exit is call/cc without the ability to return (an escape or goto, "call/exit"?).
 </p>
 <pre>
 (define (find-first-even-number arg)
@@ -609,15 +609,25 @@ set! stuff shines.  make-vector's 2nd argument can be a list of dimensions, rath
 an integer (the one dimensional case):
 </p>
 <pre>
-(make-vector (list 2 3 4))
-(make-vector '(2 3) 1.0)
-(vector-dimensions (make-vector (list 2 3 4))) -&gt; (2 3 4)
+    (make-vector (list 2 3 4))
+    (make-vector '(2 3) 1.0)
+    (vector-dimensions (make-vector (list 2 3 4))) -&gt; (2 3 4)
 </pre>
 <p>The second example includes the optional default vector element.  Once defined,
-(vect i j k) or (to be very verbose, (vector-ref vect i j k)) returns the given
-element, and (set! (vect i j k) m), (or verbose and unreadable, (vector-set! vect i j k m))
+(vect i ...) or (to be very verbose, (vector-ref vect i ...)) returns the given
+element, and (set! (vect i ...) m), (or verbose and unreadable, (vector-set! vect i ... m))
 sets that element.  vector-dimensions returns a list of the dimensions of a vector.
 </p>
+<pre>
+    (define v (make-vector '(2 3) 1.0))
+    -&gt; #(1.0 1.0 1.0 1.0 1.0 1.0)
+
+    (set! (v 0 1) 2.0)
+    -&gt; #(1.0 2.0 1.0 1.0 1.0 1.0)
+
+    (v 0 1)
+    -&gt; 2.0
+</pre>
 </dd>
 <br>
 
@@ -653,7 +663,8 @@ at startup *features* is:
 scheme function.
 procedure-documentation returns the documentation string associated with a procedure (the initial string in the
 function's body). procedure-arity returns a list describing the argument list of a function: '(required-args optional-args rest-arg).
-procedure-source returns the source (as a list) of a procedure.
+procedure-source returns the source (as a list) of a procedure. procedure-environment returns
+a procedure's environment.
 </p>
 <pre>
 &gt; (define* (add-2 a (b 32)) "add-2 adds its 2 args" (+ a b))

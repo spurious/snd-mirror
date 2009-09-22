@@ -12032,13 +12032,9 @@ if test "$with_s7" != no && test "$with_extension_language" != no && test "$ac_s
 
     $as_echo "#define HAVE_SCM_MAKE_RATIO 1" >>confdefs.h
 
-
     $as_echo "#define WITH_CASE_SENSITIVE_SYMBOL_NAMES 1" >>confdefs.h
 
     $as_echo "#define WITH_MULTIDIMENSIONAL_VECTORS 1" >>confdefs.h
-
-    $as_echo "#define WITH_R5RS_RATIONALIZE 0" >>confdefs.h
-
 
     ac_fn_c_check_header_mongrel "$LINENO" "complex.h" "ac_cv_header_complex_h" "$ac_includes_default"
 if test "x$ac_cv_header_complex_h" = x""yes; then :

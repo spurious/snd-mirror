@@ -86,7 +86,9 @@
  *        perhaps settable numerator denominator imag-part real-part angle magnitude
  *        perhaps trailing args to cons -> list*
  *        perhaps trailing args to list-ref
- *        symbol names in ||?
+ *        symbol names in ||? (or better, use "||" as matrix op:
+ *          |*| = matrix multiply (or scale if one arg is not a vector, or dot-product if both are 1-dim)
+ *          |+| |-| |/| |any...| |solve| |invert|
  *        hooks?
  *        cerror ("error/cc"?) -- tag = continuation in this case,
  *          and error handler makes it accessible (as well as error context) for eval
@@ -11738,6 +11740,11 @@ typedef struct {
   s7_pointer (*copy)(s7_scheme *sc, s7_pointer obj);
   s7_pointer (*fill)(s7_scheme *sc, s7_pointer obj, s7_pointer args);
 } s7_c_object_t;
+
+/* for-each and map? currently these assume (obj i) gets and (set! (obj i) val) sets
+ *    aribtrary method list?
+ * reverse append make section[subseq]
+ */
 
 
 
