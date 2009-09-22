@@ -1061,7 +1061,7 @@ static char *display_maxamps(const char *filename, int chans)
   ampstr = (char *)calloc(len, sizeof(char));
   vals = (mus_sample_t *)calloc(chans, sizeof(mus_sample_t));
   times = (mus_long_t *)calloc(chans, sizeof(mus_long_t));
-  mus_snprintf(ampstr, len, _("\nmax amp: "));
+  mus_snprintf(ampstr, len, "%s", _("\nmax amp: "));
   mus_sound_maxamps(filename, chans, vals, times);
   for (i = 0; i < chans; i++)
     {

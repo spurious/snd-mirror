@@ -5138,7 +5138,7 @@ static void save_key_binding(prefs_info *prf, FILE *fd, char *(*binder)(char *ke
 		       GET_TOGGLE(prf->toggle),
 		       GET_TOGGLE(prf->toggle2),
 		       GET_TOGGLE(prf->toggle3));
-      fprintf(fd, expr);
+      fprintf(fd, "%s", expr);
       free(expr);
       free_TEXT(key);
     }

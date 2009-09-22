@@ -5793,6 +5793,11 @@ int mus_audio_mixer_write(int ur_dev, int field, int chan, float *val)
  *   and to a much lesser extent, coreaudio.pdf and the HAL/Daisy examples.
  */
 
+/* TODO: the following have been deprecated: 
+ *         AudioDeviceGetPropertyInfo, AudioDeviceGetProperty, AudioHardwareGetPropertyInfo, AudioHardwareGetProperty,
+ *         AudioDeviceSetProperty
+ */
+
 #ifdef MUS_MAC_OSX
 #define AUDIO_OK 1
 
@@ -10152,7 +10157,7 @@ static void pprint(const char *str)
     {
       if ((print_it) || (!(save_it)))
 	{
-	  mus_print(str);
+	  mus_print("%s", str);
 	}
       else
 	{

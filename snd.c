@@ -34,7 +34,7 @@ void mus_error_to_snd(int type, char *msg)
    */
   if (!ss)
     {
-      fprintf(stderr, msg);
+      fprintf(stderr, "%s", msg);
       return;
     }
 
@@ -66,7 +66,7 @@ static void mus_print_to_snd(char *msg)
 {
   if (!ss)
     {
-      fprintf(stderr, msg);
+      fprintf(stderr, "%s", msg);
       return;
     }
   if (!(ignore_mus_error(MUS_NO_ERROR, msg)))
@@ -451,15 +451,15 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
     {
       if (strcmp(argv[i], "--version") == 0)
 	{
-	  fprintf(stdout, version_info());
+	  fprintf(stdout, "%s", version_info());
 	  snd_exit(0);
 	}
       else
 	{
 	  if (strcmp(argv[i], "--help") == 0)
 	    {
-	      fprintf(stdout, _("Snd is a sound editor; see http://ccrma.stanford.edu/software/snd/.\n"));
-	      fprintf(stdout, version_info());
+	      fprintf(stdout, "%s", _("Snd is a sound editor; see http://ccrma.stanford.edu/software/snd/.\n"));
+	      fprintf(stdout, "%s", version_info());
 	      snd_exit(0);
 	    }
 	}

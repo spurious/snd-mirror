@@ -6225,6 +6225,12 @@ index 10 (so 10/2 is the bes-jn arg):
 	   (outc i (* 0.5 (noid gen3 0.0)))
 	   (outd i (* 0.5 (noid gen4 0.0)))))))))
 
+(with-sound (:clipped #f)
+  (let ((samps 44100)
+	(gen (make-noid 100.0 19 (apply vct (map (lambda (n) (* pi n)) (list 0 1 0 0 1 1 1 1 1 1 0 0 1 1 1 0 1 0 1) )))))
+    (do ((i 0 (+ i 1))) 
+	((= i samps))
+      (outa i (noid gen)))))
 |#
 
 #|

@@ -131,7 +131,7 @@ int mus_error(int error, const char *format, ...)
       /* thread local error handler isn't set up with the default error handler so... */
       mus_error_to_snd(error, mus_error_buffer);
 #else
-      fprintf(stderr, mus_error_buffer);
+      fprintf(stderr, "%s", mus_error_buffer);
       fputc('\n', stderr);
 #endif
     }
@@ -287,7 +287,7 @@ const char *mus_error_type_to_string(int err)
 static void default_mus_error(int ignore, char *msg)
 {
   /* default error handler simply prints the error message */
-  fprintf(stderr, msg);
+  fprintf(stderr, "%s", msg);
 }
 
 
@@ -1543,7 +1543,7 @@ int mus_array_to_file(const char *filename, mus_sample_t *ddata, mus_long_t len,
   const char *errmsg;
   errmsg = mus_array_to_file_with_error(filename, ddata, len, srate, channels);
   if (errmsg)
-    return(mus_error(MUS_CANT_OPEN_FILE, errmsg));
+    return(mus_error(MUS_CANT_OPEN_FILE, "%s", errmsg));
   return(MUS_NO_ERROR);
 }
 
@@ -1584,7 +1584,7 @@ int mus_float_array_to_file(const char *filename, mus_float_t *ddata, mus_long_t
   free(idata);
 #endif
   if (errmsg)
-    return(mus_error(MUS_CANT_OPEN_FILE, errmsg));
+    return(mus_error(MUS_CANT_OPEN_FILE, "%s", errmsg));
 
   return(MUS_NO_ERROR);
 }

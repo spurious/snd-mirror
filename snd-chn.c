@@ -1949,11 +1949,12 @@ static char ampstr[LABEL_BUFFER_SIZE];
 #define AMP_ROOM_CUTOFF 3.0
 
 static void display_peaks(chan_info *cp, axis_info *fap, mus_float_t *data, 
-			  int start, int end, 
-			  int losamp, int hisamp, 
+			  mus_long_t start, mus_long_t end,  /* start is not used? */
+			  mus_long_t losamp, mus_long_t hisamp, 
 			  mus_float_t samps_per_pixel, bool fft_data, mus_float_t fft_scale /* fourier scale factor or 0.0 */)
 {
-  int num_peaks, row, frq_col, frq_strlen, tens, i, amp_col, amp_strlen, row_height = 15, samps;
+  int num_peaks, row, frq_col, frq_strlen, tens, i, amp_col, amp_strlen, row_height = 15;
+  mus_long_t samps;
   bool with_amps;
   mus_float_t amp0;
   axis_context *ax;
@@ -2129,7 +2130,8 @@ static void make_fft_graph(chan_info *cp, axis_info *fap, axis_context *ax, with
   snd_info *sp;
   mus_float_t *data;
   mus_float_t incr, x, scale;
-  int i, j = 0, hisamp, losamp = 0, lines_to_draw = 0;
+  mus_long_t i, j = 0, hisamp, losamp = 0;
+  int lines_to_draw = 0;
   mus_float_t samples_per_pixel, xf, ina, ymax;
   int logx, logy;
   mus_float_t pslogx, pslogy;
@@ -2147,18 +2149,18 @@ static void make_fft_graph(chan_info *cp, axis_info *fap, axis_context *ax, with
 
   if (cp->transform_type == FOURIER)
     {
-      hisamp = (int)(fp->current_size * cp->spectrum_end / 2);
+      hisamp = fp->current_size * cp->spectrum_end / 2;
       if ((cp->fft_log_frequency) && 
 	  ((SND_SRATE(sp) * 0.5 * cp->spectrum_start) < log_freq_start(ss)))
-	losamp = (int)(ceil(fp->current_size * log_freq_start(ss) / (mus_float_t)SND_SRATE(sp)));
-      else losamp = (int)(fp->current_size * cp->spectrum_start / 2);
+	losamp = (mus_long_t)(ceil(fp->current_size * log_freq_start(ss) / (mus_float_t)SND_SRATE(sp)));
+      else losamp = fp->current_size * cp->spectrum_start / 2;
       incr = (mus_float_t)SND_SRATE(sp) / (mus_float_t)(fp->current_size);
     }
   else
     {
       /* hisamp here is in terms of transform values, not original sampled data values */
-      hisamp = (int)(fp->current_size * cp->spectrum_end);
-      losamp = (int)(fp->current_size * cp->spectrum_start);
+      hisamp = fp->current_size * cp->spectrum_end;
+      losamp = fp->current_size * cp->spectrum_start;
       incr = 1.0;
     }
   if ((losamp < 0) || (losamp >= hisamp)) return;
@@ -2172,6 +2174,7 @@ static void make_fft_graph(chan_info *cp, axis_info *fap, axis_context *ax, with
   if (cp->fft_log_frequency)
     {
       mus_float_t maxlx, max_data;
+
       fap_range = fap->x1 - fap->x0;
       if (fap->x0 > 1.0) minlx = log(fap->x0); else minlx = 0.0;
       maxlx = log(fap->x1);
@@ -2208,12 +2211,11 @@ static void make_fft_graph(chan_info *cp, axis_info *fap, axis_context *ax, with
 	    }
 	  else
 	    {
-	      int size;
+	      mus_long_t size;
 	      size = hisamp - losamp + 1;
 	      fft_phases = (mus_float_t *)malloc(size * sizeof(mus_float_t));
 	      memcpy((void *)fft_phases, (void *)(&(fp->phases[losamp])), size * sizeof(mus_float_t));
 	      free_phases = true;
-	    
 	    }
 	}
 
@@ -2298,6 +2300,7 @@ static void make_fft_graph(chan_info *cp, axis_info *fap, axis_context *ax, with
       else x = fap->x0;
       xf = 0.0;     /* samples per pixel counter */
       ymax = MAX_INIT;
+
       if ((!(cp->fft_log_magnitude)) && 
 	  (!(cp->fft_log_frequency)))
 	{
@@ -2422,13 +2425,13 @@ static void make_fft_graph(chan_info *cp, axis_info *fap, axis_context *ax, with
     {
       if (cp->transform_type == FOURIER)
 	display_peaks(cp, fap, data, 
-		      (int)(SND_SRATE(sp) * cp->spectrum_start / 2), 
-		      (int)(SND_SRATE(sp) * cp->spectrum_end / 2), 
+		      SND_SRATE(sp) * cp->spectrum_start / 2,
+		      SND_SRATE(sp) * cp->spectrum_end / 2, 
 		      losamp, hisamp, 
 		      samples_per_pixel, true, scale);
       else display_peaks(cp, fap, data, 
-			 (int)(fp->current_size * cp->spectrum_start), 
-			 (int)(fp->current_size * cp->spectrum_end), 
+			 fp->current_size * cp->spectrum_start, 
+			 fp->current_size * cp->spectrum_end, 
 			 losamp, hisamp, 
 			 samples_per_pixel, true, 0.0);
     }
@@ -7935,7 +7938,7 @@ static void write_transform_peaks(FILE *fd, chan_info *ucp)
 	      if ((num_peaks != 1) || 
 		  (peak_freqs[0].freq != 0.0))
 		{
-		  fprintf(fd, sp->short_filename);
+		  fprintf(fd, "%s", sp->short_filename);
 		  if (sp->nchans > 1) fprintf(fd, _(": chan %d"), cp->chan);
 		  fprintf(fd, _(", fft " MUS_LD " points beginning at sample " MUS_LD " (%.3f secs), %s\n\n"),
 			  fp->current_size, 

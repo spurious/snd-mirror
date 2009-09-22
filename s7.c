@@ -1410,11 +1410,11 @@ static s7_pointer new_cell(s7_scheme *sc)
 
 	  sc->heap = (s7_cell **)realloc(sc->heap, (sc->heap_size + 1) * sizeof(s7_cell *));
 	  if (!(sc->heap))
-	    fprintf(stderr, "heap reallocation failed! tried to get %d bytes\n", (sc->heap_size + 1) * sizeof(s7_cell *));
+	    fprintf(stderr, "heap reallocation failed! tried to get %lud bytes\n", (sc->heap_size + 1) * sizeof(s7_cell *));
 
 	  sc->free_heap = (s7_cell **)realloc(sc->free_heap, sc->heap_size * sizeof(s7_cell *));
 	  if (!(sc->heap))
-	    fprintf(stderr, "free heap reallocation failed! tried to get %d bytes\n", sc->heap_size * sizeof(s7_cell *));	  
+	    fprintf(stderr, "free heap reallocation failed! tried to get %lud bytes\n", sc->heap_size * sizeof(s7_cell *));	  
 
 	  { 
 	    /* optimization suggested by K Matheussen */
@@ -8540,9 +8540,6 @@ s7_pointer s7_eval_c_string(s7_scheme *sc, const char *str)
   s7_pointer port;
 
   /* this can be called recursively via s7_call */
-
-  if (sc->longjmp_ok)
-    return(g_eval_string(sc, sc->args = make_list_1(sc, s7_make_string(sc, str))));
   
   stack_reset(sc); 
   sc->envir = sc->global_env; 
@@ -8559,6 +8556,7 @@ s7_pointer s7_eval_c_string(s7_scheme *sc, const char *str)
 	eval(sc, sc->op);
       else eval(sc, OP_READ_INTERNAL);
     }
+  else eval(sc, OP_READ_INTERNAL);
   
   sc->longjmp_ok = old_longjmp;
   pop_input_port(sc);

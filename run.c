@@ -3614,7 +3614,7 @@ static XEN handle_defines(ptree *prog, XEN forms)
 	  err = define_form(prog, form);
 	  if (err != NULL) 
 	    {
-	      run_warn(err);
+	      run_warn("%s", err);
 	      free(err);
 	      return(XEN_UNDEFINED);
 	    }
@@ -8500,7 +8500,7 @@ static void snd_print_s(int *args, ptree *pt) {listener_append(STRING_ARG_1);}
 static xen_value *snd_print_1(ptree *pt, xen_value **args, int num_args) {return(package(pt, R_BOOL, snd_print_s, "snd_print_s", args, 1));}
 
 
-static void snd_warning_s(int *args, ptree *pt) {snd_warning(STRING_ARG_1);}
+static void snd_warning_s(int *args, ptree *pt) {snd_warning("%s", STRING_ARG_1);}
 
 
 static xen_value *snd_warning_1(ptree *pt, xen_value **args, int num_args) {return(package(pt, R_BOOL, snd_warning_s, "snd_warning_s", args, 1));}
@@ -11929,10 +11929,17 @@ static xen_value *splice_in_method(ptree *prog, xen_value **args, int num_args, 
 
   /* fprintf(stderr, "splice in method %s (%s)\n", method_name, (use_getter == USE_GET_METHOD) ? "getter" : "setter"); */
   
+#if HAVE_GUILE
   method_str = mus_format("(%s-methods)", type_name(args[1]->type));
   methods = XEN_EVAL_C_STRING(method_str);
   methods_loc = PROTECT(methods);
   free(method_str);
+#else
+  method_str = mus_format("%s-methods", type_name(args[1]->type));
+  methods = s7_call(s7, s7_name_to_value(s7, method_str), xen_nil);
+  methods_loc = PROTECT(methods);
+  free(method_str);
+#endif
 
   /* fprintf(stderr, "methods: %s\n", XEN_AS_STRING(methods)); */
 
@@ -11968,6 +11975,7 @@ static xen_value *splice_in_method(ptree *prog, xen_value **args, int num_args, 
 #endif
 	}
     }
+
   UNPROTECT_AT(methods_loc);
   return(result);
 }
@@ -11983,6 +11991,9 @@ static void splice_in_set_method(ptree *prog, xen_value *in_v, xen_value *in_v1,
   if (tmp) free(tmp);
 }
 
+
+/* (let ((hi (make-rxycos 440.0))) (run (lambda () (mus-scaler hi)))) */
+/* (let ((gen (make-nssb 440)) (x 0.0)) (run (lambda () (set! x (mus-frequency gen)) x))) */
 
 #define GEN0(Name) \
   static void Name ## _0f(int *args, ptree *pt) {FLOAT_RESULT = mus_ ## Name (CLM_ARG_1);}  \
@@ -16161,7 +16172,7 @@ static struct ptree *form_to_ptree_1(XEN code, int decls, int *types)
 	{
 	  char *msg;
 	  msg = describe_ptree(prog, "  ");
-	  if (ptree_on == STDERR_PTREE_DISPLAY) fprintf(stderr, msg);
+	  if (ptree_on == STDERR_PTREE_DISPLAY) fprintf(stderr, "%s", msg);
 #if USE_SND
 	  else if (ptree_on == LISTENER_PTREE_DISPLAY) listener_append(msg);
 #endif
@@ -17073,12 +17084,12 @@ static XEN g_run_eval(XEN code, XEN arg, XEN arg1, XEN arg2)
 	  char *msg;
 	  fprintf(stderr, "\n-------- optimize %s\n", XEN_AS_STRING(code));
 	  msg = describe_ptree(pt, "  ");
-	  if (ptree_on == STDERR_PTREE_DISPLAY) fprintf(stderr, msg);
+	  if (ptree_on == STDERR_PTREE_DISPLAY) fprintf(stderr, "%s", msg);
 #if USE_SND
 	  else if (ptree_on == LISTENER_PTREE_DISPLAY) listener_append(msg);
 #endif
 	  free(msg);
-	  fprintf(stderr,"--------\n");
+	  fprintf(stderr, "%s", "--------\n");
 	}
 
       if (pt->args)

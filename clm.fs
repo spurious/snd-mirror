@@ -2,7 +2,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Mon Mar 15 19:25:58 CET 2004
-\ Changed: Fri Jun 26 23:04:01 CEST 2009
+\ Changed: Sun Sep 20 17:29:58 CEST 2009
 
 \ Commentary:
 \
@@ -593,17 +593,19 @@ previous
      header-type   *clm-header-type*
      comment       *clm-comment*     -- }>
   doc" Records from dac output device to the specified OUTPUT file."
+  \ INFO: mus-srate must be set before seconds->samples! [ms]
+  mus-srate                	{ old-srate }
+  srate set-mus-srate drop
   duration seconds->samples   	{ frames }
   dac-size frames min 	        { bufsize }
   channels 2 min      	        { chans }
-  mus-srate                	{ old-srate }
-  srate set-mus-srate drop
   comment empty? if $" written %s by %s" _ #( date get-func-name ) string-format to comment then
   chans bufsize make-sound-data { data }
-  chans 0.25 make-vct           { vals }
-  vals each drop mus-audio-mixer mus-audio-reclev i vals mus-audio-mixer-write drop end-each
-  vals 0.75 vct-fill! drop
-  vals each drop output-device  mus-audio-amp i vals mus-audio-mixer-write drop end-each
+  \ INFO: commented out on Sun Sep 20 17:02:02 CEST 2009 [ms]
+  \ chans 0.25 make-vct           { vals }
+  \ vals each drop mus-audio-mixer mus-audio-reclev i vals mus-audio-mixer-write drop end-each
+  \ vals 0.75 vct-fill! drop
+  \ vals each drop output-device  mus-audio-amp i vals mus-audio-mixer-write drop end-each
   output srate chans data-format header-type comment mus-sound-open-output { snd-fd }
   snd-fd 0< if 'forth-error #( get-func-name $" cannot open %S" _ output ) fth-throw then
   output-device srate chans audio-format bufsize mus-audio-open-input      { dac-fd }

@@ -768,7 +768,7 @@ Widget make_mix_dialog(void)
       free(n2);
 
       n = 0;
-      mus_snprintf(amplab, LABEL_BUFFER_SIZE, _("amp:"));
+      mus_snprintf(amplab, LABEL_BUFFER_SIZE, "%s", _("amp:"));
       s1 = XmStringCreateLocalized(amplab);
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	

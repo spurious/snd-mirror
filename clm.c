@@ -11416,7 +11416,7 @@ void mus_convolve_files(const char *file1, const char *file2, mus_float_t maxamp
   clm_free(data2);
 
   if (errmsg)
-    mus_error(MUS_CANT_OPEN_FILE, errmsg);
+    mus_error(MUS_CANT_OPEN_FILE, "%s", errmsg);
 }
 
 

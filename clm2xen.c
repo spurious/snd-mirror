@@ -69,7 +69,7 @@ static void local_mus_error(int type, char *msg)
 
 static XEN clm_mus_error(int type, const char *msg)
 {
-  mus_error(type, (char *)msg);
+  mus_error(type, "%s", msg);
   return(XEN_FALSE);
 }
 

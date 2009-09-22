@@ -128,7 +128,7 @@ char *global_search(read_direction_t direction)
   chan_info *cp;
   if (search_in_progress) 
     {
-      mus_snprintf(search_message, PRINT_BUFFER_SIZE, _("search in progress"));
+      mus_snprintf(search_message, PRINT_BUFFER_SIZE, "%s", _("search in progress"));
       return(search_message);
     }
 
@@ -198,7 +198,7 @@ char *global_search(read_direction_t direction)
 	  if (ss->stopped_explicitly) break;
 	}
       if (ss->stopped_explicitly)
-	mus_snprintf(search_message, PRINT_BUFFER_SIZE, _("search stopped"));
+	mus_snprintf(search_message, PRINT_BUFFER_SIZE, "%s", _("search stopped"));
       else
 	{
 	  if (fd->n == -1)

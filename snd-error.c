@@ -95,7 +95,7 @@ static void snd_error_1(const char *msg, bool with_redirection_and_hook)
   if ((ss) && (ss->sgx))
     {
       if ((MUS_DEBUGGING) || (ss->batch_mode))
-	fprintf(stderr, msg);
+	fprintf(stderr, "%s", msg);
 #ifdef SND_AS_WIDGET
       if (snd_error_display) 
 	snd_error_display(msg);
@@ -119,7 +119,7 @@ static void snd_error_1(const char *msg, bool with_redirection_and_hook)
     }
   else 
     {
-      fprintf(stderr, msg);
+      fprintf(stderr, "%s", msg);
       fputc('\n', stderr);
     }
 #endif
@@ -159,12 +159,12 @@ static void snd_warning_1(const char *msg)
       else 
 	{
 	  listener_append(msg);
-	  fprintf(stderr, msg); 
+	  fprintf(stderr, "%s", msg); 
 	}
     }
-  else fprintf(stderr, msg);
+  else fprintf(stderr, "%s", msg);
 #if MUS_DEBUGGING
-  fprintf(stderr, msg);
+  fprintf(stderr, "%s", msg);
 #endif
 }
 
@@ -270,7 +270,7 @@ static XEN g_snd_warning(XEN msg)
 {
   #define H_snd_warning "(" S_snd_warning " str): reports warning message str (normally in the minibuffer)"
   XEN_ASSERT_TYPE(XEN_STRING_P(msg), msg, XEN_ONLY_ARG, S_snd_warning, "a string");
-  snd_warning(XEN_TO_C_STRING(msg));
+  snd_warning("%s", XEN_TO_C_STRING(msg));
   return(msg);
 }
 

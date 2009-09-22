@@ -6126,7 +6126,7 @@ int mus_header_read(const char *name)
   CLOSE(fd, name);
   mus_error_set_handler(old_error_handler);
   if (err != MUS_NO_ERROR)
-    return(mus_error(local_error_type, local_error_msg)); /* pass error info on up the chain now that we've cleaned up the open file descriptor */
+    return(mus_error(local_error_type, "%s", local_error_msg)); /* pass error info on up the chain now that we've cleaned up the open file descriptor */
   return(err);
 }
 
