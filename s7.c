@@ -5682,7 +5682,7 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
 	  if (denominator(number(pw)) == 2)
 	    return(g_sqrt(sc, args));
 	  if (denominator(number(pw)) == 3)
-	    return(s7_make_real(sc, cbrt(num_to_real(number(n)))));
+	    return(s7_make_real(sc, cbrt(num_to_real(number(n))))); /* (expt 27 1/3) should be 3, not 3.0... */
 	  /* and 4 -> sqrt(sqrt...) etc? */
 	}
 
@@ -8521,16 +8521,22 @@ static s7_pointer g_eval_string(s7_scheme *sc, s7_pointer args)
   if (cdr(args) != sc->NIL)
     {
       if (!is_pair(cadr(args)))
-	return(s7_wrong_type_arg_error(sc, "eval-string", 2, cadr(args), "an environment"));
+	return(s7_wrong_type_arg_error(sc, "eval", 2, cadr(args), "an environment"));
       sc->envir = cadr(args);
     }
 
   port = s7_open_input_string(sc, s7_string(car(args)));
-  push_stack(sc, OP_EVAL_STRING_DONE, sc->input_port, port);
   push_input_port(sc, port);
-  push_stack(sc, OP_EVAL_STRING, args, sc->NIL); /* gc protection */
-  push_stack(sc, OP_READ_INTERNAL, sc->NIL, sc->NIL);
-  return(sc->UNSPECIFIED);
+  push_stack(sc, OP_EVAL_STRING, sc->args, sc->code);
+  eval(sc, OP_READ_INTERNAL);
+  pop_input_port(sc);
+  s7_close_input_port(sc, port);
+
+  if ((is_pair(sc->value)) &&                 /* (+ 1 (eval-string "(values 2 3)")) */
+      (car(sc->value) == sc->VALUES))
+    sc->value = splice_in_values(sc, cdr(sc->value));
+
+  return(sc->value);
 }
 
 
@@ -8538,14 +8544,15 @@ s7_pointer s7_eval_c_string(s7_scheme *sc, const char *str)
 {
   bool old_longjmp;
   s7_pointer port;
-
   /* this can be called recursively via s7_call */
+
+  if (sc->longjmp_ok)
+    return(g_eval_string(sc, make_list_1(sc, s7_make_string(sc, str))));
   
   stack_reset(sc); 
   sc->envir = sc->global_env; 
   port = s7_open_input_string(sc, str);
   push_input_port(sc, port);
-  push_stack(sc, OP_EVAL_DONE, sc->NIL, sc->NIL); 
   push_stack(sc, OP_EVAL_STRING, sc->NIL, sc->NIL);
   
   old_longjmp = sc->longjmp_ok;
@@ -8556,7 +8563,6 @@ s7_pointer s7_eval_c_string(s7_scheme *sc, const char *str)
 	eval(sc, sc->op);
       else eval(sc, OP_READ_INTERNAL);
     }
-  else eval(sc, OP_READ_INTERNAL);
   
   sc->longjmp_ok = old_longjmp;
   pop_input_port(sc);
@@ -13656,11 +13662,6 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
 	    sc->output_port = x;
 	  break;
 
-	case OP_EVAL_STRING_DONE:
-	  s7_close_input_port(sc, vector_element(sc->stack, i - 3)); /* "code" = port that we opened */
-	  pop_input_port(sc);
-	  break;
-
 	case OP_UNWIND_INPUT:
 	  s7_close_input_port(sc, vector_element(sc->stack, i - 3)); /* "code" = port that we opened */
 	  sc->input_port = vector_element(sc->stack, i - 1); /* "args" = port that we shadowed */
@@ -15083,27 +15084,17 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      push_stack(sc, OP_EVAL_STRING, sc->NIL, sc->value);
 	      push_stack(sc, OP_READ_INTERNAL, sc->NIL, sc->NIL);
 	    }
+	  else push_stack(sc, OP_EVAL_STRING_DONE, sc->NIL, sc->value);
 	}
+      else push_stack(sc, OP_EVAL_STRING_DONE, sc->NIL, sc->value);
       sc->code = sc->value;
       goto EVAL;
-
-      /* (catch #t (lambda () (eval-string ".")) (lambda args args)) */
       
       
-    case OP_EVAL_STRING_DONE:
-      pop_input_port(sc);
-      s7_close_input_port(sc, sc->code);          /* set in g_eval_string push_stack as sc->code */
-
-      if ((is_pair(sc->value)) &&                 /* (+ 1 (eval-string "(values 2 3)")) */
-	  (car(sc->value) == sc->VALUES))
-	sc->value = splice_in_values(sc, cdr(sc->value));
-
-      pop_stack(sc);
-      goto START;
-
-
     case OP_EVAL_DONE:
-      return(sc->F);
+    case OP_EVAL_STRING_DONE:
+     return(sc->F);
+
 
 
     case OP_LIST_FOR_EACH:
@@ -15676,6 +15667,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_APPLY:      /* apply 'code' to 'args' */
       if (*(sc->tracing)) 
 	trace_apply(sc);
+
+      /* fprintf(stderr, "(%s %s)\n", s7_object_to_c_string(sc, sc->code), s7_object_to_c_string(sc, sc->args)); */
 
 #if WITH_PROFILING
       symbol_calls(sc->code)++;
