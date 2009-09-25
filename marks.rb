@@ -174,7 +174,7 @@ fits (and mixes) the current selection (via granulate) between the given marks")
       mark_samps = m2_samp - m1_samp
       selection_samps = selection_frames
       reg_data = region2vct
-      reader = make_sample_reader(m1_samp)
+      reader = make_sampler(m1_samp)
       gr = make_granulate(:expansion, mark_samps / selection_samps.to_f)
       inctr = 0
       new_data = Vct.new(mark_samps) do
@@ -189,7 +189,7 @@ fits (and mixes) the current selection (via granulate) between the given marks")
                                           end
                                         end)
       end
-      free_sample_reader(reader)
+      free_sampler(reader)
       vct2channel(new_data, m1_samp, mark_samps, m1_home[0], m1_home[1])
     end
   end

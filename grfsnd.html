@@ -95,7 +95,7 @@
     </ul>
   <li><a href="extsnd.html#sndobjects">Snd's objects</a>
     <ul>
-    <li><a href="extsnd.html#samplereaders" onmouseout="UnTip()" onmouseover="Tip('sound data iterators', WIDTH, 200)">Sample-readers</a>
+    <li><a href="extsnd.html#samplers" onmouseout="UnTip()" onmouseover="Tip('sound data iterators', WIDTH, 200)">Samplers</a>
     <li><a href="extsnd.html#Vcts" onmouseout="UnTip()" onmouseover="Tip('real arrays', WIDTH, 100)">Vcts</a>
     <li><a href="extsnd.html#sndsounddata" onmouseout="UnTip()" onmouseover="Tip('arrays of vcts for multichannel data')">Sound-data</a>
     <li><a href="extsnd.html#extsndlib" onmouseout="UnTip()" onmouseover="Tip('the underlying library that handles sound data and files')">Sndlib</a>
@@ -1206,7 +1206,7 @@ an oscil or a sawtooth-wave:
     (let* ((os (<a class=quiet href="sndclm.html#make-oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_oscil_tip)">make-oscil</a> osfrq))
 	   (sr (<a class=quiet href="sndclm.html#make-src" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_src_tip)">make-src</a> :srate sr))
 	   (len (<a class=quiet href="extsnd.html#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a>))
-	   (sf (<a class=quiet href="extsnd.html#makesamplereader" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesamplereader_tip)">make-sample-reader</a>))
+	   (sf (<a class=quiet href="extsnd.html#makesampler" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesampler_tip)">make-sampler</a>))
 	   (out-data (<a class=quiet href="extsnd.html#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> len)))
       (<a class=quiet href="extsnd.html#vctmap" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctmap_tip)">vct-map!</a> out-data
 		  (lambda () 
@@ -1215,7 +1215,7 @@ an oscil or a sawtooth-wave:
 			   (if (&gt; dir 0)
 			       (<a class=quiet href="extsnd.html#nextsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_nextsample_tip)">next-sample</a> sf)
 			       (<a class=quiet href="extsnd.html#previoussample" onmouseout="UnTip()" onmouseover="Tip(extsnd_previoussample_tip)">previous-sample</a> sf))))))
-      (<a class=quiet href="extsnd.html#freesamplereader" onmouseout="UnTip()" onmouseover="Tip(extsnd_freesamplereader_tip)">free-sample-reader</a> sf)
+      (<a class=quiet href="extsnd.html#freesampler" onmouseout="UnTip()" onmouseover="Tip(extsnd_freesampler_tip)">free-sampler</a> sf)
       (<a class=quiet href="extsnd.html#vcttochannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_vcttochannel_tip)">vct-&gt;channel</a> out-data 0 len))))
 
 ; (fp 1.0 .3 20)
@@ -2175,12 +2175,12 @@ The main function is:
 
 	Applies a LADSPA plugin to a block of samples. 
 An example call to apply the low-pass-filter in the CMT plugin library is 
-(apply-ladspa (<a class=quiet href="extsnd.html#makesamplereader" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesamplereader_tip)">make-sample-reader</a> 0) (list "cmt" "lpf" 1000) 10000 "origin").
+(apply-ladspa (<a class=quiet href="extsnd.html#makesampler" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesampler_tip)">make-sampler</a> 0) (list "cmt" "lpf" 1000) 10000 "origin").
 </pre>
 <p>Dave Phillips in <a href="http://www.oreillynet.com/pub/a/linux/2001/02/02/ladspa.html">Linux Audio Plug-Ins: A Look Into LADSPA</a> adds this:
 </p>
 <pre>
-  (apply-ladspa (<a class=quiet href="extsnd.html#makesamplereader" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesamplereader_tip)">make-sample-reader</a> 57264) (list "cmt" "delay_5s" .3 .5) 32556 "ibm.wav")
+  (apply-ladspa (<a class=quiet href="extsnd.html#makesampler" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesampler_tip)">make-sampler</a> 57264) (list "cmt" "delay_5s" .3 .5) 32556 "ibm.wav")
 </pre>
 <p>
 "This sequence tells Snd to read a block of 32556 samples from the ibm.wav file, starting at sample number 57264,
@@ -2203,8 +2203,8 @@ cmt.so is in /usr/local/lib/ladspa, (and you're using tcsh), then
 than one input is required, the first argument to apply-ladspa should be a list of readers:
 </p>
 <pre>
-  (apply-ladspa (list (<a class=quiet href="extsnd.html#makesamplereader" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesamplereader_tip)">make-sample-reader</a> 0 0 0)  ;chan 0
-                      (<a class=quiet href="extsnd.html#makesamplereader" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesamplereader_tip)">make-sample-reader</a> 0 0 1)) ;chan 1
+  (apply-ladspa (list (<a class=quiet href="extsnd.html#makesampler" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesampler_tip)">make-sampler</a> 0 0 0)  ;chan 0
+                      (<a class=quiet href="extsnd.html#makesampler" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesampler_tip)">make-sampler</a> 0 0 1)) ;chan 1
                 (list "cmt" "freeverb3" 0 .5 .5 .5 .5 .5) 
                 100000 "freeverb")
 </pre>
@@ -2213,9 +2213,9 @@ than one input is required, the first argument to apply-ladspa should be a list 
 <table border=0 cellpadding=5 hspace=20><tr><td><pre>
 (define* (ladspa-channel ladspa-data :optional (beg 0) ndur snd chn (edpos -1))
   (let* ((dur (or ndur (- (<a class=quiet href="extsnd.html#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a> snd chn) beg)))
-	 (reader (<a class=quiet href="extsnd.html#makesamplereader" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesamplereader_tip)">make-sample-reader</a> beg snd chn 1 edpos)))
+	 (reader (<a class=quiet href="extsnd.html#makesampler" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesampler_tip)">make-sampler</a> beg snd chn 1 edpos)))
     (let ((result (<em class=red>apply-ladspa</em> reader ladspa-data dur "apply-ladspa" snd chn)))
-      (<a class=quiet href="extsnd.html#freesamplereader" onmouseout="UnTip()" onmouseover="Tip(extsnd_freesamplereader_tip)">free-sample-reader</a> reader)
+      (<a class=quiet href="extsnd.html#freesampler" onmouseout="UnTip()" onmouseover="Tip(extsnd_freesampler_tip)">free-sampler</a> reader)
       result)))
 </pre></td></tr></table>
 

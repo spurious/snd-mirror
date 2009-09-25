@@ -315,11 +315,11 @@ module Effects
     flt_len = frames(snd0)
     total_len = flt_len + frames(snd, chn)
     cnv = make_convolve(:filter, channel2vct, 0, flt_len, snd0)
-    sf = make_sample_reader(0, snd, chn)
+    sf = make_sampler(0, snd, chn)
     out_data = Vct.new(total_len) do |i|
       convolve(cnv, lambda { |dir| next_sample(sf) })
     end
-    free_sample_reader(sf)
+    free_sampler(sf)
     out_data.scale!(amp)
     max_samp = out_data.peak
     vct2channel(out_data, 0, total_len, snd, chn, false,
@@ -384,7 +384,7 @@ module Effects
   def effects_fp(srf, osamp, osfrq, beg = 0, dur = false, snd = false, chn = false)
     os = make_oscil(:frequency, osfrq)
     sr = make_src(:srate, srf)
-    sf = make_sample_reader(beg)
+    sf = make_sampler(beg)
     len = (dur or frames(snd, chn))
     out_data = Vct.new(len) do |i|
       src(sr, osamp * oscil(os),
@@ -396,7 +396,7 @@ module Effects
             end
           end)
     end
-    free_sample_reader(sf)
+    free_sampler(sf)
     vct2channel(out_data, beg, len, snd, chn, false,
                 format("%s(%s, %s, %s, %s, %s",
                        get_func_name, srf, osamp, osfrq, beg,
@@ -407,7 +407,7 @@ module Effects
     assert_type((sound?(mono_snd) or mono_snd == false), mono_snd, 0, "a sound index")
     assert_type((array?(pos) or number?(pos)), pos, 1, "an array or a number")
     len = frames(mono_snd)
-    reader1 = make_sample_reader(0, mono_snd)
+    reader1 = make_sampler(0, mono_snd)
     if number?(pos)
       map_channel_rb(0, len, snd, chn, false,
                      format("%s(%s, %s", get_func_name, mono_snd, pos)) do |inval|
@@ -2366,7 +2366,7 @@ unless defined? $__private_snd_menu__ and $__private_snd_menu__
     entry("Octave-down") do down_oct(2) end
     entry("Remove clicks") do
       find_click = lambda do |loc|
-        reader = make_sample_reader(loc)
+        reader = make_sampler(loc)
         samp0 = samp1 = samp2 = 0.0
         samps = make_vct(10)
         len = frames()

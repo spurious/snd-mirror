@@ -222,7 +222,7 @@ int main(int argc, char **argv)
   add_header("sndlib2xen.h");
   add_header("clm2xen.h");
   add_header("snd.h");
-#if 0
+#if 1
   add_header("snd-strings.h");
   add_header("sndlib-strings.h");
   add_header("clm-strings.h");

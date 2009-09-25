@@ -859,7 +859,7 @@ static void apply_fft(fft_state *fs)
 	vct *v;
 	int gc_loc, sf_loc;
 	mus_long_t len;
-	sfd = g_c_make_sample_reader(sf);
+	sfd = g_c_make_sampler(sf);
 	sf_loc = snd_protect(sfd);
 	res = XEN_CALL_2(added_transform_proc(cp->transform_type), 
 			 C_TO_XEN_INT64_T(data_len), 
@@ -1882,7 +1882,7 @@ static XEN g_add_transform(XEN name, XEN xlabel, XEN lo, XEN hi, XEN proc)
 {
   #define H_add_transform "(" S_add_transform " name x-label low high func): add the transform func \
 to the transform lists; func should be a function of two arguments, the length of the transform \
-and a sample-reader to get the data, and should return a vct containing the transform results. \
+and a sampler to get the data, and should return a vct containing the transform results. \
 name is the transform's name, x-label is its x-axis label, and the relevant returned data \
 to be displayed goes from low to high (normally 0.0 to 1.0)"
 

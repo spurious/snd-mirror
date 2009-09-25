@@ -100,7 +100,7 @@
 |#
 
 ;;; this could also be done with a function argument to the play function -- get a
-;;;   sample-reader for the sound, call it on each invocation of the argument function etc
+;;;   sampler for the sound, call it on each invocation of the argument function etc
 
 
 ;;; -------- play sound n times -- (play-often 3) for example.

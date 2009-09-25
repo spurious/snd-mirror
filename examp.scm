@@ -66,15 +66,15 @@
 ;;; this mainly involves keeping track of the current sound/channel
 
 (define (selection-rms-1)
-  "(selection-rms-1) -> rms of selection data using sample readers"
+  "(selection-rms-1) -> rms of selection data using samplers"
   (if (selection?)
-      (let* ((reader (make-sample-reader (selection-position)))
+      (let* ((reader (make-sampler (selection-position)))
 	     (len (selection-frames))
 	     (sum 0.0))
 	(do ((i 0 (+ i 1))) 
 	    ((= i len) 
 	     (begin 
-	       (free-sample-reader reader) 
+	       (free-sampler reader) 
 	       (sqrt (/ sum len))))
 	  (let ((val (next-sample reader)))
 	    (set! sum (+ sum (* val val))))))
@@ -83,11 +83,11 @@
 
 ;;; if you'd rather use recursion:
 (define (selection-rms)
-  "(selection-rms) -> rms of selection data using sample readers and recursion"
+  "(selection-rms) -> rms of selection data using samplers and recursion"
   ;; this is actually slightly faster than selection-rms-1
   ;; all the DO loops in this file could be re-written in this form, but I find loops easier to read
   (if (selection?)
-      (let* ((reader (make-sample-reader (selection-position)))
+      (let* ((reader (make-sampler (selection-position)))
 	     (len (selection-frames)))
 	(define rsum 
 	  (lambda (leng sum)
@@ -96,7 +96,7 @@
 		(let ((val (next-sample reader)))
 		  (rsum (- leng 1) (+ sum (* val val)))))))
 	(let ((val (rsum len 0.0)))
-	  (free-sample-reader reader)
+	  (free-sampler reader)
 	  val))
       (throw 'no-active-selection (list "selection-rms"))))
 
@@ -331,15 +331,15 @@
 (define (locate-zero limit)
   "(locate-zero limit) looks for successive samples that sum to less than 'limit', moving the cursor if successful"
   (let* ((start (cursor))
-	 (sf (make-sample-reader start)))
+	 (sf (make-sampler start)))
     (do ((n start (+ 1 n))
 	 (val0 (abs (next-sample sf)) val1)
 	 (val1 (abs (next-sample sf)) (abs (next-sample sf))))
-	((or (sample-reader-at-end? sf)
+	((or (sampler-at-end? sf)
 	     (c-g?)
 	     (< (+ val0 val1) limit))
 	 (begin
-	   (free-sample-reader sf)
+	   (free-sampler sf)
 	   (set! (cursor) n)
 	   n)))))
 
@@ -703,8 +703,8 @@ a number, the sound is split such that 0 is all in channel 0 and 90 is all in ch
   (let ((len (frames mono-snd)))
     (if (number? pan-env)
 	(let* ((pos (/ pan-env 90.0))
-	       (reader0 (make-sample-reader 0 mono-snd))
-	       (reader1 (make-sample-reader 0 mono-snd)))
+	       (reader0 (make-sampler 0 mono-snd))
+	       (reader1 (make-sampler 0 mono-snd)))
 	  (map-channel (lambda (y)
 			 (+ y (* pos (read-sample reader1))))
 		       0 len stereo-snd 1)
@@ -713,8 +713,8 @@ a number, the sound is split such that 0 is all in channel 0 and 90 is all in ch
 		       0 len stereo-snd 0))
 	(let ((e0 (make-env pan-env :length len))
 	      (e1 (make-env pan-env :length len))
-	      (reader0 (make-sample-reader 0 mono-snd))
-	      (reader1 (make-sample-reader 0 mono-snd)))
+	      (reader0 (make-sampler 0 mono-snd))
+	      (reader1 (make-sampler 0 mono-snd)))
 	  (map-channel (lambda (y)
 			 (+ y (* (env e1) (read-sample reader1))))
 		       0 len stereo-snd 1)
@@ -848,7 +848,7 @@ then inverse ffts."
 	 (im (make-vct fft-size))
 	 (ramper (make-ramp 256)) ; 512 ok too
 	 (peak (/ (maxamp) fft-mid))
-	 (read-ahead (make-sample-reader 0 snd chn))
+	 (read-ahead (make-sampler 0 snd chn))
 	 (ctr 0)
 	 (in-vowel #f))
     (do ((i 0 (+ i 1)))
@@ -963,7 +963,7 @@ current spectrum value.  (filter-fft (lambda (y) (if (< y .01) 0.0 else y))) is 
 ;; (let ((op (make-one-zero .5 .5))) (filter-fft op))
 ;; (let ((op (make-one-pole .05 .95))) (filter-fft op))
 ;; (filter-fft (lambda (y) (if (< y .1) 0.0 y)))
-;; (let ((rd (make-sample-reader 0 0 0 1 0))) (scale-by 0) (filter-fft (lambda (y) (rd)))) ; treat original sound as spectrum
+;; (let ((rd (make-sampler 0 0 0 1 0))) (scale-by 0) (filter-fft (lambda (y) (rd)))) ; treat original sound as spectrum
 ;; (filter-fft contrast-enhancement)
 ;; (filter-fft (lambda (y) (* y y y))) ; extreme low pass
 
@@ -981,7 +981,7 @@ current spectrum value.  (filter-fft (lambda (y) (if (< y .01) 0.0 else y))) is 
 	 (lo 0.0 (+ lo .12)))
 	((= i 8))
       (env-sound (list 0 0 lo 1 1 0) 0 #f 32.0 ind 0 (+ i 1))
-      (vector-set! mixers i (make-sample-reader 0 ind 0 1 (edit-position ind 0))))
+      (vector-set! mixers i (make-sampler 0 ind 0 1 (edit-position ind 0))))
     (scale-by 0.0)
     (map-channel
      (lambda (y)
@@ -991,7 +991,7 @@ current spectrum value.  (filter-fft (lambda (y) (if (< y .01) 0.0 else y))) is 
 	   (set! sum (+ sum (read-sample (vector-ref mixers i))))))))
     (do ((i 0 (+ i 1)))
 	((= i 8))
-      (free-sample-reader (vector-ref mixers i))))
+      (free-sampler (vector-ref mixers i))))
   (scale-to mx))
 |#
 
@@ -1229,7 +1229,7 @@ formants, then calls map-channel: (osc-formants .99 (vct 400.0 800.0 1200.0) (vc
   (let* ((os (make-oscil osfrq))
 	 (s (make-src :srate sr))
 	 (len (frames snd chn))
-	 (sf (make-sample-reader 0 snd chn))
+	 (sf (make-sampler 0 snd chn))
 	 (out-data (make-vct len))
 	 (amp osamp))
     (vct-map! out-data
@@ -1239,7 +1239,7 @@ formants, then calls map-channel: (osc-formants .99 (vct 400.0 800.0 1200.0) (vc
 		       (if (> dir 0)
 			   (next-sample sf)
 			   (previous-sample sf))))))
-    (free-sample-reader sf)
+    (free-sampler sf)
     (vct->channel out-data 0 len snd chn #f (format #f "fp ~A ~A ~A" sr osamp osfrq))))
 	    
 
@@ -1325,12 +1325,12 @@ to produce a sound at a new pitch but at the original tempo.  It returns a funct
 	 (sound-len (inexact->exact (round (* (srate snd) dur))))
 	 (len (max sound-len (frames snd chn)))
 	 (out-data (make-vct len))
-	 (sf (make-sample-reader 0 snd chn)))
+	 (sf (make-sampler 0 snd chn)))
     (vct-map! out-data (lambda ()
 			 (let ((val (granulate gr (lambda (dir) (next-sample sf)))))
 			   (set! (mus-increment gr) (env ge))
 			   val)))
-    (free-sample-reader sf)
+    (free-sampler sf)
     (vct->channel out-data 0 len snd chn #f (format #f "expsnd '~A" gr-env))))
 
 
@@ -1476,10 +1476,10 @@ selected sound: (map-channel (cross-synthesis 1 .5 128 6.0))"
   (let* ((flt-len (frames snd0))
 	 (total-len (+ flt-len (frames snd1)))
 	 (cnv (make-convolve :filter (channel->vct 0 flt-len snd0)))
-	 (sf (make-sample-reader 0 snd1))
+	 (sf (make-sampler 0 snd1))
 	 (out-data (make-vct total-len)))
     (vct-map! out-data (lambda () (convolve cnv (lambda (dir) (next-sample sf)))))
-    (free-sample-reader sf)
+    (free-sampler sf)
     (vct-scale! out-data amp)
     (let ((max-samp (vct-peak out-data)))
       (vct->channel out-data 0 total-len snd1)
@@ -1554,7 +1554,7 @@ selected sound: (map-channel (cross-synthesis 1 .5 128 6.0))"
 (define (sound-via-sound snd1 snd2) ; "sound composition"??
   (let* ((intrp (make-sound-interp 0 snd1 0))
 	 (len (- (frames snd1 0) 1))
-	 (rd (make-sample-reader 0 snd2 0))
+	 (rd (make-sampler 0 snd2 0))
 	 (mx (maxamp snd2 0)))
       (map-channel (lambda (val) 
 		     (sound-interp intrp (inexact->exact (floor (* len (* 0.5 (+ 1.0 (/ (read-sample rd) mx)))))))))))
@@ -1635,7 +1635,7 @@ the given channel following 'envelope' (as in env-sound-interp), using grains to
 	(if (>= i next-reader-starts-at)
 	    (begin
 	      (vector-set! readers next-reader 
-			   (make-sample-reader (max 0 (inexact->exact (round (+ position-in-original (mus-random jitter))))) 
+			   (make-sampler (max 0 (inexact->exact (round (+ position-in-original (mus-random jitter))))) 
 					       snd chn))
 	      (mus-reset (vector-ref grain-envs next-reader)) ; restart grain env
 	      (set! next-reader (+ 1 next-reader))
@@ -1645,7 +1645,7 @@ the given channel following 'envelope' (as in env-sound-interp), using grains to
 	(let ((sum 0.0))
 	  (do ((i 0 (+ i 1)))
 	      ((= i num-readers))
-	    (if (sample-reader? (vector-ref readers i))
+	    (if (sampler? (vector-ref readers i))
 		(set! sum (+ sum (* (env (vector-ref grain-envs i)) (next-sample (vector-ref readers i)))))))
 	  (sound-data-set! data 0 data-ctr sum))
 
@@ -1870,7 +1870,7 @@ as env moves to 0.0, low-pass gets more intense; amplitude and low-pass amount m
 
 (define (find-click loc)
   "(find-click loc) finds the next click starting at 'loc'"
-  (let ((reader (make-sample-reader loc))
+  (let ((reader (make-sampler loc))
 	(samp0 0.0)
 	(samp1 0.0)
 	(samp2 0.0)
@@ -2008,12 +2008,12 @@ In most cases, this will be slightly offset from the true beginning of the note"
 (define (file->vct file)
   "(file->vct file) returns a vct with file's data"
   (let* ((len (mus-sound-frames file))
-	 (reader (make-sample-reader 0 file))
+	 (reader (make-sampler 0 file))
 	 (data (make-vct len)))
     (do ((i 0 (+ i 1)))
 	((= i len))
       (vct-set! data i (next-sample reader)))
-    (free-sample-reader reader)
+    (free-sampler reader)
     data))
 
 
@@ -2431,7 +2431,7 @@ passed as the arguments so to end with channel 3 in channel 0, 2 in 1, 0 in 2, a
 	 (num-blocks (inexact->exact (floor (/ len (* (srate snd) block-len))))))
     (if (> num-blocks 1)
 	(let* ((actual-block-len (inexact->exact (ceiling (/ len num-blocks))))
-	       (rd (make-sample-reader (- len actual-block-len) snd chn))
+	       (rd (make-sampler (- len actual-block-len) snd chn))
 	       (beg 0)
 	       (ctr 1))
 	  (map-channel
@@ -2446,7 +2446,7 @@ passed as the arguments so to end with channel 3 in channel 0, 2 in 1, 0 in 2, a
 		    (begin
 		      (set! ctr (+ 1 ctr))
 		      (set! beg 0)
-		      (set! rd (make-sample-reader (max 0 (- len (* ctr actual-block-len))) snd chn))))
+		      (set! rd (make-sampler (max 0 (- len (* ctr actual-block-len))) snd chn))))
 		val))
 	    0 #f snd chn #f (format #f "reverse-by-blocks ~A" block-len))))))
 
@@ -2501,18 +2501,18 @@ passed as the arguments so to end with channel 3 in channel 0, 2 in 1, 0 in 2, a
 
   (define (segment-maxamp name beg dur)
     (let ((mx 0.0)
-	  (rd (make-sample-reader beg name)))
+	  (rd (make-sampler beg name)))
       (run
        (lambda ()
 	 (do ((i 0 (+ i 1)))
 	     ((= i dur))
 	   (set! mx (max mx (abs (next-sample rd)))))))
-      (free-sample-reader rd)
+      (free-sampler rd)
       mx))
 
   (define (segment-sound name high low)
     (let* ((end (mus-sound-frames name))
-	   (reader (make-sample-reader 0 name))    ; no need to open the sound and display it
+	   (reader (make-sampler 0 name))    ; no need to open the sound and display it
 	   (avg (make-moving-average :size 128))
 	   (lavg (make-moving-average :size 2048)) ; to distinguish between slow pulse train (low horn) and actual silence
 	   (segments (make-vct 100))
@@ -2540,7 +2540,7 @@ passed as the arguments so to end with channel 3 in channel 0, 2 in 1, 0 in 2, a
 		       (vct-set! segments segctr (- i 128))
 		       (set! segctr (+ 1 segctr))
 		       (set! in-sound #t))))))))
-      (free-sample-reader reader)
+      (free-sampler reader)
       (if in-sound
 	  (begin
 	    (vct-set! segments segctr end)
@@ -2721,12 +2721,12 @@ passed as the arguments so to end with channel 3 in channel 0, 2 in 1, 0 in 2, a
 	       (set! i (- i 1))
 	       (set! start (+ 1 start))))
 	 (if (>= i 0)
-	     (let ((rd (make-sample-reader start snd chn 1 edpos)))
+	     (let ((rd (make-sampler start snd chn 1 edpos)))
 	       (do ()
 		   ((= i -1))
 		 (vct-set! d (+ i state-0) (rd))
 		 (set! i (- i 1)))
-	       (free-sample-reader rd)))
+	       (free-sampler rd)))
 	 (vct-set! d 1 (+ frag-beg beg))
 	   
 	 d)))))
@@ -2738,7 +2738,7 @@ passed as the arguments so to end with channel 3 in channel 0, 2 in 1, 0 in 2, a
   (ptree-channel
      
    (lambda (y data forward)
-     (declare (y real) (data sample-reader) (forward boolean))
+     (declare (y real) (data sampler) (forward boolean))
      (+ y (* scl (if forward 
 		     (next-sample data) 
 		     (previous-sample data)))))
@@ -2746,7 +2746,7 @@ passed as the arguments so to end with channel 3 in channel 0, 2 in 1, 0 in 2, a
    new-beg dur snd chn -1 #f
    
    (lambda (frag-beg frag-dur forward)
-     (make-sample-reader (+ frag-beg orig-beg) snd chn 
+     (make-sampler (+ frag-beg orig-beg) snd chn 
 			 (if forward 1 -1) 
 			 (if (>= edpos 0) edpos (edit-position snd chn))))))
 

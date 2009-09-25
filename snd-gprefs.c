@@ -1,8 +1,6 @@
 #include "snd.h"
 #include "sndlib-strings.h"
 
-/* PERHAPS: use gtk color|font|file|folder choosers here? */
-
 static GtkWidget *preferences_dialog = NULL, *load_path_text_widget = NULL;
 
 static bool prefs_helping = false, prefs_unsaved = false;

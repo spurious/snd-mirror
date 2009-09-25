@@ -3793,7 +3793,7 @@ current spectrum value.
     (let ((op (<a class=quiet href="sndclm.html#make-one-zero" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_one_zero_tip)">make-one-zero</a> .5 .5))) (filter-fft op))
     (let ((op (<a class=quiet href="sndclm.html#make-one-pole" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_one_pole_tip)">make-one-pole</a> .05 .95))) (filter-fft op))
     (filter-fft (lambda (y) (if (&lt; y .1) 0.0 y))) ; like fft-squelch
-    (let ((rd (<a class=quiet href="extsnd.html#makesamplereader" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesamplereader_tip)">make-sample-reader</a> 0 0 0 1 0))) 
+    (let ((rd (<a class=quiet href="extsnd.html#makesampler" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesampler_tip)">make-sampler</a> 0 0 0 1 0))) 
       (<a class=quiet href="extsnd.html#scaleby" onmouseout="UnTip()" onmouseover="Tip(extsnd_scaleby_tip)">scale-by</a> 0) 
       (filter-fft (lambda (y) (rd))))             ; treat sound as spectrum
     (filter-fft <a class=quiet href="sndclm.html#contrast-enhancement" onmouseout="UnTip()" onmouseover="Tip(sndclm_contrast_enhancement_tip)">contrast-enhancement</a>)
@@ -5625,7 +5625,7 @@ if the frame argument is omitted.
 
 <A NAME="framereaders"></a>
 <p>To read sound data as an array of frames, there is a set of functions that are parallel
-to the sample-reader functions, but which deal in frames.  I will probably move these to C
+to the sampler functions, but which deal in frames.  I will probably move these to C
 once the dust settles.
 </p>
 
@@ -6916,9 +6916,9 @@ mix-name-&gt;id returns the if of the mix with the given name, or 'no-such-mix i
 </td></tr><tr><td></td><td>
 mix-property associates a property with each mix.
 <pre>
-    :<em class=typing>(set! (mix-property :info 0) "this is a mix")</em>
+    :<em class=typing>(set! (mix-property :info mx) "this is a mix")</em>
     <em class=listener>"this is a mix"</em>
-    :<em class=typing>(mix-property :info 0)</em>
+    :<em class=typing>(mix-property :info mx)</em>
     <em class=listener>"this is a mix"</em>
 </pre>
 </td></tr><tr><td colspan=2></td></tr>
@@ -8803,7 +8803,7 @@ argument to pvocoder can be a function.
 <pre>
     (let* ((ind (<a class=quiet href="extsnd.html#opensound" onmouseout="UnTip()" onmouseover="Tip(extsnd_opensound_tip)">open-sound</a> "oboe.snd"))
 	   (pv (<em class=red>make-pvocoder</em> 256 4 64))
-           (rd (<a class=quiet href="extsnd.html#makesamplereader" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesamplereader_tip)">make-sample-reader</a> 0)))
+           (rd (<a class=quiet href="extsnd.html#makesampler" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesampler_tip)">make-sampler</a> 0)))
       (<a class=quiet href="extsnd.html#mapchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_mapchannel_tip)">map-channel</a> (lambda (y) (<em class=red>pvocoder</em> pv rd))))
 </pre>
 <p>
@@ -8823,11 +8823,11 @@ pvoc.scm also contains a few examples of using the CLM phase-vocoder generator:
 					    (<a class=quiet href="extsnd.html#vctset" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctset_tip)">vct-set!</a> (phase-vocoder-amp-increments v) i 0.0)))
 				      #t))
 				  #f ;no change to synthesis))
-	  (reader (<a class=quiet href="extsnd.html#makesamplereader" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesamplereader_tip)">make-sample-reader</a> 0)))
+	  (reader (<a class=quiet href="extsnd.html#makesampler" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesampler_tip)">make-sampler</a> 0)))
       (<a class=quiet href="extsnd.html#mapchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_mapchannel_tip)">map-channel</a> (lambda (val)
 		  (<a class=quiet href="sndclm.html#phase-vocoder" onmouseout="UnTip()" onmouseover="Tip(sndclm_phase_vocoder_tip)">phase-vocoder</a> pv (lambda (dir) 
 				      (reader)))))
-      (<a class=quiet href="extsnd.html#freesamplereader" onmouseout="UnTip()" onmouseover="Tip(extsnd_freesamplereader_tip)">free-sample-reader</a> reader))))
+      (<a class=quiet href="extsnd.html#freesampler" onmouseout="UnTip()" onmouseover="Tip(extsnd_freesampler_tip)">free-sampler</a> reader))))
 </pre></td></tr></table>
 
 <p>This sets up a phase-vocoder generator whose edit function is squelching soft partials.
@@ -9295,7 +9295,7 @@ A slightly different view of the same filter is provided
 by <a href="#maxfdoc">maxf</a>.  
 <pre>
 (<a class=quiet href="#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> ()    ; filter "now.snd" with default freq/decay
-  (let ((rd (<a class=quiet href="extsnd.html#makesamplereader" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesamplereader_tip)">make-sample-reader</a> 0 "now.snd")) 
+  (let ((rd (<a class=quiet href="extsnd.html#makesampler" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesampler_tip)">make-sampler</a> 0 "now.snd")) 
 	(m (<em class=red>make-mfilter</em>))) 
     (run (lambda () 
 	   (do ((i 0 (+ 1 i))) 
@@ -9303,7 +9303,7 @@ by <a href="#maxfdoc">maxf</a>.
 	     (<a class=quiet href="sndclm.html#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i (<em class=red>mfilter</em> m (* .1 (rd)))))))))
 
 (<a class=quiet href="#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> ()    ; sweep center freq from 100Hz to 2000Hz
-  (let ((rd (<a class=quiet href="extsnd.html#makesamplereader" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesamplereader_tip)">make-sample-reader</a> 0 "oboe.snd")) 
+  (let ((rd (<a class=quiet href="extsnd.html#makesampler" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesampler_tip)">make-sampler</a> 0 "oboe.snd")) 
         (m (<em class=red>make-mfilter</em> :decay .99 :frequency 1000)) 
         (e (<a class=quiet href="sndclm.html#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> '(0 100 1 2000) :length 10000))) 
     (run (lambda () 
@@ -11827,7 +11827,7 @@ The currently implemented field types are:
 </p>
 
 <pre>
-    int float boolean char string list symbol keyword vct sample-reader mix-sample-reader 
+    int float boolean char string list symbol keyword vct sampler mix-sampler 
     sound-data clm float-vector int-vector vct-vector list-vector clm-vector 
 </pre>
 
@@ -11957,8 +11957,8 @@ an upward ramp and a downward ramp, then zips them together:
 	   (zp (<em class=red>make-zipper</em> (<a class=quiet href="sndclm.html#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> '(0 0 1 1) :length dur)
 			    0.05
 			    (<a class=quiet href="sndclm.html#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> (list 0 (* (<a class=quiet href="extsnd.html#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a>) 0.05)) :length dur)))
-	  (reader0 (<a class=quiet href="extsnd.html#makesamplereader" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesamplereader_tip)">make-sample-reader</a> 0 0 0))
-	  (reader1 (<a class=quiet href="extsnd.html#makesamplereader" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesamplereader_tip)">make-sample-reader</a> 0 1 0)))
+	  (reader0 (<a class=quiet href="extsnd.html#makesampler" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesampler_tip)">make-sampler</a> 0 0 0))
+	  (reader1 (<a class=quiet href="extsnd.html#makesampler" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesampler_tip)">make-sampler</a> 0 1 0)))
       (<a class=quiet href="extsnd.html#mapchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_mapchannel_tip)">map-channel</a> (lambda (val) (<em class=red>zipper</em> zp reader0 reader1))))))
 </pre></td></tr></table>
 

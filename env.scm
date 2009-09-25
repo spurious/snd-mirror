@@ -486,7 +486,7 @@ each segment: (powenv-channel '(0 0 .325  1 1 32.0 2 0 32.0))"
 	 (fsr (mus-sound-srate file))
 	 (incrsamps (inexact->exact (round (* incr fsr))))
 	 (start (inexact->exact (round (* beg fsr))))
-	 (reader (make-sample-reader start file))
+	 (reader (make-sampler start file))
 	 (end (if dur (min (inexact->exact (+ start (round (* fsr dur))))
 			   (mus-sound-frames file))
 		  (mus-sound-frames file)))

@@ -586,7 +586,7 @@ REFLECTED causes every other repetition to be in reverse."
 
 \ ;;; rms-envelope
 
-[defined] make-sample-reader [if]
+[defined] make-sampler [if]
   : rms-envelope <{ file :key beg 0.0 dur #f rfreq 30.0 db #f -- en }>
     file find-file to file
     file false? if 'no-such-file #( get-func-name file ) fth-throw then
@@ -595,7 +595,7 @@ REFLECTED causes every other repetition to be in reverse."
     file mus-sound-srate { fsr }
     incr fsr f* fround->s { incrsamps }
     beg fsr f* fround->s { start }
-    start file 0 1 #f make-sample-reader { reader }
+    start file 0 1 #f make-sampler { reader }
     dur if
       fsr dur f* start f+ fround->s  file mus-sound-frames  min
     else

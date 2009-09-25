@@ -498,7 +498,7 @@ REFLECTED causes every other repetition to be in reverse.")
     fsr = mus_sound_srate(file)
     incrsamps = (incr * sfr).round
     start = (beg * fsr).round
-    reader = make_sample_reader(start, file)
+    reader = make_sampler(start, file)
     fin = dur ? [start + (fsr * dur).round, mus_sound_frames(file)].min : mus_sound_frames(file)
     rms = make_moving_average(incrsamps)
     0.step(fin, incrsamps) do |i|

@@ -53,7 +53,7 @@ module Rubber
 
   def crossings
     crosses = 0
-    sr0 = make_sample_reader(0)
+    sr0 = make_sampler(0)
     samp0 = next_sample(sr0)
     len = frames()
     sum = 0.0
@@ -76,8 +76,8 @@ module Rubber
     data = make_vct(samps.round)
     x = 1.0
     xinc = 1.0 / samps
-    sr0 = make_sample_reader(s0.round)
-    sr1 = make_sample_reader(s1.round)
+    sr0 = make_sampler(s0.round)
+    sr1 = make_sampler(s1.round)
     (0...samps).each do |i|
       data[i] = x * next_sample(sr0) + (1.0 - x) * next_sample(sr1)
       x += xinc
@@ -97,7 +97,7 @@ module Rubber
                   cross_weights = make_vct(crosses)
                   cross_marks = make_vct(crosses)
                   cross_periods = make_vct(crosses)
-                  sr0 = make_sample_reader(0, snd, chn)
+                  sr0 = make_sampler(0, snd, chn)
                   samp0 = next_sample(sr0)
                   len = frames()
                   sum = 0.0
@@ -124,7 +124,7 @@ module Rubber
                     fftlen = (2 ** pow2).round
                     len4 = fftlen / 4
                     data = make_vct(fftlen)
-                    reader = make_sample_reader(s0.round)
+                    reader = make_sampler(s0.round)
                     (0...fftlen).each do |j| data[j] = next_sample(reader) end
                     autocorrelate(data)
                     autolen = 0
@@ -149,8 +149,8 @@ module Rubber
                     s0 = start
                     s1 = cross_samples[current_mark]
                     len = autolen
-                    sr0 = make_sample_reader(s0.round)
-                    sr1 = make_sample_reader(s1.round)
+                    sr0 = make_sampler(s0.round)
+                    sr1 = make_sampler(s1.round)
                     ampsum = 0.0
                     diffsum = 0.0
                     (0...len).each do |dummy|
@@ -171,8 +171,8 @@ module Rubber
                       s0 = start
                       s1 = cross_samples[k]
                       len = autolen
-                      sr0 = make_sample_reader(s0.round)
-                      sr1 = make_sample_reader(s1.round)
+                      sr0 = make_sampler(s0.round)
+                      sr1 = make_sampler(s1.round)
                       ampsum = 0.0
                       diffsum = 0.0
                       (0...len).each do |dummy|

@@ -90,9 +90,9 @@ returns the id of the mix at the given sample, or nil.")
   def mix2vct(id)
     Snd.raise(:no_such_mix, id) unless mix?(id)
     len = mix_length(id)
-    rd = make_mix_sample_reader(id)
+    rd = make_mix_sampler(id)
     v = Vct.new(len) do |i| read_mix_sample(rd) end
-    free_sample_reader(rd)
+    free_sampler(rd)
     v
   end
 
@@ -109,10 +109,10 @@ returns the id of the mix at the given sample, or nil.")
   def mix_maxamp(id)
     Snd.raise(:no_such_mix, id) unless mix?(id)
     len = mix_length(id)
-    rd = make_mix_sample_reader(id)
+    rd = make_mix_sampler(id)
     peak = read_mix_sample(rd).abs
     (1...len).each do peak = [peak, read_mix_sample(rd).abs].max end
-    free_sample_reader(rd)
+    free_sampler(rd)
     peak
   end
 

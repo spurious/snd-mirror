@@ -587,7 +587,7 @@ static void add_to_region_list(region *r)
 
 #define NOT_EDITABLE -2
 
-static int paste_region_1(int n, chan_info *cp, bool add, mus_long_t beg, io_error_t *err, int start_chan)
+static int paste_region_1(int n, chan_info *cp, bool add, mus_long_t beg, io_error_t *err, int start_chan, int *out_chans)
 {
   region *r;
   char *origin = NULL;
@@ -610,6 +610,8 @@ static int paste_region_1(int n, chan_info *cp, bool add, mus_long_t beg, io_err
     deferred_region_to_temp_file(r);
 
   si = sync_to_chan(cp);
+  (*out_chans) = si->chans;
+
   if (add)
     {
       /* unfortunately we need to copy here since the region may fall off the region stack while we're still using the mix */
@@ -680,8 +682,8 @@ static int paste_region_1(int n, chan_info *cp, bool add, mus_long_t beg, io_err
 static io_error_t paste_region_2(int n, chan_info *cp, bool add, mus_long_t beg)
 {
   io_error_t err = IO_NO_ERROR;
-  int id;
-  id = paste_region_1(n, cp, add, beg, &err, 0);
+  int id, chans = 0;
+  id = paste_region_1(n, cp, add, beg, &err, 0, &chans);
   return(err);
 }
 
@@ -1747,12 +1749,14 @@ using data format (default depends on machine byte order), header type (" S_mus_
 static XEN g_mix_region(XEN chn_samp_n, XEN reg_n, XEN snd_n, XEN chn_n, XEN reg_chn)
 {
   #define H_mix_region "(" S_mix_region " :optional (chn-samp 0) (region 0) snd chn (region-chan #t)): \
-mix region's channel region-chan (or all chans if region-chan is " PROC_TRUE ") into snd's channel chn starting at chn-samp; return new mix id, if any."
+mix region's channel region-chan (or all chans if region-chan is " PROC_TRUE ") into snd's channel chn starting at chn-samp; \
+it returns a list of the new mixes"
 
   chan_info *cp;
   mus_long_t samp;
   io_error_t err = IO_NO_ERROR;
-  int rg, id = -1, reg_chan = 0;
+  int i, rg, id = -1, reg_chan = 0, reg_chans = 0;
+  XEN result = XEN_EMPTY_LIST;
 
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(chn_samp_n), chn_samp_n, XEN_ARG_1, S_mix_region, "a number");
   XEN_ASSERT_TYPE(XEN_REGION_IF_BOUND_P(reg_n), reg_n, XEN_ARG_2, S_mix_region, "a region id");
@@ -1773,14 +1777,18 @@ mix region's channel region-chan (or all chans if region-chan is " PROC_TRUE ") 
   if (XEN_INTEGER_P(reg_chn))
     reg_chan = XEN_TO_C_INT(reg_chn);
 
-  id = paste_region_1(rg, cp, true, samp, &err, reg_chan);
+  id = paste_region_1(rg, cp, true, samp, &err, reg_chan, &reg_chans);
 
   /* id might legitmately be invalid mix id if with_mix_tags is #f or virtual mix not ok */
   if (SERIOUS_IO_ERROR(err))
     XEN_ERROR(CANT_UPDATE_FILE,
 	      XEN_LIST_2(C_TO_XEN_STRING(S_mix_region),
 			 C_TO_XEN_STRING(io_error_name(err))));
-  return(new_xen_mix(id));
+  
+  if (id == -1) return(XEN_FALSE);
+  for (i = 0; i < reg_chans; i++)
+    result = XEN_CONS(new_xen_mix(id + i), result);
+  return(XEN_LIST_REVERSE(result));
 }
 
 

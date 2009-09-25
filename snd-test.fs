@@ -615,18 +615,18 @@ mus-audio-playback-amp value original-audio-amp
   home-lst 0 array-ref { snd }
   home-lst 1 array-ref { chn }
   mix-id 0 mix-amp { amp }
-  mix-id make-mix-sample-reader { mr }
-  mr mix-sample-reader? unless $" %s is not mix-sample-reader?"  mr snd-display then
-  mr region-sample-reader?  if $" mix-sample-reader: region %s?" mr snd-display then
-  mr sample-reader?         if $" mix-sample-reader: normal %s?" mr snd-display then
-  mr sample-reader-position to res
-  res 0<> if $" mix sample-reader-position: %d?" #( res ) snd-display then
-  mr sample-reader-at-end? if $" mix sample-reader-at-end: %s?" #( mr ) snd-display then
-  mr sample-reader-home to res
-  mix-id res <> if $" mix sample-reader-home: %d %s?" #( res mr ) snd-display then
+  mix-id make-mix-sampler { mr }
+  mr mix-sampler? unless $" %s is not mix-sampler?"  mr snd-display then
+  mr region-sampler?  if $" mix-sampler: region %s?" mr snd-display then
+  mr sampler?         if $" mix-sampler: normal %s?" mr snd-display then
+  mr sampler-position to res
+  res 0<> if $" mix sampler-position: %d?" #( res ) snd-display then
+  mr sampler-at-end? if $" mix sampler-at-end: %s?" #( mr ) snd-display then
+  mr sampler-home to res
+  mix-id res <> if $" mix sampler-home: %d %s?" #( res mr ) snd-display then
   mr object->string 0 22 string-substring to res
-  res $" #<mix-sample-reader mi" string<> if
-    $" mix sample-reader actually got: [%s]?" #( res ) snd-display
+  res $" #<mix-sampler mi" string<> if
+    $" mix sampler actually got: [%s]?" #( res ) snd-display
   then
   1234 <'> mix-amp #t nil fth-catch to res
   stack-reset
@@ -655,7 +655,7 @@ mus-audio-playback-amp value original-audio-amp
   mr #() object-apply to mx
   199 sample to sx
   mx sx fneq if $" read-mix-sample 100: %s %s?" #( mx sx ) snd-display then
-  mr free-sample-reader drop
+  mr free-sampler drop
   \
   100 pos <>   if $" mix-position: %d?"     pos snd-display then
   41623 len <> if $" mix-length: %d?"       len snd-display then
@@ -1723,21 +1723,21 @@ include bird.fsm
    <'> filter-sound <'> filter-control-in-dB <'> filter-control-envelope <'> enved-filter-order
    <'> enved-filter <'> filter-control-in-hz <'> filter-control-order <'> filter-selection
    <'> filter-channel <'> filter-control? <'> find-channel
-   <'> find-mark <'> find-sound <'> finish-progress-report <'> frames <'> free-sample-reader
+   <'> find-mark <'> find-sound <'> finish-progress-report <'> frames <'> free-sampler
    <'> graph <'> transform? <'> delete-transform <'> add-watcher <'> delete-watcher
    <'> graph-cursor <'> graph->ps
    <'> gl-graph->ps <'> graph-style <'> lisp-graph? <'>  graphs-horizontal <'> header-type
    <'> in <'> insert-region <'> insert-sample <'> insert-samples
    <'> insert-samples-with-origin <'> insert-selection <'> insert-silence <'> insert-sound
    <'> just-sounds <'> left-sample <'> listener-prompt
-   <'> make-mix-sample-reader <'> make-player <'> make-region <'> make-region-sample-reader
-   <'> make-sample-reader <'> map-chan
+   <'> make-mix-sampler <'> make-player <'> make-region <'> make-region-sampler
+   <'> make-sampler <'> map-chan
    <'> mark-name <'> mark-sample <'> mark-sync <'> mark-sync-max
    <'> mark-home <'> marks <'> mark? <'>  max-transform-peaks
    <'> max-regions <'> maxamp <'> maxamp-position
    <'> minibuffer-history-length <'> min-dB <'> log-freq-start <'> mix
    <'> mixes <'> mix-amp <'> mix-amp-env <'> mix-length
-   <'> mix? <'> mix-position <'> mix-name <'> mix-region <'> mix-sample-reader?
+   <'> mix? <'> mix-position <'> mix-name <'> mix-region <'> mix-sampler?
    <'> mix-selection <'> mix-sound <'> mix-home <'> mix-speed
    <'> mix-tag-height <'> mix-tag-width <'> mark-tag-height <'> mark-tag-width
    <'> mix-tag-y <'> mix-vct <'> mix-waveform-height <'> time-graph-style
@@ -1756,8 +1756,8 @@ include bird.fsm
    <'> restore-controls <'> restore-region <'> reverb-control-decay <'> reverb-control-feedback
    <'> reverb-control-length <'> reverb-control-lowpass <'> reverb-control-scale
    <'> reverb-control? <'>  reverse-sound <'> reverse-selection <'> revert-sound
-   <'> right-sample <'> sample <'> sample-reader-at-end? <'>  sample-reader?
-   <'> samples <'> sample-reader-position <'> save-controls
+   <'> right-sample <'> sample <'> sampler-at-end? <'>  sampler?
+   <'> samples <'> sampler-position <'> save-controls
    <'> ladspa-dir <'> save-dir <'> save-edit-history <'> save-envelopes
    <'> save-listener <'> save-marks <'> save-region <'> save-selection
    <'> save-sound <'> save-sound-as <'> save-state <'> save-state-file
@@ -1778,7 +1778,7 @@ include bird.fsm
    <'> speed-control-style <'> speed-control-tones <'> squelch-update <'> srate
    <'> src-sound <'> src-selection <'> start-progress-report <'> stop-player
    <'> stop-playing <'> swap-channels <'> syncd-marks <'> sync
-   <'> sync-max <'> sound-properties <'> temp-dir <'>  region-sample-reader?
+   <'> sync-max <'> sound-properties <'> temp-dir <'>  region-sampler?
    <'> transform-sample <'> transform->vct <'> transform-frames <'> transform-type
    <'> trap-segfault <'> with-file-monitor <'> optimization
    <'> undo <'> update-transform-graph <'> update-time-graph <'> update-lisp-graph
@@ -1882,10 +1882,10 @@ include bird.fsm
    <'> phase-vocoder-freqs <'> phase-vocoder-phase-increments
    <'> phase-vocoder-phases
    <'> mus-generator? <'> read-sample <'> reset-listener-cursor <'> goto-listener-end
-   <'> sample-reader-home <'> selection-chans <'> selection-srate <'> snd-warning
+   <'> sampler-home <'> selection-chans <'> selection-srate <'> snd-warning
    <'> channel-data <'> x-axis-label <'> variable-graph? <'> y-axis-label
    <'> snd-url <'> snd-urls <'> free-player <'> delete-mix <'> delay-tick <'> playing
-   <'> pausing <'> copy-sample-reader <'> html-dir <'> html-program
+   <'> pausing <'> copy-sampler <'> html-dir <'> html-program
    <'> make-fir-coeffs <'> make-identity-mixer <'> mus-interp-type <'> mus-run
    <'> phase-vocoder <'> player-home <'> redo-edit <'> undo-edit ) constant procs
 
@@ -2189,8 +2189,8 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
      <'> rand-interp? <'> rand? <'> readin? <'> sample->file?
      <'> sawtooth-wave? <'> square-wave? <'> src? <'> table-lookup? <'> triangle-wave?
      <'> two-pole? <'> two-zero? <'> wave-train?
-     <'> mix-sample-reader? <'> moving-average? <'> ssb-am?
-     <'> sample-reader? <'> region-sample-reader? <'> vct? ) { ?prcs }
+     <'> mix-sampler? <'> moving-average? <'> ssb-am?
+     <'> sampler? <'> region-sampler? <'> vct? ) { ?prcs }
   args-1 each to arg
     ?prcs each to prc
       arg prc #t nil fth-catch to tag
@@ -2607,8 +2607,8 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   "/bad/baddy" 	       <'> mus-sound-report-cache 'cannot-save      check-error-tag
   <'> noop 3 make-proc       <'> set-search-procedure   'bad-arity        check-error-tag
   1234 <'> noop 1 make-proc  <'> set-search-procedure   'no-such-sound    check-error-tag
-  0 "oboe.snd" 1             <'> make-sample-reader     'no-such-channel  check-error-tag
-  0 "oboe.snd" -1            <'> make-sample-reader     'no-such-channel  check-error-tag
+  0 "oboe.snd" 1             <'> make-sampler     'no-such-channel  check-error-tag
+  0 "oboe.snd" -1            <'> make-sampler     'no-such-channel  check-error-tag
   <'> noop 1 make-proc       <'> set-zoom-focus-style   'bad-arity        check-error-tag
   1 1.0 make-mixer { mx }
   "oboe.snd" "pistol.snd" 0 12 0 mx $" a string" <'> mus-mix 'wrong-type-arg check-error-tag
@@ -2792,13 +2792,13 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   0 100 ind 0 make-region drop
   "/bad/baddy.snd"           <'> save-selection         'cannot-save      check-error-tag
   regions 0 array-ref "/bad/baddy.snd" <'> save-region          'cannot-save      check-error-tag
-  1234                       <'> make-mix-sample-reader 'no-such-mix      check-error-tag
+  1234                       <'> make-mix-sampler 'no-such-mix      check-error-tag
   0 12 1234 #t               <'> make-region            'no-such-sound    check-error-tag
   #t ind set-read-only drop
   ind #( 0 0 1 1 )           <'> set-sound-loop-info    'cannot-save      check-error-tag
-  0 ind 0 123                <'> make-sample-reader     'no-such-direction check-error-tag
-  0 ind 0 0                  <'> make-sample-reader     'no-such-direction check-error-tag
-  0 ind 0 -2                 <'> make-sample-reader     'no-such-direction check-error-tag
+  0 ind 0 123                <'> make-sampler     'no-such-direction check-error-tag
+  0 ind 0 0                  <'> make-sampler     'no-such-direction check-error-tag
+  0 ind 0 -2                 <'> make-sampler     'no-such-direction check-error-tag
   #()                        <'> scale-by               'no-data          check-error-tag
   #()                        <'> scale-to               'no-data          check-error-tag
   "hi" <'> noop 2 make-proc  <'> prompt-in-minibuffer   'bad-arity        check-error-tag
@@ -2855,8 +2855,8 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   "/bad/baddy.snd"           <'> open-sound              'no-such-file    check-error-tag
   "/bad/baddy.snd" 1 22050 mus-lshort <'> open-raw-sound 'no-such-file    check-error-tag
   "/bad/baddy.snd"           <'> view-sound              'no-such-file    check-error-tag
-  0 "/bad/baddy.snd"         <'> make-sample-reader      'no-such-file    check-error-tag
-  0 1234567                  <'> make-region-sample-reader 'no-such-region check-error-tag
+  0 "/bad/baddy.snd"         <'> make-sampler      'no-such-file    check-error-tag
+  0 1234567                  <'> make-region-sampler 'no-such-region check-error-tag
   -1                         <'> send-mozilla            'wrong-type-arg  check-error-tag
   sf-dir "bad_chans.snd" $+ 0 0 123 234 0.0 make-vct <'> file->array 'bad-header check-error-tag
   sf-dir "bad_chans.snd" $+  <'> make-readin             'bad-header check-error-tag
@@ -2994,30 +2994,30 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   close-sound-fc-cb find-channel drop
   \ 
   "oboe.snd" open-sound to ind
-  0 make-sample-reader { rd }
+  0 make-sampler { rd }
   ind close-sound drop
   10 0 do rd read-sample drop loop
-  rd sample-reader-home { home }
+  rd sampler-home { home }
   home array-length 0> if
     home 0 array-ref sound? if
       $" reader-home of closed sound: %s %s?" #( home sounds ) snd-display
     then
   then
-  rd sample-reader-position { loc }
+  rd sampler-position { loc }
   loc 0<> if $" closed reader position: %s?" #( loc ) snd-display then
-  rd sample-reader-at-end? { at-end }
-  at-end false? if $" closed sample reader at end: %s?" #( at-end ) snd-display then
+  rd sampler-at-end? { at-end }
+  at-end false? if $" closed sampler at end: %s?" #( at-end ) snd-display then
   \ 
   "oboe.snd" open-sound to ind
   vct( 0.1 0.2 0.3 ) mix-vct { mx }
-  mx make-mix-sample-reader to rd
+  mx make-mix-sampler to rd
   ind close-sound drop
   10 0 do rd read-mix-sample drop loop
   \
   8 max-regions max set-max-regions drop
   "oboe.snd" open-sound to ind
   0 100 ind 0 make-region { reg }
-  0 reg make-region-sample-reader to rd
+  0 reg make-region-sampler to rd
   ind close-sound drop
   reg forget-region drop
   10 0 do rd read-sample drop loop
@@ -3063,21 +3063,21 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
       $" map-channel rtn complex: %s" #( tag ) snd-display
     then
   then
-  0 make-sample-reader to rd
+  0 make-sampler to rd
   10 0 do rd #() apply drop loop
-  rd copy-sample-reader { crd }
+  rd copy-sampler { crd }
   ind close-sound drop
   10 0 do crd read-sample drop loop
-  crd sample-reader-home to home
+  crd sampler-home to home
   home array-length 0> if
     home 0 array-ref sound? if
       $" copy reader-home of closed sound: %s %s?" #( home sounds ) snd-display
     then
   then
-  crd sample-reader-position to loc
+  crd sampler-position to loc
   loc 0<> if $" closed copy reader position: %s?" #( loc ) snd-display then
-  crd sample-reader-at-end? to at-end
-  at-end false? if $" closed copy sample reader at end: %s?" #( at-end ) snd-display then
+  crd sampler-at-end? to at-end
+  at-end false? if $" closed copy sampler at end: %s?" #( at-end ) snd-display then
   \
   ind <'> revert-sound #t nil fth-catch to tag
   stack-reset

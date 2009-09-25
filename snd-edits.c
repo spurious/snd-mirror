@@ -6002,7 +6002,7 @@ void ptree_channel(chan_info *cp, struct ptree *tree, mus_long_t beg, mus_long_t
 }
 
 
-/* -------------------------------- sample readers -------------------------------- */
+/* -------------------------------- samplers -------------------------------- */
 
 static reader_mixes *free_reader_mixes(reader_mixes *md)
 {
@@ -6103,7 +6103,7 @@ snd_fd *free_snd_fd(snd_fd *sf)
 
 mus_long_t current_location(snd_fd *sf) 
 {
-  /* only used by moving cursor code in snd-dac.c [and sample-reader-position] */
+  /* only used by moving cursor code in snd-dac.c [and sampler-position] */
   if (sf->current_sound)
     return(READER_GLOBAL_POSITION(sf) - READER_LOCAL_POSITION(sf) + sf->current_sound->io->beg + sf->loc);
   return(READER_GLOBAL_POSITION(sf) - READER_LOCAL_POSITION(sf) + sf->loc);
@@ -6155,7 +6155,7 @@ static snd_fd *init_sample_read_any_with_bufsize(mus_long_t samp, chan_info *cp,
   sf = (snd_fd *)calloc(1, sizeof(snd_fd)); /* only creation point (... oops -- see below...)*/
 
   sf->region = INVALID_REGION;
-  sf->type = SAMPLE_READER;
+  sf->type = SAMPLER;
   sf->initial_samp = samp;
   sf->cp = cp;
   sf->fscaler = MUS_FIX_TO_FLOAT;
@@ -6204,7 +6204,7 @@ static snd_fd *init_sample_read_any_with_bufsize(mus_long_t samp, chan_info *cp,
 	      /* since arbitrarily many work procs can be running in parallel, reading the same 
 	       * data (edit tree sound file entries), we can't share the clm-style IO buffers since these contain
 	       * a local notion of current position which is not accessed on every sample by the
-	       * sample readers (they trust their snd_fd indices); we wouldn't want to be
+	       * samplers (they trust their snd_fd indices); we wouldn't want to be
 	       * constantly jumping around and re-reading data buffers (in the worst case
 	       * many times per sample) anyway, so we copy the IO buffer, allocate a relatively
 	       * small data buffer, and then free all the copied snd_data stuff as soon as
@@ -7694,17 +7694,17 @@ static XEN g_edit_fragment_type_name(XEN type)
 
 
 
-/* ---------------- sample readers ---------------- */
+/* ---------------- samplers ---------------- */
 
 static XEN_OBJECT_TYPE sf_tag;
 
-bool sample_reader_p(XEN obj) {return(XEN_OBJECT_TYPE_P(obj, sf_tag));}
+bool sampler_p(XEN obj) {return(XEN_OBJECT_TYPE_P(obj, sf_tag));}
 
-#define SAMPLE_READER_P(Obj) XEN_OBJECT_TYPE_P(Obj, sf_tag)
-#define ANY_SAMPLE_READER_P(Obj) ((sample_reader_p(Obj)) || (mix_sample_reader_p(Obj)))
+#define SAMPLER_P(Obj) XEN_OBJECT_TYPE_P(Obj, sf_tag)
+#define ANY_SAMPLER_P(Obj) ((sampler_p(Obj)) || (mix_sampler_p(Obj)))
 
-snd_fd *xen_to_sample_reader(XEN obj) {if (SAMPLE_READER_P(obj)) return((snd_fd *)XEN_OBJECT_REF(obj)); else return(NULL);}
-#define XEN_TO_SAMPLE_READER(obj) ((snd_fd *)XEN_OBJECT_REF(obj))
+snd_fd *xen_to_sampler(XEN obj) {if (SAMPLER_P(obj)) return((snd_fd *)XEN_OBJECT_REF(obj)); else return(NULL);}
+#define XEN_TO_SAMPLER(obj) ((snd_fd *)XEN_OBJECT_REF(obj))
 
 #if HAVE_S7
 static bool s7_equalp_sf(void *s1, void *s2)
@@ -7713,7 +7713,7 @@ static bool s7_equalp_sf(void *s1, void *s2)
 }
 #endif
 
-char *sample_reader_to_string(snd_fd *fd)
+char *sampler_to_string(snd_fd *fd)
 {
   char *desc;
   chan_info *cp;
@@ -7723,7 +7723,7 @@ char *sample_reader_to_string(snd_fd *fd)
   desc = (char *)calloc(PRINT_BUFFER_SIZE, sizeof(char));
 #endif
   if (fd == NULL)
-    sprintf(desc, "#<sample-reader: null>");
+    sprintf(desc, "#<sampler: null>");
   else
     {
       const char *name = NULL;
@@ -7734,7 +7734,7 @@ char *sample_reader_to_string(snd_fd *fd)
 	{
 	  if ((cp) && (cp->sound) && (cp->active >= CHANNEL_HAS_EDIT_LIST) && (!(fd->at_eof)))
 	    {
-	      if (fd->type == SAMPLE_READER)
+	      if (fd->type == SAMPLER)
 		{
 		  name = cp->sound->short_filename;
 		  if (name == NULL)
@@ -7752,15 +7752,15 @@ char *sample_reader_to_string(snd_fd *fd)
 	}
       if (name == NULL) name = "unknown source";
       if (fd->at_eof)
-	mus_snprintf(desc, PRINT_BUFFER_SIZE, "#<sample-reader: %s at eof or freed>",
+	mus_snprintf(desc, PRINT_BUFFER_SIZE, "#<sampler: %s at eof or freed>",
 		     name);
       else 
 	{
 	  if (cp)
-	    mus_snprintf(desc, PRINT_BUFFER_SIZE, "#<sample-reader: %s[%d: %d] from " MUS_LD ", at " MUS_LD ", %s>",
+	    mus_snprintf(desc, PRINT_BUFFER_SIZE, "#<sampler: %s[%d: %d] from " MUS_LD ", at " MUS_LD ", %s>",
 			 name, cp->chan, fd->edit_ctr, fd->initial_samp, current_location(fd), 
 			 (fd->direction == READ_BACKWARD) ? "backward" : "forward");
-	  else mus_snprintf(desc, PRINT_BUFFER_SIZE, "#<sample-reader: %s from " MUS_LD ", at " MUS_LD ", %s>",
+	  else mus_snprintf(desc, PRINT_BUFFER_SIZE, "#<sampler: %s from " MUS_LD ", at " MUS_LD ", %s>",
 			    name, fd->initial_samp, current_location(fd),
 			    (fd->direction == READ_BACKWARD) ? "backward" : "forward");
 	}
@@ -7769,9 +7769,9 @@ char *sample_reader_to_string(snd_fd *fd)
 }
 
 
-XEN_MAKE_OBJECT_PRINT_PROCEDURE(snd_fd, print_sf, sample_reader_to_string)
+XEN_MAKE_OBJECT_PRINT_PROCEDURE(snd_fd, print_sf, sampler_to_string)
 
-/* make-sample-reader can refer to any edit of any sound, user can subsequently
+/* make-sampler can refer to any edit of any sound, user can subsequently
  *   either clobber that edit (undo, new edit), or close the sound, but forget
  *   that the reader is now invalid.  So, we keep a list of these and unconnect
  *   them by hand when an edit is pruned or a sound is closed.
@@ -7851,7 +7851,7 @@ static void sf_free(snd_fd *fd)
   if (fd) 
     {
       snd_info *sp = NULL;
-      /* changed to reflect g_free_sample_reader 29-Oct-00 */
+      /* changed to reflect g_free_sampler 29-Oct-00 */
       unlist_reader(fd);
       sp = fd->local_sp; 
       fd->local_sp = NULL;
@@ -7865,23 +7865,23 @@ XEN_MAKE_OBJECT_FREE_PROCEDURE(snd_fd, free_sf, sf_free)
 /* sf_free is original, free_sf is wrapped form */
 
 
-static XEN g_sample_reader_at_end(XEN obj) 
+static XEN g_sampler_at_end(XEN obj) 
 {
-  #define H_sample_reader_at_end "(" S_sample_reader_at_end_p " obj): " PROC_TRUE " if sample-reader has reached the end of its data"
-  XEN_ASSERT_TYPE(ANY_SAMPLE_READER_P(obj), obj, XEN_ONLY_ARG, S_sample_reader_at_end_p, "a sample-reader (of any kind)");
-  if (sample_reader_p(obj))
+  #define H_sampler_at_end "(" S_sampler_at_end_p " obj): " PROC_TRUE " if sampler has reached the end of its data"
+  XEN_ASSERT_TYPE(ANY_SAMPLER_P(obj), obj, XEN_ONLY_ARG, S_sampler_at_end_p, "a sampler (of any kind)");
+  if (sampler_p(obj))
     {
       snd_fd *sf;
-      sf = XEN_TO_SAMPLE_READER(obj);
+      sf = XEN_TO_SAMPLER(obj);
       return(C_TO_XEN_BOOLEAN(sf->at_eof));
     }
-  if (mix_sample_reader_p(obj))
-    return(g_mix_sample_reader_at_end_p(obj));
+  if (mix_sampler_p(obj))
+    return(g_mix_sampler_at_end_p(obj));
   return(XEN_FALSE);
 }
 
 
-/* can sample-reader-position be settable? 
+/* can sampler-position be settable? 
  *   this requires that we find the fragment that holds the new position (as at the start of init_sample_read_any_with_bufsize 6892)
  *   set the fragment bounds (ind0, ind1), call file_buffers_forward|backward
  *   also check for reader_at_end complications, etc
@@ -7889,68 +7889,65 @@ static XEN g_sample_reader_at_end(XEN obj)
  *   (the only thing we avoid is choose_accessor)
  */
 
-static XEN g_sample_reader_position(XEN obj) 
+static XEN g_sampler_position(XEN obj) 
 {
-  #define H_sample_reader_position "(" S_sample_reader_position " obj): current (sample-wise) location of sample-reader"
-  XEN_ASSERT_TYPE(ANY_SAMPLE_READER_P(obj), obj, XEN_ONLY_ARG, S_sample_reader_position, "a sample-reader (of any kind)");
-  if (sample_reader_p(obj))
+  #define H_sampler_position "(" S_sampler_position " obj): current (sample-wise) location of sampler"
+  XEN_ASSERT_TYPE(ANY_SAMPLER_P(obj), obj, XEN_ONLY_ARG, S_sampler_position, "a sampler (of any kind)");
+  if (sampler_p(obj))
     {
       snd_fd *fd = NULL;
-      fd = XEN_TO_SAMPLE_READER(obj);
+      fd = XEN_TO_SAMPLER(obj);
       if (fd->at_eof) return(XEN_ZERO); /* -1? frames? */
       if ((fd->cp) && 
 	  (fd->cp->active >= CHANNEL_HAS_EDIT_LIST) && 
 	  (fd->cp->sound))
 	{
-	  if (fd->type == SAMPLE_READER)
+	  if (fd->type == SAMPLER)
 	    return(C_TO_XEN_INT64_T(current_location(fd)));
 	  return(C_TO_XEN_INT64_T(region_current_location(fd)));
 	}
     }
-  if (mix_sample_reader_p(obj))
-    return(g_mix_sample_reader_position(obj));
+  if (mix_sampler_p(obj))
+    return(g_mix_sampler_position(obj));
   return(XEN_ZERO);
 }
 
 
-static XEN g_sample_reader_home(XEN obj)
+static XEN g_sampler_home(XEN obj)
 {
-  #define H_sample_reader_home "(" S_sample_reader_home " obj): (list sound-index chan-num) associated with a sound reader, or \
-if 'obj' is a mix-sample-reader, the id of underlying mix"
-  XEN_ASSERT_TYPE(ANY_SAMPLE_READER_P(obj), obj, XEN_ONLY_ARG, S_sample_reader_home, "a sample-reader (of any kind)");
-  if (sample_reader_p(obj))
+  #define H_sampler_home "(" S_sampler_home " obj): (list sound-index chan-num) associated with a sound reader, or \
+if 'obj' is a mix-sampler, the id of underlying mix"
+  XEN_ASSERT_TYPE(ANY_SAMPLER_P(obj), obj, XEN_ONLY_ARG, S_sampler_home, "a sampler (of any kind)");
+  if (sampler_p(obj))
     {
       snd_fd *fd = NULL;
-      fd = XEN_TO_SAMPLE_READER(obj);
+      fd = XEN_TO_SAMPLER(obj);
       if ((fd->cp) && 
 	  (fd->cp->active >= CHANNEL_HAS_EDIT_LIST) && 
 	  (fd->cp->sound))
 	{
-	  if (fd->type == SAMPLE_READER)
+	  if (fd->type == SAMPLER)
 	    return(XEN_LIST_2(C_TO_XEN_INT(fd->cp->sound->index),
 			      C_TO_XEN_INT(fd->cp->chan)));
 	  return(XEN_LIST_2(C_TO_XEN_INT(fd->region),
 			    C_TO_XEN_INT(fd->cp->chan)));
 	}
     }
-  if (mix_sample_reader_p(obj))
-    return(g_mix_sample_reader_home(obj));
+  if (mix_sampler_p(obj))
+    return(g_mix_sampler_home(obj));
   return(XEN_FALSE);
 }
 
 
-/* sample readers should be called channel readers, sample should be channel-ref and channel-set!
- */
-
-XEN g_c_make_sample_reader(snd_fd *fd)
+XEN g_c_make_sampler(snd_fd *fd)
 {
   XEN_MAKE_AND_RETURN_OBJECT(sf_tag, fd, 0, free_sf);
 }
 
 
-static XEN g_make_sample_reader(XEN samp_n, XEN snd, XEN chn, XEN dir1, XEN pos) /* "dir" confuses Mac OS-X Objective-C! */
+static XEN g_make_sampler(XEN samp_n, XEN snd, XEN chn, XEN dir1, XEN pos) /* "dir" confuses Mac OS-X Objective-C! */
 {
-  #define H_make_sample_reader "(" S_make_sample_reader " :optional (start-samp 0) snd chn (dir 1) edpos): \
+  #define H_make_sampler "(" S_make_sampler " :optional (start-samp 0) snd chn (dir 1) edpos): \
 return a reader ready to access snd's channel chn's data starting at start-samp, going in direction dir (1 = \
 forward, -1 = backward), reading the version of the data indicated by edpos which defaults to the current version. \
 snd can be a filename, or a sound index number."
@@ -7961,33 +7958,38 @@ snd can be a filename, or a sound index number."
   const char *filename;
   snd_info *loc_sp = NULL;
   mus_long_t beg;
-  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samp_n), samp_n, XEN_ARG_1, S_make_sample_reader, "a number");
-  XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(dir1), dir1, XEN_ARG_4, S_make_sample_reader, "an integer");
+
+  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samp_n), samp_n, XEN_ARG_1, S_make_sampler, "a number");
+  XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(dir1), dir1, XEN_ARG_4, S_make_sampler, "an integer");
+
+  if (XEN_MIX_P(snd))
+    return(g_make_mix_sampler(snd, samp_n));
+
   if (XEN_STRING_P(snd))
     {
-      XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(chn), chn, XEN_ARG_3, S_make_sample_reader, "an integer or boolean");
+      XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(chn), chn, XEN_ARG_3, S_make_sampler, "an integer or boolean");
       filename = XEN_TO_C_STRING(snd);
       if (mus_file_probe(filename))
 	loc_sp = make_sound_readable(filename, false);
-      else return(snd_no_such_file_error(S_make_sample_reader, snd));
+      else return(snd_no_such_file_error(S_make_sampler, snd));
       chan = XEN_TO_C_INT_OR_ELSE(chn, 0);
       if ((chan < 0) || 
 	  (chan >= loc_sp->nchans))
 	{
 	  completely_free_snd_info(loc_sp);
-	  return(snd_no_such_channel_error(S_make_sample_reader, snd, chn));	
+	  return(snd_no_such_channel_error(S_make_sampler, snd, chn));	
 	}
       cp = loc_sp->chans[chan];
     }
   else 
     {
-      ASSERT_CHANNEL(S_make_sample_reader, snd, chn, 2);
-      cp = get_cp(snd, chn, S_make_sample_reader);
+      ASSERT_CHANNEL(S_make_sampler, snd, chn, 2);
+      cp = get_cp(snd, chn, S_make_sampler);
       if (!cp) return(XEN_FALSE);
     }
-  edpos = to_c_edit_position(cp, pos, S_make_sample_reader, 5);
+  edpos = to_c_edit_position(cp, pos, S_make_sampler, 5);
   direction = XEN_TO_C_INT_OR_ELSE(dir1, 1);
-  beg = beg_to_sample(samp_n, S_make_sample_reader);
+  beg = beg_to_sample(samp_n, S_make_sampler);
   if (direction == 1)
     fd = init_sample_read_any(beg, cp, READ_FORWARD, edpos);
   else
@@ -7995,7 +7997,7 @@ snd can be a filename, or a sound index number."
       if (direction == -1)
 	fd = init_sample_read_any(beg, cp, READ_BACKWARD, edpos);
       else XEN_ERROR(XEN_ERROR_TYPE("no-such-direction"),
-		     XEN_LIST_2(C_TO_XEN_STRING(S_make_sample_reader),
+		     XEN_LIST_2(C_TO_XEN_STRING(S_make_sampler),
 				dir1));
     }
   if (fd)
@@ -8008,28 +8010,28 @@ snd can be a filename, or a sound index number."
 }
 
 
-static XEN g_make_region_sample_reader(XEN samp_n, XEN reg, XEN chn, XEN dir1)
+static XEN g_make_region_sampler(XEN samp_n, XEN reg, XEN chn, XEN dir1)
 {
-  #define H_make_region_sample_reader "(" S_make_region_sample_reader " :optional (start-samp 0) (region 0) (chn 0) (dir 1)): \
+  #define H_make_region_sampler "(" S_make_region_sampler " :optional (start-samp 0) (region 0) (chn 0) (dir 1)): \
 return a reader ready to access region's channel chn data starting at start-samp going in direction dir"
 
   snd_fd *fd = NULL;
   int reg_n, chn_n;
   mus_long_t beg;
   int direction = 1;
-  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samp_n), samp_n, XEN_ARG_1, S_make_region_sample_reader, "a number");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(reg), reg, XEN_ARG_2, S_make_region_sample_reader, "an integer");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chn), chn, XEN_ARG_3, S_make_region_sample_reader, "an integer");
-  XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(dir1), dir1, XEN_ARG_4, S_make_region_sample_reader, "an integer");
+  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samp_n), samp_n, XEN_ARG_1, S_make_region_sampler, "a number");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(reg), reg, XEN_ARG_2, S_make_region_sampler, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chn), chn, XEN_ARG_3, S_make_region_sampler, "an integer");
+  XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(dir1), dir1, XEN_ARG_4, S_make_region_sampler, "an integer");
   reg_n = XEN_TO_C_INT_OR_ELSE(reg, 0);
   if (!(region_ok(reg_n))) 
     XEN_ERROR(XEN_ERROR_TYPE("no-such-region"),
-	      XEN_LIST_2(C_TO_XEN_STRING(S_make_region_sample_reader),
+	      XEN_LIST_2(C_TO_XEN_STRING(S_make_region_sampler),
                          reg));
   chn_n = XEN_TO_C_INT_OR_ELSE(chn, 0);
   if ((chn_n < 0) || (chn_n >= region_chans(reg_n)))
-    return(snd_no_such_channel_error(S_make_region_sample_reader, XEN_LIST_1(reg), chn));
-  beg = beg_to_sample(samp_n, S_make_region_sample_reader);
+    return(snd_no_such_channel_error(S_make_region_sampler, XEN_LIST_1(reg), chn));
+  beg = beg_to_sample(samp_n, S_make_region_sampler);
   direction = XEN_TO_C_INT_OR_ELSE(dir1, 1);
   if (direction == 1)
     fd = init_region_read(beg, reg_n, chn_n, READ_FORWARD);
@@ -8038,7 +8040,7 @@ return a reader ready to access region's channel chn data starting at start-samp
       if (direction == -1)
 	fd = init_region_read(beg, reg_n, chn_n, READ_BACKWARD);
       else XEN_ERROR(XEN_ERROR_TYPE("no-such-direction"),
-		     XEN_LIST_2(C_TO_XEN_STRING(S_make_region_sample_reader),
+		     XEN_LIST_2(C_TO_XEN_STRING(S_make_region_sampler),
 				dir1));
     }
   if (fd)
@@ -8054,59 +8056,63 @@ return a reader ready to access region's channel chn data starting at start-samp
 }
 
 
-static XEN g_sample_reader_p(XEN obj)
+static XEN g_sampler_p(XEN obj)
 {
-  #define H_sample_reader_p "(" S_sample_reader_p " obj): " PROC_TRUE " if obj is a sound sample-reader."
-  if (sample_reader_p(obj))
+  #define H_sampler_p "(" S_sampler_p " obj): " PROC_TRUE " if obj is a sound sampler."
+  if (sampler_p(obj))
     {
       snd_fd *fd;
-      fd = XEN_TO_SAMPLE_READER(obj);
-      return(C_TO_XEN_BOOLEAN(fd->type == SAMPLE_READER));
+      fd = XEN_TO_SAMPLER(obj);
+      return(C_TO_XEN_BOOLEAN(fd->type == SAMPLER));
     }
+
+  if (mix_sampler_p(obj))
+    return(C_STRING_TO_XEN_SYMBOL("mix"));
   return(XEN_FALSE);
 }
 
 
-static XEN g_region_sample_reader_p(XEN obj)
+static XEN g_region_sampler_p(XEN obj)
 {
-  #define H_region_sample_reader_p "(" S_region_sample_reader_p " obj): " PROC_TRUE " if obj is a region sample-reader."
-  if (sample_reader_p(obj))
+  #define H_region_sampler_p "(" S_region_sampler_p " obj): " PROC_TRUE " if obj is a region sampler."
+  if (sampler_p(obj))
     {
       snd_fd *fd;
-      fd = XEN_TO_SAMPLE_READER(obj);
+      fd = XEN_TO_SAMPLER(obj);
       return(C_TO_XEN_BOOLEAN(fd->type == REGION_READER));
     }
   return(XEN_FALSE);
 }
 
 
-static XEN g_copy_sample_reader(XEN obj)
+static XEN g_copy_sampler(XEN obj)
 {
-  #define H_copy_sample_reader "(" S_copy_sample_reader " reader): return a copy of reader"
-  XEN_ASSERT_TYPE(ANY_SAMPLE_READER_P(obj), obj, XEN_ONLY_ARG, S_copy_sample_reader, "a sample-reader (of any kind)");
-  if (sample_reader_p(obj))
+  #define H_copy_sampler "(" S_copy_sampler " reader): return a copy of reader"
+  XEN_ASSERT_TYPE(ANY_SAMPLER_P(obj), obj, XEN_ONLY_ARG, S_copy_sampler, "a sampler (of any kind)");
+  if (sampler_p(obj))
     {
       snd_fd *fd = NULL;
-      fd = XEN_TO_SAMPLE_READER(obj);
+      fd = XEN_TO_SAMPLER(obj);
       if ((fd->cp) && 
 	  (fd->cp->active >= CHANNEL_HAS_EDIT_LIST) && 
 	  (fd->cp->sound))
 	{
-	  if (fd->type == SAMPLE_READER)
-	    return(g_make_sample_reader(C_TO_XEN_INT64_T(current_location(fd)),
+	  if (fd->type == SAMPLER)
+	    return(g_make_sampler(C_TO_XEN_INT64_T(current_location(fd)),
 					C_TO_XEN_INT(fd->cp->sound->index),
 					C_TO_XEN_INT(fd->cp->chan),
 					C_TO_XEN_INT((fd->direction == READ_FORWARD) ? 1 : -1), /* Scheme side is different from C side */
 					C_TO_XEN_INT(fd->edit_ctr)));
-	  return(g_make_region_sample_reader(C_TO_XEN_INT64_T(region_current_location(fd)),
+	  return(g_make_region_sampler(C_TO_XEN_INT64_T(region_current_location(fd)),
 					     C_TO_XEN_INT(fd->region),
 					     C_TO_XEN_INT(fd->cp->chan),
 					     C_TO_XEN_INT((fd->direction == READ_FORWARD) ? 1 : -1)));
 	}
       return(XEN_FALSE);
     }
-  if (mix_sample_reader_p(obj))
-    return(g_copy_mix_sample_reader(obj));
+
+  if (mix_sampler_p(obj))
+    return(g_copy_mix_sampler(obj));
   return(XEN_FALSE);
 }
 
@@ -8114,16 +8120,16 @@ static XEN g_copy_sample_reader(XEN obj)
 static XEN g_next_sample(XEN obj)
 {
   #define H_next_sample "(" S_next_sample " reader): next sample from reader"
-  XEN_ASSERT_TYPE(SAMPLE_READER_P(obj), obj, XEN_ONLY_ARG, S_next_sample, "a sample-reader");
-  return(C_TO_XEN_DOUBLE(protected_next_sample(XEN_TO_SAMPLE_READER(obj))));
+  XEN_ASSERT_TYPE(SAMPLER_P(obj), obj, XEN_ONLY_ARG, S_next_sample, "a sampler");
+  return(C_TO_XEN_DOUBLE(protected_next_sample(XEN_TO_SAMPLER(obj))));
 }
 
 
 static XEN g_read_sample(XEN obj)
 {
   #define H_read_sample "(" S_read_sample " reader): read sample from reader"
-  XEN_ASSERT_TYPE(SAMPLE_READER_P(obj), obj, XEN_ONLY_ARG, S_read_sample, "a sample-reader");
-  return(C_TO_XEN_DOUBLE(read_sample(XEN_TO_SAMPLE_READER(obj))));
+  XEN_ASSERT_TYPE(SAMPLER_P(obj), obj, XEN_ONLY_ARG, S_read_sample, "a sampler");
+  return(C_TO_XEN_DOUBLE(read_sample(XEN_TO_SAMPLER(obj))));
 }
 
 #if HAVE_S7
@@ -8137,28 +8143,29 @@ static XEN s7_read_sample(s7_scheme *sc, XEN obj, XEN args)
 static XEN g_previous_sample(XEN obj)
 {
   #define H_previous_sample "(" S_previous_sample " reader): previous sample from reader"
-  XEN_ASSERT_TYPE(SAMPLE_READER_P(obj), obj, XEN_ONLY_ARG, S_previous_sample, "a sample-reader");
-  return(C_TO_XEN_DOUBLE(protected_previous_sample(XEN_TO_SAMPLE_READER(obj))));
+  XEN_ASSERT_TYPE(SAMPLER_P(obj), obj, XEN_ONLY_ARG, S_previous_sample, "a sampler");
+  return(C_TO_XEN_DOUBLE(protected_previous_sample(XEN_TO_SAMPLER(obj))));
 }
 
 
-static XEN g_free_sample_reader(XEN obj)
+static XEN g_free_sampler(XEN obj)
 {
-  #define H_free_sample_reader "(" S_free_sample_reader " reader): free a sample reader (of any kind)"
-  XEN_ASSERT_TYPE(ANY_SAMPLE_READER_P(obj), obj, XEN_ONLY_ARG, S_free_sample_reader, "a sample-reader");
-  if (sample_reader_p(obj))
+  #define H_free_sampler "(" S_free_sampler " reader): free a sampler (of any kind)"
+  XEN_ASSERT_TYPE(ANY_SAMPLER_P(obj), obj, XEN_ONLY_ARG, S_free_sampler, "a sampler");
+  if (sampler_p(obj))
     {
       snd_info *sp = NULL;
       snd_fd *fd;
-      fd = XEN_TO_SAMPLE_READER(obj);
+      fd = XEN_TO_SAMPLER(obj);
       unlist_reader(fd);
       sp = fd->local_sp; 
       fd->local_sp = NULL;
       free_snd_fd_almost(fd); /* this is different from sf_free! */
       if (sp) completely_free_snd_info(sp);
     }
-  if (mix_sample_reader_p(obj))
-    return(g_free_mix_sample_reader(obj));
+
+  if (mix_sampler_p(obj))
+    return(g_free_mix_sampler(obj));
   return(xen_return_first(XEN_FALSE, obj));
 }
 
@@ -8377,6 +8384,9 @@ static XEN g_as_one_edit(XEN proc, XEN origin)
   XEN result = XEN_FALSE;
   char *errmsg, *as_one_edit_origin = NULL;
   XEN errstr;
+#if HAVE_S7
+  int loc = -1;
+#endif
 
   XEN_ASSERT_TYPE((XEN_PROCEDURE_P(proc)), proc, XEN_ARG_1, S_as_one_edit, "a procedure");
   XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(origin), origin, XEN_ARG_2, S_as_one_edit, "a string");
@@ -8400,6 +8410,12 @@ static XEN g_as_one_edit(XEN proc, XEN origin)
 #else
   for_each_normal_chan(init_as_one_edit);
   result = XEN_CALL_0_NO_CATCH(proc);
+#if HAVE_S7
+  loc = s7_gc_protect(s7, result);
+  /* finish_as_one_edit can call update_graph which can call any number of hooks,
+   *   so this result has to be GC protected by hand.
+   */
+#endif
   for_each_normal_chan(finish_as_one_edit);
 #endif
 
@@ -8408,6 +8424,10 @@ static XEN g_as_one_edit(XEN proc, XEN origin)
       for_each_normal_chan_with_void(as_one_edit_set_origin, (void *)as_one_edit_origin);
       free(as_one_edit_origin);
     }
+
+#if HAVE_S7
+  s7_gc_unprotect_at(s7, loc);
+#endif
   return(xen_return_first(result, proc, origin));
 }
 
@@ -8596,7 +8616,7 @@ static mus_sample_t *g_floats_to_samples(XEN obj, int *size, const char *caller,
 static XEN g_sample(XEN samp_n, XEN snd_n, XEN chn_n, XEN pos_n)
 {
   #define H_sample "(" S_sample " samp :optional snd chn edpos): \
-return sample samp in snd's channel chn (this is a slow access -- use sample-readers for speed)"
+return sample samp in snd's channel chn (this is a slow access -- use samplers for speed)"
   mus_long_t beg;
   int pos;
   chan_info *cp;
@@ -9373,7 +9393,7 @@ delete 'samps' samples from snd's channel chn starting at 'start-samp'"
 }
 
 
-/* -------- re-direct CLM input (ina etc) to use sample-readers -------- */
+/* -------- re-direct CLM input (ina etc) to use samplers -------- */
 
 #include "clm2xen.h"
 
@@ -9435,7 +9455,7 @@ static char *snd_to_sample_describe(mus_any *ptr)
       for (i = 0; i < spl->chans; i++)
 	if (spl->sfs[i])
 	  {
-	    temp = sample_reader_to_string(spl->sfs[i]);
+	    temp = sampler_to_string(spl->sfs[i]);
 	    if (temp)
 	      {
 		len += mus_strlen(temp);
@@ -9455,7 +9475,7 @@ static char *snd_to_sample_describe(mus_any *ptr)
       for (i = 0; i < spl->chans; i++)
 	if (spl->sfs[i])
 	  {
-	    temp = sample_reader_to_string(spl->sfs[i]);
+	    temp = sampler_to_string(spl->sfs[i]);
 	    if (temp)
 	      {
 		strcat(snd_to_sample_buf, temp);
@@ -9629,18 +9649,18 @@ static XEN g_set_max_virtual_ptrees(XEN num)
 
 
 #ifdef XEN_ARGIFY_1
-XEN_ARGIFY_5(g_make_sample_reader_w, g_make_sample_reader)
-XEN_ARGIFY_4(g_make_region_sample_reader_w, g_make_region_sample_reader)
+XEN_ARGIFY_5(g_make_sampler_w, g_make_sampler)
+XEN_ARGIFY_4(g_make_region_sampler_w, g_make_region_sampler)
 XEN_NARGIFY_1(g_next_sample_w, g_next_sample)
 XEN_NARGIFY_1(g_read_sample_w, g_read_sample)
 XEN_NARGIFY_1(g_previous_sample_w, g_previous_sample)
-XEN_NARGIFY_1(g_free_sample_reader_w, g_free_sample_reader)
-XEN_NARGIFY_1(g_sample_reader_home_w, g_sample_reader_home)
-XEN_NARGIFY_1(g_sample_reader_position_w, g_sample_reader_position)
-XEN_NARGIFY_1(g_sample_reader_p_w, g_sample_reader_p)
-XEN_NARGIFY_1(g_region_sample_reader_p_w, g_region_sample_reader_p)
-XEN_NARGIFY_1(g_sample_reader_at_end_w, g_sample_reader_at_end)
-XEN_NARGIFY_1(g_copy_sample_reader_w, g_copy_sample_reader)
+XEN_NARGIFY_1(g_free_sampler_w, g_free_sampler)
+XEN_NARGIFY_1(g_sampler_home_w, g_sampler_home)
+XEN_NARGIFY_1(g_sampler_position_w, g_sampler_position)
+XEN_NARGIFY_1(g_sampler_p_w, g_sampler_p)
+XEN_NARGIFY_1(g_region_sampler_p_w, g_region_sampler_p)
+XEN_NARGIFY_1(g_sampler_at_end_w, g_sampler_at_end)
+XEN_NARGIFY_1(g_copy_sampler_w, g_copy_sampler)
 XEN_ARGIFY_3(g_save_edit_history_w, g_save_edit_history)
 XEN_ARGIFY_3(g_edit_fragment_w, g_edit_fragment)
 XEN_ARGIFY_3(g_undo_w, g_undo)
@@ -9672,18 +9692,18 @@ XEN_NARGIFY_0(g_max_virtual_ptrees_w, g_max_virtual_ptrees)
 XEN_NARGIFY_1(g_set_max_virtual_ptrees_w, g_set_max_virtual_ptrees)
 XEN_NARGIFY_1(g_edit_fragment_type_name_w, g_edit_fragment_type_name)
 #else
-#define g_make_sample_reader_w g_make_sample_reader
-#define g_make_region_sample_reader_w g_make_region_sample_reader
+#define g_make_sampler_w g_make_sampler
+#define g_make_region_sampler_w g_make_region_sampler
 #define g_next_sample_w g_next_sample
 #define g_read_sample_w g_read_sample
 #define g_previous_sample_w g_previous_sample
-#define g_free_sample_reader_w g_free_sample_reader
-#define g_sample_reader_home_w g_sample_reader_home
-#define g_sample_reader_position_w g_sample_reader_position
-#define g_sample_reader_p_w g_sample_reader_p
-#define g_region_sample_reader_p_w g_region_sample_reader_p
-#define g_sample_reader_at_end_w g_sample_reader_at_end
-#define g_copy_sample_reader_w g_copy_sample_reader
+#define g_free_sampler_w g_free_sampler
+#define g_sampler_home_w g_sampler_home
+#define g_sampler_position_w g_sampler_position
+#define g_sampler_p_w g_sampler_p
+#define g_region_sampler_p_w g_region_sampler_p
+#define g_sampler_at_end_w g_sampler_at_end
+#define g_copy_sampler_w g_copy_sampler
 #define g_save_edit_history_w g_save_edit_history
 #define g_edit_fragment_w g_edit_fragment
 #define g_undo_w g_undo
@@ -9720,9 +9740,9 @@ XEN_NARGIFY_1(g_edit_fragment_type_name_w, g_edit_fragment_type_name)
 void g_init_edits(void)
 {
 #if HAVE_S7
-  sf_tag = XEN_MAKE_OBJECT_TYPE("<sample-reader>", print_sf, free_sf, s7_equalp_sf, NULL, s7_read_sample, NULL, NULL, NULL, NULL);
+  sf_tag = XEN_MAKE_OBJECT_TYPE("<sampler>", print_sf, free_sf, s7_equalp_sf, NULL, s7_read_sample, NULL, NULL, NULL, NULL);
 #else
-  sf_tag = XEN_MAKE_OBJECT_TYPE("SampleReader", sizeof(snd_fd));
+  sf_tag = XEN_MAKE_OBJECT_TYPE("Sampler", sizeof(snd_fd));
 #endif
 
 #if HAVE_GUILE
@@ -9744,19 +9764,19 @@ void g_init_edits(void)
 
   XEN_DEFINE_CONSTANT(S_current_edit_position,         AT_CURRENT_EDIT_POSITION,         "represents the current edit history list position (-1)");
 
-  XEN_DEFINE_PROCEDURE(S_make_sample_reader,           g_make_sample_reader_w,           0, 5, 0, H_make_sample_reader);
-  XEN_DEFINE_PROCEDURE(S_make_region_sample_reader,    g_make_region_sample_reader_w,    0, 4, 0, H_make_region_sample_reader);
+  XEN_DEFINE_PROCEDURE(S_make_sampler,           g_make_sampler_w,           0, 5, 0, H_make_sampler);
+  XEN_DEFINE_PROCEDURE(S_make_region_sampler,    g_make_region_sampler_w,    0, 4, 0, H_make_region_sampler);
   XEN_DEFINE_PROCEDURE(S_read_sample,                  g_read_sample_w,                  1, 0, 0, H_read_sample);
   XEN_DEFINE_PROCEDURE(S_read_region_sample,           g_read_sample_w,                  1, 0, 0, H_read_sample);
   XEN_DEFINE_PROCEDURE(S_next_sample,                  g_next_sample_w,                  1, 0, 0, H_next_sample);
   XEN_DEFINE_PROCEDURE(S_previous_sample,              g_previous_sample_w,              1, 0, 0, H_previous_sample);
-  XEN_DEFINE_PROCEDURE(S_free_sample_reader,           g_free_sample_reader_w,           1, 0, 0, H_free_sample_reader);
-  XEN_DEFINE_PROCEDURE(S_sample_reader_home,           g_sample_reader_home_w,           1, 0, 0, H_sample_reader_home);
-  XEN_DEFINE_PROCEDURE(S_sample_reader_p,              g_sample_reader_p_w,              1, 0, 0, H_sample_reader_p);
-  XEN_DEFINE_PROCEDURE(S_region_sample_reader_p,       g_region_sample_reader_p_w,       1, 0, 0, H_region_sample_reader_p);
-  XEN_DEFINE_PROCEDURE(S_sample_reader_at_end_p,       g_sample_reader_at_end_w,         1, 0, 0, H_sample_reader_at_end);
-  XEN_DEFINE_PROCEDURE(S_sample_reader_position,       g_sample_reader_position_w,       1, 0, 0, H_sample_reader_position);
-  XEN_DEFINE_PROCEDURE(S_copy_sample_reader,           g_copy_sample_reader_w,           1, 0, 0, H_copy_sample_reader);
+  XEN_DEFINE_PROCEDURE(S_free_sampler,           g_free_sampler_w,           1, 0, 0, H_free_sampler);
+  XEN_DEFINE_PROCEDURE(S_sampler_home,           g_sampler_home_w,           1, 0, 0, H_sampler_home);
+  XEN_DEFINE_PROCEDURE(S_sampler_p,              g_sampler_p_w,              1, 0, 0, H_sampler_p);
+  XEN_DEFINE_PROCEDURE(S_region_sampler_p,       g_region_sampler_p_w,       1, 0, 0, H_region_sampler_p);
+  XEN_DEFINE_PROCEDURE(S_sampler_at_end_p,       g_sampler_at_end_w,         1, 0, 0, H_sampler_at_end);
+  XEN_DEFINE_PROCEDURE(S_sampler_position,       g_sampler_position_w,       1, 0, 0, H_sampler_position);
+  XEN_DEFINE_PROCEDURE(S_copy_sampler,           g_copy_sampler_w,           1, 0, 0, H_copy_sampler);
 
   XEN_DEFINE_PROCEDURE(S_save_edit_history,            g_save_edit_history_w,            1, 2, 0, H_save_edit_history);
   XEN_DEFINE_PROCEDURE(S_edit_fragment,                g_edit_fragment_w,                0, 3, 0, H_edit_fragment);
@@ -9846,7 +9866,7 @@ append the rest?
 
 /* for virtual filter (and ultimately virtual src), see virtual-filter-channel (examp.scm) and convolve-coeffs (snd-test.scm)
  * this almost works! -- it can repeat one sample if previous-sample after next-sample (but the standard case repeats as well!)
- *   sample-reader-position is ahead 1 if reading forward, back 1 if reading backward,
+ *   sampler-position is ahead 1 if reading forward, back 1 if reading backward,
  *   so in C, I guess we could use that for "cur-loc"
  *   but how to store in ed_fragment?
  *   and how often is this actually going to be used?

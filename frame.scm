@@ -203,7 +203,7 @@
 (define +frame-reader0+ 4)
 
 (define* (make-frame-reader :optional (beg 0) snd dir edpos)
-  "(make-frame-reader :optional beg snd dir edpos) returns a frame reader, basically a sample reader that reads all channels on each call"
+  "(make-frame-reader :optional beg snd dir edpos) returns a frame reader, basically a sampler that reads all channels on each call"
   (let ((index (or snd (selected-sound) (car (sounds)))))
     (if (and (not (sound? index))
 	     (not (string? index))) ; filename is a possibility here
@@ -216,7 +216,7 @@
 	  (vector-set! fr +frame-reader-frame+ (make-frame chns))
 	  (do ((i 0 (+ i 1)))
 	      ((= i chns))
-	    (vector-set! fr (+ i +frame-reader0+) (make-sample-reader beg index i dir edpos)))
+	    (vector-set! fr (+ i +frame-reader0+) (make-sampler beg index i dir edpos)))
 	  fr))))
 
 (define (frame-reader? obj)
@@ -225,20 +225,20 @@
        (eq? (vector-ref obj +frame-reader-tag+) 'frame-reader)))
 
 (define (frame-reader-at-end? fr)
-  "(frame-reader-at-end? fr) -> #t if the sample-readers in frame-reader fr have reached the end of their respective channels"
+  "(frame-reader-at-end? fr) -> #t if the samplers in frame-reader fr have reached the end of their respective channels"
   (if (frame-reader? fr)
       (let ((at-end #t))
 	(do ((i 0 (+ i 1)))
 	    ((or (not at-end) 
 		 (= i (vector-ref fr +frame-reader-channels+)))
 	     at-end)
-	  (set! at-end (sample-reader-at-end? (vector-ref fr (+ i +frame-reader0+))))))
+	  (set! at-end (sampler-at-end? (vector-ref fr (+ i +frame-reader0+))))))
       (throw 'wrong-type-arg (list "frame-reader-at-end" fr))))
 
 (define (frame-reader-position fr)
   "(frame-reader-position fr) -> current read position of frame-reader fr"
   (if (frame-reader? fr)
-      (sample-reader-position (vector-ref fr +frame-reader0+))
+      (sampler-position (vector-ref fr +frame-reader0+))
       (throw 'wrong-type-arg (list "frame-reader-position" fr))))
 
 (define (frame-reader-home fr)
@@ -258,7 +258,7 @@
   (if (frame-reader? fr)
       (do ((i 0 (+ i 1)))
 	  ((= i (vector-ref fr +frame-reader-channels+)))
-	(free-sample-reader (vector-ref fr (+ i +frame-reader0+))))
+	(free-sampler (vector-ref fr (+ i +frame-reader0+))))
       (throw 'wrong-type-arg (list "free-frame-reader" fr))))
 
 (define (copy-frame-reader fr)
@@ -271,7 +271,7 @@
 	(vector-set! nfr +frame-reader-channels+ chns)
 	(do ((i 0 (+ i 1)))
 	    ((= i chns))
-	  (vector-set! nfr (+ i +frame-reader0+) (copy-sample-reader (vector-ref fr (+ i +frame-reader0+)))))
+	  (vector-set! nfr (+ i +frame-reader0+) (copy-sampler (vector-ref fr (+ i +frame-reader0+)))))
 	nfr)
       (throw 'wrong-type-arg (list "copy-frame-reader" fr))))
 
@@ -312,7 +312,7 @@
 	(vector-set! fr +frame-reader-frame+ (make-frame chns))
 	(do ((i 0 (+ i 1)))
 	    ((= i chns))
-	  (vector-set! fr (+ i +frame-reader0+) (make-region-sample-reader beg reg i dir)))
+	  (vector-set! fr (+ i +frame-reader0+) (make-region-sampler beg reg i dir)))
 	fr)))
 
 (define* (make-sync-frame-reader :optional (beg 0) snd dir edpos)
@@ -341,7 +341,7 @@
 			   (begin
 			     (do ((i 0 (+ i 1)))
 				 ((= i (chans s)))
-			       (vector-set! fr (+ (+ i ctr) +frame-reader0+) (make-sample-reader beg s i dir edpos)))
+			       (vector-set! fr (+ (+ i ctr) +frame-reader0+) (make-sampler beg s i dir edpos)))
 			     (set! ctr (+ ctr (chans s))))))
 		     (sounds)))
 		  fr)))))))
@@ -363,7 +363,7 @@
 		 ((= chn (chans snd)))
 	       (if (selection-member? snd chn)
 		   (begin
-		     (vector-set! fr (+ ctr +frame-reader0+) (make-sample-reader (+ beg (selection-position snd chn)) snd chn))
+		     (vector-set! fr (+ ctr +frame-reader0+) (make-sampler (+ beg (selection-position snd chn)) snd chn))
 		     (set! ctr (+ 1 ctr))))))
 	   (sounds)))
 	fr)))
@@ -372,12 +372,12 @@
 (define (file->vct file)
   "(file->vct file) returns a vct with file's data (channel 0)"
   (let* ((len (mus-sound-frames file))
-	 (reader (make-sample-reader 0 file))
+	 (reader (make-sampler 0 file))
 	 (data (make-vct len)))
     (do ((i 0 (+ i 1)))
 	((= i len))
       (vct-set! data i (next-sample reader)))
-    (free-sample-reader reader)
+    (free-sampler reader)
     data))
 
 (define* (vct->file v file :optional (srate 22050) (comment ""))

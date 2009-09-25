@@ -97,7 +97,7 @@ end
 add_help(:zipper,
          "zipper(zip, in1, in2)  \
 creates the digital zipper sound effect using zipper generator 'zip' \
-and the two sample readers 'in1' and 'in2'")
+and the two samplers 'in1' and 'in2'")
 def zipper(zp, input1, input2)
   zp.zipper(input1, input2)
 end
@@ -111,8 +111,8 @@ def zip_sound(start, dur, file1, file2, ramp = [0, 0, 1, 1], size = 0.05)
   zip = make_zipper(make_env(:envelope, ramp, :length, len),
                     size,
                     make_env(:envelope, [0, safe_srate * size], :length, len))
-  read0 = make_sample_reader(0, file1)
-  read1 = make_sample_reader(0, file2)
+  read0 = make_sampler(0, file1)
+  read1 = make_sampler(0, file2)
   map_channel(lambda do |y| y + zipper(zip, read0, read1) end, beg, len)
 end
 # zip_sound(0, 1, "fyow.snd", "now.snd", [0, 0, 1, 1], 0.05)

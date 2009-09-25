@@ -787,7 +787,7 @@ FILE-DATA can be the file name or a list #( file-name [beg [channel]] )"
   dur file-name mus-sound-frames file-beg - || { len }
   beg 0< if 'no-such-sample #( get-func-name beg ) fth-throw then
   len 0> if
-    file-beg file-name file-channel 1 #f make-sample-reader { reader }
+    file-beg file-name file-channel 1 #f make-sampler { reader }
     $" %S %s %s %s" #( file-data beg dur get-func-name ) string-format { origin }
     reader mc-cb beg len snd chn edpos origin map-channel
   else
@@ -807,9 +807,9 @@ FILE-DATA can be the file name or a list #( file-name [beg [channel]] )"
   dur file-name mus-sound-frames file-beg - || { len }
   beg 0< if 'no-such-sample #( get-func-name beg ) fth-throw then
   len 0> if
-    file-beg file-name file-channel 1 #f make-sample-reader { reader }
+    file-beg file-name file-channel 1 #f make-sampler { reader }
     len 0.0 make-vct map! reader next-sample end-map { data }
-    reader free-sample-reader drop
+    reader free-sampler drop
     $" %S %s %s %s" #( file-data beg dur get-func-name ) string-format { origin }
     beg len data snd chn edpos #f origin insert-samples
   else
@@ -1215,7 +1215,7 @@ set-current
 	chn2
 	chn1
       then { len s1 s2 c1 c2 }
-      0 s2 c2 1 #f make-sample-reader { read2 }
+      0 s2 c2 1 #f make-sampler { read2 }
       read2 allowable-difference c-equal-cb 0 len s1 c1 #f #f scan-channel not
     then
   then

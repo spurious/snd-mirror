@@ -263,9 +263,9 @@ require extensions
 \ 
 \ this mainly involves keeping track of the current sound/channel
 : selection-rms ( -- val )
-  doc" Returns rms of selection data using sample readers."
+  doc" Returns rms of selection data using samplers."
   selection? if
-    selection-position #f #f 1 #f make-sample-reader { rd }
+    selection-position #f #f 1 #f make-sampler { rd }
     selection-frames { len }
     0.0 ( sum ) len 0 ?do rd next-sample dup f* f+ ( sum += ... ) loop
     len f/ fsqrt
@@ -458,11 +458,11 @@ y0 and y1 are ignored."
   doc" Looks for successive samples that sum to less than LIMIT, moving the cursor if successful."
   { limit }
   #f #f #f cursor { start }
-  start #f #f 1 #f make-sample-reader { sf }
+  start #f #f 1 #f make-sampler { sf }
   sf next-sample fabs { val0 }
   sf next-sample fabs { val1 }
   begin
-    sf sample-reader-at-end?
+    sf sampler-at-end?
     c-g?                     ||
     val0 val1 f+ limit f<    || not
   while
@@ -470,7 +470,7 @@ y0 and y1 are ignored."
       val1 to val0
       sf next-sample fabs to val1
   repeat
-  sf free-sample-reader drop
+  sf free-sampler drop
   start #f #f #f set-cursor
 ;
 
@@ -742,15 +742,15 @@ and 90 is all in channel 1."
   mono #f #f #f frames { len }
   pan number? if
     pan 90.0 f/ { pos }
-    0 mono #f 1 #f make-sample-reader { reader0 }
-    0 mono #f 1 #f make-sample-reader { reader1 }
+    0 mono #f 1 #f make-sampler { reader0 }
+    0 mono #f 1 #f make-sampler { reader1 }
     reader1 pos places1-cb 0 len stereo 1 #f #f map-channel drop
     reader0 pos places0-cb 0 len stereo 0 #f #f map-channel drop
   else
     :envelope pan :length len make-env { e0 }
     :envelope pan :length len make-env { e1 }
-    0 mono #f 1 #f make-sample-reader { reader0 }
-    0 mono #f 1 #f make-sample-reader { reader1 }
+    0 mono #f 1 #f make-sampler { reader0 }
+    0 mono #f 1 #f make-sampler { reader1 }
     reader1 e1 places3-cb 0 len stereo 1 #f #f map-channel drop
     reader0 e0 places2-cb 0 len stereo 0 #f #f map-channel drop
   then
@@ -869,7 +869,7 @@ then sticks at 0.0 or 1.0 until the UP argument changes."
 hide
 : squelch-vowels-cb { snd chn -- prc; y self -- val }
   32 { fft-size }
-  0 snd chn 1 #f make-sample-reader { read-ahead }
+  0 snd chn 1 #f make-sampler { read-ahead }
   1 proc-create { prc }
   fft-size 0.0 make-vct map! read-ahead #() apply end-map ( rl )       ,
   fft-size 0.0 make-vct                                   ( im )       ,
@@ -997,7 +997,7 @@ is like fft-squelch."
 \ 0.5  0.5  make-one-zero filter-fft
 \ 0.05 0.05 make-one-pole filter-fft
 \ lambda: <{ y -- val }> y 0.1 f< if 0.0 else y then ; filter-fft
-\ 0 0 0 1 0 make-sample-reader filter-fft
+\ 0 0 0 1 0 make-sampler filter-fft
 \ ' contrast-enhancement filter-fft
 \ lambda: <{ y -- val }> y y f* y f* ; filter-fft
 
@@ -1271,14 +1271,14 @@ set-current
 : fp <{ sr osamp osfrq :optional snd #f chn #f -- vct }>
   doc" Varies the sampling rate via an oscil: 1.0 0.3 20 #f #f fp"
   osfrq make-oscil { os }
-  0 snd chn 1 #f make-sample-reader { sf }
+  0 snd chn 1 #f make-sampler { sf }
   :srate sr :input sf fp-input-cb make-src { s }
   snd chn #f frames { len }
   $" %s %s %s %s" #( sr osamp osfrq get-func-name ) string-format { origin }
   len 0.0 make-vct map!
     s  os 0.0 0.0 oscil osamp f* #f src
   end-map ( out-data ) 0 len snd chn #f origin vct->channel
-  sf free-sample-reader drop
+  sf free-sampler drop
 ;
 previous
 
@@ -1367,7 +1367,7 @@ set-current
 #( 0 0.5 2 2.0 ) #f #f expsnd"
   snd chn #f frames { len }
   len snd srate f/ gr-env integrate-envelope f* gr-env envelope-last-x f/ { dur }
-  0 snd chn 1 #f make-sample-reader { sf }
+  0 snd chn 1 #f make-sampler { sf }
   :expansion gr-env 1 array-ref :jitter 0 :input sf es-input-cb make-granulate { gr }
   :envelope gr-env :duration dur make-env { ge }
   snd srate dur f* fround->s { sound-len }
@@ -1377,7 +1377,7 @@ set-current
     gr #f granulate ( val )
     gr ge env set-mus-increment drop
   end-map ( out-data ) 0 len snd chn #f origin vct->channel
-  sf free-sample-reader drop
+  sf free-sampler drop
 ;
 previous
 
@@ -1495,11 +1495,11 @@ set-current
   { snd0 snd1 amp }
   snd0 #f #f frames { flt-len }
   snd1 #f #f frames flt-len + { total-len }
-  0 snd1 0 1 #f make-sample-reader { sf }
+  0 snd1 0 1 #f make-sampler { sf }
   :input sf cnv-cb :filter 0 flt-len snd0 #f #f channel->vct make-convolve { cnv }
   total-len 0.0 make-vct map! cnv #f convolve end-map amp vct-scale! ( out-data )
   0 total-len snd1 #f #f get-func-name vct->channel vct-peak { max-samp }
-  sf free-sample-reader drop
+  sf free-sampler drop
   max-samp 1.0 f> if #( max-samp fnegate max-samp ) snd1 #f set-y-bounds drop then
   max-samp
 ;
@@ -1651,14 +1651,14 @@ previous
       j next-reader-start-at >= if
 	readers cycle-start@ { next-reader }
 	readers
-	position-in-original jitter mus-random f+ fround->s 0 max snd chn 1 #f make-sample-reader
+	position-in-original jitter mus-random f+ fround->s 0 max snd chn 1 #f make-sampler
 	cycle-set!
 	grain-envs next-reader array-ref mus-reset drop
 	hop-frames +to next-reader-start-at
       then
       0.0 ( sum )
       readers each { rd }
-	rd sample-reader? if
+	rd sampler? if
 	  grain-envs i array-ref env rd next-sample f* f+ ( sum += ... )
 	then
       end-each { sum }
@@ -1829,7 +1829,7 @@ previous
 : find-click ( loc -- pos )
   doc" Finds the next click starting at LOC."
   { loc }
-  loc #f #f 1 #f make-sample-reader { rd }
+  loc #f #f 1 #f make-sampler { rd }
   0.0 0.0 0.0 { samp0 samp1 samp2 }
   10 0.0 make-vct { samps }
   #f 					\ flag
@@ -1961,9 +1961,9 @@ In most cases, this will be slightly offset from the true beginning of the note.
     { file }
     file find-file to file
     file false? if 'no-such-file #( get-func-name file ) fth-throw then
-    0 file undef 1 #f make-sample-reader { reader }
+    0 file undef 1 #f make-sampler { reader }
     file mus-sound-frames 0.0 make-vct map! reader next-sample end-map ( data )
-    reader free-sample-reader drop
+    reader free-sampler drop
   ;
 [then]
 
@@ -2419,7 +2419,7 @@ hide
   beg actual-block-len = if
     1 self 2 cells + +! ( ctr++ )
     0 self 1 cells + !  ( beg = 0 )
-    len  self 2 cells + @ ( ctr ) actual-block-len *  - 0 max snd chn 1 #f make-sample-reader self !
+    len  self 2 cells + @ ( ctr ) actual-block-len *  - 0 max snd chn 1 #f make-sampler self !
   then
   val
 ;
@@ -2430,7 +2430,7 @@ set-current
   len snd srate block-len f* f/ fround->s { num-blocks }
   num-blocks 1 > if
     len num-blocks f/ fceil f>s { actual-block-len }
-    len actual-block-len - snd chn 1 #f make-sample-reader { rd }
+    len actual-block-len - snd chn 1 #f make-sampler { rd }
     0 { beg }
     1 { ctr }
     $" %s %s" #( block-len get-func-name ) string-format { origin }

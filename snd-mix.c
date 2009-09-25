@@ -137,7 +137,7 @@ int mix_complete_file_at_cursor(snd_info *sp, const char *filename)
       char *fullname;
       fullname = mus_expand_filename(filename);
       cp = any_selected_channel(sp);
-      err = mix_complete_file(sp, CURSOR(cp), fullname, with_mix_tags(ss), DONT_DELETE_ME, MIX_FOLLOWS_SYNC);
+      err = mix_complete_file(sp, CURSOR(cp), fullname, with_mix_tags(ss), DONT_DELETE_ME, MIX_FOLLOWS_SYNC, NULL);
       if (err == MIX_FILE_NO_FILE) 
 	snd_error("can't mix file: %s, %s", filename, snd_io_strerror());
       else
@@ -180,7 +180,7 @@ void drag_and_drop_mix_at_x_y(int data, const char *filename, int x, int y)
       sample = snd_round_mus_long_t(ungrf_x(cp->axis, x) * (double)(SND_SRATE(sp)));
       if (sample < 0) sample = 0;
       fullname = mus_expand_filename(filename);
-      mix_complete_file(sp, sample, fullname, with_mix_tags(ss), DONT_DELETE_ME, MIX_FOLLOWS_SYNC);
+      mix_complete_file(sp, sample, fullname, with_mix_tags(ss), DONT_DELETE_ME, MIX_FOLLOWS_SYNC, NULL);
       if (fullname) free(fullname);
     }
 }
@@ -227,7 +227,7 @@ static void after_mix_file(void *context)
 #endif
 
 
-int mix_complete_file(snd_info *sp, mus_long_t beg, const char *fullname, bool with_tag, file_delete_t auto_delete, mix_sync_t all_chans)
+int mix_complete_file(snd_info *sp, mus_long_t beg, const char *fullname, bool with_tag, file_delete_t auto_delete, mix_sync_t all_chans, int *out_chans)
 {
   chan_info *cp;
   chan_info **cps = NULL;
@@ -259,6 +259,7 @@ int mix_complete_file(snd_info *sp, mus_long_t beg, const char *fullname, bool w
       cps[0] = cp;
       chans = 1;
     }
+  if (out_chans) (*out_chans) = chans;
 
 #if HAVE_GUILE_DYNAMIC_WIND
   {
@@ -550,7 +551,7 @@ static mix_state *current_mix_state(mix_info *md)
 
 
 #if 0
-/* if edpos args to various mix field (getters anyway), mix? mixes make-mix-sample-reader... */
+/* if edpos args to various mix field (getters anyway), mix? mixes make-mix-sampler... */
 
 static mix_state *mix_state_at_edpos(mix_info *md, int edpos)
 {
@@ -2206,8 +2207,8 @@ void mix_display_during_drag(int mix_id, mus_long_t drag_beg, mus_long_t drag_en
 static XEN snd_no_such_mix_error(const char *caller, XEN n)
 {
   XEN_ERROR(XEN_ERROR_TYPE("no-such-mix"),
-	XEN_LIST_2(C_TO_XEN_STRING(caller),
-		   n));
+	    XEN_LIST_2(C_TO_XEN_STRING(caller),
+		       n));
   return(XEN_FALSE);
 }
 
@@ -2228,16 +2229,20 @@ void after_mix_edit(int id)
 /* ---------------------------------------- mix objects ---------------------------------------- */
 
 /* TODO: check ruby/forth/guile and update all snd-test* etc
- * TODO: revise the documentation and check all examples
- * TODO: add integer->mix and mix->integer (docs/tests)
- * TODO: mix-for-each, length and copy of mix, possibly position  (generic), home, properties, sampler(?)
- *        mix-for-each means for each sample?  of the current mix state?
- *        copy is ambiguous -- might mean make an independent copy of the mix for later edits
+ * TODO: mix-for-each, length and copy of mix, possibly position  (generic), home, properties, sampler cases
+ *         mix-for-each means for each sample?  of the current mix state?
+ *         copy is ambiguous -- might mean make an independent copy of the mix for later edits
+ * TODO: make-sampler et al take mix object (as 2nd arg where snd is now)
+ *         this is done, but sampler? and the actual readers also need to know about mix-samplers
+ *         and there's the run side of this, I suppose
+ * PERHAPS: change "sampler" to "sampler" throughout?
  * TODO: mix-ref and set as access to mix samples: (id 1) = 2nd sample
- *          md->cp->sounds[md->original_index] is the original mix data,
- *          but we have to handle stuff like amp and speed -- complicated!
- * SOMEDAY: deprecate mix-length, mix-position, mix-home, mix-properties, make-mix-sample-reader et al
+ *         md->cp->sounds[md->original_index] is the original mix data,
+ *         but we have to handle stuff like amp and speed -- complicated!
+ * SOMEDAY: deprecate mix-length, mix-position, mix-home, mix-properties, make-mix-sampler et al
  * TODO: ruby methods as in vcts
+ *
+ * TODO: mark objects, regions, eventually edit-list/sound
  */
 
 typedef struct {
@@ -2259,9 +2264,10 @@ static int xen_mix_to_int(XEN n)
 
 static XEN_OBJECT_TYPE xen_mix_tag;
 
-static bool xen_mix_p(XEN obj) {return(XEN_OBJECT_TYPE_P(obj, xen_mix_tag));}
-
-#define XEN_MIX_P(arg) xen_mix_p(arg)
+bool xen_mix_p(XEN obj) 
+{
+  return(XEN_OBJECT_TYPE_P(obj, xen_mix_tag));
+}
 
 
 static void xen_mix_free(xen_mix *v) {if (v) free(v);}
@@ -2966,7 +2972,7 @@ mix data (a vct) into snd's channel chn starting at beg; return the new mix id, 
 static XEN g_mix(XEN file, XEN chn_samp_n, XEN file_chn, XEN snd_n, XEN chn_n, XEN tag, XEN auto_delete)
 {
   #define H_mix "(" S_mix " file :optional (beg 0) (in-chan 0) snd chn (with-tag " S_with_mix_tags ") auto-delete): \
-mix channel in-chan of file into snd's channel chn starting at beg (in the output), returning the new mix's id.  \
+mix channel in-chan of file into snd's channel chn starting at beg (in the output), returning a list of the new mixes.  \
 If in-chan is #t, all input channels are mixed into successive channels of snd, starting at chn. \
 if with-tag is " PROC_FALSE ", no draggable tag is created.  If \
 auto-delete is " PROC_TRUE ", the input file is deleted when it is no longer needed."
@@ -3022,6 +3028,8 @@ auto-delete is " PROC_TRUE ", the input file is deleted when it is no longer nee
     {
       if (XEN_TRUE_P(file_chn)) /* this used to be the default as well -- XEN_NOT_BOUND_P case */
 	{
+	  int i, out_chans = 1;
+	  XEN result = XEN_EMPTY_LIST;
 	  file_delete_t delete_choice = DONT_DELETE_ME;
 	  if (XEN_INTEGER_P(auto_delete))
 	    delete_choice = (file_delete_t)XEN_TO_C_INT(auto_delete);
@@ -3042,10 +3050,16 @@ auto-delete is " PROC_TRUE ", the input file is deleted when it is no longer nee
 		  else delete_choice = DONT_DELETE_ME;
 		}
 	    }
-	  return(new_xen_mix(mix_complete_file(cp->sound, beg, name, 
-					       (XEN_NOT_BOUND_P(tag)) ? with_mix_tags(ss) : XEN_TO_C_BOOLEAN(tag),
-					       delete_choice,
-					       MIX_SETS_SYNC_LOCALLY)));
+
+	  id = mix_complete_file(cp->sound, beg, name, 
+				 (XEN_NOT_BOUND_P(tag)) ? with_mix_tags(ss) : XEN_TO_C_BOOLEAN(tag),
+				 delete_choice, MIX_SETS_SYNC_LOCALLY,
+				 &out_chans);
+	  if (id == -1) return(XEN_FALSE);
+
+	  for (i = 0; i < out_chans; i++)
+	    result = XEN_CONS(new_xen_mix(id + i), result);
+	  return(XEN_LIST_REVERSE(result));
 	}
     }
 
@@ -3110,12 +3124,14 @@ auto-delete is " PROC_TRUE ", the input file is deleted when it is no longer nee
   }
 
   update_graph(cp);
-  return(new_xen_mix(id));
+
+  if (id == -1) return(XEN_FALSE);
+  return(XEN_LIST_1(new_xen_mix(id)));
 }
 
 
 
-/* ---------------- mix sample readers ---------------- */
+/* ---------------- mix samplers ---------------- */
 
 typedef struct mix_fd {
   mix_info *md;
@@ -3124,36 +3140,36 @@ typedef struct mix_fd {
 
 static XEN_OBJECT_TYPE mf_tag;
 
-bool mix_sample_reader_p(XEN obj) 
+bool mix_sampler_p(XEN obj) 
 {
   return(XEN_OBJECT_TYPE_P(obj, mf_tag));
 }
 
 
-#define XEN_TO_MIX_SAMPLE_READER(obj) ((mix_fd *)XEN_OBJECT_REF(obj))
-#define MIX_SAMPLE_READER_P(Obj) XEN_OBJECT_TYPE_P(Obj, mf_tag)
+#define XEN_TO_MIX_SAMPLER(obj) ((mix_fd *)XEN_OBJECT_REF(obj))
+#define MIX_SAMPLER_P(Obj) XEN_OBJECT_TYPE_P(Obj, mf_tag)
 
-static void *xen_to_mix_sample_reader(XEN obj) 
+static void *xen_to_mix_sampler(XEN obj) 
 {
-  if (MIX_SAMPLE_READER_P(obj)) 
-    return(XEN_TO_MIX_SAMPLE_READER(obj)); 
+  if (MIX_SAMPLER_P(obj)) 
+    return(XEN_TO_MIX_SAMPLER(obj)); 
   return(NULL);
 }
 
 
-static XEN g_mix_sample_reader_p(XEN obj) 
+static XEN g_mix_sampler_p(XEN obj) 
 {
-  #define H_mix_sample_reader_p "(" S_mix_sample_reader_p " obj): " PROC_TRUE " if obj is a mix-sample-reader"
-  return(C_TO_XEN_BOOLEAN(mix_sample_reader_p(obj)));
+  #define H_mix_sampler_p "(" S_mix_sampler_p " obj): " PROC_TRUE " if obj is a mix-sampler"
+  return(C_TO_XEN_BOOLEAN(mix_sampler_p(obj)));
 }
 
 
-static char *mix_sample_reader_to_string(mix_fd *fd) 
+static char *mix_sampler_to_string(mix_fd *fd) 
 {
   char *desc;
   desc = (char *)calloc(PRINT_BUFFER_SIZE, sizeof(char));
   if ((fd == NULL) || (fd->sf == NULL))
-    sprintf(desc, "#<mix-sample-reader: null>");
+    sprintf(desc, "#<mix-sampler: null>");
   else
     {
       if ((mix_is_active(fd->sf->region)) &&
@@ -3162,19 +3178,19 @@ static char *mix_sample_reader_to_string(mix_fd *fd)
 	{
 	  mix_info *md;
 	  md = fd->md;
-	  mus_snprintf(desc, PRINT_BUFFER_SIZE, "#<mix-sample-reader mix %d, (from " MUS_LD ", at " MUS_LD "%s): %s>",
+	  mus_snprintf(desc, PRINT_BUFFER_SIZE, "#<mix-sampler mix %d, (from " MUS_LD ", at " MUS_LD "%s): %s>",
 		       md->id,
 		       fd->sf->initial_samp,
 		       fd->sf->loc,
 		       (fd->sf->at_eof) ? ", at eof" : "",
 		       (md->in_filename) ? md->in_filename : "<vct>");
 	}
-      else sprintf(desc, "#<mix-sample-reader: inactive>");
+      else sprintf(desc, "#<mix-sampler: inactive>");
     }
   return(desc);
 }
 
-XEN_MAKE_OBJECT_PRINT_PROCEDURE(mix_fd, print_mf, mix_sample_reader_to_string)
+XEN_MAKE_OBJECT_PRINT_PROCEDURE(mix_fd, print_mf, mix_sampler_to_string)
 
 
 static void mf_free(mix_fd *fd)
@@ -3198,18 +3214,20 @@ static bool s7_equalp_mf(void *m1, void *m2)
 }
 #endif
 
-static XEN g_make_mix_sample_reader(XEN mix_id, XEN ubeg)
+XEN g_make_mix_sampler(XEN mix_id, XEN ubeg)
 {
-  #define H_make_mix_sample_reader "(" S_make_mix_sample_reader " id :optional (beg 0)): return a reader ready to access mix id"
+  #define H_make_mix_sampler "(" S_make_mix_sampler " id :optional (beg 0)): return a reader ready to access mix id"
   mix_info *md = NULL;
   mix_state *ms;
   mus_long_t beg;
-  XEN_ASSERT_TYPE(XEN_MIX_P(mix_id), mix_id, XEN_ARG_1, S_make_mix_sample_reader, "a mix");
-  ASSERT_SAMPLE_TYPE(S_make_mix_sample_reader, ubeg, XEN_ARG_2);
+
+  XEN_ASSERT_TYPE(XEN_MIX_P(mix_id), mix_id, XEN_ARG_1, S_make_mix_sampler, "a mix");
+  ASSERT_SAMPLE_TYPE(S_make_mix_sampler, ubeg, XEN_ARG_2);
+
   md = md_from_id(XEN_MIX_TO_C_INT(mix_id));
   if (md == NULL)
-    return(snd_no_such_mix_error(S_make_mix_sample_reader, mix_id));
-  beg = beg_to_sample(ubeg, S_make_mix_sample_reader);
+    return(snd_no_such_mix_error(S_make_mix_sampler, mix_id));
+  beg = beg_to_sample(ubeg, S_make_mix_sampler);
 
   ms = current_mix_state(md);
   if (ms)
@@ -3232,8 +3250,8 @@ static XEN g_read_mix_sample(XEN obj)
 {
   mix_fd *mf;
   #define H_read_mix_sample "(" S_read_mix_sample " reader): read sample from mix reader"
-  XEN_ASSERT_TYPE(MIX_SAMPLE_READER_P(obj), obj, XEN_ONLY_ARG, S_read_mix_sample, "a mix-sample-reader");
-  mf = XEN_TO_MIX_SAMPLE_READER(obj);
+  XEN_ASSERT_TYPE(MIX_SAMPLER_P(obj), obj, XEN_ONLY_ARG, S_read_mix_sample, "a mix-sampler");
+  mf = XEN_TO_MIX_SAMPLER(obj);
   return(C_TO_XEN_DOUBLE(read_sample(mf->sf)));
 }
 
@@ -3245,53 +3263,53 @@ static XEN s7_read_mix_sample(s7_scheme *sc, XEN obj, XEN args)
 #endif
 
 
-/* tie into generic sample-reader procedures (snd-edits.c) */
+/* tie into generic sampler procedures (snd-edits.c) */
 
-XEN g_copy_mix_sample_reader(XEN obj)
+XEN g_copy_mix_sampler(XEN obj)
 {
   mix_fd *mf;
-  mf = XEN_TO_MIX_SAMPLE_READER(obj);
-  return(g_make_mix_sample_reader(new_xen_mix(mf->md->id),
+  mf = XEN_TO_MIX_SAMPLER(obj);
+  return(g_make_mix_sampler(new_xen_mix(mf->md->id),
 				  C_TO_XEN_INT64_T(current_location(mf->sf))));
 }
 
 
-XEN g_mix_sample_reader_home(XEN obj)
+XEN g_mix_sampler_home(XEN obj)
 {
   mix_fd *mf;
-  mf = XEN_TO_MIX_SAMPLE_READER(obj);
+  mf = XEN_TO_MIX_SAMPLER(obj);
   return(new_xen_mix(mf->md->id));
 }
 
 
-bool mix_sample_reader_at_end_p(void *ptr)
+bool mix_sampler_at_end_p(void *ptr)
 {
   mix_fd *mf = (mix_fd *)ptr;
   return(mf->sf->at_eof);
 }
 
 
-XEN g_mix_sample_reader_at_end_p(XEN obj)
+XEN g_mix_sampler_at_end_p(XEN obj)
 {
   mix_fd *mf;
-  mf = XEN_TO_MIX_SAMPLE_READER(obj);
-  return(C_TO_XEN_BOOLEAN(mix_sample_reader_at_end_p(mf)));
+  mf = XEN_TO_MIX_SAMPLER(obj);
+  return(C_TO_XEN_BOOLEAN(mix_sampler_at_end_p(mf)));
 }
 
 
-XEN g_mix_sample_reader_position(XEN obj)
+XEN g_mix_sampler_position(XEN obj)
 {
   mix_fd *mf;
-  mf = XEN_TO_MIX_SAMPLE_READER(obj);
-  if (mix_sample_reader_at_end_p(mf)) return(XEN_ZERO);
+  mf = XEN_TO_MIX_SAMPLER(obj);
+  if (mix_sampler_at_end_p(mf)) return(XEN_ZERO);
   return(C_TO_XEN_INT64_T(current_location(mf->sf)));
 }
 
 
-XEN g_free_mix_sample_reader(XEN obj)
+XEN g_free_mix_sampler(XEN obj)
 {
   mix_fd *mf;
-  mf = XEN_TO_MIX_SAMPLE_READER(obj);
+  mf = XEN_TO_MIX_SAMPLER(obj);
 
   if (mf)
     {
@@ -3410,9 +3428,9 @@ XEN_ARGIFY_2(g_mixes_w, g_mixes)
 XEN_ARGIFY_7(g_mix_w, g_mix)
 XEN_ARGIFY_6(g_mix_vct_w, g_mix_vct)
 
-XEN_ARGIFY_2(g_make_mix_sample_reader_w, g_make_mix_sample_reader)
+XEN_ARGIFY_2(g_make_mix_sampler_w, g_make_mix_sampler)
 XEN_NARGIFY_1(g_read_mix_sample_w, g_read_mix_sample)
-XEN_NARGIFY_1(g_mix_sample_reader_p_w, g_mix_sample_reader_p)
+XEN_NARGIFY_1(g_mix_sampler_p_w, g_mix_sampler_p)
 XEN_ARGIFY_2(g_play_mix_w, g_play_mix)
 
 XEN_NARGIFY_0(g_view_mixes_dialog_w, g_view_mixes_dialog)
@@ -3460,9 +3478,9 @@ XEN_NARGIFY_1(g_set_mix_dialog_mix_w, g_set_mix_dialog_mix)
 #define g_mix_w g_mix
 #define g_mix_vct_w g_mix_vct
 
-#define g_make_mix_sample_reader_w g_make_mix_sample_reader
+#define g_make_mix_sampler_w g_make_mix_sampler
 #define g_read_mix_sample_w g_read_mix_sample
-#define g_mix_sample_reader_p_w g_mix_sample_reader_p
+#define g_mix_sampler_p_w g_mix_sampler_p
 #define g_play_mix_w g_play_mix
 
 #define g_view_mixes_dialog_w g_view_mixes_dialog
@@ -3477,9 +3495,9 @@ void g_init_mix(void)
   init_xen_mix();
 
 #if HAVE_S7
-  mf_tag = XEN_MAKE_OBJECT_TYPE("<mix-sample-reader>", print_mf, free_mf, s7_equalp_mf, NULL, s7_read_mix_sample, NULL, NULL, NULL, NULL);
+  mf_tag = XEN_MAKE_OBJECT_TYPE("<mix-sampler>", print_mf, free_mf, s7_equalp_mf, NULL, s7_read_mix_sample, NULL, NULL, NULL, NULL);
 #else
-  mf_tag = XEN_MAKE_OBJECT_TYPE("MixSampleReader", sizeof(mix_fd));
+  mf_tag = XEN_MAKE_OBJECT_TYPE("MixSampler", sizeof(mix_fd));
 #endif
 
 #if HAVE_GUILE
@@ -3501,9 +3519,9 @@ void g_init_mix(void)
   fth_set_object_apply(mf_tag, XEN_PROCEDURE_CAST g_read_mix_sample, 0, 0, 0);
 #endif
 
-  XEN_DEFINE_PROCEDURE(S_make_mix_sample_reader, g_make_mix_sample_reader_w, 1, 1, 0, H_make_mix_sample_reader);
+  XEN_DEFINE_PROCEDURE(S_make_mix_sampler, g_make_mix_sampler_w, 1, 1, 0, H_make_mix_sampler);
   XEN_DEFINE_PROCEDURE(S_read_mix_sample,        g_read_mix_sample_w,        1, 0, 0, H_read_mix_sample);
-  XEN_DEFINE_PROCEDURE(S_mix_sample_reader_p,    g_mix_sample_reader_p_w,    1, 0, 0, H_mix_sample_reader_p);
+  XEN_DEFINE_PROCEDURE(S_mix_sampler_p,    g_mix_sampler_p_w,    1, 0, 0, H_mix_sampler_p);
   XEN_DEFINE_PROCEDURE(S_play_mix,               g_play_mix_w,               0, 2, 0, H_play_mix);
 
   XEN_DEFINE_PROCEDURE(S_mix,                    g_mix_w,                    1, 6, 0, H_mix);

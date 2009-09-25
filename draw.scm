@@ -71,7 +71,7 @@
 	(let* ((xdata (pack-x-info axinf))
 	       (ydata (pack-y-info axinf))
 	       (start (max 0 (- left rms-size)))
-	       (reader (make-sample-reader start snd chn))
+	       (reader (make-sampler start snd chn))
 	       (rms (make-moving-rms rms-size))
 	       (x0 0)
 	       (y0 0)

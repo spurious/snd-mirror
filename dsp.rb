@@ -1437,7 +1437,7 @@ returns the amplitude and initial-phase (for sin) at freq between beg and dur")
     incr = hz2radians(freq)
     sw = 0.0
     cw = 0.0
-    reader = make_sample_reader(beg, false, false, 1, false)
+    reader = make_sampler(beg, false, false, 1, false)
     dur.times do |i|
       samp = next_sample(reader)
       sw += samp * sin(i * incr)
@@ -1616,8 +1616,8 @@ returns the amplitude and initial-phase (for sin) at freq between beg and dur")
 
   def channel2_inner_product(s1, c1, s2, c2)
     sum = 0.0
-    r1 = make_sample_reader(0, s1, c1)
-    r2 = make_sample_reader(0, s2, c2)
+    r1 = make_sampler(0, s1, c1)
+    r2 = make_sampler(0, s2, c2)
     frames(s1, c1).times do |i| sum += r1.call * r2.call end
     sum
   end
@@ -1642,8 +1642,8 @@ returns the amplitude and initial-phase (for sin) at freq between beg and dur")
   # end of JOS stuff
 
   def channel_distance(s1, c1, s2, c2)
-    r1 = make_sample_reader(0, s1, c1)
-    r2 = make_sample_reader(0, s2, c2)
+    r1 = make_sampler(0, s1, c1)
+    r2 = make_sampler(0, s2, c2)
     sum = 0.0
     [frames(s1, c1), frames(s2, c2)].min.times do
       diff = r1.call - r2.call
@@ -1656,7 +1656,7 @@ returns the amplitude and initial-phase (for sin) at freq between beg and dur")
     # the "Bartlett" version, apparently
     len = frames()
     average_data = make_vct(n)
-    rd = make_sample_reader(0)
+    rd = make_sampler(0)
     n2 = n * 2
     rl = make_vct(n2)
     im = make_vct(n2)
@@ -2122,13 +2122,13 @@ splits out each harmonic and replaces it with the spectrum given in coeffs")
           "linear_src_channel(sr, [snd=false, [chn=false]]) \
 performs sampling rate conversion using linear interpolation.")
   def linear_src_channel(srinc, snd = false, chn = false)
-    rd = make_sample_reader(0, snd, chn)
+    rd = make_sampler(0, snd, chn)
     last = rd.call
     nxt = rd.call
     intrp = 0.0
     tempfile = with_sound(:clm, true, :output, snd_tempnam, :srate, srate()) do
       samp = 0
-      until sample_reader_at_end?(rd)
+      until sampler_at_end?(rd)
         if (pos = intrp) >= 1.0
           pos.floor.times do |i| last, nxt = nxt, rd.call end
           pos -= pos.floor
@@ -2178,7 +2178,7 @@ performs sampling rate conversion using linear interpolation.")
   end
 =begin
   with_sound(:clm, true) do
-    rd = make_sample_reader(0, "now.snd")
+    rd = make_sampler(0, "now.snd")
     m = make_mfilter
     10000.times do |i| outa(i, mfilter(m, 0.1 * rd.call), $output) end
   end
@@ -2187,7 +2187,7 @@ performs sampling rate conversion using linear interpolation.")
   # sweep center freq:
 =begin
   with_sound(:clm, true) do
-    rd = make_sample_reader(0, "oboe.snd")
+    rd = make_sampler(0, "oboe.snd")
     m = make_mfilter(:decay, 0.99, :frequency, 1000)
     e = make_env([0, 100, 1, 2000], :length, 10000)
     10000.times do |i|

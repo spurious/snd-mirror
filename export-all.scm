@@ -540,7 +540,7 @@ controls->channel
 convolve-selection-with
 convolve-with
 copy-context
-copy-sample-reader
+copy-sampler
 count-matches
 current-edit-position
 current-font
@@ -672,7 +672,7 @@ forget-region
 fourier-transform
 frames
 free-player
-free-sample-reader
+free-sampler
 gc-off
 gc-on
 gl-graph->ps
@@ -736,11 +736,11 @@ main-menu
 main-widgets
 make-color
 make-graph-data
-make-mix-sample-reader
+make-mix-sampler
 make-player
 make-region
-make-region-sample-reader
-make-sample-reader
+make-region-sampler
+make-sampler
 make-snd->sample
 make-variable-graph
 map-chan
@@ -784,7 +784,7 @@ mix-position
 mix-properties
 mix-region
 mix-release-hook
-mix-sample-reader?
+mix-sampler?
 mix-selection
 mix-speed
 mix-sync
@@ -877,7 +877,7 @@ region-maxamp-position
 region?
 region-position
 region-sample
-region-sample-reader?
+region-sampler?
 region-srate
 region->vct
 regions
@@ -903,10 +903,10 @@ revert-sound
 right-sample
 run
 sample
-sample-reader-at-end?
-sample-reader-home
-sample-reader?
-sample-reader-position
+sampler-at-end?
+sampler-home
+sampler?
+sampler-position
 samples
 sash-color
 save-controls

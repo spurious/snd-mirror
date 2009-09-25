@@ -141,7 +141,7 @@ copy string: in Guile: string-copy<br>
 copy list: in Guile: list-copy or copy-tree<br>
 copy vct: <a href="extsnd.html#vctcopy">vct-copy</a>, <a href="extsnd.html#vcttovector">vct-&gt;vector</a>, <a href="sndscm.html#vcttoframe">vct-&gt;frame</a><br>
 copy mix: <a href="sndscm.html#mixtovct">mix-&gt;vct</a><br>
-copy sample reader: <a href="extsnd.html#copysamplereader">copy-sample-reader</a><br>
+copy sampler: <a href="extsnd.html#copysampler">copy-sampler</a><br>
 copy (clone) current sound edit state: <a href="extsnd.html#clonesoundas">clone-sound-as</a><br>
 copy channel data: <a href="extsnd.html#channeltovct">channel-&gt;vct</a>, or <a href="extsnd.html#savesoundas">save-sound-as</a><br>
 copy selection data: <a href="extsnd.html#selection2vct">selection-&gt;vct</a> or <a href="extsnd.html#saveselection">save-selection</a><br>
@@ -375,7 +375,7 @@ mix vct: <a href="extsnd.html#mixvct">mix-vct</a><br>
 mix sound-data: <a href="sndscm.html#mixsounddata">mix-sound-data</a><br>
 mix a frame: <a href="sndscm.html#mixframe">mix-frame</a><br>
 enveloped mix: see <a href="sndscm.html#envelopedmix">enveloped-mix</a> in extensions.scm<br>
-read mix samples: <a href="extsnd.html#makemixsamplereader">make-mix-sample-reader</a><br>
+read mix samples: <a href="extsnd.html#makemixsampler">make-mix-sampler</a><br>
 mix data maxamp: <a href="sndscm.html#mixmaxamp">mix-maxamp</a><br>
 mix data to vct: <a href="sndscm.html#mixtovct">mix-&gt;vct</a><br>
 save mix data in file: <a href="sndscm.html#savemix">save-mix</a><br>
@@ -513,7 +513,7 @@ plate-reverb: ladspa.scm (a LADSPA effect)<br>
 <br>
 reverse channel: <a href="extsnd.html#reversechannel">reverse-channel</a>, <a href="extsnd.html#reversesound">reverse-sound</a><br>
 reverse selected portion: <a href="extsnd.html#reverseselection">reverse-selection</a><br>
-read samples in reverse: use <a href="extsnd.html#makesamplereader">make-sample-reader</a> with direction -1<br>
+read samples in reverse: use <a href="extsnd.html#makesampler">make-sampler</a> with direction -1<br>
 reverse at new sampling rate: use <a href="extsnd.html#srcchannel">src-channel</a> with a negative ratio<br>
 Reverse in control panel: <a href="snd.html#speed">control panel</a> and <a href="extsnd.html#speedcontrol">speed-control</a> variable<br>
 reverse an envelope: <a href="sndscm.html#reverseenvelope">reverse-envelope</a><br>

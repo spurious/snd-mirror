@@ -100,7 +100,7 @@ $original_save_dir = (save_dir or "/zap/snd")
 $original_temp_dir = (temp_dir or "/zap/tmp")
 $original_sound_file_extensions = sound_file_extensions
 $original_prompt = listener_prompt
-$sample_reader_tests = 300
+$sampler_tests = 300
 $default_file_buffer_size = 65536
 $home_dir = ENV["HOME"]
 # snd_display will print at least those much vct entries.
@@ -4697,7 +4697,7 @@ def region2vct_1(reg, chn, len)
 end
 
 def region_to_vct(reg, chn, len)
-  rs = make_region_sample_reader(0, reg, chn)
+  rs = make_region_sampler(0, reg, chn)
   make_vct!(len) do next_sample(rs) end
 end
 
@@ -6465,10 +6465,10 @@ def test085
   con_air = lambda do |dat| (10...40).each do |i| dat[i] = 0.0 end end
   rev_channel2vct = lambda do
     len = data.length
-    rd = make_sample_reader(len - 1, ind, 0, -1)
+    rd = make_sampler(len - 1, ind, 0, -1)
     dat = make_vct(len)
     (len - 1).downto(0) do |i| dat[i] = rd.call end
-    free_sample_reader(rd)
+    free_sampler(rd)
     dat
   end
   if provided? :snd_motif and provided? :xm
@@ -7163,26 +7163,26 @@ def test105
   end
   samps1 = samples2vct(0, 50827, ind, 0)
   samps2 = region2vct(0, 50828, r0, 0)
-  rd = make_sample_reader(0, ind, 0, 1)
-  snd_display("%s not sample_reader?", rd) unless sample_reader?(rd)
-  if (res = sample_reader_position(rd)).nonzero?
-    snd_display("initial sample_reader_position: %d?", res)
+  rd = make_sampler(0, ind, 0, 1)
+  snd_display("%s not sampler?", rd) unless sampler?(rd)
+  if (res = sampler_position(rd)).nonzero?
+    snd_display("initial sampler_position: %d?", res)
   end
-  if (res = sample_reader_home(rd)) != [ind, 0]
-    snd_display("sample_reader_home: %s %s?", res, [ind, 0])
+  if (res = sampler_home(rd)) != [ind, 0]
+    snd_display("sampler_home: %s %s?", res, [ind, 0])
   end
-  snd_display("%s init at end?", rd) if sample_reader_at_end?(rd)
+  snd_display("%s init at end?", rd) if sampler_at_end?(rd)
   if (res = Snd.catch do region2vct(-1, 1233, r0) end).first != :no_such_sample
     snd_display("region2vct -1: %s", res.inspect)
   end
   if res = Snd.catch do region2vct(12345678, 1, r0) end.first
     snd_display("region2vct 12345678: %s", res.inspect)
   end
-  if (res = format("%s", rd)) != "#<sample-reader: oboe.snd[0: 0] from 0, at 0, forward>"
-    snd_display("sample_reader actually got: %s", res)
+  if (res = format("%s", rd)) != "#<sampler: oboe.snd[0: 0] from 0, at 0, forward>"
+    snd_display("sampler actually got: %s", res)
   end
   erd = rd
-  snd_display("sample_reader equal? %s %s", rd, erd) if erd != rd
+  snd_display("sampler equal? %s %s", rd, erd) if erd != rd
   50827.times do |i|
     val = (i % 2).nonzero? ? next_sample(rd) : read_sample(rd)
     if val != samps1[i] or val != samps2[i]
@@ -7190,33 +7190,33 @@ def test105
       break
     end
   end
-  free_sample_reader(rd)
-  if (res = Snd.catch do make_sample_reader(0, ind, -1) end).first != :no_such_channel
-    snd_display("make_sample_reader bad chan -1: %s?", res.inspect)
+  free_sampler(rd)
+  if (res = Snd.catch do make_sampler(0, ind, -1) end).first != :no_such_channel
+    snd_display("make_sampler bad chan -1: %s?", res.inspect)
   end
-  if (res = Snd.catch do make_sample_reader(0, ind, 1) end).first != :no_such_channel
-    snd_display("make_sample_reader bad chan 1: %s?", res.inspect)
+  if (res = Snd.catch do make_sampler(0, ind, 1) end).first != :no_such_channel
+    snd_display("make_sampler bad chan 1: %s?", res.inspect)
   end
-  fd = make_sample_reader(0)
-  snd_display("sample_reader: mix %s?", fd) if mix_sample_reader?(fd)
-  snd_display("sample_reader: region %s?", fd) if region_sample_reader?(fd)
-  snd_display("sample_reader: normal %s?", fd) unless sample_reader?(fd)
-  snd_display("sample_reader: position %s?", fd) if sample_reader_position(fd).nonzero?
-  free_sample_reader(fd)
+  fd = make_sampler(0)
+  snd_display("sampler: mix %s?", fd) if mix_sampler?(fd)
+  snd_display("sampler: region %s?", fd) if region_sampler?(fd)
+  snd_display("sampler: normal %s?", fd) unless sampler?(fd)
+  snd_display("sampler: position %s?", fd) if sampler_position(fd).nonzero?
+  free_sampler(fd)
   if (res = format("%s", fd))[-16, 16] != "at eof or freed>"
-    snd_display("freed sample_reader: %s [%s]?", res, res[-16, 16])
+    snd_display("freed sampler: %s [%s]?", res, res[-16, 16])
   end
   reg = regions.first
   chns = region_chans(reg)
   if (res = Snd.catch do
-        make_region_sample_reader(0, reg, chans + 1)
+        make_region_sampler(0, reg, chans + 1)
       end).first != :no_such_channel
-    snd_display("make_region_sample_reader bad chan (2): %s %s", res.inspect, regions)
+    snd_display("make_region_sampler bad chan (2): %s %s", res.inspect, regions)
   end
   if (res = Snd.catch do
-        make_region_sample_reader(0, reg, 0, -2)
+        make_region_sampler(0, reg, 0, -2)
       end).first != :no_such_direction
-    snd_display("make_region_sample_reader bad dir (-2): %s", res.inspect)
+    snd_display("make_region_sampler bad dir (-2): %s", res.inspect)
   end
   revert_sound(ind)
   insert_sample(100, 0.5, ind)
@@ -7308,8 +7308,8 @@ def test105
   snd_display("scale_selection_by: %s?", newmaxa) if fneq(newmaxa, 2.0 * maxa)
   revert_sound(ind)
   select_all(ind)
-  rread = make_region_sample_reader(0, regions.first)
-  sread = make_sample_reader(0, ind)
+  rread = make_region_sampler(0, regions.first)
+  sread = make_sampler(0, ind)
   rvect = region2vct(0, 100, regions.first)
   svect = samples(0, 100, ind)
   if fneq(res = region_sample(1, regions.first), rvect[1])
@@ -7322,13 +7322,13 @@ def test105
     snd_display("region_samples: %s %s?", rval, rvect[i]) if fneq(rval, rvect[i])
     snd_display("samples: %s %s?", sval, svect[i]) if fneq(sval, svect[i])
   end
-  free_sample_reader(rread)
+  free_sampler(rread)
   val0 = next_sample(sread)
-  snd_display("premature end?") if sample_reader_at_end?(sread)
+  snd_display("premature end?") if sampler_at_end?(sread)
   previous_sample(sread)
   val1 = previous_sample(sread)
   snd_display("previous_sample: %s %s?", val0, val1) if fneq(val0, val1)
-  free_sample_reader(rread)
+  free_sampler(rread)
   revert_sound(ind)
   s100 = sample(100)
   s40 = sample(40)
@@ -8786,7 +8786,7 @@ def test205
 end
 
 def peak_env_equal?(name, index, e, diff)
-  rd = make_sample_reader(0, index, 0)
+  rd = make_sampler(0, index, 0)
   e_size = e.first.length
   samps_per_bin = (frames(index) / e_size.to_f).ceil
   mins, maxs = e[0, 2]
@@ -9460,9 +9460,9 @@ def test255
     insert_silence(0, dur)
     map_channel($init_channel)
     env_sound([0, 0, 1, 1, 2, 0])
-    rd = make_sample_reader(frames - 1, ind, 0, -1)
-    if (res = sample_reader_position(rd)) != (frames - 1)
-      snd_display("sample_reader_position: %s?", res)
+    rd = make_sampler(frames - 1, ind, 0, -1)
+    if (res = sampler_position(rd)) != (frames - 1)
+      snd_display("sampler_position: %s?", res)
     end
     map_channel(lambda do |y| rd.call end)
     pos = 0
@@ -9485,7 +9485,7 @@ def test255
   map_channel($init_channel)
   env_sound([0, 0, 1, 1, 2, 0])
   scale_channel(0.0, 100, 200)
-  rd = make_sample_reader(frames - 1, ind, 0, -1)
+  rd = make_sampler(frames - 1, ind, 0, -1)
   map_channel(lambda do |y| rd.call end)
   pos = 0
   e = make_env([0, 0, 1, 1, 2, 0], :length, 1001)
@@ -9521,11 +9521,11 @@ def test255
     when 6
       env_sound([0, 1, 1, 0], 10000, 2000)
     end
-    rd = make_sample_reader(frames - 1, ind, 0, -1)
+    rd = make_sampler(frames - 1, ind, 0, -1)
     map_channel(lambda do |y| rd.call end)
-    rd = make_sample_reader(frames - 1, ind, 0, -1)
+    rd = make_sampler(frames - 1, ind, 0, -1)
     map_channel(lambda do |y| rd.call end)
-    old_rd = make_sample_reader(0, ind, 0, 1, edit_position(ind, 0) - 2)
+    old_rd = make_sampler(0, ind, 0, 1, edit_position(ind, 0) - 2)
     pos = 0
     scan_channel(lambda do |y|
                    if fneq(val = old_rd.call, y)
@@ -9544,9 +9544,9 @@ def test255
   last_proc = nil
   scan_again = lambda do
     result = false
-    until sample_reader_at_end?(reader)
+    until sampler_at_end?(reader)
       if val = last_proc.call(reader.call)
-        result = [val, sample_reader_position(reader) - 1]
+        result = [val, sampler_position(reader) - 1]
         break
       end
     end
@@ -9554,7 +9554,7 @@ def test255
   end
   my_scan_chan = lambda do |proc|
     last_proc = proc
-    reader = make_sample_reader(0)
+    reader = make_sampler(0)
     scan_again.call
   end
   ind = open_sound("oboe.snd")
@@ -12129,7 +12129,7 @@ def ssb_am_1(gen, y, fm = 0.0)
 end
 
 def rough_spectrum(ind)
-  rd = make_sample_reader(0, ind, 0)
+  rd = make_sampler(0, ind, 0)
   mx = 0.0
   Vct.new(10) do
     sum = 0.0
@@ -16501,7 +16501,7 @@ def test108
   end
   print_and_check(gen,
                   "snd->sample",
-                  "snd->sample reading 2.snd (2 chans) at 1499:[#<sample-reader: 2.snd[0: 0] from 1490, at 1500, forward>, #<sample-reader: 2.snd[1: 0] from 1490, at 1500, forward>]")
+                  "snd->sample reading 2.snd (2 chans) at 1499:[#<sampler: 2.snd[0: 0] from 1490, at 1500, forward>, #<sampler: 2.snd[1: 0] from 1490, at 1500, forward>]")
   snd_display("%s not snd2sample?", gen) unless snd2sample?(gen)
   snd_display("%s not input?", gen) unless mus_input?(gen)
   snd_display("snd2sample length: %s?", gen.length) if gen.length != frames(ind)
@@ -17900,7 +17900,7 @@ def test158
   #
   ind = open_sound("oboe.snd")
   mx = maxamp(ind, 0)
-  rd = make_sample_reader(0)
+  rd = make_sampler(0)
   grn = make_granulate(:expansion, 2.0,
                        :input, lambda do |dir| rd.call end,
                        :edit, lambda do |g|
@@ -17912,7 +17912,7 @@ def test158
     snd_display("granulate edit 2* (0): %s %s?", mx, maxamp)
   end
   undo_edit
-  rd = make_sample_reader(0)
+  rd = make_sampler(0)
   grn = make_granulate(:expansion, 2.0,
                        :input, lambda do |dir| rd.call end,
                        :edit, lambda do |g|
@@ -17924,7 +17924,7 @@ def test158
     snd_display("granulate edit 4* (0): %s %s?", mx, maxamp)
   end
   revert_sound(ind)
-  rd = make_sample_reader(0)
+  rd = make_sampler(0)
   grn = make_granulate(:expansion, 2.0,
                        :edit, lambda do |g|
                          g.data.scale!(2.0)
@@ -17935,7 +17935,7 @@ def test158
     snd_display("granulate edit 2* (1): %s %s?", mx, maxamp)
   end
   undo_edit
-  rd = make_sample_reader(0)
+  rd = make_sampler(0)
   grn = make_granulate(:expansion, 2.0,
                        :edit, lambda do |g|
                          g.data.scale!(4.0)
@@ -17946,7 +17946,7 @@ def test158
     snd_display("granulate edit 4* (1): %s %s?", mx, maxamp)
   end
   revert_sound(ind)
-  rd = make_sample_reader(0)
+  rd = make_sampler(0)
   grn = make_granulate(:expansion, 2.0)
   map_channel(lambda do |y|
                 granulate(grn,
@@ -17960,7 +17960,7 @@ def test158
     snd_display("granulate edit 2* (2): %s %s?", mx, maxamp)
   end
   undo_edit
-  rd = make_sample_reader(0)
+  rd = make_sampler(0)
   grn = make_granulate(:expansion, 2.0)
   map_channel(lambda do |y|
                 granulate(grn,
@@ -17976,28 +17976,28 @@ def test158
   close_sound(ind)
   ind = open_sound("oboe.snd")
   grn = make_granulate(:expansion, 2.0, :length, 0.01, :hop, 0.05)
-  rd = make_sample_reader(0)
+  rd = make_sampler(0)
   map_channel(lambda do |y| granulate(grn, lambda do |dir| rd.call end) end)
   if (res = maxamp) > 0.2
     snd_display("trouble in granulate len 0.01 hop 0.05: %s?", res)
   end
   undo_edit
   grn = make_granulate(:expansion, 2.0, :length, 0.04, :hop, 0.05)
-  rd = make_sample_reader(0)
+  rd = make_sampler(0)
   map_channel(lambda do |y| granulate(grn, lambda do |dir| rd.call end) end)
   if (res = maxamp) > 0.2
     snd_display("trouble in granulate len 0.04 hop 0.05: %s?", res)
   end
   undo_edit
   grn = make_granulate(:expansion, 2.0, :length, 0.01, :hop, 0.25)
-  rd = make_sample_reader(0)
+  rd = make_sampler(0)
   map_channel(lambda do |y| granulate(grn, lambda do |dir| rd.call end) end)
   if (res = maxamp) > 0.2
     snd_display("trouble in granulate len 0.01 hop 0.25: %s?", res)
   end
   undo_edit
   grn = make_granulate(:expansion, 2.0, :length, 0.4, :hop, 0.5)
-  rd = make_sample_reader(0)
+  rd = make_sampler(0)
   map_channel(lambda do |y| granulate(grn, lambda do |dir| rd.call end) end)
   if (res = maxamp) > 0.2
     snd_display("trouble in granulate len 0.4 hop 0.5: %s?", res)
@@ -19293,7 +19293,7 @@ def test218
   end
   ind = open_sound("oboe.snd")
   pv = make_phase_vocoder(false, 512, 4, 128, 1.0, false, false, false)
-  rd = make_sample_reader(0)
+  rd = make_sampler(0)
   snd_display("%s not phase_vocoder?", pv) unless phase_vocoder?(pv)
   print_and_check(pv,
                   "phase-vocoder",
@@ -19326,7 +19326,7 @@ def test218
     snd_display("set_phase_vocoder_freqs: %s?", res)
   end
   undo_edit(1)
-  free_sample_reader(rd)
+  free_sampler(rd)
   # 
   lastphases = make_vct(512)
   pv = make_phase_vocoder(false, 512, 4, 128, 1.0,
@@ -19351,18 +19351,18 @@ def test218
                             false
                           },
                           false)
-  rd = make_sample_reader(0)
+  rd = make_sampler(0)
   map_chan(lambda do |val| phase_vocoder(pv, lambda do |dir| next_sample(rd) end) end)
   undo_edit(1)
-  free_sample_reader(rd)
+  free_sampler(rd)
   # 
   pv = make_phase_vocoder(false, 512, 4, (128 * 2.0).to_i, 1.0, false, false, false)
-  rd = make_sample_reader(0)
+  rd = make_sampler(0)
   len = (2.0 * frames(ind)).to_i
   data = make_vct!(len) do phase_vocoder(pv, lambda do |dir| next_sample(rd) end) end
   set_samples(0, len, data)
   undo_edit(1)
-  free_sample_reader(rd)
+  free_sampler(rd)
   #
   incalls = outcalls = 0
   pv = make_phase_vocoder(false,
@@ -19376,12 +19376,12 @@ def test218
                             outcalls += 1
                             0.0
                           })
-  rd = make_sample_reader(0)
+  rd = make_sampler(0)
   len = (2.0 * frames(ind)).to_i
   data = make_vct!(len) do phase_vocoder(pv, lambda do |dir| next_sample(rd) end) end
   set_samples(0, len, data)
   undo_edit(1)
-  free_sample_reader(rd)
+  free_sampler(rd)
   if incalls.zero? or outcalls.zero?
     snd_display("phase_vocoder incalls: %d, outcalls: %d?", incalls, outcalls)
   end
@@ -19520,8 +19520,8 @@ def test228
   scl = maxamp
   convolve_with("oboe.snd", scl, index, 0, 0)
   snd_display("convolve_with amps: %s %s?", maxmap, scl) if ffneq(maxamp, scl)
-  preader = make_sample_reader(0, index, 0, 1, 1)
-  reader = make_sample_reader(0)
+  preader = make_sampler(0, index, 0, 1, 1)
+  reader = make_sampler(0)
   frames.times do |i|
     val0 = preader.call
     val1 = reader.call
@@ -19531,13 +19531,13 @@ def test228
     end
   end
   close_sound(index)
-  reader = make_sample_reader(0, "pistol.snd")
+  reader = make_sampler(0, "pistol.snd")
   10.times do |i|
     if fneq(data[i], next_sample(reader))
       snd_display("external reader trouble")
     end
   end
-  free_sample_reader(reader)
+  free_sampler(reader)
   # 
   gen = make_moving_max(4)
   iv = vct(0.1, 0.05, -0.2, 0.15, -1.5, 0.1, 0.01, 0.001, 0.0, 0.0)
@@ -20092,19 +20092,19 @@ def test009
   snd, chn = mix_home(mix_id)[0, 2]
   nam = mix_name(mix_id)
   amp = mix_amp(mix_id)
-  mr = make_mix_sample_reader(mix_id)
-  snd_display("%s not mix_sample_reader?", mr) unless mix_sample_reader?(mr)
-  snd_display("mix_sample_reader: region %s?", mr) if region_sample_reader?(mr)
-  snd_display("mix_sample_reader: normal %s?", mr) if sample_reader?(mr)
-  if (res = sample_reader_position(mr)).nonzero?
-    snd_display("mix_sample_reader_position: %d?", res)
+  mr = make_mix_sampler(mix_id)
+  snd_display("%s not mix_sampler?", mr) unless mix_sampler?(mr)
+  snd_display("mix_sampler: region %s?", mr) if region_sampler?(mr)
+  snd_display("mix_sampler: normal %s?", mr) if sampler?(mr)
+  if (res = sampler_position(mr)).nonzero?
+    snd_display("mix_sampler_position: %d?", res)
   end
-  snd_display("mix_sample_reader at end? %s", mr) if sample_reader_at_end?(mr)
-  if (res = sample_reader_home(mr)) != mix_id
+  snd_display("mix_sampler at end? %s", mr) if sampler_at_end?(mr)
+  if (res = sampler_home(mr)) != mix_id
     snd_display("%s home: %s?", mr, res)
   end
-  if mr.to_s[0, 22] != "#<mix-sample-reader mi"
-    snd_display("mix_sample_reader actually got: [%s]?", mr.to_s[0, 22])
+  if mr.to_s[0, 22] != "#<mix-sampler mi"
+    snd_display("mix_sampler actually got: [%s]?", mr.to_s[0, 22])
   end
   99.times do |i|
     mx = i.odd? ? read_mix_sample(mr) : read_mix_sample(mr)
@@ -20114,7 +20114,7 @@ def test009
   if fneq(mx = mr.call, sx = sample(199))
     snd_display("mix_sample 100: %s %s?", mx, sx)
   end
-  free_sample_reader(mr)
+  free_sampler(mr)
   #
   snd_display("mix_position: %d?", pos) if pos != 100
   snd_display("mix_length: %d?", len) if len != 41623
@@ -20495,8 +20495,8 @@ def test039
   vct2channel(v)
   v.map! do |val| -val end
   mx = mix_vct(v, 10)
-  hi = make_mix_sample_reader(mx, 0)
-  ho = make_mix_sample_reader(mx, 5)
+  hi = make_mix_sampler(mx, 0)
+  ho = make_mix_sampler(mx, 5)
   10.times do |i|
     ho_val = ho.call
     hi_val = hi.call
@@ -20515,8 +20515,8 @@ def test039
   vct2channel(v)
   mx = mix_vct(v, 10)
   set_mix_amp_env(mx, [0, 0, 1, 1])
-  hi = make_mix_sample_reader(mx, 0)
-  ho = make_mix_sample_reader(mx, 10)
+  hi = make_mix_sampler(mx, 0)
+  ho = make_mix_sampler(mx, 10)
   10.times do |i|
     ho_val = ho.call
     hi_val = hi.call
@@ -22055,9 +22055,9 @@ def test12
     # dangling readers (overall)
     #
     ind = open_sound("oboe.snd")
-    hi = make_sample_reader(0, ind, 0)
+    hi = make_sampler(0, ind, 0)
     close_sound(ind)
-    snd_display("dangling reader: %s?", hi) unless sample_reader?(hi)
+    snd_display("dangling reader: %s?", hi) unless sampler?(hi)
     snd_display("dangling reader format: %s?", hi) unless string?(hi.to_s)
     val = hi.call
     val1 = next_sample(hi)
@@ -22066,25 +22066,25 @@ def test12
     if fneq(val, 0.0) or fneq(val1, 0.0) or fneq(val2, 0.0) or fneq(val3, 0.0)
       snd_display("dangling read: %s %s %s %s?", val, val1, val2, val3)
     end
-    if res = sample_reader_home(hi)
+    if res = sampler_home(hi)
       snd_display("dangling reader home: %s?", res)
     end
-    if (res = sample_reader_position(hi)).nonzero?
-      snd_display("dangling sample_reader_position: %s?", res)
+    if (res = sampler_position(hi)).nonzero?
+      snd_display("dangling sampler_position: %s?", res)
     end
-    unless (res = sample_reader_at_end?(hi))
+    unless (res = sampler_at_end?(hi))
       snd_display("dangling reader eof: %s?", res)
     end
-    free_sample_reader(hi)
+    free_sampler(hi)
     #
     # same (pruned edit)
     #
     ind = open_sound("oboe.snd")
     delete_samples(100, 100)
-    hi = make_sample_reader(0, ind, 0)
+    hi = make_sampler(0, ind, 0)
     revert_sound
     delete_samples(100, 100)
-    snd_display("pruned dangling reader: %s?", hi) unless sample_reader?(hi)
+    snd_display("pruned dangling reader: %s?", hi) unless sampler?(hi)
     snd_display("pruned dangling reader format: %s?", hi) unless string?(hi.to_s)
     val = hi.call
     val1 = next_sample(hi)
@@ -22093,43 +22093,43 @@ def test12
     if fneq(val, 0.0) or fneq(val1, 0.0) or fneq(val2, 0.0) or fneq(val3, 0.0)
       snd_display("pruned dangling read: %s %s %s %s?", val, val1, val2, val3)
     end
-    if (res = sample_reader_home(hi)) != [ind, 0]
+    if (res = sampler_home(hi)) != [ind, 0]
       snd_display("pruned dangling reader home: %s?", res)
     end
-    unless (res = sample_reader_at_end?(hi))
+    unless (res = sampler_at_end?(hi))
       snd_display("pruned dangling reader eof: %s?", res)
     end
-    free_sample_reader(hi)
+    free_sampler(hi)
     close_sound(ind)
     #
     # region reader
     # 
     ind = open_sound("oboe.snd")
     reg = make_region(1000, 2000, ind, 0)
-    rd = make_region_sample_reader(0, reg)
-    snd_display("region_sample_reader mix: %s?", rd) if mix_sample_reader?(rd)
-    snd_display("region_sample_reader region: %s?", rd) unless region_sample_reader?(rd)
-    snd_display("region_sample_reader normal: %s?", rd) if sample_reader?(rd)
-    if (res = sample_reader_position(rd)).nonzero?
-      snd_display("region_sample_reader position: %s?", res)
+    rd = make_region_sampler(0, reg)
+    snd_display("region_sampler mix: %s?", rd) if mix_sampler?(rd)
+    snd_display("region_sampler region: %s?", rd) unless region_sampler?(rd)
+    snd_display("region_sampler normal: %s?", rd) if sampler?(rd)
+    if (res = sampler_position(rd)).nonzero?
+      snd_display("region_sampler position: %s?", res)
     end
-    if (res = sample_reader_home(rd)) != [reg, 0]
-      snd_display("region_sample_reader home: %s?", res)
+    if (res = sampler_home(rd)) != [reg, 0]
+      snd_display("region_sampler home: %s?", res)
     end
-    if (res = sample_reader_at_end?(rd))
-      snd_display("region_sample_reader_at_end?: %s?", res)
+    if (res = sampler_at_end?(rd))
+      snd_display("region_sampler_at_end?: %s?", res)
     end
     val = rd.call
-    snd_display("region_sample_reader at start: %s?", val) if fneq(val, 0.0328)
+    snd_display("region_sampler at start: %s?", val) if fneq(val, 0.0328)
     unless string?(res = rd.to_s)
-      snd_display("region_sample_reader: %s?", res)
+      snd_display("region_sampler: %s?", res)
     end
     close_sound(ind)
     forget_region(reg)
     val = read_sample(rd)
-    snd_display("region_sample_reader at end: %s?", val) if fneq(val, 0.0)
-    snd_display("region_sample_reader after deletion?") unless sample_reader_at_end?(rd)
-    free_sample_reader(rd)
+    snd_display("region_sampler at end: %s?", val) if fneq(val, 0.0)
+    snd_display("region_sampler after deletion?") unless sampler_at_end?(rd)
+    free_sampler(rd)
     #
     # mix reader
     #
@@ -22138,25 +22138,25 @@ def test12
     ind = open_sound("oboe.snd")
     reg = make_region(1000, 2000, ind, 0, 0)
     md = mix_region(0, reg, ind, 0)
-    rd = make_mix_sample_reader(md)
+    rd = make_mix_sampler(md)
     set_mix_property(md, :hi, "hi")
     save_md = md
     if (res = mix_property(md, :hi)) != "hi"
       snd_display("mix_property (hi): %s?", res)
     end
     val = rd.call
-    snd_display("mix_sample_reader at start: %s?", val) if fneq(val, 0.0328)
+    snd_display("mix_sampler at start: %s?", val) if fneq(val, 0.0328)
     unless string?(res = rd.to_s)
-      snd_display("mix_sample_reader: %s?", res)
+      snd_display("mix_sampler: %s?", res)
     end
     close_sound(ind)
     if (res = Snd.catch do mix_property(md, :hi) end).first != :no_such_mix
       snd_display("mix_property bad mix: %s", res.inspect)
     end
-    if (res = rd.to_s) != "#<mix-sample-reader: inactive>"
-      snd_display("mix_sample_reader released: %s?", res)
+    if (res = rd.to_s) != "#<mix-sampler: inactive>"
+      snd_display("mix_sampler released: %s?", res)
     end
-    free_sample_reader(rd)
+    free_sampler(rd)
     $mix_click_hook.reset_hook!
     $close_hook.reset_hook!
     #
@@ -23860,9 +23860,9 @@ def test14
     if (res = Snd.catch do count_matches(lambda do |y| y > 0.1 end) end).first != :no_such_sample
       snd_display("count_matches z: %s", res.inspect)
     end
-    reader = make_sample_reader(0)
+    reader = make_sampler(0)
     val = next_sample(reader)
-    snd_display("sample_reader z.snd: %s?", val) if fneq(val, 0.0)
+    snd_display("sampler z.snd: %s?", val) if fneq(val, 0.0)
     snd_display("z.snd reader: %s?", reader.to_s) unless string?(reader.to_s)
     if (res = cursor_position) != [0, 0]
       snd_display("cursor_position z: %s?", res)
@@ -24452,8 +24452,8 @@ def test_selection(ind, beg, len, scaler)
   scale_selection_by(scaler)
   diff = 0.0
   pos = edit_position(ind, 0)
-  old_reader = make_sample_reader(beg, ind, 0, 1, pos - 1)
-  new_reader = make_sample_reader(beg, ind, 0, 1, pos)
+  old_reader = make_sampler(beg, ind, 0, 1, pos - 1)
+  new_reader = make_sampler(beg, ind, 0, 1, pos)
   len.times do |i|
     ov = scaler * old_reader.call
     nv = next_sample(new_reader)
@@ -24469,8 +24469,8 @@ def test_selection(ind, beg, len, scaler)
     diff += val
   end
   if diff > 0.0 then snd_display("zdiff (%d %d): %s?", beg, len, diff) end
-  free_sample_reader(old_reader)
-  free_sample_reader(new_reader)
+  free_sampler(old_reader)
+  free_sampler(new_reader)
 end
 
 def test_selection_to(ind, beg, len, maxval)
@@ -24479,7 +24479,7 @@ def test_selection_to(ind, beg, len, maxval)
   set_selection_frames(len)
   scale_selection_to(maxval)
   newmax = 0.0
-  new_reader = make_sample_reader(beg, ind, 0)
+  new_reader = make_sampler(beg, ind, 0)
   len.times do
     nv = next_sample(new_reader).abs
     if nv > newmax then newmax = nv end
@@ -24487,7 +24487,7 @@ def test_selection_to(ind, beg, len, maxval)
   if fneq(newmax, maxval)
     snd_display("%s (%d %d) %s: %s?", get_func_name, beg, len, maxval, newmax)
   end
-  free_sample_reader(new_reader)
+  free_sampler(new_reader)
 end
 
 def play_with_amps_1(snd, *amps)
@@ -25475,14 +25475,14 @@ def test0315
   key(key_to_int(?o), 4, ind)
   if frames(ind) != 100 + len then snd_display("C-o len: %s?", frames) end
   unless provided? :snd_nogui
-    reader = make_sample_reader(1200, ind)
+    reader = make_sampler(1200, ind)
     100.times do |i|
       if fneq(val = next_sample(reader), 0.0) then snd_display("C-o[%d]: %s?", i, val) end
     end
-    if (res = sample_reader_position(reader)) != 1300
+    if (res = sampler_position(reader)) != 1300
       snd_display("reader position: %s?", res)
     end
-    free_sample_reader(reader)
+    free_sampler(reader)
   end
   revert_sound(ind)
   set_cursor(1200, ind)
@@ -25493,11 +25493,11 @@ def test0315
   key(key_to_int(?z), 4, ind)
   if frames(ind) != len then snd_display("C-z len: %s?", frames) end
   unless provided? :snd_nogui
-    reader = make_sample_reader(1200, ind)
+    reader = make_sampler(1200, ind)
     100.times do |i|
       if fneq(val = next_sample(reader), 0.0) then snd_display("C-z[%d]: %s?", i, val) end
     end
-    free_sample_reader(reader)
+    free_sampler(reader)
   end
   set_cursor(0, ind)
   key(key_to_int(?u), 4, ind)
@@ -25515,11 +25515,11 @@ def test0315
   key(key_to_int(?o), 4, ind)
   if frames(ind) != srate(ind) + len then snd_display("C-o 1.0 len: %s?", frames) end
   unless provided? :snd_nogui
-    reader = make_sample_reader(1200, ind)
+    reader = make_sampler(1200, ind)
     srate(ind).times do |i|
       if fneq(val = next_sample(reader), 0.0) then snd_display("C-o 1.0[%d]: %s?", i, val) end
     end
-    free_sample_reader(reader)
+    free_sampler(reader)
   end
   revert_sound(ind)
   set_cursor(1200, ind)
@@ -25530,11 +25530,11 @@ def test0315
   key(key_to_int(?z), 4, ind)
   if frames(ind) != len then snd_display("C-z 1.0 len: %s?", frames) end
   unless provided? :snd_nogui
-    reader = make_sample_reader(1200, ind)
+    reader = make_sampler(1200, ind)
     srate(ind).times do |i|
       if fneq(val = next_sample(reader), 0.0) then snd_display("C-z 1.0[%d]: %s?", i, val) end
     end
-    free_sample_reader(reader)
+    free_sampler(reader)
   end
   close_sound(ind)
   #
@@ -26165,11 +26165,11 @@ def opt_test(choice)
   when 12
     beg = random(frames(cursnd, curchn) - 210)
     dur = random(200) + 10
-    preader0 = make_sample_reader(beg + dur - 1, cursnd, curchn, -1)
-    reader0 = make_sample_reader(beg, cursnd, curchn)
+    preader0 = make_sampler(beg + dur - 1, cursnd, curchn, -1)
+    reader0 = make_sampler(beg, cursnd, curchn)
     ptree_channel(lambda do |y| y * 2.0 end, beg, dur, cursnd, curchn, false, true)
-    preader1 = make_sample_reader(beg + dur - 1, cursnd, curchn, -1)
-    reader1 = make_sample_reader(beg, cursnd, curchn)
+    preader1 = make_sampler(beg + dur - 1, cursnd, curchn, -1)
+    reader1 = make_sampler(beg, cursnd, curchn)
     dur.times do |i|
       pval0 = preader0.call
       val0 = reader0.call
@@ -26226,9 +26226,9 @@ def opt_test(choice)
     end
     beg = random(frames(cursnd, curchn) - 300)
     dur = random(200) + 80
-    reader0 = make_sample_reader(beg, cursnd, curchn)
+    reader0 = make_sampler(beg, cursnd, curchn)
     env_channel(e, beg, dur, cursnd, curchn)
-    reader1 = make_sample_reader(beg, cursnd, curchn)
+    reader1 = make_sampler(beg, cursnd, curchn)
     en = make_env(:envelope, e, :length, dur)
     dur.times do |i|
       e0 = env(en)
@@ -26336,8 +26336,8 @@ def check_edit_tree(expected_tree, expected_vals, name)
       end
       if len > 5
         split_loc = 2 + random(len - 3)
-        fread = make_sample_reader(split_loc)
-        bread = make_sample_reader(split_loc - 1, false, false, -1)
+        fread = make_sampler(split_loc)
+        bread = make_sampler(split_loc - 1, false, false, -1)
         split_vals = Vct.new(len)
         split_loc.upto(len - 1) do |i| split_vals[i] = fread.call end
         (split_loc - 1).downto(0) do |i| split_vals[i] = bread.call end
@@ -26352,7 +26352,7 @@ end
 
 def reversed_read(snd, chn)
   len = frames(snd, chn)
-  sf  = make_sample_reader(len - 1, snd, chn, -1)
+  sf  = make_sampler(len - 1, snd, chn, -1)
   Vct.new(len) do read_sample(sf) end.reverse
 end
 
@@ -26451,20 +26451,20 @@ def test0016
    [lambda { mix_channel("pistol.snd", 0, 123, oboe, 0) }, :mix_channel],
    [lambda { insert_channel("pistol.snd", 0, 123, oboe, 0) }, :insert_channel],
    [lambda { reverse_channel(0, 123, oboe, 0) }, :reverse_channel],
-   [let(rd = make_sample_reader(0),
+   [let(rd = make_sampler(0),
         make_src(:srate, 2.0, :input, lambda { |dir| rd.call })) { |rd, sr|
         lambda { clm_channel(sr, 0, 12345, oboe, 0) }
       }, "clm_channel src"],
-   [let(rd = make_sample_reader(0),
+   [let(rd = make_sampler(0),
         make_granulate(:expansion, 2.0, :input, lambda { |dir| rd.call })) { |rd, gr|
         lambda { clm_channel(gr, 0, 12345, oboe, 0) }
       }, "clm_channel granulate"],
-   [let(rd = make_sample_reader(0),
+   [let(rd = make_sampler(0),
         flt = [1, 0, 0, 0].to_vct,
         make_convolve(:input, lambda { |dir| rd.call }, :filter, flt)) { |rd, flt, cv|
         lambda { clm_channel(cv, 0, 12345, oboe, 0) }
       }, "clm_channel convolve"],
-   [let(rd = make_sample_reader(0),
+   [let(rd = make_sampler(0),
         make_phase_vocoder(:input, lambda { |dir| rd.call })) { |rd, pv|
         lambda { clm_channel(pv, 0, 12345, oboe, 0) }
       }, "clm_channel phase_vocoder"]].each do |func, name|
@@ -26872,8 +26872,8 @@ def test0116
   if edit_tree != [[0, 1, 0, 52827, 1.0, 0.0, 0.0, 0], [52828, -2, 0, 0, 0.0, 0.0, 0.0, 0]]
     snd_display("clm_channel overlaps: %s?", edit_tree)
   end
-  reader = make_sample_reader(0)
-  preader = make_sample_reader(0, ind, 0, 1, 0)
+  reader = make_sampler(0)
+  preader = make_sampler(0, ind, 0, 1, 0)
   1000.times do |i|
     if fneq(res = reader.call, 0.0)
       snd_display("clm_channel overlap delayed[%d]: %s?", i, res)
@@ -27192,7 +27192,7 @@ def test0216
                    [85, 1, 85, 99, 1.0, 0.0, 0.0, 0],
                    [100, -2, 0, 0, 0.0, 0.0, 0.0, 0]],
                   vals, "map_channel 3 14")
-  reader = make_sample_reader(50)
+  reader = make_sampler(50)
   map_channel(lambda do |y| y - reader.call end, 0, 25)
   25.times do |i| vals[i] -= vals[i + 50] end
   check_edit_tree([[0, 9, 0, 24, 1.0, 0.0, 0.0, 0],
@@ -27376,43 +27376,43 @@ def test0216
     i1 = new_sound
     vct2channel(Vct.new(dur, 1.0))
     env_sound([0, 0, 1, 1])
-    check_env(:ramp, make_sample_reader(0), make_env([0, 0, 1, 1], :length, dur), dur)
+    check_env(:ramp, make_sampler(0), make_env([0, 0, 1, 1], :length, dur), dur)
     reverse_channel
-    check_env(:rev_ramp, make_sample_reader(0), make_env([0, 1, 1, 0], :length, dur), dur)
+    check_env(:rev_ramp, make_sampler(0), make_env([0, 1, 1, 0], :length, dur), dur)
     undo_edit(2)
     env_sound([0, 0, 1, 1, 2, 0])
-    check_env(:ramp, make_sample_reader(0), make_env([0, 0, 1, 1, 2, 0], :length, dur), dur)
-    cur_read = make_sample_reader(0)
+    check_env(:ramp, make_sampler(0), make_env([0, 0, 1, 1, 2, 0], :length, dur), dur)
+    cur_read = make_sampler(0)
     reverse_channel
-    check_env(:rev_pyr_1, cur_read, make_sample_reader(dur - 1, i1, 0, -1), dur)
+    check_env(:rev_pyr_1, cur_read, make_sampler(dur - 1, i1, 0, -1), dur)
     undo_edit(2)
     env_sound([0, 0, 1, 1, 2, 0, 3, 1])
-    check_env(:ramp_3, make_sample_reader(0), make_env([0, 0, 1, 1, 2, 0, 3, 1],:length, dur), dur)
-    cur_read = make_sample_reader(0)
+    check_env(:ramp_3, make_sampler(0), make_env([0, 0, 1, 1, 2, 0, 3, 1],:length, dur), dur)
+    cur_read = make_sampler(0)
     reverse_channel
-    check_env(:rev_pyr_2, cur_read, make_sample_reader(dur - 1, i1, 0, -1), dur)
+    check_env(:rev_pyr_2, cur_read, make_sampler(dur - 1, i1, 0, -1), dur)
     undo_edit(2)
     env_sound([0, 0, 1, 1, 2, 1, 3, 0])
-    check_env(:sqoff, make_sample_reader(0), make_env([0, 0, 1, 1, 2, 1, 3, 0], :length, dur), dur)
+    check_env(:sqoff, make_sampler(0), make_env([0, 0, 1, 1, 2, 1, 3, 0], :length, dur), dur)
     undo_edit(1)
     env_sound([0, 0, 1, 0.5, 2, 0.5, 3, 0])
-    check_env(:sqoff_5, make_sample_reader(0),
+    check_env(:sqoff_5, make_sampler(0),
               make_env([0, 0, 1, 0.5, 2, 0.5, 3, 0], :length, dur), dur)
     undo_edit(1)
     scale_channel(0.5)
     env_sound([0, 0, 1, 1])
-    check_env(:scl_ramp, make_sample_reader(0),
+    check_env(:scl_ramp, make_sampler(0),
               make_env([0, 0, 1, 1], :length, dur, :scaler, 0.5), dur)
     reverse_channel
-    check_env(:scl_rev_ramp, make_sample_reader(0),
+    check_env(:scl_rev_ramp, make_sampler(0),
               make_env([0, 1, 1, 0], :length, dur, :scaler, 0.5), dur)
     undo_edit(2)
     env_sound([0, 0, 1, 1, 2, 0])
-    check_env(:scl_ramp_3, make_sample_reader(0),
+    check_env(:scl_ramp_3, make_sampler(0),
               make_env([0, 0, 1, 1, 2, 0], :length, dur, :scaler, 0.5), dur)
-    cur_read = make_sample_reader(0)
+    cur_read = make_sampler(0)
     reverse_channel
-    check_env(:scl_rev_pyr, cur_read, make_sample_reader(dur - 1, i1, 0, -1), dur)
+    check_env(:scl_rev_pyr, cur_read, make_sampler(dur - 1, i1, 0, -1), dur)
     undo_edit(3)
     #
     if dur == 10000
@@ -27428,7 +27428,7 @@ def test0216
         scale_channel(0.5, beg, local_dur)
         e = make_env([0, 0, 1, 1, 2, 0], :length, dur)
         ctr = 0
-        check_env(:env_and_scl, make_sample_reader(0),
+        check_env(:env_and_scl, make_sampler(0),
                   lambda {
                     val = env(e)
                     ctr += 1
@@ -27452,7 +27452,7 @@ def test0216
         scale_channel(0.5, scl_beg, scl_dur)
         e = make_env([0, 0, 1, 1, 2, 1, 3, 0], :length, env_dur)
         ctr = 0
-        check_env(:env_scl_partial, make_sample_reader(0),
+        check_env(:env_scl_partial, make_sampler(0),
                   lambda {
                     val = 1.0
                     ctr += 1
@@ -27470,7 +27470,7 @@ def test0216
     env_sound([0, 0, 1, 1])
     env_sound([0, 0, 1, 1])
     e = make_env([0, 0, 1, 1], :length, dur)
-    check_env(:unenv_ramp, make_sample_reader(0),
+    check_env(:unenv_ramp, make_sampler(0),
               lambda {
                 val = env(e)
                 val * val
@@ -27496,7 +27496,7 @@ def test0216
     env_sound([0, 0, 1, 1])
     insert_samples(3, 3, Vct.new(3, 1.0))
     delete_samples(3, 3)
-    check_env(:ramp_5, make_sample_reader(0), make_env([0, 0, 1, 1], :length, dur), dur)
+    check_env(:ramp_5, make_sampler(0), make_env([0, 0, 1, 1], :length, dur), dur)
     undo_edit(3)
     env_sound([0, 0, 1, 1, 2, 0])
     if dur == 10
@@ -27674,7 +27674,7 @@ def test0316
                    [40000, 1, 40000, 99999, -1.0, 0.0, 0.0, 0],
                    [100000, -2, 0, 0, 0.0, 0.0, 0.0, 0]],
                   vals, "invert")
-  reader = make_sample_reader(0, ind, 0, 1, edit_position - 1)
+  reader = make_sampler(0, ind, 0, 1, edit_position - 1)
   map_channel(lambda { |y| y + reader.call })
   check_edit_tree([[0, 2, 0, 99999, 1.0, 0.0, 0.0, 0],
                    [100000, -2, 0, 0, 0.0, 0.0, 0.0, 0]],
@@ -27837,37 +27837,37 @@ def test0416
     set_sync(1, i2)
     env_sound([0, 0, 1, 1])
     check_envs(:ramps,
-               lambda { |s, c| make_sample_reader(0, s, c) },
+               lambda { |s, c| make_sampler(0, s, c) },
                lambda { |s, c| make_env(:envelope, [0, 0, 1, 1], :length, dur) },
                dur, i1, i2)
     reverse_sound
     check_envs(:rev_ramps,
-               lambda { |s, c| make_sample_reader(0, s, c) },
+               lambda { |s, c| make_sampler(0, s, c) },
                lambda { |s, c| make_env(:envelope, [0, 1, 1, 0], :length, dur) },
                dur, i1, i2)
     undo_edit(2)
     env_sound([0, 0, 1, 1, 2, 0])
     check_envs(:ramps_2,
-               lambda { |s, c| make_sample_reader(0, s, c) },
+               lambda { |s, c| make_sampler(0, s, c) },
                lambda { |s, c| make_env(:envelope, [0, 0, 1, 1, 2, 0], :length, dur) },
                dur, i1, i2)
     undo_edit(1)
     scale_by(0.5)
     env_sound([0, 0, 1, 1])
     check_envs(:scl_ramps,
-               lambda { |s, c| make_sample_reader(0, s, c) },
+               lambda { |s, c| make_sampler(0, s, c) },
                lambda { |s, c| make_env(:envelope, [0, 0, 1, 1], :length, dur, :scaler, 0.5) },
                dur, i1, i2)
     reverse_sound
     check_envs(:scl_rev_ramps,
-               lambda { |s, c| make_sample_reader(0, s, c) },
+               lambda { |s, c| make_sampler(0, s, c) },
                lambda { |s, c| make_env(:envelope, [0, 1, 1, 0], :length, dur, :scaler, 0.5) },
                dur, i1, i2)
     undo_edit(3)
     env_sound([0, 0, 1, 1])
     env_sound([0, 0, 1, 1])
     check_envs(:unenv_ramps,
-               lambda { |s, c| make_sample_reader(0, s, c) },
+               lambda { |s, c| make_sampler(0, s, c) },
                lambda { |s, c|
                  e = make_env(:envelope, [0, 0, 1, 1], :length, dur)
                  lambda {
@@ -27993,8 +27993,8 @@ def test0416
       snd_display("src_channel sine %s: %s?", sr, res)
     end
     if integer?(sr)
-      r0 = make_sample_reader(0)
-      r1 = make_sample_reader(0, ind, 0, 1, edit_position - 1)
+      r0 = make_sampler(0)
+      r1 = make_sampler(0, ind, 0, 1, edit_position - 1)
       500.times do |i|
         diff = (r0.call - r1.call).abs
         if diff > df
@@ -28025,8 +28025,8 @@ def test0416
       snd_display("src_channel oboe (1) %s: %s %s (df %s)?", sr, orig_max, res, df)
     end
     if integer?(sr)
-      r0 = make_sample_reader(0)
-      r1 = make_sample_reader(0, ind, 0, 1, edit_position - 1)
+      r0 = make_sampler(0)
+      r1 = make_sampler(0, ind, 0, 1, edit_position - 1)
       sri = sr.floor
       5000.times do |i|
         diff = (r0.call - r1.call).abs
@@ -31925,8 +31925,8 @@ def test0220
   map_chan(lambda { |y| oscil(gen) })
   down_oct(2)
   if frames != 200 then snd_display("down_oct new len: %s?", frames) end
-  r1 = make_sample_reader(0, ind, 0, 1, 1)
-  r2 = make_sample_reader(0, ind, 0, 1, 2)
+  r1 = make_sampler(0, ind, 0, 1, 1)
+  r2 = make_sampler(0, ind, 0, 1, 2)
   200.times do |i|
     val1 = r1.call
     val2 = r2.call
@@ -32002,8 +32002,8 @@ def test0220
   automorph(Complex(0.0, 1.0), 0, 0, 1)
   automorph(Complex(0.0, 1.0), 0, 0, 1)
   mxdiff = 0.0
-  rd1 = make_sample_reader(0, ind, 0)
-  rd2 = make_sample_reader(0, ind, 0, 1, 0)
+  rd1 = make_sampler(0, ind, 0)
+  rd2 = make_sampler(0, ind, 0, 1, 0)
   scan_channel(lambda do |y|
                  diff = (rd1.call - rd2.call).abs
                  if diff > mxdiff then mxdiff = diff end
@@ -32913,8 +32913,8 @@ def test0221
     end
     old_ind = open_sound("oboe.snd")
     diff = 0.0
-    rd = make_sample_reader(0, ind, 0)
-    home = sample_reader_home(rd)
+    rd = make_sampler(0, ind, 0)
+    home = sampler_home(rd)
     scan_channel(lambda { |y|
                    if (cd = (y - rd.call).abs) > diff then diff = cd end
                    false
@@ -33013,7 +33013,7 @@ def test0221
       flt = Vct.new(8)
       flt[0] = 2.0
       cnv = make_convolve(:filter, flt)
-      sf = make_sample_reader(0)
+      sf = make_sampler(0)
       map_channel(lambda { |y| convolve(cnv, lambda { |dir| read_sample(sf) }) })
     }],
    [:fft, lambda {
@@ -33174,13 +33174,13 @@ def ws_sine(freq)
 end
 
 def step_src
-  rd = make_sample_reader(0)
+  rd = make_sampler(0)
   os = make_oscil(2205)
   sr = make_src(:srate, 0.0)
   incr = 2.0 + oscil(os)
   tempfile = with_sound(:output, snd_tempnam, :srate, srate, :comment, get_func_name) do
     samp = 0
-    until c_g? or sample_reader_at_end?(rd)
+    until c_g? or sampler_at_end?(rd)
       out_any(samp, src(sr, incr, lambda do |dir| read_sample(rd) end), 0, $output)
       if (samp % 2205).zero? then incr = 2.0 + oscil(os) end
       samp += 1
@@ -34157,8 +34157,8 @@ def test0223
     zp = make_zipper(make_env(:envelope, [0, 0, 1, 1], :length, 22050),
                      0.05,
                      make_env(:envelope, [0, mus_srate() * 0.05], :length, 22050))
-    reader0 = make_sample_reader(0, ind, 0)
-    reader1 = make_sample_reader(0, ind1, 0)
+    reader0 = make_sampler(0, ind, 0)
+    reader1 = make_sampler(0, ind1, 0)
     22050.times do |i| outa(i, zipper(zp, reader0, reader1), $output) end
     [ind, ind1].apply(:close_sound)
   end
@@ -34173,7 +34173,7 @@ def test0223
   # 
   ind = open_sound("oboe.snd")
   pv = make_pvocoder(256, 4, 64)
-  rd = make_sample_reader(0)
+  rd = make_sampler(0)
   map_channel(lambda do |y| pvocoder(pv, rd) end)
   close_sound(ind)
   # 
@@ -34387,7 +34387,7 @@ Procs =
    :enved_filter_order, :enved_filter, :filter_control_in_hz, :filter_control_order,
    :filter_selection, :filter_channel, :filter_control_waveform_color, :filter_control?,
    :find_channel, :find_mark, :find_sound, :finish_progress_report, :foreground_color, :frames,
-   :free_sample_reader, :graph, :transform?, :delete_transform,
+   :free_sampler, :graph, :transform?, :delete_transform,
    :add_watcher, :delete_watcher, :graph_color, :graph_cursor,
    :graph_data, :graph2ps, :gl_graph2ps, :graph_style, :lisp_graph?, :graphs_horizontal,
    :header_type,
@@ -34395,8 +34395,8 @@ Procs =
    :insert_samples, :insert_samples_with_origin, :insert_selection, :insert_silence,
    :insert_sound, :just_sounds, :key, :key_binding, :left_sample, :listener_color,
    :listener_font, :listener_prompt, :listener_selection, :listener_text_color, :main_widgets,
-   :make_color, :make_graph_data, :make_mix_sample_reader, :make_player, :make_region,
-   :make_region_sample_reader, :make_sample_reader, :map_chan,
+   :make_color, :make_graph_data, :make_mix_sampler, :make_player, :make_region,
+   :make_region_sampler, :make_sampler, :map_chan,
    :mark_color, :mark_name, :mark_sample, :mark_sync, :mark_sync_max, :mark_home, :marks,
    :mark?, :max_transform_peaks, :max_regions, :max_virtual_ptrees,
    :maxamp, :maxamp_position, :menu_widgets,
@@ -34404,7 +34404,7 @@ Procs =
    :mix_color, :mix_length, :mix?,
    :view_mixes_dialog, :mix_position, :mix_dialog_mix,
    :mix_name, :mix_sync_max, :mix_sync, :mix_properties,
-   :mix_region, :mix_sample_reader?, :mix_selection, :mix_sound,
+   :mix_region, :mix_sampler?, :mix_selection, :mix_sound,
    :mix_home, :mix_speed, :mix_tag_height, :mix_tag_width, :mark_tag_height, :mark_tag_width,
    :mix_tag_y, :mix_vct, :mix_waveform_height, :time_graph_style, :lisp_graph_style,
    :transform_graph_style, :read_mix_sample, :next_sample, :read_region_sample,
@@ -34424,7 +34424,7 @@ Procs =
    :restore_region, :reverb_control_decay, :reverb_control_feedback,
    :reverb_control_length, :reverb_control_lowpass, :reverb_control_scale, :reverb_control?,
    :reverse_sound, :reverse_selection, :revert_sound, :right_sample, :sample,
-   :sample_reader_at_end?, :sample_reader?, :samples, :sample_reader_position, :sash_color,
+   :sampler_at_end?, :sampler?, :samples, :sampler_position, :sash_color,
    :save_controls, :ladspa_dir, :save_dir, :save_edit_history, :save_envelopes, :save_listener,
    :save_marks, :save_region, :save_selection, :save_sound, :save_sound_as, :save_state,
    :save_state_file, :scale_by, :scale_selection_by, :scale_selection_to, :scale_to,
@@ -34441,7 +34441,7 @@ Procs =
    :speed_control, :speed_control_style, :speed_control_tones, :squelch_update, :srate,
    :src_sound, :src_selection, :start_progress_report, :stop_player, :stop_playing,
    :swap_channels, :syncd_marks, :sync, :sync_max, :sound_properties, :temp_dir, :text_focus_color,
-   :tiny_font, :region_sample_reader?, :transform_dialog,
+   :tiny_font, :region_sampler?, :transform_dialog,
    :transform_sample, :transform2vct, :transform_frames, :transform_type, :trap_segfault,
    :with_file_monitor, :optimization, :unbind_key, :update_transform_graph, :update_time_graph,
    :update_lisp_graph, :update_sound, :run_safety, :clm_table_size,
@@ -34517,13 +34517,13 @@ Procs =
    :polar2rectangular, :phase_vocoder_amp_increments,
    :phase_vocoder_amps, :phase_vocoder_freqs,
    :phase_vocoder_phase_increments, :phase_vocoder_phases, :mus_generator?, :read_sample,
-   :reset_listener_cursor, :goto_listener_end, :sample_reader_home, :selection_chans,
+   :reset_listener_cursor, :goto_listener_end, :sampler_home, :selection_chans,
    :selection_srate, :snd_gcs, :snd_font, :snd_color, :snd_warning,
    :channel_data, :x_axis_label, :variable_graph?, :y_axis_label, :snd_url, :snd_urls,
    :free_player, :quit_button_color, :help_button_color,
    :reset_button_color, :doit_button_color, :doit_again_button_color,
    :delay_tick, :playing, :draw_axes,
-   :copy_sample_reader, :html_dir, :html_program, :make_fir_coeffs,
+   :copy_sampler, :html_dir, :html_program, :make_fir_coeffs,
    :mus_interp_type, :mus_run, :phase_vocoder,
    :player_home, :redo_edit, :undo_edit, :widget_position, :widget_size, :focus_widget]
 
@@ -34786,8 +34786,8 @@ def test0028
      :pulse_train?, :rand_interp?, :rand?, :readin?, :sample2file?, :sawtooth_wave?,
      :square_wave?, :src?,
      :table_lookup?, :triangle_wave?, :two_pole?, :two_zero?, :wave_train?,
-     :color?, :mix_sample_reader?, :moving_average?, :ssb_am?, :sample_reader?,
-     :region_sample_reader?, :vct?]
+     :color?, :mix_sampler?, :moving_average?, :ssb_am?, :sampler?,
+     :region_sampler?, :vct?]
   [Array.new(1), "hiho", sqrt(-1.0), 1.5, [1, 0], [0, 1]].each do |arg|
     procs_p.each do |n|
       if (tag = Snd.catch do snd_func(n, arg) end).first.kind_of?(TrueClass)
@@ -35182,8 +35182,8 @@ def test0228
   check_error_tag(:cannot_save) do mus_sound_report_cache("/bad/baddy") end
   check_error_tag(:bad_arity) do set_search_procedure(lambda do |a, b, c| a end) end
   check_error_tag(:no_such_sound) do set_search_procedure(1234, lambda do |a| a end) end
-  check_error_tag(:no_such_channel) do make_sample_reader(0, "oboe.snd", 1) end
-  check_error_tag(:no_such_channel) do make_sample_reader(0, "oboe.snd", -1) end
+  check_error_tag(:no_such_channel) do make_sampler(0, "oboe.snd", 1) end
+  check_error_tag(:no_such_channel) do make_sampler(0, "oboe.snd", -1) end
   check_error_tag(:bad_arity) do
     bind_key(key_to_int(?p), 0, lambda do |a, b| play_often([1, a].max) end)
   end
@@ -35389,13 +35389,13 @@ def test0228
   make_region(0, 100, ind, 0)
   check_error_tag(:cannot_save) do save_selection("/bad/baddy.snd") end
   check_error_tag(:cannot_save) do save_region(regions.car, "/bad/baddy.snd") end
-  check_error_tag(:no_such_mix) do make_mix_sample_reader(1234) end
+  check_error_tag(:no_such_mix) do make_mix_sampler(1234) end
   check_error_tag(:no_such_sound) do make_region(0, 12, 1234, true) end
   set_read_only(true, ind)
   check_error_tag(:cannot_save) do set_sound_loop_info(ind, [0, 0, 1, 1]) end
-  check_error_tag(:no_such_direction) do make_sample_reader(0, ind, 0, 123) end
-  check_error_tag(:no_such_direction) do make_sample_reader(0, ind, 0, 0) end
-  check_error_tag(:no_such_direction) do make_sample_reader(0, ind, 0, -2) end
+  check_error_tag(:no_such_direction) do make_sampler(0, ind, 0, 123) end
+  check_error_tag(:no_such_direction) do make_sampler(0, ind, 0, 0) end
+  check_error_tag(:no_such_direction) do make_sampler(0, ind, 0, -2) end
   check_error_tag(:no_data) do scale_by([]) end
   check_error_tag(:no_data) do scale_to([]) end
   check_error_tag(:bad_arity) do prompt_in_minibuffer("hi", lambda do |x, y| x + y end) end
@@ -35456,8 +35456,8 @@ def test0228
   check_error_tag(:no_such_file) do open_sound("/bad/baddy.snd") end
   check_error_tag(:no_such_file) do open_raw_sound("/bad/baddy.snd", 1, 22050, Mus_lshort) end
   check_error_tag(:no_such_file) do view_sound("/bad/baddy.snd") end
-  check_error_tag(:no_such_file) do make_sample_reader(0, "/bad/baddy.snd") end
-  check_error_tag(:no_such_region) do make_region_sample_reader(0, 1234567) end
+  check_error_tag(:no_such_file) do make_sampler(0, "/bad/baddy.snd") end
+  check_error_tag(:no_such_region) do make_region_sampler(0, 1234567) end
   check_error_tag(:no_such_key) do bind_key(12345678, 0, false) end
   check_error_tag(:no_such_key) do bind_key(-1, 0, false) end
   check_error_tag(:no_such_key) do bind_key(12, 17, false) end

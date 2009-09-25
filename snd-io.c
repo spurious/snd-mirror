@@ -444,7 +444,7 @@ io_error_t snd_write_header(const char *name, int type, int srate, int chans,
 			    int *loops)
 {
   int err; /* sndlib-style error */
-  /* trap mus_error locally here so that callers of open_temp_file can cleanup sample readers and whatnot */
+  /* trap mus_error locally here so that callers of open_temp_file can cleanup samplers and whatnot */
   local_mus_error = MUS_NO_ERROR;
   old_error_handler = mus_error_set_handler(local_mus_error_to_snd);
   mus_sound_forget(name);
@@ -685,10 +685,10 @@ snd_data *free_snd_data(snd_data *sd)
       if (!(sd->inuse))
 	{
 	  /* assume the inuse cases will eventually be freed via Guile GC.
-	   *   this can happen if a sample-reader is created, and forgotten,
+	   *   this can happen if a sampler is created, and forgotten,
 	   *   and the associated sound is closed.  The closing runs through
 	   *   the snd_data (sounds) list freeing the descriptors, but the
-	   *   forgotten sample-reader is still idle somewhere thinking it
+	   *   forgotten sampler is still idle somewhere thinking it
 	   *   might someday find a use for itself...
 	   */
 	  if (sd->temporary == ALREADY_DELETED)

@@ -1066,8 +1066,9 @@ static XEN g_mix_selection(XEN beg, XEN snd, XEN chn, XEN sel_chan)
       chan_info *cp;
       mus_long_t obeg;
       io_error_t io_err = IO_NO_ERROR;
-      int selection_chan = 0, id = -1;
+      int i, selection_chan = 0, id = -1, chans = 0;
       sync_info *si_out;
+      XEN result = XEN_EMPTY_LIST;
 
       ASSERT_CHANNEL(S_mix_selection, snd, chn, 2);
       XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(beg), beg, XEN_ARG_1, S_mix_selection, "a number");
@@ -1083,15 +1084,19 @@ static XEN g_mix_selection(XEN beg, XEN snd, XEN chn, XEN sel_chan)
 	si_out = make_simple_sync(cp, obeg); /* ignore sync */
       else si_out = sync_to_chan(cp);
 
+      chans = si_out->chans;
       id = mix_selection(cp, si_out, obeg, &io_err, selection_chan);
-
       free_sync_info(si_out);
+
       if (SERIOUS_IO_ERROR(io_err))
 	XEN_ERROR(XEN_ERROR_TYPE("IO-error"),
 		  XEN_LIST_2(C_TO_XEN_STRING(S_mix_selection),
 			     C_TO_XEN_STRING(io_error_name(io_err))));
 
-      return(new_xen_mix(id));
+      if (id == -1) return(XEN_FALSE);
+      for (i = 0; i < chans; i++)
+	result = XEN_CONS(new_xen_mix(id + i), result);
+      return(XEN_LIST_REVERSE(result));
     }
   return(snd_no_active_selection_error(S_mix_selection));
 }

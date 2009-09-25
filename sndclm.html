@@ -6127,7 +6127,7 @@ See prc95.scm for examples of both of these functions.
 <pre>
 (<a class=quiet href="sndscm.html#definstrument" onmouseout="UnTip()" onmouseover="Tip(sndscm_definstrument_tip)">definstrument</a> (echo beg dur scaler secs file)
   (let ((del (<em class=red>make-delay</em> (<a class=quiet href="#secondstosamples" onmouseout="UnTip()" onmouseover="Tip(sndclm_secondstosamples_tip)">seconds-&gt;samples</a> secs)))
-        (rd (make-sample-reader 0 file)))
+        (rd (make-sampler 0 file)))
     (<a class=quiet href="extsnd.html#run" onmouseout="UnTip()" onmouseover="Tip(extsnd_run_tip)">run</a>
      (lambda ()
        (do ((i beg (+ 1 i)))
@@ -7093,7 +7093,7 @@ In the following example, we use the edit function to reverse every other grain:
                                              (set! forward #t)
                                              (<a class=quiet href="extsnd.html#vctreverse" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctreverse_tip)">vct-reverse!</a> grain len)))
                                        len))))
-        (rd (<a class=quiet href="extsnd.html#makesamplereader" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesamplereader_tip)">make-sample-reader</a> 0)))
+        (rd (<a class=quiet href="extsnd.html#makesampler" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesampler_tip)">make-sampler</a> 0)))
     (<a class=quiet href="extsnd.html#mapchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_mapchannel_tip)">map-channel</a> (lambda (y) (<em class=red>granulate</em> grn (lambda (dir) (rd)))))))
 </pre>
 </td></tr></table>
@@ -7521,7 +7521,7 @@ writes out the new "sound":
 (let* ((snd (open-sound "oboe.snd"))
        (size 225) ; 225 * 225 is about the size of oboe.snd
        (mx (<em class=red>make-mixer!</em> size))
-       (rd (make-sample-reader 0)))
+       (rd (make-sampler 0)))
   (do ((i 0 (+ i 1)))
       ((= i size))
     (do ((j 0 (+ j 1)))
@@ -10018,7 +10018,7 @@ Here is an example that produces abs(oscil):
 <p>The field type defaults to float.  It can be any of the types that declare accepts (all of
 these type declarations are for the run macro's benefit). Currently these types are:
 int, float, boolean, char, string,
-vct, sample-reader, sound-data, clm, 
+vct, sampler, sound-data, clm, 
 float-vector, int-vector, vct-vector, list-vector, clm-vector,
 or any type defined in def-clm-struct or defgenerator.
 The "clm" type refers to built-in generators like oscil; "list-vector" refers

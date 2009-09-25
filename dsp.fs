@@ -1333,7 +1333,7 @@ if z=e^2*pi*j/n you get a Fourier transform; complex results in returned vector.
   { freq beg dur }
   freq hz->radians { incr }
   0.0 0.0 { sw cw }
-  beg #f #f 1 #f make-sample-reader { reader }
+  beg #f #f 1 #f make-sampler { reader }
   dur 0 do
     reader next-sample { samp }
     i incr c* csin samp c* sw c+ to sw
@@ -1560,8 +1560,8 @@ previous
   doc" Returns the inner-product of the two channels: <f,g>."
   { s1 c1 s2 c2 }
   0.0 { sum }
-  0 s1 c1 1 #f make-sample-reader { r1 }
-  0 s2 c2 1 #f make-sample-reader { r2 }
+  0 s1 c1 1 #f make-sampler { r1 }
+  0 s2 c2 1 #f make-sampler { r2 }
   0.0 ( sum )
   s1 c1 #f frames 0 ?do r1 next-sample r2 next-sample f* f+ ( sum += ... ) loop
   ( sum )
@@ -1591,8 +1591,8 @@ returning the 'angle' between them: acos(<f,g>/(sqrt(<f,f>)*sqrt(<g,g>)))"
 : channel-distance ( s1 c1 s2 c2 -- val )
   doc" Returns the euclidean distance between the two channels: sqrt(<f-g,f-g>)."
   { s1 c1 s2 c2 }
-  0 s1 c1 1 #f make-sample-reader { r1 }
-  0 s2 c2 1 #f make-sample-reader { r2 }
+  0 s1 c1 1 #f make-sampler { r1 }
+  0 s2 c2 1 #f make-sampler { r2 }
   0.0 ( sum )
   s1 c1 #f frames s2 c2 #f frames min 0 ?do
     r1 next-sample r2 next-sample f- dup f* f+ ( sum += diff^2 )
@@ -1604,7 +1604,7 @@ returning the 'angle' between them: acos(<f,g>/(sqrt(<f,f>)*sqrt(<g,g>)))"
   doc" Displays an 'N' point Bartlett periodogram of the samples in the current channel."
   { N }
   #f #f #f frames { len }
-  0 #f #f 1 #f make-sample-reader { rd }
+  0 #f #f 1 #f make-sampler { rd }
   N 2* { N2 }
   N2 0.0 make-vct { rl }
   N 0 ?do rl i  rd next-sample  vct-set! drop loop
@@ -2207,14 +2207,14 @@ hide
     pos sr f+ to intrp
     samp  next last f- pos f* last f+  0 *output*  out-any drop
     samp 1+ to samp
-    rd sample-reader-at-end?
+    rd sampler-at-end?
   until
   #f
 ;
 set-current
 : linear-src-channel <{ sr :optional snd #f chn #f -- file }>
   doc" Performs sampling rate conversion using linear interpolation."
-  0 snd chn 1 #f make-sample-reader { rd }
+  0 snd chn 1 #f make-sampler { rd }
   rd sr lsc-ws-cb :output snd-tempnam :srate snd srate with-sound { tempfile }
   tempfile mus-sound-frames { len }
   0 len 1- tempfile snd chn #t ( trunc ) get-func-name 0 #f ( edpos ) #t ( autodel ) set-samples
@@ -2249,7 +2249,7 @@ previous
   { file }
   file find-file to file
   file false? if 'no-such-file #( get-func-name file ) fth-throw then
-  0 file 0 1 #f make-sample-reader { rd }
+  0 file 0 1 #f make-sampler { rd }
   make-mfilter { m }
   0 proc-create rd , m , ( prc )
  does> { self -- }

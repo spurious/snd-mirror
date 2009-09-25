@@ -91,9 +91,9 @@ previous
   doc" Returns mix's data in vct."
   { id }
   id mix? false? if 'no-such-mix #( get-func-name id ) fth-throw then
-  id 0 make-mix-sample-reader { reader }
+  id 0 make-mix-sampler { reader }
   id mix-length 0.0 make-vct map! reader read-mix-sample end-map
-  reader free-sample-reader drop
+  reader free-sampler drop
 ;
 
 : save-mix ( id fname -- )

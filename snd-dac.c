@@ -30,7 +30,7 @@ typedef struct dac_info {
   int slot;
   mus_float_t *a;            /* filter coeffs */
   int a_size;          /* user can change filter order while playing (sigh...) */
-  snd_fd *chn_fd;      /* sample reader, null if DAC_XEN */
+  snd_fd *chn_fd;      /* sampler, null if DAC_XEN */
   spd_info *spd;
   mus_any *flt;
   int region, mix_id;  /* to reset region-browser play button upon completion */
@@ -1346,7 +1346,7 @@ static dac_info *play_selection_1(play_process_t background, XEN stop_proc)
 	      ends[i] = si->begs[i] + selection_len();
 	    }
 	  dp = play_channels_1(si->cps, si->chans, si->begs, ends, background, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), true, stop_proc, NULL, 0);
-	  si = free_sync_info(si); /* does not free sample readers */
+	  si = free_sync_info(si); /* does not free samplers */
 	  free(ends);
 	}
     }
@@ -3015,7 +3015,7 @@ static XEN g_player_p(XEN snd_chn)
 }
 
 
-/* player-position? -- need quick way from index to dp to its sample-reader, then C_TO_XEN_INT64_T(current_location(fd)) */
+/* player-position? -- need quick way from index to dp to its sampler, then C_TO_XEN_INT64_T(current_location(fd)) */
 
 static XEN g_players(void)
 {

@@ -4161,9 +4161,7 @@ int vf_mix(view_files_info *vdat)
       (default_env_p(vdat->amp_env)))
     id_or_error = mix_complete_file(sp, vdat->beg, 
 				    vdat->full_names[vdat->selected_files[0]], 
-				    with_mix_tags(ss), 
-				    DONT_DELETE_ME,
-				    MIX_SETS_SYNC_LOCALLY);
+				    with_mix_tags(ss), DONT_DELETE_ME, MIX_SETS_SYNC_LOCALLY, NULL);
   else
     {
       int i;
@@ -4183,11 +4181,10 @@ int vf_mix(view_files_info *vdat)
 	{ 
 	  if (sp->nchans > 1)
 	    remember_temp(tempfile, sp->nchans);
-	  id_or_error = mix_complete_file(sp, vdat->beg, 
-					  tempfile,
+	  id_or_error = mix_complete_file(sp, vdat->beg, tempfile,
 					  with_mix_tags(ss), 
 					  (sp->nchans > 1) ? MULTICHANNEL_DELETION : DELETE_ME,
-					  MIX_SETS_SYNC_LOCALLY);
+					  MIX_SETS_SYNC_LOCALLY, NULL);
 	}
       free(tempfile);
       for (i = 0; i < len; i++)

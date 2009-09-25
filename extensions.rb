@@ -275,7 +275,7 @@ applies map_chan with proc to all channels in parallel" )
     len = integer?(fin) ? ([fin, maxlen].min - beg) : (maxlen - beg)
     data = make_array(chan_num, 0.0)
     fds = make_array(chan_num) do |chn|
-      make_sample_reader(beg, chans[0].shift, chans[1].shift, 1, edpos)
+      make_sampler(beg, chans[0].shift, chans[1].shift, 1, edpos)
     end
     catch(:done) do
       len.times do |i|
@@ -303,7 +303,7 @@ applies map_chan with proc to all channels in parallel" )
     len = integer?(fin) ? ([fin, maxlen].min - beg) : (maxlen - beg)
     data = make_array(chan_num)
     fds = make_array(chan_num) do |chn|
-      make_sample_reader(beg, snds[chn], chans[chn], 1, edpos)
+      make_sampler(beg, snds[chn], chans[chn], 1, edpos)
     end
     filenames = make_array(chan_num) do |chn|
       snd_tempnam
@@ -321,7 +321,7 @@ applies map_chan with proc to all channels in parallel" )
     end
     filenames.each_with_index do |file, chn|
       mus_close(outgs[chn])
-      free_sample_reader(fds[chn])
+      free_sampler(fds[chn])
       if outsamp > 0
         delete_samples(beg, len, snds[chn], chans[chn]) if outsamp != len
         set_samples(beg, outsamp, file, snds[chn], chans[chn], true, edname)
@@ -1481,7 +1481,7 @@ mixes in file. file can be the file name or a list [file_name, beg = 0, chn = 0]
     len = (dur or (mus_sound_frames(fname) - fbeg))
     Snd.raise(:no_such_sample) if beg < 0
     if len > 0
-      reader = make_sample_reader(fbeg, fname, fchan)
+      reader = make_sampler(fbeg, fname, fchan)
       map_channel(lambda do |val|
                     val + next_sample(reader)
                   end, beg, len, snd, chn, edpos,
@@ -1509,7 +1509,7 @@ inserts the file. file can be the file name or a list [file_name, beg = 0, chn =
     len = (dur or (mus_sound_frames(fname) - fbeg))
     Snd.raise(:no_such_sample) if beg < 0
     if len > 0
-      reader = make_sample_reader(fbeg, fname, fchan)
+      reader = make_sampler(fbeg, fname, fchan)
       insert_samples(beg, len, Vct.new(len) { |i| next_sample(reader) }, snd, chn, edpos, false,
                      format("%s(%s, %s, %s", get_func_name, fdata.inspect, beg, dur))
     end
@@ -1784,7 +1784,7 @@ applies contrast enhancement to the sound" )
         s2 = first_longer ? snd2 : snd1
         c1 = first_longer ? chn1 : chn2
         c2 = first_longer ? chn2 : chn1
-        read2 = make_sample_reader(0, s2, c2)
+        read2 = make_sampler(0, s2, c2)
         (not scan_channel(lambda { |y|
                             val = read_sample(read2)
                             (val - y).abs > allowable_difference

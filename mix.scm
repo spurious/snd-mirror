@@ -70,11 +70,11 @@
   (if (mix? id)
       (let* ((len (mix-length id))
 	     (v (make-vct len))
-	     (reader (make-mix-sample-reader id)))
+	     (reader (make-mix-sampler id)))
 	(do ((i 0 (+ 1 i)))
 	    ((= i len))
 	  (vct-set! v i (read-mix-sample reader)))
-	(free-sample-reader reader)
+	(free-sampler reader)
 	v)
       (throw 'no-such-mix (list "mix->vct" id))))
 
@@ -90,14 +90,14 @@
 	  (let* ((buflen 10000)
 		 (sd (make-sound-data 1 buflen))
 		 (len (mix-length id))
-		 (reader (make-mix-sample-reader id)))
+		 (reader (make-mix-sampler id)))
 	    (do ((buf 0 (+ buf buflen)))
 		((>= buf len))
 	      (do ((i 0 (+ 1 i)))
 		  ((= i buflen))
 		(sound-data-set! sd 0 i (read-mix-sample reader)))
 	      (mus-sound-write fd 0 (- buflen 1) 1 sd))
-	    (free-sample-reader reader)
+	    (free-sampler reader)
 	    (mus-sound-close-output fd (* (mus-bytes-per-sample mus-out-format) len))))
       (throw 'no-such-mix (list "save-mix" id))))
 
@@ -107,14 +107,14 @@
   (if (mix? id)
       (let* ((len (mix-length id))
 	     (peak 0.0)
-	     (reader (make-mix-sample-reader id)))
+	     (reader (make-mix-sampler id)))
 	(set! peak (abs (read-mix-sample reader)))
 	(do ((i 1 (+ 1 i)))
 	    ((= i len))
 	  (let ((val (abs (read-mix-sample reader))))
 	    (if (> val peak)
 		(set! peak val))))
-	(free-sample-reader reader)
+	(free-sampler reader)
 	peak)
       (throw 'no-such-mix (list "mix-maxamp" id))))
 	  
@@ -205,6 +205,8 @@ All mixes sync'd to it are also moved the same number of samples. (remove-hook! 
 		       (set! (mix-property :zero n) #f)))
 		 #t))))
 
+;(mix-click-sets-amp)
+
 
 ;;; ---------- mix-click-info
 
@@ -214,8 +216,8 @@ All mixes sync'd to it are also moved the same number of samples. (remove-hook! 
 	       (format #f "Mix ~A:~%  position: ~D = ~,3F secs~%  length: ~D (~,3F secs)
 ~%  in: ~A[~D]~%  scaler: ~A~%  speed: ~A~%  env: ~A~A"
 		       (if (mix-name n)
-			   (format #f "~S (~D)" (mix-name n) n)
-			   (format #f "~D" n))
+			   (format #f "~S (~A)" (mix-name n) n)
+			   (format #f "~A" n))
 		       (mix-position n)
 		       (exact->inexact (/ (mix-position n) (srate (car (mix-home n)))))
 		       (mix-length n)
@@ -231,6 +233,8 @@ All mixes sync'd to it are also moved the same number of samples. (remove-hook! 
 			     (format #f "~%  properties: '~A" props)
 			     ""))))
   #t)
+
+;(add-hook! mix-click-hook mix-click-info)
 
 
 ;;; -------- mix-name->id
@@ -499,50 +503,61 @@ panning operation."
 	     (if (= receiving-chans 1)
 
 		 ;; mono to mono = just scale or envelope
-		 (let ((id (mix name beg 0 index 0 (with-mix-tags) auto-delete))) ; file start in-chan snd chn ...
-		   (if (mix? id)
-		       (set! (mix-amp-env id) (invert-envelope pan)))
-		   (list id))
+		 (let ((idx (mix name beg 0 index 0 (with-mix-tags) auto-delete))) ; file start in-chan snd chn ...
+		   (if (and idx (mix? (car idx)))
+		       (let ((id (car idx)))
+			 (set! (mix-amp-env id) (invert-envelope pan))
+			 idx)
+		       #f))
 
 		 ;; mono to stereo
-		 (let ((id0 (mix name beg 0 index 0 (with-mix-tags) deletion-choice))
-		       (id1 (mix name beg 0 index 1 (with-mix-tags) end-deletion-choice)))
-		   (if (and (mix? id0)
-			    (mix? id1))
-		       (begin
+		 (let ((idx0 (mix name beg 0 index 0 (with-mix-tags) deletion-choice))
+		       (idx1 (mix name beg 0 index 1 (with-mix-tags) end-deletion-choice)))
+		   (if (and idx0 (mix? (car idx0))
+			    idx1 (mix? (car idx1)))
+		       (let ((id0 (car idx0))
+			     (id1 (car idx1)))
 			 (set! (mix-amp-env id0) (invert-envelope pan))
-			 (set! (mix-amp-env id1) pan)))
-		   (list id0 id1)))
+			 (set! (mix-amp-env id1) pan)
+			 (list id0 id1))
+		       #f)))
 
 	     ;; stero input
 	     
 	     (if (= receiving-chans 1)
 
 		 ;; stereo -> mono => scale or envelope both input chans into the output
-		 (let ((id0 (mix name beg 0 index 0 (with-mix-tags) deletion-choice))
-		       (id1 (mix name beg 1 index 0 (with-mix-tags) end-deletion-choice)))
-		   (if (and (mix? id0)
-			    (mix? id1))
-		       (begin
+		 (let ((idx0 (mix name beg 0 index 0 (with-mix-tags) deletion-choice))
+		       (idx1 (mix name beg 1 index 0 (with-mix-tags) end-deletion-choice)))
+		   (if (and idx0 (mix? (car idx0))
+			    idx1 (mix? (car idx1)))
+		       (let ((id0 (car idx0))
+			     (id1 (car idx1)))
 			 (set! (mix-amp-env id0) (invert-envelope pan))
-			 (set! (mix-amp-env id1) (invert-envelope pan))))
-		   (list id0 id1))
+			 (set! (mix-amp-env id1) (invert-envelope pan))
+			 (list id0 id1))
+		       #f))
 
 		 ;; stereo -> stereo => incoming chans are treated equally, each panned into outputs
-		 (let ((id00 (mix name beg 0 index 0 (with-mix-tags) deletion-choice))
-		       (id01 (mix name beg 0 index 1 (with-mix-tags) deletion-choice))
-		       (id10 (mix name beg 1 index 0 (with-mix-tags) deletion-choice))
-		       (id11 (mix name beg 1 index 1 (with-mix-tags) end-deletion-choice)))
-		   (if (and (mix? id00)
-			    (mix? id01)
-			    (mix? id10)
-			    (mix? id11))
-		       (begin
+		 (let ((idx00 (mix name beg 0 index 0 (with-mix-tags) deletion-choice))
+		       (idx01 (mix name beg 0 index 1 (with-mix-tags) deletion-choice))
+		       (idx10 (mix name beg 1 index 0 (with-mix-tags) deletion-choice))
+		       (idx11 (mix name beg 1 index 1 (with-mix-tags) end-deletion-choice)))
+
+		   (if (and idx00 (mix? (car idx00))
+			    idx01 (mix? (car idx01))
+			    idx10 (mix? (car idx10))
+			    idx11 (mix? (car idx11)))
+		       (let ((id00 (car idx00))
+			     (id01 (car idx01))
+			     (id10 (car idx10))
+			     (id11 (car idx11)))
 			 (set! (mix-amp-env id00) (invert-envelope pan))
 			 (set! (mix-amp-env id10) (invert-envelope pan))
 			 (set! (mix-amp-env id01) pan)
-			 (set! (mix-amp-env id11) pan)))
-		   (list id00 id01 id10 id11)))))))))
+			 (set! (mix-amp-env id11) pan)
+			 (list id00 id01 id10 id11))
+		       #f)))))))))
 
 
 (define* (pan-mix-selection beg pan :optional snd chn)

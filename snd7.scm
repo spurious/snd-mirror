@@ -4,8 +4,8 @@
 
 (use-modules (ice-9 session)) ; for apropos
 
-(define free-mix-sample-reader free-sample-reader)
-(define (inspect-sample-reader rd) (format #f "~A" rd))
+(define free-mix-sampler free-sampler)
+(define (inspect-sampler rd) (format #f "~A" rd))
 
 (define enved-exp?
   (make-procedure-with-setter

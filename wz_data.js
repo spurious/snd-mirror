@@ -12,7 +12,7 @@ var extsnd_addtomenu_tip = "<code>(add-to-menu menu label func :optional positio
 var extsnd_addtransform_tip = "<code>(add-transform name x-label low high func)</code>:<br>" +
                               " add the transform func to the transform lists;<br>" +
                               " func should be a function of two arguments, <br>" +
-                              " the length of the transform and a sample-reader to get the data, <br>" +
+                              " the length of the transform and a sampler to get the data, <br>" +
                               " and should return a vct containing the transform results. <br>" +
                               " name is the transform's name, x-label is its x-axis label, <br>" +
                               " and the relevant returned data to be displayed goes from low to high (normally 0.0 to 1.0)";
@@ -152,7 +152,7 @@ var extsnd_declare_tip = "Functions embedded within run may need to declare the 
                          " causes nothing but confusion.  To get this code to work right:<br><br>" +
                          " <code>  (run (lambda () (let ((x 3.14)) (define (a b) (<b>declare</b> (b real)) (display b)) (a x))))</code><br><br>" +
                          " The current declarable types include:<br><br>" +
-                         " <code>    int float boolean char string list symbol keyword vct sample-reader mix-sample-reader</code><br>" +
+                         " <code>    int float boolean char string list symbol keyword vct sampler mix-sampler</code><br>" +
                          " <code>    sound-data clm float-vector int-vector vct-vector list-vector clm-vector</code>";
 
 var extsnd_defineenvelope_tip = "<code>(define-envelope name data)</code>: define 'name' to have the value 'data'<br>" +
@@ -264,7 +264,7 @@ var extsnd_foregroundcolor_tip = "<code>(foreground-color :optional snd chn (ax 
 
 var extsnd_frames_tip = "<code>(frames :optional snd chn edpos)</code>: number of frames of data in snd's channel chn";
 
-var extsnd_freesamplereader_tip = "<code>(free-sample-reader reader)</code>: free a sample reader (of any kind)";
+var extsnd_freesamplereader_tip = "<code>(free-sampler reader)</code>: free a sampler (of any kind)";
 
 var extsnd_gin_tip = "<code>(in msecs thunk)</code>: invoke thunk in msecs milliseconds (named call_in in Ruby)";
 
@@ -352,10 +352,10 @@ var extsnd_makegraphdata_tip = "<code>(make-graph-data :optional snd chn edpos l
                                " 'high' defaults to the current rightmost sample.<br>" +
                                " <code>(graph-data (make-graph-data))</code> reimplements the time domain graph.";
 
-var extsnd_makemixsamplereader_tip = "<code>(make-mix-sample-reader id :optional (beg 0))</code>:<br>" +
+var extsnd_makemixsamplereader_tip = "<code>(make-mix-sampler id :optional (beg 0))</code>:<br>" +
                                      " return a reader ready to access mix id";
 
-var extsnd_makesamplereader_tip = "<code>(make-sample-reader :optional (start-samp 0) snd chn (dir 1) edpos)</code>:<br>" +
+var extsnd_makesamplereader_tip = "<code>(make-sampler :optional (start-samp 0) snd chn (dir 1) edpos)</code>:<br>" +
                                   " return a reader ready to access snd's channel chn's data starting at start-samp,<br>" +
                                   " going in direction dir (1 = forward, -1 = backward),<br>" +
                                   " reading the version of the data indicated by edpos which defaults to the current version.<br>" +
@@ -411,7 +411,7 @@ var extsnd_mixreleasehook_tip = "<code>mix-release-hook (mix-id samps)</code>:<b
                                 " 'samps' = samples moved in the course of the drag.<br>" +
                                 " If the hook returns #t, the actual remix is the hook's responsibility.";
 
-var extsnd_mixsamplereaderQ_tip = "<code>(mix-sample-reader? obj)</code>: #t if obj is a mix-sample-reader";
+var extsnd_mixsamplereaderQ_tip = "<code>(mix-sampler? obj)</code>: #t if obj is a mix-sampler";
 
 var extsnd_mixselection_tip = "<code>(mix-selection :optional (beg 0) snd chn (selection-channel #t))</code>:<br>" +
                               " mix the currently selected portion starting at beg";
@@ -592,7 +592,7 @@ var extsnd_readmixsample_tip = "<code>(read-mix-sample reader)</code>: read samp
 
 var extsnd_readonly_tip = "<code>(read-only :optional snd)</code>: whether snd is write-protected";
 
-var extsnd_readsample_tip = "<code>(read-sample reader)</code>: get the next sample from the sample-reader";
+var extsnd_readsample_tip = "<code>(read-sample reader)</code>: get the next sample from the sampler";
 
 var extsnd_redo_tip = "<code>(redo :optional (count 1) snd chn)</code>: redo 'count' edits in snd's channel chn";
 
@@ -623,11 +623,11 @@ var extsnd_run_tip = "<code>(run thunk)</code>: try to optimize the procedure pa
 
 var extsnd_sample_tip = "<code>(sample samp :optional snd chn edpos)</code>:<br>" +
                         " return sample samp in snd's channel chn<br>" +
-                        " (this is a slow access -- use sample-readers for speed)";
+                        " (this is a slow access -- use samplers for speed)";
 
-var extsnd_samplereaderatendQ_tip = "<code>(sample-reader-at-end? obj)</code>: #t if sample-reader has reached the end of its data";
+var extsnd_samplereaderatendQ_tip = "<code>(sampler-at-end? obj)</code>: #t if sampler has reached the end of its data";
 
-var extsnd_samplereaderposition_tip = "<code>(sample-reader-position obj)</code>: current (sample-wise) location of sample-reader";
+var extsnd_samplereaderposition_tip = "<code>(sampler-position obj)</code>: current (sample-wise) location of sampler";
 
 var extsnd_samples_tip = "<code>(samples :optional (start-samp 0) (samps len) snd chn edpos)</code>:<br>" +
                          " return a vct containing snd channel chn's samples starting a start-samp for samps samples;<br>" +

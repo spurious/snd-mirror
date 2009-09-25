@@ -36,6 +36,7 @@
        
    (lambda (key snd chn)
      "(channel-property key snd chn) returns the value associated with 'key' in the given channel's property list, or #f"
+
      (let ((data (assoc key (channel-properties snd chn))))
        (if data
 	   (cdr data)
@@ -445,7 +446,7 @@ If 'check' is #f, the hooks are removed."
       (mix-vct (channel->vct input-beg input-len input-snd input-chn) output-beg output-snd output-chn #t)
       (let* ((output-name (snd-tempnam))
 	     (output (new-sound output-name :size input-len))
-	     (reader (make-sample-reader input-beg input-snd input-chn)))
+	     (reader (make-sampler input-beg input-snd input-chn)))
 	(map-channel (lambda (val) 
 		       (next-sample reader)) 
 		     0 input-len output 0)
@@ -481,7 +482,7 @@ a list (file-name-or-sound-index [beg [channel]])."
 	    (if (not with-tag)
 
 		;; not a virtual mix
-		(let ((reader (make-sample-reader input-beg input input-channel)))
+		(let ((reader (make-sampler input-beg input input-channel)))
 		  (map-channel (lambda (val)
 				 (+ val (next-sample reader)))
 			       start len snd chn edpos
@@ -505,7 +506,7 @@ a list (file-name-or-sound-index [beg [channel]])."
 			;; mixing part of file
 			(let* ((output-name (snd-tempnam))
 			       (output (new-sound output-name :size len))
-			       (reader (make-sample-reader input-beg input input-channel)))
+			       (reader (make-sampler input-beg input input-channel)))
 			  (map-channel (lambda (val) (next-sample reader)) 0 len output 0)
 			  (save-sound output)
 			  (close-sound output)
@@ -527,7 +528,7 @@ a list (file-name-or-sound-index [beg [channel]])."
 	 (start (or beg 0)))
     (if (< start 0) (throw 'no-such-sample (list "insert-channel" beg)))
     (if (> len 0)
-	(let ((reader (make-sample-reader file-beg file-name file-channel))
+	(let ((reader (make-sampler file-beg file-name file-channel))
 	      (data (make-vct len)))
 	  (vct-map! data (lambda () (next-sample reader)))
 	  (insert-samples start len data snd chn edpos #f 
@@ -863,7 +864,7 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 		       (vct-set! data 1 dly)
 		       (if (= fpos 0)
 			   data
-			   (let* ((reader (make-sample-reader (- fpos 1) snd chn -1 cur-edpos)))
+			   (let* ((reader (make-sampler (- fpos 1) snd chn -1 cur-edpos)))
 			     (do ((i (- dly 1) (- i 1)))
 				 ((< i 0))
 			       (vct-set! data (+ i 2) (reader)))
@@ -889,7 +890,7 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 		   (s2 (if first-longer snd2 snd1))
 		   (c1 (if first-longer chn1 chn2))
 		   (c2 (if first-longer chn2 chn1))
-		   (read2 (make-sample-reader 0 s2 c2)))
+		   (read2 (make-sampler 0 s2 c2)))
 	      (not (scan-channel (lambda (y)
 				   (let ((val (read-sample read2)))
 				     (> (abs (- val y)) allowable-difference)))

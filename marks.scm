@@ -130,7 +130,7 @@
 	(let* ((mark-samps (- m2-samp m1-samp))
 	       (selection-samps (selection-frames))
 	       (reg-data (let ((data (make-vct selection-samps))
-			       (rd (make-sample-reader (selection-position))))
+			       (rd (make-sampler (selection-position))))
 			   (do ((i 0 (+ 1 i)))
 			       ((= i selection-samps))
 			     (vct-set! data i (rd)))

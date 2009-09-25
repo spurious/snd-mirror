@@ -52,7 +52,7 @@ hide
   \ ;; return number of upward zero crossings that don't look like silence
   { snd chn }
   0 0 { crosses last-cross }
-  0 snd chn 1 #f make-sample-reader { sr0 }
+  0 snd chn 1 #f make-sampler { sr0 }
   sr0 next-sample { samp0 }
   0.0 { sum }
   extension 0.001 f* { silence }
@@ -76,8 +76,8 @@ hide
   { s0 s1 samps snd chn }
   1.0 { x }
   samps 1/f { xinc }
-  s0 snd chn 1 #f make-sample-reader { sr0 }
-  s1 snd chn 1 #f make-sample-reader { sr1 }
+  s0 snd chn 1 #f make-sampler { sr0 }
+  s1 snd chn 1 #f make-sampler { sr1 }
   samps 0.0 make-vct map!
     sr0 next-sample x f*
     sr1 next-sample  1.0 x f-  f*  f+ ( val )
@@ -99,7 +99,7 @@ hide
   crosses :initial-element 0 make-array { cross-weights }
   crosses :initial-element 0 make-array { cross-marks }
   crosses :initial-element 0 make-array { cross-periods }
-  0 snd chn 1 #f make-sample-reader { sr0 } \ ;; get cross points (sample numbers)
+  0 snd chn 1 #f make-sampler { sr0 } \ ;; get cross points (sample numbers)
   sr0 next-sample { samp0 }
   0.0 { sum }
   0 { last-cross }
@@ -123,7 +123,7 @@ hide
     0 { autolen }
     2.0  extension snd srate 40.0 f/ f* flog 2.0 flog f/ fceil ( pow2 )  f** f>s { fftlen }
     fftlen 4 / { len4 }
-    start snd chn 1 #f make-sample-reader { rd }
+    start snd chn 1 #f make-sampler { rd }
     fftlen 0.0 make-vct map! rd next-sample end-map { data }
     data autocorrelate drop
     len4 1 ?do
@@ -146,8 +146,8 @@ hide
     min-i { current-mark }
     0.0 { current-min }
     cross-samples current-mark array-ref { s1 }
-    start snd chn 1 #f make-sample-reader { sr0 }
-    s1 snd chn 1 #f make-sample-reader { sr1 }
+    start snd chn 1 #f make-sampler { sr0 }
+    s1 snd chn 1 #f make-sampler { sr1 }
     0.0 0.0 { ampsum diffsum }
     autolen 0 ?do
       sr0 next-sample { samp0 }
@@ -161,8 +161,8 @@ hide
     top i 1+ ?do
       0.0 { wgt }
       cross-samples i array-ref { s1 }
-      start snd chn 1 #f make-sample-reader { sr0 }
-      s1 snd chn 1 #f make-sample-reader { sr1 }
+      start snd chn 1 #f make-sampler { sr0 }
+      s1 snd chn 1 #f make-sampler { sr1 }
       0.0 0.0 { ampsum diffsum }
       autolen 0 ?do
 	sr0 next-sample { samp0 }

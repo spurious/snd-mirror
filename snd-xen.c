@@ -3164,7 +3164,7 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
 #endif
 
 #if (!WITH_SHARED_SNDLIB)
-  mus_init_run(); /* this needs to be called after Snd's run-optimizable functions are defined (sample_reader_p for example) */
+  mus_init_run(); /* this needs to be called after Snd's run-optimizable functions are defined (sampler_p for example) */
 #endif
 
 #if HAVE_SCHEME && HAVE_DLFCN_H

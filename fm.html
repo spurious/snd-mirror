@@ -197,8 +197,8 @@ functions that there is no difference in run-time computational expense or accur
 <!-- a check of these instruments:
 
 (define (channel-distance-max s1 c1 s2 c2)
-  (let* ((r1 (make-sample-reader 0 s1 c1))
-	 (r2 (make-sample-reader 0 s2 c2))
+  (let* ((r1 (make-sampler 0 s1 c1))
+	 (r2 (make-sampler 0 s2 c2))
 	 (sum 0.0)
 	 (mx 0.0)
 	 (mxloc 0)

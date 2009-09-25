@@ -585,10 +585,10 @@ Information about parameters can be acquired using " S_analyse_ladspa "."
     loadLADSPA();
 
   /* First parameter should be a file reader or list thereof. */
-  XEN_ASSERT_TYPE(sample_reader_p(reader) || XEN_LIST_P(reader) || XEN_FALSE_P(reader),
+  XEN_ASSERT_TYPE(sampler_p(reader) || XEN_LIST_P(reader) || XEN_FALSE_P(reader),
 		  reader,
 		  XEN_ARG_1,
-		  S_apply_ladspa, "a sample-reader, a list of readers, or " PROC_FALSE);
+		  S_apply_ladspa, "a sampler, a list of readers, or " PROC_FALSE);
   if (XEN_LIST_P(reader)) 
     readers = XEN_LIST_LENGTH(reader);
   else
@@ -644,7 +644,7 @@ Information about parameters can be acquired using " S_analyse_ladspa "."
 
   if (inchans != readers)
     {
-      msg = mus_format(_("Ladspa %s required inputs (%d) != sample-readers (%d)"), pcLabel, inchans, readers);
+      msg = mus_format(_("Ladspa %s required inputs (%d) != samplers (%d)"), pcLabel, inchans, readers);
       errmsg = C_TO_XEN_STRING(msg);
       free(msg);
       XEN_ERROR(XEN_ERROR_TYPE("plugin-error"),
@@ -674,8 +674,8 @@ Information about parameters can be acquired using " S_analyse_ladspa "."
       if (inchans > 0)
 	{
 	  if (XEN_LIST_P(reader))
-	    tmp_fd = xen_to_sample_reader(XEN_LIST_REF(reader, 0));
-	  else tmp_fd = xen_to_sample_reader(reader);
+	    tmp_fd = xen_to_sampler(XEN_LIST_REF(reader, 0));
+	  else tmp_fd = xen_to_sampler(reader);
 	  cp = tmp_fd->cp;
 	  cp_from_reader = true;
 	}
@@ -746,9 +746,9 @@ Information about parameters can be acquired using " S_analyse_ladspa "."
 	{
 	  for (i = 0; i < readers; i++)
 	    if (!(XEN_FALSE_P(XEN_LIST_REF(reader, i))))
-	      sf[i] = xen_to_sample_reader(XEN_LIST_REF(reader, i));
+	      sf[i] = xen_to_sampler(XEN_LIST_REF(reader, i));
 	}
-      else sf[0] = xen_to_sample_reader(reader);
+      else sf[0] = xen_to_sampler(reader);
     }
   /* this code added 20-Sep-01 */
   if (inchans > 0)

@@ -73,7 +73,7 @@
     </ul>
   <li><a href="#sndobjects">Snd's objects</a>
     <ul>
-    <li><a href="#samplereaders" onmouseout="UnTip()" onmouseover="Tip('sound data iterators', WIDTH, 200)">Sample-readers</a>
+    <li><a href="#samplers" onmouseout="UnTip()" onmouseover="Tip('sound data iterators', WIDTH, 200)">Samplers</a>
     <li><a href="#Vcts" onmouseout="UnTip()" onmouseover="Tip('real arrays', WIDTH, 100)">Vcts</a>
     <li><a href="#sndsounddata" onmouseout="UnTip()" onmouseover="Tip('arrays of vcts for multichannel data')">Sound-data</a>
     <li><a href="#extsndlib" onmouseout="UnTip()" onmouseover="Tip('the underlying library that handles sound data and files')">Sndlib</a>
@@ -2749,12 +2749,12 @@ of sounds, each with a list of channels, each with lists of edits,
 marks, and mixes.  The sound data itself is accessed through
 a variety of structures and functions, each aimed at a particular
 kind of use.  The accessors from lowest level up are:
-sample-readers (one sample at a time iterators) and frame-readers (a "frame" is a multichannel sample),
+samplers (one sample at a time iterators) and frame-readers (a "frame" is a multichannel sample),
 channel-at-a-time blocks (vcts, map-channel, etc), multichannel blocks (sound-data objects, map-sound, etc),
 a few historical leftovers that follow the "sync" field (scale-to, etc), and finally
 the top-level operations such as save-sound-as (these are used in the File menu, etc).
 In the following sections, I'll start with the lowest level and work upwards, more or less.
-But before launching into sample-readers, I need to explain a few things
+But before launching into samplers, I need to explain a few things
 about the following documentation.
 </p>
 
@@ -2799,10 +2799,10 @@ of these below.
 <br>
 
 
-<!-- INDEX samplereaders:sample-readers -->
-<!-- ---------------------------------------- SAMPLE-READERS ---------------------------------------- -->
+<!-- INDEX samplers:samplers -->
+<!-- ---------------------------------------- SAMPLERS ---------------------------------------- -->
 
-<table width="50%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h3><A NAME="samplereaders">Sample-readers</a></h3></td></tr></table>
+<table width="50%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h3><A NAME="samplers">Samplers</a></h3></td></tr></table>
 <p>
 The simplest data access function is <a href="#sample">sample</a> which returns the sample at
 a given position in a sound's channel.  This simplicity, however, comes at
@@ -2813,26 +2813,26 @@ The result is that sample can bring your code
 to a grinding halt.  There are two alternatives, leaving aside the scanning
 and mapping functions mentioned below.  One involves keeping the buffer of
 data around explicitly (<a class=quiet href="#channeltovct" onmouseout="UnTip()" onmouseover="Tip(extsnd_channeltovct_tip)">channel-&gt;vct</a>), and the other involves the
-use of a special object known as a sample-reader.  The sample-reader
+use of a special object known as a sampler.  The sampler
 returns the next sample in its sound each time it is called; this kind
 of access is sometimes called an "enumerator" (Ruby) or perhaps "iterator" (Gtk+).
 The buffer approach (<a class=quiet href="#channeltovct" onmouseout="UnTip()" onmouseover="Tip(extsnd_channeltovct_tip)">channel-&gt;vct</a> in <a href="grfsnd.html#expsrc">expsrc</a>)
 is better if you're jumping around in the data, the sample-by-sample approach if you're treating
 the data as a sequence of samples.
-To get a sample reader,
-you create a reader (via <a class=quiet href="#makesamplereader" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesamplereader_tip)">make-sample-reader</a>) giving it the start position, the sound and channel
+To get a sampler,
+you create a reader (via <a class=quiet href="#makesampler" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesampler_tip)">make-sampler</a>) giving it the start position, the sound and channel
 to read, and the initial read direction, then get data via <a class=quiet href="#readsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_readsample_tip)">read-sample</a> (which remembers the
-read direction passed to <a class=quiet href="#makesamplereader" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesamplereader_tip)">make-sample-reader</a>), 
+read direction passed to <a class=quiet href="#makesampler" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesampler_tip)">make-sampler</a>), 
 or <a class=quiet href="#nextsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_nextsample_tip)">next-sample</a> (read forward) and
 <a class=quiet href="#previoussample" onmouseout="UnTip()" onmouseover="Tip(extsnd_previoussample_tip)">previous-sample</a> (read backward); 
-when done, you can close the reader with <a class=quiet href="#freesamplereader" onmouseout="UnTip()" onmouseover="Tip(extsnd_freesamplereader_tip)">free-sample-reader</a>, 
+when done, you can close the reader with <a class=quiet href="#freesampler" onmouseout="UnTip()" onmouseover="Tip(extsnd_freesampler_tip)">free-sampler</a>, 
 but it's usually not necessary; the
 garbage collector will take care of it if you forget (but, sigh, the GC can be dilatory at times).
 </p>
 
 <p>There is a similar set of functions giving access to the mix data.
-<a class=quiet href="#makemixsamplereader" onmouseout="UnTip()" onmouseover="Tip(extsnd_makemixsamplereader_tip)">make-mix-sample-reader</a> returns a mix reader for the desired mix,
-<a class=quiet href="#mixsamplereaderQ" onmouseout="UnTip()" onmouseover="Tip(extsnd_mixsamplereaderQ_tip)">mix-sample-reader?</a> returns #t if its argument in a mix sample reader,
+<a class=quiet href="#makemixsampler" onmouseout="UnTip()" onmouseover="Tip(extsnd_makemixsampler_tip)">make-mix-sampler</a> returns a mix reader for the desired mix,
+<a class=quiet href="#mixsamplerQ" onmouseout="UnTip()" onmouseover="Tip(extsnd_mixsamplerQ_tip)">mix-sampler?</a> returns #t if its argument in a mix sampler,
 and <a class=quiet href="#readmixsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_readmixsample_tip)">read-mix-sample</a> returns the next sample (before it is mixed into
 the output).
 </p>
@@ -2842,60 +2842,60 @@ implemented in frame.scm.
 </p>
 
 
-<!-- -------------------------------- SAMPLE-READER TABLE -------------------------------- -->
+<!-- -------------------------------- SAMPLER TABLE -------------------------------- -->
 
 <table border=0 cellspacing=4 cellpadding=6 hspace=10>
 
-<!-- copy-sample-reader -->
-<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="copysamplereader">copy-sample-reader</a> (obj)</code>
+<!-- copy-sampler -->
+<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="copysampler">copy-sampler</a> (obj)</code>
 </td></tr><tr><td width=30><br></td><td>
-copy-sample-reader returns a copy of 'obj' which can be any kind of sample-reader.
+copy-sampler returns a copy of 'obj' which can be any kind of sampler.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
-<!-- free-sample-reader -->
-<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="freesamplereader">free-sample-reader</a> (obj)</code>
+<!-- free-sampler -->
+<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="freesampler">free-sampler</a> (obj)</code>
 </td></tr><tr><td></td><td>
-free-sample-reader
-releases the sample-reader 'obj'.  In most cases, you don't need to call this
-function because the garbage collector handles the sample-reader object, but it doesn't hurt anything (but don't try to use a sample-reader
-after you've freed it!).  If you're using zillions of sample-readers in an optimized (run-based) loop that
-doesn't trigger garbage collection, freeing the sample readers explicitly can reduce
+free-sampler
+releases the sampler 'obj'.  In most cases, you don't need to call this
+function because the garbage collector handles the sampler object, but it doesn't hurt anything (but don't try to use a sampler
+after you've freed it!).  If you're using zillions of samplers in an optimized (run-based) loop that
+doesn't trigger garbage collection, freeing the samplers explicitly can reduce
 demands on memory.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
-<!-- make-mix-sample-reader -->
-<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="makemixsamplereader">make-mix-sample-reader</a> (mix :optional (beg 0))</code>
+<!-- make-mix-sampler -->
+<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="makemixsampler">make-mix-sampler</a> (mix :optional (beg 0))</code>
 </td></tr><tr><td></td><td>
-make-mix-sample-reader creates a mix-sample-reader reading 'mix' starting (in the mix input) at 'beg'.
+make-mix-sampler creates a mix-sampler reading 'mix' starting (in the mix input) at 'beg'.
 See <a href="sndscm.html#mixtovct">mix-&gt;vct</a> in mix.scm.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
-<!-- make-region-sample-reader -->
-<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="makeregionsamplereader">make-region-sample-reader</a> (:optional start reg chn (dir 1))</code>
+<!-- make-region-sampler -->
+<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="makeregionsampler">make-region-sampler</a> (:optional start reg chn (dir 1))</code>
 </td></tr><tr><td></td><td>
-make-region-sample-reader creates a sample-reader reading channel 'chn' of the region 'reg' starting
+make-region-sampler creates a sampler reading channel 'chn' of the region 'reg' starting
 at sample 'start', and reading forward if 'dir' is 1, backwards if 'dir' is -1.
 It is not safe to assume that this reader will return zeros beyond the region boundaries.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
-<!-- make-sample-reader -->
-<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="makesamplereader">make-sample-reader</a> (:optional start snd chn dir edpos)</code>
+<!-- make-sampler -->
+<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="makesampler">make-sampler</a> (:optional start snd chn dir edpos)</code>
 </td></tr><tr><td></td><td>
-make-sample-reader creates a sample-reader reading the given channel
+make-sampler creates a sampler reading the given channel
 starting at sample 'start' with initial read direction 'dir' 
 (1=forward, -1=backward).  'edpos' is the edit history position to read;
 it defaults to the current edit. 
 <pre>
     :<em class=typing>(open-sound "oboe.snd")</em>
     <em class=listener>0</em>
-    :<em class=typing>(define reader (make-sample-reader 1000))</em>
+    :<em class=typing>(define reader (make-sampler 1000))</em>
     <em class=listener>#&lt;unspecified&gt;</em>
     :<em class=typing>reader</em>
-    <em class=listener>#&lt;sample-reader: oboe.snd[0: 0] from 1000, at 1000&gt;</em>
+    <em class=listener>#&lt;sampler: oboe.snd[0: 0] from 1000, at 1000&gt;</em>
     :<em class=typing>(read-sample reader)</em>
     <em class=listener>0.0328369140625</em>
     :<em class=typing>(sample 1000)</em>
@@ -2904,9 +2904,9 @@ it defaults to the current edit.
     <em class=listener>0.0347900390625</em>
     :<em class=typing>(sample 1001)</em>
     <em class=listener>0.0347900390625</em>
-    :<em class=typing>(sample-reader-home reader)</em>
+    :<em class=typing>(sampler-home reader)</em>
     <em class=listener>(0 0)</em>
-    :<em class=typing>(sample-reader-position reader)</em>
+    :<em class=typing>(sampler-position reader)</em>
     <em class=listener>1002</em>
 </pre>
 One use of 'edpos' is to get the difference 
@@ -2917,7 +2917,7 @@ between two edits:
   (lambda () ;assume mono, get diff between current state and previous
     (let* ((index (<a class=quiet href="#selectedsound" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectedsound_tip)">selected-sound</a>))
            (edit-pos (<a class=quiet href="#editposition" onmouseout="UnTip()" onmouseover="Tip(extsnd_editposition_tip)">edit-position</a> index))
-           (previous-edit (<em class=red>make-sample-reader</em> 0 0 index 1 (- edit-pos 1))))
+           (previous-edit (<em class=red>make-sampler</em> 0 0 index 1 (- edit-pos 1))))
       (lambda (x)
         (- x (<a class=quiet href="#readsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_readsample_tip)">read-sample</a> previous-edit)) #f))))
 
@@ -2925,57 +2925,57 @@ between two edits:
 </pre></td></tr></table>
 
 Once the reader has been set up to read at a given edit position, subsequent
-edits won't affect it. One sequence that takes advantage of this is: make-sample-reader, scale-by 0,
+edits won't affect it. One sequence that takes advantage of this is: make-sampler, scale-by 0,
 then run an overlap-add process on the data from before the scaling.
 <br><br>
-'snd' can also be a filename (a string); in this way a sample-reader
+'snd' can also be a filename (a string); in this way a sampler
 can read external sounds without going to the trouble of loading them into Snd.
 <pre>
-    (define reader (make-sample-reader 100 "oboe.snd"))
+    (define reader (make-sampler 100 "oboe.snd"))
 </pre>
-make-sample-reader is probably the most useful function in Snd; there are lots of examples
+make-sampler is probably the most useful function in Snd; there are lots of examples
 in the Scheme, Ruby, and Forth files.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
-<!-- mix-sample-reader? -->
-<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="mixsamplereaderQ">mix-sample-reader?</a> (obj)</code>
+<!-- mix-sampler? -->
+<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="mixsamplerQ">mix-sampler?</a> (obj)</code>
 </td></tr><tr><td></td><td>
-mix-sample-reader? returns #t if 'obj' is a mix-sample-reader.
+mix-sampler? returns #t if 'obj' is a mix-sampler.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
 <!-- next-sample -->
 <tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="nextsample">next-sample</a> (obj)</code>
 </td></tr><tr><td></td><td>
-next-sample returns the next sample (reading forward) read by the sample-reader 'obj'.
+next-sample returns the next sample (reading forward) read by the sampler 'obj'.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
 <!-- previous-sample -->
 <tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="previoussample">previous-sample</a> (obj)</code>
 </td></tr><tr><td></td><td>
-previous-sample returns the previous sample in the stream read by the sample-reader 'obj'.
+previous-sample returns the previous sample in the stream read by the sampler 'obj'.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
 <!-- read-mix-sample -->
 <tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="readmixsample">read-mix-sample</a> (obj)</code>
 </td></tr><tr><td></td><td>
-read-mix-sample returns the next sample read by the mix-sample-reader 'obj'.
+read-mix-sample returns the next sample read by the mix-sampler 'obj'.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
 <!-- read-region-sample -->
 <tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="readregionsample">read-region-sample</a> (obj)</code>
 </td></tr><tr><td></td><td>
-read-region-sample returns the next sample read by the region-sample-reader 'obj'.
+read-region-sample returns the next sample read by the region-sampler 'obj'.
 
 <table border=0 cellpadding=5 vspace=10><tr><td><pre>
 (define* (region-&gt;vct reg :optional (chn 0))
   (if (<a class=quiet href="#regionok" onmouseout="UnTip()" onmouseover="Tip(extsnd_regionok_tip)">region?</a> reg)
       (if (&lt; chn (<a class=quiet href="#regionchans" onmouseout="UnTip()" onmouseover="Tip(extsnd_regionchans_tip)">region-chans</a> reg))
-	  (let* ((reader (<em class=red>make-region-sample-reader</em> 0 reg chn))
+	  (let* ((reader (<em class=red>make-region-sampler</em> 0 reg chn))
 		 (len (<a class=quiet href="#regionframes" onmouseout="UnTip()" onmouseover="Tip(extsnd_regionframes_tip)">region-frames</a> reg))
 		 (data (<a class=quiet href="#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> len)))
 	    (do ((i 0 (+ 1 i)))
@@ -2991,50 +2991,50 @@ read-region-sample returns the next sample read by the region-sample-reader 'obj
 <!-- read-sample -->
 <tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="readsample">read-sample</a> (obj)</code>
 </td></tr><tr><td></td><td>
-read-sample returns the next sample read by the sample-reader 'obj', 
-reading in the direction set by <a class=quiet href="#makesamplereader" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesamplereader_tip)">make-sample-reader</a>.
+read-sample returns the next sample read by the sampler 'obj', 
+reading in the direction set by <a class=quiet href="#makesampler" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesampler_tip)">make-sampler</a>.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
-<!-- region-sample-reader? -->
-<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="regionsamplereaderQ">region-sample-reader?</a> (obj)</code>
+<!-- region-sampler? -->
+<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="regionsamplerQ">region-sampler?</a> (obj)</code>
 </td></tr><tr><td></td><td>
-region-sample-reader? returns #t if 'obj' is a region sample-reader.
+region-sampler? returns #t if 'obj' is a region sampler.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
-<!-- sample-reader-at-end? -->
-<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="samplereaderatendQ">sample-reader-at-end?</a> (obj)</code>
+<!-- sampler-at-end? -->
+<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="sampleratendQ">sampler-at-end?</a> (obj)</code>
 </td></tr><tr><td></td><td>
-sample-reader-at-end? returns #t if the sample-reader 'obj' (any kind of reader) is at the end of the sound (or whatever it is reading),
+sampler-at-end? returns #t if the sampler 'obj' (any kind of reader) is at the end of the sound (or whatever it is reading),
 and hence is returning 0.0 each time it is called.  When the last "real" sample is returned, the at-end? flag is still false; when it
-becomes true, the sample-reader returns a 0.0 sample.
+becomes true, the sampler returns a 0.0 sample.
 See <a href="sndscm.html#locatezero">locate-zero</a> in examp.scm, or <a href="sndscm.html#linearsrcchannel">linear-src-channel</a> in dsp.scm.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
-<!-- sample-reader-home -->
-<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="samplereaderhome">sample-reader-home</a> (obj)</code>
+<!-- sampler-home -->
+<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="samplerhome">sampler-home</a> (obj)</code>
 </td></tr><tr><td></td><td>
-sample-reader-home returns information describing the source of the data the sample-reader 'obj' is reading.
-if 'obj' is a sound sample reader, it returns a list with the sound index and channel number associated with 'obj'.
+sampler-home returns information describing the source of the data the sampler 'obj' is reading.
+if 'obj' is a sound sampler, it returns a list with the sound index and channel number associated with 'obj'.
 If 'obj' is a mix reader, it returns the mix's id. 
 Finally, if 'obj' is a region reader, it returns a list with the region id.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
-<!-- sample-reader-position -->
-<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="samplereaderposition">sample-reader-position</a> (obj)</code>
+<!-- sampler-position -->
+<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="samplerposition">sampler-position</a> (obj)</code>
 </td></tr><tr><td></td><td>
-sample-reader-position returns the
-current (sample-wise) location of the sample-reader 'obj' (any kind of reader).
+sampler-position returns the
+current (sample-wise) location of the sampler 'obj' (any kind of reader).
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
-<!-- sample-reader? -->
-<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="samplereaderQ">sample-reader?</a> (obj)</code>
+<!-- sampler? -->
+<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="samplerQ">sampler?</a> (obj)</code>
 </td></tr><tr><td></td><td>
-sample-reader? returns #t if 'obj' is a sample-reader.
+sampler? returns #t if 'obj' is a sampler.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 </table>
@@ -3202,7 +3202,7 @@ copy string: in Guile or Forth: string-copy<br>
 copy list: in Guile or Forth: list-copy or copy-tree<br>
 copy vct: <a href="#vctcopy">vct-copy</a>, <a href="#vcttovector">vct-&gt;vector</a>, <a href="sndscm.html#vcttoframe">vct-&gt;frame</a><br>
 copy mix: <a href="sndscm.html#mixtovct">mix-&gt;vct</a><br>
-copy sample reader: <a href="#copysamplereader">copy-sample-reader</a><br>
+copy sampler: <a href="#copysampler">copy-sampler</a><br>
 copy (clone) current sound edit state: <a href="#clonesoundas">clone-sound-as</a><br>
 copy channel data: <a href="#channeltovct">channel-&gt;vct</a>, or <a href="#savesoundas">save-sound-as</a><br>
 copy selection data: <a href="#selection2vct">selection-&gt;vct</a> or <a href="#saveselection">save-selection</a><br>
@@ -4726,13 +4726,15 @@ the Mix Dialog, various hooks, and various mouse-related actions.
 <table width="35%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>Mixes</h4></td></tr></table>
 
 <p>A mix is an object that represents a channel (one channel in and one channel out) of a sound mix.
-Each mix object has a unique identifier called its 'id' that identifies it in the following functions.
-Say we have a mix whose id is 123:</p>
+Various mixing functions create these objects (mix-vct for example).  In the old days, mixes were identified
+by integers, so for conversion you can use mix-&gt;integer and integer-&gt;mix.
+Say we have a mix object stored in the variable "id":
+</p>
 <pre>
-    &gt;<em class=listener>(set! (mix-amp 123) .5)</em>
+    &gt;<em class=listener>(set! (mix-amp id) .5)</em>
     <em class=typing>.5</em>
 </pre>
-<p>This sets mix 123's amplitude scaler to .5.  
+<p>This sets the mix's amplitude scaler to .5.  
 </p>
 
 
@@ -4745,8 +4747,9 @@ Say we have a mix whose id is 123:</p>
 </td></tr><tr><td width=30></td><td>
 <p>mix is one of the basic mixing functions.
 It mixes the 'in-chan' channel of the file 'file' into the given channel
-starting at 'samp' in the output channel.  If 'in-chan' is #t, all input channels are mixed into successive output channels.
-mix returns the mix id (of the first mix, if there are multiple channels).
+starting at 'samp' in the output channel, and returns a list with the mix.
+If 'in-chan' is #t, all input channels are mixed into successive output channels, and
+mix returns a list of the mixes.
 </p>
 <p>If 'with-mix-tags' is #f (the default is #t), the data is simply
 mixed without creating any mix objects. 
@@ -4784,7 +4787,7 @@ We can use <a href="sndscm.html#dlocsigdoc">dlocsig</a> in conjunction with mix 
 (define (<a name="mixmovesound">mix-move-sound</a> start-time file path)
   "mix file at start-time in the currently selected sound following the given dlocsig path"
   (let* ((duration (<a class=quiet href="#mussoundduration" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundduration_tip)">mus-sound-duration</a> file))
-	 (rd (<a class=quiet href="#makesamplereader" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesamplereader_tip)">make-sample-reader</a> 0 file))
+	 (rd (<a class=quiet href="#makesampler" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesampler_tip)">make-sampler</a> 0 file))
 	 (start (<a class=quiet href="sndclm.html#secondstosamples" onmouseout="UnTip()" onmouseover="Tip(sndclm_secondstosamples_tip)">seconds-&gt;samples</a> start-time))
          (tmp-sound (<a class=quiet href="sndscm.html#sound-let" onmouseout="UnTip()" onmouseover="Tip(sndscm_sound_let_tip)">with-temp-sound</a> (:channels (<a class=quiet href="#channels" onmouseout="UnTip()" onmouseover="Tip(extsnd_channels_tip)">channels</a>) :srate (<a class=quiet href="#mussoundsrate" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundsrate_tip)">mus-sound-srate</a> file))
 
@@ -4817,26 +4820,18 @@ We can use <a href="sndscm.html#dlocsigdoc">dlocsig</a> in conjunction with mix 
 <!-- mixes -->
 <tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="mixes">mixes</a> (:optional snd chn edpos)</code>
 </td></tr><tr><td></td><td>
-mixes returns a list of the mixes (their id numbers) in the given channel at the edit history position 'edpos'.
+mixes returns a list of the mix objects associated with the given channel at the edit history position 'edpos'.
 If the channel argument is omitted, you get a list of lists, each inner list referring to a single channel of that sound.
 If the sound index is also omitted, you get a list of lists of lists, the outer list referring to each sound, each
 inner list to that sound's channels.  Say we have two sounds open, 2 mixes in the first (a mono sound), and 1 mix
 in the 2nd channel of the 2nd (a stereo sound):
 <pre>
     :<em class=typing>(mixes 0 0)</em>
-    <em class=listener>(0 1)</em>     ; these are mix id's, as returned by the mix function for example
+    <em class=listener>(#&lt;mix 0&gt; #&lt;mix 2&gt;)</em>     ; these are mix objects, as returned by the mix function for example
     :<em class=typing>(mixes 1)</em>
-    <em class=listener>(() (2))</em>  ; no mix in channel 0, one in channel 1
+    <em class=listener>(() (#&lt;mix 1&gt;))</em>  ; no mix in channel 0, one in channel 1
     :<em class=typing>(mixes)</em>
-    <em class=listener>(((0 1)) (() (2)))</em>
-
-    Ruby:
-    :<em class=typing>mixes()</em>
-    <em class=listener>[[[0, 1]], [nil, [2]]]</em>
-
-    Forth:
-    <em class=listener>snd&gt;</em> <em class=typing>mixes</em>
-    <em class=listener>'( '( '( 0 1 ) ) '( nil '( 2 ) ) )</em>
+    <em class=listener>(((#&lt;mix 0&gt; #&lt;mix 2&gt;)) (() (#&lt;mix 1&gt;)))</em>
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -4844,9 +4839,9 @@ in the 2nd channel of the 2nd (a stereo sound):
 <!-- mix-amp -->
 <tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="mixamp">mix-amp</a> (mix)</code>
 </td></tr><tr><td></td><td>
-mix-amp is the amplitude scaler applied to the mix.  To make mix 0 half as loud:
+mix-amp is the amplitude scaler applied to the mix.  To make mix mx half as loud:
 <pre>
-  (set! (mix-amp 0) .5)
+  (set! (mix-amp mx) .5)
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -4858,9 +4853,9 @@ mix-amp-env is the
 amplitude envelope applied to the mix (a list of breakpoints).  
 To reset this to its default (null) state, use #f.
 <pre>
-    (set! (mix-amp-env 0) '(0 0 1 1))
+    (set! (mix-amp-env mx) '(0 0 1 1))
 </pre> 
-sets mix 0's envelope to a ramp.
+sets mix mx's envelope to a ramp.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -4869,9 +4864,9 @@ sets mix 0's envelope to a ramp.
 </td></tr><tr><td></td><td>
 This is the color of mix waveforms; it defaults to dark-gray.
 If you
-want to set just a particular mix's color, give the id of the mix
+want to set just a particular mix's color, pas the mix object 
 as the 'mix' argument: <code>(set! (mix-color) red)</code> sets all mix waveforms to
-red; but <code>(set! (mix-color 3) red)</code> sets only mix 3's waveform to red.
+red; but <code>(set! (mix-color mx) red)</code> sets only mix mx's waveform to red.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -4887,14 +4882,14 @@ mix-length returns the mix's length in samples.
 </td></tr><tr><td></td><td>
 mix-home returns a list containing the mix's output sound index and channel number, and the input original filename (if any), and input channel.
 <pre>
-    :<em class=typing>(mix "pistol.snd" 1000)</em>
-    <em class=listener>1</em>
-    :<em class=typing>(mix-home 1)</em>
+    :<em class=typing>(define mx (mix "pistol.snd" 1000))</em>
+    <em class=listener>#&lt;mix 0&gt;</em>
+    :<em class=typing>(mix-home mx)</em>
     <em class=listener>(0 0 "/home/bil/cl/pistol.snd" 0)</em>
     ;; (list output-sound-index output-channel input-filename input-channel)
-    :<em class=typing>(mix-vct (make-vct 100 .1) 2000)</em>
-    <em class=listener>2</em>
-    :<em class=typing>(mix-home 2)</em>
+    :<em class=typing>(set! mx (mix-vct (make-vct 100 .1) 2000))</em>
+    <em class=listener>#&lt;mix 1&gt;</em>
+    :<em class=typing>(mix-home mx)</em>
     <em class=listener>(0 0 #f 0)</em>
     ;;   #f: no input file
 </pre>
@@ -4904,7 +4899,7 @@ mix-home returns a list containing the mix's output sound index and channel numb
 <!-- mix-name -->
 <tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="mixname">mix-name</a> (mix)</code>
 </td></tr><tr><td></td><td>
-mix-name is the mix's name, if any.  The mix name is displayed near the mix tag.
+mix-name is the mix object's name, if any.  The mix name is displayed near the mix tag.
 See also <a href="sndscm.html#mixnametoid">mix-name-&gt;id</a>.
 Here's an example that uses the mix name and the tag location (mix-tag-y) to provide some pitch
 feedback:
@@ -5003,9 +4998,9 @@ to use multiple output files, collecting related notes in one file, then mixing 
 <!-- mix-position -->
 <tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="mixposition">mix-position</a> (mix)</code>
 </td></tr><tr><td></td><td>
-mix-position is the current starting position (a sample number) of 'mix'.  To move mix 0 so that it starts at sample 200 in the output:
+mix-position is the current starting position (a sample number) of 'mix'.  To move mix mx so that it starts at sample 200 in the output:
 <pre>
-    (set! (mix-position 0) 200)
+    (set! (mix-position mx) 200)
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -5023,14 +5018,14 @@ mix-properties is a property list associated with a mix.
 <tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="mixregion">mix-region</a> (:optional samp reg snd chn reg-chan)</code>
 </td></tr><tr><td></td><td>
 mix-region mixes region 'reg's' channel 'reg-chan' into the given channel starting at sample 'samp' ('samp' defaults to the cursor sample).
-It returns the new mix id, if any.
+It returns a list of the new mixes.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
 <!-- mix-selection -->
 <tr><td colspan=2 bgcolor="#f2f4ff"><code><em class=emdef>mix-selection</em> (:optional beg snd chn selection-chan)</code>
 </td></tr><tr><td></td><td>
-mix-selection mixes the current selection's channel 'selection-cha' into the given channel starting at 'beg', returning the new mix's id.
+mix-selection mixes the current selection's channel 'selection-cha' into the given channel starting at 'beg', returning a list of the new mixes.
 The Edit:Mix selection menu choice is essentially <code>(mix-selection (cursor))</code>.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -5096,16 +5091,16 @@ mix-vct returns the id of the new mix, or -1 (a simple mix, no tag).
 <pre>
     :<em class=typing>(channel-&gt;vct 1000 3)</em>               ; what are these 3 samples before the mix?
     <em class=listener>#&lt;vct[len=3]: -0.065 -0.059 -0.060&gt;</em>
-    :<em class=typing>(mix-vct (vct .1 .2 .3) 1000)</em>       ; add these 3 values
-    <em class=listener>3</em>
+    :<em class=typing>(define mx (mix-vct (vct .1 .2 .3) 1000))</em> ; add these 3 values
+    <em class=listener>#&lt;mix 3&gt;</em>
     :<em class=typing>(channel-&gt;vct 1000 3)</em>               ; now we hope they were added...
     <em class=listener>#&lt;vct[len=3]: 0.035 0.141 0.240&gt;</em>
-    :<em class=typing>(mix-position 3)</em>                    ; and the new mix starts at 1000
+    :<em class=typing>(mix-position mx)</em>                    ; and the new mix starts at 1000
     <em class=listener>1000</em>
-    :<em class=typing>(mix-length 3)</em>                      ; and its length is 3 samples
+    :<em class=typing>(mix-length mx)</em>                      ; and its length is 3 samples
     <em class=listener>3</em>
     :<em class=typing>(mix-vct (with-sound (:output (make-vct 44100)) (fm-violin 0 1 440 .1)))</em>
-    <em class=listener>0</em>
+    <em class=listener>#&lt;mix 4&gt;</em>
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -5120,8 +5115,7 @@ This is the maximum height in pixels of mix waveforms.  The default is 20 (see <
 <!-- mix? -->
 <tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="mixp">mix?</a> (id)</code>
 </td></tr><tr><td></td><td>
-mix? returns #t if the mix 'id' exists (that is, it is accessible in a channel's edit list).
-It returns the id if the given mix is currently active.
+mix? returns #t if 'id' is an active mix (that is, it is a mix object and it is accessible in a channel's edit list).
 Otherwise mix? returns #f.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -5156,7 +5150,7 @@ mix vct: <a href="#mixvct">mix-vct</a><br>
 mix sound-data: <a href="sndscm.html#mixsounddata">mix-sound-data</a><br>
 mix a frame: <a href="sndscm.html#mixframe">mix-frame</a><br>
 enveloped mix: see <a href="sndscm.html#envelopedmix">enveloped-mix</a> in extensions.scm<br>
-read mix samples: <a href="#makemixsamplereader">make-mix-sample-reader</a><br>
+read mix samples: <a href="#makemixsampler">make-mix-sampler</a><br>
 mix data maxamp: <a href="sndscm.html#mixmaxamp">mix-maxamp</a><br>
 mix data to vct: <a href="sndscm.html#mixtovct">mix-&gt;vct</a><br>
 save mix data in file: <a href="sndscm.html#savemix">save-mix</a><br>
@@ -5235,10 +5229,10 @@ current selection is used. If 'chn' is #t, all chans are included, taking the <a
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
-<!-- make-region-sample-reader -->
-<tr><td colspan=2 bgcolor="#f2f4ff"><code><a href="#makeregionsamplereader">make-region-sample-reader</a> (:optional start reg chn (dir 1))</code>
+<!-- make-region-sampler -->
+<tr><td colspan=2 bgcolor="#f2f4ff"><code><a href="#makeregionsampler">make-region-sampler</a> (:optional start reg chn (dir 1))</code>
 </td></tr><tr><td></td><td>
-This creates a <a href="#samplereaders">sample-reader</a> reading the region's channel 'chn' starting at sample 'start' within that region.
+This creates a <a href="#samplers">sampler</a> reading the region's channel 'chn' starting at sample 'start' within that region.
 'dir' can be 1 (read forwards) or -1 (read backwards).
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
@@ -5489,7 +5483,7 @@ The Edit:Insert selection menu choice is essentially <code>(insert-selection (cu
 <!-- mix-selection -->
 <tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="mixselection">mix-selection</a> (:optional beg snd chn)</code>
 </td></tr><tr><td></td><td>
-mix-selection mixes (adds) a copy of the selection starting at 'beg' in the given channel, and returns new mix id.
+mix-selection mixes (adds) a copy of the selection starting at 'beg' in the given channel, and returns a list of the new mixes.
 The Edit:Mix selection menu choice is <code>(mix-selection (cursor))</code>.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -5815,11 +5809,11 @@ The following substitutions can be made:
 <a href="grfsnd.html#applyladspa">apply-ladspa</a> reader dat dur origin snd chn      <a href="grfsnd.html#ladspachannel">ladspa-channel</a> dat beg dur s c e
 </pre>
 
-<p>Another case that might deserve "regularization" is <a class=quiet href="#makesamplereader" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesamplereader_tip)">make-sample-reader</a> which confusingly interpolates
+<p>Another case that might deserve "regularization" is <a class=quiet href="#makesampler" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesampler_tip)">make-sampler</a> which confusingly interpolates
 the direction argument between the channel and edit-position:
 </p>
 <pre>   (define* (read-channel :optional (beg 0) snd chn edpos (direction 1))
-     (<a class=quiet href="#makesamplereader" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesamplereader_tip)">make-sample-reader</a> beg snd chn direction edpos))
+     (<a class=quiet href="#makesampler" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesampler_tip)">make-sampler</a> beg snd chn direction edpos))
 </pre>
 
 <p>
@@ -6120,12 +6114,12 @@ This is used by some of the <a class=quiet href="#regularizedargs" onmouseout="U
 	 (chn (or nchn (<a class=quiet href="#selectedchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectedchannel_tip)">selected-channel</a>)))
 	 (dur (or ndur (- (<a class=quiet href="#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a> snd chn) beg)))
 	 (edpos (or nedpos current-edit-position))
-	 (reader (<a class=quiet href="#makesamplereader" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesamplereader_tip)">make-sample-reader</a> beg snd chn 1 edpos))
+	 (reader (<a class=quiet href="#makesampler" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesampler_tip)">make-sampler</a> beg snd chn 1 edpos))
 	 (cgen (<a class=quiet href="sndclm.html#make-convolve" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_convolve_tip)">make-convolve</a> :filter kernel 
                               :input (lambda (dir)
 				       (<a class=quiet href="#readsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_readsample_tip)">read-sample</a> reader)))))
     (<em class=red>clm-channel</em> cgen beg dur snd chn edpos)
-    (<a class=quiet href="#freesamplereader" onmouseout="UnTip()" onmouseover="Tip(extsnd_freesamplereader_tip)">free-sample-reader</a> reader)))
+    (<a class=quiet href="#freesampler" onmouseout="UnTip()" onmouseover="Tip(extsnd_freesampler_tip)">free-sampler</a> reader)))
 
 (define (difference) (<em class=red>clm-channel</em> (<a class=quiet href="sndclm.html#make-two-zero" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_two_zero_tip)">make-two-zero</a> 1 -1)))
 (define (wobble) (<em class=red>clm-channel</em> (<a class=quiet href="sndclm.html#make-ncos" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_ncos_tip)">make-ncos</a> 50 3)))
@@ -6749,7 +6743,7 @@ scanning forwards), but it's not hard to write a function to find in reverse:
 <pre>
 (define* (<A NAME="findchannelinreverse">find-channel-in-reverse</A> proc :optional beg snd chn edpos)
   (let* ((sample (or beg (- (<a class=quiet href="#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a> snd chn) 1))) ; or cursor?
-	 (reader (<a class=quiet href="#makesamplereader" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesamplereader_tip)">make-sample-reader</a> sample snd chn -1 edpos))
+	 (reader (<a class=quiet href="#makesampler" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesampler_tip)">make-sampler</a> sample snd chn -1 edpos))
 	 (result #f))
     (do ((i sample (- i 1)))
 	((or result (&lt; i 0)) 
@@ -7195,8 +7189,8 @@ then check to see how close our reconstruction is to the original:
 <em class=listener>0</em>
 <em class=listener>&gt;</em> <em class=typing>(let ((y0 0.0)) (map-channel (lambda (y) (let ((add (+ y y0))) (set! y0 add) add))))</em>
 <em class=listener>0</em>
-<em class=listener>&gt;</em> <em class=typing>(let ((rd (make-sample-reader 0 0 0 1 0))) (map-channel (lambda (y) (- y (rd)))))</em>
-<em class=listener>0</em>          ; the sample reader is reading the unedited form of the sound
+<em class=listener>&gt;</em> <em class=typing>(let ((rd (make-sampler 0 0 0 1 0))) (map-channel (lambda (y) (- y (rd)))))</em>
+<em class=listener>0</em>          ; the sampler is reading the unedited form of the sound
 <em class=listener>&gt;</em> <em class=typing>(maxamp)</em> ; i.e. how big is the biggest difference
 <em class=listener>0.0</em>
 </pre>
@@ -7282,7 +7276,7 @@ is an example of this.
     (<em class=red>map-channel</em> proc beg dur snd i edpos origin)))
 </pre></td></tr></table>
 
-An esoteric aside: map-channel sets up the sample reader before calling the procedure, so if that procedure edits
+An esoteric aside: map-channel sets up the sampler before calling the procedure, so if that procedure edits
 the sound itself (independent of map-channel), the result will be all such edits after the current edit, then the map-channel result
 applied to the original (not the newly edited) data.  That is,<br><pre>
 (let ((first #t)) 
@@ -7441,7 +7435,7 @@ The sequence of actions is:
          <a class=quiet href="#initialgraphhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_initialgraphhook_tip)">initial-graph-hook</a>
 </pre>
 There are
-other ways to get at sound file data: <a class=quiet href="#makesamplereader" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesamplereader_tip)">make-sample-reader</a> can be given a filename,
+other ways to get at sound file data: <a class=quiet href="#makesampler" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesampler_tip)">make-sampler</a> can be given a filename,
 rather than a sound index; file-&gt;vct in examp.scm; 
 <a class=quiet href="#mussoundopeninput" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundopeninput_tip)">mus-sound-open-input</a> and
 there are a variety of CLM-based functions such as
@@ -8080,11 +8074,11 @@ Here are several more examples:
   (let ((len (<a class=quiet href="#mussoundframes" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundframes_tip)">mus-sound-frames</a> file)))
     (<em class=red>ptree-channel</em>
      (lambda (y state forward)
-       (<a class=quiet href="#declare" onmouseout="UnTip()" onmouseover="Tip(extsnd_declare_tip)">declare</a> (y real) (state sample-reader) (forward boolean))
+       (<a class=quiet href="#declare" onmouseout="UnTip()" onmouseover="Tip(extsnd_declare_tip)">declare</a> (y real) (state sampler) (forward boolean))
        (+ y (if forward (<a class=quiet href="#nextsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_nextsample_tip)">next-sample</a> state) (<a class=quiet href="#previoussample" onmouseout="UnTip()" onmouseover="Tip(extsnd_previoussample_tip)">previous-sample</a> state))))
      beg len snd chn -1 #f
      (lambda (frag-beg frag-dur)
-       (<a class=quiet href="#makesamplereader" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesamplereader_tip)">make-sample-reader</a> frag-beg file)))))
+       (<a class=quiet href="#makesampler" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesampler_tip)">make-sampler</a> frag-beg file)))))
 
 </pre></td></tr></table>
 
@@ -8233,7 +8227,7 @@ reverse-channel is the <a class=quiet href="#regularizedargs" onmouseout="UnTip(
 <blockquote><small>
 <br>
 reverse selected portion: <a href="#reverseselection">reverse-selection</a><br>
-read samples in reverse: use <a href="#makesamplereader">make-sample-reader</a> with direction -1<br>
+read samples in reverse: use <a href="#makesampler">make-sampler</a> with direction -1<br>
 reverse at new sampling rate: use <a href="#srcchannel">src-channel</a> with a negative ratio<br>
 Reverse in control panel: <a href="snd.html#speed">control panel</a> and <a href="#speedcontrol">speed-control</a> variable<br>
 reverse an envelope: <a href="sndscm.html#reverseenvelope">reverse-envelope</a><br>
@@ -8331,7 +8325,7 @@ causes nothing but confusion.  To get this code to work right:
 The current declarable types include any <a href="sndscm.html#def-clm-struct">def-clm-struct</a> type and:
 
 <pre>
-    int float boolean char string list symbol keyword vct sample-reader mix-sample-reader 
+    int float boolean char string list symbol keyword vct sampler mix-sampler 
     sound-data clm float-vector int-vector vct-vector list-vector clm-vector 
 </pre>
 
@@ -8359,7 +8353,7 @@ This function gives the value of sample 'samp' in the given channel.
 </pre>
 If the desired sample happens to fall outside the current buffer 
 for the indicated channel, sample grinds to a halt &mdash; if you're 
-running a loop through a bunch of samples, use the <a href="#samplereaders">sample-readers</a> 
+running a loop through a bunch of samples, use the <a href="#samplers">samplers</a> 
 or <a href="#channeltovct">channel-&gt;vct</a> instead.  'samp' defaults to the current cursor location.
 </td></tr><tr><td colspan=2 height=18></td></tr>
 
@@ -8510,7 +8504,7 @@ There are approximately a bazillion ways to scale samples in Snd; here's a potpo
 (let ((flt (<a class=quiet href="#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> 8)))
   (<a class=quiet href="#vctset" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctset_tip)">vct-set!</a> flt 0 2.0)
   (let ((cnv (<a class=quiet href="sndclm.html#make-convolve" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_convolve_tip)">make-convolve</a> :filter flt))
-	(sf (<a class=quiet href="#makesamplereader" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesamplereader_tip)">make-sample-reader</a> 0)))
+	(sf (<a class=quiet href="#makesampler" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesampler_tip)">make-sampler</a> 0)))
     (<a class=quiet href="#mapchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_mapchannel_tip)">map-channel</a>
      (lambda (val)
        (<a class=quiet href="sndclm.html#convolve" onmouseout="UnTip()" onmouseover="Tip(sndclm_convolve_tip)">convolve</a> cnv (lambda (dir) 
@@ -8619,21 +8613,21 @@ into a previous call will not work.  That is,
   (not-a-good-idea))
 </pre></td></tr></table>
 
-will die with a segfault (this is fixable, with much effort and grumbling).  If you want a continuable search, use a sample-reader:
+will die with a segfault (this is fixable, with much effort and grumbling).  If you want a continuable search, use a sampler:
 
 <table border=0 cellpadding=5 vspace=10><tr><td><pre>
 (define reader #f)
 (define last-proc #f)
 (define (<A NAME="scanagain">scan-again</a>)
-  (if (<a class=quiet href="#samplereaderatendQ" onmouseout="UnTip()" onmouseover="Tip(extsnd_samplereaderatendQ_tip)">sample-reader-at-end?</a> reader)
+  (if (<a class=quiet href="#sampleratendQ" onmouseout="UnTip()" onmouseover="Tip(extsnd_sampleratendQ_tip)">sampler-at-end?</a> reader)
       #f
       (let ((val (last-proc (reader))))
 	(if val 
-	    (list val (- (<a class=quiet href="#samplereaderposition" onmouseout="UnTip()" onmouseover="Tip(extsnd_samplereaderposition_tip)">sample-reader-position</a> reader) 1))
+	    (list val (- (<a class=quiet href="#samplerposition" onmouseout="UnTip()" onmouseover="Tip(extsnd_samplerposition_tip)">sampler-position</a> reader) 1))
 	    (scan-again)))))
 (define (my-scan-chan proc)
   (set! last-proc proc)
-  (set! reader (<a class=quiet href="#makesamplereader" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesamplereader_tip)">make-sample-reader</a> 0))
+  (set! reader (<a class=quiet href="#makesampler" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesampler_tip)">make-sampler</a> 0))
   (scan-again))
 </pre></td></tr></table>
 
@@ -8728,14 +8722,14 @@ it's probably simpler to use <a href="sndscm.html#withsound">with-sound</a> (see
 
 <table border=0 cellpadding=5 vspace=10><tr><td><pre>
 (define (step-src)
-  (let* ((rd (<a class=quiet href="#makesamplereader" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesamplereader_tip)">make-sample-reader</a> 0))
+  (let* ((rd (<a class=quiet href="#makesampler" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesampler_tip)">make-sampler</a> 0))
 	 (o (<a class=quiet href="sndclm.html#make-oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_oscil_tip)">make-oscil</a> 2205.0))
 	 (s (<a class=quiet href="sndclm.html#make-src" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_src_tip)">make-src</a> :srate 0.0))
 	 (incr (+ 2.0 (<a class=quiet href="sndclm.html#oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_oscil_tip)">oscil</a> o)))	  
 	 (tempfile (<em class=red>with-sound</em> (:output (<a class=quiet href="#sndtempnam" onmouseout="UnTip()" onmouseover="Tip(extsnd_sndtempnam_tip)">snd-tempnam</a>) :srate (<a class=quiet href="#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a>) :to-snd #f)
 		     (<a class=quiet href="sndscm.html#run" onmouseout="UnTip()" onmouseover="Tip(sndscm_run_tip)">run</a> (lambda ()
 			    (do ((samp 0 (+ 1 samp)))
-				((or (c-g?) (<a class=quiet href="#samplereaderatendQ" onmouseout="UnTip()" onmouseover="Tip(extsnd_samplereaderatendQ_tip)">sample-reader-at-end?</a> rd)))
+				((or (c-g?) (<a class=quiet href="#sampleratendQ" onmouseout="UnTip()" onmouseover="Tip(extsnd_sampleratendQ_tip)">sampler-at-end?</a> rd)))
 			      (<a class=quiet href="sndclm.html#out-any" onmouseout="UnTip()" onmouseover="Tip(sndclm_out_any_tip)">out-any</a> samp (<a class=quiet href="sndclm.html#src" onmouseout="UnTip()" onmouseover="Tip(sndclm_src_tip)">src</a> s incr (lambda (dir) (<a class=quiet href="#readsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_readsample_tip)">read-sample</a> rd))) 0)
 			      (if (= (modulo samp 2205) 0)
 				  (set! incr (+ 2.0 (<a class=quiet href="sndclm.html#oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_oscil_tip)">oscil</a> o)))))))))
@@ -10461,7 +10455,7 @@ In Forth:
 </td></tr><tr><td></td><td>
 The current position in the edit history list; it can be set:  <code>(set! (edit-position) 0)</code> is equivalent
 to <code>(<a class=quiet href="#revertsound" onmouseout="UnTip()" onmouseover="Tip(extsnd_revertsound_tip)">revert-sound</a>)</code> in a mono sound.
-See <a href="#makesamplereader">make-sample-reader</a>.
+See <a href="#makesampler">make-sampler</a>.
 </td></tr><tr><td></td><td></td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -10644,8 +10638,8 @@ add-transform adds a transform to the transform choices (alongside Fourier, Wave
 to use in the transform dialog. 'xlabel' is the x axis label
 of the resultant graph.  'lo' and 'hi' set which portion of the returned data
 to graph (normally 0.0 to 1.0).  'proc' is a function of two 
-arguments, the length of the desired transform, and a sample-reader that 
-can be used to get the current data.  Do not free the sample-reader!  
+arguments, the length of the desired transform, and a sampler that 
+can be used to get the current data.  Do not free the sampler!  
 The function should return a vct containing the transform data.  
 add-transform returns the new transform's transform-type.
 Here's an example that displays a histogram of the current values in 16 bins:
@@ -11402,7 +11396,7 @@ When I have to deal with this stuff, I always go to a working example.
 <!-- mix-dialog-mix -->
 <tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="mixdialogmix">mix-dialog-mix</a> ()</code>
 </td></tr><tr><td></td><td>
-This is the id (an integer) of the mix displayed by the mix dialog.
+This is the id (mix object) of the mix displayed by the mix dialog.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -11981,10 +11975,10 @@ In the next example, we rebind them to treat same-sense zero-crossings as line m
   (let* ((loc (<a class=quiet href="#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a>))
 	 (twice #f)
 	 (dir (if forwards 1 -1))
-	 (reader (<a class=quiet href="#makesamplereader" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesamplereader_tip)">make-sample-reader</a> loc #f #f dir))
+	 (reader (<a class=quiet href="#makesampler" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesampler_tip)">make-sampler</a> loc #f #f dir))
 	 (val (<a class=quiet href="#readsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_readsample_tip)">read-sample</a>)))
     (while (not (or (<a class=quiet href="#cgp" onmouseout="UnTip()" onmouseover="Tip(extsnd_cgp_tip)">c-g?</a>)
-		    (and forwards (<a class=quiet href="#samplereaderatendQ" onmouseout="UnTip()" onmouseover="Tip(extsnd_samplereaderatendQ_tip)">sample-reader-at-end?</a> reader))
+		    (and forwards (<a class=quiet href="#sampleratendQ" onmouseout="UnTip()" onmouseover="Tip(extsnd_sampleratendQ_tip)">sampler-at-end?</a> reader))
 		    (and (not forwards) (= loc 0))))
       (let ((newval (<a class=quiet href="#readsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_readsample_tip)">read-sample</a> reader)))
 	(set! loc (+ loc dir))

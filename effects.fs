@@ -2754,11 +2754,11 @@ set-current
   snd0 #f #f frames { flt-len }
   snd chn #f frames flt-len + { total-len }
   :filter 0 flt-len snd0 #f #f channel->vct make-convolve { cnv }
-  0 snd chn 1 #f make-sample-reader { sf }
+  0 snd chn 1 #f make-sampler { sf }
   total-len 0.0 make-vct { out-data }
   cnv sf cnv-vct-cb { func }
   out-data func vct-map! drop
-  sf free-sample-reader drop
+  sf free-sampler drop
   out-data amp vct-scale! drop
   out-data vct-peak { max-samp }
   $" %s %s %s" #( snd0 amp get-func-name ) string-format { origin }
@@ -3114,7 +3114,7 @@ hide
 set-current
 : effects-position-sound <{ mono pos :optional snd #f chn #f -- res }>
   mono #f #f frames { len }
-  0 mono #f 1 #f make-sample-reader { rd }
+  0 mono #f 1 #f make-sampler { rd }
   $" %s %s %s" #( mono pos get-func-name ) string-format { origin }
   pos number? if
     rd pos numb-cb 0 len snd chn #f origin map-channel
@@ -3229,7 +3229,7 @@ set-current
 : effects-fp <{ srf amp freq :optional beg 0 dur #f snd #f  chn #f -- vct }>
   freq make-oscil { os }
   :srate srf make-src { sr }
-  beg snd chn 1 #f make-sample-reader { sf }
+  beg snd chn 1 #f make-sampler { sf }
   dur if dur else snd chn #f frames then { len }
   len 0.0 make-vct { out-data }
   out-data   os sr sf amp vct-fp-cb   vct-map! drop
@@ -4197,7 +4197,7 @@ $" Effects" _ value effects-menu-label
 
 hide
 : find-click <{ loc :optional snd #f chn #f -- pos|#f }>
-  loc snd chn 1 #f make-sample-reader { rd }
+  loc snd chn 1 #f make-sampler { rd }
   0.0 0.0 0.0 { samp0 samp1 samp2 }
   10 0.0 make-vct { samps }
   #f 					\ flag

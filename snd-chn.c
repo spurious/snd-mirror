@@ -5129,7 +5129,7 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 			      /* the mix has already been selected by hit-mix above (to prepare drag) */
 			      if (XEN_HOOKED(mix_click_hook))
 				res = run_progn_hook(mix_click_hook,
-						     XEN_LIST_1(C_TO_XEN_INT(mix_tag)),
+						     XEN_LIST_1(new_xen_mix(mix_tag)),
 						     S_mix_click_hook);
 			      if (!(XEN_TRUE_P(res)))
 				{

@@ -141,7 +141,7 @@ end
 =begin
 let(open_sound("oboe.snd"),
     make_pvocoder(256, 4, 64),
-    make_sample_reader(0)) do |ind, pv, rd|
+    make_sampler(0)) do |ind, pv, rd|
   map_channel(lambda do |y| pvocoder(pv, rd) end)
   play_and_wait(0, ind)
   save_sound_as("pvoc.snd", ind)
@@ -153,24 +153,24 @@ end
 
 def test_pv_1
   pv = make_phase_vocoder(false, 512, 4, 128, 1.0, false, false, false)
-  rd = make_sample_reader(0)
+  rd = make_sampler(0)
   map_channel(lambda do |y| phase_vocoder(pv, lambda do |dir| next_sample(rd) end) end)
-  free_sample_reader(rd)
+  free_sampler(rd)
 end
 
 def test_pv_2(freq)
   pv = make_phase_vocoder(false, 512, 4, 128, freq, false, false, false)
-  rd = make_sample_reader(0)
+  rd = make_sampler(0)
   map_channel(lambda do |y| phase_vocoder(pv, lambda do |dir| next_sample(rd) end) end)
-  free_sample_reader(rd)
+  free_sampler(rd)
 end
 
 def test_pv_3(time)
   pv = make_phase_vocoder(false, 512, 4, (time * 128.0).floor, 1.0, false, false, false)
-  rd = make_sample_reader(0)
+  rd = make_sampler(0)
   len = (time * frames).floor
   data = make_vct!(len) do phase_vocoder(pv, lambda do |dir| next_sample(rd) end) end
-  free_sample_reader(rd)
+  free_sampler(rd)
   vct2channel(data, 0, len)
 end
 
@@ -188,9 +188,9 @@ def test_pv_4(gate)
                               true
                             end
                           }, false)
-  rd = make_sample_reader(0)
+  rd = make_sampler(0)
   map_channel(lambda do |y| phase_vocoder(pv, lambda do |dir| next_sample(rd) end) end)
-  free_sample_reader(rd)
+  free_sampler(rd)
 end
 
 # another version of the phase vocoder

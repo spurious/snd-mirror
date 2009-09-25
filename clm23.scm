@@ -2543,7 +2543,7 @@
 
 (definstrument (sndclmdoc-echo beg dur scaler secs file)
   (let ((del (make-delay (seconds->samples secs)))
-	(rd (make-sample-reader 0 file)))
+	(rd (make-sampler 0 file)))
     (run
      (lambda ()
        (do ((i beg (+ i 1)))

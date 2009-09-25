@@ -546,7 +546,7 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 	 (len (expt 2 (inexact->exact (ceiling (/ (log size) (log 2.0))))))
 	 (rl (make-vct len))
 	 (im (make-vct len))
-	 (rd (make-sample-reader 0 snd chn)))
+	 (rd (make-sampler 0 snd chn)))
     (do ((i 0 (+ i 1)))
 	((= i size))
       (vct-set! rl i (rd)))
@@ -1142,7 +1142,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
   (let ((incr (/ (* freq 2 pi) (srate snd)))
 	(sw 0.0)
 	(cw 0.0)
-	(reader (make-sample-reader beg snd)))
+	(reader (make-sampler beg snd)))
     (do ((i 0 (+ i 1))) ; this could also use edot-product
 	((= i dur))
       (let ((samp (next-sample reader)))
@@ -1319,8 +1319,8 @@ the era when computers were human beings"
   "(channel2-inner-product s1 c1 s2 c2) returns the inner-product of the two channels: <f,g>"
   (let ((N (frames s1 c1))
 	(sum 0.0)
-	(r1 (make-sample-reader 0 s1 c1))
-	(r2 (make-sample-reader 0 s2 c2)))
+	(r1 (make-sampler 0 s1 c1))
+	(r2 (make-sampler 0 s2 c2)))
     (do ((i 0 (+ i 1)))
 	((= i N))
       (set! sum (+ sum (* (r1) (r2)))))
@@ -1347,8 +1347,8 @@ the era when computers were human beings"
 
 (define (channel-distance s1 c1 s2 c2)               ; sqrt(<f - g, f - g>)
   "(channel-distance s1 c1 s2 c2) returns the euclidean distance between the two channels: sqrt(<f-g,f-g>)"
-  (let* ((r1 (make-sample-reader 0 s1 c1))
-	 (r2 (make-sample-reader 0 s2 c2))
+  (let* ((r1 (make-sampler 0 s1 c1))
+	 (r2 (make-sampler 0 s2 c2))
 	 (sum 0.0)
 	 (N (min (frames s1 c1) (frames s2 c2))))
     (do ((i 0 (+ i 1)))
@@ -1362,7 +1362,7 @@ the era when computers were human beings"
   "(periodogram N) displays an 'N' point Bartlett periodogram of the samples in the current channel"
   (let* ((len (frames))
 	 (average-data (make-vct N))
-	 (rd (make-sample-reader 0))
+	 (rd (make-sampler 0))
 	 (N2 (* 2 N))
 	 (rl (make-vct N2))
 	 (im (make-vct N2)))
@@ -1793,7 +1793,7 @@ and replaces it with the spectrum given in coeffs"
 
 (define* (linear-src-channel sr :optional snd chn)
   "(linear-src-channel sr snd chn performs sampling rate conversion using linear interpolation."
-  (let* ((rd (make-sample-reader 0 snd chn))
+  (let* ((rd (make-sampler 0 snd chn))
 	 (last (rd))
 	 (next (rd))
 	 (intrp 0.0)
@@ -1801,7 +1801,7 @@ and replaces it with the spectrum given in coeffs"
 	  (with-sound (:output (snd-tempnam) :srate (srate snd) :to-snd #f)
 	    (run (lambda ()
 		   (do ((samp 0 (+ 1 samp)))
-		       ((sample-reader-at-end? rd))
+		       ((sampler-at-end? rd))
 		     (out-any samp
 			      (let ((pos intrp))
 				(if (>= pos 1.0)

@@ -1243,8 +1243,8 @@ class Instrument < With_sound
   end
 end
 
-# Channel2Vct and Sample_Reader are helper classes used by class
-# Snd_Instrument.  sample_reader has no possibility to set location
+# Channel2Vct and Sampler are helper classes used by class
+# Snd_Instrument.  sampler has no possibility to set location
 # (and direction) which is needed by instrument grani (clm-ins.rb).
 if provided? :snd
   class Channel2Vct
@@ -1309,10 +1309,10 @@ if provided? :snd
   end
 end
 
-class Sample_Reader
-  # (make-sample-reader (start-samp 0) (snd #f) (chn #f) (dir 1) (edpos #f))
+class Sampler
+  # (make-sampler (start-samp 0) (snd #f) (chn #f) (dir 1) (edpos #f))
   def initialize(snd = false, chn = false, start = 0, dir = 1)
-    @reader = make_sample_reader(start, snd, chn, dir, false)
+    @reader = make_sampler(start, snd, chn, dir, false)
     @direction = dir
     @start = start
     @direction = dir
@@ -1334,18 +1334,18 @@ class Sample_Reader
   end
 
   def close
-    free_sample_reader(@reader)
+    free_sampler(@reader)
     if sound?(@snd)
       close_sound_extend(@snd)
     end
   end
   
   def location
-    sample_reader_position(@reader)
+    sampler_position(@reader)
   end
 
   def location=(val)
-    # sample_reader_position isn't settable
+    # sampler_position isn't settable
   end
 end
 
@@ -1381,7 +1381,7 @@ class Snd_Instrument < Instrument
     if get_args(args, :vct?, false)
       Channel2Vct.new(get_snd(file), channel, start, direction)
     else
-      Sample_Reader.new(get_snd(file), channel, start, direction)
+      Sampler.new(get_snd(file), channel, start, direction)
     end
   end
 

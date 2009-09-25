@@ -364,17 +364,17 @@
   
   (define (violin beg dur freq amp)
     (let* ((frq-hz (* 2 (->frequency freq #t)))
-	   (id (mix (with-temp-sound () (fm-violin 0 dur frq-hz amp))
-		    (->sample beg) 0 index 0  ; start, file in-chan, sound, channel
-		    #t #t)))                  ; with tag and auto-delete
+	   (id (car (mix (with-temp-sound () (fm-violin 0 dur frq-hz amp))
+			 (->sample beg) 0 index 0  ; start, file in-chan, sound, channel
+			 #t #t))))                  ; with tag and auto-delete
       (set! (mix-property 'frequency id) frq-hz)
       (set! (mix-property 'instrument id) 'violin)))
   
   (define (cello beg dur freq amp)
     (let* ((frq-hz (* 2 (->frequency freq #t)))
-	   (id (mix (with-temp-sound () (fm-violin 0 dur frq-hz amp :fm-index 1.5))
-		    (->sample beg) 0 index 0
-		    #t #t)))
+	   (id (car (mix (with-temp-sound () (fm-violin 0 dur frq-hz amp :fm-index 1.5))
+			 (->sample beg) 0 index 0
+			 #t #t))))
       (set! (mix-property 'frequency id) frq-hz)
       (set! (mix-property 'instrument id) 'cello)))
   
@@ -478,9 +478,9 @@
   
   (define (violin beg dur freq amp)
     (let* ((frq-hz (* 2 (->frequency freq #t)))
-	   (id (mix (with-temp-sound () (fm-violin 0 dur frq-hz amp))
-		    (->sample beg) 0 index 0  ; start, file in-chan, sound, channel
-		    #t #t)))                  ; with tag and auto-delete
+	   (id (car (mix (with-temp-sound () (fm-violin 0 dur frq-hz amp))
+			 (->sample beg) 0 index 0  ; start, file in-chan, sound, channel
+			 #t #t))))                  ; with tag and auto-delete
       (set! (mix-property 'frequency id) frq-hz)
       (set! (mix-property 'instrument id) 'violin)
       (set! (mix-sync id) violin-sync)
@@ -488,9 +488,9 @@
   
   (define (cello beg dur freq amp)
     (let* ((frq-hz (* 2 (->frequency freq #t)))
-	   (id (mix (with-temp-sound () (fm-violin 0 dur frq-hz amp :fm-index 1.5))
-		    (->sample beg) 0 index 0
-		    #t #t)))
+	   (id (car (mix (with-temp-sound () (fm-violin 0 dur frq-hz amp :fm-index 1.5))
+			 (->sample beg) 0 index 0
+			 #t #t))))
       (set! (mix-property 'frequency id) frq-hz)
       (set! (mix-property 'instrument id) 'cello)
       (set! (mix-sync id) cello-sync)

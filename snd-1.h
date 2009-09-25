@@ -905,9 +905,9 @@ void check_saved_temp_file(const char *type, XEN filename, XEN date_and_length);
 bool editable_p(chan_info *cp);
 file_delete_t xen_to_file_delete_t(XEN auto_delete, const char *caller);
 snd_fd *free_snd_fd(snd_fd *sf);
-char *sample_reader_to_string(snd_fd *fd);
-bool sample_reader_p(XEN obj);
-snd_fd *xen_to_sample_reader(XEN obj);
+char *sampler_to_string(snd_fd *fd);
+bool sampler_p(XEN obj);
+snd_fd *xen_to_sampler(XEN obj);
 snd_fd *free_snd_fd_almost(snd_fd *sf);
 bool scale_channel(chan_info *cp, mus_float_t scaler, mus_long_t beg, mus_long_t num, int pos, bool in_as_one_edit);
 bool scale_channel_with_origin(chan_info *cp, mus_float_t scl, mus_long_t beg, mus_long_t num, int pos, bool in_as_one_edit, const char *origin);
@@ -1018,7 +1018,7 @@ XEN eval_str_wrapper(void *data);
 XEN eval_form_wrapper(void *data);
 XEN string_to_form(const char *data);
 char *g_print_1(XEN obj);
-XEN g_c_make_sample_reader(snd_fd *fd);
+XEN g_c_make_sampler(snd_fd *fd);
 #if HAVE_GUILE
   XEN g_call0(XEN proc, const char *caller);
   XEN g_call1(XEN proc, XEN arg, const char *caller);
@@ -1544,6 +1544,9 @@ void free_channel_mixes(chan_info *cp);
 void delete_any_remaining_mix_temp_files_at_exit(chan_info *cp);
 
 XEN new_xen_mix(int n);
+XEN g_make_mix_sampler(XEN mix_id, XEN ubeg);
+bool xen_mix_p(XEN obj);
+#define XEN_MIX_P(arg) xen_mix_p(arg)
  
 mus_long_t mix_position_from_id(int id);
 mus_long_t mix_length_from_id(int id);
@@ -1564,18 +1567,18 @@ bool mix_set_amp_edit(int id, mus_float_t amp);
 bool mix_set_speed_edit(int id, mus_float_t spd);
 void after_mix_edit(int id);
 
-int mix_complete_file(snd_info *sp, mus_long_t beg, const char *fullname, bool with_tag, file_delete_t auto_delete, mix_sync_t all_chans);
+int mix_complete_file(snd_info *sp, mus_long_t beg, const char *fullname, bool with_tag, file_delete_t auto_delete, mix_sync_t all_chans, int *out_chans);
 int mix_complete_file_at_cursor(snd_info *sp, const char *str);
 int mix_file(mus_long_t beg, mus_long_t num, int chans, chan_info **cps, const char *mixinfile, file_delete_t temp, const char *origin, bool with_tag, int start_chan);
 
-bool mix_sample_reader_at_end_p(void *mf);
-bool mix_sample_reader_p(XEN obj);
+bool mix_sampler_at_end_p(void *mf);
+bool mix_sampler_p(XEN obj);
 
-XEN g_copy_mix_sample_reader(XEN obj);
-XEN g_mix_sample_reader_home(XEN obj);
-XEN g_mix_sample_reader_at_end_p(XEN obj);
-XEN g_mix_sample_reader_position(XEN obj);
-XEN g_free_mix_sample_reader(XEN obj);
+XEN g_copy_mix_sampler(XEN obj);
+XEN g_mix_sampler_home(XEN obj);
+XEN g_mix_sampler_at_end_p(XEN obj);
+XEN g_mix_sampler_position(XEN obj);
+XEN g_free_mix_sampler(XEN obj);
 char *edit_list_mix_init(chan_info *cp);
 void channel_set_mix_tags_erased(chan_info *cp);
 void color_mixes(color_t color);

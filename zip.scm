@@ -40,7 +40,7 @@ an envelope (normally a ramp from 0 to 1) which sets where we are in the zipping
 
 
 (define (zipper zp input1 input2)
-  "(zipper zip in1 in2) creates the digital zipper sound effect using zipper generator 'zip' and the two sample readers 'in1' and 'in2'"
+  "(zipper zip in1 in2) creates the digital zipper sound effect using zipper generator 'zip' and the two samplers 'in1' and 'in2'"
   (let* ((ramp-loc (env (zdata-rampe zp)))
 	 (frame-samples (inexact->exact (floor (env (zdata-fe zp)))))
 	 (frame1 (zdata-frame1 zp))
@@ -102,8 +102,8 @@ an envelope (normally a ramp from 0 to 1) which sets where we are in the zipping
 	 (zip (make-zipper (make-env (or ramp (list 0 0 1 1)) :length dur)
 			   (or size 0.05)
 			   (make-env (list 0 (* (srate) (or size 0.05))) :length dur)))
-	(read0 (make-sample-reader 0 file1))
-	(read1 (make-sample-reader 0 file2)))
+	(read0 (make-sampler 0 file1))
+	(read1 (make-sampler 0 file2)))
     (map-channel (lambda (y)
 		   (+ y (zipper zip read0 read1)))
 		 beg dur)))
@@ -121,8 +121,8 @@ an envelope (normally a ramp from 0 to 1) which sets where we are in the zipping
 	   (zp (make-zipper (make-env '(0 0 1 1) :length dur)
 			    0.05
 			    (make-env (list 0 (* (safe-srate) 0.05)) :length dur)))
-	  (reader0 (make-sample-reader 0 0 0))
-	  (reader1 (make-sample-reader 0 1 0)))
+	  (reader0 (make-sampler 0 0 0))
+	  (reader1 (make-sampler 0 1 0)))
       (map-channel (lambda (val)
 		     (zipper zp reader0 reader1))))))
 |#

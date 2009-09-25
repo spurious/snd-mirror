@@ -325,10 +325,10 @@
 	    (newline))
 	  (begin
 	    
-	    ;; Set up sample readers for each channel.
+	    ;; Set up samplers for each channel.
 	    (c-for 0 < chans 1
 		   (lambda (ch)
-		     (set! readers (cons (make-sample-reader start
+		     (set! readers (cons (make-sampler start
 							     snd
 							     (+ startchan ch))
 					 readers))))

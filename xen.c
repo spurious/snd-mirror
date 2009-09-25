@@ -2111,6 +2111,8 @@ static XEN g_add_hook(XEN hook, XEN function, XEN position)
 
   obj = XEN_TO_GHOOK(hook);
   XEN_ASSERT_TYPE(xen_hook_p(hook), hook, XEN_ARG_1, "add-hook!", "a hook");
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(function), function, XEN_ARG_2, "add-hook!", "a function");
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(position), position, XEN_ARG_3, "add-hook!", "boolean");
 
   arity = XEN_ARITY(function);
   gc_loc = s7_gc_protect(s7, arity);
@@ -2118,9 +2120,7 @@ static XEN g_add_hook(XEN hook, XEN function, XEN position)
 	      (XEN_TO_C_INT(XEN_CAR(arity)) + XEN_TO_C_INT(XEN_CADR(arity)) >= ghook_arity(obj)) ||
 	      (XEN_TRUE_P(XEN_CADDR(arity))));
   s7_gc_unprotect_at(s7, gc_loc);
-
-  XEN_ASSERT_TYPE((XEN_PROCEDURE_P(function)) && (arity_ok), function, XEN_ARG_2, "add-hook!", "a function");
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(position), position, XEN_ARG_3, "add-hook!", "boolean");
+  XEN_ASSERT_TYPE(arity_ok, function, XEN_ARG_2, "add-hook!", "a function whose arity matches the hook's");
 
   if (XEN_BOOLEAN_P(position)) at_end = XEN_TO_C_BOOLEAN(position);
   add_ghook(obj, function, at_end);

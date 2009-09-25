@@ -569,7 +569,7 @@
 			   ;; I can't immediately find a way around the "eval" 
 			   (beg (inexact->exact (floor (* (srate outsnd) (cadr note)))))
 			   ;; can't use seconds->samples here because the global mus-srate value might not match the local one
-			   (mx (mix snd beg #t outsnd #f #t #t))     ; all chans mixed, current output sound, with mixes, with auto-delete
+			   (mx (car (mix snd beg #t outsnd #f #t #t)))     ; all chans mixed, current output sound, with mixes, with auto-delete
 			   (chans (mus-sound-chans snd)))
 		      (set! (mix-name mx) (format #f "(~A ~A)" (car note) (cadr note)))
 		      (do ((chan 0 (+ 1 chan)))

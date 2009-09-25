@@ -137,7 +137,7 @@ rt-player.scm
 	"extern mus_float_t protected_previous_sample(void *sf)"
 	
 	(public
-	 (<void> sample-reader->vct (lambda ((<SCM> scm_reader)
+	 (<void> sampler->vct (lambda ((<SCM> scm_reader)
 					     (<SCM> scm_v)
 					     (<int> direction)
 					     (<int> startpos)
@@ -147,7 +147,7 @@ rt-player.scm
                                       ;;(fprintf stderr (string "v: %p, v->data: %p, reader: %p, v->length: %d\\n") v v->data reader (cast <int> v->length))
 				      (if (|| (> (+ startpos num_samples) v->length)
 					      (< startpos 0))
-					  (printf (string "sample-reader->vct error. startpos: %d, num_samples: %d, vct-length: %d\\n") startpos num_samples (cast <int> v->length))
+					  (printf (string "sampler->vct error. startpos: %d, num_samples: %d, vct-length: %d\\n") startpos num_samples (cast <int> v->length))
 					  (if (== 1 direction)
 					      (for-each startpos (+ startpos num_samples)
 							(lambda (i)
@@ -394,7 +394,7 @@ rt-player.scm
 	      ;;(c-display "direction" direction)
 	      (set! vcts (apply vector (map (lambda (ch)
 					      (let ((v (rb2-get-buffer size)))
-						(sample-reader->vct (make-sample-reader start snd ch direction) v 1 0 size)
+						(sampler->vct (make-sampler start snd ch direction) v 1 0 size)
 						v))
 					    (iota num-channels))))
 	      (let ((ret (get-playfunc diskplaytype 'first #f)))
@@ -403,7 +403,7 @@ rt-player.scm
 	    (begin
 	      (set! rb2s (apply vector (map (lambda (ch)
 					      (if (= 1 direction)
-						  (let ((reader (make-sample-reader start-pos snd ch direction))
+						  (let ((reader (make-sampler start-pos snd ch direction))
 							(position start-pos)
 							(size (c-integer (* (mus-srate) (+ (if #t
 											       0
@@ -415,14 +415,14 @@ rt-player.scm
 								(let ((bytesleft (- end position)))
 								  (if (< bytesleft size)
 								      (begin
-									(sample-reader->vct reader avct direction 0 bytesleft)
-									(set! reader (make-sample-reader start snd ch direction))
-									(sample-reader->vct reader avct direction bytesleft (- size bytesleft))
+									(sampler->vct reader avct direction 0 bytesleft)
+									(set! reader (make-sampler start snd ch direction))
+									(sampler->vct reader avct direction bytesleft (- size bytesleft))
 									(set! position (+ start (- size bytesleft))))
 								      (begin
-									(sample-reader->vct reader avct direction 0 size)
+									(sampler->vct reader avct direction 0 size)
 									(set! position (+ position size))))))))
-						  (let ((reader (make-sample-reader start-pos snd ch direction))
+						  (let ((reader (make-sampler start-pos snd ch direction))
 							(position start-pos)
 							(size (* (mus-srate) *rt-reader-buffer-time*)))
 						    (make-rb2 ch size
@@ -430,12 +430,12 @@ rt-player.scm
 								(let ((bytesleft (1+ (- position start))))
 								  (if (< bytesleft size)
 								      (begin
-									(sample-reader->vct reader avct direction 0 bytesleft)
-									(set! reader (make-sample-reader (1- end) snd ch direction))
-									(sample-reader->vct reader avct direction bytesleft (- size bytesleft))
+									(sampler->vct reader avct direction 0 bytesleft)
+									(set! reader (make-sampler (1- end) snd ch direction))
+									(sampler->vct reader avct direction bytesleft (- size bytesleft))
 									(set! position (- (1- end) (- size bytesleft))))
 								      (begin
-									(sample-reader->vct reader avct direction 0 size)
+									(sampler->vct reader avct direction 0 size)
 									(set! position (- position size))))))))))
 					    (iota num-channels))))
 	      (let ((ret (get-playfunc diskplaytype 'first #t)))
@@ -583,7 +583,7 @@ rt-player.scm
 
 (vct-ref rt-control-values rt-control-speed)
 
-(define r (make-sample-reader 200000 0 0 1))
+(define r (make-sampler 200000 0 0 1))
 (begin r)
 (SCM_SMOB_DATA r)
 (dosomething r)

@@ -3074,17 +3074,17 @@ module Examp
   #
   # this mainly involves keeping track of the current sound/channel
 
-  add_help(:selection_rms, "selection_rms() -> rms of selection data using sample readers")
+  add_help(:selection_rms, "selection_rms() -> rms of selection data using samplers")
   def selection_rms
     if selection?
-      reader = make_sample_reader(selection_position, false, false)
+      reader = make_sampler(selection_position, false, false)
       len = selection_frames
       sum = 0.0
       len.times do
         val = next_sample(reader)
         sum += val * val
       end
-      free_sample_reader(reader)
+      free_sampler(reader)
       sqrt(sum / len)
     else
       Snd.raise(:no_active_selection)
@@ -3304,15 +3304,15 @@ end")
 looks for successive samples that sum to less than 'limit', moving the cursor if successful")
   def locate_zero(limit)
     start = cursor
-    sf = make_sample_reader(start, false, false)
+    sf = make_sampler(start, false, false)
     val0 = sf.call.abs
     val1 = sf.call.abs
     n = start
-    until sample_reader_at_end?(sf) or c_g? or val0 + val1 < limit
+    until sampler_at_end?(sf) or c_g? or val0 + val1 < limit
       val0, val1 = val1, sf.call.abs
       n += 1
     end
-    free_sample_reader(sf)
+    free_sampler(sf)
     set_cursor(n)
   end
   
@@ -3661,15 +3661,15 @@ and 90 is all in channel 1.")
     len = frames(mono_snd)
     if number?(pan_env)
       pos = pan_env / 90.0
-      rd0 = make_sample_reader(0, mono_snd, false)
-      rd1 = make_sample_reader(0, mono_snd, false)
+      rd0 = make_sampler(0, mono_snd, false)
+      rd1 = make_sampler(0, mono_snd, false)
       map_channel(lambda do |y| y + pos * read_sample(rd1) end, 0, len, stereo_snd, 1)
       map_channel(lambda do |y| y + (1.0 - pos) * read_sample(rd0) end, 0, len, stereo_snd, 0)
     else
       e0 = make_env(:envelope, pan_env, :length, len)
       e1 = make_env(:envelope, pan_env, :length, len)
-      rd0 = make_sample_reader(0, mono_snd, false)
-      rd1 = make_sample_reader(0, mono_snd, false)
+      rd0 = make_sampler(0, mono_snd, false)
+      rd1 = make_sampler(0, mono_snd, false)
       map_channel(lambda do |y| y + env(e1) * read_sample(rd1) end, 0, len, stereo_snd, 1)
       map_channel(lambda do |y| y + (1.0 - env(e0)) * read_sample(rd0) end, 0, len, stereo_snd, 0)
     end
@@ -3792,7 +3792,7 @@ suppresses portions of a sound that look like steady-state")
     im = make_vct(fft_size)
     ramper = make_ramp(256)
     peak = maxamp / fft_mid
-    read_ahead = make_sample_reader(0, snd, chn)
+    read_ahead = make_sampler(0, snd, chn)
     ctr = fft_size - 1
     ctr.times do |i| rl[i] = read_sample(read_ahead) end
     in_vowel = false
@@ -4094,11 +4094,11 @@ varies the sampling rate via an oscil: fp(1.0, 0.3, 20)")
     os = make_oscil(:frequency, osfreq)
     s = make_src(:srate, sr)
     len = frames(snd, chn)
-    sf = make_sample_reader(0, snd, chn)
+    sf = make_sampler(0, snd, chn)
     out_data = make_vct!(len) do
       src(s, osamp * oscil(os), lambda do |dir| dir > 0 ? next_sample(sf) : previous_sample(sf) end)
     end
-    free_sample_reader(sf)
+    free_sampler(sf)
     vct2channel(out_data, 0, len, snd, chn, false,
                 format("%s(%s, %s, %s", get_func_name, sr, osamp, osfreq))
   end
@@ -4170,13 +4170,13 @@ uses the granulate generator to change tempo according to an envelope: expsnd([0
     ge = make_env(:envelope, gr_env, :duration, dur)
     sound_len = (srate(snd) * dur).to_i
     len = [sound_len, frames(snd, chn)].max
-    sf = make_sample_reader(0, snd, chn)
+    sf = make_sampler(0, snd, chn)
     out_data = make_vct!(len) do
       val = granulate(gr, lambda do |dir| next_sample(sf) end)
       gr.increment = env(ge)
       val
     end
-    free_sample_reader(sf)
+    free_sampler(sf)
     vct2channel(out_data, 0, len, snd, chn, false, format("%s(%s", get_func_name, gr_env.inspect))
   end
 
@@ -4315,9 +4315,9 @@ convolves snd0 and snd1, scaling by amp, returns new max amp: cnvtest(0, 1, 0.1)
     flt_len = frames(snd0)
     total_len = flt_len + frames(snd1)
     cnv = make_convolve(:filter, channel2vct(0, flt_len, snd0))
-    sf = make_sample_reader(0, snd1, false)
+    sf = make_sampler(0, snd1, false)
     out_data = make_vct!(total_len) do convolve(cnv, lambda do |dir| next_sample(sf) end) end
-    free_sample_reader(sf)
+    free_sampler(sf)
     vct_scale!(out_data, amp)
     max_samp = vct_peak(out_data)
     vct2channel(out_data, 0, total_len, snd1)
@@ -4405,7 +4405,7 @@ sample at loc (interpolated if necessary) from func created by make_sound_interp
   def sound_via_sound(snd1, snd2)
     intrp = make_sound_interp(0, snd1, 0)
     len = frames(snd1, 0) - 1
-    rd = make_sample_reader(0, snd2, 0)
+    rd = make_sampler(0, snd2, 0)
     mx = maxamp(snd2, 0)
     map_channel(lambda do |val|
                   sound_interp(intrp, (len * 0.5 * (1.0 + (read_sample(rd) / mx))).floor)
@@ -4484,7 +4484,7 @@ reads snd's channel chn according to env and time-scale")
       position_in_original = env(read_env)
       if i >= next_reader_starts_at
         readers[next_reader] =
-          make_sample_reader([0, (position_in_original + mus_random(jitter)).round].max, false)
+          make_sampler([0, (position_in_original + mus_random(jitter)).round].max, false)
         grain_envs[next_reader].reset
         next_reader += 1
         if next_reader >= num_readers then next_reader = 0 end
@@ -4492,7 +4492,7 @@ reads snd's channel chn according to env and time-scale")
       end
       sum = 0.0
       readers.each_with_index do |rd, j|
-        if sample_reader?(rd)
+        if sampler?(rd)
           sum += env(grain_envs[j]) * next_sample(rd)
         end
       end
@@ -4733,7 +4733,7 @@ end")
 
   add_help(:find_click, "find_click(loc) finds the next click starting at 'loc'")
   def find_click(loc)
-    reader = make_sample_reader(loc, false, false)
+    reader = make_sampler(loc, false, false)
     samp0 = samp1 = samp2 = 0.0
     samps = make_vct(10)
     len = frames()
@@ -4861,9 +4861,9 @@ In most cases, this will be slightly offset from the true beginning of the note"
   add_help(:file2vct, "file2vct(file) returns a vct with file's data")
   def file2vct(file)
     len = mus_sound_frames(file)
-    reader = make_sample_reader(0, file)
+    reader = make_sampler(0, file)
     data = make_vct!(len) do next_sample(reader) end
-    free_sample_reader(reader)
+    free_sampler(reader)
     data
   end
 
@@ -5241,7 +5241,7 @@ divide sound into block-len blocks, recombine blocks in reverse order.")
     num_blocks = (len / (srate(snd).to_f * block_len)).floor
     if num_blocks > 1
       actual_block_len = len / num_blocks
-      rd = make_sample_reader(len - actual_block_len, snd, chn)
+      rd = make_sampler(len - actual_block_len, snd, chn)
       beg = 0
       ctr = 1
       map_channel(lambda do |y|
@@ -5257,7 +5257,7 @@ divide sound into block-len blocks, recombine blocks in reverse order.")
                     if beg == actual_block_len
                       ctr += 1
                       beg = 0
-                      rd = make_sample_reader([len - ctr * actual_block_len, 0].max, snd, chn)
+                      rd = make_sampler([len - ctr * actual_block_len, 0].max, snd, chn)
                     end
                     val
                   end,
@@ -5288,15 +5288,15 @@ divide sound into blocks, recombine in order, but each block internally reversed
 
   def segment_maxamp(name, beg, dur)
     mx = 0.0
-    rd = make_sample_reader(beg, name)
+    rd = make_sampler(beg, name)
     dur.times do mx = [mx, next_sample(rd).abs].max end
-    free_sample_reader(rd)
+    free_sampler(rd)
     mx
   end
 
   def segment_sound(name, high, low)
     len = mus_sound_frames(name)
-    reader = make_sample_reader(0, name)
+    reader = make_sampler(0, name)
     avg = make_moving_average(:size, 128)
     lavg = make_moving_average(:size, 2048)
     segments = Vct.new(100)
@@ -5324,7 +5324,7 @@ divide sound into blocks, recombine in order, but each block internally reversed
         end
       end
     end
-    free_sample_reader(reader)
+    free_sampler(reader)
     if in_sound
       segments[segctr] = len
       [segctr + 1, segments]
@@ -5394,7 +5394,7 @@ returns true and a sample number if it finds clipping.")
       else
         len = frames(index)
         fin = (dur ? [len, beg + dur].min : len)
-        readers = make_array(chns) do |chn| make_sample_reader(beg, index, chn) end
+        readers = make_array(chns) do |chn| make_sampler(beg, index, chn) end
         result = false
         beg.upto(fin) do |i|
           local_result = true

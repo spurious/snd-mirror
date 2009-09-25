@@ -35,7 +35,7 @@
 ;;; -------- single sample clicks
 
 (define* (remove-single-sample-clicks :optional (jump 8) snd chn)
-  (let* ((reader (make-sample-reader 0 snd chn))
+  (let* ((reader (make-sampler 0 snd chn))
 	 (mx (make-moving-average 16)) ; local average of abs difference
 	 (samp0 0.0)
 	 (samp1 0.0)
@@ -134,7 +134,7 @@
       (vct-set! data (+ beg i) (+ off (* scale (cos (+ angle (* i incr)))))))))
 
 (define* (remove-pops :optional (size 8) snd chn)
-  (let* ((reader (make-sample-reader 0 snd chn))
+  (let* ((reader (make-sampler 0 snd chn))
 	 (dly0 (make-delay (* 4 size)))
 	 (dly1 (make-delay (* 5 size)))
 	 (mx-ahead (make-moving-average (* 4 size))) ; local average of abs difference ahead of current window
@@ -355,7 +355,7 @@
 	 (ctr 0)
 	 (mx (maxamp snd chn))
 	 (avg-size 8192)
-	 (rd0 (make-sample-reader 0 snd chn))
+	 (rd0 (make-sampler 0 snd chn))
 	 (xhat 0.0)
 	 (frm (make-formant :radius (- 1.0 (/ 500.0 (srate snd))) :frequency 600))
 	 (del (make-moving-sum avg-size))

@@ -11465,7 +11465,7 @@ s7_pointer s7_apply_function(s7_scheme *sc, s7_pointer fnc, s7_pointer args)
 
 bool s7_is_procedure(s7_pointer x)
 {
-  return(is_procedure(x));
+  return(is_procedure(x) || is_closure(x) || is_closure_star(x));
 }
 
 

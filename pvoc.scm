@@ -152,7 +152,7 @@
 
 ;;;   (let* ((ind (open-sound "oboe.snd"))
 ;;;	     (pv (make-pvocoder 256 4 64))
-;;;	     (rd (make-sample-reader 0)))
+;;;	     (rd (make-sampler 0)))
 ;;;	(map-channel (lambda (y) (pvocoder pv (lambda () (rd)))))
 
 
@@ -167,11 +167,11 @@
 				  #f ;no change to edits
 				  #f ;no change to synthesis
 				  ))
-	  (reader (make-sample-reader 0)))
+	  (reader (make-sampler 0)))
       (map-channel (lambda (val)
 		     (phase-vocoder pv (lambda (dir) 
 					 (next-sample reader)))))
-      (free-sample-reader reader))))
+      (free-sampler reader))))
 
 (define test-pv-2
   (lambda (freq)
@@ -181,11 +181,11 @@
 				  #f
 				  #f ; no change to synthesis
 				  ))
-	  (reader (make-sample-reader 0)))
+	  (reader (make-sampler 0)))
       (map-channel (lambda (val)
 		     (phase-vocoder pv (lambda (dir) 
 					 (next-sample reader)))))
-      (free-sample-reader reader))))
+      (free-sampler reader))))
 
 (define test-pv-3
   (lambda (time)
@@ -195,14 +195,14 @@
 				   #f ;no change to edits
 				   #f ;no change to synthesis
 				   ))
-	   (reader (make-sample-reader 0))
+	   (reader (make-sampler 0))
 	   (len (inexact->exact (floor (* time (frames)))))
 	   (data (make-vct len))
 	   )
       (vct-map! data
 		(lambda ()
 		  (phase-vocoder pv (lambda (dir) (next-sample reader)))))
-      (free-sample-reader reader)
+      (free-sampler reader)
       (vct->channel data 0 len))))
 
 (define test-pv-4
@@ -219,12 +219,12 @@
 				      #t))
 				  #f ;no change to synthesis
 				  ))
-	  (reader (make-sample-reader 0))
+	  (reader (make-sampler 0))
 	  )
       (map-channel (lambda (val)
 		     (phase-vocoder pv (lambda (dir) 
 					 (next-sample reader)))))
-      (free-sample-reader reader))))
+      (free-sampler reader))))
 |#
 
 

@@ -209,7 +209,7 @@ the amp (more or less), 'N'  is 1..10 or thereabouts, 'fi' is the phase incremen
 
 #|
 (with-sound () 
-  (let ((rd (make-sample-reader 0 "now.snd")) 
+  (let ((rd (make-sampler 0 "now.snd")) 
 	(m (make-mfilter))) 
     (run (lambda () 
 	   (do ((i 0 (+ 1 i))) 
@@ -218,7 +218,7 @@ the amp (more or less), 'N'  is 1..10 or thereabouts, 'fi' is the phase incremen
 
 ;;; sweep center freq:
 (with-sound () 
-  (let ((rd (make-sample-reader 0 "oboe.snd")) 
+  (let ((rd (make-sampler 0 "oboe.snd")) 
         (m (make-mfilter :decay .99 :frequency 1000)) 
         (e (make-env '(0 100 1 2000) :length 10000))) 
     (run (lambda () 
