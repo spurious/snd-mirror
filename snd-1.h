@@ -1543,6 +1543,8 @@ void preload_mixes(mix_state **mixes, int low_id, ed_list *ed);
 void free_channel_mixes(chan_info *cp);
 void delete_any_remaining_mix_temp_files_at_exit(chan_info *cp);
 
+XEN new_xen_mix(int n);
+ 
 mus_long_t mix_position_from_id(int id);
 mus_long_t mix_length_from_id(int id);
 mus_float_t mix_amp_from_id(int id);

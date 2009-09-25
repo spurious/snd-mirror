@@ -447,6 +447,7 @@ static int mix_selection(chan_info *cp, sync_info *si_out, mus_long_t beg, io_er
     }
   if (tempfile) free(tempfile);
   (*err) = io_err;
+
   return(id);
 }
 
@@ -1065,8 +1066,7 @@ static XEN g_mix_selection(XEN beg, XEN snd, XEN chn, XEN sel_chan)
       chan_info *cp;
       mus_long_t obeg;
       io_error_t io_err = IO_NO_ERROR;
-      XEN res;
-      int selection_chan = 0;
+      int selection_chan = 0, id = -1;
       sync_info *si_out;
 
       ASSERT_CHANNEL(S_mix_selection, snd, chn, 2);
@@ -1083,14 +1083,15 @@ static XEN g_mix_selection(XEN beg, XEN snd, XEN chn, XEN sel_chan)
 	si_out = make_simple_sync(cp, obeg); /* ignore sync */
       else si_out = sync_to_chan(cp);
 
-      res = C_TO_XEN_INT(mix_selection(cp, si_out, obeg, &io_err, selection_chan));
+      id = mix_selection(cp, si_out, obeg, &io_err, selection_chan);
 
       free_sync_info(si_out);
       if (SERIOUS_IO_ERROR(io_err))
 	XEN_ERROR(XEN_ERROR_TYPE("IO-error"),
 		  XEN_LIST_2(C_TO_XEN_STRING(S_mix_selection),
 			     C_TO_XEN_STRING(io_error_name(io_err))));
-      return(res);
+
+      return(new_xen_mix(id));
     }
   return(snd_no_active_selection_error(S_mix_selection));
 }

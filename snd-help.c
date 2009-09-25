@@ -545,6 +545,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+25-Sep:  mixes are objects now (not ints), integer->mix and mix->integer.\n\
 17-Sep:  Snd 10.9.\n\
 10-Sep:  removed show-backtrace (it is #t now). default optimization is now 6.\n\
 9-Aug:   Snd 10.8.\n\

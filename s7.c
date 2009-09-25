@@ -86,10 +86,6 @@
  *        perhaps settable numerator denominator imag-part real-part angle magnitude
  *        perhaps trailing args to cons -> list*
  *        perhaps trailing args to list-ref
- *        symbol names in ||? (or better, use "||" as matrix op:
- *          |*| = matrix multiply (or scale if one arg is not a vector, or dot-product if both are 1-dim)
- *          |+| |-| |/| |any...| |solve| |invert|
- *        hooks?
  *        cerror ("error/cc"?) -- tag = continuation in this case,
  *          and error handler makes it accessible (as well as error context) for eval
  *        rename "force" to some name matching the notion of a promise ("delay" and "force" are about as bad as names can get)
@@ -13462,11 +13458,11 @@ each a function of no arguments, guaranteeing that finish is called even if body
   s7_pointer p;
 
   if (!is_thunk(sc, car(args)))
-    return(s7_wrong_type_arg_error(sc, "dynamic-wind", 1, car(args), "a procedure"));
+    return(s7_wrong_type_arg_error(sc, "dynamic-wind", 1, car(args), "a thunk"));
   if (!is_thunk(sc, cadr(args)))
-    return(s7_wrong_type_arg_error(sc, "dynamic-wind", 2, cadr(args), "a procedure"));
+    return(s7_wrong_type_arg_error(sc, "dynamic-wind", 2, cadr(args), "a thunk"));
   if (!is_thunk(sc, caddr(args)))
-    return(s7_wrong_type_arg_error(sc, "dynamic-wind", 3, caddr(args), "a procedure"));
+    return(s7_wrong_type_arg_error(sc, "dynamic-wind", 3, caddr(args), "a thunk"));
   
   p = new_cell(sc);
   dynamic_wind_in(p) = car(args);
@@ -13489,7 +13485,7 @@ static s7_pointer g_catch(s7_scheme *sc, s7_pointer args)
   s7_pointer p;
 
   if (!is_thunk(sc, cadr(args)))
-    return(s7_wrong_type_arg_error(sc, "catch", 2, cadr(args), "a procedure of 0 args"));
+    return(s7_wrong_type_arg_error(sc, "catch", 2, cadr(args), "a thunk"));
   if (!is_procedure(caddr(args)))
     return(s7_wrong_type_arg_error(sc, "catch", 3, caddr(args), "a procedure"));
   
@@ -14217,7 +14213,7 @@ static s7_pointer g_list_for_each(s7_scheme *sc, s7_pointer args)
 
   if ((!is_procedure(car(args))) ||
       (is_thunk(sc, car(args))))
-    return(s7_wrong_type_arg_error(sc, "for-each", 1, car(args), "a procedure"));
+    return(s7_wrong_type_arg_error(sc, "for-each", 1, car(args), "a thunk"));
 
   sc->code = car(args);
   lists = cdr(args);
@@ -14272,7 +14268,7 @@ static s7_pointer g_list_map(s7_scheme *sc, s7_pointer args)
   
   if ((!is_procedure(car(args))) ||
       (is_thunk(sc, car(args))))
-    return(s7_wrong_type_arg_error(sc, "map", 1, car(args), "a procedure"));
+    return(s7_wrong_type_arg_error(sc, "map", 1, car(args), "a thunk"));
 
   sc->code = car(args);
   lists = cdr(args);

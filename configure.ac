@@ -1510,6 +1510,8 @@ AC_ARG_WITH(forth,
 # Guile
 #--------------------------------------------------------------------------------
 
+# TODO: change from guile-config to pkg-config guile-2.0.pc
+
 if test "$with_guile" = yes && test "$ac_snd_have_extension_language" = yes ; then
   with_guile=no
   AC_MSG_WARN([You asked for both Guile and $LOCAL_LANGUAGE -- $LOCAL_LANGUAGE will be used])

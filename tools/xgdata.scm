@@ -364,7 +364,8 @@
 (CFNC "gboolean gdk_events_pending void")
 (CFNC "GdkEvent* gdk_event_get void")
 (CFNC "GdkEvent* gdk_event_peek void")
-(CFNC "GdkEvent* gdk_event_get_graphics_expose GdkWindow* window")
+;;; (CFNC "GdkEvent* gdk_event_get_graphics_expose GdkWindow* window")
+;;; out 2.18.0
 (CFNC "void gdk_event_put GdkEvent* event")
 (CFNC "GdkEvent* gdk_event_copy GdkEvent* event")
 (CFNC "void gdk_event_free GdkEvent* event")
@@ -7036,3 +7037,8 @@
 (CFNC-2177 "void gdk_window_restack GdkWindow* window GdkWindow* sibling gboolean above")
 (CFNC-2177 "void gtk_widget_set_receives_default GtkWidget* widget gboolean receives_default")
 (CFNC-2177 "gboolean gtk_widget_get_receives_default GtkWidget* widget")
+
+;;; 2.18.0
+(CFNC-2177 "void gdk_window_flush GdkWindow* window")
+
+

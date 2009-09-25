@@ -1780,7 +1780,7 @@ mix region's channel region-chan (or all chans if region-chan is " PROC_TRUE ") 
     XEN_ERROR(CANT_UPDATE_FILE,
 	      XEN_LIST_2(C_TO_XEN_STRING(S_mix_region),
 			 C_TO_XEN_STRING(io_error_name(err))));
-  return(C_TO_XEN_INT(id));
+  return(new_xen_mix(id));
 }
 
 
