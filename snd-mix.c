@@ -526,7 +526,7 @@ typedef struct {
   int id;
   char *name;
   chan_info *cp;
-  int original_index;
+  int original_index;          /* index into cp->sounds array for original mix data */
   char *in_filename;
   mus_long_t in_samps;
   int in_chan;
@@ -2229,12 +2229,15 @@ void after_mix_edit(int id)
 
 /* TODO: check ruby/forth/guile and update all snd-test* etc
  * TODO: revise the documentation and check all examples
- * TODO: add integer->mix and mix->integer
- * TODO: mix-for-each, length and copy of mix, possibly position  (generic), home, properties
+ * TODO: add integer->mix and mix->integer (docs/tests)
+ * TODO: mix-for-each, length and copy of mix, possibly position  (generic), home, properties, sampler(?)
+ *        mix-for-each means for each sample?  of the current mix state?
+ *        copy is ambiguous -- might mean make an independent copy of the mix for later edits
  * TODO: mix-ref and set as access to mix samples: (id 1) = 2nd sample
- * SOMEDAY: deprecate mix-length, mix-position, mix-home, mix-properties
+ *          md->cp->sounds[md->original_index] is the original mix data,
+ *          but we have to handle stuff like amp and speed -- complicated!
+ * SOMEDAY: deprecate mix-length, mix-position, mix-home, mix-properties, make-mix-sample-reader et al
  * TODO: ruby methods as in vcts
- * TODO: check mix-sample-reader and others in run
  */
 
 typedef struct {
@@ -2285,7 +2288,6 @@ static XEN g_xen_mix_to_string(XEN obj)
   char *vstr;
   XEN result;
   #define S_xen_mix_to_string "mix->string"
-  #define H_xen_mix_to_string "(" S_xen_mix_to_string " v): scheme readable description of v"
 
   XEN_ASSERT_TYPE(XEN_MIX_P(obj), obj, XEN_ONLY_ARG, S_xen_mix_to_string, "a mix");
 
@@ -2349,12 +2351,16 @@ static init_xen_mix(void)
 #if HAVE_S7
   xen_mix_tag = XEN_MAKE_OBJECT_TYPE("<mix>", print_xen_mix, free_xen_mix, s7_xen_mix_equalp, NULL, NULL, NULL, s7_xen_mix_length, NULL, NULL);
 #else
+#if HAVE_RUBY
+  xen_mix_tag = XEN_MAKE_OBJECT_TYPE("XenMix", sizeof(xen_mix));
+#else
   xen_mix_tag = XEN_MAKE_OBJECT_TYPE("Mix", sizeof(xen_mix));
+#endif
 #endif
 
 #if HAVE_GUILE
-  scm_set_smob_print(xen_mix_tag, print_xen_mix);
-  scm_set_smob_free(xen_mix_tag, free_xen_mix);
+  scm_set_smob_print(xen_mix_tag,  print_xen_mix);
+  scm_set_smob_free(xen_mix_tag,   free_xen_mix);
   scm_set_smob_equalp(xen_mix_tag, equalp_xen_mix);
 #endif
 
@@ -3037,9 +3043,9 @@ auto-delete is " PROC_TRUE ", the input file is deleted when it is no longer nee
 		}
 	    }
 	  return(new_xen_mix(mix_complete_file(cp->sound, beg, name, 
-						  (XEN_NOT_BOUND_P(tag)) ? with_mix_tags(ss) : XEN_TO_C_BOOLEAN(tag),
-						  delete_choice,
-						  MIX_SETS_SYNC_LOCALLY)));
+					       (XEN_NOT_BOUND_P(tag)) ? with_mix_tags(ss) : XEN_TO_C_BOOLEAN(tag),
+					       delete_choice,
+					       MIX_SETS_SYNC_LOCALLY)));
 	}
     }
 
@@ -3127,7 +3133,7 @@ bool mix_sample_reader_p(XEN obj)
 #define XEN_TO_MIX_SAMPLE_READER(obj) ((mix_fd *)XEN_OBJECT_REF(obj))
 #define MIX_SAMPLE_READER_P(Obj) XEN_OBJECT_TYPE_P(Obj, mf_tag)
 
-void *xen_to_mix_sample_reader(XEN obj) 
+static void *xen_to_mix_sample_reader(XEN obj) 
 {
   if (MIX_SAMPLE_READER_P(obj)) 
     return(XEN_TO_MIX_SAMPLE_READER(obj)); 
@@ -3295,56 +3301,6 @@ XEN g_free_mix_sample_reader(XEN obj)
     }
   return(xen_return_first(XEN_FALSE, obj));
 }
-
-
-
-/* these are for snd-run */
-
-int mix_sync_max(void)
-{
-  return(current_mix_sync_max);
-}
-
-
-mus_float_t run_read_mix_sample(void *ptr) 
-{
-  mix_fd *mf = (mix_fd *)ptr;
-  return(read_sample(mf->sf));
-}
-
-
-void *run_make_mix_sample_reader(int id, mus_long_t beg) 
-{
-  mix_info *md;
-  md = md_from_id(id);
-  if (md)
-    {
-      mix_state *ms;
-      ms = current_mix_state(md);
-      if (ms)
-	{
-	  mix_fd *mf;
-	  mf = (mix_fd *)calloc(1, sizeof(mix_fd));
-	  mf->md = md;
-	  mf->sf = make_virtual_mix_reader(md->cp, beg, ms->len, ms->index, ms->scaler, READ_FORWARD);
-	  return((void *)mf);
-	}
-    }
-  return(NULL);
-}
-
-
-char *run_mix_sample_reader_to_string(void *ptr) 
-{
-  return(mix_sample_reader_to_string((mix_fd *)ptr));
-}
-
-
-void run_free_mix_sample_reader(void *ptr) 
-{
-  mf_free((mix_fd *)ptr);
-}
-
 
 
 static XEN g_view_mixes_dialog(void)

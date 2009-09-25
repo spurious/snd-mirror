@@ -1551,7 +1551,6 @@ mus_float_t mix_amp_from_id(int id);
 mus_float_t mix_speed_from_id(int id);
 env *mix_amp_env_from_id(int id);
 chan_info *mix_chan_info_from_id(int id);
-int mix_sync_max(void);
 
 mix_state *prepare_mix_state_for_channel(chan_info *cp, int mix_loc, mus_long_t beg, mus_long_t len);
 void add_ed_mix(ed_list *ed, mix_state *ms);
@@ -1571,7 +1570,7 @@ int mix_file(mus_long_t beg, mus_long_t num, int chans, chan_info **cps, const c
 
 bool mix_sample_reader_at_end_p(void *mf);
 bool mix_sample_reader_p(XEN obj);
-void *xen_to_mix_sample_reader(XEN obj);
+
 XEN g_copy_mix_sample_reader(XEN obj);
 XEN g_mix_sample_reader_home(XEN obj);
 XEN g_mix_sample_reader_at_end_p(XEN obj);
@@ -1589,10 +1588,6 @@ void display_channel_mixes(chan_info *cp);
 bool play_mix_from_id(int mix_id);
 void drag_and_drop_mix_at_x_y(int data, const char *filename, int x, int y);
 
-mus_float_t run_read_mix_sample(void *ptr);
-char *run_mix_sample_reader_to_string(void *mf);
-void run_free_mix_sample_reader(void *ptr);
-void *run_make_mix_sample_reader(int id, mus_long_t beg);
 
 
 /* -------- snd-find.c -------- */

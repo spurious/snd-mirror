@@ -48225,8 +48225,6 @@ EDITS: 1
     
     (btst '(sample-reader? "hi") #f)
     (btst '(sample-reader? #t) #f)
-    (btst '(mix-sample-reader? "hi") #f)
-    (btst '(mix-sample-reader? #t) #f)
     
     (ftst '(let ((v (make-vct 3))) (vct-set! v 1 32.1) (vct-ref v 1)) 32.1)
     (ftst '(let ((v (make-vct 3))) (vct-set! v 1 32) (vct-ref v 1)) 32.0)
@@ -48879,7 +48877,6 @@ EDITS: 1
     (if with-gui
 	(let* ((ind (open-sound "oboe.snd"))
 	       (reg (make-region 0 10))
-	       (mx (mix-vct (vct 0 .1 .2) 10))
 	       (mrk (add-mark 123))
 	       (reg-val -100.0))
 	  (set! (mark-sync mrk) 1234)
@@ -48918,12 +48915,6 @@ EDITS: 1
 	  (let ((ok #f))
 	    (run (lambda () (set! ok (region? (+ 1 reg)))))
 	    (if ok (snd-display ";run not region?")))
-	  (let ((ok #f))
-	    (run (lambda () (set! ok (mix? mx))))
-	    (if (not ok) (snd-display ";run mix?")))
-	  (let ((ok #f))
-	    (run (lambda () (set! ok (mix? (integer->mix (+ 1 (mix->integer mx)))))))
-	    (if ok (snd-display ";run not mix?")))
 	  (if (string? (temp-dir))
 	      (let ((str "hiho")
 		    (str1 (temp-dir)))
@@ -48946,22 +48937,6 @@ EDITS: 1
 		 (let ((a (make-region-sample-reader 0 reg 0)))
 		   (set! reg-val (read-region-sample a)))))
 	  (if (fneq reg-val 0.0) (snd-display ";read-region-sample opt: ~A" reg-val))
-	  
-	  (let ((ok 0))
-	    (run (lambda () (set! ok (mix-position mx))))
-	    (if (not (= ok 10)) (snd-display ";run mix-position?")))
-	  (let ((ok 0))
-	    (run (lambda () (set! ok (mix-length mx))))
-	    (if (not (= ok 3)) (snd-display ";run mix-length?")))
-	  (let ((ok 0.0))
-	    (run (lambda () (set! ok (mix-speed mx))))
-	    (if (fneq ok 1.0) (snd-display ";run mix-speed?")))
-	  (let ((ok 0.0))
-	    (run (lambda () (set! ok (mix-amp mx))))
-	    (if (fneq ok 1.0) (snd-display ";run mix-amp?")))
-	  (let ((ok 0))
-	    (run (lambda () (set! ok (mix-sync-max))))
-	    (if (and full-test (= ok 0)) (snd-display ";run mix-sync-max 0?")))
 	  
 	  (let ((ok 0))
 	    (run (lambda () (set! ok (region-chans reg))))
@@ -50833,50 +50808,6 @@ EDITS: 1
 	   (vct-set! data2 i (* (env e2) (polyshape gen2 1.0 x2))))))
       (if (not (vequal data1 data2)) (snd-display ";run opt polyshape_1fn_env: ~A ~A" data1 data2)))
 
-
-    (if with-gui
-	(begin
-	  (let* ((ind (open-sound "oboe.snd"))
-		 (mx1 (mix-vct (vct 0.5 0.75 0.25) 100))
-		 (val #f))
-	    
-	    (run (lambda () (set! val (mix-sample-reader? (make-mix-sample-reader mx1)))))
-	    (if (not val) (snd-display ";mix-sample-reader?: ~A" val))
-	    (run (lambda ()
-		   (let ((a (make-mix-sample-reader mx1))) 
-		     (set! val (and (eq? a a) (eqv? a a) (equal? a a))))))
-	    (if (not val) (snd-display ";eq? make-mix-sample-reader 0: ~A" val))
-	    (run (lambda ()
-		   (let ((a (make-mix-sample-reader mx1))) 
-		     (set! val (mix-sample-reader? a)))))
-	    (if (not val) (snd-display ";reader? make-mix-sample-reader 0: ~A" val))
-	    (run (lambda ()
-		   (let ((a (make-mix-sample-reader mx1)) 
-			 (b (make-mix-sample-reader mx1))) 
-		     (set! val (or (eq? a b) (eqv? a b) (equal? a b))))))
-	    (if val (snd-display ";eq? make-mix-sample-reader 1: ~A" val))
-	    (run (lambda ()
-		   (let ((a (make-mix-sample-reader mx1)) 
-			 (b (make-sample-reader)))
-		     (set! val (or (eq? a b) (eqv? a b) (equal? a b))))))
-	    (if val (snd-display ";eq? make-mix-sample-reader 2: ~A" val))
-	    
-	    (let ((v (make-vct 3)))
-	      (vct-map! v (let ((r (make-mix-sample-reader mx1)))
-			    (lambda () (read-mix-sample r))))
-	      (if (not (vequal v (vct 0.5 0.75 0.25))) (snd-display ";read-mix 0: ~A" v)))
-	    
-	    (let ((v (make-vct 2)))
-	      (vct-map! v (let ((r (make-mix-sample-reader mx1 1)))
-			    (lambda () (read-mix-sample r))))
-	      (if (not (vequal v (vct 0.75 0.25))) (snd-display ";read-mix 1: ~A" v)))
-	    
-	    (let ((v (make-vct 2)))
-	      (vct-map! v (let ((r (make-mix-sample-reader mx1 1)))
-			    (lambda () (r))))
-	      (if (not (vequal v (vct 0.75 0.25))) (snd-display ";read-mix 2: ~A" v)))
-	    (close-sound ind))))
-    
     (let ((val (catch 'oops
 		      (lambda ()
 			(run (lambda ()
@@ -50923,17 +50854,7 @@ EDITS: 1
 			    (define (ho) (make-sample-reader 1000 ind 0))
 			    (read-sample (ho))))))
 	    (if (fneq val (sample 1000)) (snd-display ";run embedded lambda rtn sample-reader: ~A ~A" (sample 1000) val)))
-	  (let ((mix1 (mix-vct (make-vct 3 .1))))
-	    (let ((val (run (lambda () 
-			      (let ((r (make-mix-sample-reader mix1))) 
-				(define (ho rd) (declare (rd mix-sample-reader)) (read-mix-sample rd)) 
-				(ho r))))))
-	      (if (fneq val .1) (snd-display ";run embedded lambda arg mix-sample-reader: ~A" val)))
-	    (let ((val (run (lambda ()
-			      (define (ho) (make-mix-sample-reader mix1))
-			      (read-mix-sample (ho))))))
-	      (if (fneq val .1) (snd-display ";run embedded lambda rtn mix-sample-reader: ~A" val)))
-	    (close-sound ind))))
+	  (close-sound ind)))
     
     (let ((ind (open-sound "oboe.snd")))
       ;; check that sequestering works with init-func/ptree-channel
@@ -51083,17 +51004,6 @@ EDITS: 1
     
     (let ((val (run-eval '(lambda (a) (declare (a sound-data)) (sound-data-ref a 0 0)) (make-sound-data 1 1))))
       (if (fneq val 0.0) (snd-display ";run sound-data arg: ~A" val)))
-    
-    (if with-gui
-	(let ((ind (open-sound "oboe.snd")))
-	  (let ((val (run-eval '(lambda (a) (declare (a sample-reader)) (read-sample a)) (make-sample-reader 1000))))
-	    (if (fneq val .03283) (snd-display ";run arg sample-reader: ~A" val))
-	    
-	    (let ((mid (mix-vct (make-vct 10 .1) 10)))
-	      (let ((val (run-eval '(lambda (a) (declare (a mix-sample-reader)) (read-mix-sample a)) (make-mix-sample-reader mid 0))))
-		(if (fneq val .1) (snd-display ";run mix-sample-reader arg: ~A" val)))
-	      
-	      (close-sound ind)))))
     
     (let ((rdat (make-vct 16))
 	  (idat (make-vct 16))
@@ -66589,8 +66499,6 @@ EDITS: 1
 
 		(check-error-tag 'wrong-type-arg (lambda () (set! (mus-header-raw-defaults) 1234)))
 		(check-error-tag 'wrong-type-arg (lambda () (set! (mus-header-raw-defaults) (list 44100 2.123 "hi"))))
-		(check-error-tag 'no-such-mix (lambda () (mix-sync (integer->mix (+ 1 (mix-sync-max))))))
-		(check-error-tag 'no-such-mix (lambda () (set! (mix-sync (integer->mix (+ 1 (mix-sync-max)))) (integer->mix 1))))
 		(check-error-tag 'no-such-mix (lambda () (mix-properties (integer->mix (+ 1 (mix-sync-max))))))
 		(check-error-tag 'no-such-mix (lambda () (set! (mix-properties (integer->mix (+ 1 (mix-sync-max)))) 1)))
 		(check-error-tag 'no-such-mix (lambda () (play-mix (integer->mix (+ 1 (mix-sync-max))))))
