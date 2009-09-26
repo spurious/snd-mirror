@@ -17194,9 +17194,11 @@ You can often slightly rewrite the form to make run happy."
   optimization_hook = XEN_DEFINE_HOOK(S_optimization_hook, 1, H_optimization_hook);      /* arg = message */
 
 #if WITH_RUN
+
 #if (!USE_SND)
   current_optimization = MAX_OPTIMIZATION;
 #endif
+
   init_walkers();
   init_type_names();
 

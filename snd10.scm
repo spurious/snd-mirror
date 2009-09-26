@@ -85,3 +85,17 @@
 
 
 (if (not (defined? 'in-hz)) (define in-hz hz->radians))
+
+;;; all sample-reader -> sampler
+
+(define copy-sample-reader copy-sampler)
+(define free-sample-reader free-sampler)
+(define make-mix-sample-reader make-mix-sampler)
+(define make-region-sample-reader make-region-sampler)
+(define make-sample-reader make-sampler)
+(define mix-sample-reader? mix-sampler?)
+(define region-sample-reader? region-sampler?)
+(define sample-reader-at-end? sampler-at-end?)
+(define sample-reader-home sampler-home)
+(define sample-reader? sampler?)
+(define sample-reader-position sampler-position)

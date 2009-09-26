@@ -7701,10 +7701,14 @@ static XEN_OBJECT_TYPE sf_tag;
 bool sampler_p(XEN obj) {return(XEN_OBJECT_TYPE_P(obj, sf_tag));}
 
 #define SAMPLER_P(Obj) XEN_OBJECT_TYPE_P(Obj, sf_tag)
+
 #define ANY_SAMPLER_P(Obj) ((sampler_p(Obj)) || (mix_sampler_p(Obj)))
 
+
 snd_fd *xen_to_sampler(XEN obj) {if (SAMPLER_P(obj)) return((snd_fd *)XEN_OBJECT_REF(obj)); else return(NULL);}
+
 #define XEN_TO_SAMPLER(obj) ((snd_fd *)XEN_OBJECT_REF(obj))
+
 
 #if HAVE_S7
 static bool s7_equalp_sf(void *s1, void *s2)
@@ -7712,6 +7716,7 @@ static bool s7_equalp_sf(void *s1, void *s2)
   return(s1 == s2);
 }
 #endif
+
 
 char *sampler_to_string(snd_fd *fd)
 {
@@ -7869,14 +7874,17 @@ static XEN g_sampler_at_end(XEN obj)
 {
   #define H_sampler_at_end "(" S_sampler_at_end_p " obj): " PROC_TRUE " if sampler has reached the end of its data"
   XEN_ASSERT_TYPE(ANY_SAMPLER_P(obj), obj, XEN_ONLY_ARG, S_sampler_at_end_p, "a sampler (of any kind)");
+
   if (sampler_p(obj))
     {
       snd_fd *sf;
       sf = XEN_TO_SAMPLER(obj);
       return(C_TO_XEN_BOOLEAN(sf->at_eof));
     }
+
   if (mix_sampler_p(obj))
     return(g_mix_sampler_at_end_p(obj));
+
   return(XEN_FALSE);
 }
 
@@ -7893,6 +7901,7 @@ static XEN g_sampler_position(XEN obj)
 {
   #define H_sampler_position "(" S_sampler_position " obj): current (sample-wise) location of sampler"
   XEN_ASSERT_TYPE(ANY_SAMPLER_P(obj), obj, XEN_ONLY_ARG, S_sampler_position, "a sampler (of any kind)");
+
   if (sampler_p(obj))
     {
       snd_fd *fd = NULL;
@@ -7907,8 +7916,10 @@ static XEN g_sampler_position(XEN obj)
 	  return(C_TO_XEN_INT64_T(region_current_location(fd)));
 	}
     }
+
   if (mix_sampler_p(obj))
     return(g_mix_sampler_position(obj));
+
   return(XEN_ZERO);
 }
 
@@ -7918,6 +7929,7 @@ static XEN g_sampler_home(XEN obj)
   #define H_sampler_home "(" S_sampler_home " obj): (list sound-index chan-num) associated with a sound reader, or \
 if 'obj' is a mix-sampler, the id of underlying mix"
   XEN_ASSERT_TYPE(ANY_SAMPLER_P(obj), obj, XEN_ONLY_ARG, S_sampler_home, "a sampler (of any kind)");
+
   if (sampler_p(obj))
     {
       snd_fd *fd = NULL;
@@ -7933,8 +7945,10 @@ if 'obj' is a mix-sampler, the id of underlying mix"
 			    C_TO_XEN_INT(fd->cp->chan)));
 	}
     }
+
   if (mix_sampler_p(obj))
     return(g_mix_sampler_home(obj));
+
   return(XEN_FALSE);
 }
 
@@ -7950,7 +7964,7 @@ static XEN g_make_sampler(XEN samp_n, XEN snd, XEN chn, XEN dir1, XEN pos) /* "d
   #define H_make_sampler "(" S_make_sampler " :optional (start-samp 0) snd chn (dir 1) edpos): \
 return a reader ready to access snd's channel chn's data starting at start-samp, going in direction dir (1 = \
 forward, -1 = backward), reading the version of the data indicated by edpos which defaults to the current version. \
-snd can be a filename, or a sound index number."
+snd can be a filename, a mix object, or a sound index number."
 
   snd_fd *fd = NULL;
   int chan, edpos, direction = 1; /* in Scheme 1=forward, -1=backward */
@@ -7987,9 +8001,11 @@ snd can be a filename, or a sound index number."
       cp = get_cp(snd, chn, S_make_sampler);
       if (!cp) return(XEN_FALSE);
     }
+
   edpos = to_c_edit_position(cp, pos, S_make_sampler, 5);
   direction = XEN_TO_C_INT_OR_ELSE(dir1, 1);
   beg = beg_to_sample(samp_n, S_make_sampler);
+
   if (direction == 1)
     fd = init_sample_read_any(beg, cp, READ_FORWARD, edpos);
   else
@@ -8000,12 +8016,14 @@ snd can be a filename, or a sound index number."
 		     XEN_LIST_2(C_TO_XEN_STRING(S_make_sampler),
 				dir1));
     }
+
   if (fd)
     {
       fd->local_sp = loc_sp;
       list_reader(fd);
       XEN_MAKE_AND_RETURN_OBJECT(sf_tag, fd, 0, free_sf);
     }
+
   return(XEN_FALSE);
 }
 
@@ -8019,11 +8037,13 @@ return a reader ready to access region's channel chn data starting at start-samp
   int reg_n, chn_n;
   mus_long_t beg;
   int direction = 1;
+
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samp_n), samp_n, XEN_ARG_1, S_make_region_sampler, "a number");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(reg), reg, XEN_ARG_2, S_make_region_sampler, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chn), chn, XEN_ARG_3, S_make_region_sampler, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(dir1), dir1, XEN_ARG_4, S_make_region_sampler, "an integer");
   reg_n = XEN_TO_C_INT_OR_ELSE(reg, 0);
+
   if (!(region_ok(reg_n))) 
     XEN_ERROR(XEN_ERROR_TYPE("no-such-region"),
 	      XEN_LIST_2(C_TO_XEN_STRING(S_make_region_sampler),
@@ -8033,6 +8053,7 @@ return a reader ready to access region's channel chn data starting at start-samp
     return(snd_no_such_channel_error(S_make_region_sampler, XEN_LIST_1(reg), chn));
   beg = beg_to_sample(samp_n, S_make_region_sampler);
   direction = XEN_TO_C_INT_OR_ELSE(dir1, 1);
+
   if (direction == 1)
     fd = init_region_read(beg, reg_n, chn_n, READ_FORWARD);
   else
@@ -8043,6 +8064,7 @@ return a reader ready to access region's channel chn data starting at start-samp
 		     XEN_LIST_2(C_TO_XEN_STRING(S_make_region_sampler),
 				dir1));
     }
+
   if (fd)
     {
       fd->edit_ctr = -2 - reg_n; /* can't use fd->cp because deferred case is pointer to original (not copied) data */
@@ -8052,6 +8074,7 @@ return a reader ready to access region's channel chn data starting at start-samp
       list_reader(fd);
       XEN_MAKE_AND_RETURN_OBJECT(sf_tag, fd, 0, free_sf);
     }
+
   return(XEN_FALSE);
 }
 
@@ -8059,6 +8082,7 @@ return a reader ready to access region's channel chn data starting at start-samp
 static XEN g_sampler_p(XEN obj)
 {
   #define H_sampler_p "(" S_sampler_p " obj): " PROC_TRUE " if obj is a sound sampler."
+
   if (sampler_p(obj))
     {
       snd_fd *fd;
@@ -8068,6 +8092,7 @@ static XEN g_sampler_p(XEN obj)
 
   if (mix_sampler_p(obj))
     return(C_STRING_TO_XEN_SYMBOL("mix"));
+
   return(XEN_FALSE);
 }
 
@@ -8089,6 +8114,7 @@ static XEN g_copy_sampler(XEN obj)
 {
   #define H_copy_sampler "(" S_copy_sampler " reader): return a copy of reader"
   XEN_ASSERT_TYPE(ANY_SAMPLER_P(obj), obj, XEN_ONLY_ARG, S_copy_sampler, "a sampler (of any kind)");
+
   if (sampler_p(obj))
     {
       snd_fd *fd = NULL;
@@ -8113,24 +8139,34 @@ static XEN g_copy_sampler(XEN obj)
 
   if (mix_sampler_p(obj))
     return(g_copy_mix_sampler(obj));
+
   return(XEN_FALSE);
+}
+
+
+static snd_fd *xen_to_any_sampler(XEN obj)
+{
+  if (XEN_MIX_P(obj))
+    return(xen_mix_to_snd_fd(obj));
+  return(XEN_TO_SAMPLER(obj));
 }
 
 
 static XEN g_next_sample(XEN obj)
 {
   #define H_next_sample "(" S_next_sample " reader): next sample from reader"
-  XEN_ASSERT_TYPE(SAMPLER_P(obj), obj, XEN_ONLY_ARG, S_next_sample, "a sampler");
-  return(C_TO_XEN_DOUBLE(protected_next_sample(XEN_TO_SAMPLER(obj))));
+  XEN_ASSERT_TYPE(ANY_SAMPLER_P(obj), obj, XEN_ONLY_ARG, S_next_sample, "a sampler");
+  return(C_TO_XEN_DOUBLE(protected_next_sample(xen_to_any_sampler(obj))));
 }
 
 
 static XEN g_read_sample(XEN obj)
 {
   #define H_read_sample "(" S_read_sample " reader): read sample from reader"
-  XEN_ASSERT_TYPE(SAMPLER_P(obj), obj, XEN_ONLY_ARG, S_read_sample, "a sampler");
-  return(C_TO_XEN_DOUBLE(read_sample(XEN_TO_SAMPLER(obj))));
+  XEN_ASSERT_TYPE(ANY_SAMPLER_P(obj), obj, XEN_ONLY_ARG, S_read_sample, "a sampler");
+  return(C_TO_XEN_DOUBLE(read_sample(xen_to_any_sampler(obj))));
 }
+
 
 #if HAVE_S7
 static XEN s7_read_sample(s7_scheme *sc, XEN obj, XEN args)
@@ -8143,8 +8179,8 @@ static XEN s7_read_sample(s7_scheme *sc, XEN obj, XEN args)
 static XEN g_previous_sample(XEN obj)
 {
   #define H_previous_sample "(" S_previous_sample " reader): previous sample from reader"
-  XEN_ASSERT_TYPE(SAMPLER_P(obj), obj, XEN_ONLY_ARG, S_previous_sample, "a sampler");
-  return(C_TO_XEN_DOUBLE(protected_previous_sample(XEN_TO_SAMPLER(obj))));
+  XEN_ASSERT_TYPE(ANY_SAMPLER_P(obj), obj, XEN_ONLY_ARG, S_previous_sample, "a sampler");
+  return(C_TO_XEN_DOUBLE(protected_previous_sample(xen_to_any_sampler(obj))));
 }
 
 
@@ -8152,6 +8188,7 @@ static XEN g_free_sampler(XEN obj)
 {
   #define H_free_sampler "(" S_free_sampler " reader): free a sampler (of any kind)"
   XEN_ASSERT_TYPE(ANY_SAMPLER_P(obj), obj, XEN_ONLY_ARG, S_free_sampler, "a sampler");
+
   if (sampler_p(obj))
     {
       snd_info *sp = NULL;

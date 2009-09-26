@@ -1547,6 +1547,7 @@ XEN new_xen_mix(int n);
 XEN g_make_mix_sampler(XEN mix_id, XEN ubeg);
 bool xen_mix_p(XEN obj);
 #define XEN_MIX_P(arg) xen_mix_p(arg)
+snd_fd *xen_mix_to_snd_fd(XEN obj);
  
 mus_long_t mix_position_from_id(int id);
 mus_long_t mix_length_from_id(int id);

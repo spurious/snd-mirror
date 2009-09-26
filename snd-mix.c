@@ -2229,25 +2229,17 @@ void after_mix_edit(int id)
 /* ---------------------------------------- mix objects ---------------------------------------- */
 
 /* TODO: check ruby/forth/guile and update all snd-test* etc
- * TODO: mix-for-each, length and copy of mix, possibly position  (generic), home, properties, sampler cases
- *         mix-for-each means for each sample?  of the current mix state?
- *         copy is ambiguous -- might mean make an independent copy of the mix for later edits
- * TODO: make-sampler et al take mix object (as 2nd arg where snd is now)
- *         this is done, but sampler? and the actual readers also need to know about mix-samplers
- *         and there's the run side of this, I suppose
- * PERHAPS: change "sampler" to "sampler" throughout?
- * TODO: mix-ref and set as access to mix samples: (id 1) = 2nd sample
- *         md->cp->sounds[md->original_index] is the original mix data,
- *         but we have to handle stuff like amp and speed -- complicated!
- * SOMEDAY: deprecate mix-length, mix-position, mix-home, mix-properties, make-mix-sampler et al
+ * SOMEDAY: deprecate mix-length, mix-position, mix-home, mix-properties, make-mix-sampler, mix-sampler?, read-mix-sample, mix-name, mix-sync, mix-color
+ *            eventually? amp amp-env speed maxamp etc
  * TODO: ruby methods as in vcts
- *
  * TODO: mark objects, regions, eventually edit-list/sound
  */
 
 typedef struct {
   int n;
 } xen_mix;
+
+/* md->cp->sounds[md->original_index] is the original mix data */
 
 
 #define XEN_TO_XEN_MIX(arg) ((xen_mix *)XEN_OBJECT_REF(arg))
@@ -2451,8 +2443,10 @@ static XEN g_mix_amp(XEN n)
 {
   #define H_mix_amp "(" S_mix_amp " id): mix's scaler"
   int id;
+
   XEN_ASSERT_TYPE(XEN_MIX_P(n), n, XEN_ONLY_ARG, S_mix_amp, "a mix");
   id = XEN_MIX_TO_C_INT(n);
+
   if (mix_is_active(id))
     return(C_TO_XEN_DOUBLE(mix_amp_from_id(id)));
   return(snd_no_such_mix_error(S_mix_amp, n));
@@ -2480,8 +2474,10 @@ static XEN g_mix_amp_env(XEN n)
 {
   #define H_mix_amp_env "(" S_mix_amp_env " id): amplitude envelope applied to mix"
   int id;
+
   XEN_ASSERT_TYPE(XEN_MIX_P(n), n, XEN_ARG_1, S_mix_amp_env, "a mix");
   id = XEN_MIX_TO_C_INT(n);
+
   if (mix_is_active(id))
     return(env_to_xen(mix_amp_env_from_id(id)));
   return(snd_no_such_mix_error(S_mix_amp_env, n));
@@ -2615,14 +2611,17 @@ static XEN g_mix_tag_y(XEN n)
 static XEN g_set_mix_tag_y(XEN n, XEN val) 
 {
   int id;
+
   XEN_ASSERT_TYPE(XEN_MIX_P(n), n, XEN_ARG_1, S_setB S_mix_tag_y, "a mix");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ARG_2, S_setB S_mix_tag_y, "an integer");
   id = XEN_MIX_TO_C_INT(n);
+
   if (mix_exists(id))
     {
       chan_info *cp;
       mix_state *ms;
       mix_info *md;
+
       md = md_from_id(id);
       ms = current_mix_state(md);
       cp = md->cp;
@@ -2635,6 +2634,7 @@ static XEN g_set_mix_tag_y(XEN n, XEN val)
 	display_one_mix(ms, cp);
     }
   else return(snd_no_such_mix_error(S_setB S_mix_tag_y, n));
+
   return(val);
 }
 
@@ -3255,6 +3255,15 @@ static XEN g_read_mix_sample(XEN obj)
   return(C_TO_XEN_DOUBLE(read_sample(mf->sf)));
 }
 
+
+snd_fd *xen_mix_to_snd_fd(XEN obj)
+{
+  mix_fd *mf;
+  mf = XEN_TO_MIX_SAMPLER(obj);
+  return(mf->sf);
+}
+
+
 #if HAVE_S7
 static XEN s7_read_mix_sample(s7_scheme *sc, XEN obj, XEN args)
 {
@@ -3262,8 +3271,6 @@ static XEN s7_read_mix_sample(s7_scheme *sc, XEN obj, XEN args)
 }
 #endif
 
-
-/* tie into generic sampler procedures (snd-edits.c) */
 
 XEN g_copy_mix_sampler(XEN obj)
 {
@@ -3519,9 +3526,9 @@ void g_init_mix(void)
   fth_set_object_apply(mf_tag, XEN_PROCEDURE_CAST g_read_mix_sample, 0, 0, 0);
 #endif
 
-  XEN_DEFINE_PROCEDURE(S_make_mix_sampler, g_make_mix_sampler_w, 1, 1, 0, H_make_mix_sampler);
+  XEN_DEFINE_PROCEDURE(S_make_mix_sampler,       g_make_mix_sampler_w, 1, 1, 0, H_make_mix_sampler);
   XEN_DEFINE_PROCEDURE(S_read_mix_sample,        g_read_mix_sample_w,        1, 0, 0, H_read_mix_sample);
-  XEN_DEFINE_PROCEDURE(S_mix_sampler_p,    g_mix_sampler_p_w,    1, 0, 0, H_mix_sampler_p);
+  XEN_DEFINE_PROCEDURE(S_mix_sampler_p,          g_mix_sampler_p_w,    1, 0, 0, H_mix_sampler_p);
   XEN_DEFINE_PROCEDURE(S_play_mix,               g_play_mix_w,               0, 2, 0, H_play_mix);
 
   XEN_DEFINE_PROCEDURE(S_mix,                    g_mix_w,                    1, 6, 0, H_mix);

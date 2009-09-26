@@ -90,7 +90,7 @@ static void snd_error_1(const char *msg, bool with_redirection_and_hook)
 	return;
     }
 #if USE_NO_GUI
-  fprintf(stderr, msg);
+  fprintf(stderr, "%s", msg);
 #else
   if ((ss) && (ss->sgx))
     {
