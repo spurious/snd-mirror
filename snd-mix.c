@@ -2202,8 +2202,6 @@ void mix_display_during_drag(int mix_id, mus_long_t drag_beg, mus_long_t drag_en
 
 
 
-/* xen connection */
-
 static XEN snd_no_such_mix_error(const char *caller, XEN n)
 {
   XEN_ERROR(XEN_ERROR_TYPE("no-such-mix"),
@@ -2232,7 +2230,7 @@ void after_mix_edit(int id)
  * SOMEDAY: deprecate mix-length, mix-position, mix-home, mix-properties, make-mix-sampler, mix-sampler?, read-mix-sample, mix-name, mix-sync, mix-color
  *            eventually? amp amp-env speed maxamp etc
  * TODO: ruby methods as in vcts
- * TODO: mark objects, regions, eventually edit-list/sound
+ * TODO: region objects, sound objects
  */
 
 typedef struct {
@@ -2297,7 +2295,11 @@ static XEN g_xen_mix_to_string(XEN obj)
 #endif
 
 
-static bool xen_mix_equalp(xen_mix *v1, xen_mix *v2) {return(v1 == v2);}
+static bool xen_mix_equalp(xen_mix *v1, xen_mix *v2) 
+{
+  return((v1 == v2) ||
+	 (v1->n == v2->n));
+}
 
 
 static XEN equalp_xen_mix(XEN obj1, XEN obj2)
@@ -2813,18 +2815,8 @@ static XEN g_set_mix_tag_height(XEN val)
 
 static XEN g_mix_p(XEN n) 
 {
-  #define H_mix_p "(" S_mix_p " id): returns " PROC_TRUE " if the mix 'n' exists somewhere in the edit list, \
-the id (n) if the mix is currently active, of " PROC_FALSE " if 'n' does not refer to a mix."
-  if (XEN_MIX_P(n))
-    {
-      int id;
-      id = XEN_MIX_TO_C_INT(n);
-      if (mix_is_active(id))
-	return(n);
-      if (mix_exists(id))
-	return(XEN_TRUE);
-    }
-  return(XEN_FALSE);
+  #define H_mix_p "(" S_mix_p " id): returns " PROC_TRUE " if the 'n' is a mix that exists somewhere in the edit list."
+  return(C_TO_XEN_BOOLEAN((XEN_MIX_P(n)) && (mix_exists(XEN_MIX_TO_C_INT(n)))));
 }
 
 

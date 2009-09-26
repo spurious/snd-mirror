@@ -5037,13 +5037,13 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 	    }
 	  if (play_mark != old_mark)
 	    {
-	      if (play_mark->sync)
+	      if (mark_sync(play_mark))
 		play_syncd_mark(cp, play_mark);
 	      else 
 		{
 		  if (key_state & snd_ControlMask)
-		    play_sound(sp, play_mark->samp, NO_END_SPECIFIED);
-		  else play_channel(cp, play_mark->samp, NO_END_SPECIFIED);
+		    play_sound(sp, mark_sample(play_mark), NO_END_SPECIFIED);
+		  else play_channel(cp, mark_sample(play_mark), NO_END_SPECIFIED);
 		}
 	      sp->playing_mark = play_mark;
 	    }
@@ -5114,12 +5114,12 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 			  XEN res = XEN_FALSE;
 			  if (XEN_HOOKED(mark_click_hook))
 			    res = run_progn_hook(mark_click_hook,
-						 XEN_LIST_1(C_TO_XEN_INT(mouse_mark->id)),
+						 XEN_LIST_1(C_TO_XEN_INT(mark_to_int(mouse_mark))),
 						 S_mark_click_hook);
 			  if (!(XEN_TRUE_P(res)))
 			    report_in_minibuffer(sp, _("mark %d at sample " MUS_LD), 
-						 mouse_mark->id, 
-						 mouse_mark->samp);
+						 mark_to_int(mouse_mark), 
+						 mark_sample(mouse_mark));
 			}
 		      else
 			{
@@ -5248,7 +5248,7 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, oclock_t time)
 	  XEN drag_res = XEN_FALSE;
 	  if (XEN_HOOKED(mark_drag_triangle_hook))
 	    drag_res = run_progn_hook(mark_drag_triangle_hook,
-				      XEN_LIST_4(C_TO_XEN_INT(play_mark->id),
+				      XEN_LIST_4(C_TO_XEN_INT(mark_to_int(play_mark)),
 						 C_TO_XEN_INT(x),
 						 C_TO_XEN_INT((int)time),
 						 C_TO_XEN_BOOLEAN(dragged)),
@@ -5261,7 +5261,7 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, oclock_t time)
 	      if (!(XEN_TRUE_P(drag_res)))
 		{
 		  sp->speed_control = 0.0;
-		  play_channel(cp, play_mark->samp, NO_END_SPECIFIED);
+		  play_channel(cp, mark_sample(play_mark), NO_END_SPECIFIED);
 		}
 	    }
 	  else

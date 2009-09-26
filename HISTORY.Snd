@@ -2,6 +2,7 @@ Snd change log
 
  25-Sep:    mixes are objects (not ints), integer->mix and mix->integer.
             all "sample-reader" and "sample_reader" names changed to "sampler".
+            marks are objects (not ints), integer->mark and mark->integer.
  17-Sep:    Snd 10.9.
  10-Sep:    removed show-backtrace (it is #t). default optimization is 6.
  9-Aug:     Snd 10.8.

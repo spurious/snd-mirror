@@ -987,14 +987,16 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, mus_long_t beg, m
 	  old_marks = (mus_long_t *)malloc(cur_marks * sizeof(mus_long_t));
 	  for (m = 0; m < cur_marks; m++)
 	    {
+	      mus_long_t pos;
+	      pos = mark_sample(mps[m]);
 	      new_marks[m] = -1;
 	      if ((env_val >= 0.0) ||
-		  (mps[m]->samp < beg) ||
-		  (mps[m]->samp > (beg + dur)))
-		old_marks[m] = mps[m]->samp;
+		  (pos < beg) ||
+		  (pos > (beg + dur)))
+		old_marks[m] = pos;
 	      else 
 		{
-		  old_marks[m] = (dur - mps[m]->samp - 1) + beg; /* moving backwards, so flip marks */
+		  old_marks[m] = (dur - pos - 1) + beg; /* moving backwards, so flip marks */
 		  cur_new_mark = m;
 		}
 	    }

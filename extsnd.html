@@ -1960,7 +1960,7 @@ and #t thereafter:
 <tr><td colspan=3 bgcolor="#f2f4ff">
 <code><a class=def name="markhook">mark-hook</a> (id snd chn reason)</code>
 </td></tr><tr><td></td><td colspan=2>
-This hook is called when a mark is added, deleted, or moved (but not while moving). 'id' can be -1 (i.e. no specific mark).
+This hook is called when a mark is added, deleted, or moved (but not while moving). 'id' can be #f (i.e. no specific mark) or a mark.
 'reason' can be 0: add, 1: delete, 2: move (via set! mark-sample), 3: delete all marks, 4: release (after drag). 
 In the "release" case, the hook is called upon button release before any edits (control-drag of mark) or sorting (simple drag),
 and if the <a href="#marksync">mark-sync</a> is not 0, the hook is called on each syncd mark.
@@ -4421,14 +4421,14 @@ See also the <a href="#sndhooks">hooks</a> section above for various mark-relate
 <!-- add-mark -->
 <tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="addmark">add-mark</a> (sample :optional snd chn name sync)</code>
 </td></tr><tr><td width=30><br></td><td>
-add-mark adds a mark at the position 'sample', returning the new mark' identifier (an integer).
-Since marks
+add-mark adds a mark at the position 'sample', returning the new mark.
+Since a mark
 can move around during editing, a unique tag is needed to refer to a 
 particular mark; we call this thing its 'id' throughout this section.
 The identifier is used to specify the mark in all the mark-related functions such as <a href="#marksample">mark-sample</a>:
 <pre>
     :<em class=typing>(define m1 (add-mark 1234))</em>
-    <em class=listener>#&lt;unspecified&gt;</em>
+    <em class=listener>m1</em>
     :<em class=typing>(mark-sample m1)</em>
     <em class=listener>1234</em>
 </pre>
@@ -4442,7 +4442,7 @@ rather than throwing the 'no-such-sample error.
 <!-- delete-mark -->
 <tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="deletemark">delete-mark</a> (id)</code>
 </td></tr><tr><td></td><td>
-delete-mark deletes the mark identified with 'id'.  Mark additions and deletions follow the
+delete-mark deletes the mark 'id'.  Mark additions and deletions follow the
 edit list, so if the deleted mark was present in an earlier edit, and you undo to that point,
 the mark comes back to life.
 </td></tr><tr><td colspan=2 height=16></td></tr>
@@ -4464,7 +4464,7 @@ This function deletes all marks in the given channel.  It could be defined in Sc
 <!-- find-mark -->
 <tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="findmark">find-mark</a> (samp :optional snd chn edpos)</code>
 </td></tr><tr><td></td><td>
-find-mark returns the id of the mark at sample 'samp' or #f if none is found.
+find-mark returns the mark at sample 'samp' or #f if none is found.
 If 'samp' is a string, rather than an integer, find-mark
 looks for a mark of that name.  <a href="sndscm.html#marknametoid">mark-name-&gt;id</a>
 in marks.scm finds a named mark in any channel (a global version of find-mark).
@@ -4488,13 +4488,13 @@ This is the graphics context to use to draw a mark (XOR mode).
 <!-- mark-home -->
 <tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="markhome">mark-home</a> (id)</code>
 </td></tr><tr><td></td><td>
-mark-home is a list with the sound index and channel that hold the mark identified by 'id'.
-This provides a way to go from a mark id to its sound and
+mark-home is a list with the sound index and channel that hold the mark 'id'.
+This provides a way to go from a mark to its sound and
 channel.
 <pre>
     :<em class=typing>(marks 0 0)</em>   ; what marks are in snd 0, chn 0?
-    <em class=listener>(0)</em>            ; just one with id 0
-    :<em class=typing>(mark-home 0)</em> ; what is mark 0's snd/chn?
+    <em class=listener>(#&lt;mark 0&gt;)</em>            ; just one
+    :<em class=typing>(mark-home (car (marks 0 0)))</em> ; what is that mark's snd/chn?
     <em class=listener>(0 0)</em>
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
@@ -4503,10 +4503,10 @@ channel.
 <!-- mark-name -->
 <tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="markname">mark-name</a> (id)</code>
 </td></tr><tr><td></td><td>
-This is the name of the mark identified by 'id'.
+This is the name of the mark 'id'.
 <pre>
     :<em class=typing>(define m1 (add-mark 1234 0 0 "a name"))</em>
-    <em class=listener>#&lt;unspecified&gt;</em>
+    <em class=listener>m1</em>
     :<em class=typing>(mark-name m1)</em>
     <em class=listener>"a name"</em>
     :<em class=typing>(set! (mark-name m1) "a new name")</em>
@@ -4618,27 +4618,19 @@ each sound and its channels.
 
 marks
 without any argument, or with just a sound index returns a list of lists; each inner list is the list
-of current marks (ids) active in that channel, ordered by sample number.  If the channel argument is
-specified, marks returns just the list of mark ids.  If the edit history position is given,
-the list of ids reflects the mark list at that time in the edit history.  See <a href="sndscm.html#describemark">describe-mark</a> in marks.scm.
+of current marks active in that channel, ordered by sample number.  If the channel argument is
+specified, marks returns just the list of marks.  If the edit history position is given,
+the list of marks reflects the marks active at that point in the edit history.  See <a href="sndscm.html#describemark">describe-mark</a> in marks.scm.
 <br><br>
 Say we have two sounds open, 2 marks in the first (a mono sound), and one
 in the 2nd channel of the 2nd (a stereo sound):
 <pre>
     :<em class=typing>(marks 0 0)</em>
-    <em class=listener>(0 1)</em>     ; these are mark id's, as returned by the add-mark function for example
+    <em class=listener>(#&lt;mark 1&gt; #&lt;mark 0&gt;)</em>     ; these are mark id's, as returned by the add-mark function for example
     :<em class=typing>(marks 1)</em>
-    <em class=listener>(() (2))</em>  ; no mark in channel 0, one in channel 1
+    <em class=listener>(() (#&lt;mark 2&gt;))</em>  ; no mark in channel 0, one in channel 1
     :<em class=typing>(marks)</em>
-    <em class=listener>(((0 1)) (() (2)))</em>
-
-    Ruby:
-    :<em class=typing>marks()</em>
-    <em class=listener>[[[0, 1]], [nil, [2]]]</em>
-
-    Forth:
-    <em class=listener>snd&gt;</em> <em class=typing>marks</em>
-    <em class=listener>'( '( '( 0 1 ) ) '( nil '( 2 ) ) )</em>
+    <em class=listener>(((#&lt;mark 1&gt; #&lt;mark 0&gt;)) (() (#&lt;mark 2&gt;)))</em>
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -4667,7 +4659,7 @@ show-marks is #t if marks are being displayed.
 <!-- syncd-marks -->
 <tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="syncdmarks">syncd-marks</a> (sync)</code>
 </td></tr><tr><td></td><td>
-syncd-marks is a list of marks (the mark id's) that share the mark-sync value 'sync'.
+syncd-marks returns a list of marks that share the mark-sync value 'sync'.
 
 <table border=0 cellpadding=5><tr><td><pre>
 (define (move-syncd-marks sync diff)

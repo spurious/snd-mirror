@@ -147,12 +147,7 @@ typedef struct {
   bool free_me;
 } snd_data;
 
-typedef struct {
-  mus_long_t samp;
-  char *name;
-  int id, sync;
-  bool visible;
-} mark;
+typedef struct mark mark;
 
 typedef struct {
   mus_long_t size;
@@ -798,6 +793,9 @@ void g_init_print(void);
 
 int mark_sync_max(void);
 void set_mark_sync(mark *m, int val);
+int mark_to_int(mark *m);
+int mark_sync(mark *m);
+mus_long_t mark_sample(mark *m);
 void marks_off(chan_info *cp);
 mark *hit_mark(chan_info *cp, int x, int y, int key_state);
 mark *hit_triangle(chan_info *cp, int x, int y);
@@ -826,7 +824,13 @@ void g_init_marks(void);
 void *sound_store_marks(snd_info *sp);
 void sound_restore_marks(snd_info *sp, void *marks);
 mus_long_t mark_id_to_sample(int id);
+void show_mark(chan_info *cp, axis_info *ap, mark *mp, bool show);
+void show_mark_triangle(chan_info *cp, int x);
 
+XEN new_xen_mark(int n);
+bool xen_mark_p(XEN obj);
+#define XEN_MARK_P(arg) xen_mark_p(arg)
+ 
 
 
 /* -------- snd-data.c -------- */
@@ -1680,8 +1684,6 @@ char *scale_and_src(char **files, int len, int max_chans, mus_float_t amp, mus_f
 point_t *get_grf_points(void);
 point_t *get_grf_points1(void);
 void draw_cursor(chan_info *cp);
-void show_mark(chan_info *cp, axis_info *ap, mark *mp, bool show);
-void show_mark_triangle(chan_info *cp, int x);
 void erase_cursor(chan_info *cp);
 void set_grf_points(int xi, int j, int ymin, int ymax);
 void set_grf_point(int xi, int j, int yi);

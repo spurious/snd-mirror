@@ -461,7 +461,7 @@
 (define (mark-click-info n)
   "(mark-click-info n) is a mark-click-hook function that describes a mark and its properties"
   (help-dialog "Mark Help"
-	       (format #f "Mark ~D~A:~%  sample: ~D = ~,3F secs~A~A"
+	       (format #f "Mark ~A~A:~%  sample: ~D = ~,3F secs~A~A"
 		       n 
 		       (let ((name (mark-name n)))
 			 (if (> (string-length name) 0)

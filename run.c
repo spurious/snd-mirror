@@ -9057,25 +9057,11 @@ static xen_value * CName ## _1(ptree *prog, xen_value **args, int num_args) {ret
 
 bool r_sound_p(int i);
 BOOL_INT_OP(r_sound_p);
-BOOL_INT_OP(region_ok);
-bool r_mark_p(int n);
-BOOL_INT_OP(r_mark_p);
-INT_VOID_OP(mark_sync_max);
 INT_VOID_OP(selection_chans);
 static char *r_temp_dir(void) {return(temp_dir(ss));}
 static char *r_save_dir(void) {return(save_dir(ss));}
 STR_VOID_OP(r_temp_dir);
 STR_VOID_OP(r_save_dir);
-mus_long_t r_mark_sync(int n);
-mus_long_t r_mark_sample(int n);
-INT_INT_OP(r_mark_sync);
-INT_INT_OP(r_mark_sample);
-INT_INT_OP(region_chans);
-INT_INT_OP(region_srate);
-INT_INT_OP(region_len);
-FLOAT_INT_OP(region_maxamp);
-
-char *r_mark_name(int n);
 
 
 
@@ -9170,41 +9156,6 @@ static xen_value *cursor_1(ptree *pt, xen_value **args, int num_args)
   true_args[0] = args[0];
   rtn = package(pt, R_INT, cursor_i, "cursor_i", true_args, 2);
   for (k = num_args + 1; k <= 2; k++) free(true_args[k]);
-  return(rtn);
-}
-
-
-/* ---------------- add_mark ---------------- */
-
-static void add_mark_i(int *args, ptree *pt) 
-{
-  chan_info *cp; 
-  cp = run_get_cp(2, args, pt->ints);
-  if (cp) 
-    {
-      mark *m = NULL;
-      INT_RESULT = -1;
-      if ((INT_ARG_1 >= 0) && 
-	  (INT_ARG_1 < CURRENT_SAMPLES(cp)))
-	{
-	  m = add_mark(INT_ARG_1, NULL, cp);
-	  if (m) INT_RESULT = m->id;
-	}
-    }
-}
-
-
-static xen_value *add_mark_1(ptree *pt, xen_value **args, int num_args)
-{
-  xen_value *true_args[4];
-  xen_value *rtn;
-  int k;
-  run_opt_arg(pt, args, num_args, 2, true_args);
-  run_opt_arg(pt, args, num_args, 3, true_args);
-  true_args[0] = args[0];
-  true_args[1] = args[1];
-  rtn = package(pt, R_INT, add_mark_i, "add_mark_i", true_args, 3);
-  for (k = num_args + 1; k <= 3; k++) free(true_args[k]);
   return(rtn);
 }
 
@@ -9488,23 +9439,6 @@ static xen_value *make_sampler_1(ptree *pt, xen_value **args, int num_args)
   if (free_true_args_1) free(true_args[1]);
   return(rtn);
 }
-
-
-static void make_region_sampler_r(int *args, ptree *pt) 
-{
-  free_snd_fd(READER_RESULT);
-  READER_RESULT = init_region_read(INT_ARG_1, INT_ARG_2, INT_ARG_3, READ_FORWARD); /* beg reg chn */
-}
-
-
-static xen_value *make_region_sampler_1(ptree *pt, xen_value **args, int num_args)
-{
-  xen_value *rtn;
-  rtn = package(pt, R_READER, make_region_sampler_r, "make_region_sampler_r", args, 3);
-  add_obj_to_gcs(pt, R_READER, rtn->addr);
-  return(rtn);
-}
-
 #endif
 /* end USE_SND */
 
@@ -16840,13 +16774,9 @@ static void init_walkers(void)
   INIT_WALKER(S_sampler_p,        make_walker(sampler_p_1, NULL, NULL, 1, 1, R_BOOL, false, 0));
   INIT_WALKER(S_sampler_at_end_p, make_walker(sampler_at_end_p_1, NULL, NULL, 1, 1, R_BOOL, false, 0));
 
-  INIT_WALKER(S_make_region_sampler, make_walker(make_region_sampler_1, NULL, NULL, 3, 3, R_READER, false, 3, R_INT, R_INT, R_INT));
-  INIT_WALKER(S_read_region_sample,        make_walker(reader_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_READER));
-
   INIT_WALKER(S_edit_position,  make_walker(edit_position_1, NULL, NULL, 0, 2, R_INT, false, 0));
   INIT_WALKER(S_frames,         make_walker(frames_1, NULL, NULL, 0, 3, R_INT, false, 0));
   INIT_WALKER(S_cursor,         make_walker(cursor_1, NULL, NULL, 0, 2, R_INT, false, 0));
-  INIT_WALKER(S_add_mark,       make_walker(add_mark_1, NULL, NULL, 1, 3, R_INT, false, 0));
   INIT_WALKER(S_maxamp,         make_walker(maxamp_1, NULL, NULL, 0, 3, R_FLOAT, false, 0));
   INIT_WALKER(S_sample,         make_walker(sample_1, NULL, NULL, 1, 4, R_FLOAT, false, 1, R_INT));
   INIT_WALKER(S_srate,          make_walker(srate_1, NULL, NULL, 0, 1, R_INT, false, 0));
@@ -16860,18 +16790,9 @@ static void init_walkers(void)
   INIT_WALKER(S_report_in_minibuffer, make_walker(report_in_minibuffer_1, NULL, NULL, 1, 2, R_BOOL, false, 1, R_STRING));
 
   INIT_WALKER(S_sound_p,         make_walker(r_sound_p_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_INT));
-  INIT_WALKER(S_region_p,        make_walker(region_ok_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_INT));
-  INIT_WALKER(S_mark_p,          make_walker(r_mark_p_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_INT));
-  INIT_WALKER(S_mark_sync,       make_walker(r_mark_sync_1, NULL, NULL, 1, 1, R_INT, false, 1, R_INT));
-  INIT_WALKER(S_mark_sample,     make_walker(r_mark_sample_1, NULL, NULL, 1, 1, R_INT, false, 1, R_INT));
-  INIT_WALKER(S_mark_sync_max,   make_walker(mark_sync_max_1, NULL, NULL, 0, 0, R_INT, false, 0));
   INIT_WALKER(S_selection_chans, make_walker(selection_chans_1, NULL, NULL, 0, 0, R_INT, false, 0));
   INIT_WALKER(S_temp_dir,        make_walker(r_temp_dir_1, NULL, NULL, 0, 0, R_STRING, false, 0));
   INIT_WALKER(S_save_dir,        make_walker(r_save_dir_1, NULL, NULL, 0, 0, R_STRING, false, 0));
-  INIT_WALKER(S_region_chans,    make_walker(region_chans_1, NULL, NULL, 1, 1, R_INT, false, 1, R_INT));
-  INIT_WALKER(S_region_srate,    make_walker(region_srate_1, NULL, NULL, 1, 1, R_INT, false, 1, R_INT));
-  INIT_WALKER(S_region_frames,   make_walker(region_len_1, NULL, NULL, 1, 1, R_INT, false, 1, R_INT));
-  INIT_WALKER(S_region_maxamp,   make_walker(region_maxamp_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_INT));
   INIT_WALKER(S_fft,             make_walker(fft_1, NULL, NULL, 2, 3, R_VCT, false, 3, R_VCT, R_VCT, R_INT));
 #endif
 }
