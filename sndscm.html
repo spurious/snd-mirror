@@ -6403,10 +6403,12 @@ The marks defining the selection bounds must be in the same channel.
 </td></tr><tr><td></td><td>
 describe-mark returns a description of the movements of mark 'id' over the channel's edit history:
 <pre>
-    :<em class=typing>(describe-mark 0)</em>
-    <em class=listener>((mark 0 sound 0 "oboe.snd" channel 0) 654 478)</em>
+    :<em class=typing>(define m (add-mark 1234))</em>
+    <em class=listener>m</em>
+    :<em class=typing>(describe-mark m)</em>
+    <em class=listener>((#&lt;mark 1&gt; sound: 0 "oboe.snd" channel: 0) 1234 478)</em>
 </pre>
-Here I placed a mark in oboe.snd at sample 654, then deleted a few samples
+Here I placed a mark in oboe.snd at sample 1234, then deleted a few samples
 before it, causing it to move to sample 478.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -6483,9 +6485,9 @@ This list is created, if necessary, by mark-property.
 </td></tr><tr><td></td><td>
 mark-property accesses the property 'key' in the property list associated with the mark 'id'.
 <pre>
-    :<em class=typing>(set! (mark-property :weight 3) 2.5)</em>   ; 3 is the mark id
+    :<em class=typing>(set! (mark-property :weight m0) 2.5)</em>   ; m0 is the mark
     <em class=listener>2.5</em>
-    :<em class=typing>(mark-property :weight 3)</em>
+    :<em class=typing>(mark-property :weight m0)</em>
     <em class=listener>2.5</em>
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
@@ -6564,10 +6566,10 @@ It returns a list of all the marks it has added.
     :<em class=typing>(selection-frames)</em>
     <em class=listener>259</em>
     :<em class=typing>(snap-marks)</em>
-    <em class=listener>(8 9)</em>
-    :<em class=typing>(mark-sample 8)</em>
+    <em class=listener>(#&lt;mark 0&gt; #&lt;mark 1&gt;)</em>
+    :<em class=typing>(mark-sample (integer-&gt;mark 0))</em>
     <em class=listener>360</em>
-    :<em class=typing>(mark-sample 9)</em>
+    :<em class=typing>(mark-sample (integer-&gt;mark 1))</em>
     <em class=listener>619</em>
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>

@@ -12,7 +12,7 @@
 (define sum-of-cosines ncos)
 (define sum-of-cosines? ncos?)
 
-;;; in s7 these could simple be define*
+;;; in s7 these could simply be define*
 (def-optkey-fun (make-sum-of-sines (sines 1) (frequency 0.0) (initial-phase 0.0))
   (let ((gen (make-nsin :frequency frequency :n sines)))
     (set! (mus-phase gen) initial-phase)
@@ -99,3 +99,9 @@
 (define sample-reader-home sampler-home)
 (define sample-reader? sampler?)
 (define sample-reader-position sampler-position)
+
+(define show-backtrace
+  (make-procedure-with-setter
+   (lambda () #t)
+   (lambda (va) #t)))
+

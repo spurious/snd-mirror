@@ -1197,7 +1197,7 @@ Reverb-feedback sets the scaler on the feedback.
        (lambda (snd chn wid)
 	 (set! mark-lists (cons (list snd chn wid) mark-lists))))))
 
-  (define (deactivate-channel snd chn)
+  (define (deactivate-mark-list snd chn)
     (let ((current-mark-list-length (mark-list-length snd chn)))
       (if (and (> current-mark-list-length 0)
 	       (Widget? (mark-list snd chn)))
@@ -1208,7 +1208,7 @@ Reverb-feedback sets the scaler on the feedback.
   
   (define (make-mark-list snd chn)
     (let ((current-mark-list-length (mark-list-length snd chn)))
-      (deactivate-channel snd chn)
+      (deactivate-mark-list snd chn)
       (if (not (Widget? (mark-list snd chn)))
 	  (let* ((mark-box (add-channel-pane snd chn "mark-box" xmFormWidgetClass
 			          (list XmNbackground       (basic-color)
@@ -1238,6 +1238,7 @@ Reverb-feedback sets the scaler on the feedback.
 	    (set-main-color-of-widget mark-scroller)
 	    (XtSetValues mark-box (list XmNpaneMinimum 1))
 	    (set! (mark-list snd chn) (list snd chn mlist))))
+
       (let ((new-marks (marks snd chn)))
 	(if (> (length new-marks) current-mark-list-length)
 	    (let* ((lst (mark-list snd chn)))
@@ -1253,16 +1254,18 @@ Reverb-feedback sets the scaler on the feedback.
 				   (XtSetValues w (list XmNbackground (basic-color)))))
 		  (XtAddCallback tf XmNactivateCallback
 				 (lambda (w c i)
-				   (let* ((id (cadr (XtGetValues w (list XmNuserData 0))))
+				   (let* ((id (integer->mark (cadr (XtGetValues w (list XmNuserData 0)))))
 					  (txt (cadr (XtGetValues w (list XmNvalue 0))))
 					  (samp (if (and (string? txt) 
 							 (> (string-length txt) 0))
 						    (string->number txt)
 						    #f)))
 				     (if samp
-					 (set! (mark-sample id) samp)
+					 (if (mark? id)
+					     (set! (mark-sample id) samp))
 					 (delete-mark id))
 				     (XtSetValues w (list XmNbackground (basic-color))))))))))
+
 	(set! (mark-list-length snd chn) (length new-marks))
 	(let* ((lst (mark-list snd chn)))
 	  (call-with-exit
@@ -1273,7 +1276,7 @@ Reverb-feedback sets the scaler on the feedback.
 		(if (XmIsTextField n)
 		    (begin
 		      (XtSetValues n (list XmNvalue (number->string (mark-sample (car new-marks)))
-					   XmNuserData (car new-marks)))
+					   XmNuserData (mark->integer (car new-marks))))
 		      (XtManageChild n)
 		      (set! new-marks (cdr new-marks)))))
 	      (cadr (XtGetValues lst (list XmNchildren 0) 1)))))))
@@ -1285,13 +1288,19 @@ Reverb-feedback sets the scaler on the feedback.
   (define (unremark snd)
     (do ((i 0 (+ i 1)))
 	((= i (chans snd)))
-      (deactivate-channel snd i)))
+      (deactivate-mark-list snd i)))
 
   (define (open-remarks snd)
     (do ((i 0 (+ i 1)))
 	((= i (chans snd)))
-      (add-hook! (after-edit-hook snd i) (lambda () (if (Widget? (mark-list snd i)) (make-mark-list snd i))))
-      (add-hook! (undo-hook snd i) (lambda () (if (Widget? (mark-list snd i)) (make-mark-list snd i))))))
+      (add-hook! (after-edit-hook snd i) 
+		 (lambda () 
+		   (if (Widget? (mark-list snd i)) 
+		       (make-mark-list snd i))))
+      (add-hook! (undo-hook snd i) 
+		 (lambda () 
+		   (if (Widget? (mark-list snd i)) 
+		       (make-mark-list snd i))))))
 
   (set! including-mark-pane #t)
   (add-hook! mark-hook remark)

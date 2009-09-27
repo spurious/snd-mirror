@@ -30,7 +30,7 @@
 	 (chn (selected-channel))
 	 (ms (marks snd chn)))
     (if (> (length ms) 1)
-	(list (car ms) (cadr ms))
+	(map mark->integer (list (car ms) (cadr ms)))
 	(list))))
 
 
@@ -44,7 +44,7 @@
 
 (define (cp-play-between-marks)
   "(cp-play-between-marks) plays between 2 marks (marks-menu)"
-  (play-between-marks play-between-marks-m1 play-between-marks-m2))
+  (play-between-marks (integer->mark play-between-marks-m1) (integer->mark play-between-marks-m2)))
 
 (if (or (provided? 'xm) 
 	(provided? 'xg))
@@ -57,8 +57,8 @@
 	    (lambda (chan-marks)
 	      (for-each 
 	       (lambda (m)
-		 (if (or (= m play-between-marks-m1)
-			 (= m play-between-marks-m2))
+		 (if (or (= (mark->integer m) play-between-marks-m1)
+			 (= (mark->integer m) play-between-marks-m2))
 		     (set! (mark-sync m) 1)
 		     (set! (mark-sync m) 0)))
 	       chan-marks))
@@ -66,17 +66,11 @@
 	 (marks))
 	(update-time-graph))
 
-      (define (max-mark)
-	(let ((ms (marks (selected-sound) (selected-channel))))
-	  (if (not (null? ms))
-	      (apply max ms)
-	      -1)))
+      (define (max-mark) ; "id" here
+	(apply max (map mark->integer (marks (selected-sound) (selected-channel)))))
 
       (define (min-mark)
-	(let ((ms (marks (selected-sound) (selected-channel))))
-	  (if (not (null? ms))
-	      (apply min ms)
-	      -1)))
+	(apply min (map mark->integer (marks (selected-sound) (selected-channel)))))
 
       (define (post-play-between-marks-dialog)
         (if (not play-between-marks-dialog)
@@ -195,7 +189,7 @@
 
 (define (cp-loop-between-marks)
   "(cp-loop-between-marks) loops between two marks, playing (marks-menu)"
-  (loop-between-marks loop-between-marks-m1 loop-between-marks-m2 loop-between-marks-buffer-size))
+  (loop-between-marks (integer->mark loop-between-marks-m1) (integer->mark loop-between-marks-m2) loop-between-marks-buffer-size))
 
 (if (provided? 'xm)
     (begin
@@ -208,7 +202,7 @@
 	      (lambda (chan-marks)
 		(for-each 
 		 (lambda (m)
-		   (set! maxid (max maxid m)))
+		   (set! maxid (max maxid (mark->integer m))))
 		 chan-marks))
 	      snd-marks))
 	   (marks))
@@ -420,7 +414,9 @@
 
 (define (cp-fit-to-marks)
   "(cp-fit-to-marks) fits the selection between two marks (marks-menu)"
- (fit-selection-between-marks fit-to-mark-one fit-to-mark-two))
+  (if (selection?)
+      (fit-selection-between-marks (integer->mark fit-to-mark-one) (integer->mark fit-to-mark-two))
+      (define-selection-via-marks (integer->mark fit-to-mark-one) (integer->mark fit-to-mark-two))))
 
 (if (or (provided? 'xm) 
 	(provided? 'xg))
@@ -514,7 +510,7 @@ using the granulate generator to fix up the selection duration (this still is no
           (set! (selection-frames snd chn) (+ 1 (- end beg)))))))
 
 (define (cp-define-by-marks)
- (define-selection-via-marks define-by-mark-one define-by-mark-two))
+ (define-selection-via-marks (integer->mark define-by-mark-one) (integer->mark define-by-mark-two)))
 
 (if (or (provided? 'xm) (provided? 'xg))
     (begin
@@ -587,17 +583,24 @@ using the granulate generator to fix up the selection duration (this still is no
 ;;; ------- Start/stop mark sync
 
 (define mark-sync-menu-label #f)
+
 (define mark-sync-number 0)
+
 (define (start-sync) 
   "(start-sync) starts mark syncing (marks-menu)"
   (set! mark-sync-number (+ (mark-sync-max) 1)))
+
 (define (stop-sync) 
   "(stop-sync) stops mark-syncing (marks-menu)"
   (set! mark-sync-number 0))
+
 (define (click-to-sync id) 
   "(click-to-sync id) sets a mark's sync field when it is clicked (marks-menu)"
-  (set! (mark-sync id) mark-sync-number) #f)
+  (set! (mark-sync id) mark-sync-number)
+  #f)
+
 (add-hook! mark-click-hook click-to-sync)
+
 
 (define m-sync #f)
 (define m-sync-label "Mark sync (On)")
@@ -631,7 +634,8 @@ using the granulate generator to fix up the selection duration (this still is no
 (add-to-menu marks-menu "Mark sample loop points" mark-loops)
 
 
-;;; -------- mark loop dialog
+
+;;; -------- mark loop dialog (this refers to sound header mark points, not Snd mark objects!)
 
 (if (provided? 'xm) 
     (begin
@@ -923,6 +927,7 @@ using the granulate generator to fix up the selection duration (this still is no
       
       (add-to-menu marks-menu "Show loop editor" create-loop-dialog)
       ))
+
 
 (add-to-menu marks-menu #f #f)
 

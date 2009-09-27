@@ -2135,13 +2135,6 @@ static XEN g_set_show_indices(XEN val)
 }
 
 
-/* backwards compatibility */
-#define H_show_backtrace "an obsolete no-op"
-#define S_show_backtrace "show-backtrace"
-static XEN g_show_backtrace(void) {return(XEN_TRUE);}
-static XEN g_set_show_backtrace(XEN val) {return(XEN_TRUE);}
-
-
 static XEN g_trap_segfault(void) {return(C_TO_XEN_BOOLEAN(trap_segfault(ss)));}
 
 static XEN g_set_trap_segfault(XEN val) 
@@ -2309,8 +2302,6 @@ XEN_NARGIFY_0(g_print_length_w, g_print_length)
 XEN_NARGIFY_1(g_set_print_length_w, g_set_print_length)
 XEN_NARGIFY_0(g_show_indices_w, g_show_indices)
 XEN_NARGIFY_1(g_set_show_indices_w, g_set_show_indices)
-XEN_NARGIFY_0(g_show_backtrace_w, g_show_backtrace)
-XEN_NARGIFY_1(g_set_show_backtrace_w, g_set_show_backtrace)
 XEN_NARGIFY_0(g_trap_segfault_w, g_trap_segfault)
 XEN_NARGIFY_1(g_set_trap_segfault_w, g_set_trap_segfault)
 XEN_NARGIFY_0(g_with_relative_panes_w, g_with_relative_panes)
@@ -2385,8 +2376,6 @@ XEN_NARGIFY_0(g_abortq_w, g_abortq)
 #define g_set_print_length_w g_set_print_length
 #define g_show_indices_w g_show_indices
 #define g_set_show_indices_w g_set_show_indices
-#define g_show_backtrace_w g_show_backtrace
-#define g_set_show_backtrace_w g_set_show_backtrace
 #define g_trap_segfault_w g_trap_segfault
 #define g_set_trap_segfault_w g_set_trap_segfault
 #define g_with_relative_panes_w g_with_relative_panes
@@ -2508,9 +2497,6 @@ the hook functions return " PROC_TRUE ", the save state process opens 'filename'
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_show_indices, g_show_indices_w, H_show_indices,
 				   S_setB S_show_indices, g_set_show_indices_w,  0, 0, 1, 0);
-
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_show_backtrace, g_show_backtrace_w, H_show_backtrace,
-				   S_setB S_show_backtrace, g_set_show_backtrace_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_trap_segfault, g_trap_segfault_w, H_trap_segfault,
 				   S_setB S_trap_segfault, g_set_trap_segfault_w,  0, 0, 1, 0);

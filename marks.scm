@@ -75,7 +75,7 @@
                (chn (cadr mark-setting))
                (max-edits (apply + (edits snd chn)))
                (descr '())
-               (header (list 'mark id 'sound snd (short-file-name snd) 'channel chn)))
+               (header (list id sound: snd (short-file-name snd) 'channel: chn)))
           (do ((i max-edits (- i 1)))
               ((< i 0) descr)
             (if (member id (marks snd chn i))
@@ -124,7 +124,7 @@
     (if (not (selection?))
 	(throw 'no-active-selection))
     (if (not (equal? m1-home m2-home))
-	(snd-print (format #f "mark ~A is in ~A[~A] but mark ~A is in ~A[~A]?" 
+	(snd-print (format #f "~A is in ~A[~A] but ~A is in ~A[~A]?" 
 			   m1 (car m1-home) (cadr m1-home)
 			   m2 (car m2-home) (cadr m2-home)))
 	(let* ((mark-samps (- m2-samp m1-samp))

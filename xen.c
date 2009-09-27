@@ -1833,11 +1833,15 @@ int xen_to_c_int(XEN a) /* xen_to_c_int is expected to return an int (not an int
 
 int64_t xen_to_c_int64_t(XEN a)
 {
-  if (s7_is_integer(a))
-    return(s7_integer(a));
-  if (s7_is_rational(a))
-    return((int64_t)(s7_numerator(a) / s7_denominator(a)));
-  return((int64_t)s7_real(a));
+  if (XEN_NUMBER_P(a))
+    {
+      if (s7_is_integer(a))
+	return(s7_integer(a));
+      if (s7_is_rational(a))
+	return((int64_t)(s7_numerator(a) / s7_denominator(a)));
+      return((int64_t)s7_real(a));
+    }
+  return((int64_t)a); /* ?? in xm.c, XtSetValues of XmUserData with a pointer falls back on this -- probably can't work */
 }
 
 
