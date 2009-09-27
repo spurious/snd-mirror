@@ -1847,6 +1847,8 @@ static void make_mark_graph(chan_info *cp, mus_long_t initial_sample, mus_long_t
 }
 
 
+#if (!USE_NO_GUI)
+
 /* -------------------------------- display mark -------------------------------- */
 
 void show_mark(chan_info *cp, axis_info *ap, mark *mp, bool show)
@@ -1986,9 +1988,7 @@ void show_mark_triangle(chan_info *cp, int x)
 	       x, y0);
 }
 
-
-
-
+#endif
 
 
 

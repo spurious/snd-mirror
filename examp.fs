@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Tue Jul 05 13:09:37 CEST 2005
-\ Changed: Sun Jun 14 20:39:17 CEST 2009
+\ Changed: Sat Sep 26 02:10:47 CEST 2009
 
 \ Commentary:
 \
@@ -263,7 +263,7 @@ require extensions
 \ 
 \ this mainly involves keeping track of the current sound/channel
 : selection-rms ( -- val )
-  doc" Returns rms of selection data using samplers."
+  doc" Returns rms of selection data using sample readers."
   selection? if
     selection-position #f #f 1 #f make-sampler { rd }
     selection-frames { len }

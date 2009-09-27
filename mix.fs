@@ -3,7 +3,7 @@
 
 \ Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Tue Oct 11 18:23:12 CEST 2005
-\ Changed: Sun Dec 14 00:51:54 CET 2008
+\ Changed: Sat Sep 26 02:11:21 CEST 2009
 
 \ Commentary:
 \

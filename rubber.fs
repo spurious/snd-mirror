@@ -2,7 +2,7 @@
 
 \ Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Jan 06 05:32:57 CET 2006
-\ Changed: Fri Dec 12 00:53:05 CET 2008
+\ Changed: Sat Sep 26 02:11:36 CEST 2009
 
 \ Commentary:
 \
