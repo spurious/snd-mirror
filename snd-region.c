@@ -626,9 +626,13 @@ static int paste_region_1(int n, chan_info *cp, bool add, mus_long_t beg, io_err
       else 
 	{
 #if HAVE_FORTH
-	  origin = mus_format(MUS_LD " %d %s drop", beg, n, S_mix_region);
-#else
-	  origin = mus_format("%s" PROC_OPEN MUS_LD PROC_SEP "%d", TO_PROC_NAME(S_mix_region), beg, n);
+	  origin = mus_format("%d %s " MUS_LD " %s drop", n, S_integer_to_region, beg, S_mix_region);
+#endif
+#if HAVE_RUBY
+	  origin = mus_format("%s(%s(%d), " MUS_LD, TO_PROC_NAME(S_mix_region), TO_PROC_NAME(S_integer_to_region), n, beg);
+#endif
+#if HAVE_SCHEME || (!HAVE_EXTENSION_LANGUAGE)
+	  origin = mus_format("%s (%s %d) " MUS_LD, S_mix_region, S_integer_to_region, n, beg);
 #endif
 	  if (si->chans > 1)
 	    remember_temp(newname, si->chans);
@@ -657,11 +661,17 @@ static int paste_region_1(int n, chan_info *cp, bool add, mus_long_t beg, io_err
 	    if (r->chans > 1) 
 	      remember_temp(tempfile, r->chans);
 	}
+
 #if HAVE_FORTH
-      origin = mus_format(MUS_LD " %d %s drop", beg, n, S_insert_region);
-#else
-      origin = mus_format("%s" PROC_OPEN MUS_LD PROC_SEP "%d", TO_PROC_NAME(S_insert_region), beg, n);
+	  origin = mus_format("%d %s " MUS_LD " %s drop", n, S_integer_to_region, beg, S_insert_region);
 #endif
+#if HAVE_RUBY
+	  origin = mus_format("%s(%s(%d), " MUS_LD, TO_PROC_NAME(S_insert_region), TO_PROC_NAME(S_integer_to_region), n, beg);
+#endif
+#if HAVE_SCHEME || (!HAVE_EXTENSION_LANGUAGE)
+	  origin = mus_format("%s (%s %d) " MUS_LD, S_insert_region, S_integer_to_region, n, beg);
+#endif
+
       for (i = 0; ((i < r->chans) && (i < si->chans)); i++)
 	{
 	  chan_info *ncp;

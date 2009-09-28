@@ -5,7 +5,8 @@ Snd change log
             marks are objects (not ints), integer->mark and mark->integer.
 	    regions are objects, integer->region, region->integer.
             several region functions now take the region argument first:
-              insert-region, make-region-sampler, mix-region, region-sample, region->vct
+              insert-region, make-region-sampler, mix-region, region-sample, 
+              region->vct, region->frame, make-region-frame-reader.
             removed export-all.scm
  17-Sep:    Snd 10.9.
  10-Sep:    removed show-backtrace (it is #t). default optimization is 6.

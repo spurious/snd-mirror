@@ -786,10 +786,13 @@ void global_fft_state(void)
 
 
 #if HAVE_SCHEME
+/* TODO: make sure we don't truncate vector output with "..." ! */
+
 static void save_property_list(FILE *fd, XEN property_list, int chan, int edpos)
 {
   XEN ignore_list;
   ignore_list = XEN_ASSOC(C_STRING_TO_XEN_SYMBOL("save-state-ignore"), property_list);
+
   if (!(XEN_LIST_P(ignore_list)))
     {
       char *temp = NULL;
