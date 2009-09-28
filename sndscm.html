@@ -4420,25 +4420,25 @@ a sound as a key is held down.
 
 <!-- region-play-list -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
-<a class=def name="regionplaylist">region-play-list</a> <code>(data)</code><br>
-<em class=emdef>region-play-sequence</em> <code>(data)</code>
+<a class=def name="regionplaylist">region-play-list</a> <code> data</code><br>
+<em class=emdef>region-play-sequence</em> <code> data</code>
 </td></tr><tr><td></td><td>
 region-play-list plays a list of regions.  'data' is list of lists:
-<code>(list (list time reg)...)</code>; region 'reg' is played at time 'time' (in seconds).
+<code>(list (list reg time)...)</code>; region 'reg' is played at time 'time' (in seconds).
 <pre>
-    (region-play-list (list (list 0.0 0) (list 0.5 1) (list 1.0 2) (list 1.0 0)))
+    (region-play-list (list (list reg0 0.0) (list reg1 0.5) (list reg2 1.0) (list reg0 1.0)))
 </pre>
-which plays region 0 at time 0.0 and 1.0, region 1 at 0.5, and region 2 at 1.0.
+which plays region reg0 at time 0.0 and 1.0, region reg1 at 0.5, and region reg2 at 1.0.
 Similarly, region-play-sequence plays a sequence of regions, one after the other:
 <pre>
-    (region-play-sequence '(0 1 2 0)) ; play in same order as before, but one after the other
+    (region-play-sequence (list reg0 reg1 reg2 reg0)) ; play in same order as before, but one after the other
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
 <!-- region-rms -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
-<A class=def NAME="regionrms">region-rms</a> <code>(:optional reg)</code>
+<A class=def NAME="regionrms">region-rms</a> <code>reg</code>
 </td></tr><tr><td></td><td>
 region-rms returns the rms value of the region's data (in chan 0).
 </td></tr><tr><td colspan=2 height=16></td></tr>

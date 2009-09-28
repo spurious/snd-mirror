@@ -1282,8 +1282,8 @@ If sync is set, all chans are included.  The new region id is returned (if " S_s
 
   id = select_all(cp);
   if (selection_creates_region(ss)) 
-    return(C_TO_XEN_INT(id)); /* C_INT_TO_XEN_REGION to be consistent with-snd-region.c */
-  else return(XEN_TRUE);
+    return(C_INT_TO_XEN_REGION(id));
+  else return(XEN_FALSE);
 }
 
 

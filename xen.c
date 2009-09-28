@@ -1841,7 +1841,7 @@ int64_t xen_to_c_int64_t(XEN a)
 	return((int64_t)(s7_numerator(a) / s7_denominator(a)));
       return((int64_t)s7_real(a));
     }
-  return((int64_t)a); /* ?? in xm.c, XtSetValues of XmUserData with a pointer falls back on this -- probably can't work */
+  return(0); /* ?? in xm.c, XtSetValues of XmUserData with a pointer falls back on this -- probably can't work */
 }
 
 

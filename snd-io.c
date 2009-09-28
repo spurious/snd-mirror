@@ -4,6 +4,27 @@
  *   I think I'll just issue a warning, and let the redirection mechanism deal with it.
  */
 
+struct snd_io {
+  int fd, chans, bufsize;
+  mus_long_t frames, beg, end;
+  mus_sample_t **arrays;
+};
+
+mus_long_t io_beg(snd_io *io)
+{
+  return(io->beg);
+}
+
+mus_long_t io_end(snd_io *io)
+{
+  return(io->end);
+}
+
+int io_filed(snd_io *io)
+{
+  return(io->fd);
+}
+
 
 void snd_remove(const char *name, cache_remove_t forget)
 {
@@ -792,3 +813,32 @@ io_error_t close_temp_file(const char *filename, int ofd, int type, mus_long_t b
   return(sndlib_error_to_snd(err));
 }
 
+
+
+void set_up_snd_io(chan_info *cp, int i, int fd, const char *filename, file_info *hdr, bool post_close)
+{
+  snd_io *io;
+  snd_file_open_descriptors(fd,
+			    filename,
+			    hdr->format,
+			    hdr->data_location,
+			    hdr->chans,
+			    hdr->type);
+  io = make_file_state(fd, hdr, i, 0,
+		       (post_close) ? MAX_BUFFER_SIZE : MIX_FILE_BUFFER_SIZE);
+  cp->sounds[0] = make_snd_data_file(filename, io,
+				     copy_header(hdr->name, hdr),
+				     DONT_DELETE_ME, cp->edit_ctr, i);
+  if (post_close) 
+    {
+      snd_data *sd;
+      sd = cp->sounds[0]; 
+      sd->open = FD_CLOSED; 
+      io->fd = -1;
+      if (mus_file_close(fd) != 0)
+	snd_error(_("can't close file %s: %s"), filename, snd_io_strerror());
+    }
+  /* this is not as crazy as it looks -- we've read in the first 64K (or whatever) samples,
+   * and may need this file channel for other opens, so this file can be closed until reposition_file_state_buffers
+   */
+}

@@ -3019,7 +3019,7 @@ See <a href="sndscm.html#locatezero">locate-zero</a> in examp.scm, or <a href="s
 sampler-home returns information describing the source of the data the sampler 'obj' is reading.
 if 'obj' is a sound sampler, it returns a list with the sound index and channel number associated with 'obj'.
 If 'obj' is a mix reader, it returns the mix's id. 
-Finally, if 'obj' is a region reader, it returns a list with the region id.
+Finally, if 'obj' is a region reader, it returns a list with the region.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -5181,7 +5181,7 @@ Most of the region arguments default to the current region (the top of the regio
 <table border=0 cellspacing=4 cellpadding=6 hspace=10>
 
 <!-- forget-region -->
-<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="forgetregion">forget-region</a> (:optional reg)</code>
+<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="forgetregion">forget-region</a> reg</code>
 </td></tr><tr><td width=30><br></td><td>
 forget-region deletes region 'reg', removing it from the region stack.  This does not affect any of the
 active sounds; it just tells Snd that you no longer need any access to one of the current regions.
@@ -5194,7 +5194,7 @@ I called this forget-region because delete-region seemed ambiguous, especially g
 
 
 <!-- insert-region -->
-<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="insertregion">insert-region</a> (:optional beg reg snd chn)</code>
+<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="insertregion">insert-region</a> reg beg :optional snd chn</code>
 </td></tr><tr><td></td><td>
 insert-region inserts region 'reg' at sample 'beg' in the given channel.  The following
 function uses insert-region (and other region functions) to rotate the samples in a channel:
@@ -5213,16 +5213,16 @@ function uses insert-region (and other region functions) to rotate the samples i
 
 
 <!-- make-region -->
-<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="makeregion">make-region</a> (:optional beg end snd chn)</code>
+<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="makeregion">make-region</a> :optional beg end snd chn</code>
 </td></tr><tr><td></td><td>
 make-region creates a new region spanning the samples 'beg' to 'end' in the given channel.
-It returns the new region's id.  If no arguments are given, the 
+It returns the new region.  If no arguments are given, the 
 current selection is used. If 'chn' is #t, all chans are included, taking the <a class=quiet href="#sync" onmouseout="UnTip()" onmouseover="Tip(extsnd_sync_tip)">sync</a> fields into account.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
 <!-- make-region-sampler -->
-<tr><td colspan=2 bgcolor="#f2f4ff"><code><a href="#makeregionsampler">make-region-sampler</a> (:optional start reg chn (dir 1))</code>
+<tr><td colspan=2 bgcolor="#f2f4ff"><code><a href="#makeregionsampler">make-region-sampler</a> reg :optional start chn (dir 1)</code>
 </td></tr><tr><td></td><td>
 This creates a <a href="#samplers">sampler</a> reading the region's channel 'chn' starting at sample 'start' within that region.
 'dir' can be 1 (read forwards) or -1 (read backwards).
@@ -5231,7 +5231,7 @@ This creates a <a href="#samplers">sampler</a> reading the region's channel 'chn
 
 
 <!-- mix-region -->
-<tr><td colspan=2 bgcolor="#f2f4ff"><code><em class=emdef>mix-region</em> (:optional samp reg snd chn)</code>
+<tr><td colspan=2 bgcolor="#f2f4ff"><code><em class=emdef>mix-region</em> reg samp :optional snd chn</code>
 </td></tr><tr><td></td><td>
 mix-region mixes region 'reg' into the given channel starting at sample 'samp' (defaulting to the cursor location).
 It returns the id of the first channel's 
@@ -5240,7 +5240,7 @@ mix (subsequent channels simply increment this number).
 
 
 <!-- play-region -->
-<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="playregion">play-region</a> (:optional reg wait stop-func)</code>
+<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="playregion">play-region</a> reg :optional wait stop-func</code>
 </td></tr><tr><td></td><td>
 play-region plays region 'reg'; if wait is #t, it plays to the end before returning.  The 'stop-func'
 can be a function which is called when the play process stops.  Its one argument is
@@ -5259,14 +5259,14 @@ Here is a brief example (taken from play.scm) that plays a region over and over 
 
 
 <!-- region-chans -->
-<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="regionchans">region-chans</a> (:optional reg)</code>
+<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="regionchans">region-chans</a> reg</code>
 </td></tr><tr><td></td><td>
 This returns the number of channels in the region 'reg'.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
 <!-- region-frames -->
-<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="regionframes">region-frames</a> (:optional reg chan)</code>
+<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="regionframes">region-frames</a> reg :optional (chan 0)</code>
 </td></tr><tr><td></td><td>
 region-frames returns the number of frames in the region 'reg'.
 <pre>
@@ -5279,7 +5279,7 @@ region-frames returns the number of frames in the region 'reg'.
 
 
 <!-- region-graph-style -->
-<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="regiongraphstyle">region-graph-style</a> (style)</code>
+<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="regiongraphstyle">region-graph-style</a> style</code>
 </td></tr><tr><td></td><td>
 region-graph-style is the graph drawing choice for the region dialog's graph.
 The choices are:
@@ -5291,7 +5291,7 @@ The choices are:
 
 
 <!-- region-home -->
-<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="regionhome">region-home</a> (:optional reg)</code>
+<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="regionhome">region-home</a> reg</code>
 </td></tr><tr><td></td><td>
 This returns a list with the name of the source file for the given region, its start time in the original
 data, and its length in frames.
@@ -5299,7 +5299,7 @@ data, and its length in frames.
 
 
 <!-- region-maxamp -->
-<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="regionmaxamp">region-maxamp</a> (:optional reg)</code>
+<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="regionmaxamp">region-maxamp</a> reg</code>
 </td></tr><tr><td></td><td>
 region-maxamp is the peak amplitude of the samples in the region 'reg'.
 <pre>
@@ -5310,14 +5310,14 @@ region-maxamp is the peak amplitude of the samples in the region 'reg'.
 
 
 <!-- region-maxamp-position -->
-<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="regionmaxampposition">region-maxamp-position</a> (:optional reg)</code>
+<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="regionmaxampposition">region-maxamp-position</a> reg</code>
 </td></tr><tr><td></td><td>
 region-maxamp-position returns the location (a sample number) of the peak amplitude of the region 'reg'.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
 <!-- region-position -->
-<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="regionposition">region-position</a> (:optional reg chan)</code>
+<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="regionposition">region-position</a> reg :optional chan</code>
 </td></tr><tr><td></td><td>
 region-position returns the begin time of the region's channel 'chan' in the original sound.
 <pre>
@@ -5330,16 +5330,16 @@ region-position returns the begin time of the region's channel 'chan' in the ori
 
 
 <!-- region-sample -->
-<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="regionsample">region-sample</a> (:optional samp reg chn)</code>
+<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="regionsample">region-sample</a> reg samp :optional chan</code>
 </td></tr><tr><td></td><td>
 region-sample returns the value of the sample 'samp' in channel 'chan' of the region 'reg'.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
 <!-- region->vct -->
-<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="regiontovct">region-&gt;vct</a> (:optional samp samps reg chn v)</code>
+<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="regiontovct">region-&gt;vct</a> reg :optional samp samps chan v</code>
 </td></tr><tr><td></td><td>
-region-&gt;vct returns a vct containing 'samps' samples starting at 'samp' in channel 'chn' of the region 'reg'.
+region-&gt;vct returns a vct containing 'samps' samples starting at 'samp' in channel 'chan' of the region 'reg'.
 If 'v' (a vct) is provided, it is filled, 
 rather than creating a new vct.
 
@@ -5353,23 +5353,23 @@ rather than creating a new vct.
 
 
 <!-- region-srate -->
-<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="regionsrate">region-srate</a> (:optional reg)</code>
+<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="regionsrate">region-srate</a> reg</code>
 </td></tr><tr><td></td><td>
 region-srate returns the sampling rate of the data that makes up the region 'reg'.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
 <!-- regions -->
-<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="eregions">regions</a> ()</code>
+<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="eregions">regions</a> </code>
 </td></tr><tr><td></td><td>
-regions returns a list of active region ids.  The most recently created region is <code>(car (regions))</code>.
+regions returns a list of active regions.  The most recently created region is <code>(car (regions))</code>.
 <code>(map region-frames (regions))</code> returns a list of region lengths.
 The maxmimum length of this list is set by <a href="#maxregions">max-regions</a>.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
 <!-- region? -->
-<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="regionok">region?</a> (:optional reg)</code>
+<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="regionok">region?</a> reg</code>
 </td></tr><tr><td></td><td>
 region? returns #t if the region 'reg' exists.  There is a limit to how many regions Snd tries to
 keep track of (<a href="#maxregions">max-regions</a>); when necessary, the least-recently created region is
@@ -5378,7 +5378,7 @@ deleted.
 
 
 <!-- save-region -->
-<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="saveregion">save-region</a> (reg <a class=quiet href="sndclm.html#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">&amp;optional-key</a> :file :header-type :data-format :comment) </code>
+<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="saveregion">save-region</a> reg <a class=quiet href="sndclm.html#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">&amp;optional-key</a> :file :header-type :data-format :comment</code>
 </td></tr><tr><td></td><td>
 save-region saves the region 'reg' in 'file' in the given data format and header type.
 It returns the output filename.  The arguments after 'reg' are <a class=quiet href="sndclm.html#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">optional-key</a>
@@ -5561,7 +5561,7 @@ a list of floats, or a vct.
 <tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="selectall">select-all</a> (:optional snd chn)</code>
 </td></tr><tr><td></td><td>
 This function selects all samples in the given channel.
-If a region is created, it returns the new region's id.
+If a region is created, it returns the new region.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 

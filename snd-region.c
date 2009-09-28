@@ -1301,10 +1301,165 @@ io_error_t save_region(int rg, const char *name, int type, int format, const cha
 }
 
 
-#define XEN_REGION_P(Val) XEN_INTEGER_P(Val)
-#define XEN_REGION_IF_BOUND_P(Val) ((XEN_NOT_BOUND_P(Val)) || (XEN_INTEGER_P(Val)))
-#define XEN_REGION_TO_C_INT(Val) ((XEN_INTEGER_P(Val)) ? XEN_TO_C_INT(Val) : region_list_position_to_id(0))
-#define C_INT_TO_XEN_REGION(Val) C_TO_XEN_INT(Val)
+/* ---------------------------------------- region objects ---------------------------------------- */
+
+/* TODO: check ruby/forth/guile code/doc examples
+ * SOMEDAY: deprecate region-home|chans|frames|maxamp|position,  make-region-sampler, read-region-sample, region-sampler?
+ * TODO: check the sampler funcs for region support
+ * TODO: region-ref (also (reg n)).
+ */
+
+typedef struct {
+  int n;
+} xen_region;
+
+
+#define XEN_TO_XEN_REGION(arg) ((xen_region *)XEN_OBJECT_REF(arg))
+
+int xen_region_to_int(XEN n)
+{
+  xen_region *mx;
+  mx = XEN_TO_XEN_REGION(n);
+  return(mx->n);
+}
+
+
+static XEN_OBJECT_TYPE xen_region_tag;
+
+bool xen_region_p(XEN obj) 
+{
+  return(XEN_OBJECT_TYPE_P(obj, xen_region_tag));
+}
+
+
+static void xen_region_free(xen_region *v) {if (v) free(v);}
+
+XEN_MAKE_OBJECT_FREE_PROCEDURE(xen_region, free_xen_region, xen_region_free)
+
+
+static char *xen_region_to_string(xen_region *v)
+{
+  #define XEN_REGION_PRINT_BUFFER_SIZE 64
+  char *buf;
+  if (v == NULL) return(NULL);
+  buf = (char *)calloc(XEN_REGION_PRINT_BUFFER_SIZE, sizeof(char));
+  sprintf(buf, "#<region %d>", v->n);
+  return(buf);
+}
+
+XEN_MAKE_OBJECT_PRINT_PROCEDURE(xen_region, print_xen_region, xen_region_to_string)
+
+
+#if HAVE_FORTH || HAVE_RUBY
+static XEN g_xen_region_to_string(XEN obj)
+{
+  char *vstr;
+  XEN result;
+  #define S_xen_region_to_string "region->string"
+
+  XEN_ASSERT_TYPE(XEN_REGION_P(obj), obj, XEN_ONLY_ARG, S_xen_region_to_string, "a region");
+
+  vstr = xen_region_to_string(XEN_TO_XEN_REGION(obj));
+  result = C_TO_XEN_STRING(vstr);
+  free(vstr);
+  return(result);
+}
+#endif
+
+
+static bool xen_region_equalp(xen_region *v1, xen_region *v2) 
+{
+  return((v1 == v2) ||
+	 (v1->n == v2->n));
+}
+
+
+static XEN equalp_xen_region(XEN obj1, XEN obj2)
+{
+  if ((!(XEN_REGION_P(obj1))) || (!(XEN_REGION_P(obj2)))) return(XEN_FALSE);
+  return(xen_return_first(C_TO_XEN_BOOLEAN(xen_region_equalp(XEN_TO_XEN_REGION(obj1), XEN_TO_XEN_REGION(obj2))), obj1, obj2));
+}
+
+
+static xen_region *xen_region_make(int n)
+{
+  xen_region *new_v;
+  new_v = (xen_region *)malloc(sizeof(xen_region));
+  new_v->n = n;
+  return(new_v);
+}
+
+
+XEN new_xen_region(int n)
+{
+  xen_region *mx;
+  if (n < 0)
+    return(XEN_FALSE);
+
+  mx = xen_region_make(n);
+  XEN_MAKE_AND_RETURN_OBJECT(xen_region_tag, mx, 0, free_xen_region);
+}
+
+
+#if HAVE_S7
+static bool s7_xen_region_equalp(void *obj1, void *obj2)
+{
+  return((obj1 == obj2) ||
+	 (((xen_region *)obj1)->n == ((xen_region *)obj2)->n));
+}
+#endif
+
+
+static init_xen_region(void)
+{
+#if HAVE_S7
+  xen_region_tag = XEN_MAKE_OBJECT_TYPE("<region>", print_xen_region, free_xen_region, s7_xen_region_equalp, NULL, NULL, NULL, NULL, NULL, NULL);
+#else
+#if HAVE_RUBY
+  xen_region_tag = XEN_MAKE_OBJECT_TYPE("XenRegion", sizeof(xen_region));
+#else
+  xen_region_tag = XEN_MAKE_OBJECT_TYPE("Region", sizeof(xen_region));
+#endif
+#endif
+
+#if HAVE_GUILE
+  scm_set_smob_print(xen_region_tag,  print_xen_region);
+  scm_set_smob_free(xen_region_tag,   free_xen_region);
+  scm_set_smob_equalp(xen_region_tag, equalp_xen_region);
+#endif
+
+#if HAVE_FORTH
+  fth_set_object_inspect(xen_region_tag,   print_xen_region);
+  fth_set_object_dump(xen_region_tag,      g_xen_region_to_string);
+  fth_set_object_equal(xen_region_tag,     equalp_xen_region);
+  fth_set_object_free(xen_region_tag,      free_xen_region);
+#endif
+
+#if HAVE_RUBY
+  rb_define_method(xen_region_tag, "to_s",     XEN_PROCEDURE_CAST print_xen_region, 0);
+  rb_define_method(xen_region_tag, "eql?",     XEN_PROCEDURE_CAST equalp_xen_region, 1);
+  rb_define_method(xen_region_tag, "to_str",   XEN_PROCEDURE_CAST g_xen_region_to_string, 0);
+#endif
+}
+
+/* -------------------------------------------------------------------------------- */
+
+
+static XEN g_integer_to_region(XEN n)
+{
+  #define H_integer_to_region "(" S_integer_to_region " n) returns a region object corresponding to the given integer"
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(n), n, XEN_ONLY_ARG, S_integer_to_region, "an integer");
+  return(new_xen_region(XEN_TO_C_INT(n)));
+}
+
+
+static XEN g_region_to_integer(XEN n)
+{
+  #define H_region_to_integer "(" S_region_to_integer " id) returns the integer corresponding to the given region"
+  XEN_ASSERT_TYPE(XEN_REGION_P(n), n, XEN_ONLY_ARG, S_region_to_integer, "a region");
+  return(C_TO_XEN_INT(xen_region_to_int(n)));
+}
+
 
 static XEN snd_no_such_region_error(const char *caller, XEN n)
 {
@@ -1358,9 +1513,9 @@ static XEN g_restore_region(XEN pos, XEN chans, XEN len, XEN srate, XEN maxamp, 
 }
 
 
-static XEN g_insert_region(XEN samp_n, XEN reg_n, XEN snd_n, XEN chn_n) /* opt reg_n */
+static XEN g_insert_region(XEN reg_n, XEN samp_n, XEN snd_n, XEN chn_n) /* opt reg_n */
 {
-  #define H_insert_region "("  S_insert_region " :optional (start-samp 0) (region-id 0) snd chn): \
+  #define H_insert_region "("  S_insert_region " region :optional (start-samp 0) snd chn): \
 insert region data into snd's channel chn starting at start-samp"
 
   chan_info *cp;
@@ -1368,8 +1523,8 @@ insert region data into snd's channel chn starting at start-samp"
   mus_long_t samp;
   io_error_t err = IO_NO_ERROR;
 
-  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samp_n), samp_n, XEN_ARG_1, S_insert_region, "a number");
-  XEN_ASSERT_TYPE(XEN_REGION_IF_BOUND_P(reg_n), reg_n, XEN_ARG_2, S_insert_region, "a region id");
+  XEN_ASSERT_TYPE(XEN_REGION_P(reg_n), reg_n, XEN_ARG_1, S_insert_region, "a region id");
+  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samp_n), samp_n, XEN_ARG_2, S_insert_region, "a number");
 
   ASSERT_CHANNEL(S_insert_region, snd_n, chn_n, 3);
   cp = get_cp(snd_n, chn_n, S_insert_region);
@@ -1428,9 +1583,9 @@ static XEN g_region_frames(XEN n, XEN chan)
 {
   region *r;
   int rg, chn;
-  #define H_region_frames "(" S_region_frames " :optional (reg 0) (chan 0)): region length in frames"
+  #define H_region_frames "(" S_region_frames " reg :optional (chan 0)): region length in frames"
 
-  XEN_ASSERT_TYPE(XEN_REGION_IF_BOUND_P(n), n, XEN_ARG_1, S_region_frames, "a region id");
+  XEN_ASSERT_TYPE(XEN_REGION_P(n), n, XEN_ARG_1, S_region_frames, "a region");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chan), chan, XEN_ARG_2, S_region_frames, "an integer");
 
   rg = XEN_REGION_TO_C_INT(n);
@@ -1452,9 +1607,9 @@ static XEN g_region_position(XEN n, XEN chan)
 {
   region *r;
   int rg, chn;
-  #define H_region_position "(" S_region_position " :optional (reg 0) (chan 0)): region chan's original position"
+  #define H_region_position "(" S_region_position " reg :optional (chan 0)): region's position in the original sound"
 
-  XEN_ASSERT_TYPE(XEN_REGION_IF_BOUND_P(n), n, XEN_ARG_1, S_region_position, "a region id");
+  XEN_ASSERT_TYPE(XEN_REGION_P(n), n, XEN_ARG_1, S_region_position, "a region");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chan), chan, XEN_ARG_2, S_region_position, "an integer");
 
   rg = XEN_REGION_TO_C_INT(n);
@@ -1504,59 +1659,59 @@ static XEN region_get(region_field_t field, XEN n, const char *caller)
 
 static XEN g_region_srate(XEN n) 
 {
-  #define H_region_srate "(" S_region_srate " :optional (reg 0)): region (nominal) srate"
-  XEN_ASSERT_TYPE(XEN_REGION_IF_BOUND_P(n), n, XEN_ONLY_ARG, S_region_srate, "a region id");
+  #define H_region_srate "(" S_region_srate " reg): region (nominal) srate"
+  XEN_ASSERT_TYPE(XEN_REGION_P(n), n, XEN_ONLY_ARG, S_region_srate, "a region");
   return(region_get(REGION_SRATE, n, S_region_srate));
 }
 
 
 static XEN g_region_chans(XEN n) 
 {
-  #define H_region_chans "(" S_region_chans " :optional (reg 0): region channels"
-  XEN_ASSERT_TYPE(XEN_REGION_IF_BOUND_P(n), n, XEN_ONLY_ARG, S_region_chans, "a region id");
+  #define H_region_chans "(" S_region_chans " reg): region channels"
+  XEN_ASSERT_TYPE(XEN_REGION_P(n), n, XEN_ONLY_ARG, S_region_chans, "a region");
   return(region_get(REGION_CHANS, n, S_region_chans));
 }
 
 
 static XEN g_region_home(XEN n) 
 {
-  #define H_region_home "(" S_region_home " :optional (reg 0): a list with the region source sound name and position info"
-  XEN_ASSERT_TYPE(XEN_REGION_IF_BOUND_P(n), n, XEN_ONLY_ARG, S_region_home, "a region id");
+  #define H_region_home "(" S_region_home " reg): a list with the region source sound name and position info"
+  XEN_ASSERT_TYPE(XEN_REGION_P(n), n, XEN_ONLY_ARG, S_region_home, "a region");
   return(region_get(REGION_HOME, n, S_region_home));
 }
 
 
 static XEN g_region_maxamp(XEN n) 
 {
-  #define H_region_maxamp "(" S_region_maxamp " :optional (reg 0)): region maxamp"
-  XEN_ASSERT_TYPE(XEN_REGION_IF_BOUND_P(n), n, XEN_ONLY_ARG, S_region_maxamp, "a region id");
+  #define H_region_maxamp "(" S_region_maxamp " reg): region maxamp"
+  XEN_ASSERT_TYPE(XEN_REGION_P(n), n, XEN_ONLY_ARG, S_region_maxamp, "a region");
   return(region_get(REGION_MAXAMP, n, S_region_maxamp));
 }
 
 
 static XEN g_region_maxamp_position(XEN n) 
 {
-  #define H_region_maxamp_position "(" S_region_maxamp_position " :optional (reg 0)): first sample where region maxamp occurs"
-  XEN_ASSERT_TYPE(XEN_REGION_IF_BOUND_P(n), n, XEN_ONLY_ARG, S_region_maxamp_position, "a region id");
+  #define H_region_maxamp_position "(" S_region_maxamp_position " reg): first sample where region maxamp occurs"
+  XEN_ASSERT_TYPE(XEN_REGION_P(n), n, XEN_ONLY_ARG, S_region_maxamp_position, "a region");
   return(region_get(REGION_MAXAMP_POSITION, n, S_region_maxamp_position));
 }
 
 
 static XEN g_forget_region(XEN n) 
 {
-  #define H_forget_region "(" S_forget_region " :optional (reg 0)): remove region reg from the region list"
-  XEN_ASSERT_TYPE(XEN_REGION_IF_BOUND_P(n), n, XEN_ONLY_ARG, S_forget_region, "a region id");
+  #define H_forget_region "(" S_forget_region " reg): remove region from the region list"
+  XEN_ASSERT_TYPE(XEN_REGION_P(n), n, XEN_ONLY_ARG, S_forget_region, "a region");
   return(region_get(REGION_FORGET, n, S_forget_region));
 }
 
 
 static XEN g_play_region(XEN n, XEN wait, XEN stop_proc) 
 {
-  #define H_play_region "(" S_play_region " :optional (reg 0) wait stop-proc): play region reg; if wait is " PROC_TRUE ", play to end before returning"
+  #define H_play_region "(" S_play_region " reg :optional wait stop-proc): play region; if wait is " PROC_TRUE ", play to end before returning"
   int rg;
   bool wt = false;
 
-  XEN_ASSERT_TYPE(XEN_REGION_IF_BOUND_P(n), n, XEN_ARG_1, S_play_region, "a region id");
+  XEN_ASSERT_TYPE(XEN_REGION_P(n), n, XEN_ARG_1, S_play_region, "a region");
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(wait), wait, XEN_ARG_2, S_play_region, "a boolean");
   XEN_ASSERT_TYPE(((XEN_PROCEDURE_P(stop_proc)) && (procedure_arity_ok(stop_proc, 1))) ||
 		  (XEN_NOT_BOUND_P(stop_proc)) || 
@@ -1590,7 +1745,7 @@ static XEN g_regions(void)
 
 static XEN g_make_region(XEN beg, XEN end, XEN snd_n, XEN chn_n)
 {
-  #define H_make_region "(" S_make_region " :optional beg end snd chn): make a new region between beg and end in snd, returning its id. \
+  #define H_make_region "(" S_make_region " :optional beg end snd chn): make a new region between beg and end in snd. \
 If chn is " PROC_TRUE ", all chans are included, taking the snd sync field into account if it's not 0.  If no args are passed, the current \
 selection is used."
   int id = INVALID_REGION, old_sync, i;
@@ -1746,9 +1901,9 @@ using data format (default depends on machine byte order), header type (" S_mus_
 }
 
 
-static XEN g_mix_region(XEN chn_samp_n, XEN reg_n, XEN snd_n, XEN chn_n, XEN reg_chn)
+static XEN g_mix_region(XEN reg_n, XEN chn_samp_n, XEN snd_n, XEN chn_n, XEN reg_chn)
 {
-  #define H_mix_region "(" S_mix_region " :optional (chn-samp 0) (region 0) snd chn (region-chan #t)): \
+  #define H_mix_region "(" S_mix_region " region :optional (chn-samp 0) snd chn (region-chan #t)): \
 mix region's channel region-chan (or all chans if region-chan is " PROC_TRUE ") into snd's channel chn starting at chn-samp; \
 it returns a list of the new mixes"
 
@@ -1758,8 +1913,8 @@ it returns a list of the new mixes"
   int i, rg, id = -1, reg_chan = 0, reg_chans = 0;
   XEN result = XEN_EMPTY_LIST;
 
-  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(chn_samp_n), chn_samp_n, XEN_ARG_1, S_mix_region, "a number");
-  XEN_ASSERT_TYPE(XEN_REGION_IF_BOUND_P(reg_n), reg_n, XEN_ARG_2, S_mix_region, "a region id");
+  XEN_ASSERT_TYPE(XEN_REGION_P(reg_n), reg_n, XEN_ARG_1, S_mix_region, "a region");
+  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(chn_samp_n), chn_samp_n, XEN_ARG_2, S_mix_region, "a number");
   XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(reg_chn), reg_chn, XEN_ARG_5, S_mix_region, "an integer or " PROC_TRUE);
   ASSERT_CHANNEL(S_mix_region, snd_n, chn_n, 3);
 
@@ -1792,15 +1947,15 @@ it returns a list of the new mixes"
 }
 
 
-static XEN g_region_sample(XEN samp_n, XEN reg_n, XEN chn_n)
+static XEN g_region_sample(XEN reg_n, XEN samp_n, XEN chn_n)
 {
-  #define H_region_sample "(" S_region_sample " :optional (samp 0) (region 0) (chan 0)): region's sample at samp in chan"
+  #define H_region_sample "(" S_region_sample " region samp :optional (chan 0)): region's sample at samp in chan"
 
   int rg, chan;
   mus_long_t samp;
 
-  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samp_n), samp_n, XEN_ARG_1, S_region_sample, "a number");
-  XEN_ASSERT_TYPE(XEN_REGION_IF_BOUND_P(reg_n), reg_n, XEN_ARG_2, S_region_sample, "a region id");
+  XEN_ASSERT_TYPE(XEN_REGION_P(reg_n), reg_n, XEN_ARG_1, S_region_sample, "a region");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(samp_n), samp_n, XEN_ARG_2, S_region_sample, "a number");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chn_n), chn_n, XEN_ARG_3, S_region_sample, "an integer");
 
   chan = XEN_TO_C_INT_OR_ELSE(chn_n, 0);
@@ -1815,9 +1970,9 @@ static XEN g_region_sample(XEN samp_n, XEN reg_n, XEN chn_n)
 }
 
 
-static XEN g_region_to_vct(XEN beg_n, XEN num, XEN reg_n, XEN chn_n, XEN v)
+static XEN g_region_to_vct(XEN reg_n, XEN beg_n, XEN num, XEN chn_n, XEN v)
 {
-  #define H_region_to_vct "(" S_region_to_vct " :optional (beg 0) (samps reglen) (region 0) (chan 0) v): \
+  #define H_region_to_vct "(" S_region_to_vct " region :optional (beg 0) samps (chan 0) v): \
 write region's samples starting at beg for samps in channel chan to vct v; return v (or create a new one)"
 
   mus_float_t *data;
@@ -1825,9 +1980,9 @@ write region's samples starting at beg for samps in channel chan to vct v; retur
   mus_long_t len;
   vct *v1 = xen_to_vct(v);
 
-  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(beg_n), beg_n, XEN_ARG_1, S_region_to_vct, "a number");
-  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(num), num, XEN_ARG_2, S_region_to_vct, "a number");
-  XEN_ASSERT_TYPE(XEN_REGION_IF_BOUND_P(reg_n), reg_n, XEN_ARG_3, S_region_to_vct, "a region id");
+  XEN_ASSERT_TYPE(XEN_REGION_P(reg_n), reg_n, XEN_ARG_1, S_region_to_vct, "a region");
+  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(beg_n), beg_n, XEN_ARG_2, S_region_to_vct, "a number");
+  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(num), num, XEN_ARG_3, S_region_to_vct, "a number");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chn_n), chn_n, XEN_ARG_4, S_region_to_vct, "an integer");
 
   reg = XEN_REGION_TO_C_INT(reg_n);
@@ -1914,6 +2069,8 @@ XEN_NARGIFY_0(g_max_regions_w, g_max_regions)
 XEN_NARGIFY_1(g_set_max_regions_w, g_set_max_regions)
 XEN_NARGIFY_0(g_region_graph_style_w, g_region_graph_style)
 XEN_NARGIFY_1(g_set_region_graph_style_w, g_set_region_graph_style)
+XEN_NARGIFY_1(g_integer_to_region_w, g_integer_to_region)
+XEN_NARGIFY_1(g_region_to_integer_w, g_region_to_integer)
 #else
 #define g_restore_region_w g_restore_region
 #define g_insert_region_w g_insert_region
@@ -1937,30 +2094,37 @@ XEN_NARGIFY_1(g_set_region_graph_style_w, g_set_region_graph_style)
 #define g_set_max_regions_w g_set_max_regions
 #define g_region_graph_style_w g_region_graph_style
 #define g_set_region_graph_style_w g_set_region_graph_style
+#define g_integer_to_region_w g_integer_to_region
+#define g_region_to_integer_w g_region_to_integer
 #endif
 
 void g_init_regions(void)
 {
+  init_xen_region();
+
   init_region_keywords();
 
   XEN_DEFINE_PROCEDURE(S_restore_region,         g_restore_region_w,         9, 1, 0, "internal func used in save-state, restores a region");
-  XEN_DEFINE_PROCEDURE(S_insert_region,          g_insert_region_w,          0, 4, 0, H_insert_region);
+  XEN_DEFINE_PROCEDURE(S_insert_region,          g_insert_region_w,          2, 2, 0, H_insert_region);
   XEN_DEFINE_PROCEDURE(S_regions,                g_regions_w,                0, 0, 0, H_regions);
-  XEN_DEFINE_PROCEDURE(S_region_frames,          g_region_frames_w,          0, 2, 0, H_region_frames);
-  XEN_DEFINE_PROCEDURE(S_region_position,        g_region_position_w,        0, 2, 0, H_region_position);
-  XEN_DEFINE_PROCEDURE(S_region_srate,           g_region_srate_w,           0, 1, 0, H_region_srate);
-  XEN_DEFINE_PROCEDURE(S_region_chans,           g_region_chans_w,           0, 1, 0, H_region_chans);
-  XEN_DEFINE_PROCEDURE(S_region_home,            g_region_home_w,            0, 1, 0, H_region_home);
-  XEN_DEFINE_PROCEDURE(S_region_maxamp,          g_region_maxamp_w,          0, 1, 0, H_region_maxamp);
-  XEN_DEFINE_PROCEDURE(S_region_maxamp_position, g_region_maxamp_position_w, 0, 1, 0, H_region_maxamp_position);
+  XEN_DEFINE_PROCEDURE(S_region_frames,          g_region_frames_w,          1, 1, 0, H_region_frames);
+  XEN_DEFINE_PROCEDURE(S_region_position,        g_region_position_w,        1, 1, 0, H_region_position);
+  XEN_DEFINE_PROCEDURE(S_region_srate,           g_region_srate_w,           1, 0, 0, H_region_srate);
+  XEN_DEFINE_PROCEDURE(S_region_chans,           g_region_chans_w,           1, 0, 0, H_region_chans);
+  XEN_DEFINE_PROCEDURE(S_region_home,            g_region_home_w,            1, 0, 0, H_region_home);
+  XEN_DEFINE_PROCEDURE(S_region_maxamp,          g_region_maxamp_w,          1, 0, 0, H_region_maxamp);
+  XEN_DEFINE_PROCEDURE(S_region_maxamp_position, g_region_maxamp_position_w, 1, 0, 0, H_region_maxamp_position);
   XEN_DEFINE_PROCEDURE(S_save_region,            g_save_region_w,            2, 7, 0, H_save_region);
-  XEN_DEFINE_PROCEDURE(S_forget_region,          g_forget_region_w,          0, 1, 0, H_forget_region);
-  XEN_DEFINE_PROCEDURE(S_play_region,            g_play_region_w,            0, 3, 0, H_play_region);
+  XEN_DEFINE_PROCEDURE(S_forget_region,          g_forget_region_w,          1, 0, 0, H_forget_region);
+  XEN_DEFINE_PROCEDURE(S_play_region,            g_play_region_w,            1, 2, 0, H_play_region);
   XEN_DEFINE_PROCEDURE(S_make_region,            g_make_region_w,            0, 4, 0, H_make_region);
-  XEN_DEFINE_PROCEDURE(S_mix_region,             g_mix_region_w,             0, 5, 0, H_mix_region);
-  XEN_DEFINE_PROCEDURE(S_region_sample,          g_region_sample_w,          0, 3, 0, H_region_sample);
-  XEN_DEFINE_PROCEDURE(S_region_to_vct,          g_region_to_vct_w,          0, 5, 0, H_region_to_vct);
+  XEN_DEFINE_PROCEDURE(S_mix_region,             g_mix_region_w,             1, 4, 0, H_mix_region);
+  XEN_DEFINE_PROCEDURE(S_region_sample,          g_region_sample_w,          2, 1, 0, H_region_sample);
+  XEN_DEFINE_PROCEDURE(S_region_to_vct,          g_region_to_vct_w,          1, 4, 0, H_region_to_vct);
   XEN_DEFINE_PROCEDURE(S_region_p,               g_region_p_w,               1, 0, 0, H_region_p);
+
+  XEN_DEFINE_PROCEDURE(S_integer_to_region,      g_integer_to_region_w,      1, 0, 0, H_integer_to_region);
+  XEN_DEFINE_PROCEDURE(S_region_to_integer,      g_region_to_integer_w,      1, 0, 0, H_region_to_integer);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_max_regions, g_max_regions_w, H_max_regions, S_setB S_max_regions, g_set_max_regions_w, 0, 0, 1, 0);
 

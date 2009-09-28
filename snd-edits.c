@@ -6105,7 +6105,7 @@ mus_long_t current_location(snd_fd *sf)
 {
   /* only used by moving cursor code in snd-dac.c [and sampler-position] */
   if (sf->current_sound)
-    return(READER_GLOBAL_POSITION(sf) - READER_LOCAL_POSITION(sf) + sf->current_sound->io->beg + sf->loc);
+    return(READER_GLOBAL_POSITION(sf) - READER_LOCAL_POSITION(sf) + io_beg(sf->current_sound->io) + sf->loc);
   return(READER_GLOBAL_POSITION(sf) - READER_LOCAL_POSITION(sf) + sf->loc);
 }
 
@@ -6270,8 +6270,8 @@ mus_float_t chn_sample(mus_long_t samp, chan_info *cp, int pos)
     {
       snd_data *sd;
       sd = cp->sounds[0];
-      if ((sd) && (sd->io) && (sd->io->beg <= samp) && (sd->io->end >= samp))
-	return(MUS_SAMPLE_TO_FLOAT(sd->buffered_data[samp - sd->io->beg]));
+      if ((sd) && (sd->io) && (io_beg(sd->io) <= samp) && (io_end(sd->io) >= samp))
+	return(MUS_SAMPLE_TO_FLOAT(sd->buffered_data[samp - io_beg(sd->io)]));
     }
 
   /* do it the hard way */
@@ -6297,7 +6297,7 @@ static void previous_sound_1(snd_fd *sf)
     }
   at_start = ((sf->cb == NULL) || 
 	      (sf->current_sound == NULL) || 
-	      (READER_LOCAL_POSITION(sf) >= sf->current_sound->io->beg));
+	      (READER_LOCAL_POSITION(sf) >= io_beg(sf->current_sound->io)));
   if (at_start)
     {
       snd_data *prev_snd;
@@ -6363,7 +6363,7 @@ static void previous_sound_1(snd_fd *sf)
       /* back up in current file */
       ind0 = READER_LOCAL_POSITION(sf);
       ind1 = READER_LOCAL_END(sf);
-      indx = sf->current_sound->io->beg - 1;
+      indx = io_beg(sf->current_sound->io) - 1;
       file_buffers_back(ind0, ind1, indx, sf, sf->current_sound);
     }
 }
@@ -6389,7 +6389,7 @@ static void next_sound_1(snd_fd *sf)
     }
   at_end = ((sf->cb == NULL) || 
 	    (sf->current_sound == NULL) || 
-	    (READER_LOCAL_END(sf) <= sf->current_sound->io->end));
+	    (READER_LOCAL_END(sf) <= io_end(sf->current_sound->io)));
 
   if (at_end)
     {
@@ -6459,7 +6459,7 @@ static void next_sound_1(snd_fd *sf)
     { 
       ind0 = READER_LOCAL_POSITION(sf);
       ind1 = READER_LOCAL_END(sf);
-      indx = sf->current_sound->io->end + 1;
+      indx = io_end(sf->current_sound->io) + 1;
       file_buffers_forward(ind0, ind1, indx, sf, sf->current_sound);
     }
 }
@@ -7941,7 +7941,8 @@ if 'obj' is a mix-sampler, the id of underlying mix"
 	  if (fd->type == SAMPLER)
 	    return(XEN_LIST_2(C_TO_XEN_INT(fd->cp->sound->index),
 			      C_TO_XEN_INT(fd->cp->chan)));
-	  return(XEN_LIST_2(C_TO_XEN_INT(fd->region),
+
+	  return(XEN_LIST_2(C_INT_TO_XEN_REGION(fd->region),
 			    C_TO_XEN_INT(fd->cp->chan)));
 	}
     }
@@ -8028,9 +8029,9 @@ snd can be a filename, a mix object, or a sound index number."
 }
 
 
-static XEN g_make_region_sampler(XEN samp_n, XEN reg, XEN chn, XEN dir1)
+static XEN g_make_region_sampler(XEN reg, XEN samp_n, XEN chn, XEN dir1)
 {
-  #define H_make_region_sampler "(" S_make_region_sampler " :optional (start-samp 0) (region 0) (chn 0) (dir 1)): \
+  #define H_make_region_sampler "(" S_make_region_sampler " reg :optional (start-samp 0) (chn 0) (dir 1)): \
 return a reader ready to access region's channel chn data starting at start-samp going in direction dir"
 
   snd_fd *fd = NULL;
@@ -8038,19 +8039,21 @@ return a reader ready to access region's channel chn data starting at start-samp
   mus_long_t beg;
   int direction = 1;
 
-  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samp_n), samp_n, XEN_ARG_1, S_make_region_sampler, "a number");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(reg), reg, XEN_ARG_2, S_make_region_sampler, "an integer");
+  XEN_ASSERT_TYPE(XEN_REGION_P(reg), reg, XEN_ARG_1, S_make_region_sampler, "a region");
+  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samp_n), samp_n, XEN_ARG_2, S_make_region_sampler, "a number");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chn), chn, XEN_ARG_3, S_make_region_sampler, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(dir1), dir1, XEN_ARG_4, S_make_region_sampler, "an integer");
-  reg_n = XEN_TO_C_INT_OR_ELSE(reg, 0);
+  reg_n = XEN_REGION_TO_C_INT(reg);
 
   if (!(region_ok(reg_n))) 
     XEN_ERROR(XEN_ERROR_TYPE("no-such-region"),
 	      XEN_LIST_2(C_TO_XEN_STRING(S_make_region_sampler),
                          reg));
+
   chn_n = XEN_TO_C_INT_OR_ELSE(chn, 0);
   if ((chn_n < 0) || (chn_n >= region_chans(reg_n)))
     return(snd_no_such_channel_error(S_make_region_sampler, XEN_LIST_1(reg), chn));
+
   beg = beg_to_sample(samp_n, S_make_region_sampler);
   direction = XEN_TO_C_INT_OR_ELSE(dir1, 1);
 
@@ -8125,14 +8128,15 @@ static XEN g_copy_sampler(XEN obj)
 	{
 	  if (fd->type == SAMPLER)
 	    return(g_make_sampler(C_TO_XEN_INT64_T(current_location(fd)),
-					C_TO_XEN_INT(fd->cp->sound->index),
-					C_TO_XEN_INT(fd->cp->chan),
-					C_TO_XEN_INT((fd->direction == READ_FORWARD) ? 1 : -1), /* Scheme side is different from C side */
-					C_TO_XEN_INT(fd->edit_ctr)));
-	  return(g_make_region_sampler(C_TO_XEN_INT64_T(region_current_location(fd)),
-					     C_TO_XEN_INT(fd->region),
-					     C_TO_XEN_INT(fd->cp->chan),
-					     C_TO_XEN_INT((fd->direction == READ_FORWARD) ? 1 : -1)));
+				  C_TO_XEN_INT(fd->cp->sound->index),
+				  C_TO_XEN_INT(fd->cp->chan),
+				  C_TO_XEN_INT((fd->direction == READ_FORWARD) ? 1 : -1), /* Scheme side is different from C side */
+				  C_TO_XEN_INT(fd->edit_ctr)));
+
+	  return(g_make_region_sampler(C_INT_TO_XEN_REGION(fd->region),
+				       C_TO_XEN_INT64_T(region_current_location(fd)),
+				       C_TO_XEN_INT(fd->cp->chan),
+				       C_TO_XEN_INT((fd->direction == READ_FORWARD) ? 1 : -1)));
 	}
       return(XEN_FALSE);
     }
@@ -9802,7 +9806,7 @@ void g_init_edits(void)
   XEN_DEFINE_CONSTANT(S_current_edit_position,         AT_CURRENT_EDIT_POSITION,         "represents the current edit history list position (-1)");
 
   XEN_DEFINE_PROCEDURE(S_make_sampler,           g_make_sampler_w,           0, 5, 0, H_make_sampler);
-  XEN_DEFINE_PROCEDURE(S_make_region_sampler,    g_make_region_sampler_w,    0, 4, 0, H_make_region_sampler);
+  XEN_DEFINE_PROCEDURE(S_make_region_sampler,    g_make_region_sampler_w,    1, 3, 0, H_make_region_sampler);
   XEN_DEFINE_PROCEDURE(S_read_sample,                  g_read_sample_w,                  1, 0, 0, H_read_sample);
   XEN_DEFINE_PROCEDURE(S_read_region_sample,           g_read_sample_w,                  1, 0, 0, H_read_sample);
   XEN_DEFINE_PROCEDURE(S_next_sample,                  g_next_sample_w,                  1, 0, 0, H_next_sample);

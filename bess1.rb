@@ -112,7 +112,7 @@ module Bess_utils
 
   include Math
 
-  # simple violin, see snd-10/fm.html
+  # simple violin, see snd-11/fm.html
   def make_rt_violin(dur = 1.0, freq = 440.0, amp = 0.3, *args)
     fm_index = get_args(args, :fm_index, 1.0)
     amp_env  = get_args(args, :amp_env, [0, 0, 25, 1, 75, 1, 100, 0])

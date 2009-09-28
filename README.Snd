@@ -4,11 +4,11 @@ Snd is a sound editor.  It currently runs on nearly all
 Unix-based systems, including Mac OSX and Cygwin.
 To build Snd, get the sources from
 
-  ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-10.tar.gz
+  ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-11.tar.gz
 
-  gzip -d snd-10.tar.gz
-  tar xf snd-10.tar
-  cd snd-10
+  gzip -d snd-11.tar.gz
+  tar xf snd-11.tar
+  cd snd-11
   ./configure
   make
   make install
@@ -302,7 +302,7 @@ CCRMA:
   http://ccrma-mail.stanford.edu/mailman/listinfo/planetccrma
 
 Snd:
-  ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-10.tar.gz
+  ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-11.tar.gz
   http://ccrma.stanford.edu/software/snd/
   http://sourceforge.net/projects/snd/
   http://www.notam02.no/arkiv/doc/snd-rt/

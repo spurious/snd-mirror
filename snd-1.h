@@ -113,11 +113,7 @@ typedef struct {
   int bin, top_bin;
 } peak_env_info;
 
-typedef struct {
-  int fd, chans, bufsize;
-  mus_long_t frames, beg, end;
-  mus_sample_t **arrays;
-} snd_io;
+typedef struct snd_io snd_io;
 
 typedef struct {
   char *name;             /* full name */
@@ -148,12 +144,7 @@ typedef struct {
 } snd_data;
 
 typedef struct mark mark;
-
-typedef struct {
-  mus_long_t size;
-  mus_float_t *data;
-  mus_float_t scale;
-} enved_fft;
+typedef struct enved_fft enved_fft;
 
 typedef struct {
   int size, allocated_size;
@@ -627,6 +618,11 @@ snd_data *make_snd_data_buffer(mus_sample_t *data, int len, int ctr);
 snd_data *make_snd_data_buffer_for_simple_channel(int len);
 int open_temp_file(const char *ofile, int chans, file_info *hdr, io_error_t *err);
 io_error_t close_temp_file(const char *filename, int ofd, int type, mus_long_t bytes);
+
+void set_up_snd_io(chan_info *cp, int i, int fd, const char *filename, file_info *hdr, bool post_close);
+mus_long_t io_beg(snd_io *io);
+mus_long_t io_end(snd_io *io);
+int io_filed(snd_io *io); /* io_fd is in use already */
 
 
 
@@ -1138,6 +1134,14 @@ void g_init_regions(void);
 void for_each_region_chan_with_refint(void (*func)(chan_info *ncp, int *val), int *value);
 mus_long_t region_current_location(snd_fd *fd);
 char *region_description(int rg);
+
+XEN new_xen_region(int n);
+bool xen_region_p(XEN obj);
+int xen_region_to_int(XEN n);
+#define XEN_REGION_P(arg) xen_region_p(arg)
+#define C_INT_TO_XEN_REGION(Val) new_xen_region(Val)
+#define XEN_REGION_TO_C_INT(n) xen_region_to_int(n)
+
 
 
 /* -------- snd-env.c -------- */

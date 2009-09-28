@@ -31,12 +31,12 @@ end
 def goto_html(url)
   dir = [Dir.pwd,
          html_dir(),
+         "/usr/doc/snd-11",
+         "/usr/share/doc/snd-11",
+         "/usr/local/share/doc/snd-11",
          "/usr/doc/snd-10",
          "/usr/share/doc/snd-10",
          "/usr/local/share/doc/snd-10",
-         "/usr/doc/snd-9",
-         "/usr/share/doc/snd-9",
-         "/usr/local/share/doc/snd-9",
          "/usr/doc/snd-8"].detect do |d|
     if d.kind_of?(String)
       if File.exist?(d + "/" + "snd.html")

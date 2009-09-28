@@ -312,7 +312,8 @@
 
 (define transform-samples->vct transform->vct)
 (define transform-samples-size transform-frames)
-(define region-samples->vct region->vct)
+;(define region-samples->vct region->vct)
+(define* (region-samples->vct samp samps reg chan v) (region->vct reg samp samps chan v))
 
 (define* (scale-sound-by scl :optional beg dur snd chn edpos)
   "(scale-sound-by scl :optional beg dur snd chn edpos) is an old form of scale-sound"

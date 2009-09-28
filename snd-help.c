@@ -545,9 +545,12 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
-25-Sep:  mixes are objects now (not ints), integer->mix and mix->integer.\n\
+29-Sep:  mixes are objects now (not ints), integer->mix and mix->integer.\n\
          all \"sample-reader\" and \"sample_reader\" names changed to \"sampler\".\n\
          marks are objects (not ints), integer->mark and mark->integer.\n\
+	 regions are objects, integer->region, region->integer.\n\
+         several region functions now take the region argument first:\n\
+           insert-region, make-region-sampler, mix-region, region-sample, region->vct.\n\
 17-Sep:  Snd 10.9.\n\
 10-Sep:  removed show-backtrace (it is #t now). default optimization is now 6.\n\
 9-Aug:   Snd 10.8.\n\

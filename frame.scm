@@ -165,7 +165,7 @@
 	(do ((i 0 (+ i 1)))
 	    ((= i (region-chans reg))
 	     fr)
-	  (frame-set! fr i (region-sample pos reg i))))))
+	  (frame-set! fr i (region-sample reg pos i))))))
 
 
 (define* (sound->sound-data :optional (beg 0) dur snd)
@@ -312,7 +312,7 @@
 	(vector-set! fr +frame-reader-frame+ (make-frame chns))
 	(do ((i 0 (+ i 1)))
 	    ((= i chns))
-	  (vector-set! fr (+ i +frame-reader0+) (make-region-sampler beg reg i dir)))
+	  (vector-set! fr (+ i +frame-reader0+) (make-region-sampler reg beg i dir)))
 	fr)))
 
 (define* (make-sync-frame-reader :optional (beg 0) snd dir edpos)

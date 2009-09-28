@@ -341,7 +341,7 @@ static bool tick_peak_env(chan_info *cp, env_state *es)
 	      (cp->sounds) &&
 	      (cp->sounds[0] != NULL) &&
 	      (cp->sounds[0]->io) &&
-	      (mus_file_prescaler(cp->sounds[0]->io->fd) == 1.0))
+	      (mus_file_prescaler(io_filed(cp->sounds[0]->io)) == 1.0))
 	    {
 	      es->fd = mus_file_open_read(cp->sound->filename);
 	      if (es->fd == -1)

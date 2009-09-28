@@ -1,8 +1,12 @@
 Snd change log
 
- 25-Sep:    mixes are objects (not ints), integer->mix and mix->integer.
+ 29-Sep:    mixes are objects (not ints), integer->mix and mix->integer.
             all "sample-reader" and "sample_reader" names changed to "sampler".
             marks are objects (not ints), integer->mark and mark->integer.
+	    regions are objects, integer->region, region->integer.
+            several region functions now take the region argument first:
+              insert-region, make-region-sampler, mix-region, region-sample, region->vct
+            removed export-all.scm
  17-Sep:    Snd 10.9.
  10-Sep:    removed show-backtrace (it is #t). default optimization is 6.
  9-Aug:     Snd 10.8.

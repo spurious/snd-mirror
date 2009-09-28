@@ -101,12 +101,12 @@
       (throw 'no-active-selection (list "selection-rms"))))
 
 
-(define* (region-rms :optional (n 0))
-  "(region-rms :optional (n 0)) -> rms of region n's data (chan 0)"
-  (if (region? n)
-      (let* ((data (region->vct 0 0 n)))
+(define (region-rms reg)
+  "(region-rms n) -> rms of region n's data (chan 0)"
+  (if (region? reg)
+      (let* ((data (region->vct reg 0 0)))
 	(sqrt (/ (dot-product data data) (vct-length data))))
-      (throw 'no-such-region (list "region-rms" n))))
+      (throw 'no-such-region (list "region-rms" reg))))
 
 
 (define* (window-samples :optional snd chn)
@@ -2038,19 +2038,19 @@ starting at the cursor in the currently selected channel: (add-notes '((\"oboe.s
 
 
 (define (region-play-list data)
-  "(region-play-list data): 'data' is list of lists (list (list time reg)...), time in secs, setting up 
-a sort of play list: (region-play-list (list (list 0.0 0) (list 0.5 1) (list 1.0 2) (list 1.0 0)))"
+  "(region-play-list data): 'data' is list of lists (list (list reg time)...), time in secs, setting up 
+a sort of play list: (region-play-list (list (list reg0 0.0) (list reg1 0.5) (list reg2 1.0) (list reg0 1.0)))"
   (for-each
    (lambda (tone)
-     (let ((time (inexact->exact (floor (* 1000 (car tone)))))
-	   (region (cadr tone)))
+     (let ((time (inexact->exact (floor (* 1000 (cadr tone)))))
+	   (region (car tone)))
        (if (region? region)
 	   (in time (lambda () (play-region region))))))
    data))
 
 
 (define (region-play-sequence data)
-  "(region-play-sequence data): 'data' is list of region ids which will be played one after the other: (region-play-sequence '(0 2 1))"
+  "(region-play-sequence data): 'data' is list of regions which will be played one after the other: (region-play-sequence (list reg0 reg2 reg1))"
   (region-play-list
    (let ((time 0.0))
      (map 
@@ -2415,7 +2415,7 @@ passed as the arguments so to end with channel 3 in channel 0, 2 in 1, 0 in 2, a
 				   reg))
 			    (set! reg (vector-ref pieces j))
 			    (if reg (vector-set! pieces j #f))))))
-		(mix-region start reg)
+		(mix-region reg start)
 		(set! start (+ start (region-frames reg)))
 		(forget-region reg)))))))
      (lambda ()

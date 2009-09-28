@@ -1709,7 +1709,6 @@ snd_info *make_sound_readable(const char *filename, bool post_close)
   snd_info *sp;
   chan_info *cp;
   file_info *hdr = NULL;
-  snd_data *sd;
   int i, fd;
   mus_long_t len;
   /* we've already checked that filename exists */
@@ -1738,31 +1737,7 @@ snd_info *make_sound_readable(const char *filename, bool post_close)
 
       fd = snd_open_read(filename); /* sends the error if any */
       if (fd != -1)
-	{
-	  snd_io *io;
-	  snd_file_open_descriptors(fd,
-				    filename,
-				    hdr->format,
-				    hdr->data_location,
-				    hdr->chans,
-				    hdr->type);
-	  io = make_file_state(fd, hdr, i, 0,
-			       (post_close) ? MAX_BUFFER_SIZE : MIX_FILE_BUFFER_SIZE);
-	  cp->sounds[0] = make_snd_data_file(filename, io,
-					     copy_header(hdr->name, hdr),
-					     DONT_DELETE_ME, cp->edit_ctr, i);
-	  if (post_close) 
-	    {
-	      sd = cp->sounds[0]; 
-	      sd->open = FD_CLOSED; 
-	      io->fd = -1;
-	      if (mus_file_close(fd) != 0)
-		snd_error(_("can't close file %s: %s"), filename, snd_io_strerror());
-	    }
-	  /* this is not as crazy as it looks -- we've read in the first 64K (or whatever) samples,
-	   * and may need this file channel for other opens, so this file can be closed until reposition_file_state_buffers
-	   */
-	}
+	set_up_snd_io(cp, i, fd, filename, hdr, post_close);
     }
   sp->active = true;
   return(sp);
