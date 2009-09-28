@@ -4693,11 +4693,11 @@ def our_x2position(ind, x)
 end
 
 def region2vct_1(reg, chn, len)
-  region2vct(0, len, reg, chn)
+  region2vct(reg, 0, len, chn)
 end
 
 def region_to_vct(reg, chn, len)
-  rs = make_region_sampler(0, reg, chn)
+  rs = make_region_sampler(reg, 0, chn)
   make_vct!(len) do next_sample(rs) end
 end
 
@@ -7162,7 +7162,7 @@ def test105
     end
   end
   samps1 = samples2vct(0, 50827, ind, 0)
-  samps2 = region2vct(0, 50828, r0, 0)
+  samps2 = region2vct(r0, 0, 50828, 0)
   rd = make_sampler(0, ind, 0, 1)
   snd_display("%s not sampler?", rd) unless sampler?(rd)
   if (res = sampler_position(rd)).nonzero?
@@ -7172,10 +7172,10 @@ def test105
     snd_display("sampler_home: %s %s?", res, [ind, 0])
   end
   snd_display("%s init at end?", rd) if sampler_at_end?(rd)
-  if (res = Snd.catch do region2vct(-1, 1233, r0) end).first != :no_such_sample
+  if (res = Snd.catch do region2vct(r0, -1, 1233) end).first != :no_such_sample
     snd_display("region2vct -1: %s", res.inspect)
   end
-  if res = Snd.catch do region2vct(12345678, 1, r0) end.first
+  if res = Snd.catch do region2vct(r0, 12345678, 1) end.first
     snd_display("region2vct 12345678: %s", res.inspect)
   end
   if (res = format("%s", rd)) != "#<sampler: oboe.snd[0: 0] from 0, at 0, forward>"
@@ -7209,12 +7209,12 @@ def test105
   reg = regions.first
   chns = region_chans(reg)
   if (res = Snd.catch do
-        make_region_sampler(0, reg, chans + 1)
+        make_region_sampler(reg, 0, chans + 1)
       end).first != :no_such_channel
     snd_display("make_region_sampler bad chan (2): %s %s", res.inspect, regions)
   end
   if (res = Snd.catch do
-        make_region_sampler(0, reg, 0, -2)
+        make_region_sampler(reg, 0, 0, -2)
       end).first != :no_such_direction
     snd_display("make_region_sampler bad dir (-2): %s", res.inspect)
   end
@@ -7308,11 +7308,11 @@ def test105
   snd_display("scale_selection_by: %s?", newmaxa) if fneq(newmaxa, 2.0 * maxa)
   revert_sound(ind)
   select_all(ind)
-  rread = make_region_sampler(0, regions.first)
+  rread = make_region_sampler(regions.first, 0)
   sread = make_sampler(0, ind)
-  rvect = region2vct(0, 100, regions.first)
+  rvect = region2vct(regions.first, 0, 100)
   svect = samples(0, 100, ind)
-  if fneq(res = region_sample(1, regions.first), rvect[1])
+  if fneq(res = region_sample(regions.first, 1), rvect[1])
     snd_display("region_sample: %s %s?", res, rvect[1])
   end
   100.times do |i|
@@ -7372,10 +7372,10 @@ def test105
   end
   delete_file("not-temporary.snd")
   id = make_region(0, 99)
-  insert_region(60, id, ind)
+  insert_region(id, 60, ind)
   snd_display("insert_region len: %d?", frames) if frames != (len + 100)
   snd_display("insert_region: %s %s?", sample(100), s40) if fneq(sample(100), s40)
-  if (res = Snd.catch do insert_region(0, 1000 + regions.max) end).first != :no_such_region
+  if (res = Snd.catch do insert_region(integer2region(1000 + regions.max), 0) end).first != :no_such_region
     snd_display("insert_region bad id: %s", res.inspect)
   end
   save_region(id, "fmv.snd")
@@ -7890,7 +7890,7 @@ def test135
   end
   env_sound([0, 0, 1, 1], 0, frames, 32.0)        # temp 3
   reg = select_all                                # make multi_channel region
-  insert_region(0, reg)                           # temp 4
+  insert_region(reg, 0)                           # temp 4
   insert_selection(0)                             # temp 5
   revert_sound(ind)
   set_speed_control(0.5)
@@ -8378,7 +8378,7 @@ def test165
   if (res1 = region_frames(id, 0)) != (res2 = selection_frames)
     snd_display("region/selection_frames: %s %s (%s)?", res1, res2, region_frames(id))
   end
-  if (res1 = region_sample(0, id)) != (res2 = sample(1000, ind1))
+  if (res1 = region_sample(id, 0)) != (res2 = sample(1000, ind1))
     snd_display("region_sample from make_region: %s %s?", res1, res2)
   end
   close_sound(ind1)
@@ -9186,7 +9186,7 @@ def test235
   end
   #
   old_max = maxamp(index, true)
-  regdata = (regions or []).map do |n| region2vct(0, 10, n) end
+  regdata = (regions or []).map do |n| region2vct(n, 0, 10) end
   old_reglen = (regions or []).map do |n| region_frames(n) end
   s61_files = []
   $save_state_hook.add_hook!("snd-test") do |file|
@@ -9202,7 +9202,7 @@ def test235
     snd_display("region_frames after save: %s %s?", old_reglen, res)
   end
   (regions or []).zip(regdata) do |n, data|
-    unless vequal(res = region2vct(0, 10, n), data)
+    unless vequal(res = region2vct(n, 0, 10), data)
       snd_display("region after save %s: %s %s?", n, data, res)
     end
   end
@@ -22106,7 +22106,7 @@ def test12
     # 
     ind = open_sound("oboe.snd")
     reg = make_region(1000, 2000, ind, 0)
-    rd = make_region_sampler(0, reg)
+    rd = make_region_sampler(reg, 0)
     snd_display("region_sampler mix: %s?", rd) if mix_sampler?(rd)
     snd_display("region_sampler region: %s?", rd) unless region_sampler?(rd)
     snd_display("region_sampler normal: %s?", rd) if sampler?(rd)
@@ -22137,7 +22137,7 @@ def test12
     mix_click_sets_amp
     ind = open_sound("oboe.snd")
     reg = make_region(1000, 2000, ind, 0, 0)
-    md = mix_region(0, reg, ind, 0)
+    md = mix_region(reg, 0, ind, 0)
     rd = make_mix_sampler(md)
     set_mix_property(md, :hi, "hi")
     save_md = md
@@ -23078,7 +23078,7 @@ def test0213
                 }],
                [:insert_region, lambda { | |
                   reg = make_region(0, 100, ind, 0)
-                  insert_region(123, reg, ind, 0)
+                  insert_region(reg, 123, ind, 0)
                   forget_region(reg) if region?(reg)
                 }],
                [:insert_sample, lambda { | | insert_sample(123, 0.5, ind, 0) }],
@@ -23111,7 +23111,7 @@ def test0213
                 }],
                [:mix_region, lambda { | |
                   reg = make_region(0, 100, ind, 0)
-                  mix_region(123, reg, ind, 0)
+                  mix_region(reg, 123, ind, 0)
                   forget_region(reg) if region?(reg)
                 }],
                [:mix_selection, lambda { | |
@@ -25599,7 +25599,7 @@ def test0315
   if ((res = region_frames(id)) - 500).abs > 1
     snd_display("region_frames after src_selection: %s?", res)
   end
-  reg_mix_id = mix_region(1500, id, ind, 0)
+  reg_mix_id = mix_region(id, 1500, ind, 0)
   if (res1 = mix_length(reg_mix_id)) != (res2 = region_frames(id))
     snd_display("mix_region: %s != %s?", res1, res2)
   end
@@ -25637,7 +25637,7 @@ def test0315
     end
     revert_sound(ind)
     reg = make_region(0, 123000, ind, 0)
-    region2vct(0, 10, reg, 0, Vct.new(10))
+    region2vct(reg, 0, 10, 0, Vct.new(10))
     ramp_channel(0.0, 1.0)
     ramp_channel(0.0, 1.0)
     ramp_channel(0.0, 1.0)
@@ -35370,11 +35370,11 @@ def test0228
   check_error_tag(:no_such_sample) do delete_sample(-1) end
   check_error_tag(:no_such_sample) do delete_sample(2 * frames(ind)) end
   if regions.empty? then make_region(0, 100) end
-  check_error_tag(:no_such_channel) do region_sample(0, regions.car, 1234) end
+  check_error_tag(:no_such_channel) do region_sample(regions.car, 0, 1234) end
   check_error_tag(:no_such_channel) do region_frames(regions.car, 1234) end
   check_error_tag(:no_such_channel) do region_position(regions.car, 1234) end
-  check_error_tag(:no_such_region) do region2vct(0, 1, -1) end
-  check_error_tag(:no_such_channel) do region2vct(0, 1, regions.car, 1234) end
+  check_error_tag(:no_such_region) do region2vct(-1, 0, 1) end
+  check_error_tag(:no_such_channel) do region2vct(regions.car, 0, 1, 1234) end
   check_error_tag(:cannot_save) do save_sound_as("/bad/baddy.snd") end
   check_error_tag(:no_such_sound) do transform_sample(0, 1, 1234) end
   check_error_tag(:no_such_channel) do transform_sample(0, 1, ind, 1234) end

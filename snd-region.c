@@ -1417,13 +1417,20 @@ static bool s7_xen_region_equalp(void *obj1, void *obj2)
   return((obj1 == obj2) ||
 	 (((xen_region *)obj1)->n == ((xen_region *)obj2)->n));
 }
+
+static XEN g_region_frames(XEN n, XEN chan);
+
+static XEN s7_xen_region_length(s7_scheme *sc, XEN obj)
+{
+  return(g_region_frames(obj, XEN_ZERO));
+}
 #endif
 
 
 static init_xen_region(void)
 {
 #if HAVE_S7
-  xen_region_tag = XEN_MAKE_OBJECT_TYPE("<region>", print_xen_region, free_xen_region, s7_xen_region_equalp, NULL, NULL, NULL, NULL, NULL, NULL);
+  xen_region_tag = XEN_MAKE_OBJECT_TYPE("<region>", print_xen_region, free_xen_region, s7_xen_region_equalp, NULL, NULL, NULL, s7_xen_region_length, NULL, NULL);
 #else
 #if HAVE_RUBY
   xen_region_tag = XEN_MAKE_OBJECT_TYPE("XenRegion", sizeof(xen_region));
@@ -1572,8 +1579,6 @@ static XEN g_set_max_regions(XEN n)
   regs = XEN_TO_C_INT(n);
   if (regs < 0)
     XEN_OUT_OF_RANGE_ERROR(S_setB S_max_regions, 1, n, S_max_regions " ~A < 0?");
-  if (regs > (1 << 26))
-    XEN_OUT_OF_RANGE_ERROR(S_setB S_max_regions, 1, n, S_max_regions " ~A too large");
 
   set_max_regions(regs);
   return(C_TO_XEN_INT(max_regions(ss)));
@@ -1583,9 +1588,7 @@ static XEN g_set_max_regions(XEN n)
 static XEN g_region_p(XEN n)
 {
   #define H_region_p "(" S_region_p " reg): " PROC_TRUE " if region is active"
-  if (XEN_REGION_P(n))
-    return(C_TO_XEN_BOOLEAN(region_ok(XEN_REGION_TO_C_INT(n))));
-  return(XEN_FALSE);
+  return(C_TO_XEN_BOOLEAN((XEN_REGION_P(n)) && (region_ok(XEN_REGION_TO_C_INT(n)))));
 }
 
 

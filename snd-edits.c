@@ -7960,75 +7960,6 @@ XEN g_c_make_sampler(snd_fd *fd)
 }
 
 
-static XEN g_make_sampler(XEN samp_n, XEN snd, XEN chn, XEN dir1, XEN pos) /* "dir" confuses Mac OS-X Objective-C! */
-{
-  #define H_make_sampler "(" S_make_sampler " :optional (start-samp 0) snd chn (dir 1) edpos): \
-return a reader ready to access snd's channel chn's data starting at start-samp, going in direction dir (1 = \
-forward, -1 = backward), reading the version of the data indicated by edpos which defaults to the current version. \
-snd can be a filename, a mix object, or a sound index number."
-
-  snd_fd *fd = NULL;
-  int chan, edpos, direction = 1; /* in Scheme 1=forward, -1=backward */
-  chan_info *cp;
-  const char *filename;
-  snd_info *loc_sp = NULL;
-  mus_long_t beg;
-
-  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samp_n), samp_n, XEN_ARG_1, S_make_sampler, "a number");
-  XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(dir1), dir1, XEN_ARG_4, S_make_sampler, "an integer");
-
-  if (XEN_MIX_P(snd))
-    return(g_make_mix_sampler(snd, samp_n));
-
-  if (XEN_STRING_P(snd))
-    {
-      XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(chn), chn, XEN_ARG_3, S_make_sampler, "an integer or boolean");
-      filename = XEN_TO_C_STRING(snd);
-      if (mus_file_probe(filename))
-	loc_sp = make_sound_readable(filename, false);
-      else return(snd_no_such_file_error(S_make_sampler, snd));
-      chan = XEN_TO_C_INT_OR_ELSE(chn, 0);
-      if ((chan < 0) || 
-	  (chan >= loc_sp->nchans))
-	{
-	  completely_free_snd_info(loc_sp);
-	  return(snd_no_such_channel_error(S_make_sampler, snd, chn));	
-	}
-      cp = loc_sp->chans[chan];
-    }
-  else 
-    {
-      ASSERT_CHANNEL(S_make_sampler, snd, chn, 2);
-      cp = get_cp(snd, chn, S_make_sampler);
-      if (!cp) return(XEN_FALSE);
-    }
-
-  edpos = to_c_edit_position(cp, pos, S_make_sampler, 5);
-  direction = XEN_TO_C_INT_OR_ELSE(dir1, 1);
-  beg = beg_to_sample(samp_n, S_make_sampler);
-
-  if (direction == 1)
-    fd = init_sample_read_any(beg, cp, READ_FORWARD, edpos);
-  else
-    {
-      if (direction == -1)
-	fd = init_sample_read_any(beg, cp, READ_BACKWARD, edpos);
-      else XEN_ERROR(XEN_ERROR_TYPE("no-such-direction"),
-		     XEN_LIST_2(C_TO_XEN_STRING(S_make_sampler),
-				dir1));
-    }
-
-  if (fd)
-    {
-      fd->local_sp = loc_sp;
-      list_reader(fd);
-      XEN_MAKE_AND_RETURN_OBJECT(sf_tag, fd, 0, free_sf);
-    }
-
-  return(XEN_FALSE);
-}
-
-
 static XEN g_make_region_sampler(XEN reg, XEN samp_n, XEN chn, XEN dir1)
 {
   #define H_make_region_sampler "(" S_make_region_sampler " reg :optional (start-samp 0) (chn 0) (dir 1)): \
@@ -8074,6 +8005,78 @@ return a reader ready to access region's channel chn data starting at start-samp
                                  /* has to be less than -1 because that is the "delete all readers" sign on chan close */
       fd->region = reg_n;
       fd->type = REGION_READER;
+      list_reader(fd);
+      XEN_MAKE_AND_RETURN_OBJECT(sf_tag, fd, 0, free_sf);
+    }
+
+  return(XEN_FALSE);
+}
+
+
+static XEN g_make_sampler(XEN samp_n, XEN snd, XEN chn, XEN dir1, XEN pos) /* "dir" confuses Mac OS-X Objective-C! */
+{
+  #define H_make_sampler "(" S_make_sampler " :optional (start-samp 0) snd chn (dir 1) edpos): \
+return a reader ready to access snd's channel chn's data starting at start-samp, going in direction dir (1 = \
+forward, -1 = backward), reading the version of the data indicated by edpos which defaults to the current version. \
+snd can be a filename, a mix, a region, or a sound index number."
+
+  snd_fd *fd = NULL;
+  int chan, edpos, direction = 1; /* in Scheme 1=forward, -1=backward */
+  chan_info *cp;
+  const char *filename;
+  snd_info *loc_sp = NULL;
+  mus_long_t beg;
+
+  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samp_n), samp_n, XEN_ARG_1, S_make_sampler, "a number");
+  XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(dir1), dir1, XEN_ARG_4, S_make_sampler, "an integer");
+
+  if (XEN_MIX_P(snd))
+    return(g_make_mix_sampler(snd, samp_n));
+
+  if (XEN_REGION_P(snd))
+    return(g_make_region_sampler(snd, samp_n, chn, dir1));
+
+  if (XEN_STRING_P(snd))
+    {
+      XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(chn), chn, XEN_ARG_3, S_make_sampler, "an integer or boolean");
+      filename = XEN_TO_C_STRING(snd);
+      if (mus_file_probe(filename))
+	loc_sp = make_sound_readable(filename, false);
+      else return(snd_no_such_file_error(S_make_sampler, snd));
+      chan = XEN_TO_C_INT_OR_ELSE(chn, 0);
+      if ((chan < 0) || 
+	  (chan >= loc_sp->nchans))
+	{
+	  completely_free_snd_info(loc_sp);
+	  return(snd_no_such_channel_error(S_make_sampler, snd, chn));	
+	}
+      cp = loc_sp->chans[chan];
+    }
+  else 
+    {
+      ASSERT_CHANNEL(S_make_sampler, snd, chn, 2);
+      cp = get_cp(snd, chn, S_make_sampler);
+      if (!cp) return(XEN_FALSE);
+    }
+
+  edpos = to_c_edit_position(cp, pos, S_make_sampler, 5);
+  direction = XEN_TO_C_INT_OR_ELSE(dir1, 1);
+  beg = beg_to_sample(samp_n, S_make_sampler);
+
+  if (direction == 1)
+    fd = init_sample_read_any(beg, cp, READ_FORWARD, edpos);
+  else
+    {
+      if (direction == -1)
+	fd = init_sample_read_any(beg, cp, READ_BACKWARD, edpos);
+      else XEN_ERROR(XEN_ERROR_TYPE("no-such-direction"),
+		     XEN_LIST_2(C_TO_XEN_STRING(S_make_sampler),
+				dir1));
+    }
+
+  if (fd)
+    {
+      fd->local_sp = loc_sp;
       list_reader(fd);
       XEN_MAKE_AND_RETURN_OBJECT(sf_tag, fd, 0, free_sf);
     }

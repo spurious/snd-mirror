@@ -3091,10 +3091,10 @@ module Examp
     end
   end
 
-  add_help(:region_rms, "region_rms([n=0]) -> rms of region n's data (chan 0)")
-  def region_rms(n = 0)
+  add_help(:region_rms, "region_rms(n) -> rms of region n's data (chan 0)")
+  def region_rms(n)
     if region?(n)
-      data = region2vct(0, 0, n)
+      data = region2vct(n, 0, 0)
       sqrt(dot_product(data, data) / data.length)
     else
       Snd.raise(:no_such_region)
@@ -5220,7 +5220,7 @@ turns the currently selected soundfont file into a bunch of files of the form sa
                         reg and pieces[i] = false
                       end
                     end
-                    mix_region(start, reg)
+                    mix_region(reg, start)
                     start += region_frames(reg)
                     forget_region(reg)
                   end

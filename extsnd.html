@@ -2928,11 +2928,12 @@ Once the reader has been set up to read at a given edit position, subsequent
 edits won't affect it. One sequence that takes advantage of this is: make-sampler, scale-by 0,
 then run an overlap-add process on the data from before the scaling.
 <br><br>
-'snd' can also be a filename (a string); in this way a sampler
+'snd' can be a filename (a string); in this way a sampler
 can read external sounds without going to the trouble of loading them into Snd.
 <pre>
     (define reader (make-sampler 100 "oboe.snd"))
 </pre>
+'snd' also can be a mix or region.
 make-sampler is probably the most useful function in Snd; there are lots of examples
 in the Scheme, Ruby, and Forth files.
 </td></tr><tr><td colspan=2 height=16></td></tr>
