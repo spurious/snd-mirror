@@ -20082,7 +20082,7 @@ def test009
   if res = find_mix(0, new_index, 0)
     snd_display("found non-existent mix: %s?", res)
   end
-  unless mix?(mix_id = mix("pistol.snd", 100))
+  unless mix?(mix_id = mix("pistol.snd", 100).first)
     snd_display("%s not mix?", mix_id)
   end
   view_files_dialog
@@ -20095,7 +20095,7 @@ def test009
   mr = make_mix_sampler(mix_id)
   snd_display("%s not mix_sampler?", mr) unless mix_sampler?(mr)
   snd_display("mix_sampler: region %s?", mr) if region_sampler?(mr)
-  snd_display("mix_sampler: normal %s?", mr) if sampler?(mr)
+#  snd_display("mix_sampler: normal %s?", mr) if sampler?(mr)
   if (res = sampler_position(mr)).nonzero?
     snd_display("mix_sampler_position: %d?", res)
   end
@@ -20103,8 +20103,8 @@ def test009
   if (res = sampler_home(mr)) != mix_id
     snd_display("%s home: %s?", mr, res)
   end
-  if mr.to_s[0, 22] != "#<mix-sampler mi"
-    snd_display("mix_sampler actually got: [%s]?", mr.to_s[0, 22])
+  if mr.to_s[0, 16] != "#<mix-sampler mi"
+    snd_display("mix_sampler actually got: [%s]?", mr.to_s[0, 16])
   end
   99.times do |i|
     mx = i.odd? ? read_mix_sample(mr) : read_mix_sample(mr)
@@ -20132,7 +20132,7 @@ def test009
   set_mix_name(mix_id, "test-mix")
   if (res = mix_name(mix_id)) != "test-mix" then snd_display("mix_name set: %s?", res) end
   id = mix_name2id("test-mix")
-  if id != mix_id then snd_display("mix_name2id: %s %s?", id, mix_id) end
+  if mix2integer(id) != mix2integer(mix_id) then snd_display("mix_name2id: %s %s?", id, mix_id) end
   set_mix_name(mix_id, "test-mix-again")
   if (res = mix_name(mix_id)) != "test-mix-again" then snd_display("mix_name again: %s?", res) end
   set_mix_name(mix_id, false)
@@ -20940,7 +20940,7 @@ def test0110
   if (res = mark_property(m1, :not_there))
     snd_display("mark_not_property: %s?", res)
   end
-  if (res = Snd.catch do mark_sample(12345678) end).first != :no_such_mark
+  if (res = Snd.catch do mark_sample(integer2mark(12345678)) end).first != :no_such_mark
     snd_display("mark_sample err: %s", res.inspect)
   end
   if (res = Snd.catch do add_mark(123, 123) end).first != :no_such_sound
@@ -35055,13 +35055,13 @@ def test0128
   [:mix_amp, :mix_length,
    :mix_name, :mix_position, :mix_home, :mix_speed,
    :mix_tag_y].each_with_index do |n, i|
-    if (tag = Snd.catch do snd_func(n, 1234) end).first != :no_such_mix
+    if (tag = Snd.catch do snd_func(n, integer2mix(1234)) end).first != :no_such_mix
       snd_display("%d: mix (2) procs %s: %s", i, n, tag)
     end
   end
   [:mix_name, :mix_position,
    :mix_speed, :mix_tag_y].each_with_index do |n, i|
-    tag = Snd.catch do set_snd_func(n, 1234, $vct_3) end
+    tag = Snd.catch do set_snd_func(n, integer2mix(1234), $vct_3) end
     if tag.car != :wrong_type_arg and tag.car != :no_such_mix
       snd_display("%d: set mix (3) procs %s: %s", i, n, tag)
     end
@@ -35082,7 +35082,7 @@ def test0128
     end
   end
   [:mark_name, :mark_sample, :mark_sync, :mark_home, :delete_mark].each_with_index do |n, i|
-    if (tag = Snd.catch do snd_func(n, 1234) end).first != :no_such_mark
+    if (tag = Snd.catch do snd_func(n, integer2mark(1234)) end).first != :no_such_mark
       snd_display("%d: mark (2) procs %s: %s", i, n, tag)
     end
   end
@@ -35106,7 +35106,7 @@ def test0128
   [:play_region, :region_chans, :region_home, :region_frames, :region_position,
    :region_maxamp, :region_maxamp_position, :region_srate,
    :forget_region].each_with_index do |n, i|
-    if (tag = Snd.catch do snd_func(n, 1234) end).first != :no_such_region
+    if (tag = Snd.catch do snd_func(n, integer2region(1234)) end).first != :no_such_region
       snd_display("%d: (no) region (2) procs %s: %s", i, n, tag)
     end
   end
@@ -35373,7 +35373,7 @@ def test0228
   check_error_tag(:no_such_channel) do region_sample(regions.car, 0, 1234) end
   check_error_tag(:no_such_channel) do region_frames(regions.car, 1234) end
   check_error_tag(:no_such_channel) do region_position(regions.car, 1234) end
-  check_error_tag(:no_such_region) do region2vct(-1, 0, 1) end
+#  check_error_tag(:no_such_region) do region2vct(-1, 0, 1) end
   check_error_tag(:no_such_channel) do region2vct(regions.car, 0, 1, 1234) end
   check_error_tag(:cannot_save) do save_sound_as("/bad/baddy.snd") end
   check_error_tag(:no_such_sound) do transform_sample(0, 1, 1234) end
@@ -35385,11 +35385,11 @@ def test0228
   check_error_tag(:no_active_selection) do filter_selection(vct(0, 0, 1, 1), 4) end
   check_error_tag(:no_active_selection) do save_selection("/bad/baddy.snd") end
   check_error_tag(:no_active_selection) do env_selection([0, 0, 1, 1]) end
-  check_error_tag(:no_such_region) do save_region(1234, "/bad/baddy.snd") end
+  check_error_tag(:no_such_region) do save_region(integer2region(1234), "/bad/baddy.snd") end
   make_region(0, 100, ind, 0)
   check_error_tag(:cannot_save) do save_selection("/bad/baddy.snd") end
   check_error_tag(:cannot_save) do save_region(regions.car, "/bad/baddy.snd") end
-  check_error_tag(:no_such_mix) do make_mix_sampler(1234) end
+  check_error_tag(:no_such_mix) do make_mix_sampler(integer2mix(1234)) end
   check_error_tag(:no_such_sound) do make_region(0, 12, 1234, true) end
   set_read_only(true, ind)
   check_error_tag(:cannot_save) do set_sound_loop_info(ind, [0, 0, 1, 1]) end
@@ -35457,7 +35457,7 @@ def test0228
   check_error_tag(:no_such_file) do open_raw_sound("/bad/baddy.snd", 1, 22050, Mus_lshort) end
   check_error_tag(:no_such_file) do view_sound("/bad/baddy.snd") end
   check_error_tag(:no_such_file) do make_sampler(0, "/bad/baddy.snd") end
-  check_error_tag(:no_such_region) do make_region_sampler(0, 1234567) end
+  check_error_tag(:no_such_region) do make_region_sampler(integer2region(1234567), 0) end
   check_error_tag(:no_such_key) do bind_key(12345678, 0, false) end
   check_error_tag(:no_such_key) do bind_key(-1, 0, false) end
   check_error_tag(:no_such_key) do bind_key(12, 17, false) end
@@ -35553,11 +35553,11 @@ def test0228
   check_error_tag(:out_of_range) do make_polyshape(440.0, :partials, [1, 1], :kind, 3) end
   check_error_tag(:wrong_type_arg) do set_mus_header_raw_defaults(1234) end
   check_error_tag(:wrong_type_arg) do set_mus_header_raw_defaults([44100, 2.123, "hi"]) end
-  check_error_tag(:no_such_mix) do mix_sync(mix_sync_max + 1) end
-  check_error_tag(:no_such_mix) do set_mix_sync(mix_sync_max + 1, 1) end
-  check_error_tag(:no_such_mix) do mix_properties(mix_sync_max + 1) end
-  check_error_tag(:no_such_mix) do set_mix_properties(mix_sync_max + 1, 1) end
-  check_error_tag(:no_such_mix) do play_mix(mix_sync_max + 1) end
+  check_error_tag(:no_such_mix) do mix_sync(integer2mix(mix_sync_max + 1)) end
+  check_error_tag(:no_such_mix) do set_mix_sync(integer2mix(mix_sync_max + 1), 1) end
+  check_error_tag(:no_such_mix) do mix_properties(integer2mix(mix_sync_max + 1)) end
+  check_error_tag(:no_such_mix) do set_mix_properties(integer2mix(mix_sync_max + 1), 1) end
+  check_error_tag(:no_such_mix) do play_mix(integer2mix(mix_sync_max + 1)) end
   if provided? :snd_motif
     [:widget_position, :widget_size, :widget_text,
       :hide_widget, :show_widget, :focus_widget].each do |n|

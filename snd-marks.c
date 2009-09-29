@@ -2946,7 +2946,7 @@ void g_init_marks(void)
 				   S_setB S_mark_name, g_set_mark_name_w, 0, 1, 2, 0);
 
   XEN_DEFINE_PROCEDURE(S_mark_sync_max,   g_mark_sync_max_w,   0, 0, 0, H_mark_sync_max);
-  XEN_DEFINE_PROCEDURE(S_mark_home,       g_mark_home_w,       0, 1, 0, H_mark_home);
+  XEN_DEFINE_PROCEDURE(S_mark_home,       g_mark_home_w,       0, 1, 0, H_mark_home);        /* TODO: this is 1 0 now and nargify (and others) */
   XEN_DEFINE_PROCEDURE(S_marks,           g_marks_w,           0, 3, 0, H_marks);
   XEN_DEFINE_PROCEDURE(S_add_mark,        g_add_mark_w,        0, 5, 0, H_add_mark);
   XEN_DEFINE_PROCEDURE(S_add_mark "!",    g_add_mark_unchecked_w, 0, 5, 0, H_add_mark);
@@ -2974,3 +2974,5 @@ If the hook returns " PROC_TRUE ", the mark is not drawn."
   XEN_DEFINE_PROCEDURE("internal-test-control-drag-mark", g_test_control_drag_mark_w, 3, 0, 0, "internal testing func");
 #endif
 }
+
+/* TODO: various errors need TO_PROC_NAME (ruby is reporting region->vct) */

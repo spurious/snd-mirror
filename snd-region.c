@@ -1649,10 +1649,10 @@ static XEN region_get(region_field_t field, XEN n, const char *caller)
 
   switch (field)
     {
-    case REGION_SRATE:  return(C_TO_XEN_INT(region_srate(rg))); break;
-    case REGION_CHANS:  return(C_TO_XEN_INT(region_chans(rg))); break;
-    case REGION_MAXAMP: return(C_TO_XEN_DOUBLE(region_maxamp(rg))); break;
-    case REGION_MAXAMP_POSITION: return(C_TO_XEN_INT64_T(region_maxamp_position(rg))); break;
+    case REGION_SRATE:  return(C_TO_XEN_INT(region_srate(rg)));                                      break;
+    case REGION_CHANS:  return(C_TO_XEN_INT(region_chans(rg)));                                      break;
+    case REGION_MAXAMP: return(C_TO_XEN_DOUBLE(region_maxamp(rg)));                                  break;
+    case REGION_MAXAMP_POSITION: return(C_TO_XEN_INT64_T(region_maxamp_position(rg)));               break;
     case REGION_FORGET: delete_region_and_update_browser(region_id_to_list_position(rg)); return(n); break;
     case REGION_HOME:
       {
@@ -2065,13 +2065,13 @@ XEN_ARGIFY_4(g_insert_region_w, g_insert_region)
 XEN_NARGIFY_0(g_regions_w, g_regions)
 XEN_ARGIFY_2(g_region_frames_w, g_region_frames)
 XEN_ARGIFY_2(g_region_position_w, g_region_position)
-XEN_ARGIFY_1(g_region_srate_w, g_region_srate)
-XEN_ARGIFY_1(g_region_chans_w, g_region_chans)
-XEN_ARGIFY_1(g_region_home_w, g_region_home)
-XEN_ARGIFY_1(g_region_maxamp_w, g_region_maxamp)
-XEN_ARGIFY_1(g_region_maxamp_position_w, g_region_maxamp_position)
+XEN_NARGIFY_1(g_region_srate_w, g_region_srate)
+XEN_NARGIFY_1(g_region_chans_w, g_region_chans)
+XEN_NARGIFY_1(g_region_home_w, g_region_home)
+XEN_NARGIFY_1(g_region_maxamp_w, g_region_maxamp)
+XEN_NARGIFY_1(g_region_maxamp_position_w, g_region_maxamp_position)
 XEN_ARGIFY_9(g_save_region_w, g_save_region)
-XEN_ARGIFY_1(g_forget_region_w, g_forget_region)
+XEN_NARGIFY_1(g_forget_region_w, g_forget_region)
 XEN_ARGIFY_3(g_play_region_w, g_play_region)
 XEN_ARGIFY_4(g_make_region_w, g_make_region)
 XEN_ARGIFY_5(g_mix_region_w, g_mix_region)
