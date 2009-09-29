@@ -544,7 +544,7 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
 void snd_rb_raise(XEN tag, XEN throw_args)
 {
   static char *msg = NULL;
-  XEN err = rb_eStandardError;
+  XEN err = rb_eStandardError, bt;
   bool need_comma = false;
   int size = 2048;
 
@@ -552,6 +552,9 @@ void snd_rb_raise(XEN tag, XEN throw_args)
 
   if (strcmp(rb_id2name(tag), "Out_of_range") == 0) 
     err = rb_eRangeError;
+  else
+    if (strcmp(rb_id2name(tag), "Wrong_type_arg") == 0) 
+      err = rb_eTypeError;
 
   if (msg) free(msg);
   msg = (char *)calloc(size, sizeof(char));
@@ -582,7 +585,7 @@ void snd_rb_raise(XEN tag, XEN throw_args)
 	}
     }
 
-  XEN bt = rb_funcall(err, rb_intern("caller"), 0); 
+  bt = rb_funcall(err, rb_intern("caller"), 0); 
 
   if (XEN_VECTOR_P(bt) && XEN_VECTOR_LENGTH(bt) > 0) 
     {

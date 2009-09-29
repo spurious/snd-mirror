@@ -2872,12 +2872,12 @@ The saved file is " XEN_LANGUAGE_NAME " code, so to restore the marks, load that
 #ifdef XEN_ARGIFY_1
 XEN_ARGIFY_2(g_mark_sample_w, g_mark_sample)
 XEN_NARGIFY_2(g_set_mark_sample_w, g_set_mark_sample)
-XEN_ARGIFY_1(g_mark_sync_w, g_mark_sync)
+XEN_NARGIFY_1(g_mark_sync_w, g_mark_sync)
 XEN_NARGIFY_2(g_set_mark_sync_w, g_set_mark_sync)
-XEN_ARGIFY_1(g_mark_name_w, g_mark_name)
+XEN_NARGIFY_1(g_mark_name_w, g_mark_name)
 XEN_NARGIFY_2(g_set_mark_name_w, g_set_mark_name)
 XEN_NARGIFY_0(g_mark_sync_max_w, g_mark_sync_max)
-XEN_ARGIFY_1(g_mark_home_w, g_mark_home)
+XEN_NARGIFY_1(g_mark_home_w, g_mark_home)
 XEN_ARGIFY_3(g_marks_w, g_marks)
 XEN_ARGIFY_5(g_add_mark_w, g_add_mark)
 XEN_ARGIFY_5(g_add_mark_unchecked_w, g_add_mark_unchecked)
@@ -2937,16 +2937,16 @@ void g_init_marks(void)
   mark_hook = XEN_DEFINE_HOOK(S_mark_hook, 4, H_mark_hook);                /* args = id snd chn reason */
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mark_sample, g_mark_sample_w, H_mark_sample,
-				   S_setB S_mark_sample, g_set_mark_sample_w, 0, 2, 2, 0);
+				   S_setB S_mark_sample, g_set_mark_sample_w, 1, 1, 2, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mark_sync, g_mark_sync_w, H_mark_sync,
-				   S_setB S_mark_sync, g_set_mark_sync_w, 0, 1, 2, 0);
+				   S_setB S_mark_sync, g_set_mark_sync_w, 1, 0, 2, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mark_name, g_mark_name_w, H_mark_name,
-				   S_setB S_mark_name, g_set_mark_name_w, 0, 1, 2, 0);
+				   S_setB S_mark_name, g_set_mark_name_w, 1, 0, 2, 0);
 
   XEN_DEFINE_PROCEDURE(S_mark_sync_max,   g_mark_sync_max_w,   0, 0, 0, H_mark_sync_max);
-  XEN_DEFINE_PROCEDURE(S_mark_home,       g_mark_home_w,       0, 1, 0, H_mark_home);        /* TODO: this is 1 0 now and nargify (and others) */
+  XEN_DEFINE_PROCEDURE(S_mark_home,       g_mark_home_w,       1, 0, 0, H_mark_home); 
   XEN_DEFINE_PROCEDURE(S_marks,           g_marks_w,           0, 3, 0, H_marks);
   XEN_DEFINE_PROCEDURE(S_add_mark,        g_add_mark_w,        0, 5, 0, H_add_mark);
   XEN_DEFINE_PROCEDURE(S_add_mark "!",    g_add_mark_unchecked_w, 0, 5, 0, H_add_mark);
@@ -2975,4 +2975,3 @@ If the hook returns " PROC_TRUE ", the mark is not drawn."
 #endif
 }
 
-/* TODO: various errors need TO_PROC_NAME (ruby is reporting region->vct) */

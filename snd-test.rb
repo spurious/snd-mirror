@@ -8670,7 +8670,7 @@ def test205
     snd_display("selection_maxamp_position: %s (971)?", res)
   end
   make_region(24000, 25000)
-  if (res = region_maxamp_position) != 971
+  if (res = region_maxamp_position(regions.first)) != 971
     snd_display("region_maxamp_position: %s (971)?", res)
   end
   close_sound(ind1)
@@ -20100,8 +20100,8 @@ def test009
     snd_display("mix_sampler_position: %d?", res)
   end
   snd_display("mix_sampler at end? %s", mr) if sampler_at_end?(mr)
-  if (res = sampler_home(mr)) != mix_id
-    snd_display("%s home: %s?", mr, res)
+  unless (res = sampler_home(mr)).eql?(mix_id)
+    snd_display("%s home: %s?", sampler_home(mr), res)
   end
   if mr.to_s[0, 16] != "#<mix-sampler mi"
     snd_display("mix_sampler actually got: [%s]?", mr.to_s[0, 16])
@@ -21263,7 +21263,7 @@ def test0210
     if current_marks and (not current_marks.empty?)
       current_samples = current_marks.map do |m| mark_sample(m) end
       id = current_marks[random(current_marks.length - 1)]
-      if find_mark(mark_sample(id)) != id
+      unless find_mark(mark_sample(id)).eql?(id)
         snd_display("two marks at %s: %s?",
                     mark_sample(id), current_marks.map do |m| mark_sample(m) end)
       end
@@ -21381,14 +21381,14 @@ def test0210
   m1 = add_mark(1234)
   val0 = describe_mark(m0)
   val1 = describe_mark(m1)
-  if val0[0][1] != m0 or
+  if mark2integer(val0[0][1]) != mark2integer(m0) or
       val0[0][3] != ind or
       val0[0][6] != 0 or
       val0[1] != 4321 or
       val0[2] != 4320
     snd_display("describe_mark m0: %s?", val0)
   end
-  if val1[0][1] != m1 or
+  if mark2integer(val1[0][1]) != mark2integer(m1) or
       val1[0][3] != ind or
       val1[0][6] != 0 or
       val1[1] != false or
@@ -21399,7 +21399,7 @@ def test0210
   delete_sample(5000)
   val0 = describe_mark(m0)
   val1 = describe_mark(m1)
-  if val0[0][1] != m0 or
+  if mark2integer(val0[0][1]) != mark2integer(m0) or
       val0[0][3] != ind or
       val0[0][6] != 0 or
       val0[1] != 4321 or
@@ -21407,7 +21407,7 @@ def test0210
       val0[3] != false
     snd_display("describe_mark m0 (1): %s?", val0)
   end
-  if val1[0][1] != m1 or
+  if mark2integer(val1[0][1]) != mark2integer(m1) or
       val1[0][3] != ind or
       val1[0][6] != 0 or
       val1[1] != false or
@@ -23658,7 +23658,7 @@ def test14
       delete_marks(curfd)
       if duration(curfd) > 0.0 then set_x_bounds([0.0, [duration(curfd), 0.1].min], curfd) end
       set_y_bounds([-1.0, 1.0], curfd)
-      if Snd.marks(curfd, 0).length > 0 or new_marks != (old_marks + 2)
+      if Snd.marks(curfd, 0).length > 0 or new_marks != (old_marks + 3)
         snd_display("delete marks: %s %s?", new_marks, old_marks)
       end
     end
@@ -24578,7 +24578,7 @@ def test0015
   end
   m2 = add_mark(1000, obi, 0)
   m3 = add_mark(2000, obi, 0)
-  if (res = marks(obi, 0)) != [m2, m3]
+  unless (res = marks(obi, 0)).eql?([m2, m3])
     snd_display("add_mark: %s %s?", res, [m2, m3])
   end
   set_left_sample(950, obi, 0)
@@ -24703,7 +24703,7 @@ def test0015
   Snd.regions.apply(:forget_region)
   if regions != nil then snd_display("no regions: %s?", regions.inspect) end
   id = make_region(100, 200, obi, 0)
-  if regions != [id] then snd_display("make_region regions: %s?", regions.inspect) end
+  if (!(regions.eql?([id]))) then snd_display("make_region regions: %s?", regions.inspect) end
   revert_sound(obi)
   oldlen = frames(obi)
   env_sound_interp([0, 0, 1, 1, 2, 0], 2.0, obi, 0)

@@ -1956,6 +1956,7 @@ it returns a list of the new mixes"
   if (id == -1) return(XEN_FALSE);
   for (i = 0; i < reg_chans; i++)
     result = XEN_CONS(new_xen_mix(id + i), result);
+
   return(XEN_LIST_REVERSE(result));
 }
 

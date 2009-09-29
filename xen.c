@@ -471,6 +471,10 @@ void xen_initialize(void)
 
 #if HAVE_RUBY
 
+#if USE_SND
+void snd_rb_raise(XEN type, XEN info); /* XEN_ERROR */
+#endif
+
 #define S_add_help "add_help"
 #define S_get_help "get_help"
 
@@ -1437,11 +1441,6 @@ XEN xen_rb_create_hook(char *name, int arity, char *help)
  *   == $var_hook = Hook.new("var_hook", 1, "help $var_hook")
  *      $var_hook.add_hook!("1st proc") do |a| ... end
  */
-
-#if USE_SND
-void snd_rb_raise(XEN type, XEN info); /* XEN_ERROR */
-#endif
-
 
 #ifndef RSTRING_LEN 
   #define RB_STR_LEN(str)                RSTRING(str)->len 
