@@ -1313,9 +1313,8 @@ io_error_t save_region(int rg, const char *name, int type, int format, const cha
 
 /* ---------------------------------------- region objects ---------------------------------------- */
 
-/* TODO: check ruby/forth/guile code/doc examples
+/* TODO: check forth code examples [mix marks examp in particular]
  * SOMEDAY: deprecate region-home|chans|frames|maxamp|position,  make-region-sampler, read-region-sample, region-sampler?
- * TODO: check the sampler funcs for region support
  * TODO: region-ref (also (reg n)).
  */
 

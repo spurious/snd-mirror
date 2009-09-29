@@ -606,7 +606,7 @@ mus-audio-playback-amp value original-audio-amp
   new-index select-sound drop
   0 new-index 0 find-mix to res
   res if $" found non-existent mix: %s?" #( res ) snd-display then
-  "pistol.snd" 100 mix { mix-id }
+  "pistol.snd" 100 mix car { mix-id }
   view-files-dialog { wid }
   mix-id mix-position { pos }
   mix-id mix-length { len }

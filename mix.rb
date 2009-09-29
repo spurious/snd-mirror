@@ -198,7 +198,7 @@ is a $mix_click_hook function that describes a mix and its properties.")
   def mix_click_info(id)
     Snd.raise(:no_such_mix, id) unless mix?(id)
     info_dialog("Mix Info", format("\
-      mix id: %d%s
+      mix id: %s%s
     position: %d (%1.3f secs)
       length: %d (%1.3f secs)
           in: %s[%d]

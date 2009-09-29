@@ -8561,7 +8561,7 @@ Similarly, play-region-forever plays region 'reg' until you interrupt it with C-
     (<a class=quiet href="extsnd.html#bindkey" onmouseout="UnTip()" onmouseover="Tip(extsnd_bindkey_tip)">bind-key</a> #\r 0 
       (lambda (n) 
         "play region forever" 
-        (play-region-forever (max 0 n))))
+        (play-region-forever n)))
 </pre></td></tr></table>
 Now <code>C-u 31 p</code> plays the current sound 31 times; <code>C-u 3 r</code> plays region 3 until we type C-g.
 </td></tr><tr><td colspan=2 height=16></td></tr>

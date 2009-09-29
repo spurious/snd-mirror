@@ -1994,7 +1994,7 @@ void show_mark_triangle(chan_info *cp, int x)
 
 /* ---------------------------------------- mark object ---------------------------------------- */
 
-/* TODO: check ruby/forth code examples
+/* TODO: check forth code examples
  * SOMEDAY: deprecate mark-home|name|sync|color, perhaps sample
  */
 

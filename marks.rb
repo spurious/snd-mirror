@@ -547,7 +547,7 @@ is a $mark_click_hook function that describes a mark and its properties")
   def mark_click_info(id)
     Snd.raise(:no_such_mark, id) unless mark?(id)
     info_dialog("Mark info", format("\
-     mark id: %d%s
+     mark id: %s%s
       sample: %d (%1.3f secs)%s%s",
                                     id,
                                     ((s = mark_name(id)) ?

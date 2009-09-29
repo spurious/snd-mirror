@@ -829,6 +829,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 		  sp->filing = NOT_FILING;
 		  return;
 		}
+
 	      /* else fall through... */
 	    case SELECTION_FILING:
 	      if (selection_is_active())
@@ -890,6 +891,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 		  sp->filing = NOT_FILING;
 		  return;
 		}
+
 	      /* else fall through... */
 	    case CHANNEL_FILING:
 	      {
@@ -992,6 +994,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 		}
 	      else string_to_minibuffer(sp, _("no previous macro"));
 	      break;
+
 	    case SAVE_EDITS_FILING:
 	      if ((str[0] == 'y') ||
 		  (str[0] == 'Y'))
@@ -1008,6 +1011,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 	  sp->filing = NOT_FILING;
 	  return;
 	}
+
       if (sp->amp_count != 0)
 	{
 	  env *e;
@@ -1033,6 +1037,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 	  clear_minibuffer(sp);
 	  return;
 	}
+
 #if HAVE_EXTENSION_LANGUAGE
       if (sp->macro_count)
 	{
@@ -1047,6 +1052,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 	}
 #endif
     }
+
 #if HAVE_EXTENSION_LANGUAGE
   /* strlen can be 0 here if <cr> response to prompt */
   if (sp->prompting)
@@ -1422,15 +1428,20 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
   static bool got_ext_count = false;
   snd_info *sp;
   axis_info *ap;
+
   /* fprintf(stderr, "(%s %d%s) ", KEY_TO_NAME(keysym), unmasked_state, (extended_mode) ? " (c-x)" : ""); */
+
   if ((!cp) || (!(cp->sound)) || (cp->active < CHANNEL_HAS_EDIT_LIST)) return;
   sp = cp->sound;
   if ((!sp) || (sp->inuse != SOUND_NORMAL)) return;
+
   ap = cp->axis;
+
   if (keysym >= snd_K_Shift_L) return;
   /* this happens when the user presses Control or Shift etc prior to hitting the actual (modified) key */
   shift = unmasked_state & snd_ShiftMask;
   state = unmasked_state & SND_KEYMASK; /* mask off stuff we don't care about */
+
   if (defining_macro) continue_macro(keysym, state);
   if (!m) count = 1; else m = false;
   
@@ -1454,12 +1465,15 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
       dot_seen = false;
       if (m) return;
     }
+
   u_count = false;
+
   if ((keysym != snd_K_X) && (keysym != snd_K_x))
     {
       got_count = false;
       if (count == 0) return;
     }
+
 #if HAVE_EXTENSION_LANGUAGE
   if ((state & snd_MetaMask) && 
       ((keysym == snd_K_X) || (keysym == snd_K_x)))
@@ -1477,6 +1491,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
       return;
     }
 #endif
+
   /* if (sp->minibuffer_temp) clear_minibuffer(sp); */
 
   if (state & snd_ControlMask)

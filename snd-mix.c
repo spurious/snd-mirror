@@ -2226,7 +2226,7 @@ void after_mix_edit(int id)
 
 /* ---------------------------------------- mix objects ---------------------------------------- */
 
-/* TODO: check ruby/forth/guile and update all snd-test* etc
+/* TODO: check forth and update snd-test.fs etc
  * SOMEDAY: deprecate mix-length, mix-position, mix-home, mix-properties, make-mix-sampler, mix-sampler?, read-mix-sample, mix-name, mix-sync, mix-color
  *            eventually? amp amp-env speed maxamp etc
  * TODO: ruby methods as in vcts
@@ -2828,6 +2828,9 @@ static XEN g_mixes(XEN snd, XEN chn)
   chan_info *cp;
   int i, j;
   XEN res1 = XEN_EMPTY_LIST;
+  
+  ASSERT_CHANNEL(S_mixes, snd, chn, 0);
+
   if (XEN_INTEGER_P(snd))
     {
       if (XEN_INTEGER_P(chn))

@@ -8220,12 +8220,15 @@ static XEN g_save_edit_history(XEN filename, XEN snd, XEN chn)
   FILE *fd;
   const char *name;
   char *mcf = NULL;
+
   XEN_ASSERT_TYPE(XEN_STRING_P(filename), filename, XEN_ARG_1, S_save_edit_history, "a string");
   ASSERT_CHANNEL(S_save_edit_history, snd, chn, 2);
+
   name = XEN_TO_C_STRING(filename);
   mcf = mus_expand_filename(name);
   fd = FOPEN(mcf, "w");
   if (mcf) free(mcf);
+
   if (fd)
     {
       chan_info *cp;

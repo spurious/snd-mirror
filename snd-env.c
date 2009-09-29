@@ -902,6 +902,14 @@ void alert_envelope_editor(const char *name, env *val)
 }
 
 
+
+struct enved_fft {
+  mus_long_t size;
+  mus_float_t *data;
+  mus_float_t scale;
+};
+
+
 enved_fft *free_enved_fft(enved_fft *ef)
 {
   if (ef)

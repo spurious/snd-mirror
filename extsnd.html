@@ -5580,7 +5580,7 @@ selection-frames returns the number of frames in the current selection (its leng
 You can set this to move the selection end point:
 <pre>
     :<em class=typing>(select-all)</em>                    ; grab all of current channel
-    <em class=listener>1</em>
+    <em class=listener>#&lt;region 1&gt;</em>
     :<em class=typing>(selection-frames)</em>
     <em class=listener>55240</em>
     :<em class=typing>(set! (selection-frames) 10000)</em> ; unselect all but the starting 10000
@@ -5662,7 +5662,7 @@ This function returns the selection srate.  There's some arbitrariness in this i
 selection? returns #t if there is a selection.
 <pre>
     :<em class=typing>(select-all)</em>
-    <em class=listener>2</em>
+    <em class=listener>#&lt;region 2&gt;</em>
     :<em class=typing>(selection?)</em>
     <em class=listener>#t</em>
     :<em class=typing>(set! (selection-member? #t) #f)</em>
