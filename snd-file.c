@@ -1430,7 +1430,7 @@ void after_open(int index)
 {
   if (XEN_HOOKED(after_open_hook))
     run_hook(after_open_hook,
-	     XEN_LIST_1(C_TO_XEN_INT(index)),
+	     XEN_LIST_1(C_INT_TO_XEN_SOUND(index)),
 	     S_after_open_hook);
   call_ss_watchers(SS_FILE_OPEN_WATCHER, SS_FILE_OPENED);
 }
@@ -1501,11 +1501,11 @@ snd_info *finish_opening_sound(snd_info *sp, bool selected)
   if (sp)
     {
 #if HAVE_RUBY || HAVE_FORTH
-      XEN_VARIABLE_SET(S_snd_opened_sound, C_TO_XEN_INT(sp->index));
+      XEN_VARIABLE_SET(S_snd_opened_sound, C_INT_TO_XEN_SOUND(sp->index));
 #endif
 
 #if HAVE_GUILE || HAVE_S7
-      XEN_VARIABLE_SET(snd_opened_sound, C_TO_XEN_INT(sp->index));
+      XEN_VARIABLE_SET(snd_opened_sound, C_INT_TO_XEN_SOUND(sp->index));
 #endif
 
       sp->write_date = file_write_date(sp->filename);
@@ -1615,13 +1615,13 @@ void snd_close_file(snd_info *sp)
   /* before-close-hook can cancel the close, whereas close-hook can't */
   if (XEN_HOOKED(before_close_hook))
     res = run_or_hook(before_close_hook,
-		      XEN_LIST_1(C_TO_XEN_INT(sp->index)),
+		      XEN_LIST_1(C_INT_TO_XEN_SOUND(sp->index)),
 		      S_before_close_hook);
   if (XEN_TRUE_P(res)) return;
 
   if (XEN_HOOKED(close_hook))
     run_hook(close_hook,
-	     XEN_LIST_1(C_TO_XEN_INT(sp->index)),
+	     XEN_LIST_1(C_INT_TO_XEN_SOUND(sp->index)),
 	     S_close_hook);
 
   remember_filename(sp->filename, preloaded_files); /* for open dialog(s) previous files list in case dialog doesn't yet exist */
@@ -2056,7 +2056,7 @@ snd_info *snd_update(snd_info *sp)
     {
       /* #t => return without updating (not recommended!!), proc of 1 arg will be evaluated after update is complete */
       update_hook_result = run_or_hook(update_hook, 
-				       XEN_LIST_1(C_TO_XEN_INT(sp->index)),
+				       XEN_LIST_1(C_INT_TO_XEN_SOUND(sp->index)),
 				       S_update_hook);
       if (XEN_TRUE_P(update_hook_result)) return(sp);
       if (XEN_PROCEDURE_P(update_hook_result))
@@ -2185,7 +2185,7 @@ snd_info *snd_update(snd_info *sp)
   if (XEN_PROCEDURE_P(update_hook_result))
     {
       XEN_CALL_1(update_hook_result,
-		 (nsp) ? C_TO_XEN_INT(nsp->index) : XEN_FALSE,
+		 (nsp) ? C_INT_TO_XEN_SOUND(nsp->index) : XEN_FALSE,
 		 "procedure returned by " S_update_hook);
       if (gc_loc != NOT_A_GC_LOC) snd_unprotect_at(gc_loc);
       gc_loc = NOT_A_GC_LOC;
@@ -2250,7 +2250,7 @@ void run_after_save_as_hook(snd_info *sp, const char *already_saved_as_name, boo
       char *fullname;
       fullname = mus_expand_filename(already_saved_as_name);
       run_progn_hook(after_save_as_hook,
-		     XEN_LIST_3((sp) ? C_TO_XEN_INT(sp->index) : XEN_FALSE,
+		     XEN_LIST_3((sp) ? C_INT_TO_XEN_SOUND(sp->index) : XEN_FALSE,
 				C_TO_XEN_STRING(fullname),
 				C_TO_XEN_BOOLEAN(from_save_as_dialog)),
 		     S_after_save_as_hook);
@@ -2271,7 +2271,7 @@ bool run_before_save_as_hook(snd_info *sp, const char *save_as_filename, bool se
       XEN result = XEN_FALSE;
       before_save_as_hook_active = true;
       result = run_progn_hook(before_save_as_hook,
-			      XEN_LIST_7((sp) ? C_TO_XEN_INT(sp->index) : XEN_FALSE,
+			      XEN_LIST_7((sp) ? C_INT_TO_XEN_SOUND(sp->index) : XEN_FALSE,
 					 C_TO_XEN_STRING(save_as_filename),
 					 C_TO_XEN_BOOLEAN(selection),
 					 C_TO_XEN_INT(srate),

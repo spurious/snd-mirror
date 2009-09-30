@@ -300,11 +300,11 @@
   "(superimpose-ffts snd chn y0 y1) superimposes ffts of multiple (syncd) sounds (use with graph-hook)"
   (let ((maxsync (apply max (map sync (sounds)))))
     (if (and (> (sync snd) 0)
-	     (= snd (apply min (map (lambda (n) 
-				      (if (= (sync snd) (sync n))
-					  n
-					  (+ 1 maxsync)))
-				    (sounds)))))
+	     (equal? snd (integer->sound (apply min (map (lambda (n) 
+							   (if (= (sync snd) (sync n))
+							       (sound->integer n)
+							       (+ 1 maxsync)))
+							 (sounds))))))
 	(let* ((ls (left-sample snd chn))
 	       (rs (right-sample snd chn))
 	       (pow2 (inexact->exact (ceiling (/ (log (- rs ls)) (log 2)))))

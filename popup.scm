@@ -735,7 +735,7 @@ all saved edit lists."
     (define (find-popup snd chn dats)
       (if (not (null? dats))
 	  (let ((cur (car dats)))
-	    (if (and (= (car cur) snd)
+	    (if (and (equal? (car cur) snd)
 		     (= (cadr cur) chn))
 		cur
 		(find-popup snd chn (cdr dats))))

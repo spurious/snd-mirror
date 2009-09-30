@@ -548,8 +548,8 @@ Extensions to Snd can be found in:
 <tr><td><a href="sndscm.html#singerdoc">singer</a></td>
     <td onmouseout="UnTip()" onmouseover="Tip(singer_doc_tip)">Perry Cook's vocal-tract physical model</td></tr>
 
-<tr><td bgcolor="#f2f4ff"><a href="sndscm.html#snd4doc">snd4|5|6|7|8|9|10.scm</a></td>
-    <td bgcolor="#f2f4ff" onmouseout="UnTip()" onmouseover="Tip(snd4_doc_tip)">Backwards compatibility</td></tr>
+<tr><td bgcolor="#f2f4ff"><a href="sndscm.html#sndolddoc">snd5|6|7|8|9|10.scm</a></td>
+    <td bgcolor="#f2f4ff" onmouseout="UnTip()" onmouseover="Tip(sndold_doc_tip)">Backwards compatibility</td></tr>
 
 <tr><td><a href="sndscm.html#snddiffdoc">snddiff</a></td>
     <td onmouseout="UnTip()" onmouseover="Tip(snddiff_doc_tip)">sound difference detection</td></tr>
@@ -6777,7 +6777,7 @@ Scheme find: find-if<br>
 <tr><td colspan=2 bgcolor="#f2f4ff">
 <code><a class=def name="findsound">find-sound</a> (filename :optional nth)</code>
 </td></tr><tr><td></td><td>
-find-sound returns the index of 'filename' or
+find-sound returns the sound object of 'filename' or
 #f if no sound is found that matches 'filename'.  If there is (or might be) more than one file
 open with the given filename, the 'nth' parameter (which defaults to 0) chooses which to return.
 Leaving aside the 'nth' parameter, find-sound could be defined as:
@@ -8652,7 +8652,7 @@ This gives the selected channel in 'snd'; you can set it to select a channel.  I
 <tr><td colspan=2 bgcolor="#f2f4ff">
 <code><a class=def name="selectedsound">selected-sound</a> ()</code>
 </td></tr><tr><td></td><td>
-This gives the currently selected sound (its index, of course); you can set it to select a sound. It returns #f is there is no selected sound. 
+This returns the currently selected sound; you can set it to select a sound. It returns #f is there is no selected sound. 
 <pre>
     (or (<a class=quiet href="#selectedsound" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectedsound_tip)">selected-sound</a>)
         (and (not (null? (<a class=quiet href="#sounds" onmouseout="UnTip()" onmouseover="Tip(extsnd_sounds_tip)">sounds</a>)))
@@ -8674,9 +8674,9 @@ See also <a href="#selectchannelhook">select-channel-hook</a>.
 
 <!-- select-sound -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
-<code><a class=def name="selectsound">select-sound</a> (:optional snd)</code>
+<code><a class=def name="selectsound">select-sound</a> snd</code>
 </td></tr><tr><td></td><td>
-This selects sound 'snd' (an index); equivalent to <code>(set! (<a class=quiet href="#selectedsound" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectedsound_tip)">selected-sound</a>) snd)</code>.
+This selects sound 'snd' (a sound object or an index); equivalent to <code>(set! (<a class=quiet href="#selectedsound" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectedsound_tip)">selected-sound</a>) snd)</code>.
 See also <a href="#selectsoundhook">select-sound-hook</a>.
 </td></tr><tr><td colspan=2 height=18></td></tr>
 
@@ -8877,9 +8877,9 @@ For a fancier version, see fft-smoother in examp.scm.  See also <a href="sndscm.
 
 <!-- sound? -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
-<code><a class=def name="soundp">sound?</a> (:optional snd)</code>
+<code><a class=def name="soundp">sound?</a> snd</code>
 </td></tr><tr><td></td><td>
-sound? returns #t if 'snd' (an index) points to an open sound. 
+sound? returns #t if 'snd' refers to an open sound.
 </td></tr><tr><td colspan=2 height=18></td></tr>
 
 
@@ -11572,8 +11572,7 @@ prints the names of all the stereo AIFC files it finds:
   (<em class=red>sound-files-in-directory</em>))
 </pre></td></tr></table>
 
-See also map-sound-files in <a href="sndscm.html#snd4doc">snd4.scm</a>, and 
-<a href="sndscm.html#mapsoundfiles">map-sound-files</a> in extensions.scm.
+See also <a href="sndscm.html#mapsoundfiles">map-sound-files</a> in extensions.scm.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 

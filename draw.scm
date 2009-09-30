@@ -210,7 +210,7 @@ whenever they're in the current view."
     (add-hook! after-graph-hook
 	       (lambda (snd chn)
 		 (if (and (sound? base)
-			  (= snd base))
+			  (equal? snd base))
 		     (for-each 
 		      (lambda (snd)
 			;; perhaps this should also set sync

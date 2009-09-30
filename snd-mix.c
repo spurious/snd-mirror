@@ -2691,7 +2691,7 @@ filename or " PROC_FALSE " and the input channel for its data."
   md = md_from_id(XEN_MIX_TO_C_INT(n));
   if (md == NULL)
     return(snd_no_such_mix_error(S_mix_home, n));
-  return(XEN_LIST_4(C_TO_XEN_INT((md->cp->sound)->index),
+  return(XEN_LIST_4(C_INT_TO_XEN_SOUND((md->cp->sound)->index),
 		    C_TO_XEN_INT((md->cp->chan)),
 		    (md->in_filename) ? C_TO_XEN_STRING(md->in_filename) : XEN_FALSE,
 		    C_TO_XEN_INT(md->in_chan)));
@@ -2831,7 +2831,7 @@ static XEN g_mixes(XEN snd, XEN chn)
   
   ASSERT_CHANNEL(S_mixes, snd, chn, 0);
 
-  if (XEN_INTEGER_P(snd))
+  if (XEN_INTEGER_P(snd) || XEN_SOUND_P(snd))
     {
       if (XEN_INTEGER_P(chn))
 	{

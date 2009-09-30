@@ -7,7 +7,8 @@ Snd change log
             several region functions now take the region argument first:
               insert-region, make-region-sampler, mix-region, region-sample, 
               region->vct, region->frame, make-region-frame-reader.
-            removed export-all.scm
+            sounds are objects, but integers are still ok, integer->sound and sound->integer.
+            removed export-all.scm, snd4.scm.
  17-Sep:    Snd 10.9.
  10-Sep:    removed show-backtrace (it is #t). default optimization is 6.
  9-Aug:     Snd 10.8.

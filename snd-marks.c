@@ -2226,7 +2226,7 @@ static XEN mark_get(XEN n, mark_field_t fld, XEN pos_n, const char *caller)
       break;
 
     case MARK_HOME:   
-      return(XEN_LIST_2(C_TO_XEN_INT((ncp[0]->sound)->index),
+      return(XEN_LIST_2(C_INT_TO_XEN_SOUND((ncp[0]->sound)->index),
 			C_TO_XEN_INT(ncp[0]->chan))); 
       break;
     }
@@ -2579,9 +2579,11 @@ mark list is: channel given: (id id ...), snd given: ((id id) (id id ...)), neit
 
   chan_info *cp;
   snd_info *sp;
-
   XEN res1 = XEN_EMPTY_LIST;
-  if (XEN_INTEGER_P(snd_n))
+
+  ASSERT_CHANNEL(S_marks, snd_n, chn_n, 0);
+
+  if (XEN_INTEGER_P(snd_n) || XEN_SOUND_P(snd_n))
       {
 	int i, pos;
 	int *ids;

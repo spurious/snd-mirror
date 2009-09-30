@@ -491,7 +491,7 @@ a list (file-name-or-sound-index [beg [channel]])."
 				   (format #f "mix-channel '~A ~A ~A" input-data beg dur))))
 
 		;; a virtual mix -- use simplest method available
-		(if (number? input)
+		(if (sound? input)
 
 		    ;; sound index case
 		    (channel->mix input input-channel input-beg len snd chn start)
@@ -875,7 +875,7 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 
 (define* (channels=? snd1 chn1 snd2 chn2 :optional (allowable-difference 0.0))
   "(channels=? s1 c1 s2 c2 (diff 0.0)) -> #t if the two channels are the same (within diff) modulo trailing 0's"
-  (if (and (= snd1 snd2)
+  (if (and (equal? snd1 snd2)
 	   (= chn1 chn2))
       #t
       (let ((mx1 (maxamp snd1 chn1))

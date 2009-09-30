@@ -8,7 +8,7 @@ static bool dont_save(snd_info *sp, const char *newname)
   XEN res = XEN_FALSE;
   if (XEN_HOOKED(save_hook))
     res = run_or_hook(save_hook,
-		      XEN_LIST_2(C_TO_XEN_INT(sp->index),
+		      XEN_LIST_2(C_INT_TO_XEN_SOUND(sp->index),
 				 (newname) ? C_TO_XEN_STRING(newname) : XEN_FALSE),
 		      S_save_hook);
   return(XEN_TRUE_P(res));
@@ -7939,7 +7939,7 @@ if 'obj' is a mix-sampler, the id of underlying mix"
 	  (fd->cp->sound))
 	{
 	  if (fd->type == SAMPLER)
-	    return(XEN_LIST_2(C_TO_XEN_INT(fd->cp->sound->index),
+	    return(XEN_LIST_2(C_INT_TO_XEN_SOUND(fd->cp->sound->index),
 			      C_TO_XEN_INT(fd->cp->chan)));
 
 	  return(XEN_LIST_2(C_INT_TO_XEN_REGION(fd->region),
@@ -8131,7 +8131,7 @@ static XEN g_copy_sampler(XEN obj)
 	{
 	  if (fd->type == SAMPLER)
 	    return(g_make_sampler(C_TO_XEN_INT64_T(current_location(fd)),
-				  C_TO_XEN_INT(fd->cp->sound->index),
+				  C_INT_TO_XEN_SOUND(fd->cp->sound->index),
 				  C_TO_XEN_INT(fd->cp->chan),
 				  C_TO_XEN_INT((fd->direction == READ_FORWARD) ? 1 : -1), /* Scheme side is different from C side */
 				  C_TO_XEN_INT(fd->edit_ctr)));
@@ -8488,16 +8488,20 @@ scale samples in the given sound/channel between beg and beg + num by scaler."
   chan_info *cp;
   mus_long_t samp;
   int pos;
+
   XEN_ASSERT_TYPE(XEN_NUMBER_P(scl), scl, XEN_ARG_1, S_scale_channel, "a number");
   ASSERT_SAMPLE_TYPE(S_scale_channel, beg, XEN_ARG_2);
   ASSERT_SAMPLE_TYPE(S_scale_channel, num, XEN_ARG_3);
   ASSERT_SOUND(S_scale_channel, snd, 4);
+
   scaler = XEN_TO_C_DOUBLE(scl);
   samp = beg_to_sample(beg, S_scale_channel);
   cp = get_cp(snd, chn, S_scale_channel);
   if (!cp) return(XEN_FALSE);
   pos = to_c_edit_position(cp, edpos, S_scale_channel, 6);
+
   scale_channel(cp, scaler, samp, dur_to_samples(num, samp, cp, pos, 3, S_scale_channel), pos, NOT_IN_AS_ONE_EDIT);
+
   return(scl);
 }
 			  

@@ -545,6 +545,8 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+1-Oct:   sounds are objects, but the integer choice also works. \n\
+         sound->integer and integer->sound.\n\
 29-Sep:  mixes are objects now (not ints), integer->mix and mix->integer.\n\
          all \"sample-reader\" and \"sample_reader\" names changed to \"sampler\".\n\
          marks are objects (not ints), integer->mark and mark->integer.\n\
@@ -552,6 +554,7 @@ void about_snd_help(void)
          several region functions now take the region argument first:\n\
            insert-region, make-region-sampler, mix-region, region-sample,\n\
            region->vct, region->frame, make-region-frame-reader.\n\
+         removed export-all.scm, snd4.scm.\n\
 17-Sep:  Snd 10.9.\n\
 10-Sep:  removed show-backtrace (it is #t now). default optimization is now 6.\n\
 9-Aug:   Snd 10.8.\n\

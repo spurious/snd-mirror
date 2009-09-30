@@ -51,7 +51,7 @@
 	    (lambda (snd chn)
 	      (if (and (selection-member? snd chn)
 		       (or (null? not-this)
-			   (not (= snd (car not-this)))
+			   (not (equal? snd (car not-this)))
 			   (not (= chn (cadr not-this)))))
 		  (return (list snd chn))))
 	    (car scs)
@@ -168,7 +168,7 @@ to end of channel, beg defaults to 0, snd defaults to the currently selected sou
 	  (for-each
 	   (lambda (s)
 	     (if (or (eq? snd #t)
-		     (= s current-sound)
+		     (equal? s current-sound)
 		     (and (not (= current-sync 0))
 			  (= current-sync (sync s))))
 		 (do ((i 0 (+ 1 i)))

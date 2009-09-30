@@ -83,7 +83,7 @@ static void after_transform(chan_info *cp, mus_float_t scaler)
 {
   if (XEN_HOOKED(after_transform_hook))
     run_hook(after_transform_hook,
-	     XEN_LIST_3(C_TO_XEN_INT(cp->sound->index),
+	     XEN_LIST_3(C_INT_TO_XEN_SOUND(cp->sound->index),
 			C_TO_XEN_INT(cp->chan),
 			C_TO_XEN_DOUBLE(scaler)),
 	     S_after_transform_hook);
@@ -95,7 +95,7 @@ static void run_after_graph_hook(chan_info *cp)
   if ((cp->hookable == WITH_HOOK) &&
       (XEN_HOOKED(after_graph_hook)))
     run_hook(after_graph_hook,
-	     XEN_LIST_2(C_TO_XEN_INT(cp->sound->index),
+	     XEN_LIST_2(C_INT_TO_XEN_SOUND(cp->sound->index),
 			C_TO_XEN_INT(cp->chan)),
 	     S_after_graph_hook);
   /* (add-hook! after-graph-hook (lambda (a b) (snd-print (format #f "~A ~A" a b)))) */
@@ -681,7 +681,7 @@ void add_channel_data_1(chan_info *cp, int srate, mus_long_t frames, channel_gra
       XEN res;
       int len = 0;
       res = run_or_hook(initial_graph_hook,
-			XEN_LIST_3(C_TO_XEN_INT(cp->sound->index),
+			XEN_LIST_3(C_INT_TO_XEN_SOUND(cp->sound->index),
 				   C_TO_XEN_INT(cp->chan),
 				   C_TO_XEN_DOUBLE(dur)),
 			S_initial_graph_hook);
@@ -1104,7 +1104,7 @@ void focus_x_axis_change(axis_info *ap, chan_info *cp, int focus_style)
 	{
 	case ZOOM_FOCUS_PROC:
 	  ap->x0 = XEN_TO_C_DOUBLE(XEN_CALL_6(ss->zoom_focus_proc,
-					      C_TO_XEN_INT(cp->sound->index),
+					      C_INT_TO_XEN_SOUND(cp->sound->index),
 					      C_TO_XEN_INT(cp->chan),
 					      C_TO_XEN_DOUBLE(ap->zx),
 					      C_TO_XEN_DOUBLE(ap->x0),
@@ -3806,7 +3806,7 @@ static void display_channel_data_with_size(chan_info *cp,
       XEN res = XEN_FALSE;
       ss->graph_hook_active = true;
       res = run_progn_hook(graph_hook,
-			   XEN_LIST_4(C_TO_XEN_INT(sp->index),
+			   XEN_LIST_4(C_INT_TO_XEN_SOUND(sp->index),
 				      C_TO_XEN_INT(cp->chan),
 				      C_TO_XEN_DOUBLE(cp->axis->y0),
 				      C_TO_XEN_DOUBLE(cp->axis->y1)),
@@ -4041,7 +4041,7 @@ static void display_channel_data_with_size(chan_info *cp,
 	  ss->lisp_graph_hook_active = true;
 	  /* inadvertent recursive call here can hang entire computer */
 	  pixel_list = run_progn_hook(lisp_graph_hook,
-				      XEN_LIST_2(C_TO_XEN_INT(cp->sound->index),
+				      XEN_LIST_2(C_INT_TO_XEN_SOUND(cp->sound->index),
 						 C_TO_XEN_INT(cp->chan)),
 				      S_lisp_graph_hook);
 	  ss->lisp_graph_hook_active = false;
@@ -4068,7 +4068,7 @@ static void display_channel_data_with_size(chan_info *cp,
       if ((cp->hookable == WITH_HOOK) &&
 	  (XEN_HOOKED(after_lisp_graph_hook)))
 	run_hook(after_lisp_graph_hook,
-		 XEN_LIST_2(C_TO_XEN_INT(cp->sound->index),
+		 XEN_LIST_2(C_INT_TO_XEN_SOUND(cp->sound->index),
 			    C_TO_XEN_INT(cp->chan)),
 		 S_after_lisp_graph_hook);
     }
@@ -4863,7 +4863,7 @@ bool key_press_callback(chan_info *ncp, int x, int y, int key_state, int keysym)
       /* return true to keep this key press from being passed to keyboard_command */
       XEN res = XEN_FALSE;
       res = run_or_hook(key_press_hook,
-			XEN_LIST_4(C_TO_XEN_INT(sp->index),
+			XEN_LIST_4(C_INT_TO_XEN_SOUND(sp->index),
 				   C_TO_XEN_INT(cp->chan),
 				   C_TO_XEN_INT(keysym),
 				   C_TO_XEN_INT(key_state)), /* this can have NumLock etc -- will be masked off in keyboard_command */
@@ -4982,7 +4982,7 @@ void graph_button_press_callback(chan_info *cp, int x, int y, int key_state, int
     case CLICK_LISP:
       if (XEN_HOOKED(mouse_press_hook))
 	run_hook(mouse_press_hook,
-		 XEN_LIST_6(C_TO_XEN_INT(sp->index),
+		 XEN_LIST_6(C_INT_TO_XEN_SOUND(sp->index),
 			    C_TO_XEN_INT(cp->chan),
 			    C_TO_XEN_INT(button),
 			    C_TO_XEN_INT(key_state),
@@ -5057,7 +5057,7 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 
 	  if ((XEN_HOOKED(mouse_click_hook)) &&
 	      (XEN_TRUE_P(run_or_hook(mouse_click_hook,
-				      XEN_LIST_7(C_TO_XEN_INT(sp->index),
+				      XEN_LIST_7(C_INT_TO_XEN_SOUND(sp->index),
 						 C_TO_XEN_INT(cp->chan),
 						 C_TO_XEN_INT(button),
 						 C_TO_XEN_INT(key_state),
@@ -5108,13 +5108,13 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 		      cp->cursor_on = true;
 		      cursor_moveto(cp, 
 				    snd_round_mus_long_t(ungrf_x(cp->axis, x) * 
-						    (double)SND_SRATE(sp)));
+							 (double)SND_SRATE(sp)));
 		      if (mouse_mark)
 			{
 			  XEN res = XEN_FALSE;
 			  if (XEN_HOOKED(mark_click_hook))
 			    res = run_progn_hook(mark_click_hook,
-						 XEN_LIST_1(C_TO_XEN_INT(mark_to_int(mouse_mark))),
+						 XEN_LIST_1(new_xen_mark(mark_to_int(mouse_mark))),
 						 S_mark_click_hook);
 			  if (!(XEN_TRUE_P(res)))
 			    report_in_minibuffer(sp, _("mark %d at sample " MUS_LD), 
@@ -5248,7 +5248,7 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, oclock_t time)
 	  XEN drag_res = XEN_FALSE;
 	  if (XEN_HOOKED(mark_drag_triangle_hook))
 	    drag_res = run_progn_hook(mark_drag_triangle_hook,
-				      XEN_LIST_4(C_TO_XEN_INT(mark_to_int(play_mark)),
+				      XEN_LIST_4(new_xen_mark(mark_to_int(play_mark)),
 						 C_TO_XEN_INT(x),
 						 C_TO_XEN_INT((int)time),
 						 C_TO_XEN_BOOLEAN(dragged)),
@@ -5358,7 +5358,7 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, oclock_t time)
 	    case CLICK_LISP:
 	      if (XEN_HOOKED(mouse_drag_hook))
 		run_hook(mouse_drag_hook,
-			 XEN_LIST_6(C_TO_XEN_INT(cp->sound->index),
+			 XEN_LIST_6(C_INT_TO_XEN_SOUND(cp->sound->index),
 				    C_TO_XEN_INT(cp->chan),
 				    C_TO_XEN_INT(-1),
 				    C_TO_XEN_INT(-1),
@@ -5434,7 +5434,7 @@ static bool run_time_graph_hook(chan_info *cp, axis_context *ax)
       (XEN_HOOKED(time_graph_hook)))
     {
       result = run_progn_hook(time_graph_hook,
-			      XEN_LIST_2(C_TO_XEN_INT(cp->sound->index),
+			      XEN_LIST_2(C_INT_TO_XEN_SOUND(cp->sound->index),
 					 C_TO_XEN_INT(cp->chan)),
 			      S_time_graph_hook);
       if (XEN_PIXEL_P(result))
@@ -6482,7 +6482,7 @@ static XEN g_cursor_position(XEN snd, XEN chn)
 }
 
 
-static XEN g_frames(XEN snd_n, XEN chn_n, XEN edpos)
+XEN g_frames(XEN snd_n, XEN chn_n, XEN edpos)
 {
   #define H_frames "(" S_frames " :optional snd chn edpos): number of frames of data in snd's channel chn"
   if (XEN_BOUND_P(edpos))
@@ -8525,9 +8525,11 @@ given channel.  Currently, this must be a channel (sound) created by " S_make_va
 
 static XEN g_variable_graph_p(XEN index)
 {
-  #define H_variable_graph_p "(" S_variable_graph_p " :optional snd): " PROC_TRUE " if snd is the index of a variable graph (from " S_make_variable_graph ")."
+  #define H_variable_graph_p "(" S_variable_graph_p " :optional snd): " PROC_TRUE " if snd is a variable graph (from " S_make_variable_graph ")."
   snd_info *sp;
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(index), index, XEN_ONLY_ARG, S_variable_graph_p, "an integer");
+
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(index) || XEN_SOUND_P(index), index, XEN_ONLY_ARG, S_variable_graph_p, "a sound");
+
   sp = get_sp(index, NO_PLAYERS);
   if (sp)
     return(C_TO_XEN_BOOLEAN(sp->inuse == SOUND_WRAPPER));
@@ -8592,7 +8594,7 @@ to a standard Snd channel graph placed in the widget 'container'."
   cp->sounds[0] = make_snd_data_buffer_for_simple_channel(initial_length);
   cp->edits[0] = initial_ed_list(0, initial_length - 1);
   cp->edits[0]->origin = mus_strdup(S_make_variable_graph);
-  return(C_TO_XEN_INT(sp->index));
+  return(C_INT_TO_XEN_SOUND(sp->index));
 }
 
 

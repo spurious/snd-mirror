@@ -2,12 +2,12 @@
 #define SND_1_H
 
 #define ASSERT_SOUND(Origin, Snd, Offset) \
-  if (!((XEN_INTEGER_P(Snd)) || (XEN_FALSE_P(Snd)) || (XEN_NOT_BOUND_P(Snd)))) \
-    XEN_WRONG_TYPE_ARG_ERROR(Origin, Offset, Snd, "an integer (sound index), or " PROC_FALSE);
+  if (!((XEN_INTEGER_P(Snd)) || (XEN_SOUND_P(Snd)) || (XEN_FALSE_P(Snd)) || (XEN_NOT_BOUND_P(Snd)))) \
+    XEN_WRONG_TYPE_ARG_ERROR(Origin, Offset, Snd, "a sound object, an integer (sound index), or " PROC_FALSE);
 
 #define ASSERT_CHANNEL(Origin, Snd, Chn, Offset) \
-  if (!((XEN_INTEGER_P(Snd)) || (XEN_FALSE_P(Snd)) || (XEN_NOT_BOUND_P(Snd)))) \
-    XEN_WRONG_TYPE_ARG_ERROR(Origin, Offset, Snd, "an integer (sound index), or " PROC_FALSE); \
+  if (!((XEN_INTEGER_P(Snd)) || (XEN_SOUND_P(Snd)) || (XEN_FALSE_P(Snd)) || (XEN_NOT_BOUND_P(Snd)))) \
+    XEN_WRONG_TYPE_ARG_ERROR(Origin, Offset, Snd, "a sound object, an integer (sound index), or " PROC_FALSE); \
   else \
     if (!((XEN_INTEGER_P(Chn)) || (XEN_FALSE_P(Chn)) || (XEN_NOT_BOUND_P(Chn)))) \
       XEN_WRONG_TYPE_ARG_ERROR(Origin, Offset + 1, Chn, "an integer (0-based channel number) or " PROC_FALSE);
@@ -1319,6 +1319,8 @@ void set_graph_style(graph_style_t val);
 void set_show_marks(bool val);
 void set_show_y_zero(bool val);
 
+XEN g_frames(XEN snd_n, XEN chn_n, XEN edpos);
+
 
 
 /* -------- snd-axis.c -------- */
@@ -1407,6 +1409,14 @@ void clear_filter_strings(snd_info *sp);
 void remember_listener_string(const char *str);
 void restore_listener_string(bool back);
 void set_channel_style(channel_style_t val);
+
+XEN new_xen_sound(int n);
+bool xen_sound_p(XEN obj);
+int xen_sound_to_int(XEN n);
+#define XEN_SOUND_P(arg) xen_sound_p(arg)
+#define C_INT_TO_XEN_SOUND(Val) new_xen_sound(Val)
+#define XEN_SOUND_TO_C_INT(n) xen_sound_to_int(n)
+
 
 
 /* -------- snd-file -------- */

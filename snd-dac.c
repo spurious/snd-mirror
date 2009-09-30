@@ -667,7 +667,7 @@ static void stop_playing_with_toggle(dac_info *dp, dac_toggle_t toggle, with_hoo
 	    {
 	      if ((sp_stopping) && (XEN_HOOKED(stop_playing_hook)))
 		run_hook(stop_playing_hook,
-			 XEN_LIST_1(C_TO_XEN_INT(sp->index)),
+			 XEN_LIST_1(C_INT_TO_XEN_SOUND(sp->index)),
 			 S_stop_playing_hook);
 	    }
 	}
@@ -1182,7 +1182,7 @@ static bool call_start_playing_hook(snd_info *sp)
 {
   if ((XEN_HOOKED(start_playing_hook)) &&
       (XEN_TRUE_P(run_or_hook(start_playing_hook,
-			      XEN_LIST_1(C_TO_XEN_INT(sp->index)), /* this can be 123456 (TEMP_SOUND_INDEX in snd-file.c) -- View:Files dialog play button */
+			      XEN_LIST_1(C_INT_TO_XEN_SOUND(sp->index)), /* this can be 123456 (TEMP_SOUND_INDEX in snd-file.c) -- View:Files dialog play button */
 			      S_start_playing_hook))))
     {
       reflect_play_stop(sp);           /* turns off buttons */
@@ -2531,15 +2531,18 @@ static XEN g_play_1(XEN samp_n, XEN snd_n, XEN chn_n, bool back, bool syncd, XEN
     return(C_TO_XEN_BOOLEAN(add_xen_to_play_list(samp_n)));
 
   if (XEN_INT64_T_P(end_n)) end = XEN_TO_C_INT64_T(end_n);
+
 #if USE_NO_GUI
   background = NOT_IN_BACKGROUND;
 #else
   if (back) background = IN_BACKGROUND; else background = NOT_IN_BACKGROUND;
 #endif
+
   XEN_ASSERT_TYPE(((XEN_PROCEDURE_P(stop_proc)) && (procedure_arity_ok(stop_proc, 1))) ||
 		  (XEN_NOT_BOUND_P(stop_proc)) || 
 		  (XEN_FALSE_P(stop_proc)), 
 		  stop_proc, arg_pos + 1, caller, "a procedure of 1 arg");
+
   if (play_name) {free(play_name); play_name = NULL;}
 
   /* if even samp_n is XEN_UNDEFINED, start_dac? */
@@ -2690,7 +2693,7 @@ before returning."
 }
 
 
-static XEN g_play_and_wait(XEN samp_n, XEN snd_n, XEN chn_n, XEN syncd, XEN end_n, XEN edpos, XEN stop_proc, XEN out_chan) 
+static XEN g_play_and_wait(XEN samp_n, XEN snd, XEN chn_n, XEN syncd, XEN end_n, XEN edpos, XEN stop_proc, XEN out_chan) 
 {
   XEN result;
 
@@ -2708,7 +2711,7 @@ static XEN g_play_and_wait(XEN samp_n, XEN snd_n, XEN chn_n, XEN syncd, XEN end_
 play snd or snd's channel chn starting at start \
 and wait for the play to complete before returning.  'start' can also be a function or a filename:\n  " play_and_wait_example
 
-  result = g_play_1(samp_n, snd_n, chn_n, false, TO_C_BOOLEAN_OR_FALSE(syncd), end_n, edpos, S_play_and_wait, 6, stop_proc, out_chan);
+  result = g_play_1(samp_n, snd, chn_n, false, TO_C_BOOLEAN_OR_FALSE(syncd), end_n, edpos, S_play_and_wait, 6, stop_proc, out_chan);
 
   /* dac-hook might call c-g! leaving these flags set -- this can cause confusion (much) later.
    *   the problem is that one or both of these flags is set by c-g!, but if not cleared, anything
@@ -2723,12 +2726,15 @@ and wait for the play to complete before returning.  'start' can also be a funct
 }
 
 
-static XEN g_stop_playing(XEN snd_n)
+static XEN g_stop_playing(XEN snd)
 {
   #define H_stop_playing "(" S_stop_playing " :optional snd): stop play (DAC output) in progress"
   snd_info *sp = NULL;
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(snd_n), snd_n, XEN_ONLY_ARG, S_stop_playing, "an integer");
-  if (XEN_INTEGER_P(snd_n)) sp = get_sp(snd_n, PLAYERS_OK);
+
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(snd) || XEN_SOUND_P(snd) || XEN_NOT_BOUND_P(snd), snd, XEN_ONLY_ARG, S_stop_playing, "a sound object of index");
+
+  if (XEN_INTEGER_P(snd) || XEN_SOUND_P(snd)) 
+    sp = get_sp(snd, PLAYERS_OK);
   if (sp) 
     stop_playing_sound(sp, PLAY_STOP_CALLED); 
   else stop_playing_all_sounds(PLAY_STOP_CALLED);
@@ -2887,8 +2893,10 @@ static XEN g_player_home(XEN snd_chn)
     {
       chan_info *cp;
       cp = players[index]->chans[player_chans[index]]; /* trying to get back to the original sound index (not the player index) */
-      if ((cp->sound) && (cp->sound->active))
-	return(XEN_LIST_2(C_TO_XEN_INT(cp->sound->index),
+
+      if ((cp->sound) && 
+	  (cp->sound->active))
+	return(XEN_LIST_2(C_INT_TO_XEN_SOUND(cp->sound->index),
 			  C_TO_XEN_INT(cp->chan)));
       else return(XEN_FALSE); /* can this happen? */
     }
@@ -3003,12 +3011,16 @@ static XEN g_free_player(XEN snd_chn)
 
 /* also the dac filler needs to run on empty buffers in this case? */
 
-static XEN g_player_p(XEN snd_chn)
+static XEN g_player_p(XEN snd)
 {
   #define H_player_p "(" S_player_p " obj): is 'obj' an active player"
   int index;
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(snd_chn), snd_chn, XEN_ONLY_ARG, S_player_p, "an integer");
-  index = -XEN_TO_C_INT(snd_chn);
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(snd) || XEN_SOUND_P(snd), snd, XEN_ONLY_ARG, S_player_p, "a sound object or an integer");
+
+  if (XEN_INTEGER_P(snd))
+    index = -XEN_TO_C_INT(snd);
+  else index = -XEN_SOUND_TO_C_INT(snd);
+
   return(C_TO_XEN_BOOLEAN((index > 0) && 
 			  (index < players_size) && 
 			  (players[index])));
@@ -3027,6 +3039,7 @@ static XEN g_players(void)
       lst = XEN_CONS(C_TO_XEN_INT(-i), lst);
   return(lst);
 }
+/* TODO: a player needs to be a separate type */
 
 
 static XEN g_dac_size(void) {return(C_TO_XEN_INT(dac_size(ss)));}
