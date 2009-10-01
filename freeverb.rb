@@ -1,8 +1,8 @@
 # freeverb.rb -- CLM -> Snd/Ruby translation of freeverb.ins
 
-# Translator/Author: Michael Scholz <scholz-micha@gmx.de>
+# Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Tue Apr 08 03:53:20 CEST 2003
-# Changed: Wed Aug 30 19:28:06 CEST 2006
+# Changed: Fri Jul 06 01:53:44 CEST 2007
 
 # Original notes of Fernando Lopez-Lezcano
 

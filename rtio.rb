@@ -1,8 +1,8 @@
 # rtio.rb -- Translation of Snd/Guile's rtio.scm.
 
-# Translator/Author: Michael Scholz <scholz-micha@gmx.de>
+# Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Tue May 20 08:35:13 CEST 2003
-# Last: Sat Dec 27 17:14:47 CET 2003
+# Changed: Wed Feb 27 00:05:14 CET 2008
 
 # Commentary:
 #

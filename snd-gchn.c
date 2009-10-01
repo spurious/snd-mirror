@@ -415,7 +415,7 @@ static gboolean graph_mouse_enter(GtkWidget *w, GdkEventCrossing *ev, gpointer d
   pdata = get_user_int_data(G_OBJECT(w));
   if (XEN_HOOKED(mouse_enter_graph_hook))
     run_hook(mouse_enter_graph_hook,
-	     XEN_LIST_2(C_TO_XEN_INT(UNPACK_SOUND(pdata)),
+	     XEN_LIST_2(C_INT_TO_XEN_SOUND(UNPACK_SOUND(pdata)),
 			C_TO_XEN_INT(UNPACK_CHANNEL(pdata))),
 	     S_mouse_enter_graph_hook);
   gdk_window_set_cursor(WIDGET_TO_WINDOW(w), ss->sgx->graph_cursor);
@@ -429,7 +429,7 @@ static gboolean graph_mouse_leave(GtkWidget *w, GdkEventCrossing *ev, gpointer d
   pdata = get_user_int_data(G_OBJECT(w));
   if (XEN_HOOKED(mouse_leave_graph_hook))
     run_hook(mouse_leave_graph_hook,
-	     XEN_LIST_2(C_TO_XEN_INT(UNPACK_SOUND(pdata)),
+	     XEN_LIST_2(C_INT_TO_XEN_SOUND(UNPACK_SOUND(pdata)),
 			C_TO_XEN_INT(UNPACK_CHANNEL(pdata))),
 	     S_mouse_leave_graph_hook);
   gdk_window_set_cursor(WIDGET_TO_WINDOW(w), ss->sgx->arrow_cursor);
@@ -705,6 +705,7 @@ static void channel_drag_watcher(GtkWidget *w, const char *filename, int x, int 
   chn = UNPACK_CHANNEL(data);
   snd = UNPACK_SOUND(data);
   sp = ss->sounds[snd];
+
   if (snd_ok(sp))
     {
       switch (dtype)
@@ -720,6 +721,7 @@ static void channel_drag_watcher(GtkWidget *w, const char *filename, int x, int 
 	    report_in_minibuffer(sp, "drop to mix file in chan %d at %.4f", cp->chan + 1, seconds);
 	  else report_in_minibuffer(sp, "drop to mix file at %.4f", seconds);
 	  break;
+
 	case DRAG_LEAVE:
 	  string_to_minibuffer(sp, " "); /* not clear_minibuffer here! => segfault */
 	  break;

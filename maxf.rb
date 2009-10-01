@@ -1,7 +1,8 @@
 # maxf.rb -- CLM -> Snd/Ruby translation of maxf.ins
 
-# Translator/Author: Michael Scholz <scholz-micha@gmx.de>
-# Last: Wed Mar 16 01:37:29 CET 2005
+# Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
+# Created: Mon Mar 24 11:24:23 CET 2003
+# Changed: Fri Jul 06 01:53:44 CEST 2007
 
 # It follows the original header of Juan Reyes.
 
@@ -65,14 +66,16 @@ the desired phase.
    :numf = 12  12 filters
    :numf = 13  13 filters")
 def maxfilter(file, start = 0, *args)
-  att        = get_args(args, :att, 1.0)
-  numf       = get_args(args, :numf, 1).to_i
-  freqfactor = get_args(args, :freqfactor, 1.0)
-  amplitude  = get_args(args, :amplitude, 1.0)
-  amp_env    = get_args(args, :amp_env, [0, 1, 100, 1])
-  degree     = get_args(args, :degree, kernel_rand(90.0))
-  distance   = get_args(args, :distance, 1.0)
-  rev_amount = get_args(args, :reverb_amount, 0.2)
+  att, numf, freqfactor, amplitude, amp_env, degree, distance, reverb_amount = nil
+  optkey(args, binding,
+         [:att, 1.0],
+         [:numf, 1],
+         [:freqfactor, 1.0],
+         [:amplitude, 1.0],
+         [:amp_env, [0, 1, 100, 1]],
+         [:degree, kernel_rand(90.0)],
+         [:distance, 1.0],
+         [:reverb_amount, 0.2])
   rda, snd   = make_general_reader(file, :channel, 0)
   formfil    = CLM.new(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
   dur        = duration(file)
@@ -85,20 +88,20 @@ def maxfilter(file, start = 0, *args)
   state_5    = make_array( 2) do make_array(3, 0.0) end
   case numf
   when 1
-    message "State 0 (default): One filter"
+    Snd.display "State 0 (default): One filter"
     state_0[0] = 7.54e-002, 2000.0 * freqfactor, 2.0
   when 2
-    message "State 5: Two filters"
+    Snd.display "State 5: Two filters"
     state_5[0] = 7.54e-003, 200.0 * freqfactor, 4.0
     state_5[1] = 7.54e-004, 800.0 * freqfactor, 1.0
   when 4
-    message "State 4: Four filters"
+    Snd.display "State 4: Four filters"
     state_4[0] = 7.54e-002, 1000.0 * freqfactor, 0.5
     state_4[1] = 3.225e-002, 400.0 * freqfactor, 3.0
     state_4[2] = 1.14e-002,  800.0 * freqfactor, 2.8
     state_4[3] = 7.54e-002, 1600.0 * freqfactor, 1.0
   when 9
-    message "State 2: Streached overtone string  9 filters"
+    Snd.display "State 2: Streached overtone string  9 filters"
     state_2[0] = 1.07e-002,  100.0, 2.5
     state_2[1] = 1.07e-002,  202.0, 0.75
     state_2[2] = 1.07e-002,  305.0, 0.5
@@ -109,7 +112,7 @@ def maxfilter(file, start = 0, *args)
     state_2[7] = 1.07e-002,  817.0, 0.2
     state_2[8] = 1.07e-002,  920.0, 0.18
   when 12
-    message "State 1: Risset bell long  12 filters"
+    Snd.display "State 1: Risset bell long  12 filters"
     state_1[0]  = 5.025e-002, 224.0, 3.7
     state_1[1]  = 5.025e-002, 225.0, 3.3
     state_1[2]  = 5.025e-002, 368.0, 2.8
@@ -123,7 +126,7 @@ def maxfilter(file, start = 0, *args)
     state_1[10] = 3.78e-002, 1504.0, 0.4
     state_1[11] = 4.05e-002, 1628.0, 0.3
   when 13
-    message "State 3: Open major chord with repeated octave  12 filters"
+    Snd.display "State 3: Open major chord with repeated octave  12 filters"
     state_3[0]  = 5.025e-002,  100.0, 2.0
     state_3[1]  = 5.025e-002,  251.0, 2.0
     state_3[2]  = 5.025e-002,  299.0, 2.0
@@ -138,7 +141,7 @@ def maxfilter(file, start = 0, *args)
     state_3[11] = 5.025e-004, 1205.0, 2.0
     state_3[12] = 5.025e-004, 1205.0, 2.0
   else
-    message "Please leave default or enter [1] [2] [4] [9] [12] [13]"
+    Snd.display "Please leave default or enter [1] [2] [4] [9] [12] [13]"
     numf = 1
   end
   mvmfilt = lambda do |b, sample|
@@ -164,7 +167,7 @@ def maxfilter(file, start = 0, *args)
     b[:pp2] = (2.0 * PI * ffreq) / @srate
     b[:pp3] = b[:pp2] * famp
   end
-  run_instrument(start, dur, :degree, degree, :distance, distance, :reverb_amount, rev_amount) do
+  run_instrument(start, dur, :degree, degree, :distance, distance, :reverb_amount, reverb_amount) do
     outval_a = att * general_readin(rda)
     add_fl = 0.0
     numf.times do |j|

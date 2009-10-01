@@ -797,7 +797,7 @@ static void apply_fft(fft_state *fs)
       if (XEN_HOOKED(before_transform_hook))
 	{
 	  res = run_progn_hook(before_transform_hook, 
-			       XEN_LIST_2(C_TO_XEN_INT(cp->sound->index), 
+			       XEN_LIST_2(C_INT_TO_XEN_SOUND(cp->sound->index), 
 					  C_TO_XEN_INT(cp->chan)),
 			       S_before_transform_hook);
 	  if (XEN_NUMBER_P(res))

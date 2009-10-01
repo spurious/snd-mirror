@@ -1,8 +1,8 @@
 # xm-enved.rb -- Translation of xm-enved.scm and enved.scm -*- snd-ruby -*-
 
-# Translator/Author: Michael Scholz <scholz-micha@gmx.de>
+# Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Tue Mar 18 00:18:35 CET 2003
-# Changed: Sat Oct 22 01:34:35 CEST 2005
+# Changed: Fri Jul 06 01:52:44 CEST 2007
 
 # Commentary:
 #
@@ -235,7 +235,7 @@ sets channel amps during playback from the associated enved envelopes")
     channels(snd).times do |chn|
       player = make_player(snd, chn)
       e = make_env(:envelope, channel_envelope(snd, chn),
-                   :length, (frames(snd, chn).to_f / dac_size).floor)
+                   :end, (frames(snd, chn).to_f / dac_size).floor)
       add_player(player, 0, -1, -1, lambda { |reason| $play_hook.reset_hook! })
       $play_hook.add_hook!(get_func_name) { |fr| set_amp_control(env(e), player) }
     end
@@ -254,7 +254,7 @@ pans a mono sound following its enved envelope into a stereo sound")
     len = frames(snd, 0)
     if audio_fd != -1
       channel_envelope(snd, 0) or create_initial_envelopes(snd)
-      e = make_env(:envelope, channel_envelope(snd, 0), :length, (len.to_f / dac_size).floor)
+      e = make_env(:envelope, channel_envelope(snd, 0), :end, (len.to_f / dac_size).floor)
       while samp < len
         scaler = env(e)
         samps0 = channel2vct(samp, bufsize)

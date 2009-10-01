@@ -1,26 +1,25 @@
 #!/usr/bin/env ruby
-# bess1.rb -- some examples from clm-2/rt.lisp and clm-2/bess5.cl
+# bess1.rb -- some examples from clm/rt.lisp and clm/bess5.cl
 
-# Copyright (C) 2002--2003 Michael Scholz
+# Copyright (C) 2002--2009 Michael Scholz
 
-# Author: Michael Scholz <scholz-micha@gmx.de>
+# Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Sun Sep 15 19:11:12 CEST 2002
-# Last: Sun Jun 15 03:47:10 CEST 2003
+# Changed: Tue Sep 29 02:05:49 CEST 2009
 
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License as
-# published by the Free Software Foundation; either version 2 of
-# the License, or (at your option) any later version.
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
 
-# This program is distributed in the hope that it will be
-# useful, but WITHOUT ANY WARRANTY; without even the implied
-# warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-# PURPOSE.  See the GNU General Public License for more details.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
 
-# You should have received a copy of the GNU General Public
-# License along with this program; if not, write to the Free
-# Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
-# MA 02111-1307 USA
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 # Commentary:
 
@@ -28,14 +27,13 @@
 #
 # This file provides simple mono real time output to DAC.  Tempo,
 # frequency, amplitude, and FM index can be controlled via sliders.
-# The music algorithms are taken from clm-2/rt.lisp and
-# clm-2/bess5.cl.
+# The music algorithms are taken from clm/rt.lisp and clm/bess5.cl.
 # 
 # Bess.new.start -- starts a Motif widget with two DAC tests.
 #
-# Bess.new.start(:srate,       $rbm_srate       # 22050
-#                :bufsize,     $rbm_rt_bufsize  # 128
-#                :data_format, $rbm_data_format # Mus_lshort
+# Bess.new.start(:srate,       $clm_srate       # 22050
+#                :bufsize,     $clm_rt_bufsize  # 128
+#                :data_format, $clm_data_format # Mus_lshort
 #                :which,       :agn             # :agn or :vct_test
 #                :play,        false)
 
@@ -61,10 +59,10 @@ rescue ScriptError
 end
 
 rbm_require "sndlib"
-$rbm_output      = nil         # holds fd from mus_audio_open_output()
-$rbm_srate       = 22050
-$rbm_data_format = Mus_lshort
-$rbm_rt_bufsize  = 128
+$output      = nil         # holds fd from mus_audio_open_output()
+$clm_srate       = 22050
+$clm_data_format = Mus_lshort
+$clm_rt_bufsize  = 128
 
 module Bess_utils
   def rbm_random(n)
@@ -84,7 +82,7 @@ module Bess_utils
   end
 
   def seconds2samples(sec)
-    sr = (mus_srate() rescue $rbm_srate)
+    sr = (mus_srate() rescue $clm_srate)
     (sec * sr).round
   end
 
@@ -112,7 +110,7 @@ module Bess_utils
 
   include Math
 
-  # simple violin, see snd-11/fm.html
+  # simple violin, see snd/fm.html
   def make_rt_violin(dur = 1.0, freq = 440.0, amp = 0.3, *args)
     fm_index = get_args(args, :fm_index, 1.0)
     amp_env  = get_args(args, :amp_env, [0, 0, 25, 1, 75, 1, 100, 0])
@@ -141,8 +139,8 @@ module Bess_utils
   end
 end
 
-# class Agn is a simplified translation of clm-2/bess5.cl and
-# clm-2/clm-example.lisp.
+# class Agn is a simplified translation of clm/bess5.cl and
+# clm/clm-example.lisp.
 class Agn
   include Bess_utils
   
@@ -172,25 +170,25 @@ class Agn
   # called by XtAppAddWorkProc
   def rt_send2dac(func)
     if @play
-      mus_audio_write($rbm_output, vct2sound_data(vct_map!(make_vct($rbm_rt_bufsize), func.call),
-                                                  make_sound_data(1, $rbm_rt_bufsize), 0),
-                      $rbm_rt_bufsize)
+      mus_audio_write($output, vct2sound_data(vct_map!(make_vct($clm_rt_bufsize), func.call),
+                                                  make_sound_data(1, $clm_rt_bufsize), 0),
+                      $clm_rt_bufsize)
       false
     else
-      mus_audio_close($rbm_output)
-      $rbm_output = nil
+      mus_audio_close($output)
+      $output = nil
       true
     end
   end
   
-  # see clm-2/rt.lisp
+  # see clm/rt.lisp
   def make_vct_test(*args)
-    srate       = get_args(args, :srate, $rbm_srate)
-    bufsize     = get_args(args, :bufsize, $rbm_rt_bufsize)
-    data_format = get_args(args, :data_format, $rbm_data_format)
-    $rbm_srate = set_mus_srate(srate).to_i
-    $rbm_rt_bufsize = bufsize
-    $rbm_output = mus_audio_open_output(Mus_audio_default, srate, 1, data_format, bufsize * 2)
+    srate       = get_args(args, :srate, $clm_srate)
+    bufsize     = get_args(args, :bufsize, $clm_rt_bufsize)
+    data_format = get_args(args, :data_format, $clm_data_format)
+    $clm_srate = set_mus_srate(srate).to_i
+    $clm_rt_bufsize = bufsize
+    $output = mus_audio_open_output(Mus_audio_default, srate, 1, data_format, bufsize * 2)
     mode = [0, 12, 2, 4, 14, 4, 5, 5, 0, 7, 7, 11, 11]
     pits = Array.new(@lim + 1) do rbm_random(12.0).floor end
     begs = Array.new(@lim + 1) do 1 + rbm_random(3.0).floor end
@@ -226,15 +224,15 @@ class Agn
     envelope_interp(x * 100, [0, 0, 10, 0.25, 90, 1.0, 100, 1.0])
   end
 
-  # see clm-2/bess5.cl
+  # see clm/bess5.cl
   def make_agn(*args)
-    srate       = get_args(args, :srate, $rbm_srate)
-    bufsize     = get_args(args, :bufsize, $rbm_rt_bufsize)
-    data_format = get_args(args, :data_format, $rbm_data_format)
-    $rbm_srate = set_mus_srate(srate).to_i
-    $rbm_rt_bufsize = bufsize
-    $rbm_output = mus_audio_open_output(Mus_audio_default, srate, 1, data_format, bufsize * 2)
-    die("can't open DAC (%s)", $rbm_output.inspect) if $rbm_output < 0
+    srate       = get_args(args, :srate, $clm_srate)
+    bufsize     = get_args(args, :bufsize, $clm_rt_bufsize)
+    data_format = get_args(args, :data_format, $clm_data_format)
+    $clm_srate = set_mus_srate(srate).to_i
+    $clm_rt_bufsize = bufsize
+    $output = mus_audio_open_output(Mus_audio_default, srate, 1, data_format, bufsize * 2)
+    die("can't open DAC (%s)", $output.inspect) if $output < 0
     wins = [[0, 0, 40, 0.1, 60, 0.2, 75, 0.4, 82, 1, 90, 1, 100, 0],
             [0, 0, 60, 0.1, 80, 0.2, 90, 0.4, 95, 1, 100, 0],
             [0, 0, 10, 1, 16, 0, 32, 0.1, 50, 1, 56, 0, 60, 0, 90, 0.3, 100, 0],
@@ -518,9 +516,9 @@ class Bess < Agn
 end
 
 begin
-  # Bess.new.start(:srate, $rbm_srate,
-  #                :bufsize, $rbm_rt_bufsize,
-  #                :data_format, $rbm_data_format,
+  # Bess.new.start(:srate, $clm_srate,
+  #                :bufsize, $clm_rt_bufsize,
+  #                :data_format, $clm_data_format,
   #                :which, :agn,
   #                :play, false)
   Bess.new.start

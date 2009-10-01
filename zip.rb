@@ -1,8 +1,8 @@
 # zip.rb -- zip.scm -> zip.rb -*- snd-ruby -*-
 
-# Translator: Michael Scholz <scholz-micha@gmx.de>
+# Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Sun Apr 24 22:53:42 CEST 2005
-# Last: Mon Apr 25 03:27:16 CEST 2005
+# Changed: Sat Sep 26 02:08:01 CEST 2009
 
 # Commentary:
 

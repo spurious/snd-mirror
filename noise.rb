@@ -1,7 +1,8 @@
 # noise.rb -- CLM -> Snd/Ruby translation of noise.ins
 
-# Translator/Author: Michael Scholz <scholz-micha@gmx.de>
-# Last: Sun Feb 08 17:32:46 CET 2004
+# Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
+# Created: Wed Mar 19 05:16:56 CET 2003
+# Changed: Fri Jul 06 01:53:10 CEST 2007
 
 # Comments beginning with ;; are taken from noise.ins!
 
@@ -34,9 +35,11 @@ def fm_noise(start, dur, freq0,
              rfreq0, rfreq1, rfreqfun, rfreqat, rfreqdc,
              dev0, dev1, devfun, devat, devdc,
              *args)
-  degree   = get_args(args, :degree, kernel_rand(90.0))
-  distance = get_args(args, :distance, 1.0)
-  reverb   = get_args(args, :reverb, 0.005)
+  degree, distance, reverb = nil
+  optkey(args, binding,
+         [:degree, kernel_rand(90.0)],
+         [:distance, 1.0],
+         [:reverb, 0.005])
 
   # ;; ampat = amp envelope attack time, and so on -- this instrument
   # ;; assumes your envelopes go from 0 to 100 on the x-axis, and that

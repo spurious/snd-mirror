@@ -1,8 +1,8 @@
 # maraca.rb -- maraca.ins -> maraca.scm -> maraca.rb
 
-# Translator: Michael Scholz <scholz-micha@gmx.de>
+# Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Fri Apr 22 23:29:22 CEST 2005
-# Last: Mon Apr 25 18:50:23 CEST 2005
+# Changed: Fri Jul 06 01:53:44 CEST 2007
 
 # Commentary:
 #

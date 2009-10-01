@@ -1,8 +1,8 @@
 # play.rb -- play.scm -> play.rb -*- snd-ruby -*-
 
-# Translator: Michael Scholz <scholz-micha@gmx.de>
+# Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Fri Apr 22 23:36:39 CEST 2005
-# Changed: Sat Sep 24 17:25:24 CEST 2005
+# Changed: Fri Jul 06 01:53:01 CEST 2007
 
 # Commentary:
 #

@@ -7375,7 +7375,9 @@ def test105
   insert_region(id, 60, ind)
   snd_display("insert_region len: %d?", frames) if frames != (len + 100)
   snd_display("insert_region: %s %s?", sample(100), s40) if fneq(sample(100), s40)
-  if (res = Snd.catch do insert_region(integer2region(1000 + regions.max), 0) end).first != :no_such_region
+  if (res = Snd.catch do
+        insert_region(index2region(1000 + regions.max), 0)
+      end).first != :no_such_region
     snd_display("insert_region bad id: %s", res.inspect)
   end
   save_region(id, "fmv.snd")
@@ -8076,7 +8078,7 @@ def test145
   $after_apply_controls_hook.reset_hook!
   $after_apply_controls_hook.add_hook!("snd-test") do |snd| after_ran = snd end
   apply_controls(ind)
-  snd_display("$after_apply_controls_hook: %d?", after_ran) if ind != after_ran
+  snd_display("$after_apply_controls_hook: %s?", after_ran) unless ind.eql?(after_ran)
   $after_apply_controls_hook.reset_hook!
   revert_sound(ind)
   set_sync(1, ind)
@@ -20095,7 +20097,6 @@ def test009
   mr = make_mix_sampler(mix_id)
   snd_display("%s not mix_sampler?", mr) unless mix_sampler?(mr)
   snd_display("mix_sampler: region %s?", mr) if region_sampler?(mr)
-#  snd_display("mix_sampler: normal %s?", mr) if sampler?(mr)
   if (res = sampler_position(mr)).nonzero?
     snd_display("mix_sampler_position: %d?", res)
   end
@@ -20118,7 +20119,7 @@ def test009
   #
   snd_display("mix_position: %d?", pos) if pos != 100
   snd_display("mix_length: %d?", len) if len != 41623
-  snd_display("snd mix_home: %d?", snd) if snd != new_index
+  snd_display("snd mix_home: %s?", snd) unless snd.eql?(new_index)
   snd_display("chn mix_home: %d?", chn) if chn.nonzero?
   snd_display("mix_amp: %s?", amp) if fneq(amp, 1.0)
   snd_display("mix_speed: %s?", spd) if fneq(spd, 1.0)
@@ -22757,13 +22758,13 @@ def test0113
   $after_graph_hook.reset_hook!
   $graph_hook.reset_hook!
   $graph_hook.add_hook!("snd-test") do |snd, chn, y0, y1|
-    snd_display("$graph_hook: %s not %s?", snd, ind) if snd != ind
+    snd_display("$graph_hook: %s not %s?", snd, ind) unless snd.eql?(ind)
     snd_display("$graph_hook: (channel): %s not 0?", chn) if chn.nonzero?
     gr = true
     false
   end
   $after_graph_hook.add_hook!("snd-test") do |snd, chn|
-    snd_display("$after_graph_hook: %s not %s?", snd, ind) if snd != ind
+    snd_display("$after_graph_hook: %s not %s?", snd, ind) unless snd.eql?(ind)
     snd_display("$after_graph_hook: (channel): %s not 0?", chn) if chn.nonzero?
     agr = true
   end
@@ -22808,11 +22809,11 @@ def test0113
   #
   other = open_sound("pistol.snd")
   $select_sound_hook.add_hook!("snd-test") do |snd|
-    snd_display("$select_sound_hook: %s not %s?", snd, ind) if snd != ind
+    snd_display("$select_sound_hook: %s not %s?", snd, ind) unless snd.eql?(ind)
     sl = true
   end
   $select_channel_hook.add_hook!("snd-test") do |snd, chn|
-    snd_display("$select_channel_hook: %s not %s?", snd, ind) if snd != ind
+    snd_display("$select_channel_hook: %s not %s?", snd, ind) unless snd.eql?(ind)
     snd_display("$select_channel_hook: (channel): %s not 0?", chn) if chn.nonzero?
     scl = true
   end
@@ -22824,12 +22825,12 @@ def test0113
   #
   spl = stl = ph = ph1 = false
   $start_playing_hook.add_hook!("snd-test") do |snd|
-    snd_display("$start_playing_hook: %s not %s?", snd, ind) if snd != ind
+    snd_display("$start_playing_hook: %s not %s?", snd, ind) unless snd.eql?(ind)
     spl = true
     false
   end
   $stop_playing_hook.add_hook!("snd-test") do |snd|
-    snd_display("$stop_playing_hook: %s not %s?", snd, ind) if snd != ind
+    snd_display("$stop_playing_hook: %s not %s?", snd, ind) unless snd.eql?(ind)
     stl = true
     false
   end
@@ -22983,7 +22984,7 @@ def test0113
     if (not string?(filename)) or filename != mus_expand_filename("baddy.snd")
       snd_display("$save_hook filename: %s?", filename)
     end
-    snd_display("$save_hook: %s not %s?", snd, ind) if snd != ind
+    snd_display("$save_hook: %s not %s?", snd, ind) unless snd.eql?(ind)
     sh = true
   end
   save_sound_as("baddy.snd", ind)
@@ -22994,7 +22995,7 @@ def test0113
   end
   $save_hook.reset_hook!
   $close_hook.add_hook!("snd-test") do |snd|
-    snd_display("$close_hook: %s not %s?", snd, ind) if snd != ind
+    snd_display("$close_hook: %s not %s?", snd, ind) unless snd.eql?(ind)
     cl = true
   end
   close_sound(ind)
@@ -29703,12 +29704,12 @@ def test0219
   ind = open_sound("oboe.snd")
   # insert-region
   reg = make_region(1000, 1100)
-  insert_region(2000, reg)
+  insert_region(reg, 2000)
   val = sample(2050)
   unless proc?(func = edit_list2function)
     snd_display("edit_list2function 16: %s", func)
   end
-  if (res = func.source) != format("Proc.new {|snd, chn|  insert_region(2000, %d, snd, chn) }", reg)
+  if (res = func.source) != format("Proc.new {|snd, chn|  insert_region(%s, 2000, snd, chn) }", reg)
     snd_display("edit_list2function 16: %s", res)
   end
   revert_sound(ind)
@@ -32359,7 +32360,7 @@ def test0021
     old_1 = snd_func(func, ind_1)
     old_2 = snd_func(func, ind_2)
     sel_snd = selected_sound
-    unsel_snd = sel_snd == ind_1 ? ind_2 : ind_1
+    unsel_snd = sel_snd.eql?(ind_1) ? ind_2 : ind_1
     caller = chan ? "channel" : "sound"
     unless eq_func.call(old_val, old_default)
       snd_display("%s sound_func: no arg: %s, false: %s?", func, old_val, old_default)
@@ -32619,7 +32620,7 @@ def test0021
     old_1 = snd_func(func, ind_1)
     old_2 = snd_func(func, ind_2)
     sel_snd = selected_sound
-    unsel_snd = sel_snd == ind_1 ? ind_2 : ind_1
+    unsel_snd = sel_snd.eql?(ind_1) ? ind_2 : ind_1
     if (not (leq_func.call(old_vals, [old_1, old_2]) or leq_func.call(old_vals, [old_2, old_1])))
       snd_display("%s sound_func true: %s, sep: %s?", func, old_vals, [old_1, old_2])
     end
@@ -35373,7 +35374,6 @@ def test0228
   check_error_tag(:no_such_channel) do region_sample(regions.car, 0, 1234) end
   check_error_tag(:no_such_channel) do region_frames(regions.car, 1234) end
   check_error_tag(:no_such_channel) do region_position(regions.car, 1234) end
-#  check_error_tag(:no_such_region) do region2vct(-1, 0, 1) end
   check_error_tag(:no_such_channel) do region2vct(regions.car, 0, 1, 1234) end
   check_error_tag(:cannot_save) do save_sound_as("/bad/baddy.snd") end
   check_error_tag(:no_such_sound) do transform_sample(0, 1, 1234) end
@@ -35558,6 +35558,7 @@ def test0228
   check_error_tag(:no_such_mix) do mix_properties(integer2mix(mix_sync_max + 1)) end
   check_error_tag(:no_such_mix) do set_mix_properties(integer2mix(mix_sync_max + 1), 1) end
   check_error_tag(:no_such_mix) do play_mix(integer2mix(mix_sync_max + 1)) end
+
   if provided? :snd_motif
     [:widget_position, :widget_size, :widget_text,
       :hide_widget, :show_widget, :focus_widget].each do |n|

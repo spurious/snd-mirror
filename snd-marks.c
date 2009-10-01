@@ -500,7 +500,7 @@ static void run_mark_hook(chan_info *cp, int id, mark_hook_reason_t reason)
   if (XEN_HOOKED(mark_hook))
     run_hook(mark_hook,
 	     XEN_LIST_4(new_xen_mark(id),
-			C_TO_XEN_INT(cp->sound->index),
+			C_INT_TO_XEN_SOUND(cp->sound->index),
 			C_TO_XEN_INT(cp->chan),
 			C_TO_XEN_INT((int)reason)),
 	     S_mark_hook);

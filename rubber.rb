@@ -1,8 +1,8 @@
 # rubber.rb -- Translation of rubber.scm
 
-# Translator/Author: Michael Scholz <scholz-micha@gmx.de>
-# Last: Tue Mar 18 02:35:11 CET 2003
-# Version: $Revision: 1.4 $
+# Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
+# Created: Fri Feb 28 03:04:03 CET 2003
+# Changed: Sat Sep 26 02:04:27 CEST 2009
 
 # module Rubber (see rubber.scm)
 #  add_named_mark(samp, name, snd, chn)
@@ -128,10 +128,10 @@ module Rubber
                     (0...fftlen).each do |j| data[j] = next_sample(reader) end
                     autocorrelate(data)
                     autolen = 0
-                    (1...len4).each do |j|
+                    (1...len4).detect do |j|
                       if data[j] < data[j + 1] and data[j + 1] > data[j + 2]
                         autolen = j * 2
-                        break
+                        true
                       end
                     end
                     next_start = start + autolen
@@ -231,8 +231,7 @@ module Rubber
                   mult = (needed_samps / handled).ceil if curs >= weigths
                   changed_len = 0
                   weights = cross_weights.length
-                  (0...curs).each do |i|
-                    break if changed_len > samps
+                  (0...curs).detect do |i|
                     best_mark = edits[i].round
                     beg = cross_samples[best_mark]
                     next_beg = cross_samples[cross_marks[best_mark].round]
@@ -255,7 +254,7 @@ module Rubber
                           end
                         end
                       else
-                        message("trouble at %d: %d of %d", i, beg, frames()) if beg >= frames()
+                        Snd.display("trouble at %d: %d of %d", i, beg, frames()) if beg >= frames()
                         if $show_details
                           add_named_mark(beg - 1, format("%d:%d", i, (len / $extension).round))
                         end
@@ -274,13 +273,14 @@ module Rubber
                         end
                       end
                     end
+                    changed_len > samps
                   end
-                  message("wanted: %d, got %d", samps.round, changed_len.round) if $show_details
+                  Snd.display("wanted: %d, got %d", samps.round, changed_len.round) if $show_details
                   unsample_sound(snd, chn)
                   if $show_details
-                    message("%f -> %f (%f)",
-                            frames(snd, chn, 0), frames(snd,chn),
-                            (stretch * frames(snd, chn, 0)).round)
+                    Snd.display("%f -> %f (%f)",
+                                frames(snd, chn, 0), frames(snd,chn),
+                                (stretch * frames(snd, chn, 0)).round)
                   end
                 end, "(rubber_sound(#{args.join(', ')})")
   end

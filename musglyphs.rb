@@ -1,8 +1,8 @@
 # musglyphs.rb -- musglyphs.scm and cmn-glyphs.lisp --> musglyphs.rb -*- snd-ruby -*-
 
-# Translator: Michael Scholz <scholz-micha@gmx.de>
+# Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Wed Apr 06 00:47:44 CEST 2005
-# Last: Fri Apr 15 19:03:46 CEST 2005
+# Changed: Fri Jul 06 01:53:43 CEST 2007
 
 # Commentary:
 #

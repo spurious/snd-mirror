@@ -506,7 +506,7 @@ static void graph_mouse_enter(Widget w, XtPointer context, XEvent *event, Boolea
   XtVaGetValues(w, XmNuserData, &data, NULL);
   if (XEN_HOOKED(mouse_enter_graph_hook))
     run_hook(mouse_enter_graph_hook,
-	     XEN_LIST_2(C_TO_XEN_INT(UNPACK_SOUND(data)),
+	     XEN_LIST_2(C_INT_TO_XEN_SOUND(UNPACK_SOUND(data)),
 			C_TO_XEN_INT(UNPACK_CHANNEL(data))),
 	     S_mouse_enter_graph_hook);
   XDefineCursor(XtDisplay(w), XtWindow(w), ss->sgx->graph_cursor);
@@ -519,7 +519,7 @@ static void graph_mouse_leave(Widget w, XtPointer context, XEvent *event, Boolea
   XtVaGetValues(w, XmNuserData, &data, NULL);
   if (XEN_HOOKED(mouse_leave_graph_hook))
     run_hook(mouse_leave_graph_hook,
-	     XEN_LIST_2(C_TO_XEN_INT(UNPACK_SOUND(data)),
+	     XEN_LIST_2(C_INT_TO_XEN_SOUND(UNPACK_SOUND(data)),
 			C_TO_XEN_INT(UNPACK_CHANNEL(data))),
 	     S_mouse_leave_graph_hook);
   XUndefineCursor(XtDisplay(w), XtWindow(w));
@@ -886,6 +886,7 @@ static void channel_drag_watcher(Widget w, const char *str, Position x, Position
 	    report_in_minibuffer(sp, "drop to mix file in chan %d at %.4f", cp->chan + 1, seconds);
 	  else report_in_minibuffer(sp, "drop to mix file at %.4f", seconds);
 	  break;
+
 	case DRAG_LEAVE:
 	  string_to_minibuffer(sp, " "); /* not clear_minibuffer here! => segfault */
 	  break;

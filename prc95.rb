@@ -1,8 +1,8 @@
 # prc95.rb -- Translation of prc95.scm/prc-toolkit95.lisp to Snd/Ruby
 # Perry Cook's Physical Modelling Toolkit
 
-# Translator/Author: Michael Scholz <scholz-micha@gmx.de>
-# Last: Thu May 19 23:50:14 CEST 2005
+# Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
+# Changed: Wed Feb 27 00:00:20 CET 2008
 
 require "examp"
 require "ws"

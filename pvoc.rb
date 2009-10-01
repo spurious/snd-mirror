@@ -1,8 +1,8 @@
 # pvoc.rb -- pvoc.scm -> pvoc.rb -*- snd-ruby -*-
 
-# Translator: Michael Scholz <scholz-micha@gmx.de>
+# Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Sat Mar 27 00:19:51 CET 2004
-# Last: Tue Mar 15 00:45:35 CET 2005
+# Changed: Sat Sep 26 02:04:15 CEST 2009
 
 # Comment:
 # 
@@ -202,15 +202,17 @@ oscil bank resynthesis). 'pitch' specifies the pitch transposition ratio, 'time'
 specifies the time dilation ratio, 'gate' specifies a resynthesis gate in dB (partials \
 with amplitudes lower than the gate value will not be synthesized), \
 'hoffset is a pitch offset in Hz.")
-def pvoc(*rest) 
-  fftsize = get_args(rest, :fftsize, 512)
-  overlap = get_args(rest, :overlap, 4)
-  time    = get_args(rest, :time, 1.0)
-  pitch   = get_args(rest, :pitch, 1.0)
-  gate    = get_args(rest, :gate, 0.0)
-  hoffset = get_args(rest, :hoffset, 0.0)
-  snd     = get_args(rest, :snd, false)
-  chn     = get_args(rest, :chn, false)
+def pvoc(*rest)
+  fftsize, overlap, time, pitch, gate, hoffset, snd, chn = nil
+  optkey(rest, binding,
+         [:fftsize, 512],
+         [:overlap, 4],
+         [:time, 1.0],
+         [:pitch, 1.0],
+         [:gate, 0.0],
+         [:hoffset, 0.0],
+         [:snd, false],
+         [:chn, false])
   len = frames(snd, chn)
   filptr = 0
   sr = srate(snd)

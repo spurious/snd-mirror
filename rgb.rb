@@ -1,7 +1,8 @@
 # rgb.rb -- Guile -> Ruby translation
 
-# Translator/Author: Michael Scholz <scholz-micha@gmx.de>
-# Last: Fri Mar 04 15:02:19 CET 2005
+# Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
+# Created: Sun Mar 09 03:51:38 CET 2003
+# Changed: Fri Jul 06 01:52:54 CEST 2007
 
 # X11 color names converted to Snd (Ruby) colors
 # tan -> tawny 24-Aug-01
@@ -22,8 +23,7 @@ Spring_colormap = 11
 Summer_colormap = 12
 Rainbow_colormap = 13
 Flag_colormap = 14
-Phases_colormap = 15
-Last_colormap = 16
+Last_colormap = 15
 
 # rgb.scm
 Snow = make_color(1.00, 0.98, 0.98)

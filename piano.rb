@@ -1,8 +1,9 @@
 # piano.rb -- translation of piano.scm
 # ;;; CLM piano.ins (Scott Van Duyne) translated to Snd/Scheme
 
-# Ruby Translator: Michael Scholz <scholz-micha@gmx.de>
-# Last: Wed Feb 18 03:07:06 CET 2004
+# Ruby Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
+# Created: Thu Mar 06 03:58:02 CET 2003
+# Changed: Fri Jul 06 01:53:07 CEST 2007
 
 module Piano
   require "examp"

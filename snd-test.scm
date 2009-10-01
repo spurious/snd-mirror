@@ -5102,8 +5102,6 @@
 
 ;;; ---------------- test 5: simple overall checks ----------------
 
-(if (not (provided? 'snd-snd4.scm)) (load "snd4.scm")) ; needed for various scan/map extensions
-
 (if (not (provided? 'snd-selection.scm)) (load "selection.scm"))
 (if (not (provided? 'snd-extensions.scm)) (load "extensions.scm"))
 (if (not (provided? 'snd-selection.scm)) (load "selection.scm"))
@@ -10732,73 +10730,6 @@ EDITS: 5
 	  
 	  (close-sound ind1)
 	  (close-sound ind2))
-	
-	(let ((ind1 (open-sound "oboe.snd"))
-	      (ind2 (open-sound "2.snd")))
-	  (let ((ups1 (maxamp ind1 0))
-		(ups2 (maxamp ind2 #t)))
-	    (map-chan (lambda (n)
-			(* n 2.0))
-		      0 (frames ind1) "ignore: times 2" ind1 0)
-	    (map-sound-chans (lambda (n)
-			       (* n 2.0))
-			     0 (frames ind2) "ignore: times 2" ind2)
-	    (let ((ups3 (maxamp ind1 0))
-		  (ups4 (maxamp ind2 #t)))
-	      (if (fneq ups3 (* ups1 2.0))
-		  (snd-display ";map-chan: ~A ~A?" ups3 (* ups1 2.0)))
-	      (if (or (fneq (car ups4) (* (car ups2) 2.0))
-		      (fneq (cadr ups4) (* (cadr ups2) 2.0)))
-		  (snd-display ";map-sound-chans: ~A ~A?" (map (lambda (n) (* 2 n)) ups2) ups4)))
-	    
-	    (set! (sync ind2) #t)
-	    (set! (sync ind1) #t)
-	    (map-chans (lambda (n) (* n 0.5)))
-	    (let ((ups3 (maxamp ind1 0))
-		  (ups4 (maxamp ind2 #t)))
-	      (if (fneq ups3 ups1)
-		  (snd-display ";map-chans: ~A ~A?" ups3 ups1))
-	      (if (or (fneq (car ups4) (car ups2))
-		      (fneq (cadr ups4) (cadr ups2)))
-		  (snd-display ";map-chans: ~A ~A?" ups2 ups4)))
-	    (set! (sync ind1) #f)
-	    
-	    (if (= clmtest 0)
-		(let ((len-err #f))
-		  (map-across-all-chans (lambda (data len)
-					  (if (not (= len 3))
-					      (set! len-err len)
-					      (begin
-						(vector-set! data 0 (* (vector-ref data 0) 4.0))
-						(let ((chan0-sample (vector-ref data 1)))
-						  (vector-set! data 1 (vector-ref data 2))
-						  (vector-set! data 2 chan0-sample))))
-					  data))
-		  
-		  (if (number? len-err)
-		      (snd-display ";map-across-all-chans len: ~A?" len-err))
-		  (let ((ups3 (maxamp ind1 0))
-			(ups4 (maxamp ind2 #t)))
-		    (if (fneq ups3 (* 4 ups1))
-			(snd-display ";map-across-all-chans 1: ~A ~A?" ups3 ups1))
-		    (if (or (fneq (car ups4) (cadr ups2))
-			    (fneq (car ups4) (cadr ups2)))
-			(snd-display ";map-across-all-chans 2: ~A ~A?" ups2 ups4)))))
-	    (revert-sound ind1)
-	    (revert-sound ind2)
-	    (map-all-chans (lambda (n) (* n 4.0)))
-	    
-	    (let ((ups3 (maxamp ind1 0))
-		  (ups4 (maxamp ind2 0))
-		  (ups5 (maxamp ind1 0 0))
-		  (ups6 (maxamp ind2 0 0)))
-	      (if (fneq ups3 (* 4 ups5))
-		  (snd-display ";map-all-chans: ~A ~A?" ups3 ups5))
-	      (if (fneq ups4 (* 4 ups6))
-		  (snd-display ";map-all-chans(2): ~A ~A?" ups4 ups6)))
-	    
-	    (close-sound ind1)
-	    (close-sound ind2)))
 	
 	(let* ((ind1 (open-sound "oboe.snd"))
 	       (len (frames ind1))
@@ -32338,8 +32269,9 @@ EDITS: 2
 	(save-edit-history scm oldsnd)
 	(copy-file (file-name oldsnd) new-name)
 	(set! sfile (open-sound new-name))
+	(format #t "edit history saved in ~S~%" scm)
 	(load scm)
-	(delete-file scm)
+;	(delete-file scm)
 	sfile))
     
     
@@ -32796,7 +32728,7 @@ EDITS: 2
 	    (insert-sample 1200 .1 cfd)
 	    (if (fneq (sample 1200 cfd) .1) (snd-display ";insert-sample(looped): ~A?" (sample 1200 cfd)))
 	    (revert-sound cfd))
-	  
+
 	  (let ((cfd (open-sound "obtest.snd")))
 	    (select-sound cfd)
 	    (let ((cfd2 (open-sound "pistol.snd")))
@@ -33193,7 +33125,7 @@ EDITS: 2
     (reset-hook! open-hook)
     
     (set! (clipping) #f)
-    
+    (for-each close-sound (sounds))
     )
   )
 
@@ -65740,7 +65672,7 @@ EDITS: 1
 			(let ((tag
 			       (catch #t
 				      (lambda ()
-					(n 1234))
+					(n (integer->sound 1234)))
 				      (lambda args (car args)))))
 			  (if (not (eq? tag 'no-such-sound))
 			      (snd-display ";~D: chn procs ~A: ~A" ctr n tag))
@@ -65768,7 +65700,7 @@ EDITS: 1
 			(let ((tag
 			       (catch #t
 				      (lambda ()
-					(n 0 1234))
+					(n 0 (integer->sound 1234)))
 				      (lambda args (car args)))))
 			  (if (not (eq? tag 'no-such-sound))
 			      (snd-display ";~D: snd(1) chn procs ~A: ~A" ctr n tag))
@@ -67440,13 +67372,13 @@ EDITS: 1
 #|
 valgrind test 23 6-Aug-09:
 
-39,032,814,374  /home/bil/snd-11/io.c:mus_read_any_1 [/home/bil/snd-11/snd]
-20,772,525,729  /home/bil/snd-11/s7.c:eval_symbol [/home/bil/snd-11/snd]
-17,746,630,056  /home/bil/snd-11/snd-edits.c:next_sample_value_unscaled [/home/bil/snd-11/snd]
-15,014,697,124  /home/bil/snd-11/io.c:mus_write_1 [/home/bil/snd-11/snd]
-14,386,551,225  /home/bil/snd-11/snd-sig.c:direct_filter [/home/bil/snd-11/snd]
-13,917,957,078  /home/bil/snd-11/snd-edits.c:channel_local_maxamp [/home/bil/snd-11/snd]
-12,475,299,147  /home/bil/snd-11/s7.c:s7_mark_object_1'2 [/home/bil/snd-11/snd]
- 8,719,747,420  /home/bil/snd-11/s7.c:eval [/home/bil/snd-11/snd]
- 8,546,890,750  /home/bil/snd-11/s7.c:gc [/home/bil/snd-11/snd]
+39,032,814,374  /home/bil/snd-10/io.c:mus_read_any_1 [/home/bil/snd-10/snd]
+20,772,525,729  /home/bil/snd-10/s7.c:eval_symbol [/home/bil/snd-10/snd]
+17,746,630,056  /home/bil/snd-10/snd-edits.c:next_sample_value_unscaled [/home/bil/snd-10/snd]
+15,014,697,124  /home/bil/snd-10/io.c:mus_write_1 [/home/bil/snd-10/snd]
+14,386,551,225  /home/bil/snd-10/snd-sig.c:direct_filter [/home/bil/snd-10/snd]
+13,917,957,078  /home/bil/snd-10/snd-edits.c:channel_local_maxamp [/home/bil/snd-10/snd]
+12,475,299,147  /home/bil/snd-10/s7.c:s7_mark_object_1'2 [/home/bil/snd-10/snd]
+ 8,719,747,420  /home/bil/snd-10/s7.c:eval [/home/bil/snd-10/snd]
+ 8,546,890,750  /home/bil/snd-10/s7.c:gc [/home/bil/snd-10/snd]
 |#

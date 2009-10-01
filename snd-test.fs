@@ -2,7 +2,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sat Aug 05 00:09:28 CEST 2006
-\ Changed: Thu Jul 09 03:30:25 CEST 2009
+\ Changed: Thu Oct 01 02:56:16 CEST 2009
 
 \ Commentary:
 \
@@ -607,38 +607,38 @@ mus-audio-playback-amp value original-audio-amp
   0 new-index 0 find-mix to res
   res if $" found non-existent mix: %s?" #( res ) snd-display then
   "pistol.snd" 100 mix car { mix-id }
-  view-files-dialog { wid }
-  mix-id mix-position { pos }
-  mix-id mix-length { len }
-  mix-id mix-speed { spd }
-  mix-id mix-home { home-lst }
+  mix-id mix? unless $" %s not mix?" #( mix-id ) snd-display then
+  view-mixes-dialog    { wid }
+  mix-id mix-position  { pos }
+  mix-id mix-length    { len }
+  mix-id mix-speed     { spd }
+  mix-id mix-home      { home-lst }
   home-lst 0 array-ref { snd }
   home-lst 1 array-ref { chn }
-  mix-id 0 mix-amp { amp }
+  mix-id mix-amp       { amp }
   mix-id make-mix-sampler { mr }
   mr mix-sampler? unless $" %s is not mix-sampler?"  mr snd-display then
   mr region-sampler?  if $" mix-sampler: region %s?" mr snd-display then
-  mr sampler?         if $" mix-sampler: normal %s?" mr snd-display then
   mr sampler-position to res
   res 0<> if $" mix sampler-position: %d?" #( res ) snd-display then
   mr sampler-at-end? if $" mix sampler-at-end: %s?" #( mr ) snd-display then
   mr sampler-home to res
-  mix-id res <> if $" mix sampler-home: %d %s?" #( res mr ) snd-display then
-  mr object->string 0 22 string-substring to res
+  mix-id res object-equal? unless $" mix sampler-home: %d %s?" #( res mr ) snd-display then
+  mr object->string 0 16 string-substring to res
   res $" #<mix-sampler mi" string<> if
     $" mix sampler actually got: [%s]?" #( res ) snd-display
   then
-  1234 <'> mix-amp #t nil fth-catch to res
+  1234 integer->mix <'> mix-amp #t nil fth-catch to res
   stack-reset
   res 0 array-ref 'no-such-mix object-equal? unless
     $" mix-amp bad id: %s" #( res ) snd-display
   then
-  1234 0.1 <'> set-mix-amp #t nil fth-catch to res
+  1234 integer->mix 0.1 <'> set-mix-amp #t nil fth-catch to res
   stack-reset
   res 0 array-ref 'no-such-mix object-equal? unless
     $" set-mix-amp bad id: %s" #( res ) snd-display
   then
-  1234 #( 0 0 1 1 ) <'> set-mix-amp-env #t nil fth-catch to res
+  1234 integer->mix #( 0 0 1 1 ) <'> set-mix-amp-env #t nil fth-catch to res
   stack-reset
   res 0 array-ref 'no-such-mix object-equal? unless
     $" set-mix-amp-env bad id: %s" #( res ) snd-display
@@ -657,34 +657,34 @@ mus-audio-playback-amp value original-audio-amp
   mx sx fneq if $" read-mix-sample 100: %s %s?" #( mx sx ) snd-display then
   mr free-sampler drop
   \
-  100 pos <>   if $" mix-position: %d?"     pos snd-display then
-  41623 len <> if $" mix-length: %d?"       len snd-display then
-  snd new-index <> if $" snd mix-home: %d?" snd snd-display then
-  chn      0<> if $" chn mix-home: %d?"     chn snd-display then
-  amp 1.0 fneq if $" mix-amp: %s?"          amp snd-display then
-  spd 1.0 fneq if $" mix-speed: %s?"        spd snd-display then
+  100 pos <>   if $" mix-position: %d?"     #( pos ) snd-display then
+  41623 len <> if $" mix-length: %d?"       #( len ) snd-display then
+  snd new-index object-equal? unless $" snd mix-home: %s?" #( snd ) snd-display then
+  chn      0<> if $" chn mix-home: %d?"     #( chn ) snd-display then
+  amp 1.0 fneq if $" mix-amp: %s?"          #( amp ) snd-display then
+  spd 1.0 fneq if $" mix-speed: %s?"        #( spd ) snd-display then
   mix-id <'> play-mix 'mus-error nil fth-catch to res
   stack-reset
   res false? not if $" can't play mix: %s" #( res ) snd-display then
   mix-id 200 set-mix-position drop
-  mix-id 0 0.5 set-mix-amp drop
+  mix-id 0.5 set-mix-amp drop
   mix-id 2.0 set-mix-speed drop
   \ 
-  mix-id 0 #( 0 0 1 1 ) set-mix-amp-env drop
-  mix-id 0 mix-amp-env to res
-  mix-id 0  mix-id 0 mix-amp-env  set-mix-amp-env drop
-  mix-id 0 mix-amp-env { res1 }
+  mix-id #( 0 0 1 1 ) set-mix-amp-env drop
+  mix-id mix-amp-env to res
+  mix-id res set-mix-amp-env drop
+  mix-id mix-amp-env { res1 }
   res res1 vequal unless $" set-mix-amp-env to self: %s %s?" #( res res1 ) snd-display then
   mix-id 20 set-mix-tag-y drop
   mix-id mix-position to pos
-  mix-id mix-speed to spd
-  mix-id 0 mix-amp to amp
+  mix-id mix-speed    to spd
+  mix-id mix-amp      to amp
   mix-id mix-tag-y { my }
   200 pos <>   if $" set-mix-position: %d?" pos snd-display then
   spd 2.0 fneq if $" set-mix-speed: %s?"    spd snd-display then
   my  20    <> if $" set-mix-tag-y: %d?"    my  snd-display then
   amp 0.5 fneq if $" set-mix-amp: %s?"      amp snd-display then
-  mix-id 0 mix-amp-env to res
+  mix-id mix-amp-env to res
   res #( 0.0 0.0 1.0 1.0 ) array= unless $" set-mix-amp-env: %s?" res snd-display then
   \
   3 0.1 make-vct 100 #f #f #t "" mix-vct drop
@@ -735,7 +735,7 @@ mus-audio-playback-amp value original-audio-amp
     $" 200 find-mix: not a mix %s?" #( nid ) snd-display
   then
   \
-  "oboe.snd" 100 mix to mix-id
+  "oboe.snd" 100 mix car to mix-id
   40 set-mix-waveform-height drop
   mix-id 'hiho 123 set-mix-property
   mix-id 'hiho mix-property to res
@@ -1601,7 +1601,7 @@ include bird.fsm
   :verbose    *clm-verbose*
   :srate      44100
   :scaled-to  0.8 with-sound ( ws ) ws-close-sound
-  \ FIXME: A mysterious sound "test.snd" remains open here [ms].
+  \ FIXME: Here a mysterious sound "test.snd" remains open [ms].
   sounds if sounds each ( snd ) close-sound drop end-each then
   0.0 0.3 <'> clm-ins-test		\ from clm-ins.fs
   :notehook   *clm-verbose* if <'> test23-notehook else #f then
@@ -1912,7 +1912,7 @@ include bird.fsm
    <'> filter-control? <'> graph-cursor <'> graph-style <'> lisp-graph? <'> graphs-horizontal
    <'> just-sounds <'> left-sample <'> listener-prompt
    <'> mark-name <'> mark-sample <'> mark-sync <'> max-transform-peaks
-   <'> max-regions <'> min-dB <'> log-freq-start <'> mix-amp
+   <'> min-dB <'> log-freq-start <'> mix-amp
    <'> mix-amp-env <'> mix-name <'> mix-position <'> mix-speed <'> mix-tag-height <'> mix-tag-width
    <'> mix-tag-y <'> mark-tag-width <'> mark-tag-height <'> mix-waveform-height
    <'> transform-normalization
@@ -1923,7 +1923,7 @@ include bird.fsm
    <'> reverb-control-lowpass <'> reverb-control-scale <'> time-graph-style <'> lisp-graph-style
    <'> transform-graph-style <'> reverb-control? <'> ladspa-dir
    <'> save-dir <'> save-state-file
-   <'> selection-creates-region <'> show-axes 
+   <'> selection-creates-region <'> show-axes
    <'> show-controls <'> show-transform-peaks <'> show-indices <'> show-marks
    <'> show-mix-waveforms <'> show-selection-transform <'> show-listener <'> show-y-zero
    <'> show-grid <'> show-sonogram-cursor <'> sinc-width <'> spectrum-end
@@ -2075,8 +2075,11 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   prcs-1 each to prc
     123 prc #t nil fth-catch to tag
     stack-reset
-    tag car 'no-such-sound = unless
-      $" snd no-such-sound %s: %s" #( prc tag ) snd-display
+    \ FIXME: close-sound seems not to raise an exception but returns #f [ms].
+    tag car if
+      tag car 'no-such-sound = unless
+	$" snd no-such-sound %s: %s" #( prc tag ) snd-display
+      then
     then
   end-each
   #( vct-5 -1.0 csqrt 1.5 "hiho" ) { args-1 }
@@ -2095,6 +2098,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   "obtest.snd" open-sound { ind }
   args-1 each to arg
     prcs-1 each to prc
+      \ INFO: [ms]
       \ snd/chn before value
       \ g_set_channels(snd, val)           arg 0
       \ snd/chn after value
@@ -2252,12 +2256,11 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
      <'> sawtooth-wave <'> nrxysin <'> nrxycos <'> square-wave <'> src
      <'> ncos <'> nsin <'> table-lookup <'> tap
      <'> triangle-wave <'> two-pole <'> two-zero <'> wave-train <'> ssb-am ) { clm-prcs-1 }
-  \ -1.0 csqrt is a number so I removed it.  The reason is make-frame -> out-of-range.
-  \ FIXME: 'bad-type added for
-  \ #( nil )   mus-env
-  \ #( 1 1 1 ) mus-env
-  \ #( 1 1 1 ) partials->wave
-  #( 1 make-array color-95 ) each to arg
+  \ FIXME [ms]
+  \ 'bad-type added for      #( 1 1 1 ) partials->wave
+  \ 'out-of-range added for  -1.0 csqrt make-frame
+  \                          -1.0 csqrt make-moving-average
+  #( 1 make-array color-95 -1.0 csqrt 1 1.0 make-vct ) each to arg
     clm-prcs-1 each to prc
       arg prc #t nil fth-catch to tag
       stack-reset
@@ -2267,7 +2270,8 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
 	tag car 'no-such-method = ||
 	tag car 'error          = ||
 	tag car 'arg-error      = ||
-	tag car 'bad-type       = || unless
+	tag car 'bad-type       = ||
+	tag car 'out-of-range   = || unless
 	  $" clm %s [%s]: %s" #( prc arg tag ) snd-display
 	then
       then
@@ -2289,7 +2293,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
      <'> mus-hop <'> mus-increment <'> mus-length <'> mus-location
      <'> mus-mix <'> mus-name <'> mus-order <'> mus-phase <'> mus-ramp
      <'> mus-random <'> mus-run <'> mus-scaler <'> mus-xcoeffs <'> mus-ycoeffs ) each to prc
-    \ FIXME: 'out-of-range added.
+    \ FIXME: 'out-of-range added [ms].
     make-oscil vector-0 prc #t nil fth-catch to tag
     stack-reset
     tag if
@@ -2341,7 +2345,10 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
      <'> edit-tree <'> edits <'> fft-window-alpha <'> fft-window-beta
      <'> fft-log-frequency <'> fft-log-magnitude <'> transform-size <'> transform-graph-type
      <'> fft-window <'> transform-graph? <'> find-channel <'> graph
-     <'> graph-style <'> lisp-graph? <'> insert-region <'> insert-sound
+     <'> graph-style <'> lisp-graph?
+     \ FIXME: insert-region requires two args [ms].
+     \ <'> insert-region
+     <'> insert-sound
      <'> time-graph-style <'> lisp-graph-style <'> transform-graph-style <'> left-sample
      <'> map-chan <'> max-transform-peaks <'> maxamp
      <'> maxamp-position <'> min-dB <'> mix-region <'> transform-normalization
@@ -2381,7 +2388,9 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
      <'> fft-window-alpha <'> fft-window-beta <'> fft-log-frequency <'> fft-log-magnitude
      <'> transform-size <'> transform-graph-type <'> fft-window <'> transform-graph?
      <'> filter-sound <'> graph-style <'> lisp-graph?
-     <'> insert-region <'> left-sample <'> time-graph-style <'> lisp-graph-style
+     \ FIXME: insert-region requires two args [ms].
+     \ <'> insert-region
+     <'> left-sample <'> time-graph-style <'> lisp-graph-style
      <'> transform-graph-style <'> max-transform-peaks <'> maxamp
      <'> maxamp-position <'> min-dB <'> transform-normalization <'> peak-env-info
      <'> play <'> play-and-wait
@@ -2475,7 +2484,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
     then
   end-each
   mix-prcs each to prc
-    1234 prc #t nil fth-catch to tag
+    1234 integer->mix prc #t nil fth-catch to tag
     stack-reset
     tag car 'no-such-mix = unless
       $" [1] mix procs %s: %s" #( prc tag ) snd-display
@@ -2483,7 +2492,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   end-each
   #( <'> mix-name <'> mix-position <'> mix-home <'> mix-speed <'> mix-tag-y ) { mix-set-prcs }
   mix-set-prcs each to prc
-    1234 vct-5 prc set-xt #t nil fth-catch to tag
+    1234 integer->mix vct-5 prc set-xt #t nil fth-catch to tag
     stack-reset
     tag if
       tag car 'wrong-type-arg =
@@ -2514,7 +2523,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
     then
   end-each
   #( <'> mark-name <'> mark-sample <'> mark-sync <'> mark-home <'> delete-mark ) each to prc
-    1234 prc #t nil fth-catch to tag
+    1234 integer->mark prc #t nil fth-catch to tag
     stack-reset
     tag car 'no-such-mark = unless
       $" no mark procs %s: %s" #( prc tag ) snd-display
@@ -2530,9 +2539,10 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
     then
   end-each
   ind close-sound drop
+  \ region-sample, initially here, requires two args
   #( <'> play-region <'> region-chans <'> region-home <'> region-frames
-     <'> region-position <'> region-maxamp <'> region-maxamp-position <'> region-sample
-     <'> region->vct <'> region-srate <'> forget-region ) { reg-prcs-1 }
+     <'> region-position <'> region-maxamp <'> region-maxamp-position
+     <'> region-srate <'> forget-region ) { reg-prcs-1 }
   #( vct-5 #( 0 1 ) #() "hiho" #( 0 1 ) ) each to arg
     reg-prcs-1 each to prc
       arg prc #t nil fth-catch to tag
@@ -2543,7 +2553,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
     end-each
   end-each
   reg-prcs-1 each to prc
-    1234 prc #t nil fth-catch to tag
+    1234 integer->region prc #t nil fth-catch to tag
     stack-reset
     tag car 'no-such-region = unless
       $" (no) region procs %s: %s" #( prc tag ) snd-display
@@ -2601,14 +2611,14 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
       $" [1] hooks %s: %s" #( hook hook-name tag ) snd-display
     then
   end-each
-  "not-an-env" 	       <'> set-enved-envelope  	  'no-such-envelope check-error-tag
-  "/bad/baddy" 	       <'> save-envelopes      	  'cannot-save      check-error-tag
-  "/bad/baddy" 	       <'> save-macros         	  'cannot-save      check-error-tag
-  "/bad/baddy" 	       <'> mus-sound-report-cache 'cannot-save      check-error-tag
+  "not-an-env" 	       	     <'> set-enved-envelope  	'no-such-envelope check-error-tag
+  "/bad/baddy" 	       	     <'> save-envelopes      	'cannot-save      check-error-tag
+  "/bad/baddy" 	       	     <'> save-macros         	'cannot-save      check-error-tag
+  "/bad/baddy" 	       	     <'> mus-sound-report-cache 'cannot-save      check-error-tag
   <'> noop 3 make-proc       <'> set-search-procedure   'bad-arity        check-error-tag
   1234 <'> noop 1 make-proc  <'> set-search-procedure   'no-such-sound    check-error-tag
-  0 "oboe.snd" 1             <'> make-sampler     'no-such-channel  check-error-tag
-  0 "oboe.snd" -1            <'> make-sampler     'no-such-channel  check-error-tag
+  0 "oboe.snd" 1             <'> make-sampler     	'no-such-channel  check-error-tag
+  0 "oboe.snd" -1            <'> make-sampler     	'no-such-channel  check-error-tag
   <'> noop 1 make-proc       <'> set-zoom-focus-style   'bad-arity        check-error-tag
   1 1.0 make-mixer { mx }
   "oboe.snd" "pistol.snd" 0 12 0 mx $" a string" <'> mus-mix 'wrong-type-arg check-error-tag
@@ -2771,11 +2781,10 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   0 1234                     <'> play                   'no-such-sound    check-error-tag
   0 ind 1234                 <'> play                   'no-such-channel  check-error-tag
   regions empty? if 0 100 make-region then
-  0 regions 0 array-ref 1234         <'> region-sample          'no-such-channel  check-error-tag
-  0 regions 0 array-ref 1234         <'> region-frames          'no-such-channel  check-error-tag
-  0 regions 0 array-ref 1234         <'> region-position        'no-such-channel  check-error-tag
-  0 1 -1                     <'> region->vct            'no-such-region   check-error-tag
-  0 1 regions 0 array-ref 1234       <'> region->vct            'no-such-channel  check-error-tag
+  regions 0 array-ref 0 1234 <'> region-sample          'no-such-channel  check-error-tag
+  regions 0 array-ref 1234   <'> region-frames          'no-such-channel  check-error-tag
+  regions 0 array-ref 1234   <'> region-position        'no-such-channel  check-error-tag
+  regions 0 array-ref 0 1 1234 <'> region->vct          'no-such-channel  check-error-tag
   "/bad/baddy.snd"           <'> save-sound-as          'cannot-save      check-error-tag
   0 1 1234                   <'> transform-sample       'no-such-sound    check-error-tag
   0 1 ind 1234               <'> transform-sample       'no-such-channel  check-error-tag
@@ -2783,22 +2792,22 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   0 100 ind 1234             <'> samples->sound-data    'no-such-channel  check-error-tag
   vct( 0 1 ) "hi" 0 1 0 1 1234     <'> graph            'no-such-sound    check-error-tag
   vct( 0 1 ) "hi" 0 1 0 1 ind 1234 <'> graph            'no-such-channel  check-error-tag
-  regions 0 array-ref #f <'> noop 0 make-proc <'> play-region   'wrong-type-arg   check-error-tag
+  regions 0 array-ref #f <'> noop 0 make-proc <'> play-region 'wrong-type-arg check-error-tag
   #f #t set-selection-member? drop
   vct( 0 0 1 1 ) 4           <'> filter-selection       'no-active-selection check-error-tag
   "/bad/baddy.snd"           <'> save-selection         'no-active-selection check-error-tag
   #( 0 0 1 1 )               <'> env-selection          'no-active-selection check-error-tag
-  1234 "/bad/baddy.snd"      <'> save-region            'no-such-region   check-error-tag
+  1234 integer->region "/bad/baddy.snd" <'> save-region 'no-such-region   check-error-tag
   0 100 ind 0 make-region drop
   "/bad/baddy.snd"           <'> save-selection         'cannot-save      check-error-tag
-  regions 0 array-ref "/bad/baddy.snd" <'> save-region          'cannot-save      check-error-tag
-  1234                       <'> make-mix-sampler 'no-such-mix      check-error-tag
+  regions 0 array-ref "/bad/baddy.snd" <'> save-region  'cannot-save      check-error-tag
+  1234 integer->mix          <'> make-mix-sampler       'no-such-mix      check-error-tag
   0 12 1234 #t               <'> make-region            'no-such-sound    check-error-tag
   #t ind set-read-only drop
   ind #( 0 0 1 1 )           <'> set-sound-loop-info    'cannot-save      check-error-tag
-  0 ind 0 123                <'> make-sampler     'no-such-direction check-error-tag
-  0 ind 0 0                  <'> make-sampler     'no-such-direction check-error-tag
-  0 ind 0 -2                 <'> make-sampler     'no-such-direction check-error-tag
+  0 ind 0 123                <'> make-sampler     	'no-such-direction check-error-tag
+  0 ind 0 0                  <'> make-sampler     	'no-such-direction check-error-tag
+  0 ind 0 -2                 <'> make-sampler     	'no-such-direction check-error-tag
   #()                        <'> scale-by               'no-data          check-error-tag
   #()                        <'> scale-to               'no-data          check-error-tag
   "hi" <'> noop 2 make-proc  <'> prompt-in-minibuffer   'bad-arity        check-error-tag
@@ -2807,9 +2816,8 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   0 ind 0                    <'> set-selection-frames   'wrong-type-arg   check-error-tag
   -1                         <'> edit-fragment          'no-such-edit     check-error-tag
   101 ind 0                  <'> edit-fragment          'no-such-edit     check-error-tag
-  \ FIXME: segfault
-  \ ind 0 -2                   <'> edit-tree              'no-such-edit     check-error-tag
-  \ ind 0 101                  <'> edit-tree              'no-such-edit     check-error-tag
+  ind 0 -2                   <'> edit-tree              'no-such-edit     check-error-tag
+  ind 0 101                  <'> edit-tree              'no-such-edit     check-error-tag
   -1                         <'> add-mark               'no-such-sample   check-error-tag
   frames 2*                  <'> add-mark               'no-such-sample   check-error-tag
   "/bad/baddy"               <'> convolve-with          'no-such-file     check-error-tag
@@ -2836,48 +2844,48 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   0 #f #f #f #f #f <'> noop 0 make-proc <'> play        'wrong-type-arg   check-error-tag
   #( 0.1 0.01 ) ind          <'> set-reverb-control-length-bounds 'out-of-range check-error-tag
   #( 0.1 0.01 ) ind          <'> set-reverb-control-scale-bounds  'out-of-range check-error-tag
-  #f                         <'> scale-by                'wrong-type-arg  check-error-tag
-  2 0.1 0.1 0.2 0.2 make-mixer <'> scale-by              'wrong-type-arg  check-error-tag
-  3.0 1.0 #t                 <'> src-sound               'wrong-type-arg  check-error-tag
-  3.0 1.0 ind #t             <'> src-sound               'wrong-type-arg  check-error-tag
-  ind 0 123                  <'> display-edits           'no-such-edit    check-error-tag
+  #f                         <'> scale-by               'wrong-type-arg   check-error-tag
+  2 0.1 0.1 0.2 0.2 make-mixer <'> scale-by             'wrong-type-arg   check-error-tag
+  3.0 1.0 #t                 <'> src-sound              'wrong-type-arg   check-error-tag
+  3.0 1.0 ind #t             <'> src-sound              'wrong-type-arg   check-error-tag
+  ind 0 123                  <'> display-edits          'no-such-edit     check-error-tag
   ind close-sound drop
   "hiho" "time" 0 1 <'> noop 0 make-proc <'> add-transform 'bad-arity     check-error-tag
-  "/bad/baddy"               <'> save-state              'cannot-save     check-error-tag
-  1234 "hi" <'> noop 0 make-proc <'> add-to-menu         'no-such-menu    check-error-tag
-  "hi" <'> noop 2 make-proc  <'> add-to-main-menu        'bad-arity       check-error-tag
-  1 "hi" <'> noop 2 make-proc  <'> add-to-menu           'bad-arity       check-error-tag
-  -1                         <'> set-transform-type      'out-of-range    check-error-tag
-  123                        <'> set-transform-type      'out-of-range    check-error-tag
-  #( 0 1 ) "hiho"            <'> help-dialog             'wrong-type-arg  check-error-tag
-  #( 0 1 ) "hiho"            <'> info-dialog             'wrong-type-arg  check-error-tag
-  1234                       <'> edit-header-dialog      'no-such-sound   check-error-tag
-  "/bad/baddy.snd"           <'> open-sound              'no-such-file    check-error-tag
+  "/bad/baddy"               <'> save-state             'cannot-save      check-error-tag
+  1234 "hi" <'> noop 0 make-proc <'> add-to-menu        'no-such-menu     check-error-tag
+  "hi" <'> noop 2 make-proc  <'> add-to-main-menu       'bad-arity        check-error-tag
+  1 "hi" <'> noop 2 make-proc  <'> add-to-menu          'bad-arity        check-error-tag
+  -1                         <'> set-transform-type     'out-of-range     check-error-tag
+  123                        <'> set-transform-type     'out-of-range     check-error-tag
+  #( 0 1 ) "hiho"            <'> help-dialog            'wrong-type-arg   check-error-tag
+  #( 0 1 ) "hiho"            <'> info-dialog            'wrong-type-arg   check-error-tag
+  1234                       <'> edit-header-dialog     'no-such-sound    check-error-tag
+  "/bad/baddy.snd"           <'> open-sound             'no-such-file     check-error-tag
   "/bad/baddy.snd" 1 22050 mus-lshort <'> open-raw-sound 'no-such-file    check-error-tag
-  "/bad/baddy.snd"           <'> view-sound              'no-such-file    check-error-tag
-  0 "/bad/baddy.snd"         <'> make-sampler      'no-such-file    check-error-tag
-  0 1234567                  <'> make-region-sampler 'no-such-region check-error-tag
-  -1                         <'> send-mozilla            'wrong-type-arg  check-error-tag
+  "/bad/baddy.snd"           <'> view-sound             'no-such-file     check-error-tag
+  0 "/bad/baddy.snd"         <'> make-sampler           'no-such-file     check-error-tag
+  1234567 integer->region 0  <'> make-region-sampler    'no-such-region   check-error-tag
+  -1                         <'> send-mozilla           'wrong-type-arg   check-error-tag
   sf-dir "bad_chans.snd" $+ 0 0 123 234 0.0 make-vct <'> file->array 'bad-header check-error-tag
-  sf-dir "bad_chans.snd" $+  <'> make-readin             'bad-header check-error-tag
-  30 3 0 make-vct            <'> make-iir-filter         'mus-error       check-error-tag
-  :size 2 30 f** f>s         <'> make-wave-train         'out-of-range    check-error-tag
-  0.0                        <'> set-mus-srate           'out-of-range    check-error-tag
-  -1000                      <'> set-mus-srate           'out-of-range    check-error-tag
-  3 0 make-vct 3 0 make-vct -1 <'> dot-product           'out-of-range    check-error-tag
-  3 0 make-vct 3 0 make-vct -1 <'> multiply-arrays       'out-of-range    check-error-tag
+  sf-dir "bad_chans.snd" $+  <'> make-readin            'bad-header       check-error-tag
+  30 3 0 make-vct            <'> make-iir-filter        'mus-error        check-error-tag
+  :size 2 30 f** f>s         <'> make-wave-train        'out-of-range     check-error-tag
+  0.0                        <'> set-mus-srate          'out-of-range     check-error-tag
+  -1000                      <'> set-mus-srate          'out-of-range     check-error-tag
+  3 0 make-vct 3 0 make-vct -1 <'> dot-product          'out-of-range     check-error-tag
+  3 0 make-vct 3 0 make-vct -1 <'> multiply-arrays      'out-of-range     check-error-tag
   3 :initial-element 0.0 :initial-contents vct( 0.1 0.2 0.3 )
   <'> make-delay 'out-of-range check-error-tag
   3 :max-size 100 :initial-contents vct( 0.1 0.2 0.3 )
   <'> make-delay 'out-of-range check-error-tag
-  :size 100 :wave 3 0 make-vct <'> make-table-lookup     'out-of-range    check-error-tag
-  :size 100 :wave 3 0 make-vct <'> make-wave-train       'out-of-range    check-error-tag
-  :max-size 2 30 f** f>s     <'> make-granulate          'out-of-range    check-error-tag
-  100 12345678               <'> make-ssb-am             'out-of-range    check-error-tag
+  :size 100 :wave 3 0 make-vct <'> make-table-lookup    'out-of-range     check-error-tag
+  :size 100 :wave 3 0 make-vct <'> make-wave-train      'out-of-range     check-error-tag
+  :max-size 2 30 f** f>s     <'> make-granulate         'out-of-range     check-error-tag
+  100 12345678               <'> make-ssb-am            'out-of-range     check-error-tag
   :envelope #( 0 0 1 1 ) :distribution 10 0 make-vct <'> make-rand 'mus-error check-error-tag
-  :envelope #( 0 0 1 )       <'> make-rand               'mus-error       check-error-tag
-  :envelope #( 0 0 1 1 ) :size -2 <'> make-rand          'out-of-range    check-error-tag
-  :envelope #( 0 0 1 1 ) :size 1234567890 <'> make-rand  'out-of-range    check-error-tag
+  :envelope #( 0 0 1 )       <'> make-rand              'mus-error        check-error-tag
+  :envelope #( 0 0 1 1 ) :size -2 <'> make-rand         'out-of-range     check-error-tag
+  :envelope #( 0 0 1 1 ) :size 1234567890 <'> make-rand 'out-of-range     check-error-tag
   make-granulate #f           <'> noop 3 make-proc <'> granulate     'bad-arity check-error-tag
   make-phase-vocoder #f       <'> noop 0 make-proc <'> phase-vocoder 'bad-arity check-error-tag
   make-phase-vocoder #f #f    <'> noop 0 make-proc <'> phase-vocoder 'bad-arity check-error-tag
@@ -2886,23 +2894,22 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   3 :xcoeffs vct-3 :ycoeffs vct-3 make-filter 4 <'> mus-ycoeff 'mus-error check-error-tag
   3 :xcoeffs vct-3 :ycoeffs vct-3 make-filter 4 1.0 <'> set-mus-xcoeff 'mus-error check-error-tag
   3 :xcoeffs vct-3 :ycoeffs vct-3 make-filter 4 1.0 <'> set-mus-ycoeff 'mus-error check-error-tag
-  :ycoeffs 4 0 make-vct :order 12 <'> make-filter        'mus-error       check-error-tag
-  make-oscil 1               <'> set-mus-offset          'mus-error       check-error-tag
-  :channels 2 30 f** f>s     <'> make-locsig             'out-of-range    check-error-tag
-  :width 3000                <'> make-src                'out-of-range    check-error-tag
-  -1                         <'> make-frame              'out-of-range    check-error-tag
-  2 0.1 0.2 make-frame 3     <'> frame-ref               'mus-error       check-error-tag
-  0 0.1                      <'> make-scalar-mixer       'out-of-range    check-error-tag
-  2 make-mixer 3 4           <'> mixer-ref               'mus-error       check-error-tag
-  :fft-size 2 30 f** f>s     <'> make-phase-vocoder      'out-of-range    check-error-tag
+  :ycoeffs 4 0 make-vct :order 12 <'> make-filter       'mus-error        check-error-tag
+  make-oscil 1               <'> set-mus-offset         'mus-error        check-error-tag
+  :channels 2 30 f** f>s     <'> make-locsig            'out-of-range     check-error-tag
+  :width 3000                <'> make-src               'out-of-range     check-error-tag
+  -1                         <'> make-frame             'out-of-range     check-error-tag
+  2 0.1 0.2 make-frame 3     <'> frame-ref              'mus-error        check-error-tag
+  0 0.1                      <'> make-scalar-mixer      'out-of-range     check-error-tag
+  2 make-mixer 3 4           <'> mixer-ref              'mus-error        check-error-tag
+  :fft-size 2 30 f** f>s     <'> make-phase-vocoder     'out-of-range     check-error-tag
   :input <'> noop 1 make-proc make-src 2000000.0 <'> src 'out-of-range    check-error-tag
-  #( 1 1 ) -1                <'> partials->polynomial    'out-of-range    check-error-tag
-  #( 1 1 ) 3                 <'> partials->polynomial    'out-of-range    check-error-tag
-  :partials #( 1 1 ) :kind -1 <'> make-polyshape         'out-of-range    check-error-tag
-  :partials #( 1 1 ) :kind 3 <'> make-polyshape          'out-of-range    check-error-tag
+  #( 1 1 ) -1                <'> partials->polynomial   'out-of-range     check-error-tag
+  #( 1 1 ) 3                 <'> partials->polynomial   'out-of-range     check-error-tag
+  :partials #( 1 1 ) :kind -1 <'> make-polyshape        'out-of-range     check-error-tag
+  :partials #( 1 1 ) :kind 3 <'> make-polyshape         'out-of-range     check-error-tag
   1234                       <'> set-mus-header-raw-defaults 'wrong-type-arg check-error-tag
   #( 44100 2.123 "hi" )      <'> set-mus-header-raw-defaults 'wrong-type-arg check-error-tag
-  \ FIXME: key args should come here
   mus-audio-reinitialize drop
   10 set-window-y drop
   dismiss-all-dialogs
@@ -2950,20 +2957,12 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   "test.snd" file-delete
   $" cp -f oboe.snd test.snd" file-system drop
   "test.snd" 0o200 file-chmod
-  \ FIXME (GTK)
-  \ test.snd 0o200 chmod -> open-sound: doesn't work under snd-forth-gtk!
-  \ It works if I do it in the listener by hand.
-  \ gdb: 0x080d6e74 in tick_peak_env (cp=0x2c621e00, es=0x2d36b540)
-  \  at /usr/gnu/cvs/snd/snd-snd.c:337
-  \  337               if ((cp->edit_ctr == 0) &&
-  'snd-gtk unless
-    "test.snd" <'> open-sound #t nil fth-catch to tag
-    stack-reset
-    tag if
-      tag car 'no-such-file =
-      tag car 'mus-error    = || unless
-	$" open read-protected sound worked!: %s" #( tag ) snd-display
-      then
+  "test.snd" <'> open-sound #t nil fth-catch to tag
+  stack-reset
+  tag if
+    tag car 'no-such-file =
+    tag car 'mus-error    = || unless
+      $" open read-protected sound worked!: %s" #( tag ) snd-display
     then
   then
   "test.snd" 0o644 file-chmod
@@ -3017,7 +3016,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   8 max-regions max set-max-regions drop
   "oboe.snd" open-sound to ind
   0 100 ind 0 make-region { reg }
-  0 reg make-region-sampler to rd
+  reg 0 make-region-sampler to rd
   ind close-sound drop
   reg forget-region drop
   10 0 do rd read-sample drop loop
@@ -3042,6 +3041,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   ind revert-sound drop
   \ 
   100 0.5 ind 0 set-sample drop
+  \ INFO:
   \ Doesn't work like expected with FTH.  If more values on stack
   \ than needed, no exception can be raised.  No one knows who will
   \ take and need them.  So we have 'no-such-channel as first
@@ -3411,15 +3411,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
 		#( #f #t #() 1234 vct-5 ) each to arg7
 		  #( 1.5 -1 "/hiho" #() ) each to arg8
 		    #( 1.5 -1 #() ) each to arg9
-		      \ FIXME:
-		      \ procs10 contains GRAPH and RESTORE-REGION.
-		      \ RESTORE-REGION doesn't test for the 10th argument, a list of length 2.
-		      \ check_saved_temp_file() doesn't test it too
-		      \ and crashes with signal illegal instruction.
-		      \ That's why the three arrays for arg0 to be nice to RESTORE-REGION.
-		      \ (RESTORE-REGION is an internal function.)
-		      \ original arg0: #( #f -1 1234 )
-		      #( #( 0 0 ) #( 1 1 ) #( -1 1234 ) ) each to arg0
+		      #( #f -1 1234 ) each to arg0
 			procs10 each to prc
 			  arg1 arg2 arg3 arg4 arg5 arg6 arg7 arg8 arg9 arg0 prc #t nil fth-catch
 			  to tag

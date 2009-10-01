@@ -470,7 +470,7 @@ static void run_peak_env_hook(chan_info *cp)
 {
   if (XEN_HOOKED(peak_env_hook))
     run_hook(peak_env_hook, 
-	     XEN_LIST_2(C_TO_XEN_INT(cp->sound->index),
+	     XEN_LIST_2(C_INT_TO_XEN_SOUND(cp->sound->index),
 			C_TO_XEN_INT(cp->chan)),
 	     S_peak_env_hook);
 }
@@ -1473,7 +1473,7 @@ void sp_name_click(snd_info *sp)
       /* call name-click-hook (if any) return #t = don't print info in minibuffer */
       if ((XEN_HOOKED(name_click_hook)) &&
 	  (XEN_TRUE_P(run_or_hook(name_click_hook, 
-				  XEN_LIST_1(C_TO_XEN_INT(sp->index)),
+				  XEN_LIST_1(C_INT_TO_XEN_SOUND(sp->index)),
 				  S_name_click_hook))))
 	return;
       hdr = sp->hdr;

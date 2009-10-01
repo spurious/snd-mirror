@@ -1319,7 +1319,7 @@ void popup_menu_from(GtkWidget *w, GdkEventButton *ev, gpointer data, int snd, i
 			      XEN_LIST_5(XEN_WRAP_WIDGET(w),
 					 XEN_WRAP_EVENT((GdkEvent *)ev),
 					 XEN_WRAP_C_POINTER(data),
-					 C_TO_XEN_INT(snd),
+					 C_INT_TO_XEN_SOUND(snd),
 					 C_TO_XEN_INT(chn)),
 				  "gtk-popup-hook");
       if (XEN_TRUE_P(result)) return;

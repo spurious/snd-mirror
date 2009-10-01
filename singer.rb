@@ -1,8 +1,8 @@
 # singer.rb -- singer.ins -> singer.scm -> singer.rb -*- snd-ruby -*-
 
-# Translator: Michael Scholz <scholz-micha@gmx.de>
+# Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Sat Apr 23 13:07:53 CEST 2005
-# Changed: Sat Oct 14 02:37:59 CEST 2006
+# Changed: Fri Jul 06 01:52:50 CEST 2007
 
 # Commentary:
 #

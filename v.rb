@@ -1,8 +1,8 @@
 # v.rb -*- snd-ruby -*-
 
-# Translator: Michael Scholz <scholz-micha@gmx.de>
+# Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Wed Nov 20 02:24:34 CET 2002
-# Changed: Mon Nov 27 18:13:03 CET 2006
+# Changed: Fri Jul 06 01:52:46 CEST 2007
 
 # Comment:
 #

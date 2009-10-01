@@ -173,7 +173,7 @@ void draw_cursor(chan_info *cp)
       save_cursor_pix(cp, ax, csize, csize, cx0, cy0);
 #endif
       XEN_CALL_3((XEN_PROCEDURE_P(cp->cursor_proc)) ? (cp->cursor_proc) : (ss->cursor_proc),
-		 C_TO_XEN_INT(cp->sound->index),
+		 C_INT_TO_XEN_SOUND(cp->sound->index),
 		 C_TO_XEN_INT(cp->chan),
 		 /* this was time-graph, which was useless. It's now #t if we're in tracking-cursor mode */
 		 /*   this will be called only it with_tracking_cursor is #f -> we want to draw it ourselves */
@@ -210,7 +210,7 @@ static axis_context *get_ax(chan_info *cp, int ax_id, const char *caller)
 	    XEN_LIST_3(C_TO_XEN_STRING(caller),
 		       C_TO_XEN_STRING("axis: ~A, sound index: ~A (~A), chan: ~A"),
 		       XEN_LIST_4(C_TO_XEN_INT(ax_id),
-				  C_TO_XEN_INT(cp->sound->index),
+				  C_INT_TO_XEN_SOUND(cp->sound->index),
 				  C_TO_XEN_STRING(cp->sound->short_filename),
 				  C_TO_XEN_INT(cp->chan))));
   return(NULL);
@@ -237,7 +237,7 @@ axis_info *get_ap(chan_info *cp, axis_info_t ap_id, const char *caller)
 		       C_TO_XEN_STRING("axis: ~A of sound ~A (~A), chan: ~A (axis should be " S_time_graph ", " S_lisp_graph ", or " S_transform_graph ")") :
 		       C_TO_XEN_STRING("axis: ~A of sound ~A (~A), chan: ~A does not exist, probably because output is squelched"),
 		       XEN_LIST_4(C_TO_XEN_INT((int)(ap_id)),
-				  C_TO_XEN_INT(cp->sound->index),
+				  C_INT_TO_XEN_SOUND(cp->sound->index),
 				  C_TO_XEN_STRING(cp->sound->short_filename),
 				  C_TO_XEN_INT(cp->chan))));
   return(NULL);
