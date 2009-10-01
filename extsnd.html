@@ -199,7 +199,7 @@ are in <em class=listener>this color</em>):
 <tr>
 <td bgcolor="#fbfbff" onmouseout="UnTip()" onmouseover="Tip('this opens oboe.snd; the &quot;0&quot; returned is the new sound\'s \'index\'')"><pre>
 &gt;<em class=typing>(open-sound "oboe.snd")</em>
-<em class=listener>0</em>
+<em class=listener>#&lt;sound 0&gt;</em>
 </pre></td><td></td>
 
 <td bgcolor="#FdFdf2"><pre>
@@ -271,7 +271,7 @@ are in <em class=listener>this color</em>):
 <tr>
 <td bgcolor="#fbfbff" onmouseout="UnTip()" onmouseover="Tip('this is Scheme\'s way of saying the previous evaluation returned no newsworthy result.')"><pre>
 &gt;<em class=typing>(load "bird.scm")</em>
-<em class=listener>#&lt;unspecified&gt;</em>
+<em class=listener>make-birds</em>
 </pre></td><td></td>
 
 <td bgcolor="#FdFdf2"><pre>
@@ -307,7 +307,7 @@ are in <em class=listener>this color</em>):
 <tr>
 <td bgcolor="#fbfbff"><pre>
 &gt;<em class=typing>(define (plus a b) (+ a b))</em>
-<em class=listener>#&lt;unspecified&gt;</em>
+<em class=listener>plus</em>
 </pre></td><td></td>
 
 <td bgcolor="#FdFdf2"><pre>
@@ -626,9 +626,9 @@ pressing a key (<a href="#keypresshook">key-press-hook</a>), and so on.</p>
 
 <p>The global variables handle various customizations that aren't callback-oriented.
 For example, 
-as panes (sounds) come and go, Snd's overall size may change (this is
+as sounds come and go, Snd's overall size may change (this is
 partly determined by the window manager, but is also
-up to Snd); many people find this distracting &mdash; they would rather that the
+up to Snd).  Many people find this distracting &mdash; they would rather that the
 overall window stick to one size.  The Snd variable associated
 with this is "auto-resize"; it can be accessed as:
 </p>
@@ -1003,7 +1003,7 @@ open-file-dialog-directory is the name of the initial open file dialog directory
 
 <!-- optimization -->
 <tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="optimization">optimization</a></code></td>
-<td bgcolor="#f2f4ff"><code>0</code></td></tr><tr><td></td><td colspan=2>
+<td bgcolor="#f2f4ff"><code>6</code></td></tr><tr><td></td><td colspan=2>
 optimization affects optimization levels in Scheme.
 If non-zero, it causes Snd to try to optimize simple lambda forms passed to the searches and so forth.
 This depends partly on the optargs module, and 
@@ -1203,7 +1203,7 @@ Mono sounds and the listener are not affected (perhaps they should be?).
 This determines what a zoom action focuses (centers) on. The choices are 
 <code>zoom-focus-left</code>, <code>zoom-focus-right</code>, <code>zoom-focus-active</code>, <code>zoom-focus-middle</code>,
 or a function of 6 arguments.  The function should return the new window left edge as a float.
-Its arguments are the current sound index, channel number, zoom slider value (0.0 to 1.0), time domain window left and right
+Its arguments are the current sound, channel number, zoom slider value (0.0 to 1.0), time domain window left and right
 edges in seconds, and the current total x axis size (seconds) corresponding to a slider value
 of 1.0.
 <pre>
@@ -1357,7 +1357,7 @@ useful hook-related functions.
 <p>
 In the following list of hooks, the arguments after the hook name refer to the arguments to the functions invoked by
 the hook.  That is, <code>after-apply-controls-hook (snd)</code> means that the functions on the
-<a class=quiet href="#afterapplycontrolshook" onmouseout="UnTip()" onmouseover="Tip(extsnd_afterapplycontrolshook_tip)">after-apply-controls-hook</a> list each take one argument, a sound index.  
+<a class=quiet href="#afterapplycontrolshook" onmouseout="UnTip()" onmouseover="Tip(extsnd_afterapplycontrolshook_tip)">after-apply-controls-hook</a> list each take one argument, a sound.  
 If the argument list is followed by some
 indication such as "[or]", that means the various hook function values are or-d together.
 </p>
@@ -1635,7 +1635,7 @@ See <a href="sndscm.html#withlevelmeters">with-level-meters</a> in snd-motif.scm
 
 <!-- draw-mark-hook -->
 <tr><td colspan=3 bgcolor="#f2f4ff">
-<code><a class=def name="drawmarkhook">draw-mark-hook</a> (id)</code> [<b>progn</b>]
+<code><a class=def name="drawmarkhook">draw-mark-hook</a> (mark)</code> [<b>progn</b>]
 </td></tr><tr><td></td><td colspan=2>
 This hook is called before a mark is drawn (in XOR mode except in cairo). If the hook function returns #t, the mark is not drawn.  
 <a href="sndscm.html#marksynccolor">mark-sync-color</a>
@@ -1645,7 +1645,7 @@ in snd-motif.scm uses this hook to draw sync'd marks in some other color than th
 
 <!-- draw-mix-hook -->
 <tr><td colspan=3 bgcolor="#f2f4ff">
-<code><a class=def name="drawmixhook">draw-mix-hook</a> (id old-x old-y x y)</code> [<b>progn</b>]
+<code><a class=def name="drawmixhook">draw-mix-hook</a> (mix old-x old-y x y)</code> [<b>progn</b>]
 </td></tr><tr><td></td><td colspan=2>
 This hook is called before a mix tag is drawn. If the hook function returns either #t or a list, the mix tag is not drawn by Snd (the
 assumption is that the hook function drew something).  old-x and old-y are the previous mix tag positions (in case
@@ -1668,7 +1668,7 @@ mix the dragged file even from the menubar:
     (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_add_hook_tip)">add-hook!</a> <em class=red>drop-hook</em> (lambda (filename) (<a class=quiet href="#mix" onmouseout="UnTip()" onmouseover="Tip(extsnd_mix_tip)">mix</a> filename) #t)) ; return #t = we already dealt with the drop
 </pre>
 snd-motif.scm has examples that add a drop callback to an arbitrary widget, or
-change an existing callback (to pass the sound index and channel number to the drop callback function, bypassing drop-hook).
+change an existing callback (to pass the sound and channel number to the drop callback function, bypassing drop-hook).
 </td></tr><tr><td colspan=3 height=16></td></tr>
 
 
@@ -1881,7 +1881,7 @@ See <a href="sndscm.html#clickforlistenerhelp">click-for-listener-help</a> in dr
 
 <!-- mark-click-hook -->
 <tr><td colspan=3 bgcolor="#f2f4ff">
-<code><a class=def name="markclickhook">mark-click-hook</a> (id)</code> [<b>progn</b>]
+<code><a class=def name="markclickhook">mark-click-hook</a> (mark)</code> [<b>progn</b>]
 </td></tr><tr><td></td><td colspan=2>
 This hook is called when a mark is clicked; return #t to squelch the default minibuffer mark identification.  The following 
 hook function is used in <a href="sndscm.html#withmarkedsound">with-marked-sound</a> in ws.scm to display arbitrary info about a mark.
@@ -1891,7 +1891,7 @@ hook function is used in <a href="sndscm.html#withmarkedsound">with-marked-sound
   (lambda (n) 
     (if (not (defined? 'mark-properties)) (load "marks.scm"))
     (<a class=quiet href="#infodialog" onmouseout="UnTip()" onmouseover="Tip(extsnd_infodialog_tip)">info-dialog</a> "Mark Help"
-      (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "Mark ~D~A:~%  sample: ~D = ~,3F secs~A~A"
+      (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "Mark ~A~A:~%  sample: ~D = ~,3F secs~A~A"
 	      n 
 	      (let ((name (<a class=quiet href="#markname" onmouseout="UnTip()" onmouseover="Tip(extsnd_markname_tip)">mark-name</a> n)))
    	        (if (&gt; (string-length name) 0)
@@ -1913,7 +1913,7 @@ hook function is used in <a href="sndscm.html#withmarkedsound">with-marked-sound
 
 <!-- mark-drag-hook -->
 <tr><td colspan=3 bgcolor="#f2f4ff">
-<code><a class=def name="markdraghook">mark-drag-hook</a> (id)</code>
+<code><a class=def name="markdraghook">mark-drag-hook</a> (mark)</code>
 </td></tr><tr><td></td><td colspan=2>
 This hook is called when a mark is dragged.
 
@@ -1923,7 +1923,7 @@ This hook is called when a mark is dragged.
   (let ((samp (<a class=quiet href="#marksample" onmouseout="UnTip()" onmouseover="Tip(extsnd_marksample_tip)">mark-sample</a> id))
         (sndchn (<a class=quiet href="#markhome" onmouseout="UnTip()" onmouseover="Tip(extsnd_markhome_tip)">mark-home</a> id)))
     (<a class=quiet href="#reportinminibuffer" onmouseout="UnTip()" onmouseover="Tip(extsnd_reportinminibuffer_tip)">report-in-minibuffer</a> 
-      (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "mark ~D: sample: ~D (~,3F) ~A[~D]: ~,3F"
+      (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "mark ~A: sample: ~D (~,3F) ~A[~D]: ~,3F"
               id samp 
               (/ samp (<a class=quiet href="#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a> (car sndchn))) 
               (<a class=quiet href="#shortfilename" onmouseout="UnTip()" onmouseover="Tip(extsnd_shortfilename_tip)">short-file-name</a> (car sndchn))
@@ -1936,12 +1936,12 @@ This hook is called when a mark is dragged.
 
 <!-- mark-drag-triangle-hook -->
 <tr><td colspan=3 bgcolor="#f2f4ff">
-<code><a class=def name="markdragtrianglehook">mark-drag-triangle-hook</a> (id x time dragged-before)</code> [<b>progn</b>]
+<code><a class=def name="markdragtrianglehook">mark-drag-triangle-hook</a> (mark x time dragged-before)</code> [<b>progn</b>]
 </td></tr><tr><td></td><td colspan=2>
 This hook is called when a mark play triangle is dragged.  The smoothness of the response to the drag motion is
 largely determined by <a href="#dacsize">dac-size</a>.
 'dragged-before' is #f when the drag starts and #t thereafter.  'x' is the mouse x location in the current
-graph. 'time' is the uninterpreted (graphics toolkit) time at which the drag event was reported. 'id' is the mark id. If the hook function returns #t,
+graph. 'time' is the uninterpreted (graphics toolkit) time at which the drag event was reported. If the hook function returns #t,
 Snd takes no further action.  To set up to play, then interpret the motion yourself, return #f on the first call,
 and #t thereafter:
 
@@ -1958,9 +1958,9 @@ and #t thereafter:
 
 <!-- mark-hook -->
 <tr><td colspan=3 bgcolor="#f2f4ff">
-<code><a class=def name="markhook">mark-hook</a> (id snd chn reason)</code>
+<code><a class=def name="markhook">mark-hook</a> (mark snd chn reason)</code>
 </td></tr><tr><td></td><td colspan=2>
-This hook is called when a mark is added, deleted, or moved (but not while moving). 'id' can be #f (i.e. no specific mark) or a mark.
+This hook is called when a mark is added, deleted, or moved (but not while moving). 
 'reason' can be 0: add, 1: delete, 2: move (via set! mark-sample), 3: delete all marks, 4: release (after drag). 
 In the "release" case, the hook is called upon button release before any edits (control-drag of mark) or sorting (simple drag),
 and if the <a href="#marksync">mark-sync</a> is not 0, the hook is called on each syncd mark.
@@ -1987,7 +1987,7 @@ and if the <a href="#marksync">mark-sync</a> is not 0, the hook is called on eac
 
 <!-- mix-click-hook -->
 <tr><td colspan=3 bgcolor="#f2f4ff">
-<code><a class=def name="mixclickhook">mix-click-hook</a> (id)</code> [<b>progn</b>]
+<code><a class=def name="mixclickhook">mix-click-hook</a> (mix)</code> [<b>progn</b>]
 </td></tr><tr><td></td><td colspan=2>
 This hook is called when a mix tag is clicked; return #t to omit the default action which is to print the mix id in
 the minibuffer.  A more informative version is <a href="sndscm.html#mixclickinfo">mix-click-info</a> in mix.scm.
@@ -2004,7 +2004,7 @@ in mix.scm for a fancier version):
 
 <!-- mix-drag-hook -->
 <tr><td colspan=3 bgcolor="#f2f4ff">
-<code><a class=def name="mixdraghook">mix-drag-hook</a> (id x y)</code>
+<code><a class=def name="mixdraghook">mix-drag-hook</a> (mix x y)</code>
 </td></tr><tr><td></td><td colspan=2>
 This hook is called when a mix is dragged.
 
@@ -2029,9 +2029,9 @@ moving value as a comb filter.
 
 <!-- mix-release-hook -->
 <tr><td colspan=3 bgcolor="#f2f4ff">
-<code><a class=def name="mixreleasehook">mix-release-hook</a> (id samps)</code> [<b>progn</b>]
+<code><a class=def name="mixreleasehook">mix-release-hook</a> (mix samps)</code> [<b>progn</b>]
 </td></tr><tr><td></td><td colspan=2>
-This hook is called after a mix has been dragged by the mouse to a new position. 'id' is the mix id,
+This hook is called after a mix has been dragged by the mouse to a new position.
 'samps' is the number of samples moved during the drag.  If its function returns #t, the final position
 of the mix is
 hook's responsibility.  See <a href="sndscm.html#snapmarktobeat">snap-mix-to-beat</a> in mix.scm.
@@ -2477,7 +2477,7 @@ to keep the loop bounds up-to-date.
 <tr><td colspan=3 bgcolor="#f2f4ff">
 <code><a class=def name="selectsoundhook">select-sound-hook</a> (snd)</code>
 </td></tr><tr><td></td><td colspan=2>
-This hook is called when a sound is selected. The argument is the about-to-be-selected sound's index.
+This hook is called when a sound is selected. The argument is the about-to-be-selected sound.
 </td></tr><tr><td colspan=3 height=16></td></tr>
 
 
@@ -2620,7 +2620,7 @@ is useful if you overwrite a sound file with some other program, while viewing i
 The update process can be triggered by a variety of situations, not just by <a href="#updatesound">update-sound</a>. 
 The hook is passed the sound's index.  If its function returns #t, the update is cancelled (this is not 
 recommended!); if it returns a procedure of one argument, that procedure is called upon 
-completion of the update operation; its argument is the (possibly different) sound index. 
+completion of the update operation; its argument is the (possibly different) sound. 
 Snd tries to maintain the index across the update, but if you change the number of channels 
 the newly updated sound may have a different index.  <a href="sndscm.html#addmarkpane">add-mark-pane</a> in snd-motif.scm uses
 the returned procedure to make sure the mark pane is reactivated right away when a sound is updated. The basic idea is:
@@ -2664,7 +2664,7 @@ then get the exploding bomb icon because their underlying data has changed):
 </pre></td></tr></table>
 
 Actually this only works if there are just two windows on the same (mono) sound.  I suppose for
-trickier cases, we could set up an association list with the old sound index ("cursnd" above) and its edits,
+trickier cases, we could set up an association list with the old sound ("cursnd" above) and its edits,
 but it's probably better to bind some keystroke to a function that performs the same operations.
 </td></tr><tr><td colspan=3 height=16></td></tr>
 
@@ -2759,19 +2759,15 @@ about the following documentation.
 </p>
 
 <p>
-Each sound has an
-associated index used to refer to it in all the
-functions.  This arbitrary number is more
-or less related to the sound's position in the
-display of sounds (if the variable <a href="#showindices">show-indices</a> is #t,
-the index is displayed in front of the sound's name).
+Each sound is an object in Snd, and has an
+associated index.  To refer to that sound, you can use either the object or the index.
 In the argument lists
-below, 'snd' as an argument refers to the sound's index, and defaults to the currently
+below, 'snd' as an argument refers to either the sound object or its index.  It normally defaults to the currently
 selected sound.  Similarly, 'chn' is the channel number, starting from 0, and defaults
-to the currently selected channel.  So if there's only one sound active (say its index is 0), and it has only
-one channel, (cursor), (cursor 0), and (cursor 0 0) all refer to the same
-thing.  If you want to refer to the currently selected sound explicitly, either use #f
-as the sound index or <a href="#selectedsound">selected-sound</a>.
+to the currently selected channel.  So if there's only one sound active, and it has only
+one channel, (cursor), (cursor 0), (cursor 0 0), and (cursor (integer-&gt;sound 0)) all refer to the same
+thing.  If you want to refer to the currently selected sound explicitly, use
+<a href="#selectedsound">selected-sound</a>.
 </p>
 
 <p>Some functions take <a class=quiet href="sndclm.html#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">optional-key</a> arguments, as in CLM.
@@ -2891,11 +2887,11 @@ starting at sample 'start' with initial read direction 'dir'
 it defaults to the current edit. 
 <pre>
     :<em class=typing>(open-sound "oboe.snd")</em>
-    <em class=listener>0</em>
+    <em class=listener>#&lt;sound 0&gt;</em>
     :<em class=typing>(define reader (make-sampler 1000))</em>
-    <em class=listener>#&lt;unspecified&gt;</em>
+    <em class=listener>reader</em>
     :<em class=typing>reader</em>
-    <em class=listener>#&lt;sampler: oboe.snd[0: 0] from 1000, at 1000&gt;</em>
+    <em class=listener>#&lt;sampler: oboe.snd[0: 0] from 1000, at 1000, forward&gt;</em>
     :<em class=typing>(read-sample reader)</em>
     <em class=listener>0.0328369140625</em>
     :<em class=typing>(sample 1000)</em>
@@ -2905,7 +2901,7 @@ it defaults to the current edit.
     :<em class=typing>(sample 1001)</em>
     <em class=listener>0.0347900390625</em>
     :<em class=typing>(sampler-home reader)</em>
-    <em class=listener>(0 0)</em>
+    <em class=listener>(#&lt;sound 0&gt; 0)</em>
     :<em class=typing>(sampler-position reader)</em>
     <em class=listener>1002</em>
 </pre>
@@ -3018,8 +3014,8 @@ See <a href="sndscm.html#locatezero">locate-zero</a> in examp.scm, or <a href="s
 <tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="samplerhome">sampler-home</a> (obj)</code>
 </td></tr><tr><td></td><td>
 sampler-home returns information describing the source of the data the sampler 'obj' is reading.
-if 'obj' is a sound sampler, it returns a list with the sound index and channel number associated with 'obj'.
-If 'obj' is a mix reader, it returns the mix's id. 
+if 'obj' is a sound sampler, it returns a list with the sound and channel number associated with 'obj'.
+If 'obj' is a mix reader, it returns the mix. 
 Finally, if 'obj' is a region reader, it returns a list with the region.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -4407,8 +4403,7 @@ throw 'mus-error upon encountering an error, rather than returning -1 like the u
 
 <p>A mark is an object that refers to a particular sample.
 Each mark has an associated sample number (<a class=quiet href="#marksample" onmouseout="UnTip()" onmouseover="Tip(extsnd_marksample_tip)">mark-sample</a>), 
-name (<a class=quiet href="#markname" onmouseout="UnTip()" onmouseover="Tip(extsnd_markname_tip)">mark-name</a>), sync value (<a class=quiet href="#marksync" onmouseout="UnTip()" onmouseover="Tip(extsnd_marksync_tip)">mark-sync</a>), and
-a globally unique id number (returned by <a class=quiet href="#findmark" onmouseout="UnTip()" onmouseover="Tip(extsnd_findmark_tip)">find-mark</a> or <a class=quiet href="#addmark" onmouseout="UnTip()" onmouseover="Tip(extsnd_addmark_tip)">add-mark</a>).  
+name (<a class=quiet href="#markname" onmouseout="UnTip()" onmouseover="Tip(extsnd_markname_tip)">mark-name</a>), and sync value (<a class=quiet href="#marksync" onmouseout="UnTip()" onmouseover="Tip(extsnd_marksync_tip)">mark-sync</a>).
 See <a href="snd.html#marks">Marks</a> in snd.html
 for an overview and key bindings associated with marks.
 See also the <a href="#sndhooks">hooks</a> section above for various mark-related hooks.
@@ -4423,13 +4418,11 @@ See also the <a href="#sndhooks">hooks</a> section above for various mark-relate
 <tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="addmark">add-mark</a> (sample :optional snd chn name sync)</code>
 </td></tr><tr><td width=30><br></td><td>
 add-mark adds a mark at the position 'sample', returning the new mark.
-Since a mark
-can move around during editing, a unique tag is needed to refer to a 
-particular mark; we call this thing its 'id' throughout this section.
-The identifier is used to specify the mark in all the mark-related functions such as <a href="#marksample">mark-sample</a>:
 <pre>
     :<em class=typing>(define m1 (add-mark 1234))</em>
     <em class=listener>m1</em>
+    :<em class=typing>m1</em>
+    <em class=listener>#&lt;mark 0&gt;</em>
     :<em class=typing>(mark-sample m1)</em>
     <em class=listener>1234</em>
 </pre>
@@ -4441,9 +4434,9 @@ rather than throwing the 'no-such-sample error.
 
 
 <!-- delete-mark -->
-<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="deletemark">delete-mark</a> (id)</code>
+<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="deletemark">delete-mark</a> (mark)</code>
 </td></tr><tr><td></td><td>
-delete-mark deletes the mark 'id'.  Mark additions and deletions follow the
+delete-mark deletes the mark.  Mark additions and deletions follow the
 edit list, so if the deleted mark was present in an earlier edit, and you undo to that point,
 the mark comes back to life.
 </td></tr><tr><td colspan=2 height=16></td></tr>
@@ -4487,24 +4480,22 @@ This is the graphics context to use to draw a mark (XOR mode).
 
 
 <!-- mark-home -->
-<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="markhome">mark-home</a> (id)</code>
+<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="markhome">mark-home</a> (mark)</code>
 </td></tr><tr><td></td><td>
-mark-home is a list with the sound index and channel that hold the mark 'id'.
-This provides a way to go from a mark to its sound and
-channel.
+mark-home is a list with the sound and channel that hold the mark.
 <pre>
     :<em class=typing>(marks 0 0)</em>   ; what marks are in snd 0, chn 0?
     <em class=listener>(#&lt;mark 0&gt;)</em>            ; just one
     :<em class=typing>(mark-home (car (marks 0 0)))</em> ; what is that mark's snd/chn?
-    <em class=listener>(0 0)</em>
+    <em class=listener>(#&lt;sound 0&gt; 0)</em>
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
 <!-- mark-name -->
-<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="markname">mark-name</a> (id)</code>
+<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="markname">mark-name</a> (mark)</code>
 </td></tr><tr><td></td><td>
-This is the name of the mark 'id'.
+This is the name of the mark.
 <pre>
     :<em class=typing>(define m1 (add-mark 1234 0 0 "a name"))</em>
     <em class=listener>m1</em>
@@ -4519,9 +4510,9 @@ This is the name of the mark 'id'.
 
 
 <!-- mark-sample -->
-<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="marksample">mark-sample</a> (id :optional edpos)</code>
+<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="marksample">mark-sample</a> (mark :optional edpos)</code>
 </td></tr><tr><td></td><td>
-mark-sample is the sample number (a location) marked by the mark 'id' at edit history position 'edpos'.
+mark-sample is the sample number (a location) marked by the mark at edit history position 'edpos'.
 <pre>
     :<em class=typing>(mark-sample m1)</em>
     <em class=listener>1234</em>
@@ -4543,7 +4534,7 @@ continues to point to its original sample:
 
 
 <!-- mark-sync -->
-<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="marksync">mark-sync</a> (id)</code>
+<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="marksync">mark-sync</a> (mark)</code>
 </td></tr><tr><td></td><td>
 This is the 
 mark's sync field (the default is 0).
@@ -4617,8 +4608,8 @@ each sound and its channels.
   (apply + (map how-many-marks-in-sound (<a class=quiet href="#sounds" onmouseout="UnTip()" onmouseover="Tip(extsnd_sounds_tip)">sounds</a>))))
 </pre></td></tr></table>
 
-marks
-without any argument, or with just a sound index returns a list of lists; each inner list is the list
+If the marks function is called
+without any argument, or with just a sound, it returns a list of lists; each inner list is the list
 of current marks active in that channel, ordered by sample number.  If the channel argument is
 specified, marks returns just the list of marks.  If the edit history position is given,
 the list of marks reflects the marks active at that point in the edit history.  See <a href="sndscm.html#describemark">describe-mark</a> in marks.scm.
@@ -4637,9 +4628,9 @@ in the 2nd channel of the 2nd (a stereo sound):
 
 
 <!-- mark? -->
-<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="markp">mark?</a> (id)</code>
+<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="markp">mark?</a> (obj)</code>
 </td></tr><tr><td></td><td>
-mark? returns #t if mark 'id' is active (that is, if it is present in a currently open channel).
+mark? returns #t if 'obj' is a mark and is active (that is, if it is present in a currently open channel).
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -4815,7 +4806,7 @@ We can use <a href="sndscm.html#dlocsigdoc">dlocsig</a> in conjunction with mix 
 </td></tr><tr><td></td><td>
 mixes returns a list of the mix objects associated with the given channel at the edit history position 'edpos'.
 If the channel argument is omitted, you get a list of lists, each inner list referring to a single channel of that sound.
-If the sound index is also omitted, you get a list of lists of lists, the outer list referring to each sound, each
+If the sound is also omitted, you get a list of lists of lists, the outer list referring to each sound, each
 inner list to that sound's channels.  Say we have two sounds open, 2 mixes in the first (a mono sound), and 1 mix
 in the 2nd channel of the 2nd (a stereo sound):
 <pre>
@@ -4857,7 +4848,7 @@ sets mix mx's envelope to a ramp.
 </td></tr><tr><td></td><td>
 This is the color of mix waveforms; it defaults to dark-gray.
 If you
-want to set just a particular mix's color, pas the mix object 
+want to set just a particular mix's color, pass the mix object 
 as the 'mix' argument: <code>(set! (mix-color) red)</code> sets all mix waveforms to
 red; but <code>(set! (mix-color mx) red)</code> sets only mix mx's waveform to red.
 </td></tr><tr><td colspan=2 height=16></td></tr>
@@ -4873,17 +4864,17 @@ mix-length returns the mix's length in samples.
 <!-- mix-home-->
 <tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="mixhome">mix-home</a> (mix)</code>
 </td></tr><tr><td></td><td>
-mix-home returns a list containing the mix's output sound index and channel number, and the input original filename (if any), and input channel.
+mix-home returns a list containing the mix's output sound and channel number, and the input original filename (if any), and input channel.
 <pre>
     :<em class=typing>(define mx (mix "pistol.snd" 1000))</em>
     <em class=listener>#&lt;mix 0&gt;</em>
     :<em class=typing>(mix-home mx)</em>
-    <em class=listener>(0 0 "/home/bil/cl/pistol.snd" 0)</em>
+    <em class=listener>(#&lt;sound 0&gt; 0 "/home/bil/cl/pistol.snd" 0)</em>
     ;; (list output-sound-index output-channel input-filename input-channel)
     :<em class=typing>(set! mx (mix-vct (make-vct 100 .1) 2000))</em>
     <em class=listener>#&lt;mix 1&gt;</em>
     :<em class=typing>(mix-home mx)</em>
-    <em class=listener>(0 0 #f 0)</em>
+    <em class=listener>(#&lt;sound 0&gt; 0 #f 0)</em>
     ;;   #f: no input file
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
@@ -4892,7 +4883,7 @@ mix-home returns a list containing the mix's output sound index and channel numb
 <!-- mix-name -->
 <tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="mixname">mix-name</a> (mix)</code>
 </td></tr><tr><td></td><td>
-mix-name is the mix object's name, if any.  The mix name is displayed near the mix tag.
+mix-name is the mix's name, if any.  The mix name is displayed near the mix tag.
 See also <a href="sndscm.html#mixnametoid">mix-name-&gt;id</a>.
 Here's an example that uses the mix name and the tag location (mix-tag-y) to provide some pitch
 feedback:
@@ -5106,10 +5097,9 @@ This is the maximum height in pixels of mix waveforms.  The default is 20 (see <
 
 
 <!-- mix? -->
-<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="mixp">mix?</a> (id)</code>
+<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="mixp">mix?</a> (obj)</code>
 </td></tr><tr><td></td><td>
-mix? returns #t if 'id' is an active mix (that is, it is a mix object and it is accessible in a channel's edit list).
-Otherwise mix? returns #f.
+mix? returns #t if 'obj' is a mix object and it is accessible in a channel's edit list.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -5171,8 +5161,6 @@ with-sound (a notelist) expanded into mixes: <a href="sndscm.html#withmixedsound
 <p>A region is a saved portion of sound data.  Use the View:Region browser to inspect, edit, and save regions.
 As regions are defined, the new ones are pushed on a stack, and if enough regions already
 exist, old ones are pushed off (and deleted) to make room.
-Each region has a unique id returned by make-region and shown beside the region name in the Region Browser.
-Most of the region arguments default to the current region (the top of the regions stack).
 </p>
 
 
@@ -5235,8 +5223,7 @@ This creates a <a href="#samplers">sampler</a> reading the region's channel 'chn
 <tr><td colspan=2 bgcolor="#f2f4ff"><code><em class=emdef>mix-region</em> reg samp :optional snd chn</code>
 </td></tr><tr><td></td><td>
 mix-region mixes region 'reg' into the given channel starting at sample 'samp' (defaulting to the cursor location).
-It returns the id of the first channel's 
-mix (subsequent channels simply increment this number).
+It returns a list of mixes, one for each channel mixed.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -5272,8 +5259,8 @@ This returns the number of channels in the region 'reg'.
 region-frames returns the number of frames in the region 'reg'.
 <pre>
     :<em class=typing>(make-region 100 200)</em>
-    <em class=listener>1</em>
-    :<em class=typing>(region-frames 1)</em>
+    <em class=listener>#&lt;region 1&gt;</em>
+    :<em class=typing>(region-frames (integer-&gt;region 1))</em>
     <em class=listener>101</em>
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
@@ -5346,7 +5333,7 @@ rather than creating a new vct.
 
 <table border=0 cellpadding=5><tr><td><pre>
 (define (region-rms n)
-  (let* ((data (<em class=red>region-&gt;vct</em> 0 0 n)) ; len=0 =&gt; entire region
+  (let* ((data (<em class=red>region-&gt;vct</em> (integer-&gt;region 0) 0 #f n))
 	 (len (<a class=quiet href="#vctlength" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctlength_tip)">vct-length</a> data)))
     (sqrt (/ (<a class=quiet href="sndclm.html#dot-product" onmouseout="UnTip()" onmouseover="Tip(sndclm_dot_product_tip)">dot-product</a> data data len) len))))
 </pre></td></tr></table>
@@ -5365,7 +5352,7 @@ region-srate returns the sampling rate of the data that makes up the region 'reg
 </td></tr><tr><td></td><td>
 regions returns a list of active regions.  The most recently created region is <code>(car (regions))</code>.
 <code>(map region-frames (regions))</code> returns a list of region lengths.
-The maxmimum length of this list is set by <a href="#maxregions">max-regions</a>.
+The maximum length of this list is set by <a href="#maxregions">max-regions</a>.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -5546,7 +5533,7 @@ scale-selection-by scales (multiplies) the selection by 'scalers' which can be e
 a list of floats, or a vct.  In a multichannel selection, each member of the vct or list
 is applied to the next channel in the selection.  <code>(scale-selection-by '(0.0 2.0))</code> scales
 the first channel by 0.0, the second (if any) by 2.0.  <code>(scale-selection-by 2.0)</code> scales
-all channels by 2.0.  Normally the order of channels follows the order of the sound indices.
+all channels by 2.0.  Normally the order of channels follows the order of the sounds.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -5704,7 +5691,7 @@ swap chans in selected portion: <a href="sndscm.html#swapselectionchannels">swap
 replace portion with selection: <a href="sndscm.html#replacewithselection">replace-with-selection</a><br>
 select portion via function: <a href="sndscm.html#makeselection">make-selection</a><br>
 evaluate func on each sample of selection: <a href="sndscm.html#evaloverselection">eval-over-selection</a> (map-selection in effect)<br>
-selection members as list of lists of sound indices and channels: <a href="sndscm.html#selectionmembers">selection-members</a><br>
+selection members as list of lists of sounds and channels: <a href="sndscm.html#selectionmembers">selection-members</a><br>
 rms of selection data: <a href="sndscm.html#selectionrms">selection-rms</a><br>
 delete selection and smooth the splice: <a href="sndscm.html#deleteselectionandsmooth">delete-selection-and-smooth</a><br>
 select portion between two marks: <a href="sndscm.html#defineselectionviamarks">define-selection-via-marks</a><br>
@@ -5746,7 +5733,7 @@ It's easy to extend the notion of a selection to an arbitrary list of sound port
 
 <p>This is the heart of Snd; we've waded through all the ancillary junk, and we've
 finally reached the functions that actually edit sounds!  Most of these functions
-take both a sound index and a channel number.  When the function refers to a variable
+take both a sound and a channel number.  When the function refers to a variable
 that can be set locally on a sound (zero-pad, for example), 
 the 'snd' and 'chn' arguments can be #t, referring to all current sounds or all channels of a sound;
 this possibility is identified below by displaying the arguments in this weird brownish color:
@@ -5761,7 +5748,7 @@ sets the global amp control (slider) bounds to be between 0.0 and 2.0, whereas
 <p>Many of the procedures also have an 'edpos' argument (standing for "edit position").
 It always defaults to the current edit history position.  If specified, it can be either an edit history position (to which
 the operation is applied), the constant <a name="currenteditposition">current-edit-position</a> (the default), or a function
-of two arguments, the sound index and the channel number.  The function should return the
+of two arguments, the sound and the channel number.  The function should return the
 desired edit history position. In most cases, you should only refer to edits in the past
 (that is, 'edpos' should be less than or equal to the current edit-position); in a few
 situations, you can make use of data in the "redo" section of the edit-history list, but
@@ -5777,7 +5764,7 @@ what arguments they accept, whether a channel of #t signals application to all c
 selected one, whether the <a class=quiet href="#sync" onmouseout="UnTip()" onmouseover="Tip(extsnd_sync_tip)">sync</a> field is followed, and so on.  Rather than make a bunch of backwards
 incompatible changes, I decided to add a bunch of more-or-less synonymous functions that regularize
 these calls. The replacements always take arguments in the order begin time, duration (not end sample),
-sound index, channel number, and edit position, possibly preceded by one argument, and sometimes followed by 
+sound, channel number, and edit position, possibly preceded by one argument, and sometimes followed by 
 an edit history name or 'ring time' (overlap).  The <a class=quiet href="#sync" onmouseout="UnTip()" onmouseover="Tip(extsnd_sync_tip)">sync</a> field is ignored, an unspecified sound argument applies only to the
 current sound, and an unspecified channel argument applies only to the current channel. 
 The following substitutions can be made:
@@ -5985,9 +5972,9 @@ get out of sync somehow (<a href="#autoupdate">auto-update</a>).
 <code><a class=def name="channelampenvs">channel-amp-envs</a> (file chan size :optional peak-file-func work-proc-func)</code>
 </td></tr><tr><td></td><td>
 channel-amp-envs returns two vcts of length 'size' containing the peak-amp envelopes of the channel 'chan' of file 'file'.
-'peak-file-func' if any is used to get the name of the associated peak-env-info file if the file is very large.
+'peak-file-func' (if any) is used to get the name of the associated peak-env-info file if the file is very large.
 'work-proc-func' is called when the amp envs are ready if the amp envs are gathered in the background.
-If 'file' is a sound index (an integer), 'size' is an edit-position, and the current amp envs (if any) are returned.
+If 'file' is a sound, 'size' is an edit-position, and the current amp envs (if any) are returned.
 The arguments to 'peak-file-func' are the file and the channel.  If it returns a string, that is treated as the filename
 to read to get the peak info.  The arguments to 'work-proc-func' are the filename, the channel and the current peak.
 make-sound-icon in <a href="sndscm.html#makesoundbox">make-sound-box</a> in snd-motif.scm uses
@@ -6001,7 +5988,7 @@ this function to draw the little thumbnail graph for each sound icon.
 </td></tr><tr><td></td><td>
 channel-data provides very low-level access to the data currently in the given channel's sample buffers.
 It is used by the <a href="sndscm.html#variabledisplay">variable-display</a> mechanism to show graphs
-of variable values (normally in an instrument).  channel-data only works with sound indices returned
+of variable values (normally in an instrument).  channel-data only works with sounds returned
 by make-variable-display, and only in a float-sample version of Snd (i.e. not one that was built with
 the configure argument --without-float-samples).  See make-variable-display in snd-motif.scm.  
 </td></tr><tr><td colspan=2 height=18></td></tr>
@@ -6064,7 +6051,7 @@ so the function call is:
       (if (<a class=quiet href="#selectionok" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectionok_tip)">selection?</a>)
           (throw 'no-such-channel 
                  (list "selection-&gt;vct"
-     	               (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "snd ~D channel ~D is not a member of the selection" snd chn)))
+     	               (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "snd ~A channel ~D is not a member of the selection" snd chn)))
 	  (throw 'no-active-selection (list "selection-&gt;vct")))))
 </pre></td></tr></table>
 See also mark-explode in marks.scm.
@@ -6262,7 +6249,7 @@ This gives the cursor size in pixels; it defaults to 15. <code>(set! (cursor-siz
 The cursor style is <code>cursor-cross</code>, <code>cursor-line</code>, or a cursor-drawing function.
 The default cursor shape is a "+" sign; the cursor-line is a vertical line.
 As a function, cursor-style is a procedure of three arguments, the
-sound index, channel number, and a boolean that is true if the cursor is currently
+sound, channel number, and a boolean that is true if the cursor is currently
 tracking playback (a "tracking-cursor").
 The procedure
 should draw the cursor at the current cursor position using the
@@ -6614,7 +6601,7 @@ This returns whether the single FFT display includes phase information (the defa
 <tr><td colspan=2 bgcolor="#f2f4ff">
 <code><a class=def name="filename">file-name</a> (:optional <em class=narg>snd</em>)</code>
 </td></tr><tr><td></td><td>
-the sound's complete (or "absolute") file name; the directory is included; see <a href="#shortfilename">short-file-name</a>
+This returns the sound's complete (or "absolute") file name; the directory is included; see <a href="#shortfilename">short-file-name</a>
 if you don't want all the directory junk.  See examp.scm for many examples.
 </td></tr><tr><td colspan=2 height=18></td></tr>
 
@@ -7409,7 +7396,7 @@ There's a more elaborate version of this function in examp.scm.  See also <a hre
 <tr><td colspan=2 bgcolor="#f2f4ff">
 <code><a class=def name="opensound">open-sound</a> (filename)</code>
 </td></tr><tr><td></td><td>
-open-sound opens 'filename' and returns its index; this is equivalent to the File:Open option. <a href="#viewsound">view-sound</a>
+open-sound opens 'filename' and returns the sound object; this is equivalent to the File:Open option. <a href="#viewsound">view-sound</a>
 opens a sound read-only, or you can set <a class=quiet href="#readonly" onmouseout="UnTip()" onmouseover="Tip(extsnd_readonly_tip)">read-only</a> by hand. <a class=quiet href="#closesound" onmouseout="UnTip()" onmouseover="Tip(extsnd_closesound_tip)">close-sound</a>
 closes a file opened by open-sound.  There are a variety of hooks that are invoked during the sound opening process:
 <a class=quiet href="#duringopenhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_duringopenhook_tip)">during-open-hook</a>, <a class=quiet href="#openhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_openhook_tip)">open-hook</a>, 
@@ -7429,7 +7416,7 @@ The sequence of actions is:
 </pre>
 There are
 other ways to get at sound file data: <a class=quiet href="#makesampler" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesampler_tip)">make-sampler</a> can be given a filename,
-rather than a sound index; file-&gt;vct in examp.scm; 
+rather than a sound; file-&gt;vct in examp.scm; 
 <a class=quiet href="#mussoundopeninput" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundopeninput_tip)">mus-sound-open-input</a> and
 there are a variety of CLM-based functions such as
 <a class=quiet href="sndclm.html#filetosample" onmouseout="UnTip()" onmouseover="Tip(sndclm_filetosample_tip)">file-&gt;sample</a> and
@@ -7678,7 +7665,7 @@ play-channel is the <a class=quiet href="#regularizedargs" onmouseout="UnTip()" 
 <tr><td colspan=2 bgcolor="#f2f4ff">
 <code><a class=def name="playerhome">player-home</a> (player)</code>
 </td></tr><tr><td></td><td>
-This returns a list of the sound index and channel number associated with <a href="#makeplayer">player</a>.
+This returns a list of the sound and channel number associated with <a href="#makeplayer">player</a>.
 </td></tr><tr><td colspan=2 height=18></td></tr>
 
 
@@ -7946,9 +7933,9 @@ version of cosine-channel given under
 </pre></td></tr></table>
 
 If the underlying data
-has too many previous ptree operations, map-channel is called instead and the new
-data is saved in the normal manner (that is, I don't currently try to chain any number of these operations
-together).
+has too many previous ptree operations (more than <a href="#maxvirtualptrees">max-virtual-ptrees</a>), map-channel is called instead and the new
+data is saved in the normal manner.
+
 <br><br>
 
 If no 'init-func' is specified, the editing procedure ('proc') should not assume anything about
@@ -8018,7 +8005,7 @@ could in this case be:
 		   (let ((val (* 0.5 (+ y (<a class=quiet href="#vctref" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctref_tip)">vct-ref</a> data 0)))))
 		     (<a class=quiet href="#vctset" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctset_tip)">vct-set!</a> data 0 y)
 		     val))
-		 0 (<a class=quiet href="#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a>) ind 0 #f #f ; "ind" is the sound index 
+		 0 (<a class=quiet href="#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a>) ind 0 #f #f ; "ind" is the sound 
 		 (let ((edpos (<a class=quiet href="#editposition" onmouseout="UnTip()" onmouseover="Tip(extsnd_editposition_tip)">edit-position</a> ind 0)))
 		   (lambda (pos dur)
 		     (<a class=quiet href="#vct" onmouseout="UnTip()" onmouseover="Tip(extsnd_vct_tip)">vct</a> (if (= pos 0) 0.0
@@ -8287,7 +8274,7 @@ This returns the position (in samples) of right edge of the time domain waveform
 run is the Snd equivalent of the CL/CLM run macro.  You can wrap it around any numerically-intensive
 block of code, and the result will usually run 10 to 20 times faster.  In the context of <a href="sndscm.html#wsdoc">with-sound</a>, run is used
 to speed up instrument bodies.  My timing tests indicate that Snd+Run instruments are within a factor of two to four
-of the speed of CL+run+C in CLM.  Currently, only S7 and Guile support this optimization.
+of the speed of CL+run+C in CLM.  Currently, only S7 and Guile (before version 1.9.0) support this optimization.
 
 <table border=0 cellpadding=5 vspace=10><tr><td><pre>
 (define (ws-sine freq)
@@ -8740,10 +8727,10 @@ This returns the brief (no directory) form of the sound's filename.
 
 <pre>
     &gt;<em class=typing>(open-sound "oboe.snd")</em>
-    <em class=listener>0</em>
-    &gt;<em class=typing>(file-name 0)</em>
+    <em class=listener>#&lt;sound 0&gt;</em>
+    &gt;<em class=typing>(file-name (integer-&gt;sound 0))</em>
     <em class=listener>"/home/bil/cl/oboe.snd"</em>
-    &gt;<em class=typing>(short-file-name 0)</em>
+    &gt;<em class=typing>(short-file-name (integer-&gt;sound 0))</em>
     <em class=listener>"oboe.snd"</em>
 </pre>
 </td></tr><tr><td colspan=2 height=18></td></tr>
@@ -8948,7 +8935,7 @@ examples of using it in snd-motif.scm and autosave.scm.
 <tr><td colspan=2 bgcolor="#f2f4ff">
 <code><a class=def name="sounds">sounds</a> ()</code>
 </td></tr><tr><td></td><td>
-sounds returns a list of currently active sounds (index numbers).
+sounds returns a list of currently active sounds.
 A common Snd trope is (map func (sounds)): 
 <pre>
     (map maxamp (sounds))
@@ -9596,7 +9583,7 @@ Dialog. There are around 48 choices, so this variable goes from
 <tr><td colspan=2 bgcolor="#f2f4ff">
 <code><a class=def name="wavohop">wavo-hop</a> (:optional <em class=narg>snd chn</em>)</code>
 </td></tr><tr><td></td><td>
-This sets the distance upward (pixels) between wavogram traces; that is,
+This sets the distance upward (in pixels) between wavogram traces; that is,
 the smaller this number, the more traces can be displayed (the default is 3).  See <a href="#timegraphtype">time-graph-type</a>.
 </td></tr><tr><td colspan=2 height=18></td></tr>
 
@@ -9617,7 +9604,6 @@ This is #t if the cursor is following along in the sound during playback.  To ma
 <pre>
     (set! (with-tracking-cursor) #t)
 </pre>
-The old name of this variable (which still works) was cursor-follows-play.
 The interval (in seconds) between cursor updates is set by <a href="#cursorupdateinterval">cursor-update-interval</a>
 which defaults to 0.05.  The accuracy of the cursor in reflecting the sound coming out the speakers
 depends on the amount of buffering in your audio system.  If Snd's displayed location is off,
@@ -10354,7 +10340,7 @@ This returns the current edit list contents as a string.  If 'edpos' is specifie
 'with-source' (default: #t) determines whether ptree source code is included in the output.
 <pre>
     :<em class=typing>(open-sound "oboe.snd")</em>
-    <em class=listener>0</em>
+    <em class=listener>#&lt;sound 0&gt;</em>
     :<em class=typing>(scale-channel 2.0)</em>
     <em class=listener>2.0</em>
     :<em class=typing>(pad-channel 100 200)</em>
@@ -10392,7 +10378,7 @@ edit.
 This returns a function encapsulating the current edit history list,  providing a way to save an edit
 sequence and re-apply it in some other context.  For example, you can back up to some earlier point,
 save the edit list, make a change, then re-run the saved edit sequence.  
-The function returned takes 2 arguments, a sound index and a channel number.
+The function returned takes 2 arguments, a sound and a channel number.
 <pre>
     :<em class=typing>(define our-edits (</em><em class=red>edit-list-&gt;function</em><em class=typing>))</em> ; same example as above
     <em class=listener>#&lt;unspecified&gt;</em>
@@ -11579,7 +11565,7 @@ See also <a href="sndscm.html#mapsoundfiles">map-sound-files</a> in extensions.s
 <!-- sound-widgets -->
 <tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="soundwidgets">sound-widgets</a> ()</code>
 </td></tr><tr><td></td><td>
-sound-widgets returns a list of various widgets specific to a given sound (chosen by its index, of course):
+sound-widgets returns a list of various widgets specific to a given sound:
 <pre>
     0: main-pane 
     1: name-label                 ; sound's file name
@@ -12447,14 +12433,14 @@ In Forth, this variable is named *loaded-files*; in Ruby I think it is $". <!-- 
 When a sound file is opened, Snd looks for a file with the same 
 name but with an appended ".scm" extension.  If such a file is found, 
 it is loaded automatically.  The variable *snd-opened-sound* is set to 
-the newly opened sound's index.  This supports the snd-memo feature 
+the newly opened sound (the object).  This supports the snd-memo feature 
 in the CL version of CLM, but can be used independently of CLM to store marks, selections,
 or whatever that you want associated with a particular sound. Confusingly
 enough, this is a variable, unlike all the others &mdash; that is, you
 refer to it directly, not as a procedure call.  Say we have a sound file "now.snd",
 and we want it to use the grid-graph whenever it is viewed.  We make "now.snd.scm"
 and put in it: <code>(set! (show-grid *snd-opened-sound*) #t)</code>.  When "now.snd" is
-opened, "now.snd.scm" is loaded automatically with *snd-opened-sound* holding the index of "now.snd".
+opened, "now.snd.scm" is loaded automatically with *snd-opened-sound* holding the sound object of "now.snd".
 There are other fancier ways to do this (e.g. <a href="sndscm.html#remembersoundstate">remember-sound-state</a>).
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -12748,9 +12734,9 @@ signal 10, and we're using the kill program to send that signal to Snd (process 
 <br>
 <table width="50%" border=0><tr><td bgcolor="EEFDEE" valign="middle"><h4>s7 debugging</h4></td></tr></table>
 
-<p>When s7 hits an error, it prints out an "eval history" as well as the error message.  This history
-shows the last few evaluations with file names and line numbers if appropriate.  The current
-environment is also accessible.
+<p>When s7 hits an error, it prints out a stacktrace as well as the error message.
+The variable *error-info* has additional info.  You can also trace functions, and
+place breakpoints.  See <a href="s7.html">s7.html</a> for further details.
 </p>
 
 

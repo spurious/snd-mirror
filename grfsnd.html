@@ -1709,9 +1709,9 @@ like:
 <td bgcolor="#fbfbff"><pre>
 snd
 :<em class=typing>(new-sound "test.snd")</em>
-<em class=listener>0</em>
+<em class=listener>#&lt;sound 0&gt;</em>
 :<em class=typing>(mix "oboe.snd")</em>
-<em class=listener>0</em>
+<em class=listener>(#&lt;mix 0&gt;)</em>
 :<em class=typing>(frames)</em>
 <em class=listener>50828</em>
 :<em class=typing>(play)</em>
@@ -1724,7 +1724,7 @@ snd
 &gt; <em class=typing>new_sound("test.snd")</em>
 <em class=listener>0</em>
 &gt; <em class=typing>mix("oboe.snd")</em>
-<em class=listener>-1</em>
+<em class=listener>[#&lt;mix 0&gt;]</em>
 &gt; <em class=typing>frames</em>
 <em class=listener>50828</em>
 &gt; <em class=typing>play</em>
@@ -1966,7 +1966,6 @@ set_axis_numbers_font "9x15"
 
 set_show_mix_waveforms true
 set_trap_segfault false
-set_show_backtrace true
 set_show_indices true
 
 set_listener_prompt ":"
@@ -2064,7 +2063,7 @@ For Ruby as an Emacs subjob, see inf-snd.el.
 
 <table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndandforth">Snd with Forth</a></h3></td></tr></table>
 
-<p>Snd can be built to use Forth as its extension language.  Forth is available at:
+<p>Snd can be built with Forth as its extension language.  Forth is available at:
 </p>
 <pre>
     http://sourceforge.net/projects/fth
@@ -2098,7 +2097,7 @@ instrument: src-simp { start dur amp sr sr-env fname -- }
 
 <table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndands7">Snd with s7</a></h3></td></tr></table>
 
-<p>s7 is a tinyScheme derivative included in the Snd tarball.  It is now the Snd default extension language.
+<p>s7 is a Scheme implementation included in the Snd tarball and described in <a href="s7.html">s7.html</a>.  It is now the Snd default extension language.
 </p>
 
 <p>

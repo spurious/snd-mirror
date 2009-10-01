@@ -2359,7 +2359,7 @@ normal graph. To activate it, add it to the <a href="extsnd.html#aftergraphhook"
 <tr><td colspan=2 bgcolor="#f2f4ff">
 <em class=emdef>overlay-sounds</em> <code>(:rest sounds)</code>
 </td></tr><tr><td width=30></td><td>
-overlay-sounds overlays onto its first argument (a sound index) all subsequent arguments: <code>(overlay-sounds 1 0 3)</code>.
+overlay-sounds overlays onto its first argument (a sound) all subsequent arguments: <code>(overlay-sounds 1 0 3)</code>.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -4091,7 +4091,7 @@ then scales by 'amp'. It returns the new maximum amplitude.
 <tr><td colspan=2 bgcolor="#f2f4ff">
 <a class=def name="crosssynthesis">cross-synthesis</a> <code>(cross-snd amp fftsize radius)</code>
 </td></tr><tr><td></td><td>
-cross-synthesis performs cross-synthesis between 'cross-snd' (a sound index) and the currently 
+cross-synthesis performs cross-synthesis between 'cross-snd' (a sound) and the currently 
 selected sound.
 'cross-snd' is the sound that controls the spectra.
 <pre>
@@ -4243,7 +4243,7 @@ See also voice-&gt;unvoiced below.
 
 <!-- ramp -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
-<A class=def NAME="makeramp">make-ramp</A> <code>(:optional (size 128))</code>
+<A class=def NAME="makeramp">make-ramp</A> <code>(:optional (size 128))</code><br>
 <em class=emdef>ramp</em> <code>(gen up)</code><br>
 </td></tr><tr><td></td><td>
 ramp is a generator that produces a ramp of a given length, then sticks at 0.0 or 1.0 until the 'up' argument changes.
@@ -4420,8 +4420,8 @@ a sound as a key is held down.
 
 <!-- region-play-list -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
-<a class=def name="regionplaylist">region-play-list</a> <code> data</code><br>
-<em class=emdef>region-play-sequence</em> <code> data</code>
+<a class=def name="regionplaylist">region-play-list</a> <code> (data)</code><br>
+<em class=emdef>region-play-sequence</em> <code> (data)</code>
 </td></tr><tr><td></td><td>
 region-play-list plays a list of regions.  'data' is list of lists:
 <code>(list (list reg time)...)</code>; region 'reg' is played at time 'time' (in seconds).
@@ -4438,7 +4438,7 @@ Similarly, region-play-sequence plays a sequence of regions, one after the other
 
 <!-- region-rms -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
-<A class=def NAME="regionrms">region-rms</a> <code>reg</code>
+<A class=def NAME="regionrms">region-rms</a> <code>(reg)</code>
 </td></tr><tr><td></td><td>
 region-rms returns the rms value of the region's data (in chan 0).
 </td></tr><tr><td colspan=2 height=16></td></tr>
@@ -5142,7 +5142,7 @@ See <a href="#mixchannel">mix-channel</a> for a description of 'filedat'.
 </td></tr><tr><td></td><td>
 mix-channel is a "regularized" version of the file mixing functions (<a class=quiet href="extsnd.html#mix" onmouseout="UnTip()" onmouseover="Tip(extsnd_mix_tip)">mix</a> and 
 <a href="#mixsound">mix-sound</a>).
-Its first argument can be either a filename (a string), a sound index, or a list containing the filename (or index), the
+Its first argument can be either a filename (a string), a sound, or a list containing the filename (or index), the
 start point in the file, and (optionally) the channel of the file to mix:
 <pre>
     (mix-channel "pistol.snd")             ; mixing starts at sample 0, entire sound is mixed
@@ -5656,7 +5656,7 @@ frame-reader-chans returns the number of channels read by the frame-reader 'obj'
 <tr><td colspan=2 bgcolor="#f2f4ff">
 <a class=def name="framereaderhome">frame-reader-home</a> <code>(obj)</code></td></tr>
 <tr><td></td><td>
-frame-reader-home returns the sound index associated with the frame-reader 'obj'.
+frame-reader-home returns the sound associated with the frame-reader 'obj'.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- frame-reader-position -->
@@ -6399,9 +6399,9 @@ The marks defining the selection bounds must be in the same channel.
 
 <!-- describe-mark -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
-  <a class=def name="describemark">describe-mark</a> <code>(id)</code>
+  <a class=def name="describemark">describe-mark</a> <code>(mark)</code>
 </td></tr><tr><td></td><td>
-describe-mark returns a description of the movements of mark 'id' over the channel's edit history:
+describe-mark returns a description of the movements of the mark over the channel's edit history:
 <pre>
     :<em class=typing>(define m (add-mark 1234))</em>
     <em class=listener>m</em>
@@ -6445,7 +6445,7 @@ using the granulate generator to fix up the selection duration (it currently doe
 
 <!-- mark-click-info -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
-<A class=def NAME="markclickinfo">mark-click-info</a> <code>(id)</code>
+<A class=def NAME="markclickinfo">mark-click-info</a> <code>(mark)</code>
 </td></tr><tr><td></td><td>
 mark-click-info is a <a href="extsnd.html#markclickhook">mark-click-hook</a> function that describes a mark and its properties.  It
 is used by <a href="#withmarkedsound">with-marked-sound</a> in ws.scm.
@@ -6472,18 +6472,18 @@ If a such a mark doesn't exist, it returns <code>'no-such-mark</code>.
 
 <!-- mark-properties -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
-<a class=def name="markproperties">mark-properties</a> <code>(id)</code>
+<a class=def name="markproperties">mark-properties</a> <code>(mark)</code>
 </td></tr><tr><td></td><td>
-mark-properties accesses the property list associated with the mark 'id'.
+mark-properties accesses the property list associated with the mark.
 This list is created, if necessary, by mark-property.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
 <!-- mark-property -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
-<a class=def name="markproperty">mark-property</a> <code>(key id)</code>
+<a class=def name="markproperty">mark-property</a> <code>(key mark)</code>
 </td></tr><tr><td></td><td>
-mark-property accesses the property 'key' in the property list associated with the mark 'id'.
+mark-property accesses the property 'key' in the property list associated with the mark.
 <pre>
     :<em class=typing>(set! (mark-property :weight m0) 2.5)</em>   ; m0 is the mark
     <em class=listener>2.5</em>
@@ -6504,9 +6504,9 @@ move-syncd-marks moves any marks sharing the <a href="extsnd.html#marksync">mark
 
 <!-- pad-marks -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
-<a class=def name="padmarks">pad-marks</a> <code>(ids secs)</code>
+<a class=def name="padmarks">pad-marks</a> <code>(marks secs)</code>
 </td></tr><tr><td></td><td>
-pad-marks inserts 'secs' seconds of silence before each in a list of marks ('ids').
+pad-marks inserts 'secs' seconds of silence before each in a list of marks.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -6577,7 +6577,7 @@ It returns a list of all the marks it has added.
 
 <!-- syncup -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
-<A class=def NAME="syncup">syncup</a> <code>(ids)</code>
+<A class=def NAME="syncup">syncup</a> <code>(marks)</code>
 </td></tr><tr><td></td><td>
 syncup synchronizes a list of marks (positions them all at the same sample number) by inserting silences as needed.
 </td></tr><tr><td colspan=2 height=16></td></tr>
@@ -6878,7 +6878,7 @@ find-mix returns the identifier of the mix at sample 'sample' (or anywhere in th
 
 <!-- mix-click-info -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
-<A class=def NAME="mixclickinfo">mix-click-info</a> <code>(id)</code>
+<A class=def NAME="mixclickinfo">mix-click-info</a> <code>(mix)</code>
 </td></tr><tr><td></td><td>
 mix-click-info is a <a href="extsnd.html#mixclickhook">mix-click-hook</a> function that posts a description of the
 clicked mix in the help dialog.
@@ -6898,7 +6898,7 @@ This is intended to make it easy to compare renditions with and without a given 
 
 <!-- mix-maxamp -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
-<a class=def name="mixmaxamp">mix-maxamp</a> <code>(id)</code>
+<a class=def name="mixmaxamp">mix-maxamp</a> <code>(mix)</code>
 </td></tr><tr><td></td><td>
 mix-maxamp returns the maxamp in the given mix.
 </td></tr><tr><td colspan=2 height=16></td></tr>
@@ -6908,13 +6908,13 @@ mix-maxamp returns the maxamp in the given mix.
 <tr><td colspan=2 bgcolor="#f2f4ff">
 <a class=def name="mixnametoid">mix-name-&gt;id</a> <code>(name)</code>
 </td></tr><tr><td></td><td>
-mix-name-&gt;id returns the if of the mix with the given name, or 'no-such-mix if none can be found.
+mix-name-&gt;id returns the mix with the given name, or 'no-such-mix if none can be found.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
 <!-- mix-property -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
-<a class=def name="mixproperty">mix-property</a> <code>(key id)</code>
+<a class=def name="mixproperty">mix-property</a> <code>(key mix)</code>
 </td></tr><tr><td></td><td>
 mix-property associates a property with each mix.
 <pre>
@@ -6936,7 +6936,7 @@ mix-sound mixes 'file' (all chans) into the currently selected sound at 'start'.
 
 <!-- mix->vct -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
-<a class=def name="mixtovct">mix-&gt;vct</a> <code>(id)</code>
+<a class=def name="mixtovct">mix-&gt;vct</a> <code>(mix)</code>
 </td></tr><tr><td></td><td>
 mix-&gt;vct returns a mix's samples in a vct.
 </td></tr><tr><td colspan=2 height=16></td></tr>
@@ -7039,7 +7039,7 @@ play-mixes plays the mixes in 'mix-list'.
 
 <!-- save-mix -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
-<a class=def name="savemix">save-mix</a> <code>(id filename)</code>
+<a class=def name="savemix">save-mix</a> <code>(mix filename)</code>
 </td></tr><tr><td></td><td>
 save-mix saves a given mix's data in a file.
 </td></tr><tr><td colspan=2 height=16></td></tr>
@@ -9225,7 +9225,7 @@ appends 'msg' to whatever is in the sound's minibuffer. (snd6.scm)
 <tr><td colspan=2 bgcolor="#f2f4ff">
 <em class=emdef>backward-graph</em> <code>(:optional count snd chn)</code>
 </td></tr><tr><td></td><td>
-move the selected channel back (up or left) 'count' graphs (C-x C-o), returning a list of the new sound index and channel number.
+move the selected channel back (up or left) 'count' graphs (C-x C-o), returning a list of the new sound and channel number.
 (snd7.scm)
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -9266,7 +9266,7 @@ After File:Save-as dialog option, should Snd remain with the current file (#f) o
 <tr><td colspan=2 bgcolor="#f2f4ff">
 <em class=emdef>forward-graph</em> <code>(:optional count snd chn)</code>
 </td></tr><tr><td></td><td>
-move the selected channel forward (down or right) 'count' graphs (C-x C-o), returning a list of the new sound index and channel number.
+move the selected channel forward (down or right) 'count' graphs (C-x C-o), returning a list of the new sound and channel number.
 (snd7.scm)
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -9758,7 +9758,7 @@ load-font loads a font and returns a handle for it.
 </td></tr><tr><td></td><td>
 make-channel-drop-site shows how to add a drop site panel to a channel.  
 set-channel-drop changes the channel's graph's drop function to 'drop', a 
-function of 3 arguments, the dropped filename (a string) and the current sound index and
+function of 3 arguments, the dropped filename (a string) and the current sound and
 channel number.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -9891,9 +9891,9 @@ The 'type' argument to make-variable-display can be one of <code>'text</code>
 <code>'scale</code>, <code>'graph</code>, <code>'spectrum</code>, or <code>'meter</code>.
 It determines the kind of widget(s) used to display that variable.
 The <code>'graph</code> and <code>'spectrum</code> cases create Snd channel displays,
-accessible via a sound index (and channel 0); these respond to the
+accessible via a sound (and channel 0); these respond to the
 various channel-related functions such as <a href="extsnd.html#showtransformpeaks">show-transform-peaks</a>,
-although you have to give the sound index explicitly:
+although you have to give the sound explicitly:
 
 <pre>
     (define wid2 (make-variable-display "do-loop" "x" 'spectrum))
@@ -11600,7 +11600,7 @@ where the process monitor program shows all 16 cores running at better than 95%)
 
 <p><a name="withthreadedchannels">with-threaded-channels</a>
 is a related experiment in multithreading.  It applies 'func', a function
-of two arguments (the sound index and the channel number), to each channel in the sound 'snd',
+of two arguments (the sound and the channel number), to each channel in the sound 'snd',
 using a separate thread for each call. 
 </p>
 <pre>

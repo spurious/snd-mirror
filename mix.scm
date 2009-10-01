@@ -1,11 +1,11 @@
 ;;; various mix related functions
 ;;;
-;;; (mix->vct id) return mix data in vct
+;;; (mix->vct mix) return mix data in vct
 ;;; (snap-mix-to-beat) forces dragged mix to end up on a beat
 ;;; (silence-all-mixes) sets all mix amps to 0.0
-;;; (find-mix sample snd chn) returns the id of the mix at the given sample, or #f
+;;; (find-mix sample snd chn) returns the mix at the given sample, or #f
 ;;; (save-mix mix filename) saves mix data in file filename
-;;; (mix-maxamp id) maxamp of mix
+;;; (mix-maxamp mix) maxamp of mix
 ;;;
 ;;; mix-property associates a property list with a mix
 ;;; mix-click-sets-amp sets up hook functions so that mix click zeros amps, then subsequent click resets to the before-zero value
@@ -53,7 +53,7 @@
 
 
 (define* (find-mix sample :optional snd chn)
-  "(find-mix sample :optional snd chn) returns the id of the mix at the given sample, or #f"
+  "(find-mix sample :optional snd chn) returns the mix at the given sample, or #f"
   (let ((mix-list (mixes (or snd (selected-sound) (car (sounds))) (or chn (selected-channel snd) 0))))
     (call-with-exit
      (lambda (found-it)
@@ -66,7 +66,7 @@
 
 
 (define (mix->vct id)
-  "(mix->vct id) returns mix's data in vct"
+  "(mix->vct mix) returns mix's data in vct"
   (if (mix? id)
       (let* ((len (mix-length id))
 	     (v (make-vct len))
@@ -80,7 +80,7 @@
 
 
 (define (save-mix id filename)
-  "(save-mix id filename) saves mix data (as floats) in file filename"
+  "(save-mix mix filename) saves mix data (as floats) in file filename"
   (if (mix? id)
       (if (< (mix-length id) 1000000)
 	  (let ((v (mix->vct id))
@@ -103,7 +103,7 @@
 
 
 (define (mix-maxamp id)
-  "(mix-maxamp id) returns the max amp in the given mix"
+  "(mix-maxamp mix) returns the max amp in the given mix"
   (if (mix? id)
       (let* ((len (mix-length id))
 	     (peak 0.0)
@@ -172,7 +172,7 @@ All mixes sync'd to it are also moved the same number of samples. (remove-hook! 
 (define mix-property
   (make-procedure-with-setter
    (lambda (key id)
-     "(mix-property key id) returns the value associated with 'key' in the given mix's property list, or #f"
+     "(mix-property key mix) returns the value associated with 'key' in the given mix's property list, or #f"
      (if (mix? id)
 	 (let ((data (assoc key (mix-properties id))))
 	   (if data
@@ -213,8 +213,7 @@ All mixes sync'd to it are also moved the same number of samples. (remove-hook! 
 (define (mix-click-info n)
   "(mix-click-info n) is a mix-click-hook function that describes a mix and its properties"
   (help-dialog "Mix Help"
-	       (format #f "Mix ~A:~%  position: ~D = ~,3F secs~%  length: ~D (~,3F secs)
-~%  in: ~A[~D]~%  scaler: ~A~%  speed: ~A~%  env: ~A~A"
+	       (format #f "Mix ~A:~%  position: ~D = ~,3F secs~%  length: ~D (~,3F secs)~%  in: ~A[~D]~%  scaler: ~A~%  speed: ~A~%  env: ~A~A"
 		       (if (mix-name n)
 			   (format #f "~S (~A)" (mix-name n) n)
 			   (format #f "~A" n))
@@ -240,7 +239,7 @@ All mixes sync'd to it are also moved the same number of samples. (remove-hook! 
 ;;; -------- mix-name->id
 
 (define (mix-name->id name)
-  "(mix-name->id name) returns the mix id associated with 'name'"
+  "(mix-name->id name) returns the mix associated with 'name'"
   (call-with-exit
    (lambda (return)
      (for-each
@@ -260,7 +259,7 @@ All mixes sync'd to it are also moved the same number of samples. (remove-hook! 
 ;;; ---------------- backwards compatibilty
 
 (define (delete-mix id) 
-  "(delete-mix id) sets the mix's amp to 0.0"
+  "(delete-mix mix) sets the mix's amp to 0.0"
   (set! (mix-amp id) 0.0))
 
 
@@ -473,7 +472,7 @@ last end of the mixes in 'mix-list'"
 starting at 'start' (in samples) using 'pan-env' to decide how to split the sound between the output channels (0: all chan 0, 1: all chan 1).
 So, (pan-mix \"oboe.snd\" 0 '(0 0 1 1)) goes from all chan 0 to all chan 1.
 'auto-delete' determines whether the in-coming file should be treated as a temporary file and deleted when the mix
-is no longer accessible.  pan-mix returns a list of the id's of the mixes performing the
+is no longer accessible.  pan-mix returns a list of the mixes performing the
 panning operation."
 
   (let* ((index (or snd (selected-sound) (and (sounds) (car (sounds)))))

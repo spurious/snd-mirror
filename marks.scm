@@ -52,7 +52,7 @@
 ;;; -------- describe-mark shows mark history
 
 (define (describe-mark id)
-  "(describe-mark id) returns a description of the movements of mark id over the channel's edit history"
+  "(describe-mark mark) returns a description of the movements of mark over the channel's edit history"
   (let ((mark-setting (catch 'no-such-mark (lambda () (mark-home id)) (lambda args #f))))
     (if (not mark-setting)
         ;; not an active mark, so go scrounging for it
@@ -99,7 +99,7 @@
 
 (define syncup
   (lambda ids
-    "(syncup ids) pads the channels with zeros so that all the marks in ids list occur at the same time"
+    "(syncup marks) pads the channels with zeros so that all the given marks occur at the same time"
     (let* ((samps (map mark-sample ids))
 	   (max-samp (apply max samps)))
       (define (pad-to-sync lst-ids lst-samps)
@@ -157,7 +157,7 @@
 ;;; -------- pad-marks inserts silence before each in a list of marks
 
 (define (pad-marks ids secs)
-  "(pad-marks ids secs) inserts secs seconds of silence before each mark in ids"
+  "(pad-marks marks secs) inserts secs seconds of silence before each mark"
   (let* ((silence-length (inexact->exact (floor (* secs (srate)))))
 	 (silence-samps (make-vct silence-length)))
     (as-one-edit
@@ -377,7 +377,7 @@
 (define mark-properties
   (make-procedure-with-setter
    (lambda (id)
-     "(mark-properties id) accesses the properties of mark 'id'"
+     "(mark-properties mark) accesses the properties of mark"
      (let ((data (assoc id all-mark-properties)))
        (if data
 	   (cdr data)
@@ -392,7 +392,7 @@
 (define mark-property
   (make-procedure-with-setter
    (lambda (key id)
-     "(mark-property key id) returns the value associated with 'key' in the given mark's property list, or #f"
+     "(mark-property key mark) returns the value associated with 'key' in the given mark's property list, or #f"
      (if (mark? id)
 	 (let ((data (assoc key (mark-properties id))))
 	   (if data
