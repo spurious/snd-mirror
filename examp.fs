@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Tue Jul 05 13:09:37 CEST 2005
-\ Changed: Sat Sep 26 02:10:47 CEST 2009
+\ Changed: Tue Sep 29 02:51:34 CEST 2009
 
 \ Commentary:
 \
@@ -277,7 +277,7 @@ require extensions
 : region-rms <{ :optional reg 0 -- val }>
   doc" Returns rms of region N's data (chan 0)."
   reg region? if
-    0 0 reg region->vct { data }
+    reg 0 0 region->vct { data }
     data dup dot-product data length f/ fsqrt
   else
     'no-such-region #( get-func-name reg ) fth-throw
@@ -2363,7 +2363,7 @@ hide
 	-1 +loop
       then
     then
-    start reg #f #f 0 mix-region drop
+    reg start #f #f 0 mix-region drop
     reg 0 region-frames +to start
     reg forget-region drop
   loop

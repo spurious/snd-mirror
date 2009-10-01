@@ -2005,14 +2005,12 @@ typedef struct {
 
 #define XEN_TO_XEN_MARK(arg) ((xen_mark *)XEN_OBJECT_REF(arg))
 
-static int xen_mark_to_int(XEN n)
+int xen_mark_to_int(XEN n)
 {
   xen_mark *mx;
   mx = XEN_TO_XEN_MARK(n);
   return(mx->n);
 }
-
-#define XEN_MARK_TO_C_INT(n) xen_mark_to_int(n)
 
 
 static XEN_OBJECT_TYPE xen_mark_tag;

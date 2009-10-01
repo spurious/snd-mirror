@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Tue Dec 27 19:22:06 CET 2005
-\ Changed: Sun Jun 14 18:43:51 CEST 2009
+\ Changed: Wed Sep 30 18:08:27 CEST 2009
 
 \ Commentary:
 \
@@ -154,9 +154,9 @@ previous
 : mark-click-info <{ id -- #t }>
   doc" A mark-click-hook function that describes a mark and its properties.\n\
 mark-click-hook <'> mark-click-info add-hook!"
-  $"       mark id: %d\n" #( id ) string-format make-string-output-port { prt }
+  $"       mark id: %s\n" #( id ) string-format make-string-output-port { prt }
   id mark-name empty? unless prt $"          name: %s\n" #( id mark-name ) port-puts-format then
-  prt $"        sample: %d (%.3f secs)\n"
+  prt $"        sample: %s (%.3f secs)\n"
   #( id undef mark-sample dup id mark-home 0 array-ref srate f/ ) port-puts-format
   id mark-sync if prt $"          sync: %s\n" #( id mark-sync ) port-puts-format then
   id mark-properties { props }

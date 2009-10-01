@@ -826,6 +826,8 @@ void show_mark_triangle(chan_info *cp, int x);
 XEN new_xen_mark(int n);
 bool xen_mark_p(XEN obj);
 #define XEN_MARK_P(arg) xen_mark_p(arg)
+int xen_mark_to_int(XEN n);
+#define XEN_MARK_TO_C_INT(n) xen_mark_to_int(n)
  
 
 
@@ -1566,6 +1568,8 @@ XEN g_make_mix_sampler(XEN mix_id, XEN ubeg);
 bool xen_mix_p(XEN obj);
 #define XEN_MIX_P(arg) xen_mix_p(arg)
 snd_fd *xen_mix_to_snd_fd(XEN obj);
+int xen_mix_to_int(XEN n);
+#define XEN_MIX_TO_C_INT(n) xen_mix_to_int(n)
  
 mus_long_t mix_position_from_id(int id);
 mus_long_t mix_length_from_id(int id);

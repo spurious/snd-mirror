@@ -34,7 +34,7 @@
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs))
 
 (define tests 1)
-(define keep-going #t)
+(define keep-going #f)
 (define all-args #f)
 (define test-at-random 0)
 ;(show-ptree 1)
@@ -27624,10 +27624,6 @@ EDITS: 2
 	    (if (not (= (edit-position ind 1) 2))
 		(snd-display ";edit-position 1 after stereo mix selection moved: ~A" (edit-position ind 2)))
 	    (revert-sound ind)
-	    (delete-sample 25 ind 1)
-	    (if (or (mix? md) 
-		    (mix? (integer->mix (+ 1 (mix->integer md)))))
-		(snd-display ";undo mix stereo sel: ~A ~A" (mix? md) (mix? (integer->mix (+ 1 (mix->integer md))))))
 	    (close-sound ind)))
 	
 	(let ((ind (new-sound "test.snd"))
@@ -32237,10 +32233,7 @@ EDITS: 2
   (define delay-time 0.5)
   (define rev-funcs-set #f)
   
-  
-  
-  (let* (
-	 (cur-dir-files (remove-if 
+  (let* ((cur-dir-files (remove-if 
 			 (lambda (file) (<= (catch #t 
 						   (lambda () 
 						     (mus-sound-frames file))
@@ -32248,10 +32241,6 @@ EDITS: 2
 					    0))
 			 (sound-files-in-directory ".")))
 	 (cur-dir-len (length cur-dir-files))
-	 
-	 
-	 
-	 
 	 (stereo-files '())
 	 (quad-files '())
 	 (mono-files '())
@@ -32269,9 +32258,8 @@ EDITS: 2
 	(save-edit-history scm oldsnd)
 	(copy-file (file-name oldsnd) new-name)
 	(set! sfile (open-sound new-name))
-	(format #t "edit history saved in ~S~%" scm)
 	(load scm)
-;	(delete-file scm)
+	(delete-file scm)
 	sfile))
     
     
@@ -32795,16 +32783,6 @@ EDITS: 2
 	      (let ((clone (clone-sound-as "/tmp/cloned.snd" cfd2)))
 		(if (not (= (frames cfd2) (frames clone)))
 		    (snd-display ";clone frames: ~A ~A" (frames cfd2) (frames clone)))
-		(if (not (equal? (edits cfd2) (edits clone)))
-		    (snd-display ";clone edits: ~A ~A" (edits cfd2) (edits clone)))
-		(let ((eds (apply + (edits)))
-		      (happy #t))
-		  (do ((i 0 (+ 1 i)))
-		      ((or (not happy) (= i eds)))
-		    (if (not (equal? (edit-fragment i cfd2) (edit-fragment i clone)))
-			(begin
-			  (snd-display ";clone fragment[~A]: ~A ~A?" i (edit-fragment i cfd2) (edit-fragment i clone))
-			  (set! happy #f)))))
 		(close-sound clone))
 	      (delete-file "/tmp/cloned.snd")
 	      (mus-sound-forget "/tmp/cloned.snd")
@@ -65626,7 +65604,7 @@ EDITS: 1
 			    with-tracking-cursor cursor-position cursor-size cursor-style tracking-cursor-style delete-sample display-edits dot-size
 			    draw-dots draw-lines edit-fragment edit-position edit-tree edits fft-window-alpha fft-window-beta fft-log-frequency
 			    fft-log-magnitude fft-with-phases transform-size transform-graph-type fft-window transform-graph? find-channel
-			    graph graph-style lisp-graph? insert-region insert-sound
+			    graph graph-style lisp-graph? (lambda (a) (insert-region 0 a)) insert-sound
 			    time-graph-style lisp-graph-style transform-graph-style
 			    left-sample make-graph-data map-chan max-transform-peaks maxamp maxamp-position min-dB mix-region
 			    transform-normalization peak-env-info peaks play ;play-and-wait 
@@ -65678,29 +65656,43 @@ EDITS: 1
 			      (snd-display ";~D: chn procs ~A: ~A" ctr n tag))
 			  (set! ctr (+ ctr 1))))
 		      (list channel-widgets cursor with-tracking-cursor channel-properties
-			    cursor-position cursor-size cursor-style tracking-cursor-style delete-sample display-edits dot-size edit-fragment
+			    cursor-position cursor-size cursor-style tracking-cursor-style 
+			    (lambda (snd) (delete-sample 0 snd)) display-edits dot-size 
+			    (lambda (snd) (edit-fragment 0 snd))
 			    edit-position edit-tree edits env-sound fft-window-alpha fft-window-beta fft-log-frequency fft-log-magnitude fft-with-phases
 			    transform-size transform-graph-type fft-window transform-graph? filter-sound
-			    graph-data graph-style lisp-graph? insert-region left-sample
+			    graph-data graph-style lisp-graph? left-sample
 			    time-graph-style lisp-graph-style transform-graph-style
-			    make-graph-data max-transform-peaks maxamp maxamp-position min-dB transform-normalization peak-env-info play
-			    play-and-wait position->x position->y redo reverse-sound revert-sound right-sample sample
+			    make-graph-data max-transform-peaks maxamp maxamp-position min-dB transform-normalization peak-env-info 
+			    (lambda (snd) (play 0 snd))
+			    (lambda (snd) (play-and-wait 0 snd)) 
+			    (lambda (snd) (position->x 0 snd))
+			    (lambda (snd) (position->y 0 snd))
+			    (lambda (snd) (redo 1 snd)) reverse-sound revert-sound right-sample 
+			    (lambda (snd) (sample 0 snd))
 			    save-sound scale-by scale-to show-axes show-transform-peaks
 			    show-marks show-mix-waveforms show-y-zero show-grid show-sonogram-cursor 
 			    spectrum-end spectro-hop spectrum-start spectro-x-angle
 			    spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle spectro-z-scale squelch-update  grid-density
-			    src-sound transform-sample transform->vct
-			    transform-frames transform-type undo update-transform-graph update-time-graph update-lisp-graph
-			    update-sound wavelet-type time-graph? time-graph-type wavo-hop wavo-trace x-bounds x-position-slider normalize-channel
-			    x->position x-zoom-slider y-bounds y-position-slider x-axis-label y-axis-label y->position y-zoom-slider 
-			    zero-pad scale-channel)))
+			    src-sound 
+			    (lambda (snd) (transform-sample 0 0 snd)) transform->vct
+			    transform-frames transform-type 
+			    (lambda (snd) (undo 1 snd)) update-transform-graph update-time-graph update-lisp-graph
+			    update-sound wavelet-type time-graph? time-graph-type wavo-hop wavo-trace x-bounds x-position-slider 
+			    (lambda (snd) (normalize-channel 0.5 0 #f snd))
+			    (lambda (snd) (x->position 0 snd))
+			    x-zoom-slider y-bounds y-position-slider x-axis-label y-axis-label 
+			    (lambda (snd) (y->position 0 snd)) y-zoom-slider 
+			    zero-pad 
+			    (lambda (snd) (scale-channel 2.0 0 #f snd))
+			    )))
 	  
 	  (let ((ctr 0))
 	    (for-each (lambda (n)
 			(let ((tag
 			       (catch #t
 				      (lambda ()
-					(n 0 (integer->sound 1234)))
+					(n 0 1234))
 				      (lambda args (car args)))))
 			  (if (not (eq? tag 'no-such-sound))
 			      (snd-display ";~D: snd(1) chn procs ~A: ~A" ctr n tag))

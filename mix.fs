@@ -3,7 +3,7 @@
 
 \ Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Tue Oct 11 18:23:12 CEST 2005
-\ Changed: Sat Sep 26 02:11:21 CEST 2009
+\ Changed: Wed Sep 30 18:11:11 CEST 2009
 
 \ Commentary:
 \
@@ -168,7 +168,7 @@ previous
 mix-click-hook ' mix-click-info add-hook!"
   id mix-home 0 array-ref { mid }
   id mix-name empty? if "" else $"  (%S)" #( id mix-name ) string-format then { mname }
-  $"        mix id: %d%s\n" #( id mname ) string-format make-string-output-port { prt }
+  $"        mix id: %s%s\n" #( id mname ) string-format make-string-output-port { prt }
   prt $"      position: %d (%.3f secs)\n" #( id mix-position dup mid srate f/ ) port-puts-format
   prt $"        length: %d (%.3f secs)\n" #( id mix-length   dup mid srate f/ ) port-puts-format
   prt $"            in: %s[%d]\n" #( mid short-file-name id mix-home 1 array-ref ) port-puts-format

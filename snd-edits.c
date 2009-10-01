@@ -9404,8 +9404,10 @@ static XEN g_delete_sample(XEN samp_n, XEN snd_n, XEN chn_n, XEN edpos)
   chan_info *cp;
   mus_long_t samp;
   int pos;
+
   XEN_ASSERT_TYPE(XEN_NUMBER_P(samp_n), samp_n, XEN_ARG_1, S_delete_sample, "a number");
   ASSERT_CHANNEL(S_delete_sample, snd_n, chn_n, 2);
+
   cp = get_cp(snd_n, chn_n, S_delete_sample);
   if (!cp) return(XEN_FALSE);
   samp = beg_to_sample(samp_n, S_delete_sample);
@@ -9415,8 +9417,10 @@ static XEN g_delete_sample(XEN samp_n, XEN snd_n, XEN chn_n, XEN edpos)
 	      XEN_LIST_4(C_TO_XEN_STRING(S_delete_sample),
 			 samp_n,
 			 snd_n, chn_n));
+
   if (delete_samples(samp, 1, cp, pos))
     update_graph(cp);
+
   return(samp_n);
 }
 

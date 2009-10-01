@@ -563,15 +563,18 @@ static void symbol_set_value(XEN code, XEN sym, XEN new_val)
 enum {R_UNSPECIFIED, R_INT, R_FLOAT, R_BOOL, R_CHAR, R_STRING, R_LIST,
       R_SYMBOL, R_KEYWORD, R_FUNCTION, R_GOTO, R_VCT, 
 #if USE_SND
-      R_READER,
+      R_READER, R_SOUND, R_MIX, R_MARK, R_REGION,
 #endif 
       R_SOUND_DATA, R_CLM, 
       R_FLOAT_VECTOR, R_INT_VECTOR, R_VCT_VECTOR, R_LIST_VECTOR, R_CLM_VECTOR,
+
+      /* next 8 are for walker arg checks, generator=built-in or def-clm-struct */
       R_NUMBER, R_VECTOR, R_XEN, R_NUMBER_CLM, R_NUMBER_VCT, 
-      R_NUMBER_SOUND_DATA, R_GENERATOR, R_ANY}; /* last 9 for walker arg checks, generator=built-in or def-clm-struct */
+      R_NUMBER_SOUND_DATA, R_GENERATOR, 
+      R_ANY}; 
 
 #if USE_SND
-#define BUILT_IN_TYPES 29
+#define BUILT_IN_TYPES 33
 #else
 #define BUILT_IN_TYPES 27
 #endif
@@ -582,7 +585,7 @@ static const char **type_names = NULL;
 static const char *basic_type_names[BUILT_IN_TYPES] = {"unspecified", "int", "float", "boolean", "char", "string", "list",
 						       "symbol", "keyword", "function", "continuation", "vct", 
 #if USE_SND
-						       "sampler",
+						       "sampler", "sound", "mix", "mark", "region",
 #endif
 						       "sound-data", "clm", 
 						       "float-vector", "int-vector", "vct-vector", "list-vector", "clm-vector",
@@ -2395,6 +2398,10 @@ static xen_value *add_some_var_to_ptree(ptree *prog, int type, xen_value_constan
     case R_FUNCTION:     return(make_xen_value(type, add_fnc_to_ptree(prog, NULL), ctype));            break;
 #if USE_SND
     case R_READER:       return(make_xen_value(type, add_reader_to_ptree(prog, NULL), ctype));         break;
+    case R_SOUND:
+    case R_MIX:
+    case R_MARK:
+    case R_REGION:       return(make_xen_value(type, add_int_to_ptree(prog, 0), ctype));               break;
 #endif
     case R_SOUND_DATA:   return(make_xen_value(type, add_sound_data_to_ptree(prog, NULL), ctype));     break;
     case R_FLOAT_VECTOR:
@@ -2665,29 +2672,27 @@ int mus_run_xen_to_run_type(XEN val)
     {
       if (XEN_BOOLEAN_P(val)) return(R_BOOL); else
 	if (MUS_VCT_P(val)) return(R_VCT); else
-#if USE_SND
-	  if (sampler_p(val)) return(R_READER); else
-#endif
-	    if (sound_data_p(val)) return(R_SOUND_DATA); else
-	      if (mus_xen_p(val)) return(R_CLM); else
-		if (XEN_CHAR_P(val)) return(R_CHAR); else
-		  if (XEN_STRING_P(val)) return(R_STRING); else
-		    if (XEN_KEYWORD_P(val)) return(R_KEYWORD); else
-		      if (XEN_SYMBOL_P(val)) return(R_SYMBOL); else
-			if (XEN_LIST_P(val)) 
-			  {
-			    if ((XEN_NOT_NULL_P(val)) &&
-				(XEN_SYMBOL_P(XEN_CAR(val))))
-			      {
-				int type;
-				type = name_to_type(XEN_SYMBOL_TO_C_STRING(XEN_CAR(val)));
-				if (CLM_STRUCT_P(type))
-				  return(type); /* might be a list of symbols?? */
-			      }
-			    if (XEN_LIST_LENGTH(val) >= 0) /* no dotted lists here */
-			      return(R_LIST); 
-			  }
-			else
+	  if (sound_data_p(val)) return(R_SOUND_DATA); else
+	    if (mus_xen_p(val)) return(R_CLM); else
+	      if (XEN_CHAR_P(val)) return(R_CHAR); else
+		if (XEN_STRING_P(val)) return(R_STRING); else
+		  if (XEN_KEYWORD_P(val)) return(R_KEYWORD); else
+		    if (XEN_SYMBOL_P(val)) return(R_SYMBOL); else
+		      if (XEN_LIST_P(val)) 
+			{
+			  if ((XEN_NOT_NULL_P(val)) &&
+			      (XEN_SYMBOL_P(XEN_CAR(val))))
+			    {
+			      int type;
+			      type = name_to_type(XEN_SYMBOL_TO_C_STRING(XEN_CAR(val)));
+			      if (CLM_STRUCT_P(type))
+				return(type); /* might be a list of symbols?? */
+			    }
+			  if (XEN_LIST_LENGTH(val) >= 0) /* no dotted lists here */
+			    return(R_LIST); 
+			}
+		      else
+			{
 			  if (XEN_VECTOR_P(val))
 			    {
 			      XEN val0;
@@ -2712,6 +2717,15 @@ int mus_run_xen_to_run_type(XEN val)
 				      }
 				  }
 			    }
+#if USE_SND
+			  else
+			    if (sampler_p(val)) return(R_READER); else
+			      if (xen_sound_p(val)) return(R_SOUND); else
+				if (xen_region_p(val)) return(R_REGION); else
+				  if (xen_mix_p(val)) return(R_MIX); else
+				    if (xen_mark_p(val)) return(R_MARK);
+#endif
+			}
     }
   return(R_UNSPECIFIED);
 }
@@ -2730,7 +2744,11 @@ static xen_value *add_value_to_ptree(ptree *prog, XEN val, int type)
     case R_VCT:        v = make_xen_value(R_VCT, add_vct_to_ptree(prog, xen_to_vct(val)), R_VARIABLE);                                 break;
     case R_SOUND_DATA: v = make_xen_value(R_SOUND_DATA, add_sound_data_to_ptree(prog, XEN_TO_SOUND_DATA(val)), R_VARIABLE);            break;
 #if USE_SND
-    case R_READER:     v = make_xen_value(R_READER, add_reader_to_ptree(prog, xen_to_sampler(val)), R_VARIABLE);                 break;
+    case R_READER:     v = make_xen_value(R_READER, add_reader_to_ptree(prog, xen_to_sampler(val)), R_VARIABLE);                       break;
+    case R_MIX:        v = make_xen_value(R_INT, add_int_to_ptree(prog, XEN_MIX_TO_C_INT(val)), R_VARIABLE);                           break;
+    case R_MARK:       v = make_xen_value(R_INT, add_int_to_ptree(prog, XEN_MARK_TO_C_INT(val)), R_VARIABLE);                          break;
+    case R_REGION:     v = make_xen_value(R_INT, add_int_to_ptree(prog, XEN_REGION_TO_C_INT(val)), R_VARIABLE);                        break;
+    case R_SOUND:      v = make_xen_value(R_INT, add_int_to_ptree(prog, XEN_SOUND_TO_C_INT(val)), R_VARIABLE);                         break;
 #endif
     case R_CHAR:       v = make_xen_value(R_CHAR, add_int_to_ptree(prog, (Int)(XEN_TO_C_CHAR(val))), R_VARIABLE);                      break;
     case R_STRING:     v = make_xen_value(R_STRING, add_string_to_ptree(prog, mus_strdup(XEN_TO_C_STRING(val))), R_VARIABLE);          break;
@@ -2825,9 +2843,6 @@ static xen_value *add_global_var_to_ptree(ptree *prog, XEN form, XEN *rtn)
 	return(run_warn("can't find %s", varname));
     }
   type = mus_run_xen_to_run_type(val);
-
-  /* fprintf(stderr,"%s type: %s\n", XEN_AS_STRING(val), type_name(type)); */
-
   if (type == R_UNSPECIFIED)
     return(NULL);
 
@@ -3156,6 +3171,15 @@ static triple *va_make_triple(void (*function)(int *arg_addrs, ptree *pt),
 #define READER_ARG_1 pt->readers[args[1]]
 #define READER_ARG_2 pt->readers[args[2]]
 #define READER_ARG_3 pt->readers[args[3]]
+
+#define SOUND_RESULT pt->ints[args[0]]
+#define SOUND_ARG_1 pt->ints[args[1]]
+#define MIX_RESULT pt->ints[args[0]]
+#define MIX_ARG_1 pt->ints[args[1]]
+#define MARK_RESULT pt->ints[args[0]]
+#define MARK_ARG_1 pt->ints[args[1]]
+#define REGION_RESULT pt->ints[args[0]]
+#define REGION_ARG_1 pt->ints[args[1]]
 #endif
 
 #define FNC_RESULT ((ptree **)(pt->fncs))[args[0]]
@@ -15111,7 +15135,11 @@ static int xen_to_addr(ptree *pt, XEN arg, int type, int addr)
     case R_SOUND_DATA:   pt->sds[addr] = XEN_TO_SOUND_DATA(arg);            break;
     case R_CLM:          pt->clms[addr] = XEN_TO_MUS_ANY(arg);              break;
 #if USE_SND
-    case R_READER:       pt->readers[addr] = xen_to_sampler(arg);     break;
+    case R_READER:       pt->readers[addr] = xen_to_sampler(arg);           break;
+    case R_MARK:         pt->ints[addr] = XEN_MARK_TO_C_INT(arg);           break;
+    case R_MIX:          pt->ints[addr] = XEN_MIX_TO_C_INT(arg);            break;
+    case R_REGION:       pt->ints[addr] = XEN_REGION_TO_C_INT(arg);         break;
+    case R_SOUND:        pt->ints[addr] = XEN_SOUND_TO_C_INT(arg);          break;
 #endif
     case R_SYMBOL:
     case R_KEYWORD:      pt->xens[addr] = arg;                              break;
@@ -15362,6 +15390,8 @@ static xen_value *walk(ptree *prog, XEN form, walk_result_t walk_result)
   /* walk form, storing vars, making program entries for operators etc */
   XEN rtnval = XEN_FALSE;
 
+  /* fprintf(stderr, "walk %s\n", XEN_AS_STRING(form)); */
+
   if (current_optimization == DONT_OPTIMIZE) return(NULL);
 
   if (XEN_LIST_P(form))
@@ -15609,87 +15639,71 @@ static xen_value *walk(ptree *prog, XEN form, walk_result_t walk_result)
 	      if (w->num_arg_types < args_to_check) args_to_check = w->num_arg_types;
 	      for (i = 0; i < args_to_check; i++)
 		{
+		  /* fprintf(stderr, "check %d: %s %s\n", i + 1, type_name(w->arg_types[i]), type_name(args[i + 1]->type)); */
+
 		  if ((w->arg_types[i] != args[i + 1]->type) &&
 		      (w->arg_types[i] != R_ANY) &&
 		      (!(((POINTER_P(w->arg_types[i])) || (w->arg_types[i] == R_FUNCTION)) && (args[i + 1]->type == R_BOOL))))
 		    {
-		      if (w->arg_types[i] == R_NUMBER)
+		      switch (w->arg_types[i])
 			{
+			case R_NUMBER:
 			  if ((args[i + 1]->type != R_INT) &&
 			      (args[i + 1]->type != R_FLOAT))
 			    return(clean_up(arg_warn(prog, funcname, i + 1, args, "number"), args, num_args));
-			}
-		      else
-			{
-			  if (w->arg_types[i] == R_VECTOR)
-			    {
-			      if (!(VECTOR_P(args[i + 1]->type)))
-				return(clean_up(arg_warn(prog, funcname, i + 1, args, "vector"), args, num_args));
-			    }
-			  else
-			    {
-			      if (w->arg_types[i] == R_XEN)
-				{
-				  if (!(xenable(args[i + 1])))
-				    return(clean_up(arg_warn(prog, funcname, i + 1, args, "indirect"), args, num_args));
-				}
-			      else
-				{
-				  if (w->arg_types[i] == R_NUMBER_CLM)
-				    {
-				      if ((args[i + 1]->type != R_INT) &&
-					  (args[i + 1]->type != R_FLOAT) &&
-					  (args[i + 1]->type != R_CLM))
-					return(clean_up(arg_warn(prog, funcname, i + 1, args, "clm or number"), args, num_args));
-				    }
-				  else 
-				    {
-				      if (w->arg_types[i] == R_NUMBER_VCT)
-					{
-					  if ((args[i + 1]->type != R_INT) &&
-					      (args[i + 1]->type != R_FLOAT) &&
-					      (args[i + 1]->type != R_VCT))
-					    return(clean_up(arg_warn(prog, funcname, i + 1, args, "vct or number"), args, num_args));
-					}
-				      else
-					{
-					  if (w->arg_types[i] == R_NUMBER_SOUND_DATA)
-					    {
-					      if ((args[i + 1]->type != R_INT) &&
-						  (args[i + 1]->type != R_FLOAT) &&
-						  (args[i + 1]->type != R_SOUND_DATA))
-						return(clean_up(arg_warn(prog, funcname, i + 1, args, "sound_data or number"), args, num_args));
-					    }
-					  else
-					    {
-					      if (w->arg_types[i] == R_LIST)
-						{
-						  /* fprintf(stderr,"arg %d is a list: %d\n", i, args[i + 1]->type); */
-						  if ((args[i + 1]->type != R_LIST) &&
-						      (!(CLM_STRUCT_P(args[i + 1]->type))))
-						    return(clean_up(arg_warn(prog, funcname, i + 1, args, "list"), args, num_args));
-						}
-					      else
-						{
-						  if (w->arg_types[i] == R_GENERATOR)
-						    {
-						      if ((args[i + 1]->type != R_CLM) &&
-							  (!(CLM_STRUCT_P(args[i + 1]->type))) &&
-							  (args[i + 1]->type != R_BOOL))
-							return(clean_up(arg_warn(prog, funcname, i + 1, args, "generator"), args, num_args));
-						    }
-						  else 
-						    return(clean_up(arg_warn(prog, funcname, i + 1, args, type_name(w->arg_types[i])), args, num_args));
-						}
-					    }
-					}
-				    }
-				}
-			    }
+			  break;
+
+			case R_VECTOR:
+			  if (!(VECTOR_P(args[i + 1]->type)))
+			    return(clean_up(arg_warn(prog, funcname, i + 1, args, "vector"), args, num_args));
+			  break;
+
+			case R_XEN:
+			  if (!(xenable(args[i + 1])))
+			    return(clean_up(arg_warn(prog, funcname, i + 1, args, "indirect"), args, num_args));
+			  break;
+
+			case R_NUMBER_CLM:
+			  if ((args[i + 1]->type != R_INT) &&
+			      (args[i + 1]->type != R_FLOAT) &&
+			      (args[i + 1]->type != R_CLM))
+			    return(clean_up(arg_warn(prog, funcname, i + 1, args, "clm or number"), args, num_args));
+			  break;
+			  
+			case R_NUMBER_VCT:
+			  if ((args[i + 1]->type != R_INT) &&
+			      (args[i + 1]->type != R_FLOAT) &&
+			      (args[i + 1]->type != R_VCT))
+			    return(clean_up(arg_warn(prog, funcname, i + 1, args, "vct or number"), args, num_args));
+			  break;
+
+			case R_NUMBER_SOUND_DATA:
+			  if ((args[i + 1]->type != R_INT) &&
+			      (args[i + 1]->type != R_FLOAT) &&
+			      (args[i + 1]->type != R_SOUND_DATA))
+			    return(clean_up(arg_warn(prog, funcname, i + 1, args, "sound_data or number"), args, num_args));
+			  break;
+
+			case R_LIST:
+			  if ((args[i + 1]->type != R_LIST) &&
+			      (!(CLM_STRUCT_P(args[i + 1]->type))))
+			    return(clean_up(arg_warn(prog, funcname, i + 1, args, "list"), args, num_args));
+			  break;
+
+			case R_GENERATOR:
+			  if ((args[i + 1]->type != R_CLM) &&
+			      (!(CLM_STRUCT_P(args[i + 1]->type))) &&
+			      (args[i + 1]->type != R_BOOL))
+			    return(clean_up(arg_warn(prog, funcname, i + 1, args, "generator"), args, num_args));
+			  break;
+
+			default:
+			  return(clean_up(arg_warn(prog, funcname, i + 1, args, type_name(w->arg_types[i])), args, num_args));
 			}
 		    }
 		}
 	    }
+
 	  if (w->walker)
 	    {
 	      prog->constants = constants;
@@ -15748,15 +15762,24 @@ static xen_value *walk(ptree *prog, XEN form, walk_result_t walk_result)
 #endif
 
       type = mus_run_xen_to_run_type(form);
+      /* fprintf(stderr, "line 15765 %s %s\n", XEN_AS_STRING(form), type_name(type)); */
+
       switch (type)
 	{
-	case R_INT:     return(make_xen_value(R_INT, add_int_to_ptree(prog, R_XEN_TO_C_INT(form)), R_CONSTANT)); break;
-	case R_FLOAT:   return(make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, XEN_TO_C_DOUBLE(form)), R_CONSTANT)); break;
-	case R_STRING:  return(make_xen_value(R_STRING, add_string_to_ptree(prog, mus_strdup(XEN_TO_C_STRING(form))), R_CONSTANT)); break;
-	case R_CHAR:    return(make_xen_value(R_CHAR, add_int_to_ptree(prog, (Int)(XEN_TO_C_CHAR(form))), R_CONSTANT)); break;
-	case R_BOOL:    return(make_xen_value(R_BOOL, add_int_to_ptree(prog, (XEN_FALSE_P(form)) ? 0 : 1), R_CONSTANT)); break;
-	case R_KEYWORD: return(make_xen_value(R_KEYWORD, add_xen_to_ptree(prog, form), R_CONSTANT)); break;
+	case R_INT:     return(make_xen_value(R_INT,     add_int_to_ptree(prog, R_XEN_TO_C_INT(form)), R_CONSTANT));                 break;
+	case R_FLOAT:   return(make_xen_value(R_FLOAT,   add_dbl_to_ptree(prog, XEN_TO_C_DOUBLE(form)), R_CONSTANT));                break;
+	case R_STRING:  return(make_xen_value(R_STRING,  add_string_to_ptree(prog, mus_strdup(XEN_TO_C_STRING(form))), R_CONSTANT)); break;
+	case R_CHAR:    return(make_xen_value(R_CHAR,    add_int_to_ptree(prog, (Int)(XEN_TO_C_CHAR(form))), R_CONSTANT));           break;
+	case R_BOOL:    return(make_xen_value(R_BOOL,    add_int_to_ptree(prog, (XEN_FALSE_P(form)) ? 0 : 1), R_CONSTANT));          break;
+	case R_KEYWORD: return(make_xen_value(R_KEYWORD, add_xen_to_ptree(prog, form), R_CONSTANT));                                 break;
+#if USE_SND
+	case R_SOUND:   return(make_xen_value(R_INT,     add_int_to_ptree(prog, XEN_SOUND_TO_C_INT(form)), R_CONSTANT));             break;
+	case R_MIX:     return(make_xen_value(R_INT,     add_int_to_ptree(prog, XEN_MIX_TO_C_INT(form)), R_CONSTANT));               break;
+	case R_MARK:    return(make_xen_value(R_INT,     add_int_to_ptree(prog, XEN_MARK_TO_C_INT(form)), R_CONSTANT));              break;
+	case R_REGION:  return(make_xen_value(R_INT,     add_int_to_ptree(prog, XEN_REGION_TO_C_INT(form)), R_CONSTANT));            break;
+#endif
 	}
+
       if (XEN_SYMBOL_P(form))
 	{
 	  XEN ignore = XEN_FALSE;
@@ -16141,7 +16164,11 @@ mus_float_t mus_run_evaluate_ptreec(struct ptree *pt, mus_float_t arg, XEN objec
 	case R_SOUND_DATA:   if (pt->sds) pt->sds[addr] = XEN_TO_SOUND_DATA(object);                        break;
 	case R_CLM:          if (pt->clms) pt->clms[addr] = XEN_TO_MUS_ANY(object);                         break;
 #if USE_SND
-	case R_READER:       if (pt->readers) pt->readers[addr] = xen_to_sampler(object);             break;
+	case R_READER:       if (pt->readers) pt->readers[addr] = xen_to_sampler(object);                   break;
+	case R_MIX:          pt->ints[addr] = XEN_MIX_TO_C_INT(object);                                     break;
+	case R_MARK:         pt->ints[addr] = XEN_MARK_TO_C_INT(object);                                    break;
+	case R_REGION:       pt->ints[addr] = XEN_REGION_TO_C_INT(object);                                  break;
+	case R_SOUND:        pt->ints[addr] = XEN_SOUND_TO_C_INT(object);                                   break;
 #endif
 	case R_STRING:       
 	  if (pt->strs)
@@ -16151,7 +16178,7 @@ mus_float_t mus_run_evaluate_ptreec(struct ptree *pt, mus_float_t arg, XEN objec
 	    }
 	  break; 
 	case R_SYMBOL:
-	case R_KEYWORD:      if (pt->xens) pt->xens[addr] = object;                               break;
+	case R_KEYWORD:      if (pt->xens) pt->xens[addr] = object;                                         break;
 	default:
 	  /* disaster -- init-func returned something we can't handle, so we're heading for a segfault
 	   *   unless the overly-clever user forgot to refer to it.  Not sure how to exit completely...
@@ -16770,30 +16797,30 @@ static void init_walkers(void)
   INIT_WALKER(S_next_sample,            make_walker(next_sample_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_READER));
   INIT_WALKER(S_previous_sample,        make_walker(previous_sample_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_READER));
   INIT_WALKER(S_read_sample,            make_walker(reader_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_READER));
-  INIT_WALKER(S_make_sampler,     make_walker(make_sampler_1, NULL, NULL, 0, 5, R_READER, false, 1, R_NUMBER));
-  INIT_WALKER(S_sampler_p,        make_walker(sampler_p_1, NULL, NULL, 1, 1, R_BOOL, false, 0));
-  INIT_WALKER(S_sampler_at_end_p, make_walker(sampler_at_end_p_1, NULL, NULL, 1, 1, R_BOOL, false, 0));
+  INIT_WALKER(S_make_sampler,           make_walker(make_sampler_1, NULL, NULL, 0, 5, R_READER, false, 1, R_NUMBER));
+  INIT_WALKER(S_sampler_p,              make_walker(sampler_p_1, NULL, NULL, 1, 1, R_BOOL, false, 0));
+  INIT_WALKER(S_sampler_at_end_p,       make_walker(sampler_at_end_p_1, NULL, NULL, 1, 1, R_BOOL, false, 0));
 
-  INIT_WALKER(S_edit_position,  make_walker(edit_position_1, NULL, NULL, 0, 2, R_INT, false, 0));
-  INIT_WALKER(S_frames,         make_walker(frames_1, NULL, NULL, 0, 3, R_INT, false, 0));
-  INIT_WALKER(S_cursor,         make_walker(cursor_1, NULL, NULL, 0, 2, R_INT, false, 0));
-  INIT_WALKER(S_maxamp,         make_walker(maxamp_1, NULL, NULL, 0, 3, R_FLOAT, false, 0));
-  INIT_WALKER(S_sample,         make_walker(sample_1, NULL, NULL, 1, 4, R_FLOAT, false, 1, R_INT));
-  INIT_WALKER(S_srate,          make_walker(srate_1, NULL, NULL, 0, 1, R_INT, false, 0));
-  INIT_WALKER(S_channels,       make_walker(channels_1, NULL, NULL, 0, 1, R_INT, false, 0));
-  INIT_WALKER(S_c_g,            make_walker(c_g_p_1, NULL, NULL, 0, 0, R_BOOL, false, 0));
-  INIT_WALKER(S_vct_to_channel, make_walker(vct_to_channel_1, NULL, NULL, 3, 5, R_BOOL, false, 3, R_VCT, R_INT, R_INT));
-  INIT_WALKER(S_exit,           make_walker(exit_1, NULL, NULL, 0, 0, R_BOOL, false, 0));
+  INIT_WALKER(S_edit_position,          make_walker(edit_position_1, NULL, NULL, 0, 2, R_INT, false, 0));
+  INIT_WALKER(S_frames,                 make_walker(frames_1, NULL, NULL, 0, 3, R_INT, false, 0));
+  INIT_WALKER(S_cursor,                 make_walker(cursor_1, NULL, NULL, 0, 2, R_INT, false, 0));
+  INIT_WALKER(S_maxamp,                 make_walker(maxamp_1, NULL, NULL, 0, 3, R_FLOAT, false, 0));
+  INIT_WALKER(S_sample,                 make_walker(sample_1, NULL, NULL, 1, 4, R_FLOAT, false, 1, R_INT));
+  INIT_WALKER(S_srate,                  make_walker(srate_1, NULL, NULL, 0, 1, R_INT, false, 0));
+  INIT_WALKER(S_channels,               make_walker(channels_1, NULL, NULL, 0, 1, R_INT, false, 0));
+  INIT_WALKER(S_c_g,                    make_walker(c_g_p_1, NULL, NULL, 0, 0, R_BOOL, false, 0));
+  INIT_WALKER(S_vct_to_channel,         make_walker(vct_to_channel_1, NULL, NULL, 3, 5, R_BOOL, false, 3, R_VCT, R_INT, R_INT));
+  INIT_WALKER(S_exit,                   make_walker(exit_1, NULL, NULL, 0, 0, R_BOOL, false, 0));
 
-  INIT_WALKER(S_snd_print,            make_walker(snd_print_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_STRING));
-  INIT_WALKER(S_snd_warning,          make_walker(snd_warning_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_STRING));
-  INIT_WALKER(S_report_in_minibuffer, make_walker(report_in_minibuffer_1, NULL, NULL, 1, 2, R_BOOL, false, 1, R_STRING));
+  INIT_WALKER(S_snd_print,              make_walker(snd_print_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_STRING));
+  INIT_WALKER(S_snd_warning,            make_walker(snd_warning_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_STRING));
+  INIT_WALKER(S_report_in_minibuffer,   make_walker(report_in_minibuffer_1, NULL, NULL, 1, 2, R_BOOL, false, 1, R_STRING));
 
-  INIT_WALKER(S_sound_p,         make_walker(r_sound_p_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_INT));
-  INIT_WALKER(S_selection_chans, make_walker(selection_chans_1, NULL, NULL, 0, 0, R_INT, false, 0));
-  INIT_WALKER(S_temp_dir,        make_walker(r_temp_dir_1, NULL, NULL, 0, 0, R_STRING, false, 0));
-  INIT_WALKER(S_save_dir,        make_walker(r_save_dir_1, NULL, NULL, 0, 0, R_STRING, false, 0));
-  INIT_WALKER(S_fft,             make_walker(fft_1, NULL, NULL, 2, 3, R_VCT, false, 3, R_VCT, R_VCT, R_INT));
+  INIT_WALKER(S_sound_p,                make_walker(r_sound_p_1, NULL, NULL, 1, 1, R_BOOL, false, 0));
+  INIT_WALKER(S_selection_chans,        make_walker(selection_chans_1, NULL, NULL, 0, 0, R_INT, false, 0));
+  INIT_WALKER(S_temp_dir,               make_walker(r_temp_dir_1, NULL, NULL, 0, 0, R_STRING, false, 0));
+  INIT_WALKER(S_save_dir,               make_walker(r_save_dir_1, NULL, NULL, 0, 0, R_STRING, false, 0));
+  INIT_WALKER(S_fft,                    make_walker(fft_1, NULL, NULL, 2, 3, R_VCT, false, 3, R_VCT, R_VCT, R_INT));
 #endif
 }
 

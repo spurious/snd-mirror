@@ -2243,14 +2243,12 @@ typedef struct {
 
 #define XEN_TO_XEN_MIX(arg) ((xen_mix *)XEN_OBJECT_REF(arg))
 
-static int xen_mix_to_int(XEN n)
+int xen_mix_to_int(XEN n)
 {
   xen_mix *mx;
   mx = XEN_TO_XEN_MIX(n);
   return(mx->n);
 }
-
-#define XEN_MIX_TO_C_INT(n) xen_mix_to_int(n)
 
 
 static XEN_OBJECT_TYPE xen_mix_tag;
