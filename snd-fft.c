@@ -1939,7 +1939,7 @@ and otherwise return a list (spectro-cutoff time-slices fft-bins)"
 }
 
 
-static XEN g_transform_sample(XEN bin, XEN slice, XEN snd_n, XEN chn_n)
+static XEN g_transform_sample(XEN bin, XEN slice, XEN snd, XEN chn_n)
 {
   #define H_transform_sample "(" S_transform_sample " :optional (bin 0) (slice 0) snd chn): \
 return the current transform sample at bin and slice in snd channel chn (assuming sonogram or spectrogram)"
@@ -1948,8 +1948,8 @@ return the current transform sample at bin and slice in snd channel chn (assumin
 
   XEN_ASSERT_TYPE(XEN_INT64_T_IF_BOUND_P(bin), bin, XEN_ARG_1, S_transform_sample, "an integer");
   XEN_ASSERT_TYPE(XEN_INT64_T_IF_BOUND_P(slice), slice, XEN_ARG_2, S_transform_sample, "an integer");
-  ASSERT_CHANNEL(S_transform_sample, snd_n, chn_n, 3);
-  cp = get_cp(snd_n, chn_n, S_transform_sample);
+  ASSERT_CHANNEL(S_transform_sample, snd, chn_n, 3);
+  cp = get_cp(snd, chn_n, S_transform_sample);
   if (!cp) return(XEN_FALSE);
 
   if (cp->graph_transform_p)
@@ -1982,7 +1982,7 @@ return the current transform sample at bin and slice in snd channel chn (assumin
 						       C_TO_XEN_INT((si) ? si->target_bins : 0),
 						       slice,
 						       C_TO_XEN_INT((si) ? si->active_slices : 0),
-						       snd_n, 
+						       snd, 
 						       C_TO_XEN_STRING(cp->sound->short_filename),
 						       chn_n)));
 		}
@@ -1992,7 +1992,7 @@ return the current transform sample at bin and slice in snd channel chn (assumin
 				    C_TO_XEN_STRING("bin: ~A, max bin: ~A, sound index: ~A (~A), chan: ~A"),
 				    XEN_LIST_5(bin,
 					       C_TO_XEN_INT(fp->current_size),
-					       snd_n,
+					       snd,
 					       C_TO_XEN_STRING(cp->sound->short_filename),
 					       chn_n)));
 	}
@@ -2001,7 +2001,7 @@ return the current transform sample at bin and slice in snd channel chn (assumin
 }  
 
 
-static XEN g_transform_to_vct(XEN snd_n, XEN chn_n, XEN v)
+static XEN g_transform_to_vct(XEN snd, XEN chn_n, XEN v)
 {
   #define H_transform_to_vct "(" S_transform_to_vct " :optional snd chn obj): \
 return a vct (obj if it's passed), with the current transform data from snd's channel chn"
@@ -2010,8 +2010,8 @@ return a vct (obj if it's passed), with the current transform data from snd's ch
   vct *v1;
   v1 = xen_to_vct(v);
 
-  ASSERT_CHANNEL(S_transform_to_vct, snd_n, chn_n, 1);
-  cp = get_cp(snd_n, chn_n, S_transform_to_vct);
+  ASSERT_CHANNEL(S_transform_to_vct, snd, chn_n, 1);
+  cp = get_cp(snd, chn_n, S_transform_to_vct);
   if (!cp) return(XEN_FALSE);
 
   if ((cp->graph_transform_p) && 

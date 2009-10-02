@@ -31,16 +31,16 @@ typedef struct lisp_grf {
 } lisp_grf;
 
 
-chan_info *get_cp(XEN x_snd_n, XEN x_chn_n, const char *caller)
+chan_info *get_cp(XEN snd, XEN x_chn_n, const char *caller)
 {
   snd_info *sp;
   int chn_n;
 
-  sp = get_sp(x_snd_n, NO_PLAYERS);
+  sp = get_sp(snd, NO_PLAYERS);
 
   if ((sp == NULL) || (!(sp->active)) || (sp->inuse == SOUND_IDLE))
     {
-      snd_no_such_sound_error(caller, x_snd_n); 
+      snd_no_such_sound_error(caller, snd); 
       return(NULL); /* just in case our catch has been clobbered */
     }
 
@@ -54,7 +54,7 @@ chan_info *get_cp(XEN x_snd_n, XEN x_chn_n, const char *caller)
   if ((chn_n >= 0) && (chn_n < sp->nchans) && (sp->chans[chn_n]))
     return(sp->chans[chn_n]);
 
-  snd_no_such_channel_error(caller, x_snd_n, x_chn_n);
+  snd_no_such_channel_error(caller, snd, x_chn_n);
   return(NULL);
 }
 
@@ -5530,13 +5530,13 @@ typedef enum {CP_GRAPH_TRANSFORM_P, CP_GRAPH_TIME_P, CP_FRAMES, CP_CURSOR, CP_GR
 static XEN cp_edpos;
 static int cp_edpos_loc = NOT_A_GC_LOC;
 
-static XEN channel_get(XEN snd_n, XEN chn_n, cp_field_t fld, const char *caller)
+static XEN channel_get(XEN snd, XEN chn_n, cp_field_t fld, const char *caller)
 {
   chan_info *cp;
   snd_info *sp = NULL;
   int i;
   XEN res = XEN_EMPTY_LIST;
-  if (XEN_TRUE_P(snd_n))
+  if (XEN_TRUE_P(snd))
     {
       for (i = ss->max_sounds - 1; i >= 0; i--)
 	{
@@ -5554,17 +5554,17 @@ static XEN channel_get(XEN snd_n, XEN chn_n, cp_field_t fld, const char *caller)
     {
       if (XEN_TRUE_P(chn_n))
 	{
-	  sp = get_sp(snd_n, NO_PLAYERS);
+	  sp = get_sp(snd, NO_PLAYERS);
 	  if (sp == NULL)
-	    return(snd_no_such_sound_error(caller, snd_n));
+	    return(snd_no_such_sound_error(caller, snd));
 	  for (i = sp->nchans - 1; i >= 0; i--)
-	    res = XEN_CONS(channel_get(snd_n, C_TO_XEN_INT(i), fld, caller), res);
+	    res = XEN_CONS(channel_get(snd, C_TO_XEN_INT(i), fld, caller), res);
 	  return(res);
 	}
       else
 	{
-	  ASSERT_CHANNEL(caller, snd_n, chn_n, 1);
-	  cp = get_cp(snd_n, chn_n, caller);
+	  ASSERT_CHANNEL(caller, snd, chn_n, 1);
+	  cp = get_cp(snd, chn_n, caller);
 	  if (!cp) return(XEN_FALSE); /* perhaps snd-error-hook cancelled the error? */
 	  switch (fld)
 	    {
@@ -5761,7 +5761,7 @@ static bool call_update_graph = true;
 #define MIN_SPECTRO_ANGLE -360.0
 
 
-static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, cp_field_t fld, const char *caller)
+static XEN channel_set(XEN snd, XEN chn_n, XEN on, cp_field_t fld, const char *caller)
 {
   chan_info *cp;
   int val = 0;
@@ -5773,7 +5773,7 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, cp_field_t fld, const char 
   mus_float_t curamp;
   mus_float_t newamp[1];
   XEN res = XEN_EMPTY_LIST, errstr;
-  if (XEN_TRUE_P(snd_n))
+  if (XEN_TRUE_P(snd))
     {
       for (i = ss->max_sounds - 1; i >= 0; i--)
 	{
@@ -5785,15 +5785,15 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, cp_field_t fld, const char 
     }
   if (XEN_TRUE_P(chn_n))
     {
-      sp = get_sp(snd_n, NO_PLAYERS);
+      sp = get_sp(snd, NO_PLAYERS);
       if (sp == NULL) 
-	return(snd_no_such_sound_error(caller, snd_n));
+	return(snd_no_such_sound_error(caller, snd));
       for (i = sp->nchans - 1; i >= 0; i--)
-	res = XEN_CONS(channel_set(snd_n, C_TO_XEN_INT(i), on, fld, caller), res);
+	res = XEN_CONS(channel_set(snd, C_TO_XEN_INT(i), on, fld, caller), res);
       return(res);
     }
-  ASSERT_CHANNEL(caller, snd_n, chn_n, 2);
-  cp = get_cp(snd_n, chn_n, caller);
+  ASSERT_CHANNEL(caller, snd, chn_n, 2);
+  cp = get_cp(snd, chn_n, caller);
   if (!cp) return(XEN_FALSE);
 
   switch (fld)
@@ -6258,71 +6258,71 @@ static XEN g_update_lisp_graph(XEN snd, XEN chn)
 }
 
 
-static XEN g_edit_position(XEN snd_n, XEN chn_n) 
+static XEN g_edit_position(XEN snd, XEN chn_n) 
 {
   #define H_edit_position "(" S_edit_position " :optional snd chn): current edit history position in snd's channel chn"
-  return(channel_get(snd_n, chn_n, CP_EDIT_CTR, S_edit_position));
+  return(channel_get(snd, chn_n, CP_EDIT_CTR, S_edit_position));
 }
 
-static XEN g_set_edit_position(XEN on, XEN snd_n, XEN chn_n) 
+static XEN g_set_edit_position(XEN on, XEN snd, XEN chn_n) 
 {
   XEN_ASSERT_TYPE(XEN_INTEGER_P(on), on, XEN_ARG_1, S_setB S_edit_position, "an integer");
-  return(channel_set(snd_n, chn_n, on, CP_EDIT_CTR, S_setB S_edit_position));
+  return(channel_set(snd, chn_n, on, CP_EDIT_CTR, S_setB S_edit_position));
 }
 
 WITH_THREE_SETTER_ARGS(g_set_edit_position_reversed, g_set_edit_position)
 
 
 
-static XEN g_transform_graph_p(XEN snd_n, XEN chn_n) 
+static XEN g_transform_graph_p(XEN snd, XEN chn_n) 
 {
   #define H_transform_graph_p "(" S_transform_graph_p " :optional snd chn): " PROC_TRUE " if fft display is active in snd's channel chn"
-  return(channel_get(snd_n, chn_n, CP_GRAPH_TRANSFORM_P, S_transform_graph_p));
+  return(channel_get(snd, chn_n, CP_GRAPH_TRANSFORM_P, S_transform_graph_p));
 }
 
-static XEN g_set_transform_graph_p(XEN on, XEN snd_n, XEN chn_n) 
+static XEN g_set_transform_graph_p(XEN on, XEN snd, XEN chn_n) 
 {
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(on), on, XEN_ARG_1, S_setB S_transform_graph_p, "a boolean");
-  return(channel_set(snd_n, chn_n, on, CP_GRAPH_TRANSFORM_P, S_setB S_transform_graph_p));
+  return(channel_set(snd, chn_n, on, CP_GRAPH_TRANSFORM_P, S_setB S_transform_graph_p));
 }
 
 WITH_THREE_SETTER_ARGS(g_set_transform_graph_p_reversed, g_set_transform_graph_p)
 
 
 
-static XEN g_time_graph_p(XEN snd_n, XEN chn_n) 
+static XEN g_time_graph_p(XEN snd, XEN chn_n) 
 {
   #define H_time_graph_p "(" S_time_graph_p " :optional snd chn): " PROC_TRUE " if time domain display is active in snd's channel chn"
-  return(channel_get(snd_n, chn_n, CP_GRAPH_TIME_P, S_time_graph_p));
+  return(channel_get(snd, chn_n, CP_GRAPH_TIME_P, S_time_graph_p));
 }
 
-static XEN g_set_time_graph_p(XEN on, XEN snd_n, XEN chn_n) 
+static XEN g_set_time_graph_p(XEN on, XEN snd, XEN chn_n) 
 {
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(on), on, XEN_ARG_1, S_setB S_time_graph_p, "a boolean");
-  return(channel_set(snd_n, chn_n, on, CP_GRAPH_TIME_P, S_setB S_time_graph_p));
+  return(channel_set(snd, chn_n, on, CP_GRAPH_TIME_P, S_setB S_time_graph_p));
 }
 
 WITH_THREE_SETTER_ARGS(g_set_time_graph_p_reversed, g_set_time_graph_p)
 
 
 
-static XEN g_lisp_graph_p(XEN snd_n, XEN chn_n) 
+static XEN g_lisp_graph_p(XEN snd, XEN chn_n) 
 {
   #define H_lisp_graph_p "(" S_lisp_graph_p " :optional snd chn): " PROC_TRUE " if lisp-generated data display is active in snd's channel chn"
-  return(channel_get(snd_n, chn_n, CP_GRAPH_LISP_P, S_lisp_graph_p));
+  return(channel_get(snd, chn_n, CP_GRAPH_LISP_P, S_lisp_graph_p));
 }
 
-static XEN g_set_lisp_graph_p(XEN on, XEN snd_n, XEN chn_n) 
+static XEN g_set_lisp_graph_p(XEN on, XEN snd, XEN chn_n) 
 {
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(on), on, XEN_ARG_1, S_setB S_lisp_graph_p, "a boolean");
-  return(channel_set(snd_n, chn_n, on, CP_GRAPH_LISP_P, S_setB S_lisp_graph_p));
+  return(channel_set(snd, chn_n, on, CP_GRAPH_LISP_P, S_setB S_lisp_graph_p));
 }
 
 WITH_THREE_SETTER_ARGS(g_set_lisp_graph_p_reversed, g_set_lisp_graph_p)
 
 
 
-static XEN g_cursor(XEN snd_n, XEN chn_n, XEN edpos) 
+static XEN g_cursor(XEN snd, XEN chn_n, XEN edpos) 
 {
   #define H_cursor "(" S_cursor " :optional snd chn edpos): current cursor location in snd's channel chn"
   if (XEN_BOUND_P(edpos))
@@ -6332,15 +6332,15 @@ static XEN g_cursor(XEN snd_n, XEN chn_n, XEN edpos)
 	snd_unprotect_at(cp_edpos_loc);
       cp_edpos = edpos;
       cp_edpos_loc = snd_protect(cp_edpos);
-      res = channel_get(snd_n, chn_n, CP_EDPOS_CURSOR, S_cursor);
+      res = channel_get(snd, chn_n, CP_EDPOS_CURSOR, S_cursor);
       snd_unprotect_at(cp_edpos_loc);
       cp_edpos_loc = NOT_A_GC_LOC;
       return(res);
     }
-  return(channel_get(snd_n, chn_n, CP_CURSOR, S_cursor));
+  return(channel_get(snd, chn_n, CP_CURSOR, S_cursor));
 }
 
-static XEN g_set_cursor(XEN on, XEN snd_n, XEN chn_n, XEN edpos) 
+static XEN g_set_cursor(XEN on, XEN snd, XEN chn_n, XEN edpos) 
 {
   XEN_ASSERT_TYPE(XEN_INT64_T_P(on) || XEN_NOT_BOUND_P(on), on, XEN_ARG_1, S_setB S_cursor, "an integer");
   if (XEN_BOUND_P(edpos))
@@ -6350,33 +6350,33 @@ static XEN g_set_cursor(XEN on, XEN snd_n, XEN chn_n, XEN edpos)
 	snd_unprotect_at(cp_edpos_loc);
       cp_edpos = edpos;
       cp_edpos_loc = snd_protect(cp_edpos);
-      res = channel_set(snd_n, chn_n, on, CP_EDPOS_CURSOR, S_setB S_cursor);
+      res = channel_set(snd, chn_n, on, CP_EDPOS_CURSOR, S_setB S_cursor);
       snd_unprotect_at(cp_edpos_loc);
       cp_edpos_loc = NOT_A_GC_LOC;
       return(res);
     }
-  return(channel_set(snd_n, chn_n, on, CP_CURSOR, S_setB S_cursor));
+  return(channel_set(snd, chn_n, on, CP_CURSOR, S_setB S_cursor));
 }
 
 WITH_FOUR_SETTER_ARGS(g_set_cursor_reversed, g_set_cursor)
 
 
 
-static XEN g_cursor_style(XEN snd_n, XEN chn_n) 
+static XEN g_cursor_style(XEN snd, XEN chn_n) 
 {
   #define H_cursor_style "(" S_cursor_style " :optional snd chn): current cursor style in snd's channel chn. \
 Possible values are " S_cursor_cross " (default), " S_cursor_line " (a vertical line), or a procedure of three arguments, the \
 sound index, channel number, and graph (always " S_time_graph ").  The procedure \
 should draw the cursor at the current cursor position using the " S_cursor_context "."
 
-  if (XEN_BOUND_P(snd_n))
-    return(channel_get(snd_n, chn_n, CP_CURSOR_STYLE, S_cursor_style));
+  if (XEN_BOUND_P(snd))
+    return(channel_get(snd, chn_n, CP_CURSOR_STYLE, S_cursor_style));
   if (cursor_style(ss) == CURSOR_PROC)
     return(ss->cursor_proc);
   return(C_TO_XEN_INT((int)(cursor_style(ss))));
 }
 
-static XEN g_set_cursor_style(XEN on, XEN snd_n, XEN chn_n) 
+static XEN g_set_cursor_style(XEN on, XEN snd, XEN chn_n) 
 {
   cursor_style_t val = CURSOR_PROC;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(on) || XEN_PROCEDURE_P(on), on, XEN_ARG_1, S_setB S_cursor_style, "an integer or a function");
@@ -6390,8 +6390,8 @@ static XEN g_set_cursor_style(XEN on, XEN snd_n, XEN chn_n)
       if (val > CURSOR_LINE)
 	XEN_OUT_OF_RANGE_ERROR(S_setB S_cursor_style, 1, on, "~A, but must be " S_cursor_cross " or " S_cursor_line ", or a procedure");
     }
-  if (XEN_BOUND_P(snd_n))
-    return(channel_set(snd_n, chn_n, on, CP_CURSOR_STYLE, S_setB S_cursor_style));
+  if (XEN_BOUND_P(snd))
+    return(channel_set(snd, chn_n, on, CP_CURSOR_STYLE, S_setB S_cursor_style));
   else
     {
       if (XEN_PROCEDURE_P(on))
@@ -6423,17 +6423,17 @@ WITH_THREE_SETTER_ARGS(g_set_cursor_style_reversed, g_set_cursor_style)
 
 
 
-static XEN g_tracking_cursor_style(XEN snd_n, XEN chn_n) 
+static XEN g_tracking_cursor_style(XEN snd, XEN chn_n) 
 {
   #define H_tracking_cursor_style "(" S_tracking_cursor_style " :optional snd chn): current tracking cursor style in snd's channel chn. \
 Possible values are " S_cursor_cross " (default), and " S_cursor_line "."
 
-  if (XEN_BOUND_P(snd_n))
-    return(channel_get(snd_n, chn_n, CP_TRACKING_CURSOR_STYLE, S_tracking_cursor_style));
+  if (XEN_BOUND_P(snd))
+    return(channel_get(snd, chn_n, CP_TRACKING_CURSOR_STYLE, S_tracking_cursor_style));
   return(C_TO_XEN_INT((int)(tracking_cursor_style(ss))));
 }
 
-static XEN g_set_tracking_cursor_style(XEN on, XEN snd_n, XEN chn_n) 
+static XEN g_set_tracking_cursor_style(XEN on, XEN snd, XEN chn_n) 
 {
   int in_val;
   cursor_style_t val = CURSOR_CROSS;
@@ -6444,8 +6444,8 @@ static XEN g_set_tracking_cursor_style(XEN on, XEN snd_n, XEN chn_n)
   val = (cursor_style_t)in_val;
   if (val > CURSOR_LINE)
     XEN_OUT_OF_RANGE_ERROR(S_setB S_tracking_cursor_style, 1, on, "~A, but must be " S_cursor_cross " or " S_cursor_line);
-  if (XEN_BOUND_P(snd_n))
-    return(channel_set(snd_n, chn_n, on, CP_TRACKING_CURSOR_STYLE, S_setB S_tracking_cursor_style));
+  if (XEN_BOUND_P(snd))
+    return(channel_set(snd, chn_n, on, CP_TRACKING_CURSOR_STYLE, S_setB S_tracking_cursor_style));
   else set_tracking_cursor_style(val);
   return(on);
 }
@@ -6454,19 +6454,19 @@ WITH_THREE_SETTER_ARGS(g_set_tracking_cursor_style_reversed, g_set_tracking_curs
 
 
 
-static XEN g_cursor_size(XEN snd_n, XEN chn_n) 
+static XEN g_cursor_size(XEN snd, XEN chn_n) 
 {
   #define H_cursor_size "(" S_cursor_size " :optional snd chn): current cursor size in snd's channel chn"
-  if (XEN_BOUND_P(snd_n))
-    return(channel_get(snd_n, chn_n, CP_CURSOR_SIZE, S_cursor_size));
+  if (XEN_BOUND_P(snd))
+    return(channel_get(snd, chn_n, CP_CURSOR_SIZE, S_cursor_size));
   return(C_TO_XEN_INT(cursor_size(ss)));
 }
 
-static XEN g_set_cursor_size(XEN on, XEN snd_n, XEN chn_n) 
+static XEN g_set_cursor_size(XEN on, XEN snd, XEN chn_n) 
 {
   XEN_ASSERT_TYPE(XEN_INTEGER_P(on), on, XEN_ARG_1, S_setB S_cursor_size, "an integer");
-  if (XEN_BOUND_P(snd_n))
-    return(channel_set(snd_n, chn_n, on, CP_CURSOR_SIZE, S_setB S_cursor_size));
+  if (XEN_BOUND_P(snd))
+    return(channel_set(snd, chn_n, on, CP_CURSOR_SIZE, S_setB S_cursor_size));
   set_cursor_size(XEN_TO_C_INT_OR_ELSE(on, DEFAULT_CURSOR_SIZE));
   return(C_TO_XEN_INT(cursor_size(ss)));
 }
@@ -6482,7 +6482,7 @@ static XEN g_cursor_position(XEN snd, XEN chn)
 }
 
 
-XEN g_frames(XEN snd_n, XEN chn_n, XEN edpos)
+XEN g_frames(XEN snd, XEN chn_n, XEN edpos)
 {
   #define H_frames "(" S_frames " :optional snd chn edpos): number of frames of data in snd's channel chn"
   if (XEN_BOUND_P(edpos))
@@ -6492,25 +6492,25 @@ XEN g_frames(XEN snd_n, XEN chn_n, XEN edpos)
 	snd_unprotect_at(cp_edpos_loc);
       cp_edpos = edpos;
       cp_edpos_loc = snd_protect(cp_edpos);
-      res = channel_get(snd_n, chn_n, CP_EDPOS_FRAMES, S_frames);
+      res = channel_get(snd, chn_n, CP_EDPOS_FRAMES, S_frames);
       snd_unprotect_at(cp_edpos_loc);
       cp_edpos_loc = NOT_A_GC_LOC;
       return(res);
     }
-  return(channel_get(snd_n, chn_n, CP_FRAMES, S_frames));
+  return(channel_get(snd, chn_n, CP_FRAMES, S_frames));
 }
 
-static XEN g_set_frames(XEN on, XEN snd_n, XEN chn_n) 
+static XEN g_set_frames(XEN on, XEN snd, XEN chn_n) 
 {
   XEN_ASSERT_TYPE(XEN_NUMBER_P(on), on, XEN_ARG_1, S_setB S_frames, "a number");
-  return(channel_set(snd_n, chn_n, on, CP_FRAMES, S_setB S_frames));
+  return(channel_set(snd, chn_n, on, CP_FRAMES, S_setB S_frames));
 }
 
 WITH_THREE_SETTER_ARGS(g_set_frames_reversed, g_set_frames)
 
 
 
-static XEN g_maxamp(XEN snd_n, XEN chn_n, XEN edpos) 
+static XEN g_maxamp(XEN snd, XEN chn_n, XEN edpos) 
 {
   #define H_maxamp "(" S_maxamp " :optional snd chn edpos): maxamp of data in snd's channel chn"
   if (XEN_BOUND_P(edpos))
@@ -6520,25 +6520,25 @@ static XEN g_maxamp(XEN snd_n, XEN chn_n, XEN edpos)
 	snd_unprotect_at(cp_edpos_loc);
       cp_edpos = edpos;
       cp_edpos_loc = snd_protect(cp_edpos);
-      res = channel_get(snd_n, chn_n, CP_EDPOS_MAXAMP, S_maxamp);
+      res = channel_get(snd, chn_n, CP_EDPOS_MAXAMP, S_maxamp);
       snd_unprotect_at(cp_edpos_loc);
       cp_edpos_loc = NOT_A_GC_LOC;
       return(res);
     }
-  return(channel_get(snd_n, chn_n, CP_MAXAMP, S_maxamp));
+  return(channel_get(snd, chn_n, CP_MAXAMP, S_maxamp));
 }
 
-static XEN g_set_maxamp(XEN on, XEN snd_n, XEN chn_n) 
+static XEN g_set_maxamp(XEN on, XEN snd, XEN chn_n) 
 {
   XEN_ASSERT_TYPE(XEN_NUMBER_P(on), on, XEN_ARG_1, S_setB S_maxamp, "a number");
-  return(channel_set(snd_n, chn_n, on, CP_MAXAMP, S_setB S_maxamp));
+  return(channel_set(snd, chn_n, on, CP_MAXAMP, S_setB S_maxamp));
 }
 
 WITH_THREE_SETTER_ARGS(g_set_maxamp_reversed, g_set_maxamp)
 
 
 
-static XEN g_maxamp_position(XEN snd_n, XEN chn_n, XEN edpos) 
+static XEN g_maxamp_position(XEN snd, XEN chn_n, XEN edpos) 
 {
   #define H_maxamp_position "(" S_maxamp_position " :optional snd chn edpos): location of maxamp of data in snd's channel chn"
   if (XEN_BOUND_P(edpos))
@@ -6548,96 +6548,96 @@ static XEN g_maxamp_position(XEN snd_n, XEN chn_n, XEN edpos)
 	snd_unprotect_at(cp_edpos_loc);
       cp_edpos = edpos;
       cp_edpos_loc = snd_protect(cp_edpos);
-      res = channel_get(snd_n, chn_n, CP_EDPOS_MAXAMP_POSITION, S_maxamp_position);
+      res = channel_get(snd, chn_n, CP_EDPOS_MAXAMP_POSITION, S_maxamp_position);
       snd_unprotect_at(cp_edpos_loc);
       cp_edpos_loc = NOT_A_GC_LOC;
       return(res);
     }
-  return(channel_get(snd_n, chn_n, CP_MAXAMP_POSITION, S_maxamp_position));
+  return(channel_get(snd, chn_n, CP_MAXAMP_POSITION, S_maxamp_position));
 }
 
 
-static XEN g_squelch_update(XEN snd_n, XEN chn_n) 
+static XEN g_squelch_update(XEN snd, XEN chn_n) 
 {
   #define H_squelch_update "(" S_squelch_update " :optional snd chn): " PROC_TRUE " if updates (redisplays) are turned off in snd's channel chn"
-  return(channel_get(snd_n, chn_n, CP_SQUELCH_UPDATE, S_squelch_update));
+  return(channel_get(snd, chn_n, CP_SQUELCH_UPDATE, S_squelch_update));
 }
 
-static XEN g_set_squelch_update(XEN on, XEN snd_n, XEN chn_n) 
+static XEN g_set_squelch_update(XEN on, XEN snd, XEN chn_n) 
 {
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(on), on, XEN_ARG_1, S_setB S_squelch_update, "a boolean");
-  return(channel_set(snd_n, chn_n, on, CP_SQUELCH_UPDATE, S_setB S_squelch_update));
+  return(channel_set(snd, chn_n, on, CP_SQUELCH_UPDATE, S_setB S_squelch_update));
 }
 
 WITH_THREE_SETTER_ARGS(g_set_squelch_update_reversed, g_set_squelch_update)
 
 
 
-static XEN g_ap_sx(XEN snd_n, XEN chn_n) 
+static XEN g_ap_sx(XEN snd, XEN chn_n) 
 {
   #define H_x_position_slider "(" S_x_position_slider " :optional snd chn): current x axis position slider of snd channel chn"
-  return(channel_get(snd_n, chn_n, CP_AP_SX, S_x_position_slider));
+  return(channel_get(snd, chn_n, CP_AP_SX, S_x_position_slider));
 }
 
-static XEN g_set_ap_sx(XEN on, XEN snd_n, XEN chn_n) 
+static XEN g_set_ap_sx(XEN on, XEN snd, XEN chn_n) 
 {
   XEN_ASSERT_TYPE(XEN_NUMBER_P(on), on, XEN_ARG_1, S_setB S_x_position_slider, "a number");
-  return(channel_set(snd_n, chn_n, on, CP_AP_SX, S_setB S_x_position_slider));
+  return(channel_set(snd, chn_n, on, CP_AP_SX, S_setB S_x_position_slider));
 }
 
 WITH_THREE_SETTER_ARGS(g_set_ap_sx_reversed, g_set_ap_sx)
 
 
 
-static XEN g_ap_sy(XEN snd_n, XEN chn_n) 
+static XEN g_ap_sy(XEN snd, XEN chn_n) 
 {
   #define H_y_position_slider "(" S_y_position_slider " :optional snd chn): current y axis position slider of snd channel chn"
-  return(channel_get(snd_n, chn_n, CP_AP_SY, S_y_position_slider));
+  return(channel_get(snd, chn_n, CP_AP_SY, S_y_position_slider));
 }
 
-static XEN g_set_ap_sy(XEN on, XEN snd_n, XEN chn_n) 
+static XEN g_set_ap_sy(XEN on, XEN snd, XEN chn_n) 
 {
   XEN_ASSERT_TYPE(XEN_NUMBER_P(on), on, XEN_ARG_1, S_setB S_y_position_slider, "a number");
-  return(channel_set(snd_n, chn_n, on, CP_AP_SY, S_setB S_y_position_slider));
+  return(channel_set(snd, chn_n, on, CP_AP_SY, S_setB S_y_position_slider));
 }
 
 WITH_THREE_SETTER_ARGS(g_set_ap_sy_reversed, g_set_ap_sy)
 
 
 
-static XEN g_ap_zx(XEN snd_n, XEN chn_n) 
+static XEN g_ap_zx(XEN snd, XEN chn_n) 
 {
   #define H_x_zoom_slider "(" S_x_zoom_slider " :optional snd chn): current x axis zoom slider of snd channel chn"
-  return(channel_get(snd_n, chn_n, CP_AP_ZX, S_x_zoom_slider));
+  return(channel_get(snd, chn_n, CP_AP_ZX, S_x_zoom_slider));
 }
 
-static XEN g_set_ap_zx(XEN on, XEN snd_n, XEN chn_n) 
+static XEN g_set_ap_zx(XEN on, XEN snd, XEN chn_n) 
 {
   XEN_ASSERT_TYPE(XEN_NUMBER_P(on), on, XEN_ARG_1, S_setB S_x_zoom_slider, "a number");
-  return(channel_set(snd_n, chn_n, on, CP_AP_ZX, S_setB S_x_zoom_slider));
+  return(channel_set(snd, chn_n, on, CP_AP_ZX, S_setB S_x_zoom_slider));
 }
 
 WITH_THREE_SETTER_ARGS(g_set_ap_zx_reversed, g_set_ap_zx)
 
 
 
-static XEN g_ap_zy(XEN snd_n, XEN chn_n) 
+static XEN g_ap_zy(XEN snd, XEN chn_n) 
 {
   #define H_y_zoom_slider "(" S_y_zoom_slider " :optional snd chn): current y axis zoom slider of snd channel chn"
-  return(channel_get(snd_n, chn_n, CP_AP_ZY, S_y_zoom_slider));
+  return(channel_get(snd, chn_n, CP_AP_ZY, S_y_zoom_slider));
 }
 
-static XEN g_set_ap_zy(XEN on, XEN snd_n, XEN chn_n) 
+static XEN g_set_ap_zy(XEN on, XEN snd, XEN chn_n) 
 {
   XEN_ASSERT_TYPE(XEN_NUMBER_P(on), on, XEN_ARG_1, S_setB S_y_zoom_slider, "a number");
-  return(channel_set(snd_n, chn_n, on, CP_AP_ZY, S_setB S_y_zoom_slider));
+  return(channel_set(snd, chn_n, on, CP_AP_ZY, S_setB S_y_zoom_slider));
 }
 
 WITH_THREE_SETTER_ARGS(g_set_ap_zy_reversed, g_set_ap_zy)
 
 
 
-static XEN g_edit_hook(XEN snd_n, XEN chn_n) 
+static XEN g_edit_hook(XEN snd, XEN chn_n) 
 {
   #if HAVE_SCHEME
     #define edit_hook_example "(add-hook! (" S_edit_hook " snd chn) (lambda () (" S_snd_print " \";about to edit\") #f))"
@@ -6654,11 +6654,11 @@ This is a channel-specific hook variable; the hook procedures are thunks -- they
 arguments. " S_edit_hook " is called just before any attempt to edit the channel's data; if it returns " PROC_TRUE ", \
 the edit is aborted. \n  " edit_hook_example
 
-  return(channel_get(snd_n, chn_n, CP_EDIT_HOOK, S_edit_hook));
+  return(channel_get(snd, chn_n, CP_EDIT_HOOK, S_edit_hook));
 }
 
 
-static XEN g_after_edit_hook(XEN snd_n, XEN chn_n) 
+static XEN g_after_edit_hook(XEN snd, XEN chn_n) 
 {
   #if HAVE_SCHEME
     #define after_edit_hook_example "(add-hook! (" S_after_edit_hook " snd chn) (lambda () (" S_snd_print " \";just edited\")))"
@@ -6674,17 +6674,17 @@ static XEN g_after_edit_hook(XEN snd_n, XEN chn_n)
 This is a channel-specific hook variable; the hook procedures are thunks -- they should take no \
 arguments. " S_after_edit_hook " is called after an edit, but before " S_after_graph_hook ". \n  " after_edit_hook_example
 
-  return(channel_get(snd_n, chn_n, CP_AFTER_EDIT_HOOK, S_after_edit_hook));
+  return(channel_get(snd, chn_n, CP_AFTER_EDIT_HOOK, S_after_edit_hook));
 }
 
 
-static XEN g_undo_hook(XEN snd_n, XEN chn_n) 
+static XEN g_undo_hook(XEN snd, XEN chn_n) 
 {
   #define H_undo_hook "(" S_undo_hook " :optional snd chn): snd's channel chn's " S_undo_hook ". \
 This is a channel-specific hook variable; the hook procedures are thunks -- they should take no \
 arguments. " S_undo_hook " is called just after any undo, redo, or revert that affects the channel."
 
-  return(channel_get(snd_n, chn_n, CP_UNDO_HOOK, S_undo_hook));
+  return(channel_get(snd, chn_n, CP_UNDO_HOOK, S_undo_hook));
 }
 
 
@@ -7962,7 +7962,7 @@ static void write_transform_peaks(FILE *fd, chan_info *ucp)
 }
 
 
-static XEN g_peaks(XEN filename, XEN snd_n, XEN chn_n)
+static XEN g_peaks(XEN filename, XEN snd, XEN chn_n)
 {
   #define H_peaks "(" S_peaks " :optional filename snd chn): write current fft peaks data to filename, or \
 to the info dialog if filename is omitted"
@@ -7974,8 +7974,8 @@ to the info dialog if filename is omitted"
 
   XEN_ASSERT_TYPE((XEN_STRING_P(filename) || (XEN_FALSE_P(filename)) || (XEN_NOT_BOUND_P(filename))), filename, XEN_ARG_1, S_peaks, "a string or " PROC_FALSE);
 
-  ASSERT_CHANNEL(S_peaks, snd_n, chn_n, 2);
-  cp = get_cp(snd_n, chn_n, S_peaks);
+  ASSERT_CHANNEL(S_peaks, snd, chn_n, 2);
+  cp = get_cp(snd, chn_n, S_peaks);
   if (!cp) return(XEN_FALSE);
 
   if (XEN_STRING_P(filename))
@@ -8017,58 +8017,58 @@ to the info dialog if filename is omitted"
 }
 
 
-static XEN g_left_sample(XEN snd_n, XEN chn_n) 
+static XEN g_left_sample(XEN snd, XEN chn_n) 
 {
   #define H_left_sample "(" S_left_sample " :optional snd chn): left sample number in time domain window"
-  return(channel_get(snd_n, chn_n, CP_AP_LOSAMP, S_left_sample));
+  return(channel_get(snd, chn_n, CP_AP_LOSAMP, S_left_sample));
 }
 
-static XEN g_set_left_sample(XEN on, XEN snd_n, XEN chn_n) 
+static XEN g_set_left_sample(XEN on, XEN snd, XEN chn_n) 
 {
   XEN_ASSERT_TYPE(XEN_INT64_T_P(on) || XEN_NOT_BOUND_P(on), on, XEN_ARG_1, S_setB S_left_sample, "an integer");
-  return(channel_set(snd_n, chn_n, on, CP_AP_LOSAMP, S_setB S_left_sample));
+  return(channel_set(snd, chn_n, on, CP_AP_LOSAMP, S_setB S_left_sample));
 }
 
 WITH_THREE_SETTER_ARGS(g_set_left_sample_reversed, g_set_left_sample)
 
 
 
-static XEN g_right_sample(XEN snd_n, XEN chn_n) 
+static XEN g_right_sample(XEN snd, XEN chn_n) 
 {
   #define H_right_sample "(" S_right_sample " :optional snd chn): right sample number in time domain window"
-  return(channel_get(snd_n, chn_n, CP_AP_HISAMP, S_right_sample));
+  return(channel_get(snd, chn_n, CP_AP_HISAMP, S_right_sample));
 }
 
-static XEN g_set_right_sample(XEN on, XEN snd_n, XEN chn_n) 
+static XEN g_set_right_sample(XEN on, XEN snd, XEN chn_n) 
 {
   XEN_ASSERT_TYPE(XEN_INT64_T_P(on) || XEN_NOT_BOUND_P(on), on, XEN_ARG_1, S_setB S_right_sample, "an integer");
-  return(channel_set(snd_n, chn_n, on, CP_AP_HISAMP, S_setB S_right_sample));
+  return(channel_set(snd, chn_n, on, CP_AP_HISAMP, S_setB S_right_sample));
 }
 
 WITH_THREE_SETTER_ARGS(g_set_right_sample_reversed, g_set_right_sample)
 
 
 
-static XEN g_channel_properties(XEN snd_n, XEN chn_n) 
+static XEN g_channel_properties(XEN snd, XEN chn_n) 
 {
   #define H_channel_properties "(" S_channel_properties " :optional snd chn): \
 A property list associated with the given channel. It is set to '() at the time a sound is opened. \
 The accessor channel-property is provided in extensions." XEN_FILE_EXTENSION "."
 
-  return(channel_get(snd_n, chn_n, CP_PROPERTIES, S_channel_properties));
+  return(channel_get(snd, chn_n, CP_PROPERTIES, S_channel_properties));
 }
 
-static XEN g_set_channel_properties(XEN on, XEN snd_n, XEN chn_n) 
+static XEN g_set_channel_properties(XEN on, XEN snd, XEN chn_n) 
 {
   /* XEN_ASSERT_TYPE(XEN_LIST_P(on), on, XEN_ARG_1, S_setB S_channel_properties, "a property list"); */
-  return(channel_set(snd_n, chn_n, on, CP_PROPERTIES, S_setB S_channel_properties));
+  return(channel_set(snd, chn_n, on, CP_PROPERTIES, S_setB S_channel_properties));
 }
 
 WITH_THREE_SETTER_ARGS(g_set_channel_properties_reversed, g_set_channel_properties)
 
 
 
-static XEN g_edit_properties(XEN snd_n, XEN chn_n, XEN pos) 
+static XEN g_edit_properties(XEN snd, XEN chn_n, XEN pos) 
 {
   #define H_edit_properties "(" S_edit_properties " :optional snd chn edpos): \
 A property list associated with the given edit. It is set to '() at the time an edit is performed and cleared when that edit is no longer accessible. \
@@ -8077,9 +8077,9 @@ The accessor edit-property is provided in extensions." XEN_FILE_EXTENSION "."
   chan_info *cp;
   int edpos;
 
-  ASSERT_CHANNEL(S_edit_properties, snd_n, chn_n, 1);
+  ASSERT_CHANNEL(S_edit_properties, snd, chn_n, 1);
 
-  cp = get_cp(snd_n, chn_n, S_edit_properties);
+  cp = get_cp(snd, chn_n, S_edit_properties);
   if (!cp) return(XEN_FALSE);
 
   edpos = to_c_edit_position(cp, pos, S_edit_properties, 3);
@@ -8091,14 +8091,14 @@ The accessor edit-property is provided in extensions." XEN_FILE_EXTENSION "."
   return(XEN_VECTOR_REF(cp->edits[edpos]->properties, 0));
 }
 
-static XEN g_set_edit_properties(XEN on, XEN snd_n, XEN chn_n, XEN pos) 
+static XEN g_set_edit_properties(XEN on, XEN snd, XEN chn_n, XEN pos) 
 {
   chan_info *cp;
   int edpos;
 
-  ASSERT_CHANNEL(S_setB S_edit_properties, snd_n, chn_n, 1);
+  ASSERT_CHANNEL(S_setB S_edit_properties, snd, chn_n, 1);
 
-  cp = get_cp(snd_n, chn_n, S_setB S_edit_properties);
+  cp = get_cp(snd, chn_n, S_setB S_edit_properties);
   if (!cp) return(XEN_FALSE);
 
   edpos = to_c_edit_position(cp, pos, S_setB S_edit_properties, 3);
@@ -8115,13 +8115,13 @@ WITH_FOUR_SETTER_ARGS(g_set_edit_properties_reversed, g_set_edit_properties)
 
 
 
-static XEN g_edits(XEN snd_n, XEN chn_n)
+static XEN g_edits(XEN snd, XEN chn_n)
 {
   #define H_edits "(" S_edits " :optional snd chn): -> (list undoable-edits redoable-edits) in snd's channel chn"
   chan_info *cp;
   int i;
-  ASSERT_CHANNEL(S_edits, snd_n, chn_n, 1);
-  cp = get_cp(snd_n, chn_n, S_edits);
+  ASSERT_CHANNEL(S_edits, snd, chn_n, 1);
+  cp = get_cp(snd, chn_n, S_edits);
   if (!cp) return(XEN_FALSE);
   for (i = cp->edit_ctr + 1; i < cp->edit_size; i++)
     if (!(cp->edits[i])) break;
@@ -8130,26 +8130,26 @@ static XEN g_edits(XEN snd_n, XEN chn_n)
 }
 
 
-static XEN g_x_bounds(XEN snd_n, XEN chn_n)
+static XEN g_x_bounds(XEN snd, XEN chn_n)
 {
   #define H_x_bounds "(" S_x_bounds " :optional snd chn): a list (x0 x1) giving the current x axis bounds of snd channel chn"
   chan_info *cp;
-  ASSERT_CHANNEL(S_x_bounds, snd_n, chn_n, 1);
-  cp = get_cp(snd_n, chn_n, S_x_bounds);
+  ASSERT_CHANNEL(S_x_bounds, snd, chn_n, 1);
+  cp = get_cp(snd, chn_n, S_x_bounds);
   if (!cp) return(XEN_FALSE);
   return(XEN_LIST_2(C_TO_XEN_DOUBLE(cp->axis->x0),
 		    C_TO_XEN_DOUBLE(cp->axis->x1)));
   /* wavogram settings depend on context -- no easy way to map back to user's notion of bounds */
 }
 
-static XEN g_set_x_bounds(XEN bounds, XEN snd_n, XEN chn_n)
+static XEN g_set_x_bounds(XEN bounds, XEN snd, XEN chn_n)
 {
   chan_info *cp;
 
-  ASSERT_CHANNEL(S_setB S_x_bounds, snd_n, chn_n, 2);
+  ASSERT_CHANNEL(S_setB S_x_bounds, snd, chn_n, 2);
   XEN_ASSERT_TYPE(XEN_LIST_P(bounds) && (XEN_LIST_LENGTH(bounds) == 2), bounds, XEN_ARG_1, S_setB S_x_bounds, "a list: (x0 x1)");
 
-  cp = get_cp(snd_n, chn_n, S_setB S_x_bounds);
+  cp = get_cp(snd, chn_n, S_setB S_x_bounds);
   if (!cp) return(XEN_FALSE);
   if (cp->time_graph_type == GRAPH_ONCE) 
     {
@@ -8182,28 +8182,28 @@ WITH_THREE_SETTER_ARGS(g_set_x_bounds_reversed, g_set_x_bounds)
 
 
 
-static XEN g_y_bounds(XEN snd_n, XEN chn_n)
+static XEN g_y_bounds(XEN snd, XEN chn_n)
 {
   #define H_y_bounds "(" S_y_bounds " :optional snd chn): a list (y0 y1) giving the current y axis bounds of snd channel chn"
   chan_info *cp;
-  ASSERT_CHANNEL(S_y_bounds, snd_n, chn_n, 1);
-  cp = get_cp(snd_n, chn_n, S_y_bounds);
+  ASSERT_CHANNEL(S_y_bounds, snd, chn_n, 1);
+  cp = get_cp(snd, chn_n, S_y_bounds);
   if (!cp) return(XEN_FALSE);
   return(XEN_LIST_2(C_TO_XEN_DOUBLE(cp->axis->y0),
 		    C_TO_XEN_DOUBLE(cp->axis->y1)));
 }
 
-static XEN g_set_y_bounds(XEN bounds, XEN snd_n, XEN chn_n)
+static XEN g_set_y_bounds(XEN bounds, XEN snd, XEN chn_n)
 {
   chan_info *cp;
   mus_float_t low, hi;
   int len = 0;
   XEN y0 = XEN_UNDEFINED, y1 = XEN_UNDEFINED;
 
-  ASSERT_CHANNEL(S_setB S_y_bounds, snd_n, chn_n, 2);
+  ASSERT_CHANNEL(S_setB S_y_bounds, snd, chn_n, 2);
   XEN_ASSERT_TYPE(XEN_LIST_P_WITH_LENGTH(bounds, len), bounds, XEN_ARG_1, S_setB S_y_bounds, "a list");
 
-  cp = get_cp(snd_n, chn_n, S_setB S_y_bounds);
+  cp = get_cp(snd, chn_n, S_setB S_y_bounds);
   if (!cp) return(XEN_FALSE);
 
   if (len > 0)
@@ -8261,7 +8261,7 @@ WITH_THREE_SETTER_ARGS(g_set_y_bounds_reversed, g_set_y_bounds)
 
 
 
-static XEN g_graph(XEN ldata, XEN xlabel, XEN x0, XEN x1, XEN y0, XEN y1, XEN snd_n, XEN chn_n, XEN force_display, XEN show_axes)
+static XEN g_graph(XEN ldata, XEN xlabel, XEN x0, XEN x1, XEN y0, XEN y1, XEN snd, XEN chn_n, XEN force_display, XEN show_axes)
 {
   #define H_graph "(" S_graph " data :optional xlabel (x0 0.0) (x1 1.0) y0 y1 snd chn (force-display " PROC_TRUE ") show-axes): \
 displays 'data' as a graph with x axis label 'xlabel', axis units going from x0 to x1 and y0 to y1; 'data' can be a list or a vct. \
@@ -8292,8 +8292,8 @@ If 'data' is a list of numbers, it is treated as an envelope."
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(force_display), force_display, XEN_ARG_9, S_graph, "a boolean (force-display)");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(show_axes), show_axes, XEN_ARG_10, S_graph, "an integer (show-axes choice)");
 
-  ASSERT_CHANNEL(S_graph, snd_n, chn_n, 7);
-  cp = get_cp(snd_n, chn_n, S_graph);
+  ASSERT_CHANNEL(S_graph, snd, chn_n, 7);
+  cp = get_cp(snd, chn_n, S_graph);
   if (!cp) return(XEN_FALSE);
 
   ymin = 32768.0;

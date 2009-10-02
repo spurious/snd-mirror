@@ -2457,7 +2457,7 @@ static XEN g_save_macros(XEN file)
 
 /* this doesn't display the full prompt in motif, but I can't find any way to fix it */
 
-static XEN g_prompt_in_minibuffer(XEN msg, XEN callback, XEN snd_n, XEN raw)
+static XEN g_prompt_in_minibuffer(XEN msg, XEN callback, XEN snd, XEN raw)
 {
   #if HAVE_SCHEME
     #define prompt_example "(prompt-in-minibuffer \"what?\" (lambda (response) (snd-print response)))"
@@ -2478,10 +2478,10 @@ passed as a string to the prompt callback function; otherwise it is evaluated fi
   XEN_ASSERT_TYPE((XEN_NOT_BOUND_P(callback)) || (XEN_BOOLEAN_P(callback)) || XEN_PROCEDURE_P(callback), 
 		  callback, XEN_ARG_2, S_prompt_in_minibuffer, PROC_FALSE " or a procedure");
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(raw), raw, XEN_ARG_4, S_prompt_in_minibuffer, "a boolean");
-  ASSERT_SOUND(S_prompt_in_minibuffer, snd_n, 3);
-  sp = get_sp(snd_n, NO_PLAYERS);
+  ASSERT_SOUND(S_prompt_in_minibuffer, snd, 3);
+  sp = get_sp(snd, NO_PLAYERS);
   if ((sp == NULL) || (sp->inuse != SOUND_NORMAL))
-    return(snd_no_such_sound_error(S_prompt_in_minibuffer, snd_n));
+    return(snd_no_such_sound_error(S_prompt_in_minibuffer, snd));
   if (XEN_PROCEDURE_P(sp->prompt_callback))
     {
       snd_unprotect_at(sp->prompt_callback_loc);
@@ -2515,17 +2515,19 @@ passed as a string to the prompt callback function; otherwise it is evaluated fi
 }
 
 
-static XEN g_report_in_minibuffer(XEN msg, XEN snd_n, XEN as_error)
+static XEN g_report_in_minibuffer(XEN msg, XEN snd, XEN as_error)
 {
   #define H_report_in_minibuffer "(" S_report_in_minibuffer " msg :optional snd as-error): display msg in snd's minibuffer. \
 If 'as-error' is " PROC_TRUE ", place the message in the minibuffer's error label."
   snd_info *sp;
   XEN_ASSERT_TYPE(XEN_STRING_P(msg), msg, XEN_ARG_1, S_report_in_minibuffer, "a string");
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(as_error), as_error, XEN_ARG_2, S_report_in_minibuffer, "a boolean");
-  ASSERT_SOUND(S_report_in_minibuffer, snd_n, 2);
-  sp = get_sp(snd_n, NO_PLAYERS);
+  ASSERT_SOUND(S_report_in_minibuffer, snd, 2);
+
+  sp = get_sp(snd, NO_PLAYERS);
   if ((sp == NULL) || (sp->inuse != SOUND_NORMAL))
-    return(snd_no_such_sound_error(S_report_in_minibuffer, snd_n));
+    return(snd_no_such_sound_error(S_report_in_minibuffer, snd));
+
   if (XEN_TRUE_P(as_error))
     display_minibuffer_error(sp, XEN_TO_C_STRING(msg));
   else string_to_minibuffer(sp, XEN_TO_C_STRING(msg));

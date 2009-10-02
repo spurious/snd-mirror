@@ -2513,10 +2513,10 @@ int run_apply(int ofd)
 
 /* -------------------------------- scheme connection -------------------------------- */
 
-static XEN g_play_1(XEN samp_n, XEN snd_n, XEN chn_n, bool back, bool syncd, XEN end_n, XEN edpos, 
+static XEN g_play_1(XEN samp_n, XEN snd, XEN chn_n, bool back, bool syncd, XEN end_n, XEN edpos, 
 		    const char *caller, int arg_pos, XEN stop_proc, XEN out_chan)
 {
-  /* all chans if chn_n omitted, arbitrary file if snd_n is name */
+  /* all chans if chn_n omitted, arbitrary file if snd is name */
   snd_info *sp;
   chan_info *cp = NULL;
   sync_info *si = NULL;
@@ -2550,10 +2550,10 @@ static XEN g_play_1(XEN samp_n, XEN snd_n, XEN chn_n, bool back, bool syncd, XEN
   if (XEN_STRING_P(samp_n))
     {
       /* filename beg end background syncd ignored */
-      samp = beg_to_sample(snd_n, caller);
+      samp = beg_to_sample(snd, caller);
       if (samp < 0) XEN_ERROR(NO_SUCH_SAMPLE,
 			      XEN_LIST_2(C_TO_XEN_STRING(caller),
-					 snd_n));
+					 snd));
 
       play_name = mus_expand_filename(XEN_TO_C_STRING(samp_n));
 
@@ -2582,14 +2582,14 @@ static XEN g_play_1(XEN samp_n, XEN snd_n, XEN chn_n, bool back, bool syncd, XEN
   else
     {
       XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samp_n), samp_n, XEN_ARG_1, caller, "a number");
-      ASSERT_CHANNEL(caller, snd_n, chn_n, 2);
+      ASSERT_CHANNEL(caller, snd, chn_n, 2);
       samp = beg_to_sample(samp_n, caller);
       if (samp < 0) XEN_ERROR(NO_SUCH_SAMPLE,
 			      XEN_LIST_2(C_TO_XEN_STRING(caller),
 					 samp_n));
-      sp = get_sp(snd_n, PLAYERS_OK);
+      sp = get_sp(snd, PLAYERS_OK);
       if (sp == NULL) 
-	return(snd_no_such_sound_error(caller, snd_n));
+	return(snd_no_such_sound_error(caller, snd));
       if ((syncd) && (sp->sync != 0) && (!(IS_PLAYER(sp))))
 	{
 	  si = snd_sync(sp->sync);
@@ -2610,7 +2610,7 @@ static XEN g_play_1(XEN samp_n, XEN snd_n, XEN chn_n, bool back, bool syncd, XEN
 	  else 
 	    {
 	      int ochan = -1, pos;
-	      cp = get_cp(snd_n, chn_n, caller);
+	      cp = get_cp(snd, chn_n, caller);
 	      XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(out_chan), out_chan, arg_pos + 2, caller, "an integer");
 	      if (XEN_INTEGER_P(out_chan)) ochan = XEN_TO_C_INT(out_chan);
 	      if (ochan < 0) ochan = cp->chan;
@@ -2626,7 +2626,7 @@ static XEN g_play_1(XEN samp_n, XEN snd_n, XEN chn_n, bool back, bool syncd, XEN
 #define TO_C_BOOLEAN_OR_FALSE(a) (XEN_TRUE_P(a) || ((XEN_INTEGER_P(a)) && (XEN_TO_C_INT(a) == 1)))
 
 
-static XEN g_play(XEN samp_n, XEN snd_n, XEN chn_n, XEN syncd, XEN end_n, XEN edpos, XEN stop_proc, XEN out_chan) 
+static XEN g_play(XEN samp_n, XEN snd, XEN chn_n, XEN syncd, XEN end_n, XEN edpos, XEN stop_proc, XEN out_chan) 
 {
   #if HAVE_SCHEME
     #define play_example "(play \"oboe.snd\")"
@@ -2643,11 +2643,11 @@ static XEN g_play(XEN samp_n, XEN snd_n, XEN chn_n, XEN syncd, XEN end_n, XEN ed
 If 'end' is not given, " S_play " plays to the end of the sound.  If 'pos' is -1 or not given, the current edit position is \
 played."
 
-  return(g_play_1(samp_n, snd_n, chn_n, true, TO_C_BOOLEAN_OR_FALSE(syncd), end_n, edpos, S_play, 6, stop_proc, out_chan));
+  return(g_play_1(samp_n, snd, chn_n, true, TO_C_BOOLEAN_OR_FALSE(syncd), end_n, edpos, S_play, 6, stop_proc, out_chan));
 }
 
 
-static XEN g_play_channel(XEN beg, XEN dur, XEN snd_n, XEN chn_n, XEN edpos, XEN stop_proc, XEN out_chan) 
+static XEN g_play_channel(XEN beg, XEN dur, XEN snd, XEN chn_n, XEN edpos, XEN stop_proc, XEN out_chan) 
 {
   #define H_play_channel "(" S_play_channel " :optional (beg 0) (dur len) snd chn (pos -1) stop-proc out-chan): \
 play snd or snd's channel chn starting at beg for dur samps."
@@ -2660,7 +2660,7 @@ play snd or snd's channel chn starting at beg for dur samps."
       if (len <= 0) return(XEN_FALSE);
       end = C_TO_XEN_INT64_T(beg_to_sample(beg, S_play_channel) + len);
     }
-  return(g_play_1(beg, snd_n, chn_n, true, false, end, edpos, S_play_channel, 5, stop_proc, out_chan));
+  return(g_play_1(beg, snd, chn_n, true, false, end, edpos, S_play_channel, 5, stop_proc, out_chan));
 }
 
 

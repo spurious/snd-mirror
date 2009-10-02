@@ -8274,14 +8274,14 @@ static XEN g_save_edit_history(XEN filename, XEN snd, XEN chn)
 }
 
 
-static XEN g_undo(XEN ed_n, XEN snd_n, XEN chn_n) /* opt ed_n */
+static XEN g_undo(XEN ed_n, XEN snd, XEN chn_n) /* opt ed_n */
 {
   #define H_undo "(" S_undo " :optional (count 1) snd chn): undo 'count' edits in snd's channel chn"
   chan_info *cp;
   int num;
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ed_n), ed_n, XEN_ARG_1, S_undo, "an integer");
-  ASSERT_CHANNEL(S_undo, snd_n, chn_n, 2);
-  cp = get_cp(snd_n, chn_n, S_undo);
+  ASSERT_CHANNEL(S_undo, snd, chn_n, 2);
+  cp = get_cp(snd, chn_n, S_undo);
   if (!cp) return(XEN_FALSE);
   if (XEN_INTEGER_P(ed_n))
     {
@@ -8299,14 +8299,14 @@ static XEN g_undo(XEN ed_n, XEN snd_n, XEN chn_n) /* opt ed_n */
 }
 
 
-static XEN g_redo(XEN ed_n, XEN snd_n, XEN chn_n) /* opt ed_n */
+static XEN g_redo(XEN ed_n, XEN snd, XEN chn_n) /* opt ed_n */
 {
   #define H_redo "(" S_redo " :optional (count 1) snd chn): redo 'count' edits in snd's channel chn"
   chan_info *cp;
   int num;
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ed_n), ed_n, XEN_ARG_1, S_redo, "an integer");
-  ASSERT_CHANNEL(S_redo, snd_n, chn_n, 2);
-  cp = get_cp(snd_n, chn_n, S_redo);
+  ASSERT_CHANNEL(S_redo, snd, chn_n, 2);
+  cp = get_cp(snd, chn_n, S_redo);
   if (!cp) return(XEN_FALSE);
   if (XEN_INTEGER_P(ed_n))
     {
@@ -8664,7 +8664,7 @@ static mus_sample_t *g_floats_to_samples(XEN obj, int *size, const char *caller,
 }
 
 
-static XEN g_sample(XEN samp_n, XEN snd_n, XEN chn_n, XEN pos_n)
+static XEN g_sample(XEN samp_n, XEN snd, XEN chn_n, XEN pos_n)
 {
   #define H_sample "(" S_sample " samp :optional snd chn edpos): \
 return sample samp in snd's channel chn (this is a slow access -- use samplers for speed)"
@@ -8680,8 +8680,8 @@ return sample samp in snd's channel chn (this is a slow access -- use samplers f
       int i, loc;
       snd_info *sp;
 
-      ASSERT_SOUND(S_sample, snd_n, 1);
-      sp = get_sp(snd_n, NO_PLAYERS);
+      ASSERT_SOUND(S_sample, snd, 1);
+      sp = get_sp(snd, NO_PLAYERS);
       if (!sp) return(XEN_FALSE);
       cp = any_selected_channel(sp);
       if (!cp) return(XEN_FALSE);
@@ -8696,8 +8696,8 @@ return sample samp in snd's channel chn (this is a slow access -- use samplers f
       return(lst);
     }
   
-  ASSERT_CHANNEL(S_sample, snd_n, chn_n, 2);
-  cp = get_cp(snd_n, chn_n, S_sample);
+  ASSERT_CHANNEL(S_sample, snd, chn_n, 2);
+  cp = get_cp(snd, chn_n, S_sample);
   if (!cp) return(XEN_FALSE);
   pos = to_c_edit_position(cp, pos_n, S_sample, 4);
   if (XEN_BOUND_P(samp_n))
@@ -8708,7 +8708,7 @@ return sample samp in snd's channel chn (this is a slow access -- use samplers f
 }
 
 
-static XEN g_set_sample(XEN samp_n, XEN val, XEN snd_n, XEN chn_n, XEN edpos)
+static XEN g_set_sample(XEN samp_n, XEN val, XEN snd, XEN chn_n, XEN edpos)
 {
   /* each call consitutes a separate edit from the undo/redo point-of-view */
   chan_info *cp;
@@ -8720,8 +8720,8 @@ static XEN g_set_sample(XEN samp_n, XEN val, XEN snd_n, XEN chn_n, XEN edpos)
 
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samp_n), samp_n, XEN_ARG_1, S_setB S_sample, "a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, S_setB S_sample, "a number");
-  ASSERT_CHANNEL(S_setB S_sample, snd_n, chn_n, 3);
-  cp = get_cp(snd_n, chn_n, S_setB S_sample);
+  ASSERT_CHANNEL(S_setB S_sample, snd, chn_n, 3);
+  cp = get_cp(snd, chn_n, S_setB S_sample);
   if (!cp) return(XEN_FALSE);
   pos = to_c_edit_position(cp, edpos, S_setB S_sample, 5);
   if (pos > cp->edit_ctr)
@@ -8821,7 +8821,7 @@ file_delete_t xen_to_file_delete_t(XEN auto_delete, const char *caller)
 }
 
 
-static XEN g_set_samples_with_origin(XEN samp_0, XEN samps, XEN vect, XEN snd_n, XEN chn_n, XEN truncate, 
+static XEN g_set_samples_with_origin(XEN samp_0, XEN samps, XEN vect, XEN snd, XEN chn_n, XEN truncate, 
 				     const char *edname, XEN infile_chan, XEN edpos, XEN auto_delete)
 {
   #define H_set_samples "(set-" S_samples " start-samp samps data :optional snd chn truncate edname (infile-chan 0) edpos auto-delete): \
@@ -8841,10 +8841,10 @@ the new data's end."
 
   ASSERT_SAMPLE_TYPE(caller, samp_0, XEN_ARG_1);
   ASSERT_SAMPLE_TYPE(caller, samps, XEN_ARG_2);
-  ASSERT_CHANNEL(caller, snd_n, chn_n, 4);
+  ASSERT_CHANNEL(caller, snd, chn_n, 4);
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(truncate), truncate, XEN_ARG_6, caller, "a boolean");
 
-  cp = get_cp(snd_n, chn_n, caller);
+  cp = get_cp(snd, chn_n, caller);
   if (!cp) return(XEN_FALSE);
   XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(infile_chan), infile_chan, XEN_ARG_8, caller, "an integer");
 
@@ -8911,10 +8911,10 @@ the new data's end."
 }
 
 
-static XEN g_set_samples(XEN samp_0, XEN samps, XEN vect, XEN snd_n, XEN chn_n, XEN truncate, XEN edname, XEN infile_chan, XEN edpos, XEN auto_delete)
+static XEN g_set_samples(XEN samp_0, XEN samps, XEN vect, XEN snd, XEN chn_n, XEN truncate, XEN edname, XEN infile_chan, XEN edpos, XEN auto_delete)
 {
   XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(edname) || XEN_STRING_P(edname) || XEN_FALSE_P(edname), edname, XEN_ARG_7, "set-samples", "a string");
-  return(g_set_samples_with_origin(samp_0, samps, vect, snd_n, chn_n, truncate,
+  return(g_set_samples_with_origin(samp_0, samps, vect, snd, chn_n, truncate,
 				   (char *)((XEN_STRING_P(edname)) ? XEN_TO_C_STRING(edname) : "set-samples"),
 				   infile_chan, edpos, auto_delete));
 }
@@ -8960,14 +8960,14 @@ void check_saved_temp_file(const char *type, XEN filename, XEN date_and_length)
 }
 
 
-static XEN g_override_samples_with_origin(XEN filename, XEN samps, XEN snd_n, XEN chn_n, XEN origin, XEN date)
+static XEN g_override_samples_with_origin(XEN filename, XEN samps, XEN snd, XEN chn_n, XEN origin, XEN date)
 {
   check_saved_temp_file("sound", filename, date);
-  return(g_set_samples(XEN_ZERO, samps, filename, snd_n, chn_n, XEN_TRUE, origin, XEN_ZERO, XEN_FALSE, XEN_FALSE));
+  return(g_set_samples(XEN_ZERO, samps, filename, snd, chn_n, XEN_TRUE, origin, XEN_ZERO, XEN_FALSE, XEN_FALSE));
 }
 
 
-static XEN g_vct_to_channel(XEN v, XEN beg, XEN dur, XEN snd_n, XEN chn_n, XEN edpos, XEN origin)
+static XEN g_vct_to_channel(XEN v, XEN beg, XEN dur, XEN snd, XEN chn_n, XEN edpos, XEN origin)
 {
   #define H_vct_to_channel "(" S_vct_to_channel " vct :optional (beg 0) (dur len) snd chn edpos origin): \
 set snd's channel chn's samples starting at beg for dur samps from vct data"
@@ -8984,11 +8984,11 @@ set snd's channel chn's samples starting at beg for dur samps from vct data"
   if (XEN_NOT_BOUND_P(origin))
     caller = S_vct_to_channel;
   else caller = (const char *)XEN_TO_C_STRING(origin);
-  return(g_set_samples_with_origin(beg, dur, v, snd_n, chn_n, XEN_FALSE, caller, XEN_FALSE, edpos, XEN_UNDEFINED));
+  return(g_set_samples_with_origin(beg, dur, v, snd, chn_n, XEN_FALSE, caller, XEN_FALSE, edpos, XEN_UNDEFINED));
 }
 
 
-static XEN samples_to_vct_1(XEN samp_0, XEN samps, XEN snd_n, XEN chn_n, XEN edpos, const char *caller)
+static XEN samples_to_vct_1(XEN samp_0, XEN samps, XEN snd, XEN chn_n, XEN edpos, const char *caller)
 {
   chan_info *cp;
   snd_fd *sf;
@@ -8998,9 +8998,11 @@ static XEN samples_to_vct_1(XEN samp_0, XEN samps, XEN snd_n, XEN chn_n, XEN edp
 
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samp_0) || XEN_FALSE_P(samp_0), samp_0, XEN_ARG_1, caller, "a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samps) || XEN_FALSE_P(samps), samps, XEN_ARG_2, caller, "a number");
-  ASSERT_CHANNEL(caller, snd_n, chn_n, 3);
-  cp = get_cp(snd_n, chn_n, caller);
+  ASSERT_CHANNEL(caller, snd, chn_n, 3);
+
+  cp = get_cp(snd, chn_n, caller);
   if (!cp) return(XEN_FALSE);
+
   pos = to_c_edit_position(cp, edpos, caller, 6);
   beg = beg_to_sample(samp_0, caller);
   len = XEN_TO_C_INT64_T_OR_ELSE(samps, cp->edits[pos]->samples - beg);
@@ -9021,22 +9023,22 @@ static XEN samples_to_vct_1(XEN samp_0, XEN samps, XEN snd_n, XEN chn_n, XEN edp
 }
 
 
-static XEN g_channel_to_vct(XEN samp_0, XEN samps, XEN snd_n, XEN chn_n, XEN edpos)
+static XEN g_channel_to_vct(XEN samp_0, XEN samps, XEN snd, XEN chn_n, XEN edpos)
 {
   #define H_channel_to_vct "(" S_channel_to_vct " :optional (beg 0) (dur len) snd chn edpos): \
 return a vct containing snd channel chn's data starting at beg for dur samps"
 
-  return(samples_to_vct_1(samp_0, samps, snd_n, chn_n, edpos, S_channel_to_vct));
+  return(samples_to_vct_1(samp_0, samps, snd, chn_n, edpos, S_channel_to_vct));
 }
 
 
-static XEN g_samples(XEN samp_0, XEN samps, XEN snd_n, XEN chn_n, XEN edpos)
+static XEN g_samples(XEN samp_0, XEN samps, XEN snd, XEN chn_n, XEN edpos)
 {
   #define H_samples "(" S_samples " :optional (start-samp 0) (samps len) snd chn edpos): \
 return a vct containing snd channel chn's samples starting a start-samp for samps samples; edpos is the edit \
 history position to read (defaults to current position)."
 
-  return(samples_to_vct_1(samp_0, samps, snd_n, chn_n, edpos, S_samples));
+  return(samples_to_vct_1(samp_0, samps, snd, chn_n, edpos, S_samples));
 }
 
 
@@ -9133,7 +9135,7 @@ static XEN g_set_samples_reversed(s7_scheme *sc, s7_pointer args)
 #endif
 
 
-static XEN g_change_samples_with_origin(XEN samp_0, XEN samps, XEN origin, XEN vect, XEN snd_n, XEN chn_n, XEN edpos, XEN date)
+static XEN g_change_samples_with_origin(XEN samp_0, XEN samps, XEN origin, XEN vect, XEN snd, XEN chn_n, XEN edpos, XEN date)
 {
   chan_info *cp;
   int pos;
@@ -9143,8 +9145,8 @@ static XEN g_change_samples_with_origin(XEN samp_0, XEN samps, XEN origin, XEN v
   XEN_ASSERT_TYPE(XEN_INT64_T_P(samps), samps, XEN_ARG_2, S_change_samples_with_origin, "an integer");
   XEN_ASSERT_TYPE(XEN_STRING_P(origin), origin, XEN_ARG_3, S_change_samples_with_origin, "a string");
   XEN_ASSERT_TYPE(XEN_STRING_P(vect), vect, XEN_ARG_4, S_change_samples_with_origin, "a filename");
-  ASSERT_CHANNEL(S_change_samples_with_origin, snd_n, chn_n, 5);
-  cp = get_cp(snd_n, chn_n, S_change_samples_with_origin);
+  ASSERT_CHANNEL(S_change_samples_with_origin, snd, chn_n, 5);
+  cp = get_cp(snd, chn_n, S_change_samples_with_origin);
   if (!cp) return(XEN_FALSE);
   beg = beg_to_sample(samp_0, S_change_samples_with_origin);
   len = XEN_TO_C_INT64_T_OR_ELSE(samps, 0);
@@ -9161,7 +9163,7 @@ static XEN g_change_samples_with_origin(XEN samp_0, XEN samps, XEN origin, XEN v
 }
 
 
-static XEN g_insert_sound(XEN file, XEN ubeg, XEN file_chn, XEN snd_n, XEN chn_n, XEN edpos, XEN auto_delete)
+static XEN g_insert_sound(XEN file, XEN ubeg, XEN file_chn, XEN snd, XEN chn_n, XEN edpos, XEN auto_delete)
 {
   #if HAVE_SCHEME
     #define insert_sound_example "(" S_insert_sound " \"oboe.snd\" 1000)"
@@ -9188,8 +9190,8 @@ position.\n  " insert_sound_example "\ninserts all of oboe.snd starting at sampl
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(ubeg), ubeg, XEN_ARG_2, S_insert_sound, "a number");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(file_chn), file_chn, XEN_ARG_3, S_insert_sound, "an integer");
 
-  ASSERT_CHANNEL(S_insert_sound, snd_n, chn_n, 4);
-  cp = get_cp(snd_n, chn_n, S_insert_sound);
+  ASSERT_CHANNEL(S_insert_sound, snd, chn_n, 4);
+  cp = get_cp(snd, chn_n, S_insert_sound);
   if (!cp) return(XEN_FALSE);
 
   XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(auto_delete), auto_delete, XEN_ARG_7, S_insert_sound, "a boolean or an integer");
@@ -9262,7 +9264,7 @@ position.\n  " insert_sound_example "\ninserts all of oboe.snd starting at sampl
 }
 
 
-static XEN g_insert_sample(XEN samp_n, XEN val, XEN snd_n, XEN chn_n, XEN edpos)
+static XEN g_insert_sample(XEN samp_n, XEN val, XEN snd, XEN chn_n, XEN edpos)
 {
   #define H_insert_sample "(" S_insert_sample " sample value :optional snd chn edpos): insert 'value' at 'sample' in snd's channel chn"
   chan_info *cp;
@@ -9274,8 +9276,8 @@ static XEN g_insert_sample(XEN samp_n, XEN val, XEN snd_n, XEN chn_n, XEN edpos)
 
   XEN_ASSERT_TYPE(XEN_NUMBER_P(samp_n), samp_n, XEN_ARG_1, S_insert_sample, "a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, S_insert_sample, "a number");
-  ASSERT_CHANNEL(S_insert_sample, snd_n, chn_n, 3);
-  cp = get_cp(snd_n, chn_n, S_insert_sample);
+  ASSERT_CHANNEL(S_insert_sample, snd, chn_n, 3);
+  cp = get_cp(snd, chn_n, S_insert_sample);
   if (!cp) return(XEN_FALSE);
   beg = beg_to_sample(samp_n, S_insert_sample);
   pos = to_c_edit_position(cp, edpos, S_insert_sample, 5);
@@ -9293,7 +9295,7 @@ static XEN g_insert_sample(XEN samp_n, XEN val, XEN snd_n, XEN chn_n, XEN edpos)
 }
 
 
-static XEN g_insert_samples(XEN samp, XEN samps, XEN vect, XEN snd_n, XEN chn_n, XEN edpos, XEN auto_delete, XEN caller)
+static XEN g_insert_samples(XEN samp, XEN samps, XEN vect, XEN snd, XEN chn_n, XEN edpos, XEN auto_delete, XEN caller)
 {
   #define H_insert_samples "(" S_insert_samples " start-samp samps data :optional snd chn edpos auto-delete origin): \
 insert data (either a vct, a list of samples, or a filename) into snd's channel chn starting at 'start-samp' for 'samps' samples"
@@ -9306,9 +9308,9 @@ insert data (either a vct, a list of samples, or a filename) into snd's channel 
 
   XEN_ASSERT_TYPE(XEN_NUMBER_P(samp), samp, XEN_ARG_1, S_insert_samples, "a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(samps), samps, XEN_ARG_2, S_insert_samples, "a number");
-  ASSERT_CHANNEL(S_insert_samples, snd_n, chn_n, 4);
+  ASSERT_CHANNEL(S_insert_samples, snd, chn_n, 4);
   XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(caller), caller, XEN_ARG_8, S_insert_samples, "a string");
-  cp = get_cp(snd_n, chn_n, S_insert_samples);
+  cp = get_cp(snd, chn_n, S_insert_samples);
   if (!cp) return(XEN_FALSE);
 
   beg = beg_to_sample(samp, S_insert_samples);
@@ -9371,7 +9373,7 @@ insert data (either a vct, a list of samples, or a filename) into snd's channel 
 }
 
 
-static XEN g_insert_samples_with_origin(XEN samp, XEN samps, XEN origin, XEN vect, XEN snd_n, XEN chn_n, XEN edpos, XEN date)
+static XEN g_insert_samples_with_origin(XEN samp, XEN samps, XEN origin, XEN vect, XEN snd, XEN chn_n, XEN edpos, XEN date)
 {
   chan_info *cp;
   int pos;
@@ -9382,8 +9384,8 @@ static XEN g_insert_samples_with_origin(XEN samp, XEN samps, XEN origin, XEN vec
   XEN_ASSERT_TYPE(XEN_STRING_P(origin), origin, XEN_ARG_3, S_insert_samples_with_origin, "a string");
   XEN_ASSERT_TYPE(XEN_STRING_P(vect), vect, XEN_ARG_4, S_insert_samples_with_origin, "a filename");
 
-  ASSERT_CHANNEL(S_insert_samples_with_origin, snd_n, chn_n, 5);
-  cp = get_cp(snd_n, chn_n, S_insert_samples_with_origin);
+  ASSERT_CHANNEL(S_insert_samples_with_origin, snd, chn_n, 5);
+  cp = get_cp(snd, chn_n, S_insert_samples_with_origin);
   if (!cp) return(XEN_FALSE);
 
   beg = beg_to_sample(samp, S_insert_samples_with_origin);
@@ -9398,7 +9400,7 @@ static XEN g_insert_samples_with_origin(XEN samp, XEN samps, XEN origin, XEN vec
 }
 
 
-static XEN g_delete_sample(XEN samp_n, XEN snd_n, XEN chn_n, XEN edpos)
+static XEN g_delete_sample(XEN samp_n, XEN snd, XEN chn_n, XEN edpos)
 {
   #define H_delete_sample "(" S_delete_sample " samp :optional snd chn edpos): delete sample 'samp' from snd's channel chn"
   chan_info *cp;
@@ -9406,9 +9408,9 @@ static XEN g_delete_sample(XEN samp_n, XEN snd_n, XEN chn_n, XEN edpos)
   int pos;
 
   XEN_ASSERT_TYPE(XEN_NUMBER_P(samp_n), samp_n, XEN_ARG_1, S_delete_sample, "a number");
-  ASSERT_CHANNEL(S_delete_sample, snd_n, chn_n, 2);
+  ASSERT_CHANNEL(S_delete_sample, snd, chn_n, 2);
 
-  cp = get_cp(snd_n, chn_n, S_delete_sample);
+  cp = get_cp(snd, chn_n, S_delete_sample);
   if (!cp) return(XEN_FALSE);
   samp = beg_to_sample(samp_n, S_delete_sample);
   pos = to_c_edit_position(cp, edpos, S_delete_sample, 4);
@@ -9416,7 +9418,7 @@ static XEN g_delete_sample(XEN samp_n, XEN snd_n, XEN chn_n, XEN edpos)
     XEN_ERROR(NO_SUCH_SAMPLE,
 	      XEN_LIST_4(C_TO_XEN_STRING(S_delete_sample),
 			 samp_n,
-			 snd_n, chn_n));
+			 snd, chn_n));
 
   if (delete_samples(samp, 1, cp, pos))
     update_graph(cp);
@@ -9425,7 +9427,7 @@ static XEN g_delete_sample(XEN samp_n, XEN snd_n, XEN chn_n, XEN edpos)
 }
 
 
-static XEN g_delete_samples(XEN samp_n, XEN samps, XEN snd_n, XEN chn_n, XEN edpos)
+static XEN g_delete_samples(XEN samp_n, XEN samps, XEN snd, XEN chn_n, XEN edpos)
 {
   #define H_delete_samples "(" S_delete_samples " start-samp samps :optional snd chn edpos): \
 delete 'samps' samples from snd's channel chn starting at 'start-samp'"
@@ -9435,8 +9437,8 @@ delete 'samps' samples from snd's channel chn starting at 'start-samp'"
   mus_long_t samp, len;
   XEN_ASSERT_TYPE(XEN_NUMBER_P(samp_n), samp_n, XEN_ARG_1, S_delete_samples, "a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(samps), samps, XEN_ARG_2, S_delete_samples, "a number");
-  ASSERT_CHANNEL(S_delete_samples, snd_n, chn_n, 3);
-  cp = get_cp(snd_n, chn_n, S_delete_samples);
+  ASSERT_CHANNEL(S_delete_samples, snd, chn_n, 3);
+  cp = get_cp(snd, chn_n, S_delete_samples);
   if (!cp) return(XEN_FALSE);
   pos = to_c_edit_position(cp, edpos, S_delete_samples, 6);
   samp = beg_to_sample(samp_n, S_delete_samples);

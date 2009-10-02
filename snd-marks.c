@@ -2343,7 +2343,7 @@ static XEN g_mark_home(XEN mark_n)
 }
 
 
-static XEN g_find_mark(XEN samp_n, XEN snd_n, XEN chn_n, XEN edpos) 
+static XEN g_find_mark(XEN samp_n, XEN snd, XEN chn_n, XEN edpos) 
 {
   #define H_find_mark "(" S_find_mark " samp-or-name :optional snd chn edpos): \
 find the mark in snd's channel chn at samp (if a number) or with the given name (if a string); return the mark or " PROC_FALSE " if no mark found."
@@ -2353,9 +2353,9 @@ find the mark in snd's channel chn at samp (if a number) or with the given name 
   chan_info *cp = NULL;
 
   XEN_ASSERT_TYPE((XEN_NUMBER_P(samp_n) || XEN_STRING_P(samp_n) || (XEN_FALSE_P(samp_n))), samp_n, XEN_ARG_1, S_find_mark, "a number or string or " PROC_FALSE);
-  ASSERT_CHANNEL(S_find_mark, snd_n, chn_n, 2); 
+  ASSERT_CHANNEL(S_find_mark, snd, chn_n, 2); 
 
-  cp = get_cp(snd_n, chn_n, S_find_mark);
+  cp = get_cp(snd, chn_n, S_find_mark);
   if (!cp) return(XEN_FALSE);
   pos = to_c_edit_position(cp, edpos, S_find_mark, 4);
 
@@ -2387,7 +2387,7 @@ find the mark in snd's channel chn at samp (if a number) or with the given name 
 }
 
 
-static XEN g_add_mark_1(XEN samp_n, XEN snd_n, XEN chn_n, XEN name, XEN sync, bool check_sample) 
+static XEN g_add_mark_1(XEN samp_n, XEN snd, XEN chn_n, XEN name, XEN sync, bool check_sample) 
 {
   #define H_add_mark "(" S_add_mark " samp :optional snd chn name (sync 0)): add a mark at sample samp returning the mark."
   mark *m = NULL;
@@ -2399,9 +2399,9 @@ static XEN g_add_mark_1(XEN samp_n, XEN snd_n, XEN chn_n, XEN name, XEN sync, bo
   XEN_ASSERT_TYPE(XEN_INT64_T_P(samp_n) || XEN_NOT_BOUND_P(samp_n), samp_n, XEN_ARG_1, S_add_mark, "an integer");
   XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(name) || XEN_FALSE_P(name), name, XEN_ARG_4, S_add_mark, "a string");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(sync), sync, XEN_ARG_5, S_add_mark, "an integer");
-  ASSERT_CHANNEL(S_add_mark, snd_n, chn_n, 2);
+  ASSERT_CHANNEL(S_add_mark, snd, chn_n, 2);
 
-  cp = get_cp(snd_n, chn_n, S_add_mark);
+  cp = get_cp(snd, chn_n, S_add_mark);
   if (!cp) return(XEN_FALSE);
 
   loc = XEN_TO_C_INT64_T_OR_ELSE(samp_n, 0);
@@ -2430,15 +2430,15 @@ static XEN g_add_mark_1(XEN samp_n, XEN snd_n, XEN chn_n, XEN name, XEN sync, bo
 }
 
 
-static XEN g_add_mark(XEN samp_n, XEN snd_n, XEN chn_n, XEN name, XEN sync)
+static XEN g_add_mark(XEN samp_n, XEN snd, XEN chn_n, XEN name, XEN sync)
 {
-  return(g_add_mark_1(samp_n, snd_n, chn_n, name, sync, true));
+  return(g_add_mark_1(samp_n, snd, chn_n, name, sync, true));
 }
 
 
-static XEN g_add_mark_unchecked(XEN samp_n, XEN snd_n, XEN chn_n, XEN name, XEN sync)
+static XEN g_add_mark_unchecked(XEN samp_n, XEN snd, XEN chn_n, XEN name, XEN sync)
 {
-  return(g_add_mark_1(samp_n, snd_n, chn_n, name, sync, false));
+  return(g_add_mark_1(samp_n, snd, chn_n, name, sync, false));
 }
 
 
@@ -2464,12 +2464,12 @@ static XEN g_delete_mark(XEN id_n)
 }
 
 
-static XEN g_delete_marks(XEN snd_n, XEN chn_n) 
+static XEN g_delete_marks(XEN snd, XEN chn_n) 
 {
   #define H_delete_marks "(" S_delete_marks " :optional snd chn): delete all marks in snd's channel chn"
   chan_info *cp;
-  ASSERT_CHANNEL(S_delete_marks, snd_n, chn_n, 1);
-  cp = get_cp(snd_n, chn_n, S_delete_marks);
+  ASSERT_CHANNEL(S_delete_marks, snd, chn_n, 1);
+  cp = get_cp(snd, chn_n, S_delete_marks);
   if (!cp) return(XEN_FALSE);
   delete_marks(cp);
   return(XEN_FALSE);
@@ -2570,7 +2570,7 @@ static int *channel_marks(chan_info *cp, int pos)
 }
 
 
-static XEN g_marks(XEN snd_n, XEN chn_n, XEN pos_n) 
+static XEN g_marks(XEN snd, XEN chn_n, XEN pos_n) 
 {
   #define H_marks "(" S_marks " :optional snd chn edpos): list of marks in snd/chn at edit history position pos. \
 mark list is: channel given: (id id ...), snd given: ((id id) (id id ...)), neither given: (((id ...) ...) ...)."
@@ -2579,16 +2579,16 @@ mark list is: channel given: (id id ...), snd given: ((id id) (id id ...)), neit
   snd_info *sp;
   XEN res1 = XEN_EMPTY_LIST;
 
-  ASSERT_CHANNEL(S_marks, snd_n, chn_n, 0);
+  ASSERT_CHANNEL(S_marks, snd, chn_n, 0);
 
-  if (XEN_INTEGER_P(snd_n) || XEN_SOUND_P(snd_n))
+  if (XEN_INTEGER_P(snd) || XEN_SOUND_P(snd))
       {
 	int i, pos;
 	int *ids;
 	XEN res;
 	if (XEN_INTEGER_P(chn_n))
 	  {
-	    cp = get_cp(snd_n, chn_n, S_marks);
+	    cp = get_cp(snd, chn_n, S_marks);
 	    if (!cp) return(XEN_FALSE);
 	    if (XEN_INTEGER_P(pos_n)) 
 	      {
@@ -2614,9 +2614,9 @@ mark list is: channel given: (id id ...), snd given: ((id id) (id id ...)), neit
 	  }
 	else
 	  {
-	    sp = get_sp(snd_n, NO_PLAYERS);
+	    sp = get_sp(snd, NO_PLAYERS);
 	    if (sp == NULL) 
-	      return(snd_no_such_sound_error(S_marks, snd_n));
+	      return(snd_no_such_sound_error(S_marks, snd));
 	    for (i = sp->nchans - 1; i >= 0; i--)
 	      {
 		cp = sp->chans[i];
@@ -2810,17 +2810,17 @@ void save_mark_list(FILE *fd, chan_info *cp, bool all_chans)
 }  
 
 
-static XEN g_save_marks(XEN snd_n, XEN filename)
+static XEN g_save_marks(XEN snd, XEN filename)
 {
   #define H_save_marks "(" S_save_marks " :optional snd (filename \"<snd-file-name>.marks\")): save snd's marks in filename. \
 The saved file is " XEN_LANGUAGE_NAME " code, so to restore the marks, load that file."
   snd_info *sp;
   XEN res = XEN_FALSE;
-  ASSERT_SOUND(S_save_marks, snd_n, 1);
+  ASSERT_SOUND(S_save_marks, snd, 1);
   XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(filename), filename, XEN_ARG_2, S_save_marks, "a string");  
-  sp = get_sp(snd_n, NO_PLAYERS);
+  sp = get_sp(snd, NO_PLAYERS);
   if (sp == NULL) 
-    return(snd_no_such_sound_error(S_save_marks, snd_n));
+    return(snd_no_such_sound_error(S_save_marks, snd));
   if (map_over_sound_chans(sp, find_any_marks)) /* are there any marks? */
     {
       char *newname = NULL;
