@@ -36,7 +36,7 @@ chan_info *get_cp(XEN snd, XEN x_chn_n, const char *caller)
   snd_info *sp;
   int chn_n;
 
-  sp = get_sp(snd, NO_PLAYERS);
+  sp = get_sp(snd);
 
   if ((sp == NULL) || (!(sp->active)) || (sp->inuse == SOUND_IDLE))
     {
@@ -5554,7 +5554,7 @@ static XEN channel_get(XEN snd, XEN chn_n, cp_field_t fld, const char *caller)
     {
       if (XEN_TRUE_P(chn_n))
 	{
-	  sp = get_sp(snd, NO_PLAYERS);
+	  sp = get_sp(snd);
 	  if (sp == NULL)
 	    return(snd_no_such_sound_error(caller, snd));
 	  for (i = sp->nchans - 1; i >= 0; i--)
@@ -5785,7 +5785,7 @@ static XEN channel_set(XEN snd, XEN chn_n, XEN on, cp_field_t fld, const char *c
     }
   if (XEN_TRUE_P(chn_n))
     {
-      sp = get_sp(snd, NO_PLAYERS);
+      sp = get_sp(snd);
       if (sp == NULL) 
 	return(snd_no_such_sound_error(caller, snd));
       for (i = sp->nchans - 1; i >= 0; i--)
@@ -8530,7 +8530,7 @@ static XEN g_variable_graph_p(XEN index)
 
   XEN_ASSERT_TYPE(XEN_INTEGER_P(index) || XEN_SOUND_P(index), index, XEN_ONLY_ARG, S_variable_graph_p, "a sound");
 
-  sp = get_sp(index, NO_PLAYERS);
+  sp = get_sp(index);
   if (sp)
     return(C_TO_XEN_BOOLEAN(sp->inuse == SOUND_WRAPPER));
   return(XEN_FALSE);

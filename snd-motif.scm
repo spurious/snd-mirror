@@ -1165,7 +1165,7 @@ Reverb-feedback sets the scaler on the feedback.
   (define (find-mark-list snd chn dats)
     (if (not (null? dats))
 	(let ((cur (car dats)))
-	  (if (and (= (car cur) snd)
+	  (if (and (equal? (car cur) snd)
 		   (= (cadr cur) chn))
 	      (caddr cur)
 	      (find-mark-list snd chn (cdr dats))))
@@ -1176,7 +1176,7 @@ Reverb-feedback sets the scaler on the feedback.
       (define (remove-mark-list snd chn)
 	(set! mark-list-lengths (remove-if 
 				 (lambda (n) 
-				   (and (= (car n) snd) 
+				   (and (equal? (car n) snd) 
 					(= (cadr n) chn))) 
 				 mark-list-lengths)))
       (make-procedure-with-setter
@@ -1958,7 +1958,7 @@ Reverb-feedback sets the scaler on the feedback.
     (lambda* (:optional snd-arg)
       "(show-disk-space) adds a label to the minibuffer area showing the current free space (for use with after-open-hook)"
       (let* ((snd (or snd-arg (selected-sound)))
-	     (previous-label (find-if (lambda (n) (= (car n) snd)) labelled-snds)))
+	     (previous-label (find-if (lambda (n) (equal? (car n) snd)) labelled-snds)))
 	(if (not previous-label)
 	    (if (not snd)
 		(snd-error "no sound found for disk space label")
@@ -2816,7 +2816,7 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"
 (define with-minmax-button
   (let ((maxed-snds '()))
     (lambda (snd)
-      (let ((previous-minmax (find-if (lambda (n) (= (car n) snd)) maxed-snds)))
+      (let ((previous-minmax (find-if (lambda (n) (equal? (car n) snd)) maxed-snds)))
 	(if (not previous-minmax)
 	    (let* ((widgets (sound-widgets snd))
 		   (minibuffer (list-ref widgets 3))
@@ -2838,7 +2838,7 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"
 		(XtAddCallback 
 		 new-minmax XmNactivateCallback 
 		 (lambda (w c i)
-		   (let ((mv (find-if (lambda (n) (= (car n) c)) maxed-snds)))
+		   (let ((mv (find-if (lambda (n) (equal? (car n) c)) maxed-snds)))
 		     (if mv
 			 (let ((maxed (caddr mv)))
 			   (if maxed

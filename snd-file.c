@@ -5021,7 +5021,7 @@ list: (sustain-start sustain-end release-start release-end baseNote detune)"
   int *res;
   snd_info *sp;
   ASSERT_SOUND(S_sound_loop_info, snd, 1);
-  sp = get_sp(snd, NO_PLAYERS);
+  sp = get_sp(snd);
   if (sp == NULL)
     return(snd_no_such_sound_error(S_sound_loop_info, snd));
   res = sp->hdr->loops;
@@ -5052,12 +5052,12 @@ static XEN g_set_sound_loop_info(XEN snd, XEN vals)
       XEN_ASSERT_TYPE(XEN_LIST_P(snd), snd, XEN_ARG_1, S_setB S_sound_loop_info, "a list");
       vals = snd;
       len = XEN_LIST_LENGTH(vals); 
-      sp = get_sp(XEN_UNDEFINED, NO_PLAYERS);
+      sp = get_sp(XEN_UNDEFINED);
     }
   else 
     {
       ASSERT_SOUND(S_setB S_sound_loop_info, snd, 1);
-      sp = get_sp(snd, NO_PLAYERS);
+      sp = get_sp(snd);
     }
 
   if (sp == NULL) 
@@ -5185,7 +5185,7 @@ each inner list has the form: (name start loopstart loopend)"
   XEN inlist = XEN_EMPTY_LIST, outlist = XEN_EMPTY_LIST;
   snd_info *sp;
   ASSERT_SOUND(S_soundfont_info, snd, 1);
-  sp = get_sp(snd, NO_PLAYERS);
+  sp = get_sp(snd);
   if (sp == NULL) 
     return(snd_no_such_sound_error(S_soundfont_info, snd));
   mus_header_read(sp->filename);
@@ -5278,7 +5278,7 @@ static XEN g_edit_header_dialog(XEN snd_n)
   widget_t w;
   #define H_edit_header_dialog "(" S_edit_header_dialog " :optional snd): start the Edit Header dialog on sound snd"
   snd_info *sp; 
-  sp = get_sp(snd_n, NO_PLAYERS);
+  sp = get_sp(snd_n);
   if ((sp == NULL) || (sp->inuse != SOUND_NORMAL))
     return(snd_no_such_sound_error(S_edit_header_dialog, snd_n));
   w = edit_header(sp);

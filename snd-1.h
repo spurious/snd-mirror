@@ -1218,8 +1218,13 @@ int run_apply(int ofd);
 mus_float_t *sample_linear_env(env *e, int order);
 
 void g_init_dac(void);
-snd_info *player(int index);
 void clear_players(void);
+
+bool xen_player_p(XEN obj);
+#define XEN_PLAYER_P(arg) xen_player_p(arg)
+#define IS_PLAYER_SOUND(Sp) ((Sp) && ((Sp)->index < 0))
+snd_info *get_player_sound(XEN player);
+XEN no_such_player_error(const char *caller, XEN player);
 
 void dac_set_expand(snd_info *sp, mus_float_t newval);
 void dac_set_expand_length(snd_info *sp, mus_float_t newval);
@@ -1356,7 +1361,7 @@ axis_info *make_axis_info(chan_info *cp, double xmin, double xmax, mus_float_t y
 
 /* -------- snd-snd.c -------- */
 
-snd_info *get_sp(XEN snd_n, sp_sound_t accept_player);
+snd_info *get_sp(XEN snd_n);
 peak_env_info *free_peak_env(chan_info *cp, int pos);
 void free_peak_env_state(chan_info *cp);
 peak_env_info *free_peak_env_info(peak_env_info *ep);

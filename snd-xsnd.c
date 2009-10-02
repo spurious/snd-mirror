@@ -278,7 +278,7 @@ static int scroll_to_amp(snd_info *sp, int val)
 
 void set_amp(snd_info *sp, mus_float_t val)
 {
-  if (IS_PLAYER(sp))
+  if (IS_PLAYER_SOUND(sp))
     sp->amp_control = val;
   else XtVaSetValues(AMP_SCROLLBAR(sp),
 		     XmNvalue,
@@ -358,7 +358,7 @@ static int scroll_to_speed(snd_info *sp, int ival)
 
 void set_speed(snd_info *sp, mus_float_t val)
 {
-  if (IS_PLAYER(sp))
+  if (IS_PLAYER_SOUND(sp))
     sp->speed_control = val;
   else XtVaSetValues(SPEED_SCROLLBAR(sp),
 		     XmNvalue,
@@ -441,7 +441,7 @@ static void speed_valuechanged_callback(Widget w, XtPointer context, XtPointer i
 
 void toggle_direction_arrow(snd_info *sp, bool state)
 {
-  if (IS_PLAYER(sp))
+  if (IS_PLAYER_SOUND(sp))
     sp->speed_control_direction = ((state) ? -1 : 1);
   else XmToggleButtonSetState(SPEED_ARROW(sp), (Boolean)state, true);
 }
@@ -479,7 +479,7 @@ static int scroll_to_expand(snd_info *sp, int val)
 
 void set_expand(snd_info *sp, mus_float_t val)
 {
-  if (IS_PLAYER(sp))
+  if (IS_PLAYER_SOUND(sp))
     sp->expand_control = val;
   else XtVaSetValues(EXPAND_SCROLLBAR(sp),
 		     XmNvalue,
@@ -537,7 +537,7 @@ static void expand_button_callback(Widget w, XtPointer context, XtPointer info)
 
 void toggle_expand_button(snd_info *sp, bool state)
 {
-  if (IS_PLAYER(sp))
+  if (IS_PLAYER_SOUND(sp))
     sp->expand_control_p = state;
   else XmToggleButtonSetState(EXPAND_RIGHT_BUTTON(sp), (Boolean)state, true);
 }
@@ -565,7 +565,7 @@ static int scroll_to_contrast(snd_info *sp, int val)
 
 void set_contrast(snd_info *sp, mus_float_t val)
 {
-  if (IS_PLAYER(sp))
+  if (IS_PLAYER_SOUND(sp))
     sp->contrast_control = val;
   else XtVaSetValues(CONTRAST_SCROLLBAR(sp),
 		     XmNvalue,
@@ -623,7 +623,7 @@ static void contrast_button_callback(Widget w, XtPointer context, XtPointer info
 
 void toggle_contrast_button(snd_info *sp, bool state)
 {
-  if (IS_PLAYER(sp))
+  if (IS_PLAYER_SOUND(sp))
     sp->contrast_control_p = state;
   else XmToggleButtonSetState(CONTRAST_RIGHT_BUTTON(sp), (Boolean)state, true);
 }
@@ -665,7 +665,7 @@ static int scroll_to_revscl(snd_info *sp, int val)
 
 void set_revscl(snd_info *sp, mus_float_t val)
 {
-  if (IS_PLAYER(sp))
+  if (IS_PLAYER_SOUND(sp))
     sp->reverb_control_scale = val;
   else XtVaSetValues(REVSCL_SCROLLBAR(sp),
 		     XmNvalue,
@@ -732,7 +732,7 @@ static int scroll_to_revlen(snd_info *sp, int val)
 
 void set_revlen(snd_info *sp, mus_float_t val)
 {
-  if (IS_PLAYER(sp))
+  if (IS_PLAYER_SOUND(sp))
     sp->reverb_control_length = val;
   else XtVaSetValues(REVLEN_SCROLLBAR(sp),
 		     XmNvalue,
@@ -791,7 +791,7 @@ static void reverb_button_callback(Widget w, XtPointer context, XtPointer info)
 
 void toggle_reverb_button(snd_info *sp, bool state)
 {
-  if (IS_PLAYER(sp))
+  if (IS_PLAYER_SOUND(sp))
     sp->reverb_control_p = state;
   else XmToggleButtonSetState(REVERB_BUTTON(sp), (Boolean)state, true);
 }
@@ -812,7 +812,7 @@ static void filter_button_callback(Widget w, XtPointer context, XtPointer info)
 
 void toggle_filter_button(snd_info *sp, bool state)
 {
-  if (IS_PLAYER(sp))
+  if (IS_PLAYER_SOUND(sp))
     sp->filter_control_p = state;
   else XmToggleButtonSetState(FILTER_BUTTON(sp), (Boolean)state, true);
 }
@@ -875,7 +875,7 @@ void display_filter_env(snd_info *sp)
 
 void set_filter_text(snd_info *sp, const char *str)
 {
-  if (!(IS_PLAYER(sp)))
+  if (!(IS_PLAYER_SOUND(sp)))
     XmTextSetString(FILTER_COEFFS_TEXT(sp), (char *)str);
 }
 
@@ -949,7 +949,7 @@ static void filter_dB_callback(Widget w, XtPointer context, XtPointer info)
 void set_filter_in_dB(snd_info *sp, bool val)
 {
   sp->filter_control_in_dB = val;
-  if (!(IS_PLAYER(sp)))
+  if (!(IS_PLAYER_SOUND(sp)))
     {
       XmToggleButtonSetState(FILTER_DB_BUTTON(sp), (Boolean)val, false);
       display_filter_env(sp);
@@ -981,7 +981,7 @@ static void filter_hz_callback(Widget w, XtPointer context, XtPointer info)
 void set_filter_in_hz(snd_info *sp, bool val)
 {
   new_in_hz(sp, val);
-  if (!(IS_PLAYER(sp)))
+  if (!(IS_PLAYER_SOUND(sp)))
     {
       XmToggleButtonSetState(FILTER_HZ_BUTTON(sp), (Boolean)val, false);
       display_filter_env(sp);
@@ -994,7 +994,7 @@ void set_filter_order(snd_info *sp, int order)
   if (order & 1) order++;
   if (order <= 0) order = 2;
   sp->filter_control_order = order;
-  if (!(IS_PLAYER(sp)))
+  if (!(IS_PLAYER_SOUND(sp)))
     {
       widget_int_to_text(FILTER_ORDER_TEXT(sp), order);
       display_filter_env(sp);
@@ -1090,7 +1090,7 @@ static void filter_order_activate_callback(Widget w, XtPointer context, XtPointe
 void filter_env_changed(snd_info *sp, env *e)
 {
   /* turn e back into a string for textfield widget */
-  if (!(IS_PLAYER(sp)))
+  if (!(IS_PLAYER_SOUND(sp)))
     {
       char *tmpstr = NULL;
       XmTextSetString(FILTER_COEFFS_TEXT(sp), tmpstr = env_to_string(e));
@@ -1106,7 +1106,7 @@ void filter_env_changed(snd_info *sp, env *e)
 
 void set_play_button(snd_info *sp, bool val)
 {
-  if ((sp->sgx) && (!(IS_PLAYER(sp))))
+  if ((sp->sgx) && (!(IS_PLAYER_SOUND(sp))))
     {
       XmToggleButtonSetState(PLAY_BUTTON(sp), (Boolean)val, false);
       set_open_file_play_button(val);
@@ -1144,7 +1144,7 @@ typedef struct {bool pausing; } pause_data;
 
 static void set_play_button_pause(snd_info *sp, void *ptr)
 {
-  if ((sp->playing) && (!(IS_PLAYER(sp))))
+  if ((sp->playing) && (!(IS_PLAYER_SOUND(sp))))
     {
       pause_data *pd = (pause_data *)ptr;
       Widget w;
@@ -1208,7 +1208,7 @@ void syncb(snd_info *sp, int on)
 {
   sp->sync = on;
   if (on > ss->sound_sync_max) ss->sound_sync_max = on;
-  if (!(IS_PLAYER(sp)))
+  if (!(IS_PLAYER_SOUND(sp)))
     {
       set_sync_color(sp);
       XmToggleButtonSetState(SYNC_BUTTON(sp), (on != 0), false); /* need actual bool here, not a cast! */
@@ -3215,13 +3215,17 @@ static XEN g_sound_widgets(XEN snd)
 {
   #define H_sound_widgets "(" S_sound_widgets " :optional snd): a list of \
 widgets: (0)pane (1)name (2)control-panel (3)minibuffer (4)play-button (5)filter-env (6)unite-button (7)name-label (8)name-icon (9)sync-button"
+
   snd_info *sp;
+
   ASSERT_SOUND(S_sound_widgets, snd, 1);
-  sp = get_sp(snd, NO_PLAYERS);
+
+  sp = get_sp(snd);
   if (sp == NULL)
     return(snd_no_such_sound_error(S_sound_widgets, snd));
   if (sp->sgx == NULL)
     return(XEN_EMPTY_LIST);
+
   return(XEN_CONS(XEN_WRAP_WIDGET(SND_PANE(sp)),
 	  XEN_CONS(XEN_WRAP_WIDGET(SND_NAME(sp)),
            XEN_CONS(XEN_WRAP_WIDGET(CONTROLS(sp)),

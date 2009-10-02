@@ -578,7 +578,7 @@ static XEN g_search_procedure(XEN snd)
 
       ASSERT_SOUND(S_search_procedure, snd, 1);
 
-      sp = get_sp(snd, NO_PLAYERS);
+      sp = get_sp(snd);
       if (sp)
 	return(sp->search_proc);
       else return(XEN_FALSE);
@@ -601,7 +601,7 @@ static XEN g_set_search_procedure(XEN snd, XEN proc)
       ASSERT_SOUND(S_setB S_search_procedure, snd, 1);
       XEN_ASSERT_TYPE(XEN_PROCEDURE_P(proc) || XEN_FALSE_P(proc), proc, XEN_ARG_1, S_setB S_search_procedure, "a procedure or " PROC_FALSE);
 
-      sp = get_sp(snd, NO_PLAYERS);
+      sp = get_sp(snd);
       if (sp)
 	{
 	  error = procedure_ok(proc, 1, S_setB S_search_procedure, "proc", 1);

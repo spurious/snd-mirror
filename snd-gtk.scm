@@ -732,7 +732,7 @@ Reverb-feedback sets the scaler on the feedback.
       "(show-disk-space) adds a label to the minibuffer area showing the current free space (for use with after-open-hook)"
 
       (let* ((snd (or snd-arg (selected-sound)))
-	     (previous-label (find-if (lambda (n) (= (car n) snd)) labelled-snds)))
+	     (previous-label (find-if (lambda (n) (equal? (car n) snd)) labelled-snds)))
 	(if (not previous-label)
 	    (if (not snd)
 		(snd-error "no sound found for disk space label")

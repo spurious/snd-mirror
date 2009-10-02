@@ -8232,7 +8232,8 @@ static XEN g_save_edit_history(XEN filename, XEN snd, XEN chn)
   if (fd)
     {
       chan_info *cp;
-      if ((XEN_INTEGER_P(chn)) && (XEN_INTEGER_P(snd)))
+      if ((XEN_INTEGER_P(chn)) && 
+	  (XEN_INTEGER_P(snd) || XEN_SOUND_P(snd)))
 	{
 	  cp = get_cp(snd, chn, S_save_edit_history);
 	  if (!cp) return(XEN_FALSE);
@@ -8242,9 +8243,9 @@ static XEN g_save_edit_history(XEN filename, XEN snd, XEN chn)
 	{
 	  int i, j;
 	  snd_info *sp;
-	  if (XEN_INTEGER_P(snd))
+	  if (XEN_INTEGER_P(snd) || XEN_SOUND_P(snd))
 	    {
-	      sp = get_sp(snd, NO_PLAYERS);
+	      sp = get_sp(snd);
 	      if (sp)
 		for (i = 0; i < sp->nchans; i++)
 		  edit_history_to_file(fd, sp->chans[i], false);
@@ -8681,10 +8682,13 @@ return sample samp in snd's channel chn (this is a slow access -- use samplers f
       snd_info *sp;
 
       ASSERT_SOUND(S_sample, snd, 1);
-      sp = get_sp(snd, NO_PLAYERS);
+
+      sp = get_sp(snd);
       if (!sp) return(XEN_FALSE);
+
       cp = any_selected_channel(sp);
       if (!cp) return(XEN_FALSE);
+
       pos = to_c_edit_position(cp, pos_n, S_sample, 4);
       beg = beg_to_sample(samp_n, S_sample);
       loc = snd_protect(lst);
@@ -9646,10 +9650,13 @@ static XEN g_make_snd_to_sample(XEN snd)
   #define H_make_snd_to_sample "(" S_make_snd_to_sample " snd): return a new " S_snd_to_sample " (Snd to CLM input) generator"
   mus_any *ge;
   snd_info *sp;
+
   ASSERT_SOUND(S_make_snd_to_sample, snd, 1);
-  sp = get_sp(snd, NO_PLAYERS);
+
+  sp = get_sp(snd);
   if (sp == NULL)
     return(snd_no_such_sound_error(S_make_snd_to_sample, snd));
+
   ge = make_snd_to_sample(sp);
   if (ge)
     return(mus_xen_to_object(mus_any_to_mus_xen(ge)));

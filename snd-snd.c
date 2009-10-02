@@ -3,33 +3,24 @@
 #include "clm2xen.h"
 
 
-static snd_info *get_sp_1(int snd_n, sp_sound_t accept_player)
+static snd_info *get_sp_1(int index)
 {
-  if (snd_n >= 0)
-    {
-      if ((snd_n < ss->max_sounds) && 
-	  (snd_ok(ss->sounds[snd_n])))
-	return(ss->sounds[snd_n]);
-    }
-  else
-    {
-      if (accept_player == PLAYERS_OK)
-	return(player(snd_n));
-    }
+  if ((index >= 0) &&
+      (index < ss->max_sounds) && 
+      (snd_ok(ss->sounds[index])))
+    return(ss->sounds[index]);
+
   return(NULL);
 }
 
-
-snd_info *get_sp(XEN x_snd_n, sp_sound_t accept_player)
+snd_info *get_sp(XEN snd)
 {
-  /* if x_snd_n is a number, it is sp->index */
+  if (XEN_INTEGER_P(snd))
+    return(get_sp_1(XEN_TO_C_INT(snd)));
 
-  if (XEN_INTEGER_P(x_snd_n))
-    return(get_sp_1(XEN_TO_C_INT(x_snd_n), accept_player));
-
-  if (XEN_SOUND_P(x_snd_n))
-    return(get_sp_1(xen_sound_to_int(x_snd_n), accept_player));
-
+  if (XEN_SOUND_P(snd))
+    return(get_sp_1(xen_sound_to_int(snd)));
+      
   /* use default sound, if any */
   return(any_selected_sound());
 }
@@ -2350,9 +2341,7 @@ void call_sp_watchers(snd_info *sp, sp_watcher_t type, sp_watcher_reason_t reaso
 /* ---------------------------------------- sound objects ---------------------------------------- */
 
 /* TODO: nearly everything: doc + examples, all code + snd-test*, *.c etc:
- * TODO: tie in sound object wherever a sound is opened/created etc
  * TODO: check all integer?(snd) cases and support object
- * TODO: at least mention sound object in docs and fix all examples
  */
 
 
@@ -2528,7 +2517,7 @@ static XEN g_sound_p(XEN snd)
   if (XEN_INTEGER_P(snd) || XEN_SOUND_P(snd))
     {
       snd_info *sp;
-      sp = get_sp(snd, PLAYERS_OK);
+      sp = get_sp(snd);
       return(C_TO_XEN_BOOLEAN((sp) && 
 			      (snd_ok(sp)) &&
 			      (sp->inuse == SOUND_NORMAL)));
@@ -2554,7 +2543,7 @@ any editing operations."
 
   XEN_ASSERT_TYPE(XEN_INTEGER_P(snd) || XEN_SOUND_P(snd), snd, XEN_ONLY_ARG, S_select_sound, "a sound object or index");
 
-  sp = get_sp(snd, NO_PLAYERS);
+  sp = get_sp(snd);
   if (sp)
     {
       select_channel(sp, 0);
@@ -2611,7 +2600,7 @@ static XEN g_bomb(XEN snd, XEN on)
 
   ASSERT_SOUND(S_bomb, snd, 1);
 
-  sp = get_sp(snd, NO_PLAYERS); /* could also be a variable display handler here */
+  sp = get_sp(snd); /* could also be a variable display handler here */
   if ((sp == NULL) || 
       (sp->sgx == NULL))
     return(snd_no_such_sound_error(S_bomb, snd));
@@ -2657,9 +2646,19 @@ static XEN sound_get(XEN snd, sp_field_t fld, const char *caller)
       return(res);
     }
 
-  ASSERT_SOUND(caller, snd, 1);
-
-  sp = get_sp(snd, PLAYERS_OK);
+  if (XEN_PLAYER_P(snd))
+    {
+      sp = get_player_sound(snd);
+      if (!sp)
+	return(no_such_player_error(caller, snd));
+    }
+  else
+    {
+      ASSERT_SOUND(caller, snd, 1);
+      sp = get_sp(snd);
+      if (!sp)
+	return(snd_no_such_sound_error(caller, snd));
+    }
   if ((sp == NULL) || 
       (sp->inuse == SOUND_WRAPPER))
     return(snd_no_such_sound_error(caller, snd));
@@ -2681,14 +2680,14 @@ static XEN sound_get(XEN snd, sp_field_t fld, const char *caller)
     case SP_HEADER_TYPE:         return(C_TO_XEN_INT(sp->hdr->type));                                               break;
     case SP_DATA_LOCATION:       return(C_TO_XEN_INT64_T(sp->hdr->data_location));                                  break;
     case SP_DATA_SIZE:           return(C_TO_XEN_INT64_T(mus_samples_to_bytes(sp->hdr->format, sp->hdr->samples))); break;
-    case SP_SAVE_CONTROLS:       if (!(IS_PLAYER(sp))) save_controls(sp);                                           break;
-    case SP_RESTORE_CONTROLS:    if (!(IS_PLAYER(sp))) restore_controls(sp);                                        break;
-    case SP_RESET_CONTROLS:      if (!(IS_PLAYER(sp))) reset_controls(sp);                                          break;
+    case SP_SAVE_CONTROLS:       if (!(IS_PLAYER_SOUND(sp))) save_controls(sp);                                           break;
+    case SP_RESTORE_CONTROLS:    if (!(IS_PLAYER_SOUND(sp))) restore_controls(sp);                                        break;
+    case SP_RESET_CONTROLS:      if (!(IS_PLAYER_SOUND(sp))) reset_controls(sp);                                          break;
     case SP_FILE_NAME:           return(C_TO_XEN_STRING(sp->filename));                                             break;
     case SP_SHORT_FILE_NAME:     return(C_TO_XEN_STRING(sp->short_filename));                                       break;
-    case SP_CLOSE:               if (!(IS_PLAYER(sp))) snd_close_file(sp);                                          break;
+    case SP_CLOSE:               if (!(IS_PLAYER_SOUND(sp))) snd_close_file(sp);                                          break;
     case SP_WITH_TRACKING_CURSOR: return(C_TO_XEN_BOOLEAN(sp->with_tracking_cursor));                               break;
-    case SP_SHOW_CONTROLS:       if (!(IS_PLAYER(sp))) return(C_TO_XEN_BOOLEAN(showing_controls(sp)));              break;
+    case SP_SHOW_CONTROLS:       if (!(IS_PLAYER_SOUND(sp))) return(C_TO_XEN_BOOLEAN(showing_controls(sp)));              break;
     case SP_SPEED_TONES:         return(C_TO_XEN_INT(sp->speed_control_tones));                                     break;
     case SP_SPEED_STYLE:         return(C_TO_XEN_INT((int)(sp->speed_control_style)));                              break;
     case SP_COMMENT:             return(C_TO_XEN_STRING(sp->hdr->comment));                                         break;
@@ -2737,7 +2736,7 @@ static XEN sound_get(XEN snd, sp_field_t fld, const char *caller)
       break;
 
     case SP_UPDATE:              
-      if (!(IS_PLAYER(sp))) 
+      if (!(IS_PLAYER_SOUND(sp))) 
 	{
 	  mus_sound_forget(sp->filename); /* old record must be out-of-date, so flush it (write date can be troublesome) */
 	  sp = snd_update_within_xen(sp, caller); 
@@ -2747,7 +2746,7 @@ static XEN sound_get(XEN snd, sp_field_t fld, const char *caller)
       break;
 
     case SP_PROPERTIES:
-      if (!(IS_PLAYER(sp))) 
+      if (!(IS_PLAYER_SOUND(sp))) 
 	{
 	  if (!(XEN_VECTOR_P(sp->properties)))
 	    {
@@ -2865,10 +2864,21 @@ static XEN sound_set(XEN snd, XEN val, sp_field_t fld, const char *caller)
       return(val);
     }
 
-  ASSERT_SOUND(caller, snd, 2);
-
-  sp = get_sp(snd, PLAYERS_OK);
-  if ((sp == NULL) || (sp->inuse == SOUND_WRAPPER))
+  if (XEN_PLAYER_P(snd))
+    {
+      sp = get_player_sound(snd);
+      if (!sp)
+	return(no_such_player_error(caller, snd));
+    }
+  else
+    {
+      ASSERT_SOUND(caller, snd, 1);
+      sp = get_sp(snd);
+      if (!sp)
+	return(snd_no_such_sound_error(caller, snd));
+    }
+  if ((sp == NULL) || 
+      (sp->inuse == SOUND_WRAPPER))
     return(snd_no_such_sound_error(caller, snd));
 
   switch (fld)
@@ -2880,7 +2890,7 @@ static XEN sound_set(XEN snd, XEN val, sp_field_t fld, const char *caller)
       break;
 
     case SP_READ_ONLY:
-      if (!(IS_PLAYER(sp)))
+      if (!(IS_PLAYER_SOUND(sp)))
 	{
 	  sp->user_read_only = (XEN_TO_C_BOOLEAN(val) ? FILE_READ_ONLY : FILE_READ_WRITE);
 	  if ((sp->user_read_only == FILE_READ_ONLY) || 
@@ -2926,7 +2936,7 @@ static XEN sound_set(XEN snd, XEN val, sp_field_t fld, const char *caller)
       break;
 
     case SP_SHOW_CONTROLS:
-      if (!(IS_PLAYER(sp))) 
+      if (!(IS_PLAYER_SOUND(sp))) 
 	{
 	  if (XEN_TO_C_BOOLEAN(val))
 	    show_controls(sp); 
@@ -2951,7 +2961,7 @@ static XEN sound_set(XEN snd, XEN val, sp_field_t fld, const char *caller)
       break;
 
     case SP_SRATE:
-      if (!(IS_PLAYER(sp))) 
+      if (!(IS_PLAYER_SOUND(sp))) 
 	{
 	  ival = XEN_TO_C_INT_OR_ELSE(val, 44100);
 	  if ((ival <= 0) || (ival > 100000000))
@@ -2972,7 +2982,7 @@ static XEN sound_set(XEN snd, XEN val, sp_field_t fld, const char *caller)
       break;
 
     case SP_NCHANS: 
-      if (!(IS_PLAYER(sp))) 
+      if (!(IS_PLAYER_SOUND(sp))) 
 	{
 	  ival = XEN_TO_C_INT_OR_ELSE(val, 1);
 	  if ((ival <= 0) || (ival > 256))
@@ -2984,7 +2994,7 @@ static XEN sound_set(XEN snd, XEN val, sp_field_t fld, const char *caller)
       break;
 
     case SP_DATA_FORMAT:
-      if (!(IS_PLAYER(sp))) 
+      if (!(IS_PLAYER_SOUND(sp))) 
 	{
 	  ival = XEN_TO_C_INT(val);
 	  if (mus_data_format_p(ival))
@@ -3013,7 +3023,7 @@ static XEN sound_set(XEN snd, XEN val, sp_field_t fld, const char *caller)
       break;
 
     case SP_HEADER_TYPE:
-      if (!(IS_PLAYER(sp))) 
+      if (!(IS_PLAYER_SOUND(sp))) 
 	{
 	  ival = XEN_TO_C_INT(val);
 	  if (mus_header_type_p(ival))
@@ -3026,7 +3036,7 @@ static XEN sound_set(XEN snd, XEN val, sp_field_t fld, const char *caller)
       break;
 
     case SP_DATA_LOCATION:  
-      if (!(IS_PLAYER(sp))) 
+      if (!(IS_PLAYER_SOUND(sp))) 
 	{
 	  mus_long_t loc;
 	  loc = XEN_TO_C_INT64_T(val);
@@ -3040,7 +3050,7 @@ static XEN sound_set(XEN snd, XEN val, sp_field_t fld, const char *caller)
       break;
 
     case SP_DATA_SIZE:  
-      if (!(IS_PLAYER(sp))) 
+      if (!(IS_PLAYER_SOUND(sp))) 
 	{
 	  mus_long_t size;
 	  size = XEN_TO_C_INT64_T(val);
@@ -3054,7 +3064,7 @@ static XEN sound_set(XEN snd, XEN val, sp_field_t fld, const char *caller)
       break;
 
     case SP_COMMENT:
-      if (!(IS_PLAYER(sp))) 
+      if (!(IS_PLAYER_SOUND(sp))) 
 	{
 	  if (sp->hdr->comment) free(sp->hdr->comment);
 	  if (XEN_FALSE_P(val))
@@ -3064,7 +3074,7 @@ static XEN sound_set(XEN snd, XEN val, sp_field_t fld, const char *caller)
       break;
 
     case SP_PROPERTIES:
-      if (!(IS_PLAYER(sp)))
+      if (!(IS_PLAYER_SOUND(sp)))
 	{
 	  if (!(XEN_VECTOR_P(sp->properties)))
 	    {
@@ -3566,7 +3576,7 @@ static XEN g_channel_style(XEN snd)
     return(C_TO_XEN_INT(channel_style(ss)));
 
   ASSERT_SOUND(S_channel_style, snd, 1);
-  sp = get_sp(snd, NO_PLAYERS);
+  sp = get_sp(snd);
   if (sp == NULL) 
     return(snd_no_such_sound_error(S_channel_style, snd));
 
@@ -3623,7 +3633,7 @@ As a global (if the 'snd' arg is omitted), it is the default setting for each so
     }
 
   ASSERT_SOUND(S_setB S_channel_style, snd, 2);
-  sp = get_sp(snd, NO_PLAYERS);
+  sp = get_sp(snd);
   if (sp == NULL) 
     return(snd_no_such_sound_error(S_setB S_channel_style, snd));
 
@@ -3838,7 +3848,7 @@ static XEN g_set_selected_channel(XEN snd, XEN chn_n)
     return(g_select_channel(snd));
 
   ASSERT_SOUND(S_setB S_selected_channel, snd, 1); 
-  sp = get_sp(snd, NO_PLAYERS);
+  sp = get_sp(snd);
   if (sp == NULL) 
     return(snd_no_such_sound_error(S_setB S_selected_channel, snd));
 
@@ -3936,7 +3946,7 @@ static XEN g_save_sound(XEN index)
 
   ASSERT_SOUND(S_save_sound, index, 1);
 
-  sp = get_sp(index, NO_PLAYERS);
+  sp = get_sp(index);
   if (sp == NULL) 
     return(snd_no_such_sound_error(S_save_sound, index));
 
@@ -3981,7 +3991,7 @@ static XEN g_revert_sound(XEN index)
 
   ASSERT_SOUND(S_revert_sound, index, 1);
 
-  sp = get_sp(index, NO_PLAYERS);
+  sp = get_sp(index);
   if (sp == NULL) 
     return(snd_no_such_sound_error(S_revert_sound, index));
 
@@ -4251,7 +4261,7 @@ Omitted arguments take their value from the sound being saved.\n  " save_as_exam
 
   ASSERT_SOUND(S_save_sound_as, index, 2);
 
-  sp = get_sp(index, NO_PLAYERS);
+  sp = get_sp(index);
   if (sp == NULL) 
     return(snd_no_such_sound_error(S_save_sound_as, index));
   hdr = sp->hdr;
@@ -5011,7 +5021,7 @@ where each inner list entry can also be " PROC_FALSE "."
   XEN_ASSERT_TYPE(XEN_INT64_T_P(dur) || XEN_FALSE_P(dur) || XEN_NOT_BOUND_P(dur), dur, XEN_ARG_3, S_controls_to_channel, "an integer");
   XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(origin), origin, XEN_ARG_7, S_controls_to_channel, "a string");
 
-  sp = get_sp(snd, NO_PLAYERS); /* control changes make sense, but not 'apply' -- expecting just 'play' if a player */
+  sp = get_sp(snd); /* control changes make sense, but not 'apply' -- expecting just 'play' if a player */
   if (sp)
     {
       XEN lst;
@@ -5176,7 +5186,7 @@ The 'choices' are 0 (apply to sound), 1 (apply to channel), and 2 (apply to sele
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(beg), beg, XEN_ARG_3, S_apply_controls, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(dur), dur, XEN_ARG_4, S_apply_controls, "an integer");
 
-  sp = get_sp(snd, NO_PLAYERS); /* control changes make sense, but not 'apply' -- expecting just 'play' if a player */
+  sp = get_sp(snd); /* control changes make sense, but not 'apply' -- expecting just 'play' if a player */
   if (sp)
     {
       apply_state *ap;

@@ -4333,8 +4333,8 @@ swap the indicated channels"
     }
   else
     {
-      if (XEN_INTEGER_P(snd1))
-	sp = get_sp(snd1, NO_PLAYERS);
+      if (XEN_INTEGER_P(snd1) || XEN_SOUND_P(snd1))
+	sp = get_sp(snd1);
       else sp = cp0->sound;
       if (sp == NULL) 
 	return(snd_no_such_sound_error(S_swap_channels, snd1));

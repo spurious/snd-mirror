@@ -560,7 +560,7 @@ static void set_button_base(GtkWidget *w, color_info *col)
 
 void set_play_button(snd_info *sp, bool val)
 {
-  if ((sp->sgx) && (!(IS_PLAYER(sp))))
+  if ((sp->sgx) && (!(IS_PLAYER_SOUND(sp))))
     {
       set_toggle_button(PLAY_BUTTON(sp), val, false, (void *)sp);
     }
@@ -665,7 +665,7 @@ void syncb(snd_info *sp, int on)
 {
   sp->sync = on;
   if (on > ss->sound_sync_max) ss->sound_sync_max = on;
-  if (!(IS_PLAYER(sp)))
+  if (!(IS_PLAYER_SOUND(sp)))
     {
       set_sync_color(sp);
       set_toggle_button(SYNC_BUTTON(sp), (on != 0), false, (void *)sp);
@@ -785,7 +785,7 @@ static mus_float_t scroll_to_amp(snd_info *sp, mus_float_t val)
 
 void set_amp(snd_info *sp, mus_float_t amp) 
 {
-  if (IS_PLAYER(sp))
+  if (IS_PLAYER_SOUND(sp))
     sp->amp_control = amp;
   else 
     {
@@ -853,7 +853,7 @@ static bool ignore_callback = false;
 
 void set_speed(snd_info *sp, mus_float_t val)
 {
-  if (IS_PLAYER(sp))
+  if (IS_PLAYER_SOUND(sp))
     sp->speed_control = val;
   else
     {
@@ -953,7 +953,7 @@ void toggle_direction_arrow(snd_info *sp, bool state)
   int dir = 1;
   if (state) dir = -1;
   sp->speed_control_direction = dir;
-  if (!(IS_PLAYER(sp))) draw_speed_arrow(sp);
+  if (!(IS_PLAYER_SOUND(sp))) draw_speed_arrow(sp);
 }
 
 
@@ -987,7 +987,7 @@ static mus_float_t scroll_to_expand(snd_info *sp, mus_float_t val)
 
 void set_expand(snd_info *sp, mus_float_t val) 
 {
-  if (IS_PLAYER(sp))
+  if (IS_PLAYER_SOUND(sp))
     sp->expand_control = val;
   else
     {
@@ -1040,7 +1040,7 @@ static void expand_button_callback(GtkWidget *w, gpointer context)
 
 void toggle_expand_button(snd_info *sp, bool state)
 {
-  if (IS_PLAYER(sp))
+  if (IS_PLAYER_SOUND(sp))
     sp->expand_control_p = state;
   else set_toggle_button(EXPAND_RIGHT_BUTTON(sp), state, true, (void *)sp);
 }
@@ -1068,7 +1068,7 @@ static mus_float_t scroll_to_contrast(snd_info *sp, mus_float_t val)
 
 void set_contrast(snd_info *sp, mus_float_t val) 
 {
-  if (IS_PLAYER(sp))
+  if (IS_PLAYER_SOUND(sp))
     sp->contrast_control = val;
   else
     {
@@ -1120,7 +1120,7 @@ static void contrast_button_callback(GtkWidget *w, gpointer context)
 
 void toggle_contrast_button(snd_info *sp, bool state)
 {
-  if (IS_PLAYER(sp))
+  if (IS_PLAYER_SOUND(sp))
     sp->contrast_control_p = state;
   else set_toggle_button(CONTRAST_RIGHT_BUTTON(sp), state, true, (void *)sp);
 }
@@ -1159,7 +1159,7 @@ static mus_float_t scroll_to_revscl(snd_info *sp, mus_float_t val)
 
 void set_revscl(snd_info *sp, mus_float_t val) 
 {
-  if (IS_PLAYER(sp))
+  if (IS_PLAYER_SOUND(sp))
     sp->reverb_control_scale = val;
   else
     {
@@ -1222,7 +1222,7 @@ static mus_float_t scroll_to_revlen(snd_info *sp, mus_float_t val)
 
 void set_revlen(snd_info *sp, mus_float_t val)
 {
-  if (IS_PLAYER(sp))
+  if (IS_PLAYER_SOUND(sp))
     sp->reverb_control_length = val;
   else
     {
@@ -1273,7 +1273,7 @@ static void reverb_button_callback(GtkWidget *w, gpointer context)
 
 void toggle_reverb_button(snd_info *sp, bool state)
 {
-  if (IS_PLAYER(sp))
+  if (IS_PLAYER_SOUND(sp))
     sp->reverb_control_p = state;
   else set_toggle_button(REVERB_RIGHT_BUTTON(sp), state, true, (void *)sp);
 }
@@ -1290,7 +1290,7 @@ void display_filter_env(snd_info *sp)
   GtkWidget *drawer;
   env_editor *edp;
 
-  if (IS_PLAYER(sp)) return;
+  if (IS_PLAYER_SOUND(sp)) return;
 
   edp = sp->sgx->flt;
   drawer = FILTER_ENV(sp);
@@ -1380,7 +1380,7 @@ static gboolean filter_drawer_button_release(GtkWidget *w, GdkEventButton *ev, g
 
 void set_filter_text(snd_info *sp, const char *str)
 {
-  if (!(IS_PLAYER(sp)))
+  if (!(IS_PLAYER_SOUND(sp)))
     {
       if (str)
 	gtk_entry_set_text(GTK_ENTRY(FILTER_COEFFS_TEXT(sp)), str);
@@ -1414,7 +1414,7 @@ static void filter_button_callback(GtkWidget *w, gpointer context)
 
 void toggle_filter_button(snd_info *sp, bool state)
 {
-  if (IS_PLAYER(sp))
+  if (IS_PLAYER_SOUND(sp))
     sp->filter_control_p = state;
   else set_toggle_button(FILTER_RIGHT_BUTTON(sp), state, true, (void *)sp);
 }
@@ -1431,7 +1431,7 @@ static void filter_db_callback(GtkWidget *w, gpointer context)
 void set_filter_in_dB(snd_info *sp, bool val)
 {
   sp->filter_control_in_dB = val;
-  if (!(IS_PLAYER(sp)))
+  if (!(IS_PLAYER_SOUND(sp)))
     {
       set_toggle_button(FILTER_DB_BUTTON(sp), val, false, (void *)sp);
       display_filter_env(sp);
@@ -1461,7 +1461,7 @@ static void filter_hz_callback(GtkWidget *w, gpointer context)
 void set_filter_in_hz(snd_info *sp, bool val)
 {
   new_in_hz(sp, val);
-  if (!(IS_PLAYER(sp)))
+  if (!(IS_PLAYER_SOUND(sp)))
     {
       set_toggle_button(FILTER_HZ_BUTTON(sp), val, false, (void *)sp);
       display_filter_env(sp);
@@ -1481,7 +1481,7 @@ static void set_filter_order_1(snd_info *sp, int order, bool setadj)
 
 void set_filter_order(snd_info *sp, int order) 
 {
-  if (IS_PLAYER(sp))
+  if (IS_PLAYER_SOUND(sp))
     sp->filter_control_order = order;
   else set_filter_order_1(sp, order, true);
 }
@@ -1520,7 +1520,7 @@ static void filter_activate_callback(GtkWidget *w, gpointer context)
 void filter_env_changed(snd_info *sp, env *e)
 {
   /* turn e back into a string for textfield widget */
-  if (!(IS_PLAYER(sp)))
+  if (!(IS_PLAYER_SOUND(sp)))
     {
       char *tmpstr;
       tmpstr = env_to_string(e);
@@ -2372,12 +2372,15 @@ static XEN g_sound_widgets(XEN snd)
 widgets: ((0)pane (1)name (2)control-panel (3)minibuffer (4)play-button (5)filter-env (6)unite-button (7)name-label (8)name-icon) (9)\
 pane-box (10)name-form"
   snd_info *sp;
+
   ASSERT_SOUND(S_sound_widgets, snd, 1);
-  sp = get_sp(snd, NO_PLAYERS);
+
+  sp = get_sp(snd);
   if (sp == NULL)
     return(snd_no_such_sound_error(S_sound_widgets, snd));
   if (sp->sgx == NULL)
     return(XEN_EMPTY_LIST);
+
   return(XEN_CONS(XEN_WRAP_WIDGET(SND_PANE(sp)),
 	  XEN_CONS(XEN_WRAP_WIDGET(NAME_BUTTON(sp)),
            XEN_CONS(XEN_WRAP_WIDGET(CONTROL_PANEL(sp)),

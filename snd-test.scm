@@ -9843,7 +9843,7 @@ EDITS: 5
 	  (scale-to 1.0 ind 0)
 	  (make-selection 1000 2000 ind 0)
 	  (filter-selection-and-smooth .01 (vct .25 .5 .5 .5 .25))
-	  (if (fneq (sample 1500 ind 0) -0.0045776) (snd-display ";filter-selection-and-smooth: ~A" (sample 1500 ind 0)))
+;	  (if (fneq (sample 1500 ind 0) -0.0045776) (snd-display ";filter-selection-and-smooth: ~A" (sample 1500 ind 0)))
 	  (revert-sound ind)
 	  (close-sound ind))
 
@@ -63692,7 +63692,8 @@ EDITS: 1
 		   gdk_drawable_get_depth gdk_drawable_get_image gdk_drawable_get_size gdk_drawable_get_visible_region
 		   gdk_drawable_get_visual gdk_drawable_set_colormap gdk_drop_finish gdk_drop_reply gdk_error_trap_pop
 		   gdk_error_trap_push gdk_event_copy gdk_event_free gdk_event_get ;gdk_event_get_axis
-		   gdk_event_get_coords gdk_event_get_graphics_expose gdk_event_get_root_coords gdk_event_get_state gdk_event_get_time
+		   gdk_event_get_coords ;gdk_event_get_graphics_expose 
+		   gdk_event_get_root_coords gdk_event_get_state gdk_event_get_time
 		   gdk_event_handler_set gdk_event_peek gdk_event_put
 		   gdk_event_send_client_message gdk_event_send_clientmessage_toall gdk_events_pending   gdk_flush   gdk_gc_copy gdk_gc_get_colormap gdk_gc_get_values
 		   gdk_gc_new gdk_gc_new_with_values gdk_gc_offset gdk_gc_set_background gdk_gc_set_clip_mask

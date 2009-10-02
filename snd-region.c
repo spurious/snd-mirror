@@ -1782,7 +1782,7 @@ selection is used."
       if (XEN_TRUE_P(chn_n))
 	{
 	  /* all chans and all sync'd chans if sync not 0 */
-	  sp = get_sp(snd_n, NO_PLAYERS);
+	  sp = get_sp(snd_n);
 	  if (sp)
 	    {
 	      old_sync = sp->sync;

@@ -547,6 +547,7 @@ void about_snd_help(void)
 \n\
 1-Oct:   sounds are objects, but the integer choice also works. \n\
          sound->integer and integer->sound.\n\
+         players are objects.\n\
 29-Sep:  mixes are objects now (not ints), integer->mix and mix->integer.\n\
          all \"sample-reader\" and \"sample_reader\" names changed to \"sampler\".\n\
          marks are objects (not ints), integer->mark and mark->integer.\n\

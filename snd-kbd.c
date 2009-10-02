@@ -2474,19 +2474,23 @@ then when the user eventually responds, invoke the function callback, if any, wi
 passed as a string to the prompt callback function; otherwise it is evaluated first as Scheme code.\n  " prompt_example
 
   snd_info *sp;
+
   XEN_ASSERT_TYPE(XEN_STRING_P(msg), msg, XEN_ARG_1, S_prompt_in_minibuffer, "a string");
   XEN_ASSERT_TYPE((XEN_NOT_BOUND_P(callback)) || (XEN_BOOLEAN_P(callback)) || XEN_PROCEDURE_P(callback), 
 		  callback, XEN_ARG_2, S_prompt_in_minibuffer, PROC_FALSE " or a procedure");
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(raw), raw, XEN_ARG_4, S_prompt_in_minibuffer, "a boolean");
   ASSERT_SOUND(S_prompt_in_minibuffer, snd, 3);
-  sp = get_sp(snd, NO_PLAYERS);
+
+  sp = get_sp(snd);
   if ((sp == NULL) || (sp->inuse != SOUND_NORMAL))
     return(snd_no_such_sound_error(S_prompt_in_minibuffer, snd));
+
   if (XEN_PROCEDURE_P(sp->prompt_callback))
     {
       snd_unprotect_at(sp->prompt_callback_loc);
       sp->prompt_callback_loc = NOT_A_GC_LOC;
     }
+
   sp->prompt_callback = XEN_FALSE; /* just in case something goes awry */
   if (XEN_BOUND_P(raw)) sp->raw_prompt = XEN_TO_C_BOOLEAN(raw); else sp->raw_prompt = false;
   if (XEN_PROCEDURE_P(callback))
@@ -2524,7 +2528,7 @@ If 'as-error' is " PROC_TRUE ", place the message in the minibuffer's error labe
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(as_error), as_error, XEN_ARG_2, S_report_in_minibuffer, "a boolean");
   ASSERT_SOUND(S_report_in_minibuffer, snd, 2);
 
-  sp = get_sp(snd, NO_PLAYERS);
+  sp = get_sp(snd);
   if ((sp == NULL) || (sp->inuse != SOUND_NORMAL))
     return(snd_no_such_sound_error(S_report_in_minibuffer, snd));
 
@@ -2541,7 +2545,7 @@ static XEN g_clear_minibuffer(XEN snd)
 error message as well)."
   snd_info *sp;
   ASSERT_SOUND(S_clear_minibuffer, snd, 1);
-  sp = get_sp(snd, NO_PLAYERS);
+  sp = get_sp(snd);
   if ((sp == NULL) || (sp->inuse != SOUND_NORMAL))
     return(snd_no_such_sound_error(S_clear_minibuffer, snd));
   clear_minibuffer(sp);

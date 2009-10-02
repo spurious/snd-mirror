@@ -594,7 +594,7 @@ static void reflect_play_stop(snd_info *sp)
 }
 
 
-static void free_player(snd_info *sp);
+static void free_player_sound(snd_info *sp);
 
 typedef enum {WITHOUT_TOGGLE, WITH_TOGGLE} dac_toggle_t;
 
@@ -672,11 +672,11 @@ static void stop_playing_with_toggle(dac_info *dp, dac_toggle_t toggle, with_hoo
 	    }
 	}
     }
-  if ((sp) && (IS_PLAYER(sp))) 
+  if ((sp) && (IS_PLAYER_SOUND(sp))) 
     {
       int k;
       bool free_ok = true;
-      dp->sp = NULL; /* free_player frees it */
+      dp->sp = NULL; /* free_player_sound frees it */
       for (k = dp->slot + 1; k < dac_max_sounds; k++)
 	{
 	  dac_info *ndp;
@@ -690,7 +690,7 @@ static void stop_playing_with_toggle(dac_info *dp, dac_toggle_t toggle, with_hoo
 	    }
 	}
       if (free_ok) 
-	free_player(sp); 
+	free_player_sound(sp); 
       sp = NULL;
     }
   free_dac_info(dp, reason); /* this will call the stop-function, if any */
@@ -1055,7 +1055,7 @@ static dac_info *add_channel_to_play_list(chan_info *cp, snd_info *sp, mus_long_
       if (sp) 
 	{
 	  sp->playing++;
-	  if ((sp->with_tracking_cursor != DONT_TRACK) && (!(IS_PLAYER(sp))))
+	  if ((sp->with_tracking_cursor != DONT_TRACK) && (!(IS_PLAYER_SOUND(sp))))
 	    {
 	      cp->original_cursor = CURSOR(cp);
 	      if (cp->axis)
@@ -2511,7 +2511,250 @@ int run_apply(int ofd)
 
 
 
-/* -------------------------------- scheme connection -------------------------------- */
+/* -------- players -------- */
+
+static snd_info **players = NULL;
+static int *player_chans = NULL;
+static int players_size = 0;
+
+static int new_player_index(void)
+{
+  int i, old_size;
+  if (players_size == 0)
+    {
+      players_size = 8;
+      players = (snd_info **)calloc(players_size, sizeof(snd_info *));
+      player_chans = (int *)calloc(players_size, sizeof(int));
+      return(-1);
+    }
+  for (i = 1; i < players_size; i++)
+    if (players[i] == NULL)
+      return(-i);
+  old_size = players_size;
+  players_size += 8;
+  players = (snd_info **)realloc(players, players_size * sizeof(snd_info *));
+  player_chans = (int *)realloc(player_chans, players_size * sizeof(int));
+  for (i = old_size; i < players_size; i++)
+    {
+      players[i] = NULL;
+      player_chans[i] = 0;
+    }
+  return(-old_size);
+}
+
+#define PLAYER(Sp) -(Sp->index)
+
+static int make_player(snd_info *sp, chan_info *cp)
+{
+  /* store sp so we can access it via find_sound (get_sp) later */
+  players[PLAYER(sp)] = sp;
+  player_chans[PLAYER(sp)] = cp->chan;
+  return(-sp->index);
+}
+
+static void free_player_sound(snd_info *sp)
+{
+  if (players)
+    {
+      players[PLAYER(sp)] = NULL;
+      player_chans[PLAYER(sp)] = 0;
+    }
+  free(sp->filename);
+  sp->filename = NULL;
+  free(sp->chans);
+  sp->chans = NULL;
+  if (sp->filter_control_envelope) sp->filter_control_envelope = free_env(sp->filter_control_envelope);
+  sp->inuse = SOUND_IDLE;
+  free(sp);
+}
+
+
+void clear_players(void)
+{
+  /* called only in free_snd_info, snd-data.c -- make sure currently closing sound is not playing (via a user-created player) */
+  int i;
+  for (i = 0; i < players_size; i++)
+    {
+      int j;
+      snd_info *sp;
+      sp = players[i];
+      if (sp)
+	for (j = 0; j < sp->nchans; j++)
+	  if ((sp->chans[j] == NULL) ||
+	      (sp->chans[j]->active < CHANNEL_HAS_EDIT_LIST) ||
+	      (sp->chans[j]->sound == NULL))
+	    {
+	      int k;
+	      for (k = 0; k <= max_active_slot; k++)
+		{
+		  dac_info *dp;
+		  dp = play_list[k];
+		  if ((dp) && (sp == dp->sp))
+		    {
+		      play_list[k] = NULL;
+		      play_list_members--;
+		      free_dac_info(dp, PLAY_CLOSE); /* calls stop-function, if any. used in snd-data.c in free_snd_info */
+		    }
+		}
+	      if (IS_PLAYER_SOUND(sp)) free_player_sound(sp);
+	      break;
+	    }
+    }
+}
+
+
+/* ---------------------------------------- player objects ---------------------------------------- */
+
+typedef struct {
+  int n;
+} xen_player;
+
+
+#define XEN_TO_XEN_PLAYER(arg) ((xen_player *)XEN_OBJECT_REF(arg))
+
+static int xen_player_to_int(XEN n)
+{
+  xen_player *mx;
+  mx = XEN_TO_XEN_PLAYER(n);
+  return(mx->n);
+}
+
+#define XEN_PLAYER_TO_C_INT(Player) xen_player_to_int(Player)
+
+
+snd_info *get_player_sound(XEN obj)
+{
+  return(players[xen_player_to_int(obj)]);
+}
+
+
+static XEN_OBJECT_TYPE xen_player_tag;
+
+bool xen_player_p(XEN obj) 
+{
+  return(XEN_OBJECT_TYPE_P(obj, xen_player_tag));
+}
+
+
+static void xen_player_free(xen_player *v) {if (v) free(v);}
+
+XEN_MAKE_OBJECT_FREE_PROCEDURE(xen_player, free_xen_player, xen_player_free)
+
+
+static char *xen_player_to_string(xen_player *v)
+{
+  #define XEN_PLAYER_PRINT_BUFFER_SIZE 64
+  char *buf;
+  if (v == NULL) return(NULL);
+  buf = (char *)calloc(XEN_PLAYER_PRINT_BUFFER_SIZE, sizeof(char));
+  sprintf(buf, "#<player %d>", v->n);
+  return(buf);
+}
+
+XEN_MAKE_OBJECT_PRINT_PROCEDURE(xen_player, print_xen_player, xen_player_to_string)
+
+
+#if HAVE_FORTH || HAVE_RUBY
+static XEN g_xen_player_to_string(XEN obj)
+{
+  char *vstr;
+  XEN result;
+  #define S_xen_player_to_string "player->string"
+
+  XEN_ASSERT_TYPE(XEN_PLAYER_P(obj), obj, XEN_ONLY_ARG, S_xen_player_to_string, "a player");
+
+  vstr = xen_player_to_string(XEN_TO_XEN_PLAYER(obj));
+  result = C_TO_XEN_STRING(vstr);
+  free(vstr);
+  return(result);
+}
+#endif
+
+
+static bool xen_player_equalp(xen_player *v1, xen_player *v2) 
+{
+  return((v1 == v2) ||
+	 (v1->n == v2->n));
+}
+
+
+static XEN equalp_xen_player(XEN obj1, XEN obj2)
+{
+  if ((!(XEN_PLAYER_P(obj1))) || (!(XEN_PLAYER_P(obj2)))) return(XEN_FALSE);
+  return(xen_return_first(C_TO_XEN_BOOLEAN(xen_player_equalp(XEN_TO_XEN_PLAYER(obj1), XEN_TO_XEN_PLAYER(obj2))), obj1, obj2));
+}
+
+
+static xen_player *xen_player_make(int n)
+{
+  xen_player *new_v;
+  new_v = (xen_player *)malloc(sizeof(xen_player));
+  new_v->n = n;
+  return(new_v);
+}
+
+
+static XEN new_xen_player(int n)
+{
+  xen_player *mx;
+  if (n < 0)
+    return(XEN_FALSE);
+
+  mx = xen_player_make(n);
+  XEN_MAKE_AND_RETURN_OBJECT(xen_player_tag, mx, 0, free_xen_player);
+}
+
+#define C_INT_TO_XEN_PLAYER(val) new_xen_player(val)
+
+
+#if HAVE_S7
+static bool s7_xen_player_equalp(void *obj1, void *obj2)
+{
+  return((obj1 == obj2) ||
+	 (((xen_player *)obj1)->n == ((xen_player *)obj2)->n));
+}
+
+static XEN s7_xen_player_length(s7_scheme *sc, XEN obj)
+{
+  return(g_frames(obj, XEN_ZERO, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION)));
+}
+#endif
+
+
+static init_xen_player(void)
+{
+#if HAVE_S7
+  xen_player_tag = XEN_MAKE_OBJECT_TYPE("<player>", print_xen_player, free_xen_player, s7_xen_player_equalp, NULL, NULL, NULL, s7_xen_player_length, NULL, NULL);
+#else
+#if HAVE_RUBY
+  xen_player_tag = XEN_MAKE_OBJECT_TYPE("XenPlayer", sizeof(xen_player));
+#else
+  xen_player_tag = XEN_MAKE_OBJECT_TYPE("Player", sizeof(xen_player));
+#endif
+#endif
+
+#if HAVE_GUILE
+  scm_set_smob_print(xen_player_tag,  print_xen_player);
+  scm_set_smob_free(xen_player_tag,   free_xen_player);
+  scm_set_smob_equalp(xen_player_tag, equalp_xen_player);
+#endif
+
+#if HAVE_FORTH
+  fth_set_object_inspect(xen_player_tag,   print_xen_player);
+  fth_set_object_dump(xen_player_tag,      g_xen_player_to_string);
+  fth_set_object_equal(xen_player_tag,     equalp_xen_player);
+  fth_set_object_free(xen_player_tag,      free_xen_player);
+#endif
+
+#if HAVE_RUBY
+  rb_define_method(xen_player_tag, "to_s",     XEN_PROCEDURE_CAST print_xen_player, 0);
+  rb_define_method(xen_player_tag, "eql?",     XEN_PROCEDURE_CAST equalp_xen_player, 1);
+  rb_define_method(xen_player_tag, "to_str",   XEN_PROCEDURE_CAST g_xen_player_to_string, 0);
+#endif
+}
+
+/* -------------------------------------------------------------------------------- */
+
 
 static XEN g_play_1(XEN samp_n, XEN snd, XEN chn_n, bool back, bool syncd, XEN end_n, XEN edpos, 
 		    const char *caller, int arg_pos, XEN stop_proc, XEN out_chan)
@@ -2578,47 +2821,55 @@ static XEN g_play_1(XEN samp_n, XEN snd, XEN chn_n, bool back, bool syncd, XEN e
       sp->delete_me = (struct dialog_play_info *)1;
       if (XEN_INT64_T_P(chn_n)) end = XEN_TO_C_INT64_T(chn_n);
       play_sound_1(sp, samp, end, background, edpos, stop_proc, caller, arg_pos);
+      return(XEN_FALSE);
     }
+
+  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samp_n), samp_n, XEN_ARG_1, caller, "a number");
+  samp = beg_to_sample(samp_n, caller);
+  if (samp < 0) XEN_ERROR(NO_SUCH_SAMPLE,
+			  XEN_LIST_2(C_TO_XEN_STRING(caller),
+				     samp_n));
+
+  if (XEN_PLAYER_P(snd))
+    sp = get_player_sound(snd);
   else
     {
-      XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samp_n), samp_n, XEN_ARG_1, caller, "a number");
       ASSERT_CHANNEL(caller, snd, chn_n, 2);
-      samp = beg_to_sample(samp_n, caller);
-      if (samp < 0) XEN_ERROR(NO_SUCH_SAMPLE,
-			      XEN_LIST_2(C_TO_XEN_STRING(caller),
-					 samp_n));
-      sp = get_sp(snd, PLAYERS_OK);
-      if (sp == NULL) 
-	return(snd_no_such_sound_error(caller, snd));
-      if ((syncd) && (sp->sync != 0) && (!(IS_PLAYER(sp))))
-	{
-	  si = snd_sync(sp->sync);
-	  if (end != NO_END_SPECIFIED)
-	    {
-	      ends = (mus_long_t *)calloc(si->chans, sizeof(mus_long_t));
-	      for (i = 0; i < si->chans; i++) ends[i] = end;
-	    }
-	  for (i = 0; i < si->chans; i++) si->begs[i] = samp;
-	  play_channels_1(si->cps, si->chans, si->begs, ends, background, edpos, false, stop_proc, caller, arg_pos);
-	  si = free_sync_info(si);
-	  if (ends) free(ends);
-	}
-      else
-	{
-	  if (!(XEN_INTEGER_P(chn_n)))
-	    play_sound_1(sp, samp, end, background, edpos, stop_proc, caller, arg_pos);
-	  else 
-	    {
-	      int ochan = -1, pos;
-	      cp = get_cp(snd, chn_n, caller);
-	      XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(out_chan), out_chan, arg_pos + 2, caller, "an integer");
-	      if (XEN_INTEGER_P(out_chan)) ochan = XEN_TO_C_INT(out_chan);
-	      if (ochan < 0) ochan = cp->chan;
-	      pos = to_c_edit_position(cp, edpos, caller, arg_pos);
-	      if (cp) play_channel_1(cp, samp, end, background, pos, stop_proc, ochan);
-	    }
-	}
+      sp = get_sp(snd);
     }
+  if (sp == NULL) 
+    return(snd_no_such_sound_error(caller, snd));
+
+  if ((syncd) && 
+      (sp->sync != 0) && 
+      (!(IS_PLAYER_SOUND(sp))))
+    {
+      si = snd_sync(sp->sync);
+      if (end != NO_END_SPECIFIED)
+	{
+	  ends = (mus_long_t *)calloc(si->chans, sizeof(mus_long_t));
+	  for (i = 0; i < si->chans; i++) ends[i] = end;
+	}
+      for (i = 0; i < si->chans; i++) si->begs[i] = samp;
+      play_channels_1(si->cps, si->chans, si->begs, ends, background, edpos, false, stop_proc, caller, arg_pos);
+      si = free_sync_info(si);
+      if (ends) free(ends);
+      return(XEN_FALSE);
+    }
+
+  if (!(XEN_INTEGER_P(chn_n)))
+    play_sound_1(sp, samp, end, background, edpos, stop_proc, caller, arg_pos);
+  else 
+    {
+      int ochan = -1, pos;
+      cp = get_cp(snd, chn_n, caller);
+      XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(out_chan), out_chan, arg_pos + 2, caller, "an integer");
+      if (XEN_INTEGER_P(out_chan)) ochan = XEN_TO_C_INT(out_chan);
+      if (ochan < 0) ochan = cp->chan;
+      pos = to_c_edit_position(cp, edpos, caller, arg_pos);
+      if (cp) play_channel_1(cp, samp, end, background, pos, stop_proc, ochan);
+    }
+
   return(XEN_FALSE);
 }
 
@@ -2726,132 +2977,49 @@ and wait for the play to complete before returning.  'start' can also be a funct
 }
 
 
+XEN no_such_player_error(const char *caller, XEN player)
+{
+  XEN_ERROR(XEN_ERROR_TYPE("no-such-player"),
+	    XEN_LIST_2(C_TO_XEN_STRING(caller),
+		       player));
+  return(XEN_FALSE);
+}
+
+
 static XEN g_stop_playing(XEN snd)
 {
   #define H_stop_playing "(" S_stop_playing " :optional snd): stop play (DAC output) in progress"
   snd_info *sp = NULL;
 
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(snd) || XEN_SOUND_P(snd) || XEN_NOT_BOUND_P(snd), snd, XEN_ONLY_ARG, S_stop_playing, "a sound object of index");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(snd) || XEN_SOUND_P(snd) || XEN_NOT_BOUND_P(snd) || XEN_PLAYER_P(snd), snd, XEN_ONLY_ARG, S_stop_playing, "a sound or player");
 
-  if (XEN_INTEGER_P(snd) || XEN_SOUND_P(snd)) 
-    sp = get_sp(snd, PLAYERS_OK);
+  if (XEN_INTEGER_P(snd) || XEN_SOUND_P(snd))
+    {
+      sp = get_sp(snd);
+      if (!sp)
+	return(snd_no_such_sound_error(S_stop_playing, snd));
+    }
+  else
+    {
+      if (XEN_PLAYER_P(snd))
+	{
+	  sp = get_player_sound(snd);
+	  if (!sp)
+	    return(no_such_player_error(S_stop_playing, snd));
+	}
+    }
+
   if (sp) 
     stop_playing_sound(sp, PLAY_STOP_CALLED); 
   else stop_playing_all_sounds(PLAY_STOP_CALLED);
+
   return(XEN_FALSE);
 }
 
 
-/* -------- players -------- */
-
-static snd_info **players = NULL;
-static int *player_chans = NULL;
-static int players_size = 0;
-
-static int new_player_index(void)
-{
-  int i, old_size;
-  if (players_size == 0)
-    {
-      players_size = 8;
-      players = (snd_info **)calloc(players_size, sizeof(snd_info *));
-      player_chans = (int *)calloc(players_size, sizeof(int));
-      return(-1);
-    }
-  for (i = 1; i < players_size; i++)
-    if (players[i] == NULL)
-      return(-i);
-  old_size = players_size;
-  players_size += 8;
-  players = (snd_info **)realloc(players, players_size * sizeof(snd_info *));
-  player_chans = (int *)realloc(player_chans, players_size * sizeof(int));
-  for (i = old_size; i < players_size; i++)
-    {
-      players[i] = NULL;
-      player_chans[i] = 0;
-    }
-  return(-old_size);
-}
-
-
-static int make_player(snd_info *sp, chan_info *cp)
-{
-  /* store sp so we can access it via find_sound (get_sp) later */
-  players[PLAYER(sp)] = sp;
-  player_chans[PLAYER(sp)] = cp->chan;
-  return(sp->index);
-}
-
-
-snd_info *player(int index)
-{
-  if ((players) && (index < 0) && ((-index) < players_size))
-    return(players[-index]);
-  return(NULL);
-}
-
-
-static void free_player(snd_info *sp)
-{
-  if (players)
-    {
-      players[PLAYER(sp)] = NULL;
-      player_chans[PLAYER(sp)] = 0;
-    }
-  free(sp->filename);
-  sp->filename = NULL;
-  free(sp->chans);
-  sp->chans = NULL;
-  if (sp->filter_control_envelope) sp->filter_control_envelope = free_env(sp->filter_control_envelope);
-  sp->inuse = SOUND_IDLE;
-  free(sp);
-}
-
-
-void clear_players(void)
-{
-  /* called only in free_snd_info, snd-data.c -- make sure currently closing sound is not playing (via a user-created player) */
-  int i;
-  for (i = 0; i < players_size; i++)
-    {
-      int j;
-      snd_info *sp;
-      sp = players[i];
-      if (sp)
-	for (j = 0; j < sp->nchans; j++)
-	  if ((sp->chans[j] == NULL) ||
-	      (sp->chans[j]->active < CHANNEL_HAS_EDIT_LIST) ||
-	      (sp->chans[j]->sound == NULL))
-	    {
-	      int k;
-	      for (k = 0; k <= max_active_slot; k++)
-		{
-		  dac_info *dp;
-		  dp = play_list[k];
-		  if ((dp) && (sp == dp->sp))
-		    {
-		      play_list[k] = NULL;
-		      play_list_members--;
-		      free_dac_info(dp, PLAY_CLOSE); /* calls stop-function, if any. used in snd-data.c in free_snd_info */
-		    }
-		}
-	      if (IS_PLAYER(sp)) free_player(sp);
-	      break;
-	    }
-    }
-}
 
 
 /* add-player make-player stop-player start-playing */
-
-static XEN snd_no_such_player_error(const char *caller, XEN index)
-{
-  XEN_ERROR(XEN_ERROR_TYPE("no-such-player"),
-	    XEN_LIST_2(C_TO_XEN_STRING(caller),
-		       index));
-  return(XEN_FALSE);
-}
-
 
 static XEN g_make_player(XEN snd, XEN chn)
 {
@@ -2865,26 +3033,31 @@ to be played (via " S_start_playing ")."
 
   snd_info *true_sp, *new_sp;
   chan_info *cp;
+
   ASSERT_CHANNEL(S_make_player, snd, chn, 1);
-  true_sp = get_sp(snd, NO_PLAYERS);
+  true_sp = get_sp(snd);
   if (true_sp == NULL) 
     return(snd_no_such_sound_error(S_make_player, snd));
+
   cp = get_cp(snd, chn, S_make_player);
-  if (cp == NULL) return(XEN_FALSE); /* won't happen */
   new_sp = make_snd_info(NULL, "make_player:wrapper", true_sp->hdr, new_player_index(), FILE_READ_ONLY);
+
   free(new_sp->sgx); /* no built-in GUI */
   new_sp->sgx = NULL;
   new_sp->chans[cp->chan] = cp;
-  return(C_TO_XEN_INT(make_player(new_sp, cp)));
+
+  return(C_INT_TO_XEN_PLAYER(make_player(new_sp, cp)));
 }
 
 
-static XEN g_player_home(XEN snd_chn)
+static XEN g_player_home(XEN player)
 {
   #define H_player_home "(" S_player_home " player): a list of the sound index and channel number associated with player"
   int index;
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(snd_chn), snd_chn, XEN_ONLY_ARG, S_player_home, "an integer");
-  index = -XEN_TO_C_INT(snd_chn);
+
+  XEN_ASSERT_TYPE(XEN_PLAYER_P(player), player, XEN_ONLY_ARG, S_player_home, "a player");
+  index = XEN_PLAYER_TO_C_INT(player);
+
   if ((index > 0) && 
       (index < players_size) && 
       (players[index]) &&
@@ -2898,23 +3071,28 @@ static XEN g_player_home(XEN snd_chn)
 	  (cp->sound->active))
 	return(XEN_LIST_2(C_INT_TO_XEN_SOUND(cp->sound->index),
 			  C_TO_XEN_INT(cp->chan)));
-      else return(XEN_FALSE); /* can this happen? */
+      return(XEN_FALSE); /* can this happen? */
     }
-  return(snd_no_such_player_error(S_player_home, snd_chn));
+
+  return(no_such_player_error(S_player_home, player));
 }
 
 
-static XEN g_add_player(XEN snd_chn, XEN start, XEN end, XEN edpos, XEN stop_proc, XEN out_chan)
+static XEN g_add_player(XEN player, XEN start, XEN end, XEN edpos, XEN stop_proc, XEN out_chan)
 {
   #define H_add_player "(" S_add_player " player :optional (start 0) (end len) (pos -1) stop-proc (out-chan player-chan)): \
-add a player to the play list; the play begins when " S_start_playing " is called. \
+adds a player to the play list; the play begins when " S_start_playing " is called. \
 The start, end, and edit-position of the portion played can be specified.  'out-chan' is \
 the audio hardware output channel to use to play this channel.  It defaults to the \
 channel number in the sound that contains the channel being played."
 
   snd_info *sp = NULL;
   int index, pos;
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(snd_chn), snd_chn, XEN_ARG_1, S_add_player, "an integer");
+  chan_info *cp;
+  dac_info *dp = NULL;
+  int i, ochan = -1;
+
+  XEN_ASSERT_TYPE(XEN_PLAYER_P(player), player, XEN_ARG_1, S_add_player, "a player");
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(start), start, XEN_ARG_2, S_add_player, "a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(end), end, XEN_ARG_3, S_add_player, "a number");
   XEN_ASSERT_TYPE(((XEN_PROCEDURE_P(stop_proc)) && (procedure_arity_ok(stop_proc, 1))) ||
@@ -2922,38 +3100,41 @@ channel number in the sound that contains the channel being played."
 		  (XEN_FALSE_P(stop_proc)), 
 		  stop_proc, XEN_ARG_5, S_add_player, "a procedure of 1 arg");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(out_chan), out_chan, XEN_ARG_6, S_add_player, "an integer");
-  index = -XEN_TO_C_INT(snd_chn);
-  if ((index > 0) && (index < players_size)) sp = players[index];
-  if (sp)
-    {
-      chan_info *cp;
-      dac_info *dp = NULL;
-      int i, ochan = -1;
-      if (play_list)
-	for (i = 0; i < dac_max_sounds; i++)
-	  if ((play_list[i]) && 
-	      (sp == (play_list[i]->sp)))
-	    XEN_ERROR(XEN_ERROR_TYPE("arg-error"),
-		      XEN_LIST_3(C_TO_XEN_STRING(S_add_player),
-				 C_TO_XEN_STRING("player is already in the play list"),
-				 snd_chn));
-      cp = sp->chans[player_chans[index]];
-      pos = to_c_edit_position(cp, edpos, S_add_player, XEN_ARG_4);
-      if (XEN_INTEGER_P(out_chan)) ochan = XEN_TO_C_INT(out_chan);
-      if (ochan < 0) ochan = cp->chan;
-      dp = add_channel_to_play_list(cp,
-				    sp, /* this is not cp->sound! */
-				    beg_to_sample(start, S_add_player),
-				    XEN_TO_C_INT64_T_OR_ELSE(end, NO_END_SPECIFIED),
-				    pos,
-				    ochan);
-      if (dp == NULL) return(XEN_FALSE);
-      dp->stop_procedure = stop_proc;
-      if (XEN_PROCEDURE_P(stop_proc))
-	dp->stop_procedure_gc_loc = snd_protect(stop_proc);
-    }
-  else return(snd_no_such_player_error(S_add_player, snd_chn));
-  return(snd_chn);
+
+  index = XEN_PLAYER_TO_C_INT(player);
+  if ((index > 0) && (index < players_size)) 
+    sp = players[index];
+
+  if (!sp) 
+    return(no_such_player_error(S_add_player, player));
+
+  if (play_list)
+    for (i = 0; i < dac_max_sounds; i++)
+      if ((play_list[i]) && 
+	  (sp == (play_list[i]->sp)))
+	XEN_ERROR(XEN_ERROR_TYPE("arg-error"),
+		  XEN_LIST_3(C_TO_XEN_STRING(S_add_player),
+			     C_TO_XEN_STRING("player is already in the play list"),
+			     player));
+
+  cp = sp->chans[player_chans[index]];
+  pos = to_c_edit_position(cp, edpos, S_add_player, XEN_ARG_4);
+  if (XEN_INTEGER_P(out_chan)) ochan = XEN_TO_C_INT(out_chan);
+  if (ochan < 0) ochan = cp->chan;
+
+  dp = add_channel_to_play_list(cp,
+				sp, /* this is not cp->sound! */
+				beg_to_sample(start, S_add_player),
+				XEN_TO_C_INT64_T_OR_ELSE(end, NO_END_SPECIFIED),
+				pos,
+				ochan);
+  if (dp == NULL) return(XEN_FALSE);
+
+  dp->stop_procedure = stop_proc;
+  if (XEN_PROCEDURE_P(stop_proc))
+    dp->stop_procedure_gc_loc = snd_protect(stop_proc);
+
+  return(player);
 }
 
 
@@ -2964,66 +3145,69 @@ If a play-list is waiting, start it."
 
   int chans, srate;
   bool back;
+
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(Chans), Chans, XEN_ARG_1, S_start_playing, "an integer");
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(Srate), Srate, XEN_ARG_2, S_start_playing, "a number");
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(In_Background), In_Background, XEN_ARG_3, S_start_playing, "a boolean");
+
   chans = XEN_TO_C_INT_OR_ELSE(Chans, 1);
   if ((chans <= 0) || (chans > 256))
     XEN_OUT_OF_RANGE_ERROR(S_start_playing, 1, Chans, "chans ~A <= 0 or > 256?");
+
   srate = XEN_TO_C_INT_OR_ELSE(Srate, 44100);
   if (srate <= 0)
     XEN_OUT_OF_RANGE_ERROR(S_start_playing, 2, Srate, "srate ~A <= 0?");
+
   back = XEN_TO_C_BOOLEAN(In_Background);
+
   start_dac(srate, chans, (back) ? IN_BACKGROUND : NOT_IN_BACKGROUND, DEFAULT_REVERB_CONTROL_DECAY);
   return(XEN_FALSE);
 }
 
 
-static XEN g_stop_player(XEN snd_chn)
+static XEN g_stop_player(XEN player)
 {
   #define H_stop_player "(" S_stop_player " player): stop player (remove its associated sound from the current DAC playlist)"
-  int index;
   snd_info *sp = NULL;
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(snd_chn), snd_chn, XEN_ONLY_ARG, S_stop_player, "an integer");
-  index = -XEN_TO_C_INT(snd_chn);
-  if ((index > 0) && (index < players_size)) sp = players[index];
+
+  XEN_ASSERT_TYPE(XEN_PLAYER_P(player), player, XEN_ONLY_ARG, S_stop_player, "a player");
+
+  sp = get_player_sound(player);
   if (sp) 
     stop_playing_sound(sp, PLAY_STOP_CALLED);
-  else return(snd_no_such_player_error(S_stop_player, snd_chn));
-  return(snd_chn);
+  return(player);
 }
 
 
-static XEN g_free_player(XEN snd_chn)
+static XEN g_free_player(XEN player)
 {
   #define H_free_player "(" S_free_player " player): free all resources associated with 'player' and remove it from the current DAC playlist)"
-  int index;
   snd_info *sp = NULL;
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(snd_chn), snd_chn, XEN_ONLY_ARG, S_free_player, "an integer");
-  index = -XEN_TO_C_INT(snd_chn);
-  if ((index > 0) && (index < players_size)) sp = players[index];
+
+  XEN_ASSERT_TYPE(XEN_PLAYER_P(player), player, XEN_ONLY_ARG, S_free_player, "a player");
+
+  sp = get_player_sound(player);
   if (sp) 
-    free_player(sp);
-  else return(snd_no_such_player_error(S_free_player, snd_chn));
+    free_player_sound(sp);
   return(XEN_FALSE);
 }
 
 
 /* also the dac filler needs to run on empty buffers in this case? */
 
-static XEN g_player_p(XEN snd)
+static XEN g_player_p(XEN obj)
 {
   #define H_player_p "(" S_player_p " obj): is 'obj' an active player"
   int index;
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(snd) || XEN_SOUND_P(snd), snd, XEN_ONLY_ARG, S_player_p, "a sound object or an integer");
 
-  if (XEN_INTEGER_P(snd))
-    index = -XEN_TO_C_INT(snd);
-  else index = -XEN_SOUND_TO_C_INT(snd);
-
-  return(C_TO_XEN_BOOLEAN((index > 0) && 
-			  (index < players_size) && 
-			  (players[index])));
+  if (XEN_PLAYER_P(obj))
+    {
+      index = XEN_PLAYER_TO_C_INT(obj);
+      return(C_TO_XEN_BOOLEAN((index > 0) && 
+			      (index < players_size) && 
+			      (players[index])));
+    }
+  return(XEN_FALSE);
 }
 
 
@@ -3036,10 +3220,9 @@ static XEN g_players(void)
   int i;
   for (i = 0; i < players_size; i++)
     if (players[i])
-      lst = XEN_CONS(C_TO_XEN_INT(-i), lst);
+      lst = XEN_CONS(C_INT_TO_XEN_PLAYER(i), lst);
   return(lst);
 }
-/* TODO: a player needs to be a separate type */
 
 
 static XEN g_dac_size(void) {return(C_TO_XEN_INT(dac_size(ss)));}
@@ -3050,14 +3233,6 @@ static XEN g_set_dac_size(XEN val)
   int len;
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ONLY_ARG, S_setB S_dac_size, "a number");
   len = XEN_TO_C_INT_OR_ELSE(val, 0);
-#if 0
-#if MUS_MAC_OSX
-  if (len > 256) len = 256;
-  /* actual built-in buffer seems to be 4096, and with auto-conversions, that means 512 or greater can overflow. 
-     mulaw 22050 mono -> float 44100 stereo => 16:1 expansion
-   */
-#endif
-#endif
   if (len > 0)
     set_dac_size(len); /* macro in snd-0.h */
   return(C_TO_XEN_INT(dac_size(ss)));
@@ -3198,6 +3373,8 @@ XEN_NARGIFY_1(g_set_cursor_location_offset_w, g_set_cursor_location_offset)
 
 void g_init_dac(void)
 {
+  init_xen_player();
+
   XEN_DEFINE_PROCEDURE(S_play,           g_play_w,           0, 8, 0, H_play);
   XEN_DEFINE_PROCEDURE(S_play_channel,   g_play_channel_w,   0, 7, 0, H_play_channel);
   XEN_DEFINE_PROCEDURE(S_play_selection, g_play_selection_w, 0, 2, 0, H_play_selection);

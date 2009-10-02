@@ -265,15 +265,6 @@ typedef enum {NO_X_AXIS, WITH_X_AXIS} with_x_axis_t;
 typedef enum {NO_GRID, WITH_GRID} with_grid_t;
 typedef enum {WITH_LINEAR_AXES, WITH_LOG_X_AXIS, WITH_LOG_Y_AXIS} log_axis_t;
 
-#if defined(__GNUC__) && (!(defined(__cplusplus)))
-  #define IS_PLAYER(snd) ({ snd_info *_snd_0_h_1 = snd; ((_snd_0_h_1) && (_snd_0_h_1->index < 0)); })
-#else
-  #define IS_PLAYER(snd) ((snd) && (snd->index < 0))
-#endif
-
-#define PLAYER(snd) (-(snd->index))
-typedef enum {NO_PLAYERS, PLAYERS_OK} sp_sound_t;
-
 #define OVER_SELECTION true
 #define OVER_SOUND false
 

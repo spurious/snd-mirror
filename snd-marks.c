@@ -2614,7 +2614,7 @@ mark list is: channel given: (id id ...), snd given: ((id id) (id id ...)), neit
 	  }
 	else
 	  {
-	    sp = get_sp(snd, NO_PLAYERS);
+	    sp = get_sp(snd);
 	    if (sp == NULL) 
 	      return(snd_no_such_sound_error(S_marks, snd));
 	    for (i = sp->nchans - 1; i >= 0; i--)
@@ -2814,13 +2814,17 @@ static XEN g_save_marks(XEN snd, XEN filename)
 {
   #define H_save_marks "(" S_save_marks " :optional snd (filename \"<snd-file-name>.marks\")): save snd's marks in filename. \
 The saved file is " XEN_LANGUAGE_NAME " code, so to restore the marks, load that file."
+
   snd_info *sp;
   XEN res = XEN_FALSE;
+
   ASSERT_SOUND(S_save_marks, snd, 1);
   XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(filename), filename, XEN_ARG_2, S_save_marks, "a string");  
-  sp = get_sp(snd, NO_PLAYERS);
+
+  sp = get_sp(snd);
   if (sp == NULL) 
     return(snd_no_such_sound_error(S_save_marks, snd));
+
   if (map_over_sound_chans(sp, find_any_marks)) /* are there any marks? */
     {
       char *newname = NULL;
