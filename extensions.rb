@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Sat Jan 03 17:30:23 CET 2004
-# Changed: Mon Jul 20 00:18:13 CEST 2009
+# Changed: Sat Oct 03 01:17:35 CEST 2009
 
 # Commentary:
 # 
@@ -103,6 +103,7 @@
 #  match_sound_files(*args) do |f| ... end
 #  
 #  selection_members
+#  clear_selection
 #  make_selection(beg, len, snd, chn)
 #  delete_selection_and_smooth()
 #  eval_over_selection(&func)
@@ -463,7 +464,7 @@ sets selection from mono files (from external program)")
     cursnd = selected_sound
     chan = 0
     Snd.sounds.each do |snd|
-      channels(cursnd).times do |chn|
+      channels(snd).times do |chn|
         if selection_member?(snd, chn)
           len = mus_sound_frames(filenames[chan])
           set_samples(selection_position(snd, chn), len, filenames[chan], snd, chn, true, origin)
@@ -503,15 +504,15 @@ sets selection from mono files (from external program)")
   # 
   def back_or_forth_graph(count)
     if sounds
-      cursnd = selected_sound or sounds.first
+      cursnd = selected_sound or Snd.sounds.first
       curchn = selected_channel or 0
       curpos = 0
       pos = 0
       sndlst = []
       chnlst = []
-      sounds.each do |snd|
+      Snd.sounds.each do |snd|
         channels(snd).times do |chn|
-          if cursnd == snd and curchn == chn
+          if cursnd.eql?(snd) and curchn == chn
             curpos = pos
           end
           pos += 1
@@ -1255,6 +1256,20 @@ for which body does not return false")
     end
     sndlist
   end
+
+  add_help(:clear_selection, "clear_selection() \
+unselects any currently selected samples.")
+  def clear_selection()
+    if selection?
+      Snd.sounds.each do |snd|
+        channels(snd).times do |chn|
+          need_update = selection_member?(snd, chn)
+          set_selection_member?(false, snd, chn)
+          if need_update then update_time_graph(snd, chn) end
+        end
+      end
+    end
+  end
   
   add_help(:make_selection,
            "make_selection([beg=0, [end=false, [snd=false, [chn=false]]]]) \
@@ -1264,6 +1279,7 @@ specified. end defaults to end of channel, beg defaults to 0, \
 snd defaults to the currently selected sound.")
   def make_selection(beg = 0, len = false, snd = false, chn = false)
     add_chan_to_selection = lambda do |s0, s1, s, c|
+      unless s0 then s0 = 0 end
       set_selection_member?(true, s, c)
       set_selection_position(s0, s, c)
       val = if number?(s1)
@@ -1273,23 +1289,17 @@ snd defaults to the currently selected sound.")
             end
       set_selection_frames(val - s0, s, c)
     end
-    current_sound = (snd or selected_sound() or (sounds and sounds[0]))
+    current_sound = (snd or selected_sound() or Snd.sounds[0])
     unless sound?(current_sound) then Snd.raise(:no_such_sound, beg, len, snd, chn) end
     current_sync = sync(current_sound)
-    if selection?
-      Snd.sounds.each do |s|
-        channels(s).times do |i|
-          need_update = selection_member?(s, i)
-          set_selection_member?(false, s, i)
-          update_time_graph(s, i) if need_update
-        end
-      end
-    end
-    if chn
+    clear_selection()
+    if number?(chn)
       add_chan_to_selection.call(beg, len, snd, chn)
     else
       Snd.sounds.each do |s|
-        if snd == true or s == current_sound or (current_sync.nonzero? and current_sync == sync(s))
+        if snd == true or
+            s.eql?(current_sound) or
+            (current_sync.nonzero? and current_sync == sync(s))
           channels(s).times do |i|
             add_chan_to_selection.call(beg, len, s, i)
           end
@@ -1768,7 +1778,7 @@ applies contrast enhancement to the sound" )
            "channels_eql?(s1, c1, s2, c2, [diff, 0.0]) \
 -> true if the two channels are the same (within diff) modulo trailing 0's")
   def channels_eql?(snd1, chn1, snd2, chn2, allowable_difference = 0.0)
-    if snd1 == snd2 and chn1 == chn2
+    if snd1.eql?(snd2) and chn1 == chn2
       true
     else
       mx1 = maxamp(snd1, chn1)

@@ -89,6 +89,8 @@
  *        cerror ("error/cc"?) -- tag = continuation in this case,
  *          and error handler makes it accessible (as well as error context) for eval
  *        rename "force" to some name matching the notion of a promise ("delay" and "force" are about as bad as names can get)
+ *        make #<func args> = (func args) or something like that so we can read new_type objects, or add a reader to that struct
+ *        make-vector! where type of initial element sets type of all elements, or make-vector*?
  *
  *
  * Mike Scholz provided the FreeBSD support (complex trig funcs, etc)

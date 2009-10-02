@@ -891,8 +891,15 @@ XEN snd_no_such_channel_error(const char *caller, XEN snd, XEN chn)
 {
   int index = NOT_A_SOUND;
   snd_info *sp;
+
   if (XEN_INTEGER_P(snd))
     index = XEN_TO_C_INT(snd);
+  else
+    {
+      if (XEN_SOUND_P(snd))
+	index = XEN_SOUND_TO_C_INT(snd);
+    }
+
   if ((index >= 0) &&
       (index < ss->max_sounds) && 
       (snd_ok(ss->sounds[index]))) /* good grief... */

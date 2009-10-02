@@ -1,6 +1,6 @@
 # ws.rb -- with_sound and friends for Snd/Ruby -*- snd-ruby -*-
 
-# Copyright (c) 2003--2006 Michael Scholz <mi-scholz@users.sourceforge.net>
+# Copyright (c) 2003--2009 Michael Scholz <mi-scholz@users.sourceforge.net>
 # All rights reserved.
 # 
 # Redistribution and use in source and binary forms, with or without
@@ -409,7 +409,7 @@ __ws_verbose__ = $VERBOSE
 __ws_debug__   = $DEBUG
 # get rid of `undefined variable' messages
 with_silence do
-  $clm_version            = "ruby 11-Jul-2008"
+  $clm_version            = "ruby 3-Oct-2009"
   $output                 = nil
   $reverb                 = nil
   $clm_array_print_length ||= 8
@@ -1243,11 +1243,11 @@ class Instrument < With_sound
   end
 end
 
-# Channel2Vct and Sampler are helper classes used by class
+# WSChannel2Vct and WSSampler are helper classes used by class
 # Snd_Instrument.  sampler has no possibility to set location
 # (and direction) which is needed by instrument grani (clm-ins.rb).
 if provided? :snd
-  class Channel2Vct
+  class WSChannel2Vct
     # (channel->vct (beg 0) (dur len) (snd #f) (chn #f) (edpos #f))
     def initialize(snd = false, chn = false, start = 0, dir = 1)
       @vct = channel2vct(0, frames(snd, chn), snd, chn, false)
@@ -1309,7 +1309,7 @@ if provided? :snd
   end
 end
 
-class Sampler
+class WSSampler
   # (make-sampler (start-samp 0) (snd #f) (chn #f) (dir 1) (edpos #f))
   def initialize(snd = false, chn = false, start = 0, dir = 1)
     @reader = make_sampler(start, snd, chn, dir, false)
@@ -1379,9 +1379,9 @@ class Snd_Instrument < Instrument
            [:channel, 0],
            [:direction, 1])
     if get_args(args, :vct?, false)
-      Channel2Vct.new(get_snd(file), channel, start, direction)
+      WSChannel2Vct.new(get_snd(file), channel, start, direction)
     else
-      Sampler.new(get_snd(file), channel, start, direction)
+      WSSampler.new(get_snd(file), channel, start, direction)
     end
   end
 

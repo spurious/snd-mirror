@@ -2340,8 +2340,19 @@ void call_sp_watchers(snd_info *sp, sp_watcher_t type, sp_watcher_reason_t reaso
 
 /* ---------------------------------------- sound objects ---------------------------------------- */
 
-/* TODO: nearly everything: doc + examples, all code + snd-test*, *.c etc:
- * TODO: check all integer?(snd) cases and support object
+/* PERHAPS: generics:
+ *             source:         procedure-source mix-home mark-home region-home player-home sampler-home
+ *             length:         vector|string|vct-length mix-length frames region-frames sound-data-length
+ *             position:       mark-sample mix-position region-position sampler-position
+ *             peak or max(?): vct-peak, maxamp, region-maxamp sound-data-maxamp
+ *             properties:     mark|mix|sound-properties
+ *             name:           mark|mix-name file-name (widget name via XtName)
+ *
+ * PERHAPS: pointers wrapped in struct, not treated as ulong or ulong_long [XtPointer as sole field etc]
+ *
+ * very much PERHAPS: (+ <sound> <sound>) etc! [map for-each sort! fill! copy ref/set reverse subsequence append max/min
+ *     call-with-input-sound? read write with-output-to-sound
+ *     (+ (with-sound ...) (with-sound ...))
  */
 
 

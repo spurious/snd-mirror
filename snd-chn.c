@@ -8562,6 +8562,7 @@ to a standard Snd channel graph placed in the widget 'container'."
 
   sp = make_simple_channel_display(rate, initial_length, WITH_FW_BUTTONS, graph_style(ss), 
 				   (widget_t)(XEN_UNWRAP_WIDGET(container)), WITH_EVENTS);
+
   if (sp == NULL) /* can only happen if "container" is not a form widget (or perhaps no container XtWindow) */
     XEN_ERROR(XEN_ERROR_TYPE("wrong-type-arg"),
 	      XEN_LIST_3(C_TO_XEN_STRING(S_make_variable_graph),
@@ -8594,6 +8595,7 @@ to a standard Snd channel graph placed in the widget 'container'."
   cp->sounds[0] = make_snd_data_buffer_for_simple_channel(initial_length);
   cp->edits[0] = initial_ed_list(0, initial_length - 1);
   cp->edits[0]->origin = mus_strdup(S_make_variable_graph);
+
   return(C_INT_TO_XEN_SOUND(sp->index));
 }
 
