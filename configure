@@ -10585,6 +10585,12 @@ fi
 #--------------------------------------------------------------------------------
 
 # TODO: change from guile-config to pkg-config guile-2.0.pc
+#   if test x$PKG_CONFIG != xno ; then
+#     if $PKG_CONFIG guile-2.0 --exists ; then
+#        XEN_LIBS="`$PKG_CONFIG guile-2.0 --libs`"
+#        XEN_CFLAGS="`$PKG_CONFIG guile-2.0 --cflags`"
+#     fi
+#   fi
 
 if test "$with_guile" = yes && test "$ac_snd_have_extension_language" = yes ; then
   with_guile=no

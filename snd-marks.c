@@ -1994,7 +1994,7 @@ void show_mark_triangle(chan_info *cp, int x)
 
 /* ---------------------------------------- mark object ---------------------------------------- */
 
-/* TODO: check forth code examples
+/* 
  * SOMEDAY: deprecate mark-home|name|sync|color, perhaps sample
  */
 
@@ -2063,11 +2063,13 @@ static bool xen_mark_equalp(xen_mark *v1, xen_mark *v2)
 }
 
 
+#if (!HAVE_S7)
 static XEN equalp_xen_mark(XEN obj1, XEN obj2)
 {
   if ((!(XEN_MARK_P(obj1))) || (!(XEN_MARK_P(obj2)))) return(XEN_FALSE);
   return(xen_return_first(C_TO_XEN_BOOLEAN(xen_mark_equalp(XEN_TO_XEN_MARK(obj1), XEN_TO_XEN_MARK(obj2))), obj1, obj2));
 }
+#endif
 
 
 static xen_mark *xen_mark_make(int n)
@@ -2099,7 +2101,7 @@ static bool s7_xen_mark_equalp(void *obj1, void *obj2)
 #endif
 
 
-static init_xen_mark(void)
+static void init_xen_mark(void)
 {
 #if HAVE_S7
   xen_mark_tag = XEN_MAKE_OBJECT_TYPE("<mark>", print_xen_mark, free_xen_mark, s7_xen_mark_equalp, NULL, NULL, NULL, NULL, NULL, NULL);

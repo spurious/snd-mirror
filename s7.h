@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "1.32"
-#define S7_DATE "14-Sep-09"
+#define S7_VERSION "1.33"
+#define S7_DATE "5-Oct-09"
 
 
 typedef long long int s7_Int;
@@ -136,6 +136,9 @@ s7_pointer s7_eof_object(s7_scheme *sc);                             /* #<eof> *
    *   are the same across all threads, so they can be safely assigned to C global variables if desired. 
    */
 
+bool s7_is_c_pointer(s7_pointer arg);
+void *s7_c_pointer(s7_pointer p);
+s7_pointer s7_make_c_pointer(s7_scheme *sc, void *ptr);
 
 s7_pointer s7_eval_c_string(s7_scheme *sc, const char *str);         /* (eval-string str) */
 s7_pointer s7_object_to_string(s7_scheme *sc, s7_pointer arg);       /* (object->string obj) */
@@ -1699,6 +1702,7 @@ int main(int argc, char **argv)
  * 
  *        s7 changes
  *
+ * 5-Oct:     s7_c_pointer and friends.
  * 14-Sep:    s7_values, s7_make_continuation, and a better interrupt example.
  *            vector-for-each, vector-map, string-for-each.
  * 7-Sep:     s7_open_input_function. with-environment. receive.

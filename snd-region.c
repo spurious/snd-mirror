@@ -1313,9 +1313,7 @@ io_error_t save_region(int rg, const char *name, int type, int format, const cha
 
 /* ---------------------------------------- region objects ---------------------------------------- */
 
-/* TODO: check forth code examples [mix marks examp in particular]
- * SOMEDAY: deprecate region-home|chans|frames|maxamp|position,  make-region-sampler, read-region-sample, region-sampler?
- * TODO: region-ref (also (reg n)).
+/* SOMEDAY: deprecate region-home|chans|frames|maxamp|position,  make-region-sampler, read-region-sample, region-sampler?
  */
 
 typedef struct {
@@ -1376,18 +1374,19 @@ static XEN g_xen_region_to_string(XEN obj)
 #endif
 
 
+#if (!HAVE_S7)
 static bool xen_region_equalp(xen_region *v1, xen_region *v2) 
 {
   return((v1 == v2) ||
 	 (v1->n == v2->n));
 }
 
-
 static XEN equalp_xen_region(XEN obj1, XEN obj2)
 {
   if ((!(XEN_REGION_P(obj1))) || (!(XEN_REGION_P(obj2)))) return(XEN_FALSE);
   return(xen_return_first(C_TO_XEN_BOOLEAN(xen_region_equalp(XEN_TO_XEN_REGION(obj1), XEN_TO_XEN_REGION(obj2))), obj1, obj2));
 }
+#endif
 
 
 static xen_region *xen_region_make(int n)
@@ -1426,7 +1425,7 @@ static XEN s7_xen_region_length(s7_scheme *sc, XEN obj)
 #endif
 
 
-static init_xen_region(void)
+static void init_xen_region(void)
 {
 #if HAVE_S7
   xen_region_tag = XEN_MAKE_OBJECT_TYPE("<region>", print_xen_region, free_xen_region, s7_xen_region_equalp, NULL, NULL, NULL, s7_xen_region_length, NULL, NULL);

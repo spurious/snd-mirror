@@ -3417,7 +3417,7 @@
 	  (hey "{~%")
 	  (hey "  ~A* result;~%" name)
 	  (hey "  result = (~A*)calloc(1, sizeof(~A));~%" name name)
-	  (hey "  return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL(~S), C_TO_XEN_ULONG((unsigned long)result), make_xm_obj(result)));~%" 
+	  (hey "  return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL(~S), XEN_WRAP_C_POINTER(result), make_xm_obj(result)));~%" 
 	       (string-append name "_"))
 	  (hey "}~%~%"))
 	(begin
@@ -3440,7 +3440,7 @@
 		 (set! ctr (+ ctr 1))))
 	     strs))
 	  (hey "      }~%")
-	  (hey "  return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL(~S), C_TO_XEN_ULONG((unsigned long)result), make_xm_obj(result)));~%" 
+	  (hey "  return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL(~S), XEN_WRAP_C_POINTER(result), make_xm_obj(result)));~%" 
 	       (string-append name "_"))
 	  (hey "}~%~%")))))
 

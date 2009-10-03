@@ -2678,11 +2678,13 @@ static bool xen_player_equalp(xen_player *v1, xen_player *v2)
 }
 
 
+#if (!HAVE_S7)
 static XEN equalp_xen_player(XEN obj1, XEN obj2)
 {
   if ((!(XEN_PLAYER_P(obj1))) || (!(XEN_PLAYER_P(obj2)))) return(XEN_FALSE);
   return(xen_return_first(C_TO_XEN_BOOLEAN(xen_player_equalp(XEN_TO_XEN_PLAYER(obj1), XEN_TO_XEN_PLAYER(obj2))), obj1, obj2));
 }
+#endif
 
 
 static xen_player *xen_player_make(int n)
@@ -2721,7 +2723,7 @@ static XEN s7_xen_player_length(s7_scheme *sc, XEN obj)
 #endif
 
 
-static init_xen_player(void)
+static void init_xen_player(void)
 {
 #if HAVE_S7
   xen_player_tag = XEN_MAKE_OBJECT_TYPE("<player>", print_xen_player, free_xen_player, s7_xen_player_equalp, NULL, NULL, NULL, s7_xen_player_length, NULL, NULL);

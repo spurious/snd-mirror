@@ -6,30 +6,30 @@
 ;;;  test 3: variables                           [1727]
 ;;;  test 4: sndlib                              [2361]
 ;;;  test 5: simple overall checks               [5103]
-;;;  test 6: vcts                                [14055]
-;;;  test 7: colors                              [14440]
-;;;  test 8: clm                                 [14937]
-;;;  test 9: mix                                 [26967]
-;;;  test 10: marks                              [29184]
-;;;  test 11: dialogs                            [30145]
-;;;  test 12: extensions                         [30366]
-;;;  test 13: menus, edit lists, hooks, etc      [30637]
-;;;  test 14: all together now                   [32252]
-;;;  test 15: chan-local vars                    [33203]
-;;;  test 16: regularized funcs                  [34850]
-;;;  test 17: dialogs and graphics               [39918]
-;;;  test 18: enved                              [40010]
-;;;  test 19: save and restore                   [40029]
-;;;  test 20: transforms                         [41805]
-;;;  test 21: new stuff                          [43996]
-;;;  test 22: run                                [46006]
-;;;  test 23: with-sound                         [52702]
-;;;  test 25: X/Xt/Xm                            [57253]
-;;;  test 26: Gtk                                [61023]
-;;;  test 27: GL                                 [64582]
-;;;  test 28: errors                             [64706]
-;;;  test all done                               [67207]
-;;;  test the end                                [67435]
+;;;  test 6: vcts                                [13986]
+;;;  test 7: colors                              [14371]
+;;;  test 8: clm                                 [14868]
+;;;  test 9: mix                                 [26899]
+;;;  test 10: marks                              [29112]
+;;;  test 11: dialogs                            [30073]
+;;;  test 12: extensions                         [30294]
+;;;  test 13: menus, edit lists, hooks, etc      [30565]
+;;;  test 14: all together now                   [32178]
+;;;  test 15: chan-local vars                    [33113]
+;;;  test 16: regularized funcs                  [34760]
+;;;  test 17: dialogs and graphics               [39828]
+;;;  test 18: enved                              [39920]
+;;;  test 19: save and restore                   [39939]
+;;;  test 20: transforms                         [41715]
+;;;  test 21: new stuff                          [43906]
+;;;  test 22: run                                [45917]
+;;;  test 23: with-sound                         [52613]
+;;;  test 25: X/Xt/Xm                            [57164]
+;;;  test 26: Gtk                                [60934]
+;;;  test 27: GL                                 [64494]
+;;;  test 28: errors                             [64618]
+;;;  test all done                               [67134]
+;;;  test the end                                [67362]
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs))
 
@@ -26499,11 +26499,11 @@ EDITS: 2
 		     (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color-with-catch .95 .95 .95)  '#(0 1) 3/4 'mus-error (sqrt -1.0) (make-delay 32)
 			   (lambda () #t) (current-module) (make-sound-data 2 3) :order 0 1 -1 (make-hook 2) #f #t #\c 0.0 1.0 -1.0 
 			   '() '3 4 2 8 16 32 64 (make-vector 0) '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0)
-			   12345678901234567890)))
+			   )))
 		  (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color-with-catch .95 .95 .95)  '#(0 1) 3/4 'mus-error (sqrt -1.0) (make-delay 32)
 			(lambda () #t) (current-module) (make-sound-data 2 3) :order 0 1 -1 (make-hook 2) #f #t #\c 0.0 1.0 -1.0 
 			'() '3 4 2 8 16 32 64 (make-vector 0) '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0)
-			12345678901234567890))
+			))
 		 ;; generic args
 		 (for-each
 		  (lambda (func name)
@@ -26520,7 +26520,7 @@ EDITS: 2
 				(list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) '#(0 1) 3/4 'mus-error (sqrt -1.0)
 				      (lambda () #t) (make-sound-data 2 3) :order 0 1 -1 #f #t #\c 0.0 1.0 -1.0 
 				      '() '3 4 64 -64 (make-vector 0) '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0)
-				      12345678901234567890 (lambda (a) a)))
+				      (lambda (a) a)))
 			       (if (not (equal? (func gen) default-value))
 				   (catch #t
 					  (lambda ()
@@ -26562,7 +26562,7 @@ EDITS: 2
 	      (set! *clm-srate* old-clm-srate))
 	    
 	    (let ((random-args (list 
-				(expt 2.0 21.5) (expt 2.0 -18.0) 12345678901234567890
+				(expt 2.0 21.5) (expt 2.0 -18.0)
 				1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color-with-catch .1 .2 .3)  '#(0 1) 3/4 (sqrt -1.0) (make-delay 32)
 				(lambda () 0.0) (lambda (dir) 1.0) (lambda (a b c) 1.0) 0 1 -1 #f #t #\c 0.0 1.0 -1.0 '() 32 '(1 . 2)
 				))
@@ -58262,7 +58262,7 @@ EDITS: 1
 	       (XtUnrealizeWidget wid)
 					;(XtDestroyWidget wid1)
 	       )
-	     (XtFree 0) (XtCalloc 0 0) (XtMalloc 0) (XtRealloc 0 0)
+;	     (XtFree 0) (XtCalloc 0 0) (XtMalloc 0) (XtRealloc 0 0)
 	     (XtSetLanguageProc 
 	      (car (main-widgets)) 
 	      (lambda (dpy str data)
@@ -58798,7 +58798,7 @@ EDITS: 1
 		 (if (not (= (.bitmap_pad newimage) 8)) (snd-display ";bitmap_pad: ~A" (.bitmap_pad newimage)))
 		 (if (not (= (.bitmap_bit_order newimage) 0)) (snd-display ";bitmap_bit_order: ~A" (.bitmap_bit_order newimage)))
 		 (if (not (= (.bitmap_unit newimage) 32)) (snd-display ";bitmap_unit: ~A" (.bitmap_unit newimage)))
-		 (if (not (= (.obdata newimage) 0)) (snd-display ";obdata: ~A" (.obdata newimage)))
+;		 (if (not (= (.obdata newimage) 0)) (snd-display ";obdata: ~A" (.obdata newimage)))
 		 (if (not (= (.xoffset newimage) 0)) (snd-display ";xoffset: ~A" (.xoffset newimage)))
 		 (XPutPixel before 1 1 (basic-color))
 		 (XGetPixel before 1 1)
@@ -60759,7 +60759,7 @@ EDITS: 1
 			  (lambda args (car args))))
 		 xm-procs1))
 	      (list win 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color-with-catch .95 .95 .95)  '#(0 1) 3/4 'mus-error (sqrt -1.0) (make-delay 32)
-		    (lambda () #t) (current-module) (make-sound-data 2 3) :order 0 1 -1 (make-hook 2) #f #t '() (make-vector 0) 12345678901234567890))
+		    (lambda () #t) (current-module) (make-sound-data 2 3) :order 0 1 -1 (make-hook 2) #f #t '() (make-vector 0)))
 	     
 	     ;; ---------------- 2 Args
 	     (for-each 
@@ -60773,9 +60773,9 @@ EDITS: 1
 			     (lambda args (car args))))
 		    xm-procs2))
 		 (list win 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color-with-catch .95 .95 .95) '#(0 1) 3/4 
-		       (sqrt -1.0) (make-delay 32) :feedback -1 0 #f #t '() (make-vector 0) 12345678901234567890)))
+		       (sqrt -1.0) (make-delay 32) :feedback -1 0 #f #t '() (make-vector 0))))
 	      (list win 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color-with-catch .95 .95 .95) '#(0 1) 3/4 
-		    (sqrt -1.0) (make-delay 32) :frequency -1 0 #f #t '() (make-vector 0) 12345678901234567890))
+		    (sqrt -1.0) (make-delay 32) :frequency -1 0 #f #t '() (make-vector 0)))
 	     
 	     (if all-args
 		 (begin
@@ -60794,11 +60794,11 @@ EDITS: 1
 				      (lambda args (car args))))
 			     xm-procs3))
 			  (list win 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) '#(0 1) (sqrt -1.0) (make-delay 32) 
-				:start -1 0 #f #t '() (make-vector 0) 12345678901234567890)))
+				:start -1 0 #f #t '() (make-vector 0))))
 		       (list win 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) '#(0 1) (sqrt -1.0) (make-delay 32) 
-			     :phase -1 0 #f #t '() (make-vector 0) 12345678901234567890)))
+			     :phase -1 0 #f #t '() (make-vector 0))))
 		    (list win 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) '#(0 1) (sqrt -1.0) (make-delay 32) 
-			  :channels -1 0 #f #t '() (make-vector 0) 12345678901234567890))
+			  :channels -1 0 #f #t '() (make-vector 0)))
 		   ))
 	     
 	     (let* ((struct-accessors-1 
@@ -66036,7 +66036,7 @@ EDITS: 1
 		(check-error-tag 'bad-header (lambda () (mus-mix (string-append sf-dir "bad_chans.aifc") "oboe.snd")))
 		(check-error-tag 'no-such-sound (lambda () (set! (sound-loop-info 123) '(0 0 1 1))))
 		(check-error-tag 'bad-header (lambda () (new-sound "fmv.snd" mus-nist mus-bfloat 22050 2 "this is a comment")))
-		(check-error-tag 'no-such-player (lambda () (player-home 123)))
+		(check-error-tag 'wrong-type-arg (lambda () (player-home 123)))
 		(check-error-tag 'no-such-file (lambda () (set! (temp-dir) "/hiho")))
 		(check-error-tag 'no-such-file (lambda () (set! (save-dir) "/hiho")))
 		(check-error-tag 'out-of-range (lambda () (snd-transform 20 (make-vct 4))))
@@ -66388,7 +66388,7 @@ EDITS: 1
 			  (lambda () (n arg1 arg2))
 			  (lambda args (car args))))
 		 make-procs))
-	      (list 1.5 "/hiho" (list 0 1) 1234 vct-3 :wave -1 0 1 #f #t '() vector-0 12345678901234567890 delay-32)))
+	      (list 1.5 "/hiho" (list 0 1) 1234 vct-3 :wave -1 0 1 #f #t '() vector-0 delay-32)))
 	   keyargs)
 	  
 	  (if (and all-args (= test-28 0))
@@ -66406,9 +66406,9 @@ EDITS: 1
 				   (lambda () (n arg1 arg2 arg3))
 				   (lambda args (car args))))
 			  make-procs))
-		       (list 1.5 "/hiho" (list 0 1) 1234 vct-3 :wave -1 0 1 #f #t '() vector-0 12345678901234567890 delay-32)))
+		       (list 1.5 "/hiho" (list 0 1) 1234 vct-3 :wave -1 0 1 #f #t '() vector-0 delay-32)))
 		    keyargs))
-		 (list 1.5 "/hiho" (list 0 1) 1234 vct-3 :wave -1 0 1 #f #t '() vector-0 12345678901234567890 delay-32))
+		 (list 1.5 "/hiho" (list 0 1) 1234 vct-3 :wave -1 0 1 #f #t '() vector-0 delay-32))
 		
 		(for-each
 		 (lambda (arg1)
@@ -66425,9 +66425,9 @@ EDITS: 1
 				      (lambda args (car args))))
 			     make-procs))
 			  keyargs))
-		       (list 1.5 "/hiho" (list 0 1) 1234 vct-3 :wave -1 0 1 #f #t '() vector-0 12345678901234567890 delay-32)))
+		       (list 1.5 "/hiho" (list 0 1) 1234 vct-3 :wave -1 0 1 #f #t '() vector-0 delay-32)))
 		    keyargs))
-		 (list 1.5 "/hiho" (list 0 1) 1234 vct-3 :wave -1 0 1 #f #t '() vector-0 12345678901234567890 delay-32))))
+		 (list 1.5 "/hiho" (list 0 1) 1234 vct-3 :wave -1 0 1 #f #t '() vector-0 delay-32))))
 	  
 	  (gc)(gc)
 	  
@@ -66451,10 +66451,10 @@ EDITS: 1
 	  (let* ((main-args (list 1.5 "/hiho" (list 0 1) 1234 vct-3 color-95  '#(0 1) 3/4 'mus-error (sqrt -1.0) delay-32
 				 (lambda () #t) vct-5 sound-data-23 :order 0 1 -1 a-hook #f #t #\c 0.0 1.0 -1.0 
 				 '() '3 2 8 64 -64 vector-0 '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0) car-main cadr-main 
-				 12345678901234567890 (lambda (a) #f) abs))
+				 (lambda (a) #f) abs))
 		 (few-args (list 1.5 "/hiho" (list 0 1) 1234 vct-3 color-95 '#(0 1) 3/4 -1.0
-				 (sqrt -1.0) delay-32 :feedback -1 0 1 3 64 -64 #f #t '() vector-0 12345678901234567890))
-		 (fewer-args (list "/hiho" 1234 vct-3 -1.0 (sqrt -1.0) delay-32 -1 0 1 #f #t '() 12345678901234567890))
+				 (sqrt -1.0) delay-32 :feedback -1 0 1 3 64 -64 #f #t '() vector-0))
+		 (fewer-args (list "/hiho" 1234 vct-3 -1.0 (sqrt -1.0) delay-32 -1 0 1 #f #t '()))
 		 (less-args (if all-args main-args few-args)))
 
 	    ;; ---------------- 1 Arg

@@ -1,10 +1,5 @@
 #include "snd.h"
 
-/* TODO: in motif 2.3.2 (mar 09) the listener comes out in the top pane,
- *           and the edit history pane is permanently inactive.
- *           if -horizontal, listener is ok??
- */
-
 #define FALLBACK_FONT "fixed"
 #define DEFAULT_FONTLIST "9x15"
 

@@ -786,11 +786,24 @@ void global_fft_state(void)
 
 
 #if HAVE_SCHEME
-/* TODO: make sure we don't truncate vector output with "..." ! */
+
+static void set_print_lengths(int len); 
 
 static void save_property_list(FILE *fd, XEN property_list, int chan, int edpos)
 {
   XEN ignore_list;
+  int old_print_length, old_vct_print_length;
+#if HAVE_S7
+  int old_s7_print_length;
+  old_s7_print_length = s7_integer(s7_name_to_value(s7, "*vector-print-length*"));
+#endif
+  
+  old_vct_print_length = mus_vct_print_length();
+  old_print_length = print_length(ss);
+
+  /* make sure we don't truncate vector output with "..." */
+  set_print_lengths(1000000); /* this sets all three lengths */  
+
   ignore_list = XEN_ASSOC(C_STRING_TO_XEN_SYMBOL("save-state-ignore"), property_list);
 
   if (!(XEN_LIST_P(ignore_list)))
@@ -838,6 +851,13 @@ static void save_property_list(FILE *fd, XEN property_list, int chan, int edpos)
 	}
       snd_unprotect_at(gc_loc);
     }
+
+  /* restore the various print lengths */
+  set_print_length(old_print_length);
+  mus_vct_set_print_length(old_vct_print_length);
+#if HAVE_S7
+  s7_symbol_set_value(s7, s7_make_symbol(s7, "*vector-print-length*"), s7_make_integer(s7, old_s7_print_length));
+#endif
 }
 #endif
 
@@ -2108,6 +2128,15 @@ regions (saved selections), you can speed up many operations by setting this fla
 }
 
 
+static void set_print_lengths(int len)
+{
+  set_print_length(len);
+  mus_vct_set_print_length(len);
+#if HAVE_S7
+  s7_symbol_set_value(s7, s7_make_symbol(s7, "*vector-print-length*"), s7_make_integer(s7, len));
+#endif
+}
+
 static XEN g_print_length(void) {return(C_TO_XEN_INT(print_length(ss)));}
 
 static XEN g_set_print_length(XEN val) 
@@ -2118,11 +2147,7 @@ static XEN g_set_print_length(XEN val)
   len = XEN_TO_C_INT(val);
   if (len < 0)
     XEN_OUT_OF_RANGE_ERROR(S_setB S_print_length, XEN_ONLY_ARG, val, "must be >= 0");
-  set_print_length(len);
-  mus_vct_set_print_length(len);
-#if HAVE_S7
-  s7_symbol_set_value(s7, s7_make_symbol(s7, "*vector-print-length*"), s7_make_integer(s7, len));
-#endif
+  set_print_lengths(len);
   return(C_TO_XEN_INT(print_length(ss)));
 }
 

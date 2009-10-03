@@ -517,18 +517,18 @@ XM_TYPE_PTR_OBJ(XPoint, XPoint *)
 XM_TYPE_PTR_OBJ(XSegment, XSegment *)
 XM_TYPE_PTR_OBJ(XColor, XColor *)
 XM_TYPE(Atom, Atom)
-XM_TYPE_PTR(Colormap, Colormap)
+XM_TYPE(Colormap, Colormap)  /* XID */
 XM_TYPE_PTR_NO_C2X(Depth, Depth *)
 XM_TYPE_PTR(Display, Display *)
 XM_TYPE(Font, Font)
-XM_TYPE(GC, GC)
+XM_TYPE_PTR(GC, GC)
 XM_TYPE(KeySym, KeySym)
 XM_TYPE(Pixel, Pixel)
 XM_TYPE(Pixmap, Pixmap)
 XM_TYPE(Region, Region)
 XM_TYPE(Time, Time)
 XM_TYPE_PTR(Visual, Visual *)
-XM_TYPE_PTR(Window, Window)
+XM_TYPE(Window, Window) /* this is XID = long I think */
 XM_TYPE_PTR(XCharStruct, XCharStruct *)
 XM_TYPE_PTR(XFontProp, XFontProp *)
 XM_TYPE(XFontSet, XFontSet)
@@ -2574,9 +2574,9 @@ static int XEN_TO_C_INT_DEF(XEN len, XEN lst)
 static XEN gxm_XmTransferDone(XEN arg1, XEN arg2)
 {
   #define H_XmTransferDone "void XmTransferDone(XtPointer transfer_id, XmTransferStatus status) completes a data transfer"
-  XEN_ASSERT_TYPE(XEN_ULONG_P(arg1), arg1, 1, "XmTransferDone", "XtPointer");
+  XEN_ASSERT_TYPE(XEN_WRAPPED_C_POINTER_P(arg1), arg1, 1, "XmTransferDone", "XtPointer");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmTransferDone", "XmTransferStatus");
-  XmTransferDone((XtPointer)XEN_TO_C_ULONG(arg1), (XmTransferStatus)XEN_TO_C_INT(arg2));
+  XmTransferDone((XtPointer)XEN_UNWRAP_C_POINTER(arg1), (XmTransferStatus)XEN_TO_C_INT(arg2));
   return(arg1);
 }
 
@@ -8240,9 +8240,22 @@ structures that have attributes equal to the attributes specified by vinfo_templ
   XVisualInfo *v;
   int len;
   XEN lst = XEN_EMPTY_LIST;
+
+  fprintf(stderr, "visual: %p %p %p\n", arg1, arg2, arg3);
+
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XGetVisualInfo", "Display*");
+
+  fprintf(stderr, "past dpy\n");
+
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XGetVisualInfo", "long");
+
+  fprintf(stderr, "past arg2\n");
+
   XEN_ASSERT_TYPE(XEN_XVisualInfo_P(arg3), arg3, 3, "XGetVisualInfo", "XVisualInfo*");
+
+
+  fprintf(stderr, "-> %p %d %p\n", XEN_TO_C_Display(arg1), XEN_TO_C_INT(arg2), XEN_TO_C_XVisualInfo(arg3));
+
   v = XGetVisualInfo(XEN_TO_C_Display(arg1), XEN_TO_C_INT(arg2), XEN_TO_C_XVisualInfo(arg3), &len);
   if (v)
     {
@@ -20264,7 +20277,7 @@ static XEN gxm_data(XEN ptr)
   if (XEN_XmRowColumnCallbackStruct_P(ptr)) return(C_TO_XEN_STRING((char *)((XEN_TO_C_XmRowColumnCallbackStruct(ptr))->data)));
 #endif
 #if HAVE_XPM
-  if (XEN_XpmImage_P(ptr)) return(C_TO_XEN_ULONG((unsigned long)((XEN_TO_C_XpmImage(ptr))->data)));
+  if (XEN_XpmImage_P(ptr)) return(XEN_WRAP_C_POINTER((XEN_TO_C_XpmImage(ptr))->data));
 #endif
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "data", "XpmImage");
   return(XEN_FALSE);
@@ -20645,14 +20658,14 @@ static XEN gxm_destination_data(XEN ptr)
 {
   /* widget-class specific interpretation -- is it worth untangling? */
   XM_FIELD_ASSERT_TYPE(XEN_XmDestinationCallbackStruct_P(ptr), ptr, XEN_ONLY_ARG, "destination_data", "XmDestinationCallbackStruct");
-  return(C_TO_XEN_ULONG(((XEN_TO_C_XmDestinationCallbackStruct(ptr))->destination_data)));
+  return(XEN_WRAP_C_POINTER(((XEN_TO_C_XmDestinationCallbackStruct(ptr))->destination_data)));
 }
 
 static XEN gxm_transfer_id(XEN ptr)
 {
-  if (XEN_XmTransferDoneCallbackStruct_P(ptr)) return(C_TO_XEN_ULONG(((XEN_TO_C_XmTransferDoneCallbackStruct(ptr))->transfer_id)));
-  if (XEN_XmSelectionCallbackStruct_P(ptr)) return(C_TO_XEN_ULONG(((XEN_TO_C_XmSelectionCallbackStruct(ptr))->transfer_id)));
-  if (XEN_XmDestinationCallbackStruct_P(ptr)) return(C_TO_XEN_ULONG(((XEN_TO_C_XmDestinationCallbackStruct(ptr))->transfer_id)));
+  if (XEN_XmTransferDoneCallbackStruct_P(ptr)) return(XEN_WRAP_C_POINTER(((XEN_TO_C_XmTransferDoneCallbackStruct(ptr))->transfer_id)));
+  if (XEN_XmSelectionCallbackStruct_P(ptr)) return(XEN_WRAP_C_POINTER(((XEN_TO_C_XmSelectionCallbackStruct(ptr))->transfer_id)));
+  if (XEN_XmDestinationCallbackStruct_P(ptr)) return(XEN_WRAP_C_POINTER(((XEN_TO_C_XmDestinationCallbackStruct(ptr))->transfer_id)));
   XM_FIELD_ASSERT_TYPE(0, ptr, XEN_ONLY_ARG, "transfer_id", "a struct with a transfer_id field");
   return(XEN_FALSE);
 }

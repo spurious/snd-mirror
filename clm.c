@@ -9980,7 +9980,7 @@ void mus_fftw_with_imag(mus_float_t *rl, mus_float_t *im, int n, int dir)
   for (i = 0; i < n; i++) 
     c_in_data[i] = rl[i] + _Complex_I * im[i];
 
-  if (dir == -1) /* TODO: is sign reversed in other cases? */
+  if (dir == -1) 
     fftw_execute(c_r_plan);
   else fftw_execute(c_i_plan);
 

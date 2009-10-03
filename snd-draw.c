@@ -974,7 +974,7 @@ cursor) (4 selected_cursor) (5 selection) (6 selected_selection) (7 erase) (8 se
 fltenv_basic) (13 fltenv_data))."
 
 #if USE_MOTIF
-      #define XEN_WRAP_SND_GC(Value) XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GC"), C_TO_XEN_ULONG((unsigned long)Value))
+      #define XEN_WRAP_SND_GC(Value) XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GC"), XEN_WRAP_C_POINTER(Value))
 #else
   #if USE_GTK
     #if USE_CAIRO

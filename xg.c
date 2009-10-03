@@ -34970,7 +34970,7 @@ static XEN gxg_make_GdkColor(XEN arglist)
       case 2: result->green = XEN_TO_C_guint16(XEN_LIST_REF(arglist, 2));
       case 3: result->blue = XEN_TO_C_guint16(XEN_LIST_REF(arglist, 3));
       }
-  return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("GdkColor_"), C_TO_XEN_ULONG((unsigned long)result), make_xm_obj(result)));
+  return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("GdkColor_"), XEN_WRAP_C_POINTER(result), make_xm_obj(result)));
 }
 
 static XEN gxg_make_GdkCursor(XEN arglist)
@@ -34985,7 +34985,7 @@ static XEN gxg_make_GdkCursor(XEN arglist)
       case 0: result->type = XEN_TO_C_GdkCursorType(XEN_LIST_REF(arglist, 0));
       case 1: result->ref_count = XEN_TO_C_guint(XEN_LIST_REF(arglist, 1));
       }
-  return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("GdkCursor_"), C_TO_XEN_ULONG((unsigned long)result), make_xm_obj(result)));
+  return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("GdkCursor_"), XEN_WRAP_C_POINTER(result), make_xm_obj(result)));
 }
 
 static XEN gxg_make_GdkPoint(XEN arglist)
@@ -35000,7 +35000,7 @@ static XEN gxg_make_GdkPoint(XEN arglist)
       case 0: result->x = XEN_TO_C_gint(XEN_LIST_REF(arglist, 0));
       case 1: result->y = XEN_TO_C_gint(XEN_LIST_REF(arglist, 1));
       }
-  return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("GdkPoint_"), C_TO_XEN_ULONG((unsigned long)result), make_xm_obj(result)));
+  return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("GdkPoint_"), XEN_WRAP_C_POINTER(result), make_xm_obj(result)));
 }
 
 static XEN gxg_make_GdkRectangle(XEN arglist)
@@ -35017,7 +35017,7 @@ static XEN gxg_make_GdkRectangle(XEN arglist)
       case 2: result->width = XEN_TO_C_gint(XEN_LIST_REF(arglist, 2));
       case 3: result->height = XEN_TO_C_gint(XEN_LIST_REF(arglist, 3));
       }
-  return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("GdkRectangle_"), C_TO_XEN_ULONG((unsigned long)result), make_xm_obj(result)));
+  return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("GdkRectangle_"), XEN_WRAP_C_POINTER(result), make_xm_obj(result)));
 }
 
 static XEN gxg_make_GtkRequisition(XEN arglist)
@@ -35032,49 +35032,49 @@ static XEN gxg_make_GtkRequisition(XEN arglist)
       case 0: result->width = XEN_TO_C_gint(XEN_LIST_REF(arglist, 0));
       case 1: result->height = XEN_TO_C_gint(XEN_LIST_REF(arglist, 1));
       }
-  return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("GtkRequisition_"), C_TO_XEN_ULONG((unsigned long)result), make_xm_obj(result)));
+  return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("GtkRequisition_"), XEN_WRAP_C_POINTER(result), make_xm_obj(result)));
 }
 
 static XEN gxg_make_GtkStockItem(void)
 {
   GtkStockItem* result;
   result = (GtkStockItem*)calloc(1, sizeof(GtkStockItem));
-  return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("GtkStockItem_"), C_TO_XEN_ULONG((unsigned long)result), make_xm_obj(result)));
+  return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("GtkStockItem_"), XEN_WRAP_C_POINTER(result), make_xm_obj(result)));
 }
 
 static XEN gxg_make_GtkTextIter(void)
 {
   GtkTextIter* result;
   result = (GtkTextIter*)calloc(1, sizeof(GtkTextIter));
-  return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("GtkTextIter_"), C_TO_XEN_ULONG((unsigned long)result), make_xm_obj(result)));
+  return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("GtkTextIter_"), XEN_WRAP_C_POINTER(result), make_xm_obj(result)));
 }
 
 static XEN gxg_make_GtkTreeIter(void)
 {
   GtkTreeIter* result;
   result = (GtkTreeIter*)calloc(1, sizeof(GtkTreeIter));
-  return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("GtkTreeIter_"), C_TO_XEN_ULONG((unsigned long)result), make_xm_obj(result)));
+  return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("GtkTreeIter_"), XEN_WRAP_C_POINTER(result), make_xm_obj(result)));
 }
 
 static XEN gxg_make_PangoColor(void)
 {
   PangoColor* result;
   result = (PangoColor*)calloc(1, sizeof(PangoColor));
-  return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("PangoColor_"), C_TO_XEN_ULONG((unsigned long)result), make_xm_obj(result)));
+  return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("PangoColor_"), XEN_WRAP_C_POINTER(result), make_xm_obj(result)));
 }
 
 static XEN gxg_make_PangoRectangle(void)
 {
   PangoRectangle* result;
   result = (PangoRectangle*)calloc(1, sizeof(PangoRectangle));
-  return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("PangoRectangle_"), C_TO_XEN_ULONG((unsigned long)result), make_xm_obj(result)));
+  return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("PangoRectangle_"), XEN_WRAP_C_POINTER(result), make_xm_obj(result)));
 }
 
 static XEN gxg_make_PangoLogAttr(void)
 {
   PangoLogAttr* result;
   result = (PangoLogAttr*)calloc(1, sizeof(PangoLogAttr));
-  return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("PangoLogAttr_"), C_TO_XEN_ULONG((unsigned long)result), make_xm_obj(result)));
+  return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("PangoLogAttr_"), XEN_WRAP_C_POINTER(result), make_xm_obj(result)));
 }
 
 #if HAVE_CAIRO_CREATE
@@ -35082,7 +35082,7 @@ static XEN gxg_make_cairo_matrix_t(void)
 {
   cairo_matrix_t* result;
   result = (cairo_matrix_t*)calloc(1, sizeof(cairo_matrix_t));
-  return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("cairo_matrix_t_"), C_TO_XEN_ULONG((unsigned long)result), make_xm_obj(result)));
+  return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("cairo_matrix_t_"), XEN_WRAP_C_POINTER(result), make_xm_obj(result)));
 }
 
 #endif
@@ -48851,7 +48851,7 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("24-Sep-09"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("03-Oct-09"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

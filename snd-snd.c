@@ -15,12 +15,12 @@ static snd_info *get_sp_1(int index)
 
 snd_info *get_sp(XEN snd)
 {
-  if (XEN_INTEGER_P(snd))
-    return(get_sp_1(XEN_TO_C_INT(snd)));
-
   if (XEN_SOUND_P(snd))
     return(get_sp_1(xen_sound_to_int(snd)));
       
+  if (XEN_INTEGER_P(snd))
+    return(get_sp_1(XEN_TO_C_INT(snd)));
+
   /* use default sound, if any */
   return(any_selected_sound());
 }
@@ -2347,6 +2347,7 @@ void call_sp_watchers(snd_info *sp, sp_watcher_t type, sp_watcher_reason_t reaso
  *             peak or max(?): vct-peak, maxamp, region-maxamp sound-data-maxamp
  *             properties:     mark|mix|sound-properties
  *             name:           mark|mix-name file-name (widget name via XtName)
+ *             sync:           sync, mark|mix-sync
  *
  * PERHAPS: pointers wrapped in struct, not treated as ulong or ulong_long [XtPointer as sole field etc]
  *
@@ -2421,11 +2422,13 @@ static bool xen_sound_equalp(xen_sound *v1, xen_sound *v2)
 }
 
 
+#if (!HAVE_S7)
 static XEN equalp_xen_sound(XEN obj1, XEN obj2)
 {
   if ((!(XEN_SOUND_P(obj1))) || (!(XEN_SOUND_P(obj2)))) return(XEN_FALSE);
   return(xen_return_first(C_TO_XEN_BOOLEAN(xen_sound_equalp(XEN_TO_XEN_SOUND(obj1), XEN_TO_XEN_SOUND(obj2))), obj1, obj2));
 }
+#endif
 
 
 static xen_sound *xen_sound_make(int n)
@@ -2462,7 +2465,7 @@ static XEN s7_xen_sound_length(s7_scheme *sc, XEN obj)
 #endif
 
 
-static init_xen_sound(void)
+static void init_xen_sound(void)
 {
 #if HAVE_S7
   xen_sound_tag = XEN_MAKE_OBJECT_TYPE("<sound>", print_xen_sound, free_xen_sound, s7_xen_sound_equalp, NULL, NULL, NULL, s7_xen_sound_length, NULL, NULL);
@@ -2624,9 +2627,6 @@ static XEN g_bomb(XEN snd, XEN on)
 }
 
 
-/* TODO: remember that sound|channel|edit-properties has to treat ind=int->snd */
-
-
 typedef enum {SP_SYNC, SP_READ_ONLY, SP_NCHANS, SP_CONTRASTING, SP_EXPANDING, SP_REVERBING, SP_FILTERING, SP_FILTER_ORDER,
 	      SP_SRATE, SP_DATA_FORMAT, SP_DATA_LOCATION, SP_HEADER_TYPE, SP_SAVE_CONTROLS, SP_RESTORE_CONTROLS, SP_SELECTED_CHANNEL,
 	      SP_COMMENT, SP_FILE_NAME, SP_SHORT_FILE_NAME, SP_CLOSE, SP_UPDATE, SP_WITH_TRACKING_CURSOR, SP_SHOW_CONTROLS,
@@ -2691,14 +2691,14 @@ static XEN sound_get(XEN snd, sp_field_t fld, const char *caller)
     case SP_HEADER_TYPE:         return(C_TO_XEN_INT(sp->hdr->type));                                               break;
     case SP_DATA_LOCATION:       return(C_TO_XEN_INT64_T(sp->hdr->data_location));                                  break;
     case SP_DATA_SIZE:           return(C_TO_XEN_INT64_T(mus_samples_to_bytes(sp->hdr->format, sp->hdr->samples))); break;
-    case SP_SAVE_CONTROLS:       if (!(IS_PLAYER_SOUND(sp))) save_controls(sp);                                           break;
-    case SP_RESTORE_CONTROLS:    if (!(IS_PLAYER_SOUND(sp))) restore_controls(sp);                                        break;
-    case SP_RESET_CONTROLS:      if (!(IS_PLAYER_SOUND(sp))) reset_controls(sp);                                          break;
+    case SP_SAVE_CONTROLS:       if (!(IS_PLAYER_SOUND(sp))) save_controls(sp);                                     break;
+    case SP_RESTORE_CONTROLS:    if (!(IS_PLAYER_SOUND(sp))) restore_controls(sp);                                  break;
+    case SP_RESET_CONTROLS:      if (!(IS_PLAYER_SOUND(sp))) reset_controls(sp);                                    break;
     case SP_FILE_NAME:           return(C_TO_XEN_STRING(sp->filename));                                             break;
     case SP_SHORT_FILE_NAME:     return(C_TO_XEN_STRING(sp->short_filename));                                       break;
-    case SP_CLOSE:               if (!(IS_PLAYER_SOUND(sp))) snd_close_file(sp);                                          break;
+    case SP_CLOSE:               if (!(IS_PLAYER_SOUND(sp))) snd_close_file(sp);                                    break;
     case SP_WITH_TRACKING_CURSOR: return(C_TO_XEN_BOOLEAN(sp->with_tracking_cursor));                               break;
-    case SP_SHOW_CONTROLS:       if (!(IS_PLAYER_SOUND(sp))) return(C_TO_XEN_BOOLEAN(showing_controls(sp)));              break;
+    case SP_SHOW_CONTROLS:       if (!(IS_PLAYER_SOUND(sp))) return(C_TO_XEN_BOOLEAN(showing_controls(sp)));        break;
     case SP_SPEED_TONES:         return(C_TO_XEN_INT(sp->speed_control_tones));                                     break;
     case SP_SPEED_STYLE:         return(C_TO_XEN_INT((int)(sp->speed_control_style)));                              break;
     case SP_COMMENT:             return(C_TO_XEN_STRING(sp->hdr->comment));                                         break;
@@ -5202,20 +5202,24 @@ The 'choices' are 0 (apply to sound), 1 (apply to channel), and 2 (apply to sele
     {
       apply_state *ap;
       snd_apply_t cur_choice;
+
       if (sp->applying)
 	{
 	  XEN_ERROR(XEN_ERROR_TYPE("cannot-apply-controls"),
 		    XEN_LIST_2(C_TO_XEN_STRING(S_apply_controls),
 			       C_TO_XEN_STRING("already applying controls")));
 	}
+
       if (XEN_INT64_T_P(beg)) apply_beg = XEN_TO_C_INT64_T(beg); else apply_beg = 0;
       if (XEN_INT64_T_P(dur)) apply_dur = XEN_TO_C_INT64_T(dur); else apply_dur = 0;
       cur_choice = (snd_apply_t)XEN_TO_C_INT_OR_ELSE(choice, (int)APPLY_TO_SOUND);
+
       if (cur_choice > APPLY_TO_SELECTION)
 	XEN_OUT_OF_RANGE_ERROR(S_apply_controls, 2, choice, "~A, but must be 0=sound, 1=channel, or 2=selection");
       ss->apply_choice = cur_choice;
       sp->applying = true;
       ap = (apply_state *)make_apply_state(sp);
+
       if (ap)
 	{
 	  redirect_snd_error_to(apply_controls_error, (void *)S_apply_controls);
@@ -5596,6 +5600,7 @@ If 'filename' is a sound index or a sound object, 'size' is interpreted as an ed
 		  filename, XEN_ARG_1, S_channel_amp_envs, "a string or sound index");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chan), chan, XEN_ARG_2, S_channel_amp_envs, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(pts), pts, XEN_ARG_3, S_channel_amp_envs, "an integer");
+
   XEN_ASSERT_TYPE(((XEN_PROCEDURE_P(peak_func)) && (procedure_arity_ok(peak_func, 2))) ||
 		  (XEN_FALSE_P(peak_func)) ||
 		  (XEN_NOT_BOUND_P(peak_func)), 

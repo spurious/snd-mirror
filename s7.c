@@ -91,6 +91,7 @@
  *        rename "force" to some name matching the notion of a promise ("delay" and "force" are about as bad as names can get)
  *        make #<func args> = (func args) or something like that so we can read new_type objects, or add a reader to that struct
  *        make-vector! where type of initial element sets type of all elements, or make-vector*?
+ *          (make-vector! 32 0.0)
  *
  *
  * Mike Scholz provided the FreeBSD support (complex trig funcs, etc)
@@ -332,7 +333,7 @@ typedef struct s7_num_t {
       s7_Double imag;
     } complex_value;
     
-    unsigned long ul_value; /* these two are for uninterpreted C pointers -- not used by s7 in any way */
+    unsigned long ul_value; /* these two are not used by s7 in any way */
     unsigned long long ull_value;
 
   } value;
@@ -393,6 +394,8 @@ typedef struct s7_cell {
     unsigned char cvalue;
     
     opcode_t proc_num;
+
+    void *c_pointer;
     
     struct {
       s7_Int length;
@@ -580,7 +583,8 @@ struct s7_scheme {
 #define T_HASH_TABLE   20
 #define T_BOOLEAN      21
 #define T_C_MACRO      22
-#define BUILT_IN_TYPES 23
+#define T_C_POINTER    23
+#define BUILT_IN_TYPES 24
 
 #define TYPE_BITS                     8
 #define T_MASKTYPE                    0xff
@@ -881,6 +885,7 @@ static s7_pointer eval_error(s7_scheme *sc, const char *errmsg, s7_pointer obj);
 static bool is_thunk(s7_scheme *sc, s7_pointer x);
 static int remember_file_name(const char *file);
 static s7_pointer splice_in_values(s7_scheme *sc, s7_pointer args);
+static const char *s7_type_name(s7_pointer arg);
 
 #if WITH_ENCAPSULATION
   static void encapsulate(s7_scheme *sc, s7_pointer sym);
@@ -1005,7 +1010,6 @@ static s7_pointer g_is_constant(s7_scheme *sc, s7_pointer args)
   #define H_is_constant "(constant? obj) returns #t if obj is a constant (unsettable)"
   return(s7_make_boolean(sc, s7_is_constant(car(args))));
 }
-
 
 
 
@@ -1408,11 +1412,11 @@ static s7_pointer new_cell(s7_scheme *sc)
 
 	  sc->heap = (s7_cell **)realloc(sc->heap, (sc->heap_size + 1) * sizeof(s7_cell *));
 	  if (!(sc->heap))
-	    fprintf(stderr, "heap reallocation failed! tried to get %lud bytes\n", (sc->heap_size + 1) * sizeof(s7_cell *));
+	    fprintf(stderr, "heap reallocation failed! tried to get %lu bytes\n", (unsigned long)((sc->heap_size + 1) * sizeof(s7_cell *)));
 
 	  sc->free_heap = (s7_cell **)realloc(sc->free_heap, sc->heap_size * sizeof(s7_cell *));
 	  if (!(sc->heap))
-	    fprintf(stderr, "free heap reallocation failed! tried to get %lud bytes\n", sc->heap_size * sizeof(s7_cell *));	  
+	    fprintf(stderr, "free heap reallocation failed! tried to get %lu bytes\n", (unsigned long)(sc->heap_size * sizeof(s7_cell *)));	  
 
 	  { 
 	    /* optimization suggested by K Matheussen */
@@ -1549,6 +1553,7 @@ void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
     case T_C_OBJECT:
     case T_C_FUNCTION:
     case T_C_MACRO:
+    case T_C_POINTER:
       break;
 
     case T_HASH_TABLE:
@@ -2363,6 +2368,36 @@ static s7_pointer g_symbol_to_keyword(s7_scheme *sc, s7_pointer args)
   if (!s7_is_symbol(car(args)))
     return(s7_wrong_type_arg_error(sc, "symbol->keyword", 0, car(args), "a symbol"));
   return(s7_make_keyword(sc, s7_symbol_name(car(args))));
+}
+
+
+/* for uninterpreted pointers */
+
+bool s7_is_c_pointer(s7_pointer arg) 
+{
+  return(type(arg) == T_C_POINTER);
+}
+
+
+void *s7_c_pointer(s7_pointer p) 
+{
+  if ((type(p) == T_NUMBER) && (s7_integer(p) == 0))
+    return(NULL); /* special case where the null pointer has been cons'd up by hand */
+
+  if (type(p) != T_C_POINTER)
+    fprintf(stderr, "s7_c_pointer argument is a %s\n", s7_type_name(p));
+
+  return(p->object.c_pointer);
+}
+
+
+s7_pointer s7_make_c_pointer(s7_scheme *sc, void *ptr)
+{
+  s7_pointer x;
+  x = new_cell(sc);
+  set_type(x, T_C_POINTER | T_ATOM | T_SIMPLE | T_DONT_COPY);
+  x->object.c_pointer = ptr;
+  return(x);
 }
 
 
@@ -6430,8 +6465,6 @@ static s7_pointer g_is_inexact(s7_scheme *sc, s7_pointer args)
 }
 
 
-/* these are for uninterpreted C pointers, but we do need at least equality checks */
-
 bool s7_is_ulong(s7_pointer arg) 
 {
   return(s7_is_integer(arg));
@@ -8900,6 +8933,9 @@ static char *s7_atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
     case T_C_MACRO:
       return(s7_strdup(c_macro_name(obj)));
   
+    case T_C_POINTER:
+      return(s7_strdup("#<c_pointer>"));
+  
     case T_CONTINUATION:
       return(s7_strdup("#<continuation>"));
   
@@ -8921,15 +8957,10 @@ static char *s7_atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
 
   {
     char *buf;
-    const char *type_names[BUILT_IN_TYPES] = {"none", "nil", "string", "number", "symbol", "pair", "closure",
-					      "closure*", "continuation", "function", "character", "input port",
-					      "vector", "macro", "promise", "object", "goto","output port",
-					      "catch", "dynamic-wind", "hash-table", "boolean", "macro"};
-
     buf = (char *)calloc(512, sizeof(char));
     snprintf(buf, 512, "<unknown object! type: %d (%s), flags: %x%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s>", 
 	     type(obj), 
-	     (type(obj) < BUILT_IN_TYPES) ? type_names[type(obj)] : "none",
+	     (type(obj) < BUILT_IN_TYPES) ? s7_type_name(obj) : "none",
 	     typeflag(obj),
 	     is_simple(obj) ? " simple" : "",
 	     is_atom(obj) ? " atom" : "",
@@ -13320,6 +13351,7 @@ static const char *s7_type_name(s7_pointer arg)
     case T_CONTINUATION: return("continuation");
     case T_C_FUNCTION:   return("function");
     case T_C_MACRO:      return("macro");
+    case T_C_POINTER:    return("c-pointer");
     case T_CHARACTER:    return("character");
     case T_VECTOR:       return("vector");
     case T_MACRO:        return("macro");
@@ -21894,10 +21926,10 @@ static s7_pointer big_random(s7_scheme *sc, s7_pointer args)
 
 static void s7_gmp_init(s7_scheme *sc)
 {
-  big_integer_tag = s7_new_type("big-integer", print_big_integer, free_big_integer, equal_big_integer, NULL, NULL, NULL);
-  big_ratio_tag =   s7_new_type("big-ratio",   print_big_ratio,   free_big_ratio,   equal_big_ratio,   NULL, NULL, NULL);
-  big_real_tag =    s7_new_type("big-real",    print_big_real,    free_big_real,    equal_big_real,    NULL, NULL, NULL);
-  big_complex_tag = s7_new_type("big-complex", print_big_complex, free_big_complex, equal_big_complex, NULL, NULL, NULL);
+  big_integer_tag = s7_new_type("<big-integer>", print_big_integer, free_big_integer, equal_big_integer, NULL, NULL, NULL);
+  big_ratio_tag =   s7_new_type("<big-ratio>",   print_big_ratio,   free_big_ratio,   equal_big_ratio,   NULL, NULL, NULL);
+  big_real_tag =    s7_new_type("<big-real>",    print_big_real,    free_big_real,    equal_big_real,    NULL, NULL, NULL);
+  big_complex_tag = s7_new_type("<big-complex>", print_big_complex, free_big_complex, equal_big_complex, NULL, NULL, NULL);
 
   s7_define_function(sc, "+",                   big_add,              0, 0, true,  H_add);
   s7_define_function(sc, "-",                   big_subtract,         1, 0, true,  H_subtract);
@@ -21965,7 +21997,7 @@ static void s7_gmp_init(s7_scheme *sc)
   s7_define_function(sc, "acosh",               big_acosh,            1, 0, false, H_acosh);
   s7_define_function(sc, "atanh",               big_atanh,            1, 0, false, H_atanh);
 
-  big_rng_tag = s7_new_type("big-random-number-generator", print_big_rng, free_big_rng, equal_big_rng, NULL, NULL, NULL);
+  big_rng_tag = s7_new_type("<big-random-number-generator>", print_big_rng, free_big_rng, equal_big_rng, NULL, NULL, NULL);
   s7_define_function(sc, "random",              big_random,           1, 1, false, H_random);
   s7_define_function(sc, "make-random-state",   make_big_random_state,1, 0, false, H_make_random_state);
 
@@ -22414,7 +22446,7 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "lognot",                  g_lognot,                  1, 0, false, H_lognot);
   s7_define_function(sc, "ash",                     g_ash,                     2, 0, false, H_ash);
   
-  rng_tag = s7_new_type("random-number-generator", print_rng, free_rng, equal_rng, NULL, NULL, NULL);
+  rng_tag = s7_new_type("<random-number-generator>", print_rng, free_rng, equal_rng, NULL, NULL, NULL);
   s7_define_function(sc, "random",                  g_random,                  1, 1, false, H_random);
   s7_define_function(sc, "make-random-state",       g_make_random_state,       1, 0, false, H_make_random_state);
 

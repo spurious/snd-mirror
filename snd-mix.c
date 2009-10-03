@@ -1421,19 +1421,19 @@ char *edit_list_mix_init(chan_info *cp)
 	    new_list = mus_format("%s%s(-mix-%d #f)", 
 				  (old_list) ? old_list : "", 
 				  (old_list) ? " " : "",  /* strcat of previous + possible space */
-				  id, id);                  
+				  id);                  
 #endif
 #if HAVE_RUBY
 	    new_list = mus_format("%s%s_mix_%d = false", 
 				  (old_list) ? old_list : "", 
 				  (old_list) ? "; " : "",  /* strcat of previous + possible space */
-				  id, id);                  
+				  id);                  
 #endif
 #if HAVE_FORTH
 	    new_list = mus_format("%s%s#f { -mix-%d }", 
 				  (old_list) ? old_list : "", 
 				  (old_list) ? " " : "",   /* strcat of previous + possible space */
-				  id, id);                  
+				  id);                  
 #endif
 	    if (old_list) free(old_list);
 	  }
@@ -2226,12 +2226,10 @@ void after_mix_edit(int id)
 
 /* ---------------------------------------- mix objects ---------------------------------------- */
 
-/* TODO: check forth and update snd-test.fs etc
+/* 
  * SOMEDAY: deprecate mix-length, mix-position, mix-home, mix-properties, make-mix-sampler, mix-sampler?, read-mix-sample, mix-name, mix-sync, mix-color
  *            eventually? amp amp-env speed maxamp etc
  * TODO: ruby methods as in vcts
- * TODO: sound objects (there's an inconsistency looming here: we rarely place the snd arg 1st, or want to)
- * PERHAPS: widget also?
  */
 
 typedef struct {
@@ -2294,18 +2292,19 @@ static XEN g_xen_mix_to_string(XEN obj)
 #endif
 
 
+#if (!HAVE_S7)
 static bool xen_mix_equalp(xen_mix *v1, xen_mix *v2) 
 {
   return((v1 == v2) ||
 	 (v1->n == v2->n));
 }
 
-
 static XEN equalp_xen_mix(XEN obj1, XEN obj2)
 {
   if ((!(XEN_MIX_P(obj1))) || (!(XEN_MIX_P(obj2)))) return(XEN_FALSE);
   return(xen_return_first(C_TO_XEN_BOOLEAN(xen_mix_equalp(XEN_TO_XEN_MIX(obj1), XEN_TO_XEN_MIX(obj2))), obj1, obj2));
 }
+#endif
 
 
 static xen_mix *xen_mix_make(int n)
@@ -2345,7 +2344,7 @@ static bool s7_xen_mix_equalp(void *obj1, void *obj2)
 #endif
 
 
-static init_xen_mix(void)
+static void init_xen_mix(void)
 {
 #if HAVE_S7
   xen_mix_tag = XEN_MAKE_OBJECT_TYPE("<mix>", print_xen_mix, free_xen_mix, s7_xen_mix_equalp, NULL, NULL, NULL, s7_xen_mix_length, NULL, NULL);
@@ -3142,13 +3141,6 @@ bool mix_sampler_p(XEN obj)
 
 #define XEN_TO_MIX_SAMPLER(obj) ((mix_fd *)XEN_OBJECT_REF(obj))
 #define MIX_SAMPLER_P(Obj) XEN_OBJECT_TYPE_P(Obj, mf_tag)
-
-static void *xen_to_mix_sampler(XEN obj) 
-{
-  if (MIX_SAMPLER_P(obj)) 
-    return(XEN_TO_MIX_SAMPLER(obj)); 
-  return(NULL);
-}
 
 
 static XEN g_mix_sampler_p(XEN obj) 

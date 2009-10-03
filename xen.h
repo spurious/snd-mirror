@@ -16,6 +16,7 @@
 
 /* HISTORY:
  *
+ *  5-Oct:     use s7_c_pointer etc.
  *  7-Aug:     use s7_new_type_x in XEN_MAKE_OBJECT_TYPE.  XEN_DEFINE_SET_PROCEDURE.
  *  27-Jul:    INT64_T cases paralleling OFF_T (the latter may go away someday).
  *  14-Jul:    s7_define_function_star via XEN_DEFINE_PROCEDURE_STAR.
@@ -2378,21 +2379,28 @@ void xen_no_ext_lang_check_args(const char *name, int args, int req_args, int op
 
 
 /* (need a way to pass an uninterpreted pointer from C to XEN then back to C) */
-#if (SIZEOF_VOID_P == SIZEOF_UNSIGNED_LONG) 
- #define XEN_WRAP_C_POINTER(a)         ((XEN)(C_TO_XEN_ULONG((unsigned long)a))) 
- #define XEN_UNWRAP_C_POINTER(a)       XEN_TO_C_ULONG(a) 
-#else 
- #define XEN_WRAP_C_POINTER(a)         C_TO_XEN_INT64_T((int64_t)(a)) 
- #define XEN_UNWRAP_C_POINTER(a)       XEN_TO_C_INT64_T(a) 
-#endif 
-
-#if HAVE_GUILE
-  #define XEN_WRAPPED_C_POINTER_P(a)   (XEN_NUMBER_P(a) && XEN_EXACT_P(a))
-  /* guile assumes the argument to exact? is a number and throws an error otherwise */
+#if HAVE_S7
+  #define XEN_WRAP_C_POINTER(a)           s7_make_c_pointer(s7, (void *)(a))
+  #define XEN_UNWRAP_C_POINTER(a)         s7_c_pointer(a)
+  #define XEN_WRAPPED_C_POINTER_P(a)      s7_is_c_pointer(a)
 #else
-  #define XEN_WRAPPED_C_POINTER_P(a)   XEN_EXACT_P(a)
-#endif
 
+  #if (SIZEOF_VOID_P == SIZEOF_UNSIGNED_LONG) 
+    #define XEN_WRAP_C_POINTER(a)         ((XEN)(C_TO_XEN_ULONG((unsigned long)a))) 
+    #define XEN_UNWRAP_C_POINTER(a)       XEN_TO_C_ULONG(a) 
+  #else 
+    #define XEN_WRAP_C_POINTER(a)         C_TO_XEN_INT64_T((int64_t)(a)) 
+    #define XEN_UNWRAP_C_POINTER(a)       XEN_TO_C_INT64_T(a) 
+  #endif
+
+  #if HAVE_GUILE
+    #define XEN_WRAPPED_C_POINTER_P(a)   (XEN_NUMBER_P(a) && XEN_EXACT_P(a))
+    /* guile assumes the argument to exact? is a number and throws an error otherwise */
+  #else
+    #define XEN_WRAPPED_C_POINTER_P(a)   XEN_EXACT_P(a)
+  #endif
+
+#endif
 
 #ifdef __cplusplus
 extern "C" {
