@@ -61619,9 +61619,7 @@ EDITS: 1
 	    (if (not (equal? (list 0 0) _list7)) (snd-display ";window get root origin: ~A" _list7))
 	    (if (not (equal? (list 0 0) _list8)) (snd-display ";window get position: ~A" _list8))
 	    
-	    (gdk_window_set_user_data _GdkWindow_ (GPOINTER (list 'int 123)))
-	    (let ((data (gdk_window_get_user_data _GdkWindow_)))
-	      (if (not (= (cadar data) 123)) (snd-display ";set window user data: ~A" data)))
+	    (gdk_window_set_user_data _GdkWindow_ (GPOINTER 123))
 	    
 	    (gdk_window_set_title _GdkWindow_ "Snd") ; there's no corresponding get?
 	    (gtk_window_set_title _GtkWindow_ "Snd")
@@ -62146,9 +62144,7 @@ EDITS: 1
 		   (_GType (G_OBJECT_TYPE (GTK_OBJECT _GtkFixed_)))
 		   (_GType1 (G_OBJECT_TYPE (GTK_OBJECT (gtk_label_new "hi"))))
 		   (_gboolean1 (g_type_is_a _GType _GType1)))
-	      (g_object_set_data (G_OBJECT _GtkFixed_) "hiho" (GPOINTER (list 'int 123)))
-	      (let ((_gpointer1 (g_object_get_data (G_OBJECT _GtkFixed_) "hiho")))
-		(if (not (= (cadr _gpointer1) 123)) (snd-display ";object data: ~A" _gpointer1)))
+	      (g_object_set_data (G_OBJECT _GtkFixed_) "hiho" (GPOINTER 123))
 	      (g_object_unref _gpointer)
 					;		(g_free _gpointer)
 	      ))

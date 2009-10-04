@@ -8241,20 +8241,9 @@ structures that have attributes equal to the attributes specified by vinfo_templ
   int len;
   XEN lst = XEN_EMPTY_LIST;
 
-  fprintf(stderr, "visual: %p %p %p\n", arg1, arg2, arg3);
-
   XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XGetVisualInfo", "Display*");
-
-  fprintf(stderr, "past dpy\n");
-
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XGetVisualInfo", "long");
-
-  fprintf(stderr, "past arg2\n");
-
   XEN_ASSERT_TYPE(XEN_XVisualInfo_P(arg3), arg3, 3, "XGetVisualInfo", "XVisualInfo*");
-
-
-  fprintf(stderr, "-> %p %d %p\n", XEN_TO_C_Display(arg1), XEN_TO_C_INT(arg2), XEN_TO_C_XVisualInfo(arg3));
 
   v = XGetVisualInfo(XEN_TO_C_Display(arg1), XEN_TO_C_INT(arg2), XEN_TO_C_XVisualInfo(arg3), &len);
   if (v)

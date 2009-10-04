@@ -5807,7 +5807,7 @@ int mus_audio_mixer_write(int ur_dev, int field, int chan, float *val)
 */
 /* ./System/Library/Frameworks/CoreAudio.framework/Headers/CoreAudio.h */
 
-static char* osx_error(OSStatus err) 
+static const char* osx_error(OSStatus err) 
 {
   if (err == noErr) return("no error");
   switch (err) 
@@ -6716,9 +6716,9 @@ int mus_audio_initialize(void) {return(MUS_NO_ERROR);}
 
 int mus_audio_systems(void) {return(1);}
 
-char *mus_audio_system_name(int system) {return("Mac OSX");}
+char *mus_audio_system_name(int system) {return((char *)"Mac OSX");}
 
-char *mus_audio_moniker(void) {return("Mac OSX audio");}
+char *mus_audio_moniker(void) {return((char *)"Mac OSX audio");}
 #endif
 
 

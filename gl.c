@@ -69,11 +69,11 @@
                             (strcmp(Name, XEN_SYMBOL_TO_C_STRING(XEN_CAR(Value))) == 0))
 
 #define XL_TYPE(Name, XType) \
-  static XEN C_TO_XEN_ ## Name (XType val) {return(WRAP_FOR_XEN(#Name, val));} \
-  static XType XEN_TO_C_ ## Name (XEN val) {return((XType)XEN_UNWRAP_C_POINTER(XEN_CADR(val)));} \
+  static XEN C_TO_XEN_ ## Name (XType val) {return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL(#Name), C_TO_XEN_ULONG(val)));} \
+  static XType XEN_TO_C_ ## Name (XEN val) {return((XType)XEN_TO_C_ULONG(XEN_CADR(val)));} \
   static int XEN_ ## Name ## _P(XEN val) {return(WRAP_P(#Name, val));}
 #define XL_TYPE_1(Name, XType) \
-  static XType XEN_TO_C_ ## Name (XEN val) {return((XType)XEN_UNWRAP_C_POINTER(XEN_CADR(val)));} \
+  static XType XEN_TO_C_ ## Name (XEN val) {return((XType)XEN_TO_C_ULONG(XEN_CADR(val)));} \
   static int XEN_ ## Name ## _P(XEN val) {return(WRAP_P(#Name, val));}
 
 #define XL_TYPE_PTR(Name, XType) \
@@ -88,13 +88,13 @@
 /* ---------------------------------------- types ---------------------------------------- */
 
 #if USE_MOTIF
-XL_TYPE(XVisualInfo, XVisualInfo*)
-XL_TYPE_1(Display, Display*)
+XL_TYPE_PTR(XVisualInfo, XVisualInfo*)
+XL_TYPE_PTR(Display, Display*)
 #define C_TO_XEN_int(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_int(Arg) (int)(XEN_TO_C_INT(Arg))
 #define XEN_int_P(Arg) XEN_INTEGER_P(Arg)
 XL_TYPE_PTR_1(int_, int*)
-XL_TYPE(GLXContext, GLXContext)
+XL_TYPE_PTR(GLXContext, GLXContext)
 #define XEN_TO_C_unsigned_long(Arg) (unsigned_long)(XEN_TO_C_ULONG(Arg))
 #define XEN_unsigned_long_P(Arg) XEN_ULONG_P(Arg)
 #define C_TO_XEN_Bool(Arg) C_TO_XEN_BOOLEAN(Arg)
@@ -5937,7 +5937,7 @@ void Init_libgl(void)
       define_integers();
       define_functions();
       XEN_YES_WE_HAVE("gl");
-      XEN_DEFINE("gl-version", C_TO_XEN_STRING("14-Mar-09"));
+      XEN_DEFINE("gl-version", C_TO_XEN_STRING("04-Oct-09"));
       gl_already_inited = true;
     }
 }

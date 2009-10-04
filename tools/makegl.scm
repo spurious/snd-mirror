@@ -1,5 +1,9 @@
 ;;; makegl.scm creates the GL/GLU bindings using gldata.scm, writes gl.c
 
+;;; TODO: the 3 modules gl.c, xm.c, and xg.c have to agree with each other and with Snd
+;;;         about whether something is a pointer (e.g. XtPointer) or a ulong (e.g. XID).
+;;;         this choice needs to be made global or less prone to oversights.
+
 ;(use-modules (ice-9 debug))
 ;(use-modules (ice-9 format))
 ;(use-modules (ice-9 optargs))
@@ -334,8 +338,10 @@
 		  (begin
 		    (hey "#define XEN_~A_P(Arg) 1~%" (no-stars (car typ)))
 		    (hey "#define XEN_TO_C_~A(Arg) ((gpointer)Arg)~%" (no-stars (car typ)))))))
-	(if (not (or (string=? type "Display*")
-		     (string=? type "XVisualInfo*")))
+
+	(if (not (or (string=? type "Display*")     ; why are these 2 handled specially?
+		     (string=? type "XVisualInfo*")
+		     (string=? type "GLXContext"))) ; Snd g_snd_glx_context (snd-xmain.c) calls this a pointer
 	    (begin
 	      (if (member type glu-1-2) (hey "#ifdef GLU_VERSION_1_2~%"))
 	      (hey "XL_TYPE~A~A(~A, ~A)~%" 
@@ -353,8 +359,11 @@
 		   type)
 	      (if (member type glu-1-2) (hey "#endif~%")))
 	    (if (string=? type "Display*")
-		(hey "XL_TYPE_1(Display, Display*)~%")
-		(hey "XL_TYPE(XVisualInfo, XVisualInfo*)~%"))))))
+		(hey "XL_TYPE_PTR(Display, Display*)~%")
+		(if (string=? type "XVisualInfo*")
+		    (hey "XL_TYPE_PTR(XVisualInfo, XVisualInfo*)~%")
+		    (hey "XL_TYPE_PTR(GLXContext, GLXContext)~%")
+		    ))))))
 
 (define* (CFNC data :optional spec spec-name)
   (let ((name (cadr-str data))
@@ -537,12 +546,14 @@
 (hey "                            (XEN_SYMBOL_P(XEN_CAR(Value))) && \\~%")
 (hey "                            (strcmp(Name, XEN_SYMBOL_TO_C_STRING(XEN_CAR(Value))) == 0))~%")
 (hey "~%")
+
+;;; these have to match the choices in xm.c 
 (hey "#define XL_TYPE(Name, XType) \\~%")
-(hey "  static XEN C_TO_XEN_ ## Name (XType val) {return(WRAP_FOR_XEN(#Name, val));} \\~%")
-(hey "  static XType XEN_TO_C_ ## Name (XEN val) {return((XType)XEN_UNWRAP_C_POINTER(XEN_CADR(val)));} \\~%")
+(hey "  static XEN C_TO_XEN_ ## Name (XType val) {return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL(#Name), C_TO_XEN_ULONG(val)));} \\~%")
+(hey "  static XType XEN_TO_C_ ## Name (XEN val) {return((XType)XEN_TO_C_ULONG(XEN_CADR(val)));} \\~%")
 (hey "  static int XEN_ ## Name ## _P(XEN val) {return(WRAP_P(#Name, val));}~%")
 (hey "#define XL_TYPE_1(Name, XType) \\~%")
-(hey "  static XType XEN_TO_C_ ## Name (XEN val) {return((XType)XEN_UNWRAP_C_POINTER(XEN_CADR(val)));} \\~%")
+(hey "  static XType XEN_TO_C_ ## Name (XEN val) {return((XType)XEN_TO_C_ULONG(XEN_CADR(val)));} \\~%")
 (hey "  static int XEN_ ## Name ## _P(XEN val) {return(WRAP_P(#Name, val));}~%")
 (hey "~%")
 (hey "#define XL_TYPE_PTR(Name, XType) \\~%")

@@ -2765,7 +2765,8 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"
 	      ;; thermometer
 	      (XmScaleSetValue widget (inexact->exact (floor (* 100 var))))))
       (if (list? widget)
-	  (if (number? (car widget))
+	  (if (or (number? (car widget))
+		  (sound? (car widget)))
 	      ;; graph/spectrum -- does this need an explicit update?
 	      (let* ((snd (car widget))
 		     (data (cadr widget))

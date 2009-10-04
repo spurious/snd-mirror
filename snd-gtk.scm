@@ -1253,13 +1253,13 @@ Reverb-feedback sets the scaler on the feedback.
 	   (make-level-meter pane width height)))
 	((graph)
 	 (let* ((snd (make-variable-graph pane (string-append variable-name ": time") 2048 (mus-srate))))
-	   (list snd (channel-data snd 0))))
+	   (list (sound->integer snd) (channel-data snd 0))))
 	((spectrum)
 	 (let* ((snd (make-variable-graph pane variable-name 2048 (mus-srate))))
 	   (set! (time-graph? snd 0) #f)
 	   (set! (transform-graph? snd 0) #t)
 	   (set! (x-axis-label snd 0 transform-graph) (string-append variable-name ": frequency"))
-	   (list snd (channel-data snd 0))))
+	   (list (sound->integer snd) (channel-data snd 0))))
 	(else #f)))))
 
 (define (variable-display var widget)
@@ -1277,7 +1277,8 @@ Reverb-feedback sets the scaler on the feedback.
 	    (force-update widget)))
 
       (if (list? widget)
-	  (if (number? (car widget))
+	  (if (or (number? (car widget))
+		  (sound? (car widget)))
 	      ;; graph/spectrum -- does this need an explicit update?
 	      (let* ((snd (car widget))
 		     (data (cadr widget))
