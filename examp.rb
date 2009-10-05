@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Wed Sep 04 18:34:00 CEST 2002
-# Changed: Sun Jul 19 18:05:33 CEST 2009
+# Changed: Mon Oct 05 00:10:46 CEST 2009
 
 # Commentary:
 #
@@ -1649,6 +1649,26 @@ class SoundData
   end
 end
 
+class XenMark
+  alias == eql?
+end
+
+class XenMix
+  alias == eql?
+end
+
+class XenPlayer
+  alias == eql?
+end
+
+class XenRegion
+  alias == eql?
+end
+
+class XenSound
+  alias == eql?
+end
+
 def mus_a0(gen)
   mus_xcoeff(gen, 0)
 end
@@ -2621,8 +2641,9 @@ class Snd
       # 	* error.c (Init_Exception): change NameError to direct subclass of
       # 	  Exception so that default rescue do not handle it silently.
     rescue Interrupt, ScriptError, NameError, StandardError
+      mus_tag = rb_error_to_mus_tag
       # raise part
-      if (tag == (mus_tag = rb_error_to_mus_tag) or tag == :all)
+      if (tag == mus_tag) or (tag == :all)
         if retval != :undefined
           if proc?(retval)
             retval.call(mus_tag, snd_error_to_message)
@@ -2662,7 +2683,7 @@ class Snd
   end
 end
 
-# nearly all are instances of StandardError
+# almost all StandardError
 Snd_error_tags = [# clm2xen.c
                   :mus_error,
                   :no_such_method,
@@ -2752,8 +2773,8 @@ def rb_error_to_mus_tag
     # can't translate /usr/gnu/sound/sf1/oboe.g721 to /usr/gnu/sound/sf1/oboe.g721.snd:
     #   : Mus_error>
   when "StandardError"
-    # err = $!.message.split(/\n/).first.downcase.split(/:/).map do |e| e.strip.chomp(">") end
-    err = $!.message.delete("\n").downcase.split(/:/).compact.map do |e| e.strip.chomp(">") end
+    err = $!.message.split(/\n/).first.downcase.split(/:/).map do |e| e.strip.chomp(">") end
+    # err = $!.message.delete("\n").downcase.split(/:/).compact.map do |e| e.strip.chomp(">") end
     Snd_error_tags.detect do |tag| err.member?(tag.to_s) end or :standard_error
   when "RangeError"
     :out_of_range
@@ -3091,8 +3112,8 @@ module Examp
     end
   end
 
-  add_help(:region_rms, "region_rms(n) -> rms of region n's data (chan 0)")
-  def region_rms(n)
+  add_help(:region_rms, "region_rms([n=0]) -> rms of region n's data (chan 0)")
+  def region_rms(n = 0)
     if region?(n)
       data = region2vct(n, 0, 0)
       sqrt(dot_product(data, data) / data.length)

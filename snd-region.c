@@ -1453,6 +1453,7 @@ static void init_xen_region(void)
 #if HAVE_RUBY
   rb_define_method(xen_region_tag, "to_s",     XEN_PROCEDURE_CAST print_xen_region, 0);
   rb_define_method(xen_region_tag, "eql?",     XEN_PROCEDURE_CAST equalp_xen_region, 1);
+  rb_define_method(xen_region_tag, "==",       XEN_PROCEDURE_CAST equalp_xen_region, 1);
   rb_define_method(xen_region_tag, "to_str",   XEN_PROCEDURE_CAST g_xen_region_to_string, 0);
 #endif
 }

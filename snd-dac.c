@@ -2751,6 +2751,7 @@ static void init_xen_player(void)
 #if HAVE_RUBY
   rb_define_method(xen_player_tag, "to_s",     XEN_PROCEDURE_CAST print_xen_player, 0);
   rb_define_method(xen_player_tag, "eql?",     XEN_PROCEDURE_CAST equalp_xen_player, 1);
+  rb_define_method(xen_player_tag, "==",       XEN_PROCEDURE_CAST equalp_xen_player, 1);
   rb_define_method(xen_player_tag, "to_str",   XEN_PROCEDURE_CAST g_xen_player_to_string, 0);
 #endif
 }

@@ -2493,6 +2493,7 @@ static void init_xen_sound(void)
 #if HAVE_RUBY
   rb_define_method(xen_sound_tag, "to_s",     XEN_PROCEDURE_CAST print_xen_sound, 0);
   rb_define_method(xen_sound_tag, "eql?",     XEN_PROCEDURE_CAST equalp_xen_sound, 1);
+  rb_define_method(xen_sound_tag, "==",       XEN_PROCEDURE_CAST equalp_xen_sound, 1);
   rb_define_method(xen_sound_tag, "to_str",   XEN_PROCEDURE_CAST g_xen_sound_to_string, 0);
 #endif
 }

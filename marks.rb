@@ -2,7 +2,7 @@
 
 # Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Wed Mar 23 02:08:47 CET 2005
-# Changed: Sun Jul 19 14:41:33 CEST 2009
+# Changed: Sun Oct 04 04:47:51 CEST 2009
 
 # Commentary:
 #
@@ -382,9 +382,7 @@ defines the current selection to lie between the marks given")
   def define_selection_via_marks(m1, m2)
     m1sc = mark_home(m1)
     m2sc = mark_home(m2)
-    if m1sc != m2sc
-      Snd.raise(:snd_error, "define_selection_via_marks assumes the marks are in the same channel")
-    else
+    if m1sc.eql?(m2sc)
       beg = [mark_sample(m1), mark_sample(m2)].min
       fin = [mark_sample(m1), mark_sample(m2)].max
       snd, chn = m1sc
@@ -394,6 +392,8 @@ defines the current selection to lie between the marks given")
       set_selection_member?(true, snd, chn)
       set_selection_position(beg, snd, chn)
       set_selection_frames(fin - beg + 1, snd, chn)
+    else
+      Snd.raise(:snd_error, "define_selection_via_marks assumes the marks are in the same channel")
     end
   end
 

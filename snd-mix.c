@@ -2373,6 +2373,7 @@ static void init_xen_mix(void)
 #if HAVE_RUBY
   rb_define_method(xen_mix_tag, "to_s",     XEN_PROCEDURE_CAST print_xen_mix, 0);
   rb_define_method(xen_mix_tag, "eql?",     XEN_PROCEDURE_CAST equalp_xen_mix, 1);
+  rb_define_method(xen_mix_tag, "==",       XEN_PROCEDURE_CAST equalp_xen_mix, 1); 
   rb_define_method(xen_mix_tag, "length",   XEN_PROCEDURE_CAST g_mix_length, 0);
   rb_define_method(xen_mix_tag, "to_str",   XEN_PROCEDURE_CAST g_xen_mix_to_string, 0);
 #endif

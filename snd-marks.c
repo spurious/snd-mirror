@@ -2129,6 +2129,7 @@ static void init_xen_mark(void)
 #if HAVE_RUBY
   rb_define_method(xen_mark_tag, "to_s",     XEN_PROCEDURE_CAST print_xen_mark, 0);
   rb_define_method(xen_mark_tag, "eql?",     XEN_PROCEDURE_CAST equalp_xen_mark, 1);
+  rb_define_method(xen_mark_tag, "==",       XEN_PROCEDURE_CAST equalp_xen_mark, 1);
   rb_define_method(xen_mark_tag, "to_str",   XEN_PROCEDURE_CAST g_xen_mark_to_string, 0);
 #endif
 }

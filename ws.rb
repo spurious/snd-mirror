@@ -409,7 +409,7 @@ __ws_verbose__ = $VERBOSE
 __ws_debug__   = $DEBUG
 # get rid of `undefined variable' messages
 with_silence do
-  $clm_version            = "ruby 3-Oct-2009"
+  $clm_version            = "ruby 4-Oct-2009"
   $output                 = nil
   $reverb                 = nil
   $clm_array_print_length ||= 8
@@ -1355,7 +1355,7 @@ class Snd_Instrument < Instrument
 
   def get_snd(file)
     snd = if integer?(file)
-            file
+            integer2sound(file)
           elsif string?(file)
             if sound?(s = find_sound(file))
               s
@@ -1363,7 +1363,7 @@ class Snd_Instrument < Instrument
               open_sound(file)
             end
           end
-    if integer?(snd) and sound?(snd)
+    if sound?(snd)
       snd
     else
       Snd.snd(snd)
