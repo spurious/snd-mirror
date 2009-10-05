@@ -1396,9 +1396,7 @@
       'zero-pad (zero-pad) 0
       'zoom-focus-style (zoom-focus-style) 2 
       ))
-    (if (not *snd-remember-paths*) (snd-display ";*snd-remember-paths*?"))
     (if *snd-opened-sound* (snd-display ";*snd-opened-sound*: ~A" *snd-opened-sound*))
-    (if (not *snd-loaded-files*) (snd-display ";*snd-loaded-files*?"))
     ))
 
 
@@ -34752,9 +34750,45 @@ EDITS: 2
 		(env-sound '(0 0 1 1 2 0))
 		(if (fneq (maxamp) (vct-ref maxes (+ 1 i))) (snd-display ";enving storm ~D: ~A ~A" (+ 1 i) (vct-ref maxes (+ 1 i)) (maxamp))))
 	      (close-sound ind))
-	    
-	    
 	    ))
+	
+	;; --------------------------------------------------------------------------------
+	;; length as generic function:
+	;;     string-length vector-length hash-table-size vct-length 
+	;;     frames mus-length sound-data-length mix-length region-frames 
+
+	(let ((snd (open-sound "oboe.snd"))
+	      (v (vct .1 .2 .3))
+	      (vc (vector .1 .2 .3 .4))
+	      (lst (list 1 2 3 4 5))
+	      (hsh (make-hash-table 100))
+	      (sd (make-sound-data 1 10))
+	      (str "123456")
+	      (fr (frame .1 .2))
+	      (mx (mixer .1 .2 .3 .4)))
+	  (let ((mxv (mix-vct v 1000))
+		(reg (make-region 0 100))
+		(dly (make-delay 32))
+		(ply (make-player snd 0))
+		)
+	    (if (not (= (length snd) 50828)) (snd-display ";length of sound: ~A" (length snd)))
+	    (if (not (= (length v) 3)) (snd-display ";length of vct: ~A" (length v)))
+	    (if (not (= (length vc) 4)) (snd-display ";length of vector: ~A" (length vc)))
+	    (if (not (= (length lst) 5)) (snd-display ";length of list: ~A" (length lst)))
+	    (if (not (= (length str) 6)) (snd-display ";length of string: ~A" (length str)))
+	    (if (not (= (length sd) 10)) (snd-display ";length of sound-data: ~A" (length sd)))
+	    (if (not (= (length hsh) 100)) (snd-display ";length of hash-table: ~A" (length hsh)))
+	    (if (not (= (length fr) 2)) (snd-display ";length of frame: ~A" (length fr)))
+	    (if (not (= (length mx) 2)) (snd-display ";length of mixer: ~A" (length mx)))
+	    (if (not (= (length mxv) 3)) (snd-display ";length of mix: ~A" (length mxv)))
+	    (if (not (= (length reg) 101)) (snd-display ";length of region: ~A" (length reg)))
+	    (if (not (= (length dly) 32)) (snd-display ";length of delay: ~A" (length dly)))
+	    (if (not (= (length ply) 50828)) (snd-display ";length of player: ~A" (length ply)))
+	    )
+	  (close-sound snd))
+
+
+
 	)))
 
 ;;; ---------------- test 16: regularized funcs ----------------

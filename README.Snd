@@ -142,7 +142,7 @@ Version info:
   if Gtk, then Gtk+ 2.0.0 or later
   if Motif, then Motif 2.n but not Lesstif
   in Linux, if ALSA, then ALSA 0.9beta8 or later (or any version of OSS)
-  if Guile, Guile 1.3.4 or later but most *.scm files need 1.5.0 or later, and 1.9.0 is problematic
+  if Guile, Guile 1.3.4 through 1.8.n but most *.scm files need 1.5.0 or later
   if Ruby, Ruby 1.8.0 or later.  
   if Forth, any version
   if S7, any version
@@ -326,7 +326,6 @@ Scheme:
   http://www.cs.utexas.edu/users/wilson/schintro/schintro_toc.html
   http://www.swiss.ai.mit.edu/~jaffer/SLIB.html
   http://mitpress.mit.edu/sicp/full-text/book/book.html
-  http://cvs.zeit.de/guile-hobbit-latest.tar.gz (Hobbit for Guile 1.6.4)
 
 Forth:
   http://sourceforge.net/projects/fth
@@ -588,92 +587,13 @@ GSL 0.8 or later.
 
 ---- Guile: ---- 
 
-If you get a complaint along the lines of "ice-9/boot-9.scm not
-found", it means you're running a version of Snd that has Guile
-loaded, but Guile isn't installed locally.  You need to install Guile.
-If Guile is installed, try running 'guile-config info' to find out
-where it thinks its boot files are.  It's not impossible that running
-snd under strace would show you what the actual desired path is.  In
-the copious strace output, you should be able to find lines like:
-    stat("/usr/local/share/guile/1.4/ice-9/boot-9.scm"...)
-
-If you have installed Guile, but the snd image is looking in the wrong
-place, try setting the envinronment variable GUILE_LOAD_PATH to the
-correct directory:
-
-  setenv GUILE_LOAD_PATH /home/jimb/guile-snap
-
-  (fink): setenv GUILE_LOAD_PATH /sw/share/guile/1.6
-
-Another possibility is the %load-path variable; in your ~/.snd file try
-something like:
-
-    (set! %load-path (cons "/home/bil/test" %load-path)))
-
-(assuming you've put the guile files into /home/bil/test).
-
-
-If the configure script says that your guile doesn't have
-scm_make_smob_type, yet you do have guile 1.3.4 (or later) installed,
-it's probably because the RedHat installer or someone, installed Guile
-1.3 in /usr/bin and /usr/lib, but then the new version got installed
-in /usr/local/bin.  The simplest fix is to remove /usr/bin/guile and
-/usr/bin/guile-config.  If you get an inconsistent state here (that
-is, configure thinks you're loading 1.3, but Snd itself finds 1.3.4),
-you will get segfaults when the hooks are accessed (and probably
-elsewhere).  If you can run Snd at all, try snd --version -- this will
-try to catch and report consistency problems.
-
-
-If you want to keep several Guile versions around, but use a
-particular one for Snd, use the configure variable GUILE_CONFIG_path:
-
-./configure GUILE_CONFIG_path=/home/bil/test/bin
-
-In this case, the configure script looks for /home/bil/test/bin/guile-config
-and uses the paths it returns to build Snd.  See also the PATH business below.
-
-
-> Other thing is that configure doesn't find guile-1.4.
-> For some reason it thinks it's an older version and I have to manually edit
-> mus-config.h
-
-It's using guile-config to find guile; if you've got more
-than one guile-config, it's up to your PATH setting, or
-something, which one gets called.  In Redhat, an ancient
-version gets installed in /usr/bin, then if you install
-your own using the defaults, it ends up in /usr/local/bin,
-and in many cases, the new version is not noticed. You
-could delete or rename /usr/bin/guile-config or change the
-relevant environment variable.  To see what configure sees,
-in a shell try guile-config link or guile-config --version.
-
-Fernando Lopez-Lezcano mentioned this possibility:
-
-  If you want to force a different guile do (if you're using bash):
-
-    PATH=/usr/marco/nicepath/bin/:$PATH ./configure --with-alsa --with-gtk
-
-  where /usr/marco/nicepath/bin is the path where the guile-config you want
-  is located. Do the same thing when you make:
-
-    PATH=/usr/marco/nicepath/bin:$PATH make
-
+Guile 1.9.0 and later are not really usable.  I will eventually remove
+Guile support.
 
 If you're running Guile 1.4 and get:
     Syntax error in fixed argument declaration.
 you've hit a use of the newer (Guile 1.5) optargs syntax.  To get around
-this, load fix-optargs.scm before anything else.  There are other
-similar problems involving "applicable smobs" and the tab-completion
-system; if possible, get the latest Guile.
-
-
-If you're using a newish Guile, or Forte C on a Sun, and get
-some complaint about lt_dlopen (or some name like that), you need to
-add -lltdl to the library list.  If that doesn't fix it, add
--lguile-ltdl -- this part of the CVS guile is in flux, so the load
-sequence is tricky.
-
+this, load fix-optargs.scm before anything else.
 
 Finally, if you installed Guile from an RPM file, you may also need
 to install the guile-devel package.  Otherwise the configure process
@@ -749,18 +669,6 @@ from libSM or libICE, add -lICE -lSM to the end of the library
 list in the makefile.
 
 
-If you're using Guile, you might also need to fixup the guile 
-portion of the makefile:
-
-XEN_LIBS = -L/usr/local/lib -lguile -lm -lguile-ltdl -ldl
-
-or, in the fink case:
-
-XEN_LIBS = -L/sw/lib -lguile -lm /sw/lib/libguile.a
-XEN_CFLAGS = -I/sw/include/
-
-
-
 If C-f (and other such commands) doesn't work, either try toggling
 the "w" button, or add the focus-widget related hooks from grfsnd.html
 to your initialization file:
@@ -788,14 +696,14 @@ Here's some info from Josh Mattoon:
 
     "It turns out everything required for snd is now in fink! 
 
-     sudo fink install openmotif3 fftw guile guile-dev 
+     sudo fink install openmotif3 fftw
 
     So... after a loooong compilation process (fftw required g77) I had
     everything in place.  But ./configure couldn't find them, d'oh.  My
     simple solution was to pass in the CFLAGS and LDFLAGS as so:
     
     CFLAGS=-I/sw/include LDFLAGS="-L/sw/lib -lmx -bind_at_load" ./configure \ 
-         --with-gl --with-editres --with-static-xm --with-guile
+         --with-gl --with-editres --with-static-xm
     
     This was after a bit of trial and error.  The linker couldn't find
     some symbols that turned out to be in libmx, so I added that, and the
@@ -806,24 +714,7 @@ Here's some info from Josh Mattoon:
 (fftw is optional in Snd).  Adam Tinsdale had better luck with this:
 
     CFLAGS=-I/sw/include LDFLAGS="-L/sw/lib -lmx -bind_at_load" ./configure  \
-      --with-motif --with-guile --without-fftw --with-static-xm
-
-
-Taking that into account, if you installed Guile via fink, you might
-try:
-
-    ./configure CFLAGS="-I/sw/include" LDFLAGS="-L/sw/lib -lmx -bind_at_load" \
-GUILE_CONFIG_path=/sw/bin GUILE_CONFIG_name=guile-1.6-config GUILE_name=guile-1.6 \
---disable-nls --with-guile --with-motif --with-motif-prefix=/sw
-
-
-The ccrma-ftp images osx-10.2-snd to osx-10.4-snd need only guile 1.6.4;
-  everything else (well, leaving aside -lm) is loaded statically.  The guile
-  libraries are loaded statically, but guile needs its "boot" files in
-  its ice-9 directory whenever it starts, so you need it installed.  Set
-  the environment variable GUILE_LOAD_PATH to point to your version:
-
-    setenv GUILE_LOAD_PATH /Users/Mozart/Desktop/guile-1.6.4
+      --with-motif --without-fftw --with-static-xm
 
 
 The dac-size variable seems to matter a lot in OSX.  If you're
@@ -843,9 +734,6 @@ Rick Taube mentions this for tracing the load process:
         DYLD_FALLBACK_FRAMEWORK_PATH
         DYLD_LIBRARY_PATH
         DYLD_FALLBACK_LIBRARY_PATH
-
-Also, you can check the "about Snd" option under the Help menu
-to find out where Guile is finding its boot files.
 
 
 So, here's the detailed step-by-step method, thanks to Cris Ewing:
@@ -868,15 +756,6 @@ So, here's the detailed step-by-step method, thanks to Cris Ewing:
     
     $ fink install openmotif3
     
-    Next, install guile16
-    
-    $ fink install guile16
-    
-    And you need to add the guile development libraries, they don't get
-    installed with the rest of the packages.
-    
-    $ fink install guile16-dev
-    
     You can also use fink to install the fftw package.  It takes a really long
     time to build, but helps to speed up the fft-based functions in snd.
     
@@ -884,21 +763,7 @@ So, here's the detailed step-by-step method, thanks to Cris Ewing:
     
     Next, download and untar the latest snd sources from ccrma
     
-    Configuration has been aided quite a bit by Bill since I had my problems,
-    he's added a number of command-line variables that you can set that will
-    help with naming problems in guile16 (the guile binaries are named
-    differently than in earlier versions of guile).  If you have trouble with
-    the configure process, you may want to check to make sure what the guile
-    binaries are named.  All the information you will need to get configure to
-    work successfully is in README.Snd inside the snd distribution.  It seems
-    important to use the switch --disable-nls.  I'm not sure why, but I
-    couldn't get the build to work with nls enabled.  This is the
-    configuration command that I used after following the instructions above:
-    
-    $ ./configure CFLAGS=-I/sw/include LDFLAGS="-L/sw/lib -lmx -bind_at_load" \
-    GUILE_CONFIG_path=/sw/bin GUILE_CONFIG_name=guile-1.6-config \
-    GUILE_name=guile-1.6 --disable-nls --with-guile --with-motif \
-    --with-static-xm --with-motif-prefix=/sw
+    $ ./configure CFLAGS="-I/sw/include" LDFLAGS="-L/sw/lib -lmx -bind_at_load" --disable-nls --with-motif --with-static-xm --with-motif-prefix=/sw
     
     This config was run from a bash shell.  If you are using tcsh (and you
     might be if you upgraded to panther) then you will have to omit the part
@@ -924,7 +789,3 @@ MOTIF_LIBS =  -L/usr/X11/lib -R/usr/X11/lib  -lSM -lICE -lXft -lXmu -lfontconfig
 
 (the X11R6-old business came about because I didn't remake libXm, but the OSX installation
 process moved the previous X11R6 directory to X11R6 1, which is untypable).
-
-
-(s7 has replaced guile -- if I were building Snd on a Mac, I'd just
-ignore all the guile stuff above).

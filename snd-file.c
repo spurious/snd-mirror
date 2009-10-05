@@ -1386,23 +1386,7 @@ static void read_snd_opened_sound_file(snd_info *sp)
   char *newname;
   newname = snd_opened_sound_file_name(sp);
   if (file_write_date(newname) >= sp->write_date)
-    {
-#if HAVE_SCHEME
-      /* this file shouldn't be left in the load list -- it will confuse the save-state process 
-       *   (*snd-opened-sound* is defined here but not at the saved state file reload point)
-       * *snd-loaded-files* is the variable name (snd-xen.c), so we save and restore its value if possible 
-       */
-      XEN var = XEN_FALSE, val = XEN_FALSE;
-      var = XEN_NAME_AS_C_STRING_TO_VARIABLE("*snd-loaded-files*");
-      if (!(XEN_FALSE_P(var)))
-	val = XEN_VARIABLE_REF(var);
       snd_load_file(newname);
-      if ((!(XEN_FALSE_P(var))) && (XEN_LIST_P(val)))
-	XEN_VARIABLE_SET(var, val);
-#else
-      snd_load_file(newname);
-#endif
-    }
   free(newname);
 }
 

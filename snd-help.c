@@ -522,7 +522,6 @@ void about_snd_help(void)
 
 #if HAVE_GUILE
   features = word_wrap(XEN_AS_STRING(XEN_EVAL_C_STRING("*features*")), 400);
-  files = word_wrap(XEN_AS_STRING(XEN_EVAL_C_STRING("*snd-loaded-files*")), 400);
 #endif
 #if HAVE_RUBY
   features = word_wrap(XEN_AS_STRING(XEN_EVAL_C_STRING((char *)"$\".join(' ')")), 400);
@@ -545,6 +544,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+6-Oct:   removed *snd-loaded-files* and *snd-remember-paths*.\n\
 1-Oct:   sounds are objects, but the integer choice also works. \n\
          sound->integer and integer->sound.\n\
          players are objects.\n\

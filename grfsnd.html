@@ -866,7 +866,7 @@ latter are (configure --help):
   make
   make install
 </pre>
-<p>tries to use Guile, Motif, OSS (if Linux), and 32-bit float sample representation, then
+<p>tries to use s7, Motif, ALSA (if Linux), and a float sample representation, then
 installs the snd executable in /usr/local/bin, a brief blurb
 in /usr/local/man/man1, and the German translations in whatever directory the translation files are sent to (this is part of
 the NLS business in Gnu). 
@@ -875,11 +875,7 @@ Here at CCRMA, we normally use:
 <pre>
   ./configure --with-alsa --with-temp-dir=/zap --with-static-xm --with-gl
 </pre>
-<p>and, since I'm usually running the CVS Guile, I use:
-</p>
-<pre>
-  ./configure CFLAGS="-Wall" GUILE_CONFIG_path=/home/bil/test/bin --with-gl --with-static-xm
-</pre>
+
 <p>
 There are many more examples in tools/compsnd.
 Don't use the --enable-snd-debug switch unless you know what you are asking for!
@@ -960,15 +956,11 @@ Scholz.  It starts with a long and detailed commentary.
 <table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="dynamic">Dynamically loaded modules</a></h3></td></tr></table>
 
 <p>You can import shared object files into Snd at any time.
-If you have a Guile-aware module with a known initialization function:
 </p>
 <pre>
   (define lib (<em class=red>dynamic-link</em> "/home/bil/cl/cscm.so"))
   (<em class=red>dynamic-call</em> "init_hiho" lib)
 </pre>
-<p>I used to have an explicit example here, but the Guile API changes
-so often, and so radically, that it was never up-to-date.  Good luck!
-</p>
 
 
 <br>
@@ -2055,8 +2047,6 @@ In Ruby you make a symbol by prepending ":", so Scheme's
 <p>In the listener, everything is line-oriented (that is, I'm not trying to
 catch incomplete expressions).  And it appears that in Ruby, variables defined
 within a file are considered local to that file(?).
-My very informal timing tests indicate that
-Guile and Ruby run at the same speed.
 For Ruby as an Emacs subjob, see inf-snd.el.
 </p>
 <br>
@@ -2113,7 +2103,7 @@ The s7 initialization file is ~/.snd_s7.
 <p>
 Guile was Snd's original extension language.  Like s7, it implements Scheme.  It has trouble, however,
 with threads.  Over the years, I became increasingly unhappy with it, and finally decided in 2008 to move to s7.
-The Guile support still works, but I'm not really paying any attention to it.  For a couple
+The Guile support still works (for versions before 1.9.0), but I'm not really paying any attention to it.  For a couple
 years, Snd also supported Gauche (another Scheme), but that fell apart in 2008.
 </p>
 

@@ -218,49 +218,15 @@ We need tons of reverb (delay, convolve).
 
 <pre>
     <em class=listener>&gt;</em><em class=typing>(load "v.scm")</em>
-    <em class=listener>#&lt;unspecified&gt;</em>
+    <em class=listener>fm-violin</em>
     <em class=listener>&gt;</em><em class=typing>(with-sound () (fm-violin 0 1 440 .1))</em>
     <em class=listener>"test.snd"</em>
 </pre>
 
-<p>Snd's printout is in blue here, and your typing is in red.  The load function returns
-"#&lt;unspecified&gt;" in Guile to indicate that it is happy.
+<p>Snd's printout is in blue here, and your typing is in red.
 If all went well, you should see a graph of the fm-violin's output.  Click the "play" button to
 hear it; click "f" to see its spectrum.
 </p>
-
-
-<table border=0 hspace=40><tr><td>
-
-<p>What if this happened instead?
-</p>
-
-<pre>
-    <em class=listener>&gt;</em><em class=typing>(load "v.scm")</em>
-    <em class=listener>open-file: system-error: "No such file or directory": "v.scm" (2)</em>
-</pre>
-
-<p>Snd is telling you that "open-file" (presumably part of the load sequence) can't find v.scm.
-I guess it's on some other directory, so (in Guile) try:
-</p>
-
-<pre>
-    <em class=listener>&gt;</em><em class=typing>%load-path</em>
-    <em class=listener>("/usr/local/share/snd" "/usr/local/share/guile/1.9")</em>
-</pre>
-
-<p>"%load-path" is a list of directorties that the "load" function looks at.  Apparently these two directories don't have v.scm.
-So find out where v.scm is ("locate v.scm" is usually the quickest way), and add its directory to %load-path:
-</p>
-
-<pre>
-    <em class=listener>&gt;</em><em class=typing>(set! %load-path (cons "/home/bil/cl" %load-path))</em> ; add the "cl" directory to the search list
-    <em class=listener>#&lt;unspecified&gt;</em>
-    <em class=listener>&gt;</em><em class=typing>(load-from-path "v.scm")</em>
-    <em class=listener>#&lt;unspecified&gt;</em>
-</pre>
-</td></tr></table>
-
 
 <p>
 In Ruby, we'd do it this way:
@@ -282,14 +248,8 @@ In Ruby, we'd do it this way:
     <em class=listener>\ filename: test.snd</em>
 </pre>
 
-<p>In s7, the load path variable is named *load-path*:
-</p>
-<pre>
-    <em class=listener>&gt;</em><em class=typing>*load-path*</em>
-    <em class=listener>("." "/home/bil/cl" "/home/bil/cl" "/usr/local/share/snd")</em>
-</pre>
 
-<p>In most of this document, I'll stick with Scheme as implemented by s7 or Guile.  
+<p>In most of this document, I'll stick with Scheme as implemented by s7.  
 <a href="extsnd.html">extsnd.html</a> and <a href="sndscm.html">sndscm.html</a> have numerous
 Ruby and Forth examples, and I'll toss some in here as I go along.
 You can save yourself a lot of typing by using two features of the listener.  First, &lt;TAB&gt; (that is, the key marked TAB) tries to complete 

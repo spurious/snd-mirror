@@ -194,7 +194,7 @@ is included in <a href="http://ccrma.stanford.edu/planetccrma/software/">PlanetC
   <li><a href="grfsnd.html#startup">Snd Startup</a>
     <ul>
     <li><a href="grfsnd.html#sndswitches" onmouseout="UnTip()" onmouseover="Tip('startup switches such as -l and -p')">Snd invocation flags</a>
-    <li><a href="grfsnd.html#sndinitfile" onmouseout="UnTip()" onmouseover="Tip('~/.snd, ~/.snd_guile, ~/.snd_prefs_guile, etc')">The initialization file</a>
+    <li><a href="grfsnd.html#sndinitfile" onmouseout="UnTip()" onmouseover="Tip('~/.snd, ~/.snd_s7, ~/.snd_prefs_s7, etc')">The initialization file</a>
     <li><a href="grfsnd.html#sndresources" onmouseout="UnTip()" onmouseover="Tip('X resources: Xdefaults, gtkrc')">Snd resources</a>
     <li><a href="grfsnd.html#sndconfigurationswitches" onmouseout="UnTip()" onmouseover="Tip('this refers to the configure script used to build Snd')">Configuration choices</a>
     <li><a href="grfsnd.html#sndenvvars" onmouseout="UnTip()" onmouseover="Tip('mostly related to audio hardware choices')">Environment variables</a>
@@ -424,7 +424,7 @@ no surprises.
 The GL spectrograph is somewhat unusual,
 and I like the paned window approach to multichannel sounds ("<i>de gustibus...</i>").
 But it is primarily the embedded extension language
-(S7, Guile, Ruby, or Forth) that 
+(s7, Guile, Ruby, or Forth) that 
 makes Snd different from other editors.
 Everything in Snd from the low-level data readers to the
 high-level editing operations is tied into the extension
@@ -434,7 +434,7 @@ canned effects, Snd gives
 you full programming power over sounds, and you can 
 extend it to include whatever you want.  But if you
 are in a big hurry, or not yet confident in your ability as a programmer, many such
-operations have been included in the various scm (S7 and Guile = Scheme),
+operations have been included in the various scm (s7 and Guile = Scheme),
 rb (Ruby), and fs (Forth) files in the Snd tarball.  Dave Phillips
 wrote a set of files that implement dozens of the effects and
 editing operations built into other editors.  Just load the
@@ -463,21 +463,6 @@ is an introduction to FM; sndclm.html is the basic generator documentation;
 <a href="sndlib.html">sndlib.html</a> describes the underlying sound IO library; <a href="libxm.html">libxm.html</a>
 describes the user-interface extension library.
 </p>
-
-<p>
-Some of Snd's Scheme, Ruby, and Forth files depend
-on other such files.  If you run Snd in some directory other than its
-build directory, you need to tell it where those files are. In Scheme,
-the list of directories to search is called %load-path.  So, for example, if 
-you put all the sources in /home/bil/cl, add this line to your
-~/.snd_guile file:
-</p>
-<pre>
-  (set! %load-path (cons "/home/bil/cl" %load-path))
-
-    Ruby:   $LOAD_PATH.push("/home/bil/cl")
-    Forth:  $" /home/bil/cl" add-load-path
-</pre>
 
         <!-- I(show freq domain):A(fw) --><!-- I(show time domain):A(fw) -->
         <!-- I(show freq domain):O('f' button)(fw) --><!-- I(show time domain):O('w' button)(fw) -->

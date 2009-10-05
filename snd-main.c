@@ -141,51 +141,6 @@ void call_ss_watchers_with_context(ss_watcher_t type, ss_watcher_reason_t reason
 
 /* ---------------- save sound state (options, or entire state) ---------------- */
 
-#if HAVE_GUILE
-
-static void save_loaded_files_list(FILE *fd, const char *current_filename)
-{
-  /* make sure all previously loaded code is available */
-  XEN old_list;
-  char *full_name;
-  int len;
-  old_list = XEN_NAME_AS_C_STRING_TO_VALUE("*snd-loaded-files*");
-  len = XEN_LIST_LENGTH(old_list);
-  if (len > 0)
-    {
-      char **files;
-      int i, gc_loc, new_files = 0;
-      full_name = mus_expand_filename(current_filename);
-      gc_loc = snd_protect(old_list);
-      files = (char **)calloc(len, sizeof(char *));
-      for (i = len - 1; i >= 0; i--)
-	{
-	  char *curfile;
-	  curfile = XEN_TO_C_STRING(XEN_LIST_REF(old_list, i));
-	  if ((!(mus_strcmp(curfile, current_filename))) &&
-	      (!(mus_strcmp(curfile, full_name))) &&
-	      (mus_file_probe(curfile)))
-	    files[new_files++] = mus_strdup(curfile);
-	}
-      snd_unprotect_at(gc_loc);
-      free(full_name);
-      if (new_files > 0)
-	{
-	  fprintf(fd, ";;; reload any missing files\n");
-	  fprintf(fd, "(for-each\n  (lambda (file)\n");
-	  fprintf(fd, "    (if (and (not (member file *snd-loaded-files*))\n             (file-exists? file))\n        (load file)))\n");
-	  fprintf(fd, "  '(");
-	  for (i = 0; i < new_files; i++)
-	    fprintf(fd, "\"%s\" ", files[i]);
-	  fprintf(fd, "))\n\n");
-	}
-      for (i = 0; i < new_files; i++) free(files[i]);
-      free(files);
-    }
-}
-#endif
-
-
 static bool fneq(mus_float_t a, mus_float_t b)
 {
   /* floating point != replacement */
@@ -1306,10 +1261,6 @@ void save_state(const char *save_state_name)
       return;
     }
 
-#if HAVE_GUILE
-  /* try to make sure all previously loaded files are now loaded */
-  save_loaded_files_list(save_fd, save_state_name);
-#endif
 #if HAVE_SETLOCALE
   locale = mus_strdup(setlocale(LC_NUMERIC, "C")); /* must use decimal point in floats since Scheme assumes that format */
 #endif

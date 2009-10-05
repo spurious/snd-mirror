@@ -160,7 +160,7 @@ embedded in a keyboard macro, or typed in the
 listener.
 </p>
 <p>
-The syntax used throughout this documentation is Scheme (a form of lisp) as implemented by S7, or Guile.
+The syntax used throughout this documentation is Scheme (a form of lisp) as implemented by s7.
 You can also use Ruby or Forth, but need to make various minor <a href="grfsnd.html#sndandruby">changes</a>.
 I'm slowly adding parallel Forth and Ruby examples.
 </p>
@@ -344,7 +344,7 @@ are in <em class=listener>this color</em>):
 
 <p>Another quick way to check out the extension language is to go to the
 Preferences dialog (in the Options menu), choose some items, then
-save them.  The saved file (~/.snd_prefs_guile for example) is a text file, a program in the current
+save them.  The saved file (~/.snd_prefs_s7 for example) is a text file, a program in the current
 extension language, that initializes Snd to use whatever items you chose.
 </p>
 
@@ -1007,7 +1007,7 @@ open-file-dialog-directory is the name of the initial open file dialog directory
 optimization affects optimization levels in Scheme.
 If non-zero, it causes Snd to try to optimize simple lambda forms passed to the searches and so forth.
 This depends partly on the optargs module, and 
-applies only to S7 and Guile.
+applies only to s7 and Guile.
 The actual values of the optimization switch are:
 <pre>
     0:  no optimization (use the standard Scheme parser/evaluator)
@@ -1106,7 +1106,7 @@ a sine wave at (say) 55 Hz, then <code>(<a class=quiet href="#srcsound" onmouseo
 <!-- snd-version -->
 <tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="sndversion">snd-version</a></code></td>
 <td bgcolor="#f2f4ff"><code>"1-Jun-06" etc</code></td></tr><tr><td></td><td colspan=2>
-This is a string giving the current Snd version, normally a date. <b>version</b> is a Guile function.
+This is a string giving the current Snd version, normally a date.
 </td></tr><tr><td colspan=3 height=16></td></tr>
 
 
@@ -1745,7 +1745,6 @@ to perform cleanup activities; in <a href="sndscm.html#peakenvdoc">peak-env.scm<
     (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_add_hook_tip)">add-hook!</a> <em class=red>exit-hook</em> (lambda () (for-each <a class=quiet href="sndscm.html#peakenvdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_savepeakenvinfo_tip)">save-peak-env-info</a> (<a class=quiet href="#sounds" onmouseout="UnTip()" onmouseover="Tip(extsnd_sounds_tip)">sounds</a>))))
 </pre>
 For more examples, see extensions.scm and autosave.scm.
-Guile's exit-hook is shadowed by this variable.
 </td></tr><tr><td colspan=3 height=16></td></tr>
 
 
@@ -3483,7 +3482,7 @@ function to get the values to assign into the vct.  For example</p>
 assigning the result to each successive member of the out-data vct.
 </p>
 
-<p>In some cases (S7, Ruby, Guile 1.4.1 or later) it's possible to access a vct's
+<p>In some cases (s7, Ruby) it's possible to access a vct's
 elements with the syntax <code>(v index)</code>, equivalent to <code>(<a class=quiet href="#vctref" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctref_tip)">vct-ref</a> v index)</code>.
 In Ruby, vcts partake in the Enumerable and Comparable classes, and have a variety of
 additional methods: map, each, &lt;=&gt;, etc.  See vct.c and the Ruby documentation for a complete list.
@@ -7492,7 +7491,7 @@ To insert a block of arbitrary-valued samples:
 
 <table border=0 cellpadding=5 vspace=10><tr><td><pre>
 (define* (<A NAME="blockchannel">block-channel</a> value :optional beg dur snd chn edpos)
-  (let ((val value))                    ; this for the run macro's benefit (in Guile)
+  (let ((val value))                    ; this for the run macro's benefit
     (<em class=red>pad-channel</em> beg dur snd chn edpos) ; insert 'dur' samples, ptree-channel sets their values
     (<a class=quiet href="#ptreechannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_ptreechannel_tip)">ptree-channel</a> (lambda (y) val) beg dur snd chn)))
 </pre></td></tr></table>
@@ -8331,7 +8330,7 @@ This returns the position (in samples) of right edge of the time domain waveform
 run is the Snd equivalent of the CL/CLM run macro.  You can wrap it around any numerically-intensive
 block of code, and the result will usually run 10 to 20 times faster.  In the context of <a href="sndscm.html#wsdoc">with-sound</a>, run is used
 to speed up instrument bodies.  My timing tests indicate that Snd+Run instruments are within a factor of two to four
-of the speed of CL+run+C in CLM.  Currently, only S7 and Guile (before version 1.9.0) support this optimization.
+of the speed of CL+run+C in CLM.  Currently, only s7 supports this optimization.
 
 <table border=0 cellpadding=5 vspace=10><tr><td><pre>
 (define (ws-sine freq)
@@ -9341,7 +9340,6 @@ sync returns the sound's 'sync' value (an integer, 0 = not sync'd). Several func
 currently selected sound and also to any other sounds that share its sync value.  (I later decided that
 this was a bad idea, hence the regularized replacements).  Sounds that share a given sync value 
 move together when you drag an x-axis slider and so on.
-<br><br>The built-in Guile/Posix function named sync ("flush OS disk buffers") is available (are you sure you want this?) as %sync.
 </td></tr><tr><td colspan=2 height=18></td></tr>
 
 
@@ -11337,7 +11335,7 @@ This is the listener font.
 <tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="listenerprompt">listener-prompt</a> ()</code>
 </td></tr><tr><td></td><td>
 This is the listener prompt which defaults to "&gt;".  I like ":" better (as you can see in many of the examples in this file),
-so in ~/.snd_guile I have this line:
+so in ~/.snd_s7 I have this line:
 <pre>
     (set! (listener-prompt) ":")
 </pre>
@@ -12290,7 +12288,7 @@ fmod is mod with float arguments:
 <tr><td colspan=2 bgcolor="#f2f4ff">
 <code><a class=def name="gcoff">gc-off</a> ()</code>
 </td></tr><tr><td></td><td>
-gc-off turns garbage collection off (except in Guile where it's a no-op).
+gc-off turns garbage collection off, if possible.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -12298,7 +12296,7 @@ gc-off turns garbage collection off (except in Guile where it's a no-op).
 <tr><td colspan=2 bgcolor="#f2f4ff">
 <code><a class=def name="gcon">gc-on</a> ()</code>
 </td></tr><tr><td></td><td>
-gc-on turns garbage collection on (except in Guile where it's a no-op).
+gc-on turns garbage collection on.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -12467,26 +12465,11 @@ snd-help tries to be smart about minor mispellings:
 </pre>
 To go to the
 HTML documentation for a given object, load <a href="sndscm.html#indexdoc">index.scm</a> and use the html function.
-In Guile, to get a more global help function (i.e. one that knows about Scheme built-ins and so forth), 
-<code>(use-modules (ice-9 session))</code>.  This loads Guile's
-help (and apropos) support which uses 'regexps' and so forth.
 <br><br>
 Normally snd-help adds carriage-returns to fit the current size of the listener; to
 get the raw string instead, set the argument 'formatted' to #f.  click-for-listener-help
 in draw.scm uses this to put off formatting the help string until the help dialog (rather than
 the listener) gets it.
-<br><br>
-In Guile, the built-in help function is named "help".  Similarly, in Forth, <code>help update-transform-graph</code>.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- *snd-loaded-files* -->
-<tr><td colspan=2 bgcolor="#f2f4ff">
-<code><a class=def name="sndloadedfiles">*snd-loaded-files*</a></code>
-</td></tr><tr><td></td><td>
-(Guile only).  This is a variable (not a function), a list containing the full names of (nearly) all the
-files currently loaded into Snd.  The Guile boot file may be missing from the list.
-In Forth, this variable is named *loaded-files*; in Ruby I think it is $". <!-- " (matching double-quote for index.cl's benefit) -->
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -12514,16 +12497,6 @@ There are other fancier ways to do this (e.g. <a href="sndscm.html#remembersound
 <code><a class=def name="sndprint">snd-print</a> (str)</code>
 </td></tr><tr><td></td><td>
 This displays 'str' in the listener, then returns 'str'.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- *snd-remember-paths* -->
-<tr><td colspan=2 bgcolor="#f2f4ff">
-<code><a class=def name="sndrememberpaths">*snd-remember-paths*</a></code>
-</td></tr><tr><td></td><td>
-(Guile only).  This is a variable (not a function); if #t (the default), Snd adds code to the Guile %load-hook that makes sure the
-current file's path is included in %load-path when load or load-from-path is called.  With this set, we can
-use load-from-path inside a Scheme file when we don't know in advance where that file will reside at load time.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -12604,7 +12577,7 @@ to put the date and time in the Snd title bar.
 
 <table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndconstants">Constants</a></h3></td></tr></table>
 
-<p><b>Sndlib</b> (see <a href="sndlib.html#sndlibguile">sndlib.html</a> for a complete list):</p>
+<p><b>Sndlib</b> (see <a href="sndlib.html#sndlibxen">sndlib.html</a> for a complete list):</p>
 <pre>
   mus-next mus-aifc mus-riff mus-rf64 mus-nist mus-raw mus-ircam mus-aiff
   mus-bicsf mus-soundfont mus-voc mus-svx mus-caff
@@ -12992,7 +12965,7 @@ are:</p>
 </table>
 </td></tr></table>
 
-<p>I have these lines in my ~/.snd_guile file:
+<p>I have these lines in my ~/.snd_s7 file:
 </p>
 <pre>
     (define beige (<a class=quiet href="#makecolor" onmouseout="UnTip()" onmouseover="Tip(extsnd_makecolor_tip)">make-color</a> 0.96 0.96 0.86))

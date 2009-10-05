@@ -2340,18 +2340,21 @@ void call_sp_watchers(snd_info *sp, sp_watcher_t type, sp_watcher_reason_t reaso
 
 /* ---------------------------------------- sound objects ---------------------------------------- */
 
-/* PERHAPS: generics:
- *             source:         procedure-source mix-home mark-home region-home player-home sampler-home
- *             length:         vector|string|vct-length mix-length frames region-frames sound-data-length
+/* PERHAPS: generics (besides length):
+ *             source:         procedure-source[s7_procedure_source] mix-home mark-home region-home player-home sampler-home
+ *                               mus cases: readin=file+chan? etc, port -> filename?, sound->filename?
  *             position:       mark-sample mix-position region-position sampler-position
- *             peak or max(?): vct-peak, maxamp, region-maxamp sound-data-maxamp
- *             properties:     mark|mix|sound-properties
- *             name:           mark|mix-name file-name (widget name via XtName)
+ *                               port->line number?, mus cases = mus_location?, player? widget? 
+ *             peak or max(?): vct-peak, maxamp, region-maxamp sound-data-maxamp [vector? mix?]
+ *             properties:     mark|mix|sound-properties [sampler-props?]
+ *             name:           mark|mix-name file-name (widget name via XtName) mus-name, 
+ *                               __func__? port-filename sampler-filename
  *             sync:           sync, mark|mix-sync
+ *             copy:           should this be extended?  also fill!
  *
- * PERHAPS: pointers wrapped in struct, not treated as ulong or ulong_long [XtPointer as sole field etc]
+ * applicable sound (set! (snd chan samp)? )
  *
- * very much PERHAPS: (+ <sound> <sound>) etc! [map for-each sort! fill! copy ref/set reverse subsequence append max/min
+ * very much PERHAPS: (+ <sound> <sound>) etc! [map for-each sort! fill! copy ref/set reverse subsequence append max/min]
  *     call-with-input-sound? read write with-output-to-sound
  *     (+ (with-sound ...) (with-sound ...))
  */

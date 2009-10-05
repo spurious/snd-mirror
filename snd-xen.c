@@ -3224,30 +3224,6 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
                            (/ (%log (car args)) (%log (cadr args)))\
                            (%log (car args))))");
 
-  /* from ice-9/r4rs.scm but with output to snd listener */
-  XEN_EVAL_C_STRING("(define *snd-loaded-files* '())");
-  XEN_EVAL_C_STRING("(define *snd-remember-paths* #t)");
-
-  XEN_EVAL_C_STRING("(set! %load-hook \
-                       (lambda (filename)\
-                         (if %load-verbosely\
-                             (snd-print (format #f \"~%;;; loading ~S\" filename)))\
-                         (if (not (member filename *snd-loaded-files*))\
-                             (set! *snd-loaded-files* (cons filename *snd-loaded-files*)))\
-                         (if *snd-remember-paths*\
-                             (let ((curfile (mus-expand-filename filename))\
-                                   (last-slash 0))\
-                               (do ((i 0 (1+ i)))\
-                                   ((= i (string-length curfile)))\
-                                 (if (char=? (string-ref curfile i) #\\/)\
-	                             (set! last-slash i)))\
-                                     (let ((new-path (substring curfile 0 last-slash)))\
-                                       (if (not (member new-path %load-path))\
-	                                   (set! %load-path (append %load-path (list new-path)))))))))");
-  /* one gotcha here is that when an initialization file is loaded, and we're using cons to reset the load-path,
-   *   the user's home directory gets placed on the load list, pushing the cwd to second; hence append above
-   */
-
   /* def-optkey-fun is just define* in s7, but in guile it needs special handling.  Unfortunately,
    *    guile 1.9.0 makes this harder.
    */
@@ -3346,14 +3322,10 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   XEN_EVAL_C_STRING("(define redo-edit redo)");        /* consistency with Ruby */
   XEN_EVAL_C_STRING("(define undo-edit undo)");
 
-  XEN_EVAL_C_STRING("(define *snd-loaded-files* '())");
-  XEN_EVAL_C_STRING("(define *snd-remember-paths* #t)");
-
   XEN_EVAL_C_STRING("(define (symbol-append . args) \"(symbol-append . args) makes a new symbol from its args\"\
                        (string->symbol (apply string-append (map symbol->string args))))");
   /* taken from guile ice-9/boot9.scm, used by KM's stuff (gui.scm etc) */
 
-  /* from ice-9/r4rs.scm but with output to snd listener */
   XEN_EVAL_C_STRING("\
         (define (apropos name)\
           (define (substring? subs s)\

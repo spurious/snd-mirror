@@ -2716,9 +2716,13 @@ static bool s7_xen_player_equalp(void *obj1, void *obj2)
 	 (((xen_player *)obj1)->n == ((xen_player *)obj2)->n));
 }
 
-static XEN s7_xen_player_length(s7_scheme *sc, XEN obj)
+static XEN s7_xen_player_length(s7_scheme *sc, XEN player)
 {
-  return(g_frames(obj, XEN_ZERO, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION)));
+  chan_info *cp;
+  int index;
+  index = XEN_PLAYER_TO_C_INT(player);
+  cp = players[index]->chans[player_chans[index]];
+  return(C_TO_XEN_INT64_T(CURRENT_SAMPLES(cp)));
 }
 #endif
 

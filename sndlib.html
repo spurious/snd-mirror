@@ -63,7 +63,7 @@
 <li><a href="#otherexamples">Other Examples</a>
 </ul>
 <li><a href="#currentstatus">Current Status</a>
-<li><a href="#sndlibguile">Extension Languages</a>
+<li><a href="#sndlibxen">Extension Languages</a>
 </ul>
 <br>
 <table border=0 bordercolor="lightgreen" width=100% cellpadding=2 cellspacing=0><tr><td bgcolor="lightgreen">
@@ -94,7 +94,7 @@ SGI, and Sun.  It could conceivably work elsewhere.
 <li>sndlib.h (header for the preceding files)
 <li>sndlib2xen.c and sndlib-strings.h (tie preceding into s7, Guile, Ruby, or Forth)
 <li>clm.c and clm.h (Music V implementation)
-<li>clm2xen.c, vct.c and vct.h (tie clm.c into Guile, Ruby, or Forth)
+<li>clm2xen.c, vct.c and vct.h (tie clm.c into s7, Guile, Ruby, or Forth)
 <li>xen.h, xen.c, xen.html (the embedded language support)
 <li>run.c (the run macro to speed up scheme computations)
 <li>midi.c (primitive MIDI support)
@@ -414,15 +414,14 @@ in subsequent calls on <b>mus_midi_read</b>, <b>mus_midi_write</b>, and
 time its output, etc.  <b>mus_midi_describe</b> returns a description
 of the available MIDI hardware (its result should be freed, whereas
 the result of <b>mus_midi_device_name</b> should not be freed).
-The "int" result of each of the functions is -1 if some error occurred (from
-Guile, they throw 'mus-error).
+The "int" result of each of the functions is -1 if some error occurred.
 The <i>sysdev</i> argument to <b>mus_midi_device_name</b> is a sndlib-style
 integer packing the card number ("system" in the left half, and the
 device number in the right). On the ALSA system I'm testing at the moment,
 the MIDI device is apparently "hw:1,0" or "/dev/snd/midiC1D0"; this
 maps into sndlib as card 1, device 0; the corresponding "sysdev" number
 is 1 &lt;&lt; 16. 
-The corresponding Guile functions are:
+The corresponding functions are:
 </p>
 <pre>
   mus-midi-open-read name
@@ -994,7 +993,7 @@ of Snd and CLM, both of which are freely available.
 <br><br>
 
 <table border=0 bordercolor="lightgreen" width=100% cellpadding=2 cellspacing=0><tr><td bgcolor="lightgreen">
-<table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="sndlibguile"></a>Extension Languages</h2></td></tr></table>
+<table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="sndlibxen"></a>Extension Languages</h2></td></tr></table>
 </td></tr></table>
 
 <p>Much of sndlib is accessible at run time in any program that has one of
@@ -1004,7 +1003,6 @@ making it possible to call the library functions from its interpreter.  The docu
 is scattered around, unfortunately: the clm side is in sndclm.html and extsnd.html with many
 examples in Snd's <a href="sndscm.html#exampdoc">examp.scm</a>.  Most of these are obvious translations of the
 constants and functions described above into Scheme.  To initialize sndlib, call Init_sndlib.
-In Guile, you might do it as follows:
 </p>
 
 <pre>
@@ -1227,7 +1225,7 @@ to make it independent of Snd:
 	#f)))
 </pre></td></tr></table>
 <p>
-Now, load this code into guile+sndlib, and <code>(play-sine 440 .1)</code>.
+Now, load this code into s7+sndlib, and <code>(play-sine 440 .1)</code>.
 </p>
 
 <p>In Ruby, the sndlib shared library can be loaded via

@@ -5571,9 +5571,9 @@ static XEN channel_get(XEN snd, XEN chn_n, cp_field_t fld, const char *caller)
 	    case CP_EDIT_CTR:                return(C_TO_XEN_INT(cp->edit_ctr));                               break;
 	    case CP_GRAPH_TRANSFORM_P:       return(C_TO_XEN_BOOLEAN(cp->graph_transform_p));                  break;
 	    case CP_GRAPH_TIME_P:            return(C_TO_XEN_BOOLEAN(cp->graph_time_p));                       break;
-	    case CP_CURSOR:                  return(C_TO_XEN_INT64_T(CURSOR(cp)));                               break;
+	    case CP_CURSOR:                  return(C_TO_XEN_INT64_T(CURSOR(cp)));                             break;
 	    case CP_EDPOS_CURSOR:            return(C_TO_XEN_INT64_T(cp->edits[to_c_edit_position(cp, cp_edpos, S_cursor, 3)]->cursor)); break;
-	    case CP_FRAMES:                  return(C_TO_XEN_INT64_T(CURRENT_SAMPLES(cp)));                      break;
+	    case CP_FRAMES:                  return(C_TO_XEN_INT64_T(CURRENT_SAMPLES(cp)));                    break;
 	    case CP_GRAPH_LISP_P:            return(C_TO_XEN_BOOLEAN(cp->graph_lisp_p));                       break;
 	    case CP_AP_LOSAMP:               if (cp->axis) return(C_TO_XEN_INT64_T(cp->axis->losamp));         break;
 	    case CP_AP_HISAMP:               if (cp->axis) return(C_TO_XEN_INT64_T(cp->axis->hisamp));         break;
