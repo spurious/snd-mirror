@@ -45,9 +45,9 @@ The configure script has a bunch of arguments:
      --with-no-gui             make Snd without any graphics support
   
      --with-gl                 include support for OpenGL (default: no)
-       --with-just-gl          same but omit Guile bindings in gl.c (default: no)
+       --with-just-gl          same but omit extension language bindings in gl.c (default: no)
                                  The gl module is only useful if you want to write
-                                 Scheme code to add your own OpenGL graphics to Snd.
+                                 code to add your own OpenGL graphics to Snd.
                                  --with-just-gl will give you the GL spectrograms
                                  without any extras.
   
@@ -124,8 +124,8 @@ If the configure/make process fails, please send me
 (bil@ccrma.stanford.edu) the files mus-config.h, config.log, and makefile,
 created (or updated) by configure.
 
-Snd comes with S7, so if you don't have Guile, Ruby, or 
-Forth, you can use S7.  If you insist on building Snd without any extension 
+Snd comes with s7, so if you don't have Guile, Ruby, or 
+Forth, you can use s7.  If you insist on building Snd without any extension 
 language, you'll find that it's severely limited in what it can do.  
 Snd can also be built without any graphics toolkit.  Without either the GUI 
 or an extension language, however, there's nothing it can do.
@@ -142,7 +142,7 @@ Version info:
   if Gtk, then Gtk+ 2.0.0 or later
   if Motif, then Motif 2.n but not Lesstif
   in Linux, if ALSA, then ALSA 0.9beta8 or later (or any version of OSS)
-  if Guile, Guile 1.3.4 through 1.8.n but most *.scm files need 1.5.0 or later
+  if Guile, Guile 1.5.0 through 1.8.n (not 1.9.n or later)
   if Ruby, Ruby 1.8.0 or later.  
   if Forth, any version
   if S7, any version
@@ -154,25 +154,24 @@ Version info:
 
 ----------------------------------------------------------------
 
-The customization/extension languages are either S7 (included), Guile, Ruby, or Forth.
+The customization/extension languages are either s7 (included), Guile, Ruby, or Forth.
 
 Much of Snd's functionality is loaded as needed from the Scheme, Ruby, or Forth
 files found in the tarball (*.scm, *.rb, and *.fs).  You can run Snd without 
 these files, but there's no reason to!  Just add the directory containing
-those files to the "load-path".  In Guile,
+those files to the "load-path".  In s7,
 
-  (set! %load-path (cons "/home/bil/cl" %load-path))
+  (set! *load-path* (cons "/home/bil/cl" *load-path*))
 
-%load-path is the list of directories that Guile looks at when trying
+*load-path* is the list of directories that s7 looks at when trying
 to find a file to load.  Here I've added "/home/bil/cl" so that Snd
 can find its sources no matter what directory I run it in.  If you 
-create a file named ~/.snd_guile and put such a line in it, you'll
+create a file named ~/.snd_s7 and put such a line in it, you'll
 never have to think about it again.  In the other languages:
 
 Ruby:   $LOAD_PATH.push("/home/bil/cl")
 Forth:  "/home/bil/cl" add-load-path
-S7:     (set! *load-path* (cons "/home/bil/cl" *load-path*))
-
+Guile:  (set! %load-path (cons "/home/bil/cl" %load-path))
 
 ----------------------------------------------------------------
 
@@ -587,7 +586,7 @@ GSL 0.8 or later.
 
 ---- Guile: ---- 
 
-Guile 1.9.0 and later are not really usable.  I will eventually remove
+Guile versions 1.9.0 and beyond are not really usable.  I will eventually remove
 Guile support.
 
 If you're running Guile 1.4 and get:

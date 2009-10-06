@@ -1,4 +1,4 @@
-;;; freeverb.scm -- CLM -> Snd/Guile translation of freeverb.ins
+;;; freeverb.scm -- CLM -> Snd/Scheme translation of freeverb.ins
 
 ;; Translator/Author: Michael Scholz <scholz-micha@gmx.de>
 ;; Last: Thu Apr 24 01:32:15 CEST 2003

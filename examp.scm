@@ -2474,7 +2474,7 @@ passed as the arguments so to end with channel 3 in channel 0, 2 in 1, 0 in 2, a
 ;;;   the main function takes the top level directory of the sounds, and returns (eventually) a text
 ;;;   file containing the start times (in samples) and durations of all the notes (each sound file in
 ;;;   this library can have about 12 notes).  The results of this function need to be fixed up by hand
-;;;   in some cases (violin notes in particular).  Also this only works in Guile+Linux due to readdir bugs.
+;;;   in some cases (violin notes in particular).
 
 (define* (sounds->segment-data main-dir :optional (output-file "sounds.data"))
 

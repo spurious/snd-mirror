@@ -1,4 +1,4 @@
-;;; maxf.scm -- CLM -> Snd/Guile translation of maxf.ins
+;;; maxf.scm -- CLM -> Snd/Scheme translation of maxf.ins
 
 ;; Translator/Author: Michael Scholz <scholz-micha@gmx.de>
 ;; Last: Tue Mar 25 04:32:23 CET 2003

@@ -56,7 +56,7 @@
 <li><a href="#startup">Snd Startup</a>
   <ul>
   <li><a href="#sndswitches" onmouseout="UnTip()" onmouseover="Tip('startup switches such as -l and -p')">Snd invocation flags</a>
-  <li><a href="#sndinitfile" onmouseout="UnTip()" onmouseover="Tip('~/.snd, ~/.snd_guile, ~/.snd_prefs_guile, etc')">The initialization file</a>
+  <li><a href="#sndinitfile" onmouseout="UnTip()" onmouseover="Tip('~/.snd, ~/.snd_s7, ~/.snd_prefs_s7, etc')">The initialization file</a>
   <li><a href="#sndresources" onmouseout="UnTip()" onmouseover="Tip('X resources: Xdefaults, gtkrc')">Snd resources</a>
   <li><a href="#sndconfigurationswitches" onmouseout="UnTip()" onmouseover="Tip('this refers to the configure script that prepares a makefile to build Snd from its sources')">Configuration choices</a>
   <li><a href="#sndenvvars" onmouseout="UnTip()" onmouseover="Tip('mostly related to audio hardware choices')">Environment variables</a>
@@ -255,7 +255,7 @@ absent.  To override reading the global init file when Snd is invoked, include t
 To override the local init file, use -noinit. 
 </p>
 <p>
-The initialization files particular to a given extension language have names such as ~/.snd_guile
+The initialization files particular to a given extension language have names such as ~/.snd_s7
 and ~/.snd_prefs_ruby.  Currently the possibilities are:
 ~/.snd_prefs_guile|ruby|forth|s7, /etc/snd_guile|ruby|forth|s7.conf,
 ~/.snd_guile|ruby|forth|s7 (the notation "guile|ruby|forth" means either "guile" or "ruby" or "forth", so the file names
@@ -804,7 +804,7 @@ latter are (configure --help):
 <tr><td></td><td>--with-static-xm</td><td></td><td>include the xm module at build time; this is easier than trying to dynamically load xm.so</td></tr>
 <tr><td></td><td>--with-static-xg</td><td></td><td>include the xg module at build time; this is easier than trying to dynamically load xg.so</td></tr>
 <tr><td></td><td>--with-gl</td><td></td><td>include OpenGL support (spectrogram, etc)</td></tr>
-<tr><td></td><td>--with-just-gl</td><td></td><td>include OpenGL support, but omit the GL/S7/Guile/Ruby/Forth bindings</td></tr>
+<tr><td></td><td>--with-just-gl</td><td></td><td>include OpenGL support, but omit the GL/s7/Guile/Ruby/Forth bindings</td></tr>
 <tr><td></td><td>--with-gl2ps</td><td></td><td>include gl2ps (GL to Postscript code)</td></tr>
 <tr><td></td><td>--with-editres</td><td></td><td>include editres in xm (default: no)</td></tr>
 <tr><td></td><td>--with-xpm</td><td></td><td>use xpm, default: yes</td></tr>

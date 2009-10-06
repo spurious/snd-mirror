@@ -2042,7 +2042,7 @@ hook's responsibility.  See <a href="sndscm.html#snapmarktobeat">snap-mix-to-bea
 <code><a class=def name="mouseclickhook">mouse-click-hook</a> (snd chn button state x y axis) </code> [<b>or</b>]
 </td></tr><tr><td></td><td colspan=2>
 This hook is called upon a mouse button release or click (with various exceptions).  If its function returns #t, the click is ignored by Snd.
-See the <a href="sndscm.html#makecurrentwindowdisplay">current-window-location</a> function in draw.scm.  Here's a simpler example:
+See the <a href="sndscm.html#makecurrentwindowdisplay">current-window-location</a> function in draw.scm.  Here's an example:
 
 <table border=0 cellpadding=5 vspace=10><tr><td><pre>
 (define (click-to-center snd chn button state x y axis)
@@ -7130,7 +7130,7 @@ channels either being played (if a play is in progress) or about
 to be played.  Once some player is in the play-list, you can start 
 the play with <a href="#startplaying">start-playing</a>, and stop it prematurely with either 
 <a href="#stopplayer">stop-player</a> or <a href="#stopplaying">stop-playing</a>.  These functions make it possible 
-to build custom control panels.  Here's a simple example that plays a 
+to build custom control panels.  Here's an example that plays a 
 sound with individual amplitudes for the channels:
 
 <table border=0 cellpadding=5 vspace=10><tr><td><pre>
@@ -7490,10 +7490,9 @@ version of <a href="#insertsilence">insert-silence</a>.  To set a block of sampl
 To insert a block of arbitrary-valued samples:
 
 <table border=0 cellpadding=5 vspace=10><tr><td><pre>
-(define* (<A NAME="blockchannel">block-channel</a> value :optional beg dur snd chn edpos)
-  (let ((val value))                    ; this for the run macro's benefit
-    (<em class=red>pad-channel</em> beg dur snd chn edpos) ; insert 'dur' samples, ptree-channel sets their values
-    (<a class=quiet href="#ptreechannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_ptreechannel_tip)">ptree-channel</a> (lambda (y) val) beg dur snd chn)))
+(define* (<A NAME="blockchannel">block-channel</a> value :optional (beg 0) dur snd chn edpos)
+  (<em class=red>pad-channel</em> beg dur snd chn edpos) ; insert 'dur' samples, ptree-channel sets their values
+  (<a class=quiet href="#ptreechannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_ptreechannel_tip)">ptree-channel</a> (lambda (y) value) beg dur snd chn))
 </pre></td></tr></table>
 
 We could also use map-channel here (rather than ptree-channel), but this version
@@ -7896,7 +7895,7 @@ If 'env-too' is #f, a background process is launched reading all the sound data 
 it can take awhile for the ptree-channel results to be displayed.
 <br><br>
 
-Here is a simple example that adds a constant to each sample in a file. 
+Here is an example that adds a constant to each sample in a file. 
 <pre>
     (define* (offset-channel dc :optional (beg 0) dur snd chn edpos)
       (<em class=red>ptree-channel</em> (lambda (y) (+ y dc)) beg dur snd chn edpos <em class=red>#t</em>))
@@ -9922,7 +9921,7 @@ The control panel procedures are:
 </td></tr><tr><td width=30><br></td><td>
 The current amp value.
 It is possible to use these controls (in "real-time") in your own functions.
-See amprt in <a href="sndscm.html#exampdoc">examp.scm</a> for a simple example,
+See amprt in <a href="sndscm.html#exampdoc">examp.scm</a> for an example,
 or add-amp-control in snd-motif.scm.
 As an experiment, I added the optional 'chn' argument; if it is specified, the
 channel's local amp-control value is set instead of the sound's.  This affects
@@ -12704,7 +12703,7 @@ to put the date and time in the Snd title bar.
 <p>When something goes awry, the various functions can throw an error (a symbol)
 which is normally caught by the default error handler (this is a kind of goto 
 but without the embarrassment).  It prints out some message,
-and sometimes appends a stack trace.  So, as a simple example, selection-position
+and sometimes appends a stack trace.  So, as an example, selection-position
 throws 'no-active-selection if there isn't a selection:
 </p>
 <pre>
@@ -13051,7 +13050,7 @@ If the requested font can't be loaded, the set! statement returns the old (uncha
 
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h4><A NAME="graphics">Graphics</a></h4></td></tr></table>
 
-<p>It is possible to draw directly on any of the channel graphs.  Simple examples include the
+<p>It is possible to draw directly on any of the channel graphs.  Examples include the
 <a href="#showoriginal">show-original</a> after-graph-hook function, and the
 <a href="#xcursor">x-cursor</a> function that draws an "x" shaped cursor.
 </p>

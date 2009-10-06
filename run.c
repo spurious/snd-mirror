@@ -103,7 +103,7 @@
  *
  * TODO: run doesn't always warn about a closure (explicit gen basically) -- if it's used directly,
  *         there's no warning, but it doesn't handle the closed-over variables correctly
- * TODO: give up on Guile and remove all its support, including the extra "let" used for define* args
+ * SOMEDAY: give up on Guile and remove all its support
  * TODO: vector<->vct
  *       all numeric types + multiprecision stuff
  *       what about the thread stuff: only thread_variable in s7.h now
@@ -9852,11 +9852,13 @@ static xen_value *length_1(ptree *prog, xen_value **args, int num_args)
 }
 
 
-/* TODO fill and copy (and "run set! of globals" whatever I meant by that)
+/* TODO fill and copy (and "run set! of globals": (set! ((mus-data gen) 123) .1))
    static xen_value *string_fill_1(ptree *pt, xen_value **args, int num_args)
    static xen_value *vct_fill_1(ptree *pt, xen_value **args, int num_args)
    static xen_value *vector_fill_1(ptree *prog, xen_value **args, int num_args)
    but no list_fill and clm cases are handled specially
+  
+   also the types are ready, so mix|mark|region etc stuff could be added
 */
 
 

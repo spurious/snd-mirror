@@ -764,7 +764,7 @@ Michael Scholz, based on CLM's bess5.cl and rt.lisp.
 </td></tr></table>
 <p>
 bird.scm is a translation of the Sambox/CLM bird songs.  The two instruments set
-up a simple sine wave (bird) and simple waveshaping synthesis (bigbird).  Use a
+up a sine wave (bird) and waveshaping synthesis (bigbird).  Use a
 low-pass filter for distance effects (a bird song sounds really silly
 reverberated).  All the real information is in the amplitude and frequency
 envelopes.  These were transcribed from sonograms found in some bird guides and articles from
@@ -1836,7 +1836,7 @@ the vox instrument to mimic moving formants.
 <tr><td colspan=2 bgcolor="#f2f4ff">
 <a class=def NAME="pqw">pqw</a> <code>(beg dur freq spacing-freq carrier-freq amplitude ampfun indexfun partials ...)</code>
 </td></tr><tr><td></td><td>
-pqw is a simple phase-quadrature waveshaping instrument which produces asymmetric spectra.
+pqw is a phase-quadrature waveshaping instrument which produces asymmetric spectra.
 The trailing parameters just set the usual degree, distance, and reverb values.
 <pre>
     (<a class=quiet href="#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> () (pqw 0 .5 200 1000 .2 '(0 0 25 1 100 0) '(0 1 100 0) '(2 .1 3 .3 6 .5)))
@@ -2253,7 +2253,7 @@ It has lots of documentation and examples.  If you load dlocsig.rb, a new menu i
 If you choose a path from this menu, you get a graphical user-interface to play with the various
 envelopes that drive dlocsig.  Click the "With_Snd" button to apply the current path choices to the
 currently selected sound.  Click "Gnuplot" to get a pretty picture of the path (in 3D!).
-A simple instrument that uses dlocsig is:
+An instrument that uses dlocsig is:
 </p>
 
 <table border=0 cellpadding=5 hspace=20><tr><td><pre>
@@ -2531,7 +2531,7 @@ See also the <a href="sndclm.html#moving-scentroid">moving-scentroid</a> generat
 <tr><td colspan=2 bgcolor="#f2f4ff">
 <A class=def NAME="spotfreq">spot-freq</a> <code>(samp :optional snd chn)</code>
 </td></tr><tr><td></td><td>
-spot-freq is a simple first-pass at using autocorrelation for
+spot-freq is a first-pass at using autocorrelation for
 pitch tracking; it's easily fooled, but could probably be made relatively robust.
 <pre>
     :<em class=typing>(spot-freq 10000)</em>  ; this is oboe.snd, in about .5 secs
@@ -3841,7 +3841,7 @@ zoom-spectrum sets the transform size to correspond to the time-domain window si
 <em class=emdef>comb-filter</em> <code>(scaler size)</code><br>
 <em class=emdef>zcomb</em> <code>scaler size pm</code>
 </td></tr><tr><td></td><td>
-comb-filter is a simple example of using the CLM <a href="sndclm.html#comb">comb</a> generator.
+comb-filter is an example of using the CLM <a href="sndclm.html#comb">comb</a> generator.
 <pre>
     Scheme:  (<a class=quiet href="extsnd.html#mapchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_mapchannel_tip)">map-channel</a> (comb-filter .8 32))
     Ruby:    map_channel(comb_filter(0.8, 32))
@@ -3929,7 +3929,7 @@ moving-formant moves a formant according to an envelope (the envelope y value is
 <tr><td colspan=2 bgcolor="#f2f4ff">
 <em class=emdef>notch-filter</em> <code>(scaler size)</code>
 </td></tr><tr><td></td><td>
-This is a simple example of calling the CLM <a href="sndclm.html#notch">notch</a> filter.
+This is an example of calling the CLM <a href="sndclm.html#notch">notch</a> filter.
 <pre>
     (<a class=quiet href="extsnd.html#mapchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_mapchannel_tip)">map-channel</a> (notch-filter .8 32))
 </pre>
@@ -4078,7 +4078,7 @@ It is the multichannel version of <a href="#compandchannel">compand-channel</a>.
 <tr><td colspan=2 bgcolor="#f2f4ff">
 <em class=emdef>cnvtest</em> <code>(snd0 snd1 amp)</code>
 </td></tr><tr><td></td><td>
-This is a simple example of using convolution.
+This is an example of using convolution.
 It convolves 'snd0' and 'snd1' (using the CLM <a href="sndclm.html#convolve">convolve</a> generator), 
 then scales by 'amp'. It returns the new maximum amplitude.
 <pre>
@@ -4106,7 +4106,7 @@ selected sound.
 <em class=emdef>flecho</em> <code>(scaler secs)</code><br>
 <a class=def NAME="zecho">zecho</a> <code>(scaler secs frq amp)</code>
 </td></tr><tr><td></td><td>
-These are simple delay-based sound effects. 
+These are delay-based sound effects. 
 echo returns an echo maker ('secs' is the delay in seconds between echos, 'scaler' is
 the amplitude ratio between successive echoes).
 zecho is similar, but also modulates the echoes.
@@ -5078,51 +5078,6 @@ match-sound-files applies 'func' to each sound file in 'dir' and returns a list 
     (if (&gt; (<a class=quiet href="extsnd.html#mussoundduration" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundduration_tip)">mus-sound-duration</a> n) 10.0) 
       (<a class=quiet href="extsnd.html#sndprint" onmouseout="UnTip()" onmouseover="Tip(extsnd_sndprint_tip)">snd-print</a> n)))
   (<a class=quiet href="extsnd.html#soundfilesindirectory" onmouseout="UnTip()" onmouseover="Tip(extsnd_soundfilesindirectory_tip)">sound-files-in-directory</a> "."))
-</pre></td></tr></table>
-
-We can use Guile's regexp support here to search for all .snd and .wav files:
-
-<pre>
-    (let ((reg (make-regexp "\\.(wav|.snd)$")))
-      (match-sound-files (lambda (file) (regexp-exec reg file))))
-</pre>
-
-In fact, we could replace the built-in procedures <a href="extsnd.html#addsoundfileextension">add-sound-file-extension</a> and
-<a href="extsnd.html#soundfilesindirectory">sound-files-in-directory</a> (we're using some procedures written by Dirk Herrman here):
-
-<table border=0 cellpadding=5 hspace=20 vspace=10><tr><td><pre>
-(define (filter-list pred? objects)
-  (let loop ((objs objects)
-	     (result '()))
-    (cond ((null? objs) (reverse! result))
-	  ((pred? (car objs)) (loop (cdr objs) (cons (car objs) result)))
-	  (else (loop (cdr objs) result)))))
-
-(define (grep rx strings)
-  (let ((r (make-regexp rx)))
-    (filter-list (lambda (x) (regexp-exec r x)) strings)))
-
-(define (directory-&gt;list dir)
-  (let ((dport (opendir dir)))
-    (let loop ((entry (readdir dport))
-	       (files '()))
-      (if (not (eof-object? entry))
-	  (loop (readdir dport) (cons entry files))
-	  (begin
-	    (closedir dport)
-	    (reverse! files))))))
-
-;;; and now the Snd replacements
-(define sound-file-extensions (list "snd" "aiff" "aif" "wav" "au" "aifc" "voc" "wve"))
-
-(define (add-sound-file-extension-1 ext) 
-  (set! sound-file-extensions (cons ext sound-file-extensions)))
-
-(define* (sound-files-in-directory-1 :optional (dir "."))
-  (sort (grep
-	 (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "\\.(~{~A~^|~})$" sound-file-extensions)
-	 (directory-&gt;list dir))
-	string&lt;?))
 </pre></td></tr></table>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -8863,7 +8818,7 @@ the gate value will not be synthesized), 'hoffset' is a pitch offset in Hz.
 <A NAME="rgbdoc"></a><table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>rgb</h2></td></tr></table>
 </td></tr></table>
 
-<p>rgb.scm (rgb.rb) is a simple translation of the standard X11 color names into Snd
+<p>rgb.scm (rgb.rb) is a translation of the standard X11 color names into Snd
 color objects.
 </p>
 <pre>
@@ -9153,7 +9108,7 @@ The 'shape' and 'glot' entries are themselves lists; I think the 'glot'
 list describes the glottal pulse.  I wish I could fully explain all these lists, but 
 I translated this code a very long time ago, and can't remember any details.  You'll
 have to read the code, or perhaps find something in Perry's publications.
-In any case, here's a simple example:
+In any case, here's an example:
 </p>
 <pre>
     (<a class=quiet href="#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> () 
@@ -9383,7 +9338,7 @@ sample and a vct as the second argument.  Use <a href="extsnd.html#vcttochannel"
 <!-- snddiff -->
 <tr><td colspan=2 bgcolor="#f2f4ff"><a class=def>snddiff</a> <code>(snd0 chn0 snd1 chn1)</code>
 </td></tr><tr><td width=30></td><td>
-This could use about a lifetime's work, but it does find some simple differences:
+This could use about a lifetime's work, but it does find some differences:
 <pre>
                      ;; start with two identical sounds:
     <em class=listener>:</em><em class=typing>(map short-file-name (sounds))</em>
@@ -9395,7 +9350,7 @@ This could use about a lifetime's work, but it does find some simple differences
     <em class=listener>0.5</em>
     <em class=listener>:</em><em class=typing>(snddiff 0 0 1 0)</em>
     <em class=listener>(differences ((1000 0.5 0.0328369140625)))</em>
-                     ;; and simple scaling changes (we reverted the previous change):
+                     ;; and scaling changes (we reverted the previous change):
     <em class=listener>:</em><em class=typing>(scale-channel 2.0)</em>
     <em class=listener>2.0</em>
     <em class=listener>:</em><em class=typing>(snddiff 0 0 1 0)</em>
@@ -10372,8 +10327,7 @@ be rewritten in the same form.
 </pre></td></tr></table>
 
 <p>fm-violin-ins shows how this generator can be fitted into the original fm-violin code.
-The make-fm-violin function uses the optional arguments support from Guile (optargs.scm, loaded
-via <code>(use-modules (ice-9 optargs))</code>). The plethora of arguments is an historical artifact;
+The plethora of arguments is an historical artifact;
 normally only a few of them are used at a time.  There are two examples of calling this generator
 in fmv.scm, the simpler one being:
 </p>
@@ -10969,7 +10923,7 @@ def fm_violin(start = 0.0, dur = 1.0, freq = 440.0, amp = 0.3, *args)
 	[:degrees, false]
 
   Ruby: fm_violin(0, 1, 440, .1, [[:fm_index, 2.0]])
- Guile: (fm-violin 0 1 440 .1 :fm-index 2.0)\n\n";
+ Scheme: (fm-violin 0 1 440 .1 :fm-index 2.0)\n\n";
 
   fm_index = (args.assoc(:fm_index)[1] rescue 1.0);
   amp_env = (args.assoc(:amp_env)[1] rescue [0, 0, 25, 1, 75, 1, 100, 0]);
@@ -11097,7 +11051,7 @@ end
 </td></tr></table>
 
 <p>
-with-sound provides a simple way to package up a bunch of instrument calls into a new
+with-sound provides a way to package up a bunch of instrument calls into a new
 sound file, and open that file in Snd when the computation is complete. 
 To hear (and see) the fm-violin, for example, we first load with-sound and the instrument:
 </p>
@@ -11498,7 +11452,7 @@ along when creating this temporary file.  These default to :output
 with a unique name generated internally, and all other variables are taken from
 the overall (enclosing) with-sound.  The rest of the list is the body of the
 associated <a href="#wsdoc">with-sound</a>.
-The difference between sound-let and a simple embedded with-sound is primarily that
+The difference between sound-let and an embedded with-sound is primarily that
 sound-let names and later deletes the temporary files it creates, whereas with-sound leaves
 its explicitly named output intact (and tries to open it in Snd, which can be confusing in this context).
 Here's another example:
@@ -11887,7 +11841,7 @@ in CLM, add the desired methods as an association list with the name :methods:
 </pre></td></tr></table>
 
 <p>The first function is the "getter" and the (optional) second function is the "setter".
-You can also use Guile's make-procedure-with-setter.
+You can also use make-procedure-with-setter.
 def-clm-struct is used in generators.scm, clm-ins.scm, dsp.scm, moog.scm, prc95.scm, and various other files.
 </p>
 

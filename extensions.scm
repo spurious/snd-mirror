@@ -21,7 +21,7 @@
 (provide 'snd-extensions.scm)
 
 
-(define (remove-if pred l) ; from guile/ice-9/common-list.scm
+(define (remove-if pred l) ; from common-list.scm
   "(remove-if func lst) removes any element from 'lst' that 'func' likes"
   (let loop ((l l) (result '()))
     (cond ((null? l) (reverse! result))

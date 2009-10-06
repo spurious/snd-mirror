@@ -1,4 +1,4 @@
-;;; noise.scm -- CLM -> Snd/Guile translation of noise.ins
+;;; noise.scm -- CLM -> Snd/Scheme translation of noise.ins
 
 ;; Translator/Author: Michael Scholz <scholz-micha@gmx.de>
 ;; Last: Wed Apr 02 02:47:21 CEST 2003
