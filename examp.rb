@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Wed Sep 04 18:34:00 CEST 2002
-# Changed: Mon Oct 05 00:10:46 CEST 2009
+# Changed: Mon Oct 05 23:58:57 CEST 2009
 
 # Commentary:
 #
@@ -1649,26 +1649,6 @@ class SoundData
   end
 end
 
-class XenMark
-  alias == eql?
-end
-
-class XenMix
-  alias == eql?
-end
-
-class XenPlayer
-  alias == eql?
-end
-
-class XenRegion
-  alias == eql?
-end
-
-class XenSound
-  alias == eql?
-end
-
 def mus_a0(gen)
   mus_xcoeff(gen, 0)
 end
@@ -2350,9 +2330,9 @@ if provided? :snd_nogui
 else
   def close_sound_extend(snd)
     # 5 == Notebook
-    if main_widgets[5] and selected_sound and selected_sound <= snd
-      idx = 0
-      snds = sounds() and idx = snds.index(snd)
+    if main_widgets[5]
+      idx = Snd.sounds.index(snd)
+      if idx.nil? then idx = 0 end
       close_sound(snd)
       snds = sounds() and set_selected_sound(snds[idx < snds.length ? idx : -1])
     else

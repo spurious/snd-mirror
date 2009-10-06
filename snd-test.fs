@@ -2,7 +2,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sat Aug 05 00:09:28 CEST 2006
-\ Changed: Thu Oct 01 02:56:16 CEST 2009
+\ Changed: Tue Oct 06 00:21:21 CEST 2009
 
 \ Commentary:
 \
@@ -2630,7 +2630,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   sf-dir "bad_chans.aifc" $+ "oboe.snd" <'> mus-mix     'bad-header       check-error-tag
   123 #( 0 0 1 1 )           <'> set-sound-loop-info    'no-such-sound    check-error-tag
   "fmv.snd" mus-nist mus-bfloat 22050 2 "comment" <'> new-sound 'bad-header check-error-tag
-  123                        <'> player-home            'no-such-player   check-error-tag
+  123                        <'> player-home            'wrong-type-arg   check-error-tag
   "/hiho"                    <'> set-temp-dir           'no-such-file     check-error-tag
   "/hiho"                    <'> set-save-dir           'no-such-file     check-error-tag
   20 4 0.0 make-vct          <'> snd-transform          'out-of-range     check-error-tag

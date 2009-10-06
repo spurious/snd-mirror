@@ -103,40 +103,10 @@
  *
  * TODO: run doesn't always warn about a closure (explicit gen basically) -- if it's used directly,
  *         there's no warning, but it doesn't handle the closed-over variables correctly
+ * TODO: give up on Guile and remove all its support, including the extra "let" used for define* args
  * TODO: vector<->vct
  *       all numeric types + multiprecision stuff
- *       some or all of:
-
-    gensym [s7_gensym] symbol-table symbol->string [s7_symbol_name?] string->symbol [s7_make_symbol] symbol->value [s7_symbol_to_value]
-    global-environment [s7] current-environment [s7] provided? provide [s7_provide] defined? 
-    make-keyword [s7] symbol->keyword keyword->symbol hash-table? [s7_is_hash_table] make-hash-table [s7_make_hash_table]
-    hash-table-ref [s7_hash_table_ref] hash-table-set! [s7_hash_table_set] hash-table-size 
-
-    port-line-number port-filename
-    eof-object? 
-    set-current-output-port [s7_set..] set-current-input-port [s7_set...] set-current-error-port [s7_set...]
-    open-input-file [s7] open-input-string [s7] open-output-string [s7]
-    get-output-string [s7] read-char [s7] peek-char [s7] read [s7] newline [s7] write-char [s7]
-    write [s7] display [s7] read-byte write-byte read-line call-with-input-string call-with-input-file
-    with-input-from-string with-input-from-file call-with-output-string call-with-output-file
-    with-output-to-string with-output-to-file 
-
-    make-polar make-rectangular magnitude angle rationalize real-part imag-part numerator denominator
-    integer-length make-random-state
-
-    string list->string string->list object->string [s7_object_to_c_string]
-    cdr [s7_cdr] caar caaar caadr cadar cdaar cdddr cdadr cddar caaaar caaadr caadar cadaar caaddr
-    cadadr caddar cdaaar cdaadr cdadar cddaar cdaddr cddddr cddadr cdddar assq assv
-    assoc [s7_assoc] memq memv member [s7_member] append [s7_append] list list-tail list-line-number 
-
-    vector->list [s7_vector_to_list] list->vector
-
-    continuation? eval eval-string [s7_eval_c_string] apply
-    load [s7_load] force for-each map values call-with-values dynamic-wind catch error 
-    gc procedure? [s7_is_procedure] procedure-documentation [s7]
-    procedure-arity [s7] procedure-source [s7] [make-procedure-with-setter procedure-with-setter? procedure-with-setter-setter-arity]
-
-    what about the thread stuff: only thread_variable in s7.h now
+ *       what about the thread stuff: only thread_variable in s7.h now
  */
 
 /* some timings (I keep losing these stats, so I'll put them here for safekeeping, "*"=not optimizable)

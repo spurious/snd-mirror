@@ -65301,7 +65301,7 @@ EDITS: 1
 		      (let ((tag
 			     (catch #t
 				    (lambda ()
-				      (n 123))
+				      (n (integer-> sound 123)))
 				    (lambda args (car args)))))
 			(if (not (eq? tag 'no-such-sound))
 			    (snd-display ";snd no-such-sound ~A: ~A" n tag))))
@@ -65509,6 +65509,7 @@ EDITS: 1
 				      (if (and (not (eq? tag 'wrong-type-arg))
 					       (not (eq? tag 'no-data))
 					       (not (eq? tag 'no-such-method))
+					       (not (eq? tag 'bad-type))
 					       (not (eq? tag 'error))
 					       (not (eq? tag 'arg-error)))
 					  (snd-display ";clm ~A: tag: ~A arg: ~A [~A]" n tag arg ctr))
@@ -65531,7 +65532,7 @@ EDITS: 1
 					sawtooth-wave nrxysin nrxycos square-wave src 
 					ncos nsin table-lookup tap triangle-wave
 					two-pole two-zero wave-train ssb-am))))
-		    (list (make-vector 1) color-95 (sqrt -1.0) (vct 1.0)))
+		    (list (make-vector 1) color-95 (sqrt -1.0) (list 1.0)))
 	  (gc)(gc)
 	  
 	  (for-each (lambda (n)
@@ -66869,20 +66870,6 @@ EDITS: 1
 	(delete-file "test.snd")
 	
 	(copy-file "oboe.snd" "test.snd")
-	(system "chmod 200 test.snd")
-	(let ((tag
-	       (catch #t
-		      (lambda () (open-sound "test.snd"))
-		      (lambda args (car args)))))
-	  (if (and (not (eq? tag 'no-such-file))
-		   (not (eq? tag 'mus-error)))
-	      (begin
-		(snd-display ";open read-protected sound worked!: ~A" tag)
-		(if (sound? tag) (close-sound tag)))))
-	(system "chmod 644 test.snd")
-	(delete-file "test.snd")
-	
-	(copy-file "oboe.snd" "test.snd")
 	(system "chmod 400 test.snd")
 	(let ((ind (open-sound "oboe.snd")))
 	  (delete-sample 10)
@@ -67336,24 +67323,8 @@ EDITS: 1
   (string-append sf-dir "bad_data_format.snd.snd")
   ))
 
-(if (file-exists? "../peaks/_home_bil_cl_storm.snd-peaks-0")
-    (begin
-      (system "rm ../peaks/_home_bil_snd-11*")
-      (system "rm ../peaks/_home_bil_cl_fmv*")
-      (system "rm ../peaks/_home_bil_cl_test*")
-      (system "rm ../peaks/_home_bil_cl_tmp*")
-      (system "rm ../peaks/_home_bil_cl_hiho*")
-      (system "rm ../peaks/_home_bil_test_*")
-      (system "rm ../peaks/_home_bil_sf1_*")
-      (system "rm ../peaks/_home_bil_clm_*")
-      (system "rm ../peaks/_home_bil_zap_tmp_*")
-      (system "rm ../peaks/_home_bil_forth-snd_*")
-      (system "rm ../peaks/_home_bil_ruby-snd_*")
-      (system "rm ../peaks/_home_bil_gtk-snd_*")
-      (system "rm ../peaks/_home_bil_snd-nogui*")
-      (system "rm ../peaks/_home_bil_nogui*")
-      (system "rm ../peaks/_home_bil_no-gui*")
-      (system "rm ../peaks/_home_bil_cl_*")))
+(if (file-exists? "/home/bil/peaks")
+    (system "rm /home/bil/peaks/*"))
 
 (for-each close-sound (sounds))
 (mus-sound-prune)

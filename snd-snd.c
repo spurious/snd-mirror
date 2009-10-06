@@ -2344,13 +2344,15 @@ void call_sp_watchers(snd_info *sp, sp_watcher_t type, sp_watcher_reason_t reaso
  *             source:         procedure-source[s7_procedure_source] mix-home mark-home region-home player-home sampler-home
  *                               mus cases: readin=file+chan? etc, port -> filename?, sound->filename?
  *             position:       mark-sample mix-position region-position sampler-position
- *                               port->line number?, mus cases = mus_location?, player? widget? 
+ *               [location?]     port->line number?, mus cases = mus_location?, player? widget? 
  *             peak or max(?): vct-peak, maxamp, region-maxamp sound-data-maxamp [vector? mix?]
  *             properties:     mark|mix|sound-properties [sampler-props?]
  *             name:           mark|mix-name file-name (widget name via XtName) mus-name, 
  *                               __func__? port-filename sampler-filename
  *             sync:           sync, mark|mix-sync
  *             copy:           should this be extended?  also fill!
+ *             srate?
+ *             need documentation for these (length in extsnd?)
  *
  * applicable sound (set! (snd chan samp)? )
  *

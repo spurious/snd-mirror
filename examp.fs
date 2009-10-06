@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Tue Jul 05 13:09:37 CEST 2005
-\ Changed: Tue Sep 29 02:51:34 CEST 2009
+\ Changed: Tue Oct 06 00:09:54 CEST 2009
 
 \ Commentary:
 \
@@ -148,20 +148,13 @@
 [ifundef] close-sound-extend
   \ 5 == notebook widget
   : close-sound-extend <{ snd -- }>
-    main-widgets 5 array-ref false? unless
-      0 { idx }
-      sounds empty? unless sounds snd array-index to idx then
+    main-widgets 5 object-ref if
+      sounds snd object-index 0 max { idx }
       snd close-sound drop
       sounds empty? unless
-	sounds length 1 = if
-	  sounds 0 array-ref
-	else 
-	  idx sounds length < if
-	    sounds idx array-ref
-	  else
-	    sounds last-pair 0 array-ref
-	  then
-	then set-selected-sound drop
+	sounds
+	idx  sounds length < if idx else -1 then
+	object-ref set-selected-sound drop
       then
     else
       snd close-sound drop
