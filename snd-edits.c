@@ -9826,14 +9826,14 @@ void g_init_edits(void)
   fth_set_object_apply(sf_tag, XEN_PROCEDURE_CAST g_read_sample, 0, 0, 0);
 #endif
 
-  XEN_DEFINE_CONSTANT(S_current_edit_position,         AT_CURRENT_EDIT_POSITION,         "represents the current edit history list position (-1)");
+  XEN_DEFINE_CONSTANT(S_current_edit_position,   AT_CURRENT_EDIT_POSITION,  "represents the current edit history list position (-1)");
 
   XEN_DEFINE_PROCEDURE(S_make_sampler,           g_make_sampler_w,           0, 5, 0, H_make_sampler);
   XEN_DEFINE_PROCEDURE(S_make_region_sampler,    g_make_region_sampler_w,    1, 3, 0, H_make_region_sampler);
-  XEN_DEFINE_PROCEDURE(S_read_sample,                  g_read_sample_w,                  1, 0, 0, H_read_sample);
-  XEN_DEFINE_PROCEDURE(S_read_region_sample,           g_read_sample_w,                  1, 0, 0, H_read_sample);
-  XEN_DEFINE_PROCEDURE(S_next_sample,                  g_next_sample_w,                  1, 0, 0, H_next_sample);
-  XEN_DEFINE_PROCEDURE(S_previous_sample,              g_previous_sample_w,              1, 0, 0, H_previous_sample);
+  XEN_DEFINE_PROCEDURE(S_read_sample,            g_read_sample_w,            1, 0, 0, H_read_sample);
+  XEN_DEFINE_PROCEDURE(S_read_region_sample,     g_read_sample_w,            1, 0, 0, H_read_sample);
+  XEN_DEFINE_PROCEDURE(S_next_sample,            g_next_sample_w,            1, 0, 0, H_next_sample);
+  XEN_DEFINE_PROCEDURE(S_previous_sample,        g_previous_sample_w,        1, 0, 0, H_previous_sample);
   XEN_DEFINE_PROCEDURE(S_free_sampler,           g_free_sampler_w,           1, 0, 0, H_free_sampler);
   XEN_DEFINE_PROCEDURE(S_sampler_home,           g_sampler_home_w,           1, 0, 0, H_sampler_home);
   XEN_DEFINE_PROCEDURE(S_sampler_p,              g_sampler_p_w,              1, 0, 0, H_sampler_p);

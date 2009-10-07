@@ -144,9 +144,12 @@
  *   (fullmix "oboe.snd" 1 2 0 (list (list .1 (make-env '(0 0 1 1) :duration 2 :scaler .5)))))
  */
 
-#define WITH_COUNTERS 0
-
 #include <mus-config.h>
+
+#if HAVE_S7
+/* (almost) entire file is on this switch */
+
+#define WITH_COUNTERS 0
 
 #if USE_SND
   #include "snd.h"
@@ -189,18 +192,11 @@
 #else
   #define PROC_FALSE "#f"
   #define NOT_A_GC_LOC -1
-  #if HAVE_S7
-    #define PROTECT(Obj) s7_gc_protect(s7, Obj)
-    #define UNPROTECT_AT(Loc) s7_gc_unprotect_at(s7, Loc)
-  #endif
-  #if HAVE_GUILE
-    #define PROTECT(Obj) run_guile_gc_protect(Obj)
-    #define UNPROTECT_AT(Loc) run_guile_gc_unprotect_at(Loc)
-  #endif
+  #define PROTECT(Obj) s7_gc_protect(s7, Obj)
+  #define UNPROTECT_AT(Loc) s7_gc_unprotect_at(s7, Loc)
 #endif
 
 
-#if WITH_RUN
 static int safe_strcmp(const char *s1, const char *s2)
 {
   int val;
@@ -259,19 +255,13 @@ static int safe_strcasecmp(const char *s1, const char *s2)
 
   return(0);
 }
-#endif
 
 
 #define MAX_OPTIMIZATION 6
-static XEN optimization_hook;
-
-#if WITH_RUN || (!USE_SND)
 static int current_optimization = MAX_OPTIMIZATION;
+
+static XEN optimization_hook;
 #define S_optimization_hook "optimization-hook"
-#endif
-
-
-#if WITH_RUN
 
 #define Int mus_long_t
 #define R_C_TO_XEN_INT C_TO_XEN_INT64_T
@@ -284,31 +274,9 @@ static int current_optimization = MAX_OPTIMIZATION;
 #define GLOBAL_SET_OK 5
 #define SOURCE_OK 6
 
-#if (!HAVE_S7)
-#define XEN_CDDDR(a)                        XEN_CDR(XEN_CDR(XEN_CDR(a)))
-#endif
 #define XEN_CAAR(a)                         XEN_CAR(XEN_CAR(a))
 #define XEN_CDAR(a)                         XEN_CDR(XEN_CAR(a))
 #define XEN_CDADR(a)                        XEN_CDR(XEN_CADR(a))
-
-
-/* -------------------------------------------------------------------------------- */
-
-#if HAVE_GUILE
-#define XEN_APPLICABLE_SMOB_P(a)            (SCM_TYP7(a) == scm_tc7_smob)
-#define XEN_ENV(a)                          SCM_ENV(a)
-#define XEN_SET_SYMBOL_VALUE(pair, new_val) scm_set_cdr_x(pair, new_val)
-#define INTEGER_TO_STRING(a)                XEN_TO_C_STRING(scm_number_to_string(R_C_TO_XEN_INT(a), XEN_UNDEFINED))
-#define INTEGER_TO_STRING_WITH_RADIX(a, b)  XEN_TO_C_STRING(scm_number_to_string(R_C_TO_XEN_INT(a), R_C_TO_XEN_INT(b)))
-#define DOUBLE_TO_STRING(a)                 XEN_TO_C_STRING(scm_number_to_string(C_TO_XEN_DOUBLE(a), XEN_UNDEFINED))
-#define DOUBLE_TO_STRING_WITH_RADIX(a, b)   XEN_TO_C_STRING(scm_number_to_string(C_TO_XEN_DOUBLE(a), R_C_TO_XEN_INT(b)))
-#define XEN_WALKER(Obj)                     scm_object_property(Obj, walk_sym)
-#define XEN_SET_WALKER(Obj, Val)            scm_set_object_property_x(Obj, walk_sym, Val)
-#define XEN_PROCEDURE_WITH_SETTER_P(Proc)   scm_procedure_with_setter_p(Proc)
-#endif
-
-
-#if HAVE_S7
 
 #define XEN_APPLICABLE_SMOB_P(a)            true
 /* I don't think this is a problem in S7 because s7_is_procedure does not return true for applicable objects */
@@ -323,183 +291,11 @@ static XEN walker_hash_table;
 #define XEN_WALKER(Obj)                     s7_hash_table_ref(s7, walker_hash_table, s7_symbol_name(Obj))
 #define XEN_SET_WALKER(Obj, Val)            s7_hash_table_set(s7, walker_hash_table, s7_symbol_name(Obj), Val)
 
-#endif
-
-/* -------------------------------------------------------------------------------- */
-
 
 #define UNLIMITED_ARGS -1
 static XEN walk_sym;
 
 /* find and set (Scheme) variable values */
-
-#if HAVE_GUILE
-#if (!USE_SND)
-static XEN *gc_protected = NULL;
-static int gc_protected_size = 0;
-
-
-static run_guile_gc_protect(XEN obj)
-{
-  int i, loc;
-  scm_gc_protect(obj);
-
-  if (gc_protected_size == 0)
-    {
-      gc_protected_size = 8;
-      gc_protected = (XEN *)malloc(gc_protected_size * sizeof(XEN));
-      gc_protected[0] = obj;
-      for (i = 1; i < gc_protected_size; i++)
-	gc_protected[i] = XEN_FALSE;
-      return(0);
-    }
-
-  for (i = 0; i < gc_protected_size; i++)
-    if (gc_protected[i] == XEN_FALSE)
-      {
-	gc_protected[i] = obj;
-	return(i);
-      }
-  loc = gc_protected_size;
-  gc_protected_size *= 2;
-  gc_protected = (XEN *)realloc(gc_protected, gc_protected_size * sizeof(XEN));
-  for (i = loc + 1; i < gc_protected_size; i++)
-    gc_protected[i] = XEN_FALSE;
-  gc_protected[loc] = obj;
-  return(loc);
-}
-
-
-static run_guile_gc_unprotect_at(int loc)
-{
-  scm_gc_unprotect(gc_protected[loc]);
-  gc_protected[loc] = XEN_FALSE;
-}
-
-#endif
-
-
-static void xen_symbol_name_set_value(const char *a, XEN b)
-{
-  XEN var = XEN_FALSE;
-  var = XEN_NAME_AS_C_STRING_TO_VARIABLE(a);
-  if (!(XEN_FALSE_P(var)))
-    XEN_VARIABLE_SET(var, b);
-}
-
-static XEN symbol_to_value(XEN code, XEN sym, bool *local)
-{
-  XEN new_val = XEN_UNDEFINED;
-  XEN val;
-
-  if (XEN_PROCEDURE_P(code))
-    {
-      XEN code_env = XEN_FALSE;
-      /* scrounge around in the "eval" environment looking for local version of sym */
-      code_env = XEN_ENV(code);
-      if (XEN_LIST_P(code_env))
-	{
-	  (*local) = true;
-	  while (XEN_NOT_NULL_P(code_env))
-	    {
-	      XEN pair = XEN_FALSE;
-	      pair = XEN_CAR(code_env);
-	      if ((XEN_LIST_P(pair)) && 
-		  (XEN_PAIR_P(XEN_CAR(pair))))
-		{
-		  XEN names, values;
-		  names = XEN_CAR(pair);  /* dotted list! */
-		  values = XEN_CDR(pair); /* can have trailing key pairs, so can be any length */
-		  for (; XEN_PAIR_P(names) && XEN_LIST_P(values);)
-		    {
-		      /*
-			guile> (list? '(1 2 . 3))
-			#f
-			guile> (list-ref '(1 2 . 3) 0)
-			1
-			guile> (list-tail '(0 1 . 2) 1)
-			(1 . 2)
-			guile> (length '(0 1 . 2))
-			standard input:6:1: In procedure length in expression (length (quote #)):
-			standard input:6:1: Wrong type argument in position 1: (0 1 . 2)
-			ABORT: (wrong-type-arg)
-		      */
-
-		      if (XEN_EQ_P(XEN_CAR(names), sym))
-			return(XEN_CAR(values));
-		      names = XEN_CDR(names);
-		      values = XEN_CDR(values);
-		    }
-		}
-	      else
-		{
-		  if ((XEN_PAIR_P(pair)) && 
-		      (XEN_EQ_P(XEN_CAR(pair), sym)))
-		    return(XEN_CDR(pair));
-		}
-	      code_env = XEN_CDR(code_env);
-	    }
-	}
-    }
-
-  val = XEN_SYMBOL_TO_VARIABLE(sym);
-  if (!(XEN_FALSE_P(val))) 
-    {
-      new_val = XEN_VARIABLE_REF(val);
-      if (XEN_BOUND_P(new_val))
-	(*local) = false;
-    }
-
-  return(new_val);
-}
-
-
-static void symbol_set_value(XEN code, XEN sym, XEN new_val)
-{
-  XEN var = XEN_FALSE;
-
-  if (XEN_PROCEDURE_P(code))
-    {
-      XEN code_env = XEN_FALSE;
-      code_env = XEN_ENV(code);
-      if (XEN_LIST_P(code_env))
-	{
-	  while (XEN_NOT_NULL_P(code_env))
-	    {
-	      XEN pair = XEN_FALSE;
-	      pair = XEN_CAR(code_env);
-	      if ((XEN_LIST_P(pair)) && (XEN_LIST_P(XEN_CAR(pair))))
-		{
-		  XEN names, values;
-		  int i, len;
-		  names = XEN_CAR(pair);
-		  values = XEN_CDR(pair);
-		  len = XEN_LIST_LENGTH(names);
-		  for (i = 0; i < len; i++)
-		    if (XEN_EQ_P(XEN_LIST_REF(names, i), sym))
-		      {
-			XEN_LIST_SET(values, i, new_val);
-			return;
-		      }
-		}
-	      if ((XEN_PAIR_P(pair)) && (XEN_EQ_P(XEN_CAR(pair), sym)))
-		{
-		  XEN_SET_SYMBOL_VALUE(pair, new_val);
-		  return;
-		}
-	      code_env = XEN_CDR(code_env);
-	    }
-	}
-    }
-
-  var = XEN_SYMBOL_TO_VARIABLE(sym);
-  if (!(XEN_FALSE_P(var)))
-    XEN_VARIABLE_SET(var, new_val);
-}
-#endif
-
-
-#if HAVE_S7
 static void xen_symbol_name_set_value(const char *a, XEN b)
 {
   XEN var = XEN_FALSE;
@@ -524,7 +320,6 @@ static void symbol_set_value(XEN code, XEN sym, XEN new_val)
 {
   s7_symbol_set_value(s7, sym, new_val);
 }
-#endif
 
 
 /* -------------------------------------------------------------------------------- */
@@ -533,7 +328,7 @@ static void symbol_set_value(XEN code, XEN sym, XEN new_val)
 enum {R_UNSPECIFIED, R_INT, R_FLOAT, R_BOOL, R_CHAR, R_STRING, R_LIST,
       R_SYMBOL, R_KEYWORD, R_FUNCTION, R_GOTO, R_VCT, 
 #if USE_SND
-      R_READER, R_SOUND, R_MIX, R_MARK, R_REGION,
+      R_SAMPLER, R_SOUND, R_MIX, R_MARK, R_REGION,
 #endif 
       R_SOUND_DATA, R_CLM, 
       R_FLOAT_VECTOR, R_INT_VECTOR, R_VCT_VECTOR, R_LIST_VECTOR, R_CLM_VECTOR,
@@ -693,8 +488,8 @@ typedef struct ptree {
   int list_ctr, lists_size;
   list **lists;
 #if USE_SND
-  int reader_ctr, readers_size;
-  snd_fd **readers;
+  int sampler_ctr, samplers_size;
+  snd_fd **samplers;
 #endif
   int fnc_ctr, fncs_size;
   struct ptree **fncs;
@@ -792,14 +587,9 @@ static xen_value *make_xen_value(int typ, int address, xen_value_constant_t cons
 /* copy run_hook from snd-xen.c */
 XEN run_hook(XEN hook, XEN args, const char *caller)
 {
-#if HAVE_S7
   int gc_loc;
-#endif
   XEN procs = XEN_HOOK_PROCEDURES(hook);
-
-#if HAVE_S7
   gc_loc = s7_gc_protect(s7, args);
-#endif
 
   while (XEN_NOT_NULL_P(procs))
     {
@@ -809,10 +599,7 @@ XEN run_hook(XEN hook, XEN args, const char *caller)
       procs = XEN_CDR (procs);
     }
 
-#if HAVE_S7
   s7_gc_unprotect_at(s7, gc_loc);
-#endif
-
   return(xen_return_first(XEN_FALSE, args));
 }
 
@@ -1023,7 +810,7 @@ static char *describe_ptree(ptree *pt, const char *space)
   vect **inner_vects;
   list **inner_lists;
 #if USE_SND
-  snd_fd **inner_readers;
+  snd_fd **inner_samplers;
 #endif
   ptree **inner_fncs;
   XEN *inner_xens;
@@ -1044,7 +831,7 @@ static char *describe_ptree(ptree *pt, const char *space)
   inner_fncs = (ptree **)(pt->fncs);
   inner_xens = pt->xens;
 #if USE_SND
-  inner_readers = pt->readers;
+  inner_samplers = pt->samplers;
 #endif
   if (pt->outer_tree)
     {
@@ -1059,7 +846,7 @@ static char *describe_ptree(ptree *pt, const char *space)
       pt->fncs = pt->outer_tree->fncs;
       pt->xens = pt->outer_tree->xens;
 #if USE_SND
-      pt->readers = pt->outer_tree->readers;
+      pt->samplers = pt->outer_tree->samplers;
 #endif
       pt->xen_vars = pt->outer_tree->xen_vars;
     }
@@ -1074,7 +861,7 @@ static char *describe_ptree(ptree *pt, const char *space)
   if (pt->fncs_size > 0) buf = str_append(buf, &size, mus_format(", fncs: %d", pt->fnc_ctr));
   if (pt->xens_size > 0) buf = str_append(buf, &size, mus_format(", xens: %d", pt->xen_ctr));
 #if USE_SND
-  if (pt->readers_size > 0) buf = str_append(buf, &size, mus_format(", rds: %d", pt->reader_ctr));
+  if (pt->samplers_size > 0) buf = str_append(buf, &size, mus_format(", rds: %d", pt->sampler_ctr));
 #endif
   if (pt->xen_vars_size > 0) buf = str_append(buf, &size, mus_format(", xenvars: %d", pt->xen_var_ctr));
 
@@ -1156,7 +943,7 @@ static char *describe_ptree(ptree *pt, const char *space)
   pt->fncs = (struct ptree **)(inner_fncs);
   pt->xens = inner_xens;
 #if USE_SND
-  pt->readers = inner_readers;
+  pt->samplers = inner_samplers;
 #endif
   return(buf);
 }
@@ -1176,11 +963,6 @@ static char *describe_xen_value_1(int type, int addr, ptree *pt)
 
     case R_SYMBOL:
     case R_KEYWORD: 
-#if (!HAVE_S7)
-      if ((pt->xens) && (XEN_BOUND_P(pt->xens[addr])))
-	return(mus_format("%s%d(%s)", (type == R_SYMBOL) ? "sym" : "key", addr, XEN_AS_STRING(pt->xens[addr]))); 
-      else return(mus_format("%s%d=0", (type == R_SYMBOL) ? "sym" : "key", addr));
-#else
       {
 	char *temp = NULL, *str;
 	if ((pt->xens) && 
@@ -1190,7 +972,7 @@ static char *describe_xen_value_1(int type, int addr, ptree *pt)
 	if (temp) free(temp);
 	return(str);
       }
-#endif
+
       break;
 
     case R_FLOAT_VECTOR:
@@ -1219,11 +1001,11 @@ static char *describe_xen_value_1(int type, int addr, ptree *pt)
       break;
 
 #if USE_SND
-    case R_READER:
-      if ((pt->readers) && (pt->readers[addr]))
+    case R_SAMPLER:
+      if ((pt->samplers) && (pt->samplers[addr]))
 	{
 	  char *buf = NULL, *vstr = NULL;
-	  vstr = sampler_to_string(pt->readers[addr]);
+	  vstr = sampler_to_string(pt->samplers[addr]);
 	  buf = mus_format("rd%d(%s)", addr, vstr);
 	  if (vstr) free(vstr);
 	  return(buf);
@@ -1364,7 +1146,7 @@ static void unattach_ptree(ptree *inner, ptree *outer)
   outer->fncs = inner->fncs;
   outer->xens = inner->xens;
 #if USE_SND
-  outer->readers = inner->readers;
+  outer->samplers = inner->samplers;
 #endif
   outer->xen_vars = inner->xen_vars;
   outer->gc_protected = inner->gc_protected;
@@ -1385,7 +1167,7 @@ static void unattach_ptree(ptree *inner, ptree *outer)
   inner->fncs = NULL;
   inner->xens = NULL;
 #if USE_SND
-  inner->readers = NULL;
+  inner->samplers = NULL;
 #endif
   inner->xen_vars = NULL;
   inner->gc_protected = NULL;
@@ -1411,7 +1193,7 @@ static void unattach_ptree(ptree *inner, ptree *outer)
   outer->fnc_ctr = inner->fnc_ctr;
   outer->xen_ctr = inner->xen_ctr;
 #if USE_SND
-  outer->reader_ctr = inner->reader_ctr;
+  outer->sampler_ctr = inner->sampler_ctr;
 #endif
   outer->strs_size = inner->strs_size;
   outer->vcts_size = inner->vcts_size;
@@ -1422,7 +1204,7 @@ static void unattach_ptree(ptree *inner, ptree *outer)
   outer->fncs_size = inner->fncs_size;
   outer->xens_size = inner->xens_size;
 #if USE_SND
-  outer->readers_size = inner->readers_size;
+  outer->samplers_size = inner->samplers_size;
 #endif
   outer->xen_var_ctr = inner->xen_var_ctr;
   outer->xen_vars_size = inner->xen_vars_size;
@@ -1448,7 +1230,7 @@ static void unattach_ptree(ptree *inner, ptree *outer)
   inner->fnc_ctr = 0;
   inner->xen_ctr = 0;
 #if USE_SND
-  inner->reader_ctr = 0;
+  inner->sampler_ctr = 0;
 #endif
   inner->strs_size = 0;
   inner->vcts_size = 0;
@@ -1459,7 +1241,7 @@ static void unattach_ptree(ptree *inner, ptree *outer)
   inner->fncs_size = 0;
   inner->xens_size = 0;
 #if USE_SND
-  inner->readers_size = 0;
+  inner->samplers_size = 0;
 #endif
   inner->xen_var_ctr = 0;
   inner->xen_vars_size = 0;
@@ -1837,14 +1619,14 @@ void mus_run_free_ptree(struct ptree *pt)
 			    }
 			  break;
 #if USE_SND
-			case R_READER: 
-			  if (pt->readers[v->addr])
+			case R_SAMPLER: 
+			  if (pt->samplers[v->addr])
 			    {
 			      int k;
-			      for (k = 0; k < pt->reader_ctr; k++)
-				if ((k != v->addr) && (pt->readers[k] == pt->readers[v->addr]))
-				  pt->readers[k] = NULL;
-			      pt->readers[v->addr] = free_snd_fd(pt->readers[v->addr]); 
+			      for (k = 0; k < pt->sampler_ctr; k++)
+				if ((k != v->addr) && (pt->samplers[k] == pt->samplers[v->addr]))
+				  pt->samplers[k] = NULL;
+			      pt->samplers[v->addr] = free_snd_fd(pt->samplers[v->addr]); 
 			    }
 			  break;
 #endif
@@ -2013,10 +1795,10 @@ void mus_run_free_ptree(struct ptree *pt)
 	  pt->xens = NULL;
 	}
 #if USE_SND
-      if (pt->readers) 
+      if (pt->samplers) 
 	{
-	  free(pt->readers);
-	  pt->readers = NULL;
+	  free(pt->samplers);
+	  pt->samplers = NULL;
 	}
 #endif
       if (pt->gc_protected)
@@ -2260,22 +2042,22 @@ static int add_xen_to_ptree(ptree *pt, XEN value)
 }
 
 #if USE_SND
-static int add_reader_to_ptree(ptree *pt, snd_fd *value)
+static int add_sampler_to_ptree(ptree *pt, snd_fd *value)
 {
   int cur;
-  cur = pt->reader_ctr++;
-  if (cur >= pt->readers_size)
+  cur = pt->sampler_ctr++;
+  if (cur >= pt->samplers_size)
     {
-      pt->readers_size += 8;
-      if (pt->readers)
+      pt->samplers_size += 8;
+      if (pt->samplers)
 	{
 	  int i;
-	  pt->readers = (snd_fd **)realloc(pt->readers, pt->readers_size * sizeof(snd_fd *));
-	  for (i = cur; i < pt->readers_size; i++) pt->readers[i] = NULL;
+	  pt->samplers = (snd_fd **)realloc(pt->samplers, pt->samplers_size * sizeof(snd_fd *));
+	  for (i = cur; i < pt->samplers_size; i++) pt->samplers[i] = NULL;
 	}
-      else pt->readers = (snd_fd **)calloc(pt->readers_size, sizeof(snd_fd *));
+      else pt->samplers = (snd_fd **)calloc(pt->samplers_size, sizeof(snd_fd *));
     }
-  pt->readers[cur] = value;
+  pt->samplers[cur] = value;
   return(cur);
 }
 #endif
@@ -2367,11 +2149,11 @@ static xen_value *add_some_var_to_ptree(ptree *prog, int type, xen_value_constan
     case R_CLM:          return(make_xen_value(type, add_clm_to_ptree(prog, NULL, XEN_FALSE), ctype)); break;
     case R_FUNCTION:     return(make_xen_value(type, add_fnc_to_ptree(prog, NULL), ctype));            break;
 #if USE_SND
-    case R_READER:       return(make_xen_value(type, add_reader_to_ptree(prog, NULL), ctype));         break;
+    case R_SAMPLER:       return(make_xen_value(type, add_sampler_to_ptree(prog, NULL), ctype));         break;
     case R_SOUND:
     case R_MIX:
     case R_MARK:
-    case R_REGION:       return(make_xen_value(type, add_int_to_ptree(prog, 0), ctype));               break;
+    case R_REGION:       return(make_xen_value(type, add_int_to_ptree(prog, 0), type));                break;
 #endif
     case R_SOUND_DATA:   return(make_xen_value(type, add_sound_data_to_ptree(prog, NULL), ctype));     break;
     case R_FLOAT_VECTOR:
@@ -2506,9 +2288,7 @@ static vect *read_int_vector(XEN vectr)
 	{
 	  char *temp = NULL;
 	  run_warn("initial int vector value at %d is %s: will try to abort ptree evaluation...", i, temp = XEN_AS_STRING(datum));
-#if HAVE_S7
 	  if (temp) free(temp);
-#endif
 	  free(v->data.ints);
 	  free(v);
 	  return(NULL);
@@ -2537,9 +2317,7 @@ static vect *read_vct_vector(XEN vectr)
 	{
 	  char *temp = NULL;
 	  run_warn("initial vct vector value at %d is %s: will try to abort ptree evaluation...", i, temp = XEN_AS_STRING(datum));
-#if HAVE_S7
 	  if (temp) free(temp);
-#endif
 	  free(v->data.vcts);
 	  free(v);
 	  return(NULL);
@@ -2570,9 +2348,7 @@ static vect *read_clm_vector(XEN vectr)
 	    {
 	      char *temp = NULL;
 	      run_warn("initial clm vector value at %d is %s: will try to abort ptree evaluation...", i, temp = XEN_AS_STRING(datum));
-#if HAVE_S7
 	      if (temp) free(temp);
-#endif
 	      free(v->data.gens);
 	      free(v);
 	      return(NULL);
@@ -2605,9 +2381,7 @@ static vect *read_list_vector(ptree *pt, XEN vectr)
 	{
 	  char *temp = NULL;
 	  run_warn("initial list vector value at %d is %s: will try to abort ptree evaluation...", i, temp = XEN_AS_STRING(datum));
-#if HAVE_S7
 	  if (temp) free(temp);
-#endif
 	  free(v->data.lists);
 	  free(v);
 	  return(NULL);
@@ -2689,7 +2463,7 @@ int mus_run_xen_to_run_type(XEN val)
 			    }
 #if USE_SND
 			  else
-			    if (sampler_p(val)) return(R_READER); else
+			    if (sampler_p(val)) return(R_SAMPLER); else
 			      if (xen_sound_p(val)) return(R_SOUND); else
 				if (xen_region_p(val)) return(R_REGION); else
 				  if (xen_mix_p(val)) return(R_MIX); else
@@ -2714,11 +2488,11 @@ static xen_value *add_value_to_ptree(ptree *prog, XEN val, int type)
     case R_VCT:        v = make_xen_value(R_VCT, add_vct_to_ptree(prog, xen_to_vct(val)), R_VARIABLE);                                 break;
     case R_SOUND_DATA: v = make_xen_value(R_SOUND_DATA, add_sound_data_to_ptree(prog, XEN_TO_SOUND_DATA(val)), R_VARIABLE);            break;
 #if USE_SND
-    case R_READER:     v = make_xen_value(R_READER, add_reader_to_ptree(prog, xen_to_sampler(val)), R_VARIABLE);                       break;
-    case R_MIX:        v = make_xen_value(R_INT, add_int_to_ptree(prog, XEN_MIX_TO_C_INT(val)), R_VARIABLE);                           break;
-    case R_MARK:       v = make_xen_value(R_INT, add_int_to_ptree(prog, XEN_MARK_TO_C_INT(val)), R_VARIABLE);                          break;
-    case R_REGION:     v = make_xen_value(R_INT, add_int_to_ptree(prog, XEN_REGION_TO_C_INT(val)), R_VARIABLE);                        break;
-    case R_SOUND:      v = make_xen_value(R_INT, add_int_to_ptree(prog, XEN_SOUND_TO_C_INT(val)), R_VARIABLE);                         break;
+    case R_SAMPLER:     v = make_xen_value(R_SAMPLER, add_sampler_to_ptree(prog, xen_to_sampler(val)), R_VARIABLE);                       break;
+    case R_MIX:        v = make_xen_value(R_MIX, add_int_to_ptree(prog, XEN_MIX_TO_C_INT(val)), R_VARIABLE);                           break;
+    case R_MARK:       v = make_xen_value(R_MARK, add_int_to_ptree(prog, XEN_MARK_TO_C_INT(val)), R_VARIABLE);                         break;
+    case R_REGION:     v = make_xen_value(R_REGION, add_int_to_ptree(prog, XEN_REGION_TO_C_INT(val)), R_VARIABLE);                     break;
+    case R_SOUND:      v = make_xen_value(R_SOUND, add_int_to_ptree(prog, XEN_SOUND_TO_C_INT(val)), R_VARIABLE);                       break;
 #endif
     case R_CHAR:       v = make_xen_value(R_CHAR, add_int_to_ptree(prog, (Int)(XEN_TO_C_CHAR(val))), R_VARIABLE);                      break;
     case R_STRING:     v = make_xen_value(R_STRING, add_string_to_ptree(prog, mus_strdup(XEN_TO_C_STRING(val))), R_VARIABLE);          break;
@@ -3008,7 +2782,7 @@ static void eval_embedded_ptree(ptree *prog, ptree *pt)
   prog->fncs = pt->fncs;
   prog->xens = pt->xens;
 #if USE_SND
-  prog->readers = pt->readers;
+  prog->samplers = pt->samplers;
 #endif
 
   eval_ptree(prog);
@@ -3137,10 +2911,10 @@ static triple *va_make_triple(void (*function)(int *arg_addrs, ptree *pt),
 #define CLM_ARG_5 pt->clms[args[5]]
 
 #if USE_SND
-#define READER_RESULT pt->readers[args[0]]
-#define READER_ARG_1 pt->readers[args[1]]
-#define READER_ARG_2 pt->readers[args[2]]
-#define READER_ARG_3 pt->readers[args[3]]
+#define SAMPLER_RESULT pt->samplers[args[0]]
+#define SAMPLER_ARG_1 pt->samplers[args[1]]
+#define SAMPLER_ARG_2 pt->samplers[args[2]]
+#define SAMPLER_ARG_3 pt->samplers[args[3]]
 
 #define SOUND_RESULT pt->ints[args[0]]
 #define SOUND_ARG_1 pt->ints[args[1]]
@@ -3285,7 +3059,7 @@ static void store_b_clm(int *args, ptree *pt) {BOOL_RESULT = (bool)(CLM_ARG_1 !=
 static void store_b_vct(int *args, ptree *pt) {BOOL_RESULT = (bool)(VCT_ARG_1 != NULL);} 
 
 #if USE_SND
-static void store_b_reader(int *args, ptree *pt) {BOOL_RESULT = (bool)(READER_ARG_1);}
+static void store_b_sampler(int *args, ptree *pt) {BOOL_RESULT = (bool)(SAMPLER_ARG_1);}
 #endif
 
 static void store_b_sd(int *args, ptree *pt) {BOOL_RESULT = (bool)(SOUND_DATA_ARG_1 != NULL);}
@@ -3356,7 +3130,7 @@ static triple *set_var(ptree *pt, xen_value *var, xen_value *init_val)
 	  case R_SOUND_DATA:   return(add_triple_to_ptree(pt, va_make_triple(store_b_sd, "set_sd", 2, var, init_val))); break;
 	  case R_CLM:          return(add_triple_to_ptree(pt, va_make_triple(store_b_clm, "set_clm", 2, var, init_val))); break;
 #if USE_SND
-	  case R_READER:       return(add_triple_to_ptree(pt, va_make_triple(store_b_reader, "set_rd", 2, var, init_val))); break;
+	  case R_SAMPLER:       return(add_triple_to_ptree(pt, va_make_triple(store_b_sampler, "set_rd", 2, var, init_val))); break;
 #endif
 	  default:
 	    {
@@ -3432,9 +3206,7 @@ static xen_value *walk_sequence(ptree *prog, XEN body, walk_result_t need_result
 	  char *temp = NULL;
 	  xen_value *v1;
 	  v1 = run_warn("%s: can't handle %s", name, temp = XEN_AS_STRING(XEN_CAR(lbody)));
-#if HAVE_S7
 	  if (temp) free(temp);
-#endif
 	  return(v1);
 	}
     }
@@ -3463,9 +3235,7 @@ static char *define_form(ptree *prog, XEN form)
 	    {
 	      char *temp = NULL, *str;
 	      str = mus_format("can't handle this define: %s", temp = XEN_AS_STRING(form));
-#if HAVE_S7
 	      if (temp) free(temp);
-#endif
 	      return(str);
 	    }
 	  add_var_to_ptree(prog, XEN_SYMBOL_TO_C_STRING(XEN_CAR(var)), v);
@@ -3476,9 +3246,7 @@ static char *define_form(ptree *prog, XEN form)
 	{
 	  char *temp = NULL, *str;
 	  str = mus_format("can't handle this definition: %s", temp = XEN_AS_STRING(var));
-#if HAVE_S7
 	  if (temp) free(temp);
-#endif
 	  return(str);
 	}
     }
@@ -3489,9 +3257,7 @@ static char *define_form(ptree *prog, XEN form)
     {
       char *temp = NULL, *str;
       str = mus_format("can't handle this define value: %s", temp = XEN_AS_STRING(val));
-#if HAVE_S7
       if (temp) free(temp);
-#endif
       return(str);
     }
 
@@ -3525,9 +3291,7 @@ static XEN handle_defines(ptree *prog, XEN forms)
 	  (safe_strcmp("define", temp = XEN_AS_STRING(XEN_CAR(form))) == 0))
 	{
 	  char *err;
-#if HAVE_S7
 	  if (temp) free(temp);
-#endif
 	  err = define_form(prog, form);
 	  if (err != NULL) 
 	    {
@@ -3539,9 +3303,7 @@ static XEN handle_defines(ptree *prog, XEN forms)
 	}
       else 
 	{
-#if HAVE_S7
 	  if (temp) free(temp);
-#endif
 	  return(forms);
 	}
     }
@@ -3582,9 +3344,7 @@ static char *parallel_binds(ptree *prog, XEN old_lets, const char *name)
 	      free(vs);
 	      free(old_vs);
 	      str = mus_format("can't handle %s var: %s", name, temp = XEN_AS_STRING(lets));
-#if HAVE_S7
 	      if (temp) free(temp);
-#endif
 	      return(str);
 	    }
 	  old_vs[i] = v;
@@ -3643,9 +3403,7 @@ static char *sequential_binds(ptree *prog, XEN old_lets, const char *name)
 	    {
 	      char *temp = NULL, *str;
 	      str = mus_format("can't handle %s var: %s", name, temp = XEN_AS_STRING(lets));
-#if HAVE_S7
 	      if (temp) free(temp);
-#endif
 	      return(str);
 	    }
 
@@ -3723,9 +3481,7 @@ static char *declare_args(ptree *prog, XEN form, int default_arg_type, bool sepa
 	{
 	  char *temp = NULL, *str;
 	  str = mus_format("got too many args: %d passed, but %s declared", num_passed_args, temp = XEN_AS_STRING(template_args));
-#if HAVE_S7
 	  if (temp) free(temp);
-#endif
 	  return(str);
 	}
     }
@@ -3814,9 +3570,7 @@ static char *declare_args(ptree *prog, XEN form, int default_arg_type, bool sepa
 			{
 			  char *temp = NULL, *str;
 			  str = mus_format("unknown type in declare: %s in %s", type, temp = XEN_AS_STRING(form));
-#if HAVE_S7
 			  if (temp) free(temp);
-#endif
 			  return(str);
 			}
 		    }
@@ -3830,11 +3584,9 @@ static char *declare_args(ptree *prog, XEN form, int default_arg_type, bool sepa
 			       temp1 = XEN_AS_STRING(declaration), 
 			       temp2 = XEN_AS_STRING(template_arg), 
 			       temp3 = XEN_AS_STRING(form));
-#if HAVE_S7
 	      if (temp1) free(temp1);
 	      if (temp2) free(temp2);
 	      if (temp3) free(temp3);
-#endif
 	      return(str);
 	    }
 	}
@@ -3980,9 +3732,7 @@ static xen_value *lambda_form(ptree *prog, XEN form, bool separate, xen_value **
 	xen_value *rv;
 	char *temp = NULL;
 	rv = run_warn("can't handle this embedded lambda: %s", temp = XEN_AS_STRING(form));
-#if HAVE_S7
 	if (temp) free(temp);
-#endif
 	return(rv);
       }
     }
@@ -4237,9 +3987,7 @@ static xen_value *if_form(ptree *prog, XEN form, walk_result_t need_result)
 	  xen_value *rv;
 	  char *temp = NULL;
 	  rv = run_warn("if: bad selector? %s", temp = XEN_AS_STRING(XEN_CADR(form)));
-#if HAVE_S7
 	  if (temp) free(temp);
-#endif
 	  return(rv);
 	}
       /* else whatever it is, it has to be true? */
@@ -4276,9 +4024,7 @@ static xen_value *if_form(ptree *prog, XEN form, walk_result_t need_result)
       char *temp = NULL;
       free(jump_to_false);
       rv = run_warn("if: can't handle true branch %s", temp = XEN_AS_STRING(XEN_CADDR(form)));
-#if HAVE_S7
       if (temp) free(temp);
-#endif
       return(rv);
     }
   if (need_result != DONT_NEED_RESULT)
@@ -4303,9 +4049,7 @@ static xen_value *if_form(ptree *prog, XEN form, walk_result_t need_result)
 	{
 	  char *temp = NULL;
 	  run_warn("if: can't handle false branch %s", temp = XEN_AS_STRING(XEN_CADDDR(form)));
-#if HAVE_S7
 	  if (temp) free(temp);
-#endif
 	  if (result) free(result);
 	  if (jump_to_end) free(jump_to_end);
 	  if (true_result) free(true_result);
@@ -4320,7 +4064,7 @@ static xen_value *if_form(ptree *prog, XEN form, walk_result_t need_result)
 #if USE_SND
 	      if ((false_result->type == R_BOOL) &&
 		  ((true_result->type == R_CLM) || 
-		   (true_result->type == R_READER)))
+		   (true_result->type == R_SAMPLER)))
 #else
 	      if ((false_result->type == R_BOOL) &&
 		  (true_result->type == R_CLM))
@@ -4330,7 +4074,7 @@ static xen_value *if_form(ptree *prog, XEN form, walk_result_t need_result)
 #if USE_SND
 		if ((true_result->type == R_BOOL) &&
 		    ((false_result->type == R_CLM) || 
-		     (false_result->type == R_READER)))
+		     (false_result->type == R_SAMPLER)))
 #else
 		if ((true_result->type == R_BOOL) &&
 		    (false_result->type == R_CLM))
@@ -4395,9 +4139,7 @@ static xen_value *cond_form(ptree *prog, XEN form, walk_result_t need_result)
 	    if (fixups[i]) free(fixups[i]);
 	  free(fixups);
 	  rv = run_warn("cond test: %s", temp = XEN_AS_STRING(XEN_CAR(clause)));
-#if HAVE_S7
 	  if (temp) free(temp);
-#endif
 	  return(rv);
 	}
 
@@ -4495,9 +4237,7 @@ static xen_value *case_form(ptree *prog, XEN form, walk_result_t need_result)
       xen_value *rv;
       char *temp = NULL;
       rv = run_warn("can't handle case selector: %s", temp = XEN_AS_STRING(selector));
-#if HAVE_S7
       if (temp) free(temp);
-#endif
       return(rv);
     }
 
@@ -4506,9 +4246,7 @@ static xen_value *case_form(ptree *prog, XEN form, walk_result_t need_result)
       xen_value *rv;
       char *temp = NULL;
       rv = run_warn("case only with ints: %s", temp = XEN_AS_STRING(selector));
-#if HAVE_S7
       if (temp) free(temp);
-#endif
       return(rv);
     }
 
@@ -4560,9 +4298,7 @@ static xen_value *case_form(ptree *prog, XEN form, walk_result_t need_result)
 	    {
 	      char *temp = NULL;
 	      run_warn("bad case key: %s", temp = XEN_AS_STRING(keys));
-#if HAVE_S7
 	      if (temp) free(temp);
-#endif
 	      goto CASE_ERROR;
 	    }
 	}
@@ -4576,9 +4312,7 @@ static xen_value *case_form(ptree *prog, XEN form, walk_result_t need_result)
 		{
 		  char *temp = NULL;
 		  run_warn("case only accepts integer selectors: %s", temp = XEN_AS_STRING(key));
-#if HAVE_S7
 		  if (temp) free(temp);
-#endif
 		  goto CASE_ERROR;
 		}
 	      cur_key = XEN_TO_C_INT(key);
@@ -4676,9 +4410,7 @@ static xen_value *do_warn_of_type_trouble(int var_type, int expr_type, XEN form)
 		temp = XEN_AS_STRING(form),
 		type_name(var_type),
 		type_name(expr_type));
-#if HAVE_S7
   if (temp) free(temp);
-#endif
   return(rv);
 }
 
@@ -4886,9 +4618,7 @@ static xen_value *do_form(ptree *prog, XEN form, walk_result_t need_result)
       char *temp = NULL;
       free(test);
       rv = run_warn("do test must be boolean: %s", temp = XEN_AS_STRING(test_form));
-#if HAVE_S7
       if (temp) free(temp);
-#endif
       return(rv);
     }
 
@@ -5002,9 +4732,7 @@ static xen_value *or_form(ptree *prog, XEN form, walk_result_t ignored)
 	    if (fixups[j]) free(fixups[j]);
 	  free(fixups);
 	  rv = run_warn("or: can't handle %s", temp = XEN_AS_STRING(XEN_CAR(body)));
-#if HAVE_S7
 	  if (temp) free(temp);
-#endif
 	  return(rv);
 	}
 
@@ -5071,9 +4799,7 @@ static xen_value *and_form(ptree *prog, XEN form, walk_result_t ignored)
 	    if (fixups[j]) free(fixups[j]);
 	  free(fixups);
 	  rv = run_warn("and: can't handle %s", temp = XEN_AS_STRING(XEN_CAR(body)));
-#if HAVE_S7
 	  if (temp) free(temp);
-#endif
 	  return(rv);
 	}
 
@@ -5136,9 +4862,7 @@ static xen_value *generalized_set_form(ptree *prog, XEN form)
 	  xen_value *rv;
 	  char *temp = NULL;
 	  rv = run_warn("set!: can't handle: %s", temp = XEN_AS_STRING(setval));
-#if HAVE_S7
 	  if (temp) free(temp);
-#endif
 	  return(rv);
 	}
 
@@ -5181,9 +4905,7 @@ static xen_value *generalized_set_form(ptree *prog, XEN form)
     xen_value *rv;
     char *temp = NULL;
     rv = run_warn("generalized set! for %s not implemented yet", temp = XEN_AS_STRING(settee));
-#if HAVE_S7
     if (temp) free(temp);
-#endif
     return(rv);
   }
 }
@@ -5223,9 +4945,7 @@ static xen_value *set_form(ptree *prog, XEN form, walk_result_t ignore)
 	  xen_value *rv;
 	  char *temp = NULL;
 	  rv = run_warn("set!: can't handle: %s", temp = XEN_AS_STRING(setval));
-#if HAVE_S7
 	  if (temp) free(temp);
-#endif
 	  return(rv);
 	}
 
@@ -5268,9 +4988,7 @@ static xen_value *set_form(ptree *prog, XEN form, walk_result_t ignore)
 		   type_name(v->type), 
 		   temp = XEN_AS_STRING(form));
 	  if (str) free(str);
-#if HAVE_S7
 	  if (temp) free(temp);
-#endif
 	  free(v);
 	  return(NULL);
 	  /* this limitation could be removed, but is it worth the bother? */
@@ -5315,9 +5033,7 @@ static xen_value *set_form(ptree *prog, XEN form, walk_result_t ignore)
 	(var->unsettable))
       rv = run_warn("set!: can't set: %s", temp = XEN_AS_STRING(settee));
     else rv = run_warn("set! variable problem: %s", temp = XEN_AS_STRING(form));
-#if HAVE_S7
     if (temp) free(temp);
-#endif
     return(rv);
   }
 }
@@ -6947,7 +6663,7 @@ static void xen_eq_b(int *args, ptree *pt) {BOOL_RESULT = (Int)XEN_EQ_P(RXEN_ARG
 static void clm_eq_b(int *args, ptree *pt) {BOOL_RESULT = (Int)(CLM_ARG_1 == CLM_ARG_2);}
 
 #if USE_SND
-static void reader_eq_b(int *args, ptree *pt) {BOOL_RESULT = (Int)(READER_ARG_1 == READER_ARG_2);} /* safe because float arg -> #f below */
+static void sampler_eq_b(int *args, ptree *pt) {BOOL_RESULT = (Int)(SAMPLER_ARG_1 == SAMPLER_ARG_2);} /* safe because float arg -> #f below */
 #endif
 
 static xen_value *eq_p(ptree *prog, xen_value **args, int num_args)
@@ -6971,7 +6687,7 @@ static xen_value *eq_p(ptree *prog, xen_value **args, int num_args)
     case R_SOUND_DATA:   return(package(prog, R_BOOL, sd_eq_b, "sd_eq_b", args, 2));                  break;
     case R_CLM:          return(package(prog, R_BOOL, clm_eq_b, "clm_eq_b", args, 2));                break;
 #if USE_SND
-    case R_READER:       return(package(prog, R_BOOL, reader_eq_b, "reader_eq_b", args, 2));          break;
+    case R_SAMPLER:       return(package(prog, R_BOOL, sampler_eq_b, "sampler_eq_b", args, 2));          break;
 #endif
     case R_KEYWORD:
     case R_SYMBOL:       return(package(prog, R_BOOL, xen_eq_b, "xen_eq_b", args, 2));                break;
@@ -7019,7 +6735,7 @@ static xen_value *eqv_p(ptree *prog, xen_value **args, int num_args)
     case R_FLOAT:        return(package(prog, R_BOOL, eqv_fb, "eqv_fb", args, 2));                   break;
     case R_CLM:          return(package(prog, R_BOOL, eqv_clm, "eqv_clm", args, 2));                 break;
 #if USE_SND
-    case R_READER:       return(package(prog, R_BOOL, reader_eq_b, "reader_eq_b", args, 2));         break;
+    case R_SAMPLER:       return(package(prog, R_BOOL, sampler_eq_b, "sampler_eq_b", args, 2));         break;
 #endif
     case R_VCT:          return(package(prog, R_BOOL, vct_eqv_b, "vct_eqv_b", args, 2));             break;
     case R_SOUND_DATA:   return(package(prog, R_BOOL, sd_eqv_b, "sd_eqv_b", args, 2));               break;
@@ -7400,10 +7116,6 @@ static Double f_round(Double x)
   return((plus_half == result) && ((plus_half / 2) != floor(plus_half / 2)) ? result - 1 : result);
 }
 
-#if (!HAVE_S7)
-static void round_f(int *args, ptree *pt) {FLOAT_RESULT = f_round(FLOAT_ARG_1);}
-#endif
-
 static void round_i(int *args, ptree *pt) {INT_RESULT = (Int)f_round(FLOAT_ARG_1);}
 
 static xen_value *round_1(ptree *prog, xen_value **args, int num_args)
@@ -7411,21 +7123,10 @@ static xen_value *round_1(ptree *prog, xen_value **args, int num_args)
   /* (round 1) -> 1.0! */
   if (args[1]->type == R_INT)
     return(copy_xen_value(args[1]));
-#if HAVE_S7
+
   if (prog->constants == 1)
     return(make_xen_value(R_INT, add_int_to_ptree(prog, (Int)f_round(prog->dbls[args[1]->addr])), R_CONSTANT));
   return(package(prog, R_INT, round_i, "round_i", args, 1));
-#else
-  if (prog->constants == 1)
-    {
-      if (prog->walk_result == NEED_INT_RESULT)
-	return(make_xen_value(R_INT, add_int_to_ptree(prog, (Int)f_round(prog->dbls[args[1]->addr])), R_CONSTANT));
-      return(make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, f_round(prog->dbls[args[1]->addr])), R_CONSTANT));
-    }
-  if (prog->walk_result == NEED_INT_RESULT)
-    return(package(prog, R_INT, round_i, "round_i", args, 1));
-  return(package(prog, R_FLOAT, round_f, "round_f", args, 1));
-#endif
 }
 
 
@@ -7438,10 +7139,6 @@ static Double f_truncate(Double x)
   return(floor(x));
 }
 
-#if (!HAVE_S7)
-static void truncate_f(int *args, ptree *pt) {FLOAT_RESULT = f_truncate(FLOAT_ARG_1);}
-#endif
-
 static void truncate_i(int *args, ptree *pt) {INT_RESULT = (Int)f_truncate(FLOAT_ARG_1);}
 
 
@@ -7449,28 +7146,12 @@ static xen_value *truncate_1(ptree *prog, xen_value **args, int num_args)
 {
   if (args[1]->type == R_INT)
     return(copy_xen_value(args[1]));
-#if HAVE_S7
   if (prog->constants == 1)
     return(make_xen_value(R_INT, add_int_to_ptree(prog, (Int)f_truncate(prog->dbls[args[1]->addr])), R_CONSTANT));
   return(package(prog, R_INT, truncate_i, "truncate_i", args, 1));
-#else
-  if (prog->constants == 1)
-    {
-      if (prog->walk_result == NEED_INT_RESULT)
-	return(make_xen_value(R_INT, add_int_to_ptree(prog, (Int)f_truncate(prog->dbls[args[1]->addr])), R_CONSTANT));
-      return(make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, f_truncate(prog->dbls[args[1]->addr])), R_CONSTANT));
-    }
-  if (prog->walk_result == NEED_INT_RESULT)
-    return(package(prog, R_INT, truncate_i, "truncate_i", args, 1));
-  return(package(prog, R_FLOAT, truncate_f, "truncate_f", args, 1));
-#endif
 }
 
 /* ---------------- floor ---------------- */
-
-#if (!HAVE_S7)
-static void floor_f(int *args, ptree *pt) {FLOAT_RESULT = floor(FLOAT_ARG_1);}
-#endif
 
 static void floor_i(int *args, ptree *pt) {INT_RESULT = (Int)floor(FLOAT_ARG_1);}
 
@@ -7480,17 +7161,8 @@ static xen_value *floor_1(ptree *prog, xen_value **args, int num_args)
   if (args[1]->type == R_INT)
     return(copy_xen_value(args[1]));
 
-#if HAVE_S7
   if (prog->constants == 1)
     return(make_xen_value(R_INT, add_int_to_ptree(prog, (Int)floor(prog->dbls[args[1]->addr])), R_CONSTANT));
-#else
-  if (prog->constants == 1)
-    {
-      if (prog->walk_result == NEED_INT_RESULT)
-	return(make_xen_value(R_INT, add_int_to_ptree(prog, (Int)floor(prog->dbls[args[1]->addr])), R_CONSTANT));
-      return(make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, floor(prog->dbls[args[1]->addr])), R_CONSTANT));
-    }
-#endif
 
   if (prog->triple_ctr > 0)
     {
@@ -7552,21 +7224,11 @@ static xen_value *floor_1(ptree *prog, xen_value **args, int num_args)
 	}
     }
 
-#if HAVE_S7
   return(package(prog, R_INT, floor_i, "floor_i", args, 1));
-#else
-  if (prog->walk_result == NEED_INT_RESULT)
-    return(package(prog, R_INT, floor_i, "floor_i", args, 1));
-  return(package(prog, R_FLOAT, floor_f, "floor_f", args, 1));
-#endif
 }
 
 
 /* ---------------- ceiling ---------------- */
-
-#if (!HAVE_S7)
-static void ceiling_f(int *args, ptree *pt) {FLOAT_RESULT = ceil(FLOAT_ARG_1);}
-#endif
 
 static void ceiling_i(int *args, ptree *pt) {INT_RESULT = (Int)ceil(FLOAT_ARG_1);}
 
@@ -7575,21 +7237,9 @@ static xen_value *ceiling_1(ptree *prog, xen_value **args, int num_args)
 {
   if (args[1]->type == R_INT)
     return(copy_xen_value(args[1]));
-#if HAVE_S7
   if (prog->constants == 1)
     return(make_xen_value(R_INT, add_int_to_ptree(prog, (Int)ceil(prog->dbls[args[1]->addr])), R_CONSTANT));
   return(package(prog, R_INT, ceiling_i, "ceiling_i", args, 1));
-#else
-  if (prog->constants == 1)
-    {
-      if (prog->walk_result == NEED_INT_RESULT)
-	return(make_xen_value(R_INT, add_int_to_ptree(prog, (Int)ceil(prog->dbls[args[1]->addr])), R_CONSTANT));
-      return(make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, ceil(prog->dbls[args[1]->addr])), R_CONSTANT));
-    }
-  if (prog->walk_result == NEED_INT_RESULT)
-    return(package(prog, R_INT, ceiling_i, "ceiling_i", args, 1));
-  return(package(prog, R_FLOAT, ceiling_f, "ceiling_f", args, 1));
-#endif
 }
 
 
@@ -7997,25 +7647,6 @@ static xen_value *mus_random_1(ptree *prog, xen_value **args, int num_args)
 }
 
 
-#if (HAVE_GUILE)
-
-static void random_f(int *args, ptree *pt) {FLOAT_RESULT = mus_frandom(FLOAT_ARG_1);}
-static void random_f_add(int *args, ptree *pt) {FLOAT_RESULT = FLOAT_ARG_2 + mus_frandom(FLOAT_ARG_1);}
-static void random_f_1(int *args, ptree *pt) {FLOAT_RESULT = mus_frandom_no_input();}
-static void random_i(int *args, ptree *pt) {INT_RESULT = mus_irandom(INT_ARG_1);}
-
-static xen_value *random_1(ptree *prog, xen_value **args, int num_args)
-{
-  if (args[1]->type == R_INT)
-    return(package(prog, R_INT, random_i, "random_i", args, 1));
-  if ((prog->constants == 1) &&
-      (prog->dbls[args[1]->addr] == 1.0))
-    return(package(prog, R_FLOAT, random_f_1, "random_f_1", args, 0));
-  return(package(prog, R_FLOAT, random_f, "random_f", args, 1));
-}
-
-#else
-
 static void random_f(int *args, ptree *pt) {FLOAT_RESULT = s7_random(s7) * FLOAT_ARG_1;}
 static void random_f_add(int *args, ptree *pt) {FLOAT_RESULT = FLOAT_ARG_2 + s7_random(s7) * FLOAT_ARG_1;}
 static void random_i(int *args, ptree *pt) {INT_RESULT = (Int)(s7_random(s7) * INT_ARG_1);}
@@ -8026,8 +7657,6 @@ static xen_value *random_1(ptree *prog, xen_value **args, int num_args)
     return(package(prog, R_INT, random_i, "random_i", args, 1));
   return(package(prog, R_FLOAT, random_f, "random_f", args, 1));
 }
-
-#endif
 
 
 
@@ -8266,9 +7895,7 @@ static void display_symbol(int *args, ptree *pt)
 {
   char *temp = NULL;
   fprintf(stdout, "%s", temp = XEN_AS_STRING(RXEN_ARG_1));
-#if HAVE_S7
   if (temp) free(temp);
-#endif
 }
 
 
@@ -8276,9 +7903,7 @@ static void display_key(int *args, ptree *pt)
 {
   char *temp = NULL;
   fprintf(stdout, "%s", temp = XEN_AS_STRING(RXEN_ARG_1));
-#if HAVE_S7
   if (temp) free(temp);
-#endif
 }
 
 
@@ -8337,7 +7962,7 @@ static void display_vct_vect(int *args, ptree *pt)
 
 
 #if USE_SND
-static void display_rd(int *args, ptree *pt) {char *buf = NULL; fprintf(stdout, "%s", buf = sampler_to_string(READER_ARG_1)); free(buf);}
+static void display_rd(int *args, ptree *pt) {char *buf = NULL; fprintf(stdout, "%s", buf = sampler_to_string(SAMPLER_ARG_1)); free(buf);}
 #endif
 
 static void display_sd(int *args, ptree *pt) {char *buf = NULL; fprintf(stdout, "%s", buf = sound_data_to_string(SOUND_DATA_ARG_1)); free(buf);}
@@ -8375,7 +8000,7 @@ static xen_value *display_1(ptree *pt, xen_value **args, int num_args)
     case R_SYMBOL:       return(package(pt, R_BOOL, display_symbol, "display_symbol", args, 1));  break;
     case R_KEYWORD:      return(package(pt, R_BOOL, display_key, "display_key", args, 1));        break;
 #if USE_SND
-    case R_READER:       return(package(pt, R_BOOL, display_rd, "display_rd", args, 1));          break;
+    case R_SAMPLER:       return(package(pt, R_BOOL, display_rd, "display_rd", args, 1));          break;
 #endif
     case R_FLOAT_VECTOR:
     case R_VCT:          return(package(pt, R_BOOL, display_vct, "display_vct", args, 1));        break;
@@ -8611,17 +8236,10 @@ STR_CI_REL_OP(lt, string<?, >=)
 
 /* ---------------- number->string ---------------- */
 
-#if HAVE_S7
-  static char *f2s_1(Double n) {return(DOUBLE_TO_STRING(n));}
-  static char *f2s_2(Double n, int rad) {return(DOUBLE_TO_STRING_WITH_RADIX(n, rad));}
-  static char *i2s_1(Int n) {return(INTEGER_TO_STRING(n));}
-  static char *i2s_2(Int n, int rad) {return(INTEGER_TO_STRING_WITH_RADIX(n, rad));}
-#else
-  static char *f2s_1(Double n) {return(mus_strdup(DOUBLE_TO_STRING(n)));}
-  static char *f2s_2(Double n, int rad) {return(mus_strdup(DOUBLE_TO_STRING_WITH_RADIX(n, rad)));}
-  static char *i2s_1(Int n) {return(mus_strdup(INTEGER_TO_STRING(n)));}
-  static char *i2s_2(Int n, int rad) {return(mus_strdup(INTEGER_TO_STRING_WITH_RADIX(n, rad)));}
-#endif
+static char *f2s_1(Double n) {return(DOUBLE_TO_STRING(n));}
+static char *f2s_2(Double n, int rad) {return(DOUBLE_TO_STRING_WITH_RADIX(n, rad));}
+static char *i2s_1(Int n) {return(INTEGER_TO_STRING(n));}
+static char *i2s_2(Int n, int rad) {return(INTEGER_TO_STRING_WITH_RADIX(n, rad));}
 
 static void number2string_f1(int *args, ptree *pt) {if (STRING_RESULT) free(STRING_RESULT); STRING_RESULT = f2s_1(FLOAT_ARG_1);}
 
@@ -8814,8 +8432,8 @@ static void funcall_nf(int *args, ptree *pt)
  	break;
 
 #if USE_SND
-      case R_READER: 
- 	pt->readers[func->args[i]] = pt->readers[args[i + 2]]; 
+      case R_SAMPLER: 
+ 	pt->samplers[func->args[i]] = pt->samplers[args[i + 2]]; 
  	break;
 #endif
 
@@ -8879,8 +8497,8 @@ static void funcall_nf(int *args, ptree *pt)
       break;
 
 #if USE_SND
-    case R_READER:   
-      READER_RESULT = pt->readers[fres->addr];   
+    case R_SAMPLER:   
+      SAMPLER_RESULT = pt->samplers[fres->addr];   
       break;
 #endif
 
@@ -9349,36 +8967,36 @@ static xen_value *report_in_minibuffer_1(ptree *pt, xen_value **args, int num_ar
 
 /* ---------------- sampler stuff ---------------- */
 
-static void reader_f(int *args, ptree *pt) {FLOAT_RESULT = read_sample(READER_ARG_1);}
+static void sampler_f(int *args, ptree *pt) {FLOAT_RESULT = read_sample(SAMPLER_ARG_1);}
 
 
-static xen_value *reader_0(ptree *prog, xen_value **args, xen_value *sf)
+static xen_value *sampler_0(ptree *prog, xen_value **args, xen_value *sf)
 {
   if (args[0]) free(args[0]);
   args[0] = make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, 0.0), R_VARIABLE);
-  add_triple_to_ptree(prog, va_make_triple(reader_f, "reader_f", 2, args[0], sf));
+  add_triple_to_ptree(prog, va_make_triple(sampler_f, "sampler_f", 2, args[0], sf));
   return(args[0]);
 }
 
-static xen_value *reader_1(ptree *prog, xen_value **args, int num_args) {return(package(prog, R_FLOAT, reader_f, "reader_f", args, 1));}
+static xen_value *sampler_1(ptree *prog, xen_value **args, int num_args) {return(package(prog, R_FLOAT, sampler_f, "sampler_f", args, 1));}
 
 
-static void next_reader_f(int *args, ptree *pt) {FLOAT_RESULT = protected_next_sample(READER_ARG_1);}
+static void next_sampler_f(int *args, ptree *pt) {FLOAT_RESULT = protected_next_sample(SAMPLER_ARG_1);}
 
-static xen_value *next_sample_1(ptree *prog, xen_value **args, int num_args) {return(package(prog, R_FLOAT, next_reader_f, "next_reader_f", args, 1));}
-
-
-static void previous_reader_f(int *args, ptree *pt) {FLOAT_RESULT = protected_previous_sample(READER_ARG_1);}
-
-static xen_value *previous_sample_1(ptree *prog, xen_value **args, int num_args) {return(package(prog, R_FLOAT, previous_reader_f, "previous_reader_f", args, 1));}
+static xen_value *next_sample_1(ptree *prog, xen_value **args, int num_args) {return(package(prog, R_FLOAT, next_sampler_f, "next_sampler_f", args, 1));}
 
 
-static void reader_at_end_b_s(int *args, ptree *pt) {BOOL_RESULT = READER_ARG_1->at_eof;}
+static void previous_sampler_f(int *args, ptree *pt) {FLOAT_RESULT = protected_previous_sample(SAMPLER_ARG_1);}
+
+static xen_value *previous_sample_1(ptree *prog, xen_value **args, int num_args) {return(package(prog, R_FLOAT, previous_sampler_f, "previous_sampler_f", args, 1));}
+
+
+static void sampler_at_end_b_s(int *args, ptree *pt) {BOOL_RESULT = SAMPLER_ARG_1->at_eof;}
 
 static xen_value *sampler_at_end_p_1(ptree *prog, xen_value **args, int num_args) 
 {
-  if (args[1]->type == R_READER)
-    return(package(prog, R_BOOL, reader_at_end_b_s, "reader_at_end_b_s", args, 1));
+  if (args[1]->type == R_SAMPLER)
+    return(package(prog, R_BOOL, sampler_at_end_b_s, "sampler_at_end_b_s", args, 1));
   return(NULL);
 }
 
@@ -9394,9 +9012,9 @@ static void make_sampler_r(int *args, ptree *pt)
       if (INT_ARG_5 == -1)
 	pos = cp->edit_ctr;
       else pos = INT_ARG_5;
-      free_snd_fd(READER_RESULT);
+      free_snd_fd(SAMPLER_RESULT);
       if (INT_ARG_4 == -1) direction = READ_BACKWARD;
-      READER_RESULT = init_sample_read_any(INT_ARG_1, cp, direction, pos);
+      SAMPLER_RESULT = init_sample_read_any(INT_ARG_1, cp, direction, pos);
     }
 }
 
@@ -9427,8 +9045,8 @@ static xen_value *make_sampler_1(ptree *pt, xen_value **args, int num_args)
       else true_args[1] = args[1];
     }
   true_args[0] = args[0];
-  rtn = package(pt, R_READER, make_sampler_r, "make_sampler_r", true_args, 5);
-  add_obj_to_gcs(pt, R_READER, rtn->addr);
+  rtn = package(pt, R_SAMPLER, make_sampler_r, "make_sampler_r", true_args, 5);
+  add_obj_to_gcs(pt, R_SAMPLER, rtn->addr);
   for (k = num_args + 1; k <= 5; k++) free(true_args[k]);
   if (free_true_args_1) free(true_args[1]);
   return(rtn);
@@ -9613,8 +9231,8 @@ static void list_ref(int *args, ptree *pt)
       break;
 
 #if USE_SND
-    case R_READER:   
-      READER_RESULT = pt->readers[addr];   
+    case R_SAMPLER:   
+      SAMPLER_RESULT = pt->samplers[addr];   
       break;
 #endif
     }
@@ -9731,7 +9349,7 @@ static void list_set(int *args, ptree *pt)
     case R_VCT:          pt->vcts[addr] = VCT_ARG_3;                 break;
     case R_SOUND_DATA:   pt->sds[addr] = SOUND_DATA_ARG_3;           break;
 #if USE_SND
-    case R_READER:       pt->readers[addr] = READER_ARG_3;           break;
+    case R_SAMPLER:       pt->samplers[addr] = SAMPLER_ARG_3;           break;
 #endif
     case R_LIST:         pt->lists[addr] = LIST_ARG_3;               break;
     case R_LIST_VECTOR:
@@ -9818,18 +9436,26 @@ static void length_0(int *args, ptree *pt)
 static xen_value *vector_length_1(ptree *prog, xen_value **args, int num_args);
 static xen_value *vct_length_1(ptree *prog, xen_value **args, int num_args);
 static xen_value *mus_length_0(ptree *prog, xen_value **args, int num_args);
+static xen_value *sound_data_length_1(ptree *prog, xen_value **args, int num_args);
+
+static void sound_length_0(int *args, ptree *pt) {INT_RESULT = CURRENT_SAMPLES(ss->sounds[SOUND_ARG_1]->chans[0]);}
+static xen_value *sound_length_1(ptree *prog, xen_value **args, int num_args) {return(package(prog, R_INT, sound_length_0, "length", args, 1));}
+
+static void mix_length_0(int *args, ptree *pt) {INT_RESULT = mix_length_from_id(MIX_ARG_1);}
+static xen_value *mix_length_1(ptree *prog, xen_value **args, int num_args) {return(package(prog, R_INT, mix_length_0, "length", args, 1));}
+
+static void region_length_0(int *args, ptree *pt) {INT_RESULT = region_len(REGION_ARG_1);}
+static xen_value *region_length_1(ptree *prog, xen_value **args, int num_args) {return(package(prog, R_INT, region_length_0, "length", args, 1));}
 
 static xen_value *length_1(ptree *prog, xen_value **args, int num_args)
 {
   switch (args[1]->type)
     {
-    case R_LIST:
-      return(package(prog, R_INT, length_0, "length", args, 1));
-      break;
-
-    case R_VCT:
-      return(vct_length_1(prog, args, num_args));
-      break;
+    case R_LIST:       return(package(prog, R_INT, length_0, "length", args, 1));
+    case R_VCT:        return(vct_length_1(prog, args, num_args));
+    case R_STRING:     return(string_length_1(prog, args, num_args));
+    case R_CLM:        return(mus_length_0(prog, args, num_args));
+    case R_SOUND_DATA: return(sound_data_length_1(prog, args, num_args));
 
     case R_FLOAT_VECTOR: 
     case R_LIST_VECTOR:  
@@ -9837,17 +9463,14 @@ static xen_value *length_1(ptree *prog, xen_value **args, int num_args)
     case R_VCT_VECTOR:  
     case R_CLM_VECTOR:   
       return(vector_length_1(prog, args, num_args));
-      break;
 
-    case R_STRING:
-      return(string_length_1(prog, args, num_args));
-      break;
-      
-    case R_CLM:
-      return(mus_length_0(prog, args, num_args));
-      break;
+#if USE_SND
+    case R_SOUND:      return(sound_length_1(prog, args, num_args));    /* (let ((snd (integer->sound 0))) (run (lambda () (length snd)))) */
+    case R_MIX:        return(mix_length_1(prog, args, num_args));
+    case R_REGION:     return(region_length_1(prog, args, num_args));
+      /* not R_SAMPLER because it has no clear length (read dir can change etc) */
+#endif
     }
-
   return(run_warn("unsupported arg type for length"));
 }
 
@@ -9857,8 +9480,6 @@ static xen_value *length_1(ptree *prog, xen_value **args, int num_args)
    static xen_value *vct_fill_1(ptree *pt, xen_value **args, int num_args)
    static xen_value *vector_fill_1(ptree *prog, xen_value **args, int num_args)
    but no list_fill and clm cases are handled specially
-  
-   also the types are ready, so mix|mark|region etc stuff could be added
 */
 
 
@@ -11670,11 +11291,7 @@ static xen_value *clean_up(xen_value *result, xen_value **args, int args_size);
 static xen_value *splice_in_function_body(ptree *prog, XEN proc, xen_value **args, int num_args, const char *funcname)
 {
   XEN func_form;
-#if HAVE_S7
   func_form = XEN_CAR(XEN_PROCEDURE_SOURCE(proc));
-#else
-  func_form = XEN_PROCEDURE_SOURCE(proc);
-#endif
   /* fprintf(stderr,"splice in %s\n", XEN_AS_STRING(func_form)); */
 
   if ((XEN_LIST_P(func_form)) &&
@@ -11711,17 +11328,10 @@ static xen_value *splice_in_method(ptree *prog, xen_value **args, int num_args, 
 
   /* fprintf(stderr, "splice in method %s (%s)\n", method_name, (use_getter == USE_GET_METHOD) ? "getter" : "setter"); */
   
-#if HAVE_GUILE
-  method_str = mus_format("(%s-methods)", type_name(args[1]->type));
-  methods = XEN_EVAL_C_STRING(method_str);
-  methods_loc = PROTECT(methods);
-  free(method_str);
-#else
   method_str = mus_format("%s-methods", type_name(args[1]->type));
   methods = s7_call(s7, s7_name_to_value(s7, method_str), xen_nil);
   methods_loc = PROTECT(methods);
   free(method_str);
-#endif
 
   /* fprintf(stderr, "methods: %s\n", XEN_AS_STRING(methods)); */
 
@@ -11731,17 +11341,6 @@ static xen_value *splice_in_method(ptree *prog, xen_value **args, int num_args, 
 		       methods);
       if (XEN_LIST_P(pair))
 	{
-#if HAVE_GUILE
-	  if (use_getter == USE_GET_METHOD)
-	    result = splice_in_function_body(prog, XEN_CADR(pair), args, num_args, NULL);
-	  else
-	    {
-	      if (XEN_TRUE_P(XEN_PROCEDURE_WITH_SETTER_P(XEN_CADR(pair))))
-		result = splice_in_function_body(prog, SCM_SETTER(XEN_CADR(pair)), args, num_args, NULL);
-	      else result = splice_in_function_body(prog, XEN_CADDR(pair), args, num_args, NULL);
-	    }
-#endif
-#if HAVE_S7
 	  if (use_getter == USE_GET_METHOD)
 	    {
 	      if (XEN_PROCEDURE_WITH_SETTER_P(XEN_CADR(pair)))
@@ -11754,7 +11353,6 @@ static xen_value *splice_in_method(ptree *prog, xen_value **args, int num_args, 
 		result = splice_in_function_body(prog, s7_procedure_with_setter_setter(XEN_CADR(pair)), args, num_args, NULL);
 	      else result = splice_in_function_body(prog, XEN_CADDR(pair), args, num_args, NULL);
 	    }
-#endif
 	}
     }
 
@@ -13081,12 +12679,7 @@ static xen_value *out_any_2(ptree *prog, xen_value **args, int num_args)
 static xen_value *out_any_function_body(ptree *prog, XEN proc, xen_value **args, int num_args, const char *funcname)
 {
   XEN func_form;
-
-#if HAVE_S7
   func_form = XEN_CAR(XEN_PROCEDURE_SOURCE(proc));
-#else
-  func_form = XEN_PROCEDURE_SOURCE(proc);
-#endif
 
   if ((XEN_LIST_P(func_form)) &&
       (XEN_SYMBOL_P(XEN_CAR(func_form))) &&
@@ -14230,7 +13823,7 @@ static xen_value *string_p_1(ptree *prog, xen_value **args, int num_args)
 #if USE_SND
 static xen_value *sampler_p_1(ptree *prog, xen_value **args, int num_args)
 {
-  return(make_xen_value(R_BOOL, add_int_to_ptree(prog, args[1]->type == R_READER), R_CONSTANT));
+  return(make_xen_value(R_BOOL, add_int_to_ptree(prog, args[1]->type == R_SAMPLER), R_CONSTANT));
 }
 #endif
 
@@ -14420,7 +14013,6 @@ static XEN wrap_generator(ptree *pt, int addr)
 	return(val);
     }
 #else
-#if HAVE_S7
   if (pt->clm_locs[addr] >= 0)
     {
       XEN val;
@@ -14429,7 +14021,6 @@ static XEN wrap_generator(ptree *pt, int addr)
 	  (gen == XEN_TO_MUS_ANY(val)))
 	return(val);
     }
-#endif
 #endif
 
   /* desperate fallback */
@@ -14487,7 +14078,7 @@ static XEN xen_value_to_xen(ptree *pt, xen_value *v)
 	}
       break;
 
-      /* if xen_value_to_xen for R_CLM|VCT|LIST_VECTOR READER also in free_xen_var */
+      /* if xen_value_to_xen for R_CLM|VCT|LIST_VECTOR SAMPLER also in free_xen_var */
       /*  clm_vector data.gens=mus_any direct from scheme obj: is it safe to simply repackage? */
 
     case R_SOUND_DATA:
@@ -14610,18 +14201,6 @@ static XEN xen_values_to_list(ptree *pt, int *args)
   return(lst);
 }
 
-
-#if (!HAVE_S7)
-static XEN format_func;
-
-static void format_s(int *args, ptree *pt) 
-{ /* (let ((v (make-vector 3 123))) (run (lambda () (format #t "~A~%" v)))) */
-  if (STRING_RESULT) free(STRING_RESULT);
-  /* fprintf(stderr, "apply: %s\n", XEN_AS_STRING(xen_values_to_list(pt, args))); */
-  STRING_RESULT = mus_strdup(XEN_TO_C_STRING(XEN_APPLY(format_func, xen_values_to_list(pt, args), "format")));
-}
-
-#else
 
 static void format_s(int *args, ptree *pt) 
 {
@@ -14769,9 +14348,6 @@ static xen_value *getpid_1(ptree *prog, xen_value **args, int num_args)
 }
 
 
-#endif
-
-
 static xen_value *format_1(ptree *prog, xen_value **args, int num_args)
 {
   return(package_n_xen_args(prog, R_STRING, format_s, "format_s", args, num_args));
@@ -14890,71 +14466,6 @@ static walk_info *walker_with_declare(walk_info *w, int arg, int args, ...)
 }
 
 
-#if (!HAVE_S7)
-
-static void clm_print_s(int *args, ptree *pt) 
-{
-  if (STRING_RESULT) free(STRING_RESULT);
-  STRING_RESULT = mus_strdup(XEN_TO_C_STRING(XEN_APPLY(format_func, xen_values_to_list(pt, args), "clm-print")));
-#if USE_SND
-  listener_append(STRING_RESULT);
-#else
-  fprintf(stdout, "%s\n", STRING_RESULT);
-#endif
-}
-
-
-static bool clm_print_walk_property_set = false;
-
-static xen_value *clm_print_1(ptree *prog, xen_value **args, int num_args)
-{
-  if (!clm_print_walk_property_set)
-    {
-      XEN_SET_WALKER(XEN_NAME_AS_C_STRING_TO_VARIABLE("clm-print"),
-		     XEN_WRAP_C_POINTER(make_walker(clm_print_1, NULL, NULL, 1, UNLIMITED_ARGS, R_STRING, false, 1, -R_XEN)));
-      clm_print_walk_property_set = true;
-    }
-  return(package_n_xen_args(prog, R_STRING, clm_print_s, "clm_print_s", args, num_args));
-}
-
-
-static bool format_walk_property_set = false;
-
-static xen_value *set_up_format(ptree *prog, xen_value **args, int num_args, bool is_format)
-{
-  XEN format_var = XEN_FALSE;
-  format_var = (XEN)XEN_NAME_AS_C_STRING_TO_VARIABLE("format");
-  if ((!(XEN_FALSE_P(format_var))) &&
-      (XEN_PROCEDURE_P(XEN_VARIABLE_REF(format_var))))
-    {
-      int i;
-      /* define a walker for format */
-      if (!format_walk_property_set)
-	{
-	  XEN_SET_WALKER(format_var, 
-			 XEN_WRAP_C_POINTER(make_walker(format_1, NULL, NULL, 1, UNLIMITED_ARGS, R_STRING, false, 1, -R_XEN)));
-	}
-      format_func = XEN_VARIABLE_REF(format_var);
-      /* any further formats will be checked in walk, but this one needs explicit check */
-      for (i = 1; i <= num_args; i++)
-	if (!(xenable(args[i])))
-	  {
-	    char *xv;
-	    xv = describe_xen_value(args[i], prog);
-	    run_warn("can't handle %s as arg %d to %s", xv, i, (is_format) ? "format" : "clm-print");
-	    if (xv) free(xv);
-	    return(NULL);
-	  }
-      /* no cleanup because it is handled in walk */
-      if (is_format) 
-	return(format_1(prog, args, num_args));
-      else return(clm_print_1(prog, args, num_args));
-    }
-  return(run_warn("format not defined"));
-}
-#endif
-
-
 
 /* -------- CLM make functions -------- */
 
@@ -15068,7 +14579,7 @@ static int xen_to_addr(ptree *pt, XEN arg, int type, int addr)
 	    case R_SOUND_DATA:   pt->sds[addr] = NULL;           break;
 	    case R_CLM:          pt->clms[addr] = NULL;          break;
 #if USE_SND
-	    case R_READER:       pt->readers[addr] = NULL;       break;
+	    case R_SAMPLER:       pt->samplers[addr] = NULL;       break;
 #endif
 	    case R_LIST:         pt->lists[addr] = NULL;         break;
 	    case R_LIST_VECTOR:
@@ -15079,9 +14590,7 @@ static int xen_to_addr(ptree *pt, XEN arg, int type, int addr)
 	      {
 		char *temp = NULL;
 		run_warn("run: xen_to_addr: %s %s", temp = XEN_AS_STRING(arg), type_name(type)); 
-#if HAVE_S7
 		if (temp) free(temp);
-#endif
 		return(XEN_TO_ADDR_ERROR);
 	      }
 	      break;
@@ -15091,9 +14600,7 @@ static int xen_to_addr(ptree *pt, XEN arg, int type, int addr)
       {
 	char *temp = NULL;
 	run_warn("run: xen_to_addr 2: %s %s", temp = XEN_AS_STRING(arg), type_name(type));
-#if HAVE_S7
 	if (temp) free(temp);
-#endif
       }
       return(XEN_TO_ADDR_ERROR);
     }
@@ -15107,7 +14614,7 @@ static int xen_to_addr(ptree *pt, XEN arg, int type, int addr)
     case R_SOUND_DATA:   pt->sds[addr] = XEN_TO_SOUND_DATA(arg);            break;
     case R_CLM:          pt->clms[addr] = XEN_TO_MUS_ANY(arg);              break;
 #if USE_SND
-    case R_READER:       pt->readers[addr] = xen_to_sampler(arg);           break;
+    case R_SAMPLER:       pt->samplers[addr] = xen_to_sampler(arg);           break;
     case R_MARK:         pt->ints[addr] = XEN_MARK_TO_C_INT(arg);           break;
     case R_MIX:          pt->ints[addr] = XEN_MIX_TO_C_INT(arg);            break;
     case R_REGION:       pt->ints[addr] = XEN_REGION_TO_C_INT(arg);         break;
@@ -15165,9 +14672,7 @@ static xen_value *quote_form(ptree *prog, XEN form, walk_result_t ignore)
       xen_value *rv;
       char *temp = NULL;
       rv = run_warn("can't handle %s", temp = XEN_AS_STRING(form));
-#if HAVE_S7
       if (temp) free(temp);
-#endif
       return(rv);
     }
   v->constant = R_CONSTANT;
@@ -15394,9 +14899,7 @@ static xen_value *walk(ptree *prog, XEN form, walk_result_t walk_result)
 		      xen_value *rv;
 		      char *temp = NULL;
 		      rv = run_warn("missing expression for %s: %s", XEN_SYMBOL_TO_C_STRING(function), temp = XEN_AS_STRING(form));
-#if HAVE_S7
 		      if (temp) free(temp);
-#endif
 		      return(rv);
 		    }
 
@@ -15406,9 +14909,7 @@ static xen_value *walk(ptree *prog, XEN form, walk_result_t walk_result)
 		      xen_value *rv;
 		      char *temp = NULL;
 		      rv = run_warn("too many expressions for %s: %s", XEN_SYMBOL_TO_C_STRING(function), temp = XEN_AS_STRING(form));
-#if HAVE_S7
 		      if (temp) free(temp);
-#endif
 		      return(rv);
 		    }
 
@@ -15518,8 +15019,8 @@ static xen_value *walk(ptree *prog, XEN form, walk_result_t walk_result)
 	      switch (v->type)
 		{
 #if USE_SND
-		case R_READER:       
-		  if (num_args == 0) res = reader_0(prog, args, v);       
+		case R_SAMPLER:       
+		  if (num_args == 0) res = sampler_0(prog, args, v);       
 		  break;
 #endif
 		case R_CLM:          
@@ -15691,22 +15192,11 @@ static xen_value *walk(ptree *prog, XEN form, walk_result_t walk_result)
 	    }
 	}
 
-#if (!HAVE_S7)
-      if (mus_strcmp(funcname, "format"))
-	return(clean_up(set_up_format(prog, args, num_args, true), args, num_args));
-      if (mus_strcmp(funcname, S_clm_print))
-	return(clean_up(set_up_format(prog, args, num_args, false), args, num_args));
-#endif
-
       /* check for function defined elsewhere, get source, splice in if possible */
       if ((v == NULL) && 
 	  (current_optimization >= SOURCE_OK) &&
 	  (XEN_PROCEDURE_P(rtnval)) &&
-#if (!HAVE_S7)
-	  (XEN_FALSE_P(XEN_PROCEDURE_WITH_SETTER_P(rtnval)))
-#else
 	  (!(XEN_PROCEDURE_WITH_SETTER_P(rtnval)))
-#endif
 	  )
 	{
 	  v = splice_in_function_body(prog, rtnval, args, num_args, funcname);
@@ -15724,14 +15214,12 @@ static xen_value *walk(ptree *prog, XEN form, walk_result_t walk_result)
     {
       int type;
 
-#if HAVE_S7
       if ((s7_is_symbol(form)) &&
 	  (s7_is_constant(form)))
 	{
 	  /* fprintf(stderr, "constant form: %s\n", XEN_AS_STRING(form)); */
 	  form = s7_symbol_local_value(s7, form, s7_cdr(prog->code));
 	}
-#endif
 
       type = mus_run_xen_to_run_type(form);
       /* fprintf(stderr, "line 15765 %s %s\n", XEN_AS_STRING(form), type_name(type)); */
@@ -15745,10 +15233,10 @@ static xen_value *walk(ptree *prog, XEN form, walk_result_t walk_result)
 	case R_BOOL:    return(make_xen_value(R_BOOL,    add_int_to_ptree(prog, (XEN_FALSE_P(form)) ? 0 : 1), R_CONSTANT));          break;
 	case R_KEYWORD: return(make_xen_value(R_KEYWORD, add_xen_to_ptree(prog, form), R_CONSTANT));                                 break;
 #if USE_SND
-	case R_SOUND:   return(make_xen_value(R_INT,     add_int_to_ptree(prog, XEN_SOUND_TO_C_INT(form)), R_CONSTANT));             break;
-	case R_MIX:     return(make_xen_value(R_INT,     add_int_to_ptree(prog, XEN_MIX_TO_C_INT(form)), R_CONSTANT));               break;
-	case R_MARK:    return(make_xen_value(R_INT,     add_int_to_ptree(prog, XEN_MARK_TO_C_INT(form)), R_CONSTANT));              break;
-	case R_REGION:  return(make_xen_value(R_INT,     add_int_to_ptree(prog, XEN_REGION_TO_C_INT(form)), R_CONSTANT));            break;
+	case R_SOUND:   return(make_xen_value(R_SOUND,   add_int_to_ptree(prog, XEN_SOUND_TO_C_INT(form)), R_CONSTANT));             break;
+	case R_MIX:     return(make_xen_value(R_MIX,     add_int_to_ptree(prog, XEN_MIX_TO_C_INT(form)), R_CONSTANT));               break;
+	case R_MARK:    return(make_xen_value(R_MARK,     add_int_to_ptree(prog, XEN_MARK_TO_C_INT(form)), R_CONSTANT));             break;
+	case R_REGION:  return(make_xen_value(R_REGION,     add_int_to_ptree(prog, XEN_REGION_TO_C_INT(form)), R_CONSTANT));         break;
 #endif
 	}
 
@@ -15767,10 +15255,8 @@ static xen_value *walk(ptree *prog, XEN form, walk_result_t walk_result)
       char *temp1 = NULL, *temp2 = NULL;
       /* fprintf(stderr, "can't handle %s\n", XEN_AS_STRING(form)); */
       rv = run_warn("can't handle: %s (%s)", temp1 = XEN_AS_STRING(form), temp2 = XEN_AS_STRING(XEN_PROCEDURE_SOURCE(prog->code)));
-#if HAVE_S7
       if (temp1) free(temp1);
       if (temp2) free(temp2);
-#endif
       return(rv);
     }
 
@@ -15912,18 +15398,7 @@ static struct ptree *form_to_ptree_1(XEN code, int decls, int *types)
 
   prog->lambda_args = decls;
   prog->lambda_arg_types = types;
-
-#if HAVE_GUILE
-  if ((XEN_PROCEDURE_P(XEN_CADR(code))) && 
-      (!(XEN_APPLICABLE_SMOB_P(XEN_CADR(code))))) /* applicable smobs cause confusion here */
-    prog->code = XEN_CADR(code);                  /* need env before starting to walk the code */
-  else prog->code = XEN_FALSE;                    /* many confusing cases here -- we'll just give up */
-#endif
-
-#if HAVE_S7
   prog->code = code;
-#endif
-
   if (XEN_SYMBOL_P(form))
     {
       mus_run_free_ptree(prog);
@@ -15958,9 +15433,7 @@ static struct ptree *form_to_ptree_1(XEN code, int decls, int *types)
     {
       char *temp = NULL;
       run_warn("can't optimize: %s\n", temp = XEN_AS_STRING(form));
-#if HAVE_S7
       if (temp) free(temp);
-#endif
     }
   return(NULL);
 }
@@ -16063,11 +15536,7 @@ struct ptree *mus_run_form_to_ptree_1_b(XEN code)
 struct ptree *mus_run_form_to_ptree_1_b_without_env(XEN code)
 {
   /* find */
-#if HAVE_S7
   return(mus_run_form_to_ptree_1_b(XEN_PROCEDURE_SOURCE(code)));
-#else
-  return(mus_run_form_to_ptree_1_b(XEN_LIST_2(code, XEN_FALSE)));
-#endif
 }
 
 
@@ -16136,7 +15605,7 @@ mus_float_t mus_run_evaluate_ptreec(struct ptree *pt, mus_float_t arg, XEN objec
 	case R_SOUND_DATA:   if (pt->sds) pt->sds[addr] = XEN_TO_SOUND_DATA(object);                        break;
 	case R_CLM:          if (pt->clms) pt->clms[addr] = XEN_TO_MUS_ANY(object);                         break;
 #if USE_SND
-	case R_READER:       if (pt->readers) pt->readers[addr] = xen_to_sampler(object);                   break;
+	case R_SAMPLER:       if (pt->samplers) pt->samplers[addr] = xen_to_sampler(object);                   break;
 	case R_MIX:          pt->ints[addr] = XEN_MIX_TO_C_INT(object);                                     break;
 	case R_MARK:         pt->ints[addr] = XEN_MARK_TO_C_INT(object);                                    break;
 	case R_REGION:       pt->ints[addr] = XEN_REGION_TO_C_INT(object);                                  break;
@@ -16214,11 +15683,6 @@ static XEN eval_ptree_to_xen(ptree *pt)
 static void init_walkers(void)
 {
   #define INIT_WALKER(Name, Val) XEN_SET_WALKER((XEN)(C_STRING_TO_XEN_SYMBOL(Name)), XEN_WRAP_C_POINTER(Val))
-
-#if (HAVE_GUILE) && (!HAVE_GUILE_CALL_CC)
-  XEN call_cc;
-  XEN_DEFINE_VARIABLE("call/cc", call_cc, XEN_FALSE);
-#endif
 
   walk_sym = C_STRING_TO_XEN_SYMBOL("snd-walk");
   XEN_PROTECT_FROM_GC(walk_sym);
@@ -16318,17 +15782,11 @@ static void init_walkers(void)
   INIT_WALKER("erfc",           make_walker(erfc_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
   INIT_WALKER("lgamma",         make_walker(lgamma_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
 #endif
-#if HAVE_S7
+
   INIT_WALKER("round",          make_walker(round_1, NULL, NULL, 1, 1, R_INT, false, 1, R_NUMBER));
   INIT_WALKER("truncate",       make_walker(truncate_1, NULL, NULL, 1, 1, R_INT, false, 1, R_NUMBER));
   INIT_WALKER("floor",          make_walker(floor_1, NULL, NULL, 1, 1, R_INT, false, 1, R_NUMBER));
   INIT_WALKER("ceiling",        make_walker(ceiling_1, NULL, NULL, 1, 1, R_INT, false, 1, R_NUMBER));
-#else
-  INIT_WALKER("round",          make_walker(round_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
-  INIT_WALKER("truncate",       make_walker(truncate_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
-  INIT_WALKER("floor",          make_walker(floor_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
-  INIT_WALKER("ceiling",        make_walker(ceiling_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
-#endif
   INIT_WALKER("odd?",           make_walker(odd_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_NUMBER));
   INIT_WALKER("even?",          make_walker(even_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_NUMBER));
   INIT_WALKER("zero?",          make_walker(zero_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_NUMBER));
@@ -16402,7 +15860,6 @@ static void init_walkers(void)
   INIT_WALKER("null?",     make_walker(null_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_LIST));
   INIT_WALKER("quote",     make_walker(NULL, quote_form, NULL, 1, 1, R_ANY, false, 0));
 
-#if HAVE_S7
   INIT_WALKER("format",    make_walker(format_1, NULL, NULL, 0, UNLIMITED_ARGS, R_STRING, false, 1, -R_XEN));
   INIT_WALKER("clm-print", make_walker(format_1, NULL, NULL, 0, UNLIMITED_ARGS, R_STRING, false, 1, -R_XEN));
 
@@ -16419,7 +15876,6 @@ static void init_walkers(void)
   INIT_WALKER("current-error-port", make_walker(current_error_port_1, NULL, NULL, 0, 0, R_XEN, false, 0));
 
   INIT_WALKER("s7-version", make_walker(s7_version_1, NULL, NULL, 0, 0, R_STRING, false, 0));
-#endif
 
 
   /* -------- clm funcs */
@@ -16766,10 +16222,10 @@ static void init_walkers(void)
 
 #if USE_SND
   /* -------- snd funcs */
-  INIT_WALKER(S_next_sample,            make_walker(next_sample_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_READER));
-  INIT_WALKER(S_previous_sample,        make_walker(previous_sample_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_READER));
-  INIT_WALKER(S_read_sample,            make_walker(reader_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_READER));
-  INIT_WALKER(S_make_sampler,           make_walker(make_sampler_1, NULL, NULL, 0, 5, R_READER, false, 1, R_NUMBER));
+  INIT_WALKER(S_next_sample,            make_walker(next_sample_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_SAMPLER));
+  INIT_WALKER(S_previous_sample,        make_walker(previous_sample_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_SAMPLER));
+  INIT_WALKER(S_read_sample,            make_walker(sampler_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_SAMPLER));
+  INIT_WALKER(S_make_sampler,           make_walker(make_sampler_1, NULL, NULL, 0, 5, R_SAMPLER, false, 1, R_NUMBER));
   INIT_WALKER(S_sampler_p,              make_walker(sampler_p_1, NULL, NULL, 1, 1, R_BOOL, false, 0));
   INIT_WALKER(S_sampler_at_end_p,       make_walker(sampler_at_end_p_1, NULL, NULL, 1, 1, R_BOOL, false, 0));
 
@@ -16804,7 +16260,6 @@ static XEN g_run_eval(XEN code, XEN arg, XEN arg1, XEN arg2)
   current_optimization = SOURCE_OK;
 #endif
 
-#if HAVE_S7
   s7_pointer cl;
   int gc_loc;
 
@@ -16816,11 +16271,6 @@ static XEN g_run_eval(XEN code, XEN arg, XEN arg1, XEN arg2)
   pt->result = walk(pt, code, NEED_ANY_RESULT);
 
   s7_gc_unprotect_at(s7, gc_loc);
-
-#else
-  pt = make_ptree(8);
-  pt->result = walk(pt, code, NEED_ANY_RESULT);
-#endif
 
   /* fprintf(stderr, "run-eval: %s: %s -> %s\n", XEN_AS_STRING(code), XEN_AS_STRING(arg), (pt->result) ? describe_xen_value(pt->result, pt) : "no result"); */
 
@@ -16907,62 +16357,25 @@ to Scheme and is equivalent to (thunk)."
 
   XEN code;
   ptree *pt = NULL;
+  XEN result;
+  int gc_loc;
 
-#if (!HAVE_S7)
-  code = XEN_CADR(proc_and_code);
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(proc_and_code) && (XEN_REQUIRED_ARGS_OK(proc_and_code, 0)), proc_and_code, XEN_ONLY_ARG, S_run, "a thunk");
+  
+  code = XEN_CONS(XEN_APPEND(XEN_CONS(C_STRING_TO_XEN_SYMBOL("lambda"), 
+				      XEN_EMPTY_LIST),
+			     XEN_CAR(proc_and_code)),
+		  XEN_CDR(proc_and_code));
+  gc_loc = s7_gc_protect(s7, code);
 
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(code) && (XEN_REQUIRED_ARGS_OK(code, 0)), code, XEN_ONLY_ARG, S_run, "a thunk");
-  pt = form_to_ptree(proc_and_code);
+  pt = form_to_ptree(code);
   if (pt)
-    return(eval_ptree_to_xen(pt));
-
-  /* else fallback on straight scheme... */
-  return(XEN_CALL_0(code, S_run));
-
-#else
-
-  {
-    XEN result;
-    int gc_loc;
-    XEN_ASSERT_TYPE(XEN_PROCEDURE_P(proc_and_code) && (XEN_REQUIRED_ARGS_OK(proc_and_code, 0)), proc_and_code, XEN_ONLY_ARG, S_run, "a thunk");
-
-    code = XEN_CONS(XEN_APPEND(XEN_CONS(C_STRING_TO_XEN_SYMBOL("lambda"), 
-					XEN_EMPTY_LIST),
-			       XEN_CAR(proc_and_code)),
-		    XEN_CDR(proc_and_code));
-    gc_loc = s7_gc_protect(s7, code);
-
-    pt = form_to_ptree(code);
-    if (pt)
-      result = eval_ptree_to_xen(pt);
-    else result = XEN_CALL_0(proc_and_code, S_run);
+    result = eval_ptree_to_xen(pt);
+  else result = XEN_CALL_0(proc_and_code, S_run);
     
-    s7_gc_unprotect_at(s7, gc_loc);
-    return(result);
-  }
-
-#endif
-
+  s7_gc_unprotect_at(s7, gc_loc);
+  return(result);
 }
-
-#else
-
-struct ptree *mus_run_form_to_ptree_1_b(XEN code) {return(NULL);}
-struct ptree *mus_run_form_to_ptree_3_f(XEN code) {return(NULL);}
-struct ptree *mus_run_form_to_ptree_1_b_without_env(XEN code) {return(NULL);}
-struct ptree *mus_run_form_to_ptree_1_f(XEN code) {return(NULL);}
-mus_float_t mus_run_evaluate_ptree_1f1v1b2f(struct ptree *pt, mus_float_t arg, vct *v, bool dir) {return(0.0);}
-mus_float_t mus_run_evaluate_ptree_0f2f(struct ptree *pt) {return(0.0);}
-struct ptree *mus_run_form_to_ptree_0_f(XEN code) {return(NULL);}
-mus_float_t mus_run_evaluate_ptree_1f2f(struct ptree *pt, mus_float_t arg) {return(0.0);}
-int mus_run_evaluate_ptree_1f2b(struct ptree *pt, mus_float_t arg) {return(0);}
-void mus_run_free_ptree(struct ptree *pt) {}
-XEN mus_run_ptree_code(struct ptree *pt) {return(XEN_FALSE);}
-mus_float_t mus_run_evaluate_ptreec(struct ptree *pt, mus_float_t arg, XEN object, bool dir, int type) {return(0.0);}
-int mus_run_xen_to_run_type(XEN val) {return(0);}
-#endif
-/* endif WITH_RUN */
-
 
 
 #if USE_SND
@@ -16993,10 +16406,6 @@ static XEN g_set_optimization(XEN val)
 #endif
 
 
-static XEN g_run_safety(void) {return(C_TO_XEN_INT(0));}
-static XEN g_set_run_safety(XEN val) {return(C_TO_XEN_INT(0));}
-
-
 #define S_snd_declare "snd-declare"
 
 static XEN g_snd_declare(XEN args)
@@ -17009,10 +16418,7 @@ static XEN g_snd_declare(XEN args)
 #ifdef XEN_ARGIFY_1
 XEN_NARGIFY_0(g_optimization_w, g_optimization)
 XEN_NARGIFY_1(g_set_optimization_w, g_set_optimization)
-XEN_NARGIFY_0(g_run_safety_w, g_run_safety)
-XEN_NARGIFY_1(g_set_run_safety_w, g_set_run_safety)
 XEN_NARGIFY_1(g_snd_declare_w, g_snd_declare)
-#if WITH_RUN
 XEN_NARGIFY_1(g_run_w, g_run)
 XEN_NARGIFY_1(g_show_ptree_w, g_show_ptree)
 XEN_NARGIFY_4(g_add_clm_field_w, g_add_clm_field)
@@ -17021,14 +16427,10 @@ XEN_ARGIFY_4(g_run_eval_w, g_run_eval)
 XEN_NARGIFY_0(g_report_counts_w, g_report_counts)
 XEN_NARGIFY_0(g_clear_counts_w, g_clear_counts)
 #endif
-#endif
 #else
 #define g_optimization_w g_optimization
 #define g_set_optimization_w g_set_optimization
-#define g_run_safety_w g_run_safety
-#define g_set_run_safety_w g_set_run_safety
 #define g_snd_declare_w g_snd_declare
-#if WITH_RUN
 #define g_run_w g_run
 #define g_show_ptree_w g_show_ptree
 #define g_add_clm_field_w g_add_clm_field
@@ -17036,7 +16438,6 @@ XEN_NARGIFY_0(g_clear_counts_w, g_clear_counts)
 #if WITH_COUNTERS
 #define g_report_counts_w, g_report_counts
 #define g_clear_counts_w, g_clear_counts
-#endif
 #endif
 #endif
 
@@ -17047,22 +16448,11 @@ void mus_init_run(void)
   if (run_inited) fprintf(stderr, "redundant run initialization?");
   run_inited = true;
 
-#if WITH_RUN
-#if (!HAVE_S7)
-
-  XEN_DEFINE_PROCEDURE("run-internal",  g_run_w,           1, 0, 0, "run macro testing...");
-  XEN_EVAL_C_STRING("(defmacro " S_run " (thunk) `(run-internal (list ',thunk ,thunk)))");
-  XEN_SET_DOCUMENTATION(S_run, H_run);
-  XEN_DEFINE_PROCEDURE("run-eval",      g_run_eval_w,      1, 3, 0, "run macro testing...");
-
-#else
-
   XEN_DEFINE_PROCEDURE("run",           g_run_w,           1, 0, 0, "run macro testing...");
   XEN_DEFINE_PROCEDURE("run-eval",      g_run_eval_w,      1, 3, 0, "run macro testing...");
+
   walker_hash_table = s7_make_hash_table(s7, 1031);
   s7_gc_protect(s7, walker_hash_table);
-
-#endif
 
   XEN_DEFINE_PROCEDURE(S_add_clm_field, g_add_clm_field_w, 4, 0, 0, H_add_clm_field);
   XEN_DEFINE_PROCEDURE(S_show_ptree,    g_show_ptree_w,    1, 0, 0, H_show_ptree);
@@ -17074,46 +16464,26 @@ void mus_init_run(void)
 		       
   XEN_YES_WE_HAVE("run");
 
-#else /* else not with run */
-
-#if HAVE_SCHEME
-  XEN_EVAL_C_STRING("(defmacro " S_run " (thunk) `(,thunk))");
-#endif
-#endif
-
-
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_optimization, g_optimization_w, H_optimization, S_setB S_optimization, g_set_optimization_w,  0, 0, 1, 0);
   XEN_DEFINE_PROCEDURE(S_snd_declare, g_snd_declare_w, 1, 0, 0, H_snd_declare);
 
-  /* backwards compatibility */
-  XEN_DEFINE_PROCEDURE_WITH_SETTER("run-safety", g_run_safety_w, "obsolete", S_setB "run-safety", g_set_run_safety_w,  0, 0, 1, 0);
-
-#if HAVE_SCHEME
   XEN_EVAL_C_STRING("(defmacro declare args `(snd-declare ',args))");
   /* declare has to be a macro, else it evaluates its arguments in the fallback-on-scheme case
    *   however, we want it to still be findable on an external function (when using procedure-source to splice in the body)
    *   so in the optimizer case, it sees the original "declare" form, but in the scheme case, the snd-declare (a no-op),
    *   and in the optimizer-splicing-source case, the snd-declare, I hope.
    */
-#endif
 
-
-#if USE_SND && WITH_RUN
+#if USE_SND
   add_ss_watcher(SS_MUS_ERROR_WATCHER, watch_for_mus_error_in_run, NULL);
 #endif
 
-#if WITH_RUN
   #define H_optimization_hook S_optimization_hook " (msg): called if the run macro encounters \
 something it can't optimize.  'msg' is a string description of the offending form:\n\
   (add-hook! " S_optimization_hook " (lambda (msg) (display (format #f \"run trouble: ~A~%\" msg))))\n\
 You can often slightly rewrite the form to make run happy."
-#else
-#define H_optimization_hook S_optimization_hook " (msg): this hook is ignored because 'run' is not implemented."
-#endif
 
   optimization_hook = XEN_DEFINE_HOOK(S_optimization_hook, 1, H_optimization_hook);      /* arg = message */
-
-#if WITH_RUN
 
 #if (!USE_SND)
   current_optimization = MAX_OPTIMIZATION;
@@ -17122,7 +16492,6 @@ You can often slightly rewrite the form to make run happy."
   init_walkers();
   init_type_names();
 
-#if HAVE_S7
   {
     int i;
     s7_pointer *vals;
@@ -17131,6 +16500,57 @@ You can often slightly rewrite the form to make run happy."
       s7_remove_from_heap(s7, vals[i]);
     /* removing the hash table itself is problematic because (for example) add_clm_field adds new entries */
   }
-#endif
-#endif
+
 }
+
+
+/* -------------------------------------------------------------------------------- */
+/* not s7, make some no-ops so other languages has some hope of compiling */
+
+#else
+
+#include "_sndlib.h"
+#include "xen.h"
+#include "vct.h"
+
+#define S_run "run"
+
+struct ptree *mus_run_form_to_ptree_1_b(XEN code) {return(NULL);}
+struct ptree *mus_run_form_to_ptree_3_f(XEN code) {return(NULL);}
+struct ptree *mus_run_form_to_ptree_1_b_without_env(XEN code) {return(NULL);}
+struct ptree *mus_run_form_to_ptree_1_f(XEN code) {return(NULL);}
+mus_float_t mus_run_evaluate_ptree_1f1v1b2f(struct ptree *pt, mus_float_t arg, vct *v, bool dir) {return(0.0);}
+mus_float_t mus_run_evaluate_ptree_0f2f(struct ptree *pt) {return(0.0);}
+struct ptree *mus_run_form_to_ptree_0_f(XEN code) {return(NULL);}
+mus_float_t mus_run_evaluate_ptree_1f2f(struct ptree *pt, mus_float_t arg) {return(0.0);}
+int mus_run_evaluate_ptree_1f2b(struct ptree *pt, mus_float_t arg) {return(0);}
+void mus_run_free_ptree(struct ptree *pt) {}
+XEN mus_run_ptree_code(struct ptree *pt) {return(XEN_FALSE);}
+mus_float_t mus_run_evaluate_ptreec(struct ptree *pt, mus_float_t arg, XEN object, bool dir, int type) {return(0.0);}
+int mus_run_xen_to_run_type(XEN val) {return(0);}
+
+#define S_optimization "optimization"
+static XEN g_optimization(void) {return(C_TO_XEN_INT(0));}
+static XEN g_set_optimization(XEN val) {return(C_TO_XEN_INT(0));}
+
+static XEN optimization_hook;
+
+#ifdef XEN_ARGIFY_1
+XEN_NARGIFY_0(g_optimization_w, g_optimization)
+XEN_NARGIFY_1(g_set_optimization_w, g_set_optimization)
+#else
+#define g_optimization_w g_optimization
+#define g_set_optimization_w g_set_optimization
+#endif
+
+void mus_init_run(void)
+{
+#if HAVE_GUILE
+  XEN_EVAL_C_STRING("(defmacro " S_run " (thunk) `(,thunk))");
+#endif
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER("optimization", g_optimization_w, "a no-op", S_setB S_optimization, g_set_optimization_w,  0, 0, 1, 0);
+  optimization_hook = XEN_DEFINE_HOOK("optimization-hook", 1, "a no-op");
+}
+
+#endif

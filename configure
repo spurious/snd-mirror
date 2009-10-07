@@ -11999,10 +11999,6 @@ fi
     if test "`${GUILE_CONFIG_path}${GUILE_name} -c '(display (string<=? (version) "1.3.4"))'`" = "#t"; then
       echo found old out-of-date Guile library
     fi
-    if test "`${GUILE_CONFIG_path}${GUILE_name} -c '(display (string>=? (version) "1.5"))'`" = "#t"; then
-      $as_echo "#define WITH_RUN 1" >>confdefs.h
-
-    fi
     if test "$with_snd_as_pd_external" = yes ; then
       XEN_LIBS="`${GUILE_CONFIG_path}${GUILE_name} -c '(display (string-append (cdr (assoc (quote libdir) %guile-build-info)) "/libguile.a " (cdr (assoc (quote LIBS) %guile-build-info))))'`"
     fi
@@ -12053,8 +12049,6 @@ if test "x$ac_cv_header_complex_h" = x""yes; then :
 fi
 
 
-
-    $as_echo "#define WITH_RUN 1" >>confdefs.h
 
     LOCAL_LANGUAGE="s7"
     S7_LIB="s7.o"

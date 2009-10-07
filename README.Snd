@@ -599,13 +599,6 @@ to install the guile-devel package.  Otherwise the configure process
 will say it can't find Guile (actually guile-config).
 
 
----- Scheme ----
-
-Don't use the gcc optimization switch -ffast-math!  It disables various
-checks for NaN's causing various math functions to fail.
-
-
-
 ---- Gtk and OpenGL ----
 
 The Gtk/GL version of Snd can kill the X server!  I don't know why, and

@@ -2552,7 +2552,7 @@ static void focus_follows_mouse_toggle(prefs_info *prf)
 
 
 
-#if WITH_RUN
+#if HAVE_S7
 /* ---------------- optimization ---------------- */
 
 static int rts_optimization = DEFAULT_OPTIMIZATION;

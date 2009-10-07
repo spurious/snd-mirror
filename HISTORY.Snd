@@ -1,6 +1,8 @@
 Snd change log
 
+ 7-Oct:     removed run-safety; the run macro only works in s7.
  6-Oct:     removed *snd-loaded-files* and *snd-remember-paths*.
+            removed tools/sed-href, tools/lines.scm, and tools/check-gtk.scm.
  29-Sep:    mixes are objects (not ints), integer->mix and mix->integer.
             all "sample-reader" and "sample_reader" names changed to "sampler".
             marks are objects (not ints), integer->mark and mark->integer.
@@ -10,7 +12,7 @@ Snd change log
               region->vct, region->frame, make-region-frame-reader.
             sounds are objects, but integers are still ok, integer->sound and sound->integer.
 	    players are objects.
-            removed export-all.scm, snd4.scm.
+            removed export-all.scm, snd4.scm, snd5.scm.
  17-Sep:    Snd 10.9.
  10-Sep:    removed show-backtrace. default optimization is 6.
  9-Aug:     Snd 10.8.

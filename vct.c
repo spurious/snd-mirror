@@ -635,16 +635,12 @@ v. " vct_map_example " is the same as " vct_fill_example
   XEN_ASSERT_TYPE(MUS_VCT_P(obj), obj, XEN_ARG_1, S_vct_mapB, "a vct");
 
   v = XEN_TO_VCT(obj);
-#if WITH_RUN && USE_SND
+#if HAVE_S7 && USE_SND
   {
     struct ptree *pt = NULL;
     if ((optimization(ss)) > 0)
       {
-#if HAVE_S7
 	pt = mus_run_form_to_ptree_0_f(XEN_PROCEDURE_SOURCE(proc));
-#else
-	pt = mus_run_form_to_ptree_0_f(proc);
-#endif
 	if (pt)
 	  {
 	    for (i = 0; i < v->length; i++) 
@@ -653,9 +649,6 @@ v. " vct_map_example " is the same as " vct_fill_example
 	    return(xen_return_first(obj, proc));
 	  }
       }
-#if (!HAVE_S7)
-    proc = XEN_CADR(proc);
-#endif
 
     XEN_ASSERT_TYPE(XEN_PROCEDURE_P(proc) && (XEN_REQUIRED_ARGS_OK(proc, 0)), proc, XEN_ARG_2, S_vct_mapB, "a thunk");
     for (i = 0; i < v->length; i++) 
@@ -1294,14 +1287,8 @@ void mus_vct_init(void)
   XEN_DEFINE_PROCEDURE(S_vct,               g_vct_w,           0, 0, 1, H_vct);
   XEN_DEFINE_SET_PROCEDURE(S_vct_reverse,   g_vct_reverse_w,   1, 1, 0, H_vct_reverse);
 
-#if WITH_RUN && USE_SND
-#if HAVE_S7
+#if HAVE_S7 && USE_SND
   XEN_DEFINE_SET_PROCEDURE(S_vct_mapB,      g_vct_mapB_w,      2, 0, 0, H_vct_mapB);
-#else
-  XEN_DEFINE_PROCEDURE("vct-map-1",         g_vct_mapB_w,      2, 0, 0, H_vct_mapB);
-  XEN_EVAL_C_STRING("(defmacro vct-map! (v form) `(vct-map-1 ,v (list ',form ,form)))");
-  XEN_SET_DOCUMENTATION(S_vct_mapB, H_vct_mapB);
-#endif
 #else
   XEN_DEFINE_PROCEDURE(S_vct_mapB,          g_vct_mapB_w,      2, 0, 0, H_vct_mapB);
 #endif
@@ -1343,9 +1330,6 @@ void mus_vct_init(void)
 	       S_vct_to_string,
 	       S_vct_times,
 	       S_vct_plus,
-#if WITH_RUN && USE_SND && (!HAVE_S7)
-	       "vct-map-1",
-#endif
 	       NULL);
 #endif
 }

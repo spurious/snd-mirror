@@ -2546,7 +2546,7 @@ static XEN g_sound_p(XEN snd)
 }
 
 
-#if WITH_RUN
+#if HAVE_S7
 bool r_sound_p(int i);
 bool r_sound_p(int i)
 {

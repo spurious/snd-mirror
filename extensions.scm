@@ -799,12 +799,12 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 
 (define* (contrast-sound index :optional (beg 0) dur snd)
   "(contrast-sound index :optional beg dur snd) applies contrast-enhancement to every channel of 'snd'"
-  (let ((index (or snd (selected-sound) (car (sounds)))))
-    (if (sound? index)
-	(let* ((out-chans (chans index)))
+  (let ((ind (or snd (selected-sound) (car (sounds)))))
+    (if (sound? ind)
+	(let* ((out-chans (chans ind)))
 	  (do ((chn 0 (+ 1 chn)))
 	      ((= chn out-chans))
-	    (contrast-channel index beg dur index chn)))
+	    (contrast-channel index beg dur ind chn)))
 	(throw 'no-such-sound (list "contrast-sound" snd)))))
 
 

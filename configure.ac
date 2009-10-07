@@ -1691,9 +1691,6 @@ if test $GUILE_CONFIG_works = yes; then
     if test "`${GUILE_CONFIG_path}${GUILE_name} -c '(display (string<=? (version) "1.3.4"))'`" = "#t"; then
       echo found old out-of-date Guile library
     fi
-    if test "`${GUILE_CONFIG_path}${GUILE_name} -c '(display (string>=? (version) "1.5"))'`" = "#t"; then
-      AC_DEFINE(WITH_RUN)
-    fi
     if test "$with_snd_as_pd_external" = yes ; then
       XEN_LIBS=["`${GUILE_CONFIG_path}${GUILE_name} -c '(display (string-append (cdr (assoc (quote libdir) %guile-build-info)) "/libguile.a " (cdr (assoc (quote LIBS) %guile-build-info))))'`"]
     fi
@@ -1732,7 +1729,6 @@ if test "$with_s7" != no && test "$with_extension_language" != no && test "$ac_s
          AC_DEFINE(HAVE_SCM_C_MAKE_RECTANGULAR)
 	])
 
-    AC_DEFINE(WITH_RUN)
     LOCAL_LANGUAGE="s7"
     S7_LIB="s7.o"
 fi

@@ -548,7 +548,7 @@ Extensions to Snd can be found in:
 <tr><td><a href="sndscm.html#singerdoc">singer</a></td>
     <td onmouseout="UnTip()" onmouseover="Tip(singer_doc_tip)">Perry Cook's vocal-tract physical model</td></tr>
 
-<tr><td bgcolor="#f2f4ff"><a href="sndscm.html#sndolddoc">snd5|6|7|8|9|10.scm</a></td>
+<tr><td bgcolor="#f2f4ff"><a href="sndscm.html#sndolddoc">snd6|7|8|9|10.scm</a></td>
     <td bgcolor="#f2f4ff" onmouseout="UnTip()" onmouseover="Tip(sndold_doc_tip)">Backwards compatibility</td></tr>
 
 <tr><td><a href="sndscm.html#snddiffdoc">snddiff</a></td>
@@ -8326,7 +8326,7 @@ This returns the position (in samples) of right edge of the time domain waveform
 <tr><td colspan=2 bgcolor="#f2f4ff">
 <code><a class=def name="run">run</a> (thunk)</code>
 </td></tr><tr><td></td><td>
-run is the Snd equivalent of the CL/CLM run macro.  You can wrap it around any numerically-intensive
+run is the Snd equivalent of the CL/CLM run macro.  You can wrap it around a numerically-intensive
 block of code, and the result will usually run 10 to 20 times faster.  In the context of <a href="sndscm.html#wsdoc">with-sound</a>, run is used
 to speed up instrument bodies.  My timing tests indicate that Snd+Run instruments are within a factor of two to four
 of the speed of CL+run+C in CLM.  Currently, only s7 supports this optimization.
@@ -13808,5 +13808,10 @@ You can find out at run-time whether GL is loaded via <code>(provided? 'gl)</cod
 <td><small><a href="index.html" onmouseout="UnTip()" onmouseover="Tip(index_html_tip)">index.html</a></small></td>
 </tr></table>
 </center>
+
+
+<!-- TODO:   length handles list length, also string-length, vector-length, hash-table-size,
+    vct-length, frames, mus-length, sound-data-length, mix-length, and region-frames.
+-->
 
 </body></html>

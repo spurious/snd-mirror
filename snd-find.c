@@ -472,7 +472,7 @@ void cursor_search(chan_info *cp, int count)
 	    {
 	      /* see note above about closures */
 	      clear_sound_search_procedure(sp, false);
-#if WITH_RUN
+#if HAVE_S7
 	      if (optimization(ss) > 0)
 		sp->search_tree = mus_run_form_to_ptree_1_b_without_env(C_STRING_TO_XEN_FORM(sp->search_expr));
 #endif
@@ -612,13 +612,9 @@ static XEN g_set_search_procedure(XEN snd, XEN proc)
 		{
 		  sp->search_proc = proc;
 		  sp->search_proc_loc = snd_protect(proc);
-#if WITH_RUN
-		  if (optimization(ss) > 0)
 #if HAVE_S7
+		  if (optimization(ss) > 0)
 		    sp->search_tree = mus_run_form_to_ptree_1_b(XEN_PROCEDURE_SOURCE(proc));
-#else
-		    sp->search_tree = mus_run_form_to_ptree_1_b(XEN_LIST_2(XEN_PROCEDURE_SOURCE(proc), proc));
-#endif
 #endif
 		}
 	      return(proc);
@@ -644,13 +640,9 @@ static XEN g_set_search_procedure(XEN snd, XEN proc)
 	    {
 	      ss->search_proc = snd;
 	      ss->search_proc_loc = snd_protect(snd);
-#if WITH_RUN
-	      if (optimization(ss) > 0)
 #if HAVE_S7
+	      if (optimization(ss) > 0)
 		ss->search_tree = mus_run_form_to_ptree_1_b(XEN_PROCEDURE_SOURCE(snd));
-#else
-		ss->search_tree = mus_run_form_to_ptree_1_b(XEN_LIST_2(XEN_PROCEDURE_SOURCE(snd), snd));
-#endif
 #endif
 	    }
 	}

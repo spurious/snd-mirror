@@ -3359,12 +3359,15 @@ static XEN g_play_mix(XEN num, XEN beg)
   #define H_play_mix "(" S_play_mix " id :optional (beg 0)): play mix.  'beg' is where to start playing."
   mix_info *md;
   mus_long_t samp;
+
   XEN_ASSERT_TYPE(XEN_MIX_P(num), num, XEN_ONLY_ARG, S_play_mix, "a mix");
   md = md_from_id(XEN_MIX_TO_C_INT(num));
   if (md == NULL)
     return(snd_no_such_mix_error(S_play_mix, num));
+
   ASSERT_SAMPLE_TYPE(S_play_mix, beg, XEN_ARG_2);
   samp = beg_to_sample(beg, S_play_mix);
+
   play_mix(md, samp); 
   return(num);
 }
