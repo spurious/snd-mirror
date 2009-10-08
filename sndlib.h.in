@@ -432,20 +432,22 @@ MUS_EXPORT char *mus_strcat(char *errmsg, const char *str, int *err_size);
 #include "vct.h"
 
 MUS_EXPORT struct ptree *mus_run_form_to_ptree_1_b(XEN code);
-MUS_EXPORT struct ptree *mus_run_form_to_ptree_1_b_without_env(XEN code);
 MUS_EXPORT struct ptree *mus_run_form_to_ptree_1_f(XEN code);
-MUS_EXPORT mus_float_t mus_run_evaluate_ptree_0f2f(struct ptree *pt);
-MUS_EXPORT struct ptree *mus_run_form_to_ptree_0_f(XEN code);
 MUS_EXPORT mus_float_t mus_run_evaluate_ptree_1f2f(struct ptree *pt, mus_float_t arg);
 MUS_EXPORT int mus_run_evaluate_ptree_1f2b(struct ptree *pt, mus_float_t arg);
 MUS_EXPORT void mus_run_free_ptree(struct ptree *pt);
 MUS_EXPORT void mus_init_run(void);
 MUS_EXPORT XEN mus_run_ptree_code(struct ptree *pt);
 MUS_EXPORT mus_float_t mus_run_evaluate_ptree_1f1v1b2f(struct ptree *pt, mus_float_t arg, vct *v, bool dir);
-MUS_EXPORT struct ptree *mus_run_form_to_ptree_3_f(XEN code);
 MUS_EXPORT mus_float_t mus_run_evaluate_ptreec(struct ptree *pt, mus_float_t arg, XEN object, bool dir, int type);
 MUS_EXPORT int mus_run_xen_to_run_type(XEN val);
 
+#if HAVE_S7
+MUS_EXPORT struct ptree *mus_run_form_to_ptree_1_b_without_env(XEN code);
+MUS_EXPORT mus_float_t mus_run_evaluate_ptree_0f2f(struct ptree *pt);
+MUS_EXPORT struct ptree *mus_run_form_to_ptree_0_f(XEN code);
+MUS_EXPORT struct ptree *mus_run_form_to_ptree_3_f(XEN code);
+#endif
 
 
 

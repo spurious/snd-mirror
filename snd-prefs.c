@@ -4160,50 +4160,6 @@ static void clear_hidden_controls(prefs_info *prf) {SET_TOGGLE(prf->toggle, fals
 
 
 
-#if HAVE_GUILE
-/* ---------------- debugging aids ---------------- */
-
-static bool include_debugging_aids = false;
-
-static bool find_debugging_aids(void)
-{
-  return((XEN_DEFINED_P("snd-break")) && 
-	 (XEN_DEFINED_P("untrace-stack")));
-}
-
-
-static void reflect_debugging_aids(prefs_info *prf) {}
-static void revert_debugging_aids(prefs_info *prf) {SET_TOGGLE(prf->toggle, include_debugging_aids);}
-static void clear_debugging_aids(prefs_info *prf) {SET_TOGGLE(prf->toggle, false);}
-
-
-static void debugging_aids_toggle(prefs_info *prf)
-{
-  if ((GET_TOGGLE(prf->toggle)) &&
-      (!(find_debugging_aids())))
-    load_file_with_path_and_extension("debug");
-}
-
-
-static void save_debugging_aids(prefs_info *prf, FILE *fd)
-{
-  include_debugging_aids = GET_TOGGLE(prf->toggle);
-  if (include_debugging_aids)
-    {
-      fprintf(fd, "(use-modules (ice-9 debug) (ice-9 session))\n");
-#if HAVE_SCM_OBJECT_TO_STRING
-      /* 1.6 or later -- not sure 1.4 etc can handle these things */
-      fprintf(fd, "(debug-set! stack 0)\n");
-      fprintf(fd, "(debug-enable 'debug 'backtrace)\n");
-      fprintf(fd, "(read-enable 'positions)\n");
-#endif
-      fprintf(fd, "(if (not (provided? 'snd-debug.scm)) (load-from-path \"debug.scm\"))\n");
-    }
-}
-#endif
-
-
-
 /* ---------------- smpte ---------------- */
 
 static bool include_smpte = false;

@@ -1,11 +1,9 @@
 /* vct support 
  *
- * a vct is a Guile "smob" containing a mus_float_t array and its size
- * we use these in Snd because Guile's floating-point and vector operations are slow,
- * and Snd/CLM are applications where no user is willing to wait on a multiply.
+ * a vct is an object containing a mus_float_t array and its size
  *
  * C side:
- *   void mus_vct_init(void)                    called to declare the various functions and the vct type in Guile
+ *   void mus_vct_init(void)                    called to declare the various functions and the vct type
  *   bool mus_vct_p(XEN obj)                    is obj a vct
  *   XEN xen_make_vct(int len, mus_float_t *data)     make a new vct
  *   XEN xen_make_vct_wrapper(int len, mus_float_t *data) make a new vct that doesn't free data when garbage collector strikes

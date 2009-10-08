@@ -2625,16 +2625,6 @@ widget_t start_preferences_dialog(void)
 			      listener_prompt_text);
     remember_pref(prf, reflect_listener_prompt, save_listener_prompt, NULL, NULL, revert_listener_prompt);
 
-#if HAVE_GUILE
-    current_sep = make_inter_variable_separator(prg_box);
-    prf = prefs_row_with_toggle("include debugging aids", "snd-break",
-				(include_debugging_aids = find_debugging_aids()),
-				prg_box,
-				debugging_aids_toggle);
-    remember_pref(prf, reflect_debugging_aids, save_debugging_aids, NULL, clear_debugging_aids, revert_debugging_aids);
-    include_debugging_aids = find_debugging_aids();
-#endif
-
     current_sep = make_inter_variable_separator(prg_box);
     str = mus_format("%d", rts_print_length = print_length(ss));
     prf = prefs_row_with_text("number of vector elements to display", S_print_length, str,

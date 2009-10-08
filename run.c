@@ -54,7 +54,7 @@
  *   char-upcase char-downcase char->integer integer->char
  *   string? string string-length string-copy string-fill! string-ref string-set!
  *   make-string substring string-append string=? string<=? string>=? string<? string>? and string-ci*
- *   display number->string format [as a callback into Guile]
+ *   display number->string format
  *   make-vector if 2nd arg exists and is float
  *   list ops that reference constant lists and return something we can handle (like a number)
  *   throw with just the 1st arg (experimental...)
@@ -63,9 +63,9 @@
  *
  * limitations: 
  *      variables can have only one type, the type has to be ascertainable somehow (similarly for vector elements)
- *      some variables (imported from outside our context) cannot be set, in some cases they can't even be found (args to define* in Guile for example)
+ *      some variables (imported from outside our context) cannot be set
  *      no recursion (could be added with some pain)
- *      no macro expansion (not sure how to handle this in Guile)
+ *      no macro expansion
  *      no complex, ratio, bignum (but we use 64-bit ints)
  *      no pointer aliasing (i.e. vct var set to alias another vct var etc -- GC confusion otherwise)
  *      no apply or eval (we need to know at parse time what we are trying to do -- actually these might be doable)
@@ -96,14 +96,11 @@
  *
  * would it simplify variable handling to store everything as xen_value?
  *
- * run does not work in guile 1.9 (can't find func args any more)
- *
  * this doesn't get optimized yet: (set! ((mus-data gen) 123) .1)
  *   but the ref side does work: (let ((fr (frame .1 .2 .3))) (run (lambda () ((mus-data fr) 0))))
  *
  * TODO: run doesn't always warn about a closure (explicit gen basically) -- if it's used directly,
  *         there's no warning, but it doesn't handle the closed-over variables correctly
- * SOMEDAY: give up on Guile and remove all its support
  * TODO: vector<->vct
  *       all numeric types + multiprecision stuff
  *       what about the thread stuff: only thread_variable in s7.h now
@@ -278,10 +275,7 @@ static XEN optimization_hook;
 #define XEN_CDAR(a)                         XEN_CDR(XEN_CAR(a))
 #define XEN_CDADR(a)                        XEN_CDR(XEN_CADR(a))
 
-#define XEN_APPLICABLE_SMOB_P(a)            true
-/* I don't think this is a problem in S7 because s7_is_procedure does not return true for applicable objects */
 #define XEN_PROCEDURE_WITH_SETTER_P(Proc)   s7_is_procedure_with_setter(Proc)
-
 #define INTEGER_TO_STRING(a)                s7_number_to_string(s7, R_C_TO_XEN_INT(a), 10)
 #define INTEGER_TO_STRING_WITH_RADIX(a, b)  s7_number_to_string(s7, R_C_TO_XEN_INT(a), b)
 #define DOUBLE_TO_STRING(a)                 s7_number_to_string(s7, C_TO_XEN_DOUBLE(a), 10)
@@ -9480,6 +9474,8 @@ static xen_value *length_1(ptree *prog, xen_value **args, int num_args)
    static xen_value *vct_fill_1(ptree *pt, xen_value **args, int num_args)
    static xen_value *vector_fill_1(ptree *prog, xen_value **args, int num_args)
    but no list_fill and clm cases are handled specially
+
+   string_copy_1 vct_copy_v sound_data_copy_f perhaps xen_value_to_xen?
 */
 
 
@@ -16516,12 +16512,8 @@ You can often slightly rewrite the form to make run happy."
 #define S_run "run"
 
 struct ptree *mus_run_form_to_ptree_1_b(XEN code) {return(NULL);}
-struct ptree *mus_run_form_to_ptree_3_f(XEN code) {return(NULL);}
-struct ptree *mus_run_form_to_ptree_1_b_without_env(XEN code) {return(NULL);}
 struct ptree *mus_run_form_to_ptree_1_f(XEN code) {return(NULL);}
 mus_float_t mus_run_evaluate_ptree_1f1v1b2f(struct ptree *pt, mus_float_t arg, vct *v, bool dir) {return(0.0);}
-mus_float_t mus_run_evaluate_ptree_0f2f(struct ptree *pt) {return(0.0);}
-struct ptree *mus_run_form_to_ptree_0_f(XEN code) {return(NULL);}
 mus_float_t mus_run_evaluate_ptree_1f2f(struct ptree *pt, mus_float_t arg) {return(0.0);}
 int mus_run_evaluate_ptree_1f2b(struct ptree *pt, mus_float_t arg) {return(0);}
 void mus_run_free_ptree(struct ptree *pt) {}
