@@ -41,6 +41,9 @@ MUS_EXPORT sound_data *sound_data_offset(sound_data *sd, mus_float_t off);
 
 #define XEN_TO_SOUND_DATA(Obj) (sound_data *)XEN_OBJECT_REF(Obj)
 
+MUS_EXPORT XEN g_mus_sound_srate(XEN filename);
+MUS_EXPORT XEN g_mus_sound_chans(XEN filename);
+
 #ifdef __cplusplus
 }
 #endif

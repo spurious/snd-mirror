@@ -44,6 +44,8 @@ MUS_EXPORT mus_float_t *mus_vct_to_partials(vct *v, int *npartials, int *error_c
 MUS_EXPORT XEN mus_clm_output(void);
 MUS_EXPORT XEN mus_clm_reverb(void);
 
+MUS_EXPORT XEN g_mus_channels(XEN obj);
+
 MUS_EXPORT void Init_sndlib(void);
 
 #ifdef __cplusplus

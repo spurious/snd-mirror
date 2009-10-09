@@ -2340,19 +2340,24 @@ void call_sp_watchers(snd_info *sp, sp_watcher_t type, sp_watcher_reason_t reaso
 
 /* ---------------------------------------- sound objects ---------------------------------------- */
 
-/* PERHAPS: generics (besides length):
+/* TODO: generics (besides length, srate, channels):
  *             source:         procedure-source[s7_procedure_source] mix-home mark-home region-home player-home sampler-home
  *                               mus cases: readin=file+chan? etc, port -> filename?, sound->filename?
  *             position:       mark-sample mix-position region-position sampler-position
  *               [location?]     port->line number?, mus cases = mus_location?, player? widget? 
+ *               (CL has position)
  *             peak or max(?): vct-peak, maxamp, region-maxamp sound-data-maxamp [vector? mix?]
  *             properties:     mark|mix|sound-properties [sampler-props?]
  *             name:           mark|mix-name file-name (widget name via XtName) mus-name, 
  *                               __func__? port-filename sampler-filename
  *             sync:           sync, mark|mix-sync
  *             copy:           should this be extended?  also fill!
- *             srate?
- *             need documentation for these (length in extsnd?)
+ *             frames file-name reverse save find insert delete describe read mix append 
+ *
+ * doc length/copy/fill! (index.html too)
+ * doc/test/run srate|channels change
+ *
+ *             frames file-name sync reverse mix append: these exist already and could just be extended
  *
  * applicable sound (set! (snd chan samp)? )
  *
@@ -3430,7 +3435,23 @@ static XEN sound_set_global(XEN snd, XEN val, sp_field_t fld, const char *caller
 
 static XEN g_channels(XEN snd)
 {
-  #define H_channels "("  S_channels " :optional snd): how many channels snd has"
+  #define H_channels "("  S_channels " :optional obj): how many channels the object obj has"
+
+  if (XEN_STRING_P(snd))
+    return(g_mus_sound_chans(snd));              /* mus-sound-chans */
+
+  if ((mus_xen_p(snd)) ||
+      (sound_data_p(snd)) ||                     /* sound-data-chans */
+      (MUS_VCT_P(snd)) ||
+      (XEN_LIST_P(snd)))
+    return(g_mus_channels(snd));                 /* mus-channels */
+
+  if (XEN_MIX_P(snd))                            /* mixes are always 1 chan */
+    return(C_TO_XEN_INT(1));
+
+  if (XEN_REGION_P(snd))                         /* region-chans */
+    return(g_region_chans(snd));
+
   return(sound_get(snd, SP_NCHANS, S_channels));
 }
 
@@ -3452,7 +3473,14 @@ static XEN g_set_channels(XEN snd, XEN val)
 
 static XEN g_srate(XEN snd) 
 {
-  #define H_srate "(" S_srate " :optional snd): snd's srate"
+  #define H_srate "(" S_srate " :optional obj): obj's srate; obj can be a region, a string (sound file name), a sound, or an integer (sound index)"
+
+  if (XEN_STRING_P(snd))
+    return(g_mus_sound_srate(snd));
+
+  if (XEN_REGION_P(snd))
+    return(g_region_srate(snd));
+
   return(sound_get(snd, SP_SRATE, S_srate));
 }
 
@@ -6166,10 +6194,6 @@ If it returns " PROC_TRUE ", the usual informative minibuffer babbling is squelc
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_show_controls, g_show_controls_w, H_show_controls,
 					    S_setB S_show_controls, g_set_show_controls_w, g_set_show_controls_reversed, 0, 1, 1, 1);
   
-#if HAVE_GUILE
-  XEN_EVAL_C_STRING("(define %sync sync)"); /* protect the original meaning (a Guile/Posix built-in function) */
-#endif
-
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_sync, g_sync_w, H_sync,
 					    S_setB S_sync, g_set_sync_w, g_set_sync_reversed, 0, 1, 1, 1);
   XEN_DEFINE_PROCEDURE(S_sync_max, g_sync_max_w, 0, 0, 0, H_sync_max);

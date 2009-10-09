@@ -1669,7 +1669,7 @@ static XEN region_get(region_field_t field, XEN n, const char *caller)
 }
 
 
-static XEN g_region_srate(XEN n) 
+XEN g_region_srate(XEN n) 
 {
   #define H_region_srate "(" S_region_srate " reg): region (nominal) srate"
   XEN_ASSERT_TYPE(XEN_REGION_P(n), n, XEN_ONLY_ARG, S_region_srate, "a region");
@@ -1677,7 +1677,7 @@ static XEN g_region_srate(XEN n)
 }
 
 
-static XEN g_region_chans(XEN n) 
+XEN g_region_chans(XEN n) 
 {
   #define H_region_chans "(" S_region_chans " reg): region channels"
   XEN_ASSERT_TYPE(XEN_REGION_P(n), n, XEN_ONLY_ARG, S_region_chans, "a region");

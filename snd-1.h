@@ -1143,6 +1143,8 @@ int xen_region_to_int(XEN n);
 #define XEN_REGION_P(arg) xen_region_p(arg)
 #define C_INT_TO_XEN_REGION(Val) new_xen_region(Val)
 #define XEN_REGION_TO_C_INT(n) xen_region_to_int(n)
+XEN g_region_srate(XEN n);
+XEN g_region_chans(XEN n);
 
 
 

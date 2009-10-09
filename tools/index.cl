@@ -5,7 +5,7 @@
 
 ;;; (index '("cmn.html") "test.html" 4 nil nil nil t)
 
-;;; (index '("extsnd.html" "grfsnd.html" "sndscm.html" "sndlib.html" "sndclm.html") "test.html" 5 '("XmHTML" "AIFF" "NeXT" "Sun" "RIFF" "IRCAM" "FIR" "IIR" "Hilbert" "AIFC") t t)
+;;; (index '("extsnd.html" "grfsnd.html" "sndscm.html" "sndlib.html" "sndclm.html" "s7.html") "test.html" 5 '("XmHTML" "AIFF" "NeXT" "Sun" "RIFF" "IRCAM" "FIR" "IIR" "Hilbert" "AIFC") t t)
 ;;;   use (make-index)
 
 ;;; for snd.html table, see snd-index.cl (snd-index "test.html")
@@ -585,7 +585,7 @@
 
 (defvar array-size (* 4 8192))
 
-;;; (html-check '("sndlib.html" "snd.html" "sndclm.html" "extsnd.html" "grfsnd.html" "sndscm.html" "fm.html" "balance.html" "snd-contents.html"))
+;;; (html-check '("sndlib.html" "snd.html" "sndclm.html" "extsnd.html" "grfsnd.html" "sndscm.html" "fm.html" "balance.html" "snd-contents.html" "s7.html"))
 
 (defun html-check (files &optional (check-unhref nil))
   (let ((name 0)
@@ -954,7 +954,7 @@
 
 (defun make-index ()
   (check-all)
-  (index '("snd.html" "extsnd.html" "grfsnd.html" "sndscm.html" "sndlib.html" "sndclm.html" "fm.html" "quick.html")
+  (index '("snd.html" "extsnd.html" "grfsnd.html" "sndscm.html" "sndlib.html" "sndclm.html" "fm.html" "quick.html" "s7.html")
 	 "test.html" 5 '("XmHTML" "AIFF" "NeXT" "Sun" "RIFF" "IRCAM" "FIR" "IIR" "Hilbert" "AIFC") t t))
 
 

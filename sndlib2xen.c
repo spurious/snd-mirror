@@ -205,7 +205,7 @@ static XEN g_mus_sound_set_data_location(XEN filename, XEN val)
 }
 
 
-static XEN g_mus_sound_chans(XEN filename) 
+XEN g_mus_sound_chans(XEN filename) 
 {
   #define H_mus_sound_chans "(" S_mus_sound_chans " filename): channels of data in sound file"
   return(gmus_sound(S_mus_sound_chans, mus_sound_chans, filename));
@@ -218,7 +218,7 @@ static XEN g_mus_sound_set_chans(XEN filename, XEN val)
 }
 
 
-static XEN g_mus_sound_srate(XEN filename) 
+XEN g_mus_sound_srate(XEN filename) 
 {
   #define H_mus_sound_srate "(" S_mus_sound_srate " filename): sampling rate of sound file"
   return(gmus_sound(S_mus_sound_srate, mus_sound_srate, filename));

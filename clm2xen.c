@@ -6693,7 +6693,7 @@ return a new generator for signal placement in n channels.  Channel 0 correspond
 }
 
 
-static XEN g_mus_channels(XEN obj)
+XEN g_mus_channels(XEN obj)
 {
   #define H_mus_channels "(" S_mus_channels " gen): gen's " S_mus_channels " field, if any"
   if (XEN_LIST_P(obj)) return(call_get_method(obj, S_mus_channels));

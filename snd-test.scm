@@ -46136,12 +46136,6 @@ EDITS: 1
     (let ((val (run-eval form)))
       (if (not (eqv? val result)) (snd-display ";~A -> ~A (~A)" form val result))))
   
-  ;; can't use eq? here because identical numbers may not be eq?:
-  ;; guile> (eq? 536870912 536870912)
-  ;; #f
-  ;; guile> (eq? 536870911 536870911)
-  ;; #t
-  
   (define (itsta form arg result)
     (let ((val (run-eval form arg)))
       (if (not (eqv? val result)) (snd-display ";~A -> ~A (~A)" form val result))))
@@ -65299,9 +65293,10 @@ EDITS: 1
 						(lambda ()
 						  (n arg))
 						(lambda args (car args)))))
-				    (if (not (eq? tag 'wrong-type-arg))
+				    (if (and (not (eq? tag 'wrong-type-arg))
+					     (not (eq? tag 'mus-error)))
 					(snd-display ";snd wrong-type-arg ~A: ~A ~A" n tag arg))))
-				(list amp-control bomb apply-controls channels chans close-sound comment contrast-control 
+				(list amp-control bomb apply-controls close-sound comment contrast-control 
 				      amp-control-bounds speed-control-bounds expand-control-bounds contrast-control-bounds
 				      reverb-control-length-bounds reverb-control-scale-bounds
 				      contrast-control-amp contrast-control? data-format data-location data-size expand-control
