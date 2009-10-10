@@ -152,7 +152,7 @@
 		   (if continue-old-file
 		       (begin
 			 (set! *output* (continue-sample->file output-1))
-			 (set! (mus-srate) (mus-sound-srate output-1))
+			 (set! (mus-srate) (mus-sound-srate output-1)) ; "srate" arg shadows the generic func
 			 (let ((ind (find-sound output-1)))
 			   (if (sound? ind)
 			       (close-sound ind))))

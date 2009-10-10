@@ -93,7 +93,7 @@
 #|
 (play-sound 
  (lambda (data)
-   (let ((len (sound-data-length data)))
+   (let ((len (length data)))
      (do ((i 0 (+ 1 i)))
 	 ((= i len))
        (sound-data-set! data 0 i (* 2.0 (sound-data-ref data 0 i)))))))
@@ -211,7 +211,7 @@ read, even if not playing.  'files' is a list of files to be played."
   (let ((files-len (length files)))
     (if (> files-len 0)
 	(let* ((bufsize 256)
-	       (srate (mus-sound-srate (car files)))
+	       (srate (srate (car files)))
 	       (chans (apply max (map mus-sound-chans files)))
 	       (data (make-sound-data chans bufsize))
 	       (readers (map make-file->frame files))

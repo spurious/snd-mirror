@@ -91,6 +91,7 @@
   <li><a href="extsnd.html#behavior">Customizing Snd's behavior</a>
     <ul>
     <li><a href="extsnd.html#sndglobalvars">Global variables</a>
+    <li><a href="extsnd.html#sndgenericfuncs">Generic functions</a>
     <li><a href="extsnd.html#sndhooks" onmouseout="UnTip()" onmouseover="Tip('callbacks')">Hooks</a>
     </ul>
   <li><a href="extsnd.html#sndobjects">Snd's objects</a>
@@ -1578,8 +1579,8 @@ match-sound-files from extensions.scm):
 					       XmNfileListItemCount (length files)
 					       XmNlistUpdated #t)))))))
 
-;(install-searcher (lambda (file) (= (<a class=quiet href="extsnd.html#mussoundsrate" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundsrate_tip)">mus-sound-srate</a> file) 44100)))
-;(install-searcher (lambda (file) (= (<a class=quiet href="extsnd.html#mussoundchans" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundchans_tip)">mus-sound-chans</a> file) 4)))
+;(install-searcher (lambda (file) (= (srate file) 44100)))
+;(install-searcher (lambda (file) (= (channels file) 4)))
 </pre></td></tr></table>
 
 <p>Now click the 'Filter' button to see only those files that fit the procedure in
@@ -1909,7 +1910,7 @@ into a bunch of mono files:
 (if (= (length (<a class=quiet href="extsnd.html#scriptargs" onmouseout="UnTip()" onmouseover="Tip(extsnd_scriptargs_tip)">script-args</a>)) 2)
   (display "usage: split.scm filename")
   (let* ((name (list-ref (<a class=quiet href="extsnd.html#scriptargs" onmouseout="UnTip()" onmouseover="Tip(extsnd_scriptargs_tip)">script-args</a>) (+ 1 (<a class=quiet href="extsnd.html#scriptarg" onmouseout="UnTip()" onmouseover="Tip(extsnd_scriptarg_tip)">script-arg</a>))))
-	 (chns (<a class=quiet href="extsnd.html#mussoundchans" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundchans_tip)">mus-sound-chans</a> name)))
+	 (chns (channels name)))
     (if (&gt; chns 1)
 	(let ((ind (<a class=quiet href="extsnd.html#opensound" onmouseout="UnTip()" onmouseover="Tip(extsnd_opensound_tip)">open-sound</a> name)))
 	  (do ((i 0 (+ 1 i)))

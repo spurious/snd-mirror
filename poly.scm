@@ -59,7 +59,7 @@
 
 (define (poly-reduce p1)
   "(poly-reduce p1) removes trailing (high-degree) zeros from the vector or vct p1"
-  (if (= (vct-ref p1 (- (vct-length p1) 1)) 0.0)
+  (if (= (vct-ref p1 (- (length p1) 1)) 0.0)
       (vector->vct (poly-as-vector-reduce (vct->vector p1)))
       p1))
 
@@ -254,11 +254,11 @@
 
 (define (poly-gcd p1 p2)
   "(poly-gcd p1 p2) returns the GCD of polynomials p1 and p2 (both vcts)"
-  (if (< (vct-length p1) (vct-length p2))
+  (if (< (length p1) (length p2))
       (vct 0.0)
       (let ((qr (map poly-reduce (poly/ p1 p2))))
 	;(display (format #f ";poly-gcd ~A ~A -> ~A~%" p1 p2 qr))
-	(if (= (vct-length (cadr qr)) 1)
+	(if (= (length (cadr qr)) 1)
 	    (if (= (vct-ref (cadr qr) 0) 0.0)
 		p2
 		(vct 0.0))

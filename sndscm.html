@@ -8097,15 +8097,15 @@ all     34   5.8160    0.4993
 <pre>
          n     peak   (log peak n)            n     peak   (log peak n)
 
-all     35   5.9479    0.5015,        odd     33   5.7759    0.5016
+all     35   5.9479    0.5015,        odd     33   5.7652    0.5010
 all     37   6.1956    0.5051,        odd     34   5.8831    0.5025
 all     36   6.1241    0.5057,        odd     39   6.3385    0.5041
-all     38   6.3050    0.5062,        odd     36   6.0999    0.5046
-all     46   6.9547    0.5066,        odd     37   6.2069    0.5056
-all     40   6.4878    0.5069,        odd     38   6.2994    0.5060
-all     44   6.8350    0.5079,        odd     35   6.0626    0.5069
-all     42   6.6817    0.5082,        odd     42   6.6840    0.5083
-all     41   6.6028    0.5083,        odd     40   6.5663    0.5102
+all     38   6.3050    0.5062,        odd     36   6.0996    0.5046
+all     46   6.9547    0.5066,        odd     35   6.0197    0.5049
+all     40   6.4878    0.5069,        odd     37   6.2069    0.5056
+all     41   6.5697    0.5069,        odd     38   6.2994    0.5060
+all     44   6.8350    0.5079,        odd     42   6.6840    0.5083
+all     42   6.6817    0.5082,        odd     40   6.5663    0.5102
 all     43   6.7939    0.5094,        odd     46   7.0570    0.5104
 all     39   6.4762    0.5099,        odd     43   6.8205    0.5105
 </pre>
@@ -8545,7 +8545,7 @@ The following doubles each sample in channel 0 during playback:
 <table border=0 cellpadding=5 hspace=20><tr><td><pre>
 (<em class=red>play-sound</em>
  (lambda (data)
-   (let ((len (<a class=quiet href="extsnd.html#sounddatalength" onmouseout="UnTip()" onmouseover="Tip(extsnd_sounddatalength_tip)">sound-data-length</a> data)))
+   (let ((len (length data)))
      (do ((i 0 (+ 1 i)))
 	 ((= i len))
        (<a class=quiet href="extsnd.html#sounddataset" onmouseout="UnTip()" onmouseover="Tip(extsnd_sounddataset_tip)">sound-data-set!</a> data 0 i (* 2.0 (<a class=quiet href="extsnd.html#sounddataref" onmouseout="UnTip()" onmouseover="Tip(extsnd_sounddataref_tip)">sound-data-ref</a> data 0 i)))))))
@@ -9658,8 +9658,8 @@ install-searcher places
 our own search procedure into the filter mechanism in the File:Open
 dialog.  This has been superseded by the <a href="extsnd.html#addfilefilter">file-filter</a> mechanism now built into Snd.
 <pre>
-    (install-searcher (lambda (file) (= (<a class=quiet href="extsnd.html#mussoundsrate" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundsrate_tip)">mus-sound-srate</a> file) 44100)))
-    (install-searcher (lambda (file) (= (<a class=quiet href="extsnd.html#mussoundchans" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundchans_tip)">mus-sound-chans</a> file) 4)))
+    (install-searcher (lambda (file) (= (srate file) 44100)))
+    (install-searcher (lambda (file) (= (channels file) 4)))
 </pre>
 There's a fancier version, install-searcher-with-colors, that distinguishes between categories
 of files by using different colors.
@@ -11270,9 +11270,9 @@ everything after that is evaluated as a note list.
     <em class=listener>#&lt;unspecified&gt;</em>
     <em class=listener>&gt;</em><em class=typing>(with-sound ()  (fm-violin 0 1 440 .1))test.aif:</em>
     <em class=listener>"test.aif"</em>
-    <em class=listener>&gt;</em><em class=typing>(mus-sound-srate "test.aif")</em>
+    <em class=listener>&gt;</em><em class=typing>(srate "test.aif")</em>
     <em class=listener>44100</em>
-    <em class=listener>&gt;</em><em class=typing>(mus-sound-chans "test.aif")</em>
+    <em class=listener>&gt;</em><em class=typing>(channels "test.aif")</em>
     <em class=listener>2</em>
 </pre>
 

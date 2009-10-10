@@ -2782,7 +2782,7 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 
       ;; create delay lines for output channels that need them
     (let* ((delays (speaker-config-delays speakers))
-	   (len (vct-length delays)))
+	   (len (length delays)))
       (do ((channel 0 (+ 1 channel)))
 	  ((= channel len))
 	(let ((delayo (vct-ref delays channel)))

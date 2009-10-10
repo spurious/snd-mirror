@@ -2354,8 +2354,10 @@ void call_sp_watchers(snd_info *sp, sp_watcher_t type, sp_watcher_reason_t reaso
  *             copy:           should this be extended?  also fill!
  *             frames file-name reverse save find insert delete describe read mix append 
  *
- * doc length/copy/fill! (index.html too)
- * doc/test/run srate|channels change
+ * use length/srate/channels in the scheme code and doc examples:
+ *  chans mus-channels string-length vector-length frames mus-length mix-length region-frames
+ *
+ * doc copy/fill! (index.html too)
  *
  *             frames file-name sync reverse mix append: these exist already and could just be extended
  *

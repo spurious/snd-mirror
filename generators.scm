@@ -3696,7 +3696,7 @@
 (defgenerator (bess
 	       :make-wrapper (lambda (g)
 			       (set! (bess-frequency g) (hz->radians (bess-frequency g)))
-			       (if (>= (bess-n g) (vct-length bessel-peaks)) 
+			       (if (>= (bess-n g) (length bessel-peaks)) 
 				   (set! (bess-norm g) (/ 0.67 (expt (bess-n g) (exact->inexact 1/3))))
 				   ;; this formula comes from V P Krainov, "Selected Mathetical Methods in Theoretical Physics"
 				   (set! (bess-norm g) (vct-ref bessel-peaks (bess-n g))))
@@ -5224,7 +5224,7 @@ index 10 (so 10/2 is the bes-jn arg):
 
 (define (multi-expt-env e expts)
   (env-any e (lambda (y)
-	       (let ((b (vct-ref expts (modulo (mus-channels e) (vct-length expts)))))
+	       (let ((b (vct-ref expts (modulo (mus-channels e) (length expts)))))
 		 (/ (- (expt b y) 1.0) (- b 1.0))))))
 
 
@@ -5797,7 +5797,7 @@ index 10 (so 10/2 is the bes-jn arg):
 (defgenerator (polyoid
 	       :make-wrapper (lambda (g)
 			       (let* ((lst (polyoid-partial-amps-and-phases g))
-				      (len (vct-length lst))
+				      (len (length lst))
 				      (topk (let ((n 0))
 					      (do ((i 0 (+ i 3)))
 						  ((>= i len))
@@ -5860,7 +5860,7 @@ index 10 (so 10/2 is the bes-jn arg):
   (let* ((tn (polyoid-tn gen))
 	 (un (polyoid-un gen))
 	 (original-data (polyoid-partial-amps-and-phases gen))
-	 (data-len (vct-length original-data))
+	 (data-len (length original-data))
 	 (amps-len (vector-length amps)))
     (do ((i 0 (+ i 3))
 	 (j 0 (+ j 1)))
@@ -6163,7 +6163,7 @@ index 10 (so 10/2 is the bes-jn arg):
   (let* ((samps 44100)
 	 (n 10)
 	 (gen (make-noid 1.0 n 'min-peak))
-	 (gen2 (make-oscil n (vct-ref (polyoid-partial-amps-and-phases gen) (- (vct-length (polyoid-partial-amps-and-phases gen)) 1)))))
+	 (gen2 (make-oscil n (vct-ref (polyoid-partial-amps-and-phases gen) (- (length (polyoid-partial-amps-and-phases gen)) 1)))))
     (do ((i 0 (+ i 1)))
 	((= i samps))
       (outa i (noid gen))
@@ -6731,7 +6731,7 @@ taking input from the readin generator 'reader'.  The output data is available v
       (let* ((data (mus-data (moving-pitch-ac gen)))
 	     (peak 0.0)
 	     (peak-loc 0)
-	     (len (vct-length data)))
+	     (len (length data)))
 	(do ((i 8 (+ i 1))) ; assume we're not in the top few octaves
 	    ((= i len))
 	  (let ((apk (abs (vct-ref data i))))
@@ -6754,7 +6754,7 @@ taking input from the readin generator 'reader'.  The output data is available v
 
 #|
 (let* ((rd (make-readin "oboe.snd"))
-       (cur-srate (mus-sound-srate "oboe.snd"))
+       (cur-srate (srate "oboe.snd"))
        (old-srate (mus-srate)))
   (set! (mus-srate) cur-srate)
   (let* ((scn (make-moving-pitch rd))

@@ -8820,7 +8820,7 @@ static xen_value *sample_1(ptree *pt, xen_value **args, int num_args)
 
 /* ---------------- srate ---------------- */
 
-static void srate_i(int *args, ptree *pt) 
+static void sound_srate_i(int *args, ptree *pt) 
 {
   snd_info *sp;
   sp = run_get_sp(1, args, pt->ints);
@@ -8828,14 +8828,54 @@ static void srate_i(int *args, ptree *pt)
 }
 
 
+static void file_srate_i(int *args, ptree *pt) 
+{
+  INT_RESULT = mus_sound_srate(STRING_ARG_1);
+}
+
+
+static void region_srate_i(int *args, ptree *pt) 
+{
+  INT_RESULT = region_srate(REGION_ARG_1);
+}
+
+
 static xen_value *srate_1(ptree *pt, xen_value **args, int num_args)
 {
   xen_value *true_args[2];
-  xen_value *rtn;
+  xen_value *rtn = NULL;
   int k;
+
   run_opt_arg(pt, args, num_args, 1, true_args);
+  /* this adds an arg (of -1) if 0 passed, then run_get_sp treats the -1 as "use current sound" */
   true_args[0] = args[0];
-  rtn = package(pt, R_INT, srate_i, "srate_i", true_args, 1);
+
+  switch (true_args[1]->type)
+    {
+    case R_STRING: 
+      rtn = package(pt, R_INT, file_srate_i, "file_srate_i", true_args, 1);
+      break;
+
+#if USE_SND
+    case R_SOUND:      
+      rtn = package(pt, R_INT, sound_srate_i, "sound_srate_i", true_args, 1);
+      break;
+
+    case R_REGION:
+      rtn = package(pt, R_INT, region_srate_i, "region_srate_i", true_args, 1);
+      break;
+#endif
+
+    case R_INT:
+    case R_BOOL:
+      rtn = package(pt, R_INT, sound_srate_i, "sound_srate_i", true_args, 1);
+      break;
+
+    default:
+      run_warn("unsupported arg type for length");
+      break;
+    }
+  
   for (k = num_args + 1; k <= 1; k++) free(true_args[k]);
   return(rtn);
 }
@@ -8843,7 +8883,7 @@ static xen_value *srate_1(ptree *pt, xen_value **args, int num_args)
 
 /* ---------------- channels ---------------- */
 
-static void channels_i(int *args, ptree *pt) 
+static void sound_channels_i(int *args, ptree *pt) 
 {
   snd_info *sp;
   sp = run_get_sp(1, args, pt->ints);
@@ -8851,14 +8891,57 @@ static void channels_i(int *args, ptree *pt)
 }
 
 
+static void file_channels_i(int *args, ptree *pt) {INT_RESULT = mus_sound_chans(STRING_ARG_1);}
+static void region_channels_i(int *args, ptree *pt) {INT_RESULT = region_chans(REGION_ARG_1);}
+static void sound_data_channels_i(int *args, ptree *pt) {INT_RESULT = SOUND_DATA_ARG_1->chans;}
+static xen_value *mus_channels_0(ptree *prog, xen_value **args, int num_args);
+
+
 static xen_value *channels_1(ptree *pt, xen_value **args, int num_args)
 {
   xen_value *true_args[2];
-  xen_value *rtn;
+  xen_value *rtn = NULL;
   int k;
   run_opt_arg(pt, args, num_args, 1, true_args);
   true_args[0] = args[0];
-  rtn = package(pt, R_INT, channels_i, "channels_i", true_args, 1);
+
+  switch (true_args[1]->type)
+    {
+
+    case R_STRING: 
+      rtn = package(pt, R_INT, file_channels_i, "file_channels_i", true_args, 1);
+      break;
+
+#if USE_SND
+    case R_SOUND:      
+      rtn = package(pt, R_INT, sound_channels_i, "sound_channels_i", true_args, 1);
+      break;
+
+    case R_REGION:
+      rtn = package(pt, R_INT, region_channels_i, "region_channels_i", true_args, 1);
+      break;
+#endif
+
+    case R_INT:
+    case R_BOOL:
+      rtn = package(pt, R_INT, sound_channels_i, "sound_channels_i", true_args, 1);
+      break;
+
+    case R_SOUND_DATA:
+      rtn = package(pt, R_INT, sound_data_channels_i, "sound_data_channels_i", true_args, 1);
+      break;
+      
+    case R_CLM:
+      rtn = mus_channels_0(pt, true_args, 1);
+      break;
+
+    default:
+      if (CLM_STRUCT_P(args[1]->type))
+	rtn = mus_channels_0(pt, true_args, 1);
+      else rtn = make_xen_value(R_INT, add_int_to_ptree(pt, 1), R_CONSTANT);
+      break;
+    }
+
   for (k = num_args + 1; k <= 1; k++) free(true_args[k]);
   return(rtn);
 }
@@ -9421,11 +9504,12 @@ static xen_value *set_car_1(ptree *prog, xen_value **args, int num_args)
 }
 
 
+/* ---------------------------------------- length ---------------------------------------- */
+
 static void length_0(int *args, ptree *pt) 
 {
   INT_RESULT = LIST_ARG_1->len;
 }
-
 
 static xen_value *vector_length_1(ptree *prog, xen_value **args, int num_args);
 static xen_value *vct_length_1(ptree *prog, xen_value **args, int num_args);
@@ -9478,6 +9562,8 @@ static xen_value *length_1(ptree *prog, xen_value **args, int num_args)
    string_copy_1 vct_copy_v sound_data_copy_f perhaps xen_value_to_xen?
 */
 
+
+/* -------------------------------------------------------------------------------- */
 
 static void null_0(int *args, ptree *pt) 
 {

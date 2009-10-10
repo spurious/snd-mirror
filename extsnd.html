@@ -69,6 +69,7 @@
   <li><a href="#behavior">Customizing Snd's behavior</a>
     <ul>
     <li><a href="#sndglobalvars">Global variables</a>
+    <li><a href="#sndgenericfuncs">Generic functions</a>
     <li><a href="#sndhooks" onmouseout="UnTip()" onmouseover="Tip('callbacks')">Hooks</a>
     </ul>
   <li><a href="#sndobjects">Snd's objects</a>
@@ -1214,6 +1215,59 @@ See also <a href="snd.html#zoomoption">Zoom options</a>.
 </td></tr>
 </table>
 <br><br>
+
+
+
+<!-- ---------------------------------------- GENERIC FUNCTIONS ---------------------------------------- -->
+<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h4><A NAME="sndgenericfuncs">Generic functions</a></h4></td></tr></table>
+
+<p>Several functions in Snd are "generic" in the sense that they can handle a wide
+variety of objects.  The length function, for example, applies to strings and vectors,
+as well as lists.  
+</p>
+
+<table border=0 cellspacing=4 cellpadding=6 hspace=10>
+
+
+<!-- channels -->
+<!-- INDEX genericchannels:channels (generic) -->
+<tr><td colspan=2 bgcolor="#f2f4ff">
+<code><a class=def>channels</a> (:optional obj)</code>
+</td></tr><tr><td></td><td>
+<A NAME="genericchannels">channels</A> handles strings (<a href="#mussoundchans">mus-sound-chans</a>), <a href="#regionchans">region-chans</a>, 
+<a href="#sounddatachans">sound-data-chans</a>, <a href="sndclm.html#genericfunctions">mus-channels</a>,
+<a href="#sndmixes">mixes</a>, <a href="#Vcts">vcts</a>, and vectors (always 1 channel), and 
+<a href="#sndsounds">sounds</a> (as objects or as integers).
+</td></tr><tr><td colspan=2 height=18></td></tr>
+
+
+<!-- length -->
+<!-- INDEX genericlength:length (generic) -->
+<tr><td colspan=2 bgcolor="#f2f4ff">
+<code><a class=def>length</a> (obj)</code>
+</td></tr><tr><td></td><td>
+<A NAME="genericlength">length</A> handles list length, string-length, vector-length, <a href="s7.html#s7doc">hash-table-size</a>,
+<a href="#vctlength">vct-length</a>, <a href="#frames">frames</a> (sound length), 
+<a href="sndclm.html#genericfunctions">mus-length</a> (generators), <a href="#sounddatalength">sound-data-length</a>, 
+<a href="#mixlength">mix-length</a>, and <a href="#regionframes">region-frames</a>.
+</td></tr><tr><td colspan=2 height=18></td></tr>
+
+
+<!-- srate -->
+<!-- INDEX genericsrate:srate (generic) -->
+<tr><td colspan=2 bgcolor="#f2f4ff">
+<code><a class=def>srate</a> (:optional obj)</code>
+</td></tr><tr><td></td><td>
+<A NAME="genericsrate">srate</A> handles strings (treated as file names: <a href="#mussoundsrate">mus-sound-srate</a>), 
+regions (<a href="#regionsrate">region-srate</a>), and <a href="#sndsounds">sounds</a> (as objects or as integers).
+</td></tr><tr><td colspan=2 height=18></td></tr>
+
+
+
+</table>
+
+<br><br>
+
 
 
 <!-- ---------------------------------------- HOOKS ---------------------------------------- -->
@@ -2970,7 +3024,7 @@ read-region-sample returns the next sample read by the region-sampler 'obj'.
 <table border=0 cellpadding=5 vspace=10><tr><td><pre>
 (define* (region-&gt;vct reg :optional (chn 0))
   (if (<a class=quiet href="#regionok" onmouseout="UnTip()" onmouseover="Tip(extsnd_regionok_tip)">region?</a> reg)
-      (if (&lt; chn (<a class=quiet href="#regionchans" onmouseout="UnTip()" onmouseover="Tip(extsnd_regionchans_tip)">region-chans</a> reg))
+      (if (&lt; chn (channels reg))
 	  (let* ((reader (<em class=red>make-region-sampler</em> 0 reg chn))
 		 (len (<a class=quiet href="#regionframes" onmouseout="UnTip()" onmouseover="Tip(extsnd_regionframes_tip)">region-frames</a> reg))
 		 (data (<a class=quiet href="#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> len)))
@@ -3453,8 +3507,8 @@ channel:
 </p>
 <table border=0 cellpadding=5 hspace=20><tr><td><pre>
 (define (vct-polynomial v coeffs)
-  (let* ((v-len (<em class=red>vct-length</em> v))
-	 (num-coeffs (<em class=red>vct-length</em> coeffs))
+  (let* ((v-len (<em class=red>length</em> v))
+	 (num-coeffs (<em class=red>length</em> coeffs))
 	 (new-v (<em class=red>make-vct</em> v-len (<em class=red>vct-ref</em> coeffs (- num-coeffs 1)))))
     (do ((i (- num-coeffs 2) (- i 1)))
 	((&lt; i 0))
@@ -4095,7 +4149,7 @@ This function reads the first 32 samples of a file, returning the 30th in channe
 (define read-sample-30 
   (lambda (file)
     (let* ((fd (<a class=quiet href="#mussoundopeninput" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundopeninput_tip)">>mus-sound-open-input</a> file))
-	   (<a class=quiet href="#chans" onmouseout="UnTip()" onmouseover="Tip(extsnd_chans_tip)">chans</a> (<a class=quiet href="#mussoundchans" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundchans_tip)">mus-sound-chans</a> file))
+	   (<a class=quiet href="#chans" onmouseout="UnTip()" onmouseover="Tip(extsnd_chans_tip)">chans</a> (channels file))
 	   (data (<a class=quiet href="#makesounddata" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesounddata_tip)">make-sound-data</a> chans 32)))
       (<a class=quiet href="#mussoundread" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundread_tip)">mus-sound-read</a> fd 0 31 chans data)
       (let ((val (<a class=quiet href="#sounddataref" onmouseout="UnTip()" onmouseover="Tip(extsnd_sounddataref_tip)">sound-data-ref</a> data 0 29)))
@@ -4385,13 +4439,13 @@ throw 'mus-error upon encountering an error, rather than returning -1 like the u
   (lambda (file)
     (string-append 
      file
-     ": chans: " (number-&gt;string (<a class=quiet href="#mussoundchans" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundchans_tip)">mus-sound-chans</a> file))
-     ", srate: " (number-&gt;string (<a class=quiet href="#mussoundsrate" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundsrate_tip)">mus-sound-srate</a> file))
+     ": chans: " (number-&gt;string (channels file))
+     ", srate: " (number-&gt;string (srate file))
      ", " (<a class=quiet href="#musheadertypename" onmouseout="UnTip()" onmouseover="Tip(extsnd_musheadertypename_tip)">mus-header-type-name</a> (<a class=quiet href="#mussoundheadertype" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundheadertype_tip)">mus-sound-header-type</a> file))
      ", " (<a class=quiet href="#musdataformatname" onmouseout="UnTip()" onmouseover="Tip(extsnd_musdataformatname_tip)">mus-data-format-name</a> (<a class=quiet href="#mussounddataformat" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussounddataformat_tip)">mus-sound-data-format</a> file))
      ", len: " (number-&gt;string 
                 (/ (<a class=quiet href="#mussoundsamples" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundsamples_tip)">mus-sound-samples</a> file) 
-                   (* (<a class=quiet href="#mussoundchans" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundchans_tip)">mus-sound-chans</a> file) (<a class=quiet href="#mussoundsrate" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundsrate_tip)">mus-sound-srate</a> file)))))))
+                   (* (channels file) (srate file)))))))
 </pre></td></tr></table>
 <br>
 <br>
@@ -4804,7 +4858,7 @@ We can use <a href="sndscm.html#dlocsigdoc">dlocsig</a> in conjunction with mix 
   (let* ((duration (<a class=quiet href="#mussoundduration" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundduration_tip)">mus-sound-duration</a> file))
 	 (rd (<a class=quiet href="#makesampler" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesampler_tip)">make-sampler</a> 0 file))
 	 (start (<a class=quiet href="sndclm.html#secondstosamples" onmouseout="UnTip()" onmouseover="Tip(sndclm_secondstosamples_tip)">seconds-&gt;samples</a> start-time))
-         (tmp-sound (<a class=quiet href="sndscm.html#sound-let" onmouseout="UnTip()" onmouseover="Tip(sndscm_sound_let_tip)">with-temp-sound</a> (:channels (<a class=quiet href="#channels" onmouseout="UnTip()" onmouseover="Tip(extsnd_channels_tip)">channels</a>) :srate (<a class=quiet href="#mussoundsrate" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundsrate_tip)">mus-sound-srate</a> file))
+         (tmp-sound (<a class=quiet href="sndscm.html#sound-let" onmouseout="UnTip()" onmouseover="Tip(sndscm_sound_let_tip)">with-temp-sound</a> (:channels (<a class=quiet href="#channels" onmouseout="UnTip()" onmouseover="Tip(extsnd_channels_tip)">channels</a>) :srate (srate file))
 
          ;; We use with-temp-sound here rather than sound-let because mix normally expects its input file to
          ;; be around until it decides it doesn't need it anymore, but sound-let deletes all its temp files.
@@ -5381,7 +5435,7 @@ rather than creating a new vct.
 <table border=0 cellpadding=5><tr><td><pre>
 (define (region-rms n)
   (let* ((data (<em class=red>region-&gt;vct</em> (integer-&gt;region 0) 0 #f n))
-	 (len (<a class=quiet href="#vctlength" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctlength_tip)">vct-length</a> data)))
+	 (len (length data)))
     (sqrt (/ (<a class=quiet href="sndclm.html#dot-product" onmouseout="UnTip()" onmouseover="Tip(sndclm_dot_product_tip)">dot-product</a> data data len) len))))
 </pre></td></tr></table>
 </td></tr><tr><td colspan=2 height=16></td></tr>
@@ -6888,7 +6942,7 @@ the lisp-graph-hook, where the redisplay is automatic.
            (rs (<a class=quiet href="#rightsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_rightsample_tip)">right-sample</a>))
 	   (datal (<a class=quiet href="#makegraphdata" onmouseout="UnTip()" onmouseover="Tip(extsnd_makegraphdata_tip)">make-graph-data</a> snd chn))
 	   (data (if (<a class=quiet href="#vctp" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctp_tip)">vct?</a> datal) datal (cadr datal)))
-           (len (<a class=quiet href="#vctlength" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctlength_tip)">vct-length</a> data))
+           (len (length data))
            (sr (<a class=quiet href="#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a> snd))
 	   (y-max (<a class=quiet href="#yzoomslider" onmouseout="UnTip()" onmouseover="Tip(extsnd_yzoomslider_tip)">y-zoom-slider</a> snd chn)))
       (<a class=quiet href="#vctmultiply" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctmultiply_tip)">vct-multiply!</a> data data)
@@ -10752,7 +10806,7 @@ and initial-phase:
 </p>
 <pre>
 (define (fft-&gt;sines amps phases)
-  (let* ((len (vct-length phases))
+  (let* ((len (length phases))
 	 (fft-size (expt 2 (+ 10 (ceiling (log len 2)))))
 	 (rl (make-vct fft-size))
 	 (im (make-vct fft-size)))
@@ -10908,7 +10962,7 @@ add-file-filter returns an integer to identify 'func' in other contexts.
  (lambda (a)
    "filter out all but mono sound files"
    (and (<a class=quiet href="#soundfilep" onmouseout="UnTip()" onmouseover="Tip(extsnd_soundfilep_tip)">sound-file?</a> a)
-	(= (<a class=quiet href="#mussoundchans" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundchans_tip)">mus-sound-chans</a> a) 1))))
+	(= (channels a) 1))))
 </pre></td></tr></table></td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -11614,7 +11668,7 @@ prints the names of all the stereo AIFC files it finds:
 (for-each
   (lambda (filename)
     (if (and (= (<a class=quiet href="#mussoundheadertype" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundheadertype_tip)">mus-sound-header-type</a> filename) <a class=quiet href="#headertype" onmouseout="UnTip()" onmouseover="Tip(extsnd_headertype_tip)">mus-aifc</a>)
-             (= (<a class=quiet href="#mussoundchans" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundchans_tip)">mus-sound-chans</a> filename) 2))
+             (= (channels filename) 2))
         (<a class=quiet href="#sndprint" onmouseout="UnTip()" onmouseover="Tip(extsnd_sndprint_tip)">snd-print</a> (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "~%~A" filename))))
   (<em class=red>sound-files-in-directory</em>))
 </pre></td></tr></table>
@@ -13472,7 +13526,7 @@ sound over another at an arbitrary point, and so on (see draw.scm):
                      ;; we need to place the red portion correctly in the current graph
                      ;; so the following is getting the "bin" numbers associated with 
                      ;; samples 1000 and 2000
-		     (size (<a class=quiet href="#vctlength" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctlength_tip)">vct-length</a> low-data))
+		     (size (length low-data))
 		     (samps (- right left))
 		     (left-offset (max 0 (- 1000 left)))
 		     (left-bin (inexact-&gt;exact (round (/ (* size left-offset) samps))))
@@ -13530,7 +13584,7 @@ The result can be used in the lisp graph:
     (let ((datal (<em class=red>make-graph-data</em> snd chn)))
       (if datal
           (let* ((data (if (<a class=quiet href="#vctp" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctp_tip)">vct?</a> datal) datal (cadr datal)))
-                 (len (<a class=quiet href="#vctlength" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctlength_tip)">vct-length</a> data))
+                 (len (length data))
                  (sr (<a class=quiet href="#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a> snd)))
             (define (dB val)
 	      (if (&lt; val .001)
@@ -13808,16 +13862,4 @@ You can find out at run-time whether GL is loaded via <code>(provided? 'gl)</cod
 <td><small><a href="index.html" onmouseout="UnTip()" onmouseover="Tip(index_html_tip)">index.html</a></small></td>
 </tr></table>
 </center>
-
-
-<!-- TODO:   length handles list length, also string-length, vector-length, hash-table-size,
-                vct-length, frames, mus-length, sound-data-length, mix-length, and region-frames.
-
-             srate handles strings (mus-sound-srate), regions (region-srate), and sounds.
- 
-             channels handles strings (mus-sound-chans), region-chans, sound-data-chans, mus-channels,
-                mixes (always 1 channel), and sounds
-
--->
-
 </body></html>

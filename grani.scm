@@ -446,7 +446,7 @@
 	 (dist 0.0)
 	 (dist-scl 0.0)
 	 (dist-rscl 0.0)
-	 (where-bins-len (if (vct? where-bins) (vct-length where-bins) 0)))
+	 (where-bins-len (if (vct? where-bins) (length where-bins) 0)))
     (if reverse (set! (mus-increment in-file-reader) -1.0))
     (run
      (lambda ()

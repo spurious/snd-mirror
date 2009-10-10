@@ -105,7 +105,7 @@
   "(region-rms n) -> rms of region n's data (chan 0)"
   (if (region? reg)
       (let* ((data (region->vct reg 0 0)))
-	(sqrt (/ (dot-product data data) (vct-length data))))
+	(sqrt (/ (dot-product data data) (length data))))
       (throw 'no-such-region (list "region-rms" reg))))
 
 
@@ -143,7 +143,7 @@
 
       (if datal
 	  (let* ((data (if (vct? datal) datal (cadr datal)))
-		 (len (vct-length data))
+		 (len (length data))
 		 (sr (srate snd)))
 	    (define (dB val)
 	      (if (< val .001)
@@ -165,7 +165,7 @@
   (let* ((ls (left-sample))
 	 (rs (right-sample))
 	 (data (channel->vct ls (+ 1 (- rs ls))))
-	 (len (vct-length data)))
+	 (len (length data)))
     (sqrt (/ (dot-product data data) len))))
 
 
@@ -189,11 +189,11 @@
   (format #f "~A: chans: ~D, srate: ~D, ~A, ~A, len: ~1,3F"
 	  file
 	  (mus-sound-chans file)
-	  (mus-sound-srate file)
+	  (srate file)
 	  (mus-header-type-name (mus-sound-header-type file))
 	  (mus-data-format-name (mus-sound-data-format file))
 	  (exact->inexact (/ (mus-sound-samples file)
-			     (* (mus-sound-chans file) (mus-sound-srate file))))))
+			     (* (mus-sound-chans file) (srate file))))))
 
 
 ;;; -------- Correlation --------
@@ -1111,7 +1111,7 @@ is: (filter-sound (make-formant 2400 .99))"
 (define (osc-formants radius bases amounts freqs) ; changed to call map-channel itself, 21-Apr-05
   "(osc-formants radius bases amounts freqs) set up any number of independently oscillating 
 formants, then calls map-channel: (osc-formants .99 (vct 400.0 800.0 1200.0) (vct 400.0 800.0 1200.0) (vct 4.0 2.0 3.0)))"
-  (let* ((len (vct-length bases))
+  (let* ((len (length bases))
 	 (frms (make-vector len))
 	 (oscs (make-vector len)))
     (do ((i 0 (+ i 1)))
@@ -1528,7 +1528,7 @@ selected sound: (map-channel (cross-synthesis 1 .5 128 6.0))"
 (define* (make-sound-interp start :optional snd chn)
   "(make-sound-interp start :optional snd chn) -> an interpolating reader for snd's channel chn"
   (let* ((data (channel->vct 0 #f snd chn))
-	 (size (vct-length data)))
+	 (size (length data)))
     (lambda (loc)
       (array-interp data loc size))))
 
@@ -2056,7 +2056,7 @@ a sort of play list: (region-play-list (list (list reg0 0.0) (list reg1 0.5) (li
      (map 
       (lambda (id)
 	(let ((cur time))
-	  (set! time (+ time (/ (region-frames id) (region-srate id))))
+	  (set! time (+ time (/ (region-frames id) (srate id))))
 	  (list cur id)))
       data))))
 
@@ -2700,7 +2700,7 @@ passed as the arguments so to end with channel 3 in channel 0, 2 in 1, 0 in 2, a
    beg dur snd chn edpos #f
    
    (lambda (frag-beg frag-dur forward)
-     (let* ((order (vct-length coeffs))
+     (let* ((order (length coeffs))
 	    (coeffs-0 4)
 	    (state-0 (+ order coeffs-0))
 	    (d (make-vct (+ coeffs-0 (* 2 order)))))
@@ -2753,7 +2753,7 @@ passed as the arguments so to end with channel 3 in channel 0, 2 in 1, 0 in 2, a
 ;;; (add-channel 0.5 0 10000 (frames 0 0) 0 0 0)
 
 (define (virtual-filter-channel coeffs beg dur snd chn edpos)
-  (let ((order (vct-length coeffs))
+  (let ((order (length coeffs))
 	(pos (if (>= edpos 0) edpos (edit-position snd chn))))
     (as-one-edit
      (lambda ()

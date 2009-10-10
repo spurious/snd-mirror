@@ -1279,7 +1279,7 @@
 	 (if (not (= (vector-ref ints 0) 32)) (clm-print "int array trouble"))
 	 (vector-set! ints 1 3)
 	 (if (not (= (vector-ref ints 1) 3)) (clm-print "set int array trouble"))
-	 (if (not (= (vct-length amps) 3)) (clm-print "amps len: ~A" (vct-length amps)))
+	 (if (not (= (length amps) 3)) (clm-print "amps len: ~A" (length amps)))
 ;	 (if (not (= (array-rank amps) 1)) (clm-print "amps rank: ~A" (array-rank amps)))
 ;	 (if (not (= (array-dimension amps 0) 3)) (clm-print "amps dim 0: ~A" (array-dimension amps 0)))
 ;	 (if (not (= (array-total-size amps) 3)) (clm-print "amps total size: ~A" (array-total-size amps)))
@@ -2349,7 +2349,7 @@
 	       (loop-end (cadr loop-data))
 	       (loop-length (+ 1 (- loop-end loop-start)))
 	       (sound-section (file->array sound 0 loop-start loop-length (make-vct loop-length)))
-	       (original-loop-duration (/ loop-length (mus-sound-srate sound)))
+	       (original-loop-duration (/ loop-length (srate sound)))
 	       (tbl (make-table-lookup :frequency (/ freq original-loop-duration) :wave sound-section)))
 	       ;; "freq" here is how fast we read (transpose) the sound -- 1.0 returns the original
 	  (run
@@ -2621,7 +2621,7 @@
           (outa i (convolve ff)))))))
 
 (definstrument (sndclmdoc-granulate-sound file beg :optional dur (orig-beg 0.0) (exp-amt 1.0))
-  (let* ((f-srate (mus-sound-srate file))
+  (let* ((f-srate (srate file))
 	 (f-start (inexact->exact (round (* f-srate orig-beg))))
          (f (make-readin file :start f-start))
 	 (st (seconds->samples beg))

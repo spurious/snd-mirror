@@ -1124,7 +1124,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 (define (dht data) 
   "(dht data) returns the Hartley transform of 'data'."
   ;; taken from Perry Cook's SignalProcessor.m (the slow version of the Hartley transform)
-  (let* ((len (vct-length data)) 
+  (let* ((len (length data)) 
 	 (arr (make-vct len))
 	 (w (/ (* 2.0 pi) len)))
     (do ((i 0 (+ i 1)))
@@ -1543,8 +1543,8 @@ shift the given channel in pitch without changing its length.  The higher 'order
 
 (define (vct-polynomial v coeffs)
   ;; Horner's rule applied to entire vct
-  (let* ((v-len (vct-length v))
-	 (num-coeffs (vct-length coeffs))
+  (let* ((v-len (length v))
+	 (num-coeffs (length coeffs))
 	 (new-v (make-vct v-len (vct-ref coeffs (- num-coeffs 1)))))
     (do ((i (- num-coeffs 2) (- i 1)))
 	((< i 0))
@@ -1567,7 +1567,7 @@ shift the given channel in pitch without changing its length.  The higher 'order
 (define* (spectral-polynomial coeffs :optional snd chn)
   (let* ((len (frames snd chn))
 	 (sound (channel->vct 0 len snd chn))
-	 (num-coeffs (vct-length coeffs))
+	 (num-coeffs (length coeffs))
 	 (fft-len (if (< num-coeffs 2) 
 		      len 
 		      (expt 2 (inexact->exact (ceiling (/ (log (* (- num-coeffs 1) len)) (log 2)))))))
@@ -1629,7 +1629,7 @@ shift the given channel in pitch without changing its length.  The higher 'order
 (define* (scentroid file :key (beg 0.0) dur (db-floor -40.0) (rfreq 100.0) (fftsize 4096))
   "(scentroid file :key (beg 0.0) dur (db-floor -40.0) (rfreq 100.0) (fftsize 4096)) returns the spectral centroid envelope of a sound; 'rfreq' is \
 the rendering frequency, the number of measurements per second; 'db-floor' is the level below which data will be ignored"
-  (let* ((fsr (mus-sound-srate file))
+  (let* ((fsr (srate file))
 	 (incrsamps (inexact->exact (floor (/ fsr rfreq))))
 	 (start (inexact->exact (floor (* beg fsr))))
 	 (end (+ start (if dur (inexact->exact (* dur fsr)) (- (mus-sound-frames file) beg))))
@@ -1681,9 +1681,9 @@ the rendering frequency, the number of measurements per second; 'db-floor' is th
 
 (define (invert-filter fcoeffs)
   "(invert-filter coeffs) tries to return an inverse filter to undo the effect of the FIR filter coeffs."
-  (let* ((flen (vct-length fcoeffs))
+  (let* ((flen (length fcoeffs))
 	 (coeffs (make-vct (+ 32 flen))) ; add room for coeffs to die away
-	 (order (vct-length coeffs)))
+	 (order (length coeffs)))
     (do ((i 0 (+ i 1)))
 	((= i flen))
       (vct-set! coeffs i (vct-ref fcoeffs i)))
@@ -1712,16 +1712,16 @@ the rendering frequency, the number of measurements per second; 'db-floor' is th
   "(make-volterra-filter acoeffs bcoeffs) returns a list for use with volterra-filter, producing one of the standard non-linear filters"
   (list acoeffs 
 	bcoeffs 
-	(make-vct (max (vct-length acoeffs) (vct-length bcoeffs)))))
+	(make-vct (max (length acoeffs) (length bcoeffs)))))
 
 (define (volterra-filter flt x)
   "(volterra-filter flt x) takes 'flt', a list returned by make-volterra-filter, and an input 'x', and returns the (non-linear filtered) result"
   (let* ((as (car flt))
 	 (bs (cadr flt))
 	 (xs (caddr flt))
-	 (xlen (vct-length xs))
-	 (x1len (vct-length as))
-	 (x2len (vct-length bs))
+	 (xlen (length xs))
+	 (x1len (length as))
+	 (x2len (length bs))
 	 (sum 0.0))
     (vct-move! xs (- xlen 1) (- xlen 2) #t)
     (vct-set! xs 0 x)
@@ -1862,7 +1862,7 @@ and replaces it with the spectrum given in coeffs"
 		      (if (vct? fft)
 			  (let* ((sr (srate snd))
 				 (mx (vct-peak fft))
-				 (data-len (vct-length fft))
+				 (data-len (length fft))
 				 
 				 ;; bark settings
 				 (bark-low (floor (bark 20.0)))
@@ -2449,7 +2449,7 @@ the multi-modulator FM case described by the list of modulator frequencies and i
 
 (define (cheby-hka k a coeffs) ; (coeff 0 = DC)
   (let* ((sum 0.0)
-	 (n (vct-length coeffs)))
+	 (n (length coeffs)))
     (do ((j 0 (+ 1 j)))
 	((= j n))
       (let* ((dsum 0.0)
@@ -2493,7 +2493,7 @@ the multi-modulator FM case described by the list of modulator frequencies and i
   (let* ((partials (if (list? any-partials)
 		       (list->vct any-partials)
 		       any-partials))
-	 (len (vct-length partials))
+	 (len (length partials))
 	 (topk 0)
 	 (DC 0.0)
 	 (original-sum (let ((sum 0.0))

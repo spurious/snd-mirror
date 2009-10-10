@@ -84,7 +84,7 @@
       (let* ((flen (mus-length fr))
 	     (nv (or (and (vct? v) v)
 		     (make-vct flen)))
-	     (len (min flen (vct-length nv))))
+	     (len (min flen (length nv))))
 	(do ((i 0 (+ i 1)))
 	    ((= i len))
 	  (vct-set! nv i (frame-ref fr i)))
@@ -94,7 +94,7 @@
   "(vct->frame v :optional fr) copies vct v into either frame fr or a new frame, returning the frame"
   (if (not (vct? v))
       (throw 'wrong-type-arg (list "vct->frame" v))
-      (let* ((vlen (vct-length v))
+      (let* ((vlen (length v))
 	     (nfr (or (and (frame? fr) fr)
 		      (make-frame vlen)))
 	     (len (min vlen (mus-length nfr))))
@@ -110,10 +110,10 @@
       (throw 'wrong-type-arg (list "frame->sound-data" fr))
       (if (not (sound-data? sd))
 	  (throw 'wrong-type-arg (list "frame->sound-data" sd))
-	  (if (>= pos (sound-data-length sd))
+	  (if (>= pos (length sd))
 	      (throw 'out-of-range (list "frame->sound-data" pos))
 	      (let ((len (min (mus-length fr) 
-			      (sound-data-chans sd))))
+			      (channels sd))))
 		(do ((i 0 (+ i 1)))
 		    ((= i len))
 		  (sound-data-set! sd i pos (frame-ref fr i)))
@@ -125,10 +125,10 @@
       (throw 'wrong-type-arg (list "sound-data->frame" fr))
       (if (not (sound-data? sd))
 	  (throw 'wrong-type-arg (list "sound-data->frame" sd))
-	  (if (>= pos (sound-data-length sd))
+	  (if (>= pos (length sd))
 	      (throw 'out-of-range (list "sound-data->frame" pos))
 	      (let ((len (min (mus-length fr) 
-			      (sound-data-chans sd))))
+			      (channels sd))))
 		(do ((i 0 (+ i 1)))
 		    ((= i len))
 		  (frame-set! fr i (sound-data-ref sd i pos)))
@@ -157,13 +157,13 @@
 	  (set! (sample pos index i) (frame-ref fr i))))))
 
 	
-(define (region->frame pos reg) ; arg order is like region-sample
+(define (region->frame reg pos)
   "(region->frame pos reg) returns a frame with the contents of region reg at position pos"
   (if (not (region? reg))
       (throw 'no-such-region (list "region->frame" reg))
-      (let ((fr (make-frame (region-chans reg))))
+      (let ((fr (make-frame (channels reg))))
 	(do ((i 0 (+ i 1)))
-	    ((= i (region-chans reg))
+	    ((= i (channels reg))
 	     fr)
 	  (frame-set! fr i (region-sample reg pos i))))))
 
@@ -188,7 +188,7 @@
       (let ((index (or snd (selected-sound) (car (sounds)))))
 	(if (not (sound? index))
 	    (throw 'no-such-sound (list "sound->sound-data" snd))
-	    (let ((ndur (or dur (sound-data-length sd))))
+	    (let ((ndur (or dur (length sd))))
 	      (do ((i 0 (+ i 1)))
 		  ((= i (chans index)) 
 		   sd)
@@ -300,11 +300,11 @@
     vals))
 
 
-(define* (make-region-frame-reader beg reg :optional dir)
-  "(make-region-frame-reader beg reg :optional dir) returns a frame-reader reading the contents of region reg"
+(define* (make-region-frame-reader reg beg :optional dir)
+  "(make-region-frame-reader reg beg :optional dir) returns a frame-reader reading the contents of region reg"
   (if (not (region? reg))
       (throw 'no-such-region (list "make-region-frame-reader" reg))
-      (let* ((chns (region-chans reg))
+      (let* ((chns (channels reg))
 	     (fr (make-vector (+ chns +frame-reader0+))))
 	(vector-set! fr +frame-reader-tag+ 'frame-reader)
 	(vector-set! fr +frame-reader-snd+ reg)
@@ -384,8 +384,8 @@
   "(vct->file v file :optional srate comment) writes the data in vct v to the specified sound file"
   (if (vct? v)
       (let ((fd (mus-sound-open-output file srate 1 #f mus-riff comment)))
-	(mus-sound-write fd 0 (- (vct-length v) 1) 1 (vct->sound-data v))
-	(mus-sound-close-output fd (* (mus-bytes-per-sample mus-out-format) (vct-length v)))
+	(mus-sound-write fd 0 (- (length v) 1) 1 (vct->sound-data v))
+	(mus-sound-close-output fd (* (mus-bytes-per-sample mus-out-format) (length v)))
 	file)
       (throw 'wrong-type-arg (list "file->vct" v))))
 
@@ -405,9 +405,9 @@
 (define* (sound-data->file sd file :optional (srate 22050) (comment ""))
   "(sound-data->file sd file :optional srate comment) writes the contents of sound-data sd to file"
   (if (sound-data? sd)
-      (let ((fd (mus-sound-open-output file srate (sound-data-chans sd) #f mus-riff comment)))
-	(mus-sound-write fd 0 (- (sound-data-length sd) 1) (sound-data-chans sd) sd)
-	(mus-sound-close-output fd (* (mus-bytes-per-sample mus-out-format) (sound-data-length sd) (sound-data-chans sd)))
+      (let ((fd (mus-sound-open-output file srate (channels sd) #f mus-riff comment)))
+	(mus-sound-write fd 0 (- (length sd) 1) (channels sd) sd)
+	(mus-sound-close-output fd (* (mus-bytes-per-sample mus-out-format) (length sd) (channels sd)))
 	file)
       (throw 'wrong-type-arg (list "sound-data->file" sd))))
 
@@ -415,9 +415,9 @@
 (define (region->sound-data reg)
   "(region->sound-data reg) returns a sound-data object with the contents of region reg"
   (if (region? reg)
-      (let* ((reader (make-region-frame-reader 0 reg))
+      (let* ((reader (make-region-frame-reader reg 0))
 	     (len (region-frames reg))
-	     (chns (region-chans reg))
+	     (chns (channels reg))
 	     (data (make-sound-data chns len)))
 	(do ((i 0 (+ i 1)))
 	    ((= i len))
@@ -445,7 +445,7 @@
   "(insert-vct v :optional beg dur snd chn edpos) inserts vct v's data into sound snd at beg"
   (if (not (vct? v))
       (throw 'wrong-type-arg (list "insert-vct" v))
-      (let ((len (or dur (vct-length v))))
+      (let ((len (or dur (length v))))
 	(insert-samples beg len v snd chn edpos #f (format #f "insert-vct ~A ~A ~A" (vct->string v) beg dur)))))
 
 (define* (insert-frame fr :optional (beg 0) snd edpos)
@@ -468,8 +468,8 @@
       (let ((index (or snd (selected-sound) (car (sounds)))))
 	(if (not (sound? index))
 	    (throw 'no-such-sound (list "insert-sound-data" snd))
-	    (let* ((chns (min (sound-data-chans sd) (chans index)))
-		   (len (or dur (sound-data-length sd)))
+	    (let* ((chns (min (channels sd) (chans index)))
+		   (len (or dur (length sd)))
 		   (v (make-vct len)))
 	      (do ((chn 0 (+ 1 chn)))
 		  ((= chn chns))
@@ -495,8 +495,8 @@
       (let ((index (or snd (selected-sound) (car (sounds)))))
 	(if (not (sound? index))
 	    (throw 'no-such-sound (list "mix-sound-data" snd))
-	    (let* ((chns (min (sound-data-chans sd) (chans index)))
-		   (len (or dur (sound-data-length sd)))
+	    (let* ((chns (min (channels sd) (chans index)))
+		   (len (or dur (length sd)))
 		   (v (make-vct len))
 		   (mix-id #f))
 	      (do ((chn 0 (+ 1 chn)))

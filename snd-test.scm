@@ -34762,6 +34762,44 @@ EDITS: 2
 	    )
 	  (close-sound snd))
 
+	;; srate as generic: mus-sound-srate region-srate srate 
+	
+	(let ((snd (open-sound "oboe.snd"))
+	      (str "oboe.snd"))
+	  (let ((reg (make-region 0 100))
+		(ply (make-player snd 0))
+		)
+	    (if (not (= (srate snd) 22050)) (snd-display ";srate of sound: ~A" (srate snd)))
+	    (if (not (= (srate str) 22050)) (snd-display ";srate of string: ~A" (srate str)))
+	    (if (not (= (srate reg) 22050)) (snd-display ";srate of region: ~A" (srate reg)))
+	    (if (not (= (srate ply) 22050)) (snd-display ";srate of player: ~A" (srate ply)))
+	    )
+	  (close-sound snd))
+	
+	
+	;; channels as generic: mus-sound-chans region-chans chans mus-channels mix/etc
+	
+	(let ((snd (open-sound "oboe.snd"))
+	      (v (vct .1 .2 .3))
+	      (sd (make-sound-data 2 10))
+	      (str "oboe.snd")
+	      (fr (frame .1 .2))
+	      (mx (mixer .1 .2 .3 .4)))
+	  (let ((mxv (mix-vct v 1000))
+		(reg (make-region 0 100))
+		(ply (make-player snd 0))
+		)
+	    (if (not (= (channels snd) 1)) (snd-display ";channels of sound: ~A" (channels snd)))
+	    (if (not (= (channels v) 1)) (snd-display ";channels of vct: ~A" (channels v)))
+	    (if (not (= (channels str) 1)) (snd-display ";channels of string: ~A" (channels str)))
+	    (if (not (= (channels sd) 2)) (snd-display ";channels of sound-data: ~A" (channels sd)))
+	    (if (not (= (channels fr) 2)) (snd-display ";channels of frame: ~A" (channels fr)))
+	    (if (not (= (channels mx) 2)) (snd-display ";channels of mixer: ~A" (channels mx)))
+	    (if (not (= (channels mxv) 1)) (snd-display ";channels of mix: ~A" (channels mxv)))
+	    (if (not (= (channels reg) 1)) (snd-display ";channels of region: ~A" (channels reg)))
+	    (if (not (= (channels ply) 1)) (snd-display ";channels of player: ~A" (channels ply)))
+	    )
+	  (close-sound snd))
 
 
 	)))
@@ -52608,6 +52646,73 @@ EDITS: 1
       (if (not (= len 3)) (snd-display ";run length mixer: ~A" len)))
     (let ((len (let ((f (make-delay 32))) (run (lambda () (length f))))))
       (if (not (= len 32)) (snd-display ";run length delay: ~A" len)))
+
+
+    ;; length as generic function:
+    ;;     string-length vector-length hash-table-size vct-length 
+    ;;     frames mus-length sound-data-length mix-length region-frames 
+    
+    (let ((snd (open-sound "oboe.snd"))
+	  (v (vct .1 .2 .3))
+	  (vc (vector .1 .2 .3 .4))
+	  (lst (list 1 2 3 4 5))
+	  (sd (make-sound-data 1 10))
+	  (str "123456")
+	  (fr (frame .1 .2))
+	  (mx (mixer .1 .2 .3 .4)))
+      (let ((mxv (mix-vct v 1000))
+	    (reg (make-region 0 100))
+	    (dly (make-delay 32))
+	    )
+	(if (not (= (run (lambda () (length snd))) 50828)) (snd-display ";length of sound: ~A" (length snd)))
+	(if (not (= (run (lambda () (length v))) 3)) (snd-display ";length of vct: ~A" (length v)))
+	(if (not (= (run (lambda () (length vc))) 4)) (snd-display ";length of vector: ~A" (length vc)))
+	(if (not (= (run (lambda () (length lst))) 5)) (snd-display ";length of list: ~A" (length lst)))
+	(if (not (= (run (lambda () (length str))) 6)) (snd-display ";length of string: ~A" (length str)))
+	(if (not (= (run (lambda () (length sd))) 10)) (snd-display ";length of sound-data: ~A" (length sd)))
+	(if (not (= (run (lambda () (length fr))) 2)) (snd-display ";length of frame: ~A" (length fr)))
+	(if (not (= (run (lambda () (length mx))) 2)) (snd-display ";length of mixer: ~A" (length mx)))
+	(if (not (= (run (lambda () (length mxv))) 3)) (snd-display ";length of mix: ~A" (length mxv)))
+	(if (not (= (run (lambda () (length reg))) 101)) (snd-display ";length of region: ~A" (length reg)))
+	(if (not (= (run (lambda () (length dly))) 32)) (snd-display ";length of delay: ~A" (length dly)))
+	)
+      (close-sound snd))
+    
+    ;; srate as generic: mus-sound-srate region-srate srate 
+    
+    (let ((snd (open-sound "oboe.snd"))
+	  (str "oboe.snd"))
+      (let ((reg (make-region 0 100))
+	    )
+	(if (not (= (run (lambda () (srate snd))) 22050)) (snd-display ";srate of sound: ~A" (srate snd)))
+	(if (not (= (run (lambda () (srate str))) 22050)) (snd-display ";srate of string: ~A" (srate str)))
+	(if (not (= (run (lambda () (srate reg))) 22050)) (snd-display ";srate of region: ~A" (srate reg)))
+	)
+      (close-sound snd))
+    
+    ;; channels as generic: mus-sound-chans region-chans chans mus-channels mix/etc
+    
+    (let ((snd (open-sound "oboe.snd"))
+	  (v (vct .1 .2 .3))
+	  (sd (make-sound-data 2 10))
+	  (str "oboe.snd")
+	  (fr (frame .1 .2))
+	  (mx (mixer .1 .2 .3 .4)))
+      (let ((mxv (mix-vct v 1000))
+	    (reg (make-region 0 100))
+	    )
+	(if (not (= (run (lambda () (channels snd))) 1)) (snd-display ";channels of sound: ~A" (channels snd)))
+	(if (not (= (run (lambda () (channels v))) 1)) (snd-display ";channels of vct: ~A" (channels v)))
+	(if (not (= (run (lambda () (channels str))) 1)) (snd-display ";channels of string: ~A" (channels str)))
+	(if (not (= (run (lambda () (channels sd))) 2)) (snd-display ";channels of sound-data: ~A" (channels sd)))
+	(if (not (= (run (lambda () (channels fr))) 2)) (snd-display ";channels of frame: ~A" (channels fr)))
+	(if (not (= (run (lambda () (channels mx))) 2)) (snd-display ";channels of mixer: ~A" (channels mx)))
+	(if (not (= (run (lambda () (channels mxv))) 1)) (snd-display ";channels of mix: ~A" (channels mxv)))
+	(if (not (= (run (lambda () (channels reg))) 1)) (snd-display ";channels of region: ~A" (channels reg)))
+	)
+      (close-sound snd))
+    
+    
     ))
 
 

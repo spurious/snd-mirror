@@ -3224,6 +3224,12 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
                            (/ (%log (car args)) (%log (cadr args)))\
                            (%log (car args))))");
 
+  XEN_EVAL_C_STRING("(define %length length)");
+  XEN_EVAL_C_STRING("(define (length obj)\
+                       (if (string? obj) (string-length obj)\
+                           (if (vector? obj) (vector-length obj)\
+                               (%length obj))))");
+
   /* def-optkey-fun is just define* in s7, but in guile it needs special handling.  Unfortunately,
    *    guile 1.9.0 makes this harder.
    */

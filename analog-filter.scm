@@ -75,8 +75,8 @@
 
 (define (prototype->highpass n num den)
   (let* ((g 1.0)
-	 (numt (make-vct (vct-length num)))
-	 (dent (make-vct (vct-length den))))
+	 (numt (make-vct (length num)))
+	 (dent (make-vct (length den))))
     (do ((k 0 (+ k 2))
 	 (i 0 (+ i 3)))
 	((>= k n)) 

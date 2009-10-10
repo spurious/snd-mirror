@@ -294,7 +294,7 @@ the amp (more or less), 'N'  is 1..10 or thereabouts, 'fi' is the phase incremen
 ;;; -------- sine-bank
 
 (define* (sine-bank amps phases :optional size)
-  (let ((len (or size (vct-length amps)))
+  (let ((len (or size (length amps)))
 	(sum 0.0))
     (do ((i 0 (+ 1 i)))
 	((= i len))

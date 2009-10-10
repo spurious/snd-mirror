@@ -1282,7 +1282,7 @@ Reverb-feedback sets the scaler on the feedback.
 	      ;; graph/spectrum -- does this need an explicit update?
 	      (let* ((snd (car widget))
 		     (data (cadr widget))
-		     (frames (sound-data-length data))
+		     (frames (length data))
 		     (loc (cursor snd 0)))
 		(sound-data-set! data 0 loc var)
 		(if (time-graph? snd) (update-time-graph snd))

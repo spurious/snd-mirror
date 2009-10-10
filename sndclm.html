@@ -1546,7 +1546,7 @@ based on some previously chosen loop positions:
                (loop-end (cadr loop-data))
                (loop-length (+ 1 (- loop-end loop-start)))
                (sound-section (<a class=quiet href="#filetoarray" onmouseout="UnTip()" onmouseover="Tip(sndclm_filetoarray_tip)">file-&gt;array</a> sound 0 loop-start loop-length (<a class=quiet href="extsnd.html#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> loop-length)))
-               (original-loop-duration (/ loop-length (<a class=quiet href="extsnd.html#mussoundsrate" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundsrate_tip)">mus-sound-srate</a> sound)))
+               (original-loop-duration (/ loop-length (srate sound)))
                (tbl (<em class=red>make-table-lookup</em> :frequency (/ freq original-loop-duration) :wave sound-section)))
                ;; "freq" here is how fast we read (transpose) the sound &mdash; 1.0 returns the original
           (<a class=quiet href="extsnd.html#run" onmouseout="UnTip()" onmouseover="Tip(extsnd_run_tip)">run</a>
@@ -4730,7 +4730,7 @@ And the fourth used the ssb-am-bank function in dsp.scm rewritten here for with-
  (let* ((sound "oboe.snd")
         (mx (cadr (<a class=quiet href="extsnd.html#mussoundmaxamp" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundmaxamp_tip)">mus-sound-maxamp</a> sound)))
         (dur (<a class=quiet href="extsnd.html#mussoundduration" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundduration_tip)">mus-sound-duration</a> sound)))
-    (<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> (:scaled-to mx  :srate (<a class=quiet href="extsnd.html#mussoundsrate" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundsrate_tip)">mus-sound-srate</a> sound))
+    (<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> (:scaled-to mx  :srate (srate sound))
       (repitch 0 dur sound 554 1000)))
 </pre>
 </td></tr></table>
@@ -6991,7 +6991,7 @@ one argument that return a new input sample whenever they are called by granulat
 <table border=0 hspace=40><tr><td>
 <pre>
 (<a class=quiet href="sndscm.html#definstrument" onmouseout="UnTip()" onmouseover="Tip(sndscm_definstrument_tip)">definstrument</a> (granulate-sound file beg :optional dur (orig-beg 0.0) (exp-amt 1.0))
-  (let* ((f-srate (<a class=quiet href="extsnd.html#mussoundsrate" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundsrate_tip)">mus-sound-srate</a> file))
+  (let* ((f-srate (srate file))
 	 (f-start (inexact-&gt;exact (round (* f-srate orig-beg))))
          (f (<a class=quiet href="#make-readin" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_readin_tip)">make-readin</a> file :start f-start))
 	 (st (<a class=quiet href="#secondstosamples" onmouseout="UnTip()" onmouseover="Tip(sndclm_secondstosamples_tip)">seconds-&gt;samples</a> beg))
@@ -7213,7 +7213,7 @@ In the next example we use all these special functions to resynthesize down an o
 	       (vct-add! (phase-vocoder-phase-increments gen) (phase-vocoder-freqs gen))
 	       (vct-add! (phase-vocoder-phases gen) (phase-vocoder-phase-increments gen))
 	       (let ((sum 0.0)
-		     (n (vct-length (phase-vocoder-amps gen))))
+		     (n (length (phase-vocoder-amps gen))))
 		 (do ((k 0 (+ 1 k)))
 		     ((= k n))
 		   (set! sum (+ sum (* (vct-ref (phase-vocoder-amps gen) k)
@@ -9832,7 +9832,7 @@ via mus-data.
 </p>
 <pre>
 (let* ((rd (make-readin "oboe.snd"))
-       (cur-srate (mus-sound-srate "oboe.snd"))
+       (cur-srate (srate "oboe.snd"))
        (old-srate (mus-srate)))
   (set! (mus-srate) cur-srate)
   (let* ((scn (<em class=red>make-moving-pitch</em> rd))
@@ -10200,12 +10200,12 @@ We could define our own FIR filter using dot-product:
 <table border=0 hspace=40><tr><td>
 <pre>
 (define (make-fr-filter coeffs)
-  (list coeffs (<a class=quiet href="extsnd.html#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> (<a class=quiet href="extsnd.html#vctlength" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctlength_tip)">vct-length</a> coeffs))))
+  (list coeffs (<a class=quiet href="extsnd.html#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> (length coeffs))))
 
 (define (fr-filter flt x)
   (let* ((coeffs (car flt))
 	 (xs (cadr flt))
-	 (xlen (<a class=quiet href="extsnd.html#vctlength" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctlength_tip)">vct-length</a> xs)))
+	 (xlen (length xs)))
     (<a class=quiet href="extsnd.html#vctmove" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctmove_tip)">vct-move!</a> xs (- xlen 1) (- xlen 2) #t)
     (<a class=quiet href="extsnd.html#vctset" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctset_tip)">vct-set!</a> xs 0 x)
     (<em class=red>dot-product</em> coeffs xs xlen)))
@@ -10396,7 +10396,7 @@ only difference is that mus-fft includes the fft length as an argument, whereas
   (array-&gt;file "test.snd" 
 	       (vct-scale! rdata (/ 1.0 fsize)) 
 	       len 
-	       (mus-sound-srate "oboe.snd") 
+	       (srate "oboe.snd") 
 	       1)
   (let ((previous-case (find-sound "test.snd")))
     (if (sound? previous-case)

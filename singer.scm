@@ -197,7 +197,7 @@
 	   (first-tract 1)
 	   (offset -1)
 	   (bg (seconds->samples beg))
-	   (nd (inexact->exact (vct-ref change-times (- (vct-length change-times) 1))))
+	   (nd (inexact->exact (vct-ref change-times (- (length change-times) 1))))
 	   (next-offset bg)
 	   (last-sfd -1)
 	   (last-gfd -1))

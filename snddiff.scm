@@ -16,7 +16,7 @@
 (define (lag? snd0 chn0 snd1 chn1)
   ;; returns the probable lagtime between the two sounds (negative means second sound is delayed)
   (let* ((corr (cross-correlate snd0 chn0 snd1 chn1))
-	 (len (vct-length corr))
+	 (len (length corr))
 	 (pk (- (vct-peak corr) .000001))
 	 (pos -1)
 	 (lag (do ((i 0 (+ i 1)))
@@ -38,7 +38,7 @@
 	'no-difference
 	(let ((diffs 0)
 	      (diff-data '())
-	      (len (min (vct-length v0) (vct-length v1))))
+	      (len (min (length v0) (length v1))))
 	  (do ((i 0 (+ i 1)))
 	      ((or (> diffs 10)
 		   (= i len)))
@@ -56,7 +56,7 @@
 
 (define (unconvolve-1 v0 v1 impulse-response)  ; assume here that v0 is the original and that we're aligned, and both are trimmed at the front
   (let ((pos -1)
-	(len (vct-length v0)))
+	(len (length v0)))
 
     (do ((i 0 (+ i 1)))
 	((or (>= pos 0)
@@ -80,7 +80,7 @@
 
 (define (unconvolve v0 v1)
   (let ((trim -1)
-	(len (min (vct-length v0) (vct-length v1))))
+	(len (min (length v0) (length v1))))
     (do ((i 0 (+ i 1)))
 	((or (> trim -1)
 	     (= i len)))

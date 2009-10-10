@@ -18,7 +18,7 @@
 	 (samps (seconds->samples dur))
 	 (nd (+ st samps))
 	 (in-chans (mus-sound-chans in-file))
-	 (inloc (inexact->exact (floor (* (or inbeg 0.0) (mus-sound-srate in-file)))))
+	 (inloc (inexact->exact (floor (* (or inbeg 0.0) (srate in-file)))))
 	 (out-chans (mus-channels *output*))
 	 (mx (if matrix
 		 (make-mixer (max in-chans out-chans))

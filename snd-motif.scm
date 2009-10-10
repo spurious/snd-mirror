@@ -154,14 +154,14 @@
 ;;;
 ;;; replaces the current file search procedure in the File Selection Box
 ;;;
-;;;    (install-searcher (lambda (file) (= (mus-sound-srate file) 44100)))
+;;;    (install-searcher (lambda (file) (= (srate file) 44100)))
 ;;;    (install-searcher (lambda (file) (= (mus-sound-chans file) 4)))
 ;;;
 ;;; this is obsolete -- use the file-filter mechanism instead
 
 (define (install-searcher proc)
   "(install-searcher proc) replaces the current file search procedure in the File Selection 
-Box: (install-searcher (lambda (file) (= (mus-sound-srate file) 44100)))"
+Box: (install-searcher (lambda (file) (= (srate file) 44100)))"
   (define match-sound-files
     (lambda args
       "(match-sound-files func :optional dir) applies func to each sound file in dir and returns a list of files for which func does not return #f"
@@ -1473,7 +1473,7 @@ Reverb-feedback sets the scaler on the feedback.
 		    (* height (- 1.0 y))))))))
     (let* ((ly (y->grfy (vct-ref pts 0) range))
 	   (lx left-margin)
-	   (len (vct-length pts))
+	   (len (length pts))
 	   (xinc (/ (- width left-margin right-margin) len))
 	   (y 0))
       (do ((i 1 (+ i 1))
@@ -2770,7 +2770,7 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"
 	      ;; graph/spectrum -- does this need an explicit update?
 	      (let* ((snd (car widget))
 		     (data (cadr widget))
-		     (frames (sound-data-length data))
+		     (frames (length data))
 		     (loc (cursor snd 0)))
 		(sound-data-set! data 0 loc var)
 		(if (time-graph? snd) (update-time-graph snd))
@@ -2793,7 +2793,7 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"
 	  ;; graph/spectrum
 	  (let* ((snd (car widget))
 		 (data (cadr widget))
-		 (frames (sound-data-length data)))
+		 (frames (length data)))
 	    (set! (cursor snd 0) 0)
 	    (do ((i 0 (+ i 1)))
 		((= i frames))

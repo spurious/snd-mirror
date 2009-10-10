@@ -236,19 +236,19 @@
 
   (define (sound-data-channel->list sd chan)
     (let ((ls '()))
-      (do ((i (- (sound-data-length sd) 1) (- i 1)))
+      (do ((i (- (length sd) 1) (- i 1)))
 	  ((< i 0) ls)
 	(set! ls (cons (sound-data-ref sd chan i) ls)))))
 
   (let ((lst '()))
-    (do ((i (- (sound-data-chans sd) 1) (- i 1)))
+    (do ((i (- (channels sd) 1) (- i 1)))
 	((< i 0) lst)
       (set! lst (cons (sound-data-channel->list sd i) lst)))))
 
 
 (define (vct-convolve! r1 r2)
   "(vct-convolve! r1 r2) is a wrapper for convolution"
-  (convolution r1 r2 (vct-length r1)))
+  (convolution r1 r2 (length r1)))
 
 (define* (old-map-chan func :optional start end edname snd chn edpos)
   (map-chan (lambda (y)

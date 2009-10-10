@@ -70,8 +70,8 @@ It causes a description of the file to popup when the mouse crosses the filename
 	(format #f "~A:  ~%  chans: ~D, srate: ~D, len: ~A~%  ~A ~A~A~%  written: ~A~A~A"
 		file
 		(mus-sound-chans file)
-		(mus-sound-srate file)
-		(let ((den (* (mus-sound-chans file) (mus-sound-srate file))))
+		(srate file)
+		(let ((den (* (mus-sound-chans file) (srate file))))
 		  (if (> den 0)
 		      (format #f "~1,3F" (exact->inexact (/ (mus-sound-samples file) den)))
 		      "unknown"))

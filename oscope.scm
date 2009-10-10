@@ -72,7 +72,7 @@
 					 (lambda args -1)))
 		    (if (not (= oscope-input-port -1))
 			(begin
-			  (if (or (not (= (sound-data-chans oscope-input-data) chans))
+			  (if (or (not (= (channels oscope-input-data) chans))
 				  (not (= (sound-data-length oscope-input-data) oscope-input-frames)))
 			      (set! oscope-input-data (make-sound-data chans oscope-input-frames))))))))))
 	(if (not (= oscope-input-port -1))

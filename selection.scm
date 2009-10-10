@@ -295,7 +295,7 @@ the selection, the smooths the edges with a ramp whose duration is 'ramp-dur' (i
   (let ((temp-file (snd-tempnam)))
     (save-selection temp-file)
     (let ((selsnd (open-sound temp-file)))
-      (filter-sound flt (or order (vct-length flt)) selsnd)
+      (filter-sound flt (or order (length flt)) selsnd)
       (let ((tmp-dur (samples->seconds (frames selsnd))))
 	(set! (sync selsnd) (+ 1 (sync-max))) ; make sure env-sound hits all chans
 	(env-sound (list 0 0  ramp-dur 1  (- tmp-dur ramp-dur) 1  tmp-dur 0) 0 #f 1.0 selsnd)

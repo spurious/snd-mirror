@@ -483,7 +483,7 @@ each segment: (powenv-channel '(0 0 .325  1 1 32.0 2 0 32.0))"
   ;; based on rmsenv.ins by Bret Battey
   (let* ((e '())
 	 (incr (/ 1.0 rfreq))
-	 (fsr (mus-sound-srate file))
+	 (fsr (srate file))
 	 (incrsamps (inexact->exact (round (* incr fsr))))
 	 (start (inexact->exact (round (* beg fsr))))
 	 (reader (make-sampler start file))
