@@ -561,7 +561,7 @@
       (if (sound-property 'dragger snd)
 	  (begin
 	    (do ((i 0 (+ 1 i)))
-		((= i (chans snd)))
+		((= i (channels snd)))
 	      (if (not (= i chn))
 		  (begin
 		    (set! (y-zoom-slider snd i) (* val val))
@@ -576,7 +576,7 @@
 	      (or (sound-property 'save-state-ignore snd)
 		  (list 'save-state-ignore))))
   (do ((chn 0 (+ 1 chn)))
-      ((= chn (chans snd)))
+      ((= chn (channels snd)))
     (let* ((zy (list-ref (channel-widgets snd chn) 14)))
       (g_signal_connect_closure_by_id (GPOINTER zy)
 				      (g_signal_lookup "value_changed" (G_OBJECT_TYPE (GTK_OBJECT zy)))

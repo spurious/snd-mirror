@@ -50,7 +50,7 @@
 	    (chnlist '())
 	    (pos 0))
 	(for-each (lambda (snd)
-		    (let ((chns (chans snd)))
+		    (let ((chns (channels snd)))
 		      (do ((i 0 (+ 1 i)))
 			  ((= i chns))
 			(if (and (equal? snd cursnd)
@@ -273,7 +273,7 @@
 
 (define* (mus-bank gens amps1 :optional in1 in2)
   "(mus-bank gens amps1 :optional in1 in2) sums a vector of CLM generators ('gens') multiplied by 'amps' (a vct)"
-  (let ((len (vector-length gens))
+  (let ((len (length gens))
 	(sum 0.0)
 	(amps (if (vector? amps1) (vector->vct amps1) amps1))
 	(inp1 (if (vector? in1) (vector->vct in1) (or in1 #f)))
@@ -321,7 +321,7 @@
   (if (integer? chn)
       (scale-channel scl beg dur snd chn edpos)
       (do ((i 0 (+ 1 i)))
-	  ((= i (chans snd)))
+	  ((= i (channels snd)))
 	(scale-channel scl beg dur snd i))))
 
 (define* (scale-sound-to norm :optional beg dur snd chn)
@@ -335,7 +335,7 @@
 	(if (and (not (= mx 0.0))
 		 (not (= mx norm)))
 	    (do ((i 0 (+ 1 i)))
-		((= i (chans snd)))
+		((= i (channels snd)))
 	      (scale-channel (/ norm mx) beg dur snd i))))))
 
 (define (after-save-as-hook-replace-sound snd filename from-dialog)

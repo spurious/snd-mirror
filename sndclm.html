@@ -5218,7 +5218,7 @@ than the preceding:
 
 (define (1f-noise rans)
   (let ((val 0.0) 
-        (len (vector-length rans)))
+        (len (length rans)))
     (do ((i 0 (+ 1 i)))
         ((= i len) (/ val len))
       (set! val (+ val (<em class=red>rand</em> (vector-ref rans i)))))))
@@ -7919,7 +7919,7 @@ use its :output argument:
 	(reverb 0.0)       ; reverb amount
         (output *output*)  ; output generator or location
 	(revout *reverb*)  ; reverb output generator or location
-        (channels (mus-channels output))
+        (channels (channels output))
 	(type mus-interp-linear)
  <a class=def name="locsig">locsig</a> loc i in-sig
  <a class=def name="locsig?">locsig?</a> loc
@@ -8042,7 +8042,7 @@ To have full output to both channels,</p>
 	        (distval (<a class=quiet href="#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> dist-env)))
             (set! dist-scaler (/ 1.0 distval))
             (set! (<em class=red>locsig-ref</em> loc 0) (* (- 1.0 degval) dist-scaler))
-            (if (&gt; (<a class=quiet href="#mus-channels" onmouseout="UnTip()" onmouseover="Tip(sndclm_mus_channels_tip)">mus-channels</a> <a class=quiet onmouseout="UnTip()" onmouseover="Tip(sndclm_output_tip)">*output*</a>) 1)
+            (if (&gt; (channels <a class=quiet onmouseout="UnTip()" onmouseover="Tip(sndclm_output_tip)">*output*</a>) 1)
                 (set! (<em class=red>locsig-ref</em> loc 1) (* degval dist-scaler)))
             (if <a class=quiet onmouseout="UnTip()" onmouseover="Tip(sndclm_reverb_tip)">*reverb*</a> 
                 (set! (<em class=red>locsig-reverb-ref</em> loc 0) (* reverb-amount (sqrt dist-scaler))))

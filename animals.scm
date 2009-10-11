@@ -350,7 +350,7 @@
 	    (let ((last-page-state (map (lambda (snd) 
 					  (let ((data (list snd (file-name snd))))
 					    (do ((i 0 (+ i 1)))
-						((= i (chans snd)) data)
+						((= i (channels snd)) data)
 					      (set! data (append data (list (cons i (axis-info snd i))))))))
 					(sounds))))
 	      (bind-key "Page_Up" 0

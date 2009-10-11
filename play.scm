@@ -212,7 +212,7 @@ read, even if not playing.  'files' is a list of files to be played."
     (if (> files-len 0)
 	(let* ((bufsize 256)
 	       (srate (srate (car files)))
-	       (chans (apply max (map mus-sound-chans files)))
+	       (chans (apply max (map channels files)))
 	       (data (make-sound-data chans bufsize))
 	       (readers (map make-file->frame files))
 	       (locs (make-vector files-len 0))
@@ -225,7 +225,7 @@ read, even if not playing.  'files' is a list of files to be played."
 	      (begin
 		(do ((i 0 (+ 1 i)))
 		    ((= i files-len))
-		  (vector-set! pframes i (mus-sound-frames (list-ref files i))))
+		  (vector-set! pframes i (frames (list-ref files i))))
 		(catch #t
 		       (lambda ()
 			 (while reading
@@ -237,8 +237,8 @@ read, even if not playing.  'files' is a list of files to be played."
 					     (current-loc (vector-ref locs current-file))
 					     (next (list-ref readers next-file))
 					     (next-loc (vector-ref locs next-file))
-					     (downs (mus-channels current))
-					     (ups (mus-channels next))
+					     (downs (channels current))
+					     (ups (channels next))
 					     (up (make-frame ups))
 					     (down (make-frame downs)))
 					(do ((i 0 (+ 1 i)))
@@ -265,7 +265,7 @@ read, even if not playing.  'files' is a list of files to be played."
 					(set! current-file next-file))
 				      (let* ((current (list-ref readers current-file))
 					     (current-loc (vector-ref locs current-file))
-					     (ons (mus-channels current))
+					     (ons (channels current))
 					     (on (make-frame ons)))
 					(do ((i 0 (+ 1 i)))
 					    ((= i bufsize))
@@ -311,7 +311,7 @@ read, even if not playing.  'files' is a list of files to be played."
   (lambda (sound . amps)
     "(play-with-amps snd :rest amps) plays snd with each channel scaled by the corresponding 
 amp: (play-with-amps 0 1.0 0.5) plays channel 2 of stereo sound at half amplitude"
-    (let ((chans (chans sound)))
+    (let ((chans (channels sound)))
       (do ((chan 0 (+ 1 chan)))
           ((= chan chans))
         (let ((player (make-player sound chan)))

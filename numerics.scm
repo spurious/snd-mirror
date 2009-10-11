@@ -81,7 +81,7 @@
 
 ;;; A&S (bessel.lisp)
 (define (legendre-polynomial a x) ; sum of weighted polynomials (m=0)
-  (let ((n (- (vector-length a) 1)))
+  (let ((n (- (length a) 1)))
     (if (= n 0) 
 	(vector-ref a 0)
 	(let* ((r x)
@@ -164,7 +164,7 @@
 
 
 (define* (chebyshev-polynomial a x :optional (kind 1))
-  (let ((n (- (vector-length a) 1)))
+  (let ((n (- (length a) 1)))
     (if (= n 0) 
 	(vector-ref a 0)
 	(let* ((r (* kind x))
@@ -186,7 +186,7 @@
 
 
 (define (hermite-polynomial a x)
-  (let ((n (- (vector-length a) 1)))
+  (let ((n (- (length a) 1)))
     (if (= n 0) 
 	(vector-ref a 0)
 	(let* ((r (* 2 x))
@@ -209,7 +209,7 @@
 
 
 (define* (laguerre-polynomial a x :optional (alpha 0.0))
-  (let ((n (- (vector-length a) 1)))
+  (let ((n (- (length a) 1)))
     (if (= n 0) 
 	(vector-ref a 0)
 	(let* ((r (- (+ alpha 1.0) x))

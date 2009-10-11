@@ -1174,7 +1174,6 @@ static XEN mus_xen_apply(XEN gen, XEN arg1, XEN arg2)
 #if HAVE_S7
 static XEN g_frame_set(XEN uf1, XEN uchan, XEN val);
 static XEN g_mixer_set(XEN uf1, XEN in, XEN out, XEN val);
-static XEN g_mus_length(XEN gen);
 
 static XEN mus_xen_apply(s7_scheme *sc, XEN gen, XEN args)
 {
@@ -1623,7 +1622,7 @@ static XEN g_mus_run(XEN gen, XEN arg1, XEN arg2)
 }
 
 
-static XEN g_mus_length(XEN gen) 
+XEN g_mus_length(XEN gen)
 {
   #define H_mus_length "(" S_mus_length " gen): gen's length, if any"
   if (XEN_LIST_P(gen)) return(call_get_method(gen, S_mus_length));
@@ -6696,17 +6695,23 @@ return a new generator for signal placement in n channels.  Channel 0 correspond
 XEN g_mus_channels(XEN obj)
 {
   #define H_mus_channels "(" S_mus_channels " gen): gen's " S_mus_channels " field, if any"
+
   if (XEN_LIST_P(obj)) return(call_get_method(obj, S_mus_channels));
+
   if (MUS_XEN_P(obj))
     return(C_TO_XEN_INT(mus_channels(XEN_TO_MUS_ANY(obj))));
+
   if (MUS_VCT_P(obj))
     return(C_TO_XEN_INT(1));
+
   if (sound_data_p(obj))
     return(C_TO_XEN_INT((XEN_TO_SOUND_DATA(obj))->chans));
+
 #if HAVE_S7 && HAVE_PTHREADS
   if (s7_is_thread_variable(obj))
     return(C_TO_XEN_INT(mus_channels(XEN_TO_MUS_ANY(s7_thread_variable_value(s7, obj)))));
 #endif
+
   XEN_ASSERT_TYPE(false, obj, XEN_ONLY_ARG, S_mus_channels, "an output generator, vct, or sound-data object");
   return(XEN_FALSE); /* make compiler happy */
 }
@@ -8664,7 +8669,7 @@ static void mus_xen_init(void)
 #endif
 
 #if HAVE_S7
-  mus_xen_tag = XEN_MAKE_OBJECT_TYPE("<mus>", print_mus_xen, free_mus_xen, s7_equalp_mus_xen, mark_mus_xen, 
+  mus_xen_tag = XEN_MAKE_OBJECT_TYPE("<generator>", print_mus_xen, free_mus_xen, s7_equalp_mus_xen, mark_mus_xen, 
 				     mus_xen_apply, s7_mus_set, s7_mus_length, s7_mus_copy, s7_mus_fill);
 #else
   mus_xen_tag = XEN_MAKE_OBJECT_TYPE("Mus", sizeof(mus_xen));

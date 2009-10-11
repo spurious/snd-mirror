@@ -179,7 +179,7 @@
 
 (define* (play-with-envs :optional (sound #f))
   "(play-with-envs snd) sets channel amps during playback from the associated enved envelopes"
-  (let ((chans (chans sound)))
+  (let ((chans (channels sound)))
     (do ((chan 0 (+ 1 chan)))
 	((= chan chans))
       (let ((player (make-player sound chan))

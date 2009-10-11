@@ -1145,6 +1145,7 @@ int xen_region_to_int(XEN n);
 #define XEN_REGION_TO_C_INT(n) xen_region_to_int(n)
 XEN g_region_srate(XEN n);
 XEN g_region_chans(XEN n);
+XEN g_region_frames(XEN n, XEN chan);
 
 
 
@@ -1577,6 +1578,7 @@ bool xen_mix_p(XEN obj);
 snd_fd *xen_mix_to_snd_fd(XEN obj);
 int xen_mix_to_int(XEN n);
 #define XEN_MIX_TO_C_INT(n) xen_mix_to_int(n)
+XEN g_mix_length(XEN n);
  
 mus_long_t mix_position_from_id(int id);
 mus_long_t mix_length_from_id(int id);

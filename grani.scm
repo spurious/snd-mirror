@@ -347,9 +347,9 @@
   (let* ((ts (times->samples start-time duration))
 	 (beg (car ts))
 	 (end (cadr ts))
-	 (in-file-channels (mus-sound-chans file))
+	 (in-file-channels (channels file))
 	 (in-file-sr (exact->inexact (mus-sound-srate file)))
-	 (in-file-dur  (/ (mus-sound-frames file) in-file-sr))
+	 (in-file-dur  (/ (frames file) in-file-sr))
 	 (last-in-sample (inexact->exact (floor (* in-file-dur in-file-sr))))
 	 ;; ratio between input and output sampling rates
 	 (srate-ratio (/ in-file-sr (mus-srate)))
@@ -419,7 +419,7 @@
 			      :duration duration))
 	 (gr-degree-spread (make-env :envelope (envelope-or-number grain-degree-spread)
 				     :duration duration))
-	 (out-chans (mus-channels *output*))
+	 (out-chans (channels *output*))
 	 ;; signal locator in the stereo image
 	 (loc (make-locsig :degree 45.0
 			   :distance 1.0

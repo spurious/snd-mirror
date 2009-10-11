@@ -68,7 +68,7 @@
 (define (mix->vct id)
   "(mix->vct mix) returns mix's data in vct"
   (if (mix? id)
-      (let* ((len (mix-length id))
+      (let* ((len (frames id))
 	     (v (make-vct len))
 	     (reader (make-mix-sampler id)))
 	(do ((i 0 (+ 1 i)))
@@ -82,14 +82,14 @@
 (define (save-mix id filename)
   "(save-mix mix filename) saves mix data (as floats) in file filename"
   (if (mix? id)
-      (if (< (mix-length id) 1000000)
+      (if (< (frames id) 1000000)
 	  (let ((v (mix->vct id))
 		(fd (mus-sound-open-output filename (srate) 1 #f #f "")))
 	    (mus-sound-write fd 0 (- (length v) 1) 1 (vct->sound-data v))
 	    (mus-sound-close-output fd (* (mus-bytes-per-sample mus-out-format) (length v))))
 	  (let* ((buflen 10000)
 		 (sd (make-sound-data 1 buflen))
-		 (len (mix-length id))
+		 (len (frames id))
 		 (reader (make-mix-sampler id)))
 	    (do ((buf 0 (+ buf buflen)))
 		((>= buf len))
@@ -105,7 +105,7 @@
 (define (mix-maxamp id)
   "(mix-maxamp mix) returns the max amp in the given mix"
   (if (mix? id)
-      (let* ((len (mix-length id))
+      (let* ((len (frames id))
 	     (peak 0.0)
 	     (reader (make-mix-sampler id)))
 	(set! peak (abs (read-mix-sample reader)))
@@ -219,8 +219,8 @@ All mixes sync'd to it are also moved the same number of samples. (remove-hook! 
 			   (format #f "~A" n))
 		       (mix-position n)
 		       (exact->inexact (/ (mix-position n) (srate (car (mix-home n)))))
-		       (mix-length n)
-		       (exact->inexact (/ (mix-length n) (srate (car (mix-home n)))))
+		       (frames n)
+		       (exact->inexact (/ (frames n) (srate (car (mix-home n)))))
 		       (short-file-name (car (mix-home n))) 
 		       (cadr (mix-home n))
 		       (mix-amp n)
@@ -372,7 +372,7 @@ may change)"
   "(mixes-length mix-list) returns the number of samples between the start of the earliest mix and the \
 last end of the mixes in 'mix-list'"
   (+ 1 (- (apply max (map (lambda (m) 
-			   (+ (mix-position m) (mix-length m))) 
+			   (+ (mix-position m) (frames m))) 
 			 mix-list))
 	 (apply min (map mix-position mix-list)))))
 
@@ -396,7 +396,7 @@ last end of the mixes in 'mix-list'"
 (define (env-mixes mix-list overall-amp-env)
   "(env-mixes mix-list amp-env) applies 'amp-env' as a global amplitude envelope to the mixes in 'mix-list'"
   (let* ((mix-begs (map mix-position mix-list))
-	 (mix-ends (map (lambda (m) (+ (mix-position m) (mix-length m))) mix-list))
+	 (mix-ends (map (lambda (m) (+ (mix-position m) (frames m))) mix-list))
 	 (beg (apply min mix-begs))
 	 (end (apply max mix-ends))
 	 (first-x (car overall-amp-env))
@@ -407,7 +407,7 @@ last end of the mixes in 'mix-list'"
        (for-each 
 	(lambda (m)
 	  (let* ((beg-x (+ first-x (* x-scale (- (mix-position m) beg))))
-		 (end-x (+ first-x (* x-scale (- (+ (mix-position m) (mix-length m)) beg))))
+		 (end-x (+ first-x (* x-scale (- (+ (mix-position m) (frames m)) beg))))
 		 (wenv (window-envelope beg-x end-x overall-amp-env)))
 	    (if (null? (mix-amp-env m))
 		(set! (mix-amp-env m) wenv)
@@ -492,8 +492,8 @@ panning operation."
 	     (append (list (car e) (- 1.0 (cadr e)))
 		     (invert-envelope (cddr e)))))
 
-       (let ((incoming-chans (mus-sound-chans name))
-	     (receiving-chans (chans index)))
+       (let ((incoming-chans (channels name))
+	     (receiving-chans (channels index)))
 
 	 (if (= incoming-chans 1)
 

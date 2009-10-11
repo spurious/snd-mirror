@@ -69,9 +69,9 @@ It causes a description of the file to popup when the mouse crosses the filename
 	"(file-info file) -> description (as a string) of file"
 	(format #f "~A:  ~%  chans: ~D, srate: ~D, len: ~A~%  ~A ~A~A~%  written: ~A~A~A"
 		file
-		(mus-sound-chans file)
+		(channels file)
 		(srate file)
-		(let ((den (* (mus-sound-chans file) (srate file))))
+		(let ((den (* (channels file) (srate file))))
 		  (if (> den 0)
 		      (format #f "~1,3F" (exact->inexact (/ (mus-sound-samples file) den)))
 		      "unknown"))

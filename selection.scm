@@ -133,7 +133,7 @@
       (for-each
        (lambda (s)
 	 (do ((i 0 (+ 1 i)))
-	     ((= i (chans s)))
+	     ((= i (channels s)))
 	   (let ((need-update (selection-member? s i)))
 	     (set! (selection-member? s i) #f)
 	     (if need-update (update-time-graph s i)))))
@@ -172,7 +172,7 @@ to end of channel, beg defaults to 0, snd defaults to the currently selected sou
 		     (and (not (= current-sync 0))
 			  (= current-sync (sync s))))
 		 (do ((i 0 (+ 1 i)))
-		     ((= i (chans s)))
+		     ((= i (channels s)))
 		   (add-chan-to-selection beg end s i))))
 	   (sounds))))))
 
@@ -268,7 +268,7 @@ restores the previous selection (if any).  It returns whatever 'thunk' returned.
 	(for-each
 	 (lambda (snd)
 	   (do ((i 0 (+ 1 i)))
-	       ((= i (chans snd)))
+	       ((= i (channels snd)))
 	     (if (selection-member? snd i)
 		 (let ((pos (/ (selection-position snd i) (srate snd)))
 		       (len (/ (selection-frames snd i) (srate snd))))
@@ -282,7 +282,7 @@ restores the previous selection (if any).  It returns whatever 'thunk' returned.
 	(for-each
 	 (lambda (snd)
 	   (do ((i 0 (+ 1 i)))
-	       ((= i (chans snd)))
+	       ((= i (channels snd)))
 	     (set! (x-bounds snd i) (list beg end))))
 	 (sounds)))))
 

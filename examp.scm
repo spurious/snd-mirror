@@ -188,12 +188,12 @@
   "(finfo file) -> description (as a string) of file"
   (format #f "~A: chans: ~D, srate: ~D, ~A, ~A, len: ~1,3F"
 	  file
-	  (mus-sound-chans file)
+	  (channels file)
 	  (srate file)
 	  (mus-header-type-name (mus-sound-header-type file))
 	  (mus-data-format-name (mus-sound-data-format file))
 	  (exact->inexact (/ (mus-sound-samples file)
-			     (* (mus-sound-chans file) (srate file))))))
+			     (* (channels file) (srate file))))))
 
 
 ;;; -------- Correlation --------
@@ -314,7 +314,7 @@
 		(for-each
 		 (lambda (n)
 		   (if (and (= (sync n) (sync snd))
-			    (> (chans n) chn))
+			    (> (channels n) chn))
 		       (set! ffts (append ffts (let* ((fdr (channel->vct ls fftlen n chn))
 						      (fdi (make-vct fftlen))
 						      (spectr (make-vct (/ fftlen 2))))
@@ -1272,7 +1272,7 @@ formants, then calls map-channel: (osc-formants .99 (vct 400.0 800.0 1200.0) (vc
   "(compand-sound :optional beg dur snd) applies companding to every channel of 'snd'"
   (let ((index (or snd (selected-sound) (car (sounds)))))
     (if (sound? index)
-	(let* ((out-chans (chans index)))
+	(let* ((out-chans (channels index)))
 	  (do ((chn 0 (+ 1 chn)))
 	      ((= chn out-chans))
 	    (compand-channel beg dur index chn)))
@@ -2007,7 +2007,7 @@ In most cases, this will be slightly offset from the true beginning of the note"
 
 (define (file->vct file)
   "(file->vct file) returns a vct with file's data"
-  (let* ((len (mus-sound-frames file))
+  (let* ((len (frames file))
 	 (reader (make-sampler 0 file))
 	 (data (make-vct len)))
     (do ((i 0 (+ i 1)))
@@ -2056,7 +2056,7 @@ a sort of play list: (region-play-list (list (list reg0 0.0) (list reg1 0.5) (li
      (map 
       (lambda (id)
 	(let ((cur time))
-	  (set! time (+ time (/ (region-frames id) (srate id))))
+	  (set! time (+ time (/ (frames id) (srate id))))
 	  (list cur id)))
       data))))
 
@@ -2192,7 +2192,7 @@ a sort of play list: (region-play-list (list (list reg0 0.0) (list reg1 0.5) (li
 	 (start (seconds->samples beg))
 	 (samps (seconds->samples dur))
 	 (end (+ start samps))
-	 (len (vector-length dsp-chain)))
+	 (len (length dsp-chain)))
     (ws-interrupt?)
     (run
      (lambda ()
@@ -2416,7 +2416,7 @@ passed as the arguments so to end with channel 3 in channel 0, 2 in 1, 0 in 2, a
 			    (set! reg (vector-ref pieces j))
 			    (if reg (vector-set! pieces j #f))))))
 		(mix-region reg start)
-		(set! start (+ start (region-frames reg)))
+		(set! start (+ start (frames reg)))
 		(forget-region reg)))))))
      (lambda ()
        (set! (with-mix-tags) old-tags)
@@ -2511,7 +2511,7 @@ passed as the arguments so to end with channel 3 in channel 0, 2 in 1, 0 in 2, a
       mx))
 
   (define (segment-sound name high low)
-    (let* ((end (mus-sound-frames name))
+    (let* ((end (frames name))
 	   (reader (make-sampler 0 name))    ; no need to open the sound and display it
 	   (avg (make-moving-average :size 128))
 	   (lavg (make-moving-average :size 2048)) ; to distinguish between slow pulse train (low horn) and actual silence
@@ -2613,7 +2613,7 @@ passed as the arguments so to end with channel 3 in channel 0, 2 in 1, 0 in 2, a
 		      (car (sounds))))))
     (if (sound? snd)
 	(do ((chn 0 (+ 1 chn)))
-	    ((= chn (chans snd)))
+	    ((= chn (channels snd)))
 	  (let ((last-y 0.0)
 		(marked #f)
 		(samp 0))

@@ -178,7 +178,7 @@ static XEN g_mus_sound_set_samples(XEN filename, XEN val)
 }
 
 
-static XEN g_mus_sound_frames(XEN filename) 
+XEN g_mus_sound_frames(XEN filename) 
 {
   #define H_mus_sound_frames "(" S_mus_sound_frames " filename): frames (samples / channel) in sound file"
   return(glmus_sound(S_mus_sound_frames, mus_sound_frames, filename));

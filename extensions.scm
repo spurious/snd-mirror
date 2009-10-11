@@ -137,7 +137,7 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 
 (define (enveloped-mix filename beg env)
   "(enveloped-mix filename beg env) mixes filename starting at beg with amplitude envelope env. (enveloped-mix \"pistol.snd\" 0 '(0 0 1 1 2 0))"
-  (let* ((len (mus-sound-frames filename))
+  (let* ((len (frames filename))
 	 (tmp-name (string-append (if (and (string? (temp-dir))
 					   (> (string-length (temp-dir)) 0))
 				      (string-append (temp-dir) "/")
@@ -360,7 +360,7 @@ If 'check' is #f, the hooks are removed."
 			      channel-funcs))
 		       (let ((scs '()))
 			 (do ((i 0 (+ 1 i)))
-			     ((= i (chans snd)))
+			     ((= i (channels snd)))
 			   (set! scs (cons (list snd i) scs)))
 			 (reverse scs)))))
       #f)
@@ -370,7 +370,7 @@ If 'check' is #f, the hooks are removed."
       (let ((state (saved-state snd))) ; removes old state from current list
 	(if (and state
 		 (= (file-write-date (file-name snd)) (cadr state))
-		 (= (chans snd) (length (cadddr state)))
+		 (= (channels snd) (length (cadddr state)))
 		 (not (= choice 2)))
 	    ;; we need the chans check because auto-test files seem to have confused write dates
 	    (begin
@@ -379,7 +379,7 @@ If 'check' is #f, the hooks are removed."
 			sound-funcs
 			(caddr state))
 	      (do ((chn 0 (+ 1 chn)))
-		  ((= chn (chans snd)))
+		  ((= chn (channels snd)))
 		(dynamic-wind
 		    (lambda () (set! (squelch-update snd chn) #t))
 		    (lambda ()
@@ -472,7 +472,7 @@ a list (file-name-or-sound-index [beg [channel]])."
 			   0 
 			   (caddr input-data)))
 	 (len (or dur (- (if (string? input)
-			     (mus-sound-frames input) 
+			     (frames input) 
 			     (frames input input-channel))
 			 input-beg)))
 	 (start (or beg 0)))
@@ -498,7 +498,7 @@ a list (file-name-or-sound-index [beg [channel]])."
 
 		    ;; file input
 		    (if (and (= start 0) 
-			     (= len (mus-sound-frames input)))
+			     (= len (frames input)))
 
 			;; mixing entire file
 			(mix input start 0 snd chn #t #f) ; don't delete it!
@@ -524,7 +524,7 @@ a list (file-name-or-sound-index [beg [channel]])."
 			       (< (length file-data) 3))
 			   0 
 			   (caddr file-data)))
-	 (len (or dur (- (mus-sound-frames file-name) file-beg)))
+	 (len (or dur (- (frames file-name) file-beg)))
 	 (start (or beg 0)))
     (if (< start 0) (throw 'no-such-sample (list "insert-channel" beg)))
     (if (> len 0)
@@ -746,7 +746,7 @@ connects them with 'func', and applies the result as an amplitude envelope to th
   ;;
   (let ((index (or snd (selected-sound) (car (sounds)))))
     (if (sound? index)
-	(let* ((out-chans (chans index)))
+	(let* ((out-chans (channels index)))
 	  (do ((chn 0 (+ 1 chn)))
 	      ((= chn out-chans))
 	    (offset-channel off beg dur index chn)))
@@ -759,7 +759,7 @@ connects them with 'func', and applies the result as an amplitude envelope to th
   "(pad-sound beg dur :optional snd) places a block of 'dur' zeros in every channel of 'snd' starting at 'beg'"
   (let ((index (or snd (selected-sound) (car (sounds)))))
     (if (sound? index)
-	(let* ((out-chans (chans index)))
+	(let* ((out-chans (channels index)))
 	  (do ((chn 0 (+ 1 chn)))
 	      ((= chn out-chans))
 	    (pad-channel beg dur index chn)))
@@ -779,7 +779,7 @@ connects them with 'func', and applies the result as an amplitude envelope to th
   "(dither-sound :optional (amount .00006) beg dur snd) adds dithering to every channel of 'snd'"
   (let ((index (or snd (selected-sound) (car (sounds)))))
     (if (sound? index)
-	(let* ((out-chans (chans index)))
+	(let* ((out-chans (channels index)))
 	  (do ((chn 0 (+ 1 chn)))
 	      ((= chn out-chans))
 	    (dither-channel amount beg dur index chn)))
@@ -801,7 +801,7 @@ connects them with 'func', and applies the result as an amplitude envelope to th
   "(contrast-sound index :optional beg dur snd) applies contrast-enhancement to every channel of 'snd'"
   (let ((ind (or snd (selected-sound) (car (sounds)))))
     (if (sound? ind)
-	(let* ((out-chans (chans ind)))
+	(let* ((out-chans (channels ind)))
 	  (do ((chn 0 (+ 1 chn)))
 	      ((= chn out-chans))
 	    (contrast-channel index beg dur ind chn)))
@@ -816,7 +816,7 @@ connects them with 'func', and applies the result as an amplitude envelope to th
   ;; (map-sound (lambda (fr) (frame* fr scl)) beg dur snd))
   (let ((index (or snd (selected-sound) (car (sounds)))))
     (if (sound? index)
-	(let* ((out-chans (chans index)))
+	(let* ((out-chans (channels index)))
 	  (do ((chn 0 (+ 1 chn)))
 	      ((= chn out-chans))
 	    (scale-channel scl beg dur index chn)))
@@ -829,7 +829,7 @@ connects them with 'func', and applies the result as an amplitude envelope to th
   "(normalize-sound amp :optional beg dur snd) scales 'snd' to peak amplitude 'amp'"
   (let ((index (or snd (selected-sound) (car (sounds)))))
     (if (sound? index)
-	(let* ((out-chans (chans index))
+	(let* ((out-chans (channels index))
 	       (mx (apply max (maxamp index #t))))
 	  (do ((chn 0 (+ 1 chn)))
 	      ((= chn out-chans))
@@ -1108,7 +1108,7 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 	(calls (make-vector 50000 #f))
 	(call 0))
     (do ((i 0 (+ i 1))) 
-	((= i (vector-length st)))
+	((= i (length st)))
       (let ((lst (vector-ref st i)))
 	(for-each
 	 (lambda (sym)

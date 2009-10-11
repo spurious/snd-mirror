@@ -458,7 +458,7 @@
   (let ((index (or snd (selected-sound) (car (sounds)))))
     (if (not (sound? index))
 	(throw 'no-such-sound (list "clean-sound" snd))
-	(let ((chns (chans index)))
+	(let ((chns (channels index)))
 	  (do ((chn 0 (1+ chn)))
 	      ((= chn chns))
 	    (clean-channel index chn))))))

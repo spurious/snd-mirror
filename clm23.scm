@@ -19,7 +19,7 @@
 ;;; array of gen -> vector (and setf aref to vector-set! in this case)
 ;;; nil -> #f, t -> #t
 ;;; incf, decf 
-;;; length sometimes vector-length, vct-length etc
+;;; length sometimes length, vct-length etc
 ;;; make-filter in scm requires coeffs arrays
 ;;; &optional -> :optional, &key too (using define*)
 ;;; two-pi -> (* 2 pi)
@@ -111,7 +111,7 @@
        (do ((i start (+ i 1))) ((= i end))
 	 (let* ((sum 0.0))
 	   (do ((i 0 (+ i 1)))
-	       ((= i (vector-length arr)))
+	       ((= i (length arr)))
 	     (if (ssb-am? (vector-ref arr i))
 		 (set! sum (+ sum (ssb-am (vector-ref arr i) 1.0)))))
 	   (out-any i (* amp sum) 0)))))))
@@ -188,7 +188,7 @@
        (do ((i start (+ i 1))) ((= i end))
 	 (let ((sum 0.0))
 	   (do ((i 0 (+ i 1)))
-	       ((= i (vector-length arr)))
+	       ((= i (length arr)))
 	     (if (oscil? (vector-ref arr i))
 		 (set! sum (+ sum (oscil (vector-ref arr i))))))
 	   (out-any i (* amp .05 sum) 0)))))))
@@ -1167,9 +1167,9 @@
 	   (out-any i (frame->sample frm smp) 0)
 	   (if (not (frame? fr0)) (clm-print ";~S not a frame?" (mus-describe fr0)))
 	   (if (not (mixer? gen)) (clm-print ";~S not a mixer?" (mus-describe gen)))
-	   (if (not (= (mus-channels fr0) 2)) (clm-print ";frame channels: ~D?" (mus-channels fr0)))
-	   (if (not (= (mus-length fr1) 2)) (clm-print ";frame length: ~D?" (mus-length fr0)))
-	   (if (not (= (mus-channels gen) 2)) (clm-print ";mixer channels: ~D?" (mus-channels gen)))
+	   (if (not (= (channels fr0) 2)) (clm-print ";frame channels: ~D?" (channels fr0)))
+	   (if (not (= (length fr1) 2)) (clm-print ";frame length: ~D?" (length fr0)))
+	   (if (not (= (channels gen) 2)) (clm-print ";mixer channels: ~D?" (channels gen)))
 	   (frame->frame fr0 gen fr1)
 	   (if (or (> (abs (- (frame-ref fr0 0) 1.0)) .001)
 		   (> (abs (- (frame-ref fr1 1) 1.25)) .001)
@@ -1249,7 +1249,7 @@
        (do ((k start (+ 1 k))) ((= k end))
 	 (let ((sum 0.0))
 	   (do ((i 0 (+ i 1)))
-	       ((= i (vector-length arr)))
+	       ((= i (length arr)))
 	     (if (oscil? (vector-ref arr i))
 		 (begin
 		   (set! (mus-frequency (vector-ref arr i)) (vct-ref arrfrq i))
@@ -1309,7 +1309,7 @@
 	 (if (not (= (mus-sound-data-location filename) 28)) (clm-print ";data-location: ~A" (mus-sound-data-location filename)))
 	 (if (not (= (mus-sound-length filename) 101684)) (clm-print ";length: ~A" (mus-sound-length filename)))
 	 (if (not (= (mus-sound-samples filename) 50828)) (clm-print ";samples: ~A" (mus-sound-samples filename)))              
-	 (if (not (= (mus-sound-frames filename) 50828)) (clm-print ";frames: ~A" (mus-sound-samples filename)))
+	 (if (not (= (frames filename) 50828)) (clm-print ";frames: ~A" (mus-sound-samples filename)))
 	 (if (not (= (mus-sound-srate filename) 22050)) (clm-print ";srate: ~A" (mus-sound-srate filename)))       
 	 (out-any i (oscil os) 0))))))
 
@@ -1517,7 +1517,7 @@
 	 (out-any i (* amp (granulate sr #f
 				      (lambda (g)
 					(let ((grain (mus-data g))  ; current grain
-					      (len (mus-length g))) ; current grain length
+					      (len (length g))) ; current grain length
 					  (do ((i 0 (+ i 1)))
 					      ((= i len) len)       ; grain length unchanged in this case
 					    (vct-set! grain i (* 2 (vct-ref grain i)))))
@@ -2361,7 +2361,7 @@
 (definstrument (sndclmdoc-fm-table file start dur amp read-speed modulator-freq index-in-samples)
   (let* ((beg (seconds->samples start))
 	 (end (+ beg (seconds->samples dur)))
-	 (table-length (mus-sound-frames file))
+	 (table-length (frames file))
 	 (tab (make-table-lookup :frequency (/ read-speed (mus-sound-duration file)) 
 				 :wave (file->array file 0 0 table-length (make-vct table-length))))
 	 (osc (make-oscil modulator-freq))
@@ -2724,7 +2724,7 @@
 	        (distval (env dist-env)))
             (set! dist-scaler (/ 1.0 distval))
             (set! (locsig-ref loc 0) (* (- 1.0 degval) dist-scaler))
-            (if (> (mus-channels *output*) 1)
+            (if (> (channels *output*) 1)
                 (set! (locsig-ref loc 1) (* degval dist-scaler)))
             (if *reverb* 
                 (set! (locsig-reverb-ref loc 0) (* reverb-amount (sqrt dist-scaler))))
@@ -2786,7 +2786,7 @@
 (definstrument (move-formants start file amp radius move-env num-formants)
   (let* ((frms (make-vector num-formants))
 	 (beg (seconds->samples start))
-	 (dur (mus-sound-frames file))
+	 (dur (frames file))
 	 (end (+ beg dur))
 	 (rd (make-readin file))
 	 (menv (make-env move-env :length dur)))
@@ -2820,7 +2820,7 @@
 
 (definstrument (flux start-time file frequency combs0 combs1 :optional (scaler 0.99) (comb-len 32))
   (let* ((beg (seconds->samples start-time))
-	 (len (mus-sound-frames file))
+	 (len (frames file))
 	 (end (+ beg len))
 	 (num-combs0 (length combs0))
 	 (num-combs1 (length combs1))

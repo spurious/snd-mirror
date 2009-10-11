@@ -862,7 +862,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 (define (eliminate-hum gen x0)
   (let ((val x0))
     (do ((i 0 (+ i 1)))
-	((= i (vector-length gen)))
+	((= i (length gen)))
       (set! val (filter (vector-ref gen i) val))) ; "cascade" n filters
     val))
 
@@ -1496,7 +1496,7 @@ shift the given channel in pitch without changing its length.  The higher 'order
   (let* ((sum 0.0)
 	 (ssbs (car transposer))
 	 (bands (cadr transposer))
-	 (pairs (vector-length ssbs)))
+	 (pairs (length ssbs)))
     (do ((i 0 (+ i 1)))
 	((= i pairs) sum)
       (set! sum (+ sum (ssb-am (vector-ref ssbs i) 
@@ -1632,7 +1632,7 @@ the rendering frequency, the number of measurements per second; 'db-floor' is th
   (let* ((fsr (srate file))
 	 (incrsamps (inexact->exact (floor (/ fsr rfreq))))
 	 (start (inexact->exact (floor (* beg fsr))))
-	 (end (+ start (if dur (inexact->exact (* dur fsr)) (- (mus-sound-frames file) beg))))
+	 (end (+ start (if dur (inexact->exact (* dur fsr)) (- (frames file) beg))))
 	 (fdr (make-vct fftsize))
 	 (fdi (make-vct fftsize))
 	 (windows (+ 1 (inexact->exact (floor (/ (- end start) incrsamps)))))
@@ -1814,7 +1814,7 @@ and replaces it with the spectrum given in coeffs"
 				(set! intrp (+ pos sr))
 				(+ last (* pos (- next last))))
 			      0))))))
-	 (len (mus-sound-frames tempfile)))
+	 (len (frames tempfile)))
     (set-samples 0 (- len 1) tempfile snd chn #t "linear-src" 0 #f #t)
     ;; first #t=truncate to new length, #f=at current edpos, #t=auto delete temp file
     ))
@@ -2022,7 +2022,7 @@ and replaces it with the spectrum given in coeffs"
 		     (add-hook! mouse-click-hook choose-bark-ticks)
 		     (for-each (lambda (snd)
 				 (do ((c 0 (+ 1 c)))
-				     ((= c (chans snd)))
+				     ((= c (channels snd)))
 				   (update-lisp-graph snd c)))
 			       (sounds)))
 		   (begin
@@ -2031,7 +2031,7 @@ and replaces it with the spectrum given in coeffs"
 		     (remove-hook! mouse-click-hook choose-bark-ticks)
 		     (for-each (lambda (snd)
 				 (do ((c 0 (+ 1 c)))
-				     ((= c (chans snd)))
+				     ((= c (channels snd)))
 				   (set! (lisp-graph? snd c) #f)))
 			       (sounds))))))))
 
@@ -2254,7 +2254,7 @@ is assumed to be outside -1.0 to 1.0."
   (let ((index (or snd (selected-sound) (car (sounds)))))
     (if (not (sound? index))
 	(throw 'no-such-sound (list "unclip-sound" snd))
-	(let ((chns (chans index)))
+	(let ((chns (channels index)))
 	  (do ((chn 0 (+ 1 chn)))
 	      ((= chn chns))
 	    (unclip-channel index chn))))))

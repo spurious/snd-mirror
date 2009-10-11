@@ -29,7 +29,7 @@
   "(frame-reverse fr) reverses the contents of frame fr"
   (if (not (frame? fr))
       (throw 'wrong-type-arg (list "frame-reverse" fr))
-      (let ((len (mus-length fr)))
+      (let ((len (channels fr)))
 	(do ((i 0 (+ i 1))
 	     (j (- len 1) (- j 1)))
 	    ((>= i (/ len 2)))
@@ -42,7 +42,7 @@
   "(frame-copy fr) returns a copy of frame fr"
   (if (not (frame? fr))
       (throw 'wrong-type-arg (list "frame-copy" fr))
-      (let* ((len (mus-length fr))
+      (let* ((len (channels fr))
 	     (nfr (make-frame len)))
 	(do ((i 0 (+ i 1)))
 	    ((= i len))
@@ -52,8 +52,8 @@
 #|
 (define (frame-cross m1 m2)
   "(frame-cross fr1 fr2) returns the cross product (a frame) of frames fr1 and fr2"
-  (if (or (not (= (mus-length m1) 3))
-	  (not (= (mus-length m2) 3)))
+  (if (or (not (= (channels m1) 3))
+	  (not (= (channels m2) 3)))
       (snd-print "cross product only in 3 dimensions")
       (make-frame 3 
 		  (- (* (frame-ref m1 1) (frame-ref m2 2)) 
@@ -81,7 +81,7 @@
   "(frame->vct fr :optional v) copies frame fr into either vct v or a new vct, returning the vct"
   (if (not (frame? fr))
       (throw 'wrong-type-arg (list "frame->vct" fr))
-      (let* ((flen (mus-length fr))
+      (let* ((flen (channels fr))
 	     (nv (or (and (vct? v) v)
 		     (make-vct flen)))
 	     (len (min flen (length nv))))
@@ -97,7 +97,7 @@
       (let* ((vlen (length v))
 	     (nfr (or (and (frame? fr) fr)
 		      (make-frame vlen)))
-	     (len (min vlen (mus-length nfr))))
+	     (len (min vlen (channels nfr))))
 	(do ((i 0 (+ i 1)))
 	    ((= i len))
 	  (frame-set! nfr i (vct-ref v i)))
@@ -112,7 +112,7 @@
 	  (throw 'wrong-type-arg (list "frame->sound-data" sd))
 	  (if (>= pos (length sd))
 	      (throw 'out-of-range (list "frame->sound-data" pos))
-	      (let ((len (min (mus-length fr) 
+	      (let ((len (min (channels fr) 
 			      (channels sd))))
 		(do ((i 0 (+ i 1)))
 		    ((= i len))
@@ -127,7 +127,7 @@
 	  (throw 'wrong-type-arg (list "sound-data->frame" sd))
 	  (if (>= pos (length sd))
 	      (throw 'out-of-range (list "sound-data->frame" pos))
-	      (let ((len (min (mus-length fr) 
+	      (let ((len (min (channels fr) 
 			      (channels sd))))
 		(do ((i 0 (+ i 1)))
 		    ((= i len))
@@ -140,9 +140,9 @@
   (let ((index (or snd (selected-sound) (car (sounds)))))
     (if (not (sound? index))
 	(throw 'no-such-sound (list "sound->frame" snd))
-	(let ((fr (make-frame (chans index))))
+	(let ((fr (make-frame (channels index))))
 	  (do ((i 0 (+ i 1)))
-	      ((= i (chans index))
+	      ((= i (channels index))
 	       fr)
 	    (frame-set! fr i (sample pos index i)))))))
 
@@ -152,7 +152,7 @@
     (if (not (sound? index))
 	(throw 'no-such-sound (list "frame->sound" snd))
 	(do ((i 0 (+ i 1)))
-	    ((= i (chans index))
+	    ((= i (channels index))
 	     fr)
 	  (set! (sample pos index i) (frame-ref fr i))))))
 
@@ -173,7 +173,7 @@
   (let ((index (or snd (selected-sound) (car (sounds)))))
     (if (not (sound? index))
 	(throw 'no-such-sound (list "sound->sound-data" snd))
-	(let* ((chns (chans index))
+	(let* ((chns (channels index))
 	       (len (or dur (max 1 (- (frames index) beg))))
 	       (sd (make-sound-data chns len)))
 	  (do ((i 0 (+ i 1)))
@@ -190,7 +190,7 @@
 	    (throw 'no-such-sound (list "sound->sound-data" snd))
 	    (let ((ndur (or dur (length sd))))
 	      (do ((i 0 (+ i 1)))
-		  ((= i (chans index)) 
+		  ((= i (channels index)) 
 		   sd)
 		(vct->channel (sound-data->vct sd i) beg ndur index i)))))))
 
@@ -208,7 +208,7 @@
     (if (and (not (sound? index))
 	     (not (string? index))) ; filename is a possibility here
 	(throw 'no-such-sound (list "make-frame-reader" snd))
-	(let* ((chns (if (sound? index) (chans index) (mus-sound-chans index)))
+	(let* ((chns (if (sound? index) (channels index) (channels index)))
 	       (fr (make-vector (+ chns +frame-reader0+))))
 	  (vector-set! fr +frame-reader-tag+ 'frame-reader)
 	  (vector-set! fr +frame-reader-snd+ index)
@@ -327,7 +327,7 @@
 		(for-each
 		 (lambda (s)
 		   (if (= (sync s) snc) ; sync field is always an int (0 = none)
-		       (set! chns (+ chns (chans s)))))
+		       (set! chns (+ chns (channels s)))))
 		 (sounds))
 		(let ((fr (make-vector (+ chns +frame-reader0+))))
 		  (vector-set! fr +frame-reader-tag+ 'frame-reader)
@@ -340,9 +340,9 @@
 		       (if (= (sync s) snc)
 			   (begin
 			     (do ((i 0 (+ i 1)))
-				 ((= i (chans s)))
+				 ((= i (channels s)))
 			       (vector-set! fr (+ (+ i ctr) +frame-reader0+) (make-sampler beg s i dir edpos)))
-			     (set! ctr (+ ctr (chans s))))))
+			     (set! ctr (+ ctr (channels s))))))
 		     (sounds)))
 		  fr)))))))
 
@@ -360,7 +360,7 @@
 	  (for-each
 	   (lambda (snd)
 	     (do ((chn 0 (+ 1 chn)))
-		 ((= chn (chans snd)))
+		 ((= chn (channels snd)))
 	       (if (selection-member? snd chn)
 		   (begin
 		     (vector-set! fr (+ ctr +frame-reader0+) (make-sampler (+ beg (selection-position snd chn)) snd chn))
@@ -371,7 +371,7 @@
 
 (define (file->vct file)
   "(file->vct file) returns a vct with file's data (channel 0)"
-  (let* ((len (mus-sound-frames file))
+  (let* ((len (frames file))
 	 (reader (make-sampler 0 file))
 	 (data (make-vct len)))
     (do ((i 0 (+ i 1)))
@@ -392,8 +392,8 @@
 
 (define (file->sound-data file)
   "(file->sound-data file) returns a sound-data object with the contents of file"
-  (let* ((len (mus-sound-frames file))
-	 (chns (mus-sound-chans file))
+  (let* ((len (frames file))
+	 (chns (channels file))
 	 (reader (make-frame-reader 0 file))
 	 (data (make-sound-data chns len)))
     (do ((i 0 (+ i 1)))
@@ -455,7 +455,7 @@
       (let ((index (or snd (selected-sound) (car (sounds)))))
 	(if (not (sound? index))
 	    (throw 'no-such-sound (list "insert-frame" snd))
-	    (let ((chns (min (mus-length fr) (chans index))))
+	    (let ((chns (min (channels fr) (channels index))))
 	      (do ((chn 0 (+ 1 chn)))
 		  ((= chn chns))
 		(insert-sample beg (frame-ref fr chn) index chn edpos)))))))
@@ -468,7 +468,7 @@
       (let ((index (or snd (selected-sound) (car (sounds)))))
 	(if (not (sound? index))
 	    (throw 'no-such-sound (list "insert-sound-data" snd))
-	    (let* ((chns (min (channels sd) (chans index)))
+	    (let* ((chns (min (channels sd) (channels index)))
 		   (len (or dur (length sd)))
 		   (v (make-vct len)))
 	      (do ((chn 0 (+ 1 chn)))
@@ -483,7 +483,7 @@
       (let ((index (or snd (selected-sound) (car (sounds)))))
 	(if (not (sound? index))
 	    (throw 'no-such-sound (list "mix-frame" snd))
-	    (let ((chns (min (mus-length fr) (chans index))))
+	    (let ((chns (min (channels fr) (channels index))))
 	      (do ((chn 0 (+ 1 chn)))
 		  ((= chn chns))
 		(set! (sample beg index chn) (+ (frame-ref fr chn) (sample beg index chn)))))))))
@@ -495,7 +495,7 @@
       (let ((index (or snd (selected-sound) (car (sounds)))))
 	(if (not (sound? index))
 	    (throw 'no-such-sound (list "mix-sound-data" snd))
-	    (let* ((chns (min (channels sd) (chans index)))
+	    (let* ((chns (min (channels sd) (channels index)))
 		   (len (or dur (length sd)))
 		   (v (make-vct len))
 		   (mix-id #f))
@@ -530,7 +530,7 @@
   ;; not sure map-sound with sync is a good idea -- even scale-by following sync seems bad
   (let ((index (or snd (selected-sound) (car (sounds)))))
     (if (sound? index)
-	(let* ((out-chans (chans index))
+	(let* ((out-chans (channels index))
 	       (reader (make-frame-reader beg index +read-forward+ edpos))
 	       (filename (snd-tempnam))
 	       (writer (make-frame->file filename out-chans))
@@ -547,18 +547,18 @@
 	  (mus-close writer)
 	  (free-frame-reader reader)
 	  (do ((i 0 (+ i 1)))
-	      ((= i (chans index)))
+	      ((= i (channels index)))
 	    (set! (samples beg loc index i #f "map-sound" i #f (= i 0)) filename))) ; edpos = #f, auto-delete = chan=0
 	(throw 'no-such-sound (list "map-sound" snd)))))
 
 
 (define* (simultaneous-zero-crossing :optional (beg 0) dur snd)
   "(simultaneous-zero-crossing :option beg dur snd) looks through all channels of 'snd' for a simultaneous zero crossing."
-  (let ((last-fr (make-frame (chans snd))))
+  (let ((last-fr (make-frame (channels snd))))
     (scan-sound (lambda (fr)
 		  (let ((result #t))
 		    (do ((chn 0 (+ 1 chn)))
-			((= chn (mus-length fr)))
+			((= chn (channels fr)))
 		      (set! result (and result (< (* (frame-ref fr chn) (frame-ref last-fr chn)) 0.0)))
 		      (frame-set! last-fr chn (frame-ref fr chn)))
 		    result))

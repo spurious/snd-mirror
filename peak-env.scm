@@ -53,7 +53,7 @@
 		       (> (file-write-date peak-file)
 			  (file-write-date (file-name snd))))
 		  (begin
-		    (set! (saved-info snd) (list (file-name snd) (data-format snd) (chans snd)))
+		    (set! (saved-info snd) (list (file-name snd) (data-format snd) (channels snd)))
 		    (catch 'bad-format
 			   (lambda ()
 			     (read-peak-env-info-file snd chn peak-file))
@@ -69,7 +69,7 @@
 	       (lambda (snd)
 		 (if save-peak-env-info?
 		     (do ((i 0 (+ 1 i)))
-			 ((= i (chans snd)))
+			 ((= i (channels snd)))
 		       (let ((peak-file (mus-expand-filename (peak-env-info-file-name snd i))))
 			 (if (file-exists? peak-file)
 			     (delete-file peak-file)))))
@@ -80,7 +80,7 @@
 	       (not (null? (peak-env-info snd 0 0))))
 	  (let ((saved #f))
 	    (do ((i 0 (+ 1 i)))
-		((= i (chans snd)))
+		((= i (channels snd)))
 	      (let ((peak-file (mus-expand-filename (peak-env-info-file-name snd i))))
 		(if (or (not (file-exists? peak-file))
 			(< (file-write-date peak-file)
@@ -88,7 +88,7 @@
 		    (begin
 		      (if (not saved)
 			  (begin
-			    (set! (saved-info snd) (list (file-name snd) (data-format snd) (chans snd)))
+			    (set! (saved-info snd) (list (file-name snd) (data-format snd) (channels snd)))
 			    (set! saved #t)))
 		      (catch 'no-such-envelope
 			     (lambda ()

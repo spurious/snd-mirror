@@ -260,9 +260,9 @@ the amp (more or less), 'N'  is 1..10 or thereabouts, 'fi' is the phase incremen
 (define mus-cosines
   (make-procedure-with-setter
    (lambda (gen) 
-     (mus-length gen))
+     (length gen))
    (lambda (gen val) 
-     (set! (mus-length gen) val))))
+     (set! (length gen) val))))
 
 
 (define* (old-make-formant :optional (radius .5) (freq 0.0) gain)

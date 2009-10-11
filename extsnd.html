@@ -1241,6 +1241,40 @@ as well as lists.
 </td></tr><tr><td colspan=2 height=18></td></tr>
 
 
+<!-- copy -->
+<!-- INDEX genericcopy:copy (generic) -->
+<tr><td colspan=2 bgcolor="#f2f4ff">
+<code><a class=def>copy</a> (obj)</code>
+</td></tr><tr><td></td><td>
+<A NAME="genericcopy">copy</A> returns a copy of its argument.
+</td></tr><tr><td colspan=2 height=18></td></tr>
+
+
+<!-- fill! -->
+<!-- INDEX genericfill:fill! (generic) -->
+<tr><td colspan=2 bgcolor="#f2f4ff">
+<code><a class=def>fill!</a> (obj val)</code>
+</td></tr><tr><td></td><td>
+<A NAME="genericfill">fill!</A> fills obj with val, if possible.
+</td></tr><tr><td colspan=2 height=18></td></tr>
+
+
+<!-- frames -->
+<!-- INDEX genericframes:frames (generic) -->
+<tr><td colspan=2 bgcolor="#f2f4ff">
+<code><a class=def>frames</a> (:optional obj chn edpos)</code>
+</td></tr><tr><td></td><td>
+<A NAME="genericframes">frames</A> returns the number of "frames" in an object; this is
+the number of samples per channel in multichannel cases.  The frames function overlaps
+the <a href="#genericlength">length</a> function, but length of a string is string-length, whereas frames of a string
+treats the string as a sound file name and returns <a href="#mussoundframes">mus-sound-frames</a>.  frames can replace
+<a href="#mussoundframes">mus-sound-frames</a>, <a href="sndclm.html#genericfunctions">mus-length</a>, 
+<a href="#mixlength">mix-length</a>, <a href="#regionframes">region-frames</a>, 
+<a href="#vctlength">vct-length</a>, <a href="#sounddatalength">sound-data-length</a>,
+and the regular <a href="#frames">frames</a> function that handles sound objects and integers as sound indices.
+</td></tr><tr><td colspan=2 height=18></td></tr>
+
+
 <!-- length -->
 <!-- INDEX genericlength:length (generic) -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
@@ -5166,7 +5200,7 @@ mix-vct returns the id of the new mix, or -1 (a simple mix, no tag).
     <em class=listener>#&lt;vct[len=3]: 0.035 0.141 0.240&gt;</em>
     :<em class=typing>(mix-position mx)</em>                    ; and the new mix starts at 1000
     <em class=listener>1000</em>
-    :<em class=typing>(mix-length mx)</em>                      ; and its length is 3 samples
+    :<em class=typing>(length mx)</em>                          ; and its length is 3 samples
     <em class=listener>3</em>
     :<em class=typing>(mix-vct (with-sound (:output (make-vct 44100)) (fm-violin 0 1 440 .1)))</em>
     <em class=listener>#&lt;mix 4&gt;</em>

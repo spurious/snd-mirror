@@ -1416,8 +1416,6 @@ static bool s7_xen_region_equalp(void *obj1, void *obj2)
 	 (((xen_region *)obj1)->n == ((xen_region *)obj2)->n));
 }
 
-static XEN g_region_frames(XEN n, XEN chan);
-
 static XEN s7_xen_region_length(s7_scheme *sc, XEN obj)
 {
   return(g_region_frames(obj, XEN_ZERO));
@@ -1591,7 +1589,7 @@ static XEN g_region_p(XEN n)
 }
 
 
-static XEN g_region_frames(XEN n, XEN chan) 
+XEN g_region_frames(XEN n, XEN chan) 
 {
   region *r;
   int rg, chn;

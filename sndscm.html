@@ -5480,7 +5480,7 @@ If 'with-sync' is #t, the frame read includes all channels currently sync'd to t
     (<em class=red>scan-sound</em> (lambda (fr)
 		  (let ((result #t))
 		    (do ((chn 0 (+ 1 chn)))
-			((= chn (<a class=quiet href="sndclm.html#framemuschannels" onmouseout="UnTip()" onmouseover="Tip(sndclm_mus_length_tip)">mus-length</a> fr)))
+			((= chn (channels fr)))
 		      (set! result (and result 
                                         (&lt; (* (<a class=quiet href="sndclm.html#frame-ref" onmouseout="UnTip()" onmouseover="Tip(sndclm_frame_ref_tip)">frame-ref</a> fr chn) (<a class=quiet href="sndclm.html#frame-ref" onmouseout="UnTip()" onmouseover="Tip(sndclm_frame_ref_tip)">frame-ref</a> last-fr chn)) 0.0)))
 		      (<a class=quiet href="sndclm.html#frame-set!" onmouseout="UnTip()" onmouseover="Tip(sndclm_frame_set_tip)">frame-set!</a> last-fr chn (<a class=quiet href="sndclm.html#frame-ref" onmouseout="UnTip()" onmouseover="Tip(sndclm_frame_ref_tip)">frame-ref</a> fr chn)))
@@ -8085,6 +8085,7 @@ all     32   5.6193    0.4981,        odd     30   5.4464    0.4983
 all     30   5.4512    0.4986,        odd     32   5.6270    0.4985
 all     28   5.2679    0.4987,        odd     31   5.5606    0.4996
 all     7    2.6394    0.4988
+all     37   6.0662    0.4992
 all     34   5.8160    0.4993
 </pre>
 </td></tr></table>
@@ -8098,16 +8099,15 @@ all     34   5.8160    0.4993
          n     peak   (log peak n)            n     peak   (log peak n)
 
 all     35   5.9479    0.5015,        odd     33   5.7652    0.5010
-all     37   6.1956    0.5051,        odd     34   5.8831    0.5025
-all     36   6.1241    0.5057,        odd     39   6.3385    0.5041
-all     38   6.3050    0.5062,        odd     36   6.0996    0.5046
-all     46   6.9547    0.5066,        odd     35   6.0197    0.5049
-all     40   6.4878    0.5069,        odd     37   6.2069    0.5056
-all     41   6.5697    0.5069,        odd     38   6.2994    0.5060
+all     36   6.0636    0.5029,        odd     34   5.8831    0.5025
+all     38   6.3050    0.5062,        odd     39   6.3385    0.5041
+all     46   6.9547    0.5066,        odd     36   6.0996    0.5046
+all     40   6.4878    0.5069,        odd     35   6.0197    0.5049
+all     41   6.5697    0.5069,        odd     37   6.2069    0.5056
+all     43   6.7320    0.5070,        odd     38   6.2994    0.5060
 all     44   6.8350    0.5079,        odd     42   6.6840    0.5083
 all     42   6.6817    0.5082,        odd     40   6.5663    0.5102
-all     43   6.7939    0.5094,        odd     46   7.0570    0.5104
-all     39   6.4762    0.5099,        odd     43   6.8205    0.5105
+all     39   6.4365    0.5082,        odd     46   7.0570    0.5104
 </pre>
 </td></tr></table>
 
@@ -8221,7 +8221,7 @@ phase to 0.0).
 					      (vector? val)
 					      (= (vector-ref val 0) i)
 					      (let ((a-val (vector-ref val 1))
-						    (a-len (vector-length val)))
+						    (a-len (length val)))
 						(do ((k 2 (1+ k)))
 						    ((= k a-len))
 						  (if (and (number? (vector-ref val k))
@@ -8235,7 +8235,7 @@ phase to 0.0).
 						  (vector? val)
 						  (= (vector-ref val 0) i)
 						  (let ((a-val (vector-ref val 1))
-							(a-len (vector-length val)))
+							(a-len (length val)))
 						    (do ((k 2 (1+ k)))
 							((= k a-len))
 						      (if (and (number? (vector-ref val k))
@@ -8249,7 +8249,7 @@ phase to 0.0).
 						      (vector? val)
 						      (= (vector-ref val 0) i)
 						      (let ((a-val (vector-ref val 1))
-							    (a-len (vector-length val)))
+							    (a-len (length val)))
 							(do ((k 2 (1+ k)))
 							    ((= k a-len))
 							  (if (and (number? (vector-ref val k))
@@ -8263,7 +8263,7 @@ phase to 0.0).
 						       (vector? val)
 						       (= (vector-ref val 0) i)
 						       (let ((a-val (vector-ref val 1))
-							     (a-len (vector-length val)))
+							     (a-len (length val)))
 							 (do ((k 2 (1+ k)))
 							     ((= k a-len))
 							   (if (and (number? (vector-ref val k))
@@ -8773,7 +8773,7 @@ pvoc.scm also contains a few examples of using the CLM phase-vocoder generator:
 				  512 4 128 1.0
 				  #f ;no change to analysis
 				  (lambda (v)
-				    (let ((N (<a class=quiet href="sndclm.html#mus-length" onmouseout="UnTip()" onmouseover="Tip(sndclm_mus_length_tip)">mus-length</a> v)))
+				    (let ((N (length v)))
 				      (do ((i 0 (+ 1 i)))
 					  ((= i N))
 					(if (&lt; (<a class=quiet href="extsnd.html#vctref" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctref_tip)">vct-ref</a> (phase-vocoder-amp-increments v) i) gate)

@@ -5224,7 +5224,7 @@ index 10 (so 10/2 is the bes-jn arg):
 
 (define (multi-expt-env e expts)
   (env-any e (lambda (y)
-	       (let ((b (vct-ref expts (modulo (mus-channels e) (length expts)))))
+	       (let ((b (vct-ref expts (modulo (channels e) (length expts)))))
 		 (/ (- (expt b y) 1.0) (- b 1.0))))))
 
 
@@ -5861,7 +5861,7 @@ index 10 (so 10/2 is the bes-jn arg):
 	 (un (polyoid-un gen))
 	 (original-data (polyoid-partial-amps-and-phases gen))
 	 (data-len (length original-data))
-	 (amps-len (vector-length amps)))
+	 (amps-len (length amps)))
     (do ((i 0 (+ i 3))
 	 (j 0 (+ j 1)))
 	((or (= j amps-len)
@@ -6044,7 +6044,7 @@ index 10 (so 10/2 is the bes-jn arg):
 
 		  (if (eq? phases 'min-peak)
 		      (let ((vector-find-if (lambda (func vect)
-					      (let ((len (vector-length vect))
+					      (let ((len (length vect))
 						    (result #f))
 						(do ((i 0 (+ i 1)))
 						    ((or (= i len)
@@ -6061,7 +6061,7 @@ index 10 (so 10/2 is the bes-jn arg):
 					       (vector? val)
 					       (= (vector-ref val 0) n)
 					       (let* ((a-val (vector-ref val 1))
-						      (a-len (vector-length val))
+						      (a-len (length val))
 						      (a-data (list a-val (vector-ref val 2))))
 						 (do ((k 2 (+ 1 k)))
 						     ((= k a-len))
@@ -6259,7 +6259,7 @@ index 10 (so 10/2 is the bes-jn arg):
 
 		  (if (eq? phases 'min-peak)
 		      (let ((vector-find-if (lambda (func vect)
-					      (let ((len (vector-length vect))
+					      (let ((len (length vect))
 						    (result #f))
 						(do ((i 0 (+ i 1)))
 						    ((or (= i len)
@@ -6276,7 +6276,7 @@ index 10 (so 10/2 is the bes-jn arg):
 					       (vector? val)
 					       (= (vector-ref val 0) n)
 					       (let* ((a-val (vector-ref val 1))
-						      (a-len (vector-length val))
+						      (a-len (length val))
 						      (a-data (list a-val (vector-ref val 2))))
 						 (do ((k 2 (+ 1 k)))
 						     ((= k a-len))
@@ -6557,7 +6557,7 @@ the phases as mus-ycoeffs, and the current input data as mus-data."
 (with-sound (:channels 2)
   (let* ((gen (make-moving-spectrum (make-readin "oboe.snd")))
 	 (pv (make-phase-vocoder (make-readin "oboe.snd")))
-	 (samps (mus-sound-frames "oboe.snd")))
+	 (samps (frames "oboe.snd")))
     (run
      (lambda ()
        (do ((i 0 (+ i 1)))

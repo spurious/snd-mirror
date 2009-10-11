@@ -11,7 +11,7 @@
 
 (define (vector-add! p1 p2)
   "(vector-add! p1 p2) adds (elementwise) the vectors p1 and p2"
-  (let ((len (min (vector-length p1) (vector-length p2)))) 
+  (let ((len (min (length p1) (length p2)))) 
     (do ((i 0 (+ i 1)))
 	((= i len))
       (vector-set! p1 i (+ (vector-ref p1 i) (vector-ref p2 i))))
@@ -19,7 +19,7 @@
 
 (define (vector-scale! p1 scl)
   "(vector-scale! p1 scl) scales each element of the vector p1 by scl"
-  (let ((len (vector-length p1)))
+  (let ((len (length p1)))
     (do ((i 0 (+ i 1)))
 	((= i len))
       (vector-set! p1 i (* scl (vector-ref p1 i))))
@@ -27,7 +27,7 @@
 
 (define (vector-copy p1)
   "(vector-copy p1) returnns a copy of the vector p1"
-  (let* ((len (vector-length p1))
+  (let* ((len (length p1))
 	 (v (make-vector len)))
     (do ((i 0 (+ i 1)))
 	((= i len))
@@ -36,8 +36,8 @@
 
 (define (poly-as-vector-eval v x)
   "(poly-as-vector-eval v x) treats 'v' as a vector of polynomial coefficients, returning the value of the polynomial at x"
-  (let ((sum (vector-ref v (- (vector-length v) 1))))
-    (do ((i (- (vector-length v) 2) (- i 1)))
+  (let ((sum (vector-ref v (- (length v) 1))))
+    (do ((i (- (length v) 2) (- i 1)))
 	((< i 0) sum)
       (set! sum (+ (* sum x) (vector-ref v i))))))
 
@@ -45,11 +45,11 @@
 (define (poly-as-vector-reduce p1)
   "(poly-as-vector-reduce p1) removes trailing (high-degree) zeros from the vector p1"
   ;; always return at least a 0 coeff (rather than return #f=0 polynomial)
-  (let ((new-len (do ((i (- (vector-length p1) 1) (- i 1)))
+  (let ((new-len (do ((i (- (length p1) 1) (- i 1)))
 		     ((or (= i 0)
 			  (not (= (vector-ref p1 i) 0.0)))
 		      (+ i 1)))))
-    (if (= new-len (vector-length p1))
+    (if (= new-len (length p1))
 	p1
 	(let ((np (make-vector new-len)))
 	  (do ((i 0 (+ i 1)))
@@ -72,7 +72,7 @@
   "(poly-as-vector+ p1 p2) adds vectors p1 and p2"
   (if (vector? p1)
       (if (vector? p2)
-	  (if (> (vector-length p1) (vector-length p2))
+	  (if (> (length p1) (length p2))
 	      (vector-add! (vector-copy p1) p2)
 	      (vector-add! (vector-copy p2) p1))
 	  (let ((v (vector-copy p1)))
@@ -98,8 +98,8 @@
   "(poly-as-vector* p1 p2) multiplies (as polynomials) the vectors p1 and p2"
   (if (vector? p1)
       (if (vector? p2)
-	  (let* ((p1len (vector-length p1))
-		 (p2len (vector-length p2))
+	  (let* ((p1len (length p1))
+		 (p2len (length p2))
 		 (len (+ p1len p2len))
 		 (m (make-vector len 0)))
 	    (do ((i 0 (+ i 1)))
@@ -130,8 +130,8 @@
   (if (vector? p1)
       (if (vector? p2)
 	  ;; Numerical Recipes poldiv
-	  (let ((p1len (vector-length p1))
-		 (p2len (vector-length p2)))
+	  (let ((p1len (length p1))
+		 (p2len (length p2)))
 	    (if (> p2len p1len)
 		(list (vector 0) p2)
 		(let* ((len (max p1len p2len))
@@ -170,7 +170,7 @@
 
 (define (poly-as-vector-derivative p1)
   "(poly-as-vector-derivative p1) returns the derivative or polynomial p1 (as a vector)"
-  (let* ((len (- (vector-length p1) 1))
+  (let* ((len (- (length p1) 1))
 	 (v (make-vector len)))
     (do ((i (- len 1) (- i 1))
 	 (j len (- j 1)))
@@ -191,8 +191,8 @@
 
 (define (poly-as-vector-resultant p1 p2)
   "(poly-as-vector-resultant p1 p2) returns the resultant of polynomials p1 and p2 (vectors)"
-  (let* ((m (vector-length p1))
-	 (n (vector-length p2))
+  (let* ((m (length p1))
+	 (n (length p2))
 	 (mat (make-mixer (+ n m -2))))
     ;; load matrix with n-1 rows of m's coeffs then m-1 rows of n's coeffs (reversed in sense), return determinant
     (do ((i 0 (+ i 1)))
@@ -266,11 +266,11 @@
 
 (define (poly-as-vector-gcd p1 p2)
   "(poly-as-vector-gcd p1 p2) returns the GCD of polynomials p1 and p2 (both vectors)"
-  (if (< (vector-length p1) (vector-length p2))
+  (if (< (length p1) (length p2))
       (vector 0)
       (let ((qr (map poly-as-vector-reduce (poly-as-vector/ p1 p2))))
 	;(display (format #f ";poly-as-vector-gcd ~A ~A ->~A ~%" p1 p2 qr))
-	(if (= (vector-length (cadr qr)) 1)
+	(if (= (length (cadr qr)) 1)
 	    (if (= (vector-ref (cadr qr) 0) 0.0)
 		p2
 		(vector 0))
@@ -374,7 +374,7 @@
 	(set! roots (cons (simplify-complex (* n (exp (* i incr)))) roots)))
       roots))
 
-  (let ((deg (- (vector-length p1) 1)))
+  (let ((deg (- (length p1) 1)))
 
     (if (= deg 0)                                     ; just constant
 	'()

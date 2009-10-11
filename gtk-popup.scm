@@ -51,7 +51,7 @@
   ;; so we search for them here and handle them ourselves
 
   (define (vector-print v)
-    (if (< (vector-length v) 3)
+    (if (< (length v) 3)
 	(object->string v)
 	(let ((str (format #f "'#(~A" (vector-ref v 0))))
 	  (do ((i 1 (+ 1 i)))
@@ -340,7 +340,7 @@
 			   (format #f "~A info" (file-name snd))
 			   (format #f "~A:~%  chans: ~D~%  srate: ~D~%  header: ~A~%  data format: ~A~%  length: ~1,3F~%  maxamp: ~A~%~A~A~A~A~A"
 				   (short-file-name snd)
-				   (chans snd)
+				   (channels snd)
 				   (srate snd)
 				   (mus-header-type-name (header-type snd))
 				   (mus-data-format-name (data-format snd))
@@ -362,7 +362,7 @@
 				       "")
 				   (let ((chan-str ""))
 				     (do ((i 0 (+ 1 i)))
-					 ((= i (chans snd)))
+					 ((= i (channels snd)))
 				       (if (not (null? (channel-properties snd i)))
 					   (set! chan-str 
 						 (string-append chan-str
@@ -560,17 +560,17 @@
 			   (set! graph-popup-snd snd)
 			   (set! graph-popup-chn chn)
 			   (if (and (= (channel-style snd) channels-combined)
-				    (> (chans snd) 1))
+				    (> (channels snd) 1))
 			       (call-with-exit
 				(lambda (break)
 				  (do ((i 0 (+ 1 i)))
-				      ((= i (chans snd)))
+				      ((= i (channels snd)))
 				    (let ((off (list-ref (axis-info snd i) 14)))
 				      (if (< y off)
 					  (begin
 					    (set! graph-popup-chn (- i 1))
 					    (break)))))
-				  (set! graph-popup-chn (- (chans snd) 1)))))
+				  (set! graph-popup-chn (- (channels snd) 1)))))
 			   (let ((fax (if (transform-graph? snd chn) (axis-info snd chn transform-graph) #f))
 				 (lax (if (lisp-graph? snd chn) (axis-info snd chn lisp-graph) #f)))
 			     (if (and fax
@@ -617,7 +617,7 @@
 					 (set! menu selection-popup-menu)
 					 (let* ((eds (edits graph-popup-snd graph-popup-chn))
 						(with-edit (if (> (car eds) 0) gtk_widget_show gtk_widget_hide))
-						(nchans (chans graph-popup-snd))
+						(nchans (channels graph-popup-snd))
 						(with-selection (if (selection?) gtk_widget_show gtk_widget_hide))
 						(with-marks (if (not (null? (marks graph-popup-snd graph-popup-chn))) gtk_widget_show gtk_widget_hide)))
 					   (set! menu graph-popup-menu)
@@ -755,7 +755,7 @@ all saved edit lists."
 	    (lambda (w d) (edhist-help-edits)))))))
 
 (define (add-edhist-popup snd)
-  (let ((chns (chans snd)))
+  (let ((chns (channels snd)))
     (do ((i 0 (+ 1 i)))
 	((= i chns))
       (let ((edhist (list-ref (channel-widgets snd i) 7)))
@@ -783,7 +783,7 @@ all saved edit lists."
 
 (add-hook! after-open-hook add-edhist-popup)
 (add-hook! close-hook (lambda (snd)
-			(let ((chns (chans snd))
+			(let ((chns (channels snd))
 			      (name (short-file-name snd)))
 			  (do ((i 0 (+ 1 i)))
 			      ((= i chns))

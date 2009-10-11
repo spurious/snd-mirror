@@ -2034,17 +2034,17 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 
   ;; check to see if we have the rigth number of channels for b-format ambisonics
   (if (and (= render-using b-format-ambisonics)
-	   (not (= (or out-channels (mus-channels *output*)) 4)))
-      (snd-error (format #f "ambisonics b-format requires four output channels, current number is ~A" (or out-channels (mus-channels *output*)))))
+	   (not (= (or out-channels (channels *output*)) 4)))
+      (snd-error (format #f "ambisonics b-format requires four output channels, current number is ~A" (or out-channels (channels *output*)))))
 
   (if (not out-channels)
       (if *output*
-	  (set! out-channels (mus-channels *output*))
+	  (set! out-channels (channels *output*))
 	  (begin
 	    (snd-warning "no *output*?  Will set out-channels to 2~%")
 	    (set! out-channels 2))))
   (if (not rev-channels)
-      (set! rev-channels (if *reverb* (mus-channels *reverb*) 0)))
+      (set! rev-channels (if *reverb* (channels *reverb*) 0)))
 
   (let* (;; speaker configuration for current number of channels
 	 (speakers (get-speaker-configuration out-channels))
@@ -2266,7 +2266,7 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 		      (gain (list-ref gains i)))
 		  (vector-set! outputs speaker (* gain att))
 		  (if (and (> rev-channels 1)
-			   (< speaker (vector-length rev-outputs)))
+			   (< speaker (length rev-outputs)))
 		      (vector-set! rev-outputs speaker (* gain ratt))))))
 
 	    (let ((gain 0.0)

@@ -25,7 +25,7 @@
 	 (all-sums 0.0)
 	 (delA 0.0)
 	 (delB 0.0)
-	 (file-dur (mus-length *reverb*))
+	 (file-dur (frames *reverb*))
 	 (decay-dur (mus-srate))
 	 (len (floor (+ decay-dur file-dur)))
 	 (envA (if amp-env (make-env :envelope amp-env :scaler volume :duration (exact->inexact (/ len (mus-srate)))) #f))

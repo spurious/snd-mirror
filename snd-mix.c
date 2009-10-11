@@ -2326,8 +2326,6 @@ XEN new_xen_mix(int n)
 }
 
 
-static XEN g_mix_length(XEN n);
-
 #if HAVE_S7
 static XEN s7_xen_mix_length(s7_scheme *sc, s7_pointer obj)
 {
@@ -2396,7 +2394,7 @@ static XEN g_mix_to_integer(XEN n)
 }
 
 
-static XEN g_mix_length(XEN n) 
+XEN g_mix_length(XEN n) 
 {
   #define H_mix_length "(" S_mix_length " id): mix's length in samples"
   int id;

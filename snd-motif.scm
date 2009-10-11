@@ -155,7 +155,7 @@
 ;;; replaces the current file search procedure in the File Selection Box
 ;;;
 ;;;    (install-searcher (lambda (file) (= (srate file) 44100)))
-;;;    (install-searcher (lambda (file) (= (mus-sound-chans file) 4)))
+;;;    (install-searcher (lambda (file) (= (channels file) 4)))
 ;;;
 ;;; this is obsolete -- use the file-filter mechanism instead
 
@@ -255,11 +255,11 @@ Box: (install-searcher (lambda (file) (= (srate file) 44100)))"
 					    (lambda (n)
 					      (XmStringGenerate 
 					       n #f XmCHARSET_TEXT 
-					       (if (= (mus-sound-chans n) 1)
+					       (if (= (channels n) 1)
 						   "one"
-						   (if (= (mus-sound-chans n) 2)
+						   (if (= (channels n) 2)
 						       "two"
-						       (if (= (mus-sound-chans n) 4)
+						       (if (= (channels n) 4)
 							   "four"
 							   "three")))))
 					    files)))
@@ -311,7 +311,7 @@ Box: (install-searcher (lambda (file) (= (srate file) 44100)))"
   (let ((calls (sound-property 'dragger snd)))
     (if calls
 	(do ((chn 0 (+ 1 chn)))
-	    ((= chn (chans snd)))
+	    ((= chn (channels snd)))
 	  (let ((zy (list-ref (channel-widgets snd chn) 6)))
 	    (XtRemoveCallback zy XmNdragCallback (car calls))
 	    (set! calls (cdr calls))))))
@@ -327,7 +327,7 @@ Box: (install-searcher (lambda (file) (= (srate file) 44100)))"
   (set! (sound-property 'dragger snd)
 	(let ((calls '()))
 	  (do ((chn 0 (+ 1 chn)))
-	      ((= chn (chans snd)))
+	      ((= chn (channels snd)))
 	    (let* ((zy (list-ref (channel-widgets snd chn) 6))
 		   (slider-size (cadr (XtGetValues zy (list XmNsliderSize 0)))) ; this is relative to max size
 		   (max-size (cadr (XtGetValues zy (list XmNmaximum 0))))
@@ -338,7 +338,7 @@ Box: (install-searcher (lambda (file) (= (srate file) 44100)))"
 					 (lambda (w data info)
 					   (let ((v (/ (.value info) zy-div)))
 					     (do ((i 0 (+ i 1)))
-						 ((= i (chans snd)))
+						 ((= i (channels snd)))
 					       (if (not (= i chn))
 						   (begin
 						     (set! (y-zoom-slider snd i) (* v v))
@@ -1287,12 +1287,12 @@ Reverb-feedback sets the scaler on the feedback.
 
   (define (unremark snd)
     (do ((i 0 (+ i 1)))
-	((= i (chans snd)))
+	((= i (channels snd)))
       (deactivate-mark-list snd i)))
 
   (define (open-remarks snd)
     (do ((i 0 (+ i 1)))
-	((= i (chans snd)))
+	((= i (channels snd)))
       (add-hook! (after-edit-hook snd i) 
 		 (lambda () 
 		   (if (Widget? (mark-list snd i)) 
@@ -1314,7 +1314,7 @@ Reverb-feedback sets the scaler on the feedback.
 			   (lambda (updated-snd) 
 			     ;; this is the procedure to be called when the update is done
 			     (do ((i 0 (+ i 1)))
-				 ((= i (chans updated-snd)))
+				 ((= i (channels updated-snd)))
 			       (make-mark-list updated-snd i)))))
   )
 
@@ -2025,7 +2025,7 @@ Reverb-feedback sets the scaler on the feedback.
     (let* ((snd (cadr c))
 	   (amp (scroll->amp snd (.value info)))
 	   (ampstr (XmStringCreateLocalized (format #f "~,3F " amp)))
-	   (top-chn (- (chans snd) 1))
+	   (top-chn (- (channels snd) 1))
 	   (chn (- top-chn (caddr c)))
 	   (ctrl (and (.event info) (not (= (logand (.state (.event info)) ControlMask) 0)))))
       (XtSetValues (car c) (list XmNlabelString ampstr))
@@ -2034,7 +2034,7 @@ Reverb-feedback sets the scaler on the feedback.
 	  (let* ((wids (sound-widgets snd))
 		 (ctrls (list-ref wids 2))
 		 (snd-amp (find-child ctrls "snd-amp"))
-		 (chns (chans snd)))
+		 (chns (channels snd)))
 	    (do ((i 0 (+ i 1)))
 		((= i chns))
 	      (let* ((ampscr (find-child snd-amp (scroller-name i)))
@@ -2107,7 +2107,7 @@ Reverb-feedback sets the scaler on the feedback.
     (let* ((wids (sound-widgets snd))
 	   (ctrls (list-ref wids 2))
 	   (snd-amp (find-child ctrls "snd-amp"))
-	   (chns (chans snd)))
+	   (chns (channels snd)))
       
       (if (Widget? snd-amp)
 	  (let ((height (cadr (XtGetValues ctrls (list XmNheight 0))))
@@ -2169,13 +2169,13 @@ Reverb-feedback sets the scaler on the feedback.
 	    (XtSetValues ctrls (list XmNpaneMinimum panemin XmNpaneMaximum panemax))))))
   
   (define (amp-controls-clear snd)
-    (if (> (chans snd) 1)
+    (if (> (channels snd) 1)
 	(let* ((wids (sound-widgets snd))
 	       (ctrls (list-ref wids 2))
 	       (snd-amp (find-child ctrls "snd-amp"))
-	       (top (- (chans snd) 1)))
+	       (top (- (channels snd) 1)))
 	  (do ((i 1 (+ i 1)))
-	      ((= i (chans snd)))
+	      ((= i (channels snd)))
 	    (let ((ampn (find-child snd-amp (number-name i)))
 		  (amp (find-child snd-amp (scroller-name i))))
 	      (reset-to-one amp ampn)
@@ -2847,14 +2847,14 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"
 				 (list-set! mv 3 (cadr (XtVaGetValues (car (sound-widgets c)) (list XmNheight 0))))
 				 (list-set! mv 4 (show-controls c))
 				 (do ((i 0 (+ i 1)))
-				     ((= i (chans c)))
+				     ((= i (channels c)))
 				   (XtUnmanageChild (list-ref (channel-widgets c i) 10)))
 				 (set! (show-controls c) #f)
 				 (XmChangeColor new-minmax (make-color 1 1 0))
 				 (XtVaSetValues (car (sound-widgets c)) (list XmNpaneMaximum 25)))
 			       (let ((prev-size (list-ref mv 3)))
 				 (do ((i 0 (+ i 1)))
-				     ((= i (chans c)))
+				     ((= i (channels c)))
 				   (XtManageChild (list-ref (channel-widgets c i) 10)))
 				 (if (list-ref mv 4) (set! (show-controls c) #t))
 				 (XmChangeColor new-minmax (basic-color))

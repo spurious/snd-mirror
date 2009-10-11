@@ -32,7 +32,7 @@
   (/ samps (mus-srate)))
 
 (define (big-rectangular->polar rl im)
-  (let ((len (vector-length rl)))
+  (let ((len (length rl)))
     (do ((i 0 (+ i 1)))
 	((= i len))
       (let* ((rl1 (rl i))
@@ -41,7 +41,7 @@
 	(set! (im i) (- (atan im1 rl1)))))))
 
 (define (big-polar->rectangular mag ang)
-  (let ((len (vector-length mag)))
+  (let ((len (length mag)))
     (do ((i 0 (+ i 1)))
 	((= i len))
       (let* ((mag1 (mag i))
@@ -56,7 +56,7 @@
   (vector-fill! v 0.0))
 
 (define (big-array-normalize v)
-  (let* ((len (vector-length v))
+  (let* ((len (length v))
 	 (pk 0.0))
     (do ((i 0 (+ i 1)))
 	((= i len))
@@ -79,7 +79,7 @@
 		       (wave ipart)))))))
 
 (define (big-multiply-arrays v1 v2)
-  (let ((len (min (vector-length v1) (vector-length v2))))
+  (let ((len (min (length v1) (length v2))))
     (do ((i 0 (+ i 1)))
 	((= i len) v1)
       (set! (v1 i) (* (vi 1) (v2 i))))))
@@ -89,7 +89,7 @@
 ;;; -------- polynomial --------
 
 (define (big-polynomial coeffs x)
-  (let* ((top (- (vector-length coeffs) 1))
+  (let* ((top (- (length coeffs) 1))
 	 (sum (coeffs top)))
     (do ((i (- top 1) (- i 1)))
 	((< i 0) sum)
@@ -100,7 +100,7 @@
 ;;; -------- dot-product --------
 
 (define (big-dot-product v1 v2)
-  (let ((len (min (vector-length v1) (vector-length v2))))
+  (let ((len (min (length v1) (length v2))))
     (do ((sum 0.0)
 	 (i 0 (+ i 1)))
 	((= i len) sum)
@@ -221,7 +221,7 @@
     (lambda (g)
       (if (not (big-table-lookup-wave g))
 	  (set! (big-table-lookup-wave g) (make-vector (big-table-lookup-size g) 0.0))
-	  (set! (big-table-lookup-size g) (vector-length (big-table-lookup-wave g))))
+	  (set! (big-table-lookup-size g) (length (big-table-lookup-wave g))))
       (set! (big-table-lookup-frequency g) (/ (* (big-table-lookup-frequency g) (big-table-lookup-size g)) (mus-srate)))
       (set! (big-table-lookup-angle g) (/ (* (big-table-lookup-angle g) (big-table-lookup-size g)) (* 2 pi)))
       g))

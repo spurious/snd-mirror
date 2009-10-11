@@ -6484,7 +6484,36 @@ static XEN g_cursor_position(XEN snd, XEN chn)
 
 XEN g_frames(XEN snd, XEN chn_n, XEN edpos)
 {
-  #define H_frames "(" S_frames " :optional snd chn edpos): number of frames of data in snd's channel chn"
+  #define H_frames "(" S_frames " :optional snd-or-object chn edpos): number of frames of data in the given object or channel"
+
+  if (!(XEN_BOUND_P(chn_n)))
+    {
+      if (XEN_STRING_P(snd))
+	return(g_mus_sound_frames(snd));         /* mus-sound-frames */
+      
+      if (mus_xen_p(snd))                        /* mus-length */
+	return(g_mus_length(snd));
+
+      if (sound_data_p(snd))                     /* sound-data-length */
+	return(C_TO_XEN_INT64_T((XEN_TO_SOUND_DATA(snd))->length));
+
+      if (MUS_VCT_P(snd))                        /* vct-length */
+	return(C_TO_XEN_INT64_T((XEN_TO_VCT(snd))->length));
+
+      if (XEN_MIX_P(snd))                        /* mix-length */
+	return(g_mix_length(snd));
+
+      if (XEN_REGION_P(snd))                     /* region-frames */
+	return(g_region_frames(snd, C_TO_XEN_INT(0)));
+
+      if (XEN_PLAYER_P(snd))
+	{
+	  snd_info *sp;
+	  sp = get_player_sound(snd);
+	  return(C_TO_XEN_INT64_T(CURRENT_SAMPLES(sp->chans[0])));
+	}
+    }
+
   if (XEN_BOUND_P(edpos))
     {
       XEN res;
@@ -6497,8 +6526,10 @@ XEN g_frames(XEN snd, XEN chn_n, XEN edpos)
       cp_edpos_loc = NOT_A_GC_LOC;
       return(res);
     }
+
   return(channel_get(snd, chn_n, CP_FRAMES, S_frames));
 }
+
 
 static XEN g_set_frames(XEN on, XEN snd, XEN chn_n) 
 {

@@ -104,9 +104,9 @@
 			     (set! line-ctr (+ line-ctr 2))
 			     (set! x0 x1)
 			     (set! y0 y1)))))))      ; else should we do "max" here? or draw a vertical line from min to max?
-		(if (< line-ctr (vector-length lines))
+		(if (< line-ctr (length lines))
 		    (do ((j line-ctr (+ j 2)))       ; off-by-one in vector size calc -- need to pad so we don't get a bogus line to (0, 0)
-			((>= j (vector-length lines)))
+			((>= j (length lines)))
 		      (vector-set! lines j x0)
 		      (vector-set! lines (+ j 1) y0)))
 		(draw-lines lines snd chn)
@@ -278,7 +278,7 @@ whenever they're in the current view."
     ;; this is called before the actual update -- we need to clear the notion of edit-position to force a re-read
     (if current-window-display-is-running
 	(do ((i 0 (+ 1 i)))
-	    ((= i (chans snd)))
+	    ((= i (channels snd)))
 	  (let ((vals (channel-property 'inset-envelope snd i)))
 	    (if vals
 		(list-set! vals 2 -2))))) ; set edit-position to impossible value
@@ -434,7 +434,7 @@ whenever they're in the current view."
   (add-hook! after-open-hook 
 	     (lambda (s)
 	       (do ((ii 0 (+ 1 ii)))
-		   ((= ii (chans s)))
+		   ((= ii (channels s)))
 		 (let ((i ii)) ; for s7
 		   (set! (channel-property 'save-state-ignore s i)
 			 (cons 'inset-envelope 

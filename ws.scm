@@ -531,7 +531,7 @@
 	       (old-sync (sync outsnd)))
 
 	   ;; if multichannel output, make sure cross-chan mixes move together 
-	   (if (> (chans outsnd) 1)
+	   (if (> (channels outsnd) 1)
 	       (begin
 		 (reset-hook! mix-release-hook)
 		 (add-hook! mix-release-hook
@@ -609,7 +609,7 @@
 	(throw 'no-such-mixed-sound (list "with-mixed-sound->notelist" outsnd))
 	(let ((cur-mixes (mixes outsnd 0)) ; for now assume each mix is multichannel
 	      (oput (open-output-file output-file)))
-	  (display (format #f "(with-sound (:channels ~D)~%" (chans snd)) oput)
+	  (display (format #f "(with-sound (:channels ~D)~%" (channels snd)) oput)
 	  (for-each
 	   (lambda (id)
 	     (let ((info (with-mixed-sound-mix-info id snd)))
@@ -950,9 +950,9 @@ finish-with-sound to complete the process."
 								   (snd-version)
 								   option-str
 								   call-str))
-						     (if (and (> (mus-channels *output*) 1)
+						     (if (and (> (channels *output*) 1)
 							      (not (member :channels ',options)))
-							 (list :channels (mus-channels *output*))
+							 (list :channels (channels *output*))
 							 '())
 						     ',options))))
 				 (set! *to-snd* old-to-snd)
@@ -1149,7 +1149,7 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 ;;; -------- with-threaded-channels
 
 (define (with-threaded-channels snd func)
-  (let ((chns (chans snd)))
+  (let ((chns (channels snd)))
     (if (and (provided? 'snd-threads)
 	     (provided? 's7)
 	     (> chns 1))

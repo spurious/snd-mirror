@@ -34801,7 +34801,32 @@ EDITS: 2
 	    )
 	  (close-sound snd))
 
-
+	;; frames as generic
+	
+	(let ((snd (open-sound "oboe.snd"))
+	      (v (vct .1 .2 .3))
+	      (sd (make-sound-data 1 10))
+	      (str "oboe.snd")
+	      (fr (frame .1 .2))
+	      (mx (mixer .1 .2 .3 .4)))
+	  (let ((mxv (mix-vct v 1000))
+		(reg (make-region 0 100))
+		(dly (make-delay 32))
+		(ply (make-player snd 0))
+		)
+	    (if (not (= (frames snd) 50828)) (snd-display ";frames of sound: ~A" (frames snd)))
+	    (if (not (= (frames v) 3)) (snd-display ";frames of vct: ~A" (frames v)))
+	    (if (not (= (frames str) 50828)) (snd-display ";frames of string: ~A" (frames str)))
+	    (if (not (= (frames sd) 10)) (snd-display ";frames of sound-data: ~A" (frames sd)))
+	    (if (not (= (frames fr) 2)) (snd-display ";frames of frame: ~A" (frames fr)))
+	    (if (not (= (frames mx) 2)) (snd-display ";frames of mixer: ~A" (frames mx)))
+	    (if (not (= (frames mxv) 3)) (snd-display ";frames of mix: ~A" (frames mxv)))
+	    (if (not (= (frames reg) 101)) (snd-display ";frames of region: ~A" (frames reg)))
+	    (if (not (= (frames dly) 32)) (snd-display ";frames of delay: ~A" (frames dly)))
+	    (if (not (= (frames ply) 50828)) (snd-display ";frames of player: ~A" (frames ply)))
+	    )
+	  (close-sound snd))
+	
 	)))
 
 ;;; ---------------- test 16: regularized funcs ----------------
@@ -52712,6 +52737,31 @@ EDITS: 1
 	)
       (close-sound snd))
     
+    ;; frames as generic
+    
+    (let ((snd (open-sound "oboe.snd"))
+	  (v (vct .1 .2 .3))
+	  (sd (make-sound-data 1 10))
+	  (str "oboe.snd")
+	  (fr (frame .1 .2))
+	  (mx (mixer .1 .2 .3 .4)))
+      (let ((mxv (mix-vct v 1000))
+	    (reg (make-region 0 100))
+	    (dly (make-delay 32))
+	    (ply (make-player snd 0))
+	    )
+	(if (not (= (run (lambda () (frames snd))) 50828)) (snd-display ";frames of sound: ~A" (frames snd)))
+	(if (not (= (run (lambda () (frames v))) 3)) (snd-display ";frames of vct: ~A" (frames v)))
+	(if (not (= (run (lambda () (frames str))) 50828)) (snd-display ";frames of string: ~A" (frames str)))
+	(if (not (= (run (lambda () (frames sd))) 10)) (snd-display ";frames of sound-data: ~A" (frames sd)))
+	(if (not (= (run (lambda () (frames fr))) 2)) (snd-display ";frames of frame: ~A" (frames fr)))
+	(if (not (= (run (lambda () (frames mx))) 2)) (snd-display ";frames of mixer: ~A" (frames mx)))
+	(if (not (= (run (lambda () (frames mxv))) 3)) (snd-display ";frames of mix: ~A" (frames mxv)))
+	(if (not (= (run (lambda () (frames reg))) 101)) (snd-display ";frames of region: ~A" (frames reg)))
+	(if (not (= (run (lambda () (frames dly))) 32)) (snd-display ";frames of delay: ~A" (frames dly)))
+	(if (not (= (run (lambda () (frames ply))) 50828)) (snd-display ";frames of player: ~A" (frames ply)))
+	)
+      (close-sound snd))
     
     ))
 
@@ -65407,7 +65457,7 @@ EDITS: 1
 				      contrast-control-amp contrast-control? data-format data-location data-size expand-control
 				      expand-control-hop expand-control-jitter expand-control-length expand-control-ramp expand-control? file-name
 				      filter-control-in-dB filter-control-in-hz filter-control-envelope filter-control-order filter-control?
-				      finish-progress-report frames header-type read-only reset-controls restore-controls
+				      finish-progress-report header-type read-only reset-controls restore-controls
 				      reverb-control-decay reverb-control-feedback reverb-control-length reverb-control-lowpass
 				      reverb-control-scale reverb-control? save-controls select-sound short-file-name
 				      sound-loop-info soundfont-info speed-control speed-control-style speed-control-tones srate

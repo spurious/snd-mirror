@@ -2340,7 +2340,7 @@ void call_sp_watchers(snd_info *sp, sp_watcher_t type, sp_watcher_reason_t reaso
 
 /* ---------------------------------------- sound objects ---------------------------------------- */
 
-/* TODO: generics (besides length, srate, channels):
+/* TODO: generics (besides length, srate, channels, frames):
  *             source:         procedure-source[s7_procedure_source] mix-home mark-home region-home player-home sampler-home
  *                               mus cases: readin=file+chan? etc, port -> filename?, sound->filename?
  *             position:       mark-sample mix-position region-position sampler-position
@@ -2352,14 +2352,11 @@ void call_sp_watchers(snd_info *sp, sp_watcher_t type, sp_watcher_reason_t reaso
  *                               __func__? port-filename sampler-filename
  *             sync:           sync, mark|mix-sync
  *             copy:           should this be extended?  also fill!
- *             frames file-name reverse save find insert delete describe read mix append 
+ *             file-name reverse save find insert delete describe read mix append 
  *
- * use length/srate/channels in the scheme code and doc examples:
- *  chans mus-channels string-length vector-length frames mus-length mix-length region-frames
+ *    frames: test run
  *
- * doc copy/fill! (index.html too)
- *
- *             frames file-name sync reverse mix append: these exist already and could just be extended
+ *             file-name sync reverse mix append: these exist already and could just be extended
  *
  * applicable sound (set! (snd chan samp)? )
  *

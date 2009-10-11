@@ -192,7 +192,7 @@
 	(stopping #f)
 	(stop-widget #f))
     (define (vector-print v)
-      (if (< (vector-length v) 3)
+      (if (< (length v) 3)
 	  (object->string v)
 	  (let ((str (format #f "'#(~A" (vector-ref v 0))))
 	    (do ((i 1 (+ 1 i)))
@@ -338,7 +338,7 @@
 		 (format #f "~A info" (file-name snd))
 		 (format #f "~A:~%  chans: ~D~%  srate: ~D~%  header: ~A~%  data format: ~A~%  length: ~1,3F~%  maxamp: ~A~%~A~A~A~A~A"
 			(short-file-name snd)
-			(chans snd)
+			(channels snd)
 			(srate snd)
 			(mus-header-type-name (header-type snd))
 			(mus-data-format-name (data-format snd))
@@ -360,7 +360,7 @@
 			    "")
 			(let ((chan-str ""))
 			  (do ((i 0 (+ 1 i)))
-			      ((= i (chans snd)))
+			      ((= i (channels snd)))
 			    (if (not (null? (channel-properties snd i)))
 				(set! chan-str 
 				      (string-append chan-str
@@ -414,7 +414,7 @@
      (lambda (w)
        (let ((name (XtName w)))
 	 (if (string=? name "Snd")
-	     (if (> (chans snd) 1)
+	     (if (> (channels snd) 1)
 		 (change-label w (format #f "~A[~D]" (short-file-name snd) chn))
 		 (change-label w (short-file-name snd)))
 	     (if (or (string=? name "Save")
@@ -423,9 +423,9 @@
 		     (string=? name "Play previous"))
 		 ((if (> (car eds) 0) XtManageChild XtUnmanageChild) w)
 		 (if (string=? name "Play channel")
-		     ((if (> (chans snd) 1) XtManageChild XtUnmanageChild) w)
+		     ((if (> (channels snd) 1) XtManageChild XtUnmanageChild) w)
 		     (if (string=? name "Equalize panes")
-			 ((if (or (> (chans snd) 1) 
+			 ((if (or (> (channels snd) 1) 
 				  (> (length (sounds)) 1))
 			      XtManageChild XtUnmanageChild) w)
 			 (if (string=? name "Redo")
@@ -710,7 +710,7 @@ all saved edit lists."
     (let ((edhist-help (XtCreateManagedWidget "Help" xmPushButtonWidgetClass edhist-popup every-menu)))
       (XtAddCallback edhist-help XmNactivateCallback edhist-help-edits))
     (add-hook! close-hook (lambda (snd)
-			    (let ((chns (chans snd))
+			    (let ((chns (channels snd))
 				  (name (short-file-name snd)))
 			      (do ((i 0 (+ 1 i)))
 				  ((= i chns))
@@ -743,7 +743,7 @@ all saved edit lists."
 
     (define (add-popup snd)
       (do ((uchn 0 (+ 1 uchn)))
-	  ((= uchn (chans snd)))
+	  ((= uchn (channels snd)))
 	(let ((chn uchn)) ; this is for s7
 	  (if (not (find-popup snd chn popups))
 	      (let ((chn-grf (car (channel-widgets snd chn))))
@@ -781,18 +781,18 @@ all saved edit lists."
 			    (set! graph-popup-snd snd)
 			    (set! graph-popup-chn chn)
 			    (if (and (= (channel-style snd) channels-combined)
-				     (> (chans snd) 1))
+				     (> (channels snd) 1))
 				(let ((ye (.y e))) ; y axis location of mouse-down
 				  (call-with-exit
 				   (lambda (break)
 				     (do ((i 0 (+ 1 i)))
-					 ((= i (chans snd)))
+					 ((= i (channels snd)))
 				       (let ((off (list-ref (axis-info snd i) 14)))
 					 (if (< ye off)
 					     (begin
 					       (set! graph-popup-chn (- i 1))
 					       (break)))))
-				     (set! graph-popup-chn (- (chans snd) 1))))))
+				     (set! graph-popup-chn (- (channels snd) 1))))))
 			    
 			    (let ((fax (if (transform-graph? snd chn) (axis-info snd chn transform-graph) #f))
 				  (lax (if (lisp-graph? snd chn) (axis-info snd chn lisp-graph) #f)))
@@ -933,7 +933,7 @@ color name, an xm Pixel, a snd color, or a list of rgb values (as in Snd's make-
 		   (call-with-exit
 		    (lambda (return)
 		      (do ((i 0 (+ 1 i)))
-			  ((= i (chans n)) #t)
+			  ((= i (channels n)) #t)
 			(if (not (= (car (edits n i)) 0))
 			    (return #f))))))
 		 snds))

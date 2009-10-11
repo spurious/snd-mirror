@@ -13,7 +13,7 @@
       (if (null? vects)
 	  len
 	  (if (vector? (car vects))
-	      (total-length (cdr vects) (+ len (vector-length (car vects))))
+	      (total-length (cdr vects) (+ len (length (car vects))))
 	      (if (car vects)
 		  (total-length (cdr vects) (+ len 1))
 		  (total-length (cdr vects) len)))))
@@ -22,7 +22,7 @@
 	  vals
 	  (if (vector? (car vects))
 	      (let* ((vect (car vects))
-		     (len (vector-length vect)))
+		     (len (length vect)))
 		(do ((i 0 (+ 1 i)))
 		    ((= i len))
 		  (vector-set! vals (+ start i) (vector-ref vect i)))
@@ -339,7 +339,7 @@
 	   (lambda (id ox oy x y)
 	     (draw-mix-tag id ox oy x y)
 	     (draw-a-note (or (mix-property 'frequency id) 440.0)
-			  (/ (mix-length id) (srate))
+			  (/ (length id) (srate))
 			  x y
 			  (* 2 (mix-waveform-height))
 			  #f
@@ -414,7 +414,7 @@
 (add-hook! draw-mix-hook
 	   (lambda (id ox oy x y)
 	     (let* ((xy (draw-a-note (or (mix-property 'frequency id) 440.0)
-				     (/ (mix-length id) (srate))
+				     (/ (length id) (srate))
 				     x y
 				     (* 2 (mix-waveform-height))
 				     #f
