@@ -92,6 +92,8 @@
  *        make #<func args> = (func args) or something like that so we can read new_type objects, or add a reader to that struct
  *        make-vector! where type of initial element sets type of all elements, or make-vector*?
  *          (make-vector! 32 0.0)
+ *        reverse and append generic
+ *        ->* for conversions (->vector, ->ratio? ->string etc)
  *
  *
  * Mike Scholz provided the FreeBSD support (complex trig funcs, etc)
@@ -10335,6 +10337,8 @@ static s7_pointer g_reverse(s7_scheme *sc, s7_pointer args)
   p = car(args);
   if (p == sc->NIL)
     return(sc->NIL);
+
+  /* TODO: reverse vector|string|C_type? -- needs field */
   
   if (!is_pair(p))
     return(s7_wrong_type_arg_error(sc, "reverse", 0, p, "a list"));
@@ -10498,6 +10502,8 @@ static s7_pointer g_append(s7_scheme *sc, s7_pointer args)
 
   if (args == sc->NIL) 
     return(sc->NIL);
+
+  /* TODO: append strings|vectors|C-types?|hash-tables? */
   
   if (cdr(args) == sc->NIL)
     return(car(args)); 

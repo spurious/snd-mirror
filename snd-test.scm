@@ -34841,6 +34841,25 @@ EDITS: 2
 	  (mus-close frm)
 	  (close-sound snd))
 
+	;; sync as generic: mix-sync mark-sync sync 
+	
+	(let ((snd (open-sound "oboe.snd")))
+	  (let ((mrk (add-mark 123))
+		(mx (mix-vct (vct .1 .2 .3)))
+		)
+	    (if (not (= (sync snd) 0)) (snd-display ";sync of sound (0): ~A" (sync snd)))
+	    (if (not (= (sync mrk) 0)) (snd-display ";sync of mark (0): ~A" (sync mrk)))
+	    (if (not (= (sync mx) 0)) (snd-display ";sync of mx (0): ~A" (sync mx)))
+	    
+	    (set! (sync snd) 12)
+	    (set! (sync mrk) 24)
+	    (set! (sync mx) 36)
+	    
+	    (if (not (= (sync snd) 12)) (snd-display ";sync of sound (12): ~A" (sync snd)))
+	    (if (not (= (sync mrk) 24)) (snd-display ";sync of mark (24): ~A" (sync mrk)))
+	    (if (not (= (sync mx) 36)) (snd-display ";sync of mx (36): ~A" (sync mx)))
+	    )
+	  (close-sound snd))
 	
 	)))
 

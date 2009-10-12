@@ -2354,7 +2354,7 @@ Reverb-feedback sets the scaler on the feedback.
 	(reset-hook! draw-mark-hook))
     (add-hook! draw-mark-hook
 	       (lambda (id)
-		 (if (> (mark-sync id) 0)
+		 (if (> (sync id) 0)
 		     (begin
 		       (XSetForeground dpy mark-gc new-mark-color)
 		       (XSetForeground dpy selected-mark-gc new-selected-mark-color))

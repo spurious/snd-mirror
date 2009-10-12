@@ -2571,7 +2571,7 @@ static XEN g_set_mix_name(XEN n, XEN val)
 }
 
 
-static XEN g_mix_sync(XEN n) 
+XEN g_mix_sync(XEN n) 
 {
   #define H_mix_sync "(" S_mix_sync " id): mix sync field (an integer)"
   int id;
@@ -2583,7 +2583,7 @@ static XEN g_mix_sync(XEN n)
 }
 
 
-static XEN g_set_mix_sync(XEN n, XEN val) 
+XEN g_set_mix_sync(XEN n, XEN val) 
 {
   int id;
   XEN_ASSERT_TYPE(XEN_MIX_P(n), n, XEN_ARG_1, S_setB S_mix_sync, "a mix");

@@ -59,8 +59,8 @@
 	       (lambda (m)
 		 (if (or (= (mark->integer m) play-between-marks-m1)
 			 (= (mark->integer m) play-between-marks-m2))
-		     (set! (mark-sync m) 1)
-		     (set! (mark-sync m) 0)))
+		     (set! (sync m) 1)
+		     (set! (sync m) 0)))
 	       chan-marks))
 	    snd-marks))
 	 (marks))
@@ -596,7 +596,7 @@ using the granulate generator to fix up the selection duration (this still is no
 
 (define (click-to-sync id) 
   "(click-to-sync id) sets a mark's sync field when it is clicked (marks-menu)"
-  (set! (mark-sync id) mark-sync-number)
+  (set! (sync id) mark-sync-number)
   #f)
 
 (add-hook! mark-click-hook click-to-sync)

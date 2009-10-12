@@ -535,7 +535,7 @@
 	(if (not (provided? 'cairo))
 	    (add-hook! draw-mark-hook
 		       (lambda (id)
-			 (if (> (mark-sync id) 0)
+			 (if (> (sync id) 0)
 			     (begin
 			       (gdk_gc_set_foreground mark-gc gmc)
 			       (gdk_gc_set_foreground selected-mark-gc sgmc))

@@ -154,9 +154,9 @@
 			   (max 0 lower)
 			   higher))
 	 (true-samps-moved (- new-position (mix-position id))))
-    (if (= (mix-sync id) 0)
+    (if (= (sync id) 0)
 	(set! (mix-position id) new-position)
-	(move-mixes (syncd-mixes (mix-sync id)) true-samps-moved))
+	(move-mixes (syncd-mixes (sync id)) true-samps-moved))
     #t))
  
 (define (snap-syncd-mixes-to-beat)
@@ -424,15 +424,15 @@ last end of the mixes in 'mix-list'"
       (lambda (chn-m)
 	(for-each
 	 (lambda (m)
-	   (set! (mix-sync m) new-sync))
+	   (set! (sync m) new-sync))
 	 chn-m))
       snd-m))
    (mixes)))
 
 
-(define (syncd-mixes sync)
-  "(syncd-mixes sync) returns a list (possibly null) of all mixes whose mix-sync field is set to 'sync'"
-  (if (<= sync 0)
+(define (syncd-mixes val)
+  "(syncd-mixes val) returns a list (possibly null) of all mixes whose mix-sync field is set to 'val'"
+  (if (<= val 0)
       (list)
       (let ((mix-list '()))
 	(for-each
@@ -441,7 +441,7 @@ last end of the mixes in 'mix-list'"
 	    (lambda (chn-m)
 	      (for-each
 	       (lambda (m)
-		 (if (= (mix-sync m) sync)
+		 (if (= (sync m) val)
 		     (set! mix-list (cons m mix-list))))
 	       chn-m))
 	    snd-m))

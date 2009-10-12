@@ -828,6 +828,8 @@ bool xen_mark_p(XEN obj);
 #define XEN_MARK_P(arg) xen_mark_p(arg)
 int xen_mark_to_int(XEN n);
 #define XEN_MARK_TO_C_INT(n) xen_mark_to_int(n)
+XEN g_mark_sync(XEN mark_n);
+XEN g_set_mark_sync(XEN mark_n, XEN sync_n);
  
 
 
@@ -1581,6 +1583,8 @@ snd_fd *xen_mix_to_snd_fd(XEN obj);
 int xen_mix_to_int(XEN n);
 #define XEN_MIX_TO_C_INT(n) xen_mix_to_int(n)
 XEN g_mix_length(XEN n);
+XEN g_mix_sync(XEN n);
+XEN g_set_mix_sync(XEN n, XEN val);
  
 mus_long_t mix_position_from_id(int id);
 mus_long_t mix_length_from_id(int id);

@@ -537,10 +537,10 @@
 		 (add-hook! mix-release-hook
 			    (lambda (id samps-moved)
 			      (let ((new-pos (+ samps-moved (mix-position id)))
-				    (base (mix-sync id)))
+				    (base (sync id)))
 				(do ((mx (integer->mix base) (integer->mix (+ (mix->integer mx) 1))))
 				    ((or (not (mix? mx))
-					 (not (= (mix-sync mx) base))))
+					 (not (= (sync mx) base))))
 				  (set! (mix-position mx) new-pos))
 				#t)))))
 
@@ -574,7 +574,7 @@
 		      (set! (mix-name mx) (format #f "(~A ~A)" (car note) (cadr note)))
 		      (do ((chan 0 (+ 1 chan)))
 			  ((= chan chans))
-			(set! (mix-sync (integer->mix (+ (mix->integer mx) chan))) (mix->integer mx)))
+			(set! (sync (integer->mix (+ (mix->integer mx) chan))) (mix->integer mx)))
 		      (set! mix-info (cons (list mx beg chans note) mix-info))))
 		  ',body)
 		 (set! (sound-property 'with-mixed-sound-info outsnd) (reverse mix-info)))

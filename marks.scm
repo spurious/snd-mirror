@@ -91,7 +91,7 @@
 (define mark-sync-number 0)
 (define (start-sync) (set! mark-sync-number (+ (mark-sync-max) 1)))
 (define (stop-sync) (set! mark-sync-number 0))
-(define (click-to-sync id) (set! (mark-sync id) mark-sync-number) #f)
+(define (click-to-sync id) (set! (sync id) mark-sync-number) #f)
 ;(add-hook! mark-click-hook click-to-sync)
 
 
@@ -443,8 +443,8 @@
 			     ""))
 		       (mark-sample n)
 		       (/ (mark-sample n) (srate (car (mark-home n))))
-		       (if (not (= (mark-sync n) 0))
-			   (format #f "~%  sync: ~A" (mark-sync n))
+		       (if (not (= (sync n) 0))
+			   (format #f "~%  sync: ~A" (sync n))
 			   "")
 		       (let ((props (mark-properties n)))
 			 (if (and (list? props)
@@ -481,7 +481,7 @@
 						(> (string-length (mark-name m)) 0))
 					   (format #f "~S" (mark-name m))
 					   #f)
-				       (mark-sync m))))
+				       (sync m))))
 	  (if (not (null? (mark-properties m)))
 	      (set! str
 		    (string-append str 

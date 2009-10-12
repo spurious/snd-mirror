@@ -2311,14 +2311,14 @@ static XEN g_set_mark_sample(XEN mark_n, XEN samp_n)
 }
 
 
-static XEN g_mark_sync(XEN mark_n) 
+XEN g_mark_sync(XEN mark_n)
 {
   #define H_mark_sync "(" S_mark_sync " id): mark's sync value (default: 0)"
   XEN_ASSERT_TYPE(XEN_MARK_P(mark_n), mark_n, XEN_ONLY_ARG, S_mark_sync, "a mark");
   return(mark_get(mark_n, MARK_SYNC, XEN_UNDEFINED, S_mark_sync));
 }
 
-static XEN g_set_mark_sync(XEN mark_n, XEN sync_n) 
+XEN g_set_mark_sync(XEN mark_n, XEN sync_n)
 {
   XEN_ASSERT_TYPE(XEN_MARK_P(mark_n), mark_n, XEN_ARG_1, S_setB S_mark_sync, "a mark");
   XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_P(sync_n), sync_n, XEN_ARG_2, S_setB S_mark_sync, "an integer");

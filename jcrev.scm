@@ -16,7 +16,7 @@
 	 (comb2 (make-comb 0.733 4999))
 	 (comb3 (make-comb 0.715 5399))
 	 (comb4 (make-comb 0.697 5801))
-	 (chns (mus-channels *output*))
+	 (chns (channels *output*))
 	 (outdel1 (make-delay (seconds->samples .013)))
 	 (outdel2 (if (> chns 1) (make-delay (seconds->samples .011)) #f))
 	 (comb-sum 0.0)

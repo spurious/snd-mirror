@@ -2340,7 +2340,7 @@ void call_sp_watchers(snd_info *sp, sp_watcher_t type, sp_watcher_reason_t reaso
 
 /* ---------------------------------------- sound objects ---------------------------------------- */
 
-/* TODO: generics (besides length, srate, channels, frames, file-name):
+/* TODO: generics (besides length, srate, channels, frames, file-name, sync):
  *             source:         procedure-source[s7_procedure_source] mix-home mark-home region-home player-home sampler-home
  *                               mus cases: readin=file+chan? etc, port -> filename?, sound->filename?
  *             position:       mark-sample mix-position region-position sampler-position
@@ -2350,16 +2350,14 @@ void call_sp_watchers(snd_info *sp, sp_watcher_t type, sp_watcher_reason_t reaso
  *             properties:     edit|mark|mix|sound-properties procedure-property?  window-property? [also property as accessor]
  *             name:           mark|mix-name file-name (widget name via XtName) mus-name, 
  *                               __func__? port-filename sampler-filename
- *             sync:           sync, mark|mix-sync
  *
  *             reverse save find insert delete describe read write mix append [open and close?]
  *             sync reverse mix append: these exist already and could just be extended 
  *             remember to remake index.html
  *
  * ->* in s7? ->vector ->vct etc
- *
  * file-name of sampler?
- *    move all property list accessors into C, mark-properties check in fs/rb
+ * move all property list accessors into C, mark-properties check in fs/rb
  *
  * applicable sound (set! (snd chan samp)? )
  *
@@ -3578,14 +3576,28 @@ static XEN g_set_comment(XEN snd, XEN val)
 static XEN g_sync(XEN snd) 
 {
   #define H_sync "(" S_sync " :optional snd): snd's sync value (0 = no sync).  Some editing operations \
-are applied to all sounds sharing the sync value of the selected sound."
-  return(sound_get(snd, SP_SYNC, S_sync));
+are applied to all sounds sharing the sync value of the selected sound.  'snd' can also be a mix or mark object."
+
+  if (XEN_MIX_P(snd))                            /* mix-sync */
+    return(g_mix_sync(snd));
+
+  if (XEN_MARK_P(snd))                           /* mark-sync */
+    return(g_mark_sync(snd));
+
+  return(sound_get(snd, SP_SYNC, S_sync));       /* sync */
 }
 
 
 static XEN g_set_sync(XEN on, XEN snd) 
 {
   XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_P(on), on, XEN_ARG_1, S_setB S_sync, "an integer");
+
+  if (XEN_MIX_P(snd))
+    return(g_set_mix_sync(snd, on));
+
+  if (XEN_MARK_P(snd))
+    return(g_set_mark_sync(snd, on));
+
   return(sound_set(snd, on, SP_SYNC, S_setB S_sync));
 }
 
