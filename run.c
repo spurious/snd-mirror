@@ -8637,6 +8637,24 @@ static xen_value * CName ## _1(ptree *prog, xen_value **args, int num_args) {ret
 INT_INT_OP(mus_bytes_per_sample)
 
 
+
+static xen_value *vct_length_1(ptree *prog, xen_value **args, int num_args);
+static xen_value *mus_length_0(ptree *prog, xen_value **args, int num_args);
+static xen_value *sound_data_length_1(ptree *prog, xen_value **args, int num_args);
+
+#if USE_SND
+static void sound_length_0(int *args, ptree *pt) {INT_RESULT = CURRENT_SAMPLES(ss->sounds[SOUND_ARG_1]->chans[0]);}
+static xen_value *sound_length_1(ptree *prog, xen_value **args, int num_args) {return(package(prog, R_INT, sound_length_0, "length", args, 1));}
+
+static void mix_length_0(int *args, ptree *pt) {INT_RESULT = mix_length_from_id(MIX_ARG_1);}
+static xen_value *mix_length_1(ptree *prog, xen_value **args, int num_args) {return(package(prog, R_INT, mix_length_0, "length", args, 1));}
+
+static void region_length_0(int *args, ptree *pt) {INT_RESULT = region_len(REGION_ARG_1);}
+static xen_value *region_length_1(ptree *prog, xen_value **args, int num_args) {return(package(prog, R_INT, region_length_0, "length", args, 1));}
+#endif
+
+
+
 #if USE_SND
 /* ---------------- simple snd ops ---------------- */
 
@@ -9000,17 +9018,40 @@ static void frames_i(int *args, ptree *pt)
 }
 
 
+static xen_value *mus_sound_frames_1(ptree *pt, xen_value **args, int num_args);
+
 static xen_value *frames_1(ptree *pt, xen_value **args, int num_args)
 {
   xen_value *true_args[4];
   xen_value *rtn;
   int k;
+
+  if (num_args == 1)
+    {
+      switch (args[1]->type)
+	{
+	case R_STRING:     return(mus_sound_frames_1(pt, args, num_args));
+	case R_CLM:        return(mus_length_0(pt, args, num_args));
+	case R_VCT:        return(vct_length_1(pt, args, num_args));
+	case R_SOUND_DATA: return(sound_data_length_1(pt, args, num_args));
+
+	case R_SOUND:      return(sound_length_1(pt, args, num_args));    /* (let ((snd (integer->sound 0))) (run (lambda () (frames snd)))) */
+	case R_MIX:        return(mix_length_1(pt, args, num_args));
+	case R_REGION:     return(region_length_1(pt, args, num_args));
+	  /* not R_SAMPLER because it has no clear length (read dir can change etc) */
+
+	  /* else drop into regular frames code */
+	}
+    }
+
   if (num_args < 3)
     true_args[3] = make_xen_value(R_INT, add_int_to_ptree(pt, AT_CURRENT_EDIT_POSITION), R_CONSTANT);
   else true_args[3] = args[3];
+
   run_opt_arg(pt, args, num_args, 1, true_args);
   run_opt_arg(pt, args, num_args, 2, true_args);
   true_args[0] = args[0];
+
   rtn = package(pt, R_INT, frames_i, "frames_i", true_args, 3);
   for (k = num_args + 1; k <= 3; k++) free(true_args[k]);
   return(rtn);
@@ -9512,18 +9553,6 @@ static void length_0(int *args, ptree *pt)
 }
 
 static xen_value *vector_length_1(ptree *prog, xen_value **args, int num_args);
-static xen_value *vct_length_1(ptree *prog, xen_value **args, int num_args);
-static xen_value *mus_length_0(ptree *prog, xen_value **args, int num_args);
-static xen_value *sound_data_length_1(ptree *prog, xen_value **args, int num_args);
-
-static void sound_length_0(int *args, ptree *pt) {INT_RESULT = CURRENT_SAMPLES(ss->sounds[SOUND_ARG_1]->chans[0]);}
-static xen_value *sound_length_1(ptree *prog, xen_value **args, int num_args) {return(package(prog, R_INT, sound_length_0, "length", args, 1));}
-
-static void mix_length_0(int *args, ptree *pt) {INT_RESULT = mix_length_from_id(MIX_ARG_1);}
-static xen_value *mix_length_1(ptree *prog, xen_value **args, int num_args) {return(package(prog, R_INT, mix_length_0, "length", args, 1));}
-
-static void region_length_0(int *args, ptree *pt) {INT_RESULT = region_len(REGION_ARG_1);}
-static xen_value *region_length_1(ptree *prog, xen_value **args, int num_args) {return(package(prog, R_INT, region_length_0, "length", args, 1));}
 
 static xen_value *length_1(ptree *prog, xen_value **args, int num_args)
 {
