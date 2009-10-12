@@ -44,6 +44,7 @@ MUS_EXPORT sound_data *sound_data_offset(sound_data *sd, mus_float_t off);
 MUS_EXPORT XEN g_mus_sound_srate(XEN filename);
 MUS_EXPORT XEN g_mus_sound_chans(XEN filename);
 MUS_EXPORT XEN g_mus_sound_frames(XEN filename);
+MUS_EXPORT XEN g_mus_expand_filename(XEN file);
 
 #ifdef __cplusplus
 }

@@ -313,6 +313,7 @@
 #define S_mark_home                     "mark-home"
 #define S_mark_hook                     "mark-hook"
 #define S_mark_name                     "mark-name"
+#define S_mark_properties               "mark-properties"
 #define S_mark_p                        "mark?"
 #define S_mark_sample                   "mark-sample"
 #define S_mark_sync                     "mark-sync"

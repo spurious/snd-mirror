@@ -2137,7 +2137,7 @@ a sort of play list: (region-play-list (list (list reg0 0.0) (list reg1 0.5) (li
     (define (get-current-directory filename)
       (set! last-file-opened filename)
       (display last-file-opened)
-      (let ((new-path (directory-from-path (mus-expand-filename filename))))
+      (let ((new-path (directory-from-path (file-name filename))))
 	(if (or (not (string? current-directory))
 		(not (string=? current-directory new-path)))
 	    (get-current-files new-path)))

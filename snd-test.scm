@@ -2197,7 +2197,7 @@
 		       'make-triangle-wave 'make-two-pole 'make-two-zero
 		       'make-variable-graph 'make-vct 'make-wave-train 
 		       'map-chan 'map-channel 'mark-click-hook 'mark-color 'mark-context
-		       'mark-drag-hook 'mark-drag-triangle-hook 'mark-home 'mark-hook 'mark-name
+		       'mark-drag-hook 'mark-drag-triangle-hook 'mark-home 'mark-hook 'mark-name 'mark-properties
 		       'mark-sample 'mark-sync 'mark-sync-max 'mark-tag-height 'mark-tag-width
 		       'mark? 'marks 'max-regions 'max-transform-peaks 'max-virtual-ptrees 'maxamp
 		       'maxamp-position 'menu-widgets 'min-dB 'minibuffer-history-length 'mix
@@ -5064,12 +5064,6 @@
     (if with-s7
 	(begin
 	  (if (not (list? (global-environment))) (snd-display ";global-environment not a list?: ~A" (global-environment)))
-	  (if (port-filename (current-output-port)) 
-	      (snd-display ";port-filename output: ~A" (port-filename (current-output-port))))
-	  (if (not (string? (port-filename (current-input-port)))) 
-	      (snd-display ";port-filename input: ~A" (port-filename (current-input-port))))
-	  (if (string? (port-line-number (current-input-port)))
-	      (snd-display ";port-line-number input: ~A" (port-line-number (current-input-port))))
 
 	  (let ((ip (current-input-port)))
 	    (let ((tag (catch #t (lambda () (set-current-input-port "hiho!")) (lambda args (car args)))))
@@ -34826,6 +34820,27 @@ EDITS: 2
 	    (if (not (= (frames ply) 50828)) (snd-display ";frames of player: ~A" (frames ply)))
 	    )
 	  (close-sound snd))
+
+	;; file-name as generic
+	
+	(let ((snd (open-sound "oboe.snd"))
+	      (str "oboe.snd")
+	      (frm (make-file->sample "oboe.snd"))
+	      (prt (open-output-file "test.data")))
+	  (let ((mxv (car (mix "pistol.snd" 1000)))
+		(reg (make-region 0 100))
+		)
+	    (if (not (string=? (file-name snd) (string-append (getcwd) "/oboe.snd"))) (snd-display ";file-name of sound: ~A" (file-name snd)))
+	    (if (not (string=? (file-name str) (string-append (getcwd) "/oboe.snd"))) (snd-display ";file-name of string: ~A" (file-name str)))
+	    (if (not (string=? (file-name frm) "oboe.snd")) (snd-display ";file-name of file->sample: ~A" (file-name frm)))
+	    (if (not (string=? (file-name prt) "test.data")) (snd-display ";file-name of output port: ~A" (file-name prt)))
+	    (if (not (string=? (file-name mxv) (string-append (getcwd) "/pistol.snd"))) (snd-display ";file-name of mix: ~A" (file-name mxv)))
+	    (if (not (string=? (file-name reg) "oboe.snd")) (snd-display ";file-name of region: ~A" (file-name reg)))
+	    )
+	  (close-output-port prt)
+	  (mus-close frm)
+	  (close-sound snd))
+
 	
 	)))
 
@@ -52748,7 +52763,6 @@ EDITS: 1
       (let ((mxv (mix-vct v 1000))
 	    (reg (make-region 0 100))
 	    (dly (make-delay 32))
-	    (ply (make-player snd 0))
 	    )
 	(if (not (= (run (lambda () (frames snd))) 50828)) (snd-display ";frames of sound: ~A" (frames snd)))
 	(if (not (= (run (lambda () (frames v))) 3)) (snd-display ";frames of vct: ~A" (frames v)))
@@ -52759,8 +52773,24 @@ EDITS: 1
 	(if (not (= (run (lambda () (frames mxv))) 3)) (snd-display ";frames of mix: ~A" (frames mxv)))
 	(if (not (= (run (lambda () (frames reg))) 101)) (snd-display ";frames of region: ~A" (frames reg)))
 	(if (not (= (run (lambda () (frames dly))) 32)) (snd-display ";frames of delay: ~A" (frames dly)))
-	(if (not (= (run (lambda () (frames ply))) 50828)) (snd-display ";frames of player: ~A" (frames ply)))
 	)
+      (close-sound snd))
+
+    ;; file-name as generic
+    
+    (let ((snd (open-sound "oboe.snd"))
+	  (str "oboe.snd")
+	  (frm (make-file->sample "oboe.snd")))
+      (let ((mxv (car (mix "pistol.snd" 1000)))
+	    (reg (make-region 0 100))
+	    )
+	(if (not (string=? (run (lambda () (file-name snd))) (string-append (getcwd) "/oboe.snd"))) (snd-display ";file-name of sound: ~A" (file-name snd)))
+	(if (not (string=? (run (lambda () (file-name str))) (string-append (getcwd) "/oboe.snd"))) (snd-display ";file-name of string: ~A" (file-name str)))
+	(if (not (string=? (run (lambda () (file-name frm))) "oboe.snd")) (snd-display ";file-name of file->sample: ~A" (file-name frm)))
+	(if (not (string=? (run (lambda () (file-name mxv))) (string-append (getcwd) "/pistol.snd"))) (snd-display ";file-name of mix: ~A" (file-name mxv)))
+	(if (not (string=? (run (lambda () (file-name reg))) "oboe.snd")) (snd-display ";file-name of region: ~A" (file-name reg)))
+	)
+      (mus-close frm)
       (close-sound snd))
     
     ))
@@ -65120,7 +65150,7 @@ EDITS: 1
 		     insert-samples-with-origin insert-selection insert-silence insert-sound just-sounds key key-binding
 		     left-sample listener-color listener-font listener-prompt listener-selection listener-text-color
 		     main-widgets make-color make-graph-data make-mix-sampler make-player make-region
-		     make-region-sampler make-sampler map-chan mark-color mark-name
+		     make-region-sampler make-sampler map-chan mark-color mark-name mark-properties
 		     mark-sample mark-sync mark-sync-max mark-home marks mark?  max-transform-peaks max-regions max-virtual-ptrees
 		     maxamp maxamp-position menu-widgets minibuffer-history-length min-dB log-freq-start mix mixes mix-amp mix-amp-env
 		     mix-color mix-length mix? view-mixes-dialog mix-position
@@ -65253,7 +65283,7 @@ EDITS: 1
 			 filter-control-in-hz filter-control-order filter-control-waveform-color filter-control?  foreground-color
 			 graph-color graph-cursor graph-style lisp-graph? graphs-horizontal highlight-color
 			 just-sounds left-sample listener-color listener-font listener-prompt listener-text-color mark-color
-			 mark-name mark-sample mark-sync max-transform-peaks max-regions min-dB log-freq-start mix-amp
+			 mark-name mark-properties mark-sample mark-sync max-transform-peaks max-regions min-dB log-freq-start mix-amp
 			 mix-amp-env mix-color mix-name mix-position mix-sync mix-properties  max-virtual-ptrees
 			 mix-speed mix-tag-height mix-tag-width mix-tag-y mark-tag-width mark-tag-height 
 			 mix-waveform-height transform-normalization open-file-dialog-directory
@@ -65429,7 +65459,7 @@ EDITS: 1
 				    (lambda args (car args)))))
 			(if (not (eq? tag 'no-such-sound))
 			    (snd-display ";snd no-such-sound ~A: ~A" n tag))))
-		    (list amp-control bomb apply-controls channels chans close-sound comment contrast-control 
+		    (list amp-control bomb apply-controls channels chans comment contrast-control 
 			  amp-control-bounds speed-control-bounds expand-control-bounds contrast-control-bounds
 			  reverb-control-length-bounds reverb-control-scale-bounds
 			  contrast-control-amp contrast-control? data-format data-location data-size 
@@ -65455,7 +65485,7 @@ EDITS: 1
 				      amp-control-bounds speed-control-bounds expand-control-bounds contrast-control-bounds
 				      reverb-control-length-bounds reverb-control-scale-bounds
 				      contrast-control-amp contrast-control? data-format data-location data-size expand-control
-				      expand-control-hop expand-control-jitter expand-control-length expand-control-ramp expand-control? file-name
+				      expand-control-hop expand-control-jitter expand-control-length expand-control-ramp expand-control?
 				      filter-control-in-dB filter-control-in-hz filter-control-envelope filter-control-order filter-control?
 				      finish-progress-report header-type read-only reset-controls restore-controls
 				      reverb-control-decay reverb-control-feedback reverb-control-length reverb-control-lowpass

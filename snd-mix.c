@@ -298,9 +298,9 @@ int mix_complete_file(snd_info *sp, mus_long_t beg, const char *fullname, bool w
 }
 
 
-static char *b2s(bool val) 
+static const char *b2s(bool val) 
 {
-  return((val) ? (char *)PROC_TRUE : (char *)PROC_FALSE);  /* cast needed by g++ > 3.4 */
+  return((val) ? PROC_TRUE : PROC_FALSE);  /* cast needed by g++ > 3.4 */
 } 
 
 
@@ -704,10 +704,18 @@ void reset_mix_ctr(void)
 }
 
 
-char *mix_name(int id)
+const char *mix_name(int id)
 {
   if (mix_exists(id))
     return(mix_infos[id]->name);
+  return(NULL);
+}
+
+
+const char *mix_file_name(int id)
+{
+  if (mix_exists(id))
+    return(mix_infos[id]->in_filename);
   return(NULL);
 }
 
@@ -1008,17 +1016,17 @@ static int mix_set_sync_from_id(int id, int new_sync)
 }
 
 
-static char *mix_name_from_id(int id)
+static const char *mix_name_from_id(int id)
 {
   mix_info *md;
   md = md_from_id(id);
   if (md)
     return(md->name);
-  return(0);
+  return(NULL);
 }
 
 
-static char *mix_set_name_from_id(int id, const char *new_name)
+static const char *mix_set_name_from_id(int id, const char *new_name)
 {
   mix_info *md;
   md = md_from_id(id);
@@ -1026,8 +1034,9 @@ static char *mix_set_name_from_id(int id, const char *new_name)
     {
       if (md->name) free(md->name);
       md->name = mus_strdup(new_name);
+      return(new_name);
     }
-  return(0);
+  return(NULL);
 }
 
 

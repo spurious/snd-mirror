@@ -1246,7 +1246,18 @@ as well as lists.
 <tr><td colspan=2 bgcolor="#f2f4ff">
 <code><a class=def>copy</a> (obj)</code>
 </td></tr><tr><td></td><td>
-<A NAME="genericcopy">copy</A> returns a copy of its argument.
+<A NAME="genericcopy">copy</A> returns a copy of its argument (s7 only, and not fully implemented yet).
+</td></tr><tr><td colspan=2 height=18></td></tr>
+
+
+<!-- file-name -->
+<!-- INDEX genericfilename:file-name (generic) -->
+<tr><td colspan=2 bgcolor="#f2f4ff">
+<code><a class=def>file-name</a> (:optional obj)</code>
+</td></tr><tr><td></td><td>
+<A NAME="genericfilename">filename</A> can replace <a href="#musexpandfilename">mus-expand-filename</a>, 
+<a href="sndclm.html#genericfunctions">mus-file-name</a>, and (s7 scheme's) port-filename,
+as well as handling mixes, regions, and the regular sound-oriented <a href="#filename">file-name</a>.
 </td></tr><tr><td colspan=2 height=18></td></tr>
 
 
@@ -1255,7 +1266,7 @@ as well as lists.
 <tr><td colspan=2 bgcolor="#f2f4ff">
 <code><a class=def>fill!</a> (obj val)</code>
 </td></tr><tr><td></td><td>
-<A NAME="genericfill">fill!</A> fills obj with val, if possible.
+<A NAME="genericfill">fill!</A> fills obj with val (s7 only, and not fully implemented yet).
 </td></tr><tr><td colspan=2 height=18></td></tr>
 
 
@@ -4609,6 +4620,15 @@ This is the name of the mark.
     :<em class=typing>(mark-name m1)</em>
     <em class=listener>"a new name"</em>
 </pre>
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- mark-properties -->
+<tr><td colspan=2 bgcolor="#f2f4ff">
+<code><a class=def name="markproperties">mark-properties</a> (mark)</code>
+</td></tr><tr><td></td><td>
+mark-properties is a property list associated with a mark.
+<a href="sndscm.html#markproperty">mark-property</a> (in marks.scm) reads and writes this list.  
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 

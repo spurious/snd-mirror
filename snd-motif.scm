@@ -1607,7 +1607,7 @@ Reverb-feedback sets the scaler on the feedback.
      (open-sound file))
    (lambda (file chn)
      (format #f "~~/peaks/~A-peaks-~D"                              
-	     (xm-clean-string (mus-expand-filename file))
+	     (xm-clean-string (file-name file))
 	     chn))
    (sound-files-in-directory dir)
    '()))

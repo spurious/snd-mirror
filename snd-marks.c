@@ -5,6 +5,8 @@ struct mark {
   char *name;
   int id, sync;
   bool visible;
+  XEN properties;
+  int properties_gc_loc;
 };
 
 static int mark_id_counter = 0;
@@ -41,6 +43,8 @@ static mark *make_mark_1(mus_long_t samp, const char *name, int id, int sc)
   mp->samp = samp;
   mp->id = id;
   set_mark_sync(mp, sc);
+  mp->properties_gc_loc = NOT_A_GC_LOC;
+  mp->properties = XEN_FALSE;
   return(mp);
 }
 
@@ -62,6 +66,12 @@ static mark *free_mark(mark *mp)
   if (mp)
     {
       if (mp->name) free(mp->name);
+      if (mp->properties_gc_loc != NOT_A_GC_LOC)
+	{
+	  snd_unprotect_at(mp->properties_gc_loc);
+	  mp->properties_gc_loc = NOT_A_GC_LOC;
+	  mp->properties = XEN_FALSE;
+	}
       free(mp);
     }
   return(NULL);
@@ -2876,6 +2886,50 @@ The saved file is " XEN_LANGUAGE_NAME " code, so to restore the marks, load that
 }
 
 
+static XEN g_mark_properties(XEN n)
+{
+  mark *m;
+  #define H_mark_properties "(" S_mark_properties " id):  A property list associated with the given mark. \
+The accessor mark-property is provided in mark." XEN_FILE_EXTENSION "."
+
+  XEN_ASSERT_TYPE(XEN_MARK_P(n), n, XEN_ARG_1, S_mark_properties, "a mark");
+
+  m = find_mark_from_id(XEN_MARK_TO_C_INT(n), NULL, AT_CURRENT_EDIT_POSITION);
+  if (m == NULL)
+    return(snd_no_such_mark_error(S_mark_properties, n));
+
+  if (!(XEN_VECTOR_P(m->properties)))
+    {
+      m->properties = XEN_MAKE_VECTOR(1, XEN_EMPTY_LIST);
+      m->properties_gc_loc = snd_protect(m->properties);
+    }
+  return(XEN_VECTOR_REF(m->properties, 0));
+}
+
+
+static XEN g_set_mark_properties(XEN n, XEN val)
+{
+  mark *m;
+  XEN_ASSERT_TYPE(XEN_MARK_P(n), n, XEN_ARG_1, S_mark_properties, "a mark");
+
+  m = find_mark_from_id(XEN_MARK_TO_C_INT(n), NULL, AT_CURRENT_EDIT_POSITION);
+  if (m == NULL)
+    return(snd_no_such_mark_error(S_setB S_mark_properties, n));
+
+  if (!(XEN_VECTOR_P(m->properties)))
+    {
+      m->properties = XEN_MAKE_VECTOR(1, XEN_EMPTY_LIST);
+      m->properties_gc_loc = snd_protect(m->properties);
+    }
+
+  XEN_VECTOR_SET(m->properties, 0, val);
+  return(XEN_VECTOR_REF(m->properties, 0));
+}
+
+
+
+
+
 #ifdef XEN_ARGIFY_1
 XEN_ARGIFY_2(g_mark_sample_w, g_mark_sample)
 XEN_NARGIFY_2(g_set_mark_sample_w, g_set_mark_sample)
@@ -2900,6 +2954,8 @@ XEN_ARGIFY_2(g_save_marks_w, g_save_marks)
 XEN_NARGIFY_1(g_mark_p_w, g_mark_p)
 XEN_NARGIFY_1(g_integer_to_mark_w, g_integer_to_mark)
 XEN_NARGIFY_1(g_mark_to_integer_w, g_mark_to_integer)
+XEN_NARGIFY_1(g_mark_properties_w, g_mark_properties)
+XEN_NARGIFY_2(g_set_mark_properties_w, g_set_mark_properties)
 #if MUS_DEBUGGING && HAVE_SCHEME
   XEN_NARGIFY_3(g_test_control_drag_mark_w, g_test_control_drag_mark)
 #endif
@@ -2927,6 +2983,8 @@ XEN_NARGIFY_1(g_mark_to_integer_w, g_mark_to_integer)
 #define g_mark_p_w g_mark_p
 #define g_integer_to_mark_w g_integer_to_mark
 #define g_mark_to_integer_w g_mark_to_integer
+#define g_mark_properties_w g_mark_properties
+#define g_set_mark_properties_w g_set_mark_properties
 #if MUS_DEBUGGING && HAVE_SCHEME
   #define g_test_control_drag_mark_w g_test_control_drag_mark
 #endif
@@ -2971,6 +3029,9 @@ void g_init_marks(void)
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mark_tag_height, g_mark_tag_height_w, H_mark_tag_height,
 				   S_setB S_mark_tag_height, g_set_mark_tag_height_w, 0, 0, 1, 0);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mark_properties, g_mark_properties_w, H_mark_properties, 
+				   S_setB S_mark_properties, g_set_mark_properties_w, 1, 0, 2, 0);
 
   #define H_draw_mark_hook S_draw_mark_hook " (mark-id): called before a mark is drawn (in XOR mode). \
 If the hook returns " PROC_TRUE ", the mark is not drawn."

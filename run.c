@@ -8874,7 +8874,6 @@ static xen_value *srate_1(ptree *pt, xen_value **args, int num_args)
       rtn = package(pt, R_INT, file_srate_i, "file_srate_i", true_args, 1);
       break;
 
-#if USE_SND
     case R_SOUND:      
       rtn = package(pt, R_INT, sound_srate_i, "sound_srate_i", true_args, 1);
       break;
@@ -8882,7 +8881,6 @@ static xen_value *srate_1(ptree *pt, xen_value **args, int num_args)
     case R_REGION:
       rtn = package(pt, R_INT, region_srate_i, "region_srate_i", true_args, 1);
       break;
-#endif
 
     case R_INT:
     case R_BOOL:
@@ -8890,7 +8888,7 @@ static xen_value *srate_1(ptree *pt, xen_value **args, int num_args)
       break;
 
     default:
-      run_warn("unsupported arg type for length");
+      run_warn("unsupported arg type for srate");
       break;
     }
   
@@ -8930,7 +8928,6 @@ static xen_value *channels_1(ptree *pt, xen_value **args, int num_args)
       rtn = package(pt, R_INT, file_channels_i, "file_channels_i", true_args, 1);
       break;
 
-#if USE_SND
     case R_SOUND:      
       rtn = package(pt, R_INT, sound_channels_i, "sound_channels_i", true_args, 1);
       break;
@@ -8938,7 +8935,6 @@ static xen_value *channels_1(ptree *pt, xen_value **args, int num_args)
     case R_REGION:
       rtn = package(pt, R_INT, region_channels_i, "region_channels_i", true_args, 1);
       break;
-#endif
 
     case R_INT:
     case R_BOOL:
@@ -8963,6 +8959,92 @@ static xen_value *channels_1(ptree *pt, xen_value **args, int num_args)
   for (k = num_args + 1; k <= 1; k++) free(true_args[k]);
   return(rtn);
 }
+
+
+/* --------------- file-name ---------------- */
+
+static void sound_file_name_s(int *args, ptree *pt) 
+{
+  snd_info *sp;
+  sp = run_get_sp(1, args, pt->ints);
+  if (sp) 
+    {
+      if (STRING_RESULT) free(STRING_RESULT);
+      STRING_RESULT = mus_strdup(sp->filename);
+    }
+}
+
+
+static void string_file_name_s(int *args, ptree *pt) 
+{
+  if (STRING_RESULT) free(STRING_RESULT);
+  STRING_RESULT = mus_expand_filename(STRING_ARG_1);
+}
+
+
+static void region_file_name_s(int *args, ptree *pt) 
+{
+  if (STRING_RESULT) free(STRING_RESULT);
+  STRING_RESULT = mus_strdup(region_file_name(REGION_ARG_1));
+}
+
+
+static void mix_file_name_s(int *args, ptree *pt) 
+{
+  if (STRING_RESULT) free(STRING_RESULT);
+  STRING_RESULT = mus_strdup(mix_file_name(REGION_ARG_1));
+}
+
+static xen_value *mus_file_name_0(ptree *prog, xen_value **args, int num_args);
+
+static xen_value *file_name_1(ptree *pt, xen_value **args, int num_args)
+{
+  xen_value *true_args[2];
+  xen_value *rtn = NULL;
+  int k;
+
+  run_opt_arg(pt, args, num_args, 1, true_args);
+  /* this adds an arg (of -1) if 0 passed, then run_get_sp treats the -1 as "use current sound" */
+  true_args[0] = args[0];
+
+  switch (true_args[1]->type)
+    {
+    case R_STRING: 
+      rtn = package(pt, R_STRING, string_file_name_s, "file_name", true_args, 1);
+      break;
+
+    case R_SOUND:      
+      rtn = package(pt, R_STRING, sound_file_name_s, "file_name", true_args, 1);
+      break;
+
+    case R_REGION:
+      rtn = package(pt, R_STRING, region_file_name_s, "file_name", true_args, 1);
+      break;
+
+    case R_MIX:
+      rtn = package(pt, R_STRING, mix_file_name_s, "file_name", true_args, 1);
+      break;
+
+    case R_INT:
+    case R_BOOL:
+      rtn = package(pt, R_STRING, sound_file_name_s, "file_name", true_args, 1);
+      break;
+
+    case R_CLM:
+      rtn = mus_file_name_0(pt, true_args, 1);
+      break;
+
+    default:
+      if (CLM_STRUCT_P(args[1]->type))
+	rtn = mus_file_name_0(pt, true_args, 1);
+      else run_warn("unsupported arg type for file-name");
+      break;
+    }
+  
+  for (k = num_args + 1; k <= 1; k++) free(true_args[k]);
+  return(rtn);
+}
+
 
 
 /* ---------------- c-g? ---------------- */
@@ -9038,8 +9120,6 @@ static xen_value *frames_1(ptree *pt, xen_value **args, int num_args)
 	case R_SOUND:      return(sound_length_1(pt, args, num_args));    /* (let ((snd (integer->sound 0))) (run (lambda () (frames snd)))) */
 	case R_MIX:        return(mix_length_1(pt, args, num_args));
 	case R_REGION:     return(region_length_1(pt, args, num_args));
-	  /* not R_SAMPLER because it has no clear length (read dir can change etc) */
-
 	  /* else drop into regular frames code */
 	}
     }
@@ -16347,6 +16427,7 @@ static void init_walkers(void)
   INIT_WALKER(S_sample,                 make_walker(sample_1, NULL, NULL, 1, 4, R_FLOAT, false, 1, R_INT));
   INIT_WALKER(S_srate,                  make_walker(srate_1, NULL, NULL, 0, 1, R_INT, false, 0));
   INIT_WALKER(S_channels,               make_walker(channels_1, NULL, NULL, 0, 1, R_INT, false, 0));
+  INIT_WALKER(S_file_name,              make_walker(file_name_1, NULL, NULL, 0, 1, R_STRING, false, 0));
   INIT_WALKER(S_c_g,                    make_walker(c_g_p_1, NULL, NULL, 0, 0, R_BOOL, false, 0));
   INIT_WALKER(S_vct_to_channel,         make_walker(vct_to_channel_1, NULL, NULL, 3, 5, R_BOOL, false, 3, R_VCT, R_INT, R_INT));
   INIT_WALKER(S_exit,                   make_walker(exit_1, NULL, NULL, 0, 0, R_BOOL, false, 0));

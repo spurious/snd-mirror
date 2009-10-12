@@ -7657,11 +7657,18 @@ static s7_pointer g_port_line_number(s7_scheme *sc, s7_pointer args)
 }
 
 
+const char *s7_port_filename(s7_pointer x)
+{
+  if (is_file_port(x))
+    return(port_filename(x));
+  return(NULL);
+}
+
 static s7_pointer g_port_filename(s7_scheme *sc, s7_pointer args)
 {
   #define H_port_filename "(port-filename file-port) returns the filename associated with port"
   s7_pointer x = car(args);
-  if (is_input_port(x))
+  if (is_file_port(x))
     return(s7_make_string(sc, port_filename(x)));
   return(sc->F); /* not an error! */
 }

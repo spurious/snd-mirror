@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "1.33"
-#define S7_DATE "5-Oct-09"
+#define S7_VERSION "1.34"
+#define S7_DATE "12-Oct-09"
 
 
 typedef long long int s7_Int;
@@ -400,6 +400,8 @@ s7_pointer s7_hash_table_set(s7_scheme *sc, s7_pointer table, const char *name, 
 
 bool s7_is_input_port(s7_scheme *sc, s7_pointer p);                         /* (input-port? p) */
 bool s7_is_output_port(s7_scheme *sc, s7_pointer p);                        /* (output-port? p) */
+const char *s7_port_filename(s7_pointer x);                                 /* (port-filename p) */
+
 s7_pointer s7_current_input_port(s7_scheme *sc);                            /* (current-input-port) */
 s7_pointer s7_set_current_input_port(s7_scheme *sc, s7_pointer p);          /* (set-current-input-port) */
 s7_pointer s7_current_output_port(s7_scheme *sc);                           /* (current-output-port) */
@@ -1702,6 +1704,7 @@ int main(int argc, char **argv)
  * 
  *        s7 changes
  *
+ * 12-Oct:    s7_port_filename.
  * 5-Oct:     s7_c_pointer and friends.
  * 14-Sep:    s7_values, s7_make_continuation, and a better interrupt example.
  *            vector-for-each, vector-map, string-for-each.

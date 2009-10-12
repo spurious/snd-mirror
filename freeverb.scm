@@ -54,7 +54,7 @@
 		   (stereo-spread 23)
 		   (verbose #f))
   (let* ((startime 0.0)
-	 (dur (+ 1.0 (mus-sound-duration (mus-file-name *reverb*))))
+	 (dur (+ 1.0 (mus-sound-duration (file-name *reverb*))))
 	 (beg (seconds->samples startime))
 	 (end (cadr (times->samples startime dur)))
 	 (out-chans (channels *output*))

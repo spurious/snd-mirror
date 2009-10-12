@@ -1829,7 +1829,7 @@ static XEN g_mus_set_ycoeff(XEN gen, XEN index, XEN val)
 }
 
 
-static XEN g_mus_file_name(XEN gen) 
+XEN g_mus_file_name(XEN gen) 
 {
   #define H_mus_file_name "(" S_mus_file_name " gen): file associated with gen, if any"
   if (XEN_LIST_P(gen)) return(call_get_method(gen, S_mus_file_name));

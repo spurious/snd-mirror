@@ -2340,23 +2340,26 @@ void call_sp_watchers(snd_info *sp, sp_watcher_t type, sp_watcher_reason_t reaso
 
 /* ---------------------------------------- sound objects ---------------------------------------- */
 
-/* TODO: generics (besides length, srate, channels, frames):
+/* TODO: generics (besides length, srate, channels, frames, file-name):
  *             source:         procedure-source[s7_procedure_source] mix-home mark-home region-home player-home sampler-home
  *                               mus cases: readin=file+chan? etc, port -> filename?, sound->filename?
  *             position:       mark-sample mix-position region-position sampler-position
  *               [location?]     port->line number?, mus cases = mus_location?, player? widget? 
  *               (CL has position)
  *             peak or max(?): vct-peak, maxamp, region-maxamp sound-data-maxamp [vector? mix?]
- *             properties:     mark|mix|sound-properties [sampler-props?]
+ *             properties:     edit|mark|mix|sound-properties procedure-property?  window-property? [also property as accessor]
  *             name:           mark|mix-name file-name (widget name via XtName) mus-name, 
  *                               __func__? port-filename sampler-filename
  *             sync:           sync, mark|mix-sync
- *             copy:           should this be extended?  also fill!
- *             file-name reverse save find insert delete describe read mix append 
  *
- *    frames: test run
+ *             reverse save find insert delete describe read write mix append [open and close?]
+ *             sync reverse mix append: these exist already and could just be extended 
+ *             remember to remake index.html
  *
- *             file-name sync reverse mix append: these exist already and could just be extended
+ * ->* in s7? ->vector ->vct etc
+ *
+ * file-name of sampler?
+ *    move all property list accessors into C, mark-properties check in fs/rb
  *
  * applicable sound (set! (snd chan samp)? )
  *
@@ -3917,7 +3920,25 @@ static XEN g_set_selected_channel(XEN snd, XEN chn_n)
 
 static XEN g_file_name(XEN snd) 
 {
-  #define H_file_name "(" S_file_name " :optional snd): snd's full filename"
+  #define H_file_name "(" S_file_name " :optional snd): snd's full filename; snd can be a sound, mix, region, string, or generator."
+
+  if (mus_xen_p(snd))
+    return(g_mus_file_name(snd));
+
+  if (XEN_MIX_P(snd))
+    return(C_TO_XEN_STRING(mix_file_name(XEN_MIX_TO_C_INT(snd))));
+
+  if (XEN_REGION_P(snd))
+    return(C_TO_XEN_STRING(region_file_name(XEN_REGION_TO_C_INT(snd))));
+
+#if HAVE_S7
+  if ((s7_is_input_port(s7, snd)) || (s7_is_output_port(s7, snd)))
+    return(C_TO_XEN_STRING(s7_port_filename(snd)));
+#endif
+
+  if (XEN_STRING_P(snd))
+    return(g_mus_expand_filename(snd));
+
   return(sound_get(snd, SP_FILE_NAME, S_file_name));
 }
 

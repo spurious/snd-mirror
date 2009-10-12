@@ -372,23 +372,6 @@
 
 ;;; -------- mark property lists
 
-(define all-mark-properties '())
-
-(define mark-properties
-  (make-procedure-with-setter
-   (lambda (id)
-     "(mark-properties mark) accesses the properties of mark"
-     (let ((data (assoc id all-mark-properties)))
-       (if data
-	   (cdr data)
-           '())))
-   (lambda (id new-val)
-     (let ((old-val (assoc id all-mark-properties)))
-       (if old-val
-	   (set-cdr! old-val new-val)
-	   (set! all-mark-properties (cons (cons id new-val) all-mark-properties)))
-       new-val))))
-     
 (define mark-property
   (make-procedure-with-setter
    (lambda (key id)
@@ -407,15 +390,6 @@
 	       (set! (mark-properties id) (cons (cons key new-val) (mark-properties id))))
 	   new-val)
 	 (throw 'no-such-mark (list "set! mark-property" id))))))
-
-(add-hook! close-hook
-	   (lambda (snd)
-	     (if (not (null? all-mark-properties))
-		 ;; prune out inactive mark properties
-		 (set! all-mark-properties (remove-if (lambda (val)
-						       (not (mark? (car val))))
-						     all-mark-properties)))))
-
 
 (define (save-mark-properties)
   "(save-mark-properties) sets up an after-save-state-hook function to save any mark-properties"

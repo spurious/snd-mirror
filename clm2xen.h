@@ -46,6 +46,7 @@ MUS_EXPORT XEN mus_clm_reverb(void);
 
 MUS_EXPORT XEN g_mus_channels(XEN obj);
 MUS_EXPORT XEN g_mus_length(XEN gen);
+MUS_EXPORT XEN g_mus_file_name(XEN gen);
 
 MUS_EXPORT void Init_sndlib(void);
 

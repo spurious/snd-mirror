@@ -2922,7 +2922,7 @@ mjkoskin@sci.fi
 			(grain-amp 0.8)
 			(reverb #f))
 
-  (let ((fnam (mus-expand-filename filename)))
+  (let ((fnam (file-name filename)))
     (if (not (file-exists? fnam))
 	(throw 'no-such-file (list 'expandn filename))
 

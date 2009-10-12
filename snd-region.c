@@ -218,6 +218,16 @@ int region_srate(int n)
 }
 
 
+const char *region_file_name(int n) 
+{  
+  region *r;
+  r = id_to_region(n);
+  if (r) 
+    return(r->name); 
+  return(NULL);
+}
+
+
 mus_float_t region_maxamp(int n) 
 {
   region *r;

@@ -544,6 +544,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+12-Oct:  generic length, srate, channels, frames, file-name.\n\
 6-Oct:   removed *snd-loaded-files* and *snd-remember-paths*.\n\
 1-Oct:   sounds are objects, but the integer choice also works. \n\
          sound->integer and integer->sound.\n\
@@ -556,8 +557,6 @@ void about_snd_help(void)
            insert-region, make-region-sampler, mix-region, region-sample,\n\
            region->vct, region->frame, make-region-frame-reader.\n\
          removed export-all.scm, snd4.scm, snd5.scm.\n\
-17-Sep:  Snd 10.9.\n\
-10-Sep:  removed show-backtrace (it is #t now). default optimization is now 6.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*:\n    '", features, "\n\n",

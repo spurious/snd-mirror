@@ -341,7 +341,7 @@ static void errors_to_mix_text(const char *msg, void *data)
 static void widget_mix_to_text(Widget w, int id)
 {
   if (mix_name(id))
-    XmTextFieldSetString(w, mix_name(id));
+    XmTextFieldSetString(w, (char *)mix_name(id));
   else widget_int_to_text(w, id);
 }
 

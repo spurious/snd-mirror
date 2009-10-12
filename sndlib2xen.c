@@ -1408,7 +1408,7 @@ static XEN g_mus_file_set_prescaler(XEN fd, XEN val)
 }
 
 
-static XEN g_mus_expand_filename(XEN file)
+XEN g_mus_expand_filename(XEN file)
 {
   #define H_mus_expand_filename "(" S_mus_expand_filename " name): expand 'name' into a canonical or absolute filename, that is, \
 one in which all directories in the path are explicit."
