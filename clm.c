@@ -1323,7 +1323,7 @@ mus_any *mus_make_oscil(mus_float_t freq, mus_float_t phase)
 
 
 
-/* ---------------- ncos (previously sum-of-cosines) ---------------- */
+/* ---------------- ncos ---------------- */
 
 typedef struct {
   mus_any_class *core;
@@ -1523,18 +1523,8 @@ mus_any *mus_make_ncos(mus_float_t freq, int n)
   return((mus_any *)gen);
 }
 
-#ifndef CLM_DISABLE_DEPRECATED
-mus_any *mus_make_sum_of_cosines(int cosines, mus_float_t freq, mus_float_t phase)
-{
-  cosp *gen;
-  gen = (cosp *)mus_make_ncos(freq, cosines);
-  gen->phase = phase;
-  return((mus_any *)gen);
-}
-#endif
 
-
-/* ---------------- nsin (previously sum-of-sines) ---------------- */
+/* ---------------- nsin ---------------- */
 
 static bool nsin_equalp(mus_any *p1, mus_any *p2)
 {
@@ -1752,16 +1742,6 @@ mus_any *mus_make_nsin(mus_float_t freq, int n)
   gen->cos5 = gen->n + 1.0;
   return((mus_any *)gen);
 }
-
-#ifndef CLM_DISABLE_DEPRECATED
-mus_any *mus_make_sum_of_sines(int sines, mus_float_t freq, mus_float_t phase)
-{
-  cosp *gen;
-  gen = (cosp *)mus_make_nsin(freq, sines);
-  gen->phase = phase;
-  return((mus_any *)gen);
-}
-#endif
 
 
 /* ---------------- asymmetric-fm ---------------- */
@@ -2109,18 +2089,6 @@ mus_any *mus_make_nrxysin(mus_float_t frequency, mus_float_t y_over_x, int n, mu
   nrxy_set_r((mus_any *)gen, r);
   return((mus_any *)gen);
 }
-
-#ifndef CLM_DISABLE_DEPRECATED
-mus_any *mus_make_sine_summation(mus_float_t frequency, mus_float_t phase, int n, mus_float_t a, mus_float_t ratio)
-{
-  nrxy *gen;
-  gen = (nrxy *)mus_make_nrxysin(frequency, ratio, n, a);
-  gen->phase = phase;
-  if (n > 0)
-    gen->norm = (pow(a, n) - 1.0) / (a - 1.0); /* backwards compatibility; this actually peaks slightly over 1 as often as not */
-  return((mus_any *)gen);
-}
-#endif
 
 
 bool mus_nrxycos_p(mus_any *ptr) 

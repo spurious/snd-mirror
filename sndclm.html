@@ -3340,17 +3340,6 @@ for more dicussion about using these generators as FM modulators.
   <a class=def name="make-nsin">make-nsin</a> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency *clm-default-frequency*) (n 1)
   <a class=def name="nsin">nsin</a> ns :optional (fm 0.0)
   <a class=def name="nsin?">nsin?</a> ns
-
-
-  <a class=olddef name="make-sum-of-cosines">make-sum-of-cosines</a> <em class=gray>:optional-key
-        (cosines 1) (frequency *clm-default-frequency*) (initial-phase 0.0)</em>
-  <a class=olddef name="sum-of-cosines">sum-of-cosines</a> <em class=gray>cs :optional (fm 0.0)</em>
-  <a class=olddef name="sum-of-cosines?">sum-of-cosines?</a> <em class=gray>cs</em>
-
-  <a class=olddef name="make-sum-of-sines">make-sum-of-sines</a> <em class=gray>:optional-key
-        (sines 1) (frequency *clm-default-frequency*) (initial-phase 0.0)</em>
-  <a class=olddef name="sum-of-sines">sum-of-sines</a> <em class=gray>cs :optional (fm 0.0)</em>
-  <a class=olddef name="sum-of-sines?">sum-of-sines?</a> <em class=gray>cs</em>
 </pre>
 <br>
 
@@ -3395,9 +3384,6 @@ with_sound(:play, true) do
 </tr>
 </table>
 
-
-<p>ncos is the new form of sum-of-cosines, and nsin is the new form of sum-of-sines.
-</p>
 
 <p>ncos produces a band-limited pulse train containing
 "n" cosines.  I think this was originally viewed as a way to get a speech-oriented
@@ -3905,7 +3891,7 @@ kosine95
 <p>nsin produces a sum of equal amplitude sines.  It is very similar (good and bad) to <a href="#ncos">ncos</a>.
 For n greater than 10 or so, its peak amplitude occurs at approximately 3pi/4n, and is about .7245*n (that is, 8n*(sin^2(3pi/8))/3pi).
 The nsin generator scales its output to be between -1 and 1 for any n.  We can use nxysin to try any initial-phase in a
-sum of equal sinusoids.  The peak amp in this case varys sinusoidally from a sum-of-sines n * 0.7245 to a sum-of-cosines n * 1.0;
+sum of equal sinusoids.  The peak amp in this case varys sinusoidally from a sum of sines n * 0.7245 to a sum of cosines n * 1.0;
 the peak amp is nsin-max(n) + abs(sin(initial-phase))*(1 - nsin-max(n)).
 </p>
 
@@ -4328,11 +4314,6 @@ reflection, please send it to me, and I'll add it to this collection.
   <a class=def name="make-nrxycos">make-nrxycos</a> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency *clm-default-frequency*) (ratio 1.0) (n 1) (r .5)
   <a class=def name="nrxycos">nrxycos</a> s :optional (fm 0.0)
   <a class=def name="nrxycos?">nrxycos?</a> s
-
-  <a class=olddef name="make-sine-summation">make-sine-summation</a> <em class=gray>:optional-key
-        (frequency *clm-default-frequency*) (initial-phase 0.0) (n 1) (a .5) (ratio 1.0)</em>
-  <a class=olddef name="sine-summation">sine-summation</a><em class=gray> s :optional (fm 0.0)</em>
-  <a class=olddef name="sine-summation?">sine-summation?</a><em class=gray> s</em>
 </pre>
 <br>
 
@@ -4426,7 +4407,7 @@ with_sound(:play, true) do
 
 </td></tr></table>
 
-<p>nxrysin is the new form of the obsolete sine-summation generator.  These three generators 
+<p>These three generators 
 produce a kind of additive synthesis.
 "n" is the number of sidebands (0 gives a sine wave), "r" is the amplitude
 ratio between successive sidebands (don't set it to 1.0), and "ratio" is the ratio between the
@@ -4442,8 +4423,7 @@ fall-off of the spectrum and the spacing of the partials.
 </p>
 
 <p>The peak amplitude of nrxysin is hard to predict.
-I think nrxysin is close to the -1.0..1.0 ideal, and won't go over 1.0, whereas its ancestor, sine-summation,
-is less well behaved.
+I think nrxysin is close to the -1.0..1.0 ideal, and won't go over 1.0.
 <a href="#nrxycos">nrxycos</a> is normalized correctly.
 </p>
 

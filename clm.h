@@ -2,10 +2,11 @@
 #define CLM_H
 
 #define MUS_VERSION 4
-#define MUS_REVISION 29
-#define MUS_DATE "28-Aug-09"
+#define MUS_REVISION 30
+#define MUS_DATE "14-Oct-09"
 
 /*
+ * 14-Oct:     sine-summation, sum-of-sines, sum-of-cosines removed.
  * 28-Aug:     changed some fft-related sizes from int to mus_long_t.
  * 25-Aug:     mus_fftw_with_imag (fftw3 only).
  * 17-Aug:     mus_frame|mixer_copy|fill.
@@ -455,17 +456,6 @@ MUS_EXPORT mus_any *mus_make_nsin(mus_float_t freq, int n);
 MUS_EXPORT mus_float_t mus_nsin(mus_any *ptr, mus_float_t fm);
 MUS_EXPORT bool mus_nsin_p(mus_any *ptr);
 
-#ifndef CLM_DISABLE_DEPRECATED
-/* previous forms (changed 12-Feb-08) */
-MUS_EXPORT mus_any *mus_make_sum_of_cosines(int cosines, mus_float_t freq, mus_float_t phase);
-#define mus_sum_of_cosines(Gen, Fm) mus_ncos(Gen, Fm)
-#define mus_sum_of_cosines_p(Ptr) mus_ncos_p(Ptr)
-
-MUS_EXPORT mus_any *mus_make_sum_of_sines(int sines, mus_float_t freq, mus_float_t phase);
-#define mus_sum_of_sines(Gen, Fm) mus_nsin(Gen, Fm)
-#define mus_sum_of_sines_p(Ptr) mus_nsin_p(Ptr)
-#endif
-
 MUS_EXPORT mus_any *mus_make_nrxysin(mus_float_t frequency, mus_float_t y_over_x, int n, mus_float_t r);
 MUS_EXPORT mus_float_t mus_nrxysin(mus_any *ptr, mus_float_t fm);
 MUS_EXPORT bool mus_nrxysin_p(mus_any *ptr);
@@ -473,13 +463,6 @@ MUS_EXPORT bool mus_nrxysin_p(mus_any *ptr);
 MUS_EXPORT mus_any *mus_make_nrxycos(mus_float_t frequency, mus_float_t y_over_x, int n, mus_float_t r);
 MUS_EXPORT mus_float_t mus_nrxycos(mus_any *ptr, mus_float_t fm);
 MUS_EXPORT bool mus_nrxycos_p(mus_any *ptr);
-
-#ifndef CLM_DISABLE_DEPRECATED
-/* previous form (15-Feb-08) */
-MUS_EXPORT mus_any *mus_make_sine_summation(mus_float_t frequency, mus_float_t phase, int n, mus_float_t a, mus_float_t ratio);
-#define mus_sine_summation(Obj, Fm) mus_nrxysin(Obj, Fm)
-#define mus_sine_summation_p(Obj) mus_nrxysin_p(Obj)
-#endif
 
 MUS_EXPORT mus_float_t mus_delay(mus_any *gen, mus_float_t input, mus_float_t pm);
 MUS_EXPORT mus_float_t mus_delay_unmodulated(mus_any *ptr, mus_float_t input);
@@ -841,25 +824,6 @@ MUS_EXPORT void *mus_set_environ(mus_any *gen, void *e);
 /* used only in run.lisp */
 MUS_EXPORT mus_any *mus_make_frame_with_data(int chans, mus_float_t *data);
 MUS_EXPORT mus_any *mus_make_mixer_with_data(int chans, mus_float_t *data);
-
-
-#ifndef CLM_DISABLE_DEPRECATED
-
-  #define init_mus_module() mus_initialize()
-
-  #define mus_cosines(Obj) mus_length(Obj)
-  #define mus_set_cosines(Obj, Val) mus_set_length(Obj,Val)
-
-  #define mus_make_env_with_start(Brkpts, Pts, Scaler, Offset, Base, Duration, Start, End, Odata) mus_make_env(Brkpts, Pts, Scaler, Offset, Base, Duration, End - Start, Odata)
-
-  #define mus_make_two_zero_from_radius_and_frequency(Rad, Freq) mus_make_two_zero_from_frequency_and_radius(Freq, Rad)
-  #define mus_make_two_pole_from_radius_and_frequency(Rad, Freq) mus_make_two_pole_from_frequency_and_radius(Freq, Rad)
- 
-  #define mus_formant_radius(Obj)          mus_scaler(Obj)
-  #define mus_set_formant_radius(Obj, Val) mus_set_scaler(Obj, Val)
-
-#endif
-
 
 #ifdef __cplusplus
 }

@@ -317,17 +317,4 @@
 #define S_wave_train                 "wave-train"
 #define S_wave_train_p               "wave-train?"
 #define S_welch_window               "welch-window"
-
-#ifndef CLM_DISABLE_DEPRECATED
-#define S_make_sine_summation        "make-sine-summation"
-#define S_sine_summation             "sine-summation"
-#define S_sine_summation_p           "sine-summation?"
-#define S_make_sum_of_cosines        "make-sum-of-cosines"
-#define S_make_sum_of_sines          "make-sum-of-sines"
-#define S_sum_of_cosines             "sum-of-cosines"
-#define S_sum_of_cosines_p           "sum-of-cosines?"
-#define S_sum_of_sines               "sum-of-sines"
-#define S_sum_of_sines_p             "sum-of-sines?"
-#endif
-
 #endif

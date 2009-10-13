@@ -275,10 +275,6 @@ static XEN kw_frequency, kw_initial_phase, kw_wave, kw_amplitude,
   kw_edit, kw_synthesize, kw_analyze, kw_interp, kw_overlap, kw_pitch,
   kw_distribution, kw_coeffs, kw_kind;
 
-#ifndef CLM_DISABLE_DEPRECATED
-static XEN kw_sines, kw_cosines;
-#endif
-
 
 static void init_keywords(void)
 {
@@ -343,10 +339,6 @@ static void init_keywords(void)
   kw_distribution =     XEN_MAKE_KEYWORD("distribution");
   kw_coeffs =           XEN_MAKE_KEYWORD("coeffs");
   kw_kind =             XEN_MAKE_KEYWORD("kind");
-#ifndef CLM_DISABLE_DEPRECATED
-  kw_cosines =          XEN_MAKE_KEYWORD("cosines");
-  kw_sines =            XEN_MAKE_KEYWORD("sines");
-#endif
 }
 
 
@@ -2368,134 +2360,6 @@ static XEN g_moving_average_p(XEN obj)
   return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && (mus_moving_average_p(XEN_TO_MUS_ANY(obj)))));
 }
 
-
-#ifndef CLM_DISABLE_DEPRECATED
-/* -------- sum-of-cosines -------- */
-
-static XEN g_sum_of_cosines_p(XEN obj) 
-{
-  #define H_sum_of_cosines_p "(" S_sum_of_cosines_p " gen): " PROC_TRUE " if gen is a " S_sum_of_cosines
-  return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && (mus_sum_of_cosines_p(XEN_TO_MUS_ANY(obj)))));
-}
-
-
-static XEN g_make_sum_of_cosines(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6)
-{
-  #define H_make_sum_of_cosines "(" S_make_sum_of_cosines " (:cosines 1) (:frequency *clm-default-frequency*) (:initial-phase 0.0)): \
-return a new " S_sum_of_cosines " generator, producing a band-limited pulse train."
-
-  mus_any *ge;
-  XEN args[6]; 
-  XEN keys[3];
-  int orig_arg[3] = {0, 0, 0};
-  int vals;
-  int cosines = 1;
-  mus_float_t freq, phase = 0.0;
-
-  freq = clm_default_frequency;
-
-  keys[0] = kw_cosines;
-  keys[1] = kw_frequency;
-  keys[2] = kw_initial_phase;
-  args[0] = arg1; args[1] = arg2; args[2] = arg3; args[3] = arg4; args[4] = arg5; args[5] = arg6; 
-
-  vals = mus_optkey_unscramble(S_make_sum_of_cosines, 3, keys, args, orig_arg);
-  if (vals > 0)
-    {
-      cosines = mus_optkey_to_int(keys[0], S_make_sum_of_cosines, orig_arg[0], cosines);
-      if (cosines <= 0)
-	XEN_OUT_OF_RANGE_ERROR(S_make_sum_of_cosines, orig_arg[0], keys[0], "cosines: ~A?");
-
-      freq = mus_optkey_to_float(keys[1], S_make_sum_of_cosines, orig_arg[1], freq);
-      if (freq > (0.5 * mus_srate()))
-	XEN_OUT_OF_RANGE_ERROR(S_make_sum_of_cosines, orig_arg[1], keys[1], "freq ~A > srate/2?");
-
-      phase = mus_optkey_to_float(keys[2], S_make_sum_of_cosines, orig_arg[2], phase);
-    }
-
-  ge = mus_make_sum_of_cosines(cosines, freq, phase);
-  if (ge) return(mus_xen_to_object(mus_any_to_mus_xen(ge)));
-  return(XEN_FALSE);
-}
-
-
-static XEN g_sum_of_cosines(XEN obj, XEN fm)
-{
-  #define H_sum_of_cosines "(" S_sum_of_cosines " gen :optional (fm 0.0)): \
-get the next sample from the band-limited pulse-train produced by generator"
-
-  mus_float_t fm1 = 0.0;
-  XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_sum_of_cosines_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ARG_1, S_sum_of_cosines, "a " S_sum_of_cosines " generator");
-  if (XEN_NUMBER_P(fm)) fm1 = XEN_TO_C_DOUBLE(fm); else XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(fm), fm, XEN_ARG_2, S_sum_of_cosines, "a number");
-  return(C_TO_XEN_DOUBLE(mus_sum_of_cosines(XEN_TO_MUS_ANY(obj), fm1)));
-}
-
-
-
-/* -------- sum-of-sines -------- */
-
-static XEN g_sum_of_sines_p(XEN obj) 
-{
-  #define H_sum_of_sines_p "(" S_sum_of_sines_p " gen): " PROC_TRUE " if gen is a " S_sum_of_sines
-  return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && (mus_sum_of_sines_p(XEN_TO_MUS_ANY(obj)))));
-}
-
-
-static XEN g_make_sum_of_sines(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6)
-{
-  #define H_make_sum_of_sines "(" S_make_sum_of_sines " (:sines 1) (:frequency *clm-default-frequency*) (:initial-phase 0.0)): \
-return a new " S_sum_of_sines " generator."
-
-  mus_any *ge;
-  XEN args[6]; 
-  XEN keys[3];
-  int orig_arg[3] = {0, 0, 0};
-  int vals;
-  int sines = 1;
-  mus_float_t freq, phase = 0.0;
-
-  freq = clm_default_frequency;
-
-  keys[0] = kw_sines;
-  keys[1] = kw_frequency;
-  keys[2] = kw_initial_phase;
-  args[0] = arg1; args[1] = arg2; args[2] = arg3; args[3] = arg4; args[4] = arg5; args[5] = arg6; 
-
-  vals = mus_optkey_unscramble(S_make_sum_of_sines, 3, keys, args, orig_arg);
-  if (vals > 0)
-    {
-      sines = mus_optkey_to_int(keys[0], S_make_sum_of_sines, orig_arg[0], sines);
-      if (sines <= 0)
-	XEN_OUT_OF_RANGE_ERROR(S_make_sum_of_sines, orig_arg[0], keys[0], "cosines: ~A?");
-
-      freq = mus_optkey_to_float(keys[1], S_make_sum_of_sines, orig_arg[1], freq);
-      if (freq > (0.5 * mus_srate()))
-	XEN_OUT_OF_RANGE_ERROR(S_make_sum_of_sines, orig_arg[1], keys[1], "freq ~A > srate/2?");
-
-      phase = mus_optkey_to_float(keys[2], S_make_sum_of_sines, orig_arg[2], phase);
-    }
-
-  ge = mus_make_sum_of_sines(sines, freq, phase);
-  if (ge) return(mus_xen_to_object(mus_any_to_mus_xen(ge)));
-  return(XEN_FALSE);
-}
-
-
-static XEN g_sum_of_sines(XEN obj, XEN fm)
-{
-  #define H_sum_of_sines "(" S_sum_of_sines " gen :optional (fm 0.0)): get the next sample from " S_sum_of_sines " generator"
-
-  mus_float_t fm1 = 0.0;
-  XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_sum_of_sines_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ARG_1, S_sum_of_sines, "a " S_sum_of_sines " generator");
-  if (XEN_NUMBER_P(fm)) fm1 = XEN_TO_C_DOUBLE(fm); else XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(fm), fm, XEN_ARG_2, S_sum_of_sines, "a number");
-  return(C_TO_XEN_DOUBLE(mus_sum_of_sines(XEN_TO_MUS_ANY(obj), fm1)));
-}
-#endif
-
-/* these are the new forms of sum-of-cosines and sum-of sines, but we can't just replace them
- *   at this level because def-optkey-fun (for make-*) is defined in ws.scm, so a replacement
- *   in the init function is problematic, especially for Forth and Ruby.
- */
 
 /* -------- ncos -------- */
 
@@ -4876,84 +4740,6 @@ return a new polynomial-based waveshaping generator.  (" S_make_polywave " :part
   if (ge) return(mus_xen_to_object(mus_any_to_mus_xen_with_vct(ge, orig_v)));
   return(XEN_FALSE);
 }
-
-
-#ifndef CLM_DISABLE_DEPRECATED
-/* ---------------- sine-summation ---------------- */
-
-static XEN g_sine_summation_p(XEN obj) 
-{
-  #define H_sine_summation_p "(" S_sine_summation_p " gen): " PROC_TRUE " if gen is a " S_sine_summation
-  return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && (mus_sine_summation_p(XEN_TO_MUS_ANY(obj)))));
-}
-
-
-static XEN g_sine_summation(XEN obj, XEN fm)
-{
-  #define H_sine_summation "(" S_sine_summation " gen :optional (fm 0.0)): next sample of sine summation generator"
-  mus_float_t fm1 = 0.0;
-
-  XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_sine_summation_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ARG_1, S_sine_summation, "a " S_sine_summation " generator");
-
-  if (XEN_NUMBER_P(fm)) fm1 = XEN_TO_C_DOUBLE(fm); else XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(fm), fm, XEN_ARG_2, S_sine_summation, "a number");
-  return(C_TO_XEN_DOUBLE(mus_sine_summation(XEN_TO_MUS_ANY(obj), fm1)));
-}
-
-
-static XEN g_make_sine_summation(XEN arglist)
-{
-  #define H_make_sine_summation "(" S_make_sine_summation " (:frequency *clm-default-frequency*) (:initial-phase 0.0) (:n 1) (:a 0.5) (:ratio 1.0)): \
-return a new sine summation synthesis generator."
-
-  mus_any *ge;
-  XEN args[MAX_ARGLIST_LEN]; 
-  XEN keys[5];
-  int orig_arg[5] = {0, 0, 0, 0, 0};
-  int vals, i, arglist_len;
-  mus_float_t freq, phase = 0.0, a=.5, ratio = 1.0;
-  int n = 1;
-
-  freq = clm_default_frequency;
-
-  keys[0] = kw_frequency;
-  keys[1] = kw_initial_phase;
-  keys[2] = kw_n;
-  keys[3] = kw_a;
-  keys[4] = kw_ratio;
-
-  arglist_len = XEN_LIST_LENGTH(arglist);
-  if (arglist_len > MAX_ARGLIST_LEN)
-    XEN_ERROR(CLM_ERROR,
-	      XEN_LIST_3(C_TO_XEN_STRING(S_make_sine_summation), 
-			 C_TO_XEN_STRING("too many args!"),
-			 arglist));
-  for (i = 0; i < arglist_len; i++) args[i] = XEN_LIST_REF(arglist, i);
-  for (i = arglist_len; i < MAX_ARGLIST_LEN; i++) args[i] = XEN_UNDEFINED;
-
-  vals = mus_optkey_unscramble(S_make_sine_summation, 5, keys, args, orig_arg);
-  if (vals > 0)
-    {
-      freq = mus_optkey_to_float(keys[0], S_make_sine_summation, orig_arg[0], freq);
-      if (freq > (0.5 * mus_srate()))
-	XEN_OUT_OF_RANGE_ERROR(S_make_sine_summation, orig_arg[0], keys[0], "freq ~A > srate/2?");
-
-      phase = mus_optkey_to_float(keys[1], S_make_sine_summation, orig_arg[1], phase);
-
-      n = mus_optkey_to_int(keys[2], S_make_sine_summation, orig_arg[2], n);
-      if (n < 0)
-	XEN_OUT_OF_RANGE_ERROR(S_make_sine_summation, orig_arg[2], keys[2], "n (sidebands): ~A?");
-
-      a = mus_optkey_to_float(keys[3], S_make_sine_summation, orig_arg[3], a);
-      if (a == 1.0)
-	XEN_OUT_OF_RANGE_ERROR(S_make_sine_summation, orig_arg[3], keys[3], "a (sideband amp ratio): ~A?");
-
-      ratio = mus_optkey_to_float(keys[4], S_make_sine_summation, orig_arg[4], ratio);
-    }
-  ge = mus_make_sine_summation(freq, phase, n, a, ratio);
-  if (ge) return(mus_xen_to_object(mus_any_to_mus_xen(ge)));
-  return(XEN_FALSE);
-}
-#endif
 
 
 /* ---------------- nrxysin and nrxycos ---------------- */
@@ -8113,15 +7899,6 @@ XEN_NARGIFY_1(g_filtered_comb_p_w, g_filtered_comb_p)
 XEN_NARGIFY_1(g_all_pass_p_w, g_all_pass_p)
 XEN_NARGIFY_1(g_moving_average_p_w, g_moving_average_p)
 
-#ifndef CLM_DISABLE_DEPRECATED
-XEN_ARGIFY_6(g_make_sum_of_cosines_w, g_make_sum_of_cosines)
-XEN_ARGIFY_2(g_sum_of_cosines_w, g_sum_of_cosines)
-XEN_NARGIFY_1(g_sum_of_cosines_p_w, g_sum_of_cosines_p)
-XEN_ARGIFY_6(g_make_sum_of_sines_w, g_make_sum_of_sines)
-XEN_ARGIFY_2(g_sum_of_sines_w, g_sum_of_sines)
-XEN_NARGIFY_1(g_sum_of_sines_p_w, g_sum_of_sines_p)
-#endif
-
 XEN_ARGIFY_4(g_make_ncos_w, g_make_ncos)
 XEN_ARGIFY_2(g_ncos_w, g_ncos)
 XEN_NARGIFY_1(g_ncos_p_w, g_ncos_p)
@@ -8216,12 +7993,6 @@ XEN_NARGIFY_3(g_chebyshev_tu_sum_w, g_chebyshev_tu_sum)
 XEN_VARGIFY(g_make_polywave_w, g_make_polywave)
 XEN_ARGIFY_2(g_polywave_w, g_polywave)
 XEN_NARGIFY_1(g_polywave_p_w, g_polywave_p)
-
-#ifndef CLM_DISABLE_DEPRECATED
-XEN_VARGIFY(g_make_sine_summation_w, g_make_sine_summation)
-XEN_ARGIFY_2(g_sine_summation_w, g_sine_summation)
-XEN_NARGIFY_1(g_sine_summation_p_w, g_sine_summation_p)
-#endif
 
 XEN_VARGIFY(g_make_nrxysin_w, g_make_nrxysin)
 XEN_ARGIFY_2(g_nrxysin_w, g_nrxysin)
@@ -8427,15 +8198,6 @@ XEN_NARGIFY_1(g_mus_irandom_w, g_mus_irandom)
 #define g_all_pass_p_w g_all_pass_p
 #define g_moving_average_p_w g_moving_average_p
 
-#ifndef CLM_DISABLE_DEPRECATED
-#define g_make_sum_of_cosines_w g_make_sum_of_cosines
-#define g_sum_of_cosines_w g_sum_of_cosines
-#define g_sum_of_cosines_p_w g_sum_of_cosines_p
-#define g_make_sum_of_sines_w g_make_sum_of_sines
-#define g_sum_of_sines_w g_sum_of_sines
-#define g_sum_of_sines_p_w g_sum_of_sines_p
-#endif
-
 #define g_make_ncos_w g_make_ncos
 #define g_ncos_w g_ncos
 #define g_ncos_p_w g_ncos_p
@@ -8530,12 +8292,6 @@ XEN_NARGIFY_1(g_mus_irandom_w, g_mus_irandom)
 #define g_make_polywave_w g_make_polywave
 #define g_polywave_w g_polywave
 #define g_polywave_p_w g_polywave_p
-
-#ifndef CLM_DISABLE_DEPRECATED
-#define g_make_sine_summation_w g_make_sine_summation
-#define g_sine_summation_w g_sine_summation
-#define g_sine_summation_p_w g_sine_summation_p
-#endif
 
 #define g_make_nrxysin_w g_make_nrxysin
 #define g_nrxysin_w g_nrxysin
@@ -8757,9 +8513,6 @@ static void mus_xen_init(void)
 
   XEN_DEFINE_PROCEDURE(S_radians_to_hz,        g_radians_to_hz_w,        1, 0, 0, H_radians_to_hz);
   XEN_DEFINE_PROCEDURE(S_hz_to_radians,        g_hz_to_radians_w,        1, 0, 0, H_hz_to_radians);
-#ifndef CLM_DISABLE_DEPRECATED
-  XEN_DEFINE_PROCEDURE("in-hz",                g_hz_to_radians_w,        1, 0, 0, H_hz_to_radians); /* backwards compatibility */
-#endif
   XEN_DEFINE_PROCEDURE(S_radians_to_degrees,   g_radians_to_degrees_w,   1, 0, 0, H_radians_to_degrees);
   XEN_DEFINE_PROCEDURE(S_degrees_to_radians,   g_degrees_to_radians_w,   1, 0, 0, H_degrees_to_radians);
   XEN_DEFINE_PROCEDURE(S_db_to_linear,         g_db_to_linear_w,         1, 0, 0, H_db_to_linear);
@@ -8919,15 +8672,6 @@ static void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_rand_seed, g_mus_rand_seed_w, H_mus_rand_seed,
 				   S_setB S_mus_rand_seed, g_mus_set_rand_seed_w, 0, 0, 1, 0);
 
-#ifndef CLM_DISABLE_DEPRECATED
-  XEN_DEFINE_PROCEDURE(S_make_sum_of_cosines, g_make_sum_of_cosines_w, 0, 6, 0, H_make_sum_of_cosines); 
-  XEN_DEFINE_PROCEDURE(S_sum_of_cosines,      g_sum_of_cosines_w,      1, 1, 0, H_sum_of_cosines);
-  XEN_DEFINE_PROCEDURE(S_sum_of_cosines_p,    g_sum_of_cosines_p_w,    1, 0, 0, H_sum_of_cosines_p);
-  XEN_DEFINE_PROCEDURE(S_make_sum_of_sines,   g_make_sum_of_sines_w,   0, 6, 0, H_make_sum_of_sines); 
-  XEN_DEFINE_PROCEDURE(S_sum_of_sines,        g_sum_of_sines_w,        1, 1, 0, H_sum_of_sines);
-  XEN_DEFINE_PROCEDURE(S_sum_of_sines_p,      g_sum_of_sines_p_w,      1, 0, 0, H_sum_of_sines_p);
-#endif
-
   XEN_DEFINE_PROCEDURE(S_make_ncos,           g_make_ncos_w,           0, 4, 0, H_make_ncos); 
   XEN_DEFINE_PROCEDURE(S_ncos,                g_ncos_w,                1, 1, 0, H_ncos);
   XEN_DEFINE_PROCEDURE(S_ncos_p,              g_ncos_p_w,              1, 0, 0, H_ncos_p);
@@ -9041,11 +8785,6 @@ static void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_polywave,               g_polywave_w,               1, 1, 0, H_polywave);
   XEN_DEFINE_PROCEDURE(S_polywave_p,             g_polywave_p_w,             1, 0, 0, H_polywave_p);
 
-#ifndef CLM_DISABLE_DEPRECATED
-  XEN_DEFINE_PROCEDURE(S_make_sine_summation, g_make_sine_summation_w, 0, 0, 1, H_make_sine_summation);
-  XEN_DEFINE_PROCEDURE(S_sine_summation,      g_sine_summation_w,      1, 1, 0, H_sine_summation);
-  XEN_DEFINE_PROCEDURE(S_sine_summation_p,    g_sine_summation_p_w,    1, 0, 0, H_sine_summation_p);
-#endif
   XEN_DEFINE_PROCEDURE(S_make_nrxysin,        g_make_nrxysin_w,        0, 0, 1, H_make_nrxysin);
   XEN_DEFINE_PROCEDURE(S_nrxysin,             g_nrxysin_w,             1, 1, 0, H_nrxysin);
   XEN_DEFINE_PROCEDURE(S_nrxysin_p,           g_nrxysin_p_w,           1, 0, 0, H_nrxysin_p);
@@ -9380,11 +9119,6 @@ static void mus_xen_init(void)
 	       S_make_sample_to_file,
 	       S_make_sawtooth_wave,
 	       S_make_scalar_mixer,
-#ifndef CLM_DISABLE_DEPRECATED
-	       S_make_sine_summation,
-	       S_make_sum_of_cosines,
-	       S_make_sum_of_sines,
-#endif
 	       S_make_square_wave,
 	       S_make_src,
 	       S_make_ssb_am,
@@ -9533,14 +9267,6 @@ static void mus_xen_init(void)
 	       S_sawtooth_wave_p,
 	       S_seconds_to_samples,
 	       S_sinc_window,
-#ifndef CLM_DISABLE_DEPRECATED
-	       S_sine_summation,
-	       S_sine_summation_p,
-	       S_sum_of_cosines,
-	       S_sum_of_cosines_p,
-	       S_sum_of_sines,
-	       S_sum_of_sines_p,
-#endif
 	       S_spectrum,
 	       S_square_wave,
 	       S_square_wave_p,

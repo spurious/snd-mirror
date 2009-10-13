@@ -1626,7 +1626,7 @@ we're saving the selection.
 (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_add_hook_tip)">add-hook!</a> <em class=red>before-save-as-hook</em>
   (lambda (index filename selection sr type format comment)
     (if (not (= sr (<a class=quiet href="#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a> index)))
-        (let ((chns (<a class=quiet href="#chans" onmouseout="UnTip()" onmouseover="Tip(extsnd_chans_tip)">chans</a> index)))
+        (let ((chns (<a class=quiet href="#chans" onmouseout="UnTip()" onmouseover="Tip(extsnd_chans_tip)">channels</a> index)))
 	  (do ((i 0 (+ 1 i)))
 	      ((= i chns))
 	    (<a class=quiet href="#srcchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_srcchannel_tip)">src-channel</a> (exact-&gt;inexact (/ (<a class=quiet href="#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a> index) sr)) 0 #f index i))
@@ -2749,7 +2749,7 @@ I use update-hook to make sure the y axis bounds reflect the new maxamp, if it i
   (lambda (old-snd)
     (lambda (snd)
       (do ((i 0 (+ 1 i)))
-	  ((= i (<a class=quiet href="#chans" onmouseout="UnTip()" onmouseover="Tip(extsnd_chans_tip)">chans</a> snd)))
+	  ((= i (<a class=quiet href="#chans" onmouseout="UnTip()" onmouseover="Tip(extsnd_chans_tip)">channels</a> snd)))
 	(let ((mx (<a class=quiet href="#maxamp" onmouseout="UnTip()" onmouseover="Tip(extsnd_maxamp_tip)">maxamp</a> snd i)))
 	  (if (&gt; mx 1.0)
   	      (set! (<a class=quiet href="#ybounds" onmouseout="UnTip()" onmouseover="Tip(extsnd_ybounds_tip)">y-bounds</a> snd i) (list (- mx) mx))
@@ -4204,7 +4204,7 @@ This function reads the first 32 samples of a file, returning the 30th in channe
 (define read-sample-30 
   (lambda (file)
     (let* ((fd (<a class=quiet href="#mussoundopeninput" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundopeninput_tip)">>mus-sound-open-input</a> file))
-	   (<a class=quiet href="#chans" onmouseout="UnTip()" onmouseover="Tip(extsnd_chans_tip)">chans</a> (channels file))
+	   (<a class=quiet href="#chans" onmouseout="UnTip()" onmouseover="Tip(extsnd_chans_tip)">channels</a> (channels file))
 	   (data (<a class=quiet href="#makesounddata" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesounddata_tip)">make-sound-data</a> chans 32)))
       (<a class=quiet href="#mussoundread" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundread_tip)">mus-sound-read</a> fd 0 31 chans data)
       (let ((val (<a class=quiet href="#sounddataref" onmouseout="UnTip()" onmouseover="Tip(extsnd_sounddataref_tip)">sound-data-ref</a> data 0 29)))
@@ -6058,7 +6058,7 @@ then restore that state upon "Page Up":
 	            (map (lambda (snd) 
 			   (let ((data (list snd (<a class=quiet href="#filename" onmouseout="UnTip()" onmouseover="Tip(extsnd_filename_tip)">file-name</a> snd))))
 			     (do ((i 0 (+ 1 i)))
- 				 ((= i (<a class=quiet href="#channels" onmouseout="UnTip()" onmouseover="Tip(extsnd_channels_tip)">chans</a> snd)) data)
+ 				 ((= i (<a class=quiet href="#channels" onmouseout="UnTip()" onmouseover="Tip(extsnd_channels_tip)">channels</a> snd)) data)
 			       (set! data (append data (list (cons i (<em class=red>axis-info</em> snd i))))))))
 		         (<a class=quiet href="#sounds" onmouseout="UnTip()" onmouseover="Tip(extsnd_sounds_tip)">sounds</a>))))
 	      (<a class=quiet href="#bindkey" onmouseout="UnTip()" onmouseover="Tip(extsnd_bindkey_tip)">bind-key</a> "Page_Up" 0
@@ -6192,7 +6192,7 @@ The following code sets the 'unite' button if the current sound has more than 4 
 <table border=0 cellpadding=5 vspace=10><tr><td><pre>
 (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_add_hook_tip)">add-hook!</a> <a class=quiet href="#afteropenhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_afteropenhook_tip)">after-open-hook</a> 
   (lambda (snd)
-    (if (&gt; (<a class=quiet href="#chans" onmouseout="UnTip()" onmouseover="Tip(extsnd_chans_tip)">chans</a> snd) 4)
+    (if (&gt; (<a class=quiet href="#chans" onmouseout="UnTip()" onmouseover="Tip(extsnd_chans_tip)">channels</a> snd) 4)
         (set! (<em class=red>channel-style</em> snd) <a class=quiet href="#channelstyle" onmouseout="UnTip()" onmouseover="Tip(extsnd_channelstyle_tip)">channels-combined</a>))))
 </pre></td></tr></table>
 </td></tr><tr><td colspan=2 height=18></td></tr>
@@ -7254,7 +7254,7 @@ sound with individual amplitudes for the channels:
 <table border=0 cellpadding=5 vspace=10><tr><td><pre>
 (define play-with-amps
   (lambda (sound . amps)
-    (let ((chans (<a class=quiet href="#chans" onmouseout="UnTip()" onmouseover="Tip(extsnd_chans_tip)">chans</a> sound)))
+    (let ((chans (<a class=quiet href="#chans" onmouseout="UnTip()" onmouseover="Tip(extsnd_chans_tip)">channels</a> sound)))
       (do ((chan 0 (+ 1 chan)))
           ((= chan chans))
         (let ((player (<em class=red>make-player</em> sound chan)))
@@ -7426,7 +7426,7 @@ is an example of this.
 <table border=0 cellpadding=5 vspace=10><tr><td><pre>
 (define* (map-sound-chans proc :optional (beg 0) dur snd edpos origin)
   (do ((i 0 (+ 1 i)))
-      ((= i (<a class=quiet href="#chans" onmouseout="UnTip()" onmouseover="Tip(extsnd_chans_tip)">chans</a> snd)))
+      ((= i (<a class=quiet href="#chans" onmouseout="UnTip()" onmouseover="Tip(extsnd_chans_tip)">channels</a> snd)))
     (<em class=red>map-channel</em> proc beg dur snd i edpos origin)))
 </pre></td></tr></table>
 
@@ -9431,7 +9431,7 @@ For example, the following function reverses the channel order:
 <table border=0 cellpadding=5 vspace=10><tr><td><pre>
 (define* (<a name="reversechannels">reverse-channels</a> :optional snd)
   (let* ((ind (or snd (<a class=quiet href="#selectedsound" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectedsound_tip)">selected-sound</a>) (car (<a class=quiet href="#sounds" onmouseout="UnTip()" onmouseover="Tip(extsnd_sounds_tip)">sounds</a>))))
-	 (chns (<a class=quiet href="#channels" onmouseout="UnTip()" onmouseover="Tip(extsnd_channels_tip)">chans</a> ind)))
+	 (chns (<a class=quiet href="#channels" onmouseout="UnTip()" onmouseover="Tip(extsnd_channels_tip)">channels</a> ind)))
     (let ((swaps (inexact-&gt;exact (floor (/ chns 2)))))
       (<a class=quiet href="#asoneedit" onmouseout="UnTip()" onmouseover="Tip(extsnd_asoneedit_tip)">as-one-edit</a>
        (lambda ()
@@ -9935,7 +9935,7 @@ To set all channels at once using the selected sound's maxamp:
 <table border=0 cellpadding=5 vspace=10><tr><td><pre>
 (let ((maxval (apply max (<a class=quiet href="#maxamp" onmouseout="UnTip()" onmouseover="Tip(extsnd_maxamp_tip)">maxamp</a> #f #t)))) 
   (do ((i 0 (+ 1 i))) 
-      ((= i (<a class=quiet href="#chans" onmouseout="UnTip()" onmouseover="Tip(extsnd_chans_tip)">chans</a>))) 
+      ((= i (<a class=quiet href="#chans" onmouseout="UnTip()" onmouseover="Tip(extsnd_chans_tip)">channels</a>))) 
     (set! (<em class=red>y-bounds</em> #f i) (list (- maxval) maxval))))
 </pre></td></tr></table>
 
@@ -9943,7 +9943,7 @@ Or to set each channel to its own maxamp:
 
 <table border=0 cellpadding=5 vspace=10><tr><td><pre>
 (do ((i 0 (+ 1 i))) 
-    ((= i (<a class=quiet href="#chans" onmouseout="UnTip()" onmouseover="Tip(extsnd_chans_tip)">chans</a>)))
+    ((= i (<a class=quiet href="#chans" onmouseout="UnTip()" onmouseover="Tip(extsnd_chans_tip)">channels</a>)))
   (let ((maxval (<a class=quiet href="#maxamp" onmouseout="UnTip()" onmouseover="Tip(extsnd_maxamp_tip)">maxamp</a> #f i))) 
     (set! (<em class=red>y-bounds</em> #f i) (list (- maxval) maxval))))
 </pre></td></tr></table>

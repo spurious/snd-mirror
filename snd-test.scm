@@ -610,7 +610,7 @@
 (if (not (provided? 'snd-snd7.scm)) (load "snd7.scm")) ; forward-graph
 (if (not (provided? 'snd-snd8.scm)) (load "snd8.scm")) ; samples->sound-data
 (if (not (provided? 'snd-snd9.scm)) (load "snd9.scm")) ; make-ppolar|zpolar, various generators later moved to generators.scm
-(if (not (provided? 'snd-snd10.scm)) (load "snd10.scm")) ; sum-of-sines etc
+(if (not (provided? 'snd-snd10.scm)) (load "snd10.scm"))
 
 					;(define widvardpy (make-variable-display "do-loop" "i*2" 'graph))
 
@@ -18699,104 +18699,6 @@ EDITS: 2
 		(v2 (with-sound (:output (make-vct size) :srate 441000) (test-fm 0 size 20 1 ratio index))))
 	    (if (not (vequal v1 v2))
 		(snd-display ";fm/pm peak diff ~A ~A: ~A" ratio index (vct-peak (vct-subtract! v1 v2))))))))
-    
-    (if (defined? 'sum-of-cosines) (begin 
-    (let ((gen (make-sum-of-cosines 10 440.0))
-	  (v0 (make-vct 10))
-	  (gen1 (make-sum-of-cosines 10 440.0))
-	  (v1 (make-vct 10)))
-      (print-and-check gen 
-		       "ncos"
-		       "ncos freq: 440.000Hz, phase: 0.000, n: 10")
-      (do ((i 0 (+ 1 i)))
-	  ((= i 10))
-	(vct-set! v0 i (sum-of-cosines gen 0.0)))
-      (vct-map! v1 (lambda () (if (sum-of-cosines? gen1) (sum-of-cosines gen1 0.0) -1.0)))
-      (if (not (vequal v0 v1)) (snd-display ";map sum-of-cosines: ~A ~A" v0 v1))
-      (if (not (sum-of-cosines? gen)) (snd-display ";~A not sum-of-cosines?" gen))
-      (if (fneq (mus-phase gen) 1.253787) (snd-display ";sum-of-cosines phase: ~F?" (mus-phase gen)))
-      (if (fneq (mus-frequency gen) 440.0) (snd-display ";sum-of-cosines frequency: ~F?" (mus-frequency gen)))
-      (if (fneq (mus-scaler gen) .1) (snd-display ";sum-of-cosines scaler: ~F?" (mus-scaler gen)))
-      (if (not (= (mus-length gen) 10)) (snd-display ";sum-of-cosines cosines: ~D?" (mus-length gen)))
-      (if (not (= (mus-length gen) 10)) (snd-display ";sum-of-cosines length: ~D?" (mus-length gen)))
-      (if (or (fneq (vct-ref v0 1) 0.722) (fneq (vct-ref v0 8) -0.143)) (snd-display ";sum-of-cosines output: ~A" v0))
-      (set! (mus-scaler gen) .5) (if (fneq (mus-scaler gen) 0.5) (snd-display ";sum-of-cosines set-scaler: ~F?" (mus-scaler gen)))
-      (set! (mus-length gen) 5) (if (not (= (mus-length gen) 5)) (snd-display ";set sum-of-cosines cosines: ~D?" (mus-length gen)))
-      (if (fneq (mus-scaler gen) .2) (snd-display ";set cosines->scaler: ~A" (mus-scaler gen))))
-    
-    (test-gen-equal (make-sum-of-cosines 3 440.0) (make-sum-of-cosines 3 440.0) (make-sum-of-cosines 5 440.0))
-    (test-gen-equal (make-sum-of-cosines 3 440.0) (make-sum-of-cosines 3 440.0) (make-sum-of-cosines 3 440.0 1.0))
-    (test-gen-equal (make-sum-of-cosines 3 440.0) (make-sum-of-cosines 3 440.0) (make-sum-of-cosines 3 400.0))
-    
-    (let ((gen (make-sum-of-cosines 10)))
-      (do ((i 0 (+ 1 i)))
-	  ((= i 1100))
-	(let* ((den (sin (* (mus-phase gen) 0.5)))
-	       (val1 (if (= 0.0 den)
-			 1.0
-			 (min 1.0 (* (mus-scaler gen)
-				     (- (/ (sin (* (mus-phase gen)
-						   (+ (mus-length gen) 0.5)))
-					   (* 2.0 den))
-					0.5)))))
-	       (val2 (gen 0.0)))
-	  (if (> (abs (- val1 val2)) .002)
-	      (snd-display ";sum-of-cosines: ~A: ~A ~A" i val1 val2)))))
-    
-    (let ((gen1 (make-sum-of-cosines 10 100.0))
-	  (gen2 (make-sum-of-cosines 10 -100.0))
-	  (mx 0.0))
-      (do ((i 0 (+ 1 i)))
-	  ((= i 100))
-	(set! mx (max mx (abs (- (gen1) (gen2))))))
-      (if (fneq mx 0.0)
-	  (snd-display ";sum-of-cosines +-: ~A" mx)))
-    
-    (let ((gen (make-sum-of-sines 10 440.0))
-	  (v0 (make-vct 10))
-	  (gen1 (make-sum-of-sines 10 440.0))
-	  (v1 (make-vct 10)))
-      (print-and-check gen 
-		       "nsin"
-		       "nsin freq: 440.000Hz, phase: 0.000, n: 10")
-      (do ((i 0 (+ 1 i)))
-	  ((= i 10))
-	(vct-set! v0 i (sum-of-sines gen 0.0)))
-      (vct-map! v1 (lambda () (if (sum-of-sines? gen1) (sum-of-sines gen1 0.0) -1.0)))
-      (if (not (vequal v0 v1)) (snd-display ";map sum-of-sines: ~A ~A" v0 v1))
-      (if (not (sum-of-sines? gen)) (snd-display ";~A not sum-of-sines?" gen))
-      (if (fneq (mus-phase gen) 1.253787) (snd-display ";sum-of-sines phase: ~F?" (mus-phase gen)))
-      (if (fneq (mus-frequency gen) 440.0) (snd-display ";sum-of-sines frequency: ~F?" (mus-frequency gen)))
-      (if (fneq (mus-scaler gen) .1315) (snd-display ";sum-of-sines scaler: ~F?" (mus-scaler gen)))
-      (if (not (= (mus-length gen) 10)) (snd-display ";sum-of-sines cosines: ~D?" (mus-length gen)))
-      (if (not (= (mus-length gen) 10)) (snd-display ";sum-of-sines length: ~D?" (mus-length gen)))
-      (if (or (fneq (vct-ref v0 1) 0.784) (fneq (vct-ref v0 8) 0.181)) (snd-display ";sum-of-sines output: ~A" v0))
-      (set! (mus-scaler gen) .5) (if (fneq (mus-scaler gen) 0.5) (snd-display ";sum-of-sines set-scaler: ~F?" (mus-scaler gen)))
-      (set! (mus-length gen) 5) (if (not (= (mus-length gen) 5)) (snd-display ";set sum-of-sines cosines: ~D?" (mus-length gen)))
-      (if (fneq (mus-scaler gen) .2525) (snd-display ";set sines->scaler: ~A" (mus-scaler gen))))
-    
-    (test-gen-equal (make-sum-of-sines 3 440.0) (make-sum-of-sines 3 440.0) (make-sum-of-sines 5 440.0))
-    (test-gen-equal (make-sum-of-sines 3 440.0) (make-sum-of-sines 3 440.0) (make-sum-of-sines 3 440.0 1.0))
-    (test-gen-equal (make-sum-of-sines 3 440.0) (make-sum-of-sines 3 440.0) (make-sum-of-sines 3 400.0))
-    
-    (let ((gen (make-sum-of-sines 5)))
-      (do ((i 0 (+ 1 i)))
-	  ((= i 1100))
-	(let* ((val1 (* (sum-of-n-sines (mus-phase gen) 5) (mus-scaler gen)))
-	       (val2 (gen 0.0)))
-	  (if (fneq val1 val2)
-	      (snd-display ";sum-of-sines: ~A ~A" val1 val2)))))
-    
-    (let ((gen1 (make-sum-of-sines 10 100.0))
-	  (gen2 (make-sum-of-sines 10 -100.0))
-	  (mx 0.0))
-      (do ((i 0 (+ 1 i)))
-	  ((= i 100))
-	(set! mx (max mx (abs (+ (gen1) (gen2))))))
-      (if (fneq mx 0.0)
-	  (snd-display ";sum-of-sines +-: ~A" mx)))
-    ))
-
 
     (let ((gen (make-ncos 440.0 10))
 	  (v0 (make-vct 10))
@@ -18891,51 +18793,6 @@ EDITS: 2
       (if (fneq mx 0.0)
 	  (snd-display ";nsin +-: ~A" mx)))
 
-    
-    (if (defined? 'sine-summation) (begin
-    (let ((gen (make-sine-summation 440.0))
-	  (v0 (make-vct 10))
-	  (gen1 (make-sine-summation 440.0))
-	  (v1 (make-vct 10)))
-      (print-and-check gen 
-		       "nrxysin"
-                       "nrxysin frequency: 440.000, ratio: 1.000, phase: 0.000, n: 1, r: 0.500")
-      (do ((i 0 (+ 1 i)))
-	  ((= i 10))
-	(vct-set! v0 i (sine-summation gen 0.0)))
-      (vct-map! v1 (lambda () (if (sine-summation? gen1) (sine-summation gen1 0.0) -1.0)))
-      (if (not (vequal v0 v1)) (snd-display ";map sine-summation: ~A ~A" v0 v1))
-      (if (not (sine-summation? gen)) (snd-display ";~A not sine-summation?" gen))
-      (if (fneq (mus-phase gen) 1.253787) (snd-display ";sine-summation phase: ~F?" (mus-phase gen)))
-      (if (fneq (mus-frequency gen) 440.0) (snd-display ";sine-summation frequency: ~F?" (mus-frequency gen)))
-      ;(if (or (fneq (vct-ref v0 1) 0.249) (fneq (vct-ref v0 8) 1.296)) (snd-display ";sine-summation output: ~A" v0))
-      (if (fneq (mus-scaler gen) 0.5) (snd-display ";mus-scaler (a) sine-summation: ~A" (mus-scaler gen)))
-      (set! (mus-scaler gen) 0.75)
-      (if (fneq (mus-scaler gen) 0.75) (snd-display ";mus-scaler (set a) sine-summation: ~A" (mus-scaler gen)))
-      (if (not (= (mus-length gen) 1)) (snd-display ";mus-length sine-summation: ~A" (mus-length gen)))
-      (if (fneq (mus-offset gen) 1.0) (snd-display ";mus-offset sine-summation: ~A" (mus-offset gen))))
-    
-    (test-gen-equal (make-sine-summation 440.0) (make-sine-summation 440.0) (make-sine-summation 100.0))
-    (test-gen-equal (make-sine-summation 440.0) (make-sine-summation 440.0) (make-sine-summation 440.0 1.0))
-    (test-gen-equal (make-sine-summation 440.0) (make-sine-summation 440.0) (make-sine-summation 440.0 0.0 3))
-    
-    (let ((gen1 (make-sine-summation 1000 0 1 0.0 1))
-	  (gen2 (make-oscil 1000))
-	  (gen3 (make-sine-summation 1000 0 1 0.5 2))
-	  (gen4 (make-oscil 1000))
-	  (gen5 (make-oscil 3000))
-	  (gen6 (make-sine-summation 500.0 3.0 10 .1 .4)))
-      
-      (if (fneq (mus-phase gen6) 3.0) (snd-display ";sine-summation phase (3): ~F?" (mus-phase gen6)))
-      (if (fneq (mus-frequency gen6) 500.0) (snd-display ";sine-summation frequency (500): ~F?" (mus-frequency gen6)))
-      (if (fneq (mus-scaler gen6) 0.1) (snd-display ";mus-scaler (a) sine-summation (.1): ~A" (mus-scaler gen6)))
-      (if (not (= (mus-length gen6) 10)) (snd-display ";mus-length sine-summation (10): ~A" (mus-length gen6)))
-      (if (fneq (mus-offset gen6) 0.4) (snd-display ";mus-offset sine-summation (0.4): ~A" (mus-offset gen6)))
-      (set! gen1 (make-sine-summation 440.0 0.0 0))
-      (sine-summation gen1)
-      (let ((val (sine-summation gen1)))
-	(if (fneq val 0.125050170279874) (snd-display ";sine-summation n=0: ~A" val))))
-    ))
     
     (let ((gen (make-nrxysin 440.0))
 	  (v0 (make-vct 10))
@@ -53008,7 +52865,7 @@ EDITS: 1
 	(if (fneq total-dur (/ (frames ind) (srate ind))) 
 	    (snd-display ";with-mix (~A) total dur: ~A ~A" num total-dur (/ (frames ind) (srate ind))))
 	(if (and old-date
-		 (> (abs (- date old-date)) 10)) ; these can be off by some amount in Linux
+		 (> (- date old-date) 1)) ; these can be off by some amount in Linux
 	    (snd-display ";with-mix (~A) rewrote output?: ~A ~A ~A" num (- date old-date)
 			 (strftime "%d-%b-%g %H:%M:%S" (localtime old-date))
 			 (strftime "%d-%b-%g %H:%M:%S" (localtime date))))

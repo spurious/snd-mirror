@@ -5476,7 +5476,7 @@ scan-sound is a version of <a href="extsnd.html#scanchannel">scan-channel</a> th
 If 'with-sync' is #t, the frame read includes all channels currently sync'd to the sound 'snd'.
 <pre>
 (define* (simultaneous-zero-crossing :optional (beg 0) dur snd)
-  (let ((last-fr (<a class=quiet href="sndclm.html#make-frame" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_frame_tip)">make-frame</a> (<a class=quiet href="extsnd.html#chans" onmouseout="UnTip()" onmouseover="Tip(extsnd_chans_tip)">chans</a> snd))))
+  (let ((last-fr (<a class=quiet href="sndclm.html#make-frame" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_frame_tip)">make-frame</a> (<a class=quiet href="extsnd.html#chans" onmouseout="UnTip()" onmouseover="Tip(extsnd_chans_tip)">channels</a> snd))))
     (<em class=red>scan-sound</em> (lambda (fr)
 		  (let ((result #t))
 		    (do ((chn 0 (+ 1 chn)))
