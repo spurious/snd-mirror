@@ -158,7 +158,7 @@
 
 (define (pad-marks ids secs)
   "(pad-marks marks secs) inserts secs seconds of silence before each mark"
-  (let* ((silence-length (inexact->exact (floor (* secs (srate)))))
+  (let* ((silence-length (floor (* secs (srate))))
 	 (silence-samps (make-vct silence-length)))
     (as-one-edit
      (lambda ()
@@ -334,8 +334,8 @@
 			    (bps (/ (beats-per-minute snd chn) 60.0))
 			    (sr (srate snd))
 			    (beat (floor (/ (* samp bps) sr)))
-			    (lower (inexact->exact (floor (/ (* beat sr) bps))))
-			    (higher (inexact->exact (floor (/ (* (+ 1 beat) sr) bps)))))
+			    (lower (floor (/ (* beat sr) bps)))
+			    (higher (floor (/ (* (+ 1 beat) sr) bps))))
 		       (set! (mark-sample mrk)
 			     (if (< (- samp lower) (- higher samp))
 				 lower

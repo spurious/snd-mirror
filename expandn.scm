@@ -76,13 +76,13 @@
 				 :duration (/ duration update-rate)))
 	       (ampenv (make-env amp-env :duration duration :scaler amplitude))
 	       (ex-array (make-vector in-chans #f))
-	       (start (inexact->exact (floor (* input-start (mus-sound-srate fnam)))))
+	       (start (floor (* input-start (mus-sound-srate fnam))))
 	       (max-out-hop (if (list? hop) (max-envelope hop) hop))
 	       (min-exp-amt (if (list? expand) (min-envelope expand) expand))
 	       (max-in-hop (/ max-out-hop min-exp-amt))
-	       (max-len (inexact->exact (ceiling (* (mus-srate)
-						    (+ (max max-out-hop max-in-hop)
-						       max-seg-len)))))
+	       (max-len (ceiling (* (mus-srate)
+				    (+ (max max-out-hop max-in-hop)
+				       max-seg-len))))
 	       (ex-samp -1.0)
 	       ;; these vars used for resampling
 	       (next-samp 0.0))
@@ -135,8 +135,8 @@
 					(segl (env lenenv))                ;current segment length
 					(rmpl (env rampenv))               ;current ramp length (0 to .5)
 					(hp (env hopenv))                  ;current hop size
-					(sl (inexact->exact (floor (* segl (mus-srate)))))
-					(rl (inexact->exact (floor (* rmpl sl)))))
+					(sl (floor (* segl (mus-srate))))
+					(rl (floor (* rmpl sl))))
 				   (set! update-ctr 0)
 				   (set! (length ingen) sl)
 				   (set! (mus-ramp ingen) rl)
@@ -152,7 +152,7 @@
 			   (begin
 			     (set! next-samp (+ next-samp resa))
 			     (if (> next-samp (+ 1 ex-samp))
-				 (let ((samps (inexact->exact (floor (- next-samp ex-samp)))))
+				 (let ((samps (floor (- next-samp ex-samp))))
 				   (do ((k 0 (+ 1 k)))
 				       ((= k samps))
 				     (set! sample-0 sample-1)
@@ -194,8 +194,8 @@
 					    (segl (env lenenv))                ;current segment length
 					    (rmpl (env rampenv))               ;current ramp length (0 to .5)
 					    (hp (env hopenv))                  ;current hop size
-					    (sl (inexact->exact (floor (* segl (mus-srate)))))
-					    (rl (inexact->exact (floor (* rmpl sl)))))
+					    (sl (floor (* segl (mus-srate))))
+					    (rl (floor (* rmpl sl))))
 				       (set! update-ctr 0)
 				       (set! (length ingen0) sl)
 				       (set! (mus-ramp ingen0) rl)
@@ -217,7 +217,7 @@
 			       (begin
 				 (set! next-samp (+ next-samp resa))
 				 (if (> next-samp (+ 1 ex-samp))
-				     (let ((samps (inexact->exact (floor (- next-samp ex-samp)))))
+				     (let ((samps (floor (- next-samp ex-samp))))
 				       (do ((k 0 (+ 1 k)))
 					   ((= k samps))
 					 (set! sample-0-0 sample-1-0)
@@ -262,8 +262,8 @@
 					    (segl (env lenenv))                ;current segment length
 					    (rmpl (env rampenv))               ;current ramp length (0 to .5)
 					    (hp (env hopenv))                  ;current hop size
-					    (sl (inexact->exact (floor (* segl (mus-srate)))))
-					    (rl (inexact->exact (floor (* rmpl sl)))))
+					    (sl (floor (* segl (mus-srate))))
+					    (rl (floor (* rmpl sl))))
 				       (set! update-ctr 0)
 				       (do ((ix 0 (+ 1 ix)))
 					   ((= ix in-chans))
@@ -285,7 +285,7 @@
 			       (begin
 				 (set! next-samp (+ next-samp resa))
 				 (if (> next-samp (+ 1 ex-samp))
-				     (let ((samps (inexact->exact (floor (- next-samp ex-samp)))))
+				     (let ((samps (floor (- next-samp ex-samp))))
 				       (do ((k 0 (+ 1 k)))
 					   ((= k samps))
 					 (do ((ix 0 (+ 1 ix)))

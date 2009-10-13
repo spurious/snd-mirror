@@ -125,12 +125,12 @@
          (fil2 (make-sampler 0 file2))
 	 (start (seconds->samples beg))
 	 (end (+ start (seconds->samples dur)))
-	 (freq-inc (inexact->exact (floor (/ fsize 2))))
-	 (bin (inexact->exact (floor (/ (mus-srate) fsize))))
+	 (freq-inc (floor (/ fsize 2)))
+	 (bin (floor (/ (mus-srate) fsize)))
 	 (radius (- 1.0 (/ r fsize)))
 	 (spectrum (make-vct freq-inc 1.0))
 	 (ramp-inc (/ 1.0 1024.0))
-	 (trigger (inexact->exact (floor (/ (* dur (mus-srate)) freq-inc))))
+	 (trigger (floor (/ (* dur (mus-srate)) freq-inc)))
 	 (fs (make-vector freq-inc))
 	 (ctr 0))
 
@@ -151,7 +151,7 @@
 	   (if (> ctr trigger)
 	       (begin
 		 ;; find next randomly chosen resonator to flip
-		 (let ((next (inexact->exact (floor (random freq-inc)))))
+		 (let ((next (floor (random freq-inc))))
 		   (if (not (= (vct-ref spectrum next) 1.0))
 		       (call-with-exit
 			(lambda (break)

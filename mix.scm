@@ -128,8 +128,8 @@
 	 (bps (/ (beats-per-minute snd chn) 60.0))
 	 (sr (srate snd))
 	 (beat (floor (/ (* samp bps) sr)))
-	 (lower (inexact->exact (floor (/ (* beat sr) bps))))
-	 (higher (inexact->exact (floor (/ (* (+ 1 beat) sr) bps)))))
+	 (lower (floor (/ (* beat sr) bps)))
+	 (higher (floor (/ (* (+ 1 beat) sr) bps))))
     (set! (mix-position id)
 	  (if (< (- samp lower) (- higher samp))
 	      (max 0 lower)
@@ -148,8 +148,8 @@
 	 (bps (/ (beats-per-minute snd chn) 60.0))
 	 (sr (srate snd))
 	 (beat (floor (/ (* samp bps) sr)))
-	 (lower (inexact->exact (floor (/ (* beat sr) bps))))
-	 (higher (inexact->exact (floor (/ (* (+ 1 beat) sr) bps))))
+	 (lower (floor (/ (* beat sr) bps)))
+	 (higher (floor (/ (* (+ 1 beat) sr) bps)))
 	 (new-position (if (< (- samp lower) (- higher samp))
 			   (max 0 lower)
 			   higher))
@@ -324,7 +324,7 @@ All mixes sync'd to it are also moved the same number of samples. (remove-hook! 
 position is measured from the top of the graph, so higher tag-y values position the tag lower in the graph. For \
 example, if you know the frequency of the mix sound, you can reflect that in the tag height with: \n\n\
 \n\
-   (set! (mix-tag-y mix-id) (inexact->exact (round (* 100 (- 1.0 (/ (log (/ freq 40.0)) (* (log 2.0) 7)))))))\n"
+   (set! (mix-tag-y mix-id) (round (* 100 (- 1.0 (/ (log (/ freq 40.0)) (* (log 2.0) 7))))))\n"
 
   (for-each
    (lambda (m)
@@ -360,7 +360,7 @@ may change)"
      (lambda ()
        (for-each
 	(lambda (m)
-	  (let ((diff (inexact->exact (round (* tempo-scl (- (mix-position m) first-beg))))))
+	  (let ((diff (round (* tempo-scl (- (mix-position m) first-beg)))))
 	    (if (not (= diff 0))
 		(set! (mix-position m) (+ first-beg diff)))))
 	mix-list)))))

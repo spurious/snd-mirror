@@ -505,7 +505,7 @@ Reverb-feedback sets the scaler on the feedback.
      (lambda (ctl)
        (set! ((caddr ctl) #t) (cadr ctl))
        (XtSetValues (car ctl) 
-		    (list XmNvalue (inexact->exact (floor (* (cadr ctl) 100))))))
+		    (list XmNvalue (floor (* (cadr ctl) 100)))))
      hidden-controls))
 
   (if (not (Widget? hidden-controls-dialog))
@@ -566,9 +566,9 @@ Reverb-feedback sets the scaler on the feedback.
 		    (slider (XtCreateManagedWidget name xmScaleWidgetClass mainform
 			       (list XmNorientation   XmHORIZONTAL
 				     XmNshowValue     #t
-				     XmNminimum       (inexact->exact (floor (* low 1000)))
-				     XmNmaximum       (inexact->exact (floor (* high 1000)))
-				     XmNvalue         (inexact->exact (floor (* initial 1000)))
+				     XmNminimum       (floor (* low 1000))
+				     XmNmaximum       (floor (* high 1000))
+				     XmNvalue         (floor (* initial 1000))
 				     XmNdecimalPoints 3
 				     XmNtitleString   title
 				     XmNborderWidth   1
@@ -701,7 +701,7 @@ Reverb-feedback sets the scaler on the feedback.
 					   (list XmNorientation XmHORIZONTAL
 						 XmNshowValue   #t
 						 XmNbackground  (basic-color)
-						 XmNvalue       (inexact->exact (floor (* amplitude 100)))
+						 XmNvalue       (floor (* amplitude 100))
 						 XmNmaximum     100
 						 XmNtitleString ampstr
 						 XmNdecimalPoints 2)))
@@ -953,9 +953,8 @@ Reverb-feedback sets the scaler on the feedback.
     (define (y->grfy y range)
       (min ay1
 	   (max ay0
-		(inexact->exact
-		 (round (+ ay0
-			   (* range (- 10.0 y))))))))
+		(round (+ ay0
+			  (* range (- 10.0 y)))))))
     
     (define (draw-graph)
       (if (and (> ax1 ax0)
@@ -975,7 +974,7 @@ Reverb-feedback sets the scaler on the feedback.
 		 (j 0 (+ j 2))
 		 (xi ax0 (+ xi xincr)))
 		((= i size))
-	      (vector-set! vect j (inexact->exact (floor xi)))
+	      (vector-set! vect j (floor xi))
 	      (vector-set! vect (+ j 1) (y->grfy (vct-ref gx0 i) diff)))
 	    (if pts1 (freeXPoints pts1))
 	    (set! pts0 (vector->XPoints vect))
@@ -1433,8 +1432,8 @@ Reverb-feedback sets the scaler on the feedback.
 	(XSetForeground dpy dgc (black-pixel))
 	(XDrawArc dpy pixwin dgc 1 1 14 14 0 (* 64 360))
 	(XDrawLine dpy pixwin dgc 8 8
-		   (+ 8 (inexact->exact (round (* 7 (sin (* i (/ 3.1416 6.0)))))))
-		   (- 8 (inexact->exact (round (* 7 (cos (* i (/ 3.1416 6.0))))))))))
+		   (+ 8 (round (* 7 (sin (* i (/ 3.1416 6.0))))))
+		   (- 8 (round (* 7 (cos (* i (/ 3.1416 6.0)))))))))
     (XSetBackground dpy dgc (graph-color))
     (XSetForeground dpy dgc (data-color))
     (lambda (snd hour)
@@ -1468,9 +1467,8 @@ Reverb-feedback sets the scaler on the feedback.
     (define (y->grfy y height)
       (min ay0
 	   (max ay1
-		(inexact->exact
-		 (round (+ ay1
-		    (* height (- 1.0 y))))))))
+		(round (+ ay1
+			  (* height (- 1.0 y)))))))
     (let* ((ly (y->grfy (vct-ref pts 0) range))
 	   (lx left-margin)
 	   (len (length pts))
@@ -1480,8 +1478,8 @@ Reverb-feedback sets the scaler on the feedback.
 	   (x lx (+ x xinc)))
 	  ((= i len))
 	(set! y (y->grfy (vct-ref pts i) range))
-	(XDrawLine dpy wn gc lx ly (inexact->exact (round x)) y)
-	(set! lx (inexact->exact (round x)))
+	(XDrawLine dpy wn gc lx ly (round x) y)
+	(set! lx (round x))
 	(set! ly y)))))
 
 (define make-sound-box 
@@ -1629,7 +1627,7 @@ Reverb-feedback sets the scaler on the feedback.
 	 (height (+ 8 (caddr (XTextExtents fs "0" 1)))))
 
     (define (smpte-label samp sr)
-      (define (round-down val) (inexact->exact (truncate val)))
+      (define (round-down val) (truncate val))
       (let* ((seconds (/ samp sr))
 	     (frames (* seconds smpte-frames-per-second))
 	     (minutes (round-down (/ seconds 60)))
@@ -1747,13 +1745,13 @@ Reverb-feedback sets the scaler on the feedback.
 	 ;; (size (list-ref meter-data 2))
 	 (dpy (XtDisplay meter))
 	 (win (XtWindow meter))
-	 (major-tick (inexact->exact (round (/ width 24))))
-	 (minor-tick (inexact->exact (round (* major-tick .6))))
+	 (major-tick (round (/ width 24)))
+	 (minor-tick (round (* major-tick .6)))
 	 (ang0 (* 45 64))
 	 (ang1 (* 90 64))
-	 (wid2 (inexact->exact (floor (/ width 2))))
+	 (wid2 (floor (/ width 2)))
 	 (gc (car (snd-gcs)))
-	 (top (inexact->exact (round (/ height 3.2))))) ; distance of label from top of meter
+	 (top (round (/ height 3.2)))) ; distance of label from top of meter
     (if (and (> top 10)
 	     (> width 10)
 	     (> height 10))
@@ -1771,10 +1769,10 @@ Reverb-feedback sets the scaler on the feedback.
 	    (let* ((rdeg (degrees->radians (- 45 (* i 22.5))))
 		   (sinr (sin rdeg))
 		   (cosr (cos rdeg))
-		   (x0 (inexact->exact (round (+ wid2 (* wid2 sinr)))))
-		   (y0 (inexact->exact (round (- (+ wid2 top) (* wid2 cosr)))))
-		   (x1 (inexact->exact (round (+ wid2 (* (+ wid2 major-tick) sinr)))))
-		   (y1 (inexact->exact (round (- (+ wid2 top) (* (+ wid2 major-tick) cosr))))))
+		   (x0 (round (+ wid2 (* wid2 sinr))))
+		   (y0 (round (- (+ wid2 top) (* wid2 cosr))))
+		   (x1 (round (+ wid2 (* (+ wid2 major-tick) sinr))))
+		   (y1 (round (- (+ wid2 top) (* (+ wid2 major-tick) cosr)))))
 	      (XDrawLine dpy win gc x0 y0 x1 y1)
 	      (XDrawLine dpy win gc (+ x0 1) y0 (+ x1 1) y1)
 	      (if (< i 4)
@@ -1783,10 +1781,10 @@ Reverb-feedback sets the scaler on the feedback.
 		    (let* ((rdeg (degrees->radians (- 45 (* i 22.5) (* j (/ 90.0 20.0)))))
 			   (sinr (sin rdeg))
 			   (cosr (cos rdeg))
-			   (x0 (inexact->exact (round (* wid2 (+ 1.0 sinr)))))
-			   (y0 (inexact->exact (round (- (+ wid2 top) (* wid2 cosr)))))
-			   (x1 (inexact->exact (round (+ wid2 (* (+ wid2 minor-tick) sinr)))))
-			   (y1 (inexact->exact (round (- (+ wid2 top) (* (+ wid2 minor-tick) cosr))))))
+			   (x0 (round (* wid2 (+ 1.0 sinr))))
+			   (y0 (round (- (+ wid2 top) (* wid2 cosr))))
+			   (x1 (round (+ wid2 (* (+ wid2 minor-tick) sinr))))
+			   (y1 (round (- (+ wid2 top) (* (+ wid2 minor-tick) cosr)))))
 		      (XDrawLine dpy win gc x0 y0 x1 y1))))))
 	  (let* ((needle-speed 0.25)
 		 (bubble-speed 0.025)
@@ -1794,8 +1792,8 @@ Reverb-feedback sets the scaler on the feedback.
 		 (val (+ (* level needle-speed) (* last-level (- 1.0 needle-speed))))
 		 (deg (- (* val 90.0) 45.0))
 		 (rdeg (degrees->radians deg))
-		 (nx1 (inexact->exact (round (+ wid2 (* (+ wid2 major-tick) (sin rdeg))))))
-		 (ny1 (inexact->exact (round (- (+ wid2 top) (* (+ wid2 major-tick) (cos rdeg)))))))
+		 (nx1 (round (+ wid2 (* (+ wid2 major-tick) (sin rdeg)))))
+		 (ny1 (round (- (+ wid2 top) (* (+ wid2 major-tick) (cos rdeg))))))
 	    (XDrawLine dpy win gc wid2 (+ top wid2) nx1 ny1)
 	    (list-set! meter-data 3 val)
 	    (if (> val red-deg)
@@ -1804,7 +1802,7 @@ Reverb-feedback sets the scaler on the feedback.
 	    (if (> (list-ref meter-data 4) .01)
 		(begin
 		  (XSetForeground dpy gc (red-pixel))
-		  (let* ((redx (inexact->exact (floor (* (list-ref meter-data 4) 90 64))))
+		  (let* ((redx (floor (* (list-ref meter-data 4) 90 64)))
 			 (redy (min redx bubble-size)))
 		    (do ((i 0 (+ i 1)))
 			((= i 4))
@@ -1815,7 +1813,7 @@ Reverb-feedback sets the scaler on the feedback.
   "(with-level-meters n) adds 'n' level meters to a pane at the top of the Snd window"
   (let* ((parent (list-ref (main-widgets) 3))
 	 (height 70)
-	 (width (inexact->exact (floor (/ (cadr (XtGetValues parent (list XmNwidth 0))) n))))
+	 (width (floor (/ (cadr (XtGetValues parent (list XmNwidth 0))) n)))
 	 (meters (XtCreateManagedWidget "meters" xmFormWidgetClass parent
 	 	   (list XmNpositionIndex 0  ; top pane
 			 XmNbackground    (basic-color)
@@ -2718,8 +2716,8 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"
 		(scl (XtCreateManagedWidget variable-name xmScaleWidgetClass row-pane
 					    (list XmNbackground  (basic-color)
 						  XmNslidingMode XmTHERMOMETER
-						  XmNminimum (inexact->exact (floor (* 100 (car range))))
-						  XmNmaximum (inexact->exact (floor (* 100 (cadr range))))
+						  XmNminimum (floor (* 100 (car range)))
+						  XmNmaximum (floor (* 100 (cadr range)))
 						  XmNdecimalPoints 2
 						  XmNtitleString title
 						  XmNorientation XmHORIZONTAL
@@ -2763,7 +2761,7 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"
 		      (XmUpdateDisplay widget)))))
 	  (if (XmIsScale widget)
 	      ;; thermometer
-	      (XmScaleSetValue widget (inexact->exact (floor (* 100 var))))))
+	      (XmScaleSetValue widget (floor (* 100 var)))))
       (if (list? widget)
 	  (if (or (number? (car widget))
 		  (sound? (car widget)))
@@ -3120,7 +3118,7 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"
 					   (list XmNorientation XmHORIZONTAL
 						 XmNshowValue   #t
 						 XmNbackground  (basic-color)
-						 XmNvalue       (inexact->exact (floor (* amplitude 100)))
+						 XmNvalue       (floor (* amplitude 100))
 						 XmNmaximum     100
 						 XmNtitleString ampstr
 						 XmNdecimalPoints 2)))

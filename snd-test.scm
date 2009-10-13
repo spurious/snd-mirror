@@ -53008,8 +53008,8 @@ EDITS: 1
 	(if (fneq total-dur (/ (frames ind) (srate ind))) 
 	    (snd-display ";with-mix (~A) total dur: ~A ~A" num total-dur (/ (frames ind) (srate ind))))
 	(if (and old-date
-		 (> (abs (- date old-date)) 1)) ; these can be off by one in Linux
-	    (snd-display ";with-mix (~A) rewrote output?: ~A ~A" num 
+		 (> (abs (- date old-date)) 10)) ; these can be off by some amount in Linux
+	    (snd-display ";with-mix (~A) rewrote output?: ~A ~A ~A" num (- date old-date)
 			 (strftime "%d-%b-%g %H:%M:%S" (localtime old-date))
 			 (strftime "%d-%b-%g %H:%M:%S" (localtime date))))
 	(if (and chkmx (or (not mx) (fneq (cadr mx) amp))) (snd-display ";with-mix sndf (~A) maxamp: ~A (~A)" num mx amp))

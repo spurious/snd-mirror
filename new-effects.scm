@@ -76,7 +76,7 @@
 					(cursor (selected-sound) (selected-channel))
 					(car ms)))))
 		       (overlap (if decay
-				    (inexact->exact (floor (* (srate) decay)))
+				    (floor (* (srate) decay))
 				    0)))
 		  (apply for-each
 			 (lambda (snd chn)
@@ -245,7 +245,7 @@
 		   (lambda (w c i)
 		     (set! gain-amount initial-gain-amount)
 		     (set! (xe-envelope gain-envelope) (list 0.0 1.0 1.0 1.0))
-		     (XtSetValues (car sliders) (list XmNvalue (inexact->exact (floor (* gain-amount 100))))))
+		     (XtSetValues (car sliders) (list XmNvalue (floor (* gain-amount 100)))))
 		   
 		   (lambda () 
 		     (effect-target-ok gain-target))))
@@ -327,7 +327,7 @@
 		   
 		   (lambda (w c i)
 		     (set! normalize-amount initial-normalize-amount)
-		     (XtSetValues (car sliders) (list XmNvalue (inexact->exact (floor (* normalize-amount 100))))))
+		     (XtSetValues (car sliders) (list XmNvalue (floor (* normalize-amount 100)))))
 		   
 		   (lambda () 
 		     (effect-target-ok normalize-target))))
@@ -392,7 +392,7 @@
 		   
 		   (lambda (w c i)
 		     (set! gate-amount initial-gate-amount)
-		     (XtSetValues (car sliders) (list XmNvalue (inexact->exact (floor (* gate-amount 1000))))))
+		     (XtSetValues (car sliders) (list XmNvalue (floor (* gate-amount 1000)))))
 		   
 		   (lambda () 
 		     (not (null? (sounds))))))
@@ -436,7 +436,7 @@
 
 (define* (effects-echo input-samps-1 delay-time echo-amount :optional beg dur snd chn)
   "(effects-echo input-samps-1 delay-time echo-amount :optional beg dur snd chn) is used by the effects dialog to tie into edit-list->function"
-  (let ((del (make-delay (inexact->exact (round (* delay-time (srate snd))))))
+  (let ((del (make-delay (round (* delay-time (srate snd)))))
 	(samp 0)
 	(input-samps (or input-samps-1 dur (frames snd chn))))
     (map-channel (lambda (inval)
@@ -450,7 +450,7 @@
 (define* (effects-flecho-1 scaler secs input-samps-1 :optional beg dur snd chn)
   "(effects-flecho-1 scaler secs input-samps-1 :optional beg dur snd chn) is used by the effects dialog to tie into edit-list->function"
   (let* ((flt (make-fir-filter :order 4 :xcoeffs (vct .125 .25 .25 .125)))
-	 (del (make-delay  (inexact->exact (round (* secs (srate snd))))))
+	 (del (make-delay (round (* secs (srate snd)))))
 	 (samp 0)
 	 (input-samps (or input-samps-1 dur (frames snd chn))))
     (map-channel (lambda (inval)
@@ -464,8 +464,8 @@
 (define* (effects-zecho-1 scaler secs frq amp input-samps-1 :optional beg dur snd chn)
   "(effects-zecho-1 scaler secs frq amp input-samps-1 :optional beg dur snd chn) is used by the effects dialog to tie into edit-list->function"
   (let* ((os (make-oscil frq))
-	 (len (inexact->exact (round (* secs (srate snd)))))
-	 (del (make-delay len :max-size (inexact->exact (round (+ len amp 1)))))
+	 (len (round (* secs (srate snd))))
+	 (del (make-delay len :max-size (round (+ len amp 1))))
 	 (samp 0)
 	 (input-samps (or input-samps-1 dur (frames snd chn))))
     (map-channel (lambda (inval)
@@ -508,7 +508,7 @@
 		   (lambda (w context info)
 		     (map-chan-over-target-with-sync
 		      (lambda (input-samps) 
-			(let ((del (make-delay (inexact->exact (round (* delay-time (srate))))))
+			(let ((del (make-delay (round (* delay-time (srate)))))
 			      (samp 0))
 			  (lambda (inval)
 			    (set! samp (+ 1 samp))
@@ -529,9 +529,9 @@
 		   
 		   (lambda (w c i)   
 		     (set! delay-time initial-delay-time)
-		     (XtSetValues (car sliders) (list XmNvalue (inexact->exact (floor (* delay-time 100)))))
+		     (XtSetValues (car sliders) (list XmNvalue (floor (* delay-time 100))))
 		     (set! echo-amount initial-echo-amount)
-		     (XtSetValues (cadr sliders) (list XmNvalue (inexact->exact (floor (* echo-amount 100))))))
+		     (XtSetValues (cadr sliders) (list XmNvalue (floor (* echo-amount 100)))))
 		   
 		   (lambda ()
 		     (effect-target-ok echo-target))))
@@ -579,7 +579,7 @@
     (define flecho-1
       (lambda (scaler secs input-samps)
 	(let* ((flt (make-fir-filter :order 4 :xcoeffs (vct .125 .25 .25 .125)))
-	       (del (make-delay  (inexact->exact (round (* secs (srate))))))
+	       (del (make-delay (round (* secs (srate)))))
 	       (samp 0))
 	  (lambda (inval)
 	    (set! samp (+ 1 samp))
@@ -615,9 +615,9 @@
 		   
 		   (lambda (w c i)
 		     (set! flecho-scaler initial-flecho-scaler)
-		     (XtSetValues (list-ref sliders 0) (list XmNvalue (inexact->exact (floor (* flecho-scaler 100)))))
+		     (XtSetValues (list-ref sliders 0) (list XmNvalue (floor (* flecho-scaler 100))))
 		     (set! flecho-delay initial-flecho-delay)
-		     (XtSetValues (list-ref sliders 1) (list XmNvalue (inexact->exact (floor (* flecho-delay 100))))))
+		     (XtSetValues (list-ref sliders 1) (list XmNvalue (floor (* flecho-delay 100)))))
 		   
 		   (lambda () 
 		     (effect-target-ok flecho-target))))
@@ -668,8 +668,8 @@
     (define zecho-1
       (lambda (scaler secs frq amp input-samps)
 	(let* ((os (make-oscil frq))
-	       (len (round (inexact->exact (* secs (srate)))))
-	       (del (make-delay len :max-size (inexact->exact (round (+ len amp 1)))))
+	       (len (round (* secs (srate))))
+	       (del (make-delay len :max-size (round (+ len amp 1))))
 	       (samp 0))
 	  (lambda (inval)
 	    (set! samp (+ 1 samp))
@@ -709,13 +709,13 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 		   
 		   (lambda (w c i)
 		     (set! zecho-scaler initial-zecho-scaler)
-		     (XtSetValues (list-ref sliders 0) (list XmNvalue (inexact->exact (floor (* zecho-scaler 100)))))
+		     (XtSetValues (list-ref sliders 0) (list XmNvalue (floor (* zecho-scaler 100))))
 		     (set! zecho-delay initial-zecho-delay)
-		     (XtSetValues (list-ref sliders 1) (list XmNvalue (inexact->exact (floor (* zecho-delay 100)))))
+		     (XtSetValues (list-ref sliders 1) (list XmNvalue (floor (* zecho-delay 100))))
 		     (set! zecho-freq initial-zecho-freq)
-		     (XtSetValues (list-ref sliders 2) (list XmNvalue (inexact->exact (floor (* zecho-freq 100)))))
+		     (XtSetValues (list-ref sliders 2) (list XmNvalue (floor (* zecho-freq 100))))
 		     (set! zecho-amp initial-zecho-amp)
-		     (XtSetValues (list-ref sliders 3) (list XmNvalue (inexact->exact (floor (* zecho-amp 100))))))
+		     (XtSetValues (list-ref sliders 3) (list XmNvalue (floor (* zecho-amp 100)))))
 		   
 		   (lambda () 
 		     (effect-target-ok zecho-target))))
@@ -863,7 +863,7 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 		     (set! band-pass-freq initial-band-pass-freq)
 		     (XtSetValues (car sliders) (list XmNvalue (scale-log->linear 20 band-pass-freq 22050)))
 		     (set! band-pass-bw initial-band-pass-bw)
-		     (XtSetValues (cadr sliders) (list XmNvalue (inexact->exact (floor band-pass-bw)))))
+		     (XtSetValues (cadr sliders) (list XmNvalue (floor band-pass-bw))))
 		   
 		   (lambda () 
 		     (effect-target-ok band-pass-target))))
@@ -934,7 +934,7 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 		     (set! notch-freq initial-notch-freq)
 		     (XtSetValues (car sliders) (list XmNvalue (scale-log->linear 20 notch-freq 22050)))
 		     (set! notch-bw initial-notch-bw)
-		     (XtSetValues (cadr sliders) (list XmNvalue (inexact->exact (floor notch-bw)))))
+		     (XtSetValues (cadr sliders) (list XmNvalue (floor notch-bw))))
 		   
 		   (lambda () 
 		     (effect-target-ok notch-target))))
@@ -1134,9 +1134,9 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 		   
 		   (lambda (w c i)
 		     (set! comb-scaler initial-comb-scaler)
-		     (XtSetValues (car sliders) (list XmNvalue (inexact->exact (floor (* comb-scaler 100)))))
+		     (XtSetValues (car sliders) (list XmNvalue (floor (* comb-scaler 100))))
 		     (set! comb-size initial-comb-size)
-		     (XtSetValues (cadr sliders) (list XmNvalue (inexact->exact (floor comb-size)))))
+		     (XtSetValues (cadr sliders) (list XmNvalue (floor comb-size))))
 		   
 		   (lambda () 
 		     (effect-target-ok comb-target))))
@@ -1224,15 +1224,15 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 		   
 		   (lambda (w c i)
 		     (set! new-comb-chord-scaler initial-new-comb-chord-scaler)
-		     (XtSetValues (list-ref sliders 0) (list XmNvalue (inexact->exact (floor (* new-comb-chord-scaler 100)))))
+		     (XtSetValues (list-ref sliders 0) (list XmNvalue (floor (* new-comb-chord-scaler 100))))
 		     (set! new-comb-chord-size initial-new-comb-chord-size)
 		     (XtSetValues (list-ref sliders 1) (list XmNvalue new-comb-chord-size))
 		     (set! new-comb-chord-amp initial-new-comb-chord-amp)
-		     (XtSetValues (list-ref sliders 2) (list XmNvalue (inexact->exact (floor (* new-comb-chord-amp 100)))))
+		     (XtSetValues (list-ref sliders 2) (list XmNvalue (floor (* new-comb-chord-amp 100))))
 		     (set! new-comb-chord-interval-one initial-new-comb-chord-interval-one)
-		     (XtSetValues (list-ref sliders 3) (list XmNvalue (inexact->exact (floor (* new-comb-chord-interval-one 100)))))
+		     (XtSetValues (list-ref sliders 3) (list XmNvalue (floor (* new-comb-chord-interval-one 100))))
 		     (set! new-comb-chord-interval-two initial-new-comb-chord-interval-two)
-		     (XtSetValues (list-ref sliders 4) (list XmNvalue (inexact->exact (floor (* new-comb-chord-interval-two 100))))))
+		     (XtSetValues (list-ref sliders 4) (list XmNvalue (floor (* new-comb-chord-interval-two 100)))))
 		   
 		   (lambda () 
 		     (effect-target-ok new-comb-chord-target))))
@@ -1321,7 +1321,7 @@ Move the sliders to set the filter cutoff frequency and resonance."))
 		     (set! moog-cutoff-frequency initial-moog-cutoff-frequency)
 		     (XtSetValues (car sliders) (list XmNvalue (scale-log->linear 20 moog-cutoff-frequency 22050)))
 		     (set! moog-resonance initial-moog-resonance)
-		     (XtSetValues (cadr sliders) (list XmNvalue (inexact->exact (floor (* moog-resonance 100))))))
+		     (XtSetValues (cadr sliders) (list XmNvalue (floor (* moog-resonance 100)))))
 		   
 		   (lambda () 
 		     (effect-target-ok moog-target))))
@@ -1489,7 +1489,7 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 		   
 		   (lambda (w c i)
 		     (set! src-amount initial-src-amount)
-		     (XtSetValues (car sliders) (list XmNvalue (inexact->exact (floor (* src-amount 100))))))
+		     (XtSetValues (car sliders) (list XmNvalue (floor (* src-amount 100)))))
 		   
 		   (lambda () 
 		     (effect-target-ok src-target))))
@@ -1568,15 +1568,15 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 		   
 		   (lambda (w c i)
 		     (set! time-scale initial-time-scale)
-		     (XtSetValues (list-ref sliders 0) (list XmNvalue (inexact->exact (floor (* time-scale 100)))))
+		     (XtSetValues (list-ref sliders 0) (list XmNvalue (floor (* time-scale 100))))
 		     (set! hop-size initial-hop-size)
-		     (XtSetValues (list-ref sliders 1) (list XmNvalue (inexact->exact (floor (* hop-size 100)))))
+		     (XtSetValues (list-ref sliders 1) (list XmNvalue (floor (* hop-size 100))))
 		     (set! segment-length initial-segment-length)
-		     (XtSetValues (list-ref sliders 2) (list XmNvalue (inexact->exact (floor (* segment-length 100)))))
+		     (XtSetValues (list-ref sliders 2) (list XmNvalue (floor (* segment-length 100))))
 		     (set! ramp-scale initial-ramp-scale)
-		     (XtSetValues (list-ref sliders 3) (list XmNvalue (inexact->exact (floor (* ramp-scale 100)))))
+		     (XtSetValues (list-ref sliders 3) (list XmNvalue (floor (* ramp-scale 100))))
 		     (set! pitch-scale initial-pitch-scale)
-		     (XtSetValues (list-ref sliders 4) (list XmNvalue (inexact->exact (floor (* pitch-scale 100))))))
+		     (XtSetValues (list-ref sliders 4) (list XmNvalue (floor (* pitch-scale 100)))))
 		   
 		   (lambda () 
 		     (effect-target-ok expsrc-target))))
@@ -1671,7 +1671,7 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 		   (lambda (w c i)
 		     (set! src-timevar-scale initial-src-timevar-scale)
 		     (set! (xe-envelope src-timevar-envelope) (list 0.0 1.0 1.0 1.0))
-		     (XtSetValues (car sliders) (list XmNvalue (inexact->exact (* src-timevar-scale 100)))))
+		     (XtSetValues (car sliders) (list XmNvalue (* src-timevar-scale 100))))
 		   
 		   (lambda () 
 		     (effect-target-ok src-timevar-target))))
@@ -1810,7 +1810,7 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 		   (lambda (w c i)
 		     (set! am-effect-amount initial-am-effect-amount)
 		     (set! (xe-envelope am-effect-envelope) (list 0.0 1.0 1.0 1.0))
-		     (XtSetValues (car sliders) (list XmNvalue (inexact->exact (floor am-effect-amount)))))
+		     (XtSetValues (car sliders) (list XmNvalue (floor am-effect-amount))))
 		   
 		   (lambda () 
 		     (effect-target-ok am-effect-target))))
@@ -1993,7 +1993,7 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 	 (comb2 (make-comb 0.733 4999))
 	 (comb3 (make-comb 0.715 5399))
 	 (comb4 (make-comb 0.697 5801))
-	 (outdel1 (make-delay (inexact->exact (round (* .013 (srate))))))
+	 (outdel1 (make-delay (round (* .013 (srate)))))
 	 (comb-sum 0.0)
 	 (comb-sum-1 0.0)
 	 (comb-sum-2 0.0)
@@ -2079,11 +2079,11 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
 		   
 		   (lambda (w c i)
 		     (set! reverb-amount initial-reverb-amount)
-		     (XtSetValues (car sliders) (list XmNvalue (inexact->exact (floor (* reverb-amount 100)))))
+		     (XtSetValues (car sliders) (list XmNvalue (floor (* reverb-amount 100))))
 		     (set! reverb-filter initial-reverb-filter)
-		     (XtSetValues (cadr sliders) (list XmNvalue (inexact->exact (floor (* reverb-filter 100)))))
+		     (XtSetValues (cadr sliders) (list XmNvalue (floor (* reverb-filter 100))))
 		     (set! reverb-feedback initial-reverb-feedback)
-		     (XtSetValues (caddr sliders) (list XmNvalue (inexact->exact (floor (* reverb-feedback 100))))))
+		     (XtSetValues (caddr sliders) (list XmNvalue (floor (* reverb-feedback 100)))))
 		   
 		   (lambda () 
 		     (effect-target-ok reverb-target))))
@@ -2157,9 +2157,9 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
 		   
 		   (lambda (w c i)
 		     (set! jc-reverb-decay initial-jc-reverb-decay)
-		     (XtSetValues (list-ref sliders 0) (list XmNvalue (inexact->exact (floor (* jc-reverb-decay 100)))))
+		     (XtSetValues (list-ref sliders 0) (list XmNvalue (floor (* jc-reverb-decay 100))))
 		     (set! jc-reverb-volume initial-jc-reverb-volume)
-		     (XtSetValues (list-ref sliders 1) (list XmNvalue (inexact->exact (floor (* jc-reverb-volume 100))))))
+		     (XtSetValues (list-ref sliders 1) (list XmNvalue (floor (* jc-reverb-volume 100)))))
 		   
 		   (lambda () 
 		     (effect-target-ok jc-reverb-target))))
@@ -2228,7 +2228,7 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
 		     (set! convolve-sound-two initial-convolve-sound-two)
 		     (XtSetValues (list-ref sliders 1) (list XmNvalue convolve-sound-two))
 		     (set! convolve-amp initial-convolve-amp)
-		     (XtSetValues (list-ref sliders 2) (list XmNvalue (inexact->exact (floor (* convolve-amp 100))))))
+		     (XtSetValues (list-ref sliders 2) (list XmNvalue (floor (* convolve-amp 100)))))
 		   
 		   (lambda () 
 		     (not (null? (sounds))))))
@@ -2272,7 +2272,7 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
 	 (j 0)
 	 (len (or dur (frames snd chn)))
 	 (in-data (channel->vct beg len snd chn))
-	 (out-len (inexact->exact (round (* len (+ 1.0 (* 2 amp))))))
+	 (out-len (round (* len (+ 1.0 (* 2 amp)))))
 	 (out-data (make-vct out-len))
 	 (rd (make-src :srate 1.0
 		       :input (lambda (dir)
@@ -2329,8 +2329,8 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
 (define* (effects-flange amount speed time :optional beg dur snd chn)
   "(effects-flange amount speed time :optional beg dur snd chn) is used by the effects dialog to tie into edit-list->function"
   (let* ((ri (make-rand-interp :frequency speed :amplitude amount))
-	 (len (inexact->exact (round (* time (srate snd)))))
-	 (del (make-delay len :max-size (inexact->exact (round (+ len amount 1))))))
+	 (len (round (* time (srate snd))))
+	 (del (make-delay len :max-size (round (+ len amount 1)))))
     (map-channel (lambda (inval)
 		   (* .75 (+ inval
 			     (delay del
@@ -2506,7 +2506,7 @@ a number, the sound is split such that 0 is all in channel 0 and 90 is all in ch
 		   
 		   (lambda (w context info)
 		     (insert-silence (cursor)
-				     (inexact->exact (floor (* (srate) silence-amount)))))
+				     (floor (* (srate) silence-amount))))
 		   
 		   (lambda (w context info)
 		     (help-dialog "Add silence"
@@ -2514,7 +2514,7 @@ a number, the sound is split such that 0 is all in channel 0 and 90 is all in ch
 		   
 		   (lambda (w c i)
 		     (set! silence-amount initial-silence-amount)
-		     (XtSetValues (car sliders) (list XmNvalue (inexact->exact (floor (* silence-amount 100))))))
+		     (XtSetValues (car sliders) (list XmNvalue (floor (* silence-amount 100)))))
 		   
 		   (lambda ()
 		     (not (null? (sounds))))))
@@ -2577,7 +2577,7 @@ a number, the sound is split such that 0 is all in channel 0 and 90 is all in ch
 		   
 		   (lambda (w c i)
 		     (set! contrast-amount initial-contrast-amount)
-		     (XtSetValues (car sliders) (list XmNvalue (inexact->exact (floor (* contrast-amount 100))))))
+		     (XtSetValues (car sliders) (list XmNvalue (floor (* contrast-amount 100)))))
 		   
 		   (lambda () 
 		     (effect-target-ok contrast-target))))
@@ -2650,13 +2650,13 @@ the synthesis amplitude, the FFT size, and the radius value."))
 		     (set! cross-synth-sound initial-cross-synth-sound)
 		     (XtSetValues (list-ref sliders 0) (list XmNvalue cross-synth-sound))
 		     (set! cross-synth-amp initial-cross-synth-amp)
-		     (XtSetValues (list-ref sliders 1) (list XmNvalue (inexact->exact (floor (* cross-synth-amp 100)))))
+		     (XtSetValues (list-ref sliders 1) (list XmNvalue (floor (* cross-synth-amp 100))))
 		     (set! cross-synth-fft-size initial-cross-synth-fft-size)
 		     (if use-combo-box-for-fft-size
 			 (XtSetValues cross-synth-default-fft-widget (list XmNselectedPosition 1))
 			 (XmToggleButtonSetState cross-synth-default-fft-widget #t #t))
 		     (set! cross-synth-radius initial-cross-synth-radius)
-		     (XtSetValues (list-ref sliders 2) (list XmNvalue (inexact->exact (floor (* cross-synth-radius 100))))))
+		     (XtSetValues (list-ref sliders 2) (list XmNvalue (floor (* cross-synth-radius 100)))))
 		   
 		   (lambda () 
 		     (effect-target-ok cross-synth-target))))
@@ -2811,8 +2811,8 @@ the synthesis amplitude, the FFT size, and the radius value."))
 		     (map-chan-over-target-with-sync 
 		      (lambda (ignored)
 			(let* ((ri (make-rand-interp :frequency flange-speed :amplitude flange-amount))
-			       (len (inexact->exact (round (* flange-time (srate)))))
-			       (del (make-delay len :max-size (inexact->exact (round (+ len flange-amount 1))))))
+			       (len (round (* flange-time (srate))))
+			       (del (make-delay len :max-size (round (+ len flange-amount 1)))))
 			  (lambda (inval)
 			    (* .75 (+ inval
 				      (delay del
@@ -2829,11 +2829,11 @@ the synthesis amplitude, the FFT size, and the radius value."))
 		   
 		   (lambda (w c i)
 		     (set! flange-speed initial-flange-speed)
-		     (XtSetValues (car sliders) (list XmNvalue (inexact->exact (floor (* flange-speed 10)))))
+		     (XtSetValues (car sliders) (list XmNvalue (floor (* flange-speed 10))))
 		     (set! flange-amount initial-flange-amount)
-		     (XtSetValues (cadr sliders) (list XmNvalue (inexact->exact (floor (* flange-amount 10)))))
+		     (XtSetValues (cadr sliders) (list XmNvalue (floor (* flange-amount 10))))
 		     (set! flange-time initial-flange-time)
-		     (XtSetValues (caddr sliders) (list XmNvalue (inexact->exact (floor (* flange-time 100))))))
+		     (XtSetValues (caddr sliders) (list XmNvalue (floor (* flange-time 100)))))
 		   
 		   (lambda () 
 		     (effect-target-ok flange-target))))
@@ -2900,7 +2900,7 @@ the synthesis amplitude, the FFT size, and the radius value."))
 		   
 		   (lambda (w c i)
 		     (set! random-phase-amp-scaler initial-random-phase-amp-scaler)
-		     (XtSetValues (car sliders) (list XmNvalue (inexact->exact (floor (* random-phase-amp-scaler 100))))))
+		     (XtSetValues (car sliders) (list XmNvalue (floor (* random-phase-amp-scaler 100)))))
 		   
 		   (lambda ()
 		     (not (null? (sounds))))))
@@ -2967,11 +2967,11 @@ the synthesis amplitude, the FFT size, and the radius value."))
 		   
 		   (lambda (w c i)
 		     (set! samp-rate initial-samp-rate)
-		     (XtSetValues (car sliders) (list XmNvalue (inexact->exact (floor (* samp-rate 100)))))
+		     (XtSetValues (car sliders) (list XmNvalue (floor (* samp-rate 100))))
 		     (set! osc-amp initial-osc-amp)
-		     (XtSetValues (cadr sliders) (list XmNvalue (inexact->exact (floor (* osc-amp 100)))))
+		     (XtSetValues (cadr sliders) (list XmNvalue (floor (* osc-amp 100))))
 		     (set! osc-freq initial-osc-freq)
-		     (XtSetValues (caddr sliders) (list XmNvalue (inexact->exact (floor (* osc-freq 100))))))
+		     (XtSetValues (caddr sliders) (list XmNvalue (floor (* osc-freq 100)))))
 		   
 		   (lambda () 
 		     (effect-target-ok robotize-target))))
@@ -3035,7 +3035,7 @@ the synthesis amplitude, the FFT size, and the radius value."))
 		   
 		   (lambda (w c i)
 		     (set! rubber-factor initial-rubber-factor)
-		     (XtSetValues (car sliders) (list XmNvalue (inexact->exact (floor (* rubber-factor 100))))))
+		     (XtSetValues (car sliders) (list XmNvalue (floor (* rubber-factor 100)))))
 		   
 		   (lambda () 
 		     (effect-target-ok rubber-target))))
@@ -3107,9 +3107,9 @@ the synthesis amplitude, the FFT size, and the radius value."))
 		   
 		   (lambda (w c i)
 		     (set! wobble-frequency initial-wobble-frequency)
-		     (XtSetValues (car sliders) (list XmNvalue (inexact->exact (floor (* wobble-frequency 100)))))
+		     (XtSetValues (car sliders) (list XmNvalue (floor (* wobble-frequency 100))))
 		     (set! wobble-amplitude initial-wobble-amplitude)
-		     (XtSetValues (cadr sliders) (list XmNvalue (inexact->exact (floor (* wobble-amplitude 100))))))
+		     (XtSetValues (cadr sliders) (list XmNvalue (floor (* wobble-amplitude 100)))))
 		   
 		   (lambda () 
 		     (effect-target-ok wobble-target))))

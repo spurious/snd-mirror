@@ -78,8 +78,8 @@ This version of the fm-violin assumes it is running within with-sound (where *ou
 			(if easy-case 
 			    (make-polywave (* fm1-rat frequency) 
 					   (list (inexact->exact fm1-rat) index1
-						 (inexact->exact (floor (/ fm2-rat fm1-rat))) index2
-						 (inexact->exact (floor (/ fm3-rat fm1-rat))) index3)
+						 (floor (/ fm2-rat fm1-rat)) index2
+						 (floor (/ fm3-rat fm1-rat)) index3)
 					   mus-chebyshev-second-kind)
 			    (make-oscil (* fm1-rat frequency)))
 			#f))

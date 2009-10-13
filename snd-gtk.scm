@@ -180,9 +180,8 @@
     (define (y->grfy y range)
       (min ay1
 	   (max ay0
-		(inexact->exact
-		 (round (+ ay0
-			   (* range (- 10.0 y))))))))
+		(round (+ ay0
+			  (* range (- 10.0 y)))))))
 
     (define (cairo-draw-lines cr data size)
       (cairo_set_line_width cr 4.0)
@@ -210,7 +209,7 @@
 		      (cairo_fill cr)))
 		(cairo_set_source_rgb cr 0.0 0.0 0.0)
 		(cairo_set_line_width cr 1.0)
-		(let ((x (inexact->exact (floor ax0)))
+		(let ((x (floor ax0))
 		      (y (y->grfy (vct-ref gx0 0) diff)))
 		  (cairo_move_to cr x y)
 		  (vector-set! vect 0 x)
@@ -219,7 +218,7 @@
 		     (j 2 (+ j 2))
 		     (xi (+ ax0 xincr) (+ xi xincr)))
 		    ((= i size))
-		  (let ((x (inexact->exact (floor xi)))
+		  (let ((x (floor xi))
 			(y (y->grfy (vct-ref gx0 i) diff)))
 		    (vector-set! vect j x)
 		    (vector-set! vect (+ j 1) y)
@@ -239,7 +238,7 @@
 		     (j 0 (+ j 2))
 		     (xi ax0 (+ xi xincr)))
 		    ((= i size))
-		  (vector-set! vect j (inexact->exact (floor xi)))
+		  (vector-set! vect j (floor xi))
 		  (vector-set! vect (+ j 1) (y->grfy (vct-ref gx0 i) diff)))
 		(if pts1 (freeGdkPoints pts1))
 		(set! pts0 (vector->GdkPoints vect))
@@ -431,7 +430,7 @@
 	 (height (+ 8 (cadr wh))))
 
     (define (smpte-label samp sr)
-      (define (round-down val) (inexact->exact (truncate val)))
+      (define (round-down val) (truncate val))
       (let* ((seconds (/ samp sr))
 	     (frames (* seconds smpte-frames-per-second))
 	     (minutes (round-down (/ seconds 60)))
@@ -808,8 +807,8 @@ Reverb-feedback sets the scaler on the feedback.
 		(gdk_gc_set_foreground dgc black-pixel)
 		(gdk_draw_arc pixwin dgc #f 1 1 14 14 0 (* 64 360))
 		(gdk_draw_line pixwin dgc 8 8 
-			       (+ 8 (inexact->exact (round (* 7 (sin (* i (/ 3.1416 6.0)))))))
-			       (- 8 (inexact->exact (round (* 7 (cos (* i (/ 3.1416 6.0))))))))))
+			       (+ 8 (round (* 7 (sin (* i (/ 3.1416 6.0))))))
+			       (- 8 (round (* 7 (cos (* i (/ 3.1416 6.0)))))))))
 	    (gdk_gc_set_foreground dgc (data-color))
 	    (lambda (snd hour)
 	      (gdk_draw_drawable (GDK_DRAWABLE (gtk_widget_get_window (list-ref (sound-widgets snd) 8))) dgc 
@@ -954,11 +953,11 @@ Reverb-feedback sets the scaler on the feedback.
 	 (height (list-ref meter-data 6))
 	 ;; (size (list-ref meter-data 2))
 	 (win (GDK_DRAWABLE (gtk_widget_get_window meter)))
-	 (major-tick (inexact->exact (round (/ width 24))))
-	 (minor-tick (inexact->exact (round (* major-tick .6))))
-	 (wid2 (inexact->exact (floor (/ width 2))))
+	 (major-tick (round (/ width 24)))
+	 (minor-tick (round (* major-tick .6)))
+	 (wid2 (floor (/ width 2)))
 	 (gc (car (snd-gcs)))
-	 (top (inexact->exact (round (/ height 3.2))))) ; distance of label from top of meter
+	 (top (round (/ height 3.2)))) ; distance of label from top of meter
 
     (if (provided? 'cairo)
 	;; this is too slow -- can we save the plate? (also if just 1 meter, put pivot higher?)
@@ -1063,10 +1062,10 @@ Reverb-feedback sets the scaler on the feedback.
 	    (let* ((rdeg (degrees->radians (- 45 (* i 22.5))))
 		   (sinr (sin rdeg))
 		   (cosr (cos rdeg))
-		   (x0 (inexact->exact (round (+ wid2 (* wid2 sinr)))))
-		   (y0 (inexact->exact (round (- (+ wid2 top) (* wid2 cosr)))))
-		   (x1 (inexact->exact (round (+ wid2 (* (+ wid2 major-tick) sinr)))))
-		   (y1 (inexact->exact (round (- (+ wid2 top) (* (+ wid2 major-tick) cosr))))))
+		   (x0 (round (+ wid2 (* wid2 sinr))))
+		   (y0 (round (- (+ wid2 top) (* wid2 cosr))))
+		   (x1 (round (+ wid2 (* (+ wid2 major-tick) sinr))))
+		   (y1 (round (- (+ wid2 top) (* (+ wid2 major-tick) cosr)))))
 	      (gdk_draw_line win gc x0 y0 x1 y1)
 	      (gdk_draw_line win gc (+ x0 1) y0 (+ x1 1) y1)
 	      (if (< i 4)
@@ -1075,10 +1074,10 @@ Reverb-feedback sets the scaler on the feedback.
 		    (let* ((rdeg (degrees->radians (- 45 (* i 22.5) (* j (/ 90.0 20.0)))))
 			   (sinr (sin rdeg))
 			   (cosr (cos rdeg))
-			   (x0 (inexact->exact (round (* wid2 (+ 1.0 sinr)))))
-			   (y0 (inexact->exact (round (- (+ wid2 top) (* wid2 cosr)))))
-			   (x1 (inexact->exact (round (+ wid2 (* (+ wid2 minor-tick) sinr)))))
-			   (y1 (inexact->exact (round (- (+ wid2 top) (* (+ wid2 minor-tick) cosr))))))
+			   (x0 (round (* wid2 (+ 1.0 sinr))))
+			   (y0 (round (- (+ wid2 top) (* wid2 cosr))))
+			   (x1 (round (+ wid2 (* (+ wid2 minor-tick) sinr))))
+			   (y1 (round (- (+ wid2 top) (* (+ wid2 minor-tick) cosr)))))
 		      (gdk_draw_line win gc x0 y0 x1 y1))))))
 	  (let* ((needle-speed 0.25)
 		 (bubble-speed 0.025)
@@ -1086,8 +1085,8 @@ Reverb-feedback sets the scaler on the feedback.
 		 (val (+ (* level needle-speed) (* last-level (- 1.0 needle-speed))))
 		 (deg (- (* val 90.0) 45.0))
 		 (rdeg (degrees->radians deg))
-		 (nx1 (inexact->exact (round (+ wid2 (* (+ wid2 major-tick) (sin rdeg))))))
-		 (ny1 (inexact->exact (round (- (+ wid2 top) (* (+ wid2 major-tick) (cos rdeg)))))))
+		 (nx1 (round (+ wid2 (* (+ wid2 major-tick) (sin rdeg)))))
+		 (ny1 (round (- (+ wid2 top) (* (+ wid2 major-tick) (cos rdeg))))))
 	    (gdk_draw_line win gc wid2 (+ top wid2) nx1 ny1)
 	    (list-set! meter-data 3 val)
 	    (if (> val red-deg)
@@ -1096,7 +1095,7 @@ Reverb-feedback sets the scaler on the feedback.
 	    (if (> (list-ref meter-data 4) .01)
 		(begin
 		  (gdk_gc_set_foreground gc red-pixel)
-		  (let* ((redx (inexact->exact (floor (* (list-ref meter-data 4) 90 64))))
+		  (let* ((redx (floor (* (list-ref meter-data 4) 90 64)))
 			 (redy (min redx bubble-size)))
 		    (do ((i 0 (+ 1 i)))
 			((= i 4))
@@ -1109,7 +1108,7 @@ Reverb-feedback sets the scaler on the feedback.
   (let* ((parent (list-ref (main-widgets) 5))
 	 (height (if (> n 2) 70 85))
 	 (parent-width (cadr (gdk_drawable_get_size (GDK_DRAWABLE (gtk_widget_get_window parent)))))
-	 (width (inexact->exact (floor (/ parent-width n))))
+	 (width (floor (/ parent-width n)))
 	 (meters (gtk_hbox_new #t 4))
 	 (meter-list '()))
     (gtk_box_pack_start (GTK_BOX parent) meters #f #f 4)
@@ -1555,7 +1554,7 @@ Reverb-feedback sets the scaler on the feedback.
 
 (define (draw-page operation context page_num data)
   (let* ((cr (gtk_print_context_get_cairo_context context))
-	 (width (inexact->exact (round (gtk_print_context_get_width context)))))
+	 (width (round (gtk_print_context_get_width context))))
 
     (cairo_rectangle cr 0 0 width 10)
     (cairo_set_source_rgb cr 0.8 0.8 0.8)

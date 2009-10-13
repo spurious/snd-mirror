@@ -184,7 +184,7 @@
 	((= chan chans))
       (let ((player (make-player sound chan))
 	    (e (make-env (channel-envelope sound chan) 
-			 :length (inexact->exact (floor (exact->inexact (/ (frames sound chan) (dac-size))))))))
+			 :length (floor (exact->inexact (/ (frames sound chan) (dac-size)))))))
 	(add-player player 0 -1 -1 (lambda (reason) (reset-hook! play-hook)))
 	(add-hook! play-hook (lambda (fr)
 			       ;; if fr (dac buffer size in frames) is not dac-size, we should do something debonair
@@ -201,7 +201,7 @@
 	 (len (frames sound 0)))
     (snd-print (format #f "audio-fd: ~A " audio-fd))
     (if (not (= audio-fd -1))
-	(let ((e (make-env (channel-envelope sound 0) :length (inexact->exact (floor (/ len bufsize))))))
+	(let ((e (make-env (channel-envelope sound 0) :length (floor (/ len bufsize)))))
 	  (catch #t
 		 (lambda ()
 		   (do ((res #f (let* ((scaler (env e))

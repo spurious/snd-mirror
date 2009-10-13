@@ -58,7 +58,7 @@
 (def-clm-struct dlya (outp 0 :type float) (input #f :type clm))
 
 (define (make-delaya len lag) 
-  (make-dlya :input (make-delay len :type mus-interp-all-pass :max-size (inexact->exact (ceiling (+ len lag 1))))
+  (make-dlya :input (make-delay len :type mus-interp-all-pass :max-size (ceiling (+ len lag 1)))
 	     :outp (- lag (+ len 1))))
 
 (define (delaya d sample)
@@ -67,7 +67,7 @@
 
 (define (make-delayl len lag)
   ;; Perry's original had linear interp bug, I think -- this form is more in tune
-  (make-dlya :input (make-delay len :max-size (inexact->exact (ceiling (+ len lag 1))))
+  (make-dlya :input (make-delay len :max-size (ceiling (+ len lag 1)))
 	     :outp (- lag len)))
 
 (define (delayl d sample)
@@ -80,7 +80,7 @@
 
 (definstrument (plucky beg dur freq amplitude maxa)
   (let* ((lowestfreq 100.0)
-	 (len (+ 1 (inexact->exact (floor (/ (mus-srate) lowestfreq)))))
+	 (len (+ 1 (floor (/ (mus-srate) lowestfreq))))
 	 (delayline (make-delaya len (- (/ (mus-srate) freq) 0.5)))
 	 (filter (make-onezero))
 	 (start (seconds->samples beg))
@@ -103,11 +103,11 @@
 ;;; freq is off in this one (in prc's original also)
 (definstrument (bowstr beg dur frq amplitude maxa)
   (let* ((lowestfreq 100.0)
-	 (len (+ 1 (inexact->exact (floor (/ (mus-srate) lowestfreq)))))
+	 (len (+ 1 (floor (/ (mus-srate) lowestfreq))))
 	 (ratio 0.8317)
 	 (temp (- (/ (mus-srate) frq) 4.0))
 	 (neckdelay (make-delayl len (* temp ratio)))
-	 (bridgedelay (make-delayl (inexact->exact (floor (/ len 2))) (* temp (- 1.0 ratio))))
+	 (bridgedelay (make-delayl (floor (/ len 2)) (* temp (- 1.0 ratio))))
 	 (bowtab (make-bowtable :slope 3.0))
 	 (filt (make-onep))
 	 (rate .001)
@@ -120,7 +120,7 @@
 	 (end (+ st durlen))
 	 (out-data (make-vct durlen))
 	 (ctr 0)
-	 (release (inexact->exact (floor (* .8 durlen))))
+	 (release (floor (* .8 durlen)))
 	 (bridgeout 0.0)
 	 (neckout 0.0))
     (set-pole filt 0.6)
@@ -162,7 +162,7 @@
 
 (definstrument (brass beg dur freq amplitude maxa)
   (let* ((lowestfreq 100.0)
-	 (len (+ 1 (inexact->exact (floor (/ (mus-srate) lowestfreq)))))
+	 (len (+ 1 (floor (/ (mus-srate) lowestfreq))))
 	 (delayline (make-delaya len (+ 1.0 (/ (mus-srate) freq))))
 	 (lipfilter (make-formant freq))
 	 (dcblocker (make-dc-block))
@@ -174,7 +174,7 @@
 	 (st (seconds->samples beg))
 	 (durlen (seconds->samples dur))
 	 (end (+ st durlen))
-	 (release (inexact->exact (floor (* .8 durlen))))
+	 (release (floor (* .8 durlen)))
 	 (ctr 0)
 	 (dout 0.0))
     (ws-interrupt?)
@@ -204,7 +204,7 @@
 
 (definstrument (clarinet beg dur freq amplitude maxa)
   (let* ((lowestfreq 100.0)
-	 (len (+ 1 (inexact->exact (floor (/ (mus-srate) lowestfreq)))))
+	 (len (+ 1 (floor (/ (mus-srate) lowestfreq))))
 	 (delayline (make-delayl len (- (* 0.5 (/ (mus-srate) freq)) 1.0)))
 	 (rtable (make-reed :offset 0.7 :slope -0.3))
 	 (filter (make-onezero))
@@ -217,7 +217,7 @@
 	 (durlen (seconds->samples dur))
 	 (end (+ st durlen))
 	 (ctr 0)
-	 (release (inexact->exact (floor (* .8 durlen))))
+	 (release (floor (* .8 durlen)))
 	 (dlyout 0.0))
     (ws-interrupt?)
     (run
@@ -248,10 +248,10 @@
 
 (definstrument (flute beg dur freq amplitude maxa)
   (let* ((lowestfreq 100.0)
-	 (len (+ 1 (inexact->exact (floor (/ (mus-srate) lowestfreq)))))
+	 (len (+ 1 (floor (/ (mus-srate) lowestfreq))))
 	 (ratio 0.8)
 	 (temp (- (/ (mus-srate) freq) 5.0))
-	 (jetdelay (make-delayl (inexact->exact (floor (/ len 2))) (* temp (- 1.0 ratio))))
+	 (jetdelay (make-delayl (floor (/ len 2)) (* temp (- 1.0 ratio))))
 	 (boredelay (make-delayl len (* ratio temp)))
 	 (filter (make-onep))
 	 (dcblocker (make-dc-block))
@@ -267,7 +267,7 @@
 	 (durlen (seconds->samples dur))
 	 (end (+ st durlen))
 	 (ctr 0)
-	 (release (inexact->exact (floor (* .8 durlen))))
+	 (release (floor (* .8 durlen)))
 	 (boreout 0.0))
     (set-pole filter 0.8)
     (set-gain filter -1.0)

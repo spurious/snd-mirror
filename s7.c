@@ -94,6 +94,7 @@
  *          (make-vector! 32 0.0)
  *        reverse and append generic
  *        ->* for conversions (->vector, ->ratio? ->string etc)
+ *        frac-part (like imag-part, but x - floor(x)), perhaps int-part
  *
  *
  * Mike Scholz provided the FreeBSD support (complex trig funcs, etc)

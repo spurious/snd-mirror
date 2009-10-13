@@ -147,7 +147,7 @@
 	 (log-lo (/ (log (max lo 1.0)) log2))
 	 (log-hi (/ (log hi) log2))
 	 (log-val (/ (log val) log2)))
-    (inexact->exact (floor (* log-scale-ticks (/ (- log-val log-lo) (- log-hi log-lo)))))))
+    (floor (* log-scale-ticks (/ (- log-val log-lo) (- log-hi log-lo))))))
   
 (define (scale-linear->log lo val hi)
   "(scale-linear->log lo val hi) given user-relative lo..hi and scale-relative val, returns the user-relative val"
@@ -171,7 +171,7 @@
 			XmNshowValue     #f
 			XmNminimum       0
 			XmNmaximum       log-scale-ticks
-			XmNvalue         (inexact->exact (floor (scale-log->linear low initial high)))
+			XmNvalue         (floor (scale-log->linear low initial high))
 			XmNdecimalPoints 0
 			XmNtitleString   title
 			XmNbackground    (basic-color)))))
@@ -201,7 +201,7 @@
 
 (define (ratio->semitones ratio)
   "(ratio->semitones ratio) takes a float ratio and returns the corresponding number of semitones"
-  (inexact->exact (round (* 12 (/ (log ratio) (log 2.0))))))
+  (round (* 12 (/ (log ratio) (log 2.0)))))
 	  
 (define (create-semi-scale-widget parent title initial callback)
   "(create-semi-scale-widget parent title initial callback) returns a semitone scale widget"
@@ -254,9 +254,9 @@ and returns a list of widgets (for reset callbacks)"
 			      (XtCreateManagedWidget (car slider-data) xmScaleWidgetClass mainform
 			        (list XmNorientation   XmHORIZONTAL
 				      XmNshowValue     #t
-				      XmNminimum       (inexact->exact (floor (* low scale)))
-				      XmNmaximum       (inexact->exact (floor (* high scale)))
-				      XmNvalue         (inexact->exact (floor (* initial scale)))
+				      XmNminimum       (floor (* low scale))
+				      XmNmaximum       (floor (* high scale))
+				      XmNvalue         (floor (* initial scale))
 				      XmNdecimalPoints (if (= scale 10000) 4 (if (= scale 1000) 3 (if (= scale 100) 2 (if (= scale 10) 1 0))))
 				      XmNtitleString   title
 				      XmNleftAttachment XmATTACH_FORM

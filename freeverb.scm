@@ -106,18 +106,18 @@
 	((= c in-chans))
       (vector-set! predelays
 		   c
-		   (make-delay :size (inexact->exact (round (* *clm-srate*
-							       (if (vector? predelay)
-								   (vector-ref predelay c)
-								   (if (list? predelay)
-								       (list-ref predelay c)
-								       predelay))))))))
+		   (make-delay :size (round (* *clm-srate*
+					       (if (vector? predelay)
+						   (vector-ref predelay c)
+						   (if (list? predelay)
+						       (list-ref predelay c)
+						       predelay)))))))
     (do ((c 0 (+ 1 c)))
 	((= c out-chans))
       (do ((i 0 (+ 1 i)))
 	  ((= i numcombs))
 	(let* ((tuning (list-ref combtuning i))
-	       (len (inexact->exact (floor (* srate-scale tuning))))
+	       (len (floor (* srate-scale tuning)))
 	       (dmp (* scale-damping
 		       (if (vector? damping)
 			   (vector-ref damping i)
@@ -125,7 +125,7 @@
 			       (list-ref damping i)
 			       damping)))))
 	  (if (odd? c)
-	      (set! len (+ len (inexact->exact (floor (* srate-scale stereo-spread))))))
+	      (set! len (+ len (floor (* srate-scale stereo-spread)))))
 	  (vector-set! fcombs (+ (* c numcombs) i)
 		       (make-filtered-comb :size len 
 					   :scaler room-decay-val 
@@ -135,7 +135,7 @@
       (do ((i 0 (+ 1 i)))
 	  ((= i numallpasses))
 	(let* ((tuning (list-ref allpasstuning i))
-	       (len (inexact->exact (floor (* srate-scale tuning)))))
+	       (len (floor (* srate-scale tuning))))
 	  (if (odd? c)
 	      (set! len (+ len (floor (inexact->exact (* srate-scale stereo-spread))))))
 	  (vector-set! allpasses (+ (* c numallpasses) i)

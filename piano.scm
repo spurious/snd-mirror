@@ -46,7 +46,7 @@
   ;; very special noise generator
   (set! (pnoise-seed gen) (logand (+ (* (pnoise-seed gen) 1103515245) 12345) #xffffffff))
   ;; (bil) added the logand -- otherwise we get an overflow somewhere
-  (* amp (- (* (modulo (inexact->exact (floor (/ (pnoise-seed gen) 65536))) 65536) 0.0000305185) 1.0)))
+  (* amp (- (* (modulo (floor (/ (pnoise-seed gen) 65536)) 65536) 0.0000305185) 1.0)))
 
 
 
@@ -209,7 +209,7 @@
 	(if (< x 0.0) -1 1)))
   
   (define (apfloor len wT)
-    (let* ((len-int (inexact->exact (floor len)))
+    (let* ((len-int (floor len))
 	   (len-frac (- len len-int)))
       (if (< len-frac golden-mean)
 	  (begin
@@ -233,7 +233,7 @@
   
   (let*	((beg (seconds->samples start))
 	 (end (+ beg (seconds->samples (+ duration release-time-margin))))
-	 (dur (inexact->exact (floor (* duration (mus-srate)))))
+	 (dur (floor (* duration (mus-srate))))
 	 (freq (* 440.0 (expt 2.0 (/ (- keyNum 69.0) 12.0))))
 	 (wT (/ (* two-pi freq) (mus-srate)))
 	 

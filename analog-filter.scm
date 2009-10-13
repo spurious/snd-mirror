@@ -398,7 +398,7 @@ fl and fh are edge freqs (srate=1.0): (make-inverse-chebyshev-bandstop 8 .1 .4 9
 	(set! kr (* (exact->inexact n) (/ (gsl-ellipk (* k1 k1)) (gsl-ellipk (* k1p k1p))))))
     (set! m (minimize-function findm 0.001 0.999 kr))
     (set! k (gsl-ellipk m))
-    (let* ((cv (make-vct (inexact->exact (floor (* 0.5 (* 3 (+ n 1))))))))
+    (let* ((cv (make-vct (floor (* 0.5 (* 3 (+ n 1)))))))
       (do ((i 0 (+ i 2))
 	   (j 0 (+ j 3)))
 	  ((>= i n))

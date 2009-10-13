@@ -50,8 +50,8 @@
     (do ((i 0 (+ 1 i))
 	 (val incr (+ val incr)))
 	((> i n) pts)
-      (vector-set! pts (* i 2) (inexact->exact (floor (+ x0 (* val (+ cx (* val (+ bx (* val ax)))))))))
-      (vector-set! pts (+ (* i 2) 1) (inexact->exact (floor (+ y0 (* val (+ cy (* val (+ by (* val ay))))))))))))
+      (vector-set! pts (* i 2) (floor (+ x0 (* val (+ cx (* val (+ bx (* val ax))))))))
+      (vector-set! pts (+ (* i 2) 1) (floor (+ y0 (* val (+ cy (* val (+ by (* val ay)))))))))))
 
 ;; pass our Snd context into the graphics procedures (there's probably a cleaner way)
 (define ps-snd 0)
@@ -67,10 +67,10 @@
 (define ps-size 50)
 (define bezier-segments 50)
 (define (->x x) 
-  (inexact->exact (floor (+ xoff (* ps-size x)))))
+  (floor (+ xoff (* ps-size x))))
 (define (->y y) 
   ;; Postscript is right side up, X is upside-down
-  (inexact->exact (floor (- yoff (* ps-size y)))))
+  (floor (- yoff (* ps-size y))))
 
 ;; now functions and macros to make it possible to load the original Common Lisp glyphs directly
 
@@ -131,7 +131,7 @@
 
 (define (circle score x0 y0 rad . rest)
   (draw-dot (->x x0) (->y y0) 
-	    (inexact->exact (floor (* ps-size rad 2)))
+	    (floor (* ps-size rad 2))
 	    ps-snd ps-chn ps-ax))
 
 (define old-defvar defvar)
@@ -195,11 +195,11 @@
 (define (frequency->note-octave-and-accidental freq)
   (define (frequency->pitch freq)
     (define (log2 x) (/ (log x) (log 2.0)))
-    (inexact->exact (floor (* 12 (+ (log2 (/ freq 16.351)) (/ 1.0 24))))))
+    (floor (* 12 (+ (log2 (/ freq 16.351)) (/ 1.0 24)))))
 
   (define (pitch->note-octave-and-accidental pitch)
     (let* ((pclass (modulo pitch 12))
-	   (octave (inexact->exact (floor (/ pitch 12))))
+	   (octave (floor (/ pitch 12)))
 	   (cclass (case pclass
 		     ((0) 0) 
 		     ((1) 0) ; c-sharp
@@ -419,8 +419,8 @@
 				     (* 2 (mix-waveform-height))
 				     #f
 				     (eq? (mix-property 'instrument id) 'violin)))
-		    (note-x (inexact->exact (round (car xy))))
-		    (note-y (inexact->exact (round (- (cadr xy) (mix-tag-height))))))
+		    (note-x (round (car xy)))
+		    (note-y (round (- (cadr xy) (mix-tag-height)))))
 	       (if (not (mix-property 'original-tag-y id))
 		   (begin
 		     (set! (mix-property 'original-frequency id) (mix-property 'frequency id))
@@ -440,8 +440,8 @@
 	   (lambda (n x y)
 	     (let ((orig-y (mix-property 'original-tag-y n)))
 	       (if orig-y
-		   (let ((interval (inexact->exact (round (/ (* 12 (- (+ (mix-tag-height) orig-y) y))
-							     (* 2 (mix-waveform-height))))))
+		   (let ((interval (round (/ (* 12 (- (+ (mix-tag-height) orig-y) y))
+					     (* 2 (mix-waveform-height)))))
 			 (current-interval (mix-property 'interval n)))
 		     ;; this gives the number of semitones we have drifted
 		     (if (not (= current-interval interval))

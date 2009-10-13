@@ -74,7 +74,7 @@
 					(cursor (selected-sound) (selected-channel))
 					(car ms)))))
 		       (overlap (if decay
-				    (inexact->exact (floor (* (srate) decay)))
+				    (floor (* (srate) decay))
 				    0)))
 		  (apply for-each
 			 (lambda (snd chn)
@@ -380,7 +380,7 @@
 ;;;
 
 (define* (effects-echo input-samps-1 delay-time echo-amount :optional beg dur snd chn)
-  (let ((del (make-delay (inexact->exact (round (* delay-time (srate snd))))))
+  (let ((del (make-delay (round (* delay-time (srate snd)))))
 	(samp 0)
 	(input-samps (or input-samps-1 dur (frames snd chn))))
     (map-channel (lambda (inval)
@@ -393,7 +393,7 @@
 
 (define* (effects-flecho-1 scaler secs input-samps-1 :optional beg dur snd chn)
   (let* ((flt (make-fir-filter :order 4 :xcoeffs (vct .125 .25 .25 .125)))
-	 (del (make-delay  (inexact->exact (round (* secs (srate snd))))))
+	 (del (make-delay (round (* secs (srate snd)))))
 	 (samp 0)
 	 (input-samps (or input-samps-1 dur (frames snd chn))))
     (map-channel (lambda (inval)
@@ -406,8 +406,8 @@
 
 (define* (effects-zecho-1 scaler secs frq amp input-samps-1 :optional beg dur snd chn)
   (let* ((os (make-oscil frq))
-	 (len (round (inexact->exact (* secs (srate snd)))))
-	 (del (make-delay len :max-size (inexact->exact (round (+ len amp 1)))))
+	 (len (round (* secs (srate snd))))
+	 (del (make-delay len :max-size (round (+ len amp 1))))
 	 (samp 0)
 	 (input-samps (or input-samps-1 dur (frames snd chn))))
     (map-channel (lambda (inval)
@@ -452,7 +452,7 @@
 		     (lambda (w data)
 		       (map-chan-over-target-with-sync 
 			(lambda (input-samps) 
-			  (let ((del (make-delay (inexact->exact (round (* delay-time (srate))))))
+			  (let ((del (make-delay (round (* delay-time (srate)))))
 				(samp 0))
 			    (lambda (inval)
 			      (set! samp (+ 1 samp))
@@ -521,7 +521,7 @@
     (define flecho-1
       (lambda (scaler secs input-samps)
 	(let* ((flt (make-fir-filter :order 4 :xcoeffs (vct .125 .25 .25 .125)))
-	       (del (make-delay  (inexact->exact (round (* secs (srate))))))
+	       (del (make-delay (round (* secs (srate)))))
 	       (samp 0))
 	  (lambda (inval)
 	    (set! samp (+ 1 samp))
@@ -609,8 +609,8 @@
     (define zecho-1
       (lambda (scaler secs frq amp input-samps)
 	(let* ((os (make-oscil frq))
-	       (len (round (inexact->exact (* secs (srate)))))
-	       (del (make-delay len :max-size (inexact->exact (round (+ len amp 1)))))
+	       (len (round (* secs (srate))))
+	       (del (make-delay len :max-size (round (+ len amp 1))))
 	       (samp 0))
 	  (lambda (inval)
 	    (set! samp (+ 1 samp))
@@ -1867,7 +1867,7 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 	 (comb2 (make-comb 0.733 4999))
 	 (comb3 (make-comb 0.715 5399))
 	 (comb4 (make-comb 0.697 5801))
-	 (outdel1 (make-delay (inexact->exact (round (* .013 (srate))))))
+	 (outdel1 (make-delay (round (* .013 (srate)))))
 	 (comb-sum 0.0)
 	 (comb-sum-1 0.0)
 	 (comb-sum-2 0.0)
@@ -2129,7 +2129,7 @@ http://www.bright.net/~dlphilp/linux_csound.html under Impulse Response Data."))
 	 (j 0)
 	 (len (or dur (frames snd chn)))
 	 (in-data (channel->vct beg len snd chn))
-	 (out-len (inexact->exact (round (* len (+ 1.0 (* 2 amp))))))
+	 (out-len (round (* len (+ 1.0 (* 2 amp)))))
 	 (out-data (make-vct out-len))
 	 (rd (make-src :srate 1.0
 		       :input (lambda (dir)
@@ -2183,8 +2183,8 @@ http://www.bright.net/~dlphilp/linux_csound.html under Impulse Response Data."))
     
 (define* (effects-flange amount speed time :optional beg dur snd chn)
   (let* ((ri (make-rand-interp :frequency speed :amplitude amount))
-	 (len (inexact->exact (round (* time (srate snd)))))
-	 (del (make-delay len :max-size (inexact->exact (round (+ len amount 1))))))
+	 (len (round (* time (srate snd))))
+	 (del (make-delay len :max-size (round (+ len amount 1)))))
     (map-channel (lambda (inval)
 		   (* .75 (+ inval
 			     (delay del
@@ -2339,7 +2339,7 @@ a number, the sound is split such that 0 is all in channel 0 and 90 is all in ch
 		     "Add silence"
 
 		     (lambda (w data)
-		       (insert-silence (cursor) (inexact->exact (floor (* (srate) silence-amount)))))
+		       (insert-silence (cursor) (floor (* (srate) silence-amount))))
 
 		     (lambda (w data)
 		       (help-dialog "Add silence"
@@ -2540,8 +2540,8 @@ the synthesis amplitude, the FFT size, and the radius value."))
 		       (map-chan-over-target-with-sync 
 			(lambda (ignored)
 			  (let* ((ri (make-rand-interp :frequency flange-speed :amplitude flange-amount))
-				 (len (inexact->exact (round (* flange-time (srate)))))
-				 (del (make-delay len :max-size (inexact->exact (round (+ len flange-amount 1))))))
+				 (len (round (* flange-time (srate))))
+				 (del (make-delay len :max-size (round (+ len flange-amount 1)))))
 			    (lambda (inval)
 			      (* .75 (+ inval
 					(delay del

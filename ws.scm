@@ -567,7 +567,7 @@
 		  (lambda (note)
 		    (let* ((snd (with-temp-sound (,@args :ignore-output #t :clipped #f) (eval (append (list (car note) 0.0) (cddr note)) (current-module))))
 			   ;; I can't immediately find a way around the "eval" 
-			   (beg (inexact->exact (floor (* (srate outsnd) (cadr note)))))
+			   (beg (floor (* (srate outsnd) (cadr note))))
 			   ;; can't use seconds->samples here because the global mus-srate value might not match the local one
 			   (mx (car (mix snd beg #t outsnd #f #t #t)))     ; all chans mixed, current output sound, with mixes, with auto-delete
 			   (chans (mus-sound-chans snd)))
@@ -649,7 +649,7 @@
 		 (lambda ()
 		   (for-each
 		    (lambda (descr)
-		      (let ((m (add-mark (inexact->exact (floor (* (srate snd) (cadr descr)))) snd)))
+		      (let ((m (add-mark (floor (* (srate snd) (cadr descr))) snd)))
 			(set! (mark-name m) (format #f "~A ~A ~A" (car descr) (cadr descr) (caddr descr)))))
 		    mark-list))
 		 (lambda ()
@@ -906,7 +906,7 @@ finish-with-sound to complete the process."
 	     (throw 'with-sound-interrupt (format #f "with-mix file (arg 2) is ~A?~%;" ,ur-chkpt-file))
 	     (if (not (number? beg-1))
 		 (throw 'with-sound-interrupt (format #f "with-mix begin time (arg 3) for ~S = ~A?~%;" chkpt-file beg-1))
-		 (let ((beg (inexact->exact (round (* (mus-srate) beg-1)))))
+		 (let ((beg (round (* (mus-srate) beg-1))))
 		   (if (null? ',body)
 		       (mus-mix *output* chkpt-file beg)
 		       (let* ((call-str (object->string ',body))
@@ -1017,7 +1017,7 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 
 (define (->sample beg)
   "(->sample time-in-seconds) -> time-in-samples"
-  (inexact->exact (round (* (if (not (null? (sounds))) (srate) (mus-srate)) beg))))
+  (round (* (if (not (null? (sounds))) (srate) (mus-srate)) beg)))
 
 
 

@@ -28,7 +28,7 @@ an envelope (normally a ramp from 0 to 1) which sets where we are in the zipping
 'frame-size' is the maximum frame length during the zip in seconds (defaults to 0.05), and 
 'frame-env' is an envelope returning the current frame size during the zip process."
 
-  (let ((max-size (+ 1 (inexact->exact (ceiling (* (safe-srate) (or frame-size 0.05)))))))
+  (let ((max-size (+ 1 (ceiling (* (safe-srate) (or frame-size 0.05))))))
     (make-zdata :low-start 20
 		:frame-loc 0
 		:cursamples 0
@@ -42,10 +42,10 @@ an envelope (normally a ramp from 0 to 1) which sets where we are in the zipping
 (define (zipper zp input1 input2)
   "(zipper zip in1 in2) creates the digital zipper sound effect using zipper generator 'zip' and the two samplers 'in1' and 'in2'"
   (let* ((ramp-loc (env (zdata-rampe zp)))
-	 (frame-samples (inexact->exact (floor (env (zdata-fe zp)))))
+	 (frame-samples (floor (env (zdata-fe zp))))
 	 (frame1 (zdata-frame1 zp))
 	 (frame2 (zdata-frame2 zp))
-	 (chunk-len (inexact->exact (round (* frame-samples ramp-loc)))))
+	 (chunk-len (round (* frame-samples ramp-loc))))
     (if (<= chunk-len (zdata-low-start zp))
 	(begin
 	  (set! (zdata-frame-loc zp) 0)
@@ -69,20 +69,20 @@ an envelope (normally a ramp from 0 to 1) which sets where we are in the zipping
 		    ;; now resample each dependent on location in ramp (samp1 and samp2 are increments)
 		    (vct-fill! (zdata-frame0 zp) 0.0)
 		    (let ((start-ctr 0.0)
-			  (samp2 (inexact->exact (floor (/ frame-samples chunk-len)))))
+			  (samp2 (floor (/ frame-samples chunk-len))))
 		      ;; (snd-display ";samp2: ~A, len: ~A ~A -> ~A ~A" samp2 chunk-len frame-samples (+ 1 (* chunk-len samp2)) (vct-length frame2))
 		      (do ((k 0 (+ 1 k)))
 			  ((= k chunk-len))
-			(let* ((ictr (inexact->exact (floor start-ctr)))
+			(let* ((ictr (floor start-ctr))
 			       (y0 (vct-ref frame2 ictr))
 			       (y1 (vct-ref frame2 (+ ictr 1))))
 			  (vct-set! (zdata-frame0 zp) k (+ y0 (* (- y1 y0) (- start-ctr ictr))))
 			  (set! start-ctr (+ start-ctr samp2)))))
 		    (let ((start-ctr 0.0)
-			  (samp1 (inexact->exact (floor (/ frame-samples (- frame-samples chunk-len))))))
+			  (samp1 (floor (/ frame-samples (- frame-samples chunk-len)))))
 		      (do ((k chunk-len (+ 1 k)))
 			  ((= k frame-samples))
-			(let* ((ictr (inexact->exact (floor start-ctr)))
+			(let* ((ictr (floor start-ctr))
 			       (y0 (vct-ref frame1 ictr))
 			       (y1 (vct-ref frame1 (+ ictr 1))))
 			  (vct-set! (zdata-frame0 zp) k (+ y0 (* (- y1 y0) (- start-ctr ictr))))
@@ -97,8 +97,8 @@ an envelope (normally a ramp from 0 to 1) which sets where we are in the zipping
 
 (define* (zip-sound beg-in-seconds dur-in-seconds file1 file2 :optional ramp size)
   "(zip-sound beg dur file1 file2 :optional ramp-env size) zips the two files and mixes the result into the current sound"
-  (let* ((beg (inexact->exact (round (* (srate) beg-in-seconds))))
-	 (dur (inexact->exact (round (* (srate) dur-in-seconds))))
+  (let* ((beg (round (* (srate) beg-in-seconds)))
+	 (dur (round (* (srate) dur-in-seconds)))
 	 (zip (make-zipper (make-env (or ramp (list 0 0 1 1)) :length dur)
 			   (or size 0.05)
 			   (make-env (list 0 (* (srate) (or size 0.05))) :length dur)))

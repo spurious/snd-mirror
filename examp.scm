@@ -208,7 +208,7 @@
       (let* ((ls (left-sample snd 0))
 	     (rs (right-sample snd 0))
 	     (ilen (+ 1 (- rs ls)))
-	     (pow2 (inexact->exact (ceiling (/ (log ilen) (log 2)))))
+	     (pow2 (ceiling (/ (log ilen) (log 2))))
 	     (fftlen (inexact->exact (expt 2 pow2)))
 	     (fftscale (/ 1.0 fftlen))
 	     (rl1 (channel->vct ls fftlen snd 0))
@@ -283,10 +283,9 @@
 	   (= (transform-graph-type snd chn) graph-once))
       (begin
 	(set! (transform-size snd chn)
-	      (expt 2 (inexact->exact 
-		       (ceiling 
-			(/ (log (- (right-sample snd chn) (left-sample snd chn))) 
-			   (log 2.0))))))
+	      (expt 2 (ceiling 
+		       (/ (log (- (right-sample snd chn) (left-sample snd chn))) 
+			  (log 2.0)))))
 	(set! (spectrum-end snd chn) (y-zoom-slider snd chn))))
   #f)
 
@@ -307,7 +306,7 @@
 							 (sounds))))))
 	(let* ((ls (left-sample snd chn))
 	       (rs (right-sample snd chn))
-	       (pow2 (inexact->exact (ceiling (/ (log (- rs ls)) (log 2)))))
+	       (pow2 (ceiling (/ (log (- rs ls)) (log 2))))
 	       (fftlen (inexact->exact (expt 2 pow2))))
 	  (if (> pow2 2)
 	      (let ((ffts '()))
@@ -687,7 +686,7 @@ otherwise it moves the cursor to the first offending sample"
   (let ((bins (make-vector nbins 0)))
     (scan-channel
      (lambda (y)
-       (let ((bin (inexact->exact (floor (* (abs y) nbins)))))
+       (let ((bin (floor (* (abs y) nbins))))
 	 (vector-set! bins bin (+ (vector-ref bins bin) 1))
 	 #f)))
     bins))
@@ -732,11 +731,11 @@ a number, the sound is split such that 0 is all in channel 0 and 90 is all in ch
 then inverse ffts."
   (let* ((sr (srate snd))
 	 (len (frames snd chn))
-	 (fsize (expt 2 (inexact->exact (ceiling (/ (log len) (log 2.0))))))
+	 (fsize (expt 2 (ceiling (/ (log len) (log 2.0)))))
 	 (rdata (channel->vct 0 fsize snd chn))
 	 (idata (make-vct fsize))
-	 (lo (inexact->exact (round (/ bottom (/ sr fsize)))))
-	 (hi (inexact->exact (round (/ top (/ sr fsize))))))
+	 (lo (round (/ bottom (/ sr fsize))))
+	 (hi (round (/ top (/ sr fsize)))))
     (fft rdata idata 1)
     (if (> lo 0)
 	(begin
@@ -765,7 +764,7 @@ then inverse ffts."
 (define* (fft-squelch squelch :optional snd chn)
   "(fft-squelch squelch) ffts an entire sound, sets all bins to 0.0 whose energy is below squelch, then inverse ffts"
   (let* ((len (frames snd chn))
-	 (fsize (expt 2 (inexact->exact (ceiling (/ (log len) (log 2.0))))))
+	 (fsize (expt 2 (ceiling (/ (log len) (log 2.0)))))
 	 (rdata (channel->vct 0 fsize snd chn))
 	 (idata (make-vct fsize))
 	 (fsize2 (/ fsize 2))
@@ -800,13 +799,13 @@ then inverse ffts."
   "(fft-cancel lo-freq hi-freq) ffts an entire sound, sets the bin(s) representing lo-freq to hi-freq to 0.0, then inverse ffts"
   (let* ((sr (srate snd))
 	 (len (frames snd chn))
-	 (fsize (expt 2 (inexact->exact (ceiling (/ (log len) (log 2.0))))))
+	 (fsize (expt 2 (ceiling (/ (log len) (log 2.0)))))
 	 (rdata (channel->vct 0 fsize snd chn))
 	 (idata (make-vct fsize)))
     (fft rdata idata 1)
     (let* ((hz-bin (/ sr fsize))
-	   (lo-bin (inexact->exact (round (/ lo-freq hz-bin))))
-	   (hi-bin (inexact->exact (round (/ hi-freq hz-bin)))))
+	   (lo-bin (round (/ lo-freq hz-bin)))
+	   (hi-bin (round (/ hi-freq hz-bin))))
       (do ((i lo-bin (+ i 1))
 	   (j (- fsize lo-bin) (- j 1)))
 	  ((> i hi-bin))
@@ -843,7 +842,7 @@ then inverse ffts."
 (define* (squelch-vowels :optional snd chn)
   "(squelch-vowels) suppresses portions of a sound that look like steady-state"
   (let* ((fft-size 32)
-	 (fft-mid (inexact->exact (floor (/ fft-size 2))))
+	 (fft-mid (floor (/ fft-size 2)))
 	 (rl (make-vct fft-size))
 	 (im (make-vct fft-size))
 	 (ramper (make-ramp 256)) ; 512 ok too
@@ -881,7 +880,7 @@ then inverse ffts."
 (define* (fft-env-data fft-env :optional snd chn)
   "(fft-env-data fft-env) applies fft-env as spectral env to current sound, returning vct of new data"
   (let* ((len (frames snd chn))
-	 (fsize (expt 2 (inexact->exact (ceiling (/ (log len) (log 2.0))))))
+	 (fsize (expt 2 (ceiling (/ (log len) (log 2.0)))))
 	 (rdata (channel->vct 0 fsize snd chn))
 	 (idata (make-vct fsize))
 	 (fsize2 (/ fsize 2))
@@ -930,7 +929,7 @@ applies the function 'flt' to it, then inverse ffts.  'flt' should take one argu
 current spectrum value.  (filter-fft (lambda (y) (if (< y .01) 0.0 else y))) is like fft-squelch."
   (let* ((len (frames snd chn))
 	 (mx (maxamp snd chn))
-	 (fsize (expt 2 (inexact->exact (ceiling (/ (log len) (log 2.0))))))
+	 (fsize (expt 2 (ceiling (/ (log len) (log 2.0)))))
 	 (fsize2 (/ fsize 2))
 	 (rdata (channel->vct 0 fsize snd chn))
 	 (idata (make-vct fsize))
@@ -1000,10 +999,10 @@ current spectrum value.  (filter-fft (lambda (y) (if (< y .01) 0.0 else y))) is 
 (define* (fft-smoother cutoff start samps :optional snd chn)
   "(fft-smoother cutoff start samps snd chn) uses fft-filtering to smooth a 
 section: (vct->channel (fft-smoother .1 (cursor) 400) (cursor) 400)"
-  (let* ((fftpts (inexact->exact (expt 2 (inexact->exact (ceiling (/ (log (+ 1 samps)) (log 2.0)))))))
+  (let* ((fftpts (inexact->exact (expt 2 (ceiling (/ (log (+ 1 samps)) (log 2.0))))))
 	 (rl (channel->vct start fftpts snd chn))
 	 (im (make-vct fftpts))
-	 (top (inexact->exact (floor (* fftpts cutoff)))))
+	 (top (floor (* fftpts cutoff))))
     (let* ((old0 (vct-ref rl 0))
 	   (old1 (vct-ref rl (- samps 1)))
 	   (oldmax (vct-peak rl)))
@@ -1048,8 +1047,8 @@ in a hurry use: (clm-channel (make-comb .8 32)) instead"
 (define (comb-chord scaler size amp)
   "(comb-chord scaler size amp) returns a set of harmonically-related comb filters: (map-channel (comb-chord .95 100 .3))"
   (let ((c1 (make-comb scaler (inexact->exact size)))
-	(c2 (make-comb scaler (inexact->exact (floor (* size .75)))))
-	(c3 (make-comb scaler (inexact->exact (floor (* size 1.2))))))
+	(c2 (make-comb scaler (floor (* size .75))))
+	(c3 (make-comb scaler (floor (* size 1.2)))))
     (lambda (x) 
       (* amp (+ (comb c1 x) (comb c2 x) (comb c3 x))))))
 
@@ -1065,7 +1064,7 @@ envelope: (map-channel (zcomb .8 32 '(0 0 1 10)))"
 	(max-envelope-1 (cddr e) (max mx (abs (cadr e))))))
 
   (let ((cmb (make-comb scaler size :max-size (inexact->exact (+ size 1 (max-envelope-1 pm 0.0)))))
-	(penv (make-env :envelope pm :length (frames))))
+	(penv (make-env pm :length (frames))))
     (lambda (x)
       (comb cmb x (env penv)))))
 
@@ -1101,7 +1100,7 @@ is: (filter-sound (make-formant 2400 .99))"
 (define (moving-formant radius move)
   "(moving-formant radius move) returns a time-varying (in frequency) formant filter: (map-channel (moving-formant .99 '(0 1200 1 2400)))"
   (let ((frm (make-formant (cadr move) radius))
-	(menv (make-env :envelope move :length (frames))))
+	(menv (make-env move :length (frames))))
     (lambda (x)
       (let ((val (formant frm x)))
 	(set! (mus-frequency frm) (env menv))
@@ -1137,7 +1136,7 @@ formants, then calls map-channel: (osc-formants .99 (vct 400.0 800.0 1200.0) (vc
 
 (define (echo scaler secs)
   "(echo scaler secs) returns an echo maker: (map-channel (echo .5 .5) 0 44100)"
-  (let ((del (make-delay (inexact->exact (round (* secs (srate)))))))
+  (let ((del (make-delay (round (* secs (srate))))))
     (lambda (inval)
       (+ inval (delay del (* scaler (+ (tap del) inval)))))))
 
@@ -1145,7 +1144,7 @@ formants, then calls map-channel: (osc-formants .99 (vct 400.0 800.0 1200.0) (vc
 (define (zecho scaler secs frq amp)
   "(zecho scaler secs freq amp) returns a modulated echo maker: (map-channel (zecho .5 .75 6 10.0) 0 65000)"
   (let* ((os (make-oscil frq))
-	 (len (inexact->exact (round (* secs (srate)))))
+	 (len (round (* secs (srate))))
 	 (del (make-delay len :max-size (inexact->exact (+ len amp 1)))))
     (lambda (inval)
       (+ inval 
@@ -1157,7 +1156,7 @@ formants, then calls map-channel: (osc-formants .99 (vct 400.0 800.0 1200.0) (vc
 (define (flecho scaler secs)
   "(flecho scaler secs) returns a low-pass filtered echo maker: (map-channel (flecho .5 .9) 0 75000)"
   (let* ((flt (make-fir-filter :order 4 :xcoeffs (vct .125 .25 .25 .125)))
-	 (del (make-delay  (inexact->exact (round (* secs (srate)))))))
+	 (del (make-delay  (round (* secs (srate))))))
     (lambda (inval)
       (+ inval 
 	 (delay del 
@@ -1172,7 +1171,7 @@ formants, then calls map-channel: (osc-formants .99 (vct 400.0 800.0 1200.0) (vc
   "(ring-mod freq gliss-env) returns a time-varying ring-modulation filter: (map-channel (ring-mod 10 (list 0 0 1 (hz->radians 100))))"
   (let* ((os (make-oscil :frequency freq))
 	 (len (frames))
-	 (genv (make-env :envelope gliss-env :length len)))
+	 (genv (make-env gliss-env :length len)))
     (lambda (inval)
       (* (oscil os (env genv)) inval))))
 
@@ -1205,7 +1204,7 @@ formants, then calls map-channel: (osc-formants .99 (vct 400.0 800.0 1200.0) (vc
 	 (i 0)
 	 (len (frames))
 	 (in-data (channel->vct 0 len snd chn))
-	 (out-len (inexact->exact (round (* len (+ 1.0 (* 2 amp))))))
+	 (out-len (round (* len (+ 1.0 (* 2 amp)))))
 	 (out-data (make-vct out-len))
 	 (rd (make-src :srate 1.0 
 		       :input (lambda (dir) 
@@ -1321,8 +1320,8 @@ to produce a sound at a new pitch but at the original tempo.  It returns a funct
 		    (integrate-envelope gr-env)) ; in env.scm
 		 (envelope-last-x gr-env)))
 	 (gr (make-granulate :expansion (cadr gr-env) :jitter 0))
-	 (ge (make-env :envelope gr-env :duration dur))
-	 (sound-len (inexact->exact (round (* (srate snd) dur))))
+	 (ge (make-env gr-env :duration dur))
+	 (sound-len (round (* (srate snd) dur)))
 	 (len (max sound-len (frames snd chn)))
 	 (out-data (make-vct len))
 	 (sf (make-sampler 0 snd chn)))
@@ -1381,8 +1380,8 @@ selected sound: (map-channel (cross-synthesis 1 .5 128 6.0))"
 	 (radius (- 1.0 (/ r fftsize)))
 	 (bin (/ (srate snd) fftsize))
 	 (len (frames snd chn))
-	 (outlen (inexact->exact (floor (/ len tempo))))
-	 (hop (inexact->exact (floor (* freq-inc tempo))))
+	 (outlen (floor (/ len tempo)))
+	 (hop (floor (* freq-inc tempo)))
 	 (out-data (make-vct (max len outlen)))
 	 (formants (make-vector freq-inc))
 	 (old-peak-amp 0.0)
@@ -1557,7 +1556,7 @@ selected sound: (map-channel (cross-synthesis 1 .5 128 6.0))"
 	 (rd (make-sampler 0 snd2 0))
 	 (mx (maxamp snd2 0)))
       (map-channel (lambda (val) 
-		     (sound-interp intrp (inexact->exact (floor (* len (* 0.5 (+ 1.0 (/ (read-sample rd) mx)))))))))))
+		     (sound-interp intrp (floor (* len (* 0.5 (+ 1.0 (/ (read-sample rd) mx))))))))))
 |#
 
 
@@ -1575,7 +1574,7 @@ selected sound: (map-channel (cross-synthesis 1 .5 128 6.0))"
   "(env-sound-interp env (time-scale 1.0) snd chn) reads snd's channel chn according to env and time-scale"
   ;; since the old/new sounds can be any length, we'll write a temp file rather than trying to use map-channel or vct-map!
   (let* ((len (frames snd chn))
-	 (newlen (inexact->exact (floor (* time-scale len))))
+	 (newlen (floor (* time-scale len)))
 	 (reader (make-sound-interp 0 snd chn))
 	 (read-env (make-env envelope :length (+ 1 newlen) :scaler len))
 	 (tempfilename (snd-tempnam))
@@ -1607,14 +1606,14 @@ selected sound: (map-channel (cross-synthesis 1 .5 128 6.0))"
   "(granulated-sound-interp envelope :optional (time-scale 1.0) (grain-length 0.10) (grain-envelope '(0 0 1 1 2 1 3 0)) (output-hop 0.05) snd chn) reads \
 the given channel following 'envelope' (as in env-sound-interp), using grains to create the re-tempo'd read"
   (let* ((len (frames snd chn))
-	 (newlen (inexact->exact (floor (* time-scale len))))
+	 (newlen (floor (* time-scale len)))
 	 (read-env (make-env envelope :length newlen :scaler len))
 	 (tempfilename (snd-tempnam))
 	 (fil (mus-sound-open-output tempfilename (srate snd) 1 #f mus-next "env-sound-interp temp file"))
 	 ;; #f as data-format -> format compatible with sndlib (so no data translation is needed)
-	 (grain-frames (inexact->exact (round (* grain-length (srate snd)))))
-	 (hop-frames (inexact->exact (round (* output-hop (srate snd)))))
-	 (num-readers (+ 1 (inexact->exact (round (/ grain-length output-hop)))))
+	 (grain-frames (round (* grain-length (srate snd))))
+	 (hop-frames (round (* output-hop (srate snd))))
+	 (num-readers (+ 1 (round (/ grain-length output-hop))))
 	 (readers (make-vector num-readers #f))
 	 (grain-envs (make-vector num-readers #f))
 	 (next-reader-starts-at 0)
@@ -1635,8 +1634,7 @@ the given channel following 'envelope' (as in env-sound-interp), using grains to
 	(if (>= i next-reader-starts-at)
 	    (begin
 	      (vector-set! readers next-reader 
-			   (make-sampler (max 0 (inexact->exact (round (+ position-in-original (mus-random jitter))))) 
-					       snd chn))
+			   (make-sampler (max 0 (round (+ position-in-original (mus-random jitter)))) snd chn))
 	      (mus-reset (vector-ref grain-envs next-reader)) ; restart grain env
 	      (set! next-reader (+ 1 next-reader))
 	      (if (>= next-reader num-readers) (set! next-reader 0))
@@ -2028,7 +2026,7 @@ starting at the cursor in the currently selected channel: (add-notes '((\"oboe.s
 	  (let* ((file (car note))
 		 (offset (if (> (length note) 1) (cadr note) 0.0))
 		 (amp (if (> (length note) 2) (caddr note) #f))
-		 (beg (+ start (inexact->exact (floor (* (srate snd) offset))))))
+		 (beg (+ start (floor (* (srate snd) offset)))))
 	    (if (and (number? amp)
 		     (not (= amp 1.0)))
 		(mix-vct (vct-scale! (file->vct file) amp) beg snd chn #f "add-notes")
@@ -2042,7 +2040,7 @@ starting at the cursor in the currently selected channel: (add-notes '((\"oboe.s
 a sort of play list: (region-play-list (list (list reg0 0.0) (list reg1 0.5) (list reg2 1.0) (list reg0 1.0)))"
   (for-each
    (lambda (tone)
-     (let ((time (inexact->exact (floor (* 1000 (cadr tone)))))
+     (let ((time (floor (* 1000 (cadr tone))))
 	   (region (car tone)))
        (if (region? region)
 	   (in time (lambda () (play-region region))))))
@@ -2428,9 +2426,9 @@ passed as the arguments so to end with channel 3 in channel 0, 2 in 1, 0 in 2, a
 (define* (reverse-by-blocks block-len :optional snd chn)
   "(reverse-by-blocks block-len :optional snd chn): divide sound into block-len blocks, recombine blocks in reverse order"
   (let* ((len (frames snd chn))
-	 (num-blocks (inexact->exact (floor (/ len (* (srate snd) block-len))))))
+	 (num-blocks (floor (/ len (* (srate snd) block-len)))))
     (if (> num-blocks 1)
-	(let* ((actual-block-len (inexact->exact (ceiling (/ len num-blocks))))
+	(let* ((actual-block-len (ceiling (/ len num-blocks)))
 	       (rd (make-sampler (- len actual-block-len) snd chn))
 	       (beg 0)
 	       (ctr 1))
@@ -2454,9 +2452,9 @@ passed as the arguments so to end with channel 3 in channel 0, 2 in 1, 0 in 2, a
 (define* (reverse-within-blocks block-len :optional snd chn)
   "(reverse-within-blocks block-len :optional snd chn): divide sound into blocks, recombine in order, but each block internally reversed"
   (let* ((len (frames snd chn))
-	 (num-blocks (inexact->exact (floor (/ len (* (srate snd) block-len))))))
+	 (num-blocks (floor (/ len (* (srate snd) block-len)))))
     (if (> num-blocks 1)
-	(let* ((actual-block-len (inexact->exact (ceiling (/ len num-blocks))))
+	(let* ((actual-block-len (ceiling (/ len num-blocks)))
 	       (no-clicks-env (list 0.0 0.0  .01 1.0  .99 1.0  1.0 0.0)))
 	  (as-one-edit
 	   (lambda ()
@@ -2656,8 +2654,8 @@ passed as the arguments so to end with channel 3 in channel 0, 2 in 1, 0 in 2, a
      
    (lambda (y data forward)
      (let* ((sum 0.0)
-	    (order (inexact->exact (floor (vct-ref data 0))))
-	    (cur-loc (inexact->exact (floor (vct-ref data 1))))
+	    (order (floor (vct-ref data 0)))
+	    (cur-loc (floor (vct-ref data 1)))
 	    (init-time (> (vct-ref data 2) 0.0))
 	    (last-forward (> (vct-ref data 3) 0.0))
 	    (coeffs-0 4)

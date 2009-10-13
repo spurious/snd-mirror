@@ -59,6 +59,6 @@
 
   ;; print the average readings over the full sequence
   (snd-print (format #f ";average: ~A/~A~%" 
-		     (inexact->exact (round (/ hpsum (frames)))) 
-		     (inexact->exact (round (/ lpsum (frames)))))))
+		     (round (/ hpsum (frames)))
+		     (round (/ lpsum (frames))))))
 

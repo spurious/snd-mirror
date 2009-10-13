@@ -107,7 +107,7 @@
   ;;  the power-of-2 limitation is based on the underlying fft function's insistence on power-of-2 data sizes
   ;;  see stretch-sound-via-dft below for a general version
   (let* ((len (frames snd chn))
-	 (pow2 (inexact->exact (ceiling (/ (log len) (log 2)))))
+	 (pow2 (ceiling (/ (log len) (log 2))))
 	 (fftlen (inexact->exact (expt 2 pow2)))
 	 (fftscale (/ 1.0 fftlen))
 	 (rl1 (channel->vct 0 fftlen snd chn))
@@ -135,8 +135,8 @@
 squeezing in the frequency domain, then using the inverse DFT to get the time domain result."
   ;; this is very slow! factor>1.0
   (let* ((n (frames snd chn))
-	 (n2 (inexact->exact (floor (/ n 2.0))))
-	 (out-n (inexact->exact (round (* n factor))))
+	 (n2 (floor (/ n 2.0)))
+	 (out-n (round (* n factor)))
 	 (in-data (channel->vct 0 n snd chn))
 	 (out-data (make-vct out-n))
 	 (fr (make-vector out-n 0.0))
@@ -296,7 +296,7 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
     (let* ((s0 (car args))
 	   (snd (if (> (length args) 1) (list-ref args 1) #f))
 	   (chn (if (> (length args) 2) (list-ref args 2) #f))
-	   (pow2 (inexact->exact (ceiling (/ (log (/ (srate snd) 20.0)) (log 2)))))
+	   (pow2 (ceiling (/ (log (/ (srate snd) 20.0)) (log 2))))
 	   (fftlen (inexact->exact (expt 2 pow2)))
 	   (data (autocorrelate (channel->vct s0 fftlen snd chn)))
 	   (cor-peak (vct-peak data)))
@@ -333,7 +333,7 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
   "(chorus) tries to produce the chorus sound effect"
   (define (make-flanger)
     (let* ((ri (make-rand-interp :frequency chorus-speed :amplitude chorus-amount))
-	   (len (inexact->exact (floor (random (* 3.0 chorus-time (srate))))))
+	   (len (floor (random (* 3.0 chorus-time (srate)))))
 	   (gen (make-delay len :max-size (+ len chorus-amount 1))))
       (list gen ri)))
   (define (flanger dly inval)
@@ -362,7 +362,7 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
   "(chordalize) uses harmonically-related comb-filters to bring out a chord in a sound"
   ;; chord is a list of members of chord such as '(1 5/4 3/2)
   (let ((combs (map (lambda (interval)
-		      (make-comb chordalize-amount (inexact->exact (floor (* chordalize-base interval)))))
+		      (make-comb chordalize-amount (floor (* chordalize-base interval))))
 		    chordalize-chord))
 	(scaler (/ 0.5 (length chordalize-chord)))) ; just a guess -- maybe this should rescale to old maxamp
     (lambda (x)
@@ -375,7 +375,7 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 (define* (zero-phase :optional snd chn)
   "(zero-phase) calls fft, sets all phases to 0, and un-ffts"
   (let* ((len (frames snd chn))
-	 (pow2 (inexact->exact (ceiling (/ (log len) (log 2)))))
+	 (pow2 (ceiling (/ (log len) (log 2))))
 	 (fftlen (inexact->exact (expt 2 pow2)))
 	 (fftscale (/ 1.0 fftlen))
 	 (rl (channel->vct 0 fftlen snd chn))
@@ -394,9 +394,9 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 (define* (rotate-phase func :optional snd chn)
   "(rotate-phase func) calls fft, applies func to each phase, then un-ffts"
   (let* ((len (frames snd chn))
-	 (pow2 (inexact->exact (ceiling (/ (log len) (log 2)))))
+	 (pow2 (ceiling (/ (log len) (log 2))))
 	 (fftlen (inexact->exact (expt 2 pow2)))
-	 (fftlen2 (inexact->exact (floor (/ fftlen 2))))
+	 (fftlen2 (floor (/ fftlen 2)))
 	 (fftscale (/ 1.0 fftlen))
 	 (rl (channel->vct 0 fftlen snd chn))
 	 (old-pk (vct-peak rl))
@@ -463,7 +463,7 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
   "(spectrum->coeffs order spectr) returns FIR filter coefficients given the filter order and desired spectral envelope (a vct)"
   (let* ((coeffs (make-vct order))
 	 (n order)
-	 (m (inexact->exact (floor (/ (+ n 1) 2))))
+	 (m (floor (/ (+ n 1) 2)))
 	 (am (* 0.5 (+ n 1)))
 	 (q (/ (* pi 2.0) n)))
     (do ((j 0 (+ 1 j))
@@ -543,7 +543,7 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 (define* (hilbert-transform-via-fft :optional snd chn)
   ;; same as FIR version but use FFT and change phases by hand
   (let* ((size (frames snd chn))
-	 (len (expt 2 (inexact->exact (ceiling (/ (log size) (log 2.0))))))
+	 (len (expt 2 (ceiling (/ (log size) (log 2.0)))))
 	 (rl (make-vct len))
 	 (im (make-vct len))
 	 (rd (make-sampler 0 snd chn)))
@@ -1051,14 +1051,14 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 (define* (notch-channel freqs :optional (filter-order #f) beg dur snd chn edpos (truncate #t) (notch-width 2))
   "(notch-channel freqs :optional (filter-order #f) beg dur snd chn edpos (truncate #t) (notch-width 2)) -> notch filter removing freqs"
   (filter-channel (make-notch-frequency-response (exact->inexact (srate snd)) freqs notch-width)
-		  (or filter-order (expt 2 (inexact->exact (ceiling (/ (log (/ (srate snd) notch-width)) (log 2.0))))))
+		  (or filter-order (expt 2 (ceiling (/ (log (/ (srate snd) notch-width)) (log 2.0)))))
 		  beg dur snd chn edpos truncate
 		  (format #f "notch-channel '~A ~A ~A ~A" freqs filter-order beg dur)))
 
 (define* (notch-sound freqs :optional filter-order snd chn (notch-width 2))
   "(notch-sound freqs :optional filter-order snd chn (notch-width 2)) -> notch filter removing freqs"
   (filter-sound (make-notch-frequency-response (exact->inexact (srate snd)) freqs notch-width)
-		(or filter-order (expt 2 (inexact->exact (ceiling (/ (log (/ (srate snd) notch-width)) (log 2.0))))))
+		(or filter-order (expt 2 (ceiling (/ (log (/ (srate snd) notch-width)) (log 2.0)))))
 		snd chn #f
 		(format #f "notch-channel '~A ~A 0 #f" freqs filter-order)))
 
@@ -1066,7 +1066,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
   "(notch-selection freqs :optional filter-order (notch-width 2)) -> notch filter removing freqs"
   (if (selection?)
       (filter-selection (make-notch-frequency-response (exact->inexact (selection-srate)) freqs notch-width)
-			(or filter-order (expt 2 (inexact->exact (ceiling (/ (log (/ (selection-srate) notch-width)) (log 2.0)))))))))
+			(or filter-order (expt 2 (ceiling (/ (log (/ (selection-srate) notch-width)) (log 2.0))))))))
 
 
 ;;; -------- fractional Fourier Transform, z transform
@@ -1514,7 +1514,7 @@ shift the given channel in pitch without changing its length.  The higher 'order
 
 
 (define (transposed-echo pitch scaler secs)
-  (let ((del (make-fdelay (inexact->exact (round (* secs (srate)))) pitch scaler)))
+  (let ((del (make-fdelay (round (* secs (srate)))) pitch scaler))
     (map-channel (lambda (y) (fdelay del y)))))
 
 |#
@@ -1570,7 +1570,7 @@ shift the given channel in pitch without changing its length.  The higher 'order
 	 (num-coeffs (length coeffs))
 	 (fft-len (if (< num-coeffs 2) 
 		      len 
-		      (expt 2 (inexact->exact (ceiling (/ (log (* (- num-coeffs 1) len)) (log 2)))))))
+		      (expt 2 (ceiling (/ (log (* (- num-coeffs 1) len)) (log 2))))))
 	 (rl1 (make-vct fft-len 0.0))
 	 (rl2 (make-vct fft-len 0.0))
 	 (new-sound (make-vct fft-len)))
@@ -1630,14 +1630,14 @@ shift the given channel in pitch without changing its length.  The higher 'order
   "(scentroid file :key (beg 0.0) dur (db-floor -40.0) (rfreq 100.0) (fftsize 4096)) returns the spectral centroid envelope of a sound; 'rfreq' is \
 the rendering frequency, the number of measurements per second; 'db-floor' is the level below which data will be ignored"
   (let* ((fsr (srate file))
-	 (incrsamps (inexact->exact (floor (/ fsr rfreq))))
-	 (start (inexact->exact (floor (* beg fsr))))
+	 (incrsamps (floor (/ fsr rfreq)))
+	 (start (floor (* beg fsr)))
 	 (end (+ start (if dur (inexact->exact (* dur fsr)) (- (frames file) beg))))
 	 (fdr (make-vct fftsize))
 	 (fdi (make-vct fftsize))
-	 (windows (+ 1 (inexact->exact (floor (/ (- end start) incrsamps)))))
+	 (windows (+ 1 (floor (/ (- end start) incrsamps))))
 	 (results (make-vct windows))
-	 (fft2 (inexact->exact (floor (/ fftsize 2))))
+	 (fft2 (floor (/ fftsize 2)))
 	 (binwidth (exact->inexact (/ fsr fftsize)))
 	 (rd (make-readin file)))
     (run
@@ -1805,7 +1805,7 @@ and replaces it with the spectrum given in coeffs"
 		     (out-any samp
 			      (let ((pos intrp))
 				(if (>= pos 1.0)
-				    (let ((num (inexact->exact (floor pos))))
+				    (let ((num (floor pos)))
 				      (do ((i 0 (+ i 1)))
 					  ((= i num))
 					(set! last next)
@@ -1849,7 +1849,7 @@ and replaces it with the spectrum given in coeffs"
       (define (display-bark-fft-1 snd chn)
 	(let* ((ls (left-sample snd chn))
 	       (rs (right-sample snd chn))
-	       (fftlen (inexact->exact (expt 2 (inexact->exact (ceiling (/ (log (+ 1 (- rs ls))) (log 2))))))))
+	       (fftlen (inexact->exact (expt 2 (ceiling (/ (log (+ 1 (- rs ls))) (log 2)))))))
 	  (if (> fftlen 0)
 	      (let ((data (channel->vct ls fftlen snd chn))
 		    (normalized (not (= (transform-normalization snd chn) dont-normalize)))
@@ -1890,9 +1890,9 @@ and replaces it with the spectrum given in coeffs"
 				   ((= i data-len))
 				 (let* ((val (vct-ref fft i))
 					(frq (* sr (/ i fftlen)))
-					(bark-bin (inexact->exact (round (* bark-frqscl (- (bark frq) bark-low)))))
-					(mel-bin (inexact->exact (round (* mel-frqscl (- (mel frq) mel-low)))))
-					(erb-bin (inexact->exact (round (* erb-frqscl (- (erb frq) erb-low))))))
+					(bark-bin (round (* bark-frqscl (- (bark frq) bark-low))))
+					(mel-bin (round (* mel-frqscl (- (mel frq) mel-low))))
+					(erb-bin (round (* erb-frqscl (- (erb frq) erb-low)))))
 				   (if (and (>= bark-bin 0)
 					    (< bark-bin data-len))
 				       (vct-set! bark-data bark-bin (+ val (vct-ref bark-data bark-bin))))
@@ -1943,13 +1943,13 @@ and replaces it with the spectrum given in coeffs"
 		 (major-y0 (+ axis-y1 major-tick-len))
 		 (bark-label-font (snd-font 3))
 		 (bark-numbers-font (snd-font 2))
-		 (label-pos (inexact->exact (+ axis-x0 (* .45 (- axis-x1 axis-x0))))))
+		 (label-pos (+ axis-x0 (* .45 (- axis-x1 axis-x0)))))
 	    
 	    (define (scale-position scale f)
 	      (let ((b20 (scale 20.0)))
-		(inexact->exact (round (+ axis-x0 
-					  (/ (* (- axis-x1 axis-x0) (- (scale f) b20)) 
-					     (- (scale sr2) b20)))))))
+		(round (+ axis-x0 
+			  (/ (* (- axis-x1 axis-x0) (- (scale f) b20)) 
+			     (- (scale sr2) b20))))))
 	    
 	    (define (bark-position f) (scale-position bark f))
 	    (define (mel-position f) (scale-position mel f))
@@ -2200,8 +2200,8 @@ is assumed to be outside -1.0 to 1.0."
 			   ;; (snd-display ";[~A] collision at [~A : ~A] -> ~A" clip clip-beg clip-end next-beg)
 			   (set! backward-data-len (max 4 (- next-beg clip-end)))))
 		     
-		     (let ((forward-predict-len (min (max clip-len (inexact->exact (floor (/ forward-data-len 2)))) forward-data-len))
-			   (backward-predict-len (min (max clip-len (inexact->exact (floor (/ backward-data-len 2)))) backward-data-len)))
+		     (let ((forward-predict-len (min (max clip-len (floor (/ forward-data-len 2))) forward-data-len))
+			   (backward-predict-len (min (max clip-len (floor (/ backward-data-len 2))) backward-data-len)))
 		       
 		       ;; use LPC to reconstruct going both forwards and backwards
 		       
@@ -2376,7 +2376,7 @@ the multi-modulator FM case described by the list of modulator frequencies and i
   (if (not (null? wms))
       (let* ((sum 0.0)
 	     (index (car inds))
-	     (mx (inexact->exact (ceiling (* 7 index))))
+	     (mx (ceiling (* 7 index)))
 	     (wm (car wms)))
 	(do ((k (- mx) (+ 1 k)))
 	    ((>= k mx) sum)
@@ -2399,8 +2399,8 @@ the multi-modulator FM case described by the list of modulator frequencies and i
 
 (define (fm-complex-component freq-we-want wc wm a b interp using-sine)
   (let* ((sum 0.0)
-	 (mxa (inexact->exact (ceiling (* 7 a))))
-	 (mxb (inexact->exact (ceiling (* 7 b)))))
+	 (mxa (ceiling (* 7 a)))
+	 (mxb (ceiling (* 7 b))))
     (do ((k (- mxa) (+ 1 k)))
 	((>= k mxa))
       (do ((j (- mxb) (+ 1 j)))
@@ -2424,8 +2424,8 @@ the multi-modulator FM case described by the list of modulator frequencies and i
 
 (define (fm-cascade-component freq-we-want wc wm1 a wm2 b)
   (let* ((sum 0.0)
-	 (mxa (inexact->exact (ceiling (* 7 a))))
-	 (mxb (inexact->exact (ceiling (* 7 b)))))
+	 (mxa (ceiling (* 7 a)))
+	 (mxb (ceiling (* 7 b))))
     (do ((k (- mxa) (+ 1 k)))
 	((>= k mxa))
       (do ((j (- mxb) (+ 1 j)))
@@ -2516,7 +2516,7 @@ the multi-modulator FM case described by the list of modulator frequencies and i
 	 (min-partials (vct-copy original-partials)))
 
     (if (<= topk (/ (log tries) (log 2)))
-	(set! tries (inexact->exact (floor (expt 2 (- topk 1))))))
+	(set! tries (floor (expt 2 (- topk 1)))))
 
     (do ((try 0 (+ 1 try)))
 	((= try tries))

@@ -8,9 +8,9 @@
   "(make-pvocoder fftsize overlap interp :optional analyze edit synthesize) makes a new (Scheme-based, not CLM) phase-vocoder generator"
 
   (let* ((N (or fftsize 512))
-	 (N2 (inexact->exact (floor (/ N 2))))
+	 (N2 (floor (/ N 2)))
 	 (hop (or overlap 4))
-	 (D (inexact->exact (floor (/ N hop)))))
+	 (D (floor (/ N hop))))
 
     ;; basic: fftsize overlap
     ;;  everything else via closures (interp in particular)
@@ -123,7 +123,7 @@
 		(do ((k 0 (+ 1 k))
 		     (pscl (/ 1.0 D))
 		     (kscl (/ pi2 N)))
-		    ((= k (inexact->exact (floor (/ N 2)))))
+		    ((= k (floor (/ N 2))))
 		  (let ((phasediff (- (vct-ref freqs k) (vct-ref (pvoc-lastphase pv) k))))
 		    (vct-set! (pvoc-lastphase pv) k (vct-ref freqs k))
 		    (if (> phasediff pi) (do () ((<= phasediff pi)) (set! phasediff (- phasediff pi2))))
@@ -190,13 +190,13 @@
 (define test-pv-3
   (lambda (time)
     (let* ((pv (make-phase-vocoder #f
-				   512 4 (inexact->exact (floor (* 128 time))) 1.0
+				   512 4 (floor (* 128 time)) 1.0
 				   #f ;no change to analysis
 				   #f ;no change to edits
 				   #f ;no change to synthesis
 				   ))
 	   (reader (make-sampler 0))
-	   (len (inexact->exact (floor (* time (frames)))))
+	   (len (floor (* time (frames))))
 	   (data (make-vct len))
 	   )
       (vct-map! data
@@ -246,10 +246,10 @@
 	   (pi2 (* 2 pi))       ; handy constant
 	   (sr (srate))
 	   (N fftsize)          ; fft size
-	   (N2 (inexact->exact (floor (/ N 2))))
+	   (N2 (floor (/ N 2)))
 	   ;; (Nw fftsize) ;; window size -- currently restricted to the fftsize
-	   (D (inexact->exact (floor (/ fftsize overlap)))) ; decimation factor (how often do we take an fft)
-	   (interp (* (inexact->exact (floor (/ fftsize overlap))) time)) ; interpolation factor how often do we synthesize
+	   (D (floor (/ fftsize overlap))) ; decimation factor (how often do we take an fft)
+	   (interp (* (floor (/ fftsize overlap)) time)) ; interpolation factor how often do we synthesize
 	   ;; take a resynthesis gate specificed in dB, convert to linear amplitude
 	   (syngate (if (= 0.0 gate) 0.0 (expt 10 (/ (- (abs gate)) 20))))
 	   (poffset (hz->radians hoffset))
@@ -266,7 +266,7 @@
 	   (output interp)      ; count of samples that have been output
 	   (resynth-oscils (make-vector N2))  ; synthesis oscillators
 	   ;; (nextpct 10.0)       ; how often to print out the percentage complete message
-	   (outlen (inexact->exact (floor (* time len))))
+	   (outlen (floor (* time len)))
 	   (out-data (make-vct (max len outlen)))
 	   (in-data (channel->vct 0 (* N 2) snd chn))
 	   (in-data-beg 0))

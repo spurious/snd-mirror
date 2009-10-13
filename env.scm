@@ -321,7 +321,7 @@ If the final y value is different from the first y value, a quick ramp is
 inserted between repeats. 'normalized' causes the new envelope's x axis 
 to have the same extent as the original's. 'reflected' causes every other 
 repetition to be in reverse."
-  (let* ((times (if reflected (inexact->exact (floor (/ repeats 2))) repeats))
+  (let* ((times (if reflected (floor (/ repeats 2)) repeats))
 	 (e (if reflected
 		(let* ((lastx (list-ref ur-env (- (length ur-env) 2)))
 		       (rev-env (cddr (reverse ur-env)))
@@ -379,7 +379,7 @@ repetition to be in reverse."
     val))
 
 (define* (make-power-env envelope :key (scaler 1.0) (offset 0.0) duration)
-  (let* ((len (- (inexact->exact (floor (/ (length envelope) 3))) 1))
+  (let* ((len (- (floor (/ (length envelope) 3)) 1))
 	 (pe (make-penv :envs (make-vector len)
 			:total-envs len
 			:current-env 0
@@ -437,7 +437,7 @@ each segment: (powenv-channel '(0 0 .325  1 1 32.0 2 0 32.0))"
 	     (set! y0 y1)
 	     (set! x1 (list-ref envelope i))
 	     (set! y1 (list-ref envelope (+ i 1)))
-	     (let* ((curdur (inexact->exact (round (* fulldur (/ (- x1 x0) xrange))))))
+	     (let* ((curdur (round (* fulldur (/ (- x1 x0) xrange)))))
 	       (xramp-channel y0 y1 base curbeg curdur snd chn edpos)
 	       (set! curbeg (+ curbeg curdur)))
 	     (set! base (list-ref envelope (+ i 2)))))))))
@@ -484,8 +484,8 @@ each segment: (powenv-channel '(0 0 .325  1 1 32.0 2 0 32.0))"
   (let* ((e '())
 	 (incr (/ 1.0 rfreq))
 	 (fsr (srate file))
-	 (incrsamps (inexact->exact (round (* incr fsr))))
-	 (start (inexact->exact (round (* beg fsr))))
+	 (incrsamps (round (* incr fsr)))
+	 (start (round (* beg fsr)))
 	 (reader (make-sampler start file))
 	 (end (if dur (min (inexact->exact (+ start (round (* fsr dur))))
 			   (mus-sound-frames file))
@@ -575,8 +575,8 @@ each segment: (powenv-channel '(0 0 .325  1 1 32.0 2 0 32.0))"
 		((>= i (length env)))
 	      (let ((ttx (list-ref env i))
 		    (tty (list-ref env (+ i 1))))
-		(set! tx (inexact->exact (round (* ttx x-scl))))
-		(set! ty (inexact->exact (round (* tty y-scl))))
+		(set! tx (round (* ttx x-scl)))
+		(set! ty (round (* tty y-scl)))
 		(if px
 		    (if (not (point-on-line? px py qx qy tx ty))
 			(begin

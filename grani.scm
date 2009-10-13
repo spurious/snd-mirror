@@ -129,7 +129,7 @@
 		      (end 0)
 		      (cutoff -70)
 		      (error 0.01))
-  (make-env :envelope (db-envelope envelope cutoff error)
+  (make-env (db-envelope envelope cutoff error)
 	    :scaler scaler :offset offset
 	    :base base :duration duration :length (+ 1 end)))
 
@@ -152,7 +152,7 @@
 			     (duration 0)
 			     (end 0)
 			     (error 0.01))
-  (make-env :envelope (semitones-envelope envelope around error)
+  (make-env (semitones-envelope envelope around error)
 	    :scaler scaler :offset offset
 	    :base base :duration duration :length (+ 1 end)))
 
@@ -173,7 +173,7 @@
 			   (duration 0)
 			   (end 0)
 			   (error 0.01))
-  (make-env :envelope (octaves-envelope envelope around error)
+  (make-env (octaves-envelope envelope around error)
 	    :scaler scaler :offset offset
 	    :base base :duration duration :length (+ 1 end)))
 
@@ -220,7 +220,7 @@
 ;;; convert a time in seconds to a number of samples
 
 (define-macro (to-samples time srate)
-  `(inexact->exact (floor (* ,time ,srate))))
+  `(floor (* ,time ,srate)))
 
 ;;; create a constant envelope if argument is a number
 
@@ -350,14 +350,14 @@
 	 (in-file-channels (channels file))
 	 (in-file-sr (exact->inexact (mus-sound-srate file)))
 	 (in-file-dur  (/ (frames file) in-file-sr))
-	 (last-in-sample (inexact->exact (floor (* in-file-dur in-file-sr))))
+	 (last-in-sample (floor (* in-file-dur in-file-sr)))
 	 ;; ratio between input and output sampling rates
 	 (srate-ratio (/ in-file-sr (mus-srate)))
 	 ;; sample rate converter for input samples
 	 (rd (make-readin :file file :channel (min input-channel (- in-file-channels 1))))
 	 (in-file-reader (make-src :input rd :srate 1.0))
 	 ;; sample rate conversion envelope
-	 (sr-env (make-env :envelope (if srate-linear
+	 (sr-env (make-env (if srate-linear
 					 (envelope-or-number srate)
 					 (exp-envelope (envelope-or-number srate) 
 						       :base srate-base 
@@ -365,29 +365,29 @@
 			   :scaler srate-ratio
 			   :duration duration))
 	 ;; sample rate conversion random spread
-	 (sr-spread-env (make-env :envelope (envelope-or-number srate-spread)
+	 (sr-spread-env (make-env (envelope-or-number srate-spread)
 				  :duration duration))			 
 	 ;; amplitude envelope for the note
-	 (amp-env (make-env :envelope amp-envelope
+	 (amp-env (make-env amp-envelope
 			    :scaler amplitude
 			    :duration duration))
 	 ;; grain duration envelope
-	 (gr-dur (make-env :envelope (envelope-or-number grain-duration)
+	 (gr-dur (make-env (envelope-or-number grain-duration)
 			   :duration duration))
-	 (gr-dur-spread (make-env :envelope (envelope-or-number grain-duration-spread)
+	 (gr-dur-spread (make-env (envelope-or-number grain-duration-spread)
 				  :duration duration))
 	 ;; position in the input file where the grain starts
 	 (gr-start-scaler (if (not grain-start-in-seconds) in-file-dur 1.0))
-	 (gr-start (make-env :envelope (envelope-or-number grain-start)
+	 (gr-start (make-env (envelope-or-number grain-start)
 			     :duration duration))
 	 ;; random variation in the position in the input file
-	 (gr-start-spread (make-env :envelope (envelope-or-number grain-start-spread)
+	 (gr-start-spread (make-env (envelope-or-number grain-start-spread)
 				    :duration duration))			  
 	 ;; density envelope in grains per second
-	 (gr-dens-env (make-env :envelope (envelope-or-number grain-density)
+	 (gr-dens-env (make-env (envelope-or-number grain-density)
 				:duration duration))
 	 ;; density spread envelope in grains per second
-	 (gr-dens-spread-env (make-env :envelope (envelope-or-number grain-density-spread)
+	 (gr-dens-spread-env (make-env (envelope-or-number grain-density-spread)
 				       :duration duration))
 	 ;; grain envelope
 	 (gr-env (make-table-lookup :frequency 1.0
@@ -406,18 +406,18 @@
 								   grain-envelope-array-size))
 						  (make-vct 512))))
 	 ;; envelope for transition between grain envelopes
-	 (gr-int-env (make-env :envelope (envelope-or-number grain-envelope-transition)
+	 (gr-int-env (make-env (envelope-or-number grain-envelope-transition)
 			       :duration duration))
 	 (interp-gr-envs grain-envelope-end)
 	 ;; envelope for distance of grains (for using in locsig)
-	 (gr-dist (make-env :envelope (envelope-or-number grain-distance)
+	 (gr-dist (make-env (envelope-or-number grain-distance)
 			    :duration duration))
-	 (gr-dist-spread (make-env :envelope (envelope-or-number grain-distance-spread)
+	 (gr-dist-spread (make-env (envelope-or-number grain-distance-spread)
 				   :duration duration))
 	 ;; envelopes for angular location and spread of grain in the stereo field
-	 (gr-degree (make-env :envelope (envelope-or-number grain-degree)
+	 (gr-degree (make-env (envelope-or-number grain-degree)
 			      :duration duration))
-	 (gr-degree-spread (make-env :envelope (envelope-or-number grain-degree-spread)
+	 (gr-degree-spread (make-env (envelope-or-number grain-degree-spread)
 				     :duration duration))
 	 (out-chans (channels *output*))
 	 ;; signal locator in the stereo image
@@ -479,9 +479,8 @@
 		     ;; start grain in output file using
 		     ;; increments from previous grain
 		     (set! gr-start-sample (+ gr-start-sample
-					      (inexact->exact 
-					       (floor 
-						(* (/ (+ gr-dens gr-dens-spread)) (mus-srate))))))
+					      (floor 
+					       (* (/ (+ gr-dens gr-dens-spread)) (mus-srate)))))
 		     ;; finish if start of grain falls outside of note
 		     ;; bounds or number of grains exceeded
 		     (if (or (> gr-start-sample end)
@@ -494,7 +493,7 @@
 	       ;; back to the beginning of the grain
 	       (set! gr-offset 0)
 	       ;; start of grain in samples from beginning of note
-	       (set! gr-from-beg (inexact->exact (floor (- gr-start-sample beg))))
+	       (set! gr-from-beg (floor (- gr-start-sample beg)))
 	       ;; reset out-time dependent envelopes to current time
 	       (set! (mus-location amp-env) gr-from-beg)
 	       (set! (mus-location gr-dur) gr-from-beg)
@@ -509,13 +508,13 @@
 	       (set! in-start-value (+ (* (env gr-start) gr-start-scaler)
 				       (mus-random (* 0.5 (env gr-start-spread)
 						      gr-start-scaler))))
-	       (set! in-start (inexact->exact (floor (* in-start-value in-file-sr))))
+	       (set! in-start (floor (* in-start-value in-file-sr)))
 	       ;; duration in seconds of the grain
 	       (set! gr-duration (max grain-duration-limit
 				      (+ (env gr-dur)
 					 (mus-random (* 0.5 (env gr-dur-spread))))))
 	       ;; number of samples in the grain
-	       (set! gr-samples (inexact->exact (floor (* gr-duration (mus-srate)))))
+	       (set! gr-samples (floor (* gr-duration (mus-srate))))
 	       ;; new sample rate for grain
 	       (set! gr-srate (if srate-linear
 				  (+ (env sr-env)
@@ -526,7 +525,7 @@
 	       ;; set new sampling rate conversion factor
 	       (set! (mus-increment in-file-reader) gr-srate)
 	       ;; number of samples in input
-	       (set! in-samples (inexact->exact (/ gr-samples (/ 1 srate-ratio))))
+	       (set! in-samples (floor (/ gr-samples (/ 1 srate-ratio))))
 	       ;; restart grain envelopes
 	       (set! (mus-phase gr-env) 0.0)
 	       (set! (mus-phase gr-env-end) 0.0)

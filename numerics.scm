@@ -244,7 +244,7 @@
 
 (define* (automorph a b c d :optional snd chn)
   (let* ((len (frames snd chn))
-	 (pow2 (inexact->exact (ceiling (/ (log len) (log 2)))))
+	 (pow2 (ceiling (/ (log len) (log 2))))
 	 (fftlen (inexact->exact (expt 2 pow2)))
 	 (fftscale (/ 1.0 fftlen))
 	 (rl (channel->vct 0 fftlen snd chn))
@@ -317,7 +317,7 @@
 		     (tox (/ 2.0 (abs x)))
 		     (bip 0.0)
 		     (bi 1.0)
-		     (m (* 2 (+ n (inexact->exact (truncate (sqrt (* iacc n)))))))
+		     (m (* 2 (+ n (truncate (sqrt (* iacc n))))))
 		     (bim 0.0))
 		(do ((j m (- j 1)))
 		    ((= j 0))
@@ -676,8 +676,8 @@
 	  (hx "0123456789ABCDEF"))
       (do ((i 0 (+ i 1)))
 	  ((= i nhx))
-	(set! y (* 16.0 (- y (inexact->exact (floor y)))))
-	(string-set! chx i (string-ref hx (inexact->exact (floor y)))))
+	(set! y (* 16.0 (- y (floor y))))
+	(string-set! chx i (string-ref hx (floor y))))
       chx))
   
   (define expm
@@ -717,13 +717,13 @@
 		  (if (>= p1 pt)
 		      (begin
 			(set! r (* 16.0 r))
-			(set! r (- r (* ak (inexact->exact (floor (/ r ak))))))
+			(set! r (- r (* ak (floor (/ r ak)))))
 			(set! p1 (- p1 pt))))
 		  (set! pt (* 0.5 pt))
 		  (if (>= pt 1.0)
 		      (begin
 			(set! r (* r r))
-			(set! r (- r (* ak (inexact->exact (floor (/ r ak)))))))))))))))
+			(set! r (- r (* ak (floor (/ r ak))))))))))))))
   
   (define (series m id)
     ;; This routine evaluates the series  sum_k 16^(id-k)/(8*k+m) using the modular exponentiation technique.
@@ -735,7 +735,7 @@
 	       (p (- id k))
 	       (t (expm p ak)))
 	  (set! s (+ s (/ t ak)))
-	  (set! s (- s (inexact->exact (floor s))))))
+	  (set! s (- s (floor s)))))
       
       ;; Compute a few terms where k >= id.
       (let ((happy #f))
@@ -745,7 +745,7 @@
 		 (t (/ (expt 16.0 (- id k)) ak)))
 	    (set! happy (< t eps))
 	    (set! s (+ s t))
-	    (set! s (- s (inexact->exact (floor s)))))))))
+	    (set! s (- s (floor s))))))))
   
   ;; id is the digit position.  Digits generated follow immediately after id.
   (let* ((chx (make-string 17))
@@ -754,7 +754,7 @@
 	 (s3 (series 5 id))
 	 (s4 (series 6 id))
 	 (pid (+ (* 4.0 s1) (* -2.0 s2) (- s3) (- s4))))
-    (set! pid (+ 1.0 (- pid (inexact->exact (floor pid)))))
+    (set! pid (+ 1.0 (- pid (floor pid))))
     (ihex pid 10 chx)
     (format #t " position = ~D~% fraction = ~,15F~% hex digits =  ~S~%" id pid chx)))
   

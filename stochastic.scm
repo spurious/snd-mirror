@@ -46,11 +46,9 @@
 		(list-ref (list-ref init-array jy) 0))
       (vct-set! xy-array (+ iy 1)
 		;;convert signed float y values into signed integers 
-		(inexact->exact 
-		 (floor (* b
-			   (list-ref (list-ref init-array jy) 1)
-			   )))
-		))
+		(floor (* b
+			  (list-ref (list-ref init-array jy) 1)
+			  ))))
     (ws-interrupt?) ;;does this really belong here?
     (run
      (lambda ()
@@ -64,22 +62,23 @@
 	       (set! dy (- y oldy))
 	       (set! oldy y)
 	       ;;straight uniform distribution for y
-	       (set! ydev (inexact->exact (round (* (- 1.0 (random 2.0)) (* .01 b ywig)))))
+	       (set! ydev (round (* (- 1.0 (random 2.0)) (* .01 b ywig))))
 	       ;;gaussian distribution for x
 	       (set! xdev 
-		     (* xstep (inexact->exact (round 
-					       (* xwig 
-						  (* (sqrt (* -2.0 (log (- 1 (random 1.0)))))
-						     (cos (* 6.283185307179586 (random 1.0)))))))))
+		     (* xstep (round 
+			       (* xwig 
+				  (* (sqrt (* -2.0 (log (- 1 (random 1.0)))))
+				     (cos (* 6.283185307179586 (random 1.0))))))))
 	       (vct-set! xy-array (modulo m xy-array-l)
 			 ;;mirror stuff for x
 			 (cond ((or  (< (round xmax) (+ dx xdev))
 				     (> (round xmin)(+ dx xdev)))
 				(max (min ;;this mirror is attentuated
-				      (inexact->exact (round (+ (* xfb prev-dx) (* (- 1  xfb) (+ dx (- xdev))))))
-				      (inexact->exact (round xmax))) (inexact->exact (round xmin))))
-			       (else (inexact->exact (round (+ (* xfb prev-dx)
-							       (* (- 1  xfb) (+ dx xdev))))))))
+				      (round (+ (* xfb prev-dx) (* (- 1  xfb) (+ dx (- xdev)))))
+				      (round xmax))
+				     (round xmin)))
+			       (else (round (+ (* xfb prev-dx)
+					       (* (- 1  xfb) (+ dx xdev)))))))
 	       (vct-set! xy-array (+ (modulo m xy-array-l) 1)
 			 ;;mirror stuff for y 
 			 (cond ((or (< b (+ y ydev)) (> (- b) (+ y ydev)))

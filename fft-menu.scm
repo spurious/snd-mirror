@@ -149,12 +149,12 @@ removes all energy below the low frequency and above the high frequency, then co
 		     (if (provided? 'snd-gtk)
 			 (lambda (w data)
 			   (set! fft-squelch-amount initial-fft-squelch-amount)
-			   (gtk_adjustment_set_value (GTK_ADJUSTMENT (car sliders))  (inexact->exact (round (* fft-squelch-amount 100))))
+			   (gtk_adjustment_set_value (GTK_ADJUSTMENT (car sliders)) (round (* fft-squelch-amount 100)))
 			   ;;; (gtk_adjustment_value_changed (GTK_ADJUSTMENT (car sliders)))
 			   )
 			 (lambda (w c i)
 			   (set! fft-squelch-amount initial-fft-squelch-amount)
-			   (XtSetValues (list-ref sliders 0) (list XmNvalue (inexact->exact (round (* fft-squelch-amount 100)))))))))
+			   (XtSetValues (list-ref sliders 0) (list XmNvalue (round (* fft-squelch-amount 100))))))))
 	      
               (set! sliders
                     (add-sliders 

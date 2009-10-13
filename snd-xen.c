@@ -3215,7 +3215,7 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   XEN_EVAL_C_STRING("(define (random . args)\
                        (if (and (not (null? args))\
                                 (zero? (car args)))\
-                           (car args)\
+                           0\
                            (apply %random args)))");
 
   XEN_EVAL_C_STRING("(define %log log)");
@@ -3229,6 +3229,18 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
                        (if (string? obj) (string-length obj)\
                            (if (vector? obj) (vector-length obj)\
                                (%length obj))))");
+
+  XEN_EVAL_C_STRING("(define %floor floor)");
+  XEN_EVAL_C_STRING("(define (floor val) (inexact->exact (%floor val)))");
+
+  XEN_EVAL_C_STRING("(define %ceiling ceiling)");
+  XEN_EVAL_C_STRING("(define (ceiling val) (inexact->exact (%ceiling val)))");
+
+  XEN_EVAL_C_STRING("(define %round round)");
+  XEN_EVAL_C_STRING("(define (round val) (inexact->exact (%round val)))");
+
+  XEN_EVAL_C_STRING("(define %truncate truncate)");
+  XEN_EVAL_C_STRING("(define (truncate val) (inexact->exact (%truncate val)))");
 
   /* def-optkey-fun is just define* in s7, but in guile it needs special handling.  Unfortunately,
    *    guile 1.9.0 makes this harder.

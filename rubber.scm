@@ -27,7 +27,7 @@
 
   (define* (derumble-sound :optional snd chn)
     (let* ((old-length (frames snd chn))
-	   (pow2 (inexact->exact (ceiling (/ (log (min old-length (srate snd))) (log 2)))))
+	   (pow2 (ceiling (/ (log (min old-length (srate snd))) (log 2))))
 	   (fftlen (inexact->exact (expt 2 pow2)))
 	   (flt-env (list 0.0 0.0 (/ (* 2 16.0) (srate snd)) 0.0 (/ (* 2 20.0) (srate snd)) 1.0 1.0 1.0)))
       (filter-sound flt-env fftlen snd chn)
@@ -72,8 +72,8 @@
     (let ((data (make-vct samps))
 	  (x 1.0)
 	  (xinc (/ 1.0 samps))
-	  (sr0 (make-sampler (inexact->exact (floor s0))))
-	  (sr1 (make-sampler (inexact->exact (floor s1)))))
+	  (sr0 (make-sampler (floor s0)))
+	  (sr1 (make-sampler (floor s1))))
       (run
        (lambda ()
 	 (do ((i 0 (+ 1 i)))
@@ -126,11 +126,11 @@
 	    (let* ((start (inexact->exact (vct-ref cross-samples i)))
 		   (autolen 0))
 	      (let* ((s0 start)
-		     (pow2 (inexact->exact (ceiling (/ (log (* extension (/ (srate snd) 40.0))) (log 2)))))
+		     (pow2 (ceiling (/ (log (* extension (/ (srate snd) 40.0))) (log 2))))
 		     (fftlen (inexact->exact (expt 2 pow2)))
 		     (len4 (/ fftlen 4))
 		     (data (make-vct fftlen))
-		     (reader (make-sampler (inexact->exact (floor s0)))))
+		     (reader (make-sampler (floor s0))))
 		(do ((j 0 (+ 1 j)))
 		    ((= j fftlen))
 		  (let ((val (next-sample reader)))
@@ -160,8 +160,8 @@
 		  (let* ((s0 start)
 			 (s1 (inexact->exact (vct-ref cross-samples current-mark)))
 			 (len autolen)
-			 (sr0 (make-sampler (inexact->exact (floor s0))))
-			 (sr1 (make-sampler (inexact->exact (floor s1))))
+			 (sr0 (make-sampler (floor s0)))
+			 (sr1 (make-sampler (floor s1)))
 			 (ampsum 0.0)
 			 (diffsum 0.0))
 		    (do ((i 0 (+ 1 i)))
@@ -173,7 +173,7 @@
 		    (if (= diffsum 0.0)
 			(set! current-min 0.0)
 			(set! current-min (/ diffsum ampsum))))
-		  (set! min-samps (inexact->exact (round (* 0.5 current-min))))
+		  (set! min-samps (round (* 0.5 current-min)))
 		  (let ((top (min (- crosses 1) current-mark (+ i zeros-checked))))
 		    (do ((k (+ i 1) (+ 1 k)))
 			((= k top))
@@ -181,8 +181,8 @@
 			(let* ((s0 start)
 			       (s1 (inexact->exact (vct-ref cross-samples k)))
 			       (len autolen)
-			       (sr0 (make-sampler (inexact->exact (floor s0))))
-			       (sr1 (make-sampler (inexact->exact (floor s1))))
+			       (sr0 (make-sampler (floor s0)))
+			       (sr1 (make-sampler (floor s1)))
 			       (ampsum 0.0)
 			       (diffsum 0.0))
 			  (do ((i 0 (+ 1 i)))
@@ -213,7 +213,7 @@
        ;; now sort weights to scatter the changes as evenly as possible
        (let* ((len (frames snd chn))
 	      (adding (> stretch 1.0))
-	      (samps (inexact->exact (floor (* (abs (- stretch 1.0)) len))))
+	      (samps (floor (* (abs (- stretch 1.0)) len)))
 	      (needed-samps (if adding samps (min len (* samps 2))))
 	      (handled 0)
 	      (mult 1)
@@ -236,7 +236,7 @@
 			      (set! cur i)
 			      (set! curmin (vct-ref cross-weights i)))))
 		      (set! best-mark cur))
-		    (set! handled (+ handled (inexact->exact (floor (vct-ref cross-periods best-mark)))))
+		    (set! handled (+ handled (floor (vct-ref cross-periods best-mark))))
 		    (if (or (< handled needed-samps)
 			    (< (- handled needed-samps) (- needed-samps old-handled)))
 			(begin
@@ -245,7 +245,7 @@
 		    (vct-set! cross-weights best-mark 1000.0)))
 		))
 	 (if (>= curs weights)
-	     (set! mult (inexact->exact (ceiling (/ needed-samps handled)))))
+	     (set! mult (ceiling (/ needed-samps handled))))
 	 
 	 (let ((changed-len 0)
 	       (weights (length cross-weights)))
@@ -260,7 +260,7 @@
 		       (let ((new-samps
 			      (env-add beg next-beg len)))
 			 (if show-details
-			     (add-named-mark beg (format #f "~D:~D" i (inexact->exact (floor (/ len extension))))))
+			     (add-named-mark beg (format #f "~D:~D" i (floor (/ len extension)))))
 			 (insert-samples beg len new-samps)
 			 (if (> mult 1)
 			     (do ((k 1 (+ 1 k)))
@@ -276,7 +276,7 @@
 			 (if (>= beg (frames))
 			     (snd-print (format #f "trouble at ~D: ~D of ~D~%" i beg (frames))))
 			 (if show-details
-			     (add-named-mark (- beg 1) (format #f "~D:~D" i (inexact->exact (floor (/ len extension))))))
+			     (add-named-mark (- beg 1) (format #f "~D:~D" i (floor (/ len extension)))))
 			 (delete-samples beg len)
 			 (set! changed-len (+ changed-len len))
 			 (let ((end (+ beg len)))
@@ -293,6 +293,6 @@
      ;; and return to original srate
      (unsample-sound snd chn)
      (if show-details
-	 (snd-print (format #f "~A -> ~A (~A)~%" (frames snd chn 0) (frames snd chn) (inexact->exact (floor (* stretch (frames snd chn 0)))))))
+	 (snd-print (format #f "~A -> ~A (~A)~%" (frames snd chn 0) (frames snd chn) (floor (* stretch (frames snd chn 0))))))
      ) ; end of as-one-edit thunk
    (format #f "rubber-sound ~A" stretch)))

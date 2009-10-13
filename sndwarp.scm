@@ -164,16 +164,16 @@
 	   (rdA (make-src :input (lambda (dir) (readin f-a)) :srate 0.0 :width srcwidth))
 	   (rdB (if stereo-i (make-src :input (lambda (dir) (readin f-b)) :srate 0.0 :width srcwidth) #f))
 	   (windf (make-oscil))
-           (wsizef (make-env :envelope wsize-env :duration dur))
-	   (ampf (make-env :envelope amp-env :scaler amp :duration dur))
-	   (sratef (make-env :envelope srate-env :duration dur))
-	   (timef (make-env :envelope (if (and time-ptr scale-time-ptr)
+           (wsizef (make-env wsize-env :duration dur))
+	   (ampf (make-env amp-env :scaler amp :duration dur))
+	   (sratef (make-env srate-env :duration dur))
+	   (timef (make-env (if (and time-ptr scale-time-ptr)
 					  (normalize-envelope time-env (- fdur inputbeg))
 					  time-env)
 			    :duration dur))
-	   (locf (make-env :envelope loc-env :duration dur))
+	   (locf (make-env loc-env :duration dur))
 	   (writestart 0)
-	   (readstart (inexact->exact (round (* fsr inputbeg))))
+	   (readstart (round (* fsr inputbeg)))
 	   (eow-flag #f)
 	   (overlap-ratio 0.0)
 	   (overlap-ratio-compl 0.0)
@@ -223,16 +223,16 @@
 				  ;; Csound style - start each overlap series further into the soundfile
 				  (if (= overlap 0)
 				      0
-				      (inexact->exact (round (* winlen overlap-ratio-compl))))
+				      (round (* winlen overlap-ratio-compl)))
 				  ;; Alternative style - start each overlap series at 0
 				  0))
 			     ;; To match csound version, 1st section must start reading at 0. Using zero-start-time-ptr 
 			     ;; flag = #f,  however, allows 1st section to start as determined by time-ptr instead.
 			     (adj-time-val (if zero-start-time-ptr 0.0 time-val)))
-			 (set! readstart (inexact->exact (round (* fsr (+ inputbeg overlap-start adj-time-val)))))
+			 (set! readstart (round (* fsr (+ inputbeg overlap-start adj-time-val))))
 			 (if (not (= overlap 0)) (set! winsamps (inexact->exact (* winsamps overlap-ratio)))))
 		       ;; remaining sections
-		       (set! readstart (inexact->exact (round (* fsr (+ inputbeg time-val))))))
+		       (set! readstart (round (* fsr (+ inputbeg time-val)))))
 		   ;; STRETCH mode
 		   (if (= section 0)
 		       ;; initial section
@@ -241,14 +241,14 @@
 				  ;; Csound style - start each overlap series further into the soundfile
 				  (if (= overlap 0)
 				      0
-				      (inexact->exact (round (* winlen overlap-ratio-compl))))
+				      (round (* winlen overlap-ratio-compl)))
 				  ;; Alternative style - start each overlap series at 0
 				  0)))
 			 (begin
-			   (set! readstart (inexact->exact (round (* fsr (+ inputbeg init-read-start)))))
+			   (set! readstart (round (* fsr (+ inputbeg init-read-start))))
 			   (if (not (= overlap 0)) (set! winsamps (inexact->exact (* winsamps overlap-ratio))))))
 		       ;; remaining sections
-		       (set! readstart (inexact->exact (round (+ readstart (* fsr (/ winlen time-val))))))))
+		       (set! readstart (round (+ readstart (* fsr (/ winlen time-val)))))))
 	       ;; Set readin position and sampling rate
 	       (set! (mus-location f-a) readstart)
 	       (set! (mus-increment rdA) srate-val)
@@ -299,7 +299,7 @@
 		   (begin
 		     ;; For first section, have to backup readstart
 		     (if (and (= section 0) (> overlap 0) (not time-ptr))
-			 (set! readstart (- readstart (inexact->exact (round (* fsr winlen overlap-ratio-compl))))))))
+			 (set! readstart (- readstart (round (* fsr winlen overlap-ratio-compl)))))))
 	       (set! writestart (+ writestart winsamps))))))))))
 
 

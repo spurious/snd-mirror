@@ -7887,7 +7887,7 @@ all numbers multiplied by pi of course.
 </p>
 
 <!--
-(set! (srate 2) (inexact->exact (round (/ 1000000 (* 2 pi)))))
+(set! (srate 2) (round (/ 1000000 (* 2 pi))))
 (set! (axis-label-font) "9x15")
 (define (window-bounds losamp hisamp snd chn)
   (set! (left-sample snd chn) losamp)
@@ -7911,7 +7911,7 @@ all numbers multiplied by pi of course.
 <img src="pix/noid4.png" hspace=20 alt="n=4 case">
 
 <!--
-(set! (srate 0) (inexact->exact (round (/ 1000000 (* 2 pi)))))
+(set! (srate 0) (round (/ 1000000 (* 2 pi))))
 (set! (y-zoom-slider 1 0) (y-zoom-slider 0 0))
 (set! (x-axis-label 0 0) "2's phase")
 (window-bounds (- 436349 12000) (+ 436349 12000) 1 0)
@@ -8098,17 +8098,17 @@ all     34   5.8160    0.4993
 <pre>
          n     peak   (log peak n)            n     peak   (log peak n)
 
-all     35   5.9479    0.5015,        odd     33   5.7652    0.5010
-all     36   6.0636    0.5029,        odd     35   5.9480    0.5015
+all     35   5.9479    0.5015,        odd     35   5.9265    0.5005
+all     36   6.0636    0.5029,        odd     33   5.7652    0.5010
 all     38   6.3050    0.5062,        odd     34   5.8831    0.5025
 all     44   6.7910    0.5062,        odd     39   6.3385    0.5041
 all     46   6.9547    0.5066,        odd     36   6.0996    0.5046
 all     40   6.4878    0.5069,        odd     37   6.2069    0.5056
-all     41   6.5697    0.5069,        odd     38   6.2994    0.5060
-all     43   6.7320    0.5070,        odd     42   6.6727    0.5078
-all     39   6.4294    0.5079,        odd     40   6.5663    0.5102
-all     42   6.6817    0.5082,        odd     46   7.0570    0.5104
-all     45   6.9651    0.5099,        odd     43   6.8205    0.5105
+all     41   6.5697    0.5069,        odd     40   6.4588    0.5057
+all     43   6.7320    0.5070,        odd     38   6.2994    0.5060
+all     39   6.4294    0.5079,        odd     42   6.6727    0.5078
+all     42   6.6817    0.5082,        odd     41   6.6495    0.5102
+all     45   6.9651    0.5099,        odd     46   7.0570    0.5104
 </pre>
 </td></tr></table>
 

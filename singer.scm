@@ -75,11 +75,11 @@
 			  ((= i len))
 			(vct-set! v i (exact->inexact (list-ref (list-ref data i) 5))))
 		      v))
-	 (frq-env (make-env :envelope pfun :duration dur))
-	 (vib-env (make-env :envelope vfun :duration dur))
-	 (vib-osc (make-oscil :frequency 6.0))
-	 (glot-env (make-env :envelope gfun :duration dur))
-	 (noise-env (make-env :envelope nfun :duration dur))
+	 (frq-env (make-env pfun :duration dur))
+	 (vib-env (make-env vfun :duration dur))
+	 (vib-osc (make-oscil 6.0))
+	 (glot-env (make-env gfun :duration dur))
+	 (noise-env (make-env nfun :duration dur))
 	 (ran-vib (make-rand-interp :frequency 10 :amplitude .02))
 
 	 (tractlength 9)		;length of vocal tract

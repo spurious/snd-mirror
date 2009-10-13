@@ -37,7 +37,7 @@
 (definstrument (bird start dur frequency freqskew amplitude freq-envelope amp-envelope)
   "(bird start dur frequency freqskew amplitude freq-envelope amp-envelope)"
   (let* ((gls-env (make-env freq-envelope (hz->radians freqskew) dur))
-	 (os (make-oscil :frequency frequency))
+	 (os (make-oscil frequency))
 	 (amp-env (make-env amp-envelope amplitude dur))
 	 (len (seconds->samples dur))
 	 (beg (seconds->samples start))
