@@ -45,6 +45,8 @@ MUS_EXPORT XEN g_mus_sound_srate(XEN filename);
 MUS_EXPORT XEN g_mus_sound_chans(XEN filename);
 MUS_EXPORT XEN g_mus_sound_frames(XEN filename);
 MUS_EXPORT XEN g_mus_expand_filename(XEN file);
+MUS_EXPORT XEN g_sound_data_maxamp(XEN obj);
+MUS_EXPORT XEN g_mus_sound_maxamp(XEN file);
 
 #ifdef __cplusplus
 }

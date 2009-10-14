@@ -544,7 +544,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
-12-Oct:  generic length, srate, channels, frames, file-name, sync.\n\
+12-Oct:  generic length, srate, channels, frames, file-name, sync, maxamp.\n\
 6-Oct:   removed *snd-loaded-files* and *snd-remember-paths*.\n\
 1-Oct:   sounds are objects, but the integer choice also works. \n\
          sound->integer and integer->sound.\n\

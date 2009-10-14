@@ -4708,7 +4708,7 @@ And the fourth used the ssb-am-bank function in dsp.scm rewritten here for with-
            (<a class=quiet href="#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i (* amp sum))))))))
 
  (let* ((sound "oboe.snd")
-        (mx (cadr (<a class=quiet href="extsnd.html#mussoundmaxamp" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundmaxamp_tip)">mus-sound-maxamp</a> sound)))
+        (mx (maxamp sound))
         (dur (<a class=quiet href="extsnd.html#mussoundduration" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundduration_tip)">mus-sound-duration</a> sound)))
     (<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> (:scaled-to mx  :srate (srate sound))
       (repitch 0 dur sound 554 1000)))

@@ -1692,7 +1692,7 @@ static XEN g_mus_set_name(XEN gen, XEN name)
 }
 
 
-static XEN g_mus_data(XEN gen) 
+XEN g_mus_data(XEN gen) 
 {
   #define H_mus_data "(" S_mus_data " gen): gen's internal data (a vct), if any"
   mus_xen *ms;

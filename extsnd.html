@@ -1298,6 +1298,21 @@ and the regular <a href="#frames">frames</a> function that handles sound objects
 </td></tr><tr><td colspan=2 height=18></td></tr>
 
 
+<!-- maxamp -->
+<!-- INDEX genericmaxamp:maxamp (generic) -->
+<tr><td colspan=2 bgcolor="#f2f4ff">
+<code><a class=def>maxamp</a> (obj)</code>
+</td></tr><tr><td></td><td>
+<A NAME="genericmaxamp">maxamp</A> can handle a sound (via the regular <a href="#maxamp">maxamp</a> function),
+string (treated as a sound file name, <a href="#mussoundmaxamp">mus-sound-maxamp</a>),
+generator (maxamp of the mus-data vct, if any),
+sound-data (<a href="#sounddatamaxamp">sound-data-maxamp</a>),
+vct (<a href="#vctpeak">vct-peak</a>),
+region (<a href="#regionmaxamp">region-maxamp</a>),
+vector, list, or mix object.
+</td></tr><tr><td colspan=2 height=18></td></tr>
+
+
 <!-- srate -->
 <!-- INDEX genericsrate:srate (generic) -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
@@ -5345,7 +5360,7 @@ function uses insert-region (and other region functions) to rotate the samples i
       (<a class=quiet href="#asoneedit" onmouseout="UnTip()" onmouseover="Tip(extsnd_asoneedit_tip)">as-one-edit</a>
        (lambda ()
 	 (<a class=quiet href="#deletesamples" onmouseout="UnTip()" onmouseover="Tip(extsnd_deletesamples_tip)">delete-samples</a> 0 samps ind chan)
-	 (<em class=red>insert-region</em> (<a class=quiet href="#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a> ind chan) reg)))
+	 (<em class=red>insert-region</em> reg (<a class=quiet href="#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a> ind chan))))
       (<em class=red>forget-region</em> reg))))
 </pre></td></tr></table></td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -5394,7 +5409,7 @@ the reason the play is stopping; it will be 0 if the play completed normally.
 To see all possible reasons, see <a href="#stopplayreasons">play</a>.
 Here is a brief example (taken from play.scm) that plays a region over and over until someone types C-g:
 <pre>
-  (<em class=red>play-region</em> 0 #f
+  (<em class=red>play-region</em> reg #f
     (letrec ((stop-func (lambda (reason)
 			  (if (and (not (<a class=quiet href="#cgp" onmouseout="UnTip()" onmouseover="Tip(extsnd_cgp_tip)">c-g?</a>))
 				   (= reason 0)) ; 0 -&gt; play completed normally
@@ -5456,7 +5471,7 @@ This is the counterpart to <a href="#integertoregion">integer-&gt;region</a>.
 </td></tr><tr><td></td><td>
 region-maxamp is the peak amplitude of the samples in the region 'reg'.
 <pre>
-    :<em class=typing>(region-maxamp 1)</em>
+    :<em class=typing>(region-maxamp (integer-&gt;region 1))</em>
     <em class=listener>4.8828125e-4</em>
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
@@ -5476,7 +5491,7 @@ region-position returns the begin time of the region's channel 'chan' in the ori
 <pre>
     :<em class=typing>(make-region 1000 2000)</em>
     <em class=listener>2</em>
-    :<em class=typing>(region-position 2)</em>
+    :<em class=typing>(region-position (integer-&gt;region 2))</em>
     <em class=listener>1000</em>
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
@@ -5537,10 +5552,10 @@ save-region saves the region 'reg' in 'file' in the given data format and header
 It returns the output filename.  The arguments after 'reg' are <a class=quiet href="sndclm.html#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">optional-key</a>
 args (that is, they are normal keyword arguments, but the keywords are optional).  The following calls are equivalent:
 <pre>
-    (save-region 2 "reg0.snd")
-    (save-region 2 :file "reg0.snd" :header-type mus-next)
-    (save-region 2 "reg0.snd" mus-next <a class=quiet href="#dataformat" onmouseout="UnTip()" onmouseover="Tip(extsnd_musbfloat_tip)">mus-bfloat</a> "a comment")
-    (save-region 2 :file "reg0.snd" :comment "a comment" :data-format <a class=quiet href="#dataformat" onmouseout="UnTip()" onmouseover="Tip(extsnd_musbfloat_tip)">mus-bfloat</a>)
+    (save-region reg "reg0.snd")
+    (save-region reg :file "reg0.snd" :header-type mus-next)
+    (save-region reg "reg0.snd" mus-next <a class=quiet href="#dataformat" onmouseout="UnTip()" onmouseover="Tip(extsnd_musbfloat_tip)">mus-bfloat</a> "a comment")
+    (save-region reg :file "reg0.snd" :comment "a comment" :data-format <a class=quiet href="#dataformat" onmouseout="UnTip()" onmouseover="Tip(extsnd_musbfloat_tip)">mus-bfloat</a>)
 </pre>
 </td></tr>
 

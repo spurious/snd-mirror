@@ -3070,7 +3070,7 @@
   (with-sound (:srate 44100) (sndclmdoc-tritri 0 1 4000.0 0.7 0.1 0.01)) ; a sparrow?
   (with-sound () (sndclmdoc-shift-pitch 0 3 "oboe.snd" 1108.0))
   (let* ((sound "oboe.snd")
-	 (mx (cadr (mus-sound-maxamp sound)))
+	 (mx (maxamp sound))
 	 (dur (mus-sound-duration sound)))
     (with-sound (:scaled-to mx) 
 		(sndclmdoc-repitch 0 dur sound 554 1000)))

@@ -1149,6 +1149,7 @@ int xen_region_to_int(XEN n);
 XEN g_region_srate(XEN n);
 XEN g_region_chans(XEN n);
 XEN g_region_frames(XEN n, XEN chan);
+XEN g_region_maxamp(XEN n);
 
 
 
@@ -1585,6 +1586,7 @@ int xen_mix_to_int(XEN n);
 XEN g_mix_length(XEN n);
 XEN g_mix_sync(XEN n);
 XEN g_set_mix_sync(XEN n, XEN val);
+XEN g_mix_maxamp(XEN mix_id);
  
 mus_long_t mix_position_from_id(int id);
 mus_long_t mix_length_from_id(int id);

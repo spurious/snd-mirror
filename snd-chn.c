@@ -6488,6 +6488,9 @@ XEN g_frames(XEN snd, XEN chn_n, XEN edpos)
 
   if (!(XEN_BOUND_P(chn_n)))
     {
+      if (XEN_SOUND_P(snd))
+	return(channel_get(snd, chn_n, CP_FRAMES, S_frames));
+
       if (XEN_STRING_P(snd))
 	return(g_mus_sound_frames(snd));         /* mus-sound-frames */
       
@@ -6540,10 +6543,83 @@ static XEN g_set_frames(XEN on, XEN snd, XEN chn_n)
 WITH_THREE_SETTER_ARGS(g_set_frames_reversed, g_set_frames)
 
 
+static XEN g_vector_maxamp(XEN obj)
+{
+  double mx = 0.0;
+  int i, len;
+  len = XEN_VECTOR_LENGTH(obj);
+  for (i = 0; i < len; i++)
+    {
+      XEN el;
+      el = XEN_VECTOR_REF(obj, i);
+      if (XEN_NUMBER_P(el))
+	{
+	  double temp;
+	  temp = fabs(XEN_TO_C_DOUBLE(el));
+	  if (temp > mx) mx = temp;
+	}
+      /* should we trigger an error here? */
+    }
+  return(C_TO_XEN_DOUBLE(mx));
+}
+
+
+static XEN g_list_maxamp(XEN obj)
+{
+  double mx = 0.0;
+  int i, len;
+  len = XEN_LIST_LENGTH(obj);
+  for (i = 0; i < len; i++)
+    {
+      XEN el;
+      el = XEN_LIST_REF(obj, i);
+      if (XEN_NUMBER_P(el))
+	{
+	  double temp;
+	  temp = fabs(XEN_TO_C_DOUBLE(el));
+	  if (temp > mx) mx = temp;
+	}
+    }
+  return(C_TO_XEN_DOUBLE(mx));
+}
+
 
 static XEN g_maxamp(XEN snd, XEN chn_n, XEN edpos) 
 {
-  #define H_maxamp "(" S_maxamp " :optional snd chn edpos): maxamp of data in snd's channel chn"
+  #define H_maxamp "(" S_maxamp " :optional snd chn edpos): maxamp of data in the object 'snd', or in snd's channel chn if snd is a sound"
+
+  if (!(XEN_BOUND_P(chn_n)))
+    {
+      if (XEN_STRING_P(snd))                     /* string => mus_sound_maxamp */
+	return(XEN_CADR(g_mus_sound_maxamp(snd)));
+
+      if (mus_xen_p(snd))                        /* maxamp of mus-data */
+	{
+	  XEN v;
+	  v = g_mus_data(snd);
+	  if (MUS_VCT_P(v))
+	    return(g_vct_peak(v));
+	}
+
+      if (sound_data_p(snd))
+	return(g_list_maxamp(g_sound_data_maxamp(snd)));
+
+      if (MUS_VCT_P(snd))                        /* vct-peak */
+	return(g_vct_peak(snd));
+
+      if (XEN_MIX_P(snd))                        /* mix => sound maxamp of the mix data */
+	return(g_mix_maxamp(snd));
+
+      if (XEN_REGION_P(snd))                     /* region-maxamp */
+	return(g_region_maxamp(snd));
+
+      if (XEN_VECTOR_P(snd))
+	return(g_vector_maxamp(snd));
+
+      if (XEN_LIST_P(snd)) /* can this happen given def-clm-struct? */
+	return(g_list_maxamp(snd));
+    }
+
   if (XEN_BOUND_P(edpos))
     {
       XEN res;

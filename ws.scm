@@ -236,7 +236,7 @@
 		       (mus-close *reverb*)))
 	       (if statistics 
 		   (if reverb-to-file
-		       (set! revmax (cadr (mus-sound-maxamp reverb-1)))
+		       (set! revmax (maxamp reverb-1))
 		       (if (vct? reverb-1)
 			   (set! revmax (vct-peak reverb-1))
 			   (if (sound-data? reverb-1)

@@ -3319,13 +3319,13 @@
 
 (do ((i 0 (+ i 1)))
     ((= i 10))
-  (let ((mx (vct-peak (with-sound (:clipped #f :output (make-vct 10000))
-				  (let ((gen (make-krksin 20.0 (* i 0.1))))
-				    (run 
-				     (lambda ()
-				       (do ((i 0 (+ i 1)))
-					   ((= i 10000))
-					 (outa i (krksin gen))))))))))
+  (let ((mx (maxamp (with-sound (:clipped #f :output (make-vct 10000))
+		      (let ((gen (make-krksin 20.0 (* i 0.1))))
+			(run 
+			 (lambda ()
+			   (do ((i 0 (+ i 1)))
+			       ((= i 10000))
+			     (outa i (krksin gen))))))))))
     (snd-display ";~A: ~A" (* 0.1 i) mx)))
 
 ;;; relation between 1/(1-x)^2 and peak amp:
@@ -3649,13 +3649,13 @@
  (lambda (index)
    (for-each
     (lambda (r)
-      (let ((peak (vct-peak (with-sound (:clipped #f :output (make-vct 1000))
-					(let ((gen (make-asymmetric-fm 2000.0 :ratio .1 :r r)))
-					  (run 
-					   (lambda () 
-					     (do ((i 0 (+ i 1)))
-						 ((= i 1000))
-					       (outa i (asymmetric-fm gen index))))))))))
+      (let ((peak (maxamp (with-sound (:clipped #f :output (make-vct 1000))
+			    (let ((gen (make-asymmetric-fm 2000.0 :ratio .1 :r r)))
+			      (run 
+			       (lambda () 
+				 (do ((i 0 (+ i 1)))
+				     ((= i 1000))
+				   (outa i (asymmetric-fm gen index))))))))))
 	(if (> (abs (- peak 1.0)) .1)
 	    (snd-display ";asymmetric-fm peak: ~A, index: ~A, r: ~A" peak index r))))
     (list -10.0 -1.5 -0.5 0.5 1.0 1.5 10.0)))
@@ -4258,7 +4258,7 @@ index 10 (so 10/2 is the bes-jn arg):
 
 (do ((i 0 (+ i 1)))
     ((= i 10))
-  (let ((pk (vct-peak 
+  (let ((pk (maxamp 
 	     (with-sound (:output (make-vct 10000))
   	       (let ((gen (make-j0j1cos 100.0 i)))
 		 (run 

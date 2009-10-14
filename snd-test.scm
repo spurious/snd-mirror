@@ -34717,6 +34717,38 @@ EDITS: 2
 	    (if (not (= (sync mx) 36)) (snd-display ";sync of mx (36): ~A" (sync mx)))
 	    )
 	  (close-sound snd))
+
+	;; maxamp as generic
+	
+	(let ((snd (open-sound "oboe.snd"))
+	      (v (vct .1 .2 .3))
+	      (vc (vector .1 .2 .3 .4))
+	      (lst (list 1 2 3 4 5))
+	      (sd (make-sound-data 1 10))
+	      (str "oboe.snd")
+	      (fr (frame .1 .2)))
+	  (let ((mxv (mix-vct v 1000))
+		(reg (make-region 0 900))
+		(dly (make-delay 32))
+		)
+	    (set! (sd 0 1) .1)
+	    (delay dly .1)
+	    (delay dly .2)
+	    
+	    (if (fneq (maxamp snd) .334) (snd-display ";maxamp of sound: ~A" (maxamp snd)))
+	    (if (fneq (maxamp snd 0) .334) (snd-display ";maxamp of sound (0): ~A" (maxamp snd)))
+	    (if (fneq (maxamp snd 0 0) .14724) (snd-display ";maxamp of sound (0 0): ~A" (maxamp snd)))
+	    (if (fneq (maxamp v) .3) (snd-display ";maxamp of vct: ~A" (maxamp v)))
+	    (if (fneq (maxamp vc) .4) (snd-display ";maxamp of vector: ~A" (maxamp vc)))
+	    (if (fneq (maxamp lst) 5.0) (snd-display ";maxamp of list: ~A" (maxamp lst)))
+	    (if (fneq (maxamp str) .14724) (snd-display ";maxamp of string: ~A" (maxamp str)))
+	    (if (fneq (maxamp sd) 0.1) (snd-display ";maxamp of sound-data: ~A" (maxamp sd)))
+	    (if (fneq (maxamp fr) .2) (snd-display ";maxamp of frame: ~A" (maxamp fr)))
+	    (if (fneq (maxamp mxv) .3) (snd-display ";maxamp of mix: ~A" (maxamp mxv)))
+	    (if (fneq (maxamp reg) .02139) (snd-display ";maxamp of region: ~A" (maxamp reg)))
+	    (if (fneq (maxamp dly) .2) (snd-display ";maxamp of delay: ~A" (maxamp dly)))
+	    )
+	  (close-sound snd))
 	
 	)))
 

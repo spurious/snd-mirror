@@ -584,7 +584,7 @@ in the sound cache; if it isn't, a call on " S_mus_sound_maxamp " has to open an
 }
 
 
-static XEN g_mus_sound_maxamp(XEN file)
+XEN g_mus_sound_maxamp(XEN file)
 {
   #define H_mus_sound_maxamp "(" S_mus_sound_maxamp " filename): maxamps in sound (a list of paired amps (floats) and locations (samples))"
   int chans;
@@ -1819,7 +1819,7 @@ static XEN g_sound_data_ref(XEN obj, XEN chan, XEN frame_num)
 }
 
 
-static XEN g_sound_data_maxamp(XEN obj)
+XEN g_sound_data_maxamp(XEN obj)
 {
   #define H_sound_data_maxamp "(" S_sound_data_maxamp " sd): list of maxamps of data in sd"
   sound_data *sd;

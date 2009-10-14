@@ -92,7 +92,7 @@
  *        make #<func args> = (func args) or something like that so we can read new_type objects, or add a reader to that struct
  *        make-vector! where type of initial element sets type of all elements, or make-vector*?
  *          (make-vector! 32 0.0)
- *        reverse and append generic
+ *        member, reverse and append generic
  *        ->* for conversions (->vector, ->ratio? ->string etc)
  *        frac-part (like imag-part, but x - floor(x)), perhaps int-part
  *

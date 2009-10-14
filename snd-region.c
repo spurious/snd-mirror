@@ -1701,7 +1701,7 @@ static XEN g_region_home(XEN n)
 }
 
 
-static XEN g_region_maxamp(XEN n) 
+XEN g_region_maxamp(XEN n) 
 {
   #define H_region_maxamp "(" S_region_maxamp " reg): region maxamp"
   XEN_ASSERT_TYPE(XEN_REGION_P(n), n, XEN_ONLY_ARG, S_region_maxamp, "a region");

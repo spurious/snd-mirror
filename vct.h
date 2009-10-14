@@ -58,6 +58,7 @@ MUS_EXPORT XEN xen_list_to_vct(XEN lst);
 MUS_EXPORT vct *xen_to_vct(XEN arg);
 MUS_EXPORT XEN xen_make_vct(mus_long_t len, mus_float_t *data);
 MUS_EXPORT XEN xen_make_vct_wrapper(mus_long_t len, mus_float_t *data);
+MUS_EXPORT XEN g_vct_peak(XEN obj);
 
 #define XEN_TO_VCT(arg) ((vct *)XEN_OBJECT_REF(arg))
 #define MUS_VCT_P(arg) mus_vct_p(arg)

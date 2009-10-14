@@ -662,7 +662,7 @@ v. " vct_map_example " is the same as " vct_fill_example
 }
 
 
-static XEN g_vct_peak(XEN obj)
+XEN g_vct_peak(XEN obj)
 {
   #define H_vct_peak "(" S_vct_peak " v): max of abs of elements of v"
   mus_long_t i;

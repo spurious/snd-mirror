@@ -2738,6 +2738,29 @@ static XEN g_set_mix_color(XEN color, XEN mix_id)
 WITH_TWO_SETTER_ARGS(g_set_mix_color_reversed, g_set_mix_color)
 
 
+XEN g_mix_maxamp(XEN mix_id)
+{
+  mix_info *md;
+  mix_state *ms;
+  snd_fd *sf;
+  mus_long_t n;
+  mus_float_t mx = 0.0;
+
+  md = md_from_id(XEN_MIX_TO_C_INT(mix_id));
+  if (md == NULL)
+    return(snd_no_such_mix_error("mix-maxamp", mix_id));
+
+  ms = current_mix_state(md);
+  sf = make_virtual_mix_reader(md->cp, 0, ms->len, ms->index, 1.0, READ_FORWARD);
+  for (n = 0; n < ms->len; n++)
+    {
+      mus_float_t val;
+      val = fabs(read_sample(sf));
+      if (val > mx) mx = val;
+    }
+  free_snd_fd(sf);
+  return(C_TO_XEN_DOUBLE(mx));
+}
 
 
 /* mix-related globals */
@@ -3198,6 +3221,7 @@ static void mf_free(mix_fd *fd)
     }
 }
 
+
 XEN_MAKE_OBJECT_FREE_PROCEDURE(mix_fd, free_mf, mf_free)
 
 #if HAVE_S7
@@ -3206,6 +3230,7 @@ static bool s7_equalp_mf(void *m1, void *m2)
   return(m1 == m2);
 }
 #endif
+
 
 XEN g_make_mix_sampler(XEN mix_id, XEN ubeg)
 {
