@@ -2,7 +2,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sat Aug 05 00:09:28 CEST 2006
-\ Changed: Tue Oct 06 00:21:21 CEST 2009
+\ Changed: Tue Oct 13 00:51:07 CEST 2009
 
 \ Commentary:
 \
@@ -1782,8 +1782,7 @@ include bird.fsm
    <'> transform-sample <'> transform->vct <'> transform-frames <'> transform-type
    <'> trap-segfault <'> with-file-monitor <'> optimization
    <'> undo <'> update-transform-graph <'> update-time-graph <'> update-lisp-graph
-   <'> update-sound <'> run-safety <'> clm-table-size <'> with-verbose-cursor
-   <'> view-sound <'> wavelet-type
+   <'> update-sound <'> clm-table-size <'> with-verbose-cursor <'> view-sound <'> wavelet-type
    <'> time-graph? <'>  time-graph-type <'> wavo-hop <'> wavo-trace
    <'> window-height <'> window-width <'> window-x <'> window-y
    <'> with-mix-tags <'> with-relative-panes <'> with-gl <'> write-peak-env-info-file
@@ -1953,7 +1952,7 @@ include bird.fsm
    <'> mus-length <'> mus-location <'> mus-phase <'> mus-ramp
    <'> mus-scaler <'> vct-ref <'> x-axis-label <'> filter-control-coeffs
    <'> locsig-type <'> mus-file-buffer-size <'> mus-rand-seed <'> mus-width
-   <'> clm-table-size <'> run-safety <'> mus-offset <'> mus-reset
+   <'> clm-table-size <'> mus-offset <'> mus-reset
    <'> phase-vocoder-amp-increments <'> phase-vocoder-amps <'> phase-vocoder-freqs
    <'> phase-vocoder-phase-increments <'> phase-vocoder-phases
    <'> html-dir <'> html-program <'> mus-interp-type
@@ -2052,31 +2051,24 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   #t set-with-background-processes drop
   reset-all-hooks
   nil nil { prc tag }
-  #( <'> amp-control <'> bomb <'> apply-controls <'> channels
-     <'> chans <'> close-sound <'> comment <'> contrast-control
+  #( <'> amp-control <'> bomb <'> apply-controls <'> close-sound <'> comment <'> contrast-control
      <'> amp-control-bounds <'> speed-control-bounds <'> expand-control-bounds
-     <'> contrast-control-bounds
-     <'> reverb-control-length-bounds <'> reverb-control-scale-bounds <'> contrast-control-amp
-     <'> contrast-control?
-     <'> data-format <'> data-location <'> data-size <'> expand-control
-     <'> expand-control-hop <'> expand-control-jitter <'> expand-control-length
-     <'> expand-control-ramp
-     <'> expand-control? <'> file-name <'> filter-control-in-dB <'> filter-control-in-hz
-     <'> filter-control-envelope <'> filter-control-order <'> filter-control?
-     <'> finish-progress-report
-     <'> frames <'> header-type <'> progress-report <'> read-only
-     <'> reset-controls <'> restore-controls <'> reverb-control-decay <'> reverb-control-feedback
-     <'> reverb-control-length <'> reverb-control-lowpass <'> reverb-control-scale
-     <'> reverb-control?
-     <'> save-controls <'> select-sound <'> short-file-name <'> sound-loop-info
-     <'> speed-control <'> speed-control-style <'> speed-control-tones
-     <'> srate <'> channel-style <'> start-progress-report <'> sync
-     <'> sound-properties <'> swap-channels ) { prcs-1 }
+     <'> contrast-control-bounds <'> reverb-control-length-bounds <'> reverb-control-scale-bounds
+     <'> contrast-control-amp <'> contrast-control? <'> data-format <'> data-location
+     <'> data-size <'> expand-control <'> expand-control-hop <'> expand-control-jitter
+     <'> expand-control-length <'> expand-control-ramp <'> expand-control? <'> file-name
+     <'> filter-control-in-dB <'> filter-control-in-hz <'> filter-control-envelope
+     <'> filter-control-order <'> filter-control? <'> finish-progress-report <'> frames
+     <'> header-type <'> read-only <'> reset-controls <'> restore-controls
+     <'> reverb-control-decay <'> reverb-control-feedback <'> reverb-control-length
+     <'> reverb-control-lowpass <'> reverb-control-scale <'> reverb-control? <'> save-controls
+     <'> select-sound <'> short-file-name <'> sound-loop-info <'> speed-control
+     <'> speed-control-style <'> speed-control-tones <'> srate <'> channel-style
+     <'> start-progress-report <'> sync <'> sound-properties <'> swap-channels ) { prcs-1 }
   prcs-1 each to prc
     123 prc #t nil fth-catch to tag
     stack-reset
-    \ FIXME: close-sound seems not to raise an exception but returns #f [ms].
-    tag car if
+    tag if
       tag car 'no-such-sound = unless
 	$" snd no-such-sound %s: %s" #( prc tag ) snd-display
       then
@@ -2086,10 +2078,11 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   nil { arg }
   args-1 each to arg
     prcs-1 each to prc
-      prc <'> progress-report <> if
-	arg prc #t nil fth-catch to tag
-	stack-reset
-	tag car 'wrong-type-arg = unless
+      arg prc #t nil fth-catch to tag
+      stack-reset
+      tag if
+	tag car 'wrong-type-arg =
+	tag car 'mus-error      = || unless
 	  $" snd wrong-type-arg %s: %s (%s)" #( prc tag arg ) snd-display
 	then
       then
@@ -2103,9 +2096,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
       \ g_set_channels(snd, val)           arg 0
       \ snd/chn after value
       \ g_set_amp_control(val, snd, chn)   0 arg
-      prc <'> channels      = 
-      prc <'> chans         = ||
-      prc <'> data-format   = ||
+      prc <'> data-format   =
       prc <'> data-location = ||
       prc <'> data-size     = ||
       prc <'> header-type   = ||
@@ -2122,15 +2113,13 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   #( <'> amp-control <'> contrast-control <'> contrast-control-amp <'> contrast-control?
      <'> expand-control <'> amp-control-bounds <'> speed-control-bounds <'> expand-control-bounds
      <'> contrast-control-bounds <'> reverb-control-length-bounds <'> reverb-control-scale-bounds
-     <'> expand-control-hop
-     <'> expand-control-jitter <'> expand-control-length <'> expand-control-ramp
-     <'> expand-control?
-     <'> filter-control-in-dB <'> filter-control-in-hz <'> filter-control-envelope
-     <'> filter-control-order
+     <'> expand-control-hop <'> expand-control-jitter <'> expand-control-length
+     <'> expand-control-ramp <'> expand-control? <'> filter-control-in-dB
+     <'> filter-control-in-hz <'> filter-control-envelope <'> filter-control-order
      <'> filter-control? <'> reverb-control-decay <'> reverb-control-feedback
-     <'> reverb-control-length
-     <'> reverb-control-lowpass <'> reverb-control-scale <'> reverb-control? <'> speed-control
-     <'> speed-control-style <'> speed-control-tones <'> channel-style <'> sync ) { prcs-2 }
+     <'> reverb-control-length <'> reverb-control-lowpass <'> reverb-control-scale
+     <'> reverb-control? <'> speed-control <'> speed-control-style <'> speed-control-tones
+     <'> channel-style <'> sync ) { prcs-2 }
   args-1 each to arg
     prcs-2 each to prc
       arg ind prc set-xt #t nil fth-catch to tag
@@ -2581,7 +2570,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
      <'> window-height <'> beats-per-measure
      <'> window-width <'> window-x <'> window-y <'> with-gl
      <'> with-mix-tags <'> x-axis-style <'> beats-per-minute
-     <'> mix-tag-height <'> mix-tag-width <'> with-relative-panes <'> run-safety
+     <'> mix-tag-height <'> mix-tag-width <'> with-relative-panes
      <'> clm-table-size <'> mark-tag-width <'> mark-tag-height ) each to prc
     vct-5 prc set-xt #t nil fth-catch to tag
     stack-reset

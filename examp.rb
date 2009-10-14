@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Wed Sep 04 18:34:00 CEST 2002
-# Changed: Mon Oct 05 23:58:57 CEST 2009
+# Changed: Wed Oct 14 04:45:55 CEST 2009
 
 # Commentary:
 #
@@ -636,6 +636,48 @@ if provided? :snd
   def vct2sound_file(fd, v, samps)
     mus_sound_write(fd, 0, samps - 1, 1, vct2sound_data(v))
   end
+
+  # snd10.scm
+  def make_sum_of_sines(*args)
+    sines, frequency, initial_phase = nil
+    optkey(args, binding,
+           [:sines, 1],
+           [:frequency, 0.0],
+           [:initial_phase, 0.0])
+    gen = make_nsin(:frequency, frequency, :n, sines)
+    gen.phase = initial_phase
+    gen
+  end
+  alias sum_of_sines  nsin
+  alias sum_of_sines? nsin?
+
+  def make_sum_of_cosines(*args)
+    cosines, frequency, initial_phase = nil
+    optkey(args, binding,
+           [:cosines, 1],
+           [:frequency, 0.0],
+           [:initial_phase, 0.0])
+    gen = make_ncos(:frequency, frequency, :n, cosines)
+    gen.phase = initial_phase
+    gen
+  end
+  alias sum_of_cosines  ncos
+  alias sum_of_cosines? ncos?
+
+  def make_sine_summation(*args)
+    frequency, initial_phase, n, a, ratio = nil
+    optkey(args, binding,
+           [:frequency, 0.0],
+           [:initial_phase, 0.0],
+           [:n, 1],
+           [:a, 0.5],
+           [:ratio, 1.0])
+    gen = make_nrxysin(:frequency, frequency, :ratio, ratio, :n, n, :r, a)
+    gen.phase = initial_phase
+    gen
+  end
+  alias sine_summation  nrxysin
+  alias sine_summation? nrxysin?
 end
 
 # enum("foo", :bar, "FOO_BAR")

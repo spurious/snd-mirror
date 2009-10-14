@@ -3,7 +3,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Thu Oct 27 04:51:42 CEST 2005
-\ Changed: Sat Sep 26 02:10:33 CEST 2009
+\ Changed: Wed Oct 14 00:11:58 CEST 2009
 
 \ Commentary:
 \
@@ -263,9 +263,9 @@ ENV may be a vct, or an array.\n\
   fn 1 object-ref { y0 }
   fn -2 object-ref { last-x }
   #( x0 y0 ) { new-fn }
-  new-attack x0 f- 0.0001e old-attack x0 f- fmax f/ { scl }
+  new-attack x0 f- 0.0001 old-attack x0 f- fmax f/ { scl }
   old-decay if
-    old-decay old-attack f= if old-decay 0.000001e last-x f* f+ to old-decay then
+    old-decay old-attack f= if old-decay 0.000001 last-x f* f+ to old-decay then
   then
   len 1- 2 ?do
     fn i object-ref { x1 }

@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Oct 21 18:22:57 CEST 2005
-\ Changed: Mon Jun 15 02:32:14 CEST 2009
+\ Changed: Mon Oct 12 03:12:49 CEST 2009
 
 \ Commentary:
 
@@ -210,7 +210,7 @@ fth-xenved make-?obj xenved?
 <'> xe-set!     fth-xenved set-object-value-set \ xe index #( x y ) object-set!
 <'> xe-equal?   fth-xenved set-object-equal-p   \ obj1 obj2 equal?
 <'> xe-length   fth-xenved set-object-length    \ xe object-length => number of points (lstlen/2)
-<'> xe-mark     fth-xenved set-object-mark      \ for gc
+\ <'> xe-mark     fth-xenved set-object-mark      \ for gc
 <'> xe-free     fth-xenved set-object-free      \ for gc
 <'> xe-ref      fth-xenved 1 set-object-apply   \ xe index apply => #( x y )
 

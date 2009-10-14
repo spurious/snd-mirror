@@ -2,7 +2,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Mon Mar 15 19:25:58 CET 2004
-\ Changed: Sun Sep 20 17:29:58 CEST 2009
+\ Changed: Wed Oct 14 04:01:54 CEST 2009
 
 \ Commentary:
 \
@@ -53,7 +53,7 @@
 \ with-mix             ( body-str args fname beg -- )
 \ sound-let            ( ws-xt-lst body-xt -- )
 
-$" fth 26-Jun-2009" value *clm-version*
+$" fth 9-Oct-2009" value *clm-version*
 
 \ defined in snd/snd-xen.c
 [ifundef] snd-print   : snd-print   ( str -- str )  dup .string ;             [then]
@@ -240,8 +240,6 @@ previous
 16.0 1/f 32.0 1/f f+ notelength |S.
 
 \ === Global User Variables (settable in ~/.snd_forth or ~/.fthrc) ===
-#f 	      value *output*
-#f 	      value *reverb*
 #f 	      value *locsig*
 mus-lshort    value *clm-audio-format*
 #f            value *clm-comment*
@@ -268,7 +266,6 @@ mus-lshort    value *clm-audio-format*
   mus-lfloat        constant default-output-data-format
   mus-audio-default constant audio-output-device
   512               constant dac-size
-  0.0               constant clm-default-frequency
 [then]
 
 default-output-chans       value *clm-channels*
@@ -283,6 +280,9 @@ mus-clipping               value *clm-clipped*
 mus-array-print-length     value *clm-array-print-length*
 clm-table-size             value *clm-table-size*
 clm-default-frequency      value *clm-default-frequency*
+  
+<'> *clm-default-frequency* lambda: <{ val -- res }> val set-clm-default-frequency ; trace-var
+<'> *clm-table-size*        lambda: <{ val -- res }> val set-clm-table-size        ; trace-var
 
 \ internal global variables
 *clm-channels* value *channels*
@@ -725,7 +725,8 @@ hide
   ws :channels               array-assoc-ref  		    	to *channels*
   ws :notehook               array-assoc-ref  		    	to *notehook*
   ws :decay-time             array-assoc-ref  		    	to *clm-decay-time*
-  *clm-table-size*           set-clm-table-size         drop
+  \ *clm-default-frequency*    set-clm-default-frequency  drop
+  \ *clm-table-size*           set-clm-table-size         drop
   *clm-file-buffer-size*     set-mus-file-buffer-size   drop
   *clm-array-print-length*   set-mus-array-print-length drop
   *clm-clipped* boolean? if *clm-clipped* else #f then set-mus-clipping drop
@@ -1131,7 +1132,7 @@ lambda: { tmp1 tmp2 }\n\
 instrument: simp ( start dur freq amp -- )
   { start dur freq amp }
   :frequency freq make-oscil { os }
-  :envelope #( 0e 0e 25e 1e 75e 1e 100e 0e ) :duration dur :scaler amp make-env { en }
+  :envelope #( 0 0 25 1 75 1 100 0 ) :duration dur :scaler amp make-env { en }
   start dur run
     i  os 0.0 0.0 oscil en env f*  *output* outa drop
   loop
@@ -1174,12 +1175,12 @@ instrument: conv-simp ( start dur filt fname amp -- )
 
 \ <'> src-test with-sound drop
 event: src-test ( -- )
-  0.0 1.0 1.0 0.2 #( 0e 0e 50e 1e 100e 0e ) $" oboe.snd" src-simp
+  0.0 1.0 1.0 0.2 #( 0 0 50 1 100 0 ) $" oboe.snd" src-simp
 ;event
 
 \ <'> conv1-test with-sound drop
 event: conv1-test ( -- )
-  0.0 1.0 vct( 0.5 0.2 0.1 0.05 0e 0e 0e 0e ) $" fyow.snd" 1.0 conv-simp
+  0.0 1.0 vct( 0.5 0.2 0.1 0.05 0 0 0 0 ) $" fyow.snd" 1.0 conv-simp
 ;event
 
 \ <'> conc2-test with-sound drop
@@ -1194,19 +1195,66 @@ event: inst-test ( -- )
   2.4 1.0 $" pistol.snd" $" fyow.snd" 0.2 conv-simp
 ;event
 
-\ waveshape removed from clm.c
-#f 'snd provided? && [if]
+\ generators.scm
+: make-waveshape <{ :optional
+     frequency *clm-default-frequency*
+     partials '( 1 1 )
+     wave #f
+     size *clm-table-size* -- gen }>
+  wave if
+    :frequency frequency :coeffs wave make-polyshape
+  else
+    :frequency frequency :partials partials make-polyshape
+  then ( gen )
+;
+
+<'> polyshape  alias waveshape
+<'> polyshape? alias waveshape?
+
+: partials->waveshape <{ :optional partials #f size *clm-table-size* -- wave }>
+  partials partials->polynomial ( wave )
+;
+
+\ snd10.scm
+: make-sum-of-sines <{ :key sines 1 frequency 0.0 initial-phase 0.0 -- gen }>
+  :frequency frequency :n sines make-nsin { gen }
+  gen initial-phase set-mus-phase drop
+  gen
+;
+
+<'> nsin  alias sum-of-sines
+<'> nsin? alias sum-of-sines?
+
+: make-sum-of-cosines <{ :key cosines 1 frequency 0.0 initial-phase 0.0 -- gen }>
+  :frequency frequency :n cosines make-ncos { gen }
+  gen initial-phase set-mus-phase drop
+  gen
+;
+
+<'> ncos  alias sum-of-cosines
+<'> ncos? alias sum-of-cosines?
+
+: make-sine-summation <{ :key frequency 0.0 initial-phase 0.0 n 1 a 0.5 ratio 1.0 -- gen }>
+  :frequency frequency :ratio ratio :n n :r a make-nrxysin { gen }
+  gen initial-phase set-mus-phase drop
+  gen
+;
+
+<'> nrxysin  alias sine-summation
+<'> nrxysin? alias sine-summation?
+
+'snd provided? [if]
   instrument: arpeggio <{ start dur freq amp :key ampenv #( 0 0 0.5 1 1 0 ) offset 1.0 -- }>
     start dur times->samples { end beg }
     12 make-array map!
       :frequency freq offset i 6 - 0.03 f* f* f+
-      :partials #( 1 1  5 0.7  6 0.7  7 0.7  8 0.7  9 0.7  10 0.7 ) make-waveshape
+      :partials #( 1 1  5 0.7  6 0.7  7 0.7  8 0.7  9 0.7  10 0.7 ) make-polyshape
     end-map { waveshbank }
-    :envelope ampenv :scaler amp 0.25 f* :length end make-env { amp-env }
+    :envelope ampenv :scaler amp 0.1 f* :length end make-env { amp-env }
     end 0.0 make-vct map!
-      0.0 ( wvsum ) waveshbank each ( wv ) 1.0 0.0 waveshape f+ end-each ( wvsum ) amp-env env f*
-    end-map ( output )
-    #f channels 0 ?do ( output ) beg end #f i #f undef vct->channel ( output ) loop ( output ) drop
+      0.0 ( sum ) waveshbank each ( wv ) 1.0 0.0 polyshape f+ end-each ( sum ) amp-env env f*
+    end-map ( vct-output )
+    #f channels 0 ?do ( vct-output ) beg end #f i #f undef vct->channel loop ( vct-output ) drop
   ;instrument
 
   event: arpeggio-test ( -- )
@@ -1214,11 +1262,9 @@ event: inst-test ( -- )
     :header-type mus-next
     :data-format mus-lfloat
     :channels 2
-    :srate 22050 new-sound { snd }
+    :srate mus-srate f>s new-sound { snd }
     0 10 65 0.5 arpeggio
     snd save-sound drop
-    0 snd play drop
-    snd close-sound drop
   ;event
 [then]
 

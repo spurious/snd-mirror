@@ -2,7 +2,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Feb 03 10:36:51 CET 2006
-\ Changed: Thu Jun 25 19:41:26 CEST 2009
+\ Changed: Wed Oct 14 00:12:50 CEST 2009
 
 \ Commentary:
 \
@@ -324,7 +324,7 @@ hide
   o 1/f s o fsin f* 1.0 s f- s o fcos f* f+ fatan2 f* { pa }
   p pa f- f>s { tmp_int } tmp_int unless 1 to tmp_int then
   p pa f- tmp_int f- { pc }
-  begin pc 0.1 f< while tmp_int 1 - to tmp_int pc 1e f+ to pc repeat
+  begin pc 0.1 f< while tmp_int 1 - to tmp_int pc 1.0 f+ to pc repeat
   tmp_int
   o fsin o pc f* fsin f- o o pc f* f+ fsin f/
 ;
@@ -703,12 +703,12 @@ instrument: pqw-vox <{ start dur
       frm0 floor            { frm-fint }
       frm-fint f>s 2 mod unless
 	vals 0 frm-fint frq f* hz->radians       vct-set! drop ( even-freq )
-	vals 1 frm-fint 1e f+ frq f* hz->radians vct-set! drop ( odd-freq )
+	vals 1 frm-fint 1.0 f+ frq f* hz->radians vct-set! drop ( odd-freq )
 	vals 3 frm0 frm-fint f-                  vct-set! drop ( odd-amp )
 	vals 2 1.0 vals 3 vct-ref f-             vct-set! drop ( even-amp )
       else
 	vals 1 frm-fint frq f* hz->radians       vct-set! drop ( odd-freq )
-	vals 0 frm-fint 1e f+ frq f* hz->radians vct-set! drop ( even-freq )
+	vals 0 frm-fint 1.0 f+ frq f* hz->radians vct-set! drop ( even-freq )
 	vals 2 frm0 frm-fint f-                  vct-set! drop ( even-amp )
 	vals 3 1.0 vals 2 vct-ref f-             vct-set! drop ( odd-amp )
       then

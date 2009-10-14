@@ -98,6 +98,7 @@ end
 
 $original_save_dir = (save_dir or "/zap/snd")
 $original_temp_dir = (temp_dir or "/zap/tmp")
+$original_output_data_format = default_output_data_format
 $original_sound_file_extensions = sound_file_extensions
 $default_file_buffer_size = 65536
 $home_dir = ENV["HOME"]
@@ -1051,7 +1052,7 @@ def test000(lst, exec = false)
     lst.each do |sym, val|
       next unless symbol?(sym)
       if (res = set_snd_func(sym, snd_func(sym))) != val
-        snd_display("set_%s: %s (%s)?", sym, res, val)
+        snd_display("set_%s: %s (%s)?", sym, res, val.inspect)
       end
     end
   else
@@ -1059,7 +1060,7 @@ def test000(lst, exec = false)
     lst.each do |sym, val|
       next unless symbol?(sym)
       if (res = Module.const_get(sym)) != val
-        snd_display("%s => %s (%s)?", sym, res, val)
+        snd_display("%s => %s (%s)?", sym, res, val.inspect)
       end
     end
   end
@@ -1290,7 +1291,7 @@ def test00
             [:default_output_srate, 44100],
             [:dot_size, 1],
             [:enved_base, 1.0],
-            [:enved_clip?, false],
+            [:enved_clip?, true],
             unless provided? :snd_nogui
               [:enved_filter, true]
             end,
@@ -1333,7 +1334,6 @@ def test00
             [:mix_waveform_height, 20],
             [:mus_clipping, false],
             [:mus_prescaler, 1.0],
-            [:optimization, 6],
             [:print_length, 12],
             [:region_graph_style, Graph_lines],
             [:save_state_file, "saved-snd.rb"],
@@ -1362,7 +1362,7 @@ def test00
               [:tiny_font, if provided? :snd_motif
                              "6x12"
                            elsif provided? :snd_gtk
-                             "Monospace 8"
+                             "Sans 8"
                            end]
             end,
             [:time_graph_type, Graph_once],
@@ -1384,7 +1384,13 @@ def test00
       snd_info("start up sounds: %s mixes: %s marks: %s regions: %s", sounds, mixes, marks, regions)
     end
     test000(consts)
+    set_save_dir("")
+    set_temp_dir("")
+    set_default_output_data_format(Mus_bshort)
     test000(defs, true)
+    set_save_dir($original_save_dir)
+    set_temp_dir($original_temp_dir)
+    set_default_output_data_format($original_output_data_format)
     set_max_transform_peaks(-123)
     set_zero_pad(-123)
     test000([[:max_transform_peaks, 100], [:zero_pad, 0]], true)
@@ -1428,7 +1434,7 @@ def test001(lst, type = :normal)
     lst.each do |sym, val|
       next unless symbol?(sym)
       if (res = snd_func(sym)) != val
-        snd_display("%s %s != %s?", sym, res, val)
+        snd_display("%s %s != %s?", sym, res.inspect, val.inspect)
       end
     end
   when :without_error
@@ -1442,7 +1448,7 @@ def test001(lst, type = :normal)
     lst.each do |sym, val|
       next unless symbol?(sym)
       if (res = snd_func(sym)[1]) != val
-        snd_display("%s %s != %s?", sym, res, val)
+        snd_display("%s %s != %s?", sym, res.inspect, val.inspect)
       end
     end
   end
@@ -1485,7 +1491,7 @@ def test01
                 [:default_output_srate, 44100],
                 [:dot_size, 1],
                 [:enved_base, 1.0],
-                [:enved_clip?, false],
+                [:enved_clip?, true],
                 unless provided? :snd_nogui
                   [:enved_filter, true]
                 end,
@@ -1559,7 +1565,7 @@ def test01
                   [:tiny_font, if provided? :snd_motif
                                  "6x12"
                                elsif provided? :snd_gtk
-                                 "Monospace 8"
+                                 "Sans 8"
                                end]
                 end,
                 [:beats_per_measure, 4],
@@ -1570,7 +1576,6 @@ def test01
                 [:mix_tag_height, 14],
                 [:mix_tag_width, 6],
                 [:mix_waveform_height, 20],
-                [:optimization, 6],
                 [:time_graph_type, Graph_once],
                 [:tracking_cursor_style, Cursor_cross],
                 [:transform_graph_type, 0],
@@ -1609,7 +1614,13 @@ def test01
             [:reverb_control_length_bounds, 5.0],
             [:reverb_control_scale_bounds, 4.0],
             [:speed_control_bounds, 20.0]]
+    set_save_dir("")
+    set_temp_dir("")
+    set_default_output_data_format(Mus_bshort)
     test001(controls, :normal)
+    set_save_dir($original_save_dir)
+    set_temp_dir($original_temp_dir)
+    set_default_output_data_format($original_output_data_format)
     test001(specials, :without_error)
     test001(cadr, :cadr)
     unless provided? :snd_nogui
@@ -3819,20 +3830,6 @@ def test114
     set_cursor(44100 * 50000, ind)
     if (res = cursor(ind)) != (44100 * 50000)
       snd_display("bigger cursor: %s?", res)
-    end
-    val = backward_sample
-    if (res = cursor(ind)) != ((44100 * 50000) - 1)
-      snd_display("backup bigger cursor: %s", res)
-    end
-    if val != ((44100 * 50000) - 1)
-      snd_display("backup rtn bigger cursor: %s", cursor(ind))
-    end
-    val = forward_sample
-    if (res = cursor(ind)) != (44100 * 50000)
-      snd_display("up bigger cursor: %s", res)
-    end
-    if val != (44100 * 50000)
-      snd_display("up rtn bigger cursor: %s", cursor(ind))
     end
     m1 = add_mark(44123 * 51234, ind)
     if (res = mark_sample(m1)) != (44123 * 51234)
@@ -8413,16 +8410,6 @@ def test175
   set_cursor(200, ind, 1)
   if (res0 = cursor(ind, 0)) != 100 or (res1 = cursor(ind, 1)) != 200
     snd_display("cursor: %s %s?", res0, res1)
-  end
-  forward_sample(10, ind, 0)
-  forward_sample(-10, ind, 1)
-  if (res0 = cursor(ind, 0)) != 110 or (res1 = cursor(ind, 1)) != 190
-    snd_display("cursor (1): %s %s?", res0, res1)
-  end
-  backward_sample(-10, ind, 0)
-  backward_sample(10, ind, 1)
-  if (res0 = cursor(ind, 0)) != 120 or (res1 = cursor(ind, 1)) != 180
-    snd_display("cursor (2): %s %s?", res0, res1)
   end
   set_sync(1, ind)
   scale_by([0.5, 0.25], ind)
@@ -17292,11 +17279,11 @@ def test148
       8.times do |k|
         if k == chn and fneq(samps[k], 0.5)
           snd_display("8 out %s chan %s samp %s (0.5): %s?",
-                      mus_header_type2string(ht), chn, k, samp[k])
+                      mus_header_type2string(ht), chn, k, samps[k])
         end
         if k != chn and fneq(samps[k], 0.0)
           snd_display("8 out %s chan %s samp %s (0.0): %s?",
-                      mus_header_type2string(ht), chn, k, samp[k])
+                      mus_header_type2string(ht), chn, k, samps[k])
         end
       end
     end
@@ -18933,8 +18920,13 @@ def test188
   close_sound(ind)
   #
   if $output
-    snd_display("$output: %s", $output)
-    $output = nil
+    snd_display("$output: %s ($ws_output: %s)", $output, $ws_output)
+    $output = false
+  end
+  if $ws_output
+    # should have the same value as $output, i.e. false
+    snd_display("$ws_output not false? (%s)", $ws_output)
+    $ws_output = false
   end
   nind = new_sound("fmv.snd", Mus_aifc, Mus_bshort, 22050, 1, "this is a comment")
   with_time("fm_violin_1(0, 1, 440, 0.1)") do fm_violin_1(0, 1, 440, 0.1) end
@@ -21656,7 +21648,7 @@ end
 # ---------------- test 11: dialogs ----------------
 
 def string_equal_ignore_white_space(s1, s2)
-  s1 == s2 or s1.delete(", \n") == s2.delete(", \n")
+  s1 == s2 or s1.delete(":()-_, \n") == s2.delete(":()-_, \n")
 end
 
 def test11
@@ -21701,11 +21693,12 @@ def test11
     unless string_equal_ignore_white_space(str2, str3)
       snd_display("snd_help open_sound: %s %s?", str2, str3)
     end
-    unless string_equal_ignore_white_space(res = snd_help(:enved_base), "enved_base(): envelope editor exponential base value (1.0)")
-      snd_display("snd_help :enved_base: %s", res)
+    str = snd_help(:enved_base)
+    unless string_equal_ignore_white_space(res = snd_help(:enved_base), str)
+      snd_display("snd_help :enved_base: %s (%s)", res, str)
     end
-    unless string_equal_ignore_white_space(res = snd_help("enved_base"), "enved_base(): envelope editor exponential base value (1.0)")
-      snd_display("snd_help \"enved_base\": %s", res)
+    unless string_equal_ignore_white_space(res = snd_help("enved_base"), str)
+      snd_display("snd_help \"enved_base\": %s (%s)", res, str)
     end
     old_val = Hamming_window
     str1 = snd_help(:Hamming_window)
@@ -22303,8 +22296,8 @@ def test0013
   # HI: cursor_postion(:optional, snd, chn):
   # HO: (cursor-postion :optional snd chn):
   # That's why +4 instead of +5 like in snd-test.scm.
-  if ho.length != (hi.length + 4)
-    snd_display("length $help_hook\n# *** <[%s]%s>\n# *** <[%s]%s>?", hi.length, hi, ho.length, ho)
+  if ho.length != (hi.length + 4) or ho.length != (hi.length + 5)
+    snd_display("length $help_hook\n\t<[%s]%s>\n\t<[%s]%s>?", hi.length, hi, ho.length, ho)
   end
   $help_hook.reset_hook!
   $help_hook.add_hook!("snd-test") do |a, b| false end
@@ -23540,14 +23533,6 @@ def test14
       backward_mark(2, curfd)
       if (res1 = frames(curfd)) > 10 and (res2 = cursor(curfd)) != 10
         snd_display("backward_mark (10): %s (%s, %s)?", res2, res1, short_file_name(curfd))
-      end
-      forward_sample(5, curfd)
-      if (res1 = frames(curfd)) > 15 and (res2 = cursor(curfd)) != 15
-        snd_display("forward_sample (5): %s (%s, %s)?", res2, res1, short_file_name(curfd))
-      end
-      backward_sample(1, curfd)
-      if (res1 = frames(curfd)) > 15 and (res2 = cursor(curfd)) != 14
-        snd_display("backward_sample (1): %s (%s, %s)?", res2, res1, short_file_name(curfd))
       end
       new_marks = Snd.marks(curfd, 0).length
       delete_marks(curfd)
@@ -34328,7 +34313,7 @@ Procs =
    :swap_channels, :syncd_marks, :sync, :sync_max, :sound_properties, :temp_dir, :text_focus_color,
    :tiny_font, :region_sampler?, :transform_dialog,
    :transform_sample, :transform2vct, :transform_frames, :transform_type, :trap_segfault,
-   :with_file_monitor, :optimization, :unbind_key, :update_transform_graph, :update_time_graph,
+   :with_file_monitor, :unbind_key, :update_transform_graph, :update_time_graph,
    :update_lisp_graph, :update_sound, :clm_table_size,
    :with_verbose_cursor, :view_sound, :wavelet_type,
    :time_graph?, :time_graph_type, :wavo_hop, :wavo_trace, :window_height, :window_width,
@@ -34452,7 +34437,7 @@ Set_procs =
    :spectro_x_angle, :grid_density, :spectro_x_scale, :spectro_y_angle, :spectro_y_scale,
    :spectro_z_angle, :spectro_z_scale, :speed_control, :speed_control_style, :speed_control_tones,
    :squelch_update, :sync, :sound_properties, :temp_dir, :text_focus_color, :tiny_font, :y_bounds,
-   :transform_type, :trap_segfault, :with_file_monitor, :optimization, :with_verbose_cursor,
+   :transform_type, :trap_segfault, :with_file_monitor, :with_verbose_cursor,
    :wavelet_type, :x_bounds, :time_graph?, :wavo_hop, :wavo_trace, :with_gl,
    :with_mix_tags, :x_axis_style, :beats_per_minute, :zero_pad, :zoom_color, :zoom_focus_style,
    :with_relative_panes, :window_x, :window_y, :window_width, :window_height, :mix_dialog_mix,
@@ -34548,15 +34533,12 @@ $a_sound = false
 
 def test0028
   procs1 =
-    [:amp_control, :bomb, :apply_controls, :channels, :chans,
-     # FIXME: close_sound doesn't seem to raise any exceptions [ms]
-     # :close_sound,
-     :comment,
+    [:amp_control, :bomb, :apply_controls, :comment,
      :contrast_control, :amp_control_bounds, :speed_control_bounds, :expand_control_bounds,
      :contrast_control_bounds, :reverb_control_length_bounds, :reverb_control_scale_bounds,
      :contrast_control_amp, :contrast_control?, :data_format, :data_location, :data_size,
      :expand_control, :expand_control_hop, :expand_control_jitter, :expand_control_length,
-     :expand_control_ramp, :expand_control?, :file_name, :filter_control_in_dB,
+     :expand_control_ramp, :expand_control?, :filter_control_in_dB,
      :filter_control_in_hz, :filter_control_envelope, :filter_control_order, :filter_control?,
      :finish_progress_report, :frames, :header_type, :progress_report, :read_only,
      :reset_controls, :restore_controls, :reverb_control_decay, :reverb_control_feedback,
@@ -34565,14 +34547,15 @@ def test0028
      :speed_control, :speed_control_style, :speed_control_tones, :srate, :channel_style,
      :start_progress_report, :sync, :sound_properties, :swap_channels]
   procs1.each do |n|
-    if (tag = Snd.catch do snd_func(n, 123) end).first != :no_such_sound
+    if (tag = Snd.catch do snd_func(n, integer2sound(123)) end).first != :no_such_sound
       snd_display("snd :no_such_sound %s: %s", n, tag)
     end
   end
   [sqrt(-1.0), 1.5, "hiho"].each do |arg|
     procs1.each do |n|
       next if n == :progress_report
-      if (tag = Snd.catch do snd_func(n, arg) end).first != :wrong_type_arg
+      tag = Snd.catch do snd_func(n, arg) end
+      if tag.first != :wrong_type_arg and tag.first != :mus_error
         snd_display("snd :wrong_type_arg %s: %s %s", n, tag, arg)
       end
     end
@@ -34727,7 +34710,7 @@ def test0028
      :table_lookup, :tap, :triangle_wave, :two_pole,
      :two_zero, :wave_train, :ssb_am].each_with_index do |n, i|
       case (tag = Snd.catch do snd_func(n, arg) end).first
-      when :wrong_type_arg, :arg_error
+      when :wrong_type_arg, :no_data, :bad_type, :arg_error
         next
       else
         snd_display("clm %s: tag %s, arg %s [%s]", n, tag, arg, i)
@@ -35011,7 +34994,7 @@ def test0128
    :selected_data_color, :selected_graph_color, :selected_sound,
    :selection_creates_region, :show_controls, :show_indices,
    :show_listener, :show_selection_transform, :sinc_width, :temp_dir,
-   :text_focus_color, :tiny_font, :trap_segfault, :with_file_monitor, :optimization,
+   :text_focus_color, :tiny_font, :trap_segfault, :with_file_monitor,
    :with_verbose_cursor, :window_height,
    :beats_per_measure, :window_width, :window_x, :window_y, :with_gl,
    :with_mix_tags, :x_axis_style, :beats_per_minute, :zoom_color, :mix_tag_height,

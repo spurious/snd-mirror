@@ -404,14 +404,19 @@ def clm_player(s)
   end
 end
 
+trace_var(:$clm_default_frequency) do |val| set_clm_default_frequency(val) end
+trace_var(:$clm_table_size)        do |val| set_clm_table_size(val) end
+trace_var(:$output)                do |val| $ws_output = val end
+trace_var(:$reverb)                do |val| $ws_reverb = val end
+
 # with_silence sets $VERBOSE and $DEBUG temporary to false
 __ws_verbose__ = $VERBOSE
 __ws_debug__   = $DEBUG
 # get rid of `undefined variable' messages
 with_silence do
-  $clm_version            = "ruby 4-Oct-2009"
-  $output                 = nil
-  $reverb                 = nil
+  $clm_version            = "ruby 8-Oct-2009"
+  $output                 ||= false
+  $reverb                 ||= false
   $clm_array_print_length ||= 8
   $clm_audio_format       ||= Mus_lshort
   $clm_clipped            ||= true
@@ -937,7 +942,6 @@ installs the @with_sound_note_hook and prints the line
   
   def run(&body)
     @body ||= body
-    set_clm_table_size($clm_table_size)
     set_mus_file_buffer_size($clm_file_buffer_size)
     set_mus_array_print_length($clm_array_print_length)
     if @clipped == :undefined
