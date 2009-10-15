@@ -2355,10 +2355,7 @@ void call_sp_watchers(snd_info *sp, sp_watcher_t type, sp_watcher_reason_t reaso
  *             reverse mix append member: these exist already and could just be extended 
  *             remember to remake index.html
  *
- * check pure sndlib ins
- *
  * ->* in s7? ->vector ->vct etc
- * file-name of sampler?
  * applicable sound (set! (snd chan samp)? )
  *
  * very much PERHAPS: (+ <sound> <sound>) etc! [map for-each sort! fill! copy ref/set reverse subsequence append max/min]
@@ -3934,6 +3931,9 @@ static XEN g_file_name(XEN snd)
 {
   #define H_file_name "(" S_file_name " :optional snd): snd's full filename; snd can be a sound, mix, region, string, or generator."
 
+  if (XEN_SOUND_P(snd))
+    return(sound_get(snd, SP_FILE_NAME, S_file_name));
+
   if (mus_xen_p(snd))
     return(g_mus_file_name(snd));
 
@@ -3950,6 +3950,9 @@ static XEN g_file_name(XEN snd)
 
   if (XEN_STRING_P(snd))
     return(g_mus_expand_filename(snd));
+
+  if ((sampler_p(snd)) || (mix_sampler_p(snd)))
+    return(g_sampler_file_name(snd));
 
   return(sound_get(snd, SP_FILE_NAME, S_file_name));
 }

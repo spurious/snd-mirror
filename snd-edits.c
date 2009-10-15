@@ -7954,6 +7954,23 @@ if 'obj' is a mix-sampler, the id of underlying mix"
 }
 
 
+XEN g_sampler_file_name(XEN obj)
+{
+  if (sampler_p(obj))
+    {
+      snd_fd *fd = NULL;
+      fd = XEN_TO_SAMPLER(obj);
+      if ((fd->cp) && 
+	  (fd->cp->active >= CHANNEL_HAS_EDIT_LIST) && 
+	  (fd->cp->sound))
+	return(C_TO_XEN_STRING(fd->cp->sound->filename));
+      return(XEN_FALSE);
+    }
+
+  return(C_TO_XEN_STRING(mix_file_name(XEN_MIX_TO_C_INT(obj))));
+}
+
+
 XEN g_c_make_sampler(snd_fd *fd)
 {
   XEN_MAKE_AND_RETURN_OBJECT(sf_tag, fd, 0, free_sf);

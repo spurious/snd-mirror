@@ -1839,7 +1839,7 @@ XEN g_mus_file_name(XEN gen)
 
 /* ---------------- oscil ---------------- */
 
-#if 1
+#if (!HAVE_S7)
 /* TODO: get s7_define_function_star to work in non-Snd cases (what is the problem?) */
 
 static XEN g_make_oscil(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
@@ -1878,13 +1878,21 @@ static s7_pointer g_make_oscil(s7_scheme *sc, s7_pointer args)
   #define H_make_oscil "(" S_make_oscil " (:frequency *clm-default-frequency*) (:initial-phase 0.0)): return a new " S_oscil " (sinewave) generator"
   mus_any *ge;
   XEN frequency, initial_phase;
+  mus_float_t freq = 0.0;
 
   frequency = XEN_CAR(args);
   initial_phase = XEN_CADR(args);
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(frequency), frequency, XEN_ARG_1, S_make_oscil, "a number");
+
+  if (XEN_SYMBOL_P(frequency)) /* *clm-default-frequency* is not defined? */
+    freq = clm_default_frequency;
+  else
+    {
+      XEN_ASSERT_TYPE(XEN_NUMBER_P(frequency), frequency, XEN_ARG_1, S_make_oscil, "a number");
+      freq = XEN_TO_C_DOUBLE(frequency);
+    }
   XEN_ASSERT_TYPE(XEN_NUMBER_P(initial_phase), initial_phase, XEN_ARG_2, S_make_oscil, "a number");
 
-  ge = mus_make_oscil(XEN_TO_C_DOUBLE(frequency), XEN_TO_C_DOUBLE(initial_phase));
+  ge = mus_make_oscil(freq, XEN_TO_C_DOUBLE(initial_phase));
   if (ge) return(mus_xen_to_object(mus_any_to_mus_xen(ge)));
   return(XEN_FALSE);
 }
@@ -7878,7 +7886,7 @@ XEN_NARGIFY_1(g_mus_order_w, g_mus_order)
 XEN_NARGIFY_1(g_mus_data_w, g_mus_data)
 XEN_NARGIFY_2(g_mus_set_data_w, g_mus_set_data)
 XEN_NARGIFY_1(g_oscil_p_w, g_oscil_p)
-#if 1
+#if (!HAVE_S7)
 XEN_ARGIFY_4(g_make_oscil_w, g_make_oscil)
 #endif
 XEN_ARGIFY_3(g_oscil_w, g_oscil)
@@ -8177,7 +8185,7 @@ XEN_NARGIFY_1(g_mus_irandom_w, g_mus_irandom)
 #define g_mus_data_w g_mus_data
 #define g_mus_set_data_w g_mus_set_data
 #define g_oscil_p_w g_oscil_p
-#if 1
+#if (!HAVE_S7)
 #define g_make_oscil_w g_make_oscil
 #endif
 #define g_oscil_w g_oscil
@@ -8617,7 +8625,7 @@ static void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_mus_xcoeffs, g_mus_xcoeffs_w, 1, 0, 0, H_mus_xcoeffs);
   XEN_DEFINE_PROCEDURE(S_mus_ycoeffs, g_mus_ycoeffs_w, 1, 0, 0, H_mus_ycoeffs);
   XEN_DEFINE_PROCEDURE(S_oscil_p,     g_oscil_p_w,     1, 0, 0, H_oscil_p);
-#if 1
+#if (!HAVE_S7)
   XEN_DEFINE_PROCEDURE(S_make_oscil,  g_make_oscil_w,  0, 4, 0, H_make_oscil);
 #else
   XEN_DEFINE_PROCEDURE_STAR(S_make_oscil, g_make_oscil, "(frequency *clm-default-frequency*) (initial-phase 0.0)", H_make_oscil);

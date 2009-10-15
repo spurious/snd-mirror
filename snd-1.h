@@ -968,6 +968,7 @@ bool virtual_mix_ok(chan_info *cp, int edpos);
 bool begin_mix_op(chan_info *cp, mus_long_t old_beg, mus_long_t old_len, mus_long_t new_beg, mus_long_t new_len, int edpos, const char *caller);
 void end_mix_op(chan_info *cp, mus_long_t old_beg, mus_long_t old_len);
 void prepare_sound_list(chan_info *cp);
+XEN g_sampler_file_name(XEN obj);
 
 
 
