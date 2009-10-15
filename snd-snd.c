@@ -2355,7 +2355,7 @@ void call_sp_watchers(snd_info *sp, sp_watcher_t type, sp_watcher_reason_t reaso
  *             reverse mix append member: these exist already and could just be extended 
  *             remember to remake index.html
  *
- * check pure sndlib ins -- perhaps need ifdefs for cases that work outside snd
+ * check pure sndlib ins
  *
  * ->* in s7? ->vector ->vct etc
  * file-name of sampler?

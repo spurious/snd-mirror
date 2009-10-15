@@ -782,3 +782,24 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 	  ,@body)
 	,@args)))
 
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; generics from Snd that are used in some instruments
+;;;   these replacements assume Snd types are not present
+
+(define file-name mus-expand-filename)
+
+(define srate mus-sound-srate)
+
+(define (channels obj)
+  (if (string? obj)
+      (mus-sound-chans obj)
+      (mus-channels obj)))
+
+;;; I think length is handled by s7 for all types
+
+(define (frames obj)
+  (if (string? obj)
+      (mus-sound-frames obj)
+      (length obj)))
