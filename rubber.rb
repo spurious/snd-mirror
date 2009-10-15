@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Fri Feb 28 03:04:03 CET 2003
-# Changed: Sat Sep 26 02:04:27 CEST 2009
+# Changed: Wed Oct 14 23:12:39 CEST 2009
 
 # module Rubber (see rubber.scm)
 #  add_named_mark(samp, name, snd, chn)
@@ -13,7 +13,7 @@
 #  env_add(s0, s1, samps)
 #  rubber_sound(*args)
 
-require "examp"
+require "clm"
 
 module Rubber
   doc "#{self.class} #{self.name} is the translation of rubber.scm.\n"

@@ -1,12 +1,11 @@
-# piano.rb -- translation of piano.scm
+# piano.rb -- translation of piano.scm -*- snd-ruby -*-
 # ;;; CLM piano.ins (Scott Van Duyne) translated to Snd/Scheme
 
 # Ruby Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Thu Mar 06 03:58:02 CET 2003
-# Changed: Fri Jul 06 01:53:07 CEST 2007
+# Changed: Thu Oct 15 00:18:16 CEST 2009
 
 module Piano
-  require "examp"
   require "ws"
   require "env"
   include Env

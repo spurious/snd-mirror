@@ -2,7 +2,7 @@
 
 # Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Wed Nov 20 02:24:34 CET 2002
-# Changed: Fri Jul 06 01:52:46 CEST 2007
+# Changed: Thu Oct 15 00:21:26 CEST 2009
 
 # Comment:
 #
@@ -14,7 +14,6 @@
 #
 # Code:
 
-require "examp"
 require "ws"
 
 class Instrument

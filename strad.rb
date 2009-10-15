@@ -8,9 +8,8 @@
 #
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Sun Mar 16 02:46:52 CET 2003
-# Changed: Sun Jul 15 23:00:58 CEST 2007
+# Changed: Thu Oct 15 00:21:16 CEST 2009
 
-require "examp"
 require "ws"
 
 class DCBlock

@@ -2,7 +2,7 @@
 
 # Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Sat Mar 27 00:19:51 CET 2004
-# Changed: Sat Sep 26 02:04:15 CEST 2009
+# Changed: Thu Oct 15 00:19:47 CEST 2009
 
 # Comment:
 # 
@@ -25,7 +25,6 @@
 #  
 # Code:
 
-require "examp"
 require "ws"
 
 class Pvocoder

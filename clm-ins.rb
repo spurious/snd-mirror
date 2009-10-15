@@ -2,7 +2,7 @@
 
 # Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Tue Sep 16 01:27:09 CEST 2003
-# Changed: Tue May 12 21:03:53 CEST 2009
+# Changed: Thu Oct 15 00:12:59 CEST 2009
 
 # Instruments work with
 #   with_sound (CLM (sample2file gens) and Snd)
@@ -58,7 +58,6 @@
 
 # comments from clm-ins.scm
 
-require "examp"
 require "ws"
 require "spectr"
 require "env"

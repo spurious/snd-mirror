@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Tue Dec 10 22:08:15 CET 2002
-# Changed: Mon Jul 20 00:19:14 CEST 2009
+# Changed: Thu Oct 15 00:27:46 CEST 2009
 
 # Commentary:
 #
@@ -47,7 +47,6 @@ nb.help                      # this help
 
 # Code:
 
-require "examp"
 require "hooks"
 with_silence do
   unless defined? DBM.open

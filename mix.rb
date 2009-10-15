@@ -2,7 +2,7 @@
 
 # Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Tue Feb 22 13:40:33 CET 2005
-# Changed: Sat Jul 18 23:10:03 CEST 2009
+# Changed: Wed Oct 14 23:11:42 CEST 2009
 
 # Commentary:
 #
@@ -61,7 +61,7 @@
 
 # Code:
 
-require "examp"
+require "clm"
 
 module Mix
   # 

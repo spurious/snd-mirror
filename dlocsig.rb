@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Tue Mar 25 23:21:37 CET 2003
-# Changed: Sun Jul 19 16:27:53 CEST 2009
+# Changed: Thu Oct 15 00:13:16 CEST 2009
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -234,7 +234,6 @@
 
 # Code:
 
-require "examp"
 require "ws"
 require "complex"
 require "matrix"

@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Fri Feb 07 23:56:21 CET 2003
-# Changed: Fri Jul 17 23:20:57 CEST 2009
+# Changed: Wed Oct 14 23:11:01 CEST 2009
 
 # Commentary:
 #
@@ -42,7 +42,7 @@
 #
 # Code:
 
-require "examp"
+require "clm"
 require "snd-xm"
 require "env"
 require "extensions"

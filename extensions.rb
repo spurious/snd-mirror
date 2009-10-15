@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Sat Jan 03 17:30:23 CET 2004
-# Changed: Sat Oct 03 01:17:35 CEST 2009
+# Changed: Thu Oct 15 00:27:20 CEST 2009
 
 # Commentary:
 # 
@@ -148,7 +148,6 @@
 
 # Code:
 
-require "examp"
 require "hooks"
 include Math
 

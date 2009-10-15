@@ -2,7 +2,7 @@
 
 # Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Wed Mar 23 02:08:47 CET 2005
-# Changed: Sun Oct 04 04:47:51 CEST 2009
+# Changed: Thu Oct 15 00:27:02 CEST 2009
 
 # Commentary:
 #
@@ -49,7 +49,6 @@
 
 # Code:
 
-require "examp"
 require "hooks"
 
 module Mark

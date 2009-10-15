@@ -2,7 +2,7 @@
 
 # Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Wed Feb 25 05:31:02 CET 2004
-# Changed: Sun Jul 19 14:33:13 CEST 2009
+# Changed: Wed Oct 14 23:13:02 CEST 2009
 
 # Commentary:
 #
@@ -168,7 +168,7 @@
 
 # Code:
 
-require "examp"
+require "clm"
 
 provided? :snd_motif and (not provided? :xm) and require "libxm.so"
 provided? :snd_gtk   and (not provided? :xg) and require "libxg.so"

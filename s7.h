@@ -1106,15 +1106,6 @@ static XEN g_delete_file(XEN name)
 
 XEN_NARGIFY_1(g_delete_file_w, g_delete_file)
 
-static XEN g_random(XEN val)
-{
-  if (XEN_INTEGER_P(val))
-    return(C_TO_XEN_INT(mus_irandom(XEN_TO_C_INT(val))));
-  return(C_TO_XEN_DOUBLE(mus_frandom(XEN_TO_C_DOUBLE(val))));
-}
-
-XEN_NARGIFY_1(g_random_w, g_random)
-
 
 
 int main(int argc, char **argv)
@@ -1135,8 +1126,6 @@ int main(int argc, char **argv)
   
   XEN_DEFINE_PROCEDURE("file-exists?", g_file_exists_p_w, 1, 0, 0, H_file_exists_p);
   XEN_DEFINE_PROCEDURE("delete-file",  g_delete_file_w,   1, 0, 0, H_delete_file);
-  XEN_DEFINE_PROCEDURE("random",       g_random_w,        1, 0, 0, "(random arg): random number between 0 and arg ");
-  XEN_EVAL_C_STRING("(define (run-safety) 0)");        /* for the run macro and CLM */
   XEN_EVAL_C_STRING("(define (1+ x) (+ x 1))");        /* lots of the CLM instruments use this macro */
 
   s7_define_function(s7, "exit", our_exit, 0, 0, false, "(exit) exits the program");

@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Sat Sep 20 23:24:17 CEST 2003
-# Changed: Fri Jul 17 21:25:28 CEST 2009
+# Changed: Wed Oct 14 23:11:06 CEST 2009
 
 # Commentary:
 #
@@ -58,7 +58,7 @@
 
 # Code:
 
-require "examp"
+require "clm"
 
 module Env
   add_help(:envelope_interp,

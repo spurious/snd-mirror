@@ -2,7 +2,7 @@
 
 # Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Sun Dec 21 13:48:01 CET 2003
-# Changed: Mon Jun 23 22:40:23 CEST 2008
+# Changed: Wed Oct 14 23:11:31 CEST 2009
 
 # Commentary:
 #
@@ -41,7 +41,7 @@ end
 
 # Code:
 
-require "examp"
+require "clm"
 
 unless defined?(Hook)
   class Hook

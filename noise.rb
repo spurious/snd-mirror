@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Wed Mar 19 05:16:56 CET 2003
-# Changed: Fri Jul 06 01:53:10 CEST 2007
+# Changed: Thu Oct 15 00:17:48 CEST 2009
 
 # Comments beginning with ;; are taken from noise.ins!
 
@@ -11,7 +11,6 @@
 
 # ;;; The "noise" instrument (useful for Oceanic Music):
 
-require "examp"
 require "ws"
 require "env"
 include Env

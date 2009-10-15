@@ -2,7 +2,7 @@
 
 # Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Mon Mar 07 13:50:44 CET 2005
-# Changed: Sun Jul 19 16:19:43 CEST 2009
+# Changed: Thu Oct 15 00:13:33 CEST 2009
 
 # Commentary:
 #
@@ -187,7 +187,6 @@
 
 # Code:
 
-require "examp"
 require "ws"
 require "env"
 require "complex"

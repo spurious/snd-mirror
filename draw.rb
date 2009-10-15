@@ -2,7 +2,7 @@
 
 # Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Tue Apr 05 00:17:04 CEST 2005
-# Changed: Tue Mar 17 21:41:16 CET 2009
+# Changed: Thu Oct 15 00:13:25 CEST 2009
 
 # Commentary:
 #
@@ -29,7 +29,6 @@
 
 # Code:
 
-require "examp"
 require "extensions"
 
 module Draw

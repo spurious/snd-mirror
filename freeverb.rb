@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Tue Apr 08 03:53:20 CEST 2003
-# Changed: Fri Jul 06 01:53:44 CEST 2007
+# Changed: Thu Oct 15 00:14:35 CEST 2009
 
 # Original notes of Fernando Lopez-Lezcano
 
@@ -31,7 +31,6 @@
 
 # Code:
 
-require "examp"
 require "ws"
 with_silence(LoadError) do require "sndins" end
 

@@ -2,9 +2,8 @@
 # Perry Cook's Physical Modelling Toolkit
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
-# Changed: Wed Feb 27 00:00:20 CET 2008
+# Changed: Thu Oct 15 00:19:37 CEST 2009
 
-require "examp"
 require "ws"
 
 module PRC

@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Mon Mar 24 11:24:23 CET 2003
-# Changed: Fri Jul 06 01:53:44 CEST 2007
+# Changed: Thu Oct 15 00:16:58 CEST 2009
 
 # It follows the original header of Juan Reyes.
 
@@ -32,7 +32,6 @@
 # ;;
 # ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-require "examp"
 require "ws"
 
 CLM = Struct.new("CLM", :yy1, :yy2, :zz1, :zz2, :pp1, :pp2, :pp3, :out)

@@ -8793,17 +8793,34 @@ static void maxamp_f(int *args, ptree *pt)
   if (cp) FLOAT_RESULT = channel_maxamp(cp, INT_ARG_3);
 }
 
+static void region_maxamp_f(int *args, ptree *pt) {FLOAT_RESULT = region_maxamp(REGION_ARG_1);}
+static void mix_maxamp_f(int *args, ptree *pt) {FLOAT_RESULT = mix_maxamp(MIX_ARG_1);}
+static xen_value *vct_peak_1(ptree *prog, xen_value **args, int num_args);
 
 static xen_value *maxamp_1(ptree *pt, xen_value **args, int num_args)
 {
   xen_value *true_args[4];
   xen_value *rtn;
   int k;
+
+  if (num_args == 1)
+    {
+      switch (args[1]->type)
+	{
+	case R_FLOAT_VECTOR:
+	case R_VCT:        return(vct_peak_1(pt, args, num_args));
+	case R_MIX:        return(package(pt, R_FLOAT, mix_maxamp_f, "mix_maxamp", args, 1));
+	case R_REGION:     return(package(pt, R_FLOAT, region_maxamp_f, "region_maxamp", args, 1));
+	}
+    }
+
   run_opt_arg(pt, args, num_args, 1, true_args);
   run_opt_arg(pt, args, num_args, 2, true_args);
   run_opt_arg(pt, args, num_args, 3, true_args);
   true_args[0] = args[0];
+
   rtn = package(pt, R_FLOAT, maxamp_f, "maxamp_f", true_args, 3);
+
   for (k = num_args + 1; k <= 3; k++) free(true_args[k]);
   return(rtn);
 }

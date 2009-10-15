@@ -5,31 +5,31 @@
 ;;;  test 2: headers                             [1408]
 ;;;  test 3: variables                           [1725]
 ;;;  test 4: sndlib                              [2359]
-;;;  test 5: simple overall checks               [5101]
-;;;  test 6: vcts                                [13984]
-;;;  test 7: colors                              [14369]
-;;;  test 8: clm                                 [14866]
-;;;  test 9: mix                                 [26897]
-;;;  test 10: marks                              [29110]
-;;;  test 11: dialogs                            [30071]
-;;;  test 12: extensions                         [30292]
-;;;  test 13: menus, edit lists, hooks, etc      [30563]
-;;;  test 14: all together now                   [32176]
-;;;  test 15: chan-local vars                    [33111]
-;;;  test 16: regularized funcs                  [34794]
-;;;  test 17: dialogs and graphics               [39862]
-;;;  test 18: enved                              [39954]
-;;;  test 19: save and restore                   [39973]
-;;;  test 20: transforms                         [41749]
-;;;  test 21: new stuff                          [43940]
-;;;  test 22: run                                [45951]
-;;;  test 23: with-sound                         [52647]
-;;;  test 25: X/Xt/Xm                            [57198]
-;;;  test 26: Gtk                                [60968]
-;;;  test 27: GL                                 [64524]
-;;;  test 28: errors                             [64648]
-;;;  test all done                               [67151]
-;;;  test the end                                [67363]
+;;;  test 5: simple overall checks               [5088]
+;;;  test 6: vcts                                [13961]
+;;;  test 7: colors                              [14346]
+;;;  test 8: clm                                 [14843]
+;;;  test 9: mix                                 [26731]
+;;;  test 10: marks                              [28944]
+;;;  test 11: dialogs                            [29905]
+;;;  test 12: extensions                         [30126]
+;;;  test 13: menus, edit lists, hooks, etc      [30397]
+;;;  test 14: all together now                   [32010]
+;;;  test 15: chan-local vars                    [32937]
+;;;  test 16: regularized funcs                  [34755]
+;;;  test 17: dialogs and graphics               [39823]
+;;;  test 18: enved                              [39915]
+;;;  test 19: save and restore                   [39934]
+;;;  test 20: transforms                         [41710]
+;;;  test 21: new stuff                          [43901]
+;;;  test 22: run                                [45912]
+;;;  test 23: with-sound                         [52727]
+;;;  test 25: X/Xt/Xm                            [57278]
+;;;  test 26: Gtk                                [61048]
+;;;  test 27: GL                                 [64604]
+;;;  test 28: errors                             [64728]
+;;;  test all done                               [67232]
+;;;  test the end                                [67444]
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs))
 
@@ -52701,6 +52701,24 @@ EDITS: 1
       (mus-close frm)
       (close-sound snd))
     
+    ;; maxamp as generic
+    
+    (let ((snd (open-sound "oboe.snd"))
+	  (v (vct .1 .2 .3))
+	  (vc (vector .1 .2 .3 .4)))
+      (let ((mxv (mix-vct v 1000))
+	    (reg (make-region 0 900))
+	    )
+	(if (fneq (run (lambda () (maxamp snd))) .334) (snd-display ";maxamp of sound: ~A" (maxamp snd)))
+	(if (fneq (run (lambda () (maxamp snd 0))) .334) (snd-display ";maxamp of sound (0): ~A" (maxamp snd)))
+	(if (fneq (run (lambda () (maxamp snd 0 0))) .14724) (snd-display ";maxamp of sound (0 0): ~A" (maxamp snd)))
+	(if (fneq (run (lambda () (maxamp v))) .3) (snd-display ";maxamp of vct: ~A" (maxamp v)))
+	(if (fneq (run (lambda () (maxamp vc))) .4) (snd-display ";maxamp of vector: ~A" (run (lambda () (maxamp vc)))))
+	(if (fneq (run (lambda () (maxamp mxv))) .3) (snd-display ";maxamp of mix: ~A" (maxamp mxv)))
+	(if (fneq (run (lambda () (maxamp reg))) .02139) (snd-display ";maxamp of region: ~A" (maxamp reg)))
+	)
+      (close-sound snd))
+
     ))
 
 

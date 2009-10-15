@@ -2355,11 +2355,10 @@ void call_sp_watchers(snd_info *sp, sp_watcher_t type, sp_watcher_reason_t reaso
  *             reverse mix append member: these exist already and could just be extended 
  *             remember to remake index.html
  *
- * maxamp: run/test rb/fs
+ * check pure sndlib ins -- perhaps need ifdefs for cases that work outside snd
  *
  * ->* in s7? ->vector ->vct etc
  * file-name of sampler?
- *
  * applicable sound (set! (snd chan samp)? )
  *
  * very much PERHAPS: (+ <sound> <sound>) etc! [map for-each sort! fill! copy ref/set reverse subsequence append max/min]

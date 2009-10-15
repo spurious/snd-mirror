@@ -2,13 +2,13 @@
 
 # Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Thu Sep 05 22:28:49 CEST 2002
-# Changed: Fri Jul 17 22:08:22 CEST 2009
+# Changed: Thu Oct 15 00:27:57 CEST 2009
 
 # Commentary:
 #
 # Requires --with-motif or --with-gtk and module libxm.so or --with-static-xm!
 #
-# Tested with Snd 7.18, Motif 2.2.2, Gtk+ 2.2.1, Ruby 1.6.6, 1.6.8 and 1.9.0.
+# Tested with Snd 11, Motif 2.2.3, Gtk+ 2.16.6, Ruby 1.8.7 and 1.9.1.
 #
 # $info_comment_hook: lambda do |file, info_string| ...; new_info_string; end
 # $edhist_save_hook:  lambda do |prc| ... end
@@ -96,7 +96,6 @@
 
 # Code:
 
-require "examp"
 require "hooks"
 require "snd-xm"
 include Snd_XM

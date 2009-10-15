@@ -2738,7 +2738,7 @@ static XEN g_set_mix_color(XEN color, XEN mix_id)
 WITH_TWO_SETTER_ARGS(g_set_mix_color_reversed, g_set_mix_color)
 
 
-XEN g_mix_maxamp(XEN mix_id)
+double mix_maxamp(int mix_id)
 {
   mix_info *md;
   mix_state *ms;
@@ -2746,9 +2746,9 @@ XEN g_mix_maxamp(XEN mix_id)
   mus_long_t n;
   mus_float_t mx = 0.0;
 
-  md = md_from_id(XEN_MIX_TO_C_INT(mix_id));
+  md = md_from_id(mix_id);
   if (md == NULL)
-    return(snd_no_such_mix_error("mix-maxamp", mix_id));
+    return(0.0);
 
   ms = current_mix_state(md);
   sf = make_virtual_mix_reader(md->cp, 0, ms->len, ms->index, 1.0, READ_FORWARD);
@@ -2759,7 +2759,13 @@ XEN g_mix_maxamp(XEN mix_id)
       if (val > mx) mx = val;
     }
   free_snd_fd(sf);
-  return(C_TO_XEN_DOUBLE(mx));
+  return(mx);
+}
+
+
+XEN g_mix_maxamp(XEN mix_id)
+{
+  return(C_TO_XEN_DOUBLE(mix_maxamp(XEN_MIX_TO_C_INT(mix_id))));
 }
 
 

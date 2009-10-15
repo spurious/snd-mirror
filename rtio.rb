@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Tue May 20 08:35:13 CEST 2003
-# Changed: Wed Feb 27 00:05:14 CET 2008
+# Changed: Thu Oct 15 00:28:22 CEST 2009
 
 # Commentary:
 #
@@ -45,7 +45,6 @@
 
 # Code:
 
-require "examp"
 require "hooks"
 
 def make_rtio(*args)
