@@ -2235,11 +2235,6 @@ void after_mix_edit(int id)
 
 /* ---------------------------------------- mix objects ---------------------------------------- */
 
-/* 
- * SOMEDAY: deprecate mix-length, mix-position, mix-home, mix-properties, make-mix-sampler, mix-sampler?, read-mix-sample, mix-name, mix-sync, mix-color
- *            eventually? amp amp-env speed maxamp etc
- */
-
 typedef struct {
   int n;
 } xen_mix;

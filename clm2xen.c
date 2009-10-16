@@ -1840,7 +1840,6 @@ XEN g_mus_file_name(XEN gen)
 /* ---------------- oscil ---------------- */
 
 #if (!HAVE_S7)
-/* TODO: get s7_define_function_star to work in non-Snd cases (what is the problem?) */
 
 static XEN g_make_oscil(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {

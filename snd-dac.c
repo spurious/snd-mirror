@@ -2671,14 +2671,13 @@ static XEN g_xen_player_to_string(XEN obj)
 #endif
 
 
+#if (!HAVE_S7)
 static bool xen_player_equalp(xen_player *v1, xen_player *v2) 
 {
   return((v1 == v2) ||
 	 (v1->n == v2->n));
 }
 
-
-#if (!HAVE_S7)
 static XEN equalp_xen_player(XEN obj1, XEN obj2)
 {
   if ((!(XEN_PLAYER_P(obj1))) || (!(XEN_PLAYER_P(obj2)))) return(XEN_FALSE);

@@ -2143,11 +2143,11 @@ static xen_value *add_some_var_to_ptree(ptree *prog, int type, xen_value_constan
     case R_CLM:          return(make_xen_value(type, add_clm_to_ptree(prog, NULL, XEN_FALSE), ctype)); break;
     case R_FUNCTION:     return(make_xen_value(type, add_fnc_to_ptree(prog, NULL), ctype));            break;
 #if USE_SND
-    case R_SAMPLER:       return(make_xen_value(type, add_sampler_to_ptree(prog, NULL), ctype));         break;
+    case R_SAMPLER:       return(make_xen_value(type, add_sampler_to_ptree(prog, NULL), ctype));       break;
     case R_SOUND:
     case R_MIX:
     case R_MARK:
-    case R_REGION:       return(make_xen_value(type, add_int_to_ptree(prog, 0), type));                break;
+    case R_REGION:       return(make_xen_value(type, add_int_to_ptree(prog, 0), ctype));               break;
 #endif
     case R_SOUND_DATA:   return(make_xen_value(type, add_sound_data_to_ptree(prog, NULL), ctype));     break;
     case R_FLOAT_VECTOR:

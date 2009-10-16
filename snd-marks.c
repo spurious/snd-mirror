@@ -2004,10 +2004,6 @@ void show_mark_triangle(chan_info *cp, int x)
 
 /* ---------------------------------------- mark object ---------------------------------------- */
 
-/* 
- * SOMEDAY: deprecate mark-home|name|sync|color, perhaps sample
- */
-
 typedef struct {
   int n;
 } xen_mark;
@@ -2066,14 +2062,13 @@ static XEN g_xen_mark_to_string(XEN obj)
 #endif
 
 
+#if (!HAVE_S7)
 static bool xen_mark_equalp(xen_mark *v1, xen_mark *v2) 
 {
   return((v1 == v2) ||
 	 (v1->n == v2->n));
 }
 
-
-#if (!HAVE_S7)
 static XEN equalp_xen_mark(XEN obj1, XEN obj2)
 {
   if ((!(XEN_MARK_P(obj1))) || (!(XEN_MARK_P(obj2)))) return(XEN_FALSE);

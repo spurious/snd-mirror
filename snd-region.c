@@ -1323,9 +1323,6 @@ io_error_t save_region(int rg, const char *name, int type, int format, const cha
 
 /* ---------------------------------------- region objects ---------------------------------------- */
 
-/* SOMEDAY: deprecate region-home|chans|frames|maxamp|position,  make-region-sampler, read-region-sample, region-sampler?
- */
-
 typedef struct {
   int n;
 } xen_region;

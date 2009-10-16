@@ -4,6 +4,10 @@
 
 #include <mus-config.h>
 
+#if USE_SND
+  #include "snd.h"
+#endif
+
 #include <stdio.h>
 #if HAVE_FCNTL_H
   #include <fcntl.h>
@@ -21,26 +25,8 @@
   #include <string.h>
 #endif
 
-#ifndef NO_SNDLIB
-  #include "_sndlib.h"
-#else
-  int mus_midi_open_read(const char *name);
-  int mus_midi_open_write(const char *name);
-  int mus_midi_close(int line);
-  int mus_midi_read(int line, unsigned char *buffer, int bytes);
-  int mus_midi_write(int line, unsigned char *buffer, int bytes);
-  const char *mus_midi_device_name(int sysdev);
-  char *mus_midi_describe(void);
-  #define MUS_AUDIO_SYSTEM(n) (((n) >> 16) & 0xffff)
-  #define MUS_AUDIO_DEVICE(n) ((n) & 0xffff)
-  #if HAVE_EXTENSION_LANGUAGE
-    void mus_midi_init(void);
-  #endif
-  #define calloc(a, b)  calloc((size_t)(a), (size_t)(b))
-  #define malloc(a)     malloc((size_t)(a))
-  #define free(a)       free(a)
-  #define realloc(a, b) realloc(a, (size_t)(b))
-#endif
+#include "_sndlib.h"
+
 
 
 /* ---------------- ALSA ---------------- */
@@ -120,26 +106,15 @@ static int midi_open(const char *name, int input)
     err = snd_rawmidi_open(&line, NULL, name, SND_RAWMIDI_NONBLOCK);
   else err = snd_rawmidi_open(NULL, &line, name, SND_RAWMIDI_NONBLOCK);
   if (err)
-    {
-#ifdef NO_SNDLIB
-      fprintf(stderr, "can't open %s: %s\n", name, strerror(err));
-#else
-      return(mus_error(MUS_MIDI_OPEN_ERROR, "can't open %s: %s", name, strerror(err)));
-#endif
-      return(-1);
-    }
+    return(mus_error(MUS_MIDI_OPEN_ERROR, "can't open %s: %s", name, strerror(err)));
+
   snd_rawmidi_params_malloc(&params);
   err = snd_rawmidi_params_set_buffer_size(line, params, DEV_BUFSIZE);
   if (err)
     {
       snd_rawmidi_params_free(params);
       snd_rawmidi_close(line);
-#ifdef NO_SNDLIB
-      fprintf(stderr, "can't set %s buffer size to %d: %s\n", name, DEV_BUFSIZE, strerror(err));
-#else
       return(mus_error(MUS_MIDI_MISC_ERROR, "can't set %s buffer size to %d: %s", name, DEV_BUFSIZE, strerror(err)));
-#endif
-      return(-1);
     }
   return(new_midi_line(name, line, params, input));
 }
@@ -165,14 +140,8 @@ int mus_midi_close(int line)
       midi_lines[line] = NULL;
     }
   if (err)
-    {
-#ifdef NO_SNDLIB
-      fprintf(stderr, "can't close %s: %s\n", midi_names[line], strerror(err));
-#else
-      return(mus_error(MUS_MIDI_CLOSE_ERROR, "can't close %s: %s", midi_names[line], strerror(err)));
-#endif
-      return(-1);
-    }
+    return(mus_error(MUS_MIDI_CLOSE_ERROR, "can't close %s: %s", midi_names[line], strerror(err)));
+
   return(0);
 }
 
@@ -182,12 +151,8 @@ int mus_midi_read(int line, unsigned char *buffer, int bytes)
   if ((line < 0) || (line >= midis)) return(-1);
   if (midi_directions[line] == MIDI_READ)
     return(snd_rawmidi_read(midi_lines[line], buffer, bytes));
-#ifdef NO_SNDLIB
-  fprintf(stderr, "can't read from output %s\n", midi_names[line]);
-#else
+
   return(mus_error(MUS_MIDI_READ_ERROR, "can't read from output %s", midi_names[line]));
-#endif
-  return(-1);
 }
 
 
@@ -196,12 +161,7 @@ int mus_midi_write(int line, unsigned char *buffer, int bytes)
   if ((line < 0) || (line >= midis)) return(-1);
   if (midi_directions[line] == MIDI_WRITE)
     return(snd_rawmidi_write(midi_lines[line], buffer, bytes));
-#ifdef NO_SNDLIB
-  fprintf(stderr, "can't write to input %s\n", midi_names[line]);
-#else
   return(mus_error(MUS_MIDI_WRITE_ERROR, "can't write to input %s", midi_names[line]));
-#endif
-  return(-1);
 }
 
 
@@ -275,11 +235,7 @@ static void mus_midi_initialize(void)
     {
       midi_ports = mdInit();
       if (midi_ports == -1)
-#ifdef NO_SNDLIB
-	fprintf(stderr, "startmidi not called?");
-#else
-      mus_error(MUS_MIDI_INIT_ERROR, "startmidi not called?");
-#endif
+	mus_error(MUS_MIDI_INIT_ERROR, "startmidi not called?");
       midi_initialized = 1;
     }
 }
@@ -328,14 +284,8 @@ int midi_open(const char *name, int input)
     md = mdOpenInPort((char *)name);
   else md = mdOpenOutPort((char *)name);
   if (md == NULL)
-    {
-#ifdef NO_SNDLIB
-      fprintf(stderr, "can't open %s\n", name);
-      return(-1);
-#else
-      return(mus_error(MUS_MIDI_OPEN_ERROR, "can't open %s", name));
-#endif
-    }
+    return(mus_error(MUS_MIDI_OPEN_ERROR, "can't open %s", name));
+
   mdSetStampMode(md, MD_NOSTAMP);
   return(new_midi_line(name, md, input));
 }
@@ -371,12 +321,7 @@ int mus_midi_read(int line, unsigned char *buffer, int bytes)
 	}
       return(bytes);
     }
-#ifdef NO_SNDLIB
-  fprintf(stderr, "can't read from output %s\n", midi_names[line]);
-  return(-1);
-#else
   return(mus_error(MUS_MIDI_READ_ERROR, "can't read from output %s", midi_names[line]));
-#endif
 }
 
 
@@ -400,12 +345,7 @@ int mus_midi_write(int line, unsigned char *buffer, int bytes)
 	}
       return(bytes);
     }
-#ifdef NO_SNDLIB
-  fprintf(stderr, "can't write to input %s\n", midi_names[line]);
-  return(-1);
-#else
   return(mus_error(MUS_MIDI_WRITE_ERROR, "can't write to input %s", midi_names[line]));
-#endif
 }
 
 

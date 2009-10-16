@@ -89,12 +89,12 @@
  *        cerror ("error/cc"?) -- tag = continuation in this case,
  *          and error handler makes it accessible (as well as error context) for eval
  *        rename "force" to some name matching the notion of a promise ("delay" and "force" are about as bad as names can get)
+ *          or better, get rid of these things altogether [cash_promise?]
  *        make #<func args> = (func args) or something like that so we can read new_type objects, or add a reader to that struct
  *        make-vector! where type of initial element sets type of all elements, or make-vector*?
  *          (make-vector! 32 0.0)
  *        member, reverse and append generic
  *        ->* for conversions (->vector, ->ratio? ->string etc)
- *        frac-part (like imag-part, but x - floor(x)), perhaps int-part
  *
  *
  * Mike Scholz provided the FreeBSD support (complex trig funcs, etc)
@@ -11447,9 +11447,12 @@ static s7_pointer g_hash_table_set(s7_scheme *sc, s7_pointer args)
  *	        (lambda (obj1 obj2) (= obj1 obj2)) ; equal?
  *	        #f                                 ; gc mark
  *	        (lambda (obj arg) arg)             ; apply
- *	        #f)                                ; set
+ *	        #f                                 ; set
+ *              #f #f #f)                          ; length copy fill!
  *  (make-object <tag> value)
  *  (object? <tag> obj) or maybe (name? obj) and (make-name value)
+ *
+ * should probably add a list of methods (reverse, member, etc)
  */
 
 bool s7_is_function(s7_pointer p)  
@@ -16595,6 +16598,26 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto EVAL;
       
       
+      /* rather than having built-in force and make-promise, why not use these (from slib with some changes):
+
+	 (define (force object) (object))
+
+	 (define-macro (make-promise expression)
+           `(let ((result-ready? #f)
+  	          (result #f))
+             (lambda ()
+               (if result-ready?
+	           result
+	          (let ((x (let () 
+		             ,expression)))
+	            (if result-ready?
+		        result
+                        (begin
+		          (set! result-ready? #t)
+		          (set! result x)
+		          result)))))))
+      */
+
     case OP_MAKE_PROMISE: 
       if (sc->code == sc->NIL)  /* (make-promise) */
 	return(eval_error(sc, "make-promise needs an argument: ~A", sc->code));
@@ -16819,11 +16842,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        * Isn't it just as good to say:
        *
        * (define-macro (mac a b) 
-       *   `(with-environment 
-       *      (cons (list (cons 'a ,a) 
-       *                  (cons 'b ,b))
-       *            (global-environment))
-       *      (+ a b)))
+       *   `(with-environment (global-environment)
+       *      (+ ,a ,b)))
        *
        * now if we rebind +
        *

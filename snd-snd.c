@@ -2340,9 +2340,10 @@ void call_sp_watchers(snd_info *sp, sp_watcher_t type, sp_watcher_reason_t reaso
 
 /* ---------------------------------------- sound objects ---------------------------------------- */
 
-/* TODO: generics (besides length, srate, channels, frames, file-name, sync, maxamp):
+/* generics (besides length, srate, channels, frames, file-name, sync, maxamp):
  *             source:         procedure-source[s7_procedure_source] mix-home mark-home region-home player-home sampler-home
  *                               mus cases: readin=file+chan? etc, port -> filename?, sound->filename?
+ *               seems redundant -- why not use file-name?
  *             position:       mark-sample mix-position region-position sampler-position
  *               [location?]     port->line number?, mus cases = mus_location?, player? widget? cursor if sound?
  *               (CL has position)
@@ -2422,14 +2423,13 @@ static XEN g_xen_sound_to_string(XEN obj)
 #endif
 
 
+#if (!HAVE_S7)
 static bool xen_sound_equalp(xen_sound *v1, xen_sound *v2) 
 {
   return((v1 == v2) ||
 	 (v1->n == v2->n));
 }
 
-
-#if (!HAVE_S7)
 static XEN equalp_xen_sound(XEN obj1, XEN obj2)
 {
   if ((!(XEN_SOUND_P(obj1))) || (!(XEN_SOUND_P(obj2)))) return(XEN_FALSE);
