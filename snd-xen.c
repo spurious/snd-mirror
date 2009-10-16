@@ -82,6 +82,9 @@
  */
 
 
+/* I think all the WITH_MODULES stuff is Guile-specific */
+
+
 /* -------- protect XEN vars from GC -------- */
 
 #if HAVE_S7

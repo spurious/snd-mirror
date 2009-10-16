@@ -2513,7 +2513,7 @@
 	(if (not (= size 2)) (snd-display ";oboe: mus-sound-datum-size ~D?" size))
 	(if (not (= bytes 2)) (snd-display ";oboe: sound-bytes ~D?" bytes))
 	(if (not (= sr 22050)) (snd-display ";oboe: mus-sound-srate ~D?" sr))
-	(if (and (not m1) (= clmtest 0)) (snd-display ";oboe: mus-sound-maxamp-exists before maxamp: ~A" m1))
+	(if (and m1 (= clmtest 0)) (snd-display ";oboe: mus-sound-maxamp-exists before maxamp: ~A" m1))
 	(if (not (mus-sound-maxamp-exists? "oboe.snd")) 
 	    (snd-display ";oboe: not mus-sound-maxamp-exists after maxamp: ~A" (mus-sound-maxamp-exists? "oboe.snd")))
 	

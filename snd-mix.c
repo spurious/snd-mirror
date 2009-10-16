@@ -3007,6 +3007,11 @@ auto-delete is " PROC_TRUE ", the input file is deleted when it is no longer nee
   bool with_mixer;
   mus_long_t beg = 0, len = 0;
 
+  /* TODO: make mix generic: vct=mix-vct, region=mix-region, sound-data=mix-sound-data, frame=mix-frame,
+   *        also mix-sound|mix-channel (sound object/int), but arg order is confusing (file-chn...)
+   *        and mix-vct has "origin", also file_chn might be env: pan-mix-*
+   */
+
   XEN_ASSERT_TYPE(XEN_STRING_P(file), file, XEN_ARG_1, S_mix, "a string");
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(chn_samp_n), chn_samp_n, XEN_ARG_2, S_mix, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(file_chn), file_chn, XEN_ARG_3, S_mix, "an integer or #t");
@@ -3016,7 +3021,6 @@ auto-delete is " PROC_TRUE ", the input file is deleted when it is no longer nee
   if (name) free(name);
 
   name = mus_expand_filename(XEN_TO_C_STRING(file));
-
   if (!(mus_file_probe(name)))
     return(snd_no_such_file_error(S_mix, file));
 

@@ -3086,9 +3086,29 @@
 	  (format #t "call/cc with-input-from-string str: ~A~%" str))))
     
 (let ((badfile "tmp1.r5rs"))
-  (let ((p (open-output-file "tmp1.r5rs")))
+  (let ((p (open-output-file badfile)))
     (close-output-port p))
-  (load "tmp1.r5rs"))
+  (load badfile))
+
+(if with-procedure-arity
+    (let ((loadit "tmp1.r5rs"))
+      (let ((p (open-output-file loadit)))
+	(display "(define s7test-var 314) (define (s7test-func) 314) (define-macro (s7test-mac a) `(+ ,a 2))" p)
+	(newline p)
+	(close-output-port p)
+	(load loadit)
+	(test (= s7test-var 314) #t)
+	(test (s7test-func) 314)
+	(test (s7test-mac 1) 3)
+	(set! p (open-output-file loadit)) ; hopefully this starts a new file
+	(display "(define s7test-var 3) (define (s7test-func) 3) (define-macro (s7test-mac a) `(+ ,a 1))" p)
+	(newline p)
+	(close-output-port p)
+	(load loadit)
+	(test (= s7test-var 3) #t)
+	(test (s7test-func) 3)
+	(test (s7test-mac 1) 2)
+	)))
 
 (if with-open-input-string-and-friends
     (test (+ 100 (with-input-from-string "123" (lambda () (values (read) 1)))) 224))
@@ -20934,6 +20954,7 @@
 (test (>= 1 1 2) #f)
 (test (> 2 2 1) #f)
 (test (<= 2 2 1) #f)
+(test (= 1/2 1/2+0i) #t)
 
 (num-test (+ 0) 0)
 (num-test (- 0) 0)

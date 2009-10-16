@@ -93,9 +93,12 @@
  *        make #<func args> = (func args) or something like that so we can read new_type objects, or add a reader to that struct
  *        make-vector! where type of initial element sets type of all elements, or make-vector*?
  *          (make-vector! 32 0.0)
- *        member, reverse and append generic
+ *        perhaps member, reverse and append generic
  *        ->* for conversions (->vector, ->ratio? ->string etc)
- *
+ *        ideally: remove all mention of exact|inexact, remove "delay"|force, remove set-car!|cdr!, 
+ *                 remove *-ci-*, remove cxxxxr, remove improper lists
+ *        load should handle C shared libraries, using dlopen/dlinit [optionally]
+ * 
  *
  * Mike Scholz provided the FreeBSD support (complex trig funcs, etc)
  * Rick Taube and Andrew Burnson provided the MS Visual C++ support
@@ -3964,6 +3967,19 @@ static bool num_eq(s7_num_t a, s7_num_t b)
 	case NUM_REAL:
 	case NUM_REAL2:
 	  return(num_to_real(a) == real(b));
+
+	  /* this gives some possibly confusing results:
+
+              :(= 245850922/78256779 (angle -1))
+              #t
+	      :(= 884279719003555/281474976710656 (angle -1))
+              #t
+              :(= 245850922/78256779 884279719003555/281474976710656)
+              #f
+	      
+	     should I rationalize the float before the comparison?  These results are not incorrect (pace r6rs) --
+	     if you use a float, it infects the rest of the numbers, as anywhere else.
+	  */
 	default:
 	  return(false);
 	}

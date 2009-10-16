@@ -5696,6 +5696,10 @@ for a peak-amp minimum using a simulated annealing form of the genetic algorithm
 
   static mus_float_t even_mins[128] = {1.0000, 1.7602, 2.0215, 2.4306, 2.6048, 2.8370, 3.0470, 3.1976, 3.4542, 3.5589, 3.6567, 3.7876, 3.9733, 4.0981, 4.1938, 4.3272, 4.4921, 4.5716, 4.7571, 4.8465, 4.9435, 5.0906, 5.2096, 5.3455, 5.4625, 5.5764, 5.7049, 5.8003, 5.9163, 6.0151, 6.1343, 6.2347, 6.4029, 6.4396, 6.6475, 6.7414, 6.8175, 6.9708, 6.9600, 7.0834, 7.1365, 7.3067, 7.3740, 7.4257, 7.6039, 7.6566, 7.8176, 7.8446, 7.8823, 8.0704, 8.1656, 8.1110, 8.3345, 8.4774, 8.5795, 8.5369, 8.5913, 8.7139, 8.8306, 8.9516, 9.0178, 9.0624, 9.1954, 9.1991, 9.3012, 9.4138, 9.4627, 9.6578, 9.7173, 9.9051, 9.9687, 9.9367, 10.0003, 9.9548, 10.0225, 10.1396, 10.2207, 10.4083, 10.4703, 10.5521, 10.6487, 10.7233, 10.6924, 10.8254, 10.9919, 11.0935, 11.1283, 11.1708, 10.8833, 11.1379, 11.4275, 11.5259, 11.4209, 11.4190, 11.5435, 11.5929, 11.8009, 11.8414, 11.9157, 11.9255, 11.9558, 12.0115, 12.1164, 12.1626, 12.0953, 12.2678, 12.4979, 12.5796, 12.7024, 12.7138, 12.8146, 12.8973, 13.0260, 13.0542, 13.0533, 13.2283, 13.2483, 13.1801, 13.4175, 13.4828, 13.5715, 13.6759, 13.6521, 13.5377, 13.6356, 13.7458, 13.7406, 14.0186};
 
+  static mus_float_t min_8[4] = {23.3530, 22.5463, 24.4371, 27.7400};
+  static mus_float_t min_9[4] = {34.2100, 35.5410, 35.7760, 43.4860};
+  static mus_float_t min_10[4] = {54.4440, 52.5080, 51.8950, 70.1400};
+
   auto mus_float_t saved_min(int ch, int nn);
   auto mus_float_t get_peak(mus_float_t *phases);
   auto pk_data *next_choice(pk_data *data);
@@ -5703,13 +5707,19 @@ for a peak-amp minimum using a simulated annealing form of the genetic algorithm
 
   mus_float_t saved_min(int ch, int nn)
   {
-    switch (ch)
+    if (nn <= 128)
       {
-      case ALL:   return(all_mins[nn - 1]);
-      case ODD:   return(odd_mins[nn - 1]);
-      case EVEN:  return(even_mins[nn - 1]);
-      case PRIME: return(prime_mins[nn - 1]);
+	switch (ch)
+	  {
+	  case ALL:   return(all_mins[nn - 1]);
+	  case ODD:   return(odd_mins[nn - 1]);
+	  case EVEN:  return(even_mins[nn - 1]);
+	  case PRIME: return(prime_mins[nn - 1]);
+	  }
       }
+    if (nn == 256) return(min_8[ch]);
+    if (nn == 512) return(min_9[ch]);
+    if (nn == 1024) return(min_10[ch]);
     return((mus_float_t)nn);
   }
 

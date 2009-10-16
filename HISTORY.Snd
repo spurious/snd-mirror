@@ -1,5 +1,6 @@
 Snd change log
-
+ 
+ 16-Oct:    clm.rb and grani.rb (thanks to Mike Scholz).
  12-Oct:    generic length, srate, channels, frames, file-name, sync, maxamp.
  7-Oct:     removed run-safety; the run macro only works in s7.
  6-Oct:     removed *snd-loaded-files* and *snd-remember-paths*.
