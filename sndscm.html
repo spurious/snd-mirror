@@ -8343,7 +8343,7 @@ white noise (in sound as well as appearance); here is a small portion of one per
 
 <p>It's curious that the graphs look continuous; what
 happens to the minima as we slowly add the next higher harmonic?  It appears to me
-that each minimum splits in two, then smoothly moves to its next location (where the
+that each minimum splits in two, then smoothly moves to its next minimum location (where the
 n+1 harmonic has amplitude 1.0).  Here's a graph of the moving minima for the n=2 to
 n=3 case, showing also the resultant peak amplitude:
 </p>
@@ -8351,7 +8351,13 @@ n=3 case, showing also the resultant peak amplitude:
 <img src="pix/phase-paths.png">
 <img src="pix/peak-path.png">
 
-<p>We can use this to speed up our search by following a minimum of n harmonics as it meanders to a minimum of n+1 harmonics:
+<p>In the first graph, each dot is at the phase location of the minimum peak amplitude as the
+3rd harmonic is increased in amplitude by 0.025.  The turning points are just before the 3rd harmonic
+reaches an amplitude of 0.5.  The n=2 minima are at (0, 0), (red and green, with
+the green x=2 rather than 0), and (0, 1), (black and blue). Each splits and wanders eventually to
+the n=3 global minima at (0.41 1.68), (1.41, 1.68), (1.59, 0.32), and (0.59, 0.32).
+Each of the n=2 global minima ends up at 2 of the 4 n=3 global minima!  How lucky can we be?
+We can use this to speed up our search by following a minimum of n harmonics as it meanders to a minimum of n+1 harmonics:
 </p>
 <pre>
 ;; this starts at the current min and marches to an n+1 min
@@ -8365,7 +8371,8 @@ n=3 case, showing also the resultant peak amplitude:
 	    ((= k n))
 	  (vector-set! phases k (modulo (vct-ref p k) 2.0)))))))
 </pre>
-<p>Since we can restrict our search to 0.1 (maybe less) in each direction (rather than 2.0), we
+<p>
+Since we can restrict our search to 0.1 (maybe less) in each direction (rather than 2.0), we
 get a reduction of 20^n in the size of the space we are searching.  For large n, that is a
 huge win.
 </p>
