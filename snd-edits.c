@@ -8547,6 +8547,7 @@ scale samples in the given sound/channel between beg and beg + num to norm."
   pos = to_c_edit_position(cp, edpos, S_normalize_channel, 6);
   samps = dur_to_samples(num, samp, cp, pos, 3, S_normalize_channel);
 
+  /* in order to normalize the data, we need its current maxamp */
 #if HAVE_FORTH
   if ((samp == 0) && (samps == cp->edits[pos]->samples))
     {
@@ -8611,6 +8612,7 @@ mus_float_t channel_local_maxamp(chan_info *cp, mus_long_t beg, mus_long_t num, 
 		  string_to_minibuffer(cp->sound, _("maxamp check interrupted..."));
 		  break;
 		}
+	      j = 0;
 	    }
 	}
     }

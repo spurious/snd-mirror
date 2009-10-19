@@ -9882,11 +9882,11 @@ is distinguished from the beat by having a longer tick mark.
 
 <!-- x-bounds -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
-<code><a class=def name="xbounds">x-bounds</a> (:optional snd chn)</code>
+<code><a class=def name="xbounds">x-bounds</a> (:optional snd chn axis)</code>
 </td></tr><tr><td></td><td>
-This returns <code>(list x0 x1)</code>, the current x axis time domain bounds in seconds.  To display the entire sound:
+This returns <code>(list x0 x1)</code>, the current x axis bounds in seconds.  To display the entire sound:
 <pre>
-    (set! (x-bounds) (list 0.0 (/ (<a class=quiet href="#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a>) (<a class=quiet href="#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a>))))
+    (set! (x-bounds) (/ (<a class=quiet href="#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a>) (<a class=quiet href="#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a>)))
 </pre> 
 </td></tr><tr><td colspan=2 height=18></td></tr>
 
@@ -9941,7 +9941,7 @@ This is the current y axis label. 'context' is one of <code>time-graph</code> (t
 
 <!-- y-bounds -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
-<code><a class=def name="ybounds">y-bounds</a> (:optional snd chn)</code>
+<code><a class=def name="ybounds">y-bounds</a> (:optional snd chn axis)</code>
 </td></tr><tr><td></td><td>
 This returns <code>(list y0 y1)</code>, the current y axis bounds.
 To set the bounds to reflect the channel's maxamp, use <code>(set! (y-bounds) '())</code>.

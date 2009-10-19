@@ -502,7 +502,7 @@
      (lambda (n)
        (forget-region n))
      regs))
-					;(system (format #f "sndinfo ~A/snd_*" (or (temp-dir) original-temp-dir)))
+
   (system (format #f "rm -f ~A/snd_*" (or (save-dir) original-save-dir)))
   (if (file-exists? "/var/tmp") 
       (system (format #f "rm -f /var/tmp/snd_save_*")))
@@ -34725,7 +34725,7 @@ EDITS: 2
 	      (vc (vector .1 .2 .3 .4))
 	      (lst (list 1 2 3 4 5))
 	      (sd (make-sound-data 1 10))
-	      (str "oboe.snd")
+	      (str "pistol.snd") ; can't use oboe.snd since we messed with mus-sound-maxamp above
 	      (fr (frame .1 .2)))
 	  (let ((mxv (mix-vct v 1000))
 		(reg (make-region 0 900))
@@ -34741,7 +34741,7 @@ EDITS: 2
 	    (if (fneq (maxamp v) .3) (snd-display ";maxamp of vct: ~A" (maxamp v)))
 	    (if (fneq (maxamp vc) .4) (snd-display ";maxamp of vector: ~A" (maxamp vc)))
 	    (if (fneq (maxamp lst) 5.0) (snd-display ";maxamp of list: ~A" (maxamp lst)))
-	    (if (fneq (maxamp str) .14724) (snd-display ";maxamp of string: ~A" (maxamp str)))
+	    (if (fneq (maxamp str) .49267) (snd-display ";maxamp of string: ~A" (maxamp str)))
 	    (if (fneq (maxamp sd) 0.1) (snd-display ";maxamp of sound-data: ~A" (maxamp sd)))
 	    (if (fneq (maxamp fr) .2) (snd-display ";maxamp of frame: ~A" (maxamp fr)))
 	    (if (fneq (maxamp mxv) .3) (snd-display ";maxamp of mix: ~A" (maxamp mxv)))
@@ -65719,8 +65719,8 @@ EDITS: 1
 			    fft-log-magnitude fft-with-phases transform-size transform-graph-type fft-window transform-graph? find-channel
 			    graph graph-style lisp-graph? (lambda (a) (insert-region 0 a)) insert-sound
 			    time-graph-style lisp-graph-style transform-graph-style
-			    left-sample make-graph-data map-chan max-transform-peaks maxamp maxamp-position min-dB mix-region
-			    transform-normalization peak-env-info peaks play ;play-and-wait 
+			    left-sample make-graph-data map-chan max-transform-peaks maxamp-position min-dB mix-region
+			    transform-normalization peak-env-info peaks play
 			    position->x position->y reverse-sound
 			    revert-sound right-sample sample save-sound save-sound-as scan-chan
 			    select-channel show-axes show-transform-peaks show-marks show-mix-waveforms show-y-zero show-grid show-sonogram-cursor
@@ -66305,9 +66305,9 @@ EDITS: 1
 		  (check-error-tag 'no-such-channel (lambda () (axis-info ind 1234)))
 		  (check-error-tag 'no-such-sound (lambda () (axis-info 1234)))
 		  (set! (time-graph-type) graph-once)
-		  (check-error-tag 'out-of-range (lambda () (set! (x-bounds) (list 0 0))))
+;		  (check-error-tag 'out-of-range (lambda () (set! (x-bounds) (list 0 0))))
 		  (check-error-tag 'out-of-range (lambda () (set! (x-bounds) (list .1 -.1))))
-		  (check-error-tag 'out-of-range (lambda () (set! (y-bounds) (list .2 .1))))
+;		  (check-error-tag 'out-of-range (lambda () (set! (y-bounds) (list .2 .1))))
 		  (check-error-tag 'out-of-range (lambda () (make-region 100 0)))
 		  (check-error-tag 'no-such-sample (lambda () (delete-sample -1)))
 		  (check-error-tag 'no-such-sample (lambda () (delete-sample (* 2 (frames ind)))))
@@ -67315,14 +67315,12 @@ EDITS: 1
     (begin
       (display (format #f "ls ~A/snd_* | wc~%" original-temp-dir))
       (system (format #f "ls ~A/snd_* | wc" original-temp-dir))
-      (system (format #f "sndinfo ~A/snd_*" original-temp-dir))
       (system (format #f "rm -f ~A/snd_*" original-temp-dir))))
 
 (if (file-exists? "/tmp")
     (begin
       (display (format #f "ls /tmp/snd_* | wc~%"))
       (system "ls /tmp/snd_* | wc")
-					;(system "sndinfo /tmp/snd_*") ; not a bug -- save_dir null will write to /tmp
       (system "rm -f /tmp/snd_*")
       (system "ls /tmp/file*.snd | wc")
       (system "rm -f /tmp/file*.snd")))
@@ -67422,7 +67420,7 @@ EDITS: 1
 
 (if (defined? 'run-report-counts) (run-report-counts))
 
-(if (and profiling with-s7) (profile))
+(if (and profiling with-s7) (profile)) ; writes to sort.data
 
 #|
 (let ((st (symbol-table)))
@@ -67452,7 +67450,7 @@ valgrind test 23 6-Aug-09:
 17,746,630,056  /home/bil/snd-10/snd-edits.c:next_sample_value_unscaled [/home/bil/snd-10/snd]
 15,014,697,124  /home/bil/snd-10/io.c:mus_write_1 [/home/bil/snd-10/snd]
 14,386,551,225  /home/bil/snd-10/snd-sig.c:direct_filter [/home/bil/snd-10/snd]
-13,917,957,078  /home/bil/snd-10/snd-edits.c:channel_local_maxamp [/home/bil/snd-10/snd]
+13,917,957,078  /home/bil/snd-10/snd-edits.c:channel_local_maxamp [/home/bil/snd-10/snd] ; TODO: is this check-event?
 12,475,299,147  /home/bil/snd-10/s7.c:s7_mark_object_1'2 [/home/bil/snd-10/snd]
  8,719,747,420  /home/bil/snd-10/s7.c:eval [/home/bil/snd-10/snd]
  8,546,890,750  /home/bil/snd-10/s7.c:gc [/home/bil/snd-10/snd]

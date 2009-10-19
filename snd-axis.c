@@ -1779,22 +1779,200 @@ static XEN g_y_axis_label(XEN snd, XEN chn, XEN ax)
 static XEN g_set_y_axis_label(XEN label, XEN snd, XEN chn, XEN ax)
 {
   axis_info *ap;
+
   ASSERT_CHANNEL(S_setB S_y_axis_label, snd, chn, 2);
   XEN_ASSERT_TYPE(XEN_STRING_P(label) || XEN_FALSE_P(label), label, XEN_ARG_1, S_setB S_y_axis_label, "a string");
+
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax), ax, XEN_ARG_4, S_setB S_y_axis_label, S_time_graph ", " S_transform_graph ", or " S_lisp_graph);
   ap = TO_C_AXIS_INFO(snd, chn, ax, S_y_axis_label);
   if (ap->ylabel) free(ap->ylabel);
+
   if (XEN_FALSE_P(label))
     ap->ylabel = NULL;
   else ap->ylabel = mus_strdup(XEN_TO_C_STRING(label));
   update_graph(ap->cp);
+
   return(label);
 }
 
 WITH_FOUR_SETTER_ARGS(g_set_y_axis_label_reversed, g_set_y_axis_label)
+
+
+
+static XEN g_x_bounds(XEN snd, XEN chn, XEN ax)
+{
+  #define H_x_bounds "(" S_x_bounds " :optional snd chn axis): a list (x0 x1) giving the current x axis bounds of snd channel chn"
+  chan_info *cp;
+  axis_info *ap;
+
+  ASSERT_CHANNEL(S_x_bounds, snd, chn, 1);
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax), ax, XEN_ARG_4, S_x_bounds, S_time_graph ", " S_transform_graph ", or " S_lisp_graph);
+  ap = TO_C_AXIS_INFO(snd, chn, ax, S_x_bounds);
+
+  return(XEN_LIST_2(C_TO_XEN_DOUBLE(ap->x0),
+		    C_TO_XEN_DOUBLE(ap->x1)));
+  /* wavogram settings depend on context -- no easy way to map back to user's notion of bounds */
+}
+
+
+static XEN g_set_x_bounds(XEN bounds, XEN snd, XEN chn, XEN ax)
+{
+  chan_info *cp;
+  axis_info *ap;
+  mus_float_t x0, x1;
+
+  ASSERT_CHANNEL(S_setB S_x_bounds, snd, chn, 2);
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(bounds) || (XEN_LIST_P(bounds) && (XEN_LIST_LENGTH(bounds) == 2)), bounds, XEN_ARG_1, S_setB S_x_bounds, "a list: (x0 x1) or a number");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax), ax, XEN_ARG_4, S_setB S_x_bounds, S_time_graph ", " S_transform_graph ", or " S_lisp_graph);
+  ap = TO_C_AXIS_INFO(snd, chn, ax, S_setB S_x_bounds);
+
+  cp = get_cp(snd, chn, S_setB S_x_bounds);
+  if (!cp) return(XEN_FALSE);
+
+  if (XEN_NUMBER_P(bounds))
+    {
+      x0 = 0.0;
+      x1 = XEN_TO_C_DOUBLE(bounds);
+    }
+  else
+    {
+      x0 = XEN_TO_C_DOUBLE(XEN_CAR(bounds));
+      x1 = XEN_TO_C_DOUBLE(XEN_CADR(bounds));
+      if (x1 < x0)
+	XEN_OUT_OF_RANGE_ERROR(S_setB S_x_bounds, 1, bounds, "~A: x1 < x0?");
+    }
+
+  if (ap == cp->axis)
+    {
+      if (cp->time_graph_type == GRAPH_ONCE) 
+	{
+	  snd_info *sp;
+	  set_x_axis_x0x1(cp, x0, x1);
+	  sp = cp->sound;
+	  if (sp->nchans > 1)
+	    {
+	      if ((XEN_NOT_BOUND_P(chn)) && (cp->sound->channel_style == CHANNELS_COMBINED))
+		{
+		  int i;
+		  for (i = 0; i < sp->nchans; i++)
+		    if (i != cp->chan)
+		      set_x_axis_x0x1(sp->chans[i], x0, x1);
+		  /* y-bounds are already tied together in the channels-combined case */
+		}
+	    }
+	}
+    }
+  else
+    {
+      ap->x0 = x0;
+      ap->x1 = x1;
+    }
+  return(bounds);
+}
+
+WITH_FOUR_SETTER_ARGS(g_set_x_bounds_reversed, g_set_x_bounds)
+
+
+
+static XEN g_y_bounds(XEN snd, XEN chn, XEN ax)
+{
+  #define H_y_bounds "(" S_y_bounds " :optional snd chn axis): a list (y0 y1) giving the current y axis bounds of snd channel chn"
+  chan_info *cp;
+  axis_info *ap;
+
+  ASSERT_CHANNEL(S_y_bounds, snd, chn, 1);
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax), ax, XEN_ARG_4, S_y_bounds, S_time_graph ", " S_transform_graph ", or " S_lisp_graph);
+  ap = TO_C_AXIS_INFO(snd, chn, ax, S_x_bounds);
+
+  return(XEN_LIST_2(C_TO_XEN_DOUBLE(ap->y0),
+		    C_TO_XEN_DOUBLE(ap->y1)));
+}
+
+
+static XEN g_set_y_bounds(XEN bounds, XEN snd, XEN chn, XEN ax)
+{
+  chan_info *cp;
+  axis_info *ap;
+  mus_float_t low, hi;
+  int len = 0;
+  XEN y0 = XEN_UNDEFINED, y1 = XEN_UNDEFINED;
+
+  ASSERT_CHANNEL(S_setB S_y_bounds, snd, chn, 2);
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(bounds) || XEN_LIST_P_WITH_LENGTH(bounds, len), bounds, XEN_ARG_1, S_setB S_y_bounds, "a list or a number");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax), ax, XEN_ARG_4, S_setB S_y_bounds, S_time_graph ", " S_transform_graph ", or " S_lisp_graph);
+  ap = TO_C_AXIS_INFO(snd, chn, ax, S_setB S_y_bounds);
+
+  cp = get_cp(snd, chn, S_setB S_y_bounds);
+  if (!cp) return(XEN_FALSE);
+
+  if (XEN_NUMBER_P(bounds))
+    {
+      hi = XEN_TO_C_DOUBLE(bounds);
+      low = -hi;
+    }
+  else
+    {
+      if (len > 0)
+	{
+	  y0 = XEN_CAR(bounds);
+	  if (len > 1)
+	    y1 = XEN_CADR(bounds);
+	}
+      if (XEN_NUMBER_P(y0))
+	{
+	  low = XEN_TO_C_DOUBLE(y0);
+	  if (XEN_NUMBER_P(y1))
+	    hi = XEN_TO_C_DOUBLE(y1);
+	  else
+	    {
+	      if (low < 0.0)
+		hi = -low;
+	      else
+		{
+		  hi = low;
+		  low = -low;
+		}
+	    }
+	}
+      else
+	{
+	  if (ap == cp->axis)
+	    {
+	      /* if no bounds given, use maxamp */
+	      hi = channel_maxamp(cp, AT_CURRENT_EDIT_POSITION);
+	      if (hi < 0.0) hi = -hi;
+	      if (hi == 0.0) hi = .001;
+	      low = -hi;
+	    }
+	}
+    }
+
+  if (hi > low)
+    {
+      ap->ymin = low;
+      ap->ymax = hi;
+      ap->y_ambit = (ap->ymax - ap->ymin);
+      ap->y0 = low;
+      ap->y1 = hi;
+      ap->zy = 1.0;
+      ap->sy = 0.0;
+      if (ap == cp->axis)
+	{
+	  resize_sy_and_zy(cp);
+	  apply_y_axis_change(ap, cp);
+	}
+    }
+
+  return(bounds);
+}
+
+WITH_FOUR_SETTER_ARGS(g_set_y_bounds_reversed, g_set_y_bounds)
+
+
   
 
 #ifdef XEN_ARGIFY_1
+
 XEN_ARGIFY_4(g_x_to_position_w, g_x_to_position)
 XEN_ARGIFY_4(g_y_to_position_w, g_y_to_position)
 XEN_ARGIFY_4(g_position_to_x_w, g_position_to_x)
@@ -1807,8 +1985,13 @@ XEN_ARGIFY_3(g_x_axis_label_w, g_x_axis_label)
 XEN_ARGIFY_4(g_set_x_axis_label_w, g_set_x_axis_label)
 XEN_ARGIFY_3(g_y_axis_label_w, g_y_axis_label)
 XEN_ARGIFY_4(g_set_y_axis_label_w, g_set_y_axis_label)
+XEN_ARGIFY_3(g_x_bounds_w, g_x_bounds)
+XEN_ARGIFY_4(g_set_x_bounds_w, g_set_x_bounds)
+XEN_ARGIFY_3(g_y_bounds_w, g_y_bounds)
+XEN_ARGIFY_4(g_set_y_bounds_w, g_set_y_bounds)
 
 #else
+
 #define g_x_to_position_w g_x_to_position
 #define g_y_to_position_w g_y_to_position
 #define g_position_to_x_w g_position_to_x
@@ -1819,8 +2002,13 @@ XEN_ARGIFY_4(g_set_y_axis_label_w, g_set_y_axis_label)
 #define g_set_x_axis_label_w g_set_x_axis_label
 #define g_y_axis_label_w g_y_axis_label
 #define g_set_y_axis_label_w g_set_y_axis_label
+#define g_x_bounds_w g_x_bounds
+#define g_set_x_bounds_w g_set_x_bounds
+#define g_y_bounds_w g_y_bounds
+#define g_set_y_bounds_w g_set_y_bounds
   
 #endif
+
   
 void g_init_axis(void)
 {
@@ -1837,6 +2025,12 @@ void g_init_axis(void)
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_y_axis_label, g_y_axis_label_w, H_y_axis_label,
 					    S_setB S_y_axis_label, g_set_y_axis_label_w, g_set_y_axis_label_reversed, 0, 3, 1, 3);
   
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_x_bounds, g_x_bounds_w, H_x_bounds,
+					    S_setB S_x_bounds, g_set_x_bounds_w, g_set_x_bounds_reversed, 0, 3, 1, 3);
+
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_y_bounds, g_y_bounds_w, H_y_bounds,
+					    S_setB S_y_bounds, g_set_y_bounds_w, g_set_y_bounds_reversed, 0, 3, 1, 3);
+
   XEN_DEFINE_CONSTANT(S_time_graph,      TIME_AXIS_INFO,      "time domain graph axis info");
   XEN_DEFINE_CONSTANT(S_transform_graph, TRANSFORM_AXIS_INFO, "frequency domain graph axis info");
   XEN_DEFINE_CONSTANT(S_lisp_graph,      LISP_AXIS_INFO,      "lisp graph axis info");

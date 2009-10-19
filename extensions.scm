@@ -1134,4 +1134,3 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 		((= i call))
 	      (let ((c (vector-ref sorted-calls i)))
 		(format #t "~A:~40T~A~%" (car c) (cadr c))))))))))
-

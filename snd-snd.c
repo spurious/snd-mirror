@@ -2358,6 +2358,12 @@ void call_sp_watchers(snd_info *sp, sp_watcher_t type, sp_watcher_reason_t reaso
  *
  *             reverse save find insert delete describe read write mix append [open and close?] member
  *             reverse mix append member: these exist already and could just be extended 
+ * 
+ * (scan-channel -> channel-for-each)
+ *   and channel-map rather than map-channel
+ *   channel-for-each in the multiarg case would make it easier to compare chans 
+ * (eval-over-selection -> selection-for-each) *-for-each
+ *   then selection-map would replace the current selected samples
  */
 
 

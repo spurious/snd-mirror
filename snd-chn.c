@@ -8237,137 +8237,6 @@ static XEN g_edits(XEN snd, XEN chn_n)
 }
 
 
-static XEN g_x_bounds(XEN snd, XEN chn_n)
-{
-  #define H_x_bounds "(" S_x_bounds " :optional snd chn): a list (x0 x1) giving the current x axis bounds of snd channel chn"
-  chan_info *cp;
-  ASSERT_CHANNEL(S_x_bounds, snd, chn_n, 1);
-  cp = get_cp(snd, chn_n, S_x_bounds);
-  if (!cp) return(XEN_FALSE);
-  return(XEN_LIST_2(C_TO_XEN_DOUBLE(cp->axis->x0),
-		    C_TO_XEN_DOUBLE(cp->axis->x1)));
-  /* wavogram settings depend on context -- no easy way to map back to user's notion of bounds */
-}
-
-static XEN g_set_x_bounds(XEN bounds, XEN snd, XEN chn_n)
-{
-  chan_info *cp;
-
-  ASSERT_CHANNEL(S_setB S_x_bounds, snd, chn_n, 2);
-  XEN_ASSERT_TYPE(XEN_LIST_P(bounds) && (XEN_LIST_LENGTH(bounds) == 2), bounds, XEN_ARG_1, S_setB S_x_bounds, "a list: (x0 x1)");
-
-  cp = get_cp(snd, chn_n, S_setB S_x_bounds);
-  if (!cp) return(XEN_FALSE);
-  if (cp->time_graph_type == GRAPH_ONCE) 
-    {
-      mus_float_t x0, x1;
-      x0 = XEN_TO_C_DOUBLE(XEN_CAR(bounds));
-      x1 = XEN_TO_C_DOUBLE(XEN_CADR(bounds));
-      if (x1 > x0)
-	{
-	  snd_info *sp;
-	  set_x_axis_x0x1(cp, x0, x1);
-	  sp = cp->sound;
-	  if (sp->nchans > 1)
-	    {
-	      if ((XEN_NOT_BOUND_P(chn_n)) && (cp->sound->channel_style == CHANNELS_COMBINED))
-		{
-		  int i;
-		  for (i = 0; i < sp->nchans; i++)
-		    if (i != cp->chan)
-		      set_x_axis_x0x1(sp->chans[i], x0, x1);
-		  /* y-bounds are already tied together in the channels-combined case */
-		}
-	    }
-	}
-      else XEN_OUT_OF_RANGE_ERROR(S_setB S_x_bounds, 1, bounds, "~A: x1 > x0?");
-    }
-  return(bounds);
-}
-
-WITH_THREE_SETTER_ARGS(g_set_x_bounds_reversed, g_set_x_bounds)
-
-
-
-static XEN g_y_bounds(XEN snd, XEN chn_n)
-{
-  #define H_y_bounds "(" S_y_bounds " :optional snd chn): a list (y0 y1) giving the current y axis bounds of snd channel chn"
-  chan_info *cp;
-  ASSERT_CHANNEL(S_y_bounds, snd, chn_n, 1);
-  cp = get_cp(snd, chn_n, S_y_bounds);
-  if (!cp) return(XEN_FALSE);
-  return(XEN_LIST_2(C_TO_XEN_DOUBLE(cp->axis->y0),
-		    C_TO_XEN_DOUBLE(cp->axis->y1)));
-}
-
-static XEN g_set_y_bounds(XEN bounds, XEN snd, XEN chn_n)
-{
-  chan_info *cp;
-  mus_float_t low, hi;
-  int len = 0;
-  XEN y0 = XEN_UNDEFINED, y1 = XEN_UNDEFINED;
-
-  ASSERT_CHANNEL(S_setB S_y_bounds, snd, chn_n, 2);
-  XEN_ASSERT_TYPE(XEN_LIST_P_WITH_LENGTH(bounds, len), bounds, XEN_ARG_1, S_setB S_y_bounds, "a list");
-
-  cp = get_cp(snd, chn_n, S_setB S_y_bounds);
-  if (!cp) return(XEN_FALSE);
-
-  if (len > 0)
-    {
-      y0 = XEN_CAR(bounds);
-      if (len > 1)
-	y1 = XEN_CADR(bounds);
-    }
-
-  if (XEN_NUMBER_P(y0))
-    {
-      low = XEN_TO_C_DOUBLE(y0);
-      if (XEN_NUMBER_P(y1))
-	hi = XEN_TO_C_DOUBLE(y1);
-      else
-	{
-	  if (low < 0.0)
-	    hi = -low;
-	  else
-	    {
-	      hi = low;
-	      low = -low;
-	    }
-	}
-    }
-  else
-    {
-      /* if no bounds given, use maxamp */
-      hi = channel_maxamp(cp, AT_CURRENT_EDIT_POSITION);
-      if (hi < 0.0) hi = -hi;
-      if (hi == 0.0) hi = .001;
-      low = -hi;
-    }
-
-  if (hi > low)
-    {
-      axis_info *ap;
-      ap = cp->axis;
-      ap->ymin = low;
-      ap->ymax = hi;
-      ap->y_ambit = (ap->ymax - ap->ymin);
-      ap->y0 = low;
-      ap->y1 = hi;
-      ap->zy = 1.0;
-      ap->sy = 0.0;
-      resize_sy_and_zy(cp);
-      apply_y_axis_change(ap, cp);
-    }
-  else XEN_OUT_OF_RANGE_ERROR(S_setB S_y_bounds, 1, bounds, "~A: y1 < y0?");
-
-  return(bounds);
-}
-
-WITH_THREE_SETTER_ARGS(g_set_y_bounds_reversed, g_set_y_bounds)
-
-
-
 static XEN g_graph(XEN ldata, XEN xlabel, XEN x0, XEN x1, XEN y0, XEN y1, XEN snd, XEN chn_n, XEN force_display, XEN show_axes)
 {
   #define H_graph "(" S_graph " data :optional xlabel (x0 0.0) (x1 1.0) y0 y1 snd chn (force-display " PROC_TRUE ") show-axes): \
@@ -8905,10 +8774,6 @@ XEN_ARGIFY_2(g_show_axes_w, g_show_axes)
 XEN_ARGIFY_3(g_set_show_axes_w, g_set_show_axes)
 XEN_ARGIFY_2(g_graphs_horizontal_w, g_graphs_horizontal)
 XEN_ARGIFY_3(g_set_graphs_horizontal_w, g_set_graphs_horizontal)
-XEN_ARGIFY_2(g_x_bounds_w, g_x_bounds)
-XEN_ARGIFY_3(g_set_x_bounds_w, g_set_x_bounds)
-XEN_ARGIFY_2(g_y_bounds_w, g_y_bounds)
-XEN_ARGIFY_3(g_set_y_bounds_w, g_set_y_bounds)
 XEN_ARGIFY_2(g_update_time_graph_w, g_update_time_graph)
 XEN_ARGIFY_2(g_update_lisp_graph_w, g_update_lisp_graph)
 XEN_ARGIFY_2(g_update_transform_graph_w, g_update_transform_graph)
@@ -9058,10 +8923,6 @@ XEN_NARGIFY_1(g_set_with_gl_w, g_set_with_gl)
 #define g_set_show_axes_w g_set_show_axes
 #define g_graphs_horizontal_w g_graphs_horizontal
 #define g_set_graphs_horizontal_w g_set_graphs_horizontal
-#define g_x_bounds_w g_x_bounds
-#define g_set_x_bounds_w g_set_x_bounds
-#define g_y_bounds_w g_y_bounds
-#define g_set_y_bounds_w g_set_y_bounds
 #define g_update_time_graph_w g_update_time_graph
 #define g_update_lisp_graph_w g_update_lisp_graph
 #define g_update_transform_graph_w g_update_transform_graph
@@ -9361,12 +9222,6 @@ void g_init_chn(void)
 
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_graphs_horizontal, g_graphs_horizontal_w, H_graphs_horizontal,
 					    S_setB S_graphs_horizontal, g_set_graphs_horizontal_w, g_set_graphs_horizontal_reversed, 0, 2, 1, 2);
-
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_x_bounds, g_x_bounds_w, H_x_bounds,
-					    S_setB S_x_bounds, g_set_x_bounds_w, g_set_x_bounds_reversed, 0, 2, 1, 2);
-
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_y_bounds, g_y_bounds_w, H_y_bounds,
-					    S_setB S_y_bounds, g_set_y_bounds_w, g_set_y_bounds_reversed, 0, 2, 1, 2);
 
   #define H_zoom_focus_left "The value for " S_zoom_focus_style " that causes zooming to maintain the left edge steady"
   #define H_zoom_focus_right "The value for " S_zoom_focus_style " that causes zooming to maintain the right edge steady"

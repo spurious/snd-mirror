@@ -27,16 +27,16 @@
  *        generalized set!, procedure-with-setter, applicable objects
  *        defmacro and define-macro
  *        keywords, hash tables, block comments, define*
- *        threads (optional)
- *        multidimensional vectors (optional)
  *        format
- *        encapsulation (optional)
  *        error handling using error and catch
  *        in sndlib, the run macro works giving S7 a (somewhat limited) byte compiler
  *        no invidious distinction between built-in and "foreign"
  *          (this makes it easy to extend built-in operators like "+" -- see s7.h for a simple example)
  *        lists, strings, vectors, and hash-tables are (set-)applicable objects
  *        true multiple-values, multiple-value-bind, multiple-value-set!
+ *        threads (optional)
+ *        multidimensional vectors (optional)
+ *        encapsulation (optional)
  *
  *   many minor changes!
  *
@@ -85,7 +85,6 @@
  *        defmacro* define-macro* 
  *        perhaps settable numerator denominator imag-part real-part angle magnitude
  *        perhaps trailing args to cons -> list*
- *        perhaps trailing args to list-ref
  *        cerror ("error/cc"?) -- tag = continuation in this case,
  *          and error handler makes it accessible (as well as error context) for eval
  *        rename "force" to some name matching the notion of a promise ("delay" and "force" are about as bad as names can get)
@@ -93,11 +92,14 @@
  *        make #<func args> = (func args) or something like that so we can read new_type objects, or add a reader to that struct
  *        make-vector! where type of initial element sets type of all elements, or make-vector*?
  *          (make-vector! 32 0.0)
- *        perhaps member, reverse and append generic
+ *          set of other type either converts or error
+ *          FFI would guarantee (for example) s7_Double as elements?
+ *        perhaps reverse, and append generic
  *        ->* for conversions (->vector, ->ratio? ->string etc)
  *        ideally: remove all mention of exact|inexact, remove "delay"|force, remove set-car!|cdr!, 
  *                 remove *-ci-*, remove cxxxxr, remove improper lists
  *        load should handle C shared libraries, using dlopen/dlinit [optionally]
+ *        defgenerator
  * 
  *
  * Mike Scholz provided the FreeBSD support (complex trig funcs, etc)
@@ -385,6 +387,9 @@ typedef struct s7_vdims_t {
 typedef struct s7_cell {
   unsigned int flag;
   int hloc;
+#if WITH_PROFILING
+  long long int calls;
+#endif
   union {
     
     struct {
@@ -417,9 +422,6 @@ typedef struct s7_cell {
       struct s7_cell *car;
       struct s7_cell *cdr;
       int line;
-#if WITH_PROFILING
-      long long int calls;
-#endif
     } cons;
     
     struct {
@@ -719,7 +721,7 @@ struct s7_scheme {
 #define symbol_value(Sym)             cdr(Sym)
 #define set_symbol_value(Sym, Val)    cdr(Sym) = (Val)
 #if WITH_PROFILING
-  #define symbol_calls(p)             (p)->object.cons.calls
+  #define symbol_calls(p)             (p)->calls
 #endif
 #define symbol_global_slot(p)         (car(p))->object.string.global_slot
 
@@ -15736,6 +15738,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 #if WITH_PROFILING
       symbol_calls(sc->code)++;
 #endif
+
       if (sc->stack_top >= sc->stack_size2)
 	increase_stack_size(sc);
 
@@ -22813,6 +22816,8 @@ s7_scheme *s7_init(void)
 		   ((,encap))                            \n\
 		   (close-encapsulator ,encap))))))");
 #endif
+
+  /* s7_eval_c_string(sc, "(define (ratio? n) (and (rational? n) (not (integer? n))))"); */
 
   return(sc);
 }

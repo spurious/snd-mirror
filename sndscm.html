@@ -8334,10 +8334,41 @@ As you increase "n", the minimum peak amplitude waveform approaches
 white noise (in sound as well as appearance); here is a small portion of one period when n=65536 (the prescaling peak was 704):
 </p>
 
+
 <table hspace=40 border=0><tr><td>
 <img src="pix/s65536.png" alt="65536 harmonics">
 </td></tr></table>
 <br>
+
+
+<p>It's curious that the graphs look continuous; what
+happens to the minima as we slowly add the next higher harmonic?  It appears to me
+that each minimum splits in two, then smoothly moves to its next location (where the
+n+1 harmonic has amplitude 1.0).  Here's a graph of the moving minima for the n=2 to
+n=3 case, showing also the resultant peak amplitude:
+</p>
+
+<img src="pix/phase-paths.png">
+<img src="pix/peak-path.png">
+
+<p>We can use this to speed up our search by following a minimum of n harmonics as it meanders to a minimum of n+1 harmonics:
+</p>
+<pre>
+;; this starts at the current min and marches to an n+1 min
+(let ((n 3))
+  (let ((phases (vector 0.0 0.0 1.0)))
+    (do ((x 0.1 (+ x .1)))
+	((&gt;= x 1.0))
+      (let ((p (fpsaf x 0 n 1000 0.1 50 #f #t phases)))
+	(format #t ";~A: ~A~%" x p)
+	(do ((k 0 (+ k 1)))
+	    ((= k n))
+	  (vector-set! phases k (modulo (vct-ref p k) 2.0)))))))
+</pre>
+<p>Since we can restrict our search to 0.1 (maybe less) in each direction (rather than 2.0), we
+get a reduction of 20^n in the size of the space we are searching.  For large n, that is a
+huge win.
+</p>
 
 <br><br>
 
