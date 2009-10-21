@@ -10,17 +10,18 @@ va.scm		             	Check for common spelling mistakes, lack of trailing NULLs
 compsnd				Run a bazillion configuration/compilation tests
 testsnd				Run a bazillion tests
 gtk-headers-diffs		Find changes in Gtk headers (for xgdata.scm)
-shipit				Expect script to load changes onto a Zip drive
 sarchive                        Update backup directory, report changes
 table.scm			make snd-test contents list
 nor.scm				change \r\n to \n
 crossref.c			simple-minded cross referencer
-.gbdinit			gbd stuff
-sed-href			sed script to add silent urls
 makexg.scm + xgdata.scm      	Build xg.c, xg-ruby.c, xg-x11.h
 makegl.scm + gldata.scm        	Build gl.c
 index.cl              		Build index.html, snd-xref.c, elaborate html error checking
 snd-index.cl                    Build the index at the end of snd.html
 snd.supp			Valgrind suppressions
-check-gtk.scm			check for hidden version assumptions
 make-snd-diffs
+exs7.c                          some s7 examples (extracted from s7.h)
+check-help.scm                  bug checks for help strings
+
+ecl.txt, gauche.txt, librep.txt 
+                                saved stuff about other extension language choices

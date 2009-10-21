@@ -1802,7 +1802,6 @@ WITH_FOUR_SETTER_ARGS(g_set_y_axis_label_reversed, g_set_y_axis_label)
 static XEN g_x_bounds(XEN snd, XEN chn, XEN ax)
 {
   #define H_x_bounds "(" S_x_bounds " :optional snd chn axis): a list (x0 x1) giving the current x axis bounds of snd channel chn"
-  chan_info *cp;
   axis_info *ap;
 
   ASSERT_CHANNEL(S_x_bounds, snd, chn, 1);
@@ -1819,7 +1818,7 @@ static XEN g_set_x_bounds(XEN bounds, XEN snd, XEN chn, XEN ax)
 {
   chan_info *cp;
   axis_info *ap;
-  mus_float_t x0, x1;
+  mus_float_t x0 = 0.0, x1 = 0.0;
 
   ASSERT_CHANNEL(S_setB S_x_bounds, snd, chn, 2);
   XEN_ASSERT_TYPE(XEN_NUMBER_P(bounds) || (XEN_LIST_P(bounds) && (XEN_LIST_LENGTH(bounds) == 2)), bounds, XEN_ARG_1, S_setB S_x_bounds, "a list: (x0 x1) or a number");
@@ -1877,7 +1876,6 @@ WITH_FOUR_SETTER_ARGS(g_set_x_bounds_reversed, g_set_x_bounds)
 static XEN g_y_bounds(XEN snd, XEN chn, XEN ax)
 {
   #define H_y_bounds "(" S_y_bounds " :optional snd chn axis): a list (y0 y1) giving the current y axis bounds of snd channel chn"
-  chan_info *cp;
   axis_info *ap;
 
   ASSERT_CHANNEL(S_y_bounds, snd, chn, 1);
@@ -1893,7 +1891,7 @@ static XEN g_set_y_bounds(XEN bounds, XEN snd, XEN chn, XEN ax)
 {
   chan_info *cp;
   axis_info *ap;
-  mus_float_t low, hi;
+  mus_float_t low = 0.0, hi = 0.0;
   int len = 0;
   XEN y0 = XEN_UNDEFINED, y1 = XEN_UNDEFINED;
 
@@ -2035,6 +2033,7 @@ void g_init_axis(void)
   XEN_DEFINE_CONSTANT(S_transform_graph, TRANSFORM_AXIS_INFO, "frequency domain graph axis info");
   XEN_DEFINE_CONSTANT(S_lisp_graph,      LISP_AXIS_INFO,      "lisp graph axis info");
 }
+
 #endif
 /* end no gui (covers entire xen section) */
 

@@ -8357,7 +8357,7 @@ reaches an amplitude of 0.5.  The n=2 minima are at (0, 0), (red and green, with
 the green x=2 rather than 0), and (0, 1), (black and blue). Each splits and wanders eventually to
 the n=3 global minima at (0.41 1.68), (1.41, 1.68), (1.59, 0.32), and (0.59, 0.32).
 Each of the n=2 global minima ends up at 2 of the 4 n=3 global minima!  How lucky can we be?
-We can use this to speed up our search by following a minimum of n harmonics as it meanders to a minimum of n+1 harmonics:
+If this works in general, we can use this to speed up our search by following a minimum of n harmonics as it meanders to a minimum of n+1 harmonics:
 </p>
 <pre>
 ;; this starts at the current min and marches to an n+1 min
@@ -8373,8 +8373,9 @@ We can use this to speed up our search by following a minimum of n harmonics as 
 </pre>
 <p>
 Since we can restrict our search to 0.1 (maybe less) in each direction (rather than 2.0), we
-get a reduction of 20^n in the size of the space we are searching.  For large n, that is a
-huge win.
+get a reduction of 20^n in the size of the space we are searching.  But, as usual, there's
+a problem.  This search works for n=2 -&gt; 3 -&gt; 4 -&gt; 5, but going from 5 to 6, I seem to fall into a
+non-optimal path.
 </p>
 
 <br><br>

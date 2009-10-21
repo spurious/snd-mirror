@@ -282,6 +282,16 @@
 (define with-gui (or (provided? 'snd-gtk)
 		     (provided? 'snd-motif)))
 
+(if (not with-gui)
+    (define y-bounds (make-procedure-with-setter
+		      (lambda args (list -1.0 1.0))
+		      (lambda args (list -1.0 1.0)))))
+
+(if (not with-gui)
+    (define x-bounds (make-procedure-with-setter
+		      (lambda args (list 0.0 0.1))
+		      (lambda args (list 0.0 0.1)))))
+
 (if (file-exists? "optimizer.log")
     (delete-file "optimizer.log"))
 (define optimizer-log (open-output-file "optimizer.log"))
@@ -3235,6 +3245,8 @@
 			  (string-append sf-dir "bad_srate.nist")
 			  (string-append sf-dir "bad_length.nist")))
 	  (close-sound ind))
+
+	(map close-sound (sounds))
 	
 	(let* ((ob (open-sound (string-append "~/baddy/" home-dir "/cl/oboe.snd")))
 	       (sd (samples->sound-data))
@@ -32157,7 +32169,10 @@ EDITS: 2
 	    (save-state "s61.scm")
 	    (for-each close-sound (sounds))
 	    (for-each forget-region (regions))
-	    (load (string-append cwd "s61.scm"))
+	    (catch #t
+		   (lambda ()
+		     (load (string-append cwd "s61.scm")))
+		   (lambda args args))
 	    (if (not (= (length (sounds)) files))
 		(snd-display ";save state restart from ~A to ~A sounds?" files (length (sounds))))
 	    (set! open-files (sounds))))

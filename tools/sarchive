@@ -75,6 +75,14 @@ foreach file (*.rb *.scm *.fth *.fs)
   endif
 end
 
+chdir /home/bil/cl
+foreach file (*.rb *.fth *.fs)
+  if (-e /home/bil/dist/snd/$file) then
+  else
+    echo $file ' does not exist in /home/bil/dist/snd'
+  endif
+end
+
 chdir /home/bil/dist/snd
 cp /home/bil/cl/configure /home/bil/dist/snd
 

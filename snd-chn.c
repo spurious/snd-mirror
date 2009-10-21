@@ -6482,14 +6482,14 @@ static XEN g_cursor_position(XEN snd, XEN chn)
 }
 
 
-XEN g_frames(XEN snd, XEN chn_n, XEN edpos)
+XEN g_frames(XEN snd, XEN chn, XEN edpos)
 {
   #define H_frames "(" S_frames " :optional snd-or-object chn edpos): number of frames of data in the given object or channel"
 
-  if (!(XEN_BOUND_P(chn_n)))
+  if (!(XEN_BOUND_P(chn)))
     {
-      if (XEN_SOUND_P(snd))
-	return(channel_get(snd, chn_n, CP_FRAMES, S_frames));
+      if ((XEN_SOUND_P(snd)) || (!XEN_BOUND_P(snd)))
+	return(channel_get(snd, chn, CP_FRAMES, S_frames));
 
       if (XEN_STRING_P(snd))
 	return(g_mus_sound_frames(snd));         /* mus-sound-frames */
@@ -6524,13 +6524,13 @@ XEN g_frames(XEN snd, XEN chn_n, XEN edpos)
 	snd_unprotect_at(cp_edpos_loc);
       cp_edpos = edpos;
       cp_edpos_loc = snd_protect(cp_edpos);
-      res = channel_get(snd, chn_n, CP_EDPOS_FRAMES, S_frames);
+      res = channel_get(snd, chn, CP_EDPOS_FRAMES, S_frames);
       snd_unprotect_at(cp_edpos_loc);
       cp_edpos_loc = NOT_A_GC_LOC;
       return(res);
     }
 
-  return(channel_get(snd, chn_n, CP_FRAMES, S_frames));
+  return(channel_get(snd, chn, CP_FRAMES, S_frames));
 }
 
 
