@@ -1799,7 +1799,7 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 			(format #f "effects-am ~A ~A" am-effect-amount
 				(let* ((need-env (not (equal? (xe-envelope am-effect-envelope) (list 0.0 1.0 1.0 1.0))))
 				       (e (and need-env (xe-envelope am-effect-envelope))))
-				  (if e (format "'~A" e)
+				  (if e (format #f "'~A" e)
 				      #f))))
 		      #f))
 		   
@@ -1899,7 +1899,7 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 			(format #f "effects-rm ~A ~A" rm-frequency
 				(let* ((need-env (not (equal? (xe-envelope rm-envelope) (list 0.0 1.0 1.0 1.0))))
 				       (e (and need-env (xe-envelope rm-envelope))))
-				  (if e (format "'~A" e)
+				  (if e (format #f "'~A" e)
 				      #f))))
 		      #f))
 		   

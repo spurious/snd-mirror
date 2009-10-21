@@ -1423,7 +1423,7 @@ static s7_pointer new_cell(s7_scheme *sc)
 	    fprintf(stderr, "heap reallocation failed! tried to get %lu bytes\n", (unsigned long)((sc->heap_size + 1) * sizeof(s7_cell *)));
 
 	  sc->free_heap = (s7_cell **)realloc(sc->free_heap, sc->heap_size * sizeof(s7_cell *));
-	  if (!(sc->heap))
+	  if (!(sc->free_heap))
 	    fprintf(stderr, "free heap reallocation failed! tried to get %lu bytes\n", (unsigned long)(sc->heap_size * sizeof(s7_cell *)));	  
 
 	  { 
@@ -7670,17 +7670,23 @@ static char *describe_port(s7_scheme *sc, s7_pointer p)
 static s7_pointer g_port_line_number(s7_scheme *sc, s7_pointer args)
 {
   #define H_port_line_number "(port-line-number input-file-port) returns the current read line number of port"
-  s7_pointer x = car(args);
-  if ((is_input_port(x)) &&
-      (is_file_port(x)))
+  s7_pointer x;
+  x = car(args);
+
+  if (!(is_input_port(x)))
+    return(s7_wrong_type_arg_error(sc, "port-line-number", 1, x, "an input port"));
+
+  if (is_file_port(x))
     return(s7_make_integer(sc, port_line_number(x)));
+
   return(sc->F); /* not an error! */
 }
 
 
 const char *s7_port_filename(s7_pointer x)
 {
-  if (is_file_port(x))
+  if (((is_input_port(x)) || (is_output_port(x))) && /* make sure it's some kind of port */
+      (is_file_port(x)))
     return(port_filename(x));
   return(NULL);
 }
@@ -7688,10 +7694,16 @@ const char *s7_port_filename(s7_pointer x)
 static s7_pointer g_port_filename(s7_scheme *sc, s7_pointer args)
 {
   #define H_port_filename "(port-filename file-port) returns the filename associated with port"
-  s7_pointer x = car(args);
-  if (is_file_port(x))
-    return(s7_make_string(sc, port_filename(x)));
-  return(sc->F); /* not an error! */
+  s7_pointer x;
+  x = car(args);
+
+  if ((is_input_port(x)) || (is_output_port(x)))
+    {
+      if (is_file_port(x))
+	return(s7_make_string(sc, port_filename(x)));
+      return(sc->F); /* not an error! */
+    }
+  return(s7_wrong_type_arg_error(sc, "port-filename", 1, x, "a port"));
 }
 
 
@@ -11153,6 +11165,8 @@ static s7_pointer g_vector_map(s7_scheme *sc, s7_pointer args)
 
 /* -------- sort! -------- */
 
+/* TODO: if an error occurs in the sort function, it is possible to end up with the gc turned off */
+
 #if (!HAVE_NESTED_FUNCTIONS)
   static s7_pointer compare_proc, compare_proc_args;
   static s7_scheme *compare_sc; /* ugh */
@@ -12757,14 +12771,16 @@ typedef struct {
 
 static char *s7_format_error(s7_scheme *sc, const char *msg, const char *str, s7_pointer args, format_data *dat)
 {
-  int len, slen = 0;
+  int len;
   char *errmsg;
   s7_pointer x;
 
-  len = safe_strlen(msg) + (2 * safe_strlen(str)) + 32;
-  errmsg = (char *)malloc(len * sizeof(char));
   if (dat->loc == 0)
-    slen = snprintf(errmsg, len, "format ~S ~{~A~^ ~}: %s", msg);
+    {
+      len = safe_strlen(msg) + 32;
+      errmsg = (char *)malloc(len * sizeof(char));
+      snprintf(errmsg, len, "format ~S ~{~A~^ ~}: %s", msg);
+    }
   else 
     {
       char *filler;
@@ -12772,11 +12788,13 @@ static char *s7_format_error(s7_scheme *sc, const char *msg, const char *str, s7
       filler = (char *)calloc(dat->loc + 12, sizeof(char));
       for (i = 0; i < dat->loc + 11; i++)
 	filler[i] = ' ';
-      slen = snprintf(errmsg, len, "\nformat: ~S ~{~A~^ ~}\n%s^: %s", filler, msg);
+      len = safe_strlen(msg) + 32 + dat->loc + 12;
+      errmsg = (char *)malloc(len * sizeof(char));
+      snprintf(errmsg, len, "\nformat: ~S ~{~A~^ ~}\n%s^: %s", filler, msg);
       free(filler);
     }
 
-  x = make_list_3(sc, s7_make_string_with_length(sc, errmsg, slen), s7_make_string(sc, str), args);
+  x = make_list_3(sc, s7_make_string(sc, errmsg), s7_make_string(sc, str), args);
 
   free(errmsg);
   if (dat->str) free(dat->str);
@@ -13663,6 +13681,7 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
   vector_element(sc->error_info, ERROR_CODE_LINE) = ERROR_INFO_DEFAULT;
   vector_element(sc->error_info, ERROR_CODE_FILE) = ERROR_INFO_DEFAULT;
   vector_element(sc->error_info, ERROR_ENVIRONMENT) = sc->envir;
+  s7_gc_on(sc, true);  /* this is for sort -- probably cleaner to do it explicitly somehow */
 
   /* (let ((x 32)) (define (h1 a) (* a "hi")) (define (h2 b) (+ b (h1 b))) (h2 1)) */
 

@@ -3673,7 +3673,7 @@
 	3)
 
 (let ((vec (vector 0 1 2 3 4 5 6 7 8 9)))
-  (test (do ((i 0 (1+ i))
+  (test (do ((i 0 (+ 1 i))
 	       (n #f)
 	       (j 9 (- j 1)))
 	      ((>= i j) vec)
@@ -6220,7 +6220,7 @@
 	      `(let ((body (lambda (,label) ,@forms))
 		     (tag (gensym "return-")))
 		 (catch tag
-			(lambda () (body (lambda (val) (throw tag val))))
+			(lambda () (body (lambda (val) (error tag val))))
 			(lambda (tag val) val))))
 	    
 	    ;; (with-return FORMS...)
@@ -7261,6 +7261,15 @@
 
 	    ))
 		
+      (for-each
+       (lambda (arg)
+	 (test (port-filename arg) 'error))
+       (list "hi" -1 #\a 1 0 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i #f #t '() (list 1 2 3) '(1 . 2)))
+
+      (for-each
+       (lambda (arg)
+	 (test (port-line-number arg) 'error))
+       (list "hi" -1 #\a 1 0 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i #f #t '() (list 1 2 3) '(1 . 2)))
 
       ;; generic length/copy/fill!
       (test (length (list 1 2)) 2)
@@ -35618,7 +35627,7 @@
        (test (lognot -6) #b101)
        (test (lognot 12341234) -12341235)
        (test (lognot #b-101) 4)
-       (test (lognot (1+ (lognot 1000))) 999)
+       (test (lognot (+ 1 (lognot 1000))) 999)
 
        ;; from CL spec
        (test (let ((str ""))
@@ -40914,7 +40923,7 @@ expt error > 1e-6 around 2^-46.506993328423
 		   cadadr caddar cdaaar cdaadr cdadar cddaar cdaddr cddddr cddadr cdddar length assq assv
 		   assoc memq memv member append list list-ref 
 					;list-set! vector-set! 
-		   list-tail vector? sort!
+		   list-tail vector?
 		   vector->list list->vector vector-fill! vector vector-length vector-ref make-vector
 					;call/cc call-with-current-continuation call-with-exit load
 		   continuation? eval eval-string apply
@@ -40996,6 +41005,7 @@ expt error > 1e-6 around 2^-46.506993328423
 		(lambda (c)
 		  (catch #t 
 			 (lambda () 
+			   ;(format #t "(~A ~A ~A ~A)~%" f a b c)
 			   (f a b c))
 			 (lambda args #f)))
 		argls))
@@ -41006,7 +41016,7 @@ expt error > 1e-6 around 2^-46.506993328423
 					;(display "four args") (newline)
       (for-each
        (lambda (f)
-	 ;(display f) (display " ")
+	 (display f) (display " ")
 	 (for-each
 	  (lambda (a)
 	    (for-each

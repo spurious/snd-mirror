@@ -1,25 +1,65 @@
-Snd 10.9
+Snd 11.0 (with much help from Mike Scholz):
 
-Kjetil improved the rt stuff.
-added env.scm to sndlib (for jcvoi.scm).
-optimization now defaults to 6.
-show-backtrace removed.
+regions, players, mixes, and marks are objects now, not ints
 
-s7: *error-info* for better error reporting. 
-    vector-for-each, vector-map, string-for-each
-    generic map, for-each
+  integer->region, region->integer, integer->mix and mix->integer,
+    integer->mark and mark->integer to convert old code	
 
-added s7-slib-init.scm: slib support.  It assumes getenv, file-exists?, and system
-  are provided elsewhere (this is the case if s7 is running in Snd or sndlib).
+  mix, mix-region, and mix-selection return a list of mixes
 
-added s7.html
-  s7: with-environment, true multiple-values, vectors can have > 2^31 elements (you'll 
-      need a lot of memory).  multiple-value-bind and multiple-value-set!.
+  marks returns a list of marks
 
-checked:  gtk 2.17.7|8|9|10|11, guile 1.9.2|3, sbcl 1.0.31, gsl 1.13
+  in several region-related functions, the argument order has changed to
+    put the region object first: insert-region, make-region-sampler, mix-region,
+    region-sample, region->vct, region->frame, make-region-frame-reader
 
-  in sbcl, something has changed in the double float array handling, so functions
-  like convolution can't be called from lisp.  The instruments seem to be ok.
-  (The two use the same calling sequence so I'm a bit mystified).
+sounds are objects, but integers are still ok
+  integer->sound and sound->integer to convert old code.
 
-Thanks!: Rick Taube, Ralf Mattes, Kjetil Matheussen, Mike Scholz
+
+These changes make it possible to replace several dozen functions with generic
+  functions:
+
+  length handles list length, also string-length, vector-length, hash-table-size,
+    vct-length, frames, mus-length, sound-data-length, mix-length, and region-frames.
+
+  frames is similar but treats strings as sound file names, and ints as sound indices.  
+
+  srate handles strings (mus-sound-srate), regions (region-srate), and sounds.
+ 
+  channels handles strings (mus-sound-chans), region-chans, sound-data-chans, mus-channels,
+    mixes (always 1 channel), and sounds
+
+  file-name handles strings, sounds, mixes, regions, samplers, generators, and 
+    (s7) scheme file ports.
+
+  sync handles sync, mix-sync, and mark-sync.
+
+  maxamp can handle a sound (via the regular maxamp function), string (treated as a 
+   sound file name, mus-sound-maxamp), generator (maxamp of the mus-data vct, if any), 
+   sound-data (sound-data-maxamp), vct (vct-peak), region (region-maxamp), vector, list, 
+   or mix object.
+
+all "sample-reader" and "sample_reader" names changed to "sampler".
+  (the old names are defined in snd10.scm)
+  make-sampler (formerly make-sample-reader) "snd" arg can be a mix object, returning a mix sampler.
+  
+
+in s7 added procedure-environment and promise?
+
+removed export-all.scm, snd4.scm, snd5.scm, tools/sed-href, tools/lines.scm, 
+  and tools/check-gtk.scm.
+
+sine-summation, sum-of-sines, and sum-of-cosines removed (see snd10.scm).
+
+the run macro only works in s7.
+
+removed run-safety, *snd-loaded-files*, and *snd-remember-paths*.
+
+added clm.rb and grani.rb (thanks to Mike Scholz).
+
+
+checked: mpc 0.7, OSX 10.6, gtk 2.18.0|1|2|3, cmucl 20a, guile 1.9.4
+
+Thanks!: Kjetil Matheussen, Mike Scholz
+

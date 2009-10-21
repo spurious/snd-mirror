@@ -309,7 +309,7 @@
 		   (newline optimizer-log)))))
 
 (define (real-time) (exact->inexact (/ (get-internal-real-time) internal-time-units-per-second)))
-(define (hundred n) (inexact->exact (round (* 100 n))))
+(define (hundred n) (round (* 100 n)))
 (define times '())
 (defmacro time (a) 
   `(let ((start (real-time))) 
@@ -65044,7 +65044,6 @@ EDITS: 1
       (num-test (bes-kn 100 1000.0) 0.0)
       ))
 
-  
   (if with-gui
       
       (let* ((delay-32 (make-delay 32))
@@ -67469,4 +67468,7 @@ valgrind test 23 6-Aug-09:
 12,475,299,147  /home/bil/snd-10/s7.c:s7_mark_object_1'2 [/home/bil/snd-10/snd]
  8,719,747,420  /home/bil/snd-10/s7.c:eval [/home/bil/snd-10/snd]
  8,546,890,750  /home/bil/snd-10/s7.c:gc [/home/bil/snd-10/snd]
+
+valgrind --tool=callgrind snd -l snd-test
+callgrind_annotate --auto=yes callgrind.out.<pid> > hi
 |#
