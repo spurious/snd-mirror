@@ -11165,8 +11165,6 @@ static s7_pointer g_vector_map(s7_scheme *sc, s7_pointer args)
 
 /* -------- sort! -------- */
 
-/* TODO: if an error occurs in the sort function, it is possible to end up with the gc turned off */
-
 #if (!HAVE_NESTED_FUNCTIONS)
   static s7_pointer compare_proc, compare_proc_args;
   static s7_scheme *compare_sc; /* ugh */
@@ -11221,6 +11219,9 @@ If its first argument is a list, the list is copied (despite the '!')."
     /* qsort is a large and complex function (250 lines in libc), so we can't easily
      *   expand it in our eval loop, but we may want to jump out of the sort via call/cc,
      *   so we look for the stack being unwound past the start point -- this is a kludge!
+     * Currently, if an error occurs in the sort function, we depend on s7_error to
+     *   turn it back on; is there any case where we'd want it off despite hitting
+     *   an error?
      */
 
     push_stack(sc, OP_EVAL_DONE, sc->args, sc->code); 
@@ -13681,7 +13682,7 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
   vector_element(sc->error_info, ERROR_CODE_LINE) = ERROR_INFO_DEFAULT;
   vector_element(sc->error_info, ERROR_CODE_FILE) = ERROR_INFO_DEFAULT;
   vector_element(sc->error_info, ERROR_ENVIRONMENT) = sc->envir;
-  s7_gc_on(sc, true);  /* this is for sort -- probably cleaner to do it explicitly somehow */
+  s7_gc_on(sc, true);  /* this is in case we were triggered from the sort function -- clumsy! */
 
   /* (let ((x 32)) (define (h1 a) (* a "hi")) (define (h2 b) (+ b (h1 b))) (h2 1)) */
 
