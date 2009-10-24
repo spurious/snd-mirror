@@ -5771,16 +5771,16 @@ that give a minimum peak amplitude when the signals are added together."
      17827, 17837, 17839, 17851, 17863};
 #endif
 
-  static mus_float_t all_mins[128] = {1.0000, 1.7600, 1.9797, 2.0390, 2.3435, 2.5493, 2.6394, 2.7947, 2.9618, 3.1027, 3.2185, 3.3894, 3.5252, 3.6148, 3.7707, 3.8769, 4.0179, 4.1595, 4.2714, 4.2972, 4.5025, 4.5965, 4.6269, 4.8284, 4.9111, 5.0273, 5.0836, 5.2679, 5.3326, 5.4512, 5.5242, 5.6193, 5.6965, 5.8160, 5.9412, 6.0636, 6.0662, 6.2914, 6.4294, 6.4878, 6.5697, 6.6817, 6.7320, 6.7910, 6.9651, 6.9547, 7.1822, 7.2275, 7.3943, 7.5149, 7.6053, 7.5226, 7.7605, 7.8023, 7.8813, 7.9141, 8.0141, 8.0625, 8.2735, 8.4214, 8.4479, 8.5318, 8.4967, 8.5701, 8.6660, 8.8047, 9.0424, 9.0869, 9.0291, 8.9858, 9.1967, 9.2242, 9.2606, 9.3841, 9.3383, 9.5322, 9.6904, 9.6440, 9.8120, 9.7647, 9.8941, 10.0727, 10.0339, 10.0562, 10.2308, 10.3640, 10.3604, 10.4512, 10.6231, 10.5797, 10.7442, 10.8524, 10.9396, 10.8147, 10.8800, 11.0663, 11.0780, 11.1860, 11.0919, 11.2606, 11.2997, 11.4984, 11.6031, 11.6299, 11.3495, 11.7055, 11.8941, 11.8929, 12.0084, 12.0867, 11.9355, 12.1093, 12.2496, 12.2938, 12.3810, 12.3602, 12.2998, 12.5517, 12.6913, 12.5935, 12.7809, 12.7526, 12.5448, 12.9734, 12.9734, 13.0867, 13.0299, 13.1562};
+  static mus_float_t all_mins[128] = {1.0000, 1.7600, 1.9797, 2.0390, 2.3435, 2.5493, 2.6394, 2.7947, 2.9618, 3.1027, 3.2185, 3.3894, 3.5251, 3.6144, 3.7707, 3.8763, 4.0177, 4.1587, 4.2707, 4.2972, 4.5025, 4.5956, 4.6257, 4.8010, 4.9098, 5.0265, 5.0824, 5.2644, 5.3316, 5.4508, 5.5228, 5.6180, 5.6965, 5.8117, 5.9361, 6.0601, 6.0639, 6.2895, 6.4267, 6.4858, 6.5681, 6.6808, 6.7320, 6.7910, 6.9651, 6.9503, 7.1808, 7.2275, 7.3932, 7.5128, 7.6053, 7.5197, 7.7587, 7.7999, 7.8770, 7.9141, 8.0100, 8.0611, 8.2697, 8.4177, 8.4459, 8.5318, 8.4922, 8.5701, 8.6642, 8.8023, 9.0398, 9.0869, 9.0291, 8.9858, 9.1950, 9.2229, 9.2562, 9.3841, 9.3353, 9.5274, 9.6904, 9.6420, 9.8120, 9.7612, 9.8896, 10.0727, 10.0293, 10.0562, 10.2308, 10.3640, 10.3604, 10.4512, 10.6231, 10.5797, 10.7442, 10.8524, 10.9396, 10.8147, 10.8800, 11.0663, 11.0780, 11.1860, 11.0919, 11.2606, 11.2997, 11.4984, 11.6031, 11.6299, 11.3495, 11.7055, 11.8941, 11.8929, 12.0084, 12.0867, 11.9355, 12.1093, 12.2496, 12.2938, 12.3810, 12.3602, 12.2998, 12.5517, 12.6913, 12.5935, 12.7809, 12.7526, 12.5448, 12.9734, 12.9734, 13.0867, 13.0299, 13.1562};
 
-  static mus_float_t odd_mins[128] = {1.0000, 1.5390, 1.7387, 2.0452, 2.3073, 2.5227, 2.6184, 2.7908, 2.8865, 3.0538, 3.1771, 3.3628, 3.4758, 3.5998, 3.7418, 3.8607, 3.9558, 4.0793, 4.1940, 4.3752, 4.4620, 4.6110, 4.7242, 4.8070, 4.9268, 5.0493, 5.1390, 5.2302, 5.3165, 5.4464, 5.5606, 5.6270, 5.7652, 5.8426, 5.9265, 6.0996, 6.2069, 6.2994, 6.3385, 6.4588, 6.6495, 6.6727, 6.7842, 6.9416, 6.9829, 7.0570, 7.1528, 7.2120, 7.3344, 7.4039, 7.5196, 7.6882, 7.7157, 7.9103, 7.9105, 7.9416, 8.1025, 8.1040, 8.1630, 8.3197, 8.4698, 8.4621, 8.4616, 8.6112, 8.7237, 8.8208, 9.0398, 9.0387, 9.0697, 9.0657, 9.2568, 9.3566, 9.4458, 9.3594, 9.5487, 9.5047, 9.7401, 9.6893, 9.9076, 9.9147, 9.9320, 10.0072, 10.1652, 10.3284, 10.1798, 10.4883, 10.5161, 10.6207, 10.5694, 10.5708, 10.5839, 10.8528, 10.7955, 10.9313, 11.0756, 11.1401, 11.1291, 11.2952, 11.3506, 11.3770, 11.4939, 11.5326, 11.6333, 11.6619, 11.6648, 11.8342, 11.9285, 11.9687, 12.0196, 12.0811, 12.2053, 12.2887, 12.2429, 12.3887, 12.5388, 12.3549, 12.5049, 12.5278, 12.7429, 12.5908, 12.8771, 12.8182, 13.0145, 13.0550, 13.0726, 13.2525, 13.2728, 13.2956};
+  static mus_float_t odd_mins[128] = {1.0000, 1.5390, 1.7387, 2.0452, 2.3073, 2.5227, 2.6184, 2.7908, 2.8865, 3.0538, 3.1771, 3.3628, 3.4757, 3.5998, 3.7418, 3.8601, 3.9551, 4.0787, 4.1926, 4.3752, 4.4612, 4.6073, 4.7235, 4.8070, 4.9268, 5.0485, 5.1390, 5.2278, 5.3157, 5.4420, 5.5517, 5.6270, 5.7612, 5.8403, 5.9249, 6.0982, 6.2052, 6.2985, 6.3374, 6.3872, 6.6463, 6.6712, 6.7825, 6.9386, 6.9798, 7.0551, 7.1511, 7.2086, 7.3319, 7.4028, 7.5196, 7.6882, 7.7157, 7.9103, 7.9105, 7.9416, 8.1025, 8.1040, 8.1630, 8.3197, 8.4698, 8.4621, 8.4616, 8.6112, 8.7237, 8.8208, 9.0398, 9.0387, 9.0697, 9.0657, 9.2568, 9.3566, 9.4458, 9.3594, 9.5487, 9.5047, 9.7401, 9.6893, 9.9076, 9.9147, 9.9320, 10.0072, 10.1652, 10.3284, 10.1798, 10.4883, 10.5161, 10.6207, 10.5694, 10.5708, 10.5839, 10.8528, 10.7955, 10.9313, 11.0756, 11.1401, 11.1291, 11.2952, 11.3506, 11.3770, 11.4939, 11.5326, 11.6333, 11.6619, 11.6648, 11.8342, 11.9285, 11.9687, 12.0196, 12.0811, 12.2053, 12.2887, 12.2429, 12.3887, 12.5388, 12.3549, 12.5049, 12.5278, 12.7429, 12.5908, 12.8771, 12.8182, 13.0145, 13.0550, 13.0726, 13.2525, 13.2728, 13.2956};
 
-  static mus_float_t prime_mins[128] = {1.0000, 1.7600, 1.9798, 2.1921, 2.4768, 2.8055, 3.0619, 3.2630, 3.3824, 3.6023, 3.7790, 3.9367, 4.1554, 4.3270, 4.4685, 4.6065, 4.7223, 4.8610, 5.0211, 5.1966, 5.3661, 5.4821, 5.6251, 5.7145, 5.9894, 6.1142, 6.2682, 6.3476, 6.4650, 6.5030, 6.8025, 6.9266, 7.0959, 7.2019, 7.3633, 7.5560, 7.5472, 7.7502, 7.8274, 7.9107, 8.0448, 8.1674, 8.3099, 8.5365, 8.5788, 8.6124, 8.7022, 8.8734, 8.9994, 9.0363, 9.2417, 9.4092, 9.5446, 9.5681, 9.7062, 9.8799, 10.0170, 10.1073, 10.0038, 10.0638, 10.4499, 10.4112, 10.5549, 10.7139, 10.7789, 10.9338, 10.9738, 11.0830, 11.0547, 11.1518, 11.5242, 11.6490, 11.4931, 11.4550, 11.7339, 11.9387, 12.1038, 12.1877, 12.3315, 12.3457, 12.5201, 12.3515, 12.5453, 12.6803, 12.5808, 12.3793, 12.8348, 13.1072, 13.1332, 13.3488, 13.1363, 13.1173, 13.3385, 13.3665, 13.7290, 13.5812, 13.7350, 14.0068, 14.0505, 14.1724, 14.1791, 14.2507, 14.6395, 14.4622, 14.7860, 15.1682, 15.2002, 15.2561, 15.1525, 14.9808, 15.0547, 15.3307, 15.3429, 15.5505, 15.6506, 15.2943, 15.7276, 15.7970, 15.6895, 15.9326, 15.9995, 16.2285, 16.2395, 16.2855, 16.4469, 16.5462, 16.4782, 16.6392};
+  static mus_float_t prime_mins[128] = {1.0000, 1.7600, 1.9798, 2.1921, 2.4768, 2.8055, 3.0619, 3.2630, 3.3824, 3.6023, 3.7790, 3.9367, 4.1554, 4.3270, 4.4682, 4.6059, 4.7218, 4.8604, 5.0211, 5.1956, 5.3647, 5.4813, 5.6243, 5.7145, 5.9894, 6.0896, 6.2682, 6.3476, 6.4613, 6.5030, 6.8025, 6.9266, 7.0589, 7.2019, 7.3579, 7.5560, 7.5472, 7.7502, 7.8274, 7.9107, 8.0448, 8.1674, 8.3099, 8.3832, 8.5788, 8.6124, 8.7022, 8.8734, 8.9650, 9.0363, 9.2417, 9.4092, 9.5446, 9.5681, 9.6796, 9.8799, 10.0170, 10.1073, 10.0038, 10.0638, 10.4499, 10.4112, 10.5549, 10.7139, 10.7789, 10.9338, 10.9738, 11.0830, 11.0547, 11.1518, 11.5242, 11.4008, 11.4931, 11.4550, 11.7339, 11.9387, 12.1038, 12.1877, 12.2711, 12.3457, 12.5201, 12.3515, 12.5453, 12.6803, 12.5808, 12.3793, 12.8348, 13.0615, 13.1332, 13.3488, 13.1363, 13.1173, 13.3385, 13.3665, 13.7290, 13.5812, 13.7350, 14.0068, 14.0505, 14.1724, 14.1791, 14.2507, 14.6395, 14.4622, 14.7860, 14.9557, 15.1147, 15.1805, 15.1525, 14.9808, 15.0547, 15.3307, 15.3429, 15.5375, 15.6250, 15.2943, 15.7276, 15.7970, 15.6895, 15.9326, 15.9498, 16.2285, 16.1015, 16.2855, 16.4469, 16.5462, 16.4782, 16.6392};
 
-  static mus_float_t even_mins[128] = {1.0000, 1.7602, 2.0215, 2.4306, 2.6048, 2.8370, 3.0470, 3.1976, 3.4542, 3.5589, 3.6567, 3.7876, 3.9733, 4.0981, 4.1938, 4.3272, 4.4921, 4.5716, 4.7571, 4.8465, 4.9435, 5.0906, 5.2096, 5.3455, 5.4625, 5.5764, 5.7049, 5.8003, 5.9163, 6.0151, 6.1343, 6.2347, 6.4029, 6.4396, 6.6475, 6.7414, 6.8175, 6.9708, 6.9600, 7.0834, 7.1365, 7.3067, 7.3740, 7.4257, 7.6039, 7.6566, 7.8176, 7.8446, 7.8823, 8.0704, 8.1656, 8.1110, 8.3345, 8.4774, 8.5795, 8.5369, 8.5913, 8.7139, 8.8306, 8.9516, 9.0178, 9.0624, 9.1954, 9.1991, 9.3012, 9.4138, 9.4627, 9.6578, 9.7173, 9.9051, 9.9687, 9.9367, 10.0003, 9.9548, 10.0225, 10.1396, 10.2207, 10.4083, 10.4703, 10.5521, 10.6487, 10.7233, 10.6924, 10.8254, 10.9919, 11.0935, 11.1283, 11.1708, 10.8833, 11.1379, 11.4275, 11.5259, 11.4209, 11.4190, 11.5435, 11.5929, 11.8009, 11.8414, 11.9157, 11.9255, 11.9558, 12.0115, 12.1164, 12.1626, 12.0953, 12.2678, 12.4979, 12.5796, 12.7024, 12.7138, 12.8146, 12.8973, 13.0260, 13.0542, 13.0533, 13.2283, 13.2483, 13.1801, 13.4175, 13.4828, 13.5715, 13.6759, 13.6521, 13.5377, 13.6356, 13.7458, 13.7406, 14.0186};
+  static mus_float_t even_mins[128] = {1.0000, 1.7602, 2.0215, 2.4306, 2.6048, 2.8370, 3.0470, 3.1976, 3.4542, 3.5589, 3.6567, 3.7876, 3.9733, 4.0977, 4.1938, 4.3270, 4.4914, 4.5708, 4.7559, 4.8465, 4.9435, 5.0892, 5.2096, 5.3455, 5.4606, 5.5743, 5.7039, 5.7970, 5.9154, 6.0127, 6.1345, 6.2333, 6.4016, 6.4377, 6.6445, 6.7394, 6.8144, 6.9708, 6.9586, 7.0822, 7.1354, 7.3039, 7.3718, 7.4230, 7.6022, 7.6521, 7.8141, 7.8422, 7.8785, 8.0677, 8.1656, 8.1090, 8.3328, 8.4764, 8.5795, 8.5346, 8.5898, 8.7114, 8.8276, 8.9497, 9.0123, 9.0592, 9.1924, 9.1976, 9.2998, 9.4138, 9.4627, 9.6578, 9.7173, 9.9051, 9.9687, 9.9367, 10.0003, 9.9548, 10.0225, 10.1396, 10.2207, 10.4083, 10.4703, 10.5521, 10.6487, 10.7233, 10.6924, 10.8254, 10.9919, 11.0935, 11.1283, 11.1708, 10.8833, 11.1379, 11.4275, 11.5259, 11.4209, 11.4190, 11.5435, 11.5929, 11.8009, 11.8414, 11.9157, 11.9255, 11.9558, 12.0115, 12.1164, 12.1626, 12.0953, 12.2678, 12.4979, 12.5796, 12.7024, 12.7138, 12.8146, 12.8973, 13.0260, 13.0542, 13.0533, 13.2283, 13.2483, 13.1801, 13.4175, 13.4828, 13.5715, 13.6759, 13.6521, 13.5377, 13.6356, 13.7458, 13.7406, 14.0186};
 
-  static mus_float_t min_8[4] = {20.4678, 21.6607, 24.4371, 27.1456};
-  static mus_float_t min_9[4] = {32.5720, 33.6957, 35.7760, 43.4860};
+  static mus_float_t min_8[4] = {20.3776, 21.4363, 24.4371, 26.7748};
+  static mus_float_t min_9[4] = {32.5720, 33.3338, 35.7760, 43.4860};
   static mus_float_t min_10[4] = {54.4440, 52.5080, 51.8950, 70.1400};
 
 
@@ -6605,6 +6605,411 @@ for a peak-amp minimum using a simulated annealing form of the genetic algorithm
   return(xen_make_vct(n, min_phases));
 }
 
+
+
+
+/* -------------------------------------------------------------------------------- */
+
+#define S_fpsap "fpsap"
+
+static XEN g_fpsap(XEN x_choice, XEN x_n, XEN start_phases)
+{
+  #define H_fpsap "(" S_fpsap " choice n phases) searches \
+for a peak-amp minimum using a simulated annealing form of the genetic algorithm.  choice: 0=all, 1=odd, 2=even, 3=prime."
+
+  #define FFT_MULT 128
+  #define INCR_DOWN 0.9
+  #define INCR_MAX 1.0
+  #define INCR_MIN 0.001
+  #define RETRIES 10
+  #define RETRY_MULT 2
+  #define INIT_TRIES 1000
+  #define ALL 0
+  #define ODD 1
+  #define EVEN 2
+  #define PRIME 3
+
+  int choice, n, size, counts = 0, day_counter = 0, days = 0, years = 0, free_top = 0, fft_size = 0;
+  mus_long_t ffts = 0;
+  mus_float_t increment = INCR_MAX, orig_incr, local_best = 1000.0, incr_mult = INCR_DOWN, overall_min;
+  mus_float_t *min_phases = NULL, *temp_phases = NULL, *diff_phases = NULL, *initial_phases = NULL;
+  char *choice_name[4] = {"all", "odd", "even", "prime"};
+  pk_data **choices = NULL, **free_choices = NULL;
+  mus_float_t *rl, *im;
+  const char *file = NULL;
+  bool just_best = true;
+
+  auto mus_float_t saved_min(int ch, int nn);
+  auto mus_float_t get_peak(mus_float_t *phases);
+  auto pk_data *next_choice(pk_data *data);
+  auto bool day(void);
+
+  mus_float_t saved_min(int ch, int nn)
+  {
+    if (nn <= 128)
+      {
+	switch (ch)
+	  {
+	  case ALL:   return(all_mins[nn]);
+	  case ODD:   return(odd_mins[nn]);
+	  case EVEN:  return(even_mins[nn]);
+	  case PRIME: return(prime_mins[nn]);
+	  }
+      }
+    if (nn == 256) return(min_8[ch]);
+    if (nn == 512) return(min_9[ch]);
+    if (nn == 1024) return(min_10[ch]);
+    return((mus_float_t)nn);
+  }
+
+  mus_float_t get_peak(mus_float_t *phases)
+  {
+    int i, m;
+    mus_float_t pi2, mx_sin, mx_cos;
+
+    pi2 = M_PI / 2.0;
+    memset((void *)rl, 0, fft_size * sizeof(mus_float_t));
+    memset((void *)im, 0, fft_size * sizeof(mus_float_t));
+
+    for (m = 0; m < n; m++)
+      {
+	int bin;
+	mus_float_t phi;
+	phi = (M_PI * phases[m]) + pi2;
+	if (choice == ALL)
+	  bin = m + 1;
+	else
+	  {
+	    if (choice == ODD)
+	      bin = (m * 2) + 1;
+	    else 
+	      {
+		if (choice == EVEN)
+		  {
+		    bin = m * 2;
+		    if (bin == 0) bin = 1;
+		  }
+		else bin = primes[m];
+	      }
+	  }
+	rl[bin] = cos(phi);
+	im[bin] = sin(phi);
+      }
+
+    mus_fft(rl, im, fft_size, -1);
+    /* real part is sine reconstruction, imaginary part is cosine, we're interested in both! */
+    /*   we could also add and subtract the 2 to get 2 more cases "for free", amp sqrt(2), phase asin(cos(0)/sqrt(2)) */
+    /*   and repeat this with a shift (rotation from i) for 2n other cases */
+    /*   resultant amp is between 0 and 2 (cosine) */
+
+    ffts++;
+    mx_sin = fabs(rl[0]);
+    mx_cos = fabs(im[0]);
+    for (i = 1; i < fft_size; i++)
+      {
+	mus_float_t mxtemp;
+	mxtemp = fabs(rl[i]);
+	if (mxtemp > mx_sin)
+	  mx_sin = mxtemp;
+	mxtemp = fabs(im[i]);
+	if (mxtemp > mx_cos)
+	  mx_cos = mxtemp;
+      }
+
+    return(mx_sin); /* ignore cos case since we're trying to follow a path */
+
+    if (mx_sin <= mx_cos)
+      return(mx_sin);
+
+    /* use the cosine case, but make it sine-based with 0.0 initial phase for the fundamental */
+    for (m = 1; m < n; m++)
+      {
+	int bin;
+	if (choice == ALL)
+	  bin = m + 1;
+	else
+	  {
+	    if (choice == ODD)
+	      bin = (m * 2) + 1;
+	    else 
+	      {
+		if (choice == EVEN)
+		  {
+		    bin = m * 2;
+		    if (bin == 0) bin = 1;
+		  }
+		else bin = primes[m];
+	      }
+	  }
+	phases[m] += (0.5 * (bin - 1));
+      }
+
+    return(mx_cos);
+  }
+  
+  pk_data *next_choice(pk_data *data)
+  {
+    mus_float_t *phases;
+    mus_float_t cur_min, temp_min = 100000.0, pk = 100000.0;
+    int len, local_try, i, k, local_tries;
+    pk_data *new_pk;
+
+    new_pk = free_choices[--free_top];
+    cur_min = data->pk;
+    phases = data->phases;
+    len = n;
+    local_tries = RETRIES + day_counter * RETRY_MULT;
+
+    /* try to find a point nearby that is better */
+    for (local_try = 0; (local_try < local_tries) && (pk >= cur_min); local_try++)
+      {
+	for (i = 1; i < len; i++)
+	  temp_phases[i] = fmod(phases[i] + mus_random(increment), 2.0); /* not mus_frandom! */
+	pk = get_peak(temp_phases);
+	
+	if (pk < temp_min)
+	  {
+	    temp_min = pk;
+	    new_pk->pk = pk;
+	    for (k = 1; k < len; k++) new_pk->phases[k] = temp_phases[k];	    
+	  }
+      }
+    
+    /* if a better point is found, try to follow the slopes */
+    if (new_pk->pk < data->pk)
+      {
+	bool happy = true;
+	for (k = 1; k < len; k++)
+	  diff_phases[k] = new_pk->phases[k] - data->phases[k];
+
+	while (happy)
+	  {
+	    for (k = 1; k < len; k++)
+	      temp_phases[k] = fmod(new_pk->phases[k] + diff_phases[k], 2.0); /* frandom here? */
+	    pk = get_peak(temp_phases);
+
+	    if (pk < new_pk->pk)
+	      {
+		new_pk->pk = pk;
+		for (k = 1; k < len; k++) new_pk->phases[k] = temp_phases[k];
+	      }
+	    else happy = false;
+	  }
+      }
+
+    pk = new_pk->pk;
+
+    if (pk < local_best)
+      {
+	local_best = pk;
+	if ((!just_best) ||
+	    (pk < overall_min))
+	  {
+	    FILE *ofile;
+	    if (file)
+	      ofile = fopen(file, "a");
+	    else ofile = stderr;
+	    for (k = 1; k < len; k++) min_phases[k] = new_pk->phases[k];
+	    fprintf(ofile, "[%d, %d, %f, %lld]: %s, %d %f #(", years, days, increment, (long long int)ffts, choice_name[choice], n, pk);
+	    for (k = 0; k < len - 1; k++) fprintf(ofile, "%f ", min_phases[k]);
+	    fprintf(ofile, "%f)\n\n", min_phases[len - 1]);
+	    if (file) fclose(ofile);
+	    if (pk < overall_min) overall_min = pk;
+	  }
+
+	day_counter = 0;
+      }
+    return(new_pk);
+  }
+
+  bool day(void)
+  {
+    int i, j = 0, k, len;
+    mus_float_t sum = 0.0, avg;
+    len = size;
+    day_counter++;
+    days++;
+    for (i = 0; i < len; i++) sum += choices[i]->pk;
+    avg = sum / len;
+
+    for (i = 0; i < len; i++)
+      {
+	pk_data *datum;
+	datum = choices[i];
+	choices[i] = NULL;
+	if (datum->pk < avg)
+	  choices[j++] = datum;
+	else free_choices[free_top++] = datum;
+      }
+
+    for (i = 0, k = j; k < len; i++, k++)
+      {
+	if (i == j)
+	  i = 0;
+	choices[k] = next_choice(choices[i]);
+      }
+
+    if (day_counter < counts)
+      {
+	increment *= incr_mult;
+	if (increment < INCR_MIN) 
+	  {
+	    increment = INCR_MIN;
+	  }
+	if (increment > INCR_MAX)
+	  {
+	    increment = INCR_MAX;
+	    incr_mult = INCR_DOWN;
+	  }
+	return(true);
+      }
+    return(false);
+  }
+
+#if HAVE_SYS_TIME_H
+  {
+    struct timeval tm;
+    struct timezone tz;
+    gettimeofday(&tm, &tz);
+    mus_set_rand_seed((unsigned long)(tm.tv_sec * 1000 + tm.tv_usec / 1000));
+  }
+#endif
+
+  choice = XEN_TO_C_INT(x_choice);
+  if ((choice < ALL) || (choice > PRIME))
+    choice = ALL;
+
+  n = XEN_TO_C_INT(x_n);
+
+  size = 2000;
+  counts = 50;
+  increment = 0.001;
+  orig_incr = increment;
+  incr_mult = INCR_DOWN;
+  file = "test.data";
+  just_best = true;
+
+  if (XEN_VECTOR_P(start_phases))
+    {
+      int i;
+      initial_phases = (mus_float_t *)malloc(n * sizeof(mus_float_t));
+      for (i = 0; i < n; i++)
+	initial_phases[i] = (mus_float_t)XEN_TO_C_DOUBLE(XEN_VECTOR_REF(start_phases, i));
+    }
+
+  min_phases = (mus_float_t *)calloc(n, sizeof(mus_float_t));
+  overall_min = saved_min(choice, n);
+  temp_phases = (mus_float_t *)calloc(n, sizeof(mus_float_t));
+  diff_phases = (mus_float_t *)calloc(n, sizeof(mus_float_t));
+
+  {
+    int start, n1;
+
+    if (choice == ALL)
+      n1 = n;
+    else
+      {
+	if (choice != PRIME)
+	  n1 = n * 2;
+	else n1 = primes[n];
+      }
+    fft_size = (int)pow(2.0, (int)ceil(log(FFT_MULT * n1) / log(2.0)));
+    rl = (mus_float_t *)calloc(fft_size, sizeof(mus_float_t));
+    im = (mus_float_t *)calloc(fft_size, sizeof(mus_float_t));
+
+    choices = (pk_data **)calloc(size, sizeof(pk_data *));
+    free_choices = (pk_data **)calloc(size, sizeof(pk_data *));
+
+    for (start = 0; start < size; start++)
+      {
+	choices[start] = (pk_data *)calloc(1, sizeof(pk_data));
+	choices[start]->phases = (mus_float_t *)calloc(n, sizeof(mus_float_t));
+      }
+
+    while (true)
+      {
+	free_top = 0;
+	day_counter = 0;
+	days = 0;
+	local_best = (mus_float_t)n;
+	increment = orig_incr;
+
+	for (start = 0; start < size; start++)
+	  {
+	    mus_float_t pk, local_pk = 100000.0;
+	    int k, init_try;
+
+	    for (init_try = 0;  init_try < INIT_TRIES; init_try++)
+	      {
+		if (initial_phases)
+		  {
+		    for (k = 1; k < n; k++) 
+		      temp_phases[k] = initial_phases[k] + mus_random(increment);
+		  }
+		else
+		  {
+		    for (k = 1; k < n; k++) 
+		      temp_phases[k] = mus_frandom(2.0);
+		  }
+		pk = get_peak(temp_phases);
+
+		if (pk < local_best)
+		  {
+		    local_best = pk;
+		    if ((!just_best) ||
+			(pk < overall_min))
+		      {
+			FILE *ofile;
+			if (file)
+			  ofile = fopen(file, "a");
+			else ofile = stderr;
+			for (k = 1; k < n; k++) min_phases[k] = temp_phases[k];
+			fprintf(ofile, "[%d, %d, %f, %lld]: %s, %d %f #(", years, days, increment, (long long int)ffts, choice_name[choice], n, pk);
+			for (k = 0; k < n - 1; k++) fprintf(ofile, "%f ", min_phases[k]);
+			fprintf(ofile, "%f)\n\n", min_phases[n - 1]);
+			if (file) fclose(ofile);
+			if (pk < overall_min) overall_min = pk;
+		      }
+		  }
+
+		if (pk < local_pk)
+		  {
+		    for (k = 1; k < n; k++) choices[start]->phases[k] = temp_phases[k];
+		    choices[start]->pk = pk;
+		    local_pk = pk;
+		  }
+	      }
+	  }
+
+	while (day()) {}
+
+	break;
+	/* try again from the top... */
+	if (!file) fprintf(stderr, "[%d: %d, %f]\n", years, days, local_best);
+	years++;
+      }
+  }
+
+  free(temp_phases);
+  free(diff_phases);
+  free(rl);
+  free(im);
+  free(free_choices);
+  if (initial_phases) free(initial_phases);
+
+  {
+    int i;
+    for (i = 0; i < size; i++)
+      {
+	free(choices[i]->phases);
+	free(choices[i]);
+      }
+    free(choices);
+  }
+
+  return(xen_make_vct(n, min_phases));
+}
+
 #endif
 
 
@@ -6653,6 +7058,7 @@ XEN_ARGIFY_9(g_ptree_channel_w, g_ptree_channel)
 XEN_VARGIFY(g_find_min_peak_phases_w, g_find_min_peak_phases)
 XEN_ARGIFY_7(g_fpsa_w, g_fpsa)
 XEN_ARGIFY_9(g_fpsaf_w, g_fpsaf)
+XEN_ARGIFY_3(g_fpsap_w, g_fpsap)
 #endif
 #else
 #define g_scan_chan_w g_scan_chan
@@ -6698,6 +7104,7 @@ XEN_ARGIFY_9(g_fpsaf_w, g_fpsaf)
 #define g_find_min_peak_phases_w g_find_min_peak_phases
 #define g_fpsa_w g_fpsa
 #define g_fpsaf_w g_fpsaf
+#define g_fpsap_w g_fpsap
 #endif
 #endif
 
@@ -6750,6 +7157,7 @@ void g_init_sig(void)
   XEN_DEFINE_PROCEDURE(S_find_min_peak_phases, g_find_min_peak_phases_w, 0, 0, 1, H_find_min_peak_phases);
   XEN_DEFINE_PROCEDURE(S_fpsa, g_fpsa_w, 2, 5, 0, H_fpsa);
   XEN_DEFINE_PROCEDURE(S_fpsaf, g_fpsaf_w, 3, 6, 0, H_fpsaf);
+  XEN_DEFINE_PROCEDURE(S_fpsap, g_fpsap_w, 3, 0, 0, H_fpsap);
 #endif
 }
 
