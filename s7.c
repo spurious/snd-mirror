@@ -10672,6 +10672,9 @@ static s7_pointer s7_vector_copy(s7_scheme *sc, s7_pointer old_vect)
 
   len = vector_length(old_vect);
   new_vect = s7_make_vector_1(sc, len, false);
+  /* 
+   * here and in vector-fill! we have a problem with bignums -- should new bignums be allocated? (copy_list also)
+   */
   memcpy((void *)(vector_elements(new_vect)), (void *)(vector_elements(old_vect)), len * sizeof(s7_pointer));
 
   return(new_vect);
@@ -13309,6 +13312,8 @@ If untrace is called with no arguments, all functions are removed, turning off a
 
 static void trace_apply(s7_scheme *sc)
 {
+  /* PERHAPS: *trace-hook* */
+  /* PERHAPS: (trace #t) => trace everything and (trace #f) == (untrace) */
   int i;
 
 #if HAVE_PTHREADS
@@ -14905,7 +14910,7 @@ static s7_pointer read_string_constant(s7_scheme *sc, s7_pointer pt)
 		      else 
 			{
 			  if (!isspace(c))
-			    return(sc->F);
+			    return(sc->T); /* #f here would give confusing error message "end of input", so return #t=bad backslash */
 			}
 		    }
 		}
@@ -14984,6 +14989,8 @@ static s7_pointer read_expression(s7_scheme *sc)
 	  sc->value = read_string_constant(sc, sc->input_port);
 	  if (sc->value == sc->F)                                /* can happen if input code ends in the middle of a string */
 	    return(read_error(sc, "end of input encountered while in a string"));
+	  if (sc->value == sc->T)
+	    return(read_error(sc, "unknown backslash usage"));
 	  return(sc->value);
 	  
 	case TOKEN_SHARP_CONST:

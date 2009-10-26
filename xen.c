@@ -1871,7 +1871,10 @@ void xen_repl(int argc, char **argv)
   while (true)
     {
       if (expr_ok)
-	fprintf(stdout, "\n%s", xen_s7_repl_prompt);
+	{
+	  fprintf(stdout, "\n%s", xen_s7_repl_prompt);
+	  expr_ok = false; /* don't get into an infinite loop if running in the background! */
+	}
       if (fgets(buffer, size, stdin) != NULL)
 	{
 	  /* also, it's possible to get a string of spaces or nulls (? -- not sure what is coming in) if stdin is /dev/null */

@@ -747,5 +747,6 @@ void snd_doit(int argc, char **argv)
     }
 #endif
 
-  xen_repl(1, argv);
+  if (!nostdin)
+    xen_repl(1, argv);
 }

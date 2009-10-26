@@ -33181,7 +33181,7 @@
 		   (let ((y (random range)))
 		     (if (not (chker y))
 			 (format #t "(random ~A) -> ~A?~%" range y))
-		     (let ((iy (inexact->exact (floor (* 100 (/ y range))))))
+		     (let ((iy (min 99 (inexact->exact (floor (* 100 (/ y range)))))))
 		       (vector-set! hits iy (+ 1 (vector-ref hits iy))))))
 		 (let ((sum 0.0)
 		       (p (/ n 100.0)))
