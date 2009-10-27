@@ -1,7 +1,7 @@
 #include "snd.h"
 #include "clm2xen.h"
 
-/* TODO: we often use the pair (selected-sound) (selected-channel) or whatever,
+/* we often use the pair (selected-sound) (selected-channel) or whatever,
  *         and these are always paired in the argument lists, so if we had a
  *         C function that returned both as a (scheme) multiple-value, we
  *         could simply plug that in wherever the other 2 were wanted.

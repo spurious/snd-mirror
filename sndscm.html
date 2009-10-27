@@ -54,8 +54,8 @@
 
 <A NAME="introduction"></a>
 
-<p>This file contains notes on the Scheme, Ruby, and Forth files included with Snd.
-To use any of these files, load them:
+<p>This file describes the Scheme, Ruby, and Forth code included with Snd.
+To use this code, load the relevant file:
 </p>
 <pre>
   Scheme: (load "dsp.scm") or (load-from-path "dsp.scm")
@@ -4766,7 +4766,7 @@ See also remove-single-sample-clicks and remove-pops in clean.scm.
 <tr><td colspan=2 bgcolor="#f2f4ff">
 <em class=emdef>snd-out</em>
 </td></tr><tr><td></td><td>
-A minor irritation in the current Guile system is that Scheme's "display" function
+A minor irritation in the current Guile system is that it's "display" function
 writes to 'current-output-port', but there's no simple way to redirect that
 elsewhere.  So, if your code calls display, the result may be invisible.
 One way around this is to reset the current-output-port to be a soft port
@@ -8114,7 +8114,7 @@ all     45   6.9651    0.5099,        odd     41   6.6463    0.5100
 </td></tr></table>
 
 <p>
-Here is a graph of the values I've found so far (as of June 2009), followed by a graph of
+Here is a graph of the values I've found so far (as of October 2009), followed by a graph of
 the exponent vs n (n^y = peak amp). 
 One very good
 set for all harmonics up to n=40 is given in Horner and Beauchamp, "a genetic algorithm-based method

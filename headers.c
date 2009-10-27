@@ -32,9 +32,6 @@
  *     Sound Designer: "Developer Documentation" from Digidesign
  *
  * test cases (sample files): ccrma-ftp.stanford.edu:/pub/Lisp/sf.tar.gz
- *
- * If anyone has information on any other header or data formats, I would be most interested in it,
- * but only if it can be included in this file.
  */
 
 #include <mus-config.h>

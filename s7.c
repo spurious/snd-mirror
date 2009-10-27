@@ -100,6 +100,7 @@
  *                 remove *-ci-*, remove cxxxxr, remove improper lists
  *        load should handle C shared libraries, using dlopen/dlinit [optionally]
  *        defgenerator
+ *        *trace-hook*
  * 
  *
  * Mike Scholz provided the FreeBSD support (complex trig funcs, etc)
@@ -519,7 +520,7 @@ struct s7_scheme {
   
   /* these 6 are pointers so that all thread refs are to the same thing */
   bool *gc_off;                       /* if true, the GC won't run */
-  bool *tracing;                      /* if tracing, each function on the *trace* list prints its args upon application */
+  bool *tracing, *trace_all;          /* if tracing, each function on the *trace* list prints its args upon application */
   long *gensym_counter;
 
 #if WITH_ENCAPSULATION
@@ -13233,7 +13234,8 @@ static s7_pointer g_trace(s7_scheme *sc, s7_pointer args)
   #define H_trace "(trace . args) adds each function in its argument list to the trace list.\
 Each argument can be a function, symbol, macro, or any applicable object: (trace abs '+ v) where v is a vct \
 prints out data about any call on abs or +, and any reference to the vct v. Trace output is sent \
-to the current-output-port."
+to the current-output-port.  If trace is called without any arguments, everything is traced -- use \
+untrace without arguments to turn this off."
 
   int i;
   s7_pointer x;
@@ -13242,7 +13244,12 @@ to the current-output-port."
   sc = sc->orig_sc;
 #endif
 
-  if (args == sc->NIL) return(sc->F);
+  if (args == sc->NIL)
+    {
+      (*(sc->trace_all)) = true;
+      (*(sc->tracing)) = true;
+      return(sc->F);
+    }
   
   for (i = 0, x = args; x != sc->NIL; i++, x = cdr(x)) 
     if ((!s7_is_symbol(car(x))) &&
@@ -13264,7 +13271,6 @@ to the current-output-port."
     }
 
   (*(sc->tracing)) = (sc->trace_top > 0);
-
   return(sc->T);
 }
 
@@ -13273,48 +13279,51 @@ static s7_pointer g_untrace(s7_scheme *sc, s7_pointer args)
 {
   #define H_untrace "(untrace . args) removes each function in its arg list from the trace list. \
 If untrace is called with no arguments, all functions are removed, turning off all tracing."
+  int i, j;
+  s7_pointer x;
 
 #if HAVE_PTHREADS
   sc = sc->orig_sc;
 #endif
 
   if (args == sc->NIL)
-    sc->trace_top = 0;
-  else
     {
-      int i, j;
-      s7_pointer x;
-      for (x = args; x != sc->NIL; x = cdr(x)) 
-	{
-	  s7_pointer value;
-	  if (s7_is_symbol(car(x)))
-	    value = eval_symbol(sc, car(x));
-	  else value = car(x);
-
-	  for (i = 0; i < sc->trace_top; i++)
-	    if (value == sc->trace_list[i])
-	      sc->trace_list[i] = sc->NIL;
-	}
-
-      /* now collapse list and reset trace_top (and possibly tracing) */
-      for (i = 0, j = 0; i < sc->trace_top; i++)
-	if (sc->trace_list[i] != sc->NIL)
-	  sc->trace_list[j++] = sc->trace_list[i];
-
-      sc->trace_top = j;
+      (*(sc->trace_all)) = false;
+      for (i = 0; i < sc->trace_top; i++)
+	sc->trace_list[i] = sc->NIL;
+      sc->trace_top = 0;
+      (*(sc->tracing)) = false;
+      return(sc->F);
     }
 
+  for (x = args; x != sc->NIL; x = cdr(x)) 
+    {
+      s7_pointer value;
+      if (s7_is_symbol(car(x)))
+	value = eval_symbol(sc, car(x));
+      else value = car(x);
+      
+      for (i = 0; i < sc->trace_top; i++)
+	if (value == sc->trace_list[i])
+	  sc->trace_list[i] = sc->NIL;
+    }
+  
+  /* now collapse list and reset trace_top (and possibly tracing) */
+  for (i = 0, j = 0; i < sc->trace_top; i++)
+    if (sc->trace_list[i] != sc->NIL)
+      sc->trace_list[j++] = sc->trace_list[i];
+  
+  sc->trace_top = j;
   (*(sc->tracing)) = (sc->trace_top > 0);
-
   return(sc->T);
 }
 
 
 static void trace_apply(s7_scheme *sc)
 {
-  /* PERHAPS: *trace-hook* */
-  /* PERHAPS: (trace #t) => trace everything and (trace #f) == (untrace) */
+  /* PERHAPS: *trace-hook* (evaluated in current env?) */
   int i;
+  bool trace_it = false;
 
 #if HAVE_PTHREADS
   int id;
@@ -13322,46 +13331,56 @@ static void trace_apply(s7_scheme *sc)
   sc = sc->orig_sc;
 #endif
 
-  for (i = 0; i < sc->trace_top; i++)
-    if (sc->code == sc->trace_list[i])
-      {
-	int k, len;
-	char *tmp1, *tmp2, *str;
-	push_stack(sc, OP_TRACE_RETURN, sc->code, sc->NIL);
-	tmp1 = s7_object_to_c_string(sc, sc->code);
-	tmp2 = s7_object_to_c_string(sc, sc->args);
-	len = safe_strlen(tmp2);
-	tmp2[0] = ' ';
-	tmp2[len - 1] = ']';
-
-	len += (safe_strlen(tmp1) + sc->trace_depth + 64);
-	str = (char *)calloc(len, sizeof(char));
-
-	for (k = 0; k < sc->trace_depth; k++) str[k] = ' ';
-	str[k] = '[';
-	strcat(str, tmp1);
-	strcat(str, tmp2);
-	free(tmp1);
-	free(tmp2);
-
-#if HAVE_PTHREADS
-	if (id != 0) /* main thread */
+  if (*(sc->trace_all))
+    trace_it = true;
+  else
+    {
+      for (i = 0; i < sc->trace_top; i++)
+	if (sc->code == sc->trace_list[i])
 	  {
-	    char *tmp3;
-	    tmp3 = (char *)calloc(64, sizeof(char));
-	    snprintf(tmp3, 64, " (thread %d)", id);
-	    strcat(str, tmp3);
-	    free(tmp3);
+	    trace_it = true;
+	    break;
 	  }
+    }
+
+  if (trace_it)
+    {
+      int k, len;
+      char *tmp1, *tmp2, *str;
+      push_stack(sc, OP_TRACE_RETURN, sc->code, sc->NIL);
+      tmp1 = s7_object_to_c_string(sc, sc->code);
+      tmp2 = s7_object_to_c_string(sc, sc->args);
+      len = safe_strlen(tmp2);
+      tmp2[0] = ' ';
+      tmp2[len - 1] = ']';
+      
+      len += (safe_strlen(tmp1) + sc->trace_depth + 64);
+      str = (char *)calloc(len, sizeof(char));
+      
+      for (k = 0; k < sc->trace_depth; k++) str[k] = ' ';
+      str[k] = '[';
+      strcat(str, tmp1);
+      strcat(str, tmp2);
+      free(tmp1);
+      free(tmp2);
+      
+#if HAVE_PTHREADS
+      if (id != 0) /* main thread */
+	{
+	  char *tmp3;
+	  tmp3 = (char *)calloc(64, sizeof(char));
+	  snprintf(tmp3, 64, " (thread %d)", id);
+	  strcat(str, tmp3);
+	  free(tmp3);
+	}
 #endif
-
-	strcat(str, "\n");
-	write_string(sc, str, sc->output_port);
-	free(str);
-
-	sc->trace_depth++;
-	break;
-      }
+      
+      strcat(str, "\n");
+      write_string(sc, str, sc->output_port);
+      free(str);
+      
+      sc->trace_depth++;
+    }
 }
 
 
@@ -15737,7 +15756,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      int len;
 	      char *msg, *argstr;
 	      s7_pointer result;
-	      argstr = s7_object_to_c_string(sc, s7_append(sc, s7_reverse(sc, cdr(sc->args)), s7_cons(sc, car(sc->args), sc->code)));
+	      argstr = s7_object_to_c_string(sc, s7_append(sc, 
+							   s7_reverse(sc, cdr(sc->args)), 
+							   s7_cons(sc, car(sc->args), sc->code)));
 	      len = strlen(argstr) + 32;
 	      msg = (char *)malloc(len * sizeof(char));
 	      len = snprintf(msg, len, "improper list of arguments: %s?", argstr);
@@ -15748,6 +15769,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    }
 
 	  sc->args = safe_reverse_in_place(sc, sc->args); 
+	  /* we could omit this reversal in many cases: all built in ops could
+	   *   assume reversed args, things like eq? and + don't care about order, etc.
+	   *   But, I think the reversal is not taking any noticeable percentage of
+	   *   the overall compute time (ca 1% according to callgrind).
+	   */
 	  sc->code = car(sc->args);
 	  sc->args = cdr(sc->args);
 	  /* goto APPLY;  */
@@ -15759,8 +15785,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_APPLY:      /* apply 'code' to 'args' */
       if (*(sc->tracing)) 
 	trace_apply(sc);
-
-      /* fprintf(stderr, "(%s %s)\n", s7_object_to_c_string(sc, sc->code), s7_object_to_c_string(sc, sc->args)); */
 
 #if WITH_PROFILING
       symbol_calls(sc->code)++;
@@ -22218,6 +22242,7 @@ s7_scheme *s7_init(void)
   
   sc->gensym_counter = (long *)calloc(1, sizeof(long));
   sc->tracing = (bool *)calloc(1, sizeof(bool));
+  sc->trace_all = (bool *)calloc(1, sizeof(bool));
 
 #if WITH_ENCAPSULATION
   sc->encapsulators = sc->NIL;

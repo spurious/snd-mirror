@@ -33,7 +33,7 @@
 ;;; time varying FIR filter, notch filter
 ;;; sound-interp, env-sound-interp
 ;;; add date and time to title bar
-;;; how to get 'display' to write to Snd's listener
+;;; how to get 'display' to write to Snd's listener (Guile only)
 ;;; filtered-env (low-pass and amplitude follow envelope)
 ;;; multi-colored rxvt printout
 ;;; lisp graph with draggable x axis
@@ -1692,7 +1692,7 @@ this clock, set retitle-time to 0"
 
 
 
-;;; -------- how to get 'display' to write to Snd's listener
+;;; -------- how to get 'display' to write to Snd's listener in Guile (not s7)
 ;;;
 ;;; scheme's display function writes to current-output-port which defaults to stdout.
 ;;; This is a bit annoying since we'd like everything to go to the listener in many cases
