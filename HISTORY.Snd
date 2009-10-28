@@ -1,5 +1,6 @@
 Snd change log
- 
+
+ 28-Oct:    pretty-print.scm. 
  22-Oct:    Snd 11.0.
  16-Oct:    clm.rb and grani.rb (thanks to Mike Scholz).
  12-Oct:    generic length, srate, channels, frames, file-name, sync, maxamp.

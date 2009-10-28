@@ -544,6 +544,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+28-Oct:  pretty-print.scm.\n\
 22-Oct:  Snd 11.0.\n\
 16-Oct:  clm.rb and grani.rb (thanks to Mike Scholz).\n\
 12-Oct:  generic length, srate, channels, frames, file-name, sync, maxamp.\n\
