@@ -1794,10 +1794,12 @@ static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, mus_lon
 	{
 	  vct *v;
 	  char *vstr = NULL;
+
 	  v = (vct *)calloc(1, sizeof(vct));
 	  v->length = order;
 	  v->data = precalculated_coeffs;
 	  vstr = mus_vct_to_readable_string(v);
+
 #if HAVE_FORTH
 	  if (dur == (order + cp->edits[sf->edit_ctr]->samples))
 	    new_origin = mus_format("%s %d " MUS_LD PROC_SEP PROC_FALSE " %s", vstr, order, beg, S_filter_channel);
@@ -1817,6 +1819,7 @@ static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, mus_lon
 	  /* new_origin = filter-channel + envelope */
 	  char *envstr;
 	  envstr = env_to_string(e);
+
 #if HAVE_FORTH
 	  if (dur == (order + cp->edits[sf->edit_ctr]->samples))
 	    new_origin = mus_format("%s %d " MUS_LD PROC_SEP PROC_FALSE " %s", envstr, order, beg, S_filter_channel);

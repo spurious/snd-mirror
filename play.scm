@@ -181,16 +181,10 @@
 
 
 ;;; -------- hold DAC open and play sounds via keyboard
-;;; 
-;;; if for some reason you want the DAC to run continuously in the background,
-;;;   use the "end" argument to the first player seen upon starting the dac:
 
-(define (start-dac)
+(define* (start-dac (sr 44100) (chans 1))
   "(start-dac) starts the DAC running continuously in the background"
-  (let ((hidden-player (make-player)))
-    (set! (amp-control hidden-player) 0.0)
-    (add-player hidden-player 0 123456789)
-    (start-playing 1 22050)))
+  (play #f sr chans))
 
 (define stop-dac stop-playing)
 

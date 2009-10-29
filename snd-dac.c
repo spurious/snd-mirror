@@ -58,6 +58,12 @@ static mus_float_t dac_read_sample(struct dac_info *dp)
 }
 
 
+static mus_float_t dac_no_sample(struct dac_info *dp)
+{
+  return(0.0);
+}
+
+
 static mus_float_t dac_xen_sample(struct dac_info *dp)
 {
   XEN result;
@@ -880,17 +886,22 @@ static dac_info *make_dac_info(int slot, chan_info *cp, snd_info *sp, snd_fd *fd
   dp->mix_id = INVALID_MIX_ID;
   dp->direction = 1;
   dp->type = type; /* dac needs to know how to get input before calling mus_make_src below */
-  if (type == DAC_XEN)
+  if (type == DAC_NOTHING)
+    dp->dac_sample = dac_no_sample;
+  else
     {
-      dp->dac_sample = dac_xen_sample;
-      dp->func = func;
-      dp->func_gc_loc = snd_protect(func);
-    }
-  else 
-    {
-      dp->dac_sample = dac_read_sample;
-      dp->func = XEN_FALSE;
-      dp->func_gc_loc = NOT_A_GC_LOC;
+      if (type == DAC_XEN)
+	{
+	  dp->dac_sample = dac_xen_sample;
+	  dp->func = func;
+	  dp->func_gc_loc = snd_protect(func);
+	}
+      else 
+	{
+	  dp->dac_sample = dac_read_sample;
+	  dp->func = XEN_FALSE;
+	  dp->func_gc_loc = NOT_A_GC_LOC;
+	}
     }
   dp->a = NULL;
   dp->a_size = 0;
@@ -975,11 +986,14 @@ static void start_dac(int srate, int channels, play_process_t background, mus_fl
 	      (dp->sp) && 
 	      (global_rev == NULL))
 	    make_reverb(dp->sp, channels);
-          if (dp->audio_chan >= channels)                 /* if dac_running, the number of channels has already been set and won't change */
+	  if (snd_dacp)
 	    {
-	      if (dac_combines_channels(ss))
-		dp->audio_chan %= channels;
-	      else stop_playing(dp, WITHOUT_HOOK, PLAY_NO_CHANNEL);
+	      if (dp->audio_chan >= snd_dacp->channels)      /* if dac_running, the number of channels has already been set and won't change */
+		{
+		  if (dac_combines_channels(ss))
+		    dp->audio_chan %= snd_dacp->channels;
+		  else stop_playing(dp, WITHOUT_HOOK, PLAY_NO_CHANNEL);
+		}
 	    }
 	}
     }
@@ -1158,7 +1172,27 @@ bool add_mix_to_play_list(mix_state *ms, chan_info *cp, mus_long_t beg_within_mi
 		 (begin
              (set! samp (1+ samp)) 
              (* .5 (oscil osc))))))) ; you can use explicit control panel accessors
+
+	     (play (lambda () (if (c-g?) #f 0.0)))
  */
+
+static bool add_zeros_to_play_list(XEN srate, XEN chans)
+{
+  int slot;
+  slot = find_slot_to_play();
+  if (slot != -1)
+    {
+      dac_info *dp;
+      dp = make_dac_info(slot, NULL, NULL, NULL, NO_END_SPECIFIED, 0, DAC_NOTHING, XEN_FALSE);
+      if (dp)
+	{
+	  start_dac(XEN_TO_C_INT(srate), XEN_TO_C_INT(chans), IN_BACKGROUND, DEFAULT_REVERB_CONTROL_DECAY);
+	  return(true);
+	}
+    }
+  return(false);
+}
+
 
 static bool add_xen_to_play_list(XEN func)
 {
@@ -1170,7 +1204,7 @@ static bool add_xen_to_play_list(XEN func)
       dp = make_dac_info(slot, NULL, NULL, NULL, NO_END_SPECIFIED, 0, DAC_XEN, func);
       if (dp)
 	{
-	  start_dac((int)mus_srate(), 1, NOT_IN_BACKGROUND, DEFAULT_REVERB_CONTROL_DECAY);
+	  start_dac((int)mus_srate(), 1, IN_BACKGROUND, DEFAULT_REVERB_CONTROL_DECAY);
 	  return(true);
 	}
     }
@@ -2779,6 +2813,9 @@ static XEN g_play_1(XEN samp_n, XEN snd, XEN chn_n, bool back, bool syncd, XEN e
   if (XEN_PROCEDURE_P(samp_n))
     return(C_TO_XEN_BOOLEAN(add_xen_to_play_list(samp_n)));
 
+  if (XEN_FALSE_P(samp_n))
+    return(C_TO_XEN_BOOLEAN(add_zeros_to_play_list(snd, chn_n))); /* srate out-chans */
+
   if (XEN_INT64_T_P(end_n)) end = XEN_TO_C_INT64_T(end_n);
 
 #if USE_NO_GUI
@@ -2826,7 +2863,18 @@ static XEN g_play_1(XEN samp_n, XEN snd, XEN chn_n, bool back, bool syncd, XEN e
       sp->filename = NULL;
       sp->delete_me = (struct dialog_play_info *)1;
       if (XEN_INT64_T_P(chn_n)) end = XEN_TO_C_INT64_T(chn_n);
-      play_sound_1(sp, samp, end, background, edpos, stop_proc, caller, arg_pos);
+      if ((sp->nchans == 1) &&
+	  (XEN_INTEGER_P(out_chan)))
+	{
+	  int ochan, pos;
+	  ochan = XEN_TO_C_INT(out_chan);	  
+	  pos = to_c_edit_position(sp->chans[0], edpos, caller, arg_pos);
+	  play_channel_1(sp->chans[0], samp, end, background, pos, stop_proc, ochan);
+	}
+      else
+	{
+	  play_sound_1(sp, samp, end, background, edpos, stop_proc, caller, arg_pos);
+	}
       return(XEN_FALSE);
     }
 

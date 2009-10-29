@@ -65,6 +65,7 @@
  *        read-line, read-byte, write-byte
  *        logior, logxor, logand, lognot, ash, integer-length
  *        procedure-source, procedure-arity, procedure-documentation, help
+ *          if the initial expression in a function body is a string constant, it is assumed to be a documentation string
  *        symbol-table, symbol->value, global-environment, current-environment, stack
  *        provide, provided?, defined?, promise?
  *        port-line-number, port-filename
@@ -81,7 +82,8 @@
  *        vector-for-each, vector-map, string-for-each, for-each of any applicable object
  *
  *   things I ought to add/change:
- *        perhaps find(-if), remove etc from CL?
+ *        perhaps find(-if), remove etc from CL? (generic -- vectors and strings also as in support.scm)
+ *           if generic, perhaps add to c-type struct?
  *        defmacro* define-macro* 
  *        perhaps settable numerator denominator imag-part real-part angle magnitude
  *        perhaps trailing args to cons -> list*
@@ -90,16 +92,18 @@
  *        rename "force" to some name matching the notion of a promise ("delay" and "force" are about as bad as names can get)
  *          or better, get rid of these things altogether [cash_promise?]
  *        make #<func args> = (func args) or something like that so we can read new_type objects, or add a reader to that struct
+ *          also add a conversion function (->generator etc)
  *        make-vector! where type of initial element sets type of all elements, or make-vector*?
  *          (make-vector! 32 0.0)
  *          set of other type either converts or error
  *          FFI would guarantee (for example) s7_Double as elements?
  *        perhaps reverse, and append generic
- *        ->* for conversions (->vector, ->ratio? ->string etc)
+ *        ->* for conversions (->vector, ->ratio? ->string etc) [see end of this file]
  *        ideally: remove all mention of exact|inexact, remove "delay"|force, remove set-car!|cdr!, 
  *                 remove *-ci-*, remove cxxxxr, remove improper lists
+ *                 exact->inexact is the only useful exactness function -- perhaps (->real x)?
  *        load should handle C shared libraries, using dlopen/dlinit [optionally]
- *        defgenerator
+ *        defgenerator (or at least defstruct of some sort)
  *        *trace-hook*
  * 
  *
@@ -22875,3 +22879,87 @@ s7_scheme *s7_init(void)
 }
 
 /* TODO: how to trace setter [s7_object_set?] mus-srate for example */
+
+#if 0
+/*  here are the ->* functions, without c-type stuff
+
+(define ->string object->string) ; or perhaps (format #f "~A" x)
+
+(define (->symbol x)
+  (string->symbol (object->string x)))
+
+(define (->real x)
+  (if (number? x)
+      (if (complex? x)
+	  (real-part x)
+	  (exact->inexact x))
+      (if (string? x)
+	  (exact->inexact (string->number x))
+	  (if (char? x)
+	      (exact->inexact (->integer x))
+	      (error 'wrong-type-arg "can't convert ~A to real" x)))))
+
+(define (->integer x)
+  (if (number? x)
+      (if (complex? x)
+	  (floor (real-part x))
+	  (floor x))
+      (if (string? x)
+	  (floor (string->number x))
+	  (if (char? x)
+	      (char->integer x)
+	      (error 'wrong-type-arg "can't convert ~A to integer" x)))))  
+
+(define (->ratio x)
+  (if (number? x)
+      (if (complex? x)
+	  (rationalize (real-part x))
+	  (rationalize x))
+      (if (string? x)
+	  (rationalize (string->number x))
+	  (if (char? x)
+	      (char->integer x)
+	      (error 'wrong-type-arg "can't convert ~A to ratio" x)))))
+
+(define (->number x)
+  (if (number? x)
+      x
+      (if (string? x)
+	  (string->number x)
+	  (if (char? x)
+	      (char->integer x)
+	      (error 'wrong-type-arg "can't convert ~A to number" x)))))
+
+(define (->character x)
+  (if (char? x)
+      x
+      (if (number? x)
+	  (integer->char (->integer x))
+	  (if (and (string? x)
+		   (= (length x) 1))
+	      (string-ref x 0)
+	      (error 'wrong-type-arg "can't convert ~A to character" x)))))	      
+
+(define (->list x)
+  (if (list? x)
+      x
+      (if (pair? x)
+	  (list (car x) (cdr x))
+	  (if (vector? x)
+	      (vector->list x)
+	      (if (string? x)
+		  (string->list x)
+		  (error 'wrong-type-arg "can't convert ~A to list" x))))))	      
+
+(define (->vector x)
+  (if (vector? x)
+      x
+      (if (list? x)
+	  (list->vector x)
+	  (if (string? x)
+	      (list->vector (string->list x))
+	      (if (pair? x)
+		  (list->vector (->list x))
+		  (error 'wrong-type-arg "can't convert ~A to vector" x))))))
+  */
+#endif

@@ -2,7 +2,7 @@
 
 ;;; channel-property, sound-property, edit-property
 ;;; delete selected portion and smooth the splice
-;;; mix with result at original peak amp
+;;; mix then scale result to original peak amp
 ;;; mix with envelope
 ;;; map-sound-files, for-each-sound-file, match-sound-files, directory->list
 ;;; check-for-unsaved-edits
@@ -21,7 +21,7 @@
 (provide 'snd-extensions.scm)
 
 
-(define (remove-if pred l) ; from common-list.scm
+(define (remove-if pred l) ; from Guile's common-list.scm == comlist.scm from slib
   "(remove-if func lst) removes any element from 'lst' that 'func' likes"
   (let loop ((l l) (result '()))
     (cond ((null? l) (reverse! result))

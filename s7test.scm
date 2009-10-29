@@ -4831,6 +4831,10 @@
 (test (call/cc (lambda (return) (catch #t (lambda () (error 'hi "")) (lambda args (return "oops"))))) "oops")
 (test (call/cc (lambda (return) (catch #t (lambda () (return 1)) (lambda args (return "oops"))))) 1)
 (test (catch #t (lambda () (call/cc (lambda (return) (return "oops")))) (lambda arg 1)) "oops")
+(test (call/cc (if (< 2 1) (lambda (return) (return 1)) (lambda (return) (return 2) 3))) 2)
+(test (call/cc (let ((a 1)) (lambda (return) (set! a (+ a 1)) (return a)))) 2)
+(test (call/cc (lambda (return) (let ((hi return)) (hi 2) 3))) 2)
+(test (let () (define (hi) (call/cc func)) (define (func a) (a 1)) (hi)) 1)
 
 (test (let ((listindex (lambda (e l)
 			 (call/cc (lambda (not_found)
@@ -6742,6 +6746,13 @@
       (for-each
        (lambda (arg)
 	 (test (procedure-arity arg) 'error))
+       (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi '#(()) (list 1 2 3) '(1 . 2) "hi"))
+
+      (test (string=? (let () (define (hi) "this is a string" 1) (procedure-documentation hi)) "this is a string") #t)
+
+      (for-each
+       (lambda (arg)
+	 (test (procedure-environment arg) 'error))
        (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi '#(()) (list 1 2 3) '(1 . 2) "hi"))
 
       (for-each
@@ -41272,4 +41283,4 @@ expt error > 1e-6 around 2^-46.506993328423
 ;;; same:            (call/cc (lambda (a b) (a 1))) -> same
 ;;; same:            (call/cc (lambda arg ((car arg) 1))) -> 1
 ;;; (call/cc (lambda () 1)) -> error?
-;;; this should work I think: (begin (define (hi) (call/cc func)) (define (func a) (a 1)))
+
