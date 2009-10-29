@@ -101,7 +101,6 @@
  *        load should handle C shared libraries, using dlopen/dlinit [optionally]
  *        defgenerator
  *        *trace-hook*
- *        pprint
  * 
  *
  * Mike Scholz provided the FreeBSD support (complex trig funcs, etc)

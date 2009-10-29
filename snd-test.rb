@@ -18920,13 +18920,8 @@ def test188
   close_sound(ind)
   #
   if $output
-    snd_display("$output: %s ($ws_output: %s)", $output, $ws_output)
+    snd_display("$output: %s", $output)
     $output = false
-  end
-  if $ws_output
-    # should have the same value as $output, i.e. false
-    snd_display("$ws_output not false? (%s)", $ws_output)
-    $ws_output = false
   end
   nind = new_sound("fmv.snd", Mus_aifc, Mus_bshort, 22050, 1, "this is a comment")
   with_time("fm_violin_1(0, 1, 440, 0.1)") do fm_violin_1(0, 1, 440, 0.1) end
@@ -24892,15 +24887,17 @@ def test0115
   select_channel(1)
   key(key_to_int(?x), 4, id)
   key(key_to_int(?v), 0, id)
-  x0 = x_bounds(id, 0)
-  x1 = x_bounds(id, 1)
-  if fneq(x0[0], x1[0]) or fneq(x0[1], x1[1])
-    snd_display("C-x v: %s %s?", x0, x1)
+  unless provided?(:snd_nogui)
+    x0 = x_bounds(id, 0)
+    x1 = x_bounds(id, 1)
+    if fneq(x0[0], x1[0]) or fneq(x0[1], x1[1])
+      snd_display("C-x v: %s %s?", x0, x1)
+    end
+    key(key_to_int(?u), 4, id)
+    key(key_to_int(?1), 0, id)
+    key(key_to_int(?x), 4, id)
+    key(key_to_int(?q), 0, id)
   end
-  key(key_to_int(?u), 4, id)
-  key(key_to_int(?1), 0, id)
-  key(key_to_int(?x), 4, id)
-  key(key_to_int(?q), 0, id)
   close_sound(id)
 end
 
@@ -34790,8 +34787,8 @@ def test0128
    :transform_graph_type, :fft_window, :transform_graph?, :find_channel, :graph, :graph_style,
    :lisp_graph?, :insert_sound, :time_graph_style, :lisp_graph_style,
    :transform_graph_style, :left_sample, :make_graph_data, :map_chan, :max_transform_peaks,
-   :maxamp, :maxamp_position, :min_dB, :mix_region, :transform_normalization,
-   :peak_env_info, :peaks, :play, :play_and_wait, :position2x, :position2y, :reverse_sound,
+   :maxamp_position, :min_dB, :mix_region, :transform_normalization,
+   :peak_env_info, :peaks, :play, :position2x, :position2y, :reverse_sound,
    :revert_sound, :right_sample, :sample, :save_sound, :save_sound_as,
    :scan_chan, :select_channel, :show_axes, :show_transform_peaks, :show_marks,
    :show_mix_waveforms, :show_y_zero, :show_grid, :show_sonogram_cursor, :spectrum_end,
@@ -35227,9 +35224,7 @@ def test0228
   check_error_tag(:no_such_channel) do axis_info(ind, 1234) end
   check_error_tag(:no_such_sound) do axis_info(1234) end
   set_time_graph_type(Graph_once)
-  check_error_tag(:out_of_range) do set_x_bounds([0, 0]) end
   check_error_tag(:out_of_range) do set_x_bounds([0.1, -0.1]) end
-  check_error_tag(:out_of_range) do set_y_bounds([0.2, 0.1]) end
   check_error_tag(:out_of_range) do make_region(100, 0) end
   check_error_tag(:no_such_sample) do delete_sample(-1) end
   check_error_tag(:no_such_sample) do delete_sample(2 * frames(ind)) end

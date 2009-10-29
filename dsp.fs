@@ -2,7 +2,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Dec 30 04:52:13 CET 2005
-\ Changed: Sat Sep 26 02:09:32 CEST 2009
+\ Changed: Mon Oct 26 15:10:03 CET 2009
 
 \ src-duration             ( en -- dur )
 \ src-fit-envelope         ( e1 target-dur -- e2 )
@@ -168,56 +168,58 @@ for time-varying sampling-rate conversion."
 ;
 : src-fit-envelope { e1 target-dur -- e2 } e1 e1 src-duration target-dur f/ scale-envelope ;
 
-\ ;;; -------- Dolph-Chebyshev window
-\ ;;; 
-\ ;;; formula taken from Richard Lyons, "Understanding DSP"
-\ ;;; see clm.c for C version (using either GSL's or GCC's complex trig functions)
+'complex provided? [if]
+  \ ;;; -------- Dolph-Chebyshev window
+  \ ;;; 
+  \ ;;; formula taken from Richard Lyons, "Understanding DSP"
+  \ ;;; see clm.c for C version (using either GSL's or GCC's complex trig functions)
 
-: dolph ( n gamma -- im )
-  doc" Produces a Dolph-Chebyshev FFT data window of N points using GAMMA as the window parameter."
-  { n gamma }
-  10.0 gamma f** cacosh n c/ ccosh { alpha }
-  alpha cacosh n c* ccosh 1/c { den }
-  n 0.0 make-vct { rl }
-  n 0.0 make-vct { im }
-  pi n f/ { freq }
-  0.0 { phase }
-  n 0 ?do
-    phase ccos alpha c* cacos n c* ccos den c* { val }
-    rl i  val real-ref vct-set! drop
-    im i  val imag-ref vct-set! drop
-    phase freq f+ to phase
-  loop
-  rl im -1 fft ( rl ) dup vct-peak 1/f vct-scale! ( rl ) n 2/ cycle-start!
-  n 0 ?do im i  rl cycle-ref  vct-set! drop loop
-  im
-;
+  : dolph ( n gamma -- im )
+    doc" Produces a Dolph-Chebyshev FFT data window of N points using GAMMA as the window parameter."
+    { n gamma }
+    10.0 gamma f** cacosh n c/ ccosh { alpha }
+    alpha cacosh n c* ccosh 1/c { den }
+    n 0.0 make-vct { rl }
+    n 0.0 make-vct { im }
+    pi n f/ { freq }
+    0.0 { phase }
+    n 0 ?do
+      phase ccos alpha c* cacos n c* ccos den c* { val }
+      rl i  val real-ref vct-set! drop
+      im i  val imag-ref vct-set! drop
+      phase freq f+ to phase
+    loop
+    rl im -1 fft ( rl ) dup vct-peak 1/f vct-scale! ( rl ) n 2/ cycle-start!
+    n 0 ?do im i  rl cycle-ref  vct-set! drop loop
+    im
+  ;
 
-\ ;;; this version taken from Julius Smith's "Spectral Audio..." with three changes
-\ ;;;   it does the DFT by hand, and is independent of anything from Snd (fft, vcts etc)
+  \ ;;; this version taken from Julius Smith's "Spectral Audio..." with three changes
+  \ ;;;   it does the DFT by hand, and is independent of anything from Snd (fft, vcts etc)
 
-: dolph-1 ( n gamma -- im )
-  { n gamma }
-  10.0 gamma f** cacosh n c/ ccosh { alpha }
-  alpha cacosh n c* ccosh 1/c { den }
-  pi n f/ { freq }
-  half-pi fnegate { phase }
-  -1.0 { mult }
-  n make-array map!
-    phase ccos alpha c* cacos n c* ccos den c* mult c* ( val )
-    mult fnegate to mult
-    phase freq f+ to phase
-    ( val )
-  end-map { vals }
-  \ now take the DFT
-  0.0 { pk }
-  n make-array map!
-    0.0 ( sum )
-    vals each ( val ) 0+1.0i two-pi c* j c* i c*  n c/ cexp c* c+ ( sum++ ) end-each cabs { sum }
-    sum pk f> if sum to pk then
-    sum
-  end-map ( w ) map! *key* pk f/ end-map ( w )
-;
+  : dolph-1 ( n gamma -- im )
+    { n gamma }
+    10.0 gamma f** cacosh n c/ ccosh { alpha }
+    alpha cacosh n c* ccosh 1/c { den }
+    pi n f/ { freq }
+    half-pi fnegate { phase }
+    -1.0 { mult }
+    n make-array map!
+      phase ccos alpha c* cacos n c* ccos den c* mult c* ( val )
+      mult fnegate to mult
+      phase freq f+ to phase
+      ( val )
+    end-map { vals }
+    \ now take the DFT
+    0.0 { pk }
+    n make-array map!
+      0.0 ( sum )
+      vals each ( val ) 0+1.0i two-pi c* j c* i c*  n c/ cexp c* c+ ( sum++ ) end-each cabs { sum }
+      sum pk f> if sum to pk then
+      sum
+    end-map ( w ) map! *key* pk f/ end-map ( w )
+  ;
+[then]
 
 \ ;;; ------- move sound down by n (a power of 2) ---
 
@@ -247,26 +249,28 @@ for time-varying sampling-rate conversion."
   rl2 0 n len * snd chn #f $" %s %s" #( n get-func-name ) string-format vct->channel
 ;
 
-: stretch-sound-via-dft <{ factor :optional snd #f chn #f -- }>
-  doc" Makes the given channel longer (FACTOR should be > 1.0) \
-by squeezing in the frequency domain, then using the inverse DFT to get the time domain result."
-  snd chn #f frames { n }
-  n f2/ floor f>s { n2 }
-  n factor f* fround->s { out-n }
-  0 n snd chn #f channel->vct { in-data }
-  out-n :initial-element 0.0 make-array { fr }
-  two-pi n f/ { freq }
-  n 0 ?do
-    i n2 < if
-      fr i                 freq 0.0-1.0i c* i c* in-data edot-product  array-set!
-    else
-      fr out-n n - 1- i +  freq 0.0-1.0i c* i c* in-data edot-product  array-set!
-    then
-  loop
-  two-pi out-n f/ { freq }
-  out-n 0.0 make-vct map! freq 0.0+1.0i c* i c* fr edot-product n c/ real-ref end-map ( out-data )
-  0 out-n snd chn #f $" %s %s" #( factor get-func-name ) string-format vct->channel drop
-;
+'complex provided? [if]
+  : stretch-sound-via-dft <{ factor :optional snd #f chn #f -- }>
+    doc" Makes the given channel longer (FACTOR should be > 1.0) \
+    by squeezing in the frequency domain, then using the inverse DFT to get the time domain result."
+    snd chn #f frames { n }
+    n f2/ floor f>s { n2 }
+    n factor f* fround->s { out-n }
+    0 n snd chn #f channel->vct { in-data }
+    out-n :initial-element 0.0 make-array { fr }
+    two-pi n f/ { freq }
+    n 0 ?do
+      i n2 < if
+	fr i                 freq 0.0-1.0i c* i c* in-data edot-product  array-set!
+      else
+	fr out-n n - 1- i +  freq 0.0-1.0i c* i c* in-data edot-product  array-set!
+      then
+    loop
+    two-pi out-n f/ { freq }
+    out-n 0.0 make-vct map! freq 0.0+1.0i c* i c* fr edot-product n c/ real-ref end-map ( out-data )
+    0 out-n snd chn #f $" %s %s" #( factor get-func-name ) string-format vct->channel drop
+  ;
+[then]
 
 \ ;;; -------- compute-uniform-circular-string
 \ ;;;
@@ -1293,21 +1297,23 @@ if angle=1.0, you get a normal Fourier transform."
   end-map ( hr ) hi
 ;
 
-: z-transform ( data n z -- )
-  doc" Performs a Z transform on DATA; \
-if z=e^2*pi*j/n you get a Fourier transform; complex results in returned vector."
-  { f n z }
-  n make-array map!
-    0.0 ( sum )
-    1.0 { t }
-    z i f** { m }
-    n 0 ?do
-      f i vct-ref t c* c+ ( sum += ... )
-      t m c* to t
-    loop ( sum )
-  end-map
-;
-\ data n  0.0  2.0 n f/ pi f*  make-rectangular cexp z-transform
+'complex provided? [if]
+  : z-transform ( data n z -- )
+    doc" Performs a Z transform on DATA; \
+    if z=e^2*pi*j/n you get a Fourier transform; complex results in returned vector."
+    { f n z }
+    n make-array map!
+      0.0 ( sum )
+      1.0 { t }
+      z i f** { m }
+      n 0 ?do
+	f i vct-ref t c* c+ ( sum += ... )
+	t m c* to t
+      loop ( sum )
+    end-map
+  ;
+  \ data n  0.0  2.0 n f/ pi f*  make-rectangular cexp z-transform
+[then]
 
 \ ;;; -------- slow Hartley transform
 
@@ -1328,45 +1334,47 @@ if z=e^2*pi*j/n you get a Fourier transform; complex results in returned vector.
   arr
 ;
 
-: find-sine ( freq beg dur -- amp ph )
-  doc" Returns the amplitude and initial-phase (for sin) at FREQ."
-  { freq beg dur }
-  freq hz->radians { incr }
-  0.0 0.0 { sw cw }
-  beg #f #f 1 #f make-sampler { reader }
-  dur 0 do
-    reader next-sample { samp }
-    i incr c* csin samp c* sw c+ to sw
-    i incr c* ccos samp c* cw c+ to sw
-  loop
-  sw sw c* cw cw c* c+ csqrt dur c/ 2.0 c* ( amp )
-  cw sw catan2                             ( ph )
-;
+'complex provided? [if]
+  : find-sine ( freq beg dur -- amp ph )
+    doc" Returns the amplitude and initial-phase (for sin) at FREQ."
+    { freq beg dur }
+    freq hz->radians { incr }
+    0.0 0.0 { sw cw }
+    beg #f #f 1 #f make-sampler { reader }
+    dur 0 do
+      reader next-sample { samp }
+      i incr c* csin samp c* sw c+ to sw
+      i incr c* ccos samp c* cw c+ to sw
+    loop
+    sw sw c* cw cw c* c+ csqrt dur c/ 2.0 c* ( amp )
+    cw sw catan2                             ( ph )
+  ;
 
-hide
-: goert-cb { y0 y1 y2 cs -- prc; y self -- f }
-  1 proc-create y0 , y1 , y2 , cs , ( prc )
- does> { y self -- f }
-  self 1 cells + @ self 2 cells + ! ( y2 = y1 )
-  self @ self 1 cells + !           ( y1 = y0 )
-  self 1 cells + @ { y1 }
-  self 2 cells + @ { y2 }
-  self 3 cells + @ { cs }
-  y1 cs c* y2 c- y c+ self ! ( y0 = ... )
-  #f
-;
-set-current
-: goertzel <{ freq :optional beg 0 dur #f -- amp }>
-  doc" Returns the amplitude of the FREQ spectral component."
-  #f srate { sr }
-  0.0 0.0 0.0 { y0 y1 y2 }
-  two-pi freq f* sr f/ { rfreq }
-  rfreq fcos f2* { cs }
-  dur unless #f #f #f frames to dur then
-  y0 y1 y2 cs goert-cb beg dur #f #f #f scan-channel drop
-  0.0  rfreq fnegate make-rectangular cexp y1 c* y0 c+ magnitude
-;
-previous
+  hide
+  : goert-cb { y0 y1 y2 cs -- prc; y self -- f }
+    1 proc-create y0 , y1 , y2 , cs , ( prc )
+   does> { y self -- f }
+    self 1 cells + @ self 2 cells + ! ( y2 = y1 )
+    self @ self 1 cells + !           ( y1 = y0 )
+    self 1 cells + @ { y1 }
+    self 2 cells + @ { y2 }
+    self 3 cells + @ { cs }
+    y1 cs c* y2 c- y c+ self ! ( y0 = ... )
+    #f
+  ;
+  set-current
+  : goertzel <{ freq :optional beg 0 dur #f -- amp }>
+    doc" Returns the amplitude of the FREQ spectral component."
+    #f srate { sr }
+    0.0 0.0 0.0 { y0 y1 y2 }
+    two-pi freq f* sr f/ { rfreq }
+    rfreq fcos f2* { cs }
+    dur unless #f #f #f frames to dur then
+    y0 y1 y2 cs goert-cb beg dur #f #f #f scan-channel drop
+    0.0  rfreq fnegate make-rectangular cexp y1 c* y0 c+ magnitude
+  ;
+  previous
+[then]
 
 : make-spencer-filter ( -- gen )
   doc" It's a version of make-fir-filter; \
@@ -1876,7 +1884,7 @@ DB-FLOOR is the level below which data will be ignored."
   dur if dur fsr f* else file mus-sound-frames beg b- then { end }
   fftsize 0.0 make-vct { fdr }
   fftsize 0.0 make-vct { fdi }
-  end start b- incrsamps b/ 1+ { windows }
+  end start b- incrsamps b/ 1 b+ { windows }
   windows 0.0 make-vct { results }
   fftsize 2/ { fft2 }
   fsr fftsize f/ fround->s { binwidth }

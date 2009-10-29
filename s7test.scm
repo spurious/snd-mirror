@@ -4823,6 +4823,7 @@
         count)
       2)
 
+(test (procedure? (call/cc call/cc)) #t)
 (test (call/cc (lambda (c) (0 (c 1)))) 1)
 (test (call/cc (lambda (k) (k "foo"))) "foo")
 (test (call/cc (lambda (k) "foo")) "foo")

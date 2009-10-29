@@ -2,7 +2,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sat Aug 05 00:09:28 CEST 2006
-\ Changed: Tue Oct 13 00:51:07 CEST 2009
+\ Changed: Mon Oct 26 15:19:44 CET 2009
 
 \ Commentary:
 \
@@ -187,10 +187,6 @@ mus-audio-playback-amp value original-audio-amp
   then
 ;
 : set-arity-ok <{ proc args -- f }> proc set-xt args arity-ok ; 
-: safe-divide ( a b -- c )
-  { a b }
-  b zero? b fzero? || if a else a b b/ then
-;
 : make-color-with-catch ( c1 c2 c3 -- color )
   <'> make-color 'no-such-color #t fth-catch if stack-reset 1 0 0 make-color then
 ;
@@ -1045,6 +1041,23 @@ mus-audio-playback-amp value original-audio-amp
 : f4neq ( a b -- f ) f- fabs  1.0 f> ;
 : f5neq ( a b -- f ) { a b } a b f- fabs 10.0  a b fmax 0.05 f*  f> ;
 
+'complex provided? [if]
+  \ dolph/dolph-1 are only defined if complex numbers available
+  : dolph-test ( -- )
+    16 1.0 dolph { val1 }
+    dolph-chebyshev-window 16 1.0 make-fft-window { val2 }
+    val1 val2 vequal unless
+      $" dolph/dolph 1: %s %s" #( val1 val2 ) snd-display
+    then
+    16 1.0 dolph-1 to val1
+    val1 val2 vequal unless
+      $" dolph-1/dolph 1: %s %s" #( val1 val2 ) snd-display
+    then
+  ;
+[else]
+  <'> noop alias dolph-test
+[then]
+
 : 15-chan-local-vars ( -- )
   \ dsp.fs
   "test.snd" mus-next mus-bfloat 22050 1 $" src-* tests" 10000 new-sound { ind }
@@ -1091,15 +1104,7 @@ mus-audio-playback-amp value original-audio-amp
   then
   ind close-sound drop
   \
-  16 1.0 dolph { val1 }
-  dolph-chebyshev-window 16 1.0 make-fft-window { val2 }
-  val1 val2 vequal unless
-    $" dolph/dolph 1: %s %s" #( val1 val2 ) snd-display
-  then
-  16 1.0 dolph-1 to val1
-  val1 val2 vequal unless
-    $" dolph-1/dolph 1: %s %s" #( val1 val2 ) snd-display
-  then
+  dolph-test
   \ env.fs
   \ envelope-interp
   0.1 #( 0 0 1 1 ) 1.0 envelope-interp dup 0.1 fneq if
@@ -2035,7 +2040,11 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   y 0.4 f> if 1 self @ ( ind ) 0 set-frames drop then
   y
 ;
-: mc-3-cb <{ y -- val }> y 0.0+1.0i c* ;
+'complex provided? [if]
+  : mc-3-cb <{ y -- val }> y 0.0+1.0i c* ;
+[else]
+  noop alias mc-3-cb
+[then]
 : edpos-1-cb { ind -- prc; self -- edpos }
   0 proc-create ind , ( prc )
  does> { self -- edpos }
@@ -2339,11 +2348,9 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
      \ <'> insert-region
      <'> insert-sound
      <'> time-graph-style <'> lisp-graph-style <'> transform-graph-style <'> left-sample
-     <'> map-chan <'> max-transform-peaks <'> maxamp
-     <'> maxamp-position <'> min-dB <'> mix-region <'> transform-normalization
-     <'> peak-env-info <'> peaks <'> play <'> play-and-wait
-     <'> reverse-sound <'> revert-sound
-     <'> right-sample <'> sample <'> save-sound <'> save-sound-as
+     <'> map-chan <'> max-transform-peaks <'> maxamp-position <'> min-dB <'> mix-region
+     <'> transform-normalization <'> peak-env-info <'> peaks <'> play <'> reverse-sound
+     <'> revert-sound <'> right-sample <'> sample <'> save-sound <'> save-sound-as
      <'> scan-chan <'> select-channel <'> show-axes <'> show-transform-peaks
      <'> show-marks <'> show-mix-waveforms <'> show-y-zero <'> show-grid
      <'> show-sonogram-cursor <'> spectrum-end <'> spectro-hop <'> spectrum-start
@@ -2358,9 +2365,11 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   chn-prcs each to prc
     vct-5 prc #t nil fth-catch to tag
     stack-reset
-    tag car 'wrong-type-arg =
-    tag car 'no-such-sound  = || unless
-      $" chn (no snd) procs %s: %s" #( prc tag ) snd-display
+    tag if
+      tag car 'wrong-type-arg =
+      tag car 'no-such-sound  = || unless
+	$" chn (no snd) procs %s: %s" #( prc tag ) snd-display
+      then
     then
   end-each
   chn-prcs each to prc
@@ -2760,9 +2769,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
     1234                     <'> axis-info              'no-such-sound    check-error-tag
   then
   graph-once set-time-graph-type drop
-  #( 0 0 )                   <'> set-x-bounds           'out-of-range     check-error-tag
   #( 0.1 -0.1 )              <'> set-x-bounds           'out-of-range     check-error-tag
-  #( 0.2 0.1 )               <'> set-y-bounds           'out-of-range     check-error-tag
   100 0                      <'> make-region            'out-of-range     check-error-tag
   -1                         <'> delete-sample          'no-such-sample   check-error-tag
   ind frames 2*              <'> delete-sample          'no-such-sample   check-error-tag
@@ -3045,7 +3052,9 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
     then
   then
   ind revert-sound drop
-  <'> mc-3-cb <'> map-channel #t nil fth-catch to tag
+  'complex provided? if
+    <'> mc-3-cb <'> map-channel #t nil fth-catch to tag
+  then
   stack-reset
   tag if
     tag car 'bad-type = unless

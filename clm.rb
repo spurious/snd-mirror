@@ -2,7 +2,7 @@
 
 # Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Wed Oct 14 23:02:57 CEST 2009
-# Changed: Thu Oct 15 00:29:48 CEST 2009
+# Changed: Wed Oct 28 22:37:22 CET 2009
 
 # Commentary:
 #
@@ -536,6 +536,23 @@ if provided? :snd
   end
   alias sine_summation  nrxysin
   alias sine_summation? nrxysin?
+
+  if provided?(:snd_nogui)
+    def x_bounds(*args)
+      []
+    end
+    
+    def y_bounds(*args)
+      []
+    end
+    def set_x_bounds(bounds, *args)
+      bounds
+    end
+    
+    def set_y_bounds(bounds, *args)
+      bounds
+    end
+  end
 end
 
 # enum("foo", :bar, "FOO_BAR")

@@ -2,7 +2,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Mon Mar 15 19:25:58 CET 2004
-\ Changed: Wed Oct 14 04:01:54 CEST 2009
+\ Changed: Mon Oct 26 14:46:45 CET 2009
 
 \ Commentary:
 \
@@ -68,7 +68,14 @@ $" fth 9-Oct-2009" value *clm-version*
 
 dl-load sndlib Init_sndlib
 
-'snd provided? [unless]
+'snd provided? [if]
+  'snd-nogui provided? [if]
+    : x-bounds <{ :optional snd 0 chn 0 axis 0 -- }> #f ;
+    : y-bounds <{ :optional snd 0 chn 0 axis 0 -- }> #f ;
+    : set-x-bounds <{ bounds :optional snd 0 chn 0 axis 0 -- }> #f ;
+    : set-y-bounds <{ bounds :optional snd 0 chn 0 axis 0 -- }> #f ;
+  [then]
+[else]
   <'> noop alias main-widgets
   <'> noop alias sounds
   <'> noop alias set-selected-sound
@@ -1090,7 +1097,7 @@ lambda: ( -- )\n\
   then { mix-time }
   snd-time false?
   mix-time false? ||
-  snd-time mix-time b< || if
+  snd-time mix-time d< || if
     mix-file args each end-each :output snd-file clm-load drop
   then
   snd-file :output-frame start seconds->samples clm-mix

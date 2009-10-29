@@ -2,11 +2,11 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Tue Mar 18 00:18:35 CET 2003
-# Changed: Fri Jul 06 01:52:44 CEST 2007
+# Changed: Thu Oct 15 00:29:14 CEST 2009
 
 # Commentary:
 #
-# Tested with Snd 7.12, Motif 2.2.2, Gtk+ 2.2.1, Ruby 1.6.6, 1.6.8 and 1.9.0.
+# Tested with Snd 11, Motif 2.2.3, Gtk+ 2.16.6, Ruby 1.8.7 and 1.9.1.
 #
 # module Snd_enved
 #  channel_enved(snd, chn)
@@ -92,7 +92,6 @@
 
 # Code:
 
-require "examp"
 require "env"
 require "hooks"
 require "extensions"
@@ -235,7 +234,7 @@ sets channel amps during playback from the associated enved envelopes")
     channels(snd).times do |chn|
       player = make_player(snd, chn)
       e = make_env(:envelope, channel_envelope(snd, chn),
-                   :end, (frames(snd, chn).to_f / dac_size).floor)
+                   :length, (frames(snd, chn).to_f / dac_size).floor)
       add_player(player, 0, -1, -1, lambda { |reason| $play_hook.reset_hook! })
       $play_hook.add_hook!(get_func_name) { |fr| set_amp_control(env(e), player) }
     end
@@ -254,7 +253,7 @@ pans a mono sound following its enved envelope into a stereo sound")
     len = frames(snd, 0)
     if audio_fd != -1
       channel_envelope(snd, 0) or create_initial_envelopes(snd)
-      e = make_env(:envelope, channel_envelope(snd, 0), :end, (len.to_f / dac_size).floor)
+      e = make_env(:envelope, channel_envelope(snd, 0), :length, (len.to_f / dac_size).floor)
       while samp < len
         scaler = env(e)
         samps0 = channel2vct(samp, bufsize)
