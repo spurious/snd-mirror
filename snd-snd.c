@@ -2340,7 +2340,7 @@ void call_sp_watchers(snd_info *sp, sp_watcher_t type, sp_watcher_reason_t reaso
 
 /* ---------------------------------------- sound objects ---------------------------------------- */
 
-/* generics (besides length, srate, channels, frames, file-name, sync, maxamp):
+/* PERHAPS: generics (besides length, srate, channels, frames, file-name, sync, maxamp):
  *
  *             source:         procedure-source[s7_procedure_source] mix-home mark-home region-home player-home sampler-home
  *                               mus cases: readin=file+chan? etc, port -> filename?, sound->filename?
@@ -2358,10 +2358,13 @@ void call_sp_watchers(snd_info *sp, sp_watcher_t type, sp_watcher_reason_t reaso
  *
  *             reverse save find insert delete describe read write mix append [open and close?] member
  *             reverse mix append member: these exist already and could just be extended 
+ *
+ *             play? (mix region sound file player)
  * 
  * (scan-channel -> channel-for-each)
  *   and channel-map rather than map-channel
  *   channel-for-each in the multiarg case would make it easier to compare chans 
+ *   (find-if func snd...)
  * (eval-over-selection -> selection-for-each) *-for-each
  *   then selection-map would replace the current selected samples
  */

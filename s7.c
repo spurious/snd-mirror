@@ -76,7 +76,7 @@
  *        define-constant, pi, most-positive-fixnum, most-negative-fixnum, constant?
  *            a constant is really constant -- it can't be bound or set.
  *        symbol-calls if profiling is enabled
- *        stacktrace, trace and untrace, __func__, macroexpand
+ *        stacktrace, trace and untrace, *trace-hook*, __func__, macroexpand
  *            as in C, __func__ is the name of the function currently being defined.
  *        length, copy, fill!, map, for-each are generic
  *        vector-for-each, vector-map, string-for-each, for-each of any applicable object
@@ -104,7 +104,6 @@
  *                 exact->inexact is the only useful exactness function -- perhaps (->real x)?
  *        load should handle C shared libraries, using dlopen/dlinit [optionally]
  *        defgenerator (or at least defstruct of some sort)
- *        *trace-hook*
  * 
  *
  * Mike Scholz provided the FreeBSD support (complex trig funcs, etc)
@@ -317,12 +316,12 @@ typedef enum {OP_READ_INTERNAL, OP_EVAL, OP_EVAL_ARGS0, OP_EVAL_ARGS1, OP_APPLY,
 	      OP_QUIT, OP_CATCH, OP_DYNAMIC_WIND, OP_LIST_FOR_EACH, OP_LIST_MAP, OP_DEFINE_CONSTANT0, OP_DEFINE_CONSTANT1, 
 	      OP_DO, OP_DO_END0, OP_DO_END1, OP_DO_STEP0, OP_DO_STEP1, OP_DO_STEP2, OP_DO_INIT,
 	      OP_DEFINE_STAR, OP_LAMBDA_STAR, OP_ERROR_QUIT, OP_UNWIND_INPUT, OP_UNWIND_OUTPUT, 
-	      OP_TRACE_RETURN, OP_ERROR_HOOK_QUIT, OP_WITH_ENV0, OP_WITH_ENV1, OP_WITH_ENV2,
+	      OP_TRACE_RETURN, OP_ERROR_HOOK_QUIT, OP_TRACE_HOOK_QUIT, OP_WITH_ENV0, OP_WITH_ENV1, OP_WITH_ENV2,
 	      OP_VECTOR_FOR_EACH, OP_VECTOR_MAP0, OP_VECTOR_MAP1, OP_STRING_FOR_EACH, OP_OBJECT_FOR_EACH,
 	      OP_MAX_DEFINED} opcode_t;
 
 #define NUM_SMALL_INTS 256
-/* this needs to be at least OP_MAX_DEFINED = 85 */
+/* this needs to be at least OP_MAX_DEFINED = 86 */
 
 typedef enum {TOKEN_EOF, TOKEN_LEFT_PAREN, TOKEN_RIGHT_PAREN, TOKEN_DOT, TOKEN_ATOM, TOKEN_QUOTE, TOKEN_DOUBLE_QUOTE, 
 	      TOKEN_BACK_QUOTE, TOKEN_COMMA, TOKEN_AT_MARK, TOKEN_SHARP_CONST, TOKEN_VECTOR} token_t;
@@ -511,7 +510,7 @@ struct s7_scheme {
   s7_pointer LAMBDA, LAMBDA_STAR, QUOTE, QUASIQUOTE, UNQUOTE, UNQUOTE_SPLICING, MACROEXPAND;
   s7_pointer APPLY, VECTOR, CONS, APPEND, CDR, VECTOR_FUNCTION, VALUES, ELSE, SET;
   s7_pointer ERROR, WRONG_TYPE_ARG, OUT_OF_RANGE, FORMAT_ERROR, WRONG_NUMBER_OF_ARGS;
-  s7_pointer KEY_KEY, KEY_OPTIONAL, KEY_REST, __FUNC__, ERROR_HOOK;
+  s7_pointer KEY_KEY, KEY_OPTIONAL, KEY_REST, __FUNC__, ERROR_HOOK, TRACE_HOOK;
   s7_pointer FEED_TO;                 /* => */
   s7_pointer OBJECT_SET;              /* applicable object set method */
   s7_pointer VECTOR_SET, STRING_SET, LIST_SET, HASH_TABLE_SET;
@@ -1675,7 +1674,7 @@ static void show_stack(s7_scheme *sc)
      "read_and_return_expression", "load_return_if_eof", "load_close_and_pop_if_eof", "eval_string", 
      "eval_string_done", "eval_done", "quit", "catch", "dynamic_wind", "for_list_each", "list_map", "define_constant0", 
      "define_constant1", "do", "do_end0", "do_end1", "do_step0", "do_step1", "do_step2", "do_init", "define_star", 
-     "lambda_star", "error_quit", "unwind_input", "unwind_output", "trace_return", "error_hook_quit",
+     "lambda_star", "error_quit", "unwind_input", "unwind_output", "trace_return", "error_hook_quit", "trace_hook_quit",
      "with_env0", "with_env1", "with_env2", "vector_for_each", "vector_map0", "vector_map1", "string_for_each", 
      "object_for_each"};
 
@@ -13325,7 +13324,6 @@ If untrace is called with no arguments, all functions are removed, turning off a
 
 static void trace_apply(s7_scheme *sc)
 {
-  /* PERHAPS: *trace-hook* (evaluated in current env?) */
   int i;
   bool trace_it = false;
 
@@ -13384,6 +13382,20 @@ static void trace_apply(s7_scheme *sc)
       free(str);
       
       sc->trace_depth++;
+
+      {
+	/* handle *trace-hook* */
+	s7_pointer trace_hook, trace_hook_binding;
+	trace_hook_binding = s7_find_symbol_in_environment(sc, sc->envir, sc->TRACE_HOOK, true);
+	if ((trace_hook_binding != sc->NIL) &&
+	    (is_procedure(symbol_value(trace_hook_binding))))
+	  {
+	    trace_hook = symbol_value(trace_hook_binding);
+	    push_stack(sc, OP_TRACE_HOOK_QUIT, sc->args, sc->code); /* restore current state after dealing with the trace hook func */
+	    sc->args = make_list_2(sc, sc->code, sc->args);
+	    sc->code = trace_hook;
+	  }
+      }
     }
 }
 
@@ -15787,13 +15799,15 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       /* ---------------- OP_APPLY ---------------- */
     APPLY:
     case OP_APPLY:      /* apply 'code' to 'args' */
-      if (*(sc->tracing)) 
-	trace_apply(sc);
 
 #if WITH_PROFILING
       symbol_calls(sc->code)++;
 #endif
 
+      if (*(sc->tracing)) 
+	trace_apply(sc);
+
+    APPLY_WITHOUT_TRACE:
       if (sc->stack_top >= sc->stack_size2)
 	increase_stack_size(sc);
 
@@ -17079,6 +17093,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       pop_stack(sc);
       goto START;
       
+
+    case OP_TRACE_HOOK_QUIT:
+      goto APPLY_WITHOUT_TRACE;
+
       
     case OP_ERROR_HOOK_QUIT:
       s7_symbol_set_value(sc, sc->ERROR_HOOK, sc->code);
@@ -22397,6 +22415,9 @@ s7_scheme *s7_init(void)
   sc->ERROR_HOOK = s7_make_symbol(sc, "*error-hook*");
   typeflag(sc->ERROR_HOOK) |= T_DONT_COPY; 
 
+  sc->TRACE_HOOK = s7_make_symbol(sc, "*trace-hook*");
+  typeflag(sc->TRACE_HOOK) |= T_DONT_COPY; 
+
   sc->SET = s7_make_symbol(sc, "set!");
   typeflag(sc->SET) |= T_DONT_COPY; 
 
@@ -22707,6 +22728,8 @@ s7_scheme *s7_init(void)
   
   s7_define_function(sc, "trace",                   g_trace,                   0, 0, true,  H_trace);
   s7_define_function(sc, "untrace",                 g_untrace,                 0, 0, true,  H_untrace);
+  s7_define_variable(sc, "*trace-hook*", sc->NIL);
+
   s7_define_function(sc, "stack",                   g_stack,                   0, 1, false, H_stack);
   s7_define_function(sc, "stacktrace",              g_stacktrace,              0, 1, false, H_stacktrace);
 

@@ -498,6 +498,20 @@ which allows you to stop at some point, then evaluate arbitrary expressions in t
 trace with no arguments causes everything to be traced, and untrace with no arguments
 turns this off.
 </p>
+<p>There is also a hook, *trace-hook*, a function of 2 arguments (the currently traced
+function and the list of current arguments).  It is evaluated in the environment of the
+function call (that is, global to the function, not the function's local environment).
+</p>
+<pre>
+    (define (hiho a b c) (* a b c))
+    (set! *trace-hook* (lambda (f args) (format #t "sum of args: ~A~%" (apply + args))))
+    (trace hiho)
+    (hiho 2 3 4)
+
+    [hiho 2 3 4]
+    sum of args: 9
+     24
+</pre>
 </dd>
 <br>
 

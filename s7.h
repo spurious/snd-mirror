@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "1.34"
-#define S7_DATE "12-Oct-09"
+#define S7_VERSION "1.35"
+#define S7_DATE "30-Oct-09"
 
 
 typedef long long int s7_Int;
@@ -1693,6 +1693,7 @@ int main(int argc, char **argv)
  * 
  *        s7 changes
  *
+ * 30-Oct:    *trace-hook*.
  * 12-Oct:    s7_port_filename.
  * 5-Oct:     s7_c_pointer and friends.
  * 14-Sep:    s7_values, s7_make_continuation, and a better interrupt example.

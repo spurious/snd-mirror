@@ -101,9 +101,6 @@
  *
  * TODO: run doesn't always warn about a closure (explicit gen basically) -- if it's used directly,
  *         there's no warning, but it doesn't handle the closed-over variables correctly
- * TODO: vector<->vct
- *       all numeric types + multiprecision stuff
- *       what about the thread stuff: only thread_variable in s7.h now
  */
 
 /* some timings (I keep losing these stats, so I'll put them here for safekeeping, "*"=not optimizable)
@@ -10093,7 +10090,6 @@ static xen_value *vct_set_2(ptree *prog, xen_value **args, int num_args)
 }
 
 
-
 static void make_vct_v(int *args, ptree *pt) 
 {
   if (VCT_RESULT) mus_vct_free(VCT_RESULT);
@@ -16045,6 +16041,8 @@ static void init_walkers(void)
   INIT_WALKER("vector-fill!",  make_walker(vector_fill_1, NULL, NULL, 2, 2, R_INT, false, 1, R_VECTOR));
   INIT_WALKER("vector-set!",   make_walker(vector_set_1, NULL, NULL, 3, 3, R_ANY, false, 2, R_VECTOR, R_INT));
   INIT_WALKER("make-vector",   make_walker(make_vector_1, NULL, NULL, 1, 2, R_ANY, false, 2, R_INT, R_NUMBER));
+  INIT_WALKER(S_vct_to_vector, make_walker(vct_copy_1, NULL, NULL, 1, 1, R_VCT, false, 1, R_VCT));
+  INIT_WALKER(S_vector_to_vct, make_walker(vct_copy_1, NULL, NULL, 1, 1, R_VCT, false, 1, R_VECTOR));
 
   /* -------- list funcs */
   INIT_WALKER("list-ref",  make_walker(list_ref_1, NULL, NULL, 2, 2, R_ANY, false, 2, R_LIST, R_INT));

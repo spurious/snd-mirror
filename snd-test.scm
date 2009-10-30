@@ -65734,7 +65734,7 @@ EDITS: 1
 			    graph graph-style lisp-graph? (lambda (a) (insert-region 0 a)) insert-sound
 			    time-graph-style lisp-graph-style transform-graph-style
 			    left-sample make-graph-data map-chan max-transform-peaks maxamp-position min-dB mix-region
-			    transform-normalization peak-env-info peaks play
+			    transform-normalization peak-env-info peaks ;play
 			    position->x position->y reverse-sound
 			    revert-sound right-sample sample save-sound save-sound-as scan-chan
 			    select-channel show-axes show-transform-peaks show-marks show-mix-waveforms show-y-zero show-grid show-sonogram-cursor
