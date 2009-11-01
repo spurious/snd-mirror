@@ -1,67 +1,25 @@
-#!/usr/bin/guile -s
-!#
-
-(use-modules (ice-9 format))
-
-;;;   for the Ruby version, see bess.rb by Michael Scholz
-
-;;; load sndlib and xmlib
-(if (not (provided? 'sndlib))
-    (let ((sndlib (dynamic-link "libsndlib.so")))
-      (if (not (dynamic-object? sndlib))
-	  (set! sndlib (dynamic-link "sndlib.so")))
-      (if (not (dynamic-object? sndlib))
-	  (error "can't find sndlib.so or libsndlib.so")
-	  (dynamic-call (dynamic-func "Init_sndlib" sndlib) #f))))
-
-(if (not (provided? 'xm))
-    (let ((libxm (dynamic-link "libxm.so")))
-      (if (not (dynamic-object? libxm))
-	  (error "can't find libxm")
-	  (dynamic-call (dynamic-func "Init_libxm" libxm) #f))))
-
-;;; if these fail, first strace bess.scm and see where it failed
-;;; if it actually did find the library, try running Snd and (dlopen "sndlib.so")
-;;;   Snd's dlopen will report a truthful error message (libtool lies)
-
-(define use-snd (provided? 'snd))
-
 ;;; set up our user-interface
-(let* ((shell-app (if (not use-snd)
-		      (XtVaOpenApplication 
-		       "FM Forever!" 0 '()
-		       applicationShellWidgetClass
-		       (list XmNallowShellResize #t)
-		       (list "*fontList: 9x15"
-			     "*enableEtchedInMenu: True"
-			     "*enableThinThickness: True"
-			     "*enableToggleColor: True"
-			     "*enableToggleVisual: True"))
-		      #f))
-       (app (if use-snd
-		(car (main-widgets))
-		(cadr shell-app)))
+(let* ((shell-app #f)
+       (app (car (main-widgets)))
 
-       (shell (if use-snd
-		  (let* ((xdismiss (XmStringCreate "Go away" XmFONTLIST_DEFAULT_TAG))
-			 (xhelp (XmStringCreate "Help" XmFONTLIST_DEFAULT_TAG))
-			 (titlestr (XmStringCreate "FM Forever!" XmFONTLIST_DEFAULT_TAG))
-			 (dialog (XmCreateTemplateDialog (cadr (main-widgets)) "FM Forever!"
-				   (list XmNcancelLabelString   xdismiss
-					 XmNhelpLabelString     xhelp
-					 XmNautoUnmanage        #f
-					 XmNdialogTitle         titlestr
-					 XmNresizePolicy        XmRESIZE_GROW
-					 XmNnoResize            #f
-					 XmNtransient           #f))))
-		    (XtAddCallback dialog 
-				   XmNhelpCallback (lambda (w context info)
-						     (snd-print "This dialog lets you experiment with simple FM")))
-		    (XmStringFree xhelp)
-		    (XmStringFree xdismiss)
-		    (XmStringFree titlestr)
-		    dialog)
-		  (car shell-app)))
+       (shell (let* ((xdismiss (XmStringCreate "Go away" XmFONTLIST_DEFAULT_TAG))
+		     (xhelp (XmStringCreate "Help" XmFONTLIST_DEFAULT_TAG))
+		     (titlestr (XmStringCreate "FM Forever!" XmFONTLIST_DEFAULT_TAG))
+		     (dialog (XmCreateTemplateDialog (cadr (main-widgets)) "FM Forever!"
+						     (list XmNcancelLabelString   xdismiss
+							   XmNhelpLabelString     xhelp
+							   XmNautoUnmanage        #f
+							   XmNdialogTitle         titlestr
+							   XmNresizePolicy        XmRESIZE_GROW
+							   XmNnoResize            #f
+							   XmNtransient           #f))))
+		(XtAddCallback dialog 
+			       XmNhelpCallback (lambda (w context info)
+						 (snd-print "This dialog lets you experiment with simple FM")))
+		(XmStringFree xhelp)
+		(XmStringFree xdismiss)
+		(XmStringFree titlestr)
+		dialog))
 
        (dpy (XtDisplay shell))
        (screen (DefaultScreenOfDisplay dpy))
@@ -84,9 +42,6 @@
     (let ((s1 (XmStringCreate (format #f "~D" value) XmFONTLIST_DEFAULT_TAG)))
       (XtVaSetValues label (list XmNlabelString s1))
       (XmStringFree s1)))
-
-  (if (not use-snd)
-      (XtSetValues shell (list XmNtitle "FM Forever!")))
 
   (let* ((light-blue (position-color))
 	 (form (XtCreateManagedWidget "form" xmFormWidgetClass shell 
@@ -262,9 +217,8 @@
     (XmScaleSetValue fm-scale (inexact->exact (floor (* 100 (/ index high-index)))))
     (XmScaleSetValue cm-scale (inexact->exact (floor (* ratio (/ 100 high-ratio)))))
 
-    (if use-snd
-	(XtManageChild shell)
-	(XtRealizeWidget shell))
+    (XtManageChild shell)
+    (XtRealizeWidget shell)
 
     ;; send fm data to dac
     (mus-oss-set-buffers 4 12) ; a no-op except in OSS/Linux
@@ -283,12 +237,11 @@
 				 (XtRemoveWorkProc proc) ; odd that there's no XtAppRemoveWorkProc
 				 (mus-audio-close port))
 			       #f)
-      (if use-snd
-	  (XtAddCallback shell
-			 XmNcancelCallback (lambda (w context info)
-					     (XtRemoveWorkProc proc)
-					     (mus-audio-close port)
-					     (XtUnmanageChild shell))))
+      (XtAddCallback shell
+		     XmNcancelCallback (lambda (w context info)
+					 (XtRemoveWorkProc proc)
+					 (mus-audio-close port)
+					 (XtUnmanageChild shell)))
       (set! proc (XtAppAddWorkProc 
 		  app 
 		  (lambda (ignored-arg)
@@ -304,7 +257,5 @@
 					      (hz->radians (* ratio frequency)))))))))
 		    (mus-audio-write port data bufsize)
 		    #f))))
-    (if (not use-snd)
-	(XtAppMainLoop app))))
-
+    ))
 

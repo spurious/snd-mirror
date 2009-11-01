@@ -106,7 +106,7 @@
 <li><a href="grfsnd.html#startup">Snd Startup</a>
   <ul>
   <li><a href="grfsnd.html#sndswitches" onmouseout="UnTip()" onmouseover="Tip('startup switches such as -l and -p')">Snd invocation flags</a>
-  <li><a href="grfsnd.html#sndinitfile" onmouseout="UnTip()" onmouseover="Tip('~/.snd, ~/.snd_guile, ~/.snd_prefs_guile, etc')">The initialization file</a>
+  <li><a href="grfsnd.html#sndinitfile" onmouseout="UnTip()" onmouseover="Tip('~/.snd, ~/.snd_s7, ~/.snd_prefs_s7, etc')">The initialization file</a>
   <li><a href="grfsnd.html#sndresources" onmouseout="UnTip()" onmouseover="Tip('X resources: Xdefaults, gtkrc')">Snd resources</a>
   <li><a href="grfsnd.html#sndconfigurationswitches" onmouseout="UnTip()" onmouseover="Tip('this refers to the configure script that prepares a makefile to build Snd from its sources')">Configuration choices</a>
   <li><a href="grfsnd.html#sndenvvars" onmouseout="UnTip()" onmouseover="Tip('mostly related to audio hardware choices')">Environment variables</a>
@@ -1007,8 +1007,7 @@ open-file-dialog-directory is the name of the initial open file dialog directory
 <td bgcolor="#f2f4ff"><code>6</code></td></tr><tr><td></td><td colspan=2>
 optimization affects optimization levels in Scheme.
 If non-zero, it causes Snd to try to optimize simple lambda forms passed to the searches and so forth.
-This depends partly on the optargs module, and 
-applies only to s7 and Guile.
+This applies only to s7.
 The actual values of the optimization switch are:
 <pre>
     0:  no optimization (use the standard Scheme parser/evaluator)
@@ -8203,7 +8202,7 @@ currently doesn't know how to save the enclosing environment along with the init
 </pre></td></tr></table>
 
 will not save the "outer" declaration in the saved state file. 
-This is a general problem with save-state; there's no obvious way in Guile to
+This is a general problem with save-state; there's no obvious way in Scheme to
 save the current closure as text.
 You can fix the saved state file by hand (it is just Scheme, Ruby, or Forth code, of course),
 but that's not a very elegant solution.

@@ -704,17 +704,12 @@ stops autosaving, and <code>(auto-save)</code> restarts it.
 <A NAME="bessdoc"></a><table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>bess</h2></td></tr></table>
 </td></tr></table>
 
-<p>bess.scm is a Scheme file that can be run either as a
-Guile script (independent of Snd) or loaded into Snd.
-As a Guile script,
-it loads sndlib and xmlib, and creates its own application windows.
-In Snd, it creates a new dialog.
-In either case, it opens the DAC, puts up a bunch of scale widgets, and starts two CLM oscils doing
+<p>bess.scm creates a dialog (named "FM Forever!"),
+opens the DAC, puts up a bunch of scale widgets, and starts two CLM oscils doing
 frequency modulation in semi-real-time (how "real-time" it is depends on your
 audio setup).
 Michael Scholz has contributed a Ruby translation of this with many improvements:
-bess.rb.  To use bess.scm as a script, you may need to make it executable: <code>chmod 777 bess.scm</code>.
-If you get "command not found", you need to edit the path to guile in the source.
+bess.rb.  
 </p>
 
 <table border=0 hspace=20>
@@ -735,8 +730,8 @@ If you get "command not found", you need to edit the path to guile in the source
 </td></tr></table>
 <br>
 
-<p>bess1.scm and bess1.rb are scripts (independent of Snd), similar to bess.scm and bess.rb,
-that give you real-time GUI-based control over the fm-violin while it cycles around in a simple
+<p>bess1.scm and bess1.rb 
+give you real-time GUI-based control over the fm-violin while it cycles around in a simple
 compositional algorithm.  Both were written by
 Michael Scholz, based on CLM's bess5.cl and rt.lisp.
 </p>

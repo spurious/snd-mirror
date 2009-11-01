@@ -761,7 +761,7 @@ bool sound_file_p(const char *name)
 {
   int i, dot_loc = -1, len;
   if (!name) return(false);
-  len = strlen(name);
+  len = mus_strlen(name);
   for (i = 0; i < len; i++)
     if (name[i] == '.')
       dot_loc = i;
@@ -772,7 +772,7 @@ bool sound_file_p(const char *name)
       const char *ext;
       ext = (const char *)(name + dot_loc + 1);
       for (i = 0; i < sound_file_extensions_end; i++)
-	if (strcmp(ext, sound_file_extensions[i]) == 0)
+	if (mus_strcmp(ext, sound_file_extensions[i]))
 	  return(true);
     }
   return(false);

@@ -22836,6 +22836,7 @@ s7_scheme *s7_init(void)
 
   /* s7_define_function(sc, "dump-heap", g_dump_heap, 0, 0, false, "hiho"); */
 
+#if (!S7_DISABLE_DEPRECATED)
   /* backwards compatiblity */
   s7_eval_c_string(sc, "(define (backtracing val) #f) \n\
                         (define (set-backtrace-length val) #f) \n\
@@ -22843,6 +22844,7 @@ s7_scheme *s7_init(void)
                         (define (backtrace) #f)");
   s7_eval_c_string(sc, "(define (gc-verbose val) #f) \n\
                         (define (load-verbose val) #f)");
+#endif
 
   /* macroexpand */
   s7_eval_c_string(sc, "(define-macro (macroexpand mac) `(,(procedure-source (car mac)) ',mac))");

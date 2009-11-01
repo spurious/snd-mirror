@@ -1,19 +1,5 @@
 ;;; makegl.scm creates the GL/GLU bindings using gldata.scm, writes gl.c
 
-;;; TODO: the 3 modules gl.c, xm.c, and xg.c have to agree with each other and with Snd
-;;;         about whether something is a pointer (e.g. XtPointer) or a ulong (e.g. XID).
-;;;         this choice needs to be made global or less prone to oversights.
-
-;(use-modules (ice-9 debug))
-;(use-modules (ice-9 format))
-;(use-modules (ice-9 optargs))
-;(use-modules (ice-9 common-list))
-
-;(debug-enable 'debug)
-;(debug-enable 'backtrace)
-;(read-enable 'positions)
-;(read-set! keywords 'prefix)
-
 (define gl-file (open-output-file "gl.c"))
 
 (define (hey . args)

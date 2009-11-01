@@ -1470,7 +1470,7 @@ AC_ARG_WITH(ruby,
             else 
               AC_MSG_WARN([can't find Ruby!])
   	      AC_DEFINE(HAVE_RUBY,0)
-              AC_DEFINE(HAVE_EXTENSION_LANGUAGE,0)
+#              AC_DEFINE(HAVE_EXTENSION_LANGUAGE,0)
             fi
 	fi)
 
@@ -1509,14 +1509,6 @@ AC_ARG_WITH(forth,
 # Guile
 #--------------------------------------------------------------------------------
 
-# TODO: change from guile-config to pkg-config guile-2.0.pc
-#   if test x$PKG_CONFIG != xno ; then
-#     if $PKG_CONFIG guile-2.0 --exists ; then
-#        XEN_LIBS="`$PKG_CONFIG guile-2.0 --libs`"
-#        XEN_CFLAGS="`$PKG_CONFIG guile-2.0 --cflags`"
-#     fi
-#   fi
-
 if test "$with_guile" = yes && test "$ac_snd_have_extension_language" = yes ; then
   with_guile=no
   AC_MSG_WARN([You asked for both Guile and $LOCAL_LANGUAGE -- $LOCAL_LANGUAGE will be used])
@@ -1541,6 +1533,13 @@ XM_LIBS=""
 if test "$with_guile" = no && test "$with_snd_as_pd_external" = no; then
   AC_DEFINE(HAVE_GUILE,0)
 else
+
+#   if test x$PKG_CONFIG != xno ; then
+#     if $PKG_CONFIG guile-2.0 --exists ; then
+#        XEN_LIBS="`$PKG_CONFIG guile-2.0 --libs`"
+#        XEN_CFLAGS="`$PKG_CONFIG guile-2.0 --cflags`"
+#     fi
+#   fi
 
   AC_CHECK_FILE(/usr/lib/snd/bin/${GUILE_CONFIG_name},[
     GUILE_CONFIG_path=/usr/lib/snd/bin/
@@ -1590,7 +1589,7 @@ if test $GUILE_CONFIG_works = yes; then
   if test "`${GUILE_CONFIG_path}${GUILE_name} -c '(display (string>=? (version) "1.3.4"))'`" != "#t"; then
     AC_MSG_WARN(Snd needs Guile 1.3.4 or later)
     AC_DEFINE(HAVE_GUILE,0)
-    AC_DEFINE(HAVE_EXTENSION_LANGUAGE,0)
+#    AC_DEFINE(HAVE_EXTENSION_LANGUAGE,0)
   else
     AC_SUBST(XEN_CFLAGS)
     if test "$XM_LIBS" = ""; then
@@ -2362,6 +2361,7 @@ AC_ARG_ENABLE(deprecated,
     AC_DEFINE(CLM_DISABLE_DEPRECATED)
     AC_DEFINE(SNDLIB_DISABLE_DEPRECATED)
     AC_DEFINE(XEN_DISABLE_DEPRECATED)
+    AC_DEFINE(S7_DISABLE_DEPRECATED)
   fi)
 
 if test "$enable_snd_debug" = yes ; then

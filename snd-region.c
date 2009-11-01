@@ -1722,7 +1722,7 @@ static XEN g_forget_region(XEN n)
 }
 
 
-static XEN g_play_region(XEN n, XEN wait, XEN stop_proc) 
+XEN g_play_region(XEN n, XEN wait, XEN stop_proc) 
 {
   #define H_play_region "(" S_play_region " reg :optional wait stop-proc): play region; if wait is " PROC_TRUE ", play to end before returning"
   int rg;

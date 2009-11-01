@@ -276,13 +276,10 @@ then .snd.  If you're always using just one version of Snd, it's simplest to sti
 </pre>
 
 <p> 
-Here's a more elaborate initialization file (~/.snd_guile):
+Here's a more elaborate initialization file (~/.snd_s7):
 </p>
 
 <table border=0 cellpadding=5 hspace=20><tr><td><pre>
-(use-modules (ice-9 debug) (ice-9 format) (ice-9 optargs))
-(debug-set! stack 0)                ;turn off Guile's stack-size check
-
 (set! (<a class=quiet href="extsnd.html#windowwidth" onmouseout="UnTip()" onmouseover="Tip(extsnd_windowwidth_tip)">window-width</a>) 800)           ;these set the initial window size
 (set! (<a class=quiet href="extsnd.html#windowheight" onmouseout="UnTip()" onmouseover="Tip(extsnd_windowheight_tip)">window-height</a>) 500)
 
@@ -298,7 +295,6 @@ Here's a more elaborate initialization file (~/.snd_guile):
 
 (set! (<a class=quiet href="extsnd.html#listenerprompt" onmouseout="UnTip()" onmouseover="Tip(extsnd_listenerprompt_tip)">listener-prompt</a>) ":")        ;change listener prompt from the default "&gt;" to ":"
 (set! (<a class=quiet href="extsnd.html#showlistener" onmouseout="UnTip()" onmouseover="Tip(extsnd_showlistener_tip)">show-listener</a>) #t)           ;include the listener window initially
-(set! (<a class=quiet href="extsnd.html#showindices" onmouseout="UnTip()" onmouseover="Tip(extsnd_showindices_tip)">show-indices</a>) #t)            ;include sound index values with the sound name
 
 (define beige (<a class=quiet href="extsnd.html#makecolor" onmouseout="UnTip()" onmouseover="Tip(extsnd_makecolor_tip)">make-color</a> 0.96 0.96 0.86))
 (define blue (<a class=quiet href="extsnd.html#makecolor" onmouseout="UnTip()" onmouseover="Tip(extsnd_makecolor_tip)">make-color</a> 0 0 1))
@@ -329,7 +325,6 @@ Here's a more elaborate initialization file (~/.snd_guile):
     (if (&gt; (<a class=quiet href="extsnd.html#chans" onmouseout="UnTip()" onmouseover="Tip(extsnd_chans_tip)">channels</a> snd) 4)
         (set! (<a class=quiet href="extsnd.html#channelstyle" onmouseout="UnTip()" onmouseover="Tip(extsnd_channelstyle_tip)">channel-style</a> snd) <a class=quiet href="extsnd.html#channelstyle" onmouseout="UnTip()" onmouseover="Tip(extsnd_channelstyle_tip)">channels-combined</a>))))
 
-(set! (<a class=quiet href="extsnd.html#optimization" onmouseout="UnTip()" onmouseover="Tip(extsnd_optimization_tip)">optimization</a>) 6)              ;turn on full optimization (live dangerously...)
 (set! (<a class=quiet href="extsnd.html#selectioncreatesregion" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectioncreatesregion_tip)">selection-creates-region</a>) #f) ;turn off automatic region creation
 </pre></td></tr></table>
 
@@ -839,7 +834,7 @@ latter are (configure --help):
 <tr><td></td><td>--with-midi</td><td></td><td>include sndlib midi module (default: no)</td></tr>
 <tr><td></td><td>--with-shared-sndlib</td><td></td><td>try to load libsndlib.so, rather than building it into Snd (default: no)</td></tr>
 <tr><td></td><td>--with-modules</td><td></td><td>use this switch with --with-shared-sndlib if sndlib.so uses modules (Guile only)</td></tr>
-<tr><td></td><td>--disable-deprecated</td><td></td><td>do not include any deprecated stuff from gtk, guile, sndlib, xen, clm, etc</td></tr>
+<tr><td></td><td>--disable-deprecated</td><td></td><td>do not include any deprecated stuff from gtk, s7, sndlib, xen, clm, etc</td></tr>
 <tr><td></td><td>--enable-threads</td><td></td><td>include pthreads to take advantage of multiprocessor machines</td></tr>
 <tr><td></td><td>--with-threads</td><td></td><td>include pthreads, same as --enable-threads</td></tr>
 <tr><td colspan=2></td><td></td><td></td></tr>
@@ -1766,8 +1761,7 @@ if you have an executable file with:
     :(<a class=quiet href="extsnd.html#exit" onmouseout="UnTip()" onmouseover="Tip(extsnd_exit_tip)">exit</a>)
     /home/bil/test/snd-11/ 
 </pre>
-<p>The difference between this use of Snd, and using guile itself
-for scripts is that Snd uses the -l switch where guile would use -s.
+<p>
 As noted above, you can use the -e switch to use Snd as a pure
 command-line program, and, of course, (<a class=quiet href="extsnd.html#exit" onmouseout="UnTip()" onmouseover="Tip(extsnd_exit_tip)">exit</a>) to drop back to the shell.
 Here's a script that doubles every sample in "oboe.snd" and

@@ -3391,7 +3391,7 @@ static bool play_mix(mix_info *md, mus_long_t beg)
 }
 
 
-static XEN g_play_mix(XEN num, XEN beg)
+XEN g_play_mix(XEN num, XEN beg)
 {
   #define H_play_mix "(" S_play_mix " id :optional (beg 0)): play mix.  'beg' is where to start playing."
   mix_info *md;

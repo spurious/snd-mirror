@@ -10383,8 +10383,7 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 $as_echo "$as_me: WARNING: can't find Ruby!" >&2;}
   	      $as_echo "#define HAVE_RUBY 0" >>confdefs.h
 
-              $as_echo "#define HAVE_EXTENSION_LANGUAGE 0" >>confdefs.h
-
+#              AC_DEFINE(HAVE_EXTENSION_LANGUAGE,0)
             fi
 	fi
 fi
@@ -10583,14 +10582,6 @@ fi
 # Guile
 #--------------------------------------------------------------------------------
 
-# TODO: change from guile-config to pkg-config guile-2.0.pc
-#   if test x$PKG_CONFIG != xno ; then
-#     if $PKG_CONFIG guile-2.0 --exists ; then
-#        XEN_LIBS="`$PKG_CONFIG guile-2.0 --libs`"
-#        XEN_CFLAGS="`$PKG_CONFIG guile-2.0 --cflags`"
-#     fi
-#   fi
-
 if test "$with_guile" = yes && test "$ac_snd_have_extension_language" = yes ; then
   with_guile=no
   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: You asked for both Guile and $LOCAL_LANGUAGE -- $LOCAL_LANGUAGE will be used" >&5
@@ -10617,6 +10608,13 @@ if test "$with_guile" = no && test "$with_snd_as_pd_external" = no; then
   $as_echo "#define HAVE_GUILE 0" >>confdefs.h
 
 else
+
+#   if test x$PKG_CONFIG != xno ; then
+#     if $PKG_CONFIG guile-2.0 --exists ; then
+#        XEN_LIBS="`$PKG_CONFIG guile-2.0 --libs`"
+#        XEN_CFLAGS="`$PKG_CONFIG guile-2.0 --cflags`"
+#     fi
+#   fi
 
   as_ac_File=`$as_echo "ac_cv_file_/usr/lib/snd/bin/${GUILE_CONFIG_name}" | $as_tr_sh`
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for /usr/lib/snd/bin/${GUILE_CONFIG_name}" >&5
@@ -10693,8 +10691,7 @@ if test $GUILE_CONFIG_works = yes; then
 $as_echo "$as_me: WARNING: Snd needs Guile 1.3.4 or later" >&2;}
     $as_echo "#define HAVE_GUILE 0" >>confdefs.h
 
-    $as_echo "#define HAVE_EXTENSION_LANGUAGE 0" >>confdefs.h
-
+#    AC_DEFINE(HAVE_EXTENSION_LANGUAGE,0)
   else
 
     if test "$XM_LIBS" = ""; then
@@ -15368,6 +15365,8 @@ if test "${enable_deprecated+set}" = set; then :
     $as_echo "#define SNDLIB_DISABLE_DEPRECATED 1" >>confdefs.h
 
     $as_echo "#define XEN_DISABLE_DEPRECATED 1" >>confdefs.h
+
+    $as_echo "#define S7_DISABLE_DEPRECATED 1" >>confdefs.h
 
   fi
 fi

@@ -45,9 +45,7 @@
 
 (if (defined? 'run-clear-counts) (run-clear-counts))
 
-(define with-guile (provided? 'snd-guile))
 (define with-s7 (provided? 'snd-s7))
-(if (and with-guile with-s7) (display ";both switches are on?"))
 
 (if with-s7
     (begin
@@ -269,9 +267,6 @@
 (set! (mus-audio-playback-amp) playback-amp)
 
 (define sampler-tests 300)
-(if with-guile (debug-set! stack 0))
-(debug-enable 'debug 'backtrace)
-(read-enable 'positions)
 
 ;; try to get a different random number sequence on each run
 (set! (mus-rand-seed) (current-time))
@@ -10302,11 +10297,6 @@ EDITS: 5
 	  (close-sound ind2))
 	
 	(let* ((ind (open-sound "now.snd")))
-	  (if with-guile
-	      (if (not (= now-snd-index ind)) 
-		  (snd-display ";*snd-opened-sound*: ~A ~A ~A" *snd-opened-sound* ind now-snd-index)))
-	  ;; that is in now.snd.scm, but there's no reason to assume the define becomes a global
-
 	  (set! (amp-control ind) .5)
 	  (if (ffneq (amp-control ind) .5) (snd-display ";amp-control (.5): ~A?" (amp-control ind)))
 	  (set! (amp-control ind 0) .25)
@@ -14173,8 +14163,6 @@ EDITS: 2
 	      (snd-display ";apply-controls srate -1.0 samples: ~A ~A" (maxamp) (sample 9327)))
 	  (if (fneq (speed-control ind) 1.0) (snd-display ";apply-controls -1.0 -> ~A?" (speed-control ind)))
 
-	  (if with-guile
-	      (begin
 		(add-hook! dac-hook (lambda (data) 
 				      (set! ctr (+ 1 ctr))
 				      (if (>= ctr 3) (c-g!))))
@@ -14211,9 +14199,10 @@ EDITS: 2
 							(lambda args args))))
 					(if (not (eq? (car tag) 'cannot-apply-controls))
 					    (snd-display ";dac-hook: recursive attempt apply-controls: ~A" tag)))))
-		(reset-hook! dac-hook)))
-		(revert-sound)
-		(close-sound ind))
+		(reset-hook! dac-hook)
+
+	  (revert-sound)
+	  (close-sound ind))
 
 	(let ((v1 (make-vct 32)))
 	  (vct-map! v1
@@ -14862,7 +14851,7 @@ EDITS: 2
 (if (not (provided? 'snd-bird.scm)) (load "bird.scm"))
 (if (not (provided? 'snd-v.scm)) (load "v.scm"))
 (if (not (provided? 'snd-numerics.scm)) (load "numerics.scm"))
-(if (not with-guile) (if (not (provided? 'snd-generators.scm)) (load "generators.scm")))
+(if (not (provided? 'snd-generators.scm)) (load "generators.scm"))
 
 (def-clm-struct sa1 (freq 0.0 :type float) (coscar #f :type clm) (sincar #f :type clm) (dly #f :type clm) (hlb #f :type clm))
 
@@ -43985,9 +43974,6 @@ EDITS: 1
 		       (list new-low-data new-high-data) snd chn copy-context left-bin right-bin)
 		      (set! (foreground-color snd chn) old-color))))))))
   
-  (define apropos-cs "(guile-user): close-sound	#<primitive-procedure close-sound>
-")
-  
   (define show-hiho
     ;; show a red "hiho" in the helvetica bold font on a gray background
     (lambda (snd chn)
@@ -50270,29 +50256,6 @@ EDITS: 1
 	(set! ts (cons (list "jcrev  " (hundred t0) (hundred t1) (inexact->exact (round (safe-divide t0 t1)))) ts))
 	(close-sound ind))
       (snd-display "~{       ~A~%~}~%" ts))
-    
-					;Guile timings:
-					;       (osc+env 144 25 6)
-					;       (vct-ref 204 18 11)
-					;       (let if  134 15 9)
-					;       (abs sin 121 17 7)
-					;       (-1      82 11 7)
-					;       (*2      71 12 6)
-					;       (jcrev   165 22 8)
-					;       (expsnd  65 8 8)
-					;       (fm vln  131 18 7)
-					;s7 20-Nov-08:
-					;       ("osc+env" 261 16 16)
-					;       ("vct-ref" 259 9 27)
-					;       ("let if " 252 10 24)
-					;       ("abs sin" 161 13 12)
-					;       ("-1     " 122 8 16)
-					;       ("*2     " 129 6 20)
-					;       ("jcrev  " 233 13 18)
-					;       ("expsnd " 101 7 15)
-					;       ("fm vln " 274 13 22)
-
-    
     (if with-gui
 	(let* ((osc (make-oscil 440))
 	       (vi (make-vector 2 1))
@@ -53089,7 +53052,6 @@ EDITS: 1
     ;; since we only catch 'mus-error and 'with-sound-interrupt above, any other error
     ;;   closes *output* and returns to the top-level -- are there languishing threads?
     ;;   Need a way outside with-sound to see what threads are out there.
-    ;;     Guile: all-threads and current-thread, thread-exited?
     
     (define (bad-ins start)
       (c-g!))
@@ -66575,12 +66537,21 @@ EDITS: 1
 	  (gc)(gc)
 
 	  (let* ((main-args (list 1.5 "/hiho" (list 0 1) 1234 vct-3 color-95  '#(0 1) 3/4 'mus-error (sqrt -1.0) delay-32
-				 (lambda () #t) vct-5 sound-data-23 :order 0 1 -1 a-hook #f #t #\c 0.0 1.0 -1.0 
-				 '() '3 2 8 64 -64 vector-0 '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0) car-main cadr-main 
-				 (lambda (a) #f) abs))
+				 (lambda () #t) vct-5 sound-data-23 :order 0 1 -1 a-hook #f #t #\c 0.0 -1.0 
+				 '() '3 64 -64 vector-0 '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0) car-main cadr-main 
+				 (lambda (a) #f) abs
+				 1.0+1.0i (cons 1 2) '((1 2) (3 4)) '((1 (2)) (((3) 4)))
+				 (vector 1 #\a '(3)) (make-vector 0)
+				 (let ((x 3)) (lambda (y) (+ x y))) (lambda args args)
+				 "" (make-hash-table 256)
+				 (symbol->value '_?__undefined__?_)                  ; -> #<undefined> hopefully
+				 (vector-fill! (vector 0) 0)                         ; -> #<unspecified>?
+				 (with-input-from-string "" (lambda () (read-char))) ; -> #<eof>?
+				 (make-random-state 1234)
+				 ))
 		 (few-args (list 1.5 "/hiho" (list 0 1) 1234 vct-3 color-95 '#(0 1) 3/4 -1.0
-				 (sqrt -1.0) delay-32 :feedback -1 0 1 3 64 -64 #f #t '() vector-0))
-		 (fewer-args (list "/hiho" 1234 vct-3 -1.0 (sqrt -1.0) delay-32 -1 0 1 #f #t '()))
+				 (sqrt -1.0) delay-32 :feedback -1 0 1 "" 'hi (lambda (a) (+ a 1)) -64 #f #t '() vector-0))
+		 (fewer-args (list "/hiho" 1234 vct-3 -1.0 (sqrt -1.0) delay-32 -1 0 1 #f #t "" '()))
 		 (less-args (if all-args main-args few-args)))
 
 	    ;; ---------------- 1 Arg
@@ -67293,26 +67264,6 @@ EDITS: 1
 	(display (format #f "(test ~D:) ~1,1F " i (vector-ref best-times i)))))
   (display (format #f ")~%~%")))
 
-  ;guile 1.8.? I think
-  ;times: (58 58 153 99 2260 5316 613 133 11171 2857 593 738 730 918 583 1228 2977 182 165 2797 717 1697 4920 6595 0 0 0 241 7019)
-  ;total: 553
-
-  ; s7:
-  ;times: (30 29 40 37 458 3596 45 93 19877 2542 136 44 180 496 367 1947 3062 50 32 3833 835 1735 4736 13099 0 0 0 42 5636)
-  ;total: 631
-  ;ratios: (.5 .5 .4 .4 .2 .7 .1 .7 1.7 .9 .2 .1 .2 .5 .5 1.5 1.0 .3 .2 1.3 1.1 .9 .9 2.0 .0 .0 .0 .2 .8 )
-
-  ;24-Aug-09 (one other long job running)
-  ;times: (6 5 38 22 1347 5194 497 31 6439 1954 361 133 519 1883 1503 1536 2268 33 14 2179 403 1198 1563 12045 0 0 0 10 1174);
-  ;total: 424
-  ;ratios: (0.1 0.1 0.3 0.2 0.6 1.0 0.8 0.2 0.6 0.7 0.6 0.2 0.6 1.9 1.8 1.2 0.8 0.2 0.1 0.7 0.5 0.6 0.3 1.8 0.0 0.0 0.0 0.0 0.2 )
-
-  ;  s7test noinit 6-Oct-08
-  ;  0.986u 0.011s 0:01.01 98.0%     0+0k 0+224io 0pf+0w
-  ;  s7test (no bug machine) noinit 24-Aug-09, one other long job running at the time
-  ;  0.531u 0.016s 0:00.55 98.1%     0+0k 0+176io 0pf+0w
-
-
 ;;; -------- cleanup temp files
 
 (if (provided? 'snd-nogui)
@@ -67346,9 +67297,6 @@ EDITS: 1
       (system "rm -f /var/tmp/snd_*")
       (system "ls /var/tmp/file*.snd | wc")
       (system "rm -f /var/tmp/file*.snd")))
-
-(if (file-exists? (string-append home-dir "/.snd_prefs_guile"))
-    (delete-file (string-append home-dir "/.snd_prefs_guile")))
 
 (if (defined? 'dlocsig-speaker-configs) (set! dlocsig-speaker-configs #f))
 

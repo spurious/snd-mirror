@@ -1677,7 +1677,7 @@ int main(int argc, char **argv)
 #endif
 
 
-
+#if (!S7_DISABLE_DEPRECATED)
   /* backwards compatibility... */
 #define s7_F(Sc)           s7_f(Sc)
 #define s7_T(Sc)           s7_t(Sc)
@@ -1685,7 +1685,7 @@ int main(int argc, char **argv)
 #define s7_UNDEFINED(Sc)   s7_undefined(Sc)
 #define s7_UNSPECIFIED(Sc) s7_unspecified(Sc)
 #define s7_EOF_OBJECT(Sc)  s7_eof_object(Sc)
-
+#endif
 
 
 

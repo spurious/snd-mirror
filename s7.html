@@ -378,7 +378,7 @@ of pthread_getspecific, simply call it: (var).
 
 <dt><em class=emdef>FFI</em></dt>
 <dd><p>s7 exists only to serve as an extension of some other application, so in a sense
-it is just a foreign function interface.  See s7.h for the API and many examples.
+it is just a foreign function interface.  See s7.h for the API.
 Here is a bare REPL:
 </p>
 <pre>
@@ -409,8 +409,23 @@ int main(int argc, char **argv)
     }
 }
 </pre>
+<p>s7.h has several examples showing how to do various things from C:
+</p>
+<ul>
+<li>read-eval-print loop
+<li>define a function with arguments and a returned value, and define a variable 
+<li>call a scheme function from C, and get/set scheme variable values in C
+<li>C++ and Juce
+<li>load sndlib using the XEN functions and macros
+<li>add a new scheme type and a procedure-with-setter
+<li>redirect display output to a C procedure
+<li>extend a built-in operator ("+" in this case)
+<li>C-side define* (s7_define_function_star)
+<li>C-side define-macro (s7_define_macro)
+<li>signal handling (C-C to break out of an infinite loop)
+</ul>
 </dd>
-<br>
+<br><br>
 
 <dt><em class=emdef>error handling via error and catch</em></dt>
 <dd><p>s7's error handling mimics that of (pre-r6rs) Guile.  An error is signalled

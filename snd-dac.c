@@ -2816,6 +2816,21 @@ static XEN g_play_1(XEN samp_n, XEN snd, XEN chn_n, bool back, bool syncd, XEN e
   if (XEN_FALSE_P(samp_n))
     return(C_TO_XEN_BOOLEAN(add_zeros_to_play_list(snd, chn_n))); /* srate out-chans */
 
+  if (XEN_MIX_P(samp_n))
+    return(g_play_mix(samp_n, snd)); /* "snd" = begin sample */
+
+  if (XEN_REGION_P(samp_n))
+    return(g_play_region(samp_n, snd, chn_n)); /* region wait stop-proc */
+
+
+  /* TODO: clean up all these play cases! -- there's no need to follow the original args */
+  /* TODO: make sure play (and friends) can take a sound object */
+  /*  is  the "stop-proc" of any use anymore? */
+  /* TODO: make sure "play" itself allows objects */
+  /* TODO: play-channel for objects and so on (play-and-wait = no stop?) */
+  /* TODO: let sound object be first arg, also player object */
+
+
   if (XEN_INT64_T_P(end_n)) end = XEN_TO_C_INT64_T(end_n);
 
 #if USE_NO_GUI

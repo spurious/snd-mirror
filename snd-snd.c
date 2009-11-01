@@ -2340,7 +2340,9 @@ void call_sp_watchers(snd_info *sp, sp_watcher_t type, sp_watcher_reason_t reaso
 
 /* ---------------------------------------- sound objects ---------------------------------------- */
 
-/* PERHAPS: generics (besides length, srate, channels, frames, file-name, sync, maxamp):
+/* this is my long term plan right now... */
+
+/* generics (besides length, srate, channels, frames, file-name, sync, maxamp, play):
  *
  *             source:         procedure-source[s7_procedure_source] mix-home mark-home region-home player-home sampler-home
  *                               mus cases: readin=file+chan? etc, port -> filename?, sound->filename?
@@ -2359,7 +2361,26 @@ void call_sp_watchers(snd_info *sp, sp_watcher_t type, sp_watcher_reason_t reaso
  *             reverse save find insert delete describe read write mix append [open and close?] member
  *             reverse mix append member: these exist already and could just be extended 
  *
- *             play? (mix region sound file player)
+ *             scale(-to|by) convolve fft env filter insert mix reverse save smooth src copy|fill! map|scan pan-mix
+ *               sampler? replace-with?
+ *
+ * doc/test/cleanup play (mix region sound file player)
+ * TODO: make a selection object, and add it to all the generics
+ *       (selection) collides with selection? which might take opt arg, return #t if no arg and selection to be backwards compatible?
+ *       length: selection-frames, play -> play-selection, maxamp -> selection-maxamp
+ *       srate -> selection-srate, channels -> selection-chans, file-name via selection-sound?
+ *   but... (let ((sel (selection))) ...change to selection members... (scale-by sel) -- what does this do? 
+ *       it scales the current selection -- that object has a counter for each time the selection changes
+ *       so (eq? sel1 sel2) is #f if the selection has changed
+ *       but selection ops all refer through it to the current selection
+ *       (selection?) -> is there a current selection,
+ *       (selection? sel) -> is sel the selection object, and is there a selection
+ *       (selection) returns the selection object with the counter
+ *
+ * save with all the optkey args for all types (treat list/vector etc as sound data)
+ * copy selection = open copy as sound? 
+ * fill! selection (or others) as set all samps to val
+ *    also move make-selection into C
  * 
  * (scan-channel -> channel-for-each)
  *   and channel-map rather than map-channel
@@ -2367,6 +2388,30 @@ void call_sp_watchers(snd_info *sp, sp_watcher_t type, sp_watcher_reason_t reaso
  *   (find-if func snd...)
  * (eval-over-selection -> selection-for-each) *-for-each
  *   then selection-map would replace the current selected samples
+ *
+ * do everything through generic sampler (vector etc)
+ *   in/out/readin generic as well, so we can use instruments for edits and vice-versa without change
+ *   selection sampler [no need for snd-sampler (snd-edits) I think]
+ *   generic rms?
+ *   make-vector! double -> replace vct/sound-data objects
+ *
+ *  the goal being that all clm and snd structures are compatible, all operations interchangeable
+ *    so (violin 0 1 440 .1) can appear sensibly in any context
+ *  add a mix-tag to the selection so it can be dragged? or treat it as a kind of mix?
+ *
+ * then deprecate all the special case stuff, add generic versions of *.scm examples
+ * sound-file properties?  a data base saving all such info (rather than kludges involving headers)
+ *   (hash-table makes more sense as a property list than a list in large cases) -- currently it's actually a vector
+ *   or a global data base for all properties? -- easy to search or display in various ways
+ *
+ * remove with-mix and friends, also autosave.scm
+ * all current "work procs" could be handled as separate threads
+ * all multichannel parallel ops also threaded, and graphics updates, and playing
+ *
+ * make-vector! choices: any, 1 obj [any type], 1 obj: double -- do any others warrant special handling?
+ * current sync-info as vector? (then selection = vector of sound objs)
+ *
+ * here's an oddity: ./snd t30 -e '(get-best...)' says unknown variable?!? doesn't the load take place first?
  */
 
 
