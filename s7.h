@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "1.35"
-#define S7_DATE "30-Oct-09"
+#define S7_VERSION "1.36"
+#define S7_DATE "3-Nov-09"
 
 
 typedef long long int s7_Int;
@@ -324,6 +324,7 @@ s7_pointer s7_make_and_fill_vector(s7_scheme *sc, s7_Int len, s7_pointer fill); 
 s7_Int s7_vector_length(s7_pointer vec);                                              /* (vector-length vec) */
 s7_pointer s7_vector_to_list(s7_scheme *sc, s7_pointer vect);                         /* (vector->list vect) */
 s7_pointer *s7_vector_elements(s7_pointer vec);                                       /* a pointer to the array of s7_pointers */
+int s7_vector_rank(s7_pointer vect);                                                  /* number of dimensions in vect */
 
   /* if s7 is built with multidimensional and applicable vectors, 
    *
@@ -1693,6 +1694,7 @@ int main(int argc, char **argv)
  * 
  *        s7 changes
  *
+ * 3-Nov:     s7_vector_rank.
  * 30-Oct:    *trace-hook*.
  * 12-Oct:    s7_port_filename.
  * 5-Oct:     s7_c_pointer and friends.

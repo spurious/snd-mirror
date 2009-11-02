@@ -5502,6 +5502,12 @@ static XEN g_in_any_1(const char *caller, XEN frame, XEN chan, XEN inp)
       XEN_ASSERT_TYPE(false, inp, XEN_ARG_3, caller, "a procedure of 2 arguments: the sample number and the channel");
     }
 
+  if (XEN_VECTOR_P(inp))
+    {
+      if (pos < XEN_VECTOR_LENGTH(inp))
+	return(XEN_VECTOR_REF(inp, pos)); /* TODO: doc/test vector in-any, and add chan arg if s7 and multidim vects */
+    }
+
   return(C_TO_XEN_DOUBLE(0.0));
 }
 
@@ -5601,6 +5607,13 @@ static XEN g_out_any_1(const char *caller, XEN frame, XEN chan, XEN val, XEN out
       XEN_ASSERT_TYPE(false, outp, XEN_ARG_4, caller, "a procedure of 3 arguments: the sample number, the sample value, and the channel");
     }
 
+  if (XEN_VECTOR_P(outp))
+    {
+      if (pos < XEN_VECTOR_LENGTH(outp))
+	XEN_VECTOR_SET(outp, pos, C_TO_XEN_DOUBLE(XEN_TO_C_DOUBLE(XEN_VECTOR_REF(outp, pos)) + inv));
+      /* TODO: doc/test out-any to vector + s7/multidim */
+    }
+
   return(val);
 }
 
@@ -5655,7 +5668,7 @@ static XEN g_mus_close(XEN ptr)
     }
 #endif
 
-  XEN_ASSERT_TYPE(MUS_VCT_P(ptr) || XEN_FALSE_P(ptr) || sound_data_p(ptr) || XEN_PROCEDURE_P(ptr), 
+  XEN_ASSERT_TYPE(MUS_VCT_P(ptr) || XEN_FALSE_P(ptr) || sound_data_p(ptr) || XEN_PROCEDURE_P(ptr) || XEN_VECTOR_P(ptr), 
 		  ptr, XEN_ONLY_ARG, S_mus_close, "an IO gen or its outa equivalent");
   return(XEN_ZERO);
 }

@@ -353,7 +353,7 @@ is for compatibility with Guile).
 Threads in s7 share the heap and symbol table, but have their own local environment, stack,
 and evaluator locals.  I use the term "lock" in place of "mutex", and "thread-variable"
 in place of "pthread_key".  The thread-variable is applicable and settable, so instead
-of pthread_getspecific, simply call it: (var).
+of pthread_getspecific, just call it: (var).
 </p>
 </dd>
 <br>
@@ -936,7 +936,7 @@ signals that the symbol is in the Package-With-No-Name [offstage: harmonica, tub
 <dt><em class=emdef>multiple-values</em></dt>
 <dd><p>
 The r5rs section about values makes no sense to me;  why have
-multiple values at all if you're simply going to throw away all
+multiple values at all if you're just going to throw away all
 but the first value?
 In s7 (+ (values 1 2 3) 4) is 10.  Similarly,
 </p>

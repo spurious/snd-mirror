@@ -2795,6 +2795,7 @@ static void init_xen_player(void)
 
 /* -------------------------------------------------------------------------------- */
 
+static XEN g_play_selection(XEN wait, XEN stop_proc);
 
 static XEN g_play_1(XEN samp_n, XEN snd, XEN chn_n, bool back, bool syncd, XEN end_n, XEN edpos, 
 		    const char *caller, int arg_pos, XEN stop_proc, XEN out_chan)
@@ -2821,6 +2822,9 @@ static XEN g_play_1(XEN samp_n, XEN snd, XEN chn_n, bool back, bool syncd, XEN e
 
   if (XEN_REGION_P(samp_n))
     return(g_play_region(samp_n, snd, chn_n)); /* region wait stop-proc */
+
+  if (XEN_SELECTION_P(samp_n))
+    return(g_play_selection(snd, chn_n));
 
 
   /* TODO: clean up all these play cases! -- there's no need to follow the original args */

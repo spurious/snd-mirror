@@ -163,10 +163,11 @@
 		   (set! (mus-safety *output*) output-safety))
 		 (begin
 		   (if (not continue-old-file)
-		       (if (vct? output-1)
-			   (vct-fill! output-1 0.0)
-			   (if (sound-data? output-1)
-			       (sound-data-fill! output-1 0.0))))
+		       ;; if s7 we could just use fill! here (and below)
+		       (if (or (vct? output-1)
+			       (sound-data? output-1)
+			       (vector? output-1))
+			   (fill! output-1 0.0)))
 		   (set! *output* output-1)))
 
 	     (if reverb
@@ -181,10 +182,10 @@
 		       (set! (mus-safety *reverb*) output-safety))
 		     (begin
 		       (if (not continue-old-file)
-			   (if (vct? reverb-1)
-			       (vct-fill! reverb-1 0.0)
-			       (if (sound-data? reverb-1)
-				   (sound-data-fill! reverb-1 0.0))))
+			   (if (or (vct? reverb-1)
+				   (sound-data? reverb-1)
+				   (vector? reverb-1))
+			       (fill! reverb-1 0.0)))
 		       (set! *reverb* reverb-1)))))
 
 	   ;; else thread-output
@@ -235,12 +236,11 @@
 		   (if reverb-to-file
 		       (mus-close *reverb*)))
 	       (if statistics 
-		   (if reverb-to-file
-		       (set! revmax (maxamp reverb-1))
-		       (if (vct? reverb-1)
-			   (set! revmax (vct-peak reverb-1))
-			   (if (sound-data? reverb-1)
-			       (set! revmax (sound-data-peak reverb-1))))))
+		   (if (or reverb-to-file
+			   (vct? reverb-1)
+			   (sound-data? reverb-1)
+			   (vector? reverb-1))
+		       (set! revmax (maxamp reverb-1))))
 	       (if (not thread-reverb)
 		   (begin
 		     (if reverb-to-file
@@ -286,7 +286,8 @@
 			    (if (vct? output-1) "vct" 
 				(if (sound-data? output-1) "sound-data"
 				    (if (procedure? output-1) "function" 
-					"flush"))))
+					(if (vector? output-1) "vector"
+					    "flush")))))
 			(if (or scaled-to scaled-by) 
 			    " (before scaling)" 
 			    "")
@@ -302,7 +303,9 @@
 				(list (vct-peak output-1))
 				(if (sound-data? output-1)
 				    (sound-data-maxamp output-1)
-				    0.0)))
+				    (if (vector? output-1)
+					(list (maxamp output-1))
+					0.0))))
 			(if revmax (format #f "  rev max: ~,4F~%" revmax) "")
 			cycles)))
 
@@ -327,7 +330,18 @@
 			       (let ((pk (sound-data-peak output-1)))
 				 (if (> pk 0.0)
 				     (sound-data-scale! output-1 (/ scaled-to pk))))
-			       (sound-data-scale! output-1 scaled-by))))))
+			       (sound-data-scale! output-1 scaled-by))
+			   (if (vector? output-1)
+			       (if scaled-to
+				   (let ((pk (maxamp output-1)))
+				     (if (> pk 0.0)
+					 (let ((scl (/ scaled-to pk)))
+					   (do ((i 0 (+ i 1)))
+					       ((= i (vector-length output-1)))
+					     (vector-set! output-1 i (* scl (vector-ref output-1 i)))))))
+				   (do ((i 0 (+ i 1)))
+				       ((= i (vector-length output-1)))
+				     (vector-set! output-1 i (* scaled-by (vector-ref output-1 i))))))))))
 
 	   (if (and play output-to-file)
 	       (if to-snd
@@ -736,9 +750,10 @@ finish-with-sound to complete the process."
 	      (set! *output* (make-sample->file output channels data-format header-type comment))))
 	(begin
 	  (if (not continue-old-file)
-	      (if (vct? output)
-		  (vct-fill! output 0.0)
-		  (sound-data-fill! output 0.0)))
+	      (if (or (vct? output)
+		      (sound-data? output)
+		      (vector? output))
+		  (fill! output 0.0)))
 	  (set! *output* output)))
 
     (if reverb
@@ -751,9 +766,10 @@ finish-with-sound to complete the process."
 		  (set! *reverb* (make-sample->file revfile reverb-channels data-format header-type))))
 	    (begin
 	      (if (not continue-old-file)
-		  (if (vct? revfile)
-		      (vct-fill! revfile 0.0)
-		      (sound-data-fill! revfile 0.0)))
+		  (if (or (vct? revfile)
+			  (sound-data? revfile)
+			  (vector? revfile))
+		      (fill! revfile 0.0)))
 	      (set! *reverb* revfile))))
 
     (list 'with-sound-data

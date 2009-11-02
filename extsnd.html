@@ -1233,7 +1233,9 @@ as well as lists.
 <tr><td colspan=2 bgcolor="#f2f4ff">
 <code><a class=def>channels</a> (:optional obj)</code>
 </td></tr><tr><td></td><td>
-<A NAME="genericchannels">channels</A> handles strings (<a href="#mussoundchans">mus-sound-chans</a>), <a href="#regionchans">region-chans</a>, 
+<A NAME="genericchannels">channels</A> handles strings (<a href="#mussoundchans">mus-sound-chans</a>), 
+<a href="#regionchans">region-chans</a>, 
+the current selection (<a href="#selectionchans">selection-chans</a>),
 <a href="#sounddatachans">sound-data-chans</a>, <a href="sndclm.html#genericfunctions">mus-channels</a>,
 <a href="#sndmixes">mixes</a>, <a href="#Vcts">vcts</a>, and vectors (always 1 channel), and 
 <a href="#sndsounds">sounds</a> (as objects or as integers).
@@ -1279,7 +1281,8 @@ the number of samples per channel.  The frames function overlaps
 the <a href="#genericlength">length</a> function, but length of a string is string-length, whereas frames of a string
 treats the string as a sound file name and returns <a href="#mussoundframes">mus-sound-frames</a>.  frames can replace
 <a href="#mussoundframes">mus-sound-frames</a>, <a href="sndclm.html#genericfunctions">mus-length</a>, 
-<a href="#mixlength">mix-length</a>, <a href="#regionframes">region-frames</a>, 
+<a href="#mixlength">mix-length</a>, 
+<a href="#regionframes">region-frames</a>, <a href="#selectionframes">selection-frames</a>,
 <a href="#vctlength">vct-length</a>, <a href="#sounddatalength">sound-data-length</a>,
 and the regular <a href="#frames">frames</a> function that handles sound objects and integers as sound indices.
 </td></tr><tr><td colspan=2 height=18></td></tr>
@@ -1293,14 +1296,16 @@ and the regular <a href="#frames">frames</a> function that handles sound objects
 <A NAME="genericlength">length</A> handles list length, string-length, vector-length, <a href="s7.html#s7doc">hash-table-size</a>,
 <a href="#vctlength">vct-length</a>, <a href="#frames">frames</a> (sound length), 
 <a href="sndclm.html#genericfunctions">mus-length</a> (generators), <a href="#sounddatalength">sound-data-length</a>, 
-<a href="#mixlength">mix-length</a>, and <a href="#regionframes">region-frames</a>.
+<a href="#mixlength">mix-length</a>, 
+<a href="#selectionframes">selection-frames</a>,
+and <a href="#regionframes">region-frames</a>.
 </td></tr><tr><td colspan=2 height=18></td></tr>
 
 
 <!-- maxamp -->
 <!-- INDEX genericmaxamp:maxamp (generic) -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
-<code><a class=def>maxamp</a> (obj)</code>
+<code><a class=def>maxamp</a> (obj :optional chn)</code>
 </td></tr><tr><td></td><td>
 <A NAME="genericmaxamp">maxamp</A> can handle a sound (via the regular <a href="#maxamp">maxamp</a> function),
 string (treated as a sound file name, <a href="#mussoundmaxamp">mus-sound-maxamp</a>),
@@ -1308,7 +1313,20 @@ generator (maxamp of the mus-data vct, if any),
 sound-data (<a href="#sounddatamaxamp">sound-data-maxamp</a>),
 vct (<a href="#vctpeak">vct-peak</a>),
 region (<a href="#regionmaxamp">region-maxamp</a>),
+the current selection (<a href="#selectionmaxamp">selection-maxamp</a>),
 vector, list, or mix object.
+</td></tr><tr><td colspan=2 height=18></td></tr>
+
+
+<!-- TODO: play -->
+<!-- INDEX genericplay:play (generic) -->
+<tr><td colspan=2 bgcolor="#f2f4ff">
+<code><a class=def>play</a> ()</code>
+</td></tr><tr><td></td><td>
+<A NAME="genericplay">play</A> 
+
+...all about play...
+
 </td></tr><tr><td colspan=2 height=18></td></tr>
 
 
@@ -1318,7 +1336,8 @@ vector, list, or mix object.
 <code><a class=def>srate</a> (:optional obj)</code>
 </td></tr><tr><td></td><td>
 <A NAME="genericsrate">srate</A> handles strings (treated as file names: <a href="#mussoundsrate">mus-sound-srate</a>), 
-regions (<a href="#regionsrate">region-srate</a>), and <a href="#sndsounds">sounds</a> (as objects or as integers).
+regions (<a href="#regionsrate">region-srate</a>), the selection (<a href="#selectionsrate">selection-srate</a>),
+and <a href="#sndsounds">sounds</a> (as objects or as integers).
 </td></tr><tr><td colspan=2 height=18></td></tr>
 
 
@@ -2456,7 +2475,7 @@ This hook is called each time the optimizer hits something it can't handle; 'mes
     (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_add_hook_tip)">add-hook!</a> <em class=red>optimization-hook</em> (lambda (n) (display (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "~A~%" n))))
 </pre>
 Normally, if the optimizer fails for some reason, it falls back silently on the Scheme evaluator, so
-the code simply runs slower.  This hook gives you a way to find out why the optimizer gave up.
+the code runs slower.  This hook gives you a way to find out why the optimizer gave up.
 </td></tr><tr><td colspan=3 height=16></td></tr>
 
 
@@ -4154,7 +4173,7 @@ mus-header-type-name converts 'type', an integer, to a string, e.g. "AIFF".  Som
     mus-next  mus-aifc  mus-riff  mus-rf64 mus-nist  mus-raw  mus-ircam  mus-aiff mus-caff
     mus-bicsf mus-soundfont mus-voc mus-svx mus-unsupported
 </pre>
-This function doesn't set the header choices for output of recording; it simply decodes a sndlib header type identifier.
+This function doesn't set the header choices for output of recording; it just decodes a sndlib header type identifier.
 <pre>
     :<em class=typing>(mus-header-type-name (mus-sound-header-type "oboe.snd"))</em>
     <em class=listener>"Sun/Next"</em>
@@ -4898,7 +4917,7 @@ starting at 'samp' in the output channel, and returns a list with the mix.
 If 'in-chan' is #t, all input channels are mixed into successive output channels, and
 mix returns a list of the mixes.
 </p>
-<p>If 'with-mix-tags' is #f (the default is #t), the data is simply
+<p>If 'with-mix-tags' is #f (the default is #t), the data is
 mixed without creating any mix objects. 
 </p>
 
@@ -5232,7 +5251,7 @@ example, if you know the frequency of the mix sound, you can reflect that in the
 </td></tr><tr><td></td><td>
 mix-vct is one of the basic mixing functions. It
 mixes the contents of 'vct' into the given channel starting at sample 'beg'.
-If 'with-mix-tags' is #f (the default is #t), the data is simply
+If 'with-mix-tags' is #f (the default is #t), the data is
 mixed without creating any mix tags.
 mix-vct returns the id of the new mix, or -1 (a simple mix, no tag).
 <pre>
@@ -5823,9 +5842,10 @@ This function returns the selection srate.  There's some arbitrariness in this i
 
 
 <!-- selection? -->
-<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="selectionok">selection?</a> ()</code>
+<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="selectionok">selection?</a> (:optional obj)</code>
 </td></tr><tr><td></td><td>
 selection? returns #t if there is a selection.
+If some 'obj' is passed, selection? returns #t is obj is a selection object, and there is a selection.
 <pre>
     :<em class=typing>(select-all)</em>
     <em class=listener>#&lt;region 2&gt;</em>
@@ -8110,7 +8130,7 @@ Here is an example that mixes a sine wave into the current channel:
 </pre></td></tr></table>
 
 In the normal case,
-this function simply mixes in a sine wave: <code>(+ y (* (<a class=quiet href="#vctref" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctref_tip)">vct-ref</a> data 2) (sin angle)))</code>
+this function just mixes in a sine wave: <code>(+ y (* (<a class=quiet href="#vctref" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctref_tip)">vct-ref</a> data 2) (sin angle)))</code>
 where the amplitude scaler is stored in <code>(<a class=quiet href="#vctref" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctref_tip)">vct-ref</a> data 2)</code>.  In subsequent
 reads, the init-func sets up a vct with the current phase (dependent on the frequency
 and the fragment begin sample), the phase increment (dependent on the frequency), and
@@ -9292,7 +9312,7 @@ states aren't of great interest, you can save time by turning off redisplays.
 <code><a class=def name="srate">srate</a> (:optional <em class=narg>snd</em>)</code>
 </td></tr><tr><td></td><td>
 This is the sound's sampling rate.  If you set this to a new value, update-sound is called to
-reflect the new srate, but any current edits are simply flushed.  This is consistent
+reflect the new srate, but any current edits are flushed.  This is consistent
 with the other header fields (data-format, etc), but it can be annoying.
 <br><br>
 There are several srates floating around in Snd.  
@@ -9668,7 +9688,7 @@ sonogram or spectrogram) 'slice' in the given channel.
 This is the fft size (the default size is 512).  It should be a power of 2.
 If your version of Snd was built with FFTW, and you set transform-size
 too large (on my machine, with 2 GBytes of memory,
-<code>(expt 2 26)</code> is apparently too large), FFTW simply exits Snd!  There is currently
+<code>(expt 2 26)</code> is apparently too large), FFTW exits Snd!  There is currently
 no way to trap the error.  Also, FFTW assumes the fft size is a (signed) int &mdash; 2^30 is probably
 the transform-size limit.
 </td></tr><tr><td colspan=2 height=18></td></tr>
@@ -10497,7 +10517,7 @@ entire panel.
 describes the edit history of a channel. When, for example, you type C-d, nothing actually
 happens to any data, despite the fact that the graph no longer shows that sample, it's omitted when you play the
 channel, and so on.  Instead, a descriptor is appended to the edit history of that
-channel saying "sample n was deleted".  Undo and redo move around in this list (they simply move the
+channel saying "sample n was deleted".  Undo and redo move around in this list (they just move the
 pointer to the current edit history position); all the positions are accessible just like the current
 one, and are exposed in many functions described above via the 'pos' or 'edpos' arguments.
 The edit list functions are:
@@ -10789,7 +10809,7 @@ into an independent Snd process:
 
 <p>It is sometimes more convenient to edit the edit history lists
 directly, than to run Snd and invoke the <a href="snd.html#savedstate">"Save session"</a> menu option.
-These lists are simply Scheme, Ruby, or Forth programs, just like anything else
+These lists are Scheme, Ruby, or Forth programs, just like anything else
 discussed in this document.  You could even write them from
 scratch.  Say we want to make a stereo file that consists
 of four mono files mixed at various points; we know where they

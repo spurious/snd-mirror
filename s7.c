@@ -11050,6 +11050,16 @@ static s7_pointer g_is_vector(s7_scheme *sc, s7_pointer args)
 }
 
 
+int s7_vector_rank(s7_pointer vect)
+{
+#if WITH_MULTIDIMENSIONAL_VECTORS
+  if (vector_is_multidimensional(vect))
+    return(vector_ndims(vect));
+#endif
+  return(1);
+}
+
+
 #if WITH_MULTIDIMENSIONAL_VECTORS
 static s7_pointer g_vector_dimensions(s7_scheme *sc, s7_pointer args)
 {

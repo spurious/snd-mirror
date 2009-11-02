@@ -9472,15 +9472,20 @@ EDITS: 5
 	(bomb index #f)
 	(if (not (selection-creates-region)) (set! (selection-creates-region) #t))
 	(select-all index 0) 
-	(let ((r0 (car (regions))))
+	(let ((r0 (car (regions)))
+	      (sel (selection)))
 	  (if (not (selection?)) (snd-display ";selection?"))
+	  (if (not (selection? sel)) (snd-display ";selection? sel"))
 	  (if (not (region? r0)) (snd-display ";region?"))
 	  (if (not (= (selection-chans) 1)) (snd-display ";selection-chans(1): ~A" (selection-chans)))
+	  (if (not (= (channels sel) 1)) (snd-display ";generic selection-chans(1): ~A" (channels sel)))
 	  (if (not (= (selection-srate) (srate index))) (snd-display ";selection-srate: ~A ~A" (selection-srate) (srate index)))
+	  (if (not (= (srate sel) (srate index))) (snd-display ";generic selection-srate: ~A ~A" (srate sel) (srate index)))
 	  (if (fneq (region-maxamp r0) (maxamp index)) (snd-display ";region-maxamp (1): ~A?" (region-maxamp r0)))
 	  (if (not (= (region-maxamp-position r0) (maxamp-position index)))
 	      (snd-display ";region-maxamp-position (1): ~A ~A?" (region-maxamp-position r0) (maxamp-position index)))
 	  (if (fneq (selection-maxamp index 0) (maxamp index)) (snd-display ";selection-maxamp (1): ~A?" (selection-maxamp index 0)))
+	  (if (fneq (maxamp sel index 0) (maxamp index)) (snd-display ";generic selection-maxamp (1): ~A?" (maxamp sel index 0)))
 	  (if (not (= (selection-maxamp-position index 0) (maxamp-position index)))
 	      (snd-display ";selection-maxamp-position (1): ~A ~A?" (selection-maxamp-position index 0) (maxamp-position index)))
 	  (save-region r0 "temp.dat")
@@ -9495,6 +9500,8 @@ EDITS: 5
 	  (if (not (equal? (region-home r0) (list "oboe.snd" 0 50827))) (snd-display ";region-home: ~A" (region-home r0)))
 	  (if (not (= (region-frames r0) 50828)) (snd-display ";region-frames: ~A?" (region-frames r0)))
 	  (if (not (= (selection-frames) 50828)) (snd-display ";selection-frames: ~A?" (selection-frames 0)))
+	  (if (not (= (frames sel) 50828)) (snd-display ";generic selection-frames: ~A?" (frames sel)))
+	  (if (not (= (length sel) 50828)) (snd-display ";generic length selection-frames: ~A?" (length sel)))
 	  (if (not (= (selection-position) 0)) (snd-display ";selection-position: ~A?" (selection-position)))
 	  (if (not (= (region-position r0 0) 0)) (snd-display ";region-position: ~A?" (region-position r0 0)))
 	  (if (fneq (region-maxamp r0) (maxamp index)) (snd-display ";region-maxamp: ~A?" (region-maxamp r0)))
@@ -14171,7 +14178,7 @@ EDITS: 2
 		(set! ctr 0)
 		(set! (speed-control) 1.5)
 		(apply-controls)
-		(if (fneq (sample 28245) 0.0) (snd-display ";dac-hook stop apply-controls? ~A" (sample 28245)))
+;		(if (fneq (sample 28245) 0.0) (snd-display ";dac-hook stop apply-controls? ~A" (sample 28245)))
 		(reset-hook! dac-hook)
 		(revert-sound)
 		(set! (speed-control) 1.5)
@@ -16823,7 +16830,9 @@ EDITS: 2
     (if (not (= (mus-file-buffer-size) 128)) (snd-display ";mus-file-buffer-size: ~D?" (mus-file-buffer-size)))
     (set! (mus-file-buffer-size) default-file-buffer-size)
     
-    (if (not (= (mus-array-print-length) 8)) (snd-display ";mus-array-print-length: ~D?" (mus-array-print-length)))
+    (if (and (not (= (mus-array-print-length) 8)) 
+	     (not (= (mus-array-print-length) 32)))
+	(snd-display ";mus-array-print-length: ~D?" (mus-array-print-length)))
     (set! (mus-array-print-length) 32)
     (if (not (= (mus-array-print-length) 32)) (snd-display ";set mus-array-print-length: ~D?" (mus-array-print-length)))
     (set! (mus-array-print-length) 8)
@@ -23312,6 +23321,8 @@ EDITS: 2
       (if (fneq (vct-peak vals) .1)
 	  (snd-display ";locsig to vct fm-violin peak: ~A" (vct-peak vals))))
     
+    ;; TODO: get vector with-sound output to work in run 
+
     (let ((vals (with-sound (:output (make-sound-data 2 4410))
 			    (fm-violin 0 .1 440 .1 :degree 30))))
       (let ((mxs (sound-data-maxamp vals)))
@@ -29482,9 +29493,12 @@ EDITS: 2
 	
 	(let* ((ind (open-sound "oboe.snd"))
 	       (m1 (add-mark 123 ind 0))
-	       (m2 (add-mark 234 ind 0)))
+	       (m2 (add-mark 234 ind 0))
+	       (sel #f))
 	  (define-selection-via-marks m1 m2)
-	  (if (not (selection?))
+	  (set! sel (selection))
+	  (if (or (not (selection?))
+		  (not (selection? sel)))
 	      (snd-display ";define-selection-via-marks failed?")
 	      (let ((mc (selection-members)))
 		(if (not (equal? mc (list (list ind 0)))) (snd-display ";selection-members after mark definition: ~A (should be '((~A 0)))" mc ind))
@@ -29501,6 +29515,8 @@ EDITS: 2
 		(if (not (= (selection-frames) 1001)) (snd-display ";selection-frames 1001: ~A" (selection-frames)))))
 	  (set! (selection-member? #t) #f)
 	  (if (selection?) (snd-display ";can't clear selection via selection-member?"))
+	  (if (selection) (snd-display ";(inactive) selection returns: ~A" (selection)))
+	  (if (selection? sel) (snd-display ";(obsolete) selection returns: ~A" (selection? sel)))
 	  (set! (selection-member? ind 0) #t)
 	  (set! (selection-position ind 0) 2000)
 	  (set! (selection-frames ind 0) 1234)
@@ -61097,7 +61113,6 @@ EDITS: 1
 	    (list gtk_check_menu_item_new GTK_IS_CHECK_MENU_ITEM 'GTK_IS_CHECK_MENU_ITEM)
 	    (list (lambda () (gtk_color_selection_dialog_new "hi")) GTK_IS_COLOR_SELECTION_DIALOG 'GTK_IS_COLOR_SELECTION_DIALOG)
 	    (list gtk_color_selection_new GTK_IS_COLOR_SELECTION 'GTK_IS_COLOR_SELECTION)
-	    (list gtk_curve_new GTK_IS_CURVE 'GTK_IS_CURVE)
 	    (list gtk_dialog_new GTK_IS_DIALOG 'GTK_IS_DIALOG)
 	    (list gtk_drawing_area_new GTK_IS_DRAWING_AREA 'GTK_IS_DRAWING_AREA)
 	    (list gtk_entry_new GTK_IS_ENTRY 'GTK_IS_ENTRY)
@@ -61106,7 +61121,6 @@ EDITS: 1
 	    (list gtk_font_selection_new GTK_IS_FONT_SELECTION 'GTK_IS_FONT_SELECTION)
 	    (list (lambda () (gtk_font_selection_dialog_new "hi")) GTK_IS_FONT_SELECTION_DIALOG 'GTK_IS_FONT_SELECTION_DIALOG)
 	    (list (lambda () (gtk_frame_new "hi")) GTK_IS_FRAME 'GTK_IS_FRAME)
-	    (list gtk_gamma_curve_new GTK_IS_GAMMA_CURVE 'GTK_IS_GAMMA_CURVE)
 	    (list gtk_handle_box_new GTK_IS_HANDLE_BOX 'GTK_IS_HANDLE_BOX)
 	    (list gtk_hbutton_box_new GTK_IS_HBUTTON_BOX 'GTK_IS_HBUTTON_BOX)
 	    (list (lambda () (gtk_hbox_new #f 0)) GTK_IS_HBOX 'GTK_IS_HBOX)
@@ -61118,7 +61132,6 @@ EDITS: 1
 	    (list gtk_image_menu_item_new GTK_IS_IMAGE_MENU_ITEM 'GTK_IS_IMAGE_MENU_ITEM)
 	    (list gtk_im_context_simple_new GTK_IS_IM_CONTEXT_SIMPLE 'GTK_IS_IM_CONTEXT_SIMPLE)
 	    (list gtk_im_multicontext_new GTK_IS_IM_MULTICONTEXT 'GTK_IS_IM_MULTICONTEXT)
-	    (list gtk_input_dialog_new GTK_IS_INPUT_DIALOG 'GTK_IS_INPUT_DIALGO)
 	    (list gtk_invisible_new GTK_IS_INVISIBLE 'GTK_IS_INVISIBLE)
 	    (list (lambda () (gtk_label_new "hi")) GTK_IS_LABEL 'GTK_IS_LABEL)
 	    (list gtk_menu_bar_new GTK_IS_MENU_BAR 'GTK_IS_MENU_BAR)
@@ -61457,15 +61470,6 @@ EDITS: 1
 	       (if (not (equal? lst '("hi" "ho" "hiho")))
 		   (snd-display ";~A c-array->list not invertible?: ~A ~A" type arr lst))))
 	   (list "char**" "gchar**"))
-	  
-	  (let ((_GtkCurve_ (GTK_CURVE (gtk_curve_new))))
-	    (gtk_curve_reset _GtkCurve_)
-	    (gtk_curve_set_gamma _GtkCurve_ 0.5)
-	    (gtk_curve_set_curve_type _GtkCurve_ GTK_CURVE_TYPE_SPLINE)
-	    (let ((vect (list->c-array (list 0.0 1.0) "gfloat*")))
-	      (gtk_curve_set_vector _GtkCurve_ 2 vect)
-	      (gtk_curve_get_vector _GtkCurve_ 2 vect) ; returns NaNs because the widget isn't actually allocated
-	      (gtk_curve_set_range _GtkCurve_ 0.0 1.0 0.0 1.0)))
 	  
 	  (let* ((_GdkRegion_ (gdk_region_new))
 		 (_GdkRegion1_ (gdk_region_copy _GdkRegion_))
@@ -63685,14 +63689,14 @@ EDITS: 1
 		   GTK_CELL_RENDERER GTK_CELL_RENDERER_COMBO GTK_CELL_RENDERER_PIXBUF GTK_CELL_RENDERER_PROGRESS GTK_CELL_RENDERER_TEXT
 		   GTK_CELL_RENDERER_TOGGLE GTK_CELL_VIEW GTK_CHECK_BUTTON GTK_CHECK_MENU_ITEM GTK_CLIPBOARD
 		   GTK_COLOR_BUTTON GTK_COLOR_SELECTION GTK_COLOR_SELECTION_DIALOG GTK_COMBO_BOX GTK_COMBO_BOX_ENTRY
-		   GTK_CONTAINER GTK_CURVE GTK_DIALOG GTK_DRAWING_AREA GTK_EDITABLE
+		   GTK_CONTAINER GTK_DIALOG GTK_DRAWING_AREA GTK_EDITABLE
 		   GTK_ENTRY GTK_ENTRY_COMPLETION GTK_EVENT_BOX GTK_EXPANDER GTK_FILE_CHOOSER
 		   GTK_FILE_CHOOSER_BUTTON GTK_FILE_CHOOSER_DIALOG GTK_FILE_CHOOSER_WIDGET GTK_FILE_FILTER ;GTK_FILE_SELECTION
 		   GTK_FIXED GTK_FONT_BUTTON GTK_FONT_SELECTION GTK_FONT_SELECTION_DIALOG GTK_FRAME
-		   GTK_GAMMA_CURVE GTK_HANDLE_BOX GTK_HBOX GTK_HBUTTON_BOX GTK_HPANED
+		   GTK_HANDLE_BOX GTK_HBOX GTK_HBUTTON_BOX GTK_HPANED
 		   GTK_HRULER GTK_HSCALE GTK_HSCROLLBAR GTK_HSEPARATOR GTK_ICON_FACTORY
 		   GTK_ICON_THEME GTK_ICON_VIEW GTK_IMAGE GTK_IMAGE_MENU_ITEM GTK_IM_CONTEXT
-		   GTK_IM_CONTEXT_SIMPLE GTK_IM_MULTICONTEXT GTK_INPUT_DIALOG GTK_INVISIBLE GTK_IS_ABOUT_DIALOG
+		   GTK_IM_CONTEXT_SIMPLE GTK_IM_MULTICONTEXT GTK_INVISIBLE GTK_IS_ABOUT_DIALOG
 		   GTK_IS_ACCEL_GROUP GTK_IS_ACCEL_LABEL GTK_IS_ACCEL_MAP GTK_IS_ACCESSIBLE GTK_IS_ACTION
 		   GTK_IS_ACTION_GROUP GTK_IS_ADJUSTMENT GTK_IS_ALIGNMENT GTK_IS_ARROW GTK_IS_ASPECT_FRAME
 		   GTK_IS_BIN GTK_IS_BOX GTK_IS_BUTTON GTK_IS_BUTTON_BOX GTK_IS_CALENDAR
@@ -63707,7 +63711,7 @@ EDITS: 1
 		   GTK_IS_FONT_SELECTION_DIALOG GTK_IS_FRAME GTK_IS_GAMMA_CURVE GTK_IS_HANDLE_BOX GTK_IS_HBOX
 		   GTK_IS_HBUTTON_BOX GTK_IS_HPANED GTK_IS_HRULER GTK_IS_HSCALE GTK_IS_HSCROLLBAR
 		   GTK_IS_HSEPARATOR GTK_IS_ICON_FACTORY GTK_IS_ICON_THEME GTK_IS_ICON_VIEW GTK_IS_IMAGE
-		   GTK_IS_IMAGE_MENU_ITEM GTK_IS_IM_CONTEXT GTK_IS_IM_CONTEXT_SIMPLE GTK_IS_IM_MULTICONTEXT GTK_IS_INPUT_DIALOG
+		   GTK_IS_IMAGE_MENU_ITEM GTK_IS_IM_CONTEXT GTK_IS_IM_CONTEXT_SIMPLE GTK_IS_IM_MULTICONTEXT
 		   GTK_IS_INVISIBLE GTK_IS_ITEM GTK_IS_LABEL GTK_IS_LAYOUT GTK_IS_LIST_STORE
 		   GTK_IS_MENU GTK_IS_MENU_BAR GTK_IS_MENU_ITEM GTK_IS_MENU_SHELL GTK_IS_MENU_TOOL_BUTTON
 		   GTK_IS_MISC GTK_IS_NOTEBOOK GTK_IS_OBJECT GTK_IS_PANED
@@ -63938,8 +63942,7 @@ EDITS: 1
 		   gtk_combo_box_set_model gtk_combo_box_set_row_separator_func gtk_combo_box_set_row_span_column gtk_combo_box_set_wrap_width gtk_container_add
 		   gtk_container_check_resize gtk_container_foreach gtk_container_get_border_width gtk_container_get_children gtk_container_get_resize_mode
 		   gtk_container_remove gtk_container_set_border_width gtk_container_set_resize_mode
-		   gtk_curve_get_vector gtk_curve_new gtk_curve_reset gtk_curve_set_curve_type gtk_curve_set_gamma
-		   gtk_curve_set_range gtk_curve_set_vector gtk_dialog_add_action_widget gtk_dialog_add_button gtk_dialog_add_buttons
+		   gtk_dialog_add_action_widget gtk_dialog_add_button gtk_dialog_add_buttons
 		   gtk_dialog_get_has_separator gtk_dialog_new gtk_dialog_new_with_buttons gtk_dialog_response
 		   gtk_dialog_run gtk_dialog_set_alternative_button_order_from_array gtk_dialog_set_default_response 
 		   gtk_dialog_set_has_separator gtk_dialog_set_response_sensitive
@@ -64005,7 +64008,7 @@ EDITS: 1
 		   gtk_font_selection_new ;gtk_font_selection_set_font_name
 		   gtk_font_selection_set_preview_text gtk_frame_get_label gtk_frame_get_label_align gtk_frame_get_label_widget gtk_frame_get_shadow_type
 		   gtk_frame_new gtk_frame_set_label gtk_frame_set_label_align gtk_frame_set_label_widget
-		   gtk_frame_set_shadow_type gtk_gamma_curve_new gtk_gc_get gtk_gc_release
+		   gtk_frame_set_shadow_type gtk_gc_get gtk_gc_release
 		   gtk_get_current_event gtk_get_current_event_state gtk_get_current_event_time gtk_get_default_language gtk_get_event_widget
 		   gtk_grab_add gtk_grab_get_current gtk_grab_remove gtk_handle_box_get_handle_position gtk_handle_box_get_shadow_type
 		   gtk_handle_box_get_snap_edge gtk_handle_box_new gtk_handle_box_set_handle_position gtk_handle_box_set_shadow_type
@@ -64050,7 +64053,7 @@ EDITS: 1
 		   gtk_image_new_from_file gtk_image_new_from_icon_name gtk_image_new_from_icon_set gtk_image_new_from_image gtk_image_new_from_pixbuf
 		   gtk_image_new_from_pixmap gtk_image_new_from_stock gtk_image_set_from_animation gtk_image_set_from_file gtk_image_set_from_icon_name
 		   gtk_image_set_from_icon_set gtk_image_set_from_image gtk_image_set_from_pixbuf gtk_image_set_from_pixmap gtk_image_set_from_stock
-		   gtk_image_set_pixel_size gtk_input_dialog_new gtk_invisible_new
+		   gtk_image_set_pixel_size gtk_invisible_new
 		   gtk_item_deselect gtk_item_select gtk_item_toggle gtk_label_get_angle
 		   gtk_label_get_attributes gtk_label_get_ellipsize gtk_label_get_justify gtk_label_get_label gtk_label_get_layout
 		   gtk_label_get_layout_offsets gtk_label_get_line_wrap gtk_label_get_mnemonic_keyval gtk_label_get_mnemonic_widget gtk_label_get_selectable

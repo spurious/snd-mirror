@@ -2364,23 +2364,11 @@ void call_sp_watchers(snd_info *sp, sp_watcher_t type, sp_watcher_reason_t reaso
  *             scale(-to|by) convolve fft env filter insert mix reverse save smooth src copy|fill! map|scan pan-mix
  *               sampler? replace-with?
  *
- * doc/test/cleanup play (mix region sound file player)
- * TODO: make a selection object, and add it to all the generics
- *       (selection) collides with selection? which might take opt arg, return #t if no arg and selection to be backwards compatible?
- *       length: selection-frames, play -> play-selection, maxamp -> selection-maxamp
- *       srate -> selection-srate, channels -> selection-chans, file-name via selection-sound?
- *   but... (let ((sel (selection))) ...change to selection members... (scale-by sel) -- what does this do? 
- *       it scales the current selection -- that object has a counter for each time the selection changes
- *       so (eq? sel1 sel2) is #f if the selection has changed
- *       but selection ops all refer through it to the current selection
- *       (selection?) -> is there a current selection,
- *       (selection? sel) -> is sel the selection object, and is there a selection
- *       (selection) returns the selection object with the counter
+ * doc/test/cleanup play (mix region selection sound file player)
  *
  * save with all the optkey args for all types (treat list/vector etc as sound data)
  * copy selection = open copy as sound? 
  * fill! selection (or others) as set all samps to val
- *    also move make-selection into C
  * 
  * (scan-channel -> channel-for-each)
  *   and channel-map rather than map-channel
@@ -2410,8 +2398,6 @@ void call_sp_watchers(snd_info *sp, sp_watcher_t type, sp_watcher_reason_t reaso
  *
  * make-vector! choices: any, 1 obj [any type], 1 obj: double -- do any others warrant special handling?
  * current sync-info as vector? (then selection = vector of sound objs)
- *
- * here's an oddity: ./snd t30 -e '(get-best...)' says unknown variable?!? doesn't the load take place first?
  */
 
 
@@ -3499,6 +3485,9 @@ static XEN g_channels(XEN snd)
   if (XEN_REGION_P(snd))                         /* region-chans */
     return(g_region_chans(snd));
 
+  if (XEN_SELECTION_P(snd))                      /* selection-chans */
+    return(g_selection_chans());
+
   return(sound_get(snd, SP_NCHANS, S_channels));
 }
 
@@ -3527,6 +3516,9 @@ static XEN g_srate(XEN snd)
 
   if (XEN_REGION_P(snd))
     return(g_region_srate(snd));
+
+  if (XEN_SELECTION_P(snd))
+    return(g_selection_srate());
 
   return(sound_get(snd, SP_SRATE, S_srate));
 }

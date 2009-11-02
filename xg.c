@@ -624,10 +624,6 @@ XM_TYPE_PTR_1(GtkContainer_, GtkContainer*)
 #define C_TO_XEN_GtkResizeMode(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkResizeMode(Arg) (GtkResizeMode)(XEN_TO_C_INT(Arg))
 #define XEN_GtkResizeMode_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE_PTR_1(GtkCurve_, GtkCurve*)
-XM_TYPE_PTR_1(gfloat_, gfloat*)
-#define XEN_TO_C_GtkCurveType(Arg) (GtkCurveType)(XEN_TO_C_INT(Arg))
-#define XEN_GtkCurveType_P(Arg) XEN_INTEGER_P(Arg)
 #define XEN_TO_C_GtkDialogFlags(Arg) (GtkDialogFlags)(XEN_TO_C_INT(Arg))
 #define XEN_GtkDialogFlags_P(Arg) XEN_INTEGER_P(Arg)
 #define XEN_etc_P(Arg) (XEN_LIST_P(Arg))
@@ -5982,43 +5978,11 @@ static XEN gxg_gtk_button_new_with_mnemonic(XEN label)
   return(C_TO_XEN_GtkWidget_(gtk_button_new_with_mnemonic(XEN_TO_C_gchar_(label))));
 }
 
-static XEN gxg_gtk_button_pressed(XEN button)
-{
-  #define H_gtk_button_pressed "void gtk_button_pressed(GtkButton* button)"
-  XEN_ASSERT_TYPE(XEN_GtkButton__P(button), button, 1, "gtk_button_pressed", "GtkButton*");
-  gtk_button_pressed(XEN_TO_C_GtkButton_(button));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_button_released(XEN button)
-{
-  #define H_gtk_button_released "void gtk_button_released(GtkButton* button)"
-  XEN_ASSERT_TYPE(XEN_GtkButton__P(button), button, 1, "gtk_button_released", "GtkButton*");
-  gtk_button_released(XEN_TO_C_GtkButton_(button));
-  return(XEN_FALSE);
-}
-
 static XEN gxg_gtk_button_clicked(XEN button)
 {
   #define H_gtk_button_clicked "void gtk_button_clicked(GtkButton* button)"
   XEN_ASSERT_TYPE(XEN_GtkButton__P(button), button, 1, "gtk_button_clicked", "GtkButton*");
   gtk_button_clicked(XEN_TO_C_GtkButton_(button));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_button_enter(XEN button)
-{
-  #define H_gtk_button_enter "void gtk_button_enter(GtkButton* button)"
-  XEN_ASSERT_TYPE(XEN_GtkButton__P(button), button, 1, "gtk_button_enter", "GtkButton*");
-  gtk_button_enter(XEN_TO_C_GtkButton_(button));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_button_leave(XEN button)
-{
-  #define H_gtk_button_leave "void gtk_button_leave(GtkButton* button)"
-  XEN_ASSERT_TYPE(XEN_GtkButton__P(button), button, 1, "gtk_button_leave", "GtkButton*");
-  gtk_button_leave(XEN_TO_C_GtkButton_(button));
   return(XEN_FALSE);
 }
 
@@ -6781,72 +6745,6 @@ static XEN gxg_gtk_container_get_children(XEN container)
   #define H_gtk_container_get_children "GList* gtk_container_get_children(GtkContainer* container)"
   XEN_ASSERT_TYPE(XEN_GtkContainer__P(container), container, 1, "gtk_container_get_children", "GtkContainer*");
   return(C_TO_XEN_GList_(gtk_container_get_children(XEN_TO_C_GtkContainer_(container))));
-}
-
-static XEN gxg_gtk_curve_new(void)
-{
-  #define H_gtk_curve_new "GtkWidget* gtk_curve_new( void)"
-  return(C_TO_XEN_GtkWidget_(gtk_curve_new()));
-}
-
-static XEN gxg_gtk_curve_reset(XEN curve)
-{
-  #define H_gtk_curve_reset "void gtk_curve_reset(GtkCurve* curve)"
-  XEN_ASSERT_TYPE(XEN_GtkCurve__P(curve), curve, 1, "gtk_curve_reset", "GtkCurve*");
-  gtk_curve_reset(XEN_TO_C_GtkCurve_(curve));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_curve_set_gamma(XEN curve, XEN gamma)
-{
-  #define H_gtk_curve_set_gamma "void gtk_curve_set_gamma(GtkCurve* curve, gfloat gamma)"
-  XEN_ASSERT_TYPE(XEN_GtkCurve__P(curve), curve, 1, "gtk_curve_set_gamma", "GtkCurve*");
-  XEN_ASSERT_TYPE(XEN_gfloat_P(gamma), gamma, 2, "gtk_curve_set_gamma", "gfloat");
-  gtk_curve_set_gamma(XEN_TO_C_GtkCurve_(curve), XEN_TO_C_gfloat(gamma));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_curve_set_range(XEN curve, XEN min_x, XEN max_x, XEN min_y, XEN max_y)
-{
-  #define H_gtk_curve_set_range "void gtk_curve_set_range(GtkCurve* curve, gfloat min_x, gfloat max_x, \
-gfloat min_y, gfloat max_y)"
-  XEN_ASSERT_TYPE(XEN_GtkCurve__P(curve), curve, 1, "gtk_curve_set_range", "GtkCurve*");
-  XEN_ASSERT_TYPE(XEN_gfloat_P(min_x), min_x, 2, "gtk_curve_set_range", "gfloat");
-  XEN_ASSERT_TYPE(XEN_gfloat_P(max_x), max_x, 3, "gtk_curve_set_range", "gfloat");
-  XEN_ASSERT_TYPE(XEN_gfloat_P(min_y), min_y, 4, "gtk_curve_set_range", "gfloat");
-  XEN_ASSERT_TYPE(XEN_gfloat_P(max_y), max_y, 5, "gtk_curve_set_range", "gfloat");
-  gtk_curve_set_range(XEN_TO_C_GtkCurve_(curve), XEN_TO_C_gfloat(min_x), XEN_TO_C_gfloat(max_x), XEN_TO_C_gfloat(min_y), 
-                      XEN_TO_C_gfloat(max_y));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_curve_get_vector(XEN curve, XEN veclen, XEN vector)
-{
-  #define H_gtk_curve_get_vector "void gtk_curve_get_vector(GtkCurve* curve, int veclen, gfloat* vector)"
-  XEN_ASSERT_TYPE(XEN_GtkCurve__P(curve), curve, 1, "gtk_curve_get_vector", "GtkCurve*");
-  XEN_ASSERT_TYPE(XEN_int_P(veclen), veclen, 2, "gtk_curve_get_vector", "int");
-  XEN_ASSERT_TYPE(XEN_gfloat__P(vector), vector, 3, "gtk_curve_get_vector", "gfloat*");
-  gtk_curve_get_vector(XEN_TO_C_GtkCurve_(curve), XEN_TO_C_int(veclen), XEN_TO_C_gfloat_(vector));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_curve_set_vector(XEN curve, XEN veclen, XEN vector)
-{
-  #define H_gtk_curve_set_vector "void gtk_curve_set_vector(GtkCurve* curve, int veclen, gfloat* vector)"
-  XEN_ASSERT_TYPE(XEN_GtkCurve__P(curve), curve, 1, "gtk_curve_set_vector", "GtkCurve*");
-  XEN_ASSERT_TYPE(XEN_int_P(veclen), veclen, 2, "gtk_curve_set_vector", "int");
-  XEN_ASSERT_TYPE(XEN_gfloat__P(vector), vector, 3, "gtk_curve_set_vector", "gfloat*");
-  gtk_curve_set_vector(XEN_TO_C_GtkCurve_(curve), XEN_TO_C_int(veclen), XEN_TO_C_gfloat_(vector));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_curve_set_curve_type(XEN curve, XEN type)
-{
-  #define H_gtk_curve_set_curve_type "void gtk_curve_set_curve_type(GtkCurve* curve, GtkCurveType type)"
-  XEN_ASSERT_TYPE(XEN_GtkCurve__P(curve), curve, 1, "gtk_curve_set_curve_type", "GtkCurve*");
-  XEN_ASSERT_TYPE(XEN_GtkCurveType_P(type), type, 2, "gtk_curve_set_curve_type", "GtkCurveType");
-  gtk_curve_set_curve_type(XEN_TO_C_GtkCurve_(curve), XEN_TO_C_GtkCurveType(type));
-  return(XEN_FALSE);
 }
 
 static XEN gxg_gtk_dialog_new(void)
@@ -7726,12 +7624,6 @@ static XEN gxg_gtk_frame_get_shadow_type(XEN frame)
   return(C_TO_XEN_GtkShadowType(gtk_frame_get_shadow_type(XEN_TO_C_GtkFrame_(frame))));
 }
 
-static XEN gxg_gtk_gamma_curve_new(void)
-{
-  #define H_gtk_gamma_curve_new "GtkWidget* gtk_gamma_curve_new( void)"
-  return(C_TO_XEN_GtkWidget_(gtk_gamma_curve_new()));
-}
-
 static XEN gxg_gtk_gc_get(XEN depth, XEN colormap, XEN values, XEN values_mask)
 {
   #define H_gtk_gc_get "GdkGC* gtk_gc_get(gint depth, GdkColormap* colormap, GdkGCValues* values, GdkGCValuesMask values_mask)"
@@ -8564,12 +8456,6 @@ GtkMenuShell* menushell)"
   XEN_ASSERT_TYPE(XEN_GtkMenuShell__P(menushell), menushell, 2, "gtk_im_multicontext_append_menuitems", "GtkMenuShell*");
   gtk_im_multicontext_append_menuitems(XEN_TO_C_GtkIMMulticontext_(context), XEN_TO_C_GtkMenuShell_(menushell));
   return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_input_dialog_new(void)
-{
-  #define H_gtk_input_dialog_new "GtkWidget* gtk_input_dialog_new( void)"
-  return(C_TO_XEN_GtkWidget_(gtk_input_dialog_new()));
 }
 
 static XEN gxg_gtk_invisible_new(void)
@@ -9918,34 +9804,6 @@ GtkWidget* child)"
   XEN_ASSERT_TYPE(XEN_GtkNotebook__P(notebook), notebook, 1, "gtk_notebook_get_menu_label_text", "GtkNotebook*");
   XEN_ASSERT_TYPE(XEN_GtkWidget__P(child), child, 2, "gtk_notebook_get_menu_label_text", "GtkWidget*");
   return(C_TO_XEN_gchar_(gtk_notebook_get_menu_label_text(XEN_TO_C_GtkNotebook_(notebook), XEN_TO_C_GtkWidget_(child))));
-}
-
-static XEN gxg_gtk_notebook_query_tab_label_packing(XEN notebook, XEN child, XEN ignore_expand, XEN ignore_fill, XEN ignore_pack_type)
-{
-  #define H_gtk_notebook_query_tab_label_packing "void gtk_notebook_query_tab_label_packing(GtkNotebook* notebook, \
-GtkWidget* child, gboolean* [expand], gboolean* [fill], GtkPackType* [pack_type])"
-  gboolean ref_expand;
-  gboolean ref_fill;
-  GtkPackType ref_pack_type;
-  XEN_ASSERT_TYPE(XEN_GtkNotebook__P(notebook), notebook, 1, "gtk_notebook_query_tab_label_packing", "GtkNotebook*");
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(child), child, 2, "gtk_notebook_query_tab_label_packing", "GtkWidget*");
-  gtk_notebook_query_tab_label_packing(XEN_TO_C_GtkNotebook_(notebook), XEN_TO_C_GtkWidget_(child), &ref_expand, &ref_fill, 
-                                       &ref_pack_type);
-  return(XEN_LIST_3(C_TO_XEN_gboolean(ref_expand), C_TO_XEN_gboolean(ref_fill), C_TO_XEN_GtkPackType(ref_pack_type)));
-}
-
-static XEN gxg_gtk_notebook_set_tab_label_packing(XEN notebook, XEN child, XEN expand, XEN fill, XEN pack_type)
-{
-  #define H_gtk_notebook_set_tab_label_packing "void gtk_notebook_set_tab_label_packing(GtkNotebook* notebook, \
-GtkWidget* child, gboolean expand, gboolean fill, GtkPackType pack_type)"
-  XEN_ASSERT_TYPE(XEN_GtkNotebook__P(notebook), notebook, 1, "gtk_notebook_set_tab_label_packing", "GtkNotebook*");
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(child), child, 2, "gtk_notebook_set_tab_label_packing", "GtkWidget*");
-  XEN_ASSERT_TYPE(XEN_gboolean_P(expand), expand, 3, "gtk_notebook_set_tab_label_packing", "gboolean");
-  XEN_ASSERT_TYPE(XEN_gboolean_P(fill), fill, 4, "gtk_notebook_set_tab_label_packing", "gboolean");
-  XEN_ASSERT_TYPE(XEN_GtkPackType_P(pack_type), pack_type, 5, "gtk_notebook_set_tab_label_packing", "GtkPackType");
-  gtk_notebook_set_tab_label_packing(XEN_TO_C_GtkNotebook_(notebook), XEN_TO_C_GtkWidget_(child), XEN_TO_C_gboolean(expand), 
-                                     XEN_TO_C_gboolean(fill), XEN_TO_C_GtkPackType(pack_type));
-  return(XEN_FALSE);
 }
 
 static XEN gxg_gtk_notebook_reorder_child(XEN notebook, XEN child, XEN position)
@@ -33984,7 +33842,6 @@ static XEN gxg_GTK_CHECK_MENU_ITEM(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XE
 static XEN gxg_GTK_COLOR_SELECTION_DIALOG(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkColorSelectionDialog_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GTK_COLOR_SELECTION(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkColorSelection_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GTK_CONTAINER(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkContainer_"), XEN_CADR(obj)) : XEN_FALSE);}
-static XEN gxg_GTK_CURVE(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkCurve_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GTK_DIALOG(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkDialog_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GTK_DRAWING_AREA(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkDrawingArea_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GTK_EDITABLE(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkEditable_"), XEN_CADR(obj)) : XEN_FALSE);}
@@ -33994,7 +33851,6 @@ static XEN gxg_GTK_FIXED(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C
 static XEN gxg_GTK_FONT_SELECTION(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkFontSelection_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GTK_FONT_SELECTION_DIALOG(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkFontSelectionDialog_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GTK_FRAME(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkFrame_"), XEN_CADR(obj)) : XEN_FALSE);}
-static XEN gxg_GTK_GAMMA_CURVE(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkGammaCurve_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GTK_HANDLE_BOX(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkHandleBox_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GTK_HBUTTON_BOX(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkHButtonBox_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GTK_HBOX(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkHBox_"), XEN_CADR(obj)) : XEN_FALSE);}
@@ -34009,7 +33865,6 @@ static XEN gxg_GTK_IMAGE_MENU_ITEM(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XE
 static XEN gxg_GTK_IM_CONTEXT(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkIMContext_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GTK_IM_CONTEXT_SIMPLE(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkIMContextSimple_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GTK_IM_MULTICONTEXT(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkIMMulticontext_"), XEN_CADR(obj)) : XEN_FALSE);}
-static XEN gxg_GTK_INPUT_DIALOG(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkInputDialog_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GTK_INVISIBLE(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkInvisible_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GTK_ITEM(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkItem_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GTK_LABEL(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkLabel_"), XEN_CADR(obj)) : XEN_FALSE);}
@@ -34211,7 +34066,6 @@ static XEN gxg_GTK_IS_CHECK_MENU_ITEM(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_
 static XEN gxg_GTK_IS_COLOR_SELECTION_DIALOG(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_COLOR_SELECTION_DIALOG((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_COLOR_SELECTION(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_COLOR_SELECTION((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_CONTAINER(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_CONTAINER((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
-static XEN gxg_GTK_IS_CURVE(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_CURVE((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_DIALOG(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_DIALOG((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_DRAWING_AREA(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_DRAWING_AREA((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_EDITABLE(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_EDITABLE((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
@@ -34221,7 +34075,6 @@ static XEN gxg_GTK_IS_FIXED(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(o
 static XEN gxg_GTK_IS_FONT_SELECTION(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_FONT_SELECTION((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_FONT_SELECTION_DIALOG(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_FONT_SELECTION_DIALOG((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_FRAME(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_FRAME((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
-static XEN gxg_GTK_IS_GAMMA_CURVE(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_GAMMA_CURVE((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_HANDLE_BOX(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_HANDLE_BOX((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_HBUTTON_BOX(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_HBUTTON_BOX((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_HBOX(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_HBOX((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
@@ -34236,7 +34089,6 @@ static XEN gxg_GTK_IS_IMAGE_MENU_ITEM(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_
 static XEN gxg_GTK_IS_IM_CONTEXT(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_IM_CONTEXT((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_IM_CONTEXT_SIMPLE(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_IM_CONTEXT_SIMPLE((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_IM_MULTICONTEXT(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_IM_MULTICONTEXT((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
-static XEN gxg_GTK_IS_INPUT_DIALOG(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_INPUT_DIALOG((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_INVISIBLE(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_INVISIBLE((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_ITEM(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_ITEM((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_LABEL(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_LABEL((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
@@ -34530,12 +34382,6 @@ static XEN c_array_to_xen_list(XEN val_1, XEN clen)
       if (len == -1) {for (i = 0; arr[i]; i++) {}; len = i;}
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_char_(arr[i]), result);
     }
-  if (strcmp(ctype, "gfloat_") == 0)
-    {
-      gfloat* arr; arr = (gfloat*)XEN_UNWRAP_C_POINTER(XEN_CADR(val)); 
-      if (len == -1) {for (i = 0; arr[i]; i++) {}; len = i;}
-      for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_gfloat(arr[i]), result);
-    }
   if (strcmp(ctype, "GtkIconSize_") == 0)
     {
       GtkIconSize* arr; arr = (GtkIconSize*)XEN_UNWRAP_C_POINTER(XEN_CADR(val)); 
@@ -34681,12 +34527,6 @@ static XEN xen_list_to_c_array(XEN val, XEN type)
       char** arr; arr = (char**)calloc(len + 1, sizeof(char*));
       for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_char_(XEN_CAR(val));
       return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("char__"), XEN_WRAP_C_POINTER(arr), make_xm_obj(arr)));
-    }
-  if (strcmp(ctype, "gfloat*") == 0)
-    {
-      gfloat* arr; arr = (gfloat*)calloc(len + 1, sizeof(gfloat));
-      for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_gfloat(XEN_CAR(val));
-      return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("gfloat_"), XEN_WRAP_C_POINTER(arr), make_xm_obj(arr)));
     }
   if (strcmp(ctype, "GtkIconSize*") == 0)
     {
@@ -35512,11 +35352,7 @@ XEN_NARGIFY_0(gxg_gtk_button_new_w, gxg_gtk_button_new)
 XEN_NARGIFY_1(gxg_gtk_button_new_with_label_w, gxg_gtk_button_new_with_label)
 XEN_NARGIFY_1(gxg_gtk_button_new_from_stock_w, gxg_gtk_button_new_from_stock)
 XEN_NARGIFY_1(gxg_gtk_button_new_with_mnemonic_w, gxg_gtk_button_new_with_mnemonic)
-XEN_NARGIFY_1(gxg_gtk_button_pressed_w, gxg_gtk_button_pressed)
-XEN_NARGIFY_1(gxg_gtk_button_released_w, gxg_gtk_button_released)
 XEN_NARGIFY_1(gxg_gtk_button_clicked_w, gxg_gtk_button_clicked)
-XEN_NARGIFY_1(gxg_gtk_button_enter_w, gxg_gtk_button_enter)
-XEN_NARGIFY_1(gxg_gtk_button_leave_w, gxg_gtk_button_leave)
 XEN_NARGIFY_2(gxg_gtk_button_set_relief_w, gxg_gtk_button_set_relief)
 XEN_NARGIFY_1(gxg_gtk_button_get_relief_w, gxg_gtk_button_get_relief)
 XEN_NARGIFY_2(gxg_gtk_button_set_label_w, gxg_gtk_button_set_label)
@@ -35597,13 +35433,6 @@ XEN_NARGIFY_1(gxg_gtk_container_get_resize_mode_w, gxg_gtk_container_get_resize_
 XEN_NARGIFY_1(gxg_gtk_container_check_resize_w, gxg_gtk_container_check_resize)
 XEN_ARGIFY_3(gxg_gtk_container_foreach_w, gxg_gtk_container_foreach)
 XEN_NARGIFY_1(gxg_gtk_container_get_children_w, gxg_gtk_container_get_children)
-XEN_NARGIFY_0(gxg_gtk_curve_new_w, gxg_gtk_curve_new)
-XEN_NARGIFY_1(gxg_gtk_curve_reset_w, gxg_gtk_curve_reset)
-XEN_NARGIFY_2(gxg_gtk_curve_set_gamma_w, gxg_gtk_curve_set_gamma)
-XEN_NARGIFY_5(gxg_gtk_curve_set_range_w, gxg_gtk_curve_set_range)
-XEN_NARGIFY_3(gxg_gtk_curve_get_vector_w, gxg_gtk_curve_get_vector)
-XEN_NARGIFY_3(gxg_gtk_curve_set_vector_w, gxg_gtk_curve_set_vector)
-XEN_NARGIFY_2(gxg_gtk_curve_set_curve_type_w, gxg_gtk_curve_set_curve_type)
 XEN_NARGIFY_0(gxg_gtk_dialog_new_w, gxg_gtk_dialog_new)
 XEN_ARGIFY_4(gxg_gtk_dialog_new_with_buttons_w, gxg_gtk_dialog_new_with_buttons)
 XEN_NARGIFY_3(gxg_gtk_dialog_add_action_widget_w, gxg_gtk_dialog_add_action_widget)
@@ -35694,7 +35523,6 @@ XEN_NARGIFY_3(gxg_gtk_frame_set_label_align_w, gxg_gtk_frame_set_label_align)
 XEN_ARGIFY_3(gxg_gtk_frame_get_label_align_w, gxg_gtk_frame_get_label_align)
 XEN_NARGIFY_2(gxg_gtk_frame_set_shadow_type_w, gxg_gtk_frame_set_shadow_type)
 XEN_NARGIFY_1(gxg_gtk_frame_get_shadow_type_w, gxg_gtk_frame_get_shadow_type)
-XEN_NARGIFY_0(gxg_gtk_gamma_curve_new_w, gxg_gtk_gamma_curve_new)
 XEN_NARGIFY_4(gxg_gtk_gc_get_w, gxg_gtk_gc_get)
 XEN_NARGIFY_1(gxg_gtk_gc_release_w, gxg_gtk_gc_release)
 XEN_NARGIFY_0(gxg_gtk_handle_box_new_w, gxg_gtk_handle_box_new)
@@ -35793,7 +35621,6 @@ XEN_NARGIFY_0(gxg_gtk_im_context_simple_new_w, gxg_gtk_im_context_simple_new)
 XEN_NARGIFY_4(gxg_gtk_im_context_simple_add_table_w, gxg_gtk_im_context_simple_add_table)
 XEN_NARGIFY_0(gxg_gtk_im_multicontext_new_w, gxg_gtk_im_multicontext_new)
 XEN_NARGIFY_2(gxg_gtk_im_multicontext_append_menuitems_w, gxg_gtk_im_multicontext_append_menuitems)
-XEN_NARGIFY_0(gxg_gtk_input_dialog_new_w, gxg_gtk_input_dialog_new)
 XEN_NARGIFY_0(gxg_gtk_invisible_new_w, gxg_gtk_invisible_new)
 XEN_NARGIFY_1(gxg_gtk_item_select_w, gxg_gtk_item_select)
 XEN_NARGIFY_1(gxg_gtk_item_deselect_w, gxg_gtk_item_deselect)
@@ -35943,8 +35770,6 @@ XEN_NARGIFY_2(gxg_gtk_notebook_get_menu_label_w, gxg_gtk_notebook_get_menu_label
 XEN_NARGIFY_3(gxg_gtk_notebook_set_menu_label_w, gxg_gtk_notebook_set_menu_label)
 XEN_NARGIFY_3(gxg_gtk_notebook_set_menu_label_text_w, gxg_gtk_notebook_set_menu_label_text)
 XEN_NARGIFY_2(gxg_gtk_notebook_get_menu_label_text_w, gxg_gtk_notebook_get_menu_label_text)
-XEN_ARGIFY_5(gxg_gtk_notebook_query_tab_label_packing_w, gxg_gtk_notebook_query_tab_label_packing)
-XEN_NARGIFY_5(gxg_gtk_notebook_set_tab_label_packing_w, gxg_gtk_notebook_set_tab_label_packing)
 XEN_NARGIFY_3(gxg_gtk_notebook_reorder_child_w, gxg_gtk_notebook_reorder_child)
 XEN_NARGIFY_1(gxg_GTK_OBJECT_TYPE_NAME_w, gxg_GTK_OBJECT_TYPE_NAME)
 XEN_NARGIFY_1(gxg_GTK_OBJECT_FLAGS_w, gxg_GTK_OBJECT_FLAGS)
@@ -38609,7 +38434,6 @@ XEN_NARGIFY_1(gxg_GTK_CHECK_MENU_ITEM_w, gxg_GTK_CHECK_MENU_ITEM)
 XEN_NARGIFY_1(gxg_GTK_COLOR_SELECTION_DIALOG_w, gxg_GTK_COLOR_SELECTION_DIALOG)
 XEN_NARGIFY_1(gxg_GTK_COLOR_SELECTION_w, gxg_GTK_COLOR_SELECTION)
 XEN_NARGIFY_1(gxg_GTK_CONTAINER_w, gxg_GTK_CONTAINER)
-XEN_NARGIFY_1(gxg_GTK_CURVE_w, gxg_GTK_CURVE)
 XEN_NARGIFY_1(gxg_GTK_DIALOG_w, gxg_GTK_DIALOG)
 XEN_NARGIFY_1(gxg_GTK_DRAWING_AREA_w, gxg_GTK_DRAWING_AREA)
 XEN_NARGIFY_1(gxg_GTK_EDITABLE_w, gxg_GTK_EDITABLE)
@@ -38619,7 +38443,6 @@ XEN_NARGIFY_1(gxg_GTK_FIXED_w, gxg_GTK_FIXED)
 XEN_NARGIFY_1(gxg_GTK_FONT_SELECTION_w, gxg_GTK_FONT_SELECTION)
 XEN_NARGIFY_1(gxg_GTK_FONT_SELECTION_DIALOG_w, gxg_GTK_FONT_SELECTION_DIALOG)
 XEN_NARGIFY_1(gxg_GTK_FRAME_w, gxg_GTK_FRAME)
-XEN_NARGIFY_1(gxg_GTK_GAMMA_CURVE_w, gxg_GTK_GAMMA_CURVE)
 XEN_NARGIFY_1(gxg_GTK_HANDLE_BOX_w, gxg_GTK_HANDLE_BOX)
 XEN_NARGIFY_1(gxg_GTK_HBUTTON_BOX_w, gxg_GTK_HBUTTON_BOX)
 XEN_NARGIFY_1(gxg_GTK_HBOX_w, gxg_GTK_HBOX)
@@ -38634,7 +38457,6 @@ XEN_NARGIFY_1(gxg_GTK_IMAGE_MENU_ITEM_w, gxg_GTK_IMAGE_MENU_ITEM)
 XEN_NARGIFY_1(gxg_GTK_IM_CONTEXT_w, gxg_GTK_IM_CONTEXT)
 XEN_NARGIFY_1(gxg_GTK_IM_CONTEXT_SIMPLE_w, gxg_GTK_IM_CONTEXT_SIMPLE)
 XEN_NARGIFY_1(gxg_GTK_IM_MULTICONTEXT_w, gxg_GTK_IM_MULTICONTEXT)
-XEN_NARGIFY_1(gxg_GTK_INPUT_DIALOG_w, gxg_GTK_INPUT_DIALOG)
 XEN_NARGIFY_1(gxg_GTK_INVISIBLE_w, gxg_GTK_INVISIBLE)
 XEN_NARGIFY_1(gxg_GTK_ITEM_w, gxg_GTK_ITEM)
 XEN_NARGIFY_1(gxg_GTK_LABEL_w, gxg_GTK_LABEL)
@@ -38836,7 +38658,6 @@ XEN_NARGIFY_1(gxg_GTK_IS_CHECK_MENU_ITEM_w, gxg_GTK_IS_CHECK_MENU_ITEM)
 XEN_NARGIFY_1(gxg_GTK_IS_COLOR_SELECTION_DIALOG_w, gxg_GTK_IS_COLOR_SELECTION_DIALOG)
 XEN_NARGIFY_1(gxg_GTK_IS_COLOR_SELECTION_w, gxg_GTK_IS_COLOR_SELECTION)
 XEN_NARGIFY_1(gxg_GTK_IS_CONTAINER_w, gxg_GTK_IS_CONTAINER)
-XEN_NARGIFY_1(gxg_GTK_IS_CURVE_w, gxg_GTK_IS_CURVE)
 XEN_NARGIFY_1(gxg_GTK_IS_DIALOG_w, gxg_GTK_IS_DIALOG)
 XEN_NARGIFY_1(gxg_GTK_IS_DRAWING_AREA_w, gxg_GTK_IS_DRAWING_AREA)
 XEN_NARGIFY_1(gxg_GTK_IS_EDITABLE_w, gxg_GTK_IS_EDITABLE)
@@ -38846,7 +38667,6 @@ XEN_NARGIFY_1(gxg_GTK_IS_FIXED_w, gxg_GTK_IS_FIXED)
 XEN_NARGIFY_1(gxg_GTK_IS_FONT_SELECTION_w, gxg_GTK_IS_FONT_SELECTION)
 XEN_NARGIFY_1(gxg_GTK_IS_FONT_SELECTION_DIALOG_w, gxg_GTK_IS_FONT_SELECTION_DIALOG)
 XEN_NARGIFY_1(gxg_GTK_IS_FRAME_w, gxg_GTK_IS_FRAME)
-XEN_NARGIFY_1(gxg_GTK_IS_GAMMA_CURVE_w, gxg_GTK_IS_GAMMA_CURVE)
 XEN_NARGIFY_1(gxg_GTK_IS_HANDLE_BOX_w, gxg_GTK_IS_HANDLE_BOX)
 XEN_NARGIFY_1(gxg_GTK_IS_HBUTTON_BOX_w, gxg_GTK_IS_HBUTTON_BOX)
 XEN_NARGIFY_1(gxg_GTK_IS_HBOX_w, gxg_GTK_IS_HBOX)
@@ -38861,7 +38681,6 @@ XEN_NARGIFY_1(gxg_GTK_IS_IMAGE_MENU_ITEM_w, gxg_GTK_IS_IMAGE_MENU_ITEM)
 XEN_NARGIFY_1(gxg_GTK_IS_IM_CONTEXT_w, gxg_GTK_IS_IM_CONTEXT)
 XEN_NARGIFY_1(gxg_GTK_IS_IM_CONTEXT_SIMPLE_w, gxg_GTK_IS_IM_CONTEXT_SIMPLE)
 XEN_NARGIFY_1(gxg_GTK_IS_IM_MULTICONTEXT_w, gxg_GTK_IS_IM_MULTICONTEXT)
-XEN_NARGIFY_1(gxg_GTK_IS_INPUT_DIALOG_w, gxg_GTK_IS_INPUT_DIALOG)
 XEN_NARGIFY_1(gxg_GTK_IS_INVISIBLE_w, gxg_GTK_IS_INVISIBLE)
 XEN_NARGIFY_1(gxg_GTK_IS_ITEM_w, gxg_GTK_IS_ITEM)
 XEN_NARGIFY_1(gxg_GTK_IS_LABEL_w, gxg_GTK_IS_LABEL)
@@ -39483,11 +39302,7 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gtk_button_new_with_label_w gxg_gtk_button_new_with_label
 #define gxg_gtk_button_new_from_stock_w gxg_gtk_button_new_from_stock
 #define gxg_gtk_button_new_with_mnemonic_w gxg_gtk_button_new_with_mnemonic
-#define gxg_gtk_button_pressed_w gxg_gtk_button_pressed
-#define gxg_gtk_button_released_w gxg_gtk_button_released
 #define gxg_gtk_button_clicked_w gxg_gtk_button_clicked
-#define gxg_gtk_button_enter_w gxg_gtk_button_enter
-#define gxg_gtk_button_leave_w gxg_gtk_button_leave
 #define gxg_gtk_button_set_relief_w gxg_gtk_button_set_relief
 #define gxg_gtk_button_get_relief_w gxg_gtk_button_get_relief
 #define gxg_gtk_button_set_label_w gxg_gtk_button_set_label
@@ -39568,13 +39383,6 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gtk_container_check_resize_w gxg_gtk_container_check_resize
 #define gxg_gtk_container_foreach_w gxg_gtk_container_foreach
 #define gxg_gtk_container_get_children_w gxg_gtk_container_get_children
-#define gxg_gtk_curve_new_w gxg_gtk_curve_new
-#define gxg_gtk_curve_reset_w gxg_gtk_curve_reset
-#define gxg_gtk_curve_set_gamma_w gxg_gtk_curve_set_gamma
-#define gxg_gtk_curve_set_range_w gxg_gtk_curve_set_range
-#define gxg_gtk_curve_get_vector_w gxg_gtk_curve_get_vector
-#define gxg_gtk_curve_set_vector_w gxg_gtk_curve_set_vector
-#define gxg_gtk_curve_set_curve_type_w gxg_gtk_curve_set_curve_type
 #define gxg_gtk_dialog_new_w gxg_gtk_dialog_new
 #define gxg_gtk_dialog_new_with_buttons_w gxg_gtk_dialog_new_with_buttons
 #define gxg_gtk_dialog_add_action_widget_w gxg_gtk_dialog_add_action_widget
@@ -39665,7 +39473,6 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gtk_frame_get_label_align_w gxg_gtk_frame_get_label_align
 #define gxg_gtk_frame_set_shadow_type_w gxg_gtk_frame_set_shadow_type
 #define gxg_gtk_frame_get_shadow_type_w gxg_gtk_frame_get_shadow_type
-#define gxg_gtk_gamma_curve_new_w gxg_gtk_gamma_curve_new
 #define gxg_gtk_gc_get_w gxg_gtk_gc_get
 #define gxg_gtk_gc_release_w gxg_gtk_gc_release
 #define gxg_gtk_handle_box_new_w gxg_gtk_handle_box_new
@@ -39764,7 +39571,6 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gtk_im_context_simple_add_table_w gxg_gtk_im_context_simple_add_table
 #define gxg_gtk_im_multicontext_new_w gxg_gtk_im_multicontext_new
 #define gxg_gtk_im_multicontext_append_menuitems_w gxg_gtk_im_multicontext_append_menuitems
-#define gxg_gtk_input_dialog_new_w gxg_gtk_input_dialog_new
 #define gxg_gtk_invisible_new_w gxg_gtk_invisible_new
 #define gxg_gtk_item_select_w gxg_gtk_item_select
 #define gxg_gtk_item_deselect_w gxg_gtk_item_deselect
@@ -39914,8 +39720,6 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gtk_notebook_set_menu_label_w gxg_gtk_notebook_set_menu_label
 #define gxg_gtk_notebook_set_menu_label_text_w gxg_gtk_notebook_set_menu_label_text
 #define gxg_gtk_notebook_get_menu_label_text_w gxg_gtk_notebook_get_menu_label_text
-#define gxg_gtk_notebook_query_tab_label_packing_w gxg_gtk_notebook_query_tab_label_packing
-#define gxg_gtk_notebook_set_tab_label_packing_w gxg_gtk_notebook_set_tab_label_packing
 #define gxg_gtk_notebook_reorder_child_w gxg_gtk_notebook_reorder_child
 #define gxg_GTK_OBJECT_TYPE_NAME_w gxg_GTK_OBJECT_TYPE_NAME
 #define gxg_GTK_OBJECT_FLAGS_w gxg_GTK_OBJECT_FLAGS
@@ -42580,7 +42384,6 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_GTK_COLOR_SELECTION_DIALOG_w gxg_GTK_COLOR_SELECTION_DIALOG
 #define gxg_GTK_COLOR_SELECTION_w gxg_GTK_COLOR_SELECTION
 #define gxg_GTK_CONTAINER_w gxg_GTK_CONTAINER
-#define gxg_GTK_CURVE_w gxg_GTK_CURVE
 #define gxg_GTK_DIALOG_w gxg_GTK_DIALOG
 #define gxg_GTK_DRAWING_AREA_w gxg_GTK_DRAWING_AREA
 #define gxg_GTK_EDITABLE_w gxg_GTK_EDITABLE
@@ -42590,7 +42393,6 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_GTK_FONT_SELECTION_w gxg_GTK_FONT_SELECTION
 #define gxg_GTK_FONT_SELECTION_DIALOG_w gxg_GTK_FONT_SELECTION_DIALOG
 #define gxg_GTK_FRAME_w gxg_GTK_FRAME
-#define gxg_GTK_GAMMA_CURVE_w gxg_GTK_GAMMA_CURVE
 #define gxg_GTK_HANDLE_BOX_w gxg_GTK_HANDLE_BOX
 #define gxg_GTK_HBUTTON_BOX_w gxg_GTK_HBUTTON_BOX
 #define gxg_GTK_HBOX_w gxg_GTK_HBOX
@@ -42605,7 +42407,6 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_GTK_IM_CONTEXT_w gxg_GTK_IM_CONTEXT
 #define gxg_GTK_IM_CONTEXT_SIMPLE_w gxg_GTK_IM_CONTEXT_SIMPLE
 #define gxg_GTK_IM_MULTICONTEXT_w gxg_GTK_IM_MULTICONTEXT
-#define gxg_GTK_INPUT_DIALOG_w gxg_GTK_INPUT_DIALOG
 #define gxg_GTK_INVISIBLE_w gxg_GTK_INVISIBLE
 #define gxg_GTK_ITEM_w gxg_GTK_ITEM
 #define gxg_GTK_LABEL_w gxg_GTK_LABEL
@@ -42807,7 +42608,6 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_GTK_IS_COLOR_SELECTION_DIALOG_w gxg_GTK_IS_COLOR_SELECTION_DIALOG
 #define gxg_GTK_IS_COLOR_SELECTION_w gxg_GTK_IS_COLOR_SELECTION
 #define gxg_GTK_IS_CONTAINER_w gxg_GTK_IS_CONTAINER
-#define gxg_GTK_IS_CURVE_w gxg_GTK_IS_CURVE
 #define gxg_GTK_IS_DIALOG_w gxg_GTK_IS_DIALOG
 #define gxg_GTK_IS_DRAWING_AREA_w gxg_GTK_IS_DRAWING_AREA
 #define gxg_GTK_IS_EDITABLE_w gxg_GTK_IS_EDITABLE
@@ -42817,7 +42617,6 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_GTK_IS_FONT_SELECTION_w gxg_GTK_IS_FONT_SELECTION
 #define gxg_GTK_IS_FONT_SELECTION_DIALOG_w gxg_GTK_IS_FONT_SELECTION_DIALOG
 #define gxg_GTK_IS_FRAME_w gxg_GTK_IS_FRAME
-#define gxg_GTK_IS_GAMMA_CURVE_w gxg_GTK_IS_GAMMA_CURVE
 #define gxg_GTK_IS_HANDLE_BOX_w gxg_GTK_IS_HANDLE_BOX
 #define gxg_GTK_IS_HBUTTON_BOX_w gxg_GTK_IS_HBUTTON_BOX
 #define gxg_GTK_IS_HBOX_w gxg_GTK_IS_HBOX
@@ -42832,7 +42631,6 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_GTK_IS_IM_CONTEXT_w gxg_GTK_IS_IM_CONTEXT
 #define gxg_GTK_IS_IM_CONTEXT_SIMPLE_w gxg_GTK_IS_IM_CONTEXT_SIMPLE
 #define gxg_GTK_IS_IM_MULTICONTEXT_w gxg_GTK_IS_IM_MULTICONTEXT
-#define gxg_GTK_IS_INPUT_DIALOG_w gxg_GTK_IS_INPUT_DIALOG
 #define gxg_GTK_IS_INVISIBLE_w gxg_GTK_IS_INVISIBLE
 #define gxg_GTK_IS_ITEM_w gxg_GTK_IS_ITEM
 #define gxg_GTK_IS_LABEL_w gxg_GTK_IS_LABEL
@@ -43461,11 +43259,7 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_button_new_with_label, gxg_gtk_button_new_with_label_w, 1, 0, 0, H_gtk_button_new_with_label);
   XG_DEFINE_PROCEDURE(gtk_button_new_from_stock, gxg_gtk_button_new_from_stock_w, 1, 0, 0, H_gtk_button_new_from_stock);
   XG_DEFINE_PROCEDURE(gtk_button_new_with_mnemonic, gxg_gtk_button_new_with_mnemonic_w, 1, 0, 0, H_gtk_button_new_with_mnemonic);
-  XG_DEFINE_PROCEDURE(gtk_button_pressed, gxg_gtk_button_pressed_w, 1, 0, 0, H_gtk_button_pressed);
-  XG_DEFINE_PROCEDURE(gtk_button_released, gxg_gtk_button_released_w, 1, 0, 0, H_gtk_button_released);
   XG_DEFINE_PROCEDURE(gtk_button_clicked, gxg_gtk_button_clicked_w, 1, 0, 0, H_gtk_button_clicked);
-  XG_DEFINE_PROCEDURE(gtk_button_enter, gxg_gtk_button_enter_w, 1, 0, 0, H_gtk_button_enter);
-  XG_DEFINE_PROCEDURE(gtk_button_leave, gxg_gtk_button_leave_w, 1, 0, 0, H_gtk_button_leave);
   XG_DEFINE_PROCEDURE(gtk_button_set_relief, gxg_gtk_button_set_relief_w, 2, 0, 0, H_gtk_button_set_relief);
   XG_DEFINE_PROCEDURE(gtk_button_get_relief, gxg_gtk_button_get_relief_w, 1, 0, 0, H_gtk_button_get_relief);
   XG_DEFINE_PROCEDURE(gtk_button_set_label, gxg_gtk_button_set_label_w, 2, 0, 0, H_gtk_button_set_label);
@@ -43546,13 +43340,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_container_check_resize, gxg_gtk_container_check_resize_w, 1, 0, 0, H_gtk_container_check_resize);
   XG_DEFINE_PROCEDURE(gtk_container_foreach, gxg_gtk_container_foreach_w, 2, 1, 0, H_gtk_container_foreach);
   XG_DEFINE_PROCEDURE(gtk_container_get_children, gxg_gtk_container_get_children_w, 1, 0, 0, H_gtk_container_get_children);
-  XG_DEFINE_PROCEDURE(gtk_curve_new, gxg_gtk_curve_new_w, 0, 0, 0, H_gtk_curve_new);
-  XG_DEFINE_PROCEDURE(gtk_curve_reset, gxg_gtk_curve_reset_w, 1, 0, 0, H_gtk_curve_reset);
-  XG_DEFINE_PROCEDURE(gtk_curve_set_gamma, gxg_gtk_curve_set_gamma_w, 2, 0, 0, H_gtk_curve_set_gamma);
-  XG_DEFINE_PROCEDURE(gtk_curve_set_range, gxg_gtk_curve_set_range_w, 5, 0, 0, H_gtk_curve_set_range);
-  XG_DEFINE_PROCEDURE(gtk_curve_get_vector, gxg_gtk_curve_get_vector_w, 3, 0, 0, H_gtk_curve_get_vector);
-  XG_DEFINE_PROCEDURE(gtk_curve_set_vector, gxg_gtk_curve_set_vector_w, 3, 0, 0, H_gtk_curve_set_vector);
-  XG_DEFINE_PROCEDURE(gtk_curve_set_curve_type, gxg_gtk_curve_set_curve_type_w, 2, 0, 0, H_gtk_curve_set_curve_type);
   XG_DEFINE_PROCEDURE(gtk_dialog_new, gxg_gtk_dialog_new_w, 0, 0, 0, H_gtk_dialog_new);
   XG_DEFINE_PROCEDURE(gtk_dialog_new_with_buttons, gxg_gtk_dialog_new_with_buttons_w, 3, 1, 0, H_gtk_dialog_new_with_buttons);
   XG_DEFINE_PROCEDURE(gtk_dialog_add_action_widget, gxg_gtk_dialog_add_action_widget_w, 3, 0, 0, H_gtk_dialog_add_action_widget);
@@ -43643,7 +43430,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_frame_get_label_align, gxg_gtk_frame_get_label_align_w, 1, 2, 0, H_gtk_frame_get_label_align);
   XG_DEFINE_PROCEDURE(gtk_frame_set_shadow_type, gxg_gtk_frame_set_shadow_type_w, 2, 0, 0, H_gtk_frame_set_shadow_type);
   XG_DEFINE_PROCEDURE(gtk_frame_get_shadow_type, gxg_gtk_frame_get_shadow_type_w, 1, 0, 0, H_gtk_frame_get_shadow_type);
-  XG_DEFINE_PROCEDURE(gtk_gamma_curve_new, gxg_gtk_gamma_curve_new_w, 0, 0, 0, H_gtk_gamma_curve_new);
   XG_DEFINE_PROCEDURE(gtk_gc_get, gxg_gtk_gc_get_w, 4, 0, 0, H_gtk_gc_get);
   XG_DEFINE_PROCEDURE(gtk_gc_release, gxg_gtk_gc_release_w, 1, 0, 0, H_gtk_gc_release);
   XG_DEFINE_PROCEDURE(gtk_handle_box_new, gxg_gtk_handle_box_new_w, 0, 0, 0, H_gtk_handle_box_new);
@@ -43742,7 +43528,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_im_context_simple_add_table, gxg_gtk_im_context_simple_add_table_w, 4, 0, 0, H_gtk_im_context_simple_add_table);
   XG_DEFINE_PROCEDURE(gtk_im_multicontext_new, gxg_gtk_im_multicontext_new_w, 0, 0, 0, H_gtk_im_multicontext_new);
   XG_DEFINE_PROCEDURE(gtk_im_multicontext_append_menuitems, gxg_gtk_im_multicontext_append_menuitems_w, 2, 0, 0, H_gtk_im_multicontext_append_menuitems);
-  XG_DEFINE_PROCEDURE(gtk_input_dialog_new, gxg_gtk_input_dialog_new_w, 0, 0, 0, H_gtk_input_dialog_new);
   XG_DEFINE_PROCEDURE(gtk_invisible_new, gxg_gtk_invisible_new_w, 0, 0, 0, H_gtk_invisible_new);
   XG_DEFINE_PROCEDURE(gtk_item_select, gxg_gtk_item_select_w, 1, 0, 0, H_gtk_item_select);
   XG_DEFINE_PROCEDURE(gtk_item_deselect, gxg_gtk_item_deselect_w, 1, 0, 0, H_gtk_item_deselect);
@@ -43892,8 +43677,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_notebook_set_menu_label, gxg_gtk_notebook_set_menu_label_w, 3, 0, 0, H_gtk_notebook_set_menu_label);
   XG_DEFINE_PROCEDURE(gtk_notebook_set_menu_label_text, gxg_gtk_notebook_set_menu_label_text_w, 3, 0, 0, H_gtk_notebook_set_menu_label_text);
   XG_DEFINE_PROCEDURE(gtk_notebook_get_menu_label_text, gxg_gtk_notebook_get_menu_label_text_w, 2, 0, 0, H_gtk_notebook_get_menu_label_text);
-  XG_DEFINE_PROCEDURE(gtk_notebook_query_tab_label_packing, gxg_gtk_notebook_query_tab_label_packing_w, 2, 3, 0, H_gtk_notebook_query_tab_label_packing);
-  XG_DEFINE_PROCEDURE(gtk_notebook_set_tab_label_packing, gxg_gtk_notebook_set_tab_label_packing_w, 5, 0, 0, H_gtk_notebook_set_tab_label_packing);
   XG_DEFINE_PROCEDURE(gtk_notebook_reorder_child, gxg_gtk_notebook_reorder_child_w, 3, 0, 0, H_gtk_notebook_reorder_child);
   XG_DEFINE_PROCEDURE(GTK_OBJECT_TYPE_NAME, gxg_GTK_OBJECT_TYPE_NAME_w, 1, 0, 0, H_GTK_OBJECT_TYPE_NAME);
   XG_DEFINE_PROCEDURE(GTK_OBJECT_FLAGS, gxg_GTK_OBJECT_FLAGS_w, 1, 0, 0, H_GTK_OBJECT_FLAGS);
@@ -46551,7 +46334,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(GTK_COLOR_SELECTION_DIALOG, gxg_GTK_COLOR_SELECTION_DIALOG_w, 1, 0, 0, "(GTK_COLOR_SELECTION_DIALOG obj) casts obj to GTK_COLOR_SELECTION_DIALOG");
   XG_DEFINE_PROCEDURE(GTK_COLOR_SELECTION, gxg_GTK_COLOR_SELECTION_w, 1, 0, 0, "(GTK_COLOR_SELECTION obj) casts obj to GTK_COLOR_SELECTION");
   XG_DEFINE_PROCEDURE(GTK_CONTAINER, gxg_GTK_CONTAINER_w, 1, 0, 0, "(GTK_CONTAINER obj) casts obj to GTK_CONTAINER");
-  XG_DEFINE_PROCEDURE(GTK_CURVE, gxg_GTK_CURVE_w, 1, 0, 0, "(GTK_CURVE obj) casts obj to GTK_CURVE");
   XG_DEFINE_PROCEDURE(GTK_DIALOG, gxg_GTK_DIALOG_w, 1, 0, 0, "(GTK_DIALOG obj) casts obj to GTK_DIALOG");
   XG_DEFINE_PROCEDURE(GTK_DRAWING_AREA, gxg_GTK_DRAWING_AREA_w, 1, 0, 0, "(GTK_DRAWING_AREA obj) casts obj to GTK_DRAWING_AREA");
   XG_DEFINE_PROCEDURE(GTK_EDITABLE, gxg_GTK_EDITABLE_w, 1, 0, 0, "(GTK_EDITABLE obj) casts obj to GTK_EDITABLE");
@@ -46561,7 +46343,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(GTK_FONT_SELECTION, gxg_GTK_FONT_SELECTION_w, 1, 0, 0, "(GTK_FONT_SELECTION obj) casts obj to GTK_FONT_SELECTION");
   XG_DEFINE_PROCEDURE(GTK_FONT_SELECTION_DIALOG, gxg_GTK_FONT_SELECTION_DIALOG_w, 1, 0, 0, "(GTK_FONT_SELECTION_DIALOG obj) casts obj to GTK_FONT_SELECTION_DIALOG");
   XG_DEFINE_PROCEDURE(GTK_FRAME, gxg_GTK_FRAME_w, 1, 0, 0, "(GTK_FRAME obj) casts obj to GTK_FRAME");
-  XG_DEFINE_PROCEDURE(GTK_GAMMA_CURVE, gxg_GTK_GAMMA_CURVE_w, 1, 0, 0, "(GTK_GAMMA_CURVE obj) casts obj to GTK_GAMMA_CURVE");
   XG_DEFINE_PROCEDURE(GTK_HANDLE_BOX, gxg_GTK_HANDLE_BOX_w, 1, 0, 0, "(GTK_HANDLE_BOX obj) casts obj to GTK_HANDLE_BOX");
   XG_DEFINE_PROCEDURE(GTK_HBUTTON_BOX, gxg_GTK_HBUTTON_BOX_w, 1, 0, 0, "(GTK_HBUTTON_BOX obj) casts obj to GTK_HBUTTON_BOX");
   XG_DEFINE_PROCEDURE(GTK_HBOX, gxg_GTK_HBOX_w, 1, 0, 0, "(GTK_HBOX obj) casts obj to GTK_HBOX");
@@ -46576,7 +46357,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(GTK_IM_CONTEXT, gxg_GTK_IM_CONTEXT_w, 1, 0, 0, "(GTK_IM_CONTEXT obj) casts obj to GTK_IM_CONTEXT");
   XG_DEFINE_PROCEDURE(GTK_IM_CONTEXT_SIMPLE, gxg_GTK_IM_CONTEXT_SIMPLE_w, 1, 0, 0, "(GTK_IM_CONTEXT_SIMPLE obj) casts obj to GTK_IM_CONTEXT_SIMPLE");
   XG_DEFINE_PROCEDURE(GTK_IM_MULTICONTEXT, gxg_GTK_IM_MULTICONTEXT_w, 1, 0, 0, "(GTK_IM_MULTICONTEXT obj) casts obj to GTK_IM_MULTICONTEXT");
-  XG_DEFINE_PROCEDURE(GTK_INPUT_DIALOG, gxg_GTK_INPUT_DIALOG_w, 1, 0, 0, "(GTK_INPUT_DIALOG obj) casts obj to GTK_INPUT_DIALOG");
   XG_DEFINE_PROCEDURE(GTK_INVISIBLE, gxg_GTK_INVISIBLE_w, 1, 0, 0, "(GTK_INVISIBLE obj) casts obj to GTK_INVISIBLE");
   XG_DEFINE_PROCEDURE(GTK_ITEM, gxg_GTK_ITEM_w, 1, 0, 0, "(GTK_ITEM obj) casts obj to GTK_ITEM");
   XG_DEFINE_PROCEDURE(GTK_LABEL, gxg_GTK_LABEL_w, 1, 0, 0, "(GTK_LABEL obj) casts obj to GTK_LABEL");
@@ -46785,7 +46565,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(GTK_IS_COLOR_SELECTION_DIALOG, gxg_GTK_IS_COLOR_SELECTION_DIALOG_w, 1, 0, 0, "(GTK_IS_COLOR_SELECTION_DIALOG obj): " PROC_TRUE " if obj is a GTK_IS_COLOR_SELECTION_DIALOG");
   XG_DEFINE_PROCEDURE(GTK_IS_COLOR_SELECTION, gxg_GTK_IS_COLOR_SELECTION_w, 1, 0, 0, "(GTK_IS_COLOR_SELECTION obj): " PROC_TRUE " if obj is a GTK_IS_COLOR_SELECTION");
   XG_DEFINE_PROCEDURE(GTK_IS_CONTAINER, gxg_GTK_IS_CONTAINER_w, 1, 0, 0, "(GTK_IS_CONTAINER obj): " PROC_TRUE " if obj is a GTK_IS_CONTAINER");
-  XG_DEFINE_PROCEDURE(GTK_IS_CURVE, gxg_GTK_IS_CURVE_w, 1, 0, 0, "(GTK_IS_CURVE obj): " PROC_TRUE " if obj is a GTK_IS_CURVE");
   XG_DEFINE_PROCEDURE(GTK_IS_DIALOG, gxg_GTK_IS_DIALOG_w, 1, 0, 0, "(GTK_IS_DIALOG obj): " PROC_TRUE " if obj is a GTK_IS_DIALOG");
   XG_DEFINE_PROCEDURE(GTK_IS_DRAWING_AREA, gxg_GTK_IS_DRAWING_AREA_w, 1, 0, 0, "(GTK_IS_DRAWING_AREA obj): " PROC_TRUE " if obj is a GTK_IS_DRAWING_AREA");
   XG_DEFINE_PROCEDURE(GTK_IS_EDITABLE, gxg_GTK_IS_EDITABLE_w, 1, 0, 0, "(GTK_IS_EDITABLE obj): " PROC_TRUE " if obj is a GTK_IS_EDITABLE");
@@ -46795,7 +46574,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(GTK_IS_FONT_SELECTION, gxg_GTK_IS_FONT_SELECTION_w, 1, 0, 0, "(GTK_IS_FONT_SELECTION obj): " PROC_TRUE " if obj is a GTK_IS_FONT_SELECTION");
   XG_DEFINE_PROCEDURE(GTK_IS_FONT_SELECTION_DIALOG, gxg_GTK_IS_FONT_SELECTION_DIALOG_w, 1, 0, 0, "(GTK_IS_FONT_SELECTION_DIALOG obj): " PROC_TRUE " if obj is a GTK_IS_FONT_SELECTION_DIALOG");
   XG_DEFINE_PROCEDURE(GTK_IS_FRAME, gxg_GTK_IS_FRAME_w, 1, 0, 0, "(GTK_IS_FRAME obj): " PROC_TRUE " if obj is a GTK_IS_FRAME");
-  XG_DEFINE_PROCEDURE(GTK_IS_GAMMA_CURVE, gxg_GTK_IS_GAMMA_CURVE_w, 1, 0, 0, "(GTK_IS_GAMMA_CURVE obj): " PROC_TRUE " if obj is a GTK_IS_GAMMA_CURVE");
   XG_DEFINE_PROCEDURE(GTK_IS_HANDLE_BOX, gxg_GTK_IS_HANDLE_BOX_w, 1, 0, 0, "(GTK_IS_HANDLE_BOX obj): " PROC_TRUE " if obj is a GTK_IS_HANDLE_BOX");
   XG_DEFINE_PROCEDURE(GTK_IS_HBUTTON_BOX, gxg_GTK_IS_HBUTTON_BOX_w, 1, 0, 0, "(GTK_IS_HBUTTON_BOX obj): " PROC_TRUE " if obj is a GTK_IS_HBUTTON_BOX");
   XG_DEFINE_PROCEDURE(GTK_IS_HBOX, gxg_GTK_IS_HBOX_w, 1, 0, 0, "(GTK_IS_HBOX obj): " PROC_TRUE " if obj is a GTK_IS_HBOX");
@@ -46810,7 +46588,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(GTK_IS_IM_CONTEXT, gxg_GTK_IS_IM_CONTEXT_w, 1, 0, 0, "(GTK_IS_IM_CONTEXT obj): " PROC_TRUE " if obj is a GTK_IS_IM_CONTEXT");
   XG_DEFINE_PROCEDURE(GTK_IS_IM_CONTEXT_SIMPLE, gxg_GTK_IS_IM_CONTEXT_SIMPLE_w, 1, 0, 0, "(GTK_IS_IM_CONTEXT_SIMPLE obj): " PROC_TRUE " if obj is a GTK_IS_IM_CONTEXT_SIMPLE");
   XG_DEFINE_PROCEDURE(GTK_IS_IM_MULTICONTEXT, gxg_GTK_IS_IM_MULTICONTEXT_w, 1, 0, 0, "(GTK_IS_IM_MULTICONTEXT obj): " PROC_TRUE " if obj is a GTK_IS_IM_MULTICONTEXT");
-  XG_DEFINE_PROCEDURE(GTK_IS_INPUT_DIALOG, gxg_GTK_IS_INPUT_DIALOG_w, 1, 0, 0, "(GTK_IS_INPUT_DIALOG obj): " PROC_TRUE " if obj is a GTK_IS_INPUT_DIALOG");
   XG_DEFINE_PROCEDURE(GTK_IS_INVISIBLE, gxg_GTK_IS_INVISIBLE_w, 1, 0, 0, "(GTK_IS_INVISIBLE obj): " PROC_TRUE " if obj is a GTK_IS_INVISIBLE");
   XG_DEFINE_PROCEDURE(GTK_IS_ITEM, gxg_GTK_IS_ITEM_w, 1, 0, 0, "(GTK_IS_ITEM obj): " PROC_TRUE " if obj is a GTK_IS_ITEM");
   XG_DEFINE_PROCEDURE(GTK_IS_LABEL, gxg_GTK_IS_LABEL_w, 1, 0, 0, "(GTK_IS_LABEL obj): " PROC_TRUE " if obj is a GTK_IS_LABEL");
@@ -47665,9 +47442,6 @@ static void define_integers(void)
   DEFINE_INTEGER(GTK_BUTTONBOX_EDGE);
   DEFINE_INTEGER(GTK_BUTTONBOX_START);
   DEFINE_INTEGER(GTK_BUTTONBOX_END);
-  DEFINE_INTEGER(GTK_CURVE_TYPE_LINEAR);
-  DEFINE_INTEGER(GTK_CURVE_TYPE_SPLINE);
-  DEFINE_INTEGER(GTK_CURVE_TYPE_FREE);
   DEFINE_INTEGER(GTK_DELETE_CHARS);
   DEFINE_INTEGER(GTK_DELETE_WORD_ENDS);
   DEFINE_INTEGER(GTK_DELETE_WORDS);
@@ -48398,7 +48172,6 @@ static void define_integers(void)
   DEFINE_ULONG(GTK_TYPE_FONT_SELECTION);
   DEFINE_ULONG(GTK_TYPE_FONT_SELECTION_DIALOG);
   DEFINE_ULONG(GTK_TYPE_FRAME);
-  DEFINE_ULONG(GTK_TYPE_GAMMA_CURVE);
   DEFINE_ULONG(GTK_TYPE_HANDLE_BOX);
   DEFINE_ULONG(GTK_TYPE_HBUTTON_BOX);
   DEFINE_ULONG(GTK_TYPE_HBOX);
@@ -48412,7 +48185,6 @@ static void define_integers(void)
   DEFINE_ULONG(GTK_TYPE_IM_CONTEXT);
   DEFINE_ULONG(GTK_TYPE_IM_CONTEXT_SIMPLE);
   DEFINE_ULONG(GTK_TYPE_IM_MULTICONTEXT);
-  DEFINE_ULONG(GTK_TYPE_INPUT_DIALOG);
   DEFINE_ULONG(GTK_TYPE_INVISIBLE);
   DEFINE_ULONG(GTK_TYPE_ITEM);
   DEFINE_ULONG(GTK_TYPE_LABEL);
@@ -48851,7 +48623,7 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("04-Oct-09"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("02-Nov-09"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

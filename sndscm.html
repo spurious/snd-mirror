@@ -525,7 +525,7 @@ in the duration.
 </pre>
 <p>
 I have this action bound to the "m" key in my ~/.snd initialization file.  The change is reflected in
-the envelope editor.  We can draw the amplitude envelope simply by approximating the shape.  Call it "hairy-amp".
+the envelope editor.  We can define the amplitude envelope by approximating the shape.  Call it "hairy-amp".
 </p>
 
 <img src="pix/hairy3.png" alt="get amp env" hspace=40>
@@ -1126,7 +1126,7 @@ But, it is an historical artifact, so I'm reluctant to change it.
 </p>
 
 <p>To try out any of these instruments, start Snd, set optimization to 6, load ws.scm and clm-ins.scm, then
-simply paste the with-sound call into the listener.  It will automatically write the
+paste the with-sound call into the listener.  It will automatically write the
 new sound file and open it in Snd.
 </p>
 
@@ -3286,7 +3286,7 @@ Main features are:
 
 <p>
 env.scm provides a variety envelope functions.
-An envelope in Snd/CLM is simply a list of breakpoint pairs.  In the function names, 
+An envelope in Snd/CLM is a list of breakpoint pairs.  In the function names, 
 I try to remember to use "envelope" to be a list of breakpoints, and "env" to be the result of <a href="sndclm.html#make-env">make-env</a>,
 a CLM env structure passed to the <a href="sndclm.html#env">env</a> generator.
 In an envelope,
@@ -5850,8 +5850,8 @@ describe-hook tries to decipher the functions on the hook list; this is almost i
 <tr><td colspan=2 bgcolor="#f2f4ff">
 <a class=def name="hookmember">hook-member</a> <code>(func hook)</code>
 </td></tr><tr><td></td><td>
-hook-member returns #t if 'func' is already on the hook list.
-It is simply <code>(member value (hook-&gt;list hook))</code>
+hook-member returns #t if 'func' is already on the hook list, equivalent to
+<code>(member value (hook-&gt;list hook))</code>
 <pre>
     :<em class=typing>(hook-member save-peak-env-info <a class=quiet href="extsnd.html#closehook" onmouseout="UnTip()" onmouseover="Tip(extsnd_closehook_tip)">close-hook</a>)</em>
     <em class=listener>(#&lt;procedure save-peak-env-info ((snd) ...))&gt;</em>
@@ -6535,7 +6535,7 @@ syncup synchronizes a list of marks (positions them all at the same sample numbe
 </table>
 
 <p>marks.scm also has code that tries to make it simpler to sync marks together &mdash;
-you simply click the marks that should share a <a href="extsnd.html#marksync">mark-sync</a> field,
+you just click the marks that should share a <a href="extsnd.html#marksync">mark-sync</a> field,
 rather than laboriously setting each one in the listener;
 see <b>start-sync</b> and <b>stop-sync</b>.
 There is also some code (look for "eval-header" toward the end of the file) that saves mark info in a
@@ -11154,7 +11154,7 @@ we want to hear an arpeggio from the fm-violin:
 </pre>
 
 <p>
-with-sound opens an output object, either a sound file, a vct, or a sound-data object: (*output*), and
+with-sound opens an output object, either a sound file, a vct, a vector, or a sound-data object: (*output*), and
 optionally a reverb output object: *reverb*.  Each instrument uses <a href="sndclm.html#out-any">out-any</a> to add its sounds to the
 *output* results.  with-sound next sets up a variety of variables describing the current
 output, and establishes an environment where various problems can be handled nicely (in Scheme,
@@ -11365,7 +11365,7 @@ begin time) in the Snd window title bar, and tries to use the xm module if it is
 			  (set! (<a class=quiet href="extsnd.html#windowproperty" onmouseout="UnTip()" onmouseover="Tip(extsnd_windowproperty_tip)">window-property</a> "SND_VERSION" "WM_NAME") new-title)))))
 </pre>
 
-<p>The "output" argument can be a vct or a sound-data object, as well as a filename:
+<p>The "output" argument can be a vct, a vector, or a sound-data object, as well as a filename:
 </p>
 <pre>
     (with-sound (:output (<a class=quiet href="extsnd.html#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> 44100)) (fm-violin 0 1 440 .1))

@@ -190,6 +190,8 @@ mus_long_t selection_beg(chan_info *cp)
 }
 
 
+static xen_selection_counter = 0;
+
 static void cp_set_selection_beg(chan_info *cp, mus_long_t beg)
 {
   ed_list *ed;
@@ -200,6 +202,7 @@ static void cp_set_selection_beg(chan_info *cp, mus_long_t beg)
   if (beg < len)
     ed->selection_beg = beg;
   else ed->selection_beg = len - 1;
+  xen_selection_counter++;
 
   ed->selection_maxamp = -1.0;
   ed->selection_maxamp_position = -1;
@@ -363,6 +366,7 @@ void reactivate_selection(chan_info *cp, mus_long_t beg, mus_long_t end)
   cp->selection_visible = false;
   ed->selection_maxamp = -1.0;
   ed->selection_maxamp_position = -1;
+  xen_selection_counter++;
 
   call_selection_watchers(SELECTION_ACTIVE);
 }
@@ -811,6 +815,161 @@ void move_selection(chan_info *cp, int x)
 }
 
 
+/* ---------------------------------------- selection object ---------------------------------------- */
+
+typedef struct {
+  int n;
+} xen_selection;
+
+
+#define XEN_TO_XEN_SELECTION(arg) ((xen_selection *)XEN_OBJECT_REF(arg))
+
+static int xen_selection_to_int(XEN n)
+{
+  xen_selection *mx;
+  mx = XEN_TO_XEN_SELECTION(n);
+  return(mx->n);
+}
+
+
+static XEN_OBJECT_TYPE xen_selection_tag;
+
+bool xen_selection_p(XEN obj) 
+{
+  return(XEN_OBJECT_TYPE_P(obj, xen_selection_tag));
+}
+
+
+static void xen_selection_free(xen_selection *v) {if (v) free(v);}
+
+XEN_MAKE_OBJECT_FREE_PROCEDURE(xen_selection, free_xen_selection, xen_selection_free)
+
+
+static char *xen_selection_to_string(xen_selection *v)
+{
+  #define XEN_SELECTION_PRINT_BUFFER_SIZE 64
+  char *buf;
+  if (v == NULL) return(NULL);
+  buf = (char *)calloc(XEN_SELECTION_PRINT_BUFFER_SIZE, sizeof(char));
+  sprintf(buf, "#<selection %d>", v->n);
+  return(buf);
+}
+
+XEN_MAKE_OBJECT_PRINT_PROCEDURE(xen_selection, print_xen_selection, xen_selection_to_string)
+
+
+#if HAVE_FORTH || HAVE_RUBY
+static XEN g_xen_selection_to_string(XEN obj)
+{
+  char *vstr;
+  XEN result;
+  #define S_xen_selection_to_string "selection->string"
+
+  XEN_ASSERT_TYPE(XEN_SELECTION_P(obj), obj, XEN_ONLY_ARG, S_xen_selection_to_string, "a selection");
+
+  vstr = xen_selection_to_string(XEN_TO_XEN_SELECTION(obj));
+  result = C_TO_XEN_STRING(vstr);
+  free(vstr);
+  return(result);
+}
+#endif
+
+
+#if (!HAVE_S7)
+static bool xen_selection_equalp(xen_selection *v1, xen_selection *v2) 
+{
+  return((v1 == v2) ||
+	 (v1->n == v2->n));
+}
+
+static XEN equalp_xen_selection(XEN obj1, XEN obj2)
+{
+  if ((!(XEN_SELECTION_P(obj1))) || (!(XEN_SELECTION_P(obj2)))) return(XEN_FALSE);
+  return(xen_return_first(C_TO_XEN_BOOLEAN(xen_selection_equalp(XEN_TO_XEN_SELECTION(obj1), XEN_TO_XEN_SELECTION(obj2))), obj1, obj2));
+}
+#endif
+
+
+static xen_selection *xen_selection_make(int n)
+{
+  xen_selection *new_v;
+  new_v = (xen_selection *)malloc(sizeof(xen_selection));
+  new_v->n = n;
+  return(new_v);
+}
+
+
+static XEN g_selection(void)
+{
+  #define H_selection "(" S_selection" ) returns an object representing the current selection, or #f if there is no active selection"
+  if (selection_is_active())
+    {
+      xen_selection *mx;
+      mx = xen_selection_make(xen_selection_counter);
+      XEN_MAKE_AND_RETURN_OBJECT(xen_selection_tag, mx, 0, free_xen_selection);
+    }
+  return(XEN_FALSE);
+}
+
+
+#if HAVE_S7
+static XEN s7_xen_selection_length(s7_scheme *sc, XEN obj)
+{
+  return(g_selection_frames(XEN_UNDEFINED, XEN_UNDEFINED));
+}
+
+static bool s7_xen_selection_equalp(void *obj1, void *obj2)
+{
+  return((obj1 == obj2) ||
+	 (((xen_selection *)obj1)->n == ((xen_selection *)obj2)->n));
+}
+
+static XEN s7_xen_selection_fill(s7_scheme *sc, XEN obj, XEN val)
+{
+  /* TODO: fill selected portion with (number) val -- obj must be a selection object */
+}
+#endif
+
+
+static void init_xen_selection(void)
+{
+#if HAVE_S7
+  xen_selection_tag = XEN_MAKE_OBJECT_TYPE("<selection>", 
+					   print_xen_selection, free_xen_selection, s7_xen_selection_equalp, 
+					   NULL, NULL, NULL, s7_xen_selection_length, 
+					   NULL, s7_xen_selection_fill);
+#else
+#if HAVE_RUBY
+  xen_selection_tag = XEN_MAKE_OBJECT_TYPE("XenSelection", sizeof(xen_selection));
+#else
+  xen_selection_tag = XEN_MAKE_OBJECT_TYPE("selection", sizeof(xen_selection));
+#endif
+#endif
+
+#if HAVE_GUILE
+  scm_set_smob_print(xen_selection_tag,  print_xen_selection);
+  scm_set_smob_free(xen_selection_tag,   free_xen_selection);
+  scm_set_smob_equalp(xen_selection_tag, equalp_xen_selection);
+#endif
+
+#if HAVE_FORTH
+  fth_set_object_inspect(xen_selection_tag,   print_xen_selection);
+  fth_set_object_dump(xen_selection_tag,      g_xen_selection_to_string);
+  fth_set_object_equal(xen_selection_tag,     equalp_xen_selection);
+  fth_set_object_free(xen_selection_tag,      free_xen_selection);
+#endif
+
+#if HAVE_RUBY
+  rb_define_method(xen_selection_tag, "to_s",     XEN_PROCEDURE_CAST print_xen_selection, 0);
+  rb_define_method(xen_selection_tag, "eql?",     XEN_PROCEDURE_CAST equalp_xen_selection, 1);
+  rb_define_method(xen_selection_tag, "==",       XEN_PROCEDURE_CAST equalp_xen_selection, 1);
+  rb_define_method(xen_selection_tag, "to_str",   XEN_PROCEDURE_CAST g_xen_selection_to_string, 0);
+#endif
+}
+/* -------------------------------------------------------------------------------- */
+
+
+
 io_error_t save_selection(const char *ofile, int type, int format, int srate, const char *comment, int chan)
 {
   /* type and format have already been checked */
@@ -1102,9 +1261,15 @@ static XEN g_mix_selection(XEN beg, XEN snd, XEN chn, XEN sel_chan)
 }
 
 
-static XEN g_selection_p(void)
+static XEN g_selection_p(XEN sel)
 {
-  #define H_selection_p "(" S_selection_p "): " PROC_TRUE " if selection is currently active, visible, etc"
+  #define H_selection_p "(" S_selection_p " :optional obj): " PROC_TRUE " if selection is currently active, visible, etc. \
+If 'obj' is passed, " S_selection_p " returns #t is obj is a selection object and there is a current selection."
+
+  if ((XEN_BOUND_P(sel)) &&
+      (!(xen_selection_p(sel))))
+    return(XEN_FALSE);
+
   return(C_TO_XEN_BOOLEAN(selection_is_active()));
 }
 
@@ -1169,7 +1334,7 @@ static XEN g_set_selection_position(XEN pos, XEN snd, XEN chn)
 WITH_THREE_SETTER_ARGS(g_set_selection_position_reversed, g_set_selection_position)
 
 
-static XEN g_selection_frames(XEN snd, XEN chn)
+XEN g_selection_frames(XEN snd, XEN chn)
 {
   #define H_selection_frames "(" S_selection_frames " :optional snd chn): selection length"
   if (selection_is_active())
@@ -1373,21 +1538,21 @@ save the current selection in file using the indicated file attributes.  If chan
 }
 
 
-static XEN g_selection_chans(void)
+XEN g_selection_chans(void)
 {
   #define H_selection_chans "(" S_selection_chans "): chans in active selection"
   return(C_TO_XEN_INT(selection_chans()));
 }
 
 
-static XEN g_selection_srate(void)
+XEN g_selection_srate(void)
 {
   #define H_selection_srate "(" S_selection_srate "): selection srate"
   return(C_TO_XEN_INT(selection_srate()));
 }
 
 
-static XEN g_selection_maxamp(XEN snd, XEN chn)
+XEN g_selection_maxamp(XEN snd, XEN chn)
 {
   #define H_selection_maxamp "(" S_selection_maxamp " :optional snd chn): selection maxamp in given channel"
   chan_info *cp;
@@ -1416,7 +1581,8 @@ XEN_ARGIFY_2(g_selection_frames_w, g_selection_frames)
 XEN_ARGIFY_3(g_set_selection_frames_w, g_set_selection_frames)
 XEN_ARGIFY_2(g_selection_member_w, g_selection_member)
 XEN_ARGIFY_3(g_set_selection_member_w, g_set_selection_member)
-XEN_NARGIFY_0(g_selection_p_w, g_selection_p)
+XEN_NARGIFY_0(g_selection_w, g_selection)
+XEN_ARGIFY_1(g_selection_p_w, g_selection_p)
 XEN_NARGIFY_0(g_selection_chans_w, g_selection_chans)
 XEN_NARGIFY_0(g_selection_srate_w, g_selection_srate)
 XEN_ARGIFY_2(g_selection_maxamp_w, g_selection_maxamp)
@@ -1434,6 +1600,7 @@ XEN_VARGIFY(g_save_selection_w, g_save_selection)
 #define g_selection_member_w g_selection_member
 #define g_set_selection_member_w g_set_selection_member
 #define g_selection_p_w g_selection_p
+#define g_selection_w g_selection
 #define g_selection_chans_w g_selection_chans
 #define g_selection_srate_w g_selection_srate
 #define g_selection_maxamp_w g_selection_maxamp
@@ -1448,6 +1615,7 @@ XEN_VARGIFY(g_save_selection_w, g_save_selection)
 void g_init_selection(void)
 {
   init_selection_keywords();
+  init_xen_selection();
 
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_selection_position, g_selection_position_w, H_selection_position,
 					    S_setB S_selection_position, g_set_selection_position_w, g_set_selection_position_reversed,
@@ -1461,7 +1629,8 @@ void g_init_selection(void)
 					    S_setB S_selection_member, g_set_selection_member_w, g_set_selection_member_reversed,
 					    0, 2, 1, 2);
 
-  XEN_DEFINE_PROCEDURE(S_selection_p,      g_selection_p_w,      0, 0, 0, H_selection_p);
+  XEN_DEFINE_PROCEDURE(S_selection,        g_selection_w,        0, 0, 0, H_selection);
+  XEN_DEFINE_PROCEDURE(S_selection_p,      g_selection_p_w,      0, 1, 0, H_selection_p);
   XEN_DEFINE_PROCEDURE(S_selection_chans,  g_selection_chans_w,  0, 0, 0, H_selection_chans);
   XEN_DEFINE_PROCEDURE(S_selection_srate,  g_selection_srate_w,  0, 0, 0, H_selection_srate);
   XEN_DEFINE_PROCEDURE(S_selection_maxamp, g_selection_maxamp_w, 0, 2, 0, H_selection_maxamp);

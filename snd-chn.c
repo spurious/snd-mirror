@@ -6517,6 +6517,9 @@ XEN g_frames(XEN snd, XEN chn, XEN edpos)
 	}
     }
 
+  if (XEN_SELECTION_P(snd))
+    return(g_selection_frames(chn, edpos));
+
   if (XEN_BOUND_P(edpos))
     {
       XEN res;
@@ -6619,6 +6622,9 @@ static XEN g_maxamp(XEN snd, XEN chn_n, XEN edpos)
       if (XEN_LIST_P(snd)) /* can this happen given def-clm-struct? */
 	return(g_list_maxamp(snd));
     }
+
+  if (XEN_SELECTION_P(snd))                      /* selection-maxamp where chn=snd and edpos=chn */
+    return(g_selection_maxamp(chn_n, edpos));
 
   if (XEN_BOUND_P(edpos))
     {

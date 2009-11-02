@@ -1595,7 +1595,7 @@ Say we have a sine wave in a table with L elements, and we want to read it at a 
 f Hz at a sampling rate of Fs.  This requires that we read the table at locations that are multiples of
 L * f / Fs.  This is ordinarily not an integer (that is, we've fallen between the
 table elements).  We have no data between the elements, but we can make (plenty of)
-assumptions about what ought to be there.  In the no-interpolation case (type = <code>mus-interp-none</code>), we simply take the floor of
+assumptions about what ought to be there.  In the no-interpolation case (type = <code>mus-interp-none</code>), we take the floor of
 the table-relative phase, returning a squared-off sine-wave:
 </p>
 
@@ -1681,8 +1681,8 @@ is higher (by n^2) than the fundamental's.  We either have to use enormous
 tables or stick to low
 numbered partials.  To keep the noise components out of sight in 16-bit output (down 90 dB),
 we need 180 elements per period.  So a table with a 50th harmonic has to be at least length 8192.
-It's odd that the cutoff here is basically the same as
-in the waveshaping case; a 50-th harmonic is trouble in either case.
+It's odd that the cutoff here is so similar to
+the waveshaping case; a 50-th harmonic is trouble in either case.
 (This leaves an opening for <a href="#ncos">ncos</a> and friends even when dynamic spectra aren't the issue).
 </p>
 
@@ -1959,7 +1959,7 @@ vcts of component amplitudes.
 These functions makes it easy to do additive synthesis
 with any number of harmonics (I've tried 16384), each with arbitrary
 initial-phase and amplitude, and each harmonic independently changeable 
-in phase and amplitude at run-time simply by setting a vct value.
+in phase and amplitude at run-time by setting a vct value.
 </p>
 
 
@@ -2680,7 +2680,7 @@ One popular kind of vibrato is:
 is useful; the others are silly).
 sawtooth-wave ramps from -1 to 1, then goes immediately back to -1.
 Use a negative frequency to turn the "teeth" the other way.
-To get a sawtooth from 0 to 1, you can simply use modulo:
+To get a sawtooth from 0 to 1, you can use modulo:
 </p>
 <pre>
     (with-sound () (do ((i 0 (+ i 1)) (x 0.0 (+ x .01))) ((= i 22050)) (outa i (modulo x 1.0))))
@@ -5084,7 +5084,7 @@ both reflect that in their spectra (spectrum y axis is in dB):
 <p>where the ".01"'s affect how tightly the resultant values cluster toward 0.0 &mdash;
 set them to .0001, for example, to get most of the random values close to 0.0.
 The central-limit theorem says that you can get closer and closer to gaussian
-noise simply by adding rand's together.  Orfanidis in 
+noise by adding rand's together.  Orfanidis in 
 "Introduction to Signal Processing" says 12 calls on rand will
 do perfectly well:
 </p><pre>
@@ -7137,7 +7137,7 @@ phase-vocoder generator.  The analyze argument is a function of two arguments, t
 the input function. The default is to read the current input,
 take an fft, get the new amplitudes and phases (as the edit
 function default), then resynthesize using sines; so, the
-default case simply returns a resynthesis of the original input.  The "interp" argument sets the time between
+default case returns a resynthesis of the original input.  The "interp" argument sets the time between
 ffts (for time stretching, etc). 
 </p>
 
@@ -7788,16 +7788,16 @@ with_sound(:play, true) do
 <p>These are the "generic" input and output functions.
 out-any adds its "data" argument (a sound sample) into the "output" object at sample
 position "loc".  
-The "output" argument can be a vct, a sound-data object, or a function, as well as the more usual frame-&gt;file object.
+The "output" argument can be a vct, a vector, a sound-data object, or a function, as well as the more usual frame-&gt;file object.
 or any output-capable CLM generator.
 In with-sound, the current output is *output* and the reverb output is *reverb*.
 outa is the same as out-any with a channel of 0.  It is not an error to try to write to a channel that doesn't exist;
-the function simply returns.
+the function just returns.
 </p>
 
 <p>in-any returns the sample at position "loc" in
 "input".  ina is the same as in-any with a channel of 0.
-As in out-any and friends, the "input" argument can be a file-&gt;frame object, a vct, sound-data object, or a function.
+As in out-any and friends, the "input" argument can be a file-&gt;frame object, a vct, a vector, sound-data object, or a function.
 If "input" is a function, it should take two arguments, the location and the channel number.
 </p>
 
@@ -9022,9 +9022,9 @@ think there would be any difference, even taking FM into account.
 as the carrier, there's no point in an ssb version.  nxy1cos is the same as nxycos, but every other
 component is multiplied by -1, and "n" produces 2n components.
 Normalization in the "sin" cases is tricky.  If ratio is 1, we can use nsin's normalization, and if ratio = 2, noddsin's,
-but otherwise nxysin currently simply uses 1/n.  This ensures that the generator output is always between -1 and 1,
+but otherwise nxysin currently uses 1/n.  This ensures that the generator output is always between -1 and 1,
 but in some cases (mainly involving low "n" and simple "ratio"), the output might not be full amplitude.  nxy1sin is
-even trickier, so it simply divides by "n".
+even trickier, so it divides by "n".
 </p>
 
 <br>

@@ -1106,6 +1106,13 @@ void add_selection_or_region(int reg, chan_info *cp);
 void insert_selection_from_menu(void);
 void insert_selection_or_region(int reg, chan_info *cp);
 
+bool xen_selection_p(XEN obj);
+#define XEN_SELECTION_P(arg) xen_selection_p(arg)
+XEN g_selection_chans(void);
+XEN g_selection_srate(void);
+XEN g_selection_maxamp(XEN snd, XEN chn);
+XEN g_selection_frames(XEN snd, XEN chn);
+
 void g_init_selection(void);
   
 
