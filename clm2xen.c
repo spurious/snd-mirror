@@ -6428,7 +6428,7 @@ return a new generator for signal placement in n channels.  Channel 0 correspond
 	    {
 	      if (XEN_PROCEDURE_P(keys3)) /* don't combine this with vct case above -- sound-data thinks it is a procedure */
 		ov = keys3;
-	      else XEN_ASSERT_TYPE(XEN_KEYWORD_P(keys[3]) || XEN_FALSE_P(keys[3]), keys[3], orig_arg[3], S_make_locsig, "an output gen, vct, sound-data object, or a function");
+	      else XEN_ASSERT_TYPE(XEN_KEYWORD_P(keys[3]) || XEN_FALSE_P(keys[3]), keys[3], orig_arg[3], S_make_locsig, "an output gen, vct, vector, sound-data object, or a function");
 	    }
 	}
     }

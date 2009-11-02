@@ -927,6 +927,7 @@ static bool s7_xen_selection_equalp(void *obj1, void *obj2)
 static XEN s7_xen_selection_fill(s7_scheme *sc, XEN obj, XEN val)
 {
   /* TODO: fill selected portion with (number) val -- obj must be a selection object */
+  /* can this be just scale_selection by 0.0? (g_scale_selection_by in snd-sig.c) */
 }
 #endif
 
@@ -1265,6 +1266,10 @@ static XEN g_selection_p(XEN sel)
 {
   #define H_selection_p "(" S_selection_p " :optional obj): " PROC_TRUE " if selection is currently active, visible, etc. \
 If 'obj' is passed, " S_selection_p " returns #t is obj is a selection object and there is a current selection."
+
+  /* TODO: doc selection? */
+  /* TODO: what happens if we make-region-sampler, let the region be deleted, then read? */
+  /*  similarly, do we snd-test for make-sampler, close sound and read? */
 
   if ((XEN_BOUND_P(sel)) &&
       (!(xen_selection_p(sel))))

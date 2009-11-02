@@ -7042,19 +7042,18 @@
 (CFNC-2177 "void gdk_window_flush GdkWindow* window")
 
 
-#|
 ;;; 2.19.0
-GtkWidget* gtk_dialog_get_widget_for_response (GtkDialog *dialog, gint response_id);
-void gtk_tooltip_set_icon_from_gicon (GtkTooltip *tooltip,  GIcon *gicon, GtkIconSize size);
-GdkWindow* gtk_viewport_get_bin_window (GtkViewport *viewport);
-GtkWidget *gtk_spinner_new (void);
-void gtk_spinner_start (GtkSpinner *spinner);
-void gtk_spinner_stop (GtkSpinner *spinner);
-GtkCellRenderer *gtk_cell_renderer_spinner_new (void); /* surely a bug?? */
+(CFNC-2190 "GtkWidget* gtk_dialog_get_widget_for_response GtkDialog* dialog gint response_id")
+(CFNC-2190 "void gtk_tooltip_set_icon_from_gicon GtkTooltip* tooltip GIcon* gicon GtkIconSize size")
+(CFNC-2190 "GdkWindow* gtk_viewport_get_bin_window GtkViewport* viewport")
+(CFNC-2190 "GtkWidget* gtk_spinner_new void")
+(CFNC-2190 "void gtk_spinner_start GtkSpinner* spinner")
+(CFNC-2190 "void gtk_spinner_stop GtkSpinner* spinner")
+(CFNC-2190 "GtkCellRenderer* gtk_cell_renderer_spinner_new void") ; surely they mean GtkCellRendererSpinner?
 
 (CCAST-2190 "GTK_SPINNER(obj)" "GtkSpinner*")
 (CCHK-2190 "GTK_IS_SPINNER(obj)" "GtkSpinner*")
 
 (CCAST-2190 "GTK_CELL_RENDERER_SPINNER(obj)" "GtkCellRendererSpinner*")
 (CCHK-2190 "GTK_IS_CELL_RENDERER_SPINNER(obj)" "GtkCellRendererSpinner*")
-|#
+

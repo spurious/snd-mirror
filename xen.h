@@ -11,11 +11,12 @@
  */
 
 #define XEN_MAJOR_VERSION 3
-#define XEN_MINOR_VERSION 1
-#define XEN_VERSION "3.1"
+#define XEN_MINOR_VERSION 2
+#define XEN_VERSION "3.2"
 
 /* HISTORY:
  *
+ *  2-Nov:     XEN_VECTOR_RANK.
  *  5-Oct:     use s7_c_pointer etc.
  *  7-Aug:     use s7_new_type_x in XEN_MAKE_OBJECT_TYPE.  XEN_DEFINE_SET_PROCEDURE.
  *  27-Jul:    INT64_T cases paralleling OFF_T (the latter may go away someday).
@@ -1744,6 +1745,7 @@ extern XEN xen_false, xen_true, xen_nil, xen_undefined;
 #define XEN_VECTOR_SET(Vect, Num, Val)             s7_vector_set(s7, Vect, Num, Val)
 #define XEN_MAKE_VECTOR(Num, Fill)                 s7_make_and_fill_vector(s7, Num, Fill)
 #define XEN_VECTOR_TO_LIST(Vect)                   s7_vector_to_list(s7, Vect)
+#define XEN_VECTOR_RANK(Vect)                      s7_vector_rank(Vect)
 
 #define XEN_CHAR_P(Arg)                            s7_is_character(Arg)
 #define XEN_TO_C_CHAR(Arg)                         s7_character(Arg)
@@ -2355,6 +2357,7 @@ void xen_no_ext_lang_check_args(const char *name, int args, int req_args, int op
 #define XEN_TO_C_OFF_T(a)             xen_to_c_off_t(a)
 #define XEN_TO_C_INT64_T(a)           xen_to_c_int64_t(a)
 #define XEN_AS_STRING(form)           XEN_TO_C_STRING(XEN_TO_STRING(form))
+#define XEN_VECTOR_RANK(Vect)         1
 #else
 #define XEN_AS_STRING(form)           s7_object_to_c_string(s7, form)
 #endif

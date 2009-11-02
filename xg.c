@@ -1022,6 +1022,10 @@ XM_TYPE_PTR(GtkInfoBar_, GtkInfoBar*)
 XM_TYPE_PTR(GtkEntryBuffer_, GtkEntryBuffer*)
 #endif
 
+#if HAVE_GTK_SPINNER_NEW
+XM_TYPE_PTR(GtkSpinner_, GtkSpinner*)
+#endif
+
 #if HAVE_CAIRO_CREATE
 XM_TYPE_PTR(cairo_t_, cairo_t*)
 XM_TYPE_PTR(cairo_surface_t_, cairo_surface_t*)
@@ -31842,6 +31846,64 @@ static XEN gxg_gdk_window_flush(XEN window)
 
 #endif
 
+#if HAVE_GTK_SPINNER_NEW
+static XEN gxg_gtk_dialog_get_widget_for_response(XEN dialog, XEN response_id)
+{
+  #define H_gtk_dialog_get_widget_for_response "GtkWidget* gtk_dialog_get_widget_for_response(GtkDialog* dialog, \
+gint response_id)"
+  XEN_ASSERT_TYPE(XEN_GtkDialog__P(dialog), dialog, 1, "gtk_dialog_get_widget_for_response", "GtkDialog*");
+  XEN_ASSERT_TYPE(XEN_gint_P(response_id), response_id, 2, "gtk_dialog_get_widget_for_response", "gint");
+  return(C_TO_XEN_GtkWidget_(gtk_dialog_get_widget_for_response(XEN_TO_C_GtkDialog_(dialog), XEN_TO_C_gint(response_id))));
+}
+
+static XEN gxg_gtk_tooltip_set_icon_from_gicon(XEN tooltip, XEN gicon, XEN size)
+{
+  #define H_gtk_tooltip_set_icon_from_gicon "void gtk_tooltip_set_icon_from_gicon(GtkTooltip* tooltip, \
+GIcon* gicon, GtkIconSize size)"
+  XEN_ASSERT_TYPE(XEN_GtkTooltip__P(tooltip), tooltip, 1, "gtk_tooltip_set_icon_from_gicon", "GtkTooltip*");
+  XEN_ASSERT_TYPE(XEN_GIcon__P(gicon), gicon, 2, "gtk_tooltip_set_icon_from_gicon", "GIcon*");
+  XEN_ASSERT_TYPE(XEN_GtkIconSize_P(size), size, 3, "gtk_tooltip_set_icon_from_gicon", "GtkIconSize");
+  gtk_tooltip_set_icon_from_gicon(XEN_TO_C_GtkTooltip_(tooltip), XEN_TO_C_GIcon_(gicon), XEN_TO_C_GtkIconSize(size));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_viewport_get_bin_window(XEN viewport)
+{
+  #define H_gtk_viewport_get_bin_window "GdkWindow* gtk_viewport_get_bin_window(GtkViewport* viewport)"
+  XEN_ASSERT_TYPE(XEN_GtkViewport__P(viewport), viewport, 1, "gtk_viewport_get_bin_window", "GtkViewport*");
+  return(C_TO_XEN_GdkWindow_(gtk_viewport_get_bin_window(XEN_TO_C_GtkViewport_(viewport))));
+}
+
+static XEN gxg_gtk_spinner_new(void)
+{
+  #define H_gtk_spinner_new "GtkWidget* gtk_spinner_new( void)"
+  return(C_TO_XEN_GtkWidget_(gtk_spinner_new()));
+}
+
+static XEN gxg_gtk_spinner_start(XEN spinner)
+{
+  #define H_gtk_spinner_start "void gtk_spinner_start(GtkSpinner* spinner)"
+  XEN_ASSERT_TYPE(XEN_GtkSpinner__P(spinner), spinner, 1, "gtk_spinner_start", "GtkSpinner*");
+  gtk_spinner_start(XEN_TO_C_GtkSpinner_(spinner));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_spinner_stop(XEN spinner)
+{
+  #define H_gtk_spinner_stop "void gtk_spinner_stop(GtkSpinner* spinner)"
+  XEN_ASSERT_TYPE(XEN_GtkSpinner__P(spinner), spinner, 1, "gtk_spinner_stop", "GtkSpinner*");
+  gtk_spinner_stop(XEN_TO_C_GtkSpinner_(spinner));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_cell_renderer_spinner_new(void)
+{
+  #define H_gtk_cell_renderer_spinner_new "GtkCellRenderer* gtk_cell_renderer_spinner_new( void)"
+  return(C_TO_XEN_GtkCellRenderer_(gtk_cell_renderer_spinner_new()));
+}
+
+#endif
+
 #if HAVE_CAIRO_CREATE
 static XEN gxg_cairo_create(XEN target)
 {
@@ -34030,6 +34092,11 @@ static XEN gxg_GTK_INFO_BAR(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_
 static XEN gxg_GTK_ENTRY_BUFFER(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkEntryBuffer_"), XEN_CADR(obj)) : XEN_FALSE);}
 #endif
 
+#if HAVE_GTK_SPINNER_NEW
+static XEN gxg_GTK_SPINNER(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkSpinner_"), XEN_CADR(obj)) : XEN_FALSE);}
+static XEN gxg_GTK_CELL_RENDERER_SPINNER(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkCellRendererSpinner_"), XEN_CADR(obj)) : XEN_FALSE);}
+#endif
+
 static XEN gxg_GDK_IS_COLORMAP(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GDK_IS_COLORMAP((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GDK_IS_DRAG_CONTEXT(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GDK_IS_DRAG_CONTEXT((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GDK_IS_DRAWABLE(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GDK_IS_DRAWABLE((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
@@ -34236,6 +34303,11 @@ static XEN gxg_GTK_IS_INFO_BAR(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_
 
 #if HAVE_GTK_STATUS_ICON_GET_TITLE
 static XEN gxg_GTK_IS_ENTRY_BUFFER(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_ENTRY_BUFFER((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
+#endif
+
+#if HAVE_GTK_SPINNER_NEW
+static XEN gxg_GTK_IS_SPINNER(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_SPINNER((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
+static XEN gxg_GTK_IS_CELL_RENDERER_SPINNER(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_CELL_RENDERER_SPINNER((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 #endif
 
 
@@ -38167,6 +38239,16 @@ XEN_NARGIFY_1(gxg_gtk_widget_get_receives_default_w, gxg_gtk_widget_get_receives
 XEN_NARGIFY_1(gxg_gdk_window_flush_w, gxg_gdk_window_flush)
 #endif
 
+#if HAVE_GTK_SPINNER_NEW
+XEN_NARGIFY_2(gxg_gtk_dialog_get_widget_for_response_w, gxg_gtk_dialog_get_widget_for_response)
+XEN_NARGIFY_3(gxg_gtk_tooltip_set_icon_from_gicon_w, gxg_gtk_tooltip_set_icon_from_gicon)
+XEN_NARGIFY_1(gxg_gtk_viewport_get_bin_window_w, gxg_gtk_viewport_get_bin_window)
+XEN_NARGIFY_0(gxg_gtk_spinner_new_w, gxg_gtk_spinner_new)
+XEN_NARGIFY_1(gxg_gtk_spinner_start_w, gxg_gtk_spinner_start)
+XEN_NARGIFY_1(gxg_gtk_spinner_stop_w, gxg_gtk_spinner_stop)
+XEN_NARGIFY_0(gxg_gtk_cell_renderer_spinner_new_w, gxg_gtk_cell_renderer_spinner_new)
+#endif
+
 #if HAVE_CAIRO_CREATE
 XEN_NARGIFY_1(gxg_cairo_create_w, gxg_cairo_create)
 XEN_NARGIFY_0(gxg_cairo_version_w, gxg_cairo_version)
@@ -38622,6 +38704,11 @@ XEN_NARGIFY_1(gxg_GTK_INFO_BAR_w, gxg_GTK_INFO_BAR)
 XEN_NARGIFY_1(gxg_GTK_ENTRY_BUFFER_w, gxg_GTK_ENTRY_BUFFER)
 #endif
 
+#if HAVE_GTK_SPINNER_NEW
+XEN_NARGIFY_1(gxg_GTK_SPINNER_w, gxg_GTK_SPINNER)
+XEN_NARGIFY_1(gxg_GTK_CELL_RENDERER_SPINNER_w, gxg_GTK_CELL_RENDERER_SPINNER)
+#endif
+
 XEN_NARGIFY_1(gxg_GDK_IS_COLORMAP_w, gxg_GDK_IS_COLORMAP)
 XEN_NARGIFY_1(gxg_GDK_IS_DRAG_CONTEXT_w, gxg_GDK_IS_DRAG_CONTEXT)
 XEN_NARGIFY_1(gxg_GDK_IS_DRAWABLE_w, gxg_GDK_IS_DRAWABLE)
@@ -38828,6 +38915,11 @@ XEN_NARGIFY_1(gxg_GTK_IS_INFO_BAR_w, gxg_GTK_IS_INFO_BAR)
 
 #if HAVE_GTK_STATUS_ICON_GET_TITLE
 XEN_NARGIFY_1(gxg_GTK_IS_ENTRY_BUFFER_w, gxg_GTK_IS_ENTRY_BUFFER)
+#endif
+
+#if HAVE_GTK_SPINNER_NEW
+XEN_NARGIFY_1(gxg_GTK_IS_SPINNER_w, gxg_GTK_IS_SPINNER)
+XEN_NARGIFY_1(gxg_GTK_IS_CELL_RENDERER_SPINNER_w, gxg_GTK_IS_CELL_RENDERER_SPINNER)
 #endif
 
 XEN_NARGIFY_1(gxg_height_w, gxg_height)
@@ -42117,6 +42209,16 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gdk_window_flush_w gxg_gdk_window_flush
 #endif
 
+#if HAVE_GTK_SPINNER_NEW
+#define gxg_gtk_dialog_get_widget_for_response_w gxg_gtk_dialog_get_widget_for_response
+#define gxg_gtk_tooltip_set_icon_from_gicon_w gxg_gtk_tooltip_set_icon_from_gicon
+#define gxg_gtk_viewport_get_bin_window_w gxg_gtk_viewport_get_bin_window
+#define gxg_gtk_spinner_new_w gxg_gtk_spinner_new
+#define gxg_gtk_spinner_start_w gxg_gtk_spinner_start
+#define gxg_gtk_spinner_stop_w gxg_gtk_spinner_stop
+#define gxg_gtk_cell_renderer_spinner_new_w gxg_gtk_cell_renderer_spinner_new
+#endif
+
 #if HAVE_CAIRO_CREATE
 #define gxg_cairo_create_w gxg_cairo_create
 #define gxg_cairo_version_w gxg_cairo_version
@@ -42572,6 +42674,11 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_GTK_ENTRY_BUFFER_w gxg_GTK_ENTRY_BUFFER
 #endif
 
+#if HAVE_GTK_SPINNER_NEW
+#define gxg_GTK_SPINNER_w gxg_GTK_SPINNER
+#define gxg_GTK_CELL_RENDERER_SPINNER_w gxg_GTK_CELL_RENDERER_SPINNER
+#endif
+
 #define gxg_GDK_IS_COLORMAP_w gxg_GDK_IS_COLORMAP
 #define gxg_GDK_IS_DRAG_CONTEXT_w gxg_GDK_IS_DRAG_CONTEXT
 #define gxg_GDK_IS_DRAWABLE_w gxg_GDK_IS_DRAWABLE
@@ -42778,6 +42885,11 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 
 #if HAVE_GTK_STATUS_ICON_GET_TITLE
 #define gxg_GTK_IS_ENTRY_BUFFER_w gxg_GTK_IS_ENTRY_BUFFER
+#endif
+
+#if HAVE_GTK_SPINNER_NEW
+#define gxg_GTK_IS_SPINNER_w gxg_GTK_IS_SPINNER
+#define gxg_GTK_IS_CELL_RENDERER_SPINNER_w gxg_GTK_IS_CELL_RENDERER_SPINNER
 #endif
 
 #define gxg_height_w gxg_height
@@ -46074,6 +46186,16 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gdk_window_flush, gxg_gdk_window_flush_w, 1, 0, 0, H_gdk_window_flush);
 #endif
 
+#if HAVE_GTK_SPINNER_NEW
+  XG_DEFINE_PROCEDURE(gtk_dialog_get_widget_for_response, gxg_gtk_dialog_get_widget_for_response_w, 2, 0, 0, H_gtk_dialog_get_widget_for_response);
+  XG_DEFINE_PROCEDURE(gtk_tooltip_set_icon_from_gicon, gxg_gtk_tooltip_set_icon_from_gicon_w, 3, 0, 0, H_gtk_tooltip_set_icon_from_gicon);
+  XG_DEFINE_PROCEDURE(gtk_viewport_get_bin_window, gxg_gtk_viewport_get_bin_window_w, 1, 0, 0, H_gtk_viewport_get_bin_window);
+  XG_DEFINE_PROCEDURE(gtk_spinner_new, gxg_gtk_spinner_new_w, 0, 0, 0, H_gtk_spinner_new);
+  XG_DEFINE_PROCEDURE(gtk_spinner_start, gxg_gtk_spinner_start_w, 1, 0, 0, H_gtk_spinner_start);
+  XG_DEFINE_PROCEDURE(gtk_spinner_stop, gxg_gtk_spinner_stop_w, 1, 0, 0, H_gtk_spinner_stop);
+  XG_DEFINE_PROCEDURE(gtk_cell_renderer_spinner_new, gxg_gtk_cell_renderer_spinner_new_w, 0, 0, 0, H_gtk_cell_renderer_spinner_new);
+#endif
+
 #if HAVE_CAIRO_CREATE
   XG_DEFINE_PROCEDURE(cairo_create, gxg_cairo_create_w, 1, 0, 0, H_cairo_create);
   XG_DEFINE_PROCEDURE(cairo_version, gxg_cairo_version_w, 0, 0, 0, H_cairo_version);
@@ -46522,6 +46644,11 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(GTK_ENTRY_BUFFER, gxg_GTK_ENTRY_BUFFER_w, 1, 0, 0, "(GTK_ENTRY_BUFFER obj) casts obj to GTK_ENTRY_BUFFER");
 #endif
 
+#if HAVE_GTK_SPINNER_NEW
+  XG_DEFINE_PROCEDURE(GTK_SPINNER, gxg_GTK_SPINNER_w, 1, 0, 0, "(GTK_SPINNER obj) casts obj to GTK_SPINNER");
+  XG_DEFINE_PROCEDURE(GTK_CELL_RENDERER_SPINNER, gxg_GTK_CELL_RENDERER_SPINNER_w, 1, 0, 0, "(GTK_CELL_RENDERER_SPINNER obj) casts obj to GTK_CELL_RENDERER_SPINNER");
+#endif
+
   XG_DEFINE_PROCEDURE(c-array->list, c_array_to_xen_list_w, 2, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(list->c-array, xen_list_to_c_array_w, 2, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(freeGdkPoints, gxg_freeGdkPoints_w, 1, 0, 0, H_freeGdkPoints);
@@ -46735,6 +46862,11 @@ static void define_functions(void)
 
 #if HAVE_GTK_STATUS_ICON_GET_TITLE
   XG_DEFINE_PROCEDURE(GTK_IS_ENTRY_BUFFER, gxg_GTK_IS_ENTRY_BUFFER_w, 1, 0, 0, "(GTK_IS_ENTRY_BUFFER obj): " PROC_TRUE " if obj is a GTK_IS_ENTRY_BUFFER");
+#endif
+
+#if HAVE_GTK_SPINNER_NEW
+  XG_DEFINE_PROCEDURE(GTK_IS_SPINNER, gxg_GTK_IS_SPINNER_w, 1, 0, 0, "(GTK_IS_SPINNER obj): " PROC_TRUE " if obj is a GTK_IS_SPINNER");
+  XG_DEFINE_PROCEDURE(GTK_IS_CELL_RENDERER_SPINNER, gxg_GTK_IS_CELL_RENDERER_SPINNER_w, 1, 0, 0, "(GTK_IS_CELL_RENDERER_SPINNER obj): " PROC_TRUE " if obj is a GTK_IS_CELL_RENDERER_SPINNER");
 #endif
 
 }
