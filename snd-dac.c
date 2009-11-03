@@ -2824,16 +2824,17 @@ static XEN g_play_1(XEN samp_n, XEN snd, XEN chn_n, bool back, bool syncd, XEN e
     return(g_play_region(samp_n, snd, chn_n)); /* region wait stop-proc */
 
   if (XEN_SELECTION_P(samp_n))
-    return(g_play_selection(snd, chn_n));
+    return(g_play_selection(snd, chn_n));      /* wait stop-proc */
+
+  if ((XEN_SOUND_P(samp_n)) ||                 /* snd-obj channel (assume start=0?) */
+      (XEN_PLAYER_P(samp_n)))
+    return(g_play_1(XEN_ZERO, samp_n, snd, back, syncd, end_n, edpos, caller, arg_pos, stop_proc, out_chan));
 
 
   /* TODO: clean up all these play cases! -- there's no need to follow the original args */
   /* TODO: make sure play (and friends) can take a sound object */
   /*  is  the "stop-proc" of any use anymore? */
-  /* TODO: make sure "play" itself allows objects */
   /* TODO: play-channel for objects and so on (play-and-wait = no stop?) */
-  /* TODO: let sound object be first arg, also player object */
-
 
   if (XEN_INT64_T_P(end_n)) end = XEN_TO_C_INT64_T(end_n);
 
@@ -2910,6 +2911,7 @@ static XEN g_play_1(XEN samp_n, XEN snd, XEN chn_n, bool back, bool syncd, XEN e
       ASSERT_CHANNEL(caller, snd, chn_n, 2);
       sp = get_sp(snd);
     }
+
   if (sp == NULL) 
     return(snd_no_such_sound_error(caller, snd));
 

@@ -252,7 +252,7 @@ bool separator_char_p(char c)
 	 (c != '!') &&
 	 (c != '_') &&
 #endif
-#if HAVE_SCHEME || HAVE_CL
+#if HAVE_SCHEME
 	 (c != '-') &&
 	 (c != '_') &&
 	 (c != '>') &&

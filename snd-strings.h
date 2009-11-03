@@ -522,6 +522,7 @@
 #define S_selection_maxamp              "selection-maxamp"
 #define S_selection_maxamp_position     "selection-maxamp-position"
 #define S_selection_member              "selection-member?"
+#define S_selection_to_mix              "selection->mix"
 #define S_selection_p                   "selection?"
 #define S_selection_position            "selection-position"
 #define S_selection_srate               "selection-srate"

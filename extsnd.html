@@ -5751,6 +5751,26 @@ If a region is created, it returns the new region.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
+<!-- selection -->
+<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="selection">selection</a> ()</code>
+</td></tr><tr><td></td><td>
+<p>selection returns an object representing the current selection, or #f if there is no active selection.
+The object can be passed to the <a href="#sndgenericfuncs">generic functions</a> to refer to the
+current selection:
+</p>
+<pre>
+    :<em class=typing>(define selobj (selection))</em>
+    <em class=listener>selobj</em>
+    :<em class=typing>selobj</em>
+    <em class=listener>#&lt;selection 1&gt;</em>
+    :<em class=typing>(selection-chans)</em>
+    <em class=listener>1</em>
+    :<em class=typing>(channels selobj)</em>
+    <em class=listener>1</em>
+</pre>
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
 <!-- selection-chans -->
 <tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="selectionchans">selection-chans</a> ()</code>
 </td></tr><tr><td></td><td>

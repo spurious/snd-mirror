@@ -1001,12 +1001,14 @@ static int mix_sync_from_id(int id)
 
 static int current_mix_sync_max = 0;
 
-static int mix_set_sync_from_id(int id, int new_sync)
+int mix_set_sync_from_id(int id, int new_sync)
 {
   mix_info *md;
   md = md_from_id(id);
   if (md)
     {
+      if (new_sync == -1) new_sync = current_mix_sync_max + 1;
+
       md->sync = new_sync;
       if (new_sync > current_mix_sync_max)
 	current_mix_sync_max = new_sync;
@@ -2114,6 +2116,41 @@ void move_mix_tag(int mix_id, int x, int y)
 
   reflect_mix_change(mix_id);
 
+  {
+    int i, sync;
+    sync = mix_sync_from_id(mix_id);
+    if (sync != 0)
+      {
+	mus_long_t beg;
+	beg = snd_round_mus_long_t(ungrf_x(cp->axis, x) * (double)(SND_SRATE(cp->sound)));
+	for (i = 0; i < mix_infos_ctr; i++)
+	  if ((i != mix_id) && (mix_is_active(i)))
+	    {
+	      mix_info *md;
+	      md = mix_infos[i];
+	      if ((md) && (md->sync == sync))
+		{
+		  mix_set_position_edit(i, beg); /* needs offset if any */
+		  if (!axis_changed)
+		    {
+		      mix_state *mx;
+		      mus_long_t cur_end;
+		      chan_info *cx;
+		      mx = current_mix_state(md);
+		      cx = md->cp;
+		      cur_end = ms->beg + ms->len;
+		      if (cur_end > drag_end)
+			drag_end = cur_end;
+		      if (ms->beg < drag_beg)
+			drag_beg = ms->beg;
+		      make_partial_graph(cx, drag_beg, drag_end);
+		      display_one_mix_with_bounds(mx, cx, cx->axis, cx->axis->losamp, cx->axis->hisamp);
+		    }
+		}
+	    }
+      }
+  }
+
   if ((axis_changed) ||
       (cp->sound->channel_style == CHANNELS_SUPERIMPOSED))
     display_channel_time_data(cp);
@@ -2170,6 +2207,8 @@ void finish_moving_mix_tag(int mix_id, int x)
 				    C_TO_XEN_INT64_T(pos - mix_position_from_id(mix_id))),
 			 S_mix_release_hook);
 
+  /* TODO: doc syncd mix drag stuff and get offsets */
+
   if (!(XEN_TRUE_P(res)))
     {
       if (mix_set_position_edit(mix_id, pos))
@@ -2181,8 +2220,29 @@ void finish_moving_mix_tag(int mix_id, int x)
 			     *   and we have to run lisp/fft graphs in any case (and the hook),
 			     *   but display_channel_data_1 erases the old graph, so it's hard to specialize for this case
 			     */
-	}
-    }
+
+	  {
+	    int i, sync;
+	    sync = mix_sync_from_id(mix_id);
+	    if (sync != 0)
+	      {
+		for (i = 0; i < mix_infos_ctr; i++)
+		  if ((i != mix_id) && (mix_is_active(i)))
+		    {
+		      mix_info *md;
+		      md = mix_infos[i];
+		      if ((md) && (md->sync == sync))
+			{
+			  mix_set_position_edit(i, pos); /* needs offset if any */
+			  CURSOR(md->cp) = pos;
+			  after_edit(md->cp);
+			  update_graph(md->cp);
+			}
+		    }
+		}
+	    }
+      }
+  }
 }
 
 

@@ -19,6 +19,9 @@
  *     HAVE_GTK_ADJUSTMENT_GET_UPPER for 2.13.4..6
  *     HAVE_GTK_SCALE_ADD_MARK for 2.15.0
  *     HAVE_GTK_INFO_BAR_NEW for 2.17.2
+ *     HAVE_GTK_STATUS_ICON_GET_TITLE for 2.17.3
+ *     HAVE_GTK_WIDGET_GET_VISIBLE for 2.17.7
+ *     HAVE_GTK_SPINNER_NEW for 2.19.0
  *     HAVE_CAIRO_CREATE for cairo
  *     HAVE_CAIRO_GET_USER_DATA for cairo 1.4.0
  *     HAVE_CAIRO_FORMAT_STRIDE_FOR_WIDTH for cairo 1.6.4
@@ -48755,7 +48758,7 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("02-Nov-09"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("03-Nov-09"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

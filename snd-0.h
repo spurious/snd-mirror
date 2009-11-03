@@ -234,19 +234,6 @@ typedef enum {FILE_READ_WRITE, FILE_READ_ONLY} read_only_t;
   #define PROC_TRUE  "#t"
   #define PROC_QUOTE "'"
 #endif
-#if HAVE_CL
-  #define TO_PROC_NAME(Str) Str
-  #define TO_VAR_NAME(Str) Str
-  #define PROC_OPEN " "
-  #define PROC_SEP " "
-  #define LIST_OPEN "(list "
-  #define LIST_CLOSE ")"
-  #define BPAREN "("
-  #define EPAREN ")"
-  #define PROC_FALSE "nil"
-  #define PROC_TRUE  "t"
-  #define PROC_QUOTE "'"
-#endif
 
 #define MAX_MAIN_MENUS 64
 #define NO_REGIONS -2

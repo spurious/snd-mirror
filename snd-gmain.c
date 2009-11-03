@@ -438,6 +438,7 @@ static idle_func_t startup_funcs(gpointer context)
 
       ss->sgx->graph_cursor = gdk_cursor_new((GdkCursorType)in_graph_cursor(ss));
       ss->sgx->wait_cursor = gdk_cursor_new(GDK_WATCH);
+      ss->sgx->bounds_cursor = gdk_cursor_new(GDK_SB_H_DOUBLE_ARROW);
       ss->sgx->arrow_cursor = gdk_cursor_new(GDK_LEFT_PTR);
       break;
 

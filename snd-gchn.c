@@ -659,19 +659,21 @@ static gboolean graph_scroll(GtkWidget *w, GdkEventScroll *ev, gpointer data)
 
 static gboolean graph_button_motion(GtkWidget *w, GdkEventMotion *ev, gpointer data)
 { 
-  if (BUTTON1_PRESSED(EVENT_STATE(ev)))
+  int x, y;
+  GdkModifierType state;
+
+  if (EVENT_IS_HINT(ev))
+    gdk_window_get_pointer(EVENT_WINDOW(ev), &x, &y, &state);
+  else
     {
-      int x, y;
-      GdkModifierType state;
-      if (EVENT_IS_HINT(ev))
-	gdk_window_get_pointer(EVENT_WINDOW(ev), &x, &y, &state);
-      else
-	{
-	  x = (int)(EVENT_X(ev));
-	  y = (int)(EVENT_Y(ev));
-	}
-      graph_button_motion_callback((chan_info *)data, x, y, EVENT_TIME(ev));
+      x = (int)(EVENT_X(ev));
+      y = (int)(EVENT_Y(ev));
     }
+
+  if (BUTTON1_PRESSED(EVENT_STATE(ev)))
+    graph_button_motion_callback((chan_info *)data, x, y, EVENT_TIME(ev));
+  else check_cursor_shape((chan_info *)data, x, y);
+
   return(false);
 }
 

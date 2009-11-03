@@ -212,6 +212,7 @@ typedef struct {
   bool sono_cursor_pix_ready;
   mus_float_t progress_pct;
 #endif
+  GdkCursor *current_cursor;
 } chan_context;
 
 typedef struct {
@@ -280,7 +281,7 @@ typedef struct {
   GtkWidget *requestor_dialog;
   mus_float_t bg_gradient;
   
-  GdkCursor *arrow_cursor, *wait_cursor, *graph_cursor;
+  GdkCursor *arrow_cursor, *wait_cursor, *graph_cursor, *bounds_cursor;
   gint fam_port;
   GtkWidget **mw, **pw;
   bool axis_color_set;

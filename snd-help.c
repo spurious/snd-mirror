@@ -634,12 +634,6 @@ void find_help(void)
     #define count_matches_example "     >lambda: <{ y }> 0.1 y f< ; count-matches\n     2851"
     #define search_procedure_example "   >lambda: <{ y }> 0.1 y f< ; set-search-procedure"
   #endif
-  #if HAVE_CL
-    #define basic_example "(lambda (y) (> y 0.1))"
-    #define find_channel_example "    >(find-channel (lambda (y) (> y .1)))\n    (t 4423)"
-    #define count_matches_example "    >(count-matches (lambda (y) (> y .1)))\n    2851"
-    #define search_procedure_example "    >(setf (search-procedure) (lambda (y) (> y .1)))"
-  #endif
 
   snd_help_with_xrefs("Find", 
 
@@ -706,11 +700,6 @@ void undo_help(void)
     #define H_undo S_undo
     #define H_redo S_redo
     #define edit_position_example "0 set-edit-position \\ revert channel"
-  #endif
-  #if HAVE_CL
-    #define H_undo S_undo
-    #define H_redo S_redo
-    #define edit_position_example "(setf (edit-position) 0) ; revert channel"
   #endif
 
   snd_help_with_xrefs("Undo and Redo", 
@@ -805,12 +794,6 @@ void sync_help(void)
     #define H_channels_combined S_channels_combined
     #define H_channels_superimposed S_channels_superimposed
   #endif
-  #if HAVE_CL
-    #define channel_style_example "(setf (channel-style snd) channels-combined)"
-    #define H_channels_separate S_channels_separate
-    #define H_channels_combined S_channels_combined
-    #define H_channels_superimposed S_channels_superimposed
-  #endif
 
   snd_help_with_xrefs("Sync", 
 
@@ -879,9 +862,6 @@ void debug_help(void)
   #if HAVE_FORTH
     #define vardpy_reference "variable-display, which isn't written yet"
   #endif
-  #if HAVE_CL
-    #define vardpy_reference "variable-display in snd-motif.cl??"
-  #endif
 
   snd_help_with_xrefs("Debugging", 
 
@@ -918,7 +898,7 @@ about it!  If possible, run Snd in gdb and send me the stack trace: \n\n\
 
 void env_help(void) 
 {
-  #if HAVE_SCHEME || HAVE_CL
+  #if HAVE_SCHEME
     #define envelope_example "'(0 0 1 1 2 0)"
     #define env_sound_example "(env-sound '(0 0 1 1 2 0))"
   #endif
@@ -1010,19 +990,6 @@ void fft_help(void)
     #define transform_graph_types "graph-once  graph-as-sonogram  graph-as-spectrogram"
     #define transform_normalizations "dont-normalize normalize-by-channel normalize-by-sound normalize-globally"
     #define fft_windows "      bartlett-window blackman2-window blackman3-window blackman4-window\n      cauchy-window connes-window dolph-chebyshev-window exponential-window\n      gaussian-window hamming-window hann-poisson-window hann-window\n      kaiser-window parzen-window poisson-window rectangular-window\n      riemann-window samaraki-window tukey-window ultraspherical-window\n      welch-window bartlett-hann-window bohman-window flat-top-window blackman5..10-window"
-  #endif
-  #if HAVE_CL
-    #define transform_normalization_example "(setf (transform-normalization) dont-normalize)"
-    #define transform_size_example "(setf (transform-size) 512)"
-    #define transform_type_example "(setf (transform-type) autocorrelation)"
-    #define fft_window_example "(setf (fft-window) rectangular-window)"
-    #define transform_graph_example "(setf (transform-graph?) #t)"
-    #define transform_graph_type_example "(setf (transform-graph-type) graph-as-sonogram)"
-    #define transform_log_magnitude_example "(setf (transform-log-magnitude) #f)"
-    #define transform_types "fourier-transform wavelet-transform  haar-transform\n      autocorrelation   walsh-transform    cepstrum"
-    #define transform_graph_types "graph-once  graph-as-sonogram  graph-as-spectrogram"
-    #define transform_normalizations "dont-normalize normalize-by-channel normalize-by-sound normalize-globally"
-    #define fft_windows "      bartlett-window blackman2-window blackman3-window blackman4-window\n      cauchy-window connes-window dolph-chebyshev-window exponential-window\n      gaussian-window hamming-window hann-poisson-window hann-window\n      kaiser-window parzen-window poisson-window rectangular-window\n      riemann-window samaraki-window tukey-window ultraspherical-window\n      welch-window bartlett-hann-window bohman-window flat-top-window  blackman5..10-window"
   #endif
 
   snd_help_with_xrefs("FFT",
@@ -1156,11 +1123,6 @@ void controls_help(void)
     #define amp_control_bounds_example "'( 0.0 20.0 ) set-amp-control-bounds"
     #define speed_control_styles "speed-control-as-float speed-control-as-ratio speed-control-as-semitone"
   #endif
-  #if HAVE_CL
-    #define amp_control_example "(setf (amp-control) 0.5)"
-    #define amp_control_bounds_example "(setf (amp-control-bounds) (list 0.0 20.0))"
-    #define speed_control_styles "speed-control-as-float speed-control-as-ratio speed-control-as-semitone"
-  #endif
 
   snd_help_with_xrefs("The Control Panel", 
 
@@ -1280,10 +1242,6 @@ void marks_help(void)
     #define add_mark_example "1234 add-mark"
     #define mark_name_example "0 \"mark-0\" set-mark-name"
   #endif
-  #if HAVE_CL
-    #define add_mark_example "(add-mark 1234)"
-    #define mark_name_example "(setf (mark-name 0) \"mark-0\")"
-  #endif
 
   snd_help_with_xrefs("Marks", 
 
@@ -1379,12 +1337,6 @@ void mix_help(void)
     #define mix_vct_example "0.0 0.1 0.2 vct 1234 mix-vct"
     #define mix_amp_example "0 0.5 set-mix-amp"
     #define mix_amp_env_example "0 '( 0.0 0.0 1.0 1.0 ) set-mix-amp-env"
-  #endif
-  #if HAVE_CL
-    #define mix_example "(mix \"oboe.snd\" 1234)"
-    #define mix_vct_example "(mix-vct (vct 0 .1 .2) 1234)"
-    #define mix_amp_example "(setf (mix-amp 0) .5)"
-    #define mix_amp_env_example "(setf (mix-amp-env 0) '(0 0 1 1))"
   #endif
 
   snd_help_with_xrefs("Mixing", 
@@ -1678,9 +1630,6 @@ void key_binding_help(void)
   #if HAVE_FORTH
     #define bind_key_example "\"End\" 0\n       lambda: <{ -- val }> doc\"view full sound\"\n         '( 0.0  #f #f #f frames  #f srate  f/ ) #f #f set-x-bounds ; bind-key"
   #endif
-  #if HAVE_CL
-    #define bind_key_example "(bind-key \"End\" 0\n      #'(lambda () \"view full sound\"\n        (setf (x-bounds) (list 0.0 (/ (frames) (srate))))))"
-  #endif
 
   int i;
 
@@ -1746,12 +1695,6 @@ void play_help(void)
     #define play_cursor_example "cursor play"
     #define play_file_example "\"oboe.snd\" play"
     #define play_previous_version_example "0 #f #f #f #f 0 0 edit-position 1- play"
-    #define H_cursor_line S_cursor_line
-  #endif
-  #if HAVE_CL
-    #define play_cursor_example "(play (cursor))"
-    #define play_file_example "(play \"oboe.snd\")"
-    #define play_previous_version_example "(play 0 nil nil nil nil (1- (edit-position)))"
     #define H_cursor_line S_cursor_line
   #endif
 
@@ -1839,11 +1782,6 @@ void reverb_help(void)
     #define reverb_control_p_example "#t set-reverb-control?"
     #define mention_hidden_controls ""
   #endif
-  #if HAVE_CL
-    #define reverb_control_length_bounds_example "(setf (reverb-control-length-bounds) (list 0.0 10.0))"
-    #define reverb_control_p_example "(setf (reverb-control?) #t)"
-    #define mention_hidden_controls "\nThe lowpass and feedback controls are accessible from the \"Hidden controls\" dialog in snd-motif.cl??"
-  #endif
 
   snd_help_with_xrefs("Reverb",
 
@@ -1918,7 +1856,7 @@ If you want Snd to ask before overwriting a file in any case, set the variable "
 
 void filter_help(void)
 {
-  #if HAVE_SCHEME || HAVE_CL
+  #if HAVE_SCHEME
     #define filter_sound_env_example "(filter-sound '(0 1 1 0) 1024)"
     #define filter_sound_vct_example "(filter-sound (vct .1 .2 .3 .3 .2 .1) 6)"
     #define filter_sound_clm_example "(filter-sound (make-filter 2 (vct 1 -1) (vct 0 -0.99)))"
@@ -1992,7 +1930,7 @@ The control filter functions are:\n\
 
 void resample_help(void)
 {
-  #if HAVE_SCHEME || HAVE_CL
+  #if HAVE_SCHEME
     #define src_number_example "(src-channel 2.0) ; go twice as fast"
     #define src_env_example "(src-channel '(0 1 1 2))"
     #define src_clm_example "(src-channel (make-env '(0 1 1 2) :end (frames)))"
@@ -2160,7 +2098,7 @@ functions are:\n\
 
 void region_help(void)
 {
-  #if HAVE_SCHEME || HAVE_CL
+  #if HAVE_SCHEME
     #define region_to_vct_example "(region->vct 0 0 reg) ; len=0 => entire region"
     #define save_region_example "(save-region reg :file \"reg0.snd\" :header-type mus-next)"
   #endif
@@ -2258,7 +2196,7 @@ continue the definition.",
 
 void selection_help(void)
 {
-  #if HAVE_SCHEME || HAVE_CL
+  #if HAVE_SCHEME
     #define env_selection_example "(env-selection '(0 0 1 1 2 0))"
     #define save_selection_example "(save-selection \"sel.snd\" :channel 1)"
     #define scale_selection_list_example "(scale-selection-by '(0.0 2.0))"
@@ -2386,10 +2324,6 @@ void colors_help(void)
     #define make_color_example ": blue 0 0 1 make-color ;"
     #define set_basic_color_example "blue set-basic-color"
   #endif
-  #if HAVE_CL
-    #define make_color_example "(defvar blue (make-color 0.0 0.0 1.0))"
-    #define set_basic_color_example "(setf (basic-color) blue)"
-  #endif
 
   snd_help_with_xrefs("Colors",
 
@@ -2448,7 +2382,7 @@ The sonogram colors can be set in the View:Colors dialog.",
 
 void envelope_editor_dialog_help(void)
 {
-  #if HAVE_SCHEME || HAVE_CL
+  #if HAVE_SCHEME
     #define define_envelope_name "defvar, define, or define-envelope"
     #define ramp_envelope_example "'(0 0 1 1)"
     #define define_envelope_example "  (defvar ramp '(0 0 1 1))\n  (define-envelope pyramid '(0 0 1 1 2 0))"
@@ -2766,11 +2700,6 @@ void find_dialog_help(void)
     #define find_example "lambda: <{ y }> 0.1 y f< ;"
     #define zero_plus "zero+"
     #define closure_example ": zero+ ( -- prc; n self -- val )\n  lambda-create 0.0 ( lastn ) , latestxt 1 make-proc\n does> { n self -- val }\n  self @ ( lastn ) f0<  n f0>= &&  -1 && { rtn }\n  n self ! ( lastn = n )\n  rtn\n;" 
-  #endif
-  #if HAVE_CL
-    #define find_example "(lambda (n) (> n .1))"
-    #define zero_plus "zero+"
-    #define closure_example "  (defun zero+ ()\n  (let ((lastn 0.0))\n      (lambda (n)\n        (let ((rtn (and (< lastn 0.0) (>= n 0.0) -1)))\n          (set! lastn n)\n          rtn)))"
   #endif
 
   snd_help_with_xrefs("Global Find",
@@ -3309,11 +3238,6 @@ static char *snd_finder(const char *name, bool got_help)
   #define TRAILER ""
   const char *defines[NUM_DEFINES] = {": ", "instrument: ", "event: "};
 #endif
-#if HAVE_CL
-  #define NUM_DEFINES 3
-  #define TRAILER " "
-  const char *defines[NUM_DEFINES] = {"(defun (", "(defmacro ", "(definstrument ("};
-#endif
 
   if (mus_strlen(FGREP_PROG) == 0) return(NULL); /* configure didn't find a plausible fgrep */
 
@@ -3458,7 +3382,7 @@ static bool strings_might_match(const char *a, const char *b, int len)
 #if HAVE_RUBY
       if (a[i] == '_') return(true);
 #endif
-#if HAVE_SCHEME || HAVE_FORTH || HAVE_CL
+#if HAVE_SCHEME || HAVE_FORTH
       if (a[i] == '-') return(true);
 #endif
     }
@@ -3787,7 +3711,7 @@ XEN g_snd_help_with_search(XEN text, int widget_wid, bool search)
 {
   /* snd-help but no search for misspelled name if search=false */
 
-  #if HAVE_SCHEME || HAVE_CL
+  #if HAVE_SCHEME
     #define snd_help_example "(snd-help 'make-vct)"
     #define snd_help_arg_type "can be a string, symbol, or in some cases, the object itself"
   #endif

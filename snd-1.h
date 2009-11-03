@@ -1093,6 +1093,8 @@ void ripple_selection(ed_list *new_ed, mus_long_t beg, mus_long_t num);
 sync_info *selection_sync(void);
 void start_selection_creation(chan_info *cp, mus_long_t samp);
 void update_possible_selection_in_progress(mus_long_t samp);
+void restart_selection_creation(chan_info *cp, bool right);
+
 int make_region_from_selection(void);
 void display_selection(chan_info *cp);
 bool delete_selection(cut_selection_regraph_t regraph);
@@ -1343,6 +1345,7 @@ void set_show_marks(bool val);
 void set_show_y_zero(bool val);
 
 XEN g_frames(XEN snd_n, XEN chn_n, XEN edpos);
+void check_cursor_shape(chan_info *cp, int x, int y);
 
 
 
@@ -1584,6 +1587,7 @@ void reset_mix_ctr(void);
 void preload_mixes(mix_state **mixes, int low_id, ed_list *ed);
 void free_channel_mixes(chan_info *cp);
 void delete_any_remaining_mix_temp_files_at_exit(chan_info *cp);
+int mix_set_sync_from_id(int id, int new_sync);
 
 XEN new_xen_mix(int n);
 XEN g_make_mix_sampler(XEN mix_id, XEN ubeg);
@@ -1723,6 +1727,7 @@ mus_long_t to_c_edit_samples(chan_info *cp, XEN edpos, const char *caller, int a
 mus_long_t beg_to_sample(XEN beg, const char *caller);
 mus_long_t dur_to_samples(XEN dur, mus_long_t beg, chan_info *cp, int edpos, int argn, const char *caller);
 char *scale_and_src(char **files, int len, int max_chans, mus_float_t amp, mus_float_t speed, env *amp_env, bool *err);
+XEN g_scale_selection_by(XEN scalers);
 
 
 /* -------- snd-draw.c -------- */

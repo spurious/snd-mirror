@@ -99,6 +99,7 @@ typedef struct {
   int fft_pix_x0, fft_pix_y0;
   bool fft_pix_ready;
   mus_float_t fft_pix_cutoff;
+  Cursor current_cursor;
 } chan_context;
 
 typedef struct {
@@ -160,7 +161,7 @@ typedef struct {
   Widget listener_pane;
   Widget *dialogs;
   int num_dialogs, dialogs_size;
-  Cursor graph_cursor, wait_cursor;
+  Cursor graph_cursor, wait_cursor, bounds_cursor;
   Widget requestor_dialog;
 #if HAVE_GL
   GLXContext cx;

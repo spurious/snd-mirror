@@ -576,6 +576,16 @@ void start_selection_creation(chan_info *cp, mus_long_t samp)
 }
 
 
+void restart_selection_creation(chan_info *cp, bool right)
+{
+  int i;
+  syncd_chans = sync_to_chan(cp);
+  if (right)
+    syncd_chans->begs[0] = selection_beg(cp);
+  else syncd_chans->begs[0] = selection_end(cp);
+}
+
+
 bool selection_creation_in_progress(void) {return(syncd_chans != NULL);}
 
 
@@ -635,6 +645,11 @@ static void cp_redraw_selection(chan_info *cp)
 #if USE_CAIRO
   make_graph(cp);
 #endif
+
+  if (ap->losamp <= beg)
+    {
+      
+    }
 }
 
 
@@ -1244,8 +1259,8 @@ static XEN g_mix_selection(XEN beg, XEN snd, XEN chn, XEN sel_chan)
 	si_out = make_simple_sync(cp, obeg); /* ignore sync */
       else si_out = sync_to_chan(cp);
 
-      chans = si_out->chans;
       id = mix_selection(cp, si_out, obeg, &io_err, selection_chan);
+      chans = si_out->chans;                 /* save for loop below */
       free_sync_info(si_out);
 
       if (SERIOUS_IO_ERROR(io_err))
@@ -1262,12 +1277,70 @@ static XEN g_mix_selection(XEN beg, XEN snd, XEN chn, XEN sel_chan)
 }
 
 
+static XEN g_selection_to_mix(void)
+{
+  /* TODO: doc/test selection->mix */
+  #define H_selection_to_mix "(" S_selection_to_mix "): turns the current selection into a mix"
+  if (selection_is_active())
+    {
+      chan_info *cp;
+      io_error_t io_err = IO_NO_ERROR;
+      int i, id = INVALID_MIX_ID, chans = 0, sync = -1;
+      sync_info *si_out;
+      XEN result = XEN_EMPTY_LIST;
+      char *tempfile = NULL, *origin = NULL;
+
+      si_out = selection_sync();
+      cp = si_out->cps[0];
+
+      tempfile = snd_tempnam();
+      io_err = save_selection(tempfile, MUS_NEXT, MUS_OUT_FORMAT, SND_SRATE(cp->sound), NULL, SAVE_ALL_CHANS);
+      if (SERIOUS_IO_ERROR(io_err))
+	{
+	  if (tempfile) free(tempfile);
+	  free_sync_info(si_out);
+	  XEN_ERROR(XEN_ERROR_TYPE("IO-error"),
+		    XEN_LIST_2(C_TO_XEN_STRING(S_selection_to_mix),
+			       C_TO_XEN_STRING(io_error_name(io_err))));
+	}
+
+      origin = mus_format("%s", S_selection_to_mix);
+      if (si_out->chans > 1)
+	remember_temp(tempfile, si_out->chans);
+
+      g_scale_selection_by(C_TO_XEN_DOUBLE(0.0));
+
+      id = mix_file(selection_beg(NULL), selection_len(), si_out->chans, si_out->cps, tempfile, 
+		    (si_out->chans > 1) ? MULTICHANNEL_DELETION : DELETE_ME, 
+		    origin, true,
+		    0);
+
+      deactivate_selection();
+      free(origin);
+      if (tempfile) free(tempfile);
+      chans = si_out->chans;                 /* save for loop below */
+      free_sync_info(si_out);
+
+      if (id == -1) return(XEN_FALSE);
+      if (chans == 1)
+	return(XEN_CONS(new_xen_mix(id), XEN_EMPTY_LIST)); /* no sync */
+
+      for (i = 0; i < chans; i++)
+	{
+	  sync = mix_set_sync_from_id(id + i, sync);
+	  result = XEN_CONS(new_xen_mix(id + i), result);
+	}
+      return(XEN_LIST_REVERSE(result));
+    }
+  return(snd_no_active_selection_error(S_selection_to_mix));
+}
+
+
 static XEN g_selection_p(XEN sel)
 {
   #define H_selection_p "(" S_selection_p " :optional obj): " PROC_TRUE " if selection is currently active, visible, etc. \
 If 'obj' is passed, " S_selection_p " returns #t is obj is a selection object and there is a current selection."
 
-  /* TODO: doc selection? */
   /* TODO: what happens if we make-region-sampler, let the region be deleted, then read? */
   /*  similarly, do we snd-test for make-sampler, close sound and read? */
 
@@ -1595,6 +1668,7 @@ XEN_ARGIFY_2(g_selection_maxamp_position_w, g_selection_maxamp_position)
 XEN_NARGIFY_0(g_delete_selection_w, g_delete_selection)
 XEN_ARGIFY_3(g_insert_selection_w, g_insert_selection)
 XEN_ARGIFY_4(g_mix_selection_w, g_mix_selection)
+XEN_NARGIFY_0(g_selection_to_mix_w, g_selection_to_mix)
 XEN_ARGIFY_2(g_select_all_w, g_select_all)
 XEN_VARGIFY(g_save_selection_w, g_save_selection)
 #else
@@ -1613,6 +1687,7 @@ XEN_VARGIFY(g_save_selection_w, g_save_selection)
 #define g_delete_selection_w g_delete_selection
 #define g_insert_selection_w g_insert_selection
 #define g_mix_selection_w g_mix_selection
+#define g_selection_to_mix_w g_selection_to_mix
 #define g_select_all_w g_select_all
 #define g_save_selection_w g_save_selection
 #endif
@@ -1643,6 +1718,7 @@ void g_init_selection(void)
   XEN_DEFINE_PROCEDURE(S_delete_selection, g_delete_selection_w, 0, 0, 0, H_delete_selection);
   XEN_DEFINE_PROCEDURE(S_insert_selection, g_insert_selection_w, 0, 3, 0, H_insert_selection);
   XEN_DEFINE_PROCEDURE(S_mix_selection,    g_mix_selection_w,    0, 4, 0, H_mix_selection);
+  XEN_DEFINE_PROCEDURE(S_selection_to_mix, g_selection_to_mix_w, 0, 0, 0, H_selection_to_mix);
   XEN_DEFINE_PROCEDURE(S_select_all,       g_select_all_w,       0, 2, 0, H_select_all);
   XEN_DEFINE_PROCEDURE(S_save_selection,   g_save_selection_w,   0, 0, 1, H_save_selection);
 }

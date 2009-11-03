@@ -325,9 +325,6 @@ enum {MUS_NO_ERROR, MUS_NO_FREQUENCY, MUS_NO_PHASE, MUS_NO_GEN, MUS_NO_LENGTH,
   #if HAVE_FORTH
     #define S_setB "set-"
   #endif
-  #if HAVE_CL
-    #define S_setB "setf"
-  #endif
   #if (!HAVE_EXTENSION_LANGUAGE)
     #define S_setB "set-"
   #endif

@@ -13,10 +13,6 @@
     #define PROC_FALSE "#f"
     #define PROC_TRUE "#t"
   #endif
-  #if HAVE_CL
-    #define PROC_FALSE "nil"
-    #define PROC_TRUE  "t"
-  #endif
 #endif
 
 #include <stddef.h>
@@ -42,9 +38,6 @@
   #endif
   #if HAVE_FORTH
     #define S_setB "set-"
-  #endif
-  #if HAVE_CL
-    #define S_setB "setf"
   #endif
 #endif
 

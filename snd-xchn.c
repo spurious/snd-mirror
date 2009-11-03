@@ -503,26 +503,38 @@ static XEN mouse_leave_graph_hook;
 static void graph_mouse_enter(Widget w, XtPointer context, XEvent *event, Boolean *flag)
 {
   int data;
+  XEnterWindowEvent *ev = (XEnterWindowEvent *)event;
+
   XtVaGetValues(w, XmNuserData, &data, NULL);
   if (XEN_HOOKED(mouse_enter_graph_hook))
     run_hook(mouse_enter_graph_hook,
 	     XEN_LIST_2(C_INT_TO_XEN_SOUND(UNPACK_SOUND(data)),
 			C_TO_XEN_INT(UNPACK_CHANNEL(data))),
 	     S_mouse_enter_graph_hook);
+
+  /*
   XDefineCursor(XtDisplay(w), XtWindow(w), ss->sgx->graph_cursor);
+  */
+  check_cursor_shape((chan_info *)context, ev->x, ev->y);
 }
 
 
 static void graph_mouse_leave(Widget w, XtPointer context, XEvent *event, Boolean *flag)
 {
   int data;
+  XLeaveWindowEvent *ev = (XLeaveWindowEvent *)event;
+
   XtVaGetValues(w, XmNuserData, &data, NULL);
   if (XEN_HOOKED(mouse_leave_graph_hook))
     run_hook(mouse_leave_graph_hook,
 	     XEN_LIST_2(C_INT_TO_XEN_SOUND(UNPACK_SOUND(data)),
 			C_TO_XEN_INT(UNPACK_CHANNEL(data))),
 	     S_mouse_leave_graph_hook);
+
+  /*
   XUndefineCursor(XtDisplay(w), XtWindow(w));
+  */
+  check_cursor_shape((chan_info *)context, ev->x, ev->y);
 }
 
 
@@ -542,11 +554,21 @@ static void graph_button_release(Widget w, XtPointer context, XEvent *event, Boo
   graph_button_release_callback((chan_info *)context, ev->x, ev->y, ev->state, ev->button);
 }
 
-
+#if 0
 static void graph_button_motion(Widget w, XtPointer context, XEvent *event, Boolean *cont) 
 { /* mouse drag */
   XMotionEvent *ev = (XMotionEvent *)event;
   graph_button_motion_callback((chan_info *)context, ev->x, ev->y, ev->time);
+}
+#endif
+
+
+static void graph_mouse_motion(Widget w, XtPointer context, XEvent *event, Boolean *cont) 
+{ /* mouse movement */
+  XMotionEvent *ev = (XMotionEvent *)event;
+  if (ev->state == 0)
+    check_cursor_shape((chan_info *)context, ev->x, ev->y);
+  else graph_button_motion_callback((chan_info *)context, ev->x, ev->y, ev->time);
 }
 
 
@@ -1145,7 +1167,8 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Wid
       /* allow cursor in all cases (zoom to cursor in region window for example, or fft axis drag in variable display) */
       XtAddEventHandler(cw[W_graph], ButtonPressMask, false, graph_button_press, (XtPointer)cp);
       XtAddEventHandler(cw[W_graph], ButtonReleaseMask, false, graph_button_release, (XtPointer)cp);
-      XtAddEventHandler(cw[W_graph], ButtonMotionMask, false, graph_button_motion, (XtPointer)cp);
+      /* XtAddEventHandler(cw[W_graph], ButtonMotionMask, false, graph_button_motion, (XtPointer)cp); */
+      XtAddEventHandler(cw[W_graph], PointerMotionMask, false, graph_mouse_motion, (XtPointer)cp);
       if (main == NULL)
 	{
 #if (SIZEOF_INT == SIZEOF_VOID_P)
@@ -1153,9 +1176,10 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Wid
 #else
 	  long data;
 #endif
-	  XtAddEventHandler(cw[W_graph], EnterWindowMask, false, graph_mouse_enter, NULL);
+	  XtAddEventHandler(cw[W_graph], EnterWindowMask, false, graph_mouse_enter, (XtPointer)cp);
 	  XtAddEventHandler(cw[W_graph], LeaveWindowMask, false, graph_mouse_leave, (XtPointer)cp);
 	  XtAddEventHandler(cw[W_graph], KeyPressMask, false, cp_graph_key_press, (XtPointer)cp);
+
 #if (SIZEOF_INT == SIZEOF_VOID_P)
 	  data = PACK_SOUND_AND_CHANNEL(sp->index, cp->chan);
 #else
