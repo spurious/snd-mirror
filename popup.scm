@@ -141,6 +141,7 @@
 			   (sounds))
 		 sndlist))))
       (list "Save as"   xmPushButtonWidgetClass every-menu (lambda (w c i) (save-selection-dialog)))
+      (list "Selection->Mix"  xmPushButtonWidgetClass every-menu (lambda (w c i) (selection->mix)))
       (list "Copy->New" xmPushButtonWidgetClass every-menu 
 	    (lambda (w c i) 
 	      (let ((new-file-name (snd-tempnam)))
@@ -177,8 +178,9 @@
       (list "Reset controls" xmPushButtonWidgetClass every-menu (lambda (w c i) (reset-controls)))
       (list "Unselect"       xmPushButtonWidgetClass every-menu (lambda (w c i) (set! (selection-member? #t) #f)))
       (list "Reverse"        xmPushButtonWidgetClass every-menu (lambda (w c i) (reverse-selection)))
-      (list "Mix"            xmPushButtonWidgetClass every-menu (lambda (w c i) (mix-selection (cursor))))
-      (list "Invert"         xmPushButtonWidgetClass every-menu (lambda (w c i) (scale-selection-by -1)))))))
+      (list "Mix (at cursor)"  xmPushButtonWidgetClass every-menu (lambda (w c i) (mix-selection (cursor))))
+;     (list "Invert"         xmPushButtonWidgetClass every-menu (lambda (w c i) (scale-selection-by -1)))
+      ))))
 
 
 ;;; -------- time domain popup
@@ -191,6 +193,7 @@
   (let ((every-menu (list XmNbackground (highlight-color)))
 	(stopping #f)
 	(stop-widget #f))
+
     (define (vector-print v)
       (if (< (length v) 3)
 	  (object->string v)
@@ -199,6 +202,7 @@
 		((= i 3))
 	      (set! str (string-append str " " (object->string (vector-ref v i)))))
 	    (string-append str " ...)"))))
+
     (define (display-properties props)
       ;; there's no way to tell Guile's format that enormous vectors should not be printed in full
       ;; so we search for them here and handle them ourselves

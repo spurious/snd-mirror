@@ -59,11 +59,11 @@ chan_info *get_cp(XEN snd, XEN x_chn_n, const char *caller)
 }
 
 
-typedef enum {CLICK_NOGRAPH, CLICK_WAVE, CLICK_FFT_AXIS, CLICK_LISP, 
+typedef enum {CLICK_NOGRAPH, CLICK_WAVE, CLICK_FFT_AXIS, CLICK_LISP, CLICK_MIX, CLICK_MARK,
 	      CLICK_FFT_MAIN, CLICK_SELECTION_LEFT, CLICK_SELECTION_RIGHT} click_loc_t;
 /* for marks, regions, mouse click detection */
 /*
- * static char *click_detection_names[7] = {"no graph", "click wave", "click fft axis", "click lisp", 
+ * static char *click_detection_names[9] = {"no graph", "click wave", "click fft axis", "click lisp", "click mix", "click mark",
  *                                          "click fft graph", "click selection left", "click selection right"};
  */
 
@@ -4593,11 +4593,11 @@ void goto_graph(chan_info *cp)
 #endif
 #endif
 
-
 static click_loc_t within_graph(chan_info *cp, int x, int y)
 {
   int x0, x1, y0, y1;
   axis_info *ap;
+  #define SELECTION_DRAG_HEIGHT 30
 
   x0 = x - SLOPPY_MOUSE;
   x1 = x + SLOPPY_MOUSE;
@@ -4611,8 +4611,7 @@ static click_loc_t within_graph(chan_info *cp, int x, int y)
       if (((x0 <= ap->x_axis_x1) && (x1 >= ap->x_axis_x0)) && 
 	  ((y0 <= ap->y_axis_y0) && (y1 >= ap->y_axis_y1)))
 	{
-	  if ((y < 30) && 
-	      /* TODO: this needs to handle united chans where we want to drag the chans other than 0 */
+	  if ((y < (ap->y_offset + SELECTION_DRAG_HEIGHT)) &&
 	      (selection_is_active_in_channel(cp)))
 	    {
 	      /* look for click at selection boundary */
@@ -4640,6 +4639,13 @@ static click_loc_t within_graph(chan_info *cp, int x, int y)
 		    return(CLICK_SELECTION_RIGHT);
 		}	      
 	    }
+
+	  if (hit_mix(cp, x, y) != NO_MIX_TAG)
+	    return(CLICK_MIX);
+
+	  if (hit_mark(cp, x, y, 0) != NULL)
+	    return(CLICK_MARK);
+
 	  return(CLICK_WAVE);
 	}
     }
@@ -4694,10 +4700,19 @@ static click_loc_t within_graph(chan_info *cp, int x, int y)
 void check_cursor_shape(chan_info *cp, int x, int y)
 {
   click_loc_t where;
+  chan_info *ncp;
+  
+  if (cp->sound->channel_style == CHANNELS_COMBINED) 
+    ncp = which_channel(cp->sound, y);
+  else ncp = cp;
 
-  where = within_graph(cp, x, y);
+  where = within_graph(ncp, x, y);
+
   if ((where == CLICK_SELECTION_LEFT) ||
-      (where == CLICK_SELECTION_RIGHT))
+      (where == CLICK_SELECTION_RIGHT) ||
+      (where == CLICK_MIX) ||
+      (where == CLICK_MARK) ||
+      (where == CLICK_FFT_AXIS))
     {
       if (cp->cgx->current_cursor != ss->sgx->bounds_cursor)
 	{
@@ -5062,6 +5077,8 @@ void graph_button_press_callback(chan_info *cp, int x, int y, int key_state, int
 		 S_mouse_press_hook);
       break;
 
+    case CLICK_MIX:
+    case CLICK_MARK:
     case CLICK_WAVE:
       if ((mouse_mark == NULL) && 
 	  (play_mark == NULL))
@@ -5154,9 +5171,9 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 						 C_TO_XEN_INT(key_state),
 						 C_TO_XEN_INT(x),
 						 C_TO_XEN_INT(y),
-						 C_TO_XEN_INT((int)((actax == CLICK_WAVE) ? 
-								    TIME_AXIS_INFO : ((actax == CLICK_LISP) ? 
-										      LISP_AXIS_INFO : TRANSFORM_AXIS_INFO)))),
+						 C_TO_XEN_INT((int)(((actax == CLICK_FFT_AXIS) || (actax == CLICK_FFT_MAIN)) ? 
+								     TRANSFORM_AXIS_INFO : ((actax == CLICK_LISP) ? 
+											    LISP_AXIS_INFO : TIME_AXIS_INFO)))),
 				      S_mouse_click_hook))))
 	    return;
 
@@ -5164,6 +5181,8 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 	    {
 	    case CLICK_SELECTION_LEFT:
 	    case CLICK_SELECTION_RIGHT:
+	    case CLICK_MIX:
+	    case CLICK_MARK:
 	    case CLICK_WAVE:
 	      if (button == BUTTON_2) /* the middle button */
 		{
@@ -5279,7 +5298,9 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 		{
 		  if ((click_within_graph == CLICK_WAVE) ||
 		      (click_within_graph == CLICK_SELECTION_LEFT) ||
-		      (click_within_graph == CLICK_SELECTION_RIGHT))
+		      (click_within_graph == CLICK_SELECTION_RIGHT) ||
+		      (click_within_graph == CLICK_MIX) ||
+		      (click_within_graph == CLICK_MARK))
 		    {
 		      cancel_selection_watch();
 		      finish_selection_creation();
@@ -5377,6 +5398,8 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, oclock_t time)
 	    {
 	    case CLICK_SELECTION_LEFT:
 	    case CLICK_SELECTION_RIGHT:
+	    case CLICK_MIX:
+	    case CLICK_MARK:
 	    case CLICK_WAVE:
 	      if (mix_tag != NO_MIX_TAG)
 		{

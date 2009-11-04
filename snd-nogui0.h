@@ -66,6 +66,7 @@ typedef struct {
   int fft_pix_x0, fft_pix_y0;
   bool fft_pix_ready;
   mus_float_t fft_pix_cutoff;
+  int current_cursor;
 } chan_context;
 
 typedef struct {
@@ -91,6 +92,7 @@ typedef struct {
   struct dialog_play_info *ignore_me; /* for the compiler's benefit */
   int requestor_dialog;
   bool axis_color_set;
+  int bounds_cursor, graph_cursor;
 } state_context;
 
 #define snd_ShiftMask 0

@@ -566,7 +566,7 @@ static void graph_button_motion(Widget w, XtPointer context, XEvent *event, Bool
 static void graph_mouse_motion(Widget w, XtPointer context, XEvent *event, Boolean *cont) 
 { /* mouse movement */
   XMotionEvent *ev = (XMotionEvent *)event;
-  if (ev->state == 0)
+  if ((ev->state & Button1Mask) == 0)
     check_cursor_shape((chan_info *)context, ev->x, ev->y);
   else graph_button_motion_callback((chan_info *)context, ev->x, ev->y, ev->time);
 }

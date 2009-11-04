@@ -169,6 +169,7 @@
 				     (sounds))
 			   sndlist))))
 		(list "Save as"   every-menu (lambda (w data) (save-selection-dialog)))
+		(list "Selection->Mix" every-menu (lambda (w data) (selection->mix)))
 		(list "Copy->New" every-menu 
 		      (lambda (w data) 
 			(let ((new-file-name (snd-tempnam)))
@@ -193,8 +194,9 @@
 		(list "Reset controls" every-menu (lambda (w data) (reset-controls)))
 		(list "Unselect"       every-menu (lambda (w data) (set! (selection-member? #t) #f)))
 		(list "Reverse"        every-menu (lambda (w data) (reverse-selection)))
-		(list "Mix"            every-menu (lambda (w data) (mix-selection (cursor))))
-		(list "Invert"         every-menu (lambda (w data) (scale-selection-by -1)))))))
+		(list "Mix (at cursor)" every-menu (lambda (w data) (mix-selection (cursor))))
+;		(list "Invert"         every-menu (lambda (w data) (scale-selection-by -1)))
+		))))
 	   
 	   ;; -------- time domain popup
 	   
