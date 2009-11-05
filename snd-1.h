@@ -1587,6 +1587,7 @@ void reset_mix_ctr(void);
 void preload_mixes(mix_state **mixes, int low_id, ed_list *ed);
 void free_channel_mixes(chan_info *cp);
 void delete_any_remaining_mix_temp_files_at_exit(chan_info *cp);
+int mix_sync_from_id(int id);
 int mix_set_sync_from_id(int id, int new_sync);
 
 XEN new_xen_mix(int n);

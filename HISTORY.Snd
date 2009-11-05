@@ -1,6 +1,6 @@
 Snd change log
 
- 2-Nov:     selection function/object.
+ 2-Nov:     selection function/object. selection->mix.
  28-Oct:    pretty-print.scm. 
  22-Oct:    Snd 11.0.
  16-Oct:    clm.rb and grani.rb (thanks to Mike Scholz).

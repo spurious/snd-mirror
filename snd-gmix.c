@@ -497,6 +497,26 @@ static void mix_dB_callback(GtkWidget *w, gpointer context)
 }
 
 
+static void mix_sync_callback(GtkWidget *w, gpointer context) 
+{
+  bool cb_set;
+  cb_set = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w));
+  if ((cb_set) &&
+      (mix_sync_from_id(mix_dialog_id) == 0))
+    {
+      mix_set_sync_from_id(mix_dialog_id, -1); /* -1 -> choose a new sync val */
+    }
+  else
+    {
+      if ((!(cb_set)) &&
+	  (mix_sync_from_id(mix_dialog_id) != 0))
+	{
+	  mix_set_sync_from_id(mix_dialog_id, 0);
+	}
+    }
+}
+
+
 static void mix_clip_callback(GtkWidget *w, gpointer context) 
 {
   spf->clip_p = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w));
@@ -621,6 +641,7 @@ void make_speaker_icons_transparent(const char *bg_line)
   blue_speaker_xpm[1] = bg_line;
 }
 
+static GtkWidget *w_sync;
 
 GtkWidget *make_mix_dialog(void)
 {
@@ -833,6 +854,11 @@ GtkWidget *make_mix_dialog(void)
       gtk_box_pack_start(GTK_BOX(w_dB_row), w_dB, false, false, 0);
       gtk_widget_show(w_dB);
 
+      w_sync = gtk_check_button_new_with_label(_("sync"));
+      SG_SIGNAL_CONNECT(w_sync, "toggled", mix_sync_callback, NULL);
+      gtk_box_pack_start(GTK_BOX(w_dB_row), w_sync, false, false, 0);
+      gtk_widget_show(w_sync);
+
       /* GRAPH (drawing area) */
       w_env = gtk_drawing_area_new();
       gtk_widget_set_events(w_env, GDK_ALL_EVENTS_MASK);
@@ -848,7 +874,10 @@ GtkWidget *make_mix_dialog(void)
 
       gtk_widget_show(mix_dialog);
       set_dialog_widget(MIX_DIALOG, mix_dialog);
+
       gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w_clip), true);
+      if (mix_sync_from_id(mix_dialog_id) != 0)
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w_sync), true);
 
       mix_play_ax = (axis_context *)calloc(1, sizeof(axis_context));
       mix_play_ax->wn = WIDGET_TO_WINDOW(mix_play_pix);
@@ -933,6 +962,8 @@ void reflect_mix_change(int mix_id)
 	  if (!dialog_env) 
 	    dialog_env = default_env(1.0, 1.0);
 	  mix_amp_env_resize(w_env);
+
+	  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w_sync), (mix_sync_from_id(mix_dialog_id) != 0));
 	}
     }
 }

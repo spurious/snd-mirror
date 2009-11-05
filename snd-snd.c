@@ -2368,7 +2368,7 @@ void call_sp_watchers(snd_info *sp, sp_watcher_t type, sp_watcher_reason_t reaso
  *
  * save with all the optkey args for all types (treat list/vector etc as sound data)
  * copy selection = open copy as sound? 
- * fill! selection (or others) as set all samps to val
+ * fill! as set all samps to val (selection is done) [sound object, perhaps mix]
  * 
  * (scan-channel -> channel-for-each)
  *   and channel-map rather than map-channel
@@ -2392,12 +2392,17 @@ void call_sp_watchers(snd_info *sp, sp_watcher_t type, sp_watcher_reason_t reaso
  *   (hash-table makes more sense as a property list than a list in large cases) -- currently it's actually a vector
  *   or a global data base for all properties? -- easy to search or display in various ways
  *
- * remove with-mix and friends, also autosave.scm
+ * remove with-mix and friends, also autosave.scm, also read-hook
  * all current "work procs" could be handled as separate threads
  * all multichannel parallel ops also threaded, and graphics updates, and playing
  *
  * make-vector! choices: any, 1 obj [any type], 1 obj: double -- do any others warrant special handling?
  * current sync-info as vector? (then selection = vector of sound objs)
+ *
+ * mix-selection (+), sel->0|1 ("_", "^"), sel amp/pitch, drag mix to move, smooth corners, sync if all at once, copy
+ *   same for mix, cut="x", "<" ">" to repos, 
+ *
+ *  arrow cursor here and perhaps reflect click
  */
 
 

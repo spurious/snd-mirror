@@ -213,10 +213,11 @@ All mixes sync'd to it are also moved the same number of samples. (remove-hook! 
 (define (mix-click-info n)
   "(mix-click-info n) is a mix-click-hook function that describes a mix and its properties"
   (help-dialog "Mix Help"
-	       (format #f "Mix ~A:~%  position: ~D = ~,3F secs~%  length: ~D (~,3F secs)~%  in: ~A[~D]~%  scaler: ~A~%  speed: ~A~%  env: ~A~A"
+	       (format #f "Mix ~A (sync: ~A):~%  position: ~D = ~,3F secs~%  length: ~D (~,3F secs)~%  in: ~A[~D]~%  scaler: ~A~%  speed: ~A~%  env: ~A~A"
 		       (if (mix-name n)
 			   (format #f "~S (~A)" (mix-name n) n)
 			   (format #f "~A" n))
+		       (mix-sync n)
 		       (mix-position n)
 		       (exact->inexact (/ (mix-position n) (srate (car (mix-home n)))))
 		       (frames n)

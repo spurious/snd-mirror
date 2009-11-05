@@ -2130,8 +2130,9 @@ and if the <a href="#marksync">mark-sync</a> is not 0, the hook is called on eac
 <tr><td colspan=3 bgcolor="#f2f4ff">
 <code><a class=def name="mixclickhook">mix-click-hook</a> (mix)</code> [<b>progn</b>]
 </td></tr><tr><td></td><td colspan=2>
-This hook is called when a mix tag is clicked; return #t to omit the default action which is to print the mix id in
-the minibuffer.  A more informative version is <a href="sndscm.html#mixclickinfo">mix-click-info</a> in mix.scm.
+This hook is called when a mix tag is clicked; return #t to omit the default action which is to start the Mix dialog 
+with the clicked mix.
+One example is <a href="sndscm.html#mixclickinfo">mix-click-info</a> in mix.scm.
 Here's an example that sets a mix's amps to 0 if you click it (see <a href="sndscm.html#mixclicksetsamp">mix-click-sets-amp</a>
 in mix.scm for a fancier version):
 
@@ -5843,6 +5844,14 @@ ie equivalent to unselect-all.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
+<!-- selection->mix -->
+<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="selectiontomix">selection-&gt;mix</a> ()</code>
+</td></tr><tr><td></td><td>
+selection-&gt;mix turns the current selection into a mix, or into several sync'd mixes if the selection
+has more than one channel.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
 <!-- selection-position -->
 <tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="selectionposition">selection-position</a> (:optional snd chn)</code>
 </td></tr><tr><td></td><td>
@@ -5923,6 +5932,7 @@ write selection to a file: <a href="sndscm.html#menusdoc">selection-&gt;new</a><
 notch filter selection: <a href="sndscm.html#notchselection">notch-selection</a><br>
 undo select-all.: <a href="sndscm.html#menusdoc">deselect-all</a><br>
 filter the selection: <a href="#filterselection">filter-selection</a>, <a href="sndscm.html#filterselectionandsmooth">filter-selection-and-smooth</a><br>
+turn the selection into a mix: <a href="#selectiontomix">selection-&gt;mix</a><br>
 <br>
 </blockquote></small>
 </td></tr></TABLE>

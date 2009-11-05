@@ -989,7 +989,7 @@ env *mix_amp_env_from_id(int id)
 
 /* stable (not in edit list) */
 
-static int mix_sync_from_id(int id)
+int mix_sync_from_id(int id)
 {
   mix_info *md;
   md = md_from_id(id);

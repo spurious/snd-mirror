@@ -482,6 +482,26 @@ static void mix_dB_callback(Widget w, XtPointer context, XtPointer info)
 }
 
 
+static void mix_sync_callback(Widget w, XtPointer context, XtPointer info)
+{
+  XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info; 
+  if ((cb->set) &&
+      (mix_sync_from_id(mix_dialog_id) == 0))
+    {
+      mix_set_sync_from_id(mix_dialog_id, -1); /* -1 -> choose a new sync val */
+    }
+  else
+    {
+      if ((!(cb->set)) &&
+	  (mix_sync_from_id(mix_dialog_id) != 0))
+	{
+	  mix_set_sync_from_id(mix_dialog_id, 0);
+	}
+    }
+  /* TODO: if others share sync, show them somehow */
+}
+
+
 static void mix_clip_callback(Widget w, XtPointer context, XtPointer info)
 {
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info; 
@@ -568,6 +588,7 @@ void make_mixer_icons_transparent_again(Pixel old_color, Pixel new_color)
     }
 }
 
+static Widget w_sync;
 
 Widget make_mix_dialog(void) 
 {
@@ -866,6 +887,11 @@ Widget make_mix_dialog(void)
       w_dB = make_togglebutton_widget(_("dB"), w_dB_row, args, n);
       XtAddCallback(w_dB, XmNvalueChangedCallback, mix_dB_callback, NULL);
 
+      if (mix_sync_from_id(mix_dialog_id) != 0)
+	{XtSetArg(args[n], XmNset, true); n++;}
+      w_sync = make_togglebutton_widget(_("sync"), w_dB_row, args, n);
+      XtAddCallback(w_sync, XmNvalueChangedCallback, mix_sync_callback, NULL);
+
 
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
@@ -1003,6 +1029,8 @@ void reflect_mix_change(int mix_id)
 	  if (!dialog_env) 
 	    dialog_env = default_env(1.0, 1.0);
 	  mix_amp_env_resize(w_env, NULL, NULL);
+
+	  set_toggle_button(w_sync, (mix_sync_from_id(mix_dialog_id) != 0), false, NULL);
 	}
     }
 }

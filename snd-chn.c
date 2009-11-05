@@ -5187,9 +5187,7 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 	      if (button == BUTTON_2) /* the middle button */
 		{
 		  cp->cursor_on = true;
-		  cursor_moveto(cp, 
-				snd_round_mus_long_t(ungrf_x(cp->axis, x) * 
-						(double)SND_SRATE(sp)));
+		  cursor_moveto(cp, snd_round_mus_long_t(ungrf_x(cp->axis, x) * (double)SND_SRATE(sp)));
 		  paste_region(region_list_position_to_id(0), cp);
 		}
 	      else 
@@ -5208,9 +5206,7 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 			  if (key_state & snd_MetaMask) ap->zx *= .5;
 			  if (ap->x_ambit != 0.0)
 			    ap->sx = (((double)(CURSOR(cp)) / (double)SND_SRATE(sp) - 
-				       ap->zx * 0.5 * (ap->xmax - ap->xmin)) - 
-				      ap->xmin) / 
-			      ap->x_ambit;
+				       ap->zx * 0.5 * (ap->xmax - ap->xmin)) - ap->xmin) / ap->x_ambit;
 			  apply_x_axis_change(ap, cp);
 			  resize_sx_and_zx(cp);
 			}
@@ -5218,9 +5214,7 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 		  else
 		    {
 		      cp->cursor_on = true;
-		      cursor_moveto(cp, 
-				    snd_round_mus_long_t(ungrf_x(cp->axis, x) * 
-							 (double)SND_SRATE(sp)));
+		      cursor_moveto(cp, snd_round_mus_long_t(ungrf_x(cp->axis, x) * (double)SND_SRATE(sp)));
 		      if (mouse_mark)
 			{
 			  XEN res = XEN_FALSE;
@@ -5232,6 +5226,7 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 			    report_in_minibuffer(sp, _("mark %d at sample " MUS_LD), 
 						 mark_to_int(mouse_mark), 
 						 mark_sample(mouse_mark));
+			  /* TODO: make mark click more useful! -- mark-click-info in marks.scm */
 			}
 		      else
 			{
@@ -5245,8 +5240,8 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 						     S_mix_click_hook);
 			      if (!(XEN_TRUE_P(res)))
 				{
+				  make_mix_dialog();
 				  reflect_mix_change(mix_tag);
-				  report_in_minibuffer(sp, _("mix %d "), mix_tag);
 				}
 			    }
 			}

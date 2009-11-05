@@ -897,6 +897,7 @@ static bool xen_selection_equalp(xen_selection *v1, xen_selection *v2)
 	 (v1->n == v2->n));
 }
 
+
 static XEN equalp_xen_selection(XEN obj1, XEN obj2)
 {
   if ((!(XEN_SELECTION_P(obj1))) || (!(XEN_SELECTION_P(obj2)))) return(XEN_FALSE);
@@ -933,16 +934,51 @@ static XEN s7_xen_selection_length(s7_scheme *sc, XEN obj)
   return(g_selection_frames(XEN_UNDEFINED, XEN_UNDEFINED));
 }
 
+
 static bool s7_xen_selection_equalp(void *obj1, void *obj2)
 {
   return((obj1 == obj2) ||
 	 (((xen_selection *)obj1)->n == ((xen_selection *)obj2)->n));
 }
 
+
 static XEN s7_xen_selection_fill(s7_scheme *sc, XEN obj, XEN val)
 {
-  /* TODO: fill selected portion with (number) val -- obj must be a selection object */
-  /* can this be just scale_selection by 0.0? (g_scale_selection_by in snd-sig.c) */
+  sync_info *si;
+  mus_float_t valf;
+
+  valf = XEN_TO_C_DOUBLE(val);
+  if (valf == 0.0)
+    {
+      mus_float_t vals[1] = {0.0};
+      scale_by(NULL, vals, 1, true); /* 1 entry in vals array, true = over selection */
+      return(XEN_FALSE);
+    }
+
+  si = selection_sync();
+  if (si)
+    {
+      int i;
+      for (i = 0; i < si->chans; i++)
+	{
+	  int j;
+	  mus_long_t beg, end, len;
+	  mus_sample_t *data;
+	  mus_sample_t value;
+	  beg = selection_beg(si->cps[i]);
+	  end = selection_end(si->cps[i]);
+	  len = end - beg + 1;
+	  data = (mus_sample_t *)malloc(len * sizeof(mus_sample_t));
+	  value = MUS_FLOAT_TO_SAMPLE(valf);
+	  for (j = 0; j < len; j++)
+	    data[j] = value;
+	  if (change_samples(beg, len, data, si->cps[i], "fill! selection", si->cps[i]->edit_ctr))
+	    update_graph(si->cps[i]);
+	  free(data);
+	  /* TODO: snd-test fill! selection */
+	}
+    }
+  return(XEN_FALSE);
 }
 #endif
 
@@ -1279,7 +1315,7 @@ static XEN g_mix_selection(XEN beg, XEN snd, XEN chn, XEN sel_chan)
 
 static XEN g_selection_to_mix(void)
 {
-  /* TODO: doc/test selection->mix */
+  /* TODO: test selection->mix */
   #define H_selection_to_mix "(" S_selection_to_mix "): turns the current selection into a mix"
   if (selection_is_active())
     {
@@ -1570,9 +1606,11 @@ save the current selection in file using the indicated file attributes.  If chan
   keys[3] = kw_srate;
   keys[4] = kw_comment;
   keys[5] = kw_channel;
+
   for (i = 0; i < 12; i++) args[i] = XEN_UNDEFINED;
   arglist_len = XEN_LIST_LENGTH(arglist);
   for (i = 0; i < arglist_len; i++) args[i] = XEN_LIST_REF(arglist, i);
+
   vals = mus_optkey_unscramble(S_save_selection, 6, keys, args, orig_arg);
   if (vals > 0)
     {
@@ -1583,28 +1621,34 @@ save the current selection in file using the indicated file attributes.  If chan
       com = mus_optkey_to_string(keys[4], S_save_selection, orig_arg[4], NULL);
       chn = mus_optkey_to_int(keys[5], S_save_selection, orig_arg[5], SAVE_ALL_CHANS);
     }
+
   if (file == NULL) 
     XEN_ERROR(XEN_ERROR_TYPE("IO-error"),
 	      XEN_LIST_2(C_TO_XEN_STRING(S_save_selection),
 			 C_TO_XEN_STRING("no output file?")));
+
   if ((type != -1) && (!(mus_header_writable(type, -2))))
     XEN_ERROR(CANNOT_SAVE,
 	      XEN_LIST_3(C_TO_XEN_STRING(S_save_selection),
 			 C_TO_XEN_STRING(_("can't write this header type:")),
 			 C_TO_XEN_STRING(mus_header_type_name(type))));
+
   if ((type != -1) && (format != -1) && (!(mus_header_writable(type, format))))
     XEN_ERROR(CANNOT_SAVE,
 	      XEN_LIST_4(C_TO_XEN_STRING(S_save_selection),
 			 C_TO_XEN_STRING(_("can't write this combination of header type and data format:")),
 			 C_TO_XEN_STRING(mus_header_type_name(type)),
 			 C_TO_XEN_STRING(mus_data_format_name(format))));
+
   if ((sr != -1) && (sr <= 0))
     XEN_ERROR(CANNOT_SAVE,
 	      XEN_LIST_3(C_TO_XEN_STRING(S_save_selection),
 			 C_TO_XEN_STRING(_("srate can't be <= 0")),
 			 C_TO_XEN_INT(sr)));
+
   fname = mus_expand_filename(file);
   io_err = save_selection(fname, type, format, sr, com, chn);
+
   if (fname) free(fname);
   if ((io_err != IO_NO_ERROR) &&
       (io_err != IO_INTERRUPTED) &&
