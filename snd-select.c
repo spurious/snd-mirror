@@ -959,17 +959,16 @@ static XEN s7_xen_selection_fill(s7_scheme *sc, XEN obj, XEN val)
   if (si)
     {
       int i;
+      mus_sample_t value;
+      value = MUS_FLOAT_TO_SAMPLE(valf);
       for (i = 0; i < si->chans; i++)
 	{
-	  int j;
-	  mus_long_t beg, end, len;
+	  mus_long_t beg, end, len, j;
 	  mus_sample_t *data;
-	  mus_sample_t value;
 	  beg = selection_beg(si->cps[i]);
 	  end = selection_end(si->cps[i]);
 	  len = end - beg + 1;
 	  data = (mus_sample_t *)malloc(len * sizeof(mus_sample_t));
-	  value = MUS_FLOAT_TO_SAMPLE(valf);
 	  for (j = 0; j < len; j++)
 	    data[j] = value;
 	  if (change_samples(beg, len, data, si->cps[i], "fill! selection", si->cps[i]->edit_ctr))
@@ -1065,7 +1064,6 @@ io_error_t save_selection(const char *ofile, int type, int format, int srate, co
   else chans = 1;
 
   io_err = snd_write_header(ofile, type, srate, chans, chans * dur, format, comment, NULL);
-  ASSERT_IO_ERROR(io_err, "snd_write_header in save_selection");
   if (io_err != IO_NO_ERROR)
     {
       si = free_sync_info(si);
@@ -1258,7 +1256,6 @@ static XEN g_insert_selection(XEN beg, XEN snd, XEN chn)
       io_err = insert_selection(cp, si_out, samp);
       free_sync_info(si_out);
 
-      ASSERT_IO_ERROR(io_err, "insert_selection in g_insert_selection");
       if (SERIOUS_IO_ERROR(io_err))
 	XEN_ERROR(XEN_ERROR_TYPE("IO-error"),
 		  XEN_LIST_2(C_TO_XEN_STRING(S_insert_selection),

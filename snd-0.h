@@ -167,12 +167,6 @@ enum {BLACK_AND_WHITE_COLORMAP, GRAY_COLORMAP, HOT_COLORMAP, COOL_COLORMAP, BONE
                                (Err != IO_NEED_WRITE_CONFIRMATION) && \
                                (Err != IO_NO_CHANGES))
 
-#if MUS_DEBUGGING
-  #define ASSERT_IO_ERROR(Err, Location) if (Err >= IO_ERROR_NUM) {fprintf(stderr, "%s: bogus io error: %d\n", Location, Err); abort();}
-#else
-  #define ASSERT_IO_ERROR(Err, Location)
-#endif
-
 typedef enum {SS_ANY_WATCHER, SS_FILE_OPEN_WATCHER, SS_MUS_ERROR_WATCHER, SS_SND_ERROR_WATCHER} ss_watcher_t;
 typedef enum {SS_FILE_OPENED, SS_FILE_CLOSED, SS_MUS_ERROR, SS_SND_ERROR} ss_watcher_reason_t;
 typedef enum {SP_ANY_WATCHER, SP_READ_ONLY_WATCHER, SP_REVERT_WATCHER} sp_watcher_t;

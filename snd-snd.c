@@ -2342,7 +2342,7 @@ void call_sp_watchers(snd_info *sp, sp_watcher_t type, sp_watcher_reason_t reaso
 
 /* this is my long term plan right now... */
 
-/* generics (besides length, srate, channels, frames, file-name, sync, maxamp, play):
+/* generics (besides length, srate, channels, frames, file-name, sync, maxamp, play, fill!):
  *
  *             source:         procedure-source[s7_procedure_source] mix-home mark-home region-home player-home sampler-home
  *                               mus cases: readin=file+chan? etc, port -> filename?, sound->filename?
@@ -2368,7 +2368,12 @@ void call_sp_watchers(snd_info *sp, sp_watcher_t type, sp_watcher_reason_t reaso
  *
  * save with all the optkey args for all types (treat list/vector etc as sound data)
  * copy selection = open copy as sound? 
- * fill! as set all samps to val (selection is done) [sound object, perhaps mix]
+ *
+ *    objects are generator(clm2xen), player(snd-dac), sampler(snd-edits), sound-data(sndlib2xen),
+ *               mark(snd-marks), mix(snd-mix), selection(snd-select), region(snd-region),
+ *               vct(vct), hook(xen), XmObj(xm, xg), plus the base types(s7): string hash-table vector pair object, else arg
+ *               which means that promise (for example) is not copied (and what about builtin things like bignum, random-state etc)?
+ *    also needed are further cases of ref/set
  * 
  * (scan-channel -> channel-for-each)
  *   and channel-map rather than map-channel
@@ -2403,6 +2408,7 @@ void call_sp_watchers(snd_info *sp, sp_watcher_t type, sp_watcher_reason_t reaso
  *   same for mix, cut="x", "<" ">" to repos, 
  *
  *  arrow cursor here and perhaps reflect click
+ * TODO: sound fill tests
  */
 
 
@@ -2506,9 +2512,61 @@ static bool s7_xen_sound_equalp(void *obj1, void *obj2)
 	 (((xen_sound *)obj1)->n == ((xen_sound *)obj2)->n));
 }
 
+
 static XEN s7_xen_sound_length(s7_scheme *sc, XEN obj)
 {
   return(g_frames(obj, XEN_ZERO, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION)));
+}
+
+
+static XEN s7_xen_sound_fill(s7_scheme *sc, XEN obj, XEN val)
+{
+  snd_info *sp;
+  sp = get_sp(obj);
+  if (sp)
+    {
+      mus_float_t valf;
+      chan_info *cp;
+      int i;
+
+      valf = XEN_TO_C_DOUBLE(val);
+      if (valf == 0.0)
+	{
+	  for (i = 0; i < sp->nchans; i++)
+	    {
+	      cp = sp->chans[i];
+	      scale_channel(cp, 0.0, 0, CURRENT_SAMPLES(cp), cp->edit_ctr, false);
+	      update_graph(cp);
+	    }
+	}
+      else
+	{
+	  /* SOMEDAY: wouldn't it be better here (and selection fill) to use ptree_channel with (lambda (y) val)? */
+	  /*   ptree_channel(cp, <make-ptree>, 0, CURRENT_SAMPLES(cp), cp->edit_ctr, true, XEN_FALSE, "fill! sound") */
+
+	  mus_long_t len = -1, j;
+	  mus_sample_t *data = NULL;
+	  mus_sample_t value;
+	  value = MUS_FLOAT_TO_SAMPLE(valf);	  
+
+	  for (i = 0; i < sp->nchans; i++)
+	    {
+	      cp = sp->chans[i];
+	      if ((!data) || (CURRENT_SAMPLES(cp) != len))
+		{
+		  len = CURRENT_SAMPLES(cp);
+		  if (data) free(data);
+		  data = (mus_sample_t *)malloc(len * sizeof(mus_sample_t));
+		  for (j = 0; j < len; j++)
+		    data[j] = value;
+		}
+	      if (change_samples(0, len, data, cp, "fill! sound", cp->edit_ctr))
+		update_graph(cp);
+	    }
+	  free(data);
+	}
+    }
+  return(XEN_FALSE);
 }
 #endif
 
@@ -2516,7 +2574,8 @@ static XEN s7_xen_sound_length(s7_scheme *sc, XEN obj)
 static void init_xen_sound(void)
 {
 #if HAVE_S7
-  xen_sound_tag = XEN_MAKE_OBJECT_TYPE("<sound>", print_xen_sound, free_xen_sound, s7_xen_sound_equalp, NULL, NULL, NULL, s7_xen_sound_length, NULL, NULL);
+  xen_sound_tag = XEN_MAKE_OBJECT_TYPE("<sound>", print_xen_sound, free_xen_sound, s7_xen_sound_equalp, 
+				       NULL, NULL, NULL, s7_xen_sound_length, NULL, s7_xen_sound_fill);
 #else
 #if HAVE_RUBY
   xen_sound_tag = XEN_MAKE_OBJECT_TYPE("XenSound", sizeof(xen_sound));

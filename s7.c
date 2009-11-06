@@ -104,6 +104,9 @@
  *                 exact->inexact is the only useful exactness function -- perhaps (->real x)?
  *        load should handle C shared libraries, using dlopen/dlinit [optionally]
  *        defgenerator (or at least defstruct of some sort)
+ *        perhaps vector<->string and make-list for consistency
+ *        copy for bignums and random states, length for bignums?
+ *        perhaps bring new_type_x out to scheme -- could this be extended to defstruct?
  * 
  *
  * Mike Scholz provided the FreeBSD support (complex trig funcs, etc)
@@ -12087,8 +12090,6 @@ static s7_pointer g_object_for_each(s7_scheme *sc, s7_pointer args)
   push_stack(sc, OP_OBJECT_FOR_EACH, sc->args, sc->code);
   return(sc->UNSPECIFIED);
 }
-
-
 
 
 

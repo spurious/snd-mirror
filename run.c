@@ -8655,11 +8655,6 @@ static xen_value *region_length_1(ptree *prog, xen_value **args, int num_args) {
 #if USE_SND
 /* ---------------- simple snd ops ---------------- */
 
-#define FLOAT_INT_OP(CName) \
-static void CName ## _i(int *args, ptree *pt) {FLOAT_RESULT = CName(INT_ARG_1);} \
-static xen_value * CName ## _1(ptree *prog, xen_value **args, int num_args) {return(package(prog, R_FLOAT, CName ## _i, #CName "_i", args, 1));}
-
-
 #define BOOL_INT_OP(CName) \
 static void CName ## _i(int *args, ptree *pt) {BOOL_RESULT = CName(INT_ARG_1);} \
 static xen_value * CName ## _1(ptree *prog, xen_value **args, int num_args) {return(package(prog, R_BOOL, CName ## _i, #CName "_i", args, 1));}
