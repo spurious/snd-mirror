@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Wed Dec 21 17:37:13 CET 2005
-\ Changed: Sun Jun 14 18:16:22 CEST 2009
+\ Changed: Fri Nov 06 00:30:07 CET 2009
 
 \ Commentary:
 \ 
@@ -16,7 +16,7 @@
 require clm
 
 #t value save-peak-env-info?
-$" ~/peaks" value save-peak-env-info-directory
+"~/peaks" value save-peak-env-info-directory
 
 \ defined in src/ficl/softcore/softcore.fr
 \ 
@@ -49,7 +49,7 @@ hide
     snd chn peak-env-info-file-name mus-expand-filename { peak-file }
     peak-file file-exists?
     peak-file file-write-date
-    snd file-name file-write-date b> && if
+    snd file-name file-write-date d> && if
       #() { vals }
       vals     'data-format snd data-format array-assoc-set!
       ( vals ) 'channels    snd channels    array-assoc-set! to vals
@@ -70,6 +70,9 @@ hide
 : save-peak-env-info <{ snd -- }>
   initial-graph-hook <'> restore-peak-env-info-upon-open add-hook!
   update-hook        <'> peak-env-info-update-cb         add-hook!
+  save-peak-env-info-directory file-directory? unless
+    save-peak-env-info-directory 0o755 file-mkdir
+  then
   save-peak-env-info?
   snd 0 0 peak-env-info length 0> && if
     #f { saved }
@@ -77,7 +80,7 @@ hide
       snd i peak-env-info-file-name mus-expand-filename { peak-file }
       peak-file file-exists? not
       peak-file file-write-date
-      snd file-name file-write-date b< || if
+      snd file-name file-write-date d< || if
 	saved unless
 	  #() { vals }
 	  vals     'data-format snd data-format array-assoc-set!
@@ -93,7 +96,7 @@ hide
 
 set-current
 
-close-hook ' save-peak-env-info add-hook!
+close-hook <'> save-peak-env-info add-hook!
 exit-hook lambda: <{ -- }> sounds each save-peak-env-info end-each ; add-hook!
 
 previous

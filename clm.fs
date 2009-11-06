@@ -2,7 +2,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Mon Mar 15 19:25:58 CET 2004
-\ Changed: Mon Oct 26 14:46:45 CET 2009
+\ Changed: Fri Nov 06 00:15:36 CET 2009
 
 \ Commentary:
 \
@@ -53,7 +53,7 @@
 \ with-mix             ( body-str args fname beg -- )
 \ sound-let            ( ws-xt-lst body-xt -- )
 
-$" fth 9-Oct-2009" value *clm-version*
+$" fth 06-Nov-2009" value *clm-version*
 
 \ defined in snd/snd-xen.c
 [ifundef] snd-print   : snd-print   ( str -- str )  dup .string ;             [then]
@@ -333,7 +333,7 @@ previous
 ;
 
 : make-default-comment ( -- str )
-  $" Written %s by %s at %s using clm (%s)" _
+  $" Written %s by %s at %s using clm (%s)"
   #( $" %a %d-%b-%y %H:%M %Z" current-time strftime
      getlogin
      gethostname
@@ -344,7 +344,7 @@ previous
   { start dur }
   start seconds->samples { beg }
   dur   seconds->samples { len }
-  beg len b+ beg
+  beg len d+ beg
 ;
 
 : normalize-partials ( parts1 -- parts2 )
@@ -565,7 +565,7 @@ previous
   input mus-sound-srate  { srate }
   input mus-sound-chans  { chans }
   chans 2 > if
-    $" %s: we can only handle 2 chans, not %d" _ #( get-func-name chans ) string-format warning
+    $" %s: we can only handle 2 chans, not %d" #( get-func-name chans ) string-format warning
     2 to chans
   then
   verbose if input snd-info then
@@ -573,9 +573,9 @@ previous
   bufsize 0> if
     chans bufsize make-sound-data { data }
     input mus-sound-open-input { snd-fd }
-    snd-fd 0< if 'forth-error #( get-func-name $" cannot open %s" _ input ) fth-throw then
+    snd-fd 0< if 'forth-error #( get-func-name $" cannot open %s" input ) fth-throw then
     mus-audio-default srate chans 2 min audio-format bufsize mus-audio-open-output { dac-fd }
-    dac-fd 0< if 'forth-error #( get-func-name $" cannot open dac" _ ) fth-throw then
+    dac-fd 0< if 'forth-error #( get-func-name $" cannot open dac" ) fth-throw then
     frames 0 ?do
       i bufsize + frames > if frames i - to bufsize then
       snd-fd 0 bufsize 1- chans data mus-sound-read drop
@@ -606,7 +606,7 @@ previous
   duration seconds->samples   	{ frames }
   dac-size frames min 	        { bufsize }
   channels 2 min      	        { chans }
-  comment empty? if $" written %s by %s" _ #( date get-func-name ) string-format to comment then
+  comment empty? if $" written %s by %s" #( date get-func-name ) string-format to comment then
   chans bufsize make-sound-data { data }
   \ INFO: commented out on Sun Sep 20 17:02:02 CEST 2009 [ms]
   \ chans 0.25 make-vct           { vals }
@@ -614,9 +614,9 @@ previous
   \ vals 0.75 vct-fill! drop
   \ vals each drop output-device  mus-audio-amp i vals mus-audio-mixer-write drop end-each
   output srate chans data-format header-type comment mus-sound-open-output { snd-fd }
-  snd-fd 0< if 'forth-error #( get-func-name $" cannot open %S" _ output ) fth-throw then
+  snd-fd 0< if 'forth-error #( get-func-name $" cannot open %S" output ) fth-throw then
   output-device srate chans audio-format bufsize mus-audio-open-input      { dac-fd }
-  dac-fd 0< if 'forth-error #( get-func-name $" cannot open dac" _ ) fth-throw then
+  dac-fd 0< if 'forth-error #( get-func-name $" cannot open dac" ) fth-throw then
   verbose if
     $" filename: %s"                #( output )          clm-message
     $"   device: %d"                #( output-device )   clm-message
@@ -886,7 +886,7 @@ set-current
     make-sample->file
   then to *output*
   *output* sample->file? unless
-    'with-sound-error #( get-func-name $" cannot open sample->file" _ ) fth-throw
+    'with-sound-error #( get-func-name $" cannot open sample->file" ) fth-throw
   then
   cont? if
     output mus-sound-srate set-mus-srate drop
@@ -904,7 +904,7 @@ set-current
       $" with-sound temporary reverb file" make-sample->file
     then to *reverb*
     *reverb* sample->file? unless
-      'with-sound-error #( get-func-name $" cannot open reverb sample->file" _ ) fth-throw
+      'with-sound-error #( get-func-name $" cannot open reverb sample->file" ) fth-throw
     then
   then
   ws :timer make-timer array-assoc-set! to ws
@@ -926,7 +926,7 @@ set-current
     *reverb* mus-close drop
     ws :reverb-file-name array-assoc-ref undef make-file->sample to *reverb*
     *reverb* file->sample? unless
-      'with-sound-error #( get-func-name $" cannot open file->sample" _ ) fth-throw
+      'with-sound-error #( get-func-name $" cannot open file->sample" ) fth-throw
     then
     \ compute ws reverb
     *clm-debug* if
@@ -1004,7 +1004,7 @@ See with-sound for a full keyword list.\n\
   then
   { fname ws }
   fname file-exists? if
-    ws :verbose array-assoc-ref if $" loading %S" _ #( fname ) clm-message then
+    ws :verbose array-assoc-ref if $" loading %S" #( fname ) clm-message then
     fname <'> file-eval ws with-sound-main ( ws )
   else
     'no-such-file $" %s: %S not found" #( get-func-name fname ) fth-raise
@@ -1269,7 +1269,8 @@ event: inst-test ( -- )
     :header-type mus-next
     :data-format mus-lfloat
     :channels 2
-    :srate mus-srate f>s new-sound { snd }
+    :srate mus-srate f>s
+    :comment make-default-comment new-sound { snd }
     0 10 65 0.5 arpeggio
     snd save-sound drop
   ;event

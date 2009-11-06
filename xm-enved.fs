@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Oct 21 18:22:57 CEST 2005
-\ Changed: Mon Oct 12 03:12:49 CEST 2009
+\ Changed: Fri Nov 06 00:36:32 CET 2009
 
 \ Commentary:
 
@@ -50,7 +50,7 @@ This instance hook is like the global ENVED-HOOK; \
 POS is ENVELOPE's x-position, X and Y are the new points, \
 and REASON is one of the Snd constants ENVED-ADD-POINT, ENVED-DELETE-POINT, ENVED-MOVE-POINT.  \
 If one of the hook procedures in the hook array returns #f, xenved changes the breakpoint, \
-otherwise the last hook procedure is responsible for manipulating GEN's envelope itself." _
+otherwise the last hook procedure is responsible for manipulating GEN's envelope itself."
 create-hook before-enved-hook
 
 hide
@@ -404,10 +404,10 @@ fth-xenved make-?obj xenved?
      envelope    #( 0 0 1 1 )
      axis-bounds #( 0 1 0 1 )
      args        #() -- xe }>
-  parent      FWidget?     parent      2 $" a widget"                _ assert-type
-  axis-bounds axis-bounds? axis-bounds 4 $" an array of axis bounds" _ assert-type
+  parent      FWidget?     parent      2 $" a widget"                assert-type
+  axis-bounds axis-bounds? axis-bounds 4 $" an array of axis bounds" assert-type
   xenved% %alloc { xe }
-  xe unless 'system-error #( get-func-name $" cannot create xenved" _ ) fth-throw then
+  xe unless 'system-error #( get-func-name $" cannot create xenved" ) fth-throw then
   envelope make-enved xe xe-enved !
   name string? unless $" xe-test" to name then
   name   xe xe-name !
@@ -450,24 +450,24 @@ fth-xenved make-?obj xenved?
 
 : xe-envelope ( gen -- lst )
   { gen }
-  gen xenved? gen 1 $" an xenved object" _ assert-type
+  gen xenved? gen 1 $" an xenved object" assert-type
   gen xe-envelope@
 ;
 : set-xe-envelope ( gen lst -- )
   { gen lst }
-  gen xenved? gen 1 $" an xenved object" _ assert-type
-  lst array?  lst 2 $" an array"         _ assert-type
+  gen xenved? gen 1 $" an xenved object" assert-type
+  lst array?  lst 2 $" an array"         assert-type
   lst gen xe-envelope!
   gen xe-redraw
 ;
 : xe-open ( gen -- )
   { gen }
-  gen xenved? gen 1 $" an xenved object" _ assert-type
+  gen xenved? gen 1 $" an xenved object" assert-type
   gen xe-drawer@ FWidget? if gen xe-drawer@ FXtManageChild drop then
 ;
 : xe-close ( gen -- )
   { gen }
-  gen xenved? gen 1 $" an xenved object" _ assert-type
+  gen xenved? gen 1 $" an xenved object" assert-type
   gen xe-drawer@ FWidget? if gen xe-drawer@ FXtUnmanageChild drop then
 ;
 previous

@@ -3,7 +3,7 @@
 
 \ Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Tue Oct 11 18:23:12 CEST 2005
-\ Changed: Wed Sep 30 18:11:11 CEST 2009
+\ Changed: Sat Oct 31 00:04:31 CET 2009
 
 \ Commentary:
 \
@@ -165,7 +165,7 @@ previous
 
 : mix-click-info <{ id -- #t }>
   doc" A mix-click-hook function that describes a mix and its properties.\n\
-mix-click-hook ' mix-click-info add-hook!"
+mix-click-hook <'> mix-click-info add-hook!"
   id mix-home 0 array-ref { mid }
   id mix-name empty? if "" else $"  (%S)" #( id mix-name ) string-format then { mname }
   $"        mix id: %s%s\n" #( id mname ) string-format make-string-output-port { prt }
@@ -180,7 +180,7 @@ mix-click-hook ' mix-click-info add-hook!"
   $" Mix info" prt port->string info-dialog drop
   #t
 ;
-\ mix-click-hook ' mix-click-info add-hook!
+\ mix-click-hook <'> mix-click-info add-hook!
 
 \ ;;; -------- mix-name->id
 

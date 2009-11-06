@@ -2364,10 +2364,11 @@ void call_sp_watchers(snd_info *sp, sp_watcher_t type, sp_watcher_reason_t reaso
  *             scale(-to|by) convolve fft env filter insert mix reverse save smooth src copy|fill! map|scan pan-mix
  *               sampler? replace-with?
  *
+ *             copy sound selection perhaps sampler
+ *
  * doc/test/cleanup play (mix region selection sound file player)
  *
  * save with all the optkey args for all types (treat list/vector etc as sound data)
- * copy selection = open copy as sound? 
  *
  *    objects are generator(clm2xen), player(snd-dac), sampler(snd-edits), sound-data(sndlib2xen),
  *               mark(snd-marks), mix(snd-mix), selection(snd-select), region(snd-region),

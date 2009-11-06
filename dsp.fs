@@ -2,7 +2,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Dec 30 04:52:13 CET 2005
-\ Changed: Mon Oct 26 15:10:03 CET 2009
+\ Changed: Fri Nov 06 00:15:46 CET 2009
 
 \ src-duration             ( en -- dur )
 \ src-fit-envelope         ( e1 target-dur -- e2 )
@@ -516,7 +516,7 @@ Global variable CHORDALIZE-CHORD is an array of members of chord such as #( 1 5/
 
 : rotate-phase <{ func :optional snd #f chn #f -- vct }>
   doc" Calls fft, applies FUNC, a proc or xt, to each phase, then un-ffts."
-  func proc? func xt? || func 1 $" a proc or xt" _ assert-type
+  func proc? func xt? || func 1 $" a proc or xt" assert-type
   snd chn #f frames { len }
   2.0  len flog 2.0 flog f/ fceil ( pow2 )  f** fround->s { fftlen }
   fftlen 2/ { fftlen2 }
@@ -1881,10 +1881,10 @@ DB-FLOOR is the level below which data will be ignored."
   file mus-sound-srate { fsr }
   fsr rfreq f/ fround->s { incrsamps }
   beg fsr f* fround->s { start }
-  dur if dur fsr f* else file mus-sound-frames beg b- then { end }
+  dur if dur fsr f* else file mus-sound-frames beg d- then { end }
   fftsize 0.0 make-vct { fdr }
   fftsize 0.0 make-vct { fdi }
-  end start b- incrsamps b/ 1 b+ { windows }
+  end start d- incrsamps d/ 1 d+ { windows }
   windows 0.0 make-vct { results }
   fftsize 2/ { fft2 }
   fsr fftsize f/ fround->s { binwidth }

@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Tue Jul 05 13:09:37 CEST 2005
-\ Changed: Tue Oct 06 00:09:54 CEST 2009
+\ Changed: Sat Oct 31 00:04:01 CET 2009
 
 \ Commentary:
 \
@@ -287,7 +287,7 @@ require extensions
 
 : display-energy <{ snd chn -- v }>
   doc" A lisp-graph-hook function to display the time domain data as energy (squared).\n\
-list-graph-hook ' display-energy add-hook!"
+list-graph-hook <'> display-energy add-hook!"
   snd chn undef undef undef make-graph-data dup array? if 1 array-ref then { data }
   data if
     snd chn left-sample { ls }
@@ -299,14 +299,14 @@ list-graph-hook ' display-energy add-hook!"
     #f
   then
 ;
-\ lisp-graph-hook ' display-energy add-hook!
+\ lisp-graph-hook <'> display-energy add-hook!
 
 hide
 : db-calc ( val -- r ) { val } val 0.001 f< if -60.0 else 20.0 val flog10 f* then ;
 set-current
 : display-db <{ snd chn -- v }>
   doc" A lisp-graph-hook function to display the time domain data in dB.\n\
-list-graph-hook ' display-db add-hook!"
+list-graph-hook <'> display-db add-hook!"
   snd chn undef undef undef make-graph-data dup array? if 1 array-ref then { data }
   data if
     snd chn left-sample { ls }
@@ -320,7 +320,7 @@ list-graph-hook ' display-db add-hook!"
   then
 ;
 previous
-\ lisp-graph-hook ' display-db add-hook!
+\ lisp-graph-hook <'> display-db add-hook!
 
 : window-rms ( -- val )
   doc" Returns rms of data in currently selected graph window."
@@ -341,7 +341,7 @@ previous
     #f
   then
 ;
-\ after-transform-hook ' fft-peak add-hook!
+\ after-transform-hook <'> fft-peak add-hook!
 
 \ ;;; -------- 'info' from extsnd.html using format --------
 
@@ -399,7 +399,7 @@ y0 and y1 are ignored."
     $" %s wants stereo input" #( get-func-name ) string-format snd #f report-in-minibuffer
   then
 ;
-\ graph-hook ' display-correlate add-hook!
+\ graph-hook <'> display-correlate add-hook!
 
 \ ;;; -------- set transform-size based on current time domain window size
 \ ;;;
@@ -415,7 +415,7 @@ y0 and y1 are ignored."
   then
   #f
 ;
-\ graph-hook ' zoom-spectrum add-hook!
+\ graph-hook <'> zoom-spectrum add-hook!
 
 \ ;;; -------- superimpose spectra of sycn'd sounds
 
@@ -443,7 +443,7 @@ y0 and y1 are ignored."
   then
   #f
 ;
-\ graph-hook ' superimpose-ffts add-hook!
+\ graph-hook <'> superimpose-ffts add-hook!
 
 \ ;;; -------- c-g? example (Anders Vinjar)
 
@@ -534,7 +534,7 @@ y0 and y1 are ignored."
   then
   #f
 ;
-\ graph-hook ' auto-dot add-hook!
+\ graph-hook <'> auto-dot add-hook!
 
 \ ;;; -------- move window left edge to mark upon 'm'
 \ ;;;
@@ -991,7 +991,7 @@ is like fft-squelch."
 \ 0.05 0.05 make-one-pole filter-fft
 \ lambda: <{ y -- val }> y 0.1 f< if 0.0 else y then ; filter-fft
 \ 0 0 0 1 0 make-sampler filter-fft
-\ ' contrast-enhancement filter-fft
+\ <'> contrast-enhancement filter-fft
 \ lambda: <{ y -- val }> y y f* y f* ; filter-fft
 
 : fft-smoother <{ cutoff start samps :optional snd #f chn #f -- val }>
@@ -2064,13 +2064,13 @@ into a bunch of files of the form sample-name.aif."
     else
       #f #f #f frames
     then { end }
-    vals 2 array-ref  start b- { loop-start }
-    vals 3 array-ref start b- { loop-end }
+    vals 2 array-ref  start d- { loop-start }
+    vals 3 array-ref start d- { loop-end }
     name ".aif" $+ { filename }
     selection? if #f #t #f set-selection-member? drop then
     #t #f #f set-selection-member? drop
     start #f #f set-selection-position drop
-    end start b- #f #f set-selection-frames drop
+    end start d- #f #f set-selection-frames drop
     :file filename :header-type mus-aifc save-selection drop
     filename open-sound { temp }
     temp #( loop-start loop-end ) set-sound-loop-info drop

@@ -3,7 +3,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sun Dec 18 19:21:00 CET 2005
-\ Changed: Sat Sep 26 02:11:04 CEST 2009
+\ Changed: Fri Nov 06 00:29:24 CET 2009
 
 \ Commentary:
 \
@@ -575,7 +575,7 @@ lambda: <{ snd -- val }> #f ; value no-cb
   #t
   snd channels 0 ?do
     snd i edits 0 array-ref 0> if
-      $" %s[%d] has unsaved edits.  Close (y/n)? " _ #( snd short-file-name i ) string-format
+      $" %s[%d] has unsaved edits.  Close (y/n)? " #( snd short-file-name i ) string-format
       exiting yes-cb no-cb snd yes-or-no?
       not
     then
@@ -728,10 +728,10 @@ hide
   else
     remember-sound-filename io-open-write to io
     io $" \\ -*- snd-forth -*-\n" io-write
-    io $" \\ from remember-sound-state in %s\n" _ #( *filename* ) io-write-format
-    io $" \\ written: %s\n\n" _ #( date ) io-write-format
+    io $" \\ from remember-sound-state in %s\n" #( *filename* ) io-write-format
+    io $" \\ written: %s\n\n" #( date ) io-write-format
     io $" %S to -saved-remember-sound-states-\n\n" #( remember-states ) io-write-format
-    io $" \\ %s ends here\n" _ #( remember-sound-filename #f file-basename ) io-write-format
+    io $" \\ %s ends here\n" #( remember-sound-filename #f file-basename ) io-write-format
     io io-close
   then
   #f
@@ -1341,7 +1341,7 @@ previous
 \ --- reopen menu ---
 
 hide
-"empty" _ value reopen-empty
+"empty" value reopen-empty
 #() value reopen-names
 #f  value reopen-menu
 16  value reopen-max-length
@@ -1390,7 +1390,7 @@ set-current
 : with-reopen-menu ( -- )
   including-reopen-menu unless
     #() to reopen-names
-    reopen-menu false? if "Reopen" _ extensions-noop add-to-main-menu to reopen-menu then
+    reopen-menu false? if "Reopen" extensions-noop add-to-main-menu to reopen-menu then
     reopen-menu reopen-empty extensions-noop 0 add-to-menu drop
     reopen-names reopen-empty array-push to reopen-names
     #t to including-reopen-menu
@@ -1403,7 +1403,7 @@ previous
 \ --- buffers menu ---
 
 hide
-"empty" _ value buffer-empty
+"empty" value buffer-empty
 #() value buffer-names
 #f  value buffer-menu
 
@@ -1438,7 +1438,7 @@ set-current
 : with-buffers-menu ( -- )
   including-buffers-menu unless
     #() to buffer-names
-    buffer-menu false? if "Buffers" _ extensions-noop add-to-main-menu to buffer-menu then
+    buffer-menu false? if "Buffers" extensions-noop add-to-main-menu to buffer-menu then
     buffer-menu buffer-empty extensions-noop 0 add-to-menu drop
     buffer-names buffer-empty array-push to buffer-names
     #t to including-buffers-menu

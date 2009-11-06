@@ -6688,6 +6688,23 @@ static s7_pointer g_make_random_state(s7_scheme *sc, s7_pointer args)
 }
 
 
+static s7_pointer copy_random_state(s7_scheme *sc, s7_pointer obj)
+{
+  s7_rng_t *r;
+  if (c_object_type(obj) == rng_tag)
+    {
+      s7_rng_t *new_r;
+      r = (s7_rng_t *)s7_object_value(obj);
+      new_r = (s7_rng_t *)calloc(1, sizeof(s7_rng_t));
+      new_r->ran_seed = r->ran_seed;
+      new_r->ran_carry = r->ran_carry;
+      return(s7_make_object(sc, rng_tag, (void *)new_r));
+    }
+  /* I can't find a way to copy a gmp random generator */
+  return(sc->F);
+}
+
+
 #if HAVE_PTHREADS
 static pthread_mutex_t rng_lock = PTHREAD_MUTEX_INITIALIZER;
 #endif
@@ -22611,7 +22628,7 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "lognot",                  g_lognot,                  1, 0, false, H_lognot);
   s7_define_function(sc, "ash",                     g_ash,                     2, 0, false, H_ash);
   
-  rng_tag = s7_new_type("<random-number-generator>", print_rng, free_rng, equal_rng, NULL, NULL, NULL);
+  rng_tag = s7_new_type_x("<random-number-generator>", print_rng, free_rng, equal_rng, NULL, NULL, NULL, NULL, copy_random_state, NULL);
   s7_define_function(sc, "random",                  g_random,                  1, 1, false, H_random);
   s7_define_function(sc, "make-random-state",       g_make_random_state,       1, 0, false, H_make_random_state);
 

@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Mon Dec 26 22:36:46 CET 2005
-\ Changed: Sun Jun 14 20:40:00 CEST 2009
+\ Changed: Fri Nov 06 00:36:06 CET 2009
 
 \ Commentary:
 \
@@ -267,7 +267,7 @@ hide
        FXmNorientation      FXmVERTICAL
        FXmNpaneMinimum      100
        FXmNbottomAttachment FXmATTACH_FORM ) add-channel-pane { mark-box }
-    $" Marks" _ FxmLabelWidgetClass mark-box
+    $" Marks" FxmLabelWidgetClass mark-box
     #( FXmNbackground       highlight-color
        FXmNleftAttachment   FXmATTACH_FORM
        FXmNrightAttachment  FXmATTACH_FORM
@@ -428,17 +428,17 @@ hide
 
 : kmg { num -- str }
   num 0<= if
-    $" disk full!" _
+    $" disk full!"
   else
     "" { str }
     num 1024 > if
       num 1024 1024 * > if
-	$" space: %6.3fG" _ #( num 1024.0 1024.0 f* f/ ) string-format
+	$" space: %6.3fG" #( num 1024.0 1024.0 f* f/ ) string-format
       else
-	$" space: %6.3fM" _ #( num 1024.0 f/ )           string-format
+	$" space: %6.3fM" #( num 1024.0 f/ )           string-format
       then
     else
-      $" space: %10dK" _ #( num ) string-format
+      $" space: %10dK" #( num ) string-format
     then ( str )
   then
 ;
@@ -487,11 +487,11 @@ set-current
       labelled-snds previous-label array-push drop
       app 10000 <'> show-label previous-label FXtAppAddTimeOut drop
     else
-      $" no sound found for disk space label" _ snd-error drop
+      $" no sound found for disk space label" snd-error drop
     then
   then
 ;
-\ after-open-hook ' show-disk-space add-hook!
+\ after-open-hook <'> show-disk-space add-hook!
 previous
 
 : current-label ( widget -- label )

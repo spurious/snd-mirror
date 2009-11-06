@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Tue Dec 27 19:22:06 CET 2005
-\ Changed: Wed Sep 30 18:08:27 CEST 2009
+\ Changed: Fri Nov 06 00:29:50 CET 2009
 
 \ Commentary:
 \
@@ -118,7 +118,7 @@ hide
 : save-mark-properties-cb <{ filename -- }>
   undef undef undef marks 0 array-ref 0 array-ref array? if
     filename :fam a/o io-open { io }
-    io $" \n\\ from save-mark-properties in %s\n" _ #( *filename* ) io-write-format
+    io $" \n\\ from save-mark-properties in %s\n" #( *filename* ) io-write-format
     io $" require marks\n\n" io-write
     io $" let:\n" io-write
     io $"   nil nil { snd mk }\n" io-write

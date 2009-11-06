@@ -2,7 +2,7 @@
 
 \ Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Jan 06 05:32:57 CET 2006
-\ Changed: Sat Sep 26 02:11:36 CEST 2009
+\ Changed: Fri Nov 06 00:35:16 CET 2009
 
 \ Commentary:
 \
@@ -236,7 +236,7 @@ hide
 	end-each
       else
 	beg snd chn #f frames >= if
-	  $" trouble at %d: %d of %d" _ #( i beg snd chn #f frames ) clm-message
+	  $" trouble at %d: %d of %d" #( i beg snd chn #f frames ) clm-message
 	then
 	show-details if
 	  beg 1- $" %d:%d" #( i len extension f/ f>s ) string-format snd chn add-named-mark drop
@@ -257,7 +257,7 @@ hide
     then
   end-each
   show-details if
-    $" wanted: %d, got %d" _ #( samps changed-len ) clm-message
+    $" wanted: %d, got %d" #( samps changed-len ) clm-message
   then
   \ ;; and return to original srate
   snd chn unsample-sound

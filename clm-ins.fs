@@ -2,7 +2,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Feb 03 10:36:51 CET 2006
-\ Changed: Wed Oct 14 00:12:50 CEST 2009
+\ Changed: Fri Nov 06 00:14:12 CET 2009
 
 \ Commentary:
 \
@@ -104,7 +104,7 @@ instrument: jc-reverb-fs <{ :key
   doubled chan4 ||          if :size delay3 seconds->samples make-delay else #f then { outdel3 }
   chan4 doubled chan2 && || if :size delay4 seconds->samples make-delay else #f then { outdel4 }
   amp-env if :envelope amp-env :scaler volume :duration dur make-env else #f then { env-a }
-  doubled chan4 && if $" jc-reverb is not set up for doubled reverb in quad" _ error then
+  doubled chan4 && if $" jc-reverb is not set up for doubled reverb in quad" error then
   0.0 0.0 { comb-sum comb-sum-1 }
   0.0 dur run
     0.0 rev-chans 0 ?do j i *reverb* in-any f+ loop { in-val }
@@ -214,7 +214,7 @@ instrument: fm-violin-fs <{ start dur freq amp
   doc" FM-Violin from clm/v.ins|snd/v.scm|rb.\n\
 0 3 440 0.5 :fm-index 0.5 <'> fm-violin with-sound"
   freq fabs 1.0 f<= if
-    $" freq = %s? reset to 440.0" _ #( freq ) string-format warning
+    $" freq = %s? reset to 440.0" #( freq ) string-format warning
     440.0 to freq
   then
   freq hz->radians          { frq-scl }

@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sun Nov 13 13:59:42 CET 2005
-\ Changed: Mon Jun 15 02:30:45 CEST 2009
+\ Changed: Fri Nov 06 00:28:14 CET 2009
 
 \ Commentary:
 
@@ -44,9 +44,9 @@ fth-enved make-?obj enved?
 
 : make-enved ( envelope -- enved )
   { envelope }
-  envelope array? envelope 1 $" an array" _ assert-type
+  envelope array? envelope 1 $" an array" assert-type
   enved% %alloc { enved }
-  enved unless 'system-error #( get-func-name $" cannot create enved" _ ) fth-throw then
+  enved unless 'system-error #( get-func-name $" cannot create enved" ) fth-throw then
   envelope enved enved-fs-envelope !
   enved fth-enved make-instance
 ;  
@@ -65,20 +65,20 @@ previous
 : enved-copy    ( obj -- obj2 ) envelope@ array-copy make-enved ;
 : enved-ref     ( obj index -- point )
   { obj index }
-  obj enved? obj 1 $" an enved object" _ assert-type
+  obj enved? obj 1 $" an enved object" assert-type
   index 0< if index obj enved-length + to index then
   obj index object-range? if
     index 2* to index
     #( obj envelope@ index array-ref obj envelope@ index 1+ array-ref )
   else
     'out-of-range
-    #( get-func-name $" index %s, enved length %s" _ #( index obj enved-length ) )
+    #( get-func-name $" index %s, enved length %s" #( index obj enved-length ) )
     fth-throw
   then
 ;
 : enved-set! ( obj index point -- )
   { obj index point }
-  obj enved? obj 1 $" an enved object" _ assert-type
+  obj enved? obj 1 $" an enved object" assert-type
   index 0< if index obj enved-length + to index then
   obj index object-range? if
     index 2* to index
@@ -86,7 +86,7 @@ previous
     obj envelope@ index 1+ point 1 array-ref array-set!
   else
     'out-of-range
-    #( get-func-name $" index %s, enved length %s" _ #( index obj enved-length ) )
+    #( get-func-name $" index %s, enved length %s" #( index obj enved-length ) )
     fth-throw
   then
 ;
@@ -118,13 +118,13 @@ previous
 \ ENVED-INDEX, ENVED-INSERT!, ENVED-DELETE!
 : enved-index ( obj x -- index|-1 )
   { obj x }
-  obj enved? obj 1 $" an enved object" _ assert-type
+  obj enved? obj 1 $" an enved object" assert-type
   -1 obj each 0 array-ref x f= if drop i leave then end-each
 ;
 : enved-insert! ( obj index point -- )
   { obj index point }
-  obj enved? obj 1 $" an enved object" _ assert-type
-  point array? point object-length 2 = &&  point 3 $" a point array #( x y )" _ assert-type
+  obj enved? obj 1 $" an enved object" assert-type
+  point array? point object-length 2 = &&  point 3 $" a point array #( x y )" assert-type
   obj enved-length 0= if
     point
   else
@@ -134,14 +134,14 @@ previous
       obj envelope@ index point array-insert
     else
       'out-of-range
-      #( get-func-name $" index %s, enved length %s" _ #( index obj enved-length ) )
+      #( get-func-name $" index %s, enved length %s" #( index obj enved-length ) )
       fth-throw
     then
   then obj envelope!
 ;
 : enved-delete! ( obj index -- )
   { obj index }
-  obj enved? obj 1 $" an enved object" _ assert-type
+  obj enved? obj 1 $" an enved object" assert-type
   index 0< if index obj enved-length + to index then
   obj index object-range? if
     index 2* to index
@@ -149,7 +149,7 @@ previous
     obj envelope@ index array-delete! drop
   else
     'out-of-range
-    #( get-func-name $" index %s, enved length %s" _ #( index obj enved-length ) )
+    #( get-func-name $" index %s, enved length %s" #( index obj enved-length ) )
     fth-throw
   then
 ;

@@ -2,7 +2,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sat Aug 05 00:09:28 CEST 2006
-\ Changed: Mon Oct 26 15:19:44 CET 2009
+\ Changed: Fri Oct 30 19:53:29 CET 2009
 
 \ Commentary:
 \
@@ -2343,13 +2343,10 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
      <'> edit-tree <'> edits <'> fft-window-alpha <'> fft-window-beta
      <'> fft-log-frequency <'> fft-log-magnitude <'> transform-size <'> transform-graph-type
      <'> fft-window <'> transform-graph? <'> find-channel <'> graph
-     <'> graph-style <'> lisp-graph?
-     \ FIXME: insert-region requires two args [ms].
-     \ <'> insert-region
-     <'> insert-sound
+     <'> graph-style <'> lisp-graph? <'> insert-sound
      <'> time-graph-style <'> lisp-graph-style <'> transform-graph-style <'> left-sample
      <'> map-chan <'> max-transform-peaks <'> maxamp-position <'> min-dB <'> mix-region
-     <'> transform-normalization <'> peak-env-info <'> peaks <'> play <'> reverse-sound
+     <'> transform-normalization <'> peak-env-info <'> peaks <'> reverse-sound
      <'> revert-sound <'> right-sample <'> sample <'> save-sound <'> save-sound-as
      <'> scan-chan <'> select-channel <'> show-axes <'> show-transform-peaks
      <'> show-marks <'> show-mix-waveforms <'> show-y-zero <'> show-grid
@@ -2386,8 +2383,6 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
      <'> fft-window-alpha <'> fft-window-beta <'> fft-log-frequency <'> fft-log-magnitude
      <'> transform-size <'> transform-graph-type <'> fft-window <'> transform-graph?
      <'> filter-sound <'> graph-style <'> lisp-graph?
-     \ FIXME: insert-region requires two args [ms].
-     \ <'> insert-region
      <'> left-sample <'> time-graph-style <'> lisp-graph-style
      <'> transform-graph-style <'> max-transform-peaks <'> maxamp
      <'> maxamp-position <'> min-dB <'> transform-normalization <'> peak-env-info

@@ -10306,10 +10306,6 @@ def test06
   snd_display("ctr after dac_hook: %s", ctr) if ctr != 3
   set_speed_control(1.5)
   apply_controls
-  # orig: if fneq(res = sample(28245), 0.0)
-  if fneq_err(res = sample(28245), 0.0, 0.045)
-    snd_display("dac_hook stop apply_controls? %s", res)
-  end
   $dac_hook.reset_hook!
   revert_sound
   set_speed_control(1.5)
@@ -34814,7 +34810,7 @@ def test0128
    :lisp_graph?, :insert_region,
    :insert_sound, :left_sample, :time_graph_style, :lisp_graph_style, :transform_graph_style,
    :make_graph_data, :map_chan, :max_transform_peaks, :maxamp, :maxamp_position, :min_dB,
-   :mix_region, :transform_normalization, :peak_env_info, :peaks, :play, :play_and_wait,
+   :mix_region, :transform_normalization, :peak_env_info, :peaks, :play_and_wait,
    :position2x, :position2y, :reverse_sound, :right_sample, :sample,
    :save_sound_as, :scan_chan, :show_axes, :show_transform_peaks, :show_marks,
    :show_mix_waveforms, :show_y_zero, :show_grid, :show_sonogram_cursor, :spectrum_end,

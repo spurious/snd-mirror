@@ -3,7 +3,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Dec 23 00:28:28 CET 2005
-\ Changed: Thu Jun 25 19:51:41 CEST 2009
+\ Changed: Fri Nov 06 00:34:53 CET 2009
 
 \ Commentary:
 
@@ -31,12 +31,12 @@ require snd-xm
 
 \ for prefs
 : edhist-help-edits <{ w c info  -- }>
-  $" Edit History Functions" _
+  $" Edit History Functions"
   $" This popup menu gives access to the edit-list function handlers in Snd.  \
 At any time you can backup in the edit list, 'save' the current trailing edits, make some \
 new set of edits, then 'reapply' the saved edits.  The 'apply' choice gives access to all \
 currently saved edit lists -- any such list can be applied to any channel.  'Clear' deletes \
-all saved edit lists." _
+all saved edit lists."
   #( $" {edit lists}" $" {edit-list->function}" )
   #( $" extsnd.html#editlists" $" extsnd.html#editlist_to_function" )
   help-dialog drop
@@ -191,7 +191,7 @@ hide
   vars :stopping array-assoc-ref if
     vars     :stopping #f array-assoc-set!
     ( vars ) :stop-widget array-assoc-ref FWidget? if
-      vars :stop-widget array-assoc-ref "Play" _ change-label
+      vars :stop-widget array-assoc-ref "Play" change-label
     then
   then
 ;
@@ -200,26 +200,26 @@ hide
  does> { w c info self -- }
   self @ { vars }
   vars :stopping array-assoc-ref if
-    w "Play" _ change-label
+    w "Play" change-label
     vars :stopping #f array-assoc-set!
     ( vars ) :stopping1 array-assoc-ref if
       vars   :stopping1 #f array-assoc-set!
-      ( vars ) :stop-widget1 array-assoc-ref $" Loop play" _ change-label
+      ( vars ) :stop-widget1 array-assoc-ref $" Loop play" change-label
     then
     undef stop-playing drop
   else
-    w "Stop" _ change-label
+    w "Stop" change-label
     vars :stop-widget w array-assoc-set!
     ( vars ) :stopping #t array-assoc-set! drop
     #f undef play-selection drop
   then
 ;
 : stop-playing-selection { w vars -- }
-  w $" Loop play" _ change-label
+  w $" Loop play" change-label
   vars     :stopping1 #f array-assoc-set!
   ( vars ) :stopping array-assoc-ref if
     vars :stopping #f array-assoc-set!
-    ( vars ) :stop-widget array-assoc-ref "Play" _ change-label
+    ( vars ) :stop-widget array-assoc-ref "Play" change-label
   then
 ;
 : play-selection-again { w vars -- prc; reason self -- }
@@ -247,7 +247,7 @@ hide
     w vars stop-playing-selection
     undef stop-playing drop
   else
-    w "Stop!" _ change-label
+    w "Stop!" change-label
     vars     :stop-widget1 w  array-assoc-set!
     ( vars ) :stopping1    #t array-assoc-set! to vars
     #f  w vars play-selection-again  play-selection drop
@@ -302,7 +302,7 @@ hide
   $"  duration: %d, %.3f\n" #( len len #f srate f/ ) string-format str swap << to str
   $"     chans: %d\n" selection-chans string-format str swap << to str
   $"    maxamp: %.3f\n" #f #f selection-maxamp string-format str swap << to str
-  $" Selection Info" _ str info-dialog drop
+  $" Selection Info" str info-dialog drop
 ;
 \ choice 2 == selection
 : sel-appcnt <{ w c info -- val }> #f 2 0 undef apply-controls ;
@@ -316,24 +316,24 @@ let: ( -- menu )
   #a( :stopping #f :stopping1 #f :stop-widget #f :stop-widget1 #f ) { vars }
   stop-playing-selection-hook vars sel-stop-play-cb add-hook!
   "selection-popup" main-widgets 2 array-ref
-  #( #( $" Selection"        _ 'label     #f               #f )
-     #( $" sep"              _ 'separator #f               #f )
-     #( $" Play"             _ #f         vars sel-play-cb #f )
-     #( $" Loop play"        _ #f         vars sel-loop-cb #f )
-     #( $" Delete"           _ #f         <'> sel-del      #f )
-     #( $" Zero"             _ #f         <'> sel-zero     #f )
-     #( $" Crop"             _ #f         <'> sel-crop     #f )
-     #( $" Save as"          _ #f         <'> sel-save-as  #f )
-     #( $" Copy->New"        _ #f         <'> sel-copy     #f )
-     #( $" Cut->New"         _ #f         <'> sel-cut      #f )
-     #( $" Snap marks"       _ #f         <'> sel-marks    #f )
-     #( $" Selection Info"   _ #f         <'> sel-info     #f )
-     #( $" Apply controls"   _ #f         <'> sel-appcnt   #f )
-     #( $" Reset controls"   _ #f         <'> sel-rescnt   #f )
-     #( $" Unselect"         _ #f         <'> sel-unsel    #f )
-     #( $" Reverse"          _ #f         <'> sel-rev      #f )
-     #( $" Mix"              _ #f         <'> sel-mix      #f )
-     #( $" Invert"           _ #f         <'> sel-invert   #f ) ) make-popup-menu
+  #( #( $" Selection"        'label     #f               #f )
+     #( $" sep"              'separator #f               #f )
+     #( $" Play"             #f         vars sel-play-cb #f )
+     #( $" Loop play"        #f         vars sel-loop-cb #f )
+     #( $" Delete"           #f         <'> sel-del      #f )
+     #( $" Zero"             #f         <'> sel-zero     #f )
+     #( $" Crop"             #f         <'> sel-crop     #f )
+     #( $" Save as"          #f         <'> sel-save-as  #f )
+     #( $" Copy->New"        #f         <'> sel-copy     #f )
+     #( $" Cut->New"         #f         <'> sel-cut      #f )
+     #( $" Snap marks"       #f         <'> sel-marks    #f )
+     #( $" Selection Info"   #f         <'> sel-info     #f )
+     #( $" Apply controls"   #f         <'> sel-appcnt   #f )
+     #( $" Reset controls"   #f         <'> sel-rescnt   #f )
+     #( $" Unselect"         #f         <'> sel-unsel    #f )
+     #( $" Reverse"          #f         <'> sel-rev      #f )
+     #( $" Mix"              #f         <'> sel-mix      #f )
+     #( $" Invert"           #f         <'> sel-invert   #f ) ) make-popup-menu
 ;let constant selection-popup-menu
 
 \ --- time domain popup ---
@@ -346,7 +346,7 @@ let: ( -- menu )
   self @ { vars }
   vars :stopping array-assoc-ref if
     vars     :stopping #f array-assoc-set!
-    ( vars ) :stop-widget array-assoc-ref dup if "Play" _ change-label else drop then
+    ( vars ) :stop-widget array-assoc-ref dup if "Play" change-label else drop then
   then
 ;
 : play-cb ( vars -- prc; w c i self -- )
@@ -355,10 +355,10 @@ let: ( -- menu )
   self @ { vars }
   vars :stopping array-assoc-ref if
     vars :stopping #f array-assoc-set! drop
-    w "Play" _ change-label
+    w "Play" change-label
     undef stop-playing drop
   else
-    w "Stop" _ change-label
+    w "Stop" change-label
     vars :stopping #t array-assoc-set! drop
     0 graph-popup-snd undef undef undef undef undef undef play drop
   then
@@ -373,7 +373,7 @@ let: ( -- menu )
  does> { w c info self -- }
   self @ { vars }
   vars     :stopping #t array-assoc-set!
-  ( vars ) :stop-widget array-assoc-ref "Stop" _ change-label
+  ( vars ) :stop-widget array-assoc-ref "Stop" change-label
   0 graph-popup-snd graph-popup-chn undef undef undef undef undef play drop
 ;
 : pcur-cb ( vars -- prc; w c i self -- )
@@ -381,7 +381,7 @@ let: ( -- menu )
  does> { w c info self -- }
   self @ { vars }
   vars     :stopping #t array-assoc-set!
-  ( vars ) :stop-widget array-assoc-ref "Stop" _ change-label
+  ( vars ) :stop-widget array-assoc-ref "Stop" change-label
   graph-popup-snd graph-popup-chn #f cursor
   graph-popup-snd undef undef undef undef undef undef play drop
 ;
@@ -390,7 +390,7 @@ let: ( -- menu )
  does> { w c info self -- }
   self @ { vars }
   vars     :stopping #t array-assoc-set!
-  ( vars ) :stop-widget array-assoc-ref "Stop" _ change-label
+  ( vars ) :stop-widget array-assoc-ref "Stop" change-label
   0 graph-popup-snd graph-popup-chn #f #f
   graph-popup-snd graph-popup-chn edit-position 1-
   undef undef play drop
@@ -400,7 +400,7 @@ let: ( -- menu )
  does> { w c info self -- }
   self @ { vars }
   vars     :stopping #t array-assoc-set!
-  ( vars ) :stop-widget array-assoc-ref "Stop" _ change-label
+  ( vars ) :stop-widget array-assoc-ref "Stop" change-label
   0 graph-popup-snd graph-popup-chn #f #f 0 undef undef play drop
 ;
 
@@ -529,34 +529,34 @@ let: ( -- menu )
   "graph-popup" main-widgets 2 array-ref
   #( #( $" Snd"              'label       #f              #f )
      #( $" sep"              'separator   #f              #f )
-     #( $" Play"             _ #f         vars play-cb    vars stop-cb )
-     #( $" Play channel"     _ #f         vars pchan-cb   #f )
-     #( $" Play from cursor" _ #f         vars pcur-cb    #f )
-     #( $" Play previous"    _ #f         vars pprev-cb   #f )
-     #( $" Play original"    _ #f         vars porig-cb   #f )
-     #( $" Undo"             _ #f         <'> pundo-cb    #f )
-     #( $" Redo"             _ #f         <'> predo-cb    #f )
-     #( $" Revert"           _ #f         <'> prev-cb     #f )
-     #( $" Open"             _ #f         <'> popen-cb    #f )
-     #( $" Save"             _ #f         <'> psave-cb    #f )
-     #( $" Save as"          _ #f         <'> psaveas-cb  #f )
-     #( $" Update"           _ #f         <'> pupdate-cb  #f )
-     #( $" Close"            _ #f         <'> pclose-cb   #f )
-     #( $" Mix selection"    _ #f         <'> pmixsel-cb  #f )
-     #( $" Insert selection" _ #f         <'> pinssel-cb  #f )
-     #( $" Replace with selection" _ #f   <'> prepsel-cb  #f )
-     #( $" Select all"       _ #f         <'> pselall-cb  #f )
-     #( $" Unselect"         _ #f         <'> punsel-cb   #f )
-     #( $" Apply controls"   _ #f         <'> papcnt-cb   #f )
-     #( $" Reset controls"   _ #f         <'> precnt-cb   #f )
-     #( $" Info"             _ #f         <'> pinfo-cb    #f )
-     #( $" Add mark"         _ #f         <'> paddmrk-cb  #f )
-     #( $" Delete mark"      _ #f         <'> pdelmrk-cb  #f )
-     #( $" Delete all marks" _ #f         <'> pdelamrk-cb #f )
-     #( $" To next mark"     _ #f         <'> pnextmrk-cb #f )
-     #( $" To last mark"     _ #f         <'> plastmrk-cb #f )
-     #( $" sep"                'separator #f              #f )
-     #( $" Exit"             _ #f         <'> exit-cb     #f ) ) make-popup-menu
+     #( $" Play"             #f         vars play-cb    vars stop-cb )
+     #( $" Play channel"     #f         vars pchan-cb   #f )
+     #( $" Play from cursor" #f         vars pcur-cb    #f )
+     #( $" Play previous"    #f         vars pprev-cb   #f )
+     #( $" Play original"    #f         vars porig-cb   #f )
+     #( $" Undo"             #f         <'> pundo-cb    #f )
+     #( $" Redo"             #f         <'> predo-cb    #f )
+     #( $" Revert"           #f         <'> prev-cb     #f )
+     #( $" Open"             #f         <'> popen-cb    #f )
+     #( $" Save"             #f         <'> psave-cb    #f )
+     #( $" Save as"          #f         <'> psaveas-cb  #f )
+     #( $" Update"           #f         <'> pupdate-cb  #f )
+     #( $" Close"            #f         <'> pclose-cb   #f )
+     #( $" Mix selection"    #f         <'> pmixsel-cb  #f )
+     #( $" Insert selection" #f         <'> pinssel-cb  #f )
+     #( $" Replace with selection" #f   <'> prepsel-cb  #f )
+     #( $" Select all"       #f         <'> pselall-cb  #f )
+     #( $" Unselect"         #f         <'> punsel-cb   #f )
+     #( $" Apply controls"   #f         <'> papcnt-cb   #f )
+     #( $" Reset controls"   #f         <'> precnt-cb   #f )
+     #( $" Info"             #f         <'> pinfo-cb    #f )
+     #( $" Add mark"         #f         <'> paddmrk-cb  #f )
+     #( $" Delete mark"      #f         <'> pdelmrk-cb  #f )
+     #( $" Delete all marks" #f         <'> pdelamrk-cb #f )
+     #( $" To next mark"     #f         <'> pnextmrk-cb #f )
+     #( $" To last mark"     #f         <'> plastmrk-cb #f )
+     #( $" sep"              'separator #f              #f )
+     #( $" Exit"             #f         <'> exit-cb     #f ) ) make-popup-menu
 ;let constant graph-popup-menu
 
 : graph-popup-cb { snd chn -- prc; widget self -- }
@@ -573,34 +573,34 @@ let: ( -- menu )
       w snd short-file-name change-label
     then
   else
-    name $" Save"          _ string=
-    name $" Undo"          _ string= ||
-    name $" Revert"        _ string= ||
-    name $" Play previous" _ string= || if
+    name $" Save"          string=
+    name $" Undo"          string= ||
+    name $" Revert"        string= ||
+    name $" Play previous" string= || if
       w eds 0 array-ref 0> if FXtManageChild else FXtUnmanageChild then drop
     else
-      name $" Play channel" _ string= if
+      name $" Play channel" string= if
 	w snd channels 1 > if FXtManageChild else FXtUnmanageChild then drop
       else
-	name $" Redo" _ string= if
+	name $" Redo" string= if
 	  w eds 1 array-ref 0> if FXtManageChild else FXtUnmanageChild then drop
 	else
-	  name $" Mix selection"          _ string=
-	  name $" Insert selection"       _ string= ||
-	  name $" Unselect"               _ string= ||
-	  name $" Replace with selection" _ string= || if
+	  name $" Mix selection"          string=
+	  name $" Insert selection"       string= ||
+	  name $" Unselect"               string= ||
+	  name $" Replace with selection" string= || if
 	    w selection? if FXtManageChild else FXtUnmanageChild then drop
 	  else
-	    name $" Play from cursor" _ string= if
+	    name $" Play from cursor" string= if
 	      w snd chn #f cursor 0> if FXtManageChild else FXtUnmanageChild then drop
 	    else
-	      name $" Play original" _ string= if
+	      name $" Play original" string= if
 		w eds 0 array-ref 1 > if FXtManageChild else FXtUnmanageChild then drop
 	      else
-		name $" Delete mark"       _ string=
-		name $" Delete all marks"  _ string= ||
-		name $" To next mark"      _ string= ||
-		name $" To last mark"      _ string= || if
+		name $" Delete mark"       string=
+		name $" Delete all marks"  string= ||
+		name $" To next mark"      string= ||
+		name $" To last mark"      string= || if
 		  w snd chn #f marks nil? unless FXtManageChild else FXtUnmanageChild then drop
 		then
 	      then
@@ -646,9 +646,9 @@ let: ( -- menu )
   self @ ( val ) graph-popup-snd choose-chan set-transform-graph-type drop
 ;
 : grp-labs ( -- ary )
-  #( #( "once"        _ graph-once           grp-lst-cb )
-     #( "sonogram"    _ graph-as-sonogram    grp-lst-cb )
-     #( "spectrogram" _ graph-as-spectrogram grp-lst-cb ) )
+  #( #( "once"        graph-once           grp-lst-cb )
+     #( "sonogram"    graph-as-sonogram    grp-lst-cb )
+     #( "spectrogram" graph-as-spectrogram grp-lst-cb ) )
 ;
 : grp-set <{ lst -- }>
   lst each ( child )
@@ -810,18 +810,18 @@ value fft-trn-transform
 
 let: ( -- menu )
   $" fft-popup" main-widgets 2 array-ref
-  #( #( $" Transform"        _ 'label     #f               #f )
-     #( $" sep"                'separator #f               #f )
-     #( $" Peaks"            _ #f         <'> fft-peaks-cb #f )
-     #( $" dB"               _ #f         <'> fft-db-cb    #f )
-     #( $" Log freq"         _ #f         <'> fft-frq-cb   #f )
-     #( $" Normalize"        _ #f         <'> fft-norm-cb  #f )
-     #( $" Graph type"       _ 'cascade   grp-labs         <'> grp-set )
-     #( $" Size"             _ 'cascade   siz-labs         <'> siz-set )
-     #( $" Window"           _ 'cascade   win-labs         <'> win-set )
-     #( $" Transform type"   _ 'cascade   trn-labs         <'> trn-set )
-     #( $" Wavelet type"     _ 'cascade   typ-labs         <'> typ-set )
-     #( $" Color/Orientation" _ #f        <'> fft-color    #f ) ) make-popup-menu
+  #( #( $" Transform"        'label     #f               #f )
+     #( $" sep"              'separator #f               #f )
+     #( $" Peaks"            #f         <'> fft-peaks-cb #f )
+     #( $" dB"               #f         <'> fft-db-cb    #f )
+     #( $" Log freq"         #f         <'> fft-frq-cb   #f )
+     #( $" Normalize"        #f         <'> fft-norm-cb  #f )
+     #( $" Graph type"       'cascade   grp-labs         <'> grp-set )
+     #( $" Size"             'cascade   siz-labs         <'> siz-set )
+     #( $" Window"           'cascade   win-labs         <'> win-set )
+     #( $" Transform type"   'cascade   trn-labs         <'> trn-set )
+     #( $" Wavelet type"     'cascade   typ-labs         <'> typ-set )
+     #( $" Color/Orientation" #f        <'> fft-color    #f ) ) make-popup-menu
 ;let constant fft-popup-menu
 
 : fft-popup-cb { snd chn -- cb; widget self -- }
@@ -830,14 +830,14 @@ let: ( -- menu )
   self @ { chn }
   self cell+ @ { snd }
   w FXtName { name }
-  name $" Peaks" _ string= if
-    w snd chn show-transform-peaks if $" No peaks" _ else $" Peaks" _ then change-label
+  name $" Peaks" string= if
+    w snd chn show-transform-peaks if $" No peaks" else $" Peaks" then change-label
   else
-    name $" dB" _ string= if
-      w snd chn fft-log-magnitude if $" Linear" _ else $" dB" _ then change-label
+    name $" dB" string= if
+      w snd chn fft-log-magnitude if $" Linear" else $" dB" then change-label
     else
-      name $" Log freq" _ string= if
-	w snd chn fft-log-frequency if $" Linear freq" _ else $" Log freq" _ then change-label
+      name $" Log freq" string= if
+	w snd chn fft-log-frequency if $" Linear freq" else $" Log freq" then change-label
       then
     then
   then
@@ -923,14 +923,14 @@ hide
 let: ( -- menu )
   close-hook <'> edhist-close-hook-cb add-hook!
   "edhist-popup" main-widgets 2 array-ref
-  #( #( "Edits"   _ 'label     #f      	                #f )
-     #( "sep"       'separator #f      	                #f )
-     #( "Save"    _ #f         <'> edhist-save-edits    #f )
-     #( "Reapply" _ #f         <'> edhist-reapply-edits #f )
-     #( "Apply"   _ 'cascade   <'> edhist-set-wid       <'> edhist-apply-edits  )
-     #( "Clear"   _ #f         <'> edhist-clear-edits   #f )
-     #( "sep"       'separator #f                       #f )
-     #( "Help"    _ #f         <'> edhist-help-edits    #f ) ) make-popup-menu
+  #( #( "Edits"   'label     #f                       #f )
+     #( "sep"     'separator #f                       #f )
+     #( "Save"    #f         <'> edhist-save-edits    #f )
+     #( "Reapply" #f         <'> edhist-reapply-edits #f )
+     #( "Apply"   'cascade   <'> edhist-set-wid       <'> edhist-apply-edits  )
+     #( "Clear"   #f         <'> edhist-clear-edits   #f )
+     #( "sep"     'separator #f                       #f )
+     #( "Help"    #f         <'> edhist-help-edits    #f ) ) make-popup-menu
 ;let constant edit-history-menu
 
 : edhist-popup-cb { snd chn -- cb; widget self -- }
@@ -939,13 +939,13 @@ let: ( -- menu )
   self @ { chn }
   self cell+ @ { snd }
   w FXtName { name }
-  name "Clear" _ string= name "Apply" _ string= || if
+  name "Clear" string= name "Apply" string= || if
     w edhist-funcs empty? if #f else #t then FXtSetSensitive drop
   else
-    name "Save" _ string= if
+    name "Save" string= if
       w 0 snd chn edits each + end-each 0> if #t else #f then FXtSetSensitive drop
     else
-      name "Reapply" _ string= if
+      name "Reapply" string= if
 	w edhist-funcs #( snd chn ) array-assoc-ref if #t else #f then FXtSetSensitive drop
       then
     then
@@ -1084,7 +1084,7 @@ NEW-COLOR can be the color name, an xm Pixel, a snd color, or a list of rgb valu
     dpy scr FDefaultColormap { cmap }
     FXColor { col }
     dpy cmap new-color col col FXAllocNamedColor 0= if
-      $" can't allocate %S" _ #( new-color ) string-format snd-error
+      $" can't allocate %S" #( new-color ) string-format snd-error
     else
       col Fpixel
     then
@@ -1155,10 +1155,10 @@ hide
 : list-clear-cb <{ w c info -- val }> clear-listener ;
 : listener-edit <{ w -- }>
   w FXtName { name }
-  name "Help" _ string= if
+  name "Help" string= if
     listener-selection { subject }
     subject if
-      w $" Help on %S" _ #( subject ) string-format change-label
+      w $" Help on %S" #( subject ) string-format change-label
       w FXtManageChild drop
     else
       w FXtUnmanageChild drop
@@ -1199,18 +1199,18 @@ let: ( -- )
     main-widgets 4 array-ref
   then { parent }
   "listener-popup" parent
-  #( #( $" Listener" 	   _ 'label     #f           	       #f )
-     #( $" sep"      	     'separator #f           	       #f )
-     #( $" Play"     	   _ 'cascade   <'> list-play-cb       <'> identity-cb #t )
-     #( $" Help"           _ #f         <'> list-help-cb       #f )
-     #( $" Open"     	   _ #f         <'> popen-cb           #f )
-     #( $" Clear listener" _ #f         <'> list-clear-cb      #f )
-     #( $" Close"    	   _ 'cascade   <'> close-sound-extend <'> identity-cb #t )
-     #( $" Save"     	   _ 'cascade   <'> save-sound         <'> edited-cb   #t )
-     #( $" Revert"   	   _ 'cascade   <'> revert-sound       <'> edited-cb   #t )
-     #( $" Focus"          _ 'cascade   <'> list-focus-cb      <'> focused-cb  #f )
-     #( $" sep"              'separator #f                     #f )
-     #( $" Exit"           _ #f         <'> exit-cb            #f ) ) make-popup-menu { menu }
+  #( #( $" Listener" 	   'label     #f           	     #f )
+     #( $" sep"      	   'separator #f           	     #f )
+     #( $" Play"     	   'cascade   <'> list-play-cb       <'> identity-cb #t )
+     #( $" Help"           #f         <'> list-help-cb       #f )
+     #( $" Open"     	   #f         <'> popen-cb           #f )
+     #( $" Clear listener" #f         <'> list-clear-cb      #f )
+     #( $" Close"    	   'cascade   <'> close-sound-extend <'> identity-cb #t )
+     #( $" Save"     	   'cascade   <'> save-sound         <'> edited-cb   #t )
+     #( $" Revert"   	   'cascade   <'> revert-sound       <'> edited-cb   #t )
+     #( $" Focus"          'cascade   <'> list-focus-cb      <'> focused-cb  #f )
+     #( $" sep"            'separator #f                     #f )
+     #( $" Exit"           #f         <'> exit-cb            #f ) ) make-popup-menu { menu }
   parent FXmNpopupHandlerCallback menu listener-popup-cb undef FXtAddCallback drop
   menu
 ;let constant listener-popup-menu
