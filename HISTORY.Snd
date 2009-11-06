@@ -1,5 +1,6 @@
 Snd change log
 
+ 6-Nov:     removed all support for gtkglext.
  2-Nov:     selection function/object. selection->mix.
  28-Oct:    pretty-print.scm. 
  22-Oct:    Snd 11.0.

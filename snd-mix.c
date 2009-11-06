@@ -537,7 +537,7 @@ typedef struct {
   peak_env_info *peak_env;
   XEN properties;
   int properties_gc_loc;
-  color_t color;
+  color_t color, original_color;
   int x, y;  /* these are needed to know where to erase while dragging the tag */
 } mix_info;
 
@@ -768,6 +768,7 @@ static mix_info *make_mix_info(chan_info *cp)
   md->cp = cp;
   md->temporary = DONT_DELETE_ME;
   md->color = ss->sgx->mix_color;
+  md->original_color = md->color;
   md->tag_y = 0;
   md->tag_x = 0;
   md->name = NULL;
@@ -789,7 +790,7 @@ mix_state *prepare_mix_state_for_channel(chan_info *cp, int mix_loc, mus_long_t 
 }
 
 
-static void map_over_channel_mixes(chan_info *cp, void (*func)(mix_info *umx))
+static void for_each_channel_mix(chan_info *cp, void (*func)(mix_info *umx))
 {
   int i;
   for (i = 0; i < mix_infos_ctr; i++)
@@ -798,6 +799,26 @@ static void map_over_channel_mixes(chan_info *cp, void (*func)(mix_info *umx))
       md = mix_infos[i];
       if ((md) && (md->cp == cp))
 	(*func)(md);
+    }
+}
+
+
+void for_each_syncd_mix(int current_mix_id, void (*func)(void *m, void *data), void *udata)
+{
+  int i, sync;
+  sync = mix_sync_from_id(current_mix_id);
+  if (sync != 0)
+    {
+      for (i = 0; i < mix_infos_ctr; i++)
+	if ((i != current_mix_id) && 
+	    (mix_is_active(i)))
+	    {
+	      mix_info *md;
+	      md = mix_infos[i];
+	      if ((md) && 
+		  (md->sync == sync))
+		(*func)((void *)md, udata);
+	    }
     }
 }
 
@@ -833,7 +854,7 @@ static void remove_temporary_mix_file(mix_info *md)
 
 void delete_any_remaining_mix_temp_files_at_exit(chan_info *cp)
 {
-  map_over_channel_mixes(cp, remove_temporary_mix_file);
+  for_each_channel_mix(cp, remove_temporary_mix_file);
 }
 
 
@@ -1061,8 +1082,8 @@ static int mix_tag_y_from_id(int id)
   return(0);
 }
 
-#if (!USE_NO_GUI)
-static color_t mix_color_from_id(int mix_id)
+
+color_t mix_color_from_id(int mix_id)
 {
   mix_info *md;
   md = md_from_id(mix_id);
@@ -1070,10 +1091,9 @@ static color_t mix_color_from_id(int mix_id)
     return(md->color);
   return(ss->sgx->mix_color);
 }
-#endif
 
 
-static color_t mix_set_color_from_id(int id, color_t new_color)
+color_t mix_set_color_from_id(int id, color_t new_color)
 {
   mix_info *md;
   md = md_from_id(id);
@@ -1082,6 +1102,29 @@ static color_t mix_set_color_from_id(int id, color_t new_color)
   return(new_color);
 }
 
+
+void mix_unset_color_from_id(int id)
+{
+  mix_info *md;
+  md = md_from_id(id);
+  if (md)
+    md->color = md->original_color;
+}
+
+
+void syncd_mix_unset_color(void *m, void *ignore)
+{
+  mix_info *md = (mix_info *)m;
+  md->color = md->original_color;
+}
+
+
+void syncd_mix_set_color(void *m, void *ignore)
+{
+  mix_info *md = (mix_info *)m;
+  /* assume red (this is from the mix dialog) */
+  md->color = ss->sgx->red;
+}
 
 
 bool mix_set_amp_edit(int id, mus_float_t amp)
@@ -2056,6 +2099,32 @@ static XEN mix_drag_hook;
 
 static mus_long_t drag_beg = 0, drag_end = 0;
 
+typedef struct {mus_long_t beg; bool axis_changed;} move_mix_data;
+
+void move_syncd_mix(void *m, void *data)
+{
+  mix_info *md = (mix_info *)m;
+  chan_info *cp;
+  move_mix_data *mmd = (move_mix_data *)data;
+
+  cp = md->cp;
+  mix_set_position_edit(md->id, mmd->beg); /* TODO: needs offset if any */
+  if (!mmd->axis_changed)
+    {
+      mix_state *mx;
+      mus_long_t cur_end;
+      mx = current_mix_state(md);
+      cur_end = mx->beg + mx->len;
+      if (cur_end > drag_end)
+	drag_end = cur_end;
+      if (mx->beg < drag_beg)
+	drag_beg = mx->beg;
+      make_partial_graph(cp, drag_beg, drag_end);
+      display_one_mix_with_bounds(mx, cp, cp->axis, cp->axis->losamp, cp->axis->hisamp);
+    }
+}
+
+
 void move_mix_tag(int mix_id, int x, int y) 
 {
   /* dragging mix, hit_mix returns id, called only from snd-chn.c and above (watch_mix) */
@@ -2115,40 +2184,13 @@ void move_mix_tag(int mix_id, int x, int y)
     }
 
   reflect_mix_change(mix_id);
-
   {
-    int i, sync;
-    sync = mix_sync_from_id(mix_id);
-    if (sync != 0)
-      {
-	mus_long_t beg;
-	beg = snd_round_mus_long_t(ungrf_x(cp->axis, x) * (double)(SND_SRATE(cp->sound)));
-	for (i = 0; i < mix_infos_ctr; i++)
-	  if ((i != mix_id) && (mix_is_active(i)))
-	    {
-	      mix_info *md;
-	      md = mix_infos[i];
-	      if ((md) && (md->sync == sync))
-		{
-		  mix_set_position_edit(i, beg); /* needs offset if any */
-		  if (!axis_changed)
-		    {
-		      mix_state *mx;
-		      mus_long_t cur_end;
-		      chan_info *cx;
-		      mx = current_mix_state(md);
-		      cx = md->cp;
-		      cur_end = ms->beg + ms->len;
-		      if (cur_end > drag_end)
-			drag_end = cur_end;
-		      if (ms->beg < drag_beg)
-			drag_beg = ms->beg;
-		      make_partial_graph(cx, drag_beg, drag_end);
-		      display_one_mix_with_bounds(mx, cx, cx->axis, cx->axis->losamp, cx->axis->hisamp);
-		    }
-		}
-	    }
-      }
+    move_mix_data *mmd;
+    mmd = (move_mix_data *)malloc(sizeof(move_mix_data));
+    mmd->beg = snd_round_mus_long_t(ungrf_x(cp->axis, x) * (double)(SND_SRATE(cp->sound)));
+    mmd->axis_changed = axis_changed;
+    for_each_syncd_mix(mix_id, move_syncd_mix, (void *)mmd);
+    free(mmd);
   }
 
   if ((axis_changed) ||
@@ -2764,10 +2806,10 @@ void color_mixes(color_t color)
   set_mix_color(color);
   for (i = 0; i < mix_infos_ctr; i++)
     if (mix_infos[i])
-      mix_infos[i]->color = color;
-  /*
-  for_each_normal_chan(update_graph);
-  */
+      {
+	mix_infos[i]->color = color;
+	mix_infos[i]->original_color = color;
+      }
 }
 
 

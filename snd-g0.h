@@ -8,11 +8,6 @@
   #include <cairo/cairo.h>
 #endif
 
-#if HAVE_GL
-  #include <gtk/gtkgl.h>
-  #include <GL/gl.h>
-#endif
-
 #define LOTSA_PIXELS 10000
 
 #define BACKGROUND_QUIT false

@@ -886,10 +886,6 @@ static void check_orientation_hook(void)
 
 static GtkWidget *oid_dialog = NULL, *oid_ax, *oid_ay, *oid_az, *oid_sx, *oid_sy, *oid_sz, *oid_hop; 
 static GtkObject *oid_ax_adj, *oid_az_adj, *oid_ay_adj, *oid_sx_adj, *oid_sz_adj, *oid_sy_adj, *oid_hop_adj;
-#if HAVE_GL
-  static GtkWidget *oid_glbutton;
-#endif
-
 
 static void ax_orientation_callback(GtkAdjustment *adj, gpointer context) 
 {
@@ -1077,27 +1073,9 @@ static void reset_color_orientation_callback(GtkWidget *w, gpointer context)
 }
 
 
-#if HAVE_GL
-static void glbutton_callback(GtkWidget *w, gpointer context)
-{
-  sgl_save_currents();
-  in_set_with_gl(TOGGLE_BUTTON_ACTIVE(w));
-  sgl_set_currents(true);
-  /* for_each_chan(update_graph); */
-}
-#endif
-
 void set_with_gl(bool val, bool with_dialogs)
 {
-#if HAVE_GL
-  sgl_save_currents();
-#endif
   in_set_with_gl(val);
-#if HAVE_GL
-  sgl_set_currents(with_dialogs);
-  if ((oid_dialog) && (with_dialogs))
-    set_toggle_button(oid_glbutton, val, false, NULL);
-#endif
 }
 
 
@@ -1452,15 +1430,6 @@ GtkWidget *start_color_orientation_dialog(bool managed)
       SG_SIGNAL_CONNECT(oid_hop_adj, "value_changed", hop_callback, NULL);
       gtk_box_pack_start(GTK_BOX(hop_box), oid_hop, true, true, 0);
       gtk_widget_show(oid_hop);
-
-
-#if HAVE_GL
-      oid_glbutton = gtk_check_button_new_with_label(_("use OpenGL"));
-      gtk_box_pack_start(GTK_BOX(orientbox), oid_glbutton, false, false, 0);
-      gtk_widget_show(oid_glbutton);
-      SG_SIGNAL_CONNECT(oid_glbutton, "toggled", glbutton_callback, NULL);
-      set_toggle_button(oid_glbutton, with_gl(ss), false, NULL);
-#endif
 
       sep5 = gtk_vseparator_new();
       gtk_box_pack_start(GTK_BOX(orientbox), sep5, false, false, 3);

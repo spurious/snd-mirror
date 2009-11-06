@@ -2695,7 +2695,7 @@ void reset_spectro(void)
   set_spectro_z_scale((with_gl(ss)) ? DEFAULT_SPECTRO_Z_SCALE : 0.1);
 }
 
-#if HAVE_GLU
+#if HAVE_GL
   #include <GL/glu.h>
 #endif
 
@@ -2763,46 +2763,19 @@ static void make_axes(chan_info *cp, axis_info *ap, x_axis_style_t x_style, bool
 #define DONT_CLEAR_GRAPH false
 #define CLEAR_GRAPH true
 
-#if HAVE_GL && USE_GTK
-  #define GL_MAKE_CURRENT(Cp) gdk_gl_drawable_make_current(gtk_widget_get_gl_drawable(channel_graph(Cp)), \
-		                                           gtk_widget_get_gl_context(channel_graph(Cp)))
-  #define GL_SWAP_BUFFERS(Cp) if (gdk_gl_drawable_is_double_buffered(gtk_widget_get_gl_drawable(channel_graph(Cp)))) \
-	                        gdk_gl_drawable_swap_buffers(gtk_widget_get_gl_drawable(channel_graph(Cp))); \
-                              else glFlush()
-#endif
-
-
 #if HAVE_GL
-
 static void set_up_for_gl(chan_info *cp)
 {
-#if USE_MOTIF
   glXMakeCurrent(MAIN_DISPLAY(ss), XtWindow(channel_graph(cp)), ss->sgx->cx);
-#else
-  GL_MAKE_CURRENT(cp);
-  gdk_gl_drawable_wait_gdk(gtk_widget_get_gl_drawable(channel_graph(cp)));
-#endif
 }
 
 
 static void gl_display(chan_info *cp)
 {
-#if USE_MOTIF
   if (ss->gl_has_double_buffer)
     glXSwapBuffers(MAIN_DISPLAY(ss), XtWindow(channel_graph(cp)));
   else glFlush();
-#else
-  GL_SWAP_BUFFERS(cp);
-  gdk_gl_drawable_wait_gl(gtk_widget_get_gl_drawable(channel_graph(cp)));
-#endif
 }
-
-
-#if USE_CAIRO
-  #define GL_COLOR_SET(R, G, B) glColor3d(R, G, B)
-#else
-  #define GL_COLOR_SET(R, G, B) glColor3us(R, G, B)
-#endif
 
 
 static void gl_spectrogram(sono_info *si, int gl_fft_list, mus_float_t cutoff, bool use_dB, mus_float_t min_dB,
@@ -2919,15 +2892,11 @@ static bool make_gl_spectrogram(chan_info *cp)
   axis_info *fap;
   snd_info *sp;
   bool need_relist = false;
-
   rgb_t br = RGB_MAX, bg = RGB_MAX, bb = RGB_MAX;
-#if USE_MOTIF
+
   Colormap cmap;
   XColor tmp_color;
   Display *dpy;
-#else
-  color_info *tmp_color;
-#endif
 
   si = cp->sonogram_data;
   sp = cp->sound;
@@ -2965,7 +2934,6 @@ static bool make_gl_spectrogram(chan_info *cp)
   glShadeModel(GL_SMOOTH);
   glClearDepth(1.0);
 
-#if USE_MOTIF
   /* get the background color */
   dpy = XtDisplay(MAIN_SHELL(ss));
   cmap = DefaultColormap(dpy, DefaultScreen(dpy));
@@ -2981,15 +2949,6 @@ static bool make_gl_spectrogram(chan_info *cp)
 	       RGB_TO_FLOAT(tmp_color.green),
 	       RGB_TO_FLOAT(tmp_color.blue),
 	       0.0);
-#else
-  if (cp == selected_channel())
-    tmp_color = ss->sgx->selected_graph_color;
-  else tmp_color = ss->sgx->graph_color;
-  glClearColor(RGB_TO_FLOAT(tmp_color->red),
-	       RGB_TO_FLOAT(tmp_color->green),
-	       RGB_TO_FLOAT(tmp_color->blue),
-	       0.0);
-#endif
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   if (need_relist)
@@ -3036,11 +2995,7 @@ static bool make_gl_spectrogram(chan_info *cp)
   if (cp->graph_lisp_p)
     display_channel_lisp_data(cp); 
   
-#if USE_MOTIF
   return(XtAppPending(MAIN_APP(ss)) == 0); /* return true if there are no pending events to force current buffer to be displayed */
-#else
-  return(true);
-#endif
 }
 #endif
 /* HAVE_GL */
@@ -4702,6 +4657,8 @@ void check_cursor_shape(chan_info *cp, int x, int y)
   click_loc_t where;
   chan_info *ncp;
   
+  if ((!cp) || (!cp->sound) || (cp->active == CHANNEL_INACTIVE)) return;
+
   if (cp->sound->channel_style == CHANNELS_COMBINED) 
     ncp = which_channel(cp->sound, y);
   else ncp = cp;

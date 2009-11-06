@@ -16625,8 +16625,8 @@ void mus_init_run(void)
   if (run_inited) fprintf(stderr, "redundant run initialization?");
   run_inited = true;
 
-  XEN_DEFINE_PROCEDURE("run",           g_run_w,           1, 0, 0, "run macro testing...");
-  XEN_DEFINE_PROCEDURE("run-eval",      g_run_eval_w,      1, 3, 0, "run macro testing...");
+  XEN_DEFINE_PROCEDURE("run",           g_run_w,           1, 0, 0, H_run);
+  XEN_DEFINE_PROCEDURE("run-eval",      g_run_eval_w,      1, 3, 0, H_run);
 
   walker_hash_table = s7_make_hash_table(s7, 1031);
   s7_gc_protect(s7, walker_hash_table);

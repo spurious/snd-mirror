@@ -43,7 +43,7 @@ AC_DEFINE_UNQUOTED(SND_HOST, "$host")
 #   --with-gmp            include multiprecision arithmetic via gmp, mpfr, and mpc
 #   --enable-snd-debug    include Snd internal debugging stuff
 #   --enable-threads      include pthread stuff [also "--with-threads" since I can't remember which is correct]
-#   --disable-deprecated  do not include any deprecated stuff (in gtk, motif, guile, sndlib, clm, etc)
+#   --disable-deprecated  do not include any deprecated stuff (in gtk, motif, s7, sndlib, clm, etc)
 #   --with-ladspa         include LADSPA plugin support (Linux)
 #   --with-sample-width=N use N bits of samples (default = 24)
 #   --with-esd            use Enlightened Sound Daemon
@@ -62,9 +62,9 @@ AC_DEFINE_UNQUOTED(SND_HOST, "$host")
 #   --with-temp-dir       directory to use for temp files
 #   --with-save-dir       directory to use for saved-state files
 #   --with-doc-dir        directory to search for documentation
-#   --with-gl             include OpenGL support (default=no)
-#   --with-just-gl        include OpenGL support but omit the Guile bindings (gl.o) (default=no)
-#   --with-gl2ps          include gl2ps
+#   --with-gl             include OpenGL support (default=no, Motif only)
+#   --with-just-gl        include OpenGL support but omit the extension language bindings (default=no, Motif only)
+#   --with-gl2ps          include gl2ps (Motif only)
 #   --with-modules        accommodate sndlib that was built with modules
 #   --with-editres 	  include EditRes in xm
 #   --with-shared-sndlib  load sndlib.so if possible
@@ -96,9 +96,9 @@ AC_ARG_WITH(static-gsl,  [  --with-static-gsl	  use libgsl.a to build Snd (for o
 AC_ARG_WITH(static-xm,   [  --with-static-xm	  include the xm module])
 AC_ARG_WITH(static-xg,   [  --with-static-xg	  include the xg module])
 AC_ARG_WITH(guile,       [  --with-guile	  	  use Guile])
-AC_ARG_WITH(gl,          [  --with-gl		  include OpenGL support])
-AC_ARG_WITH(just-gl,     [  --with-just-gl	  include OpenGL support, but omit the GL/Guile bindings])
-AC_ARG_WITH(gl2ps,       [  --with-gl2ps		  include gl2ps])
+AC_ARG_WITH(gl,          [  --with-gl		  include OpenGL support, Motif only])
+AC_ARG_WITH(just-gl,     [  --with-just-gl	  include OpenGL support, but omit the extension language bindings, Motif only])
+AC_ARG_WITH(gl2ps,       [  --with-gl2ps		  include gl2ps, Motif only])
 AC_ARG_WITH(motif,	 [  --with-motif	  	  use libXm to build Snd])
 AC_ARG_WITH(static-motif,[  --with-static-motif	  use libXm.a to build Snd])
 AC_ARG_WITH(modules,     [  --with-modules	  use if sndlib uses modules])
@@ -1205,7 +1205,7 @@ GL_FILES=""
 GL_FLAGS=""
 have_gl=no
 if test "$with_gl" = yes || test "$with_just_gl" = yes ; then
-  if test "$with_motif" = yes || test "$with_gtk" = yes ; then
+  if test "$with_motif" = yes ; then
     AC_CHECK_HEADER(GL/gl.h,
       [have_gl=yes],
       [
@@ -1231,30 +1231,9 @@ if test "$with_gl" = yes || test "$with_just_gl" = yes ; then
            GL_LIBS="$GL_LIBS -lGLU"
           ])
       GL_LIBS="$GL_LIBS -lGL"
-      if test "$with_gtk" = yes ; then
-        # motif uses built-in support, but gtk uses gtkglext, so we need to check for the latter
-        if test x$PKG_CONFIG != xno && $PKG_CONFIG gtkglext-1.0 --exists ; then
-          GL_LIBS="$GL_LIBS `$PKG_CONFIG gtkglext-1.0 --libs`"
-          GL_FLAGS="$GL_FLAGS `$PKG_CONFIG gtkglext-1.0 --cflags`"
-          AC_CHECK_LIB(m, gdk_gl_context_copy, 
-            [
-	      AC_DEFINE(HAVE_GDK_GL_CONTEXT_COPY)
-              have_gl=yes
-              OPTIONAL_LIBRARIES="$OPTIONAL_LIBRARIES gtkglext"
-            ],
-            [
-	      AC_MSG_WARN([gtkglext version is too old])
-              have_gl=no
-            ], 
-            $GL_LIBS)
-        else
-          have_gl=no
-          AC_MSG_WARN([can't find gtkglext])
-        fi
-      fi
     fi
   else
-    AC_MSG_WARN([GL only works with Motif or Gtk2])
+    AC_MSG_WARN([GL only works with Motif])
   fi
 fi
 
@@ -2261,7 +2240,7 @@ fi
 #--------------------------------------------------------------------------------
 #
 # look for sndlib-config, check mus_sample_bits against current choice [with-float-sample, with-sample-width]
-#   also language (Guile, Ruby) needs to match (what about versions!) and audio choice
+#   also language (s7, Ruby, Forth) needs to match (what about versions!) and audio choice
 # check against needed version (17.2 for now -- need mus_vct_copy in vct.c)
 # set SNDLIB_FILES and SNDLIB_LIB
 
@@ -2356,7 +2335,7 @@ AM_GNU_GETTEXT([external])
 #--------------------------------------------------------------------------------
 
 AC_ARG_ENABLE(deprecated,
-  [  --disable-deprecated	  do not include any deprecated stuff from gtk, guile, motif, clm, or sndlib],
+  [  --disable-deprecated	  do not include any deprecated stuff from gtk, s7, motif, clm, or sndlib],
   if test "$enable_deprecated" = no ; then
     CFLAGS="-DGTK_DISABLE_DEPRECATED -DG_DISABLE_DEPRECATED -DGDK_DISABLE_DEPRECATED -DPANGO_DISABLE_DEPRECATED -DCAIRO_DISABLE_DEPRECATED $CFLAGS"
     AC_DEFINE(XM_DISABLE_DEPRECATED)
@@ -2420,7 +2399,7 @@ if test "$ac_snd_have_extension_language" = no ; then
     if test "$ac_cv_header_dlfcn_h" = yes ; then
       LDFLAGS="$LDFLAGS -ldl"
     fi
-    AC_MSG_WARN([Snd needs either an extension language (Guile, s7, Fth, or Ruby), or a graphics toolkit (Gtk or Motif), or preferably both.  As currently configured, this version of Snd is useless.])
+    AC_MSG_WARN([Snd needs either an extension language (s7, Fth, Ruby, or Guile), or a graphics toolkit (Gtk or Motif), or preferably both.  As currently configured, this version of Snd is useless.])
     if test "$with_snd_as_pd_external" = yes ; then	
        AC_MSG_ERROR(Guile is needed when making snd as a pd external.)
     fi

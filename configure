@@ -1427,7 +1427,7 @@ Optional Features:
   --enable-snd-debug      include internal Snd debugging functions
   --disable-nls           do not use Native Language Support
   --disable-rpath         do not hardcode runtime library paths
-  --disable-deprecated	  do not include any deprecated stuff from gtk, guile, motif, clm, or sndlib
+  --disable-deprecated	  do not include any deprecated stuff from gtk, s7, motif, clm, or sndlib
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -1443,9 +1443,9 @@ Optional Packages:
   --with-static-xm	  include the xm module
   --with-static-xg	  include the xg module
   --with-guile	  	  use Guile
-  --with-gl		  include OpenGL support
-  --with-just-gl	  include OpenGL support, but omit the GL/Guile bindings
-  --with-gl2ps		  include gl2ps
+  --with-gl		  include OpenGL support, Motif only
+  --with-just-gl	  include OpenGL support, but omit the extension language bindings, Motif only
+  --with-gl2ps		  include gl2ps, Motif only
   --with-motif	  	  use libXm to build Snd
   --with-static-motif	  use libXm.a to build Snd
   --with-modules	  use if sndlib uses modules
@@ -4008,7 +4008,7 @@ _ACEOF
 #   --with-gmp            include multiprecision arithmetic via gmp, mpfr, and mpc
 #   --enable-snd-debug    include Snd internal debugging stuff
 #   --enable-threads      include pthread stuff [also "--with-threads" since I can't remember which is correct]
-#   --disable-deprecated  do not include any deprecated stuff (in gtk, motif, guile, sndlib, clm, etc)
+#   --disable-deprecated  do not include any deprecated stuff (in gtk, motif, s7, sndlib, clm, etc)
 #   --with-ladspa         include LADSPA plugin support (Linux)
 #   --with-sample-width=N use N bits of samples (default = 24)
 #   --with-esd            use Enlightened Sound Daemon
@@ -4027,9 +4027,9 @@ _ACEOF
 #   --with-temp-dir       directory to use for temp files
 #   --with-save-dir       directory to use for saved-state files
 #   --with-doc-dir        directory to search for documentation
-#   --with-gl             include OpenGL support (default=no)
-#   --with-just-gl        include OpenGL support but omit the Guile bindings (gl.o) (default=no)
-#   --with-gl2ps          include gl2ps
+#   --with-gl             include OpenGL support (default=no, Motif only)
+#   --with-just-gl        include OpenGL support but omit the extension language bindings (default=no, Motif only)
+#   --with-gl2ps          include gl2ps (Motif only)
 #   --with-modules        accommodate sndlib that was built with modules
 #   --with-editres 	  include EditRes in xm
 #   --with-shared-sndlib  load sndlib.so if possible
@@ -9783,7 +9783,7 @@ GL_FILES=""
 GL_FLAGS=""
 have_gl=no
 if test "$with_gl" = yes || test "$with_just_gl" = yes ; then
-  if test "$with_motif" = yes || test "$with_gtk" = yes ; then
+  if test "$with_motif" = yes ; then
     ac_fn_c_check_header_mongrel "$LINENO" "GL/gl.h" "ac_cv_header_GL_gl_h" "$ac_includes_default"
 if test "x$ac_cv_header_GL_gl_h" = x""yes; then :
   have_gl=yes
@@ -9834,72 +9834,10 @@ fi
 
 
       GL_LIBS="$GL_LIBS -lGL"
-      if test "$with_gtk" = yes ; then
-        # motif uses built-in support, but gtk uses gtkglext, so we need to check for the latter
-        if test x$PKG_CONFIG != xno && $PKG_CONFIG gtkglext-1.0 --exists ; then
-          GL_LIBS="$GL_LIBS `$PKG_CONFIG gtkglext-1.0 --libs`"
-          GL_FLAGS="$GL_FLAGS `$PKG_CONFIG gtkglext-1.0 --cflags`"
-          { $as_echo "$as_me:${as_lineno-$LINENO}: checking for gdk_gl_context_copy in -lm" >&5
-$as_echo_n "checking for gdk_gl_context_copy in -lm... " >&6; }
-if test "${ac_cv_lib_m_gdk_gl_context_copy+set}" = set; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lm $GL_LIBS $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char gdk_gl_context_copy ();
-int
-main ()
-{
-return gdk_gl_context_copy ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_m_gdk_gl_context_copy=yes
-else
-  ac_cv_lib_m_gdk_gl_context_copy=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_m_gdk_gl_context_copy" >&5
-$as_echo "$ac_cv_lib_m_gdk_gl_context_copy" >&6; }
-if test "x$ac_cv_lib_m_gdk_gl_context_copy" = x""yes; then :
-
-	      $as_echo "#define HAVE_GDK_GL_CONTEXT_COPY 1" >>confdefs.h
-
-              have_gl=yes
-              OPTIONAL_LIBRARIES="$OPTIONAL_LIBRARIES gtkglext"
-
-else
-
-	      { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: gtkglext version is too old" >&5
-$as_echo "$as_me: WARNING: gtkglext version is too old" >&2;}
-              have_gl=no
-
-fi
-
-        else
-          have_gl=no
-          { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: can't find gtkglext" >&5
-$as_echo "$as_me: WARNING: can't find gtkglext" >&2;}
-        fi
-      fi
     fi
   else
-    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: GL only works with Motif or Gtk2" >&5
-$as_echo "$as_me: WARNING: GL only works with Motif or Gtk2" >&2;}
+    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: GL only works with Motif" >&5
+$as_echo "$as_me: WARNING: GL only works with Motif" >&2;}
   fi
 fi
 
@@ -13627,7 +13565,7 @@ fi
 #--------------------------------------------------------------------------------
 #
 # look for sndlib-config, check mus_sample_bits against current choice [with-float-sample, with-sample-width]
-#   also language (Guile, Ruby) needs to match (what about versions!) and audio choice
+#   also language (s7, Ruby, Forth) needs to match (what about versions!) and audio choice
 # check against needed version (17.2 for now -- need mus_vct_copy in vct.c)
 # set SNDLIB_FILES and SNDLIB_LIB
 
@@ -15468,8 +15406,8 @@ if test "$ac_snd_have_extension_language" = no ; then
     if test "$ac_cv_header_dlfcn_h" = yes ; then
       LDFLAGS="$LDFLAGS -ldl"
     fi
-    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Snd needs either an extension language (Guile, s7, Fth, or Ruby), or a graphics toolkit (Gtk or Motif), or preferably both.  As currently configured, this version of Snd is useless." >&5
-$as_echo "$as_me: WARNING: Snd needs either an extension language (Guile, s7, Fth, or Ruby), or a graphics toolkit (Gtk or Motif), or preferably both.  As currently configured, this version of Snd is useless." >&2;}
+    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Snd needs either an extension language (s7, Fth, Ruby, or Guile), or a graphics toolkit (Gtk or Motif), or preferably both.  As currently configured, this version of Snd is useless." >&5
+$as_echo "$as_me: WARNING: Snd needs either an extension language (s7, Fth, Ruby, or Guile), or a graphics toolkit (Gtk or Motif), or preferably both.  As currently configured, this version of Snd is useless." >&2;}
     if test "$with_snd_as_pd_external" = yes ; then
        as_fn_error "Guile is needed when making snd as a pd external." "$LINENO" 5
     fi

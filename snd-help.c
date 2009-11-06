@@ -281,13 +281,6 @@ static char *gl_version(void)
   char *gl2ps_version(void); /* snd-print.c */
 #endif
 
-#if USE_GTK
-  #include <X11/Xlib.h>
-  #include <X11/Xutil.h>
-  #include <GL/gl.h>
-  #include <GL/glx.h>
-#endif
-
 static char *glx_version(void)
 {
   #define VERSION_SIZE 128
@@ -321,7 +314,6 @@ static char *glx_version(void)
 #endif
     }
 
-#if USE_MOTIF
   if (MAIN_DISPLAY(ss) != NULL)
     {
       if (ss->sgx->cx)
@@ -335,15 +327,6 @@ static char *glx_version(void)
 	  mus_snprintf(version, VERSION_SIZE, " %d.%d", major, minor);
 	}
     }
-#else
-  if (gdk_gl_query_extension() != 0)
-    {
-      /* can't get GL_VERSION here -- segfaults in FC6 x86_64 */
-      gdk_gl_query_version(&major, &minor);
-      mus_snprintf(version, VERSION_SIZE, " GtkGL version: %d.%d", major, minor);
-    }
-  else mus_snprintf(version, VERSION_SIZE, " gtkGL not supported?");
-#endif
   if (snd_itoa_ctr < snd_itoa_size) snd_itoa_strs[snd_itoa_ctr++] = version;
   return(version);
 }
@@ -432,14 +415,6 @@ char *version_info(void)
 #if HAVE_GL
 	  "\n    OpenGL", glx_version(),
 	  gl_version(),
-  #if USE_GTK
-	  ", gtkglext ",
-    #ifdef GTKGLEXT_MAJOR_VERSION
-	  snd_itoa(GTKGLEXT_MAJOR_VERSION), ".",
-	  snd_itoa(GTKGLEXT_MINOR_VERSION), ".",
-	  snd_itoa(GTKGLEXT_MICRO_VERSION),
-    #endif
-  #endif
   #if MUS_WITH_GL2PS
           ", ", gl2ps_name = gl2ps_version(),
   #endif

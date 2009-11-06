@@ -1622,6 +1622,13 @@ bool mix_set_amp_edit(int id, mus_float_t amp);
 bool mix_set_speed_edit(int id, mus_float_t spd);
 void after_mix_edit(int id);
 
+color_t mix_color_from_id(int mix_id);
+color_t mix_set_color_from_id(int id, color_t new_color);
+void mix_unset_color_from_id(int id);
+void syncd_mix_set_color(void *m, void *ignore);
+void syncd_mix_unset_color(void *m, void *ignore);
+void for_each_syncd_mix(int current_mix_id, void (*func)(void *m, void *data), void *udata);
+
 int mix_complete_file(snd_info *sp, mus_long_t beg, const char *fullname, bool with_tag, file_delete_t auto_delete, mix_sync_t all_chans, int *out_chans);
 int mix_complete_file_at_cursor(snd_info *sp, const char *str);
 int mix_file(mus_long_t beg, mus_long_t num, int chans, chan_info **cps, const char *mixinfile, file_delete_t temp, const char *origin, bool with_tag, int start_chan);

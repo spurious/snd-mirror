@@ -393,54 +393,6 @@
 	(set! x-ints (cons name x-ints))
 	(set! names (cons (cons name 'int) names)))))
 
-
-
-;;; gtkglext bindings removed 17-Oct-08
-#|
-(define* (CFNC-G data :optional spec spec-name)
-  (let ((name (cadr-str data))
-	(args (caddr-str data)))
-    (if (assoc name names)
-	(display (format #f "~A CFNC-G~%" name))
-	(let ((type (car-str data)))
-	  (if (not (member type g-types))
-	      (set! g-types (cons type g-types)))
-	  (let ((strs (parse-args args 'g)))
-	    (if spec
-		(set! g-funcs (cons (list name type strs args spec spec-name) g-funcs))
-		(set! g-funcs (cons (list name type strs args) g-funcs)))
-	    (set! names (cons (cons name 'fnc) names)))))))
-
-(define* (CFNC-G5 data :optional spec spec-name)
-  (let ((name (cadr-str data))
-	(args (caddr-str data)))
-    (if (assoc name names)
-	(display (format #f "~A CFNC-G5~%" name))
-	(let ((type (car-str data)))
-	  (if (not (member type g-types))
-	      (set! g-types (cons type g-types)))
-	  (let ((strs (parse-args args 'g)))
-	    (if spec
-		(set! g5-funcs (cons (list name type strs args spec spec-name) g5-funcs))
-		(set! g5-funcs (cons (list name type strs args) g5-funcs)))
-	    (set! names (cons (cons name 'fnc) names)))))))
-
-(define* (CINT-G name :optional type)
-  (if (assoc name names)
-      (display (format #f "~A CINT-G~%" name))
-      (begin
-	(set! g-ints (cons name g-ints))
-	(set! names (cons (cons name 'int) names)))))
-
-(define* (CINT-G5 name :optional type)
-  (if (assoc name names)
-      (display (format #f "~A CINT-G5~%" name))
-      (begin
-	(set! g5-ints (cons name g5-ints))
-	(set! names (cons (cons name 'int) names)))))
-|#
-
-
 (define (no-arg name)
   (let ((len (string-length name)))
     (call-with-exit
@@ -484,10 +436,6 @@
 (hey "#include <mus-config.h>~%~%")
 
 (hey "#if HAVE_EXTENSION_LANGUAGE~%")
-
-;(hey "#if USE_GTK~%")
-;(hey "  #include <gtk/gtkgl.h>~%")
-;(hey "#endif~%")
 
 (hey "#include <GL/gl.h>~%")
 (hey "#if HAVE_GLU~%")
@@ -813,13 +761,6 @@
 (for-each handle-func (reverse x-funcs))
 (hey "#endif~%")
 
-;(hey "#if USE_GTK~%")
-;(for-each handle-func (reverse g-funcs))
-;(hey "#ifdef GTKGLEXT_MAJOR_VERSION~%")
-;(for-each handle-func (reverse g5-funcs))
-;(hey "#endif~%")
-;(hey "#endif~%~%")
-
 (for-each handle-func (reverse funcs))
 (uncheck-glu)
 
@@ -852,13 +793,6 @@
 (for-each argify-func (reverse x-funcs))
 (hey "#endif~%")
 
-;(hey "#if USE_GTK~%")
-;(for-each argify-func (reverse g-funcs))
-;(hey "#ifdef GTKGLEXT_MAJOR_VERSION~%")
-;(for-each argify-func (reverse g5-funcs))
-;(hey "#endif~%")
-;(hey "#endif~%~%")
-
 (for-each argify-func (reverse funcs))
 (uncheck-glu)
 
@@ -886,13 +820,6 @@
 (hey "#if USE_MOTIF~%")
 (for-each unargify-func (reverse x-funcs))
 (hey "#endif~%")
-
-;(hey "#if USE_GTK~%")
-;(for-each unargify-func (reverse g-funcs))
-;(hey "#ifdef GTKGLEXT_MAJOR_VERSION~%")
-;(for-each unargify-func (reverse g5-funcs))
-;(hey "#endif~%")
-;(hey "#endif~%~%")
 
 (for-each unargify-func (reverse funcs))
 (uncheck-glu)
@@ -926,13 +853,6 @@
 (for-each defun (reverse x-funcs))
 (hey "#endif~%")
 
-;(hey "#if USE_GTK~%")
-;(for-each defun (reverse g-funcs))
-;(hey "#ifdef GTKGLEXT_MAJOR_VERSION~%")
-;(for-each defun (reverse g5-funcs))
-;(hey "#endif~%")
-;(hey "#endif~%")
-
 (for-each defun (reverse funcs))
 (uncheck-glu)
 
@@ -955,19 +875,6 @@
    (hey "  DEFINE_INTEGER(~A);~%" val)) 
  (reverse x-ints))
 (hey "#endif~%")
-
-;(hey "#if USE_GTK~%")
-;(for-each 
-; (lambda (val) 
-;   (hey "  DEFINE_INTEGER(~A);~%" val)) 
-; (reverse g-ints))
-;(hey "#ifdef GTKGLEXT_MAJOR_VERSION~%")
-;(for-each 
-; (lambda (val) 
-;   (hey "  DEFINE_INTEGER(~A);~%" val)) 
-; (reverse g5-ints))
-;(hey "#endif~%")
-;(hey "#endif~%")
 
 (for-each 
  (lambda (val) 

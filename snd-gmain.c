@@ -628,12 +628,6 @@ void snd_doit(int argc, char **argv)
   gdk_set_locale();
 #endif
 
-#if HAVE_GL && USE_GTK
-  /* gtkglext can kill the X server somehow -- I can't see how, and the net gossip about it is not helpful. */
-  if (!(gtk_gl_init_check(&argc, &argv)))
-    fprintf(stderr, "gtkglext is unhappy!");
-#endif
-
 #endif
 
   ss->channel_min_height = CHANNEL_MIN_HEIGHT;

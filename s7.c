@@ -18058,6 +18058,12 @@ s7_pointer s7_make_big_integer(s7_scheme *sc, mpz_t *val)
 }
 
 
+s7_pointer copy_big_integer(s7_scheme *sc, s7_pointer obj)
+{
+  return(s7_make_big_integer(sc, s7_big_integer(obj)));
+}
+
+
 static s7_pointer string_to_big_ratio(s7_scheme *sc, const char *str, int radix)
 {
   mpq_t *n;
@@ -18091,6 +18097,12 @@ static s7_pointer mpq_to_big_ratio(s7_scheme *sc, mpq_t val)
 s7_pointer s7_make_big_ratio(s7_scheme *sc, mpq_t *val)
 {
   return(mpq_to_big_ratio(sc, *val));
+}
+
+
+s7_pointer copy_big_ratio(s7_scheme *sc, s7_pointer obj)
+{
+  return(s7_make_big_ratio(sc, s7_big_ratio(obj)));
 }
 
 
@@ -18179,6 +18191,12 @@ static s7_pointer mpfr_to_big_real(s7_scheme *sc, mpfr_t val)
 s7_pointer s7_make_big_real(s7_scheme *sc, mpfr_t *val)
 {
   return(mpfr_to_big_real(sc, *val));
+}
+
+
+s7_pointer copy_big_real(s7_scheme *sc, s7_pointer obj)
+{
+  return(s7_make_big_real(sc, s7_big_real(obj)));
 }
 
 
@@ -18288,6 +18306,12 @@ static s7_pointer mpc_to_big_complex(s7_scheme *sc, mpc_t val)
 s7_pointer s7_make_big_complex(s7_scheme *sc, mpc_t *val)
 {
   return(mpc_to_big_complex(sc, *val));
+}
+
+
+s7_pointer copy_big_complex(s7_scheme *sc, s7_pointer obj)
+{
+  return(s7_make_big_complex(sc, s7_big_complex(obj)));
 }
 
 
@@ -22063,10 +22087,10 @@ static s7_pointer big_random(s7_scheme *sc, s7_pointer args)
 
 static void s7_gmp_init(s7_scheme *sc)
 {
-  big_integer_tag = s7_new_type("<big-integer>", print_big_integer, free_big_integer, equal_big_integer, NULL, NULL, NULL);
-  big_ratio_tag =   s7_new_type("<big-ratio>",   print_big_ratio,   free_big_ratio,   equal_big_ratio,   NULL, NULL, NULL);
-  big_real_tag =    s7_new_type("<big-real>",    print_big_real,    free_big_real,    equal_big_real,    NULL, NULL, NULL);
-  big_complex_tag = s7_new_type("<big-complex>", print_big_complex, free_big_complex, equal_big_complex, NULL, NULL, NULL);
+  big_integer_tag = s7_new_type_x("<big-integer>", print_big_integer, free_big_integer, equal_big_integer, NULL, NULL, NULL, NULL, copy_big_integer, NULL);
+  big_ratio_tag =   s7_new_type_x("<big-ratio>",   print_big_ratio,   free_big_ratio,   equal_big_ratio,   NULL, NULL, NULL, NULL, copy_big_ratio, NULL);
+  big_real_tag =    s7_new_type_x("<big-real>",    print_big_real,    free_big_real,    equal_big_real,    NULL, NULL, NULL, NULL, copy_big_real, NULL);
+  big_complex_tag = s7_new_type_x("<big-complex>", print_big_complex, free_big_complex, equal_big_complex, NULL, NULL, NULL, NULL, copy_big_complex, NULL);
 
   s7_define_function(sc, "+",                   big_add,              0, 0, true,  H_add);
   s7_define_function(sc, "-",                   big_subtract,         1, 0, true,  H_subtract);

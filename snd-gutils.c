@@ -82,9 +82,6 @@ bool set_axis_label_font(const char *font)
       in_set_axis_label_font(mus_strdup(font));
       if (AXIS_LABEL_FONT(ss)) pango_font_description_free(AXIS_LABEL_FONT(ss));
       AXIS_LABEL_FONT(ss) = fs;
-#if HAVE_GL
-      reload_label_font();
-#endif
       return(true);
     }
   return(false);
@@ -102,9 +99,6 @@ bool set_axis_numbers_font(const char *font)
       in_set_axis_numbers_font(mus_strdup(font));
       if (AXIS_NUMBERS_FONT(ss)) pango_font_description_free(AXIS_NUMBERS_FONT(ss));
       AXIS_NUMBERS_FONT(ss) = fs;
-#if HAVE_GL
-      reload_number_font();
-#endif
       return(true);
     }
   return(false);

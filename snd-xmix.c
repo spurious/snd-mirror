@@ -13,7 +13,7 @@
 /* ---------------- mix dialog ---------------- */
 
 static Widget mix_dialog = NULL;
-static int mix_dialog_id = INVALID_MIX_ID;
+static int mix_dialog_id = INVALID_MIX_ID, old_mix_dialog_id = INVALID_MIX_ID;
 static env *dialog_env = NULL;
 
 static bool dragging = false;
@@ -979,7 +979,7 @@ void reflect_mix_change(int mix_id)
 	  mus_float_t val;
 	  set_sensitive(nextb, (next_mix_id(mix_dialog_id) != INVALID_MIX_ID));
 	  set_sensitive(previousb, (previous_mix_id(mix_dialog_id) != INVALID_MIX_ID));
-	  
+
 	  /* now reflect current mix state in mix dialog controls */
 	  if (mix_exists(mix_dialog_id))
 	    {
@@ -988,6 +988,18 @@ void reflect_mix_change(int mix_id)
 	      char lab[LABEL_BUFFER_SIZE];
 	      
 	      cp = mix_chan_info_from_id(mix_dialog_id);
+	      if (old_mix_dialog_id != INVALID_MIX_ID)
+		{
+		  mix_unset_color_from_id(old_mix_dialog_id);
+		  for_each_syncd_mix(old_mix_dialog_id, syncd_mix_unset_color, NULL);
+		}
+	      old_mix_dialog_id = mix_dialog_id;
+	      mix_set_color_from_id(mix_dialog_id, ss->sgx->red);
+	      for_each_syncd_mix(mix_dialog_id, syncd_mix_set_color, NULL);
+
+	      for_each_normal_chan(display_channel_mixes);
+
+	      /* TODO: if united, chan 2 mix drag adds bg color at top? */
 
 	      if (!dragging)
 		{

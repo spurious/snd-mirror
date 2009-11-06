@@ -3,7 +3,7 @@
 /* ---------------- mix dialog ---------------- */
 
 static GtkWidget *mix_dialog = NULL;
-static int mix_dialog_id = INVALID_MIX_ID;
+static int mix_dialog_id = INVALID_MIX_ID, old_mix_dialog_id = INVALID_MIX_ID;
 static env *dialog_env = NULL;
 
 static bool dragging = false;
@@ -921,6 +921,16 @@ void reflect_mix_change(int mix_id)
 	      mus_long_t beg, len;
 
 	      cp = mix_chan_info_from_id(mix_dialog_id);
+	      if (old_mix_dialog_id != INVALID_MIX_ID)
+		{
+		  mix_unset_color_from_id(old_mix_dialog_id);
+		  for_each_syncd_mix(old_mix_dialog_id, syncd_mix_unset_color, NULL);
+		}
+	      old_mix_dialog_id = mix_dialog_id;
+	      mix_set_color_from_id(mix_dialog_id, ss->sgx->red);
+	      for_each_syncd_mix(mix_dialog_id, syncd_mix_set_color, NULL);
+
+	      for_each_normal_chan(display_channel_mixes);
 
 	      if (!dragging)
 		{

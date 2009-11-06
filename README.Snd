@@ -44,7 +44,7 @@ The configure script has a bunch of arguments:
   
      --with-no-gui             make Snd without any graphics support
   
-     --with-gl                 include support for OpenGL (default: no)
+     --with-gl                 include support for OpenGL (default: no, Motif only)
        --with-just-gl          same but omit extension language bindings in gl.c (default: no)
                                  The gl module is only useful if you want to write
                                  code to add your own OpenGL graphics to Snd.
@@ -147,7 +147,6 @@ Version info:
   if Forth, any version
   if S7, any version
   if GSL, version 0.8 or later
-  if gtkglext, version 1.0 or later
   if gamin, version 0.1.0 or later
   if Cairo and the xg module, version 1.2.6 or later
 
@@ -336,7 +335,6 @@ Motif:
 Gtk+:
   http://www.gtk.org
   ftp://ftp.gtk.org/pub/gtk/
-  http://sourceforge.net/projects/gtkglext/
 
 OpenGL:
   http://www.mesa3d.org/
@@ -597,15 +595,6 @@ this, load fix-optargs.scm before anything else.
 Finally, if you installed Guile from an RPM file, you may also need
 to install the guile-devel package.  Otherwise the configure process
 will say it can't find Guile (actually guile-config).
-
-
----- Gtk and OpenGL ----
-
-The Gtk/GL version of Snd can kill the X server!  I don't know why, and
-others out in webland are equally bewildered.  I believe that gtkglext 
-is officially unmaintained, and Gtk has decided to go with cairo instead.
-Ideally, Gtk would flush cairo which is a total loss, and use openGL
-directly, but I guess technical criteria are not driving this process.
 
 
 ---- Sun ----

@@ -799,9 +799,9 @@ latter are (configure --help):
 <tr><td></td><td>--with-no-gui</td><td></td><td>make Snd without any graphics support</td></tr>
 <tr><td></td><td>--with-static-xm</td><td></td><td>include the xm module at build time; this is easier than trying to dynamically load xm.so</td></tr>
 <tr><td></td><td>--with-static-xg</td><td></td><td>include the xg module at build time; this is easier than trying to dynamically load xg.so</td></tr>
-<tr><td></td><td>--with-gl</td><td></td><td>include OpenGL support (spectrogram, etc)</td></tr>
-<tr><td></td><td>--with-just-gl</td><td></td><td>include OpenGL support, but omit the GL/s7/Guile/Ruby/Forth bindings</td></tr>
-<tr><td></td><td>--with-gl2ps</td><td></td><td>include gl2ps (GL to Postscript code)</td></tr>
+<tr><td></td><td>--with-gl</td><td></td><td>include OpenGL support (spectrogram, etc, Motif only)</td></tr>
+<tr><td></td><td>--with-just-gl</td><td></td><td>include OpenGL support, but omit the GL/s7/Guile/Ruby/Forth bindings (Motif only)</td></tr>
+<tr><td></td><td>--with-gl2ps</td><td></td><td>include gl2ps (GL to Postscript code, Motif only)</td></tr>
 <tr><td></td><td>--with-editres</td><td></td><td>include editres in xm (default: no)</td></tr>
 <tr><td></td><td>--with-xpm</td><td></td><td>use xpm, default: yes</td></tr>
 <tr><td></td><td>--with-xp</td><td></td><td>use xp, default: no; this is the Xprint library which is not tied into Snd at all</td></tr>
@@ -2431,7 +2431,7 @@ sets SND_COMMAND to 'str', which Snd subsequently notices.
 
 <table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndandgl">Snd and OpenGL</a></h3></td></tr></table>
 
-<p>Snd can be used in conjunction with OpenGL.  If it is configured
+<p>Snd with Motif can be used in conjunction with OpenGL.  If it is configured
 with the switch --with-gl or --with-just-gl, the top level Snd shell
 is setup to handle OpenGL graphics.  These are used automatically by
 the spectrogram display; the colormap and viewing angle are set by either the View:Color/Orientation
@@ -2442,7 +2442,7 @@ variables.
 <img src="pix/nowgl.png" alt="gl" hspace=20>
 <p>
 The GL-to-Scheme bindings are in gl.c, and follow the same name and type
-conventions of the Gtk/Motif bindings in xm.c or xg.c.
+conventions of the Motif bindings in xm.c.
 Any of the Snd drawing area widgets (or your own) can receive GL graphics
 commands.  Here is a translation of the SGI/xjournal glxmotif
 program:
