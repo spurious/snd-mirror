@@ -2342,7 +2342,7 @@ void call_sp_watchers(snd_info *sp, sp_watcher_t type, sp_watcher_reason_t reaso
 
 /* this is my long term plan right now... */
 
-/* generics (besides length, srate, channels, frames, file-name, sync, maxamp, play, fill!):
+/* generics (besides length, srate, channels, frames, file-name, sync, maxamp, play, copy, fill!):
  *
  *             source:         procedure-source[s7_procedure_source] mix-home mark-home region-home player-home sampler-home
  *                               mus cases: readin=file+chan? etc, port -> filename?, sound->filename?
@@ -2364,11 +2364,9 @@ void call_sp_watchers(snd_info *sp, sp_watcher_t type, sp_watcher_reason_t reaso
  *             scale(-to|by) convolve fft env filter insert mix reverse save smooth src copy|fill! map|scan pan-mix
  *               sampler? replace-with?
  *
- *             copy sound selection perhaps sampler
- *
- * doc/test/cleanup play (mix region selection sound file player)
- *
+ * TODO: doc/test/cleanup play (mix region selection sound file player)
  * save with all the optkey args for all types (treat list/vector etc as sound data)
+ * check map/for-each cases -- sound selection etc (and add to extsnd) and set/ref
  *
  *    objects are generator(clm2xen), player(snd-dac), sampler(snd-edits), sound-data(sndlib2xen),
  *               mark(snd-marks), mix(snd-mix), selection(snd-select), region(snd-region),
@@ -2391,7 +2389,6 @@ void call_sp_watchers(snd_info *sp, sp_watcher_t type, sp_watcher_reason_t reaso
  *
  *  the goal being that all clm and snd structures are compatible, all operations interchangeable
  *    so (violin 0 1 440 .1) can appear sensibly in any context
- *  add a mix-tag to the selection so it can be dragged? or treat it as a kind of mix?
  *
  * then deprecate all the special case stuff, add generic versions of *.scm examples
  * sound-file properties?  a data base saving all such info (rather than kludges involving headers)
@@ -2409,7 +2406,7 @@ void call_sp_watchers(snd_info *sp, sp_watcher_t type, sp_watcher_reason_t reaso
  *   same for mix, cut="x", "<" ">" to repos, 
  *
  *  arrow cursor here and perhaps reflect click
- * TODO: sound fill tests
+ * TODO: selection fill/copy tests
  */
 
 
@@ -2520,6 +2517,25 @@ static XEN s7_xen_sound_length(s7_scheme *sc, XEN obj)
 }
 
 
+static XEN s7_xen_sound_copy(s7_scheme *sc, XEN obj)
+{
+  snd_info *sp;
+  sp = get_sp(obj);
+  if (sp)
+    {
+      char *name;
+      name = snd_tempnam();
+      if (mus_header_writable(sp->hdr->type, sp->hdr->format))
+	save_edits_without_display(sp, name, sp->hdr->type, sp->hdr->format, sp->hdr->srate, NULL, AT_CURRENT_EDIT_POSITION);
+      else save_edits_without_display(sp, name, MUS_NEXT, MUS_OUT_FORMAT, sp->hdr->srate, NULL, AT_CURRENT_EDIT_POSITION);
+      sp = snd_open_file(name, FILE_READ_WRITE);
+      free(name);
+      return(new_xen_sound(sp->index));
+    }
+  return(XEN_FALSE);
+}
+
+
 static XEN s7_xen_sound_fill(s7_scheme *sc, XEN obj, XEN val)
 {
   snd_info *sp;
@@ -2576,7 +2592,7 @@ static void init_xen_sound(void)
 {
 #if HAVE_S7
   xen_sound_tag = XEN_MAKE_OBJECT_TYPE("<sound>", print_xen_sound, free_xen_sound, s7_xen_sound_equalp, 
-				       NULL, NULL, NULL, s7_xen_sound_length, NULL, s7_xen_sound_fill);
+				       NULL, NULL, NULL, s7_xen_sound_length, s7_xen_sound_copy, s7_xen_sound_fill);
 #else
 #if HAVE_RUBY
   xen_sound_tag = XEN_MAKE_OBJECT_TYPE("XenSound", sizeof(xen_sound));

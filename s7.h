@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "1.36"
-#define S7_DATE "3-Nov-09"
+#define S7_VERSION "1.37"
+#define S7_DATE "7-Nov-09"
 
 
 typedef long long int s7_Int;
@@ -325,6 +325,8 @@ s7_Int s7_vector_length(s7_pointer vec);                                        
 s7_pointer s7_vector_to_list(s7_scheme *sc, s7_pointer vect);                         /* (vector->list vect) */
 s7_pointer *s7_vector_elements(s7_pointer vec);                                       /* a pointer to the array of s7_pointers */
 int s7_vector_rank(s7_pointer vect);                                                  /* number of dimensions in vect */
+s7_Int *s7_vector_dimensions(s7_pointer vec);                                         /* dimensions */
+s7_Int *s7_vector_offsets(s7_pointer vec);                                            /* precalculated offsets to speed-up addressing */
 
   /* if s7 is built with multidimensional and applicable vectors, 
    *
@@ -839,6 +841,7 @@ void s7_mark_object(s7_pointer p);
  *   use C-side define* (s7_define_function_star)
  *   use C-side define-macro (s7_define_macro)
  *   signal handling (C-C to break out of an infinite loop)
+ *   direct multidimensional vector element access
  */
 
 
@@ -1678,6 +1681,80 @@ int main(int argc, char **argv)
 #endif
 
 
+/* --------------------------------------------------------------------------------
+ *
+ * direct multidimensional vector element access
+ */
+
+#if 0
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+
+#include "s7.h"
+
+static s7_pointer ref3(s7_scheme *sc, s7_pointer args)
+{
+  /* (ref3 vec) prints out a multidimensional vector's contents, assuming a 3-D vector here */
+  int x, y, z;
+  s7_pointer *elements;
+  s7_Int *offsets, *dimensions;
+
+  elements = s7_vector_elements(s7_car(args));
+  dimensions = s7_vector_dimensions(s7_car(args));
+  offsets = s7_vector_offsets(s7_car(args));
+
+  for (z = 0; z < dimensions[0]; z++)
+    for (y = 0; y < dimensions[1]; y++)
+      for (x = 0; x < dimensions[2]; x++)
+	fprintf(stdout, "z: %d, y: %d, x: %d, (3dvec z y x): %s\n",
+		z, y, x,
+		s7_object_to_c_string(sc, elements[z * offsets[0] + y * offsets[1] + x * offsets[2]]));
+
+  return(s7_car(args));
+}
+
+int main(int argc, char **argv)
+{
+  s7_scheme *s7;
+  char buffer[512];
+  char response[1024];
+
+  s7 = s7_init(); 
+  s7_define_function(s7, "ref3", ref3, 1, 0, false, "(ref3 vect) prints the elements of the vector");
+
+  while (1)
+    {
+      fprintf(stdout, "\n> "); 
+      fgets(buffer, 512, stdin);
+
+      if ((buffer[0] != '\n') || 
+	  (strlen(buffer) > 1))
+	{                            
+	  sprintf(response, "(write %s)", buffer);
+	  s7_eval_c_string(s7, response); /* evaluate input and write the result */
+	}
+    }
+}
+
+/*
+ * > (define vect (make-vector (list 1 2 3) 0))
+ * vect
+ * > (set! (vect 0 1 1) 32)
+ * 32
+ * > (ref3 vect)
+ * z: 0, y: 0, x: 0, (3dvec z y x): 0
+ * z: 0, y: 0, x: 1, (3dvec z y x): 0
+ * z: 0, y: 0, x: 2, (3dvec z y x): 0
+ * z: 0, y: 1, x: 0, (3dvec z y x): 0
+ * z: 0, y: 1, x: 1, (3dvec z y x): 32
+ * z: 0, y: 1, x: 2, (3dvec z y x): 0
+ * #(0 0 0 0 32 0)
+ */
+
+#endif
+
+
 #if (!S7_DISABLE_DEPRECATED)
   /* backwards compatibility... */
 #define s7_F(Sc)           s7_f(Sc)
@@ -1694,6 +1771,7 @@ int main(int argc, char **argv)
  * 
  *        s7 changes
  *
+ * 7-Nov:     s7_vector_dimensions, s7_vector_offsets, example of use.
  * 3-Nov:     s7_vector_rank.
  * 30-Oct:    *trace-hook*.
  * 12-Oct:    s7_port_filename.

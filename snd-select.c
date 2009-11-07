@@ -942,6 +942,22 @@ static bool s7_xen_selection_equalp(void *obj1, void *obj2)
 }
 
 
+static XEN s7_xen_selection_copy(s7_scheme *sc, XEN obj)
+{
+  if (selection_is_active())
+    {
+      snd_info *sp;
+      char *name;
+      name = snd_tempnam();
+      save_selection(name, MUS_NEXT, MUS_OUT_FORMAT, selection_srate(), NULL, SAVE_ALL_CHANS);
+      sp = snd_open_file(name, FILE_READ_WRITE);
+      free(name);
+      return(new_xen_sound(sp->index));
+    }
+  return(XEN_FALSE);
+}
+
+
 static XEN s7_xen_selection_fill(s7_scheme *sc, XEN obj, XEN val)
 {
   sync_info *si;
@@ -988,7 +1004,7 @@ static void init_xen_selection(void)
   xen_selection_tag = XEN_MAKE_OBJECT_TYPE("<selection>", 
 					   print_xen_selection, free_xen_selection, s7_xen_selection_equalp, 
 					   NULL, NULL, NULL, s7_xen_selection_length, 
-					   NULL, s7_xen_selection_fill);
+					   s7_xen_selection_copy, s7_xen_selection_fill);
 #else
 #if HAVE_RUBY
   xen_selection_tag = XEN_MAKE_OBJECT_TYPE("XenSelection", sizeof(xen_selection));

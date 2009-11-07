@@ -227,26 +227,26 @@ static bool little_endian = false;
 
 mus_long_t mus_header_samples(void)            {return(data_size);}
 mus_long_t mus_header_data_location(void)      {return(data_location);}
-int mus_header_chans(void)                {return(chans);}
-int mus_header_srate(void)                {return(srate);}
-int mus_header_type(void)                 {return(header_type);}
-int mus_header_format(void)               {return(data_format);}
+int mus_header_chans(void)                     {return(chans);}
+int mus_header_srate(void)                     {return(srate);}
+int mus_header_type(void)                      {return(header_type);}
+int mus_header_format(void)                    {return(data_format);}
 mus_long_t mus_header_comment_start(void)      {return(comment_start);}
 mus_long_t mus_header_comment_end(void)        {return(comment_end);}
 mus_long_t mus_header_aux_comment_start(int n) {if (aux_comment_start) return(aux_comment_start[n]); else return(-1);}
 mus_long_t mus_header_aux_comment_end(int n)   {if (aux_comment_end) return(aux_comment_end[n]); else return(-1);}
-int mus_header_type_specifier(void)       {return(type_specifier);}
-int mus_header_bits_per_sample(void)      {return(bits_per_sample);}
-int mus_header_fact_samples(void)         {return(fact_samples);}
-int mus_header_block_align(void)          {return(block_align);}
+int mus_header_type_specifier(void)            {return(type_specifier);}
+int mus_header_bits_per_sample(void)           {return(bits_per_sample);}
+int mus_header_fact_samples(void)              {return(fact_samples);}
+int mus_header_block_align(void)               {return(block_align);}
 mus_long_t mus_header_true_length(void)        {return(true_file_length);}
-int mus_header_original_format(void)      {return(original_data_format);}
-int mus_header_loop_mode(int which)       {if (loop_modes) return(loop_modes[which]); else return(-1);}
-int mus_header_loop_start(int which)      {if (loop_starts) return(loop_starts[which]); else return(-1);}
-int mus_header_loop_end(int which)        {if (loop_ends) return(loop_ends[which]); else return(-1);}
-int mus_header_mark_position(int id)      {int i; for (i = 0; i < markers; i++) {if (marker_ids[i] == id) return(marker_positions[i]);} return(-1);}
-int mus_header_base_detune(void)          {return(base_detune);}
-int mus_header_base_note(void)            {return(base_note);}
+int mus_header_original_format(void)           {return(original_data_format);}
+int mus_header_loop_mode(int which)            {if (loop_modes) return(loop_modes[which]); else return(-1);}
+int mus_header_loop_start(int which)           {if (loop_starts) return(loop_starts[which]); else return(-1);}
+int mus_header_loop_end(int which)             {if (loop_ends) return(loop_ends[which]); else return(-1);}
+int mus_header_mark_position(int id)           {int i; for (i = 0; i < markers; i++) {if (marker_ids[i] == id) return(marker_positions[i]);} return(-1);}
+int mus_header_base_detune(void)               {return(base_detune);}
+int mus_header_base_note(void)                 {return(base_note);}
 
 int mus_header_mark_info(int **m_ids, int **m_positions)
 {

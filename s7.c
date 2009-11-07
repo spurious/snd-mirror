@@ -10749,6 +10749,32 @@ s7_pointer *s7_vector_elements(s7_pointer vec)
 }
 
 
+s7_Int *s7_vector_dimensions(s7_pointer vec)
+{
+#if WITH_MULTIDIMENSIONAL_VECTORS
+  return(vec->object.vector.dim_info->dims);
+#else
+  s7_Int *dims;
+  dims = (s7_Int *)malloc(sizeof(s7_Int));
+  dims[0] = vector_length(vec);
+  return(dims);
+#endif
+}
+
+
+s7_Int *s7_vector_offsets(s7_pointer vec)
+{
+#if WITH_MULTIDIMENSIONAL_VECTORS
+  return(vec->object.vector.dim_info->offsets);
+#else
+  s7_Int *offs;
+  offs = (s7_Int *)malloc(sizeof(s7_Int));
+  offs[0] = 1;
+  return(offs);
+#endif
+}
+
+
 s7_pointer s7_vector_to_list(s7_scheme *sc, s7_pointer vect)
 {
   s7_pointer lst = sc->NIL;
