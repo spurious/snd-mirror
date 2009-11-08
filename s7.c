@@ -31,7 +31,7 @@
  *        error handling using error and catch
  *        in sndlib, the run macro works giving S7 a (somewhat limited) byte compiler
  *        no invidious distinction between built-in and "foreign"
- *          (this makes it easy to extend built-in operators like "+" -- see s7.h for a simple example)
+ *          (this makes it easy to extend built-in operators like "+" -- see s7.html for a simple example)
  *        lists, strings, vectors, and hash-tables are (set-)applicable objects
  *        true multiple-values, multiple-value-bind, multiple-value-set!
  *        threads (optional)
@@ -9043,6 +9043,12 @@ static char *s7_atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
 	     ((typeflag(obj) & UNUSED_BITS) != 0) ? " bad bits at top" : "");
     return(buf);
   }
+}
+
+
+bool s7_is_valid_pointer(s7_pointer arg)
+{
+  return((type(arg) > T_UNTYPED) && (type(arg) < BUILT_IN_TYPES));
 }
 
 

@@ -990,7 +990,6 @@ static XEN s7_xen_selection_fill(s7_scheme *sc, XEN obj, XEN val)
 	  if (change_samples(beg, len, data, si->cps[i], "fill! selection", si->cps[i]->edit_ctr))
 	    update_graph(si->cps[i]);
 	  free(data);
-	  /* TODO: snd-test fill! selection */
 	}
     }
   return(XEN_FALSE);

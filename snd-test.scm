@@ -3423,6 +3423,15 @@
 	(let ((var (catch #t (lambda () (mus-sound-reopen-output "fmv.snd" 1 mus-bshort -1 #f)) (lambda args args))))
 	  (if (not (eq? (car var) 'out-of-range))
 	      (snd-display ";mus-sound-reopen-output bad type: ~A" var)))
+
+	(let ((sd (make-sound-data 2 10)))
+	  (fill! sd 1.0)
+	  (if (not (vequal (sound-data->vct sd 0) (make-vct 10 1.0)))
+	      (snd-display ";fill! sd chan 0: ~A" (sound-data->vct sd 0)))
+	  (if (not (vequal (sound-data->vct sd 1) (make-vct 10 1.0)))
+	      (snd-display ";fill! sd chan 1: ~A" (sound-data->vct sd 1)))
+	  (let ((sd1 (copy sd)))
+	    (if (not (equal? sd sd1)) (snd-display ";copy sd: ~A ~A"))))
 	
 	(for-each
 	 (lambda (proc name)
@@ -14026,6 +14035,56 @@ EDITS: 2
       (if (fneq (maxamp s1) 0.3) (snd-display ";fill 2 with 0.3: ~A" (maxamp s1)))
       (close-sound s1))
 
+    (for-each close-sound (sounds))
+    (let ((snd (open-sound "oboe.snd")))
+      (make-selection 1000 2000 snd 0)
+      (copy (selection))
+      (let* ((r1 (make-sampler 1000 snd 0))
+	     (snds (sounds))
+	     (sel (if (eq? (car snds) snd) (cadr snds) (car snds)))
+	     (r2 (make-sampler 0 sel 0))
+	     (happy #t))
+	(do ((i 0 (+ i 1)))
+	    ((or (not happy)
+		 (= i 1000)))
+	  (let ((v1 (r1))
+		(v2 (r2)))
+	    (if (> (abs (- v1 v2)) .0001)
+		(begin
+		  (set! happy #f)
+		  (snd-display ";copied selection not equal? pos: ~A, ~A ~A" i v1 v2)))))
+	(close-sound sel)
+	(if (not (selection?))
+	    (snd-display ";copy selection unselected?")
+	    (begin
+	      (fill! (selection) 0.0)
+	      (let ((r1 (make-sampler 1000 snd 0))
+		    (happy #t))
+		(do ((i 0 (+ i 1)))
+		    ((or (not happy)
+			 (= i 1000)))
+		  (let ((v1 (r1)))
+		    (if (not (= v1 0.0))
+			(begin
+			  (set! happy #f)
+			  (snd-display ";fill! selection not 0.0? pos: ~A, ~A" i v1))))))
+	      (revert-sound snd)
+	      (if (not (selection?))
+		  (snd-display ";revert-sound selection unselected?")
+		  (begin
+		    (fill! (selection) 0.3)
+		    (let ((r1 (make-sampler 1000 snd 0))
+			  (happy #t))
+		      (do ((i 0 (+ i 1)))
+			  ((or (not happy)
+			       (= i 1000)))
+			(let ((v1 (r1)))
+			  (if (not (= v1 0.3))
+			      (begin
+				(set! happy #f)
+				(snd-display ";fill! selection not 0.3? pos: ~A, ~A" i v1)))))))))))
+      (close-sound snd))
+    
     (clear-save-state-files)))
 	
   
@@ -20254,6 +20313,13 @@ EDITS: 2
     (let ((fr (make-frame! 3 .1 .2 .3))
 	  (fr1 (make-frame 3 .1 .2 .3)))
       (if (not (equal? fr fr1)) (snd-display ";make-frame! (args): ~A ~A" fr fr1)))
+
+    (let ((fr (frame .1 .2 .3)))
+      (let ((fr1 (copy fr)))
+	(if (not (equal? fr fr1)) (snd-display ";copy frame: ~A ~A" fr fr1)))
+      (fill! fr 0.0)
+      (if (not (equal? fr (frame 0.0 0.0 0.0)))
+	  (snd-display ";fill! frame 0.0: ~A" fr)))
     
     
     (let* ((mx1 (make-mixer 2 1 2 3 4))
@@ -20296,6 +20362,13 @@ EDITS: 2
 	    (snd-display ";make-scale (identity): ~A" mx1)))
       (mus-reset mx1)
       (if (fneq (mixer-ref mx1 0 0) 0.0) (snd-display ";reset mixer: ~A" mx1)))
+
+    (let ((mx (mixer .1 .2 .3 .4)))
+      (let ((mx1 (copy mx)))
+	(if (not (equal? mx mx1)) (snd-display ";mixer copy not equal? ~A ~A" mx mx1)))
+      (fill! mx 0.1)
+      (if (not (equal? mx (mixer .1 .1 .1 .1))) 
+	  (snd-display ";fill! mixer: ~A" mx)))
     
     (let ((var (catch #t (lambda () (make-mixer 2 0.0 0.0 0.0 0.0 0.0)) (lambda args args))))
       (if (not (eq? (car var) 'mus-error))
@@ -43916,7 +43989,6 @@ EDITS: 1
 	  (periodogram 256)
 	  (if (not (lisp-graph? ind)) (snd-display ";periodogram not graphed?"))
 	  (close-sound ind))
-	
 	))
 
     (do ((i 0 (+ i 1)))
