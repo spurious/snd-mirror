@@ -10756,27 +10756,27 @@ s7_pointer *s7_vector_elements(s7_pointer vec)
 
 s7_Int *s7_vector_dimensions(s7_pointer vec)
 {
-#if WITH_MULTIDIMENSIONAL_VECTORS
-  return(vec->object.vector.dim_info->dims);
-#else
   s7_Int *dims;
+#if WITH_MULTIDIMENSIONAL_VECTORS
+  if (vector_is_multidimensional(vec))
+    return(vec->object.vector.dim_info->dims);
+#endif
   dims = (s7_Int *)malloc(sizeof(s7_Int));
   dims[0] = vector_length(vec);
   return(dims);
-#endif
 }
 
 
 s7_Int *s7_vector_offsets(s7_pointer vec)
 {
-#if WITH_MULTIDIMENSIONAL_VECTORS
-  return(vec->object.vector.dim_info->offsets);
-#else
   s7_Int *offs;
+#if WITH_MULTIDIMENSIONAL_VECTORS
+  if (vector_is_multidimensional(vec))
+    return(vec->object.vector.dim_info->offsets);
+#endif
   offs = (s7_Int *)malloc(sizeof(s7_Int));
   offs[0] = 1;
   return(offs);
-#endif
 }
 
 
