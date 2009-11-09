@@ -105,7 +105,6 @@
  *        load should handle C shared libraries, using dlopen/dlinit [optionally]
  *        defgenerator (or at least defstruct of some sort)
  *        perhaps vector<->string and make-list for consistency
- *        copy for bignums and random states, length for bignums?
  *        perhaps bring new_type_x out to scheme -- could this be extended to defstruct?
  * 
  *

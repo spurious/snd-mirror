@@ -803,7 +803,7 @@ static void for_each_channel_mix(chan_info *cp, void (*func)(mix_info *umx))
 }
 
 
-void for_each_syncd_mix(int current_mix_id, void (*func)(void *m, void *data), void *udata)
+static void for_each_syncd_mix(int current_mix_id, void (*func)(mix_info *md, void *data), void *udata)
 {
   int i, sync;
   sync = mix_sync_from_id(current_mix_id);
@@ -817,7 +817,7 @@ void for_each_syncd_mix(int current_mix_id, void (*func)(void *m, void *data), v
 	      md = mix_infos[i];
 	      if ((md) && 
 		  (md->sync == sync))
-		(*func)((void *)md, udata);
+		(*func)(md, udata);
 	    }
     }
 }
@@ -1083,7 +1083,7 @@ static int mix_tag_y_from_id(int id)
 }
 
 
-color_t mix_color_from_id(int mix_id)
+static color_t mix_color_from_id(int mix_id)
 {
   mix_info *md;
   md = md_from_id(mix_id);
@@ -1112,18 +1112,28 @@ void mix_unset_color_from_id(int id)
 }
 
 
-void syncd_mix_unset_color(void *m, void *ignore)
+static void syncd_mix_unset_color_1(mix_info *md, void *ignore)
 {
-  mix_info *md = (mix_info *)m;
   md->color = md->original_color;
 }
 
 
-void syncd_mix_set_color(void *m, void *ignore)
+void syncd_mix_unset_color(int id)
 {
-  mix_info *md = (mix_info *)m;
+  for_each_syncd_mix(id, syncd_mix_unset_color_1, NULL);
+}
+
+
+static void syncd_mix_set_color_1(mix_info *md, void *ignore)
+{
   /* assume red (this is from the mix dialog) */
   md->color = ss->sgx->red;
+}
+
+
+void syncd_mix_set_color(int id, color_t col)
+{
+  for_each_syncd_mix(id, syncd_mix_set_color_1, NULL);
 }
 
 
@@ -1160,6 +1170,29 @@ bool mix_set_amp_edit(int id, mus_float_t amp)
 	}
     }
   return(edited);
+}
+
+
+typedef struct {mus_float_t amp;} syncd_amp_info;
+
+static void syncd_mix_set_amp_1(mix_info *md, void *amp)
+{
+  mus_long_t beg, len;
+  syncd_amp_info *ai = (syncd_amp_info *)amp;
+  mix_set_amp_edit(md->id, ai->amp);
+  beg = mix_position_from_id(md->id);
+  len = mix_length_from_id(md->id);
+  mix_display_during_drag(md->id, beg, beg + len);
+}
+
+
+void syncd_mix_set_amp(int id, mus_float_t amp)
+{
+  syncd_amp_info *ai;
+  ai = malloc(sizeof(syncd_amp_info));
+  ai->amp = amp;
+  for_each_syncd_mix(id, syncd_mix_set_amp_1, (void *)ai);
+  free(ai);
 }
 
 
@@ -1442,6 +1475,33 @@ bool mix_set_speed_edit(int id, mus_float_t spd)
     }
   return(edited);
 }
+
+
+typedef struct {mus_float_t speed;} syncd_speed_info;
+
+static void syncd_mix_set_speed_1(mix_info *md, void *speed)
+{
+  mus_long_t beg, len;
+  syncd_speed_info *ai = (syncd_speed_info *)speed;
+  mix_set_speed_edit(md->id, ai->speed);
+  beg = mix_position_from_id(md->id);
+  len = mix_length_from_id(md->id);
+  mix_display_during_drag(md->id, beg, beg + len);
+}
+
+
+void syncd_mix_set_speed(int id, mus_float_t speed)
+{
+  syncd_speed_info *ai;
+  ai = malloc(sizeof(syncd_speed_info));
+  ai->speed = speed;
+  for_each_syncd_mix(id, syncd_mix_set_speed_1, (void *)ai);
+  free(ai);
+}
+
+
+
+
 
 /* mix-samples/set-mix-samples? 
  *   combine mix_set_amp_env_edit with remake_mix_data accepting either vct or filename
@@ -2099,29 +2159,15 @@ static XEN mix_drag_hook;
 
 static mus_long_t drag_beg = 0, drag_end = 0;
 
+
 typedef struct {mus_long_t beg; bool axis_changed;} move_mix_data;
 
-void move_syncd_mix(void *m, void *data)
+void move_syncd_mix(mix_info *md, void *data)
 {
-  mix_info *md = (mix_info *)m;
-  chan_info *cp;
   move_mix_data *mmd = (move_mix_data *)data;
-
-  cp = md->cp;
-  mix_set_position_edit(md->id, mmd->beg); /* TODO: needs offset if any */
+  mix_set_position_edit(md->id, mmd->beg);                         /* TODO: needs offset if any */
   if (!mmd->axis_changed)
-    {
-      mix_state *mx;
-      mus_long_t cur_end;
-      mx = current_mix_state(md);
-      cur_end = mx->beg + mx->len;
-      if (cur_end > drag_end)
-	drag_end = cur_end;
-      if (mx->beg < drag_beg)
-	drag_beg = mx->beg;
-      make_partial_graph(cp, drag_beg, drag_end);
-      display_one_mix_with_bounds(mx, cp, cp->axis, cp->axis->losamp, cp->axis->hisamp);
-    }
+    mix_display_during_drag(md->id, drag_beg, drag_end);
 }
 
 
@@ -2189,7 +2235,7 @@ void move_mix_tag(int mix_id, int x, int y)
     mmd = (move_mix_data *)malloc(sizeof(move_mix_data));
     mmd->beg = snd_round_mus_long_t(ungrf_x(cp->axis, x) * (double)(SND_SRATE(cp->sound)));
     mmd->axis_changed = axis_changed;
-    for_each_syncd_mix(mix_id, move_syncd_mix, (void *)mmd);
+    for_each_syncd_mix(mix_id, move_syncd_mix, (void *)mmd);           /* syncd mixes drag together */
     free(mmd);
   }
 

@@ -1378,6 +1378,11 @@ static XEN g_selection_to_mix(void)
 	  sync = mix_set_sync_from_id(id + i, sync);
 	  result = XEN_CONS(new_xen_mix(id + i), result);
 	}
+
+      if ((mix_dialog_mix() >= id) &&
+	  (mix_dialog_mix() < (id + chans)))
+	reflect_mix_change(id);
+       /* this update is needed in a case like: file close (closing old mix), open new, mix -- this mix can now have old mix's id */
       return(XEN_LIST_REVERSE(result));
     }
   return(snd_no_active_selection_error(S_selection_to_mix));

@@ -65,8 +65,16 @@ and want a quick tour of where s7 is different:
 </p>
 <br>
 
+
 <dl>
-<dt><em class=emdef>call-with-exit and continuation?</em></dt>
+
+<!-- -------------------------------------------------------------------------------- -->
+<dt>
+<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>call-with-exit and continuation?</h4></td></tr></table>
+</td></tr></table>
+</dt>
+
 <dd><p>call-with-exit is call/cc without the ability to return (an escape or goto, "call/exit"?).
 </p>
 <pre>
@@ -88,7 +96,13 @@ as opposed to a normal procedure.
 <br>
 
 
-<dt><em class=emdef>multiprecision arithmetic</em></dt>
+<!-- -------------------------------------------------------------------------------- -->
+<dt>
+<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>multiprecision arithmetic</h4></td></tr></table>
+</td></tr></table>
+</dt>
+
 <dd><p>All numeric types (integers, ratios, reals, complex numbers) are supported.
 The basic integer and real
 types are defined in s7.h, defaulting to long long int and double.  
@@ -130,7 +144,14 @@ Its argument is a string representing the desired number:
 </dd>
 <br>
 
-<dt><em class=emdef>math functions</em></dt>
+
+<!-- -------------------------------------------------------------------------------- -->
+<dt>
+<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>math functions</h4></td></tr></table>
+</td></tr></table>
+</dt>
+
 <dd><p>
 s7 includes:
 </p>
@@ -189,7 +210,14 @@ Other math-related differences between s7 and r5rs:
 </dd>
 <br>
 
-<dt><em class=emdef>defmacro, define-macro, macroexpand, and gensym</em></dt>
+
+<!-- -------------------------------------------------------------------------------- -->
+<dt>
+<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>define-macro, defmacro, macroexpand, gensym</h4></td></tr></table>
+</td></tr></table>
+</dt>
+
 <dd><p>These are the standard macro definers.  </p>
 <pre>
 (define-macro (add-1 arg) `(+ 1 ,arg))
@@ -217,7 +245,13 @@ giving the new symbol name's prefix.
 <br>
 
 
-<dt><em class=emdef>define* and lambda*</em></dt>
+<!-- -------------------------------------------------------------------------------- -->
+<dt>
+<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>define*, lambda*</h4></td></tr></table>
+</td></tr></table>
+</dt>
+
 <dd><p>These are extensions of define and lambda that make it easier to
 to deal with optional, keyword, and rest arguments.  
 The syntax is very simple: every argument to define* has a default value
@@ -249,7 +283,14 @@ above as an example:
 </dd>
 <br>
 
-<dt><em class=emdef>define-constant and constant?</em></dt>
+
+<!-- -------------------------------------------------------------------------------- -->
+<dt>
+<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>define-constant, constant?</h4></td></tr></table>
+</td></tr></table>
+</dt>
+
 <dd><p>define-constant defines a constant and constant? returns #t if its argument
 is a constant.  A constant in s7 is really constant: it can't be set or rebound.
 </p>
@@ -277,7 +318,14 @@ become constants:
 </dd>
 <br>
 
-<dt><em class=emdef>make-procedure-with-setter</em></dt>
+
+<!-- -------------------------------------------------------------------------------- -->
+<dt>
+<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>procedure-with-setter</h4></td></tr></table>
+</td></tr></table>
+</dt>
+
 <dd><p>A procedure-with-setter consists of two functions, the "getter" and the "setter".
 The getter is called when the object is encountered as a function, and the setter when
 it is set:
@@ -292,7 +340,14 @@ it is set:
 </dd>
 <br>
 
-<dt><em class=emdef>applicable objects and generalized set!</em></dt>
+
+<!-- -------------------------------------------------------------------------------- -->
+<dt>
+<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>applicable objects, generalized set!</h4></td></tr></table>
+</td></tr></table>
+</dt>
+
 <dd><p>Lists, strings, vectors, hash-tables, and any cooperating C-defined objects
 are both applicable and settable.  I think the syntax is pretty:
 </p>
@@ -313,7 +368,14 @@ when it is buried in vector-refs and vector-set!s!
 </dd>
 <br>
 
-<dt><em class=emdef>block comments in #| ... |# and #! ... !#</em></dt>
+
+<!-- -------------------------------------------------------------------------------- -->
+<dt>
+<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>blocks comments in #| ... |# and #! ... !#</h4></td></tr></table>
+</td></tr></table>
+</dt>
+
 <dd>
 <p>Multi-line comments can be enclosed in either #| and |#, or #! and !# (the latter
 is for compatibility with Guile).
@@ -321,8 +383,15 @@ is for compatibility with Guile).
 </dd>
 <br>
 
-<dt><em class=emdef>hash tables </em></dt>
-<dd>
+
+<!-- -------------------------------------------------------------------------------- -->
+<dt>
+<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>hash-tables</h4></td></tr></table>
+</td></tr></table>
+</dt>
+
+<dd><br>
 <ul>
 <li>(make-hash-table (size 461))
 <li>(hash-table-ref ht obj)
@@ -335,7 +404,14 @@ is for compatibility with Guile).
 </dd>
 <br>
 
-<dt><em class=emdef>threads</em></dt>
+
+<!-- -------------------------------------------------------------------------------- -->
+<dt>
+<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>threads</h4></td></tr></table>
+</td></tr></table>
+</dt>
+
 <dd><p>If s7 is built with HAVE_PTHREADS set, you get multithreading functions.
 </p>
 <ul>
@@ -358,7 +434,14 @@ of pthread_getspecific, just call it: (var).
 </dd>
 <br>
 
-<dt><em class=emdef>format and object-&gt;string</em></dt>
+
+<!-- -------------------------------------------------------------------------------- -->
+<dt>
+<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>format, object-&gt;string</h4></td></tr></table>
+</td></tr></table>
+</dt>
+
 <dd><p>s7's built-in format function is very close to that in srfi-48.</p>
 <pre>
 (format #f "~A ~D ~F" 'hi 123 3.14)
@@ -376,7 +459,14 @@ of pthread_getspecific, just call it: (var).
 </dd>
 <br>
 
-<dt><em class=emdef>error handling via error and catch</em></dt>
+
+<!-- -------------------------------------------------------------------------------- -->
+<dt>
+<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>error handling</h4></td></tr></table>
+</td></tr></table>
+</dt>
+
 <dd><p>s7's error handling mimics that of (pre-r6rs) Guile.  An error is signalled
 via the error function, and can be trapped and dealt with via catch.
 </p>
@@ -436,7 +526,14 @@ which allows you to stop at some point, then evaluate arbitrary expressions in t
 </dd>
 <br>
 
-<dt><em class=emdef>trace and untrace</em></dt>
+
+<!-- -------------------------------------------------------------------------------- -->
+<dt>
+<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>trace, untrace</h4></td></tr></table>
+</td></tr></table>
+</dt>
+
 <dd><p>These functions provide tracing:
 </p>
 <pre>
@@ -479,7 +576,14 @@ function call (that is, global to the function, not the function's local environ
 </dd>
 <br>
 
-<dt><em class=emdef>stacktrace and stack</em></dt>
+
+<!-- -------------------------------------------------------------------------------- -->
+<dt>
+<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>stacktrace, stack</h4></td></tr></table>
+</td></tr></table>
+</dt>
+
 <dd><p>stacktrace prints the stack contents.  Its optional argument
 can be *error-info* to show the stack at the point of the last error,
 a thread object to show that thread's stack, or a continuation to
@@ -491,7 +595,14 @@ internally by the evaluator.
 </dd>
 <br>
 
-<dt><em class=emdef>IO functions</em></dt>
+
+<!-- -------------------------------------------------------------------------------- -->
+<dt>
+<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>IO functions</h4></td></tr></table>
+</td></tr></table>
+</dt>
+
 <dd>
 <p>Besides files, ports can also represent strings and functions.  The string port functions
 are:
@@ -531,7 +642,14 @@ for an example.
 </dd>
 <br>
 
-<dt><em class=emdef>Generic functions</em></dt>
+
+<!-- -------------------------------------------------------------------------------- -->
+<dt>
+<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>generic functions</h4></td></tr></table>
+</td></tr></table>
+</dt>
+
 <dd><p>length, copy, and fill! are generic functions in the sense that their argument can be
 a list, string, vector, hash-table, or C-defined object.  Since vectors and lists are set-applicable, 
 and length is generic, we can write a generic FFT that accepts both types or any other object that follows this syntax:
@@ -584,7 +702,14 @@ and length is generic, we can write a generic FFT that accepts both types or any
 </dd>
 <br>
 
-<dt><em class=emdef>multidimensional vectors</em></dt>
+
+<!-- -------------------------------------------------------------------------------- -->
+<dt>
+<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>multidimensional vectors</h4></td></tr></table>
+</td></tr></table>
+</dt>
+
 <dd><p>
 If s7 is built with WITH_MULTIDIMENSIONAL_VECTORS (the default), it supports 
 vectors with any number of dimensions.  It is here, in particular, that the generalized
@@ -614,7 +739,14 @@ sets that element.  vector-dimensions returns a list of the dimensions of a vect
 </dd>
 <br>
 
-<dt><em class=emdef>*load-path* and *load-hook*</em></dt>
+
+<!-- -------------------------------------------------------------------------------- -->
+<dt>
+<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>*load-path*, *load-hook*</h4></td></tr></table>
+</td></tr></table>
+</dt>
+
 <dd><p>*load-path* is a list of directories to search when loading a file.
 *load-hook* is a function called just before a file is loaded.  Its argument is the filename.
 While loading, port-filename and port-line-number (of the current-input-port) can tell you
@@ -626,7 +758,14 @@ where you are in the file.
 </dd>
 <br>
 
-<dt><em class=emdef>*features*, provide, and provided?</em></dt>
+
+<!-- -------------------------------------------------------------------------------- -->
+<dt>
+<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>provide, provided?, *features*</h4></td></tr></table>
+</td></tr></table>
+</dt>
+
 <dd><p>As in Common Lisp, *features* is a list describing what is currently loaded into s7.  You can
 check it with the provided? function, or add something to it with provide.  In my version of Snd,
 at startup *features* is:
@@ -641,7 +780,14 @@ at startup *features* is:
 </dd>
 <br>
 
-<dt><em class=emdef>procedure info</em></dt>
+
+<!-- -------------------------------------------------------------------------------- -->
+<dt>
+<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>procedure info</h4></td></tr></table>
+</td></tr></table>
+</dt>
+
 <dd><p>procedure-source, procedure-arity, procedure-documentation, and help provide a look into a
 scheme function.
 procedure-documentation returns the documentation string associated with a procedure (the initial string in the
@@ -666,7 +812,13 @@ add-2
 <br>
 
 
-<dt><em class=emdef>symbol table info</em></dt>
+<!-- -------------------------------------------------------------------------------- -->
+<dt>
+<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>symbol table info</h4></td></tr></table>
+</td></tr></table>
+</dt>
+
 <dd><p>(symbol-table) returns the symbol table, a vector of lists of symbols.
 (symbol-&gt;value sym :optional env) returns the binding of 'sym'
 in the given environment which defaults to the current environment.
@@ -692,7 +844,14 @@ Here we scan the symbol table for any function that doesn't have documentation:
 </dd>
 <br>
 
-<dt><em class=emdef>environments</em></dt>
+
+<!-- -------------------------------------------------------------------------------- -->
+<dt>
+<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>environment info</h4></td></tr></table>
+</td></tr></table>
+</dt>
+
 <dd><p>environments are "first class objects" in s7.  An environment is
 a list of alists ending with a hash-table (the global environment).
 (current-environment :optional thread)
@@ -791,7 +950,13 @@ write "hygenic" macros:
 <br>
 
 
-<dt><em class=emdef>encapsulation</em></dt>
+<!-- -------------------------------------------------------------------------------- -->
+<dt>
+<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>encapsulation</h4></td></tr></table>
+</td></tr></table>
+</dt>
+
 <dd><p>encapsulation saves and restores environments.</p>
 <ul>
 <li>(open-encapsulator)
@@ -828,7 +993,14 @@ global-x
 </dd>
 <br>
 
-<dt><em class=emdef>eval and eval-string</em></dt>
+
+<!-- -------------------------------------------------------------------------------- -->
+<dt>
+<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>eval, eval-string</h4></td></tr></table>
+</td></tr></table>
+</dt>
+
 <dd><p>
 eval evaluates its argument (a list representing a piece of code).  It takes an optional
 second argument, the environment in which the evaluation should take place.  eval-string
@@ -844,7 +1016,14 @@ is similar, but its argument is a string.
 </dd>
 <br>
 
-<dt><em class=emdef>reverse!, list-set!, sort!</em></dt>
+
+<!-- -------------------------------------------------------------------------------- -->
+<dt>
+<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>reverse!, list-set!, sort!</h4></td></tr></table>
+</td></tr></table>
+</dt>
+
 <dd><p>reverse! is an in-place version of the built-in function reverse.  That is, 
 it modifies the list passed to it in the process of reversing its contents.
 list-set! sets a member of a list.  sort! sorts a list or a vector using the
@@ -864,7 +1043,14 @@ but vectors are sorted in place.
 </dd>
 <br>
 
-<dt><em class=emdef>keywords</em></dt>
+
+<!-- -------------------------------------------------------------------------------- -->
+<dt>
+<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>keywords</h4></td></tr></table>
+</td></tr></table>
+</dt>
+
 <dd><p>
 Keywords exist mainly for define*'s benefit.  The keyword functions are:
 keyword?, make-keyword, symbol-&gt;keyword, and keyword-&gt;symbol.
@@ -875,14 +1061,28 @@ signals that the symbol is in the Package-With-No-Name [offstage: harmonica, tub
 </dd>
 <br>
 
-<dt><em class=emdef>help</em></dt>
+
+<!-- -------------------------------------------------------------------------------- -->
+<dt>
+<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>help</h4></td></tr></table>
+</td></tr></table>
+</dt>
+
 <dd><p>
 (help obj) tries to find information about obj.  
 </p>
 </dd>
 <br>
 
-<dt><em class=emdef>multiple-values</em></dt>
+
+<!-- -------------------------------------------------------------------------------- -->
+<dt>
+<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>multiple-values</h4></td></tr></table>
+</td></tr></table>
+</dt>
+
 <dd><p>
 The r5rs section about values makes no sense to me;  why have
 multiple values at all if you're just going to throw away all
@@ -933,18 +1133,38 @@ we can package these up in a values call:
 -->
 
 
-<dt><em class=emdef>quit</em></dt>
+<!-- -------------------------------------------------------------------------------- -->
+<dt>
+<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>quit</h4></td></tr></table>
+</td></tr></table>
+</dt>
+
 <dd><p>quit exits s7.</p>
 <br>
 
-<dt><em class=emdef>make-promise</em></dt>
+
+<!-- -------------------------------------------------------------------------------- -->
+<dt>
+<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>make-promise</h4></td></tr></table>
+</td></tr></table>
+</dt>
+
 <dd><p>This is named "delay" in most Schemes, but that name belongs to CLM.
 There is also promise? which returns #t if its argument is a promise.
 </p>
 </dd>
 <br>
 
-<dt><em class=emdef>gc</em></dt>
+
+<!-- -------------------------------------------------------------------------------- -->
+<dt>
+<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>gc</h4></td></tr></table>
+</td></tr></table>
+</dt>
+
 <dd><p>The gc function either calls the GC (if passed no arguments), or turns the GC either on: (gc #t)
 or off: (gc #f).
 </p>
@@ -952,7 +1172,13 @@ or off: (gc #f).
 <br>
 
 
-<dt><em class=emdef>define-expansion</em></dt>
+<!-- -------------------------------------------------------------------------------- -->
+<dt>
+<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>define-expansion</h4></td></tr></table>
+</td></tr></table>
+</dt>
+
 <dd><p>
 This defines read-time macros, which are just dangerous enough that
 I probably shouldn't document them.  It has the same syntax as
@@ -964,7 +1190,13 @@ bind it to something else, which is asking for confusion).
 <br>
 
 
-<dt><em class=emdef>other differences from r5rs</em></dt>
+<!-- -------------------------------------------------------------------------------- -->
+<dt>
+<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>other differences from r5rs</h4></td></tr></table>
+</td></tr></table>
+</dt>
+
 <dd><br>
 <ul>
 <li>do sets its step variables, rather than rebinding them.
@@ -972,15 +1204,21 @@ bind it to something else, which is asking for confusion).
 <li>s7-version returns the current s7 version.
 <li>no scheme-report-environment, null-environment, or interaction-environment (= current-environment?).
 <li>no transcript-on or transcript-off.
-<li>__func__ is the name of the function currently being defined (as in C).
+<li>__func__ is the name of the function currently being defined or called (as in C).
 <li>vector-for-each, vector-map, string-for-each
 </ul>
 </dd>
 <br>
 <br>
 
-<dt><em class=emdef>changes I'll probably get to someday</em></dt>
-<dd>
+<!-- -------------------------------------------------------------------------------- -->
+<dt>
+<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>changes I'll get to someday</h4></td></tr></table>
+</td></tr></table>
+</dt>
+
+<dd><br>
 <ul>
 <li>define-macro* defmacro*
 <li>settable numerator denominator imag-part real-part angle magnitude
@@ -994,6 +1232,7 @@ bind it to something else, which is asking for confusion).
 </dl>
 
 
+<!-- -------------------------------------------------------------------------------- -->
 <table border=0 bordercolor="lightgreen" width=100% cellpadding=2 cellspacing=0><tr><td bgcolor="lightgreen">
 <table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h3>FFI examples</h3></td></tr></table>
 </td></tr></table>

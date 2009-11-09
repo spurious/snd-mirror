@@ -2367,6 +2367,7 @@ void call_sp_watchers(snd_info *sp, sp_watcher_t type, sp_watcher_reason_t reaso
  * TODO: doc/test/cleanup play (mix region selection sound file player)
  * save with all the optkey args for all types (treat list/vector etc as sound data)
  * check map/for-each cases -- sound selection etc (and add to extsnd) and set/ref
+ *   for-each depends on ref, map could depend on copy/set/ref
  *
  *    objects are generator(clm2xen), player(snd-dac), sampler(snd-edits), sound-data(sndlib2xen),
  *               mark(snd-marks), mix(snd-mix), selection(snd-select), region(snd-region),
@@ -2402,11 +2403,10 @@ void call_sp_watchers(snd_info *sp, sp_watcher_t type, sp_watcher_reason_t reaso
  * make-vector! choices: any, 1 obj [any type], 1 obj: double -- do any others warrant special handling?
  * current sync-info as vector? (then selection = vector of sound objs)
  *
- * mix-selection (+), sel->0|1 ("_", "^"), sel amp/pitch, drag mix to move, smooth corners, sync if all at once, copy
+ * mix-selection (+), sel->0|1 ("_", "^"), smooth corners?
  *   same for mix, cut="x", "<" ">" to repos, 
  *
  *  arrow cursor here and perhaps reflect click
- * TODO: selection fill/copy tests
  */
 
 

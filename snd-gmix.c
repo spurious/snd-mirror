@@ -95,6 +95,7 @@ static gboolean speed_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer 
   speed_dragged = false;
   if (!(mix_is_active(mix_dialog_id))) return(false);
   mix_set_speed_edit(mix_dialog_id, 1.0);
+  syncd_mix_set_speed(mix_dialog_id, 1.0);
   after_mix_edit(mix_dialog_id);
   reflect_mix_speed(1.0);
   return(false);
@@ -121,26 +122,45 @@ static gboolean speed_label_click_callback(GtkWidget *w, GdkEventButton *ev, gpo
 
 static gboolean speed_motion_callback(GtkWidget *w, GdkEventMotion *ev, gpointer data)
 {
+  mus_float_t speed;
+  mus_long_t beg, end;
+
   if (!speed_pressed) {speed_dragged = false; return(false);}
   speed_dragged = true;
+
   if (!(mix_is_active(mix_dialog_id))) return(false);
   if (!dragging) 
     start_dragging(mix_dialog_id);
   else keep_dragging(mix_dialog_id);
-  mix_set_speed_edit(mix_dialog_id, set_speed_label(w_speed_number, scrollbar_to_speed(ADJUSTMENT_VALUE(w_speed_adj))));
+
+  speed = set_speed_label(w_speed_number, scrollbar_to_speed(ADJUSTMENT_VALUE(w_speed_adj)));
+  mix_set_speed_edit(mix_dialog_id, speed);
+
+  beg = mix_position_from_id(mix_dialog_id);
+  end = beg + mix_length_from_id(mix_dialog_id);
+  if (drag_beg > beg) drag_beg = beg;
+  if (drag_end < end) drag_end = end;
+
   mix_display_during_drag(mix_dialog_id, drag_beg, drag_end);
+  syncd_mix_set_speed(mix_dialog_id, speed);
   return(false);
 }
 
 
 static gboolean speed_release_callback(GtkWidget *w, GdkEventButton *ev, gpointer data) 
 {
+  mus_float_t speed;
+
   speed_pressed = false;
   speed_dragged = false;
+
   if (!(mix_is_active(mix_dialog_id))) return(false);
   if (dragging)
     stop_dragging(mix_dialog_id);
-  mix_set_speed_edit(mix_dialog_id, set_speed_label(w_speed_number, scrollbar_to_speed(ADJUSTMENT_VALUE(w_speed_adj))));
+
+  speed = set_speed_label(w_speed_number, scrollbar_to_speed(ADJUSTMENT_VALUE(w_speed_adj)));
+  mix_set_speed_edit(mix_dialog_id, speed);
+  syncd_mix_set_speed(mix_dialog_id, speed);
   after_mix_edit(mix_dialog_id);
   return(false);
 }
@@ -190,6 +210,7 @@ static gboolean amp_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer da
   if (!(mix_is_active(mix_dialog_id))) return(false);
   reflect_mix_amp(1.0);
   mix_set_amp_edit(mix_dialog_id, 1.0);
+  syncd_mix_set_amp(mix_dialog_id, 1.0);
   after_mix_edit(mix_dialog_id);
   ADJUSTMENT_SET_VALUE(w_amp_adj, amp_to_scroll(amp_control_min(ss), 1.0, amp_control_max(ss)));
   /* gtk_adjustment_value_changed(GTK_ADJUSTMENT(w_amp_adj)); */
@@ -199,33 +220,35 @@ static gboolean amp_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer da
 
 static gboolean amp_motion_callback(GtkWidget *w, GdkEventMotion *ev, gpointer data)
 {
-  mus_float_t scrollval;
+  mus_float_t amp;
   if (!amp_pressed) {amp_dragged = false; return(false);}
   amp_dragged = true;
   if (!(mix_is_active(mix_dialog_id))) return(false);
   if (!dragging) 
     start_dragging(mix_dialog_id);
   else keep_dragging(mix_dialog_id);
-  scrollval = ADJUSTMENT_VALUE(w_amp_adj);
-  reflect_mix_amp(scrollbar_to_amp(scrollval));
-  mix_set_amp_edit(mix_dialog_id, scrollbar_to_amp(scrollval));
+  amp = scrollbar_to_amp(ADJUSTMENT_VALUE(w_amp_adj));
+  reflect_mix_amp(amp);
+  mix_set_amp_edit(mix_dialog_id, amp);
   mix_display_during_drag(mix_dialog_id, drag_beg, drag_end);
+  syncd_mix_set_amp(mix_dialog_id, amp);
   return(false);
 }
 
 
 static gboolean amp_release_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
-  mus_float_t scrollval;
+  mus_float_t amp;
   dragging = false;
   amp_pressed = false;
   amp_dragged = false;
   if (!(mix_is_active(mix_dialog_id))) return(false);
   if (dragging)
     stop_dragging(mix_dialog_id);
-  scrollval = ADJUSTMENT_VALUE(w_amp_adj);
-  reflect_mix_amp(scrollbar_to_amp(scrollval));
-  mix_set_amp_edit(mix_dialog_id, scrollbar_to_amp(scrollval));
+  amp = scrollbar_to_amp(ADJUSTMENT_VALUE(w_amp_adj));
+  reflect_mix_amp(amp);
+  mix_set_amp_edit(mix_dialog_id, amp);
+  syncd_mix_set_amp(mix_dialog_id, amp);
   after_mix_edit(mix_dialog_id);
   return(false);
 }
@@ -924,11 +947,11 @@ void reflect_mix_change(int mix_id)
 	      if (old_mix_dialog_id != INVALID_MIX_ID)
 		{
 		  mix_unset_color_from_id(old_mix_dialog_id);
-		  for_each_syncd_mix(old_mix_dialog_id, syncd_mix_unset_color, NULL);
+		  syncd_mix_unset_color(old_mix_dialog_id);
 		}
 	      old_mix_dialog_id = mix_dialog_id;
 	      mix_set_color_from_id(mix_dialog_id, ss->sgx->red);
-	      for_each_syncd_mix(mix_dialog_id, syncd_mix_set_color, NULL);
+	      syncd_mix_set_color(mix_dialog_id, ss->sgx->red);
 
 	      for_each_normal_chan(display_channel_mixes);
 

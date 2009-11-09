@@ -82,13 +82,20 @@ static mus_float_t set_speed_label(Widget speed_number, int ival)
 static void speed_click_callback(Widget w, XtPointer context, XtPointer info) 
 {
   char speed_number_buffer[6];
+  mus_float_t speed;
+
   if (!(mix_is_active(mix_dialog_id))) return;
-  mix_set_speed_edit(mix_dialog_id, 
-		     speed_changed(1.0,
-				   speed_number_buffer,
-				   xmix_speed_control_style,
-				   speed_control_tones(ss),
-				   6));
+  speed = speed_changed(1.0,
+			speed_number_buffer,
+			xmix_speed_control_style,
+			speed_control_tones(ss),
+			6);
+
+  drag_beg = mix_position_from_id(mix_dialog_id);
+  drag_end = drag_beg + mix_length_from_id(mix_dialog_id);
+
+  mix_set_speed_edit(mix_dialog_id, speed);
+  syncd_mix_set_speed(mix_dialog_id, speed);
   after_mix_edit(mix_dialog_id);
   set_label(w_speed_number, speed_number_buffer);
   XtVaSetValues(w_speed, XmNvalue, speed_to_scrollbar(speed_control_min(ss), 1.0, speed_control_max(ss)), NULL);
@@ -119,25 +126,43 @@ static void speed_label_click_callback(Widget w, XtPointer context, XtPointer in
 static void speed_drag_callback(Widget w, XtPointer context, XtPointer info) 
 {
   int ival;
+  mus_float_t speed;
+  mus_long_t beg, end;
+
   ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
   if (!(mix_is_active(mix_dialog_id))) return;
+
   ival = ((XmScrollBarCallbackStruct *)info)->value;
   if (!dragging) 
     start_dragging(mix_dialog_id);
   else keep_dragging(mix_dialog_id);
-  mix_set_speed_edit(mix_dialog_id, set_speed_label(w_speed_number, ival));
+
+  speed = set_speed_label(w_speed_number, ival);
+  mix_set_speed_edit(mix_dialog_id, speed);
+
+  beg = mix_position_from_id(mix_dialog_id);
+  end = beg + mix_length_from_id(mix_dialog_id);
+  if (drag_beg > beg) drag_beg = beg;
+  if (drag_end < end) drag_end = end;
+
   mix_display_during_drag(mix_dialog_id, drag_beg, drag_end);
+  syncd_mix_set_speed(mix_dialog_id, speed); /* TODO: need beg and end here as well */
 }
 
 
 static void speed_valuechanged_callback(Widget w, XtPointer context, XtPointer info) 
 {
   XmScrollBarCallbackStruct *cb = (XmScrollBarCallbackStruct *)info;
+  mus_float_t speed;
+
   ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
   if (!(mix_is_active(mix_dialog_id))) return;
   if (dragging)
     stop_dragging(mix_dialog_id);
-  mix_set_speed_edit(mix_dialog_id, set_speed_label(w_speed_number, cb->value));
+
+  speed = set_speed_label(w_speed_number, cb->value);
+  mix_set_speed_edit(mix_dialog_id, speed);
+  syncd_mix_set_speed(mix_dialog_id, speed);
   after_mix_edit(mix_dialog_id);
 }
 
@@ -171,6 +196,7 @@ static void change_mix_amp(int mix_id, mus_float_t val)
 {
   char sfs[6];
   mix_set_amp_edit(mix_id, val);
+  syncd_mix_set_amp(mix_id, val);
   mus_snprintf(sfs, 6, "%.2f", val);
   set_label(w_amp_number, sfs);
 }
@@ -987,15 +1013,16 @@ void reflect_mix_change(int mix_id)
 	      mus_long_t beg, len;
 	      char lab[LABEL_BUFFER_SIZE];
 	      
+	      /* syncd mixes have the same color (red) reverting to old color when sync changes */
 	      cp = mix_chan_info_from_id(mix_dialog_id);
 	      if (old_mix_dialog_id != INVALID_MIX_ID)
 		{
 		  mix_unset_color_from_id(old_mix_dialog_id);
-		  for_each_syncd_mix(old_mix_dialog_id, syncd_mix_unset_color, NULL);
+		  syncd_mix_unset_color(old_mix_dialog_id);
 		}
 	      old_mix_dialog_id = mix_dialog_id;
 	      mix_set_color_from_id(mix_dialog_id, ss->sgx->red);
-	      for_each_syncd_mix(mix_dialog_id, syncd_mix_set_color, NULL);
+	      syncd_mix_set_color(mix_dialog_id, ss->sgx->red);
 
 	      for_each_normal_chan(display_channel_mixes);
 
@@ -1061,3 +1088,6 @@ void mix_dialog_set_mix(int id)
   mix_dialog_id = id; 
   reflect_mix_change(mix_dialog_id);
 }
+
+
+/* TODO: amp-env, beg/end activate, play mix with sync */

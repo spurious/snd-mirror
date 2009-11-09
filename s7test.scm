@@ -7361,6 +7361,10 @@
 	      (v 1))
 	    0)
 
+      (let ()
+	(define (hiho a) __func__)
+	(test (hiho 1) 'hiho))
+
       (num-test (log 8 2) 3)
       (num-test (log -1 -1) 1.0)
       (num-test (log 1 1) 'error)
