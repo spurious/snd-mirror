@@ -1626,6 +1626,7 @@ void syncd_mix_set_color(int id, color_t col);
 void syncd_mix_unset_color(int id);
 void syncd_mix_set_amp(int id, mus_float_t amp);
 void syncd_mix_set_speed(int id, mus_float_t amp);
+void syncd_mix_set_amp_env(int id, env *e);
 void mix_unset_color_from_id(int id);
 color_t mix_set_color_from_id(int id, color_t new_color);
 

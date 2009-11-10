@@ -441,8 +441,15 @@ static void apply_mix_dialog_callback(Widget w, XtPointer context, XtPointer inf
   if (!(mix_is_active(mix_dialog_id))) return;
   if ((dialog_env) && 
       (!(default_env_p(dialog_env))))
-    mix_set_amp_env_edit(mix_dialog_id, dialog_env);
-  else mix_set_amp_env_edit(mix_dialog_id, NULL);
+    {
+      mix_set_amp_env_edit(mix_dialog_id, dialog_env);
+      syncd_mix_set_amp_env(mix_dialog_id, dialog_env);  
+    }
+  else 
+    {
+      mix_set_amp_env_edit(mix_dialog_id, NULL);
+      syncd_mix_set_amp_env(mix_dialog_id, NULL);  
+    }
   mix_amp_env_resize(w_env, NULL, NULL);
   after_mix_edit(mix_dialog_id);
 }
@@ -1090,4 +1097,4 @@ void mix_dialog_set_mix(int id)
 }
 
 
-/* TODO: amp-env, beg/end activate, play mix with sync */
+/* TODO: beg/end activate, play mix with sync */

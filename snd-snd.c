@@ -2399,14 +2399,12 @@ void call_sp_watchers(snd_info *sp, sp_watcher_t type, sp_watcher_reason_t reaso
  * remove with-mix and friends, also autosave.scm, also read-hook
  * all current "work procs" could be handled as separate threads
  * all multichannel parallel ops also threaded, and graphics updates, and playing
+ * if help dialog active show mix/mark info and help for current listener typing
+ * whenever drag/click show info in minibuffer, also mix-click info shows time etc
+ * check make-sampler with mix! -- let 1st arg be object, selection sampler
  *
  * make-vector! choices: any, 1 obj [any type], 1 obj: double -- do any others warrant special handling?
  * current sync-info as vector? (then selection = vector of sound objs)
- *
- * mix-selection (+), sel->0|1 ("_", "^"), smooth corners?
- *   same for mix, cut="x", "<" ">" to repos, 
- *
- *  arrow cursor here and perhaps reflect click
  */
 
 

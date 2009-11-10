@@ -1388,6 +1388,24 @@ bool mix_set_amp_env_edit(int id, env *e)
 }
 
 
+static void syncd_mix_set_amp_env_1(mix_info *md, void *e)
+{
+  mus_long_t beg, len;
+  env *amp_env = (env *)e;
+  mix_set_amp_env_edit(md->id, amp_env);
+  beg = mix_position_from_id(md->id);
+  len = mix_length_from_id(md->id);
+  mix_display_during_drag(md->id, beg, beg + len);
+}
+
+
+void syncd_mix_set_amp_env(int id, env *e)
+{
+  for_each_syncd_mix(id, syncd_mix_set_amp_env_1, (void *)e);
+}
+
+
+
 bool mix_set_position_edit(int id, mus_long_t pos)
 {
   mix_info *md;

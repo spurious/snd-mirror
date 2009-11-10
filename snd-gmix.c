@@ -561,8 +561,15 @@ static void apply_mix_dialog(GtkWidget *w, gpointer context)
 
   if ((dialog_env) && 
       (!(default_env_p(dialog_env))))
-    mix_set_amp_env_edit(mix_dialog_id, dialog_env);
-  else mix_set_amp_env_edit(mix_dialog_id, NULL);
+    {
+      mix_set_amp_env_edit(mix_dialog_id, dialog_env);
+      syncd_mix_set_amp_env(mix_dialog_id, dialog_env);  
+    }
+  else 
+    {
+      mix_set_amp_env_edit(mix_dialog_id, NULL);
+      syncd_mix_set_amp_env(mix_dialog_id, NULL);  
+    }
   after_mix_edit(mix_dialog_id);
   mix_amp_env_resize(w_env);
 }

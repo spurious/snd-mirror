@@ -496,7 +496,7 @@ If you get some complaint like
 
 try setting:
 
-    (set! mus-alsa-device "plughw:0")
+    (set! (mus-alsa-device) "plughw:0")
 
 then try playing again.  The "default" device is always completely
 broken.  

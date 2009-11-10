@@ -1327,7 +1327,6 @@ static XEN g_mix_selection(XEN beg, XEN snd, XEN chn, XEN sel_chan)
 
 static XEN g_selection_to_mix(void)
 {
-  /* TODO: test selection->mix */
   #define H_selection_to_mix "(" S_selection_to_mix "): turns the current selection into a mix"
   if (selection_is_active())
     {
@@ -1693,12 +1692,33 @@ XEN g_selection_srate(void)
 
 XEN g_selection_maxamp(XEN snd, XEN chn)
 {
-  #define H_selection_maxamp "(" S_selection_maxamp " :optional snd chn): selection maxamp in given channel"
-  chan_info *cp;
-  ASSERT_CHANNEL(S_selection_maxamp, snd, chn, 1);
-  cp = get_cp(snd, chn, S_selection_maxamp);
-  if (!cp) return(XEN_FALSE);
-  return(C_TO_XEN_DOUBLE(selection_maxamp(cp)));
+  #define H_selection_maxamp "(" S_selection_maxamp " :optional snd chn): selection maxamp in given channel, or overall maxamp if no args passed."
+  if (XEN_BOUND_P(snd))
+    {
+      chan_info *cp;
+      ASSERT_CHANNEL(S_selection_maxamp, snd, chn, 1);
+      cp = get_cp(snd, chn, S_selection_maxamp);
+      if (!cp) return(XEN_FALSE);
+      return(C_TO_XEN_DOUBLE(selection_maxamp(cp)));
+    }
+  else
+    {
+      mus_float_t mx = 0.0;
+      int i;
+      sync_info *si;
+      si = selection_sync();
+      if (!si)
+	return(C_TO_XEN_DOUBLE(0.0)); /* no selection -- error? */
+      for (i = 0; i < si->chans; i++)
+	{
+	  mus_float_t cur_mx;
+	  cur_mx = selection_maxamp(si->cps[i]);
+	  if (cur_mx > mx)
+	    mx = cur_mx;
+	}
+      free_sync_info(si);
+      return(C_TO_XEN_DOUBLE(mx));
+    }
 }
 
 

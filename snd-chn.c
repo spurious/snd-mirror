@@ -5180,10 +5180,25 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 						 XEN_LIST_1(new_xen_mark(mark_to_int(mouse_mark))),
 						 S_mark_click_hook);
 			  if (!(XEN_TRUE_P(res)))
-			    report_in_minibuffer(sp, _("mark %d at sample " MUS_LD), 
-						 mark_to_int(mouse_mark), 
-						 mark_sample(mouse_mark));
-			  /* TODO: make mark click more useful! -- mark-click-info in marks.scm */
+			    {
+			      mus_long_t samp;
+			      int sync;
+			      samp = mark_sample(mouse_mark);
+			      sync = mark_sync(mouse_mark);
+			      if (sync == 0)
+				report_in_minibuffer(sp, _("mark %d at sample " MUS_LD " (%3f secs): %3f"), 
+						     mark_to_int(mouse_mark), 
+						     samp,
+						     (double)samp / (double)(SND_SRATE(sp)),
+						     chn_sample(samp, cp, cp->edit_ctr));
+			      else
+				report_in_minibuffer(sp, _("mark %d at sample " MUS_LD " (%3f secs): %3f, (sync: %d)"), 
+						     mark_to_int(mouse_mark), 
+						     samp,
+						     (double)samp / (double)(SND_SRATE(sp)),
+						     chn_sample(samp, cp, cp->edit_ctr),
+						     sync);
+			    }
 			}
 		      else
 			{
@@ -6705,7 +6720,31 @@ static XEN g_maxamp(XEN snd, XEN chn_n, XEN edpos)
       cp_edpos_loc = NOT_A_GC_LOC;
       return(res);
     }
-  return(channel_get(snd, chn_n, CP_MAXAMP, S_maxamp));
+  
+  if ((XEN_BOUND_P(chn_n)) ||
+      (XEN_TRUE_P(snd)))
+    return(channel_get(snd, chn_n, CP_MAXAMP, S_maxamp));
+
+  ASSERT_SOUND(S_maxamp, snd, 0);
+  {
+    snd_info *sp;
+    sp = get_sp(snd);
+    if (sp)
+      {
+	int i;
+	mus_float_t mx = 0.0;
+	for (i = 0; i < sp->nchans; i++)
+	  {
+	    mus_float_t cur_mx;
+	    cur_mx = channel_maxamp(sp->chans[i], sp->chans[i]->edit_ctr);
+	    if (cur_mx > mx)
+	      mx = cur_mx;
+	  }
+	return(C_TO_XEN_DOUBLE(mx));
+      }
+    else snd_no_such_sound_error(S_maxamp, snd); 
+  }
+  return(XEN_ZERO);
 }
 
 static XEN g_set_maxamp(XEN on, XEN snd, XEN chn_n) 

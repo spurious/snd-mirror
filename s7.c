@@ -9047,7 +9047,8 @@ static char *s7_atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
 
 bool s7_is_valid_pointer(s7_pointer arg)
 {
-  return((type(arg) > T_UNTYPED) && (type(arg) < BUILT_IN_TYPES));
+  return((arg) &&
+	 (type(arg) > T_UNTYPED) && (type(arg) < BUILT_IN_TYPES));
 }
 
 

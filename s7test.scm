@@ -7363,7 +7363,9 @@
 
       (let ()
 	(define (hiho a) __func__)
-	(test (hiho 1) 'hiho))
+	(test (or (equal? (hiho 1) 'hiho)
+		  (equal? (car (hiho 1)) 'hiho))
+	      #t))
 
       (num-test (log 8 2) 3)
       (num-test (log -1 -1) 1.0)

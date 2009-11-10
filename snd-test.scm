@@ -1,35 +1,35 @@
 ;;; Snd tests
 ;;;
-;;;  test 0: constants                           [636]
-;;;  test 1: defaults                            [1219]
-;;;  test 2: headers                             [1418]
-;;;  test 3: variables                           [1735]
-;;;  test 4: sndlib                              [2369]
-;;;  test 5: simple overall checks               [5100]
-;;;  test 6: vcts                                [13973]
-;;;  test 7: colors                              [14358]
-;;;  test 8: clm                                 [14855]
-;;;  test 9: mix                                 [26743]
-;;;  test 10: marks                              [28956]
-;;;  test 11: dialogs                            [29917]
-;;;  test 12: extensions                         [30138]
-;;;  test 13: menus, edit lists, hooks, etc      [30409]
-;;;  test 14: all together now                   [32022]
-;;;  test 15: chan-local vars                    [32952]
-;;;  test 16: regularized funcs                  [34770]
-;;;  test 17: dialogs and graphics               [39838]
-;;;  test 18: enved                              [39930]
-;;;  test 19: save and restore                   [39949]
-;;;  test 20: transforms                         [41725]
-;;;  test 21: new stuff                          [43916]
-;;;  test 22: run                                [45927]
-;;;  test 23: with-sound                         [52742]
-;;;  test 25: X/Xt/Xm                            [57293]
-;;;  test 26: Gtk                                [61063]
-;;;  test 27: GL                                 [64619]
-;;;  test 28: errors                             [64743]
-;;;  test all done                               [67246]
-;;;  test the end                                [67456]
+;;;  test 0: constants                           [631]
+;;;  test 1: defaults                            [1214]
+;;;  test 2: headers                             [1413]
+;;;  test 3: variables                           [1730]
+;;;  test 4: sndlib                              [2364]
+;;;  test 5: simple overall checks               [5104]
+;;;  test 6: vcts                                [14169]
+;;;  test 7: colors                              [14553]
+;;;  test 8: clm                                 [15050]
+;;;  test 9: mix                                 [26956]
+;;;  test 10: marks                              [29169]
+;;;  test 11: dialogs                            [30135]
+;;;  test 12: extensions                         [30356]
+;;;  test 13: menus, edit lists, hooks, etc      [30627]
+;;;  test 14: all together now                   [32240]
+;;;  test 15: chan-local vars                    [33170]
+;;;  test 16: regularized funcs                  [34988]
+;;;  test 17: dialogs and graphics               [40056]
+;;;  test 18: enved                              [40148]
+;;;  test 19: save and restore                   [40167]
+;;;  test 20: transforms                         [41943]
+;;;  test 21: new stuff                          [44133]
+;;;  test 22: run                                [46141]
+;;;  test 23: with-sound                         [52933]
+;;;  test 25: X/Xt/Xm                            [57483]
+;;;  test 26: Gtk                                [61253]
+;;;  test 27: GL                                 [64796]
+;;;  test 28: errors                             [64920]
+;;;  test all done                               [67432]
+;;;  test the end                                [67619]
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs))
 
@@ -14038,12 +14038,15 @@ EDITS: 2
     (for-each close-sound (sounds))
     (let ((snd (open-sound "oboe.snd")))
       (make-selection 1000 2000 snd 0)
+      (if (not (selection?)) (snd-display ";make-selection for copy failed?"))
       (copy (selection))
       (let* ((r1 (make-sampler 1000 snd 0))
 	     (snds (sounds))
-	     (sel (if (eq? (car snds) snd) (cadr snds) (car snds)))
+	     (sel (if (equal? (car snds) snd) (cadr snds) (car snds)))
 	     (r2 (make-sampler 0 sel 0))
 	     (happy #t))
+	(if (equal? sel snd)
+	    (snd-display ";very weird: ~A equal? ~A from ~A (~A ~A ~A)" sel snd snds (car snds) (cadr snds) (equal? (car snds) snd)))
 	(do ((i 0 (+ i 1)))
 	    ((or (not happy)
 		 (= i 1000)))
@@ -14052,10 +14055,10 @@ EDITS: 2
 	    (if (> (abs (- v1 v2)) .0001)
 		(begin
 		  (set! happy #f)
-		  (snd-display ";copied selection not equal? pos: ~A, ~A ~A" i v1 v2)))))
+		  (snd-display ";copied selection not equal? pos: ~A, ~A ~A (~A ~A from ~A)" i v1 v2 sel snd snds)))))
 	(close-sound sel)
 	(if (not (selection?))
-	    (snd-display ";copy selection unselected?")
+	    (snd-display ";copy selection unselected? ~A" (sounds))
 	    (begin
 	      (fill! (selection) 0.0)
 	      (let ((r1 (make-sampler 1000 snd 0))
@@ -14083,8 +14086,86 @@ EDITS: 2
 			      (begin
 				(set! happy #f)
 				(snd-display ";fill! selection not 0.3? pos: ~A, ~A" i v1)))))))))))
-      (close-sound snd))
+      (for-each close-sound (sounds)))
     
+    (let ((snd (open-sound "oboe.snd")))
+      (make-selection 1000 2000 snd 0)
+      (if (not (selection?)) 
+	  (snd-display ";make-selection failed?")
+	  (let ((sel-max (maxamp (selection)))
+		(sel-len (length (selection))))
+	    (let ((mx (car (selection->mix))))
+	      (if (not (mix? mx))
+		  (snd-display ";selection->mix: ~A" mx)
+		  (let ((mx-rd (make-mix-sampler mx 0))
+			(snd-rd (make-sampler 1000 snd 0))
+			(orig-rd (make-sampler 1000 snd 0 1 0)))
+		    (let ((happy #t))
+		      (do ((i 0 (+ i 1)))
+			  ((or (not happy) 
+			       (= i 1000)))
+			(let ((mx-val (mx-rd))
+			      (snd-val (snd-rd))
+			      (orig-val (orig-rd)))
+			  (if (or (fneq mx-val snd-val)
+				  (fneq snd-val orig-val))
+			      (begin
+				(set! happy #f)
+				(snd-display ";selection->mix at ~A: ~A ~A ~A" (+ i 1000) mx-val snd-val orig-val))))))
+		    (if (not (= (length mx) sel-len 1001)) (snd-display ";selection->mix mix length: ~A (~A)" (length mx) sel-len))
+		    (if (fneq (maxamp mx) sel-max) (snd-display ";selection->mix maxamps: ~A ~A" (maxamp mx) sel-max)))))))
+      (for-each close-sound (sounds)))
+    
+    (let ((snd (open-sound "2.snd")))
+      (set! (sync snd) 1)
+      ;; make-selection claims it follows the sync field
+      (make-selection 2000 3000 snd)
+      (if (not (selection?)) 
+	  (snd-display ";make-selection (2) failed?")
+	  (let ((sel-max (maxamp (selection)))
+		(sel-len (length (selection)))
+		(sel-chns (channels (selection))))
+	    (if (not (= sel-chns 2)) (snd-display ";make-selection stereo syncd chans: ~A" sel-chns))
+	    (if (not (= sel-len 1001)) (snd-display ";make-selection stereo length: ~A" sel-len))
+	    (let* ((mx-list (selection->mix))
+		   (mx0 (car mx-list))
+		   (mx1 (cadr mx-list)))
+	      (if (or (not (mix? mx0))
+		      (not (mix? mx1)))
+		  (snd-display ";selection->mix stereo: ~A ~A" mx0 mx1)
+		  (let ((mx0-rd (make-mix-sampler mx0 0))
+			(mx1-rd (make-mix-sampler mx1 0))
+			(snd0-rd (make-sampler 2000 snd 0))
+			(snd1-rd (make-sampler 2000 snd 1))
+			(orig0-rd (make-sampler 2000 snd 0 1 0))
+			(orig1-rd (make-sampler 2000 snd 1 1 0)))
+		    (let ((happy #t))
+		      (do ((i 0 (+ i 1)))
+			  ((or (not happy) 
+			       (= i 1000)))
+			(let ((mx0-val (mx0-rd))
+			      (mx1-val (mx1-rd))
+			      (snd0-val (snd0-rd))
+			      (snd1-val (snd1-rd))
+			      (orig0-val (orig0-rd))
+			      (orig1-val (orig1-rd)))
+			  (if (or (fneq mx0-val snd0-val)
+				  (fneq snd0-val orig0-val))
+			      (begin
+				(set! happy #f)
+				(snd-display ";selection->mix stereo 0 at ~A: ~A ~A ~A" (+ i 2000) mx0-val snd0-val orig0-val)))
+			  (if (or (fneq mx1-val snd1-val)
+				  (fneq snd1-val orig1-val))
+			      (begin
+				(set! happy #f)
+				(snd-display ";selection->mix stereo 1 at ~A: ~A ~A ~A" (+ i 2000) mx1-val snd1-val orig1-val))))))))
+	      
+	      (if (not (= (length mx0) (length mx1) sel-len 1001))
+		  (snd-display ";selection->mix stereo mix length: ~A ~A (~A)" (length mx0) (length mx1) sel-len))
+	      (if (fneq (max (maxamp mx0) (maxamp mx1)) sel-max) 
+		  (snd-display ";selection->mix stereo maxamps: ~A ~A ~A" (maxamp mx0) (maxamp mx1) sel-max)))))
+      (for-each close-sound (sounds)))
+
     (clear-save-state-files)))
 	
   
@@ -44572,7 +44653,6 @@ EDITS: 1
 		(list min-dB 'min-dB ind-1 ind-2 -100.0 (lambda (a b) (< (abs (- a b)) .01)) feql #t #t)
 		(list x-position-slider 'x-position-slider ind-1 ind-2 .1 (lambda (a b) (< (abs (- a b)) .01)) feql #t #f)
 		
-		(list maxamp 'maxamp ind-1 ind-2 1.0 (lambda (a b) (< (abs (- a b)) .01)) feql #t #f)
 		(list y-position-slider 'y-position-slider ind-1 ind-2 0.5 (lambda (a b) (< (abs (- a b)) .01)) feql #t #f)
 		(list x-zoom-slider 'x-zoom-slider ind-1 ind-2 0.2 (lambda (a b) (< (abs (- a b)) .01)) feql #t #f)
 		(list y-zoom-slider 'y-zoom-slider ind-1 ind-2 0.2 (lambda (a b) (< (abs (- a b)) .01)) feql #t #f)

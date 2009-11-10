@@ -5808,6 +5808,7 @@ See also <a href="sndscm.html#makeselection">make-selection</a>.
 <tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="selectionmaxamp">selection-maxamp</a> (:optional snd chn)</code>
 </td></tr><tr><td></td><td>
 selection-maxamp returns the peak amplitude of the selection in the given channel.
+If no arguments are passed, selection-maxamp returns the overall selection maxamp.
 I use this to provide a view of the selection amplitude envelope in the envelope editor.  If you select
 'selection' and 'wave' in that dialog, it displays a copy of whatever is in the main channel graph,
 so to get a display that makes it easy to "connect the dots", I use C-x m:
@@ -7516,7 +7517,8 @@ the preceding edit in the list will be the <code>(set! (<a class=quiet href="#sa
 <tr><td colspan=2 bgcolor="#f2f4ff">
 <code><a class=def name="maxamp">maxamp</a> (:optional <em class=narg>snd chn</em> edpos)</code>
 </td></tr><tr><td></td><td>
-This returns the max amp of the given channel.  Used with set!, it is equivalent to <a class=quiet href="#scaleto" onmouseout="UnTip()" onmouseover="Tip(extsnd_scaleto_tip)">scale-to</a>.
+This returns the max amp of the given channel, or the overall maxamp of snd if no channel argument is given.
+Used with set!, it is equivalent to <a class=quiet href="#scaleto" onmouseout="UnTip()" onmouseover="Tip(extsnd_scaleto_tip)">scale-to</a>.
 
 <table border=0 cellpadding=5 vspace=10><tr><td><pre>
 (define (maxamp-all)
