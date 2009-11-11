@@ -5318,6 +5318,7 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, oclock_t time)
   if (mouse_mark)
     {
       move_mark(cp, mouse_mark, x);
+      report_in_minibuffer(sp, "%.4f", ungrf_x(cp->axis, x));
       dragged = true;
     }
   else
@@ -5368,6 +5369,9 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, oclock_t time)
 	    case CLICK_MIX:
 	    case CLICK_MARK:
 	    case CLICK_WAVE:
+	      if (dragged) 
+		report_in_minibuffer(sp, "%.4f", ungrf_x(cp->axis, x));
+
 	      if (mix_tag != NO_MIX_TAG)
 		{
 		  move_mix_tag(mix_tag, x, y);

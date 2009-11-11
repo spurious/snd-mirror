@@ -531,9 +531,7 @@ static void mix_sync_callback(Widget w, XtPointer context, XtPointer info)
 	  mix_set_sync_from_id(mix_dialog_id, 0);
 	}
     }
-  /* TODO: if others share sync, show them somehow 
-              ideally we'd how the current mix in a different color -- use that for syncd cases
-   */
+  /* TODO: make sure sync setting is reflected in colors */
 }
 
 

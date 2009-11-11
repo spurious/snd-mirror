@@ -2342,7 +2342,7 @@ void call_sp_watchers(snd_info *sp, sp_watcher_t type, sp_watcher_reason_t reaso
 
 /* this is my long term plan right now... */
 
-/* generics (besides length, srate, channels, frames, file-name, sync, maxamp, play, copy, fill!):
+/* generics (besides length, srate, channels, frames, file-name, sync, maxamp, [play], copy, fill!, [apply], [set!], [for-each[, [map]):
  *
  *             source:         procedure-source[s7_procedure_source] mix-home mark-home region-home player-home sampler-home
  *                               mus cases: readin=file+chan? etc, port -> filename?, sound->filename?
@@ -2361,7 +2361,7 @@ void call_sp_watchers(snd_info *sp, sp_watcher_t type, sp_watcher_reason_t reaso
  *             reverse save find insert delete describe read write mix append [open and close?] member
  *             reverse mix append member: these exist already and could just be extended 
  *
- *             scale(-to|by) convolve fft env filter insert mix reverse save smooth src copy|fill! map|scan pan-mix
+ *             scale(-to|by) convolve fft env filter insert mix reverse save smooth src map|scan pan-mix
  *               sampler? replace-with?
  *
  * TODO: doc/test/cleanup play (mix region selection sound file player)
@@ -2374,7 +2374,9 @@ void call_sp_watchers(snd_info *sp, sp_watcher_t type, sp_watcher_reason_t reaso
  *               vct(vct), hook(xen), XmObj(xm, xg), plus the base types(s7): string hash-table vector pair object, else arg
  *               which means that promise (for example) is not copied (and what about builtin things like bignum, random-state etc)?
  *    also needed are further cases of ref/set
- * 
+ *    ref needed: mix? region selection sound
+ *    set needed: selection? sound 
+ *
  * (scan-channel -> channel-for-each)
  *   and channel-map rather than map-channel
  *   channel-for-each in the multiarg case would make it easier to compare chans 
@@ -2399,12 +2401,9 @@ void call_sp_watchers(snd_info *sp, sp_watcher_t type, sp_watcher_reason_t reaso
  * remove with-mix and friends, also autosave.scm, also read-hook
  * all current "work procs" could be handled as separate threads
  * all multichannel parallel ops also threaded, and graphics updates, and playing
- * if help dialog active show mix/mark info and help for current listener typing
- * whenever drag/click show info in minibuffer, also mix-click info shows time etc
- * check make-sampler with mix! -- let 1st arg be object, selection sampler
- *
+ * TODO: if help dialog active show mix/mark info and help for current listener typing
+ * TODO: make-sampler with mix etc -- let 1st arg be object, also add selection sampler
  * make-vector! choices: any, 1 obj [any type], 1 obj: double -- do any others warrant special handling?
- * current sync-info as vector? (then selection = vector of sound objs)
  */
 
 
