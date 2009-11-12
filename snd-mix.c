@@ -522,6 +522,7 @@ static mix_state *ed_mix_state(ed_list *ed, int mix_id)
 /* these are the nominally unchanging fields in a mix (they don't follow the edit lists) */
 
 #define MIX_TAG_ERASED -1
+#define ORIGINAL_SYNC_UNSET -1
 
 typedef struct {
   int id;
@@ -532,7 +533,7 @@ typedef struct {
   mus_long_t in_samps;
   int in_chan;
   int tag_x, tag_y;
-  int sync;
+  int sync, original_sync;
   file_delete_t temporary;     /* in-filename was written by us and needs to be deleted when mix state is deleted */
   peak_env_info *peak_env;
   XEN properties;
@@ -776,6 +777,8 @@ static mix_info *make_mix_info(chan_info *cp)
   md->peak_env = NULL;
   md->properties_gc_loc = NOT_A_GC_LOC;
   md->properties = XEN_FALSE;
+  md->sync = 0;
+  md->original_sync = ORIGINAL_SYNC_UNSET;
   return(md);
 }
 
@@ -1028,7 +1031,25 @@ int mix_set_sync_from_id(int id, int new_sync)
   md = md_from_id(id);
   if (md)
     {
-      if (new_sync == -1) new_sync = current_mix_sync_max + 1;
+      if (new_sync == GET_NEW_SYNC) 
+	{
+	  new_sync = current_mix_sync_max + 1;
+	  md->original_sync = new_sync;
+	}
+      else
+	{
+	  if (new_sync == GET_ORIGINAL_SYNC)
+	    {
+	      if (md->original_sync == ORIGINAL_SYNC_UNSET)
+		new_sync = current_mix_sync_max + 1;
+	      else new_sync = md->original_sync;
+	    }
+	  else
+	    {
+	      if (new_sync != 0)
+		md->original_sync = new_sync;
+	    }
+	}
 
       md->sync = new_sync;
       if (new_sync > current_mix_sync_max)
@@ -2281,6 +2302,26 @@ void move_mix_tag(int mix_id, int x, int y)
 }
 
 
+static void syncd_mix_set_position_1(mix_info *md, void *data)
+{
+  move_mix_data *mmd = (move_mix_data *)data;
+  mix_set_position_edit(md->id, mmd->beg);
+  CURSOR(md->cp) = mmd->beg;
+  after_edit(md->cp);
+  update_graph(md->cp);
+}
+
+
+void syncd_mix_set_position(int mix_id, mus_long_t pos)
+{
+  move_mix_data *pos_data;
+  pos_data = (move_mix_data *)malloc(sizeof(move_mix_data));
+  pos_data->beg = pos;
+  for_each_syncd_mix(mix_id, syncd_mix_set_position_1, pos_data);
+  free(pos_data);
+}
+
+
 void finish_moving_mix_tag(int mix_id, int x)
 {
   /* from mouse release after tag drag in snd-chn.c only */
@@ -2326,29 +2367,9 @@ void finish_moving_mix_tag(int mix_id, int x)
 			     *   and we have to run lisp/fft graphs in any case (and the hook),
 			     *   but display_channel_data_1 erases the old graph, so it's hard to specialize for this case
 			     */
-
-	  {
-	    int i, sync;
-	    sync = mix_sync_from_id(mix_id);
-	    if (sync != 0)
-	      {
-		for (i = 0; i < mix_infos_ctr; i++)
-		  if ((i != mix_id) && (mix_is_active(i)))
-		    {
-		      mix_info *md;
-		      md = mix_infos[i];
-		      if ((md) && (md->sync == sync))
-			{
-			  mix_set_position_edit(i, pos); /* needs offset if any */
-			  CURSOR(md->cp) = pos;
-			  after_edit(md->cp);
-			  update_graph(md->cp);
-			}
-		    }
-		}
-	    }
-      }
-  }
+	  syncd_mix_set_position(mix_id, pos);
+	}
+    }
 }
 
 
@@ -3541,7 +3562,7 @@ static XEN g_set_mix_dialog_mix(XEN val)
 }
 
 
-static bool play_mix(mix_info *md, mus_long_t beg)
+static bool play_mix(mix_info *md, mus_long_t beg, bool start_playing)
 {
   mix_state *ms;
   ms = current_mix_state(md);
@@ -3552,8 +3573,21 @@ static bool play_mix(mix_info *md, mus_long_t beg)
 	ms = ed_mix_state(md->cp->edits[i], md->id);
     }
   if (ms)
-    return(add_mix_to_play_list(ms, md->cp, beg));
+    return(add_mix_to_play_list(ms, md->cp, beg, start_playing));
   return(false);
+}
+
+
+static void syncd_mix_play_1(mix_info *md, void *ignore)
+{
+  play_mix(md, 0, false);
+}
+
+
+void syncd_mix_play(int id)
+{
+  /* add any syncd mixes to the play list (started later) */
+  for_each_syncd_mix(id, syncd_mix_play_1, NULL);
 }
 
 
@@ -3571,7 +3605,7 @@ XEN g_play_mix(XEN num, XEN beg)
   ASSERT_SAMPLE_TYPE(S_play_mix, beg, XEN_ARG_2);
   samp = beg_to_sample(beg, S_play_mix);
 
-  play_mix(md, samp); 
+  play_mix(md, samp, true); 
   return(num);
 }
 
@@ -3581,7 +3615,7 @@ bool play_mix_from_id(int mix_id)
   mix_info *md;
   md = md_from_id(mix_id);
   if (md)
-    return(play_mix(md, 0));
+    return(play_mix(md, 0, true));
   return(false);
 }
 

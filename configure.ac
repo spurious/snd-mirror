@@ -1570,7 +1570,6 @@ if test $GUILE_CONFIG_works = yes; then
   if test "`${GUILE_CONFIG_path}${GUILE_name} -c '(display (string>=? (version) "1.3.4"))'`" != "#t"; then
     AC_MSG_WARN(Snd needs Guile 1.3.4 or later)
     AC_DEFINE(HAVE_GUILE,0)
-#    AC_DEFINE(HAVE_EXTENSION_LANGUAGE,0)
   else
     AC_SUBST(XEN_CFLAGS)
     if test "$XM_LIBS" = ""; then

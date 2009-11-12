@@ -635,6 +635,7 @@ static void stop_playing_with_toggle(dac_info *dp, dac_toggle_t toggle, with_hoo
   else sp = NULL; /* don't free it as a player below */
   play_list[dp->slot] = NULL;
   play_list_members--;
+
   if (toggle == WITH_TOGGLE) 
     {
       switch (dp->type)
@@ -656,6 +657,7 @@ static void stop_playing_with_toggle(dac_info *dp, dac_toggle_t toggle, with_hoo
 	  break;
 	}
     }
+
   if (dp->slot == max_active_slot) max_active_slot--;
   if (with_hook == WITH_HOOK)
     {
@@ -1138,7 +1140,7 @@ void play_region(int region, play_process_t background)
 }
 
 
-bool add_mix_to_play_list(mix_state *ms, chan_info *cp, mus_long_t beg_within_mix)
+bool add_mix_to_play_list(mix_state *ms, chan_info *cp, mus_long_t beg_within_mix, bool start_playing)
 {
   int slot;
   slot = find_slot_to_play();
@@ -1153,7 +1155,8 @@ bool add_mix_to_play_list(mix_state *ms, chan_info *cp, mus_long_t beg_within_mi
 	  if (dp)
 	    {
 	      dp->mix_id = ms->index; /* any valid mix id will do */
-	      start_dac(SND_SRATE(cp->sound), 1, NOT_IN_BACKGROUND, DEFAULT_REVERB_CONTROL_DECAY);
+	      if (start_playing)
+		start_dac(SND_SRATE(cp->sound), 1, NOT_IN_BACKGROUND, DEFAULT_REVERB_CONTROL_DECAY);
 	      return(true);
 	    }
 	}

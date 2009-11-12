@@ -1227,7 +1227,7 @@ void play_sound(snd_info *sp, mus_long_t start, mus_long_t end);
 void play_channels(chan_info **cps, int chans, mus_long_t *starts, mus_long_t *ur_ends, 
 		   play_process_t background, XEN edpos, bool selection, const char *caller, int arg_pos);
 void play_selection(play_process_t background);
-bool add_mix_to_play_list(mix_state *ms, chan_info *cp, mus_long_t beg_within_mix);
+bool add_mix_to_play_list(mix_state *ms, chan_info *cp, mus_long_t beg_within_mix, bool start_playing);
 void toggle_dac_pausing(void); /* snd-dac.c */
 bool play_in_progress(void);
 void initialize_apply(snd_info *sp, int chans, mus_long_t beg, mus_long_t frames);
@@ -1627,6 +1627,8 @@ void syncd_mix_unset_color(int id);
 void syncd_mix_set_amp(int id, mus_float_t amp);
 void syncd_mix_set_speed(int id, mus_float_t amp);
 void syncd_mix_set_amp_env(int id, env *e);
+void syncd_mix_set_position(int mix_id, mus_long_t pos);
+void syncd_mix_play(int id);
 void mix_unset_color_from_id(int id);
 color_t mix_set_color_from_id(int id, color_t new_color);
 

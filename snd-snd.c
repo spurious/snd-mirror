@@ -2342,7 +2342,7 @@ void call_sp_watchers(snd_info *sp, sp_watcher_t type, sp_watcher_reason_t reaso
 
 /* this is my long term plan right now... */
 
-/* generics (besides length, srate, channels, frames, file-name, sync, maxamp, [play], copy, fill!, [apply], [set!], [for-each[, [map]):
+/* generics (besides length, srate, channels, frames, file-name, sync, maxamp, [play], copy, fill!, [apply], [set!], [for-each], [map]):
  *
  *             source:         procedure-source[s7_procedure_source] mix-home mark-home region-home player-home sampler-home
  *                               mus cases: readin=file+chan? etc, port -> filename?, sound->filename?
@@ -2398,7 +2398,7 @@ void call_sp_watchers(snd_info *sp, sp_watcher_t type, sp_watcher_reason_t reaso
  *   (hash-table makes more sense as a property list than a list in large cases) -- currently it's actually a vector
  *   or a global data base for all properties? -- easy to search or display in various ways
  *
- * remove with-mix and friends, also autosave.scm, also read-hook
+ * remove autosave.scm, also read-hook
  * all current "work procs" could be handled as separate threads
  * all multichannel parallel ops also threaded, and graphics updates, and playing
  * TODO: if help dialog active show mix/mark info and help for current listener typing

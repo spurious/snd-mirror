@@ -616,6 +616,7 @@
 (if (not (provided? 'snd-snd8.scm)) (load "snd8.scm")) ; samples->sound-data
 (if (not (provided? 'snd-snd9.scm)) (load "snd9.scm")) ; make-ppolar|zpolar, various generators later moved to generators.scm
 (if (not (provided? 'snd-snd10.scm)) (load "snd10.scm"))
+(if (not (provided? 'snd-snd11.scm)) (load "snd11.scm"))
 
 					;(define widvardpy (make-variable-display "do-loop" "i*2" 'graph))
 

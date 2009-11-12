@@ -2777,11 +2777,8 @@ static void gl_display(chan_info *cp)
   else glFlush();
 }
 
-#if USE_CAIRO
-  #define GL_COLOR_SET(R, G, B) glColor3d(R, G, B)
-#else
-  #define GL_COLOR_SET(R, G, B) glColor3us(R, G, B)
-#endif
+
+#define GL_COLOR_SET(R, G, B) glColor3us(R, G, B)
 
 static void gl_spectrogram(sono_info *si, int gl_fft_list, mus_float_t cutoff, bool use_dB, mus_float_t min_dB,
 			   rgb_t br, rgb_t bg, rgb_t bb)

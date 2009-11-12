@@ -246,6 +246,9 @@ typedef enum {NO_X_AXIS, WITH_X_AXIS} with_x_axis_t;
 typedef enum {NO_GRID, WITH_GRID} with_grid_t;
 typedef enum {WITH_LINEAR_AXES, WITH_LOG_X_AXIS, WITH_LOG_Y_AXIS} log_axis_t;
 
+#define GET_NEW_SYNC -1
+#define GET_ORIGINAL_SYNC -2
+
 #define OVER_SELECTION true
 #define OVER_SOUND false
 

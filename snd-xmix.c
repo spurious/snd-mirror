@@ -146,7 +146,7 @@ static void speed_drag_callback(Widget w, XtPointer context, XtPointer info)
   if (drag_end < end) drag_end = end;
 
   mix_display_during_drag(mix_dialog_id, drag_beg, drag_end);
-  syncd_mix_set_speed(mix_dialog_id, speed); /* TODO: need beg and end here as well */
+  syncd_mix_set_speed(mix_dialog_id, speed);
 }
 
 
@@ -428,7 +428,12 @@ static void beg_activated(void)
       beg = string_to_mus_float_t(up_to_colon, 0.0, "begin time");
       redirect_errors_to(NULL, NULL);
       if (beg >= 0.0)
-	mix_set_position_edit(mix_dialog_id, (mus_long_t)(beg * SND_SRATE(cp->sound)));
+	{
+	  mus_long_t pos;
+	  pos = (mus_long_t)(beg * SND_SRATE(cp->sound));
+	  mix_set_position_edit(mix_dialog_id, pos);
+	  syncd_mix_set_position(mix_dialog_id, pos);
+	}
       after_mix_edit(mix_dialog_id);
       free(up_to_colon);
       XtFree(val);
@@ -452,6 +457,11 @@ static void apply_mix_dialog_callback(Widget w, XtPointer context, XtPointer inf
     }
   mix_amp_env_resize(w_env, NULL, NULL);
   after_mix_edit(mix_dialog_id);
+}
+
+
+static void copy_mix_dialog_callback(Widget w, XtPointer context, XtPointer info) 
+{
 }
 
 
@@ -481,7 +491,7 @@ static void help_mix_dialog_callback(Widget w, XtPointer context, XtPointer info
 }
 
 
-/* -------- mix play -------- */
+/* -------- play -------- */
 
 static bool mix_playing = false;
 
@@ -500,12 +510,16 @@ static void mix_dialog_play_callback(Widget w, XtPointer context, XtPointer info
   else
     {
       if (!(mix_exists(mix_dialog_id))) return;
-      mix_playing = play_mix_from_id(mix_dialog_id);
-      if ((mix_play) && (mix_playing))
-	XmChangeColor(mix_play, ss->sgx->pushed_button_color);
+      if (mix_play)
+	XmChangeColor(mix_play, ss->sgx->pushed_button_color); /* this needs to happen before trying to play */
+      syncd_mix_play(mix_dialog_id);
+      mix_playing = true;                                      /* don't use the return value here */
+      play_mix_from_id(mix_dialog_id);
     }
 }
 
+
+/* -------- dB -------- */
 
 static void mix_dB_callback(Widget w, XtPointer context, XtPointer info)
 {
@@ -515,25 +529,32 @@ static void mix_dB_callback(Widget w, XtPointer context, XtPointer info)
 }
 
 
+/* -------- sync -------- */
+
 static void mix_sync_callback(Widget w, XtPointer context, XtPointer info)
 {
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info; 
   if ((cb->set) &&
       (mix_sync_from_id(mix_dialog_id) == 0))
     {
-      mix_set_sync_from_id(mix_dialog_id, -1); /* -1 -> choose a new sync val */
+      mix_set_sync_from_id(mix_dialog_id, GET_ORIGINAL_SYNC);  /* choose a new sync val or return to previous */
+      /* check for resync */
+      syncd_mix_set_color(mix_dialog_id, ss->sgx->red);
     }
   else
     {
       if ((!(cb->set)) &&
 	  (mix_sync_from_id(mix_dialog_id) != 0))
 	{
+	  syncd_mix_unset_color(mix_dialog_id); /* unset colors of any syncd mixes */
 	  mix_set_sync_from_id(mix_dialog_id, 0);
 	}
     }
-  /* TODO: make sure sync setting is reflected in colors */
+  for_each_normal_chan(display_channel_mixes);
 }
 
+
+/* -------- clip -------- */
 
 static void mix_clip_callback(Widget w, XtPointer context, XtPointer info)
 {
@@ -543,6 +564,8 @@ static void mix_clip_callback(Widget w, XtPointer context, XtPointer info)
 }
 
 
+/* -------- wave -------- */
+
 static void mix_wave_callback(Widget w, XtPointer context, XtPointer info)
 {
   XmToggleButtonCallbackStruct *cb = (XmToggleButtonCallbackStruct *)info; 
@@ -550,6 +573,8 @@ static void mix_wave_callback(Widget w, XtPointer context, XtPointer info)
   mix_amp_env_resize(w_env, NULL, NULL);
 }
 
+
+/* -------- next/previous -------- */
 
 static Widget nextb, previousb;
 
@@ -628,8 +653,8 @@ Widget make_mix_dialog(void)
   if (mix_dialog == NULL)
     {
       Widget mainform, mix_row, mix_frame, sep, w_sep1;
-      Widget w_dB_frame, w_dB, w_clip, w_wave, w_dB_row;
-      XmString xdismiss, xhelp, xtitle, s1, xapply;
+      Widget w_dB_frame, w_dB, w_clip, w_wave, w_dB_row, env_button;
+      XmString xdismiss, xhelp, xtitle, s1, xcopy;
       int n;
       Arg args[20];
       XtCallbackList n1, n2;
@@ -640,14 +665,14 @@ Widget make_mix_dialog(void)
 
       mix_dialog_id = any_mix_id();
       xdismiss = XmStringCreateLocalized(_("Go Away"));
-      xapply = XmStringCreateLocalized(_("Apply Env"));
+      xcopy = XmStringCreateLocalized(_("Copy mix"));
       xhelp = XmStringCreateLocalized(_("Help"));
       xtitle = XmStringCreateLocalized(_("Mixes"));
 
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNokLabelString, xdismiss); n++;
-      XtSetArg(args[n], XmNcancelLabelString, xapply); n++;
+      XtSetArg(args[n], XmNcancelLabelString, xcopy); n++;
       XtSetArg(args[n], XmNhelpLabelString, xhelp); n++;
       XtSetArg(args[n], XmNautoUnmanage, false); n++;
       XtSetArg(args[n], XmNdialogTitle, xtitle); n++;
@@ -657,11 +682,11 @@ Widget make_mix_dialog(void)
       mix_dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), _("Mixes"), args, n);
 
       XtAddCallback(mix_dialog, XmNokCallback, dismiss_mix_dialog_callback, NULL);
-      XtAddCallback(mix_dialog, XmNcancelCallback, apply_mix_dialog_callback, NULL);
+      XtAddCallback(mix_dialog, XmNcancelCallback, copy_mix_dialog_callback, NULL);
       XtAddCallback(mix_dialog, XmNhelpCallback, help_mix_dialog_callback, NULL);
 
       XmStringFree(xhelp);
-      XmStringFree(xapply);
+      XmStringFree(xcopy);
       XmStringFree(xdismiss);
       XmStringFree(xtitle);
 
@@ -671,6 +696,12 @@ Widget make_mix_dialog(void)
       XtVaSetValues(XmMessageBoxGetChild(mix_dialog, XmDIALOG_CANCEL_BUTTON), XmNbackground, ss->sgx->doit_button_color, NULL);
       XtVaSetValues(XmMessageBoxGetChild(mix_dialog, XmDIALOG_OK_BUTTON), XmNbackground, ss->sgx->quit_button_color, NULL);
       XtVaSetValues(XmMessageBoxGetChild(mix_dialog, XmDIALOG_HELP_BUTTON), XmNbackground, ss->sgx->help_button_color, NULL);
+
+      n = 0;
+      XtSetArg(args[n], XmNbackground, ss->sgx->reset_button_color); n++;
+      XtSetArg(args[n], XmNarmColor, ss->sgx->pushed_button_color); n++;
+      env_button = XtCreateManagedWidget(_("Apply env"), xmPushButtonGadgetClass, mix_dialog, args, n);
+      XtAddCallback(env_button, XmNactivateCallback, apply_mix_dialog_callback, NULL);
 
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
@@ -1095,4 +1126,8 @@ void mix_dialog_set_mix(int id)
 }
 
 
-/* TODO: beg/end activate, play mix with sync */
+/* TODO: play button is not cleared, nor is playing state */
+/* TODO: copy mix (as func and button) */
+/* TODO: copy mark, perhaps region */
+/* TODO: if mix/mark tags overlap change tag height (in all such cases, including mix) */
+/* PERHAPS: copy sound/mix as clone? */

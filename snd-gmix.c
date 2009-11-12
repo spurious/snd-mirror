@@ -460,7 +460,12 @@ static void beg_activated(GtkWidget *w, gpointer context)
       beg = string_to_mus_float_t(up_to_colon, 0.0, "begin time");
       redirect_errors_to(NULL, NULL);
       if (beg >= 0.0)
-	mix_set_position_edit(mix_dialog_id, (mus_long_t)(beg * SND_SRATE(cp->sound)));
+	{
+	  mus_long_t pos;
+	  pos = (mus_long_t)(beg * SND_SRATE(cp->sound));
+	  mix_set_position_edit(mix_dialog_id, pos);
+	  syncd_mix_set_position(mix_dialog_id, pos);
+	}
       after_mix_edit(mix_dialog_id);
       free(up_to_colon);
     }
@@ -496,12 +501,14 @@ static void mix_play_callback(GtkWidget *w, gpointer context)
   else
     {
       if (!(mix_exists(mix_dialog_id))) return;
-      mix_playing = play_mix_from_id(mix_dialog_id);
-      if ((mix_play_ax) && (mix_playing))
+      if (mix_play_ax)
 	{
 	  mix_speaker_pix = speaker_on_pix;
 	  draw_picture(mix_play_ax, mix_speaker_pix, 0, 0, 2, 4, 12, 12);
 	}
+      syncd_mix_play(mix_dialog_id);
+      mix_playing = true;
+      play_mix_from_id(mix_dialog_id);
     }
 }
 
@@ -527,16 +534,20 @@ static void mix_sync_callback(GtkWidget *w, gpointer context)
   if ((cb_set) &&
       (mix_sync_from_id(mix_dialog_id) == 0))
     {
-      mix_set_sync_from_id(mix_dialog_id, -1); /* -1 -> choose a new sync val */
+      mix_set_sync_from_id(mix_dialog_id, GET_ORIGINAL_SYNC);  /* choose a new sync val or return to previous */
+      /* check for resync */
+      syncd_mix_set_color(mix_dialog_id, ss->sgx->red);
     }
   else
     {
       if ((!(cb_set)) &&
 	  (mix_sync_from_id(mix_dialog_id) != 0))
 	{
+	  syncd_mix_unset_color(mix_dialog_id); /* unset colors of any syncd mixes */
 	  mix_set_sync_from_id(mix_dialog_id, 0);
 	}
     }
+  for_each_normal_chan(display_channel_mixes);
 }
 
 
@@ -677,7 +688,7 @@ GtkWidget *make_mix_dialog(void)
 {
   if (mix_dialog == NULL)
     {
-      GtkWidget *dismiss_button, *help_button, *rc, *mix_frame, *rc_top;
+      GtkWidget *dismiss_button, *help_button, *rc, *mix_frame, *rc_top, *copy_button;
       GtkWidget *lo_hbox, *w_dB_frame, *w_dB, *w_clip, *w_wave, *w_dB_row, *mix_play_pix;
       char amplab[LABEL_BUFFER_SIZE];
 
@@ -704,6 +715,12 @@ GtkWidget *make_mix_dialog(void)
       gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(mix_dialog)), apply_button, false, true, 10);
       SG_SIGNAL_CONNECT(apply_button, "clicked", apply_mix_dialog, NULL);
       gtk_widget_show(apply_button);
+
+      copy_button = sg_button_new_from_stock_with_label(_("Copy mix"), GTK_STOCK_COPY);
+      gtk_widget_set_name(copy_button, "reset_button");
+      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(mix_dialog)), copy_button, false, true, 10);
+      /* SG_SIGNAL_CONNECT(copy_button, "clicked", copy_mix_dialog, NULL); */
+      gtk_widget_show(copy_button);
 
       help_button = gtk_button_new_from_stock(GTK_STOCK_HELP);
       gtk_widget_set_name(help_button, "help_button");

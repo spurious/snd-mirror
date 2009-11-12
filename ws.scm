@@ -879,102 +879,7 @@ finish-with-sound to complete the process."
 (add-hook! after-save-state-hook ws-save-state)
 
 
-;;; -------- with-mix --------
-;;;
-;;; weird syntax = with-mix (with-sound-args) file-name start-in-output &body body
-;;;
-;;; (with-sound () 
-;;;   (with-mix () "section-1" 0 (fm-violin 0 1 440 .1)
-;;;                              (fm-violin 1 2 660 .1))
-;;; ...)
-
-(define (with-mix-find-file-with-extensions file extensions)
-  "(with-mix-find-file-with-extensions file extensions) helps the with-mix macro find checkpoint files"
-  (if (file-exists? file)
-      file
-      (call-with-exit
-       (lambda (found-one)
-	 (for-each
-	  (lambda (ext)
-	    (let ((new-file (string-append file "." ext)))
-	      (if (file-exists? new-file)
-		  (found-one new-file))))
-	  extensions)
-	 #f))))
-
-(define (with-mix-file-extension file default)
-  "(with-mix-file-extension file default) is a helper function for the with-mix macro"
-  (let ((len (string-length file)))
-    (call-with-exit
-     (lambda (ok)
-       (do ((i (- len 1) (- i 1)))
-	   ((= i 0))
-	 (if (char=? (string-ref file i) #\.)
-	     (ok (substring file (+ 1 i) len))))
-       default))))
-
-(defmacro with-mix (options ur-chkpt-file ur-beg . body)
-  `(let ((chkpt-file ,ur-chkpt-file)
-	 (beg-1 ,ur-beg))
-     (if (not (list? ',options))
-	 (throw 'with-sound-interrupt (format #f "with-mix options list (arg 1) is ~A?~%;" ',options))
-	 (if (not (string? chkpt-file))
-	     (throw 'with-sound-interrupt (format #f "with-mix file (arg 2) is ~A?~%;" ,ur-chkpt-file))
-	     (if (not (number? beg-1))
-		 (throw 'with-sound-interrupt (format #f "with-mix begin time (arg 3) for ~S = ~A?~%;" chkpt-file beg-1))
-		 (let ((beg (round (* (mus-srate) beg-1))))
-		   (if (null? ',body)
-		       (mus-mix *output* chkpt-file beg)
-		       (let* ((call-str (object->string ',body))
-			      (option-str (object->string ',options))
-			      (sndf (with-mix-find-file-with-extensions chkpt-file (list (with-mix-file-extension *clm-file-name* "snd") "snd")))
-			      (revf (and sndf *reverb* (with-mix-find-file-with-extensions chkpt-file (list "rev"))))
-			      (mix-values (and sndf
-					       (or (not *reverb*)
-						   revf)
-					       (let ((comment (mus-sound-comment sndf)))
-						 (and (string? comment)
-						      (catch #t
-							     (lambda ()
-							       (eval-string comment))
-							     (lambda args #f))))))) ; any error means we lost
-			 (if (and sndf
-				  (or (not *reverb*)
-				      revf)
-				  (list? mix-values)
-				  (= (length mix-values) 2)
-				  (string? (car mix-values))
-				  (string? (cadr mix-values))
-				  (string=? (car mix-values) option-str)
-				  (string=? (cadr mix-values) call-str))
-			     (begin
-			       (if *clm-verbose* (snd-print (format #f "mix ~S at ~,3F~%" sndf beg)))
-			       (mus-mix *output* sndf beg)
-			       (if revf (mus-mix *reverb* revf beg)))
-			     ;; else recompute
-			     (let ((old-to-snd *to-snd*))
-			       (set! *to-snd* #f)
-			       (if *clm-verbose* (snd-print (format #f "remake ~S at ~,3F~%" chkpt-file beg)))
-			       (let ((new-sound 
-				      (apply with-sound-helper 
-					     (lambda () ,@body) 
-					     (append (list :output 
-							   (string-append chkpt-file "." (with-mix-file-extension *clm-file-name* "snd")))
-						     (list :comment 
-							   (format #f "(begin~%;; written ~A (Snd: ~A)~%(list ~S ~S))~%"
-								   (strftime "%a %d-%b-%Y %H:%M %Z" (localtime (current-time)))
-								   (snd-version)
-								   option-str
-								   call-str))
-						     (if (and (> (channels *output*) 1)
-							      (not (member :channels ',options)))
-							 (list :channels (channels *output*))
-							 '())
-						     ',options))))
-				 (set! *to-snd* old-to-snd)
-				 (mus-mix *output* new-sound beg)
-				 (if revf (mus-mix *reverb* revf beg)))))))))))))
-
+;;; -------- def-optkey-instrument --------
 
 (defmacro def-optkey-instrument (args . body)
   (let* ((name (car args))
@@ -998,6 +903,8 @@ finish-with-sound to complete the process."
            (list (*definstrument-hook* name targs))
            (list)))))
 
+
+;;; -------- ->frequency --------
 
 (define ->frequency
   (let ((main-pitch (/ 440.0 (expt 2.0 (/ 57 12)))) ; a4 = 440Hz is pitch 57 in our numbering
@@ -1030,6 +937,9 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 		(* main-pitch (expt 2 octave) (vector-ref ratios base-pitch))
 		(* main-pitch (expt 2.0 (/ et-pitch 12)))))
 	  pitch))))
+
+
+;;; -------- ->sample --------
 
 (define (->sample beg)
   "(->sample time-in-seconds) -> time-in-samples"
@@ -1134,7 +1044,7 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 	      field-names field-types))))
 
 
-;;; ----------------
+;;; -------- clm-display-globals --------
 ;;;
 ;;; display all the globals that might affect with-sound unexpectedly
 

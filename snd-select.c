@@ -1332,7 +1332,7 @@ static XEN g_selection_to_mix(void)
     {
       chan_info *cp;
       io_error_t io_err = IO_NO_ERROR;
-      int i, id = INVALID_MIX_ID, chans = 0, sync = -1;
+      int i, id = INVALID_MIX_ID, chans = 0, sync = GET_NEW_SYNC;
       sync_info *si_out;
       XEN result = XEN_EMPTY_LIST;
       char *tempfile = NULL, *origin = NULL;

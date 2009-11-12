@@ -7098,7 +7098,7 @@ transpose-mixes sets the speed of mix in 'mix-list' to cause a transposition by 
 <br>
 
 <table bgcolor="aliceblue" border=0><tr><td>
-<pre>see also: <a href="extsnd.html#sndmixes">Mixes</a> <a href="snd.html#mixingfiles">View:Mix</a> <a href="#mixchannel">mix-channel</a> <a href="#fadedoc">dissolve-fade</a> <a href="#musmix">mus-mix</a> <a href="#with-mix">with-mix</a>
+<pre>see also: <a href="extsnd.html#sndmixes">Mixes</a> <a href="snd.html#mixingfiles">View:Mix</a> <a href="#mixchannel">mix-channel</a> <a href="#fadedoc">dissolve-fade</a> <a href="#musmix">mus-mix</a>
 </pre></td>
 </tr></table>
 
@@ -8095,7 +8095,7 @@ all     37   6.0639    0.4991
          n     peak   (log peak n)            n     peak   (log peak n)
 
 all     35   5.9242    0.5004,        odd     35   5.9249    0.5004
-all     36   6.0601    0.5028,        odd     34   5.8403    0.5005
+all     36   6.0573    0.5027,        odd     34   5.8403    0.5005
 all     38   6.2895    0.5055,        odd     33   5.7612    0.5008
 all     44   6.7910    0.5062,        odd     40   6.3872    0.5027
 all     46   6.9503    0.5064,        odd     39   6.3374    0.5040
@@ -11458,7 +11458,7 @@ avoid lists, if possible, and fancy stuff like map or apply, and you should be f
 
 <br>
 
-<p>There are several other versions of with-sound: with-temp-sound, with-threaded-sound, with-mixed-sound, sound-let, clm-load, with-mix, and the Common Music
+<p>There are several other versions of with-sound: with-temp-sound, with-threaded-sound, with-mixed-sound, sound-let, clm-load, and the Common Music
 handles, init-with-sound and finish-with-sound.
 <a name="withtempsound">with-temp-sound</a> and <a name="sound-let">sound-let</a> set up temporary bindings for embedded with-sounds.
 </p>
@@ -11628,6 +11628,30 @@ in the minibuffer.
       (fm-violin 1 .1 660 .1 :degree 45))
 </pre>
 
+<p>There's also a quick sound file mixer named mus-mix:
+</p>
+
+<pre>
+  <a class=def name="musmix">mus-mix</a> outfile infile :optional (outloc 0) (frames) (inloc 0) mixer envs
+</pre>
+
+<p>This function
+mixes 'infile' into 'outfile' starting at 'outloc' in 'outfile' and 'inloc' in 'infile',
+mixing 'frames' frames into 'outfile'.  'frames' defaults to the length of 'infile'. If 'mixer',
+use it to scale the various channels; if 'envs' (an array of envelope generators), use
+it in conjunction with mixer to scale and envelope all the various ins and outs.
+'outfile' can also be a <a href="sndclm.html#frametofile">frame-&gt;file</a> generator, and 'infile' can be a 
+<a href="sndclm.html#filetoframe">file-&gt;frame</a> generator.
+</p>
+
+<table border=0 cellpadding=5 hspace=20><tr><td><pre>
+(<a class=quiet href="#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> () 
+  (fm-violin 0 .1 440 .1) 
+  (<a class=quiet href="#musmix" onmouseout="UnTip()" onmouseover="Tip(sndscm_musmix_tip)">mus-mix</a> <a class=quiet onmouseout="UnTip()" onmouseover="Tip(sndclm_output_tip)">*output*</a> "oboe.snd") 
+  (fm-violin .1 .1 660 .1))
+</pre></td></tr></table>
+
+
 
 <br>
 <table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
@@ -11677,65 +11701,6 @@ split with-sound into two pieces, primarily for Common Music's benefit.
     (<a class=quiet href="#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> (:scaled-to .5)
       (fm-violin 0 1 440 .1))
 </pre>
-
-
-<br>
-<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
-<table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>with-mix</h4></td></tr></table>
-</td></tr></table>
-
-<p><a name="with-mix">with-mix</a> is a "checkpointing" version of with-sound, more useful in the bad old days when computers
-were incredibly slow, but lingering on...
-It is a macro, callable within <a href="#wsdoc">with-sound</a> or <a href="#clmload">clm-load</a>,
-which saves the computation in its body in a separate file, and
-then upon a subsequent recomputation, tries to tell (via a string comparison) when that file's data is up to date
-and does not need to be recomputed.
-</p>
-
-<table border=0 hspace=40 cellpadding=8 cellspacing=3><tr><td>
-<pre>
-(<a class=quiet href="#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> () 
-  (fm-violin 0 .1 440 .1)
-  (<em class=red>with-mix</em> () "sec1" .5 
-    (fm-violin 0 .1 550 .1)
-    (fm-violin .1 .1 660 .1))
-  (<em class=red>with-mix</em> (:reverb jc-reverb) "sec2" 1.0
-    (fm-violin 0 .1 880 .1 :reverb-amount .2)
-    (fm-violin .1 .1 1320 .1 :reverb-amount .2))
-  (fm-violin 2 .1 220 .1)
-  (<em class=red>mix</em> "/zap/slow.snd"))
-</pre>
-</td></tr></table>
-
-<p>Now, if we change just the first note in the with-mix call, the
-second with-mix section will not be recomputed, but will be mixed in from the
-saved file "sec2.snd".
-In the old days, when notes took hours to compute, this was a big deal,
-but not anymore.
-</p>
-
-<p>There's also a quick sound file mixer named mus-mix:
-</p>
-
-<pre>
-  <a class=def name="musmix">mus-mix</a> outfile infile :optional (outloc 0) (frames) (inloc 0) mixer envs
-</pre>
-
-<p>This function
-mixes 'infile' into 'outfile' starting at 'outloc' in 'outfile' and 'inloc' in 'infile',
-mixing 'frames' frames into 'outfile'.  'frames' defaults to the length of 'infile'. If 'mixer',
-use it to scale the various channels; if 'envs' (an array of envelope generators), use
-it in conjunction with mixer to scale and envelope all the various ins and outs.
-'outfile' can also be a <a href="sndclm.html#frametofile">frame-&gt;file</a> generator, and 'infile' can be a 
-<a href="sndclm.html#filetoframe">file-&gt;frame</a> generator.
-</p>
-
-<table border=0 cellpadding=5 hspace=20><tr><td><pre>
-(<a class=quiet href="#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> () 
-  (fm-violin 0 .1 440 .1) 
-  (<a class=quiet href="#musmix" onmouseout="UnTip()" onmouseover="Tip(sndscm_musmix_tip)">mus-mix</a> <a class=quiet onmouseout="UnTip()" onmouseover="Tip(sndclm_output_tip)">*output*</a> "oboe.snd") 
-  (fm-violin .1 .1 660 .1))
-</pre></td></tr></table>
 
 
 <br>
