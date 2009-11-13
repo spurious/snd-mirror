@@ -1210,7 +1210,7 @@ static void syncd_mix_set_amp_1(mix_info *md, void *amp)
 void syncd_mix_set_amp(int id, mus_float_t amp)
 {
   syncd_amp_info *ai;
-  ai = malloc(sizeof(syncd_amp_info));
+  ai = (syncd_amp_info *)malloc(sizeof(syncd_amp_info));
   ai->amp = amp;
   for_each_syncd_mix(id, syncd_mix_set_amp_1, (void *)ai);
   free(ai);
@@ -1532,7 +1532,7 @@ static void syncd_mix_set_speed_1(mix_info *md, void *speed)
 void syncd_mix_set_speed(int id, mus_float_t speed)
 {
   syncd_speed_info *ai;
-  ai = malloc(sizeof(syncd_speed_info));
+  ai = (syncd_speed_info *)malloc(sizeof(syncd_speed_info));
   ai->speed = speed;
   for_each_syncd_mix(id, syncd_mix_set_speed_1, (void *)ai);
   free(ai);

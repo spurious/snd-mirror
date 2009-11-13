@@ -483,6 +483,7 @@ static void widget_mix_to_text(GtkWidget *w, int id)
 static gboolean copy_mix_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
   copy_mix(mix_dialog_id);
+  return(false);
 }
 
 

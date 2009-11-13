@@ -5789,7 +5789,7 @@ that give a minimum peak amplitude when the signals are added together."
   static mus_float_t min_11[4] = {80.9069, 83.1080, 87.3002, 102.6190};
 
 
-#define USE_CLM_RANDOM 0
+#define USE_CLM_RANDOM (!HAVE_S7)
 
 static mus_float_t local_random(mus_float_t val)
 {

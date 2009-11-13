@@ -17805,7 +17805,7 @@ static void mark_s7(s7_scheme *sc)
  */
 
 #if defined(MPC_VERSION_MAJOR) && defined(MPC_VERSION_MINOR)
-#if ((MPC_VERSION_MAJOR == 0) && (MPC_VERSION_MINOR > 5))
+#if ((MPC_VERSION_MAJOR >= 1) || ((MPC_VERSION_MAJOR == 0) && (MPC_VERSION_MINOR > 5)))
 
 #define TRIG_TYPE int
 
@@ -17828,6 +17828,10 @@ static void mpc_init_set_ui_ui(mpc_ptr z, unsigned long int x, unsigned long int
   mpc_set_ui_ui(z, x, y, rnd);
 }
 
+#if ((MPC_VERSION_MAJOR >= 1) || ((MPC_VERSION_MAJOR == 0) && (MPC_VERSION_MINOR > 7)))
+#define HAVE_MPC_ASIN 1
+#endif
+
 #else
 #define TRIG_TYPE void
 #define mpc_set_default_precision(Prec) mpc_set_default_prec(Prec)
@@ -17841,6 +17845,10 @@ static void mpc_init_set_ui_ui(mpc_ptr z, unsigned long int x, unsigned long int
 #ifndef MPC_IM
 #define MPC_IM(x) mpc_imagref(x)
 #define MPC_RE(x) mpc_realref(x)
+#endif
+
+#ifndef HAVE_MPC_ASIN
+#define HAVE_MPC_ASIN 0
 #endif
 
 /* -------------------------------------------------------------------------------- */
@@ -20312,7 +20320,11 @@ static s7_pointer big_expt(s7_scheme *sc, s7_pointer args)
   if ((s7_is_number(x)) &&
       (s7_is_number(y)))
     {
+#if HAVE_MPC_ASIN
+      mpc_t cy;
+#else
       mpfr_t r, theta, yre, yim, nr, ntheta, lgr;
+#endif
       mpc_t *z;
       
       x = promote_number(sc, T_BIG_COMPLEX, x);
@@ -20336,6 +20348,13 @@ static s7_pointer big_expt(s7_scheme *sc, s7_pointer args)
 	  return(small_int(sc, 1));
 	}
 
+#if HAVE_MPC_ASIN
+      /* this chooses different roots in a few cases */
+      mpc_init(cy);
+      mpc_set(cy, S7_BIG_COMPLEX(y), MPC_RNDNN);
+      mpc_pow(*z, *z, cy, MPC_RNDNN);
+      mpc_clear(cy);
+#else
       mpfr_init(r);
       mpfr_init(theta);
       mpc_abs(r, *z, GMP_RNDN);                                 /* r = cabs(x) */
@@ -20366,7 +20385,7 @@ static s7_pointer big_expt(s7_scheme *sc, s7_pointer args)
       mpfr_clear(ntheta);
       mpfr_clear(yre);
       mpfr_clear(yim);
-      
+#endif      
       if (mpfr_cmp_ui(MPC_IM(*z), 0) == 0)
 	{
 	  mpfr_t *n;
@@ -20405,7 +20424,6 @@ static s7_pointer big_expt(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer big_asinh(s7_scheme *sc, s7_pointer args)
 {
-  /* the complex case is not yet implmented in mpc, so use the earlier formula for casinh */
   s7_pointer p;
   p = car(args);
   if (is_c_object(p))
@@ -20422,10 +20440,16 @@ static s7_pointer big_asinh(s7_scheme *sc, s7_pointer args)
 	}
       if (c_object_type(p) == big_complex_tag)
 	{
-	  mpc_t *n;
+#if (!HAVE_MPC_ASIN)
 	  mpc_t z;
+#endif
+	  mpc_t *n;
 	  n = (mpc_t *)malloc(sizeof(mpc_t));
 	  mpc_init(*n);
+#if HAVE_MPC_ASIN
+	  mpc_set(*n, S7_BIG_COMPLEX(p), MPC_RNDNN);
+	  mpc_asinh(*n, *n, MPC_RNDNN);
+#else
 	  mpc_init(z);
 	  mpc_set(z, S7_BIG_COMPLEX(p), MPC_RNDNN);
 	  mpc_mul(*n, z, z, MPC_RNDNN);      /* z*z */
@@ -20434,6 +20458,7 @@ static s7_pointer big_asinh(s7_scheme *sc, s7_pointer args)
 	  mpc_add(*n, *n, z, MPC_RNDNN);     /* z + sqrt(1+z*z) */
 	  mpc_log(*n, *n, MPC_RNDNN);        /* log(z+sqrt(1+z*z)) */
 	  mpc_clear(z);
+#endif
 	  return(s7_make_object(sc, big_complex_tag, (void *)n));
 	}
     }
@@ -20443,7 +20468,6 @@ static s7_pointer big_asinh(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer big_acosh(s7_scheme *sc, s7_pointer args)
 {
-  /* the complex case is not yet implmented in mpc, so use the earlier formula for cacosh */
   s7_pointer p;
   p = car(args);
   if (is_c_object(p))
@@ -20465,12 +20489,17 @@ static s7_pointer big_acosh(s7_scheme *sc, s7_pointer args)
 	}
       if (c_object_type(p) == big_complex_tag)
 	{
-	  /* use 2.0 * clog(csqrt(0.5 * (z + 1.0)) + csqrt(0.5 * (z - 1.0))) for better results when z is very large */
-	  mpc_t *n;
+#if (!HAVE_MPC_ASIN)
 	  mpc_t zm1, zp1;
+#endif
+	  mpc_t *n;
 	  n = (mpc_t *)malloc(sizeof(mpc_t));
 	  mpc_init(*n);
 	  mpc_set(*n, S7_BIG_COMPLEX(p), MPC_RNDNN);
+#if HAVE_MPC_ASIN
+	  mpc_acosh(*n, *n, MPC_RNDNN);
+#else
+	  /* use 2.0 * clog(csqrt(0.5 * (z + 1.0)) + csqrt(0.5 * (z - 1.0))) for better results when z is very large */
 	  mpc_init(zm1);
 	  mpc_init(zp1);
 	  mpc_set(zm1, *n, MPC_RNDNN);
@@ -20486,6 +20515,7 @@ static s7_pointer big_acosh(s7_scheme *sc, s7_pointer args)
 	  mpc_mul_ui(*n, *n, 2, MPC_RNDNN);
 	  mpc_clear(zm1);
 	  mpc_clear(zp1);
+#endif
 	  return(s7_make_object(sc, big_complex_tag, (void *)n));
 	}
     }
@@ -20495,7 +20525,6 @@ static s7_pointer big_acosh(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer big_atanh(s7_scheme *sc, s7_pointer args)
 {
-  /* the complex case is not yet implmented in mpc, so use the earlier formula for catanh */
   s7_pointer p;
   p = car(args);
   if (is_c_object(p))
@@ -20522,10 +20551,16 @@ static s7_pointer big_atanh(s7_scheme *sc, s7_pointer args)
 	}
       if (c_object_type(p) == big_complex_tag)
 	{
-	  mpc_t *n;
+#if (!HAVE_MPC_ASIN)
 	  mpc_t zp1, zm1;
+#endif
+	  mpc_t *n;
 	  n = (mpc_t *)malloc(sizeof(mpc_t));
 	  mpc_init(*n);
+#if HAVE_MPC_ASIN
+	  mpc_set(*n, S7_BIG_COMPLEX(p), MPC_RNDNN);
+	  mpc_atanh(*n, *n, MPC_RNDNN);
+#else
 	  mpc_init(zp1);
 	  mpc_init(zm1);
 	  mpc_set(zp1, S7_BIG_COMPLEX(p), MPC_RNDNN);
@@ -20535,6 +20570,7 @@ static s7_pointer big_atanh(s7_scheme *sc, s7_pointer args)
 	  mpc_div(*n, zp1, zm1, MPC_RNDNN);     /* (1+z)/(1-z) */
 	  mpc_log(*n, *n, MPC_RNDNN);           /* log((1+z)/(1-z)) */
 	  mpc_div_ui(*n, *n, 2, MPC_RNDNN);     /* log((1+z)/(1-z))/2 */
+#endif
 	  return(s7_make_object(sc, big_complex_tag, (void *)n));
 	}
     }
@@ -20544,7 +20580,6 @@ static s7_pointer big_atanh(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer big_atan(s7_scheme *sc, s7_pointer args)
 {
-  /* the complex case is not yet implmented in mpc, so use the earlier formula for catan */
   /* either arg can be big, 2nd is optional */
   s7_pointer p0, p1 = NULL;
 
@@ -20574,10 +20609,15 @@ static s7_pointer big_atan(s7_scheme *sc, s7_pointer args)
 
       if (c_object_type(p0) == big_complex_tag)
 	{
-	  mpc_t *n;
+#if (!HAVE_MPC_ASIN)
 	  mpc_t ci, cipz, cimz;
+#endif
+	  mpc_t *n;
 	  n = (mpc_t *)malloc(sizeof(mpc_t));
 	  mpc_init_set(*n, S7_BIG_COMPLEX(p0), MPC_RNDNN);
+#if HAVE_MPC_ASIN
+	  mpc_atan(*n, *n, MPC_RNDNN);
+#else
 	  mpc_init_set_ui_ui(ci, 0, 1, MPC_RNDNN);        /* 0+i ... */
 	  mpc_init_set_ui_ui(cipz, 0, 1, MPC_RNDNN);
 	  mpc_init_set_ui_ui(cimz, 0, 1, MPC_RNDNN);
@@ -20590,6 +20630,7 @@ static s7_pointer big_atan(s7_scheme *sc, s7_pointer args)
 	  mpc_div_ui(*n, *n, 2, MPC_RNDNN);               /* log((i+z)/(i-z))/2 */
 	  mpc_mul(*n, *n, ci, MPC_RNDNN);                 /* i*log((i+z)/(i-z))/2 */
 	  mpc_clear(ci);
+#endif
 	  return(s7_make_object(sc, big_complex_tag, (void *)n));
 	}
     }
@@ -20599,7 +20640,6 @@ static s7_pointer big_atan(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer big_acos(s7_scheme *sc, s7_pointer args)
 {
-  /* the complex case is not yet implmented in mpc, so use the earlier formula for cacos */
   s7_pointer p;
   p = car(args);
   if (is_c_object(p))
@@ -20629,13 +20669,17 @@ static s7_pointer big_acos(s7_scheme *sc, s7_pointer args)
 
       if (c_object_type(p) == big_complex_tag)
 	{
+#if (!HAVE_MPC_ASIN)
 	  bool ok;
-	  mpc_t *n;
 	  mpc_t x, ci;
 	  mpfr_t temp;
+#endif
+	  mpc_t *n;
 	  n = (mpc_t *)malloc(sizeof(mpc_t));
 	  mpc_init_set(*n, S7_BIG_COMPLEX(p), MPC_RNDNN);
-
+#if HAVE_MPC_ASIN
+	  mpc_acos(*n, *n, MPC_RNDNN);
+#else
 	  /* check for very large args as in g_acos */
 	  mpfr_init_set_ui(temp, 10000000, GMP_RNDN);
 	  ok = ((mpfr_cmpabs(MPC_RE(*n), temp) <= 0) &&
@@ -20675,6 +20719,7 @@ static s7_pointer big_acos(s7_scheme *sc, s7_pointer args)
 	  mpc_neg(*n, *n, MPC_RNDNN);
 	  mpc_clear(x);
 	  mpc_clear(ci);
+#endif
 	  return(s7_make_object(sc, big_complex_tag, (void *)n));
 	}
     }
@@ -20714,13 +20759,17 @@ static s7_pointer big_asin(s7_scheme *sc, s7_pointer args)
 
       if (c_object_type(p) == big_complex_tag)
 	{
+#if (!HAVE_MPC_ASIN)
 	  bool ok;
-	  mpc_t *n;
 	  mpc_t x, ci;
 	  mpfr_t temp;
+#endif
+	  mpc_t *n;
 	  n = (mpc_t *)malloc(sizeof(mpc_t));
 	  mpc_init_set(*n, S7_BIG_COMPLEX(p), MPC_RNDNN);
-
+#if HAVE_MPC_ASIN
+	  mpc_asin(*n, *n, MPC_RNDNN);
+#else
 	  /* check for very large args as in g_asin */
 	  mpfr_init_set_ui(temp, 10000000, GMP_RNDN);
 	  ok = ((mpfr_cmpabs(MPC_RE(*n), temp) <= 0) &&
@@ -20761,6 +20810,7 @@ static s7_pointer big_asin(s7_scheme *sc, s7_pointer args)
 	  mpc_neg(*n, *n, MPC_RNDNN);
 	  mpc_clear(x);
 	  mpc_clear(ci);
+#endif
 	  return(s7_make_object(sc, big_complex_tag, (void *)n));
 	}
     }

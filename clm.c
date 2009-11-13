@@ -9868,6 +9868,8 @@ mus_float_t mus_granulate(mus_any *ptr, mus_float_t (*input)(void *arg, int dire
 /* fft of mus_float_t data in zero-based arrays
  */
 
+static void mus_big_fft(mus_float_t *rl, mus_float_t *im, mus_long_t n, int is);
+
 #if HAVE_FFTW3 && HAVE_COMPLEX_TRIG && (!__cplusplus)
 
 static fftw_complex *c_in_data = NULL, *c_out_data = NULL;
@@ -9915,8 +9917,6 @@ static void mus_fftw_with_imag(mus_float_t *rl, mus_float_t *im, int n, int dir)
   MUS_UNLOCK(&c_fft_lock);
 }
 
-
-static void mus_big_fft(mus_float_t *rl, mus_float_t *im, mus_long_t n, int is);
 
 void mus_fft(mus_float_t *rl, mus_float_t *im, mus_long_t n, int is)
 {

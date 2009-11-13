@@ -190,7 +190,7 @@ mus_long_t selection_beg(chan_info *cp)
 }
 
 
-static xen_selection_counter = 0;
+static int xen_selection_counter = 0;
 
 static void cp_set_selection_beg(chan_info *cp, mus_long_t beg)
 {
@@ -578,7 +578,6 @@ void start_selection_creation(chan_info *cp, mus_long_t samp)
 
 void restart_selection_creation(chan_info *cp, bool right)
 {
-  int i;
   syncd_chans = sync_to_chan(cp);
   if (right)
     syncd_chans->begs[0] = selection_beg(cp);
@@ -838,14 +837,6 @@ typedef struct {
 
 
 #define XEN_TO_XEN_SELECTION(arg) ((xen_selection *)XEN_OBJECT_REF(arg))
-
-static int xen_selection_to_int(XEN n)
-{
-  xen_selection *mx;
-  mx = XEN_TO_XEN_SELECTION(n);
-  return(mx->n);
-}
-
 
 static XEN_OBJECT_TYPE xen_selection_tag;
 

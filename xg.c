@@ -48297,7 +48297,6 @@ static void define_integers(void)
   DEFINE_ULONG(GTK_TYPE_COLOR_SELECTION_DIALOG);
   DEFINE_ULONG(GTK_TYPE_COLOR_SELECTION);
   DEFINE_ULONG(GTK_TYPE_CONTAINER);
-  DEFINE_ULONG(GTK_TYPE_CURVE);
   DEFINE_ULONG(GTK_TYPE_DIALOG);
   DEFINE_ULONG(GTK_TYPE_DRAWING_AREA);
   DEFINE_ULONG(GTK_TYPE_EDITABLE);
@@ -48758,7 +48757,7 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("03-Nov-09"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("13-Nov-09"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */
