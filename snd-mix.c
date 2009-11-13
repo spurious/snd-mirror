@@ -2201,7 +2201,7 @@ static mus_long_t drag_beg = 0, drag_end = 0;
 
 typedef struct {mus_long_t beg; bool axis_changed;} move_mix_data;
 
-void move_syncd_mix(mix_info *md, void *data)
+static void move_syncd_mix(mix_info *md, void *data)
 {
   move_mix_data *mmd = (move_mix_data *)data;
   mix_set_position_edit(md->id, mmd->beg);                         /* TODO: needs offset if any */

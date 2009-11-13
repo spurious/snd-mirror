@@ -20349,7 +20349,7 @@ static s7_pointer big_expt(s7_scheme *sc, s7_pointer args)
 	}
 
 #if HAVE_MPC_ASIN
-      /* this chooses different roots in a few cases */
+      /* this chooses a different root in a few cases */
       mpc_init(cy);
       mpc_set(cy, S7_BIG_COMPLEX(y), MPC_RNDNN);
       mpc_pow(*z, *z, cy, MPC_RNDNN);

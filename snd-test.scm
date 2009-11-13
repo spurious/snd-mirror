@@ -14438,6 +14438,17 @@ EDITS: 2
 	  (if (not (vequal v0 (vct .1 .1 .3 .3 .3)))
 	      (snd-display ";vct-add + offset: ~A" v0)))
 
+	;; test local var gc protection in vct.h vct_to_vector
+	(let ((v1 (vct-map! 
+		   (make-vct 44100 0.0) 
+		   (make-oscil 1)))) 
+	  (vct->vector v1) 
+	  (vct->vector v1)
+	  (let ((vect (vct->vector v1)))
+	    (vector->vct vect)
+	    (vector->vct vect)
+	    (set! v1 (vector->vct vect))))
+
 	;; a test of big vcts (needs 16 Gbytes):
 	(if (and (string? (getenv "HOSTNAME"))
 		 (string=? (getenv "HOSTNAME") "fatty8"))

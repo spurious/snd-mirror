@@ -2785,11 +2785,11 @@
 	 (display "(input-port? ") (display arg) (display ") returned #t?") (newline))))
  (list "hi" #f (integer->char 65) 1 (list 1 2) '#t '3 (make-vector 3) 3.14 3/4 1.0+1.0i #\f))
 
-(test (call-with-input-file "r5rstest.scm" input-port?) #t)
+(test (call-with-input-file "s7test.scm" input-port?) #t)
 (if (not (eq? start-input-port (current-input-port)))
     (begin (display "call-with-input-file did not restore current-input-port? ") (display start-input-port) (display " ") (display (current-input-port)) (newline)))
 
-(test (let ((this-file (open-input-file "r5rstest.scm"))) (let ((res (input-port? this-file))) (close-input-port this-file) res)) #t)
+(test (let ((this-file (open-input-file "s7test.scm"))) (let ((res (input-port? this-file))) (close-input-port this-file) res)) #t)
 (if (not (eq? start-input-port (current-input-port)))
     (begin (display "open-input-file clobbered current-input-port? ") (display start-input-port) (display " ") (display (current-input-port)) (newline)))
 
@@ -3715,7 +3715,7 @@
    (test (or arg) arg))
  (list "hi" -1 #\a 1 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i #t (list 1 2 3) '(1 . 2)))
 
-(test (call-with-input-file "r5rstest.scm"
+(test (call-with-input-file "s7test.scm"
 	(lambda (p)
 	  (let ((loc 0))
 	    (let loop ((val (read p)))
@@ -3762,7 +3762,7 @@
    (test (and arg) arg))
  (list "hi" -1 #\a 1 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i #t (list 1 2 3) '(1 . 2)))
 
-(test (call-with-input-file "r5rstest.scm"
+(test (call-with-input-file "s7test.scm"
 	(lambda (p)
 	  (let ((loc 0))
 	    (let loop ((val (read p)))

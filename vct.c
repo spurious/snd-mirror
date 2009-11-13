@@ -781,16 +781,26 @@ static XEN g_vector_to_vct(XEN vect)
   mus_long_t len, i;
   vct *v;
   XEN scv;
+#if HAVE_S7
+  int gc_loc;
+#endif
 
   XEN_ASSERT_TYPE(XEN_VECTOR_P(vect), vect, XEN_ONLY_ARG, S_vector_to_vct, "a vector");
 
   len = (mus_long_t)XEN_VECTOR_LENGTH(vect);
   if (len == 0) return(XEN_FALSE);
   scv = xen_make_vct(len, (mus_float_t *)calloc(len, sizeof(mus_float_t)));
+#if HAVE_S7
+  gc_loc = s7_gc_protect(s7, scv);
+#endif
+
   v = XEN_TO_VCT(scv);
   for (i = 0; i < len; i++) 
     v->data[i] = (mus_float_t)XEN_TO_C_DOUBLE(XEN_VECTOR_REF(vect, i));
 
+#if HAVE_S7
+  s7_gc_unprotect_at(s7, gc_loc);
+#endif
   return(xen_return_first(scv, vect));
 }
 
@@ -801,6 +811,9 @@ static XEN g_vct_to_vector(XEN vobj)
   vct *v;
   mus_long_t i, len;
   XEN new_vect;
+#if HAVE_S7
+  int gc_loc;
+#endif
 
   XEN_ASSERT_TYPE(MUS_VCT_P(vobj), vobj, XEN_ONLY_ARG, S_vct_to_vector, "a vct");
 
@@ -808,6 +821,9 @@ static XEN g_vct_to_vector(XEN vobj)
   len = v->length;
   new_vect = XEN_MAKE_VECTOR(len, C_TO_XEN_DOUBLE(0.0));
 
+#if HAVE_S7
+  gc_loc = s7_gc_protect(s7, new_vect);
+#endif
 #if HAVE_RUBY && HAVE_RB_GC_DISABLE
   rb_gc_disable(); 
   /* uh oh -- gc is triggered by C_TO_XEN_DOUBLE causing segfault, even if we
@@ -819,6 +835,9 @@ static XEN g_vct_to_vector(XEN vobj)
   for (i = 0; i < len; i++) 
     XEN_VECTOR_SET(new_vect, i, C_TO_XEN_DOUBLE(v->data[i]));
 
+#if HAVE_S7
+  s7_gc_unprotect_at(s7, gc_loc);
+#endif
 #if HAVE_RUBY && HAVE_RB_GC_DISABLE
   rb_gc_enable();
 #endif
