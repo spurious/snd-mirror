@@ -204,7 +204,7 @@ const char *mus_optkey_to_string(XEN key, const char *caller, int n, char *def)
 }
 
 
-vct *mus_optkey_to_vct(XEN key, const char *caller, int n, vct *def)
+static vct *mus_optkey_to_vct(XEN key, const char *caller, int n, vct *def)
 {
   if ((!(XEN_KEYWORD_P(key))) && (!(XEN_FALSE_P(key))))
     {

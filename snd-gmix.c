@@ -480,6 +480,11 @@ static void widget_mix_to_text(GtkWidget *w, int id)
 }
 
 
+static gboolean copy_mix_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
+{
+  copy_mix(mix_dialog_id);
+}
+
 
 /* -------- mix play -------- */
 
@@ -565,7 +570,7 @@ static void mix_wave_callback(GtkWidget *w, gpointer context)
 }
 
 
-static void apply_mix_dialog(GtkWidget *w, gpointer context)
+static void apply_env_callback(GtkWidget *w, gpointer context)
 {
   /* set all mix amp envs, last one should remix */
   if (!(mix_is_active(mix_dialog_id))) return;
@@ -713,13 +718,13 @@ GtkWidget *make_mix_dialog(void)
       apply_button = sg_button_new_from_stock_with_label(_("Apply Env"), GTK_STOCK_APPLY);
       gtk_widget_set_name(apply_button, "doit_again_button");
       gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(mix_dialog)), apply_button, false, true, 10);
-      SG_SIGNAL_CONNECT(apply_button, "clicked", apply_mix_dialog, NULL);
+      SG_SIGNAL_CONNECT(apply_button, "clicked", apply_env_callback, NULL);
       gtk_widget_show(apply_button);
 
       copy_button = sg_button_new_from_stock_with_label(_("Copy mix"), GTK_STOCK_COPY);
       gtk_widget_set_name(copy_button, "reset_button");
       gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(mix_dialog)), copy_button, false, true, 10);
-      /* SG_SIGNAL_CONNECT(copy_button, "clicked", copy_mix_dialog, NULL); */
+      SG_SIGNAL_CONNECT(copy_button, "clicked", copy_mix_callback, NULL);
       gtk_widget_show(copy_button);
 
       help_button = gtk_button_new_from_stock(GTK_STOCK_HELP);

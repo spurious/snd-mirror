@@ -8,7 +8,6 @@
 /*
  * 14-Oct:     sine-summation, sum-of-sines, sum-of-cosines removed.
  * 28-Aug:     changed some fft-related sizes from int to mus_long_t.
- * 25-Aug:     mus_fftw_with_imag (fftw3 only).
  * 17-Aug:     mus_frame|mixer_copy|fill.
  * 27-Jul:     mus_float_t for Float, and mus_long_t for off_t.
  * 15-Jun:     mus_rectangular_to_magnitudes (polar, but ignore phases).
@@ -171,7 +170,7 @@
  * 29-Jul:     various *_1 cases for the optimizer.
  * 15-Jul:     mus_continue_sample2file.
  * 10-Jul:     mus_file_name.
- * 7-Jun:      fftw support added(mus_fftw).
+ * 7-Jun:      fftw support added.
  * 31-May:     changed mus_any_class.
  * 3-May:      many int->mus_long_t changes for large files.
  * 8-Apr:      off-by-1 env bug(Lisp/C are now identical), env_interp of exp env beyond end bugfix.
@@ -757,13 +756,6 @@ MUS_EXPORT mus_float_t *mus_make_fft_window(mus_fft_window_t type, mus_long_t si
 MUS_EXPORT mus_float_t *mus_make_fft_window_with_window(mus_fft_window_t type, mus_long_t size, mus_float_t beta, mus_float_t mu, mus_float_t *window);
 MUS_EXPORT const char *mus_fft_window_name(mus_fft_window_t win);
 MUS_EXPORT const char **mus_fft_window_names(void);
-
-#if HAVE_FFTW || HAVE_FFTW3
-  MUS_EXPORT void mus_fftw(mus_float_t *rl, int n, int dir);
-  #if HAVE_FFTW3 && HAVE_COMPLEX_TRIG && (!__cplusplus)
-    MUS_EXPORT void mus_fftw_with_imag(mus_float_t *rl, mus_float_t *im, int n, int dir);
-  #endif
-#endif
 
 MUS_EXPORT mus_float_t *mus_autocorrelate(mus_float_t *data, mus_long_t n);
 MUS_EXPORT mus_float_t *mus_correlate(mus_float_t *data1, mus_float_t *data2, mus_long_t n);

@@ -1609,6 +1609,7 @@ mus_float_t mix_amp_from_id(int id);
 mus_float_t mix_speed_from_id(int id);
 env *mix_amp_env_from_id(int id);
 chan_info *mix_chan_info_from_id(int id);
+int copy_mix(int id);
 
 mix_state *prepare_mix_state_for_channel(chan_info *cp, int mix_loc, mus_long_t beg, mus_long_t len);
 void add_ed_mix(ed_list *ed, mix_state *ms);
@@ -1636,9 +1637,7 @@ int mix_complete_file(snd_info *sp, mus_long_t beg, const char *fullname, bool w
 int mix_complete_file_at_cursor(snd_info *sp, const char *str);
 int mix_file(mus_long_t beg, mus_long_t num, int chans, chan_info **cps, const char *mixinfile, file_delete_t temp, const char *origin, bool with_tag, int start_chan);
 
-bool mix_sampler_at_end_p(void *mf);
 bool mix_sampler_p(XEN obj);
-
 XEN g_copy_mix_sampler(XEN obj);
 XEN g_mix_sampler_home(XEN obj);
 XEN g_mix_sampler_at_end_p(XEN obj);

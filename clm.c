@@ -50,10 +50,6 @@
 
 #if HAVE_FFTW3
   #include <fftw3.h>
-#else
-  #if HAVE_FFTW
-    #include <rfftw.h>
-  #endif
 #endif
 
 #if HAVE_COMPLEX_TRIG
@@ -9872,59 +9868,17 @@ mus_float_t mus_granulate(mus_any *ptr, mus_float_t (*input)(void *arg, int dire
 /* fft of mus_float_t data in zero-based arrays
  */
 
-#if HAVE_FFTW3
-static double *rdata = NULL, *idata = NULL;
-static fftw_plan rplan, iplan;  
-/* 
- * this "plan" business makes multi-threaded reallocs less attractive --
- *   I don't think a system like sinc_table would work here because we still have
- *   to make sure only one thread is using a given set of arrays and their plan.
- */
-
-static int last_fft_size = 0;   
-#if HAVE_PTHREADS
-  static mus_lock_t fft_lock = MUS_LOCK_INITIALIZER;
-#endif
-
-
-void mus_fftw(mus_float_t *rl, int n, int dir)
-{
-  int i;
-  /* array names are confusing here: rdata = input data, idata = output data */
-
-  MUS_LOCK(&fft_lock);
-
-  if (n != last_fft_size)
-    {
-      if (rdata) {fftw_free(rdata); fftw_free(idata); fftw_destroy_plan(rplan); fftw_destroy_plan(iplan);}
-      rdata = (double *)fftw_malloc(n * sizeof(double));
-      idata = (double *)fftw_malloc(n * sizeof(double));
-      rplan = fftw_plan_r2r_1d(n, rdata, idata, (fftw_r2r_kind)FFTW_FORWARD, FFTW_ESTIMATE); 
-      iplan = fftw_plan_r2r_1d(n, rdata, idata, (fftw_r2r_kind)FFTW_BACKWARD, FFTW_ESTIMATE);
-      last_fft_size = n;
-    }
-  memset((void *)idata, 0, n * sizeof(double));
-  for (i = 0; i < n; i++) rdata[i] = rl[i];
-  if (dir != -1)
-    fftw_execute(rplan);
-  else fftw_execute(iplan);
-  for (i = 0; i < n; i++) rl[i] = idata[i];
-
-  MUS_UNLOCK(&fft_lock);
-}
-
-
-#if HAVE_COMPLEX_TRIG && (!__cplusplus)
+#if HAVE_FFTW3 && HAVE_COMPLEX_TRIG && (!__cplusplus)
 
 static fftw_complex *c_in_data = NULL, *c_out_data = NULL;
 static fftw_plan c_r_plan, c_i_plan;  
-
 static int last_c_fft_size = 0;   
+
 #if HAVE_PTHREADS
   static mus_lock_t c_fft_lock = MUS_LOCK_INITIALIZER;
 #endif
 
-void mus_fftw_with_imag(mus_float_t *rl, mus_float_t *im, int n, int dir)
+static void mus_fftw_with_imag(mus_float_t *rl, mus_float_t *im, int n, int dir)
 {
   int i;
 
@@ -9960,51 +9914,10 @@ void mus_fftw_with_imag(mus_float_t *rl, mus_float_t *im, int n, int dir)
 
   MUS_UNLOCK(&c_fft_lock);
 }
-#endif
 
-#else
-
-#if HAVE_FFTW
-
-static fftw_real *rdata = NULL, *idata = NULL;
-static rfftw_plan rplan, iplan;
-static int last_fft_size = 0;
-#if HAVE_PTHREADS
-  static mus_lock_t fft_lock = MUS_LOCK_INITIALIZER;
-#endif
-
-
-void mus_fftw(mus_float_t *rl, int n, int dir)
-{
-  int i;
-
-  MUS_LOCK(&fft_lock);
-
-  if (n != last_fft_size)
-    {
-      if (rdata) {clm_free(rdata); clm_free(idata); rfftw_destroy_plan(rplan); rfftw_destroy_plan(iplan);}
-      rplan = rfftw_create_plan(n, FFTW_REAL_TO_COMPLEX, FFTW_ESTIMATE); /* I didn't see any improvement here from using FFTW_MEASURE */
-      iplan = rfftw_create_plan(n, FFTW_COMPLEX_TO_REAL, FFTW_ESTIMATE);
-      last_fft_size = n;
-      rdata = (fftw_real *)clm_calloc(n, sizeof(fftw_real), "fftw");
-      idata = (fftw_real *)clm_calloc(n, sizeof(fftw_real), "fftw");
-    }
-  memset((void *)idata, 0, n * sizeof(fftw_real));
-  /* if mus_float_t (default float) == fftw_real (default double) we could forego the data copy */
-  for (i = 0; i < n; i++) rdata[i] = rl[i];
-  if (dir != -1)
-    rfftw_one(rplan, rdata, idata);
-  else rfftw_one(iplan, rdata, idata);
-  for (i = 0; i < n; i++) rl[i] = idata[i];
-
-  MUS_UNLOCK(&fft_lock);
-}
-#endif
-#endif
 
 static void mus_big_fft(mus_float_t *rl, mus_float_t *im, mus_long_t n, int is);
 
-#if HAVE_FFTW3 && HAVE_COMPLEX_TRIG && (!__cplusplus)
 void mus_fft(mus_float_t *rl, mus_float_t *im, mus_long_t n, int is)
 {
   /* simple timing tests indicate fftw is slightly less than 4 times faster than mus_fft in this context */
@@ -12221,8 +12134,8 @@ void mus_initialize(void)
   array_print_length = MUS_DEFAULT_ARRAY_PRINT_LENGTH;
   clm_file_buffer_size = MUS_DEFAULT_FILE_BUFFER_SIZE;
 
-#if HAVE_FFTW3 || HAVE_FFTW
-  last_fft_size = 0;
+#if HAVE_FFTW3 && HAVE_COMPLEX_TRIG && (!__cplusplus)
+  last_c_fft_size = 0;
   /* is there a problem if the caller built fftw with --enable-threads?  
    *   How to tell via configure that we need to initialize the thread stuff in libfftw?
    */

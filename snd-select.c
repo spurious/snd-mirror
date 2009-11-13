@@ -1393,9 +1393,6 @@ static XEN g_selection_p(XEN sel)
   #define H_selection_p "(" S_selection_p " :optional obj): " PROC_TRUE " if selection is currently active, visible, etc. \
 If 'obj' is passed, " S_selection_p " returns #t is obj is a selection object and there is a current selection."
 
-  /* TODO: what happens if we make-region-sampler, let the region be deleted, then read? */
-  /*  similarly, do we snd-test for make-sampler, close sound and read? */
-
   if ((XEN_BOUND_P(sel)) &&
       (!(xen_selection_p(sel))))
     return(XEN_FALSE);

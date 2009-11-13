@@ -2103,13 +2103,26 @@ static bool s7_xen_mark_equalp(void *obj1, void *obj2)
   return((obj1 == obj2) ||
 	 (((xen_mark *)obj1)->n == ((xen_mark *)obj2)->n));
 }
+
+
+static XEN s7_xen_mark_copy(s7_scheme *sc, s7_pointer obj)
+{
+  int id;
+  mark *m, *new_m;
+  chan_info *cps[1];
+  id = xen_mark_to_int(obj);
+  m = find_mark_from_id(id, cps, AT_CURRENT_EDIT_POSITION);
+  new_m = add_mark(m->samp, m->name, cps[0]);
+  new_m->sync = m->sync;
+  return(new_xen_mark(new_m->id));
+}
 #endif
 
 
 static void init_xen_mark(void)
 {
 #if HAVE_S7
-  xen_mark_tag = XEN_MAKE_OBJECT_TYPE("<mark>", print_xen_mark, free_xen_mark, s7_xen_mark_equalp, NULL, NULL, NULL, NULL, NULL, NULL);
+  xen_mark_tag = XEN_MAKE_OBJECT_TYPE("<mark>", print_xen_mark, free_xen_mark, s7_xen_mark_equalp, NULL, NULL, NULL, NULL, s7_xen_mark_copy, NULL);
 #else
 #if HAVE_RUBY
   xen_mark_tag = XEN_MAKE_OBJECT_TYPE("XenMark", sizeof(xen_mark));

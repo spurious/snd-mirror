@@ -169,10 +169,6 @@ static void main_snd_help(const char *subject, ...)
 
 #if HAVE_FFTW3
   #include <fftw3.h>
-#else
-  #if HAVE_FFTW
-    #include <fftw.h>
-  #endif
 #endif
 
 #if MUS_PULSEAUDIO
@@ -383,7 +379,7 @@ char *version_info(void)
           " ", MUS_GSL_VERSION,
   #endif
 #endif
-#if HAVE_FFTW || HAVE_FFTW3
+#if HAVE_FFTW3
 	  "\n    ", fftw_version,
 #endif
 #if USE_MOTIF

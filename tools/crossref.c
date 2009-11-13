@@ -338,6 +338,10 @@ int main(int argc, char **argv)
   add_file("sc.c");
   add_file("ffi.lisp");
   add_file("sndlib2clm.lisp");
+  add_file("run.lisp");
+  add_file("clm1.lisp");
+
+  add_file("sndins/sndins.c");
 
   for (i = 0; i < headers_ctr; i++)
     {

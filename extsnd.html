@@ -1249,7 +1249,7 @@ the current selection (<a href="#selectionchans">selection-chans</a>),
 <code><a class=def>copy</a> (obj)</code>
 </td></tr><tr><td></td><td>
 <A NAME="genericcopy">copy</A> returns a copy of its argument.
-It works with strings, lists, vectors, hash tables, vcts, sound-data objects, frames, mixers, sounds, the current selection,
+It works with strings, lists, vectors, hash tables, vcts, sound-data objects, frames, mixers, sounds, the current selection, mixes, marks,
 bignums, and the non-gmp random state objects.
 </td></tr><tr><td colspan=2 height=18></td></tr>
 
@@ -5300,6 +5300,14 @@ rather than <a href="#play">play</a>).
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
+<!-- save-mix -->
+<tr><td colspan=2 bgcolor="#f2f4ff">
+<code><a class=def name="savemix">save-mix</a> (mix filename)</code>
+</td></tr><tr><td></td><td>
+save-mix saves a given mix's data in the file 'filename'.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
 <!-- with-mix-tags -->
 <tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="withmixtags">with-mix-tags</a> ()</code>
 </td></tr><tr><td></td><td>
@@ -5324,7 +5332,7 @@ enveloped mix: see <a href="sndscm.html#envelopedmix">enveloped-mix</a> in exten
 read mix samples: <a href="#makemixsampler">make-mix-sampler</a><br>
 mix data maxamp: <a href="sndscm.html#mixmaxamp">mix-maxamp</a><br>
 mix data to vct: <a href="sndscm.html#mixtovct">mix-&gt;vct</a><br>
-save mix data in file: <a href="sndscm.html#savemix">save-mix</a><br>
+save mix data in file: <a href="#savemix">save-mix</a><br>
 mix property list: <a href="sndscm.html#mixproperty">mix-property</a> in mix.scm<br>
 pan mono sound into stereo: see <a href="sndscm.html#placesound">place-sound</a> in examp.scm<br>
 move a mixed sound via dlocsig: <a href="#mixmovesound">mix-move-sound</a><br>
@@ -8655,7 +8663,7 @@ check first for unsaved edits: <a href="sndscm.html#checkforunsavededits">check-
 save Snd's complete state (unsaved edits and all): <a href="#savestate">save-state</a>, <a href="#savedir">save-dir</a>, <a href="#savestatehook">save-state-hook</a>, <a href="#savestatefile">save-state-file</a><br>
 save the selection: <a href="#saveselection">save-selection</a><br>
 save a region: <a href="#saveregion">save-region</a><br>
-save a mix: <a href="sndscm.html#savemix">save-mix</a><br>
+save a mix: <a href="#savemix">save-mix</a><br>
 save the control panel state: <a href="#savecontrols">save-controls</a><br>
 save currently defined envelopes (envelope editor): <a href="#saveenvelopes">save-envelopes</a><br>
 start the file save dialog: <a href="#savesounddialog">save-sound-dialog</a><br>

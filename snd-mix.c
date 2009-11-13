@@ -2529,13 +2529,19 @@ static bool s7_xen_mix_equalp(void *obj1, void *obj2)
   return((obj1 == obj2) ||
 	 (((xen_mix *)obj1)->n == ((xen_mix *)obj2)->n));
 }
+
+
+static XEN s7_xen_mix_copy(s7_scheme *sc, s7_pointer obj)
+{
+  return(new_xen_mix(copy_mix(XEN_MIX_TO_C_INT(obj))));
+}
 #endif
 
 
 static void init_xen_mix(void)
 {
 #if HAVE_S7
-  xen_mix_tag = XEN_MAKE_OBJECT_TYPE("<mix>", print_xen_mix, free_xen_mix, s7_xen_mix_equalp, NULL, NULL, NULL, s7_xen_mix_length, NULL, NULL);
+  xen_mix_tag = XEN_MAKE_OBJECT_TYPE("<mix>", print_xen_mix, free_xen_mix, s7_xen_mix_equalp, NULL, NULL, NULL, s7_xen_mix_length, s7_xen_mix_copy, NULL);
 #else
 #if HAVE_RUBY
   xen_mix_tag = XEN_MAKE_OBJECT_TYPE("XenMix", sizeof(xen_mix));
@@ -2725,9 +2731,6 @@ static XEN g_set_mix_speed(XEN n, XEN uval)
 }
 
 
-
-/* mix-info */
-
 static XEN g_mix_name(XEN n) 
 {
   #define H_mix_name "(" S_mix_name " id): name of mix"
@@ -2882,7 +2885,6 @@ filename or " PROC_FALSE " and the input channel for its data."
 		    (md->in_filename) ? C_TO_XEN_STRING(md->in_filename) : XEN_FALSE,
 		    C_TO_XEN_INT(md->in_chan)));
 }
-
 
 
 void color_mixes(color_t color)
@@ -3499,7 +3501,7 @@ XEN g_mix_sampler_home(XEN obj)
 }
 
 
-bool mix_sampler_at_end_p(void *ptr)
+static bool mix_sampler_at_end_p(void *ptr)
 {
   mix_fd *mf = (mix_fd *)ptr;
   return(mf->sf->at_eof);
@@ -3535,6 +3537,122 @@ XEN g_free_mix_sampler(XEN obj)
       mf->md = NULL;
     }
   return(xen_return_first(XEN_FALSE, obj));
+}
+
+
+static io_error_t save_mix(int id, const char *name, int type, int format)
+{
+  mix_info *md;
+  chan_info *cp;
+  snd_info *sp;
+  mix_state *ms;
+  io_error_t io_err = IO_NO_ERROR;
+  mus_long_t frames;
+
+  md = md_from_id(id);
+  cp = md->cp;
+  sp = cp->sound;
+  ms = current_mix_state(md);
+  frames = ms->len;
+
+  io_err = snd_write_header(name, type, SND_SRATE(sp), 1, frames, format, NULL, NULL);
+
+  if (io_err == IO_NO_ERROR)
+    {
+      mus_long_t oloc;
+      int ofd;
+      oloc = mus_header_data_location();
+      ofd = snd_reopen_write(name);
+      if (ofd != -1)
+	{
+	  mus_sample_t **bufs;
+	  mus_sample_t *data;
+	  int err = 0;
+	  mus_long_t i;
+	  mix_fd *mf = NULL;
+
+	  snd_file_open_descriptors(ofd, name, format, oloc, 1, type);
+	  mus_file_set_clipping(ofd, clipping(ss));
+	  lseek(ofd, oloc, SEEK_SET);
+
+	  mf = (mix_fd *)calloc(1, sizeof(mix_fd));
+	  mf->md = md;
+	  mf->sf = make_virtual_mix_reader(md->cp, 0, ms->len, ms->index, ms->scaler, READ_FORWARD);
+	  mf->sf->region = md->id;
+
+	  bufs = (mus_sample_t **)calloc(1, sizeof(mus_sample_t *));
+	  bufs[0] = (mus_sample_t *)calloc(FILE_BUFFER_SIZE, sizeof(mus_sample_t));
+	  data = bufs[0];
+
+	  for (i = 0; i < frames; i += FILE_BUFFER_SIZE)
+	    {
+	      int cursamples, k;
+	      if ((i + FILE_BUFFER_SIZE) < frames) 
+		cursamples = FILE_BUFFER_SIZE; 
+	      else cursamples = (frames - i);
+
+	      for (k = 0; k < cursamples; k++)
+		data[k] = read_sample(mf->sf);
+	      err = mus_file_write(ofd, 0, cursamples - 1, 1, bufs);
+	      if (err == -1) 
+		{
+		  snd_warning("write error while saving mix");
+		  break;
+		}
+	    }
+
+	  free_snd_fd(mf->sf);
+	  free(mf);
+	  free(bufs[0]);
+	  data = NULL;
+	  free(bufs);
+
+	  mus_file_close(ofd);
+	}
+      else snd_error("%s %d in %s: %s", S_save_mix, id, name, snd_io_strerror());
+    }
+  else snd_error("%s %d in %s: %s", S_save_mix, id, name, snd_io_strerror());
+  return(io_err);
+}
+
+
+int copy_mix(int id)
+{
+  int new_id;
+  mus_long_t pos;
+  char *filename, *origin;
+  mix_info *md, *new_md;
+
+  md = md_from_id(id);
+  if (!md) return(-1);
+
+  filename = snd_tempnam();
+  save_mix(id, filename, MUS_NEXT, MUS_OUT_FORMAT);
+
+  pos = mix_position_from_id(id);
+  origin = tagged_mix_to_string(filename, pos, 0, true); /* true = file should be auto-deleted, I think */
+
+  new_id = mix_file_with_tag(md->cp, filename, 0, pos, DELETE_ME, origin);
+
+  new_md = md_from_id(new_id);
+  if (!new_md->in_filename)
+    new_md->in_filename = mus_strdup(filename);
+
+  free(origin);
+  free(filename);
+  return(new_id); 
+}
+
+
+static XEN g_save_mix(XEN m, XEN file)
+{
+  #define H_save_mix "(" S_save_mix " mix filename) saves mix's samples in the file 'filename'"
+
+  XEN_ASSERT_TYPE(XEN_MIX_P(m), m, XEN_ARG_1, S_save_mix, "a mix");
+  XEN_ASSERT_TYPE(XEN_STRING_P(file), file, XEN_ARG_2, S_save_mix, "a filename");
+
+  save_mix(XEN_MIX_TO_C_INT(m), XEN_TO_C_STRING(file), MUS_NEXT, MUS_OUT_FORMAT);
+  return(m);
 }
 
 
@@ -3665,6 +3783,7 @@ XEN_ARGIFY_2(g_make_mix_sampler_w, g_make_mix_sampler)
 XEN_NARGIFY_1(g_read_mix_sample_w, g_read_mix_sample)
 XEN_NARGIFY_1(g_mix_sampler_p_w, g_mix_sampler_p)
 XEN_ARGIFY_2(g_play_mix_w, g_play_mix)
+XEN_NARGIFY_2(g_save_mix_w, g_save_mix)
 
 XEN_NARGIFY_0(g_view_mixes_dialog_w, g_view_mixes_dialog)
 XEN_NARGIFY_0(g_mix_dialog_mix_w, g_mix_dialog_mix)
@@ -3715,6 +3834,7 @@ XEN_NARGIFY_1(g_set_mix_dialog_mix_w, g_set_mix_dialog_mix)
 #define g_read_mix_sample_w g_read_mix_sample
 #define g_mix_sampler_p_w g_mix_sampler_p
 #define g_play_mix_w g_play_mix
+#define g_save_mix_w g_save_mix
 
 #define g_view_mixes_dialog_w g_view_mixes_dialog
 #define g_mix_dialog_mix_w g_mix_dialog_mix
@@ -3756,6 +3876,7 @@ void g_init_mix(void)
   XEN_DEFINE_PROCEDURE(S_read_mix_sample,        g_read_mix_sample_w,        1, 0, 0, H_read_mix_sample);
   XEN_DEFINE_PROCEDURE(S_mix_sampler_p,          g_mix_sampler_p_w,    1, 0, 0, H_mix_sampler_p);
   XEN_DEFINE_PROCEDURE(S_play_mix,               g_play_mix_w,               0, 2, 0, H_play_mix);
+  XEN_DEFINE_PROCEDURE(S_save_mix,               g_save_mix_w,               2, 0, 0, H_save_mix);
 
   XEN_DEFINE_PROCEDURE(S_mix,                    g_mix_w,                    1, 6, 0, H_mix);
   XEN_DEFINE_PROCEDURE(S_mix_vct,                g_mix_vct_w,                1, 5, 0, H_mix_vct);

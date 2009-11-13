@@ -4,7 +4,6 @@
 ;;; (snap-mix-to-beat) forces dragged mix to end up on a beat
 ;;; (silence-all-mixes) sets all mix amps to 0.0
 ;;; (find-mix sample snd chn) returns the mix at the given sample, or #f
-;;; (save-mix mix filename) saves mix data in file filename
 ;;; (mix-maxamp mix) maxamp of mix
 ;;;
 ;;; mix-property associates a property list with a mix
@@ -79,27 +78,7 @@
       (throw 'no-such-mix (list "mix->vct" id))))
 
 
-(define (save-mix id filename)
-  "(save-mix mix filename) saves mix data (as floats) in file filename"
-  (if (mix? id)
-      (if (< (frames id) 1000000)
-	  (let ((v (mix->vct id))
-		(fd (mus-sound-open-output filename (srate) 1 #f #f "")))
-	    (mus-sound-write fd 0 (- (length v) 1) 1 (vct->sound-data v))
-	    (mus-sound-close-output fd (* (mus-bytes-per-sample mus-out-format) (length v))))
-	  (let* ((buflen 10000)
-		 (sd (make-sound-data 1 buflen))
-		 (len (frames id))
-		 (reader (make-mix-sampler id)))
-	    (do ((buf 0 (+ buf buflen)))
-		((>= buf len))
-	      (do ((i 0 (+ 1 i)))
-		  ((= i buflen))
-		(sound-data-set! sd 0 i (read-mix-sample reader)))
-	      (mus-sound-write fd 0 (- buflen 1) 1 sd))
-	    (free-sampler reader)
-	    (mus-sound-close-output fd (* (mus-bytes-per-sample mus-out-format) len))))
-      (throw 'no-such-mix (list "save-mix" id))))
+;;; 12-Nov-09: moved save-mix to C (snd-mix.c)
 
 
 (define (mix-maxamp id)

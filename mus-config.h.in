@@ -116,7 +116,6 @@
 #undef MUS_JACK_VERSION
 #undef MUS_PULSEAUDIO
 
-#undef HAVE_FFTW
 #undef HAVE_FFTW3
 #undef WITH_GMP
 

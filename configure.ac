@@ -404,20 +404,10 @@ if test "$with_fftw" != no; then
       FFTW_LIBS="`$PKG_CONFIG fftw3 --libs`"
       FFTW_CFLAGS="`$PKG_CONFIG fftw3 --cflags`"
       AC_DEFINE(HAVE_FFTW3)
-      OPTIONAL_LIBRARIES="$OPTIONAL_LIBRARIES fftw"
+      OPTIONAL_LIBRARIES="$OPTIONAL_LIBRARIES fftw3"
       AC_MSG_RESULT(yes)
     else
       AC_MSG_RESULT(no)
-      AC_MSG_CHECKING(for fftw2)
-      if $PKG_CONFIG fftw --exists ; then
-        FFTW_LIBS="`$PKG_CONFIG fftw --libs`"
-        FFTW_CFLAGS="`$PKG_CONFIG fftw --cflags`"
-        AC_DEFINE(HAVE_FFTW)
-        OPTIONAL_LIBRARIES="$OPTIONAL_LIBRARIES fftw"
-        AC_MSG_RESULT(yes)
-      else
-        AC_MSG_RESULT(no)
-      fi
     fi
   else
     SAVELIBS=$LIBS
@@ -427,19 +417,10 @@ if test "$with_fftw" != no; then
 		                [fftw_plan plan; fftw_execute(plan)])],
 		[AC_MSG_RESULT(yes)
 		 AC_DEFINE(HAVE_FFTW3)
-                 OPTIONAL_LIBRARIES="$OPTIONAL_LIBRARIES fftw"
+                 OPTIONAL_LIBRARIES="$OPTIONAL_LIBRARIES fftw3"
 		 FFTW_LIBS="-lfftw3"],
 		[AC_MSG_RESULT(no)
                  LIBS=$SAVELIBS
-                 LIBS="$LIBS -lrfftw -lfftw -lm"
-                 AC_MSG_CHECKING([for fftw-2])
-                 AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <rfftw.h>],
-                                [rfftw_one(NULL, NULL, NULL)])],
-		  		[AC_MSG_RESULT(yes)
-		   		 AC_DEFINE(HAVE_FFTW)
-                                 OPTIONAL_LIBRARIES="$OPTIONAL_LIBRARIES fftw"
-		   		 FFTW_LIBS="-lrfftw -lfftw"],
-		  		[AC_MSG_RESULT(no)])
 		])
     LIBS=$SAVELIBS
   fi

@@ -1463,7 +1463,7 @@ $mouse_enter_text_hook.add_hook!(\"enter\") do |w|\n\
   preload_best_completions();
 }
 
-/* PERHAPS: is it possible to track mouse motion, notice what's under it, and
- *            post help in the minibuffer?  Or print a sample value? 
+/* PERHAPS: is it possible to track mouse motion in a text widget, notice what's under it, and
+ *            post help in the minibuffer?  
  *          or see latest func typed or do the Help (popup menu) if that dialog is active)
  */

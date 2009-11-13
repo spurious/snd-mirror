@@ -13977,7 +13977,7 @@ EDITS: 2
     (let ((s1 (open-sound "oboe.snd")))
       (let ((s2 (copy s1)))
 	(if (not (sound? s2))
-	    (snd-display "copy sound oboe -> ~A" s2)
+	    (snd-display ";copy sound oboe -> ~A" s2)
 	    (begin
 	      (if (not (= (srate s1) (srate s2))) (snd-display ";copy sounds srates: ~A ~A" (srate s1) (srate s2)))
 	      (if (not (= (frames s1) (frames s2))) (snd-display ";copy sounds frames: ~A ~A" (frames s1) (frames s2)))
@@ -14004,7 +14004,7 @@ EDITS: 2
     (let ((s1 (open-sound "2a.snd")))
       (let ((s2 (copy s1)))
 	(if (not (sound? s2))
-	    (snd-display "copy sound 2a -> ~A" s2)
+	    (snd-display ";copy sound 2a -> ~A" s2)
 	    (begin
 	      (if (not (= (srate s1) (srate s2))) (snd-display ";copy sounds srates 2: ~A ~A" (srate s1) (srate s2)))
 	      (if (not (= (frames s1) (frames s2))) (snd-display ";copy sounds frames 2: ~A ~A" (frames s1) (frames s2)))
@@ -29600,6 +29600,22 @@ EDITS: 2
 		
 		))))
 	
+	(let ((fd (open-sound "oboe.snd"))
+	      (m1 (add-mark 1234)))
+	  (set! (mark-name m1) "1234")
+	  (set! (mark-sync m1) 1234)
+	  (let ((m2 (copy m1)))
+	    (if (not (mark? m2)) 
+		(snd-display "; copy mark: ~A?" m2)
+		(begin
+		  (if (not (= (mark-sample m1) (mark-sample m2) 1234))
+		      (snd-display ";copy mark sample: ~A ~A" (mark-sample m1) (mark-sample m2)))
+		  (if (not (= (mark-sync m1) (mark-sync m2) 1234))
+		      (snd-display ";copy mark sync: ~A ~A" (mark-sync m1) (mark-sync m2)))
+		  (if (not (string=? (mark-name m2) "1234"))
+		      (snd-display ";copy mark name: ~A?" (mark-name m2))))))
+	  (close-sound fd))
+
 	(let* ((ind (open-sound "pistol.snd"))
 	       (samp1 1834)
 	       (samp2 8345)
@@ -29607,7 +29623,7 @@ EDITS: 2
 	       (m2 (add-mark samp2)))
 	  (set! (mark-sync m1) 123)
 	  (set! (mark-sync m2) 100)
-	  (if (not (= (mark-sync-max) 123)) (snd-display ";mark-sync-max: ~A" (mark-sync-max)))
+	  (if (not (= (mark-sync-max) 1234)) (snd-display ";mark-sync-max: ~A" (mark-sync-max)))
 	  (src-sound -1)
 	  (if (not (= (mark-sample m1) 39788))
 	      (snd-display ";src -1 m1 -> ~A" (mark-sample m1)))

@@ -1,13 +1,5 @@
 #include "snd.h"
 
-/* multiple mix dialogs might be nice but:
- *  requires arg for mix-dialog-mix, loop in reflect, "New Viewer" button, 
- *  how to make sure two dialogs don't try to affect the same mix?
- *  and we already have an easy way to move between mixes: click the tag changes the dialog mix
- *    or maybe not -- it would be better to have a list of the current active mixes in the dialog,
- *    and click there would (?) move the view
- */
-
 #define NAME_COLUMNS 8
 
 /* ---------------- mix dialog ---------------- */
@@ -462,6 +454,7 @@ static void apply_mix_dialog_callback(Widget w, XtPointer context, XtPointer inf
 
 static void copy_mix_dialog_callback(Widget w, XtPointer context, XtPointer info) 
 {
+  copy_mix(mix_dialog_id);
 }
 
 
@@ -1126,8 +1119,7 @@ void mix_dialog_set_mix(int id)
 }
 
 
-/* TODO: play button is not cleared, nor is playing state */
-/* TODO: copy mix (as func and button) */
-/* TODO: copy mark, perhaps region */
+/* PERHAPS: lock mix -- some way to write it and remove the mixer */
+/* TODO: copy mix test */
 /* TODO: if mix/mark tags overlap change tag height (in all such cases, including mix) */
-/* PERHAPS: copy sound/mix as clone? */
+

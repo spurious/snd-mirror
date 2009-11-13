@@ -484,6 +484,7 @@
 #define S_save_listener                 "save-listener"
 #define S_save_macros                   "save-macros"
 #define S_save_marks                    "save-marks"
+#define S_save_mix                      "save-mix"
 #define S_save_region                   "save-region"
 #define S_save_region_dialog            "save-region-dialog"
 #define S_save_selection                "save-selection"
