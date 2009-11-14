@@ -29,7 +29,7 @@
  *        keywords, hash tables, block comments, define*
  *        format
  *        error handling using error and catch
- *        in sndlib, the run macro works giving S7 a (somewhat limited) byte compiler
+ *        in sndlib, the run macro works giving s7 a (somewhat limited) byte compiler
  *        no invidious distinction between built-in and "foreign"
  *          (this makes it easy to extend built-in operators like "+" -- see s7.html for a simple example)
  *        lists, strings, vectors, and hash-tables are (set-)applicable objects
@@ -97,7 +97,7 @@
  *          (make-vector! 32 0.0)
  *          set of other type either converts or error
  *          FFI would guarantee (for example) s7_Double as elements?
- *        perhaps reverse, and append generic
+ *        perhaps generic reverse and append
  *        ->* for conversions (->vector, ->ratio? ->string etc) [see end of this file]
  *        ideally: remove all mention of exact|inexact, remove "delay"|force, remove set-car!|cdr!, 
  *                 remove *-ci-*, remove cxxxxr, remove improper lists
@@ -17803,6 +17803,8 @@ static void mark_s7(s7_scheme *sc)
  *   they also left a dangling declaration of mpc_default_prec, so we have to provide a different name
  * in 0.7 they removed MPC_IM and MPC_RE, and replaced them with mpc_imagref and mpc_realref.
  */
+
+/* TODO: remove mpc < 0.8 support! */
 
 #if defined(MPC_VERSION_MAJOR) && defined(MPC_VERSION_MINOR)
 #if ((MPC_VERSION_MAJOR >= 1) || ((MPC_VERSION_MAJOR == 0) && (MPC_VERSION_MINOR > 5)))

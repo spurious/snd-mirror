@@ -475,13 +475,13 @@ Widget add_menu(void)
 #endif
 
   /* FILE MENU */
-  XtSetArg(main_args[main_n], XmNuserData, 0);
+  XtSetArg(main_args[main_n], XmNuserData, (XtPointer)0);
   file_menu = XmCreatePulldownMenu(main_menu, (char *)"File", main_args, main_n + 1);
   
   high_n = start_high_n;
   XtSetArg(high_args[high_n], XmNsubMenuId, file_menu); high_n++;
   XtSetArg(high_args[high_n], XmNmnemonic, 'F'); high_n++;
-  XtSetArg(high_args[high_n], XmNuserData, 0); high_n++;
+  XtSetArg(high_args[high_n], XmNuserData, (XtPointer)0); high_n++;
   file_cascade_menu = XtCreateManagedWidget(_("File"), xmCascadeButtonWidgetClass, main_menu, high_args, high_n);
 
   file_open_menu = XtCreateManagedWidget(_("Open"), xmPushButtonWidgetClass, file_menu, main_args, main_n);
@@ -545,13 +545,13 @@ Widget add_menu(void)
 
 
   /* EDIT MENU */
-  XtSetArg(main_args[main_n], XmNuserData, 1);
+  XtSetArg(main_args[main_n], XmNuserData, (XtPointer)1);
   edit_menu = XmCreatePulldownMenu(main_menu, (char *)"Edit", main_args, main_n + 1);
 
   high_n = start_high_n;
   XtSetArg(high_args[high_n], XmNsubMenuId, edit_menu); high_n++;
   XtSetArg(high_args[high_n], XmNmnemonic, 'E'); high_n++;
-  XtSetArg(high_args[high_n], XmNuserData, 1); high_n++;
+  XtSetArg(high_args[high_n], XmNuserData, (XtPointer)1); high_n++;
   edit_cascade_menu = XtCreateManagedWidget(_("Edit"), xmCascadeButtonWidgetClass, main_menu, high_args, high_n);
   
   edit_undo_menu = XtCreateManagedWidget(_("Undo"), xmPushButtonWidgetClass, edit_menu, in_args, in_n);
@@ -605,13 +605,13 @@ Widget add_menu(void)
 
 
   /* VIEW MENU */
-  XtSetArg(main_args[main_n], XmNuserData, 2);
+  XtSetArg(main_args[main_n], XmNuserData, (XtPointer)2);
   view_menu = XmCreatePulldownMenu(main_menu, (char *)"View", main_args, main_n + 1);
 
   high_n = start_high_n;
   XtSetArg(high_args[high_n], XmNsubMenuId, view_menu); high_n++;
   XtSetArg(high_args[high_n], XmNmnemonic, 'V'); high_n++;
-  XtSetArg(high_args[high_n], XmNuserData, 2); high_n++;
+  XtSetArg(high_args[high_n], XmNuserData, (XtPointer)2); high_n++;
   view_cascade_menu = XtCreateManagedWidget(_("View"), xmCascadeButtonWidgetClass, main_menu, high_args, high_n);
 
   view_controls_menu = XtCreateManagedWidget(_("Show controls"), xmPushButtonWidgetClass, view_menu, main_args, main_n);
@@ -767,13 +767,13 @@ Widget add_menu(void)
 
 
   /* OPTIONS MENU */
-  XtSetArg(main_args[main_n], XmNuserData, 3);
+  XtSetArg(main_args[main_n], XmNuserData, (XtPointer)3);
   options_menu = XmCreatePulldownMenu(main_menu, (char *)"Option", main_args, main_n + 1);
 
   high_n = start_high_n;
   XtSetArg(high_args[high_n], XmNsubMenuId, options_menu); high_n++;
   XtSetArg(high_args[high_n], XmNmnemonic, 'O'); high_n++;
-  XtSetArg(high_args[high_n], XmNuserData, 3); high_n++;
+  XtSetArg(high_args[high_n], XmNuserData, (XtPointer)3); high_n++;
   options_cascade_menu = XtCreateManagedWidget(_("Options"), xmCascadeButtonWidgetClass, main_menu, high_args, high_n);
 
   options_transform_menu = XtCreateManagedWidget(_("Transform Options"), xmPushButtonWidgetClass, options_menu, main_args, main_n);
@@ -797,13 +797,13 @@ Widget add_menu(void)
 
 
   /* HELP MENU */
-  XtSetArg(main_args[main_n], XmNuserData, 4);
+  XtSetArg(main_args[main_n], XmNuserData, (XtPointer)4);
   help_menu = XmCreatePulldownMenu(main_menu, (char *)"Help", main_args, main_n + 1);
 
   high_n = start_high_n;
   XtSetArg(high_args[high_n], XmNsubMenuId, help_menu); high_n++;
   XtSetArg(high_args[high_n], XmNmnemonic, 'H'); high_n++;
-  XtSetArg(high_args[high_n], XmNuserData, 4); high_n++;
+  XtSetArg(high_args[high_n], XmNuserData, (XtPointer)4); high_n++;
   help_cascade_menu = XtCreateManagedWidget(_("Help"), xmCascadeButtonWidgetClass, main_menu, high_args, high_n);
 
   help_about_snd_menu = XtCreateManagedWidget(_("About Snd"), xmPushButtonWidgetClass, help_menu, main_args, main_n);
@@ -972,7 +972,7 @@ void create_popup_menu(void)
       XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
       mainp = MAIN_PANE(ss);
       XtSetArg(args[n], XmNpopupEnabled, XmPOPUP_AUTOMATIC_RECURSIVE); n++;
-      XtSetArg(args[n], XmNuserData, 5);
+      XtSetArg(args[n], XmNuserData, (XtPointer)5);
       popup_menu = XmCreatePopupMenu(mainp, (char *)"popup-menu", args, n + 1);
 
       n = 0;
@@ -1022,16 +1022,15 @@ void create_popup_menu(void)
 
 static void SND_callback(Widget w, XtPointer info, XtPointer context) 
 {
-  int callb;
+  pointer_or_int_t callb;
   XtVaGetValues(w, XmNuserData, &callb, NULL);
   g_snd_callback(CALL_INDEX(callb)); /* menu option activate callback */
-  if (callb < 0) fprintf(stderr,"%s callback: %d\n", XtName(w), callb); /* this exists solely to prevent an inexplicable segfault in dual x86_64 FC4 systems?? */
 }
 
 
 static void GHC_callback(Widget w, XtPointer info, XtPointer context) 
 {
-  int slot;
+  pointer_or_int_t slot;
   XtVaGetValues(w, XmNuserData, &slot, NULL);
   g_snd_callback(CALL_INDEX(slot)); /* main menu cascading callback */
 }
@@ -1089,7 +1088,7 @@ static bool clobber_menu(Widget w, const char *name)
       (mus_strcmp(name, wname)) &&
       (XtIsManaged(w)))
     {
-      int slot;
+      pointer_or_int_t slot;
       XtVaGetValues(w, XmNuserData, &slot, NULL);
       unprotect_callback(CALL_INDEX(slot));
       XtUnmanageChild(w);
@@ -1172,7 +1171,7 @@ Widget g_add_to_menu(int which_menu, const char *label, int callb, int position)
   if (menw == NULL) return(NULL);
   if (label)
     {
-      if (SIZEOF_LONG != SIZEOF_VOID_P) /* this stuff doesn't work in 64-bit machines */
+      if (SIZEOF_LONG != SIZEOF_VOID_P) /* TODO: this stuff doesn't work in 64-bit machines */
 	{
 	  /* look for currently unused widget first */
 	  /*   but close-all and open-recent should be left alone! */

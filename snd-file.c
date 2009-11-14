@@ -3587,11 +3587,7 @@ void view_files_reflect_sort_items(void)
 		set_menu_label(vdat->sort_items[j], 
 			       XEN_TO_C_STRING(XEN_CAR(ref)));
 		{
-#if (SIZEOF_INT == SIZEOF_VOID_P)
-		  int data;
-#else
-		  long data;
-#endif
+		  pointer_or_int_t data;
 		  data = i + SORT_XEN;
 		  set_user_data(G_OBJECT(vdat->sort_items[j]), 
 				(gpointer)data); /* this is an index into the file_sorters list, not the widget list */

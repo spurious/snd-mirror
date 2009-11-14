@@ -564,7 +564,9 @@ static void notebook_page_changed_callback(Widget w, XtPointer context, XtPointe
       page = nb->page_widget;
       if (page)
 	{
-	  XtVaGetValues(page, XmNuserData, &index, NULL);
+	  pointer_or_int_t data;
+	  XtVaGetValues(page, XmNuserData, &data, NULL);
+	  index = (int)data;
 	  if ((index < ss->max_sounds) && 
 	      (snd_ok(ss->sounds[index])))
 	    {

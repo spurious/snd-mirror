@@ -9,9 +9,11 @@
 
 static void Tab_completion(Widget w, XEvent *event, char **str, Cardinal *num) 
 {
-  int completer = -1;
+  int completer;
+  pointer_or_int_t data;
 
-  XtVaGetValues(w, XmNuserData, &completer, NULL);
+  XtVaGetValues(w, XmNuserData, &data, NULL);
+  completer = (int)data;
 
   /* fprintf(stderr,"tab in %s: %d\n", XtName(w), completer); */
 

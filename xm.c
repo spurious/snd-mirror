@@ -6,10 +6,11 @@
 #include <mus-config.h>
 #include <stdlib.h>
 
-#define XM_DATE "7-Aug-09"
+#define XM_DATE "16-Nov-09"
 
 /* HISTORY: 
  *
+ *   16-Nov:    XM_XTPOINTER resource type for 64-bit systems.
  *   7-Aug:     s7 extended type change.
  *   27-Jul:    changed OFF_T to INT64_T.
  *   24-Feb:    and then changed some back to ULONGs!
@@ -913,7 +914,7 @@ typedef enum {XM_INT, XM_ULONG, XM_UCHAR, XM_FLOAT, XM_STRING, XM_XMSTRING, XM_S
 	      XM_TRANSFER_CALLBACK, XM_CONVERT_CALLBACK, XM_SEARCH_CALLBACK, XM_ORDER_CALLBACK,
 	      XM_QUALIFY_CALLBACK, XM_ALLOC_COLOR_CALLBACK, XM_POPUP_CALLBACK, XM_SCREEN_COLOR_CALLBACK,
 	      XM_DROP_CALLBACK, XM_TRANSFER_ENTRY_LIST, XM_DRAG_CALLBACK, XM_STRING_OR_XMSTRING, XM_PARSE_CALLBACK,
-	      XM_BOOLEAN_OR_INT, XM_POSITION, XM_SHORT, XM_ROW_INFO, XM_CURSOR,
+	      XM_BOOLEAN_OR_INT, XM_POSITION, XM_SHORT, XM_ROW_INFO, XM_CURSOR, XM_XTPOINTER,
 	      XM_NOT_A_RESOURCE
 } xm_resource_t;
 
@@ -2284,6 +2285,7 @@ static XEN C_TO_XEN_ANY(Widget w, Arg arg)
     {
     case XM_INT:	      return(C_TO_XEN_INT((*((int *)(arg.value)))));
     case XM_ULONG:	      return(C_TO_XEN_ULONG((*((unsigned long *)(arg.value)))));
+    case XM_XTPOINTER:	      return(XEN_WRAP_C_POINTER((XtPointer)(arg.value)));
     case XM_UCHAR:	      return(C_TO_XEN_INT((*((unsigned char *)(arg.value)))));
     case XM_FLOAT:	      return(C_TO_XEN_DOUBLE((*((float *)(arg.value))))); /* the resource values are floats */
     case XM_STRING:	      return(C_TO_XEN_STRING((char *)(*((char **)(arg.value)))));
@@ -26132,7 +26134,7 @@ static void define_strings(void)
   DEFINE_RESOURCE(XmNchildPlacement, XM_UCHAR);
   DEFINE_RESOURCE(XmNchildVerticalAlignment, XM_UCHAR);
   DEFINE_RESOURCE(XmNchildren, XM_WIDGET_LIST);
-  DEFINE_RESOURCE(XmNclientData, XM_ULONG);
+  DEFINE_RESOURCE(XmNclientData, XM_XTPOINTER);
   DEFINE_RESOURCE(XmNclipWindow, XM_WIDGET);
   DEFINE_RESOURCE(XmNcolormap, XM_COLORMAP);
   DEFINE_RESOURCE(XmNcolumns, XM_SHORT);
@@ -26483,7 +26485,7 @@ static void define_strings(void)
   DEFINE_RESOURCE(XmNunmapCallback, XM_CALLBACK);
   DEFINE_RESOURCE(XmNunpostBehavior, XM_UCHAR);
   DEFINE_RESOURCE(XmNuseAsyncGeometry, XM_BOOLEAN);
-  DEFINE_RESOURCE(XmNuserData, XM_ULONG);
+  DEFINE_RESOURCE(XmNuserData, XM_XTPOINTER);
   DEFINE_RESOURCE(XmNvalidCursorForeground, XM_PIXEL);
   DEFINE_RESOURCE(XmNvalue, XM_STRING_OR_INT);
   DEFINE_RESOURCE(XmNvalueChangedCallback, XM_CALLBACK);

@@ -502,7 +502,7 @@ static XEN mouse_leave_graph_hook;
 
 static void graph_mouse_enter(Widget w, XtPointer context, XEvent *event, Boolean *flag)
 {
-  int data;
+  pointer_or_int_t data;
   XEnterWindowEvent *ev = (XEnterWindowEvent *)event;
 
   XtVaGetValues(w, XmNuserData, &data, NULL);
@@ -521,7 +521,7 @@ static void graph_mouse_enter(Widget w, XtPointer context, XEvent *event, Boolea
 
 static void graph_mouse_leave(Widget w, XtPointer context, XEvent *event, Boolean *flag)
 {
-  int data;
+  pointer_or_int_t data;
   XLeaveWindowEvent *ev = (XLeaveWindowEvent *)event;
 
   XtVaGetValues(w, XmNuserData, &data, NULL);
@@ -871,20 +871,16 @@ static void cp_graph_key_press(Widget w, XtPointer context, XEvent *event, Boole
 
 static void channel_drop_watcher(Widget w, const char *str, Position x, Position y, void *context)
 {
-#if (SIZEOF_INT == SIZEOF_VOID_P)
-  int data;
-  data = (int)context;
-#else
-  long data;
-  data = (long)context; /* also at 1020 */
-#endif
+  pointer_or_int_t data;
+  data = (pointer_or_int_t)context;
   drag_and_drop_mix_at_x_y((int)data, str, x, y);
 }
 
 
 static void channel_drag_watcher(Widget w, const char *str, Position x, Position y, drag_style_t dtype, void *context)
 {
-  int snd, chn, data;
+  int snd, chn;
+  pointer_or_int_t data;
   snd_info *sp;
   chan_info *cp;
   float seconds;
@@ -1171,20 +1167,12 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Wid
       XtAddEventHandler(cw[W_graph], PointerMotionMask, false, graph_mouse_motion, (XtPointer)cp);
       if (main == NULL)
 	{
-#if (SIZEOF_INT == SIZEOF_VOID_P)
-	  int data;
-#else
-	  long data;
-#endif
+	  pointer_or_int_t data;
 	  XtAddEventHandler(cw[W_graph], EnterWindowMask, false, graph_mouse_enter, (XtPointer)cp);
 	  XtAddEventHandler(cw[W_graph], LeaveWindowMask, false, graph_mouse_leave, (XtPointer)cp);
 	  XtAddEventHandler(cw[W_graph], KeyPressMask, false, cp_graph_key_press, (XtPointer)cp);
 
-#if (SIZEOF_INT == SIZEOF_VOID_P)
-	  data = PACK_SOUND_AND_CHANNEL(sp->index, cp->chan);
-#else
-	  data = (long)PACK_SOUND_AND_CHANNEL(sp->index, cp->chan);
-#endif
+	  data = (pointer_or_int_t)PACK_SOUND_AND_CHANNEL(sp->index, cp->chan);
 	  add_drag_and_drop(cw[W_graph], channel_drop_watcher, channel_drag_watcher, (void *)data);
 	}
 

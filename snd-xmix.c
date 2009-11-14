@@ -1055,8 +1055,6 @@ void reflect_mix_change(int mix_id)
 
 	      for_each_normal_chan(display_channel_mixes);
 
-	      /* TODO: if united, chan 2 mix drag adds bg color at top? */
-
 	      if (!dragging)
 		{
 		  val = mix_speed_from_id(mix_dialog_id);
@@ -1119,7 +1117,8 @@ void mix_dialog_set_mix(int id)
 }
 
 
-/* PERHAPS: lock mix -- some way to write it and remove the mixer */
-/* TODO: copy mix test */
+/* PERHAPS: lock (apply?) mix -- some way to write it and remove the mixer */
 /* TODO: if mix/mark tags overlap change tag height (in all such cases, including mix) */
+/* TODO: if united, chan 2 mix drag adds bg color at top? */
+
 

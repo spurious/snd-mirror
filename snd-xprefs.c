@@ -124,7 +124,7 @@ static void set_radio_button(prefs_info *prf, int which)
 
 static int which_radio_button(prefs_info *prf)
 {
-  int which = 0;
+  pointer_or_int_t which = 0;
   XtVaGetValues(prf->radio_button, XmNuserData, &which, NULL);
   return(which);
 }

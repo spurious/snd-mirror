@@ -413,8 +413,10 @@ static void sort_files_and_redisplay(file_pattern_info *fp);
 static void file_list_item_activate_callback(Widget w, XtPointer context, XtPointer info)
 {
   file_popup_info *fd = (file_popup_info *)context;
-  int choice = 0;
-  XtVaGetValues(w, XmNuserData, &choice, NULL);
+  pointer_or_int_t data;
+  int choice;
+  XtVaGetValues(w, XmNuserData, &data, NULL);
+  choice = (int)data;
   if (choice >= FILE_FILTER_OFFSET)
     {
       XmToggleButtonSetState(fd->fp->just_sounds_button, false, false);
@@ -5172,9 +5174,9 @@ static void sort_view_files_small_to_big(Widget w, XtPointer context, XtPointer 
 
 static void sort_view_files_xen(Widget w, XtPointer context, XtPointer info) 
 {
-  int index;
+  pointer_or_int_t index;
   XtVaGetValues(w, XmNuserData, &index, NULL); /* index is location in list of file-sorters */
-  sort_vf((view_files_info *)context, index);
+  sort_vf((view_files_info *)context, (int)index);
 }
 
 

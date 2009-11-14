@@ -124,6 +124,9 @@ AC_ARG_WITH(gmp,         [  --with-gmp		  include multiprecision arithmetic via 
 AC_ARG_WITH(s7,          [  --with-s7  	          use S7, default=yes])
 AC_ARG_WITH(extension-language, [  --with-extension-language	use some extension language, default=yes])
 
+# an experiment
+AC_ARG_WITH(directfb,    [  --with-directfb	  use directfb config scripts, rather than gtk, default=no])
+
 
 # -------- internal sample data type --------
 
@@ -1046,7 +1049,11 @@ else
 
 	GTK_LD_LIBS="$GTK_LIBS"
 	if test x$PKG_CONFIG != xno ; then
-          GTK_LD_LIBS="`$PKG_CONFIG gtk+-2.0 --libs-only-L` `$PKG_CONFIG gtk+-2.0 --libs-only-l`"
+          if test "$with_directfb" = yes ; then
+            GTK_LD_LIBS="`$PKG_CONFIG gtk+-directfb-2.0 --libs-only-L` `$PKG_CONFIG gtk+-directfb-2.0 --libs-only-l`"
+          else
+            GTK_LD_LIBS="`$PKG_CONFIG gtk+-2.0 --libs-only-L` `$PKG_CONFIG gtk+-2.0 --libs-only-l`"
+          fi
           pango_version="`$PKG_CONFIG pango --modversion`"
           AC_DEFINE_UNQUOTED(MUS_PANGO_VERSION,"${pango_version}")
         fi
