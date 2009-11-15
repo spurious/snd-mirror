@@ -2798,6 +2798,10 @@ static void init_xen_player(void)
 
 /* -------------------------------------------------------------------------------- */
 
+
+/* (play [object] :start :end? :duration? :edit-position [used by save-as] :wait :stop :channel :[dac]out-channel? :sync? or should sync be default -- no arg for it)
+ */
+
 static XEN g_play_selection(XEN wait, XEN stop_proc);
 
 static XEN g_play_1(XEN samp_n, XEN snd, XEN chn_n, bool back, bool syncd, XEN end_n, XEN edpos, 
@@ -2820,8 +2824,12 @@ static XEN g_play_1(XEN samp_n, XEN snd, XEN chn_n, bool back, bool syncd, XEN e
   if (XEN_FALSE_P(samp_n))
     return(C_TO_XEN_BOOLEAN(add_zeros_to_play_list(snd, chn_n))); /* srate out-chans */
 
+  /* if 1st arg is object, 2nd is begin time?, is there any real use in this case for stop-proc or wait? */
+  /* stop proc should be handled by a hook, not a passed-in procedure */
+  /* or add keywords for all these choices */
+
   if (XEN_MIX_P(samp_n))
-    return(g_play_mix(samp_n, snd)); /* "snd" = begin sample */
+    return(g_play_mix(samp_n, snd));                              /* "snd" = begin sample */
 
   if (XEN_REGION_P(samp_n))
     return(g_play_region(samp_n, snd, chn_n)); /* region wait stop-proc */

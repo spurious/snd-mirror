@@ -1171,30 +1171,27 @@ Widget g_add_to_menu(int which_menu, const char *label, int callb, int position)
   if (menw == NULL) return(NULL);
   if (label)
     {
-      if (SIZEOF_LONG != SIZEOF_VOID_P) /* TODO: this stuff doesn't work in 64-bit machines */
+      /* look for currently unused widget first */
+      /*   but close-all and open-recent should be left alone! */
+      CompositeWidget cw = (CompositeWidget)menw;
+      for (i = 0; i < cw->composite.num_children; i++)
 	{
-	  /* look for currently unused widget first */
-	  /*   but close-all and open-recent should be left alone! */
-	  CompositeWidget cw = (CompositeWidget)menw;
-	  for (i = 0; i < cw->composite.num_children; i++)
+	  m = cw->composite.children[i];
+	  if ((m) && 
+	      (!(XtIsManaged(m))) &&
+	      (m != file_close_all_menu) &&
+	      (m != file_open_recent_menu) &&
+	      (m != file_open_recent_cascade_menu))
 	    {
-	      m = cw->composite.children[i];
-	      if ((m) && 
-		  (!(XtIsManaged(m))) &&
-		  (m != file_close_all_menu) &&
-		  (m != file_open_recent_menu) &&
-		  (m != file_open_recent_cascade_menu))
+	      if (!(mus_strcmp(XtName(m), label)))
 		{
-		  if (!(mus_strcmp(XtName(m), label)))
-		    {
-		      set_widget_name(m, label);
-		      set_button_label(m, label);
-		    }
-		  if (position >= 0) XtVaSetValues(m, XmNpositionIndex, position, NULL);
-		  XtVaSetValues(m, XmNuserData, PACK_MENU_DATA(callb, which_menu), NULL);
-		  XtManageChild(m);
-		  return(m);
+		  set_widget_name(m, label);
+		  set_button_label(m, label);
 		}
+	      if (position >= 0) XtVaSetValues(m, XmNpositionIndex, position, NULL);
+	      XtVaSetValues(m, XmNuserData, PACK_MENU_DATA(callb, which_menu), NULL);
+	      XtManageChild(m);
+	      return(m);
 	    }
 	}
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;

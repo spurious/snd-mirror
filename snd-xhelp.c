@@ -575,33 +575,28 @@ Widget snd_help_with_xrefs(const char *subject, const char *helpstr, with_word_w
   help_urls = urls; /* can't associate the url with the help item in any "natural" way in Motif (no user-data per item) */
   if (xrefs)
     {
-      XmString *strs;
-      int i = 0, len = 0, strs_size = 32;
-      strs = (XmString *)calloc(strs_size, sizeof(XmString));	  
-      while (true)
+      int i, len;
+
+      for (i = 0; ; i++)
+	if (!xrefs[i])
+	  {
+	    len = i;
+	    break;
+	  }
+
+      if (len > 0)
 	{
-	  if (i >= strs_size)
-	    {
-	      int k;
-	      strs_size *= 2;
-	      strs = (XmString *)realloc(strs, strs_size * sizeof(XmString));
-	      for (k = i; k < strs_size; k++) strs[k] = NULL;
-	    }
-	  if (xrefs[i])
-	    {
-	      strs[i] = parse_crossref((const char *)(xrefs[i]));
-	      i++;
-	    }
-	  else 
-	    {
-	      len = i;
-	      break;
-	    }
+	  XmString *strs;
+	  strs = (XmString *)calloc(len, sizeof(XmString));
+	  
+	  for (i = 0; i < len; i++)
+	    strs[i] = parse_crossref((const char *)(xrefs[i]));
+	  XtVaSetValues(related_items, XmNitems, strs, XmNitemCount, len, NULL);
+
+	  for (i = 0; i < len; i++)
+	    XmStringFree(strs[i]);
+	  free(strs);
 	}
-      XtVaSetValues(related_items, XmNitems, strs, XmNitemCount, len, NULL);
-      for (i = 0; i < len; i++)
-	XmStringFree(strs[i]);
-      free(strs);
     }
   return(w);
 }

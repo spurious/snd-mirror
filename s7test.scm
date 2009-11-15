@@ -36890,6 +36890,7 @@
       (test (if 1 . 2) 'error)
       (test (if 1 2 . 3) 'error)
       (test (if . 1) 'error)
+      (test (if _no_var_ 1) 'error)
       
       (test (for-each (lambda (x) (display "for-each should not have called this"))) 'error)
       (test (for-each (lambda () 1) '()) 'error)
@@ -36999,6 +37000,7 @@
       (test (set! 3.14 1) 'error)
       (test (set! #\a 12) 'error)
       (test (set! (1 2) #t) 'error)
+      (test (set! _not_a_var_ 1) 'error)
       
       (test (let ((a (lambda (x) (set! a 3) x))) (list (a 1) a)) 'error)
       (test (let ((a (let ((b 1)) (set! a 3) b))) a) 'error)            
