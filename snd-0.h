@@ -33,6 +33,12 @@
 #define CANNOT_SAVE      XEN_ERROR_TYPE("cannot-save")
 #define CANT_UPDATE_FILE XEN_ERROR_TYPE("cant-update-file")
 
+#if (SIZEOF_INT == SIZEOF_VOID_P)
+  typedef int pointer_or_int_t;
+#else
+  typedef long long int pointer_or_int_t;
+#endif
+
 #ifndef STRFTIME_FORMAT
   #define STRFTIME_FORMAT "%a %d-%b-%Y %H:%M %Z"
 #endif
@@ -48,8 +54,8 @@
 #define XOR(a, b) ((a) ^ (b))
 /* can't get used to this operator -- in the good old days, ^ meant exponentiation */
 
-#define UNPACK_SOUND(a) (a >> 16)
-#define UNPACK_CHANNEL(a) (a & 0xff)
+#define UNPACK_SOUND(a) ((int)a >> 16)
+#define UNPACK_CHANNEL(a) ((int)a & 0xff)
 #define PACK_SOUND_AND_CHANNEL(a, b) ((a << 16) | b)
 
 #define POINT_BUFFER_SIZE 8192
