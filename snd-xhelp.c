@@ -21,7 +21,8 @@ static void help_expose(Widget w, XtPointer context, XEvent *event, Boolean *con
     old_help_text_width = curwid;
   else
     {
-      if ((outer_with_wrap == WITH_WORD_WRAP) && (abs(curwid - old_help_text_width) > 10))
+      if ((outer_with_wrap == WITH_WORD_WRAP) && 
+	  (abs(curwid - old_help_text_width) > 10))
 	{
 	  char *cur_help_str, *new_help_str = NULL;
 	  cur_help_str = XmTextGetString(help_text);
@@ -94,7 +95,9 @@ static char *find_highlighted_text(XmString xs)
   char *result;
   XmStringComponentType type;
   XmStringContext ctx;
+
   XmStringInitContext(&ctx, xs);
+
   while ((type = XmStringGetNextTriple(ctx, &len, &text)) != XmSTRING_COMPONENT_END)
     {
       switch (type)
@@ -102,9 +105,11 @@ static char *find_highlighted_text(XmString xs)
 	case XmSTRING_COMPONENT_RENDITION_BEGIN: 
 	  in_red_text = mus_strcmp((char *)text, "url_text");
 	  break;
+
 	case XmSTRING_COMPONENT_RENDITION_END:
 	  in_red_text = false;
 	  break;
+
 	case XmSTRING_COMPONENT_TEXT:
 	  if (in_red_text) 
 	    {
@@ -114,10 +119,12 @@ static char *find_highlighted_text(XmString xs)
 	      return(result);
 	    }
 	}
+
       /* this from the Motif docs, though it looks odd to me */
       if (text) XtFree((char *)text);
       text = NULL;
     }
+
   XmStringFreeContext(ctx);
   return(NULL);
 }
@@ -136,6 +143,7 @@ static bool new_help(const char *pattern, bool complain)
 {
   const char *url = NULL;
   const char **xrefs;
+
   url = snd_url(pattern);
   if (url)
     {
@@ -155,6 +163,7 @@ static bool new_help(const char *pattern, bool complain)
       url_to_html_viewer(url);
       return(true);
     }
+
   if ((!(snd_topic_help(pattern))) && (complain))
     {
       xrefs = help_name_to_xrefs(pattern);
@@ -166,6 +175,7 @@ static bool new_help(const char *pattern, bool complain)
 	}
       else snd_help_with_xrefs(pattern, "(no help found)", WITH_WORD_WRAP, NULL, NULL);
     }
+
   return(false);
 }
 
@@ -542,13 +552,16 @@ Widget snd_help(const char *subject, const char *helpstr, with_word_wrap_t with_
   /* place help string in scrollable help window */
   /* if window is already active, add this help at the top and reposition */
   XmString xstr1;
+
   outer_with_wrap = with_wrap;
   if (!(help_dialog)) 
     create_help_monolog(); 
   else raise_dialog(help_dialog);
+
   xstr1 = XmStringCreateLocalized((char *)subject);
   XtVaSetValues(help_dialog, XmNmessageString, xstr1, NULL);
   original_help_text = (char *)helpstr;
+
   if (with_wrap == WITH_WORD_WRAP)
     {
       char *new_help_str = NULL;
@@ -557,8 +570,10 @@ Widget snd_help(const char *subject, const char *helpstr, with_word_wrap_t with_
       if (new_help_str) free(new_help_str);
     }
   else XmTextSetString(help_text, (char *)helpstr);
+
   if (!XtIsManaged(help_dialog)) 
     XtManageChild(help_dialog);
+
   XmStringFree(xstr1);
   XtVaSetValues(related_items, XmNitems, NULL, XmNitemCount, 0, NULL);
   if (help_needed) add_pattern_to_help_history(subject);

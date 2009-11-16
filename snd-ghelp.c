@@ -233,6 +233,7 @@ static gboolean text_release_callback(GtkTreeSelection *selection, gpointer *gp)
   /* this needs to be bool return false -- otherwise, apparently, the mouse-drag->selection never gets turned off! */
   GtkTextIter start, end;
   #define HELP_BUFFER gtk_text_view_get_buffer(GTK_TEXT_VIEW(help_text))
+
   if (gtk_text_buffer_get_selection_bounds(HELP_BUFFER, &start, &end))
     {
       char *txt;
@@ -253,6 +254,7 @@ static gboolean text_release_callback(GtkTreeSelection *selection, gpointer *gp)
 	  g_free(txt);
 	}
     }
+
   return(false);
 }
 
@@ -332,11 +334,16 @@ GtkWidget *snd_help(const char *subject, const char *helpstr, with_word_wrap_t w
 {
   /* place help string in scrollable help window */
   /* if window is already active, add this help at the top and reposition */
+
   outer_with_wrap = with_wrap;
-  if (!(help_dialog)) create_help_monolog(); else raise_dialog(help_dialog);
+  if (!(help_dialog)) 
+    create_help_monolog(); 
+  else raise_dialog(help_dialog);
+
   gtk_window_set_title(GTK_WINDOW(help_dialog), subject);
   original_help_text = (char *)helpstr;
   gtk_text_buffer_set_text(gtk_text_view_get_buffer(GTK_TEXT_VIEW(help_text)), "", 0);
+
   if (with_wrap == WITH_WORD_WRAP)
     {
       char *new_help = NULL;
@@ -345,6 +352,7 @@ GtkWidget *snd_help(const char *subject, const char *helpstr, with_word_wrap_t w
       if (new_help) free(new_help);
     }
   else add_help_text(help_text, helpstr);
+
   if (help_needed) add_pattern_to_help_history(subject);
   slist_clear(related_items); /* this can clobber "subject"! */
   gtk_widget_set_sensitive(help_next_button, (help_history_pos < help_history_size) && (help_history[help_history_pos]));

@@ -520,34 +520,20 @@ the lang.csh file in /etc/profile.d).
 
 ---- Motif: ----
 
-Only Motif 2.n is supported.
+Only Motif 2.n is supported.  Be sure to get the Motif development
+package if you want to build Snd (you need the Motif headers).
 
-If you get the error:
-
- snd-x0.h:9 Xm/XmAll: No such file or directory
-
-This probably means you don't have the Motif headers installed -- to
-build Snd with a GUI from the sources, you need either Motif or Gtk+.
-Motif has been released as open source software: see the url
-mentioned below.  If you installed the openmotif library rpm package,
-it may not have included the headers (look under
-/usr/X11R6/include/Xm); to build Snd from the sources you need the
-headers (in the openmotif-devel packages).
-
-In Debian, apt-get install libmotif-dev.
-
-If you have installed Motif in some weird place, use the -I compiler
-flag to provide that information to the compiler.  I've added the
--with-motif-prefix argument to the configure script, but don't know if
-it works; if, for example, you have Motif in /usr/local/lib and
-/usr/local/include, try --with-motif-prefix=/usr/local
+If you have installed Motif in some weird place, use the --with-motif-prefix
+configure argument.
 
 If Snd using Lesstif is messed up, that's Lesstif's problem!  I'm
 not trying to support this anymore.
 
-In Fedora 7, openMotif will need /usr/include/X11/extensions/Print.h
+In Fedora 7 and later, openMotif will need /usr/include/X11/extensions/Print.h
 /usr/include/X11/bitmaps/gray, and /usr/X11R6/lib/libXp.so.  I copy these
 from old machines, but there must be a better way...
+
+On 64-bit machines, use motif 2.3.2 or later.
 
 
 
@@ -567,8 +553,8 @@ you can find where it occurs by:
   where
 
 In some cases, if you installed gtk from an RPM file, you
-also need to install gtk-devel.  Otherwise the configure
-process thinks you have an old, unusable version of gtk.
+also need to install gtk-devel.
+
 
 
 ---- GSL: ----

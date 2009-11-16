@@ -25,106 +25,105 @@ static bool mix_vct_untagged(vct *v, chan_info *cp, mus_long_t beg, const char *
 
 static bool mix_file_untagged(const char *filename, int in_chan, chan_info *cp, mus_long_t beg, mus_long_t num, file_delete_t auto_delete, const char *origin)
 {
-  if ((num > 0) && (editable_p(cp)))
+  file_info *ihdr, *ohdr;
+  char *ofile;
+  int ofd, ifd = -1;
+  io_error_t io_err = IO_NO_ERROR;
+  snd_fd *sf = NULL;
+  mus_long_t i, j, size, in_chans;
+  int err = 0;
+  mus_sample_t **data;
+  mus_sample_t *chandata;
+
+  if ((num <= 0) || (!editable_p(cp)))
+    return(false);
+
+  ihdr = make_file_info(filename, FILE_READ_ONLY, FILE_NOT_SELECTED);
+  if (!ihdr) return(false);
+
+  if (in_chan >= ihdr->chans)
     {
-      file_info *ihdr;
-      ihdr = make_file_info(filename, FILE_READ_ONLY, FILE_NOT_SELECTED);
-      if ((ihdr) && (in_chan < ihdr->chans))
-	{
-	  char *ofile;
-	  file_info *ohdr;
-	  int ofd;
-	  io_error_t io_err = IO_NO_ERROR;
-
-	  ofile = snd_tempnam();
-	  ohdr = make_temp_header(ofile, SND_SRATE(cp->sound), 1, 0, (char *)origin);
-	  ofd = open_temp_file(ofile, 1, ohdr, &io_err);
-	  if (ofd == -1) 
-	    {
-	      free_file_info(ihdr);
-	      free_file_info(ohdr);
-	      snd_error(_("%s mix temp file %s: %s"), 
-			(io_err != IO_NO_ERROR) ? io_error_name(io_err) : "can't open",
-			ofile, 
-			snd_open_strerror()); 
-	    }
-	  else
-	    {
-	      if ((disk_space_p(num * mus_bytes_per_sample(ohdr->format), ofile)) == DISK_SPACE_OK)
-		{
-		  snd_fd *sf = NULL;
-		  int ifd = 0;
-		  sf = init_sample_read(beg, cp, READ_FORWARD);
-		  if (sf)
-		    ifd = snd_open_read(filename);
-		  if ((!sf) ||        /* i.e. no space for temp, I guess */
-		      (ifd < 0))       /* maybe too many files open? */
-		    {
-		      free_file_info(ihdr);
-		      free_file_info(ohdr);
-		      mus_file_close(ofd);
-		      snd_remove(ofile, REMOVE_FROM_CACHE);
-		      free(ofile);
-		    }
-		  else
-		    {
-		      mus_long_t i, j, size, in_chans;
-		      int err = 0;
-		      mus_sample_t **data;
-		      mus_sample_t *chandata;
-		      if (beg < 0) beg = 0;
-		      in_chans = ihdr->chans;
-
-		      snd_file_open_descriptors(ifd, filename,
-						ihdr->format,
-						ihdr->data_location,
-						ihdr->chans,
-						ihdr->type);
-		      during_open(ifd, filename, SND_MIX_FILE);
-		      if (num < MAX_BUFFER_SIZE) size = num; else size = MAX_BUFFER_SIZE;
-
-		      data = (mus_sample_t **)calloc(in_chans, sizeof(mus_sample_t *));
-		      data[in_chan] = (mus_sample_t *)calloc(size, sizeof(mus_sample_t));
-		      chandata = data[in_chan];
-
-		      lseek(ofd, ohdr->data_location, SEEK_SET);
-		      lseek(ifd, ihdr->data_location, SEEK_SET);
-		      mus_file_read_chans(ifd, 0, size - 1, in_chans, data, data);
-		      for (i = 0, j = 0; i < num; i++)
-			{
-			  if (j == size)
-			    {
-			      err = mus_file_write(ofd, 0, size - 1, 1, &chandata);
-			      mus_file_read_chans(ifd, 0, size - 1, in_chans, data, data);
-			      j = 0;
-			      if (err == -1) break;
-			    }
-			  chandata[j] += read_sample_to_mus_sample(sf);
-			  j++;
-			}
-		      if (j > 0) mus_file_write(ofd, 0, j - 1, 1, &chandata);
-
-		      close_temp_file(ofile, ofd, ohdr->type, num * mus_bytes_per_sample(ohdr->format));
-		      mus_file_close(ifd);
-		      sf = free_snd_fd(sf);
-		      free(data[in_chan]);
-		      free(data);
-		      free_file_info(ihdr);
-		      free_file_info(ohdr);
-		      file_change_samples(beg, num, ofile, cp, 0, DELETE_ME, origin, cp->edit_ctr);
-		      if (ofile) free(ofile);
-
-		      if (auto_delete == DELETE_ME)
-			snd_remove(filename, REMOVE_FROM_CACHE);
-
-		      update_graph(cp);
-		      return(true);
-		    }
-		}
-	    }
-	}
+      free_file_info(ihdr);
+      return(false);
     }
-  return(false);
+
+  ofile = snd_tempnam();
+  ohdr = make_temp_header(ofile, SND_SRATE(cp->sound), 1, 0, (char *)origin);
+  ofd = open_temp_file(ofile, 1, ohdr, &io_err);
+  if (ofd == -1) 
+    {
+      free_file_info(ihdr);
+      free_file_info(ohdr);
+      snd_error(_("%s mix temp file %s: %s"), 
+		(io_err != IO_NO_ERROR) ? io_error_name(io_err) : "can't open",
+		ofile, 
+		snd_open_strerror()); 
+      return(false);
+    }
+
+  if ((disk_space_p(num * mus_bytes_per_sample(ohdr->format), ofile)) != DISK_SPACE_OK)
+    return(false);
+
+  sf = init_sample_read(beg, cp, READ_FORWARD);
+  if (sf) ifd = snd_open_read(filename);
+  if ((!sf) || (ifd < 0))
+    {
+      if (sf) free_snd_fd(sf);
+      free_file_info(ihdr);
+      free_file_info(ohdr);
+      mus_file_close(ofd);
+      snd_remove(ofile, REMOVE_FROM_CACHE);
+      free(ofile);
+      return(false);
+    }
+
+  if (beg < 0) beg = 0;
+  in_chans = ihdr->chans;
+
+  snd_file_open_descriptors(ifd, filename,
+			    ihdr->format,
+			    ihdr->data_location,
+			    ihdr->chans,
+			    ihdr->type);
+  during_open(ifd, filename, SND_MIX_FILE);
+  if (num < MAX_BUFFER_SIZE) size = num; else size = MAX_BUFFER_SIZE;
+
+  data = (mus_sample_t **)calloc(in_chans, sizeof(mus_sample_t *));
+  data[in_chan] = (mus_sample_t *)calloc(size, sizeof(mus_sample_t));
+  chandata = data[in_chan];
+  
+  lseek(ofd, ohdr->data_location, SEEK_SET);
+  lseek(ifd, ihdr->data_location, SEEK_SET);
+  mus_file_read_chans(ifd, 0, size - 1, in_chans, data, data);
+  for (i = 0, j = 0; i < num; i++)
+    {
+      if (j == size)
+	{
+	  err = mus_file_write(ofd, 0, size - 1, 1, &chandata);
+	  mus_file_read_chans(ifd, 0, size - 1, in_chans, data, data);
+	  j = 0;
+	  if (err == -1) break;
+	}
+      chandata[j] += read_sample_to_mus_sample(sf);
+      j++;
+    }
+  if (j > 0) mus_file_write(ofd, 0, j - 1, 1, &chandata);
+  
+  close_temp_file(ofile, ofd, ohdr->type, num * mus_bytes_per_sample(ohdr->format));
+  mus_file_close(ifd);
+  sf = free_snd_fd(sf);
+  free(data[in_chan]);
+  free(data);
+  free_file_info(ihdr);
+  free_file_info(ohdr);
+  file_change_samples(beg, num, ofile, cp, 0, DELETE_ME, origin, cp->edit_ctr);
+  if (ofile) free(ofile);
+
+  if (auto_delete == DELETE_ME)
+    snd_remove(filename, REMOVE_FROM_CACHE);
+
+  update_graph(cp);
+  return(true);
 }
 
 
@@ -1627,6 +1626,60 @@ int hit_mix(chan_info *cp, int x, int y) /* mix tag press in snd-chn.c */
 	}
     }
   return(NO_MIX_TAG);
+}
+
+
+static int mix_tag_collides(int mix_id)
+{
+  #define SLOPPY_MOUSE 3
+  mix_info*md;
+  int x, y;
+  chan_info *cp = NULL;
+  mix_list *mxl = NULL;
+  
+  md = md_from_id(mix_id);
+  if (md) cp = md->cp;
+  if (cp) mxl = (mix_list *)(cp->edits[cp->edit_ctr]->mixes); /* active mixes in the current edit of this channel */
+
+  if (mxl)
+    {
+      int i, width, height;
+
+      if (mxl->size <= 1) return(false);
+
+      width = mix_tag_width(ss);
+      height = mix_tag_height(ss);
+
+      x = md->tag_x;
+      if (x <= 0)
+	{
+	  mix_state *ms;
+	  ms = current_mix_state(md);
+	  x = grf_x((double)(ms->beg) / (double)(SND_SRATE(cp->sound)), cp->axis);
+	}
+      y = md->tag_y + MIX_TAG_Y_OFFSET + cp->axis->y_offset;
+
+      for (i = 0; i < mxl->size; i++)
+	{
+	  mix_state *ms;
+	  ms = mxl->list[i];
+	  if ((ms) &&
+	      (ms->mix_id != mix_id))
+	    {
+	      int mx, my;
+	      mx = mix_infos[ms->mix_id]->tag_x;
+	      if (mx <= 0)
+		mx = grf_x((double)(ms->beg) / (double)(SND_SRATE(cp->sound)), cp->axis);
+	      my = mix_infos[ms->mix_id]->tag_y + MIX_TAG_Y_OFFSET + cp->axis->y_offset;
+	      if ((x + SLOPPY_MOUSE >= (mx - width / 2)) && 
+		  (x - SLOPPY_MOUSE <= (mx + width / 2)) &&
+		  (y + SLOPPY_MOUSE >= (my - height)) && 
+		  (y - SLOPPY_MOUSE <= (my + 0)))
+		return(true);
+	    }
+	}
+    }
+  return(false);
 }
 
 

@@ -432,6 +432,63 @@ of pthread_getspecific, just call it: (var).
 <!-- -------------------------------------------------------------------------------- -->
 <dt>
 <table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>multiple-values</h4></td></tr></table>
+</td></tr></table>
+</dt>
+
+<dd><p>
+The r5rs section about values makes no sense to me;  why have
+multiple values at all if you're just going to throw away all
+but the first value?
+In s7 (+ (values 1 2 3) 4) is 10.  Similarly,
+</p>
+<pre>
+  (string-ref ((lambda () (values "abcd" 2))))
+  -&gt; #\c
+
+  ((lambda (a b) (+ a b)) 
+   ((lambda () (values 1 2))))
+  -&gt; 3
+
+  ;; call-with-values: 
+  (define-macro (call-with-values producer consumer) 
+    `(,consumer (,producer)))
+
+  ;; multiple-value-bind ("receive" in srfi-8):
+  (define-macro (multiple-value-bind vars expr . body)
+    `((lambda ,vars ,@body) ,expr))
+
+  ;; multiple-value-set!:
+  (define-macro (multiple-value-set! vars expr . body)
+    (let ((local-vars (map (lambda (n) (gensym)) vars)))
+      `((lambda ,local-vars ,@(map (lambda (n ln) `(set! ,n ,ln)) vars local-vars) ,@body) ,expr)))
+
+  ;; call/cc returns multiple values:
+  (+ (call/cc (lambda (ret) (ret 1 2 3))) 4)
+  -&gt; 10
+
+  ;; let*-values is defined as a macro at the end of s7.c (commented out)
+</pre>
+<p>
+In Snd many functions take the same trailing arguments: sound-index, channel-number, and edit-position;
+we can package these up in a values call:
+</p>
+<pre>
+   ;; say we have those arguments in snd, chn, edpos
+   (defmacro sce () `(values ,snd ,chn ,edpos))
+   (maxamp (sce))
+</pre>
+</dd>
+<br>
+
+<!-- should this work? (let ((var (values (values 1 2 3)))) (+ var 4)) 
+     currently you need: (let ((var (values (values 1 2 3)))) (+ (eval var) 4)) -> 10
+-->
+
+
+<!-- -------------------------------------------------------------------------------- -->
+<dt>
+<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
 <table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>call-with-exit and continuation?</h4></td></tr></table>
 </td></tr></table>
 </dt>
@@ -452,21 +509,6 @@ of pthread_getspecific, just call it: (var).
 </pre>
 <p>continuation? returns #t if its argument is a continuation,
 as opposed to a normal procedure.
-</p>
-</dd>
-<br>
-
-
-<!-- -------------------------------------------------------------------------------- -->
-<dt>
-<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
-<table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>blocks comments in #| ... |# and #! ... !#</h4></td></tr></table>
-</td></tr></table>
-</dt>
-
-<dd>
-<p>Multi-line comments can be enclosed in either #| and |#, or #! and !# (the latter
-is for compatibility with Guile).
 </p>
 </dd>
 <br>
@@ -743,47 +785,6 @@ and length is generic, we can write a generic FFT that accepts both types or any
 <!-- -------------------------------------------------------------------------------- -->
 <dt>
 <table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
-<table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>*load-path*, *load-hook*</h4></td></tr></table>
-</td></tr></table>
-</dt>
-
-<dd><p>*load-path* is a list of directories to search when loading a file.
-*load-hook* is a function called just before a file is loaded.  Its argument is the filename.
-While loading, port-filename and port-line-number (of the current-input-port) can tell you
-where you are in the file.
-</p>
-<pre>
-(set! *load-hook* (lambda (name) (format #t "loading ~S...~%" name)))
-</pre>
-</dd>
-<br>
-
-
-<!-- -------------------------------------------------------------------------------- -->
-<dt>
-<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
-<table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>provide, provided?, *features*</h4></td></tr></table>
-</td></tr></table>
-</dt>
-
-<dd><p>As in Common Lisp, *features* is a list describing what is currently loaded into s7.  You can
-check it with the provided? function, or add something to it with provide.  In my version of Snd,
-at startup *features* is:
-</p>
-<pre>
-&gt; *features*
-(snd10 snd snd-s7 snd-motif gsl alsa xm snd-ladspa run clm4 clm sndlib gmp multidimensional-vectors s7)
-
-&gt; (provided? 'gmp)
-#t
-</pre>
-</dd>
-<br>
-
-
-<!-- -------------------------------------------------------------------------------- -->
-<dt>
-<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
 <table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>procedure info</h4></td></tr></table>
 </td></tr></table>
 </dt>
@@ -953,42 +954,39 @@ write "hygenic" macros:
 <!-- -------------------------------------------------------------------------------- -->
 <dt>
 <table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
-<table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>encapsulation</h4></td></tr></table>
+<table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>*load-path*, *load-hook*</h4></td></tr></table>
 </td></tr></table>
 </dt>
 
-<dd><p>encapsulation saves and restores environments.</p>
-<ul>
-<li>(open-encapsulator)
-<li>(close-encapsulator encap)
-<li>(encapsulator-bindings encap)
-<li>(encapsulator? obj)
-<li>(encapsulate . body)
-</ul>
-<p>An encapsulator is 
-a sort of data-side continuation.  open-encapsulator
-remembers the overall environment at the point it is called, returning an encapuslator
-object.  Whenever we want to return to that data state, we call that object as a thunk.
-encapsulator-bindings returns the alist of variables awaiting restoration.  When the encapsulator is called (restoring those bindings),
-the list is cleared, and the encapsulator starts saving values again (so repeated calls
-keep returning you to that data state).  close-encapsulator turns that encapsulator off.
-In a REPL, for example, you could save the initial state, then return to it at any time,
-without restarting the interpreter.  fluid-let is not what we want here because it has
-a body, and requires that you list in advance what variables you want to protect (and
-besides, it's not really a let (it uses "set!") and I can't see anything fluid about it).
-encapsulate is a macro that evaluates its body, then returns any variables global to that code to their prior value.
+<dd><p>*load-path* is a list of directories to search when loading a file.
+*load-hook* is a function called just before a file is loaded.  Its argument is the filename.
+While loading, port-filename and port-line-number (of the current-input-port) can tell you
+where you are in the file.
 </p>
 <pre>
-&gt; (define global-x 32)
-global-x
+(set! *load-hook* (lambda (name) (format #t "loading ~S...~%" name)))
+</pre>
+</dd>
+<br>
 
-&gt; (encapsulate 
-    (set! global-x 123) 
-    (format #f "x: ~A" global-x))
-  "x: 123"
 
-&gt; global-x
-32
+<!-- -------------------------------------------------------------------------------- -->
+<dt>
+<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>provide, provided?, *features*</h4></td></tr></table>
+</td></tr></table>
+</dt>
+
+<dd><p>As in Common Lisp, *features* is a list describing what is currently loaded into s7.  You can
+check it with the provided? function, or add something to it with provide.  In my version of Snd,
+at startup *features* is:
+</p>
+<pre>
+&gt; *features*
+(snd10 snd snd-s7 snd-motif gsl alsa xm snd-ladspa run clm4 clm sndlib gmp multidimensional-vectors s7)
+
+&gt; (provided? 'gmp)
+#t
 </pre>
 </dd>
 <br>
@@ -1013,6 +1011,21 @@ is similar, but its argument is a string.
 &gt; (eval-string "(+ 1 2)")
 3
 </pre>
+</dd>
+<br>
+
+
+<!-- -------------------------------------------------------------------------------- -->
+<dt>
+<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>blocks comments in #| ... |# and #! ... !#</h4></td></tr></table>
+</td></tr></table>
+</dt>
+
+<dd>
+<p>Multi-line comments can be enclosed in either #| and |#, or #! and !# (the latter
+is for compatibility with Guile).
+</p>
 </dd>
 <br>
 
@@ -1079,63 +1092,6 @@ signals that the symbol is in the Package-With-No-Name [offstage: harmonica, tub
 <!-- -------------------------------------------------------------------------------- -->
 <dt>
 <table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
-<table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>multiple-values</h4></td></tr></table>
-</td></tr></table>
-</dt>
-
-<dd><p>
-The r5rs section about values makes no sense to me;  why have
-multiple values at all if you're just going to throw away all
-but the first value?
-In s7 (+ (values 1 2 3) 4) is 10.  Similarly,
-</p>
-<pre>
-  (string-ref ((lambda () (values "abcd" 2))))
-  -&gt; #\c
-
-  ((lambda (a b) (+ a b)) 
-   ((lambda () (values 1 2))))
-  -&gt; 3
-
-  ;; call-with-values: 
-  (define-macro (call-with-values producer consumer) 
-    `(,consumer (,producer)))
-
-  ;; multiple-value-bind ("receive" in srfi-8):
-  (define-macro (multiple-value-bind vars expr . body)
-    `((lambda ,vars ,@body) ,expr))
-
-  ;; multiple-value-set!:
-  (define-macro (multiple-value-set! vars expr . body)
-    (let ((local-vars (map (lambda (n) (gensym)) vars)))
-      `((lambda ,local-vars ,@(map (lambda (n ln) `(set! ,n ,ln)) vars local-vars) ,@body) ,expr)))
-
-  ;; call/cc returns multiple values:
-  (+ (call/cc (lambda (ret) (ret 1 2 3))) 4)
-  -&gt; 10
-
-  ;; let*-values is defined as a macro at the end of s7.c (commented out)
-</pre>
-<p>
-In Snd many functions take the same trailing arguments: sound-index, channel-number, and edit-position;
-we can package these up in a values call:
-</p>
-<pre>
-   ;; say we have those arguments in snd, chn, edpos
-   (defmacro sce () `(values ,snd ,chn ,edpos))
-   (maxamp (sce))
-</pre>
-</dd>
-<br>
-
-<!-- should this work? (let ((var (values (values 1 2 3)))) (+ var 4)) 
-     currently you need: (let ((var (values (values 1 2 3)))) (+ (eval var) 4)) -> 10
--->
-
-
-<!-- -------------------------------------------------------------------------------- -->
-<dt>
-<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
 <table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>quit</h4></td></tr></table>
 </td></tr></table>
 </dt>
@@ -1186,6 +1142,50 @@ define-macro, and the same result except that the macro is
 dealt with at read time!  (This means it does not respect attempts to
 bind it to something else, which is asking for confusion).
 </p>
+</dd>
+<br>
+
+
+<!-- -------------------------------------------------------------------------------- -->
+<dt>
+<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>encapsulation</h4></td></tr></table>
+</td></tr></table>
+</dt>
+
+<dd><p>encapsulation saves and restores environments.</p>
+<ul>
+<li>(open-encapsulator)
+<li>(close-encapsulator encap)
+<li>(encapsulator-bindings encap)
+<li>(encapsulator? obj)
+<li>(encapsulate . body)
+</ul>
+<p>An encapsulator is 
+a sort of data-side continuation.  open-encapsulator
+remembers the overall environment at the point it is called, returning an encapuslator
+object.  Whenever we want to return to that data state, we call that object as a thunk.
+encapsulator-bindings returns the alist of variables awaiting restoration.  When the encapsulator is called (restoring those bindings),
+the list is cleared, and the encapsulator starts saving values again (so repeated calls
+keep returning you to that data state).  close-encapsulator turns that encapsulator off.
+In a REPL, for example, you could save the initial state, then return to it at any time,
+without restarting the interpreter.  fluid-let is not what we want here because it has
+a body, and requires that you list in advance what variables you want to protect (and
+besides, it's not really a let (it uses "set!") and I can't see anything fluid about it).
+encapsulate is a macro that evaluates its body, then returns any variables global to that code to their prior value.
+</p>
+<pre>
+&gt; (define global-x 32)
+global-x
+
+&gt; (encapsulate 
+    (set! global-x 123) 
+    (format #f "x: ~A" global-x))
+  "x: 123"
+
+&gt; global-x
+32
+</pre>
 </dd>
 <br>
 
