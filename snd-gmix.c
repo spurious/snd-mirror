@@ -9,7 +9,7 @@ static env *dialog_env = NULL;
 static bool dragging = false;
 static int edpos_before_drag;
 static with_hook_t hookable_before_drag;
-static mus_long_t drag_beg = 0, drag_end = 0;
+static mus_long_t drag_beg = 0, drag_end = 0, orig_beg = 0;
 
 static void start_dragging(int mix_id) 
 {
@@ -21,6 +21,7 @@ static void start_dragging(int mix_id)
   dragging = true;
   drag_beg = mix_position_from_id(mix_id);
   drag_end = drag_beg + mix_length_from_id(mix_id);
+  start_dragging_syncd_mixes(mix_id);
 }
 
 
@@ -29,6 +30,7 @@ static void keep_dragging(int mix_id)
   chan_info *cp;
   cp = mix_chan_info_from_id(mix_id);
   cp->edit_ctr = edpos_before_drag;
+  keep_dragging_syncd_mixes(mix_id);
 }
 
 
@@ -39,6 +41,7 @@ static void stop_dragging(int mix_id)
   undo_edit(cp, 1);
   cp->hookable = hookable_before_drag;
   dragging = false;
+  stop_dragging_syncd_mixes(mix_id);
 }
 
 
@@ -97,6 +100,7 @@ static gboolean speed_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer 
   mix_set_speed_edit(mix_dialog_id, 1.0);
   syncd_mix_set_speed(mix_dialog_id, 1.0);
   after_mix_edit(mix_dialog_id);
+  after_syncd_mix_edit(mix_dialog_id);
   reflect_mix_speed(1.0);
   return(false);
 }
@@ -162,6 +166,7 @@ static gboolean speed_release_callback(GtkWidget *w, GdkEventButton *ev, gpointe
   mix_set_speed_edit(mix_dialog_id, speed);
   syncd_mix_set_speed(mix_dialog_id, speed);
   after_mix_edit(mix_dialog_id);
+  after_syncd_mix_edit(mix_dialog_id);
   return(false);
 }
 
@@ -212,6 +217,7 @@ static gboolean amp_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer da
   mix_set_amp_edit(mix_dialog_id, 1.0);
   syncd_mix_set_amp(mix_dialog_id, 1.0);
   after_mix_edit(mix_dialog_id);
+  after_syncd_mix_edit(mix_dialog_id);
   ADJUSTMENT_SET_VALUE(w_amp_adj, amp_to_scroll(amp_control_min(ss), 1.0, amp_control_max(ss)));
   /* gtk_adjustment_value_changed(GTK_ADJUSTMENT(w_amp_adj)); */
   return(false);
@@ -250,6 +256,7 @@ static gboolean amp_release_callback(GtkWidget *w, GdkEventButton *ev, gpointer 
   mix_set_amp_edit(mix_dialog_id, amp);
   syncd_mix_set_amp(mix_dialog_id, amp);
   after_mix_edit(mix_dialog_id);
+  after_syncd_mix_edit(mix_dialog_id);
   return(false);
 }
 
@@ -461,10 +468,11 @@ static void beg_activated(GtkWidget *w, gpointer context)
       redirect_errors_to(NULL, NULL);
       if (beg >= 0.0)
 	{
-	  mus_long_t pos;
+	  mus_long_t pos, old_pos;
+	  old_pos = mix_position_from_id(mix_dialog_id);
 	  pos = (mus_long_t)(beg * SND_SRATE(cp->sound));
 	  mix_set_position_edit(mix_dialog_id, pos);
-	  syncd_mix_set_position(mix_dialog_id, pos);
+	  syncd_mix_change_position(mix_dialog_id, pos - old_pos);
 	}
       after_mix_edit(mix_dialog_id);
       free(up_to_colon);
