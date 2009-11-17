@@ -1507,11 +1507,6 @@ typedef struct ctrl_state {
   bool expand_on, contrast_on, reverb_on, filter_on, reversed;
   int filter_order;
   mus_float_t contrast_amp, expand_ramp, expand_length, expand_hop, expand_jitter, reverb_feedback, reverb_decay, reverb_lowpass;
-#if HAVE_GUILE_DYNAMIC_WIND
-  snd_info *sp;
-  int old_selected_channel;
-  void *ap;
-#endif
 } ctrl_state;
 
 
@@ -5168,37 +5163,6 @@ static void apply_controls_error(const char *msg, void *data)
 }
 
 
-#if HAVE_GUILE_DYNAMIC_WIND
-static void before_controls_to_channel(void *ignore) {}
-static void after_controls_to_channel(void *context) 
-{
-  ctrl_state *cs = (ctrl_state *)context;
-  snd_info *sp;
-  sp = cs->sp;
-  sp->selected_channel = cs->old_selected_channel;
-  restore_control_settings(sp, cs);
-  free_control_settings(cs);
-}
-
-
-static XEN controls_to_channel_body(void *context)
-{
-  ctrl_state *cs = (ctrl_state *)context;
-  apply_state *ap;
-  ap = (apply_state *)(cs->ap);
-  if (ap)
-    {
-      redirect_snd_error_to(apply_controls_error, (void *)S_controls_to_channel);
-      redirect_snd_warning_to(squelch_printout, NULL);
-      while (apply_controls(ap)) {};
-      redirect_snd_warning_to(NULL, NULL); /* no-op message pointless within xen */
-      redirect_snd_error_to(NULL, NULL);
-    }
-  return(XEN_FALSE);
-}
-#endif
-
-
 static XEN g_controls_to_channel(XEN settings, XEN beg, XEN dur, XEN snd, XEN chn, XEN origin)
 {
   #define H_controls_to_channel "(" S_controls_to_channel " settings :optional beg dur snd chn origin) sets up \
@@ -5345,16 +5309,6 @@ where each inner list entry can also be " PROC_FALSE "."
 #endif
 #endif
 
-#if HAVE_GUILE_DYNAMIC_WIND
-      saved_settings->sp = sp;
-      saved_settings->old_selected_channel = old_selected_channel;
-      saved_settings->ap = (void *)ap;
-      scm_internal_dynamic_wind((scm_t_guard)before_controls_to_channel, 
-				(scm_t_inner)controls_to_channel_body,  /* restore settings if error during apply_controls */
-				(scm_t_guard)after_controls_to_channel, 
-				(void *)saved_settings,
-				(void *)saved_settings);
-#else
       if (ap)
 	{
 	  redirect_snd_error_to(apply_controls_error, (void *)S_controls_to_channel);
@@ -5366,7 +5320,6 @@ where each inner list entry can also be " PROC_FALSE "."
       sp->selected_channel = old_selected_channel;
       restore_control_settings(sp, saved_settings);
       free_control_settings(saved_settings);
-#endif
     }
 
   return(settings);

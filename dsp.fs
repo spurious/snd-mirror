@@ -2,7 +2,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Dec 30 04:52:13 CET 2005
-\ Changed: Fri Nov 06 00:15:46 CET 2009
+\ Changed: Tue Nov 17 16:30:58 CET 2009
 
 \ src-duration             ( en -- dur )
 \ src-fit-envelope         ( e1 target-dur -- e2 )
@@ -1261,7 +1261,7 @@ its order is M * 2, F1 and F2 are the band edge frequencies in Hz."
 
 : notch-selection <{ freqs :optional filter-order #f notch-width 2 -- f }>
   doc" Returns a notch filter removing freqs."
-  selection? if
+  undef selection? if
     selection-srate s>f freqs notch-width make-notch-frequency-response ( nf )
     filter-order
     2.0 selection-srate notch-width f/ flog 2.0 flog f/ fceil f** fround->s || ( order )

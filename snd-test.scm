@@ -27653,6 +27653,7 @@ EDITS: 2
 	  (delay-channel-mixes 200 100 ind 0)
 	  (if (not (= (mix-position m2) 123)) (snd-display ";delay-channel mixes mix-position m2: ~A" (mix-position m2)))
 	  (if (not (= (mix-position m1) 421)) (snd-display ";delay-channel-mixes mix-position m1: ~A" (mix-position m1)))
+	  (check-mix-tags ind 0)
 	  (close-sound ind))
 	
 	;; check that current console is correct

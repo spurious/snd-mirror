@@ -62,12 +62,6 @@ hostname                                  value *hostname*
 #f value __lisp-graph__
 #t set-show-listener drop
 
-\ defined in snd/snd-xen.c
-[ifundef] clm-print <'> fth-print alias clm-print [then]
-: clm-message { fmt args -- str } ." \ " fmt args format .string cr ;
-
-*fth-verbose* [if] $" loading %S" #( *filename* ) clm-message [then]
-
 before-load-hook reset-hook!
 before-load-hook lambda: <{ fname -- f }>
   *fth-verbose* if $" loading %S" #( fname ) clm-message then
@@ -83,8 +77,8 @@ mus-lfloat        set-default-output-data-format drop
 1024 1024 *       set-mus-file-buffer-size       drop
 512               set-dac-size                   drop
 mus-audio-default set-audio-output-device        drop
-#t                set-mus-clipping set-clipping  drop
-512               set-clm-table-size             drop
+#t                set-mus-clipping               drop
+#t                set-clipping                   drop
 50                set-mus-array-print-length     drop
 50                set-object-print-length
 
@@ -235,7 +229,7 @@ output-comment-hook lambda: <{ str1 -- str2 }>
       "%EI:%EM%p" current-time strftime string-downcase! { tm }
       "(/usr)?" *home* $+ make-regexp file-pwd "~" regexp-replace { path }
       $" (%s:%s)\n[%s %s] (%d)> " #( *short-hostname* path *program-name* tm pos ) string-format
-    ; add-hook!
+    ;
   [then] add-hook!
 [else]					\ not snd-nogui
   require draw
@@ -257,7 +251,7 @@ output-comment-hook lambda: <{ str1 -- str2 }>
   ; #t $" close sound and jump to next open [ms]" dup bind-key drop
   \ C-x x
   <char> x 0 lambda: <{ -- val }>
-    selection? if
+    undef selection? if
       $" selection-eval:" <'> eval-over-selection #f #f prompt-in-minibuffer
     else
       $" no selection" #f #f report-in-minibuffer
@@ -372,7 +366,4 @@ $" Snd of %s (Fth %s)" #( snd-version fth-version ) clm-message
 #t show-listener drop
 'snd-nogui provided? [if] stack-reset [else] #f set-show-controls drop [then]
 
-\ local variables:
-\ eval: (setq inf-snd-forth-program-name "snd-fth")
-\ end:
 \ .snd_forth ends here

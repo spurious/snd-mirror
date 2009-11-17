@@ -3718,103 +3718,6 @@ the current sample, the vct returned by 'init-func', and the current read direct
 }
 
 
-#if HAVE_GUILE_DYNAMIC_WIND
-typedef struct {
-  XEN proc;
-  mus_long_t beg, num;
-  snd_fd *sf;
-  snd_info *sp;
-  chan_info *cp;
-  const char *caller;
-  bool counting;
-  bool reporting;
-} scan_context;
-
-
-static scan_context *make_scan_context(XEN p, mus_long_t b, mus_long_t n, snd_fd *f, snd_info *s, chan_info *cp, const char *orig, bool count)
-{
-  scan_context *sc;
-  sc = (scan_context *)calloc(1, sizeof(scan_context));
-  sc->proc = p;
-  sc->beg = b;
-  sc->num = n;
-  sc->sf = f;
-  sc->sp = s;
-  sc->cp = cp;
-  sc->caller = orig;
-  sc->counting = count;
-  sc->reporting = false;
-  return(sc);
-}
-
-
-static void before_scan(void *ignore)
-{
-  /* we could possibly catch call/cc into previous scan here, but that requires an smob for the context */
-  /*   put init_sample_read here, update sc->beg in scan body, don't free context explicitly */
-}
-
-
-static XEN scan_body(void *context)
-{
-  mus_long_t kp;
-  int counts = 0, rpt = 0, rpt4 = 0;
-  scan_context *sc = (scan_context *)context;
-  sc->reporting = (sc->num > REPORTING_SIZE);
-  rpt4 = MAX_BUFFER_SIZE / 4;
-  if (sc->reporting) start_progress_report(sc->cp);
-  ss->stopped_explicitly = false;
-  for (kp = 0; kp < sc->num; kp++)
-    {
-      XEN res;
-      res = XEN_CALL_1_NO_CATCH(sc->proc, C_TO_XEN_DOUBLE((double)read_sample(sc->sf)));
-      /* in Forth, a return value of 0 is assumed to be false -- should we check for that? */
-      if (XEN_NOT_FALSE_P(res))
-	{
-	  if ((sc->counting) &&
-	      (XEN_TRUE_P(res)))
-	    counts++;
-	  else
-	    return(XEN_LIST_2(res,
-			      C_TO_XEN_INT64_T(kp + sc->beg)));
-	}
-      if (sc->reporting) 
-	{
-	  rpt++;
-	  if (rpt > rpt4)
-	    {
-	      progress_report(sc->cp, (mus_float_t)((double)kp / (double)(sc->num)));
-	      if (!(sc->sp->active))
-		{
-		  ss->stopped_explicitly = true;
-		  break;
-		}
-	      rpt = 0;
-	    }
-	}
-      if (ss->stopped_explicitly)
-	{
-	  ss->stopped_explicitly = false;
-	  report_in_minibuffer(sc->sp, _("%s stopped at sample " MUS_LD), sc->caller, kp + sc->beg);
-	  break;
-	}
-    }
-  if (sc->counting)
-    return(C_TO_XEN_INT(counts));
-  return(XEN_FALSE);
-}
-
-
-static void after_scan(void *context)
-{
-  scan_context *sc = (scan_context *)context;
-  sc->sf = free_snd_fd(sc->sf);
-  if (sc->reporting) finish_progress_report(sc->cp);
-  free(sc);
-}
-#endif
-
-
 static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn, 
 		     const char *caller, bool counting, XEN edpos, int arg_pos, XEN s_dur)
 {
@@ -3824,10 +3727,8 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn,
   snd_fd *sf;
   XEN errstr;
   mus_long_t kp, num;
-#if (!HAVE_GUILE_DYNAMIC_WIND)
   int rpt = 0, rpt4;
   bool reporting = false;
-#endif
   int counts = 0, pos;
   char *errmsg;
   XEN proc = XEN_FALSE;
@@ -3900,18 +3801,6 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn,
 	}
     }
 
-#if HAVE_GUILE_DYNAMIC_WIND
-  /* package up context and try to protect against errors/throws in the user's code */
-  {
-    scan_context *sc;
-    sc = make_scan_context(proc, beg, num, sf, sp, cp, caller, counting);
-    return(scm_internal_dynamic_wind((scm_t_guard)before_scan, 
-				     (scm_t_inner)scan_body, 
-				     (scm_t_guard)after_scan, 
-				     (void *)sc,
-				     (void *)sc));
-  }
-#else
   reporting = ((num > REPORTING_SIZE) && (!(cp->squelch_update)));
   if (reporting) start_progress_report(cp);
   rpt4 = MAX_BUFFER_SIZE / 4;
@@ -3961,7 +3850,7 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn,
   sf = free_snd_fd(sf);
   if (counting)
     return(C_TO_XEN_INT(counts));
-#endif
+
   return(XEN_FALSE);
 }
 
@@ -5781,12 +5670,12 @@ that give a minimum peak amplitude when the signals are added together."
 
   static mus_float_t prime_mins[128] = {1.0000, 1.7600, 1.9798, 2.1921, 2.4768, 2.8055, 3.0619, 3.2630, 3.3824, 3.6023, 3.7790, 3.9367, 4.1554, 4.3270, 4.4682, 4.6059, 4.7218, 4.8604, 5.0211, 5.1956, 5.3647, 5.4813, 5.6243, 5.7130, 5.9296, 6.0896, 6.2676, 6.3135, 6.4613, 6.5017, 6.8001, 6.9251, 7.0589, 7.2007, 7.3565, 7.5318, 7.5455, 7.6915, 7.7842, 7.9080, 8.0448, 8.1657, 8.3069, 8.3798, 8.5310, 8.6088, 8.6992, 8.8014, 8.9328, 9.0363, 9.2374, 9.4068, 9.5363, 9.5313, 9.6776, 9.7378, 10.0134, 10.1073, 10.0027, 10.0601, 10.4499, 10.4094, 10.4941, 10.6736, 10.7350, 10.8520, 10.9738, 11.0830, 11.0547, 11.1479, 11.1971, 11.3860, 11.4931, 11.4437, 11.7280, 11.7627, 12.0382, 12.1679, 12.1730, 12.3429, 12.3626, 12.3478, 12.5414, 12.6803, 12.5808, 12.3749, 12.8302, 13.0615, 13.1332, 13.1629, 13.0117, 13.1089, 13.2557, 13.3665, 13.6617, 13.5758, 13.7307, 13.8839, 14.0505, 14.1724, 14.0406, 14.2507, 14.3833, 14.4622, 14.6572, 14.9445, 14.9586, 15.1805, 15.1161, 14.9808, 15.0547, 15.1714, 15.3372, 15.5375, 15.6250, 15.2943, 15.7276, 15.7970, 15.6895, 15.9326, 15.8349, 16.1678, 15.7789, 16.2480, 16.4469, 16.4857, 16.4488, 16.6392};
 
-  static mus_float_t even_mins[128] = {1.0000, 1.7602, 2.0215, 2.4306, 2.6048, 2.8370, 3.0470, 3.1976, 3.4542, 3.5589, 3.6567, 3.7876, 3.9733, 4.0977, 4.1938, 4.3270, 4.4914, 4.5708, 4.7559, 4.8465, 4.9435, 5.0892, 5.2096, 5.3455, 5.4606, 5.5743, 5.7039, 5.7970, 5.9014, 5.9895, 6.0637, 6.2333, 6.2832, 6.4377, 6.5249, 6.6179, 6.7277, 6.8341, 6.8365, 7.0413, 7.1354, 7.2378, 7.2740, 7.4230, 7.4014, 7.6170, 7.6743, 7.7110, 7.8292, 8.0614, 8.0733, 8.1090, 8.3315, 8.3280, 8.4143, 8.5346, 8.5898, 8.6808, 8.7612, 8.8681, 8.9416, 9.0592, 9.1463, 9.1833, 9.2998, 9.4107, 9.3342, 9.6553, 9.4935, 9.7298, 9.5218, 9.9273, 10.0003, 9.9515, 9.8575, 10.1373, 10.1124, 10.2428, 10.4685, 10.5500, 10.5817, 10.7233, 10.6905, 10.8232, 10.8724, 10.8841, 11.0644, 10.9827, 10.8792, 11.1336, 11.3480, 11.4202, 11.4157, 11.4158, 11.5435, 11.5826, 11.6891, 11.8372, 11.8206, 11.9212, 11.9480, 12.0037, 12.1147, 12.1626, 12.0923, 12.2608, 12.4388, 12.5756, 12.6602, 12.6238, 12.8128, 12.8261, 12.7770, 12.9787, 13.0451, 13.0730, 12.9938, 13.1753, 13.3075, 13.1242, 13.1032, 13.5610, 13.5695, 13.0527, 13.6324, 13.5221, 13.7383, 13.6215};
+  static mus_float_t even_mins[128] = {1.0000, 1.7602, 2.0215, 2.4306, 2.6048, 2.8370, 3.0470, 3.1976, 3.4542, 3.5589, 3.6567, 3.7876, 3.9733, 4.0977, 4.1938, 4.3270, 4.4914, 4.5708, 4.7559, 4.8465, 4.9435, 5.0892, 5.2096, 5.3455, 5.4606, 5.5743, 5.7039, 5.7970, 5.9014, 5.9895, 6.0637, 6.2333, 6.2832, 6.4377, 6.5249, 6.6179, 6.7277, 6.8312, 6.8365, 7.0413, 7.1354, 7.2378, 7.2740, 7.4230, 7.4014, 7.6170, 7.6743, 7.7110, 7.8292, 8.0614, 8.0733, 8.1090, 8.3315, 8.3280, 8.4143, 8.5346, 8.5898, 8.6808, 8.7612, 8.8681, 8.9416, 9.0592, 9.1463, 9.1833, 9.2998, 9.4107, 9.3342, 9.6553, 9.4935, 9.7298, 9.5218, 9.9273, 10.0003, 9.9515, 9.8575, 10.1373, 10.1124, 10.2428, 10.4685, 10.5500, 10.5817, 10.7233, 10.6905, 10.8232, 10.8724, 10.8841, 11.0644, 10.9827, 10.8792, 11.1336, 11.3480, 11.4202, 11.4157, 11.4158, 11.5435, 11.5826, 11.6891, 11.8372, 11.8206, 11.9212, 11.9480, 12.0037, 12.1147, 12.1626, 12.0923, 12.2608, 12.3774, 12.5756, 12.6602, 12.6238, 12.8128, 12.8167, 12.7770, 12.9787, 13.0451, 13.0730, 12.9938, 13.1753, 13.3075, 13.1242, 13.1032, 13.5610, 13.5695, 13.0527, 13.4751, 13.5221, 13.7383, 13.6215};
 
   static mus_float_t min_8[4] = {20.3776, 20.5383, 21.6732, 25.9420};
   static mus_float_t min_9[4] = {32.4246, 32.5035, 32.8042, 41.6648};
-  static mus_float_t min_10[4] = {50.8310, 50.3944, 51.8950, 70.1400};
-  static mus_float_t min_11[4] = {80.3556, 82.8998, 84.9030, 102.6190};
+  static mus_float_t min_10[4] = {50.8310, 50.3169, 51.8950, 70.1400};
+  static mus_float_t min_11[4] = {80.2100, 82.6529, 84.4229, 102.6190};
 
 #define USE_CLM_RANDOM (!HAVE_S7)
 

@@ -8425,24 +8425,6 @@ static void finish_as_one_edit(chan_info *cp)
 }
 
 
-#if HAVE_GUILE_DYNAMIC_WIND
-static void before_as_one_edit(void *context)
-{
-  for_each_normal_chan(init_as_one_edit);
-}
-
-static XEN as_one_edit_body(void *context)
-{
-  return(XEN_CALL_0_NO_CATCH((XEN)context));
-}
-
-static void after_as_one_edit(void *context)
-{
-  for_each_normal_chan(finish_as_one_edit);
-}
-#endif
-
-
 static XEN g_as_one_edit(XEN proc, XEN origin)
 {
   #define H_as_one_edit "(" S_as_one_edit " thunk :optional origin): evaluate thunk, collecting all edits into one from the edit history's point of view"
@@ -8466,13 +8448,7 @@ static XEN g_as_one_edit(XEN proc, XEN origin)
   if (XEN_STRING_P(origin))
 	as_one_edit_origin = mus_strdup(XEN_TO_C_STRING(origin));
       else as_one_edit_origin = NULL;
-#if HAVE_GUILE_DYNAMIC_WIND
-  result = scm_internal_dynamic_wind((scm_t_guard)before_as_one_edit, 
-				     (scm_t_inner)as_one_edit_body, 
-				     (scm_t_guard)after_as_one_edit, 
-				     (void *)proc,
-				     (void *)proc);
-#else
+
   for_each_normal_chan(init_as_one_edit);
   result = XEN_CALL_0_NO_CATCH(proc);
 #if HAVE_S7
@@ -8482,7 +8458,6 @@ static XEN g_as_one_edit(XEN proc, XEN origin)
    */
 #endif
   for_each_normal_chan(finish_as_one_edit);
-#endif
 
   if (as_one_edit_origin)
     {

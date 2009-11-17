@@ -544,24 +544,6 @@ void calculate_fft(chan_info *cp)
 
 static bool updating = false;
 
-
-#if HAVE_GUILE_DYNAMIC_WIND
-static void before_dpy(void *ignore) {}
-
-static void after_dpy(void *context) {updating = false;}
-
-static XEN dpy_body(void *context)
-{
-  chan_info *cp = (chan_info *)context;
-  if ((cp->graph_transform_p) && 
-      (!(chan_fft_in_progress(cp)))) 
-    calculate_fft_1(cp, DONT_FORCE_REDISPLAY);
-  display_channel_data(cp);
-  return(XEN_FALSE);
-}
-#endif
-
-
 static void update_graph_1(chan_info *cp, bool warn)
 {
   /* don't put display stuff here!  This is needed so that the fft display does not get caught in a loop */
@@ -607,19 +589,11 @@ static void update_graph_1(chan_info *cp, bool warn)
 	return;
       }
 
-#if HAVE_GUILE_DYNAMIC_WIND
-  scm_internal_dynamic_wind((scm_t_guard)before_dpy, 
-			    (scm_t_inner)dpy_body, 
-			    (scm_t_guard)after_dpy, 
-			    (void *)cp,
-			    (void *)cp);
-#else
   if ((cp->graph_transform_p) && 
       (!(chan_fft_in_progress(cp)))) 
     calculate_fft_1(cp, DONT_FORCE_REDISPLAY);
   display_channel_data(cp);
   updating = false;
-#endif
 }
 
 

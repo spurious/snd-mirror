@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "1.37"
-#define S7_DATE "11-Nov-09"
+#define S7_VERSION "1.38"
+#define S7_DATE "17-Nov-09"
 
 
 typedef long long int s7_Int;
@@ -238,7 +238,7 @@ bool s7_is_eqv(s7_pointer a, s7_pointer b);                                  /* 
 bool s7_is_equal(s7_pointer a, s7_pointer b);                                /* (equal? a b) */
 
 
-bool s7_is_boolean(s7_scheme *sc, s7_pointer x);                             /* (boolean? x) */
+bool s7_is_boolean(s7_pointer x);                                            /* (boolean? x) */
 bool s7_boolean(s7_scheme *sc, s7_pointer x);                                /* scheme boolean -> C bool */
 s7_pointer s7_make_boolean(s7_scheme *sc, bool x);                           /* C bool -> scheme boolean */
 
@@ -845,6 +845,7 @@ void s7_mark_object(s7_pointer p);
  * 
  *        s7 changes
  *
+ * 17-Nov:    s7_is_boolean no longer takes the s7_scheme argument.
  * 7-Nov:     s7_vector_dimensions, s7_vector_offsets, example of use.
  * 3-Nov:     s7_vector_rank.
  * 30-Oct:    *trace-hook*.

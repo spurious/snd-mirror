@@ -3,7 +3,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Dec 23 00:28:28 CET 2005
-\ Changed: Fri Nov 06 00:34:53 CET 2009
+\ Changed: Tue Nov 17 16:32:38 CET 2009
 
 \ Commentary:
 
@@ -589,7 +589,7 @@ let: ( -- menu )
 	  name $" Insert selection"       string= ||
 	  name $" Unselect"               string= ||
 	  name $" Replace with selection" string= || if
-	    w selection? if FXtManageChild else FXtUnmanageChild then drop
+	    w undef selection? if FXtManageChild else FXtUnmanageChild then drop
 	  else
 	    name $" Play from cursor" string= if
 	      w snd chn #f cursor 0> if FXtManageChild else FXtUnmanageChild then drop
@@ -1019,7 +1019,7 @@ let: ( -- menu )
       else
 	#t
       then if
-	selection? if
+	undef selection? if
 	  snd graph-popup-chn selection-position { pos }
 	  snd srate { sr }
 	  pos sr f/ { beg }		\ BEG and END should be floats

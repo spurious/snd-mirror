@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sun Dec 18 23:36:09 CET 2005
-\ Changed: Sun Jun 14 18:48:14 CEST 2009
+\ Changed: Sat Jul 25 17:37:39 CEST 2009
 
 \ Commentary:
 
@@ -27,7 +27,7 @@ hide
     snd channels 0 ?do
       'inset-envelope snd i channel-property { vals }
       \ set edit-position to impossible value
-      vals if vals 'edit-position -2 array-assoc-set! to vals then
+      vals array? if vals 'edit-position -2 array-assoc-set! to vals then
     loop
   then
   #f
@@ -59,7 +59,7 @@ hide
       x-offset lx + chan-offset rx lx - 1 max height
       snd grf-chn selection-context #f fill-rectangle drop
       'inset-envelope snd chn channel-property { old-env }
-      old-env if
+      old-env array? if
 	new-peaks not
 	old-env 'width         array-assoc-ref width                 = &&
 	old-env 'height        array-assoc-ref height                = &&
@@ -154,7 +154,6 @@ hide
 	( vals ) 'y-offset      y-offset              array-assoc-set! { vals }
 	'inset-envelope vals snd chn set-channel-property drop
       then
-      \ FIXME
       data1 length 2 mod if data1 array-pop drop then
       data0 snd grf-chn time-graph draw-lines drop
       data1 if data1 snd grf-chn time-graph draw-lines drop then

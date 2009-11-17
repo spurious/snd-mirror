@@ -8,6 +8,8 @@
 ;;;
 ;;; mix-property associates a property list with a mix
 ;;; mix-click-sets-amp sets up hook functions so that mix click zeros amps, then subsequent click resets to the before-zero value
+;;; check-mix-tags tries to move mix tags around to avoid collisions
+
 
 (use-modules (ice-9 common-list))
 (provide 'snd-mix.scm)
@@ -586,4 +588,40 @@ begin time of each mix that starts after beg in the given channel"
 	      (car (sounds))) 
 	  (or chn 0))))
 
+;;; -------- check-mix-tags
 
+(define* (check-mix-tags snd chn)
+  "(check-mix-tags :optional snd chn) tries to move mix tags around to avoid collisions"
+  (if (not snd)
+      (for-each check-mix-tags (sounds))
+      (if (not chn)
+	  (let ((chns (channels snd)))
+	    (do ((i 0 (+ i 1)))
+		((= i chns))
+	      (check-mix-tags snd i)))
+	  (let ((mxs (mixes snd chn))
+		(changed #f))
+	    (define (check-mix mx trailing-mixes)
+	      (if (not (null? trailing-mixes))
+		  (let ((pos (mix-position mx))
+			(ls (left-sample snd chn))
+			(rs (right-sample snd chn)))
+		    (if (<= ls pos rs)
+			(let ((x (x->position (/ pos (srate snd))))
+			      (y (mix-tag-y mx)))
+			  (for-each 
+			   (lambda (other-mix)
+			     (let ((other-pos (mix-position other-mix)))
+			       (if (<= ls other-pos rs)
+				   (let ((other-x (x->position (/ other-pos (srate snd))))
+					 (other-y (mix-tag-y other-mix)))
+				     (if (and (< (abs (- x other-x)) 6)
+					      (< (abs (- y other-y)) 10))
+					 (begin
+					   (set! (mix-tag-y other-mix) (+ (mix-tag-y other-mix) 20))
+					   (set! changed #t)))))))
+			   trailing-mixes)))
+		    (check-mix (car trailing-mixes) (cdr trailing-mixes)))))
+	    (check-mix (car mxs) (cdr mxs))
+	    (if changed
+		(update-time-graph snd chn))))))

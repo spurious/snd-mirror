@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Tue Jul 05 13:09:37 CEST 2005
-\ Changed: Sat Oct 31 00:04:01 CET 2009
+\ Changed: Tue Nov 17 16:31:54 CET 2009
 
 \ Commentary:
 \
@@ -257,7 +257,7 @@ require extensions
 \ this mainly involves keeping track of the current sound/channel
 : selection-rms ( -- val )
   doc" Returns rms of selection data using sample readers."
-  selection? if
+  undef selection? if
     selection-position #f #f 1 #f make-sampler { rd }
     selection-frames { len }
     0.0 ( sum ) len 0 ?do rd next-sample dup f* f+ ( sum += ... ) loop
@@ -1502,7 +1502,7 @@ previous
 
 : swap-selection-channels ( -- )
   doc" Swaps the currently selected data's channels."
-  selection? if
+  undef selection? if
     selection-chans 2 = if
       selection-position { beg }
       selection-frames { len }
@@ -2067,7 +2067,7 @@ into a bunch of files of the form sample-name.aif."
     vals 2 array-ref  start d- { loop-start }
     vals 3 array-ref start d- { loop-end }
     name ".aif" $+ { filename }
-    selection? if #f #t #f set-selection-member? drop then
+    undef selection? if #f #t #f set-selection-member? drop then
     #t #f #f set-selection-member? drop
     start #f #f set-selection-position drop
     end start d- #f #f set-selection-frames drop

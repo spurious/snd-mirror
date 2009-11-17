@@ -5249,6 +5249,7 @@ example, if you know the frequency of the mix sound, you can reflect that in the
    (set! (mix-tag-y mix-id) 
          (inexact-&gt;exact (round (* 100 (- 1.0 (/ (log (/ freq 40.0)) (* (log 2.0) 7)))))))
 </pre>
+See, for example, check-mix-tags in sndscm.html.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 

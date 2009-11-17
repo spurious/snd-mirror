@@ -1452,34 +1452,6 @@ char *output_name(const char *current_name)
 }
 
 
-#if HAVE_GUILE_DYNAMIC_WIND
-/* cleanup even if error in file lookup process */
-typedef struct {
-  char *filename;
-  read_only_t read_only;
-  file_info *hdr;
-} open_file_context;
-
-static snd_info *open_file_sp = NULL;
-static void before_open_file(void *context) {}
-
-
-static XEN open_file_body(void *context)
-{
-  open_file_context *sc = (open_file_context *)context;
-  open_file_sp = add_sound_window(sc->filename, sc->read_only, sc->hdr); /* snd-xsnd.c -> make_file_info (in this file) */
-  return(XEN_FALSE);
-}
-
-
-static void after_open_file(void *context)
-{
-  open_file_context *sc = (open_file_context *)context;
-  free(sc);
-}
-#endif
-
-
 snd_info *finish_opening_sound(snd_info *sp, bool selected)
 {
   if (sp)
@@ -1566,23 +1538,8 @@ snd_info *snd_open_file(const char *filename, read_only_t read_only)
       return(NULL);
     }
 
-#if HAVE_GUILE_DYNAMIC_WIND
-  {
-    open_file_context *ofc;
-    ofc = (open_file_context *)calloc(1, sizeof(open_file_context));
-    ofc->filename = mcf;
-    ofc->read_only = read_only;
-    ofc->hdr = hdr;
-    scm_internal_dynamic_wind((scm_t_guard)before_open_file, 
-			      (scm_t_inner)open_file_body, 
-			      (scm_t_guard)after_open_file, 
-			      (void *)ofc,
-			      (void *)ofc);
-    sp = open_file_sp; /* has to be global since we free sc during the unwind */
-  }
-#else
   sp = add_sound_window(mcf, read_only, hdr);
-#endif
+
   if (mcf) {free(mcf); mcf = NULL;}
   return(finish_opening_sound(sp, FILE_SELECTED));
 }

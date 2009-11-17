@@ -185,47 +185,6 @@ void drag_and_drop_mix_at_x_y(int data, const char *filename, int x, int y)
 }
 
 
-#if HAVE_GUILE_DYNAMIC_WIND
-typedef struct {
-  mus_long_t beg, len;
-  int chans;
-  chan_info **cps;
-  const char *fullname;
-  bool with_tag;
-  file_delete_t auto_delete;
-  sync_info *si;
-  int old_sync;
-  snd_info *sp;
-} mix_file_context;
-
-static void before_mix_file(void *ignore) {}
-
-
-static XEN mix_file_body(void *context)
-{
-  mix_file_context *mx = (mix_file_context *)context;
-  int id;
-  id = mix_file(mx->beg, mx->len, mx->chans, mx->cps, mx->fullname, mx->auto_delete, NULL, mx->with_tag, 0);
-  return(new_xen_mix(id));
-}
-
-
-static void after_mix_file(void *context)
-{
-  mix_file_context *mx = (mix_file_context *)context;
-  if (mx->si) 
-    mx->si = free_sync_info(mx->si); 
-  else 
-    {
-      if (mx->cps) 
-	free(mx->cps);
-    }
-  mx->sp->sync = mx->old_sync;
-  free(mx);
-}
-#endif
-
-
 int mix_complete_file(snd_info *sp, mus_long_t beg, const char *fullname, bool with_tag, file_delete_t auto_delete, mix_sync_t all_chans, int *out_chans)
 {
   chan_info *cp;
@@ -260,29 +219,6 @@ int mix_complete_file(snd_info *sp, mus_long_t beg, const char *fullname, bool w
     }
   if (out_chans) (*out_chans) = chans;
 
-#if HAVE_GUILE_DYNAMIC_WIND
-  {
-    mix_file_context *mx;
-    XEN result;
-    mx = (mix_file_context *)calloc(1, sizeof(mix_file_context));
-    mx->beg = beg;
-    mx->len = len;
-    mx->chans = chans;
-    mx->cps = cps;
-    mx->fullname = fullname;
-    mx->si = si;
-    mx->sp = sp;
-    mx->with_tag = with_tag;
-    mx->auto_delete = auto_delete;
-    mx->old_sync = old_sync;
-    result = scm_internal_dynamic_wind((scm_t_guard)before_mix_file, 
-				       (scm_t_inner)mix_file_body, 
-				       (scm_t_guard)after_mix_file, 
-				       (void *)mx,
-				       (void *)mx);
-    id = XEN_TO_C_INT(result);
-  }
-#else
   id = mix_file(beg, len, chans, cps, fullname, auto_delete, NULL, with_tag, 0);
   if (si) 
     si = free_sync_info(si); 
@@ -292,7 +228,7 @@ int mix_complete_file(snd_info *sp, mus_long_t beg, const char *fullname, bool w
 	free(cps);
     }
   sp->sync = old_sync;
-#endif
+
   return(id);
 }
 
@@ -1629,61 +1565,6 @@ int hit_mix(chan_info *cp, int x, int y) /* mix tag press in snd-chn.c */
 }
 
 
-static int mix_tag_collides(int mix_id)
-{
-  #define SLOPPY_MOUSE 3
-  mix_info*md;
-  int x, y;
-  chan_info *cp = NULL;
-  mix_list *mxl = NULL;
-  
-  md = md_from_id(mix_id);
-  if (md) cp = md->cp;
-  if (cp) mxl = (mix_list *)(cp->edits[cp->edit_ctr]->mixes); /* active mixes in the current edit of this channel */
-
-  if (mxl)
-    {
-      int i, width, height;
-
-      if (mxl->size <= 1) return(false);
-
-      width = mix_tag_width(ss);
-      height = mix_tag_height(ss);
-
-      x = md->tag_x;
-      if (x <= 0)
-	{
-	  mix_state *ms;
-	  ms = current_mix_state(md);
-	  x = grf_x((double)(ms->beg) / (double)(SND_SRATE(cp->sound)), cp->axis);
-	}
-      y = md->tag_y + MIX_TAG_Y_OFFSET + cp->axis->y_offset;
-
-      for (i = 0; i < mxl->size; i++)
-	{
-	  mix_state *ms;
-	  ms = mxl->list[i];
-	  if ((ms) &&
-	      (ms->mix_id != mix_id))
-	    {
-	      int mx, my;
-	      mx = mix_infos[ms->mix_id]->tag_x;
-	      if (mx <= 0)
-		mx = grf_x((double)(ms->beg) / (double)(SND_SRATE(cp->sound)), cp->axis);
-	      my = mix_infos[ms->mix_id]->tag_y + MIX_TAG_Y_OFFSET + cp->axis->y_offset;
-	      if ((x + SLOPPY_MOUSE >= (mx - width / 2)) && 
-		  (x - SLOPPY_MOUSE <= (mx + width / 2)) &&
-		  (y + SLOPPY_MOUSE >= (my - height)) && 
-		  (y - SLOPPY_MOUSE <= (my + 0)))
-		return(true);
-	    }
-	}
-    }
-  return(false);
-}
-
-
-
 /* mix display */
 
 void channel_set_mix_tags_erased(chan_info *cp)
@@ -2125,7 +2006,7 @@ static void erase_mix_tag_and_waveform(mix_state *ms, chan_info *cp, axis_info *
   old_x = x + mix_tag_width(ss) - 2;
   if ((old_x + wave_width) > ap->x_axis_x1)
     wave_width = ap->x_axis_x1 - old_x;
-  fill_rectangle(erase_context(cp), old_x, (y > wave_height) ? (y - wave_height) : 0, wave_width + 2, wave_height + 2);
+  fill_rectangle(erase_context(cp), old_x, y - wave_height + 6, wave_width + 2, wave_height + 12);
 }
 
 
@@ -2140,10 +2021,6 @@ static void draw_mix_tag_and_waveform(mix_info *md, mix_state *ms, int x)
   ap = cp->axis;
   show_wave = ((show_mix_waveforms(ss)) && (cp->show_mix_waveforms));
   y = ap->y_offset + md->tag_y + MIX_TAG_Y_OFFSET;
-    
-  if ((show_wave) &&
-      (md->y != MIX_TAG_ERASED))
-    erase_mix_tag_and_waveform(ms, cp, ap, md->x, y);
 
   if (ms->beg >= ap->losamp)
     draw_mix_tag(md, x, y);
@@ -2247,6 +2124,7 @@ static with_hook_t hookable_before_drag;
 static bool mix_dragged = false;
 static XEN mix_release_hook;
 static XEN mix_drag_hook;
+static mus_long_t orig_beg = 0;
 /* also mix_click_hook in snd-chn.c */
 
 static mus_long_t drag_beg = 0, drag_end = 0;
@@ -2254,10 +2132,12 @@ static mus_long_t drag_beg = 0, drag_end = 0;
 
 typedef struct {mus_long_t beg; bool axis_changed;} move_mix_data;
 
+static mus_long_t syncd_mix_position(int id);
+
 static void move_syncd_mix(mix_info *md, void *data)
 {
   move_mix_data *mmd = (move_mix_data *)data;
-  mix_set_position_edit(md->id, mmd->beg);                         /* TODO: needs offset if any */
+  mix_set_position_edit(md->id, syncd_mix_position(md->id) + mmd->beg);
   if (!mmd->axis_changed)
     mix_display_during_drag(md->id, drag_beg, drag_end);
 }
@@ -2271,6 +2151,7 @@ void move_mix_tag(int mix_id, int x, int y)
   axis_info *ap;
   chan_info *cp;
   bool axis_changed = false;
+  mus_long_t pos;
 
   md = md_from_id(mix_id);
   cp = md->cp;
@@ -2281,11 +2162,18 @@ void move_mix_tag(int mix_id, int x, int y)
       hookable_before_drag = cp->hookable;
       cp->hookable = WITHOUT_HOOK;
       drag_beg = mix_position_from_id(mix_id);
+      orig_beg = drag_beg;
       drag_end = drag_beg + mix_length_from_id(mix_id);
+      start_dragging_syncd_mixes(mix_id);
     }
-  else cp->edit_ctr = edpos_before_drag;
+  else 
+    {
+      cp->edit_ctr = edpos_before_drag;
+      keep_dragging_syncd_mixes(mix_id);
+    }
   
-  mix_set_position_edit(mix_id, snd_round_mus_long_t(ungrf_x(cp->axis, x) * (double)(SND_SRATE(cp->sound))));
+  pos = snd_round_mus_long_t(ungrf_x(cp->axis, x) * (double)(SND_SRATE(cp->sound)));
+  mix_set_position_edit(mix_id, pos);
 
   mix_dragged = true;
   ap = cp->axis;
@@ -2325,7 +2213,7 @@ void move_mix_tag(int mix_id, int x, int y)
   {
     move_mix_data *mmd;
     mmd = (move_mix_data *)malloc(sizeof(move_mix_data));
-    mmd->beg = snd_round_mus_long_t(ungrf_x(cp->axis, x) * (double)(SND_SRATE(cp->sound)));
+    mmd->beg = pos - orig_beg;
     mmd->axis_changed = axis_changed;
     for_each_syncd_mix(mix_id, move_syncd_mix, (void *)mmd);           /* syncd mixes drag together */
     free(mmd);
@@ -2358,8 +2246,7 @@ void move_mix_tag(int mix_id, int x, int y)
 static void syncd_mix_set_position_1(mix_info *md, void *data)
 {
   move_mix_data *mmd = (move_mix_data *)data;
-  mix_set_position_edit(md->id, mmd->beg);
-  CURSOR(md->cp) = mmd->beg;
+  mix_set_position_edit(md->id, syncd_mix_position(md->id) + mmd->beg);
   after_edit(md->cp);
   update_graph(md->cp);
 }
@@ -2400,6 +2287,7 @@ void finish_moving_mix_tag(int mix_id, int x)
   
   if (cp->edit_ctr > edpos_before_drag) /* possibly dragged it back to start point, so no edit took place */
     cp->edit_ctr--;
+  keep_dragging_syncd_mixes(mix_id);    /* fixup edpos */
 
   if (XEN_HOOKED(mix_release_hook))
     res = run_progn_hook(mix_release_hook,
@@ -2407,10 +2295,10 @@ void finish_moving_mix_tag(int mix_id, int x)
 				    C_TO_XEN_INT64_T(pos - mix_position_from_id(mix_id))),
 			 S_mix_release_hook);
 
-  /* TODO: doc syncd mix drag stuff and get offsets */
-
   if (!(XEN_TRUE_P(res)))
     {
+      mus_long_t old_pos;
+      old_pos = mix_position_from_id(mix_id);
       if (mix_set_position_edit(mix_id, pos))
 	{
 	  CURSOR(cp) = pos;
@@ -2420,9 +2308,10 @@ void finish_moving_mix_tag(int mix_id, int x)
 			     *   and we have to run lisp/fft graphs in any case (and the hook),
 			     *   but display_channel_data_1 erases the old graph, so it's hard to specialize for this case
 			     */
-	  syncd_mix_set_position(mix_id, pos);
+	  syncd_mix_set_position(mix_id, pos - old_pos); /* assumes syncd_mixes list exists */
 	}
     }
+  stop_dragging_syncd_mixes(mix_id);
 }
 
 
@@ -2470,6 +2359,137 @@ void after_mix_edit(int id)
       update_graph(md->cp);
     }
 }
+
+
+
+
+/* ---------------------------------------- syncd mixes ---------------------------------------- */
+
+typedef struct {
+  int mix_id, orig_edpos;
+  mus_long_t orig_beg;
+  chan_info *cp;
+} syncd_mix_info;
+
+static syncd_mix_info *syncd_mixes = NULL;
+static int syncd_mixes_length = 0;
+
+
+static mus_long_t syncd_mix_position(int id)
+{
+  if (syncd_mixes)
+    {
+      int i;
+      for (i = 0; i < syncd_mixes_length; i++)
+	if (id == syncd_mixes[i].mix_id)
+	  return(syncd_mixes[i].orig_beg);
+    }
+  return(-1);
+}
+
+
+static void add_syncd_mix(mix_info *md, void *ignore)
+{
+  mus_long_t pos;
+  int i, mix_id;
+
+  mix_id = md->id;
+  pos = mix_position_from_id(mix_id);
+
+  i = syncd_mixes_length++;
+  syncd_mixes[i].mix_id = mix_id;
+  syncd_mixes[i].orig_beg = pos;
+  syncd_mixes[i].orig_edpos = md->cp->edit_ctr;
+  syncd_mixes[i].cp = md->cp;
+}
+
+
+static void count_syncd_mixes(mix_info *md, void *ignore)
+{
+  syncd_mixes_length++;
+}
+
+
+void start_dragging_syncd_mixes(int mix_id)
+{
+  syncd_mixes_length = 0;
+  for_each_syncd_mix(mix_id, count_syncd_mixes, NULL);
+  if (syncd_mixes_length > 0)
+    {
+      syncd_mixes = (syncd_mix_info *)calloc(syncd_mixes_length, sizeof(syncd_mix_info));
+      syncd_mixes_length = 0;
+      for_each_syncd_mix(mix_id, add_syncd_mix, NULL);
+    }
+}
+
+void keep_dragging_syncd_mixes(int mix_id)
+{
+  int i;
+  for (i = 0; i < syncd_mixes_length; i++)
+    syncd_mixes[i].cp->edit_ctr = syncd_mixes[i].orig_edpos;
+}
+
+void stop_dragging_syncd_mixes(int mix_id)
+{
+  /* undo edit? */
+  if (syncd_mixes)
+    {
+      free(syncd_mixes);
+      syncd_mixes = NULL;
+      syncd_mixes_length = 0;
+    }
+}
+  
+
+static void syncd_mix_change_position_1(mix_info *md, void *data)
+{
+  move_mix_data *mmd = (move_mix_data *)data;
+  mix_set_position_edit(md->id, mix_position_from_id(md->id) + mmd->beg);
+  if (!mmd->axis_changed)
+    mix_display_during_drag(md->id, drag_beg, drag_end);
+}
+
+
+void syncd_mix_change_position(int mix_id, mus_long_t change)
+{
+  move_mix_data *pos_data;
+  pos_data = (move_mix_data *)malloc(sizeof(move_mix_data));
+  pos_data->beg = change;
+  for_each_syncd_mix(mix_id, syncd_mix_change_position_1, pos_data);
+  free(pos_data);
+}
+
+
+static int ms_chans = 0;
+static chan_info **ms_cps = NULL;
+
+static void update_syncd_chans(mix_info *md, void *ignore)
+{
+  int i;
+  for (i = 0; i < ms_chans; i++)
+    if (md->cp == ms_cps[i])
+      return;
+  ms_cps[ms_chans++] = md->cp;
+  update_graph(md->cp);
+}
+
+
+void after_syncd_mix_edit(int id)
+{
+  ms_chans = active_channels(WITH_VIRTUAL_CHANNELS);
+  if (ms_chans > 1)
+    {
+      ms_cps = (chan_info **)calloc(ms_chans, sizeof(chan_info *));
+      ms_chans = 1;
+      ms_cps[0] = mix_chan_info_from_id(id); /* base cp handled elsewhere */
+      for_each_syncd_mix(id, update_syncd_chans, NULL);
+      ms_chans = 0;
+      free(ms_cps);
+      ms_cps = NULL;
+    }
+}
+
+
 
 
 
@@ -2682,7 +2702,6 @@ static XEN g_set_mix_position(XEN n, XEN pos)
   beg = beg_to_sample(pos, S_setB S_mix_position);
   if (mix_set_position_edit(id, beg))
     after_mix_edit(id);
-
   return(pos);
 }
 
@@ -3668,6 +3687,7 @@ static io_error_t save_mix(int id, const char *name, int type, int format)
   return(io_err);
 }
 
+#define MIX_TAG_Y_SEPARATION 20
 
 int copy_mix(int id)
 {
@@ -3690,6 +3710,8 @@ int copy_mix(int id)
   new_md = md_from_id(new_id);
   if (!new_md->in_filename)
     new_md->in_filename = mus_strdup(filename);
+
+  new_md->tag_y = md->tag_y + MIX_TAG_Y_SEPARATION;
 
   free(origin);
   free(filename);
@@ -3982,3 +4004,4 @@ void g_init_mix(void)
 
   draw_mix_hook = XEN_DEFINE_HOOK(S_draw_mix_hook, 5, H_draw_mix_hook); /* arg = id, old-x, old-y, x, y */
 }
+

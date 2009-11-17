@@ -3,7 +3,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sun Oct 16 23:04:30 CEST 2005
-\ Changed: Fri Nov 06 00:27:07 CET 2009
+\ Changed: Tue Nov 17 16:31:38 CET 2009
 
 \ Commentary:
 \
@@ -381,7 +381,7 @@ hide
     typ 'sound equal? if wid #t #t FXmToggleButtonSetState drop then
     typ 'selection equal? if
       selection-buttons wid array-push drop
-      selection? unless wid #f FXtSetSensitive drop then
+      undef selection? unless wid #f FXtSetSensitive drop then
     then
   end-each
   truncate-prc if
@@ -472,7 +472,7 @@ hide
 ;
 
 : map-chan-over-target-with-sync { func target origin-func decay -- }
-  target 'selection equal? selection? not && if
+  target 'selection equal? undef selection? not && if
     $" no selection" snd-warning drop
   else
     target 'sound equal? sounds nil? && if
@@ -643,7 +643,7 @@ hide
     then
   else
     gen target@ 'selection equal? if
-      selection? if
+      undef selection? if
 	with-env array? if
 	  with-env 1.0 env-selection drop
 	else
@@ -749,7 +749,7 @@ hide
     gen amount@ #f #f scale-to drop
   else
     gen target@ 'selection equal? if
-      selection? if
+      undef selection? if
 	gen amount@ scale-selection-to drop
       else
 	$" no selection" snd-warning drop
@@ -2105,7 +2105,7 @@ hide
     gen amount@ 1.0 undef undef undef src-sound drop
   else
     gen target@ 'selection equal? if
-      selection? if
+      undef selection? if
 	gen amount@ 1.0 src-selection drop
       else
 	$" no selection" snd-warning drop

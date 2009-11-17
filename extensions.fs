@@ -3,7 +3,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sun Dec 18 19:21:00 CET 2005
-\ Changed: Fri Nov 06 00:29:24 CET 2009
+\ Changed: Tue Nov 17 16:32:19 CET 2009
 
 \ Commentary:
 \
@@ -424,7 +424,7 @@ for which FUNC does not return #f."
   doc" Returns an array of lists of #( snd chn ) indicating the channels \
 participating in the current selection."
   #() { sndlist }
-  selection? if
+  undef selection? if
     sounds each { snd }
       snd channels 0 ?do
 	snd i selection-member? if sndlist #( snd i ) array-push drop then
@@ -445,7 +445,7 @@ END defaults to end of channel, BEG defaults to 0, SND defaults to the currently
   snd snd-snd { current-sound }
   current-sound sound? unless 'no-such-sound #( get-func-name beg end snd chn ) fth-throw then
   current-sound sync { current-sync }
-  selection? if
+  undef selection? if
     sounds each { s }
       s channels 0 ?do
 	s i selection-member? ( need-update )
@@ -478,7 +478,7 @@ END defaults to end of channel, BEG defaults to 0, SND defaults to the currently
 
 : delete-selection-and-smooth ( -- )
   doc" Deletes the current selection and smooths the splice."
-  selection? if
+  undef selection? if
     #f #f selection-position { beg }
     #f #f selection-frames   { len }
     all-chans each { lst }
@@ -503,7 +503,7 @@ END defaults to end of channel, BEG defaults to 0, SND defaults to the currently
 : eval-over-selection <{ func -- val }>
   doc" Evaluates FUNC on each sample in the current selection."
   func proc?
-  selection? && if
+  undef selection? && if
     #f #f selection-position { beg }
     #f #f selection-frames   { len }
     $" <'> %s %s" #( func get-func-name ) string-format { origin }
@@ -520,7 +520,7 @@ END defaults to end of channel, BEG defaults to 0, SND defaults to the currently
 ;
 0 [if]
 "x" 0 lambda: <{ -- val }>
-  selection? if
+  undef selection? if
     $" selection-eval:" <'> eval-over-selection #f #f prompt-in-minibuffer
   else
     $" no selection" #f #f report-in-minibuffer
@@ -1477,7 +1477,7 @@ previous
 \ ;;; -------- show-selection
 
 : show-selection <{ -- }>
-  selection? if
+  undef selection? if
     #f #f { beg end }
     sounds each { snd }
       snd channels 0 ?do

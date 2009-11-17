@@ -1632,6 +1632,9 @@ void syncd_mix_set_position(int mix_id, mus_long_t pos);
 void syncd_mix_play(int id);
 void mix_unset_color_from_id(int id);
 color_t mix_set_color_from_id(int id, color_t new_color);
+void start_dragging_syncd_mixes(int mix_id);
+void keep_dragging_syncd_mixes(int mix_id);
+void stop_dragging_syncd_mixes(int mix_id);
 
 int mix_complete_file(snd_info *sp, mus_long_t beg, const char *fullname, bool with_tag, file_delete_t auto_delete, mix_sync_t all_chans, int *out_chans);
 int mix_complete_file_at_cursor(snd_info *sp, const char *str);

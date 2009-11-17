@@ -967,9 +967,9 @@ bool s7_boolean(s7_scheme *sc, s7_pointer x)
 }
 
 
-bool s7_is_boolean(s7_scheme *sc, s7_pointer x)
+bool s7_is_boolean(s7_pointer x)
 {
-  return((x == sc->F) || (x == sc->T));
+  return(type(x) == T_BOOLEAN);
 }
 
 
@@ -982,7 +982,7 @@ s7_pointer s7_make_boolean(s7_scheme *sc, bool x)
 static s7_pointer g_is_boolean(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_boolean "(boolean? obj) returns #t if obj is #f or #t"
-  return(s7_make_boolean(sc, s7_is_boolean(sc, car(args))));
+  return(s7_make_boolean(sc, s7_is_boolean(car(args))));
 }
 
 
@@ -13257,7 +13257,7 @@ spacing (and spacing character) and precision.  ~{ starts an embedded format dir
   if (!s7_is_string(cadr(args)))
     return(s7_wrong_type_arg_error(sc, "format", 2, cadr(args), "a string"));
     
-  if (!((s7_is_boolean(sc, pt)) ||           /* #f or #t */
+  if (!((s7_is_boolean(pt)) ||               /* #f or #t */
 	(pt == sc->NIL) ||                   /* default current-output-port = stdout -> nil */
 	(s7_is_output_port(sc, pt))))        /* (current-output-port) or call-with-open-file arg, etc */
     return(s7_wrong_type_arg_error(sc, "format", 1, pt, "#f, #t, or an output port"));
