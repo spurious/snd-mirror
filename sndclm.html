@@ -608,13 +608,12 @@ with_sound(:play, true) do
 
 <td bgcolor="#effdef">
 <pre>
-44100 lambda: &lt;{ len }&gt;
+lambda: ( -- )
   440.0 make-oscil { gen }
-  len 0 ?do
-  i gen 0.0 0.0 oscil 0.5 f* *output* outa drop
+  44100 0 do
+    i  gen 0 0 oscil  f2/ *output* outa drop
   loop
-;
-:play #t :channels 1 :srate 44100 with-sound
+; :play #t with-sound drop
 </pre>
 </td>
 </tr>
@@ -1056,9 +1055,10 @@ at 440 Hz when the srate is 1000, 4000, and 16000:
 <pre>
 (with-sound (:play #t)
   (let ((gen (make-oscil 440.0))
-        (ampf (make-env '(0 0  .01 1  .25 .1 .5 .01  1 0)
-	                :scaler 0.5
-                        :length 44100)))
+        (ampf (make-env 
+                '(0 0  .01 1  .25 .1 1 0)
+	        :scaler 0.5
+                :length 44100)))
     (do ((i 0 (+ 1 i)))
         ((= i 44100))
       (outa i (* (env ampf) (oscil gen))))))
@@ -1071,13 +1071,29 @@ at 440 Hz when the srate is 1000, 4000, and 16000:
 <pre>
 with_sound(:play, true) do
   gen = make_oscil(440.0);
-  ampf = make_env([0, 0, 0.01, 1.0, 0.25, 0.1, 0.5, 0.01, 1, 0],
-                  :scaler, 0.5,
-                  :length, 44100);
+  ampf = make_env(
+          [0, 0, 0.01, 1.0, 0.25, 0.1, 1, 0],
+          :scaler, 0.5,
+          :length, 44100);
   44100.times do |i| 
     outa(i, env(ampf) * oscil(gen), $output) 
     end
   end.output
+</pre>
+</td>
+
+<td width=4></td>
+
+<td bgcolor="#effdef">
+<pre>
+lambda: ( -- )
+  440.0 make-oscil { gen }
+  '( 0 0 0.01 1 0.25 0.1 1 0 )
+  :scaler 0.5 :length 44100 make-env { ampf }
+  44100 0 do
+    i  gen 0 0 oscil  ampf env  f* *output*  outa drop
+  loop
+; :play #t with-sound drop
 </pre>
 </td>
 </tr>
@@ -1462,6 +1478,19 @@ with_sound(:play, true) do
     outa(i, 0.5 * table_lookup(gen), $output) 
     end
   end.output
+</pre>
+</td>
+
+<td width=4></td>
+
+<td bgcolor="#effdef">
+<pre>
+lambda: ( -- )
+  440.0 :wave '( 1 0.5  2 0.5 ) #f #f partials->wave make-table-lookup { gen }
+  44100 0 do
+    i  gen 0 table-lookup  f2/ *output* outa drop
+  loop
+; :play #t with-sound drop
 </pre>
 </td>
 </tr>
@@ -1871,18 +1900,16 @@ with_sound(:play, true) do
 </pre>
 </td>
 
-
 <td width=4></td>
 
 <td bgcolor="#effdef">
 <pre>
-44100 lambda: &lt;{ len }&gt;
-  440.0 '( 1 0.5 2 0.5 ) 1 make-polywave { gen }
-  len 0 ?do
-  i gen 0.0 polywave 0.5 f* *output* outa drop
+lambda: ( -- )
+  440.0 :partials '( 1 0.5 2 0.5 ) make-polywave { gen }
+  44100 0 do
+    i  gen 0 polywave  f2/ *output* outa drop
   loop
-;
-:play #t :channels 1 :srate 44100 with-sound
+; :play #t with-sound drop
 </pre>
 </td>
 
@@ -2646,13 +2673,12 @@ with_sound(:play, true) do
 
 <td bgcolor="#effdef">
 <pre>
-44100 lambda: &lt;{ len }&gt;
+lambda: ( -- )
   440.0 make-triangle-wave { gen }
-  len 0 ?do
-  i gen 0.0 triangle-wave 0.5 f* *output* outa drop
+  44100 0 do
+    i  gen 0 triangle-wave  f2/ *output* outa drop
   loop
-;
-:play #t :channels 1 :srate 44100 with-sound
+; :play #t with-sound drop
 </pre>
 </td>
 </tr>
@@ -3372,13 +3398,12 @@ with_sound(:play, true) do
 
 <td bgcolor="#effdef">
 <pre>
-44100 lambda: &lt;{ len }&gt;
+lambda: ( -- )
   440.0 10 make-ncos { gen }
-  len 0 ?do
-  i gen 0.0 ncos 0.5 f* *output* outa drop
+  44100 0 do
+    i  gen 0 ncos  f2/ *output* outa drop
   loop
-;
-:play #t :channels 1 :srate 44100 with-sound
+; :play #t with-sound drop
 </pre>
 </td>
 </tr>
@@ -3720,7 +3745,7 @@ despite having the same spectrum.  We confront the burning question: given n equ
 harmonically related sinusoids, what is the minimum peak amplitude?  sqrt(n) is too low.  Here are (some of) the
 best minimum peaks I've found:
 <pre>
-    1 1.0, 2 1.76, 4 2.04, 8 2.79, 16 3.97, 32 5.75, 64 9.70, 128 15.12, 2048 89.56
+    1 1.0, 2 1.76, 4 2.04, 8 2.79, 16 3.87, 32 5.65, 64 8.57, 128 13.15, 256 20.37, 512 32.42, 1024 50.83, 2048 80.09
 </pre>
 For the actual phases, investigated with
 amiable, if sometimes incomprehensible advice from Bill Gosper, Marc LeBrun,
@@ -4342,17 +4367,17 @@ with_sound(:play, true) do
   end.output
 </pre>
 </td>
+
 <td width=4></td>
 
 <td bgcolor="#effdef">
 <pre>
-44100 lambda: &lt;{ len }&gt;
-  440.0 1.0 10 0.5 make-nrxycos { gen }
-  len 0 ?do
-  i gen 0.0 nrxycos 0.5 f* *output* outa drop
+lambda: ( -- )
+  440.0 :n 10 make-nrxycos { gen }
+  44100 0 ?do
+    i  gen 0 nrxycos  f2/ *output* outa drop
   loop
-;
-:play #t :channels 1 :srate 44100 with-sound
+; :play #t with-sound drop
 </pre>
 </td>
 </tr>
@@ -4526,12 +4551,13 @@ In the graph, r is 0 at the midpoint, r goes from -1.0 to 1.0 along the horizont
 <tr>
 <td bgcolor="#f0f4ff">
 <pre>
-(with-sound (:play #t :statistics #t :srate 44100)
+(with-sound (:play #t :srate 44100)
   (let ((shifter (make-ssb-am 440.0 20))
 	(osc (make-oscil 440.0)))
     (do ((i 0 (+ 1 i)))
 	((= i 44100))
-      (outa i (* 0.5 (ssb-am shifter (oscil osc)))))))
+      (outa i (* 0.5 (ssb-am shifter 
+                       (oscil osc)))))))
 </pre>
 </td>
 
@@ -4539,16 +4565,31 @@ In the graph, r is 0 at the midpoint, r goes from -1.0 to 1.0 along the horizont
 
 <td bgcolor="#fbfbf0">
 <pre>
-with_sound(:play, true, :statistics, true, :srate, 44100) do
+with_sound(:play, true, :srate, 44100) do
   shifter = make_ssb_am(440.0, 20);
   osc = make_oscil(440.0);
   44100.times do |i|
-    outa(i, 0.5 * ssb_am(shifter, oscil(osc)), $output);
+    outa(i, 
+         0.5 * ssb_am(shifter, oscil(osc)), 
+         $output);
     end
   end.output
 </pre>
 </td>
 
+<td width=4></td>
+
+<td bgcolor="#effdef">
+<pre>
+lambda: ( -- )
+  440.0 20 make-ssb-am { shifter }
+  440.0 make-oscil { osc }
+  44100 0 ?do
+    i  shifter  osc 0 0 oscil  0 ssb-am f2/ *output* outa drop
+  loop
+; :play #t :srate 44100 with-sound drop
+</pre>
+</td>
 </tr>
 </table>
 
@@ -4791,6 +4832,21 @@ with_sound(:play, true) do
 </pre>
 </td>
 
+<td width=4></td>
+
+<td bgcolor="#effdef">
+<pre>
+lambda: ( -- )
+  400 10 make-ncos { g }
+  g -0.5 pi f* set-mus-phase drop
+  64 make-vct map! g 0 ncos end-map { v }
+  440.0 :wave v make-wave-train { gen }
+  44100 0 do
+    i  gen 0 wave-train  f2/ *output* outa drop
+  loop
+; :play #t with-sound drop
+</pre>
+</td>
 </tr>
 </table>
 
@@ -4990,6 +5046,23 @@ with_sound(:play, true, :channels, 2) do
     outb(i, 0.5 * oscil(osc2, rand_interp(ran2)), $output);
     end
   end.output
+</pre>
+</td>
+
+<td width=4></td>
+
+<td bgcolor="#effdef">
+<pre>
+lambda: ( -- )
+  5.0 220.0 hz->radians make-rand { ran1 }
+  5.0 330.0 hz->radians make-rand-interp { ran2 }
+   440.0 make-oscil { osc1 }
+  1320.0 make-oscil { osc2 }
+  88200 0 do
+    i  osc1  ran1 0 rand         0 oscil  f2/ *output* outa drop
+    i  osc2  ran2 0 rand-interp  0 oscil  f2/ *output* outb drop
+  loop
+; :channels 2 :play #t with-sound drop
 </pre>
 </td>
 </tr>
@@ -5396,7 +5469,8 @@ and <a href="#green-noise">green-noise</a> (bounded Brownian noise).
 	(ran1 (make-rand 10000.0 .002)))
     (do ((i 0 (+ 1 i)))
 	((= i 44100))
-      (outa i (* 0.5 (two-pole flt (rand ran1)))))))
+      (outa i (* 0.5 (two-pole flt 
+                       (rand ran1)))))))
 </pre>
 </td>
 
@@ -5408,12 +5482,27 @@ with_sound(:play, true) do
   flt = make_two_pole(1000.0, 0.999);
   ran1 = make_rand(10000.0, 0.002); 
   44100.times do |i|
-    outa(i, 0.5 * two_pole(flt, rand(ran1)), $output);
+    outa(i, 
+         0.5 * two_pole(flt, rand(ran1)), 
+         $output);
     end
   end.output
 </pre>
 </td>
 
+<td width=4></td>
+
+<td bgcolor="#effdef">
+<pre>
+lambda: ( -- )
+  1000.0 0.999 make-two-pole { flt }
+  10000.0 0.002 make-rand { ran1 }
+  44100 0 do
+    i  flt  ran1 0 rand  two-pole  f2/ *output* outa drop
+  loop
+; :play #t with-sound drop
+</pre>
+</td>
 </tr>
 </table>
 
@@ -5572,7 +5661,8 @@ as the response at that frequency (in terms of a sampling rate of 1.0):
 	(ran1 (make-rand 10000.0 5.0)))
     (do ((i 0 (+ 1 i)))
 	((= i 44100))
-      (outa i (* 0.5 (firmant flt (rand ran1)))))))
+      (outa i (* 0.5 (firmant flt 
+                       (rand ran1)))))))
 </pre>
 </td>
 
@@ -5584,12 +5674,27 @@ with_sound(:play, true) do
   flt = make_firmant(1000.0, 0.999);
   ran1 = make_rand(10000.0, 5.0); 
   44100.times do |i|
-    outa(i, 0.5 * firmant(flt, rand(ran1)), $output);
+    outa(i, 
+         0.5 * firmant(flt, rand(ran1)), 
+         $output);
     end
   end.output
 </pre>
 </td>
 
+<td width=4></td>
+
+<td bgcolor="#effdef">
+<pre>
+lambda: ( -- )
+  1000.0 0.999 make-firmant { flt }
+  10000.0 5.0 make-rand { ran1 }
+  44100 0 do
+    i  flt  ran1 0 rand  #f firmant  f2/ *output* outa drop
+  loop
+; :play #t with-sound drop
+</pre>
+</td>
 </tr>
 </table>
 
@@ -5839,6 +5944,19 @@ with_sound(:play, true) do
 </pre>
 </td>
 
+<td width=4></td>
+
+<td bgcolor="#effdef">
+<pre>
+lambda: ( -- )
+  3 vct( 0.0 -1.978 0.998 ) make-iir-filter { flt }
+  10000.0 0.002 make-rand { ran1 }
+  44100 0 do
+    i  flt  ran1 0 rand  iir-filter  f2/ *output* outa drop
+  loop
+; :play #t with-sound drop
+</pre>
+</td>
 </tr>
 </table>
 
@@ -6011,13 +6129,32 @@ with_sound(:play, true) do
   osc1 = make_oscil(440.0);
   osc2 = make_oscil(660.0);
   44100.times do |i|
-    outa(i, 0.5 * (oscil(osc1) +
-                   delay(dly, oscil(osc2))), $output);
+    outa(i, 
+         0.5 * (oscil(osc1) + 
+                delay(dly, oscil(osc2))), 
+         $output);
     end
   end.output
 </pre>
 </td>
 
+<td width=4></td>
+
+<td bgcolor="#effdef">
+<pre>
+lambda: ( -- )
+  0.5 seconds-&gt;samples make-delay { dly }
+  440.0 make-oscil { osc1 }
+  660.0 make-oscil { osc2 }
+  44100 0 do
+    i
+    osc1 0 0 oscil
+    dly  osc2 0 0 oscil  0 delay f+
+    f2/ *output* outa drop
+  loop
+; :play #t with-sound drop
+</pre>
+</td>
 </tr>
 </table>
 
@@ -6152,12 +6289,32 @@ with_sound(:play, true) do
   ampf = make_env([0.0, 0.0, 1.0, 1.0, 2.0, 1.0, 3.0, 0.0],
 		  :length, 4410);
   88200.times do |i|
-    outa(i, 0.5 * (comb(cmb, env(ampf) * oscil(osc))), $output);
+    outa(i, 
+         0.5 * (comb(cmb, env(ampf) * oscil(osc))), 
+         $output);
     end
   end.output
 </pre>
 </td>
 
+<td width=4></td>
+
+<td bgcolor="#effdef">
+<pre>
+lambda: ( -- )
+  0.4 0.4 seconds-&gt;samples make-comb { cmb }
+  440.0 make-oscil { osc }
+  '( 0 0 1 1 2 1 3 0 ) :length 4410 make-env { ampf }
+  88200 0 do
+    i
+    cmb ( gen )
+    ampf env  osc 0 0 oscil  f* ( val )
+    0 ( pm )
+    comb f2/ *output* outa drop
+  loop
+; :play #t with-sound drop
+</pre>
+</td>
 </tr>
 </table>
 
@@ -6343,7 +6500,7 @@ in the feedback loop:
 </pre>
 
 
-<table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=5>
+<table border=1 bordercolor="lightgray" hspace=20 cellspacing=12 cellpadding=5>
 
 <tr>
 <td bgcolor="#f0f4ff">
@@ -6354,24 +6511,40 @@ in the feedback loop:
         (ampf (make-env '(0 0 1 1 2 1 3 0) :length 4410)))
     (do ((i 0 (+ 1 i)))
         ((= i 88200))
-      (outa i (* 0.5 (all-pass alp (* (env ampf)
-                                      (oscil osc))))))))
+      (outa i (* 0.5 (all-pass alp (* (env ampf) (oscil osc))))))))
 </pre>
 </td>
-
-<td width=4></td>
-
+</tr>
+<tr>
 <td bgcolor="#fbfbf0">
 <pre>
 with_sound(:play, true) do
   alp = make_all_pass(-0.4, 0.4, seconds2samples(0.4));
   osc = make_oscil(440.0);
-  ampf = make_env([0.0, 0.0, 1.0, 1.0, 2.0, 1.0, 3.0, 0.0],
-		  :length, 4410);
+  ampf = make_env([0.0, 0.0, 1.0, 1.0, 2.0, 1.0, 3.0, 0.0], :length, 4410);
   88200.times do |i|
     outa(i, 0.5 * (all_pass(alp, env(ampf) * oscil(osc))), $output);
     end
   end.output
+</pre>
+</td>
+</tr>
+
+<tr>
+<td bgcolor="#effdef">
+<pre>
+lambda: ( -- )
+  -0.4 0.4 0.4 seconds-&gt;samples make-all-pass { alp }
+  440.0 make-oscil { osc }
+  '( 0 0 1 1 2 1 3 0 ) :length 4410 make-env { ampf }
+  88200 0 do
+    i
+    alp ( gen )
+    ampf env  osc 0 0 oscil  f* ( val )
+    0 ( pm )
+    all-pass f2/ *output* outa drop
+  loop
+; :play #t with-sound drop
 </pre>
 </td>
 
@@ -6451,15 +6624,37 @@ with_sound(:play, true) do
   stop = 44100 - 4410;
   stop.times do |i|
     val = oscil(osc);
-    outa(i, val * moving_average(avg, val.abs), $output);
+    outa(i, 
+         val * moving_average(avg, val.abs), 
+         $output);
     end
   4410.times do |i|
-    outa(stop + i, oscil(osc) * 
-                   moving_average(avg, 0.0), $output);
+    outa(stop + i, 
+         oscil(osc) * moving_average(avg, 0.0), 
+         $output);
     end
   end.output</pre>
 </td>
 
+<td width=4></td>
+
+<td bgcolor="#effdef">
+<pre>
+lambda: ( -- )
+  4410 make-moving-average { avg }
+  440.0 make-oscil { osc }
+  44100 4410 - { stop }
+  0.0 { val }
+  stop 0 do
+    osc 0 0 oscil to val
+    i  avg val fabs moving-average  val f* *output* outa drop
+  loop
+  44100 stop do
+    i  avg 0.0 moving-average  osc 0 0 oscil f*  *output* outa drop
+  loop
+; :play #t with-sound drop
+</pre>
+</td>
 </tr>
 </table>
 
@@ -6529,7 +6724,7 @@ that are squelched and those that are unchanged (to avoid clicks):
 </pre>
 
 
-<table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=5>
+<table border=1 bordercolor="lightgray" hspace=20 cellspacing=8 cellpadding=5>
 
 <tr>
 <td bgcolor="#f0f4ff">
@@ -6544,14 +6739,13 @@ that are squelched and those that are unchanged (to avoid clicks):
 </pre>
 </td>
 
-<td width=4></td>
-
 <td bgcolor="#fbfbf0">
 <pre>
 with_sound(:play, true, :srate, 22050) do
   rd = make_readin("oboe.snd");
   len = 2 * mus_sound_frames("oboe.snd");
-  sr = make_src(lambda do |dir| readin(rd) end, 0.5);
+  sr = make_src(lambda do |dir| 
+                 readin(rd) end, 0.5);
   len.times do |i|
     outa(i, src(sr), $output);
     end
@@ -6559,8 +6753,21 @@ with_sound(:play, true, :srate, 22050) do
 </pre>
 </td>
 
+<td bgcolor="#effdef">
+<pre>
+lambda: ( -- )
+  "oboe.snd" make-readin { rd }
+  rd 0.5 make-src { sr }
+  "oboe.snd" mus-sound-frames 2* ( len ) 0 do
+    i  sr 0 #f src  *output* outa drop
+  loop
+; :play #t :srate 22050 with-sound drop
+</pre>
+</td>
+
 </tr>
 <tr>
+
 <td bgcolor="#f0f4ff">
 <pre>
 (with-sound (:play #t)
@@ -6574,8 +6781,6 @@ with_sound(:play, true, :srate, 22050) do
 </pre>
 </td>
 
-<td width=4></td>
-
 <td bgcolor="#fbfbf0">
 <pre>
 with_sound(:play, true) do
@@ -6588,6 +6793,25 @@ with_sound(:play, true) do
                     $output);
     end
   end.output
+</pre>
+</td>
+
+<td bgcolor="#effdef">
+<pre>
+: make-src-proc { osc -- prc; dir self -- val }
+  1 proc-create osc , ( prc )
+ does> { dir self -- val }
+  self @ ( osc ) 0 0 oscil
+;
+
+lambda: ( -- )
+  440.0 make-oscil { osc }
+  osc make-src-proc { prc }
+  :srate 2.0 make-src { sr }
+  44100 0 do
+    i  sr 0 prc src  *output* outa drop
+  loop
+; :play #t with-sound drop
 </pre>
 </td>
 
@@ -6707,7 +6931,7 @@ envelope so that the result has a given duration, use <a href="sndscm.html#srcfi
 </pre>
 
 
-<table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=5>
+<table border=1 bordercolor="lightgray" hspace=20 cellspacing=8 cellpadding=5>
 
 <tr>
 <td bgcolor="#f0f4ff">
@@ -6715,27 +6939,39 @@ envelope so that the result has a given duration, use <a href="sndscm.html#srcfi
 (with-sound (:play #t :statistics #t)
   (let ((cnv (make-convolve 
               (make-readin "pistol.snd")
-              (file-&gt;vct "oboe.snd")))) ; in examp.scm
+              (file-&gt;vct "oboe.snd")))) ; examp.scm
     (do ((i 0 (+ 1 i)))
 	((= i 88200))
       (outa i (* 0.25 (convolve cnv))))))
 </pre>
 </td>
 
-<td width=4></td>
-
 <td bgcolor="#fbfbf0">
 <pre>
 with_sound(:play, true, :statistics, true) do
   rd = make_readin("oboe.snd");
-  flt = file2vct("pistol.snd"); # in examp.rb
-  cnv = make_convolve(lambda { |dir| readin(rd)}, flt);
+  flt = file2vct("pistol.snd"); # examp.rb
+  cnv = make_convolve(lambda { |dir| 
+                       readin(rd)}, flt);
   88200.times do |i|
     outa(i, 0.25 * convolve(cnv), $output);
     end
   end.output
 </pre>
 </td>
+
+<td bgcolor="#effdef">
+<pre>
+lambda: ( -- )
+  "pistol.snd" make-readin ( rd )
+  "oboe.snd" file->vct ( v ) make-convolve { cnv }
+  88200 0 do
+    i  cnv #f convolve  0.25 f* *output* outa drop
+  loop
+; :play #t :statistics #t with-sound drop
+</pre>
+</td>
+
 </tr>
 
 <tr>
@@ -6754,8 +6990,6 @@ with_sound(:play, true, :statistics, true) do
 </pre>
 </td>
 
-<td width=4></td>
-
 <td bgcolor="#fbfbf0">
 <pre>
 with_sound(:play, true) do
@@ -6771,6 +7005,20 @@ with_sound(:play, true) do
   end.output
 </pre>
 </td>
+
+<td bgcolor="#effdef">
+<pre>
+lambda: ( -- )
+  "oboe.snd" "pistol.snd" 0.5 "convolved.snd" convolve-files { tempfile }
+  tempfile make-readin { reader }
+  tempfile mus-sound-frames ( len ) 0 do
+    i  reader readin  *output* outa drop
+  loop
+  tempfile file-delete
+; :play #t with-sound drop
+</pre>
+</td>
+
 </tr>
 </table>
 
@@ -6844,7 +7092,7 @@ but convolve uses an FFT internally, rather than a laborious dot-product.
 </pre>
 
 
-<table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=5>
+<table border=1 bordercolor="lightgray" hspace=20 cellspacing=8 cellpadding=5>
 
 <tr>
 <td bgcolor="#f0f4ff">
@@ -6857,17 +7105,27 @@ but convolve uses an FFT internally, rather than a laborious dot-product.
 </pre>
 </td>
 
-<td width=4></td>
-
 <td bgcolor="#fbfbf0">
 <pre>
 with_sound(:play, true) do
   rd = make_readin("oboe.snd");
-  grn = make_granulate(lambda do |dir| readin(rd) end, 2.0);
+  grn = make_granulate(lambda do |dir| 
+                        readin(rd) end, 2.0);
   88200.times do |i|
     outa(i, granulate(grn), $output);
     end
   end.output
+</pre>
+</td>
+
+<td bgcolor="#effdef">
+<pre>
+lambda: ( -- )
+  "oboe.snd" make-readin 2.0 make-granulate { grn }
+  44100 0 do
+    i  grn #f #f granulate  *output* outa drop
+  loop
+; :play #t with-sound drop
 </pre>
 </td>
 </tr>
@@ -6891,8 +7149,6 @@ with_sound(:play, true) do
 </pre>
 </td>
 
-<td width=4></td>
-
 <td bgcolor="#fbfbf0">
 <pre>
 with_sound(:play, true) do
@@ -6908,6 +7164,25 @@ with_sound(:play, true) do
     outa(i, granulate(grn), $output);
     end
   end.output
+</pre>
+</td>
+
+<td bgcolor="#effdef">
+<pre>
+: make-granulate-proc { osc sweep -- prc; dir self -- val }
+  1 proc-create osc , sweep , ( prc )
+ does> { dir self -- val }
+  self @ ( osc )  self cell+ @ ( sweep ) env  0 oscil  0.2 f*
+;
+
+lambda: ( -- )
+  440.0 make-oscil { osc }
+  '( 0 0 1 1 ) :scaler 440.0 hz->radians :length 44100 make-env { sweep }
+  osc sweep make-granulate-proc :expansion 2.0 :length 0.5 make-granulate { grn }
+  88200 0 do
+    i  grn #f #f granulate  *output* outa drop
+  loop
+; :play #t with-sound drop
 </pre>
 </td>
 </tr>
@@ -7055,7 +7330,7 @@ In the following example, we use the edit function to reverse every other grain:
 </pre>
 
 
-<table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=5>
+<table border=1 bordercolor="lightgray" hspace=20 cellspacing=8 cellpadding=5>
 
 <tr>
 <td bgcolor="#f0f4ff">
@@ -7069,18 +7344,28 @@ In the following example, we use the edit function to reverse every other grain:
 </pre>
 </td>
 
-<td width=4></td>
-
 <td bgcolor="#fbfbf0">
 <pre>
 with_sound(:play, true) do
   rd = make_readin("oboe.snd");
   pv = make_phase_vocoder(
-         lambda do |dir| readin(rd) end, :pitch, 2.0);
+         lambda do |dir| 
+           readin(rd) end, :pitch, 2.0);
   88200.times do |i|
     outa(i, phase_vocoder(pv), $output);
     end
   end.output
+</pre>
+</td>
+
+<td bgcolor="#effdef">
+<pre>
+lambda: ( -- )
+  "oboe.snd" make-readin :pitch 2.0 make-phase-vocoder { pv }
+  44100 0 do
+    i  pv #f #f #f #f phase-vocoder  *output* outa drop
+  loop
+; :play #t with-sound drop
 </pre>
 </td>
 </tr>
@@ -7100,8 +7385,6 @@ with_sound(:play, true) do
 </pre>
 </td>
 
-<td width=4></td>
-
 <td bgcolor="#fbfbf0">
 <pre>
 with_sound(:play, true, :srate, 22050) do
@@ -7114,6 +7397,17 @@ with_sound(:play, true, :srate, 22050) do
     outa(i, phase_vocoder(pv), $output);
     end
   end.output
+</pre>
+</td>
+
+<td bgcolor="#effdef">
+<pre>
+lambda: ( -- )
+  "oboe.snd" make-readin :interp 256 make-phase-vocoder { pv }
+  "oboe.snd" mus-sound-frames 2* ( samps ) 0 do
+    i  pv #f #f #f #f phase-vocoder  *output* outa drop
+  loop
+; :play #t :srate 22050 with-sound drop
 </pre>
 </td>
 </tr>
@@ -7260,6 +7554,18 @@ with_sound(:play, true) do
 </pre>
 </td>
 
+<td width=4></td>
+
+<td bgcolor="#effdef">
+<pre>
+lambda: ( -- )
+  440.0 0.0 0.9 0.5 make-asymmetric-fm { fm }
+  44100 0 do
+    i  fm 1.0 0 asymmetric-fm  f2/ *output* outa drop
+  loop
+; :play #t with-sound drop
+</pre>
+</td>
 </tr>
 </table>
 
@@ -7581,6 +7887,22 @@ with_sound(:channels, 2) do
 </pre>
 </td>
 
+<td width=4></td>
+
+<td bgcolor="#effdef">
+<pre>
+lambda: ( -- )
+  "stereo.snd" make-file->frame { input }
+  2 make-frame { frm }
+  "stereo.snd" mus-sound-frames ( len ) 0 do
+    input i frm file->frame ( frm ) 1 frame-ref ( val1 )
+    frm 0 frame-ref ( val0 ) frm 1 rot frame-set! drop
+    ( val1 ) frm 0 rot frame-set! drop
+    *output* i frm frame->file drop
+  loop
+; :channels 2 :play #t with-sound drop
+</pre>
+</td>
 </tr>
 </table>
 
@@ -7662,13 +7984,12 @@ with_sound(:play, true) do
 
 <td bgcolor="#effdef">
 <pre>
-44100 lambda: &lt;{ len }&gt;
+lambda: ( -- )
   "oboe.snd" make-readin { reader }
-  len 0 ?do
-  i reader readin 2.0 f* *output* outa drop
+  44100 0 do
+    i  reader readin  f2/ *output* outa drop
   loop
-;
-:play #t :channels 1 :srate 44100 with-sound
+; :play #t with-sound drop
 </pre>
 </td>
 </tr>
@@ -7771,13 +8092,12 @@ with_sound(:play, true) do
 
 <td bgcolor="#effdef">
 <pre>
-44100 lambda: &lt;{ len }&gt;
+lambda: ( -- )
   "oboe.snd" make-file->sample { infile }
-  len 0 ?do
-  i i 0 infile in-any 0 out-any drop
+  44100 0 do
+    i  i 0 infile in-any  0 *output* out-any drop
   loop
-;
-:play #f :channels 1 :srate 44100 with-sound
+; :play #t with-sound drop
 </pre>
 </td>
 </tr>
@@ -7947,14 +8267,13 @@ with_sound(:play, true, :channels, 2) do
 
 <td bgcolor="#effdef">
 <pre>
-44100 lambda: &lt;{ len }&gt;
-  60.0 :output *output* make-locsig { loc }
+lambda: ( -- )
+  60.0 make-locsig { loc }
   440.0 make-oscil { osc }
-  len 0 ?do
-  loc i osc 0.0 0.0 oscil 0.5 f* locsig drop
+  44100 0 do
+    loc i  osc 0 0 oscil f2/  locsig drop
   loop
-;
-:play #t :channels 2 :srate 44100 with-sound
+; :play #t :channels 2 with-sound drop
 </pre>
 </td>
 </tr>
@@ -10291,6 +10610,24 @@ with_sound(:play, true) do
   end.output
 </pre>
 </td>
+
+<td width=4></td>
+
+<td bgcolor="#effdef">
+<pre>
+lambda: ( -- )
+  440.0 make-oscil { osc1 }
+  220.0 make-oscil { osc2 }
+  44100 0 do
+    i
+    0.3            ( car )
+    osc1 0 0 oscil ( in1 )
+    osc2 0 0 oscil ( in2 ) amplitude-modulate  f2/ *output* outa drop
+  loop
+; :play #t with-sound drop
+</pre>
+</td>
+
 </tr>
 </table>
 

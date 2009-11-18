@@ -2,7 +2,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sat Aug 05 00:09:28 CEST 2006
-\ Changed: Fri Oct 30 19:53:29 CET 2009
+\ Changed: Wed Nov 18 01:52:59 CET 2009
 
 \ Commentary:
 \
@@ -1593,6 +1593,258 @@ lambda: <{ x -- y }> pi random ; value random-pi-addr
   gen   mg 0.0 0.0 oscil 0.02 f*  ssb-fm
 ;
 
+\ examples from sndclm.html
+: sndclm-oscil-test ( -- )
+  440.0 make-oscil { gen }
+  44100 0 do
+    i  gen 0 0 oscil  f2/ *output* outa drop
+  loop
+;
+: sndclm-env-test ( -- )
+  440.0 make-oscil { gen }
+  '( 0 0 0.01 1 0.25 0.1 0.5 0.01 1 0 )
+  :scaler 0.5 :length 44100 make-env { ampf }
+  44100 0 do
+    i  gen 0 0 oscil  ampf env  f* *output*  outa drop
+  loop
+;
+: sndclm-table-lookup-test ( -- )
+  440.0 :wave '( 1 0.5  2 0.5 ) #f #f partials->wave make-table-lookup { gen }
+  44100 0 do
+    i  gen 0 table-lookup  f2/ *output* outa drop
+  loop
+;
+: sndclm-polywave-test ( -- )
+  440.0 :partials '( 1 0.5 2 0.5 ) make-polywave { gen }
+  44100 0 do
+    i  gen 0 polywave  f2/ *output* outa drop
+  loop
+;
+: sndclm-triangle-wave-test ( -- )
+  440.0 make-triangle-wave { gen }
+  44100 0 do
+    i  gen 0 triangle-wave  f2/ *output* outa drop
+  loop
+;
+: sndclm-ncos-test ( -- )
+  440.0 10 make-ncos { gen }
+  44100 0 do
+    i  gen 0 ncos  f2/ *output* outa drop
+  loop
+;
+: sndclm-nrxycos-test ( -- )
+  440.0 :n 10 make-nrxycos { gen }
+  44100 0 ?do
+    i  gen 0 nrxycos  f2/ *output* outa drop
+  loop
+;
+: sndclm-ssb-am-test ( -- )
+  440.0 20 make-ssb-am { shifter }
+  440.0 make-oscil { osc }
+  44100 0 ?do
+    i  shifter  osc 0 0 oscil  0 ssb-am f2/ *output* outa drop
+  loop
+;
+: sndclm-wave-train-test ( -- )
+  400 10 make-ncos { g }
+  g -0.5 pi f* set-mus-phase drop
+  64 make-vct map! g 0 ncos end-map { v }
+  440.0 :wave v make-wave-train { gen }
+  44100 0 do
+    i  gen 0 wave-train  f2/ *output* outa drop
+  loop
+;
+: sndclm-rand-test ( -- )
+  5.0 220.0 hz->radians make-rand { ran1 }
+  5.0 330.0 hz->radians make-rand-interp { ran2 }
+   440.0 make-oscil { osc1 }
+  1320.0 make-oscil { osc2 }
+  88200 0 do
+    i  osc1  ran1 0 rand         0 oscil  f2/ *output* outa drop
+    i  osc2  ran2 0 rand-interp  0 oscil  f2/ *output* outb drop
+  loop
+;
+: sndclm-two-pole-test ( -- )
+  1000.0 0.999 make-two-pole { flt }
+  10000.0 0.002 make-rand { ran1 }
+  44100 0 do
+    i  flt  ran1 0 rand  two-pole  f2/ *output* outa drop
+  loop
+;
+: sndclm-firmant-test ( -- )
+  1000.0 0.999 make-firmant { flt }
+  10000.0 5.0 make-rand { ran1 }
+  44100 0 do
+    i  flt  ran1 0 rand  #f firmant  f2/ *output* outa drop
+  loop
+;
+: sndclm-iir-filter-test ( -- )
+  3 vct( 0.0 -1.978 0.998 ) make-iir-filter { flt }
+  10000.0 0.002 make-rand { ran1 }
+  44100 0 do
+    i  flt  ran1 0 rand  iir-filter  f2/ *output* outa drop
+  loop
+;
+: sndclm-delay-test ( -- )
+  0.5 seconds->samples make-delay { dly }
+  440.0 make-oscil { osc1 }
+  660.0 make-oscil { osc2 }
+  44100 0 do
+    i
+    osc1 0 0 oscil
+    dly  osc2 0 0 oscil  0 delay f+
+    f2/ *output* outa drop
+  loop
+;
+: sndclm-comb-test ( -- )
+  0.4 0.4 seconds->samples make-comb { cmb }
+  440.0 make-oscil { osc }
+  '( 0 0 1 1 2 1 3 0 ) :length 4410 make-env { ampf }
+  88200 0 do
+    i
+    cmb ( gen )
+    ampf env  osc 0 0 oscil  f* ( val )
+    0 ( pm )
+    comb f2/ *output* outa drop
+  loop
+;
+: sndclm-all-pass-test ( -- )
+  -0.4 0.4 0.4 seconds->samples make-all-pass { alp }
+  440.0 make-oscil { osc }
+  '( 0 0 1 1 2 1 3 0 ) :length 4410 make-env { ampf }
+  88200 0 do
+    i
+    alp ( gen )
+    ampf env  osc 0 0 oscil  f* ( val )
+    0 ( pm )
+    all-pass f2/ *output* outa drop
+  loop
+;
+: sndclm-moving-average-test ( -- )
+  4410 make-moving-average { avg }
+  440.0 make-oscil { osc }
+  44100 4410 - { stop }
+  0.0 { val }
+  stop 0 do
+    osc 0 0 oscil to val
+    i  avg val fabs moving-average  val f* *output* outa drop
+  loop
+  44100 stop do
+    i  avg 0.0 moving-average  osc 0 0 oscil f*  *output* outa drop
+  loop
+;
+: sndclm-src1-test ( -- )
+  "oboe.snd" make-readin { rd }
+  rd 0.5 make-src { sr }
+  "oboe.snd" mus-sound-frames 2* ( len ) 0 do
+    i  sr 0 #f src  *output* outa drop
+  loop
+;
+: make-src-proc { osc -- prc; dir self -- val }
+  1 proc-create osc , ( prc )
+ does> { dir self -- val }
+  self @ ( osc ) 0 0 oscil
+;
+: sndclm-src2-test ( -- )
+  440.0 make-oscil { osc }
+  osc make-src-proc { prc }
+  :srate 2.0 make-src { sr }
+  44100 0 do
+    i  sr 0 prc src  *output* outa drop
+  loop
+;
+: sndclm-convolve1-test ( -- )
+  "pistol.snd" make-readin ( rd )
+  "oboe.snd" file->vct ( v ) make-convolve { cnv }
+  88200 0 do
+    i  cnv #f convolve  0.25 f* *output* outa drop
+  loop
+;
+: sndclm-convolve2-test ( -- )
+  "oboe.snd" "pistol.snd" 0.5 "convolved.snd" convolve-files { tempfile }
+  tempfile make-readin { reader }
+  tempfile mus-sound-frames ( len ) 0 do
+    i  reader readin  *output* outa drop
+  loop
+  tempfile file-delete
+;
+: sndclm-granulate1-test ( -- )
+  "oboe.snd" make-readin 2.0 make-granulate { grn }
+  44100 0 do
+    i  grn #f #f granulate  *output* outa drop
+  loop
+;
+: make-granulate-proc { osc sweep -- prc; dir self -- val }
+  1 proc-create osc , sweep , ( prc )
+ does> { dir self -- val }
+  self @ ( osc )  self cell+ @ ( sweep ) env  0 oscil  0.2 f*
+;
+: sndclm-granulate2-test ( -- )
+  440.0 make-oscil { osc }
+  '( 0 0 1 1 ) :scaler 440.0 hz->radians :length 44100 make-env { sweep }
+  osc sweep make-granulate-proc :expansion 2.0 :length 0.5 make-granulate { grn }
+  88200 0 do
+    i  grn #f #f granulate  *output* outa drop
+  loop
+;
+: sndclm-phase-vocoder1-test ( -- )
+  "oboe.snd" make-readin :pitch 2.0 make-phase-vocoder { pv }
+  44100 0 do
+    i  pv #f #f #f #f phase-vocoder  *output* outa drop
+  loop
+;
+: sndclm-phase-vocoder2-test ( -- )
+  "oboe.snd" make-readin :interp 256 make-phase-vocoder { pv }
+  "oboe.snd" mus-sound-frames 2* ( samps ) 0 do
+    i  pv #f #f #f #f phase-vocoder  *output* outa drop
+  loop
+;
+: sndclm-asymmetric-fm-test ( -- )
+  440.0 0.0 0.9 0.5 make-asymmetric-fm { fm }
+  44100 0 do
+    i  fm 1.0 0 asymmetric-fm  f2/ *output* outa drop
+  loop
+;
+: sndclm-file->frame->file-test ( -- )
+  "stereo.snd" make-file->frame { input }
+  2 make-frame { frm }
+  "stereo.snd" mus-sound-frames ( len ) 0 do
+    input i frm file->frame ( frm ) 1 frame-ref ( val1 )
+    frm 0 frame-ref ( val0 ) frm 1 rot frame-set! drop
+    ( val1 ) frm 0 rot frame-set! drop
+    *output* i frm frame->file drop
+  loop
+;
+: sndclm-readin-test ( -- )
+  "oboe.snd" make-readin { reader }
+  44100 0 do
+    i  reader readin  f2/ *output* outa drop
+  loop
+;
+: sndclm-in-out-any-test ( -- )
+  "oboe.snd" make-file->sample { infile }
+  44100 0 do
+    i  i 0 infile in-any  0 *output* out-any drop
+  loop
+;
+: sndclm-locsig-test ( -- )
+  60.0 make-locsig { loc }
+  440.0 make-oscil { osc }
+  44100 0 do
+    loc i  osc 0 0 oscil f2/  locsig drop
+  loop
+;
+: sndclm-amplitude-modulate-test ( -- )
+  440.0 make-oscil { osc1 }
+  220.0 make-oscil { osc2 }
+  44100 0 do
+    i
+    0.3            ( car )
+    osc1 0 0 oscil ( in1 )
+    osc2 0 0 oscil ( in2 ) amplitude-modulate  f2/ *output* outa drop
+  loop
+;
+
 include bird.fsm
 
 : ws-close-sound ( ws -- )
@@ -1620,6 +1872,38 @@ include bird.fsm
   0 1000 ind 0 pad-channel drop
   gen mg test23-ssb-fm <'> map-channel #t nil fth-catch stack-reset
   ind close-sound drop
+  \ examples from sndclm.html
+  <'> sndclm-oscil-test              :play *clm-verbose* with-sound ( ws ) ws-close-sound
+  <'> sndclm-env-test                :play *clm-verbose* with-sound ( ws ) ws-close-sound
+  <'> sndclm-table-lookup-test       :play *clm-verbose* with-sound ( ws ) ws-close-sound
+  <'> sndclm-polywave-test           :play *clm-verbose* with-sound ( ws ) ws-close-sound
+  <'> sndclm-triangle-wave-test      :play *clm-verbose* with-sound ( ws ) ws-close-sound
+  <'> sndclm-ncos-test               :play *clm-verbose* with-sound ( ws ) ws-close-sound
+  <'> sndclm-nrxycos-test            :play *clm-verbose* with-sound ( ws ) ws-close-sound
+  <'> sndclm-ssb-am-test             :play *clm-verbose* with-sound ( ws ) ws-close-sound
+  <'> sndclm-wave-train-test         :play *clm-verbose* with-sound ( ws ) ws-close-sound
+  <'> sndclm-rand-test   :channels 2 :play *clm-verbose* with-sound ( ws ) ws-close-sound
+  <'> sndclm-two-pole-test           :play *clm-verbose* with-sound ( ws ) ws-close-sound
+  <'> sndclm-firmant-test            :play *clm-verbose* with-sound ( ws ) ws-close-sound
+  <'> sndclm-iir-filter-test         :play *clm-verbose* with-sound ( ws ) ws-close-sound
+  <'> sndclm-delay-test              :play *clm-verbose* with-sound ( ws ) ws-close-sound
+  <'> sndclm-comb-test               :play *clm-verbose* with-sound ( ws ) ws-close-sound
+  <'> sndclm-all-pass-test           :play *clm-verbose* with-sound ( ws ) ws-close-sound
+  <'> sndclm-moving-average-test     :play *clm-verbose* with-sound ( ws ) ws-close-sound
+  <'> sndclm-src1-test  :srate 22050 :play *clm-verbose* with-sound ( ws ) ws-close-sound
+  <'> sndclm-src2-test               :play *clm-verbose* with-sound ( ws ) ws-close-sound
+  <'> sndclm-convolve1-test          :play *clm-verbose* with-sound ( ws ) ws-close-sound
+  <'> sndclm-convolve2-test          :play *clm-verbose* with-sound ( ws ) ws-close-sound
+  <'> sndclm-granulate1-test         :play *clm-verbose* with-sound ( ws ) ws-close-sound
+  <'> sndclm-granulate2-test         :play *clm-verbose* with-sound ( ws ) ws-close-sound
+  <'> sndclm-phase-vocoder1-test     :play *clm-verbose* with-sound ( ws ) ws-close-sound
+  <'> sndclm-phase-vocoder2-test :srate 22050 :play *clm-verbose* with-sound ( ws ) ws-close-sound
+  <'> sndclm-asymmetric-fm-test      :play *clm-verbose* with-sound ( ws ) ws-close-sound
+  <'> sndclm-file->frame->file-test :channels 2 :play *clm-verbose* with-sound ( ws ) ws-close-sound
+  <'> sndclm-readin-test             :play *clm-verbose* with-sound ( ws ) ws-close-sound
+  <'> sndclm-in-out-any-test         :play *clm-verbose* with-sound ( ws ) ws-close-sound
+  <'> sndclm-locsig-test :channels 2 :play *clm-verbose* with-sound ( ws ) ws-close-sound
+  <'> sndclm-amplitude-modulate-test :play *clm-verbose* with-sound ( ws ) ws-close-sound
 ;
 
 \ ====== test 28: errors
