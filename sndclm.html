@@ -1453,40 +1453,35 @@ step envelope in pitch: <a href="#rxyk!cos">brassy</a> in generators.scm<br>
 </pre>
 
 
-<table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=5>
+<table border=1 bordercolor="lightgray" hspace=20 cellspacing=8 cellpadding=5>
 
 <tr>
 <td bgcolor="#f0f4ff">
 <pre>
 (with-sound (:play #t)
-  (let ((gen (make-table-lookup 440.0
-               :wave (partials-&gt;wave '(1 .5  2 .5)))))
+  (let ((gen (make-table-lookup 440.0 :wave (partials-&gt;wave '(1 .5  2 .5)))))
     (do ((i 0 (+ 1 i)))
         ((= i 44100))
       (outa i (* 0.5 (table-lookup gen))))))
 </pre>
 </td>
-
-<td width=4></td>
-
+</tr><tr>
 <td bgcolor="#fbfbf0">
 <pre>
 with_sound(:play, true) do
-  gen = make_table_lookup(440.0,
-         :wave, partials2wave([1.0, 0.5, 2.0, 0.5]));
+  gen = make_table_lookup(440.0, :wave, partials2wave([1.0, 0.5, 2.0, 0.5]));
   44100.times do |i| 
     outa(i, 0.5 * table_lookup(gen), $output) 
     end
   end.output
 </pre>
 </td>
-
-<td width=4></td>
+</tr><tr>
 
 <td bgcolor="#effdef">
 <pre>
 lambda: ( -- )
-  440.0 :wave '( 1 0.5  2 0.5 ) #f #f partials->wave make-table-lookup { gen }
+  440.0 :wave '( 1 0.5  2 0.5 ) #f #f partials-&gt;wave make-table-lookup { gen }
   44100 0 do
     i  gen 0 table-lookup  f2/ *output* outa drop
   loop
@@ -5054,8 +5049,8 @@ with_sound(:play, true, :channels, 2) do
 <td bgcolor="#effdef">
 <pre>
 lambda: ( -- )
-  5.0 220.0 hz->radians make-rand { ran1 }
-  5.0 330.0 hz->radians make-rand-interp { ran2 }
+  5.0 220.0 hz-&gt;radians make-rand { ran1 }
+  5.0 330.0 hz-&gt;radians make-rand-interp { ran2 }
    440.0 make-oscil { osc1 }
   1320.0 make-oscil { osc2 }
   88200 0 do
@@ -6262,7 +6257,7 @@ and is the basis for about a dozen extensions (comb and friends below).
 </pre>
 
 
-<table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=5>
+<table border=1 bordercolor="lightgray" hspace=20 cellspacing=8 cellpadding=5>
 
 <tr>
 <td bgcolor="#f0f4ff">
@@ -6270,34 +6265,29 @@ and is the basis for about a dozen extensions (comb and friends below).
 (with-sound (:play #t)
   (let ((cmb (make-comb 0.4 (seconds-&gt;samples 0.4)))
         (osc (make-oscil 440.0))
-        (ampf (make-env '(0 0 1 1 2 1 3 0) 
-                        :length 4410)))
+        (ampf (make-env '(0 0 1 1 2 1 3 0) :length 4410)))
     (do ((i 0 (+ 1 i)))
 	((= i 88200))
-      (outa i (* 0.5 (comb cmb (* (env ampf)
-				  (oscil osc))))))))
+      (outa i (* 0.5 (comb cmb (* (env ampf) (oscil osc))))))))
 </pre>
 </td>
 
-<td width=4></td>
+</tr><tr>
 
 <td bgcolor="#fbfbf0">
 <pre>
 with_sound(:play, true) do
   cmb = make_comb(0.4, seconds2samples(0.4));
   osc = make_oscil(440.0);
-  ampf = make_env([0.0, 0.0, 1.0, 1.0, 2.0, 1.0, 3.0, 0.0],
-		  :length, 4410);
+  ampf = make_env([0.0, 0.0, 1.0, 1.0, 2.0, 1.0, 3.0, 0.0], :length, 4410);
   88200.times do |i|
-    outa(i, 
-         0.5 * (comb(cmb, env(ampf) * oscil(osc))), 
-         $output);
+    outa(i, 0.5 * (comb(cmb, env(ampf) * oscil(osc))), $output);
     end
   end.output
 </pre>
 </td>
 
-<td width=4></td>
+</tr><tr>
 
 <td bgcolor="#effdef">
 <pre>
@@ -6964,7 +6954,7 @@ with_sound(:play, true, :statistics, true) do
 <pre>
 lambda: ( -- )
   "pistol.snd" make-readin ( rd )
-  "oboe.snd" file->vct ( v ) make-convolve { cnv }
+  "oboe.snd" file-&gt;vct ( v ) make-convolve { cnv }
   88200 0 do
     i  cnv #f convolve  0.25 f* *output* outa drop
   loop
@@ -7177,7 +7167,7 @@ with_sound(:play, true) do
 
 lambda: ( -- )
   440.0 make-oscil { osc }
-  '( 0 0 1 1 ) :scaler 440.0 hz->radians :length 44100 make-env { sweep }
+  '( 0 0 1 1 ) :scaler 440.0 hz-&gt;radians :length 44100 make-env { sweep }
   osc sweep make-granulate-proc :expansion 2.0 :length 0.5 make-granulate { grn }
   88200 0 do
     i  grn #f #f granulate  *output* outa drop
@@ -7892,13 +7882,13 @@ with_sound(:channels, 2) do
 <td bgcolor="#effdef">
 <pre>
 lambda: ( -- )
-  "stereo.snd" make-file->frame { input }
+  "stereo.snd" make-file-&gt;frame { input }
   2 make-frame { frm }
   "stereo.snd" mus-sound-frames ( len ) 0 do
-    input i frm file->frame ( frm ) 1 frame-ref ( val1 )
+    input i frm file-&gt;frame ( frm ) 1 frame-ref ( val1 )
     frm 0 frame-ref ( val0 ) frm 1 rot frame-set! drop
     ( val1 ) frm 0 rot frame-set! drop
-    *output* i frm frame->file drop
+    *output* i frm frame-&gt;file drop
   loop
 ; :channels 2 :play #t with-sound drop
 </pre>
@@ -8067,7 +8057,7 @@ readin and <a href="#env">env</a>:
 <pre>
 (with-sound (:play #t)
   (let ((infile 
-          (make-file->sample "oboe.snd")))
+          (make-file-&gt;sample "oboe.snd")))
     (do ((i 0 (+ 1 i)))
         ((= i 44100))
       (out-any i (in-any i 0 infile) 0))))
@@ -8093,7 +8083,7 @@ with_sound(:play, true) do
 <td bgcolor="#effdef">
 <pre>
 lambda: ( -- )
-  "oboe.snd" make-file->sample { infile }
+  "oboe.snd" make-file-&gt;sample { infile }
   44100 0 do
     i  i 0 infile in-any  0 *output* out-any drop
   loop
@@ -10578,7 +10568,7 @@ And a sort of converse is <a href="sndscm.html#soundinterp">sound-interp</a>.
 </pre>
 
 
-<table border=1 bordercolor="lightgray" hspace=20 vspace=10 cellspacing=2 cellpadding=5>
+<table border=1 bordercolor="lightgray" hspace=20 vspace=10 cellspacing=8 cellpadding=5>
 
 <tr>
 <td bgcolor="#f0f4ff">
@@ -10588,13 +10578,11 @@ And a sort of converse is <a href="sndscm.html#soundinterp">sound-interp</a>.
 	(osc2 (make-oscil 220.0)))
     (do ((i 0 (+ 1 i)))
 	((= i 44100))
-      (outa i (* 0.5 (amplitude-modulate 0.3 
-		       (oscil osc1) 
-		       (oscil osc2)))))))
+      (outa i (* 0.5 (amplitude-modulate 0.3 (oscil osc1) (oscil osc2)))))))
 </pre>
 </td>
 
-<td width=4></td>
+</tr><tr>
 
 <td bgcolor="#fbfbf0">
 <pre>
@@ -10602,16 +10590,13 @@ with_sound(:play, true) do
   osc1 = make_oscil(440.0);
   osc2 = make_oscil(220.0);
   44100.times do |i|
-    outa(i, 0.5 * amplitude_modulate(0.3,
-                    oscil(osc1),
-		    oscil(osc2)),
-	    $output);
+    outa(i, 0.5 * amplitude_modulate(0.3, oscil(osc1), oscil(osc2)), $output);
     end
   end.output
 </pre>
 </td>
 
-<td width=4></td>
+</tr></tr>
 
 <td bgcolor="#effdef">
 <pre>

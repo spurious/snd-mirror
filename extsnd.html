@@ -21,13 +21,6 @@
 </style>
 </head>
 
-<!-- other possible tooltips: file-exists? delete-file procedure-with-setter define* list-set! load-from-path 
-                                  delete-file system remove-hook! throw copy-file
-                              ruby examples?
-			      sndscm.html: normalize-partials
-			                   add-main-pane
--->
-
 <body bgcolor=white>
 
 <script language=JavaScript type="text/javascript" src="wz_tooltip.js"></script>
@@ -138,7 +131,7 @@
 <li><a href="index.html">Index</a>
 </ul>
 
-</td><td><img src="pix/rr2.png" alt="the works">
+</td><td><img src="pix/rr2.png" alt="setting switches">
 </td></tr></table>
 <br><br>
 
@@ -2163,7 +2156,7 @@ This hook is called when a mix is dragged.
     (<a class=quiet href="#reportinminibuffer" onmouseout="UnTip()" onmouseover="Tip(extsnd_reportinminibuffer_tip)">report-in-minibuffer</a> 
       (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "mix ~A at ~D: ~,3F" 
         n (<a class=quiet href="#mixposition" onmouseout="UnTip()" onmouseover="Tip(extsnd_mixposition_tip)">mix-position</a> n) 
-        (exact->inexact (/ (<a class=quiet href="#mixposition" onmouseout="UnTip()" onmouseover="Tip(extsnd_mixposition_tip)">mix-position</a> n) (<a class=quiet href="#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a>)))))))
+        (exact-&gt;inexact (/ (<a class=quiet href="#mixposition" onmouseout="UnTip()" onmouseover="Tip(extsnd_mixposition_tip)">mix-position</a> n) (<a class=quiet href="#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a>)))))))
 </pre></td></tr></table>
 
 A neat example is to set up an empty sound with a 1.0 in sample 0, mix in a vct containing one element of 0.5, then set
@@ -4624,7 +4617,7 @@ old code to the current style.
 
 
 <!-- mark->integer -->
-<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="marktointeger">mark->integer</a> (mark)</code>
+<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="marktointeger">mark-&gt;integer</a> (mark)</code>
 </td></tr><tr><td></td><td>
 This is the counterpart to <a href="#integertomark">integer-&gt;mark</a>.
 </td></tr><tr><td colspan=2 height=16></td></tr>
@@ -4910,7 +4903,7 @@ old code to the current style.
 
 
 <!-- mix->integer -->
-<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="mixtointeger">mix->integer</a> (mix)</code>
+<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="mixtointeger">mix-&gt;integer</a> (mix)</code>
 </td></tr><tr><td></td><td>
 This is the counterpart to <a href="#integertomix">integer-&gt;mix</a>.
 </td></tr><tr><td colspan=2 height=16></td></tr>
@@ -5216,7 +5209,7 @@ mix-speed is the speed (resampling ratio) of 'mix'; 1.0 (the default) means no r
 <tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="mixsync">mix-sync</a> (mix)</code>
 </td></tr><tr><td></td><td>
 mix-sync is an integer, like <a href="#sync">sync</a> that you can use to group mixes.  See <a href="sndscm.html#mixdoc">mix.scm</a>
-for many examples.
+for many examples.  Mix objects that share a non-zero sync value drag together, and are edited together in the mix dialog.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -5495,7 +5488,7 @@ data, and its length in frames.
 
 
 <!-- region->integer -->
-<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="regiontointeger">region->integer</a> (region)</code>
+<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="regiontointeger">region-&gt;integer</a> (region)</code>
 </td></tr><tr><td></td><td>
 This is the counterpart to <a href="#integertoregion">integer-&gt;region</a>.
 </td></tr><tr><td colspan=2 height=16></td></tr>
@@ -9195,7 +9188,7 @@ See also explode-sf2 in examp.scm.
 
 
 <!-- sound->integer -->
-<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="soundtointeger">sound->integer</a> (sound)</code>
+<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="soundtointeger">sound-&gt;integer</a> (sound)</code>
 </td></tr><tr><td></td><td>
 This is the counterpart to <a href="#integertosound">integer-&gt;sound</a>.
 </td></tr><tr><td colspan=2 height=16></td></tr>

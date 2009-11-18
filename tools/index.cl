@@ -1,11 +1,11 @@
 ;;; index -- read clm.html (or whatever) and make a column-ized index
 ;;; html-check -- look for dangling hrefs
 
-;;; (index '("clm.html") "test.html" 5 '("XmHTML" "AIFF" "NeXT" "Sun" "RIFF" "IRCAM" "FIR" "IIR" "Hilbert" "AIFC") nil nil t)
+;;; (index '("clm.html") "test.html" 5 '("AIFF" "NeXT" "Sun" "RIFF" "IRCAM" "FIR" "IIR" "Hilbert" "AIFC") nil nil t)
 
 ;;; (index '("cmn.html") "test.html" 4 nil nil nil t)
 
-;;; (index '("extsnd.html" "grfsnd.html" "sndscm.html" "sndlib.html" "sndclm.html" "s7.html") "test.html" 5 '("XmHTML" "AIFF" "NeXT" "Sun" "RIFF" "IRCAM" "FIR" "IIR" "Hilbert" "AIFC") t t)
+;;; (index '("extsnd.html" "grfsnd.html" "sndscm.html" "sndlib.html" "sndclm.html" "s7.html") "test.html" 5 '("AIFF" "NeXT" "Sun" "RIFF" "IRCAM" "FIR" "IIR" "Hilbert" "AIFC") t t)
 ;;;   use (make-index)
 
 ;;; for snd.html table, see snd-index.cl (snd-index "test.html")
@@ -29,12 +29,13 @@
 (defvar xrefs nil)
 (defvar topics nil)
 
-(setf names (make-array 2048 :initial-element nil))
-(setf files (make-array 2048 :initial-element nil))
-(setf generals (make-array 1024))
-(setf xrefs (make-array 1024))
-(setf gfiles (make-array 1024 :initial-element nil))
-(setf topics (make-array 2048 :initial-element nil))
+(defvar array-length 4096)
+(setf names (make-array array-length :initial-element nil))
+(setf files (make-array array-length :initial-element nil))
+(setf generals (make-array array-length))
+(setf xrefs (make-array array-length))
+(setf gfiles (make-array array-length :initial-element nil))
+(setf topics (make-array array-length :initial-element nil))
 
 (defstruct ind name sortby topic file general indexed)
 
@@ -339,11 +340,11 @@
 	(current-general 0)
 	(got-tr nil)
 	(topic nil))
-    (dotimes (i 2048)
+    (dotimes (i array-length)
       (setf (aref names i) nil)
       (setf (aref files i) nil)
       (setf (aref topics i) nil))
-    (dotimes (i 1024)
+    (dotimes (i array-length)
       (setf (aref gfiles i) nil)
       (setf (aref generals i) nil))
     (loop for file in file-names and file-ctr from 0 do
@@ -635,7 +636,12 @@
 				    (progn 
 				      (warn "~A[~D]: nested <!--?" file linectr)
 				      (decf comments)))
-				(setf in-comment t))))
+				(setf in-comment t)))
+			  (if (and (not in-comment)
+				   (< i (- len 1))
+				   (char= (elt line (+ i 1)) #\space))
+			      (warn "~A[~D]: '< ' in ~A?" file linectr line))
+			  )
 		      (if (char= c #\>)
 			  (progn
 			    (decf openctr)
@@ -652,7 +658,15 @@
 			      (if (and (not (= openctr 0))
 				       (not (> p-quotes 0)))
 				  (if (not in-comment) (warn "~A[~D]: ~A has unmatched >?" file linectr line))))
-			    (setf openctr 0))
+			    (setf openctr 0)
+			    (if (and (not in-comment)
+				     (>= i 2)
+				     (char= (elt line (- i 1)) #\-)
+				     (not (char= (elt line (- i 2)) #\-))
+				     (< i (- len 1))
+				     (alphanumericp (elt line (+ i 1))))
+				(warn "~A[~D]: untranslated '>': ~A" file linectr line))
+			    )
 			(if (char= c #\&)
 			    (if (and (not in-comment)
 				     (not (string-equal "&gt;" (my-subseq line i (+ i 4))))
@@ -955,7 +969,7 @@
 (defun make-index ()
   (check-all)
   (index '("snd.html" "extsnd.html" "grfsnd.html" "sndscm.html" "sndlib.html" "sndclm.html" "fm.html" "quick.html" "s7.html")
-	 "test.html" 5 '("XmHTML" "AIFF" "NeXT" "Sun" "RIFF" "IRCAM" "FIR" "IIR" "Hilbert" "AIFC") t t))
+	 "test.html" 5 '("AIFF" "NeXT" "Sun" "RIFF" "IRCAM" "FIR" "IIR" "Hilbert" "AIFC") t t))
 
 
 (defun check-names ()  

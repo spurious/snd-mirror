@@ -170,10 +170,10 @@ Other math-related differences between s7 and r5rs:
 &gt; (log 8 2)
 3
 
-&gt; (number->string 0.5 2)
+&gt; (number-&gt;string 0.5 2)
 "0.1"
 
-&gt; (string->number "0.1" 2)
+&gt; (string-&gt;number "0.1" 2)
 0.5
 
 &gt; (rationalize 1.5)
@@ -1305,7 +1305,7 @@ int main(int argc, char **argv)
   s7 = <em class=red>s7_init</em>();                     /* initialize the interpreter */
   <em class=red>s7_define_function</em>(s7, "exit", our_exit, 0, 0, false, "(exit) exits the program");
                                       /* add the function "exit" to the interpreter.
-                                       *   0, 0, false -> no required args,
+                                       *   0, 0, false -&gt; no required args,
 				       *                  no optional args,
 				       *                  no "rest" arg
 				       */
@@ -1619,10 +1619,10 @@ static char *print_dax(s7_scheme *sc, void *val)
   char *data_str, *str;
   int data_str_len;
   dax *o = (dax *)val;
-  data_str = s7_object_to_c_string(sc, o->data);
+  data_str = s7_object_to_c_string(sc, o-&gt;data);
   data_str_len = strlen(data_str);
   str = (char *)calloc(data_str_len + 32, sizeof(char));
-  snprintf(str, data_str_len + 32, "#&lt;dax %.3f %s&gt;", o->x, data_str);
+  snprintf(str, data_str_len + 32, "#&lt;dax %.3f %s&gt;", o-&gt;x, data_str);
   free(data_str);
   return(str);
 }
@@ -1640,7 +1640,7 @@ static bool equal_dax(void *val1, void *val2)
 static void mark_dax(void *val)
 {
   dax *o = (dax *)val;
-  if (o) s7_mark_object(o->data);
+  if (o) s7_mark_object(o-&gt;data);
 }
 
 static int dax_type_tag = 0;
@@ -1649,10 +1649,10 @@ static s7_pointer make_dax(s7_scheme *sc, s7_pointer args)
 {
   dax *o;
   o = (dax *)malloc(sizeof(dax));
-  o->x = s7_real(s7_car(args));
+  o-&gt;x = s7_real(s7_car(args));
   if (s7_cdr(args) != s7_nil(sc))
-    o->data = s7_car(s7_cdr(args));
-  else o->data = s7_nil(sc);
+    o-&gt;data = s7_car(s7_cdr(args));
+  else o-&gt;data = s7_nil(sc);
   return(<em class=red>s7_make_object</em>(sc, dax_type_tag, (void *)o));
 }
 
@@ -1667,14 +1667,14 @@ static s7_pointer dax_x(s7_scheme *sc, s7_pointer args)
 {
   dax *o;
   o = (dax *)<em class=red>s7_object_value</em>(s7_car(args));
-  return(s7_make_real(sc, o->x));
+  return(s7_make_real(sc, o-&gt;x));
 }
 
 static s7_pointer set_dax_x(s7_scheme *sc, s7_pointer args)
 {
   dax *o;
   o = (dax *)s7_object_value(s7_car(args));
-  o->x = s7_real(s7_car(s7_cdr(args)));
+  o-&gt;x = s7_real(s7_car(s7_cdr(args)));
   return(s7_car(s7_cdr(args)));
 }
 
@@ -1682,15 +1682,15 @@ static s7_pointer dax_data(s7_scheme *sc, s7_pointer args)
 {
   dax *o;
   o = (dax *)s7_object_value(s7_car(args));
-  return(o->data);
+  return(o-&gt;data);
 }
 
 static s7_pointer set_dax_data(s7_scheme *sc, s7_pointer args)
 {
   dax *o;
   o = (dax *)s7_object_value(s7_car(args));
-  o->data = s7_car(s7_cdr(args));
-  return(o->data);
+  o-&gt;data = s7_car(s7_cdr(args));
+  return(o-&gt;data);
 }
 
 int main(int argc, char **argv)

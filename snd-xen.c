@@ -3578,3 +3578,9 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   scm_c_use_module("snd clm");
 #endif
 }
+
+/* unguile troubles:
+ *     snd_pd_external.[ch], pd-*.scm
+ *     rt-*.scm
+ *     eval-c.scm, osc.scm, snd-hobbit.scm
+ */
