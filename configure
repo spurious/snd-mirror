@@ -15320,6 +15320,8 @@ if test "${enable_deprecated+set}" = set; then :
 
     $as_echo "#define S7_DISABLE_DEPRECATED 1" >>confdefs.h
 
+    $as_echo "#define SND_DISABLE_DEPRECATED 1" >>confdefs.h
+
   fi
 fi
 

@@ -94,10 +94,10 @@ def play_often(n)
   play_once = lambda do |reason|
     if plays > 0 and (not c_g?) and reason == 0
       plays -= 1
-      play(0, false, false, false, false, false, play_once)
+      old_play(0, false, false, false, false, false, play_once)
     end
   end
-  play(0, false, false, false, false, false, play_once)
+  old_play(0, false, false, false, false, false, play_once)
 end
 # bind_key(?p, 0, lambda do |n| play_often([1, n].max) end, false, "play often")
 
@@ -108,10 +108,10 @@ add_help(:play_until_c_g,
 def play_until_c_g
   play_once = lambda do |reason|
     if (not c_g?) and reason == 0
-      play(0, false, false, false, false, false, play_once)
+      old_play(0, false, false, false, false, false, play_once)
     end
   end
-  play(0, false, false, false, false, false, play_once)
+  old_play(0, false, false, false, false, false, play_once)
 end
 
 # play region over and over until C-g typed

@@ -275,7 +275,7 @@ plays the portion between the marks (searching for plausible default marks)")
       pos2 = mark_sample(m2)
       beg = [pos1, pos2].min
       len = [pos1, pos2].max
-      play(beg, mark_home(m1).car, mark_home(m1).cadr, false, len)
+      old_play(beg, mark_home(m1).car, mark_home(m1).cadr, false, len)
     end
   end
 

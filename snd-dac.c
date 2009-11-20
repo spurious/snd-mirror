@@ -2799,11 +2799,6 @@ static void init_xen_player(void)
 
 /* -------------------------------------------------------------------------------- */
 
-/* TODO: check all tests, rewrite docs (eventually), make compatible versions of
- *          play-channel play-mix play-selection play-region play-and-wait old-play
- * perhaps someday: make all args work for region/selection etc
- */
-
 static XEN play_file(const char *play_name, mus_long_t start, mus_long_t end, int in_channel, int out_channel, play_process_t background, XEN stop_func)
 {
   snd_info *sp;
@@ -2872,9 +2867,9 @@ If object is a string, it is assumed to be a file name: \n    " play_example "\n
 
   XEN object = XEN_UNDEFINED;
   mus_long_t start = 0, end = NO_END_SPECIFIED;
-  int channel = -1, out_channel = -1, srate = 44100, channels = 2, edpos_argpos = 0, channel_argpos;
+  int channel = -1, out_channel = -1, srate = 44100, channels = 2, edpos_argpos = 0, channel_argpos = 0;
   bool with_sync = false, wait = false;
-  XEN stop_func = XEN_FALSE, edit_position = XEN_FALSE, channel_arg;
+  XEN stop_func = XEN_FALSE, edit_position = XEN_FALSE, channel_arg = XEN_FALSE;
   play_process_t background;
   snd_info *sp;
 
@@ -2916,6 +2911,8 @@ If object is a string, it is assumed to be a file name: \n    " play_example "\n
 	    XEN_OUT_OF_RANGE_ERROR(S_play, orig_arg[1], keys[1], "end ~A is negative?");
 
 	  channel = mus_optkey_to_int(keys[2], S_play, orig_arg[2], channel);
+	  channel_argpos = orig_arg[2];
+	  channel_arg = keys[2];
 	  
 	  if (!(XEN_KEYWORD_P(keys[3]))) 
 	    {
@@ -3477,8 +3474,7 @@ If it returns " PROC_TRUE ", the sound is not played."
   sdobj_loc = NOT_A_GC_LOC;
 
 
-  /* backwards compatibility */
-
+#ifndef SND_DISABLE_DEPRECATED
 #if HAVE_S7
   XEN_EVAL_C_STRING("(define* (play-region reg wait stop-func)\
                        (play (if (integer? reg) (integer->region reg) reg) :wait wait :stop stop-func))");
@@ -3579,8 +3575,10 @@ If it returns " PROC_TRUE ", the sound is not played."
                              #:channel (or chn -1) #:with-sync #f #:start beg #:end (if dur (+ beg dur) -1) \
                              #:stop stop-proc #:out-channel out-chan #:edit-position pos))");
 #endif
+#endif
 
-
-  /* TODO: fixup forth cases, and all scm/rb/fs files, examples etc in docs */
+  /* TODO: fixup forth cases, and all fs files */
+  /* SOMEDAY: extend rest of play args to other cases like play-region */
+  /* TODO: fixup all the play refs in *.html (quick etc), unindex play-region et al */
 
 }

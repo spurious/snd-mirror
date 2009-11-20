@@ -1318,16 +1318,14 @@ vector, list, or mix object.
 </td></tr><tr><td colspan=2 height=18></td></tr>
 
 
-<!-- TODO: play docs -->
 <!-- INDEX genericplay:play (generic) -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
-<code><a class=def>play</a> (object <a class=quiet href="sndclm.html#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">&amp;optional-key</a> :start :end :channel :edit-position :out-channel :with-sync :wait :stop)</code>
+<code><a class=def>play</a> (object <a class=quiet href="sndclm.html#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">&amp;optional-key</a> :start :end :channel :edit-position :out-channel :with-sync :wait :stop :srate :channels)</code>
 </td></tr><tr><td></td><td>
 <A NAME="genericplay">play</A> plays an object. 
 The object can be a string (sound filename), a sound object or index, a mix, a region, the selection object, #f, a procedure, or a player.
 Not all the keyword arguments apply in all cases, though I hope to fill in the table of possibilities eventually.
-
-
+The full documentation is currently under <a href="#play">play</a>.
 </td></tr><tr><td colspan=2 height=18></td></tr>
 
 
@@ -7634,6 +7632,15 @@ The multichannel version is <a href="sndscm.html#normalizesound">normalize-sound
 </td></tr><tr><td colspan=2 height=18></td></tr>
 
 
+<!-- old-play -->
+<tr><td colspan=2 bgcolor="#f2f4ff">
+<code><a class=def>old-play</a> (:optional samp snd chn sync end edpos stop-proc out-chan)</code>
+</td></tr><tr><td></td><td>
+<p>old-play is the old form of "play". It is obsolete; use <a href="#play">play</a> instead.
+</p>
+</td></tr><tr><td colspan=2 height=18></td></tr>
+
+
 <!-- open-raw-sound -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
 <code><a class=def name="openrawsound">open-raw-sound</a> (<a class=quiet href="sndclm.html#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">&amp;optional-key</a> :file :channels :srate :data-format)</code>
@@ -7758,57 +7765,52 @@ by <a href="#maxfftpeaks">max-transform-peaks</a>.
 
 <!-- play -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
-<code><a class=def name="play">play</a> (:optional samp snd chn sync end edpos stop-proc out-chan)</code>
+<code><a class=def name="play">play</a> (object <a class=quiet href="sndclm.html#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">&amp;optional-key</a> :start :end :channel :edit-position :out-channel :with-sync :wait :stop :srate :channels)</code>
 </td></tr><tr><td></td><td>
 <p>
-The "play" function has been completely redone; see the generic <a href="#genericplay">play</a> documentation.  This documentation describes the obsolete "old-play" function.
+play plays 'object'.  If no arguments are passed, it plays the currently selected sound.
+'object' can be a string (sound filename), a sound object or index, a mix, a region, the selection object, #f, a procedure, or a player.
+Not all the keyword arguments apply in all cases, though I hope to fill in the table of possibilities eventually.
+'start' is where to start playing (a sample number, defaults to 0).
+'end' is where to stop playing.
+'channel' is which channel to play (the default is to play all channels).
+'edit-position' is which edit history list entry to play, where that is relevant.  The default is the current entry.
+'out-channel' is which DAC channel to send the samples to.
+'with-sync' sets whether to include all objects sync'd to the current one (default is no, #f).
+'wait' sets whether the function call should wait until the play is complete before returning (default is no, #f).
+'stop' is a procedure called when the play completes.
+'srate' and 'channels' are for one special case, described below.
 </p>
-<p>
-This function plays the given channel starting from sample 'samp'. 
-If 'sync' is #t, it plays all sounds sync'd to 'snd'.  If 'end' is not given or is #f, 
-it plays until the end of the sound. If 'end' is given (as a sample number), the 
-actual end point may be off by a few samples; Snd only checks on 
-dac-buffer boundaries (normally around 256 samples).
-</p>
+
 <pre>
-    (play)                                     ; play current sound, all chans from start to end
-    (play (<a class=quiet href="#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a>))                            ; play starting from the cursor
-    (play (round (* 3.0 (<a class=quiet href="#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a>))) 1 3)         ; play snd 1, chan 3 (4th chan), start at 3.0 secs
-    (play 0 #f #f #t)                          ; play sync'd sounds
-    (play 0 #f #f #f (round (* 3.0 (<a class=quiet href="#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a>))))  ; play from start for 3.0 secs
-    (play 0 #f #f #f #f 2)                     ; play the version at edit history position 2
-    (play 0 0 2 #f #f #f #f 0)                     ; play chan 2, but send it to DAC chan 0
-    (play (<a class=quiet href="#marksample" onmouseout="UnTip()" onmouseover="Tip(extsnd_marksample_tip)">mark-sample</a> 0) #f #f #f (<a class=quiet href="#marksample" onmouseout="UnTip()" onmouseover="Tip(extsnd_marksample_tip)">mark-sample</a> 1)); play between marks 0 and 1
-    (play (<a class=quiet href="#selectionposition" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectionposition_tip)">selection-position</a>) #f #f (+ (<a class=quiet href="#selectionposition" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectionposition_tip)">selection-position</a>) (<a class=quiet href="#selectionframes" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectionframes_tip)">selection-frames</a>))) ; play selection
-    (play #f 44100 2)                          ; open DAC and run, stop with stop-playing
+    (play)                                                       ; play current sound, all chans from start to end
+    (play ((selected-sound) <a class=quiet href="#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a>))                             ; play starting from the cursor
+    (play (integer-&gt;sound 1) (round (* 3.0 (<a class=quiet href="#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a>))) :channel 3) ; play snd 1, chan 3 (4th chan), start at 3.0 secs
+    (play (selected-sound) 0 :with-sync #t)                      ; play sync'd sounds
+    (play (selected-sound) 0 :end (round (* 3.0 (<a class=quiet href="#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a>))))       ; play from start for 3.0 secs
+    (play (selected-sound) 0 :edit-position 2)                   ; play the version at edit history position 2
+    (play (integer-&gt;sound 0) 0 :channel 2 :out-channel 0)        ; play chan 2, but send it to DAC chan 0
+    (play (selected-sound) (<a class=quiet href="#marksample" onmouseout="UnTip()" onmouseover="Tip(extsnd_marksample_tip)">mark-sample</a> (integer-&gt;mark 0)) :end (<a class=quiet href="#marksample" onmouseout="UnTip()" onmouseover="Tip(extsnd_marksample_tip)">mark-sample</a> (integer-&gt;mark 1))); play between marks 0 and 1
+    (play (selection))                                           ; play the selection
+    (play #f :srate 44100 :channels 2)                           ; open DAC and run, stop with stop-playing
+    (play "1a.snd")                                              ; play 1a.snd
+    (play "1a.snd" 1000 4000)                                    ; play 1a.snd from sample 1000 to 4000
 </pre>
 <p>
-'samp' can
-also be a filename (a string).  In this case, 'snd' can be the start 
-sample (default 0), and 'chn' can be the end sample (default end-of-file).
+If 'stop' is a procedure of one argument, it is called when the play process stops.
+The argument passed to the stop procedure provides the reason the play is stopping; it will be 0 if the play completed normally.
+This is intended mainly for looping plays, as in <a href="sndscm.html#playoften">play-often</a>.
 </p>
 <pre>
-    (play "1a.snd")                                ; play 1a.snd
-    (play "1a.snd" 1000 4000)                      ; play 1a.snd from sample 1000 to 4000
+    (play (selected-sound) 0 :stop (lambda (reason)              ; if interrupted, say so in the listener
+                                     (if (not (= reason 0))
+                                         (<a class=quiet href="#sndprint" onmouseout="UnTip()" onmouseover="Tip(extsnd_sndprint_tip)">snd-print</a> ";play interrupted"))))
 </pre>
 <p>
-If 'chn' is not given, or is a boolean, play plays all channels together.
-If 'pos' is given, it plays at that edit position.
-If 'stop-proc' is a procedure of one argument, it is called when the play process stops.
-The argument passed to 'stop-proc' provides the reason the play is stopping; it will be 0 if the play completed normally.
-'stop-proc' is intended mainly for looping plays, as in <a href="sndscm.html#playoften">play-often</a>.
+The 'edit-position' argument makes it easier to try "A:B" comparisons; this plays the version before the latest edit:
 </p>
 <pre>
-    (play 0 #f #f #f #f #f 
-      (lambda (reason)                             ; if interrupted, say so in the listener
-        (if (not (= reason 0))
-            (<a class=quiet href="#sndprint" onmouseout="UnTip()" onmouseover="Tip(extsnd_sndprint_tip)">snd-print</a> ";play interrupted"))))
-</pre>
-<p>
-The 'pos' argument makes it easier to try "A:B" comparisons; this plays the version before the latest edit:
-</p>
-<pre>
-    (play 0 #f #f #f #f (- (<a class=quiet href="#editposition" onmouseout="UnTip()" onmouseover="Tip(extsnd_editposition_tip)">edit-position</a>) 1))
+    (play (selected-sound) :edit-position (- (<a class=quiet href="#editposition" onmouseout="UnTip()" onmouseover="Tip(extsnd_editposition_tip)">edit-position</a>) 1))
 </pre>
 <p>
 The following code binds the "p" key to play all channels of the current sound from the cursor, and
@@ -7816,7 +7818,7 @@ the "P" key to play the previous version of the current sound:
 </p>
 <table border=0 cellpadding=5><tr><td><pre>
 (define (play-from-cursor current)
-  (<em class=red>play</em> (<a class=quiet href="#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a>) #f #f #f #f (if current #f (- (<a class=quiet href="#editposition" onmouseout="UnTip()" onmouseover="Tip(extsnd_editposition_tip)">edit-position</a>) 1))))
+  (<em class=red>play</em> (selected-sound) (<a class=quiet href="#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a>) :edit-position (if current #f (- (<a class=quiet href="#editposition" onmouseout="UnTip()" onmouseover="Tip(extsnd_editposition_tip)">edit-position</a>) 1))))
 
 (<a class=quiet href="#bindkey" onmouseout="UnTip()" onmouseover="Tip(extsnd_bindkey_tip)">bind-key</a> (char-&gt;integer #\p) 0 
   (lambda () "play from cursor" (play-from-cursor #t) <a class=quiet onmouseout="UnTip()" onmouseover="Tip(extsnd_keyboard_no_action_tip)">keyboard-no-action</a>))
@@ -7834,10 +7836,10 @@ And here we play from the cursor with a moving ("tracking") cursor:
     (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_add_hook_tip)">add-hook!</a> <a class=quiet href="#stopplayinghook" onmouseout="UnTip()" onmouseover="Tip(extsnd_stopplayinghook_tip)">stop-playing-hook</a> 
 	       (lambda (snd)
 		 (set! (<a class=quiet href="#withtrackingcursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_withtrackingcursor_tip)">with-tracking-cursor</a>) old-tracking)))
-    (<em class=red>play</em> (<a class=quiet href="#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a>))))
+    (<em class=red>play</em> (selected-sound) (<a class=quiet href="#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a>))))
 </pre></td></tr></table>
 <p>
-If 'samp' is #f, the next two arguments set the sampling rate and number of output channels.
+If 'object' is #f, the :srate and :channels arguments set up the DAC.
 The DAC then stays open until you call <a href="#stopplaying">stop-playing</a>. This is useful
 when you're using bind-key and play to trigger sounds, but want the output to have more channels
 than the various inputs.
@@ -7845,15 +7847,15 @@ than the various inputs.
 <table border=0 cellpadding=5><tr><td><pre>
 (bind-key #\o 0 
   (lambda () ; send oboe.snd to chan 0
-    (play "oboe.snd" 0 #f #f #f #f #f 0)))   
+    (play "oboe.snd" :out-channel 0)))   
 
 (bind-key #\p 0 
   (lambda () ; send pistol.snd to chan 1
-    (play "pistol.snd" 0 #f #f #f #f #f 1))) 
+    (play "pistol.snd" :out-channel 1))) 
 
 ;;; Now open a sound (so you have a non-listener pane to type to)
 
-(play #f 22050 2) ; srate 22050, 2 output chans
+(play #f :srate 22050 :channels 2) ; srate 22050, 2 output chans
 
 ;;; this holds the DAC open indefinitely
 ;;; Now type o and p in the sound pane until you want to quit, then
@@ -7861,7 +7863,7 @@ than the various inputs.
 (stop-playing) 
 </pre></td></tr></table>
 <p>
-Finally, if 'samp' is a function, it is called on every sample; if it returns a number, that number is
+Finally, if 'object' is a function, it is called on every sample; if it returns a number, that number is
 sent to the DAC; if it returns #f, it stops.  <a href="sndscm.html#playmixes">play-mixes</a> uses this
 function option to time the playing of each mix in a sequence of mixes.  Another example is <a href="sndscm.html#playsine">play-sine</a>:
 </p>
@@ -7885,9 +7887,9 @@ function option to time the playing of each mix in a sequence of mixes.  Another
 play one channel: <a href="#playchannel">play-channel</a>, play button in control panel or files dialog<br>
 play from cursor: C-q and example above<br>
 play from cursor with tracking cursor: <a href="#pfc">pfc</a> above<br>
-play the selection: <a href="#playselection">play-selection</a>, <a href="snd.html#cxp">C-x p</a><br>
-play a region: <a href="#playregion">play-region</a>, <a href="snd.html#cxp">C-x p</a>, play button in Region dialog<br>
-play a mix: <a href="#playmix">play-mix</a>, play button in Mix dialog<br>
+play the selection: (play (selection)), <a href="snd.html#cxp">C-x p</a><br>
+play a region: (play region-object), <a href="snd.html#cxp">C-x p</a>, play button in Region dialog<br>
+play a mix: (play mix-object), play button in Mix dialog<br>
 play a sequence of mixes: <a href="sndscm.html#playmixes">play-mixes</a><br>
 play from mark: click or drag triangle (control-click for all chans)<br>
 play continuously between two marks: <a href="sndscm.html#loopbetweenmarks">loop-it</a><br>
@@ -7936,7 +7938,7 @@ The hooks called during a play operation are:
     as each sound ends: <a class=quiet href="#stopplayinghook" onmouseout="UnTip()" onmouseover="Tip(extsnd_stopplayinghook_tip)">stop-playing-hook</a>, <a class=quiet href="#stopplayingselectionhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_stopplayingselectionhook_tip)">stop-playing-selection-hook</a>
     close audio device: <a class=quiet href="#stopdachook" onmouseout="UnTip()" onmouseover="Tip(extsnd_stopdachook_tip)">stop-dac-hook</a>
 </pre>
-</td></tr><tr><td colspan=2 height=18></td></tr>
+
 
 
 <!-- play-and-wait -->

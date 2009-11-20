@@ -37,7 +37,7 @@
 # Usage:
 #
 # menu = make_snd_popup("graph") do
-#   entry("Play") do |snd, chn, w| play(0, snd) end
+#   entry("Play") do |snd, chn, w| play(snd, 0) end
 #   cascade("Marks") do
 #     entry("Add") do |snd, chn, w| add_mark(cursor(snd, chn), snd, chn) end
 #     entry("Delete") do |snd, chn, w| delete_mark(marks(snd, chn)[0]) end
@@ -731,28 +731,28 @@ unless defined? $__private_popup_menu__ and $__private_popup_menu__
       else
         change_label(w, "Stop")
         stopping = true
-        play(0, snd)
+        play(snd, 0)
       end
     end
     entry("Play channel") do |snd, chn, w|
       stopping = true
       change_label(stop_widget, "Stop")
-      play(0, snd, chn)
+      old_play(0, snd, chn)
     end
     entry("Play from cursor") do |snd, chn, w|
       stopping = true
       change_label(stop_widget, "Stop")
-      play(cursor(snd, chn), snd)
+      old_play(cursor(snd, chn), snd)
     end
     entry("Play previous") do |snd, chn, w|
       stopping = true
       change_label(stop_widget, "Stop")
-      play(0, snd, chn, false, false, edit_position - 1)
+      old_play(0, snd, chn, false, false, edit_position - 1)
     end
     entry("Play original") do |snd, chn, w|
       stopping = true
       change_label(stop_widget, "Stop")
-      play(0, snd, chn, false, false, 0)
+      old_play(0, snd, chn, false, false, 0)
     end
     entry("Undo") do |snd, chn, w| undo_edit(1, snd, chn) end if defined? undo_edit
     entry("Redo") do |snd, chn, w| redo_edit(1, snd, chn) end if defined? redo_edit
@@ -1114,7 +1114,7 @@ all saved edit lists.",
       end
       focused = lambda do | | (snds = Snd.sounds).length > 1 ? snds : [] end
       cascade("Play") do
-        children(identity) do |snd| play(0, snd) end
+        children(identity) do |snd| play(snd, 0) end
       end
       entry("Open") do |snd, chn, w| open_file_dialog end
       entry("Clear listener") do |snd, chn, w| clear_listener end

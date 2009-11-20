@@ -2322,7 +2322,7 @@ AM_GNU_GETTEXT([external])
 #--------------------------------------------------------------------------------
 
 AC_ARG_ENABLE(deprecated,
-  [  --disable-deprecated	  do not include any deprecated stuff from gtk, s7, motif, clm, or sndlib],
+  [  --disable-deprecated	  do not include any deprecated stuff from gtk, s7, motif, clm, snd, or sndlib],
   if test "$enable_deprecated" = no ; then
     CFLAGS="-DGTK_DISABLE_DEPRECATED -DG_DISABLE_DEPRECATED -DGDK_DISABLE_DEPRECATED -DPANGO_DISABLE_DEPRECATED -DCAIRO_DISABLE_DEPRECATED $CFLAGS"
     AC_DEFINE(XM_DISABLE_DEPRECATED)
@@ -2330,6 +2330,7 @@ AC_ARG_ENABLE(deprecated,
     AC_DEFINE(SNDLIB_DISABLE_DEPRECATED)
     AC_DEFINE(XEN_DISABLE_DEPRECATED)
     AC_DEFINE(S7_DISABLE_DEPRECATED)
+    AC_DEFINE(SND_DISABLE_DEPRECATED)
   fi)
 
 if test "$enable_snd_debug" = yes ; then

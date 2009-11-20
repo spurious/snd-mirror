@@ -35182,8 +35182,8 @@ def test0228
   check_error_tag(:out_of_range) do snd_spectrum(Vct.new(8), 0, 0) end
   check_error_tag(:no_such_file) do play("/baddy/hiho") end
   check_error_tag(:bad_format) do play($sf_dir + "nist-shortpack.wav") end
-  check_error_tag(:no_such_sound) do play(0, 123) end
-  check_error_tag(:no_such_channel) do play(0, ind, 123) end
+  check_error_tag(:no_such_sound) do play(123, 0) end
+  check_error_tag(:no_such_channel) do old_play(0, ind, 123) end
   check_error_tag(:no_such_channel) do make_player(ind, 123) end
   check_error_tag(:no_such_file) do mix("/baddy/hiho") end
   check_error_tag(:no_such_channel) do mix("oboe.snd", 0, 2) end
@@ -35284,7 +35284,7 @@ def test0228
   check_error_tag(:out_of_range) do filter_sound(vct(0, 0, 1, 1), 0) end
   check_error_tag(:out_of_range) do filter_sound(vct(0, 0, 1, 1), 10) end
   check_error_tag(:wrong_type_arg) do
-    play(0, false, false, false, false, false, lambda do | | false end)
+    old_play(0, false, false, false, false, false, lambda do | | false end)
   end
   check_error_tag(:out_of_range) do set_reverb_control_length_bounds([0.1, 0.01], ind) end
   check_error_tag(:out_of_range) do set_reverb_control_scale_bounds([0.1, 0.01], ind) end
