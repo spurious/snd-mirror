@@ -182,6 +182,17 @@ int mus_optkey_to_int(XEN key, const char *caller, int n, int def)
 }
 
 
+bool mus_optkey_to_bool(XEN key, const char *caller, int n, bool def)
+{
+  if (!(XEN_KEYWORD_P(key)))
+    {
+      XEN_ASSERT_TYPE(XEN_BOOLEAN_P(key), key, n, caller, "#f or #t");
+      return(XEN_TO_C_BOOLEAN(key));
+    }
+  return(def);
+}
+
+
 mus_long_t mus_optkey_to_mus_long_t(XEN key, const char *caller, int n, mus_long_t def)
 {
   if (!(XEN_KEYWORD_P(key)))

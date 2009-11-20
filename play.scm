@@ -114,8 +114,8 @@
 	       (= reason 0))
 	  (begin
 	    (set! plays (- plays 1))
-	    (play 0 #f #f #f #f #f play-once))))
-    (play 0 #f #f #f #f #f play-once)))
+	    (play (selected-sound) :start 0 :stop play-once))))
+    (play (selected-sound) :start 0 :stop play-once)))
 
 ;(bind-key #\p 0 (lambda (n) "play often" (play-often (max 1 n))))
 
@@ -127,8 +127,8 @@
   (define (play-once reason)
     (if (and (not (c-g?))
 	     (= reason 0))
-	(play 0 #f #f #f #f #f play-once)))
-  (play 0 #f #f #f #f #f play-once))
+	(play (selected-sound) :start 0 :stop play-once)))
+  (play (selected-sound) :start 0 :stop play-once))
 
 
 ;;; -------- play region over and over until C-g typed
@@ -184,7 +184,7 @@
 
 (define* (start-dac (sr 44100) (chans 1))
   "(start-dac) starts the DAC running continuously in the background"
-  (play #f sr chans))
+  (play #f :srate sr :channels chans))
 
 (define stop-dac stop-playing)
 

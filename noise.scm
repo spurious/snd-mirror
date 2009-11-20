@@ -187,6 +187,6 @@
 ;;     (do ((i 0 (+ 1 i)))
 ;; 	((= i chns))
 ;;       (mix-vct (vct-scale! (vct-copy data) (locsig-ref loc i)) beg snd i #f))
-;;     (play 0 snd)))
+;;     (play snd 0)))
 
 ;; noise.scm ends here

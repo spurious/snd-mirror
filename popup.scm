@@ -258,29 +258,29 @@
 		  (begin
 		    (change-label w "Stop")
 		    (set! stopping #t)
-		    (play 0 graph-popup-snd))))
+		    (play graph-popup-snd 0))))
 	    (lambda (wid)
 	      (set! stop-widget wid)))
       (list "Play channel"       xmPushButtonWidgetClass every-menu 
 	    (lambda (w c i)
 	      (set! stopping #t)
 	      (change-label stop-widget "Stop")
-	      (play 0 graph-popup-snd graph-popup-chn)))
+	      (play graph-popup-snd 0 :channel graph-popup-chn)))
       (list "Play from cursor"   xmPushButtonWidgetClass every-menu 
 	    (lambda (w c i)
 	      (set! stopping #t)
 	      (change-label stop-widget "Stop")
-	      (play (cursor graph-popup-snd graph-popup-chn) graph-popup-snd)))
+	      (play graph-popup-snd :start (cursor graph-popup-snd graph-popup-chn))))
       (list "Play previous"      xmPushButtonWidgetClass every-menu
 	    (lambda (w c i)
 	      (set! stopping #t)
 	      (change-label stop-widget "Stop")
-	      (play 0 graph-popup-snd graph-popup-chn #f #f (- (edit-position) 1))))  ; play version before most-recent edit
+	      (play graph-popup-snd 0 :channel graph-popup-chn :edit-position (- (edit-position) 1))))  ; play version before most-recent edit
       (list "Play original"      xmPushButtonWidgetClass every-menu
 	    (lambda (w c i)
 	      (set! stopping #t)
 	      (change-label stop-widget "Stop")
-	      (play 0 graph-popup-snd graph-popup-chn #f #f 0)))                     ; play unedited version
+	      (play graph-popup-snd 0 :channel graph-popup-chn :edit-position 0)))                     ; play unedited version
       (list "Undo"               xmPushButtonWidgetClass every-menu 
 	    (lambda (w c i)
 	      (undo 1 graph-popup-snd graph-popup-chn)))
@@ -951,7 +951,7 @@ color name, an xm Pixel, a snd color, or a list of rgb values (as in Snd's make-
     (XtCreateManagedWidget "sep" xmSeparatorWidgetClass listener-popup every-menu)
 
     (let ((listener-popup-menu
-	   (list (make-popdown-entry "Play" listener-popup (lambda (snd) (play 0 snd)) every-menu identity #t)
+	   (list (make-popdown-entry "Play" listener-popup (lambda (snd) (play snd 0)) every-menu identity #t)
 
 		 (let ((help-widget (XtCreateManagedWidget "Help" xmPushButtonWidgetClass listener-popup every-menu)))
 		   (XtAddCallback help-widget XmNactivateCallback

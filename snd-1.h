@@ -1160,7 +1160,7 @@ XEN g_region_srate(XEN n);
 XEN g_region_chans(XEN n);
 XEN g_region_frames(XEN n, XEN chan);
 XEN g_region_maxamp(XEN n);
-XEN g_play_region(XEN n, XEN wait, XEN stop_proc);
+XEN g_play_region(XEN n, play_process_t back, XEN stop_proc);
 
 
 
@@ -1656,7 +1656,7 @@ int prepare_mix_dialog_waveform(int mix_id, axis_info *ap, bool *two_sided);
 void display_channel_mixes(chan_info *cp);
 
 bool play_mix_from_id(int mix_id);
-XEN g_play_mix(XEN num, XEN beg);
+XEN g_play_mix(XEN num, mus_long_t beg);
 void drag_and_drop_mix_at_x_y(int data, const char *filename, int x, int y);
 
 

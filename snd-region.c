@@ -1722,28 +1722,19 @@ static XEN g_forget_region(XEN n)
 }
 
 
-XEN g_play_region(XEN n, XEN wait, XEN stop_proc) 
+XEN g_play_region(XEN n, play_process_t back, XEN stop_proc) 
 {
-  #define H_play_region "(" S_play_region " reg :optional wait stop-proc): play region; if wait is " PROC_TRUE ", play to end before returning"
   int rg;
-  bool wt = false;
-
-  XEN_ASSERT_TYPE(XEN_REGION_P(n), n, XEN_ARG_1, S_play_region, "a region");
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(wait), wait, XEN_ARG_2, S_play_region, "a boolean");
-  XEN_ASSERT_TYPE(((XEN_PROCEDURE_P(stop_proc)) && (procedure_arity_ok(stop_proc, 1))) ||
-		  (XEN_NOT_BOUND_P(stop_proc)) || 
-		  (XEN_FALSE_P(stop_proc)), 
-		  stop_proc, XEN_ARG_3, S_play_region, "a procedure of 1 arg");
-  if (XEN_TRUE_P(wait)) wt = true;
-
+  region *r;
   rg = XEN_REGION_TO_C_INT(n);
-  if (!(region_ok(rg)))
-    return(snd_no_such_region_error(S_play_region, n));
-
-  make_region_readable(id_to_region(rg));
-  play_region_1(rg, (wt) ? NOT_IN_BACKGROUND : IN_BACKGROUND, stop_proc);
-
-  return(n);
+  r = id_to_region(rg);
+  if (r)
+    {
+      make_region_readable(r);
+      play_region_1(rg, back, stop_proc);
+      return(n);
+    }
+  return(snd_no_such_region_error(S_play, n));
 }
 
 
@@ -2077,7 +2068,6 @@ XEN_NARGIFY_1(g_region_maxamp_w, g_region_maxamp)
 XEN_NARGIFY_1(g_region_maxamp_position_w, g_region_maxamp_position)
 XEN_ARGIFY_9(g_save_region_w, g_save_region)
 XEN_NARGIFY_1(g_forget_region_w, g_forget_region)
-XEN_ARGIFY_3(g_play_region_w, g_play_region)
 XEN_ARGIFY_4(g_make_region_w, g_make_region)
 XEN_ARGIFY_5(g_mix_region_w, g_mix_region)
 XEN_ARGIFY_3(g_region_sample_w, g_region_sample)
@@ -2102,7 +2092,6 @@ XEN_NARGIFY_1(g_region_to_integer_w, g_region_to_integer)
 #define g_region_maxamp_position_w g_region_maxamp_position
 #define g_save_region_w g_save_region
 #define g_forget_region_w g_forget_region
-#define g_play_region_w g_play_region
 #define g_make_region_w g_make_region
 #define g_mix_region_w g_mix_region
 #define g_region_sample_w g_region_sample
@@ -2134,7 +2123,6 @@ void g_init_regions(void)
   XEN_DEFINE_PROCEDURE(S_region_maxamp_position, g_region_maxamp_position_w, 1, 0, 0, H_region_maxamp_position);
   XEN_DEFINE_PROCEDURE(S_save_region,            g_save_region_w,            2, 7, 0, H_save_region);
   XEN_DEFINE_PROCEDURE(S_forget_region,          g_forget_region_w,          1, 0, 0, H_forget_region);
-  XEN_DEFINE_PROCEDURE(S_play_region,            g_play_region_w,            1, 2, 0, H_play_region);
   XEN_DEFINE_PROCEDURE(S_make_region,            g_make_region_w,            0, 4, 0, H_make_region);
   XEN_DEFINE_PROCEDURE(S_mix_region,             g_mix_region_w,             1, 4, 0, H_mix_region);
   XEN_DEFINE_PROCEDURE(S_region_sample,          g_region_sample_w,          2, 1, 0, H_region_sample);

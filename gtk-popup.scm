@@ -246,7 +246,7 @@
 			    (begin
 			      (change-label w "Stop")
 			      (set! stopping #t)
-			      (play 0 graph-popup-snd))))
+			      (play graph-popup-snd :start 0))))
 		      (lambda (wid)
 			(set! stop-widget wid)))
 		(list "Play channel" 
@@ -254,25 +254,25 @@
 		      (lambda (w data)
 			(set! stopping #t)
 			(change-label stop-widget "Stop")
-			(play 0 graph-popup-snd graph-popup-chn)))
+			(play graph-popup-snd :start 0 :channel graph-popup-chn)))
 		(list "Play from cursor"
 		      (lambda (w) (set! play-cursor-popup-menu w))
 		      (lambda (w data)
 			(set! stopping #t)
 			(change-label stop-widget "Stop")
-			(play (cursor graph-popup-snd graph-popup-chn) graph-popup-snd)))
+			(play graph-popup-snd :start (cursor graph-popup-snd graph-popup-chn))))
 		(list "Play previous"
 		      (lambda (w) (set! play-previous-popup-menu w))
 		      (lambda (w data)
 			(set! stopping #t)
 			(change-label stop-widget "Stop")
-			(play 0 graph-popup-snd graph-popup-chn #f #f (- (edit-position) 1))))  ; play version before most-recent edit
+			(play graph-popup-snd :start 0 :channel graph-popup-chn :edit-position (- (edit-position) 1))))  ; play version before most-recent edit
 		(list "Play original"
 		      (lambda (w) (set! play-original-popup-menu w))
 		      (lambda (w data)
 			(set! stopping #t)
 			(change-label stop-widget "Stop")
-			(play 0 graph-popup-snd graph-popup-chn #f #f 0)))                     ; play unedited version
+			(play graph-popup-snd :start 0 :channel graph-popup-chn :edit-position 0)))                     ; play unedited version
 		(list "Undo"
 		      (lambda (w) (set! undo-popup-menu w))
 		      (lambda (w data)

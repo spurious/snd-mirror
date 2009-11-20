@@ -66026,7 +66026,7 @@ EDITS: 1
 			    graph-data graph-style lisp-graph? left-sample
 			    time-graph-style lisp-graph-style transform-graph-style
 			    make-graph-data max-transform-peaks maxamp maxamp-position min-dB transform-normalization peak-env-info 
-			    (lambda (snd) (play 0 snd))
+			    (lambda (snd) (play snd 0))
 			    (lambda (snd) (play-and-wait 0 snd)) 
 			    (lambda (snd) (position->x 0 snd))
 			    (lambda (snd) (position->y 0 snd))
@@ -66239,7 +66239,7 @@ EDITS: 1
 					       (not (eq? tag 'wrong-number-of-args)))
 					  (snd-display ";~D: region procs ~A: ~A ~A" ctr n tag arg))
 				      (set! ctr (+ ctr 1))))
-				  (list play-region region-chans region-home region-frames 
+				  (list region-chans region-home region-frames 
 					region-position region-maxamp region-maxamp-position region-sample 
 					region->vct region-srate forget-region))))
 		    (list vct-5 '#(0 1) (sqrt -1.0) "hiho" (list 0 1)))
@@ -66254,7 +66254,7 @@ EDITS: 1
 			  (if (not (eq? tag 'no-such-region))
 			      (snd-display ";~D: (no) region procs ~A: ~A" ctr n tag))
 			  (set! ctr (+ ctr 1))))
-		      (list play-region region-chans region-home region-frames region-position 
+		      (list region-chans region-home region-frames region-position 
 			    region-maxamp region-maxamp-position region-srate forget-region))) 
 	  
 	  (let ((ctr 0))
@@ -66523,7 +66523,7 @@ EDITS: 1
 		  (check-error-tag 'out-of-range (lambda () (snd-spectrum (make-vct 8) 0 0)))
 		  (check-error-tag 'no-such-file (lambda () (play "/baddy/hiho")))
 		  (check-error-tag 'bad-format (lambda () (play (string-append sf-dir "nist-shortpack.wav"))))
-		  (check-error-tag 'no-such-channel (lambda () (play 0 ind 123)))
+		  (check-error-tag 'no-such-channel (lambda () (play ind 0 :channel 123)))
 		  (check-error-tag 'no-such-channel (lambda () (make-player ind 123)))
 		  (check-error-tag 'no-such-file (lambda () (mix "/baddy/hiho")))
 		  (check-error-tag 'no-such-channel (lambda () (mix "oboe.snd" 0 2)))
@@ -66561,8 +66561,8 @@ EDITS: 1
 		  (check-error-tag 'no-such-sample (lambda () (delete-sample -1)))
 		  (check-error-tag 'no-such-sample (lambda () (delete-sample (* 2 (frames ind)))))
 		  (check-error-tag 'no-such-file (lambda () (play "/bad/baddy.snd")))
-		  (check-error-tag 'no-such-sound (lambda () (play 0 1234)))
-		  (check-error-tag 'no-such-channel (lambda () (play 0 ind 1234)))
+		  (check-error-tag 'no-such-sound (lambda () (play 1234 0)))
+		  (check-error-tag 'no-such-channel (lambda () (play ind 0 :channel 1234)))
 		  (if (= (length (regions)) 0) (make-region 0 100))
 		  (check-error-tag 'no-such-channel (lambda () (region-sample (car (regions)) 0 1234)))
 		  (check-error-tag 'no-such-channel (lambda () (region-frames (car (regions)) 1234)))
@@ -66625,7 +66625,7 @@ EDITS: 1
 		  (check-error-tag 'no-such-channel (lambda () (filter-channel (vct 0 0 1 1) 4 #f #f ind 1)))
 		  (check-error-tag 'out-of-range (lambda () (filter-sound (vct 0 0 1 1) 0)))
 		  (check-error-tag 'out-of-range (lambda () (filter-sound (vct 0 0 1 1) 10)))
-		  (check-error-tag 'wrong-type-arg (lambda () (play 0 #f #f #f #f #f (lambda () #f))))
+		  (check-error-tag 'wrong-type-arg (lambda () (play (selected-sound) 0 :stop (lambda () #f))))
 		  (check-error-tag 'out-of-range (lambda () (set! (reverb-control-length-bounds ind) (list .1 .01))))
 		  (check-error-tag 'out-of-range (lambda () (set! (reverb-control-scale-bounds ind) (list .1 .01))))
 		  (check-error-tag 'wrong-type-arg (lambda () (scale-by #f)))

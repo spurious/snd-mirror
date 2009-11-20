@@ -136,13 +136,13 @@
     (if (and (not (c-g?))
              (= reason 0))
         (begin
-          (play in-position #f #f #f (+ in-position preview-length)))))
+          (play (selected-sound) in-position (+ in-position preview-length)))))
   (if (and
         (not (eq? in-mark #f))
         (not (eq? out-mark #f)))
       (if (< out-position in-position)
           (play (max 0 (- out-position preview-length)) #f #f #f out-position #f play-next))
-      (play (cursor) #f #f #f (+ (cursor) preview-length)))))
+      (play (selected-sound) (cursor) (+ (cursor) preview-length)))))
 
 ; Copied from examp.scm
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -225,7 +225,7 @@
     (set! (with-tracking-cursor) #t)
     (if (playing)
         (stop-playing)
-        (play (cursor)))
+        (play (selected-sound) (cursor)))
     cursor-in-view))
 
 (bind-key #\l 0

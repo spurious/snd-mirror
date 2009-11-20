@@ -3231,7 +3231,13 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   XEN_EVAL_C_STRING("(define (length obj)\
                        (if (string? obj) (string-length obj)\
                            (if (vector? obj) (vector-length obj)\
-                               (%length obj))))");
+                               (if (vct? obj) (vct-length obj)\
+                                   (if (sound? obj) (frames obj)\
+                                       (if (mix? obj) (mix-length obj)\
+                                           (if (sound-data? obj) (sound-data-length obj)\
+                                               (if (region? obj) (region-frames obj)\
+                                                   (if (selection? obj) (selection-frames obj)\
+                                                       (%length obj))))))))))");
 
   XEN_EVAL_C_STRING("(define %floor floor)");
   XEN_EVAL_C_STRING("(define (floor val) (inexact->exact (%floor val)))");
@@ -3442,12 +3448,6 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   XEN_EVAL_C_STRING("' undo alias undo-edit");
 #endif
 
-
-  /* clm-print */
-#if HAVE_FORTH
-  /* XEN_EVAL_C_STRING(": clm-print ( fmt lst -- ) 0 drop ;"); */
-#endif
-
 #if HAVE_RUBY
   XEN_EVAL_C_STRING("def clm_print(str, *args)\n\
                       snd_print format(str, *args)\n\
@@ -3582,5 +3582,5 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
 /* unguile troubles:
  *     snd_pd_external.[ch], pd-*.scm
  *     rt-*.scm
- *     eval-c.scm, osc.scm, snd-hobbit.scm
+ *     eval-c.scm, osc.scm, snd-hobbit.scm, snd_frg.scm probably snd_conffile.scm
  */

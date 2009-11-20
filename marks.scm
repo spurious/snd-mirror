@@ -219,11 +219,10 @@
 		 (pos2 (mark-sample m2))
 		 (beg (min pos1 pos2))
 		 (end (max pos1 pos2)))
-	    (play beg
-		  (car (mark-home m1)) 
-		  (cadr (mark-home m1)) 
-		  #f 
-		  end))))))
+	    (play (car (mark-home m1)) 
+		  :channel (cadr (mark-home m1))
+		  :start beg 
+		  :end end))))))
 
 
 ;;; -------- report-mark-names causes mark names to be posted in the minibuffer as a sound is played

@@ -1318,14 +1318,15 @@ vector, list, or mix object.
 </td></tr><tr><td colspan=2 height=18></td></tr>
 
 
-<!-- TODO: play -->
+<!-- TODO: play docs -->
 <!-- INDEX genericplay:play (generic) -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
-<code><a class=def>play</a> ()</code>
+<code><a class=def>play</a> (object <a class=quiet href="sndclm.html#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">&amp;optional-key</a> :start :end :channel :edit-position :out-channel :with-sync :wait :stop)</code>
 </td></tr><tr><td></td><td>
-<A NAME="genericplay">play</A> 
+<A NAME="genericplay">play</A> plays an object. 
+The object can be a string (sound filename), a sound object or index, a mix, a region, the selection object, #f, a procedure, or a player.
+Not all the keyword arguments apply in all cases, though I hope to fill in the table of possibilities eventually.
 
-...all about play...
 
 </td></tr><tr><td colspan=2 height=18></td></tr>
 
@@ -5290,9 +5291,13 @@ mix? returns #t if 'obj' is a mix object and it is accessible in a channel's edi
 <!-- play-mix -->
 <tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="playmix">play-mix</a> (mix :optional beg)</code>
 </td></tr><tr><td></td><td>
-play-mix plays the mix 'mix'.  'beg' is where to start playing within the mix.
+<p>play-mix plays the mix 'mix'.  'beg' is where to start playing within the mix.
 This function does not return until the play is complete or is interrupted (it is similar to <a href="#playandwait">play-and-wait</a>,
 rather than <a href="#play">play</a>).
+</p>
+<p>play-mix is obsolete and will be removed soon (use play).
+</p>
+
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -5431,11 +5436,13 @@ It returns a list of mixes, one for each channel mixed.
 <!-- play-region -->
 <tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="playregion">play-region</a> reg :optional wait stop-func</code>
 </td></tr><tr><td></td><td>
+<p>
 play-region plays region 'reg'; if wait is #t, it plays to the end before returning.  The 'stop-func'
 can be a function which is called when the play process stops.  Its one argument is
 the reason the play is stopping; it will be 0 if the play completed normally.
 To see all possible reasons, see <a href="#stopplayreasons">play</a>.
 Here is a brief example (taken from play.scm) that plays a region over and over until someone types C-g:
+</p>
 <pre>
   (<em class=red>play-region</em> reg #f
     (letrec ((stop-func (lambda (reason)
@@ -5444,6 +5451,10 @@ Here is a brief example (taken from play.scm) that plays a region over and over 
 			      (<em class=red>play-region</em> reg #f stop-func)))))
       stop-func))
 </pre>
+
+<p>play-region is obsolete and will be removed soon (use play).
+</p>
+
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -5679,12 +5690,16 @@ The Edit:Mix selection menu choice is <code>(mix-selection (cursor))</code>.
 <!-- play-selection -->
 <tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="playselection">play-selection</a> (:optional wait edpos stop-func)</code>
 </td></tr><tr><td></td><td>
-play-selection plays the selection.  'edpos' is the edit position which default to the current edit.
+<p>play-selection plays the selection.  'edpos' is the edit position which default to the current edit.
 If 'wait' is #t, play-selection does not return until the play has completed.
 If 'stop-func' is a procedure of one argument, it is called when the play process stops.
 The argument provides the reason the play is stopping; it will be 0 if the play completed normally.
 See <a href="#playregion">play-region</a> for an example, and <a href="#stopplayreasons">play</a>
 for a complete list of these reasons.
+</p>
+<p>play-selection is obsolete and will be removed soon (use play).
+</p>
+
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -6016,7 +6031,6 @@ The following substitutions can be made:
 <a href="#insertsilence">insert-silence</a> beg dur s c                      <a href="#padchannel">pad-channel</a> beg dur s c e
 <a href="#insertsound">insert-sound</a> file beg filechn s c e             <a href="sndscm.html#insertchannel">insert-channel</a> filedat beg dur s c e
 <a href="#mix">mix</a> file beg filechn s c with-tags              <a href="sndscm.html#mixchannel">mix-channel</a> filedat beg dur s c e
-<a href="#play">play</a> beg s c sync end e                         <a href="#playchannel">play-channel</a> beg dur s c e
 <a href="#redo">redo</a> edits s c                                  <a href="#redochannel">redo-channel</a> edits s c
 <a href="#reversesound">reverse-sound</a> s c e                             <a href="#reversechannel">reverse-channel</a> beg dur s c e
 <A href="#scaleby">scale-by</a> scls s c                               <a href="#scalechannel">scale-channel</a> scl beg dur s c e
@@ -7747,6 +7761,9 @@ by <a href="#maxfftpeaks">max-transform-peaks</a>.
 <code><a class=def name="play">play</a> (:optional samp snd chn sync end edpos stop-proc out-chan)</code>
 </td></tr><tr><td></td><td>
 <p>
+The "play" function has been completely redone; see the generic <a href="#genericplay">play</a> documentation.  This documentation describes the obsolete "old-play" function.
+</p>
+<p>
 This function plays the given channel starting from sample 'samp'. 
 If 'sync' is #t, it plays all sounds sync'd to 'snd'.  If 'end' is not given or is #f, 
 it plays until the end of the sound. If 'end' is given (as a sample number), the 
@@ -7926,11 +7943,15 @@ The hooks called during a play operation are:
 <tr><td colspan=2 bgcolor="#f2f4ff">
 <code><a class=def name="playandwait">play-and-wait</a> (:optional samp snd chn sync end edpos stop-proc out-chan)</code>
 </td></tr><tr><td></td><td>
+<p>
 This plays the given channel starting from sample 'samp' and waits
 for it to finish.  <a href="#play">play</a> on the other hand returns immediately so subsequent calls on play 
 mix multiple sample streams together, rather than playing them one after the other.
 If 'pos' is given, play-and-wait plays at that edit position.
 'stop-proc' is explained under 'play' above; it's not really needed here, but "consistency is a virtue", I guess.
+</p>
+<p>play-and-wait is obsolete and will be removed soon (use play).
+</p>
 </td></tr><tr><td colspan=2 height=18></td></tr>
 
 
@@ -7938,7 +7959,11 @@ If 'pos' is given, play-and-wait plays at that edit position.
 <tr><td colspan=2 bgcolor="#f2f4ff">
 <code><a class=def name="playchannel">play-channel</a> (:optional beg dur snd chn edpos stop-proc out-chan)</code>
 </td></tr><tr><td></td><td>
+<p>
 play-channel is the <a class=quiet href="#regularizedargs" onmouseout="UnTip()" onmouseover="Tip(extsnd_regularizedargs_tip)">regularized</a> version of <a href="#play">play</a>.
+</p>
+<p>play-channel is obsolete and will be removed soon (use play).
+</p>
 </td></tr><tr><td colspan=2 height=18></td></tr>
 
 

@@ -305,7 +305,7 @@
 (lambda (snd)
     
         (set! (channel-style snd) channels-superimposed)))
-    (play (cursor)))
+    (play (selected-sound) :start (cursor)))
 
 (define (play-end)
 (key (char->integer #\>) 1)
@@ -313,7 +313,7 @@
 (key (char->integer #\t) 4)
 (set! status 2)
 (set! (cursor) (- (cursor) 100000))
-(play (cursor))
+(play (selected-sound) :start (cursor))
 )
 
 (define (toggle-play)

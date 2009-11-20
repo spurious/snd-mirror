@@ -2763,8 +2763,6 @@
 		18))
 
       (test (equal? (make-vector 0) (make-vector '(0))) #t)
-      (test (equal? (make-vector 0) (make-vector '(0 0))) #t)
-
       (test (make-vector (1 . 2) "hi") 'error)))
 
 

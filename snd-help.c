@@ -515,6 +515,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+20-Nov:  play is generic now, \"old-play\" is the previous form.\n\
 2-Nov:   selection function/object. selection->mix.\n\
 28-Oct:  pretty-print.scm.\n\
 22-Oct:  Snd 11.0.\n\
@@ -1367,7 +1368,7 @@ The main mix-related functions are:\n\
     mix's length in samples\n\
 \n\
 Other such function include: " S_mix_waveform_height ", " S_with_mix_tags ", " S_mix_tag_width ",\n\
-    " S_mix_tag_height ", " S_mix_tag_y ", " S_play_mix ", " S_mixes ".",
+    " S_mix_tag_height ", " S_mix_tag_y ", " S_mixes ".",
 
 #else
 "Since mixing is the most common and most useful editing operation performed on \
@@ -1688,27 +1689,7 @@ In a multichannel file, C-q plays all channels from the current channel's \
 cursor if the sync button is on, and otherwise plays only the current channel. \
 Except in the browsers, what is actually played depends on the control panel.\
 \n\n\
-The following functions are related to playing sounds:\n\
-\n\
-  " S_play " (:optional samp snd chn sync end edpos stop-proc out-chan)\n\
-    To play from the cursor: " play_cursor_example "\n\
-    To play a file: " play_file_example "\n\
-    To play the previous version of a sound: \n\
-      " play_previous_version_example "\n\
-\n\
-    To get a \"tracking cursor\" (a moving line that tries to follow along)\n\
-      set " S_with_tracking_cursor " to " PROC_TRUE ", and " S_tracking_cursor_style "\n\
-      to " H_cursor_line ".\n\
-\n\
-  " S_play_and_wait " (:optional samp snd chn sync end edpos stop-proc out-chan)\n\
-    a version of 'play' that does not return until the playing is complete.\n\
-\n\
-  " S_play_channel " (:optional beg dur snd chn edpos stop-proc out-chan)\n\
-  " S_play_mix " (mix :optional beg)\n\
-  " S_play_region " (:optional reg wait stop-func)\n\
-  " S_play_selection " (:optional wait pos stop-proc)\n\
-\n\
-  " S_pausing ": set to " PROC_TRUE " to pause output\n",
+Use the play function to play any object.",
 
 #else
 "To play a sound, click the 'play' button.  If the sound has more channels than your DAC(s), Snd will (normally) try to mix the extra channels \
@@ -2108,9 +2089,6 @@ The main region-related functions are:\n\
   " S_mix_region " (:optional samp reg snd chn reg-chan)\n\
     mix in region 'reg' at sample 'samp' (defaults to the cursor sample)\n\
 \n\
-  " S_play_region " (:optional reg wait stop-func)\n\
-    play region\n\
-\n\
   " S_save_region " (reg :optional-key :file :header-type :data-format :comment)\n\
     save region 'reg' in 'file' in data format (default is mus-bshort),\n\
     header type (default is mus-next), and comment. Return the output\n\
@@ -2214,9 +2192,6 @@ The primary selection-related functions are:\n\
 \n\
   " S_mix_selection " (:optional beg snd chn selection-chan)\n\
     mix (add) selection starting at 'beg'\n\
-\n\
-  " S_play_selection " (:optional wait pos stop-proc)\n\
-    play the selection\n\
 \n\
   " S_reverse_selection "(): reverse selected portion\n\
 \n\

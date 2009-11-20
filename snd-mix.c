@@ -3784,21 +3784,15 @@ void syncd_mix_play(int id)
 }
 
 
-XEN g_play_mix(XEN num, XEN beg)
+XEN g_play_mix(XEN num, mus_long_t samp)
 {
-  #define H_play_mix "(" S_play_mix " id :optional (beg 0)): play mix.  'beg' is where to start playing."
   mix_info *md;
-  mus_long_t samp;
 
-  XEN_ASSERT_TYPE(XEN_MIX_P(num), num, XEN_ONLY_ARG, S_play_mix, "a mix");
   md = md_from_id(XEN_MIX_TO_C_INT(num));
   if (md == NULL)
-    return(snd_no_such_mix_error(S_play_mix, num));
-
-  ASSERT_SAMPLE_TYPE(S_play_mix, beg, XEN_ARG_2);
-  samp = beg_to_sample(beg, S_play_mix);
-
+    return(snd_no_such_mix_error(S_play, num));
   play_mix(md, samp, true); 
+
   return(num);
 }
 
@@ -3857,7 +3851,6 @@ XEN_ARGIFY_6(g_mix_vct_w, g_mix_vct)
 XEN_ARGIFY_2(g_make_mix_sampler_w, g_make_mix_sampler)
 XEN_NARGIFY_1(g_read_mix_sample_w, g_read_mix_sample)
 XEN_NARGIFY_1(g_mix_sampler_p_w, g_mix_sampler_p)
-XEN_ARGIFY_2(g_play_mix_w, g_play_mix)
 XEN_NARGIFY_2(g_save_mix_w, g_save_mix)
 
 XEN_NARGIFY_0(g_view_mixes_dialog_w, g_view_mixes_dialog)
@@ -3908,7 +3901,6 @@ XEN_NARGIFY_1(g_set_mix_dialog_mix_w, g_set_mix_dialog_mix)
 #define g_make_mix_sampler_w g_make_mix_sampler
 #define g_read_mix_sample_w g_read_mix_sample
 #define g_mix_sampler_p_w g_mix_sampler_p
-#define g_play_mix_w g_play_mix
 #define g_save_mix_w g_save_mix
 
 #define g_view_mixes_dialog_w g_view_mixes_dialog
@@ -3950,7 +3942,6 @@ void g_init_mix(void)
   XEN_DEFINE_PROCEDURE(S_make_mix_sampler,       g_make_mix_sampler_w, 1, 1, 0, H_make_mix_sampler);
   XEN_DEFINE_PROCEDURE(S_read_mix_sample,        g_read_mix_sample_w,        1, 0, 0, H_read_mix_sample);
   XEN_DEFINE_PROCEDURE(S_mix_sampler_p,          g_mix_sampler_p_w,    1, 0, 0, H_mix_sampler_p);
-  XEN_DEFINE_PROCEDURE(S_play_mix,               g_play_mix_w,               0, 2, 0, H_play_mix);
   XEN_DEFINE_PROCEDURE(S_save_mix,               g_save_mix_w,               2, 0, 0, H_save_mix);
 
   XEN_DEFINE_PROCEDURE(S_mix,                    g_mix_w,                    1, 6, 0, H_mix);

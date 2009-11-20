@@ -34,6 +34,7 @@ MUS_EXPORT mus_any *mus_optkey_to_mus_any(XEN key, const char *caller, int n, mu
 MUS_EXPORT int mus_optkey_unscramble(const char *caller, int nkeys, XEN *keys, XEN *args, int *orig);
 MUS_EXPORT mus_float_t mus_optkey_to_float(XEN key, const char *caller, int n, mus_float_t def);
 MUS_EXPORT int mus_optkey_to_int(XEN key, const char *caller, int n, int def);
+MUS_EXPORT bool mus_optkey_to_bool(XEN key, const char *caller, int n, bool def);
 MUS_EXPORT mus_long_t mus_optkey_to_mus_long_t(XEN key, const char *caller, int n, mus_long_t def);
 MUS_EXPORT const char *mus_optkey_to_string(XEN key, const char *caller, int n, char *def);
 MUS_EXPORT XEN mus_optkey_to_procedure(XEN key, const char *caller, int n, XEN def, int required_args, const char *err);

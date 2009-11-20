@@ -635,7 +635,7 @@
 		      (= axis time-graph))
 		 (let ((samp (max 0 (c-integer (* (srate snd) (position->x x snd chn)))))
 		       (dasspeed (speed-control))
-		       (play (c-p snd)))
+		       (play (selected-sound) :start (c-p snd)))
 		   (cond ((= button 4)
 			  (if (< dasspeed 0)
 			      (set! (speed-control) (* -1 dasspeed)))
@@ -654,7 +654,7 @@
 
 #!
 (set! (speed-control) -1)
-(play (- (frames) 1000) #f #f #f 1000 #f #f)
+(play (selected-sound) (- (frames) 1000) 1000)
 !#
 
 
@@ -701,7 +701,7 @@
     
   (def-method (play pos)
     (define (das-play)
-      (play 0 #f #f #f #f #f das-callback))
+      (play (selected-sound) 0 :stop das-callback))
     (define (das-callback x)
       (if (and (= x 0) *c-islooping*)
 	  (das-play)
@@ -712,7 +712,7 @@
     
     (if (c-use-rt-player?)
 	(rt-snd-play snd 0 #f startplaypos)
-	(play startplaypos #f #f #f #f #f das-callback)))
+	(play (selected-sound) startplaypos :stop das-callback)))
 
   ;; Stops if allready playing
   (def-method (play2 pos)
@@ -725,7 +725,7 @@
 
   (def-method (play-selection #:optional (pos (get-selection-start)))
     (define (das-play)
-      (play (get-selection-start) #f #f #f (get-selection-end) #f das-callback))
+      (play (selected-sound) :start (get-selection-start) :end (get-selection-end) :stop das-callback))
     (define (das-callback x)
       (if (and (= x 0) *c-islooping*)
 	  (das-play)
@@ -737,7 +737,7 @@
 	(rt-snd-play snd (get-selection-start) (get-selection-end) (if (>= (speed-control snd) 0)
 								       pos
 								       (1- (get-selection-end))))
-	(play pos #f #f #f (get-selection-end) #f das-callback)))
+	(play (selected-sound) pos (get-selection-end) :stop das-callback)))
   
   (def-method (stop #:optional pos)
     (set! (cursor-follows-play) #f)

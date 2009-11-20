@@ -1,5 +1,6 @@
 Snd change log
 
+ 20-Nov:    play is generic now, "old-play" is the previous form.
  6-Nov:     removed all support for gtkglext.
  2-Nov:     selection function/object. selection->mix.
  28-Oct:    pretty-print.scm. 

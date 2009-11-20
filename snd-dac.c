@@ -1,4 +1,5 @@
 #include "snd.h"
+#include "clm2xen.h"
 
 /*
  * each channel currently being played has an associated dac_info struct
@@ -1179,7 +1180,7 @@ bool add_mix_to_play_list(mix_state *ms, chan_info *cp, mus_long_t beg_within_mi
 	     (play (lambda () (if (c-g?) #f 0.0)))
  */
 
-static bool add_zeros_to_play_list(XEN srate, XEN chans)
+static bool add_zeros_to_play_list(int srate, int chans)
 {
   int slot;
   slot = find_slot_to_play();
@@ -1189,7 +1190,7 @@ static bool add_zeros_to_play_list(XEN srate, XEN chans)
       dp = make_dac_info(slot, NULL, NULL, NULL, NO_END_SPECIFIED, 0, DAC_NOTHING, XEN_FALSE);
       if (dp)
 	{
-	  start_dac(XEN_TO_C_INT(srate), XEN_TO_C_INT(chans), IN_BACKGROUND, DEFAULT_REVERB_CONTROL_DECAY);
+	  start_dac(srate, chans, IN_BACKGROUND, DEFAULT_REVERB_CONTROL_DECAY);
 	  return(true);
 	}
     }
@@ -2798,172 +2799,59 @@ static void init_xen_player(void)
 
 /* -------------------------------------------------------------------------------- */
 
-
-/* (play [object] :start :end? :duration? :edit-position [used by save-as] :wait :stop :channel :[dac]out-channel? :sync? or should sync be default -- no arg for it)
+/* TODO: check all tests, rewrite docs (eventually), make compatible versions of
+ *          play-channel play-mix play-selection play-region play-and-wait old-play
+ * perhaps someday: make all args work for region/selection etc
  */
 
-static XEN g_play_selection(XEN wait, XEN stop_proc);
-
-static XEN g_play_1(XEN samp_n, XEN snd, XEN chn_n, bool back, bool syncd, XEN end_n, XEN edpos, 
-		    const char *caller, int arg_pos, XEN stop_proc, XEN out_chan)
+static XEN play_file(const char *play_name, mus_long_t start, mus_long_t end, int in_channel, int out_channel, play_process_t background, XEN stop_func)
 {
-  /* all chans if chn_n omitted, arbitrary file if snd is name */
   snd_info *sp;
-  chan_info *cp = NULL;
-  sync_info *si = NULL;
-  static char *play_name = NULL;
-  int i;
-  mus_long_t samp = 0;
-  mus_long_t end = NO_END_SPECIFIED;
-  mus_long_t *ends = NULL;
-  play_process_t background;
 
-  if (XEN_PROCEDURE_P(samp_n))
-    return(C_TO_XEN_BOOLEAN(add_xen_to_play_list(samp_n)));
+  if (!(mus_file_probe(play_name)))
+    return(snd_no_such_file_error(S_play, C_TO_XEN_STRING(play_name)));
 
-  if (XEN_FALSE_P(samp_n))
-    return(C_TO_XEN_BOOLEAN(add_zeros_to_play_list(snd, chn_n))); /* srate out-chans */
+  if (!(mus_header_type_p(mus_sound_header_type(play_name))))
+    XEN_ERROR(BAD_HEADER,
+	      XEN_LIST_3(C_TO_XEN_STRING(S_play),
+			 C_TO_XEN_STRING(play_name),
+			 C_TO_XEN_STRING(mus_header_type_name(mus_header_type()))));
 
-  /* if 1st arg is object, 2nd is begin time?, is there any real use in this case for stop-proc or wait? */
-  /* stop proc should be handled by a hook, not a passed-in procedure */
-  /* or add keywords for all these choices */
-
-  if (XEN_MIX_P(samp_n))
-    return(g_play_mix(samp_n, snd));                              /* "snd" = begin sample */
-
-  if (XEN_REGION_P(samp_n))
-    return(g_play_region(samp_n, snd, chn_n)); /* region wait stop-proc */
-
-  if (XEN_SELECTION_P(samp_n))
-    return(g_play_selection(snd, chn_n));      /* wait stop-proc */
-
-  if ((XEN_SOUND_P(samp_n)) ||                 /* snd-obj channel (assume start=0?) */
-      (XEN_PLAYER_P(samp_n)))
-    return(g_play_1(XEN_ZERO, samp_n, snd, back, syncd, end_n, edpos, caller, arg_pos, stop_proc, out_chan));
-
-
-  /* TODO: clean up all these play cases! -- there's no need to follow the original args */
-  /* TODO: make sure play (and friends) can take a sound object */
-  /*  is  the "stop-proc" of any use anymore? */
-  /* TODO: play-channel for objects and so on (play-and-wait = no stop?) */
-
-  if (XEN_INT64_T_P(end_n)) end = XEN_TO_C_INT64_T(end_n);
-
-#if USE_NO_GUI
-  background = NOT_IN_BACKGROUND;
-#else
-  if (back) background = IN_BACKGROUND; else background = NOT_IN_BACKGROUND;
-#endif
-
-  XEN_ASSERT_TYPE(((XEN_PROCEDURE_P(stop_proc)) && (procedure_arity_ok(stop_proc, 1))) ||
-		  (XEN_NOT_BOUND_P(stop_proc)) || 
-		  (XEN_FALSE_P(stop_proc)), 
-		  stop_proc, arg_pos + 1, caller, "a procedure of 1 arg");
-
-  if (play_name) {free(play_name); play_name = NULL;}
-
-  /* if even samp_n is XEN_UNDEFINED, start_dac? */
-
-  if (XEN_STRING_P(samp_n))
-    {
-      /* filename beg end background syncd ignored */
-      samp = beg_to_sample(snd, caller);
-      if (samp < 0) XEN_ERROR(NO_SUCH_SAMPLE,
-			      XEN_LIST_2(C_TO_XEN_STRING(caller),
-					 snd));
-
-      play_name = mus_expand_filename(XEN_TO_C_STRING(samp_n));
-
-      if (!(mus_file_probe(play_name)))
-	return(snd_no_such_file_error(caller, samp_n));
-
-      if (!(mus_header_type_p(mus_sound_header_type(play_name))))
-	XEN_ERROR(BAD_HEADER,
-		  XEN_LIST_3(C_TO_XEN_STRING(caller),
-			     samp_n, 
-			     C_TO_XEN_STRING(mus_header_type_name(mus_header_type()))));
-
-      if (!(mus_data_format_p(mus_sound_data_format(play_name))))
-	XEN_ERROR(XEN_ERROR_TYPE("bad-format"),
-		  XEN_LIST_3(C_TO_XEN_STRING(caller),
-			     samp_n, 
-			     C_TO_XEN_STRING(mus_header_original_format_name(mus_sound_original_format(play_name),
-									     mus_sound_header_type(play_name)))));
-      sp = make_sound_readable(play_name, false);
-      sp->short_filename = filename_without_directory(play_name);
-      sp->filename = NULL;
-      sp->delete_me = (struct dialog_play_info *)1;
-      if (XEN_INT64_T_P(chn_n)) end = XEN_TO_C_INT64_T(chn_n);
-      if ((sp->nchans == 1) &&
-	  (XEN_INTEGER_P(out_chan)))
-	{
-	  int ochan, pos;
-	  ochan = XEN_TO_C_INT(out_chan);	  
-	  pos = to_c_edit_position(sp->chans[0], edpos, caller, arg_pos);
-	  play_channel_1(sp->chans[0], samp, end, background, pos, stop_proc, ochan);
-	}
-      else
-	{
-	  play_sound_1(sp, samp, end, background, edpos, stop_proc, caller, arg_pos);
-	}
-      return(XEN_FALSE);
-    }
-
-  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samp_n), samp_n, XEN_ARG_1, caller, "a number");
-  samp = beg_to_sample(samp_n, caller);
-  if (samp < 0) XEN_ERROR(NO_SUCH_SAMPLE,
-			  XEN_LIST_2(C_TO_XEN_STRING(caller),
-				     samp_n));
-
-  if (XEN_PLAYER_P(snd))
-    sp = get_player_sound(snd);
-  else
-    {
-      ASSERT_CHANNEL(caller, snd, chn_n, 2);
-      sp = get_sp(snd);
-    }
-
-  if (sp == NULL) 
-    return(snd_no_such_sound_error(caller, snd));
-
-  if ((syncd) && 
-      (sp->sync != 0) && 
-      (!(IS_PLAYER_SOUND(sp))))
-    {
-      si = snd_sync(sp->sync);
-      if (end != NO_END_SPECIFIED)
-	{
-	  ends = (mus_long_t *)calloc(si->chans, sizeof(mus_long_t));
-	  for (i = 0; i < si->chans; i++) ends[i] = end;
-	}
-      for (i = 0; i < si->chans; i++) si->begs[i] = samp;
-      play_channels_1(si->cps, si->chans, si->begs, ends, background, edpos, false, stop_proc, caller, arg_pos);
-      si = free_sync_info(si);
-      if (ends) free(ends);
-      return(XEN_FALSE);
-    }
-
-  if (!(XEN_INTEGER_P(chn_n)))
-    play_sound_1(sp, samp, end, background, edpos, stop_proc, caller, arg_pos);
-  else 
-    {
-      int ochan = -1, pos;
-      cp = get_cp(snd, chn_n, caller);
-      XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(out_chan), out_chan, arg_pos + 2, caller, "an integer");
-      if (XEN_INTEGER_P(out_chan)) ochan = XEN_TO_C_INT(out_chan);
-      if (ochan < 0) ochan = cp->chan;
-      pos = to_c_edit_position(cp, edpos, caller, arg_pos);
-      if (cp) play_channel_1(cp, samp, end, background, pos, stop_proc, ochan);
-    }
-
+  if (!(mus_data_format_p(mus_sound_data_format(play_name))))
+    XEN_ERROR(XEN_ERROR_TYPE("bad-format"),
+	      XEN_LIST_3(C_TO_XEN_STRING(S_play),
+			 C_TO_XEN_STRING(play_name),
+			 C_TO_XEN_STRING(mus_header_original_format_name(mus_sound_original_format(play_name),
+									 mus_sound_header_type(play_name)))));
+  sp = make_sound_readable(play_name, false);
+  sp->short_filename = filename_without_directory(play_name);
+  sp->filename = NULL;
+  sp->delete_me = (struct dialog_play_info *)1;
+  if (in_channel != -1)
+    play_channel_1(sp->chans[in_channel], start, end, background, 0, stop_func, (out_channel < 0) ? 0 : out_channel);
+  else play_sound_1(sp, start, end, background, XEN_ZERO, stop_func, S_play, -1);
+  
   return(XEN_FALSE);
 }
 
 
-#define TO_C_BOOLEAN_OR_FALSE(a) (XEN_TRUE_P(a) || ((XEN_INTEGER_P(a)) && (XEN_TO_C_INT(a) == 1)))
+static XEN kw_start, kw_end, kw_channel, kw_wait, kw_edit_position, kw_stop, kw_out_channel, kw_with_sync, kw_srate, kw_channels;
 
+static void init_play_keywords(void)
+{
+  kw_start = XEN_MAKE_KEYWORD("start");
+  kw_end = XEN_MAKE_KEYWORD("end");
+  kw_wait = XEN_MAKE_KEYWORD("wait");
+  kw_channel = XEN_MAKE_KEYWORD("channel");
+  kw_out_channel = XEN_MAKE_KEYWORD("out-channel");
+  kw_edit_position = XEN_MAKE_KEYWORD("edit-position");
+  kw_stop = XEN_MAKE_KEYWORD("stop");
+  kw_with_sync = XEN_MAKE_KEYWORD("with-sync");
+  kw_srate = XEN_MAKE_KEYWORD("srate");
+  kw_channels = XEN_MAKE_KEYWORD("channels");
+}
 
-static XEN g_play(XEN samp_n, XEN snd, XEN chn_n, XEN syncd, XEN end_n, XEN edpos, XEN stop_proc, XEN out_chan) 
+static XEN g_play(XEN arglist)
 {
   #if HAVE_SCHEME
     #define play_example "(play \"oboe.snd\")"
@@ -2975,91 +2863,176 @@ static XEN g_play(XEN samp_n, XEN snd, XEN chn_n, XEN syncd, XEN end_n, XEN edpo
     #define play_example "\"oboe.snd\" play"
   #endif
 
-  #define H_play "(" S_play " :optional (start 0) snd chn sync end (pos -1) stop-proc out-chan): play snd or snd's channel chn starting at start. \
-'start' can also be a function or a filename: " play_example ".  If 'sync' is true, all sounds syncd to snd are played. \
-If 'end' is not given, " S_play " plays to the end of the sound.  If 'pos' is -1 or not given, the current edit position is \
-played."
+  #define H_play "(" S_play " object :start :end :channel :edit-position :out-channel :with-sync :wait :stop): \
+play the object from start to end.  If channel is not given, play all channels.  If with-sync, play all objects sync'd \
+to the current object.  If wait, wait for the play process to finish before going on.  If out-channel, send the samples \
+to that DAC channel.  If edit-position, play that member of the edit list, otherwise play the current state of the object. \
+If stop, call that function when the play process finishes.  \
+If object is a string, it is assumed to be a file name: \n    " play_example "\n."
 
-  return(g_play_1(samp_n, snd, chn_n, true, TO_C_BOOLEAN_OR_FALSE(syncd), end_n, edpos, S_play, 6, stop_proc, out_chan));
-}
+  XEN object = XEN_UNDEFINED;
+  mus_long_t start = 0, end = NO_END_SPECIFIED;
+  int channel = -1, out_channel = -1, srate = 44100, channels = 2, edpos_argpos = 0, channel_argpos;
+  bool with_sync = false, wait = false;
+  XEN stop_func = XEN_FALSE, edit_position = XEN_FALSE, channel_arg;
+  play_process_t background;
+  snd_info *sp;
 
-
-static XEN g_play_channel(XEN beg, XEN dur, XEN snd, XEN chn_n, XEN edpos, XEN stop_proc, XEN out_chan) 
-{
-  #define H_play_channel "(" S_play_channel " :optional (beg 0) (dur len) snd chn (pos -1) stop-proc out-chan): \
-play snd or snd's channel chn starting at beg for dur samps."
-  XEN end = XEN_FALSE;
-  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(beg), beg, XEN_ARG_1, S_play_channel, "a number");
-  if (XEN_INTEGER_P(dur))
+  if (XEN_NOT_NULL_P(arglist))
     {
-      mus_long_t len;
-      len = XEN_TO_C_INT64_T(dur);
-      if (len <= 0) return(XEN_FALSE);
-      end = C_TO_XEN_INT64_T(beg_to_sample(beg, S_play_channel) + len);
+      XEN args[20]; 
+      XEN keys[10];
+      int orig_arg[10] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+      int vals, i, arglist_len;
+
+      object = XEN_CAR(arglist);
+      arglist = XEN_CDR(arglist);
+
+      keys[0] = kw_start;
+      keys[1] = kw_end;
+      keys[2] = kw_channel;
+      keys[3] = kw_edit_position;
+      keys[4] = kw_out_channel;
+      keys[5] = kw_with_sync;
+      keys[6] = kw_wait;
+      keys[7] = kw_stop;
+      keys[8] = kw_srate;
+      keys[9] = kw_channels;
+
+      for (i = 0; i < 16; i++) args[i] = XEN_UNDEFINED;
+      arglist_len = XEN_LIST_LENGTH(arglist);
+
+      for (i = 0; i < arglist_len; i++) args[i] = XEN_LIST_REF(arglist, i);
+      vals = mus_optkey_unscramble(S_play, 8, keys, args, orig_arg);
+
+      if (vals > 0)
+	{
+	  start = mus_optkey_to_mus_long_t(keys[0], S_play, orig_arg[0], start);
+	  if (start < 0) 
+	    XEN_OUT_OF_RANGE_ERROR(S_play, orig_arg[0], keys[0], "start ~A is negative?");
+
+	  end = mus_optkey_to_mus_long_t(keys[1], S_play, orig_arg[1], end);
+	  if (end < -1)
+	    XEN_OUT_OF_RANGE_ERROR(S_play, orig_arg[1], keys[1], "end ~A is negative?");
+
+	  channel = mus_optkey_to_int(keys[2], S_play, orig_arg[2], channel);
+	  
+	  if (!(XEN_KEYWORD_P(keys[3]))) 
+	    {
+	      edit_position = keys[3];
+	      edpos_argpos = orig_arg[3];
+	    }
+	  out_channel = mus_optkey_to_int(keys[4], S_play, orig_arg[4], out_channel);
+
+	  with_sync = mus_optkey_to_bool(keys[5], S_play, orig_arg[5], with_sync);
+	  wait = mus_optkey_to_bool(keys[6], S_play, orig_arg[6], wait);
+	  stop_func = mus_optkey_to_procedure(keys[7], S_play, orig_arg[7], stop_func, 1, "play stop function takes 1 argument");
+
+	  srate = mus_optkey_to_int(keys[8], S_play, orig_arg[8], srate);
+	  if (srate <= 0) 
+	    XEN_OUT_OF_RANGE_ERROR(S_play, orig_arg[8], keys[8], "srate ~A <= 0?");
+
+	  channels = mus_optkey_to_int(keys[9], S_play, orig_arg[9], channels);
+	  if (channels <= 0)
+	    XEN_OUT_OF_RANGE_ERROR(S_play, orig_arg[9], keys[9], "channels ~A <= 0?");
+	}
     }
-  return(g_play_1(beg, snd, chn_n, true, false, end, edpos, S_play_channel, 5, stop_proc, out_chan));
-}
 
-
-static XEN g_play_selection(XEN wait, XEN stop_proc) 
-{
-  #define H_play_selection "(" S_play_selection " :optional wait stop-proc): play the selection. \
-'wait', if " PROC_TRUE ", causes " S_play_selection " to wait until the playing is finished \
-before returning."
-
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(wait), wait, XEN_ARG_1, S_play_selection, "a boolean");
-  XEN_ASSERT_TYPE(((XEN_PROCEDURE_P(stop_proc)) && (procedure_arity_ok(stop_proc, 1))) ||
-		  (XEN_NOT_BOUND_P(stop_proc)) || 
-		  (XEN_FALSE_P(stop_proc)), 
-		  stop_proc, XEN_ARG_3, S_play_selection, "a procedure of 1 arg");
-
-  if (selection_is_active())
+  /* unspecified object means the current sound, all chans, all samps, with sync, without wait, current edpos */
+  if (XEN_NOT_BOUND_P(object))
     {
-      play_process_t background;
-#if (!USE_NO_GUI)
-      bool back = false;
-      back = (!(TO_C_BOOLEAN_OR_FALSE(wait)));
-      if (back) background = IN_BACKGROUND; else background = NOT_IN_BACKGROUND;
-#else
-      background = NOT_IN_BACKGROUND;
-#endif
-      play_selection_1(background, stop_proc);
+      sp = any_selected_sound();
+      if (sp) play_sound(sp, start, end);
       return(XEN_FALSE);
     }
-  return(snd_no_active_selection_error(S_play_selection));
-}
 
+  /* #f object means start sending out zeros */
+  if (XEN_FALSE_P(object))
+    return(C_TO_XEN_BOOLEAN(add_zeros_to_play_list(srate, channels)));
 
-static XEN g_play_and_wait(XEN samp_n, XEN snd, XEN chn_n, XEN syncd, XEN end_n, XEN edpos, XEN stop_proc, XEN out_chan) 
-{
-  XEN result;
+  /* procedure object means add that function to the play list */
+  if (XEN_PROCEDURE_P(object))
+    return(C_TO_XEN_BOOLEAN(add_xen_to_play_list(object)));
 
-  #if HAVE_SCHEME
-    #define play_and_wait_example "(play-and-wait \"oboe.snd\")"
-  #endif
-  #if HAVE_RUBY
-    #define play_and_wait_example "play_and_wait(\"oboe.snd\")"
-  #endif
-  #if HAVE_FORTH
-    #define play_and_wait_example "\"oboe.snd\" play-and-wait"
-  #endif
+  /* mix object */
+  if (XEN_MIX_P(object))
+    return(g_play_mix(object, start));
 
-  #define H_play_and_wait "(" S_play_and_wait " (start 0) snd chn syncd end (pos -1) stop-proc out-chan): \
-play snd or snd's channel chn starting at start \
-and wait for the play to complete before returning.  'start' can also be a function or a filename:\n  " play_and_wait_example
+#if USE_NO_GUI
+  background = NOT_IN_BACKGROUND;
+#else
+  if (wait) background = IN_BACKGROUND; else background = NOT_IN_BACKGROUND;
+#endif
 
-  result = g_play_1(samp_n, snd, chn_n, false, TO_C_BOOLEAN_OR_FALSE(syncd), end_n, edpos, S_play_and_wait, 6, stop_proc, out_chan);
+  /* selection object */
+  if (XEN_SELECTION_P(object))
+    {
+      if (selection_is_active())
+	play_selection_1(background, stop_func);
+      return(object);
+    }
 
-  /* dac-hook might call c-g! leaving these flags set -- this can cause confusion (much) later.
-   *   the problem is that one or both of these flags is set by c-g!, but if not cleared, anything
-   *   might call (c-g?) later which will see the (long previous) c-g! -- I'd clear the flags
-   *   before calling check-for-event in g_abortq (snd-main.c), but that assumes no one else
-   *   called it earlier.  c-g! appears to be problematic...
-   */
+  /* region object */
+  if (XEN_REGION_P(object))
+    return(g_play_region(object, background, stop_func));
 
-  ss->stopped_explicitly = false;
-  ss->cg_seen = false;
-  return(result);
+  /* string object = filename */
+  if (XEN_STRING_P(object))
+    {
+      char *name;
+      name = mus_expand_filename(XEN_TO_C_STRING(object));
+      play_file((const char *)name, start, end, channel, out_channel, background, stop_func);
+      free(name);
+      return(object);
+    }
+
+  /* otherwise object is either a player or a sound */
+  if (XEN_PLAYER_P(object))
+    sp = get_player_sound(object);
+  else sp = get_sp(object);
+
+  if (sp == NULL) 
+    return(snd_no_such_sound_error(S_play, object));
+
+  if ((with_sync) && 
+      (sp->sync != 0) && 
+      (!(IS_PLAYER_SOUND(sp))))
+    {
+      sync_info *si;
+      mus_long_t *ends;
+      int i;
+
+      si = snd_sync(sp->sync);
+      if (end != NO_END_SPECIFIED)
+	{
+	  ends = (mus_long_t *)calloc(si->chans, sizeof(mus_long_t));
+	  for (i = 0; i < si->chans; i++) ends[i] = end;
+	}
+      for (i = 0; i < si->chans; i++) si->begs[i] = start;
+      play_channels_1(si->cps, si->chans, si->begs, ends, background, edit_position, false, stop_func, S_play, edpos_argpos);
+      si = free_sync_info(si);
+      if (ends) free(ends);
+      return(XEN_FALSE);
+    }
+
+  if (channel == -1)
+    play_sound_1(sp, start, end, background, edit_position, stop_func, S_play, edpos_argpos);
+  else 
+    {
+      if ((channel < sp->nchans) &&
+	  (channel >= 0))
+	{
+	  int pos;
+	  chan_info *cp;
+	  cp = sp->chans[channel];
+	  if (out_channel < 0) out_channel = channel;
+	  pos = to_c_edit_position(cp, edit_position, S_play, edpos_argpos);
+	  play_channel_1(cp, start, end, background, pos, stop_func, out_channel);
+	}
+      else XEN_OUT_OF_RANGE_ERROR(S_play, channel_argpos, channel_arg, "channel ~A does not exist?");
+    }
+
+  return(object);
 }
 
 
@@ -3404,10 +3377,7 @@ static XEN g_set_cursor_location_offset(XEN val)
 
 
 #ifdef XEN_ARGIFY_1
-XEN_ARGIFY_8(g_play_w, g_play)
-XEN_ARGIFY_7(g_play_channel_w, g_play_channel)
-XEN_ARGIFY_2(g_play_selection_w, g_play_selection)
-XEN_ARGIFY_8(g_play_and_wait_w, g_play_and_wait)
+XEN_VARGIFY(g_play_w, g_play)
 XEN_ARGIFY_1(g_stop_playing_w, g_stop_playing)
 XEN_ARGIFY_2(g_make_player_w, g_make_player)
 XEN_ARGIFY_6(g_add_player_w, g_add_player)
@@ -3431,9 +3401,6 @@ XEN_NARGIFY_0(g_cursor_location_offset_w, g_cursor_location_offset)
 XEN_NARGIFY_1(g_set_cursor_location_offset_w, g_set_cursor_location_offset)
 #else
 #define g_play_w g_play
-#define g_play_channel_w g_play_channel
-#define g_play_selection_w g_play_selection
-#define g_play_and_wait_w g_play_and_wait
 #define g_stop_playing_w g_stop_playing
 #define g_make_player_w g_make_player
 #define g_add_player_w g_add_player
@@ -3460,11 +3427,9 @@ XEN_NARGIFY_1(g_set_cursor_location_offset_w, g_set_cursor_location_offset)
 void g_init_dac(void)
 {
   init_xen_player();
+  init_play_keywords();
 
-  XEN_DEFINE_PROCEDURE(S_play,           g_play_w,           0, 8, 0, H_play);
-  XEN_DEFINE_PROCEDURE(S_play_channel,   g_play_channel_w,   0, 7, 0, H_play_channel);
-  XEN_DEFINE_PROCEDURE(S_play_selection, g_play_selection_w, 0, 2, 0, H_play_selection);
-  XEN_DEFINE_PROCEDURE(S_play_and_wait,  g_play_and_wait_w,  0, 8, 0, H_play_and_wait);
+  XEN_DEFINE_PROCEDURE(S_play,           g_play_w,           0, 0, 1, H_play);
   XEN_DEFINE_PROCEDURE(S_stop_playing,   g_stop_playing_w,   0, 1, 0, H_stop_playing);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_pausing, g_pausing_w, H_pausing, S_setB S_pausing, g_set_pausing_w, 0, 0, 1, 0);
@@ -3510,4 +3475,112 @@ If it returns " PROC_TRUE ", the sound is not played."
 
   sdobj = XEN_FALSE;
   sdobj_loc = NOT_A_GC_LOC;
+
+
+  /* backwards compatibility */
+
+#if HAVE_S7
+  XEN_EVAL_C_STRING("(define* (play-region reg wait stop-func)\
+                       (play (if (integer? reg) (integer->region reg) reg) :wait wait :stop stop-func))");
+
+  XEN_EVAL_C_STRING("(define* (play-selection wait stop-func)\
+                       (play (selection) :wait wait :stop stop-func))");
+
+  XEN_EVAL_C_STRING("(define* (play-mix id (beg 0))\
+                       (play (if (integer? id) (integer->mix id) id) beg))");
+
+  XEN_EVAL_C_STRING("(define* (play-and-wait (start 0) snd chn syncd end (pos -1) stop-proc)\
+                       (if (string? start)\
+                           (play start (or snd 0) :end (or chn -1) :wait #t) \
+                           (play (if (integer? snd) (integer->sound snd)\
+                                     (if (sound? snd) snd\
+                                         (or (selected-sound) (car (sounds)))))\
+                                 :channel (or chn -1) :wait #t :with-sync syncd :start start :end (or end -1) \
+                                 :stop stop-proc :edit-position pos)))");
+
+  XEN_EVAL_C_STRING("(define* (old-play (start 0) snd chn syncd end (pos -1) stop-proc (out-chan -1))\
+                       (play (if (integer? snd) (integer->sound snd)\
+                                 (if (sound? snd) snd\
+                                     (or (selected-sound) (car (sounds)))))\
+                             :channel (or chn -1) :with-sync syncd :start start :end (or end -1) :stop stop-proc :out-channel out-chan :edit-position pos))");
+
+  XEN_EVAL_C_STRING("(define* (play-channel (beg 0) dur snd chn (pos -1) stop-proc (out-chan -1))\
+                       (play (if (integer? snd) (integer->sound snd)\
+                                 (if (sound? snd) snd\
+                                     (or (selected-sound) (car (sounds)))))\
+                             :channel (or chn -1) :with-sync #f :start beg :end (if dur (+ beg dur) -1) :stop stop-proc :out-channel out-chan :edit-position pos))");
+#endif
+
+#if HAVE_RUBY
+  XEN_EVAL_C_STRING("def play_region(reg, wait = false, stop_proc = false)\n\
+                       play(reg.kind_of?(Fixnum) ? integer2region(reg) : reg, :wait, wait, :stop, stop_proc)\n\
+                       end");
+
+  XEN_EVAL_C_STRING("def play_selection(wait = false, stop_proc = false)\n\
+                       play(selection(), :wait, wait, :stop, stop_proc)\n\
+                       end");
+
+  XEN_EVAL_C_STRING("def play_mix(id, beg = 0)\n\
+                       play(id.kind_of?(Fixnum) ? integer2mix(id) : id, :start, beg)\n\
+                       end");
+
+  XEN_EVAL_C_STRING("def play_and_wait(start, snd, chn = -1, syncd = false, end = -1, pos = -1, stop_proc = false, out_chan = -1)\n\
+                       play(snd.kind_of?(Fixnum) ? integer2sound(snd) : snd, :channel, chn, :with_sync, syncd, :wait, true, \n\
+                            :start, start, :end, end, :stop, stop_proc, :out_channel, out_chan, :edit_position, pos)\n\
+                       end");
+
+  XEN_EVAL_C_STRING("def old_play(start, snd, chn = -1, syncd = false, end = -1, pos = -1, stop_proc = false, out_chan = -1)\n\
+                       play(snd.kind_of?(Fixnum) ? integer2sound(snd) : snd, :channel, chn, :with_sync, syncd, \n\
+                            :start, start, :end, end, :stop, stop_proc, :out_channel, out_chan, :edit_position, pos)\n\
+                       end");
+
+  XEN_EVAL_C_STRING("def play_channel(start, dur, snd, chn = 0, pos = -1, stop_proc = false, out_chan = -1)\n\
+                       play(snd.kind_of?(Fixnum) ? integer2sound(snd) : snd, :channel, chn, \n\
+                            :start, start, :end, dur.kind_of?(Fixnum) ? (start + dur) : -1, \n\
+                            :stop, stop_proc, :out_channel, out_chan, :edit_position, pos)\n\
+                       end");
+#endif  
+
+#if HAVE_FORTH
+#endif
+
+#if HAVE_GUILE
+  XEN_EVAL_C_STRING("(use-modules (ice-9 optargs))");
+
+  XEN_EVAL_C_STRING("(define* (play-region reg #:optional (wait #f) (stop-func #f))\
+                       (play (if (integer? reg) (integer->region reg) reg) #:wait wait #:stop stop-func))");
+
+  XEN_EVAL_C_STRING("(define* (play-selection #:optional (wait #f) (stop-func #f))\
+                       (play (selection) #:wait wait #:stop stop-func))");
+
+  XEN_EVAL_C_STRING("(define* (play-mix id #:optional (beg 0))\
+                       (play (if (integer? id) (integer->mix id) id) beg))");
+
+  XEN_EVAL_C_STRING("(define* (play-and-wait #:optional (start 0) (snd #f) (chn #f) (syncd #f) (end -1) (pos -1) (stop-proc #f))\
+                       (if (string? start)\
+                           (play start (or snd 0) #:end (or chn -1) #:wait #t) \
+                           (play (if (integer? snd) (integer->sound snd)\
+                                     (if (sound? snd) snd\
+                                         (or (selected-sound) (car (sounds)))))\
+                                 #:channel (or chn -1) #:wait #t #:with-sync syncd #:start start #:end (or end -1) \
+                                 #:stop stop-proc #:edit-position pos)))");
+
+  XEN_EVAL_C_STRING("(define* (old-play #:optional (start 0) (snd #f) (chn #f) (syncd #f) (end -1) (pos -1) (stop-proc #f) (out-chan -1))\
+                       (play (if (integer? snd) (integer->sound snd)\
+                                 (if (sound? snd) snd\
+                                     (or (selected-sound) (car (sounds)))))\
+                             #:channel (or chn -1) #:with-sync syncd #:start start #:end (or end -1) \
+                             #:stop stop-proc #:out-channel out-chan #:edit-position pos))");
+
+  XEN_EVAL_C_STRING("(define* (play-channel #:optional (beg 0) (dur #f) (snd #f) (chn #f) (pos -1) (stop-proc #f) (out-chan -1))\
+                       (play (if (integer? snd) (integer->sound snd)\
+                                 (if (sound? snd) snd\
+                                     (or (selected-sound) (car (sounds)))))\
+                             #:channel (or chn -1) #:with-sync #f #:start beg #:end (if dur (+ beg dur) -1) \
+                             #:stop stop-proc #:out-channel out-chan #:edit-position pos))");
+#endif
+
+
+  /* TODO: fixup forth cases, and all scm/rb/fs files, examples etc in docs */
+
 }
