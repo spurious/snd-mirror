@@ -1890,7 +1890,7 @@ than 40 seconds in duration, and truncates them to 40 seconds:
 <table border=0 cellpadding=5 hspace=20><tr><td><pre>
 #!snd -b
 !#
-(<a class=quiet href="extsnd.html#playandwait" onmouseout="UnTip()" onmouseover="Tip(extsnd_playandwait_tip)">play-and-wait</a> (list-ref (<a class=quiet href="extsnd.html#scriptargs" onmouseout="UnTip()" onmouseover="Tip(extsnd_scriptargs_tip)">script-args</a>) (+ (<a class=quiet href="extsnd.html#scriptarg" onmouseout="UnTip()" onmouseover="Tip(extsnd_scriptarg_tip)">script-arg</a>) 1)))
+(play (list-ref (<a class=quiet href="extsnd.html#scriptargs" onmouseout="UnTip()" onmouseover="Tip(extsnd_scriptargs_tip)">script-args</a>) (+ (<a class=quiet href="extsnd.html#scriptarg" onmouseout="UnTip()" onmouseover="Tip(extsnd_scriptarg_tip)">script-arg</a>) 1)) :wait #t)
 (<a class=quiet href="extsnd.html#exit" onmouseout="UnTip()" onmouseover="Tip(extsnd_exit_tip)">exit</a>)
 </pre></td></tr></table>
 

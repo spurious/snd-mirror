@@ -3007,6 +3007,7 @@ If object is a string, it is assumed to be a file name: \n    " play_example "\n
 	}
       for (i = 0; i < si->chans; i++) si->begs[i] = start;
       play_channels_1(si->cps, si->chans, si->begs, ends, background, edit_position, false, stop_func, S_play, edpos_argpos);
+
       si = free_sync_info(si);
       if (ends) free(ends);
       return(XEN_FALSE);
@@ -3498,13 +3499,15 @@ If it returns " PROC_TRUE ", the sound is not played."
                        (play (if (integer? snd) (integer->sound snd)\
                                  (if (sound? snd) snd\
                                      (or (selected-sound) (car (sounds)))))\
-                             :channel (or chn -1) :with-sync syncd :start start :end (or end -1) :stop stop-proc :out-channel out-chan :edit-position pos))");
+                             :channel (or chn -1) :with-sync syncd :start start :end (or end -1) \
+                             :stop stop-proc :out-channel out-chan :edit-position pos))");
 
   XEN_EVAL_C_STRING("(define* (play-channel (beg 0) dur snd chn (pos -1) stop-proc (out-chan -1))\
                        (play (if (integer? snd) (integer->sound snd)\
                                  (if (sound? snd) snd\
                                      (or (selected-sound) (car (sounds)))))\
-                             :channel (or chn -1) :with-sync #f :start beg :end (if dur (+ beg dur) -1) :stop stop-proc :out-channel out-chan :edit-position pos))");
+                             :channel (or chn -1) :with-sync #f :start beg :end (if dur (+ beg dur) -1) \
+                             :stop stop-proc :out-channel out-chan :edit-position pos))");
 #endif
 
 #if HAVE_RUBY
@@ -3538,6 +3541,55 @@ If it returns " PROC_TRUE ", the sound is not played."
 #endif  
 
 #if HAVE_FORTH
+  XEN_EVAL_C_STRING(": play-region <{ reg :optional wait #f stop-proc #f -- val }>\n\
+ reg fixnum? if reg integer->region else reg then :wait wait :stop stop-proc play ;"); 
+
+  XEN_EVAL_C_STRING(": play-selection <{ :optional wait #f stop-proc #f -- val }>\n\
+ selection :wait wait :stop stop-proc play ;"); 
+
+  XEN_EVAL_C_STRING(": play-mix <{ id :optional beg 0 -- }>\n\
+ id fixnum? if id integer->mix else id then :start beg play ;"); 
+
+  XEN_EVAL_C_STRING(": play-and-wait <{ start\n\
+    :optional snd #f chn -1 syncd #f end -1 pos 0 stop-proc #f -- val }>\n\
+ start string? if\n\
+   start snd :channel chn :end end :wait #t play\n\
+ else\n\
+   snd fixnum? if\n\
+     snd integer->sound\n\
+   else\n\
+     snd sound? if\n\
+    snd\n\
+     else\n\
+    selected-sound sounds car ||\n\
+     then\n\
+   then :channel chn :wait #t :with-sync syncd\n\
+   :start start :end end :stop stop-proc :edit-position pos play\n\
+ then ;"); 
+
+  XEN_EVAL_C_STRING(": old-play <{ :optional start 0 snd #f chn -1 syncd #f end -1 pos 0 stop-proc #f out-chan -1 -- val }>\n\
+ snd fixnum? if\n\
+   snd integer->sound\n\
+ else\n\
+   snd sound? if\n\
+     snd\n\
+   else\n\
+     selected-sound sounds car ||\n\
+   then\n\
+ then :channel chn :with-sync syncd :start start :end end :stop stop-proc\n\
+ :out-channel out-chan :edit-position pos play ;"); 
+
+  XEN_EVAL_C_STRING(": play-channel <{ :optional beg 0 dur #f snd #f chn -1 pos 0 stop-proc #f out-chan -1 -- val }>\n\
+ snd fixnum? if\n\
+   snd integer->sound\n\
+ else\n\
+   snd sound? if\n\
+     snd\n\
+   else\n\
+     selected-sound sounds car ||\n\
+   then\n\
+ then :channel chn :with-sync #f :start beg :end dur fixnum? if beg dur d+ else -1 then\n\
+ :stop stop-proc :out-channel out-chan :edit-position pos play ;"); 
 #endif
 
 #if HAVE_GUILE
@@ -3577,7 +3629,7 @@ If it returns " PROC_TRUE ", the sound is not played."
 #endif
 #endif
 
-  /* TODO: fixup forth cases, and all fs files */
+  /* TODO: fixup all fs files */
   /* SOMEDAY: extend rest of play args to other cases like play-region */
   /* TODO: fixup all the play refs in *.html (quick etc), unindex play-region et al */
 

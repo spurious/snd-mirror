@@ -2691,7 +2691,7 @@ selection is active:
     (if (and (<a class=quiet href="#selectionok" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectionok_tip)">selection?</a>)
 	     (<a class=quiet href="#selectionmember" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectionmember_tip)">selection-member?</a> snd))
 	(begin
-	  (<a class=quiet href="#playselection" onmouseout="UnTip()" onmouseover="Tip(extsnd_playselection_tip)">play-selection</a>)
+	  (play (selection))
 	  #t) ; there's a selection so don't play the entire sound
 	#f))) ; no selection, so go ahead and play it all
 </pre></td></tr></table>
@@ -5287,11 +5287,9 @@ mix? returns #t if 'obj' is a mix object and it is accessible in a channel's edi
 
 
 <!-- play-mix -->
-<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="playmix">play-mix</a> (mix :optional beg)</code>
+<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def>play-mix</a> (mix :optional beg)</code>
 </td></tr><tr><td></td><td>
 <p>play-mix plays the mix 'mix'.  'beg' is where to start playing within the mix.
-This function does not return until the play is complete or is interrupted (it is similar to <a href="#playandwait">play-and-wait</a>,
-rather than <a href="#play">play</a>).
 </p>
 <p>play-mix is obsolete and will be removed soon (use play).
 </p>
@@ -5432,7 +5430,7 @@ It returns a list of mixes, one for each channel mixed.
 
 
 <!-- play-region -->
-<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="playregion">play-region</a> reg :optional wait stop-func</code>
+<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def>play-region</a> reg :optional wait stop-func</code>
 </td></tr><tr><td></td><td>
 <p>
 play-region plays region 'reg'; if wait is #t, it plays to the end before returning.  The 'stop-func'
@@ -5686,14 +5684,13 @@ The Edit:Mix selection menu choice is <code>(mix-selection (cursor))</code>.
 
 
 <!-- play-selection -->
-<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="playselection">play-selection</a> (:optional wait edpos stop-func)</code>
+<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def>play-selection</a> (:optional wait edpos stop-func)</code>
 </td></tr><tr><td></td><td>
 <p>play-selection plays the selection.  'edpos' is the edit position which default to the current edit.
 If 'wait' is #t, play-selection does not return until the play has completed.
 If 'stop-func' is a procedure of one argument, it is called when the play process stops.
 The argument provides the reason the play is stopping; it will be 0 if the play completed normally.
-See <a href="#playregion">play-region</a> for an example, and <a href="#stopplayreasons">play</a>
-for a complete list of these reasons.
+See <a href="#stopplayreasons">play</a> for a complete list of these reasons.
 </p>
 <p>play-selection is obsolete and will be removed soon (use play).
 </p>
@@ -7884,7 +7881,7 @@ function option to time the playing of each mix in a sequence of mixes.  Another
 
 <TABLE border=3 bordercolor="tan" hspace=20 vspace=10><tr><td>
 <small><blockquote>
-play one channel: <a href="#playchannel">play-channel</a>, play button in control panel or files dialog<br>
+play one channel: (play sound-object :channel n), play button in control panel or files dialog<br>
 play from cursor: C-q and example above<br>
 play from cursor with tracking cursor: <a href="#pfc">pfc</a> above<br>
 play the selection: (play (selection)), <a href="snd.html#cxp">C-x p</a><br>
@@ -7938,12 +7935,12 @@ The hooks called during a play operation are:
     as each sound ends: <a class=quiet href="#stopplayinghook" onmouseout="UnTip()" onmouseover="Tip(extsnd_stopplayinghook_tip)">stop-playing-hook</a>, <a class=quiet href="#stopplayingselectionhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_stopplayingselectionhook_tip)">stop-playing-selection-hook</a>
     close audio device: <a class=quiet href="#stopdachook" onmouseout="UnTip()" onmouseover="Tip(extsnd_stopdachook_tip)">stop-dac-hook</a>
 </pre>
-
+</td></tr><tr><td colspan=2 height=18></td></tr>
 
 
 <!-- play-and-wait -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
-<code><a class=def name="playandwait">play-and-wait</a> (:optional samp snd chn sync end edpos stop-proc out-chan)</code>
+<code><a class=def>play-and-wait</a> (:optional samp snd chn sync end edpos stop-proc out-chan)</code>
 </td></tr><tr><td></td><td>
 <p>
 This plays the given channel starting from sample 'samp' and waits
@@ -7959,7 +7956,7 @@ If 'pos' is given, play-and-wait plays at that edit position.
 
 <!-- play-channel -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
-<code><a class=def name="playchannel">play-channel</a> (:optional beg dur snd chn edpos stop-proc out-chan)</code>
+<code><a class=def>play-channel</a> (:optional beg dur snd chn edpos stop-proc out-chan)</code>
 </td></tr><tr><td></td><td>
 <p>
 play-channel is the <a class=quiet href="#regularizedargs" onmouseout="UnTip()" onmouseover="Tip(extsnd_regularizedargs_tip)">regularized</a> version of <a href="#play">play</a>.
@@ -13920,130 +13917,6 @@ You can find out at run-time whether GL is loaded via <code>(provided? 'gl)</cod
 
 </table>
 
-
-        <!-- I(open file):L(open-sound)(opensound) -->
-	<!-- I(close file):L(close-sound)(closesound) -->
-	<!-- I(save file):L(save-sound)(savesound) -->
-        <!-- I(save file as):L(save-sound-as)(savesoundas) -->
-        <!-- I(change format):L(save-sound-as)(savesoundas) -->
-	<!-- I(revert file):L(revert-sound)(revertsound) -->
-        <!-- I(open file read-only):L(view-sound)(viewsound) -->
-        <!-- I(create new file):L(new-sound)(newsound) -->
-	<!-- I(print file):L(graph-&gt;ps)(graphtops) -->
-	<!-- I(exit Snd):L(exit)(exit) -->
-        <!-- I(undo edit):L(undo)(undo) -->
-	<!-- I(redo edit):L(redo)(redo) -->
-        <!-- I(cut selection):L(delete-selection)(deleteselection) -->
-	<!-- I(insert selection):O(insert-region)(insertregion) -->
-	<!-- I(insert selection):L(insert-selection)(insertselection) -->
-	<!-- I(play file):L(play, stop)(play) -->
-        <!-- I(show marks):L(show-marks)(showmarks) --><!-- I(show marks):A(showmarks) -->
-	<!-- I(y=0 line):L(show-y-zero)(showyzero) -->
-	<!-- I(dots or lines):L(graph-style)(graphstyle) -->
-        <!-- I(combine channels):L(channel-style)(channelstyle) -->
-        <!-- I(control panel):L(show-controls)(showcontrols) -->
-	<!-- I(fft peaks):L(show-transform-peaks)(showtransformpeaks) -->
-        <!-- I(fft peaks):O(peaks)(peaks) -->
-	<!-- I(fft/sono/spectrogram):L(transform-graph-type)(transformgraphtype) -->
-        <!-- I(zoom focus):L(zoom-focus-style)(zoomfocusstyle) -->
-	<!-- I(fft in dB):L(fft-log-magnitude)(fftlogmagnitude) -->
-	<!-- I(fft log freq):L(fft-log-frequency)(fftlogfrequency) -->
-	<!-- I(select sound):L(selected-sound)(selectedsound) -->
-	<!-- I(multichannel ops):L(sync)(sync) -->
-        <!-- I(save control panel):L(save-controls)(savecontrols) -->
-	<!-- I(amp env):L(env-sound)(envsound) -->
-        <!-- I(filter):L(filter-control-envelope)(filtercontrolenvelope) -->
-	<!-- I(filter):M(Edit: Edit Env)(editenvelope) -->
-        <!-- I(axis bounds):L([xy]-bounds)(xbounds) -->
-	<!-- I(max amp):L(maxamp)(maxamp) -->
-	<!-- I(max amp):A(maxamp) -->
-        <!-- I(define mark):L(add-mark)(addmark) -->
-        <!-- I(color):L(color-orientation-dialog)(colororientationdialog) -->
-	<!-- I(color):O(color-scale,color-cutoff)(colorscale) -->
-        <!-- I(orientation):O(spectro-x-angle etc)(spectroxangle) -->
-	<!-- I(file lists):L(view-files-dialog)(viewfilesdialog) -->
-        <!-- I(define selection):L(make-region)(makeregion) -->
-	<!-- I(delete samples):L(delete-samples)(deletesamples) -->
-        <!-- I(temp directory):L(temp-dir)(tempdir) -->
-        <!-- I(continue session):L(load) -->
-        <!-- I(fft window):L(fft-window)(fftwindow) -->
-	<!-- I(fft size):L(transform-size)(transformsize) -->
-        <!-- I(fft window parameter):L(fft-window-beta)(fftbeta) -->
-	<!-- I(move cursor ahead):L(set cursor)(cursor) -->
-        <!-- I(move cursor back):L(set cursor)(cursor) -->
-        <!-- I(insert zeros):L(insert-silence)(insertsilence) -->
-        <!-- I(insert zeros):O(pad-channel)(padchannel) -->
-	<!-- I(change samples):L(set-samples)(setsamples) -->
-	<!-- I(srate conversion):L(src-sound)(srcsound) --><!-- I(srate conversion):M(Edit: Edit Env)(editenvelope) -->
-        <!-- I(srate conversion):O(src-selection)(srcsoundselection) --><!-- I(srate conversion):A(srcsound) -->
-	<!-- I(resample):L(src-sound)(srcsound) --><!-- I(resample):M(Edit: Edit Env)(editenvelope) --><!-- I(resample):A(srcsound) -->
-	<!-- I(resample):O(src-selection)(srcsoundselection) --><!-- I(reverse samples):A(reversesound) -->
-	<!-- I(reverse samples):L(reverse-sound)(reversesound) --><!-- I(reverse samples):O(reverse-selection)(reverseselection) -->
-	<!-- I(filter samples):L(filter-sound)(filtersound) --><!-- I(filter samples):M(Edit: Edit Env)(editenvelope) -->
-	<!-- I(filter samples):O(filter-selection)(filterselection) --><!-- I(filter samples):A(filtersound) -->
-	<!-- I(save marks):L(save-marks)(savemarks) -->
-        <!-- I(show freq domain):L(transform-graph?)(transformgraphp) -->
-	<!-- I(show time domain):L(time-graph?)(timegraphp) -->
-        <!-- I(keyboard macros):L(key)(key) -->
-        <!-- I(delete mark):L(delete-mark)(deletemark) --> <!-- I(delete mark):O(delete-marks)(deletemarks) -->
-	<!-- I(sonogram):L(transform-graph-type)(transformgraphtype) -->
-	<!-- I(spectrogram):L(transform-graph-type)(transformgraphtype) -->
-        <!-- I(X axis units):L(x-axis-style)(xaxisstyle) -->
-	<!-- I(speed units):L(speed-control-style)(speedstyle) -->
-	<!-- I(speed units):O(speed-control-tones)(speedtones) -->
-	<!-- I(change srate):L(src-sound)(srcsound) -->	
-	<!-- I(edit env):L(enved-dialog)(enveddialog) -->
-	<!-- I(edit header):L(edit-header-dialog)(editheaderdialog) -->
-	<!-- I(insert file):L(insert-sound)(insertsound) -->
-	<!-- I(mix file):L(mix)(mix) -->
-	<!-- I(move mixed file):L(mix-position)(mixposition) -->
-	<!-- I(play selection):L(play-selection)(playselection) -->
-	<!-- I(play selection):O(play-region)(playregion) -->
-	<!-- I(update file):L(update)(updatesound) -->
-	<!-- I(view envs):L(enved-dialog)(enveddialog) -->
-	<!-- I(play channel):L(play-channel)(playchannel) -->
-	<!-- I(play channel):O(play)(play) -->
-	<!-- I(mix selection):O(mix-region)(mixregion) -->
-	<!-- I(mix selection):L(mix-selection)(mixselection) -->
-	<!-- I(interrupt Snd):L(stop-playing)(stopplaying) -->
-	<!-- I(interrupt Snd):O(c-g!)(cgx) -->
-	<!-- I(move window back):L(left-sample)(leftsample) -->
-	<!-- I(move window ahead):L(right-sample)(rightsample) -->
-	<!-- I(change tempo):L(expand)(expandcontrol) -->
-	<!-- I(wavelets):L(wavelet-type)(wavelettype) -->
-	<!-- I(save macros):L(save-macros)(savemacros) -->
-        <!-- I(save selection):L(save-region)(saveregion) --><!-- I(save selection):O(save-selection)(saveselection) -->
-	<!-- I(examine regions):L(view-regions-dialog)(viewregionsdialog) -->
-	<!-- I(zoom window):L(x-bounds)(xbounds) -->
-	<!-- I(describe audio):A(musaudiodescribe) --><!-- I(describe audio):L(mus-audio-describe)(musaudiodescribe) -->
-	<!-- I(abort command):L(c-g?)(cgp) -->
-	<!-- I(count matches):L(count-matches)(countmatches) --><!-- I(count matches):A(countmatches) -->
-	<!-- I(convolution):L(convolution)(convolve) --><!-- I(convolution):A(convolve) --><!-- I(convolution):O(convolve-with)(convolvewith) -->
-	<!-- I(auto save):O(autosave.scm) -->
-        <!-- I(reverberate file):L(convolve-with)(convolvewith) -->
-        <!-- I(record sound):L(recorder-dialog)(recorderdialog) -->
-        <!-- I(describe file):L(info)(sndinfo) -->
-        <!-- I(change pitch):L(src-sound)(srcsound) -->
-	<!-- I(change colors):L(make-color)(aboutcolors) --><!-- I(change colors):A(aboutcolors) --><!-- I(change colors):O(resources)(sndresources) -->
-	<!-- I(create new file):O(default-output-srate)(defaultoutputsrate) -->
-	<!-- I(autocorrelation):L(autocorrelate)(autocorrelate) -->
-	<!-- I(axis bounds):O(axis-info)(axisinfo) -->
-	<!-- I(horizontal panes):L(graphs-horizontal)(graphshorizontal) -->
-	<!-- I(extract channel):L(save-sound-as)(savesoundas) -->
-	<!-- I(save channel):L(save-sound-as)(savesoundas) -->
-	<!-- I(swap channels):L(swap-channels)(swapchannels) -->
-	<!-- I(overlay sounds):L(graph-data)(graphdata) -->
-	<!-- I(overlay sounds):A(graphdata) -->
-	<!-- I(edit env):O(enved-hook)(envedhook) -->
-	<!-- I(close file):O(close-hook)(closehook) -->
-	<!-- I(change samples):O(edit-hook)(edithook) -->
-	<!-- I(file lists):O(mouse-enter-label-hook)(mouseenterlabelhook) -->
-	<!-- I(swap channels):A(swapchannels) -->
-	<!-- I(extend file):L(pad-channel)(padchannel) -->
-	<!-- I(extract channel):O(channel-&gt;vct)(channeltovct) -->
-	<!-- I(fft normalization):L(transform-normalization)(normalizefft) -->
-	<!-- I(fft normalization):A(normalizefft) -->
-	<!-- I(file formats):L(data-format)(dataformat) -->
 
 <br><br>
 

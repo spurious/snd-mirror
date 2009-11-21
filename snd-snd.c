@@ -2337,7 +2337,7 @@ void call_sp_watchers(snd_info *sp, sp_watcher_t type, sp_watcher_reason_t reaso
 
 /* this is my long term plan right now... */
 
-/* generics (besides length, srate, channels, frames, file-name, sync, maxamp, [play], copy, fill!, [apply], [set!], [for-each], [map]):
+/* generics (besides length, srate, channels, frames, file-name, sync, maxamp, play, copy, fill!, [apply], [set!], [for-each], [map]):
  *
  *             source:         procedure-source[s7_procedure_source] mix-home mark-home region-home player-home sampler-home
  *                               mus cases: readin=file+chan? etc, port -> filename?, sound->filename?
@@ -2359,7 +2359,6 @@ void call_sp_watchers(snd_info *sp, sp_watcher_t type, sp_watcher_reason_t reaso
  *             scale(-to|by) convolve fft env filter insert mix reverse save smooth src map|scan pan-mix
  *               sampler? replace-with?
  *
- * TODO: doc/test/cleanup play (mix region selection sound file player)
  * save with all the optkey args for all types (treat list/vector etc as sound data)
  * check map/for-each cases -- sound selection etc (and add to extsnd) and set/ref
  *   for-each depends on ref, map could depend on copy/set/ref

@@ -830,7 +830,6 @@ void s7_mark_object(s7_pointer p);
 
 
 #if (!S7_DISABLE_DEPRECATED)
-  /* backwards compatibility... */
 #define s7_F(Sc)           s7_f(Sc)
 #define s7_T(Sc)           s7_t(Sc)
 #define s7_NIL(Sc)         s7_nil(Sc)

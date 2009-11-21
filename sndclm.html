@@ -744,15 +744,14 @@ keep the spectra steady, and in the second, I fix up the PM index.
 </td></tr></table>
 
 
-<table border=2 cellpadding=6 hspace=20 vspace=20>
-<tr><td>
-<p>To show CLM in its various embodiments, here are  the Scheme, Common Lisp, Ruby, Forth, and C versions of the bird instrument;
+<p>To show CLM in its various embodiments, here are the Scheme, Common Lisp, Ruby, Forth, and C versions of the bird instrument;
 it produces a sinusoid with (usually very elaborate) amplitude and frequency envelopes.
 </p>
 
-</td></tr><tr><td>
+<table border=2 cellpadding=6 hspace=20 vspace=20>
+<tr><td bgcolor="#f0f4ff">
 
-<table border=0 hspace=20><tr><td>
+<table border=0 hspace=20><tr><td bgcolor="#f0f4ff">
 <pre>
 (define (scheme-bird start dur frequency freqskew amplitude freq-envelope amp-envelope)
   (let* ((gls-env (<a class=quiet href="#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> freq-envelope (<a class=quiet href="#hztoradians" onmouseout="UnTip()" onmouseover="Tip(sndclm_hztoradians_tip)">hz-&gt;radians</a> freqskew) dur))
@@ -769,9 +768,9 @@ it produces a sinusoid with (usually very elaborate) amplitude and frequency env
 </pre>
 </td></tr></table>
 
-</td></tr><tr><td>
+</td></tr><tr><td bgcolor="#fbf4f0">
 
-<table border=0 hspace=20><tr><td>
+<table border=0 hspace=20><tr><td bgcolor="#fbf4f0">
 <pre>
 (definstrument common-lisp-bird (startime dur frequency freq-skew amplitude freq-envelope amp-envelope)
   (multiple-value-bind (beg end) (times-&gt;samples startime dur)
@@ -785,9 +784,9 @@ it produces a sinusoid with (usually very elaborate) amplitude and frequency env
 </pre>
 </td></tr></table>
 
-</td></tr><tr><td>
+</td></tr><tr><td bgcolor="#fbfbf0">
 
-<table border=0 hspace=20><tr><td>
+<table border=0 hspace=20><tr><td bgcolor="#fbfbf0">
 <pre>
 def ruby_bird(start, dur, freq, freqskew, amp, freq_envelope, amp_envelope)
   gls_env = make_env(:envelope, freq_envelope, :scaler, hz2radians(freqskew), :duration, dur)
@@ -800,9 +799,9 @@ end
 </pre>
 </td></tr></table>
 
-</td></tr><tr><td>
+</td></tr><tr><td bgcolor="#effdef">
 
-<table border=0 hspace=20><tr><td>
+<table border=0 hspace=20><tr><td bgcolor="#effdef">
 <pre>
 instrument: forth-bird { f: start f: dur f: freq f: freq-skew f: amp freqenv ampenv -- }
     :frequency freq make-oscil { os }
@@ -817,9 +816,9 @@ instrument: forth-bird { f: start f: dur f: freq f: freq-skew f: amp freqenv amp
 </pre>
 </td></tr></table>
 
-</td></tr><tr><td>
+</td></tr><tr><td bgcolor="#f0f0f0">
 
-<table border=0 hspace=20><tr><td>
+<table border=0 hspace=20><tr><td bgcolor="#f0f0f0">
 <pre>
 void c_bird(double start, double dur, double frequency, double freqskew, double amplitude, 
 	    double *freqdata, int freqpts, double *ampdata, int amppts, mus_any *output)
@@ -5027,7 +5026,7 @@ trigger, and mus-reset to restart an envelope.
 </pre>
 </td>
 
-<td width=4></td>
+</tr><tr>
 
 <td bgcolor="#fbfbf0">
 <pre>
@@ -5044,7 +5043,7 @@ with_sound(:play, true, :channels, 2) do
 </pre>
 </td>
 
-<td width=4></td>
+</tr><tr>
 
 <td bgcolor="#effdef">
 <pre>
@@ -5925,7 +5924,7 @@ example that puts formant on the edge of disaster (the glitch is about to explod
 </pre>
 </td>
 
-<td width=4></td>
+</tr><tr>
 
 <td bgcolor="#fbfbf0">
 <pre>
@@ -5939,7 +5938,7 @@ with_sound(:play, true) do
 </pre>
 </td>
 
-<td width=4></td>
+</tr><tr>
 
 <td bgcolor="#effdef">
 <pre>
@@ -6595,16 +6594,14 @@ To get the "all-pass" behavior, set feedback equal to -feedforward.
     (do ((i 0 (+ 1 i)))
 	((= i stop))
       (let ((val (oscil osc)))
-	(outa i (* val 
-                   (moving-average avg (abs val))))))
+	(outa i (* val (moving-average avg (abs val))))))
     (do ((i stop (+ 1 i)))
 	((= i 44100))
-      (outa i (* (oscil osc) 
-                 (moving-average avg 0.0))))))
+      (outa i (* (oscil osc) (moving-average avg 0.0))))))
 </pre>
 </td>
 
-<td width=4></td>
+</tr><tr>
 
 <td bgcolor="#fbfbf0">
 <pre>
@@ -6614,19 +6611,15 @@ with_sound(:play, true) do
   stop = 44100 - 4410;
   stop.times do |i|
     val = oscil(osc);
-    outa(i, 
-         val * moving_average(avg, val.abs), 
-         $output);
+    outa(i, val * moving_average(avg, val.abs), $output);
     end
   4410.times do |i|
-    outa(stop + i, 
-         oscil(osc) * moving_average(avg, 0.0), 
-         $output);
+    outa(stop + i, oscil(osc) * moving_average(avg, 0.0), $output);
     end
   end.output</pre>
 </td>
 
-<td width=4></td>
+</tr><tr>
 
 <td bgcolor="#effdef">
 <pre>
@@ -10596,7 +10589,7 @@ with_sound(:play, true) do
 </pre>
 </td>
 
-</tr></tr>
+</tr><tr>
 
 <td bgcolor="#effdef">
 <pre>
