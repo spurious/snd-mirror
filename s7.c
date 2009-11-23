@@ -86,7 +86,6 @@
  *           if generic, perhaps add to c-type struct?
  *        defmacro* define-macro* 
  *        perhaps settable numerator denominator imag-part real-part angle magnitude
- *        perhaps trailing args to cons -> list*
  *        cerror ("error/cc"?) -- tag = continuation in this case,
  *          and error handler makes it accessible (as well as error context) for eval
  *        rename "force" to some name matching the notion of a promise ("delay" and "force" are about as bad as names can get)
@@ -1545,7 +1544,7 @@ void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
       break;
 
     case T_SYMBOL:
-      /* here hloc is usually NOT_IN_HEAP, but in syntax case can be the syntax op code */
+      /* here hloc is usually NOT_IN_HEAP, but in the syntax case can be the syntax op code */
       return;
 
     case T_CLOSURE:

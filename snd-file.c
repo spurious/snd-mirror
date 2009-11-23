@@ -1460,7 +1460,7 @@ snd_info *finish_opening_sound(snd_info *sp, bool selected)
       XEN_VARIABLE_SET(S_snd_opened_sound, C_INT_TO_XEN_SOUND(sp->index));
 #endif
 
-#if HAVE_GUILE || HAVE_S7
+#if HAVE_SCHEME
       XEN_VARIABLE_SET(snd_opened_sound, C_INT_TO_XEN_SOUND(sp->index));
 #endif
 

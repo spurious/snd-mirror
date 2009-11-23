@@ -2392,10 +2392,8 @@ void call_sp_watchers(snd_info *sp, sp_watcher_t type, sp_watcher_reason_t reaso
  *   (hash-table makes more sense as a property list than a list in large cases) -- currently it's actually a vector
  *   or a global data base for all properties? -- easy to search or display in various ways
  *
- * remove autosave.scm, also read-hook
  * all current "work procs" could be handled as separate threads
  * all multichannel parallel ops also threaded, and graphics updates, and playing
- * TODO: if help dialog active show mix/mark info and help for current listener typing
  * TODO: make-sampler with mix etc -- let 1st arg be object, also add selection sampler
  * make-vector! choices: any, 1 obj [any type], 1 obj: double -- do any others warrant special handling?
  */
@@ -6224,7 +6222,6 @@ XEN_NARGIFY_1(g_sound_to_integer_w, g_sound_to_integer)
 void g_init_snd(void)
 {
   init_xen_sound();
-
   init_sound_keywords();
 
   #define H_name_click_hook S_name_click_hook " (snd): called when sound name clicked. \

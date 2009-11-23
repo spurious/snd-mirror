@@ -3140,7 +3140,6 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   g_init_marks();
   g_init_regions();
   g_init_selection();
-  g_init_dac();
   g_init_mix();
   g_init_chn();
   g_init_kbd();
@@ -3154,6 +3153,7 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   g_init_menu();
   g_init_main();
   g_init_snd();
+  g_init_dac(); /* needs to follow snd and mix */
   g_init_file();
   g_init_data();
   g_init_env();

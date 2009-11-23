@@ -1968,8 +1968,10 @@ int prepare_mix_dialog_waveform(int mix_id, axis_info *ap, bool *two_sided)
   mus_long_t old_lo, old_hi;
   double cur_srate;
   int pts;
+
   md = md_from_id(mix_id);
   if (!md) return(0);
+
   scl = ap->y_axis_y0 - ap->y_axis_y1;
   old_lo = ap->losamp;
   old_hi = ap->hisamp;
@@ -1986,7 +1988,9 @@ int prepare_mix_dialog_waveform(int mix_id, axis_info *ap, bool *two_sided)
   ap->y0 = -1.0;
   ap->y1 = 1.0;
   init_axis_scales(ap);
+
   pts = prepare_mix_waveform(md, ms, ap, scl * .5, (int)(scl * .5), cur_srate, two_sided);
+
   ap->x0 = x0;
   ap->x1 = x1;
   ap->y0 = y0;
@@ -1994,6 +1998,7 @@ int prepare_mix_dialog_waveform(int mix_id, axis_info *ap, bool *two_sided)
   ap->losamp = old_lo;
   ap->hisamp = old_hi;
   init_axis_scales(ap);
+
   return(pts);
 }
 
@@ -2948,10 +2953,12 @@ static XEN g_mix_home(XEN n)
   #define H_mix_home "(" S_mix_home " id): list of sound index and channel for the output of the mix, and the \
 filename or " PROC_FALSE " and the input channel for its data."
   mix_info *md; 
+
   XEN_ASSERT_TYPE(XEN_MIX_P(n), n, XEN_ONLY_ARG, S_mix_home, "a mix");
   md = md_from_id(XEN_MIX_TO_C_INT(n));
   if (md == NULL)
     return(snd_no_such_mix_error(S_mix_home, n));
+
   return(XEN_LIST_4(C_INT_TO_XEN_SOUND((md->cp->sound)->index),
 		    C_TO_XEN_INT((md->cp->chan)),
 		    (md->in_filename) ? C_TO_XEN_STRING(md->in_filename) : XEN_FALSE,
@@ -3270,7 +3277,9 @@ auto-delete is " PROC_TRUE ", the input file is deleted when it is no longer nee
 
   /* TODO: make mix generic: vct=mix-vct, region=mix-region, sound-data=mix-sound-data, frame=mix-frame,
    *        also mix-sound|mix-channel (sound object/int), but arg order is confusing (file-chn...)
-   *        and mix-vct has "origin", also file_chn might be env: pan-mix-*
+   *        and mix-vct has "origin", also file_chn might be env: pan-mix-* [vector list?]
+   *
+   * mix object :channel :out-channel :start (:end?) :with-tag :auto-delete (:edit-position?) (:channels?) :origin
    */
 
   XEN_ASSERT_TYPE(XEN_STRING_P(file), file, XEN_ARG_1, S_mix, "a string");
@@ -3385,10 +3394,12 @@ auto-delete is " PROC_TRUE ", the input file is deleted when it is no longer nee
 	if (len < FILE_BUFFER_SIZE)
 	  {
 	    mus_sample_t *data;
+
 	    data = (mus_sample_t *)malloc(len * sizeof(mus_sample_t));
 	    len = mus_file_to_array(name, file_channel, 0, len, data); 
 	    id = mix_buffer_with_tag(cp, data, beg, len, origin);
 	    free(data);
+
 	    if (delete_file == DELETE_ME)
 	      snd_remove(name, REMOVE_FROM_CACHE);
 	    else

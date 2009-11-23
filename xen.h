@@ -3,10 +3,10 @@
 
 /* macros for extension language support 
  *
- * Guile:     covers 1.3.4 to present (1.9.0)
- * Ruby:      covers 1.6 to present (1.9, but avoid the latter!)
+ * Guile:     covers 1.3.4 to present
+ * Ruby:      covers 1.6 to present
  * Forth:     covers 1.0 to present
- * S7:        all versions
+ * s7:        all versions
  * None:      all versions
  */
 
@@ -2333,10 +2333,11 @@ void xen_no_ext_lang_check_args(const char *name, int args, int req_args, int op
 #endif
 
 #if HAVE_GUILE
-#define XEN_ONLY_ARG 0
+  #define XEN_ONLY_ARG 0
 #else
-#define XEN_ONLY_ARG 1
+  #define XEN_ONLY_ARG 1
 #endif
+
 #define XEN_ARG_1    1
 #define XEN_ARG_2    2
 #define XEN_ARG_3    3
@@ -2350,16 +2351,16 @@ void xen_no_ext_lang_check_args(const char *name, int args, int req_args, int op
 /* 10 is the limit in Guile (SCM_GSUBR_MAX in gsubr.h), no limit in S7, not sure about Ruby or Forth */
 
 #if (!HAVE_S7)
-#define XEN_TO_C_OFF_T_OR_ELSE(a, b)   xen_to_c_off_t_or_else(a, b)
-#define XEN_TO_C_INT64_T_OR_ELSE(a, b) xen_to_c_int64_t_or_else(a, b)
-#define C_TO_XEN_OFF_T(a)             c_to_xen_off_t(a)
-#define C_TO_XEN_INT64_T(a)           C_TO_XEN_LONG_LONG(a)
-#define XEN_TO_C_OFF_T(a)             xen_to_c_off_t(a)
-#define XEN_TO_C_INT64_T(a)           xen_to_c_int64_t(a)
-#define XEN_AS_STRING(form)           XEN_TO_C_STRING(XEN_TO_STRING(form))
-#define XEN_VECTOR_RANK(Vect)         1
+  #define XEN_TO_C_OFF_T_OR_ELSE(a, b)   xen_to_c_off_t_or_else(a, b)
+  #define XEN_TO_C_INT64_T_OR_ELSE(a, b) xen_to_c_int64_t_or_else(a, b)
+  #define C_TO_XEN_OFF_T(a)             c_to_xen_off_t(a)
+  #define C_TO_XEN_INT64_T(a)           C_TO_XEN_LONG_LONG(a)
+  #define XEN_TO_C_OFF_T(a)             xen_to_c_off_t(a)
+  #define XEN_TO_C_INT64_T(a)           xen_to_c_int64_t(a)
+  #define XEN_AS_STRING(form)           XEN_TO_C_STRING(XEN_TO_STRING(form))
+  #define XEN_VECTOR_RANK(Vect)         1
 #else
-#define XEN_AS_STRING(form)           s7_object_to_c_string(s7, form)
+  #define XEN_AS_STRING(form)           s7_object_to_c_string(s7, form)
 #endif
 
 
@@ -2413,13 +2414,13 @@ XEN xen_return_first(XEN a, ...);
 char *xen_strdup(const char *str);
 
 #if (!HAVE_S7)
-int xen_to_c_int_or_else(XEN obj, int fallback);
-off_t xen_to_c_off_t_or_else(XEN obj, off_t fallback);
-off_t xen_to_c_off_t(XEN obj);
-XEN c_to_xen_off_t(off_t val);
-int64_t xen_to_c_int64_t_or_else(XEN obj, int64_t fallback);
-int64_t xen_to_c_int64_t(XEN obj);
-#define XEN_DEFINE_SET_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc) XEN_DEFINE_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc)
+  int xen_to_c_int_or_else(XEN obj, int fallback);
+  off_t xen_to_c_off_t_or_else(XEN obj, off_t fallback);
+  off_t xen_to_c_off_t(XEN obj);
+  XEN c_to_xen_off_t(off_t val);
+  int64_t xen_to_c_int64_t_or_else(XEN obj, int64_t fallback);
+  int64_t xen_to_c_int64_t(XEN obj);
+  #define XEN_DEFINE_SET_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc) XEN_DEFINE_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc)
 #endif
 
 char *xen_version(void);
