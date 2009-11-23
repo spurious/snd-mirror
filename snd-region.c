@@ -1357,7 +1357,7 @@ static char *xen_region_to_string(xen_region *v)
   char *buf;
   if (v == NULL) return(NULL);
   buf = (char *)calloc(XEN_REGION_PRINT_BUFFER_SIZE, sizeof(char));
-  sprintf(buf, "#<region %d>", v->n);
+  snprintf(buf, XEN_REGION_PRINT_BUFFER_SIZE, "#<region %d>", v->n);
   return(buf);
 }
 

@@ -7,24 +7,6 @@
 # X11 color names converted to Snd (Ruby) colors
 # tan -> tawny 24-Aug-01
 
-# e.g. set_colormap(Jet_colormap)
-Black_and_white_colormap = 0
-Gray_colormap = 1
-Hot_colormap = 2
-Cool_colormap = 3
-Bone_colormap = 4
-Copper_colormap = 5
-Pink_colormap = 6
-Jet_colormap = 7
-Prism_colormap = 8
-Autumn_colormap = 9
-Winter_colormap = 10
-Spring_colormap = 11
-Summer_colormap = 12
-Rainbow_colormap = 13
-Flag_colormap = 14
-Last_colormap = 15
-
 # rgb.scm
 Snow = make_color(1.00, 0.98, 0.98)
 Ghost_white = make_color(0.97, 0.97, 1.00)

@@ -2350,7 +2350,7 @@ void call_sp_watchers(snd_info *sp, sp_watcher_t type, sp_watcher_reason_t reaso
  *             properties:     edit|mark|mix|sound|channel-properties procedure-property?  window-property? [also property as accessor]
  *               but then typos lead to seriously confusing behavior -- I think I'll leave out properties for now.
  *
- *             name:           mark|mix-name file-name (widget name via XtName) mus-name, 
+ *             name:           mark|mix-name file-name (widget name via XtName) mus-name [colormap error-type -- if these were objects]
  *                               __func__? port-filename sampler-filename
  *
  *             reverse save find insert delete describe read write mix append [open and close?] member
@@ -2364,12 +2364,15 @@ void call_sp_watchers(snd_info *sp, sp_watcher_t type, sp_watcher_reason_t reaso
  *   for-each depends on ref, map could depend on copy/set/ref
  *
  *    objects are generator(clm2xen), player(snd-dac), sampler(snd-edits), sound-data(sndlib2xen),
- *               mark(snd-marks), mix(snd-mix), selection(snd-select), region(snd-region),
+ *               mark(snd-marks), mix(snd-mix), selection(snd-select), region(snd-region), colormap,
  *               vct(vct), hook(xen), XmObj(xm, xg), plus the base types(s7): string hash-table vector pair object, else arg
  *               which means that promise (for example) is not copied (and what about builtin things like bignum, random-state etc)?
+ *
  *    also needed are further cases of ref/set
  *    ref needed: mix? region selection sound
  *    set needed: selection? sound 
+ *
+ * possible new objects: transform, watcher, menu-item, file-filter|sorter, fft-window?, color? variable-graph?
  *
  * (scan-channel -> channel-for-each)
  *   and channel-map rather than map-channel
@@ -2433,7 +2436,7 @@ static char *xen_sound_to_string(xen_sound *v)
   char *buf;
   if (v == NULL) return(NULL);
   buf = (char *)calloc(XEN_SOUND_PRINT_BUFFER_SIZE, sizeof(char));
-  sprintf(buf, "#<sound %d>", v->n);
+  snprintf(buf, XEN_SOUND_PRINT_BUFFER_SIZE, "#<sound %d>", v->n);
   return(buf);
 }
 

@@ -22,17 +22,20 @@ static char *display_maxamps(const char *filename, int chans)
 {
   char *ampstr;
   char fstr[16];
-  int i;
+  int i, len;
   mus_sample_t *vals;
   mus_long_t *times;
-  ampstr = (char *)calloc(chans * 32, sizeof(char));
+
+  len = chans * 32;
+  ampstr = (char *)calloc(len, sizeof(char));
   vals = (mus_sample_t *)calloc(chans, sizeof(mus_sample_t));
   times = (mus_long_t *)calloc(chans, sizeof(mus_long_t));
-  sprintf(ampstr, "\n  max amp%s: ", (chans > 1) ? "s" : "");
+
+  snprintf(ampstr, len, "\n  max amp%s: ", (chans > 1) ? "s" : "");
   mus_sound_maxamps(filename, chans, vals, times);
   for (i = 0; i < chans; i++)
     {
-      sprintf(fstr, "%.3f ", MUS_SAMPLE_TO_FLOAT(vals[i]));
+      snprintf(fstr, 16, "%.3f ", MUS_SAMPLE_TO_FLOAT(vals[i]));
       strcat(ampstr, fstr);
     }
   free(vals);
@@ -80,8 +83,8 @@ int main(int argc, char *argv[])
 	      format = mus_sound_original_format(argv[ctr]);
 	      format_name = (char *)mus_header_original_format_name(format, type);
 	      if (format_name)
-		sprintf(format_info, "%d (%s)", format, format_name);
-	      else sprintf(format_info, "%d", format);
+		snprintf(format_info, 64, "%d (%s)", format, format_name);
+	      else snprintf(format_info, 64, "%d", format);
 	    }
 	  fprintf(stdout, "%s:\n  srate: %d\n  chans: %d\n  length: %f",
 		  argv[ctr], srate, chans, length);

@@ -2038,7 +2038,7 @@ static char *xen_mark_to_string(xen_mark *v)
   char *buf;
   if (v == NULL) return(NULL);
   buf = (char *)calloc(XEN_MARK_PRINT_BUFFER_SIZE, sizeof(char));
-  sprintf(buf, "#<mark %d>", v->n);
+  snprintf(buf, XEN_MARK_PRINT_BUFFER_SIZE, "#<mark %d>", v->n);
   return(buf);
 }
 

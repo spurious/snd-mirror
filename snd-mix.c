@@ -2536,7 +2536,7 @@ static char *xen_mix_to_string(xen_mix *v)
   char *buf;
   if (v == NULL) return(NULL);
   buf = (char *)calloc(XEN_MIX_PRINT_BUFFER_SIZE, sizeof(char));
-  sprintf(buf, "#<mix %d>", v->n);
+  snprintf(buf, XEN_MIX_PRINT_BUFFER_SIZE, "#<mix %d>", v->n);
   return(buf);
 }
 
@@ -3462,7 +3462,7 @@ static char *mix_sampler_to_string(mix_fd *fd)
   char *desc;
   desc = (char *)calloc(PRINT_BUFFER_SIZE, sizeof(char));
   if ((fd == NULL) || (fd->sf == NULL))
-    sprintf(desc, "#<mix-sampler: null>");
+    snprintf(desc, PRINT_BUFFER_SIZE, "#<mix-sampler: null>");
   else
     {
       if ((mix_is_active(fd->sf->region)) &&
@@ -3478,7 +3478,7 @@ static char *mix_sampler_to_string(mix_fd *fd)
 		       (fd->sf->at_eof) ? ", at eof" : "",
 		       (md->in_filename) ? md->in_filename : "<vct>");
 	}
-      else sprintf(desc, "#<mix-sampler: inactive>");
+      else snprintf(desc, PRINT_BUFFER_SIZE, "#<mix-sampler: inactive>");
     }
   return(desc);
 }

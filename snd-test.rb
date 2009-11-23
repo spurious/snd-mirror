@@ -1422,8 +1422,8 @@ end
 
 # ---------------- test 01: defaults ----------------
 
-$good_colormap = provided?(:gl) ? 2 : 0
-$better_colormap = 0
+$good_colormap = provided?(:gl) ? $hot_colormap : $black_and_white_colormap
+$better_colormap = $black_and_white_colormap
 
 # :normal        = [[Symbol, val], ...]
 # :without_error = [Symbol, ...]
@@ -1460,10 +1460,12 @@ def test01
     Snd.sounds.apply(:close_sound)
     unless provided? :snd_nogui
       unless colormap? $good_colormap
-        $good_colormap = (1..19).detect do |c| colormap?(c) end
+        $good_colormap = (1..19).detect do |c| colormap?(integer2colormap(c)) end
+        $good_colormap = integer2colormap($good_colormap)
       end
       unless colormap? $better_colormap
-        $better_colormap = ($good_colormap..19).detect do |c| colormap?(c) end
+        $better_colormap = ($good_colormap..19).detect do |c| colormap?(integer2colormap(c)) end
+        $better_colormap = integer2colormap($better_colormap)
       end
     end
     controls = [[:ask_before_overwrite, false],
@@ -10529,7 +10531,7 @@ def test007
                      [0.0, 0.0, 0.49999], [1.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 0.0, 1.0],
                      [1.0, 0.0, 1.0], [0.0, 0.500007629510948, 0.4], [1.0, 0.0, 0.0],
                      [1.0, 0.0, 0.0], [0.0, 0.0, 0.0]]
-  Last_colormap.times do |i|
+  15.times do |i|
     if colormap?(i)
       unless vequal(res0 = colormap_ref(i, 0), res1 = true_color_list[i])
         snd_display("colormap_ref[%s]: %s (%s)", i, res0, res1)
@@ -10609,7 +10611,7 @@ def test017
                                                ((29.0 / 24) * x - 1.0 / 8) :
                                                ((7.0 / 8) * x + 1.0 / 8))
       b = (x < (3.0 / 8)) ? ((29.0 / 24) * x) : ((7.0 / 8) * x + 1.0 / 8)
-      rgb = colormap_ref(Bone_colormap, x)
+      rgb = colormap_ref($bone_colormap, x)
       r1, g1, b1 = rgb
       if x < 1.0 - 1.0 / n and (fneq_err(r, r1, err) or fneq_err(g, g1, err) or fneq_err(b, b1, err))
         snd_display("bone %.3f (%.3f): %s %s",
@@ -10622,7 +10624,7 @@ def test017
       r = (x < (4.0 / 5)) ? ((5.0 / 4) * x) : 1.0
       g = (4.0 / 5) * x
       b = (1.0 / 2) * x
-      rgb = colormap_ref(Copper_colormap, x)
+      rgb = colormap_ref($copper_colormap, x)
       r1, g1, b1 = rgb
       if x < 1.0 - 1.0 / n and
           (fneq_err(r, r1, err) or fneq_err(g, g1, err) or fneq_err(b, b1, err))
@@ -10636,7 +10638,7 @@ def test017
       r = 0.0
       g = x
       b = 1.0 - g / 2.0
-      rgb = colormap_ref(Winter_colormap, x)
+      rgb = colormap_ref($winter_colormap, x)
       r1, g1, b1 = rgb
       if x < 1.0 - 1.0 / n and
           (fneq_err(r, r1, err) or fneq_err(g, g1, err) or fneq_err(b, b1, err))
@@ -10650,7 +10652,7 @@ def test017
       r = 1.0
       g = x
       b = 0.0
-      rgb = colormap_ref(Autumn_colormap, x)
+      rgb = colormap_ref($autumn_colormap, x)
       r1, g1, b1 = rgb
       if x < 1.0 - 1.0 / n and
           (fneq_err(r, r1, err) or fneq_err(g, g1, err) or fneq_err(b, b1, err))
@@ -10664,7 +10666,7 @@ def test017
       r = x
       g = 1.0 - r
       b = 1.0
-      rgb = colormap_ref(Cool_colormap, x)
+      rgb = colormap_ref($cool_colormap, x)
       r1, g1, b1 = rgb
       if x < 1.0 - 1.0 / n and
           (fneq_err(r, r1, err) or fneq_err(g, g1, err) or fneq_err(b, b1, err))
@@ -10678,7 +10680,7 @@ def test017
       r = (x < (3.0 / 8)) ? ((8.0 / 3) * x) : 1.0
       g = (x < (3.0 / 8)) ? 0.0 : ((x < (3.0 / 4)) ? ((8.0 / 3) * x - 1.0) : 1.0)
       b = (x < (3.0 / 4)) ? 0.0 : (4.0 * x - 3)
-      rgb = colormap_ref(Hot_colormap, x)
+      rgb = colormap_ref($hot_colormap, x)
       r1, g1, b1 = rgb
       if x < 1.0 - 1.0 / n and
           (fneq_err(r, r1, err) or fneq_err(g, g1, err) or fneq_err(b, b1, err))
@@ -10696,7 +10698,7 @@ def test017
                                      ((x < (7.0 / 8)) ? (-4.0 * x + 7.0 / 2) : 0.0))))
       b = (x < (1.0 / 8)) ? (4.0 * x + 0.5) : ((x < (3.0 / 8)) ? 1.0 :
                                                ((x < (5.0 / 8)) ? (-4.0 * x + 5.0 / 2) : 0.0))
-      rgb = colormap_ref(Jet_colormap, x)
+      rgb = colormap_ref($jet_colormap, x)
       r1, g1, b1 = rgb
       if x < 1.0 - 1.0 / n and
           (fneq_err(r, r1, err) or fneq_err(g, g1, err) or fneq_err(b, b1, err))
@@ -10711,7 +10713,7 @@ def test017
       g = (x < (3.0 / 8)) ? ((2.0 / 3) * x) :
         ((x < (3.0 / 4)) ? ((14.0 / 9) * x - 1.0 / 3) : ((2.0 / 3) * x + 1.0 / 3))
       b = (x < (3.0 / 4)) ? ((2.0 / 3) * x) : (2.0 * x - 1.0)
-      rgb = colormap_ref(Pink_colormap, x)
+      rgb = colormap_ref($pink_colormap, x)
       r1, g1, b1 = rgb
       if x < 1.0 - 1.0 / n and
           (fneq_err(r, r1, err) or fneq_err(g, g1, err) or fneq_err(b, b1, err))
@@ -10725,7 +10727,7 @@ def test017
       r = 1.0
       g = x
       b = 1.0 - g
-      rgb = colormap_ref(Spring_colormap, x)
+      rgb = colormap_ref($spring_colormap, x)
       r1, g1, b1 = rgb
       if x < 1.0 - 1.0 / n and
           (fneq_err(r, r1, err) or fneq_err(g, g1, err) or fneq_err(b, b1, err))
@@ -10739,7 +10741,7 @@ def test017
       r = x
       g = x
       b = x
-      rgb = colormap_ref(Gray_colormap, x)
+      rgb = colormap_ref($gray_colormap, x)
       r1, g1, b1 = rgb
       if x < 1.0 - 1.0 / n and
           (fneq_err(r, r1, err) or fneq_err(g, g1, err) or fneq_err(b, b1, err))
@@ -10753,7 +10755,7 @@ def test017
       r = 0.0
       g = 0.0
       b = 0.0
-      rgb = colormap_ref(Black_and_white_colormap, x)
+      rgb = colormap_ref($black_and_white_colormap, x)
       r1, g1, b1 = rgb
       if x < 1.0 - 1.0 / n and
           (fneq_err(r, r1, err) or fneq_err(g, g1, err) or fneq_err(b, b1, err))
@@ -10767,7 +10769,7 @@ def test017
       r = x
       g = 0.5 + r / 2.0
       b = 0.4
-      rgb = colormap_ref(Summer_colormap, x)
+      rgb = colormap_ref($summer_colormap, x)
       r1, g1, b1 = rgb
       if x < 1.0 - 1.0 / n and
           (fneq_err(r, r1, err) or fneq_err(g, g1, err) or fneq_err(b, b1, err))
@@ -10783,7 +10785,7 @@ def test017
       g = (x < (2.0 / 5)) ? ((5.0 / 2) * x) : ((x < (3.0 / 5)) ? 1.0 :
                                                ((x < (4.0 / 5)) ? (-5.0 * x + 4) : 0.0))
       b = (x < (3.0 / 5)) ? 0.0 : ((x < (4.0 / 5)) ? (5.0 * x - 3) : 1.0)
-      rgb = colormap_ref(Rainbow_colormap, x)
+      rgb = colormap_ref($rainbow_colormap, x)
       r1, g1, b1 = rgb
       if x < 1.0 - 1.0 / n and
           (fneq_err(r, r1, err) or fneq_err(g, g1, err) or fneq_err(b, b1, err))
@@ -10794,7 +10796,7 @@ def test017
     end
     10.times do |i|
       x = random(1.0)
-      rgb = colormap_ref(Prism_colormap, x)
+      rgb = colormap_ref($prism_colormap, x)
       if x < 1.0 - 1.0 / n and
           (not vequal(rgb, [1.0, 0.0, 0.0])) and
           (not vequal(rgb, [1.0, 0.5, 0.0])) and
@@ -10807,7 +10809,7 @@ def test017
     end
     10.times do |i|
       x = random(1.0)
-      rgb = colormap_ref(Flag_colormap, x)
+      rgb = colormap_ref($flag_colormap, x)
       if x < 1.0 - 1.0 / n and
           (not vequal(rgb, [1.0, 0.0, 0.0])) and
           (not vequal(rgb, [1.0, 1.0, 1.0])) and
@@ -10829,28 +10831,28 @@ def test027
   unless vequal(res = colormap_ref(ind, 0.5), [1.0, 1.0, 1.0])
     snd_display("white colormap: %s?", res)
   end
-  if (res = Snd.catch do set_colormap(ind) end).first == :no_such_colormap or colormap != ind
+  if (res = Snd.catch do set_colormap(ind) end).first == :no_such_colormap or colormap2integer(colormap) != ind
     snd_display("colormap white: %s %s %s", res, ind, colormap)
   end
   if (res = colormap_name(ind)) != "white"
     snd_display("white colormap name: %s?", res)
   end
-  if (res = Snd.catch do delete_colormap(1234) end).first != :no_such_colormap
+  if (res = Snd.catch do delete_colormap(integer2colormap(1234)) end).first != :no_such_colormap
     snd_display("delete_colormap 1234: %s?", res)
   end
-  if (res = Snd.catch do colormap_ref(1234, 0.5) end).first != :no_such_colormap
+  if (res = Snd.catch do colormap_ref(integer2colormap(1234), 0.5) end).first != :no_such_colormap
     snd_display("colormap_ref 1234: %s?", res)
   end
-  if (res = Snd.catch do colormap_ref(-1, 0.5) end).first != :no_such_colormap
+  if (res = Snd.catch do colormap_ref(integer2colormap(-1), 0.5) end).first != :no_such_colormap
     snd_display("colormap_ref -1: %s?", res)
   end
-  if (res = Snd.catch do set_colormap(1234) end).first != :no_such_colormap
+  if (res = Snd.catch do set_colormap(integer2colormap(1234)) end).first != :no_such_colormap
     snd_display("set_colormap 1234: %s?", res)
   end
-  if (res = Snd.catch do set_colormap(-1) end).first != :no_such_colormap
+  if (res = Snd.catch do set_colormap(integer2colormap(-1)) end).first != :no_such_colormap
     snd_display("set_colormap -1: %s?", res)
   end
-  if (res = Snd.catch do colormap_ref(Copper_colormap, 2.0) end).first != :out_of_range
+  if (res = Snd.catch do colormap_ref($copper_colormap, 2.0) end).first != :out_of_range
     snd_display("colormap_ref 2.0: %s?", res)
   end
   #
@@ -10858,13 +10860,13 @@ def test027
   if (res = colormap_size) != $old_colormap_size
     snd_display("set_colormap_size: %s %s?", res, $old_colormap_size)
   end
-  if (res = colormap_name(Black_and_white_colormap)) != "black-and-white"
+  if (res = colormap_name($black_and_white_colormap)) != "black-and-white"
     snd_display("black-and-white: %s?", res)
   end
-  if (res = colormap_name(Gray_colormap)) != "gray"
+  if (res = colormap_name($gray_colormap)) != "gray"
     snd_display("gray: %s?", res)
   end
-  if (res = colormap_name(Rainbow_colormap)) != "rainbow"
+  if (res = colormap_name($rainbow_colormap)) != "rainbow"
     snd_display("rainbow: %s?", res)
   end
   purple_cmap = add_colormap("purple",
@@ -10915,14 +10917,14 @@ def test027
                                     end
                                     [r, g, b]
                                   end)
-  delete_colormap(Pink_colormap)
-  if res = colormap?(Pink_colormap)
-    snd_display("delete_colormap %s: %s?", Pink_colormap, res)
+  delete_colormap($pink_colormap)
+  if res = colormap?($pink_colormap)
+    snd_display("delete_colormap %s: %s?", $pink_colormap, res)
   end
-  if (res = Snd.catch do set_colormap(Pink_colormap) end).first != :no_such_colormap or
-      colormap == Pink_colormap
+  if (res = Snd.catch do set_colormap($pink_colormap) end).first != :no_such_colormap or
+      colormap == $pink_colormap
     snd_display("delete pink colormap: %s %s %s?",
-                res, Pink_colormap, colormap)
+                res, $pink_colormap, colormap)
   end
   [1024, 256, 2, 512].each do |n|
     set_colormap_size(n)
@@ -10931,7 +10933,7 @@ def test027
       r = (x < 4.0 / 5) ? ((5.0 / 4) * x) : 1.0
       g = (4.0 / 5) * x
       b = 0.5 * x
-      rgb = colormap_ref(Copper_colormap, x)
+      rgb = colormap_ref($copper_colormap, x)
       r1, g1, b1 = rgb
       err = 0.01
       if n > 2 and

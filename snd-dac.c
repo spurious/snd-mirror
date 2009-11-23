@@ -2685,7 +2685,7 @@ static char *xen_player_to_string(xen_player *v)
   char *buf;
   if (v == NULL) return(NULL);
   buf = (char *)calloc(XEN_PLAYER_PRINT_BUFFER_SIZE, sizeof(char));
-  sprintf(buf, "#<player %d>", v->n);
+  snprintf(buf, XEN_PLAYER_PRINT_BUFFER_SIZE, "#<player %d>", v->n);
   return(buf);
 }
 

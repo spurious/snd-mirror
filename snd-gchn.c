@@ -493,7 +493,7 @@ static void remake_edit_history(chan_info *cp)
 	  if ((ncp) && (ncp->sound))
 	    {
 	      ncp->edhist_base = ed++;
-	      sprintf(title, "chan %d: %s", k + 1, sp->filename);
+	      snprintf(title, filelen, "chan %d: %s", k + 1, sp->filename);
 	      slist_append(lst, title);
 	      eds = ncp->edit_ctr;
 	      while ((eds < (ncp->edit_size - 1)) && (ncp->edits[eds + 1])) eds++;

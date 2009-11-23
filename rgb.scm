@@ -4,26 +4,6 @@
 
 ;; tan -> tawny 24-Aug-01
 
-;;; colormap names
-
-(define black-and-white-colormap 0)
-(define gray-colormap 1)
-(define hot-colormap 2)
-(define cool-colormap 3)
-(define bone-colormap 4)
-(define copper-colormap 5)
-(define pink-colormap 6)
-(define jet-colormap 7)
-(define prism-colormap 8)
-(define autumn-colormap 9)
-(define winter-colormap 10)
-(define spring-colormap 11)
-(define summer-colormap 12)
-(define rainbow-colormap 13)
-(define flag-colormap 14)
-(define phases-colormap 15)
-
-
 (define snow (make-color 1.00 0.98 0.98))
 (define ghost-white (make-color 0.97 0.97 1.00))
 (define white-smoke (make-color 0.96 0.96 0.96))

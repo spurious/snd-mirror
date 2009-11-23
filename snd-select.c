@@ -857,7 +857,7 @@ static char *xen_selection_to_string(xen_selection *v)
   char *buf;
   if (v == NULL) return(NULL);
   buf = (char *)calloc(XEN_SELECTION_PRINT_BUFFER_SIZE, sizeof(char));
-  sprintf(buf, "#<selection %d>", v->n);
+  snprintf(buf, XEN_SELECTION_PRINT_BUFFER_SIZE, "#<selection %d>", v->n);
   return(buf);
 }
 

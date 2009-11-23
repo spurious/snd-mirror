@@ -7728,7 +7728,7 @@ char *sampler_to_string(snd_fd *fd)
   desc = (char *)calloc(PRINT_BUFFER_SIZE, sizeof(char));
 #endif
   if (fd == NULL)
-    sprintf(desc, "#<sampler: null>");
+    snprintf(desc, PRINT_BUFFER_SIZE, "#<sampler: null>");
   else
     {
       const char *name = NULL;

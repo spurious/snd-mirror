@@ -15,24 +15,6 @@
 
 \ Code:
 
-00 constant black-and-white-colormap
-01 constant gray-colormap
-02 constant hot-colormap
-03 constant cool-colormap
-04 constant bone-colormap
-05 constant copper-colormap
-06 constant pink-colormap
-07 constant jet-colormap
-08 constant prism-colormap
-09 constant autumn-colormap
-10 constant winter-colormap
-11 constant spring-colormap
-12 constant summer-colormap
-13 constant rainbow-colormap
-14 constant flag-colormap
-15 constant phases-colormap
-16 constant last-colormap
-
 1.00 0.98 0.98 make-color constant snow
 0.97 0.97 1.00 make-color constant ghost-white
 0.96 0.96 0.96 make-color constant white-smoke

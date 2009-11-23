@@ -239,28 +239,39 @@ static mus_float_t **make_xen_colormap(int size, XEN lambda)
 	  add_colormap_func_error_msg = NULL;
 	}
       else str = XEN_FALSE;
+
       XEN_ERROR(XEN_ERROR_TYPE("colormap-error"),
 		XEN_LIST_3(C_TO_XEN_STRING(S_add_colormap),
 			   C_TO_XEN_STRING("function error:"),
 			   str));
     }
-  if (XEN_LIST_P(xrgb))
+
+  if (!(XEN_LIST_P(xrgb)))
+    XEN_ERROR(XEN_ERROR_TYPE("colormap-error"),
+	      XEN_LIST_3(C_TO_XEN_STRING(S_add_colormap),
+			 C_TO_XEN_STRING("colormap func must return a list of 3 vcts"),
+			 lambda));
+  else
     {
       vct *xr, *xg, *xb;
       int i, gc_loc;
+
       /* user-defined colormap func returns a list of 3 vcts (r g b) */
       gc_loc = snd_protect(xrgb);
+
       if (!(mus_vct_p(XEN_LIST_REF(xrgb, 0)))) 
 	XEN_ERROR(XEN_ERROR_TYPE("colormap-error"),
 		  XEN_LIST_3(C_TO_XEN_STRING(S_add_colormap),
 			     C_TO_XEN_STRING("function did not return a list of vcts!"),
 			     xrgb));
+
       xr = XEN_TO_VCT(XEN_LIST_REF(xrgb, 0));
       if (xr->length < size)
 	XEN_ERROR(XEN_ERROR_TYPE("colormap-error"),
 		  XEN_LIST_3(C_TO_XEN_STRING(S_add_colormap),
 			     C_TO_XEN_STRING("function did not return a list of vcts of the correct size"),
 			     xrgb));
+
       xg = XEN_TO_VCT(XEN_LIST_REF(xrgb, 1));
       xb = XEN_TO_VCT(XEN_LIST_REF(xrgb, 2));
       rgb = make_base_rgb(size);
@@ -270,12 +281,9 @@ static mus_float_t **make_xen_colormap(int size, XEN lambda)
 	  rgb[1][i] = xg->data[i];
 	  rgb[2][i] = xb->data[i];
 	}
+
       snd_unprotect_at(gc_loc);
     }
-  else XEN_ERROR(XEN_ERROR_TYPE("colormap-error"),
-		 XEN_LIST_3(C_TO_XEN_STRING(S_add_colormap),
-			    C_TO_XEN_STRING("colormap func must return a list of 3 vcts"),
-			    lambda));
   return(rgb);
 }
 
@@ -868,6 +876,180 @@ void phases_rgb(float x, rgb_t *r, rgb_t *g, rgb_t *b)
 #endif
 
 
+/* ---------------------------------------- colormap objects ---------------------------------------- */
+
+typedef struct {
+  int n;
+} xen_colormap;
+
+
+#define XEN_TO_XEN_COLORMAP(arg) ((xen_colormap *)XEN_OBJECT_REF(arg))
+
+static int xen_colormap_to_int(XEN n)
+{
+  xen_colormap *col;
+  col = XEN_TO_XEN_COLORMAP(n);
+  return(col->n);
+}
+
+#define XEN_COLORMAP_TO_C_INT(n) xen_colormap_to_int(n)
+
+
+static XEN_OBJECT_TYPE xen_colormap_tag;
+
+static bool xen_colormap_p(XEN obj) 
+{
+  return(XEN_OBJECT_TYPE_P(obj, xen_colormap_tag));
+}
+
+#define XEN_COLORMAP_P(Obj) xen_colormap_p(Obj)
+
+
+static void xen_colormap_free(xen_colormap *v) {if (v) free(v);}
+
+XEN_MAKE_OBJECT_FREE_PROCEDURE(xen_colormap, free_xen_colormap, xen_colormap_free)
+
+
+static char *xen_colormap_to_string(xen_colormap *v)
+{
+  #define XEN_COLORMAP_PRINT_BUFFER_SIZE 64
+  char *buf;
+  if (v == NULL) return(NULL);
+  buf = (char *)calloc(XEN_COLORMAP_PRINT_BUFFER_SIZE, sizeof(char));
+  snprintf(buf, XEN_COLORMAP_PRINT_BUFFER_SIZE, "#<colormap %s>", colormap_name(v->n));
+  return(buf);
+}
+
+XEN_MAKE_OBJECT_PRINT_PROCEDURE(xen_colormap, print_xen_colormap, xen_colormap_to_string)
+
+
+#if HAVE_FORTH || HAVE_RUBY
+static XEN g_xen_colormap_to_string(XEN obj)
+{
+  char *vstr;
+  XEN result;
+  #define S_xen_colormap_to_string "colormap->string"
+
+  XEN_ASSERT_TYPE(XEN_COLORMAP_P(obj), obj, XEN_ONLY_ARG, S_xen_colormap_to_string, "a colormap");
+
+  vstr = xen_colormap_to_string(XEN_TO_XEN_COLORMAP(obj));
+  result = C_TO_XEN_STRING(vstr);
+  free(vstr);
+  return(result);
+}
+#endif
+
+
+#if (!HAVE_S7)
+static bool xen_colormap_equalp(xen_colormap *v1, xen_colormap *v2) 
+{
+  return((v1 == v2) ||
+	 (v1->n == v2->n));
+}
+
+static XEN equalp_xen_colormap(XEN obj1, XEN obj2)
+{
+  if ((!(XEN_COLORMAP_P(obj1))) || (!(XEN_COLORMAP_P(obj2)))) return(XEN_FALSE);
+  return(xen_return_first(C_TO_XEN_BOOLEAN(xen_colormap_equalp(XEN_TO_XEN_COLORMAP(obj1), XEN_TO_XEN_COLORMAP(obj2))), obj1, obj2));
+}
+#endif
+
+
+static xen_colormap *xen_colormap_make(int n)
+{
+  xen_colormap *new_v;
+  new_v = (xen_colormap *)malloc(sizeof(xen_colormap));
+  new_v->n = n;
+  return(new_v);
+}
+
+
+static XEN new_xen_colormap(int n)
+{
+  xen_colormap *mx;
+  if (n < 0)
+    return(XEN_FALSE);
+
+  mx = xen_colormap_make(n);
+  XEN_MAKE_AND_RETURN_OBJECT(xen_colormap_tag, mx, 0, free_xen_colormap);
+}
+
+#define C_INT_TO_XEN_COLORMAP(Val) new_xen_colormap(Val)
+
+
+#if HAVE_S7
+static bool s7_xen_colormap_equalp(void *obj1, void *obj2)
+{
+  return((obj1 == obj2) ||
+	 (((xen_colormap *)obj1)->n == ((xen_colormap *)obj2)->n));
+}
+
+
+static XEN s7_xen_colormap_length(s7_scheme *sc, XEN obj)
+{
+  return(C_TO_XEN_INT(color_map_size(ss)));
+}
+
+
+static XEN g_colormap_ref(XEN map, XEN pos);
+static XEN s7_colormap_apply(s7_scheme *sc, XEN obj, XEN args)
+{
+  return(g_colormap_ref(obj, XEN_CAR(args)));
+}
+#endif
+
+
+static void init_xen_colormap(void)
+{
+#if HAVE_S7
+  xen_colormap_tag = XEN_MAKE_OBJECT_TYPE("<colormap>", print_xen_colormap, free_xen_colormap, s7_xen_colormap_equalp, 
+				       NULL, s7_colormap_apply, NULL, s7_xen_colormap_length, NULL, NULL);
+#else
+#if HAVE_RUBY
+  xen_colormap_tag = XEN_MAKE_OBJECT_TYPE("XenColormap", sizeof(xen_colormap));
+#else
+  xen_colormap_tag = XEN_MAKE_OBJECT_TYPE("Colormap", sizeof(xen_colormap));
+#endif
+#endif
+
+#if HAVE_GUILE
+  scm_set_smob_print(xen_colormap_tag,  print_xen_colormap);
+  scm_set_smob_free(xen_colormap_tag,   free_xen_colormap);
+  scm_set_smob_equalp(xen_colormap_tag, equalp_xen_colormap);
+#endif
+
+#if HAVE_FORTH
+  fth_set_object_inspect(xen_colormap_tag,   print_xen_colormap);
+  fth_set_object_dump(xen_colormap_tag,      g_xen_colormap_to_string);
+  fth_set_object_equal(xen_colormap_tag,     equalp_xen_colormap);
+  fth_set_object_free(xen_colormap_tag,      free_xen_colormap);
+#endif
+
+#if HAVE_RUBY
+  rb_define_method(xen_colormap_tag, "to_s",     XEN_PROCEDURE_CAST print_xen_colormap, 0);
+  rb_define_method(xen_colormap_tag, "eql?",     XEN_PROCEDURE_CAST equalp_xen_colormap, 1);
+  rb_define_method(xen_colormap_tag, "==",       XEN_PROCEDURE_CAST equalp_xen_colormap, 1);
+  rb_define_method(xen_colormap_tag, "to_str",   XEN_PROCEDURE_CAST g_xen_colormap_to_string, 0);
+#endif
+}
+
+
+/* -------------------------------------------------------------------------------- */
+
+static XEN g_integer_to_colormap(XEN n)
+{
+  #define H_integer_to_colormap "(" S_integer_to_colormap " n) returns a colormap object corresponding to the given integer"
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(n), n, XEN_ONLY_ARG, S_integer_to_colormap, "an integer");
+  return(new_xen_colormap(XEN_TO_C_INT(n)));
+}
+
+
+static XEN g_colormap_to_integer(XEN n)
+{
+  #define H_colormap_to_integer "(" S_colormap_to_integer " id) returns the integer corresponding to the given colormap"
+  XEN_ASSERT_TYPE(XEN_COLORMAP_P(n), n, XEN_ONLY_ARG, S_colormap_to_integer, "a colormap");
+  return(C_TO_XEN_INT(xen_colormap_to_int(n)));
+}
 
 
 
@@ -875,45 +1057,52 @@ static XEN g_colormap_ref(XEN map, XEN pos)
 {
   int index;
   mus_float_t x;
-  #define H_colormap_ref "(" S_colormap_ref " index pos): (list r g b). Index is the colormap \
-index (the value of " S_colormap " for example).  Pos is between 0.0 and 1.0."
   rgb_t r = 0, g = 0, b = 0;
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(map), map, XEN_ARG_1, S_colormap_ref, "an integer");
+
+  #define H_colormap_ref "(" S_colormap_ref " colormap pos): (list r g b). Pos is between 0.0 and 1.0."
+
+  XEN_ASSERT_TYPE(XEN_COLORMAP_P(map), map, XEN_ARG_1, S_colormap_ref, "a colormap object");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(pos), pos, XEN_ARG_2, S_colormap_ref, "a number between 0.0 and 1.0");
-  index = XEN_TO_C_INT(map);
+
+  index = XEN_COLORMAP_TO_C_INT(map);
   if (!(is_colormap(index)))
     XEN_ERROR(NO_SUCH_COLORMAP,
 	      XEN_LIST_2(C_TO_XEN_STRING(S_colormap_ref),
 			 map));
+
   x = XEN_TO_C_DOUBLE(pos);
   if ((x < 0.0) || (x > 1.0))
     XEN_OUT_OF_RANGE_ERROR(S_colormap_ref, 2, pos, "x must be between 0.0 and 1.0: ~A");
+
   get_current_color(index, (int)(color_map_size(ss) * x + 0.5), &r, &g, &b);
   return(XEN_LIST_3(C_TO_XEN_DOUBLE(RGB_TO_FLOAT(r)),
 		    C_TO_XEN_DOUBLE(RGB_TO_FLOAT(g)),
 		    C_TO_XEN_DOUBLE(RGB_TO_FLOAT(b))));
 }
 
-
 /* can't use Colormap -- it's the X type name */
 
-static XEN g_colormap(void) {return(C_TO_XEN_INT(color_map(ss)));}
+
+static XEN g_colormap(void) 
+{
+  #define H_colormap "(" S_colormap "): current colormap choice."
+  return(C_INT_TO_XEN_COLORMAP(color_map(ss)));
+}
 
 static XEN g_set_colormap(XEN val) 
 {
   int index;
-  #define H_colormap "(" S_colormap "): current colormap choice. \
-This should be an integer between 0 and the current colormap table top (default: 0).  The maps (from 0 to 14) are: \
-black-and-white, gray, hot, cool, bone, copper, pink, jet, prism, autumn, winter, \
-spring, summer, rainbow, and flag.  These names are defined in rgb.scm."
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_colormap, "an integer"); 
-  index = XEN_TO_C_INT(val);
+
+  XEN_ASSERT_TYPE(XEN_COLORMAP_P(val), val, XEN_ONLY_ARG, S_setB S_colormap, "a colormap"); 
+
+  index = XEN_COLORMAP_TO_C_INT(val);
   if (!(is_colormap(index)))
     XEN_ERROR(NO_SUCH_COLORMAP,
 	      XEN_LIST_2(C_TO_XEN_STRING(S_colormap),
 			 val));
+
   set_color_map(index); /* this normally redisplays */
-  return(C_TO_XEN_INT(color_map(ss)));
+  return(val);
 }
 
 
@@ -921,56 +1110,67 @@ static XEN g_colormap_size(void) {return(C_TO_XEN_INT(color_map_size(ss)));}
 
 static XEN g_set_colormap_size(XEN val) 
 {
-  int maps;
+  int size;
   #define H_colormap_size "(" S_colormap_size "): current colormap size; default is 512."
+
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_colormap_size, "an integer"); 
-  maps = XEN_TO_C_INT(val);
-  if (maps < 0)
+
+  size = XEN_TO_C_INT(val);
+  if (size < 0)
     XEN_OUT_OF_RANGE_ERROR(S_setB S_colormap_size, 1, val, "size ~A < 0?");
-  if (maps > (1 << 26))
+  if (size > (1 << 26))
     XEN_OUT_OF_RANGE_ERROR(S_setB S_colormap_size, 1, val, "size ~A too large");
-  set_color_map_size(maps);
+
+  set_color_map_size(size);
   check_colormap_sizes(color_map_size(ss));
+
   return(C_TO_XEN_INT(color_map_size(ss)));
 }
 
 
-static XEN g_colormap_name(XEN index)
+static XEN g_colormap_name(XEN col)
 {
   int map;
-  #define H_colormap_name "(" S_colormap_name " index) returns the colormap's name."
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(index), index, XEN_ONLY_ARG, S_colormap_name, "an integer"); 
-  map = XEN_TO_C_INT(index);
+  #define H_colormap_name "(" S_colormap_name " colormap) returns the colormap's name (used in the Color/Orientation dialog)."
+
+  XEN_ASSERT_TYPE(XEN_COLORMAP_P(col), col, XEN_ONLY_ARG, S_colormap_name, "a colormap"); 
+
+  map = XEN_COLORMAP_TO_C_INT(col);
   if (!(is_colormap(map)))
     XEN_ERROR(NO_SUCH_COLORMAP,
 	      XEN_LIST_2(C_TO_XEN_STRING(S_colormap_name),
-			 index));
+			 col));
+
   return(C_TO_XEN_STRING(cmaps[map]->name));
 }
 
 
-static XEN g_colormap_p(XEN index)
+static XEN g_colormap_p(XEN obj)
 {
-  #define H_colormap_p "(" S_colormap_p " index) -> " PROC_TRUE " if index represents a usable colormap."
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(index), index, XEN_ONLY_ARG, S_colormap_p, "an integer"); 
-  return(C_TO_XEN_BOOLEAN(is_colormap(XEN_TO_C_INT(index))));
+  #define H_colormap_p "(" S_colormap_p " obj) -> " PROC_TRUE " if 'obj' is a colormap."
+  return(C_TO_XEN_BOOLEAN(XEN_COLORMAP_P(obj) && 
+			  is_colormap(XEN_COLORMAP_TO_C_INT(obj))));
 }
 
 
-static XEN g_delete_colormap(XEN index)
+static XEN g_delete_colormap(XEN col)
 {
   int map;
-  #define H_delete_colormap "(" S_delete_colormap " index) removes the specified colormap."
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(index), index, XEN_ONLY_ARG, S_delete_colormap, "an integer"); 
-  map = XEN_TO_C_INT(index);
+  #define H_delete_colormap "(" S_delete_colormap " colormap) frees the specified colormap."
+
+  XEN_ASSERT_TYPE(XEN_COLORMAP_P(col), col, XEN_ONLY_ARG, S_delete_colormap, "a colormap"); 
+
+  map = XEN_COLORMAP_TO_C_INT(col);
   if (!(is_colormap(map)))
     XEN_ERROR(NO_SUCH_COLORMAP,
 	      XEN_LIST_2(C_TO_XEN_STRING(S_delete_colormap),
-			 index));
+			 col));
+
   delete_cmap(map);
   reflect_color_list(false);
   if (color_map(ss) == map) set_color_map(DEFAULT_COLOR_MAP);
-  return(index);
+
+  return(col);
 }
 
 
@@ -980,16 +1180,20 @@ static XEN g_add_colormap(XEN name, XEN func)
 {
   int index;
   #define H_add_colormap "(" S_add_colormap " name func) adds the colormap created by func to the colormap table, \
-returning the new index."
+returning the new colormap. 'name' is the colormap's name in the View:Color/Orientation dialog."
+
   XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_1, S_add_colormap, "a string"); 
   XEN_ASSERT_TYPE(XEN_PROCEDURE_P(func) && (!mus_xen_p(func)), func, XEN_ARG_2, S_add_colormap, "a function of 2 args");
+
   if (!(procedure_arity_ok(func, 1)))
     return(snd_bad_arity_error(S_add_colormap, 
 			       C_TO_XEN_STRING("func should take 1 arg"), 
 			       func));
+
   index = add_colormap(XEN_TO_C_STRING(name), func);
   reflect_color_list(false);
-  return(C_TO_XEN_INT(index));
+
+  return(C_INT_TO_XEN_COLORMAP(index));
 }
 
 
@@ -1003,6 +1207,8 @@ XEN_NARGIFY_1(g_set_colormap_size_w, g_set_colormap_size)
 XEN_NARGIFY_1(g_colormap_name_w, g_colormap_name)
 XEN_NARGIFY_1(g_delete_colormap_w, g_delete_colormap)
 XEN_NARGIFY_2(g_add_colormap_w, g_add_colormap)
+XEN_NARGIFY_1(g_integer_to_colormap_w, g_integer_to_colormap)
+XEN_NARGIFY_1(g_colormap_to_integer_w, g_colormap_to_integer)
 #else
 #define g_colormap_ref_w g_colormap_ref
 #define g_colormap_w g_colormap
@@ -1013,14 +1219,20 @@ XEN_NARGIFY_2(g_add_colormap_w, g_add_colormap)
 #define g_colormap_name_w g_colormap_name
 #define g_delete_colormap_w g_delete_colormap
 #define g_add_colormap_w g_add_colormap
+#define g_integer_to_colormap_w g_integer_to_colormap
+#define g_colormap_to_integer_w g_colormap_to_integer
 #endif
 
+
+static XEN colormap_temp[16]; /* static for Ruby's sake */
 
 void g_init_gxcolormaps(void)
 {
   cmaps_size = NUM_BUILTIN_COLORMAPS;
   cmaps = (cmap **)calloc(cmaps_size, sizeof(cmap *));
-  /* these are just place-holders */
+  
+  init_xen_colormap();
+
   cmaps[BLACK_AND_WHITE_COLORMAP] = make_builtin_cmap(1, _("black-and-white"), make_black_and_white_colormap, black_and_white_rgb); 
   cmaps[GRAY_COLORMAP] =    make_builtin_cmap(1, _("gray"),    make_gray_colormap,    gray_rgb); 
   cmaps[AUTUMN_COLORMAP] =  make_builtin_cmap(1, _("autumn"),  make_autumn_colormap,  autumn_rgb); 
@@ -1038,6 +1250,23 @@ void g_init_gxcolormaps(void)
   cmaps[RAINBOW_COLORMAP] = make_builtin_cmap(1, _("rainbow"), make_rainbow_colormap, rainbow_rgb); 
   cmaps[PHASES_COLORMAP] =  make_builtin_cmap(1, _("phases"),  make_phases_colormap,  phases_rgb); 
 
+  XEN_DEFINE_VARIABLE("black-and-white-colormap", colormap_temp[0], C_INT_TO_XEN_COLORMAP(0));
+  XEN_DEFINE_VARIABLE("gray-colormap",            colormap_temp[1], C_INT_TO_XEN_COLORMAP(1));
+  XEN_DEFINE_VARIABLE("hot-colormap",             colormap_temp[2], C_INT_TO_XEN_COLORMAP(2));
+  XEN_DEFINE_VARIABLE("cool-colormap",            colormap_temp[3], C_INT_TO_XEN_COLORMAP(3));
+  XEN_DEFINE_VARIABLE("bone-colormap",            colormap_temp[4], C_INT_TO_XEN_COLORMAP(4));
+  XEN_DEFINE_VARIABLE("copper-colormap",          colormap_temp[5], C_INT_TO_XEN_COLORMAP(5));
+  XEN_DEFINE_VARIABLE("pink-colormap",            colormap_temp[6], C_INT_TO_XEN_COLORMAP(6));
+  XEN_DEFINE_VARIABLE("jet-colormap",             colormap_temp[7], C_INT_TO_XEN_COLORMAP(7));
+  XEN_DEFINE_VARIABLE("prism-colormap",           colormap_temp[8], C_INT_TO_XEN_COLORMAP(8));
+  XEN_DEFINE_VARIABLE("autumn-colormap",          colormap_temp[9], C_INT_TO_XEN_COLORMAP(9));
+  XEN_DEFINE_VARIABLE("winter-colormap",          colormap_temp[10], C_INT_TO_XEN_COLORMAP(10));
+  XEN_DEFINE_VARIABLE("spring-colormap",          colormap_temp[11], C_INT_TO_XEN_COLORMAP(11));
+  XEN_DEFINE_VARIABLE("summer-colormap",          colormap_temp[12], C_INT_TO_XEN_COLORMAP(12));
+  XEN_DEFINE_VARIABLE("rainbow-colormap",         colormap_temp[13], C_INT_TO_XEN_COLORMAP(13));
+  XEN_DEFINE_VARIABLE("flag-colormap",            colormap_temp[14], C_INT_TO_XEN_COLORMAP(14));
+  XEN_DEFINE_VARIABLE("phases-colormap",          colormap_temp[15], C_INT_TO_XEN_COLORMAP(15));
+
   XEN_DEFINE_PROCEDURE(S_colormap_p, g_colormap_p_w,           1, 0, 0, H_colormap_p);
   XEN_DEFINE_PROCEDURE(S_colormap_ref, g_colormap_ref_w,       2, 0, 0, H_colormap_ref);
   XEN_DEFINE_PROCEDURE(S_add_colormap, g_add_colormap_w,       2, 0, 0, H_add_colormap);
@@ -1046,4 +1275,7 @@ void g_init_gxcolormaps(void)
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_colormap,      g_colormap_w,      H_colormap,      S_setB S_colormap,      g_set_colormap_w,      0, 0, 1, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_colormap_size, g_colormap_size_w, H_colormap_size, S_setB S_colormap_size, g_set_colormap_size_w, 0, 0, 1, 0);
+
+  XEN_DEFINE_PROCEDURE(S_integer_to_colormap,       g_integer_to_colormap_w, 1, 0, 0, H_integer_to_colormap);
+  XEN_DEFINE_PROCEDURE(S_colormap_to_integer,       g_colormap_to_integer_w, 1, 0, 0, H_colormap_to_integer);
 }

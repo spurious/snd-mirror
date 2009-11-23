@@ -1214,8 +1214,8 @@
 
 ;;; ---------------- test 1: defaults ----------------
 
-(define good-colormap (if (provided? 'gl) 2 0))
-(define better-colormap 0)
+(define good-colormap (if (provided? 'gl) hot-colormap black-and-white-colormap))
+(define better-colormap black-and-white-colormap)
 (if with-gui
     (if (not (colormap? good-colormap))
 	(set! good-colormap
@@ -1223,8 +1223,8 @@
 	       (lambda (return)
 		 (do ((i 1 (+ 1 i)))
 		     ((= i 20))
-		   (if (colormap? i)
-		       (return i))))))))
+		   (if (colormap? (integer->colormap i))
+		       (return (integer->colormap i)))))))))
 (if with-gui
     (if (not (colormap? better-colormap))
 	(set! better-colormap
@@ -1232,8 +1232,8 @@
 	       (lambda (return)
 		 (do ((i good-colormap (+ 1 i)))
 		     ((= i 20))
-		   (if (colormap? i)
-		       (return i))))))))
+		   (if (colormap? (integer->colormap i))
+		       (return (integer->colormap i)))))))))
 
 (define (snd_test_1)
   (letrec ((test-defaults
@@ -14613,17 +14613,16 @@ EDITS: 2
 	  (if (not (equal? (color->list c1) (list 0.0 0.0 1.0)))
 	      (snd-display ";color->list: ~A ~A?" c1 (color->list c1))))
 	(do ((i 0 (+ 1 i))) 
-	    ((> i flag-colormap))
-	  (if (colormap? i)
-	      (let ((val (colormap-ref i 0))
-		    (true-val (list-ref (list '(0.0 0.0 0.0) '(0.0 0.0 0.0) '(0.0 0.0 0.0) '(0.0 1.0 1.0)
-					      '(0.0 0.0 7.01915007248035e-4) '(0.0 0.0 0.0) '(0.0 0.0 0.0)
-					      '(0.0 0.0 0.49999) '(1.0 0.0 0.0) '(1.0 0.0 0.0) '(0.0 0.0 1.0)
-					      '(1.0 0.0 1.0) '(0.0 0.500007629510948 0.4) '(1.0 0.0 0.0)
-					      '(1.0 0.0 0.0) '(0.0 0.0 0.0))
-					i)))
-		(if (not (feql val true-val))
-		    (snd-display ";colormap-ref ~A: ~A (~A)" i val true-val)))))
+	    ((not (colormap? (integer->colormap i))))
+	  (let ((val (colormap-ref (integer->colormap i) 0))
+		(true-val (list-ref (list '(0.0 0.0 0.0) '(0.0 0.0 0.0) '(0.0 0.0 0.0) '(0.0 1.0 1.0)
+					  '(0.0 0.0 7.01915007248035e-4) '(0.0 0.0 0.0) '(0.0 0.0 0.0)
+					  '(0.0 0.0 0.49999) '(1.0 0.0 0.0) '(1.0 0.0 0.0) '(0.0 0.0 1.0)
+					  '(1.0 0.0 1.0) '(0.0 0.500007629510948 0.4) '(1.0 0.0 0.0)
+					  '(1.0 0.0 0.0) '(0.0 0.0 1.0))
+				    i)))
+	    (if (not (feql val true-val))
+		(snd-display ";colormap-ref ~A: ~A (~A)" i val true-val))))
 	(catch #t ; might be undefined var as well as no-such-color
 	       (lambda () 
 		 (test-color
@@ -14682,6 +14681,9 @@ EDITS: 2
 		   (set! (graph-color) white)
 		   (close-sound ind)))
 	       (lambda args args))
+
+	(if (not (= (length jet-colormap) (colormap-size)))
+	    (snd-display ";jet-colormap length: ~A ~A" (length jet-colormap) (colormap-size)))
 	
 	(for-each 
 	 (lambda (n err)
@@ -14702,10 +14704,20 @@ EDITS: 2
 			   (* 29/24 x)
 			   (+ (* 7/8 x) 1/8)))
 		    (rgb (colormap-ref bone-colormap x))
+		    (rgb1 (bone-colormap x))
 		    (r1 (list-ref rgb 0))
 		    (g1 (list-ref rgb 1))
-		    (b1 (list-ref rgb 2)))
-	       (if (and (< x (- 1.0 (/ 1.0 n))) (or (cfneq r r1) (cfneq g g1) (cfneq b b1)))
+		    (b1 (list-ref rgb 2))
+		    (r2 (list-ref rgb1 0))
+		    (g2 (list-ref rgb1 1))
+		    (b2 (list-ref rgb1 2)))
+	       (if (and (< x (- 1.0 (/ 1.0 n))) 
+			(or (cfneq r r1) 
+			    (cfneq g g1) 
+			    (cfneq b b1)
+			    (cfneq r2 r1) 
+			    (cfneq g2 g1) 
+			    (cfneq b2 b1)))
 		   (snd-display ";bone ~,3F (~,3F): ~{~,3F ~} ~{~,3F ~}" 
 				x (max (abs (- r r1)) (abs (- g g1)) (abs (- b b1))) (list r g b) (list r1 g1 b1)))))
 	   
@@ -14952,25 +14964,28 @@ EDITS: 2
 	      (snd-display ";white colormap: ~A" (colormap-ref ind 0.5)))
 	  (let ((tag (catch #t (lambda () (set! (colormap) ind)) (lambda args args))))
 	    (if (or (eq? tag 'no-such-colormap)
-		    (not (= (colormap) ind)))
+		    (not (equal? (colormap) ind))
+		    (not (= (colormap->integer (colormap)) (colormap->integer ind))))
 		(snd-display ";colormap white: ~A ~A ~A" tag ind (colormap))))
 	  (if (not (string=? (colormap-name ind) "white"))
 	      (snd-display ";white colormap name: ~A" (colormap-name ind))))
-	
-	(let ((tag (catch #t (lambda () (delete-colormap 1234)) (lambda args (car args)))))
+
+	(let ((tag (catch #t (lambda () (delete-colormap (integer->colormap 1234))) (lambda args (car args)))))
 	  (if (not (eq? tag 'no-such-colormap))
 	      (snd-display ";delete-colormap 1234: ~A" tag)))
-	(let ((tag (catch #t (lambda () (colormap-ref 1234 0.5)) (lambda args (car args)))))
+	(let ((tag (catch #t (lambda () (colormap-ref (integer->colormap 1234) 0.5)) (lambda args (car args)))))
 	  (if (not (eq? tag 'no-such-colormap))
 	      (snd-display ";colormap-ref 1234: ~A" tag)))
-	(let ((tag (catch #t (lambda () (colormap-ref -1 0.5)) (lambda args (car args)))))
-	  (if (not (eq? tag 'no-such-colormap))
+	(let ((tag (catch #t (lambda () (colormap-ref (integer->colormap -1) 0.5)) (lambda args (car args)))))
+	  (if (and (not (eq? tag 'no-such-colormap))
+		   (not (eq? tag 'wrong-type-arg)))
 	      (snd-display ";colormap-ref -1: ~A" tag)))
-	(let ((tag (catch #t (lambda () (set! (colormap) 1234)) (lambda args (car args)))))
+	(let ((tag (catch #t (lambda () (set! (colormap) (integer->colormap 1234))) (lambda args (car args)))))
 	  (if (not (eq? tag 'no-such-colormap))
 	      (snd-display "; set colormap 1234: ~A" tag)))
-	(let ((tag (catch #t (lambda () (set! (colormap) -1)) (lambda args (car args)))))
-	  (if (not (eq? tag 'no-such-colormap))
+	(let ((tag (catch #t (lambda () (set! (colormap) (integer->colormap -1))) (lambda args (car args)))))
+	  (if (and (not (eq? tag 'no-such-colormap))
+		   (not (eq? tag 'wrong-type-arg)))
 	      (snd-display "; set colormap -1: ~A" tag)))
 	(let ((tag (catch #t (lambda () (colormap-ref copper-colormap 2.0)) (lambda args (car args)))))
 	  (if (not (eq? tag 'out-of-range))
@@ -15034,13 +15049,14 @@ EDITS: 2
 	      (snd-display ";delete-colormap ~A: ~A" pink-colormap (colormap? pink-colormap)))
 	  (let ((tag (catch #t (lambda () (set! (colormap) pink-colormap)) (lambda args args))))
 	    (if (or (not (eq? (car tag) 'no-such-colormap))
-		    (= (colormap) pink-colormap))
+		    (equal? (colormap) pink-colormap))
 		(snd-display ";delete pink colormap: ~A ~A ~A" tag pink-colormap (colormap))))
-	  
+
 	  (for-each
 	   (lambda (n)
 	     (set! (colormap-size) n)
-	     (do ((i 0 (+ 1 i))) ((= i 10))
+	     (do ((i 0 (+ 1 i))) 
+		 ((= i 10))
 	       (let* ((x (random 1.0))
 		      (r (if (< x 4/5) (* 5/4 x) 1.0))
 		      (g (* 4/5 x))
@@ -43767,7 +43783,7 @@ EDITS: 1
 			   (force-event)))))
 		 (lambda args args))
 	  (let ((old-colormap (colormap)))
-	    (set! (colormap) 0) ; black-and-white
+	    (set! (colormap) black-and-white-colormap)
 	    (update-transform-graph)
 	    (set! (transform-graph-type ind1 0) graph-as-spectrogram)
 	    (update-transform-graph)
@@ -45070,7 +45086,6 @@ EDITS: 1
 	    (if (fneq diff 0.0) (snd-display ";arr->file->array overall max diff: ~A" diff))))
 	
 	;; now clear sono bins if possible 
-					;	(set! (colormap) 1)
 	(set! (colormap-size) 16)
 	(set! (transform-size ind 0) 8)
 	(set! (transform-graph-type ind 0) graph-as-sonogram)

@@ -3528,9 +3528,11 @@ static char *html_directory(void)
   if (html_dir(ss))
     {
       bool happy;
+      int len;
       char *hd = NULL;
-      hd = (char *)calloc(mus_strlen(html_dir(ss)) + 16, sizeof(char));
-      sprintf(hd, "%s/snd.html", html_dir(ss));
+      len = mus_strlen(html_dir(ss)) + 16;
+      hd = (char *)calloc(len, sizeof(char));
+      snprintf(hd, len, "%s/snd.html", html_dir(ss));
       happy = mus_file_probe(hd);
       free(hd);
       if (happy) return(mus_strdup(html_dir(ss)));
@@ -3560,18 +3562,20 @@ void url_to_html_viewer(const char *url)
       if (program)
 	{
 	  char *path;
-	  path = (char *)calloc(strlen(dir_path) + strlen(url) + 256, sizeof(char));
+	  int len;
+	  len = strlen(dir_path) + strlen(url) + 256;
+	  path = (char *)calloc(len, sizeof(char));
 	  if ((strcmp(program, "netscape") == 0) ||
 	      (strcmp(program, "mozilla") == 0) ||
 	      (strcmp(program, "firefox") == 0))
 	    {
-	      sprintf(path, "%s/%s", dir_path, url);
+	      snprintf(path, len, "%s/%s", dir_path, url);
 	      send_mozilla(program, path);
 	    }
 	  else
 	    {
 	      int err;
-	      sprintf(path, "%s file:%s/%s", program, dir_path, url);
+	      snprintf(path, len, "%s file:%s/%s", program, dir_path, url);
 	      err = system(path);
 	      if (err == -1)
 		fprintf(stderr, "can't start %s?", program);

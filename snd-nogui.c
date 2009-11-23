@@ -326,7 +326,9 @@ void top_level_catch(int ignore)
 }
 #endif
 
+
 #define FALLBACK_FONT "9x15"
+static XEN colormap_temp[16]; /* static for Ruby's sake */
 
 void snd_doit(int argc, char **argv)
 {
@@ -341,6 +343,23 @@ void snd_doit(int argc, char **argv)
 #if HAVE_S7
   xen_s7_set_repl_prompt("snd>");
 #endif
+
+  XEN_DEFINE_VARIABLE("black-and-white-colormap", colormap_temp[0], C_TO_XEN_INT(0));
+  XEN_DEFINE_VARIABLE("gray-colormap",            colormap_temp[1], C_TO_XEN_INT(1));
+  XEN_DEFINE_VARIABLE("hot-colormap",             colormap_temp[2], C_TO_XEN_INT(2));
+  XEN_DEFINE_VARIABLE("cool-colormap",            colormap_temp[3], C_TO_XEN_INT(3));
+  XEN_DEFINE_VARIABLE("bone-colormap",            colormap_temp[4], C_TO_XEN_INT(4));
+  XEN_DEFINE_VARIABLE("copper-colormap",          colormap_temp[5], C_TO_XEN_INT(5));
+  XEN_DEFINE_VARIABLE("pink-colormap",            colormap_temp[6], C_TO_XEN_INT(6));
+  XEN_DEFINE_VARIABLE("jet-colormap",             colormap_temp[7], C_TO_XEN_INT(7));
+  XEN_DEFINE_VARIABLE("prism-colormap",           colormap_temp[8], C_TO_XEN_INT(8));
+  XEN_DEFINE_VARIABLE("autumn-colormap",          colormap_temp[9], C_TO_XEN_INT(9));
+  XEN_DEFINE_VARIABLE("winter-colormap",          colormap_temp[10], C_TO_XEN_INT(10));
+  XEN_DEFINE_VARIABLE("spring-colormap",          colormap_temp[11], C_TO_XEN_INT(11));
+  XEN_DEFINE_VARIABLE("summer-colormap",          colormap_temp[12], C_TO_XEN_INT(12));
+  XEN_DEFINE_VARIABLE("rainbow-colormap",         colormap_temp[13], C_TO_XEN_INT(13));
+  XEN_DEFINE_VARIABLE("flag-colormap",            colormap_temp[14], C_TO_XEN_INT(14));
+  XEN_DEFINE_VARIABLE("phases-colormap",          colormap_temp[15], C_TO_XEN_INT(15));
 
 #if HAVE_SCHEME
   XEN_EVAL_C_STRING("(define " S_color_hook " (make-hook 0))");

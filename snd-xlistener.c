@@ -469,12 +469,17 @@ static void Complain(Widget w, XEvent *event, char **str, Cardinal *num)
    */
   char *old_text, *new_text;
   XmTextPosition curpos;
+  int len;
+
   curpos = XmTextGetCursorPosition(w);
   old_text = XmTextGetString(w);
-  new_text = (char *)calloc(mus_strlen(old_text) + 5, sizeof(char));
-  sprintf(new_text, "%s C-%c", (old_text) ? old_text : "", str[0][0]);
+  len = mus_strlen(old_text) + 5;
+  new_text = (char *)calloc(len, sizeof(char));
+  snprintf(new_text, len, "%s C-%c", (old_text) ? old_text : "", str[0][0]);
+
   XmTextSetString(w, new_text);
   XmTextSetCursorPosition(w, curpos);
+
   if (old_text) XtFree(old_text);
   free(new_text);
 }

@@ -287,7 +287,7 @@
 (c-define *c-color-cutoff* 0.0)
 (set! (color-cutoff) *c-color-cutoff*)
 
-(c-define *c-colormap* 4)
+(c-define *c-colormap* bone-colormap)
 (set! (colormap) *c-colormap*)
 
 (c-define *c-transform-size* 1024)

@@ -651,7 +651,7 @@ static void remake_edit_history(Widget lst, chan_info *cp, int from_graph)
 	{
 	  ncp = sp->chans[k];
 	  ncp->edhist_base = ed;
-	  sprintf(title, "chan %d: %s", k + 1, sp->filename);
+	  snprintf(title, filelen, "chan %d: %s", k + 1, sp->filename);
 	  edits[ed++] = XmStringCreateLocalized(title);
 	  eds = ncp->edit_ctr;
 	  while ((eds < (ncp->edit_size - 1)) && (ncp->edits[eds + 1])) eds++;

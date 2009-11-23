@@ -60,12 +60,16 @@ bool send_mozilla(const char *html_viewer, const char *url)
   Window window;
   Display *dpy;
   char *command;
+  int len;
+
+  len = mus_strlen(url) + mus_strlen(html_viewer) + 32;
   dpy = MAIN_DISPLAY(ss);
-  command = (char *)calloc(mus_strlen(url) + mus_strlen(html_viewer) + 32, sizeof(char));
+  command = (char *)calloc(len, sizeof(char));
   window = find_window(dpy, DefaultRootWindow(dpy), NS_VERSION, compare_window);
+
   if (window)
     {
-      sprintf(command, "openURL(file:%s)", url);
+      snprintf(command, len, "openURL(file:%s)", url);
       XChangeProperty(dpy, 
 		      window, 
 		      XInternAtom(dpy, NS_COMMAND, 0), 
@@ -79,7 +83,7 @@ bool send_mozilla(const char *html_viewer, const char *url)
     {
       if (!(fork()))
         {
-	  sprintf(command, "%s file:%s", html_viewer, url);
+	  snprintf(command, len, "%s file:%s", html_viewer, url);
 	  if (execl("/bin/sh", "/bin/sh", "-c", command, NULL) == -1)
 	    {
 	      free(command);
@@ -87,6 +91,7 @@ bool send_mozilla(const char *html_viewer, const char *url)
 	    }
 	}
     }
+
   free(command);
   return(true);
 }

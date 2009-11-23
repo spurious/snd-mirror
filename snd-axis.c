@@ -197,9 +197,12 @@ static char *measure_number(int bpm, double val)
 static char *clock_number(double loc, int tens)
 {
   /* DD:HH:MM:SS.ddd */
+  #define CLOCK_BUFFER_SIZE 64
+
   int day, hour, minute, second;
   double frac_second;
   char *buf;
+
   second = (int)loc;
   frac_second = loc - second;
   minute = (int)floor(second / 60);
@@ -208,25 +211,28 @@ static char *clock_number(double loc, int tens)
   second %= 60;
   minute %= 60;
   hour %= 24;
-  buf = (char *)calloc(64, sizeof(char));
+
+  buf = (char *)calloc(CLOCK_BUFFER_SIZE, sizeof(char));
+
   if (day > 0)
-    sprintf(buf, "%02d:%02d:%02d:%02d.%0*d", day, hour, minute, second, tens, (int)(frac_second * pow(10.0, tens)));
+    snprintf(buf, CLOCK_BUFFER_SIZE, "%02d:%02d:%02d:%02d.%0*d", day, hour, minute, second, tens, (int)(frac_second * pow(10.0, tens)));
   else
     {
       if (hour > 0)
-	sprintf(buf, "%02d:%02d:%02d.%0*d", hour, minute, second, tens, (int)(frac_second * pow(10.0, tens)));
+	snprintf(buf, CLOCK_BUFFER_SIZE, "%02d:%02d:%02d.%0*d", hour, minute, second, tens, (int)(frac_second * pow(10.0, tens)));
       else
 	{
 	  if (minute > 0)
-	    sprintf(buf, "%02d:%02d.%0*d", minute, second, tens, (int)(frac_second * pow(10.0, tens)));
+	    snprintf(buf, CLOCK_BUFFER_SIZE, "%02d:%02d.%0*d", minute, second, tens, (int)(frac_second * pow(10.0, tens)));
 	  else
 	    {
 	      if (second > 0)
-		sprintf(buf, "%d.%0*d", second, tens, (int)(frac_second * pow(10.0, tens)));
-	      else sprintf(buf, "0.%0*d", tens, (int)(frac_second * pow(10.0, tens)));
+		snprintf(buf, CLOCK_BUFFER_SIZE, "%d.%0*d", second, tens, (int)(frac_second * pow(10.0, tens)));
+	      else snprintf(buf, CLOCK_BUFFER_SIZE, "0.%0*d", tens, (int)(frac_second * pow(10.0, tens)));
 	    }
 	}
     }
+
   return(buf);
 }
 

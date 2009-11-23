@@ -289,11 +289,11 @@ char *prettyf(double num, int tens)
   static char prtbuf[256];
 
   if (tens <= 0)
-    sprintf(prtbuf, "%d", (int)snd_round(num));
+    snprintf(prtbuf, 256, "%d", (int)snd_round(num));
   else 
     {
       int i, len;
-      sprintf(prtbuf, "%.*f", tens, num); /* %f assumes double arg */
+      snprintf(prtbuf, 256, "%.*f", tens, num); /* %f assumes double arg */
       /* look for trailing 0's beyond the ddd.0 case */
       len = strlen(prtbuf);
       for (i = len - 1; (i > 0) && (prtbuf[i] == '0') && (prtbuf[i - 1] != '.'); i--)

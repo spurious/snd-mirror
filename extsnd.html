@@ -1294,7 +1294,7 @@ and the regular <a href="#frames">frames</a> function that handles sound objects
 <code><a class=def>length</a> (obj)</code>
 </td></tr><tr><td></td><td>
 <A NAME="genericlength">length</A> handles list length, string-length, vector-length, <a href="s7.html#s7doc">hash-table-size</a>,
-<a href="#vctlength">vct-length</a>, <a href="#frames">frames</a> (sound length), 
+<a href="#vctlength">vct-length</a>, <a href="#frames">frames</a> (sound length), colormap-size,
 <a href="sndclm.html#genericfunctions">mus-length</a> (generators), <a href="#sounddatalength">sound-data-length</a>, 
 <a href="#mixlength">mix-length</a>, 
 <a href="#selectionframes">selection-frames</a>,
@@ -12929,7 +12929,7 @@ to put the date and time in the Snd title bar.
   time-graph     transform-graph     lisp-graph
 </pre>
 
-<p><b>Colormap</b> choice (<a href="#colormap">colormap</a>, defined in rgb.scm):</p>
+<p><b>Colormap</b> choice (<a href="#colormap">colormap</a>):</p>
 <pre>
   black-and-white-colormap gray-colormap     hot-colormap     cool-colormap
   bone-colormap            copper-colormap   pink-colormap    jet-colormap
@@ -13312,7 +13312,7 @@ If the requested font can't be loaded, the set! statement returns the old (uncha
 <tr><td colspan=2 bgcolor="#f2f4ff">
 <code><a class=def name="addcolormap">add-colormap</a> (name func)</code>
 </td></tr><tr><td></td><td>
-add-colormap adds a new colormap to the colormap table, returning its index (for
+add-colormap adds a new colormap to the colormap table, returning the colormap object (for
 use with <a href="#colormap">colormap</a> or <a href="#colormapref">colormap-ref</a>).
 'name' is the name displayed in the Color/Orientation Dialog's list of colormaps.
 'func' is a function of one argument, the desired colormap size; it will be
@@ -13449,10 +13449,10 @@ and color-scale to drive colormap choices:
 </td></tr><tr><td></td><td>
 This is the colormap choice for various displays, most prominently the transform sonogram and spectrogram,
 and the wavogram.
-The built-in maps (from 0 to 15) are: 
-black-and-white, gray, hot, cool, bone, copper, pink, jet, prism, autumn, winter, 
-spring, summer, rainbow, flag, and phases. 
-These names are defined (with '-colormap' appended) in rgb.scm and rgb.rb.
+The built-in maps are: 
+black-and-white-colormap, gray-colormap, hot-colormap, cool-colormap, bone-colormap, 
+copper-colormap, pink-colormap, jet-colormap, prism-colormap, autumn-colormap, winter-colormap, 
+spring-colormap, summer-colormap, rainbow-colormap, flag-colormap, and phases-colormap. 
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -13465,7 +13465,6 @@ colormap-name returns the specified colormap's name.
   <em class=listener>:</em><em class=typing>(colormap-name (colormap))</em>
   <em class=listener>"hot"</em>
 </pre>
-rgb.scm defines the built-in colormap names.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -13489,11 +13488,18 @@ The default is 512.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
+<!-- colormap->integer -->
+<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="colormaptointeger">colormap-&gt;integer</a> (colormap-object)</code>
+</td></tr><tr><td></td><td>
+This function returns the integer corresponding to a given colormap.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
 <!-- colormap? -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
-<code><a class=def name="colormapp">colormap?</a> (index)</code>
+<code><a class=def name="colormapp">colormap?</a> (object)</code>
 </td></tr><tr><td></td><td>
-colormap? returns #t if 'index' represents a usable colormap.
+colormap? returns #t if 'object' is a usable colormap.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -13529,9 +13535,9 @@ See <a href="#xcursor">x-cursor</a> or
 
 <!-- delete-colormap -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
-<code><a class=def name="deletecolormap">delete-colormap</a> (index)</code>
+<code><a class=def name="deletecolormap">delete-colormap</a> (object)</code>
 </td></tr><tr><td></td><td>
-delete-colormap deletes the colormap represented by 'index'.
+delete-colormap deletes the memory associated with the given colormap.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -13742,6 +13748,13 @@ sound over another at an arbitrary point, and so on (see draw.scm):
 <img src="pix/redsamps.png" alt="red samples" hspace=20>
 
 </td></tr><tr><td colspan=2 height=32></td></tr>
+
+
+<!-- integer->colormap -->
+<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="integertocolormap">integer-&gt;colormap</a> (i)</code>
+</td></tr><tr><td></td><td>
+This function returns the colormap corresponding to a given integer. 
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
 
 <!--  make-color -->
