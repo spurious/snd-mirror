@@ -3279,6 +3279,8 @@ auto-delete is " PROC_TRUE ", the input file is deleted when it is no longer nee
    *        also mix-sound|mix-channel (sound object/int), but arg order is confusing (file-chn...)
    *        and mix-vct has "origin", also file_chn might be env: pan-mix-* [vector list?]
    *
+   * mix-vct origin arg is not used (externally) except as a comment
+   *
    * mix object :channel :out-channel :start (:end?) :with-tag :auto-delete (:edit-position?) (:channels?) :origin
    */
 
@@ -3329,6 +3331,7 @@ auto-delete is " PROC_TRUE ", the input file is deleted when it is no longer nee
 	  int i, out_chans = 1;
 	  XEN result = XEN_EMPTY_LIST;
 	  file_delete_t delete_choice = DONT_DELETE_ME;
+
 	  if (XEN_INTEGER_P(auto_delete))
 	    delete_choice = (file_delete_t)XEN_TO_C_INT(auto_delete);
 	  else

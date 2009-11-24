@@ -84,10 +84,7 @@
  *   things I ought to add/change:
  *        perhaps find(-if), remove etc from CL? (generic -- vectors and strings also as in support.scm)
  *           if generic, perhaps add to c-type struct?
- *        defmacro* define-macro* 
- *        perhaps settable numerator denominator imag-part real-part angle magnitude
- *        cerror ("error/cc"?) -- tag = continuation in this case,
- *          and error handler makes it accessible (as well as error context) for eval
+ *        cerror ("error/cc"?)
  *        rename "force" to some name matching the notion of a promise ("delay" and "force" are about as bad as names can get)
  *          or better, get rid of these things altogether [cash_promise?]
  *        make #<func args> = (func args) or something like that so we can read new_type objects, or add a reader to that struct
@@ -309,7 +306,8 @@ typedef enum {OP_READ_INTERNAL, OP_EVAL, OP_EVAL_ARGS0, OP_EVAL_ARGS1, OP_APPLY,
 	      OP_DEFINE0, OP_DEFINE1, OP_BEGIN, OP_IF0, OP_IF1, OP_SET0, OP_SET1, OP_SET2, 
 	      OP_LET0, OP_LET1, OP_LET2, OP_LET_STAR0, OP_LET_STAR1, 
 	      OP_LETREC0, OP_LETREC1, OP_LETREC2, OP_COND0, OP_COND1, OP_MAKE_PROMISE, OP_AND0, OP_AND1, 
-	      OP_OR0, OP_OR1, OP_DEFMACRO, OP_MACRO0, OP_MACRO1, OP_DEFINE_MACRO, OP_DEFINE_EXPANSION, OP_EXPANSION,
+	      OP_OR0, OP_OR1, OP_DEFMACRO, OP_DEFMACRO_STAR, OP_MACRO0, OP_MACRO1, 
+	      OP_DEFINE_MACRO, OP_DEFINE_MACRO_STAR, OP_DEFINE_EXPANSION, OP_EXPANSION,
 	      OP_CASE0, OP_CASE1, OP_CASE2, OP_READ_LIST, OP_READ_DOT, OP_READ_QUOTE, 
 	      OP_READ_QUASIQUOTE, OP_READ_QUASIQUOTE_VECTOR, OP_READ_UNQUOTE, OP_READ_UNQUOTE_SPLICING, 
 	      OP_READ_VECTOR, OP_FORCE, OP_READ_RETURN_EXPRESSION, OP_READ_POP_AND_RETURN_EXPRESSION, 
@@ -322,7 +320,7 @@ typedef enum {OP_READ_INTERNAL, OP_EVAL, OP_EVAL_ARGS0, OP_EVAL_ARGS1, OP_APPLY,
 	      OP_MAX_DEFINED} opcode_t;
 
 #define NUM_SMALL_INTS 256
-/* this needs to be at least OP_MAX_DEFINED = 86 */
+/* this needs to be at least OP_MAX_DEFINED = 88 */
 
 typedef enum {TOKEN_EOF, TOKEN_LEFT_PAREN, TOKEN_RIGHT_PAREN, TOKEN_DOT, TOKEN_ATOM, TOKEN_QUOTE, TOKEN_DOUBLE_QUOTE, 
 	      TOKEN_BACK_QUOTE, TOKEN_COMMA, TOKEN_AT_MARK, TOKEN_SHARP_CONST, TOKEN_VECTOR} token_t;
@@ -1669,7 +1667,8 @@ static void show_stack(s7_scheme *sc)
     {"read_internal", "eval", "eval_args0", "eval_args1", "apply", "eval_macro", "lambda", "quote", 
      "define0", "define1", "begin", "if0", "if1", "set0", "set1", "set2", "let0", "let1", "let2", 
      "let_star0", "let_star1", "letrec0", "letrec1", "letrec2", "cond0", "cond1", "make_promise", 
-     "and0", "and1", "or0", "or1", "defmacro", "macro0", "macro1", "define_macro", "define_expansion", "expansion", 
+     "and0", "and1", "or0", "or1", "defmacro", "defmacro_star", "macro0", "macro1", 
+     "define_macro", "define_macro_star", "define_expansion", "expansion", 
      "case0", "case1", "case2", "read_list", "read_dot", "read_quote", "read_quasiquote", "read_quasiquote_vector", 
      "read_unquote", "read_unquote_splicing", "read_vector", "force", "read_return_expression", 
      "read_and_return_expression", "load_return_if_eof", "load_close_and_pop_if_eof", "eval_string", 
@@ -16936,6 +16935,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       
     case OP_DEFMACRO:
+    case OP_DEFMACRO_STAR:
       
       /* (defmacro name (args) body) ->
        *
@@ -17010,7 +17010,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 						     sc->APPLY,
 						     s7_cons(sc, 
 							     s7_cons(sc, 
-								     sc->LAMBDA,
+								     (sc->op == OP_DEFMACRO_STAR) ? sc->LAMBDA_STAR : sc->LAMBDA,
 								     sc->z),
 							     make_list_1(sc, make_list_2(sc, sc->CDR, sc->y)))))));
 
@@ -17040,6 +17040,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 
     case OP_DEFINE_MACRO:
+    case OP_DEFINE_MACRO_STAR:
       if (!is_pair(car(sc->code)))
 	return(s7_wrong_type_arg_error(sc, "define-macro", 1, car(sc->code), "a list (name ...)"));
 
@@ -17078,7 +17079,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 						     sc->APPLY,
 						     s7_cons(sc, 
 							     s7_cons(sc, 
-								     sc->LAMBDA,
+								     (sc->op == OP_DEFINE_MACRO_STAR) ? sc->LAMBDA_STAR : sc->LAMBDA,
 								     s7_cons(sc, 
 									     cdar(sc->code), /* arg list */
 									     sc->z)),
@@ -22465,7 +22466,9 @@ s7_scheme *s7_init(void)
   assign_syntax(sc, "case",              OP_CASE0);
   assign_syntax(sc, "macro",             OP_MACRO0);           /* r4rs macro syntax, I think */
   assign_syntax(sc, "defmacro",          OP_DEFMACRO);         /* CL-style macro syntax */
+  assign_syntax(sc, "defmacro*",         OP_DEFMACRO_STAR);
   assign_syntax(sc, "define-macro",      OP_DEFINE_MACRO);     /* Scheme-style macro syntax */
+  assign_syntax(sc, "define-macro*",     OP_DEFINE_MACRO_STAR); 
   assign_syntax(sc, "define-expansion",  OP_DEFINE_EXPANSION); /* read-time (immediate) macro expansion */
   assign_syntax(sc, "do",                OP_DO);
   assign_syntax(sc, "with-environment",  OP_WITH_ENV0);

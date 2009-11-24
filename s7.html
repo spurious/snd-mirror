@@ -186,40 +186,6 @@ Other math-related differences between s7 and r5rs:
 <!-- -------------------------------------------------------------------------------- -->
 <dt>
 <table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
-<table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>define-macro, defmacro, macroexpand, gensym</h4></td></tr></table>
-</td></tr></table>
-</dt>
-
-<dd><p>These are the standard macro definers.  </p>
-<pre>
-(define-macro (add-1 arg) `(+ 1 ,arg))
-(defmacro add-1 (arg) `(+ 1 ,arg))
-</pre>
-<p>macroexpand can help debug a macro:
-</p>
-<pre>
-&gt; (define-macro (add-1 arg) `(+ 1 ,arg))
-add-1
-&gt; (macroexpand (add-1 32))
-(+ 1 32)
-</pre>
-<p>gensym returns a symbol that is guaranteed to be currently unused.  It takes an optional string argument
-giving the new symbol name's prefix.
-</p>
-<pre>
-(defmacro pop! (sym)
-  (let ((v (<em class=red>gensym</em>)))
-    `(let ((,v (car ,sym)))
-       (set! ,sym (cdr ,sym))
-       ,v)))
-</pre>
-</dd>
-<br>
-
-
-<!-- -------------------------------------------------------------------------------- -->
-<dt>
-<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
 <table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>define*, lambda*</h4></td></tr></table>
 </td></tr></table>
 </dt>
@@ -251,6 +217,52 @@ above as an example:
 (hi 1) -&gt; '(1 32 "hi")
 (hi :b 2 :a 3) -&gt; '(3 2 "hi")
 (hi 3 2 1) -&gt; '(3 2 1)
+</pre>
+</dd>
+<br>
+
+
+<!-- -------------------------------------------------------------------------------- -->
+<dt>
+<table border=0 bordercolor="lightgreen" width=60% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>define-macro, define-macro*, defmacro, defmacro*, macroexpand, gensym</h4></td></tr></table>
+</td></tr></table>
+</dt>
+
+<dd><p>These are the standard macro definers.  </p>
+<pre>
+(define-macro (add-1 arg) `(+ 1 ,arg))
+(defmacro add-1 (arg) `(+ 1 ,arg))
+</pre>
+<p>macroexpand can help debug a macro:
+</p>
+<pre>
+&gt; (define-macro (add-1 arg) `(+ 1 ,arg))
+add-1
+&gt; (macroexpand (add-1 32))
+(+ 1 32)
+</pre>
+<p>gensym returns a symbol that is guaranteed to be currently unused.  It takes an optional string argument
+giving the new symbol name's prefix.
+</p>
+<pre>
+(defmacro pop! (sym)
+  (let ((v (<em class=red>gensym</em>)))
+    `(let ((,v (car ,sym)))
+       (set! ,sym (cdr ,sym))
+       ,v)))
+</pre>
+<p>As in define*, the starred forms give optional and keyword arguments:
+</p>
+<pre>
+&gt; (define-macro* (add-2 a (b 2)) `(+ ,a ,b))
+add-2
+&gt; (add-2 1 3)
+4
+&gt; (add-2 1)
+3
+&gt; (add-2 :b 3 :a 1)
+4
 </pre>
 </dd>
 <br>
@@ -1220,8 +1232,6 @@ global-x
 
 <dd><br>
 <ul>
-<li>define-macro* defmacro*
-<li>settable numerator denominator imag-part real-part angle magnitude
 <li>cerror ("error/cc"?)
 <li>make-vector! where the initial element sets the element type permanently
 <li>remove all mention of exact and inexact
