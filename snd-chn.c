@@ -5698,10 +5698,10 @@ static XEN channel_get(XEN snd, XEN chn_n, cp_field_t fld, const char *caller)
 	    case CP_FFT_LOG_MAGNITUDE:       return(C_TO_XEN_BOOLEAN(cp->fft_log_magnitude));                    break;
 	    case CP_FFT_WITH_PHASES:         return(C_TO_XEN_BOOLEAN(cp->fft_with_phases));                      break;
 	    case CP_SPECTRO_HOP:             return(C_TO_XEN_INT(cp->spectro_hop));                              break;
-	    case CP_TRANSFORM_SIZE:          return(C_TO_XEN_INT64_T(cp->transform_size));                         break;
+	    case CP_TRANSFORM_SIZE:          return(C_TO_XEN_INT64_T(cp->transform_size));                       break;
 	    case CP_TRANSFORM_GRAPH_TYPE:    return(C_TO_XEN_INT((int)(cp->transform_graph_type)));              break;
 	    case CP_FFT_WINDOW:              return(C_TO_XEN_INT((int)(cp->fft_window)));                        break;
-	    case CP_TRANSFORM_TYPE:          return(C_TO_XEN_INT(cp->transform_type));                           break;
+	    case CP_TRANSFORM_TYPE:          return(C_INT_TO_XEN_TRANSFORM(cp->transform_type));                 break;
 	    case CP_TRANSFORM_NORMALIZATION: return(C_TO_XEN_INT((int)(cp->transform_normalization)));           break;
 	    case CP_SHOW_MIX_WAVEFORMS:      return(C_TO_XEN_BOOLEAN(cp->show_mix_waveforms));                   break;
 	    case CP_TIME_GRAPH_STYLE:        return(C_TO_XEN_INT(cp->time_graph_style));                         break;
@@ -6110,9 +6110,9 @@ static XEN channel_set(XEN snd, XEN chn_n, XEN on, cp_field_t fld, const char *c
       break;
 
     case CP_TRANSFORM_TYPE:
-      cp->transform_type = XEN_TO_C_INT(on); /* range already checked */
+      cp->transform_type = XEN_TRANSFORM_TO_C_INT(on);
       calculate_fft(cp); 
-      return(C_TO_XEN_INT(cp->transform_type));
+      return(C_INT_TO_XEN_TRANSFORM(cp->transform_type));
       break;
 
     case CP_TRANSFORM_NORMALIZATION:      
@@ -7664,24 +7664,27 @@ static XEN g_transform_type(XEN snd, XEN chn)
 {
   #define H_transform_type "(" S_transform_type " :optional snd chn): transform type; can be one of " S_fourier_transform ", \
 " S_wavelet_transform ", " S_haar_transform ", " S_autocorrelation ", " S_walsh_transform ", \
-" S_cepstrum ", or an index corresponding to an added transform."
+" S_cepstrum ", or an added transform (see " S_add_transform ")."
 
   if (XEN_BOUND_P(snd))
     return(channel_get(snd, chn, CP_TRANSFORM_TYPE, S_transform_type));
-  return(C_TO_XEN_INT(transform_type(ss)));
+  return(C_INT_TO_XEN_TRANSFORM(transform_type(ss)));
 }
 
 static XEN g_set_transform_type(XEN val, XEN snd, XEN chn)
 {
   int type;
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ARG_1, S_setB S_transform_type, "an integer"); 
-  type = XEN_TO_C_INT(val);
+  XEN_ASSERT_TYPE(XEN_TRANSFORM_P(val), val, XEN_ARG_1, S_setB S_transform_type, "a transform object"); 
+  type = XEN_TRANSFORM_TO_C_INT(val);
   if (!(transform_p(type)))
-    XEN_OUT_OF_RANGE_ERROR(S_setB S_transform_type, 1, val, "~A: unknown transform type");
+    XEN_OUT_OF_RANGE_ERROR(S_setB S_transform_type, 1, val, "~A: unknown transform");
+
   if (XEN_BOUND_P(snd))
     return(channel_set(snd, chn, val, CP_TRANSFORM_TYPE, S_setB S_transform_type));
+
   set_transform_type(type);
-  return(C_TO_XEN_INT(transform_type(ss)));
+
+  return(C_INT_TO_XEN_TRANSFORM(transform_type(ss)));
 }
 
 WITH_THREE_SETTER_ARGS(g_set_transform_type_reversed, g_set_transform_type)

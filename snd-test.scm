@@ -649,7 +649,6 @@
     (test-constants
      (list
       'enved-amplitude enved-amplitude 0 
-      'autocorrelation autocorrelation 3
       'bartlett-window bartlett-window 4 
       'bartlett-hann-window bartlett-hann-window 21
       'blackman2-window blackman2-window 6 
@@ -682,20 +681,17 @@
       'zoom-focus-left zoom-focus-left 0
       'zoom-focus-middle zoom-focus-middle 3
       'zoom-focus-right zoom-focus-right 1 
-      'fourier-transform fourier-transform 0 
       'gaussian-window gaussian-window 14 
       'graph-dots graph-dots 1
       'graph-dots-and-lines graph-dots-and-lines 3 
       'graph-filled graph-filled 2 
       'graph-lines graph-lines 0 
       'graph-lollipops graph-lollipops 4
-      'haar-transform haar-transform 5
       'hamming-window hamming-window 5
       'hann-window hann-window 1
       'hann-poisson-window hann-poisson-window 17
       'kaiser-window kaiser-window 11 
       'keyboard-no-action keyboard-no-action 4
-      'cepstrum cepstrum 4
       'graph-once graph-once 0 
       'parzen-window parzen-window 3
       'poisson-window poisson-window 13
@@ -716,8 +712,6 @@
       'speed-control-as-semitone speed-control-as-semitone 2 
       'enved-srate enved-srate 2 
       'tukey-window tukey-window 15 
-      'walsh-transform walsh-transform 2
-      'wavelet-transform wavelet-transform 1
       'welch-window welch-window 2 
       'cursor-cross cursor-cross 0
       'cursor-line cursor-line 1
@@ -979,7 +973,7 @@
     (if (not (equal? (transform-size)  512 )) 
 	(snd-display ";transform-size set def: ~A" (transform-size)))
     (set! (transform-graph-type) (transform-graph-type))
-    (if (not (equal? (transform-graph-type) 0))
+    (if (not (equal? (transform-graph-type) graph-once))
 	(snd-display ";transform-graph-type set def: ~A" (transform-graph-type)))
     (set! (fft-window) (fft-window))
     (if (not (equal? (fft-window)  6 )) 
@@ -1109,7 +1103,7 @@
 	     (not (equal? (tiny-font) "Sans 8")))
 	(snd-display ";tiny-font set def: ~A" (tiny-font)))
     (set! (transform-type) (transform-type))
-    (if (not (equal? (transform-type)  0 )) 
+    (if (not (equal? (transform-type)  fourier-transform )) 
 	(snd-display ";transform-type set def: ~A" (transform-type)))
     (set! (trap-segfault) (trap-segfault))
     (if (not (equal? (trap-segfault)  #f)) 
@@ -1384,11 +1378,11 @@
       'time-graph? (without-errors (time-graph?)) 'no-such-sound
       'tiny-font (tiny-font) (if (provided? 'snd-motif) "6x12" "Sans 8")
       'tracking-cursor-style (tracking-cursor-style) cursor-cross
-      'transform-graph-type (transform-graph-type) 0
+      'transform-graph-type (transform-graph-type) graph-once
       'transform-graph? (without-errors (transform-graph?)) 'no-such-sound
       'transform-normalization (transform-normalization) normalize-by-channel
       'transform-size (transform-size) 512
-      'transform-type (transform-type) 0 
+      'transform-type (transform-type) fourier-transform
       'view-files-sort (view-files-sort) 0
       'view-files-sort (view-files-sort) 0 
       'wavelet-type (wavelet-type) 0 
@@ -1909,7 +1903,7 @@
 	(list 'fft-log-magnitude fft-log-magnitude #f #t)
 	(list 'fft-with-phases fft-with-phases #f #t)
 	(list 'transform-size transform-size 512 1024)
-	(list 'transform-graph-type transform-graph-type 0 1)
+	(list 'transform-graph-type transform-graph-type graph-once graph-as-sonogram)
 	(list 'fft-window fft-window 6 5)
 	(list 'transform-graph? transform-graph? #f #t)
 	(list 'filter-control-in-dB filter-control-in-dB #f #t)
@@ -1973,7 +1967,7 @@
 	(list 'speed-control-tones speed-control-tones 12 18)
 	(list 'sync sync 0 1)
 	(list 'tiny-font tiny-font (if (provided? 'snd-gtk) "Sans 8" "6x12") (if (provided? 'snd-gtk) "Monospace 10" "9x15"))
-	(list 'transform-type transform-type 0 1)
+	(list 'transform-type transform-type fourier-transform autocorrelation)
 	(list 'with-verbose-cursor with-verbose-cursor #f #t)
 	(list 'wavelet-type wavelet-type 0 1)
 	(list 'time-graph? time-graph? #f #t)
@@ -2036,7 +2030,7 @@
 	(list 'cursor-style cursor-style cursor-line '(2 123))
 	(list 'tracking-cursor-style tracking-cursor-style cursor-cross '(-1))
 	(list 'tracking-cursor-style tracking-cursor-style cursor-line '(2 123))
-	(list 'transform-graph-type transform-graph-type 0 '(-1 123))
+	(list 'transform-graph-type transform-graph-type graph-once '(-1 123))
 	(list 'fft-window fft-window 6 '(-1 123))
 	(list 'enved-filter-order enved-filter-order 40 '(-1 0))
 	(list 'filter-control-order filter-control-order 20 '(-10 -1 0))
@@ -2052,7 +2046,7 @@
 	(list 'speed-control speed-control 1.0 '(0.0))
 	(list 'speed-control-bounds speed-control-bounds (list 0.05 20.0) (list #f (list 0.0) (list 1.0 0.0) 2.0))
 	(list 'speed-control-style speed-control-style 0 '(-1 10))
-	(list 'transform-type transform-type 0 '(-1 123))
+	(list 'transform-type transform-type fourier-transform (list (integer->transform -1) (integer->transform 123)))
 	(list 'wavelet-type wavelet-type 0 '(-1 123))
 	(list 'wavo-hop wavo-hop 1 '(0 -123))
 	(list 'wavo-trace wavo-trace 1 '(0 -123))
@@ -9377,8 +9371,8 @@ EDITS: 5
 	  (set! (transform-size index 0) 64)
 	  (do ((i 0 (+ 1 i)))
 	      ((= i num-transforms))
-	    (set! (transform-type) i)
-	    (if (not (transform? i)) (snd-display ";transform? ~A?" i))
+	    (set! (transform-type) (integer->transform i))
+	    (if (not (transform? (integer->transform i))) (snd-display ";transform? ~A?" i))
 	    (do ((j 0 (+ 1 j)))
 		((= j num-transform-graph-types))
 	      (set! (transform-graph-type index 0) j)
@@ -32992,14 +32986,16 @@ EDITS: 2
 						   ((= j steps))
 						 (vct-set! v (+ j bin) (+ step (vct-ref v (+ j bin)))))))))))))
 	  (set! (x-bounds) '(.1 .2))
-	  (set! (transform-type) graph-once)
+	  (set! (transform-type) fourier-transform)
 	  (set! (x-bounds) '(.1 .2))
 	  (add-hook! lisp-graph-hook display-energy)
 	  (reset-hook! graph-hook)
-	  (add-hook! graph-hook display-correlation)
-	  (set! (x-bounds) '(.1 .12))
-	  (set! (x-bounds) '(.1 .2))
-	  (remove-hook! graph-hook display-correlation)
+	  (if (= (channels) 2)
+	      (begin
+		(add-hook! graph-hook display-correlation)
+		(set! (x-bounds) '(.1 .12))
+		(set! (x-bounds) '(.1 .2))
+		(remove-hook! graph-hook display-correlation)))
 	  (set! (lisp-graph?) #f)
 	  (map-chan 
 	   (let ((sum-of-squares 0.0)
@@ -33148,7 +33144,7 @@ EDITS: 2
 	      (list 'fft-log-magnitude fft-log-magnitude #f #f #t)
 	      (list 'fft-with-phases fft-with-phases #f #f #t)
 	      (list 'transform-size transform-size #f 16 (if (<= tests 10) 4096 128))
-	      (list 'transform-graph-type transform-graph-type #f 0 2)
+	      (list 'transform-graph-type transform-graph-type #f graph-once graph-as-spectrogram)
 	      (list 'fft-window fft-window #f 0 dolph-chebyshev-window)
 	      (list 'transform-graph? transform-graph? #t #f #t)
 	      (list 'filter-control-in-dB filter-control-in-dB #t #f #t)
@@ -33199,7 +33195,6 @@ EDITS: 2
 	      (list 'speed-control-style speed-control-style #f 0 2)
 	      (list 'speed-control-tones speed-control-tones #f 2 100)
 	      (list 'sync sync #t 0 5)
-	      (list 'transform-type transform-type #f fourier-transform (if (<= tests 10) 6 3))
 	      (list 'with-verbose-cursor with-verbose-cursor #f #f #t)
 	      (list 'wavelet-type wavelet-type #f 0 10)
 	      (list 'time-graph? time-graph? #t #f #t)
@@ -33209,7 +33204,7 @@ EDITS: 2
 	      (list 'zero-pad zero-pad #f 0 2)
 	      (list 'zoom-focus-style zoom-focus-style #f 0 3))))
 	  
-	  (if (not (= (transform-type) fourier-transform))
+	  (if (not (equal? (transform-type) fourier-transform))
 	      (begin
 		(set! (transform-graph? #t #t) #f)
 		(set! (transform-size) (min (transform-size) 128))))
@@ -35672,7 +35667,6 @@ EDITS: 2
 	  (lambda () (mix-channel "pistol.snd" -1 123 oboe))
 	  (lambda () (insert-channel "pistol.snd" -1 123 oboe))
 	  (lambda () (reverse-channel -1 123 oboe))
-	  (lambda () (play-channel -1 123 oboe))
 	  (lambda () (scale-sound-by 2.0 -1 123 oboe))
 	  (lambda () (env-sound '(0 0 1 1) -1 123 oboe))
 	  (lambda () (set-samples -1 123 (make-vct 3) oboe))
@@ -43580,8 +43574,8 @@ EDITS: 1
 	  (delete-transform ftype)
 	  (if (transform? ftype) (snd-display ";transform deleted: ~A" ftype))
 	  (if (transform? -1) (snd-display ";transform? -1"))
-	  (if (transform? 123) (snd-display ";transform? 123"))
-	  (if (not (= (transform-type ind 0) fourier-transform)) 
+	  (if (transform? (integer->transform 123)) (snd-display ";transform? 123"))
+	  (if (not (equal? (transform-type ind 0) fourier-transform)) 
 	      (snd-display ";after delete-transform ~A -> ~A" ftype (transform-type ind 0)))
 	  (close-sound ind))
 	
@@ -44557,7 +44551,7 @@ EDITS: 1
 	(if (fneq (sample 20) -.992) (snd-display ";scale-to 1.0 byte (20): ~A" (sample 10)))
 	(close-sound ind))
       
-      (set! (transform-graph-type) 0)
+      (set! (transform-graph-type) graph-once)
       (set! (fft-window) 6)
       (set! (show-y-zero) #f)
       (set! (show-transform-peaks) #f)
@@ -44753,7 +44747,7 @@ EDITS: 1
 		(list transform-size 'transform-size ind-1 ind-2 64 = equal? #t #t)
 		(list transform-graph-type 'transform-graph-type ind-1 ind-2 1 = equal? #t #t)
 		(list fft-window 'fft-window ind-1 ind-2 1 = equal? #t #t)
-		(list transform-type 'transform-type ind-1 ind-2 1 = equal? #t #t)
+					;               (list transform-type 'transform-type ind-1 ind-2 1 equal? equal? #t #t)
 		(list transform-normalization 'transform-normalization ind-1 ind-2 2 = equal? #t #t)
 		(list max-transform-peaks 'max-transform-peaks ind-1 ind-2 10 = equal? #t #t)
 		(list dot-size 'dot-size ind-1 ind-2 10 = equal? #t #t)
@@ -66415,7 +66409,7 @@ EDITS: 1
 		(check-error-tag 'wrong-type-arg (lambda () (player-home 123)))
 		(check-error-tag 'no-such-file (lambda () (set! (temp-dir) "/hiho")))
 		(check-error-tag 'no-such-file (lambda () (set! (save-dir) "/hiho")))
-		(check-error-tag 'out-of-range (lambda () (snd-transform 20 (make-vct 4))))
+		(check-error-tag 'out-of-range (lambda () (snd-transform (integer->transform 20) (make-vct 4))))
 		(check-error-tag 'bad-header (lambda () (mus-sound-maxamp (string-append sf-dir "bad_chans.snd"))))
 		(check-error-tag 'bad-header (lambda () (set! (mus-sound-maxamp (string-append sf-dir "bad_chans.snd")) '(0.0 0.0))))
 		(check-error-tag 'mus-error (lambda () (make-iir-filter :order 32 :ycoeffs (make-vct 4))))
@@ -66656,8 +66650,8 @@ EDITS: 1
 		(check-error-tag 'no-such-menu (lambda () (add-to-menu 1234 "hi" (lambda () #f))))
 		(check-error-tag 'bad-arity (lambda () (add-to-main-menu "hi" (lambda (a b) #f))))
 		(check-error-tag 'bad-arity (lambda () (add-to-menu 1 "hi" (lambda (a b) #f))))
-		(check-error-tag 'out-of-range (lambda () (set! (transform-type) -1)))
-		(check-error-tag 'out-of-range (lambda () (set! (transform-type) 123)))
+		(check-error-tag 'wrong-type-arg (lambda () (set! (transform-type) (integer->transform -1))))
+		(check-error-tag 'out-of-range (lambda () (set! (transform-type) (integer->transform 123))))
 		(check-error-tag 'wrong-type-arg (lambda () (help-dialog (list 0 1) "hiho")))
 		(check-error-tag 'wrong-type-arg (lambda () (info-dialog (list 0 1) "hiho")))
 		(check-error-tag 'no-such-sound (lambda () (edit-header-dialog 1234)))

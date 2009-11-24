@@ -593,7 +593,7 @@
 					       (gtk_widget_set_sensitive child (not (= (fft-window graph-popup-snd graph-popup-chn) window))))
 					     fft-windows windows)
 				   (for-each (lambda (child type)
-					       (gtk_widget_set_sensitive child (not (= (transform-type graph-popup-snd graph-popup-chn) type))))
+					       (gtk_widget_set_sensitive child (not (equal? (transform-type graph-popup-snd graph-popup-chn) type))))
 					     fft-types types)
 				   (let ((ctr 0))
 				     (for-each (lambda (child)

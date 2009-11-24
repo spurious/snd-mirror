@@ -515,6 +515,8 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+23-Nov:  colormaps are objects now.  integer->colormap, colormap->integer.\n\
+         transforms are also objects.  integer->transform, transform->integer.\n\
 20-Nov:  play is generic now, \"old-play\" is the previous form.\n\
 2-Nov:   selection function/object. selection->mix.\n\
 28-Oct:  pretty-print.scm.\n\

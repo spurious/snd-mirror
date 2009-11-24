@@ -1070,7 +1070,7 @@ def test00
   if $test00
     $before_test_hook.call(0)
     consts = [[:Enved_amplitude, 0],
-              [:Autocorrelation, 3],
+#              [:$autocorrelation, 3],
               [:Bartlett_window, 4],
               [:Bartlett_hann_window, 21],
               [:Blackman2_window, 6],
@@ -1103,20 +1103,20 @@ def test00
               [:Zoom_focus_left, 0],
               [:Zoom_focus_middle, 3],
               [:Zoom_focus_right, 1],
-              [:Fourier_transform, 0],
+#              [:$fourier_transform, 0],
               [:Gaussian_window, 14],
               [:Graph_dots, 1],
               [:Graph_dots_and_lines, 3],
               [:Graph_filled, 2],
               [:Graph_lines, 0],
               [:Graph_lollipops, 4],
-              [:Haar_transform, 5],
+#              [:$haar_transform, 5],
               [:Hamming_window, 5],
               [:Hann_window, 1],
               [:Hann_poisson_window, 17],
               [:Kaiser_window, 11],
               [:Keyboard_no_action, 4],
-              [:Cepstrum, 4],
+#              [:$cepstrum, 4],
               [:Parzen_window, 3],
               [:Poisson_window, 13],
               [:Rectangular_window, 0],
@@ -1136,8 +1136,8 @@ def test00
               [:Speed_control_as_semitone, 2],
               [:Enved_srate, 2],
               [:Tukey_window, 15],
-              [:Walsh_transform, 2],
-              [:Wavelet_transform, 1],
+#              [:$walsh_transform, 2],
+#              [:$wavelet_transform, 1],
               [:Welch_window, 2],
               [:Cursor_cross, 0],
               [:Cursor_line, 1],
@@ -1370,7 +1370,7 @@ def test00
             [:transform_graph_type, 0],
             [:transform_normalization, Normalize_by_channel],
             [:transform_size, 512],
-            [:transform_type, 0],
+            [:transform_type, $fourier_transform],
             [:trap_segfault, true],     # snd/snd-0.h says: true (snd-test.scm: false)
             [:wavelet_type, 0],
             [:wavo_hop, 3],
@@ -1583,7 +1583,7 @@ def test01
                 [:transform_graph_type, 0],
                 [:transform_normalization, Normalize_by_channel],
                 [:transform_size, 512],
-                [:transform_type, 0],
+                [:transform_type, $fourier_transform],
                 [:wavelet_type, 0],
                 [:wavo_hop, 3],
                 [:wavo_trace, 64],
@@ -2102,7 +2102,7 @@ def test03
       if provided? :snd_motif
         [:tiny_font, "6x12", "9x15"]
       end,
-      [:transform_type, 0, 1],
+      [:transform_type, $fourier_transform, $autocorrelation],
       [:with_verbose_cursor, false, true],
       [:wavelet_type, 0, 1],
       [:time_graph?, false, true],
@@ -2165,7 +2165,7 @@ def test03
       [:speed_control, 1.0, [0.0]],
       [:speed_control_bounds, [0.05, 20.0], [false, [0.0], [1.0, 0.0], 2.0]],
       [:speed_control_style, 0, [-1, 10]],
-      [:transform_type, 0, [-1, 123]],
+      [:transform_type, $fourier_transform, [-1, 123]],
       [:wavelet_type, 0, [-1, 123]],
       [:wavo_hop, 3, [0, -123]],
       [:wavo_trace, 64, [0, -123]],
@@ -6951,19 +6951,19 @@ def test105
   set_transform_graph?(true, ind, 0)
   set_transform_size(64, ind, 0)
   num_transforms.times do |i|
-    set_transform_type(i)
-    snd_display("transform? %s?", i) unless transform?(i)
+    set_transform_type(integer2transform(i))
+    snd_display("transform? %s?", i) unless transform?(integer2transform(i))
     num_transform_graph_types.times do |j|
       set_transform_graph_type(j, ind, 0)
       update_transform_graph(ind, 0)
     end
   end
-  set_transform_type(Fourier_transform)
+  set_transform_type($fourier_transform)
   unless (res = transform?(transform_type))
-    snd_display("transform? %s %s?", res, Fourier_transform)
+    snd_display("transform? %s %s?", res, $fourier_transform)
   end
-  unless transform?(Autocorrelation)
-    snd_display("transform? Autocorrelation")
+  unless transform?($autocorrelation)
+    snd_display("transform? autocorrelation")
   end
   snd_display("read_only open_sound: %s?", read_only(ind)) if read_only(ind)
   set_read_only(true, ind)
@@ -22335,7 +22335,7 @@ def test0013
   #
   set_transform_size(256, fd, 0)
   dpys = [Graph_once, Graph_as_sonogram, Graph_as_spectrogram] * 2
-  ffts = [Fourier_transform] * 3 + [Autocorrelation] * 3
+  ffts = [transform2integer($fourier_transform)] * 3 + [transform2integer($autocorrelation)] * 3
   dpys.zip(ffts) do |dpy_type, fft_type|
     set_transform_graph_type(dpy_type, fd, 0)
     set_transform_type(fft_type, fd, 0)
@@ -22357,7 +22357,7 @@ def test0013
     snd_display("access invalid (slice) transform sample: %s", res.inspect)
   end
   close_sound(fd)
-  set_transform_type(Fourier_transform)
+  set_transform_type($fourier_transform)
   $after_open_hook.add_hook!("snd-test") do |snd|
     set_x_axis_style(X_axis_in_samples, snd, true)
   end
@@ -24001,7 +24001,7 @@ def test14
     end
     set_transform_type(add_transform("histogram", "bins", 0.0, 1.0, func))
     set_x_bounds([0.1, 0.2])
-    set_transform_type(Graph_once)
+    set_transform_type($fourier_transform)
     set_x_bounds([0.1, 0.2])
     $lisp_graph_hook.add_hook!("display_energy") do |snd, chn| display_energy(snd, chn) end
     $graph_hook.reset_hook!
@@ -24164,7 +24164,7 @@ def test14
      [:speed_control_style, false, 0, 2],
      [:speed_control_tones, false, 2, 100],
      [:sync, true, 0, 5],
-     [:transform_type, false, Fourier_transform, 6],
+     [:transform_type, false, $fourier_transform, 6],
      [:with_verbose_cursor, false, false, true],
      [:wavelet_type, false, 0, 10],
      [:time_graph?, true, false, true],
@@ -24191,7 +24191,7 @@ def test14
       end
     end
     # save_options("hiho.rb")
-    if transform_type != Fourier_transform
+    if transform_type != $fourier_transform
       set_transform_graph?(false, true, true)
       set_transform_size([transform_size, 128].min)
     end
@@ -24931,7 +24931,7 @@ def test0215
    [:transform_size, 32],
    [:fft_window_alpha, 0.5],
    [:fft_window_beta, 0.5],
-   [:transform_type, Autocorrelation],
+   [:transform_type, $autocorrelation],
    [:transform_normalization, 0],
    [:show_mix_waveforms, true],
    [:graph_style, Graph_lollipops],
@@ -25716,7 +25716,7 @@ def test0415
   v = Vct.new(2000) do |i| sin(i * 2.0 * (PI / 10)) end
   vct2channel(v, 0, 2000, ind, 0)
   set_transform_size(256)
-  set_transform_type(Fourier_transform)
+  set_transform_type($fourier_transform)
   set_transform_normalization(Normalize_by_channel)
   set_transform_graph_style(Graph_once)
   set_zero_pad(0)
@@ -25774,7 +25774,7 @@ def test15
   if $test15
     $before_test_hook.call(15)
     set_clipping(false)
-    set_transform_type(Fourier_transform)
+    set_transform_type($fourier_transform)
     test0015
     test0115
     test0215
@@ -26282,7 +26282,6 @@ def test0016
    [lambda { mix_channel("pistol.snd", -1, 123, oboe) }, :mix_channel],
    [lambda { insert_channel("pistol.snd", -1, 123, oboe) }, :insert_channel],
    [lambda { reverse_channel(-1, 123, oboe) }, :reverse_channel],
-   [lambda { play_channel(-1, 123, oboe) }, :play_channel],
    [lambda { scale_sound_by(2.0, -1, 123, oboe) }, :scale_sound_by],
    [lambda { env_sound([0, 0, 1, 1], -1, 123, oboe) }, :env_sound],
    [lambda { set_samples(-1, 123, Vct.new(3), oboe) }, :set_samples],
@@ -30823,8 +30822,8 @@ def test0020
   # check small transform cases
   index = open_sound("oboe.snd")
   set_transform_graph?(true)
-  [Fourier_transform, Wavelet_transform, Autocorrelation,
-   Walsh_transform, Cepstrum, Haar_transform].each do |transform|
+  [$fourier_transform, $wavelet_transform, $autocorrelation,
+   $walsh_transform, $cepstrum, $haar_transform].each do |transform|
     set_transform_type(transform)
     [8, 7, -7, 4, 3, 2, 1, 0].each do |size|
       Snd.catch do 
@@ -30839,17 +30838,17 @@ def test0020
   # 
   d0 = Vct.new(16)
   d0[0] = 1.0
-  snd_transform(Fourier_transform, d0, 0)
+  snd_transform($fourier_transform, d0, 0)
   d0.each_with_index do |val, i|
     if fneq(val, 1.0) then snd_display("fourier (1.0) [%s]: %s?", i, val) end
   end
   d0 = Vct.new(16)
   d0[0] = 1.0
-  snd_transform(Fourier_transform, d0, 0)
+  snd_transform($fourier_transform, d0, 0)
   d0.each_with_index do |val, i|
     if fneq(val, 1.0) then snd_display("fourier (1.0) [%s]: %s?", i, val) end
   end
-  snd_transform(Fourier_transform, d0, 0)
+  snd_transform($fourier_transform, d0, 0)
   d0.each_with_index do |val, i|
     if i.zero?
       if fneq(val, 256.0) and fneq(val, 361.0)
@@ -31057,8 +31056,8 @@ def test0020
       rl = Vct.new(len, 1.0)
       xrl = Vct.new(len, 1.0)
       len2 = len / 2
-      snd_transform(Fourier_transform, rl)
-      snd_transform(Fourier_transform, xrl, true)
+      snd_transform($fourier_transform, rl)
+      snd_transform($fourier_transform, xrl, true)
       len2.times do |i|
         if fneq(rl[i], xrl[i])
           snd_display("flat fft: %s at %s: %s %s?", len, i, rl[i], xrl[i])
@@ -31077,8 +31076,8 @@ def test0020
       len2 = len / 2
       rl[len2] = 1.0
       xrl[len2] = 1.0
-      snd_transform(Fourier_transform, rl)
-      snd_transform(Fourier_transform, xrl, true)
+      snd_transform($fourier_transform, rl)
+      snd_transform($fourier_transform, xrl, true)
       len2.times do |i|
         if fneq(rl[i], xrl[i])
           snd_display("impulse fft: %s at %s: %s %s?", len, i, rl[i], xrl[i])
@@ -31095,9 +31094,9 @@ def test0020
       len2 = len / 2
       rl[len2] = 1.0
       xrl[len2] = 1.0
-      snd_transform(Fourier_transform, rl)
+      snd_transform($fourier_transform, rl)
       rl.scale!(1.0 / len)
-      snd_transform(Fourier_transform, xrl, true)
+      snd_transform($fourier_transform, xrl, true)
       xrl.scale!(1.0 / len)
       len2.times do |i|
         if fneq(rl[i], xrl[i])
@@ -31114,9 +31113,9 @@ def test0020
       len2 = len / 2
       rl[len2] = 1.0
       xrl[len2] = 1.0
-      snd_transform(Fourier_transform, rl)
+      snd_transform($fourier_transform, rl)
       rl.scale!(1.0 / len)
-      snd_transform(Fourier_transform, xrl, true)
+      snd_transform($fourier_transform, xrl, true)
       xrl.scale!(1.0 / len)
       len2.times do |i|
         if fneq(rl[i], xrl[i])
@@ -31175,7 +31174,7 @@ def test0020
       len2 = len / 2
       rl[0] = 1.0
       rl[4] = 1.0
-      snd_transform(Autocorrelation, rl, 0)
+      snd_transform($autocorrelation, rl, 0)
       if fneq(rl[0], 2.0) then snd_display("autocorrelation %s 0: %s?", len, rl[0]) end
       if fneq(rl[4], 1.0) then snd_display("autocorrelation %s 4: %s?", len, rl[0]) end
       rla[0] = 1.0
@@ -31213,7 +31212,7 @@ def test0020
         ind = random(len)
         rl[ind] = xrl[ind] = random(1.0)
       end
-      snd_transform(Autocorrelation, rl, 0)
+      snd_transform($autocorrelation, rl, 0)
       mus_fft(xrl, xim, len, 1)
       xrl[0] *= xrl[0]
       xrl[len2] *= xrl[len2]
@@ -31238,14 +31237,14 @@ def test0020
   #
   rl = vct(0.423618, 0.259318, -0.048365, 1.140571, -0.811856, -0.994098, -0.998613, -2.453642,
            -0.438549, -1.520463, -0.312065, -0.724707, 1.154010, 1.466936, 0.110463, -1.520854)
-  nrl = snd_transform(Cepstrum, rl, 0).scale(1.399)
+  nrl = snd_transform($cepstrum, rl, 0).scale(1.399)
   unless vequal(nrl, vct(1.3994950, 0.1416877, 0.0952407, 0.0052814, -0.0613192, 0.0082986,
                          -0.0233993, -0.0476585, 0.0259498, -0.0476585, -0.0233993, 0.0082986,
                          -0.0613192, 0.0052814, 0.0952407, 0.1416877))
     snd_display("cepstrum 16: %s?", nrl)
   end
   rl = Vct.new(16) do |i| i end
-  nrl = snd_transform(Cepstrum, rl, 0).scale(2.72)
+  nrl = snd_transform($cepstrum, rl, 0).scale(2.72)
   unless vequal(nrl, vct(2.720, 0.452, 0.203, 0.122, 0.082, 0.061, 0.048, 0.041,
                          0.039, 0.041, 0.048, 0.061, 0.082, 0.122, 0.203, 0.452))
     snd_display("cepstrum 16 by ones: %s?", nrl)
@@ -31257,7 +31256,7 @@ def test0020
       xrl = Vct.new(len)
       rl[0] = 1.0
       rl[4] = 1.0
-      snd_transform(Cepstrum, rl, 0)
+      snd_transform($cepstrum, rl, 0)
       xrl[0] = 1.0
       xrl[4] = 1.0
       mus_fft(xrl, xim, len, 1)
@@ -31289,22 +31288,22 @@ def test0120
   #
   d0 = Vct.new(8)
   d0[0] = 1.0
-  snd_transform(Walsh_transform, d0)
+  snd_transform($walsh_transform, d0)
   unless vequal(d0, Vct.new(8, 1.0))
     snd_display("walsh 1: %s?", d0)
   end
-  snd_transform(Walsh_transform, d0)
+  snd_transform($walsh_transform, d0)
   unless vequal(d0, vct(8, 0, 0, 0, 0, 0, 0, 0))
     snd_display("walsh -1: %s?", d0)
   end
   #
   d0 = Vct.new(8)
   d0[1] = 1.0
-  snd_transform(Walsh_transform, d0)
+  snd_transform($walsh_transform, d0)
   unless vequal(d0, vct(1, -1, 1, -1, 1, -1, 1, -1))
     snd_display("walsh 2: %s?", d0)
   end
-  snd_transform(Walsh_transform, d0)
+  snd_transform($walsh_transform, d0)
   unless vequal(d0, vct(0, 8, 0, 0, 0, 0, 0, 0))
     snd_display("walsh -2: %s?", d0)
   end
@@ -31312,38 +31311,38 @@ def test0120
   d0 = Vct.new(8)
   d0[0] = 0.5
   d0[1] = 1.0
-  snd_transform(Walsh_transform, d0)
+  snd_transform($walsh_transform, d0)
   unless vequal(d0, vct(1.5, -0.5, 1.5, -0.5, 1.5, -0.5, 1.5, -0.5))
     snd_display("walsh 3: %s?", d0)
   end
-  snd_transform(Walsh_transform, d0)
+  snd_transform($walsh_transform, d0)
   unless vequal(d0, vct(4, 8, 0, 0, 0, 0, 0, 0))
     snd_display("walsh -3: %s?", d0)
   end
   #
   d0 = Vct.new(8) do random(1.0) end
   d1 = d0.dup
-  snd_transform(Walsh_transform, d0)
-  snd_transform(Walsh_transform, d0)
+  snd_transform($walsh_transform, d0)
+  snd_transform($walsh_transform, d0)
   d0.scale! 1.0 / 8.0
   unless vequal(d0, d1)
     snd_display("walsh 4: %s %s?", d0, d1)
   end
   #
   d0 = vct(1, 1, 1, -1, 1, 1, 1, -1, 1, 1, 1, -1, -1, -1, -1, 1)
-  d1 = snd_transform(Walsh_transform, d0)
+  d1 = snd_transform($walsh_transform, d0)
   unless vequal(d1, vct(4, 4, 4, -4, 4, 4, 4, -4, 4, 4, 4, -4, -4, -4, -4, 4))
     snd_display("walsh 5: %s?", d1)
   end
   # 
   d0 = vct(1, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
-  d1 = snd_transform(Walsh_transform, d0)
+  d1 = snd_transform($walsh_transform, d0)
   unless vequal(d1, vct(0, 2, 2, 0, 0, 2, 2, 0, 0, 2, 2, 0, 0, 2, 2, 0))
     snd_display("walsh 6: %s?", d1)
   end
   d0 = vct(0.174, -0.880, -0.555, -0.879, 0.038, 0.696, -0.612, 0.006,
            -0.613, 0.334, -0.111, -0.821, 0.130, 0.030, -0.229, 0.170)
-  d1 = snd_transform(Walsh_transform, d0)
+  d1 = snd_transform($walsh_transform, d0)
   unless vequal(d1, vct(-3.122, -0.434, 2.940, -0.468, -3.580, 2.716, -0.178, -1.386,
                         -0.902, 0.638, 1.196, 1.848, -0.956, 2.592, -1.046, 2.926))
     snd_display("walsh 7: %s?", d1)
@@ -31353,7 +31352,7 @@ def test0120
   #
   d0 = Vct.new(8)
   d0[2] = 1.0
-  snd_transform(Haar_transform, d0)
+  snd_transform($haar_transform, d0)
   unless vequal(d0, vct(0.354, 0.354, -0.500, 0.000, 0.000, 0.707, 0.000, 0.000))
     snd_display("haar 1: %s?", d0)
   end
@@ -31364,7 +31363,7 @@ def test0120
   #
   d0 = Vct.new(8)
   d0[0] = 1.0
-  snd_transform(Haar_transform, d0)
+  snd_transform($haar_transform, d0)
   unless vequal(d0, vct(0.354, 0.354, 0.500, 0.000, 0.707, 0.000, 0.000, 0.000))
     snd_display("haar 2: %s?", d0)
   end
@@ -31373,31 +31372,31 @@ def test0120
     snd_display("inverse_haar 2: %s?", d0)
   end
   #
-  d0 = snd_transform(Haar_transform,
+  d0 = snd_transform($haar_transform,
                      vct(-0.483, 0.174, -0.880, -0.555, -0.879, 0.038, 0.696, -0.612))
   unless vequal(d0, vct(-0.884, -0.349, 0.563, -0.462, -0.465, -0.230, -0.648, 0.925))
     snd_display("haar 3: %s?", d0)
   end
   #
   sq2 = sqrt(2.0)
-  d0 = snd_transform(Haar_transform, vct(4, 6, 10, 12, 8, 6, 5, 5))
+  d0 = snd_transform($haar_transform, vct(4, 6, 10, 12, 8, 6, 5, 5))
   unless vequal(d0, vct(14 * sq2, 2 * sq2, -6, 2, -sq2, -sq2, sq2, 0))
     snd_display("haar 4: %s?", d0)
   end
-  d0 = snd_transform(Haar_transform, vct(2, 4, 6, 8, 10, 12, 14, 16))
+  d0 = snd_transform($haar_transform, vct(2, 4, 6, 8, 10, 12, 14, 16))
   unless vequal(d0, x = vct(18 * sq2, -8 * sq2, -4, -4, -sq2, -sq2, -sq2, -sq2))
     snd_display("haar 5: %s?", d0, x)
   end
   #
   d0 = Vct.new(8)
   d1 = Vct.new(8) do |i| d0[i] = random(1.0) end
-  snd_transform(Haar_transform, d0)
+  snd_transform($haar_transform, d0)
   inverse_haar(d0)
   unless vequal(d0, d1) then snd_display("inverse_haar 6: %s %s?", d0, d1) end
   #
   # wavelet
   #
-  d0 = snd_transform(Wavelet_transform, vct(1, 1, 0, 0, 0, 0, 0, 0), 0) # daub4
+  d0 = snd_transform($wavelet_transform, vct(1, 1, 0, 0, 0, 0, 0, 0), 0) # daub4
   unless vequal(d0, vct(0.625, 0.375, -0.217, 1.083, -0.354, 0.000, 0.000, 0.354))
     snd_display("fxt wavelet 1: %s?", d0)
   end
@@ -31408,7 +31407,7 @@ def test0120
       d1[2] = 1.0
       d2[2] = 1.0
       wavelet(d1, size, 0, :pwt, val)
-      snd_transform(Wavelet_transform, d2, key.last)
+      snd_transform($wavelet_transform, d2, key.last)
       unless vequal(d1, d2)
         snd_display("wavelet (%s) %s:\n# %s\n# %s?", size, key, d1, d2)
       end
@@ -31438,7 +31437,7 @@ def test0120
       next if key.last > 8
       d2 = Vct.new(size) do random(1.0) end
       d1 = d2.dup
-      snd_transform(Wavelet_transform, d2, key.last)
+      snd_transform($wavelet_transform, d2, key.last)
       wavelet(d2, size, -1, :pwt, val)
       unless vequal(d1, d2)
         snd_display("random wavelet %s:\n# %s\n# %s?", key.first, d1, d2)
@@ -31493,8 +31492,8 @@ def test0120
   delete_transform(ftype)
   if transform?(ftype) then snd_display("transform? deleted: %s?", ftype) end
   if transform?(-1) then snd_display("transform? -1: %s?", ftype) end
-  if transform?(123) then snd_display("transform? 123: %s?", ftype) end
-  if (res = transform_type(ind, 0)) != Fourier_transform
+  if transform?(integer2transform(123)) then snd_display("transform? 123: %s?", ftype) end
+  if (res = transform_type(ind, 0)) != $fourier_transform
     snd_display("after delete_transform %s -> %s?", ftype, res)
   end
   close_sound(ind)
@@ -32436,7 +32435,7 @@ def test0021
    [:transform_size, 64, :==, :eql?, true, true],
    [:transform_graph_type, 1, :==, :eql?, true, true],
    [:fft_window, 1, :==, :eql?, true, true],
-   [:transform_type, 1, :==, :eql?, true, true],
+#   [:transform_type, 1, :==, :eql?, true, true],
    [:transform_normalization, 2, :==, :eql?, true, true],
    [:max_transform_peaks, 10, :==, :eql?, true, true],
    [:dot_size, 10, :==, :eql?, true, true],
@@ -35304,8 +35303,8 @@ def test0228
   check_error_tag(:no_such_menu) do add_to_menu(1234, "hi", lambda do | | false end) end
   check_error_tag(:bad_arity) do add_to_main_menu("hi", lambda do |a, b| false end) end
   check_error_tag(:bad_arity) do add_to_menu(1, "hi", lambda do |a, b| false end) end
-  check_error_tag(:out_of_range) do set_transform_type(-1) end
-  check_error_tag(:out_of_range) do set_transform_type(123) end
+  check_error_tag(:out_of_range) do set_transform_type(integer2transform(-1)) end
+  check_error_tag(:out_of_range) do set_transform_type(integer2transform(123)) end
   check_error_tag(:wrong_type_arg) do help_dialog([0, 1], "hiho") end
   check_error_tag(:wrong_type_arg) do info_dialog([0, 1], "hiho") end
   check_error_tag(:no_such_sound) do edit_header_dialog(1234) end

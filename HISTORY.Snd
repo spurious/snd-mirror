@@ -1,5 +1,7 @@
 Snd change log
 
+ 23-Nov:    colormaps are objects now.  integer->colormap, colormap->integer.
+            transforms are also objects.  integer->transform, transform->integer.
  20-Nov:    play is generic now, "old-play" is the previous form.
  6-Nov:     removed all support for gtkglext.
  2-Nov:     selection function/object. selection->mix.

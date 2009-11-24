@@ -2350,7 +2350,7 @@ void call_sp_watchers(snd_info *sp, sp_watcher_t type, sp_watcher_reason_t reaso
  *             properties:     edit|mark|mix|sound|channel-properties procedure-property?  window-property? [also property as accessor]
  *               but then typos lead to seriously confusing behavior -- I think I'll leave out properties for now.
  *
- *             name:           mark|mix-name file-name (widget name via XtName) mus-name [colormap error-type -- if these were objects]
+ *             name:           mark|mix-name file-name (widget name via XtName) mus-name colormap
  *                               __func__? port-filename sampler-filename
  *
  *             reverse save find insert delete describe read write mix append [open and close?] member
@@ -2363,16 +2363,21 @@ void call_sp_watchers(snd_info *sp, sp_watcher_t type, sp_watcher_reason_t reaso
  * check map/for-each cases -- sound selection etc (and add to extsnd) and set/ref
  *   for-each depends on ref, map could depend on copy/set/ref
  *
- *    objects are generator(clm2xen), player(snd-dac), sampler(snd-edits), sound-data(sndlib2xen),
- *               mark(snd-marks), mix(snd-mix), selection(snd-select), region(snd-region), colormap,
- *               vct(vct), hook(xen), XmObj(xm, xg), plus the base types(s7): string hash-table vector pair object, else arg
- *               which means that promise (for example) is not copied (and what about builtin things like bignum, random-state etc)?
+ *    objects are generator(clm2xen), player(snd-dac), sampler(snd-edits), sound-data(sndlib2xen), transform (snd-fft),
+ *               mark(snd-marks), mix(snd-mix), selection(snd-select), region(snd-region), colormap(snd-gxcolormap),
+ *               vct(vct), hook(xen), XmObj(xm, xg), plus the base types(s7): string hash-table vector pair object
  *
  *    also needed are further cases of ref/set
  *    ref needed: mix? region selection sound
  *    set needed: selection? sound 
  *
- * possible new objects: transform, watcher, menu-item, file-filter|sorter, fft-window?, color? variable-graph?
+ * possible new objects: menu-item, file-filter|sorter, fft-window?, color? widget? variable-graph?
+ *
+ * color is currently a list with 'color as car -- perhaps make this a true object
+ *   also clm method list "mus-name": clm2xen.c
+ *        Font, XtAppContext, GC, etc in snd-draw.c [but needs to remain compatible with xm/xg]
+ *        ladspa stuff
+ *        window widget event snd-g|x0.h
  *
  * (scan-channel -> channel-for-each)
  *   and channel-map rather than map-channel
@@ -2399,6 +2404,8 @@ void call_sp_watchers(snd_info *sp, sp_watcher_t type, sp_watcher_reason_t reaso
  * all multichannel parallel ops also threaded, and graphics updates, and playing
  * TODO: make-sampler with mix etc -- let 1st arg be object, also add selection sampler
  * make-vector! choices: any, 1 obj [any type], 1 obj: double -- do any others warrant special handling?
+ *
+ * what about "Save again" menu item -- save as using the same choices including filename as before? [popup]
  */
 
 

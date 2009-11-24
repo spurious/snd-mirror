@@ -976,12 +976,12 @@ written: %s\n", channels(snd), srate(snd), frames(snd) / srate(snd).to_f,
     cascade("Transform type") do
       children(lambda do |snd, chn, val|
                  transform_type(snd, chn) != val
-               end, [["Fourier", Fourier_transform],
-                     ["Autocorrelate", Autocorrelation],
-                     ["Cepstrum", Cepstrum],
-                     ["Walsh", Walsh_transform],
-                     ["Haar", Haar_transform],
-                     ["Wavelet", Wavelet_transform]]) do |snd, chn, val|
+               end, [["Fourier", $fourier_transform],
+                     ["Autocorrelate", $autocorrelation],
+                     ["Cepstrum", $cepstrum],
+                     ["Walsh", $walsh_transform],
+                     ["Haar", $haar_transform],
+                     ["Wavelet", $wavelet_transform]]) do |snd, chn, val|
         set_transform_type(val, snd, choose_chan.call(snd, chn))
       end
       cascade("Wavelet type") do

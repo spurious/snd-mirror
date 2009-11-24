@@ -1294,9 +1294,9 @@ and the regular <a href="#frames">frames</a> function that handles sound objects
 <code><a class=def>length</a> (obj)</code>
 </td></tr><tr><td></td><td>
 <A NAME="genericlength">length</A> handles list length, string-length, vector-length, <a href="s7.html#s7doc">hash-table-size</a>,
-<a href="#vctlength">vct-length</a>, <a href="#frames">frames</a> (sound length), colormap-size,
+<a href="#vctlength">vct-length</a>, <a href="#frames">frames</a> (sound length), <a href="#colormapsize">colormap-size</a>,
 <a href="sndclm.html#genericfunctions">mus-length</a> (generators), <a href="#sounddatalength">sound-data-length</a>, 
-<a href="#mixlength">mix-length</a>, 
+<a href="#mixlength">mix-length</a>, <a href="#transformsize">transform-size</a>,
 <a href="#selectionframes">selection-frames</a>,
 and <a href="#regionframes">region-frames</a>.
 </td></tr><tr><td colspan=2 height=18></td></tr>
@@ -10924,14 +10924,14 @@ other such text.
 <tr><td colspan=2 bgcolor="#f2f4ff">
 <code><a class=def name="addtransform">add-transform</a> (name xlabel lo hi transform)</code>
 </td></tr><tr><td width=30></td><td>
-add-transform adds a transform to the transform choices (alongside Fourier, Wavelet, etc).  'name' is the name
+add-transform adds a transform to the transform choices (alongside fourier-transform, etc).  'name' is the name
 to use in the transform dialog. 'xlabel' is the x axis label
 of the resultant graph.  'lo' and 'hi' set which portion of the returned data
 to graph (normally 0.0 to 1.0).  'proc' is a function of two 
 arguments, the length of the desired transform, and a sampler that 
 can be used to get the current data.  Do not free the sampler!  
 The function should return a vct containing the transform data.  
-add-transform returns the new transform's transform-type.
+add-transform returns the new transform's transform-type (an object).
 Here's an example that displays a histogram of the current values in 16 bins:
 
 <table border=0 cellpadding=5 vspace=10><tr><td><pre>
@@ -10982,8 +10982,7 @@ If GSL is included in Snd, the following code ties in the (slow) Hankel transfor
 <tr><td colspan=2 bgcolor="#f2f4ff">
 <code><a class=def name="deletetransform">delete-transform</a> (type)</code>
 </td></tr><tr><td></td><td>
-This removes a transform that was added via <a class=quiet href="#addtransform" onmouseout="UnTip()" onmouseover="Tip(extsnd_addtransform_tip)">add-transform</a>.  The deleted transform-type may be re-used by
-a subsequent add-transform.
+This removes a transform that was added via <a class=quiet href="#addtransform" onmouseout="UnTip()" onmouseover="Tip(extsnd_addtransform_tip)">add-transform</a>.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -11018,6 +11017,13 @@ and initial-phase:
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
+<!-- integer->transform -->
+<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="integertotransform">integer-&gt;transform</a> (i)</code>
+</td></tr><tr><td></td><td>
+This function returns the transform (type object) corresponding to a given integer. 
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
 <!-- snd-spectrum -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
 <code><a class=def name="sndspectrum">snd-spectrum</a> (data window length :optional (linear #t) (beta 0.0) in-place (normalized #t))</code>
@@ -11035,11 +11041,18 @@ If 'in-place' is #t, the spectrum is in 'data', otherwise snd-spectrum returns a
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
+<!-- transform->integer -->
+<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="transformtointeger">transform-&gt;integer</a> (transform-object)</code>
+</td></tr><tr><td></td><td>
+This function returns the integer corresponding to a given transform type object (e.g. fourier-transform).
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
 <!-- transform? -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
-<code><a class=def name="transformp">transform?</a> (type)</code>
+<code><a class=def name="transformp">transform?</a> (object)</code>
 </td></tr><tr><td></td><td>
-This returns #t if 'type' refers to an active transform type.
+This returns #t if 'object' is a transform object.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 </table>

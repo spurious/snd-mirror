@@ -1005,6 +1005,14 @@ int max_transform_type(void);
 void set_transform_position(int i, int j);
 bool transform_p(int type);
 
+XEN new_xen_transform(int n);
+bool xen_transform_p(XEN obj);
+int xen_transform_to_int(XEN n);
+#define XEN_TRANSFORM_P(arg) xen_transform_p(arg)
+#define C_INT_TO_XEN_TRANSFORM(Val) new_xen_transform(Val)
+#define XEN_TRANSFORM_TO_C_INT(n) xen_transform_to_int(n)
+
+
 
 /* -------- snd-xen.c -------- */
 

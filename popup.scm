@@ -588,7 +588,7 @@
        (lambda (lst)
 	 (for-each 
 	  (lambda (child type)
-	    (XtSetSensitive child (not (= (transform-type graph-popup-snd graph-popup-chn) type))))
+	    (XtSetSensitive child (not (equal? (transform-type graph-popup-snd graph-popup-chn) type))))
 	  lst types))
        every-menu))
 
