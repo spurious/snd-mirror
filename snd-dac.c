@@ -3523,14 +3523,15 @@ If it returns " PROC_TRUE ", the sound is not played."
                        play(id.kind_of?(Fixnum) ? integer2mix(id) : id, :start, beg)\n\
                        end");
 
-  XEN_EVAL_C_STRING("def play_and_wait(start, snd, chn = -1, syncd = false, end = -1, pos = -1, stop_proc = false, out_chan = -1)\n\
+  /* "end" is a reserved word in Ruby, so we'll use "samps" instead */
+  XEN_EVAL_C_STRING("def play_and_wait(start, snd, chn = -1, syncd = false, samps = -1, pos = -1, stop_proc = false, out_chan = -1)\n\
                        play(snd.kind_of?(Fixnum) ? integer2sound(snd) : snd, :channel, chn, :with_sync, syncd, :wait, true, \n\
-                            :start, start, :end, end, :stop, stop_proc, :out_channel, out_chan, :edit_position, pos)\n\
+                            :start, start, :end, samps, :stop, stop_proc, :out_channel, out_chan, :edit_position, pos)\n\
                        end");
 
-  XEN_EVAL_C_STRING("def old_play(start, snd, chn = -1, syncd = false, end = -1, pos = -1, stop_proc = false, out_chan = -1)\n\
+  XEN_EVAL_C_STRING("def old_play(start, snd, chn = -1, syncd = false, samps = -1, pos = -1, stop_proc = false, out_chan = -1)\n\
                        play(snd.kind_of?(Fixnum) ? integer2sound(snd) : snd, :channel, chn, :with_sync, syncd, \n\
-                            :start, start, :end, end, :stop, stop_proc, :out_channel, out_chan, :edit_position, pos)\n\
+                            :start, start, :end, samps, :stop, stop_proc, :out_channel, out_chan, :edit_position, pos)\n\
                        end");
 
   XEN_EVAL_C_STRING("def play_channel(start, dur, snd, chn = 0, pos = -1, stop_proc = false, out_chan = -1)\n\
