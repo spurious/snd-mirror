@@ -1115,20 +1115,6 @@ signals that the symbol is in the Package-With-No-Name [offstage: harmonica, tub
 <!-- -------------------------------------------------------------------------------- -->
 <dt>
 <table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
-<table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>make-promise</h4></td></tr></table>
-</td></tr></table>
-</dt>
-
-<dd><p>This is named "delay" in most Schemes, but that name belongs to CLM.
-There is also promise? which returns #t if its argument is a promise.
-</p>
-</dd>
-<br>
-
-
-<!-- -------------------------------------------------------------------------------- -->
-<dt>
-<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
 <table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>gc</h4></td></tr></table>
 </td></tr></table>
 </dt>
@@ -1213,6 +1199,7 @@ global-x
 <ul>
 <li>do sets its step variables, rather than rebinding them.
 <li>no syntax-rules or any of its friends.
+<li>force and delay are implemented as in slib and depend on the WITH_FORCE switch, normally 0
 <li>s7-version returns the current s7 version.
 <li>no scheme-report-environment, null-environment, or interaction-environment (= current-environment?).
 <li>no transcript-on or transcript-off.
@@ -1221,22 +1208,6 @@ global-x
 </ul>
 </dd>
 <br>
-<br>
-
-<!-- -------------------------------------------------------------------------------- -->
-<dt>
-<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
-<table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>changes I'll get to someday</h4></td></tr></table>
-</td></tr></table>
-</dt>
-
-<dd><br>
-<ul>
-<li>cerror ("error/cc"?)
-<li>make-vector! where the initial element sets the element type permanently
-<li>remove all mention of exact and inexact
-</ul>
-</dd>
 <br>
 
 </dl>
@@ -1262,6 +1233,7 @@ compile-time flags:
     WITH_MULTIDIMENSIONAL_VECTORS  1 if you want multidimensional vectors (default is 1)
     WITH_PROFILING                 1 if you want profiling support (default is 0)
     WITH_ENCAPSULATION             1 if you want encapsulation (default is 0)
+    WITH_FORCE                     1 if you want force and delay (default is 0)
     S7_DISABLE_DEPRECATED          1 if you want to make sure you're not using any deprecated s7 stuff
 </pre>
 <p>See the comment at the start of s7.c for more information about these switches.

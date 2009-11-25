@@ -42,6 +42,7 @@
  *
  *   deliberate omission from r5rs: 
  *        no syntax-rules or any of its friends
+ *        force and delay unless WITH_FORCE is 1 (default is 0)
  *        no inexact integer or ratio (so, for example, truncate returns an exact integer), no exact complex or exact real
  *           (exact? has no obvious meaning in regard to complex numbers anyway -- are we referring to the polar or
  *            the rectangular form, and are both real and imaginary parts included? -- why can't they be separate?)
@@ -53,7 +54,6 @@
  *   deliberate difference from r5rs:
  *        modulo, remainder, and quotient take integer, ratio, or real args 
  *        lcm and gcd can take integer or ratio args
- *        delay is renamed make-promise to avoid collisions in CLM, also promise?
  *        continuation? function to distinguish a continuation from a procedure
  *        log takes an optional 2nd arg (base)
  *        '.' and an exponent can occur in a number in any base -- they do not mean "base 10"!  
@@ -67,7 +67,7 @@
  *        procedure-source, procedure-arity, procedure-documentation, help
  *          if the initial expression in a function body is a string constant, it is assumed to be a documentation string
  *        symbol-table, symbol->value, global-environment, current-environment, stack
- *        provide, provided?, defined?, promise?
+ *        provide, provided?, defined?
  *        port-line-number, port-filename
  *        object->string, eval-string
  *        reverse!, list-set!, sort!
@@ -84,9 +84,6 @@
  *   things I ought to add/change:
  *        perhaps find(-if), remove etc from CL? (generic -- vectors and strings also as in support.scm)
  *           if generic, perhaps add to c-type struct?
- *        cerror ("error/cc"?)
- *        rename "force" to some name matching the notion of a promise ("delay" and "force" are about as bad as names can get)
- *          or better, get rid of these things altogether [cash_promise?]
  *        make #<func args> = (func args) or something like that so we can read new_type objects, or add a reader to that struct
  *          also add a conversion function (->generator etc)
  *        make-vector! where type of initial element sets type of all elements, or make-vector*?
@@ -95,7 +92,7 @@
  *          FFI would guarantee (for example) s7_Double as elements?
  *        perhaps generic reverse and append
  *        ->* for conversions (->vector, ->ratio? ->string etc) [see end of this file]
- *        ideally: remove all mention of exact|inexact, remove "delay"|force, remove set-car!|cdr!, 
+ *        ideally: remove all mention of exact|inexact, remove set-car!|cdr!, 
  *                 remove *-ci-*, remove cxxxxr, remove improper lists
  *                 exact->inexact is the only useful exactness function -- perhaps (->real x)?
  *        load should handle C shared libraries, using dlopen/dlinit [optionally]
@@ -217,6 +214,13 @@
    */
 #endif
 
+#ifndef WITH_FORCE
+  #define WITH_FORCE 0
+  /* this includes the slib versions of force and delay.  The name "delay" collides with CLM,
+   *    so this is not compatible with sndlib.
+   */
+#endif
+
 
 
 /* -------------------------------------------------------------------------------- */
@@ -305,12 +309,12 @@
 typedef enum {OP_READ_INTERNAL, OP_EVAL, OP_EVAL_ARGS0, OP_EVAL_ARGS1, OP_APPLY, OP_EVAL_MACRO, OP_LAMBDA, OP_QUOTE, 
 	      OP_DEFINE0, OP_DEFINE1, OP_BEGIN, OP_IF0, OP_IF1, OP_SET0, OP_SET1, OP_SET2, 
 	      OP_LET0, OP_LET1, OP_LET2, OP_LET_STAR0, OP_LET_STAR1, 
-	      OP_LETREC0, OP_LETREC1, OP_LETREC2, OP_COND0, OP_COND1, OP_MAKE_PROMISE, OP_AND0, OP_AND1, 
-	      OP_OR0, OP_OR1, OP_DEFMACRO, OP_DEFMACRO_STAR, OP_MACRO0, OP_MACRO1, 
+	      OP_LETREC0, OP_LETREC1, OP_LETREC2, OP_COND0, OP_COND1, 
+	      OP_AND0, OP_AND1, OP_OR0, OP_OR1, OP_DEFMACRO, OP_DEFMACRO_STAR, OP_MACRO0, OP_MACRO1, 
 	      OP_DEFINE_MACRO, OP_DEFINE_MACRO_STAR, OP_DEFINE_EXPANSION, OP_EXPANSION,
 	      OP_CASE0, OP_CASE1, OP_CASE2, OP_READ_LIST, OP_READ_DOT, OP_READ_QUOTE, 
 	      OP_READ_QUASIQUOTE, OP_READ_QUASIQUOTE_VECTOR, OP_READ_UNQUOTE, OP_READ_UNQUOTE_SPLICING, 
-	      OP_READ_VECTOR, OP_FORCE, OP_READ_RETURN_EXPRESSION, OP_READ_POP_AND_RETURN_EXPRESSION, 
+	      OP_READ_VECTOR, OP_READ_RETURN_EXPRESSION, OP_READ_POP_AND_RETURN_EXPRESSION, 
 	      OP_LOAD_RETURN_IF_EOF, OP_LOAD_CLOSE_AND_POP_IF_EOF, OP_EVAL_STRING, OP_EVAL_STRING_DONE, OP_EVAL_DONE,
 	      OP_QUIT, OP_CATCH, OP_DYNAMIC_WIND, OP_LIST_FOR_EACH, OP_LIST_MAP, OP_DEFINE_CONSTANT0, OP_DEFINE_CONSTANT1, 
 	      OP_DO, OP_DO_END0, OP_DO_END1, OP_DO_STEP0, OP_DO_STEP1, OP_DO_STEP2, OP_DO_INIT,
@@ -320,7 +324,7 @@ typedef enum {OP_READ_INTERNAL, OP_EVAL, OP_EVAL_ARGS0, OP_EVAL_ARGS1, OP_APPLY,
 	      OP_MAX_DEFINED} opcode_t;
 
 #define NUM_SMALL_INTS 256
-/* this needs to be at least OP_MAX_DEFINED = 88 */
+/* this needs to be at least OP_MAX_DEFINED = 86 */
 
 typedef enum {TOKEN_EOF, TOKEN_LEFT_PAREN, TOKEN_RIGHT_PAREN, TOKEN_DOT, TOKEN_ATOM, TOKEN_QUOTE, TOKEN_DOUBLE_QUOTE, 
 	      TOKEN_BACK_QUOTE, TOKEN_COMMA, TOKEN_AT_MARK, TOKEN_SHARP_CONST, TOKEN_VECTOR} token_t;
@@ -585,17 +589,16 @@ struct s7_scheme {
 #define T_INPUT_PORT   11
 #define T_VECTOR       12
 #define T_MACRO        13
-#define T_PROMISE      14
-#define T_C_OBJECT     15
-#define T_GOTO         16
-#define T_OUTPUT_PORT  17
-#define T_CATCH        18
-#define T_DYNAMIC_WIND 19
-#define T_HASH_TABLE   20
-#define T_BOOLEAN      21
-#define T_C_MACRO      22
-#define T_C_POINTER    23
-#define BUILT_IN_TYPES 24
+#define T_C_OBJECT     14
+#define T_GOTO         15
+#define T_OUTPUT_PORT  16
+#define T_CATCH        17
+#define T_DYNAMIC_WIND 18
+#define T_HASH_TABLE   19
+#define T_BOOLEAN      20
+#define T_C_MACRO      21
+#define T_C_POINTER    22
+#define BUILT_IN_TYPES 23
 
 #define TYPE_BITS                     8
 #define T_MASKTYPE                    0xff
@@ -784,7 +787,6 @@ struct s7_scheme {
 
 #define is_goto(p)                    (type(p) == T_GOTO)
 #define is_macro(p)                   (type(p) == T_MACRO)
-#define is_promise(p)                 (type(p) == T_PROMISE)
 
 #define is_closure(p)                 (type(p) == T_CLOSURE)
 #define is_closure_star(p)            (type(p) == T_CLOSURE_STAR)
@@ -1548,7 +1550,6 @@ void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
     case T_CLOSURE:
     case T_CLOSURE_STAR:
     case T_MACRO:
-    case T_PROMISE:
       s7_remove_from_heap(sc, closure_source(x));
       break;
 
@@ -1666,11 +1667,11 @@ static void show_stack(s7_scheme *sc)
   const char *ops[OP_MAX_DEFINED] = 
     {"read_internal", "eval", "eval_args0", "eval_args1", "apply", "eval_macro", "lambda", "quote", 
      "define0", "define1", "begin", "if0", "if1", "set0", "set1", "set2", "let0", "let1", "let2", 
-     "let_star0", "let_star1", "letrec0", "letrec1", "letrec2", "cond0", "cond1", "make_promise", 
+     "let_star0", "let_star1", "letrec0", "letrec1", "letrec2", "cond0", "cond1", 
      "and0", "and1", "or0", "or1", "defmacro", "defmacro_star", "macro0", "macro1", 
      "define_macro", "define_macro_star", "define_expansion", "expansion", 
      "case0", "case1", "case2", "read_list", "read_dot", "read_quote", "read_quasiquote", "read_quasiquote_vector", 
-     "read_unquote", "read_unquote_splicing", "read_vector", "force", "read_return_expression", 
+     "read_unquote", "read_unquote_splicing", "read_vector", "read_return_expression", 
      "read_and_return_expression", "load_return_if_eof", "load_close_and_pop_if_eof", "eval_string", 
      "eval_string_done", "eval_done", "quit", "catch", "dynamic_wind", "for_list_each", "list_map", "define_constant0", 
      "define_constant1", "do", "do_end0", "do_end1", "do_step0", "do_step1", "do_step2", "do_init", "define_star", 
@@ -2459,7 +2460,6 @@ static s7_pointer copy_object(s7_scheme *sc, s7_pointer obj)
       (is_closure(obj)) ||
       (is_closure_star(obj)) ||
       (is_macro(obj)) || 
-      (is_promise(obj)) ||
       (s7_is_function(obj)))
     cdr(nobj) = cdr(obj); /* closure_environment in func cases */
   else cdr(nobj) = copy_object(sc, cdr(obj));
@@ -8985,9 +8985,6 @@ static char *s7_atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
 	return(s7_strdup("#<closure>"));
       }
   
-    case T_PROMISE:
-      return(s7_strdup("#<promise>"));
-  
     case T_C_FUNCTION:
       return(s7_strdup(c_function_name(obj)));
 
@@ -11644,7 +11641,7 @@ s7_pointer s7_procedure_source(s7_scheme *sc, s7_pointer p)
    * ((a) (+ a b)) (((b . 1)) #(() () () () () ((make-filtered-comb . make-filtered-comb)) () () ...))
    */
   
-  if (is_closure(p) || is_closure_star(p) || is_macro(p) || is_promise(p)) 
+  if (is_closure(p) || is_closure_star(p) || is_macro(p))
     {
       return(s7_cons(sc, 
 		     s7_append(sc, 
@@ -11675,7 +11672,7 @@ static s7_pointer g_procedure_source(s7_scheme *sc, s7_pointer args)
       (!is_macro(p)))
     return(s7_wrong_type_arg_error(sc, "procedure-source", 0, p, "a procedure or a macro"));
 
-  if (is_closure(p) || is_closure_star(p) || is_macro(p) || is_promise(p)) 
+  if (is_closure(p) || is_closure_star(p) || is_macro(p))
     return(s7_append(sc, 
 		     make_list_2(sc, 
 				 (is_closure_star(p)) ? sc->LAMBDA_STAR : sc->LAMBDA, 
@@ -11706,7 +11703,7 @@ static s7_pointer g_procedure_environment(s7_scheme *sc, s7_pointer args)
   if (!is_procedure(p))
     return(s7_wrong_type_arg_error(sc, "procedure-environment", 0, p, "a procedure"));
 
-  if (is_closure(p) || is_closure_star(p) || is_promise(p)) 
+  if (is_closure(p) || is_closure_star(p))
     return(closure_environment(p));
   return(sc->global_env);
 }
@@ -12479,14 +12476,6 @@ static s7_pointer g_is_equal(s7_scheme *sc, s7_pointer args)
   #define H_is_equal "(equal? obj1 obj2) returns #t if obj1 is equal to obj2"
   return(make_boolean(sc, s7_is_equal(car(args), cadr(args))));
 }
-
-
-static s7_pointer g_is_promise(s7_scheme *sc, s7_pointer args)
-{
-  #define H_is_promise "(promise? obj1) returns #t if obj1 is a promise (from make-promise = 'delay' in other schemes)"
-  return(make_boolean(sc, type(car(args)) == T_PROMISE));
-}
-
 
 
 
@@ -13315,8 +13304,7 @@ untrace without arguments to turn this off."
   for (i = 0, x = args; x != sc->NIL; i++, x = cdr(x)) 
     if ((!s7_is_symbol(car(x))) &&
 	(!s7_is_procedure(car(x))) &&
-	(!is_any_macro(car(x))) &&
-	(!is_promise(car(x))))
+	(!is_any_macro(car(x))))
       return(s7_wrong_type_arg_error(sc, "trace", i + 1, car(x), "a symbol, a function, or some other applicable object"));
 
   for (i = 0, x = args; x != sc->NIL; i++, x = cdr(x)) 
@@ -13507,7 +13495,6 @@ static const char *s7_type_name(s7_pointer arg)
     case T_CHARACTER:    return("character");
     case T_VECTOR:       return("vector");
     case T_MACRO:        return("macro");
-    case T_PROMISE:      return("promise");
     case T_CATCH:        return("catch");
     case T_DYNAMIC_WIND: return("dynamic-wind");
     case T_HASH_TABLE:   return("hash-table");
@@ -13767,6 +13754,17 @@ static int remember_file_name(const char *file)
  *
  * PERHAPS: include the continuation? 
  */
+
+/* slightly ugly:
+
+(define-macro (cerror . args)
+  `(call/cc
+    (lambda (continue)
+      (apply error continue ',args))))
+
+;;; now ((vector-ref *error-info* 0)) will continue from the error
+*/
+
 
 static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bool exit_eval)
 {
@@ -14259,22 +14257,6 @@ void s7_quit(s7_scheme *sc)
 {
   stack_reset(sc);
   push_stack(sc, OP_QUIT, sc->NIL, sc->NIL);
-}
-
-
-static s7_pointer g_force(s7_scheme *sc, s7_pointer args)
-{
-  #define H_force "(force obj) lazily evaluates obj"
-  if (is_promise(car(args)))
-    {
-      sc->code = car(args);
-      push_stack(sc, OP_FORCE, sc->NIL, sc->code);
-      sc->args = sc->NIL;
-      push_stack(sc, OP_APPLY, sc->args, sc->code);
-      return(sc->NIL);
-    }
-  /* already forced, presumably */
-  return(car(args));
 }
 
 
@@ -15936,9 +15918,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  }
 
 	  
-	case T_CLOSURE:
+	case T_CLOSURE:                              /* -------- normal function (lambda), or macro -------- */
 	case T_MACRO:
-	case T_PROMISE:             	          /* -------- normal function (lambda), macro, or delay -------- */
 	  sc->envir = new_frame_in_env(sc, closure_environment(sc->code)); 
 	  
 	  /* load up the current args into the ((args) (lambda)) layout [via the current environment] */
@@ -16742,70 +16723,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       push_stack(sc, OP_COND1, sc->NIL, sc->code);
       sc->code = caar(sc->code);
       goto EVAL;
-      
-      
-      /* rather than having built-in force and make-promise, why not use these (from slib with some changes):
-
-	 (define (force object) (object))
-
-	 (define-macro (make-promise expression)
-           `(let ((result-ready? #f)
-  	          (result #f))
-             (lambda ()
-               (if result-ready?
-	           result
-	          (let ((x (let () 
-		             ,expression)))
-	            (if result-ready?
-		        result
-                        (begin
-		          (set! result-ready? #t)
-		          (set! result x)
-		          result)))))))
-      */
-
-    case OP_MAKE_PROMISE: 
-      if (sc->code == sc->NIL)  /* (make-promise) */
-	return(eval_error(sc, "make-promise needs an argument: ~A", sc->code));
-
-      if (cdr(sc->code) != sc->NIL)
-	return(eval_error(sc, "make-promise takes one argument: ~A", sc->code));
-
-      sc->value = s7_make_closure(sc, s7_cons(sc, sc->NIL, sc->code), sc->envir);
-      set_type(sc->value, T_PROMISE);
-      pop_stack(sc);
-      goto START;
-      
-      
-    case OP_FORCE:     /* Save forced value replacing promise */
-      /* in g_force, code = car(args) == the promise
-       *   it then calls apply, and then pops to here, so value == promise's value, code = promise object
-       */
-      {
-	int cloc;
-	cloc = sc->code->hloc;
-	memcpy(sc->code, sc->value, sizeof(s7_cell));
-	sc->code->hloc = cloc;
-      }
-      /* "values" is trouble here -- I think, since "delay" is a mess to begin with, that I'll ignore that problem */
-      /*    (let ((arg (force (make-promise (values 1 2 3))))) (+ arg 4)) ; this doesn't work yet */
-
-      /* memcpy is trouble:
-       * if, for example, sc->value is a string, after memcpy we have two (string) objects in the heap
-       *   pointing to the same string.  When they are GC'd, we try to free the same pointer twice.
-       *   But we can't clear sc->value and reset its type -- it might be #t for example!
-       *   We can't just say sc->code = sc->value because we're playing funny games with
-       *   self-modifying code here.  So...
-       */
-
-      clear_finalizable(sc->code);                /* make sure GC calls free once */
-
-      if ((is_pair(sc->value)) &&                 /* (+ (force (make-promise (values 1 2 3))) 4) */
-	  (car(sc->value) == sc->VALUES))
-	sc->value = splice_in_values(sc, cdr(sc->value));
-
-      pop_stack(sc);
-      goto START;
       
       
     case OP_AND0:
@@ -22460,7 +22377,6 @@ s7_scheme *s7_init(void)
   assign_syntax(sc, "let*",              OP_LET_STAR0);
   assign_syntax(sc, "letrec",            OP_LETREC0);
   assign_syntax(sc, "cond",              OP_COND0);
-  assign_syntax(sc, "make-promise",      OP_MAKE_PROMISE);     /* "delay" in standard scheme */
   assign_syntax(sc, "and",               OP_AND0);
   assign_syntax(sc, "or",                OP_OR0);
   assign_syntax(sc, "case",              OP_CASE0);
@@ -22853,9 +22769,6 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "eval",                    g_eval,                    1, 1, false, H_eval);
   s7_define_function(sc, "eval-string",             g_eval_string,             1, 1, false, H_eval_string);
   s7_define_function(sc, "apply",                   g_apply,                   1, 0, true,  H_apply);
-  s7_define_function(sc, "force",                   g_force,                   1, 0, false, H_force);
-  s7_define_function(sc, "promise?",                g_is_promise,              1, 0, false, H_is_promise);
-
   s7_define_function(sc, "for-each",                g_for_each,                2, 0, true,  H_list_for_each);
   s7_define_function(sc, "map",                     g_map,                     2, 0, true,  H_list_map);
 
@@ -23021,6 +22934,7 @@ s7_scheme *s7_init(void)
   */
 #endif
 
+
 #if WITH_ENCAPSULATION
   s7_eval_c_string(sc, "                                 \n\
       (define-macro (encapsulate . body)                 \n\
@@ -23038,6 +22952,26 @@ s7_scheme *s7_init(void)
 
   /* s7_eval_c_string(sc, "(define (ratio? n) (and (rational? n) (not (integer? n))))"); */
 
+
+#if WITH_FORCE
+  s7_eval_c_string("(define (force object) (object))");
+
+  s7_eval_c_string("(define-macro (delay expression)\n\
+                      `(let ((result-ready? #f)\n\
+  	                     (result #f))\n\
+                         (lambda ()\n\
+                           (if result-ready?\n\
+	                       result\n\
+	                       (let ((x (let () \n\
+		                          ,expression)))\n\
+	                         (if result-ready?\n\
+		                     result\n\
+                                    (begin\n\
+		                      (set! result-ready? #t)\n\
+		                      (set! result x)\n\
+		                      result)))))))");
+#endif
+	   
   return(sc);
 }
 
@@ -23126,3 +23060,4 @@ s7_scheme *s7_init(void)
 		  (error 'wrong-type-arg "can't convert ~A to vector" x))))))
   */
 #endif
+

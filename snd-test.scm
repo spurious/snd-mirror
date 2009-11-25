@@ -35675,7 +35675,7 @@ EDITS: 2
 	  (lambda () (ptree-channel (lambda (y) (+ y .1)) -1 123 oboe)))
 	 (list 
 	  "scale-channel" "env-channel" "clm-channel" "vct->channel" "smooth-channel" "pad-channel" "src-channel"
-	  "mix-channel" "insert-channel" "reverse-channel" "play-channel" 
+	  "mix-channel" "insert-channel" "reverse-channel"
 	  "scale-sound-by" "env-sound" "set-samples" "smooth-sound" "insert-silence" "ptree-channel"))
 	
 	(scale-channel 2.0 12345678 123 oboe)

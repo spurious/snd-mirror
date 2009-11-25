@@ -34,7 +34,6 @@
 (define with-reverse! #t)                                      ; test reverse!
 (define with-open-input-string-and-friends #t)                 ; string IO, as well as file
 (define with-delay #f)                                         ; delay and force 
-(define with-delay-named-make-promise #t)                      ;   same but "delay" -> "make-promise" ("delay" belongs to CLM)
 (define with-bitwise-functions #t)                             ; logand|or|xor|ior, ash
 (define with-hash-tables #t)                                   ; make-hash-table and friends
 (define with-keywords #t)                                      ; make-keyword, keyword->symbol etc
@@ -4274,11 +4273,6 @@
     (test (+ (with-input-from-string "(values 1 2 3)" (lambda () (read))) 2) 8))
 (test (< (values 1 2 3)) #t)
 
-(test (+ (force (make-promise (values 1 2 3))) 4) 10)
-;;;       (let ((arg (force (make-promise (values 1 2 3))))) (+ arg 4)) ; this doesn't work yet
-;;;       (apply + (map (lambda (n) (values n (+ n 1))) (list 1 2)))    ; nor does this
-
-
 (test (let ((sum 0)) (for-each (lambda (n m p) (set! sum (+ sum n m p))) (values (list 1 2 3) (list 4 5 6) (list 7 8 9)))) 45)
 (test (map (lambda (n m p) (+ n m p)) (values (list 1 2 3) (list 4 5 6) (list 7 8 9))) '(12 15 18))
 (test (string-append (values "123" "4" "5") "6" (values "78" "90")) "1234567890")
@@ -5703,202 +5697,6 @@
       ))
 
 
-(if with-delay-named-make-promise
-    (begin
-
-      (test (let ((count 0))
-	      (let ((p1 (make-promise (* 2 3 (let () (set! count (+ count 1)) count)))))
-		(let ((val1 (force p1))
-		      (val2 (force p1))
-		      (val3 (force p1)))
-		  (and (= val1 val2 val3 6)
-		       (= count 1)))))
-	    #t)
-
-      (test (let ((stream-car (lambda (s) (car (force s))))
-		  (stream-cdr (lambda (s) (cdr (force s))))
-		  (counters (let next ((n 1)) (make-promise (cons n (next (+ n 1)))))))
-	      (let* ((val1 (stream-car counters))
-		     (val2 (stream-car (stream-cdr counters))))
-		(letrec ((stream-add (lambda (s1 s2)
-				       (make-promise (cons 
-					       (+ (stream-car s1) (stream-car s2))
-					       (stream-add (stream-cdr s1) (stream-cdr s2)))))))
-		  (let ((even-counters (stream-add counters counters)))
-		    (let* ((val3 (stream-car even-counters))
-			   (val4 (stream-car (stream-cdr even-counters))))
-		      (list val1 val2 val3 val4))))))
-	    (list 1 2 2 4))
-
-      (test (force (make-promise (+ 1 2))) 3)
-      (test (let ((p (make-promise (+ 1 2)))) (list (force p) (force p))) (list 3 3))
-      (test (letrec ((a-stream (letrec ((next (lambda (n)
-						(cons n (make-promise (next (+ n 1)))))))
-				 (next 0)))
-		     (head car)
-		     (tail (lambda (stream) (force (cdr stream)))))
-	      (head (tail (tail a-stream))))
-	    2)
-
-      (letrec ((count 0)
-	       (p (make-promise (begin (set! count (+ count 1))
-				(if (> count x)
-				    count
-				    (force p)))))
-	       (x 5))
-	(test (force p) 6)
-	(set! x 10)
-	(test (force p) 6))
-
-      (test (let ((generate (lambda (use-it)
-			      (let loop ((i 0))
-				(if (< i 10) (begin (use-it i) (loop (+ i 1)))))))
-		  (generator->lazy-list (lambda (generator)
-					  (make-promise
-					    (call/cc (lambda (k-main)
-						       (generator 
-							(lambda (e)
-							  (call/cc (lambda (k-reenter)
-								     (k-main (cons e 
-										   (make-promise 
-										     (call/cc (lambda (k-new-main)
-												(set! k-main k-new-main)
-												(k-reenter #f))))))))))
-						       (k-main '()))))))
-		  (fnull? (lambda (x) (null? (force x))))
-		  (fcar (lambda (x) (car (force x))))
-		  (fcdr (lambda (x) (cdr (force x)))))
-	      (letrec ((lazy-list->list (lambda (lz)
-					  (if (fnull? lz) '()
-					      (cons (fcar lz) (lazy-list->list (fcdr lz)))))))
-		(lazy-list->list (generator->lazy-list generate))))
-	    '(0 1 2 3 4 5 6 7 8 9))
-
-      (test (let* ((x 1)
-		   (p (make-promise (+ x 1))))
-	      (force p)
-	      (set! x (+ x 1))
-	      (force p))
-	    2)
-
-      (test (let* ((x 1) 
-		   (p #f))
-	      (let* ((x 2))
-		(set! p (make-promise (+ x 1))))
-	      (force p))
-	    3)
-
-      (test (letrec ((count 0)
-		     (x 5)
-		     (p (make-promise (begin (set! count (+ count 1))
-				      (if (> count x)
-					  count
-					  (force p))))))
-	      (force p)
-	      (set! x 10)
-	      (force p))
-	    6)
-      
-      (test (let ((count 0))
-	      (define s (make-promise (begin (set! count (+ count 1)) 1)))
-	      (+ (force s) (force s))
-	      count)
-	    1)
-
-      (test (let ()
-	      (define f
-		(let ((first? #t))
-		  (make-promise
-		    (if first?
-			(begin
-			  (set! first? #f)
-			  (force f))
-			'second))))
-	      (force f))
-	    'second)
-
-      (test (let ()
-	      (define q
-		(let ((count 5))
-		  (define (get-count) count)
-		  (define p (make-promise (if (<= count 0)
-				       count
-				       (begin (set! count (- count 1))
-					      (force p)
-					      (set! count (+ count 2))
-					      count))))
-		  (list get-count p)))
-	      (let* ((get-count (car q))
-		     (p (cadr q))
-		     (a (get-count))
-		     (b (force p))
-		     (c (get-count)))
-		(list a b c)))
-	    (list 5 0 10))
-
-      (for-each
-       (lambda (arg)
-	 (test (force (make-promise arg)) arg))
-       (list "hi" -1 #\a 1 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i #t (list 1 2 3) '(1 . 2)))
-
-      (test
-       (let ()
-	 
-	 (define (square x) (* x x))
-	 
-	 (define (calculate-statistics-1 the-series)
-	   (let* ((size (length the-series))
-		  (sum (apply + the-series))
-		  (mean (/ sum size))
-		  (variance (let* ((variance-list (map (lambda (x) (square (- x mean))) the-series)))
-			      (/ (apply + variance-list) size)))
-		  (standard-deviation (sqrt variance)))
-	     (vector mean variance standard-deviation)))
-	 
-	 (define (calculate-statistics the-series)
-	   (let* ((size (make-promise (length the-series)))
-		  (mean (make-promise (/ (apply + the-series) (force size))))
-		  (variance (make-promise (let* ((variance-list (map (lambda (x) (square (- x (force mean)))) the-series)))
-					    (/ (apply + variance-list) (force size)))))
-		  (standard-deviation (make-promise (sqrt (force variance)))))
-	     (vector mean variance standard-deviation)))
-	 
-	 (let* ((stats1 (calculate-statistics-1 '(2 6 4 3 7 4 3 6 7 8 43 4 3 2 36 75 3)))
-		(stats (calculate-statistics '(2 6 4 3 7 4 3 6 7 8 43 4 3 2 36 75 3)))
-		(mean (force (vector-ref stats 0)))
-		(variance (force (vector-ref stats 1)))
-		(stddev (force (vector-ref stats 2))))
-	   (and (equal? (vector-ref stats1 0) mean)
-		(equal? (vector-ref stats1 1) variance)
-		(< (abs (- (vector-ref stats1 2) stddev)) 1.0e-6))))
-       #t)
-
-      (test 
-       (let ()
-
-	 (define (flatten x)
-	   (define (does-flatten x)
-	     (if (not (pair? x)) x
-		 (cond
-		  ((null? (car x)) (does-flatten (cdr x)))
-		  ((not (pair? (car x)))
-		   (cons (car x) (make-promise (does-flatten (cdr x)))))
-		  (else
-		   (does-flatten
-		    (cons (caar x) (cons (cdar x) (cdr x))))))))
-	   (make-promise (does-flatten x)))
-	 
-	 (let ((lst '((1 2) 3 ((4) 5)))
-	       (newlst '()))
-	   (do ((i 0 (+ i 1))
-		(p (force (flatten lst)) (force (cdr p))))
-	       ((= i 5) (reverse newlst))
-	     (set! newlst (cons (car p) newlst)))))
-       (list 1 2 3 4 5))
-       
-       
-      ))
-    
     
     
 ;;; -------- quasiquote --------
@@ -6810,6 +6608,8 @@
       (test (let () (define-macro (hi a) `(+ ,a 1) #f) (hi 2)) #f)
       (test (let () (define-macro (mac1 a) `',a) (equal? (mac1 (+ 1 2)) '(+ 1 2))) #t)
 
+      ;; TODO: test defmacro* and define-macro*
+
       (begin
 	(define-macro (hi a) `(+ ,a 1))
 	(test (hi 2) 3)
@@ -6825,13 +6625,6 @@
 	(test (list? '(((hi 1)))) #t)
 	(test (equal? (vector (hi 1)) '#(2)) #t)
 	(test (symbol? (vector-ref '#(hi) 0)) #t))
-
-      (test (promise? (make-promise (+ 1 2))) #t)
-      (for-each
-       (lambda (arg)
-	 (test (promise? arg) #f))
-       (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi '#(()) (list 1 2 3) '(1 . 2) "hi"))
-      (test (let ((p (make-promise (+ 1 2)))) (force p) (promise? p)) #f) ; force! might be a more accurate name
 
       (test (let () (define-constant __c1__ 32) __c1__) 32)
       (test (let () __c1__) 'error)
@@ -37199,15 +36992,6 @@
 	    (test (delay 1 2) 'error)
 	    ))
       
-      (if with-delay-named-make-promise
-	  (begin
-	    (test (force) 'error)
-	    (test (make-promise) 'error)
-	    (test (make-promise 1 2) 'error)
-	    
-	    ))
-      
-      
       (if with-hash-tables
 	  (begin 
 	    
@@ -38086,8 +37870,6 @@
   (let ((funcs (make-vector 3 #f))) (do ((i 0 (+ i 1))) ((= i 3)) (vector-set! funcs i (lambda () (+ i 1)))) (+ ((vector-ref funcs 0)) ((vector-ref funcs 1)) ((vector-ref funcs 2)))) got 12 but expected 6
   
 (let* ((x (quote (1 2 3))) (y (apply list x))) (not (eq? x y))) got #f but expected #t
-
-(let () (define q (let ((count 5)) (define (get-count) count) (define p (make-promise (if (<= count 0) count (begin (set! count (- count 1)) (force p) (set! count (+ count 2)) count)))) (list get-count p))) (let* ((get-count (car q)) (p (cadr q)) (a (get-count)) (b (force p)) (c (get-count))) (list a b c))) got (5 10 10) but expected (5 0 10)
 
 format #t 1 output-port: 2! (this is testing output ports)
 

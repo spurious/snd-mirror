@@ -844,7 +844,8 @@ void s7_mark_object(s7_pointer p);
  * 
  *        s7 changes
  *
- * 24-Nov:    define-macro* and defmacro*
+ * 24-Nov:    define-macro* and defmacro*.
+ *            force and delay included only if WITH_FORCE set, promise? removed.
  * 17-Nov:    s7_is_boolean no longer takes the s7_scheme argument.
  * 7-Nov:     s7_vector_dimensions, s7_vector_offsets, example of use.
  * 3-Nov:     s7_vector_rank.
