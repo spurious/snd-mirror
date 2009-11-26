@@ -2389,8 +2389,6 @@ void call_sp_watchers(snd_info *sp, sp_watcher_t type, sp_watcher_reason_t reaso
  * do everything through generic sampler (vector etc)
  *   in/out/readin generic as well, so we can use instruments for edits and vice-versa without change
  *   selection sampler [no need for snd-sampler (snd-edits) I think]
- *   generic rms?
- *   make-vector! double -> replace vct/sound-data objects
  *
  *  the goal being that all clm and snd structures are compatible, all operations interchangeable
  *    so (violin 0 1 440 .1) can appear sensibly in any context
@@ -2403,8 +2401,6 @@ void call_sp_watchers(snd_info *sp, sp_watcher_t type, sp_watcher_reason_t reaso
  * all current "work procs" could be handled as separate threads
  * all multichannel parallel ops also threaded, and graphics updates, and playing
  * TODO: make-sampler with mix etc -- let 1st arg be object, also add selection sampler
- * make-vector! choices: any, 1 obj [any type], 1 obj: double -- do any others warrant special handling?
- *
  * what about "Save again" menu item -- save as using the same choices including filename as before? [popup]
  */
 

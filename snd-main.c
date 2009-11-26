@@ -283,6 +283,7 @@ static const char *enved_target_name(enved_target_t choice)
 
 static const char *b2s(bool val) {return((val) ? (char *)PROC_TRUE : (char *)PROC_FALSE);} /* cast needed by g++ > 3.4 */
 
+#if (!USE_NO_GUI)
 static char *colvarname = NULL;
 static char *colormap_variable_name(int col)
 {
@@ -291,6 +292,7 @@ static char *colormap_variable_name(int col)
   snprintf(colvarname, 64, "%s-colormap", colormap_name(col));
   return(colvarname);
 }
+#endif
 
 
 #define white_space "      "
@@ -464,8 +466,10 @@ static void save_options(FILE *fd)
   if (wavo_hop(ss) != DEFAULT_WAVO_HOP) pss_sd(fd, S_wavo_hop, wavo_hop(ss));
   if (wavo_trace(ss) != DEFAULT_WAVO_TRACE) pss_sd(fd, S_wavo_trace, wavo_trace(ss));
   if (spectro_hop(ss) != DEFAULT_SPECTRO_HOP) pss_sd(fd, S_spectro_hop, spectro_hop(ss));
+#if (!USE_NO_GUI)
   if ((color_map(ss) != DEFAULT_COLOR_MAP) && (color_map(ss) <= 15)) pss_ss(fd, S_colormap, TO_VAR_NAME(colormap_variable_name(color_map(ss))));
   if (color_map_size(ss) != DEFAULT_COLOR_MAP_SIZE) pss_sd(fd, S_colormap_size, color_map_size(ss));
+#endif
   if (wavelet_type(ss) != DEFAULT_WAVELET_TYPE) pss_sd(fd, S_wavelet_type, wavelet_type(ss));
   if (cursor_style(ss) != DEFAULT_CURSOR_STYLE) pss_ss(fd, S_cursor_style, cursor_style_name(cursor_style(ss)));
   if (tracking_cursor_style(ss) != DEFAULT_TRACKING_CURSOR_STYLE) pss_ss(fd, S_tracking_cursor_style, cursor_style_name(tracking_cursor_style(ss)));

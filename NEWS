@@ -1,65 +1,47 @@
-Snd 11.0 (with much help from Mike Scholz):
+Snd 11.1:
 
-regions, players, mixes, and marks are objects now, not ints
+many more ruby/forth improvements thanks to Mike.
 
-  integer->region, region->integer, integer->mix and mix->integer,
-    integer->mark and mark->integer to convert old code	
+*trace-hook* in s7.  Also defmacro* and define-macro*.
 
-  mix, mix-region, and mix-selection return a list of mixes
+force and delay are now included in s7 only if WITH_FORCE is defined.
+  The slib implementation is used.  The promise? function has been removed.
+  I used "make-promise" for "delay" in earlier versions of s7 to avoid
+  collisions with CLM.
 
-  marks returns a list of marks
+removed the sbcl ppc undefined_alien_function stuff from cmus.c.
 
-  in several region-related functions, the argument order has changed to
-    put the region object first: insert-region, make-region-sampler, mix-region,
-    region-sample, region->vct, region->frame, make-region-frame-reader
+removed all support for gtkglext and fftw2 (use fftw3).
 
-sounds are objects, but integers are still ok
-  integer->sound and sound->integer to convert old code.
+play is generic, and uses optkey args (this is a non-compatible change).  
+  "old-play" is the old version of play.  play-channel, play-mix, play-region,
+  play-selection, and play-and-wait are deprecated.
 
+selection function/object; added selection choice to the generic funcs.
+selection->mix.
+The graphed selection bounds can be changed by dragging the mouse.
 
-These changes make it possible to replace several dozen functions with generic
-  functions:
+The mix dialog follows the (mix-)sync field, and has 2 new buttons!
 
-  length handles list length, also string-length, vector-length, hash-table-size,
-    vct-length, frames, mus-length, sound-data-length, mix-length, and region-frames.
+copy and fill! for selection and sound, and copy for mix and mark.
 
-  frames is similar but treats strings as sound file names, and ints as sound indices.  
+moved with-mix from ws.scm to snd11.scm.
+moved save-mix from mix.scm into C.
+added check-mix-tags to mix.scm.
 
-  srate handles strings (mus-sound-srate), regions (region-srate), and sounds.
- 
-  channels handles strings (mus-sound-chans), region-chans, sound-data-chans, mus-channels,
-    mixes (always 1 channel), and sounds
+added snd-forth-docs.fs (incorporated in sndclm.html), thanks to Mike.
 
-  file-name handles strings, sounds, mixes, regions, samplers, generators, and 
-    (s7) scheme file ports.
+colormaps are objects now, not ints; added the predefined colormaps
+  as built-in objects (hot-colormap, etc), and integer->colormap,
+  colormap->integer.  Each colormap function now takes a colormap object
+  as the first argument, not an integer.
 
-  sync handles sync, mix-sync, and mark-sync.
+transforms are objects also; fourier-transform etc; integer->transform and
+  transform->integer.  add-transform returns such an object, delete-transform
+  and transform-type take one.
 
-  maxamp can handle a sound (via the regular maxamp function), string (treated as a 
-   sound file name, mus-sound-maxamp), generator (maxamp of the mus-data vct, if any), 
-   sound-data (sound-data-maxamp), vct (vct-peak), region (region-maxamp), vector, list, 
-   or mix object.
+removed tools/snd-index.cl.
 
-all "sample-reader" and "sample_reader" names changed to "sampler".
-  (the old names are defined in snd10.scm)
-  make-sampler (formerly make-sample-reader) "snd" arg can be a mix object, returning a mix sampler.
-  
+checked: sbcl 1.0.32, gtk 2.19.0, acl 8.2, mpc 0.8, guile 1.9.5, fth 1.2.8
 
-in s7 added procedure-environment and promise?
-
-removed export-all.scm, snd4.scm, snd5.scm, tools/sed-href, tools/lines.scm, 
-  and tools/check-gtk.scm.
-
-sine-summation, sum-of-sines, and sum-of-cosines removed (see snd10.scm).
-
-the run macro only works in s7.
-
-removed run-safety, *snd-loaded-files*, and *snd-remember-paths*.
-
-added clm.rb and grani.rb (thanks to Mike Scholz).
-
-
-checked: mpc 0.7, OSX 10.6, gtk 2.18.0|1|2|3, cmucl 20a, guile 1.9.4
-
-Thanks!: Kjetil Matheussen, Mike Scholz
-
+Thanks!: Geoff Lee, Mike Scholz, Rick Taube, Alan Grover, Kjetil Matheussen.

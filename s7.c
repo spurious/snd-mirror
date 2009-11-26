@@ -42,7 +42,7 @@
  *
  *   deliberate omission from r5rs: 
  *        no syntax-rules or any of its friends
- *        force and delay unless WITH_FORCE is 1 (default is 0)
+ *        no force and delay unless WITH_FORCE is 1 (default is 0)
  *        no inexact integer or ratio (so, for example, truncate returns an exact integer), no exact complex or exact real
  *           (exact? has no obvious meaning in regard to complex numbers anyway -- are we referring to the polar or
  *            the rectangular form, and are both real and imaginary parts included? -- why can't they be separate?)
