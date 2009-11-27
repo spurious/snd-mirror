@@ -63,6 +63,61 @@ $bigger_snd = "/usr/gnu/sound/SFiles/bigger.snd"
 #  test 28: errors
 #  test all done
 
+#
+# STOP_PROC takes one arg!
+# EDIT_POSITION pos || proc(snd, chn)
+# 
+#           play(object
+#                :start         0
+#                :end           -1 (NO_END_SPECIFIED)
+#                :channel       false (-1)
+#                :edit_position false (0)
+#                :out_channel   -1
+#                :with_sync     false
+#                :wait          false
+#                :stop          false
+#
+#    play_region replaced by generic play
+#    play_region(reg,
+#                wait = false,
+#                stop_proc = false)
+#
+# play_selection replaced by generic play
+# play_selection(wait = false,
+#                stop_proc = false)
+#
+#       play_mix replaced by generic play
+#       play_mix(id,
+#                beg = 0)
+#
+#  play_and_wait replaced by generic play
+#  play_and_wait(start, snd,
+#                chn = -1,
+#                syncd = false,
+#                samps = -1,
+#                pos = -1,
+#                stop_proc = false,
+#                out_chan = -1)
+#
+#       old_play no longer in use
+#       old_play(start,
+#                snd,
+#                chn = -1,
+#                syncd = false,
+#                samps = -1,
+#                pos = -1,
+#                stop_proc = false,
+#                out_chan = -1)
+#
+#   play_channel no longer in use
+#   play_channel(start,
+#                dur,
+#                snd,
+#                chn = 0,
+#                pos = -1,
+#                stop_proc = false,
+#                out_chan = -1)
+
 $VERBOSE        = false
 $DEBUG          = false
 $ERROR_AND_EXIT = false
@@ -1070,7 +1125,6 @@ def test00
   if $test00
     $before_test_hook.call(0)
     consts = [[:Enved_amplitude, 0],
-#              [:$autocorrelation, 3],
               [:Bartlett_window, 4],
               [:Bartlett_hann_window, 21],
               [:Blackman2_window, 6],
@@ -1103,20 +1157,17 @@ def test00
               [:Zoom_focus_left, 0],
               [:Zoom_focus_middle, 3],
               [:Zoom_focus_right, 1],
-#              [:$fourier_transform, 0],
               [:Gaussian_window, 14],
               [:Graph_dots, 1],
               [:Graph_dots_and_lines, 3],
               [:Graph_filled, 2],
               [:Graph_lines, 0],
               [:Graph_lollipops, 4],
-#              [:$haar_transform, 5],
               [:Hamming_window, 5],
               [:Hann_window, 1],
               [:Hann_poisson_window, 17],
               [:Kaiser_window, 11],
               [:Keyboard_no_action, 4],
-#              [:$cepstrum, 4],
               [:Parzen_window, 3],
               [:Poisson_window, 13],
               [:Rectangular_window, 0],
@@ -1136,8 +1187,6 @@ def test00
               [:Speed_control_as_semitone, 2],
               [:Enved_srate, 2],
               [:Tukey_window, 15],
-#              [:$walsh_transform, 2],
-#              [:$wavelet_transform, 1],
               [:Welch_window, 2],
               [:Cursor_cross, 0],
               [:Cursor_line, 1],
@@ -1367,7 +1416,7 @@ def test00
             end,
             [:time_graph_type, Graph_once],
             [:tracking_cursor_style, Cursor_cross],
-            [:transform_graph_type, 0],
+            [:transform_graph_type, Graph_once],
             [:transform_normalization, Normalize_by_channel],
             [:transform_size, 512],
             [:transform_type, $fourier_transform],
@@ -1460,12 +1509,14 @@ def test01
     Snd.sounds.apply(:close_sound)
     unless provided? :snd_nogui
       unless colormap? $good_colormap
-        $good_colormap = (1..19).detect do |c| colormap?(integer2colormap(c)) end
-        $good_colormap = integer2colormap($good_colormap)
+        $good_colormap = integer2colormap((1..19).detect do |c|
+                                            colormap?(integer2colormap(c))
+                                          end)
       end
       unless colormap? $better_colormap
-        $better_colormap = ($good_colormap..19).detect do |c| colormap?(integer2colormap(c)) end
-        $better_colormap = integer2colormap($better_colormap)
+        $better_colormap = integer2colormap(($good_colormap..19).detect do |c|
+                                              colormap?(integer2colormap(c))
+                                            end)
       end
     end
     controls = [[:ask_before_overwrite, false],
@@ -1580,7 +1631,7 @@ def test01
                 [:mix_waveform_height, 20],
                 [:time_graph_type, Graph_once],
                 [:tracking_cursor_style, Cursor_cross],
-                [:transform_graph_type, 0],
+                [:transform_graph_type, Graph_once],
                 [:transform_normalization, Normalize_by_channel],
                 [:transform_size, 512],
                 [:transform_type, $fourier_transform],
@@ -1977,200 +2028,199 @@ end
 def test03
   if $test03
     $before_test_hook.call(3)
-    vars = [
-      [:amp_control, 1.0, 0.5],
-      [:amp_control_bounds, [0.0, 8.0], [1.0, 5.0]],
-      [:ask_before_overwrite, false, true],
-      [:audio_input_device, 0, 1],
-      [:audio_output_device, 0, 1],
-      [:auto_resize, true, false],
-      [:auto_update, false, true],
-      [:channel_style, 0, 1],
-      unless provided? :snd_nogui
-        [:colormap, $good_colormap, $better_colormap]
-      end,
-      [:color_cutoff, 0.003, 0.01],
-      [:color_inverted, true, false],
-      [:color_scale, 1.0, 0.5],
-      [:contrast_control, 0.0, 0.5],
-      [:contrast_control_bounds, [0.0, 10.0], [1.0, 5.0]],
-      [:contrast_control_amp, 1.0, 0.5],
-      [:contrast_control?, false, true],
-      [:auto_update_interval, 60.0, 120.0],
-      [:cursor_update_interval, 0.05, 0.1],
-      [:cursor_location_offset, 0, 32768],
-      [:with_tracking_cursor, false, true],
-      [:cursor_size, 15, 30],
-      [:cursor_style, Cursor_cross, Cursor_line],
-      [:tracking_cursor_style, Cursor_cross, Cursor_line],
-      [:dac_combines_channels, true, false],
-      [:dac_size, 256, 512],
-      [:minibuffer_history_length, 8, 16],
-      [:clipping, false, true],
-      [:default_output_chans, 1, 2],
-      [:default_output_data_format, 1, 1],
-      [:default_output_srate, 22050, 44100],
-      [:default_output_header_type, Mus_next, Mus_aifc],
-      [:dot_size, 1, 4],
-      [:enved_base, 1.0, 1.5],
-      [:enved_clip?, false, true],
-      [:enved_in_dB, false, true],
-      [:enved_style, Envelope_linear, Envelope_exponential],
-      [:enved_power, 3.0, 3.5],
-      [:enved_target, 0, 1],
-      [:enved_wave?, false, true],
-      [:eps_file, "snd.eps", "snd-1.eps"],
-      [:eps_left_margin, 0.0, 72.0],
-      [:eps_size, 1.0, 2.0],
-      [:eps_bottom_margin, 0.0, 36.0],
-      [:expand_control, 1.0, 2.0],
-      [:expand_control_bounds, [0.001, 20.0], [1.0, 2.0]],
-      [:expand_control_hop, 0.05, 0.1],
-      [:expand_control_jitter, 0.1, 0.2],
-      [:expand_control_length, 0.15, 0.2],
-      [:expand_control_ramp, 0.4, 0.2],
-      [:expand_control?, false, true],
-      [:fft_window_alpha, 0.0, 1.0],
-      [:fft_window_beta, 0.0, 0.5],
-      [:fft_log_frequency, false, true],
-      [:fft_log_magnitude, false, true],
-      [:transform_size, 512, 1024],
-      [:transform_graph_type, 0, 1],
-      [:fft_window, 6, 5],
-      [:transform_graph?, false, true],
-      [:filter_control_in_dB, false, true],
-      [:filter_control_envelope, [0.0, 1.0, 1.0, 1.0], [0.0, 1.0, 1.0, 0.0]],
-      unless provided? :snd_nogui
-        [:enved_filter, true, false]
-      end,
-      [:enved_filter_order, 40, 20],
-      [:filter_control_in_hz, false, true],
-      [:filter_control_order, 20, 40],
-      [:filter_control?, false, true],
-      unless provided? :snd_nogui
-        [:graph_cursor, 34, 33]
-      end,
-      [:graph_style, 0, 1],
-      [:just_sounds, false, true],
-      [:listener_prompt, ">", ":"],
-      [:max_transform_peaks, 100, 10],
-      [:max_regions, 16, 6],
-      [:min_dB, -60.0, -90.0],
-      [:log_freq_start, 32.0, 10.0],
-      [:mix_waveform_height, 20, 40],
-      [:mix_tag_height, 14, 20],
-      [:mix_tag_width, 6, 20],
-      [:mark_tag_height, 4, 20],
-      [:mark_tag_width, 10, 20],
-      [:selection_creates_region, true, false],
-      [:transform_normalization, Normalize_by_channel, Dont_normalize],
-      [:print_length, 12, 16],
-      [:region_graph_style, Graph_lines, Graph_lollipops],
-      [:reverb_control_decay, 1.0, 2.0],
-      [:reverb_control_feedback, 1.09, 1.6],
-      [:reverb_control_length, 1.0, 2.0],
-      [:reverb_control_length_bounds, [0.0, 0.5], [1.0, 2.0]],
-      [:reverb_control_lowpass, 0.7, 0.9],
-      [:reverb_control_scale, 0.0, 0.2],
-      [:reverb_control_scale_bounds, [0.0, 4.0], [0.0, 0.2]],
-      [:reverb_control?, false, true],
-      [:show_axes, 1, 0],
-      [:show_transform_peaks, false, true],
-      [:show_indices, false, true],
-      [:show_marks, true, false],
-      [:show_mix_waveforms, true, false],
-      [:show_selection_transform, false, true],
-      [:show_y_zero, false, true],
-      [:show_grid, false, true],
-      [:grid_density, 1.0, 0.5],
-      [:show_sonogram_cursor, false, true],
-      [:sinc_width, 10, 40],
-      [:spectrum_end, 1.0, 0.7],
-      [:spectro_hop, 4, 10],
-      [:spectrum_start, 0.0, 0.1],
-      [:spectro_x_angle, (provided?(:gl) ? 300.0 : 90.0), 60.0],
-      [:spectro_x_scale, (provided?(:gl) ? 1.5 : 1.0), 2.0],
-      [:spectro_y_angle, (provided?(:gl) ? 320.0 : 0.0), 60.0],
-      [:spectro_y_scale, 1.0, 2.0],
-      [:spectro_z_angle, (provided?(:gl) ? 0.0 : 358.0), 60.0],
-      [:spectro_z_scale, (provided?(:gl) ? 1.0 : 0.1), 0.2],
-      [:speed_control, 1.0, 0.5],
-      [:speed_control_bounds, [0.05, 20.0], [1.0, 5.0]],
-      [:speed_control_style, 0, 1],
-      [:speed_control_tones, 12, 18],
-      [:sync, 0, 1],
-      if provided? :snd_motif
-        [:tiny_font, "6x12", "9x15"]
-      end,
-      [:transform_type, $fourier_transform, $autocorrelation],
-      [:with_verbose_cursor, false, true],
-      [:wavelet_type, 0, 1],
-      [:time_graph?, false, true],
-      [:time_graph_type, Graph_once, Graph_as_wavogram],
-      [:wavo_hop, 3, 6],
-      [:wavo_trace, 64, 128],
-      [:with_mix_tags, (provided?(:snd_nogui) ? false : true), false],
-      [:with_relative_panes, true, false],
-      [:with_gl, provided?(:gl), false],
-      [:x_axis_style, 0, 1],
-      [:beats_per_minute, 30.0, 120.0],
-      [:beats_per_measure, 1, 120],
-      [:zero_pad, 0, 1],
-      [:zoom_focus_style, 2, 1],
-      [:window_width, window_width, 300],
-      [:window_height, window_height, 300],
-      [:window_x, 10, 123],
-      [:window_y, 10, 321],
-      [:color_scale, color_scale, 100.0]]
-    bad_args = [
-      [:amp_control, 1.0, [-1.0, 123.123]],
-      [:amp_control_bounds, [0.0, 8.0], [false, [0.0], [1.0, 0.0], 2.0]],
-      [:channel_style, 0, [32, -1, 1.0]],
-      unless provided? :snd_nogui
-        [:colormap, $good_colormap, [321, -123]]
-      end,
-      [:color_cutoff, 0.003, [-1.0, 123.123]],
-      [:color_scale, 1.0, [-32.0, 2000.0]],
-      [:contrast_control, 0.0, [-123.123, 123.123]],
-      [:contrast_control_bounds, [0.0, 10.0], [false, [0.0], [1.0, 0.0], 2.0]],
-      [:cursor_size, 15, [1.123, -2.5]],
-      [:dac_size, 256, [-1, 0, -123]],
-      [:dot_size, 1, [0, -1, -123]],
-      [:enved_target, 0, [123, -321]],
-      [:expand_control, 1.0, [-1.0, 0.0]],
-      [:expand_control_bounds, [0.001, 20.0], [false, [0.0], [1.0, 0.0], 2.0]],
-      [:expand_control_hop, 0.05, [-1.0]],
-      [:expand_control_length, 0.15, [-1.0, 0.0]],
-      [:expand_control_ramp, 0.4, [-1.0, 1.0, 123.123]],
-      [:fft_window_alpha, 0.0, [-1.0, 123.123]],
-      [:fft_window_beta, 0.0, [-1.0, 123.123]],
-      [:transform_size, 512, [-1, 0]],
-      [:zero_pad, 0, [-1, -123]],
-      [:cursor_style, Cursor_cross, [-1]],
-      [:cursor_style, Cursor_line, [2, 123]],
-      [:tracking_cursor_style, Cursor_cross, [-1]],
-      [:tracking_cursor_style, Cursor_line, [2, 123]],
-      [:transform_graph_type, 0, [-1, 123]],
-      [:fft_window, 6, [-1, 123]],
-      [:enved_filter_order, 40, [-1, 0]],
-      [:filter_control_order, 20, [-10, -1, 0]],
-      [:max_transform_peaks, 100, [-1]],
-      [:max_regions, 16, [-1, -123]],
-      [:reverb_control_length, 1.0, [-1.0]],
-      [:show_axes, 1, [-1, 123]],
-      [:sinc_width, 10, [-10]],
-      [:spectrum_end, 1.0, [-1.0]],
-      [:spectro_hop, 4, [-10, -1, 0]],
-      [:spectrum_start, 0.0, [-1.0]],
-      [:speed_control, 1.0, [0.0]],
-      [:speed_control_bounds, [0.05, 20.0], [false, [0.0], [1.0, 0.0], 2.0]],
-      [:speed_control_style, 0, [-1, 10]],
-      [:transform_type, $fourier_transform, [-1, 123]],
-      [:wavelet_type, 0, [-1, 123]],
-      [:wavo_hop, 3, [0, -123]],
-      [:wavo_trace, 64, [0, -123]],
-      [:x_axis_style, 0, [-1, 123]],
-      [:zoom_focus_style, 2, [-1, 123]]]
+    vars = [[:amp_control, 1.0, 0.5],
+            [:amp_control_bounds, [0.0, 8.0], [1.0, 5.0]],
+            [:ask_before_overwrite, false, true],
+            [:audio_input_device, 0, 1],
+            [:audio_output_device, 0, 1],
+            [:auto_resize, true, false],
+            [:auto_update, false, true],
+            [:channel_style, 0, 1],
+            unless provided? :snd_nogui
+              [:colormap, $good_colormap, $better_colormap]
+            end,
+            [:color_cutoff, 0.003, 0.01],
+            [:color_inverted, true, false],
+            [:color_scale, 1.0, 0.5],
+            [:contrast_control, 0.0, 0.5],
+            [:contrast_control_bounds, [0.0, 10.0], [1.0, 5.0]],
+            [:contrast_control_amp, 1.0, 0.5],
+            [:contrast_control?, false, true],
+            [:auto_update_interval, 60.0, 120.0],
+            [:cursor_update_interval, 0.05, 0.1],
+            [:cursor_location_offset, 0, 32768],
+            [:with_tracking_cursor, false, true],
+            [:cursor_size, 15, 30],
+            [:cursor_style, Cursor_cross, Cursor_line],
+            [:tracking_cursor_style, Cursor_cross, Cursor_line],
+            [:dac_combines_channels, true, false],
+            [:dac_size, 256, 512],
+            [:minibuffer_history_length, 8, 16],
+            [:clipping, false, true],
+            [:default_output_chans, 1, 2],
+            [:default_output_data_format, 1, 1],
+            [:default_output_srate, 22050, 44100],
+            [:default_output_header_type, Mus_next, Mus_aifc],
+            [:dot_size, 1, 4],
+            [:enved_base, 1.0, 1.5],
+            [:enved_clip?, false, true],
+            [:enved_in_dB, false, true],
+            [:enved_style, Envelope_linear, Envelope_exponential],
+            [:enved_power, 3.0, 3.5],
+            [:enved_target, 0, 1],
+            [:enved_wave?, false, true],
+            [:eps_file, "snd.eps", "snd-1.eps"],
+            [:eps_left_margin, 0.0, 72.0],
+            [:eps_size, 1.0, 2.0],
+            [:eps_bottom_margin, 0.0, 36.0],
+            [:expand_control, 1.0, 2.0],
+            [:expand_control_bounds, [0.001, 20.0], [1.0, 2.0]],
+            [:expand_control_hop, 0.05, 0.1],
+            [:expand_control_jitter, 0.1, 0.2],
+            [:expand_control_length, 0.15, 0.2],
+            [:expand_control_ramp, 0.4, 0.2],
+            [:expand_control?, false, true],
+            [:fft_window_alpha, 0.0, 1.0],
+            [:fft_window_beta, 0.0, 0.5],
+            [:fft_log_frequency, false, true],
+            [:fft_log_magnitude, false, true],
+            [:transform_size, 512, 1024],
+            [:transform_graph_type, Graph_once, Graph_as_spectrogram],
+            [:fft_window, 6, 5],
+            [:transform_graph?, false, true],
+            [:filter_control_in_dB, false, true],
+            [:filter_control_envelope, [0.0, 1.0, 1.0, 1.0], [0.0, 1.0, 1.0, 0.0]],
+            unless provided? :snd_nogui
+              [:enved_filter, true, false]
+            end,
+            [:enved_filter_order, 40, 20],
+            [:filter_control_in_hz, false, true],
+            [:filter_control_order, 20, 40],
+            [:filter_control?, false, true],
+            unless provided? :snd_nogui
+              [:graph_cursor, 34, 33]
+            end,
+            [:graph_style, 0, 1],
+            [:just_sounds, false, true],
+            [:listener_prompt, ">", ":"],
+            [:max_transform_peaks, 100, 10],
+            [:max_regions, 16, 6],
+            [:min_dB, -60.0, -90.0],
+            [:log_freq_start, 32.0, 10.0],
+            [:mix_waveform_height, 20, 40],
+            [:mix_tag_height, 14, 20],
+            [:mix_tag_width, 6, 20],
+            [:mark_tag_height, 4, 20],
+            [:mark_tag_width, 10, 20],
+            [:selection_creates_region, true, false],
+            [:transform_normalization, Normalize_by_channel, Dont_normalize],
+            [:print_length, 12, 16],
+            [:region_graph_style, Graph_lines, Graph_lollipops],
+            [:reverb_control_decay, 1.0, 2.0],
+            [:reverb_control_feedback, 1.09, 1.6],
+            [:reverb_control_length, 1.0, 2.0],
+            [:reverb_control_length_bounds, [0.0, 0.5], [1.0, 2.0]],
+            [:reverb_control_lowpass, 0.7, 0.9],
+            [:reverb_control_scale, 0.0, 0.2],
+            [:reverb_control_scale_bounds, [0.0, 4.0], [0.0, 0.2]],
+            [:reverb_control?, false, true],
+            [:show_axes, 1, 0],
+            [:show_transform_peaks, false, true],
+            [:show_indices, false, true],
+            [:show_marks, true, false],
+            [:show_mix_waveforms, true, false],
+            [:show_selection_transform, false, true],
+            [:show_y_zero, false, true],
+            [:show_grid, false, true],
+            [:grid_density, 1.0, 0.5],
+            [:show_sonogram_cursor, false, true],
+            [:sinc_width, 10, 40],
+            [:spectrum_end, 1.0, 0.7],
+            [:spectro_hop, 4, 10],
+            [:spectrum_start, 0.0, 0.1],
+            [:spectro_x_angle, (provided?(:gl) ? 300.0 : 90.0), 60.0],
+            [:spectro_x_scale, (provided?(:gl) ? 1.5 : 1.0), 2.0],
+            [:spectro_y_angle, (provided?(:gl) ? 320.0 : 0.0), 60.0],
+            [:spectro_y_scale, 1.0, 2.0],
+            [:spectro_z_angle, (provided?(:gl) ? 0.0 : 358.0), 60.0],
+            [:spectro_z_scale, (provided?(:gl) ? 1.0 : 0.1), 0.2],
+            [:speed_control, 1.0, 0.5],
+            [:speed_control_bounds, [0.05, 20.0], [1.0, 5.0]],
+            [:speed_control_style, 0, 1],
+            [:speed_control_tones, 12, 18],
+            [:sync, 0, 1],
+            if provided? :snd_motif
+              [:tiny_font, "6x12", "9x15"]
+            end,
+            [:transform_type, $fourier_transform, $autocorrelation],
+            [:with_verbose_cursor, false, true],
+            [:wavelet_type, 0, 1],
+            [:time_graph?, false, true],
+            [:time_graph_type, Graph_once, Graph_as_wavogram],
+            [:wavo_hop, 3, 6],
+            [:wavo_trace, 64, 128],
+            [:with_mix_tags, (provided?(:snd_nogui) ? false : true), false],
+            [:with_relative_panes, true, false],
+            [:with_gl, provided?(:gl), false],
+            [:x_axis_style, 0, 1],
+            [:beats_per_minute, 30.0, 120.0],
+            [:beats_per_measure, 1, 120],
+            [:zero_pad, 0, 1],
+            [:zoom_focus_style, 2, 1],
+            [:window_width, window_width, 300],
+            [:window_height, window_height, 300],
+            [:window_x, 10, 123],
+            [:window_y, 10, 321],
+            [:color_scale, color_scale, 100.0]]
+    bad_args = [[:amp_control, 1.0, [-1.0, 123.123]],
+                [:amp_control_bounds, [0.0, 8.0], [false, [0.0], [1.0, 0.0], 2.0]],
+                [:channel_style, 0, [32, -1, 1.0]],
+                unless provided? :snd_nogui
+                  [:colormap, $good_colormap, [321, -123]]
+                end,
+                [:color_cutoff, 0.003, [-1.0, 123.123]],
+                [:color_scale, 1.0, [-32.0, 2000.0]],
+                [:contrast_control, 0.0, [-123.123, 123.123]],
+                [:contrast_control_bounds, [0.0, 10.0], [false, [0.0], [1.0, 0.0], 2.0]],
+                [:cursor_size, 15, [1.123, -2.5]],
+                [:dac_size, 256, [-1, 0, -123]],
+                [:dot_size, 1, [0, -1, -123]],
+                [:enved_target, 0, [123, -321]],
+                [:expand_control, 1.0, [-1.0, 0.0]],
+                [:expand_control_bounds, [0.001, 20.0], [false, [0.0], [1.0, 0.0], 2.0]],
+                [:expand_control_hop, 0.05, [-1.0]],
+                [:expand_control_length, 0.15, [-1.0, 0.0]],
+                [:expand_control_ramp, 0.4, [-1.0, 1.0, 123.123]],
+                [:fft_window_alpha, 0.0, [-1.0, 123.123]],
+                [:fft_window_beta, 0.0, [-1.0, 123.123]],
+                [:transform_size, 512, [-1, 0]],
+                [:zero_pad, 0, [-1, -123]],
+                [:cursor_style, Cursor_cross, [-1]],
+                [:cursor_style, Cursor_line, [2, 123]],
+                [:tracking_cursor_style, Cursor_cross, [-1]],
+                [:tracking_cursor_style, Cursor_line, [2, 123]],
+                [:transform_graph_type, Graph_once, [-1, 123]],
+                [:fft_window, 6, [-1, 123]],
+                [:enved_filter_order, 40, [-1, 0]],
+                [:filter_control_order, 20, [-10, -1, 0]],
+                [:max_transform_peaks, 100, [-1]],
+                [:max_regions, 16, [-1, -123]],
+                [:reverb_control_length, 1.0, [-1.0]],
+                [:show_axes, 1, [-1, 123]],
+                [:sinc_width, 10, [-10]],
+                [:spectrum_end, 1.0, [-1.0]],
+                [:spectro_hop, 4, [-10, -1, 0]],
+                [:spectrum_start, 0.0, [-1.0]],
+                [:speed_control, 1.0, [0.0]],
+                [:speed_control_bounds, [0.05, 20.0], [false, [0.0], [1.0, 0.0], 2.0]],
+                [:speed_control_style, 0, [-1, 10]],
+                [:transform_type, $fourier_transform,
+                 [integer2transform(-1), integer2transform(123)]],
+                [:wavelet_type, 0, [-1, 123]],
+                [:wavo_hop, 3, [0, -123]],
+                [:wavo_trace, 64, [0, -123]],
+                [:x_axis_style, 0, [-1, 123]],
+                [:zoom_focus_style, 2, [-1, 123]]]
     ind = open_sound("oboe.snd")
     td = temp_dir
     Snd.catch do
@@ -6800,16 +6850,16 @@ def test105
   if (res = snd_completion(" zoom_focus_s")) != " zoom_focus_style"
     snd_display("completion (2): %s", res)
   end
-  play_and_wait("oboe.snd")
-  play_and_wait("oboe.snd", 12000)
-  play_and_wait("oboe.snd", 12000, 15000)
-  play_and_wait(0, false, false, false, false, edit_position - 1)
+  play("oboe.snd", :wait, true)
+  play("oboe.snd", :start, 12000, :wait, true)
+  play("oboe.snd", :start, 12000, :end, 15000, :wait, true)
+  play(ind, :edit_position, edit_position - 1)
   old_speed = speed_control(ind)
   old_style = speed_control_style
   old_open = show_controls(ind)
   set_show_controls(true, ind)
   set_speed_control(-2.0, ind)
-  play_and_wait(12345, ind)
+  play(ind, :start, 12345, :wait, true)
   set_speed_control_style(Speed_control_as_semitone)
   set_speed_control(0.5, ind)
   set_speed_control_style(Speed_control_as_ratio)
@@ -6963,7 +7013,7 @@ def test105
     snd_display("transform? %s %s?", res, $fourier_transform)
   end
   unless transform?($autocorrelation)
-    snd_display("transform? autocorrelation")
+    snd_display("transform? $autocorrelation")
   end
   snd_display("read_only open_sound: %s?", read_only(ind)) if read_only(ind)
   set_read_only(true, ind)
@@ -7070,7 +7120,7 @@ def test105
   eds = edits
   snd_display("edits: %s?", eds) if eds[0].nonzero? or eds[1].nonzero?
   snd_display("edit_position: %s %s?", edit_position, eds) if edit_position != eds[0]
-  play_and_wait(0, ind, 0)
+  play(ind, :channel, 0, :wait, true)
   bomb(ind, false)
   select_all(ind, 0)
   r0 = regions.first
@@ -7100,7 +7150,7 @@ def test105
   else
     snd_display("save_region file disappeared?")
   end
-  play_region(r0, true)   # needs to be true here or it never gets run
+  play(r0, :wait, true)   # needs to be true here or it never gets run
   if Snd.regions.length != 1
     snd_display("regions: %s", regions)
   end
@@ -8641,11 +8691,13 @@ def test205
   end
   #
   src_sound(2.0, 1.0, ind1, 0)
-  play_and_wait(0, ind1, 0, false, false, 0)
-  play_and_wait(0, ind1, 0, false, false, 1)
-  play_and_wait(0, ind1, 0, false, false, lambda do |snd, chn| edit_position(snd, chn) end)
+  play(ind1, :channel, 0, :edit_position, 0, :wait, true)
+  play(ind1, :channel, 0, :edit_position, 1, :wait, true)
+  play(ind1, :channel, 0, :edit_position, lambda do |snd, chn|
+         edit_position(snd, chn)
+       end, :wait, true)
   undo_edit(1, ind1, 0)
-  play_and_wait(0, ind1, 0, false, false, 1)
+  play(ind1, :channel, 0, :edit_position, 1, :wait, true)
   #
   delete_samples(0, 10000, ind1, 0)
   save_sound_as("fmv.snd", ind1, :edit_position, 0)
@@ -8714,7 +8766,7 @@ def test205
   set_show_sonogram_cursor(true)
   set_cursor_follows_play(true)
   set_transform_graph_type(Graph_as_sonogram)
-  play_and_wait
+  play(selected_sound, :wait, true)
   set_transform_graph?(true)
   close_sound(ind)
   close_sound(ind1)
@@ -9234,7 +9286,7 @@ def test255
   rid0 = make_region(2000, 2020, ind, 0)
   rid0_data = region2vct_1(rid0, 0, 20)
   scale_sound_by(2.0)
-  play_region(rid0, true)
+  play(rid0, :wait, true)
   unless vequal(res = region2vct_1(rid0, 0, 20), rid0_data)
     snd_display("deferred region after scaling:\n# %s\n# %s", rid0_data, res)
   end
@@ -9243,7 +9295,7 @@ def test255
   end
   undo_edit
   scale_by(4.0)
-  play_region(rid0, true)
+  play(rid0, :wait, true)
   unless vequal(res = region2vct_1(rid0, 0, 20), rid0_data)
     snd_display("file region after scaling:\n# %s\n# %s", rid0_data, res)
   end
@@ -9257,8 +9309,8 @@ def test255
     snd_display("deferred region after scale_to:\n# %s\n# %s", rid1_data, res)
   end
   close_sound(ind)
-  play_region(rid0, true)
-  play_region(rid1, true)
+  play(rid0, :wait, true)
+  play(rid1, :wait, true)
   unless vequal(res = region2vct_1(rid1, 0, 20), rid1_data)
     snd_display("deferred region after close:\n# %s\n# %s", rid1_data, res)
   end
@@ -9386,7 +9438,7 @@ def test255
   fp(1.0, 0.3, 20)
   old_cursor = with_tracking_cursor
   set_with_tracking_cursor(true)
-  play_and_wait
+  play(selected_sound, :wait, true)
   set_with_tracking_cursor(old_cursor)
   close_sound(ind)
   #
@@ -10271,7 +10323,7 @@ def test06
   # 
   ind = open_sound("oboe.snd")
   set_speed_control(0.5, ind)
-  play_and_wait
+  play(selected_sound, :wait, true)
   apply_controls
   revert_sound
   reset_controls(ind)
@@ -10304,7 +10356,7 @@ def test06
     ctr += 1
     c_g! if ctr >= 3
   end
-  play_and_wait
+  play(selected_sound, :wait, true)
   snd_display("ctr after dac_hook: %s", ctr) if ctr != 3
   set_speed_control(1.5)
   apply_controls
@@ -10316,7 +10368,7 @@ def test06
     ctr += 1
     apply_controls if ctr == 3
   end
-  play_and_wait
+  play(selected_sound, :wait, true)
   if edit_position(ind, 0) != 1
     snd_display("apply_controls from hook: %s %s", edits(ind), edit_tree(ind))
   end
@@ -10530,11 +10582,14 @@ def test007
                      [0.0, 0.0, 7.01915007248035e-4], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0],
                      [0.0, 0.0, 0.49999], [1.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 0.0, 1.0],
                      [1.0, 0.0, 1.0], [0.0, 0.500007629510948, 0.4], [1.0, 0.0, 0.0],
-                     [1.0, 0.0, 0.0], [0.0, 0.0, 0.0]]
+                     [1.0, 0.0, 0.0], [0.0, 0.0, 1.0]]
   15.times do |i|
-    if colormap?(i)
-      unless vequal(res0 = colormap_ref(i, 0), res1 = true_color_list[i])
-        snd_display("colormap_ref[%s]: %s (%s)", i, res0, res1)
+    cm = integer2colormap(i)
+    if colormap?(cm)
+      res0 = colormap_ref(cm, 0)
+      res1 = true_color_list[i]
+      unless vequal(res0, res1)
+        snd_display("colormap_ref[%s]: %s (%s)", cm, res0, res1)
       end
     end
   end
@@ -10613,7 +10668,10 @@ def test017
       b = (x < (3.0 / 8)) ? ((29.0 / 24) * x) : ((7.0 / 8) * x + 1.0 / 8)
       rgb = colormap_ref($bone_colormap, x)
       r1, g1, b1 = rgb
-      if x < 1.0 - 1.0 / n and (fneq_err(r, r1, err) or fneq_err(g, g1, err) or fneq_err(b, b1, err))
+      if x < 1.0 - 1.0 / n and
+          (fneq_err(r, r1, err) or
+           fneq_err(g, g1, err) or
+           fneq_err(b, b1, err))
         snd_display("bone %.3f (%.3f): %s %s",
                     x, [(r - r1).abs, (g - g1).abs, (b - b1).abs].max,
                     [r, g, b], [r1, g1, b1])
@@ -10823,7 +10881,7 @@ end
 
 def test027
   ind = add_colormap("white", lambda do |size|
-                       [make_vct(size, 1.0), make_vct(size,1.0), make_vct(size,1.0)]
+                       [make_vct(size, 1.0), make_vct(size, 1.0), make_vct(size, 1.0)]
                      end)
   unless res = colormap?(ind)
     snd_display("add_colormap %s: %s?", ind, res)
@@ -10831,7 +10889,7 @@ def test027
   unless vequal(res = colormap_ref(ind, 0.5), [1.0, 1.0, 1.0])
     snd_display("white colormap: %s?", res)
   end
-  if (res = Snd.catch do set_colormap(ind) end).first == :no_such_colormap or colormap2integer(colormap) != ind
+  if (res = Snd.catch do set_colormap(ind) end).first == :no_such_colormap or colormap != ind
     snd_display("colormap white: %s %s %s", res, ind, colormap)
   end
   if (res = colormap_name(ind)) != "white"
@@ -10843,13 +10901,15 @@ def test027
   if (res = Snd.catch do colormap_ref(integer2colormap(1234), 0.5) end).first != :no_such_colormap
     snd_display("colormap_ref 1234: %s?", res)
   end
-  if (res = Snd.catch do colormap_ref(integer2colormap(-1), 0.5) end).first != :no_such_colormap
+  res = Snd.catch do colormap_ref(integer2colormap(-1), 0.5) end
+  if res.first != :no_such_colormap and res.first != :wrong_type_arg
     snd_display("colormap_ref -1: %s?", res)
   end
   if (res = Snd.catch do set_colormap(integer2colormap(1234)) end).first != :no_such_colormap
     snd_display("set_colormap 1234: %s?", res)
   end
-  if (res = Snd.catch do set_colormap(integer2colormap(-1)) end).first != :no_such_colormap
+  res = Snd.catch do set_colormap(integer2colormap(-1)) end
+  if res.first != :no_such_colormap and res.first != :wrong_type_arg
     snd_display("set_colormap -1: %s?", res)
   end
   if (res = Snd.catch do colormap_ref($copper_colormap, 2.0) end).first != :out_of_range
@@ -14841,7 +14901,7 @@ def test068
     end
   end
   map_chan(poltergeist.call(300, 0.1, 0.0, 30.0, [0, 100, 1, 4000], [0, 0.99, 1, 0.9]))
-  play_and_wait(0, ob)
+  play(ob, :wait, true)
   close_sound(ob)
 end
 
@@ -18923,7 +18983,7 @@ def test188
   end
   nind = new_sound("fmv.snd", Mus_aifc, Mus_bshort, 22050, 1, "this is a comment")
   with_time("fm_violin_1(0, 1, 440, 0.1)") do fm_violin_1(0, 1, 440, 0.1) end
-  play_and_wait(0, nind)
+  play(nind, :wait, true)
   save_sound(nind)
   snd_display("save_sound clobbered %s?", nind) unless sound?(nind)
   oboe_index = (find_sound("oboe.snd") or open_sound("oboe.snd"))
@@ -18936,7 +18996,7 @@ def test188
   end
   snd_display("selected_channel: %s?", selected_channel) if selected_channel != 0
   jc_reverb_1(1.0, false, 0.1, false)
-  play_and_wait(0, nind)
+  play(nind, :wait, true)
   voiced2unvoiced(1.0, 256, 2.0, 2.0)
   pulse_voice(80, 20.0, 1.0, 1024, 0.01)
   map_chan(fltit)
@@ -20057,10 +20117,10 @@ def test009
   snd_display("mix_speed: %s?", spd) if fneq(spd, 1.0)
   snd_display("mix_name: %s?", nam) unless nam.null?
   Snd.catch(:mus_error, lambda do |args| snd_display("can\'t play mix: %s", args) end) do
-    play_mix(mix_id)
+    play(mix_id)
   end
   Snd.catch(:mus_error, lambda do |args| snd_display("can\'t play mix from 1000: %s", args) end) do
-    play_mix(mix_id, 1000)
+    play(mix_id, :start, 1000)
   end
   set_mix_name(mix_id, "test-mix")
   if (res = mix_name(mix_id)) != "test-mix" then snd_display("mix_name set: %s?", res) end
@@ -22338,7 +22398,7 @@ def test0013
   ffts = [transform2integer($fourier_transform)] * 3 + [transform2integer($autocorrelation)] * 3
   dpys.zip(ffts) do |dpy_type, fft_type|
     set_transform_graph_type(dpy_type, fd, 0)
-    set_transform_type(fft_type, fd, 0)
+    set_transform_type(integer2transform(fft_type), fd, 0)
     update_transform_graph(fd, 0)
     vals = transform2vct(fd, 0)
     if vals
@@ -22487,7 +22547,7 @@ def test0113
     $open_raw_sound_hook.reset_hook! unless $open_raw_sound_hook.empty?
     $open_raw_sound_hook.add_hook!("snd-hook") do |file, choice| [1, 22050, Mus_bshort] end
     ind = open_sound(file)
-    play_and_wait(0, ind)
+    play(ind, :wait, true)
     $open_raw_sound_hook.remove_hook!("snd-hook")
     if (res = [chans(ind),
                srate(ind),
@@ -22733,7 +22793,7 @@ def test0113
   end
   set_expand_control?(true, ind)
   set_reverb_control?(true, ind)
-  play_and_wait(0, ind)
+  play(ind, :wait, true)
   set_expand_control?(false, ind)
   set_reverb_control?(false, ind)
   snd_display("$start_playing_hook not called?") unless spl
@@ -22753,7 +22813,7 @@ def test0113
     set_reverb_control_lowpass(0.02)
     set_reverb_control_feedback(0.02)
   end
-  play_and_wait(0, ind)
+  play(ind, :wait, true)
   $play_hook.reset_hook!
   $start_playing_hook.add_hook!("snd-test") do |snd| true end
   play("4.aiff")
@@ -22764,8 +22824,8 @@ def test0113
   set_selection_creates_region(true)
   $stop_playing_selection_hook.add_hook!("snd-test") do | | ss = true end
   reg = select_all
-  play_selection(true)
-  play_region(reg, true)
+  play(selected_sound, :wait, true)
+  play(reg, :wait, true)
   snd_display("$stop_playing_selection_hook not called?") unless ss
   $stop_playing_selection_hook.reset_hook!
   set_selection_creates_region(old_reg)
@@ -22774,7 +22834,7 @@ def test0113
     ctr += 1
     stop_playing
   end
-  play_and_wait(0, ind)
+  play(ind, :wait, true)
   snd_display("stop_playing: %s?", ctr) if ctr > 2
   $dac_hook.reset_hook!
   #
@@ -22901,7 +22961,7 @@ def test0213
     in2 = open_sound("2.snd")
     set_sync(1, in1)
     set_sync(1, in2)
-    play_and_wait(0, false, false, true)
+    play(selected_sound, :wait, true)
     close_sound(in1)
     close_sound(in2)
   end
@@ -23549,9 +23609,9 @@ def test14
     end
     forward_graph(1)
     backward_graph(1)
-    Snd.catch do play_region(regions[2], true) end
-    Snd.catch do mix_region end
-    frames < 100000 and play_and_wait
+    Snd.catch do play(regions[2], :wait, true) end
+    Snd.catch do mix_region(regions[2]) end
+    frames < 100000 and play(selected_sound, :wait, true)
     scale_to(0.1, choose_fd.call)
     scale_by(2.0, choose_fd.call)
     save_controls
@@ -23625,7 +23685,7 @@ def test14
     if frames > 1
       make_region(0, frames)
       convolve_selection_with("fyow.snd", 0.5)
-      frames < 100000 and play_and_wait
+      frames < 100000 and play(selected_sound, :wait, true)
     end
     convolve_with("fyow.snd", 0.25)
     insert_sound("oboe.snd")
@@ -23775,11 +23835,11 @@ def test14
     s8_snd = (File.exist?("s8.snd") ? "s8.snd" : "oboe.snd")
     as_one_edit_rb do
       mix(s8_snd, 24000)
-      select_all
+      reg = select_all
       if selection?
         filter_selection([0, 0, 0.2, 1, 0.5, 0, 1, 0], 40)
         delete_selection
-        mix_region
+        mix_region(reg)
       end
     end
     if (res = edit_position(zz)) != 1
@@ -23804,7 +23864,7 @@ def test14
       scale_by(0.1)
       set_sync(1)
       if channels(s8) > 3 then select_channel(3) end
-      if region?(reg) then insert_region(80000) end
+      if region?(reg) then insert_region(reg, 80000) end
     end
     if (res = edit_position) != editctr + 1
       snd_display("as_one_edit s8: %s -> %s?", editctr, res)
@@ -23845,7 +23905,7 @@ def test14
     set_speed_control(2.0)
     test_panel(:speed_control)
     apply_controls
-    frames < 100000 and play_and_wait
+    frames < 100000 and play(selected_sound, :wait, true)
     if fneq(res1 = reverb_control_decay(cfd), res2 = reverb_control_decay)
       snd_display("reverb_control_decay local: %s, global: %s?", res1, res2)
     end
@@ -23856,13 +23916,13 @@ def test14
     test_panel(:reverb_control_lowpass)
     test_panel(:reverb_control_feedback)
     apply_controls
-    frames < 100000 and play_and_wait
+    frames < 100000 and play(selected_sound, :wait, true)
     set_contrast_control?(true)
     set_contrast_control(0.5)
     test_panel(:contrast_control)
     test_panel(:contrast_control_amp)
     apply_controls
-    frames < 100000 and play_and_wait
+    frames < 100000 and play(selected_sound, :wait, true)
     set_expand_control?(true)
     set_expand_control(2.5)
     test_panel(:expand_control)
@@ -23870,18 +23930,18 @@ def test14
     test_panel(:expand_control_hop)
     test_panel(:expand_control_ramp)
     apply_controls
-    frames < 100000 and play_and_wait
+    frames < 100000 and play(selected_sound, :wait, true)
     set_filter_control?(true)
     set_filter_control_order(40)
     test_panel(:filter_control_order)
     set_filter_control_envelope([0, 0, 0.1, 1, 0.2, 0, 1, 0])
     filter_control_envelope
     apply_controls
-    frames < 100000 and play_and_wait
+    frames < 100000 and play(selected_sound, :wait, true)
     set_amp_control(1.5)
     test_panel(:amp_control)
     apply_controls
-    frames < 100000 and play_and_wait
+    frames < 100000 and play(selected_sound, :wait, true)
     swap_channels(cfd, 0, cfd2, 0)
     set_amp_control(0.75, true)
     test_panel(:amp_control)
@@ -24005,10 +24065,14 @@ def test14
     set_x_bounds([0.1, 0.2])
     $lisp_graph_hook.add_hook!("display_energy") do |snd, chn| display_energy(snd, chn) end
     $graph_hook.reset_hook!
-    $graph_hook.add_hook!("correlate") do |snd, chn, y0, y1| display_correlate(snd, chn, y0, y1) end
-    set_x_bounds([0.1, 0.12])
-    set_x_bounds([0.1, 0.2])
-    $graph_hook.remove_hook!("correlate")
+    if channels() == 2
+      $graph_hook.add_hook!("correlate") do |snd, chn, y0, y1|
+        display_correlate(snd, chn, y0, y1)
+      end
+      set_x_bounds([0.1, 0.12])
+      set_x_bounds([0.1, 0.2])
+      $graph_hook.remove_hook!("correlate")
+    end
     set_lisp_graph?(false)
     sum_of_squares = 0.0
     buffer = Vct.new(128)
@@ -24113,7 +24177,7 @@ def test14
      [:fft_log_magnitude, false, false, true],
      [:fft_with_phases, false, false, true],
      [:transform_size, false, 16, 128],
-     [:transform_graph_type, false, 0, 2],
+     [:transform_graph_type, false, Graph_once, Graph_as_spectrogram],
      [:fft_window, false, 0, Dolph_chebyshev_window],
      [:transform_graph?, true, false, true],
      [:filter_control_in_dB, true, false, true],
@@ -24164,7 +24228,6 @@ def test14
      [:speed_control_style, false, 0, 2],
      [:speed_control_tones, false, 2, 100],
      [:sync, true, 0, 5],
-     [:transform_type, false, $fourier_transform, 6],
      [:with_verbose_cursor, false, false, true],
      [:wavelet_type, false, 0, 10],
      [:time_graph?, true, false, true],
@@ -26261,7 +26324,6 @@ def test0016
    [lambda { mix_channel("pistol.snd", 0, 0, oboe) }, :mix_channel],
    [lambda { insert_channel("pistol.snd", 0, 0, oboe) }, :insert_channel],
    [lambda { reverse_channel(0, 0, oboe) }, :reverse_channel],
-   [lambda { play_channel(0, 0, oboe) }, :play_channel],
    [lambda { scale_sound_by(2.0, 0, 0, oboe) }, :scale_sound_by],
    [lambda { env_sound([0, 0, 1, 1], 0, 0, oboe) }, :env_sound],
    [lambda { set_samples(0, 0, Vct.new(3), oboe) }, :set_samples],
@@ -26298,8 +26360,7 @@ def test0016
    [lambda { env_channel(make_env([0, 0, 1, 1], :length, 123), 12345678, 123, oboe) }, :env_channel],
    [lambda { smooth_channel(12345678, 123, oboe) }, :smooth_channel],
    [lambda { src_channel(2.0, 12345678, 123, oboe) }, :src_channel],
-   [lambda { reverse_channel(12345678, 123, oboe) }, :reverse_channel],
-   [lambda { play_channel(12345678, 123, oboe) }, :play_channel]].each do |func, name|
+   [lambda { reverse_channel(12345678, 123, oboe) }, :reverse_channel]].each do |func, name|
     func.call
     if (res = edit_position(oboe)) != 0
       snd_display("beg: 12345678 %s: %s %s?", name, res, edit_fragment)
@@ -26370,8 +26431,7 @@ def test0016
    [lambda { src_channel(2.0, 0, 123, oboe, 0, 123) }, :src_channel],
    [lambda { mix_channel("pistol.snd", 0, 123, oboe, 0, 123) }, :mix_channel],
    [lambda { insert_channel("pistol.snd", 0, 123, oboe, 0, 123) }, :insert_channel],
-   [lambda { reverse_channel(0, 123, oboe, 0, 123) }, :reverse_channel],
-   [lambda { play_channel(0, 123, oboe, 0, 123) }, :play_channel]].each do |func, name|
+   [lambda { reverse_channel(0, 123, oboe, 0, 123) }, :reverse_channel]].each do |func, name|
     if (res = Snd.catch do func.call end).first != :no_such_edit
       snd_display("bad edpos %s: %s", name, res.inspect)
     end
@@ -31538,7 +31598,7 @@ def test0120
     end
   end
   old_colormap = colormap
-  set_colormap(0)
+  set_colormap(integer2colormap(0))
   update_transform_graph
   set_transform_graph_type(Graph_as_spectrogram, ind1, 0)
   update_transform_graph
@@ -32187,7 +32247,7 @@ def test0021
   if fneq(sample(20), -0.992) then snd_display("scale_to 1.0 Mus_byte (20): %s?", sample(20)) end
   close_sound(ind)
   # 
-  set_transform_graph_type(0)
+  set_transform_graph_type(Graph_once)
   set_fft_window(6)
   set_show_y_zero(false)
   set_show_transform_peaks(false)
@@ -32407,7 +32467,6 @@ def test0021
   end
   [[:min_dB, -100.0, ffeqlp, veqlp, true, true],
    [:x_position_slider, 0.1, ffeqlp, veqlp, true, false],
-   [:maxamp, 1.0, ffeqlp, veqlp, true, false],
    [:y_position_slider, 0.5, ffeqlp, veqlp, true, false],
    [:x_zoom_slider, 0.2, ffeqlp, veqlp, true, false],
    [:y_zoom_slider, 0.2, ffeqlp, veqlp, true, false],
@@ -32435,7 +32494,6 @@ def test0021
    [:transform_size, 64, :==, :eql?, true, true],
    [:transform_graph_type, 1, :==, :eql?, true, true],
    [:fft_window, 1, :==, :eql?, true, true],
-#   [:transform_type, 1, :==, :eql?, true, true],
    [:transform_normalization, 2, :==, :eql?, true, true],
    [:max_transform_peaks, 10, :==, :eql?, true, true],
    [:dot_size, 10, :==, :eql?, true, true],
@@ -33193,7 +33251,7 @@ def test23_a
            0.005, 0.005, amp1, ind1, fmt1, amp2, ind2, fmt2, amp3, ind3, fmt3, amp4, ind4, fmt4)
   end
   if sound?(ind = find_sound("test.snd"))
-    play_and_wait(0, ind)
+    play(ind, :wait, true)
     close_sound(ind)
   else
     snd_display("missing test.snd (%s)", get_func_name)
@@ -33320,7 +33378,7 @@ def test23_b
                        vct(0.016, 0.015, 0.013, 0.011, 0.008, 0.006, 0.004, 0.003, 0.001, 0.000)))
       snd_display("fm_violin with_sound:\n#\t%s\n#\t%s", res1, res2)
     end
-    play_and_wait(0, ind)
+    play(ind, :wait, true)
     close_sound(ind)
   else
     snd_display("missing test.snd (%s)", get_func_name)
@@ -33353,7 +33411,7 @@ def test0023
                   srate(ind), mus_srate, mus_sound_srate("test.snd"))
     end
     if frames(ind) != 2205 then snd_display("with_sound frames (%s): %s?", i, frames(ind)) end
-    play_and_wait(0, ind)
+    play(ind, :wait, true)
   end
   with_sound(:continue_old_file, true) do fm_violin(0.2, 0.1, 440, 0.25) end
   ind = find_sound("test.snd")
@@ -34368,8 +34426,7 @@ Procs =
    :vct_fill!, :vct_set!, :mus_audio_describe, :vct_peak, :vct?, :list2vct, :vct2list,
    :vector2vct, :vct2vector, :vct_move!, :vct_reverse!, :vct_subseq, :vct, :little_endian?,
    :vct2string, :clm_channel, :env_channel, :map_channel_with_base, :map_channel,
-   :scan_channel, :play_channel,
-   :reverse_channel, :seconds2samples, :samples2seconds, :vct2channel,
+   :scan_channel, :reverse_channel, :seconds2samples, :samples2seconds, :vct2channel,
    :smooth_channel, :channel2vct,
    :src_channel, :scale_channel, :ramp_channel, :pad_channel, :normalize_channel,
    :cursor_position, :clear_listener, :mus_sound_prune, :mus_sound_forget, :xramp_channel,
@@ -34667,7 +34724,7 @@ def test0028
     end
   end
   [:reverse_selection, :selection_position, :selection_frames, :smooth_selection,
-   :scale_selection_to, :play_selection, :insert_selection, :delete_selection, :mix_selection,
+   :scale_selection_to, :insert_selection, :delete_selection, :mix_selection,
    :src_selection, :filter_selection, :env_selection].each do |n|
     if (tag = Snd.catch do
           case n
@@ -34811,7 +34868,7 @@ def test0128
    :lisp_graph?, :insert_region,
    :insert_sound, :left_sample, :time_graph_style, :lisp_graph_style, :transform_graph_style,
    :make_graph_data, :map_chan, :max_transform_peaks, :maxamp, :maxamp_position, :min_dB,
-   :mix_region, :transform_normalization, :peak_env_info, :peaks, :play_and_wait,
+   :mix_region, :transform_normalization, :peak_env_info, :peaks,
    :position2x, :position2y, :reverse_sound, :right_sample, :sample,
    :save_sound_as, :scan_chan, :show_axes, :show_transform_peaks, :show_marks,
    :show_mix_waveforms, :show_y_zero, :show_grid, :show_sonogram_cursor, :spectrum_end,
@@ -34848,7 +34905,7 @@ def test0128
       snd_display("%s: chn procs %s: %s", i, n, tag)
     end
   end
-  [:delete_sample, :edit_fragment, :graph_data, :graph_style, :play, :play_and_wait,
+  [:delete_sample, :edit_fragment, :graph_data, :graph_style,
    :position2x, :position2y, :redo_edit, :time_graph_style, :lisp_graph_style,
    :transform_graph_style, :scale_by, :scale_to, :undo_edit, :x2position, :y2position,
    :x_axis_label].each_with_index do |n, i|
@@ -34857,8 +34914,7 @@ def test0128
     end
   end
   index = open_sound("oboe.snd")
-  [:delete_sample, :edit_fragment, :graph_data, :play, :play_and_wait,
-   :position2x, :position2y, :redo_edit,
+  [:delete_sample, :edit_fragment, :graph_data, :position2x, :position2y, :redo_edit,
    :scale_by, :scale_to, :undo_edit, :x2position, :y2position].each_with_index do |n, i|
     if (tag = Snd.catch do snd_func(n, 0, index, 1234) end).first != :no_such_channel
       snd_display("%s: snd(1 1234) chn procs %s: %s", i, n, tag)
@@ -34953,7 +35009,7 @@ def test0128
   end
   close_sound(index)
   [[0, 1], sqrt(-1.0), "hiho", [0, 1]].each do |arg|
-    [:play_region, :region_chans, :region_home, :region_frames, :region_position,
+    [:region_chans, :region_home, :region_frames, :region_position,
      :region_maxamp, :region_maxamp_position, :region_sample, :region2vct,
      :region_srate, :forget_region].each_with_index do |n, i|
       if (tag = Snd.catch do snd_func(n, arg) end).first != :wrong_type_arg
@@ -34961,7 +35017,7 @@ def test0128
       end
     end
   end
-  [:play_region, :region_chans, :region_home, :region_frames, :region_position,
+  [:region_chans, :region_home, :region_frames, :region_position,
    :region_maxamp, :region_maxamp_position, :region_srate,
    :forget_region].each_with_index do |n, i|
     if (tag = Snd.catch do snd_func(n, integer2region(1234)) end).first != :no_such_region
@@ -35059,7 +35115,7 @@ def test0228
   check_error_tag(:wrong_type_arg) do player_home(123) end
   check_error_tag(:no_such_file) do set_temp_dir("/hiho") end
   check_error_tag(:no_such_file) do set_save_dir("/hiho") end
-  check_error_tag(:out_of_range) do snd_transform(20, make_vct(4)) end
+  check_error_tag(:out_of_range) do snd_transform(integer2transform(20), make_vct(4)) end
   check_error_tag(:bad_header) do mus_sound_maxamp($sf_dir + "bad_chans.snd") end
   check_error_tag(:bad_header) do set_mus_sound_maxamp($sf_dir + "bad_chans.snd", [0.0, 0.0]) end
   check_error_tag(:mus_error) do make_iir_filter(:order, 32, :ycoeffs, make_vct(4)) end
@@ -35161,9 +35217,6 @@ def test0228
   check_error_tag(:cannot_save) do save_sound_as("test.snd", ind, Mus_voc, Mus_bshort) end
   check_error_tag(:cannot_save) do save_selection("test.snd", Mus_riff, Mus_bshort) end
   check_error_tag(:cannot_save) do save_selection("test.snd", Mus_voc, Mus_bshort) end
-  check_error_tag(:wrong_type_arg) do play_selection(0, lambda do | | false end) end
-  check_error_tag(:wrong_type_arg) do play_selection(0, 0) end
-  check_error_tag(:wrong_type_arg) do play_selection(0, lambda do |a, b| false end) end
   check_error_tag(:no_data) do draw_lines([]) end
   check_error_tag(:bad_length) do draw_lines([1, 2, 3]) end
   check_error_tag(:out_of_range) do src_channel(make_env([0, 0, 1, 1], :length, 11)) end
@@ -35184,7 +35237,6 @@ def test0228
   check_error_tag(:no_such_file) do play("/baddy/hiho") end
   check_error_tag(:bad_format) do play($sf_dir + "nist-shortpack.wav") end
   check_error_tag(:no_such_sound) do play(123, 0) end
-  check_error_tag(:no_such_channel) do old_play(0, ind, 123) end
   check_error_tag(:no_such_channel) do make_player(ind, 123) end
   check_error_tag(:no_such_file) do mix("/baddy/hiho") end
   check_error_tag(:no_such_channel) do mix("oboe.snd", 0, 2) end
@@ -35235,7 +35287,6 @@ def test0228
   check_error_tag(:no_such_channel) do transform_sample(0, 1, ind, 1234) end
   check_error_tag(:no_such_sound) do graph(vct(0, 1), "hi", 0, 1, 0, 1, 1234) end
   check_error_tag(:no_such_channel) do graph(vct(0, 1), "hi", 0, 1, 0, 1, ind, 1234) end
-  check_error_tag(:wrong_type_arg) do play_region(regions.car, false, lambda do | | false end) end
   set_selection_member?(false, true)
   check_error_tag(:no_active_selection) do filter_selection(vct(0, 0, 1, 1), 4) end
   check_error_tag(:no_active_selection) do save_selection("/bad/baddy.snd") end
@@ -35284,9 +35335,6 @@ def test0228
   check_error_tag(:no_such_channel) do filter_channel(vct(0, 0, 1, 1), 4, false, false, ind, 1) end
   check_error_tag(:out_of_range) do filter_sound(vct(0, 0, 1, 1), 0) end
   check_error_tag(:out_of_range) do filter_sound(vct(0, 0, 1, 1), 10) end
-  check_error_tag(:wrong_type_arg) do
-    old_play(0, false, false, false, false, false, lambda do | | false end)
-  end
   check_error_tag(:out_of_range) do set_reverb_control_length_bounds([0.1, 0.01], ind) end
   check_error_tag(:out_of_range) do set_reverb_control_scale_bounds([0.1, 0.01], ind) end
   check_error_tag(:wrong_type_arg) do scale_by(false) end
@@ -35303,7 +35351,7 @@ def test0228
   check_error_tag(:no_such_menu) do add_to_menu(1234, "hi", lambda do | | false end) end
   check_error_tag(:bad_arity) do add_to_main_menu("hi", lambda do |a, b| false end) end
   check_error_tag(:bad_arity) do add_to_menu(1, "hi", lambda do |a, b| false end) end
-  check_error_tag(:out_of_range) do set_transform_type(integer2transform(-1)) end
+  check_error_tag(:wrong_type_arg) do set_transform_type(integer2transform(-1)) end
   check_error_tag(:out_of_range) do set_transform_type(integer2transform(123)) end
   check_error_tag(:wrong_type_arg) do help_dialog([0, 1], "hiho") end
   check_error_tag(:wrong_type_arg) do info_dialog([0, 1], "hiho") end
@@ -35412,7 +35460,6 @@ def test0228
   check_error_tag(:no_such_mix) do set_mix_sync(integer2mix(mix_sync_max + 1), 1) end
   check_error_tag(:no_such_mix) do mix_properties(integer2mix(mix_sync_max + 1)) end
   check_error_tag(:no_such_mix) do set_mix_properties(integer2mix(mix_sync_max + 1), 1) end
-  check_error_tag(:no_such_mix) do play_mix(integer2mix(mix_sync_max + 1)) end
 
   if provided? :snd_motif
     [:widget_position, :widget_size, :widget_text,

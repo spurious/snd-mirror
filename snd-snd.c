@@ -2402,6 +2402,7 @@ void call_sp_watchers(snd_info *sp, sp_watcher_t type, sp_watcher_reason_t reaso
  * all multichannel parallel ops also threaded, and graphics updates, and playing
  * TODO: make-sampler with mix etc -- let 1st arg be object, also add selection sampler
  * what about "Save again" menu item -- save as using the same choices including filename as before? [popup]
+ *   or save button next to "unite" et al.  Also "close"? min max close save buttons on the left before the sound name?
  */
 
 

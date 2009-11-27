@@ -2,7 +2,7 @@
 
 # Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Wed Mar 23 02:08:47 CET 2005
-# Changed: Thu Oct 15 00:27:02 CEST 2009
+# Changed: Thu Nov 26 18:17:55 CET 2009
 
 # Commentary:
 #
@@ -275,7 +275,7 @@ plays the portion between the marks (searching for plausible default marks)")
       pos2 = mark_sample(m2)
       beg = [pos1, pos2].min
       len = [pos1, pos2].max
-      old_play(beg, mark_home(m1).car, mark_home(m1).cadr, false, len)
+      play(mark_home(m1).car, :channel, mark_home(m1).cadr, :start, beg, :end, len)
     end
   end
 

@@ -6595,6 +6595,20 @@
 	 (test (procedure-source arg) 'error))
        (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi '#(()) (list 1 2 3) '(1 . 2) "hi"))
 
+      (test (make-list 0) '())
+      (test (make-list 0 123) '())
+      (test (make-list 1) '(#f))
+      (test (make-list 1 123) '(123))
+      (test (make-list 1 '()) '(()))
+      (test (make-list 2) '(#f #f))
+      (test (make-list 2 1) '(1 1))
+      (test (make-list -1) 'error)
+
+      (for-each
+       (lambda (arg)
+	 (test (make-list arg) 'error))
+       (list #\a '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi '#(()) (list 1 2 3) '(1 . 2) "hi"))
+
       (test (let () (defmacro hiho (a) `(+ ,a 1)) (hiho 3)) 4)
       (test (let () (defmacro hiho () `(+ 3 1)) (hiho)) 4)
       (test (let () (defmacro hiho () `(+ 3 1)) (hiho 1)) 'error)
@@ -6608,8 +6622,40 @@
       (test (let () (define-macro (hi a) `(+ ,a 1) #f) (hi 2)) #f)
       (test (let () (define-macro (mac1 a) `',a) (equal? (mac1 (+ 1 2)) '(+ 1 2))) #t)
 
-      ;; TODO: test defmacro* and define-macro*
 
+      (define-macro* (_mac1_) `(+ 1 2))
+      (test (_mac1_) 3)
+      (define-macro* (_mac2_ a) `(+ ,a 2))
+      (test (_mac2_ 1) 3)
+      (test (_mac2_ :a 2) 4)
+      (define-macro* (_mac3_ (a 1)) `(+ ,a 2))
+      (test (_mac3_) 3)
+      (test (_mac3_ 3) 5)
+      (test (_mac3_ :a 0) 2)
+      (define-macro* (_mac4_ (a 1) (b 2)) `(+ ,a ,b))
+      (test (_mac4_) 3)
+      (test (_mac4_ :b 3) 4)
+      (test (_mac4_ 2 :b 3) 5)
+      (test (_mac4_ :b 10 :a 12) 22)
+      (test (_mac4_ :a 4) 6)
+      
+      
+      (defmacro* _mac11_ () `(+ 1 2))
+      (test (_mac11_) 3)
+      (defmacro* _mac12_ (a) `(+ ,a 2))
+      (test (_mac12_ 1) 3)
+      (test (_mac12_ :a 2) 4)
+      (defmacro* _mac13_ ((a 1)) `(+ ,a 2))
+      (test (_mac13_) 3)
+      (test (_mac13_ 3) 5)
+      (test (_mac13_ :a 0) 2)
+      (defmacro* _mac14_ ((a 1) (b 2)) `(+ ,a ,b))
+      (test (_mac14_) 3)
+      (test (_mac14_ :b 3) 4)
+      (test (_mac14_ 2 :b 3) 5)
+      (test (_mac14_ :b 10 :a 12) 22)
+      (test (_mac14_ :a 4) 6)
+      
       (begin
 	(define-macro (hi a) `(+ ,a 1))
 	(test (hi 2) 3)

@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Sat Jan 03 17:30:23 CET 2004
-# Changed: Thu Oct 15 00:27:20 CEST 2009
+# Changed: Thu Nov 26 18:14:32 CET 2009
 
 # Commentary:
 # 
@@ -1228,7 +1228,7 @@ applies body to each sound file in dir")
   end
   alias for_each_sound_file each_sound_file
   alias map_sound_files each_sound_file
-  # each_sound_file(".", "/usr/gnu/sound/SFiles") do |f| play_and_wait(f) end
+  # each_sound_file(".", "/usr/gnu/sound/SFiles") do |f| play(f, :wait, true) end
 
   add_help(:match_sound_files,
            "match_sound_files(*dir_args) do |file| ... end  \

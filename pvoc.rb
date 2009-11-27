@@ -2,7 +2,7 @@
 
 # Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Sat Mar 27 00:19:51 CET 2004
-# Changed: Thu Oct 15 00:19:47 CEST 2009
+# Changed: Thu Nov 26 18:15:00 CET 2009
 
 # Comment:
 # 
@@ -142,7 +142,7 @@ let(open_sound("oboe.snd"),
     make_pvocoder(256, 4, 64),
     make_sampler(0)) do |ind, pv, rd|
   map_channel(lambda do |y| pvocoder(pv, rd) end)
-  play_and_wait(0, ind)
+  play(ind, :wait, true)
   save_sound_as("pvoc.snd", ind)
   revert_sound(ind)
   close_sound(ind)

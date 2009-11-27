@@ -1090,40 +1090,18 @@ signals that the symbol is in the Package-With-No-Name [offstage: harmonica, tub
 <!-- -------------------------------------------------------------------------------- -->
 <dt>
 <table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
-<table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>help</h4></td></tr></table>
+<table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>other functions</h4></td></tr></table>
 </td></tr></table>
 </dt>
 
 <dd><p>
-(help obj) tries to find information about obj.  
-</p>
+<p>(<b>help</b> obj) tries to find information about obj.</p>
+<p>(<b>quit</b>) exits s7.</p>
+<p>(<b>make-list</b> length (initial-element #f)) returns a list of 'length' elements defaulting to 'initial-element'.</p>
+<p>(<b>gc</b>) calls the garbage collector.  (gc #f) turns off the GC, and (gc #t) turns it on.</p>
 </dd>
 <br>
 
-
-<!-- -------------------------------------------------------------------------------- -->
-<dt>
-<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
-<table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>quit</h4></td></tr></table>
-</td></tr></table>
-</dt>
-
-<dd><p>quit exits s7.</p>
-<br>
-
-
-<!-- -------------------------------------------------------------------------------- -->
-<dt>
-<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
-<table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>gc</h4></td></tr></table>
-</td></tr></table>
-</dt>
-
-<dd><p>The gc function either calls the GC (if passed no arguments), or turns the GC either on: (gc #t)
-or off: (gc #f).
-</p>
-</dd>
-<br>
 
 
 <!-- -------------------------------------------------------------------------------- -->

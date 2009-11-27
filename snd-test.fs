@@ -2,7 +2,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sat Aug 05 00:09:28 CEST 2006
-\ Changed: Wed Nov 18 01:52:59 CET 2009
+\ Changed: Thu Nov 26 20:48:04 CET 2009
 
 \ Commentary:
 \
@@ -659,7 +659,7 @@ mus-audio-playback-amp value original-audio-amp
   chn      0<> if $" chn mix-home: %d?"     #( chn ) snd-display then
   amp 1.0 fneq if $" mix-amp: %s?"          #( amp ) snd-display then
   spd 1.0 fneq if $" mix-speed: %s?"        #( spd ) snd-display then
-  mix-id <'> play-mix 'mus-error nil fth-catch to res
+  mix-id <'> play 'mus-error nil fth-catch to res
   stack-reset
   res false? not if $" can't play mix: %s" #( res ) snd-display then
   mix-id 200 set-mix-position drop
@@ -2155,7 +2155,7 @@ include bird.fsm
    <'> vct->list <'> vector->vct <'> vct->vector <'> vct-move!
    <'> vct-reverse! <'> vct-subseq <'> vct <'> little-endian?
    <'> vct->string <'> clm-channel <'> env-channel <'> map-channel
-   <'> scan-channel <'> play-channel <'> reverse-channel <'> seconds->samples
+   <'> scan-channel <'> reverse-channel <'> seconds->samples
    <'> samples->seconds <'> smooth-channel <'> vct->channel <'> channel->vct
    <'> src-channel <'> scale-channel <'> ramp-channel <'> pad-channel
    <'> normalize-channel <'> cursor-position <'> clear-listener <'> mus-sound-prune
@@ -2498,7 +2498,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
     then
   end-each
   #( <'> reverse-selection <'> selection-position <'> selection-frames <'> smooth-selection
-     <'> scale-selection-to <'> play-selection <'> insert-selection <'> delete-selection
+     <'> scale-selection-to <'> insert-selection <'> delete-selection
      <'> mix-selection ) each to prc
     prc #t nil fth-catch to tag
     stack-reset
@@ -2670,7 +2670,6 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
      <'> left-sample <'> time-graph-style <'> lisp-graph-style
      <'> transform-graph-style <'> max-transform-peaks <'> maxamp
      <'> maxamp-position <'> min-dB <'> transform-normalization <'> peak-env-info
-     <'> play <'> play-and-wait
      <'> redo <'> reverse-sound <'> revert-sound <'> right-sample
      <'> sample <'> save-sound <'> scale-by <'> scale-to
      <'> show-axes <'> show-transform-peaks <'> show-marks <'> show-mix-waveforms
@@ -2691,8 +2690,8 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
       $" chn procs %s: %s" #( prc tag ) snd-display
     then
   end-each
-  #( <'> delete-sample <'> edit-fragment <'> graph-style <'> play
-     <'> play-and-wait <'> redo <'> time-graph-style <'> lisp-graph-style
+  #( <'> delete-sample <'> edit-fragment <'> graph-style
+     <'> redo <'> time-graph-style <'> lisp-graph-style
      <'> transform-graph-style <'> scale-by <'> scale-to <'> undo <'> x-axis-label ) { prcs-3 }
   prcs-3 each to prc
     0 1234 prc #t nil fth-catch to tag
@@ -2817,7 +2816,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   end-each
   ind close-sound drop
   \ region-sample, initially here, requires two args
-  #( <'> play-region <'> region-chans <'> region-home <'> region-frames
+  #( <'> region-chans <'> region-home <'> region-frames
      <'> region-position <'> region-maxamp <'> region-maxamp-position
      <'> region-srate <'> forget-region ) { reg-prcs-1 }
   #( vct-5 #( 0 1 ) #() "hiho" #( 0 1 ) ) each to arg
@@ -2910,7 +2909,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   123                        <'> player-home            'wrong-type-arg   check-error-tag
   "/hiho"                    <'> set-temp-dir           'no-such-file     check-error-tag
   "/hiho"                    <'> set-save-dir           'no-such-file     check-error-tag
-  20 4 0.0 make-vct          <'> snd-transform          'out-of-range     check-error-tag
+  20 integer->transform 4 0.0 make-vct <'> snd-transform 'out-of-range    check-error-tag
   sf-dir "bad_chans.aifc" $+ <'> mus-sound-maxamp       'bad-header       check-error-tag
   sf-dir "bad_chans.snd" $+ #( 0.0 0.0 ) <'> set-mus-sound-maxamp 'bad-header check-error-tag
   :order 32 :ycoeffs 4 0.0 make-vct <'> make-iir-filter 'mus-error        check-error-tag
@@ -3005,9 +3004,6 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   "test.snd" ind mus-voc  mus-bshort  <'> save-sound-as 'cannot-save      check-error-tag
   "test.snd" mus-riff mus-bshort <'> save-selection     'cannot-save      check-error-tag
   "test.snd" mus-voc  mus-bshort <'> save-selection     'cannot-save      check-error-tag
-  0 <'> noop 0 make-proc     <'> play-selection         'wrong-type-arg   check-error-tag
-  0 0                        <'> play-selection         'wrong-type-arg   check-error-tag
-  0 <'> noop 2 make-proc     <'> play-selection         'wrong-type-arg   check-error-tag
   #( 0 0 1 1 )  :length 11 make-env <'> src-channel     'out-of-range     check-error-tag
   #( 0 1 1 0 )  :length 11 make-env <'> src-channel     'out-of-range     check-error-tag
   #( 0 1 1 -1 ) :length 11 make-env <'> src-channel     'out-of-range     check-error-tag
@@ -3025,7 +3021,6 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   8 0.0 make-vct 0 0         <'> snd-spectrum           'out-of-range     check-error-tag
   "/baddy/hiho"              <'> play                   'no-such-file     check-error-tag
   sf-dir "nist-shortpack.wav" $+ <'> play               'bad-format       check-error-tag
-  0 ind 123                  <'> play                   'no-such-channel  check-error-tag
   ind 123                    <'> make-player            'no-such-channel  check-error-tag
   "/baddy/hiho"              <'> mix                    'no-such-file     check-error-tag
   "oboe.snd" 0 2             <'> mix                    'no-such-channel  check-error-tag
@@ -3053,8 +3048,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   -1                         <'> delete-sample          'no-such-sample   check-error-tag
   ind frames 2*              <'> delete-sample          'no-such-sample   check-error-tag
   "/bad/baddy.snd"           <'> play                   'no-such-file     check-error-tag
-  0 1234                     <'> play                   'no-such-sound    check-error-tag
-  0 ind 1234                 <'> play                   'no-such-channel  check-error-tag
+  1234 0                     <'> play                   'no-such-sound    check-error-tag
   regions empty? if 0 100 make-region then
   regions 0 array-ref 0 1234 <'> region-sample          'no-such-channel  check-error-tag
   regions 0 array-ref 1234   <'> region-frames          'no-such-channel  check-error-tag
@@ -3067,7 +3061,6 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   0 100 ind 1234             <'> samples->sound-data    'no-such-channel  check-error-tag
   vct( 0 1 ) "hi" 0 1 0 1 1234     <'> graph            'no-such-sound    check-error-tag
   vct( 0 1 ) "hi" 0 1 0 1 ind 1234 <'> graph            'no-such-channel  check-error-tag
-  regions 0 array-ref #f <'> noop 0 make-proc <'> play-region 'wrong-type-arg check-error-tag
   #f #t set-selection-member? drop
   vct( 0 0 1 1 ) 4           <'> filter-selection       'no-active-selection check-error-tag
   "/bad/baddy.snd"           <'> save-selection         'no-active-selection check-error-tag
@@ -3116,7 +3109,6 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   vct( 0 0 1 1 ) 4 #f #f ind 1  <'> filter-channel      'no-such-channel  check-error-tag
   vct( 0 0 1 1 ) 0           <'> filter-sound           'out-of-range     check-error-tag
   vct( 0 0 1 1 ) 10          <'> filter-sound           'out-of-range     check-error-tag
-  0 #f #f #f #f #f <'> noop 0 make-proc <'> play        'wrong-type-arg   check-error-tag
   #( 0.1 0.01 ) ind          <'> set-reverb-control-length-bounds 'out-of-range check-error-tag
   #( 0.1 0.01 ) ind          <'> set-reverb-control-scale-bounds  'out-of-range check-error-tag
   #f                         <'> scale-by               'wrong-type-arg   check-error-tag
@@ -3130,8 +3122,8 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   1234 "hi" <'> noop 0 make-proc <'> add-to-menu        'no-such-menu     check-error-tag
   "hi" <'> noop 2 make-proc  <'> add-to-main-menu       'bad-arity        check-error-tag
   1 "hi" <'> noop 2 make-proc  <'> add-to-menu          'bad-arity        check-error-tag
-  -1                         <'> set-transform-type     'out-of-range     check-error-tag
-  123                        <'> set-transform-type     'out-of-range     check-error-tag
+  -1 integer->transform      <'> set-transform-type     'wrong-type-arg   check-error-tag
+  123 integer->transform     <'> set-transform-type     'out-of-range     check-error-tag
   #( 0 1 ) "hiho"            <'> help-dialog            'wrong-type-arg   check-error-tag
   #( 0 1 ) "hiho"            <'> info-dialog            'wrong-type-arg   check-error-tag
   1234                       <'> edit-header-dialog     'no-such-sound    check-error-tag

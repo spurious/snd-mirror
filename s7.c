@@ -70,7 +70,7 @@
  *        provide, provided?, defined?
  *        port-line-number, port-filename
  *        object->string, eval-string
- *        reverse!, list-set!, sort!
+ *        reverse!, list-set!, sort!, make-list
  *        gc, quit, *load-hook*, *error-hook*, *error-info*
  *        *features*, *load-path*, *vector-print-length*
  *        define-constant, pi, most-positive-fixnum, most-negative-fixnum, constant?
@@ -90,15 +90,15 @@
  *          (make-vector! 32 0.0)
  *          set of other type either converts or error
  *          FFI would guarantee (for example) s7_Double as elements?
- *        perhaps generic reverse and append
+ *        perhaps generic reverse and append -- in the ! sense, reverse can be based on apply/set!/length
  *        ->* for conversions (->vector, ->ratio? ->string etc) [see end of this file]
  *        ideally: remove all mention of exact|inexact, remove set-car!|cdr!, 
  *                 remove *-ci-*, remove cxxxxr, remove improper lists
  *                 exact->inexact is the only useful exactness function -- perhaps (->real x)?
  *        load should handle C shared libraries, using dlopen/dlinit [optionally]
  *        defgenerator (or at least defstruct of some sort)
- *        perhaps vector<->string and make-list for consistency
- *        perhaps bring new_type_x out to scheme -- could this be extended to defstruct?
+ *        perhaps vector<->string for consistency
+ *        perhaps bring new_type_x out to scheme -- could this be extended to defstruct? (needs make)
  * 
  *
  * Mike Scholz provided the FreeBSD support (complex trig funcs, etc)
@@ -9839,6 +9839,36 @@ static s7_pointer g_is_list(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_list "(list? obj) returns #t if obj is a list"
   return(make_boolean(sc, is_proper_list(sc, car(args))));
+}
+
+
+static s7_pointer g_make_list(s7_scheme *sc, s7_pointer args)
+{
+  #define H_make_list "(make-list length (initial-element #f)) returns a list of 'length' elements whose value is 'initial-element'."
+
+  s7_pointer init, result;
+  int i, len;
+
+  if (!s7_is_integer(car(args)))
+    return(s7_wrong_type_arg_error(sc, "make-list", 1, car(args), "an integer"));
+  len = s7_integer(car(args));
+  if (len < 0)
+    return(s7_out_of_range_error(sc, "make-list", 1, car(args), "length should be non-negative"));
+  if (len == 0) return(sc->NIL);          /* what about (make-list 0 123)? */
+
+  if (is_pair(cdr(args)))
+    init = cadr(args);
+  else init = sc->F;
+  
+  result = sc->NIL;
+  if (sc->free_heap_top <= len) gc(sc);
+
+  s7_gc_on(sc, false);
+  for (i = 0; i < len; i++)
+    result = s7_cons(sc, init, result);
+  s7_gc_on(sc, true);
+
+  return(result);
 }
 
 
@@ -22737,6 +22767,7 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "list-ref",                g_list_ref,                2, 0, false, H_list_ref);
   s7_define_set_function(sc, "list-set!",           g_list_set,                3, 0, false, H_list_set);
   s7_define_function(sc, "list-tail",               g_list_tail,               2, 0, false, H_list_tail);
+  s7_define_function(sc, "make-list",               g_make_list,               1, 1, false, H_make_list);
 
   s7_define_function(sc, "length",                  g_length,                  1, 0, false, H_length);
   s7_define_function(sc, "copy",                    g_copy,                    1, 0, false, H_copy);

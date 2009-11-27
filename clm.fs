@@ -2,7 +2,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Mon Mar 15 19:25:58 CET 2004
-\ Changed: Fri Nov 06 00:15:36 CET 2009
+\ Changed: Thu Nov 26 18:29:52 CET 2009
 
 \ Commentary:
 \
@@ -53,7 +53,7 @@
 \ with-mix             ( body-str args fname beg -- )
 \ sound-let            ( ws-xt-lst body-xt -- )
 
-$" fth 06-Nov-2009" value *clm-version*
+$" fth 26-Nov-2009" value *clm-version*
 
 \ defined in snd/snd-xen.c
 [ifundef] snd-print   : snd-print   ( str -- str )  dup .string ;             [then]
@@ -770,14 +770,14 @@ hide
 \       xt: output player execute
 \     proc: player #( output ) run-proc
 \   string: "player output" system
-\ else snd: output play-and-wait
+\ else snd: output :wait #t play
 \      clm: output play-sound
 \ 
 \ A player may look like this:
 \
 \ : play-3-times ( output -- )
 \   { output }
-\   3 0 ?do output play-and-wait drop loop
+\   3 0 ?do output :wait #t play drop loop
 \ ;
 \ <'> play-3-times to *clm-player*
 : ws-play-it ( ws -- )
@@ -791,7 +791,7 @@ hide
       $" %s %s" #( player output ) string-format file-shell drop
     else
       'snd provided? if
-	output find-file play-and-wait drop
+	output find-file :wait #t play drop
       else
 	output :verbose #f play-sound
       then

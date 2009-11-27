@@ -2,7 +2,7 @@
 
 # Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Thu Sep 05 22:28:49 CEST 2002
-# Changed: Thu Oct 15 00:27:57 CEST 2009
+# Changed: Thu Nov 26 18:20:42 CET 2009
 
 # Commentary:
 #
@@ -599,7 +599,7 @@ unless defined? $__private_popup_menu__ and $__private_popup_menu__
         change_label(w, "Stop")
         stop_widget = w
         stopping = true
-        play_selection
+        play(selected_sound)
       end
     end
     entry("Loop play") do |snd, chn, w|
@@ -616,8 +616,10 @@ unless defined? $__private_popup_menu__ and $__private_popup_menu__
         change_label(w, "Stop!")
         stop_widget1 = w
         stopping1 = true
-        $stop_playing_selection_hook.add_hook!("popup-play-selection") do | | play_selection end
-        play_selection
+        $stop_playing_selection_hook.add_hook!("popup-play-selection") do | |
+          play(selected_sound)
+        end
+        play(selected_sound)
       end
     end
     entry("Delete") do |snd, chn, w| delete_selection end
@@ -737,22 +739,22 @@ unless defined? $__private_popup_menu__ and $__private_popup_menu__
     entry("Play channel") do |snd, chn, w|
       stopping = true
       change_label(stop_widget, "Stop")
-      old_play(0, snd, chn)
+      play(snd, :channel, chn)
     end
     entry("Play from cursor") do |snd, chn, w|
       stopping = true
       change_label(stop_widget, "Stop")
-      old_play(cursor(snd, chn), snd)
+      play(snd, :start, cursor(snd, chn))
     end
     entry("Play previous") do |snd, chn, w|
       stopping = true
       change_label(stop_widget, "Stop")
-      old_play(0, snd, chn, false, false, edit_position - 1)
+      play(snd, :channel, chn, :edit_position, edit_position - 1)
     end
     entry("Play original") do |snd, chn, w|
       stopping = true
       change_label(stop_widget, "Stop")
-      old_play(0, snd, chn, false, false, 0)
+      play(snd, :channel, chn, :edit_position, 0)
     end
     entry("Undo") do |snd, chn, w| undo_edit(1, snd, chn) end if defined? undo_edit
     entry("Redo") do |snd, chn, w| redo_edit(1, snd, chn) end if defined? redo_edit

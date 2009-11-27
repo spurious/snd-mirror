@@ -3,7 +3,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Dec 23 00:28:28 CET 2005
-\ Changed: Tue Nov 17 16:32:38 CET 2009
+\ Changed: Thu Nov 26 18:32:35 CET 2009
 
 \ Commentary:
 
@@ -211,7 +211,7 @@ hide
     w "Stop" change-label
     vars :stop-widget w array-assoc-set!
     ( vars ) :stopping #t array-assoc-set! drop
-    #f undef play-selection drop
+    selected-sound play drop
   then
 ;
 : stop-playing-selection { w vars -- }
@@ -231,7 +231,7 @@ hide
     c-g?                        not
     reason                       0= &&
     vars :stopping1 array-assoc-ref && if
-      #f  w vars recurse  play-selection drop
+      selected-sound  :stop w vars recurse  play drop
     else
       w vars stop-playing-selection
     then
@@ -250,7 +250,7 @@ hide
     w "Stop!" change-label
     vars     :stop-widget1 w  array-assoc-set!
     ( vars ) :stopping1    #t array-assoc-set! to vars
-    #f  w vars play-selection-again  play-selection drop
+    #f  :stop w vars play-selection-again  play drop
   then
 ;
 : as-one-edit-thunk ( selection -- prc; self -- )
@@ -360,7 +360,7 @@ let: ( -- menu )
   else
     w "Stop" change-label
     vars :stopping #t array-assoc-set! drop
-    0 graph-popup-snd undef undef undef undef undef undef play drop
+    graph-popup-snd play drop
   then
 ;
 : stop-cb ( vars -- prc; widget self -- )
@@ -374,7 +374,7 @@ let: ( -- menu )
   self @ { vars }
   vars     :stopping #t array-assoc-set!
   ( vars ) :stop-widget array-assoc-ref "Stop" change-label
-  0 graph-popup-snd graph-popup-chn undef undef undef undef undef play drop
+  graph-popup-snd :channel graph-popup-chn play drop
 ;
 : pcur-cb ( vars -- prc; w c i self -- )
   3 proc-create swap ,
@@ -382,8 +382,7 @@ let: ( -- menu )
   self @ { vars }
   vars     :stopping #t array-assoc-set!
   ( vars ) :stop-widget array-assoc-ref "Stop" change-label
-  graph-popup-snd graph-popup-chn #f cursor
-  graph-popup-snd undef undef undef undef undef undef play drop
+  graph-popup-snd :start graph-popup-snd graph-popup-chn #f cursor play drop
 ;
 : pprev-cb ( vars -- prc; w c i self -- )
   3 proc-create swap ,
@@ -401,7 +400,7 @@ let: ( -- menu )
   self @ { vars }
   vars     :stopping #t array-assoc-set!
   ( vars ) :stop-widget array-assoc-ref "Stop" change-label
-  0 graph-popup-snd graph-popup-chn #f #f 0 undef undef play drop
+  graph-popup-snd :channel graph-popup-chn :edit-position 0 play drop
 ;
 
 : pundo-cb   <{ w c info -- val }> 1 graph-popup-snd graph-popup-chn undo ;
@@ -1130,7 +1129,7 @@ hide
   snds
 ;
 : focused-cb    <{ snds -- lst }> snds length 1 > if snds else #() then ;
-: list-play-cb  <{ snd -- val }>  0 snd undef undef undef undef undef undef play ;
+: list-play-cb  <{ snd -- val }>  snd play ;
 : list-focus-cb <{ us -- val }>
   \ 5 == notebook-outer-pane
   main-widgets 5 array-ref FWidget? if

@@ -2,7 +2,7 @@
 
 # Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Fri Apr 22 23:36:39 CEST 2005
-# Changed: Fri Jul 06 01:53:01 CEST 2007
+# Changed: Thu Nov 26 18:19:16 CET 2009
 
 # Commentary:
 #
@@ -94,10 +94,10 @@ def play_often(n)
   play_once = lambda do |reason|
     if plays > 0 and (not c_g?) and reason == 0
       plays -= 1
-      old_play(0, false, false, false, false, false, play_once)
+      play(selected_sound, :wait, play_once)
     end
   end
-  old_play(0, false, false, false, false, false, play_once)
+  play(selected_sound, :wait, play_once)
 end
 # bind_key(?p, 0, lambda do |n| play_often([1, n].max) end, false, "play often")
 
@@ -108,10 +108,10 @@ add_help(:play_until_c_g,
 def play_until_c_g
   play_once = lambda do |reason|
     if (not c_g?) and reason == 0
-      old_play(0, false, false, false, false, false, play_once)
+      play(0, false, false, false, false, false, play_once)
     end
   end
-  old_play(0, false, false, false, false, false, play_once)
+  play(0, false, false, false, false, false, play_once)
 end
 
 # play region over and over until C-g typed
@@ -121,10 +121,10 @@ add_help(:play_region_forever,
 def play_region_forever(reg)
   play_region_again = lambda do |reason|
     if (not c_g?) and reason == 0
-      play_region(reg, false, play_region_again)
+      play(reg, :stop, play_region_again)
     end
   end
-  play_region(reg, false, play_region_again)
+  play(reg, :stop, play_region_again)
 end
 # bind_key(?p, 0,
 #          lambda do |n| play_region_forever(Snd.regions[[0, n].max]) end,

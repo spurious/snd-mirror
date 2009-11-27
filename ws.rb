@@ -396,7 +396,7 @@ require "hooks"
 
 def clm_player(s)
   if provided?(:snd) and sound?(s)
-    play_and_wait(0, s)
+    play(s, :wait, true)
   elsif string?(s) and File.exist?(s)
     system("sndplay #{s}")
   else
@@ -412,7 +412,7 @@ __ws_verbose__ = $VERBOSE
 __ws_debug__   = $DEBUG
 # get rid of `undefined variable' messages
 with_silence do
-  $clm_version            = "ruby 15-Oct-2009"
+  $clm_version            = "ruby 26-Nov-2009"
   $output                 ||= false
   $reverb                 ||= false
   $clm_array_print_length ||= 8
@@ -1138,7 +1138,7 @@ installs the @with_sound_note_hook and prints the line
       when Method
         snd_func(@player, @out_snd)
       else
-        play_and_wait(0, @out_snd)
+        play(@out_snd, :wait, true)
       end
     else
       # Outside Snd we use a Proc or Method of one arg, a sound FILE NAME.

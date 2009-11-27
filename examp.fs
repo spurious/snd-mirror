@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Tue Jul 05 13:09:37 CEST 2005
-\ Changed: Tue Nov 17 16:31:54 CET 2009
+\ Changed: Thu Nov 26 18:25:33 CET 2009
 
 \ Commentary:
 \
@@ -2009,7 +2009,7 @@ hide
 : rpl-cb { reg -- prc; self -- val }
   0 proc-create reg , ( prc )
  does> { self -- val }
-  self @ ( reg ) undef undef play-region
+  self @ ( reg ) play
 ;
 set-current
 : region-play-list ( data -- )

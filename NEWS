@@ -2,7 +2,7 @@ Snd 11.1:
 
 many more ruby/forth improvements thanks to Mike.
 
-*trace-hook* in s7.  Also defmacro* and define-macro*.
+*trace-hook* in s7.  Also defmacro* and define-macro*.  make-list.
 
 force and delay are now included in s7 only if WITH_FORCE is defined.
   The slib implementation is used.  The promise? function has been removed.

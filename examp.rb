@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Wed Sep 04 18:34:00 CEST 2002
-# Changed: Wed Oct 14 23:07:20 CEST 2009
+# Changed: Thu Nov 26 19:34:47 CET 2009
 
 # module Examp (examp.scm)
 #  selection_rms
@@ -362,7 +362,9 @@ end")
   def superimpose_ffts(snd, chn, y0, y1)
     maxsync = Snd.sounds.map do |s| sync(s) end.max
     if sync(snd) > 0 and
-        snd == Snd.sounds.map do |s| sync(snd) == sync(s) ? s : maxsync + 1 end.min
+        snd == Snd.sounds.map do |s|
+        sync(snd) == sync(s) ? sound2integer(s) : (maxsync + 1)
+      end.min
       ls = left_sample(snd, chn)
       rs = right_sample(snd, chn)
       pow2 = (log(rs - ls) / log(2)).ceil
@@ -1982,7 +1984,7 @@ region_play_list([[0.0, 0], [0.5, 1], [1.0, 2], [1.0, 0]])")
     (data or []).each do |tm, rg|
       tm = (1000.0 * tm).floor
       if region?(rg)
-        call_in(tm, lambda do | | play_region(rg) end)
+        call_in(tm, lambda do | | play(rg) end)
       end
     end
   end
