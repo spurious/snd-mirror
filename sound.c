@@ -691,7 +691,7 @@ static void sound_table_lock_error_handler(int type, char *msg)
   pthread_setspecific(mus_thread_error_handler, (void *)old_header_read_error_handler);
   pthread_setspecific(mus_thread_previous_error_handler, (void *)old_previous_header_read_error_handler);
   MUS_UNLOCK(&sound_table_lock);
-  mus_error(type, msg);
+  mus_error(type, "%s", msg);
 }
 #endif
 

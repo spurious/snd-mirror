@@ -1015,7 +1015,7 @@ XM_TYPE_PTR(GIcon_, GIcon*)
 #endif
 
 #if HAVE_GTK_INFO_BAR_NEW
-XM_TYPE_PTR(GtkInfoBar_, GtkInfoBar*)
+XM_TYPE_PTR_1(GtkInfoBar_, GtkInfoBar*)
 #define C_TO_XEN_GtkMessageType(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkMessageType(Arg) (GtkMessageType)(XEN_TO_C_INT(Arg))
 #define XEN_GtkMessageType_P(Arg) XEN_INTEGER_P(Arg)
@@ -1026,7 +1026,7 @@ XM_TYPE_PTR(GtkEntryBuffer_, GtkEntryBuffer*)
 #endif
 
 #if HAVE_GTK_SPINNER_NEW
-XM_TYPE_PTR(GtkSpinner_, GtkSpinner*)
+XM_TYPE_PTR_1(GtkSpinner_, GtkSpinner*)
 #endif
 
 #if HAVE_CAIRO_CREATE
@@ -48757,7 +48757,7 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("13-Nov-09"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("27-Nov-09"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

@@ -341,7 +341,7 @@ void top_level_catch(int ignore)
 #if MUS_DEBUGGING
 static void trap_xt_error(String message)
 {
-  fprintf(stderr, message);
+  fprintf(stderr, "%s", message);
   XEN_ERROR(XEN_ERROR_TYPE("xt-error"),
 	    XEN_LIST_2(C_TO_XEN_STRING("Xt error:"),
 		       C_TO_XEN_STRING(message)));
@@ -871,13 +871,13 @@ void snd_doit(int argc, char **argv)
 	vi = glXChooseVisual(dpy, DefaultScreen(dpy), snglBuf);
       }
     if (vi == NULL) 
-      fprintf(stderr, _("no RGB visual with desired depth\n")); /* not snd_error -- shell not ready yet */
+      fprintf(stderr, "%s", _("no RGB visual with desired depth\n")); /* not snd_error -- shell not ready yet */
     else
       {
 	/* create an OpenGL rendering context */
 	cx = glXCreateContext(dpy, vi, /* no display list sharing */ None, /* favor direct */ GL_TRUE);
 	if (cx == NULL) 
-	  fprintf(stderr, _("could not create rendering context\n"));
+	  fprintf(stderr, "%s", _("could not create rendering context\n"));
 	else
 	  {
 	    /* create an X colormap since probably not using default visual */

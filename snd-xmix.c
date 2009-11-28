@@ -11,7 +11,7 @@ static env *dialog_env = NULL;
 static bool dragging = false;
 static int edpos_before_drag;
 static with_hook_t hookable_before_drag;
-static mus_long_t drag_beg = 0, drag_end = 0, orig_beg = 0;
+static mus_long_t drag_beg = 0, drag_end = 0;
 
 static void start_dragging(int mix_id) 
 {

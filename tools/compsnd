@@ -323,9 +323,9 @@ make allclean
 echo ' '
 echo ' '
 echo ' -------------------------------------------------------------------------------- '
-echo ' -----                --with-forth --with-gtk --with-static-xg --with-gl      --- '
+echo ' -----                --with-forth --with-gtk --with-static-xg      --- '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet --with-forth --with-gtk --with-static-xg --with-gl LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include"
+./configure --quiet --with-forth --with-gtk --with-static-xg LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include"
 make
 ./snd --version
 ./snd -noinit --features "'clm 'snd-gtk 'xg 'gl"
@@ -378,9 +378,9 @@ echo ' '
 make allclean
 
 echo ' -------------------------------------------------------------------------------- '
-echo ' ----                 --without-extension-language --with-gtk --with-gl ------  '
+echo ' ----                 --without-extension-language --with-gtk ------  '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet --without-extension-language --with-gtk --with-gl
+./configure --quiet --without-extension-language --with-gtk
 make
 echo ' '
 echo ' '
@@ -453,9 +453,9 @@ make allclean
 echo ' '
 echo ' '
 echo ' -------------------------------------------------------------------------------- '
-echo ' ----                --with-guile --with-gtk --with-static-xg --with-gl      --- '
+echo ' ----                --with-guile --with-gtk --with-static-xg      --- '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet --with-guile --with-gtk --with-static-xg --with-gl LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include"
+./configure --quiet --with-guile --with-gtk --with-static-xg LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include"
 make
 ./snd --version
 ./snd -noinit --features "'clm 'snd-gtk 'xg 'gl"
@@ -646,9 +646,9 @@ echo ' '
 make allclean
 
 echo ' -------------------------------------------------------------------------------- '
-echo ' -----                GTK_DISABLE_DEPRECATED G_DISABLE_DEPRECATED GDK_DISABLE_DEPRECATED --with-gtk --with-static-xm --with-x11 '
+echo ' -----                GTK_DISABLE_DEPRECATED G_DISABLE_DEPRECATED GDK_DISABLE_DEPRECATED --with-gtk --with-static-xm '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet --disable-deprecated CFLAGS="-Wall -I/usr/X11R6/include -D_FORTIFY_SOURCE" --with-gtk --with-static-xm --with-x11
+./configure --quiet --disable-deprecated CFLAGS="-Wall -I/usr/X11R6/include -D_FORTIFY_SOURCE" --with-gtk --with-static-xm
 make
 echo ' '
 echo ' '
@@ -730,9 +730,9 @@ rm -f snd
 rm -f config.cache
 
 echo ' -------------------------------------------------------------------------------- '
-echo ' ----                 --enable-snd-debug --with-gtk --with-gsl --with-gl --with-gl2ps '
+echo ' ----                 --enable-snd-debug --with-gtk --with-gsl '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include -DXEN_DEBUGGING" --enable-snd-debug --with-gtk --with-gsl --with-gl --with-gl2ps
+./configure --quiet LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include -DXEN_DEBUGGING" --enable-snd-debug --with-gtk --with-gsl
 make
 echo ' '
 echo ' '
@@ -840,9 +840,9 @@ echo ' '
 make allclean
 
 echo ' -------------------------------------------------------------------------------- '
-echo ' ----                GTK_DISABLE_DEPRECATED G_DISABLE_DEPRECATED GDK_DISABLE_DEPRECATED --with-ruby --with-static-xm --with-gtk --with-x11 --with-gl '
+echo ' ----                GTK_DISABLE_DEPRECATED G_DISABLE_DEPRECATED GDK_DISABLE_DEPRECATED --with-ruby --with-static-xm --with-gtk '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet --disable-deprecated LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include -D_FORTIFY_SOURCE" --with-ruby --with-static-xm --with-gtk --with-x11 --with-gl
+./configure --quiet --disable-deprecated LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include -D_FORTIFY_SOURCE" --with-ruby --with-static-xm --with-gtk
 make
 echo ' '
 echo ' '
@@ -1116,9 +1116,9 @@ echo ' '
 echo ' '
 
 echo ' -------------------------------------------------------------------------------- '
-echo ' -----                --without-extension-language --with-gtk --with-static-xg --with-gl '
+echo ' -----                --without-extension-language --with-gtk --with-static-xg '
 echo ' -------------------------------------------------------------------------------- '
-./configure --without-extension-language --with-gtk --with-static-xg --with-gl --quiet
+./configure --without-extension-language --with-gtk --with-static-xg --quiet
 make
 ./snd --version
 make allclean

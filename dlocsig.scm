@@ -227,7 +227,7 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
   "(listp lst) is #t is 'lst' is a non-null list"
   (and (list? a) (not (null? a))))
 
-(define (make-list n val)
+(define (make-list-1 n val)
   (let ((lst '()))
     (do ((i 0 (+ i 1)))
 	((= i n))
@@ -864,7 +864,7 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 	    (set! px (cons (list-ref points i) px))
 	    (set! py (cons (list-ref points (+ i 1)) py))
 	    (set! pz (cons (list-ref points (+ i 2)) pz)))
-	  (list (reverse px) (reverse py) (reverse pz) (make-list (length px) #f)))
+	  (list (reverse px) (reverse py) (reverse pz) (make-list-1 (length px) #f)))
 
       ;; it's a two dimensional list
       ;; '(x0 y0 x1 y1 ... xn yn)
@@ -876,7 +876,7 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 	    ((>= i len))
 	  (set! px (cons (list-ref points i) px))
 	  (set! py (cons (list-ref points (+ i 1)) py)))
-	(list (reverse px) (reverse py) (make-list (length px) 0.0) (make-list (length px) #f))))))
+	(list (reverse px) (reverse py) (make-list-1 (length px) 0.0) (make-list-1 (length px) #f))))))
 
 ;;; Parse a set of 2d or 3d polar points into the separate coordinates
 
@@ -936,7 +936,7 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 	      (set! x (cons (* dxy (imag-part avec)) x))
 	     (set! y (cons (* dxy (real-part avec)) y))
 	     (set! z (cons (* d (imag-part evec)) z))))
-	  (list (reverse x) (reverse y) (reverse z) (make-list (length x) #f)))
+	  (list (reverse x) (reverse y) (reverse z) (make-list-1 (length x) #f)))
 
       ;; decode a two dimensional list
       ;;   '(d0 a0 d1 a1 ... dn an)
@@ -953,7 +953,7 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 		 (avec (cis (* (/ a dlocsig-one-turn) 2 pi))))
 	    (set! x (cons (* d (imag-part avec)) x))
 	    (set! y (cons (* d (real-part avec)) y))))
-	(list (reverse x) (reverse y) (make-list (length x) 0.0) (make-list (length x) #f))))))
+	(list (reverse x) (reverse y) (make-list-1 (length x) 0.0) (make-list-1 (length x) #f))))))
 
 
 (define (xparse-path xpath)
@@ -1503,7 +1503,7 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 		  (set! xrz (append xrz (list zi-bz) zs))
 		  
 		  ;; accumulate intermediate unknown velocities as nils
-		  (set! xrv (append xrv (list vi-bz) (make-list (length xs) #f)))
+		  (set! xrv (append xrv (list vi-bz) (make-list-1 (length xs) #f)))
 		  (if (= i (- len 1))
 		      (begin
 			;; add the last point

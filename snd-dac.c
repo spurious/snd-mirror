@@ -2996,7 +2996,7 @@ If object is a string, it is assumed to be a file name: \n    " play_example "\n
       (!(IS_PLAYER_SOUND(sp))))
     {
       sync_info *si;
-      mus_long_t *ends;
+      mus_long_t *ends = NULL;
       int i;
 
       si = snd_sync(sp->sync);

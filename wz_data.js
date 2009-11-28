@@ -546,26 +546,17 @@ var extsnd_padchannel_tip = "<code>(pad-channel beg dur :optional snd chn edpos)
 
 var extsnd_peaksfont_tip = "<code>(peaks-font)</code>: normal font used by fft peak display";
 
-var extsnd_play_tip = "<code>(play :optional (start 0) snd chn sync end (pos -1) stop-proc out-chan)</code>:<br>" +
-                      " play snd or snd's channel chn starting at start.<br>" +
-                      " 'start' can also be a function or a filename:<br>" +
-                      "<code>  (play \"oboe.snd\")</code>.<br>" +
-                      " If 'sync' is true, all sounds syncd to snd are played.<br>" +
-                      " If 'end' is not given, play plays to the end of the sound.<br>" +
-                      " If 'pos' is -1 or not given, the current edit position is played.";
-
-var extsnd_playandwait_tip = "<code>(play-and-wait (start 0) snd chn syncd end (pos -1) stop-proc out-chan)</code>:<br>" +
-                             " play snd or snd's channel chn starting at start and wait for the play to complete before returning.<br>" +
-                             " 'start' can also be a function or a filename:<br>" +
-                             "<code>  (play-and-wait \"oboe.snd\")</code>";
+var extsnd_play_tip = "<code>(play object :start :end :channel :edit-position :out-channel :with-sync :wait :stop):<br>" +
+                      " play the object from start to end.<br>" +
+                      " If channel is not given, play all channels.<br>" +
+                      " If with-sync, play all objects sync'd to the current object.<br>" +
+                      " If wait, wait for the play process to finish before going on.<br>" +
+                      " If out-channel, send the samples to that DAC channel.<br>" +
+                      " If edit-position, play that member of the edit list.<br>" +
+                      " If stop, call that function when the play process finishes.<br>" +
+                      " If object is a string, it is assumed to be a file name.";
 
 var extsnd_playhook_tip = "<code>play-hook (samps)</code>: called each time a buffer is sent to the DAC.";
-
-var extsnd_playregion_tip = "<code>(play-region :optional (reg 0) wait stop-proc)</code>:<br>" +
-                            " play region reg; if wait is #t, play to end before returning";
-
-var extsnd_playselection_tip = "<code>(play-selection :optional wait stop-proc)</code>: play the selection.<br>" +
-                               " 'wait', if #t, causes play-selection to wait until the playing is finished before returning.";
 
 var extsnd_positiontox_tip = "<code>(position-&gt;x val :optional snd chn (ax time-graph))</code>: x axis value corresponding to pixel val";
 

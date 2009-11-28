@@ -9861,7 +9861,7 @@ static s7_pointer g_make_list(s7_scheme *sc, s7_pointer args)
   else init = sc->F;
   
   result = sc->NIL;
-  if (sc->free_heap_top <= len) gc(sc);
+  if (sc->free_heap_top <= (unsigned int)len) gc(sc);
 
   s7_gc_on(sc, false);
   for (i = 0; i < len; i++)

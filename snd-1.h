@@ -1643,6 +1643,8 @@ color_t mix_set_color_from_id(int id, color_t new_color);
 void start_dragging_syncd_mixes(int mix_id);
 void keep_dragging_syncd_mixes(int mix_id);
 void stop_dragging_syncd_mixes(int mix_id);
+void after_syncd_mix_edit(int id);
+void syncd_mix_change_position(int mix_id, mus_long_t change);
 
 int mix_complete_file(snd_info *sp, mus_long_t beg, const char *fullname, bool with_tag, file_delete_t auto_delete, mix_sync_t all_chans, int *out_chans);
 int mix_complete_file_at_cursor(snd_info *sp, const char *str);

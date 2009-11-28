@@ -9,7 +9,7 @@ static env *dialog_env = NULL;
 static bool dragging = false;
 static int edpos_before_drag;
 static with_hook_t hookable_before_drag;
-static mus_long_t drag_beg = 0, drag_end = 0, orig_beg = 0;
+static mus_long_t drag_beg = 0, drag_end = 0;
 
 static void start_dragging(int mix_id) 
 {
@@ -864,7 +864,7 @@ GtkWidget *make_mix_dialog(void)
       gtk_widget_show(w_amp_event);
       SG_SIGNAL_CONNECT(w_amp_event, "button_press_event", amp_click_callback, NULL);
       
-      mus_snprintf(amplab, LABEL_BUFFER_SIZE, _("amp:"));
+      mus_snprintf(amplab, LABEL_BUFFER_SIZE, "%s", _("amp:"));
       w_amp_label = gtk_label_new(amplab);
       gtk_container_add(GTK_CONTAINER(w_amp_event), w_amp_label);
       gtk_widget_show(w_amp_label);
