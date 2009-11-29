@@ -33,13 +33,6 @@ make xm
 ./snd --version
 ./snd -l snd-test 0
 make allclean
-echo ' CC=g++ CFLAGS="-Wall -I/usr/X11R6/include" --with-guile '
-./configure --quiet CC=g++ CFLAGS="-Wall -I/usr/X11R6/include" --with-guile LDFLAGS="-L/usr/X11R6/lib"
-make
-make xm
-./snd --version
-./snd -l snd-test 1
-./snd -l snd-test 22
 
 echo ' -------------------------------- with-no-gui -------------------------------- '
 make allclean
@@ -157,8 +150,8 @@ rm -f config.cache
 rm -f makefile
 rm -f mus-config.h
 rm -f sndinfo
-echo ' CFLAGS="-Wall -I/usr/X11R6/include"  --with-float-samples --without-ladspa --with-gl --with-modules --without-gsl --without-xpm '
-./configure --quiet CFLAGS="-Wall -I/usr/X11R6/include"  --with-float-samples --without-ladspa --with-gl --with-modules --without-gsl --without-xpm LDFLAGS="-L/usr/X11R6/lib"
+echo ' CFLAGS="-Wall -I/usr/X11R6/include"  --with-float-samples --without-ladspa --with-gl --without-gsl --without-xpm '
+./configure --quiet CFLAGS="-Wall -I/usr/X11R6/include"  --with-float-samples --without-ladspa --with-gl --without-gsl --without-xpm LDFLAGS="-L/usr/X11R6/lib"
 make
 make xm
 echo ' '
@@ -175,14 +168,13 @@ rm -f config.cache
 rm -f makefile
 rm -f mus-config.h
 rm -f sndinfo
-echo ' CFLAGS="-Wall -I/usr/X11R6/include"  --with-float-samples --with-modules '
-./configure --quiet CFLAGS="-Wall -I/usr/X11R6/include"  --with-float-samples --with-modules LDFLAGS="-L/usr/X11R6/lib"
+echo ' CFLAGS="-Wall -I/usr/X11R6/include"  --with-float-samples --with-modules --with-guile '
+./configure --quiet CFLAGS="-Wall -I/usr/X11R6/include"  --with-float-samples --with-modules --with-guile LDFLAGS="-L/usr/X11R6/lib"
 make
 echo ' '
 echo ' '
 ./snd --version
-./snd -l snd-test
-echo ' -------------------------------- that was full snd-test with-modules -------------------------------- '
+./snd -l snd-test 0
 make clmclean
 
 echo ' '

@@ -533,9 +533,9 @@ rm -f mus-config.h
 rm -f sndinfo
 
 echo ' -------------------------------------------------------------------------------- '
-echo ' ----                  --without-float-samples --without-ladspa --with-gl --with-gl2ps --with-modules --without-gsl --without-xpm '
+echo ' ----                  --without-float-samples --without-ladspa --with-gl --with-gl2ps --without-gsl --without-xpm '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include"  --without-float-samples --without-ladspa --with-gl --with-gl2ps --with-modules --without-gsl --without-xpm
+./configure --quiet LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include"  --without-float-samples --without-ladspa --with-gl --with-gl2ps --without-gsl --without-xpm
 make
 echo ' '
 echo ' '

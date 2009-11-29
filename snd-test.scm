@@ -33,7 +33,7 @@
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs))
 
-(define tests 1)
+(define tests 5)
 (define keep-going #f)
 (define all-args #f)
 (define test-at-random 0)
@@ -61585,12 +61585,12 @@ EDITS: 1
 	    (if (not (= _GtkReliefStyle GTK_RELIEF_NORMAL)) (snd-display ";button relief: ~A" _GtkReliefStyle))
 	    (let ((align (gtk_button_get_alignment _GtkButton_)))
 	      (if (or (fneq (car align) 0.5) (fneq (cadr align) 0.5)) (snd-display ";button align: ~A" align)))
-	    ;; presumably these care explicit callbacks
-	    (gtk_button_pressed _GtkButton_)
-	    (gtk_button_released _GtkButton_)
-	    (gtk_button_clicked _GtkButton_)
-	    (gtk_button_enter _GtkButton_)
-	    (gtk_button_leave _GtkButton_)
+	    ;; presumably these are explicit callbacks (out 2.19)
+	    ;; (gtk_button_pressed _GtkButton_)
+	    ;; (gtk_button_released _GtkButton_)
+	    ;; (gtk_button_clicked _GtkButton_)
+	    ;; (gtk_button_enter _GtkButton_)
+	    ;; (gtk_button_leave _GtkButton_)
 	    (gtk_button_set_relief _GtkButton_ GTK_RELIEF_NONE)
 	    (gtk_button_set_label _GtkButton_ "label")
 	    (gtk_button_set_use_underline _GtkButton_ #t)
@@ -61720,14 +61720,6 @@ EDITS: 1
 	    (gtk_widget_unmap _GtkWidget_)
 	    (gtk_widget_unrealize _GtkWidget_)
 	    (gtk_widget_unparent _GtkWidget_))
-	  
-	  (for-each
-	   (lambda (type)
-	     (let* ((arr (list->c-array '(1.0 2.0 3.0) type))
-		    (lst (c-array->list arr 3)))
-	       (if (not (feql lst '(1.0 2.0 3.0)))
-		   (snd-display ";~A c-array->list not invertible?: ~A ~A" type arr lst))))
-	   (list "gfloat*"))
 	  
 	  (for-each
 	   (lambda (type)
@@ -62300,9 +62292,9 @@ EDITS: 1
 	    (gtk_notebook_set_scrollable _GtkNotebook_ #t)
 	    (gtk_notebook_set_tab_label_text _GtkNotebook_ page "yow")
 	    (gtk_notebook_reorder_child _GtkNotebook_ _GtkWidget_ 0)
-	    (gtk_notebook_set_tab_label_packing _GtkNotebook_ page #f #f GTK_PACK_START)
-	    (let ((vals (gtk_notebook_query_tab_label_packing _GtkNotebook_ page)))
-	      (if (not (equal? vals (list #f #f GTK_PACK_START))) (snd-display ";notebook tab pack: ~A" vals)))
+;;	    (gtk_notebook_set_tab_label_packing _GtkNotebook_ page #f #f GTK_PACK_START)
+;;	    (let ((vals (gtk_notebook_query_tab_label_packing _GtkNotebook_ page)))
+;;	      (if (not (equal? vals (list #f #f GTK_PACK_START))) (snd-display ";notebook tab pack: ~A" vals)))
 	    (gtk_notebook_set_tab_label _GtkNotebook_ page (gtk_label_new "ho")))
 	  
 	  (let* ((_GtkHandleBox_ (GTK_HANDLE_BOX (gtk_handle_box_new)))
@@ -63982,12 +63974,12 @@ EDITS: 1
 		   GTK_IS_CELL_EDITABLE GTK_IS_CELL_LAYOUT GTK_IS_CELL_RENDERER GTK_IS_CELL_RENDERER_COMBO GTK_IS_CELL_RENDERER_PIXBUF
 		   GTK_IS_CELL_RENDERER_PROGRESS GTK_IS_CELL_RENDERER_TEXT GTK_IS_CELL_RENDERER_TOGGLE GTK_IS_CELL_VIEW GTK_IS_CHECK_BUTTON
 		   GTK_IS_CHECK_MENU_ITEM GTK_IS_CLIPBOARD GTK_IS_COLOR_BUTTON GTK_IS_COLOR_SELECTION GTK_IS_COLOR_SELECTION_DIALOG
-		   GTK_IS_COMBO_BOX GTK_IS_COMBO_BOX_ENTRY GTK_IS_CONTAINER GTK_IS_CURVE GTK_IS_DIALOG
+		   GTK_IS_COMBO_BOX GTK_IS_COMBO_BOX_ENTRY GTK_IS_CONTAINER GTK_IS_DIALOG
 		   GTK_IS_DRAWING_AREA GTK_IS_EDITABLE GTK_IS_ENTRY GTK_IS_ENTRY_COMPLETION GTK_IS_EVENT_BOX
 		   GTK_IS_EXPANDER GTK_IS_FILE_CHOOSER GTK_IS_FILE_CHOOSER_BUTTON GTK_IS_FILE_CHOOSER_DIALOG GTK_IS_FILE_CHOOSER_WIDGET
 		   GTK_IS_FILE_FILTER ;GTK_IS_FILE_SELECTION 
 		   GTK_IS_FIXED GTK_IS_FONT_BUTTON GTK_IS_FONT_SELECTION
-		   GTK_IS_FONT_SELECTION_DIALOG GTK_IS_FRAME GTK_IS_GAMMA_CURVE GTK_IS_HANDLE_BOX GTK_IS_HBOX
+		   GTK_IS_FONT_SELECTION_DIALOG GTK_IS_FRAME GTK_IS_HANDLE_BOX GTK_IS_HBOX
 		   GTK_IS_HBUTTON_BOX GTK_IS_HPANED GTK_IS_HRULER GTK_IS_HSCALE GTK_IS_HSCROLLBAR
 		   GTK_IS_HSEPARATOR GTK_IS_ICON_FACTORY GTK_IS_ICON_THEME GTK_IS_ICON_VIEW GTK_IS_IMAGE
 		   GTK_IS_IMAGE_MENU_ITEM GTK_IS_IM_CONTEXT GTK_IS_IM_CONTEXT_SIMPLE GTK_IS_IM_MULTICONTEXT
@@ -64166,10 +64158,10 @@ EDITS: 1
 		   gtk_border_free gtk_box_get_homogeneous gtk_box_get_spacing
 		   gtk_box_pack_end gtk_box_pack_start gtk_box_query_child_packing
 		   gtk_box_reorder_child gtk_box_set_child_packing gtk_box_set_homogeneous gtk_box_set_spacing gtk_button_box_get_child_secondary
-		   gtk_button_box_get_layout gtk_button_box_set_child_secondary gtk_button_box_set_layout gtk_button_clicked
-		   gtk_button_enter gtk_button_get_alignment gtk_button_get_focus_on_click gtk_button_get_image gtk_button_get_label
-		   gtk_button_get_relief gtk_button_get_use_stock gtk_button_get_use_underline gtk_button_leave
-		   gtk_button_new gtk_button_new_from_stock gtk_button_new_with_mnemonic gtk_button_pressed gtk_button_released
+		   gtk_button_box_get_layout gtk_button_box_set_child_secondary gtk_button_box_set_layout 
+		   gtk_button_get_alignment gtk_button_get_focus_on_click gtk_button_get_image gtk_button_get_label
+		   gtk_button_get_relief gtk_button_get_use_stock gtk_button_get_use_underline
+		   gtk_button_new gtk_button_new_from_stock gtk_button_new_with_mnemonic
 		   gtk_button_set_alignment gtk_button_set_focus_on_click gtk_button_set_image gtk_button_set_label gtk_button_set_relief
 		   gtk_button_set_use_stock gtk_button_set_use_underline gtk_calendar_clear_marks gtk_calendar_get_date
 		   gtk_calendar_get_display_options gtk_calendar_mark_day gtk_calendar_new gtk_calendar_select_day
@@ -64364,9 +64356,9 @@ EDITS: 1
 		   gtk_notebook_get_show_border gtk_notebook_get_show_tabs gtk_notebook_get_tab_label gtk_notebook_get_tab_label_text gtk_notebook_get_tab_pos
 		   gtk_notebook_insert_page gtk_notebook_insert_page_menu gtk_notebook_new gtk_notebook_next_page
 		   gtk_notebook_page_num gtk_notebook_popup_disable gtk_notebook_popup_enable gtk_notebook_prepend_page gtk_notebook_prepend_page_menu
-		   gtk_notebook_prev_page gtk_notebook_query_tab_label_packing gtk_notebook_remove_page gtk_notebook_reorder_child gtk_notebook_set_current_page
+		   gtk_notebook_prev_page gtk_notebook_remove_page gtk_notebook_reorder_child gtk_notebook_set_current_page
 		   gtk_notebook_set_menu_label gtk_notebook_set_menu_label_text gtk_notebook_set_scrollable gtk_notebook_set_show_border gtk_notebook_set_show_tabs
-		   gtk_notebook_set_tab_label gtk_notebook_set_tab_label_packing gtk_notebook_set_tab_label_text gtk_notebook_set_tab_pos gtk_object_destroy
+		   gtk_notebook_set_tab_label gtk_notebook_set_tab_label_text gtk_notebook_set_tab_pos gtk_object_destroy
 		   gtk_paint_arrow gtk_paint_box gtk_paint_box_gap
 		   gtk_paint_check gtk_paint_diamond gtk_paint_expander gtk_paint_extension gtk_paint_flat_box
 		   gtk_paint_focus gtk_paint_handle gtk_paint_hline gtk_paint_layout gtk_paint_option

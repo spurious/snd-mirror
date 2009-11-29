@@ -2711,6 +2711,8 @@ XEN_NARGIFY_1(g_mus_set_max_table_size_w, g_mus_set_max_table_size)
 #endif
 
 
+/* TODO: remove the "with-modules" support (also in sndlib itself) */
+
 #if WITH_MODULES
 static void sndlib2xen_init(void *ignore)
 #else

@@ -1,5 +1,6 @@
 Snd change log
 
+ 30-Nov:    Snd 11.1.
  23-Nov:    colormaps are objects now.  integer->colormap, colormap->integer.
             transforms are also objects.  integer->transform, transform->integer.
  20-Nov:    play is generic now, "old-play" is the previous form.

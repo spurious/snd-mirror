@@ -701,6 +701,7 @@ int mus_file_open_read(const char *arg)
 
 bool mus_file_probe(const char *arg) 
 {
+  if (!arg) return(false);
 #if HAVE_ACCESS
   return(access(arg, F_OK) == 0);
 #else
