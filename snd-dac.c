@@ -2935,11 +2935,18 @@ If object is a string, it is assumed to be a file name: \n    " play_example "\n
 	}
     }
 
+#if USE_NO_GUI
+  background = NOT_IN_BACKGROUND;
+#else
+  if (wait) background = IN_BACKGROUND; else background = NOT_IN_BACKGROUND;
+#endif
+
   /* unspecified object means the current sound, all chans, all samps, with sync, without wait, current edpos */
   if (XEN_NOT_BOUND_P(object))
     {
       sp = any_selected_sound();
-      if (sp) play_sound(sp, start, end);
+      if (sp) 
+	play_sound_1(sp, start, end, background, C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), XEN_FALSE, NULL, 0);
       return(XEN_FALSE);
     }
 
@@ -2954,12 +2961,6 @@ If object is a string, it is assumed to be a file name: \n    " play_example "\n
   /* mix object */
   if (XEN_MIX_P(object))
     return(g_play_mix(object, start));
-
-#if USE_NO_GUI
-  background = NOT_IN_BACKGROUND;
-#else
-  if (wait) background = IN_BACKGROUND; else background = NOT_IN_BACKGROUND;
-#endif
 
   /* selection object */
   if (XEN_SELECTION_P(object))

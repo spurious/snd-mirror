@@ -2353,11 +2353,11 @@ void call_sp_watchers(snd_info *sp, sp_watcher_t type, sp_watcher_reason_t reaso
  *             name:           mark|mix-name file-name (widget name via XtName) mus-name colormap
  *                               __func__? port-filename sampler-filename
  *
- *             reverse save find insert delete describe read write mix append [open and close?] member
- *             reverse mix append member: these exist already and could just be extended 
+ *             reverse is a special case -- it really only makes sense with lists where reversal happens all the time
+ *               and for all other types we'd want reverse! (in-place change), but extremely rarely.
  *
- *             scale(-to|by) convolve fft env filter insert mix reverse save smooth src map|scan pan-mix
- *               sampler? replace-with?
+ *     which leaves:
+ *             scale(-to|by) convolve fft env filter insert mix save smooth src map|scan pan-mix sampler?
  *
  * save with all the optkey args for all types (treat list/vector etc as sound data)
  * check map/for-each cases -- sound selection etc (and add to extsnd) and set/ref

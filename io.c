@@ -1387,7 +1387,8 @@ static int mus_write_1(int tfd, mus_long_t beg, mus_long_t end, int chans, mus_s
 
 	  if ((data_format == MUS_OUT_FORMAT) && 
 	      (chans == 1) && 
-	      (beg == 0))
+	      (beg == 0) &&
+	      (!inbuf)) /* "tfd" can be data format */
 	    {
 	      bytes = (end + 1) * siz;
 	      return(checked_write(tfd, (char *)(bufs[0]), bytes));

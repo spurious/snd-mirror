@@ -82,20 +82,16 @@
  *        vector-for-each, vector-map, string-for-each, for-each of any applicable object
  *
  *   things I ought to add/change:
- *        perhaps find(-if), remove etc from CL? (generic -- vectors and strings also as in support.scm)
- *           if generic, perhaps add to c-type struct?
  *        make #<func args> = (func args) or something like that so we can read new_type objects, or add a reader to that struct
  *          also add a conversion function (->generator etc)
  *        make-vector! where type of initial element sets type of all elements, or make-vector*?
  *          (make-vector! 32 0.0)
- *          set of other type either converts or error
- *          FFI would guarantee (for example) s7_Double as elements?
- *        perhaps generic reverse and append -- in the ! sense, reverse can be based on apply/set!/length
+ *          unproblematic types: s7_Double|s7_Int (ratio/complex too) char string boolean list/pair closure/function port c-object hash/vector continuation
+ *          FFI would guarantee (for example) s7_Double as elements? or type(a) == type(b) and c-object types agree
  *        ->* for conversions (->vector, ->ratio? ->string etc) [see end of this file]
  *        ideally: remove all mention of exact|inexact, remove set-car!|cdr!, 
  *                 remove *-ci-*, remove cxxxxr, remove improper lists
- *                 exact->inexact is the only useful exactness function -- perhaps (->real x)?
- *        load should handle C shared libraries, using dlopen/dlinit [optionally]
+ *                 exact->inexact is the only useful exactness function -- perhaps (->float x)?
  *        defgenerator (or at least defstruct of some sort)
  *        perhaps vector<->string for consistency
  *        perhaps bring new_type_x out to scheme -- could this be extended to defstruct? (needs make)
@@ -157,7 +153,7 @@
  *
  *
  * To get multiprecision arithmetic, set WITH_GMP to 1.
- *   You'll also need libgmp, libmpfr, and libmpc (version 0.5.2 or later)
+ *   You'll also need libgmp, libmpfr, and libmpc (version 0.8.0 or later)
  *
  * If your C compiler supports nested functions, define HAVE_NESTED_FUNCTIONS.
  */
@@ -10424,8 +10420,6 @@ static s7_pointer g_reverse(s7_scheme *sc, s7_pointer args)
   if (p == sc->NIL)
     return(sc->NIL);
 
-  /* TODO: reverse vector|string|C_type? -- needs field */
-  
   if (!is_pair(p))
     return(s7_wrong_type_arg_error(sc, "reverse", 0, p, "a list"));
   
@@ -10589,8 +10583,6 @@ static s7_pointer g_append(s7_scheme *sc, s7_pointer args)
   if (args == sc->NIL) 
     return(sc->NIL);
 
-  /* TODO: append strings|vectors|C-types?|hash-tables? */
-  
   if (cdr(args) == sc->NIL)
     return(car(args)); 
   
@@ -17743,24 +17735,8 @@ static void mark_s7(s7_scheme *sc)
 
 #if WITH_GMP
 
-
-/* ---------------- MPC fixups ----------------
- *
- * mpc changed a lot in version 0.6, so we need to provide backwards compatibility (without any autoconf switches) 
- *   they also left a dangling declaration of mpc_default_prec, so we have to provide a different name
- * in 0.7 they removed MPC_IM and MPC_RE, and replaced them with mpc_imagref and mpc_realref.
- */
-
-/* TODO: remove mpc < 0.8 support! */
-
-#if defined(MPC_VERSION_MAJOR) && defined(MPC_VERSION_MINOR)
-#if ((MPC_VERSION_MAJOR >= 1) || ((MPC_VERSION_MAJOR == 0) && (MPC_VERSION_MINOR > 5)))
-
-#define TRIG_TYPE int
-
 static mp_prec_t mpc_precision = 128;
 static mp_prec_t mpc_set_default_precision(mp_prec_t prec) {mpc_precision = prec; return(prec);}
-
 
 #define mpc_init(Z) mpc_init2(Z, mpc_precision)
 
@@ -17776,32 +17752,6 @@ static void mpc_init_set_ui_ui(mpc_ptr z, unsigned long int x, unsigned long int
   mpc_init(z);
   mpc_set_ui_ui(z, x, y, rnd);
 }
-
-#if ((MPC_VERSION_MAJOR >= 1) || ((MPC_VERSION_MAJOR == 0) && (MPC_VERSION_MINOR > 7)))
-#define HAVE_MPC_ASIN 1
-#endif
-
-#else
-#define TRIG_TYPE void
-#define mpc_set_default_precision(Prec) mpc_set_default_prec(Prec)
-#endif
-
-#else
-#define TRIG_TYPE void
-#define mpc_set_default_precision(Prec) mpc_set_default_prec(Prec)
-#endif
-
-#ifndef MPC_IM
-#define MPC_IM(x) mpc_imagref(x)
-#define MPC_RE(x) mpc_realref(x)
-#endif
-
-#ifndef HAVE_MPC_ASIN
-#define HAVE_MPC_ASIN 0
-#endif
-
-/* -------------------------------------------------------------------------------- */
-
 
 
 static s7_pointer promote_number(s7_scheme *sc, int type, s7_pointer x);
@@ -18252,11 +18202,11 @@ static s7_pointer s7_number_to_big_complex(s7_scheme *sc, s7_pointer p)
 
 static s7_pointer make_big_real_or_complex(s7_scheme *sc, s7_pointer z)
 {
-  if (mpfr_cmp_ui(MPC_IM(S7_BIG_COMPLEX(z)), 0) == 0)
+  if (mpfr_cmp_ui(mpc_imagref(S7_BIG_COMPLEX(z)), 0) == 0)
     {
       mpfr_t *n;
       n = (mpfr_t *)malloc(sizeof(mpfr_t));
-      mpfr_init_set(*n, MPC_RE(S7_BIG_COMPLEX(z)), GMP_RNDN);
+      mpfr_init_set(*n, mpc_realref(S7_BIG_COMPLEX(z)), GMP_RNDN);
       return(s7_make_object(sc, big_real_tag, (void *)n));
     }
   return(z);
@@ -18451,7 +18401,7 @@ s7_Double s7_real_part(s7_pointer x)
   if (is_c_object(x))
     {
       if (c_object_type(x) == big_complex_tag)
-	return((s7_Double)mpfr_get_d(MPC_RE(S7_BIG_COMPLEX(x)), GMP_RNDN));
+	return((s7_Double)mpfr_get_d(mpc_realref(S7_BIG_COMPLEX(x)), GMP_RNDN));
 
       if (c_object_type(x) == big_real_tag)
 	return((s7_Double)mpfr_get_d(S7_BIG_REAL(x), GMP_RNDN));
@@ -18471,7 +18421,7 @@ s7_Double s7_imag_part(s7_pointer x)
   if (is_c_object(x))
     {
       if (c_object_type(x) == big_complex_tag)
-	return((s7_Double)mpfr_get_d(MPC_IM(S7_BIG_COMPLEX(x)), GMP_RNDN));
+	return((s7_Double)mpfr_get_d(mpc_imagref(S7_BIG_COMPLEX(x)), GMP_RNDN));
       return(0.0);
     }
   return(num_to_imag_part(number(x)));
@@ -19860,11 +19810,11 @@ static s7_pointer big_log(s7_scheme *sc, s7_pointer args)
 	mpc_div(*n, *n, base, MPC_RNDNN);
 	mpc_clear(base);
 
-	if (mpfr_cmp_ui(MPC_IM(*n), 0) == 0)    /* (log -1.0 -1.0) */
+	if (mpfr_cmp_ui(mpc_imagref(*n), 0) == 0)    /* (log -1.0 -1.0) */
 	  {
 	    mpfr_t *x;
 	    x = (mpfr_t *)malloc(sizeof(mpfr_t));
-	    mpfr_init_set(*x, MPC_RE(*n), GMP_RNDN);
+	    mpfr_init_set(*x, mpc_realref(*n), GMP_RNDN);
 	    mpc_clear(*n);
 	    free(n);
 	    return(s7_make_object(sc, big_real_tag, (void *)x));
@@ -19979,7 +19929,7 @@ enum {TRIG_NO_CHECK, TRIG_TAN_CHECK, TRIG_TANH_CHECK};
 
 static s7_pointer big_trig(s7_scheme *sc, s7_pointer args, s7_function g_trig, 
 			   int (*mpfr_trig)(mpfr_ptr, mpfr_srcptr, mpfr_rnd_t),
-			   TRIG_TYPE (*mpc_trig)(mpc_ptr, mpc_srcptr, mpc_rnd_t),
+			   int (*mpc_trig)(mpc_ptr, mpc_srcptr, mpc_rnd_t),
 			   int tan_case)
 /* these declarations mimic the mpfr.h and mpc.h declarations.  It seems to me that
  *   they ought to be:
@@ -20029,11 +19979,11 @@ static s7_pointer big_trig(s7_scheme *sc, s7_pointer args, s7_function g_trig,
 	  n = (mpc_t *)malloc(sizeof(mpc_t));
 	  mpc_init(*n);
 	  mpc_trig(*n, S7_BIG_COMPLEX(p), MPC_RNDNN);
-	  if (mpfr_cmp_ui(MPC_IM(*n), 0) == 0)
+	  if (mpfr_cmp_ui(mpc_imagref(*n), 0) == 0)
 	    {
 	      mpfr_t *z;
 	      z = (mpfr_t *)malloc(sizeof(mpfr_t));
-	      mpfr_init_set(*z, MPC_RE(*n), GMP_RNDN);
+	      mpfr_init_set(*z, mpc_realref(*n), GMP_RNDN);
 	      mpc_clear(*n);
 	      free(n);
 	      return(s7_make_object(sc, big_real_tag, (void *)z));
@@ -20269,11 +20219,7 @@ static s7_pointer big_expt(s7_scheme *sc, s7_pointer args)
   if ((s7_is_number(x)) &&
       (s7_is_number(y)))
     {
-#if HAVE_MPC_ASIN
       mpc_t cy;
-#else
-      mpfr_t r, theta, yre, yim, nr, ntheta, lgr;
-#endif
       mpc_t *z;
       
       x = promote_number(sc, T_BIG_COMPLEX, x);
@@ -20297,61 +20243,28 @@ static s7_pointer big_expt(s7_scheme *sc, s7_pointer args)
 	  return(small_int(sc, 1));
 	}
 
-#if HAVE_MPC_ASIN
-      /* this chooses a different root in a few cases */
       mpc_init(cy);
       mpc_set(cy, S7_BIG_COMPLEX(y), MPC_RNDNN);
       mpc_pow(*z, *z, cy, MPC_RNDNN);
       mpc_clear(cy);
-#else
-      mpfr_init(r);
-      mpfr_init(theta);
-      mpc_abs(r, *z, GMP_RNDN);                                 /* r = cabs(x) */
-      mpfr_init_set(lgr, r, GMP_RNDN);
-      mpfr_log(lgr, lgr, GMP_RNDN);                             /* lgr = log(r) */
-      mpc_arg(theta, *z, GMP_RNDN);                             /* theta = carg(x) */
-      mpfr_init_set(yre, MPC_RE(S7_BIG_COMPLEX(y)), GMP_RNDN);  /* yre = creal(y) */
-      mpfr_init_set(yim, MPC_IM(S7_BIG_COMPLEX(y)), GMP_RNDN);  /* yim = cimag(y) */
-      mpfr_init_set(nr, theta, GMP_RNDN);
-      mpfr_mul(nr, nr, yim, GMP_RNDN);                          /* nr = yim * theta */
-      mpfr_init_set(ntheta, yre, GMP_RNDN);
-      mpfr_mul(ntheta, ntheta, lgr, GMP_RNDN);                  /* (temp) = yre * log(r) */
-      mpfr_sub(nr, ntheta, nr, GMP_RNDN);                       /* nr = yre * log(r) - yim * theta */
-      mpfr_exp(nr, nr, GMP_RNDN);                               /* nr = exp(yre * log(r) - yim * theta) */
-      mpfr_mul(lgr, lgr, yim, GMP_RNDN);                        /* (temp) = yim * log(r) */
-      mpfr_mul(theta, theta, yre, GMP_RNDN);                    /* (temp) = yre * theta */
-      mpfr_add(ntheta, theta, lgr, GMP_RNDN);                   /* ntheta = yre * theta + yim * log(r) */
-      mpfr_sin(yim, ntheta, GMP_RNDN);                          /* (temp) = sin(ntheta) */
-      mpfr_cos(yre, ntheta, GMP_RNDN);                          /* (temp) = cos(ntheta) */
-      mpfr_mul(yim, yim, nr, GMP_RNDN);                         /* (temp) = nr * sin(ntheta) */
-      mpfr_mul(yre, yre, nr, GMP_RNDN);                         /* (temp) = nr * cos(ntheta) */
-      mpc_set_fr_fr(*z, yre, yim, MPC_RNDNN);                   /* result = nr * cos(ntheta) + (nr * sin(ntheta)) * i */
-      
-      mpfr_clear(r);
-      mpfr_clear(lgr);
-      mpfr_clear(nr);
-      mpfr_clear(theta);
-      mpfr_clear(ntheta);
-      mpfr_clear(yre);
-      mpfr_clear(yim);
-#endif      
-      if (mpfr_cmp_ui(MPC_IM(*z), 0) == 0)
+
+      if (mpfr_cmp_ui(mpc_imagref(*z), 0) == 0)
 	{
 	  mpfr_t *n;
 	  if ((s7_is_rational(car(args))) &&
 	      (s7_is_rational(cadr(args))) &&
-	      (mpfr_integer_p(MPC_RE(*z)) != 0))
+	      (mpfr_integer_p(mpc_realref(*z)) != 0))
 	    {
 	      /* mpfr_integer_p can be confused: (expt 2718/1000 (bignum "617/5")) returns an int if precision=128, float if 512 */
 	      /*   so first make sure we're within (say) 31 bits */
 	      mpfr_t zi;
 	      mpfr_init_set_ui(zi, LONG_MAX, GMP_RNDN);
-	      if (mpfr_cmpabs(MPC_RE(*z), zi) < 0)
+	      if (mpfr_cmpabs(mpc_realref(*z), zi) < 0)
 		{
 		  mpz_t *k;
 		  k = (mpz_t *)malloc(sizeof(mpz_t));
 		  mpz_init(*k);
-		  mpfr_get_z(*k, MPC_RE(*z), GMP_RNDN);
+		  mpfr_get_z(*k, mpc_realref(*z), GMP_RNDN);
 		  mpc_clear(*z);
 		  mpfr_clear(zi);
 		  free(z);
@@ -20360,7 +20273,7 @@ static s7_pointer big_expt(s7_scheme *sc, s7_pointer args)
 	      mpfr_clear(zi);
 	    }
 	  n = (mpfr_t *)malloc(sizeof(mpfr_t));
-	  mpfr_init_set(*n, MPC_RE(*z), GMP_RNDN);
+	  mpfr_init_set(*n, mpc_realref(*z), GMP_RNDN);
 	  mpc_clear(*z);
 	  free(z);
 	  return(s7_make_object(sc, big_real_tag, (void *)n));
@@ -20389,25 +20302,11 @@ static s7_pointer big_asinh(s7_scheme *sc, s7_pointer args)
 	}
       if (c_object_type(p) == big_complex_tag)
 	{
-#if (!HAVE_MPC_ASIN)
-	  mpc_t z;
-#endif
 	  mpc_t *n;
 	  n = (mpc_t *)malloc(sizeof(mpc_t));
 	  mpc_init(*n);
-#if HAVE_MPC_ASIN
 	  mpc_set(*n, S7_BIG_COMPLEX(p), MPC_RNDNN);
 	  mpc_asinh(*n, *n, MPC_RNDNN);
-#else
-	  mpc_init(z);
-	  mpc_set(z, S7_BIG_COMPLEX(p), MPC_RNDNN);
-	  mpc_mul(*n, z, z, MPC_RNDNN);      /* z*z */
-	  mpc_add_ui(*n, *n, 1, MPC_RNDNN);  /* 1 + z*z */
-	  mpc_sqrt(*n, *n, MPC_RNDNN);       /* sqrt(1+z*z) */
-	  mpc_add(*n, *n, z, MPC_RNDNN);     /* z + sqrt(1+z*z) */
-	  mpc_log(*n, *n, MPC_RNDNN);        /* log(z+sqrt(1+z*z)) */
-	  mpc_clear(z);
-#endif
 	  return(s7_make_object(sc, big_complex_tag, (void *)n));
 	}
     }
@@ -20438,33 +20337,11 @@ static s7_pointer big_acosh(s7_scheme *sc, s7_pointer args)
 	}
       if (c_object_type(p) == big_complex_tag)
 	{
-#if (!HAVE_MPC_ASIN)
-	  mpc_t zm1, zp1;
-#endif
 	  mpc_t *n;
 	  n = (mpc_t *)malloc(sizeof(mpc_t));
 	  mpc_init(*n);
 	  mpc_set(*n, S7_BIG_COMPLEX(p), MPC_RNDNN);
-#if HAVE_MPC_ASIN
 	  mpc_acosh(*n, *n, MPC_RNDNN);
-#else
-	  /* use 2.0 * clog(csqrt(0.5 * (z + 1.0)) + csqrt(0.5 * (z - 1.0))) for better results when z is very large */
-	  mpc_init(zm1);
-	  mpc_init(zp1);
-	  mpc_set(zm1, *n, MPC_RNDNN);
-	  mpc_sub_ui(zm1, zm1, 1, MPC_RNDNN);
-	  mpc_div_ui(zm1, zm1, 2, MPC_RNDNN);
-	  mpc_sqrt(zm1, zm1, MPC_RNDNN);
-	  mpc_set(zp1, *n, MPC_RNDNN);
-	  mpc_add_ui(zp1, zp1, 1, MPC_RNDNN);
-	  mpc_div_ui(zp1, zp1, 2, MPC_RNDNN);
-	  mpc_sqrt(zp1, zp1, MPC_RNDNN);
-	  mpc_add(*n, zp1, zm1, MPC_RNDNN);
-	  mpc_log(*n, *n, MPC_RNDNN);
-	  mpc_mul_ui(*n, *n, 2, MPC_RNDNN);
-	  mpc_clear(zm1);
-	  mpc_clear(zp1);
-#endif
 	  return(s7_make_object(sc, big_complex_tag, (void *)n));
 	}
     }
@@ -20500,26 +20377,11 @@ static s7_pointer big_atanh(s7_scheme *sc, s7_pointer args)
 	}
       if (c_object_type(p) == big_complex_tag)
 	{
-#if (!HAVE_MPC_ASIN)
-	  mpc_t zp1, zm1;
-#endif
 	  mpc_t *n;
 	  n = (mpc_t *)malloc(sizeof(mpc_t));
 	  mpc_init(*n);
-#if HAVE_MPC_ASIN
 	  mpc_set(*n, S7_BIG_COMPLEX(p), MPC_RNDNN);
 	  mpc_atanh(*n, *n, MPC_RNDNN);
-#else
-	  mpc_init(zp1);
-	  mpc_init(zm1);
-	  mpc_set(zp1, S7_BIG_COMPLEX(p), MPC_RNDNN);
-	  mpc_set(zm1, zp1, MPC_RNDNN);
-	  mpc_add_ui(zp1, zp1, 1, MPC_RNDNN);   /* 1+z */
-	  mpc_ui_sub(zm1, 1, zm1, MPC_RNDNN);   /* 1-z */
-	  mpc_div(*n, zp1, zm1, MPC_RNDNN);     /* (1+z)/(1-z) */
-	  mpc_log(*n, *n, MPC_RNDNN);           /* log((1+z)/(1-z)) */
-	  mpc_div_ui(*n, *n, 2, MPC_RNDNN);     /* log((1+z)/(1-z))/2 */
-#endif
 	  return(s7_make_object(sc, big_complex_tag, (void *)n));
 	}
     }
@@ -20558,28 +20420,10 @@ static s7_pointer big_atan(s7_scheme *sc, s7_pointer args)
 
       if (c_object_type(p0) == big_complex_tag)
 	{
-#if (!HAVE_MPC_ASIN)
-	  mpc_t ci, cipz, cimz;
-#endif
 	  mpc_t *n;
 	  n = (mpc_t *)malloc(sizeof(mpc_t));
 	  mpc_init_set(*n, S7_BIG_COMPLEX(p0), MPC_RNDNN);
-#if HAVE_MPC_ASIN
 	  mpc_atan(*n, *n, MPC_RNDNN);
-#else
-	  mpc_init_set_ui_ui(ci, 0, 1, MPC_RNDNN);        /* 0+i ... */
-	  mpc_init_set_ui_ui(cipz, 0, 1, MPC_RNDNN);
-	  mpc_init_set_ui_ui(cimz, 0, 1, MPC_RNDNN);
-	  mpc_add(cipz, cipz, *n, MPC_RNDNN);             /* i+z */
-	  mpc_sub(cimz, cimz, *n, MPC_RNDNN);             /* i-z */
-	  mpc_div(*n, cipz, cimz, MPC_RNDNN);             /* (i+z)/(i-z) */
-	  mpc_clear(cipz);
-	  mpc_clear(cimz);
-	  mpc_log(*n, *n, MPC_RNDNN);                     /* log((i+z)/(i-z)) */
-	  mpc_div_ui(*n, *n, 2, MPC_RNDNN);               /* log((i+z)/(i-z))/2 */
-	  mpc_mul(*n, *n, ci, MPC_RNDNN);                 /* i*log((i+z)/(i-z))/2 */
-	  mpc_clear(ci);
-#endif
 	  return(s7_make_object(sc, big_complex_tag, (void *)n));
 	}
     }
@@ -20618,57 +20462,10 @@ static s7_pointer big_acos(s7_scheme *sc, s7_pointer args)
 
       if (c_object_type(p) == big_complex_tag)
 	{
-#if (!HAVE_MPC_ASIN)
-	  bool ok;
-	  mpc_t x, ci;
-	  mpfr_t temp;
-#endif
 	  mpc_t *n;
 	  n = (mpc_t *)malloc(sizeof(mpc_t));
 	  mpc_init_set(*n, S7_BIG_COMPLEX(p), MPC_RNDNN);
-#if HAVE_MPC_ASIN
 	  mpc_acos(*n, *n, MPC_RNDNN);
-#else
-	  /* check for very large args as in g_acos */
-	  mpfr_init_set_ui(temp, 10000000, GMP_RNDN);
-	  ok = ((mpfr_cmpabs(MPC_RE(*n), temp) <= 0) &&
-		(mpfr_cmpabs(MPC_IM(*n), temp) <= 0));
-	  mpfr_clear(temp);
-	  if (!ok)
-	    {
-	      mpc_t sq1mz, sq1pz;
-	      mpfr_t rl, im;
-	      mpc_init_set(sq1mz, *n, MPC_RNDNN);
-	      mpc_init_set(sq1pz, *n, MPC_RNDNN);
-	      mpc_ui_sub(sq1mz, 1, sq1mz, MPC_RNDNN);
-	      mpc_add_ui(sq1pz, sq1pz, 1, MPC_RNDNN);
-	      mpc_sqrt(sq1mz, sq1mz, MPC_RNDNN);
-	      mpc_sqrt(sq1pz, sq1pz, MPC_RNDNN);
-	      mpfr_init_set(rl, MPC_RE(sq1pz), GMP_RNDN);
-	      mpfr_div(rl, MPC_RE(sq1mz), rl, GMP_RNDN);
-	      mpfr_atan(rl, rl, GMP_RNDN);
-	      mpfr_mul_ui(rl, rl, 2, GMP_RNDN);
-	      mpc_conj(sq1pz, sq1pz, MPC_RNDNN);
-	      mpc_mul(sq1pz, sq1pz, sq1mz, MPC_RNDNN);
-	      mpfr_init_set(im, MPC_IM(sq1pz), GMP_RNDN);
-	      mpfr_asinh(im, im, GMP_RNDN);
-	      mpc_set_fr_fr(*n, rl, im, MPC_RNDNN);
-	      return(s7_make_object(sc, big_complex_tag, (void *)n));
-	    }
-
-	  mpc_init_set(x, *n, MPC_RNDNN);
-	  mpc_mul(x, x, x, MPC_RNDNN);
-	  mpc_ui_sub(x, 1, x, MPC_RNDNN);
-	  mpc_sqrt(x, x, MPC_RNDNN);
-	  mpc_init_set_ui_ui(ci, 0, 1, MPC_RNDNN);
-	  mpc_mul(x, x, ci, MPC_RNDNN);
-	  mpc_add(*n, *n, x, MPC_RNDNN);
-	  mpc_log(*n, *n, MPC_RNDNN);
-	  mpc_mul(*n, *n, ci, MPC_RNDNN);
-	  mpc_neg(*n, *n, MPC_RNDNN);
-	  mpc_clear(x);
-	  mpc_clear(ci);
-#endif
 	  return(s7_make_object(sc, big_complex_tag, (void *)n));
 	}
     }
@@ -20708,58 +20505,10 @@ static s7_pointer big_asin(s7_scheme *sc, s7_pointer args)
 
       if (c_object_type(p) == big_complex_tag)
 	{
-#if (!HAVE_MPC_ASIN)
-	  bool ok;
-	  mpc_t x, ci;
-	  mpfr_t temp;
-#endif
 	  mpc_t *n;
 	  n = (mpc_t *)malloc(sizeof(mpc_t));
 	  mpc_init_set(*n, S7_BIG_COMPLEX(p), MPC_RNDNN);
-#if HAVE_MPC_ASIN
 	  mpc_asin(*n, *n, MPC_RNDNN);
-#else
-	  /* check for very large args as in g_asin */
-	  mpfr_init_set_ui(temp, 10000000, GMP_RNDN);
-	  ok = ((mpfr_cmpabs(MPC_RE(*n), temp) <= 0) &&
-		(mpfr_cmpabs(MPC_IM(*n), temp) <= 0));
-	  mpfr_clear(temp);
-	  if (!ok)
-	    {
-	      mpc_t sq1mz, sq1pz, ctemp;
-	      mpfr_t rl, im;
-	      mpc_init_set(sq1mz, *n, MPC_RNDNN);
-	      mpc_init_set(sq1pz, *n, MPC_RNDNN);
-	      mpc_ui_sub(sq1mz, 1, sq1mz, MPC_RNDNN);
-	      mpc_add_ui(sq1pz, sq1pz, 1, MPC_RNDNN);
-	      mpc_sqrt(sq1mz, sq1mz, MPC_RNDNN);
-	      mpc_sqrt(sq1pz, sq1pz, MPC_RNDNN);
-	      mpc_init(ctemp);
-	      mpc_mul(ctemp, sq1mz, sq1pz, MPC_RNDNN);
-	      mpfr_init_set(rl, MPC_RE(ctemp), GMP_RNDN);
-	      mpfr_div(rl, MPC_RE(*n), rl, GMP_RNDN);
-	      mpfr_atan(rl, rl, GMP_RNDN);
-	      mpc_conj(sq1mz, sq1mz, MPC_RNDNN);
-	      mpc_mul(sq1pz, sq1pz, sq1mz, MPC_RNDNN);
-	      mpfr_init_set(im, MPC_IM(sq1pz), GMP_RNDN);
-	      mpfr_asinh(im, im, GMP_RNDN);
-	      mpc_set_fr_fr(*n, rl, im, MPC_RNDNN);
-	      return(s7_make_object(sc, big_complex_tag, (void *)n));
-	    }
-
-	  mpc_init_set(x, *n, MPC_RNDNN);
-	  mpc_mul(x, x, x, MPC_RNDNN);
-	  mpc_ui_sub(x, 1, x, MPC_RNDNN);
-	  mpc_sqrt(x, x, MPC_RNDNN);
-	  mpc_init_set_ui_ui(ci, 0, 1, MPC_RNDNN);
-	  mpc_mul(*n, *n, ci, MPC_RNDNN);
-	  mpc_add(*n, *n, x, MPC_RNDNN);
-	  mpc_log(*n, *n, MPC_RNDNN);
-	  mpc_mul(*n, *n, ci, MPC_RNDNN);
-	  mpc_neg(*n, *n, MPC_RNDNN);
-	  mpc_clear(x);
-	  mpc_clear(ci);
-#endif
 	  return(s7_make_object(sc, big_complex_tag, (void *)n));
 	}
     }
@@ -22123,8 +21872,8 @@ static s7_pointer big_random(s7_scheme *sc, s7_pointer args)
 #if HAVE_PTHREADS
 	  pthread_mutex_unlock(&rng_lock);
 #endif
-	  mpfr_mul(MPC_RE(*n), MPC_RE(*n), MPC_RE(S7_BIG_COMPLEX(num)), GMP_RNDN);
-	  mpfr_mul(MPC_IM(*n), MPC_IM(*n), MPC_IM(S7_BIG_COMPLEX(num)), GMP_RNDN);
+	  mpfr_mul(mpc_realref(*n), mpc_realref(*n), mpc_realref(S7_BIG_COMPLEX(num)), GMP_RNDN);
+	  mpfr_mul(mpc_imagref(*n), mpc_imagref(*n), mpc_imagref(S7_BIG_COMPLEX(num)), GMP_RNDN);
 	  return(s7_make_object(sc, big_complex_tag, (void *)n));
 	}
     }
@@ -22987,19 +22736,19 @@ s7_scheme *s7_init(void)
 #if WITH_FORCE
   s7_eval_c_string("(define (force object) (object))");
 
-  s7_eval_c_string("(define-macro (delay expression)\n\
-                      `(let ((result-ready? #f)\n\
-  	                     (result #f))\n\
-                         (lambda ()\n\
-                           (if result-ready?\n\
-	                       result\n\
-	                       (let ((x (let () \n\
-		                          ,expression)))\n\
-	                         (if result-ready?\n\
-		                     result\n\
-                                    (begin\n\
+  s7_eval_c_string("(define-macro (delay expression)         \n\
+                      `(let ((result-ready? #f)              \n\
+  	                     (result #f))                    \n\
+                         (lambda ()                          \n\
+                           (if result-ready?                 \n\
+	                       result                        \n\
+	                       (let ((x (let ()              \n\
+		                          ,expression)))     \n\
+	                         (if result-ready?           \n\
+		                     result                  \n\
+                                    (begin                   \n\
 		                      (set! result-ready? #t)\n\
-		                      (set! result x)\n\
+		                      (set! result x)        \n\
 		                      result)))))))");
 #endif
 	   

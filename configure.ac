@@ -1,6 +1,6 @@
 # Configuration script for Snd
 
-AC_INIT(snd, 11.1, bil@ccrma.stanford.edu, ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-11.tar.gz)
+AC_INIT(snd, 11.2, bil@ccrma.stanford.edu, ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-11.tar.gz)
 
 AC_CONFIG_SRCDIR(snd.c)
 AC_CANONICAL_HOST
@@ -19,7 +19,7 @@ LOCAL_LANGUAGE="None"
 GRAPHICS_TOOLKIT="None"
 
 PACKAGE=Snd
-VERSION=11.1
+VERSION=11.2
 AC_DEFINE_UNQUOTED(SND_PACKAGE, "$PACKAGE")
 AC_DEFINE_UNQUOTED(SND_VERSION, "$VERSION")
 AC_SUBST(SND_PACKAGE)
@@ -65,7 +65,6 @@ AC_DEFINE_UNQUOTED(SND_HOST, "$host")
 #   --with-gl             include OpenGL support (default=no, Motif only)
 #   --with-just-gl        include OpenGL support but omit the extension language bindings (default=no, Motif only)
 #   --with-gl2ps          include gl2ps (Motif only)
-#   --with-modules        accommodate sndlib that was built with modules
 #   --with-editres 	  include EditRes in xm
 #   --with-shared-sndlib  load sndlib.so if possible
 #   --with-builtin-gtkrc  include built-in gtkrc fallbacks (default=yes)
@@ -101,7 +100,6 @@ AC_ARG_WITH(just-gl,     [  --with-just-gl	  include OpenGL support, but omit th
 AC_ARG_WITH(gl2ps,       [  --with-gl2ps		  include gl2ps, Motif only])
 AC_ARG_WITH(motif,	 [  --with-motif	  	  use libXm to build Snd])
 AC_ARG_WITH(static-motif,[  --with-static-motif	  use libXm.a to build Snd])
-AC_ARG_WITH(modules,     [  --with-modules	  use if sndlib uses modules])
 AC_ARG_WITH(editres,     [  --with-editres	  include editres in xm])
 AC_ARG_WITH(ladspa,	 [  --with-ladspa  	  include support for LADSPA plugins, Linux only])
 AC_ARG_WITH(hobbit,      [  --with-hobbit 	  include hobbit-style function arity checking, default=no])
@@ -533,7 +531,7 @@ if test "$with_gmp" = yes ; then
     AC_LINK_IFELSE(
         [AC_LANG_PROGRAM(
                 [#include <mpc.h>],
-                [mpc_t x;  mpc_init2(x, 53); mpc_clear(x);] 
+                [mpc_t x;  mpc_init2(x, 53); mpc_clear(x);  mpc_asin(x, x, MPC_RNDNN);] 
         )],
         [AC_MSG_RESULT(yes)
          AC_CHECK_LIB(mpc, mpc_arg, 
@@ -1627,9 +1625,6 @@ if test $GUILE_CONFIG_works = yes; then
     AC_CHECK_LIB($GNAME, scm_c_primitive_load,   [AC_DEFINE(HAVE_SCM_C_PRIMITIVE_LOAD)])
     AC_CHECK_LIB($GNAME, scm_nan_p,              [AC_DEFINE(HAVE_SCM_NAN_P)])
     AC_CHECK_LIB($GNAME, scm_module_public_interface, [AC_DEFINE(HAVE_SCM_MODULE_PUBLIC_INTERFACE)])
-    AC_CHECK_LIB($GNAME, scm_c_define_module,    [if test "$with_modules" = yes; then
-						    AC_DEFINE(WITH_MODULES)
-						  fi])
     AC_CHECK_TYPE(scm_t_catch_body,              [AC_DEFINE(HAVE_SCM_T_CATCH_BODY)], , [#include <libguile.h>]) # not gh.h here -> g++ dies
     AC_CHECK_TYPE(scm_t_guard,                   [AC_DEFINE(HAVE_GUILE_DYNAMIC_WIND)], , [#include <libguile.h>])
 
@@ -2276,16 +2271,6 @@ if test "$with_shared_sndlib" = yes; then
             SNDLIB_LIB="-L$SNDLIB_PREFIX/lib -lsndlib"
             OPTIONAL_LIBRARIES="$OPTIONAL_LIBRARIES sndlib"
             AC_DEFINE(WITH_SHARED_SNDLIB)
-	    SNDLIB_WITH_MODULES=`$SNDLIB_CONFIG --modules`
-            if test "$SNDLIB_WITH_MODULES" = "yes" ; then
-	      if test "$with_modules" != yes; then
-		AC_DEFINE(WITH_MODULES)
-              fi
-            else
-	      if test "$with_modules" = yes; then
-		AC_DEFINE(WITH_MODULES, 0)
-              fi
-            fi
           else
 	    AC_MSG_WARN([libsndlib.so was built with $SNDLIB_LANGUAGE, but current choice is $LOCAL_LANGUAGE])
           fi

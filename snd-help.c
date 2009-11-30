@@ -362,9 +362,6 @@ char *version_info(void)
 #else
 	  ", int", snd_itoa(MUS_SAMPLE_BITS), _(" samples"),
 #endif
-#if WITH_MODULES
-	  _(", with modules"),
-#endif
 #if HAVE_PTHREADS
 	  ", with threads",
 #endif
@@ -515,6 +512,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+1-Dec:   removed --with-modules configuration switch.\n\
 30-Nov:  Snd 11.1.\n\
 23-Nov:  colormaps are objects now.  integer->colormap, colormap->integer.\n\
          transforms are also objects.  integer->transform, transform->integer.\n\

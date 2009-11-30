@@ -224,7 +224,6 @@
 
 #undef WITH_HOBBIT
 #undef WITH_RT
-#undef WITH_MODULES
 #undef WITH_RELATIVE_PANES
 #undef WITH_MIDI
 

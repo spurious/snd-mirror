@@ -82,8 +82,6 @@
  */
 
 
-/* I think all the WITH_MODULES stuff is Guile-specific */
-
 
 /* -------- protect XEN vars from GC -------- */
 
@@ -3572,11 +3570,6 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
 
   XEN_YES_WE_HAVE("snd");
   XEN_YES_WE_HAVE("snd" SND_MAJOR_VERSION);
-
-#if WITH_MODULES
-  scm_c_use_module("snd sndlib");
-  scm_c_use_module("snd clm");
-#endif
 }
 
 /* unguile troubles:

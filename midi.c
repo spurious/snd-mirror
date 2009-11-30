@@ -754,11 +754,7 @@ static XEN g_mus_midi_describe(void)
   #define g_mus_midi_describe_w g_mus_midi_describe
 #endif
 
-#if WITH_MODULES
-static void midi_init(void *ignore)
-#else
 void mus_midi_init(void)
-#endif
 {
   XEN_DEFINE_PROCEDURE(S_mus_midi_open_read,   g_mus_midi_open_read_w, 1, 0, 0,   H_mus_midi_open_read);
   XEN_DEFINE_PROCEDURE(S_mus_midi_open_write,  g_mus_midi_open_write_w, 1, 0, 0,  H_mus_midi_open_write);
@@ -767,23 +763,5 @@ void mus_midi_init(void)
   XEN_DEFINE_PROCEDURE(S_mus_midi_write,       g_mus_midi_write_w, 2, 0, 0,       H_mus_midi_write);
   XEN_DEFINE_PROCEDURE(S_mus_midi_device_name, g_mus_midi_device_name_w, 0, 1, 0, H_mus_midi_device_name);
   XEN_DEFINE_PROCEDURE(S_mus_midi_describe,    g_mus_midi_describe_w, 0, 0, 0,    H_mus_midi_describe);
-
-#if WITH_MODULES
-  scm_c_export(S_mus_midi_open_read,
-	       S_mus_midi_open_write,
-	       S_mus_midi_close,
-	       S_mus_midi_read,
-	       S_mus_midi_write,
-	       S_mus_midi_device_name,
-	       S_mus_midi_describe,
-	       NULL);
-#endif
 }
-
-#if WITH_MODULES
-void mus_midi_init(void)
-{
-  scm_c_define_module("snd sndlib", midi_init, NULL);  
-}
-#endif
 #endif

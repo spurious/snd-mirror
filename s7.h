@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "1.39"
-#define S7_DATE "24-Nov-09"
+#define S7_VERSION "1.40"
+#define S7_DATE "1-Dec-09"
 
 
 typedef long long int s7_Int;
@@ -844,6 +844,7 @@ void s7_mark_object(s7_pointer p);
  * 
  *        s7 changes
  *
+ * 1-Dec:     mpc versions before 0.8.0 are no longer supported.
  * 24-Nov:    define-macro* and defmacro*.
  *            force and delay included only if WITH_FORCE set, promise? removed.
  * 17-Nov:    s7_is_boolean no longer takes the s7_scheme argument.

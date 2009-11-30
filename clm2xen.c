@@ -8448,11 +8448,7 @@ XEN_NARGIFY_1(g_mus_irandom_w, g_mus_irandom)
 #endif
 
 
-#if WITH_MODULES
-static void clm_init(void *ignore)
-#else
 static void mus_xen_init(void)
-#endif
 {
   mus_initialize();
 
@@ -8821,12 +8817,12 @@ static void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_polywave,               g_polywave_w,               1, 1, 0, H_polywave);
   XEN_DEFINE_PROCEDURE(S_polywave_p,             g_polywave_p_w,             1, 0, 0, H_polywave_p);
 
-  XEN_DEFINE_PROCEDURE(S_make_nrxysin,        g_make_nrxysin_w,        0, 0, 1, H_make_nrxysin);
-  XEN_DEFINE_PROCEDURE(S_nrxysin,             g_nrxysin_w,             1, 1, 0, H_nrxysin);
-  XEN_DEFINE_PROCEDURE(S_nrxysin_p,           g_nrxysin_p_w,           1, 0, 0, H_nrxysin_p);
-  XEN_DEFINE_PROCEDURE(S_make_nrxycos,        g_make_nrxycos_w,        0, 0, 1, H_make_nrxycos);
-  XEN_DEFINE_PROCEDURE(S_nrxycos,             g_nrxycos_w,             1, 1, 0, H_nrxycos);
-  XEN_DEFINE_PROCEDURE(S_nrxycos_p,           g_nrxycos_p_w,           1, 0, 0, H_nrxycos_p);
+  XEN_DEFINE_PROCEDURE(S_make_nrxysin,           g_make_nrxysin_w,           0, 0, 1, H_make_nrxysin);
+  XEN_DEFINE_PROCEDURE(S_nrxysin,                g_nrxysin_w,                1, 1, 0, H_nrxysin);
+  XEN_DEFINE_PROCEDURE(S_nrxysin_p,              g_nrxysin_p_w,              1, 0, 0, H_nrxysin_p);
+  XEN_DEFINE_PROCEDURE(S_make_nrxycos,           g_make_nrxycos_w,           0, 0, 1, H_make_nrxycos);
+  XEN_DEFINE_PROCEDURE(S_nrxycos,                g_nrxycos_w,                1, 1, 0, H_nrxycos);
+  XEN_DEFINE_PROCEDURE(S_nrxycos_p,              g_nrxycos_p_w,              1, 0, 0, H_nrxycos_p);
 
 
 #if HAVE_SCHEME
@@ -8862,20 +8858,26 @@ static void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_make_locsig,       g_make_locsig_w,  0, 0, 1, H_make_locsig);
   XEN_DEFINE_PROCEDURE(S_move_locsig,       g_move_locsig_w,  3, 0, 0, H_move_locsig);
   XEN_DEFINE_PROCEDURE(S_mus_channels,      g_mus_channels_w, 1, 0, 0, H_mus_channels);
+
 #if HAVE_SCHEME || HAVE_FORTH
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_locsig_ref, g_locsig_ref_w, H_locsig_ref, S_setB S_locsig_ref, g_locsig_set_w,  2, 0, 3, 0);
 #endif
+
 #if HAVE_RUBY
   XEN_DEFINE_PROCEDURE(S_locsig_ref,        g_locsig_ref_w,   2, 0, 0, H_locsig_ref);
 #endif
+
   XEN_DEFINE_PROCEDURE(S_locsig_set,        g_locsig_set_w,   3, 0, 0, H_locsig_set);
+
 #if HAVE_SCHEME || HAVE_FORTH
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_locsig_reverb_ref, g_locsig_reverb_ref_w, H_locsig_reverb_ref, 
 				   S_locsig_reverb_set, g_locsig_reverb_set_w,  2, 0, 3, 0);
 #endif
+
 #if HAVE_RUBY
   XEN_DEFINE_PROCEDURE(S_locsig_reverb_ref, g_locsig_reverb_ref_w, 2, 0, 0, H_locsig_reverb_ref);
 #endif
+
   XEN_DEFINE_PROCEDURE(S_locsig_reverb_set, g_locsig_reverb_set_w, 3, 0, 0, H_locsig_reverb_set);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_locsig_type, g_locsig_type_w, H_locsig_type, S_setB S_locsig_type, g_set_locsig_type_w,  0, 0, 1, 0);
 
@@ -9004,337 +9006,7 @@ static void mus_xen_init(void)
     gettimeofday(&overall_start_time, &z0);
   }
 #endif
-
-  /* is this a good idea?  I think it means these names are automatically imported into
-   *   subsequently defined modules, which seems like a bad idea.  Perhaps we should
-   *   have a separate scheme file with these names in an export statement, if there
-   *   is such a thing.
-   */
-#if WITH_MODULES
-  scm_c_export(
-	       S_all_pass,
-	       S_all_pass_p,
-	       S_amplitude_modulate,
-	       S_array_interp,
-	       S_asymmetric_fm,
-	       S_asymmetric_fm_p,
-	       S_autocorrelate,
-	       S_bartlett_window,
-	       S_bartlett_hann_window,
-	       S_bohman_window,
-	       S_flat_top_window,
-	       S_blackman2_window,
-	       S_blackman3_window,
-	       S_blackman4_window,
-	       S_blackman5_window,
-	       S_blackman6_window,
-	       S_blackman7_window,
-	       S_blackman8_window,
-	       S_blackman9_window,
-	       S_blackman10_window,
-	       S_cauchy_window,
-	       S_clear_array,
-	       S_clear_sincs,
-	       S_clm_print,
-	       S_clm_default_frequency,
-	       S_clm_table_size,
-	       S_comb,
-	       S_comb_p,
-	       S_connes_window,
-	       S_continue_sample_to_file,
-	       S_continue_frame_to_file,
-	       S_contrast_enhancement,
-	       S_convolution,
-	       S_convolve,
-	       S_convolve_files,
-	       S_convolve_p,
-	       S_correlate,
-	       S_db_to_linear,
-	       S_degrees_to_radians,
-	       S_delay,
-	       S_delay_p,
-	       S_delay_tick,
-	       S_dolph_chebyshev_window,
-	       S_dot_product,
-	       S_dpss_window,
-#if HAVE_COMPLEX_TRIG && XEN_HAVE_COMPLEX_NUMBERS
-	       S_edot_product,
-#endif
-	       S_env,
-	       S_env_any,
-	       S_env_interp,
-	       S_env_p,
-	       S_exponential_window,
-	       S_file_to_frame,
-	       S_file_to_frame_p,
-	       S_file_to_sample,
-	       S_file_to_sample_p,
-	       S_filter,
-	       S_filter_p,
-	       S_filtered_comb,
-	       S_filtered_comb_p,
-	       S_fir_filter,
-	       S_fir_filter_p,
-	       S_firmant,
-	       S_firmant_p,
-	       S_formant,
-	       S_formant_bank,
-	       S_formant_p,
-	       S_frame_add,
-	       S_frame_multiply,
-	       S_frame,
-	       S_frame_p,
-	       S_frame_ref,
-	       S_frame_set,
-	       S_frame_to_file,
-	       S_frame_to_file_p,
-	       S_frame_to_frame,
-	       S_frame_to_list,
-	       S_frame_to_sample,
-	       S_gaussian_window,
-	       S_granulate,
-	       S_granulate_p,
-	       S_hamming_window,
-	       S_hann_poisson_window,
-	       S_hann_window,
-	       S_hz_to_radians,
-	       S_iir_filter,
-	       S_iir_filter_p,
-	       S_in_any,
-	       S_ina,
-	       S_inb,
-	       S_kaiser_window,
-	       S_linear_to_db,
-	       S_locsig,
-	       S_locsig_p,
-	       S_locsig_ref,
-	       S_locsig_reverb_ref,
-	       S_locsig_reverb_set,
-	       S_locsig_set,
-	       S_locsig_type,
-	       S_make_all_pass,
-	       S_make_asymmetric_fm,
-	       S_make_comb,
-	       S_make_convolve,
-	       S_make_delay,
-	       S_make_env,
-	       S_make_fft_window,
-	       S_make_file_to_frame,
-	       S_make_file_to_sample,
-	       S_make_filter,
-	       S_make_filtered_comb,
-	       S_make_fir_coeffs,
-	       S_make_fir_filter,
-	       S_make_firmant,
-	       S_make_formant,
-	       S_make_frame "!",
-	       S_make_frame,
-	       S_make_frame_to_file,
-	       S_make_granulate,
-	       S_make_iir_filter,
-	       S_make_locsig,
-	       S_make_mixer "!",
-	       S_make_mixer,
-	       S_make_move_sound,
-	       S_make_moving_average,
-	       S_make_ncos,
-	       S_make_notch,
-	       S_make_nrxycos,
-	       S_make_nrxysin,
-	       S_make_nsin,
-	       S_make_one_pole,
-	       S_make_one_zero,
-	       S_make_oscil,
-	       S_make_phase_vocoder,
-	       S_make_polyshape,
-	       S_make_polywave,
-	       S_make_pulse_train,
-	       S_make_rand,
-	       S_make_rand_interp,
-	       S_make_readin,
-	       S_make_sample_to_file,
-	       S_make_sawtooth_wave,
-	       S_make_scalar_mixer,
-	       S_make_square_wave,
-	       S_make_src,
-	       S_make_ssb_am,
-	       S_make_table_lookup,
-	       S_make_triangle_wave,
-	       S_make_two_pole,
-	       S_make_two_zero,
-	       S_make_wave_train,
-	       S_mixer_add,
-	       S_mixer_multiply,
-	       S_mixer,
-	       S_mixer_p,
-	       S_mixer_ref,
-	       S_mixer_set,
-	       S_mlt_sine_window,
-	       S_move_locsig,
-	       S_move_sound,
-	       S_move_sound_p,
-	       S_moving_average,
-	       S_moving_average_p,
-	       S_multiply_arrays,
-	       S_mus_apply,
-	       S_mus_array_print_length,
-	       S_mus_channel,
-	       S_mus_channels,
-	       S_mus_chebyshev_first_kind,
-	       S_mus_chebyshev_second_kind,
-	       S_mus_chebyshev_t_sum,
-	       S_mus_chebyshev_tu_sum,
-	       S_mus_chebyshev_u_sum,
-	       S_mus_close,
-	       S_mus_data,
-	       S_mus_describe,
-	       S_mus_feedback,
-	       S_mus_feedforward,
-	       S_mus_fft,
-	       S_mus_file_buffer_size,
-	       S_mus_file_name,
-	       S_mus_float_equal_fudge_factor,
-	       S_mus_frandom,
-	       S_mus_frequency,
-	       S_mus_generator_p,
-	       S_mus_hop,
-	       S_mus_increment,
-	       S_mus_input_p,
-	       S_mus_interp_all_pass,
-	       S_mus_interp_bezier,
-	       S_mus_interp_hermite,
-	       S_mus_interp_lagrange,
-	       S_mus_interp_linear,
-	       S_mus_interp_none,
-	       S_mus_interp_sinusoidal,
-	       S_mus_interp_type,
-	       S_mus_interpolate,
-	       S_mus_irandom,
-	       S_mus_length,
-	       S_mus_location,
-	       S_mus_mix,
-	       S_mus_name,
-	       S_mus_offset,
-	       S_mus_order,
-	       S_mus_output_p,
-	       S_mus_phase,
-	       S_mus_ramp,
-	       S_mus_rand_seed,
-	       S_mus_random,
-	       S_mus_reset,
-	       S_mus_run,
-	       S_mus_safety,
-	       S_mus_scaler,
-	       S_mus_set_formant_radius_and_frequency,
-	       S_mus_srate,
-	       S_mus_width,
-	       S_mus_xcoeff,
-	       S_mus_xcoeffs,
-	       S_mus_ycoeff,
-	       S_mus_ycoeffs,
-	       S_ncos,
-	       S_ncos_p,
-	       S_normalize_partials,
-	       S_notch,
-	       S_notch_p,
-	       S_nrxycos,
-	       S_nrxycos_p,
-	       S_nrxysin,
-	       S_nrxysin_p,
-	       S_nsin,
-	       S_nsin_p,
-	       S_one_pole,
-	       S_one_pole_p,
-	       S_one_zero,
-	       S_one_zero_p,
-	       S_oscil,
-	       S_oscil_p,
-	       S_out_any,
-	       S_outa,
-	       S_outb,
-	       S_outc,
-	       S_outd,
-	       S_output,
-	       S_papoulis_window,
-	       S_partials_to_polynomial,
-	       S_partials_to_wave,
-	       S_parzen_window,
-	       S_phase_partials_to_wave,
-	       S_phase_vocoder,
-	       S_phase_vocoder_amp_increments,
-	       S_phase_vocoder_amps,
-	       S_phase_vocoder_freqs,
-	       S_phase_vocoder_p,
-	       S_phase_vocoder_phase_increments,
-	       S_phase_vocoder_phases,
-	       S_poisson_window,
-	       S_polar_to_rectangular,
-	       S_polynomial,
-	       S_polyshape,
-	       S_polyshape_p,
-	       S_polywave,
-	       S_polywave_p,
-	       S_pulse_train,
-	       S_pulse_train_p,
-	       S_radians_to_degrees,
-	       S_radians_to_hz,
-	       S_rand,
-	       S_rand_interp,
-	       S_rand_interp_p,
-	       S_rand_p,
-	       S_readin,
-	       S_readin_p,
-	       S_rectangular_to_magnitudes,
-	       S_rectangular_to_polar,
-	       S_rectangular_window,
-	       S_reverb,
-	       S_riemann_window,
-	       S_ring_modulate,
-	       S_rv2_window,
-	       S_rv3_window,
-	       S_rv4_window,
-	       S_samaraki_window,
-	       S_sample_to_file,
-	       S_sample_to_file_add,
-	       S_sample_to_file_p,
-	       S_sample_to_frame,
-	       S_samples_to_seconds,
-	       S_sawtooth_wave,
-	       S_sawtooth_wave_p,
-	       S_seconds_to_samples,
-	       S_sinc_window,
-	       S_spectrum,
-	       S_square_wave,
-	       S_square_wave_p,
-	       S_src,
-	       S_src_p,
-	       S_ssb_am,
-	       S_ssb_am_p,
-	       S_table_lookup,
-	       S_table_lookup_p,
-	       S_tap,
-	       S_triangle_wave,
-	       S_triangle_wave_p,
-	       S_tukey_window,
-	       S_two_pole,
-	       S_two_pole_p,
-	       S_two_zero,
-	       S_two_zero_p,
-	       S_ultraspherical_window,
-	       S_wave_train,
-	       S_wave_train_p,
-	       S_welch_window,
-	       NULL);
-#endif
 }
-
-
-#if WITH_MODULES
-static void mus_xen_init(void)
-{
-  scm_c_define_module("snd clm", clm_init, NULL);
-}
-#endif
 
 
 void Init_sndlib(void)

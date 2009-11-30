@@ -1,5 +1,6 @@
 Snd change log
 
+ 1-Dec:     removed --with-modules configuration switch.
  30-Nov:    Snd 11.1.
  23-Nov:    colormaps are objects now.  integer->colormap, colormap->integer.
             transforms are also objects.  integer->transform, transform->integer.

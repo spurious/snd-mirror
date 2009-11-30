@@ -31,24 +31,17 @@
 ;;;  test all done                               [67489]
 ;;;  test the end                                [67676]
 
-(use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs))
-
-(define tests 5)
+(define tests 1)
 (define keep-going #f)
 (define all-args #f)
 (define test-at-random 0)
 ;(show-ptree 1)
-;(debug-enable 'warn-deprecated)
 (define profiling #f)
 
-;(if (provided? 'snd-s7) (set! *load-hook* (lambda (name) (format #t "load ~S~%" name))))
+;(set! *load-hook* (lambda (name) (format #t "load ~S~%" name)))
 
 (if (defined? 'run-clear-counts) (run-clear-counts))
 
-(define with-s7 (provided? 'snd-s7))
-
-(if with-s7
-    (begin
       (define O_RDWR 2)
       (define O_APPEND 1024)
       (define O_RDONLY 0)
@@ -159,8 +152,6 @@
 	      (set! prev mmax))))
 	rl)
       
-      ))
-
 (if (not (defined? 'snd-test)) (define snd-test -1))
 (define full-test (< snd-test 0))
 (define total-tests 28)
@@ -555,10 +546,7 @@
 
 (define (arity-ok func args)
   "func accepts args"
-  (let ((arity (if (not with-s7)
-		   (or (procedure-property func 'arity)
-		       (ref func 'arity))
-		   (procedure-arity func))))
+  (let ((arity (procedure-arity func)))
     (and (list-p arity)
 	 (>= args (car arity))
 	 (or (and (list-p (cddr arity))
@@ -567,13 +555,9 @@
 
 (define (set-arity-ok func args)
   "set proc accepts args"
-  (let ((arity (if (not with-s7)
-		   (if (procedure-with-setter? func)
-		       (procedure-property (setter func) 'arity)
-		       (procedure-property func 'arity))
-		   (if (procedure-with-setter? func)
-		       (procedure-with-setter-setter-arity func)
-		       (procedure-arity func)))))
+  (let ((arity (if (procedure-with-setter? func)
+		   (procedure-with-setter-setter-arity func)
+		   (procedure-arity func))))
     (and (list-p arity)
 	 (>= args (car arity))
 	 (or (and (list-p (cddr arity))
@@ -3549,14 +3533,14 @@
 	    (if (not (eq? tag 'out-of-range))
 		(snd-display ";sound-data->sound-data frames: ~A" tag))))
 	
-	(if (provided? 'snd-s7)
+
 	    (let ((sd (make-sound-data 1 1)))
 	      (if (fneq (sd 0 0) 0.0) (snd-display ";sound-data ref: ~A" (sd 0 0)))
 	      (set! (sd 0 0) 1.0)
 	      (if (fneq (sd 0 0) 1.0) (snd-display ";sound-data set: ~A" (sd 0 0)))
 	      (if (not (equal? sd (let ((sd1 (make-sound-data 1 1))) (sound-data-set! sd1 0 0 1.0) sd1)))
-		  (snd-display ";sound-data set not equal: ~A" sd))))
-	(if (provided? 'snd-s7)
+		  (snd-display ";sound-data set not equal: ~A" sd)))
+
 	    (let ((sd (make-sound-data 2 3)))
 	      (if (fneq (sd 0 0) 0.0) (snd-display ";sound-data ref (1): ~A" (sd 0 0)))
 	      (set! (sd 1 0) 1.0)
@@ -3567,7 +3551,7 @@
 				    (sound-data-set! sd1 1 0 1.0)
 				    (sound-data-set! sd1 1 2 2.0)
 				    sd1)))
-		  (snd-display ";sound-data set (3) not equal: ~A" sd))))
+		  (snd-display ";sound-data set (3) not equal: ~A" sd)))
 
 
 	(for-each 
@@ -4916,8 +4900,7 @@
       (if (file-exists? "test space.marks")
       (delete-file "test space.marks")))
 
-    (if (and (provided? 'snd-threads)
-	     with-s7)
+    (if (provided? 'snd-threads)
 	(let ((old-file-buffer-size *clm-file-buffer-size*))
 	  
 	  (let* ((result (with-threaded-sound ()
@@ -5072,8 +5055,6 @@
     (if (not (getenv "PATH")) (snd-display ";getenv: no PATH?"))
     (if (not (number? (getpid))) (snd-display ";getpid: ~A" (getpid)))
 
-    (if with-s7
-	(begin
 	  (if (not (list? (global-environment))) (snd-display ";global-environment not a list?: ~A" (global-environment)))
 
 	  (let ((ip (current-input-port)))
@@ -5090,7 +5071,6 @@
 	    (let ((tag (catch #t (lambda () (set-current-error-port "hiho!")) (lambda args (car args)))))
 	      (if (not (eq? tag 'wrong-type-arg)) (snd-display ";set-current-error-port tag: ~A" tag))
 	      (if (not (equal? ip (current-error-port))) (snd-display ";set-current-error-port clobbered port? ~A ~A" ip (current-error-port)))))
-	  ))
     
     ))
 
@@ -14561,13 +14541,7 @@ EDITS: 2
 
 ;;; ---------------- test 7: colors ----------------
 
-(if (not (provided? 'snd-rgb.scm)) 
-    (if (not with-s7)
-	(catch 'no-such-color 
-	       (lambda () 
-		 (load "rgb.scm")) 
-	       (lambda args args))
-	(load "rgb.scm")))
+(if (not (provided? 'snd-rgb.scm)) (load "rgb.scm"))
 
 (define (snd_test_7)
   (define colormap-error-max 0.0)
@@ -17413,8 +17387,6 @@ EDITS: 2
       (if (not (eq? (car var) 'wrong-type-arg))
 	  (snd-display ";polynomial empty coeffs: ~A" var)))
     
-    (if with-s7
-	(begin
 	  (do ((i 0 (+ i 1)))
 	      ((= i 100))
 	    (let ((arg1 (- (random 100.0) 50.0))
@@ -17423,7 +17395,7 @@ EDITS: 2
 		    (val2 (modulo arg1 arg2)))
 		(if (and (> (abs (- val1 val2)) 1e-8)
 			 (> (abs (- (abs (- val1 val2)) (abs arg2))) 1e-8))
-		    (format #t "~A ~A: ~A ~A -> ~A~%" arg1 arg2 val1 val2 (abs (- val1 val2)))))))))
+		    (format #t "~A ~A: ~A ~A -> ~A~%" arg1 arg2 val1 val2 (abs (- val1 val2)))))))
 
     (let ((err 0.0)
 	  (coeffs (vct 1.0 0.0 -.4999999963 0.0 .0416666418 0.0 -.0013888397 0.0 .0000247609 0.0 -.0000002605))
@@ -17553,7 +17525,7 @@ EDITS: 2
     (let ((vals (poly-gcd (vct 2 -2 -1 1) (vct -2.5 1))))
       (if (not (vequal vals (vct 0.000))) (snd-display ";poly-gcd 7: ~A" vals)))
     
-    (if with-s7 (poly-roots-tests))
+    (poly-roots-tests)
     
     (let ((val (poly-as-vector-resultant (vector -1 0 1) (vector 1 -2 1))))
       (if (fneq val 0.0) (snd-display ";poly-resultant 0: ~A" val)))
@@ -20564,8 +20536,6 @@ EDITS: 2
       (if (not (equal? fr1 fr2))
 	  (snd-display ";frame...: ~A ~A" fr1 fr2)))
     
-    (if (provided? 'snd-s7)
-	(begin
 	  (let ((fr1 (frame .1)))
 	    (if (fneq (fr1 0) .1) (snd-display ";frame gen ref (.1): ~A" (fr1 0)))
 	    (set! (fr1 0) .2)
@@ -20612,7 +20582,7 @@ EDITS: 2
 	    (if (fneq (mx 1 1) .5) (snd-display ";mixer (1 1) gen set (.5): ~A" (mx 1 1))))
 	  
 	  (let ((mx (mixer)))
-	    (if (not (equal? mx (make-mixer 1 0.0))) (snd-display ";(mixer): ~A" mx)))))
+	    (if (not (equal? mx (make-mixer 1 0.0))) (snd-display ";(mixer): ~A" mx)))
 	  
 	  
     (for-each 
@@ -24031,45 +24001,6 @@ EDITS: 2
 	(if (< vr 4.0)
 	    (snd-display ";rand not so random? ~A (chi)" vr))))
     
-    (if (and (defined? 'sort)
-	     (not with-s7))  ; this use of sort assumes it can sort vectors
-	(let ((v2 (lambda (n) ; Kolmogorov-Smirnov
-		    (let ((vals (make-vector n 0.0))
-			  (sn (sqrt n)))
-		      (do ((i 1 (+ 1 i)))
-			  ((= i n))
-			(vector-set! vals i (+ 0.5 (mus-random 0.5))))
-		      (set! vals (sort vals <))
-		      (let ((K+ 0.0)
-			    (K- 0.0)
-			    (incr (/ 1.0 n))
-			    (y 0.0))
-			(do ((i 1 (+ 1 i))
-			     (x incr (+ x incr)))
-			    ((= i n))
-			  (let ((Kp (- x (vector-ref vals i)))
-				(Km (- (vector-ref vals i) y)))
-			    (if (> Kp K+) (set! K+ Kp))
-			    (if (> Km K-) (set! K- Km))
-			    (set! y x)))
-			(list (* sn K+) (* sn K-)
-			      (- .07089 (/ 0.15 sn)) 
-			      (- .1601 (/ .014 sn))
-			      (- .3793 (/ 0.15 sn))
-			      (- .5887 (/ 0.15 sn))))))))
-	  
-	  ;;:(v2 1000)
-	  ;;(0.419489806081307 0.536508579184211 0.0661465835097474 0.159657281127576 0.374556583509747 0.583956583509747)
-	  ;; if < .2 complain?
-	  
-	  (let* ((vr (v2 1000))
-		 (kp (car vr))
-		 (km (cadr vr))
-		 (k (list-ref vr 3)))
-	    (if (or (< kp k)
-		    (< km k))
-		(snd-display ";mus-random not random? ~A (KS)" vr)))))
-    
     (let ((data (make-vct 65536)))
       (do ((i 0 (+ 1 i)))
 	  ((= i 65536))
@@ -25822,7 +25753,7 @@ EDITS: 2
 	(if (> (maxamp) .004) (snd-display ";ssb-am fm cancelled: ~A" (maxamp)))
 	(close-sound ind)))
     
-    (if (defined? 'mus-ssb-bank) ; not defined if --with-modules
+    (if (defined? 'mus-ssb-bank)
 	(let ((bands (make-vector 3))
 	      (ssbs (make-vector 3)))
 	  (do ((i 0 (+ 1 i)))
@@ -26953,8 +26884,7 @@ EDITS: 2
 	       (snd-display ";tanh(~A): ~A ~A ~A" x val val1 val2))))
        (list 1.0 0.1 0.1 0.333)))
 
-    (if (and all-args
-	     with-s7)
+    (if all-args
 	(let ((maxerr 0.0)
 	      (max-case #f)
 	      (cases 0))
@@ -30295,15 +30225,7 @@ EDITS: 2
 	  (do ((i 0 (+ 1 i)))
 	      ((= i 25)) ; need to cycle the 8's
 	    (if (defined? (string->symbol (car (list-ref vals i))))
-		(snd-help (car (list-ref vals i)) #f)))
-	  (if (and with-gui
-		   (not with-s7))
-	      (begin
-		(do ((i 0 (+ 1 i)))
-		    ((= i 25)) ; need to cycle the 8's
-		  (if (defined? (string->symbol (car (list-ref vals i))))
-		      (help-dialog (car (list-ref vals i)) (snd-help (car (list-ref vals i)) #f))))
-		(hide-widget (help-dialog "hi" "ho")))))
+		(snd-help (car (list-ref vals i)) #f))))
 	
 	(set! (show-indices) #t)
 	(let ((ind (open-sound "oboe.snd")))
@@ -52624,13 +52546,11 @@ EDITS: 1
       (if (sound? ind)
 	  (close-sound ind)))
     
-    (if with-s7
 	(let ((hie (lambda* ((a 0.0)) (declare (a float)) (+ a 1.0))))
 	  (if (fneq (run (lambda () (hie 1.0))) 2.0) (snd-display ";run opt args 0"))
 	  (if (fneq (run (lambda () (hie))) 1.0) (snd-display ";run opt args 1"))
-	  (if (fneq (run (lambda () (+ (hie) (hie 1.0)))) 3.0) (snd-display ";run opt args 2"))))
+	  (if (fneq (run (lambda () (+ (hie) (hie 1.0)))) 3.0) (snd-display ";run opt args 2")))
 
-    (if with-s7
 	(let ((hi (lambda* ((a 0.0) :optional (b 0.0)) (declare (a float) (b float)) (+ a b))))
 	  (if (fneq (run (lambda () (hi 1.0))) 1.0) (snd-display ";run opt args 3"))
 	  (if (fneq (run (lambda () (hi 1.0 2.0))) 3.0) (snd-display ";run opt args 4"))
@@ -52638,7 +52558,7 @@ EDITS: 1
 	  (if (fneq (run (lambda () (+ (hi) (hi 1.0) (hi 1.0 2.0)))) 4.0) (snd-display ";run opt args 6"))
 	  (if (fneq (run (lambda () (+ (hi 1.0) (hi) (hi 1.0 2.0)))) 4.0) (snd-display ";run opt args 7"))
 	  (if (fneq (run (lambda () (+ (hi 1.0) (hi 1.0 2.0) (hi)))) 4.0) (snd-display ";run opt args 8"))
-	  (if (fneq (run (lambda () (+ (hi 1.0 2.0) (hi) (hi 1.0)))) 4.0) (snd-display ";run opt args 9"))))
+	  (if (fneq (run (lambda () (+ (hi 1.0 2.0) (hi) (hi 1.0)))) 4.0) (snd-display ";run opt args 9")))
 
     ;; optimizer tests
     (ixtst (let ((x 1) (y 2)) (run (lambda () (if (= x y) (+ x y) (- x y))))) -1)
@@ -53626,8 +53546,7 @@ EDITS: 1
 			     (list "oboe.snd" "pistol.snd") #t))
 	 (lambda args (display args)))
 
-  (if (and (provided? 'snd-threads)
-	   (provided? 's7))
+  (if (provided? 'snd-threads)
       (begin
 	
 	;; 1-chan
@@ -60562,33 +60481,7 @@ EDITS: 1
 			   (list .widget 'Widget '.widget #f) (list .doit 'Boolean '.doit))
 		     )))
 	       
-	       (if (not with-s7)
-		   (for-each
-		    (lambda (call)
-		      (let ((struct ((car call)))
-			    (val #f))
-			(set! (.event struct) (XEvent))
-			(for-each
-			 (lambda (field)
-			   (if (not (list-p field)) (snd-display ";~A: ~A" struct field))
-			   (set! val ((car field) struct))
-			   (if (< (length field) 4)
-			       (case (cadr field)
-				 ((int) (set! ((car field) struct) 0))
-				 ((Atom) (set! ((car field) struct) XA_STRING))
-				 ((uchar) (set! ((car field) struct) 0))
-				 ((Position) (set! ((car field) struct) 0))
-				 ((Widget) (set! ((car field) struct) (list 'Widget 0)))
-				 ((XmString) (set! ((car field) struct) (list 'XmString 0)))
-				 ((XtPointer) (set! ((car field) struct) 0))
-				 ((char*) (set! ((car field) struct) "hi"))
-				 ((Boolean) (set! ((car field) struct) #f))
-				 ((XEvent) #f) ; already being set
-				 ((XmString* int* Time Window Widget* Screen) #f) 
-				 ((char) (set! ((car field) struct) 0))
-				 )))
-			 (cdr call))))
-		    callbacks)))
+	       )
 
 	     (let ((shell (cadr (main-widgets)))
 		   (resource-list
@@ -65075,17 +64968,12 @@ EDITS: 1
   
   (set! (with-background-processes) #t)
   
-  (if (and with-s7
-	   (provided? 'gmp))
-      (begin
 	(load "s7test.scm")
 	(if all-args
 	    (s7-test-at-random))
-	))
 
   (if (and (provided? 'gsl)
-	   (provided? 'gmp)
-	   with-s7)
+	   (provided? 'gmp))
       (begin
 
 	;; from GSL
@@ -66363,23 +66251,6 @@ EDITS: 1
 			  (list mouse-click-hook 'mouse-click-hook)
 			  (list enved-hook 'enved-hook)))
 	  
-	  (if (not with-s7)
-	      (for-each (lambda (n)
-			  (let* ((hook (car n))
-				 (hook-name (cadr n))
-				 (tag
-				  (catch #t
-					 (lambda () (add-hook! hook (lambda (a b c) (+ a b c))))
-					 (lambda args (car args)))))
-			    (if (not (eq? tag 'wrong-type-arg))
-				(snd-display ";hooks ~A: ~A" hook-name tag))))
-			(list (list exit-hook 'exit-hook)
-			      (list stop-dac-hook 'stop-dac-hook)
-			      (list stop-playing-selection-hook 'stop-playing-selection-hook)
-			      (list color-hook 'color-hook)
-			      (list orientation-hook 'orientation-hook)
-			      (list start-playing-selection-hook 'start-playing-selection-hook))))
-	  
 	  (if (= test-28 0) 
 	      (begin
 		(check-error-tag 'no-such-envelope (lambda () (set! (enved-envelope) "not-an-env")))
@@ -67655,7 +67526,7 @@ EDITS: 1
 
 (if (defined? 'run-report-counts) (run-report-counts))
 
-(if (and profiling with-s7) (profile)) ; writes to sort.data
+(if profiling (profile)) ; writes to sort.data
 
 #|
 (let ((st (symbol-table)))

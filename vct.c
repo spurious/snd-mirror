@@ -1202,11 +1202,7 @@ vct( 0.5 0.3 0.1 ) .g => #<vct[len=3]: 0.500 0.300 0.100>"
 #endif
 
 
-#if WITH_MODULES
-static void mus_vct_init_1(void *ignore)
-#else
 void mus_vct_init(void)
-#endif
 {
 
 #if HAVE_S7
@@ -1320,42 +1316,4 @@ void mus_vct_init(void)
   XEN_DEFINE_SET_PROCEDURE(S_vct_setB,      g_vct_set_w,       3, 0, 0, H_vct_setB);
   XEN_DEFINE_SET_PROCEDURE(S_vct_times,     g_vct_times_w,     2, 0, 0, H_vct_times);
   XEN_DEFINE_SET_PROCEDURE(S_vct_plus,      g_vct_plus_w,      2, 0, 0, H_vct_plus);
-
-#if WITH_MODULES
-  scm_c_export(S_make_vct,
-	       S_vct_copy,
-	       S_vct_p,
-	       S_list_to_vct,
-	       S_vct_to_list,
-	       S_vector_to_vct,
-	       S_vct_to_vector,
-	       S_vct_length,
-	       S_vct_multiplyB,
-	       S_vct_scaleB,
-	       S_vct_fillB,
-	       S_vct_addB,
-	       S_vct_subtractB,
-	       S_vct_offsetB,
-	       S_vct_peak,
-	       S_vct_moveB,
-	       S_vct_subseq,
-	       S_vct,
-	       S_vct_mapB,
-	       S_vct_ref,
-	       S_vct_setB,
-	       S_vct_reverse,
-	       S_vct_to_string,
-	       S_vct_times,
-	       S_vct_plus,
-	       NULL);
-#endif
 }
-
-
-#if WITH_MODULES
-void mus_vct_init(void)
-{
-  scm_c_define_module("snd sndlib", mus_vct_init_1, NULL);
-}
-#endif
-
