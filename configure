@@ -9529,9 +9529,9 @@ if test "x$ac_cv_lib_m_gtk_widget_get_visible" = x""yes; then :
 fi
 
 	# for 2.19.n
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for gtk_spinner_new in -lm" >&5
-$as_echo_n "checking for gtk_spinner_new in -lm... " >&6; }
-if test "${ac_cv_lib_m_gtk_spinner_new+set}" = set; then :
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for gtk_tool_palette_new in -lm" >&5
+$as_echo_n "checking for gtk_tool_palette_new in -lm... " >&6; }
+if test "${ac_cv_lib_m_gtk_tool_palette_new+set}" = set; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_lib_save_LIBS=$LIBS
@@ -9545,28 +9545,28 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char gtk_spinner_new ();
+char gtk_tool_palette_new ();
 int
 main ()
 {
-return gtk_spinner_new ();
+return gtk_tool_palette_new ();
   ;
   return 0;
 }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_m_gtk_spinner_new=yes
+  ac_cv_lib_m_gtk_tool_palette_new=yes
 else
-  ac_cv_lib_m_gtk_spinner_new=no
+  ac_cv_lib_m_gtk_tool_palette_new=no
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_m_gtk_spinner_new" >&5
-$as_echo "$ac_cv_lib_m_gtk_spinner_new" >&6; }
-if test "x$ac_cv_lib_m_gtk_spinner_new" = x""yes; then :
-  $as_echo "#define HAVE_GTK_SPINNER_NEW 1" >>confdefs.h
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_m_gtk_tool_palette_new" >&5
+$as_echo "$ac_cv_lib_m_gtk_tool_palette_new" >&6; }
+if test "x$ac_cv_lib_m_gtk_tool_palette_new" = x""yes; then :
+  $as_echo "#define HAVE_GTK_TOOL_PALETTE_NEW 1" >>confdefs.h
 
 fi
 

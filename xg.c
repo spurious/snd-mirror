@@ -21,7 +21,7 @@
  *     HAVE_GTK_INFO_BAR_NEW for 2.17.2
  *     HAVE_GTK_STATUS_ICON_GET_TITLE for 2.17.3
  *     HAVE_GTK_WIDGET_GET_VISIBLE for 2.17.7
- *     HAVE_GTK_SPINNER_NEW for 2.19.0
+ *     HAVE_GTK_TOOL_PALETTE_NEW for 2.19.1
  *     HAVE_CAIRO_CREATE for cairo
  *     HAVE_CAIRO_GET_USER_DATA for cairo 1.4.0
  *     HAVE_CAIRO_FORMAT_STRIDE_FOR_WIDTH for cairo 1.6.4
@@ -1025,8 +1025,12 @@ XM_TYPE_PTR_1(GtkInfoBar_, GtkInfoBar*)
 XM_TYPE_PTR(GtkEntryBuffer_, GtkEntryBuffer*)
 #endif
 
-#if HAVE_GTK_SPINNER_NEW
+#if HAVE_GTK_TOOL_PALETTE_NEW
 XM_TYPE_PTR_1(GtkSpinner_, GtkSpinner*)
+XM_TYPE_PTR(GtkToolShell_, GtkToolShell*)
+XM_TYPE_PTR(GtkToolPalette_, GtkToolPalette*)
+XM_TYPE(GtkToolPaletteDragTargets, GtkToolPaletteDragTargets)
+XM_TYPE_PTR(GtkToolItemGroup_, GtkToolItemGroup*)
 #endif
 
 #if HAVE_CAIRO_CREATE
@@ -31849,7 +31853,7 @@ static XEN gxg_gdk_window_flush(XEN window)
 
 #endif
 
-#if HAVE_GTK_SPINNER_NEW
+#if HAVE_GTK_TOOL_PALETTE_NEW
 static XEN gxg_gtk_dialog_get_widget_for_response(XEN dialog, XEN response_id)
 {
   #define H_gtk_dialog_get_widget_for_response "GtkWidget* gtk_dialog_get_widget_for_response(GtkDialog* dialog, \
@@ -31903,6 +31907,449 @@ static XEN gxg_gtk_cell_renderer_spinner_new(void)
 {
   #define H_gtk_cell_renderer_spinner_new "GtkCellRenderer* gtk_cell_renderer_spinner_new( void)"
   return(C_TO_XEN_GtkCellRenderer_(gtk_cell_renderer_spinner_new()));
+}
+
+static XEN gxg_gtk_action_set_always_show_image(XEN action, XEN always_show)
+{
+  #define H_gtk_action_set_always_show_image "void gtk_action_set_always_show_image(GtkAction* action, \
+gboolean always_show)"
+  XEN_ASSERT_TYPE(XEN_GtkAction__P(action), action, 1, "gtk_action_set_always_show_image", "GtkAction*");
+  XEN_ASSERT_TYPE(XEN_gboolean_P(always_show), always_show, 2, "gtk_action_set_always_show_image", "gboolean");
+  gtk_action_set_always_show_image(XEN_TO_C_GtkAction_(action), XEN_TO_C_gboolean(always_show));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_action_get_always_show_image(XEN action)
+{
+  #define H_gtk_action_get_always_show_image "gboolean gtk_action_get_always_show_image(GtkAction* action)"
+  XEN_ASSERT_TYPE(XEN_GtkAction__P(action), action, 1, "gtk_action_get_always_show_image", "GtkAction*");
+  return(C_TO_XEN_gboolean(gtk_action_get_always_show_image(XEN_TO_C_GtkAction_(action))));
+}
+
+static XEN gxg_gtk_notebook_get_action_widget(XEN notebook, XEN pack_type)
+{
+  #define H_gtk_notebook_get_action_widget "GtkWidget* gtk_notebook_get_action_widget(GtkNotebook* notebook, \
+GtkPackType pack_type)"
+  XEN_ASSERT_TYPE(XEN_GtkNotebook__P(notebook), notebook, 1, "gtk_notebook_get_action_widget", "GtkNotebook*");
+  XEN_ASSERT_TYPE(XEN_GtkPackType_P(pack_type), pack_type, 2, "gtk_notebook_get_action_widget", "GtkPackType");
+  return(C_TO_XEN_GtkWidget_(gtk_notebook_get_action_widget(XEN_TO_C_GtkNotebook_(notebook), XEN_TO_C_GtkPackType(pack_type))));
+}
+
+static XEN gxg_gtk_notebook_set_action_widget(XEN notebook, XEN widget, XEN pack_type)
+{
+  #define H_gtk_notebook_set_action_widget "void gtk_notebook_set_action_widget(GtkNotebook* notebook, \
+GtkWidget* widget, GtkPackType pack_type)"
+  XEN_ASSERT_TYPE(XEN_GtkNotebook__P(notebook), notebook, 1, "gtk_notebook_set_action_widget", "GtkNotebook*");
+  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 2, "gtk_notebook_set_action_widget", "GtkWidget*");
+  XEN_ASSERT_TYPE(XEN_GtkPackType_P(pack_type), pack_type, 3, "gtk_notebook_set_action_widget", "GtkPackType");
+  gtk_notebook_set_action_widget(XEN_TO_C_GtkNotebook_(notebook), XEN_TO_C_GtkWidget_(widget), XEN_TO_C_GtkPackType(pack_type));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_statusbar_get_message_area(XEN statusbar)
+{
+  #define H_gtk_statusbar_get_message_area "GtkWidget* gtk_statusbar_get_message_area(GtkStatusbar* statusbar)"
+  XEN_ASSERT_TYPE(XEN_GtkStatusbar__P(statusbar), statusbar, 1, "gtk_statusbar_get_message_area", "GtkStatusbar*");
+  return(C_TO_XEN_GtkWidget_(gtk_statusbar_get_message_area(XEN_TO_C_GtkStatusbar_(statusbar))));
+}
+
+static XEN gxg_gtk_tool_item_get_ellipsize_mode(XEN tool_item)
+{
+  #define H_gtk_tool_item_get_ellipsize_mode "PangoEllipsizeMode gtk_tool_item_get_ellipsize_mode(GtkToolItem* tool_item)"
+  XEN_ASSERT_TYPE(XEN_GtkToolItem__P(tool_item), tool_item, 1, "gtk_tool_item_get_ellipsize_mode", "GtkToolItem*");
+  return(C_TO_XEN_PangoEllipsizeMode(gtk_tool_item_get_ellipsize_mode(XEN_TO_C_GtkToolItem_(tool_item))));
+}
+
+static XEN gxg_gtk_tool_item_get_text_alignment(XEN tool_item)
+{
+  #define H_gtk_tool_item_get_text_alignment "gfloat gtk_tool_item_get_text_alignment(GtkToolItem* tool_item)"
+  XEN_ASSERT_TYPE(XEN_GtkToolItem__P(tool_item), tool_item, 1, "gtk_tool_item_get_text_alignment", "GtkToolItem*");
+  return(C_TO_XEN_gfloat(gtk_tool_item_get_text_alignment(XEN_TO_C_GtkToolItem_(tool_item))));
+}
+
+static XEN gxg_gtk_tool_item_get_text_orientation(XEN tool_item)
+{
+  #define H_gtk_tool_item_get_text_orientation "GtkOrientation gtk_tool_item_get_text_orientation(GtkToolItem* tool_item)"
+  XEN_ASSERT_TYPE(XEN_GtkToolItem__P(tool_item), tool_item, 1, "gtk_tool_item_get_text_orientation", "GtkToolItem*");
+  return(C_TO_XEN_GtkOrientation(gtk_tool_item_get_text_orientation(XEN_TO_C_GtkToolItem_(tool_item))));
+}
+
+static XEN gxg_gtk_tool_item_get_text_size_group(XEN tool_item)
+{
+  #define H_gtk_tool_item_get_text_size_group "GtkSizeGroup* gtk_tool_item_get_text_size_group(GtkToolItem* tool_item)"
+  XEN_ASSERT_TYPE(XEN_GtkToolItem__P(tool_item), tool_item, 1, "gtk_tool_item_get_text_size_group", "GtkToolItem*");
+  return(C_TO_XEN_GtkSizeGroup_(gtk_tool_item_get_text_size_group(XEN_TO_C_GtkToolItem_(tool_item))));
+}
+
+static XEN gxg_gtk_tool_shell_get_text_orientation(XEN shell)
+{
+  #define H_gtk_tool_shell_get_text_orientation "GtkOrientation gtk_tool_shell_get_text_orientation(GtkToolShell* shell)"
+  XEN_ASSERT_TYPE(XEN_GtkToolShell__P(shell), shell, 1, "gtk_tool_shell_get_text_orientation", "GtkToolShell*");
+  return(C_TO_XEN_GtkOrientation(gtk_tool_shell_get_text_orientation(XEN_TO_C_GtkToolShell_(shell))));
+}
+
+static XEN gxg_gtk_tool_shell_get_text_alignment(XEN shell)
+{
+  #define H_gtk_tool_shell_get_text_alignment "gfloat gtk_tool_shell_get_text_alignment(GtkToolShell* shell)"
+  XEN_ASSERT_TYPE(XEN_GtkToolShell__P(shell), shell, 1, "gtk_tool_shell_get_text_alignment", "GtkToolShell*");
+  return(C_TO_XEN_gfloat(gtk_tool_shell_get_text_alignment(XEN_TO_C_GtkToolShell_(shell))));
+}
+
+static XEN gxg_gtk_tool_shell_get_ellipsize_mode(XEN shell)
+{
+  #define H_gtk_tool_shell_get_ellipsize_mode "PangoEllipsizeMode gtk_tool_shell_get_ellipsize_mode(GtkToolShell* shell)"
+  XEN_ASSERT_TYPE(XEN_GtkToolShell__P(shell), shell, 1, "gtk_tool_shell_get_ellipsize_mode", "GtkToolShell*");
+  return(C_TO_XEN_PangoEllipsizeMode(gtk_tool_shell_get_ellipsize_mode(XEN_TO_C_GtkToolShell_(shell))));
+}
+
+static XEN gxg_gtk_tool_shell_get_text_size_group(XEN shell)
+{
+  #define H_gtk_tool_shell_get_text_size_group "GtkSizeGroup* gtk_tool_shell_get_text_size_group(GtkToolShell* shell)"
+  XEN_ASSERT_TYPE(XEN_GtkToolShell__P(shell), shell, 1, "gtk_tool_shell_get_text_size_group", "GtkToolShell*");
+  return(C_TO_XEN_GtkSizeGroup_(gtk_tool_shell_get_text_size_group(XEN_TO_C_GtkToolShell_(shell))));
+}
+
+static XEN gxg_gtk_tool_palette_new(void)
+{
+  #define H_gtk_tool_palette_new "GtkWidget* gtk_tool_palette_new( void)"
+  return(C_TO_XEN_GtkWidget_(gtk_tool_palette_new()));
+}
+
+static XEN gxg_gtk_tool_palette_set_group_position(XEN palette, XEN group, XEN position)
+{
+  #define H_gtk_tool_palette_set_group_position "void gtk_tool_palette_set_group_position(GtkToolPalette* palette, \
+GtkWidget* group, gint position)"
+  XEN_ASSERT_TYPE(XEN_GtkToolPalette__P(palette), palette, 1, "gtk_tool_palette_set_group_position", "GtkToolPalette*");
+  XEN_ASSERT_TYPE(XEN_GtkWidget__P(group), group, 2, "gtk_tool_palette_set_group_position", "GtkWidget*");
+  XEN_ASSERT_TYPE(XEN_gint_P(position), position, 3, "gtk_tool_palette_set_group_position", "gint");
+  gtk_tool_palette_set_group_position(XEN_TO_C_GtkToolPalette_(palette), XEN_TO_C_GtkWidget_(group), XEN_TO_C_gint(position));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_tool_palette_set_exclusive(XEN palette, XEN group, XEN exclusive)
+{
+  #define H_gtk_tool_palette_set_exclusive "void gtk_tool_palette_set_exclusive(GtkToolPalette* palette, \
+GtkWidget* group, gboolean exclusive)"
+  XEN_ASSERT_TYPE(XEN_GtkToolPalette__P(palette), palette, 1, "gtk_tool_palette_set_exclusive", "GtkToolPalette*");
+  XEN_ASSERT_TYPE(XEN_GtkWidget__P(group), group, 2, "gtk_tool_palette_set_exclusive", "GtkWidget*");
+  XEN_ASSERT_TYPE(XEN_gboolean_P(exclusive), exclusive, 3, "gtk_tool_palette_set_exclusive", "gboolean");
+  gtk_tool_palette_set_exclusive(XEN_TO_C_GtkToolPalette_(palette), XEN_TO_C_GtkWidget_(group), XEN_TO_C_gboolean(exclusive));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_tool_palette_set_expand(XEN palette, XEN group, XEN expand)
+{
+  #define H_gtk_tool_palette_set_expand "void gtk_tool_palette_set_expand(GtkToolPalette* palette, GtkWidget* group, \
+gboolean expand)"
+  XEN_ASSERT_TYPE(XEN_GtkToolPalette__P(palette), palette, 1, "gtk_tool_palette_set_expand", "GtkToolPalette*");
+  XEN_ASSERT_TYPE(XEN_GtkWidget__P(group), group, 2, "gtk_tool_palette_set_expand", "GtkWidget*");
+  XEN_ASSERT_TYPE(XEN_gboolean_P(expand), expand, 3, "gtk_tool_palette_set_expand", "gboolean");
+  gtk_tool_palette_set_expand(XEN_TO_C_GtkToolPalette_(palette), XEN_TO_C_GtkWidget_(group), XEN_TO_C_gboolean(expand));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_tool_palette_get_group_position(XEN palette, XEN group)
+{
+  #define H_gtk_tool_palette_get_group_position "gint gtk_tool_palette_get_group_position(GtkToolPalette* palette, \
+GtkWidget* group)"
+  XEN_ASSERT_TYPE(XEN_GtkToolPalette__P(palette), palette, 1, "gtk_tool_palette_get_group_position", "GtkToolPalette*");
+  XEN_ASSERT_TYPE(XEN_GtkWidget__P(group), group, 2, "gtk_tool_palette_get_group_position", "GtkWidget*");
+  return(C_TO_XEN_gint(gtk_tool_palette_get_group_position(XEN_TO_C_GtkToolPalette_(palette), XEN_TO_C_GtkWidget_(group))));
+}
+
+static XEN gxg_gtk_tool_palette_get_exclusive(XEN palette, XEN group)
+{
+  #define H_gtk_tool_palette_get_exclusive "gboolean gtk_tool_palette_get_exclusive(GtkToolPalette* palette, \
+GtkWidget* group)"
+  XEN_ASSERT_TYPE(XEN_GtkToolPalette__P(palette), palette, 1, "gtk_tool_palette_get_exclusive", "GtkToolPalette*");
+  XEN_ASSERT_TYPE(XEN_GtkWidget__P(group), group, 2, "gtk_tool_palette_get_exclusive", "GtkWidget*");
+  return(C_TO_XEN_gboolean(gtk_tool_palette_get_exclusive(XEN_TO_C_GtkToolPalette_(palette), XEN_TO_C_GtkWidget_(group))));
+}
+
+static XEN gxg_gtk_tool_palette_get_expand(XEN palette, XEN group)
+{
+  #define H_gtk_tool_palette_get_expand "gboolean gtk_tool_palette_get_expand(GtkToolPalette* palette, \
+GtkWidget* group)"
+  XEN_ASSERT_TYPE(XEN_GtkToolPalette__P(palette), palette, 1, "gtk_tool_palette_get_expand", "GtkToolPalette*");
+  XEN_ASSERT_TYPE(XEN_GtkWidget__P(group), group, 2, "gtk_tool_palette_get_expand", "GtkWidget*");
+  return(C_TO_XEN_gboolean(gtk_tool_palette_get_expand(XEN_TO_C_GtkToolPalette_(palette), XEN_TO_C_GtkWidget_(group))));
+}
+
+static XEN gxg_gtk_tool_palette_set_icon_size(XEN palette, XEN icon_size)
+{
+  #define H_gtk_tool_palette_set_icon_size "void gtk_tool_palette_set_icon_size(GtkToolPalette* palette, \
+GtkIconSize icon_size)"
+  XEN_ASSERT_TYPE(XEN_GtkToolPalette__P(palette), palette, 1, "gtk_tool_palette_set_icon_size", "GtkToolPalette*");
+  XEN_ASSERT_TYPE(XEN_GtkIconSize_P(icon_size), icon_size, 2, "gtk_tool_palette_set_icon_size", "GtkIconSize");
+  gtk_tool_palette_set_icon_size(XEN_TO_C_GtkToolPalette_(palette), XEN_TO_C_GtkIconSize(icon_size));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_tool_palette_unset_icon_size(XEN palette)
+{
+  #define H_gtk_tool_palette_unset_icon_size "void gtk_tool_palette_unset_icon_size(GtkToolPalette* palette)"
+  XEN_ASSERT_TYPE(XEN_GtkToolPalette__P(palette), palette, 1, "gtk_tool_palette_unset_icon_size", "GtkToolPalette*");
+  gtk_tool_palette_unset_icon_size(XEN_TO_C_GtkToolPalette_(palette));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_tool_palette_set_style(XEN palette, XEN style)
+{
+  #define H_gtk_tool_palette_set_style "void gtk_tool_palette_set_style(GtkToolPalette* palette, GtkToolbarStyle style)"
+  XEN_ASSERT_TYPE(XEN_GtkToolPalette__P(palette), palette, 1, "gtk_tool_palette_set_style", "GtkToolPalette*");
+  XEN_ASSERT_TYPE(XEN_GtkToolbarStyle_P(style), style, 2, "gtk_tool_palette_set_style", "GtkToolbarStyle");
+  gtk_tool_palette_set_style(XEN_TO_C_GtkToolPalette_(palette), XEN_TO_C_GtkToolbarStyle(style));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_tool_palette_unset_style(XEN palette)
+{
+  #define H_gtk_tool_palette_unset_style "void gtk_tool_palette_unset_style(GtkToolPalette* palette)"
+  XEN_ASSERT_TYPE(XEN_GtkToolPalette__P(palette), palette, 1, "gtk_tool_palette_unset_style", "GtkToolPalette*");
+  gtk_tool_palette_unset_style(XEN_TO_C_GtkToolPalette_(palette));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_tool_palette_get_icon_size(XEN palette)
+{
+  #define H_gtk_tool_palette_get_icon_size "GtkIconSize gtk_tool_palette_get_icon_size(GtkToolPalette* palette)"
+  XEN_ASSERT_TYPE(XEN_GtkToolPalette__P(palette), palette, 1, "gtk_tool_palette_get_icon_size", "GtkToolPalette*");
+  return(C_TO_XEN_GtkIconSize(gtk_tool_palette_get_icon_size(XEN_TO_C_GtkToolPalette_(palette))));
+}
+
+static XEN gxg_gtk_tool_palette_get_style(XEN palette)
+{
+  #define H_gtk_tool_palette_get_style "GtkToolbarStyle gtk_tool_palette_get_style(GtkToolPalette* palette)"
+  XEN_ASSERT_TYPE(XEN_GtkToolPalette__P(palette), palette, 1, "gtk_tool_palette_get_style", "GtkToolPalette*");
+  return(C_TO_XEN_GtkToolbarStyle(gtk_tool_palette_get_style(XEN_TO_C_GtkToolPalette_(palette))));
+}
+
+static XEN gxg_gtk_tool_palette_get_drop_item(XEN palette, XEN x, XEN y)
+{
+  #define H_gtk_tool_palette_get_drop_item "GtkToolItem* gtk_tool_palette_get_drop_item(GtkToolPalette* palette, \
+gint x, gint y)"
+  XEN_ASSERT_TYPE(XEN_GtkToolPalette__P(palette), palette, 1, "gtk_tool_palette_get_drop_item", "GtkToolPalette*");
+  XEN_ASSERT_TYPE(XEN_gint_P(x), x, 2, "gtk_tool_palette_get_drop_item", "gint");
+  XEN_ASSERT_TYPE(XEN_gint_P(y), y, 3, "gtk_tool_palette_get_drop_item", "gint");
+  return(C_TO_XEN_GtkToolItem_(gtk_tool_palette_get_drop_item(XEN_TO_C_GtkToolPalette_(palette), XEN_TO_C_gint(x), XEN_TO_C_gint(y))));
+}
+
+static XEN gxg_gtk_tool_palette_get_drop_group(XEN palette, XEN x, XEN y)
+{
+  #define H_gtk_tool_palette_get_drop_group "GtkWidget* gtk_tool_palette_get_drop_group(GtkToolPalette* palette, \
+gint x, gint y)"
+  XEN_ASSERT_TYPE(XEN_GtkToolPalette__P(palette), palette, 1, "gtk_tool_palette_get_drop_group", "GtkToolPalette*");
+  XEN_ASSERT_TYPE(XEN_gint_P(x), x, 2, "gtk_tool_palette_get_drop_group", "gint");
+  XEN_ASSERT_TYPE(XEN_gint_P(y), y, 3, "gtk_tool_palette_get_drop_group", "gint");
+  return(C_TO_XEN_GtkWidget_(gtk_tool_palette_get_drop_group(XEN_TO_C_GtkToolPalette_(palette), XEN_TO_C_gint(x), XEN_TO_C_gint(y))));
+}
+
+static XEN gxg_gtk_tool_palette_get_drag_item(XEN palette, XEN selection)
+{
+  #define H_gtk_tool_palette_get_drag_item "GtkWidget* gtk_tool_palette_get_drag_item(GtkToolPalette* palette, \
+GtkSelectionData* selection)"
+  XEN_ASSERT_TYPE(XEN_GtkToolPalette__P(palette), palette, 1, "gtk_tool_palette_get_drag_item", "GtkToolPalette*");
+  XEN_ASSERT_TYPE(XEN_GtkSelectionData__P(selection), selection, 2, "gtk_tool_palette_get_drag_item", "GtkSelectionData*");
+  return(C_TO_XEN_GtkWidget_(gtk_tool_palette_get_drag_item(XEN_TO_C_GtkToolPalette_(palette), XEN_TO_C_GtkSelectionData_(selection))));
+}
+
+static XEN gxg_gtk_tool_palette_set_drag_source(XEN palette, XEN targets)
+{
+  #define H_gtk_tool_palette_set_drag_source "void gtk_tool_palette_set_drag_source(GtkToolPalette* palette, \
+GtkToolPaletteDragTargets targets)"
+  XEN_ASSERT_TYPE(XEN_GtkToolPalette__P(palette), palette, 1, "gtk_tool_palette_set_drag_source", "GtkToolPalette*");
+  XEN_ASSERT_TYPE(XEN_GtkToolPaletteDragTargets_P(targets), targets, 2, "gtk_tool_palette_set_drag_source", "GtkToolPaletteDragTargets");
+  gtk_tool_palette_set_drag_source(XEN_TO_C_GtkToolPalette_(palette), XEN_TO_C_GtkToolPaletteDragTargets(targets));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_tool_palette_add_drag_dest(XEN palette, XEN widget, XEN flags, XEN targets, XEN actions)
+{
+  #define H_gtk_tool_palette_add_drag_dest "void gtk_tool_palette_add_drag_dest(GtkToolPalette* palette, \
+GtkWidget* widget, GtkDestDefaults flags, GtkToolPaletteDragTargets targets, GdkDragAction actions)"
+  XEN_ASSERT_TYPE(XEN_GtkToolPalette__P(palette), palette, 1, "gtk_tool_palette_add_drag_dest", "GtkToolPalette*");
+  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 2, "gtk_tool_palette_add_drag_dest", "GtkWidget*");
+  XEN_ASSERT_TYPE(XEN_GtkDestDefaults_P(flags), flags, 3, "gtk_tool_palette_add_drag_dest", "GtkDestDefaults");
+  XEN_ASSERT_TYPE(XEN_GtkToolPaletteDragTargets_P(targets), targets, 4, "gtk_tool_palette_add_drag_dest", "GtkToolPaletteDragTargets");
+  XEN_ASSERT_TYPE(XEN_GdkDragAction_P(actions), actions, 5, "gtk_tool_palette_add_drag_dest", "GdkDragAction");
+  gtk_tool_palette_add_drag_dest(XEN_TO_C_GtkToolPalette_(palette), XEN_TO_C_GtkWidget_(widget), XEN_TO_C_GtkDestDefaults(flags), 
+                                 XEN_TO_C_GtkToolPaletteDragTargets(targets), XEN_TO_C_GdkDragAction(actions));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_tool_palette_get_hadjustment(XEN palette)
+{
+  #define H_gtk_tool_palette_get_hadjustment "GtkAdjustment* gtk_tool_palette_get_hadjustment(GtkToolPalette* palette)"
+  XEN_ASSERT_TYPE(XEN_GtkToolPalette__P(palette), palette, 1, "gtk_tool_palette_get_hadjustment", "GtkToolPalette*");
+  return(C_TO_XEN_GtkAdjustment_(gtk_tool_palette_get_hadjustment(XEN_TO_C_GtkToolPalette_(palette))));
+}
+
+static XEN gxg_gtk_tool_palette_get_vadjustment(XEN palette)
+{
+  #define H_gtk_tool_palette_get_vadjustment "GtkAdjustment* gtk_tool_palette_get_vadjustment(GtkToolPalette* palette)"
+  XEN_ASSERT_TYPE(XEN_GtkToolPalette__P(palette), palette, 1, "gtk_tool_palette_get_vadjustment", "GtkToolPalette*");
+  return(C_TO_XEN_GtkAdjustment_(gtk_tool_palette_get_vadjustment(XEN_TO_C_GtkToolPalette_(palette))));
+}
+
+static XEN gxg_gtk_tool_palette_get_drag_target_item(void)
+{
+  #define H_gtk_tool_palette_get_drag_target_item "GtkTargetEntry* gtk_tool_palette_get_drag_target_item( void)"
+  return(C_TO_XEN_GtkTargetEntry_(gtk_tool_palette_get_drag_target_item()));
+}
+
+static XEN gxg_gtk_tool_palette_get_drag_target_group(void)
+{
+  #define H_gtk_tool_palette_get_drag_target_group "GtkTargetEntry* gtk_tool_palette_get_drag_target_group( void)"
+  return(C_TO_XEN_GtkTargetEntry_(gtk_tool_palette_get_drag_target_group()));
+}
+
+static XEN gxg_gtk_tool_item_group_new(XEN label)
+{
+  #define H_gtk_tool_item_group_new "GtkWidget* gtk_tool_item_group_new(gchar* label)"
+  XEN_ASSERT_TYPE(XEN_gchar__P(label), label, 1, "gtk_tool_item_group_new", "gchar*");
+  return(C_TO_XEN_GtkWidget_(gtk_tool_item_group_new((const gchar*)XEN_TO_C_gchar_(label))));
+}
+
+static XEN gxg_gtk_tool_item_group_set_label(XEN group, XEN label)
+{
+  #define H_gtk_tool_item_group_set_label "void gtk_tool_item_group_set_label(GtkToolItemGroup* group, \
+gchar* label)"
+  XEN_ASSERT_TYPE(XEN_GtkToolItemGroup__P(group), group, 1, "gtk_tool_item_group_set_label", "GtkToolItemGroup*");
+  XEN_ASSERT_TYPE(XEN_gchar__P(label), label, 2, "gtk_tool_item_group_set_label", "gchar*");
+  gtk_tool_item_group_set_label(XEN_TO_C_GtkToolItemGroup_(group), (const gchar*)XEN_TO_C_gchar_(label));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_tool_item_group_set_label_widget(XEN group, XEN label_widget)
+{
+  #define H_gtk_tool_item_group_set_label_widget "void gtk_tool_item_group_set_label_widget(GtkToolItemGroup* group, \
+GtkWidget* label_widget)"
+  XEN_ASSERT_TYPE(XEN_GtkToolItemGroup__P(group), group, 1, "gtk_tool_item_group_set_label_widget", "GtkToolItemGroup*");
+  XEN_ASSERT_TYPE(XEN_GtkWidget__P(label_widget), label_widget, 2, "gtk_tool_item_group_set_label_widget", "GtkWidget*");
+  gtk_tool_item_group_set_label_widget(XEN_TO_C_GtkToolItemGroup_(group), XEN_TO_C_GtkWidget_(label_widget));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_tool_item_group_set_collapsed(XEN group, XEN collapsed)
+{
+  #define H_gtk_tool_item_group_set_collapsed "void gtk_tool_item_group_set_collapsed(GtkToolItemGroup* group, \
+gboolean collapsed)"
+  XEN_ASSERT_TYPE(XEN_GtkToolItemGroup__P(group), group, 1, "gtk_tool_item_group_set_collapsed", "GtkToolItemGroup*");
+  XEN_ASSERT_TYPE(XEN_gboolean_P(collapsed), collapsed, 2, "gtk_tool_item_group_set_collapsed", "gboolean");
+  gtk_tool_item_group_set_collapsed(XEN_TO_C_GtkToolItemGroup_(group), XEN_TO_C_gboolean(collapsed));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_tool_item_group_set_ellipsize(XEN group, XEN ellipsize)
+{
+  #define H_gtk_tool_item_group_set_ellipsize "void gtk_tool_item_group_set_ellipsize(GtkToolItemGroup* group, \
+PangoEllipsizeMode ellipsize)"
+  XEN_ASSERT_TYPE(XEN_GtkToolItemGroup__P(group), group, 1, "gtk_tool_item_group_set_ellipsize", "GtkToolItemGroup*");
+  XEN_ASSERT_TYPE(XEN_PangoEllipsizeMode_P(ellipsize), ellipsize, 2, "gtk_tool_item_group_set_ellipsize", "PangoEllipsizeMode");
+  gtk_tool_item_group_set_ellipsize(XEN_TO_C_GtkToolItemGroup_(group), XEN_TO_C_PangoEllipsizeMode(ellipsize));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_tool_item_group_set_header_relief(XEN group, XEN style)
+{
+  #define H_gtk_tool_item_group_set_header_relief "void gtk_tool_item_group_set_header_relief(GtkToolItemGroup* group, \
+GtkReliefStyle style)"
+  XEN_ASSERT_TYPE(XEN_GtkToolItemGroup__P(group), group, 1, "gtk_tool_item_group_set_header_relief", "GtkToolItemGroup*");
+  XEN_ASSERT_TYPE(XEN_GtkReliefStyle_P(style), style, 2, "gtk_tool_item_group_set_header_relief", "GtkReliefStyle");
+  gtk_tool_item_group_set_header_relief(XEN_TO_C_GtkToolItemGroup_(group), XEN_TO_C_GtkReliefStyle(style));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_tool_item_group_get_label(XEN group)
+{
+  #define H_gtk_tool_item_group_get_label "gchar* gtk_tool_item_group_get_label(GtkToolItemGroup* group)"
+  XEN_ASSERT_TYPE(XEN_GtkToolItemGroup__P(group), group, 1, "gtk_tool_item_group_get_label", "GtkToolItemGroup*");
+  return(C_TO_XEN_gchar_(gtk_tool_item_group_get_label(XEN_TO_C_GtkToolItemGroup_(group))));
+}
+
+static XEN gxg_gtk_tool_item_group_get_label_widget(XEN group)
+{
+  #define H_gtk_tool_item_group_get_label_widget "GtkWidget* gtk_tool_item_group_get_label_widget(GtkToolItemGroup* group)"
+  XEN_ASSERT_TYPE(XEN_GtkToolItemGroup__P(group), group, 1, "gtk_tool_item_group_get_label_widget", "GtkToolItemGroup*");
+  return(C_TO_XEN_GtkWidget_(gtk_tool_item_group_get_label_widget(XEN_TO_C_GtkToolItemGroup_(group))));
+}
+
+static XEN gxg_gtk_tool_item_group_get_collapsed(XEN group)
+{
+  #define H_gtk_tool_item_group_get_collapsed "gboolean gtk_tool_item_group_get_collapsed(GtkToolItemGroup* group)"
+  XEN_ASSERT_TYPE(XEN_GtkToolItemGroup__P(group), group, 1, "gtk_tool_item_group_get_collapsed", "GtkToolItemGroup*");
+  return(C_TO_XEN_gboolean(gtk_tool_item_group_get_collapsed(XEN_TO_C_GtkToolItemGroup_(group))));
+}
+
+static XEN gxg_gtk_tool_item_group_get_ellipsize(XEN group)
+{
+  #define H_gtk_tool_item_group_get_ellipsize "PangoEllipsizeMode gtk_tool_item_group_get_ellipsize(GtkToolItemGroup* group)"
+  XEN_ASSERT_TYPE(XEN_GtkToolItemGroup__P(group), group, 1, "gtk_tool_item_group_get_ellipsize", "GtkToolItemGroup*");
+  return(C_TO_XEN_PangoEllipsizeMode(gtk_tool_item_group_get_ellipsize(XEN_TO_C_GtkToolItemGroup_(group))));
+}
+
+static XEN gxg_gtk_tool_item_group_get_header_relief(XEN group)
+{
+  #define H_gtk_tool_item_group_get_header_relief "GtkReliefStyle gtk_tool_item_group_get_header_relief(GtkToolItemGroup* group)"
+  XEN_ASSERT_TYPE(XEN_GtkToolItemGroup__P(group), group, 1, "gtk_tool_item_group_get_header_relief", "GtkToolItemGroup*");
+  return(C_TO_XEN_GtkReliefStyle(gtk_tool_item_group_get_header_relief(XEN_TO_C_GtkToolItemGroup_(group))));
+}
+
+static XEN gxg_gtk_tool_item_group_insert(XEN group, XEN item, XEN position)
+{
+  #define H_gtk_tool_item_group_insert "void gtk_tool_item_group_insert(GtkToolItemGroup* group, GtkToolItem* item, \
+gint position)"
+  XEN_ASSERT_TYPE(XEN_GtkToolItemGroup__P(group), group, 1, "gtk_tool_item_group_insert", "GtkToolItemGroup*");
+  XEN_ASSERT_TYPE(XEN_GtkToolItem__P(item), item, 2, "gtk_tool_item_group_insert", "GtkToolItem*");
+  XEN_ASSERT_TYPE(XEN_gint_P(position), position, 3, "gtk_tool_item_group_insert", "gint");
+  gtk_tool_item_group_insert(XEN_TO_C_GtkToolItemGroup_(group), XEN_TO_C_GtkToolItem_(item), XEN_TO_C_gint(position));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_tool_item_group_set_item_position(XEN group, XEN item, XEN position)
+{
+  #define H_gtk_tool_item_group_set_item_position "void gtk_tool_item_group_set_item_position(GtkToolItemGroup* group, \
+GtkToolItem* item, gint position)"
+  XEN_ASSERT_TYPE(XEN_GtkToolItemGroup__P(group), group, 1, "gtk_tool_item_group_set_item_position", "GtkToolItemGroup*");
+  XEN_ASSERT_TYPE(XEN_GtkToolItem__P(item), item, 2, "gtk_tool_item_group_set_item_position", "GtkToolItem*");
+  XEN_ASSERT_TYPE(XEN_gint_P(position), position, 3, "gtk_tool_item_group_set_item_position", "gint");
+  gtk_tool_item_group_set_item_position(XEN_TO_C_GtkToolItemGroup_(group), XEN_TO_C_GtkToolItem_(item), XEN_TO_C_gint(position));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_tool_item_group_get_item_position(XEN group, XEN item)
+{
+  #define H_gtk_tool_item_group_get_item_position "gint gtk_tool_item_group_get_item_position(GtkToolItemGroup* group, \
+GtkToolItem* item)"
+  XEN_ASSERT_TYPE(XEN_GtkToolItemGroup__P(group), group, 1, "gtk_tool_item_group_get_item_position", "GtkToolItemGroup*");
+  XEN_ASSERT_TYPE(XEN_GtkToolItem__P(item), item, 2, "gtk_tool_item_group_get_item_position", "GtkToolItem*");
+  return(C_TO_XEN_gint(gtk_tool_item_group_get_item_position(XEN_TO_C_GtkToolItemGroup_(group), XEN_TO_C_GtkToolItem_(item))));
+}
+
+static XEN gxg_gtk_tool_item_group_get_n_items(XEN group)
+{
+  #define H_gtk_tool_item_group_get_n_items "guint gtk_tool_item_group_get_n_items(GtkToolItemGroup* group)"
+  XEN_ASSERT_TYPE(XEN_GtkToolItemGroup__P(group), group, 1, "gtk_tool_item_group_get_n_items", "GtkToolItemGroup*");
+  return(C_TO_XEN_guint(gtk_tool_item_group_get_n_items(XEN_TO_C_GtkToolItemGroup_(group))));
+}
+
+static XEN gxg_gtk_tool_item_group_get_nth_item(XEN group, XEN index)
+{
+  #define H_gtk_tool_item_group_get_nth_item "GtkToolItem* gtk_tool_item_group_get_nth_item(GtkToolItemGroup* group, \
+guint index)"
+  XEN_ASSERT_TYPE(XEN_GtkToolItemGroup__P(group), group, 1, "gtk_tool_item_group_get_nth_item", "GtkToolItemGroup*");
+  XEN_ASSERT_TYPE(XEN_guint_P(index), index, 2, "gtk_tool_item_group_get_nth_item", "guint");
+  return(C_TO_XEN_GtkToolItem_(gtk_tool_item_group_get_nth_item(XEN_TO_C_GtkToolItemGroup_(group), XEN_TO_C_guint(index))));
+}
+
+static XEN gxg_gtk_tool_item_group_get_drop_item(XEN group, XEN x, XEN y)
+{
+  #define H_gtk_tool_item_group_get_drop_item "GtkToolItem* gtk_tool_item_group_get_drop_item(GtkToolItemGroup* group, \
+gint x, gint y)"
+  XEN_ASSERT_TYPE(XEN_GtkToolItemGroup__P(group), group, 1, "gtk_tool_item_group_get_drop_item", "GtkToolItemGroup*");
+  XEN_ASSERT_TYPE(XEN_gint_P(x), x, 2, "gtk_tool_item_group_get_drop_item", "gint");
+  XEN_ASSERT_TYPE(XEN_gint_P(y), y, 3, "gtk_tool_item_group_get_drop_item", "gint");
+  return(C_TO_XEN_GtkToolItem_(gtk_tool_item_group_get_drop_item(XEN_TO_C_GtkToolItemGroup_(group), XEN_TO_C_gint(x), XEN_TO_C_gint(y))));
 }
 
 #endif
@@ -34095,9 +34542,11 @@ static XEN gxg_GTK_INFO_BAR(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_
 static XEN gxg_GTK_ENTRY_BUFFER(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkEntryBuffer_"), XEN_CADR(obj)) : XEN_FALSE);}
 #endif
 
-#if HAVE_GTK_SPINNER_NEW
+#if HAVE_GTK_TOOL_PALETTE_NEW
 static XEN gxg_GTK_SPINNER(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkSpinner_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GTK_CELL_RENDERER_SPINNER(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkCellRendererSpinner_"), XEN_CADR(obj)) : XEN_FALSE);}
+static XEN gxg_GTK_TOOL_PALETTE(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkToolPalette_"), XEN_CADR(obj)) : XEN_FALSE);}
+static XEN gxg_GTK_TOOL_ITEM_GROUP(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkToolItemGroup_"), XEN_CADR(obj)) : XEN_FALSE);}
 #endif
 
 static XEN gxg_GDK_IS_COLORMAP(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GDK_IS_COLORMAP((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
@@ -34308,9 +34757,11 @@ static XEN gxg_GTK_IS_INFO_BAR(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_
 static XEN gxg_GTK_IS_ENTRY_BUFFER(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_ENTRY_BUFFER((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 #endif
 
-#if HAVE_GTK_SPINNER_NEW
+#if HAVE_GTK_TOOL_PALETTE_NEW
 static XEN gxg_GTK_IS_SPINNER(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_SPINNER((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_CELL_RENDERER_SPINNER(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_CELL_RENDERER_SPINNER((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
+static XEN gxg_GTK_IS_TOOL_PALETTE(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_TOOL_PALETTE((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
+static XEN gxg_GTK_IS_TOOL_ITEM_GROUP(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_TOOL_ITEM_GROUP((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 #endif
 
 
@@ -38242,7 +38693,7 @@ XEN_NARGIFY_1(gxg_gtk_widget_get_receives_default_w, gxg_gtk_widget_get_receives
 XEN_NARGIFY_1(gxg_gdk_window_flush_w, gxg_gdk_window_flush)
 #endif
 
-#if HAVE_GTK_SPINNER_NEW
+#if HAVE_GTK_TOOL_PALETTE_NEW
 XEN_NARGIFY_2(gxg_gtk_dialog_get_widget_for_response_w, gxg_gtk_dialog_get_widget_for_response)
 XEN_NARGIFY_3(gxg_gtk_tooltip_set_icon_from_gicon_w, gxg_gtk_tooltip_set_icon_from_gicon)
 XEN_NARGIFY_1(gxg_gtk_viewport_get_bin_window_w, gxg_gtk_viewport_get_bin_window)
@@ -38250,6 +38701,58 @@ XEN_NARGIFY_0(gxg_gtk_spinner_new_w, gxg_gtk_spinner_new)
 XEN_NARGIFY_1(gxg_gtk_spinner_start_w, gxg_gtk_spinner_start)
 XEN_NARGIFY_1(gxg_gtk_spinner_stop_w, gxg_gtk_spinner_stop)
 XEN_NARGIFY_0(gxg_gtk_cell_renderer_spinner_new_w, gxg_gtk_cell_renderer_spinner_new)
+XEN_NARGIFY_2(gxg_gtk_action_set_always_show_image_w, gxg_gtk_action_set_always_show_image)
+XEN_NARGIFY_1(gxg_gtk_action_get_always_show_image_w, gxg_gtk_action_get_always_show_image)
+XEN_NARGIFY_2(gxg_gtk_notebook_get_action_widget_w, gxg_gtk_notebook_get_action_widget)
+XEN_NARGIFY_3(gxg_gtk_notebook_set_action_widget_w, gxg_gtk_notebook_set_action_widget)
+XEN_NARGIFY_1(gxg_gtk_statusbar_get_message_area_w, gxg_gtk_statusbar_get_message_area)
+XEN_NARGIFY_1(gxg_gtk_tool_item_get_ellipsize_mode_w, gxg_gtk_tool_item_get_ellipsize_mode)
+XEN_NARGIFY_1(gxg_gtk_tool_item_get_text_alignment_w, gxg_gtk_tool_item_get_text_alignment)
+XEN_NARGIFY_1(gxg_gtk_tool_item_get_text_orientation_w, gxg_gtk_tool_item_get_text_orientation)
+XEN_NARGIFY_1(gxg_gtk_tool_item_get_text_size_group_w, gxg_gtk_tool_item_get_text_size_group)
+XEN_NARGIFY_1(gxg_gtk_tool_shell_get_text_orientation_w, gxg_gtk_tool_shell_get_text_orientation)
+XEN_NARGIFY_1(gxg_gtk_tool_shell_get_text_alignment_w, gxg_gtk_tool_shell_get_text_alignment)
+XEN_NARGIFY_1(gxg_gtk_tool_shell_get_ellipsize_mode_w, gxg_gtk_tool_shell_get_ellipsize_mode)
+XEN_NARGIFY_1(gxg_gtk_tool_shell_get_text_size_group_w, gxg_gtk_tool_shell_get_text_size_group)
+XEN_NARGIFY_0(gxg_gtk_tool_palette_new_w, gxg_gtk_tool_palette_new)
+XEN_NARGIFY_3(gxg_gtk_tool_palette_set_group_position_w, gxg_gtk_tool_palette_set_group_position)
+XEN_NARGIFY_3(gxg_gtk_tool_palette_set_exclusive_w, gxg_gtk_tool_palette_set_exclusive)
+XEN_NARGIFY_3(gxg_gtk_tool_palette_set_expand_w, gxg_gtk_tool_palette_set_expand)
+XEN_NARGIFY_2(gxg_gtk_tool_palette_get_group_position_w, gxg_gtk_tool_palette_get_group_position)
+XEN_NARGIFY_2(gxg_gtk_tool_palette_get_exclusive_w, gxg_gtk_tool_palette_get_exclusive)
+XEN_NARGIFY_2(gxg_gtk_tool_palette_get_expand_w, gxg_gtk_tool_palette_get_expand)
+XEN_NARGIFY_2(gxg_gtk_tool_palette_set_icon_size_w, gxg_gtk_tool_palette_set_icon_size)
+XEN_NARGIFY_1(gxg_gtk_tool_palette_unset_icon_size_w, gxg_gtk_tool_palette_unset_icon_size)
+XEN_NARGIFY_2(gxg_gtk_tool_palette_set_style_w, gxg_gtk_tool_palette_set_style)
+XEN_NARGIFY_1(gxg_gtk_tool_palette_unset_style_w, gxg_gtk_tool_palette_unset_style)
+XEN_NARGIFY_1(gxg_gtk_tool_palette_get_icon_size_w, gxg_gtk_tool_palette_get_icon_size)
+XEN_NARGIFY_1(gxg_gtk_tool_palette_get_style_w, gxg_gtk_tool_palette_get_style)
+XEN_NARGIFY_3(gxg_gtk_tool_palette_get_drop_item_w, gxg_gtk_tool_palette_get_drop_item)
+XEN_NARGIFY_3(gxg_gtk_tool_palette_get_drop_group_w, gxg_gtk_tool_palette_get_drop_group)
+XEN_NARGIFY_2(gxg_gtk_tool_palette_get_drag_item_w, gxg_gtk_tool_palette_get_drag_item)
+XEN_NARGIFY_2(gxg_gtk_tool_palette_set_drag_source_w, gxg_gtk_tool_palette_set_drag_source)
+XEN_NARGIFY_5(gxg_gtk_tool_palette_add_drag_dest_w, gxg_gtk_tool_palette_add_drag_dest)
+XEN_NARGIFY_1(gxg_gtk_tool_palette_get_hadjustment_w, gxg_gtk_tool_palette_get_hadjustment)
+XEN_NARGIFY_1(gxg_gtk_tool_palette_get_vadjustment_w, gxg_gtk_tool_palette_get_vadjustment)
+XEN_NARGIFY_0(gxg_gtk_tool_palette_get_drag_target_item_w, gxg_gtk_tool_palette_get_drag_target_item)
+XEN_NARGIFY_0(gxg_gtk_tool_palette_get_drag_target_group_w, gxg_gtk_tool_palette_get_drag_target_group)
+XEN_NARGIFY_1(gxg_gtk_tool_item_group_new_w, gxg_gtk_tool_item_group_new)
+XEN_NARGIFY_2(gxg_gtk_tool_item_group_set_label_w, gxg_gtk_tool_item_group_set_label)
+XEN_NARGIFY_2(gxg_gtk_tool_item_group_set_label_widget_w, gxg_gtk_tool_item_group_set_label_widget)
+XEN_NARGIFY_2(gxg_gtk_tool_item_group_set_collapsed_w, gxg_gtk_tool_item_group_set_collapsed)
+XEN_NARGIFY_2(gxg_gtk_tool_item_group_set_ellipsize_w, gxg_gtk_tool_item_group_set_ellipsize)
+XEN_NARGIFY_2(gxg_gtk_tool_item_group_set_header_relief_w, gxg_gtk_tool_item_group_set_header_relief)
+XEN_NARGIFY_1(gxg_gtk_tool_item_group_get_label_w, gxg_gtk_tool_item_group_get_label)
+XEN_NARGIFY_1(gxg_gtk_tool_item_group_get_label_widget_w, gxg_gtk_tool_item_group_get_label_widget)
+XEN_NARGIFY_1(gxg_gtk_tool_item_group_get_collapsed_w, gxg_gtk_tool_item_group_get_collapsed)
+XEN_NARGIFY_1(gxg_gtk_tool_item_group_get_ellipsize_w, gxg_gtk_tool_item_group_get_ellipsize)
+XEN_NARGIFY_1(gxg_gtk_tool_item_group_get_header_relief_w, gxg_gtk_tool_item_group_get_header_relief)
+XEN_NARGIFY_3(gxg_gtk_tool_item_group_insert_w, gxg_gtk_tool_item_group_insert)
+XEN_NARGIFY_3(gxg_gtk_tool_item_group_set_item_position_w, gxg_gtk_tool_item_group_set_item_position)
+XEN_NARGIFY_2(gxg_gtk_tool_item_group_get_item_position_w, gxg_gtk_tool_item_group_get_item_position)
+XEN_NARGIFY_1(gxg_gtk_tool_item_group_get_n_items_w, gxg_gtk_tool_item_group_get_n_items)
+XEN_NARGIFY_2(gxg_gtk_tool_item_group_get_nth_item_w, gxg_gtk_tool_item_group_get_nth_item)
+XEN_NARGIFY_3(gxg_gtk_tool_item_group_get_drop_item_w, gxg_gtk_tool_item_group_get_drop_item)
 #endif
 
 #if HAVE_CAIRO_CREATE
@@ -38707,9 +39210,11 @@ XEN_NARGIFY_1(gxg_GTK_INFO_BAR_w, gxg_GTK_INFO_BAR)
 XEN_NARGIFY_1(gxg_GTK_ENTRY_BUFFER_w, gxg_GTK_ENTRY_BUFFER)
 #endif
 
-#if HAVE_GTK_SPINNER_NEW
+#if HAVE_GTK_TOOL_PALETTE_NEW
 XEN_NARGIFY_1(gxg_GTK_SPINNER_w, gxg_GTK_SPINNER)
 XEN_NARGIFY_1(gxg_GTK_CELL_RENDERER_SPINNER_w, gxg_GTK_CELL_RENDERER_SPINNER)
+XEN_NARGIFY_1(gxg_GTK_TOOL_PALETTE_w, gxg_GTK_TOOL_PALETTE)
+XEN_NARGIFY_1(gxg_GTK_TOOL_ITEM_GROUP_w, gxg_GTK_TOOL_ITEM_GROUP)
 #endif
 
 XEN_NARGIFY_1(gxg_GDK_IS_COLORMAP_w, gxg_GDK_IS_COLORMAP)
@@ -38920,9 +39425,11 @@ XEN_NARGIFY_1(gxg_GTK_IS_INFO_BAR_w, gxg_GTK_IS_INFO_BAR)
 XEN_NARGIFY_1(gxg_GTK_IS_ENTRY_BUFFER_w, gxg_GTK_IS_ENTRY_BUFFER)
 #endif
 
-#if HAVE_GTK_SPINNER_NEW
+#if HAVE_GTK_TOOL_PALETTE_NEW
 XEN_NARGIFY_1(gxg_GTK_IS_SPINNER_w, gxg_GTK_IS_SPINNER)
 XEN_NARGIFY_1(gxg_GTK_IS_CELL_RENDERER_SPINNER_w, gxg_GTK_IS_CELL_RENDERER_SPINNER)
+XEN_NARGIFY_1(gxg_GTK_IS_TOOL_PALETTE_w, gxg_GTK_IS_TOOL_PALETTE)
+XEN_NARGIFY_1(gxg_GTK_IS_TOOL_ITEM_GROUP_w, gxg_GTK_IS_TOOL_ITEM_GROUP)
 #endif
 
 XEN_NARGIFY_1(gxg_height_w, gxg_height)
@@ -42212,7 +42719,7 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gdk_window_flush_w gxg_gdk_window_flush
 #endif
 
-#if HAVE_GTK_SPINNER_NEW
+#if HAVE_GTK_TOOL_PALETTE_NEW
 #define gxg_gtk_dialog_get_widget_for_response_w gxg_gtk_dialog_get_widget_for_response
 #define gxg_gtk_tooltip_set_icon_from_gicon_w gxg_gtk_tooltip_set_icon_from_gicon
 #define gxg_gtk_viewport_get_bin_window_w gxg_gtk_viewport_get_bin_window
@@ -42220,6 +42727,58 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gtk_spinner_start_w gxg_gtk_spinner_start
 #define gxg_gtk_spinner_stop_w gxg_gtk_spinner_stop
 #define gxg_gtk_cell_renderer_spinner_new_w gxg_gtk_cell_renderer_spinner_new
+#define gxg_gtk_action_set_always_show_image_w gxg_gtk_action_set_always_show_image
+#define gxg_gtk_action_get_always_show_image_w gxg_gtk_action_get_always_show_image
+#define gxg_gtk_notebook_get_action_widget_w gxg_gtk_notebook_get_action_widget
+#define gxg_gtk_notebook_set_action_widget_w gxg_gtk_notebook_set_action_widget
+#define gxg_gtk_statusbar_get_message_area_w gxg_gtk_statusbar_get_message_area
+#define gxg_gtk_tool_item_get_ellipsize_mode_w gxg_gtk_tool_item_get_ellipsize_mode
+#define gxg_gtk_tool_item_get_text_alignment_w gxg_gtk_tool_item_get_text_alignment
+#define gxg_gtk_tool_item_get_text_orientation_w gxg_gtk_tool_item_get_text_orientation
+#define gxg_gtk_tool_item_get_text_size_group_w gxg_gtk_tool_item_get_text_size_group
+#define gxg_gtk_tool_shell_get_text_orientation_w gxg_gtk_tool_shell_get_text_orientation
+#define gxg_gtk_tool_shell_get_text_alignment_w gxg_gtk_tool_shell_get_text_alignment
+#define gxg_gtk_tool_shell_get_ellipsize_mode_w gxg_gtk_tool_shell_get_ellipsize_mode
+#define gxg_gtk_tool_shell_get_text_size_group_w gxg_gtk_tool_shell_get_text_size_group
+#define gxg_gtk_tool_palette_new_w gxg_gtk_tool_palette_new
+#define gxg_gtk_tool_palette_set_group_position_w gxg_gtk_tool_palette_set_group_position
+#define gxg_gtk_tool_palette_set_exclusive_w gxg_gtk_tool_palette_set_exclusive
+#define gxg_gtk_tool_palette_set_expand_w gxg_gtk_tool_palette_set_expand
+#define gxg_gtk_tool_palette_get_group_position_w gxg_gtk_tool_palette_get_group_position
+#define gxg_gtk_tool_palette_get_exclusive_w gxg_gtk_tool_palette_get_exclusive
+#define gxg_gtk_tool_palette_get_expand_w gxg_gtk_tool_palette_get_expand
+#define gxg_gtk_tool_palette_set_icon_size_w gxg_gtk_tool_palette_set_icon_size
+#define gxg_gtk_tool_palette_unset_icon_size_w gxg_gtk_tool_palette_unset_icon_size
+#define gxg_gtk_tool_palette_set_style_w gxg_gtk_tool_palette_set_style
+#define gxg_gtk_tool_palette_unset_style_w gxg_gtk_tool_palette_unset_style
+#define gxg_gtk_tool_palette_get_icon_size_w gxg_gtk_tool_palette_get_icon_size
+#define gxg_gtk_tool_palette_get_style_w gxg_gtk_tool_palette_get_style
+#define gxg_gtk_tool_palette_get_drop_item_w gxg_gtk_tool_palette_get_drop_item
+#define gxg_gtk_tool_palette_get_drop_group_w gxg_gtk_tool_palette_get_drop_group
+#define gxg_gtk_tool_palette_get_drag_item_w gxg_gtk_tool_palette_get_drag_item
+#define gxg_gtk_tool_palette_set_drag_source_w gxg_gtk_tool_palette_set_drag_source
+#define gxg_gtk_tool_palette_add_drag_dest_w gxg_gtk_tool_palette_add_drag_dest
+#define gxg_gtk_tool_palette_get_hadjustment_w gxg_gtk_tool_palette_get_hadjustment
+#define gxg_gtk_tool_palette_get_vadjustment_w gxg_gtk_tool_palette_get_vadjustment
+#define gxg_gtk_tool_palette_get_drag_target_item_w gxg_gtk_tool_palette_get_drag_target_item
+#define gxg_gtk_tool_palette_get_drag_target_group_w gxg_gtk_tool_palette_get_drag_target_group
+#define gxg_gtk_tool_item_group_new_w gxg_gtk_tool_item_group_new
+#define gxg_gtk_tool_item_group_set_label_w gxg_gtk_tool_item_group_set_label
+#define gxg_gtk_tool_item_group_set_label_widget_w gxg_gtk_tool_item_group_set_label_widget
+#define gxg_gtk_tool_item_group_set_collapsed_w gxg_gtk_tool_item_group_set_collapsed
+#define gxg_gtk_tool_item_group_set_ellipsize_w gxg_gtk_tool_item_group_set_ellipsize
+#define gxg_gtk_tool_item_group_set_header_relief_w gxg_gtk_tool_item_group_set_header_relief
+#define gxg_gtk_tool_item_group_get_label_w gxg_gtk_tool_item_group_get_label
+#define gxg_gtk_tool_item_group_get_label_widget_w gxg_gtk_tool_item_group_get_label_widget
+#define gxg_gtk_tool_item_group_get_collapsed_w gxg_gtk_tool_item_group_get_collapsed
+#define gxg_gtk_tool_item_group_get_ellipsize_w gxg_gtk_tool_item_group_get_ellipsize
+#define gxg_gtk_tool_item_group_get_header_relief_w gxg_gtk_tool_item_group_get_header_relief
+#define gxg_gtk_tool_item_group_insert_w gxg_gtk_tool_item_group_insert
+#define gxg_gtk_tool_item_group_set_item_position_w gxg_gtk_tool_item_group_set_item_position
+#define gxg_gtk_tool_item_group_get_item_position_w gxg_gtk_tool_item_group_get_item_position
+#define gxg_gtk_tool_item_group_get_n_items_w gxg_gtk_tool_item_group_get_n_items
+#define gxg_gtk_tool_item_group_get_nth_item_w gxg_gtk_tool_item_group_get_nth_item
+#define gxg_gtk_tool_item_group_get_drop_item_w gxg_gtk_tool_item_group_get_drop_item
 #endif
 
 #if HAVE_CAIRO_CREATE
@@ -42677,9 +43236,11 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_GTK_ENTRY_BUFFER_w gxg_GTK_ENTRY_BUFFER
 #endif
 
-#if HAVE_GTK_SPINNER_NEW
+#if HAVE_GTK_TOOL_PALETTE_NEW
 #define gxg_GTK_SPINNER_w gxg_GTK_SPINNER
 #define gxg_GTK_CELL_RENDERER_SPINNER_w gxg_GTK_CELL_RENDERER_SPINNER
+#define gxg_GTK_TOOL_PALETTE_w gxg_GTK_TOOL_PALETTE
+#define gxg_GTK_TOOL_ITEM_GROUP_w gxg_GTK_TOOL_ITEM_GROUP
 #endif
 
 #define gxg_GDK_IS_COLORMAP_w gxg_GDK_IS_COLORMAP
@@ -42890,9 +43451,11 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_GTK_IS_ENTRY_BUFFER_w gxg_GTK_IS_ENTRY_BUFFER
 #endif
 
-#if HAVE_GTK_SPINNER_NEW
+#if HAVE_GTK_TOOL_PALETTE_NEW
 #define gxg_GTK_IS_SPINNER_w gxg_GTK_IS_SPINNER
 #define gxg_GTK_IS_CELL_RENDERER_SPINNER_w gxg_GTK_IS_CELL_RENDERER_SPINNER
+#define gxg_GTK_IS_TOOL_PALETTE_w gxg_GTK_IS_TOOL_PALETTE
+#define gxg_GTK_IS_TOOL_ITEM_GROUP_w gxg_GTK_IS_TOOL_ITEM_GROUP
 #endif
 
 #define gxg_height_w gxg_height
@@ -46189,7 +46752,7 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gdk_window_flush, gxg_gdk_window_flush_w, 1, 0, 0, H_gdk_window_flush);
 #endif
 
-#if HAVE_GTK_SPINNER_NEW
+#if HAVE_GTK_TOOL_PALETTE_NEW
   XG_DEFINE_PROCEDURE(gtk_dialog_get_widget_for_response, gxg_gtk_dialog_get_widget_for_response_w, 2, 0, 0, H_gtk_dialog_get_widget_for_response);
   XG_DEFINE_PROCEDURE(gtk_tooltip_set_icon_from_gicon, gxg_gtk_tooltip_set_icon_from_gicon_w, 3, 0, 0, H_gtk_tooltip_set_icon_from_gicon);
   XG_DEFINE_PROCEDURE(gtk_viewport_get_bin_window, gxg_gtk_viewport_get_bin_window_w, 1, 0, 0, H_gtk_viewport_get_bin_window);
@@ -46197,6 +46760,58 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_spinner_start, gxg_gtk_spinner_start_w, 1, 0, 0, H_gtk_spinner_start);
   XG_DEFINE_PROCEDURE(gtk_spinner_stop, gxg_gtk_spinner_stop_w, 1, 0, 0, H_gtk_spinner_stop);
   XG_DEFINE_PROCEDURE(gtk_cell_renderer_spinner_new, gxg_gtk_cell_renderer_spinner_new_w, 0, 0, 0, H_gtk_cell_renderer_spinner_new);
+  XG_DEFINE_PROCEDURE(gtk_action_set_always_show_image, gxg_gtk_action_set_always_show_image_w, 2, 0, 0, H_gtk_action_set_always_show_image);
+  XG_DEFINE_PROCEDURE(gtk_action_get_always_show_image, gxg_gtk_action_get_always_show_image_w, 1, 0, 0, H_gtk_action_get_always_show_image);
+  XG_DEFINE_PROCEDURE(gtk_notebook_get_action_widget, gxg_gtk_notebook_get_action_widget_w, 2, 0, 0, H_gtk_notebook_get_action_widget);
+  XG_DEFINE_PROCEDURE(gtk_notebook_set_action_widget, gxg_gtk_notebook_set_action_widget_w, 3, 0, 0, H_gtk_notebook_set_action_widget);
+  XG_DEFINE_PROCEDURE(gtk_statusbar_get_message_area, gxg_gtk_statusbar_get_message_area_w, 1, 0, 0, H_gtk_statusbar_get_message_area);
+  XG_DEFINE_PROCEDURE(gtk_tool_item_get_ellipsize_mode, gxg_gtk_tool_item_get_ellipsize_mode_w, 1, 0, 0, H_gtk_tool_item_get_ellipsize_mode);
+  XG_DEFINE_PROCEDURE(gtk_tool_item_get_text_alignment, gxg_gtk_tool_item_get_text_alignment_w, 1, 0, 0, H_gtk_tool_item_get_text_alignment);
+  XG_DEFINE_PROCEDURE(gtk_tool_item_get_text_orientation, gxg_gtk_tool_item_get_text_orientation_w, 1, 0, 0, H_gtk_tool_item_get_text_orientation);
+  XG_DEFINE_PROCEDURE(gtk_tool_item_get_text_size_group, gxg_gtk_tool_item_get_text_size_group_w, 1, 0, 0, H_gtk_tool_item_get_text_size_group);
+  XG_DEFINE_PROCEDURE(gtk_tool_shell_get_text_orientation, gxg_gtk_tool_shell_get_text_orientation_w, 1, 0, 0, H_gtk_tool_shell_get_text_orientation);
+  XG_DEFINE_PROCEDURE(gtk_tool_shell_get_text_alignment, gxg_gtk_tool_shell_get_text_alignment_w, 1, 0, 0, H_gtk_tool_shell_get_text_alignment);
+  XG_DEFINE_PROCEDURE(gtk_tool_shell_get_ellipsize_mode, gxg_gtk_tool_shell_get_ellipsize_mode_w, 1, 0, 0, H_gtk_tool_shell_get_ellipsize_mode);
+  XG_DEFINE_PROCEDURE(gtk_tool_shell_get_text_size_group, gxg_gtk_tool_shell_get_text_size_group_w, 1, 0, 0, H_gtk_tool_shell_get_text_size_group);
+  XG_DEFINE_PROCEDURE(gtk_tool_palette_new, gxg_gtk_tool_palette_new_w, 0, 0, 0, H_gtk_tool_palette_new);
+  XG_DEFINE_PROCEDURE(gtk_tool_palette_set_group_position, gxg_gtk_tool_palette_set_group_position_w, 3, 0, 0, H_gtk_tool_palette_set_group_position);
+  XG_DEFINE_PROCEDURE(gtk_tool_palette_set_exclusive, gxg_gtk_tool_palette_set_exclusive_w, 3, 0, 0, H_gtk_tool_palette_set_exclusive);
+  XG_DEFINE_PROCEDURE(gtk_tool_palette_set_expand, gxg_gtk_tool_palette_set_expand_w, 3, 0, 0, H_gtk_tool_palette_set_expand);
+  XG_DEFINE_PROCEDURE(gtk_tool_palette_get_group_position, gxg_gtk_tool_palette_get_group_position_w, 2, 0, 0, H_gtk_tool_palette_get_group_position);
+  XG_DEFINE_PROCEDURE(gtk_tool_palette_get_exclusive, gxg_gtk_tool_palette_get_exclusive_w, 2, 0, 0, H_gtk_tool_palette_get_exclusive);
+  XG_DEFINE_PROCEDURE(gtk_tool_palette_get_expand, gxg_gtk_tool_palette_get_expand_w, 2, 0, 0, H_gtk_tool_palette_get_expand);
+  XG_DEFINE_PROCEDURE(gtk_tool_palette_set_icon_size, gxg_gtk_tool_palette_set_icon_size_w, 2, 0, 0, H_gtk_tool_palette_set_icon_size);
+  XG_DEFINE_PROCEDURE(gtk_tool_palette_unset_icon_size, gxg_gtk_tool_palette_unset_icon_size_w, 1, 0, 0, H_gtk_tool_palette_unset_icon_size);
+  XG_DEFINE_PROCEDURE(gtk_tool_palette_set_style, gxg_gtk_tool_palette_set_style_w, 2, 0, 0, H_gtk_tool_palette_set_style);
+  XG_DEFINE_PROCEDURE(gtk_tool_palette_unset_style, gxg_gtk_tool_palette_unset_style_w, 1, 0, 0, H_gtk_tool_palette_unset_style);
+  XG_DEFINE_PROCEDURE(gtk_tool_palette_get_icon_size, gxg_gtk_tool_palette_get_icon_size_w, 1, 0, 0, H_gtk_tool_palette_get_icon_size);
+  XG_DEFINE_PROCEDURE(gtk_tool_palette_get_style, gxg_gtk_tool_palette_get_style_w, 1, 0, 0, H_gtk_tool_palette_get_style);
+  XG_DEFINE_PROCEDURE(gtk_tool_palette_get_drop_item, gxg_gtk_tool_palette_get_drop_item_w, 3, 0, 0, H_gtk_tool_palette_get_drop_item);
+  XG_DEFINE_PROCEDURE(gtk_tool_palette_get_drop_group, gxg_gtk_tool_palette_get_drop_group_w, 3, 0, 0, H_gtk_tool_palette_get_drop_group);
+  XG_DEFINE_PROCEDURE(gtk_tool_palette_get_drag_item, gxg_gtk_tool_palette_get_drag_item_w, 2, 0, 0, H_gtk_tool_palette_get_drag_item);
+  XG_DEFINE_PROCEDURE(gtk_tool_palette_set_drag_source, gxg_gtk_tool_palette_set_drag_source_w, 2, 0, 0, H_gtk_tool_palette_set_drag_source);
+  XG_DEFINE_PROCEDURE(gtk_tool_palette_add_drag_dest, gxg_gtk_tool_palette_add_drag_dest_w, 5, 0, 0, H_gtk_tool_palette_add_drag_dest);
+  XG_DEFINE_PROCEDURE(gtk_tool_palette_get_hadjustment, gxg_gtk_tool_palette_get_hadjustment_w, 1, 0, 0, H_gtk_tool_palette_get_hadjustment);
+  XG_DEFINE_PROCEDURE(gtk_tool_palette_get_vadjustment, gxg_gtk_tool_palette_get_vadjustment_w, 1, 0, 0, H_gtk_tool_palette_get_vadjustment);
+  XG_DEFINE_PROCEDURE(gtk_tool_palette_get_drag_target_item, gxg_gtk_tool_palette_get_drag_target_item_w, 0, 0, 0, H_gtk_tool_palette_get_drag_target_item);
+  XG_DEFINE_PROCEDURE(gtk_tool_palette_get_drag_target_group, gxg_gtk_tool_palette_get_drag_target_group_w, 0, 0, 0, H_gtk_tool_palette_get_drag_target_group);
+  XG_DEFINE_PROCEDURE(gtk_tool_item_group_new, gxg_gtk_tool_item_group_new_w, 1, 0, 0, H_gtk_tool_item_group_new);
+  XG_DEFINE_PROCEDURE(gtk_tool_item_group_set_label, gxg_gtk_tool_item_group_set_label_w, 2, 0, 0, H_gtk_tool_item_group_set_label);
+  XG_DEFINE_PROCEDURE(gtk_tool_item_group_set_label_widget, gxg_gtk_tool_item_group_set_label_widget_w, 2, 0, 0, H_gtk_tool_item_group_set_label_widget);
+  XG_DEFINE_PROCEDURE(gtk_tool_item_group_set_collapsed, gxg_gtk_tool_item_group_set_collapsed_w, 2, 0, 0, H_gtk_tool_item_group_set_collapsed);
+  XG_DEFINE_PROCEDURE(gtk_tool_item_group_set_ellipsize, gxg_gtk_tool_item_group_set_ellipsize_w, 2, 0, 0, H_gtk_tool_item_group_set_ellipsize);
+  XG_DEFINE_PROCEDURE(gtk_tool_item_group_set_header_relief, gxg_gtk_tool_item_group_set_header_relief_w, 2, 0, 0, H_gtk_tool_item_group_set_header_relief);
+  XG_DEFINE_PROCEDURE(gtk_tool_item_group_get_label, gxg_gtk_tool_item_group_get_label_w, 1, 0, 0, H_gtk_tool_item_group_get_label);
+  XG_DEFINE_PROCEDURE(gtk_tool_item_group_get_label_widget, gxg_gtk_tool_item_group_get_label_widget_w, 1, 0, 0, H_gtk_tool_item_group_get_label_widget);
+  XG_DEFINE_PROCEDURE(gtk_tool_item_group_get_collapsed, gxg_gtk_tool_item_group_get_collapsed_w, 1, 0, 0, H_gtk_tool_item_group_get_collapsed);
+  XG_DEFINE_PROCEDURE(gtk_tool_item_group_get_ellipsize, gxg_gtk_tool_item_group_get_ellipsize_w, 1, 0, 0, H_gtk_tool_item_group_get_ellipsize);
+  XG_DEFINE_PROCEDURE(gtk_tool_item_group_get_header_relief, gxg_gtk_tool_item_group_get_header_relief_w, 1, 0, 0, H_gtk_tool_item_group_get_header_relief);
+  XG_DEFINE_PROCEDURE(gtk_tool_item_group_insert, gxg_gtk_tool_item_group_insert_w, 3, 0, 0, H_gtk_tool_item_group_insert);
+  XG_DEFINE_PROCEDURE(gtk_tool_item_group_set_item_position, gxg_gtk_tool_item_group_set_item_position_w, 3, 0, 0, H_gtk_tool_item_group_set_item_position);
+  XG_DEFINE_PROCEDURE(gtk_tool_item_group_get_item_position, gxg_gtk_tool_item_group_get_item_position_w, 2, 0, 0, H_gtk_tool_item_group_get_item_position);
+  XG_DEFINE_PROCEDURE(gtk_tool_item_group_get_n_items, gxg_gtk_tool_item_group_get_n_items_w, 1, 0, 0, H_gtk_tool_item_group_get_n_items);
+  XG_DEFINE_PROCEDURE(gtk_tool_item_group_get_nth_item, gxg_gtk_tool_item_group_get_nth_item_w, 2, 0, 0, H_gtk_tool_item_group_get_nth_item);
+  XG_DEFINE_PROCEDURE(gtk_tool_item_group_get_drop_item, gxg_gtk_tool_item_group_get_drop_item_w, 3, 0, 0, H_gtk_tool_item_group_get_drop_item);
 #endif
 
 #if HAVE_CAIRO_CREATE
@@ -46647,9 +47262,11 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(GTK_ENTRY_BUFFER, gxg_GTK_ENTRY_BUFFER_w, 1, 0, 0, "(GTK_ENTRY_BUFFER obj) casts obj to GTK_ENTRY_BUFFER");
 #endif
 
-#if HAVE_GTK_SPINNER_NEW
+#if HAVE_GTK_TOOL_PALETTE_NEW
   XG_DEFINE_PROCEDURE(GTK_SPINNER, gxg_GTK_SPINNER_w, 1, 0, 0, "(GTK_SPINNER obj) casts obj to GTK_SPINNER");
   XG_DEFINE_PROCEDURE(GTK_CELL_RENDERER_SPINNER, gxg_GTK_CELL_RENDERER_SPINNER_w, 1, 0, 0, "(GTK_CELL_RENDERER_SPINNER obj) casts obj to GTK_CELL_RENDERER_SPINNER");
+  XG_DEFINE_PROCEDURE(GTK_TOOL_PALETTE, gxg_GTK_TOOL_PALETTE_w, 1, 0, 0, "(GTK_TOOL_PALETTE obj) casts obj to GTK_TOOL_PALETTE");
+  XG_DEFINE_PROCEDURE(GTK_TOOL_ITEM_GROUP, gxg_GTK_TOOL_ITEM_GROUP_w, 1, 0, 0, "(GTK_TOOL_ITEM_GROUP obj) casts obj to GTK_TOOL_ITEM_GROUP");
 #endif
 
   XG_DEFINE_PROCEDURE(c-array->list, c_array_to_xen_list_w, 2, 0, 0, NULL);
@@ -46867,9 +47484,11 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(GTK_IS_ENTRY_BUFFER, gxg_GTK_IS_ENTRY_BUFFER_w, 1, 0, 0, "(GTK_IS_ENTRY_BUFFER obj): " PROC_TRUE " if obj is a GTK_IS_ENTRY_BUFFER");
 #endif
 
-#if HAVE_GTK_SPINNER_NEW
+#if HAVE_GTK_TOOL_PALETTE_NEW
   XG_DEFINE_PROCEDURE(GTK_IS_SPINNER, gxg_GTK_IS_SPINNER_w, 1, 0, 0, "(GTK_IS_SPINNER obj): " PROC_TRUE " if obj is a GTK_IS_SPINNER");
   XG_DEFINE_PROCEDURE(GTK_IS_CELL_RENDERER_SPINNER, gxg_GTK_IS_CELL_RENDERER_SPINNER_w, 1, 0, 0, "(GTK_IS_CELL_RENDERER_SPINNER obj): " PROC_TRUE " if obj is a GTK_IS_CELL_RENDERER_SPINNER");
+  XG_DEFINE_PROCEDURE(GTK_IS_TOOL_PALETTE, gxg_GTK_IS_TOOL_PALETTE_w, 1, 0, 0, "(GTK_IS_TOOL_PALETTE obj): " PROC_TRUE " if obj is a GTK_IS_TOOL_PALETTE");
+  XG_DEFINE_PROCEDURE(GTK_IS_TOOL_ITEM_GROUP, gxg_GTK_IS_TOOL_ITEM_GROUP_w, 1, 0, 0, "(GTK_IS_TOOL_ITEM_GROUP obj): " PROC_TRUE " if obj is a GTK_IS_TOOL_ITEM_GROUP");
 #endif
 
 }
@@ -48757,7 +49376,7 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("27-Nov-09"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("02-Dec-09"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

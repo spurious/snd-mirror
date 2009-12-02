@@ -2087,7 +2087,7 @@
   (dpy "#endif~%~%"))
 
 (define (with-2190 dpy thunk)
-  (dpy "#if HAVE_GTK_SPINNER_NEW~%")
+  (dpy "#if HAVE_GTK_TOOL_PALETTE_NEW~%")
   (thunk)
   (dpy "#endif~%~%"))
 
@@ -2139,7 +2139,7 @@
 (hey " *     HAVE_GTK_INFO_BAR_NEW for 2.17.2~%")
 (hey " *     HAVE_GTK_STATUS_ICON_GET_TITLE for 2.17.3~%")
 (hey " *     HAVE_GTK_WIDGET_GET_VISIBLE for 2.17.7~%")
-(hey " *     HAVE_GTK_SPINNER_NEW for 2.19.0~%")
+(hey " *     HAVE_GTK_TOOL_PALETTE_NEW for 2.19.1~%")
 (hey " *     HAVE_CAIRO_CREATE for cairo~%")
 (hey " *     HAVE_CAIRO_GET_USER_DATA for cairo 1.4.0~%")
 (hey " *     HAVE_CAIRO_FORMAT_STRIDE_FOR_WIDTH for cairo 1.6.4~%")

@@ -1137,7 +1137,7 @@ else
 	# for 2.17.7, 2.18.n
 	AC_CHECK_LIB(m, gtk_widget_get_visible, [AC_DEFINE(HAVE_GTK_WIDGET_GET_VISIBLE)], ,$GTK_LIBS)
 	# for 2.19.n
-	AC_CHECK_LIB(m, gtk_spinner_new, [AC_DEFINE(HAVE_GTK_SPINNER_NEW)], ,$GTK_LIBS)
+	AC_CHECK_LIB(m, gtk_tool_palette_new, [AC_DEFINE(HAVE_GTK_TOOL_PALETTE_NEW)], ,$GTK_LIBS)
 
 	# for gdk|pango_cairo 
 	AC_CHECK_LIB(m, gdk_cairo_create, 
