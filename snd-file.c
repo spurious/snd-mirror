@@ -17,7 +17,7 @@
   #include <sys/param.h>
 #endif
 
-#if (HAVE_SYS_MOUNT_H && MUS_MAC_OSX) || __bsdi__ || MUS_NETBSD
+#if (HAVE_SYS_MOUNT_H && HAVE_OSX) || __bsdi__ || HAVE_NETBSD
   #include <sys/mount.h>
 #endif
 
@@ -46,7 +46,7 @@ mus_long_t disk_kspace(const char *filename) {return(1234567);}
 
 mus_long_t disk_kspace(const char *filename)
 {
-#if MUS_SUN
+#if HAVE_SUN
   statvfs_t buf; /* else dumb compiler complaint */
 #else
   struct statvfs buf;

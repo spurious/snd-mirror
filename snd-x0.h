@@ -29,7 +29,7 @@
 
 typedef enum {NOT_ACTIVATABLE, ACTIVATABLE, NOT_ACTIVATABLE_OR_FOCUSED, ACTIVATABLE_BUT_NOT_FOCUSED} text_cr_t;
 
-#ifdef MUS_SGI
+#if HAVE_SGI
   #define LINE_MARGIN 10
   #define CONTROLS_MARGIN 0
 #else
@@ -179,7 +179,7 @@ typedef enum {WITHOUT_COMMENT_FIELD, WITH_COMMENT_FIELD} dialog_comment_t;
 
 #define snd_ShiftMask ShiftMask
 #define snd_ControlMask ControlMask
-#ifndef MUS_SUN
+#if (!HAVE_SUN)
   #define snd_MetaMask Mod1Mask
 #else
   #define snd_MetaMask (Mod1Mask | Mod4Mask)

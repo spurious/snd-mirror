@@ -92,6 +92,13 @@
 #undef SND_VERSION
 #undef SND_HOST
 
+#undef HAVE_OSX
+#undef HAVE_WINDOZE
+#undef HAVE_SUN
+#undef HAVE_SGI
+#undef HAVE_NETBSD
+#undef HAVE_LINUX
+
 #undef MUS_LINUX
 #undef MUS_SGI
 #undef MUS_ALPHA

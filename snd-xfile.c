@@ -5711,7 +5711,7 @@ static void vf_amp_env_redraw(Widget w, view_files_info *vdat)
 }
 
 
-#ifdef MUS_MAC_OSX
+#if HAVE_OSX
 static int press_x, press_y;
 #endif
 
@@ -5721,7 +5721,7 @@ static void vf_drawer_button_motion(Widget w, XtPointer context, XEvent *event, 
   XMotionEvent *ev = (XMotionEvent *)event;
   mus_float_t pos;
 
-#ifdef MUS_MAC_OSX
+#if HAVE_OSX
   if ((press_x == ev->x) && (press_y == ev->y)) return;
 #endif
 
@@ -5737,7 +5737,7 @@ static void vf_drawer_button_press(Widget w, XtPointer context, XEvent *event, B
   XButtonEvent *ev = (XButtonEvent *)event;
   mus_float_t pos;
 
-#ifdef MUS_MAC_OSX
+#if HAVE_OSX
   press_x = ev->x;
   press_y = ev->y;
 #endif

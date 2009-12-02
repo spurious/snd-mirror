@@ -44,7 +44,7 @@
 #ifndef SND_AS_WIDGET
   #define PLAIN_ICON 1
   #define XPM_ICON 2
-  #ifdef MUS_SGI
+  #if HAVE_SGI
     #define ICON_TYPE PLAIN_ICON
   #else
     #define ICON_TYPE XPM_ICON
@@ -53,7 +53,7 @@
 
 #define POSITION_SLIDER_WIDTH 13
 #define ZOOM_SLIDER_WIDTH 10
-#ifndef MUS_LINUX
+#if (!HAVE_LINUX)
   #define TOGGLE_SIZE 0
 #else
   #define TOGGLE_SIZE 15
@@ -759,7 +759,7 @@ void snd_doit(int argc, char **argv)
   ss->channel_min_height = CHANNEL_MIN_HEIGHT;
   ss->Graph_Cursor = DEFAULT_GRAPH_CURSOR;
 #ifndef SND_AS_WIDGET
-#if MUS_ALPHA
+#ifndef __alpha__
   XtSetArg(args[0], XtNwidth, 640);
   XtSetArg(args[1], XtNheight, 256);
   shell = XtAppInitialize(&app, "Snd", NULL, 0, &argc, argv, fallbacks, args, 2);

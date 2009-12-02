@@ -624,7 +624,7 @@ void snd_doit(int argc, char **argv)
 #else
   gtk_init(&argc, &argv);
 
-#ifndef MUS_MAC_OSX
+#ifndef HAVE_OSX
   gdk_set_locale();
 #endif
 

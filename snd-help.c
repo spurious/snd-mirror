@@ -3146,7 +3146,7 @@ static char *call_grep(const char *defstr, const char *name, const char *endstr,
 {
   int err;
   char *command;
-#if (!MUS_SUN)
+#if (!HAVE_SUN)
   /* Gnu fgrep: -s switch to fgrep = "silent", I guess (--no-messages) [OSX uses Gnu fgrep] */
   /* configure script looks for grep -F or fgrep, setting FGREP_PROG (fgrep is supposedly obsolete) */
   command = mus_format(FGREP_PROG " -s \"%s%s%s\" %s/*." XEN_FILE_EXTENSION " --line-number > %s", defstr, name, endstr, path, tempfile);
@@ -3176,11 +3176,13 @@ static char *snd_finder(const char *name, bool got_help)
   #define TRAILER " "
   const char *defines[NUM_DEFINES] = {"(define (", "(define* (", "(define ", "(define+ (", "(defmacro ", "(defmacro* ", "(definstrument ("};
 #endif
+
 #if HAVE_RUBY
   #define NUM_DEFINES 2
   #define TRAILER ""
   const char *defines[NUM_DEFINES] = {"def ", "class "};
 #endif
+
 #if HAVE_FORTH
   #define NUM_DEFINES 3
   #define TRAILER ""

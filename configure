@@ -6063,6 +6063,43 @@ rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
 
 
+case "$host" in
+    *-*-linux*)
+	$as_echo "#define HAVE_LINUX 1" >>confdefs.h
+
+	;;
+    *-*-sunos4*)
+        $as_echo "#define HAVE_SUN 1" >>confdefs.h
+
+        ;;
+    *-*-solaris*)
+	$as_echo "#define HAVE_SUN 1" >>confdefs.h
+
+        ;;
+    *-sgi*)
+        $as_echo "#define HAVE_SGI 1" >>confdefs.h
+
+        ;;
+    *-*-netbsd*)
+        $as_echo "#define HAVE_NETBSD 1" >>confdefs.h
+
+        ;;
+    *-*-cygwin*)
+        $as_echo "#define HAVE_WINDOZE 1" >>confdefs.h
+
+	;;
+    *-*-mingw*)
+	$as_echo "#define HAVE_WINDOZE 1" >>confdefs.h
+
+	;;
+    *-apple-*)
+        $as_echo "#define HAVE_OSX 1" >>confdefs.h
+
+	;;
+esac
+
+
+
 
 
 #--------------------------------------------------------------------------------
@@ -11991,7 +12028,6 @@ fi
 
 
 
-
 #--------------------------------------------------------------------------------
 # Audio library
 #--------------------------------------------------------------------------------
@@ -12501,10 +12537,6 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 	if test $LOCAL_LANGUAGE = "None"; then
 	  LIBS="$LIBS -lm"
 	fi
-        ;;
-    alpha*)
-        $as_echo "#define MUS_ALPHA 1" >>confdefs.h
-
         ;;
     *-*-bsdi*)
 	$as_echo "#define HAVE_OSS 1" >>confdefs.h

@@ -1292,7 +1292,7 @@ void snd_load_init_file(bool no_global, bool no_init)
 #endif
 
 #define SND_INIT_FILE_ENVIRONMENT_NAME "SND_INIT_FILE"
-#ifndef MUS_WINDOZE
+#if (!HAVE_WINDOZE)
   #define INIT_FILE_NAME "~/.snd"
 #else
   #define INIT_FILE_NAME "snd-init"

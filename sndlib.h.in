@@ -37,7 +37,7 @@
 #endif
 
 
-#if MUS_WINDOZE
+#if HAVE_WINDOZE
   /* I got these from gmp.h */
   #if defined (__GNUC__)
     #define MUS_EXPORT  __declspec(__dllexport__)

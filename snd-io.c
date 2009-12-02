@@ -93,7 +93,7 @@ int snd_open(const char *filename, int flags, mode_t mode)
   ss->local_errno = 0;
   ss->local_open_errno = 0;
   errno = 0;
-#if MUS_WINDOZE
+#if HAVE_WINDOZE
   result = open(filename, flags);
 #else
   result = open(filename, flags, mode);

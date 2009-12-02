@@ -2272,7 +2272,7 @@ bool directory_p(const char *filename);
 
 static bool directory_p(const char *filename)
 {
-#if MUS_WINDOZE
+#if HAVE_WINDOZE
   return(false);
 
 #else

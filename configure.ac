@@ -392,6 +392,35 @@ AC_LINK_IFELSE(
   [AC_MSG_RESULT(no)])
 
 
+case "$host" in
+    *-*-linux*) 
+	AC_DEFINE(HAVE_LINUX)
+	;;
+    *-*-sunos4*) 
+        AC_DEFINE(HAVE_SUN)
+        ;;
+    *-*-solaris*) 
+	AC_DEFINE(HAVE_SUN)
+        ;;
+    *-sgi*) 
+        AC_DEFINE(HAVE_SGI)
+        ;;
+    *-*-netbsd*) 
+        AC_DEFINE(HAVE_NETBSD)
+        ;;
+    *-*-cygwin*)
+        AC_DEFINE(HAVE_WINDOZE)
+	;;
+    *-*-mingw*)
+	AC_DEFINE(HAVE_WINDOZE)
+	;;
+    *-apple-*)
+        AC_DEFINE(HAVE_OSX)
+	;;
+esac
+
+
+
 
 
 #--------------------------------------------------------------------------------
@@ -1700,7 +1729,6 @@ AC_SUBST(S7_LIB)
 
 
 
-
 #--------------------------------------------------------------------------------
 # Audio library
 #--------------------------------------------------------------------------------
@@ -1936,9 +1964,6 @@ case "$host" in
 	if test $LOCAL_LANGUAGE = "None"; then
 	  LIBS="$LIBS -lm"
 	fi
-        ;;
-    alpha*) 
-        AC_DEFINE(MUS_ALPHA)
         ;;
     *-*-bsdi*) 
 	AC_DEFINE(HAVE_OSS)

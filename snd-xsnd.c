@@ -7,7 +7,7 @@
 #endif
 
 
-#ifndef MUS_SGI
+#if (!HAVE_SGI)
   #define TOGGLE_MARGIN 0
 #endif
 
@@ -879,7 +879,7 @@ void set_filter_text(snd_info *sp, const char *str)
     XmTextSetString(FILTER_COEFFS_TEXT(sp), (char *)str);
 }
 
-#ifdef MUS_MAC_OSX
+#if HAVE_OSX
 static int press_x, press_y;
 #endif
 
@@ -889,7 +889,7 @@ static void filter_drawer_button_motion(Widget w, XtPointer context, XEvent *eve
   snd_info *sp = (snd_info *)context;
   XMotionEvent *ev = (XMotionEvent *)event;
   env_editor *edp;
-#ifdef MUS_MAC_OSX
+#if HAVE_OSX
   if ((press_x == ev->x) && (press_y == ev->y)) return;
 #endif
   edp = sp->sgx->flt;
@@ -906,7 +906,7 @@ static void filter_drawer_button_press(Widget w, XtPointer context, XEvent *even
   XButtonEvent *ev = (XButtonEvent *)event;
   env_editor *edp;
   if (!(sp->filter_control_envelope)) return;
-#ifdef MUS_MAC_OSX
+#if HAVE_OSX
   press_x = ev->x;
   press_y = ev->y;
 #endif
@@ -2667,7 +2667,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       XtSetArg(args[n], XmNshadowThickness, 0); n++;
       XtSetArg(args[n], XmNhighlightThickness, 0); n++;
       XtSetArg(args[n], XmNfillOnArm, false); n++;
-#ifdef MUS_SGI
+#if HAVE_SGI
       FILTER_LABEL(sp) = XtCreateManagedWidget("filter-label", xmPushButtonWidgetClass, CONTROLS(sp), args, n);
 #else
       FILTER_LABEL(sp) = XtCreateManagedWidget("filter-label", xmLabelWidgetClass, CONTROLS(sp), args, n);

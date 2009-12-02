@@ -27,7 +27,7 @@
 #endif
 
 
-#if MUS_WINDOZE
+#if HAVE_WINDOZE
   /* I got these from gmp.h */
   #if defined (__GNUC__)
     #define MUS_EXPORT  __declspec(__dllexport__)
@@ -49,7 +49,7 @@
   #endif
 #endif
 
-#if (SIZEOF_SSIZE_T == SIZEOF_INT) && (!MUS_MAC_OSX)
+#if (SIZEOF_SSIZE_T == SIZEOF_INT) && (!HAVE_OSX)
   #define SSIZE_TD "%d"
 #else
   #define SSIZE_TD "%ld"
@@ -282,7 +282,7 @@ enum {MUS_NO_ERROR, MUS_NO_FREQUENCY, MUS_NO_PHASE, MUS_NO_GEN, MUS_NO_LENGTH,
 /* keep this list in sync with mus_error_names in sound.c and snd-test.scm|rb */
 
 
-#if MUS_WINDOZE
+#if HAVE_WINDOZE
   #ifdef FOPEN
     #undef FOPEN
   #endif

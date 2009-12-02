@@ -286,7 +286,7 @@ static void mix_amp_env_resize(Widget w, XtPointer context, XtPointer info)
 }
 
 
-#ifdef MUS_MAC_OSX
+#if HAVE_OSX
 static int press_x, press_y;
 #endif
 
@@ -294,7 +294,7 @@ static void mix_drawer_button_motion(Widget w, XtPointer context, XEvent *event,
 {
   XMotionEvent *ev = (XMotionEvent *)event;
   if (!(mix_is_active(mix_dialog_id))) return;
-#ifdef MUS_MAC_OSX
+#if HAVE_OSX
   if ((press_x == ev->x) && (press_y == ev->y)) return;
 #endif
   env_editor_button_motion(spf, ev->x, ev->y, ev->time, dialog_env);
@@ -306,7 +306,7 @@ static void mix_drawer_button_press(Widget w, XtPointer context, XEvent *event, 
 {
   XButtonEvent *ev = (XButtonEvent *)event;
   if (!(mix_is_active(mix_dialog_id))) return;
-#ifdef MUS_MAC_OSX
+#if HAVE_OSX
   press_x = ev->x;
   press_y = ev->y;
 #endif

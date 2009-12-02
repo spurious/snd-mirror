@@ -298,7 +298,7 @@ typedef enum {WITHOUT_COMMENT_FIELD, WITH_COMMENT_FIELD} dialog_comment_t;
 
 #define snd_ShiftMask GDK_SHIFT_MASK
 #define snd_ControlMask GDK_CONTROL_MASK
-#ifndef MUS_SUN
+#if (!HAVE_SUN)
   #define snd_MetaMask GDK_MOD1_MASK
 #else
   #define snd_MetaMask (GDK_MOD1_MASK | GDK_MOD4_MASK)
