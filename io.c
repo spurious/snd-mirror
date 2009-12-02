@@ -1231,9 +1231,11 @@ mus_long_t mus_file_read_chans(int tfd, mus_long_t beg, mus_long_t end, int chan
 {
   /* an optimization of mus_file_read -- just reads the desired channels */
   mus_long_t num, rtn, k;
+
   num = (end - beg + 1);
   rtn = mus_read_any_1(tfd, beg, chans, num, bufs, cm, NULL);
   if (rtn == MUS_ERROR) return(MUS_ERROR);
+
   if (rtn < num) 
     for (k = 0; k < chans; k++)
       if ((cm == NULL) || (cm[k]))
@@ -1244,6 +1246,7 @@ mus_long_t mus_file_read_chans(int tfd, mus_long_t beg, mus_long_t end, int chan
 	  i = rtn + beg;
 	  memset((void *)(buffer + i), 0, (end - i + 1) * sizeof(mus_sample_t));
 	}
+
   return(num);
 }
 

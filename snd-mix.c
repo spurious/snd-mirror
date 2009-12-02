@@ -3282,6 +3282,12 @@ auto-delete is " PROC_TRUE ", the input file is deleted when it is no longer nee
    * mix-vct origin arg is not used (externally) except as a comment
    *
    * mix object :channel :out-channel :start (:end?) :with-tag :auto-delete (:edit-position?) (:channels?) :origin
+   *   or
+   * mix object :start :end :channel :edit-position :out-channel :with-tag :auto-delete :origin ?
+   * mix in-object out-object :start :end :channel :edit-position :out-channel :with-tag :auto-delete :origin ?
+   *   from
+   * play object :start :end :channel :edit-position :out-channel :with-sync :wait :stop): 
+   * save_sound_as :file :sound :header-type :data-format :srate :channel :edit-position :comment): 
    */
 
   XEN_ASSERT_TYPE(XEN_STRING_P(file), file, XEN_ARG_1, S_mix, "a string");

@@ -76,6 +76,7 @@ AC_DEFINE_UNQUOTED(SND_HOST, "$host")
 #   --with-midi           include sndlib midi module
 #   --with-cairo          use cairo for Gtk graphics, if possible
 #   --with-pulseaudio     use PulseAudio
+#   --with-portaudio      use portaudio
 #   --with-profiling      add code to keep profiling stats (s7)
 #   GUILE_CONFIG_path     where to look for guile-config
 #   GUILE_CONFIG_name     Fink (OSX) includes guile-config under funny names
@@ -109,6 +110,7 @@ AC_ARG_WITH(doubles,     [  --with-doubles	  use doubles throughout])
 AC_ARG_WITH(float-samples, [  --with-float-samples	  use floats (or doubles) as the internal sample respresentation, default=yes])
 AC_ARG_WITH(cairo,	 [  --with-cairo		  use cairo for graphics in Gtk -- not currently very usable])
 AC_ARG_WITH(pulseaudio,  [  --with-pulseaudio 		  use PulseAudio, default=no])
+AC_ARG_WITH(portaudio,   [  --with-portaudio 		  use portaudio, default=no])
 AC_ARG_WITH(profiling,   [  --with-profiling		  add code to keep profiling stats (s7 only)])
 
 # these are primarily for testing
@@ -1751,6 +1753,13 @@ if test "$with_pulseaudio" = yes ; then
       [AC_MSG_WARN(can't find the pulseaudio header files)])],
     [AC_MSG_WARN(can't find the pulseaudio library)])
 fi
+fi
+
+
+if test "$with_pulseaudio" = yes ; then
+          AUDIO_SYSTEM=PORTAUDIO
+	  AC_DEFINE(MUS_PORTAUDIO)
+	  AUDIO_LIB="-lportaudio"
 fi
 
 if test "$AUDIO_SYSTEM" != None ; then

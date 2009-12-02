@@ -760,6 +760,7 @@ with_doubles
 with_float_samples
 with_cairo
 with_pulseaudio
+with_portaudio
 with_profiling
 with_gsl
 with_fftw
@@ -1460,6 +1461,7 @@ Optional Packages:
   --with-float-samples	  use floats (or doubles) as the internal sample respresentation, default=yes
   --with-cairo		  use cairo for graphics in Gtk -- not currently very usable
   --with-pulseaudio 		  use PulseAudio, default=no
+  --with-portaudio 		  use portaudio, default=no
   --with-profiling		  add code to keep profiling stats (s7 only)
   --with-gsl		  use GSL, default=yes
   --with-fftw		  use fftw, default=yes
@@ -4072,6 +4074,7 @@ _ACEOF
 #   --with-midi           include sndlib midi module
 #   --with-cairo          use cairo for Gtk graphics, if possible
 #   --with-pulseaudio     use PulseAudio
+#   --with-portaudio      use portaudio
 #   --with-profiling      add code to keep profiling stats (s7)
 #   GUILE_CONFIG_path     where to look for guile-config
 #   GUILE_CONFIG_name     Fink (OSX) includes guile-config under funny names
@@ -4228,6 +4231,12 @@ fi
 # Check whether --with-pulseaudio was given.
 if test "${with_pulseaudio+set}" = set; then :
   withval=$with_pulseaudio;
+fi
+
+
+# Check whether --with-portaudio was given.
+if test "${with_portaudio+set}" = set; then :
+  withval=$with_portaudio;
 fi
 
 
@@ -12126,6 +12135,14 @@ $as_echo "$as_me: WARNING: can't find the pulseaudio library" >&2;}
 fi
 
 fi
+fi
+
+
+if test "$with_pulseaudio" = yes ; then
+          AUDIO_SYSTEM=PORTAUDIO
+	  $as_echo "#define MUS_PORTAUDIO 1" >>confdefs.h
+
+	  AUDIO_LIB="-lportaudio"
 fi
 
 if test "$AUDIO_SYSTEM" != None ; then

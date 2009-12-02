@@ -1179,6 +1179,27 @@ make
 ./snd -noinit --features ":clm, :snd-gtk, :snd_ruby"
 make allclean
 
+echo ' -------------------------------------------------------------------------------- '
+echo ' ----                 --with-portaudio                                       ---- '
+echo ' -------------------------------------------------------------------------------- '
+./configure --with-portaudio --quiet
+make
+./snd --version
+./snd -noinit --features "'clm 'snd-gtk"
+make allclean
+
+
+
+echo ' -------------------------------------------------------------------------------- '
+echo ' ----                 --with-pulseaudio                                      ---- '
+echo ' -------------------------------------------------------------------------------- '
+./configure --with-pulseaudio --quiet
+make
+./snd --version
+./snd -noinit --features "'clm 'snd-gtk"
+make allclean
+
+
 
 cp ~/sndlib/* .
 echo ' -------------------------------------------------------------------------------- '

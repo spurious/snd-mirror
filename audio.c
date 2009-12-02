@@ -10124,6 +10124,34 @@ char *mus_audio_moniker(void)
 
 
 
+/* -------------------------------- PORTAUDIO -------------------------------- */
+
+#if defined(MUS_PORTAUDIO) && (!(defined(AUDIO_OK)))
+#define AUDIO_OK 1
+
+#include <portaudio.h>
+
+static void describe_audio_state_1(void) {pprint("portaudio");}
+
+int mus_audio_open_output(int dev, int srate, int chans, int format, int size) {return(MUS_ERROR);}
+int mus_audio_open_input(int dev, int srate, int chans, int format, int size) {return(MUS_ERROR);}
+int mus_audio_write(int line, char *buf, int bytes) {return(MUS_ERROR);}
+int mus_audio_close(int line) {return(MUS_ERROR);}
+int mus_audio_read(int line, char *buf, int bytes) {return(MUS_ERROR);}
+int mus_audio_initialize(void) {return(MUS_ERROR);}
+
+
+int mus_audio_mixer_read(int dev, int field, int chan, float *val) {return(MUS_ERROR);}
+int mus_audio_mixer_write(int dev, int field, int chan, float *val) {return(MUS_ERROR);}
+int mus_audio_systems(void) {return(1);}
+char *mus_audio_system_name(int system) {return((char *)"portaudio");}
+char *mus_audio_moniker(void) {return((char *)"portaudio");}
+
+
+#endif
+
+
+
 /* ------------------------------- STUBS ----------------------------------------- */
 
 #ifndef AUDIO_OK

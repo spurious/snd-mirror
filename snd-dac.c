@@ -3631,7 +3631,5 @@ If it returns " PROC_TRUE ", the sound is not played."
 #endif
 #endif
 
-  /* TODO: fixup play-* refs in all fs files */
   /* SOMEDAY: extend rest of play args to other cases like play-region */
-
 }
