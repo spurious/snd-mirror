@@ -10131,14 +10131,105 @@ char *mus_audio_moniker(void)
 
 #include <portaudio.h>
 
-static void describe_audio_state_1(void) {pprint("portaudio");}
+static unsigned long sndlib_to_portaudio_format(int format)
+{
+  switch (format)
+    {
+    case MUS_BYTE:   return(paInt8);
+    case MUS_LSHORT: return(paInt16);
+    case MUS_BSHORT: return(paInt16);
+    case MUS_LINT:   return(paInt32);
+    case MUS_BINT:   return(paInt32);
+    case MUS_LFLOAT: return(paFloat32);
+    case MUS_BFLOAT: return(paFloat32);
+    }
+  return(paInt16);
+}
 
-int mus_audio_open_output(int dev, int srate, int chans, int format, int size) {return(MUS_ERROR);}
-int mus_audio_open_input(int dev, int srate, int chans, int format, int size) {return(MUS_ERROR);}
-int mus_audio_write(int line, char *buf, int bytes) {return(MUS_ERROR);}
-int mus_audio_close(int line) {return(MUS_ERROR);}
-int mus_audio_read(int line, char *buf, int bytes) {return(MUS_ERROR);}
-int mus_audio_initialize(void) {return(MUS_ERROR);}
+static void describe_audio_state_1(void) 
+{
+  pprint("portaudio");
+}
+
+
+static PaStream *stream = NULL;
+
+int mus_audio_open_output(int dev, int srate, int chans, int format, int size) 
+{
+  PaStreamParameters output_pars;
+  PaError err;
+
+  output_pars.device = Pa_GetDefaultOutputDevice();
+  output_pars.channelCount = chans;
+  output_pars.sampleFormat = sndlib_to_portaudio_format(format);
+  output_pars.suggestedLatency = Pa_GetDeviceInfo(output_pars.device)->defaultHighOutputLatency;
+  output_pars.hostApiSpecificStreamInfo = NULL;
+
+  err = Pa_OpenStream(&stream, NULL, &output_pars, srate, 1024, paClipOff, NULL, NULL);
+  if (err == paNoError)
+    err = Pa_StartStream(stream);
+
+  if (err != paNoError)
+    {
+      fprintf(stderr, "portaudio open output: %s\n", Pa_GetErrorText(err));
+      return(MUS_ERROR);
+    }
+  return(MUS_NO_ERROR);
+}
+
+
+int mus_audio_open_input(int dev, int srate, int chans, int format, int size) 
+{
+  return(MUS_ERROR);
+}
+
+
+int mus_audio_write(int line, char *buf, int bytes) 
+{
+  PaError err;
+  err = Pa_WriteStream(stream, buf, 1024);
+
+  if (err != paNoError)
+    {
+      fprintf(stderr, "portaudio write: %s\n", Pa_GetErrorText(err));
+      return(MUS_ERROR);
+    }
+  return(MUS_NO_ERROR);
+}
+
+
+int mus_audio_close(int line) 
+{
+  PaError err;
+  err = Pa_CloseStream(stream);
+
+  if (err != paNoError)
+    {
+      fprintf(stderr, "portaudio write: %s\n", Pa_GetErrorText(err));
+      return(MUS_ERROR);
+    }
+  return(MUS_NO_ERROR);
+}
+
+
+int mus_audio_read(int line, char *buf, int bytes) 
+{
+  return(MUS_ERROR);
+}
+
+
+/* should we terminate it somewhere? */
+
+int mus_audio_initialize(void) 
+{
+  PaError err;
+  err = Pa_Initialize();
+  if (err == paNoError)
+    return(MUS_NO_ERROR);
+
+  fprintf(stderr, "portaudio initialize: %s\n", Pa_GetErrorText(err));
+  return(MUS_ERROR);
+}
 
 
 int mus_audio_mixer_read(int dev, int field, int chan, float *val) {return(MUS_ERROR);}

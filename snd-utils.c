@@ -350,9 +350,16 @@ char *snd_tempnam(void)
 }
 
 
+#if MUS_PORTAUDIO
+#include <portaudio.h>
+#endif
+
 void snd_exit(int val)
 {
 #ifndef SND_AS_WIDGET
+#if MUS_PORTAUDIO
+  Pa_Terminate();
+#endif
   exit(val);
 #endif
 }

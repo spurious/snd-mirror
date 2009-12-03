@@ -1760,7 +1760,7 @@ if test "$with_esd" = yes ; then
         if test "$with_alsa" = yes || test "$with_static_alsa" = yes ; then
 	  AC_MSG_WARN([esd takes precedence over alsa -- the two are not compatible])
         fi
-        AUDIO_SYSTEM=ESD
+        AUDIO_SYSTEM=esd
        ],
       [AC_MSG_WARN(can't find the ESD header files)])],
     [AC_MSG_WARN(can't find the ESD library)])
@@ -1776,7 +1776,7 @@ if test "$with_pulseaudio" = yes ; then
         else 
           AUDIO_LIB="-lpulse-simple"
         fi
-        AUDIO_SYSTEM=PULSEAUDIO
+        AUDIO_SYSTEM=pulseaudio
        ],
       [AC_MSG_WARN(can't find the pulseaudio header files)])],
     [AC_MSG_WARN(can't find the pulseaudio library)])
@@ -1784,11 +1784,22 @@ fi
 fi
 
 
-if test "$with_pulseaudio" = yes ; then
-          AUDIO_SYSTEM=PORTAUDIO
+if test "$with_portaudio" = yes ; then
+  AC_CHECK_LIB(portaudio, main, [
+    AC_CHECK_HEADER(portaudio.h, [
+          AUDIO_SYSTEM=portaudio
 	  AC_DEFINE(MUS_PORTAUDIO)
+	if test x$PKG_CONFIG != xno ; then
+          AUDIO_LIB="`$PKG_CONFIG portaudio-2.0 --libs`"
+        else 
 	  AUDIO_LIB="-lportaudio"
+        fi
+	],
+      [AC_MSG_WARN(can't find the portaudio header file)])],
+    [AC_MSG_WARN(can't find the portaudio library)])
 fi
+# TODO: this needs to be added to sndlib/clm configure.ac [also the macros]
+
 
 if test "$AUDIO_SYSTEM" != None ; then
   AC_MSG_RESULT(Using the $AUDIO_SYSTEM audio system)
@@ -1813,7 +1824,7 @@ if test "$with_jack" = yes ; then
               [with_jack=no
 	       AC_MSG_WARN(can't find the samplerate library. JACK will not be used.)])
             if test $with_jack = yes ; then
-               AUDIO_SYSTEM=JACK
+               AUDIO_SYSTEM=Jack
 	       AC_DEFINE(MUS_JACK)
 	       if test x$PKG_CONFIG != xno ; then
                    jack_version="`$PKG_CONFIG jack --modversion`"
@@ -1837,14 +1848,14 @@ case "$host" in
 	  SO_FLAGS="-fPIC $SO_FLAGS"
         fi
 
-        AUDIO_SYSTEM=ALSA
+        AUDIO_SYSTEM=Alsa
 	if test "$with_oss" = yes ; then 
           AUDIO_SYSTEM=OSS
 	else
 
           if test "$ac_cv_header_alsa_asoundlib_h" = yes ; then
             AC_CHECK_LIB(asound, main,
-               AUDIO_SYSTEM=ALSA,
+               AUDIO_SYSTEM=Alsa,
                [AC_MSG_WARN(can't find the ALSA library)])
           else
             AC_MSG_WARN(can't find the ALSA header files)
@@ -1854,7 +1865,7 @@ case "$host" in
 
 	if test "$with_jack" = yes ; then 
 	       if test "$with_alsa" != yes ; then
-                 AUDIO_SYSTEM=JACK
+                 AUDIO_SYSTEM=Jack
                fi
 	fi
 

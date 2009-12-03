@@ -12099,7 +12099,7 @@ _ACEOF
 	  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: esd takes precedence over alsa -- the two are not compatible" >&5
 $as_echo "$as_me: WARNING: esd takes precedence over alsa -- the two are not compatible" >&2;}
         fi
-        AUDIO_SYSTEM=ESD
+        AUDIO_SYSTEM=esd
 
 else
   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: can't find the ESD header files" >&5
@@ -12157,7 +12157,7 @@ if test "x$ac_cv_header_pulse_simple_h" = x""yes; then :
         else
           AUDIO_LIB="-lpulse-simple"
         fi
-        AUDIO_SYSTEM=PULSEAUDIO
+        AUDIO_SYSTEM=pulseaudio
 
 else
   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: can't find the pulseaudio header files" >&5
@@ -12174,12 +12174,65 @@ fi
 fi
 
 
-if test "$with_pulseaudio" = yes ; then
-          AUDIO_SYSTEM=PORTAUDIO
+if test "$with_portaudio" = yes ; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for main in -lportaudio" >&5
+$as_echo_n "checking for main in -lportaudio... " >&6; }
+if test "${ac_cv_lib_portaudio_main+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lportaudio  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+
+int
+main ()
+{
+return main ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_portaudio_main=yes
+else
+  ac_cv_lib_portaudio_main=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_portaudio_main" >&5
+$as_echo "$ac_cv_lib_portaudio_main" >&6; }
+if test "x$ac_cv_lib_portaudio_main" = x""yes; then :
+
+    ac_fn_c_check_header_mongrel "$LINENO" "portaudio.h" "ac_cv_header_portaudio_h" "$ac_includes_default"
+if test "x$ac_cv_header_portaudio_h" = x""yes; then :
+
+          AUDIO_SYSTEM=portaudio
 	  $as_echo "#define MUS_PORTAUDIO 1" >>confdefs.h
 
+	if test x$PKG_CONFIG != xno ; then
+          AUDIO_LIB="`$PKG_CONFIG portaudio-2.0 --libs`"
+        else
 	  AUDIO_LIB="-lportaudio"
+        fi
+
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: can't find the portaudio header file" >&5
+$as_echo "$as_me: WARNING: can't find the portaudio header file" >&2;}
 fi
+
+
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: can't find the portaudio library" >&5
+$as_echo "$as_me: WARNING: can't find the portaudio library" >&2;}
+fi
+
+fi
+# TODO: this needs to be added to sndlib configure.ac
+
 
 if test "$AUDIO_SYSTEM" != None ; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: Using the $AUDIO_SYSTEM audio system" >&5
@@ -12290,7 +12343,7 @@ $as_echo "$as_me: WARNING: can't find the samplerate library. JACK will not be u
 fi
 
             if test $with_jack = yes ; then
-               AUDIO_SYSTEM=JACK
+               AUDIO_SYSTEM=Jack
 	       $as_echo "#define MUS_JACK 1" >>confdefs.h
 
 	       if test x$PKG_CONFIG != xno ; then
@@ -12371,7 +12424,7 @@ $as_echo "$as_me: WARNING: can't find the ALSA header files" >&2;}
 
 	if test "$with_jack" = yes ; then
 	       if test "$with_alsa" != yes ; then
-                 AUDIO_SYSTEM=JACK
+                 AUDIO_SYSTEM=Jack
                fi
 	fi
 

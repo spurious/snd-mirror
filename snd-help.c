@@ -175,6 +175,10 @@ static void main_snd_help(const char *subject, ...)
   #include <pulse/version.h>
 #endif
 
+#if MUS_PORTAUDIO
+  #include <portaudio.h>
+#endif
+
 #if USE_MOTIF
   #define XM_VERSION_NAME "xm-version"
 #else
@@ -344,7 +348,10 @@ char *version_info(void)
 	  " of ",
 	  SND_DATE,
 	  ":\n    ", xversion,
-	  "\n    ", mus_audio_moniker(),
+	  "\n    ", 
+#if (!MUS_PORTAUDIO)
+	  mus_audio_moniker(),
+#endif
 #if MUS_JACK
 	  ", Jack: ",
 #ifdef MUS_JACK_VERSION
@@ -353,6 +360,9 @@ char *version_info(void)
 #endif
 #if MUS_PULSEAUDIO
 	  " ", pa_get_library_version(),
+#endif
+#if MUS_PORTAUDIO
+	  Pa_GetVersionText(),
 #endif
 	  "\n    Sndlib ", snd_itoa(SNDLIB_VERSION), ".", 
                            snd_itoa(SNDLIB_REVISION), 
@@ -512,6 +522,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+4-Dec:   portaudio support.\n\
 1-Dec:   removed --with-modules configuration switch.\n\
 30-Nov:  Snd 11.1.\n\
 23-Nov:  colormaps are objects now.  integer->colormap, colormap->integer.\n\
@@ -520,20 +531,6 @@ void about_snd_help(void)
 2-Nov:   selection function/object. selection->mix.\n\
 28-Oct:  pretty-print.scm.\n\
 22-Oct:  Snd 11.0.\n\
-16-Oct:  clm.rb and grani.rb (thanks to Mike Scholz).\n\
-12-Oct:  generic length, srate, channels, frames, file-name, sync, maxamp.\n\
-6-Oct:   removed *snd-loaded-files* and *snd-remember-paths*.\n\
-1-Oct:   sounds are objects, but the integer choice also works. \n\
-         sound->integer and integer->sound.\n\
-         players are objects.\n\
-29-Sep:  mixes are objects now (not ints), integer->mix and mix->integer.\n\
-         all \"sample-reader\" and \"sample_reader\" names changed to \"sampler\".\n\
-         marks are objects (not ints), integer->mark and mark->integer.\n\
-	 regions are objects, integer->region, region->integer.\n\
-         several region functions now take the region argument first:\n\
-           insert-region, make-region-sampler, mix-region, region-sample,\n\
-           region->vct, region->frame, make-region-frame-reader.\n\
-         removed export-all.scm, snd4.scm, snd5.scm.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*:\n    '", features, "\n\n",
