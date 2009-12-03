@@ -1,4 +1,4 @@
-/* Audio hardware handlers (SGI, OSS, ALSA, Sun, Windows, Mac OSX, Jack, ESD, HPUX, NetBSD) */
+/* Audio hardware handlers (SGI, OSS, ALSA, Sun, Windows, Mac OSX, Jack, ESD, HPUX, NetBSD, pulseaudio, portaudio) */
 
 /*
  * layout of this file:
@@ -14,6 +14,7 @@
  *    NetBSD
  *    SGI new and old audio library
  *    PulseAudio (in progress?)
+ *    PortAudio
  *    audio describers
  */
 
@@ -10131,6 +10132,9 @@ char *mus_audio_moniker(void)
 
 #include <portaudio.h>
 
+#define PA_OUT_STREAM 0
+#define PA_IN_STREAM 1
+
 static unsigned long sndlib_to_portaudio_format(int format)
 {
   switch (format)
@@ -10146,13 +10150,7 @@ static unsigned long sndlib_to_portaudio_format(int format)
   return(paInt16);
 }
 
-static void describe_audio_state_1(void) 
-{
-  pprint("portaudio");
-}
-
-
-static PaStream *stream = NULL;
+static PaStream *out_stream = NULL;
 
 int mus_audio_open_output(int dev, int srate, int chans, int format, int size) 
 {
@@ -10165,29 +10163,50 @@ int mus_audio_open_output(int dev, int srate, int chans, int format, int size)
   output_pars.suggestedLatency = Pa_GetDeviceInfo(output_pars.device)->defaultHighOutputLatency;
   output_pars.hostApiSpecificStreamInfo = NULL;
 
-  err = Pa_OpenStream(&stream, NULL, &output_pars, srate, 1024, paClipOff, NULL, NULL);
+  err = Pa_OpenStream(&out_stream, NULL, &output_pars, srate, 1024, paClipOff, NULL, NULL);
   if (err == paNoError)
-    err = Pa_StartStream(stream);
+    err = Pa_StartStream(out_stream);
 
   if (err != paNoError)
     {
       fprintf(stderr, "portaudio open output: %s\n", Pa_GetErrorText(err));
       return(MUS_ERROR);
     }
-  return(MUS_NO_ERROR);
+  return(PA_OUT_STREAM);
 }
 
 
+static PaStream *in_stream = NULL;
+
 int mus_audio_open_input(int dev, int srate, int chans, int format, int size) 
 {
-  return(MUS_ERROR);
+  PaStreamParameters input_pars;
+  PaError err;
+
+  input_pars.device = Pa_GetDefaultInputDevice();
+  input_pars.channelCount = chans;
+  input_pars.sampleFormat = sndlib_to_portaudio_format(format);
+  input_pars.suggestedLatency = Pa_GetDeviceInfo(input_pars.device)->defaultHighInputLatency;
+  input_pars.hostApiSpecificStreamInfo = NULL;
+
+  err = Pa_OpenStream(&in_stream, &input_pars, NULL, srate, 1024, paClipOff, NULL, NULL);
+  if (err == paNoError)
+    err = Pa_StartStream(in_stream);
+
+  if (err != paNoError)
+    {
+      fprintf(stderr, "portaudio open input: %s\n", Pa_GetErrorText(err));
+      return(MUS_ERROR);
+    }
+  return(MUS_NO_ERROR);
+
 }
 
 
 int mus_audio_write(int line, char *buf, int bytes) 
 {
   PaError err;
-  err = Pa_WriteStream(stream, buf, 1024);
+  err = Pa_WriteStream(out_stream, buf, 1024);
 
   if (err != paNoError)
     {
@@ -10201,11 +10220,13 @@ int mus_audio_write(int line, char *buf, int bytes)
 int mus_audio_close(int line) 
 {
   PaError err;
-  err = Pa_CloseStream(stream);
+  if (line == PA_IN_STREAM)
+    err = Pa_CloseStream(in_stream);
+  else err = Pa_CloseStream(out_stream);
 
   if (err != paNoError)
     {
-      fprintf(stderr, "portaudio write: %s\n", Pa_GetErrorText(err));
+      fprintf(stderr, "portaudio close: %s\n", Pa_GetErrorText(err));
       return(MUS_ERROR);
     }
   return(MUS_NO_ERROR);
@@ -10214,15 +10235,27 @@ int mus_audio_close(int line)
 
 int mus_audio_read(int line, char *buf, int bytes) 
 {
-  return(MUS_ERROR);
+  PaError err;
+  err = Pa_ReadStream(in_stream, buf, 1024);
+
+  if (err != paNoError)
+    {
+      fprintf(stderr, "portaudio read: %s\n", Pa_GetErrorText(err));
+      return(MUS_ERROR);
+    }
+  return(MUS_NO_ERROR);
 }
 
 
-/* should we terminate it somewhere? */
+static bool portaudio_initialized = false;
 
 int mus_audio_initialize(void) 
 {
   PaError err;
+
+  if (portaudio_initialized) return(MUS_NO_ERROR);
+  portaudio_initialized = true;
+
   err = Pa_Initialize();
   if (err == paNoError)
     return(MUS_NO_ERROR);
@@ -10237,6 +10270,43 @@ int mus_audio_mixer_write(int dev, int field, int chan, float *val) {return(MUS_
 int mus_audio_systems(void) {return(1);}
 char *mus_audio_system_name(int system) {return((char *)"portaudio");}
 char *mus_audio_moniker(void) {return((char *)"portaudio");}
+
+
+static void describe_audio_state_1(void) 
+{
+  int i, ndevices, default_input_device, default_output_device;
+
+  mus_audio_initialize();
+
+  ndevices = Pa_GetDeviceCount();
+  default_input_device = Pa_GetDefaultInputDevice();
+  default_output_device = Pa_GetDefaultOutputDevice();
+
+  for (i = 0; i < ndevices; i++)
+    {
+      const PaDeviceInfo *info;
+      const PaHostApiInfo *host_info;
+
+      info = Pa_GetDeviceInfo(i);
+      host_info = Pa_GetHostApiInfo(info->hostApi);
+      
+      pprint(info->name);
+      pprint(" (");
+      pprint(host_info->name);
+      pprint(") ");
+      if ((i == default_input_device) ||
+	  (i == host_info->defaultInputDevice))
+	pprint("default input");
+      else
+	{
+	  if ((i == default_output_device) ||
+	      (i == host_info->defaultOutputDevice))
+	    pprint("default output");
+	}
+      snprintf(audio_strbuf, PRINT_BUFFER_SIZE, "\n  input chans: %d, output chans: %d\n", info->maxInputChannels, info->maxOutputChannels);
+      pprint(audio_strbuf);
+    }
+}
 
 
 #endif

@@ -1201,6 +1201,17 @@ make allclean
 
 
 
+echo ' -------------------------------------------------------------------------------- '
+echo ' ----                 --with-portaudio                                      ---- '
+echo ' -------------------------------------------------------------------------------- '
+./configure --with-portaudio --quiet
+make
+./snd --version
+./snd -noinit --features "'clm 'snd-gtk"
+make allclean
+
+
+
 cp ~/sndlib/* .
 echo ' -------------------------------------------------------------------------------- '
 echo ' -----                sndlib tests                                           ---- '
