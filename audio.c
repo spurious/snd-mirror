@@ -10163,7 +10163,7 @@ int mus_audio_open_output(int dev, int srate, int chans, int format, int size)
   output_pars.suggestedLatency = Pa_GetDeviceInfo(output_pars.device)->defaultHighOutputLatency;
   output_pars.hostApiSpecificStreamInfo = NULL;
 
-  err = Pa_OpenStream(&out_stream, NULL, &output_pars, srate, 1024, paClipOff, NULL, NULL);
+  err = Pa_OpenStream(&out_stream, NULL, &output_pars, srate, 1024, paClipOff, NULL, NULL); /* TODO: 1024 = frames [dac_size] but can we use "size"? */
   if (err == paNoError)
     err = Pa_StartStream(out_stream);
 

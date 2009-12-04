@@ -4,7 +4,6 @@
  */
 
 /* SOMEDAY: use emacs as the listener via the xembed protocol? (this connection is not quite ready) */
-/* TODO: check the tutorial!  perhaps remove it */
 
 #include "snd.h"
 
