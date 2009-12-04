@@ -51,30 +51,7 @@
   (set! oscope-power (not oscope-power))
   (if oscope-power
       (begin
-	(set! oscope-input-port (mus-audio-open-input mus-audio-microphone audio-srate 1 mus-lshort 512))
-	(if (= oscope-input-port -1)
-	    ;; ask card what it wants
-	    (let ((vals (make-vct 32))
-		  (chans 1)
-		  (bytes 512))
-	      (mus-audio-mixer-read mus-audio-line-in mus-audio-format 32 vals)
-	      (let ((fmt (inexact->exact (vct-ref vals 1))))
-		(mus-audio-mixer-read mus-audio-line-in mus-audio-channel 32 vals)
-		(set! chans (inexact->exact (vct-ref vals 0)))
-		(let ((err (mus-audio-mixer-read mus-audio-line-in mus-audio-samples-per-channel 2 vals)))
-		  (if (not (= err -1))
-		      (set! oscope-input-frames (inexact->exact (vct-ref vals 0))))
-		  (let* ((bps (mus-bytes-per-sample fmt)))
-		    (set! bytes (* bps oscope-input-frames chans))
-		    (set! oscope-input-port (catch #t
-					 (lambda ()
-					   (mus-audio-open-input mus-audio-line-in audio-srate chans fmt bytes))
-					 (lambda args -1)))
-		    (if (not (= oscope-input-port -1))
-			(begin
-			  (if (or (not (= (channels oscope-input-data) chans))
-				  (not (= (sound-data-length oscope-input-data) oscope-input-frames)))
-			      (set! oscope-input-data (make-sound-data chans oscope-input-frames))))))))))
+	(set! oscope-input-port (mus-audio-open-input 0 audio-srate 1 mus-lshort 512))
 	(if (not (= oscope-input-port -1))
 	    (begin
 	      (do ()

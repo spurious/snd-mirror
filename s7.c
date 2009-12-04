@@ -84,7 +84,7 @@
  *   things I ought to add/change:
  *        make #<func args> = (func args) or something like that so we can read new_type objects, or add a reader to that struct
  *          also add a conversion function (->generator etc)
- *          or add #< escape to read -- look for that type, call its reader?
+ *          or add #< escape to read
  *        make-vector! where type of initial element sets type of all elements, or make-vector*? [make-typed-vector?]
  *          (make-vector! 32 0.0)
  *          unproblematic types: s7_Double|s7_Int (ratio/complex too) char string boolean list/pair closure/function port c-object hash/vector continuation

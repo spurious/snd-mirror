@@ -236,27 +236,6 @@
 ;;(setlocale LC_ALL "de_DE")
 (set! (with-background-processes) #f)
 (define max-optimization 6)
-
-;; start-playing-hook is only called when an indexed sound is played, not if play-mix etc -- need a way to hit all possible playback
-(define mus-audio-playback-amp
-  (make-procedure-with-setter
-   (lambda ()
-     (let ((vals (make-vct 32)))
-       (mus-audio-mixer-read mus-audio-default mus-audio-amp 0 vals)
-       (let ((ch0-amp (vct-ref vals 0)))
-	 (mus-audio-mixer-read mus-audio-default mus-audio-amp 1 vals)
-	 (let ((ch1-amp (vct-ref vals 0)))
-	   (list ch0-amp ch1-amp)))))
-   (lambda (val)
-     (let ((vals (make-vct 32)))
-       (vct-set! vals 0 val)
-       (mus-audio-mixer-write mus-audio-default mus-audio-amp 0 vals)       
-       (mus-audio-mixer-write mus-audio-default mus-audio-amp 1 vals)
-       val))))
-
-(define playback-amp 0.50)
-(set! (mus-audio-playback-amp) playback-amp)
-
 (define sampler-tests 300)
 
 ;; try to get a different random number sequence on each run
@@ -778,47 +757,6 @@
       'mus-lfloat-unscaled mus-lfloat-unscaled 20
       'mus-bdouble-unscaled mus-bdouble-unscaled 21
       'mus-ldouble-unscaled mus-ldouble-unscaled 22
-      
-      'mus-audio-default mus-audio-default 0
-      'mus-audio-duplex-default mus-audio-duplex-default 1
-      'mus-audio-line-out mus-audio-line-out 4
-      'mus-audio-line-in mus-audio-line-in 5
-      'mus-audio-microphone mus-audio-microphone 6
-      'mus-audio-speakers mus-audio-speakers 7
-      'mus-audio-dac-out mus-audio-dac-out 10
-      'mus-audio-adat-in mus-audio-adat-in 2
-      'mus-audio-aes-in mus-audio-aes-in 3
-      'mus-audio-digital-in mus-audio-digital-in 8
-      'mus-audio-digital-out mus-audio-digital-out 9
-      'mus-audio-adat-out mus-audio-adat-out 11
-      'mus-audio-aes-out mus-audio-aes-out 12
-      'mus-audio-dac-filter mus-audio-dac-filter 13
-      'mus-audio-mixer mus-audio-mixer 14
-      'mus-audio-line1 mus-audio-line1 15
-      'mus-audio-line2 mus-audio-line2 16
-      'mus-audio-line3 mus-audio-line3 17
-      'mus-audio-aux-input mus-audio-aux-input 18
-      'mus-audio-cd mus-audio-cd 19
-      'mus-audio-aux-output mus-audio-aux-output 20
-      'mus-audio-spdif-in mus-audio-spdif-in 21
-      'mus-audio-spdif-out mus-audio-spdif-out 22
-      'mus-audio-amp mus-audio-amp 23
-      'mus-audio-srate mus-audio-srate 24
-      'mus-audio-channel mus-audio-channel 25
-      'mus-audio-format mus-audio-format 26
-      'mus-audio-port mus-audio-port 37
-      'mus-audio-imix mus-audio-imix 27
-      'mus-audio-igain mus-audio-igain 28
-      'mus-audio-reclev mus-audio-reclev 29
-      'mus-audio-pcm mus-audio-pcm 30
-      'mus-audio-pcm2 mus-audio-pcm2 31
-      'mus-audio-ogain mus-audio-ogain 32
-      'mus-audio-line mus-audio-line 33
-      'mus-audio-synth mus-audio-synth 34
-      'mus-audio-bass mus-audio-bass 35
-      'mus-audio-treble mus-audio-treble 36
-      'mus-audio-direction mus-audio-direction 39
-      'mus-audio-samples-per-channel mus-audio-samples-per-channel 38
       ))
     
     (set! (region-graph-style) (region-graph-style))
@@ -2197,17 +2135,9 @@
 		       'mouse-leave-listener-hook 'mouse-leave-text-hook 'mouse-press-hook 'move-locsig 'move-sound 'move-sound? 'multiply-arrays
 		       'mus-aifc 'mus-aiff 'mus-alaw 'mus-alsa-buffer-size 'mus-alsa-buffers
 		       'mus-alsa-capture-device 'mus-alsa-device 'mus-alsa-playback-device 'mus-alsa-squelch-warning 'mus-apply
-		       'mus-array-print-length 'mus-float-equal-fudge-factor 'mus-audio-adat-in 'mus-audio-adat-out 'mus-audio-aes-in 'mus-audio-aes-out
-		       'mus-audio-amp 'mus-audio-aux-input 'mus-audio-aux-output 'mus-audio-bass 'mus-audio-cd
-		       'mus-audio-channel 'mus-audio-close 'mus-audio-dac-filter 'mus-audio-dac-out 'mus-audio-default
-		       'mus-audio-describe 'mus-audio-digital-in 'mus-audio-digital-out 'mus-audio-direction 'mus-audio-duplex-default
-		       'mus-audio-format 'mus-audio-igain 'mus-audio-imix 'mus-audio-line 'mus-audio-line-in
-		       'mus-audio-line-out 'mus-audio-line1 'mus-audio-line2 'mus-audio-line3 'mus-audio-microphone
-		       'mus-audio-mixer 'mus-audio-mixer-read 'mus-audio-mixer-write 'mus-audio-ogain 'mus-audio-open-input
-		       'mus-audio-open-output 'mus-audio-pcm 'mus-audio-pcm2 'mus-audio-port 'mus-audio-read
-		       'mus-audio-reclev 'mus-audio-reinitialize 'mus-audio-report 'mus-audio-samples-per-channel 'mus-audio-spdif-in
-		       'mus-audio-spdif-out 'mus-audio-speakers 'mus-audio-srate 'mus-audio-synth 'mus-audio-systems
-		       'mus-audio-treble 'mus-audio-write 'mus-b24int 'mus-bdouble 'mus-bdouble-unscaled
+		       'mus-array-print-length 'mus-float-equal-fudge-factor 
+
+		       'mus-b24int 'mus-bdouble 'mus-bdouble-unscaled
 		       'mus-bfloat 'mus-bfloat-unscaled 'mus-bicsf 'mus-bint 'mus-bintn
 		       'mus-bshort 'mus-byte 'mus-bytes-per-sample 'mus-caff 'mus-channel 'mus-channels
 		       'mus-chebyshev-first-kind 'mus-chebyshev-second-kind 'mus-clipping 'mus-close
@@ -2363,9 +2293,9 @@
     (mus-sound-read sound-fd 0 (- bufsize 1) chans data)
     (catch #t
 	   (lambda ()
-	     (let ((audio-fd (mus-audio-open-output mus-audio-default (mus-sound-srate file) chans mus-lshort bytes)))
+	     (let ((audio-fd (mus-audio-open-output 0 (mus-sound-srate file) chans mus-lshort bytes)))
 	       (if (= audio-fd -1)
-		   (set! audio-fd (mus-audio-open-output mus-audio-default (mus-sound-srate file) chans mus-bshort bytes)))
+		   (set! audio-fd (mus-audio-open-output 0 (mus-sound-srate file) chans mus-bshort bytes)))
 	       (if (= audio-fd -1)
 		   (snd-display ";can't play ~A" file)
 		   (begin
@@ -2421,7 +2351,7 @@
 	   (in-port (catch 'mus-error
 			   (lambda ()
 			     (mus-audio-open-input 
-			      (card+device in-sys mus-audio-default) 
+			      (card+device in-sys 0) 
 			      our-srate our-chans our-short our-dac-buffer-size-in-bytes))
 			   (lambda args -1)))
 	   (data (make-sound-data our-chans our-dac-buffer-size-in-shorts))
@@ -2451,8 +2381,7 @@
 	    (m1 (mus-sound-maxamp-exists? "oboe.snd"))
 	    (mal (mus-sound-maxamp "oboe.snd"))
 	    (mz (mus-sound-maxamp "z.snd"))
-	    (bytes (mus-bytes-per-sample (mus-sound-data-format "oboe.snd")))
-	    (sys (mus-audio-systems)))
+	    (bytes (mus-bytes-per-sample (mus-sound-data-format "oboe.snd"))))
 	(if (or (not (= (car mz) 0))
 		(fneq (cadr mz) 0.0))
 	    (snd-display ";mus-sound-maxamp z.snd: ~A (~A ~A)" mz (not (= (car mz) 0)) (fneq (cadr mz) 0.0)))
@@ -2488,7 +2417,6 @@
 		    (delete-file "hiho.tmp")))))
 	(if (< (string-length (mus-audio-report)) 10)
 	    (snd-display ";mus-audio-report: ~A" (mus-audio-report)))
-	(if (and (not (= sys 1)) (not (= sys 2))) (snd-display ";mus-audio-systems: ~A?" sys))
 	(if (not (= chns 1)) (snd-display ";oboe: mus-sound-chans ~D?" chns))
 	(if (not (= dl 28)) (snd-display ";oboe: mus-sound-data-location ~D (~A)?" dl (= dl 28)))
 	(if (not (= fr 50828)) (snd-display ";oboe: mus-sound-frames ~D?" fr))
@@ -3263,27 +3191,6 @@
 	(if (selected-sound)
 	    (snd-display ";selected-sound ~A ~A" (selected-sound) (sounds)))
 	
-	(let* ((vals (make-vct 32))
-	       (err (mus-audio-mixer-read mus-audio-microphone mus-audio-amp 0 vals)))
-	  (if (= err -1) 
-	      (snd-display ";mus-audio-mixer-read?")
-	      (for-each 
-	       (lambda (field)
-		 (for-each
-		  (lambda (device)
-		    (if (not (= (mus-audio-mixer-read device field 0 vals) -1))
-			(mus-audio-mixer-write device field 0 vals)))
-		  (list mus-audio-default mus-audio-duplex-default mus-audio-line-out mus-audio-line-in mus-audio-microphone
-			mus-audio-speakers mus-audio-dac-out mus-audio-adat-in mus-audio-aes-in mus-audio-digital-in
-			mus-audio-digital-out mus-audio-adat-out mus-audio-aes-out mus-audio-dac-filter mus-audio-mixer
-			mus-audio-line1 mus-audio-line2 mus-audio-line3 mus-audio-aux-input mus-audio-cd mus-audio-aux-output
-			mus-audio-spdif-in mus-audio-spdif-out)))
-	       (list mus-audio-amp mus-audio-srate mus-audio-channel mus-audio-format mus-audio-port mus-audio-imix
-		     mus-audio-igain mus-audio-reclev mus-audio-pcm mus-audio-pcm2 mus-audio-ogain mus-audio-line
-		     mus-audio-line1 mus-audio-line2 mus-audio-line3 mus-audio-cd
-		     mus-audio-synth mus-audio-bass mus-audio-treble mus-audio-direction mus-audio-samples-per-channel))
-	      ))
-	
 	(if (file-exists? (string-append (or sf-dir "") "a.sf2"))
 	    (let ((fil (open-sound (string-append (or sf-dir "") "a.sf2"))))
 	      (if fil
@@ -3413,26 +3320,6 @@
 	    (if (not (equal? sd sd1)) (snd-display ";copy sd: ~A ~A"))))
 	
 	(for-each
-	 (lambda (proc name)
-	   (let ((var (catch #t (lambda () (proc mus-audio-default 22050 -1 mus-lshort 512)) (lambda args args))))
-	     (if (not (eq? (car var) 'out-of-range))
-		 (snd-display ";~A bad chans: ~A" name var)))
-	   (let ((var (catch #t (lambda () (proc mus-audio-default 22050 1 -1 512)) (lambda args args))))
-	     (if (not (eq? (car var) 'out-of-range))
-		 (snd-display ";~A bad format: ~A" name var)))
-	   (let ((var (catch #t (lambda () (proc -1 22050 1 mus-lshort 512)) (lambda args args))))
-	     (if (not (eq? (car var) 'out-of-range))
-		 (snd-display ";~A bad device: ~A" name var)))
-	   (let ((var (catch #t (lambda () (proc mus-audio-default -22050 1 mus-lshort 512)) (lambda args args))))
-	     (if (not (eq? (car var) 'out-of-range))
-		 (snd-display ";~A bad srate: ~A" name var)))
-	   (let ((var (catch #t (lambda () (proc mus-audio-default 22050 1 mus-lshort -512)) (lambda args args))))
-	     (if (not (eq? (car var) 'out-of-range))
-		 (snd-display ";~A bad size: ~A" name var))))
-	 (list mus-audio-open-output mus-audio-open-input)
-	 (list "mus-audio-open-output" "mus-audio-open-input"))
-	
-	(for-each
 	 (lambda (file)
 	   (let ((tag (catch #t
 			     (lambda () (open-sound (string-append sf-dir file)))
@@ -3451,19 +3338,6 @@
 	      (snd-display ";open raw: ~A ~A ~A ~A ~A" (data-format ind) (chans ind) (srate ind) (data-location ind) (frames ind)))
 	  (reset-hook! open-raw-sound-hook)
 	  (close-sound ind))
-	
-	(let ((vals (make-vct 32)))
-	  (for-each 
-	   (lambda (proc name)
-	     (let ((var (catch #t (lambda () (proc -1 mus-audio-amp 0 vals)) (lambda args args))))
-	       (if (not (eq? (car var) 'out-of-range))
-		   (snd-display ";~A bad device: ~A" name var)))
-	     (let ((var (catch #t (lambda () (proc mus-audio-microphone -1 0 vals)) (lambda args args))))
-	       (if (not (eq? (car var) 'out-of-range))
-		   (snd-display ";~A bad field: ~A" name var))))
-	   (list mus-audio-mixer-read mus-audio-mixer-write)
-	   (list "mus-audio-mixer-read" "mus-audio-mixer-write")))
-	(mus-audio-mixer-write mus-audio-microphone mus-audio-amp 0 (make-vct 1 1.0))
 	
 	(let* ((ind (open-sound (string-append "/usr/local/" (getcwd) "/2.snd"))) ; check the "//" path reset case
 	       (sd1 (samples->sound-data 12000 10 ind 0))
@@ -30667,7 +30541,7 @@ EDITS: 2
 	     (out-block (make-vct block-size))
 	     (len (frames))
 	     (data (make-sound-data 1 block-size))
-	     (audio-port (mus-audio-open-output mus-audio-default (srate) 1 mus-lshort (* block-size 2)))
+	     (audio-port (mus-audio-open-output 0 (srate) 1 mus-lshort (* block-size 2)))
 	     (ra (ladspa-run-adding descriptor handle block-size)))
 	(if ra (snd-display ";ladspa-run-adding: ~A" ra))
 	(ladspa-set-run-adding-gain descriptor handle block-size)
@@ -65312,7 +65186,7 @@ EDITS: 1
 		     snd->sample snd->sample? make-snd->sample make-scalar-mixer
 		     
 		     beats-per-minute beats-per-measure channel-amp-envs convolve-files filter-control-coeffs 
-		     locsig-type make-phase-vocoder mus-audio-mixer-read
+		     locsig-type make-phase-vocoder 
 		     mus-describe mus-error-type->string mus-file-buffer-size mus-name mus-offset mus-out-format mus-reset
 		     mus-rand-seed mus-width phase-vocoder?
 		     polar->rectangular phase-vocoder-amp-increments phase-vocoder-amps phase-vocoder-freqs
@@ -67369,7 +67243,6 @@ EDITS: 1
 
 (clear-sincs)
 (stop-playing)
-(set! (mus-audio-playback-amp) 1.0)
 (mus-oss-set-buffers 4 12)
 
 (reset-almost-all-hooks)

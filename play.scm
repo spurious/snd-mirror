@@ -38,27 +38,11 @@
 		(add-hook! mus-error-hook (lambda (typ msg) #t)))
 	    (let ((val (catch #t
 			      (lambda ()
-				(mus-audio-open-output mus-audio-default cur-srate outchans frm outbytes))
+				(mus-audio-open-output 0 cur-srate outchans frm outbytes))
 			      (lambda args -1)))) ; -1 returned in case of error
 	      (if no-error 
 		  (reset-hook! mus-error-hook))
 	      val))))
-    (if (= audio-fd -1)
-	;; ask card what it wants -- ALSA with some cards, for example, insists on 10 (virtual) channels and mus-lintn data!
-	(let ((vals (make-vct 32)))
-	  (mus-audio-mixer-read mus-audio-default mus-audio-format 32 vals)
-	  (let ((fmt (inexact->exact (vct-ref vals 1))))
-	    (mus-audio-mixer-read mus-audio-default mus-audio-channel 32 vals)
-	    (set! outchans (inexact->exact (vct-ref vals 0)))
-	    (let ((err (mus-audio-mixer-read mus-audio-default mus-audio-samples-per-channel 2 vals)))
-	      (if (not (= err -1))
-		  (set! pframes (inexact->exact (vct-ref vals 0))))
-	      (let* ((bps (mus-bytes-per-sample fmt)))
-		(set! outbytes (* bps pframes outchans))
-		(set! audio-fd (catch #t
-				      (lambda ()
-					(mus-audio-open-output mus-audio-default cur-srate outchans fmt outbytes))
-				      (lambda args -1))))))))
     (if (not (= audio-fd -1))
 	(set! (dac-size) outbytes))
     (list audio-fd outchans pframes)))
@@ -156,7 +140,7 @@
 	 (all-data (samples->sound-data)) ; for simplicity, just grab all the data
 	 (audio-data (make-sound-data 1 bufsize))
 	 (bytes (* bufsize 2)) ; mus-audio-write handles the translation to short (and takes frames, not bytes as 3rd arg)
-	 (audio-fd (mus-audio-open-output mus-audio-default (srate) 1 mus-lshort bytes)))
+	 (audio-fd (mus-audio-open-output 0 (srate) 1 mus-lshort bytes)))
     (if (not (= audio-fd -1))
 	(do ()
 	    ((c-g?) 
@@ -213,7 +197,7 @@ read, even if not playing.  'files' is a list of files to be played."
 	       (pframes (make-vector files-len 0))
 	       (current-file 0)
 	       (reading #t)
-	       (out-port (mus-audio-open-output mus-audio-default srate chans mus-lshort (* bufsize 2))))
+	       (out-port (mus-audio-open-output 0 srate chans mus-lshort (* bufsize 2))))
 	  (if (< out-port 0)
 	      (format #t "can't open audio port! ~A" out-port)
 	      (begin

@@ -56,7 +56,6 @@
 <ul>
 <li><a href="#sndinfo">SndInfo</a>
 <li><a href="#sndplay">SndPlay</a>
-<li><a href="#sndrecord">SndRecord</a>
 <li><a href="#audinfo">AudInfo</a>
 <li><a href="#sndsine">SndSine</a>
 <li><a href="#clmosc">clmosc</a>
@@ -262,9 +261,6 @@ error occurs, they return -1 (MUS_ERROR). </p>
   int mus_audio_write(int line, char *buf, int bytes)
   int mus_audio_close(int line)
   int mus_audio_read(int line, char *buf, int bytes)
-  int mus_audio_mixer_read(int dev, int field, int chan, float *val)
-  int mus_audio_mixer_write(int dev, int field, int chan, float *val)
-  int mus_audio_systems(void)
   char *mus_audio_system_name(int system)
 </pre>
 
@@ -274,11 +270,6 @@ error occurs, they return -1 (MUS_ERROR). </p>
 current state of the audio hardware.  <i>mus_audio_report</i>
 returns the same description as a string.</p>
 
-<p><i>mus_audio_systems</i> returns the number of separate and complete
-audio systems (soundcards essentially) that are available.
-<i>mus_audio_system_name</i>  returns some user-recognizable name for the given card.
-</p>
-
 <p><i>mus_audio_open_input</i> opens an audio port to read sound data (i.e. a microphone, line in, etc).
 The input device is <i>dev</i> (see sndlib.h for details; when in doubt, use MUS_AUDIO_DEFAULT).
 The input sampling rate is <i>srate</i> or as close as we
@@ -286,10 +277,7 @@ can get to it.  The number of input channels (if available) is <i>chans</i>.
 The input data format is <i>format</i> (when in doubt, use the macro MUS_AUDIO_COMPATIBLE_FORMAT).
 And the input buffer size (if settable at all) is <i>size</i> (bytes).  This
 function returns an integer to distinguish its port from others that might be
-in use.  In this and other related functions, the device has an optional second
-portion that refers to the soundcard or system for that device.  MUS_AUDIO_PACK_SYSTEM(n)
-refers to the nth such card, so (SNDLIB_DAC_DEVICE | MUS_AUDIO_PACK_SYSTEM(1)) is the 2nd
-card's dac (the default is system 0, the first card).
+in use.
 </p>
 
 <p><i>mus_audio_open_output</i> opens an audio port to write data (i.e. speakers, line out, etc).
@@ -307,85 +295,7 @@ by that function with channels interleaved.</p>
 port associated with <i>line</i>.  This data is assumed to be in the format
 requested by mus_audio_open_output with channels interleaved.</p>
 
-<p><A class=def NAME="readaudiostate">mus_audio_mixer_read</a> and <b>mus_audio_mixer_write</b> are complicated.  They
-get and set the audio hardware state.  The audio hardware is treated as a
-set of "systems" (sound cards) each of which has a set of "devices" (dacs, adcs, etc),
-with various "fields" that can be read or set (gain, channels active, etc).
-For example, a microphone is called
-the MUS_AUDIO_MICROPHONE, and its hardware gain setting (if any) is called
-the MUS_AUDIO_AMP.  All gains are considered to be linear between 0.0 and
-1.0, so to set the microphone's first channel amplitude to .5 (that is,
-the gain of the signal before it reaches the analog-to-digital converter),</p>
-<pre>
-  float vals[1];
-  vals[0]=0.5;
-  mus_audio_mixer_write(MUS_AUDIO_MICROPHONE,MUS_AUDIO_AMP,0,vals);
-</pre>
-<p>Similarly</p>
-<pre>
-  mus_audio_mixer_read(MUS_AUDIO_MICROPHONE,MUS_AUDIO_AMP,0,vals);
-  amp=vals[0];
-</pre>
-<p>returns the current gain in the float array vals.  mus_audio_mixer_read
-can also return a description of the currently available audio
-hardware.</p>
 
-<p>If a requested operation is not implemented or something goes wrong, -1 is returned.</p>
-
-<h4>Systems</h4>
-<p>Each separate sound card is called a system, accessible via the <i>device</i>
-argument through the macro MUS_AUDIO_PACK_SYSTEM(n). The count starts at 0 which is the default.  The
-function <b>mus_audio_systems</b> returns how many such cards are available.  (Currently
-it returns more than one only on Linux systems with multiple sound cards).
-</p>
-
-<h4>Devices</h4>
-<p>Each audio system has a set of available devices.  To find out what is 
-available on a given system</p>
-<pre>
-  #define LIST_MAX_SIZE 32;
-  float device_list[LIST_MAX_SIZE];
-  mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(0),MUS_AUDIO_PORT,LIST_MAX_SIZE,device_list);
-</pre>
-<p>The list of available devices is returned in the device_list array,
-with the number of the devices as device_list[0].  The set of device
-identifiers is in sndlib.h (MUS_AUDIO_LINE_IN for example). Two special
-devices are MUS_AUDIO_MIXER and MUS_AUDIO_DAC_FILTER.  The latter refers
-to the low-pass filter often associated with a DAC.  The former
-refers to a set of analog gain and tone controls often associated
-with a sound card.  The individual gains are accessed through the
-various fields (described below).
-</p>
-
-<h4>Fields</h4>
-<p>The field argument in mus-audio-mixer-read and mus-audio-mixer-write selects
-one aspect of the given card's devices' controls.  
-The simplest operations involve MUS_AUDIO_AMP and MUS_AUDIO_SRATE.  The latter
-gets or sets the sampling rate of the device, and the former gets or sets
-the amplitude (between 0.0 and 1.0) of the specified channel of the device.
-The value to be set or returned is in the 0th element of the <i>vals</i>
-array.  An example of reading the current microphone gain is given above.
-The meaning of the field argument can depend on which device it is
-applied to, so there is some complexity here.  The <i>channel</i>
-argument usually selects which channel we are interested in, but in
-some cases it instead tells mus-audio-mixer-read how big a returned list
-can get.  A brief description of the fields:</p>
-<pre>
-MUS_AUDIO_AMP       gain or volume control (0.0 to 1.0)
-MUS_AUDIO_SRATE     sampling rate
-MUS_AUDIO_CHANNEL   active channels
-
-MUS_AUDIO_BASS, MUS_AUDIO_TREBLE    mixer's tone control
-MUS_AUDIO_LINE                      mixer's line-in gain control
-MUS_AUDIO_MICROPHONE                mixer's microphone gain control
-similarly for MUS_AUDIO_IMIX, MUS_AUDIO_IGAIN, 
-              MUS_AUDIO_RECLEV, MUS_AUDIO_PCM, MUS_AUDIO_PCM2,
-              MUS_AUDIO_OGAIN, MUS_AUDIO_LINE1, 
-              MUS_AUDIO_LINE2, MUS_AUDIO_LINE3, MUS_AUDIO_SYNTH 
-
-MUS_AUDIO_FORMAT    return list of usable sound formats (e.g. MUS_BSHORT)
-MUS_AUDIO_PORT      return list of available devices (e.g. MUS_AUDIO_MICROPHONE)
-</pre>
 
 <br>
 <table border=0 bordercolor="lightgreen" width=100% cellpadding=2 cellspacing=0><tr><td bgcolor="lightgreen">
@@ -656,44 +566,7 @@ int main(int argc, char *argv[])
 
 </pre>
 <br>
-<table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndrecord">SndRecord</a></h3></td></tr></table>
 
-<p>This code records a couple seconds of sound from a microphone.
-Input formats and sampling rates are dependent on available
-hardware, so in a real program, you'd use <a href="#readaudiostate">mus_audio_mixer_read</a>
-to find out what was available, then mus_file_read_buffer to
-turn that data into a stream of floats.
-You'd also provide some way to turn the thing off. (sndrecord.c)</p>
-<pre>
-int main(int argc, char *argv[])
-{
-  int fd, afd, i, err;
-  short *ibuf;
-  afd = -1;
-  mus_sound_initialize();	
-  fd = mus_sound_open_output(argv[1], 22050, 1, MUS_BSHORT, MUS_NEXT, "created by sndrecord");
-  if (fd != -1)
-    {
-      ibuf = (short *)calloc(BUFFER_SIZE, sizeof(short));
-      afd = mus_audio_open_input(MUS_AUDIO_MICROPHONE, 22050, 1, MUS_BSHORT, BUFFER_SIZE);
-      if (afd != -1)
-	{
-	  for (i = 0; i &lt; 10; i++) /* grab 10 buffers of input */
-	    {
-	      err = mus_audio_read(afd, (char *)ibuf, BUFFER_SIZE * 2);
-	      if (err != MUS_NO_ERROR) break;
-	      write(fd, ibuf, BUFFER_SIZE * 2);
-	    }
-	  mus_audio_close(afd);
-	}
-      mus_sound_close_output(fd, BUFFER_SIZE * 10 * 2);
-      free(ibuf);
-    }
-  return(0);
-}
-</pre>
-
-<br>
 <table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="audinfo">AudInfo</a></h3></td></tr></table>
 
 <p>This program describes the current audio harware state (audinfo.c):</p>
@@ -932,65 +805,6 @@ of Snd and CLM, both of which are freely available.
 </p>
 <br>
 
-<table border=0 bordercolor="lightgreen" width=100% cellpadding=2 cellspacing=0><tr><td bgcolor="lightgreen">
-<table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="currentstatus">Current Status</a></h2></td></tr></table>
-</td></tr></table>
-
-<br>
-<table border=8 bordercolor="lightgreen" cellpadding=4 hspace=20> 
-  <tr><th bgcolor="beige">System</th><th bgcolor="beige">SndSine</th><th bgcolor="beige">SndInfo</th><th bgcolor="beige">Audinfo</th><th bgcolor="beige">SndPlay</th><th bgcolor="beige">SndRecord</th><th bgcolor="beige">CLM</th><th bgcolor="beige">MIDI</th></tr>
-  <tr><td>SGI old and new AL</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td>partly tested</td></tr>
-  <tr><td>OSS (Linux et al)</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td>untested</td></tr>
-  <tr><td>Windoze</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>not written</td><td align=middle>ok</td><td>not written</td></tr>
-  <tr><td>Sun</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td>not written</td></tr>
-  <tr><td>LinuxPPC</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>untested</td><td align=middle>ok</td><td>untested</td></tr>
-  <tr><td>ALSA</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td>partly tested</td></tr>
-  <tr><td>Mac OSX</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td>untested</td></tr>
-  <tr><td>NetBSD</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td>untested</td></tr>
-  <tr><td>ESD</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td></td><td align=middle>ok</td><td>untested</td></tr>
-  <tr><td>HPUX</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td align=middle>ok</td><td></td><td align=middle>ok</td><td>untested</td></tr>
-</table>
-
-<br>
-
-
-<table border=0 hspace=20>
-<tr><td bgcolor="#EEFDEE">read/write (many data formats)</td></tr>
-<tr><td>
-<pre>
-    NeXT/Sun/DEC/AFsp
-    AIFF/AIFC
-    RIFF (Microsoft wave)
-    RF64
-    IRCAM (old style)
-    NIST-sphere
-    CAFF
-    no header ("raw")
-</pre>
-</td></tr>
-<tr><td><br></td></tr>
-<tr><td bgcolor="#EEFDEE">read-only (in selected data formats)</td></tr>
-<tr><td>
-<pre>
-    8SVX (IFF), EBICSF, INRS, ESPS, SPPACK, ADC (OGI), AVR, VOC, PVF, NVF,
-    Sound Tools, Turtle Beach SMP, SoundFont 2.0, Sound Designer I, PSION, MAUD, Kurzweil 2000,
-    Gravis Ultrasound, ASF, PAF, CSL, Comdisco SPW, Goldwave sample, omf, quicktime, sox,
-    Sonic Foundry, SBStudio II, Delusion digital, Digiplayer ST3, Farandole Composer WaveSample,
-    Ultratracker WaveSample, Sample Dump exchange, Yamaha SY85, SY99, and TX16, Covox v8, AVI, 
-    Impulse tracker, Korg, Akai, Turtle Beach, Matlab-5
-</pre>
-</td></tr>
-<tr><td><br></td></tr>
-<tr><td bgcolor="#EEFDEE">automatically translated to a readable format</td></tr>
-<tr><td>
-<pre>
-    IEEE text, Mus10, SAM 16-bit (modes 1 and 4), AVI, NIST shortpack, HCOM, Intel, 
-    IBM, and Oki (Dialogic) ADPCM, G721, G723_24, G723_40, MIDI sample dump, Ogg, Speex, 
-    Flac, Midi, Mpeg, Shorten, Wavepack, tta (via external programs)
-</pre>
-</td></tr></table>
-
-<br><br>
 
 <table border=0 bordercolor="lightgreen" width=100% cellpadding=2 cellspacing=0><tr><td bgcolor="lightgreen">
 <table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="sndlibxen"></a>Extension Languages</h2></td></tr></table>
@@ -1019,18 +833,6 @@ constants and functions described above into Scheme.  To initialize sndlib, call
   mus-bshort mus-lshort mus-mulaw mus-alaw mus-byte mus-ubyte mus-bfloat
   mus-lfloat mus-bint mus-lint mus-b24int mus-l24int mus-bdouble mus-ldouble
   mus-ubshort mus-ulshort
-
-  mus-audio-default mus-audio-duplex-default mus-audio-line-out mus-audio-line-in
-  mus-audio-microphone mus-audio-speakers mus-audio-dac-out mus-audio-adat-in
-  mus-audio-aes-in mus-audio-digital-in mus-audio-digital-out mus-audio-adat-out
-  mus-audio-aes-out mus-audio-dac-filter mus-audio-mixer mus-audio-line1
-  mus-audio-line2 mus-audio-line3 mus-audio-aux-input mus-audio-cd mus-audio-aux-output
-  mus-audio-spdif-in mus-audio-spdif-out
-
-  mus-audio-amp mus-audio-srate mus-audio-channel mus-audio-format mus-audio-port
-  mus-audio-imix mus-audio-igain mus-audio-reclev mus-audio-pcm mus-audio-pcm2
-  mus-audio-ogain mus-audio-line mus-audio-synth mus-audio-bass mus-audio-treble
-  mus-audio-direction mus-audio-samples-per-channel
 
   mus-sound-samples (filename)             samples of sound according to header (can be incorrect)
   mus-sound-frames (filename)              frames of sound according to header (can be incorrect)
@@ -1078,12 +880,7 @@ constants and functions described above into Scheme.  To initialize sndlib, call
   mus-audio-write (line sdata frames)      write <i>frames</i> of data from sound-data object <i>sdata</i> to port <i>line</i>
   mus-audio-read (line sdata frames)       read <i>frames</i> of data into sound-data object <i>sdata</i> from port <i>line</i>
   mus-audio-close (line)                   close audio port <i>line</i>
-  mus-audio-mixer-read (device field channel vals)
-                                           read current state of <i>device</i>'s <i>field</i> &mdash; see mus_audio_mixer_read above.
-  mus-audio-mixer-write (device field channel vals)
-                                           write new state for <i>device</i>'s <i>field</i> &mdash; see mus_audio_mixer_write above.
-  mus-audio-systems ()                     returns how many separate "systems" (soundcards) it can find.  To specify
-                                           a particular system in the "device" parameters, add (ash system 16) to the device.
+
   mus-oss-set-buffers (num size)           in Linux (OSS) sets the number and size of the OSS "fragments"
   mus-sun-set-outputs (speaker headphones line-out) On the Sun, cause output to go to the chosen devices
   mus-netbsd-set-outputs (speaker headphones line-out) On netBSD, cause output to go to the chosen devices
@@ -1121,31 +918,6 @@ constants and functions described above into Scheme.  To initialize sndlib, call
       (let ((val (<a class=quiet href="extsnd.html#sounddataref" onmouseout="UnTip()" onmouseover="Tip(extsnd_sounddataref_tip)">sound-data-ref</a> data 0 29)))
 	(<a class=quiet href="extsnd.html#mussoundcloseinput" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundcloseinput_tip)">mus-sound-close-input</a> fd)
 	val))))
-
-;;; here we get the microphone volume, then set it to .5
-  (define vals (make-vct 32))
-  (<a class=quiet href="extsnd.html#musaudiomixerread" onmouseout="UnTip()" onmouseover="Tip(extsnd_musaudiomixerread_tip)">mus-audio-mixer-read</a> mus-audio-microphone mus-audio-amp 0 vals)
-  (vct-ref vals 0)
-  (vct-set! vals 0 .5)
-  (<a class=quiet href="extsnd.html#musaudiomixerwrite" onmouseout="UnTip()" onmouseover="Tip(extsnd_musaudiomixerwrite_tip)">mus-audio-mixer-write</a> mus-audio-microphone mus-audio-amp 0 vals)
-
-;;; this function plays a sound (we're assuming that we can play 16-bit linear little-endian data)
-(define play-sound
-  (lambda (file)
-    (let* ((sound-fd (<a class=quiet href="extsnd.html#mussoundopeninput" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundopeninput_tip)">mus-sound-open-input</a> file))
-	   (<a class=quiet href="extsnd.html#chans" onmouseout="UnTip()" onmouseover="Tip(extsnd_chans_tip)">chans</a> (<a class=quiet href="extsnd.html#mussoundchans" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundchans_tip)">mus-sound-chans</a> file))
-	   (<a class=quiet href="extsnd.html#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a> (<a class=quiet href="extsnd.html#mussoundframes" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundframes_tip)">mus-sound-frames</a> file))
-	   (bufsize 256)
-	   (data (<a class=quiet href="extsnd.html#makesounddata" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesounddata_tip)">make-sound-data</a> chans bufsize))
-	   (bytes (* bufsize chans 2)))
-      (<a class=quiet href="extsnd.html#mussoundread" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundread_tip)">mus-sound-read</a> sound-fd 0 (- bufsize 1) chans data)
-      (let ((audio-fd (<a class=quiet href="extsnd.html#musaudioopenoutput" onmouseout="UnTip()" onmouseover="Tip(extsnd_musaudioopenoutput_tip)">mus-audio-open-output</a> mus-audio-default (<a class=quiet href="extsnd.html#mussoundsrate" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundsrate_tip)">mus-sound-srate</a> file) chans mus-lshort bytes)))
-	(do ((i 0 (+ i bufsize)))
-	    ((&gt;= i frames))
-	  (<a class=quiet href="extsnd.html#musaudiowrite" onmouseout="UnTip()" onmouseover="Tip(extsnd_musaudiowrite_tip)">mus-audio-write</a> audio-fd data bufsize)
-	  (<a class=quiet href="extsnd.html#mussoundread" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundread_tip)">mus-sound-read</a> sound-fd 0 (- bufsize 1) chans data))
-	(<a class=quiet href="extsnd.html#mussoundcloseinput" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundcloseinput_tip)">mus-sound-close-input</a> sound-fd)
-	(<a class=quiet href="extsnd.html#musaudioclose" onmouseout="UnTip()" onmouseover="Tip(extsnd_musaudioclose_tip)">mus-audio-close</a> audio-fd)))))
 </pre>
 
 

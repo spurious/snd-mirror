@@ -1061,6 +1061,8 @@ static void audio_io_set_format(int line, int format)
 #define audio_io_set_write_format(Line, Format) audio_io_set_format(Line, ((mus_audio_io_format(Line) & 0xffff) | (Format << 16)))
 
 
+/* TODO: remove the 'device' arg to mus-audio-open-input|output -- it should just be whatever the default is */
+
 static XEN g_mus_audio_open_output(XEN dev, XEN srate, XEN chans, XEN format, XEN size)
 {
   #if HAVE_SCHEME
@@ -1154,11 +1156,14 @@ static XEN g_mus_audio_close(XEN line)
 }
 
 
+#if (!SNDLIB_DISABLE_DEPRECATED)
+/* obsolete */
 static XEN g_mus_audio_systems(void) 
 {
   #define H_mus_audio_systems "(" S_mus_audio_systems "): number of audio systems; normally each sound card is a separate 'system'"
   return(C_TO_XEN_INT(mus_audio_systems()));
 }
+#endif
 
 
 /* these take a sndlib buffer (sound_data) and handle the conversion to the interleaved char* internally */
@@ -1256,16 +1261,22 @@ from the audio line into sound-data sdata."
 }
 
 
+#if (!SNDLIB_DISABLE_DEPRECATED)
+/* TODO: fix the rb/fs cases for mus-audio-* changes */
+
+/* obsolete */
 static XEN g_mus_audio_mixer_read(XEN dev, XEN field, XEN chan, XEN vals)
 {
 #if HAVE_SCHEME
   #define mixer_read_example "  (let ((vals (" S_make_vct " 32)))\n    (" S_mus_audio_mixer_read " " S_mus_audio_default " " S_mus_audio_format " 32 vals))\n"
   #define mixer_read_vct_example "(" S_vct_ref " vals 0)"
 #endif
+
 #if HAVE_RUBY
   #define mixer_read_example "  vals = make_vct(32)\n  mus_audio_mixer_read(Mus_audio_default, Mus_audio_format, 32, vals)\n"
   #define mixer_read_vct_example "vals[0]"
 #endif
+
 #if HAVE_FORTH
   #define mixer_read_example "  32 0.0 make-vct value vals\n  mus-audio-default mus-audio-format 32 vals mus-audio-mixer-read\n"
   #define mixer_read_vct_example "vals 0 vct-ref"
@@ -1306,6 +1317,7 @@ sets " mixer_read_vct_example " to the default device's desired audio sample dat
 }
 
 
+/* obsolete */
 static XEN g_mus_audio_mixer_write(XEN dev, XEN field, XEN chan, XEN vals)
 {
   #define H_mus_audio_mixer_write "(" S_mus_audio_mixer_write " device field channel vals): change some portion of the sound card mixer state"
@@ -1335,6 +1347,7 @@ static XEN g_mus_audio_mixer_write(XEN dev, XEN field, XEN chan, XEN vals)
   free(fvals);
   return(xen_return_first(C_TO_XEN_INT(res), vals));
 }
+#endif
 
 
 /* global default clipping and prescaler values */
@@ -2534,15 +2547,24 @@ XEN_NARGIFY_1(g_mus_sound_mark_info_w, g_mus_sound_mark_info)
 XEN_NARGIFY_1(g_mus_sound_maxamp_w, g_mus_sound_maxamp)
 XEN_NARGIFY_2(g_mus_sound_set_maxamp_w, g_mus_sound_set_maxamp)
 XEN_NARGIFY_1(g_mus_sound_maxamp_exists_w, g_mus_sound_maxamp_exists)
-XEN_NARGIFY_0(g_mus_audio_report_w, g_mus_audio_report)
 XEN_NARGIFY_3(g_mus_sun_set_outputs_w, g_mus_sun_set_outputs)
 XEN_NARGIFY_3(g_mus_netbsd_set_outputs_w, g_mus_netbsd_set_outputs)
 XEN_NARGIFY_1(g_mus_sound_open_input_w, g_mus_sound_open_input)
 XEN_NARGIFY_1(g_mus_sound_close_input_w, g_mus_sound_close_input)
+
+XEN_NARGIFY_0(g_mus_audio_report_w, g_mus_audio_report)
 XEN_NARGIFY_1(g_mus_audio_close_w, g_mus_audio_close)
+XEN_NARGIFY_3(g_mus_audio_write_w, g_mus_audio_write)
+XEN_NARGIFY_3(g_mus_audio_read_w, g_mus_audio_read)
+XEN_NARGIFY_5(g_mus_audio_open_output_w, g_mus_audio_open_output)
+XEN_NARGIFY_5(g_mus_audio_open_input_w, g_mus_audio_open_input)
+
+#if (!SNDLIB_DISABLE_DEPRECATED)
 XEN_NARGIFY_0(g_mus_audio_systems_w, g_mus_audio_systems)
 XEN_NARGIFY_4(g_mus_audio_mixer_read_w, g_mus_audio_mixer_read)
 XEN_NARGIFY_4(g_mus_audio_mixer_write_w, g_mus_audio_mixer_write)
+#endif
+
 XEN_NARGIFY_0(g_mus_clipping_w, g_mus_clipping)
 XEN_NARGIFY_1(g_mus_set_clipping_w, g_mus_set_clipping)
 XEN_NARGIFY_1(g_mus_file_clipping_w, g_mus_file_clipping)
@@ -2554,16 +2576,12 @@ XEN_NARGIFY_2(g_mus_file_set_prescaler_w, g_mus_file_set_prescaler)
 XEN_NARGIFY_0(g_mus_header_raw_defaults_w, g_mus_header_raw_defaults)
 XEN_NARGIFY_1(g_mus_header_set_raw_defaults_w, g_mus_header_set_raw_defaults)
 XEN_NARGIFY_1(g_mus_expand_filename_w, g_mus_expand_filename)
-XEN_NARGIFY_3(g_mus_audio_write_w, g_mus_audio_write)
-XEN_NARGIFY_3(g_mus_audio_read_w, g_mus_audio_read)
 XEN_ARGIFY_6(g_mus_sound_open_output_w, g_mus_sound_open_output)
 XEN_ARGIFY_5(g_mus_sound_reopen_output_w, g_mus_sound_reopen_output)
 XEN_NARGIFY_2(g_mus_sound_close_output_w, g_mus_sound_close_output)
 XEN_NARGIFY_5(g_mus_sound_read_w, g_mus_sound_read)
 XEN_NARGIFY_5(g_mus_sound_write_w, g_mus_sound_write)
 XEN_NARGIFY_2(g_mus_sound_seek_frame_w, g_mus_sound_seek_frame)
-XEN_NARGIFY_5(g_mus_audio_open_output_w, g_mus_audio_open_output)
-XEN_NARGIFY_5(g_mus_audio_open_input_w, g_mus_audio_open_input)
 XEN_ARGIFY_1(g_mus_sound_report_cache_w, g_mus_sound_report_cache)
 XEN_NARGIFY_1(g_mus_sound_forget_w, g_mus_sound_forget)
 XEN_NARGIFY_0(g_mus_sound_prune_w, g_mus_sound_prune)
@@ -2647,15 +2665,24 @@ XEN_NARGIFY_1(g_mus_set_max_table_size_w, g_mus_set_max_table_size)
 #define g_mus_sound_maxamp_w g_mus_sound_maxamp
 #define g_mus_sound_set_maxamp_w g_mus_sound_set_maxamp
 #define g_mus_sound_maxamp_exists_w g_mus_sound_maxamp_exists
-#define g_mus_audio_report_w g_mus_audio_report
 #define g_mus_sun_set_outputs_w g_mus_sun_set_outputs
 #define g_mus_netbsd_set_outputs_w g_mus_netbsd_set_outputs
 #define g_mus_sound_open_input_w g_mus_sound_open_input
 #define g_mus_sound_close_input_w g_mus_sound_close_input
+
+#define g_mus_audio_report_w g_mus_audio_report
 #define g_mus_audio_close_w g_mus_audio_close
+#define g_mus_audio_write_w g_mus_audio_write
+#define g_mus_audio_read_w g_mus_audio_read
+#define g_mus_audio_open_output_w g_mus_audio_open_output
+#define g_mus_audio_open_input_w g_mus_audio_open_input
+
+#if (!SNDLIB_DISABLE_DEPRECATED)
 #define g_mus_audio_systems_w g_mus_audio_systems
 #define g_mus_audio_mixer_read_w g_mus_audio_mixer_read
 #define g_mus_audio_mixer_write_w g_mus_audio_mixer_write
+#endif
+
 #define g_mus_clipping_w g_mus_clipping
 #define g_mus_set_clipping_w g_mus_set_clipping
 #define g_mus_file_clipping_w g_mus_file_clipping
@@ -2667,16 +2694,12 @@ XEN_NARGIFY_1(g_mus_set_max_table_size_w, g_mus_set_max_table_size)
 #define g_mus_header_raw_defaults_w g_mus_header_raw_defaults
 #define g_mus_header_set_raw_defaults_w g_mus_header_set_raw_defaults
 #define g_mus_expand_filename_w g_mus_expand_filename
-#define g_mus_audio_write_w g_mus_audio_write
-#define g_mus_audio_read_w g_mus_audio_read
 #define g_mus_sound_open_output_w g_mus_sound_open_output
 #define g_mus_sound_reopen_output_w g_mus_sound_reopen_output
 #define g_mus_sound_close_output_w g_mus_sound_close_output
 #define g_mus_sound_read_w g_mus_sound_read
 #define g_mus_sound_write_w g_mus_sound_write
 #define g_mus_sound_seek_frame_w g_mus_sound_seek_frame
-#define g_mus_audio_open_output_w g_mus_audio_open_output
-#define g_mus_audio_open_input_w g_mus_audio_open_input
 #define g_mus_sound_report_cache_w g_mus_sound_report_cache
 #define g_mus_sound_forget_w g_mus_sound_forget
 #define g_mus_sound_prune_w g_mus_sound_prune
@@ -2808,6 +2831,8 @@ void mus_sndlib_xen_initialize(void)
   XEN_DEFINE_CONSTANT(S_mus_lfloat_unscaled,      MUS_LFLOAT_UNSCALED,      "unscaled little-endian float data format id");
 
   XEN_DEFINE_CONSTANT(S_mus_audio_default,        MUS_AUDIO_DEFAULT,        "default audio device");
+
+#if (!SNDLIB_DISABLE_DEPRECATED)
   XEN_DEFINE_CONSTANT(S_mus_audio_duplex_default, MUS_AUDIO_DUPLEX_DEFAULT, "default duplex device");
   XEN_DEFINE_CONSTANT(S_mus_audio_line_out,       MUS_AUDIO_LINE_OUT,       "audio line-out device");
   XEN_DEFINE_CONSTANT(S_mus_audio_line_in,        MUS_AUDIO_LINE_IN,        "audio line-in device");
@@ -2848,6 +2873,11 @@ void mus_sndlib_xen_initialize(void)
   XEN_DEFINE_CONSTANT(S_mus_audio_synth,          MUS_AUDIO_SYNTH,          "mixer 'synth' field id");
   XEN_DEFINE_CONSTANT(S_mus_audio_bass,           MUS_AUDIO_BASS,           "mixer 'bass' field id");
   XEN_DEFINE_CONSTANT(S_mus_audio_treble,         MUS_AUDIO_TREBLE,         "mixer 'treble' field id");
+
+  XEN_DEFINE_PROCEDURE(S_mus_audio_mixer_read,     g_mus_audio_mixer_read_w,       4, 0, 0, H_mus_audio_mixer_read);
+  XEN_DEFINE_PROCEDURE(S_mus_audio_mixer_write,    g_mus_audio_mixer_write_w,      4, 0, 0, H_mus_audio_mixer_write);
+  XEN_DEFINE_PROCEDURE(S_mus_audio_systems,        g_mus_audio_systems_w,          0, 0, 0, H_mus_audio_systems);
+#endif
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_sound_samples, g_mus_sound_samples_w, H_mus_sound_samples, 
 				   S_setB S_mus_sound_samples, g_mus_sound_set_samples_w, 1, 0, 2, 0);
@@ -2899,26 +2929,26 @@ void mus_sndlib_xen_initialize(void)
   XEN_DEFINE_PROCEDURE(S_mus_sound_maxamp_exists,  g_mus_sound_maxamp_exists_w,    1, 0, 0, H_mus_sound_maxamp_exists);
   XEN_DEFINE_PROCEDURE(S_mus_sound_forget,         g_mus_sound_forget_w,           1, 0, 0, H_mus_sound_forget);
   XEN_DEFINE_PROCEDURE(S_mus_sound_prune,          g_mus_sound_prune_w,            0, 0, 0, H_mus_sound_prune);
-  XEN_DEFINE_PROCEDURE(S_mus_audio_report,         g_mus_audio_report_w,           0, 0, 0, H_mus_audio_report);
-  XEN_DEFINE_PROCEDURE(S_mus_sun_set_outputs,      g_mus_sun_set_outputs_w,        3, 0, 0, H_mus_sun_set_outputs);
-  XEN_DEFINE_PROCEDURE(S_mus_netbsd_set_outputs,   g_mus_netbsd_set_outputs_w,     3, 0, 0, H_mus_netbsd_set_outputs);
   XEN_DEFINE_PROCEDURE(S_mus_sound_open_input,     g_mus_sound_open_input_w,       1, 0, 0, H_mus_sound_open_input);
   XEN_DEFINE_PROCEDURE(S_mus_sound_close_input,    g_mus_sound_close_input_w,      1, 0, 0, H_mus_sound_close_input);
+
+  XEN_DEFINE_PROCEDURE(S_mus_audio_report,         g_mus_audio_report_w,           0, 0, 0, H_mus_audio_report);
   XEN_DEFINE_PROCEDURE(S_mus_audio_close,          g_mus_audio_close_w,            1, 0, 0, H_mus_audio_close);
-  XEN_DEFINE_PROCEDURE(S_mus_audio_systems,        g_mus_audio_systems_w,          0, 0, 0, H_mus_audio_systems);
-  XEN_DEFINE_PROCEDURE(S_mus_audio_mixer_read,     g_mus_audio_mixer_read_w,       4, 0, 0, H_mus_audio_mixer_read);
-  XEN_DEFINE_PROCEDURE(S_mus_audio_mixer_write,    g_mus_audio_mixer_write_w,      4, 0, 0, H_mus_audio_mixer_write);
-  XEN_DEFINE_PROCEDURE(S_mus_expand_filename,      g_mus_expand_filename_w,        1, 0, 0, H_mus_expand_filename);
   XEN_DEFINE_PROCEDURE(S_mus_audio_write,          g_mus_audio_write_w,            3, 0, 0, H_mus_audio_write);
   XEN_DEFINE_PROCEDURE(S_mus_audio_read,           g_mus_audio_read_w,             3, 0, 0, H_mus_audio_read);
+  XEN_DEFINE_PROCEDURE(S_mus_audio_open_output,    g_mus_audio_open_output_w,      5, 0, 0, H_mus_audio_open_output);
+  XEN_DEFINE_PROCEDURE(S_mus_audio_open_input,     g_mus_audio_open_input_w,       5, 0, 0, H_mus_audio_open_input);
+
+  XEN_DEFINE_PROCEDURE(S_mus_sun_set_outputs,      g_mus_sun_set_outputs_w,        3, 0, 0, H_mus_sun_set_outputs);
+  XEN_DEFINE_PROCEDURE(S_mus_netbsd_set_outputs,   g_mus_netbsd_set_outputs_w,     3, 0, 0, H_mus_netbsd_set_outputs);
+
+  XEN_DEFINE_PROCEDURE(S_mus_expand_filename,      g_mus_expand_filename_w,        1, 0, 0, H_mus_expand_filename);
   XEN_DEFINE_PROCEDURE(S_mus_sound_open_output,    g_mus_sound_open_output_w,      1, 5, 0, H_mus_sound_open_output);
   XEN_DEFINE_PROCEDURE(S_mus_sound_reopen_output,  g_mus_sound_reopen_output_w,    1, 4, 0, H_mus_sound_reopen_output);
   XEN_DEFINE_PROCEDURE(S_mus_sound_close_output,   g_mus_sound_close_output_w,     2, 0, 0, H_mus_sound_close_output);
   XEN_DEFINE_PROCEDURE(S_mus_sound_read,           g_mus_sound_read_w,             5, 0, 0, H_mus_sound_read);
   XEN_DEFINE_PROCEDURE(S_mus_sound_write,          g_mus_sound_write_w,            5, 0, 0, H_mus_sound_write);
   XEN_DEFINE_PROCEDURE(S_mus_sound_seek_frame,     g_mus_sound_seek_frame_w,       2, 0, 0, H_mus_sound_seek_frame);
-  XEN_DEFINE_PROCEDURE(S_mus_audio_open_output,    g_mus_audio_open_output_w,      5, 0, 0, H_mus_audio_open_output);
-  XEN_DEFINE_PROCEDURE(S_mus_audio_open_input,     g_mus_audio_open_input_w,       5, 0, 0, H_mus_audio_open_input);
   XEN_DEFINE_PROCEDURE(S_mus_sound_report_cache,   g_mus_sound_report_cache_w,     0, 1, 0, H_mus_sound_report_cache);
   XEN_DEFINE_PROCEDURE(S_mus_error_type_to_string, g_mus_error_type_to_string_w,   1, 0, 0, H_mus_error_type_to_string);
   XEN_DEFINE_PROCEDURE(S_mus_oss_set_buffers,      g_mus_oss_set_buffers_w,        2, 0, 0, H_mus_oss_set_buffers);

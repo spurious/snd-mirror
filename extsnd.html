@@ -3965,66 +3965,10 @@ examine this function's output.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
-<!-- mus-audio-mixer-read -->
-<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="musaudiomixerread">mus-audio-mixer-read</a> (device field channel vals)</code>
-</td></tr><tr><td></td><td>
-mus-audio-mixer-read reads the current state of the field 'field' of audio device 'device'.
-'vals' should be a vct big enough to handle the returned data (32 is a good first guess).
-The 'channel' argument is often treated as the size of the vct 'vals'.
-Device names are listed below under <a href="#musaudioopeninput">mus-audio-open-input</a>.
-The fields are:
-</td></tr><tr><td></td><td>
-<pre>
-
-  mus-audio-amp         mus-audio-srate    mus-audio-channel mus-audio-format
-  mus-audio-imix        mus-audio-igain    mus-audio-reclev  mus-audio-pcm 
-  mus-audio-ogain       mus-audio-line     mus-audio-synth   mus-audio-bass
-  mus-audio-direction   mus-audio-port     mus-audio-pcm2    mus-audio-treble
-  mus-audio-samples-per-channel
-</pre>
-These fields originally referred to OSS soundcard settings; many years have passed, and the whole notion is now
-obsolete, but if you think there's some easy way to reflect the same idea in modern hardware, check out ALSA or
-the new Mac audio system.  I can't face this mess!
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- mus-audio-mixer-write -->
-<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="musaudiomixerwrite">mus-audio-mixer-write</a> (device field channel vals)</code>
-</td></tr><tr><td></td><td>
-mus-audio-mixer-write sets the state of the field 'field' of audio device 'device'.
-
-<table border=0 cellpadding=5 vspace=10><tr><td><pre>
-;;; here we get the microphone volume, then set it to .5
-(define vals (<a class=quiet href="#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> 32))
-(<em class=red>mus-audio-mixer-read</em> mus-audio-microphone mus-audio-amp 0 vals)
-(<a class=quiet href="#vctref" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctref_tip)">vct-ref</a> vals 0)
-(<a class=quiet href="#vctset" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctset_tip)">vct-set!</a> vals 0 .5)
-(<em class=red>mus-audio-mixer-write</em> mus-audio-microphone mus-audio-amp 0 vals)
-;;; now set the 2 "igain" fields to 1
-(<a class=quiet href="#vctset" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctset_tip)">vct-set!</a> vals 0 1.0)
-(<a class=quiet href="#vctset" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctset_tip)">vct-set!</a> vals 1 1.0)
-(<em class=red>mus-audio-mixer-write</em> mus-audio-mixer mus-audio-igain 2 vals)
-</pre>
-</td></tr></table></td></tr>
-<tr><td colspan=2 height=16></td></tr>
-
-
 <!-- mus-audio-open-input -->
 <tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="musaudioopeninput">mus-audio-open-input</a> (device srate chans format bufsize)</code>
 </td></tr><tr><td></td><td>
-mus-audio-open-input opens the audio input (recording) port 'device'.  It returns -1 if the open failed.  'device' is one of:
-</td></tr><tr><td></td><td>
-<pre>
-
-  mus-audio-default      mus-audio-duplex-default   mus-audio-line-out
-  mus-audio-microphone   mus-audio-speakers         mus-audio-dac-out    
-  mus-audio-aes-in       mus-audio-digital-in       mus-audio-digital-out
-  mus-audio-aes-out      mus-audio-dac-filter       mus-audio-mixer
-  mus-audio-line2        mus-audio-line3            mus-audio-aux-input 
-  mus-audio-line-in      mus-audio-aux-output       mus-audio-adat-in
-  mus-audio-adat-out     mus-audio-line1            mus-audio-cd 
-  mus-audio-spdif-in     mus-audio-spdif-out
-</pre>
+mus-audio-open-input opens the audio input (recording) port 'device'.  It returns -1 if the open failed.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -6074,21 +6018,6 @@ are listed <a href="#stopplayreasons">here</a>, but they really aren't interesti
 The 'out-chan' argument is the audio output channel to send the data to; it defaults to
 the channel number of the player's channel in the containing sound (that is, the default is to
 send channel 1 data to channel 1 of the DAC, and so on).
-
-<table border=0 cellpadding=5 vspace=10><tr><td><pre>
-(define* (play-mono-as-stereo :optional snd)
-  "(play-mono-as-stereo snd) sends the channel 0 data in 'snd' to all available DAC channels."
-  (let ((vals (<a class=quiet href="#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> 3))
-	(end (<a class=quiet href="#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a> snd)))
-    (<a class=quiet href="#musaudiomixerread" onmouseout="UnTip()" onmouseover="Tip(extsnd_musaudiomixerread_tip)">mus-audio-mixer-read</a> mus-audio-default mus-audio-channel 3 vals)
-    (let ((chans (max (inexact-&gt;exact (<a class=quiet href="#vctref" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctref_tip)">vct-ref</a> vals 0)) 2))) ; assume stereo is out there
-      (do ((chan 0 (+ 1 chan)))                               ; get a player for each output channel
-	  ((= chan chans))
-	(let ((player (<em class=red>make-player</em> snd 0)))
-	  (<em class=red>add-player</em> player 0 end current-edit-position #f chan)))
-      (<em class=red>start-playing</em> chans (<a class=quiet href="#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a> snd)))))
-</pre></td></tr></table>
-
 See play-with-envs in enved.scm, play-syncd-marks in marks.scm, or start-dac in play.scm.
 </td></tr><tr><td colspan=2 height=18></td></tr>
 

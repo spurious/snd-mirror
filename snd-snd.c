@@ -2554,9 +2554,7 @@ static XEN s7_xen_sound_fill(s7_scheme *sc, XEN obj, XEN val)
 	}
       else
 	{
-	  /* SOMEDAY: wouldn't it be better here (and selection fill) to use ptree_channel with (lambda (y) val)? */
-	  /*   ptree_channel(cp, <make-ptree>, 0, CURRENT_SAMPLES(cp), cp->edit_ctr, true, XEN_FALSE, "fill! sound") */
-
+#if (!HAVE_S7)
 	  mus_long_t len = -1, j;
 	  mus_sample_t *data = NULL;
 	  mus_sample_t value;
@@ -2577,6 +2575,26 @@ static XEN s7_xen_sound_fill(s7_scheme *sc, XEN obj, XEN val)
 		update_graph(cp);
 	    }
 	  free(data);
+#else
+	  char *expr;
+	  XEN func;
+	  int gc_loc;
+	  
+	  func = s7_eval_c_string(s7, expr = mus_format("(lambda (y) %f)", valf));
+	  gc_loc = s7_gc_protect(s7, func);
+	  free(expr);
+
+	  for (i = 0; i < sp->nchans; i++)
+	    {
+	      cp = sp->chans[i];
+	      /* we need a separate ptree for each channel */
+	      ptree_channel(cp, 
+			    mus_run_form_to_ptree_1_f(XEN_PROCEDURE_SOURCE(func)), 
+			    0, CURRENT_SAMPLES(cp), cp->edit_ctr, true, XEN_FALSE, "fill! sound");
+	    }
+	  
+	  s7_gc_unprotect_at(s7, gc_loc);
+#endif
 	}
     }
   return(XEN_FALSE);

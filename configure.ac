@@ -1798,7 +1798,6 @@ if test "$with_portaudio" = yes ; then
       [AC_MSG_WARN(can't find the portaudio header file)])],
     [AC_MSG_WARN(can't find the portaudio library)])
 fi
-# TODO: this needs to be added to sndlib/clm configure.ac [also the macros]
 
 
 if test "$AUDIO_SYSTEM" != None ; then

@@ -41,22 +41,6 @@
 	(vct->vector vc0)
 	vc0)))
 
-;;; 'impossible-bounds changed to 'out-of-range
-
-(define (clear-audio-inputs)
-  "OSS-specific: clears input lines, maximizes output gains; intent is to reduce noise"
-  (let ((vals (make-vct 32)))
-    (vct-set! vals 0 0.0)
-    (vct-set! vals 1 0.0)
-    (mus-audio-mixer-write mus-audio-mixer mus-audio-microphone 0 vals)
-    (mus-audio-mixer-write mus-audio-mixer mus-audio-igain 0 vals)
-    (mus-audio-mixer-write mus-audio-mixer mus-audio-line 0 vals)
-    (vct-set! vals 0 1.0)
-    (vct-set! vals 1 1.0)
-    (mus-audio-mixer-write mus-audio-default mus-audio-amp 2 vals)
-    (mus-audio-mixer-write mus-audio-mixer mus-audio-ogain 0 vals)
-    (mus-audio-mixer-write mus-audio-mixer mus-audio-pcm 2 vals)))
-
 (define* (append-to-minibuffer msg :optional snd)
   "(append-to-minibuffer msg :optional snd) appends 'msg' to whatever is in snd's minibuffer"
   (if (and (sound? snd)
