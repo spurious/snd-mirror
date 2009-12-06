@@ -201,28 +201,15 @@ static void start_recording(void)
 }
 
 
-static int look_for_format (float *mixer_vals, int format)
-{
-  int i, lim;
-  lim = (int)mixer_vals[0];
-  for (i = 1; i <= lim; i++)
-    if ((int)mixer_vals[i] == format)
-      return(format);
-  return(-1);
-}
-
-
 static void start_reading(void)
 {
   mus_float_t *maxes;
-  #define MIXER_SIZE 8
-  float mixer_vals[MIXER_SIZE];
   int input_device, buffer_size, err = MUS_NO_ERROR;
   unsigned char *inbuf;
 
   clear_error();
-  mus_audio_mixer_read(MUS_AUDIO_DEFAULT, MUS_AUDIO_CHANNEL, MIXER_SIZE, mixer_vals);
-  recorder_chans = (int)mixer_vals[0];
+
+  recorder_chans = mus_audio_device_channels(MUS_AUDIO_DEFAULT);
   if (recorder_chans > 4) recorder_chans = 8;
   if (recorder_chans <= 0)
     {
@@ -234,31 +221,8 @@ static void start_reading(void)
       return;
     }
 
-  /*
-  mixer_vals[0] = 44100.0;
-  mus_audio_mixer_write(MUS_AUDIO_DEFAULT, MUS_AUDIO_SRATE, 0, mixer_vals);
-  */
   recorder_srate = 44100;
-
-  mus_audio_mixer_read(MUS_AUDIO_DEFAULT, MUS_AUDIO_FORMAT, MIXER_SIZE, mixer_vals);
-#if MUS_LITTLE_ENDIAN
-  recorder_format = look_for_format(mixer_vals, MUS_LFLOAT);
-  if (recorder_format == -1)
-    {
-      recorder_format = look_for_format(mixer_vals, MUS_LSHORT);
-      if (recorder_format == -1)
-	recorder_format = (int)mixer_vals[1];
-    }
-#else
-  recorder_format = look_for_format(mixer_vals, MUS_BFLOAT);
-  if (recorder_format == -1)
-    {
-      recorder_format = look_for_format(mixer_vals, MUS_BSHORT);
-      if (recorder_format == -1)
-	recorder_format = (int)mixer_vals[1];
-    }
-#endif
-
+  recorder_format = mus_audio_device_format(MUS_AUDIO_DEFAULT);
   buffer_size = 4096;
   
   input_device = mus_audio_open_input(MUS_AUDIO_DEFAULT, recorder_srate, recorder_chans, recorder_format, buffer_size);

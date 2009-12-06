@@ -17747,13 +17747,6 @@ static void mpc_init_set(mpc_ptr z, mpc_ptr y, mpc_rnd_t rnd)
 }
 
 
-static void mpc_init_set_ui_ui(mpc_ptr z, unsigned long int x, unsigned long int y, mpc_rnd_t rnd)
-{
-  mpc_init(z);
-  mpc_set_ui_ui(z, x, y, rnd);
-}
-
-
 static s7_pointer promote_number(s7_scheme *sc, int type, s7_pointer x);
 
 static int big_integer_tag = 0;

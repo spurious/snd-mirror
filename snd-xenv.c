@@ -1049,9 +1049,7 @@ Widget create_envelope_editor(void)
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNcolumns, 3); n++;
       XtSetArg(args[n], XmNrecomputeSize, false); n++;
-#if (!HAVE_SGI)
       XtSetArg(args[n], XmNheight, 24); n++;
-#endif
       XtSetArg(args[n], XmNresizeWidth, false); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNmarginHeight, 0); n++;

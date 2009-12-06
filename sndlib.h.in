@@ -183,6 +183,9 @@ enum {MUS_UNKNOWN, MUS_BSHORT, MUS_MULAW, MUS_BYTE, MUS_BFLOAT, MUS_BINT, MUS_AL
 #define MUS_AUDIO_DEVICE(n) ((n) & 0xffff)
 
 
+#if (SNDLIB_DISABLE_DEPRECATED)
+#define MUS_AUDIO_DEFAULT 0
+#else
 enum {MUS_AUDIO_DEFAULT, MUS_AUDIO_DUPLEX_DEFAULT, MUS_AUDIO_ADAT_IN, MUS_AUDIO_AES_IN, MUS_AUDIO_LINE_OUT,
       MUS_AUDIO_LINE_IN, MUS_AUDIO_MICROPHONE, MUS_AUDIO_SPEAKERS, MUS_AUDIO_DIGITAL_IN, MUS_AUDIO_DIGITAL_OUT,
       MUS_AUDIO_DAC_OUT, MUS_AUDIO_ADAT_OUT, MUS_AUDIO_AES_OUT, MUS_AUDIO_DAC_FILTER, MUS_AUDIO_MIXER,
@@ -193,6 +196,7 @@ enum {MUS_AUDIO_DEFAULT, MUS_AUDIO_DUPLEX_DEFAULT, MUS_AUDIO_ADAT_IN, MUS_AUDIO_
       MUS_AUDIO_BASS, MUS_AUDIO_TREBLE, MUS_AUDIO_PORT, MUS_AUDIO_SAMPLES_PER_CHANNEL,
       MUS_AUDIO_DIRECTION
 };
+#endif
 
 
 #define MUS_ERROR -1
@@ -332,10 +336,12 @@ MUS_EXPORT int mus_audio_read(int line, char *buf, int bytes);
 MUS_EXPORT int mus_audio_write_buffers(int line, int frames, int chans, mus_sample_t **bufs, int output_format, bool clipped);
 MUS_EXPORT int mus_audio_read_buffers(int line, int frames, int chans, mus_sample_t **bufs, int input_format);
 
+#if (!SNDLIB_DISABLE_DEPRECATED)
 MUS_EXPORT int mus_audio_mixer_read(int dev, int field, int chan, float *val);
 MUS_EXPORT int mus_audio_mixer_write(int dev, int field, int chan, float *val);
-MUS_EXPORT int mus_audio_initialize(void);
+#endif
 
+MUS_EXPORT int mus_audio_initialize(void);
 MUS_EXPORT int mus_audio_reinitialize(void); /* 29-Aug-01 for CLM/Snd bugfix? */
 MUS_EXPORT int mus_audio_systems(void);
 MUS_EXPORT char *mus_audio_system_name(int sys);
@@ -362,6 +368,9 @@ MUS_EXPORT int mus_alsa_buffers(void);
 MUS_EXPORT int mus_alsa_set_buffers(int num);
 MUS_EXPORT bool mus_alsa_squelch_warning(void);
 MUS_EXPORT bool mus_alsa_set_squelch_warning(bool val);
+
+MUS_EXPORT int mus_audio_device_channels(int dev);
+MUS_EXPORT int mus_audio_device_format(int dev);
 
 
 

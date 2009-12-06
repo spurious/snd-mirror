@@ -195,7 +195,7 @@ void map_over_children(Widget w, void (*func)(Widget uw))
 {
   /* apply func to each child in entire tree beneath top widget */
   /* taken from Douglas Young, "Motif Debugging and Performance Tuning" Prentice-Hall 1995 */
-  /* used mostly to get colors right in non-SGI environments with "convenience" widgets */
+  /* used mostly to get colors right in environments with "convenience" widgets */
   if (w)
     {
       unsigned int i;

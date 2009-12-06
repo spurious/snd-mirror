@@ -95,13 +95,10 @@
 #undef HAVE_OSX
 #undef HAVE_WINDOZE
 #undef HAVE_SUN
-#undef HAVE_SGI
 #undef HAVE_NETBSD
 #undef HAVE_LINUX
 
 #undef MUS_LINUX
-#undef MUS_SGI
-#undef MUS_ALPHA
 #undef MUS_SUN
 #undef MUS_OPENBSD
 #undef MUS_NETBSD

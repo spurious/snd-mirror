@@ -44,11 +44,7 @@
 #ifndef SND_AS_WIDGET
   #define PLAIN_ICON 1
   #define XPM_ICON 2
-  #if HAVE_SGI
-    #define ICON_TYPE PLAIN_ICON
-  #else
-    #define ICON_TYPE XPM_ICON
-  #endif
+  #define ICON_TYPE XPM_ICON
 #endif
 
 #define POSITION_SLIDER_WIDTH 13

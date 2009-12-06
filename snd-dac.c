@@ -1958,11 +1958,15 @@ static int alsa_max_chans_dev = 0;
 static bool audio_devices_scanned = false;
 static int alsa_devices_available = 0;
 
+void mus_audio_alsa_channel_info(int dev, int *info);
+void mus_audio_alsa_device_list(int sys, int size, float *val);
+int mus_audio_alsa_device_direction(int dev);
+
 static void scan_audio_devices(void)
 {
-  int err, cards, card, devs, dev, d;
+  int cards, card, devs, dev, d;
   int index = 0;
-  float direction;
+  int direction;
   float val[ALSA_MAX_DEVICES];
   if (!audio_devices_scanned)
     {
@@ -1977,33 +1981,18 @@ static void scan_audio_devices(void)
       /* scan all cards and build a list of available output devices */
       for (card = 0; card < cards; card++) 
 	{
-	  if ((err = mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(card), 
-					  MUS_AUDIO_PORT, 
-					  ALSA_MAX_DEVICES, val)) != MUS_NO_ERROR) 
-	    {
-	      snd_warning("can't get audio device info of %d", card);
-	    }
+	  mus_audio_alsa_device_list(MUS_AUDIO_PACK_SYSTEM(card), ALSA_MAX_DEVICES, val);
 	  devs = (int)(val[0]);
 	  /* scan all devices in the card */
 	  for (d = 0; d < devs; d++) 
 	    {
 	      dev = (int)(val[d + 1]);
-	      if ((err = mus_audio_mixer_read(MUS_AUDIO_PACK_SYSTEM(card) | dev, 
-					      MUS_AUDIO_DIRECTION, 
-					      0, 
-					      &direction)) != MUS_NO_ERROR) 
+	      direction = mus_audio_alsa_device_direction(MUS_AUDIO_PACK_SYSTEM(card) | dev);
+	      if (direction == 0) 
 		{
-		  snd_warning("can't read direction, ignoring device %d", dev);
-		  direction = 0;
-		} 
-	      else 
-		{
-		  if ((int)direction == 0) 
-		    {
-		      /* remember output device */
-		      alsa_devices[index++] = MUS_AUDIO_PACK_SYSTEM(card) | dev;
-		      if (index >= ALSA_MAX_DEVICES) goto NO_MORE_DEVICES;
-		    }
+		  /* remember output device */
+		  alsa_devices[index++] = MUS_AUDIO_PACK_SYSTEM(card) | dev;
+		  if (index >= ALSA_MAX_DEVICES) goto NO_MORE_DEVICES;
 		}
 	    }
 	}
@@ -2011,38 +2000,31 @@ static void scan_audio_devices(void)
       /* get channel availability for all devices */
       for (d = 0; d < index; d++) 
 	{
+	  int chan_info[4];
 	  alsa_available_chans[d] = 0;
 	  alsa_min_chans[d] = 0;
 	  alsa_max_chans[d] = 0;
-	  if ((err = mus_audio_mixer_read(alsa_devices[d], MUS_AUDIO_CHANNEL, 2, val)) == MUS_NO_ERROR) 
+	  mus_audio_alsa_channel_info(alsa_devices[d], chan_info);
+	  alsa_available_chans[d] = chan_info[0];
+	  alsa_min_chans[d] = chan_info[1];
+	  alsa_max_chans[d] = chan_info[2];
+	  if (alsa_max_chans[d] > alsa_max_chans_value) 
 	    {
-	      alsa_available_chans[d] = (int)(val[0]);
-	      alsa_min_chans[d] = (int)(val[1]);
-	      alsa_max_chans[d] = (int)(val[2]);
-	      if (alsa_max_chans[d] > alsa_max_chans_value) 
-		{
-		  /* remember widest device */
-		  alsa_max_chans_value = alsa_max_chans[d];
-		  alsa_max_chans_dev = d;
-		}
+	      /* remember widest device */
+	      alsa_max_chans_value = alsa_max_chans[d];
+	      alsa_max_chans_dev = d;
 	    }
 	}
     }
-#if 0
-  if (index == 0)
-    snd_warning("can't find any playable device");
-  /* this seems to happen all the time? */
-#endif
   alsa_devices_available = index;
 }
 
+int mus_audio_alsa_samples_per_channel(int dev);
 
 static bool start_audio_output_1(void)
 {
-  int err;
   int i, d;
   int samples_per_channel = 256;
-  float val[ALSA_MAX_DEVICES];
   static int out_dev[ALSA_MAX_DEVICES];
   int alloc_devs = 0;
   int alloc_chans = 0;
@@ -2127,15 +2109,12 @@ static bool start_audio_output_1(void)
 			snd_dacp->channels, alloc_chans);
 	  snd_dacp->channels = alloc_chans;
 	}
+
       /* read the number of samples per channel the device wants buffered */
-      if ((err = mus_audio_mixer_read(alsa_devices[out_dev[0]], 
-				      MUS_AUDIO_SAMPLES_PER_CHANNEL, 
-				      2, val)) != MUS_ERROR) 
-	{
-	  samples_per_channel = (int)(val[0]);
-	}
+      samples_per_channel = mus_audio_alsa_samples_per_channel(alsa_devices[out_dev[0]]);
       snd_dacp->frames = samples_per_channel;
       set_dac_size(snd_dacp->frames * mus_bytes_per_sample(snd_dacp->out_format));
+
       /* open all allocated devices */
       for (d = 0; d < alloc_devs; d++) 
 	{
@@ -2190,17 +2169,7 @@ static bool start_audio_output_1(void)
       /* -------------------- OSS not ALSA -------------------- */
       /* api == MUS_OSS_API -- MUS_JACK_API should not intrude here because we're in HAVE_ALSA || HAVE_OSS */
       if (snd_dacp->channels > 2)
-	{
-	  err = mus_audio_mixer_read(audio_output_device(ss), MUS_AUDIO_CHANNEL, 0, val);
-	  if (err != MUS_ERROR) 
-	    {
-	      int chans;
-	      chans = (int)(val[0]);
-	      if (chans > 0)
-		oss_available_chans = chans;
-	      else snd_warning("open audio output got %d chans?\n", chans);
-	    }
-	}
+	oss_available_chans = mus_audio_device_channels(audio_output_device(ss));
       for (i = 0; i < MAX_DEVICES; i++) dev_fd[i] = -1;
       /* see if we can play 16 bit output */
       snd_dacp->out_format = mus_audio_compatible_format(audio_output_device(ss));
@@ -2220,24 +2189,6 @@ static bool start_audio_output_1(void)
 		dev_fd[1] = mus_audio_open_output(MUS_AUDIO_PACK_SYSTEM(1) | audio_output_device(ss), 
 						  snd_dacp->srate, 2, 
 						  snd_dacp->out_format, 
-						  dac_size(ss));
-	    }
-	  else
-	    {
-	      /* there is one special case here: Ensoniq's allow you to play quad
-	       * by sending two channels (non-clock-synchronous with the other two)
-	       * out the line in port, but this possibility confuses LinuxPPC (OSS-Free)
-	       */
-	      set_dac_print();
-	      dev_fd[0] = mus_audio_open_output(MUS_AUDIO_AUX_OUTPUT, 
-						snd_dacp->srate, 2, 
-						snd_dacp->out_format, 
-						dac_size(ss));
-	      unset_dac_print();
-	      if (dev_fd[0] != MUS_ERROR) 
-		dev_fd[1] = mus_audio_open_output(audio_output_device(ss), 
-						  snd_dacp->srate, 2, 
-						  snd_dacp->out_format,
 						  dac_size(ss));
 	    }
 	  if (dev_fd[1] == MUS_ERROR)
@@ -2285,52 +2236,10 @@ static bool start_audio_output_1(void)
   int i;
   int available_chans = 2;
   float val[32];
-  if (snd_dacp->channels > 2)
-    {
-      err = mus_audio_mixer_read(audio_output_device(ss), MUS_AUDIO_CHANNEL, 0, val);
-      if (err != MUS_ERROR) 
-	available_chans = (int)(val[0]);
-      else 
-	{
-	  stop_playing_all_sounds(PLAY_ERROR);
-	  snd_error(_("can't get audio output chans? (%d) "), audio_output_device(ss));
-	  return(false);
-	}
-    }
-  for (i = 0; i < MAX_DEVICES; i++) dev_fd[i] = -1;
-  snd_dacp->out_format = MUS_AUDIO_COMPATIBLE_FORMAT;
 
-#ifdef SUN
-  /* can audio hardware handle this data format? */
-  err = mus_audio_mixer_read(audio_output_device(ss), MUS_AUDIO_FORMAT, 32, val);
-  {
-    bool happy = false;
-    for (i = 1; i <= (int)(val[0]); i++)
-      if ((int)(val[i]) == MUS_AUDIO_COMPATIBLE_FORMAT)
-	{
-	  happy = true;
-	  break;
-	}
-    if (!happy)
-      {
-	int max_bits = -1, best_fit = 0;
-	for (i = 1; i <= (int)(val[0]); i++)
-	  if (mus_bytes_per_sample((int)(val[i])) > max_bits)
-	    {
-	      best_fit = (int)(val[i]);
-	      max_bits = mus_bytes_per_sample(best_fit); /* probably mus-mulaw is all we get */
-	    }
-	if (max_bits == -1)
-	  {
-	    snd_warning_without_format("can't find any playable data format!");
-	    return(false);
-	  }
-	snd_dacp->out_format = best_fit;
-      }
-  }
-  /* but there's still trouble -- on opteron solaris 10, the only playable srate is 48000, but the mixer lies about it! */
-  /*   I can't see what to do in this case */
-#endif
+  if (snd_dacp->channels > 2)
+    available_chans = mus_audio_device_channels(audio_output_device(ss));
+
   if (available_chans <= 0)
     {
       snd_warning("no available channels??");
@@ -2344,6 +2253,10 @@ static bool start_audio_output_1(void)
 		    available_chans);
       snd_dacp->channels = available_chans;
     }
+
+  for (i = 0; i < MAX_DEVICES; i++) dev_fd[i] = -1;
+  snd_dacp->out_format = mus_audio_device_format(audio_output_device(ss));
+
   set_dac_print();
   if (dev_fd[0] == MUS_ERROR)
     dev_fd[0] = mus_audio_open_output(audio_output_device(ss), 

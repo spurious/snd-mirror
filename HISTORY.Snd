@@ -1,5 +1,6 @@
 Snd change log
 
+ 7-Dec:     removed SGI support.
  4-Dec:     portaudio support.
  1-Dec:     removed --with-modules configuration switch.
  30-Nov:    Snd 11.1.

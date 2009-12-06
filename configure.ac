@@ -402,9 +402,6 @@ case "$host" in
     *-*-solaris*) 
 	AC_DEFINE(HAVE_SUN)
         ;;
-    *-sgi*) 
-        AC_DEFINE(HAVE_SGI)
-        ;;
     *-*-netbsd*) 
         AC_DEFINE(HAVE_NETBSD)
         ;;
@@ -1959,21 +1956,6 @@ case "$host" in
 	if test "$GCC" = yes ; then
 	  SO_FLAGS="-fPIC $SO_FLAGS"
         fi
-        ;;
-    *-sgi*) 
-        AC_DEFINE(MUS_SGI)
-	AUDIO_SYSTEM=SGI
-	AUDIO_LIB="-laudio"
-        if test $GUILE_CONFIG_works = no; then
- 	  LIBS="$LIBS -lc -lm -lmd"
-        else
-	  LIBS="$LIBS -lmd"
-        fi
-        LDSO_FLAGS="-shared -all"
-	SO_LD=":"
-	if test $LOCAL_LANGUAGE = "None"; then
-	  LIBS="$LIBS -lm"
-	fi
         ;;
     *-*-bsdi*) 
 	AC_DEFINE(HAVE_OSS)

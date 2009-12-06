@@ -7,9 +7,7 @@
 #endif
 
 
-#if (!HAVE_SGI)
-  #define TOGGLE_MARGIN 0
-#endif
+#define TOGGLE_MARGIN 0
 
 enum {W_pane,
       W_name_form, W_amp_form,
@@ -2667,11 +2665,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       XtSetArg(args[n], XmNshadowThickness, 0); n++;
       XtSetArg(args[n], XmNhighlightThickness, 0); n++;
       XtSetArg(args[n], XmNfillOnArm, false); n++;
-#if HAVE_SGI
-      FILTER_LABEL(sp) = XtCreateManagedWidget("filter-label", xmPushButtonWidgetClass, CONTROLS(sp), args, n);
-#else
       FILTER_LABEL(sp) = XtCreateManagedWidget("filter-label", xmLabelWidgetClass, CONTROLS(sp), args, n);
-#endif
       XmStringFree(s1);
 
       /* filter order */
