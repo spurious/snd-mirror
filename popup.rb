@@ -2,7 +2,7 @@
 
 # Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Thu Sep 05 22:28:49 CEST 2002
-# Changed: Thu Nov 26 18:20:42 CET 2009
+# Changed: Thu Nov 26 22:26:17 CET 2009
 
 # Commentary:
 #
@@ -599,7 +599,7 @@ unless defined? $__private_popup_menu__ and $__private_popup_menu__
         change_label(w, "Stop")
         stop_widget = w
         stopping = true
-        play(selected_sound)
+        play(selection())
       end
     end
     entry("Loop play") do |snd, chn, w|
@@ -617,9 +617,9 @@ unless defined? $__private_popup_menu__ and $__private_popup_menu__
         stop_widget1 = w
         stopping1 = true
         $stop_playing_selection_hook.add_hook!("popup-play-selection") do | |
-          play(selected_sound)
+          play(selection())
         end
-        play(selected_sound)
+        play(selection())
       end
     end
     entry("Delete") do |snd, chn, w| delete_selection end

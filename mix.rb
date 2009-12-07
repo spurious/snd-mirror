@@ -2,7 +2,7 @@
 
 # Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Tue Feb 22 13:40:33 CET 2005
-# Changed: Wed Oct 14 23:11:42 CEST 2009
+# Changed: Sun Nov 29 14:51:09 CET 2009
 
 # Commentary:
 #
@@ -96,13 +96,15 @@ returns the id of the mix at the given sample, or nil.")
     v
   end
 
-  add_help(:save_mix, "save_mix(id, filename) saves mix data (as floats) in file FILENAME.")
-  def save_mix(id, filename)
-    Snd.raise(:no_such_mix, id) unless mix?(id)
-    v = mix2vct(id)
-    fd = mus_sound_open_output(filename, srate(), 1, false, false, "")
-    mus_sound_write(fd, 0, v.length - 1, 1, vct2sound_data(v))
-    mus_sound_close_output(fd, 4 * v.length)
+  unless defined? save_mix
+    add_help(:save_mix, "save_mix(id, filename) saves mix data (as floats) in file FILENAME.")
+    def save_mix(id, filename)
+      Snd.raise(:no_such_mix, id) unless mix?(id)
+      v = mix2vct(id)
+      fd = mus_sound_open_output(filename, srate(), 1, false, false, "")
+      mus_sound_write(fd, 0, v.length - 1, 1, vct2sound_data(v))
+      mus_sound_close_output(fd, 4 * v.length)
+    end
   end
 
   add_help(:mix_maxamp, "mix_maxamp(id) returns the max amp in the given mix.")

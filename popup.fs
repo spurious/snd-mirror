@@ -3,7 +3,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Dec 23 00:28:28 CET 2005
-\ Changed: Thu Nov 26 18:32:35 CET 2009
+\ Changed: Fri Nov 27 01:02:37 CET 2009
 
 \ Commentary:
 
@@ -184,19 +184,19 @@ hide
 ;
 
 \ --- selection popup ---
-: sel-stop-play-cb ( vars -- prc; self -- )
-  0 proc-create swap ,
+: sel-stop-play-cb { vars -- prc; self -- }
+  0 proc-create vars ,
  does> { self -- }
   self @ { vars }
   vars :stopping array-assoc-ref if
     vars     :stopping #f array-assoc-set!
-    ( vars ) :stop-widget array-assoc-ref FWidget? if
-      vars :stop-widget array-assoc-ref "Play" change-label
-    then
+    ( vars ) :stop-widget array-assoc-ref { w }
+    w FWidget? if w "Play" change-label then
   then
 ;
-: sel-play-cb ( vars -- prc; w c i self -- )
-  3 proc-create swap ,
+: sel-play-again-cb ( -- ) selection play drop ;
+: sel-play-cb { vars -- prc; w c i self -- }
+  3 proc-create vars ,
  does> { w c info self -- }
   self @ { vars }
   vars :stopping array-assoc-ref if
@@ -205,72 +205,54 @@ hide
     ( vars ) :stopping1 array-assoc-ref if
       vars   :stopping1 #f array-assoc-set!
       ( vars ) :stop-widget1 array-assoc-ref $" Loop play" change-label
+      stop-playing-selection-hook <'> sel-play-again-cb remove-hook! drop
     then
     undef stop-playing drop
   else
     w "Stop" change-label
     vars :stop-widget w array-assoc-set!
     ( vars ) :stopping #t array-assoc-set! drop
-    selected-sound play drop
+    selection play drop
   then
 ;
-: stop-playing-selection { w vars -- }
-  w $" Loop play" change-label
-  vars     :stopping1 #f array-assoc-set!
-  ( vars ) :stopping array-assoc-ref if
-    vars :stopping #f array-assoc-set!
-    ( vars ) :stop-widget array-assoc-ref "Play" change-label
-  then
-;
-: play-selection-again { w vars -- prc; reason self -- }
-  1 proc-create w , vars ,
- does> { reason self -- }
-  self       @ { w }
-  self cell+ @ { vars }
-  vars array? if
-    c-g?                        not
-    reason                       0= &&
-    vars :stopping1 array-assoc-ref && if
-      selected-sound  :stop w vars recurse  play drop
-    else
-      w vars stop-playing-selection
-    then
-  else
-    $" %s: assoc array required, got %s" #( get-func-name vars ) string-format snd-warning drop
-  then
-;
-: sel-loop-cb ( vars -- prc; w c i self -- )
-  3 proc-create swap ,
+: sel-loop-cb { vars -- prc; w c i self -- }
+  3 proc-create vars ,
  does> { w c info self -- }
   self @ { vars }
   vars :stopping1 array-assoc-ref if
-    w vars stop-playing-selection
+    w $" Loop play" change-label
+    vars :stopping1 #f array-assoc-set!
+    ( vars ) :stopping array-assoc-ref if
+      vars :stopping #f array-assoc-set!
+      ( vars ) :stop-widget array-assoc-ref "Play" change-label
+    then
+    stop-playing-selection-hook <'> sel-play-again-cb remove-hook! drop
     undef stop-playing drop
   else
     w "Stop!" change-label
     vars     :stop-widget1 w  array-assoc-set!
-    ( vars ) :stopping1    #t array-assoc-set! to vars
-    #f  :stop w vars play-selection-again  play drop
+    ( vars ) :stopping1    #t array-assoc-set! drop
+    stop-playing-selection-hook <'> sel-play-again-cb add-hook!
+    selection play drop
   then
 ;
-: as-one-edit-thunk ( selection -- prc; self -- )
-  0 proc-create swap ,
+: as-one-edit-thunk { sel -- prc; self -- }
+  0 proc-create sel ,
  does> { self -- }
-  self @ { selection }
-  selection 0 array-ref { snd }
-  selection 1 array-ref { chn }
+  self @ { sel }
+  sel 0 array-ref { snd }
+  sel 1 array-ref { chn }
   snd chn selection-position { beg }
   snd chn selection-frames   { len }
   beg 0> if 0 beg snd chn delete-samples drop then
-  len snd chn #f frames < if len 1+ snd chn #f frames len - snd chn delete-samples drop then
+  snd chn #f frames { frms }
+  len frms < if len 1+  frms len -  snd chn delete-samples drop then
 ;
 
 : sel-del  <{ w c info -- val }> delete-selection ;
 : sel-zero <{ w c info -- val }> 0.0 scale-selection-by ;
 : sel-crop <{ w c info -- }>
-  selection-members each { selection }
-    selection as-one-edit-thunk "" as-one-edit drop
-  end-each
+  selection-members each ( sel ) as-one-edit-thunk "" as-one-edit drop end-each
 ;
 : sel-save-as <{ w c info -- val }> save-selection-dialog ;
 : sel-copy <{ w c info -- }>
@@ -346,7 +328,7 @@ let: ( -- menu )
   self @ { vars }
   vars :stopping array-assoc-ref if
     vars     :stopping #f array-assoc-set!
-    ( vars ) :stop-widget array-assoc-ref dup if "Play" change-label else drop then
+    ( vars ) :stop-widget array-assoc-ref ?dup-if "Play" change-label then
   then
 ;
 : play-cb ( vars -- prc; w c i self -- )
@@ -371,36 +353,34 @@ let: ( -- menu )
 : pchan-cb ( vars -- prc; w c i self -- )
   3 proc-create swap ,
  does> { w c info self -- }
-  self @ { vars }
-  vars     :stopping #t array-assoc-set!
+  self @ ( vars ) :stopping #t array-assoc-set!
   ( vars ) :stop-widget array-assoc-ref "Stop" change-label
   graph-popup-snd :channel graph-popup-chn play drop
 ;
 : pcur-cb ( vars -- prc; w c i self -- )
   3 proc-create swap ,
  does> { w c info self -- }
-  self @ { vars }
-  vars     :stopping #t array-assoc-set!
+  self @ ( vars ) :stopping #t array-assoc-set!
   ( vars ) :stop-widget array-assoc-ref "Stop" change-label
   graph-popup-snd :start graph-popup-snd graph-popup-chn #f cursor play drop
 ;
 : pprev-cb ( vars -- prc; w c i self -- )
   3 proc-create swap ,
  does> { w c info self -- }
-  self @ { vars }
-  vars     :stopping #t array-assoc-set!
+  self @ ( vars ) :stopping #t array-assoc-set!
   ( vars ) :stop-widget array-assoc-ref "Stop" change-label
-  0 graph-popup-snd graph-popup-chn #f #f
-  graph-popup-snd graph-popup-chn edit-position 1-
-  undef undef play drop
+  graph-popup-snd
+  :channel graph-popup-chn
+  :edit-position graph-popup-snd graph-popup-chn edit-position 1- play drop
 ;
 : porig-cb ( vars -- prc; w c i self -- )
   3 proc-create swap ,
  does> { w c info self -- }
-  self @ { vars }
-  vars     :stopping #t array-assoc-set!
+  self @ ( vars ) :stopping #t array-assoc-set!
   ( vars ) :stop-widget array-assoc-ref "Stop" change-label
-  graph-popup-snd :channel graph-popup-chn :edit-position 0 play drop
+  graph-popup-snd
+  :channel graph-popup-chn
+  :edit-position 0 play drop
 ;
 
 : pundo-cb   <{ w c info -- val }> 1 graph-popup-snd graph-popup-chn undo ;

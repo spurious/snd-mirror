@@ -183,22 +183,7 @@ enum {MUS_UNKNOWN, MUS_BSHORT, MUS_MULAW, MUS_BYTE, MUS_BFLOAT, MUS_BINT, MUS_AL
 #define MUS_AUDIO_DEVICE(n) ((n) & 0xffff)
 
 
-#if (SNDLIB_DISABLE_DEPRECATED)
 #define MUS_AUDIO_DEFAULT 0
-#else
-enum {MUS_AUDIO_DEFAULT, MUS_AUDIO_DUPLEX_DEFAULT, MUS_AUDIO_ADAT_IN, MUS_AUDIO_AES_IN, MUS_AUDIO_LINE_OUT,
-      MUS_AUDIO_LINE_IN, MUS_AUDIO_MICROPHONE, MUS_AUDIO_SPEAKERS, MUS_AUDIO_DIGITAL_IN, MUS_AUDIO_DIGITAL_OUT,
-      MUS_AUDIO_DAC_OUT, MUS_AUDIO_ADAT_OUT, MUS_AUDIO_AES_OUT, MUS_AUDIO_DAC_FILTER, MUS_AUDIO_MIXER,
-      MUS_AUDIO_LINE1, MUS_AUDIO_LINE2, MUS_AUDIO_LINE3, MUS_AUDIO_AUX_INPUT, MUS_AUDIO_CD,
-      MUS_AUDIO_AUX_OUTPUT, MUS_AUDIO_SPDIF_IN, MUS_AUDIO_SPDIF_OUT, MUS_AUDIO_AMP, MUS_AUDIO_SRATE,
-      MUS_AUDIO_CHANNEL, MUS_AUDIO_FORMAT, MUS_AUDIO_IMIX, MUS_AUDIO_IGAIN, MUS_AUDIO_RECLEV,
-      MUS_AUDIO_PCM, MUS_AUDIO_PCM2, MUS_AUDIO_OGAIN, MUS_AUDIO_LINE, MUS_AUDIO_SYNTH,
-      MUS_AUDIO_BASS, MUS_AUDIO_TREBLE, MUS_AUDIO_PORT, MUS_AUDIO_SAMPLES_PER_CHANNEL,
-      MUS_AUDIO_DIRECTION
-};
-#endif
-
-
 #define MUS_ERROR -1
 
 enum {MUS_NO_ERROR, MUS_NO_FREQUENCY, MUS_NO_PHASE, MUS_NO_GEN, MUS_NO_LENGTH,
@@ -333,12 +318,6 @@ MUS_EXPORT int mus_audio_read(int line, char *buf, int bytes);
 
 MUS_EXPORT int mus_audio_write_buffers(int line, int frames, int chans, mus_sample_t **bufs, int output_format, bool clipped);
 MUS_EXPORT int mus_audio_read_buffers(int line, int frames, int chans, mus_sample_t **bufs, int input_format);
-
-#if (!SNDLIB_DISABLE_DEPRECATED)
-MUS_EXPORT int mus_audio_mixer_read(int dev, int field, int chan, float *val);
-MUS_EXPORT int mus_audio_mixer_write(int dev, int field, int chan, float *val);
-#endif
-
 MUS_EXPORT int mus_audio_initialize(void);
 MUS_EXPORT int mus_audio_reinitialize(void); /* 29-Aug-01 for CLM/Snd bugfix? */
 MUS_EXPORT int mus_audio_systems(void);
@@ -346,8 +325,6 @@ MUS_EXPORT char *mus_audio_moniker(void);
 MUS_EXPORT int mus_audio_api(void);
 MUS_EXPORT int mus_audio_compatible_format(int dev);
 
-MUS_EXPORT void mus_netbsd_set_outputs(int speakers, int headphones, int line_out);
-MUS_EXPORT void mus_sun_set_outputs(int speakers, int headphones, int line_out);
 MUS_EXPORT void mus_oss_set_buffers(int num, int size);
 
 MUS_EXPORT char *mus_alsa_playback_device(void);

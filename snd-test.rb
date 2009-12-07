@@ -31960,7 +31960,7 @@ def test20
       test_erf
     end
     test0020
-    test0120
+    test0120 unless provided? :snd_nogui
     test0220
     $after_test_hook.call(20)
   end

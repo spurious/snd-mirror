@@ -395,38 +395,6 @@ static XEN g_mus_sound_duration(XEN gfilename)
 }
 
 
-static XEN g_mus_sun_set_outputs(XEN speakers, XEN headphones, XEN line_out)
-{
-  #define H_mus_sun_set_outputs "(" S_mus_sun_set_outputs " speaker headphones line-out): set the current Sun audio outputs. \
-Each entry should be either 0 (turn off device) or 1 (turn it on)."
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(speakers), speakers, XEN_ARG_1, S_mus_sun_set_outputs, "an integer");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(headphones), headphones, XEN_ARG_2, S_mus_sun_set_outputs, "an integer");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(line_out), line_out, XEN_ARG_3, S_mus_sun_set_outputs, "an integer");
-#ifdef MUS_SUN
-  mus_sun_set_outputs(XEN_TO_C_INT(speakers),
-		      XEN_TO_C_INT(headphones),
-		      XEN_TO_C_INT(line_out));
-#endif
-  return(XEN_FALSE);
-}
-
-
-static XEN g_mus_netbsd_set_outputs(XEN speakers, XEN headphones, XEN line_out)
-{
-  #define H_mus_netbsd_set_outputs "(" S_mus_netbsd_set_outputs " speaker headphones line-out): set the current netBSD audio outputs. \
-Each entry should be either 0 (turn off device) or 1 (turn it on)."
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(speakers), speakers, XEN_ARG_1, S_mus_netbsd_set_outputs, "an integer");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(headphones), headphones, XEN_ARG_2, S_mus_netbsd_set_outputs, "an integer");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(line_out), line_out, XEN_ARG_3, S_mus_netbsd_set_outputs, "an integer");
-#ifdef MUS_NETBSD
-  mus_netbsd_set_outputs(XEN_TO_C_INT(speakers),
-			 XEN_TO_C_INT(headphones),
-			 XEN_TO_C_INT(line_out));
-#endif
-  return(XEN_FALSE);
-}
-
-
 static XEN g_mus_oss_set_buffers(XEN num, XEN size)
 {
   #define H_mus_oss_set_buffers "(" S_mus_oss_set_buffers " num size): set Linux OSS 'fragment' number and size. \
@@ -1152,16 +1120,6 @@ static XEN g_mus_audio_close(XEN line)
 }
 
 
-#if (!SNDLIB_DISABLE_DEPRECATED)
-/* obsolete */
-static XEN g_mus_audio_systems(void) 
-{
-  #define H_mus_audio_systems "(" S_mus_audio_systems "): number of audio systems; normally each sound card is a separate 'system'"
-  return(C_TO_XEN_INT(mus_audio_systems()));
-}
-#endif
-
-
 /* these take a sndlib buffer (sound_data) and handle the conversion to the interleaved char* internally */
 /* so, they take "frames", not "bytes", and a sound_data object, not char* etc */
 
@@ -1258,84 +1216,6 @@ from the audio line into sound-data sdata."
 
 
 /* TODO: fix the rb/fs cases for mus-audio-* changes */
-#if (!SNDLIB_DISABLE_DEPRECATED)
-
-/* obsolete */
-static XEN g_mus_audio_mixer_read(XEN dev, XEN field, XEN chan, XEN vals)
-{
-#if HAVE_SCHEME
-  #define mixer_read_example "  (let ((vals (" S_make_vct " 32)))\n    (" S_mus_audio_mixer_read " " S_mus_audio_default " " S_mus_audio_format " 32 vals))\n"
-  #define mixer_read_vct_example "(" S_vct_ref " vals 0)"
-#endif
-
-#if HAVE_RUBY
-  #define mixer_read_example "  vals = make_vct(32)\n  mus_audio_mixer_read(Mus_audio_default, Mus_audio_format, 32, vals)\n"
-  #define mixer_read_vct_example "vals[0]"
-#endif
-
-#if HAVE_FORTH
-  #define mixer_read_example "  32 0.0 make-vct value vals\n  mus-audio-default mus-audio-format 32 vals mus-audio-mixer-read\n"
-  #define mixer_read_vct_example "vals 0 vct-ref"
-#endif
-
-  #define H_mus_audio_mixer_read "(" S_mus_audio_mixer_read " device field channel vals): read some portion of the sound card mixer state. \
-The device is the nominal audio device, normally " S_mus_audio_default ". The field describes what info we are requesting: \
-to get the device's max available chans, use " S_mus_audio_channel ". The channel arg, when relevant, specifies \
-which channel we want info on or the 'vals' vct length. \
-The requested info is written into 'vals': \n\n" mixer_read_example " \n\
-sets " mixer_read_vct_example " to the default device's desired audio sample data format."
-
-  int val, i, len;
-  float *fvals;
-  vct *v = NULL;
-
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(dev), dev, XEN_ARG_1, S_mus_audio_mixer_read, "an integer");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(field), field, XEN_ARG_2, S_mus_audio_mixer_read, "an integer");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(chan), chan, XEN_ARG_3, S_mus_audio_mixer_read, "an integer");
-  XEN_ASSERT_TYPE(MUS_VCT_P(vals), vals, XEN_ARG_4, S_mus_audio_mixer_read, "a vct");
-
-  v = XEN_TO_VCT(vals);
-  len = v->length;
-  fvals = (float *)calloc(len, sizeof(float));
-  val = mus_audio_mixer_read(XEN_TO_C_INT(dev),
-			     XEN_TO_C_INT(field),
-			     XEN_TO_C_INT(chan),
-			     fvals);
-  for (i = 0; i < len; i++) 
-    v->data[i] = fvals[i];
-  free(fvals);
-  return(xen_return_first(C_TO_XEN_INT(val), vals));
-}
-
-
-/* obsolete */
-static XEN g_mus_audio_mixer_write(XEN dev, XEN field, XEN chan, XEN vals)
-{
-  #define H_mus_audio_mixer_write "(" S_mus_audio_mixer_write " device field channel vals): change some portion of the sound card mixer state"
-  int i, len, res;
-  float *fvals;
-  vct *v = NULL;
-
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(dev), dev, XEN_ARG_1, S_mus_audio_mixer_write, "an integer");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(field), field, XEN_ARG_2, S_mus_audio_mixer_write, "an integer");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(chan), chan, XEN_ARG_3, S_mus_audio_mixer_write, "an integer");
-  XEN_ASSERT_TYPE(MUS_VCT_P(vals), vals, XEN_ARG_4, S_mus_audio_mixer_write, "a vct");
-
-  v = XEN_TO_VCT(vals);
-  len = v->length;
-  fvals = (float *)calloc(len, sizeof(float));
-  for (i = 0; i < len; i++) 
-    fvals[i] = v->data[i];
-  res = mus_audio_mixer_write(XEN_TO_C_INT(dev),
-			      XEN_TO_C_INT(field),
-			      XEN_TO_C_INT(chan),
-			      fvals);
-  free(fvals);
-  return(xen_return_first(C_TO_XEN_INT(res), vals));
-}
-#endif
-
-
 /* global default clipping and prescaler values */
 
 static XEN g_mus_clipping(void)
@@ -2533,8 +2413,6 @@ XEN_NARGIFY_1(g_mus_sound_mark_info_w, g_mus_sound_mark_info)
 XEN_NARGIFY_1(g_mus_sound_maxamp_w, g_mus_sound_maxamp)
 XEN_NARGIFY_2(g_mus_sound_set_maxamp_w, g_mus_sound_set_maxamp)
 XEN_NARGIFY_1(g_mus_sound_maxamp_exists_w, g_mus_sound_maxamp_exists)
-XEN_NARGIFY_3(g_mus_sun_set_outputs_w, g_mus_sun_set_outputs)
-XEN_NARGIFY_3(g_mus_netbsd_set_outputs_w, g_mus_netbsd_set_outputs)
 XEN_NARGIFY_1(g_mus_sound_open_input_w, g_mus_sound_open_input)
 XEN_NARGIFY_1(g_mus_sound_close_input_w, g_mus_sound_close_input)
 
@@ -2544,12 +2422,6 @@ XEN_NARGIFY_3(g_mus_audio_write_w, g_mus_audio_write)
 XEN_NARGIFY_3(g_mus_audio_read_w, g_mus_audio_read)
 XEN_NARGIFY_5(g_mus_audio_open_output_w, g_mus_audio_open_output)
 XEN_NARGIFY_5(g_mus_audio_open_input_w, g_mus_audio_open_input)
-
-#if (!SNDLIB_DISABLE_DEPRECATED)
-XEN_NARGIFY_0(g_mus_audio_systems_w, g_mus_audio_systems)
-XEN_NARGIFY_4(g_mus_audio_mixer_read_w, g_mus_audio_mixer_read)
-XEN_NARGIFY_4(g_mus_audio_mixer_write_w, g_mus_audio_mixer_write)
-#endif
 
 XEN_NARGIFY_0(g_mus_clipping_w, g_mus_clipping)
 XEN_NARGIFY_1(g_mus_set_clipping_w, g_mus_set_clipping)
@@ -2651,8 +2523,6 @@ XEN_NARGIFY_1(g_mus_set_max_table_size_w, g_mus_set_max_table_size)
 #define g_mus_sound_maxamp_w g_mus_sound_maxamp
 #define g_mus_sound_set_maxamp_w g_mus_sound_set_maxamp
 #define g_mus_sound_maxamp_exists_w g_mus_sound_maxamp_exists
-#define g_mus_sun_set_outputs_w g_mus_sun_set_outputs
-#define g_mus_netbsd_set_outputs_w g_mus_netbsd_set_outputs
 #define g_mus_sound_open_input_w g_mus_sound_open_input
 #define g_mus_sound_close_input_w g_mus_sound_close_input
 
@@ -2662,12 +2532,6 @@ XEN_NARGIFY_1(g_mus_set_max_table_size_w, g_mus_set_max_table_size)
 #define g_mus_audio_read_w g_mus_audio_read
 #define g_mus_audio_open_output_w g_mus_audio_open_output
 #define g_mus_audio_open_input_w g_mus_audio_open_input
-
-#if (!SNDLIB_DISABLE_DEPRECATED)
-#define g_mus_audio_systems_w g_mus_audio_systems
-#define g_mus_audio_mixer_read_w g_mus_audio_mixer_read
-#define g_mus_audio_mixer_write_w g_mus_audio_mixer_write
-#endif
 
 #define g_mus_clipping_w g_mus_clipping
 #define g_mus_set_clipping_w g_mus_set_clipping
@@ -2818,53 +2682,6 @@ void mus_sndlib_xen_initialize(void)
 
   XEN_DEFINE_CONSTANT(S_mus_audio_default,        MUS_AUDIO_DEFAULT,        "default audio device");
 
-#if (!SNDLIB_DISABLE_DEPRECATED)
-  XEN_DEFINE_CONSTANT(S_mus_audio_duplex_default, MUS_AUDIO_DUPLEX_DEFAULT, "default duplex device");
-  XEN_DEFINE_CONSTANT(S_mus_audio_line_out,       MUS_AUDIO_LINE_OUT,       "audio line-out device");
-  XEN_DEFINE_CONSTANT(S_mus_audio_line_in,        MUS_AUDIO_LINE_IN,        "audio line-in device");
-  XEN_DEFINE_CONSTANT(S_mus_audio_microphone,     MUS_AUDIO_MICROPHONE,     "microphone device");
-  XEN_DEFINE_CONSTANT(S_mus_audio_speakers,       MUS_AUDIO_SPEAKERS,       "speakers device (a mixer kludge)");
-  XEN_DEFINE_CONSTANT(S_mus_audio_dac_out,        MUS_AUDIO_DAC_OUT,        "DAC out device");
-  XEN_DEFINE_CONSTANT(S_mus_audio_adat_in,        MUS_AUDIO_ADAT_IN,        "ADAT in device");
-  XEN_DEFINE_CONSTANT(S_mus_audio_aes_in,         MUS_AUDIO_AES_IN,         "AES in device");
-  XEN_DEFINE_CONSTANT(S_mus_audio_digital_in,     MUS_AUDIO_DIGITAL_IN,     "digital audio in device");
-  XEN_DEFINE_CONSTANT(S_mus_audio_digital_out,    MUS_AUDIO_DIGITAL_OUT,    "digital audio out device");
-  XEN_DEFINE_CONSTANT(S_mus_audio_adat_out,       MUS_AUDIO_ADAT_OUT,       "ADAT out device");
-  XEN_DEFINE_CONSTANT(S_mus_audio_aes_out,        MUS_AUDIO_AES_OUT,        "AES out device");
-  XEN_DEFINE_CONSTANT(S_mus_audio_dac_filter,     MUS_AUDIO_DAC_FILTER,     "DAC filter 'device' (a mixer kludge)");
-  XEN_DEFINE_CONSTANT(S_mus_audio_mixer,          MUS_AUDIO_MIXER,          "the 'mixer' device");
-  XEN_DEFINE_CONSTANT(S_mus_audio_line1,          MUS_AUDIO_LINE1,          "audio line 1 device");
-  XEN_DEFINE_CONSTANT(S_mus_audio_line2,          MUS_AUDIO_LINE2,          "audio line 2 device");
-  XEN_DEFINE_CONSTANT(S_mus_audio_line3,          MUS_AUDIO_LINE3,          "audio line 3 device");
-  XEN_DEFINE_CONSTANT(S_mus_audio_aux_input,      MUS_AUDIO_AUX_INPUT,      "aux audio in device");
-  XEN_DEFINE_CONSTANT(S_mus_audio_cd,             MUS_AUDIO_CD,             "CD in device");
-  XEN_DEFINE_CONSTANT(S_mus_audio_aux_output,     MUS_AUDIO_AUX_OUTPUT,     "aux audio out device");
-  XEN_DEFINE_CONSTANT(S_mus_audio_spdif_in,       MUS_AUDIO_SPDIF_IN,       "SPDIF in device");
-  XEN_DEFINE_CONSTANT(S_mus_audio_spdif_out,      MUS_AUDIO_SPDIF_OUT,      "SPDIF out device");
-  XEN_DEFINE_CONSTANT(S_mus_audio_direction,      MUS_AUDIO_DIRECTION,      "audio sample flow direction (" S_mus_audio_read ")");
-  XEN_DEFINE_CONSTANT(S_mus_audio_samples_per_channel, MUS_AUDIO_SAMPLES_PER_CHANNEL, "samples per channel (" S_mus_audio_read ")");
-
-  XEN_DEFINE_CONSTANT(S_mus_audio_amp,            MUS_AUDIO_AMP,            "mixer amp field id");
-  XEN_DEFINE_CONSTANT(S_mus_audio_srate,          MUS_AUDIO_SRATE,          "mixer srate field id");
-  XEN_DEFINE_CONSTANT(S_mus_audio_channel,        MUS_AUDIO_CHANNEL, "       mixer channel field id");
-  XEN_DEFINE_CONSTANT(S_mus_audio_format,         MUS_AUDIO_FORMAT,         "mixer data format field id");
-  XEN_DEFINE_CONSTANT(S_mus_audio_port,           MUS_AUDIO_PORT,           "mixer port");
-  XEN_DEFINE_CONSTANT(S_mus_audio_imix,           MUS_AUDIO_IMIX,           "mixer 'imix' field id");
-  XEN_DEFINE_CONSTANT(S_mus_audio_igain,          MUS_AUDIO_IGAIN,          "mixer 'igain' field id");
-  XEN_DEFINE_CONSTANT(S_mus_audio_reclev,         MUS_AUDIO_RECLEV,         "mixer 'reclev' field id");
-  XEN_DEFINE_CONSTANT(S_mus_audio_pcm,            MUS_AUDIO_PCM,            "mixer 'pcm' field id");
-  XEN_DEFINE_CONSTANT(S_mus_audio_pcm2,           MUS_AUDIO_PCM2,           "mixer 'pcm2' field id");
-  XEN_DEFINE_CONSTANT(S_mus_audio_ogain,          MUS_AUDIO_OGAIN,          "mixer 'ogain' field id");
-  XEN_DEFINE_CONSTANT(S_mus_audio_line,           MUS_AUDIO_LINE,           "mixer 'line' field id");
-  XEN_DEFINE_CONSTANT(S_mus_audio_synth,          MUS_AUDIO_SYNTH,          "mixer 'synth' field id");
-  XEN_DEFINE_CONSTANT(S_mus_audio_bass,           MUS_AUDIO_BASS,           "mixer 'bass' field id");
-  XEN_DEFINE_CONSTANT(S_mus_audio_treble,         MUS_AUDIO_TREBLE,         "mixer 'treble' field id");
-
-  XEN_DEFINE_PROCEDURE(S_mus_audio_mixer_read,     g_mus_audio_mixer_read_w,       4, 0, 0, H_mus_audio_mixer_read);
-  XEN_DEFINE_PROCEDURE(S_mus_audio_mixer_write,    g_mus_audio_mixer_write_w,      4, 0, 0, H_mus_audio_mixer_write);
-  XEN_DEFINE_PROCEDURE(S_mus_audio_systems,        g_mus_audio_systems_w,          0, 0, 0, H_mus_audio_systems);
-#endif
-
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_sound_samples, g_mus_sound_samples_w, H_mus_sound_samples, 
 				   S_setB S_mus_sound_samples, g_mus_sound_set_samples_w, 1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_sound_data_location, g_mus_sound_data_location_w, H_mus_sound_data_location,
@@ -2924,9 +2741,6 @@ void mus_sndlib_xen_initialize(void)
   XEN_DEFINE_PROCEDURE(S_mus_audio_read,           g_mus_audio_read_w,             3, 0, 0, H_mus_audio_read);
   XEN_DEFINE_PROCEDURE(S_mus_audio_open_output,    g_mus_audio_open_output_w,      5, 0, 0, H_mus_audio_open_output);
   XEN_DEFINE_PROCEDURE(S_mus_audio_open_input,     g_mus_audio_open_input_w,       5, 0, 0, H_mus_audio_open_input);
-
-  XEN_DEFINE_PROCEDURE(S_mus_sun_set_outputs,      g_mus_sun_set_outputs_w,        3, 0, 0, H_mus_sun_set_outputs);
-  XEN_DEFINE_PROCEDURE(S_mus_netbsd_set_outputs,   g_mus_netbsd_set_outputs_w,     3, 0, 0, H_mus_netbsd_set_outputs);
 
   XEN_DEFINE_PROCEDURE(S_mus_expand_filename,      g_mus_expand_filename_w,        1, 0, 0, H_mus_expand_filename);
   XEN_DEFINE_PROCEDURE(S_mus_sound_open_output,    g_mus_sound_open_output_w,      1, 5, 0, H_mus_sound_open_output);
