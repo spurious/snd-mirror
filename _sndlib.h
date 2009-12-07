@@ -2,8 +2,8 @@
 #define SNDLIB_H
 
 #define SNDLIB_VERSION 21
-#define SNDLIB_REVISION 0
-#define SNDLIB_DATE "27-July-09"
+#define SNDLIB_REVISION 1
+#define SNDLIB_DATE "7-Dec-09"
 
 #include <mus-config.h>
 
@@ -433,9 +433,7 @@ MUS_EXPORT int mus_float_array_to_file(const char *filename, mus_float_t *ddata,
 #define MUS_OSS_API 1
 #define MUS_JACK_API 2
 
-MUS_EXPORT bool mus_audio_device_p(int n);
-MUS_EXPORT void mus_audio_describe(void);
-MUS_EXPORT char *mus_audio_report(void);
+MUS_EXPORT char *mus_audio_describe(void);
 MUS_EXPORT int mus_audio_open_output(int dev, int srate, int chans, int format, int size);
 MUS_EXPORT int mus_audio_open_input(int dev, int srate, int chans, int format, int size);
 MUS_EXPORT int mus_audio_write(int line, char *buf, int bytes);
@@ -471,7 +469,6 @@ MUS_EXPORT int mus_audio_initialize(void);
 #endif
 
 MUS_EXPORT int mus_audio_systems(void);
-MUS_EXPORT char *mus_audio_system_name(int sys);
 MUS_EXPORT char *mus_audio_moniker(void);
 MUS_EXPORT int mus_audio_compatible_format(int dev);
 

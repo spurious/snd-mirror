@@ -1646,15 +1646,6 @@ XEN run_or_hook(XEN hook, XEN args, const char *caller)
 
 
 
-/* this needs to be in Snd (rather than sndlib2xen.c) because it calls post_it */
-static XEN g_mus_audio_describe(void) 
-{
-  #define H_mus_audio_describe "("  S_mus_audio_describe "): post a description of the audio hardware state in the Help dialog"
-  post_it("Audio State", mus_audio_report()); 
-  return(XEN_TRUE);
-}
-
-
 #if HAVE_SCHEME && HAVE_DLFCN_H
 #include <dlfcn.h>
 /* these are included because libtool's dlopen is incredibly stupid */
@@ -2771,7 +2762,6 @@ static char *find_source_file(const char *orig)
 XEN_NARGIFY_1(g_snd_print_w, g_snd_print)
 XEN_NARGIFY_0(g_little_endian_w, g_little_endian)
 XEN_NARGIFY_0(g_snd_global_state_w, g_snd_global_state)
-XEN_NARGIFY_0(g_mus_audio_describe_w, g_mus_audio_describe)
 XEN_NARGIFY_1(g_add_source_file_extension_w, g_add_source_file_extension)
 
 #if MUS_DEBUGGING
@@ -2829,7 +2819,6 @@ XEN_NARGIFY_1(g_add_watcher_w, g_add_watcher)
 #define g_snd_print_w g_snd_print
 #define g_little_endian_w g_little_endian
 #define g_snd_global_state_w g_snd_global_state
-#define g_mus_audio_describe_w g_mus_audio_describe
 #define g_add_source_file_extension_w g_add_source_file_extension
 #if MUS_DEBUGGING
   #define g_snd_sound_pointer_w g_snd_sound_pointer
@@ -3030,7 +3019,6 @@ void g_xen_initialize(void)
   add_source_file_extension("marks"); /* from save-marks */
   default_source_file_extensions = source_file_extensions_end;
 
-  XEN_DEFINE_PROCEDURE(S_mus_audio_describe, g_mus_audio_describe_w, 0, 0, 0, H_mus_audio_describe);
   XEN_DEFINE_PROCEDURE("snd-global-state", g_snd_global_state_w, 0, 0, 0, "internal testing function");
   XEN_DEFINE_PROCEDURE(S_add_source_file_extension, g_add_source_file_extension_w, 1, 0, 0, H_add_source_file_extension);
 

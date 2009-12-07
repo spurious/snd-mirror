@@ -2415,8 +2415,8 @@
 			(snd-display ";print-cache 1: ~A?" line))
 		    (close-input-port p)
 		    (delete-file "hiho.tmp")))))
-	(if (< (string-length (mus-audio-report)) 10)
-	    (snd-display ";mus-audio-report: ~A" (mus-audio-report)))
+	(if (< (string-length (mus-audio-describe)) 10)
+	    (snd-display ";mus-audio-describe: ~A" (mus-audio-describe)))
 	(if (not (= chns 1)) (snd-display ";oboe: mus-sound-chans ~D?" chns))
 	(if (not (= dl 28)) (snd-display ";oboe: mus-sound-data-location ~D (~A)?" dl (= dl 28)))
 	(if (not (= fr 50828)) (snd-display ";oboe: mus-sound-frames ~D?" fr))
@@ -30038,7 +30038,6 @@ EDITS: 2
       (begin
 	
 	(without-errors (peaks))
-	(mus-audio-describe) 
 	(let ((envd (enved-dialog) ))
 	  (let ((cold (color-orientation-dialog))
 		(trd (transform-dialog))
@@ -65135,7 +65134,7 @@ EDITS: 1
 		     mus-sound-samples mus-sound-frames mus-sound-duration mus-sound-datum-size mus-sound-data-location data-size
 		     mus-sound-chans mus-sound-srate mus-sound-header-type mus-sound-data-format mus-sound-length
 		     mus-sound-type-specifier mus-header-type-name mus-data-format-name mus-sound-comment mus-sound-write-date
-		     mus-bytes-per-sample mus-sound-loop-info mus-sound-mark-info mus-audio-report mus-sun-set-outputs mus-netbsd-set-outputs
+		     mus-bytes-per-sample mus-sound-loop-info mus-sound-mark-info mus-audio-describe mus-sun-set-outputs mus-netbsd-set-outputs
 					;mus-alsa-buffers mus-alsa-buffer-size mus-apply
 		     mus-alsa-squelch-warning
 					;mus-alsa-device mus-alsa-playback-device mus-alsa-capture-device 
@@ -65177,7 +65176,7 @@ EDITS: 1
 		     spectrum square-wave square-wave? src src? ncos nsin ssb-am
 		     ncos? nsin? ssb-am? table-lookup table-lookup? tap triangle-wave triangle-wave? two-pole two-pole? two-zero
 		     two-zero? wave-train wave-train?  make-vct vct-add! vct-subtract!  vct-copy
-		     vct-length vct-multiply! vct-offset! vct-ref vct-scale! vct-fill! vct-set! mus-audio-describe vct-peak
+		     vct-length vct-multiply! vct-offset! vct-ref vct-scale! vct-fill! vct-set! vct-peak
 		     vct? list->vct vct->list vector->vct vct->vector vct-move! vct-reverse! vct-subseq vct little-endian? vct->string
 		     clm-channel env-channel env-channel-with-base map-channel scan-channel play-channel 
 		     reverse-channel seconds->samples samples->seconds

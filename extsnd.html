@@ -3959,9 +3959,7 @@ or <a href="#musaudioopenoutput">mus-audio-open-output</a>).
 <!-- mus-audio-describe -->
 <tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="musaudiodescribe">mus-audio-describe</a> ()</code>
 </td></tr><tr><td></td><td>
-mus-audio-describe displays a string purporting to describe the audio hardware state.  This function
-works best in OSS.  If you're not getting any sound during playback, the first thing to do is to
-examine this function's output.
+mus-audio-describe returns a string describing the current audio hardware state.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -3983,14 +3981,6 @@ mus-audio-open-output opens the audio output (playback) port 'device'.  It retur
 <tr><td colspan=2 height=16><code><a class=def name="musaudioread">mus-audio-read</a> (line sd frames)</code>
 </td></tr><tr><td></td><td>
 mus-audio-read reads 'frames' frames of data into the sound-data object 'sd' from the audio input port 'line'.  
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- mus-audio-report -->
-<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="musaudioreport">mus-audio-report</a> ()</code>
-</td></tr><tr><td></td><td>
-mus-audio-report returns a string describing the current audio hardware state. <a href="#musaudiodescribe">mus-audio-describe</a>
-prints out the same string.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 

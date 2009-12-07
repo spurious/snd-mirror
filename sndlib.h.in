@@ -2,8 +2,8 @@
 #define SNDLIB_H
 
 #define SNDLIB_VERSION 21
-#define SNDLIB_REVISION 0
-#define SNDLIB_DATE "27-Jul-09"
+#define SNDLIB_REVISION 1
+#define SNDLIB_DATE "7-Dec-09"
 
 
 /* these are picked up during configuration */
@@ -324,9 +324,7 @@ MUS_EXPORT int mus_float_array_to_file(const char *filename, mus_float_t *ddata,
 
 /* -------- audio.c -------- */
 
-MUS_EXPORT bool mus_audio_device_p(int n);
-MUS_EXPORT void mus_audio_describe(void);
-MUS_EXPORT char *mus_audio_report(void);
+MUS_EXPORT char *mus_audio_describe(void);
 MUS_EXPORT int mus_audio_open_output(int dev, int srate, int chans, int format, int size);
 MUS_EXPORT int mus_audio_open_input(int dev, int srate, int chans, int format, int size);
 MUS_EXPORT int mus_audio_write(int line, char *buf, int bytes);
@@ -344,17 +342,13 @@ MUS_EXPORT int mus_audio_mixer_write(int dev, int field, int chan, float *val);
 MUS_EXPORT int mus_audio_initialize(void);
 MUS_EXPORT int mus_audio_reinitialize(void); /* 29-Aug-01 for CLM/Snd bugfix? */
 MUS_EXPORT int mus_audio_systems(void);
-MUS_EXPORT char *mus_audio_system_name(int sys);
 MUS_EXPORT char *mus_audio_moniker(void);
 MUS_EXPORT int mus_audio_api(void);
 MUS_EXPORT int mus_audio_compatible_format(int dev);
 
 MUS_EXPORT void mus_netbsd_set_outputs(int speakers, int headphones, int line_out);
 MUS_EXPORT void mus_sun_set_outputs(int speakers, int headphones, int line_out);
-#define mus_audio_sun_outputs mus_sun_set_outputs
-
 MUS_EXPORT void mus_oss_set_buffers(int num, int size);
-#define mus_audio_set_oss_buffers mus_oss_set_buffers
 
 MUS_EXPORT char *mus_alsa_playback_device(void);
 MUS_EXPORT char *mus_alsa_set_playback_device(const char *name);
@@ -363,7 +357,7 @@ MUS_EXPORT char *mus_alsa_set_capture_device(const char *name);
 MUS_EXPORT char *mus_alsa_device(void);
 MUS_EXPORT char *mus_alsa_set_device(const char *name);
 MUS_EXPORT int mus_alsa_buffer_size(void);
-MUS_EXPORT int mus_alsa_set_buffer_size(int size);
+US_EXPORT int mus_alsa_set_buffer_size(int size);
 MUS_EXPORT int mus_alsa_buffers(void);
 MUS_EXPORT int mus_alsa_set_buffers(int num);
 MUS_EXPORT bool mus_alsa_squelch_warning(void);

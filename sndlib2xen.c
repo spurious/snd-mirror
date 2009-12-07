@@ -374,10 +374,10 @@ format (e.g. " S_mus_bshort " = 2)"
 }
 
 
-static XEN g_mus_audio_report(void) 
+static XEN g_mus_audio_describe(void) 
 {
-  #define H_mus_audio_report "(" S_mus_audio_report "): string describing current audio hardware setup"
-  return(C_TO_XEN_STRING(mus_audio_report()));
+  #define H_mus_audio_describe "(" S_mus_audio_describe "): returns a string describing the current audio hardware setup"
+  return(C_TO_XEN_STRING(mus_audio_describe()));
 }
 
 
@@ -1093,8 +1093,6 @@ return the audio line number:\n  " audio_open_example
   ifmt = XEN_TO_C_INT(format);
   isize = XEN_TO_C_INT_OR_ELSE(size, 0);
 
-  if (!(mus_audio_device_p(MUS_AUDIO_DEVICE(idev))))
-    XEN_OUT_OF_RANGE_ERROR(S_mus_audio_open_output, 1, dev, "~A: invalid device");
   if (!(mus_data_format_p(ifmt)))
     XEN_OUT_OF_RANGE_ERROR(S_mus_audio_open_output, 4, format, "~A: invalid data format");
   if (isize < 0)
@@ -1129,8 +1127,6 @@ open the audio device ready for input with the indicated attributes; return the 
   ifmt = XEN_TO_C_INT(format);
   isize = XEN_TO_C_INT_OR_ELSE(size, 0);
 
-  if (!(mus_audio_device_p(MUS_AUDIO_DEVICE(idev))))
-    XEN_OUT_OF_RANGE_ERROR(S_mus_audio_open_input, 1, dev, "~A: invalid device");
   if (!(mus_data_format_p(ifmt)))
     XEN_OUT_OF_RANGE_ERROR(S_mus_audio_open_input, 4, format, "~A: invalid data format");
   if (isize < 0)
@@ -1261,8 +1257,8 @@ from the audio line into sound-data sdata."
 }
 
 
-#if (!SNDLIB_DISABLE_DEPRECATED)
 /* TODO: fix the rb/fs cases for mus-audio-* changes */
+#if (!SNDLIB_DISABLE_DEPRECATED)
 
 /* obsolete */
 static XEN g_mus_audio_mixer_read(XEN dev, XEN field, XEN chan, XEN vals)
@@ -1298,11 +1294,6 @@ sets " mixer_read_vct_example " to the default device's desired audio sample dat
   XEN_ASSERT_TYPE(XEN_INTEGER_P(chan), chan, XEN_ARG_3, S_mus_audio_mixer_read, "an integer");
   XEN_ASSERT_TYPE(MUS_VCT_P(vals), vals, XEN_ARG_4, S_mus_audio_mixer_read, "a vct");
 
-  if (!(mus_audio_device_p(MUS_AUDIO_DEVICE(XEN_TO_C_INT(dev)))))
-    XEN_OUT_OF_RANGE_ERROR(S_mus_audio_mixer_read, 1, dev, "~A: invalid device");
-  if (!(mus_audio_device_p(MUS_AUDIO_DEVICE(XEN_TO_C_INT(field)))))
-    XEN_OUT_OF_RANGE_ERROR(S_mus_audio_mixer_read, 2, field, "~A: invalid field");
-
   v = XEN_TO_VCT(vals);
   len = v->length;
   fvals = (float *)calloc(len, sizeof(float));
@@ -1329,11 +1320,6 @@ static XEN g_mus_audio_mixer_write(XEN dev, XEN field, XEN chan, XEN vals)
   XEN_ASSERT_TYPE(XEN_INTEGER_P(field), field, XEN_ARG_2, S_mus_audio_mixer_write, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(chan), chan, XEN_ARG_3, S_mus_audio_mixer_write, "an integer");
   XEN_ASSERT_TYPE(MUS_VCT_P(vals), vals, XEN_ARG_4, S_mus_audio_mixer_write, "a vct");
-
-  if (!(mus_audio_device_p(MUS_AUDIO_DEVICE(XEN_TO_C_INT(dev)))))
-    XEN_OUT_OF_RANGE_ERROR(S_mus_audio_mixer_write, 1, dev, "~A: invalid device");
-  if (!(mus_audio_device_p(MUS_AUDIO_DEVICE(XEN_TO_C_INT(field)))))
-    XEN_OUT_OF_RANGE_ERROR(S_mus_audio_mixer_write, 2, field, "~A: invalid field");
 
   v = XEN_TO_VCT(vals);
   len = v->length;
@@ -2552,7 +2538,7 @@ XEN_NARGIFY_3(g_mus_netbsd_set_outputs_w, g_mus_netbsd_set_outputs)
 XEN_NARGIFY_1(g_mus_sound_open_input_w, g_mus_sound_open_input)
 XEN_NARGIFY_1(g_mus_sound_close_input_w, g_mus_sound_close_input)
 
-XEN_NARGIFY_0(g_mus_audio_report_w, g_mus_audio_report)
+XEN_NARGIFY_0(g_mus_audio_describe_w, g_mus_audio_describe)
 XEN_NARGIFY_1(g_mus_audio_close_w, g_mus_audio_close)
 XEN_NARGIFY_3(g_mus_audio_write_w, g_mus_audio_write)
 XEN_NARGIFY_3(g_mus_audio_read_w, g_mus_audio_read)
@@ -2670,7 +2656,7 @@ XEN_NARGIFY_1(g_mus_set_max_table_size_w, g_mus_set_max_table_size)
 #define g_mus_sound_open_input_w g_mus_sound_open_input
 #define g_mus_sound_close_input_w g_mus_sound_close_input
 
-#define g_mus_audio_report_w g_mus_audio_report
+#define g_mus_audio_describe_w g_mus_audio_describe
 #define g_mus_audio_close_w g_mus_audio_close
 #define g_mus_audio_write_w g_mus_audio_write
 #define g_mus_audio_read_w g_mus_audio_read
@@ -2932,7 +2918,7 @@ void mus_sndlib_xen_initialize(void)
   XEN_DEFINE_PROCEDURE(S_mus_sound_open_input,     g_mus_sound_open_input_w,       1, 0, 0, H_mus_sound_open_input);
   XEN_DEFINE_PROCEDURE(S_mus_sound_close_input,    g_mus_sound_close_input_w,      1, 0, 0, H_mus_sound_close_input);
 
-  XEN_DEFINE_PROCEDURE(S_mus_audio_report,         g_mus_audio_report_w,           0, 0, 0, H_mus_audio_report);
+  XEN_DEFINE_PROCEDURE(S_mus_audio_describe,       g_mus_audio_describe_w,         0, 0, 0, H_mus_audio_describe);
   XEN_DEFINE_PROCEDURE(S_mus_audio_close,          g_mus_audio_close_w,            1, 0, 0, H_mus_audio_close);
   XEN_DEFINE_PROCEDURE(S_mus_audio_write,          g_mus_audio_write_w,            3, 0, 0, H_mus_audio_write);
   XEN_DEFINE_PROCEDURE(S_mus_audio_read,           g_mus_audio_read_w,             3, 0, 0, H_mus_audio_read);

@@ -406,9 +406,6 @@
 (define sort-files-by-size 4)
 (define sort-files-by-entry -1) ; no longer implemented
 
-(define mus-audio-sun-outputs mus-sun-set-outputs)
-(define mus-audio-set-oss-buffers mus-oss-set-buffers)
-
 ;;; this was actually referring to the default (global) value, not file-specific
 (define mus-file-data-clipped mus-clipping)
 (define data-clipped clipping)

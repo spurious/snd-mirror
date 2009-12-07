@@ -18,22 +18,19 @@
  */
 
 /*
- * void mus_audio_describe(void) describes the audio hardware state.
- * char *mus_audio_report(void) returns the same information as a string.
+ * char *mus_audio_describe(void) returns a description of the audio hardware
  *
  * int mus_audio_open_output(int dev, int srate, int chans, int format, int size)
  * int mus_audio_open_input(int dev, int srate, int chans, int format, int size)
  * int mus_audio_write(int line, char *buf, int bytes)
  * int mus_audio_close(int line)
  * int mus_audio_read(int line, char *buf, int bytes)
- *
  * int mus_audio_initialize(void) does whatever is needed to get set up
- * AUDIO_SYSTEM(n) selects the nth card (counting from 0), AUDIO_SYSTEM(0) is always the default
- * char *mus_audio_system_name(int system) returns some user-recognizable (?) name for the given card (don't free)
  * char *mus_audio_moniker(void) returns some brief description of the overall audio setup (don't free return string).
  */
 
-/* TODO: get rid of mus_audio_mixer_read and drastically simplify mus_audio_describe (and do we actually need mus_audio_report?)
+/* TODO: get rid of mus_audio_mixer_read and drastically simplify
+ *             sndlib-strings names for these macros
  */
 
 /* error handling is tricky here -- higher levels are using many calls as probes, so
@@ -144,6 +141,48 @@ static int mus_audio_mixer_read(int dev, int field, int chan, float *val);
 static char *version_name = NULL;
 static bool audio_initialized = false;
 
+#if (SNDLIB_DISABLE_DEPRECATED)
+#define S_mus_audio_adat_in             "mus-audio-adat-in"
+#define S_mus_audio_adat_out            "mus-audio-adat-out"
+#define S_mus_audio_aes_in              "mus-audio-aes-in"
+#define S_mus_audio_aes_out             "mus-audio-aes-out"
+#define S_mus_audio_amp                 "mus-audio-amp"
+#define S_mus_audio_aux_input           "mus-audio-aux-input"
+#define S_mus_audio_aux_output          "mus-audio-aux-output"
+#define S_mus_audio_bass                "mus-audio-bass"
+#define S_mus_audio_cd                  "mus-audio-cd"
+#define S_mus_audio_channel             "mus-audio-channel"
+#define S_mus_audio_dac_filter          "mus-audio-dac-filter"
+#define S_mus_audio_dac_out             "mus-audio-dac-out"
+#define S_mus_audio_digital_in          "mus-audio-digital-in"
+#define S_mus_audio_digital_out         "mus-audio-digital-out"
+#define S_mus_audio_direction           "mus-audio-direction"
+#define S_mus_audio_duplex_default      "mus-audio-duplex-default"
+#define S_mus_audio_format              "mus-audio-format"
+#define S_mus_audio_igain               "mus-audio-igain"
+#define S_mus_audio_imix                "mus-audio-imix"
+#define S_mus_audio_line                "mus-audio-line"
+#define S_mus_audio_line1               "mus-audio-line1"
+#define S_mus_audio_line2               "mus-audio-line2"
+#define S_mus_audio_line3               "mus-audio-line3"
+#define S_mus_audio_line_in             "mus-audio-line-in"
+#define S_mus_audio_line_out            "mus-audio-line-out"
+#define S_mus_audio_microphone          "mus-audio-microphone"
+#define S_mus_audio_mixer               "mus-audio-mixer"
+#define S_mus_audio_ogain               "mus-audio-ogain"
+#define S_mus_audio_pcm                 "mus-audio-pcm"
+#define S_mus_audio_pcm2                "mus-audio-pcm2"
+#define S_mus_audio_port                "mus-audio-port"
+#define S_mus_audio_reclev              "mus-audio-reclev"
+#define S_mus_audio_samples_per_channel "mus-audio-samples-per-channel"
+#define S_mus_audio_spdif_in            "mus-audio-spdif-in"
+#define S_mus_audio_spdif_out           "mus-audio-spdif-out"
+#define S_mus_audio_speakers            "mus-audio-speakers"
+#define S_mus_audio_srate               "mus-audio-srate"
+#define S_mus_audio_synth               "mus-audio-synth"
+#define S_mus_audio_treble              "mus-audio-treble"
+#endif
+
 static const char *mus_audio_device_names[] = {
   S_mus_audio_default, S_mus_audio_duplex_default, S_mus_audio_adat_in, S_mus_audio_aes_in, S_mus_audio_line_out,
   S_mus_audio_line_in, S_mus_audio_microphone, S_mus_audio_speakers, S_mus_audio_digital_in, S_mus_audio_digital_out,
@@ -158,29 +197,7 @@ static const char *mus_audio_device_names[] = {
 
 static const char *mus_audio_device_name(int dev)
 {
-  if (mus_audio_device_p(dev))
-    return(mus_audio_device_names[dev]);
-  return("invalid device");
-}
-
-bool mus_audio_device_p(int n)
-{
-  switch (n)
-    {
-    case MUS_AUDIO_DEFAULT: case MUS_AUDIO_DUPLEX_DEFAULT: case MUS_AUDIO_ADAT_IN: case MUS_AUDIO_AES_IN: 
-    case MUS_AUDIO_LINE_OUT: case MUS_AUDIO_LINE_IN: case MUS_AUDIO_MICROPHONE: case MUS_AUDIO_SPEAKERS: 
-    case MUS_AUDIO_DIGITAL_IN: case MUS_AUDIO_DIGITAL_OUT: case MUS_AUDIO_DAC_OUT: case MUS_AUDIO_ADAT_OUT: 
-    case MUS_AUDIO_AES_OUT: case MUS_AUDIO_DAC_FILTER: case MUS_AUDIO_MIXER: case MUS_AUDIO_LINE1: 
-    case MUS_AUDIO_LINE2: case MUS_AUDIO_LINE3: case MUS_AUDIO_AUX_INPUT: case MUS_AUDIO_CD: 
-    case MUS_AUDIO_AUX_OUTPUT: case MUS_AUDIO_SPDIF_IN: case MUS_AUDIO_SPDIF_OUT: case MUS_AUDIO_AMP: 
-    case MUS_AUDIO_SRATE: case MUS_AUDIO_CHANNEL: case MUS_AUDIO_FORMAT: case MUS_AUDIO_IMIX: 
-    case MUS_AUDIO_IGAIN: case MUS_AUDIO_RECLEV: case MUS_AUDIO_PCM: case MUS_AUDIO_PCM2: 
-    case MUS_AUDIO_OGAIN: case MUS_AUDIO_LINE: case MUS_AUDIO_SYNTH: case MUS_AUDIO_BASS: 
-    case MUS_AUDIO_TREBLE: case MUS_AUDIO_PORT: case MUS_AUDIO_SAMPLES_PER_CHANNEL: case MUS_AUDIO_DIRECTION:
-      return(true);
-      break;
-    }
-  return(false);
+  return(mus_audio_device_names[dev]);
 }
 
 
@@ -201,36 +218,6 @@ static const char *mus_audio_format_name(int fr)
 
 static char *audio_strbuf = NULL; /* previous name "strbuf" collides with Mac OSX global! */
 static void pprint(const char *str);
-
-int mus_audio_device_gains(int dev);
-
-int mus_audio_device_channels(int dev)
-{
-  float val[4];
-  mus_audio_mixer_read(dev, MUS_AUDIO_CHANNEL, 0, val);
-  return((int)val[0]);
-}
-
-int mus_audio_device_gains(int ur_dev)
-{
-  float val[4];
-  int err;
-  int dev;
-  dev = MUS_AUDIO_DEVICE(ur_dev);
-  /* to get hardware gains, read device amp_field and error = none */
-  if ((dev == MUS_AUDIO_DAC_FILTER) || (dev == MUS_AUDIO_MIXER)) 
-    {
-      err = mus_audio_mixer_read(ur_dev, MUS_AUDIO_CHANNEL, 0, val);
-#ifdef HAVE_ALSA
-      if (err != MUS_NO_ERROR) return(0);
-#endif
-      return((int)val[0]);
-    }
-  err = mus_audio_mixer_read(ur_dev, MUS_AUDIO_AMP, 0, val);
-  if (err != MUS_NO_ERROR) return(0);
-  return(mus_audio_device_channels(ur_dev));
-}
-
 
 
 /* ------------------------------- OSS ----------------------------------------- */
@@ -384,48 +371,6 @@ static char *mixer_name(int sys)
 	}
     }
   return((char *)DAC_NAME);
-}
-
-static char *oss_mus_audio_system_name(int system) 
-{
-#if HAVE_SAM_9407
-  if ((system < sound_cards) && (audio_type[system] == SAM9407_DSP))
-    {
-      int fd;
-      fd = open(mixer_name(system), O_RDONLY, 0);
-      if (fd != -1) 
-	{
-	  static SamDriverInfo driverInfo;
-	  if (ioctl(fd, SAM_IOC_DRIVER_INFO, &driverInfo) >= 0) 
-	    {
-	      close(fd);
-	      return(driverInfo.hardware);
-	    }
-	  close(fd);
-	}
-      return("sam9407");
-    }
-#endif
-#ifdef NEW_OSS
-  static mixer_info mixinfo;
-  int status, ignored, fd;
-  fd = open(mixer_name(system), O_RDONLY, 0);
-  if (fd != -1)
-    {
-      status = ioctl(fd, OSS_GETVERSION, &ignored);
-      if (status == 0)
-	{
-	  status = ioctl(fd, SOUND_MIXER_INFO, &mixinfo);
-	  if (status == 0) 
-	    {
-	      close(fd);
-	      return(mixinfo.name);
-	    }
-	}
-      close(fd);
-    }
-#endif
-  return((char *)"OSS");
 }
 
 #if HAVE_SAM_9407
@@ -2237,7 +2182,6 @@ static int (*vect_mus_audio_initialize)(void);
 /* vectors for the rest of the sndlib api */
 static void  (*vect_mus_oss_set_buffers)(int num, int size);
 static int   (*vect_mus_audio_systems)(void);
-static char* (*vect_mus_audio_system_name)(int system);
 static char* (*vect_mus_audio_moniker)(void);
 static int   (*vect_mus_audio_open_output)(int ur_dev, int srate, int chans, int format, int size);
 static int   (*vect_mus_audio_open_input)(int ur_dev, int srate, int chans, int format, int requested_size);
@@ -2264,11 +2208,6 @@ void mus_oss_set_buffers(int num, int size)
 int mus_audio_systems(void) 
 {
   return(vect_mus_audio_systems());
-}
-
-char* mus_audio_system_name(int system) 
-{
-  return(vect_mus_audio_system_name(system));
 }
 
 #if HAVE_ALSA 
@@ -2354,7 +2293,6 @@ static int probe_api(void)
   vect_mus_audio_initialize = oss_mus_audio_initialize;
   vect_mus_oss_set_buffers = oss_mus_oss_set_buffers;
   vect_mus_audio_systems = oss_mus_audio_systems;
-  vect_mus_audio_system_name = oss_mus_audio_system_name;
   vect_mus_audio_moniker = oss_mus_audio_moniker;
   vect_mus_audio_open_output = oss_mus_audio_open_output;
   vect_mus_audio_open_input = oss_mus_audio_open_input;
@@ -2466,7 +2404,6 @@ static int probe_api(void)
 static int   alsa_mus_audio_initialize(void);
 static void  alsa_mus_oss_set_buffers(int num, int size);
 static int   alsa_mus_audio_systems(void);
-static char* alsa_mus_audio_system_name(int system);
 static int   alsa_mus_audio_open_output(int ur_dev, int srate, int chans, int format, int size);
 static int   alsa_mus_audio_open_input(int ur_dev, int srate, int chans, int format, int requested_size);
 static int   alsa_mus_audio_write(int id, char *buf, int bytes);
@@ -2496,7 +2433,6 @@ static int probe_api(void)
 	vect_mus_audio_initialize = alsa_mus_audio_initialize;
 	vect_mus_oss_set_buffers = alsa_mus_oss_set_buffers;
 	vect_mus_audio_systems = alsa_mus_audio_systems;
-	vect_mus_audio_system_name = alsa_mus_audio_system_name;
 	vect_mus_audio_moniker = alsa_mus_audio_moniker;
 	vect_mus_audio_open_output = alsa_mus_audio_open_output;
 	vect_mus_audio_open_input = alsa_mus_audio_open_input;
@@ -2516,7 +2452,6 @@ static int probe_api(void)
 	vect_mus_audio_initialize = oss_mus_audio_initialize;
 	vect_mus_oss_set_buffers = oss_mus_oss_set_buffers;
 	vect_mus_audio_systems = oss_mus_audio_systems;
-	vect_mus_audio_system_name = oss_mus_audio_system_name;
 	vect_mus_audio_moniker = oss_mus_audio_moniker;
 	vect_mus_audio_open_output = oss_mus_audio_open_output;
 	vect_mus_audio_open_input = oss_mus_audio_open_input;
@@ -3255,13 +3190,6 @@ bool mus_alsa_set_squelch_warning(bool val)
 
 
 
-
-/* return the name of a given system */
-
-static char *alsa_mus_audio_system_name(int system) 
-{
-  return(alsa_playback_device_name);
-}
 
 /* get a device name from the environment */
 
@@ -4021,7 +3949,6 @@ static void alsa_describe_audio_state_1(void)
 
 int mus_audio_initialize(void) {return(MUS_NO_ERROR);}
 int mus_audio_systems(void) {return(1);}
-char *mus_audio_system_name(int system) {return("Sun");}
 
 static int sun_default_outputs = (AUDIO_HEADPHONE | AUDIO_LINE_OUT | AUDIO_SPEAKER);
 
@@ -5015,7 +4942,7 @@ int mus_audio_systems(void)
   /* this number is available -- see below (user mixer number as in linux)->mixerGetNumDevs */
   return(1);
 }
-char *mus_audio_system_name(int system) {return("Windoze");}
+
 
 DWORD CALLBACK next_buffer(HWAVEOUT w, UINT msg, DWORD user_data, DWORD p1, DWORD p2)
 {
@@ -6771,7 +6698,6 @@ int mus_audio_initialize(void) {return(MUS_NO_ERROR);}
 
 int mus_audio_systems(void) {return(1);}
 
-char *mus_audio_system_name(int system) {return((char *)"Mac OSX");}
 
 char *mus_audio_moniker(void) {return((char *)"Mac OSX audio");}
 #endif
@@ -6803,7 +6729,6 @@ static int swap_end, resign; /* How to handle samples on write */
 
 int mus_audio_initialize(void) {return(MUS_NO_ERROR);}
 int mus_audio_systems(void) {return(1);}
-char *mus_audio_system_name(int system) {return esd_name;}
 static char our_name[LABEL_BUFFER_SIZE];
 char *mus_audio_moniker(void) 
 {
@@ -7555,7 +7480,6 @@ static int sndjack_read_dev;
 static int   jack_mus_audio_initialize(void);
 static void  jack_mus_oss_set_buffers(int num, int size);
 static int   jack_mus_audio_systems(void);
-static char* jack_mus_audio_system_name(int system);
 static char* jack_mus_audio_moniker(void);
 static int   jack_mus_audio_open_output(int ur_dev, int srate, int chans, int format, int size);
 static int   jack_mus_audio_open_input(int ur_dev, int srate, int chans, int format, int requested_size);
@@ -7623,11 +7547,6 @@ int mus_audio_systems(void)
   return(jack_mus_audio_systems());
 }
 
-char* mus_audio_system_name(int system) 
-{
-  return(jack_mus_audio_system_name(system));
-}
-
 char* mus_audio_moniker(void) 
 {
   return(jack_mus_audio_moniker());
@@ -7661,7 +7580,6 @@ static int jack_mus_audio_initialize(void) {
   vect_mus_audio_initialize = jack_mus_audio_initialize;
   vect_mus_oss_set_buffers = jack_mus_oss_set_buffers;
   vect_mus_audio_systems = jack_mus_audio_systems;
-  vect_mus_audio_system_name = jack_mus_audio_system_name;
   vect_mus_audio_moniker = jack_mus_audio_moniker;
   vect_mus_audio_open_output = jack_mus_audio_open_output;
   vect_mus_audio_open_input = jack_mus_audio_open_input;
@@ -8029,7 +7947,6 @@ int jack_mus_audio_systems(void) {
   return(2);
 }
 
-char *jack_mus_audio_system_name(int system) {return((char *)"linux jack");}
 char *jack_mus_audio_moniker(void) {return((char *)"jack");}
 #endif
  
@@ -8352,7 +8269,6 @@ int mus_audio_mixer_write(int ur_dev, int field, int chan, float *val)
 int mus_audio_initialize(void) {return(MUS_NO_ERROR);}
 
 int mus_audio_systems(void) {return(1);}
-char *mus_audio_system_name(int system) {return("HPUX");}
 
 /* struct audio_status status_b;
  * ioctl(devAudio, AUDIO_GET_STATUS, &status_b)
@@ -8479,12 +8395,6 @@ int mus_audio_initialize(void)
 int mus_audio_systems(void) 
 {
   return(1);
-}
-
-
-char *mus_audio_system_name(int system) 
-{
-  return("NetBSD");
 }
 
 
@@ -9106,12 +9016,6 @@ int mus_audio_systems(void)
 }
 
 
-char *mus_audio_system_name(int system) 
-{
-  return((char *)"pulseaudio");
-}
-
-
 char *mus_audio_moniker(void) 
 {
   return((char *)"pulseaudio");
@@ -9272,7 +9176,6 @@ int mus_audio_mixer_write(int dev, int field, int chan, float *val) {return(MUS_
 #endif
 
 int mus_audio_systems(void) {return(1);}
-char *mus_audio_system_name(int system) {return((char *)"portaudio");}
 char *mus_audio_moniker(void) {return((char *)"portaudio");}
 
 
@@ -9338,7 +9241,6 @@ int mus_audio_mixer_write(int dev, int field, int chan, float *val) {return(MUS_
 
 int mus_audio_initialize(void) {return(MUS_ERROR);}
 int mus_audio_systems(void) {return(0);}
-char *mus_audio_system_name(int system) {return((char *)"none");}
 char *mus_audio_moniker(void) {return((char *)"no audio support");}
 #endif
 
@@ -9347,36 +9249,28 @@ char *mus_audio_moniker(void) {return((char *)"no audio support");}
 /* -------------------------------- pprint etc -------------------------------- */
 
 static char *save_it = NULL;
-static int print_it = 1;
 static int save_it_len = 0;
 static int save_it_loc = 0;
 
 static void pprint(const char *str)
 {
-  int i, len;
   if ((str) && (*str))
     {
-      if ((print_it) || (!(save_it)))
+      int i, len;
+      len = strlen(str);
+      if ((len + save_it_loc + 2) >= save_it_len)
 	{
-	  mus_print("%s", str);
+	  save_it_len = (len + save_it_loc + 1024);
+	  save_it = (char *)realloc(save_it, save_it_len * sizeof(char));
 	}
-      else
-	{
-	  len = strlen(str);
-	  if ((len + save_it_loc + 2) >= save_it_len)
-	    {
-	      save_it_len = (len + save_it_loc + 1024);
-	      save_it = (char *)realloc(save_it, save_it_len * sizeof(char));
-	    }
-	  for (i = 0; i < len; i++)
-	    save_it[save_it_loc++] = str[i];
-	  save_it[save_it_loc] = 0;
-	}
+      for (i = 0; i < len; i++)
+	save_it[save_it_loc++] = str[i];
+      save_it[save_it_loc] = 0;
     }
 }
 
 
-char *mus_audio_report(void)
+char *mus_audio_describe(void)
 {
   mus_audio_initialize();
   if (!(save_it)) 
@@ -9385,19 +9279,9 @@ char *mus_audio_report(void)
       save_it = (char *)calloc(save_it_len, sizeof(char));
     }
   save_it_loc = 0;
-  print_it = 0;
   if (!audio_strbuf) audio_strbuf = (char *)calloc(PRINT_BUFFER_SIZE, sizeof(char));
   describe_audio_state_1();
   return(save_it);
-}
-
-
-void mus_audio_describe(void)
-{
-  mus_audio_initialize();
-  print_it = 1;
-  if (!audio_strbuf) audio_strbuf = (char *)calloc(PRINT_BUFFER_SIZE, sizeof(char));
-  describe_audio_state_1();
 }
 
 
@@ -9567,3 +9451,13 @@ int mus_audio_alsa_device_direction(int dev)
   return((int)dir);
 }
 #endif
+
+
+int mus_audio_device_channels(int dev)
+{
+  float val[4];
+  mus_audio_mixer_read(dev, MUS_AUDIO_CHANNEL, 0, val);
+  return((int)val[0]);
+}
+
+
