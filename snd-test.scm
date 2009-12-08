@@ -2151,7 +2151,7 @@
 		       'mus-ldouble-unscaled 'mus-length 'mus-lfloat 'mus-lfloat-unscaled 'mus-lint
 		       'mus-lintn 'mus-location 'mus-lshort 'mus-max-malloc 'mus-max-table-size 'mus-midi-close
 		       'mus-midi-describe 'mus-midi-device-name 'mus-midi-open-read 'mus-midi-open-write 'mus-midi-read
-		       'mus-midi-write 'mus-mix 'mus-mulaw 'mus-name 'mus-netbsd-set-outputs
+		       'mus-midi-write 'mus-mix 'mus-mulaw 'mus-name 
 		       'mus-next 'mus-nist 'mus-offset 'mus-order 'mus-oss-set-buffers
 		       'mus-out-format 'mus-output? 'mus-phase 'mus-prescaler 'mus-ramp
 		       'mus-rand-seed 'mus-random 'mus-raw 'mus-reset 'mus-riff
@@ -2161,7 +2161,7 @@
 		       'mus-sound-loop-info 'mus-sound-mark-info 'mus-sound-maxamp 'mus-sound-maxamp-exists? 'mus-sound-open-input 'mus-sound-open-output
 		       'mus-sound-prune 'mus-sound-read 'mus-sound-reopen-output 'mus-sound-report-cache 'mus-sound-samples
 		       'mus-sound-seek-frame 'mus-sound-srate 'mus-sound-type-specifier 'mus-sound-write 'mus-sound-write-date
-		       'mus-soundfont 'mus-srate 'mus-sun-set-outputs 'mus-svx 'mus-ubshort
+		       'mus-soundfont 'mus-srate 'mus-svx 'mus-ubshort
 		       'mus-ubyte 'mus-ulshort 'mus-unknown 'mus-unsupported 'mus-voc
 		       'mus-width 'mus-xcoeff 'mus-xcoeffs 'mus-ycoeff 'mus-ycoeffs
 		       'name-click-hook 'new-sound 'new-sound-dialog 'new-sound-hook 'new-widget-hook
@@ -2520,9 +2520,6 @@
 	    (close-sound index)
 	    (if (not (equal? (mus-sound-loop-info "fmv1.snd") (list 1200 1400 0 0 2 1 1 0)))
 		(snd-display ";saved null loop-info (no mode1): ~A" (mus-sound-loop-info "fmv1.snd")))))
-	
-	(if (mus-sun-set-outputs 1 2 3) (snd-display ";mus-sun-set-outputs: ~A" (mus-sun-set-outputs 1 2 3)))
-	(if (mus-netbsd-set-outputs 1 2 3) (snd-display ";mus-netbsd-set-outputs: ~A" (mus-netbsd-set-outputs 1 2 3)))
 	
 	(if com (snd-display ";oboe: mus-sound-comment ~A?" com))
 	(let ((fsnd (string-append sf-dir "nasahal8.wav")))
@@ -65134,7 +65131,7 @@ EDITS: 1
 		     mus-sound-samples mus-sound-frames mus-sound-duration mus-sound-datum-size mus-sound-data-location data-size
 		     mus-sound-chans mus-sound-srate mus-sound-header-type mus-sound-data-format mus-sound-length
 		     mus-sound-type-specifier mus-header-type-name mus-data-format-name mus-sound-comment mus-sound-write-date
-		     mus-bytes-per-sample mus-sound-loop-info mus-sound-mark-info mus-audio-describe mus-sun-set-outputs mus-netbsd-set-outputs
+		     mus-bytes-per-sample mus-sound-loop-info mus-sound-mark-info mus-audio-describe
 					;mus-alsa-buffers mus-alsa-buffer-size mus-apply
 		     mus-alsa-squelch-warning
 					;mus-alsa-device mus-alsa-playback-device mus-alsa-capture-device 

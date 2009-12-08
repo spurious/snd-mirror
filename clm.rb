@@ -451,8 +451,8 @@ if provided? :snd
   Sort_files_by_date = 2
   Sort_files_by_size = 4
   Sort_files_by_entry = -1
-  alias mus_audio_sun_outputs           mus_sun_set_outputs
-  alias set_oss_buffers                 mus_oss_set_buffers
+#  alias mus_audio_sun_outputs           mus_sun_set_outputs
+#  alias set_oss_buffers                 mus_oss_set_buffers
   alias mus_audio_set_oss_buffers       mus_oss_set_buffers
   unless defined? mus_file_data_clipped
     alias mus_file_data_clipped         mus_clipping

@@ -335,7 +335,6 @@ int main(int argc, char **argv)
   add_file("xg.c");
 
   add_file("cmus.c");
-  add_file("sc.c");
   add_file("ffi.lisp");
   add_file("sndlib2clm.lisp");
   add_file("run.lisp");

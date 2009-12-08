@@ -878,8 +878,6 @@ constants and functions described above into Scheme.  To initialize sndlib, call
   mus-audio-close (line)                   close audio port <i>line</i>
 
   mus-oss-set-buffers (num size)           in Linux (OSS) sets the number and size of the OSS "fragments"
-  mus-sun-set-outputs (speaker headphones line-out) On the Sun, cause output to go to the chosen devices
-  mus-netbsd-set-outputs (speaker headphones line-out) On netBSD, cause output to go to the chosen devices
 
   make-sound-data (chans, frames)      return a sound-data object with <i>chans</i> arrays, each of length <i>frames</i>
   sound-data-ref (obj chan frame)      return (as a float) the sample in channel <i>chan</i> at location <i>frame</i>
