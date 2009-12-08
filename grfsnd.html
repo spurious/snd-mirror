@@ -2417,15 +2417,6 @@ a response from Snd, use <code>(set! (window-property consat name) command)</cod
 'name' is the property to change (the X window property that Snd will change), and 
 'command' is the string
 that replaces the current property value (which Snd will evaluate).
-CLM's communication
-with Snd function sends Snd this string:</p>
-<pre>
-    "(set! (<a class=quiet href="extsnd.html#windowproperty" onmouseout="UnTip()" onmouseover="Tip(extsnd_windowproperty_tip)">window-property</a> \"CLM_VERSION\" \"CLM_COMMAND\") " str ")"
-</pre>
-<p>where 'str' is the form to be evaluated within Snd.  It then waits
-for a change to the CLM_COMMAND property, returning its value to the
-user. The send-snd function itself, similarly, looks for SND_VERSION and
-sets SND_COMMAND to 'str', which Snd subsequently notices.
 </p>
 <br>
 
