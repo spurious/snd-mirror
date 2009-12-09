@@ -108,7 +108,6 @@
 #undef HAVE_NEW_ALSA
 #undef HAVE_JACK_IN_LINUX
 #undef MUS_JACK
-#undef HAVE_SAM_9407
 #undef MUS_MAC_OSX
 #undef MUS_ESD
 #undef MUS_HPUX

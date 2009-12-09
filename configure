@@ -4751,13 +4751,6 @@ if test "x$ac_cv_header__var_lib_oss_include_sys_soundcard_h" = x""yes; then :
 fi
 
 
-ac_fn_c_check_header_mongrel "$LINENO" "sys/sam9407.h" "ac_cv_header_sys_sam9407_h" "$ac_includes_default"
-if test "x$ac_cv_header_sys_sam9407_h" = x""yes; then :
-  $as_echo "#define HAVE_SAM_9407 1" >>confdefs.h
-
-fi
-
-
 ac_fn_c_check_header_mongrel "$LINENO" "gnu/libc-version.h" "ac_cv_header_gnu_libc_version_h" "$ac_includes_default"
 if test "x$ac_cv_header_gnu_libc_version_h" = x""yes; then :
   $as_echo "#define HAVE_GNU_LIBC_VERSION_H 1" >>confdefs.h
@@ -6074,10 +6067,6 @@ case "$host" in
         ;;
     *-*-solaris*)
 	$as_echo "#define HAVE_SUN 1" >>confdefs.h
-
-        ;;
-    *-sgi*)
-        $as_echo "#define HAVE_SGI 1" >>confdefs.h
 
         ;;
     *-*-netbsd*)
@@ -12231,7 +12220,6 @@ $as_echo "$as_me: WARNING: can't find the portaudio library" >&2;}
 fi
 
 fi
-# TODO: this needs to be added to sndlib configure.ac
 
 
 if test "$AUDIO_SYSTEM" != None ; then
@@ -12372,7 +12360,7 @@ case "$host" in
 	  SO_FLAGS="-fPIC $SO_FLAGS"
         fi
 
-        AUDIO_SYSTEM=ALSA
+        AUDIO_SYSTEM=Alsa
 	if test "$with_oss" = yes ; then
           AUDIO_SYSTEM=OSS
 	else
@@ -12409,7 +12397,7 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_asound_main" >&5
 $as_echo "$ac_cv_lib_asound_main" >&6; }
 if test "x$ac_cv_lib_asound_main" = x""yes; then :
-  AUDIO_SYSTEM=ALSA
+  AUDIO_SYSTEM=Alsa
 else
   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: can't find the ALSA library" >&5
 $as_echo "$as_me: WARNING: can't find the ALSA library" >&2;}
@@ -12574,22 +12562,6 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 	if test "$GCC" = yes ; then
 	  SO_FLAGS="-fPIC $SO_FLAGS"
         fi
-        ;;
-    *-sgi*)
-        $as_echo "#define MUS_SGI 1" >>confdefs.h
-
-	AUDIO_SYSTEM=SGI
-	AUDIO_LIB="-laudio"
-        if test $GUILE_CONFIG_works = no; then
- 	  LIBS="$LIBS -lc -lm -lmd"
-        else
-	  LIBS="$LIBS -lmd"
-        fi
-        LDSO_FLAGS="-shared -all"
-	SO_LD=":"
-	if test $LOCAL_LANGUAGE = "None"; then
-	  LIBS="$LIBS -lm"
-	fi
         ;;
     *-*-bsdi*)
 	$as_echo "#define HAVE_OSS 1" >>confdefs.h

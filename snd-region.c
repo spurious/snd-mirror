@@ -1642,7 +1642,7 @@ static XEN g_region_position(XEN n, XEN chan)
 }
 
 
-typedef enum {REGION_SRATE, REGION_CHANS, REGION_MAXAMP, REGION_FORGET, REGION_PLAY, REGION_MAXAMP_POSITION, REGION_HOME} region_field_t;
+typedef enum {REGION_SRATE, REGION_CHANS, REGION_MAXAMP, REGION_FORGET, REGION_MAXAMP_POSITION, REGION_HOME} region_field_t;
 
 static XEN region_get(region_field_t field, XEN n, const char *caller)
 {

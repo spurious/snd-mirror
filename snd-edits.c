@@ -1722,14 +1722,6 @@ enum {ED_SIMPLE,                ED_MIX,
       ED_XRAMP_RAMP_PTREE_XRAMP_RAMP_PTREE,
       ED_XRAMP_RAMP_PTREE_XRAMP_RAMP_PTREE_ZERO,
 
-#if 0      
-      /* double split -- all ramps treated via xramp_ramp -- needs two added split fields */
-      ED_XRAMP_RAMP_PTREE_XRAMP_RAMP_PTREE_XRAMP_RAMP,
-      ED_PTREE_XRAMP_RAMP_PTREE_XRAMP_RAMP_PTREE,
-      ED_PTREE_XRAMP_RAMP_PTREE_XRAMP_RAMP_PTREE_ZERO,
-      ED_PTREE_XRAMP_RAMP_PTREE_XRAMP_RAMP_PTREE_XRAMP_RAMP,
-#endif
-
       NUM_OPS
 };
 

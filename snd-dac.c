@@ -1959,7 +1959,7 @@ static bool audio_devices_scanned = false;
 static int alsa_devices_available = 0;
 
 void mus_audio_alsa_channel_info(int dev, int *info);
-void mus_audio_alsa_device_list(int sys, int size, float *val);
+void mus_audio_alsa_device_list(int sys, int size, int *val);
 int mus_audio_alsa_device_direction(int dev);
 
 static void scan_audio_devices(void)
@@ -1967,7 +1967,7 @@ static void scan_audio_devices(void)
   int cards, card, devs, dev, d;
   int index = 0;
   int direction;
-  float val[ALSA_MAX_DEVICES];
+  int val[ALSA_MAX_DEVICES];
   if (!audio_devices_scanned)
     {
       audio_devices_scanned = true;
@@ -1982,11 +1982,11 @@ static void scan_audio_devices(void)
       for (card = 0; card < cards; card++) 
 	{
 	  mus_audio_alsa_device_list(MUS_AUDIO_PACK_SYSTEM(card), ALSA_MAX_DEVICES, val);
-	  devs = (int)(val[0]);
+	  devs = val[0];
 	  /* scan all devices in the card */
 	  for (d = 0; d < devs; d++) 
 	    {
-	      dev = (int)(val[d + 1]);
+	      dev = val[d + 1];
 	      direction = mus_audio_alsa_device_direction(MUS_AUDIO_PACK_SYSTEM(card) | dev);
 	      if (direction == 0) 
 		{

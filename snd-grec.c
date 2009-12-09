@@ -2,7 +2,7 @@
 
 static GtkWidget *recorder = NULL, *meters = NULL, *record_button = NULL, *recorder_output = NULL, *info;
 static bool reading = false, recording = false;
-static char *recorder_filename = NULL;
+static char *recorder_filename = "test.snd";
 static int recorder_fd = -1, recorder_srate = 44100, recorder_chans = 2, recorder_format = MUS_LFLOAT;
 static mus_long_t recorder_total_bytes = 0;
 static axis_context *recorder_ax = NULL;

@@ -256,7 +256,7 @@ static int use_one_device = 1;
 
 void mus_audio_alsa_channel_info(int dev, int *info);
 int mus_audio_alsa_samples_per_channel(int dev);
-void mus_audio_alsa_device_list(int sys, int size, float *val);
+void mus_audio_alsa_device_list(int sys, int size, int *val);
 int mus_audio_alsa_device_direction(int dev);
 
 #define MAX_SLOTS 64
@@ -268,7 +268,7 @@ static int main_alsa(int argc, char *argv[])
   mus_sample_t **read_bufs;
   int afd[MAX_SLOTS];
   short *out_buf[MAX_SLOTS];
-  float val[MAX_SLOTS];
+  int val[MAX_SLOTS];
   int afd0, afd1;
   char *name = NULL;
   int base, curframes;
@@ -376,10 +376,10 @@ static int main_alsa(int argc, char *argv[])
 	{
 	  /* get the list of all available devices */
 	  mus_audio_alsa_device_list(MUS_AUDIO_PACK_SYSTEM(card), MAX_SLOTS, val);
-	  devs = (int)(val[0]);
+	  devs = val[0];
 	  for (d = 0; d < devs; d++) 
 	    {
-	      dev = (int)(val[d + 1]);
+	      dev = val[d + 1];
 	      sysdev = MUS_AUDIO_PACK_SYSTEM(card)|dev;
 	      dir = mus_audio_alsa_device_direction(sysdev);
 

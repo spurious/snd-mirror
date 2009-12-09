@@ -230,7 +230,6 @@ Seppo Ingalsuo:                     the HPUX port.
 Juan Reyes:                         the DEC Alpha port.
 Guenter Geiger and Stefan Schwandter: the Linux Alpha port.
 Paul Davis:                         the original ALSA support.
-Gerd Rausch:                        the Sam 9407 support.
 Steven Schultz and Mike Scholz:     the *BSD ports.
 Ludger Brummer and Charles Nichols: the Mac-OSX port.
 Thomas Klausner:                    the NetBSD port.

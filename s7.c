@@ -81,21 +81,6 @@
  *        length, copy, fill!, map, for-each are generic
  *        vector-for-each, vector-map, string-for-each, for-each of any applicable object
  *
- *   things I ought to add/change:
- *        make #<func args> = (func args) or something like that so we can read new_type objects, or add a reader to that struct
- *          also add a conversion function (->generator etc)
- *          or add #< escape to read
- *        make-vector! where type of initial element sets type of all elements, or make-vector*? [make-typed-vector?]
- *          (make-vector! 32 0.0)
- *          unproblematic types: s7_Double|s7_Int (ratio/complex too) char string boolean list/pair closure/function port c-object hash/vector continuation
- *          FFI would guarantee (for example) s7_Double as elements? or type(a) == type(b) and c-object types agree
- *        ->* for conversions (->vector, ->ratio? ->string etc) [see end of this file]
- *        ideally: remove all mention of exact|inexact, remove set-car!|cdr!, 
- *                 remove *-ci-*, remove cxxxxr, remove improper lists
- *                 exact->inexact is the only useful exactness function -- perhaps (->float x)?
- *        perhaps vector<->string for consistency
- *        perhaps bring new_type_x out to scheme -- could this be extended to defstruct? (needs make)
- * 
  *
  * Mike Scholz provided the FreeBSD support (complex trig funcs, etc)
  * Rick Taube and Andrew Burnson provided the MS Visual C++ support

@@ -194,7 +194,7 @@ static int greater_compare(const void *a, const void *b)
 
 int main(int argc, char **argv)
 {
-  int i, j, fd, curfile, chars, k, in_comment = 0, in_white = 0, calls = 0, in_parens = 0, in_quotes = 0, in_define = 0, in_curly = 0;
+  int i, j, fd, curfile, chars, k, in_comment = 0, in_white = 0, calls = 0, in_parens = 0, in_quotes = 0, in_define = 0, in_curly = 0, in_enum = 0;
   int maxc[NAME_SIZE], maxf[NAME_SIZE], maxg[NAME_SIZE], mcalls[NAME_SIZE];
   qdata **qs;
   char input[MAX_CHARS];
@@ -465,6 +465,7 @@ int main(int argc, char **argv)
       in_comment = 0;
       in_white = 0;
       in_define = 0;
+      in_enum = 0;
       for (i = 0; i < files_ctr; i++)
 	{
 	  char **all_names = NULL;
@@ -522,8 +523,21 @@ int main(int argc, char **argv)
 				      (j < (chars - 1)) && 
 				      ((input[j - 1] != '\'') || (input[j + 1] != '\'')))
 				    {
-				      if (input[j] == '{') curly_ctr++;
-				      else if (input[j] == '}') curly_ctr--;
+				      if (input[j] == '{') 
+					{
+					  curly_ctr++;
+					  if ((j > 4) && 
+					      (strncmp((input + (j - 5)), "enum", 4) == 0))
+					    in_enum = true;
+					}
+				      else 
+					{
+					  if (input[j] == '}') 
+					    {
+					      curly_ctr--;
+					      if (in_enum) in_enum = false;
+					    }
+					}
 				    }
 				}
 			      
@@ -552,7 +566,8 @@ int main(int argc, char **argv)
 					    all_names_counts[m]++;
 					  }
 				      
-				      if ((!got_macro) && (in_define == 1) && (strcmp(curname, "define") != 0))
+				      if (((!got_macro) && (in_define == 1) && (strcmp(curname, "define") != 0)) ||
+					  (in_enum))
 					{
 					  got_macro = true;
 					  if (!happy)
