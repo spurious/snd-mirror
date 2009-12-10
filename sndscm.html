@@ -8101,7 +8101,7 @@ all     44   6.6282    0.4998
 <pre>
          n     peak   (log peak n)            n     peak   (log peak n)
 
-all     46   6.8316    0.5019,        odd     38   6.1676    0.5001
+all     46   6.8316    0.5019,        odd     38   6.1658    0.5001
 all     40   6.3751    0.5022,        odd     36   6.0249    0.5012
 all     43   6.6237    0.5027,        odd     39   6.2859    0.5018
 all     42   6.5703    0.5037,        odd     43   6.6436    0.5035
@@ -8140,8 +8140,18 @@ initial phases, so it is obviously irrelevant).
 
 <p>The "even" cases are not independent of the "all" cases; each even-harmonics set can be at worst 1.0 above
 its corresponding (n-1) all-harmonics set (shift the current "all" choices right to multiply each by 2, then set the new fundamental
-phase to 0.0).  
+phase to 0.0).  If you then search around this set of phases, you'll find very good values.  Using Snd's fpsap:
 </p>
+
+<pre>
+      (let ((all (cadr (get-best :all (- val 1))))) ; get the best all-harmonic phases for n - 1
+	(let ((new-phases (make-vector val 0.0)))   ; place in new phase vector shifted up
+	  (do ((k 0 (+ k 1)))
+	      ((= k (- val 1)))
+	    (vector-set! new-phases (+ k 1) (vector-ref all k)))
+	  (vector-set! new-phases 0 0.0)
+	  (fpsap 2 val new-phases)))                ; search that vicinity for a good set
+</pre>
 
 
 <!--
