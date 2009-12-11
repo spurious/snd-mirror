@@ -3032,10 +3032,6 @@ void g_xen_initialize(void)
   fth_add_loaded_files("sndlib.so");
 #endif
 
-#if WITH_MIDI && HAVE_EXTENSION_LANGUAGE
-  mus_midi_init();
-#endif
-
 #if (!HAVE_S7)
   gc_protection = XEN_FALSE;
 #endif

@@ -171,14 +171,6 @@ static void main_snd_help(const char *subject, ...)
   #include <fftw3.h>
 #endif
 
-#if MUS_PULSEAUDIO
-  #include <pulse/version.h>
-#endif
-
-#if MUS_PORTAUDIO
-  #include <portaudio.h>
-#endif
-
 #if USE_MOTIF
   #define XM_VERSION_NAME "xm-version"
 #else
@@ -349,21 +341,7 @@ char *version_info(void)
 	  SND_DATE,
 	  ":\n    ", xversion,
 	  "\n    ", 
-#if (!MUS_PORTAUDIO)
 	  mus_audio_moniker(),
-#endif
-#if MUS_JACK
-	  ", Jack: ",
-#ifdef MUS_JACK_VERSION
-	  MUS_JACK_VERSION,
-#endif
-#endif
-#if MUS_PULSEAUDIO
-	  " ", pa_get_library_version(),
-#endif
-#if MUS_PORTAUDIO
-	  Pa_GetVersionText(),
-#endif
 	  "\n    Sndlib ", snd_itoa(SNDLIB_VERSION), ".", 
                            snd_itoa(SNDLIB_REVISION), 
                            " (", SNDLIB_DATE,
@@ -522,6 +500,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+11-Dec:  removed midi.c, sndrecord.c, SGI support, mus-audio-mixer-*, and Alsa < 1.0 support.\n\
 4-Dec:   portaudio support.\n\
 1-Dec:   removed --with-modules configuration switch.\n\
 30-Nov:  Snd 11.1.\n\

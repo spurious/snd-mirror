@@ -2149,9 +2149,8 @@
 		       'mus-interp-hermite 'mus-interp-lagrange 'mus-interp-linear 'mus-interp-none 'mus-interp-sinusoidal
 		       'mus-interp-type 'mus-interpolate 'mus-ircam 'mus-l24int 'mus-ldouble
 		       'mus-ldouble-unscaled 'mus-length 'mus-lfloat 'mus-lfloat-unscaled 'mus-lint
-		       'mus-lintn 'mus-location 'mus-lshort 'mus-max-malloc 'mus-max-table-size 'mus-midi-close
-		       'mus-midi-describe 'mus-midi-device-name 'mus-midi-open-read 'mus-midi-open-write 'mus-midi-read
-		       'mus-midi-write 'mus-mix 'mus-mulaw 'mus-name 
+		       'mus-lintn 'mus-location 'mus-lshort 'mus-max-malloc 'mus-max-table-size
+		       'mus-mix 'mus-mulaw 'mus-name 
 		       'mus-next 'mus-nist 'mus-offset 'mus-order 'mus-oss-set-buffers
 		       'mus-out-format 'mus-output? 'mus-phase 'mus-prescaler 'mus-ramp
 		       'mus-rand-seed 'mus-random 'mus-raw 'mus-reset 'mus-riff
@@ -3863,7 +3862,6 @@
 			  "can't close audio" "can't open audio" "audio read error" "audio amp not available"
 			  "can't write audio" "can't read audio" "no audio read permission" 
 			  "can't close file" "arg out of range" "wrong type arg"
-			  "midi open error" "midi read error" "midi write error" "midi close error" "midi init error" "midi misc error"
 			  "no channels method" "no hop method" "no width method" "no file-name method" "no ramp method" "no run method"
 			  "no increment method" "no offset method"
 			  "no xcoeff method" "no ycoeff method" "no xcoeffs method" "no ycoeffs method" "no reset" "bad size" "can't convert"

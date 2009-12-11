@@ -224,8 +224,6 @@ static const char *mus_initial_error_names[MUS_INITIAL_ERROR_TAG] = {
   "can't write audio", "can't read audio", "no audio read permission", 
   "can't close file", "arg out of range", "wrong type arg",
 
-  "midi open error", "midi read error", "midi write error", "midi close error", "midi init error", "midi misc error",
-
   "no channels method", "no hop method", "no width method", "no file-name method", "no ramp method", "no run method",
   "no increment method", "no offset method",
   "no xcoeff method", "no ycoeff method", "no xcoeffs method", "no ycoeffs method", "no reset", "bad size", "can't convert",

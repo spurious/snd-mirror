@@ -255,7 +255,6 @@ int main(int argc, char **argv)
   add_file("vct.c");
   add_file("sndlib2xen.c");
   add_file("clm2xen.c");
-  add_file("midi.c");
   add_file("snd-io.c");
   add_file("snd-utils.c");
   add_file("snd-error.c");

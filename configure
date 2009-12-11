@@ -615,7 +615,6 @@ SET_MAKE
 SNDLIB_LIB
 SNDLIB_FILES
 SNDLIB_CONFIG
-MIDI_FILES
 PATH_WVUNPACK
 PATH_WAVPACK
 PATH_TTA
@@ -755,7 +754,6 @@ with_editres
 with_ladspa
 with_hobbit
 with_builtin_gtkrc
-with_midi
 with_doubles
 with_float_samples
 with_cairo
@@ -1456,7 +1454,6 @@ Optional Packages:
   --with-ladspa  	  include support for LADSPA plugins, Linux only
   --with-hobbit 	  include hobbit-style function arity checking, default=no
   --with-builtin-gtkrc	  include built-in gtkrc fallbacks, default=yes
-  --with-midi		  include sndlib midi module
   --with-doubles	  use doubles throughout
   --with-float-samples	  use floats (or doubles) as the internal sample respresentation, default=yes
   --with-cairo		  use cairo for graphics in Gtk -- not currently very usable
@@ -4071,7 +4068,6 @@ _ACEOF
 #   --without-xpm         omit XPM even if it exists (for testing)
 #   --without-xp          omit libXp even if it exists (for testing)
 #   --without-fam         libfam can be obsolete, but it's not clear how to test this
-#   --with-midi           include sndlib midi module
 #   --with-cairo          use cairo for Gtk graphics, if possible
 #   --with-pulseaudio     use PulseAudio
 #   --with-portaudio      use portaudio
@@ -4201,12 +4197,6 @@ fi
 # Check whether --with-builtin-gtkrc was given.
 if test "${with_builtin_gtkrc+set}" = set; then :
   withval=$with_builtin_gtkrc;
-fi
-
-
-# Check whether --with-midi was given.
-if test "${with_midi+set}" = set; then :
-  withval=$with_midi;
 fi
 
 
@@ -12337,7 +12327,7 @@ fi
 	       if test x$PKG_CONFIG != xno ; then
                    jack_version="`$PKG_CONFIG jack --modversion`"
                    cat >>confdefs.h <<_ACEOF
-#define MUS_JACK_VERSION "${jack_version}"
+#define MUS_JACK_VERSION "Jack: ${jack_version}"
 _ACEOF
 
           	   JACK_LIBS="`$PKG_CONFIG jack --libs`"
@@ -12418,10 +12408,10 @@ $as_echo "$as_me: WARNING: can't find the ALSA header files" >&2;}
 
 	case $AUDIO_SYSTEM in
 	    ALSA)
-                # if alsa version < 0.9 complain and use OSS
+                # if alsa version < 1.0 complain and use OSS
 		alsa_ok=yes
-		{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for ALSA 0.9 or later" >&5
-$as_echo_n "checking for ALSA 0.9 or later... " >&6; }
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for ALSA 1.0 or later" >&5
+$as_echo_n "checking for ALSA 1.0 or later... " >&6; }
 		cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 #include <alsa/asoundlib.h>
@@ -12429,7 +12419,7 @@ int
 main ()
 {
 
-			  	    #if ((SND_LIB_MAJOR == 0) && (SND_LIB_MINOR < 9))
+			  	    #if (SND_LIB_MAJOR < 1)
 				      #error too old
 				    #endif
 
@@ -12453,63 +12443,6 @@ $as_echo "$alsa_ok" >&6; }
 		    else
 	    	      AUDIO_LIB="-lasound"
 		    fi
-
-                    # snd_config_get_id argnum changed in Nov-01
-                    snd_config_get_id_args=1
-                    { $as_echo "$as_me:${as_lineno-$LINENO}: checking alsa snd_config_get_id args" >&5
-$as_echo_n "checking alsa snd_config_get_id args... " >&6; }
-                    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <alsa/asoundlib.h>
-int
-main ()
-{
-snd_config_t *c;
-					const char *id;
-		      			snd_config_get_id(c, &id)
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  snd_config_get_id_args=2
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-                    { $as_echo "$as_me:${as_lineno-$LINENO}: result: $snd_config_get_id_args" >&5
-$as_echo "$snd_config_get_id_args" >&6; }
-                    cat >>confdefs.h <<_ACEOF
-#define SND_CONFIG_GET_ID_ARGS $snd_config_get_id_args
-_ACEOF
-
-
-                    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for newer alsa calling sequences" >&5
-$as_echo_n "checking for newer alsa calling sequences... " >&6; }
-                    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <alsa/asoundlib.h>
-int
-main ()
-{
-snd_pcm_hw_params_t *hw_params;
-			  	        unsigned int tmp;
-					int dir;
-				        snd_pcm_hw_params_get_rate_max(hw_params, &tmp, &dir)
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  $as_echo "#define HAVE_NEW_ALSA 1" >>confdefs.h
-
-                        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-
 		    if test "$with_jack" = yes ; then
 		      if test "$with_static_alsa" = yes ; then
 			 AUDIO_LIB="/usr/lib/libasound.a -lsamplerate"
@@ -12728,7 +12661,7 @@ fi
 
 
 #--------------------------------------------------------------------------------
-# OGG, Flac, Speex, Mpeg, Midi, Shorten, TTA, Wavpack
+# OGG, Flac, Speex, Mpeg, Timidity, Shorten, TTA, Wavpack
 # --------------------------------------------------------------------------------
 
 # Extract the first word of "oggdec", so it can be a program name with args.
@@ -13590,14 +13523,6 @@ fi
 #   also language (s7, Ruby, Forth) needs to match (what about versions!) and audio choice
 # check against needed version (17.2 for now -- need mus_vct_copy in vct.c)
 # set SNDLIB_FILES and SNDLIB_LIB
-
-MIDI_FILES=""
-if test "$with_midi" = yes; then
-  MIDI_FILES="MIDI_O_FILES"
-  $as_echo "#define WITH_MIDI 1" >>confdefs.h
-
-fi
-
 
 SNDLIB_FILES="SNDLIB_O_FILES"
 if test "$enable_snd_debug" != yes ; then

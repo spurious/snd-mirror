@@ -1,5 +1,8 @@
 Snd change log
 
+2010 ----------------------------------------------------------------
+
+ 11-Dec:    removed midi.c and Alsa < 1.0 support.
  7-Dec:     removed SGI support.
  4-Dec:     portaudio support.
  1-Dec:     removed --with-modules configuration switch.

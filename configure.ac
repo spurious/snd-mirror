@@ -73,7 +73,6 @@ AC_DEFINE_UNQUOTED(SND_HOST, "$host")
 #   --without-xpm         omit XPM even if it exists (for testing)
 #   --without-xp          omit libXp even if it exists (for testing)
 #   --without-fam         libfam can be obsolete, but it's not clear how to test this
-#   --with-midi           include sndlib midi module
 #   --with-cairo          use cairo for Gtk graphics, if possible
 #   --with-pulseaudio     use PulseAudio
 #   --with-portaudio      use portaudio
@@ -105,7 +104,6 @@ AC_ARG_WITH(editres,     [  --with-editres	  include editres in xm])
 AC_ARG_WITH(ladspa,	 [  --with-ladspa  	  include support for LADSPA plugins, Linux only])
 AC_ARG_WITH(hobbit,      [  --with-hobbit 	  include hobbit-style function arity checking, default=no])
 AC_ARG_WITH(builtin-gtkrc,[  --with-builtin-gtkrc	  include built-in gtkrc fallbacks, default=yes])
-AC_ARG_WITH(midi,        [  --with-midi		  include sndlib midi module])
 AC_ARG_WITH(doubles,     [  --with-doubles	  use doubles throughout])
 AC_ARG_WITH(float-samples, [  --with-float-samples	  use floats (or doubles) as the internal sample respresentation, default=yes])
 AC_ARG_WITH(cairo,	 [  --with-cairo		  use cairo for graphics in Gtk -- not currently very usable])
@@ -1823,7 +1821,7 @@ if test "$with_jack" = yes ; then
 	       AC_DEFINE(MUS_JACK)
 	       if test x$PKG_CONFIG != xno ; then
                    jack_version="`$PKG_CONFIG jack --modversion`"
-                   AC_DEFINE_UNQUOTED(MUS_JACK_VERSION,"${jack_version}")
+                   AC_DEFINE_UNQUOTED(MUS_JACK_VERSION, "Jack: ${jack_version}")
           	   JACK_LIBS="`$PKG_CONFIG jack --libs`"
           	   JACK_FLAGS="`$PKG_CONFIG jack --cflags`"
                fi
@@ -1866,13 +1864,13 @@ case "$host" in
 
 	case $AUDIO_SYSTEM in
 	    ALSA)
-                # if alsa version < 0.9 complain and use OSS
+                # if alsa version < 1.0 complain and use OSS
 		alsa_ok=yes
-		AC_MSG_CHECKING([for ALSA 0.9 or later])
+		AC_MSG_CHECKING([for ALSA 1.0 or later])
 		AC_COMPILE_IFELSE(
                   [AC_LANG_PROGRAM([#include <alsa/asoundlib.h>],
 			           [
-			  	    #if ((SND_LIB_MAJOR == 0) && (SND_LIB_MINOR < 9))
+			  	    #if (SND_LIB_MAJOR < 1)
 				      #error too old
 				    #endif
 				   ])],
@@ -1886,31 +1884,6 @@ case "$host" in
 		    else
 	    	      AUDIO_LIB="-lasound"
 		    fi
-
-                    # snd_config_get_id argnum changed in Nov-01
-                    snd_config_get_id_args=1
-                    AC_MSG_CHECKING([alsa snd_config_get_id args])
-                    AC_COMPILE_IFELSE(
-		      [AC_LANG_PROGRAM([#include <alsa/asoundlib.h>],
-	             		       [snd_config_t *c; 
-					const char *id; 
-		      			snd_config_get_id(c, &id)])],
-       		      snd_config_get_id_args=2)
-                    AC_MSG_RESULT($snd_config_get_id_args)
-                    AC_DEFINE_UNQUOTED(SND_CONFIG_GET_ID_ARGS,$snd_config_get_id_args)
-
-                    AC_MSG_CHECKING([for newer alsa calling sequences])
-                    AC_COMPILE_IFELSE(
-		      [AC_LANG_PROGRAM([#include <alsa/asoundlib.h>],
-	             		       [snd_pcm_hw_params_t *hw_params;
-			  	        unsigned int tmp;
-					int dir;
-				        snd_pcm_hw_params_get_rate_max(hw_params, &tmp, &dir)
-				       ])],
-		       [AC_DEFINE(HAVE_NEW_ALSA)
-                        AC_MSG_RESULT(yes)],
-		       [AC_MSG_RESULT(no)])
-
 		    if test "$with_jack" = yes ; then 
 		      if test "$with_static_alsa" = yes ; then
 			 AUDIO_LIB="/usr/lib/libasound.a -lsamplerate"
@@ -2064,7 +2037,7 @@ AC_SUBST(SO_LD)
 
 
 #--------------------------------------------------------------------------------
-# OGG, Flac, Speex, Mpeg, Midi, Shorten, TTA, Wavpack
+# OGG, Flac, Speex, Mpeg, Timidity, Shorten, TTA, Wavpack
 # --------------------------------------------------------------------------------
 
 AC_PATH_PROG(PATH_OGGDEC, oggdec, no) # OGG read
@@ -2250,13 +2223,6 @@ fi
 #   also language (s7, Ruby, Forth) needs to match (what about versions!) and audio choice
 # check against needed version (17.2 for now -- need mus_vct_copy in vct.c)
 # set SNDLIB_FILES and SNDLIB_LIB
-
-MIDI_FILES=""
-if test "$with_midi" = yes; then
-  MIDI_FILES="MIDI_O_FILES"
-  AC_DEFINE(WITH_MIDI)
-fi
-AC_SUBST(MIDI_FILES)
 
 SNDLIB_FILES="SNDLIB_O_FILES"
 if test "$enable_snd_debug" != yes ; then

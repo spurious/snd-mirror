@@ -57,7 +57,6 @@ localedir = ${datadir}/locale
 DEFS = -DLOCALE_DIR=\"$(localedir)\" -DSCRIPTS_DIR=\"$(pkgdatadir)\" @DEFS@
 
 SNDLIB_FILES = $(@SNDLIB_FILES@)
-MIDI_FILES = $(@MIDI_FILES@)
 
 GX_FILES = $(@GX_FILES@)
 GX_HEADERS = $(@GX_HEADERS@)
@@ -76,7 +75,6 @@ SND_HEADERS = mus-config.h sndlib.h _sndlib.h clm.h snd.h snd-0.h snd-1.h snd-st
 SND_X_HEADERS = snd-x0.h snd-x1.h
 SND_G_HEADERS = snd-g0.h snd-g1.h
 SNDLIB_O_FILES = headers.o audio.o io.o sound.o clm.o xen.o vct.o sndlib2xen.o clm2xen.o
-MIDI_O_FILES = midi.o
 
 S7_HEADERS = s7.h mus-config.h
 S7_FILES = s7.c
@@ -103,9 +101,9 @@ NO_FILES =
 
 main_target: @MAKE_TARGET@
 
-snd: $(SNDLIB_HEADERS) $(SND_HEADERS) $(GX_HEADERS) $(S7_HEADERS) $(S7_O_FILES) $(SNDLIB_FILES) $(MIDI_FILES) $(O_FILES) $(GX_FILES) $(GL_FILES)
+snd: $(SNDLIB_HEADERS) $(SND_HEADERS) $(GX_HEADERS) $(S7_HEADERS) $(S7_O_FILES) $(SNDLIB_FILES) $(O_FILES) $(GX_FILES) $(GL_FILES)
 	(cd po && $(MAKE))
-	$(CC) $(LDFLAGS) $(CFLAGS) $(S7_O_FILES) $(SNDLIB_FILES) $(MIDI_FILES) $(O_FILES) $(GX_FILES) $(GL_FILES) -o snd $(SNDLIB_LIB) $(XEN_LIBS) $(GTK_LIBS) $(GL_LIBS) $(MOTIF_LIBS) $(JACK_LIBS) $(RT_LIBS) $(AUDIO_LIB) $(FFTW_LIBS) $(GSL_LIBS) $(FAM_LIB) $(GMP_LIBS) $(LIBS)
+	$(CC) $(LDFLAGS) $(CFLAGS) $(S7_O_FILES) $(SNDLIB_FILES) $(O_FILES) $(GX_FILES) $(GL_FILES) -o snd $(SNDLIB_LIB) $(XEN_LIBS) $(GTK_LIBS) $(GL_LIBS) $(MOTIF_LIBS) $(JACK_LIBS) $(RT_LIBS) $(AUDIO_LIB) $(FFTW_LIBS) $(GSL_LIBS) $(FAM_LIB) $(GMP_LIBS) $(LIBS)
 
 xm: 	xen.h mus-config.h $(S7_HEADERS)
 	rm -f xen.o
@@ -121,16 +119,15 @@ xg: 	xen.h mus-config.h $(S7_HEADERS)
 
 widget: snd_widget.o
 
-snd_widget.o: $(SNDLIB_HEADERS) $(SND_HEADERS) $(GX_HEADERS) $(S7_HEADERS) $(SNDLIB_FILES) $(MIDI_FILES) $(O_FILES) $(GX_FILES) $(GL_FILES)
-	$(LD) -r $(LDFLAGS) $(SNDLIB_FILES) $(MIDI_FILES) $(O_FILES) $(GX_FILES) $(GL_FILES) -o snd_widget.o
+snd_widget.o: $(SNDLIB_HEADERS) $(SND_HEADERS) $(GX_HEADERS) $(S7_HEADERS) $(SNDLIB_FILES) $(O_FILES) $(GX_FILES) $(GL_FILES)
+	$(LD) -r $(LDFLAGS) $(SNDLIB_FILES) $(O_FILES) $(GX_FILES) $(GL_FILES) -o snd_widget.o
 
-external: $(SNDLIB_HEADERS) $(SND_HEADERS) $(GX_HEADERS) $(S7_HEADERS) $(SNDLIB_FILES) $(MIDI_FILES) $(O_FILES) $(GX_FILES) $(GL_FILES)  snd_pd_external.o
-	$(CC) -shared -o snd.pd_linux $(LDFLAGS) $(SNDLIB_FILES) $(MIDI_FILES) $(O_FILES)  $(GX_FILES) $(SNDLIB_LIB) $(XEN_LIBS) $(JACK_LIBS) $(RT_LIBS) $(AUDIO_LIB) $(FFTW_LIBS) $(GSL_LIBS) $(FAM_LIB) $(GMP_LIBS) $(LIBS) snd_pd_external.o
+external: $(SNDLIB_HEADERS) $(SND_HEADERS) $(GX_HEADERS) $(S7_HEADERS) $(SNDLIB_FILES) $(O_FILES) $(GX_FILES) $(GL_FILES)  snd_pd_external.o
+	$(CC) -shared -o snd.pd_linux $(LDFLAGS) $(SNDLIB_FILES) $(O_FILES)  $(GX_FILES) $(SNDLIB_LIB) $(XEN_LIBS) $(JACK_LIBS) $(RT_LIBS) $(AUDIO_LIB) $(FFTW_LIBS) $(GSL_LIBS) $(FAM_LIB) $(GMP_LIBS) $(LIBS) snd_pd_external.o
 	strip --strip-unneeded snd.pd_linux
 	ln -sf snd-11/snd.pd_linux ..
 
 $(SNDLIB_O_FILES): $(SNDLIB_HEADERS) $(SND_HEADERS) $(S7_HEADERS)
-$(MIDI_O_FILES): $(SNDLIB_HEADERS) $(SND_HEADERS) $(S7_HEADERS)
 $(O_FILES): $(SNDLIB_HEADERS) $(SND_HEADERS) $(SND_X_HEADERS) $(S7_HEADERS)
 $(X_O_FILES): $(SNDLIB_HEADERS) $(SND_HEADERS) $(SND_X_HEADERS) $(S7_HEADERS)
 $(G_O_FILES): $(SNDLIB_HEADERS) $(SND_HEADERS) $(SND_G_HEADERS) $(S7_HEADERS)
@@ -138,7 +135,6 @@ $(S7_O_FILES): $(S7_HEADERS) $(S7_FILES)
 
 clean:
 	rm -f $(SNDLIB_O_FILES)
-	rm -f $(MIDI_O_FILES)
 	rm -f $(O_FILES)
 	rm -f $(X_O_FILES)
 	rm -f $(G_O_FILES)

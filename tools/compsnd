@@ -314,7 +314,7 @@ echo ' '
 echo ' -------------------------------------------------------------------------------- '
 echo ' -----                --with-forth --enable-snd-debug --with-static-xm --with-editres --with-gl ---- '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet --with-forth --enable-snd-debug --with-static-xm --with-editres --with-gl LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include" --with-midi
+./configure --quiet --with-forth --enable-snd-debug --with-static-xm --with-editres --with-gl LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include"
 make
 ./snd --version
 ./snd -noinit --features "'clm 'snd-forth 'xm 'gl"
@@ -444,7 +444,7 @@ echo ' '
 echo ' -------------------------------------------------------------------------------- '
 echo ' ----                --with-guile --enable-snd-debug --with-static-xm --with-editres --with-gl '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet --with-guile --enable-snd-debug --with-static-xm --with-editres --with-gl LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include" --with-midi
+./configure --quiet --with-guile --enable-snd-debug --with-static-xm --with-editres --with-gl LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include"
 make
 ./snd --version
 ./snd -noinit --features "'clm 'snd-guile 'xm 'gl"
@@ -476,24 +476,6 @@ echo ' '
 make allclean
 rm -f snd
 rm -f config.cache
-
-echo ' -------------------------------------------------------------------------------- '
-echo ' ----                 --with-static-gsl --with-alsa --with-midi                -  '
-echo ' -------------------------------------------------------------------------------- '
-./configure --quiet LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include" --with-static-gsl --with-alsa --with-midi
-make
-echo ' '
-echo ' '
-./snd --version
-./snd -noinit --features "'clm 'gsl 'alsa"
-
-echo ' '
-make allclean
-rm -f snd
-rm -f config.cache
-rm -f makefile
-rm -f mus-config.h
-rm -f sndinfo
 
 echo ' -------------------------------------------------------------------------------- '
 echo ' -----                 --with-doubles                                       ----  '
@@ -553,9 +535,9 @@ rm -f mus-config.h
 rm -f sndinfo
 
 echo ' -------------------------------------------------------------------------------- '
-echo ' -----                 --without-float-samples --with-sample-width=32 --with-just-gl --with-static-motif --without-fftw --with-midi '
+echo ' -----                 --without-float-samples --with-sample-width=32 --with-just-gl --with-static-motif --without-fftw '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include"  --without-float-samples --with-sample-width=32 --with-just-gl --with-static-motif --without-fftw --with-midi
+./configure --quiet LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include"  --without-float-samples --with-sample-width=32 --with-just-gl --with-static-motif --without-fftw
 make
 echo ' '
 echo ' '
@@ -777,7 +759,7 @@ make allclean
 echo ' -------------------------------------------------------------------------------- '
 echo ' ----                 g++ --with-ruby                                        ---- '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet CC=g++ LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include" --with-ruby --with-midi
+./configure --quiet CC=g++ LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include" --with-ruby
 make
 ./snd --version
 ./snd -noinit --features ":clm, :snd_ruby"

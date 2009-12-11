@@ -141,7 +141,7 @@ are different enough that gl.c can be a pain to build).
 Version info:
   if Gtk, then Gtk+ 2.0.0 or later
   if Motif, then Motif 2.n but not Lesstif
-  in Linux, if ALSA, then ALSA 0.9beta8 or later (or any version of OSS)
+  in Linux, if ALSA, then ALSA 1.0 or later (or any version of OSS)
   if Guile, Guile 1.5.0 through 1.8.n (not 1.9.n or later)
   if Ruby, Ruby 1.8.0 or later.  
   if Forth, any version
@@ -426,9 +426,7 @@ the audio card thinks it's the local network controller or something.
 
 ---- ALSA: ----
 
-Only versions from 0.9 of ALSA are supported. If you get a compile-time
-complaint about snd_pcm_hw_params (ALSA 0.9beta4) you need to get
-a newer version of ALSA.
+Only versions from 1.0 of ALSA are supported.
 
 On recording, here's a note from Fernando from cmdist:
 

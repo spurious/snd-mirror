@@ -50,7 +50,6 @@
 <li><a href="#headers">Headers</a>
 <li><a href="#data">Data</a>
 <li><a href="#hardware">Hardware</a>
-<li><a href="#midi">MIDI</a>
 <li><a href="#music5">Music V</a>
 <li><a href="#examples">Examples</a>
 <ul>
@@ -95,7 +94,6 @@ SGI, and Sun.  It could conceivably work elsewhere.
 <li>clm2xen.c, vct.c and vct.h (tie clm.c into s7, Guile, Ruby, or Forth)
 <li>xen.h, xen.c, xen.html (the embedded language support)
 <li>run.c (the run macro to speed up scheme computations)
-<li>midi.c (primitive MIDI support)
 </ul>
 
 <p>
@@ -105,8 +103,8 @@ function names start with "mus_" and constants start with "MUS_".  Audio hardwar
 functions involving sound files referenced through the file name
 start with "mus_sound_", functions involving files at a lower level
 with "mus_file_", functions involving header access with "mus_header_",
-functions involving audio hardware access with "mus_audio_", and MIDI functions
-with "mus_midi_", and various
+functions involving audio hardware access with "mus_audio_",
+and various
 others just with "mus_" (number translations, etc).  Conversions use
 the word "to" as in "mus_samples_to_bytes".  Booleans use "_p" (an ancient
 Common Lisp convention meaning "predicate" I think).
@@ -293,56 +291,6 @@ port associated with <i>line</i>.  This data is assumed to be in the format
 requested by mus_audio_open_output with channels interleaved.</p>
 
 
-
-<br>
-<table border=0 bordercolor="lightgreen" width=100% cellpadding=2 cellspacing=0><tr><td bgcolor="lightgreen">
-<table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="midi">MIDI</a></h2></td></tr></table>
-</td></tr></table>
-
-<p>
-There is some simple, very low-level MIDI support in sndlib.  
-</p>
-<pre>
- int mus_midi_open_read(const char *name)
- int mus_midi_open_write(const char *name)
- int mus_midi_close(int line)
- int mus_midi_read(int line, unsigned char *buffer, int bytes)
- int mus_midi_write(int line, unsigned char *buffer, int bytes)
- char *mus_midi_device_name(int sysdev)
- char *mus_midi_describe(void)
-</pre>
-<p>These procedures remove all structure imposed by the available
-MIDI drivers, presenting each such device as if it were a sort of
-file.  <b>mus_midi_open_read</b> and <b>mus_midi_open_write</b>
-open a given device (its name can be found by calling <b>mus_midi_device_name</b>
-with an argument of 0), returning an integer that refers to that port
-in subsequent calls on <b>mus_midi_read</b>, <b>mus_midi_write</b>, and
-<b>mus_midi_close</b>.  No attempt is made to interpret the data, or
-time its output, etc.  <b>mus_midi_describe</b> returns a description
-of the available MIDI hardware (its result should be freed, whereas
-the result of <b>mus_midi_device_name</b> should not be freed).
-The "int" result of each of the functions is -1 if some error occurred.
-The <i>sysdev</i> argument to <b>mus_midi_device_name</b> is a sndlib-style
-integer packing the card number ("system" in the left half, and the
-device number in the right). On the ALSA system I'm testing at the moment,
-the MIDI device is apparently "hw:1,0" or "/dev/snd/midiC1D0"; this
-maps into sndlib as card 1, device 0; the corresponding "sysdev" number
-is 1 &lt;&lt; 16. 
-The corresponding functions are:
-</p>
-<pre>
-  mus-midi-open-read name
-  mus-midi-open-write name
-  mus-midi-close md
-  mus-midi-device-name sys-dev
-  mus-midi-describe
-  mus-midi-read md bytes
-  mus-midi-write md bytes
-</pre>
-<p><b>mus-midi-read</b> and <b>mus-midi-write</b> return a list
-of the bytes read or written (empty if none), or #f if something
-went wrong.  
-</p>
 
 <br>
 <table border=0 bordercolor="lightgreen" width=100% cellpadding=2 cellspacing=0><tr><td bgcolor="lightgreen">
