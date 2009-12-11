@@ -1029,8 +1029,6 @@ static void audio_io_set_format(int line, int format)
 #define audio_io_set_write_format(Line, Format) audio_io_set_format(Line, ((mus_audio_io_format(Line) & 0xffff) | (Format << 16)))
 
 
-/* TODO: remove the 'device' arg to mus-audio-open-input|output -- it should just be whatever the default is */
-
 static XEN g_mus_audio_open_output(XEN dev, XEN srate, XEN chans, XEN format, XEN size)
 {
   #if HAVE_SCHEME

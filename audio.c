@@ -19,7 +19,6 @@
 
 /*
  * char *mus_audio_describe(void) returns a description of the audio hardware
- *
  * int mus_audio_open_output(int dev, int srate, int chans, int format, int size)
  * int mus_audio_open_input(int dev, int srate, int chans, int format, int size)
  * int mus_audio_write(int line, char *buf, int bytes)
@@ -95,8 +94,8 @@
 #include "sndlib-strings.h"
 
 enum {MUS_AUDIO_DEFAULT_0, MUS_AUDIO_DUPLEX_DEFAULT, MUS_AUDIO_LINE_OUT,
-      MUS_AUDIO_LINE_IN, MUS_AUDIO_MICROPHONE, MUS_AUDIO_SPEAKERS, MUS_AUDIO_DIGITAL_IN, MUS_AUDIO_DIGITAL_OUT,
-      MUS_AUDIO_DAC_OUT, MUS_AUDIO_MIXER, MUS_AUDIO_AUX_INPUT, MUS_AUDIO_AUX_OUTPUT
+      MUS_AUDIO_LINE_IN, MUS_AUDIO_MICROPHONE, MUS_AUDIO_SPEAKERS, MUS_AUDIO_DIGITAL_OUT,
+      MUS_AUDIO_DAC_OUT, MUS_AUDIO_MIXER, MUS_AUDIO_AUX_OUTPUT
 };
 
 
@@ -881,16 +880,14 @@ static int oss_mus_audio_open_input(int ur_dev, int srate, int chans, int format
   if (((dev == MUS_AUDIO_DEFAULT) || (dev == MUS_AUDIO_DUPLEX_DEFAULT)) && (sys == 0))
     audio_fd = linux_audio_open(dev_name = dac_name(sys, 0), 
 				O_RDWR, 0, sys);
-  else audio_fd = linux_audio_open(dev_name = dac_name(sys, (dev == MUS_AUDIO_AUX_INPUT) ? 1 : 0), 
-				   O_RDONLY, 0, sys);
+  else audio_fd = linux_audio_open(dev_name = dac_name(sys, 0), O_RDONLY, 0, sys);
   if (audio_fd == -1)
     {
       if (dev == MUS_AUDIO_DUPLEX_DEFAULT)
 	RETURN_ERROR_EXIT(MUS_AUDIO_CONFIGURATION_NOT_AVAILABLE, -1,
 		       mus_format("can't open %s (device %s): %s",
 				  dev_name, mus_audio_device_name(dev), strerror(errno)));
-      if ((audio_fd = linux_audio_open(dev_name = dac_name(sys, (dev == MUS_AUDIO_AUX_INPUT) ? 1 : 0), 
-				       O_RDONLY, 0, sys)) == -1)
+      if ((audio_fd = linux_audio_open(dev_name = dac_name(sys, 0), O_RDONLY, 0, sys)) == -1)
         {
           if ((errno == EACCES) || (errno == ENOENT))
 	    RETURN_ERROR_EXIT(MUS_AUDIO_NO_READ_PERMISSION, -1,
@@ -1692,25 +1689,23 @@ static int to_alsa_device(int dev, int *adev, snd_pcm_stream_t *achan)
       (*adev) = 0;
       (*achan) = SND_PCM_STREAM_PLAYBACK;
       break;
+
     case MUS_AUDIO_AUX_OUTPUT:
       /* extra analog output */
       (*adev) = 1;
       (*achan) = SND_PCM_STREAM_PLAYBACK;
       break;
+
     case MUS_AUDIO_DAC_OUT:
       /* analog outputs */
       (*adev) = 2;
       (*achan) = SND_PCM_STREAM_PLAYBACK;
       break;
+
     case MUS_AUDIO_MICROPHONE:
     case MUS_AUDIO_LINE_IN:
       /* analog input */
       (*adev) = 0;
-      (*achan) = SND_PCM_STREAM_CAPTURE;
-      break;
-    case MUS_AUDIO_AUX_INPUT:
-      /* extra analog input */
-      (*adev) = 1;
       (*achan) = SND_PCM_STREAM_CAPTURE;
       break;
 
@@ -1749,7 +1744,6 @@ static int to_sndlib_device(int dev, int channel)
       switch (dev) 
 	{
 	case 0: return(MUS_AUDIO_LINE_IN);
-	case 1: return(MUS_AUDIO_AUX_INPUT);
 	default:
 	  return(MUS_ERROR);
 	}
@@ -1768,24 +1762,6 @@ static int alsa_mus_error(int type, char *message)
     }
   return(MUS_ERROR);
 }
-
-#if 0
-static void alsa_dump_hardware_params(snd_pcm_hw_params_t *params, const char *msg) 
-{
-  snd_output_t *out;
-  snd_output_stdio_attach(&out, stderr, 0);
-  fprintf(stderr, "%s\n", msg);
-  snd_pcm_hw_params_dump(params, out);
-}
-
-static void alsa_dump_software_params(snd_pcm_sw_params_t *params, const char *msg) 
-{
-  snd_output_t *out;
-  snd_output_stdio_attach(&out, stderr, 0);
-  fprintf(stderr, "%s\n", msg);
-  snd_pcm_sw_params_dump(params, out);
-}
-#endif
 
 
 /* dump current hardware and software configuration */
@@ -6715,51 +6691,6 @@ static void describe_audio_state_1(void)
     }
 
   close(line);
-
-#if 0
-  /* I don't see anything useful in all this mixer data, so I'll omit it */
-  fprintf(stderr, "/dev/mixer:\n");
-  line = open("/dev/mixer", O_RDONLY | O_NDELAY);
-  if (line == -1)
-    return;
-  val = ioctl(line, AUDIO_GETDEV, &dev);
-  fprintf(stderr, "\n%d, name: %s, version: %s, config: %s\n",
-	  val, dev.name, dev.version, dev.config);
-  for (i = 0; ; i++)
-    {
-      mdev.index = i;
-      val = ioctl(line, AUDIO_MIXER_DEVINFO, &mdev);
-      if (val != 0) break;
-      fprintf(stderr, "%d: name: %s ", i, mdev.label.name);
-      fprintf(stderr, "class: %d, type: %d, units: %s, chans: %d, delta: %d\n", 
-	      mdev.mixer_class, mdev.type, mdev.un.v.units.name, mdev.un.v.num_channels, mdev.un.v.delta);
-      mx.dev = i;
-      ioctl(line, AUDIO_MIXER_READ, &mx);
-      switch (mx.type)
-	{
-	case AUDIO_MIXER_CLASS:
-	  fprintf(stderr, "mixer read: class type?\n"); 
-	  break;
-	case AUDIO_MIXER_ENUM:
-	  fprintf(stderr, "mixer read: enum: %d\n", mx.un.ord);
-	  break;
-	case AUDIO_MIXER_SET:
-	case AUDIO_MIXER_VALUE:
-	  {
-	    int j;
-	    ml = mx.un.value;
-	    fprintf(stderr, "mixer read: level: %d chans [", ml.num_channels);
-	    for (j = 0; j < ml.num_channels; j++)
-	      fprintf(stderr, "%d ", (int)(ml.level[j]));
-	    fprintf(stderr, "]\n");
-	  }
-	  break;
-	default:
-	  fprintf(stderr, "mixer read: unknown type? %d\n", mx.type); 
-	  break;
-	}
-    }
-#endif
 }
 
 

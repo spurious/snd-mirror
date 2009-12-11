@@ -365,9 +365,8 @@ void snd_exit(int val)
 }
 
 
-/* PERHAPS: glib now has a "gio" module that provides a fam-like service: HAVE_GFILEMONITOR or libgiofam?
- *            or is this just a fam wrapper?
- */
+/* glib now has a "gio" module that provides a fam-like service, but it requires using gio style file handlers throughout. */
+
 
 /* ---------------- file alteration monitor (fam or gamin) ---------------- */
 #if HAVE_FAM

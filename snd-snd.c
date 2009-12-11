@@ -158,13 +158,14 @@ void free_peak_env_state(chan_info *cp)
 
 static env_state *make_env_state(chan_info *cp, mus_long_t samples)
 {
-  int pos;
+  int pos, orig_pos;
   peak_env_info *ep;
   env_state *es;
 
   if (samples <= 0) return(NULL);
   stop_peak_env(cp);
   pos = cp->edit_ctr;
+  orig_pos = cp->edits[pos]->edpos; /* don't assume we're editing the preceding state! */
   es = (env_state *)calloc(1, sizeof(env_state)); /* only creation point */
   es->file_open = false;
   es->samples = samples;
@@ -187,14 +188,14 @@ static env_state *make_env_state(chan_info *cp, mus_long_t samples)
       if (pos > 0)
 	{
 	  peak_env_info *old_ep;
-	  old_ep = cp->edits[pos - 1]->peak_env;
+	  old_ep = cp->edits[orig_pos]->peak_env;
 
 	  if ((old_ep) && 
 	      (old_ep->completed))
 	    {
 	      mus_long_t start, end, old_samples;
 
-	      /* here in many cases, the preceding edit's amp env has most of the data we need.
+	      /* here in many cases, the underlying edit's amp env has most of the data we need.
 	       * cp->edits[cp->edit_ctr] describes the current edit, with beg and end, so in the
 	       * simplest case, we can just copy to the bin representing beg, and from the bin
 	       * representing end (setting ep->top_bin and ep->bin); if the file's length has
@@ -202,7 +203,7 @@ static env_state *make_env_state(chan_info *cp, mus_long_t samples)
 	       * as-one-edit can mess this up...
 	       */
 
-	      old_samples = cp->edits[pos - 1]->samples;
+	      old_samples = cp->edits[orig_pos]->samples;
 	      if (snd_abs_mus_long_t(samples - old_samples) < (samples / 2))
 		{
 		  int start_bin, end_bin, old_end_bin;
@@ -215,7 +216,7 @@ static env_state *make_env_state(chan_info *cp, mus_long_t samples)
 		      int i, j;
 
 		      /* here we'll try to take advantage of an existing envelope */
-		      old_ep = cp->edits[pos - 1]->peak_env;
+		      old_ep = cp->edits[orig_pos]->peak_env;
 		      ep->samps_per_bin = old_ep->samps_per_bin;
 		      ep->peak_env_size = (int)(ceil((double)(es->samples) / (double)(ep->samps_per_bin)));
 		      ep->data_max = (mus_float_t *)calloc(ep->peak_env_size, sizeof(mus_float_t));

@@ -2,12 +2,7 @@
 #include "clm2xen.h"
 #include "clm-strings.h"
 
-/* TODO: the per-chan attributes (y-bounds, graph-type etc) are a mess when update, unite, sync etc happen
- * TODO: the default should be to show the full y-bounds if possible
- *   it might be nice to show the waveform(s) as-read-so-far updating as we get new points from the disk
- *   (with blank space after current read end point) -- peak_env_usable[snd-snd.c] and peak_env_graph
- *   would need to be smarter? or use peak_env_partial_graph?
- */
+/* TODO: the per-chan attributes (y-bounds, graph-type etc) are a mess when update, unite, sync etc happen */
 
 bool graph_style_p(int grf)
 {
@@ -618,10 +613,10 @@ void add_channel_data_1(chan_info *cp, int srate, mus_long_t frames, channel_gra
   /* initialize channel, including edit/sound lists */
   axis_info *ap;
   mus_float_t ymin = 0.0, ymax = 0.0, y0, y1;
-  double xmax, x0, x1, dur, gdur;
+  double xmax, x0, x1, dur;
   const char *label = NULL;
   char *hook_label = NULL;
-  bool ymin_set = false, ymax_set = false;
+  bool ymin_set = false, ymax_set = false, x_set = false;
 
   cp->edit_size = INITIAL_EDIT_SIZE;
   cp->edits = (ed_list **)calloc(cp->edit_size, sizeof(ed_list *));
@@ -637,6 +632,7 @@ void add_channel_data_1(chan_info *cp, int srate, mus_long_t frames, channel_gra
   x1 = 0.1;
   y0 = -1.0;
   y1 = 1.0;
+
   switch (cp->x_axis_style)
     {
     case X_AXIS_IN_BEATS:      label = _("time (beats)");    break;
@@ -645,7 +641,9 @@ void add_channel_data_1(chan_info *cp, int srate, mus_long_t frames, channel_gra
     case X_AXIS_AS_PERCENTAGE: label = _("time (percent)");  break;
     default:                   label = _("time");            break;
     }
+
   dur = (double)frames / (double)(srate);
+
   if ((cp->hookable == WITH_HOOK) && 
       (graphed == WITH_GRAPH) &&    
       /* can also be WITHOUT_GRAPH and WITHOUT_INITIAL_GRAPH_HOOK
@@ -665,6 +663,7 @@ void add_channel_data_1(chan_info *cp, int srate, mus_long_t frames, channel_gra
 
       if (XEN_LIST_P_WITH_LENGTH(res, len))
 	{
+	  x_set = true;
 	  if (len > 0) x0 = XEN_TO_C_DOUBLE(XEN_CAR(res));
 	  if (len > 1) x1 = XEN_TO_C_DOUBLE(XEN_CADR(res));
 	  if (len > 2) y0 = XEN_TO_C_DOUBLE(XEN_CADDR(res));
@@ -686,16 +685,13 @@ void add_channel_data_1(chan_info *cp, int srate, mus_long_t frames, channel_gra
 	}
     }
 
-  if (dur == 0.0) gdur = .001; else gdur = dur;
-  xmax = gdur;
-  if (x1 == 0.0) x1 = gdur;
-  
   if ((!ymax_set) && (!ymin_set) &&
       (peak_env_maxamp_ok(cp, 0))) /* peak-env.scm uses initial-graph-hook to read in this data, so it's not entirely hopeless */
     {
       ymax = peak_env_maxamp(cp, 0);
       if (ymax < 1.0) ymax = 1.0;
       ymin = -ymax;
+      if (!x_set) x1 = 0.0; /* show full sound if peak env is available */
     }
   else
     {
@@ -711,6 +707,12 @@ void add_channel_data_1(chan_info *cp, int srate, mus_long_t frames, channel_gra
 	  else ymin = -1.0;
 	}
     }
+
+  if (dur == 0.0) xmax = .001; else xmax = dur;
+  if ((x1 == 0.0) ||
+      ((!x_set) && (dur < 10.0)))
+    x1 = xmax;
+
   if (dur <= 0.0)
     {
       /* empty sound */
@@ -722,13 +724,16 @@ void add_channel_data_1(chan_info *cp, int srate, mus_long_t frames, channel_gra
       if (xmax > dur) xmax = dur;
       if (x0 >= x1) x0 = x1 - .01;
     }
+
   if (xmax <= 0.0) xmax = .001;
   if (ymin >= ymax) ymin = ymax - .01;
   if (y0 >= y1) y0 = y1 - .01;
+
   ap = make_axis_info(cp, 0.0, xmax, ymin, ymax, (hook_label) ? hook_label : label, x0, x1, y0, y1, NULL);
+
   if (hook_label) free(hook_label);
 
-  if (dur == 0)
+  if (dur == 0.0)
     {
       ap->zx = 1.0;
       ap->sx = 1.0;

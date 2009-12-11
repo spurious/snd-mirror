@@ -4143,6 +4143,7 @@ ed_list *initial_ed_list(mus_long_t beg, mus_long_t end)
   ed->edit_type = INITIALIZE_EDIT;
   ed->sound_location = 0;
   ed->samples = end + 1;
+
   /* origin (channel %s %d) desc channel should be obvious from context */
   FRAGMENT_LOCAL_POSITION(ed, 0) = beg;
   FRAGMENT_LOCAL_END(ed, 0) = end;
@@ -4886,6 +4887,7 @@ static ed_list *delete_section_from_list(mus_long_t beg, mus_long_t num, ed_list
 bool delete_samples(mus_long_t beg, mus_long_t num, chan_info *cp, int edpos)
 {
   mus_long_t len;
+
   if (num <= 0) return(true);
   len = cp->edits[edpos]->samples;
   if ((beg < len) && (beg >= 0))

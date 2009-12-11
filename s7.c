@@ -13758,8 +13758,6 @@ static int remember_file_name(const char *file)
  *    4: if not #f, the file name of that code
  *    5: the environment at the point of the error
  *    6..top: stack enviroment pointers (giving enough info to reconstruct the current call stack), ending in #f
- *
- * PERHAPS: include the continuation? 
  */
 
 /* slightly ugly:

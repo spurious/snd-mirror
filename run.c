@@ -11412,8 +11412,6 @@ static void mixer_set_0(int *args, ptree *pt)
   mus_mixer_set(CLM_ARG_1, INT_ARG_2, INT_ARG_3, FLOAT_ARG_4);
 }
 
-/* PERHAPS: mixer direct */
-
 static void mixer_set_i(int *args, ptree *pt) 
 {
   mus_mixer_set(CLM_ARG_1, INT_ARG_2, INT_ARG_3, (mus_float_t)INT_ARG_4);
