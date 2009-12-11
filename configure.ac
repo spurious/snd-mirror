@@ -1817,7 +1817,7 @@ if test "$with_jack" = yes ; then
               [with_jack=no
 	       AC_MSG_WARN(can't find the samplerate library. JACK will not be used.)])
             if test $with_jack = yes ; then
-               AUDIO_SYSTEM=Jack
+               AUDIO_SYSTEM=JACK
 	       AC_DEFINE(MUS_JACK)
 	       if test x$PKG_CONFIG != xno ; then
                    jack_version="`$PKG_CONFIG jack --modversion`"
@@ -1841,14 +1841,14 @@ case "$host" in
 	  SO_FLAGS="-fPIC $SO_FLAGS"
         fi
 
-        AUDIO_SYSTEM=Alsa
+        AUDIO_SYSTEM=ALSA
 	if test "$with_oss" = yes ; then 
           AUDIO_SYSTEM=OSS
 	else
 
           if test "$ac_cv_header_alsa_asoundlib_h" = yes ; then
             AC_CHECK_LIB(asound, main,
-               AUDIO_SYSTEM=Alsa,
+               AUDIO_SYSTEM=ALSA,
                [AC_MSG_WARN(can't find the ALSA library)])
           else
             AC_MSG_WARN(can't find the ALSA header files)
@@ -1858,7 +1858,7 @@ case "$host" in
 
 	if test "$with_jack" = yes ; then 
 	       if test "$with_alsa" != yes ; then
-                 AUDIO_SYSTEM=Jack
+                 AUDIO_SYSTEM=JACK
                fi
 	fi
 
@@ -2016,7 +2016,7 @@ case "$host" in
 	       AC_MSG_RESULT(yes)],
 	      [AC_MSG_RESULT(no)])
         else
-            AUDIO_SYSTEM=Jack
+            AUDIO_SYSTEM=JACK
 	    JACK_LIBS="-framework CoreAudio -framework CoreServices -framework AudioUnit -L/usr/local/lib -ljack -lsamplerate"
             JACK_FLAGS="-I/usr/local/include"
 	fi

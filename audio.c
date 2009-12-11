@@ -7256,11 +7256,11 @@ int mus_audio_device_format(int dev) /* snd-dac snd-xrec snd-grec */
 
   mixer_vals[0] = 0;
 
-#if HAVE_OSS
+#if HAVE_OSS && (!MUS_JACK)
   oss_formats(dev, mixer_vals);
 #endif
 
-#if HAVE_ALSA
+#if HAVE_ALSA && (!MUS_JACK)
   alsa_formats(dev, 16, mixer_vals);
 #endif
 

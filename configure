@@ -12321,7 +12321,7 @@ $as_echo "$as_me: WARNING: can't find the samplerate library. JACK will not be u
 fi
 
             if test $with_jack = yes ; then
-               AUDIO_SYSTEM=Jack
+               AUDIO_SYSTEM=JACK
 	       $as_echo "#define MUS_JACK 1" >>confdefs.h
 
 	       if test x$PKG_CONFIG != xno ; then
@@ -12350,7 +12350,7 @@ case "$host" in
 	  SO_FLAGS="-fPIC $SO_FLAGS"
         fi
 
-        AUDIO_SYSTEM=Alsa
+        AUDIO_SYSTEM=ALSA
 	if test "$with_oss" = yes ; then
           AUDIO_SYSTEM=OSS
 	else
@@ -12387,7 +12387,7 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_asound_main" >&5
 $as_echo "$ac_cv_lib_asound_main" >&6; }
 if test "x$ac_cv_lib_asound_main" = x""yes; then :
-  AUDIO_SYSTEM=Alsa
+  AUDIO_SYSTEM=ALSA
 else
   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: can't find the ALSA library" >&5
 $as_echo "$as_me: WARNING: can't find the ALSA library" >&2;}
@@ -12402,7 +12402,7 @@ $as_echo "$as_me: WARNING: can't find the ALSA header files" >&2;}
 
 	if test "$with_jack" = yes ; then
 	       if test "$with_alsa" != yes ; then
-                 AUDIO_SYSTEM=Jack
+                 AUDIO_SYSTEM=JACK
                fi
 	fi
 
@@ -12638,7 +12638,7 @@ $as_echo "no" >&6; }
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
         else
-            AUDIO_SYSTEM=Jack
+            AUDIO_SYSTEM=JACK
 	    JACK_LIBS="-framework CoreAudio -framework CoreServices -framework AudioUnit -L/usr/local/lib -ljack -lsamplerate"
             JACK_FLAGS="-I/usr/local/include"
 	fi
