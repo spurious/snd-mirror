@@ -1253,7 +1253,7 @@ static s7_pointer our_exit(s7_scheme *sc, s7_pointer args)
    *    s7_car(args) is the 1st arg, etc 
    */
   exit(1);
-  return(s7_nil()); /* never executed, but makes the compiler happier */
+  return(s7_nil(sc)); /* never executed, but makes the compiler happier */
 }
 
 int main(int argc, char **argv)

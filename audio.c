@@ -6173,6 +6173,7 @@ char *jack_mus_audio_moniker(void)
 #define AUDIO_OK 1
 #include <sys/audio.h>
 
+
 #define RETURN_ERROR_EXIT(Error_Type, Audio_Line, Ur_Error_Message) \
   do { char *Error_Message; Error_Message = Ur_Error_Message; \
     if (Audio_Line != -1) close(Audio_Line); \
@@ -6182,18 +6183,25 @@ char *jack_mus_audio_moniker(void)
     return(MUS_ERROR); \
   } while (false)
 
-char *mus_audio_moniker(void) {return("HPUX audio");}
+
+char *mus_audio_moniker(void) 
+{
+  return("HPUX audio");
+}
+
 
 int mus_audio_open_output(int ur_dev, int srate, int chans, int format, int size)
 {
   int fd, i, dev;
   struct audio_describe desc;
+
   dev = MUS_AUDIO_DEVICE(ur_dev);
   fd = open("/dev/audio", O_RDWR);
   if (fd == -1) 
     RETURN_ERROR_EXIT(MUS_AUDIO_CANT_OPEN, -1,
 		      mus_format("can't open /dev/audio for output: %s",
 				 strerror(errno)));
+
   ioctl(fd, AUDIO_SET_CHANNELS, chans);
   if (dev == MUS_AUDIO_SPEAKERS)
     ioctl(fd, AUDIO_SET_OUTPUT, AUDIO_OUT_SPEAKER);
@@ -6201,32 +6209,41 @@ int mus_audio_open_output(int ur_dev, int srate, int chans, int format, int size
     if (dev == MUS_AUDIO_LINE_OUT)
       ioctl(fd, AUDIO_SET_OUTPUT, AUDIO_OUT_LINE);
     else ioctl(fd, AUDIO_SET_OUTPUT, AUDIO_OUT_HEADPHONE);
+
   if (format == MUS_BSHORT)
     ioctl(fd, AUDIO_SET_DATA_FORMAT, AUDIO_FORMAT_LINEAR16BIT);
   else
-    if (format == MUS_MULAW)
-      ioctl(fd, AUDIO_SET_DATA_FORMAT, AUDIO_FORMAT_ULAW);
-  else 
-    if (format == MUS_ALAW)
-      ioctl(fd, AUDIO_SET_DATA_FORMAT, AUDIO_FORMAT_ALAW);
-    else 
-      RETURN_ERROR_EXIT(MUS_AUDIO_FORMAT_NOT_AVAILABLE, fd,
-			mus_format("can't set output format to %d (%s) for %d (%s)",
-				   format, mus_audio_format_name(format),
-				   dev, 
-				   mus_audio_device_name(dev)));
+    {
+      if (format == MUS_MULAW)
+	ioctl(fd, AUDIO_SET_DATA_FORMAT, AUDIO_FORMAT_ULAW);
+      else 
+	{
+	  if (format == MUS_ALAW)
+	    ioctl(fd, AUDIO_SET_DATA_FORMAT, AUDIO_FORMAT_ALAW);
+	  else 
+	    RETURN_ERROR_EXIT(MUS_AUDIO_FORMAT_NOT_AVAILABLE, fd,
+			      mus_format("can't set output format to %d (%s) for %d (%s)",
+					 format, mus_audio_format_name(format),
+					 dev, 
+					 mus_audio_device_name(dev)));
+	}
+    }
+
   ioctl(fd, AUDIO_DESCRIBE, &desc);
   for (i = 0; i < desc.nrates; i++) 
     if (srate == desc.sample_rate[i]) 
       break;
+
   if (i == desc.nrates) 
     RETURN_ERROR_EXIT(SRATE_NOT_AVAILABLE, fd,
 		      mus_format("can't set srate to %d on %d (%s)",
 				 srate, dev, 
 				 mus_audio_device_name(dev)));
+
   ioctl(fd, AUDIO_SET_SAMPLE_RATE, srate);
   return(fd);
 }
+
 
 int mus_audio_write(int line, char *buf, int bytes)
 {
@@ -6234,11 +6251,13 @@ int mus_audio_write(int line, char *buf, int bytes)
   return(MUS_NO_ERROR);
 }
 
+
 int mus_audio_close(int line) 
 {
   close(line);
   return(MUS_NO_ERROR);
 }
+
 
 static void describe_audio_state_1(void)
 {
@@ -6246,8 +6265,10 @@ static void describe_audio_state_1(void)
   struct audio_gain gain;
   int mina, maxa, fd, tmp;
   int g[2];
+
   fd = open("/dev/audio", O_RDWR);
   if (fd == -1) return;
+
   ioctl(fd, AUDIO_GET_OUTPUT, &tmp);
   switch (tmp)
     {
@@ -6255,12 +6276,14 @@ static void describe_audio_state_1(void)
     case AUDIO_OUT_HEADPHONE: pprint("output: headphone\n"); break;
     case AUDIO_OUT_LINE:      pprint("output: line out\n"); break;
     }
+
   ioctl(fd, AUDIO_GET_INPUT, &tmp);
   switch (tmp)
     {
     case AUDIO_IN_MIKE: pprint("input: mic\n"); break;
     case AUDIO_IN_LINE: pprint("input: line in\n"); break;
     }
+
   ioctl(fd, AUDIO_GET_DATA_FORMAT, &tmp);
   switch (tmp)
     {
@@ -6268,10 +6291,13 @@ static void describe_audio_state_1(void)
     case AUDIO_FORMAT_ULAW:        pprint("format: mulaw\n"); break;
     case AUDIO_FORMAT_ALAW:        pprint("format: alaw\n"); break;
     }
+
   ioctl(fd, AUDIO_DESCRIBE, &desc);
   gain.channel_mask = (AUDIO_CHANNEL_LEFT | AUDIO_CHANNEL_RIGHT);
+
   ioctl(fd, AUDIO_GET_GAINS, &gain);
   close(fd);
+
   g[0] = gain.cgain[0].transmit_gain; 
   g[1] = gain.cgain[1].transmit_gain;
   mina = desc.min_transmit_gain;  
@@ -6280,6 +6306,7 @@ static void describe_audio_state_1(void)
 	  (float)(g[0] - mina) / (float)(maxa - mina),
 	  (float)(g[1] - mina) / (float)(maxa - mina)); 
   pprint(audio_strbuf);
+
   g[0] = gain.cgain[0].receive_gain; 
   g[1] = gain.cgain[1].receive_gain;
   mina = desc.min_receive_gain;  
@@ -6288,6 +6315,7 @@ static void describe_audio_state_1(void)
 	  (float)(g[0] - mina) / (float)(maxa - mina),
 	  (float)(g[1] - mina) / (float)(maxa - mina)); 
   pprint(audio_strbuf);
+
   g[0] = gain.cgain[0].monitor_gain; 
   g[1] = gain.cgain[1].monitor_gain;
   mina = desc.min_monitor_gain;  
@@ -6298,9 +6326,18 @@ static void describe_audio_state_1(void)
   pprint(audio_strbuf);
 }
 
-int mus_audio_initialize(void) {return(MUS_NO_ERROR);}
 
-int mus_audio_systems(void) {return(1);}
+int mus_audio_initialize(void) 
+{
+  return(MUS_NO_ERROR);
+}
+
+
+int mus_audio_systems(void) 
+{
+  return(1);
+}
+
 
 /* struct audio_status status_b;
  * ioctl(devAudio, AUDIO_GET_STATUS, &status_b)
@@ -6311,42 +6348,53 @@ int mus_audio_open_input(int ur_dev, int srate, int chans, int format, int size)
 {
   int fd, i, dev;
   struct audio_describe desc;
+
   dev = MUS_AUDIO_DEVICE(ur_dev);
   fd = open("/dev/audio", O_RDWR);
   if (fd == -1)
     RETURN_ERROR_EXIT(MUS_AUDIO_CANT_OPEN, NULL,
 		      mus_format("can't open /dev/audio for input: %s",
 				 strerror(errno)));
+
   ioctl(fd, AUDIO_SET_CHANNELS, chans);
   if (dev == MUS_AUDIO_MICROPHONE)
     ioctl(fd, AUDIO_SET_INPUT, AUDIO_IN_MIKE);
   else ioctl(fd, AUDIO_SET_INPUT, AUDIO_IN_LINE);
+
   if (format == MUS_BSHORT)
     ioctl(fd, AUDIO_SET_DATA_FORMAT, AUDIO_FORMAT_LINEAR16BIT);
   else
-    if (format == MUS_MULAW)
-      ioctl(fd, AUDIO_SET_DATA_FORMAT, AUDIO_FORMAT_ULAW);
-  else 
-    if (format == MUS_ALAW)
-      ioctl(fd, AUDIO_SET_DATA_FORMAT, AUDIO_FORMAT_ALAW);
-    else 
-      RETURN_ERROR_EXIT(MUS_AUDIO_FORMAT_NOT_AVAILABLE, fd,
-			mus_format("can't set input format to %d (%s) on %d (%s)",
-				   format, mus_audio_format_name(format),
-				   dev, 
-				   mus_audio_device_name(dev)));
+    {
+      if (format == MUS_MULAW)
+	ioctl(fd, AUDIO_SET_DATA_FORMAT, AUDIO_FORMAT_ULAW);
+      else 
+	{
+	  if (format == MUS_ALAW)
+	    ioctl(fd, AUDIO_SET_DATA_FORMAT, AUDIO_FORMAT_ALAW);
+	  else 
+	    RETURN_ERROR_EXIT(MUS_AUDIO_FORMAT_NOT_AVAILABLE, fd,
+			      mus_format("can't set input format to %d (%s) on %d (%s)",
+					 format, mus_audio_format_name(format),
+					 dev, 
+					 mus_audio_device_name(dev)));
+	}
+    }
+
   ioctl(fd, AUDIO_DESCRIBE, &desc);
   for (i = 0; i < desc.nrates; i++) 
     if (srate == desc.sample_rate[i]) 
       break;
+
   if (i == desc.nrates) 
     RETURN_ERROR_EXIT(MUS_AUDIO_SRATE_NOT_AVAILABLE, fd,
 		      mus_format("can't set srate to %d on %d (%s)",
 				 srate, dev, 
 				 mus_audio_device_name(dev)));
+
   ioctl(fd, AUDIO_SET_SAMPLE_RATE, srate);
   return(fd);
 }
+
 
 int mus_audio_read(int line, char *buf, int bytes) 
 {
@@ -7111,7 +7159,7 @@ void mus_audio_alsa_channel_info(int dev, int *info)
   info[0] = 2;
 #endif
 
-#if HAVE_ALSA
+#if HAVE_ALSA && (!MUS_JACK)
   alsa_chans(dev, info);
 #endif
 }
@@ -7187,7 +7235,7 @@ int mus_audio_alsa_device_direction(int dev)
 
 int mus_audio_device_channels(int dev)
 {
-#if HAVE_ALSA
+#if HAVE_ALSA &(!MUS_JACK)
   return(alsa_chans(dev, NULL));
 #endif
 
@@ -7205,7 +7253,7 @@ int mus_audio_device_channels(int dev)
 
 int mus_audio_compatible_format(int dev) /* snd-dac and sndplay */
 {
-#if HAVE_ALSA || HAVE_JACK_IN_LINUX
+#if HAVE_ALSA && (!MUS_JACK)
   int err, i;
   int ival[32];
   err = alsa_formats(dev, 32, ival);
