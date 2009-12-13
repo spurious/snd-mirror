@@ -6991,7 +6991,11 @@ int mus_audio_initialize(void)
 }
 
 
-int mus_audio_systems(void) {return(1);}
+int mus_audio_systems(void) 
+{
+  return(1);
+}
+
 
 char *mus_audio_moniker(void) 
 {
