@@ -2965,7 +2965,6 @@ noise-making instrument: <a href="#noisedoc">noise.scm, noise.rb</a><br>
 physical modeling of noisy instruments: <a href="#maracadoc">maraca.scm, maraca.rb</a><br>
 arbitrary distribution via rejection method: <a href="#anyrandom">any-random</a><br>
 CL: random, *random-state*, make-random-state*: random number between 0 and arg, arg can't be 0!<br>
-Guile: random, *random-state*, seed-&gt;random-state: random number between 0 and arg, arg can't be 0!<br>
 Ruby: kernel_rand (alias for Ruby's rand), srand: random integer between 0 and arg, or float between 0 and 1<br>
 <a href="sndclm.html#mus-random">mus-random, mus_random</a>: random float between -arg and arg<br>
 mus-rand-seed (settable)<br>
@@ -4754,26 +4753,6 @@ See also remove-single-sample-clicks and remove-pops in clean.scm.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
-<!-- snd-out -->
-<tr><td colspan=2 bgcolor="#f2f4ff">
-<em class=emdef>snd-out</em>
-</td></tr><tr><td></td><td>
-A minor irritation in the current Guile system is that it's "display" function
-writes to 'current-output-port', but there's no simple way to redirect that
-elsewhere.  So, if your code calls display, the result may be invisible.
-One way around this is to reset the current-output-port to be a soft port
-that actually calls <a href="extsnd.html#sndprint">snd-print</a> instead:
-<pre>
-    (set-current-output-port snd-out) ; snd-out is a soft port sending stuff to the listener
-</pre>
-To return to the standard display behaviour:
-<pre>
-    (set-current-output-port stdout) ; stdout was saved at load time
-</pre>
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-
 <!-- sounds->segment-data -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
 <a class=def NAME="soundstosegmentdata">sounds-&gt;segment-data</A> <code>(main-dir (output-file "sounds.data"))</code>
@@ -5954,7 +5933,7 @@ These variables may need to be customized to fit your system:
 </p>
 <pre>
 inf-snd-ruby-program-name   "snd-ruby"    Snd-Ruby program name
-inf-snd-scheme-program-name "snd-guile"   Snd-Scheme program name using Guile
+inf-snd-scheme-program-name "snd-s7"      Snd-Scheme program name using s7
 inf-snd-forth-program-name  "snd-forth"   Snd-Forth program name
 inf-snd-working-directory   "~/"          where Ruby or Scheme scripts reside
 inf-snd-index-path          "~/"          path to snd-xref.c
@@ -7265,9 +7244,7 @@ changes the mix pitch if you drag the note up or down.
 <p>nb.scm provides popup help for files in the View:Files dialog.  As you move
 the mouse through the file list, the help dialog posts information about the file
 underneath the mouse.  This uses a slightly fancier file information procedure
-than <a href="#finfo">finfo</a> in examp.scm.  If you have the guile-gdbm package, you can use
-its database procedures to associate arbitrary information with files which
-is posted along with the header info:
+than <a href="#finfo">finfo</a> in examp.scm. 
 </p>
 <!-- main-index |nbdoc:file database -->
 
@@ -7280,8 +7257,6 @@ is posted along with the header info:
 <p>nb adds 'note' to the info associated with a file: <code>(nb "test.snd" "test's info")</code>.
 unb erases any info pertaining to a file: <code>(unb "test.snd")</code>.
 prune-db removes any info associated with defunct files.
-nb.scm works fine without guile-gdbm; to load
-guile-gdbm, set the variable 'use-gdbm' to #t.
 The Ruby version of nb (written by Mike Scholz) has several other features &mdash; see nb.rb
 for details.
 </p>

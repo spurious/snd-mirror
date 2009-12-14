@@ -1503,9 +1503,6 @@ var oscope_doc_tip = "oscope.scm sets up a dialog with a Snd channel window<br>"
                      " (time domain, fft etc) that displays data read from the<br>" +
                      " microphone in real time.";
 
-var peak_env_doc_tip = "This saves the overall amplitude envelopes for a given sound so<br>" +
-                       " that a subsequent re-open of the sound can display the full waveform quickly.";
-
 var piano_doc_tip = "Scott van Duyne's piano model that includes multiple coupled strings,<br>" +
                     " a nonlinear hammer, and an arbitrarily large soundboard and enclosure";
 
@@ -1581,8 +1578,6 @@ var scheme_format_tip = "<code>(format destination control-string :rest args)</c
                         "<code>(format #f \"A: ~A, D: ~D, F: ~F~%\" (make-vct 2 3.14) 32 1.5)</code><br><br>" +
                         "produces:<br><br>" +
                         "<code>\"A: #&lt;vct[len=2]: 3.140 3.140&gt;, D: 32, F: 1.5<br>" +
-                        "\"</code><br>" +
-                        "format is not defined by Scheme, so in Guile you need to <code>(use-modules (ice-9 format))</code><br>" +
-                        "For full details, see the Common Lisp documentation, or possibly srfi-29";
+                        "\"</code>.";
 
 var scheme_reset_hook_tip = "<code>(reset-hook! hook)</code>: removes all functions from 'hook'.";

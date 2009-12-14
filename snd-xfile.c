@@ -1319,7 +1319,7 @@ static file_dialog_info *make_file_dialog(read_only_t read_only, char *title, ch
   fd->info1 = XtVaCreateManagedWidget("", xmLabelWidgetClass, rc2, XmNbackground, ss->sgx->highlight_color, NULL);
   fd->info2 = XtVaCreateManagedWidget("", xmLabelWidgetClass, rc2, XmNbackground, ss->sgx->highlight_color, NULL);
 
-#if 0
+#if WITH_FILER_GRAPH
   {
     Widget grf_drawer, grf_frame, grf_form;
 

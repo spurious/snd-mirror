@@ -23,9 +23,6 @@ The configure script has a bunch of arguments:
      --with-ruby               use Ruby as the extension language
        --with-ruby-prefix      set location of Ruby
   
-     --with-guile              use Guile; the path to guile-config
-                                 can be set via GUILE_CONFIG_path (see examples below).
-  
      --with-forth              use Forth (Mike Scholz's FTH) as the extension language.
   
 
@@ -124,8 +121,8 @@ If the configure/make process fails, please send me
 (bil@ccrma.stanford.edu) the files mus-config.h, config.log, and makefile,
 created (or updated) by configure.
 
-Snd comes with s7, so if you don't have Guile, Ruby, or 
-Forth, you can use s7.  If you insist on building Snd without any extension 
+Snd comes with s7, but
+if you insist on building Snd without any extension 
 language, you'll find that it's severely limited in what it can do.  
 Snd can also be built without any graphics toolkit.  Without either the GUI 
 or an extension language, however, there's nothing it can do.
@@ -142,7 +139,6 @@ Version info:
   if Gtk, then Gtk+ 2.0.0 or later
   if Motif, then Motif 2.n but not Lesstif
   in Linux, if ALSA, then ALSA 1.0 or later (or any version of OSS)
-  if Guile, Guile 1.5.0 through 1.8.n (not 1.9.n or later)
   if Ruby, Ruby 1.8.0 or later.  
   if Forth, any version
   if S7, any version
@@ -153,7 +149,7 @@ Version info:
 
 ----------------------------------------------------------------
 
-The customization/extension languages are either s7 (included), Guile, Ruby, or Forth.
+The customization/extension languages are either s7, Ruby, or Forth.
 
 Much of Snd's functionality is loaded as needed from the Scheme, Ruby, or Forth
 files found in the tarball (*.scm, *.rb, and *.fs).  You can run Snd without 
@@ -170,7 +166,6 @@ never have to think about it again.  In the other languages:
 
 Ruby:   $LOAD_PATH.push("/home/bil/cl")
 Forth:  "/home/bil/cl" add-load-path
-Guile:  (set! %load-path (cons "/home/bil/cl" %load-path))
 
 ----------------------------------------------------------------
 
@@ -563,38 +558,6 @@ that comes with Redhat 7.0 doesn't include any of the complex
 trig package?  If GSL is used at all (it is only needed if your
 C compiler/libraries don't support complex trig), then Snd needs 
 GSL 0.8 or later.
-
-
----- Guile: ---- 
-
-Guile versions 1.9.0 and beyond are not really usable.  I will eventually remove
-Guile support.
-
-If you're running Guile 1.4 and get:
-    Syntax error in fixed argument declaration.
-you've hit a use of the newer (Guile 1.5) optargs syntax.  To get around
-this, load fix-optargs.scm before anything else.
-
-Finally, if you installed Guile from an RPM file, you may also need
-to install the guile-devel package.  Otherwise the configure process
-will say it can't find Guile (actually guile-config).
-
-
----- Sun ----
-
-If the make process complains about lt_dlclose and friends, add -lltdl
-to the XEN_LIBS list in makefile.  The --with-gl and --with-just-gl
-switches are not recommended on the Sun, though they work; the
-colormap of the entire system is hijacked while Snd is running.
-
-Perhaps simplest is to get the package through blastwave:
-
-    pkg-get -i snd
-
-http://www.blastwave.org/packages/snd 
-http://www.blastwave.org 
-http://www.blastwave.org/howto.html
-
 
 
 ---- Mac OSX: ---- 

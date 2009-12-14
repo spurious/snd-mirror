@@ -258,21 +258,21 @@ To override the local init file, use -noinit.
 <p>
 The initialization files particular to a given extension language have names such as ~/.snd_s7
 and ~/.snd_prefs_ruby.  Currently the possibilities are:
-~/.snd_prefs_guile|ruby|forth|s7, /etc/snd_guile|ruby|forth|s7.conf,
-~/.snd_guile|ruby|forth|s7 (the notation "guile|ruby|forth" means either "guile" or "ruby" or "forth", so the file names
-spelled out completely are "/etc/snd_guile.conf", "/etc/snd_ruby.conf", etc; which one is loaded
+~/.snd_prefs_ruby|forth|s7, /etc/snd_ruby|forth|s7.conf,
+~/.snd_ruby|forth|s7 (the notation "ruby|forth" means either "guile" or "ruby" or "forth", so the file names
+spelled out completely are "/etc/snd_ruby.conf", etc; which one is loaded
 obviously depends on which language you chose during configuration).  
 The save-options (preferences dialog) process writes to
-.snd_prefs_* which is loaded first, if it exists; then Snd looks for .snd_* (s7, guile, ruby, or forth);
+.snd_prefs_* which is loaded first, if it exists; then Snd looks for .snd_* (s7, ruby, or forth);
 then .snd.  If you're always using just one version of Snd, it's simplest to stick with
 .snd.  The actual load sequence is:
 </p>
 <pre>
-    /etc/snd_guile|ruby|forth|s7.conf    (these two canceled by -noglob)
+    /etc/snd_ruby|forth|s7.conf    (these two canceled by -noglob)
     /etc/snd.conf               
-    ~/.snd_prefs_guile|ruby|forth|s7     (the rest canceled by -noinit)
-    ~/.snd_guile|ruby|forth|s7
-    ~/.snd                               (also SND_INIT_FILE_ENVRIONMENT_NAME)
+    ~/.snd_prefs_ruby|forth|s7     (the rest canceled by -noinit)
+    ~/.snd_ruby|forth|s7
+    ~/.snd                         (also SND_INIT_FILE_ENVRIONMENT_NAME)
 </pre>
 
 <p> 
@@ -798,7 +798,7 @@ latter are (configure --help):
 <tr><td></td><td>--with-static-xm</td><td></td><td>include the xm module at build time; this is easier than trying to dynamically load xm.so</td></tr>
 <tr><td></td><td>--with-static-xg</td><td></td><td>include the xg module at build time; this is easier than trying to dynamically load xg.so</td></tr>
 <tr><td></td><td>--with-gl</td><td></td><td>include OpenGL support (spectrogram, etc, Motif only)</td></tr>
-<tr><td></td><td>--with-just-gl</td><td></td><td>include OpenGL support, but omit the GL/s7/Guile/Ruby/Forth bindings (Motif only)</td></tr>
+<tr><td></td><td>--with-just-gl</td><td></td><td>include OpenGL support, but omit the GL/s7/Ruby/Forth bindings (Motif only)</td></tr>
 <tr><td></td><td>--with-gl2ps</td><td></td><td>include gl2ps (GL to Postscript code, Motif only)</td></tr>
 <tr><td></td><td>--with-editres</td><td></td><td>include editres in xm (default: no)</td></tr>
 <tr><td></td><td>--with-xpm</td><td></td><td>use xpm, default: yes</td></tr>
@@ -1359,6 +1359,8 @@ It's also possible to load sndlib into cm.  Here's a note from Rick:
 
 <br><br>
 <table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndwithpd">Snd and Pd</a></h3></td></tr></table>
+
+<!-- TODO: does this depend on Guile? -->
 
 <p>Snd can be built to be used as a Pd "external".  Use the --with-snd-as-pd-external switch, and make sure
 the configure script can find a Guile compiled with "--with-threads" and "--enable-static". 
@@ -2099,9 +2101,34 @@ want anything to work, stick to guile versions before 1.9.0.  Eventually I will 
 </p>
 
 <p>
-The Snd/Guile initialization file is ~/.snd_guile.
+Since this is a big change in Snd, I feel like I should look back and try to
+explain what went awry.  When I started Snd, I hoped to use emacs as the
+listener, and emacs lisp as the extension language.  I was in the midst of
+trying to extract emacs lisp from emacs when someone mentioned guile.
+At that time I would have perferred a language closer to Common Lisp,
+but there were none I could embed in Snd.  I read through the guile
+mail archives, and was impressed by Jim Blandy, at that time the head of
+guile.  So I abandoned emacs lisp, and embedded guile.  But several years
+later, Jim Blandy left guile (he now has his own Scheme named Minor),
+and guile's new leader was a disaster.  Guile became comatose, and the
+guile forums became (in my view) ever more hostile.  I tried to
+escape to Gauche, but then that project chose to go toward a compiler,
+and abandoned embedded language support.  I reached a point where
+guile was severely hampering my work.  I wanted solid multithreading
+(for with-sound in CLM primarily), and guile's was a morass of
+bugs.  Since guile code was famously unreadable, it was impossible
+to find these bugs in any reasonable time.  I also wanted multiprecision
+floats for my own research interests, but I had no hope of getting guile's
+developers to accept that.  Although guile finally got a new, infinitely better leader,
+the project chose to go in two directions I did not like.  First, it chose
+to move toward r6rs which I consider unspeakably ugly, and second it made
+a compiler its main goal.  The latter wrecked the run macro because it (run)
+needs to be able to look into the current environment.  So, I saw
+no way out except to find or write a new extension language.  The list
+of things I looked at is in snd-xen.c.  As you can see, that list
+ends with TinyScheme.  As soon as I saw it, I knew I could make it
+into a "real" scheme that I could use indefinitely: s7.
 </p>
-
 
 <br><br>
 

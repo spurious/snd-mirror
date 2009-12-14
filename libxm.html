@@ -26,12 +26,12 @@
 </td></tr></table>
 
 <br>
-<p>libxm provides s7, Guile, Ruby, and Forth (fth) bindings for Xlib, Xt, Xp, Xpm, and Xm (Motif);
+<p>libxm provides s7, Ruby, and Forth (fth) bindings for Xlib, Xt, Xp, Xpm, and Xm (Motif);
 or alternatively (under the name libxg) Gtk, gdk, gdk-pixbuf, pango, cairo, and some of glib;
 and much of OpenGL.
 You can build it with just X, and so on &mdash; see README.libxm for details.
 There are several example files in the libxm package &mdash; anything with
-the extension "scm", "rb", or "fs".  libxm can be used directly with s7, Guile, Ruby, or Forth,
+the extension "scm", "rb", or "fs".  libxm can be used directly with s7, Ruby, or Forth,
 providing a graphical user-interface for scripts.
 </p>
 <p>
@@ -62,47 +62,7 @@ structs are accessed by the field name and the lisp variable (which contains the
 (.pixel color) for example, or (.foreground gcvalue);
 blank structs, where needed, can be created via (Name) &mdash; (XColor) or (XGCValues) for example.
 </p>
-<p>
-You can use libxm directly in guile.  Here is an example script:
-</p>
-<pre>
-#!/usr/local/bin/guile -s
-!#
 
-(let ((libxm (dynamic-link "libxm.so")))
-  (dynamic-call (dynamic-func "Init_libxm" libxm) #f))
-
-(let* ((shell-app (XtVaOpenApplication 
-		    "Test" 0 '() applicationShellWidgetClass
-		    (list XmNallowShellResize #t)))
-       (app (cadr shell-app))
-       (shell (car shell-app))
-       (black (BlackPixelOfScreen 
-		(DefaultScreenOfDisplay 
-		  (XtDisplay shell)))))
-  (if (not (XtIsApplicationShell shell))
-      (display "not appshell"?))
-  (XtSetValues shell (list XmNtitle "Hi!"))
-  (let* ((main-pane 
-	  (XtVaCreateManagedWidget 
-	    "main-pane" xmFormWidgetClass shell
-	    (list XmNforeground       black
-		  XmNtopAttachment    XmATTACH_FORM
-		  XmNbottomAttachment XmATTACH_FORM
-		  XmNleftAttachment   XmATTACH_FORM
-		  XmNrightAttachment  XmATTACH_FORM
-		  XmNallowResize      #t)))
-	 (button (XtCreateManagedWidget 
-		   "push me" xmPushButtonWidgetClass main-pane '() 0)))
-    (XtAddCallback button XmNactivateCallback 
-		    (lambda (widget context event-info)
-		      (display widget)
-		      (display (.reason event-info))
-		      (display context))
-		    123)
-    (XtRealizeWidget shell)
-    (XtAppMainLoop app)))
-</pre>
 <p>To use libxm from some existing program, you need only
 export the caller's XtAppContext and main shell widget (mainly to
 get the Display variable).  In Snd, the g_main_widgets procedure
@@ -124,19 +84,9 @@ and macros.
 popup.rb, effects.rb, snd-xm.rb,
 and snd-test.scm in the Snd tarball. There is
 also some further discussion of this stuff in Snd's grfsnd.html (Ruby examples,
-etc).  Here's a version of "hello world":
+etc).  
 </p>
 <pre>
-#!/usr/local/bin/guile -s
-!#
-
-(use-modules (ice-9 optargs))
-
-(let ((libxg (dynamic-link "libxg.so")))
-  (dynamic-call (dynamic-func "init_xg" libxg) #f))
-
-;;; translation of /usr/share/doc/gtk2-devel-2.0.6/examples/helloworld/helloworld.c
-
 (gtk_init 0 #f)
 (let ((window (gtk_window_new GTK_WINDOW_TOPLEVEL)))
   (g_signal_connect window "delete_event" 

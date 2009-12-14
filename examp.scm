@@ -1692,29 +1692,6 @@ this clock, set retitle-time to 0"
 
 
 
-;;; -------- how to get 'display' to write to Snd's listener in Guile (not s7)
-;;;
-;;; scheme's display function writes to current-output-port which defaults to stdout.
-;;; This is a bit annoying since we'd like everything to go to the listener in many cases
-;;; so, to bring that about we need to define our own "soft-port" as follows:
-
-(define stdout (current-output-port)) ;save it in case we want to go back to it
-(define snd-out
-  (make-soft-port
-   (vector                      ;soft port is a vector of procedures:
-    (lambda (c) (snd-print c))  ;  procedure accepting one character for output 
-    (lambda (s) (snd-print s))  ;  procedure accepting a string for output 
-    (lambda () #f)              ;  thunk for flushing output (not needed here)
-    #f                          ;  thunk for getting one character (also not needed)
-    (lambda () #f))             ;  thunk for closing port -- hmm should this go back to the previous?
-   "w"))
-
-;(set-current-output-port snd-out)
-
-;;; Perhaps this should be built-in, allowing us to merge snd-help and help etc.
-
-
-
 ;;; -------- filtered-env 
 
 (define* (filtered-env e :optional snd chn)

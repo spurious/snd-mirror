@@ -3327,8 +3327,8 @@ vct-copy returns a copy of the vct 'v'.
 <blockquote><small>
 <br>
 copy file: in Scheme: copy-file, in Ruby: File.copy or File.syscopy<br>
-copy string: in Guile or Forth: string-copy<br>
-copy list: in Guile or Forth: list-copy or copy-tree<br>
+copy string: in Forth: string-copy<br>
+copy list: in Forth: list-copy or copy-tree<br>
 copy vct: <a href="#vctcopy">vct-copy</a>, <a href="#vcttovector">vct-&gt;vector</a>, <a href="sndscm.html#vcttoframe">vct-&gt;frame</a><br>
 copy mix: <a href="sndscm.html#mixtovct">mix-&gt;vct</a><br>
 copy sampler: <a href="#copysampler">copy-sampler</a><br>
@@ -3340,7 +3340,6 @@ copy transform data: <a href="#transformtovct">transform-&gt;vct</a><br>
 copy sound-data: <a href="#sounddatatovct">sound-data-&gt;vct</a><br>
 copy a frame: <a href="sndscm.html#framecopy">frame-copy</a>, <a href="sndscm.html#frametovct">frame-&gt;vct</a><br>
 copy vector: <a href="#vectortovct">vector-&gt;vct</a><br>
-copy random state: Guile: copy-random-state, or use <a href="sndclm.html#mus-rand-seed">mus-rand-seed</a><br>
 <br>
 </small></blockquote>
 </td></tr></TABLE>
@@ -8398,7 +8397,7 @@ reverse block-wise: <a href="sndscm.html#reversebyblocks">reverse-by-blocks and 
 reverse via FFT: <a href="#sillyreverse">silly-reverse</a><br>
 reverse order of channels: <a href="#reversechannels">reverse-channels</a><br>
 reverse a list: reverse and reverse!<br>
-reverse a string: in Guile or Forth: string-reverse, in Ruby: reverse<br>
+reverse a string: in Forth: string-reverse, in Ruby: reverse<br>
 reverse a vct: <a href="#vctreverse">vct-reverse!</a><br>
 reverse a frame: <a href="sndscm.html#framereverse">frame-reverse</a><br>
 <br>
@@ -12312,8 +12311,7 @@ exit back to the top level, (break-exit):
 <code><a class=def name="cgp">c-g?</a> ()</code>
 </td></tr><tr><td></td><td>
 This checks for C-g to interrupt an on-going computation, and let other UI 
-events through.  c-g? is especially useful in loops; we can define our own safe 'while' loop as follows
-(this is a slight revision of Guile's while macro from ice-9/boot-9.scm):
+events through.  c-g? is especially useful in loops; we can define our own safe 'while' loop as follows:
 
 <table border=0 cellpadding=5 vspace=10><tr><td><pre>
 (defmacro safe-while (cond . body)
@@ -12904,34 +12902,6 @@ The variable *error-info* has additional info.  You can also trace functions, an
 place breakpoints.  See <a href="s7.html">s7.html</a> for further details.
 </p>
 
-
-<br>
-<table width="50%" border=0><tr><td bgcolor="EEFDEE" valign="middle"><h4>Guile debugging</h4></td></tr></table>
-
-<p>There are a variety of debugging aids supplied by Guile, including
-a backtrace facility.  To be sure all Guile's debugging support
-code is loaded,
-</p>
-<pre>
-  (use-modules (ice-9 debug))
-</pre>
-<p>
-To get backtraces,
-</p>
-<pre>
-    (read-enable 'positions)
-    (debug-enable 'debug 'backtrace)
-</pre>
-<p>If you're getting a stack overflow, and you're sure it's not a case
-of infinite recursion,
-</p>
-<pre>
-    (debug-set! stack 0)
-</pre>
-<p>turns off the (very conservative) stack overflow check.  If for some reason the
-backtrace information doesn't include a file name or line number, you can watch the
-load process by setting <b>%load-verbosely</b> to #t.
-</p>
 
 <br>
 <table width="50%" border=0><tr><td bgcolor="EEFDEE" valign="middle"><h4>Forth debugging</h4></td></tr></table>

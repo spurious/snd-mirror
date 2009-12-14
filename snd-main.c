@@ -1690,7 +1690,7 @@ static XEN g_set_peak_env_dir(XEN val)
       if (peak_env_dir(ss)) free(peak_env_dir(ss));
       set_peak_env_dir(NULL);
     }
-  return(C_TO_XEN_STRING(temp_dir(ss)));
+  return(C_TO_XEN_STRING(peak_env_dir(ss)));
 }
 
 

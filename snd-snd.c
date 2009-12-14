@@ -2338,6 +2338,10 @@ void call_sp_watchers(snd_info *sp, sp_watcher_t type, sp_watcher_reason_t reaso
 
 /* this is my long term plan right now... */
 
+/* first move several functions from the extension language into C (next thing to move: "current-window-display")
+ *   and make a few GUI improvements.  Then...
+ */
+
 /* generics (besides length, srate, channels, frames, file-name, sync, maxamp, play, copy, fill!, [apply], [set!], [for-each], [map]):
  *
  *             source:         procedure-source[s7_procedure_source] mix-home mark-home region-home player-home sampler-home
@@ -5399,6 +5403,8 @@ The 'choices' are 0 (apply to sound), 1 (apply to channel), and 2 (apply to sele
 }
 
 
+/* ---------------------------------------- peak env files ---------------------------------------- */
+
 static int pack_env_info_type(void)
 {
   /* put data description in peak-env info file (in case user opens it from incompatible machine) */
@@ -5448,7 +5454,6 @@ void delete_peak_env_info_file(chan_info *cp)
 #define PEAK_ENV_INTS 5
 #define PEAK_ENV_SAMPS 2
 
-/* TODO: snd-test peak-env-dir, also check by hand turning it off and on */
 
 bool write_peak_env_info_file(chan_info *cp)
 {
@@ -5601,7 +5606,8 @@ const char *read_peak_env_info_file(chan_info *cp)
   return(NULL);
 }
 
-static XEN g_env_info_to_vcts(peak_env_info *ep, int len)
+
+static XEN g_peak_env_info_to_vcts(peak_env_info *ep, int len)
 {
   /* changed 5-Jan-03 to return vcts (Guile vector printer is stupid) */
   /* in snd-test this causes unfreed memory because the sound-icon-box saves all the data for each icon (vcts unfreed) */
@@ -5654,7 +5660,6 @@ static XEN g_env_info_to_vcts(peak_env_info *ep, int len)
 }
 
 
-
 #if (!USE_NO_GUI)
 typedef struct {
   chan_info *cp;
@@ -5681,7 +5686,7 @@ static idle_func_t tick_it(any_pointer_t pet)
 	{
 	  int loc;
 	  XEN peak;
-	  peak = g_env_info_to_vcts(cp->edits[0]->peak_env, et->len);
+	  peak = g_peak_env_info_to_vcts(cp->edits[0]->peak_env, et->len);
 	  loc = snd_protect(peak);
 	  XEN_CALL_3(et->func,
 		     et->filename,
@@ -5748,7 +5753,7 @@ If 'filename' is a sound index or a sound object, 'size' is interpreted as an ed
 	  ep = cp->edits[pos]->peak_env; /* this can be null -- we run the peak envs if necessary */
 	  if ((ep) &&
 	      (ep->completed))
-	    return(g_env_info_to_vcts(ep, ep->peak_env_size));
+	    return(g_peak_env_info_to_vcts(ep, ep->peak_env_size));
 
 	  /* force amp env to completion */
 	  stop_peak_env(cp);
@@ -5759,7 +5764,7 @@ If 'filename' is a sound index or a sound object, 'size' is interpreted as an ed
 	      es = free_env_state(es);
 	      ep = cp->edits[pos]->peak_env;
 	      if (ep)
-		return(g_env_info_to_vcts(ep, ep->peak_env_size));
+		return(g_peak_env_info_to_vcts(ep, ep->peak_env_size));
 	    }
 	  return(XEN_EMPTY_LIST);
 	}
@@ -5786,7 +5791,7 @@ If 'filename' is a sound index or a sound object, 'size' is interpreted as an ed
 	  if (cp->edits[0]->peak_env)
 	    {
 	      if (fullname) free(fullname);
-	      return(g_env_info_to_vcts(cp->edits[0]->peak_env, len));
+	      return(g_peak_env_info_to_vcts(cp->edits[0]->peak_env, len));
 	    }
 	}
       else
@@ -5828,7 +5833,7 @@ If 'filename' is a sound index or a sound object, 'size' is interpreted as an ed
 	      if (ep)
 		{
 		  XEN vcts;
-		  vcts = g_env_info_to_vcts(ep, len);
+		  vcts = g_peak_env_info_to_vcts(ep, len);
 		  ep = free_peak_env_info(ep);
 		  if (peakname) free(peakname);
 		  if (fullname) free(fullname);
@@ -5870,7 +5875,7 @@ If 'filename' is a sound index or a sound object, 'size' is interpreted as an ed
 #endif
 	  while (!(tick_peak_env(cp, es))) {};
 	  es = free_env_state(es);
-	  peak = g_env_info_to_vcts(cp->edits[0]->peak_env, len);
+	  peak = g_peak_env_info_to_vcts(cp->edits[0]->peak_env, len);
 	}
       cp->active = CHANNEL_INACTIVE;
       completely_free_snd_info(sp);
@@ -5878,6 +5883,8 @@ If 'filename' is a sound index or a sound object, 'size' is interpreted as an ed
     }
   return(XEN_FALSE);
 }
+
+/* -------------------------------------------------------------------------------- */
 
 
 static XEN g_start_progress_report(XEN snd, XEN chn)
