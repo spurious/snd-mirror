@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Tue Mar 18 00:18:35 CET 2003
-# Changed: Thu Oct 15 00:29:14 CEST 2009
+# Changed: Tue Dec 08 22:32:24 CET 2009
 
 # Commentary:
 #
@@ -248,7 +248,7 @@ pans a mono sound following its enved envelope into a stereo sound")
     bufsize = 256
     data = make_sound_data(2, bufsize)
     bytes = bufsize * 4
-    audio_fd = mus_audio_open_output(Mus_audio_default, srate(snd), 2, Mus_lshort, bytes)
+    audio_fd = mus_audio_open_output(0, srate(snd), 2, Mus_lshort, bytes)
     samp = 0
     len = frames(snd, 0)
     if audio_fd != -1

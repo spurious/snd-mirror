@@ -2,7 +2,7 @@
 
 # Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Fri Apr 22 23:36:39 CEST 2005
-# Changed: Thu Nov 26 18:19:16 CET 2009
+# Changed: Tue Dec 08 22:30:20 CET 2009
 
 # Commentary:
 #
@@ -32,23 +32,9 @@ def open_play_output(out_chans = 1,
     $mus_error_hook.add_hook!(get_func_name) do |type, msg| true end
   end
   audio_fd = Snd.catch(:all, -1) do
-    mus_audio_open_output(Mus_audio_default, out_srate, out_chans, out_format, out_bufsize * 2)
+    mus_audio_open_output(0, out_srate, out_chans, out_format, out_bufsize * 2)
   end.first
   if no_error then $mus_error_hook.remove_hook!(get_func_name) end
-  if audio_fd == -1
-    vals = Vct.new(32)
-    mus_audio_mixer_read(Mus_audio_default, Mus_audio_format, 32, vals)
-    out_format = vals[1].to_i
-    mus_audio_mixer_read(Mus_audio_default, Mus_audio_channel, 32, vals)
-    out_chans = vals[0].to_i
-    err = mus_audio_mixer_read(Mus_audio_default, Mus_audio_samples_per_channel, 2, vals)
-    if err != -1 then out_bufsize = vals[0].to_i end
-    bps = mus_bytes_per_sample(out_format)
-    out_bytes = bps * out_bufsize * out_chans
-    audio_fd = Snd.catch(:all, -1) do
-      mus_audio_open_output(Mus_audio_default, out_srate, out_chans, out_format, out_bufsize * 2)
-    end.first
-  end
   if audio_fd != -1 then set_dac_size(out_bufsize) end
   [audio_fd, out_chans, out_bufsize]
 end
@@ -142,7 +128,7 @@ def loop_between_marks(m1, m2, bufsize)
   all_data = samples2sound_data
   audio_data = SoundData.new(1, bufsize)
   bytes = 2 * bufsize
-  audio_fd = mus_audio_open_output(Mus_audio_default, srate, 1, Mus_lshort, bytes)
+  audio_fd = mus_audio_open_output(0, srate, 1, Mus_lshort, bytes)
   if audio_fd != -1
     until c_g?
       bufsize.times do |i|
@@ -204,7 +190,7 @@ def vector_synthesis(files, read_even_when_not_playing, &driver)
     locs = Array.new(files_len, 0)
     current_file = 0
     reading = true
-    if (out_port = mus_audio_open_output(Mus_audio_default, sr, chns, Mus_lshort, bufsize * 2)) < 0
+    if (out_port = mus_audio_open_output(0, sr, chns, Mus_lshort, bufsize * 2)) < 0
       Snd.raise(:snd_error, "can\'t open audio port! %s", out_port)
     else
       pframes = Array.new(files_len) do |i| mus_sound_frames(files[i]) end

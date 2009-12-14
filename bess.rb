@@ -1,32 +1,34 @@
-#!/usr/bin/env ruby -wd
+#!/usr/local/bin/ruby -wd
 # bess -- Translation of Bill Schottstaedt's bess.scm to Ruby.
 
-# Copyright (C) 2002--2006 Michael Scholz
+# Copyright (c) 2002--2009 Michael Scholz <mi-scholz@users.sourceforge.net>
+# All rights reserved.
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+# SUCH DAMAGE.
 
-# Author: Michael Scholz <mi-scholz@users.sourceforge.net>
-# Created: Sun Sep 15 19:11:12 CEST 2002
-# Changed: Fri Jul 06 01:53:45 CEST 2007
-# Keywords: dac, sound, snd, clm
+begin require 'rubygems' rescue LoadError end
 
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2 of the License, or
-# (at your option) any later version.
-
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
-
-# Code:
-
-rcsid = "$Id: bess.rb,v 1.9 2007/07/05 23:54:46 mike Exp $"
 file = File.basename __FILE__
-banner = "This is #{file.upcase} v#{rcsid.split(' ')[2]}, (C) 2002--2006 Michael Scholz"
+banner = "This is #{file.upcase} v1.9, (C) 2002--2009 Michael Scholz"
 
 def warn(*args)
   str = format(*args) << ($! ? ": #{$!}" : "") << "\n"
@@ -111,7 +113,7 @@ Usage: #{file} [ options ] [ -- X options ]
    -h, --help               display this help message and exit
 
 Example: #{file} -pf1000 -r3 -b ivory1 -s ivory3"
-    require "getoptlong"
+    rbm_require "getoptlong"
     GetoptLong.new(["--play", "-p", GetoptLong::NO_ARGUMENT],
                    ["--frequency", "-f", GetoptLong::REQUIRED_ARGUMENT],
                    ["--index1", "-i", GetoptLong::REQUIRED_ARGUMENT],
@@ -297,7 +299,7 @@ Example: #{file} -pf1000 -r3 -b ivory1 -s ivory3"
     end
     proc = nil
     data = make_sound_data(@chans, @bufsize)
-    port = mus_audio_open_output(Mus_audio_default, @srate, @chans, Mus_lshort, @bufsize * 2)
+    port = mus_audio_open_output(0, @srate, @chans, Mus_lshort, @bufsize * 2)
     die("Can't open DAC!") if port < 0
     RXmAddWMProtocolCallback(@shell_app[0],
                              RXmInternAtom(RXtDisplay(@shell_app[0]), "WM_DELETE_WINDOW", false),
@@ -365,14 +367,14 @@ class Bess
   end
 
   def ffm
-    run_ffm(@amp, @play, @freq, @fm_index1, @fm_index2, @fm_index3,
-            @fm_ratio1, @fm_ratio2, @fm_ratio3, @osc, @md1, @md2, @md3)
+    ffm_c(@amp, @play, @freq, @fm_index1, @fm_index2, @fm_index3,
+          @fm_ratio1, @fm_ratio2, @fm_ratio3, @osc, @md1, @md2, @md3)
   end
 
-  require 'inline'
+  rbm_require 'inline'
   include Inline
-  def run_ffm(*args)
-  prelude = %Q{
+  inline do |ffm_c|
+    fft_c.c "
 #include <sndlib.h>
 #include <clm.h>
   
@@ -383,33 +385,31 @@ typedef struct {
     void *input_ptree;
 } mus_xen;
   
-#define RSNDGEN(obj) (mus_any *)(((mus_xen *)(DATA_PTR(obj)))->gen)
-}
-    inline args, prelude, %Q{
-    int i = 0;
-    float amp = NUM2DBL(argv[i++]);
-    float play = NUM2DBL(argv[i++]);
-    float freq = NUM2DBL(argv[i++]);
-    float fm_index1 = NUM2DBL(argv[i++]);
-    float fm_index2 = NUM2DBL(argv[i++]);
-    float fm_index3 = NUM2DBL(argv[i++]);
-    float fm_ratio1 = NUM2DBL(argv[i++]);
-    float fm_ratio2 = NUM2DBL(argv[i++]);
-    float fm_ratio3 = NUM2DBL(argv[i++]);
-    mus_any *osc = RSNDGEN(argv[i++]);
-    mus_any *md1 = RSNDGEN(argv[i++]);
-    mus_any *md2 = RSNDGEN(argv[i++]);
-    mus_any *md3 = RSNDGEN(argv[i++]);
-    return rb_float_new(amp * play * mus_oscil(osc, mus_hz2radians(freq) +
-       fm_index1 * mus_oscil(md1, mus_hz2radians(fm_ratio1 * freq), 0.0) +
-       fm_index2 * mus_oscil(md2, mus_hz2radians(fm_ratio2 * freq), 0.0) +
-       fm_index3 * mus_oscil(md3, mus_hz2radians(fm_ratio3 * freq), 0.0), 0.0));
-}
+double
+fft_c(double amp,
+      double play,
+      double freq,
+      double fm_index1,
+      double fm_index2,
+      double fm_index3,
+      double fm_ratio1,
+      double fm_ratio2,
+      double fm_ratio3,
+      mus_any *osc,
+      mus_any *md1,
+      mus_any *md2,
+      mus_any *md3)
+{
+      return (amp * play * mus_oscil(osc, mus_hz2radians(freq) +
+              fm_index1 * mus_oscil(md1, mus_hz2radians(fm_ratio1 * freq), 0.0) +
+              fm_index2 * mus_oscil(md2, mus_hz2radians(fm_ratio2 * freq), 0.0) +
+              fm_index3 * mus_oscil(md3, mus_hz2radians(fm_ratio3 * freq), 0.0), 0.0));
+}"
   end
 end
 
 begin
-  bess(banner, file) do ffm() end
+  bess(banner, file) do ffm_rb() end
 end
 
 # bess.rb ends here

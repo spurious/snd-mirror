@@ -259,7 +259,7 @@ To override the local init file, use -noinit.
 The initialization files particular to a given extension language have names such as ~/.snd_s7
 and ~/.snd_prefs_ruby.  Currently the possibilities are:
 ~/.snd_prefs_ruby|forth|s7, /etc/snd_ruby|forth|s7.conf,
-~/.snd_ruby|forth|s7 (the notation "ruby|forth" means either "guile" or "ruby" or "forth", so the file names
+~/.snd_ruby|forth|s7 (the notation "ruby|forth" means either "ruby" or "forth", so the file names
 spelled out completely are "/etc/snd_ruby.conf", etc; which one is loaded
 obviously depends on which language you chose during configuration).  
 The save-options (preferences dialog) process writes to
@@ -808,12 +808,10 @@ latter are (configure --help):
 <tr><td colspan=2></td><td></td><td></td></tr>
 
 <tr><td colspan=2 bgcolor="#EEFDEE">Language choices</td><td></td><td></td></tr>
-<tr><td></td><td>--with-guile</td><td></td><td>use Guile as the extension language, GUILE_CONFIG_path sets Guile location</td></tr>
 <tr><td></td><td>--with-forth</td><td></td><td>use Forth as the extension language</td></tr>
 <tr><td></td><td>--with-ruby</td><td></td><td>use Ruby as the extension language; version 1.6.4 or later</td></tr>
 <tr><td></td><td>--with-s7</td><td></td><td>use S7 as the extension language (default = yes)</td></tr>
 <tr><td></td><td>--with-ruby-prefix=PFX</td><td></td><td>where Ruby is installed</td></tr>
-<tr><td></td><td>--with-hobbit</td><td></td><td>include hobbit-style function arity checking (hobbit is a Scheme compiler), default: no</td></tr>
 <tr><td colspan=2></td><td></td><td></td></tr>
 
 <tr><td colspan=2 bgcolor="#EEFDEE">Numerical choices</td><td></td><td></td></tr>
@@ -851,8 +849,6 @@ latter are (configure --help):
 <tr><td colspan=2></td><td></td><td></td></tr>
 </table>
 
-<p>Other configuration variables are GUILE_CONFIG_name and SNDLIB_CONFIG_path. The default configuration/build sequence:
-</p>
 <pre>
   ./configure
   make
@@ -884,7 +880,6 @@ Depending on how Snd is configured, any of the following symbols may be "provide
 <tr><td><A NAME="sndmotiffeature">snd-motif</a></td><td>Motif used as GUI toolkit (--with-motif, usually the default if Motif can be found)</td></tr>
 <tr><td bgcolor="#f2f4ff"><A NAME="sndgtkfeature">snd-gtk</a></td><td bgcolor="#f2f4ff">Gtk+ used as GUI toolkit (--with-gtk)</td></tr>
 <tr><td>snd-nogui</td><td>No GUI built-in (--with-no-gui, or neither Motif nor Gtk+ found)</td></tr>
-<tr><td bgcolor="#f2f4ff">snd-guile</td><td bgcolor="#f2f4ff">Guile as extension language (--with-guile, usually the default if guile can be found)</td></tr>
 <tr><td>snd-ruby</td><td>Ruby as extension language (--with-ruby)</td></tr>
 <tr><td bgcolor="#f2f4ff">snd-forth</td><td bgcolor="#f2f4ff">Forth as extension language (--with-forth)</td></tr>
 <tr><td>snd-s7</td><td>S7 as extension language (--with-s7)</td></tr>

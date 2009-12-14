@@ -412,7 +412,7 @@ __ws_verbose__ = $VERBOSE
 __ws_debug__   = $DEBUG
 # get rid of `undefined variable' messages
 with_silence do
-  $clm_version            = "ruby 26-Nov-2009"
+  $clm_version            = "ruby 08-Dec-2009"
   $output                 ||= false
   $reverb                 ||= false
   $clm_array_print_length ||= 8
@@ -449,7 +449,7 @@ with_silence do
     $clm_data_format   ||= Mus_lfloat
     $clm_header_type   ||= Mus_next
     $clm_locsig_type   ||= Mus_interp_linear
-    $clm_output_device ||= Mus_audio_default
+    $clm_output_device ||= 0
     $clm_rt_bufsize    ||= 512
     $clm_srate         ||= 44100
   end
@@ -495,7 +495,7 @@ module WS
    :player             $clm_player           sndplay
 # special with_dac options:
    :bufsize            $clm_rt_bufsize       512
-   :device             $clm_output_device    Mus_audio_default
+   :device             $clm_output_device    0
  
  Usage: with_sound(:play, 1, :statistics, true) do fm_violin end"
   

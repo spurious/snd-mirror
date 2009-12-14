@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Sun Mar 09 03:51:38 CET 2003
-# Changed: Fri Jul 06 01:52:54 CEST 2007
+# Changed: Wed Nov 25 01:25:31 CET 2009
 
 # X11 color names converted to Snd (Ruby) colors
 # tan -> tawny 24-Aug-01

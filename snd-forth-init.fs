@@ -76,7 +76,7 @@ mus-next          set-default-output-header-type drop
 mus-lfloat        set-default-output-data-format drop
 1024 1024 *       set-mus-file-buffer-size       drop
 512               set-dac-size                   drop
-mus-audio-default set-audio-output-device        drop
+0                 set-audio-output-device        drop
 #t                set-mus-clipping               drop
 #t                set-clipping                   drop
 50                set-mus-array-print-length     drop

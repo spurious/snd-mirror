@@ -24,7 +24,6 @@ $original_temp_dir = set_temp_dir("/usr/gnu/tmp")
 set_with_gl(false)
 
 # $with_exit = false
-$audio_amp_zero = 1.0
 # $with_backtrace = true
 $sf_dir = "/usr/gnu/sound/sf1/"
 $bigger_snd = "/usr/gnu/sound/SFiles/bigger.snd"
@@ -160,6 +159,14 @@ $home_dir = ENV["HOME"]
 # snd_display will print at least those much vct entries.
 $info_array_print_length = 48
 
+let do
+  dir = Dir.pwd + "/peaks"
+  unless File.directory?(dir)
+    Dir.mkdir(dir)
+  end
+  set_peak_env_dir(dir)
+end
+
 # Returns the Ascii value of KEY as a Fixnum.
 #
 # Since Ruby 1.9.0 (July/August 2006) ?x returns string "x" instead of
@@ -186,7 +193,6 @@ end
 
 if provided? :snd_nogui then set_with_mix_tags(true) end
 
-$audio_amp_zero = 0.0
 $with_backtrace = false
 $sf_dir = "/home/bil/sf1/"
 $with_exit = true
@@ -510,26 +516,6 @@ end
 set_mus_file_buffer_size($default_file_buffer_size)
 set_with_background_processes(false)
 
-make_proc_with_setter(:mus_audio_playback_amp,
-                      lambda do
-                        vals = make_vct(32)
-                        mus_audio_mixer_read(Mus_audio_default, Mus_audio_amp, 0, vals)
-                        ch0_amp = vals[0]
-                        mus_audio_mixer_read(Mus_audio_default, Mus_audio_amp, 1, vals)
-                        ch1_amp = vals[0]
-                        [ch0_amp, ch1_amp]
-                      end,
-                      lambda do |val|
-                        vals = make_vct(32)
-                        vals[0] = val
-                        mus_audio_mixer_write(Mus_audio_default, Mus_audio_amp, 0, vals)
-                        mus_audio_mixer_write(Mus_audio_default, Mus_audio_amp, 1, vals)
-                        val
-                      end)
-
-$orig_audio_amp = mus_audio_playback_amp.first
-set_mus_audio_playback_amp($audio_amp_zero)
-
 def make_color_with_catch(c1, c2, c3)
   make_color(c1, c2, c3)
 rescue
@@ -730,7 +716,6 @@ def finish_snd_test
    "wood.sds.snd"].each do |file|
     with_file(file, false) do delete_file(file) end
   end
-  set_mus_audio_playback_amp($orig_audio_amp)
 end
 
 # map_chan* procedure
@@ -1273,47 +1258,7 @@ def test00
               [:Mus_bfloat_unscaled, 19],
               [:Mus_lfloat_unscaled, 20],
               [:Mus_bdouble_unscaled, 21],
-              [:Mus_ldouble_unscaled, 22],
-              #
-              [:Mus_audio_default, 0],
-              [:Mus_audio_duplex_default, 1],
-              [:Mus_audio_line_out, 4],
-              [:Mus_audio_line_in, 5],
-              [:Mus_audio_microphone, 6],
-              [:Mus_audio_speakers, 7],
-              [:Mus_audio_adat_in, 2],
-              [:Mus_audio_aes_in, 3],
-              [:Mus_audio_digital_in, 8],
-              [:Mus_audio_digital_out, 9],
-              [:Mus_audio_adat_out, 11],
-              [:Mus_audio_aes_out, 12],
-              [:Mus_audio_dac_filter, 13],
-              [:Mus_audio_mixer, 14],
-              [:Mus_audio_line1, 15],
-              [:Mus_audio_line2, 16],
-              [:Mus_audio_line3, 17],
-              [:Mus_audio_aux_input, 18],
-              [:Mus_audio_cd, 19],
-              [:Mus_audio_aux_output, 20],
-              [:Mus_audio_spdif_in, 21],
-              [:Mus_audio_spdif_out, 22],
-              [:Mus_audio_amp, 23],
-              [:Mus_audio_srate, 24],
-              [:Mus_audio_channel, 25],
-              [:Mus_audio_format, 26],
-              [:Mus_audio_port, 37],
-              [:Mus_audio_imix, 27],
-              [:Mus_audio_igain, 28],
-              [:Mus_audio_reclev, 29],
-              [:Mus_audio_pcm, 30],
-              [:Mus_audio_pcm2, 31],
-              [:Mus_audio_ogain, 32],
-              [:Mus_audio_line, 33],
-              [:Mus_audio_synth, 34],
-              [:Mus_audio_bass, 35],
-              [:Mus_audio_treble, 36],
-              [:Mus_audio_direction, 39],
-              [:Mus_audio_samples_per_channel, 38]]
+              [:Mus_ldouble_unscaled, 22]]
     # 
     defs = [[:ask_before_overwrite, false],
             [:audio_output_device, 0],
@@ -1369,6 +1314,7 @@ def test00
             [:html_program, "firefox"],
             [:just_sounds, false],
             [:ladspa_dir, ""],
+            [:peak_env_dir, ""],
             [:listener_prompt, ">"],
             [:log_freq_start, 32.0],
             [:mark_tag_height, 4],
@@ -1580,6 +1526,7 @@ def test01
                 [:html_program, "firefox"],
                 [:just_sounds, false],
                 [:ladspa_dir, ""],
+                [:peak_env_dir, ""],
                 [:listener_prompt, ">"],
                 [:log_freq_start, 32.0],
                 [:max_regions, 16],
@@ -2302,9 +2249,9 @@ def play_sound_1(file)
   bufsize = 256
   data = SoundData.new(chans, bufsize)
   bytes = bufsize * chans * 2
-  audio_fd = mus_audio_open_output(Mus_audio_default, srate, chans, Mus_lshort, bytes)
+  audio_fd = mus_audio_open_output(0, srate, chans, Mus_lshort, bytes)
   if audio_fd == -1
-    audio_fd = mus_audio_open_output(Mus_audio_default, srate, chans, Mus_bshort, bytes)
+    audio_fd = mus_audio_open_output(0, srate, chans, Mus_bshort, bytes)
   end
   if audio_fd == -1
     snd_display("can\'t play %s", file)
@@ -2326,31 +2273,6 @@ def frame2byte(file, frame)
   mus_sound_data_location(file) + mus_sound_chans(file) * mus_sound_datum_size(file) * frame
 end
 
-def show_input_1(in_sys = 0)
-  our_short = (little_endian? ? Mus_lshort : Mus_bshort)
-  our_srate = 22050
-  our_dac_buffer_size_in_bytes = 512
-  our_dac_buffer_size_in_shorts = 256
-  our_chans = 1
-  our_chan = 0
-  in_port = Snd.catch(:mus_error, -1) do
-    mus_audio_open_input(in_sys << 16 | Mus_audio_default,
-                                 our_srate, our_chans, our_short,
-                                 our_dac_buffer_size_in_bytes)
-  end.first
-  if in_port == -1
-    snd_display("can\'t open audio input port")
-  else
-    data = make_sound_data(our_chans, our_dac_buffer_size_in_shorts)
-    vobj = make_vct(our_dac_buffer_size_in_shorts)
-    10.times do |i|
-      mus_audio_read(in_port, data, our_dac_buffer_size_in_shorts)
-      graph(sound_data2vct(data, our_chan, vobj))
-    end
-    mus_audio_close(in_port)
-  end
-end
-
 def test004(formats)
   oboe_snd = "oboe.snd"
   chns = mus_sound_chans(oboe_snd)
@@ -2365,7 +2287,6 @@ def test004(formats)
   mal = mus_sound_maxamp(oboe_snd)
   mz = mus_sound_maxamp "z.snd"
   bytes = mus_bytes_per_sample(mus_sound_data_format(oboe_snd))
-  sys = mus_audio_systems
   if mz[0].nonzero? or mz[1].nonzero?
     snd_display("mus_sound_maxamp z.snd: %s?", mz)
   end
@@ -2388,8 +2309,7 @@ def test004(formats)
   end
   fp.close
   delete_file(hiho)
-  snd_display("mus_audio_report: %s?", mus_audio_report) if mus_audio_report.length < 10
-  snd_display("mus_audio_systems: %s?", sys) if sys != 1 and sys != 2
+  snd_display("mus_audio_describe: %s?", mus_audio_describe) if mus_audio_describe.length < 10
   snd_display("oboe: mus_sound_chans %s?", chns)         if chns != 1
   snd_display("oboe: mus_sound_data_location %s?", dl)   if dl != 28
   snd_display("oboe: mus_sound_frames %s?", fr)          if fr != 50828
@@ -2488,8 +2408,6 @@ def test024
   if mus_sound_loop_info("fmv1.snd") != [1200, 1400, 0, 0, 2, 1, 1, 0]
     snd_display("saved null loop_info (no mode1): %s?", mus_sound_loop_info("fmv1.snd"))
   end
-  if res = mus_sun_set_outputs(1, 2, 3) then snd_display("mus_sun_set_outputs: %s?", res) end
-  if res = mus_netbsd_set_outputs(1, 2, 3) then snd_display("mus_netbsd_set_outputs: %s?", res) end
   delete_files("fmv.snd", "fmv1.snd")
 end
 
@@ -2709,7 +2627,7 @@ def test054
   end
 end
 
-def test064(fields, devices)
+def test064
   oboe_snd = "oboe.snd"
   ob = view_sound(oboe_snd)
   samp = sample(1000, ob)
@@ -2958,19 +2876,6 @@ def test064(fields, devices)
   end
   close_sound(ob)
   snd_display("selected_sound %s %s?", selected_sound, sounds) if selected_sound
-  vals = make_vct(32)
-  if mus_audio_mixer_read(Mus_audio_microphone, Mus_audio_amp, 0, vals) == -1
-    snd_display("mus_audio_mixer_read?")
-  end
-  fields.each do |field|
-    devices.each do |device|
-      Snd.catch do
-        if mus_audio_mixer_read(device, field, 0, vals) != -1
-          mus_audio_mixer_write(device, field, 0, vals)
-        end
-      end
-    end
-  end
   with_file("a.sf2") do |fsnd|
     fil = open_sound(fsnd)
     loops = soundfont_info(fil)
@@ -3109,33 +3014,6 @@ def test074
     snd_display("mus_sound_reopen_output bad type: %s?", res)
   end
   delete_file("fmv.snd")
-  [:mus_audio_open_output, :mus_audio_open_input].each do |sym|
-    if (res = Snd.catch do
-          snd_func(sym, Mus_audio_default, 22050, -1, Mus_lshort, 512)
-        end).first != :out_of_range
-      snd_display("%s bad chans: %s", sym, res)
-    end
-    if (res = Snd.catch do
-          snd_func(sym, Mus_audio_default, 22050, 1, -1, 512)
-        end).first != :out_of_range
-      snd_display("%s bad format: %s", sym, res)
-    end
-    if (res = Snd.catch do
-          snd_func(sym, -1, 22050, 1, Mus_lshort, 512)
-        end).first != :out_of_range
-      snd_display("%s bad device: %s", sym, res)
-    end
-    if (res = Snd.catch do
-          snd_func(sym, Mus_audio_default, -22050, 1, Mus_lshort, 512)
-        end).first != :out_of_range
-      snd_display("%s bad srate: %s", sym, res)
-    end
-    if (res = Snd.catch do
-          snd_func(sym, Mus_audio_default, 22050, 1, Mus_lshort, -512)
-        end).first != :out_of_range
-      snd_display("%s bad size: %s", sym, res)
-    end
-  end
   ["trunc.snd",
    "trunc.aiff",
    "trunc.wav",
@@ -3170,18 +3048,6 @@ def test074
     close_sound(ind)
   end
   $open_raw_sound_hook.reset_hook!
-  vals = make_vct(32)
-  [:mus_audio_mixer_read, :mus_audio_mixer_write].each do |sym|
-    if (res = Snd.catch do snd_func(sym, -1, Mus_audio_amp, 0, vals) end).first != :out_of_range
-      snd_display("%s bad device: %s?", sym, res)
-    end
-    if (res = Snd.catch do
-          snd_func(sym, Mus_audio_microphone, -1, 0, vals)
-        end).first != :out_of_range
-      snd_display("%s bad fields: %s?", sym, res)
-    end
-  end
-  mus_audio_mixer_write(Mus_audio_microphone, Mus_audio_amp, 0, make_vct(1))
   ind = open_sound("2.snd")
   sd1 = samples2sound_data(12000, 10, ind, 0)
   vc1 = sound_data2vct(sd1)
@@ -3656,12 +3522,6 @@ def test104
    "can't close file",
    "arg out of range",
    "wrong type arg",
-   "midi open error",
-   "midi read error",
-   "midi write error",
-   "midi close error",
-   "midi init error",
-   "midi misc error",
    "no channels method",
    "no hop method",
    "no width method",
@@ -4519,52 +4379,7 @@ def test04
       ["clmcom.aif", "this is a comment"],
       ["anno.aif", "1994 Jesus Villena\n"],
       ["telephone.wav", "sample_byte_format -s2 01\nchannel_count -i 1\nsample_count -i 36461\nsample_rate -i 16000\nsample_n_bytes -i 2\nsample_sig_bits -i 16\n"]]
-    fields = [Mus_audio_amp,
-      Mus_audio_srate,
-      Mus_audio_channel,
-      Mus_audio_format,
-      Mus_audio_port,
-      Mus_audio_imix,
-      Mus_audio_igain,
-      Mus_audio_reclev,
-      Mus_audio_pcm,
-      Mus_audio_pcm2,
-      Mus_audio_ogain,
-      Mus_audio_line,
-      Mus_audio_line1,
-      Mus_audio_line2,
-      Mus_audio_line3,
-      Mus_audio_cd,
-      Mus_audio_synth,
-      Mus_audio_bass,
-      Mus_audio_treble,
-      Mus_audio_direction,
-      Mus_audio_samples_per_channel]
-    devices = [Mus_audio_default,
-      Mus_audio_duplex_default,
-      Mus_audio_line_out,
-      Mus_audio_line_in,
-      Mus_audio_microphone,
-      Mus_audio_speakers,
-      Mus_audio_dac_out,
-      Mus_audio_adat_in,
-      Mus_audio_aes_in,
-      Mus_audio_digital_in,
-      Mus_audio_digital_out,
-      Mus_audio_adat_out,
-      Mus_audio_aes_out,
-      Mus_audio_dac_filter,
-      Mus_audio_mixer,
-      Mus_audio_line1,
-      Mus_audio_line2,
-      Mus_audio_line3,
-      Mus_audio_aux_input,
-      Mus_audio_cd,
-      Mus_audio_aux_output,
-      Mus_audio_spdif_in,
-      Mus_audio_spdif_out]
     ind = open_sound("oboe.snd")
-    show_input_1
     close_sound(ind)
     test004(formats)
     test014
@@ -4578,7 +4393,7 @@ def test04
     test034(:mus_sound_maxamp, [["4.aiff", [12345, 0.5, 54321, 0.2, 0, 0.1, 9999, 0.01]]])
     test044
     test054
-    test064(fields, devices)
+    test064
     test074
     test084
     test094
@@ -9173,8 +8988,8 @@ def test235
   end
   #
   old_max = maxamp(index, true)
-  regdata = (regions or []).map do |n| region2vct(n, 0, 10) end
-  old_reglen = (regions or []).map do |n| region_frames(n) end
+  regdata = Snd.regions.map do |n| region2vct(n, 0, 10) end
+  old_reglen = Snd.regions.map do |n| region_frames(n) end
   s61_files = []
   $save_state_hook.add_hook!("snd-test") do |file|
     s61_files.push(file)
@@ -9185,10 +9000,10 @@ def test235
   close_sound(index)
   Snd.regions.apply(:forget_region)
   load("s61.rb")
-  if (res = (regions or []).map do |n| region_frames(n) end) != old_reglen
+  if (res = Snd.regions.map do |n| region_frames(n) end) != old_reglen
     snd_display("region_frames after save: %s %s?", old_reglen, res)
   end
-  (regions or []).zip(regdata) do |n, data|
+  Snd.regions.zip(regdata) do |n, data|
     unless vequal(res = region2vct(n, 0, 10), data)
       snd_display("region after save %s: %s %s?", n, data, res)
     end
@@ -10051,7 +9866,7 @@ def test05
     test185
     test205
     test225
-    test235
+    test235 unless provided? :snd_nogui # load("s61.rb") -> set_transform_size(0)
     test245
     test255
     test265
@@ -21692,7 +21507,7 @@ def test10
     $before_test_hook.call(10)
     clear_sincs
     test0010
-    test0110
+    test0110 unless provided? :snd_nogui # load("s61.rb") -> set_transform_size(0)
     test0210
     $after_test_hook.call(10)
   end
@@ -21708,7 +21523,6 @@ def test11
   if (not provided?(:snd_nogui)) and $test11
     $before_test_hook.call(11)
     Snd.catch do peaks end
-    mus_audio_describe
     cold = color_orientation_dialog
     trd  = transform_dialog
     regd = view_regions_dialog
@@ -22643,7 +22457,7 @@ def test0113
   end
   ind1 = open_sound("test.snd")
   mx1 = maxamp(ind1)
-  snd_display("set_mus_file_prescaler: %s -> %s?", mx0, mx1) if fneq(mx1, mx0 * 4.0)
+  snd_display("set_mus_file_prescaler: %s -> %s (%s)?", mx0, mx1, mx1 / mx0) if fneq(mx1, mx0 * 4.0)
   close_sound(ind1)
   $during_open_hook.reset_hook!
   #
@@ -23729,20 +23543,7 @@ def test14
     end
     #
     ind = open_sound("z.snd")
-    if (res = peak_env_info(ind))
-      snd_display("peak_env_info of empty sound: %s?", res)
-    end
     restore_controls
-    if (res = peak_env_info(ind)) != nil
-      snd_display("peak_env_info z.snd: %s?", res)
-    end
-    if (res = Snd.catch do write_peak_env_info_file(ind, 0, "hi") end).first != :no_such_envelope
-      snd_display("write_peak_env_info_file null env: %s", res.inspect)
-    end
-    tag = (res = Snd.catch do read_peak_env_info_file(ind, 0, "hi") end).first
-    if tag != :bad_header and tag != :no_such_file and tag != :mus_error
-      snd_display("read_peak_env_info_file null file: %s", res.inspect)
-    end
     snd_display("frames z.snd: %s?", frames(ind)) if frames(ind).nonzero?
     snd_display("samples of empty file (z): %s?", samples) if samples != false
     snd_display("channel2vct of empty file (z): %s?", channel2vct) if channel2vct != false
@@ -24989,6 +24790,7 @@ def test0215
    [:with_verbose_cursor, true],
    [:fft_log_frequency, true],
    [:fft_log_magnitude, true],
+   [:fft_with_phases, true],
    [:min_dB, -120.0],
    [:wavelet_type, 3],
    [:transform_size, 32],
@@ -25772,13 +25574,13 @@ def test0415
   close_sound(ind)
   # 
   ind = new_sound("fmv.snd")
-  old_size = transform_size
+  old_size = transform_size.zero? ? 128 : transform_size
   old_type = transform_type
   old_norm = transform_normalization
   old_grf = transform_graph_type
   v = Vct.new(2000) do |i| sin(i * 2.0 * (PI / 10)) end
   vct2channel(v, 0, 2000, ind, 0)
-  set_transform_size(256)
+  set_transform_size(256, ind)
   set_transform_type($fourier_transform)
   set_transform_normalization(Normalize_by_channel)
   set_transform_graph_style(Graph_once)
@@ -25840,7 +25642,7 @@ def test15
     set_transform_type($fourier_transform)
     test0015
     test0115
-    test0215
+    test0215 unless provided? :snd_nogui # set_transform_size(0) in test_history_channel
     test0315
     test0415
     $after_test_hook.call(15)
@@ -28276,7 +28078,7 @@ def test16
   if $test16
     $before_test_hook.call(16)
     test0016
-    test0116
+    test0116 unless provided? :snd_nogui # load("hiho.rb") -> set_transform_size(0)
     test0216
     test0316
     test0416
@@ -30109,7 +29911,7 @@ end
 def test19
   if $test19
     $before_test_hook.call(19)
-    test0019
+    test0019 unless provided? :snd_nogui # load(save_state_file) -> set_transform_size(0)
     test0119
     test0219
     test0319
@@ -32821,7 +32623,8 @@ def test0221
       array2file("test.snd", v, fr, sr, chns)
       update_sound(ind)
       if fneq(res = maxamp(ind, 0), mx)
-        snd_display("update_sound looped maxamp: %s %s %s %s %s?", i, ind, frames(ind), res, mx)
+        snd_display("update_sound looped maxamp: %s %s %s %s %s (%s)?",
+                    i, ind, frames(ind), res, mx, res / mx)
       end
       if chans(ind) != chns
         snd_display("update_sound looped chans: %s %s?", chns, chans(ind))
@@ -34331,7 +34134,7 @@ Procs =
    :mix_tag_y, :mix_vct, :mix_waveform_height, :time_graph_style, :lisp_graph_style,
    :transform_graph_style, :read_mix_sample, :next_sample, :read_region_sample,
    :transform_normalization, :open_file_dialog_directory,
-   :open_raw_sound, :open_sound, :color_orientation_dialog, :previous_sample, :peak_env_info,
+   :open_raw_sound, :open_sound, :color_orientation_dialog, :previous_sample,
    :peaks, :position_color, :position2x, :position2y,
    :add_directory_to_view_files_list, :add_file_to_view_files_list,
    :view_files_amp, :view_files_speed, :view_files_files, :view_files_selected_files,
@@ -34347,7 +34150,8 @@ Procs =
    :reverb_control_length, :reverb_control_lowpass, :reverb_control_scale, :reverb_control?,
    :reverse_sound, :reverse_selection, :revert_sound, :right_sample, :sample,
    :sampler_at_end?, :sampler?, :samples, :sampler_position, :sash_color,
-   :save_controls, :ladspa_dir, :save_dir, :save_edit_history, :save_envelopes, :save_listener,
+   :save_controls, :ladspa_dir, :peak_env_dir,
+   :save_dir, :save_edit_history, :save_envelopes, :save_listener,
    :save_marks, :save_region, :save_selection, :save_sound, :save_sound_as, :save_state,
    :save_state_file, :scale_by, :scale_selection_by, :scale_selection_to, :scale_to,
    :scan_chan, :search_procedure, :select_all, :select_channel, :select_sound, :selected_channel,
@@ -34369,7 +34173,7 @@ Procs =
    :update_lisp_graph, :update_sound, :clm_table_size,
    :with_verbose_cursor, :view_sound, :wavelet_type,
    :time_graph?, :time_graph_type, :wavo_hop, :wavo_trace, :window_height, :window_width,
-   :window_x, :window_y, :with_mix_tags, :with_relative_panes, :with_gl, :write_peak_env_info_file,
+   :window_x, :window_y, :with_mix_tags, :with_relative_panes, :with_gl,
    :x_axis_style, :beats_per_measure, :beats_per_minute, :x_bounds, :x_position_slider,
    :x2position, :x_zoom_slider, :mus_header_type2string, :mus_data_format2string, :y_bounds,
    :y_position_slider, :y2position, :y_zoom_slider, :zero_pad, :zoom_color, :zoom_focus_style,
@@ -34378,8 +34182,7 @@ Procs =
    :mus_sound_data_location, :data_size, :mus_sound_chans, :mus_sound_srate,
    :mus_sound_header_type, :mus_sound_data_format, :mus_sound_length, :mus_sound_type_specifier,
    :mus_header_type_name, :mus_data_format_name, :mus_sound_comment, :mus_sound_write_date,
-   :mus_bytes_per_sample, :mus_sound_loop_info, :mus_sound_mark_info, :mus_audio_report,
-   :mus_sun_set_outputs, :mus_netbsd_set_outputs,
+   :mus_bytes_per_sample, :mus_sound_loop_info, :mus_sound_mark_info, :mus_audio_describe,
    :mus_sound_maxamp, :mus_sound_maxamp_exists?, :mus_file_prescaler, :mus_prescaler,
    :mus_clipping, :mus_file_clipping, :mus_header_raw_defaults,
    :moving_average, :moving_average?, :make_moving_average, :mus_expand_filename,
@@ -34423,7 +34226,7 @@ Procs =
    :table_lookup?, :tap, :triangle_wave, :triangle_wave?, :two_pole, :two_pole?, :two_zero,
    :two_zero?, :wave_train, :wave_train?, :make_vct, :vct_add!,
    :vct_subtract!, :vct_copy, :vct_length, :vct_multiply!, :vct_offset!, :vct_ref, :vct_scale!,
-   :vct_fill!, :vct_set!, :mus_audio_describe, :vct_peak, :vct?, :list2vct, :vct2list,
+   :vct_fill!, :vct_set!, :vct_peak, :vct?, :list2vct, :vct2list,
    :vector2vct, :vct2vector, :vct_move!, :vct_reverse!, :vct_subseq, :vct, :little_endian?,
    :vct2string, :clm_channel, :env_channel, :map_channel_with_base, :map_channel,
    :scan_channel, :reverse_channel, :seconds2samples, :samples2seconds, :vct2channel,
@@ -34432,7 +34235,7 @@ Procs =
    :cursor_position, :clear_listener, :mus_sound_prune, :mus_sound_forget, :xramp_channel,
    :ptree_channel, :snd2sample, :snd2sample?, :make_snd2sample, :make_scalar_mixer,
    :beats_per_minute, :beats_per_measure, :channel_amp_envs, :convolve_files,
-   :filter_control_coeffs, :locsig_type, :make_phase_vocoder, :mus_audio_mixer_read,
+   :filter_control_coeffs, :locsig_type, :make_phase_vocoder,
    :mus_describe, :mus_error_type2string, :mus_file_buffer_size, :mus_name, :mus_offset,
    :mus_reset, :mus_rand_seed, :mus_width, :phase_vocoder?,
    :polar2rectangular, :phase_vocoder_amp_increments,
@@ -34480,7 +34283,8 @@ Set_procs =
    :pushed_button_color, :region_graph_style, :reverb_control_decay,
    :reverb_control_feedback, :reverb_control_length, :reverb_control_lowpass,
    :reverb_control_scale, :time_graph_style, :lisp_graph_style, :transform_graph_style,
-   :reverb_control?, :sash_color, :ladspa_dir, :save_dir, :save_state_file, :selected_data_color,
+   :reverb_control?, :sash_color, :ladspa_dir, :peak_env_dir,
+   :save_dir, :save_state_file, :selected_data_color,
    :selected_graph_color, :selection_color, :selection_creates_region, :show_axes,
    :show_controls, :show_transform_peaks, :show_indices, :show_marks,
    :show_mix_waveforms, :show_selection_transform, :show_listener, :show_y_zero, :show_grid,
@@ -34842,7 +34646,7 @@ def test0128
    :lisp_graph?, :insert_sound, :time_graph_style, :lisp_graph_style,
    :transform_graph_style, :left_sample, :make_graph_data, :map_chan, :max_transform_peaks,
    :maxamp_position, :min_dB, :mix_region, :transform_normalization,
-   :peak_env_info, :peaks, :play, :position2x, :position2y, :reverse_sound,
+   :peaks, :play, :position2x, :position2y, :reverse_sound,
    :revert_sound, :right_sample, :sample, :save_sound, :save_sound_as,
    :scan_chan, :select_channel, :show_axes, :show_transform_peaks, :show_marks,
    :show_mix_waveforms, :show_y_zero, :show_grid, :show_sonogram_cursor, :spectrum_end,
@@ -34868,7 +34672,7 @@ def test0128
    :lisp_graph?, :insert_region,
    :insert_sound, :left_sample, :time_graph_style, :lisp_graph_style, :transform_graph_style,
    :make_graph_data, :map_chan, :max_transform_peaks, :maxamp, :maxamp_position, :min_dB,
-   :mix_region, :transform_normalization, :peak_env_info, :peaks,
+   :mix_region, :transform_normalization, :peaks,
    :position2x, :position2y, :reverse_sound, :right_sample, :sample,
    :save_sound_as, :scan_chan, :show_axes, :show_transform_peaks, :show_marks,
    :show_mix_waveforms, :show_y_zero, :show_grid, :show_sonogram_cursor, :spectrum_end,
@@ -34891,7 +34695,7 @@ def test0128
    :filter_sound, :graph_data, :graph_style, :lisp_graph?, :left_sample,
    :time_graph_style, :lisp_graph_style, :transform_graph_style, :make_graph_data,
    :max_transform_peaks, :maxamp, :maxamp_position, :min_dB, :transform_normalization,
-   :peak_env_info, :reverse_sound, :revert_sound, :right_sample, :save_sound, :scale_by,
+   :reverse_sound, :revert_sound, :right_sample, :save_sound, :scale_by,
    :scale_to, :show_axes, :show_transform_peaks, :show_marks, :show_mix_waveforms,
    :show_y_zero, :show_grid, :show_sonogram_cursor, :spectrum_end, :spectro_hop,
    :spectrum_start, :spectro_x_angle, :spectro_x_scale, :spectro_y_angle, :spectro_y_scale,
@@ -34927,7 +34731,7 @@ def test0128
    :fft_window, :transform_graph?, :graph_style, :lisp_graph?, :left_sample,
    :time_graph_style, :lisp_graph_style, :transform_graph_style, :make_graph_data,
    :max_transform_peaks, :maxamp, :maxamp_position, :min_dB, :transform_normalization,
-   :peak_env_info, :reverse_sound, :right_sample, :show_axes, :show_transform_peaks,
+   :reverse_sound, :right_sample, :show_axes, :show_transform_peaks,
    :show_marks, :show_mix_waveforms, :show_y_zero, :show_grid, :show_sonogram_cursor,
    :grid_density, :spectrum_end, :spectro_hop, :spectrum_start, :spectro_x_angle,
    :spectro_x_scale, :spectro_y_angle, :spectro_y_scale, :spectro_z_angle,
@@ -34948,7 +34752,7 @@ def test0128
    :graph_style, :lisp_graph?, :left_sample, :make_graph_data,
    :max_transform_peaks, :maxamp, :maxamp_position, :time_graph_style,
    :lisp_graph_style, :transform_graph_style, :min_dB, :transform_normalization,
-   :peak_env_info, :reverse_sound, :right_sample, :show_axes, :grid_density,
+   :reverse_sound, :right_sample, :show_axes, :grid_density,
    :show_transform_peaks, :show_marks, :show_mix_waveforms, :show_y_zero,
    :show_grid, :show_sonogram_cursor, :spectrum_end, :spectro_hop, :spectrum_start,
    :spectro_x_angle, :spectro_x_scale, :spectro_y_angle, :spectro_y_scale,
@@ -35040,7 +34844,7 @@ def test0128
    :position_color, :time_graph_style, :lisp_graph_style, :transform_graph_style,
    :peaks_font, :bold_peaks_font, :view_files_sort, :print_length,
    :pushed_button_color,
-   :sash_color, :ladspa_dir, :save_dir, :save_state_file, :selected_channel,
+   :sash_color, :ladspa_dir, :peak_env_dir, :save_dir, :save_state_file, :selected_channel,
    :selected_data_color, :selected_graph_color, :selected_sound,
    :selection_creates_region, :show_controls, :show_indices,
    :show_listener, :show_selection_transform, :sinc_width, :temp_dir,
@@ -35177,7 +34981,6 @@ def test0228
   check_error_tag(:wrong_type_arg) do read_only([ind]) end
   check_error_tag(:wrong_type_arg) do frames(ind, [0]) end
   check_error_tag(:wrong_type_arg) do smooth_sound(0, -10) end
-  check_error_tag(:cannot_save) do write_peak_env_info_file(ind, 0, "/baddy/hi") end
   check_error_tag(:no_such_channel) do mix_selection(0, ind, 123) end
   check_error_tag(:no_such_channel) do insert_selection(0, ind, 123) end
   check_error_tag(:out_of_range) do set_channels(ind, 0) end

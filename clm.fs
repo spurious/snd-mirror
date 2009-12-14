@@ -2,7 +2,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Mon Mar 15 19:25:58 CET 2004
-\ Changed: Thu Nov 26 18:29:52 CET 2009
+\ Changed: Tue Dec 08 20:08:30 CET 2009
 
 \ Commentary:
 \
@@ -53,7 +53,7 @@
 \ with-mix             ( body-str args fname beg -- )
 \ sound-let            ( ws-xt-lst body-xt -- )
 
-$" fth 26-Nov-2009" value *clm-version*
+$" fth 08-Dec-2009" value *clm-version*
 
 \ defined in snd/snd-xen.c
 [ifundef] snd-print   : snd-print   ( str -- str )  dup .string ;             [then]
@@ -267,12 +267,12 @@ mus-lshort    value *clm-audio-format*
 #()           value *clm-instruments* \ array of arrays #( ins-name start dur local-vars )
 
 'snd provided? [unless]
-  1                 constant default-output-chans
-  44100             constant default-output-srate
-  mus-next          constant default-output-header-type
-  mus-lfloat        constant default-output-data-format
-  mus-audio-default constant audio-output-device
-  512               constant dac-size
+  1          constant default-output-chans
+  44100      constant default-output-srate
+  mus-next   constant default-output-header-type
+  mus-lfloat constant default-output-data-format
+  0          constant audio-output-device
+  512        constant dac-size
 [then]
 
 default-output-chans       value *clm-channels*
@@ -574,7 +574,7 @@ previous
     chans bufsize make-sound-data { data }
     input mus-sound-open-input { snd-fd }
     snd-fd 0< if 'forth-error #( get-func-name $" cannot open %s" input ) fth-throw then
-    mus-audio-default srate chans 2 min audio-format bufsize mus-audio-open-output { dac-fd }
+    0 srate chans 2 min audio-format bufsize mus-audio-open-output { dac-fd }
     dac-fd 0< if 'forth-error #( get-func-name $" cannot open dac" ) fth-throw then
     frames 0 ?do
       i bufsize + frames > if frames i - to bufsize then
@@ -608,11 +608,6 @@ previous
   channels 2 min      	        { chans }
   comment empty? if $" written %s by %s" #( date get-func-name ) string-format to comment then
   chans bufsize make-sound-data { data }
-  \ INFO: commented out on Sun Sep 20 17:02:02 CEST 2009 [ms]
-  \ chans 0.25 make-vct           { vals }
-  \ vals each drop mus-audio-mixer mus-audio-reclev i vals mus-audio-mixer-write drop end-each
-  \ vals 0.75 vct-fill! drop
-  \ vals each drop output-device  mus-audio-amp i vals mus-audio-mixer-write drop end-each
   output srate chans data-format header-type comment mus-sound-open-output { snd-fd }
   snd-fd 0< if 'forth-error #( get-func-name $" cannot open %S" output ) fth-throw then
   output-device srate chans audio-format bufsize mus-audio-open-input      { dac-fd }

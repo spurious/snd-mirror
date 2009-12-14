@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Tue May 20 08:35:13 CEST 2003
-# Changed: Thu Oct 15 00:28:22 CEST 2009
+# Changed: Tue Dec 08 22:31:54 CET 2009
 
 # Commentary:
 #
@@ -13,7 +13,6 @@
 #  :srate     22050
 #  :in_sys    0 (card #)
 #  :out_sys   1 (card #)
-#  :device    Mus_audio_default
 #  :fmt       Mus_lshort or Mus_bshort depending on little_endian?
 #  :bytes     512
 #  :shorts    256
@@ -68,19 +67,18 @@ class RTIO
     @srate   = get_args(args, :srate, 22050)
     @in_sys  = get_args(args, :in_sys, 0)
     @out_sys = get_args(args, :out_sys, 1)
-    @device  = get_args(args, :device, Mus_audio_default)
     @fmt     = get_args(args, :fmt, little_endian? ? Mus_lshort : Mus_bshort)
     @bytes   = get_args(args, :bytes, 512)
     @shorts  = get_args(args, :shorts, 256)
     @func    = get_args(args, :func, nil)
   end
-  attr_accessor :srate, :in_sys, :out_sys, :device, :fmt, :bytes, :shorts
+  attr_accessor :srate, :in_sys, :out_sys, :fmt, :bytes, :shorts
   attr_reader :chans, :sound_properties
   
   def inspect
-    format("#<%s: chans: %d, srate: %d, in_sys: %d, out_sys: %d, device: %d, \
+    format("#<%s: chans: %d, srate: %d, in_sys: %d, out_sys: %d, \
 fmt: %d, bytes: %d, shorts: %d, func: %s>",
-           self.class, @chans, @srate, @in_sys, @out_sys, @device,
+           self.class, @chans, @srate, @in_sys, @out_sys,
            @fmt, @bytes, @shorts, @func.inspect)
   end
 
@@ -92,9 +90,8 @@ fmt: %d, bytes: %d, shorts: %d, func: %s>",
 #  rt = RTIO.new
 #  rt.chans = 2
 #  rt.srate = 44100
-#  rt.device = Mus_audio_cd
 # or even
-#   rt = RTIO.new(:srate, 44100, :chans, 2, :device, Mus_audio_cd)
+#   rt = RTIO.new(:srate, 44100, :chans, 2)
 # 
 # make_rtio(*args) or RTIO.new(*args)
 #
@@ -103,7 +100,6 @@ fmt: %d, bytes: %d, shorts: %d, func: %s>",
 #  :srate     22050
 #  :in_sys    0 (card #)
 #  :out_sys   1 (card #)
-#  :device    Mus_audio_default
 #  :fmt       Mus_lshort or Mus_bshort depending on little_endian?
 #  :bytes     512
 #  :shorts    256
@@ -344,7 +340,7 @@ HELP
   end
   
   def audio_open(sys, output = false)
-    device = sys << 16 | @device
+    device = sys << 16 | 0
     port = if output
              mus_audio_open_output(device, @srate, @chans, @fmt, @bytes)
            else

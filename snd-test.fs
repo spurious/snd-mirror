@@ -2,7 +2,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sat Aug 05 00:09:28 CEST 2006
-\ Changed: Thu Nov 26 20:48:04 CET 2009
+\ Changed: Mon Dec 14 17:34:32 CET 2009
 
 \ Commentary:
 \
@@ -35,7 +35,6 @@ require hooks
 require marks
 require extensions
 require env
-require peak-env
 require mix
 require dsp
 'snd-motif provided? [if]
@@ -75,10 +74,12 @@ listener-prompt        		  value original-prompt
 #f to *clm-verbose*
 #f to *clm-debug*
 
-file-pwd "/peaks" $+ to save-peak-env-info-directory
-save-peak-env-info-directory file-directory? [unless]
-  save-peak-env-info-directory 0o755 file-mkdir
-[then]
+let: ( -- )
+  file-pwd "/peaks" $+ { dir }
+  dir file-directory? unless dir 0o755 file-mkdir then
+  dir set-peak-env-dir drop
+;let
+
 *clm-search-list* file-pwd array-push to *clm-search-list*
 
 \ Snd stdout and Snd stderr going to the listener and to
@@ -100,23 +101,6 @@ hide
 set-current
 : snd-display ( --; fmt args -- ) postpone *lineno* postpone (snd-display) ; immediate
 previous
-
-: mus-audio-playback-amp ( -- val )
-  32 0.0 make-vct { vals0 }
-  32 0.0 make-vct { vals1 }
-  mus-audio-default mus-audio-amp 0 vals0 mus-audio-mixer-read drop
-  mus-audio-default mus-audio-amp 1 vals1 mus-audio-mixer-read drop
-  vals0 0 vct-ref vals1 0 vct-ref fmax
-;
-: set-mus-audio-playback-amp ( lst -- )
-  { val }
-  32 0.0 make-vct { vals }
-  vals 0 val vct-set! drop
-  mus-audio-default mus-audio-amp 0 vals mus-audio-mixer-write drop
-  mus-audio-default mus-audio-amp 1 vals mus-audio-mixer-write drop
-;
-0.0                    value audio-amp-zero
-mus-audio-playback-amp value original-audio-amp
 
 : fneq-err ( r1 r2 err -- f ) -rot f- fabs f<= ;
 : cneq-err ( c1 c2 err -- f )
@@ -279,7 +263,6 @@ mus-audio-playback-amp value original-audio-amp
   date #() clm-message
   ""   #() clm-message
   default-file-buffer-size set-mus-file-buffer-size to *clm-file-buffer-size*
-  audio-amp-zero set-mus-audio-playback-amp
   #f  set-with-background-processes drop
   #f  set-trap-segfault  	    drop
   600 set-window-x       	    drop
@@ -371,7 +354,6 @@ mus-audio-playback-amp value original-audio-amp
      "nist-shortpack.wav.snd"
      "bad_data_format.snd.snd" ) each ( file ) sf-dir swap $+ file-delete end-each
   "test-forth.output" save-listener drop
-  original-audio-amp set-mus-audio-playback-amp
   original-prompt set-listener-prompt drop
 ;
 
@@ -2032,12 +2014,12 @@ include bird.fsm
    <'> mix-tag-y <'> mix-vct <'> mix-waveform-height <'> time-graph-style
    <'> lisp-graph-style <'> transform-graph-style <'> read-mix-sample
    <'> next-sample <'> transform-normalization <'> open-raw-sound
-   <'> open-sound <'> previous-sample <'> peak-env-info <'> peaks <'> player? <'> players
+   <'> open-sound <'> previous-sample <'> peaks <'> player? <'> players
    <'> add-directory-to-view-files-list <'> add-file-to-view-files-list
    <'> view-files-sort <'> view-files-amp <'> view-files-speed <'> view-files-files
    <'> view-files-selected-files <'> view-files-speed-style <'> view-files-amp-env
    <'> print-length <'> progress-report <'> prompt-in-minibuffer <'> read-only
-   <'> read-peak-env-info-file <'> redo <'> region-chans <'> region-home
+   <'> redo <'> region-chans <'> region-home
    <'> region-graph-style <'> region-frames <'> region-position <'> region-maxamp
    <'> region-maxamp-position <'> selection-maxamp <'> selection-maxamp-position
    <'> region-sample <'> region->vct <'> clear-minibuffer <'> region-srate <'> regions
@@ -2047,7 +2029,7 @@ include bird.fsm
    <'> reverb-control? <'>  reverse-sound <'> reverse-selection <'> revert-sound
    <'> right-sample <'> sample <'> sampler-at-end? <'>  sampler?
    <'> samples <'> sampler-position <'> save-controls
-   <'> ladspa-dir <'> save-dir <'> save-edit-history <'> save-envelopes
+   <'> ladspa-dir <'> peak-env-dir <'> save-dir <'> save-edit-history <'> save-envelopes
    <'> save-listener <'> save-marks <'> save-region <'> save-selection
    <'> save-sound <'> save-sound-as <'> save-state <'> save-state-file
    <'> scale-by <'> scale-selection-by <'> scale-selection-to <'> scale-to
@@ -2074,7 +2056,7 @@ include bird.fsm
    <'> update-sound <'> clm-table-size <'> with-verbose-cursor <'> view-sound <'> wavelet-type
    <'> time-graph? <'>  time-graph-type <'> wavo-hop <'> wavo-trace
    <'> window-height <'> window-width <'> window-x <'> window-y
-   <'> with-mix-tags <'> with-relative-panes <'> with-gl <'> write-peak-env-info-file
+   <'> with-mix-tags <'> with-relative-panes <'> with-gl
    <'> x-axis-style <'> beats-per-measure <'> beats-per-minute <'> x-bounds
    <'> x-position-slider <'> x-zoom-slider <'> mus-header-type->string
    <'> mus-data-format->string <'> y-bounds <'> y-position-slider
@@ -2085,8 +2067,9 @@ include bird.fsm
    <'> mus-sound-type-specifier
    <'> mus-header-type-name <'> mus-data-format-name <'> mus-sound-comment
    <'> mus-sound-write-date
-   <'> mus-bytes-per-sample <'> mus-sound-loop-info <'> mus-audio-report <'> mus-sun-set-outputs
-   <'> mus-netbsd-set-outputs <'> mus-alsa-squelch-warning <'> mus-sound-maxamp
+   <'> mus-bytes-per-sample <'> mus-sound-loop-info
+   'snd-nogui [unless] <'> mus-audio-describe [then]
+   <'> mus-alsa-squelch-warning <'> mus-sound-maxamp
    <'> mus-sound-maxamp-exists?
    <'> mus-file-prescaler <'> mus-prescaler <'> mus-clipping <'> mus-file-clipping
    <'> mus-header-raw-defaults <'> moving-average <'> moving-average? <'> make-moving-average
@@ -2150,7 +2133,6 @@ include bird.fsm
    <'> make-vct <'> vct-add! <'> vct-subtract!
    <'> vct-copy <'> vct-length <'> vct-multiply! <'> vct-offset!
    <'> vct-ref <'> vct-scale! <'> vct-fill! <'> vct-set!
-   'snd-nogui [unless] <'> mus-audio-describe [then]
    <'> vct-peak <'> vct? <'> list->vct
    <'> vct->list <'> vector->vct <'> vct->vector <'> vct-move!
    <'> vct-reverse! <'> vct-subseq <'> vct <'> little-endian?
@@ -2162,7 +2144,7 @@ include bird.fsm
    <'> mus-sound-forget <'> xramp-channel <'> ptree-channel <'> snd->sample
    <'> snd->sample? <'> make-snd->sample <'> make-scalar-mixer <'> beats-per-minute
    <'> beats-per-measure <'> channel-amp-envs <'> convolve-files <'> filter-control-coeffs
-   <'> locsig-type <'> make-phase-vocoder <'> mus-audio-mixer-read <'> mus-describe
+   <'> locsig-type <'> make-phase-vocoder <'> mus-describe
    <'> mus-error-type->string <'> mus-file-buffer-size <'> mus-name <'> mus-offset
    <'> mus-out-format <'> mus-reset <'> mus-rand-seed <'> mus-width
    <'> phase-vocoder? <'> polar->rectangular <'> phase-vocoder-amp-increments
@@ -2209,7 +2191,7 @@ include bird.fsm
    <'> view-files-selected-files <'> region-graph-style <'> reverb-control-decay
    <'> reverb-control-feedback <'> reverb-control-length
    <'> reverb-control-lowpass <'> reverb-control-scale <'> time-graph-style <'> lisp-graph-style
-   <'> transform-graph-style <'> reverb-control? <'> ladspa-dir
+   <'> transform-graph-style <'> reverb-control? <'> ladspa-dir <'> peak-env-dir
    <'> save-dir <'> save-state-file
    <'> selection-creates-region <'> show-axes
    <'> show-controls <'> show-transform-peaks <'> show-indices <'> show-marks
@@ -2234,8 +2216,7 @@ include bird.fsm
    <'> selected-sound <'> selection-position <'> selection-frames
    <'> selection-member? <'> sound-loop-info <'> srate <'> time-graph-type
    <'> x-position-slider <'> x-zoom-slider <'> y-position-slider
-   <'> y-zoom-slider <'> sound-data-ref <'> mus-array-print-length
-   <'> mus-float-equal-fudge-factor
+   <'> y-zoom-slider <'> sound-data-ref <'> mus-array-print-length <'> mus-float-equal-fudge-factor
    <'> mus-data <'> mus-feedback <'> mus-feedforward
    <'> mus-frequency <'> mus-hop <'> mus-increment
    <'> mus-length <'> mus-location <'> mus-phase <'> mus-ramp
@@ -2630,7 +2611,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
      <'> graph-style <'> lisp-graph? <'> insert-sound
      <'> time-graph-style <'> lisp-graph-style <'> transform-graph-style <'> left-sample
      <'> map-chan <'> max-transform-peaks <'> maxamp-position <'> min-dB <'> mix-region
-     <'> transform-normalization <'> peak-env-info <'> peaks <'> reverse-sound
+     <'> transform-normalization <'> peaks <'> reverse-sound
      <'> revert-sound <'> right-sample <'> sample <'> save-sound <'> save-sound-as
      <'> scan-chan <'> select-channel <'> show-axes <'> show-transform-peaks
      <'> show-marks <'> show-mix-waveforms <'> show-y-zero <'> show-grid
@@ -2669,7 +2650,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
      <'> filter-sound <'> graph-style <'> lisp-graph?
      <'> left-sample <'> time-graph-style <'> lisp-graph-style
      <'> transform-graph-style <'> max-transform-peaks <'> maxamp
-     <'> maxamp-position <'> min-dB <'> transform-normalization <'> peak-env-info
+     <'> maxamp-position <'> min-dB <'> transform-normalization
      <'> redo <'> reverse-sound <'> revert-sound <'> right-sample
      <'> sample <'> save-sound <'> scale-by <'> scale-to
      <'> show-axes <'> show-transform-peaks <'> show-marks <'> show-mix-waveforms
@@ -2719,7 +2700,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
      <'> transform-graph-type <'> fft-window <'> transform-graph? <'> graph-style
      <'> lisp-graph? <'> left-sample <'> time-graph-style <'> lisp-graph-style
      <'> transform-graph-style <'> max-transform-peaks <'> maxamp
-     <'> maxamp-position <'> min-dB <'> transform-normalization <'> peak-env-info
+     <'> maxamp-position <'> min-dB <'> transform-normalization
      <'> reverse-sound <'> right-sample <'> show-axes <'> show-transform-peaks
      <'> show-marks <'> show-mix-waveforms <'> show-y-zero <'> show-grid
      <'> show-sonogram-cursor <'>  grid-density <'> spectrum-end <'> spectro-hop
@@ -2848,7 +2829,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
      <'> max-regions <'> minibuffer-history-length <'> mix-waveform-height <'> region-graph-style
      <'> time-graph-style <'> lisp-graph-style <'> transform-graph-style
      <'> view-files-sort <'> print-length
-     <'> ladspa-dir <'> save-dir
+     <'> ladspa-dir <'> peak-env-dir <'> save-dir
      <'> save-state-file <'> selected-channel
      <'> selected-sound <'> selection-creates-region <'> show-controls
      <'> show-indices <'> show-listener <'> show-selection-transform <'> sinc-width
@@ -2966,9 +2947,6 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   #( ind )                   <'> read-only              'wrong-type-arg   check-error-tag
   ind #( 0 )                 <'> frames                 'wrong-type-arg   check-error-tag
   0 -10                      <'> smooth-sound           'wrong-type-arg   check-error-tag
-  'snd-nogui unless
-    ind 0 "/baddy/hi"        <'> write-peak-env-info-file 'cannot-save    check-error-tag
-  then
   0 ind 123                  <'> mix-selection          'no-such-channel  check-error-tag
   0 ind 123                  <'> insert-selection       'no-such-channel  check-error-tag
   ind 0                      <'> set-channels           'out-of-range     check-error-tag
