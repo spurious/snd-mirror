@@ -2351,10 +2351,7 @@ Doesnt work any more.
 ;; The point is to decrease the loading time.
 ; First make sure the peaks directory is present
 (system (string-append "mkdir " (getenv "HOME") "/peaks >/dev/null 2>/dev/null"))
-(c-load-from-path peak-env)
-(add-hook! after-open-hook save-peak-env-info)
-;;(add-hook! after-save-hook save-peak-env-info)
-;;(add-hook! after-save-as-hook save-peak-env-info)
+(set! (peak-env-dir) "/peaks")
 
 (if use-gtk
     (c-load-from-path snd-gtk)

@@ -1020,6 +1020,9 @@
     (set! (ladspa-dir) (ladspa-dir))
     (if (not (equal? (ladspa-dir)  #f )) 
 	(snd-display ";ladspa-dir set def: ~A" (ladspa-dir)))
+    (set! (peak-env-dir) (peak-env-dir))
+    (if (not (equal? (peak-env-dir)  #f )) 
+	(snd-display ";peak-env-dir set def: ~A" (peak-env-dir)))
     (set! (tiny-font) (tiny-font))
     (if (and (not (equal? (tiny-font) "6x12"))
 	     (not (equal? (tiny-font) "Sans 8")))
@@ -1242,6 +1245,7 @@
       'html-program (html-program) "firefox"
       'just-sounds (just-sounds) #f
       'ladspa-dir (ladspa-dir) #f 
+      'peak-env-dir (peak-env-dir) #f 
       'lisp-graph? (without-errors (lisp-graph?)) 'no-such-sound
       'listener-prompt (listener-prompt) ">" 
       'log-freq-start (log-freq-start) 32.0	
@@ -2099,7 +2103,7 @@
 		       'insert-file-dialog 'insert-region 'insert-sample 'insert-samples 'insert-samples-with-origin
 		       'insert-selection 'insert-silence 'insert-sound 'just-sounds 'kaiser-window
 		       'key 'key-binding 'key-press-hook 'keyboard-no-action 'ladspa-activate
-		       'ladspa-cleanup 'ladspa-connect-port 'ladspa-deactivate 'ladspa-descriptor 'ladspa-dir
+		       'ladspa-cleanup 'ladspa-connect-port 'ladspa-deactivate 'ladspa-descriptor 'ladspa-dir 'peak-env-dir
 		       'ladspa-instantiate 'ladspa-run 'ladspa-run-adding 'ladspa-set-run-adding-gain 'left-sample
 		       'linear->db 'lisp-graph 'lisp-graph-hook 'lisp-graph-style 'lisp-graph?
 		       'list->vct 'list-ladspa 'listener-click-hook 'listener-color 'listener-font
@@ -2171,7 +2175,7 @@
 		       'orientation-hook 'oscil 'oscil? 'out-any 'outa
 		       'outb 'outc 'outd 'output-comment-hook 'output-name-hook 
 		       'override-samples-with-origin 'pad-channel 'partials->polynomial 'partials->wave
-		       'parzen-window 'pausing 'peak-env-hook 'peak-env-info 'peaks 'peaks-font
+		       'parzen-window 'pausing 'peak-env-hook 'peaks 'peaks-font
 		       'phase-partials->wave 'phase-vocoder 'phase-vocoder-amp-increments 'phase-vocoder-amps 'phase-vocoder-freqs
 		       'phase-vocoder-phase-increments 'phase-vocoder-phases 'phase-vocoder? 'play
 		       'play-and-wait 'play-channel 'play-hook 'play-mix 'play-region
@@ -2182,7 +2186,7 @@
 		       'prompt-in-minibuffer 'ptree-channel 'pulse-train
 		       'pulse-train? 'pushed-button-color 'quit-button-color 'radians->degrees 'radians->hz
 		       'ramp-channel 'rand 'rand-interp 'rand-interp? 'rand?
-		       'read-hook 'read-mix-sample 'read-only 'read-peak-env-info-file 'read-region-sample
+		       'read-hook 'read-mix-sample 'read-only 'read-region-sample
 		       'read-sample 'readin 'readin? 
 		       'rectangular->magnitudes 'rectangular->polar 'rectangular-window 'redo 'redo-edit
 		       'region->vct 'region-chans 'region-home 'region-frames 'region-graph-style 'region-maxamp
@@ -2253,7 +2257,7 @@
 		       'wavo-hop 'wavo-trace 'welch-window 'widget-position
 		       'widget-size 'widget-text 'window-height 'window-property 'window-property-changed-hook
 		       'window-width 'window-x 'window-y 'with-background-processes 'with-file-monitor 'with-gl
-		       'with-mix-tags 'with-relative-panes 'with-tracking-cursor 'with-verbose-cursor 'write-peak-env-info-file
+		       'with-mix-tags 'with-relative-panes 'with-tracking-cursor 'with-verbose-cursor
 		       'x->position 'x-axis-as-clock 'x-axis-as-percentage 'x-axis-in-beats 'x-axis-in-measures
 		       'x-axis-in-samples 'x-axis-in-seconds 'x-axis-label 'x-axis-style 'x-bounds
 		       'x-position-slider 'x-zoom-slider 'xramp-channel 'y->position 'y-axis-label
@@ -31234,9 +31238,10 @@ EDITS: 2
 		   (set! (mus-file-prescaler fd) 4.0)))
       (let* ((ind1 (open-sound "test.snd"))
 	     (mx1 (maxamp ind1)))
-	(if (fneq mx1 (* 4.0 mx0)) (snd-display ";set prescaler: ~A -> ~A" mx0 mx1))
+	(if (fneq mx1 (* 4.0 mx0)) (snd-display ";set prescaler: ~A -> ~A (~A)" mx0 mx1 (/ mx1 mx0)))
 	(close-sound ind1)))
     (reset-hook! during-open-hook)
+    (set! (mus-file-prescaler) 1.0)
     
     (let ((ind #f)
 	  (op #f)
@@ -32497,18 +32502,6 @@ EDITS: 2
 		   (lambda (beg) (insert-silence beg 100)))))
 	  
 	  (let ((ind (open-sound "z.snd")))
-	    (if (not (null? (peak-env-info ind))) (snd-display ";peak-env-info of empty sound: ~A" (peak-env-info ind)))
-	    (restore-controls)
-	    (if (not (equal? (peak-env-info ind) '()))
-		(snd-display ";peak-env-info z.snd: ~A" (peak-env-info ind)))
-	    (let ((var (catch #t (lambda () (write-peak-env-info-file ind 0 "hi")) (lambda args args))))
-	      (if (not (eq? (car var) 'no-such-envelope))
-		  (snd-display ";write-peak-env-info-file null env: ~A" var)))
-	    (let ((var (catch #t (lambda () (read-peak-env-info-file ind 0 "hi")) (lambda args args))))
-	      (if (and (not (eq? (car var) 'bad-header))
-		       (not (eq? (car var) 'no-such-file))
-		       (not (eq? (car var) 'mus-error)))
-		  (snd-display ";read-peak-env-info-file null file: ~A" var)))
 	    (if (not (= (frames ind) 0)) (snd-display ";frames z.snd ~A" (frames ind)))
 	    (if (not (eq? (samples) #f)) (snd-display ";samples of empty file (z): ~A" (samples)))
 	    (if (not (eq? (channel->vct) #f)) (snd-display ";channel->vct of empty file (z): ~A" (channel->vct)))
@@ -37884,8 +37877,7 @@ EDITS: 3
 	    (begin
 	      (reset-hook! update-hook)
 	      (reset-hook! close-hook)
-	      (reset-hook! exit-hook)
-	      (load "peak-env.scm"))) ; don't check provided list -- need to load it to get the initial-graph-hook set
+	      (reset-hook! exit-hook)))
 	
 	(let ((data (map
 		     (lambda (sound)
@@ -38418,118 +38410,6 @@ EDITS: 3
 		      (snd-display ";ptree previous: ~A ~A" i val)
 		      (set! happy #f))))))
 	  (close-sound ind))
-
-	;; peak envs
-	(let ((data-formats (list mus-bshort mus-lshort mus-mulaw mus-alaw mus-byte mus-ubyte mus-bfloat mus-lfloat
-				  mus-bint mus-lint mus-bintn mus-lintn mus-b24int mus-l24int mus-bdouble mus-ldouble
-				  mus-ubshort mus-ulshort mus-bfloat-unscaled mus-lfloat-unscaled mus-bdouble-unscaled 
-				  mus-ldouble-unscaled)))
-	  
-	  ;; PEAK_ENV_CUTOFF in snd-0.h is 50000, snd-chn.c 831 calls start_peak_env
-	  ;; peak-env-info snd chn pos:  (done? min max)
-	  ;; channel-amp-envs snd chn pos: (min-vct max-vct)
-	  
-	  ;; mono
-	  (for-each
-	   (lambda (frm)
-	     (let* ((file (with-sound (:srate 44100 :data-format frm) 
-			    (fm-violin 0 .5 440 .1) 
-			    (fm-violin 1.5 .5 660 .1)))
-		    (snd-direct (find-sound file))
-		    (snd-read (new-sound "peak-test.snd" :comment "peak env tests at 38270"))
-		    (envs-direct (channel-amp-envs snd-direct 0))
-		    (info-direct (peak-env-info snd-direct 0)))
-	       
-	       (mix file 0 0 snd-read 0)
-	       
-	       (let* ((envs-read (channel-amp-envs snd-read 0))
-		      (info-read (peak-env-info snd-read 0)))
-		 
-		 (if (not (vequal (channel->vct 0 88200 snd-direct 0) (channel->vct 0 88200 snd-read 0)))
-		     (snd-display ";peak-env-info ~A direct != mix?" (mus-data-format->string frm)))
-		 
-		 (if (not (vequal (car envs-direct) (car envs-read)))
-		     (snd-display ";channel-amp-envs direct != read mins ~A" (mus-data-format->string frm)))
-		 (if (not (vequal (cadr envs-direct) (cadr envs-read)))
-		     (snd-display ";channel-amp-envs direct != read maxs ~A" (mus-data-format->string frm)))
-		 
-		 (if (not (member frm (list mus-byte mus-ubyte)))
-		     (begin
-		       (if (or (fneq (cadr info-direct) -.1) (fneq (caddr info-direct) .1))
-			   (snd-display ";peak-env-info direct ~A: ~A" (mus-data-format->string frm) info-direct))
-		       (if (or (fneq (cadr info-read) -.1) (fneq (caddr info-read) .1))
-			   (snd-display ";peak-env-info read ~A: ~A" (mus-data-format->string frm) info-read)))
-		     (begin
-		       (if (or (ffneq (cadr info-direct) -.1) (ffneq (caddr info-direct) .1))
-			   (snd-display ";peak-env-info direct ~A: ~A" (mus-data-format->string frm) info-direct))
-		       (if (or (ffneq (cadr info-read) -.1) (ffneq (caddr info-read) .1))
-			   (snd-display ";peak-env-info read ~A: ~A" (mus-data-format->string frm) info-read))))
-		 
-		 (close-sound snd-direct)
-		 (close-sound snd-read))))
-	   data-formats)
-	  
-	  ;; stereo
-	  (for-each
-	   (lambda (frm)
-	     (let* ((file (with-sound (:srate 44100 :data-format frm :channels 2) 
-			    (fm-violin 0 .5 440 .1 :degree 0) 
-			    (fm-violin 1.5 .5 660 .2 :degree 90)))
-		    (snd-direct (find-sound file))
-		    (snd-read (new-sound "peak-test.snd" :comment "peak env tests at 38309" :channels 2))
-		    (envs-direct0 (channel-amp-envs snd-direct 0))
-		    (envs-direct1 (channel-amp-envs snd-direct 1))
-		    (info-direct0 (peak-env-info snd-direct 0))
-		    (info-direct1 (peak-env-info snd-direct 1)))
-	       
-	       (mix file 0 #t snd-read 0) ; #t for all chans, I hope
-	       
-	       (let* ((envs-read0 (channel-amp-envs snd-read 0))
-		      (envs-read1 (channel-amp-envs snd-read 1))
-		      (info-read0 (peak-env-info snd-read 0))
-		      (info-read1 (peak-env-info snd-read 1)))
-		 
-		 (if (not (vequal (channel->vct 0 88200 snd-direct 0) (channel->vct 0 88200 snd-read 0)))
-		     (snd-display ";peak-env-info ~A chan 0 direct != mix?" (mus-data-format->string frm)))
-		 (if (not (vequal (channel->vct 0 88200 snd-direct 1) (channel->vct 0 88200 snd-read 1)))
-		     (snd-display ";peak-env-info ~A chan 1 direct != mix?" (mus-data-format->string frm)))
-		 
-		 (if (not (vequal (car envs-direct0) (car envs-read0)))
-		     (snd-display ";channel-amp-envs chan 0 direct != read mins ~A" (mus-data-format->string frm)))
-		 (if (not (vequal (cadr envs-direct0) (cadr envs-read0)))
-		     (snd-display ";channel-amp-envs chan 0 direct != read maxs ~A" (mus-data-format->string frm)))
-		 (if (not (vequal (car envs-direct1) (car envs-read1)))
-		     (snd-display ";channel-amp-envs chan 1 direct != read mins ~A" (mus-data-format->string frm)))
-		 (if (not (vequal (cadr envs-direct1) (cadr envs-read1)))
-		     (snd-display ";channel-amp-envs chan 1 direct != read maxs ~A" (mus-data-format->string frm)))
-		 
-		 (if (not (member frm (list mus-byte mus-ubyte mus-mulaw)))
-		     (begin
-		       (if (or (fneq (cadr info-direct0) -.1) (fneq (caddr info-direct0) .1))
-			   (snd-display ";peak-env-info chan 0 direct ~A: ~A" (mus-data-format->string frm) info-direct0))
-		       (if (or (fneq (cadr info-read0) -.1) (fneq (caddr info-read0) .1))
-			   (snd-display ";peak-env-info chan 0 read ~A: ~A" (mus-data-format->string frm) info-read0))
-		       (if (or (fneq (cadr info-direct1) -.2) (fneq (caddr info-direct1) .2))
-			   (snd-display ";peak-env-info chan 1 direct ~A: ~A" (mus-data-format->string frm) info-direct1))
-		       (if (or (fneq (cadr info-read1) -.2) (fneq (caddr info-read1) .2))
-			   (snd-display ";peak-env-info chan 1 read ~A: ~A" (mus-data-format->string frm) info-read1)))
-		     (begin
-		       (if (or (ffneq (cadr info-direct0) -.1) (ffneq (caddr info-direct0) .1))
-			   (snd-display ";peak-env-info chan 0 direct ~A: ~A" (mus-data-format->string frm) info-direct0))
-		       (if (or (ffneq (cadr info-read0) -.1) (ffneq (caddr info-read0) .1))
-			   (snd-display ";peak-env-info chan 0 read ~A: ~A" (mus-data-format->string frm) info-read0))
-		       (if (or (ffneq (cadr info-direct1) -.2) (ffneq (caddr info-direct1) .2))
-			   (snd-display ";peak-env-info chan 1 direct ~A: ~A" (mus-data-format->string frm) info-direct1))
-		       (if (or (ffneq (cadr info-read1) -.2) (ffneq (caddr info-read1) .2))
-			   (snd-display ";peak-env-info chan 1 read ~A: ~A" (mus-data-format->string frm) info-read1))))
-		 
-		 (close-sound snd-direct)
-		 (close-sound snd-read))))
-	   data-formats))
-
-	(if (file-exists? "peak-test.snd")
-	    (delete-file "peak-test.snd"))
-
 
      	;; recursion tests
         (let ((old-opt (optimization))
@@ -39827,11 +39707,6 @@ EDITS: 1
 			      (save-sound-as "nope.snd" :edit-position 21))
 			    (lambda args (car args)))))
 	    (if (not (eq? tag 'no-such-edit)) (snd-display ";save-sound-as at bad edpos: ~A" tag)))
-	  (let ((tag (catch 'no-such-edit
-			    (lambda ()
-			      (peak-env-info ind 0 21))
-			    (lambda args (car args)))))
-	    (if (not (eq? tag 'no-such-edit)) (snd-display ";peak-env-info at bad edpos: ~A" tag)))
 	  (let ((tag (catch 'no-such-file
 			    (lambda ()
 			      (channel-amp-envs "/baddy/hiho"))
@@ -44835,7 +44710,7 @@ EDITS: 1
 		     (update-sound ind)
 		     (let ((mx1 (maxamp ind 0)))
 		       (if (fneq mx mx1)
-			   (snd-display ";update-sound looped maxamp: ~A ~A ~A ~A ~A" i ind (frames ind) mx1 mx)))
+			   (snd-display ";update-sound looped maxamp: ~A ~A ~A ~A ~A (~A)" i ind (frames ind) mx1 mx (/ mx1 mx))))
 		     (if (not (= (chans ind) chns)) (snd-display ";update-sound looped chans: ~A ~A" chns (chans ind)))
 		     (if (not (= (srate ind) sr)) (snd-display ";update-sound looped srate: ~A ~A" sr (srate ind)))
 		     (if (not (= (frames ind) fr)) (snd-display ";update-sound looped frames: ~A ~A" fr (frames ind 0)))))
@@ -65092,19 +64967,19 @@ EDITS: 1
 					;new-sound in add-watcher
 		     read-mix-sample next-sample read-region-sample
 		     transform-normalization open-file-dialog-directory open-raw-sound open-sound previous-sample
-		     peak-env-info peaks ;play play-and-wait play-mix play-region play-selection
+		     peaks ;play play-and-wait play-mix play-region play-selection
 		     player? players
 		     position-color position->x position->y add-directory-to-view-files-list add-file-to-view-files-list view-files-sort 
 		     view-files-amp view-files-speed view-files-files view-files-selected-files view-files-speed-style view-files-amp-env
 		     print-length progress-report prompt-in-minibuffer pushed-button-color read-only
-		     read-peak-env-info-file redo region-chans view-regions-dialog region-home 
+		     redo region-chans view-regions-dialog region-home 
 		     region-graph-style region-frames region-position region-maxamp region-maxamp-position 
 		     selection-maxamp selection-maxamp-position region-sample region->vct clear-minibuffer
 		     region-srate regions region?  remove-from-menu report-in-minibuffer reset-controls restore-controls
 		     restore-region reverb-control-decay reverb-control-feedback 
 		     reverb-control-length reverb-control-lowpass reverb-control-scale reverb-control?  reverse-sound
 		     reverse-selection revert-sound right-sample sample sampler-at-end?  sampler? samples sampler-position
-		     sash-color save-controls ladspa-dir save-dir save-edit-history save-envelopes
+		     sash-color save-controls ladspa-dir peak-env-dir save-dir save-edit-history save-envelopes
 		     save-listener save-marks save-region save-selection save-sound save-sound-as
 		     save-state save-state-file scale-by scale-selection-by scale-selection-to scale-to
 		     scan-chan search-procedure select-all select-channel select-sound
@@ -65123,7 +64998,7 @@ EDITS: 1
 		     update-transform-graph update-time-graph update-lisp-graph update-sound clm-table-size clm-default-frequency
 		     with-verbose-cursor view-sound wavelet-type
 		     time-graph?  time-graph-type wavo-hop wavo-trace window-height window-width window-x window-y
-		     with-mix-tags with-relative-panes with-gl write-peak-env-info-file x-axis-style beats-per-measure
+		     with-mix-tags with-relative-panes with-gl x-axis-style beats-per-measure
 		     beats-per-minute x-bounds x-position-slider x->position x-zoom-slider mus-header-type->string mus-data-format->string
 		     y-bounds y-position-slider y->position y-zoom-slider zero-pad zoom-color zoom-focus-style mus-set-formant-radius-and-frequency
 		     mus-sound-samples mus-sound-frames mus-sound-duration mus-sound-datum-size mus-sound-data-location data-size
@@ -65224,7 +65099,7 @@ EDITS: 1
 			 view-files-files view-files-selected-files 
 			 region-graph-style reverb-control-decay reverb-control-feedback
 			 reverb-control-length reverb-control-lowpass reverb-control-scale time-graph-style lisp-graph-style transform-graph-style
-			 reverb-control? sash-color ladspa-dir save-dir save-state-file selected-data-color selected-graph-color
+			 reverb-control? sash-color ladspa-dir peak-env-dir save-dir save-state-file selected-data-color selected-graph-color
 			 selection-color selection-creates-region show-axes show-controls
 			 show-transform-peaks show-indices show-marks show-mix-waveforms show-selection-transform show-listener
 			 show-y-zero show-grid show-sonogram-cursor sinc-width spectrum-end spectro-hop spectrum-start spectro-x-angle  grid-density
@@ -65726,7 +65601,7 @@ EDITS: 1
 			    graph graph-style lisp-graph? (lambda (a) (insert-region 0 a)) insert-sound
 			    time-graph-style lisp-graph-style transform-graph-style
 			    left-sample make-graph-data map-chan max-transform-peaks maxamp-position min-dB mix-region
-			    transform-normalization peak-env-info peaks ;play
+			    transform-normalization peaks ;play
 			    position->x position->y reverse-sound
 			    revert-sound right-sample sample save-sound save-sound-as scan-chan
 			    select-channel show-axes show-transform-peaks show-marks show-mix-waveforms show-y-zero show-grid show-sonogram-cursor
@@ -65754,7 +65629,7 @@ EDITS: 1
 			    graph graph-style lisp-graph? insert-region insert-sound left-sample
 			    time-graph-style lisp-graph-style transform-graph-style
 			    make-graph-data map-chan max-transform-peaks maxamp maxamp-position min-dB mix-region transform-normalization
-			    peak-env-info peaks play play-and-wait position->x position->y reverse-sound right-sample sample
+			    peaks play play-and-wait position->x position->y reverse-sound right-sample sample
 			    save-sound-as scan-chan show-axes show-transform-peaks show-marks
 			    show-mix-waveforms show-y-zero show-grid show-sonogram-cursor 
 			    spectrum-end spectro-hop spectrum-start spectro-x-angle
@@ -65782,7 +65657,7 @@ EDITS: 1
 			    transform-size transform-graph-type fft-window transform-graph? filter-sound
 			    graph-data graph-style lisp-graph? left-sample
 			    time-graph-style lisp-graph-style transform-graph-style
-			    make-graph-data max-transform-peaks maxamp maxamp-position min-dB transform-normalization peak-env-info 
+			    make-graph-data max-transform-peaks maxamp maxamp-position min-dB transform-normalization
 ;			    (lambda (snd) (play snd 0))
 ;			    (lambda (snd) (play-and-wait 0 snd)) 
 			    (lambda (snd) (position->x 0 snd))
@@ -65850,7 +65725,7 @@ EDITS: 1
 			    dot-size edit-position edit-tree edits fft-window-alpha fft-window-beta fft-log-frequency fft-log-magnitude fft-with-phases
 			    transform-size transform-graph-type fft-window transform-graph? graph-style lisp-graph? left-sample
 			    time-graph-style lisp-graph-style transform-graph-style
-			    make-graph-data max-transform-peaks maxamp maxamp-position min-dB transform-normalization peak-env-info
+			    make-graph-data max-transform-peaks maxamp maxamp-position min-dB transform-normalization
 			    reverse-sound right-sample show-axes show-transform-peaks show-marks 
 			    show-mix-waveforms show-y-zero show-grid show-sonogram-cursor  grid-density
 			    spectrum-end spectro-hop spectrum-start spectro-x-angle spectro-x-scale spectro-y-angle
@@ -65876,7 +65751,7 @@ EDITS: 1
 			    fft-window-alpha fft-window-beta fft-log-frequency fft-log-magnitude fft-with-phases transform-size transform-graph-type fft-window
 			    transform-graph? graph-style lisp-graph? left-sample make-graph-data max-transform-peaks maxamp maxamp-position
 			    time-graph-style lisp-graph-style transform-graph-style
-			    min-dB transform-normalization peak-env-info reverse-sound right-sample show-axes  grid-density
+			    min-dB transform-normalization reverse-sound right-sample show-axes  grid-density
 			    show-transform-peaks show-marks show-mix-waveforms show-y-zero show-grid show-sonogram-cursor spectrum-end spectro-hop
 			    spectrum-start spectro-x-angle spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle
 			    spectro-z-scale squelch-update transform->vct transform-frames transform-type
@@ -66036,7 +65911,7 @@ EDITS: 1
 			    listener-color listener-font listener-prompt listener-text-color max-regions
 			    minibuffer-history-length mix-waveform-height region-graph-style position-color
 			    time-graph-style lisp-graph-style transform-graph-style peaks-font bold-peaks-font
-			    view-files-sort print-length pushed-button-color sash-color ladspa-dir save-dir save-state-file
+			    view-files-sort print-length pushed-button-color sash-color ladspa-dir peak-env-dir save-dir save-state-file
 			    selected-channel selected-data-color selected-graph-color 
 			    selected-sound selection-creates-region show-controls show-indices show-listener
 			    show-selection-transform sinc-width temp-dir text-focus-color tiny-font
@@ -66203,7 +66078,6 @@ EDITS: 1
 		  (check-error-tag 'wrong-type-arg (lambda () (read-only (list ind))))
 		  (check-error-tag 'wrong-type-arg (lambda () (frames ind (list 0))))
 		  (check-error-tag 'wrong-type-arg (lambda () (smooth-sound 0 -10)))
-		  (check-error-tag 'cannot-save (lambda () (write-peak-env-info-file ind 0 "/baddy/hi")))
 		  (check-error-tag 'bad-arity (lambda () (ptree-channel (lambda (a b c) #f) 0 10 #f #f #f #f (lambda (a) #f))))
 		  (check-error-tag 'bad-arity (lambda () (ptree-channel (lambda (a) #f) 0 10 #f #f #f #f (lambda (a b) #f))))
 		  (check-error-tag 'no-such-channel (lambda () (mix-selection 0 ind 123)))
@@ -67456,3 +67330,4 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
  6,943,061,664  run.c:jump_if_not_equal [/home/bil/cl/snd]
 
 |#
+;; TODO: check prefs for peak-env-dir

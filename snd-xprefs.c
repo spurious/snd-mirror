@@ -1960,11 +1960,11 @@ widget_t start_preferences_dialog(void)
     remember_pref(prf, reflect_show_controls, save_show_controls, NULL, NULL, revert_show_controls);
 
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
-    include_peak_env_directory = mus_strdup(peak_env_directory());
+    include_peak_env_directory = mus_strdup(peak_env_dir(ss));
     rts_peak_env_directory = mus_strdup(include_peak_env_directory);
     include_peak_envs = find_peak_envs();
     rts_peak_envs = include_peak_envs;
-    prf = prefs_row_with_toggle_with_text("save peak envs to speed up initial display", "save-peak-env-info",
+    prf = prefs_row_with_toggle_with_text("save peak envs to speed up initial display", "peak-env-dir",
 					  include_peak_envs,
 					  "directory:", include_peak_env_directory, 25,
 					  dpy_box, current_sep,

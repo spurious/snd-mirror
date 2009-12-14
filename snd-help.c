@@ -500,6 +500,8 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+14-Dec:  peak-env support moved to C, added peak-env-dir, removed peak-env.*,\n\
+           peak-env-info, read-peak-env-info-file, and write-peak-env-info-file.\n\
 11-Dec:  removed midi.c, sndrecord.c, SGI support, mus-audio-mixer-*, and Alsa < 1.0 support.\n\
 4-Dec:   portaudio support.\n\
 1-Dec:   removed --with-modules configuration switch.\n\
@@ -507,9 +509,6 @@ void about_snd_help(void)
 23-Nov:  colormaps are objects now.  integer->colormap, colormap->integer.\n\
          transforms are also objects.  integer->transform, transform->integer.\n\
 20-Nov:  play is generic now, \"old-play\" is the previous form.\n\
-2-Nov:   selection function/object. selection->mix.\n\
-28-Oct:  pretty-print.scm.\n\
-22-Oct:  Snd 11.0.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*:\n    '", features, "\n\n",

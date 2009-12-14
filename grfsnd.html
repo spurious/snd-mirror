@@ -303,10 +303,7 @@ Here's a more elaborate initialization file (~/.snd_s7):
 
 (set! (<a class=quiet href="extsnd.html#savedir" onmouseout="UnTip()" onmouseover="Tip(extsnd_savedir_tip)">save-dir</a>) "/zap/snd")        ;save-state files are placed in /zap/snd
 (set! (<a class=quiet href="extsnd.html#tempdir" onmouseout="UnTip()" onmouseover="Tip(extsnd_tempdir_tip)">temp-dir</a>) "/zap/tmp")        ;temp files are placed in /zap/tmp
-(load "peak-env.scm")               ;large file peak env data is saved for faster 
-				    ;  subsequent reads &mdash; this makes the first
-				    ;  view of a large file much snappier &mdash;
-				    ;  its default directory for the data is ~/peaks.
+(set! (peak-env-dir) "~/peaks")
 
 (load "draw.scm")                   ;load some useful extensions
 (load "hooks.scm")
@@ -395,7 +392,7 @@ lambda: ( str -- ) ." \ &lt;" .string ." &gt;" cr ; to *clm-notehook*
 
 'snd-motif provided? 'xm provided? not && [if] dl-load libxm Init_libxm [then]
 'snd-gtk   provided? 'xg provided? not && [if] dl-load libxg Init_libxg [then]
-require peak-env
+
 require examp
 require extensions
 require mix

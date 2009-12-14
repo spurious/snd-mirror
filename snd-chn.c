@@ -645,48 +645,64 @@ void add_channel_data_1(chan_info *cp, int srate, mus_long_t frames, channel_gra
   dur = (double)frames / (double)(srate);
 
   if ((cp->hookable == WITH_HOOK) && 
-      (graphed == WITH_GRAPH) &&    
+      (graphed == WITH_GRAPH))
+    {
       /* can also be WITHOUT_GRAPH and WITHOUT_INITIAL_GRAPH_HOOK
        *   the former is called in snd-nogui, and in the make_readable calls in snd-regions and snd-snd
        *   the latter is from snd-edits where we are updating an already displayed sound (and keeping its axis settings across the update)
        * this hook is replacing earlier "initial-x0" settings
        */
-      (XEN_HOOKED(initial_graph_hook)))
-    {
-      XEN res;
-      int len = 0;
-      res = run_or_hook(initial_graph_hook,
-			XEN_LIST_3(C_INT_TO_XEN_SOUND(cp->sound->index),
-				   C_TO_XEN_INT(cp->chan),
-				   C_TO_XEN_DOUBLE(dur)),
-			S_initial_graph_hook);
 
-      if (XEN_LIST_P_WITH_LENGTH(res, len))
+      /* peak-env setup.  This used to be handled by extension language code (peak-env.*) using
+       *   the initial-graph-hook, close-hook, and exit-hook.
+       */
+      if (peak_env_dir(ss))
 	{
-	  x_set = true;
-	  if (len > 0) x0 = XEN_TO_C_DOUBLE(XEN_CAR(res));
-	  if (len > 1) x1 = XEN_TO_C_DOUBLE(XEN_CADR(res));
-	  if (len > 2) y0 = XEN_TO_C_DOUBLE(XEN_CADDR(res));
-	  if (len > 3) y1 = XEN_TO_C_DOUBLE(XEN_CADDDR(res));
-	  if ((len > 4) && 
-	      (XEN_STRING_P(XEN_LIST_REF(res, 4))))
-	    hook_label = mus_strdup(XEN_TO_C_STRING(XEN_LIST_REF(res, 4)));
-	  if (len > 5)
+	  /* look for peak env file.  If found, read in its contents. */
+	  const char *error_string;
+	  error_string = read_peak_env_info_file(cp);
+	  if (error_string)
+	    snd_warning("peak-env: %s\n", error_string);
+	}
+
+      /* initial-graph-hook */
+      if (XEN_HOOKED(initial_graph_hook))
+	{
+	  XEN res;
+	  int len = 0;
+	  res = run_or_hook(initial_graph_hook,
+			    XEN_LIST_3(C_INT_TO_XEN_SOUND(cp->sound->index),
+				       C_TO_XEN_INT(cp->chan),
+				       C_TO_XEN_DOUBLE(dur)),
+			    S_initial_graph_hook);
+
+	  if (XEN_LIST_P_WITH_LENGTH(res, len))
 	    {
-	      ymin = XEN_TO_C_DOUBLE(XEN_LIST_REF(res, 5));
-	      ymin_set = true;
+	      x_set = true;
+	      if (len > 0) x0 = XEN_TO_C_DOUBLE(XEN_CAR(res));
+	      if (len > 1) x1 = XEN_TO_C_DOUBLE(XEN_CADR(res));
+	      if (len > 2) y0 = XEN_TO_C_DOUBLE(XEN_CADDR(res));
+	      if (len > 3) y1 = XEN_TO_C_DOUBLE(XEN_CADDDR(res));
+	      if ((len > 4) && 
+		  (XEN_STRING_P(XEN_LIST_REF(res, 4))))
+		hook_label = mus_strdup(XEN_TO_C_STRING(XEN_LIST_REF(res, 4)));
+	      if (len > 5)
+		{
+		  ymin = XEN_TO_C_DOUBLE(XEN_LIST_REF(res, 5));
+		  ymin_set = true;
+		}
+	      if (len > 6)
+		{
+		  ymax = XEN_TO_C_DOUBLE(XEN_LIST_REF(res, 6));
+		  ymax_set = true;
+		}
+	      /* ymin/ymax for possible fit data hooks */
 	    }
-	  if (len > 6)
-	    {
-	      ymax = XEN_TO_C_DOUBLE(XEN_LIST_REF(res, 6));
-	      ymax_set = true;
-	    }
-	  /* ymin/ymax for possible fit data hooks */
 	}
     }
 
   if ((!ymax_set) && (!ymin_set) &&
-      (peak_env_maxamp_ok(cp, 0))) /* peak-env.scm uses initial-graph-hook to read in this data, so it's not entirely hopeless */
+      (peak_env_maxamp_ok(cp, 0)))
     {
       ymax = peak_env_maxamp(cp, 0);
       if (ymax < 1.0) ymax = 1.0;
@@ -809,7 +825,7 @@ void add_channel_data(char *filename, chan_info *cp, channel_graph_t graphed)
     }
 #if (!USE_NO_GUI)
   if ((CURRENT_SAMPLES(cp) > PEAK_ENV_CUTOFF) &&
-      (cp->edits[0]->peak_env == NULL) &&              /* perhaps created in initial-graph-hook by read-peak-env-info-file */
+      (cp->edits[0]->peak_env == NULL) &&              /* perhaps created at initial graph time */
       (cp->sound->short_filename != NULL))             /* region browser jumped in too soon during autotest */
     start_peak_env(cp);
 #endif

@@ -1319,6 +1319,48 @@ static file_dialog_info *make_file_dialog(read_only_t read_only, char *title, ch
   fd->info1 = XtVaCreateManagedWidget("", xmLabelWidgetClass, rc2, XmNbackground, ss->sgx->highlight_color, NULL);
   fd->info2 = XtVaCreateManagedWidget("", xmLabelWidgetClass, rc2, XmNbackground, ss->sgx->highlight_color, NULL);
 
+#if 0
+  {
+    Widget grf_drawer, grf_frame, grf_form;
+
+    n = 0;
+    grf_frame = XtCreateManagedWidget("grf-frame", xmFrameWidgetClass, rc1, args, n); /* is this needed? */
+    
+    n = 0;
+#if 0
+    XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
+    XtSetArg(args[n], XmNheight, 60); n++;
+    XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
+    XtSetArg(args[n], XmNresizable, false); n++; /* form specific */
+#endif
+    n = attach_all_sides(args, n);
+    grf_form = XtCreateManagedWidget("grf-form", xmFormWidgetClass, grf_frame, args, n);
+
+
+
+#if 0
+    sp = make_simple_channel_display(region_srate(id), region_len(id), WITH_ARROWS, region_graph_style(ss), region_grf, WITHOUT_EVENTS);
+    sp->inuse = SOUND_FILER;
+    cp = sp->chans[0];
+
+    XtAddCallback(channel_graph(cp), XmNresizeCallback, filer_resize_callback, (XtPointer)cp);
+    XtAddCallback(channel_graph(cp), XmNexposeCallback, filer_resize_callback, (XtPointer)cp);
+
+    /* channel_f is up arrow, channel_w is down arrow */
+    XtAddCallback(channel_f(cp), XmNactivateCallback, filer_up_arrow_callback, NULL);
+    XtAddCallback(channel_w(cp), XmNactivateCallback, filer_down_arrow_callback, NULL);
+    set_sensitive(channel_f(cp), false);
+    if (sp->nchans > 1) set_sensitive(channel_w(cp), true);
+    cp->chan = 0;
+    sp->hdr = fixup_filer_data(cp, 0, 0);
+    filer_update_graph(cp);
+    add_ss_watcher(SS_FILE_OPEN_WATCHER, reflect_file_in_filer, NULL);
+#endif
+
+  }
+#endif
+
+
   /* -------- Snd-like color schemes */
   color_file_selection_box(fd->dialog);
   XtVaSetValues(fd->fp->just_sounds_button, XmNselectColor, ss->sgx->pushed_button_color, NULL);

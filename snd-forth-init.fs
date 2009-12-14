@@ -92,7 +92,6 @@ require hooks
 require marks
 require extensions
 require env
-require peak-env
 require mix
 require dsp
 require rgb
@@ -125,7 +124,7 @@ require rgb
 3 remember-sound-state
 *snd-home* add-load-path
 *snd-home* "/snd-remember-sound.fs" $+ to remember-sound-filename
-*snd-home* "/peaks" $+                 to save-peak-env-info-directory
+*snd-home* "/peaks" $+                 to peak-env-dir
 
 "CLM_SEARCH_PATH" getenv dup [if]
   ":" string-split [each] add-directory-to-view-files-list drop [end-each]

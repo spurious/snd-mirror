@@ -1298,16 +1298,6 @@ var sndscm_run_tip = "<code>(run  thunk)</code> tries to optimize its argument u
                      " When successful, it can speed up computation by about a factor of 10.<br>" +
                      " When unsuccessful, it falls back on Scheme, so you always get a sound. ";
 
-var sndscm_savepeakenvinfo_tip = "The functions in peak-env.scm provide relatively robust access to<br>" +
-                       " peak envelope files.  These files save Snd's overall amplitude envelopes<br>" +
-                       " for a given sound so that a subsequent re-open of that sound has the<br>" +
-                       " waveform immediately.  For very large sounds, this can save as much as<br>" +
-                       " a minute during which Snd is running the amplitude envelope builders<br>" +
-                       " in the background and displaying whatever it can.  That is, it makes<br>" +
-                       " opening a large sound much faster after the initial read and save.<br>" +
-                       " The variable 'save-peak-env-info' determines whether these envelopes are<br>" +
-                       " being saved (its default is #t).";
-
 var sndscm_scalemixes_tip = "<code>(scale-mixes mix-list scl)</code>: scales the amplitude of each mix in 'mix-list' by 'scl'.";
 
 var sndscm_sgfilter_tip = "<code>(savitzky-golay-filter gen input)</code>: a Savitzky-Golay filter, assuming symmetrical positioning.<br>" +

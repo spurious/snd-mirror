@@ -706,6 +706,9 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
   #define DEFAULT_LADSPA_DIR NULL
 #endif
 
+#define peak_env_dir(ss) ss->Peak_Env_Dir
+#define set_peak_env_dir(a) ss->Peak_Env_Dir = a
+
 #define open_file_dialog_directory(ss) ss->Open_File_Dialog_Directory
 #define set_open_file_dialog_directory(a) ss->Open_File_Dialog_Directory = a
 

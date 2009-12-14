@@ -1560,6 +1560,9 @@ void snd_close_file(snd_info *sp)
 		      S_before_close_hook);
   if (XEN_TRUE_P(res)) return;
 
+  if (peak_env_dir(ss))
+    map_over_sound_chans(sp, write_peak_env_info_file);
+
   if (XEN_HOOKED(close_hook))
     run_hook(close_hook,
 	     XEN_LIST_1(C_INT_TO_XEN_SOUND(sp->index)),
@@ -1992,6 +1995,10 @@ snd_info *snd_update(snd_info *sp)
   app_x = widget_width(MAIN_SHELL(ss));
   app_y = widget_height(MAIN_SHELL(ss));
   ur_filename = sp->filename;
+
+  if (peak_env_dir(ss))
+    for (i = 0; i < sp->nchans; i++)
+      delete_peak_env_info_file(sp->chans[i]);
 
   if (XEN_HOOKED(update_hook))
     {

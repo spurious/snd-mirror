@@ -1902,9 +1902,11 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
   sp->inuse = SOUND_NORMAL;
   sx = sp->sgx;
   sp->bomb_ctr = 0;
+
   if (sx->snd_widgets == NULL) 
     sx->snd_widgets = (Widget *)calloc(NUM_SND_WIDGETS, sizeof(Widget));
   sw = sx->snd_widgets;
+
   if ((!make_widgets) && (old_chans < nchans))
     {
       for (i = old_chans; i < nchans; i++) 

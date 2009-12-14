@@ -4669,14 +4669,14 @@ static void help_peak_envs(prefs_info *prf)
 	   "When a very large file is first opened, Snd scans all the data to build up an overall \
 representation of the sound.  If you like to view the entire sound upon opening it, you can speed \
 up the process a lot by saving this initial representation.  The data is called a 'peak-env' file \
-and it resides in the 'peak-env-directory'.",
+and it resides in the 'peak-env-dir'.",
 	   WITH_WORD_WRAP);
 }
 
 
 static bool find_peak_envs(void) 
 {
-  return(XEN_TO_C_BOOLEAN(prefs_variable_get("save-peak-env-info?")));
+  return(peak_env_dir(ss));
 }
 
 
@@ -4704,33 +4704,20 @@ static void save_peak_envs(prefs_info *prf, FILE *fd)
   if (rts_peak_envs)
     {
 #if HAVE_SCHEME
-      fprintf(fd, "(if (not (provided? 'snd-peak-env.scm)) (load-from-path \"peak-env.scm\"))\n");
       if (include_peak_env_directory)
-	fprintf(fd, "(set! save-peak-env-info-directory \"%s\")\n", include_peak_env_directory);
+	fprintf(fd, "(set! (peak-env-dir) \"%s\")\n", include_peak_env_directory);
 #endif
 
 #if HAVE_RUBY
-      fprintf(fd, "require \"env\"\n");
       if (include_peak_env_directory)
-	fprintf(fd, "$save_peak_env_info_directory = \"%s\"\n", include_peak_env_directory);
+	fprintf(fd, "$peak_env_dir = \"%s\"\n", include_peak_env_directory);
 #endif
 
 #if HAVE_FORTH
-      fprintf(fd, "require peak-env\n");
       if (include_peak_env_directory)
-	fprintf(fd, "\"%s\" to save-peak-env-info-directory\n", include_peak_env_directory);
+	fprintf(fd, "\"%s\" to peak-env-dir\n", include_peak_env_directory);
 #endif
     }
-}
-
-
-static const char *peak_env_directory(void)
-{
-  if (include_peak_env_directory)
-    return(include_peak_env_directory);
-  if (XEN_DEFINED_P("save-peak-env-info-directory"))
-    return(XEN_TO_C_STRING(XEN_NAME_AS_C_STRING_TO_VALUE("save-peak-env-info-directory")));
-  return(NULL);
 }
 
 

@@ -11,6 +11,12 @@ static void remove_temp_files(chan_info *cp)
 }
 
 
+static void save_peak_env_info(chan_info *cp)
+{
+  write_peak_env_info_file(cp); /* this returns bool, but for_each_chan wants void */
+}
+
+
 static XEN exit_hook;
 static XEN before_exit_hook;
 
@@ -25,6 +31,9 @@ bool snd_exit_cleanly(bool force_exit)
 		      XEN_EMPTY_LIST,
 		      S_before_exit_hook);
   if ((XEN_TRUE_P(res)) && (!force_exit)) return(false); /* does it make any sense to call this hook if we're forced to exit anyway? */
+
+  if (peak_env_dir(ss))
+    for_each_chan(save_peak_env_info);
 
   if (XEN_HOOKED(exit_hook))
     run_hook(exit_hook, 
@@ -526,6 +535,7 @@ static void save_options(FILE *fd)
 
   if (save_state_file(ss))
     pss_sq(fd, S_save_state_file, save_state_file(ss));
+  if (peak_env_dir(ss)) pss_sq(fd, S_temp_dir, peak_env_dir(ss));
   if (temp_dir(ss)) pss_sq(fd, S_temp_dir, temp_dir(ss));
   if (save_dir(ss)) pss_sq(fd, S_save_dir, save_dir(ss));
   if (open_file_dialog_directory(ss)) pss_sq(fd, S_open_file_dialog_directory, open_file_dialog_directory(ss));
@@ -1659,6 +1669,31 @@ static XEN g_set_temp_dir(XEN val)
 }
 
 
+static XEN g_peak_env_dir(void) {return(C_TO_XEN_STRING(peak_env_dir(ss)));}
+
+static XEN g_set_peak_env_dir(XEN val) 
+{
+  #define H_peak_env_dir "(" S_peak_env_dir "): name of directory for peak env files (or " PROC_FALSE "=null)"
+  const char *dir = NULL;
+  XEN_ASSERT_TYPE(XEN_STRING_P(val) || XEN_FALSE_P(val), val, XEN_ONLY_ARG, S_setB S_peak_env_dir, "a string or " PROC_FALSE "=default (null)"); 
+  if (XEN_STRING_P(val)) 
+    {
+      dir = XEN_TO_C_STRING(val);
+      if (snd_access(dir, S_peak_env_dir))
+	{
+	  if (peak_env_dir(ss)) free(peak_env_dir(ss));
+	  set_peak_env_dir(mus_strdup(dir));
+	}
+    }
+  else
+    {
+      if (peak_env_dir(ss)) free(peak_env_dir(ss));
+      set_peak_env_dir(NULL);
+    }
+  return(C_TO_XEN_STRING(temp_dir(ss)));
+}
+
+
 static XEN g_ladspa_dir(void) {return(C_TO_XEN_STRING(ladspa_dir(ss)));}
 
 static XEN g_set_ladspa_dir(XEN val) 
@@ -2184,6 +2219,8 @@ XEN_NARGIFY_0(g_save_dir_w, g_save_dir)
 XEN_NARGIFY_1(g_set_save_dir_w, g_set_save_dir)
 XEN_NARGIFY_0(g_open_file_dialog_directory_w, g_open_file_dialog_directory)
 XEN_NARGIFY_1(g_set_open_file_dialog_directory_w, g_set_open_file_dialog_directory)
+XEN_NARGIFY_0(g_peak_env_dir_w, g_peak_env_dir)
+XEN_NARGIFY_1(g_set_peak_env_dir_w, g_set_peak_env_dir)
 XEN_NARGIFY_0(g_temp_dir_w, g_temp_dir)
 XEN_NARGIFY_1(g_set_temp_dir_w, g_set_temp_dir)
 XEN_NARGIFY_0(g_ladspa_dir_w, g_ladspa_dir)
@@ -2258,6 +2295,8 @@ XEN_NARGIFY_0(g_abortq_w, g_abortq)
 #define g_set_save_dir_w g_set_save_dir
 #define g_open_file_dialog_directory_w g_open_file_dialog_directory
 #define g_set_open_file_dialog_directory_w g_set_open_file_dialog_directory
+#define g_peak_env_dir_w g_peak_env_dir
+#define g_set_peak_env_dir_w g_set_peak_env_dir
 #define g_temp_dir_w g_temp_dir
 #define g_set_temp_dir_w g_set_temp_dir
 #define g_ladspa_dir_w g_ladspa_dir
@@ -2347,6 +2386,9 @@ void g_init_main(void)
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_open_file_dialog_directory, g_open_file_dialog_directory_w, H_open_file_dialog_directory,
 				   S_setB S_open_file_dialog_directory, g_set_open_file_dialog_directory_w,  0, 0, 1, 0);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_peak_env_dir, g_peak_env_dir_w, H_peak_env_dir,
+				   S_setB S_peak_env_dir, g_set_peak_env_dir_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_temp_dir, g_temp_dir_w, H_temp_dir,
 				   S_setB S_temp_dir, g_set_temp_dir_w,  0, 0, 1, 0);

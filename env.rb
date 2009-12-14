@@ -46,15 +46,6 @@
 #    make_semitones_env(env, *args)
 #    octaves_envelope(env, around, error)
 #    make_octaves_env(env, *args)
-#
-# class Peak_env
-#  initialize
-#  info_file_name(snd, chn)
-#  save_info_at_close(snd)
-#  restore_info_upon_open(snd, chn, dur)
-#  
-# install_save_peak_env
-# uninstall_save_peak_env
 
 # Code:
 
@@ -688,81 +679,5 @@ with_sound(:channels, 1, :play, 1) do | |
   test_power_env(2.4, 1, [0, 0, 0,   1, 1, 1,   2, 0.5, 0.123,   3, 1, 321,   4, 0, 0])
 end
 =end
-
-$save_peak_env_info_p = true
-$save_peak_env_info_directory = "~/peaks"
-
-class Peak_env
-  def initialize
-    @saved_peak_info = {}
-  end
-
-  def info_file_name(snd, chn)
-    format("%s/%s-ruby-peaks-%d", $save_peak_env_info_directory, file_name(snd).tr("/\\", "_"), chn)
-  end
-
-  # intended as a $close_hook function
-  def save_info_at_close(snd)
-    if $save_peak_env_info_p and peak_env_info(snd, 0, 0)
-      saved = false
-      channels(snd).times do |chn|
-        peak_file = mus_expand_filename(info_file_name(snd, chn))
-        if (not File.exist?(peak_file)) or
-            file_write_date(peak_file) < file_write_date(file_name(snd))
-          unless saved
-            @saved_peak_info[file_name(snd)] =
-              {:data_format => data_format(snd),
-              :channels => channels(snd)}
-            saved = true
-          end
-          Snd.catch(:no_such_envelope) do | | write_peak_env_info_file(snd, chn, peak_file) end
-        end
-      end
-    end
-  end
-
-  # intended as an $initial_graph_hook_function
-  def restore_info_upon_open(snd, chn, dur)
-    peak_info = @saved_peak_info[file_name(snd)]
-    if (not peak_info) or
-        (data_format(snd) == peak_info[:data_format] and channels(snd) == peak_info[:channels])
-      peak_file = mus_expand_filename(info_file_name(snd, chn))
-      if File.exist?(peak_file) and
-          file_write_date(peak_file) > file_write_date(file_name(snd))
-        @saved_peak_info[file_name(snd)] =
-          {:data_format => data_format(snd),
-          :channels => channels(snd)}
-        read_peak_env_info_file(snd, chn, peak_file)
-      end
-    end
-    false
-  end
-end
-
-def install_save_peak_env
-  peak_env = Peak_env.new
-  hook_name = "peak-env"
-  $update_hook.add_hook!(hook_name) do |snd|
-    if $save_peak_env_info_p
-      channels(snd).times do |chn|
-        peak_file = mus_expand_filename(peak_env.info_file_name(snd, chn))
-        File.exist?(peak_file) and File.unlink(peak_file)
-      end
-    end
-  end
-  $initial_graph_hook.add_hook!(hook_name) do |snd, chn, dur|
-      peak_env.restore_info_upon_open(snd, chn, dur)
-  end
-  $close_hook.add_hook!(hook_name) do |snd|
-    peak_env.save_info_at_close(snd)
-  end
-  $exit_hook.add_hook!(hook_name) do | |
-    Snd.sounds.each do |snd| peak_env.save_info_at_close(snd) end
-  end
-end
-
-def uninstall_save_peak_env
-  [$update_hook, $initial_graph_hook, $close_hook, $exit_hook].apply(:remove_hook!, "peak-env")
-end
 
 # env.rb ends here

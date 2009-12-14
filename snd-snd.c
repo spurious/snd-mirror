@@ -5399,48 +5399,6 @@ The 'choices' are 0 (apply to sound), 1 (apply to channel), and 2 (apply to sele
 }
 
 
-static XEN g_peak_env_info(XEN snd, XEN chn, XEN pos)
-{
-  #define H_peak_env_info "(" S_peak_env_info " :optional snd chn edpos): \
-return some of the overall amplitude envelope data for the given channel \
-at the given edit list position.  The data currently returned are whether \
-the envelopes are complete (they are the result of a background process), and the min and max data values."
-
-  chan_info *cp;
-  peak_env_info *ep;
-  int edpos;
-  chan_context *cgx;
-
-  ASSERT_CHANNEL(S_peak_env_info, snd, chn, 1);
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(pos), pos, XEN_ARG_3, S_peak_env_info, "an integer");
-  cp = get_cp(snd, chn, S_peak_env_info);
-  if (!cp) return(XEN_EMPTY_LIST);
-
-  cgx = cp->cgx;
-  if ((!cgx) || (!(cp->edits)))
-    return(XEN_EMPTY_LIST);
-
-  edpos = XEN_TO_C_INT_OR_ELSE(pos, cp->edit_ctr);
-  if (edpos == AT_CURRENT_EDIT_POSITION)
-    edpos = cp->edit_ctr;
-  if ((edpos < 0) || 
-      (edpos >= cp->edit_size) || 
-      (cp->edits[edpos] == NULL))
-    XEN_ERROR(NO_SUCH_EDIT,
-	      XEN_LIST_2(C_TO_XEN_STRING(S_peak_env_info),
-			 pos));
-
-  ep = cp->edits[edpos]->peak_env;
-  if (ep)
-    return(XEN_LIST_3(C_TO_XEN_BOOLEAN(ep->completed),
-		      C_TO_XEN_DOUBLE(ep->fmin),
-		      C_TO_XEN_DOUBLE(ep->fmax)));
-
-  /* don't throw an error here since the env may be in progress */
-  return(XEN_EMPTY_LIST);
-}
-
-
 static int pack_env_info_type(void)
 {
   /* put data description in peak-env info file (in case user opens it from incompatible machine) */
@@ -5454,45 +5412,66 @@ static int pack_env_info_type(void)
 }
 
 
+static char *peak_clean(const char *name)
+{
+  int len, i;
+  char *peak_name;
+  len = mus_strlen(name);
+  peak_name = (char *)calloc(len, sizeof(char));
+  for (i = 0; i < len; i++)
+    {
+      if ((name[i] == '\\') ||
+	  (name[i] == '/'))
+	peak_name[i] = '_';
+      else peak_name[i] = name[i];
+    }
+  return(peak_name);
+}
+
+
+void delete_peak_env_info_file(chan_info *cp)
+{
+  char *fullname, *peak_file_name;
+
+  peak_file_name = mus_format("%s/%s-peaks-%d", peak_env_dir(ss), peak_clean(cp->sound->filename), cp->chan);
+  fullname = mus_expand_filename(peak_file_name);
+
+  if (mus_file_probe(fullname))
+    unlink(fullname);
+
+  if (fullname) free(fullname);
+  if (peak_file_name) free(peak_file_name);
+}
+
+
 #define PEAK_ENV_VERSION 0
 #define PEAK_ENV_INTS 5
 #define PEAK_ENV_SAMPS 2
 
-static XEN g_write_peak_env_info_file(XEN snd, XEN chn, XEN name)
+/* TODO: snd-test peak-env-dir, also check by hand turning it off and on */
+
+bool write_peak_env_info_file(chan_info *cp)
 {
-  #define H_write_peak_env_info_file "(" S_write_peak_env_info_file " snd chn name): save current peak-env info in file"
-  chan_info *cp;
-  char *fullname = NULL;
+  char *fullname, *peak_file_name;
   peak_env_info *ep;
   int fd;
   int ibuf[PEAK_ENV_INTS];
   mus_float_t mbuf[PEAK_ENV_SAMPS];
+  ssize_t bytes;
 
-  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_2, S_write_peak_env_info_file, "a string");
-  ASSERT_CHANNEL(S_write_peak_env_info_file, snd, chn, 1);
-  cp = get_cp(snd, chn, S_write_peak_env_info_file);
-  if (!cp) return(XEN_FALSE);
+  if (!(cp->edits)) return(true);
   ep = cp->edits[0]->peak_env;
-  if (ep == NULL)
-    {
-      XEN_ERROR(NO_SUCH_ENVELOPE,
-		XEN_LIST_3(C_TO_XEN_STRING(S_write_peak_env_info_file),
-			   snd,
-			   chn));
-      return(XEN_FALSE);  /* not sure why this is needed sometimes... */
-    }
+  if (ep == NULL) return(false);
 
-  fullname = mus_expand_filename(XEN_TO_C_STRING(name));
+  peak_file_name = mus_format("%s/%s-peaks-%d", peak_env_dir(ss), peak_clean(cp->sound->filename), cp->chan);
+  fullname = mus_expand_filename(peak_file_name);
+
   fd = mus_file_create(fullname);
   if (fd == -1)
     {
-      XEN errstr;
-      errstr = C_TO_XEN_STRING(fullname);
       if (fullname) free(fullname);
-      XEN_ERROR(CANNOT_SAVE,
-		XEN_LIST_3(C_TO_XEN_STRING(S_write_peak_env_info_file),
-			   errstr,
-			   C_TO_XEN_STRING(snd_open_strerror())));
+      if (peak_file_name) free(peak_file_name);
+      return(false);
     }
 
   ibuf[0] = ((ep->completed) ? 1 : 0) | PEAK_ENV_VERSION | (pack_env_info_type() << 16);
@@ -5502,17 +5481,17 @@ static XEN g_write_peak_env_info_file(XEN snd, XEN chn, XEN name)
   ibuf[4] = ep->top_bin;
   mbuf[0] = ep->fmin;
   mbuf[1] = ep->fmax;
-  {
-    ssize_t bytes;
-    bytes = write(fd, (char *)ibuf, (PEAK_ENV_INTS * sizeof(int)));
-    if (bytes != 0) bytes = write(fd, (char *)mbuf, (PEAK_ENV_SAMPS * sizeof(mus_float_t)));
-    if (bytes != 0) bytes = write(fd, (char *)(ep->data_min), (ep->peak_env_size * sizeof(mus_float_t)));
-    if (bytes != 0) bytes = write(fd, (char *)(ep->data_max), (ep->peak_env_size * sizeof(mus_float_t)));
-    if (bytes == 0) fprintf(stderr, "write error in " S_write_peak_env_info_file);
-  }
+
+  bytes = write(fd, (char *)ibuf, (PEAK_ENV_INTS * sizeof(int)));
+  if (bytes != 0) bytes = write(fd, (char *)mbuf, (PEAK_ENV_SAMPS * sizeof(mus_float_t)));
+  if (bytes != 0) bytes = write(fd, (char *)(ep->data_min), (ep->peak_env_size * sizeof(mus_float_t)));
+  if (bytes != 0) bytes = write(fd, (char *)(ep->data_max), (ep->peak_env_size * sizeof(mus_float_t)));
+  if (bytes == 0) fprintf(stderr, "write error while writing peak env file");
+
   snd_close(fd, fullname);
   if (fullname) free(fullname);
-  return(name);
+  if (peak_file_name) free(peak_file_name);
+  return(true);
 }
 
 
@@ -5540,6 +5519,7 @@ static peak_env_info *get_peak_env_info(const char *fullname, peak_env_error_t *
       (*error) = PEAK_ENV_NO_FILE;
       return(NULL);
     }
+
   bytes = read(fd, (char *)ibuf, (PEAK_ENV_INTS * sizeof(int)));
   if (bytes != (PEAK_ENV_INTS * sizeof(int)))
     {
@@ -5547,6 +5527,7 @@ static peak_env_info *get_peak_env_info(const char *fullname, peak_env_error_t *
       (*error) = PEAK_ENV_NO_DATA;
       return(NULL);
     }
+
   hdr = ibuf[0];
   (*error) = PEAK_ENV_NO_ERROR;
   if (((hdr & 0xf) != 0) && ((hdr & 0xf) != 1)) 
@@ -5566,83 +5547,59 @@ static peak_env_info *get_peak_env_info(const char *fullname, peak_env_error_t *
 	    }
 	}
     }
+
   if ((*error) != PEAK_ENV_NO_ERROR) 
     {
       snd_close(fd, fullname);
       return(NULL);
     }
+
   ep = (peak_env_info *)calloc(1, sizeof(peak_env_info));
   ep->completed = (bool)(hdr & 0xf); /* version number in higher bits */
   ep->peak_env_size = ibuf[1];
   ep->samps_per_bin = ibuf[2];
   ep->bin = ibuf[3];
   ep->top_bin = ibuf[4];
+
   if (read(fd, (char *)mbuf, (PEAK_ENV_SAMPS * sizeof(mus_float_t))) == 0) fprintf(stderr, "%s: read error", fullname);
+
   ep->fmin = mbuf[0];
   ep->fmax = mbuf[1];
+
   ep->data_min = (mus_float_t *)malloc(ep->peak_env_size * sizeof(mus_float_t));
   ep->data_max = (mus_float_t *)malloc(ep->peak_env_size * sizeof(mus_float_t));
+
   if (read(fd, (char *)(ep->data_min), (ep->peak_env_size * sizeof(mus_float_t))) == 0) fprintf(stderr, "%s: read error", fullname);
   if (read(fd, (char *)(ep->data_max), (ep->peak_env_size * sizeof(mus_float_t))) == 0) fprintf(stderr, "%s: read error", fullname);
+
   snd_close(fd, fullname);
   return(ep);
 }
 
 
-static XEN g_read_peak_env_info_file(XEN snd, XEN chn, XEN name)
+const char *read_peak_env_info_file(chan_info *cp)
 {
-  #define H_read_peak_env_info_file "(" S_read_peak_env_info_file " snd chn name): read stored peak-env info from file"
-  /* has to happen in initial_graph_hook to precede add_peak_env */
-  chan_info *cp;
   peak_env_error_t err = PEAK_ENV_NO_ERROR;
-  char *fullname;
+  char *fullname, *peak_file_name;
 
-  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_3, S_read_peak_env_info_file, "a string");
-  ASSERT_CHANNEL(S_read_peak_env_info_file, snd, chn, 1);
-  cp = get_cp(snd, chn, S_read_peak_env_info_file);
-  if ((!cp) || (!(cp->edits))) return(XEN_FALSE);
+  if (!(cp->edits)) return(NULL);
 
-  fullname = mus_expand_filename(XEN_TO_C_STRING(name));
-  cp->edits[0]->peak_env = get_peak_env_info(fullname, &err);
+  peak_file_name = mus_format("%s/%s-peaks-%d", peak_env_dir(ss), peak_clean(cp->sound->filename), cp->chan);
+  fullname = mus_expand_filename(peak_file_name);
+
+  if ((mus_file_probe(fullname)) &&
+      (file_write_date(fullname) > cp->sound->write_date))
+    cp->edits[0]->peak_env = get_peak_env_info(fullname, &err);
+
   if (fullname) free(fullname);
-  if (cp->edits[0]->peak_env == NULL)
-    {
-      XEN error_type;
-      switch (err)
-	{
-	case PEAK_ENV_BAD_HEADER:
-	  error_type = BAD_HEADER;
-	  break;
+  if (peak_file_name) free(peak_file_name);
 
-	case PEAK_ENV_BAD_FORMAT:
-	  error_type = XEN_ERROR_TYPE("bad-format");
-	  break;
+  if ((cp->edits[0]->peak_env == NULL) &&
+      (err != PEAK_ENV_NO_ERROR))
+    return(peak_env_error[(int)err]);
 
-	case PEAK_ENV_BAD_SIZE:
-	  error_type = XEN_ERROR_TYPE("bad-size");
-	  break;
-
-	case PEAK_ENV_NO_FILE:
-	  error_type = NO_SUCH_FILE;
-	  break;
-
-	case PEAK_ENV_NO_DATA:
-	  error_type = NO_DATA;
-	  break;
-
-	default:
-	  fprintf(stderr, "internal Snd bug!");
-	  error_type = XEN_ERROR_TYPE("Snd-internal-error");
-	  break;
-	}
-      XEN_ERROR(error_type, 
-		XEN_LIST_3(C_TO_XEN_STRING(S_read_peak_env_info_file),
-			   C_TO_XEN_STRING(peak_env_error[(int)err]),
-			   name));
-    }
-  return(name);
+  return(NULL);
 }
-
 
 static XEN g_env_info_to_vcts(peak_env_info *ep, int len)
 {
@@ -6106,9 +6063,6 @@ XEN_ARGIFY_1(g_speed_control_style_w, g_speed_control_style)
 XEN_ARGIFY_2(g_set_speed_control_style_w, g_set_speed_control_style)
 XEN_ARGIFY_1(g_speed_control_tones_w, g_speed_control_tones)
 XEN_ARGIFY_2(g_set_speed_control_tones_w, g_set_speed_control_tones)
-XEN_ARGIFY_3(g_peak_env_info_w, g_peak_env_info)
-XEN_NARGIFY_3(g_write_peak_env_info_file_w, g_write_peak_env_info_file)
-XEN_NARGIFY_3(g_read_peak_env_info_file_w, g_read_peak_env_info_file)
 XEN_ARGIFY_5(g_channel_amp_envs_w, g_channel_amp_envs);
 XEN_ARGIFY_2(g_start_progress_report_w, g_start_progress_report)
 XEN_ARGIFY_2(g_finish_progress_report_w, g_finish_progress_report)
@@ -6231,9 +6185,6 @@ XEN_NARGIFY_1(g_sound_to_integer_w, g_sound_to_integer)
 #define g_set_speed_control_style_w g_set_speed_control_style
 #define g_speed_control_tones_w g_speed_control_tones
 #define g_set_speed_control_tones_w g_set_speed_control_tones
-#define g_peak_env_info_w g_peak_env_info
-#define g_write_peak_env_info_file_w g_write_peak_env_info_file
-#define g_read_peak_env_info_file_w g_read_peak_env_info_file
 #define g_channel_amp_envs_w g_channel_amp_envs
 #define g_start_progress_report_w g_start_progress_report
 #define g_finish_progress_report_w g_finish_progress_report
@@ -6442,9 +6393,6 @@ If it returns " PROC_TRUE ", the usual informative minibuffer babbling is squelc
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_speed_control_tones, g_speed_control_tones_w, H_speed_control_tones,
 					    S_setB S_speed_control_tones, g_set_speed_control_tones_w, g_set_speed_control_tones_reversed, 0, 1, 1, 1);
 
-  XEN_DEFINE_PROCEDURE(S_peak_env_info,            g_peak_env_info_w,            0, 3, 0, H_peak_env_info);
-  XEN_DEFINE_PROCEDURE(S_write_peak_env_info_file, g_write_peak_env_info_file_w, 3, 0, 0, H_write_peak_env_info_file);
-  XEN_DEFINE_PROCEDURE(S_read_peak_env_info_file,  g_read_peak_env_info_file_w,  3, 0, 0, H_read_peak_env_info_file);
   XEN_DEFINE_PROCEDURE(S_channel_amp_envs,         g_channel_amp_envs_w,         0, 5, 0, H_channel_amp_envs);
 
   XEN_DEFINE_PROCEDURE(S_sounds,                   g_sounds_w,                   0, 0, 0, H_sounds);

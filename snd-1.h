@@ -476,7 +476,7 @@ typedef struct snd_state {
   channel_style_t Channel_Style;
   sound_style_t Sound_Style;
   show_axes_t Show_Axes;
-  char *Eps_File, *Temp_Dir, *Save_Dir, *Ladspa_Dir;
+  char *Eps_File, *Temp_Dir, *Save_Dir, *Ladspa_Dir, *Peak_Env_Dir;
   char *Listener_Font, *Axis_Label_Font, *Axis_Numbers_Font, *Tiny_Font, *Peaks_Font, *Bold_Peaks_Font;
   char *orig_listener_font, *orig_axis_label_font, *orig_axis_numbers_font, *orig_tiny_font, *orig_peaks_font, *orig_bold_peaks_font;
   bool Verbose_Cursor, Trap_Segfault;
@@ -1450,6 +1450,10 @@ int xen_sound_to_int(XEN n);
 #define XEN_SOUND_P(arg) xen_sound_p(arg)
 #define C_INT_TO_XEN_SOUND(Val) new_xen_sound(Val)
 #define XEN_SOUND_TO_C_INT(n) xen_sound_to_int(n)
+
+const char *read_peak_env_info_file(chan_info *cp);
+bool write_peak_env_info_file(chan_info *cp);
+void delete_peak_env_info_file(chan_info *cp);
 
 
 
