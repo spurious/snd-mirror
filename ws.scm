@@ -1,6 +1,5 @@
 ;;; with-sound and friends
 
-(use-modules (ice-9 optargs) (ice-9 format))
 (provide 'snd-ws.scm)
 
 (if (not (provided? 'snd-extensions.scm)) (load-from-path "extensions.scm")) ; we need sound-property in with-mixed-sound
@@ -579,7 +578,7 @@
 	       (lambda ()
 		 (for-each
 		  (lambda (note)
-		    (let* ((snd (with-temp-sound (,@args :ignore-output #t :clipped #f) (eval (append (list (car note) 0.0) (cddr note)) (current-module))))
+		    (let* ((snd (with-temp-sound (,@args :ignore-output #t :clipped #f) (eval (append (list (car note) 0.0) (cddr note)) (current-environment))))
 			   ;; I can't immediately find a way around the "eval" 
 			   (beg (floor (* (srate outsnd) (cadr note))))
 			   ;; can't use seconds->samples here because the global mus-srate value might not match the local one

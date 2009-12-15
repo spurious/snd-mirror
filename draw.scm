@@ -1,7 +1,5 @@
 ;;; examples of extensions to Snd's graphics
 
-(use-modules (ice-9 optargs))
-
 (provide 'snd-draw.scm)
 (if (not (provided? 'snd-extensions.scm)) (load-from-path "extensions.scm"))
 
@@ -264,8 +262,6 @@ whenever they're in the current view."
 
 
 ;;; -------- inset overall waveform; if click, move to that location
-
-(use-modules (ice-9 common-list))
 
 (define inset-width .2)
 (define inset-height .25)

@@ -1,4 +1,3 @@
-(use-modules (ice-9 format))
 (provide 'snd-panic.scm)
 
 (define panic-menu (add-to-main-menu "Panic Control"))

@@ -8,7 +8,6 @@
 ;; SND version by Michael Scholz (based on strad.ins)
 ;; revised by Bill to suit the run macro
 
-(use-modules (ice-9 optargs))
 (provide 'snd-strad.scm)
 (if (not (provided? 'snd-ws.scm)) (load-from-path "ws.scm"))
 ;;; (if (not (provided? 'snd-jcrev.scm)) (load-from-path "jcrev.scm"))

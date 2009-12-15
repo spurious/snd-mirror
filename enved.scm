@@ -8,9 +8,7 @@
 ;;; (play-with-envs snd) sets channel amps during playback from the associated enved envelopes
 ;;; (play-panned snd) pans a mono sound following its enved envelope into a stereo sound
 
-(use-modules (ice-9 format))
 (provide 'snd-enved.scm)
-
 (if (not (provided? 'snd-extensions.scm)) (load-from-path "extensions.scm"))
 
 (define channel-envelope

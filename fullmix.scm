@@ -1,5 +1,3 @@
-(use-modules (ice-9 optargs))
-
 (provide 'snd-fullmix.scm)
 
 (if (and (not (provided? 'snd-ws.scm)) 

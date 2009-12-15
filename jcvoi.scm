@@ -3,8 +3,6 @@
 (provide 'snd-jcvoi.scm)
 (if (not (provided? 'snd-env.scm)) (load "env.scm"))
 
-(use-modules (ice-9 optargs) (ice-9 format))
-
 (define fnc #f)  ;; fnc[sex,vowel,formant number,formant freq,amp or fm index]
 (define vibfreqfun #f)
 (define i3fun1 #f)

@@ -3,7 +3,6 @@
 ;;; (xe-create-enved name parent args axis-bounds) -> new envelope editor (returned value is list)
 ;;; (xe-envelope editor) -> current envelope (settable)
 
-(use-modules (ice-9 common-list) (ice-9 format))
 (provide 'snd-xm-enved.scm)
 
 

@@ -2,8 +2,6 @@
 
 (provide 'snd-snd7.scm)
 
-(use-modules (ice-9 session)) ; for apropos
-
 (define free-mix-sampler free-sampler)
 (define (inspect-sampler rd) (format #f "~A" rd))
 

@@ -1,5 +1,3 @@
-(use-modules (ice-9 optargs) (ice-9 format))
-
 (provide 'snd-numerics.scm)
 
 ;;; random stuff I needed at one time or another while goofing around...

@@ -1,4 +1,3 @@
-(use-modules (ice-9 format))
 (provide 'snd-marks-menu.scm)
 
 (if (provided? 'xm)

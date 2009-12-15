@@ -37,8 +37,6 @@
 ;;; create-audit-dialog
 ;;; equalize-panes
 
-(use-modules (ice-9 common-list) (ice-9 format))
-
 (if (not (provided? 'snd-motif)) (snd-error "snd-motif.scm is Motif-specific"))
 
 (define (find-if pred l)

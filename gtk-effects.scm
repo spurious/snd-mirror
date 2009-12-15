@@ -1,7 +1,5 @@
 ;;; translation of new-effects.scm to gtk/xg
 
-(use-modules (ice-9 format) (ice-9 common-list))
- 
 (if (not (provided? 'xg))
     (let ((hxm (dlopen "xg.so")))
       (if (string? hxm)

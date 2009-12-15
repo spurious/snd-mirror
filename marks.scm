@@ -1,6 +1,5 @@
 ;;; examples of mark-related functions
 
-(use-modules (ice-9 format) (ice-9 common-list))
 (provide 'snd-marks.scm)
 
 ;;; Contents:

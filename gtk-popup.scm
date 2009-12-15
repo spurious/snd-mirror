@@ -4,7 +4,6 @@
 ;;;   a popup for each entry/textview widget and there's no way to get rid of it!
 ;;;   perhaps we could find a pointer to its children and hide all of them?)
 
-(use-modules (ice-9 format))
 (define popup-already-loaded (provided? 'snd-gtk-popup.scm))
 (provide 'snd-gtk-popup.scm)
 

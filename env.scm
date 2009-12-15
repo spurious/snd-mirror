@@ -19,8 +19,6 @@
 ;;; normalize-envelope
 ;;; simplify-envelope
 
-(use-modules (ice-9 format) (ice-9 optargs))
-
 (provide 'snd-env.scm)
 
 ;;; -------- envelope-interp

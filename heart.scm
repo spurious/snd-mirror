@@ -1,6 +1,3 @@
-;(use-modules (ice-9 format))
-;(if (not (defined? 'read-line)) (use-modules (ice-9 rdelim)))
-
 ;;; use with-sound to write the data to a sound file
 (if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
 

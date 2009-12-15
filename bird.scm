@@ -8,7 +8,6 @@
 ;;; 3-Nov-08: I changed some of the instrument names to avoid collisions with animals.scm (prepended "b-")
 
 
-(use-modules (ice-9 optargs) (ice-9 format))
 (provide 'snd-bird.scm)
 
 ;;; translated (semi-automatically) from a Sambox note list to bird.clm, then bird.scm

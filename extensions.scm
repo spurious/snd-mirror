@@ -17,9 +17,7 @@
 ;;; mono->stereo, mono-files->stereo, stereo->mono
 
 
-(use-modules (ice-9 common-list) (ice-9 optargs) (ice-9 format))
 (provide 'snd-extensions.scm)
-
 
 (define (remove-if pred l) ; from Guile's common-list.scm == comlist.scm from slib
   "(remove-if func lst) removes any element from 'lst' that 'func' likes"

@@ -1,6 +1,5 @@
 ;;; SNDWARP
 
-(use-modules (ice-9 optargs))
 (provide 'snd-sndwarp.scm)
 
 ;;;

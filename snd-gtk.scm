@@ -20,8 +20,6 @@
 ;;; make-color-selector-dialog
 ;;; add-main-menu-mnemonics
 
-(use-modules (ice-9 format) (ice-9 common-list))
-
 (if (not (provided? 'snd-gtk)) (snd-error "snd-gtk.scm is Gtk-specific"))
 
 

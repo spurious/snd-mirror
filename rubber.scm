@@ -3,7 +3,6 @@
 ;;;   rubber-sound looks for stable portions and either inserts or deletes periods 
 ;;;     period length is determined via autocorrelation
 
-(use-modules (ice-9 format))
 (provide 'snd-rubber.scm)
 
 (define zeros-checked 8)

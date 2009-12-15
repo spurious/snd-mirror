@@ -1,5 +1,3 @@
-(use-modules (ice-9 format) (ice-9 optargs))
-
 (if (provided? 'xm)
     (if (not (provided? 'snd-effects-utils.scm))
 	(load-from-path "effects-utils.scm"))) ; make-effect-dialog

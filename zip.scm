@@ -5,7 +5,6 @@
 ;;; changed 19-Apr-05 to use def-clm-struct and envelopes (and fixed duration bug in zip-sound)
 
 
-(use-modules (ice-9 optargs))
 (provide 'snd-zip.scm)
 (if (not (provided? 'snd-ws.scm)) (load-from-path "ws.scm"))
 

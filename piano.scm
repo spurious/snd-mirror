@@ -5,8 +5,6 @@
 (if (not (provided? 'snd-env.scm)) (load-from-path "env.scm"))
 (if (not (provided? 'snd-generators.scm)) (load-from-path "generators.scm"))
 
-(use-modules (ice-9 format) (ice-9 optargs))
-
 
 (defgenerator one-pole-allpass (coeff 0.0) (x1 0.0) (y1 0.0))
 

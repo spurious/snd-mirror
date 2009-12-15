@@ -1,7 +1,4 @@
-(use-modules (ice-9 format) (ice-9 optargs))
-
 (provide 'snd-effects-utils.scm)
-
 (if (not (provided? 'snd-motif)) (snd-error "effects-utils.scm is Motif-specific"))
 
 (if (not (provided? 'xm))

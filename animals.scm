@@ -225,7 +225,6 @@
 ;;; Killdeer
 
 
-(use-modules (ice-9 optargs) (ice-9 format))
 (provide 'snd-animals.scm)
 
 (if (not (provided? 'snd-generators.scm)) (load "generators.scm"))

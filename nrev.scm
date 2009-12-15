@@ -1,7 +1,5 @@
 ;;; NREV (the most popular Samson box reverb)
 
-(use-modules (ice-9 optargs))
-
 (provide 'snd-nrev.scm)
 
 (if (and (not (provided? 'snd-ws.scm)) 

@@ -1,9 +1,7 @@
 ;; clean-channel -- noise reduction
 
-(use-modules (ice-9 optargs) (ice-9 format))
 (provide 'snd-clean.scm)
-
-(load "dsp.scm")
+(if (not (provided? 'snd-dsp.scm)) (load "dsp.scm"))
 
 (define* (goertzel-channel freq :optional beg dur snd chn)
   "(goertzel-channel freq :optional beg dur snd chn) returns the amplitude of the 'freq' spectral component"

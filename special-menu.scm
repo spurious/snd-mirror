@@ -1,5 +1,3 @@
-(use-modules (ice-9 format))
-
 (provide 'snd-special-menu.scm)
 
 (if (provided? 'xm)
@@ -38,7 +36,7 @@
   (lambda ()
     (select-file
       (lambda (filename)
-        (shell (format #f "timidity -Ow ~a" filename)))
+        (system (format #f "timidity -Ow ~a" filename)))
       "Select MIDI file" "." "*.mid" "Converts MIDI file to WAV using TiMidity. \
 Output will be named after the original MIDI file, i.e., foo.mid converts to foo.wav. \
 You must have TiMidity and a patch set installed for this function to work. \

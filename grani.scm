@@ -23,7 +23,6 @@
 ;;; out-scaler
 ;;;   scaler for the converted values
 
-(use-modules (ice-9 format) (ice-9 optargs))
 (provide 'snd-grani.scm)
 
 (if (not (provided? 'snd-ws.scm)) (load-from-path "ws.scm"))

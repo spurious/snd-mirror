@@ -2,8 +2,6 @@
 ;;;
 ;;; all assume they're called within with-sound, most set up C-g to (throw 'with-sound-interrupt)
 
-(use-modules (ice-9 optargs))
-
 (provide 'snd-clm-ins.scm)
 
 (if (not (provided? 'snd-ws.scm)) (load-from-path "ws.scm"))

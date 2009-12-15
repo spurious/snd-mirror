@@ -26384,11 +26384,11 @@ EDITS: 2
 		     (lambda (arg2)
 		       (catch #t (lambda () (runp gen arg1 arg2)) (lambda args (car args))))
 		     (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color-with-catch .95 .95 .95)  '#(0 1) 3/4 'mus-error (sqrt -1.0) (make-delay 32)
-			   (lambda () #t) (current-module) (make-sound-data 2 3) :order 0 1 -1 (make-hook 2) #f #t #\c 0.0 1.0 -1.0 
+			   (lambda () #t) (current-environment) (make-sound-data 2 3) :order 0 1 -1 (make-hook 2) #f #t #\c 0.0 1.0 -1.0 
 			   '() '3 4 2 8 16 32 64 (make-vector 0) '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0)
 			   )))
 		  (list 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color-with-catch .95 .95 .95)  '#(0 1) 3/4 'mus-error (sqrt -1.0) (make-delay 32)
-			(lambda () #t) (current-module) (make-sound-data 2 3) :order 0 1 -1 (make-hook 2) #f #t #\c 0.0 1.0 -1.0 
+			(lambda () #t) (current-environment) (make-sound-data 2 3) :order 0 1 -1 (make-hook 2) #f #t #\c 0.0 1.0 -1.0 
 			'() '3 4 2 8 16 32 64 (make-vector 0) '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0)
 			))
 		 ;; generic args
@@ -51165,7 +51165,7 @@ EDITS: 1
       (if val (snd-display ";run eq? key 0?")))
     (let ((val (run-eval '(cond ((= 1 2) 3) ((+ 2 3) 4)))))
       (if (not (= val 4)) (snd-display ";run bad cond: ~A" val)))
-    (let ((tag (catch #t (lambda () (run-eval '(let ((a 3)) (set! a (current-module))))) (lambda args (car args)))))
+    (let ((tag (catch #t (lambda () (run-eval '(let ((a 3)) (set! a (current-environment))))) (lambda args (car args)))))
       (if (not (eq? tag 'cannot-parse)) (snd-display ";run bad set!: ~A" tag)))
     (let ((tag (catch #t (lambda () (run-eval '(let ((a 2)) (define "hi" 3) a))) (lambda args (car args)))))
       (if (not (eq? tag 'cannot-parse)) (snd-display ";run bad define: ~A" tag)))
@@ -60769,7 +60769,7 @@ EDITS: 1
 			  (lambda args (car args))))
 		 xm-procs1))
 	      (list win 1.5 "/hiho" (list 0 1) 1234 (make-vct 3) (make-color-with-catch .95 .95 .95)  '#(0 1) 3/4 'mus-error (sqrt -1.0) (make-delay 32)
-		    (lambda () #t) (current-module) (make-sound-data 2 3) :order 0 1 -1 (make-hook 2) #f #t '() (make-vector 0)))
+		    (lambda () #t) (current-environment) (make-sound-data 2 3) :order 0 1 -1 (make-hook 2) #f #t '() (make-vector 0)))
 	     
 	     ;; ---------------- 2 Args
 	     (for-each 

@@ -1,7 +1,5 @@
 ;;; -------- auto-save 
 
-(use-modules (ice-9 format))
-
 (provide 'snd-autosave.scm)
 
 (if (not (provided? 'snd-extensions.scm)) (load-from-path "extensions.scm"))

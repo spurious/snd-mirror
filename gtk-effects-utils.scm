@@ -1,5 +1,3 @@
-(use-modules (ice-9 format) (ice-9 optargs))
-
 (if (not (provided? 'xg))
     (let ((hxm (dlopen "xg.so")))
       (if (string? hxm)

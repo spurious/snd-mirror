@@ -2,7 +2,6 @@
 ;;;
 ;;; these used to be in the effects menu
 
-(use-modules (ice-9 format))
 (provide 'snd-edit-menu.scm)
 
 (define edit-menu 1)

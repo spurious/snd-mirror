@@ -13,7 +13,6 @@
 
 ;;; The "noise" instrument (useful for Oceanic Music):
 
-(use-modules (ice-9 format) (ice-9 optargs))
 (provide 'snd-noise.scm)
 (if (not (provided? 'snd-ws.scm)) (load-from-path "ws.scm"))
 (if (not (provided? 'snd-env.scm)) (load-from-path "env.scm"))

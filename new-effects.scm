@@ -1,5 +1,3 @@
-(use-modules (ice-9 format) (ice-9 common-list))
-
 (if (not (provided? 'snd-motif)) (snd-error "new-effects.scm is Motif-specific"))
 
 (if (not (provided? 'xm))

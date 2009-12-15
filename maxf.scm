@@ -32,7 +32,6 @@
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(use-modules (ice-9 format) (ice-9 optargs))
 (provide 'snd-maxf.scm)
 (if (not (provided? 'snd-ws.scm)) (load-from-path "ws.scm"))
 ;;; (if (not (provided? 'snd-jcrev.scm)) (load-from-path "jcrev.scm"))

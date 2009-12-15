@@ -11,7 +11,6 @@
 ;;;    (change-listener-popup-color new-color) to change its color
 ;;; a popup menu is also added to each edit history pane to display the "spreadsheet" edit-list->function menu
 
-(use-modules (ice-9 common-list) (ice-9 format))
 (provide 'snd-popup.scm)
 
 (if (not (provided? 'xm))

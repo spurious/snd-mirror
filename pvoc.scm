@@ -1,6 +1,5 @@
 ;;; versions of the Moore-Klingbeil-Trevisani-Edwards phase-vocoder
 
-(use-modules (ice-9 optargs))
 (provide 'snd-pvoc.scm)
 (if (not (provided? 'snd-snd7.scm)) (load-from-path "snd7.scm"))
 

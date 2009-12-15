@@ -1,7 +1,5 @@
 ;;; a DSP-related grabbag
 
-(use-modules (ice-9 optargs) (ice-9 format))
-
 (provide 'snd-dsp.scm)
 (if (not (provided? 'snd-ws.scm)) (load-from-path "ws.scm"))
 (if (not (provided? 'snd-generators.scm)) (load-from-path "generators.scm")) ; moving-*

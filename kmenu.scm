@@ -2,29 +2,23 @@
 ; add mnemonics to the main menu (gtk only)
 
 
-(use-modules (srfi srfi-1))
-(use-modules (srfi srfi-13))
+(define (string-index str chr)
+  (let ((len (string-length str))
+	(res #f))
+    (and (char? chr)
+	 (do ((i 0 (+ i 1)))
+	     ((or res (= i len)) res)
+	   (set! res (char=? (string-ref str i) chr))))))
 
-(if (provided? 'snd-s7)
-    (begin
-      (define (string-index str chr)
-	(let ((len (string-length str))
-	      (res #f))
-	  (and (char? chr)
-	       (do ((i 0 (+ i 1)))
-		   ((or res (= i len)) res)
-		 (set! res (char=? (string-ref str i) chr))))))
+(define (string-replace str rstr ind ignore)
+  (string-set! str i (string-ref rstr 0)))
 
-      (define (string-replace str rstr ind ignore)
-	(string-set! str i (string-ref rstr 0)))
-
-      (define (find thunk lst)
-	(if (null? lst)
-	    #f
-	    (if (thunk (car lst))
-		(car lst)
-		(find thunk (cdr lst)))))
-      ))
+(define (find thunk lst)
+  (if (null? lst)
+      #f
+      (if (thunk (car lst))
+	  (car lst)
+	  (find thunk (cdr lst)))))
       
 
 (let ()

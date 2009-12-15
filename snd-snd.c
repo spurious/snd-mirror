@@ -2339,7 +2339,6 @@ void call_sp_watchers(snd_info *sp, sp_watcher_t type, sp_watcher_reason_t reaso
 /* this is my long term plan right now... */
 
 /* first move several functions from the extension language into C (next thing to move: "current-window-display")
- *   and make a few GUI improvements.  Then...
  */
 
 /* generics (besides length, srate, channels, frames, file-name, sync, maxamp, play, copy, fill!, [apply], [set!], [for-each], [map]):

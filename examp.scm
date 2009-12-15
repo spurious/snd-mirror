@@ -55,8 +55,6 @@
 ;;; sound segmentation
 ;;; sync-all
 
-(use-modules (ice-9 debug) (ice-9 format) (ice-9 optargs) (ice-9 common-list))
-
 (provide 'snd-examp.scm)
 (if (not (provided? 'snd-ws.scm)) (load-from-path "ws.scm"))
 

@@ -1,6 +1,5 @@
 ;;; a software oscilloscope using the standard Snd channel display interface
 
-(use-modules (ice-9 format) (ice-9 optargs))
 (provide 'snd-oscope.scm)
 
 (define audio-srate 44100) ; graph's sampling rate

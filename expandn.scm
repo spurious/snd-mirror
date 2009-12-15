@@ -8,8 +8,6 @@
 ;;; clm-4 and scheme May-08 bil
 ;;; split out cases to optimize May-09 bil
 
-(use-modules (ice-9 optargs))
-
 (provide 'snd-expandn.scm)
 
 (if (and (not (provided? 'snd-ws.scm)) 

@@ -5,13 +5,10 @@
 ;;;   to remove a file's info, (unb file)
 ;;;   to clean non-existent file references out of the database, (prune-db)
 
-(use-modules (ice-9 format))
 (provide 'snd-nb.scm)
 
 (define use-gdbm #f)
 (define nb-database "nb.db")
-
-(if use-gdbm (use-modules (gdbm gdbm)))
 
 (define (nb file note)
   "(nb file note) adds 'note' to the info asociated with 'file'"

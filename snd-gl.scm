@@ -1,6 +1,5 @@
 ;;; examples of using the GL bindings
 
-(use-modules (ice-9 format))
 (provide 'snd-snd-gl.scm)
 
 ;;; ---------------- gl-info ----------------

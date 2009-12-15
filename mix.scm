@@ -11,9 +11,7 @@
 ;;; check-mix-tags tries to move mix tags around to avoid collisions
 
 
-(use-modules (ice-9 common-list))
 (provide 'snd-mix.scm)
-
 
 (define (tree-for-each func tree)
   "(tree-for-each func tree) applies func to every leaf of 'tree'"

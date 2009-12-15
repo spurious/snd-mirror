@@ -5,7 +5,6 @@
 (if (not (provided? 'snd-dsp.scm)) (load-from-path "dsp.scm"))
 (if (not (provided? 'snd-snd9.scm)) (load-from-path "snd9.scm")) ; sine-bank
 
-(use-modules (ice-9 optargs) (ice-9 format))
 
 ;;; definstrument -> define (+ change open paren placement)
 ;;; *srate* -> (mus-srate)
