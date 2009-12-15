@@ -2664,6 +2664,7 @@
 	(if (not (string-=? (strftime "%d-%b-%Y %H:%M" (localtime (file-write-date "oboe.snd"))) "15-Oct-2006 04:34"))
 	    (snd-display ";oboe: file-write-date: ~A?" (strftime "%d-%b-%Y %H:%M" (localtime (file-write-date "oboe.snd")))))
 	(play-sound-1 "oboe.snd")
+	(mus-sound-forget "oboe.snd")
 	
 	(let ((lasth (do ((i 1 (+ 1 i)))
 			 ((string-=? (mus-header-type-name i) "unsupported") i))))
@@ -31229,19 +31230,6 @@ EDITS: 2
 	(close-sound ind)
 	(reset-hook! open-raw-sound-hook)))
     (reset-hook! during-open-hook)
-    (let* ((ind (open-sound "oboe.snd"))
-	   (mx0 (maxamp ind)))
-      (save-sound-as "test.snd" ind mus-next mus-bfloat)
-      (close-sound ind)
-      (add-hook! during-open-hook
-		 (lambda (fd name reason)
-		   (set! (mus-file-prescaler fd) 4.0)))
-      (let* ((ind1 (open-sound "test.snd"))
-	     (mx1 (maxamp ind1)))
-	(if (fneq mx1 (* 4.0 mx0)) (snd-display ";set prescaler: ~A -> ~A (~A)" mx0 mx1 (/ mx1 mx0)))
-	(close-sound ind1)))
-    (reset-hook! during-open-hook)
-    (set! (mus-file-prescaler) 1.0)
     
     (let ((ind #f)
 	  (op #f)

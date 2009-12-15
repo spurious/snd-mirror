@@ -24,10 +24,10 @@ make sndplay
 make sndrecord
 
 
-echo ' -------------------------------- basic configure guile -------------------------------- '
+echo ' -------------------------------- basic configure -------------------------------- '
 make allclean
-echo ' CFLAGS="-Wall -I/usr/X11R6/include" --with-guile '
-./configure --quiet CFLAGS="-Wall -I/usr/X11R6/include" --with-guile LDFLAGS="-L/usr/X11R6/lib"
+echo ' CFLAGS="-Wall -I/usr/X11R6/include" '
+./configure --quiet CFLAGS="-Wall -I/usr/X11R6/include" LDFLAGS="-L/usr/X11R6/lib"
 make
 make xm
 ./snd --version
@@ -86,28 +86,6 @@ make xg
 ./snd --version
 ./snd -l snd-test 9
 
-echo ' -------------------------------- no-guile -------------------------------- '
-make allclean
-rm -f snd
-rm -f config.cache
-echo ' --without-guile --without-ruby '
-./configure --quiet --without-guile --without-ruby CFLAGS="-I/usr/X11R6/include" LDFLAGS="-L/usr/X11R6/lib"
-make
-echo ' '
-echo ' '
-./snd --version
-make allclean
-echo ' --without-guile --without-ruby --with-gtk '
-./configure --quiet --without-guile --without-ruby --with-gtk
-make
-echo ' '
-echo ' '
-./snd --version
-make sndinfo
-./sndinfo test.snd
-
-echo ' '
-date
 echo ' -------------------------------- static gsl -------------------------------- '
 make allclean
 rm -f snd
@@ -305,7 +283,7 @@ echo ' CFLAGS="-Wall -I/usr/X11R6/include" --with-snd-as-widget '
 make
 make xm
 gcc -c saw.c -I. -g -O2 -I/usr/local/include -I/usr/X11R6/include -o saw.o
-gcc saw.o snd_widget.o -o saw -L/usr/X11R6/lib -lSM -lICE -lXm -lXt -lXp -lX11 -lXext -lXpm -L/usr/local/lib -lfftw3 -lguile -lguile-ltdl -lcrypt -lm
+gcc saw.o snd_widget.o -o saw -L/usr/X11R6/lib -lSM -lICE -lXm -lXt -lXp -lX11 -lXext -lXpm -L/usr/local/lib -lfftw3 -lm
 echo ' '
 echo ' '
 date
@@ -446,19 +424,6 @@ make
 ./snd --version
 ./snd -l snd-test 6
 make allclean
-echo ' CC=g++ --without-guile --without-ruby '
-./configure --quiet CC=g++ --without-guile --without-ruby CFLAGS="-I/usr/X11R6/include" LDFLAGS="-L/usr/X11R6/lib"
-make
-make xm
-./snd --version
-make allclean
-echo ' CC=g++ --with-static-xm --without-gsl '
-./configure --quiet CC=g++ --with-static-xm --without-gsl CFLAGS="-I/usr/X11R6/include" LDFLAGS="-L/usr/X11R6/lib"
-make
-make xm
-./snd --version
-./snd -l snd-test 18
-make allclean
 echo ' '
 echo ' '
 date
@@ -518,14 +483,6 @@ echo ' '
 echo ' CC=g++ --with-no-gui --disable-nls '
 ./configure --quiet CC=g++ --with-no-gui --disable-nls
 make
-./snd --version
-make allclean
-echo ' '
-echo ' '
-echo ' CC=g++ --without-guile --without-ruby --disable-nls '
-./configure --quiet CC=g++ --without-guile --without-ruby --disable-nls CFLAGS="-I/usr/X11R6/include" LDFLAGS="-L/usr/X11R6/lib"
-make
-make xm
 ./snd --version
 make allclean
 echo ' '

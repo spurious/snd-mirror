@@ -2896,8 +2896,6 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
 
       if (ss->active_sounds == 0) /* ticked at the end in snd-file.c */
 	{
-	  /* PERHAPS: thumbnail sketch in open info window? what about the header comment? */
-
 	  XmToggleButtonSetState(SYNC_BUTTON(sp), false, false);
 	  XtUnmanageChild(SYNC_BUTTON(sp));
 	}

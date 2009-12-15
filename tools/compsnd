@@ -117,21 +117,6 @@ make allclean
 echo ' '
 echo ' '
 echo ' -------------------------------------------------------------------------------- '
-echo ' -----                   -Wdeclaration-after-statement -Wmissing-field-initializer ---- '
-echo ' -------------------------------------------------------------------------------- '
-./configure --with-guile --quiet CFLAGS="-Wall -I/usr/X11R6/include -D_FORTIFY_SOURCE" LDFLAGS="-L/usr/X11R6/lib"
-make
-make xm
-./snd --version
-./snd -noinit --features "'clm 'sndlib 'snd 'snd-guile 'snd-motif"
-# echo '(let ((hxm (dlopen (string-append (getcwd) "/xm.so")))) (dlinit hxm "Init_libxm") (display XmARROWS_END) (exit))' > tmp.scm
-# ./snd tmp.scm
-# rm tmp.scm
-make allclean
-
-echo ' '
-echo ' '
-echo ' -------------------------------------------------------------------------------- '
 echo ' ----                 --enable-snd-debug g++                                ----  '
 echo ' -------------------------------------------------------------------------------- '
 ./configure --quiet --enable-snd-debug CC=g++ CFLAGS="-Wall -I/usr/X11R6/include" LDFLAGS="-L/usr/X11R6/lib" 
@@ -427,55 +412,6 @@ make
 ./snd --version
 ./snd -noinit --features "'clm 'snd-gtk 'xg 'gl"
 make allclean
-
-echo ' '
-echo ' '
-echo ' -------------------------------------------------------------------------------- '
-echo ' ----                 --with-guile                                          ---- '
-echo ' -------------------------------------------------------------------------------- '
-./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --quiet --with-guile
-make
-./snd --version
-./snd -noinit --features "'clm 'snd-guile 'snd-motif"
-make allclean
-
-echo ' '
-echo ' '
-echo ' -------------------------------------------------------------------------------- '
-echo ' ----                --with-guile --enable-snd-debug --with-static-xm --with-editres --with-gl '
-echo ' -------------------------------------------------------------------------------- '
-./configure --quiet --with-guile --enable-snd-debug --with-static-xm --with-editres --with-gl LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include"
-make
-./snd --version
-./snd -noinit --features "'clm 'snd-guile 'xm 'gl"
-make allclean
-
-echo ' '
-echo ' '
-echo ' -------------------------------------------------------------------------------- '
-echo ' ----                --with-guile --with-gtk --with-static-xg      --- '
-echo ' -------------------------------------------------------------------------------- '
-./configure --quiet --with-guile --with-gtk --with-static-xg LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include"
-make
-./snd --version
-./snd -noinit --features "'clm 'snd-gtk 'xg 'gl"
-make allclean
-
-echo ' '
-echo ' '
-echo ' -------------------------------------------------------------------------------- '
-echo ' -----                --with-guile --with-no-gui                             --- '
-echo ' -------------------------------------------------------------------------------- '
-./configure --quiet --with-guile --with-no-gui LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include"
-make
-./snd --version
-./snd -noinit --features "'clm 'snd-guile 'snd-nogui"
-make allclean
-
-echo ' '
-make allclean
-rm -f snd
-rm -f config.cache
 
 echo ' -------------------------------------------------------------------------------- '
 echo ' -----                 --with-doubles                                       ----  '
@@ -1238,18 +1174,6 @@ echo ' -------------------------------------------------------------------------
 echo ' -------------------------------- sndlib ruby -------------------------------- '
 echo ' -------------------------------------------------------------------------------- '
 ./configure --quiet --with-ruby
-make
-make clean
-echo ' -------------------------------------------------------------------------------- '
-echo ' -------------------------------- sndlib guile -------------------------------- '
-echo ' -------------------------------------------------------------------------------- '
-./configure --quiet --with-guile
-make
-make clean
-echo ' -------------------------------------------------------------------------------- '
-echo ' -------------------------------- sndlib guile c++ -------------------------------- '
-echo ' -------------------------------------------------------------------------------- '
-./configure --quiet --with-guile CC=g++
 make
 make clean
 echo ' -------------------------------------------------------------------------------- '

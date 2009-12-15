@@ -7744,7 +7744,6 @@ char *sampler_to_string(snd_fd *fd)
 		      case SOUND_WRAPPER: name = "wrapped source";   break;
 		      case SOUND_REGION:  name = "region as source"; break;
 		      case SOUND_READER:  name = "readable source";  break;
-		      case SOUND_FILER:   name = "filer source";     break;
 		      }
 		}
 	      else name = "region as source";

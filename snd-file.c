@@ -2114,12 +2114,6 @@ snd_info *snd_update(snd_info *sp)
       restore_axes_data(nsp, sa, mus_sound_duration(filename), false);
       sound_restore_marks(nsp, ms);
 
-#if 0
-      /* I don't think this is needed -- marks do get redisplayed, and the rest is handled in restore_axes_data */
-      for (i = 0; i < nsp->nchans; i++) 
-	update_graph(nsp->chans[i]);
-#endif
-
       for (i = 0; (i < nsp->nchans) && (i < sp_chans); i++) 
 	CURSOR(nsp->chans[i]) = old_cursors[i];
 

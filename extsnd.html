@@ -4067,7 +4067,7 @@ See also <a href="#cliphook">clip-hook</a>.
 </td></tr><tr><td></td><td>
 This is the prescaling value for reading data from the sndlib file descriptor 'fd'.
 If you're reading float data that is extremely soft (i.e. peak amplitude
-below .001), the transfer to integer form in sndlib (if you're using integer internal sample format) can cause bits
+below .001), the transfer to integer form in sndlib (if you're using an integer internal sample format) can cause bits
 to be lost, resulting in hiss.  In this case set the prescaler for
 the file to 1000.0 or so to get the data into a more normal
 range.  Since mus-file-prescaler must be set after opening
