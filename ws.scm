@@ -852,17 +852,12 @@ finish-with-sound to complete the process."
   "(ws-save-state filename) is an after-save-state-hook function that saves the current with-sound global settings"
 
   (define (open-appending filename)
-    (if (provided? 'snd-guile)
-	(open filename (logior O_RDWR O_APPEND))
-	(open-output-file filename "a")))
+    (open-output-file filename "a"))
 
   (define (close-appending fd)
-    (if (provided? 'snd-guile)
-	(close fd)
-	(close-output-port fd)))
+    (close-output-port fd))
 
   (let ((fd (open-appending filename)))
-    ;; open in Guile throws 'system-error (I think) if anything goes wrong
     ;; fd is a Scheme port at this point (not an integer), so we can use format etc
     ;; should the save-state file load this file if it hasn't been loaded? (what path?)
     (format fd "~%~%;;; from ws.scm~%")

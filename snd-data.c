@@ -15,6 +15,7 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound)
       cp->last_sonogram = NULL;
       cp->last_wavogram = NULL;
       cp->temp_sonogram = NULL;
+      cp->inset_graph = NULL;
 #if HAVE_GL
       cp->gl_fft_list = NO_LIST;
       cp->gl_wavo_list = NO_LIST;
@@ -121,6 +122,8 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound)
       free(cp->last_wavogram); 
       cp->last_wavogram = NULL;
     }
+  if (cp->inset_graph)
+    clear_inset_graph(cp);
   cp->active = CHANNEL_INITIALIZED;
   return(cp);
 }
@@ -227,6 +230,9 @@ static chan_info *free_chan_info(chan_info *cp)
       cp->undo_hook = XEN_FALSE;
       cp->undo_hook_loc = NOT_A_GC_LOC;
     }
+  if (cp->inset_graph)
+    clear_inset_graph(cp);
+
   return(cp);  /* pointer is left for possible future re-use */
 }
 
@@ -496,6 +502,9 @@ snd_info *completely_free_snd_info(snd_info *sp)
 	      snd_unprotect_at(cp->properties_loc);
 	      cp->properties_loc = NOT_A_GC_LOC;
 	    }
+	  if (cp->inset_graph)
+	    free_inset_graph(cp);
+
 	  cp->active = CHANNEL_FREED;
 	  free(cp);
 	  /* it's possible to have dangling readers (snd_fd) with pointers to this channel (see note in snd-edits.c under unlist_reader) */

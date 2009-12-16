@@ -62,8 +62,6 @@ int main (int argc, char **argv )
 
 /* ---------------- GTK VERSION ---------------- */
 
-/* Gtk+ version using Guile */
-
 static bool snd_running = false;
 GtkWidget *form, *shell, *label, *snd;
 
@@ -114,7 +112,6 @@ static void gsnd_main (int argc, char **argv )
 
 int main(int argc, char *argv[])
 {
-  scm_boot_guile(argc, argv, gsnd_main, 0);
   return(0);
 }
 

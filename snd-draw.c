@@ -197,6 +197,7 @@ void erase_cursor(chan_info *cp)
 }
 
 
+/* -------------------------------------------------------------------------------- */
 
 #define AXIS_CONTEXT_ID_OK(Id) ((Id >= CHAN_GC) && (Id <= CHAN_TMPGC))
 #define AXIS_INFO_ID_OK(Id)    (Id <= (int)LISP_AXIS_INFO)
@@ -219,7 +220,7 @@ static axis_context *get_ax(chan_info *cp, int ax_id, const char *caller)
 
 #define TO_C_AXIS_CONTEXT(Snd, Chn, Ax, Caller) \
   get_ax(get_cp(Snd, Chn, Caller), \
-	   XEN_TO_C_INT_OR_ELSE(Ax, (int)CHAN_GC),	\
+	 XEN_TO_C_INT_OR_ELSE(Ax, (int)CHAN_GC),	\
          Caller)
 
 axis_info *get_ap(chan_info *cp, axis_info_t ap_id, const char *caller)

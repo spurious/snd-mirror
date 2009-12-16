@@ -2131,12 +2131,6 @@ static void init_xen_mark(void)
 #endif
 #endif
 
-#if HAVE_GUILE
-  scm_set_smob_print(xen_mark_tag,  print_xen_mark);
-  scm_set_smob_free(xen_mark_tag,   free_xen_mark);
-  scm_set_smob_equalp(xen_mark_tag, equalp_xen_mark);
-#endif
-
 #if HAVE_FORTH
   fth_set_object_inspect(xen_mark_tag,   print_xen_mark);
   fth_set_object_dump(xen_mark_tag,      g_xen_mark_to_string);

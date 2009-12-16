@@ -50,13 +50,11 @@ AC_DEFINE_UNQUOTED(SND_HOST, "$host")
 #   --with-no-gui         make Snd without any graphics support
 #   --with-motif-prefix   set location of Motif
 #   --with-static-gsl     statically load GSL
-#   --with-guile          use Guile as the extension language
 #   --with-forth          use Forth as the extension language
 #   --with-ruby           use Ruby as the extension language
 #   --with-ruby-prefix    set location of Ruby
 #   --with-s7             use S7 as the extension language (default = yes)
 #   --with-extension-language use some extension language (default=yes)
-#   --with-hobbit         include hobbit-style function arity checking
 #   --with-rt             make Snd capable of running Snd-Rt
 #   --with-static-xm      include xm module
 #   --with-temp-dir       directory to use for temp files
@@ -77,9 +75,6 @@ AC_DEFINE_UNQUOTED(SND_HOST, "$host")
 #   --with-pulseaudio     use PulseAudio
 #   --with-portaudio      use portaudio
 #   --with-profiling      add code to keep profiling stats (s7)
-#   GUILE_CONFIG_path     where to look for guile-config
-#   GUILE_CONFIG_name     Fink (OSX) includes guile-config under funny names
-#   GUILE_name            same problem
 #   SNDLIB_CONFIG_path    where to look for sndlib-config
 
 #--------------------------------------------------------------------------------
@@ -94,7 +89,6 @@ AC_ARG_WITH(no-gui,      [  --with-no-gui  	  make Snd without any graphics supp
 AC_ARG_WITH(static-gsl,  [  --with-static-gsl	  use libgsl.a to build Snd (for obsolete RPM version)])
 AC_ARG_WITH(static-xm,   [  --with-static-xm	  include the xm module])
 AC_ARG_WITH(static-xg,   [  --with-static-xg	  include the xg module])
-AC_ARG_WITH(guile,       [  --with-guile	  	  use Guile])
 AC_ARG_WITH(gl,          [  --with-gl		  include OpenGL support, Motif only])
 AC_ARG_WITH(just-gl,     [  --with-just-gl	  include OpenGL support, but omit the extension language bindings, Motif only])
 AC_ARG_WITH(gl2ps,       [  --with-gl2ps		  include gl2ps, Motif only])
@@ -102,7 +96,6 @@ AC_ARG_WITH(motif,	 [  --with-motif	  	  use libXm to build Snd])
 AC_ARG_WITH(static-motif,[  --with-static-motif	  use libXm.a to build Snd])
 AC_ARG_WITH(editres,     [  --with-editres	  include editres in xm])
 AC_ARG_WITH(ladspa,	 [  --with-ladspa  	  include support for LADSPA plugins, Linux only])
-AC_ARG_WITH(hobbit,      [  --with-hobbit 	  include hobbit-style function arity checking, default=no])
 AC_ARG_WITH(builtin-gtkrc,[  --with-builtin-gtkrc	  include built-in gtkrc fallbacks, default=yes])
 AC_ARG_WITH(doubles,     [  --with-doubles	  use doubles throughout])
 AC_ARG_WITH(float-samples, [  --with-float-samples	  use floats (or doubles) as the internal sample respresentation, default=yes])
@@ -155,11 +148,6 @@ if test "$with_doubles" = yes ; then
   AC_DEFINE(WITH_DOUBLES)
 else
   AC_DEFINE(mus_float_t, float)
-fi
-
-if test "$with_hobbit" = yes ; then
-  AC_DEFINE(WITH_HOBBIT)
-  RANDOM_FEATURES="$RANDOM_FEATURES hobbit"
 fi
 
 if test "$with_builtin_gtkrc" != no; then
@@ -1483,211 +1471,17 @@ AC_ARG_WITH(forth,
  	                  AC_DEFINE(HAVE_EXTENSION_LANGUAGE)
 			  if test "$FTH_HAVE_COMPLEX" = yes ; then
      	      		     AC_DEFINE(HAVE_COMPLEX_TRIG)
-     	      		     AC_DEFINE(HAVE_SCM_MAKE_COMPLEX)
-     	      		     AC_DEFINE(HAVE_SCM_C_MAKE_RECTANGULAR)
+     	      		     AC_DEFINE(HAVE_MAKE_COMPLEX)
+     	      		     AC_DEFINE(HAVE_MAKE_RECTANGULAR)
 			  fi
 			  if test "$FTH_HAVE_RATIO" = yes ; then
-     	      		     AC_DEFINE(HAVE_SCM_MAKE_RATIO)
+     	      		     AC_DEFINE(HAVE_MAKE_RATIO)
 			  fi
                		  AC_SUBST(XEN_CFLAGS, $FTH_CFLAGS)
                		  AC_SUBST(XEN_LIBS,   $FTH_LIBS)
  	      		  LOCAL_LANGUAGE="Forth"
  	      		  ac_snd_have_extension_language=yes])
 	fi)
-
-
-
-#--------------------------------------------------------------------------------
-# Guile
-#--------------------------------------------------------------------------------
-
-if test "$with_guile" = yes && test "$ac_snd_have_extension_language" = yes ; then
-  with_guile=no
-  AC_MSG_WARN([You asked for both Guile and $LOCAL_LANGUAGE -- $LOCAL_LANGUAGE will be used])
-fi
-
-if test "$with_guile" = yes && test "$ac_snd_have_extension_language" != yes ; then
-
-XEN_LIBS=""
-XEN_CFLAGS=""
-if test "$GUILE_CONFIG_name" = "" ; then
-  GUILE_CONFIG_name="guile-config"
-fi
-if test "$GUILE_name" = "" ; then
-  GUILE_name="guile"
-fi
-
-# GUILE_CONFIG_path=""
-# allow user to specify this in invocation line
-GUILE_LIB_path=""
-XM_LIBS=""
-
-if test "$with_guile" = no && test "$with_snd_as_pd_external" = no; then
-  AC_DEFINE(HAVE_GUILE,0)
-else
-
-#   if test x$PKG_CONFIG != xno ; then
-#     if $PKG_CONFIG guile-2.0 --exists ; then
-#        XEN_LIBS="`$PKG_CONFIG guile-2.0 --libs`"
-#        XEN_CFLAGS="`$PKG_CONFIG guile-2.0 --cflags`"
-#     fi
-#   fi
-
-  AC_CHECK_FILE(/usr/lib/snd/bin/${GUILE_CONFIG_name},[
-    GUILE_CONFIG_path=/usr/lib/snd/bin/
-    GUILE_LIB_path=/usr/lib/snd/lib
-	])
-
-  AC_MSG_CHECKING(for Guile)
-  if test "$GUILE_CONFIG_path" != "" ; then
-    if ! test -x "${GUILE_CONFIG_path}${GUILE_CONFIG_name}" ; then
-      # try adding the "/" to the path    
-      GUILE_CONFIG_path="${GUILE_CONFIG_path}/"
-      if ! test -x "${GUILE_CONFIG_path}${GUILE_CONFIG_name}" ; then
-        AC_MSG_WARN([Guile config path is $GUILE_CONFIG_path, but I can't find guile-config!])
-      fi
-    fi
-  fi
-
-  if (${GUILE_CONFIG_path}${GUILE_CONFIG_name} link > /dev/null) 2>&1; then
-    GUILE_CONFIG_works=yes
-    guile_version="`${GUILE_CONFIG_path}${GUILE_name} -c '(display (version))'`"
-    AC_MSG_RESULT($guile_version)
-  else
-    GUILE_CONFIG_works=no
-    AC_MSG_RESULT(no)
-  fi
-
-if test $GUILE_CONFIG_works = yes; then
-
-  XEN_CFLAGS="`${GUILE_CONFIG_path}${GUILE_CONFIG_name} compile`"
-
-  if test "$GUILE_LIB_path" != "" ; then
-    # MacOSX linker doesn't know the -rpath stuff, but user may have placed Guile in /usr/lib/snd/bin
-    case "$host" in
-      *-apple-*)
-        XEN_LIBS="`${GUILE_CONFIG_path}${GUILE_CONFIG_name} link`"
-        ;;
-      *)
-        XEN_LIBS="-Xlinker -rpath -Xlinker $GUILE_LIB_path `${GUILE_CONFIG_path}${GUILE_CONFIG_name} link`"
-	XM_LIBS="`${GUILE_CONFIG_path}${GUILE_CONFIG_name} link`"
-	;;
-    esac
-  else
-    # GUILE_LIB_path is empty
-    XEN_LIBS="`${GUILE_CONFIG_path}${GUILE_CONFIG_name} link`"
-  fi
-
-  if test "`${GUILE_CONFIG_path}${GUILE_name} -c '(display (string>=? (version) "1.3.4"))'`" != "#t"; then
-    AC_MSG_WARN(Snd needs Guile 1.3.4 or later)
-    AC_DEFINE(HAVE_GUILE,0)
-  else
-    AC_SUBST(XEN_CFLAGS)
-    if test "$XM_LIBS" = ""; then
-      XM_LIBS="$XEN_LIBS"
-      if test "`${GUILE_CONFIG_path}${GUILE_name} -c '(display (string>=? (version) "1.6.8"))'`" = "#t"; then
-        # the -pthread business confuses ld
-        new_libs=`echo " $XM_LIBS " | sed -e 's/-pthread //'`
-        LD_XM_LIBS="$new_libs"
-      fi
-      if test "$with_snd_as_pd_external" && test "`${GUILE_CONFIG_path}${GUILE_name} -c '(display (string>=? (version) "1.7.2"))'`" != "#t"; then
-	 AC_MSG_ERROR(Snd needs guile V1.7.2 or newer to work as a pd external)
-      fi
-    fi
-
-    AC_SUBST(XM_LIBS)
-    AC_SUBST(LD_XM_LIBS)
-
-    AC_DEFINE(HAVE_GUILE)
-    AC_DEFINE(HAVE_SCHEME)
-    AC_DEFINE(HAVE_EXTENSION_LANGUAGE)
-    LOCAL_LANGUAGE="Guile"
-    ac_snd_have_extension_language=yes
-
-    OLD_LIBS="$LIBS"
-    LIBS="$XEN_LIBS $LIBS"
-    OLD_CFLAGS="$CFLAGS"
-    CFLAGS="$XEN_CFLAGS $CFLAGS"
-    GNAME="guile"
-
-# special Mac OSX stuff -- need to protect against multiple -lguile's, add -all_load, and add -lguile-ltdl
-    case "$host" in
-      *-apple-*)
- 	CFLAGS="$CFLAGS -all_load"
-	GNAME="m"
-	;;
-      *-*-solaris*) 
-# this is a bug in the Sun guile-config I think
-        if test "`${GUILE_CONFIG_path}${GUILE_name} -c '(display (string>=? (version) "1.6"))'`" = "#t"; then
-	  XEN_LIBS="$XEN_LIBS -lltdl"
-	fi
-	;;
-    esac
-
-    AC_CHECK_LIB($GNAME, scm_set_smob_apply,     [AC_DEFINE(HAVE_APPLICABLE_SMOB)])
-    AC_CHECK_LIB($GNAME, scm_remember_upto_here, [AC_DEFINE(HAVE_SCM_REMEMBER_UPTO_HERE)])
-    AC_CHECK_LIB($GNAME, scm_make_real,          [AC_DEFINE(HAVE_SCM_MAKE_REAL)])
-    AC_CHECK_LIB($GNAME, scm_object_to_string,   [AC_DEFINE(HAVE_SCM_OBJECT_TO_STRING)])
-    AC_CHECK_LIB($GNAME, scm_num2long_long,      [AC_DEFINE(HAVE_SCM_NUM2LONG_LONG)])
-    AC_CHECK_LIB($GNAME, scm_num2int,            [AC_DEFINE(HAVE_SCM_NUM2INT)])
-    AC_CHECK_LIB($GNAME, scm_c_make_vector,      [AC_DEFINE(HAVE_SCM_C_MAKE_VECTOR)])
-    AC_CHECK_LIB($GNAME, scm_c_define,           [AC_DEFINE(HAVE_SCM_C_DEFINE)])
-    AC_CHECK_LIB($GNAME, scm_c_define_gsubr,     [AC_DEFINE(HAVE_SCM_C_DEFINE_GSUBR)])
-    AC_CHECK_LIB($GNAME, scm_c_eval_string,      [AC_DEFINE(HAVE_SCM_C_EVAL_STRING)])
-    AC_CHECK_LIB($GNAME, scm_list_n,             [AC_DEFINE(HAVE_SCM_LIST_N)])
-    AC_CHECK_LIB($GNAME, scm_str2symbol,         [AC_DEFINE(HAVE_SCM_STR2SYMBOL)])
-    AC_CHECK_LIB($GNAME, scm_defined_p,          [AC_DEFINE(HAVE_SCM_DEFINED_P)])
-    AC_CHECK_LIB($GNAME, scm_mem2string,         [AC_DEFINE(HAVE_SCM_MEM2STRING)])
-    AC_CHECK_LIB($GNAME, scm_continuation_p,     [AC_DEFINE(HAVE_SCM_CONTINUATION_P)])
-    AC_CHECK_LIB($GNAME, scm_make_ratio,         [AC_DEFINE(HAVE_SCM_MAKE_RATIO)])
-    AC_CHECK_LIB($GNAME, scm_make_complex,       [AC_DEFINE(HAVE_SCM_MAKE_COMPLEX)])
-    AC_CHECK_LIB($GNAME, scm_to_signed_integer,  [AC_DEFINE(HAVE_SCM_TO_SIGNED_INTEGER)])
-    AC_CHECK_LIB($GNAME, scm_c_make_rectangular, [AC_DEFINE(HAVE_SCM_C_MAKE_RECTANGULAR)])
-    AC_CHECK_LIB($GNAME, scm_car,                [AC_DEFINE(HAVE_SCM_CAR)])
-    AC_CHECK_LIB($GNAME, scm_from_locale_keyword,[AC_DEFINE(HAVE_SCM_FROM_LOCALE_KEYWORD)])
-    AC_CHECK_LIB($GNAME, scm_is_vector,          [AC_DEFINE(HAVE_SCM_IS_VECTOR)])
-    AC_CHECK_LIB($GNAME, scm_is_simple_vector,   [AC_DEFINE(HAVE_SCM_IS_SIMPLE_VECTOR)])
-    AC_CHECK_LIB($GNAME, scm_c_primitive_load,   [AC_DEFINE(HAVE_SCM_C_PRIMITIVE_LOAD)])
-    AC_CHECK_LIB($GNAME, scm_nan_p,              [AC_DEFINE(HAVE_SCM_NAN_P)])
-    AC_CHECK_LIB($GNAME, scm_module_public_interface, [AC_DEFINE(HAVE_SCM_MODULE_PUBLIC_INTERFACE)])
-    AC_CHECK_TYPE(scm_t_catch_body,              [AC_DEFINE(HAVE_SCM_T_CATCH_BODY)], , [#include <libguile.h>]) # not gh.h here -> g++ dies
-    AC_CHECK_TYPE(scm_t_guard,                   [AC_DEFINE(HAVE_GUILE_DYNAMIC_WIND)], , [#include <libguile.h>])
-
-    AC_MSG_CHECKING([for call/cc])
-    if test "`${GUILE_CONFIG_path}${GUILE_name} -c '(display (defined? (quote call/cc)))'`" = "#t"; then
-      AC_DEFINE(HAVE_GUILE_CALL_CC)
-      AC_MSG_RESULT(yes)
-    else
-      AC_MSG_RESULT(no)
-    fi
-
-    if test "$with_snd_as_pd_external" = yes ; then
-      AC_MSG_CHECKING([whether guile and snd-as-pd are compatible])
-      AC_RUN_IFELSE( 
-        [AC_LANG_PROGRAM([#include <libguile.h>], 
-                         [return (1 != SCM_USE_PTHREAD_THREADS)])],
-        [AC_MSG_RESULT([yes])],
-        [AC_MSG_RESULT(Guile is missing --with-threads)])
-    fi
-
-
-    LIBS="$OLD_LIBS"
-    CFLAGS="$OLD_CFLAGS"
-
-    if test "`${GUILE_CONFIG_path}${GUILE_name} -c '(display (string<=? (version) "1.3.4"))'`" = "#t"; then
-      echo found old out-of-date Guile library
-    fi
-    if test "$with_snd_as_pd_external" = yes ; then
-      XEN_LIBS=["`${GUILE_CONFIG_path}${GUILE_name} -c '(display (string-append (cdr (assoc (quote libdir) %guile-build-info)) "/libguile.a " (cdr (assoc (quote LIBS) %guile-build-info))))'`"]
-    fi
-
-    AC_SUBST(XEN_LIBS)
-  fi
-else
-  AC_DEFINE(HAVE_GUILE,0)
-fi
-fi
-fi
 
 
 
@@ -1707,12 +1501,12 @@ if test "$with_s7" != no && test "$with_extension_language" != no && test "$ac_s
     AC_DEFINE(HAVE_SCHEME)	
     ac_snd_have_extension_language=yes
     AC_DEFINE(HAVE_EXTENSION_LANGUAGE)
-    AC_DEFINE(HAVE_SCM_MAKE_RATIO)
+    AC_DEFINE(HAVE_MAKE_RATIO)
     AC_DEFINE(WITH_CASE_SENSITIVE_SYMBOL_NAMES)
     AC_DEFINE(WITH_MULTIDIMENSIONAL_VECTORS)
     AC_CHECK_HEADER(complex.h, 
         [
-         AC_DEFINE(HAVE_SCM_C_MAKE_RECTANGULAR)
+         AC_DEFINE(HAVE_MAKE_RECTANGULAR)
 	])
 
     LOCAL_LANGUAGE="s7"
@@ -2363,7 +2157,7 @@ if test "$ac_snd_have_extension_language" = no ; then
     if test "$ac_cv_header_dlfcn_h" = yes ; then
       LDFLAGS="$LDFLAGS -ldl"
     fi
-    AC_MSG_WARN([Snd needs either an extension language (s7, Fth, Ruby, or Guile), or a graphics toolkit (Gtk or Motif), or preferably both.  As currently configured, this version of Snd is useless.])
+    AC_MSG_WARN([Snd needs either an extension language (s7, Fth, or Ruby), or a graphics toolkit (Gtk or Motif), or preferably both.  As currently configured, this version of Snd is useless.])
     if test "$with_snd_as_pd_external" = yes ; then	
        AC_MSG_ERROR(Guile is needed when making snd as a pd external.)
     fi

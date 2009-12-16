@@ -423,23 +423,6 @@ char *key_binding_description(int key, int state, bool cx_extended)
   if (pos < 0) pos = in_user_keymap(key, state, cx_extended);
   if (pos >= 0)
     {
-#if HAVE_GUILE
-      XEN value, help_text = XEN_FALSE;
-      value = user_keymap[pos].func;
-      help_text = XEN_PROCEDURE_HELP(value);            /* (procedure-property ...) */
-      if (XEN_FALSE_P(help_text))
-	{
-	  help_text = XEN_PROCEDURE_SOURCE_HELP(value); /* (procedure-documentation ...) -- this is the first line of source if string */
-	  if (XEN_FALSE_P(help_text))
-	    help_text = XEN_PROCEDURE_NAME(value);
-	}
-      if (!(XEN_FALSE_P(help_text))) 
-	{
-	  if (XEN_STRING_P(help_text))
-	    return(mus_strdup(XEN_TO_C_STRING(help_text)));
-	  return(mus_strdup(XEN_AS_STRING(help_text)));
-	}
-#endif
       if (user_keymap[pos].origin)
 	return(mus_strdup(user_keymap[pos].origin));
       return(mus_strdup("something indescribable")); /* NULL would mean "no binding" */

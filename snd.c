@@ -29,9 +29,6 @@ static bool ignore_mus_error(int type, char *msg)
 
 void mus_error_to_snd(int type, char *msg)
 {
-  /* it's possible to get here outside any catch, and in Guile a throw in that case
-   *   kills the main program!
-   */
   if (!ss)
     {
       fprintf(stderr, "%s", msg);
@@ -224,6 +221,7 @@ void snd_set_global_defaults(bool need_cleanup)
   ss->Show_Axes = DEFAULT_SHOW_AXES;
   ss->Show_Indices = DEFAULT_SHOW_INDICES;
   ss->Show_Backtrace = DEFAULT_SHOW_BACKTRACE;
+  ss->With_Inset_Graph = DEFAULT_WITH_INSET_GRAPH;
 
   ss->Listener_Prompt = mus_strdup(DEFAULT_LISTENER_PROMPT);
   ss->listener_prompt_length = mus_strlen(ss->Listener_Prompt);
@@ -296,6 +294,10 @@ void snd_set_global_defaults(bool need_cleanup)
     ss->Save_State_File = mus_strdup(DEFAULT_SAVE_STATE_FILE); 
   else ss->Save_State_File = NULL;
 
+  if (DEFAULT_PEAK_ENV_DIR != (char *)NULL) 
+    ss->Peak_Env_Dir = mus_strdup(DEFAULT_PEAK_ENV_DIR); 
+  else ss->Peak_Env_Dir = NULL;
+  
   ss->Enved_Base = DEFAULT_ENVED_BASE;
   ss->Enved_Power = DEFAULT_ENVED_POWER;
   ss->Enved_Wave_p = DEFAULT_ENVED_WAVE_P;
@@ -399,11 +401,7 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
 #if SND_AS_WIDGET
   snd_state *snd_main(int argc, char **argv)
 #else
-  #if HAVE_GUILE
-    static void snd_main(void *closure, int argc, char **argv)
-  #else
-    int main(int argc, char **argv)
-  #endif
+  int main(int argc, char **argv)
 #endif
 {
   int i;
@@ -539,9 +537,7 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
     return(ss); 
   #else
     snd_doit(argc, argv);
-    #if (!HAVE_GUILE)
-      return(0);
-    #endif
+    return(0);
   #endif
 #endif
 }
@@ -549,14 +545,6 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
 
 #ifndef SND_AS_WIDGET
   #ifndef SND_AS_PD_EXTERNAL
-    #if HAVE_GUILE
-    int main(int argc, char *argv[])
-     {
-       scm_boot_guile(argc, argv, snd_main, 0);
-       /* anything after this call will not be executed */
-       return(0);
-     }
-    #endif
   #endif
 #endif
 

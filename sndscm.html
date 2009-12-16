@@ -2276,7 +2276,7 @@ An instrument that uses dlocsig is:
 <A NAME="drawdoc"></a><table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>draw</h2></td></tr></table>
 </td></tr></table>
 
-<p>draw.scm has examples of graphics-oriented extensions.  The most useful one is make-current-window-display.
+<p>draw.scm has examples of graphics-oriented extensions.
 </p>
 
 <table border=0 hspace=20 cellspacing=4 cellpadding=6>
@@ -2317,24 +2317,6 @@ To activate this, add it to <a href="extsnd.html#aftergraphhook">after-graph-hoo
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
-<!-- make-current-window-display -->
-<tr><td colspan=2 bgcolor="#f2f4ff">
-<a class=def name="makecurrentwindowdisplay">make-current-window-display</a> <code>()</code>
-</td></tr><tr><td width=30></td><td>
-make-current-window-display
-displays in the upper right corner the overall current sound and where the current window fits in it.
-This information is implicit in the x axis zoom and position sliders, but a redundant graph doesn't hurt.  If you click in that graph,
-the cursor is moved to the clicked point.  A menu item named "Toggle inset" is added to the View menu to turn this
-little graph off or on.
-
-<img src="pix/uppergrf.png" alt="make-current-window-display" hspace=20 vspace=10>
-<br>
-If you're using a line cursor (if <a href="extsnd.html#cursorstyle">cursor-style</a> is <code>cursor-line</code>), it may 
-collide at times with the little graph; 
-to get a more polite cursor, use <a href="#smartlinecursor">smart-line-cursor</a>.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
 <!-- overlay-rms-env -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
 <a class=def name="overlayrmsenv">overlay-rms-env</a> <code>(snd chn)</code>
@@ -2370,15 +2352,6 @@ To activate this, add it to <a href="extsnd.html#aftergraphhook">after-graph-hoo
 </td><td>
 <img src="pix/samplesviacolormap.png" alt="samples-via-colormap" hspace=10>
 </td></tr></table>
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- smart-line-cursor -->
-<tr><td colspan=2 bgcolor="#f2f4ff">
-<A class=def NAME="smartlinecursor">smart-line-cursor</A> <code>(snd chn tracking)</code>
-</td></tr><tr><td width=30></td><td>
-smart-line-cursor is a <a href="extsnd.html#cursorstyle">cursor-style</a> function that tries 
-not to overwrite the thumbnail graph drawn by <a href="#makecurrentwindowdisplay">make-current-window-display</a>.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 </table>
@@ -8119,7 +8092,7 @@ phase to 0.0).  If you then search around this set of phases, you'll find very g
 
 
 (define* (make-sqrt-png :optional (xp 0.59))
-  (set! current-window-display-is-running #f)
+  (set! (with-inset-graph) #f)
   (reset-hook! time-graph-hook)
   (add-hook! time-graph-hook
 	     (lambda (snd chn)
@@ -9468,7 +9441,7 @@ add-mark-pane adds a pane to each channel giving the current mark locations (sam
 These can be edited to move the mark, or deleted to delete the mark.  (If you add-mark-pane to a channel having marks,
 you need to make some change to them to force it to be displayed).
 Here's a picture (it also shows <a href="#showsmptelabel">show-smpte-label</a>, 
-<a href="#makecurrentwindowdisplay">make-current-window-display</a> (draw.scm), and <a href="#showdiskspace">show-disk-space</a>).
+<a href="extsnd.html#withinsetgraph">with-inset-graph</a>, and <a href="#showdiskspace">show-disk-space</a>).
 <br>
 <img src="pix/markpane.png" alt="mark pane" hspace=20 vspace=10 usemap="#markpanemap" border=0>
 <map name="markpanemap">
@@ -9476,7 +9449,7 @@ Here's a picture (it also shows <a href="#showsmptelabel">show-smpte-label</a>,
   <area shape=rect coords="240,33,245,120" alt="SMPTE label" onmouseout="UnTip()" onmouseover="Tip('this is mark at sample 8001: <code>(add-mark 8001)</code>')">
   <area shape=rect coords="337,33,343,120" alt="SMPTE label" onmouseout="UnTip()" onmouseover="Tip('this is mark at sample 9400: <code>(add-mark 9400)</code>')">
   <area shape=rect coords="539,33,545,120" alt="SMPTE label" onmouseout="UnTip()" onmouseover="Tip('this is mark at sample 12345: <code>(add-mark 12345)</code>')">
-  <area shape=rect coords="570,25,710,45" alt="SMPTE label" onmouseout="UnTip()" onmouseover="Tip('this is the graph produced by <code>(display-current-window)</code>')">
+  <area shape=rect coords="570,25,710,45" alt="SMPTE label" onmouseout="UnTip()" onmouseover="Tip('this is the graph produced by <code>(set! (with-inset-graph) #t)</code>')">
   <area shape=rect coords="725,25,800,155" alt="SMPTE label" onmouseout="UnTip()" onmouseover="Tip('this is the mark pane from <code>(add-mark-pane)</code>')">
   <area shape=rect coords="590,155,700,170" alt="SMPTE label" onmouseout="UnTip()" onmouseover="Tip('this is the amount of free disk space I have.<br>In the bad old days, disk space was a constant problem.')">
 </map>
@@ -10020,7 +9993,7 @@ y-axis zoom sliders of a multichannel file to move together (zync) or separately
 
 <table bgcolor="aliceblue" border=0><tr>
 <td>
-<pre>see also: <a href="grfsnd.html#sndwithmotif" onmouseout="UnTip()" onmouseover="Tip('Motif extensions from xm.c')">motif</a> <a href="grfsnd.html#sndwithgtk" onmouseout="UnTip()" onmouseover="Tip('Gtk extensions from xg.c')">gtk</a> <a href="extsnd.html#snddialogs" onmouseout="UnTip()" onmouseover="Tip('customizing the built-in dialogs, etc')">dialogs</a> <a href="extsnd.html#graphics" onmouseout="UnTip()" onmouseover="Tip('write your own sound display functions or customize Snd\'s')">graphics</a> <a href="#menusdoc" onmouseout="UnTip()" onmouseover="Tip('various dialogs')">menus</a> <a href="#makecurrentwindowdisplay" onmouseout="UnTip()" onmouseover="Tip('draw thumbnail sketch in upper right corner')">make-current-window-display</a> <a href="#popupdoc" onmouseout="UnTip()" onmouseover="Tip('context-sensitive popup menus')">popup</a> <a href="#enveddoc" onmouseout="UnTip()" onmouseover="Tip('envelope editors')">enved</a> <a href="libxm.html" onmouseout="UnTip()" onmouseover="Tip('library that ties Motif and Gtk into Snd')">libxm</a>
+<pre>see also: <a href="grfsnd.html#sndwithmotif" onmouseout="UnTip()" onmouseover="Tip('Motif extensions from xm.c')">motif</a> <a href="grfsnd.html#sndwithgtk" onmouseout="UnTip()" onmouseover="Tip('Gtk extensions from xg.c')">gtk</a> <a href="extsnd.html#snddialogs" onmouseout="UnTip()" onmouseover="Tip('customizing the built-in dialogs, etc')">dialogs</a> <a href="extsnd.html#graphics" onmouseout="UnTip()" onmouseover="Tip('write your own sound display functions or customize Snd\'s')">graphics</a> <a href="#menusdoc" onmouseout="UnTip()" onmouseover="Tip('various dialogs')">menus</a> <a href="#popupdoc" onmouseout="UnTip()" onmouseover="Tip('context-sensitive popup menus')">popup</a> <a href="#enveddoc" onmouseout="UnTip()" onmouseover="Tip('envelope editors')">enved</a> <a href="libxm.html" onmouseout="UnTip()" onmouseover="Tip('library that ties Motif and Gtk into Snd')">libxm</a>
 </pre>
 </td></tr></table>
 

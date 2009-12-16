@@ -16716,10 +16716,6 @@ XEN_NARGIFY_1(g_set_optimization_w, g_set_optimization)
 
 void mus_init_run(void)
 {
-#if HAVE_GUILE
-  XEN_EVAL_C_STRING("(defmacro " S_run " (thunk) `(,thunk))");
-#endif
-
   XEN_DEFINE_PROCEDURE_WITH_SETTER("optimization", g_optimization_w, "a no-op", S_setB S_optimization, g_set_optimization_w,  0, 0, 1, 0);
   optimization_hook = XEN_DEFINE_HOOK("optimization-hook", 1, "a no-op");
 }

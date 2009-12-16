@@ -136,9 +136,7 @@ Snd graphics contexts: <a href="extsnd.html#sndgcs">snd-gcs</a><br>
 <table border=3 bordercolor="tan" hspace=40><th bgcolor="lightgreen">Copying</th><tr><td>
 <blockquote><small>
 <br>
-copy file: in Guile: copy-file, in Ruby: File.copy or File.syscopy<br>
-copy string: in Guile: string-copy<br>
-copy list: in Guile: list-copy or copy-tree<br>
+copy file: in Ruby: File.copy or File.syscopy<br>
 copy vct: <a href="extsnd.html#vctcopy">vct-copy</a>, <a href="extsnd.html#vcttovector">vct-&gt;vector</a>, <a href="sndscm.html#vcttoframe">vct-&gt;frame</a><br>
 copy mix: <a href="sndscm.html#mixtovct">mix-&gt;vct</a><br>
 copy sampler: <a href="extsnd.html#copysampler">copy-sampler</a><br>
@@ -150,7 +148,6 @@ copy transform data: <a href="extsnd.html#transformtovct">transform-&gt;vct</a><
 copy sound-data: <a href="extsnd.html#sounddatatovct">sound-data-&gt;vct</a><br>
 copy a frame: <a href="sndscm.html#framecopy">frame-copy</a>, <a href="sndscm.html#frametovct">frame-&gt;vct</a><br>
 copy vector: <a href="extsnd.html#vectortovct">vector-&gt;vct</a><br>
-copy random state: Guile: copy-random-state, or use <a href="sndclm.html#mus-rand-seed">mus-rand-seed</a><br>
 <br>
 </small></blockquote>
 </td></tr></table>
@@ -298,7 +295,6 @@ graphical equalizer filter bank: <a href="sndscm.html#clminsdoc">graphEq</a><br>
 nonlinear (Volterra) filter: <a href="sndscm.html#volterrafilter">volterra-filter</a><br>
 Kalman filter: <a href="sndscm.html#kalmanfilterchannel">kalman-filter-channel</a><br>
 see also convolution, physical modeling, reverb, and <a href="sndscm.html#ssffts">fft-based filtering</a><br>
-Guile built-in filter function: %filter.<br>
 <br>
 </small></blockquote>
 </td></tr></table>
@@ -431,7 +427,6 @@ noise-making instrument: <a href="sndscm.html#noisedoc">noise.scm, noise.rb</a><
 physical modeling of noisy instruments: <a href="sndscm.html#maracadoc">maraca.scm</a><br>
 arbitrary distribution via rejection method: <a href="sndscm.html#anyrandom">any-random</a><br>
 CL: random, *random-state*, make-random-state*: random number between 0 and arg, arg can't be 0!<br>
-Guile: random, *random-state*, seed-&gt;random-state: random number between 0 and arg, arg can't be 0!<br>
 Ruby: kernel_rand (alias for Ruby's rand), srand: random integer between 0 and arg, or float between 0 and 1<br>
 <a href="sndclm.html#mus-random">mus-random, mus_random</a>: random float between -arg and arg<br>
 mus-rand-seed (settable)<br>
@@ -519,7 +514,7 @@ reverse block-wise: <a href="sndscm.html#reversebyblocks">reverse-by-blocks and 
 reverse via FFT: <a href="extsnd.html#sillyreverse">silly-reverse</a><br>
 reverse order of channels: <a href="extsnd.html#reversechannels">reverse-channels</a><br>
 reverse a list: reverse and reverse!<br>
-reverse a string: in Guile: string-reverse, in Ruby: reverse<br>
+reverse a string: in Ruby: reverse<br>
 reverse vct: <a href="extsnd.html#vctreverse">vct-reverse!</a><br>
 reverse a frame: <a href="sndscm.html#framereverse">frame-reverse</a><br>
 <br>

@@ -337,9 +337,6 @@ void snd_doit(int argc, char **argv)
   ss->sgx = (state_context *)calloc(1, sizeof(state_context));
   ss->sgx->axis_color_set = false;
 
-#if HAVE_GUILE
-  XEN_EVAL_C_STRING("(set! scm-repl-prompt \"snd> \")");
-#endif
 #if HAVE_S7
   xen_s7_set_repl_prompt("snd>");
 #endif
@@ -430,11 +427,6 @@ void snd_doit(int argc, char **argv)
   XEN_EVAL_C_STRING("(define (" S_graph_data " . args) #f)");
 
   XEN_EVAL_C_STRING("(define (" S_in " . args) #f)"); 
-  /* Guile: XEN_EVAL_C_STRING("(define (in time thunk) (join-thread (call-with-new-thread (lambda () (usleep (* 1000 time)) (thunk)))))"); */
-  /* 
-   * but this requires a join somewhere, which makes it kinda pointless
-   * and select on SIGALRM is too tricky
-   */
   XEN_EVAL_C_STRING("(define (" S_main_widgets " . args) #f)");
   XEN_EVAL_C_STRING("(define (" S_make_color " . args) #f)");
   XEN_EVAL_C_STRING("(define (" S_make_graph_data " . args) #f)");

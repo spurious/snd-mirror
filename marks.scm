@@ -393,14 +393,10 @@
   "(save-mark-properties) sets up an after-save-state-hook function to save any mark-properties"
 
   (define (open-appending filename)
-    (if (provided? 'snd-guile)
-	(open filename (logior O_RDWR O_APPEND))
-	(open-output-file filename "a")))
+    (open-output-file filename "a"))
 
   (define (close-appending fd)
-    (if (provided? 'snd-guile)
-	(close fd)
-	(close-output-port fd)))
+    (close-output-port fd))
 
   (add-hook! after-save-state-hook 
     (lambda (filename)

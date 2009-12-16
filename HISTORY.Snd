@@ -2,6 +2,8 @@ Snd change log
 
 2010 ----------------------------------------------------------------
 
+ 16-Dec:    make-current-window-display (draw.scm) moved to C as with-inset-graph.
+            removed Guile support.
  14-Dec:    peak-env support moved to C, added peak-env-dir, removed peak-env.*,
               peak-env-info, read-peak-env-info-file, and write-peak-env-info-file.
  11-Dec:    removed midi.c and Alsa < 1.0 support.

@@ -108,7 +108,6 @@ static const char *main_snd_xrefs[16] = {
   "{Ruby}: extension language",
   "{Forth}: extension language",
   "{s7}: extension language",
-  "{Guile}: extension language",
   "{Emacs}: Snd as Emacs subjob",
   "{Libxm}: graphics module",
   "{Sndlib}: underlying sound support library",
@@ -127,7 +126,6 @@ static const char *main_snd_xref_urls[16] = {
   "grfsnd.html#sndandruby",
   "grfsnd.html#sndandforth",
   "grfsnd.html#sndands7",
-  "grfsnd.html#sndandguile",
   "grfsnd.html#emacssnd",
   "libxm.html#xm",
   "sndlib.html#introduction",
@@ -472,20 +470,19 @@ char *version_info(void)
 void about_snd_help(void)
 {
   char *info = NULL, *features = NULL;
-#if HAVE_GUILE || HAVE_FORTH
+#if HAVE_FORTH
   char *files = NULL;
 #endif
 
-#if HAVE_GUILE
-  features = word_wrap(XEN_AS_STRING(XEN_EVAL_C_STRING("*features*")), 400);
-#endif
 #if HAVE_RUBY
   features = word_wrap(XEN_AS_STRING(XEN_EVAL_C_STRING((char *)"$\".join(' ')")), 400);
 #endif
+
 #if HAVE_FORTH
   features = word_wrap(XEN_AS_STRING(XEN_VARIABLE_REF("*features*")), 400);
   files = word_wrap(XEN_AS_STRING(XEN_VARIABLE_REF("*loaded-files*")), 400);
 #endif
+
 #if HAVE_S7
   {
     char *temp = NULL;
@@ -500,6 +497,8 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+16-Dec:  make-current-window-display (draw.scm) moved to C as with-inset-graph.\n\
+         removed Guile support.\n\
 14-Dec:  peak-env support moved to C, added peak-env-dir, removed peak-env.*,\n\
            peak-env-info, read-peak-env-info-file, and write-peak-env-info-file.\n\
 11-Dec:  removed midi.c, sndrecord.c, SGI support, mus-audio-mixer-*, and Alsa < 1.0 support.\n\
@@ -510,10 +509,6 @@ void about_snd_help(void)
          transforms are also objects.  integer->transform, transform->integer.\n\
 20-Nov:  play is generic now, \"old-play\" is the previous form.\n\
 ",
-#if HAVE_GUILE
-	    "\n    *features*:\n    '", features, "\n\n",
-            "\n    loaded files: ", files, "\n\n",
-#endif
 #if HAVE_RUBY	    
 	    "\n    $LOADED_FEATURES: \n", features, "\n\n",
 #endif
@@ -532,7 +527,7 @@ NULL);
 
   if (info) free(info);
   if (features) free(features);
-#if HAVE_GUILE || HAVE_FORTH
+#if HAVE_FORTH
   if (files) free(files);
 #endif
 }
@@ -3666,99 +3661,6 @@ and its value is returned."
 
   char *str = NULL, *subject = NULL;
   int min_diff = 1000;
-
-#if HAVE_GUILE
-  {
-    XEN help_text = XEN_FALSE; 
-    int topic_min = 0;
-    bool already_looped = false;
-    XEN value = XEN_FALSE, sym = XEN_FALSE;
-    if (XEN_EQ_P(text, XEN_UNDEFINED))                              /* if no arg, describe snd-help */
-      {
-	help_text = C_TO_XEN_STRING(H_snd_help);
-	subject = (char *)S_snd_help;
-      }
-    else
-      {
-	if (XEN_SYMBOL_P(text)) 
-	  {
-	    help_text = XEN_OBJECT_HELP(text);
-	    sym = text;
-	    subject = XEN_SYMBOL_TO_C_STRING(text);
-	  }
-	else 
-	  {
-	    if (XEN_STRING_P(text))
-	      {
-		subject = XEN_TO_C_STRING(text);
-		sym = C_STRING_TO_XEN_SYMBOL(subject);
-		help_text = XEN_OBJECT_HELP(sym);
-	      }
-	    else
-	      {
-		value = text;
-		help_text = XEN_OBJECT_HELP(text);
-	      }
-	  }
-	if (search)
-	  topic_min = snd_int_log2(mus_strlen(subject));
-	
-      HELP_LOOP:
-	if (XEN_FALSE_P(help_text))
-	  {
-#if HAVE_SCM_C_DEFINE
-	    XEN lookup;
-	    if ((XEN_FALSE_P(value)) && (XEN_SYMBOL_P(sym)))
-	      {
-		lookup = XEN_SYMBOL_TO_VARIABLE(sym);
-		if (!(XEN_FALSE_P(lookup)))
-		  value = XEN_VARIABLE_REF(lookup);
-	      }
-#endif
-	    help_text = XEN_OBJECT_HELP(value);         /* (object-property ...) */
-	    if ((XEN_FALSE_P(help_text)) &&
-		(XEN_PROCEDURE_P(value)))
-	      {
-		help_text = XEN_PROCEDURE_HELP(value);  /* (procedure-property ...) */
-		if (XEN_FALSE_P(help_text))
-		  help_text = XEN_PROCEDURE_SOURCE_HELP(value);      /* (procedure-documentation ...) -- this is the first line of source if string */
-
-		/* if procedure-with-setter, documentation string might be on the getter? */
-		if ((XEN_FALSE_P(help_text)) &&
-		    (SCM_PROCEDURE_WITH_SETTER_P(value)))
-		  help_text = XEN_PROCEDURE_SOURCE_HELP(SCM_PROCEDURE(value));
-	      }
-	    if ((XEN_FALSE_P(help_text)) && (search) && (!already_looped))
-	      {
-		/* we're getting desperate! */
-		int i, min_loc = 0, this_diff;
-		already_looped = true;
-		for (i = 0; i < HELP_NAMES_SIZE; i++)
-		  {
-		    this_diff = levenstein(subject, help_names[i]);
-		    if (this_diff < min_diff)
-		      {
-			min_diff = this_diff;
-			min_loc = i;
-		      }
-		  }
-		if (min_diff < topic_min)
-		  {
-		    subject = (char *)help_names[min_loc];
-		    sym = C_STRING_TO_XEN_SYMBOL(subject);
-		    help_text = XEN_OBJECT_HELP(sym);
-		    goto HELP_LOOP;
-		  }
-	      }
-	  }
-      }
-    /* help strings are always processed through the word-wrapper to fit whichever widget they are posted to */
-    /*   this means all the H_doc strings in Snd need to omit line-feeds except where necessary (i.e. code) */
-    
-    if (XEN_STRING_P(help_text))
-      str = XEN_TO_C_STRING(help_text);
-  }
-#endif
 
 #if HAVE_RUBY
   if (XEN_STRING_P(text))

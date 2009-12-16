@@ -341,7 +341,6 @@ char *shorter_tempnam(const char *udir, const char *prefix)
 
 char *snd_tempnam(void)
 {
-  /* problem here is that NULL passed back from Guile becomes "" which is not NULL from tempnam's point of view */
   char *udir;
   udir = temp_dir(ss);
   if ((udir) && (*udir))

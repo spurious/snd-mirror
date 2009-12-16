@@ -404,7 +404,7 @@ static void speed_label_click_callback(Widget w, XtPointer context, XtPointer in
 
 static void speed_drag_callback(Widget w, XtPointer context, XtPointer info) 
 {
-#if (HAVE_SCM_MAKE_RATIO || HAVE_SCM_C_MAKE_RECTANGULAR)
+#if (HAVE_MAKE_RATIO || HAVE_MAKE_RECTANGULAR)
   snd_info *sp = (snd_info *)context;
 #endif
 

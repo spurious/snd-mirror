@@ -1188,6 +1188,20 @@ set this switch to #f to disable the monitor.  (One such bug was fixed in gamin 
 </td></tr><tr><td colspan=3 height=16></td></tr>
 
 
+<!-- with-inset-graph -->
+<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="withinsetgraph">with-inset-graph</a></code></td>
+<td bgcolor="#f2f4ff"><code>#f</code></td></tr><tr><td></td><td colspan=2>
+If with-inset-graph is #t, a small graph is
+added to the upper right corner showing the overall current sound and where the current window fits in it.
+This information is implicit in the x axis zoom and position sliders, but a redundant graph doesn't hurt.  If you click in that graph,
+the cursor is moved to the clicked point.  
+
+<img src="pix/uppergrf.png" alt="with-inset-graph" hspace=20 vspace=10>
+<br>
+
+</td></tr><tr><td colspan=3 height=16></td></tr>
+
+
 <!-- with-relative-panes -->
 <tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="withrelativepanes">with-relative-panes</a></code></td>
 <td bgcolor="#f2f4ff"><code>#t</code></td></tr><tr><td></td><td colspan=2>
@@ -2175,7 +2189,6 @@ hook's responsibility.  See <a href="sndscm.html#snapmarktobeat">snap-mix-to-bea
 <code><a class=def name="mouseclickhook">mouse-click-hook</a> (snd chn button state x y axis) </code> [<b>or</b>]
 </td></tr><tr><td></td><td colspan=2>
 This hook is called upon a mouse button release or click (with various exceptions).  If its function returns #t, the click is ignored by Snd.
-See the <a href="sndscm.html#makecurrentwindowdisplay">current-window-location</a> function in draw.scm.  Here's an example:
 
 <table border=0 cellpadding=5 vspace=10><tr><td><pre>
 (define (click-to-center snd chn button state x y axis)
@@ -2521,7 +2534,6 @@ making it slightly easier to set default output names.
 <code><a class=def name="peakenvhook">peak-env-hook</a> (snd chn)</code>
 </td></tr><tr><td></td><td colspan=2>
 This hook is called upon completion of a new peak envelope.
-See <a href="sndscm.html#makecurrentwindowdisplay">make-current-window-display</a> in draw.scm.
 </td></tr><tr><td colspan=3 height=16></td></tr>
 
 
@@ -6066,7 +6078,7 @@ then restore that state upon "Page Up":
 			       last-page-state)))))))
 </pre></td></tr></table>
 
-See also draw-smpte-label in snd-motif.scm, or make-current-window-display in draw.scm.
+See also draw-smpte-label in snd-motif.scm.
 </td></tr><tr><td colspan=2 height=18></td></tr>
 
 
@@ -6402,7 +6414,6 @@ tracking playback (a "tracking-cursor").
 The procedure
 should draw the cursor at the current cursor position using the
 <a href="#cursorcontext">cursor-context</a>.
-One example is smart-line-cursor in draw.scm.
 Here is a simpler one that
 replaces the normal "+" cursor with an "x":
 
@@ -13435,7 +13446,6 @@ This draws a line from ('x0 y0') to ('x1 y1') in the specified context.
 <code><a class=def name="drawlines">draw-lines</a> (lines snd chn context)</code>
 </td></tr><tr><td></td><td>
 This draws lines following the (x y) pairs in the vector 'lines' in the specified context.
-See make-current-window-display in draw.scm.
 make-bezier-1 in <a href="sndscm.html#musglyphs">musglyphs.scm</a> can be used to draw Bezier curves.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 

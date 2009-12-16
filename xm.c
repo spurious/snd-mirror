@@ -10,6 +10,7 @@
 
 /* HISTORY: 
  *
+ *   16-Dec:    removed Guile support.
  *   16-Nov:    XM_XTPOINTER resource type for 64-bit systems.
  *   7-Aug:     s7 extended type change.
  *   27-Jul:    changed OFF_T to INT64_T.
@@ -165,7 +166,7 @@
 #include <X11/extensions/shape.h>
 #endif
 
-/* compile-time flags are HAVE_XPM HAVE_MOTIF HAVE_XM_XP HAVE_GUILE|HAVE_RUBY MUS_WITH_EDITRES */
+/* compile-time flags are HAVE_XPM HAVE_MOTIF HAVE_XM_XP HAVE_RUBY MUS_WITH_EDITRES */
 
 /* if you're using g++ and it complains about XmRemoveFromPostFromList, update Motif (you need 2.1.30) */
 
@@ -366,16 +367,6 @@
 
 static XEN_OBJECT_TYPE xm_obj_tag;
 
-#if HAVE_GUILE
-static size_t xm_obj_free(XEN obj)
-{
-  void *val;
-  val = (void *)XEN_OBJECT_REF(obj);
-  free(val);
-  return(0);
-}
-#endif
-
 #if HAVE_RUBY
 static void *xm_obj_free(XEN obj)
 {
@@ -418,10 +409,6 @@ static void define_xm_obj(void)
   xm_obj_tag = XEN_MAKE_OBJECT_TYPE("<XmObj>", NULL, xm_obj_free, s7_equalp_xm, NULL, NULL, NULL, NULL, NULL, NULL);
 #else
   xm_obj_tag = XEN_MAKE_OBJECT_TYPE("XmObj", sizeof(void *));
-#endif
-
-#if HAVE_GUILE
-  scm_set_smob_free(xm_obj_tag, xm_obj_free);
 #endif
 
 #if HAVE_FORTH

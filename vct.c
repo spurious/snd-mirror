@@ -662,16 +662,11 @@ v. " vct_map_example " is the same as " vct_fill_example
 }
 
 
-XEN g_vct_peak(XEN obj)
+double mus_vct_peak(vct *v)
 {
-  #define H_vct_peak "(" S_vct_peak " v): max of abs of elements of v"
   mus_long_t i;
   mus_float_t val = 0.0, absv;
-  vct *v;
 
-  XEN_ASSERT_TYPE(MUS_VCT_P(obj), obj, XEN_ONLY_ARG, S_vct_peak, "a vct");
-
-  v = XEN_TO_VCT(obj);
   val = fabs(v->data[0]); 
   for (i = 1; i < v->length; i++) 
     {
@@ -679,7 +674,15 @@ XEN g_vct_peak(XEN obj)
       if (absv > val) val = absv;
     }
 
-  return(xen_return_first(C_TO_XEN_DOUBLE(val), obj));
+  return(val);
+}
+
+
+XEN g_vct_peak(XEN obj)
+{
+  #define H_vct_peak "(" S_vct_peak " v): max of abs of elements of v"
+  XEN_ASSERT_TYPE(MUS_VCT_P(obj), obj, XEN_ONLY_ARG, S_vct_peak, "a vct");
+  return(C_TO_XEN_DOUBLE(mus_vct_peak(XEN_TO_VCT(obj))));
 }
 
 
@@ -1211,15 +1214,6 @@ void mus_vct_init(void)
 				 s7_mus_vct_copy, s7_mus_vct_fill);
 #else
   vct_tag = XEN_MAKE_OBJECT_TYPE("Vct", sizeof(vct));
-#endif
-
-#if HAVE_GUILE
-  scm_set_smob_print(vct_tag, print_vct);
-  scm_set_smob_free(vct_tag, free_vct);
-  scm_set_smob_equalp(vct_tag, equalp_vct);
-#if HAVE_APPLICABLE_SMOB
-  scm_set_smob_apply(vct_tag, XEN_PROCEDURE_CAST g_vct_ref, 1, 0, 0);
-#endif
 #endif
 
 #if HAVE_FORTH

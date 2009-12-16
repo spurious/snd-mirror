@@ -612,11 +612,6 @@ void listener_return(widget_t w, int last_prompt)
        *   I assume the form is ok because the continuation will preserve it somehow.
        */
 
-#if HAVE_GUILE
-      if ((mus_strlen(str) > 1) || (str[0] != '\n'))
-	form = string_to_form(str);
-#endif
-
 #if HAVE_RUBY || HAVE_FORTH
       form = XEN_EVAL_C_STRING(str);
 #endif
@@ -660,7 +655,6 @@ void listener_return(widget_t w, int last_prompt)
       free(str);
       str = NULL;
 
-      /* in the Guile case, an error goes to snd_catch_scm_error -> listener_append_and_prompt ultimately */
       if (!got_error)
 	snd_report_listener_result(form); /* used to check for unbound form here, but that's no good in Ruby,
 					   *   and doesn't seem sensible in Guile
@@ -741,13 +735,6 @@ void set_listener_prompt(const char *new_prompt)
     char *str;
     XEN_EVAL_C_STRING("before-prompt-hook reset-hook!\n");
     str = mus_format("before-prompt-hook lambda: <{ prompt pos }> \"%s\" ; add-hook!", listener_prompt(ss));
-    XEN_EVAL_C_STRING(str);
-    free(str);
-#endif
-
-#if HAVE_GUILE
-    char *str;
-    str = mus_format("(set! scm-repl-prompt \"%s\")", listener_prompt(ss)); /* defined in ice-9/boot9.scm */
     XEN_EVAL_C_STRING(str);
     free(str);
 #endif

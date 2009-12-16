@@ -19,7 +19,7 @@
 
 (provide 'snd-extensions.scm)
 
-(define (remove-if pred l) ; from Guile's common-list.scm == comlist.scm from slib
+(define (remove-if pred l)
   "(remove-if func lst) removes any element from 'lst' that 'func' likes"
   (let loop ((l l) (result '()))
     (cond ((null? l) (reverse! result))
@@ -203,66 +203,65 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 (define* (check-for-unsaved-edits :optional (check #t))
   "(check-for-unsaved-edits :optional (check #t)) -> sets up hooks to check for and ask about unsaved edits when a sound is closed.
 If 'check' is #f, the hooks are removed."
-  (let () ; make new guile happy
 
-    (define* (yes-or-no? question action-if-yes action-if-no :optional snd)
-      ;; we are replacing the caller's requested action with this prompt, so the action won't take place
-      ;;   until we get a response.
-      (clear-minibuffer snd)
-      (prompt-in-minibuffer question
-			    (lambda (response)
-			      (clear-minibuffer snd)
-			      (if (or (string=? response "yes")
-				      (string=? response "y"))
-				  (action-if-yes snd)
-				  (action-if-no snd)))
-			    snd #t))
+  (define* (yes-or-no? question action-if-yes action-if-no :optional snd)
+    ;; we are replacing the caller's requested action with this prompt, so the action won't take place
+    ;;   until we get a response.
+    (clear-minibuffer snd)
+    (prompt-in-minibuffer question
+			  (lambda (response)
+			    (clear-minibuffer snd)
+			    (if (or (string=? response "yes")
+				    (string=? response "y"))
+				(action-if-yes snd)
+				(action-if-no snd)))
+			  snd #t))
 
-    (define (ignore-unsaved-edits-at-close? ind exiting)
-      (let ((eds 0))
-	(do ((i 0 (+ 1 i)))
-	    ((= i (channels ind)))
-	  (set! eds (+ eds (car (edits ind i)))))
-	(if (> eds 0)
-	    (begin
-	      ;; there are unsaved edits; cancel requested action (return #f -> #t) and wait for response
-	      (yes-or-no?
-	       (format #f "~A has unsaved edits.  ~A anyway? " 
-		       (short-file-name ind)
-		       (if exiting "Exit" "Close"))
-	       (lambda (snd)
-		 ;;"Yes close anyway"
-		 (revert-sound ind) ; to make sure this hook doesn't activate
-		 (close-sound ind)
-		 (if exiting (exit)))
-	       (lambda (snd)
-		 ;;"no don't close"
-		 #f) ; this return value is just a placeholder to make Scheme happy
-	       ind)
-	      #f) ; (not #f) -> #t means cancel request pending response
-	    #t))) ; (not #t) -> #f means go ahead, there are no unsaved edits
+  (define (ignore-unsaved-edits-at-close? ind exiting)
+    (let ((eds 0))
+      (do ((i 0 (+ 1 i)))
+	  ((= i (channels ind)))
+	(set! eds (+ eds (car (edits ind i)))))
+      (if (> eds 0)
+	  (begin
+	    ;; there are unsaved edits; cancel requested action (return #f -> #t) and wait for response
+	    (yes-or-no?
+	     (format #f "~A has unsaved edits.  ~A anyway? " 
+		     (short-file-name ind)
+		     (if exiting "Exit" "Close"))
+	     (lambda (snd)
+	       ;;"Yes close anyway"
+	       (revert-sound ind) ; to make sure this hook doesn't activate
+	       (close-sound ind)
+	       (if exiting (exit)))
+	     (lambda (snd)
+	       ;;"no don't close"
+	       #f) ; this return value is just a placeholder to make Scheme happy
+	     ind)
+	    #f) ; (not #f) -> #t means cancel request pending response
+	  #t))) ; (not #t) -> #f means go ahead, there are no unsaved edits
+  
+  (define (ignore-unsaved-edits-at-exit?)
+    (letrec ((ignore-unsaved-edits-at-exit-1?
+	      (lambda (snds)
+		(or (null? snds)
+		    (and (ignore-unsaved-edits-at-close? (car snds) #t)
+			 (ignore-unsaved-edits-at-exit-1? (cdr snds)))))))
+      (ignore-unsaved-edits-at-exit-1? (sounds))))
+  
+  (define (unsaved-edits-at-exit?) (not (ignore-unsaved-edits-at-exit?)))
+  (define (unsaved-edits-at-close? snd) (not (ignore-unsaved-edits-at-close? snd #f)))
     
-    (define (ignore-unsaved-edits-at-exit?)
-      (letrec ((ignore-unsaved-edits-at-exit-1?
-		(lambda (snds)
-		  (or (null? snds)
-		      (and (ignore-unsaved-edits-at-close? (car snds) #t)
-			   (ignore-unsaved-edits-at-exit-1? (cdr snds)))))))
-	(ignore-unsaved-edits-at-exit-1? (sounds))))
-
-    (define (unsaved-edits-at-exit?) (not (ignore-unsaved-edits-at-exit?)))
-    (define (unsaved-edits-at-close? snd) (not (ignore-unsaved-edits-at-close? snd #f)))
-    
-    (set! checking-for-unsaved-edits check)
-    (if check
-	(begin
-	  (if (not (member unsaved-edits-at-exit? (hook->list before-exit-hook)))
-	      (add-hook! before-exit-hook unsaved-edits-at-exit?))
-	  (if (not (member unsaved-edits-at-close? (hook->list before-close-hook)))
-	      (add-hook! before-close-hook unsaved-edits-at-close?)))
-	(begin
-	  (remove-hook! before-exit-hook unsaved-edits-at-exit?)
-	  (remove-hook! before-close-hook unsaved-edits-at-close?)))))
+  (set! checking-for-unsaved-edits check)
+  (if check
+      (begin
+	(if (not (member unsaved-edits-at-exit? (hook->list before-exit-hook)))
+	    (add-hook! before-exit-hook unsaved-edits-at-exit?))
+	(if (not (member unsaved-edits-at-close? (hook->list before-close-hook)))
+	    (add-hook! before-close-hook unsaved-edits-at-close?)))
+      (begin
+	(remove-hook! before-exit-hook unsaved-edits-at-exit?)
+	(remove-hook! before-close-hook unsaved-edits-at-close?))))
 
 
 ;;; -------- remember-sound-state
@@ -385,8 +384,7 @@ If 'check' is #f, the hooks are removed."
 				  (if (and (list? val)
 					   (not (null? val))
 					   (eq? (car val) 'lambda))
-				      (set! (f snd chn) (eval val (interaction-environment)))
-				      ;; this works in Guile
+				      (set! (f snd chn) (eval val (current-environment)))
 				      (set! (f snd chn) val)))
 				channel-funcs
 				(list-ref (cadddr state) chn)))

@@ -2628,12 +2628,6 @@ static void init_xen_mix(void)
 #endif
 #endif
 
-#if HAVE_GUILE
-  scm_set_smob_print(xen_mix_tag,  print_xen_mix);
-  scm_set_smob_free(xen_mix_tag,   free_xen_mix);
-  scm_set_smob_equalp(xen_mix_tag, equalp_xen_mix);
-#endif
-
 #if HAVE_FORTH
   fth_set_object_inspect(xen_mix_tag,   print_xen_mix);
   fth_set_object_dump(xen_mix_tag,      g_xen_mix_to_string);
@@ -3938,14 +3932,6 @@ void g_init_mix(void)
   mf_tag = XEN_MAKE_OBJECT_TYPE("<mix-sampler>", print_mf, free_mf, s7_equalp_mf, NULL, s7_read_mix_sample, NULL, NULL, NULL, NULL);
 #else
   mf_tag = XEN_MAKE_OBJECT_TYPE("MixSampler", sizeof(mix_fd));
-#endif
-
-#if HAVE_GUILE
-  scm_set_smob_print(mf_tag, print_mf);
-  scm_set_smob_free(mf_tag, free_mf);
-#if HAVE_APPLICABLE_SMOB
-  scm_set_smob_apply(mf_tag, XEN_PROCEDURE_CAST g_read_mix_sample, 0, 0, 0);
-#endif
 #endif
 
 #if HAVE_RUBY

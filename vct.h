@@ -53,6 +53,7 @@ MUS_EXPORT char *mus_vct_to_readable_string(vct *v);
 MUS_EXPORT vct *mus_vct_make(mus_long_t len);
 MUS_EXPORT vct *mus_vct_free(vct *v);
 MUS_EXPORT vct *mus_vct_copy(vct *vc);
+MUS_EXPORT double mus_vct_peak(vct *v);
 
 MUS_EXPORT XEN xen_list_to_vct(XEN lst);
 MUS_EXPORT vct *xen_to_vct(XEN arg);

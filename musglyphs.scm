@@ -135,9 +135,7 @@
 	    ps-snd ps-chn ps-ax))
 
 (define old-defvar defvar)
-(if (not (provided? 'snd-s7))
-    (set! defvar define)
-    (defmacro defvar (name value) `(define ,name ,value)))
+(defmacro defvar (name value) `(define ,name ,value))
 
 (define-macro (setf a b) `(set! ,a ,b))
 
@@ -179,9 +177,7 @@
 ;	 (apply (setter sound-comment) (list snd val))))))
 
 ;(load "loop.scm") ; Rick's loop implementation (cm/src/loop.scm)
-(if (not (provided? 'snd-s7))
-    (define progn begin)
-    (defmacro progn args `(begin ,@args)))
+(defmacro progn args `(begin ,@args))
 
 (load-from-path "cmn-glyphs.lisp")
 

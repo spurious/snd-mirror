@@ -642,6 +642,10 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 #define in_set_verbose_cursor(a) ss->Verbose_Cursor = a
 #define DEFAULT_VERBOSE_CURSOR false
 
+#define with_inset_graph(ss) ss->With_Inset_Graph
+#define set_with_inset_graph(a) ss->With_Inset_Graph = a
+#define DEFAULT_WITH_INSET_GRAPH false
+
 #define selection_creates_region(ss) ss->Selection_Creates_Region
 #define set_selection_creates_region(a) ss->Selection_Creates_Region = a
 #define DEFAULT_SELECTION_CREATES_REGION true
@@ -708,6 +712,9 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define peak_env_dir(ss) ss->Peak_Env_Dir
 #define set_peak_env_dir(a) ss->Peak_Env_Dir = a
+#ifndef DEFAULT_PEAK_ENV_DIR
+  #define DEFAULT_PEAK_ENV_DIR NULL
+#endif
 
 #define open_file_dialog_directory(ss) ss->Open_File_Dialog_Directory
 #define set_open_file_dialog_directory(a) ss->Open_File_Dialog_Directory = a

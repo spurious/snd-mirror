@@ -407,7 +407,7 @@
 (load "gldata.scm")
 
 ;;; ---------------------------------------- write output file ----------------------------------------
-(hey "/* gl.c: s7, Guile, Ruby, and Forth bindings for GL, GLU~%")
+(hey "/* gl.c: s7, Ruby, and Forth bindings for GL, GLU~%")
 (hey " *   generated automatically from makegl.scm and gldata.scm~%")
 (hey " *   needs xen.h~%")
 (hey " *~%")
@@ -416,6 +416,8 @@
 (hey " * 'gl is added to *features*~%")
 (hey " *~%")
 (hey " * HISTORY:~%")
+(hey " *     16-Dec-09: removed Guile support.~%")
+(hey " *     --------~%")
 (hey " *     17-Oct-08: removed gtkglext bindings.~%")
 (hey " *     --------~%")
 (hey " *     30-Mar-06: check for glu.h, omit GLU_* if necessary.  Add Forth support.~%")
@@ -575,7 +577,7 @@
 	  (line-len 0)
 	  (line-max 120)
 	  (protect-arglist #f)
-	  (max-args 10)) ; libguile/gsubr.h:#define SCM_GSUBR_MAX 10
+	  (max-args 10)) 
 
      (define (hey-start)
        ;; start of checked line

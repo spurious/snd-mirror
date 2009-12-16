@@ -2,7 +2,7 @@
 
 static GtkWidget *recorder = NULL, *meters = NULL, *record_button = NULL, *recorder_output = NULL, *info;
 static bool reading = false, recording = false;
-static char *recorder_filename = "test.snd";
+static char *recorder_filename = NULL;
 static int recorder_fd = -1, recorder_srate = 44100, recorder_chans = 2, recorder_format = MUS_LFLOAT;
 static mus_long_t recorder_total_bytes = 0;
 static axis_context *recorder_ax = NULL;
@@ -365,6 +365,7 @@ widget_t record_file(void)
       gtk_widget_show(output_label);
       
       recorder_output = snd_entry_new(hbox, WITH_WHITE_BACKGROUND);
+      if (!recorder_filename) recorder_filename = mus_strdup("test.snd");
       gtk_entry_set_text(GTK_ENTRY(recorder_output), recorder_filename);
 
       db_button = gtk_check_button_new_with_label(_("dB"));

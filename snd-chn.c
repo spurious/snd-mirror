@@ -4048,6 +4048,9 @@ static void display_channel_data_with_size(chan_info *cp,
       if ((sp->channel_style != CHANNELS_SUPERIMPOSED) && (height > 10))
 	display_channel_id(cp, height + offset, sp->nchans);
 
+      if (with_inset_graph(ss))
+	show_inset_graph(cp);
+
       run_after_graph_hook(cp);
     } 
 }
@@ -5594,6 +5597,271 @@ axis_context *mix_waveform_context(chan_info *cp)    {return(set_context(cp, CHA
 static axis_context *combined_context(chan_info *cp) {return(set_context(cp, CHAN_TMPGC));}
 
 
+/* ---------------------------------------- inset graph ---------------------------------------- */
+
+#define INSET_WIDTH .2
+#define INSET_HEIGHT .25
+
+typedef struct inset_graph_info_t {  /* chan_info field is inset_graph, set to null in snd-data, but not cleared or freed */
+  int width, height, edpos, y_offset, data_size;
+  point_t *data0, *data1;
+} inset_graph_info_t;
+
+
+void clear_inset_graph(chan_info *cp)
+{
+  if (cp->inset_graph)
+    cp->inset_graph->edpos = -2;
+}
+
+
+void free_inset_graph(chan_info *cp)
+{
+  if (cp->inset_graph)
+    {
+      if (cp->inset_graph->data0) free(cp->inset_graph->data0);
+      if (cp->inset_graph->data1) free(cp->inset_graph->data1);
+      free(cp->inset_graph);
+      cp->inset_graph = NULL;
+    }
+}
+
+
+#if (!USE_NO_GUI)
+static void make_point_arrays(inset_graph_info_t *info, int size, vct *v1)
+{
+  if (size != info->data_size)
+    {
+      if (info->data0) free(info->data0);
+      if (info->data1) free(info->data1);
+      info->data1 = NULL;
+      info->data0 = (point_t *)calloc(size, sizeof(point_t));
+    }
+
+  if ((v1) && (!(info->data1)))
+    info->data1 = (point_t *)calloc(size, sizeof(point_t));
+
+  info->data_size = size;
+}
+#endif
+
+
+void show_inset_graph(chan_info *cp)
+{
+#if (!USE_NO_GUI)
+  if ((with_inset_graph(ss)) &&
+      (cp->graph_time_p))
+    {
+      int grf_width, width, x_offset, y_offset, grf_height, height, chan_offset, grf_chn = 0;
+      bool new_peaks;
+      inset_graph_info_t *info;
+      int64_t frames;
+
+      if (!(cp->inset_graph))
+	{
+	  cp->inset_graph = (inset_graph_info_t *)calloc(1, sizeof(inset_graph_info_t));
+	  cp->inset_graph->edpos = -2;
+	}
+
+      info = cp->inset_graph;
+      grf_width = cp->axis->x_axis_x1;
+      width = snd_round(INSET_WIDTH * grf_width);
+      x_offset = grf_width - width;
+      grf_height = cp->axis->y_axis_y0 - cp->axis->y_axis_y1;
+      height = snd_round(INSET_HEIGHT * grf_height);
+      chan_offset = cp->axis->y_axis_y1 - 6;
+      y_offset = chan_offset + snd_round(height * 0.5);
+      if (cp->sound->channel_style == CHANNELS_SEPARATE) grf_chn = cp->chan;
+      new_peaks = ((cp->axis->cp) && (cp->axis->cp->new_peaks));
+      /* new_peaks is set during update_graph if we just finished a new peak-env */
+      frames = CURRENT_SAMPLES(cp);
+
+      if ((width > 10) &&
+	  (height > 10) &&
+	  (frames > 0) &&
+	  ((cp->chan == 0) || (cp->sound->channel_style != CHANNELS_SUPERIMPOSED)))
+	{
+	  /* draw axes around the inset graph */
+	  axis_context *cur_ax;
+	  chan_info *grf_cp;
+	  grf_cp = cp->sound->chans[grf_chn];
+
+	  cur_ax = set_context(grf_cp, CHAN_GC);
+	  fill_rectangle(cur_ax, x_offset, chan_offset + height, width, 2);
+	  fill_rectangle(cur_ax, x_offset, chan_offset, 2, height);
+
+	  /* show where the current window fits into the overall graph */
+	  {
+	    int rx, lx, wx;
+	    rx = snd_round(width * (double)(cp->axis->hisamp) / (double)frames);
+	    lx = snd_round(width * (double)(cp->axis->losamp) / (double)frames);
+	    wx = rx - lx;
+	    if (wx <= 0) wx = 1;
+	    cur_ax = set_context(grf_cp, CHAN_SELGC);
+	    fill_rectangle(cur_ax, x_offset + lx, chan_offset, wx, height);
+	  }
+
+	  if ((!new_peaks) &&
+	      (width == info->width) &&
+	      (height == info->height) &&
+	      (y_offset == info->y_offset) &&
+	      (cp->edit_ctr == info->edpos))
+	    {
+	      /* use old env graph points if nothing has changed */
+	    }
+	  else
+	    {
+	      /* need to get new peak env graph points */
+	      XEN data;
+	      double data_max = 0.0, data_scaler, step;
+	      vct *v0 = NULL, *v1 = NULL;
+	      int data_len;
+#if HAVE_S7
+	      int gc_loc;
+#endif
+
+	      data = make_graph_data(cp, cp->edit_ctr, 0, frames);
+#if HAVE_S7
+	      gc_loc = s7_gc_protect(s7, data);
+#endif
+	      if (mus_vct_p(data))
+		v0 = xen_to_vct(data);
+	      else
+		{
+		  v0 = xen_to_vct(XEN_CAR(data));
+		  v1 = xen_to_vct(XEN_CADR(data));
+		}
+	      data_max = mus_vct_peak(v0);
+	      if (v1)
+		{
+		  double data1_max;
+		  data1_max = mus_vct_peak(v1);
+		  if (data1_max > data_max) data_max = data1_max;
+		}
+	      
+	      if (data_max > 0.0)
+		data_scaler = (double)height / (2 * data_max);
+	      else data_scaler = 0.0;
+
+	      data_len = v0->length;
+	      step = (double)data_len / (double)width;
+
+	      if (data_scaler < 0.00000001)
+		{
+		  /* load up 0's */
+		  int i, j;
+		  
+		  make_point_arrays(info, width, v1);
+
+		  for (j = x_offset, i = 0; i < width; i++, j++)
+		    {
+		      info->data0[i].x = j;
+		      info->data0[i].y = y_offset;
+		      if (v1)
+			{
+			  info->data1[i].x = j;
+			  info->data1[i].y = y_offset;
+			}
+		    }
+		}
+	      else
+		{
+		  if (data_len > width)
+		    {
+		      /* normal case: more samples to display than we have room for, so subsample */
+		      int i, j;
+		      double max_y, min_y, stepper = 0.0;
+		      max_y = -data_max;
+		      min_y = data_max;
+		      
+		      make_point_arrays(info, width, v1);
+		      
+		      for (i = 0, j = 0; (i < data_len) && (j < width); i++)
+			{
+			  if (v1)
+			    {
+			      if (v1->data[i] > max_y) max_y = v1->data[i];
+			      if (v0->data[i] < min_y) min_y = v0->data[i];
+			    }
+			  else
+			    {
+			      if (v0->data[i] > max_y) max_y = v0->data[i];
+			    }
+			  stepper += 1.0;
+			  if (stepper >= step)
+			    {
+			      info->data0[j].x = x_offset;
+			      info->data0[j].y = snd_round(y_offset - max_y * data_scaler);
+			      max_y = -data_max;
+			      if (v1)
+				{
+				  info->data1[j].x = x_offset;
+				  info->data1[j].y = snd_round(y_offset - min_y * data_scaler);
+				  min_y = data_max;
+				}
+			      x_offset++;
+			      stepper -= step;
+			      j++;
+			    }
+			}
+
+		      while (j < width)
+			{
+			  info->data0[j].x = info->data0[j - 1].x;
+			  info->data0[j].y = info->data0[j - 1].y;
+			  if (v1) 
+			    {
+			      info->data1[j].x = info->data1[j - 1].x;
+			      info->data1[j].y = info->data1[j - 1].y;
+			    }
+			  j++;
+			}
+		    }
+		  else
+		    {
+		      /* more pixels than samples */
+		      double xstep, xj;
+		      int i;
+		      xstep = (double)width / (double)data_len;
+		      xj = (double)x_offset;
+
+		      make_point_arrays(info, data_len, v1);
+
+		      for (i = 0; i < data_len; i++, xj += xstep)
+			{
+			  info->data0[i].x = snd_round(xj);
+			  if (!v1)
+			    info->data0[i].y = snd_round(y_offset - data_scaler * v0->data[i]);
+			  else
+			    {
+			      info->data0[i].y = snd_round(y_offset - data_scaler * v1->data[i]);
+			      info->data1[i].x = info->data0[i].x;
+			      info->data1[i].x = snd_round(y_offset - data_scaler * v0->data[i]);
+			    }
+			}
+		    }
+		}
+
+	      info->width = width;
+	      info->height = height;
+	      info->edpos = cp->edit_ctr;
+	      info->y_offset = y_offset;
+#if HAVE_S7
+	      s7_gc_unprotect_at(s7, gc_loc);
+#endif
+	    }
+
+	  cur_ax = set_context(grf_cp, CHAN_GC);
+	  draw_lines(cur_ax, info->data0, info->data_size);
+	  if (info->data1) draw_lines(cur_ax, info->data1, info->data_size);
+	}
+    }
+#endif
+}
+
+
+
+/* -------------------------------------------------------------------------------- */
 
 typedef enum {CP_GRAPH_TRANSFORM_P, CP_GRAPH_TIME_P, CP_FRAMES, CP_CURSOR, CP_GRAPH_LISP_P, CP_AP_LOSAMP, CP_AP_HISAMP, CP_SQUELCH_UPDATE,
 	      CP_EDIT_CTR, CP_CURSOR_STYLE, CP_EDIT_HOOK, CP_UNDO_HOOK, CP_AFTER_EDIT_HOOK,

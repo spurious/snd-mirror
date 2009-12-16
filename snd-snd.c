@@ -2619,12 +2619,6 @@ static void init_xen_sound(void)
 #endif
 #endif
 
-#if HAVE_GUILE
-  scm_set_smob_print(xen_sound_tag,  print_xen_sound);
-  scm_set_smob_free(xen_sound_tag,   free_xen_sound);
-  scm_set_smob_equalp(xen_sound_tag, equalp_xen_sound);
-#endif
-
 #if HAVE_FORTH
   fth_set_object_inspect(xen_sound_tag,   print_xen_sound);
   fth_set_object_dump(xen_sound_tag,      g_xen_sound_to_string);

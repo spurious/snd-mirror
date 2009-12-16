@@ -1997,8 +1997,10 @@ snd_info *snd_update(snd_info *sp)
   ur_filename = sp->filename;
 
   if (peak_env_dir(ss))
-    for (i = 0; i < sp->nchans; i++)
-      delete_peak_env_info_file(sp->chans[i]);
+    for_each_sound_chan(sp, delete_peak_env_info_file);
+
+  if (with_inset_graph(ss))
+    for_each_sound_chan(sp, clear_inset_graph);
 
   if (XEN_HOOKED(update_hook))
     {
@@ -4921,10 +4923,6 @@ static XEN g_set_sound_file_extensions(XEN lst)
 
 static XEN g_file_write_date(XEN file)
 {
-  #if HAVE_GUILE
-    #define write_date_equivalent "Equivalent to Guile's (stat:mtime (stat file))"
-  #endif
-
   #if HAVE_RUBY
     #define write_date_equivalent "Equivalent to Ruby's File.mtime(file)"
   #endif

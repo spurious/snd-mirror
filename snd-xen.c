@@ -12,17 +12,12 @@
  *                       (or (selected-channel) 0))
  *               (values #f 0)))
  *         and similarly in other such cases. [end chn edpos]
- *         This is incompatible with Guile.
  */
 
-/* Snd defines its own exit, delay, and frame? clobbering (presumably) the Guile version, (filter is another such collision)
+/* Snd defines its own exit and delay
  *
  *   In Scheme, delay is protected in clm2xen.c as make-promise
  *              filter is defined in srfi-1 so we need protection against that
- *
- *   In Guile, frame? is %frame?
- *             we redefine random to accept 0 or 0.0 as its 1st argument
- *             we redefine log to take a 2nd arg.
  *
  *   In Ruby, rand is kernel_rand.
  *
@@ -169,7 +164,6 @@ int snd_protect(XEN obj)
 
       XEN_VECTOR_SET(gc_protection, old_size, obj);
 
-      /* it would be ideal to unprotect the old table, but it's a permanent object in Guile terms */
       /*   in Ruby, I think we can unprotect it */
 #if HAVE_RUBY || HAVE_FORTH
       XEN_UNPROTECT_FROM_GC(tmp);
@@ -275,7 +269,7 @@ static XEN snd_format_if_needed(XEN args)
   format_info_len = mus_strlen(format_info);
 
   if (XEN_LIST_P(XEN_CADR(args)))
-    format_args = XEN_COPY_ARG(XEN_CADR(args)); /* protect Ruby case, a no-op in Guile */
+    format_args = XEN_COPY_ARG(XEN_CADR(args)); /* protect Ruby case */
   else format_args = XEN_CADR(args);
 
   errmsg = (char *)calloc(err_size, sizeof(char));
@@ -314,7 +308,7 @@ static XEN snd_format_if_needed(XEN args)
 		      else
 			{
 			  char *temp = NULL;
-#if HAVE_GUILE || HAVE_FORTH
+#if HAVE_FORTH
 			  if (XEN_PROCEDURE_P(cur_arg))
 			    {
 			      /* don't need the source, just the name here, I think */
@@ -369,174 +363,6 @@ static XEN snd_format_if_needed(XEN args)
   return(xen_return_first(result, args));
 }
 #endif
-
-
-/* ---------------- GUILE error handler ---------------- */
-
-#ifndef MUS_DEBUGGING
-  #define MUS_DEBUGGING 0
-#endif
-
-#if HAVE_GUILE
-static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error handler, data = handler_data = caller's name */
-{
-  char *possible_code;
-  XEN port;
-  int port_gc_loc, stack_gc_loc;
-  XEN stack = XEN_FALSE;
-  char *tag_name = NULL;
-  bool need_comma = false;
-
-  if (XEN_SYMBOL_P(tag)) tag_name = XEN_SYMBOL_TO_C_STRING(tag);
-  if (mus_strcmp(tag_name, "snd-top-level"))
-    return(throw_args); /* not an error -- just a way to exit the current context */
-
-  port = scm_mkstrport(XEN_ZERO, 
-		       scm_make_string(XEN_ZERO, C_TO_XEN_CHAR(0)),
-		       SCM_OPN | SCM_WRTNG,
-		       "snd error handler");
-  port_gc_loc = snd_protect(port);
-  XEN_PUTS("\n", port);
-
-  if ((MUS_DEBUGGING) || (ss->batch_mode))
-    {
-      /* force out an error before possible backtrace call */
-      XEN lport;
-      lport = scm_current_error_port();
-      XEN_DISPLAY(tag, lport);
-      XEN_PUTS(": ", lport);
-      XEN_DISPLAY(throw_args, lport);
-      XEN_FLUSH_PORT(lport);
-    }
-
-  /* Guile's error messages sometimes have formatting directives in the first of the throw_args,
-   *   but its simple_format (called by Guile's error handlers) can itself die with an error
-   *   in some cases, causing the main program to exit, so we replace the whole thing with our own.
-   */
-  if ((XEN_LIST_P(throw_args)) && 
-      (XEN_LIST_LENGTH(throw_args) > 0))
-    {
-      /* normally car is string name of calling func */
-      if (XEN_NOT_FALSE_P(XEN_CAR(throw_args)))
-	{
-	  XEN_DISPLAY(XEN_CAR(throw_args), port);
-	  XEN_PUTS(": ", port);
-	  XEN_DISPLAY(tag, port); /* redundant in many cases */
-	  need_comma = true;
-	}
-      /* else it's something like unbound variable which passes #f as car */
-      if (XEN_LIST_LENGTH(throw_args) > 1)
-	{
-	  /* here XEN_CADR can contain formatting info and XEN_CADDR is a list of args to fit in */
-	  /* or it may be a list of info vars etc */
-	  if (need_comma) XEN_PUTS(": ", port);
-	  if (XEN_STRING_P(XEN_CADR(throw_args)))
-	    XEN_DISPLAY(snd_format_if_needed(XEN_CDR(throw_args)), port);
-	  else XEN_DISPLAY(XEN_CDR(throw_args), port);
-	}
-
-      /* wrong-type-arg happens more than others, and actually doesn't provide the needed info
-       *   in most cases -- the error is usually in argument order.  So, if we can find a help
-       *   string for XEN_CAR (normally the caller's name), we'll print out that info too.
-       */
-
-      /* this code is not called in snd-test test 28 because there all errors are caught explicitly */
-
-      if ((XEN_STRING_P(XEN_CAR(throw_args))) &&
-	  ((XEN_EQ_P(tag, XEN_ERROR_TYPE("wrong-type-arg"))) ||
-	   (XEN_EQ_P(tag, XEN_ERROR_TYPE("wrong-number-of-args")))))
-	{
-	  XEN str;
-	  str = g_snd_help_with_search(XEN_CAR(throw_args), 400, false);
-	  if (XEN_STRING_P(str))
-	    {
-	      char *help;
-	      help = mus_strdup(XEN_TO_C_STRING(str));
-	      if (help)
-		{
-		  int i, len;
-		  len = mus_strlen(help);
-		  for (i = 1; i < len; i++)
-		    if ((help[i] == '\n') ||                        /* try to print just the calling sequence */
-			((help[i] == ':') && (help[i - 1] == ')'))) /* :optional can occur in the arg list */
-		      {
-			help[i] = 0;
-			break;
-		      }
-		  XEN_PUTS("\n    ", port);
-		  XEN_DISPLAY(C_TO_XEN_STRING(help), port);
-		  free(help);
-		}
-	    }
-	}
-    }
-  else 
-    {
-      /* 'cannot-parse can get us here */
-      XEN_DISPLAY(tag, port);
-      XEN_PUTS(": ", port);
-      XEN_DISPLAY(throw_args, port);
-    }
-#if HAVE_SCM_C_DEFINE
-  stack = scm_fluid_ref(XEN_VARIABLE_REF(scm_the_last_stack_fluid_var));
-#else
-  stack = scm_fluid_ref(XEN_CDR(scm_the_last_stack_fluid));
-#endif
-  if (XEN_NOT_FALSE_P(stack)) 
-    {
-      stack_gc_loc = snd_protect(stack);
-      XEN_PUTS("\n", port);
-      scm_display_backtrace(stack, port, XEN_UNDEFINED, XEN_UNDEFINED);
-      snd_unprotect_at(stack_gc_loc);
-    }
-  else
-    {
-      if (last_file_loaded)
-	{
-	  XEN_PUTS("\n(while loading \"", port);
-	  XEN_PUTS(last_file_loaded, port);
-	  XEN_PUTS("\")", port);
-	  last_file_loaded = NULL;
-	}
-    }
-  possible_code = (char *)data; /* or is this the caller's name? */
-  if ((possible_code) && 
-      (mus_strlen(possible_code) < PRINT_BUFFER_SIZE))
-    {
-      /* not actually sure if this is always safe */
-      XEN_PUTS("\n; ", port);
-      XEN_PUTS(possible_code, port);
-    }
-  XEN_FLUSH_PORT(port); /* needed to get rid of trailing garbage chars?? -- might be pointless now */
-  {
-    char *name_buf;
-    name_buf = mus_strdup(XEN_TO_C_STRING(XEN_PORT_TO_STRING(port)));
-    if (name_buf)
-      {
-	bool show_error = true;
-	if ((!tag_name) || (strcmp(tag_name, "snd-error") != 0)) /* otherwise an explicit snd-error call which has run the hook already */
-	  show_error = (!(run_snd_error_hook(name_buf)));
-	if (show_error)
-	  {
-	    if (ss->xen_error_handler)
-	      call_xen_error_handler(name_buf);
-	    else
-	      {
-		listener_append_and_prompt(name_buf);
-		if (!(listener_is_visible()))
-		  snd_error_without_redirection_or_hook(name_buf);
-		/* we're in xen_error from the redirection point of view and we already checked snd-error-hook */
-	      }
-	  }
-	free(name_buf);
-      }
-  }
-  snd_unprotect_at(port_gc_loc);
-  check_for_event();
-  return(tag);
-}
-#endif
-/* end HAVE_GUILE */
 
 
 /* ---------------- RUBY error handler ---------------- */
@@ -621,132 +447,16 @@ void snd_rb_raise(XEN tag, XEN throw_args)
  *   so, we only throw if catch_exists.
  */
 
-#if HAVE_GUILE
-static XEN snd_internal_stack_catch(XEN tag,
-				    XEN_CATCH_BODY_TYPE body,
-				    void *body_data,
-#if HAVE_SCM_T_CATCH_BODY
-				    scm_t_catch_handler handler,
-#else
-				    scm_catch_handler_t handler,
-#endif
-				    void *handler_data)
-{ /* declaration from libguile/throw */
-  XEN result;
-  if (ss->catch_exists < 0) ss->catch_exists = 0;
-  ss->catch_exists++;
-  /* one function can invoke, for example, a hook that will call back here setting up a nested catch */
-  result = scm_internal_stack_catch(tag, body, body_data, handler, handler_data);
-  if (ss->catch_exists > 0) ss->catch_exists--;
-  return(result);
-}
 
+#if HAVE_EXTENSION_LANGUAGE
 
-XEN snd_throw(XEN key, XEN args)
-{
-  if (ss->catch_exists)
-    return(XEN_THROW(key, args));
-  else
-    {
-      snd_error("%s: %s", 
-		XEN_AS_STRING(key),
-		XEN_AS_STRING(args));
-    }
-  return(XEN_FALSE);
-}
-
-
-XEN snd_catch_any(XEN_CATCH_BODY_TYPE body, void *body_data, const char *caller)
-{
-  return(snd_internal_stack_catch(XEN_TRUE, body, body_data, snd_catch_scm_error, (void *)caller));
-}
-
-
-static XEN g_call0_1(void *arg)
-{
-  return(XEN_CALL_0_NO_CATCH((XEN)arg));
-}
-
-
-XEN g_call0(XEN proc, const char *caller) /* replacement for gh_call0 -- protect ourselves from premature exit(!$#%@$) */
-{
-  return(snd_catch_any(g_call0_1, (void *)proc, caller));
-}
-
-
-static XEN g_call1_1(void *arg)
-{
-  return(XEN_CALL_1_NO_CATCH(((XEN *)arg)[0], ((XEN *)arg)[1]));
-}
-
-
-XEN g_call1(XEN proc, XEN arg, const char *caller)
-{
-  XEN args[2];
-  args[0] = proc;
-  args[1] = arg;
-  return(snd_catch_any(g_call1_1, (void *)args, caller));
-}
-
-
-static XEN g_call_any_1(void *arg)
-{
-  return(XEN_APPLY_NO_CATCH(((XEN *)arg)[0], ((XEN *)arg)[1]));
-}
-
-
-XEN g_call_any(XEN proc, XEN arglist, const char *caller)
-{
-  XEN args[2];
-  args[0] = proc;
-  args[1] = arglist;
-  return(snd_catch_any(g_call_any_1, (void *)args, caller));
-}
-
-
-static XEN g_call2_1(void *arg)
-{
-  return(XEN_CALL_2_NO_CATCH(((XEN *)arg)[0], ((XEN *)arg)[1], ((XEN *)arg)[2]));
-}
-
-
-XEN g_call2(XEN proc, XEN arg1, XEN arg2, const char *caller)
-{
-  XEN args[3];
-  args[0] = proc;
-  args[1] = arg1;
-  args[2] = arg2;
-  return(snd_catch_any(g_call2_1, (void *)args, caller));
-}
-
-
-static XEN g_call3_1(void *arg)
-{
-  return(XEN_CALL_3_NO_CATCH(((XEN *)arg)[0], ((XEN *)arg)[1], ((XEN *)arg)[2], ((XEN *)arg)[3]));
-}
-
-
-XEN g_call3(XEN proc, XEN arg1, XEN arg2, XEN arg3, const char *caller)
-{
-  XEN args[4];
-  args[0] = proc;
-  args[1] = arg1;
-  args[2] = arg2;
-  args[3] = arg3;
-  return(snd_catch_any(g_call3_1, (void *)args, caller));
-}
-#endif
-
-
-#if HAVE_RUBY || HAVE_FORTH || HAVE_S7
 XEN snd_catch_any(XEN_CATCH_BODY_TYPE body, void *body_data, const char *caller)
 {
   return((*body)(body_data));
 }
-#endif
 
+#else
 
-#if (!HAVE_EXTENSION_LANGUAGE)
 /* no extension language but user managed to try to evaluate something -- one way is to
  *   activate the minibuffer (via click) and type an expression into it
  */
@@ -773,19 +483,6 @@ bool procedure_arity_ok(XEN proc, int args)
   rargs = XEN_TO_C_INT(arity);
   if (rargs != args)
     return(false);
-#endif
-
-#if HAVE_GUILE
-  {
-    int oargs, restargs, loc;
-    loc = snd_protect(arity);
-    rargs = XEN_TO_C_INT(XEN_CAR(arity));
-    oargs = XEN_TO_C_INT(XEN_CADR(arity));
-    restargs = ((XEN_TRUE_P(XEN_CADDR(arity))) ? 1 : 0);
-    snd_unprotect_at(loc);
-    if (rargs > args) return(false);
-    if ((restargs == 0) && ((rargs + oargs) < args)) return(false);
-  }
 #endif
 
 #if HAVE_S7
@@ -994,21 +691,6 @@ char *g_print_1(XEN obj) /* free return val */
   return(mus_strdup(XEN_AS_STRING(obj))); 
 #endif
 
-#if HAVE_GUILE
-#if HAVE_SCM_OBJECT_TO_STRING
-  return(mus_strdup(XEN_AS_STRING(obj))); 
-#else
-  XEN str, val;
-  XEN port;
-  str = scm_makstr (0, 0);
-  port = scm_mkstrport (XEN_ZERO, str, SCM_OPN | SCM_WRTNG, S_snd_print);
-  scm_prin1(obj, port, 1);
-  val = XEN_PORT_TO_STRING(port);
-  XEN_CLOSE_PORT(port);
-  return(mus_strdup(XEN_TO_C_STRING(val)));
-#endif
-#endif
-
 #if (!HAVE_EXTENSION_LANGUAGE)
   return(NULL);
 #endif
@@ -1100,13 +782,7 @@ void snd_report_result(XEN result, const char *buf)
 
 void snd_report_listener_result(XEN form)
 {
-#if HAVE_RUBY || HAVE_FORTH || HAVE_S7
   snd_report_result(form, "\n");
-#endif
-
-#if HAVE_GUILE
-  snd_report_result(snd_catch_any(eval_form_wrapper, (void *)form, NULL), "\n");
-#endif
 }
 
 
@@ -1258,21 +934,15 @@ void snd_load_init_file(bool no_global, bool no_init)
   /* called only in snd-g|xmain.c at initialization time */
 
   /* changed Oct-05 because the Scheme/Ruby/Forth choices are becoming a hassle --
-   *   now save-options has its own file ~/.snd_prefs_guile|ruby|forth|s7 which is loaded first, if present
-   *     then ~/.snd_guile|ruby|forth|s7, if present
+   *   now save-options has its own file ~/.snd_prefs_ruby|forth|s7 which is loaded first, if present
+   *     then ~/.snd_ruby|forth|s7, if present
    *     then ~/.snd for backwards compatibility
    * snd_options does not write ~/.snd anymore, but overwrites the .snd_prefs_* file
    * use set init files only change the ~/.snd choice
    *
-   * there are parallel choices for the global configuration file: /etc/snd_guile|ruby|forth|s7.conf
+   * there are parallel choices for the global configuration file: /etc/snd_ruby|forth|s7.conf
    */
 #if HAVE_EXTENSION_LANGUAGE
-#if HAVE_GUILE
-  #define SND_EXT_CONF "/etc/snd_guile.conf"
-  #define SND_PREFS "~/.snd_prefs_guile"
-  #define SND_INIT "~/.snd_guile"
-#endif
-
 #if HAVE_RUBY
   #define SND_EXT_CONF "/etc/snd_ruby.conf"
   #define SND_PREFS "~/.snd_prefs_ruby"
@@ -1546,7 +1216,6 @@ mus_long_t string_to_mus_long_t(const char *str, mus_long_t lo, const char *fiel
 
 XEN run_progn_hook(XEN hook, XEN args, const char *caller)
 {
-  /* Guile built-in scm_c_run_hook doesn't return the value of the hook procedure(s) and exits on error */
 #if HAVE_S7
   int gc_loc;
 #endif
@@ -1559,10 +1228,6 @@ XEN run_progn_hook(XEN hook, XEN args, const char *caller)
    *   they are cons'd up in our C code, and applied here via s7_call, so between
    *   s7_call's, they are not otherwise protected.  In normal function calls, the
    *   args are on the sc->args list in the evaluator, and therefore protected.
-   *   In Guile (for example), the args are presumably on the C stack, and thus
-   *   protected, but even in that case, we need the "xen_return_first" business
-   *   below to be completely safe -- this tells the C compiler not to optimize
-   *   them off the stack. 
    */
 #endif
 
@@ -1626,14 +1291,7 @@ XEN run_or_hook(XEN hook, XEN args, const char *caller)
 	result = XEN_APPLY(XEN_CAR(procs), args, caller);
       else result = XEN_CALL_0(XEN_CAR(procs), caller);
       if (XEN_NOT_FALSE_P(result)) 
-#if HAVE_GUILE
-	{
-	  if (!(XEN_EQ_P(result, SCM_UNSPECIFIED)))
-	    hook_result = result; /* return last non-#f result, but not #<unspecified>! */
-	}
-#else
         hook_result = result;
-#endif
       procs = XEN_CDR (procs);
     }
 
@@ -2874,21 +2532,6 @@ XEN_NARGIFY_1(g_add_watcher_w, g_add_watcher)
 #endif
 
 
-#if HAVE_GUILE
-#define S_write_byte "write-byte"
-
-static XEN g_write_byte(XEN byte) /* this collides with CM */
-{
-  #define H_write_byte "(" S_write_byte " byte): writes byte to the current output port"
-  XEN port;
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(byte), byte, XEN_ONLY_ARG, S_write_byte, "an integer");
-  port = scm_current_output_port();
-  scm_putc(XEN_TO_C_INT(byte), SCM_COERCE_OUTPORT(port));
-  return(byte);
-}
-#endif
-
-
 static char *legalize_path(const char *in_str)
 { 
   int inlen;
@@ -3186,145 +2829,6 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
     free(legal_pwd); 
   } 
 
-#if HAVE_GUILE
-  XEN_DEFINE_PROCEDURE(S_write_byte, g_write_byte, 1, 0, 0, H_write_byte);
-
-  XEN_EVAL_C_STRING("(read-set! keywords 'prefix)");
-  XEN_EVAL_C_STRING("(print-enable 'source)");
-
-  XEN_EVAL_C_STRING("(define (big-fft . args) #f)");
-  XEN_EVAL_C_STRING("(define redo-edit redo)");        /* consistency with Ruby */
-  XEN_EVAL_C_STRING("(define undo-edit undo)");
-
-  XEN_EVAL_C_STRING("(define %random random)");        /* CL/Guile random is inexcusably stupid */
-  XEN_EVAL_C_STRING("(define (random . args)\
-                       (if (and (not (null? args))\
-                                (zero? (car args)))\
-                           0\
-                           (apply %random args)))");
-
-  XEN_EVAL_C_STRING("(define %log log)");
-  XEN_EVAL_C_STRING("(define (log . args)\
-                       (if (not (null? (cdr args)))\
-                           (/ (%log (car args)) (%log (cadr args)))\
-                           (%log (car args))))");
-
-  XEN_EVAL_C_STRING("(define %length length)");
-  XEN_EVAL_C_STRING("(define (length obj)\
-                       (if (string? obj) (string-length obj)\
-                           (if (vector? obj) (vector-length obj)\
-                               (if (vct? obj) (vct-length obj)\
-                                   (if (sound? obj) (frames obj)\
-                                       (if (mix? obj) (mix-length obj)\
-                                           (if (sound-data? obj) (sound-data-length obj)\
-                                               (if (region? obj) (region-frames obj)\
-                                                   (if (selection? obj) (selection-frames obj)\
-                                                       (%length obj))))))))))");
-
-  XEN_EVAL_C_STRING("(define %floor floor)");
-  XEN_EVAL_C_STRING("(define (floor val) (inexact->exact (%floor val)))");
-
-  XEN_EVAL_C_STRING("(define %ceiling ceiling)");
-  XEN_EVAL_C_STRING("(define (ceiling val) (inexact->exact (%ceiling val)))");
-
-  XEN_EVAL_C_STRING("(define %round round)");
-  XEN_EVAL_C_STRING("(define (round val) (inexact->exact (%round val)))");
-
-  XEN_EVAL_C_STRING("(define %truncate truncate)");
-  XEN_EVAL_C_STRING("(define (truncate val) (inexact->exact (%truncate val)))");
-
-  /* def-optkey-fun is just define* in s7, but in guile it needs special handling.  Unfortunately,
-   *    guile 1.9.0 makes this harder.
-   */
-#if (!HAVE_SCM_MODULE_PUBLIC_INTERFACE) /* not 1.9.0 */
-  XEN_EVAL_C_STRING("\
-(defmacro def-optkey-fun (decls . body)\
-  (let ((func-name (car decls))\
-	(func-args (cdr decls)))\
-    (if (null? func-args)\
-	`(define (,func-name) ,@body)\
-	(let ((args (map (lambda (arg)\
-			   (symbol->keyword (if (list? arg) (car arg) arg)))\
-			 func-args))\
-	      (key-name (string->symbol (string-append (symbol->string func-name) \"-1\"))))\
-	  (if (= (length func-args) 1)\
-	      `(begin\
-		 (define* (,key-name :key ,@func-args) ,@body)\
-		 (define* (,func-name :rest passed-args)\
-		   (if (or (null? passed-args)\
-			   (keyword? (car passed-args)))\
-		       (apply ,key-name passed-args)\
-		       (apply ,key-name ,(car args) passed-args))))\
-	      `(begin\
-		 (define* (,key-name :key ,@func-args) ,@body)\
-		 (define* (,func-name :rest passed-args)\
-		   (if (or (null? passed-args)\
-			   (keyword? (car passed-args)))\
-		       (apply ,key-name passed-args)\
-		       (let ((arglen (length passed-args)))\
-			 (if (or (= arglen 1) \
-				 (and (> arglen 2) \
-				      (keyword? (cadr passed-args))))\
-			     (apply ,key-name ,(car args) (car passed-args) (cdr passed-args))\
-			     (if (or (= arglen 2) \
-				     (and (> arglen 3) \
-					  (keyword? (caddr passed-args))))\
-				 (apply ,key-name \
-					,(car args) (car passed-args) \
-					,(cadr args) (cadr passed-args) \
-					(cddr passed-args))\
-				 (let ((allargs (call-with-exit\
-						 (lambda (break)\
-						   (let ((arglist '())\
-							 (pa passed-args)\
-							 (na ',args))\
-						     (do ((k 0 (+ 1 k)))\
-							 ((= k arglen) arglist)\
-						       (if (keyword? (car pa))\
-							   (break (append arglist pa))\
-							   (begin\
-							     (set! arglist (append arglist (list (car na) (car pa))))\
-							     (set! pa (cdr pa))\
-							     (set! na (cdr na))))))))))\
-				   (apply ,key-name allargs)))))))))))))");
-#else
-  XEN_EVAL_C_STRING("(use-modules (ice-9 optargs))");
-
-  XEN_EVAL_C_STRING("\
-(defmacro def-optkey-fun (decls . body)\
-  (let* ((func-name (car decls))\
-	 (func-args (cdr decls))\
-	 (args (map (lambda (arg)\
-		     (symbol->keyword (if (list? arg) (car arg) arg)))\
-		   func-args))\
-	 (key-name (string->symbol (string-append (symbol->string func-name) \"-1\"))))\
-    `(begin\
-       (define* (,key-name #:key ,@func-args) ,@body)\
-       (define (,func-name . passed-args)\
-	 (if (or (null? passed-args)\
-		 (keyword? (car passed-args)))\
-	     (apply ,key-name passed-args)\
-	     (let ((arglen (length passed-args)))\
-	       (let ((allargs (call/cc\
-			       (lambda (break)\
-				 (let ((arglist '())\
-				       (pa passed-args)\
-				       (na ',args))\
-				   (do ((k 0 (+ 1 k)))\
-				       ((= k arglen) arglist)\
-				     (if (keyword? (car pa))\
-					 (break (append arglist pa))\
-					 (begin\
-					   (set! arglist (append arglist (list (car na) (car pa))))\
-					   (set! pa (cdr pa))\
-					   (set! na (cdr na))))))))))\
-		 (apply ,key-name allargs))))))))");
-
-  /* XEN_EVAL_C_STRING("(set! %load-should-autocompile #f)"); */
-#endif
-
-#endif
-
 #if HAVE_S7
   init_listener_ports();
 
@@ -3504,10 +3008,6 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   XEN_YES_WE_HAVE("snd-nogui");
 #endif
 
-#if HAVE_GUILE
-  XEN_YES_WE_HAVE("snd-guile");
-#endif
-
 #if HAVE_FORTH
   XEN_YES_WE_HAVE("snd-forth");
 #endif
@@ -3555,9 +3055,3 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   XEN_YES_WE_HAVE("snd");
   XEN_YES_WE_HAVE("snd" SND_MAJOR_VERSION);
 }
-
-/* unguile troubles:
- *     snd_pd_external.[ch], pd-*.scm
- *     rt-*.scm
- *     eval-c.scm, osc.scm, snd-hobbit.scm, snd_frg.scm probably snd_conffile.scm
- */

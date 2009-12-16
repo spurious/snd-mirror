@@ -1442,12 +1442,6 @@ static void init_xen_region(void)
 #endif
 #endif
 
-#if HAVE_GUILE
-  scm_set_smob_print(xen_region_tag,  print_xen_region);
-  scm_set_smob_free(xen_region_tag,   free_xen_region);
-  scm_set_smob_equalp(xen_region_tag, equalp_xen_region);
-#endif
-
 #if HAVE_FORTH
   fth_set_object_inspect(xen_region_tag,   print_xen_region);
   fth_set_object_dump(xen_region_tag,      g_xen_region_to_string);

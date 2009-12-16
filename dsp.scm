@@ -2555,7 +2555,7 @@ the multi-modulator FM case described by the list of modulator frequencies and i
 
 
 #|
-;;; these are standard FFTs for s7 (they won't work in Guile)
+;;; these are standard FFTs for s7
 
 (define* (fft! rl im n (dir 1))
 

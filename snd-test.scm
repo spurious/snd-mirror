@@ -1048,6 +1048,9 @@
     (set! (with-verbose-cursor) (with-verbose-cursor))
     (if (not (equal? (with-verbose-cursor)  #f)) 
 	(snd-display ";with-verbose-cursor set def: ~A" (with-verbose-cursor)))
+    (set! (with-inset-graph) (with-inset-graph))
+    (if (not (equal? (with-inset-graph)  #f)) 
+	(snd-display ";with-inset-graph set def: ~A" (with-inset-graph)))
     (set! (wavelet-type) (wavelet-type))
     (if (not (equal? (wavelet-type)  0 )) 
 	(snd-display ";wavelet-type set def: ~A" (wavelet-type)))
@@ -1318,6 +1321,7 @@
       'with-relative-panes (with-relative-panes) #t
       'with-tracking-cursor (with-tracking-cursor) #f
       'with-verbose-cursor (with-verbose-cursor) #f
+      'with-inset-graph (with-inset-graph) #f
       'x-axis-style (x-axis-style) 0 
       'zero-pad (zero-pad) 0
       'zoom-focus-style (zoom-focus-style) 2 
@@ -2257,7 +2261,7 @@
 		       'wavo-hop 'wavo-trace 'welch-window 'widget-position
 		       'widget-size 'widget-text 'window-height 'window-property 'window-property-changed-hook
 		       'window-width 'window-x 'window-y 'with-background-processes 'with-file-monitor 'with-gl
-		       'with-mix-tags 'with-relative-panes 'with-tracking-cursor 'with-verbose-cursor
+		       'with-mix-tags 'with-relative-panes 'with-tracking-cursor 'with-verbose-cursor 'with-inset-graph
 		       'x->position 'x-axis-as-clock 'x-axis-as-percentage 'x-axis-in-beats 'x-axis-in-measures
 		       'x-axis-in-samples 'x-axis-in-seconds 'x-axis-label 'x-axis-style 'x-bounds
 		       'x-position-slider 'x-zoom-slider 'xramp-channel 'y->position 'y-axis-label
@@ -64984,7 +64988,7 @@ EDITS: 1
 		     text-focus-color tiny-font region-sampler? transform-dialog transform-sample
 		     transform->vct transform-frames transform-type trap-segfault with-file-monitor optimization unbind-key undo
 		     update-transform-graph update-time-graph update-lisp-graph update-sound clm-table-size clm-default-frequency
-		     with-verbose-cursor view-sound wavelet-type
+		     with-verbose-cursor view-sound wavelet-type with-inset-graph
 		     time-graph?  time-graph-type wavo-hop wavo-trace window-height window-width window-x window-y
 		     with-mix-tags with-relative-panes with-gl x-axis-style beats-per-measure
 		     beats-per-minute x-bounds x-position-slider x->position x-zoom-slider mus-header-type->string mus-data-format->string
@@ -65093,7 +65097,7 @@ EDITS: 1
 			 show-y-zero show-grid show-sonogram-cursor sinc-width spectrum-end spectro-hop spectrum-start spectro-x-angle  grid-density
 			 spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle spectro-z-scale speed-control
 			 speed-control-style speed-control-tones squelch-update sync sound-properties temp-dir text-focus-color tiny-font y-bounds
-			 transform-type trap-segfault with-file-monitor optimization with-verbose-cursor wavelet-type x-bounds
+			 transform-type trap-segfault with-file-monitor optimization with-verbose-cursor with-inset-graph wavelet-type x-bounds
 			 time-graph? wavo-hop wavo-trace with-gl with-mix-tags x-axis-style beats-per-minute zero-pad zoom-color zoom-focus-style 
 			 with-relative-panes  window-x window-y window-width window-height mix-dialog-mix beats-per-measure
 			 channels chans colormap comment data-format data-location data-size edit-position frames header-type maxamp
@@ -65903,7 +65907,7 @@ EDITS: 1
 			    selected-channel selected-data-color selected-graph-color 
 			    selected-sound selection-creates-region show-controls show-indices show-listener
 			    show-selection-transform sinc-width temp-dir text-focus-color tiny-font
-			    trap-segfault with-file-monitor optimization unbind-key with-verbose-cursor window-height beats-per-measure
+			    trap-segfault with-file-monitor optimization unbind-key with-verbose-cursor with-inset-graph window-height beats-per-measure
 			    window-width window-x window-y with-gl with-mix-tags x-axis-style beats-per-minute zoom-color mix-tag-height
 			    mix-tag-width with-relative-panes clm-table-size clm-default-frequency mark-tag-width mark-tag-height
 			    quit-button-color help-button-color reset-button-color doit-button-color doit-again-button-color

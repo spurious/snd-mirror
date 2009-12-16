@@ -1003,12 +1003,6 @@ static void init_xen_selection(void)
 #endif
 #endif
 
-#if HAVE_GUILE
-  scm_set_smob_print(xen_selection_tag,  print_xen_selection);
-  scm_set_smob_free(xen_selection_tag,   free_xen_selection);
-  scm_set_smob_equalp(xen_selection_tag, equalp_xen_selection);
-#endif
-
 #if HAVE_FORTH
   fth_set_object_inspect(xen_selection_tag,   print_xen_selection);
   fth_set_object_dump(xen_selection_tag,      g_xen_selection_to_string);

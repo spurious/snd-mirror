@@ -1,4 +1,4 @@
-/* xg.c: S7, Guile, Ruby, and Forth bindings for gdk/gtk/pango/cairo, some of glib
+/* xg.c: s7, Ruby, and Forth bindings for gdk/gtk/pango/cairo, some of glib
  *   this file generated automatically from makexg.scm and xgdata.scm
  *   needs xen.h
  *
@@ -57,6 +57,8 @@
  *     win32-specific functions
  *
  * HISTORY:
+ *     16-Dec-09: removed Guile support.
+ *     --------
  *     16-Oct:    removed Gauche support.
  *     1-Sep:     S7 support.
  *     8-Jul-08:  started removing all struct accessors (for Gtk 3).
@@ -152,15 +154,6 @@
 
 /* -------------------------------- smob for GC -------------------------------- */
 static XEN_OBJECT_TYPE xm_obj_tag;
-#if HAVE_GUILE
-static size_t xm_obj_free(XEN obj)
-{
-  void *val;
-  val = (void *)XEN_OBJECT_REF(obj);
-  free(val);
-  return(0);
-}
-#endif
 #if HAVE_RUBY
 static void *xm_obj_free(XEN obj)
 {
@@ -198,9 +191,6 @@ static void define_xm_obj(void)
  xm_obj_tag = XEN_MAKE_OBJECT_TYPE("<XmObj>", NULL, xm_obj_free, s7_equalp_xm, NULL, NULL, NULL, NULL, NULL, NULL);
 #else
   xm_obj_tag = XEN_MAKE_OBJECT_TYPE("XmObj", sizeof(void *));
-#endif
-#if HAVE_GUILE
-  scm_set_smob_free(xm_obj_tag, xm_obj_free);
 #endif
 #if HAVE_FORTH
   fth_set_object_free(xm_obj_tag, xm_obj_free);
@@ -49376,7 +49366,7 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("02-Dec-09"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("15-Dec-09"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

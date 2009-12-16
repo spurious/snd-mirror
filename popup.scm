@@ -205,6 +205,9 @@
     (define (display-properties props)
       ;; there's no way to tell Guile's format that enormous vectors should not be printed in full
       ;; so we search for them here and handle them ourselves
+      
+      ;; TODO: fix this!
+
       (let ((str ""))
 	(for-each
 	 (lambda (pr)

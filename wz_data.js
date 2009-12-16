@@ -424,20 +424,6 @@ var extsnd_mixtagy_tip = "<code>(mix-tag-y id)</code>: height of mix's tag";
 
 var extsnd_musaudioclose_tip = "<code>(mus-audio-close line)</code>: close the audio hardware line";
 
-var extsnd_musaudiomixerread_tip = "<code>(mus-audio-mixer-read device field channel vals)</code>:<br>" +
-                                   " read some portion of the sound card mixer state.<br>" +
-                                   " The device is the nominal audio device, normally <code>mus-audio-default</code>.<br>" +
-                                   " The field describes what info we are requesting:<br>" +
-                                   " to get the device's max available chans, use <code>mus-audio-channel</code>.<br>" +
-                                   " The channel arg, when relevant, specifies which channel we want info on.<br>" +
-                                   " The requested info is written into 'vals':<br>" +
-                                   "<pre>  (let ((vals (make-vct 32)))<br><br>" +
-                                   "    (mus-audio-mixer-read mus-audio-default mus-audio-format 32 vals))</pre><br><br>" +
-                                   " sets <code>(vct-ref vals 0)</code> to the default device's desired audio sample data format.";
-
-var extsnd_musaudiomixerwrite_tip = "<code>(mus-audio-mixer-write device field channel vals)</code>:<br>" +
-                                    " change some portion of the sound card mixer state";
-
 var extsnd_musaudioopenoutput_tip = "<code>(mus-audio-open-output device srate chans format bytes)</code>:<br>" +
                                     " open the audio device ready for output at the given srate and so on;<br>" +
                                     " return the audio line number:<br>" +

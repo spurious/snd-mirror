@@ -1512,7 +1512,7 @@ static void preferences_help_callback(GtkWidget *w, gpointer context)
   prefs_helping = true;
   snd_help("preferences",
 	   "This dialog sets various global variables. 'Save' then writes the new values \
-to ~/.snd_prefs_guile|ruby|forth|s7 so that they take effect the next time you start Snd.  'Revert' resets each variable either to \
+to ~/.snd_prefs_ruby|forth|s7 so that they take effect the next time you start Snd.  'Revert' resets each variable either to \
 its value when the Preferences dialog was started, or to the last saved value.  'Clear' resets each variable to its default value (its \
 value when Snd starts, before loading initialization files). 'Help' starts this dialog, and as long as it's active, it will post helpful \
 information if the mouse lingers over some variable -- sort of a tooltip that stays out of your way. \
@@ -1713,12 +1713,12 @@ widget_t start_preferences_dialog(void)
     remember_pref(prf, reflect_unsaved_edits, save_unsaved_edits, help_unsaved_edits, clear_unsaved_edits, revert_unsaved_edits);
 
     current_sep = make_inter_variable_separator(dpy_box);
-    prf = prefs_row_with_toggle("include thumbnail graph in upper right corner", "make-current-window-display",
-				rts_current_window_display = current_window_display(),
+    prf = prefs_row_with_toggle("include thumbnail graph in upper right corner", "with-inset-graph",
+				rts_with_inset_graph = with_inset_graph(ss),
 				dpy_box,
-				current_window_display_toggle);
-    remember_pref(prf, reflect_current_window_display, save_current_window_display, help_current_window, 
-		  clear_current_window_display, revert_current_window_display);
+				with_inset_graph_toggle);
+    remember_pref(prf, reflect_with_inset_graph, save_with_inset_graph, help_current_window, 
+		  clear_with_inset_graph, revert_with_inset_graph);
 
     current_sep = make_inter_variable_separator(dpy_box);
     prf = prefs_row_with_toggle("resize main window as sounds open and close", S_auto_resize,

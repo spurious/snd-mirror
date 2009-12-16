@@ -493,6 +493,7 @@ static void save_options(FILE *fd)
   if (fneq(cursor_update_interval(ss), DEFAULT_CURSOR_UPDATE_INTERVAL)) pss_sf(fd, S_cursor_update_interval, cursor_update_interval(ss));
   if (cursor_location_offset(ss) != DEFAULT_CURSOR_LOCATION_OFFSET) pss_sd(fd, S_cursor_location_offset, cursor_location_offset(ss));
   if (verbose_cursor(ss) != DEFAULT_VERBOSE_CURSOR) pss_ss(fd, S_with_verbose_cursor, b2s(verbose_cursor(ss)));
+  if (with_inset_graph(ss) != DEFAULT_WITH_INSET_GRAPH) pss_ss(fd, S_with_inset_graph, b2s(with_inset_graph(ss)));
   if (show_indices(ss) != DEFAULT_SHOW_INDICES) pss_ss(fd, S_show_indices, b2s(show_indices(ss)));
   if (show_transform_peaks(ss) != DEFAULT_SHOW_TRANSFORM_PEAKS) pss_ss(fd, S_show_transform_peaks, b2s(show_transform_peaks(ss)));
   if (show_y_zero(ss) != DEFAULT_SHOW_Y_ZERO) pss_ss(fd, S_show_y_zero, b2s(show_y_zero(ss)));
@@ -535,7 +536,7 @@ static void save_options(FILE *fd)
 
   if (save_state_file(ss))
     pss_sq(fd, S_save_state_file, save_state_file(ss));
-  if (peak_env_dir(ss)) pss_sq(fd, S_temp_dir, peak_env_dir(ss));
+  if (peak_env_dir(ss)) pss_sq(fd, S_peak_env_dir, peak_env_dir(ss));
   if (temp_dir(ss)) pss_sq(fd, S_temp_dir, temp_dir(ss));
   if (save_dir(ss)) pss_sq(fd, S_save_dir, save_dir(ss));
   if (open_file_dialog_directory(ss)) pss_sq(fd, S_open_file_dialog_directory, open_file_dialog_directory(ss));
@@ -1001,7 +1002,7 @@ static void save_sound_state(snd_info *sp, void *ptr)
   char *tmpstr = NULL;
   fd = (FILE *)ptr;
   open_save_sound_block(sp, fd, true);
-  b_ok = false; /* can't have empty begin statement in old Guiles */
+  b_ok = false; 
   if (sp->sync != DEFAULT_SYNC) psp_sd(fd, S_sync, sp->sync);
   if (sp->contrast_control_p != DEFAULT_CONTRAST_CONTROL_P) psp_ss(fd, S_contrast_control_p, b2s(sp->contrast_control_p));
   if (fneq(sp->contrast_control, DEFAULT_CONTRAST_CONTROL)) psp_sf(fd, S_contrast_control, sp->contrast_control);
@@ -1346,9 +1347,6 @@ const char *save_options_in_prefs(void)
   FILE *fd;
   char *fullname;
 
-#if HAVE_GUILE
-  #define SND_PREFS "~/.snd_prefs_guile"
-#endif
 #if HAVE_RUBY
   #define SND_PREFS "~/.snd_prefs_ruby"
 #endif
@@ -1552,13 +1550,6 @@ int handle_next_startup_arg(int auto_open_ctr, char **auto_open_file_names, bool
 				      XEN_ADD_TO_LOAD_PATH(auto_open_file_names[auto_open_ctr]);
 				    }
 				}
-#if 0
-#if HAVE_GUILE && HAVE_SCM_MODULE_PUBLIC_INTERFACE /* 1.9.0 autocompile flag */
-			      /* the 1.9 guile shell (which we use as our repl if no-gui) says to use this arg, so we need to implement it */
-			      if (strcmp("--no-autocompile", argname) == 0)
-				
-#endif
-#endif
 			      else
 				{
 				  if (startup_filename == NULL)
@@ -1885,6 +1876,22 @@ static XEN g_set_just_sounds(XEN on)
   set_just_sounds(XEN_TO_C_BOOLEAN(on));
   reflect_just_sounds();
   return(C_TO_XEN_BOOLEAN(just_sounds(ss)));
+}
+
+
+static XEN g_with_inset_graph(void)
+{
+  #define H_with_inset_graph "(" S_with_inset_graph "): if " PROC_TRUE " (default is " PROC_FALSE "), display the inset graph in the time domain section."
+  return(C_TO_XEN_BOOLEAN(with_inset_graph(ss)));
+}
+
+
+static XEN g_set_with_inset_graph(XEN on) 
+{
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(on), on, XEN_ARG_1, S_setB S_with_inset_graph, "a boolean");
+  set_with_inset_graph(XEN_TO_C_BOOLEAN(on));
+  /* TODO: update all graphs */
+  return(C_TO_XEN_BOOLEAN(with_inset_graph(ss)));
 }
 
 
@@ -2240,6 +2247,8 @@ XEN_NARGIFY_0(g_window_height_w, g_window_height)
 XEN_NARGIFY_1(g_set_window_height_w, g_set_window_height)
 XEN_NARGIFY_0(g_just_sounds_w, g_just_sounds)
 XEN_NARGIFY_1(g_set_just_sounds_w, g_set_just_sounds)
+XEN_NARGIFY_0(g_with_inset_graph_w, g_with_inset_graph)
+XEN_NARGIFY_1(g_set_with_inset_graph_w, g_set_with_inset_graph)
 XEN_NARGIFY_0(g_audio_output_device_w, g_audio_output_device)
 XEN_NARGIFY_1(g_set_audio_output_device_w, g_set_audio_output_device)
 XEN_NARGIFY_0(g_audio_input_device_w, g_audio_input_device)
@@ -2316,6 +2325,8 @@ XEN_NARGIFY_0(g_abortq_w, g_abortq)
 #define g_set_window_height_w g_set_window_height
 #define g_just_sounds_w g_just_sounds
 #define g_set_just_sounds_w g_set_just_sounds
+#define g_with_inset_graph_w g_with_inset_graph
+#define g_set_with_inset_graph_w g_set_with_inset_graph
 #define g_audio_output_device_w g_audio_output_device
 #define g_set_audio_output_device_w g_set_audio_output_device
 #define g_audio_input_device_w g_audio_input_device
@@ -2369,9 +2380,6 @@ XEN_NARGIFY_0(g_abortq_w, g_abortq)
 void g_init_main(void)
 {
   XEN_DEFINE_PROCEDURE(S_save_state,   g_save_state_w,   0, 1, 0, H_save_state);
-#if HAVE_GUILE
-  XEN_EVAL_C_STRING("(define %exit exit)");
-#endif
 #if HAVE_FORTH			/* exit is an existing word */
   XEN_DEFINE_PROCEDURE("snd-" S_exit,  g_exit_w,         0, 1, 0, H_exit);
 #else
@@ -2493,6 +2501,9 @@ the hook functions return " PROC_TRUE ", the save state process opens 'filename'
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_just_sounds, g_just_sounds_w, H_just_sounds, 
 				   S_setB S_just_sounds, g_set_just_sounds_w,  0, 0, 1, 0);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_with_inset_graph, g_with_inset_graph_w, H_with_inset_graph, 
+				   S_setB S_with_inset_graph, g_set_with_inset_graph_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE(S_snd_version,              g_snd_version_w,              0, 0, 0, H_snd_version);
   XEN_DEFINE_PROCEDURE(S_color_orientation_dialog, g_color_orientation_dialog_w, 0, 1, 0, H_color_orientation_dialog);

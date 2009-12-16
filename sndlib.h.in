@@ -332,7 +332,7 @@ MUS_EXPORT char *mus_alsa_set_capture_device(const char *name);
 MUS_EXPORT char *mus_alsa_device(void);
 MUS_EXPORT char *mus_alsa_set_device(const char *name);
 MUS_EXPORT int mus_alsa_buffer_size(void);
-US_EXPORT int mus_alsa_set_buffer_size(int size);
+MUS_EXPORT int mus_alsa_set_buffer_size(int size);
 MUS_EXPORT int mus_alsa_buffers(void);
 MUS_EXPORT int mus_alsa_set_buffers(int num);
 MUS_EXPORT bool mus_alsa_squelch_warning(void);

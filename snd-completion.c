@@ -6,7 +6,7 @@
 static char *current_match = NULL;
 
 /* TAB completion requires knowing what is currently defined, which requires scrounging
- *   around in the symbol tables (an "obarray" in Guile, vector in Ruby, hash-table in S7)
+ *   around in the symbol tables
  */
 
 #if HAVE_S7
@@ -55,101 +55,6 @@ static int completions(const char *text)
 }
 
 #endif
-
-
-
-#if HAVE_GUILE
-#if defined(SCM_MODULE_OBARRAY)
-
-static int xen_return_first_int(int a, ...)
-{
-  return(a);
-}
-
-
-static int scan_tab(XEN tab, const char *text, int len, int matches)
-{
-  int i, n;
-  XEN ls = XEN_FALSE, handle = XEN_FALSE;
-#ifdef SCM_HASHTABLE_BUCKET
-  n = SCM_HASHTABLE_N_BUCKETS(tab);
-  for (i = 0; i < n; i++)
-    {
-      ls = SCM_HASHTABLE_BUCKET(tab, i); /* from libguile/modules.c */
-#else
-#ifdef SCM_HASHTABLE_BUCKETS
-  /* this version searches through Guile's module's hash tables */
-  n = SCM_HASHTABLE_N_BUCKETS(tab);
-  for (i = 0; i < n; i++)
-    {
-      ls = SCM_HASHTABLE_BUCKETS(tab)[i];
-#else
-  n = XEN_VECTOR_LENGTH(tab);
-  for (i = 0; i < n; ++i)
-    {
-      ls = SCM_VELTS(tab)[i];
-#endif
-#endif
-      while (XEN_NOT_NULL_P(ls))
-	{
-	  handle = XEN_CAR(XEN_CAR(ls));
-	  if (XEN_SYMBOL_P(handle)) /* can be a number: (2.0 . #<variable...>) -- wasn't this a bug in weak-tables? */
-	    {
-	      char *sym;
-	      sym = XEN_SYMBOL_TO_C_STRING(handle);
-	      if (sym)
-		{
-		  if (strncmp(text, sym, len) == 0)
-		    {
-		      matches++;
-		      add_possible_completion(sym);
-		      if (current_match == NULL)
-			current_match = mus_strdup(sym);
-		      else 
-			{
-			  int j, curlen;
-			  curlen = mus_strlen(current_match);
-			  for (j = 0; j < curlen; j++)
-			    if (current_match[j] != sym[j])
-			      {
-				current_match[j] = '\0';
-				break;
-			      }
-			}
-		    }
-		}
-	    }
-	  ls = XEN_CDR(ls);
-	}
-    }
-  return(xen_return_first_int(matches, handle, ls, tab));
-}
-
-
-static int completions(const char *text)
-{
-  int len, matches = 0;
-  XEN curmod = XEN_FALSE, uses = XEN_FALSE;
-  len = strlen(text);
-  curmod = scm_current_module();
-  matches = scan_tab(SCM_MODULE_OBARRAY(curmod), text, len, 0);
-  uses = SCM_MODULE_USES(curmod);
-  while (XEN_CONS_P(uses))
-    {
-      matches = scan_tab(SCM_MODULE_OBARRAY(XEN_CAR(uses)), 
-			 text, len, matches);
-      uses = XEN_CDR(uses);
-    }
-  return(xen_return_first_int(matches, curmod, uses));
-}
-
-#else
-
-static int completions(const char *text) {return(0);}
-
-#endif
-#endif
-/* end Guile && SCM_MODULE_OBARRAY */
 
 
 #if HAVE_RUBY

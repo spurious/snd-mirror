@@ -1012,12 +1012,6 @@ static void init_xen_colormap(void)
 #endif
 #endif
 
-#if HAVE_GUILE
-  scm_set_smob_print(xen_colormap_tag,  print_xen_colormap);
-  scm_set_smob_free(xen_colormap_tag,   free_xen_colormap);
-  scm_set_smob_equalp(xen_colormap_tag, equalp_xen_colormap);
-#endif
-
 #if HAVE_FORTH
   fth_set_object_inspect(xen_colormap_tag,   print_xen_colormap);
   fth_set_object_dump(xen_colormap_tag,      g_xen_colormap_to_string);

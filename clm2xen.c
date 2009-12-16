@@ -1068,7 +1068,7 @@ static XEN_MARK_OBJECT_TYPE mark_mus_xen(XEN obj)
   /* rb_gc_mark and scheme_mark_object pass us the actual value, not the XEN wrapper */
   ms = (mus_xen *)obj;
 #endif
-#if HAVE_GUILE || HAVE_FORTH
+#if HAVE_FORTH
   ms = XEN_TO_MUS_XEN(obj);
 #endif
   if (ms->vcts) 
@@ -1081,9 +1081,6 @@ static XEN_MARK_OBJECT_TYPE mark_mus_xen(XEN obj)
     }
 #if HAVE_RUBY
   return(NULL);
-#endif
-#if HAVE_GUILE
-  return(XEN_FALSE);
 #endif
 }
 
@@ -1098,20 +1095,6 @@ static void mus_xen_free(mus_xen *ms)
 }
 
 XEN_MAKE_OBJECT_FREE_PROCEDURE(mus_xen, free_mus_xen, mus_xen_free)
-
-
-#if HAVE_GUILE
-static int print_mus_xen(XEN obj, XEN port, scm_print_state *pstate)
-{
-  char *str;
-  XEN_PUTS("#<", port);
-  str = mus_describe(XEN_TO_MUS_ANY(obj));
-  XEN_PUTS(str, port);
-  if (str) free(str);
-  XEN_PUTS(">", port);
-  return(1);
-}
-#endif
 
 
 #if HAVE_S7
@@ -1405,12 +1388,6 @@ static XEN call_set_method(XEN gen, XEN value, const char *method_name)
 				XEN_LIST_LENGTH(gen) - 1));
   if (XEN_LIST_P(pair))
     {
-#if HAVE_GUILE
-      if (SCM_PROCEDURE_WITH_SETTER_P(XEN_CADR(pair)))
-	return(XEN_CALL_2(SCM_SETTER(XEN_CADR(pair)),
-			  gen, value,
-			  method_name));
-#endif
 #if HAVE_S7
       if (s7_is_procedure_with_setter(XEN_CADR(pair)))
 	return(XEN_CALL_2(s7_procedure_with_setter_setter(XEN_CADR(pair)),
@@ -1439,12 +1416,6 @@ static XEN call_set_method_2(XEN gen, XEN arg, XEN value, const char *method_nam
 				XEN_LIST_LENGTH(gen) - 1));
   if (XEN_LIST_P(pair))
     {
-#if HAVE_GUILE
-      if (SCM_PROCEDURE_WITH_SETTER_P(XEN_CADR(pair)))
-	return(XEN_CALL_3(SCM_SETTER(XEN_CADR(pair)),
-			  gen, arg, value,
-			  method_name));
-#endif
 #if HAVE_S7
       if (s7_is_procedure_with_setter(XEN_CADR(pair)))
 	return(XEN_CALL_3(s7_procedure_with_setter_setter(XEN_CADR(pair)),
@@ -5373,12 +5344,12 @@ static XEN g_env_any(XEN e, XEN func)
 
 static XEN clm_output, clm_reverb; /* *output* and *reverb* at extlang level -- these can be output streams, vct, sound-data objects etc */
 
-#if HAVE_GUILE || (HAVE_S7 && (!HAVE_PTHREADS))
+#if (HAVE_S7 && (!HAVE_PTHREADS))
 XEN mus_clm_output(void) {return(XEN_VARIABLE_REF(clm_output));}
 XEN mus_clm_reverb(void) {return(XEN_VARIABLE_REF(clm_reverb));}
 #endif
 
-#if (!HAVE_GUILE) && (!HAVE_S7)
+#if (!HAVE_S7)
 XEN mus_clm_output(void) {return(XEN_VARIABLE_REF(S_output));}
 XEN mus_clm_reverb(void) {return(XEN_VARIABLE_REF(S_reverb));}
 #endif
@@ -8464,16 +8435,6 @@ static void mus_xen_init(void)
 #endif
 
 
-#if HAVE_GUILE
-  scm_set_smob_mark(mus_xen_tag, mark_mus_xen);
-  scm_set_smob_print(mus_xen_tag, print_mus_xen);
-  scm_set_smob_free(mus_xen_tag, free_mus_xen);
-  scm_set_smob_equalp(mus_xen_tag, equalp_mus_xen);
-#if HAVE_APPLICABLE_SMOB
-  scm_set_smob_apply(mus_xen_tag, XEN_PROCEDURE_CAST mus_xen_apply, 0, 2, 0);
-#endif
-#endif
-
 #if HAVE_FORTH
   fth_set_object_inspect(mus_xen_tag, print_mus_xen);
   fth_set_object_equal(mus_xen_tag, equalp_mus_xen);
@@ -8654,14 +8615,7 @@ static void mus_xen_init(void)
 
 
 #if HAVE_SCHEME
-#if (!HAVE_S7)
-  #if (!HAVE_SCM_MODULE_PUBLIC_INTERFACE) /* guile 1.9.0 */
-    XEN_EVAL_C_STRING("(define %delay delay)"); /* protect the original meaning (a Scheme built-in function) */
-    XEN_EVAL_C_STRING("(define make-promise delay)"); /* this is the s7 name */
-  #endif
-#else
   XEN_EVAL_C_STRING("(defmacro %delay (arg) `(make-promise ,arg))"); 
-#endif
 #endif
   XEN_DEFINE_PROCEDURE(S_make_delay,      g_make_delay_w,      0, 0, 1, H_make_delay);
   XEN_DEFINE_PROCEDURE(S_make_comb,       g_make_comb_w,       0, 0, 1, H_make_comb);
@@ -8758,10 +8712,6 @@ static void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_make_frame "!", g_make_frame_unchecked_w,  0, 0, 1, H_make_frame);
   XEN_DEFINE_PROCEDURE(S_frame,          g_frame_w,                 0, 0, 1, H_frame);
 
-#if HAVE_GUILE
-  XEN_EVAL_C_STRING("(define %frame? frame?)"); /* protect the original meaning */
-  /* frame? is defined in guile stacks.c scm_frame_p, but doesn't appear to be used in ice-9 */
-#endif
   XEN_DEFINE_PROCEDURE(S_frame_p,        g_frame_p_w,        1, 0, 0, H_frame_p);
   XEN_DEFINE_PROCEDURE(S_frame_add,      g_frame_add_w,      2, 1, 0, H_frame_add);
   XEN_DEFINE_PROCEDURE(S_frame_multiply, g_frame_multiply_w, 2, 1, 0, H_frame_multiply);
@@ -8825,16 +8775,8 @@ static void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_nrxycos_p,              g_nrxycos_p_w,              1, 0, 0, H_nrxycos_p);
 
 
-#if HAVE_SCHEME
-  #if (!HAVE_SCM_MODULE_PUBLIC_INTERFACE) /* guile 1.9.0 */
-    XEN_EVAL_C_STRING("(if (defined? 'filter) (define %filter filter))"); /* defined in Guile 1.7 */
-  #endif
-#endif
   XEN_DEFINE_PROCEDURE(S_make_filter,     g_make_filter_w,     0, 6, 0, H_make_filter);
   XEN_DEFINE_PROCEDURE(S_filter,          g_filter_w,          2, 0, 0, H_filter);
-#if HAVE_SCHEME
-  XEN_DEFINE_PROCEDURE("clm:" S_filter,   g_filter_w,          2, 0, 0, H_filter); /* gad... */
-#endif
   XEN_DEFINE_PROCEDURE(S_filter_p,        g_filter_p_w,        1, 0, 0, H_filter_p);
   XEN_DEFINE_PROCEDURE(S_make_fir_coeffs, g_make_fir_coeffs_w, 2, 0, 0, H_make_fir_coeffs);
   XEN_DEFINE_PROCEDURE(S_make_fir_filter, g_make_fir_filter_w, 0, 4, 0, H_make_fir_filter);

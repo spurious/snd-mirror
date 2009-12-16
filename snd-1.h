@@ -14,43 +14,6 @@
 
 /* these macros fix up argument order for setter procs in Scheme: (set! (proc a b) c) */
 /*    snd-edits has a 5 and a 10 case */
-#if HAVE_GUILE
-
-#define WITH_TWO_SETTER_ARGS(name_reversed, name) \
-static XEN name_reversed(XEN arg1, XEN arg2)		\
-{							\
-  if (XEN_NOT_BOUND_P(arg2))				\
-    return(name(arg1, XEN_UNDEFINED));			\
-  return(name(arg2, arg1));				\
-}
-
-#define WITH_THREE_SETTER_ARGS(name_reversed, name) \
-static XEN name_reversed(XEN arg1, XEN arg2, XEN arg3) \
-  {						       \
-    if (XEN_NOT_BOUND_P(arg2))			       \
-      return(name(arg1, XEN_UNDEFINED, XEN_UNDEFINED)); \
-    else {						\
-      if (XEN_NOT_BOUND_P(arg3))			\
-	return(name(arg2, arg1, XEN_UNDEFINED));	\
-      else return(name(arg3, arg1, arg2));		\
-}}
-
-#define WITH_FOUR_SETTER_ARGS(name_reversed, name) \
-static XEN name_reversed(XEN arg1, XEN arg2, XEN arg3, XEN arg4)	\
-{									\
-  if (XEN_NOT_BOUND_P(arg2))						\
-    return(name(arg1, XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED));	\
-  else {								\
-    if (XEN_NOT_BOUND_P(arg3))						\
-      return(name(arg2, arg1, XEN_UNDEFINED, XEN_UNDEFINED));		\
-    else {								\
-      if (XEN_NOT_BOUND_P(arg4))					\
-	return(name(arg3, arg1, arg2, XEN_UNDEFINED));			\
-      else return(name(arg4, arg1, arg2, arg3));			\
-}}}
-
-#else
-
 #if HAVE_S7
 
 #define WITH_TWO_SETTER_ARGS(name_reversed, name)	   \
@@ -92,8 +55,6 @@ static XEN name_reversed(XEN arg1, XEN arg2, XEN arg3, XEN arg4)	\
 #define WITH_TWO_SETTER_ARGS(name_reversed, name)
 #define WITH_THREE_SETTER_ARGS(name_reversed, name)
 #define WITH_FOUR_SETTER_ARGS(name_reversed, name)
-
-#endif
 #endif
 
 #define ASSERT_SAMPLE_TYPE(Origin, Beg, Offset) \
@@ -349,6 +310,7 @@ typedef struct chan_info {
   mus_float_t *amp_control; /* local amp controls in snd-dac; should it be extended to other controls? */
   search_result_t last_search_result;
   bool just_zero, new_peaks, editable, tracking;
+  struct inset_graph_info_t *inset_graph; /* defined in snd-chn.c */
 #if HAVE_GL
   int gl_fft_list, gl_wavo_list;
 #endif
@@ -479,7 +441,7 @@ typedef struct snd_state {
   char *Eps_File, *Temp_Dir, *Save_Dir, *Ladspa_Dir, *Peak_Env_Dir;
   char *Listener_Font, *Axis_Label_Font, *Axis_Numbers_Font, *Tiny_Font, *Peaks_Font, *Bold_Peaks_Font;
   char *orig_listener_font, *orig_axis_label_font, *orig_axis_numbers_font, *orig_tiny_font, *orig_peaks_font, *orig_bold_peaks_font;
-  bool Verbose_Cursor, Trap_Segfault;
+  bool Verbose_Cursor, Trap_Segfault, With_Inset_Graph;
   int Enved_Filter_Order;
   mus_float_t Eps_Left_Margin, Eps_Bottom_Margin, Eps_Size, Log_Freq_Start;
   mus_float_t Spectro_X_Scale, Spectro_Y_Scale, Spectro_Z_Scale, Spectro_Z_Angle, Spectro_X_Angle, Spectro_Y_Angle;
@@ -1032,13 +994,6 @@ XEN eval_form_wrapper(void *data);
 XEN string_to_form(const char *data);
 char *g_print_1(XEN obj);
 XEN g_c_make_sampler(snd_fd *fd);
-#if HAVE_GUILE
-  XEN g_call0(XEN proc, const char *caller);
-  XEN g_call1(XEN proc, XEN arg, const char *caller);
-  XEN g_call2(XEN proc, XEN arg1, XEN arg2, const char *caller);
-  XEN g_call3(XEN proc, XEN arg1, XEN arg2, XEN arg3, const char *caller);
-  XEN g_call_any(XEN proc, XEN arglist, const char *caller);
-#endif
 char *procedure_ok(XEN proc, int args, const char *caller, const char *arg_name, int argn);
 bool procedure_arity_ok(XEN proc, int args);
 int snd_protect(XEN obj);
@@ -1328,6 +1283,10 @@ int make_background_graph(chan_info *cp, int srate, bool *two_sided);
 void reset_spectro(void);
 void cursor_moveto(chan_info *cp, mus_long_t samp);
 chan_info *which_channel(snd_info *sp, int y);
+
+void clear_inset_graph(chan_info *cp);
+void show_inset_graph(chan_info *cp);
+void free_inset_graph(chan_info *cp);
 
 void g_init_chn(void);
 XEN make_graph_data(chan_info *cp, int edit_pos, mus_long_t losamp, mus_long_t hisamp);

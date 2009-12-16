@@ -1,4 +1,4 @@
-/* gl.c: s7, Guile, Ruby, and Forth bindings for GL, GLU
+/* gl.c: s7, Ruby, and Forth bindings for GL, GLU
  *   generated automatically from makegl.scm and gldata.scm
  *   needs xen.h
  *
@@ -7,6 +7,8 @@
  * 'gl is added to *features*
  *
  * HISTORY:
+ *     16-Dec-09: removed Guile support.
+ *     --------
  *     17-Oct-08: removed gtkglext bindings.
  *     --------
  *     30-Mar-06: check for glu.h, omit GLU_* if necessary.  Add Forth support.
@@ -5937,7 +5939,7 @@ void Init_libgl(void)
       define_integers();
       define_functions();
       XEN_YES_WE_HAVE("gl");
-      XEN_DEFINE("gl-version", C_TO_XEN_STRING("06-Nov-09"));
+      XEN_DEFINE("gl-version", C_TO_XEN_STRING("15-Dec-09"));
       gl_already_inited = true;
     }
 }

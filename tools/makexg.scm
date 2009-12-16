@@ -2116,7 +2116,7 @@
 
 
 ;;; ---------------------------------------- write output files ----------------------------------------
-(hey "/* xg.c: S7, Guile, Ruby, and Forth bindings for gdk/gtk/pango/cairo, some of glib~%")
+(hey "/* xg.c: s7, Ruby, and Forth bindings for gdk/gtk/pango/cairo, some of glib~%")
 (hey " *   this file generated automatically from makexg.scm and xgdata.scm~%")
 (hey " *   needs xen.h~%")
 (hey " *~%")
@@ -2191,6 +2191,8 @@
 (hey " *     win32-specific functions~%")
 (hey " *~%")
 (hey " * HISTORY:~%")
+(hey " *     16-Dec-09: removed Guile support.~%")
+(hey " *     --------~%")
 (hey " *     16-Oct:    removed Gauche support.~%")
 (hey " *     1-Sep:     S7 support.~%")
 (hey " *     8-Jul-08:  started removing all struct accessors (for Gtk 3).~%")
@@ -2281,15 +2283,6 @@
 
 (hey "/* -------------------------------- smob for GC -------------------------------- */~%")
 (hey "static XEN_OBJECT_TYPE xm_obj_tag;~%")
-(hey "#if HAVE_GUILE~%")
-(hey "static size_t xm_obj_free(XEN obj)~%")
-(hey "{~%")
-(hey "  void *val;~%")
-(hey "  val = (void *)XEN_OBJECT_REF(obj);~%")
-(hey "  free(val);~%")
-(hey "  return(0);~%")
-(hey "}~%")
-(hey "#endif~%")
 (hey "#if HAVE_RUBY~%")
 (hey "static void *xm_obj_free(XEN obj)~%")
 (hey "{~%")
@@ -2327,9 +2320,6 @@
 (hey " xm_obj_tag = XEN_MAKE_OBJECT_TYPE(\"<XmObj>\", NULL, xm_obj_free, s7_equalp_xm, NULL, NULL, NULL, NULL, NULL, NULL);~%")
 (hey "#else~%")
 (hey "  xm_obj_tag = XEN_MAKE_OBJECT_TYPE(\"XmObj\", sizeof(void *));~%")
-(hey "#endif~%")
-(hey "#if HAVE_GUILE~%")
-(hey "  scm_set_smob_free(xm_obj_tag, xm_obj_free);~%")
 (hey "#endif~%")
 (hey "#if HAVE_FORTH~%")
 (hey "  fth_set_object_free(xm_obj_tag, xm_obj_free);~%")
@@ -2700,7 +2690,7 @@
 	  (line-len 0)
 	  (line-max 120)
 	  (protect-arglist #f)
-	  (max-args 10)) ; libguile/gsubr.h:#define SCM_GSUBR_MAX 10
+	  (max-args 10)) 
 
      (define (hey-start)
        ;; start of checked line

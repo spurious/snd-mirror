@@ -2232,10 +2232,8 @@ static bool start_audio_output_1(void)
 
 static bool start_audio_output_1(void)
 {
-  int err;
   int i;
   int available_chans = 2;
-  float val[32];
 
   if (snd_dacp->channels > 2)
     available_chans = mus_audio_device_channels(audio_output_device(ss));
@@ -2687,12 +2685,6 @@ static void init_xen_player(void)
 #else
   xen_player_tag = XEN_MAKE_OBJECT_TYPE("Player", sizeof(xen_player));
 #endif
-#endif
-
-#if HAVE_GUILE
-  scm_set_smob_print(xen_player_tag,  print_xen_player);
-  scm_set_smob_free(xen_player_tag,   free_xen_player);
-  scm_set_smob_equalp(xen_player_tag, equalp_xen_player);
 #endif
 
 #if HAVE_FORTH
@@ -3505,42 +3497,6 @@ If it returns " PROC_TRUE ", the sound is not played."
    then\n\
  then :channel chn :with-sync #f :start beg :end dur fixnum? if beg dur d+ else -1 then\n\
  :stop stop-proc :out-channel out-chan :edit-position pos play ;"); 
-#endif
-
-#if HAVE_GUILE
-  XEN_EVAL_C_STRING("(use-modules (ice-9 optargs))");
-
-  XEN_EVAL_C_STRING("(define* (play-region reg #:optional (wait #f) (stop-func #f))\
-                       (play (if (integer? reg) (integer->region reg) reg) #:wait wait #:stop stop-func))");
-
-  XEN_EVAL_C_STRING("(define* (play-selection #:optional (wait #f) (stop-func #f))\
-                       (play (selection) #:wait wait #:stop stop-func))");
-
-  XEN_EVAL_C_STRING("(define* (play-mix id #:optional (beg 0))\
-                       (play (if (integer? id) (integer->mix id) id) beg))");
-
-  XEN_EVAL_C_STRING("(define* (play-and-wait #:optional (start 0) (snd #f) (chn #f) (syncd #f) (end -1) (pos -1) (stop-proc #f))\
-                       (if (string? start)\
-                           (play start (or snd 0) #:end (or chn -1) #:wait #t) \
-                           (play (if (integer? snd) (integer->sound snd)\
-                                     (if (sound? snd) snd\
-                                         (or (selected-sound) (car (sounds)))))\
-                                 #:channel (or chn -1) #:wait #t #:with-sync syncd #:start start #:end (or end -1) \
-                                 #:stop stop-proc #:edit-position pos)))");
-
-  XEN_EVAL_C_STRING("(define* (old-play #:optional (start 0) (snd #f) (chn #f) (syncd #f) (end -1) (pos -1) (stop-proc #f) (out-chan -1))\
-                       (play (if (integer? snd) (integer->sound snd)\
-                                 (if (sound? snd) snd\
-                                     (or (selected-sound) (car (sounds)))))\
-                             #:channel (or chn -1) #:with-sync syncd #:start start #:end (or end -1) \
-                             #:stop stop-proc #:out-channel out-chan #:edit-position pos))");
-
-  XEN_EVAL_C_STRING("(define* (play-channel #:optional (beg 0) (dur #f) (snd #f) (chn #f) (pos -1) (stop-proc #f) (out-chan -1))\
-                       (play (if (integer? snd) (integer->sound snd)\
-                                 (if (sound? snd) snd\
-                                     (or (selected-sound) (car (sounds)))))\
-                             #:channel (or chn -1) #:with-sync #f #:start beg #:end (if dur (+ beg dur) -1) \
-                             #:stop stop-proc #:out-channel out-chan #:edit-position pos))");
 #endif
 #endif
 

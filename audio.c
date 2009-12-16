@@ -2686,8 +2686,8 @@ static int alsa_chans(int ur_dev, int *info)
 {
   int card;
   int device;
-  int alsa_device;
-  snd_pcm_stream_t alsa_stream;
+  int alsa_device = 0;
+  snd_pcm_stream_t alsa_stream = SND_PCM_STREAM_PLAYBACK;
 
   if ((!audio_initialized) && 
       (mus_audio_initialize() != MUS_NO_ERROR))
@@ -2745,8 +2745,8 @@ static int alsa_formats(int ur_dev, int chan, int *val)
 {
   int card;
   int device;
-  int alsa_device;
-  snd_pcm_stream_t alsa_stream;
+  int alsa_device = 0;
+  snd_pcm_stream_t alsa_stream = SND_PCM_STREAM_PLAYBACK;
   int f, err;
   
   if ((!audio_initialized) && 
@@ -7217,8 +7217,8 @@ int mus_audio_alsa_device_direction(int dev)
     }
 #else
   {
-    int card, device, alsa_device;
-    snd_pcm_stream_t alsa_stream;
+    int card, device, alsa_device = 0;
+    snd_pcm_stream_t alsa_stream = SND_PCM_STREAM_PLAYBACK;
   
     if ((!audio_initialized) && 
 	(mus_audio_initialize() != MUS_NO_ERROR))

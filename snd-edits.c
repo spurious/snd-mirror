@@ -2625,11 +2625,6 @@ static void display_ed_list(chan_info *cp, FILE *outp, int i, ed_list *ed, bool 
 		  code = mus_run_ptree_code(cp->ptrees[FRAGMENT_PTREE_INDEX(ed, j, 0)]);
 		  if (XEN_LIST_P(code))
 		    fprintf(outp, ", code: %s", temp1 = (char *)XEN_AS_STRING(code));
-#if HAVE_GUILE
-		  code = cp->ptree_inits[FRAGMENT_PTREE_INDEX(ed, j, 0)];
-		  if (XEN_PROCEDURE_P(code))
-		    fprintf(outp, ", init: %s", XEN_AS_STRING(XEN_PROCEDURE_SOURCE(code)));
-#endif
 #if HAVE_S7
 		  code = cp->ptree_inits[FRAGMENT_PTREE_INDEX(ed, j, 0)];
 		  if (XEN_PROCEDURE_P(code))
@@ -2986,7 +2981,7 @@ static char *split_origin(char *origin, char **ret_name)
 
 void edit_history_to_file(FILE *fd, chan_info *cp, bool with_save_state_hook)
 {
-  /* write edit list as a guile|ruby program to fd (open for writing) for subsequent load */
+  /* write edit list as a scheme|ruby|forth program to fd (open for writing) for subsequent load */
   /*   the entire current list is written, then the edit_ctr is fixed up to reflect its current state */
   int i, edits;
   ed_list *ed;
@@ -3292,15 +3287,11 @@ void edit_history_to_file(FILE *fd, chan_info *cp, bool with_save_state_hook)
 		  fprintf(fd, " %s", (ed->ptree_env_too) ? "#t" : "#f");
 		  code = cp->ptree_inits[ed->ptree_location];
 		  if (XEN_PROCEDURE_P(code))
-#if HAVE_GUILE
-		    fprintf(fd, " %s", XEN_AS_STRING(XEN_PROCEDURE_SOURCE(code)));
-#else
 		  {
 		    char *temp = NULL;
 		    fprintf(fd, " %s", temp = XEN_AS_STRING(XEN_CAR(XEN_PROCEDURE_SOURCE(code))));
 		    if (temp) free(temp);
 		  }
-#endif
 		}
 #endif
 	      if (nfile) 
@@ -6388,10 +6379,7 @@ static void next_sound_1(snd_fd *sf)
   if (at_end)
     {
       snd_data *nxt_snd;
-      if (sf->current_sound) 
-	{
-	  nxt_snd = sf->current_sound; 
-	  nxt_snd->inuse = false; 
+      if                                                                 snd->inuse = false; 
 	  sf->current_sound = NULL;
 	  if (nxt_snd->copy) nxt_snd = free_snd_data(nxt_snd);
 	}
@@ -8742,30 +8730,6 @@ static XEN g_set_sample(XEN samp_n, XEN val, XEN snd, XEN chn_n, XEN edpos)
 }
 
 
-#if HAVE_GUILE
-static XEN g_set_sample_reversed(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
-{
-  if (XEN_NOT_BOUND_P(arg2))
-    return(g_set_sample(XEN_UNDEFINED, arg1, XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED));
-  else
-    {
-      if (XEN_NOT_BOUND_P(arg3))
-	return(g_set_sample(arg1, arg2, XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED));
-      else 
-	{
-	  if (XEN_NOT_BOUND_P(arg4)) 
-	    return(g_set_sample(arg1, arg3, arg2, XEN_UNDEFINED, XEN_UNDEFINED)); 
-	  else 
-	    {
-	      if (XEN_NOT_BOUND_P(arg5)) 
-		return(g_set_sample(arg1, arg4, arg2, arg3, XEN_UNDEFINED)); 
-	      else return(g_set_sample(arg1, arg5, arg2, arg3, arg4));
-	    }
-	}
-    }
-}
-#endif
-
 #if HAVE_S7
 static XEN g_set_sample_reversed(s7_scheme *sc, s7_pointer args)
 {
@@ -9033,52 +8997,6 @@ history position to read (defaults to current position)."
   return(samples_to_vct_1(samp_0, samps, snd, chn_n, edpos, S_samples));
 }
 
-
-#if HAVE_GUILE
-static XEN g_set_samples_reversed(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7, XEN arg8, XEN arg9, XEN arg10)
-{
-  /* (set! (samples start samps [snd chn trunc edname infilechan edpos delete]) vect) */
-  if (XEN_NOT_BOUND_P(arg4))
-    return(g_set_samples(arg1, arg2, arg3, 
-			 XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED));
-  else
-    {
-      if (XEN_NOT_BOUND_P(arg5))
-	return(g_set_samples(arg1, arg2, arg4, arg3, 
-			     XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED));
-      else 
-	{
-	  if (XEN_NOT_BOUND_P(arg6)) 
-	    return(g_set_samples(arg1, arg2, arg5, arg3, arg4, 
-				 XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED));
-	  else
-	    {
-	      if (XEN_NOT_BOUND_P(arg7)) 
-		return(g_set_samples(arg1, arg2, arg6, arg3, arg4, arg5, 
-				     XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED));
-	      else
-		{
-		  if (XEN_NOT_BOUND_P(arg8)) 
-		    return(g_set_samples(arg1, arg2, arg7, arg3, arg4, arg5, arg6, 
-					 XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED));
-		  else
-		    {
-		      if (XEN_NOT_BOUND_P(arg9)) 
-			return(g_set_samples(arg1, arg2, arg8, arg3, arg4, arg5, arg6, arg7,
-					     XEN_UNDEFINED, XEN_UNDEFINED));
-		      else 
-			{
-			  if (XEN_NOT_BOUND_P(arg10)) 
-			    return(g_set_samples(arg1, arg2, arg9, arg3, arg4, arg5, arg6, arg7, arg8, XEN_UNDEFINED));
-			  else return(g_set_samples(arg1, arg2, arg10, arg3, arg4, arg5, arg6, arg7, arg8, arg9));
-			}
-		    }
-		}
-	    }
-	}
-    }
-}
-#endif
 
 #if HAVE_S7
 static XEN g_set_samples_reversed(s7_scheme *sc, s7_pointer args)
@@ -9797,17 +9715,11 @@ void g_init_edits(void)
   sf_tag = XEN_MAKE_OBJECT_TYPE("Sampler", sizeof(snd_fd));
 #endif
 
-#if HAVE_GUILE
-  scm_set_smob_print(sf_tag, print_sf);
-  scm_set_smob_free(sf_tag, free_sf);
-#if HAVE_APPLICABLE_SMOB
-  scm_set_smob_apply(sf_tag, XEN_PROCEDURE_CAST g_read_sample, 0, 0, 0);
-#endif
-#endif
 #if HAVE_RUBY
   rb_define_method(sf_tag, "to_s", XEN_PROCEDURE_CAST print_sf, 0);
   rb_define_method(sf_tag, "call", XEN_PROCEDURE_CAST g_read_sample, 0);
 #endif
+
 #if HAVE_FORTH
   fth_set_object_inspect(sf_tag, print_sf);
   fth_set_object_free(sf_tag, free_sf);

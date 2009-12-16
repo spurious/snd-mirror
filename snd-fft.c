@@ -2210,12 +2210,6 @@ static void init_xen_transform(void)
 #endif
 #endif
 
-#if HAVE_GUILE
-  scm_set_smob_print(xen_transform_tag,  print_xen_transform);
-  scm_set_smob_free(xen_transform_tag,   free_xen_transform);
-  scm_set_smob_equalp(xen_transform_tag, equalp_xen_transform);
-#endif
-
 #if HAVE_FORTH
   fth_set_object_inspect(xen_transform_tag,   print_xen_transform);
   fth_set_object_dump(xen_transform_tag,      g_xen_transform_to_string);

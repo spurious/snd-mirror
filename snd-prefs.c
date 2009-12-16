@@ -205,7 +205,7 @@ static char **load_path_to_string_array(int *len)
   int dir_len = 0, i, j = 0;
   XEN dirs;
 
-  dirs = XEN_LOAD_PATH; /* in Guile, if this is the %load-path symbol value, the list gets mangled?? (so use eval string) */
+  dirs = XEN_LOAD_PATH;
   dir_len = XEN_LIST_LENGTH(dirs);
 
   if (dir_len > 0)
@@ -227,10 +227,6 @@ static char **load_path_to_string_array(int *len)
 
 static void add_local_load_path(FILE *fd, char *path)
 {
-#if HAVE_GUILE
-  fprintf(fd, "(if (not (member \"%s\" %%load-path)) (set! %%load-path (cons \"%s\" %%load-path)))\n", path, path);
-#endif
-
 #if HAVE_RUBY
   fprintf(fd, "if (not $LOAD_PATH.include?(\"%s\")) then $LOAD_PATH.push(\"%s\") end\n", path, path);
 #endif
@@ -379,21 +375,6 @@ static void prefs_help(prefs_info *prf)
 	    {
 	      XEN obj;
 	      obj = XEN_OBJECT_HELP(sym);
-#if HAVE_GUILE
-	      if (XEN_FALSE_P(obj))
-		{
-		  XEN lookup;
-		  lookup = XEN_SYMBOL_TO_VARIABLE(sym);
-		  if (!(XEN_FALSE_P(lookup)))
-		    {
-		      sym = XEN_VARIABLE_REF(lookup);
-		      if (XEN_PROCEDURE_P(sym))
-			{
-			  obj = XEN_PROCEDURE_HELP(sym);
-			  if (XEN_FALSE_P(obj))
-			    obj = XEN_PROCEDURE_SOURCE_HELP(sym);
-			}}}
-#endif
 	      if (XEN_STRING_P(obj))
 		{
 		  prefs_helping = true;
@@ -2440,38 +2421,18 @@ static void unsaved_edits_toggle(prefs_info *prf)
 
 
 
-/* ---------------- current-window-display ---------------- */
+/* ---------------- with-inset-graph ---------------- */
 
-static bool rts_current_window_display = false, prefs_current_window_display = false;
+static bool rts_with_inset_graph = false, prefs_with_inset_graph = false;
 
-static bool current_window_display(void)
+static void revert_with_inset_graph(prefs_info *prf) {set_with_inset_graph(rts_with_inset_graph);}
+static void clear_with_inset_graph(prefs_info *prf) {set_with_inset_graph(false);}
+
+
+static void save_with_inset_graph(prefs_info *prf, FILE *fd)
 {
-  return(XEN_TO_C_BOOLEAN(prefs_variable_get("current-window-display-is-running")));
-}
-
-
-static void set_current_window_display(bool val, const char *load)
-{
-  prefs_current_window_display = val;
-  if ((load) && (val) &&
-      (!XEN_DEFINED_P("current-window-display-is-running")))
-    {
-      load_file_with_path_and_extension(load);
-      prefs_function_call_0("make-current-window-display");
-    }
-  prefs_variable_set("current-window-display-is-running", C_TO_XEN_BOOLEAN(val));
-}
-
-
-static void revert_current_window_display(prefs_info *prf) {set_current_window_display(rts_current_window_display, NULL);}
-static void clear_current_window_display(prefs_info *prf) {set_current_window_display(false, NULL);}
-
-
-static void save_current_window_display(prefs_info *prf, FILE *fd)
-{
-  rts_current_window_display = GET_TOGGLE(prf->toggle);
-  if (rts_current_window_display)
-    prefs_function_save_0(fd, "make-current-window-display", "draw");
+  rts_with_inset_graph = GET_TOGGLE(prf->toggle);
+  set_with_inset_graph(rts_with_inset_graph);
 }
 
 
@@ -2485,16 +2446,16 @@ little graph, the cursor and main window are moved to that spot.",
 }
 
 
-static void current_window_display_toggle(prefs_info *prf)
+static void with_inset_graph_toggle(prefs_info *prf)
 {
-  set_current_window_display(GET_TOGGLE(prf->toggle), "draw");
+  set_with_inset_graph(GET_TOGGLE(prf->toggle));
 }
 
 
-static void reflect_current_window_display(prefs_info *prf) 
+static void reflect_with_inset_graph(prefs_info *prf) 
 {
-  prefs_current_window_display = current_window_display();
-  SET_TOGGLE(prf->toggle, prefs_current_window_display);
+  prefs_with_inset_graph = with_inset_graph(ss);
+  SET_TOGGLE(prf->toggle, prefs_with_inset_graph);
 }
 
 
@@ -4761,9 +4722,6 @@ these files, but there's no reason to!  Just add the directory containing \
 them to the load path variable%s.  " XEN_LANGUAGE_NAME " searches these \
 directories for any *." XEN_FILE_EXTENSION " files that it can't \
 find elsewhere.  The current load path list is: \n\n%s\n",
-#if HAVE_GUILE
-		   ", %load-path",
-#else
 #if HAVE_RUBY
 		   ", $LOAD_PATH",
 #else
@@ -4771,7 +4729,6 @@ find elsewhere.  The current load path list is: \n\n%s\n",
 		   ", *load-path*",
 #else
 		   "",
-#endif
 #endif
 #endif
 		   temp = (char *)XEN_AS_STRING(XEN_LOAD_PATH));
@@ -4787,15 +4744,6 @@ static char *find_sources(void) /* returns full filename if found else null */
 {
   char *file = NULL;
   #define BASE_FILE "extensions." XEN_FILE_EXTENSION
-
-#if HAVE_GUILE
-  {
-    XEN xfile;
-    xfile = scm_sys_search_load_path(C_TO_XEN_STRING(BASE_FILE));
-    if (XEN_STRING_P(xfile))
-      file = mus_strdup(XEN_TO_C_STRING(xfile));
-  }
-#endif
 
 #if HAVE_S7
   /* mimic Forth code below -- get *load-path* value and run through it */

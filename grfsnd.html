@@ -305,11 +305,10 @@ Here's a more elaborate initialization file (~/.snd_s7):
 (set! (<a class=quiet href="extsnd.html#tempdir" onmouseout="UnTip()" onmouseover="Tip(extsnd_tempdir_tip)">temp-dir</a>) "/zap/tmp")        ;temp files are placed in /zap/tmp
 (set! (peak-env-dir) "~/peaks")
 
-(load "draw.scm")                   ;load some useful extensions
 (load "hooks.scm")
 (load "extensions.scm")
 
-(make-current-window-display)       ;display an overview of the current window in the upper right
+(set! (with-inset-graph) #t)        ;display an overview of the current window in the upper right
 (focus-follows-mouse)               ;automatically focus on (activate) the widget under the mouse
 
 (if (provided? '<a class=quiet href="#sndmotiffeature">snd-motif</a>)          
@@ -472,7 +471,7 @@ focus-follows-mouse
 3 remember-sound-state
 'xm provided? [if]
   add-mark-pane
-  make-current-window-display
+  #t with-inset-graph
   #t show-smpte-label
 [then]
 save-mark-properties
@@ -1829,7 +1828,6 @@ the following displays all the comments it finds:
 <table border=0 cellpadding=5 hspace=20><tr><td><pre>
 #!/home/bil/cl/snd -l
 !#
-(use-modules (ice-9 format))
 (if (= (length (<a class=quiet href="extsnd.html#scriptargs" onmouseout="UnTip()" onmouseover="Tip(extsnd_scriptargs_tip)">script-args</a>)) 2) ;i.e. ("-l" "script")
   (display "usage: script file-name...")
   (do ((arg (+ (<a class=quiet href="extsnd.html#scriptarg" onmouseout="UnTip()" onmouseover="Tip(extsnd_scriptarg_tip)">script-arg</a>) 1) (+ 1 arg)))
@@ -2089,10 +2087,7 @@ The s7 initialization file is ~/.snd_s7.
 <table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndandguile">Snd with Guile</a></h3></td></tr></table>
 
 <p>
-Guile was Snd's original extension language.  Like s7, it implements Scheme.
-Over the years, I became increasingly unhappy with it, and finally decided in 2008 to move to s7.
-You can still use Guile in Snd, but the two projects are steadily diverging.  At this point, if you
-want anything to work, stick to guile versions before 1.9.0.  Eventually I will remove the guile support.
+Guile support has been removed.
 </p>
 
 <p>

@@ -2312,9 +2312,7 @@ Doesnt work any more.
 
 
 ;; (DO NOT) Show the little picture of the whole sound in the upper right corner.
-(c-load-from-path draw)
-;(make-current-window-display)
-
+(set! (with-inset-graph) #f)
 
 ;; The background-process slows things down when the little picture is active and loading large files.
 ;; Better turn off the background-process when loading.

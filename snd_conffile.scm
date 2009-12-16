@@ -2071,8 +2071,7 @@ Does not work.
 
 
 ;;Show the little picture of the whole sound in the upper right corner.
-(c-load-from-path draw)
-(make-current-window-display)
+(set! (with-inset-graph) #t)
 
 
 ;; The background-process slows things down when the little picture is active and loading large files.

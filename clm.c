@@ -734,8 +734,6 @@ mus_float_t *mus_data(mus_any *gen)
 
 /* every case that implements the data or set data functions needs to include
  * a var-allocated flag, since all such memory has to be handled via vcts
- * in guile; a subsequent free by the enclosing object could leave a dangling
- * pointer in guile -- see clm2xen.c
  */
 
 mus_float_t *mus_set_data(mus_any *gen, mus_float_t *new_data)
@@ -3698,13 +3696,7 @@ mus_any *mus_make_all_pass(mus_float_t backward, mus_float_t forward, int size, 
     {
       gen->core = &ALL_PASS_CLASS;
       gen->xscl = forward;
-      gen->yscl = backward;
-      return((mus_any *)gen);
-    }
-  return(NULL);
-}
-
-
+      gen->yscl = b_me:${as_lineno-$LINENO}: checking for gtk_tool_palette_new in -
 bool mus_moving_average_p(mus_any *ptr) 
 {
   return((ptr) && 
