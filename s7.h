@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "1.40"
-#define S7_DATE "1-Dec-09"
+#define S7_VERSION "1.41"
+#define S7_DATE "16-Dec-09"
 
 
 typedef long long int s7_Int;
@@ -394,7 +394,7 @@ s7_pointer s7_hash_table_ref(s7_scheme *sc, s7_pointer table, const char *name);
 s7_pointer s7_hash_table_set(s7_scheme *sc, s7_pointer table, const char *name, s7_pointer value);  
                                                                             /* (hash-table-set! table name value) */
   /* a hash-table is a vector of alists '((symbol value)), so to iterate over a hash-table
-   *   use vector-ref and cdr down the lists.  An entry defaults to '() -- see "apropos" below
+   *   use hash-table-for-each which calls its function with each of these alists.  An entry defaults to nil.
    */
   /* hash-tables are applicable:
       (let ((hash (make-hash-table)))
@@ -844,6 +844,7 @@ void s7_mark_object(s7_pointer p);
  * 
  *        s7 changes
  *
+ * 16-Dec:    hash-table-for-each.
  * 1-Dec:     mpc versions before 0.8.0 are no longer supported.
  * 24-Nov:    define-macro* and defmacro*.
  *            force and delay included only if WITH_FORCE set, promise? removed.

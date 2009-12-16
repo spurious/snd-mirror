@@ -300,6 +300,7 @@ static void view_listener_callback(Widget w, XtPointer info, XtPointer context) 
 static void view_mix_dialog_callback(Widget w, XtPointer info, XtPointer context) {make_mix_dialog();}
 static void view_zero_callback(Widget w, XtPointer info, XtPointer context){set_show_y_zero((!(show_y_zero(ss))));}
 static void view_cursor_callback(Widget w, XtPointer info, XtPointer context){set_verbose_cursor((!(verbose_cursor(ss))));}
+static void view_inset_callback(Widget w, XtPointer info, XtPointer context){set_with_inset_graph((!(with_inset_graph(ss))));}
 
 
 static void view_controls_callback(Widget w, XtPointer info, XtPointer context)
@@ -668,6 +669,9 @@ Widget add_menu(void)
 
   view_cursor_menu = XtCreateManagedWidget(_("Verbose cursor"), xmPushButtonWidgetClass, view_menu, main_args, main_n);
   XtAddCallback(view_cursor_menu, XmNactivateCallback, view_cursor_callback, NULL);
+
+  view_inset_menu = XtCreateManagedWidget(_("With inset graph"), xmPushButtonWidgetClass, view_menu, main_args, main_n);
+  XtAddCallback(view_inset_menu, XmNactivateCallback, view_inset_callback, NULL);
 
   view_combine_menu = XmCreatePulldownMenu(view_menu, (char *)"combine", main_args, main_n);
 

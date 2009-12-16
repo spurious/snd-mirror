@@ -302,10 +302,11 @@ typedef enum {OP_READ_INTERNAL, OP_EVAL, OP_EVAL_ARGS0, OP_EVAL_ARGS1, OP_APPLY,
 	      OP_DEFINE_STAR, OP_LAMBDA_STAR, OP_ERROR_QUIT, OP_UNWIND_INPUT, OP_UNWIND_OUTPUT, 
 	      OP_TRACE_RETURN, OP_ERROR_HOOK_QUIT, OP_TRACE_HOOK_QUIT, OP_WITH_ENV0, OP_WITH_ENV1, OP_WITH_ENV2,
 	      OP_VECTOR_FOR_EACH, OP_VECTOR_MAP0, OP_VECTOR_MAP1, OP_STRING_FOR_EACH, OP_OBJECT_FOR_EACH,
+	      OP_HASH_TABLE_FOR_EACH, 
 	      OP_MAX_DEFINED} opcode_t;
 
 #define NUM_SMALL_INTS 256
-/* this needs to be at least OP_MAX_DEFINED = 86 */
+/* this needs to be at least OP_MAX_DEFINED = 87 */
 
 typedef enum {TOKEN_EOF, TOKEN_LEFT_PAREN, TOKEN_RIGHT_PAREN, TOKEN_DOT, TOKEN_ATOM, TOKEN_QUOTE, TOKEN_DOUBLE_QUOTE, 
 	      TOKEN_BACK_QUOTE, TOKEN_COMMA, TOKEN_AT_MARK, TOKEN_SHARP_CONST, TOKEN_VECTOR} token_t;
@@ -1658,7 +1659,7 @@ static void show_stack(s7_scheme *sc)
      "define_constant1", "do", "do_end0", "do_end1", "do_step0", "do_step1", "do_step2", "do_init", "define_star", 
      "lambda_star", "error_quit", "unwind_input", "unwind_output", "trace_return", "error_hook_quit", "trace_hook_quit",
      "with_env0", "with_env1", "with_env2", "vector_for_each", "vector_map0", "vector_map1", "string_for_each", 
-     "object_for_each"};
+     "object_for_each", "hash-table-for-each"};
 
   int i;
   for (i = sc->stack_top - 4; i >= 0; i -= 4)
@@ -11187,6 +11188,44 @@ static s7_pointer g_vector_for_each(s7_scheme *sc, s7_pointer args)
 }
 
 
+static s7_pointer g_hash_table_for_each(s7_scheme *sc, s7_pointer args)
+{
+  /* (hash-table-for-each (lambda (n) (format #t "~A " n)) hash) */
+  #define H_hash_table_for_each "(hash-table-for-each func table1 ...) applies func to each element of the hash tables traversed in parallel"
+  int i, len;
+  s7_pointer vect, x, fargs;
+
+  sc->code = car(args);
+  if (!is_procedure(sc->code))
+    return(s7_wrong_type_arg_error(sc, "hash-table-for-each", 1, sc->code, "a procedure"));
+
+  vect = cadr(args);
+  if (!s7_is_hash_table(vect))
+    return(s7_wrong_type_arg_error(sc, "hash-table-for-each", 2, vect, "a hash-table"));
+
+  len = vector_length(vect);
+  fargs = s7_cons(sc, sc->NIL, sc->NIL);
+
+  if (cddr(args) != sc->NIL)
+    {
+      for (i = 3, x = cddr(args); x != sc->NIL; x = cdr(x), i++)
+	{
+	  if (!s7_is_hash_table(car(x)))
+	    return(s7_wrong_type_arg_error(sc, "hash-table-for-each", i, car(x), "a hash-table"));
+	  if (len != vector_length(car(x)))
+	    return(s7_wrong_type_arg_error(sc, "hash-table-for-each", i, car(x), "a hash-table whose length matches the other hash-tables"));
+	  fargs = s7_cons(sc, sc->NIL, fargs);
+	}
+    }
+
+  sc->args = s7_cons(sc, make_mutable_integer(sc, 0), 
+               s7_cons(sc, s7_make_integer(sc, len), 
+                 s7_cons(sc, fargs, cdr(args))));
+  push_stack(sc, OP_HASH_TABLE_FOR_EACH, sc->args, sc->code);
+  return(sc->UNSPECIFIED);
+}
+
+
 static s7_pointer g_vector_map(s7_scheme *sc, s7_pointer args)
 {
   /* (vector-map (lambda (n) (+ n 1)) (vector 1 2 3)) */
@@ -14490,16 +14529,15 @@ static s7_pointer g_for_each(s7_scheme *sc, s7_pointer args)
   if (s7_is_vector(car(fargs)))
     return(g_vector_for_each(sc, args));
 
+  if (s7_is_hash_table(car(fargs)))
+    return(g_hash_table_for_each(sc, args));
+
   if (s7_is_string(car(fargs)))
     return(g_string_for_each(sc, args));
 
   if (s7_is_applicable_object(car(fargs)))
     return(g_object_for_each(sc, args));
   
-  /* hash-table? -- this seems special because one arg->2, and only one ht arg? */
-  /*    TODO: these will not currently work because they are vectors, but the func arg = alist */
-  /*    TODO: also need hash-table-for-each, I think since vector-ref does not work */
-
   return(s7_wrong_type_arg_error(sc, "for-each", 2, car(fargs), "an applicable object"));
 }
 
@@ -15326,6 +15364,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 
     case OP_VECTOR_FOR_EACH:
+    case OP_HASH_TABLE_FOR_EACH:
       /* func = sc->code, func-args = caddr(sc->args), counter = car(sc->args), len = cadr(sc->args), vector(s) = cdddr(sc->args) */
       if (s7_integer(car(sc->args)) < s7_integer(cadr(sc->args)))
 	{
@@ -15340,7 +15379,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    car(x) = vector_element(car(y), loc);   /* make func's arglist */
 
 	  integer(number(car(sc->args))) = loc + 1;
-	  push_stack(sc, OP_VECTOR_FOR_EACH, sc->args, sc->code);
+	  push_stack(sc, sc->op, sc->args, sc->code);
 	  sc->args = fargs;
 	  goto APPLY;
 	}
@@ -22270,7 +22309,7 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "hash-table-ref",          g_hash_table_ref,          2, 0, false, H_hash_table_ref);
   s7_define_set_function(sc, "hash-table-set!",     g_hash_table_set,          3, 0, false, H_hash_table_set);
   s7_define_function(sc, "hash-table-size",         g_hash_table_size,         1, 0, false, H_hash_table_size);
-  
+  s7_define_function(sc, "hash-table-for-each",     g_hash_table_for_each,     2, 0, true,  H_hash_table_for_each);  
   
   s7_define_function(sc, "port-line-number",        g_port_line_number,        1, 0, false, H_port_line_number);
   s7_define_function(sc, "port-filename",           g_port_filename,           1, 0, false, H_port_filename);

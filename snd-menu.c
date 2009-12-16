@@ -94,6 +94,9 @@ void view_menu_update(void)
   /* verbose cursor label */
   set_menu_label(view_cursor_menu, (verbose_cursor(ss)) ? _("Silent cursor") : _("Verbose cursor"));
 
+  /* inset graph label */
+  set_menu_label(view_inset_menu, (with_inset_graph(ss)) ? _("Without inset graph") : _("With inset graph"));
+
   /* channel style */
   set_sensitive(view_combine_separate_menu,     channel_style(ss) != CHANNELS_SEPARATE);
   set_sensitive(view_combine_combined_menu,     channel_style(ss) != CHANNELS_COMBINED);

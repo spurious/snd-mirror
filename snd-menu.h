@@ -21,7 +21,7 @@ enum {m_menu,
         v_menu, v_cascade_menu,
           v_graph_style_menu, v_graph_style_cascade_menu,
             v_lines_menu, v_dots_menu, v_filled_menu, v_dots_and_lines_menu, v_lollipops_menu,
-          v_zero_menu, v_cursor_menu, v_controls_menu, v_listener_menu,
+            v_zero_menu, v_cursor_menu, v_inset_menu, v_controls_menu, v_listener_menu,
           v_region_menu,
           v_combine_menu, v_combine_cascade_menu,
             v_combine_separate_menu, v_combine_combined_menu, v_combine_superimposed_menu,
@@ -121,6 +121,7 @@ enum {m_menu,
 #define view_lollipops_menu (ss->sgx->mw[v_lollipops_menu])
 #define view_zero_menu (ss->sgx->mw[v_zero_menu])
 #define view_cursor_menu (ss->sgx->mw[v_cursor_menu])
+#define view_inset_menu (ss->sgx->mw[v_inset_menu])
 #define view_controls_menu (ss->sgx->mw[v_controls_menu])
 #define view_listener_menu (ss->sgx->mw[v_listener_menu])
 #define view_region_menu (ss->sgx->mw[v_region_menu])
