@@ -3696,7 +3696,13 @@ mus_any *mus_make_all_pass(mus_float_t backward, mus_float_t forward, int size, 
     {
       gen->core = &ALL_PASS_CLASS;
       gen->xscl = forward;
-      gen->yscl = b_me:${as_lineno-$LINENO}: checking for gtk_tool_palette_new in -
+      gen->yscl = backward;
+      return((mus_any *)gen);
+    }
+  return(NULL);
+}
+
+
 bool mus_moving_average_p(mus_any *ptr) 
 {
   return((ptr) && 
