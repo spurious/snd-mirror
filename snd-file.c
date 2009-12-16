@@ -4946,7 +4946,7 @@ current-time:\n(strftime \"%a %d-%b-%Y %H:%M %Z\" (localtime (" S_file_write_dat
   time_t date;
   XEN_ASSERT_TYPE(XEN_STRING_P(file), file, XEN_ONLY_ARG, S_file_write_date, "a string");
   date = file_write_date(XEN_TO_C_STRING(file));
-  return(xen_return_first(C_TO_XEN_INT(date), file));
+  return(C_TO_XEN_INT(date));
 }
 
 
@@ -5107,7 +5107,7 @@ static XEN g_set_sound_loop_info(XEN snd, XEN vals)
     if (err != IO_SAVE_HOOK_CANCELLATION) 
       snd_update(sp);
     free(tmp_file);
-    return(xen_return_first((err == IO_NO_ERROR) ? XEN_TRUE : C_TO_XEN_INT((int)err), snd, vals));
+    return((err == IO_NO_ERROR) ? XEN_TRUE : C_TO_XEN_INT((int)err));
   }
 }
 
@@ -5165,7 +5165,7 @@ static XEN g_sound_files_in_directory(XEN dirname)
 	}
       free(name);
     }
-  return(xen_return_first(res, dirname));
+  return(res);
 }
 
 

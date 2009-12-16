@@ -5859,6 +5859,17 @@ void show_inset_graph(chan_info *cp)
 #endif
 }
 
+/* TODO: click within inset graph
+ * TODO: smart line cursor
+ * TODO: check prefs handling of both peak-env-dir and with-inset-graph
+ * TODO: check insets in multi cases (what was the mix release stuff about?)
+ * TODO: track down the ;update-sound looped maxamp troubles
+ * TODO: unguile cleanup checks for snd-xen.c xen.h etc
+ * TODO: gtk g++ const business: In function 'gxg_gtk_tool_palette_get_drag_target_group':
+ *           xg.c:32193: warning: passing argument 1 of 'C_TO_XEN_GtkTargetEntry_' discards qualifiers from pointer target type
+ *           and several others: gxg_gtk_tool_palette_get_drag_target_item gxg_recent_filter gxg_clip_rich_text_received
+ */
+
 
 
 /* -------------------------------------------------------------------------------- */
@@ -8794,7 +8805,7 @@ If 'data' is a list of numbers, it is treated as an envelope."
 	update_graph(cp);
       else display_channel_lisp_data(cp);
     }
-  return(xen_return_first(XEN_FALSE, ldata, data, xlabel));
+  return(XEN_FALSE);
   /* returning #f here because graph might be last thing in lisp-graph-hook, and we
    *   don't want its return value mistaken for the "pixel_list" that that hook function
    *   can return.

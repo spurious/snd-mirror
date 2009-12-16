@@ -1640,10 +1640,9 @@ static XEN g_color_to_list(XEN obj)
   tmp_color.flags = DoRed | DoGreen | DoBlue;
   tmp_color.pixel = XEN_UNWRAP_PIXEL(obj);
   XQueryColor(dpy, cmap, &tmp_color);
-  return(xen_return_first(XEN_LIST_3(C_TO_XEN_DOUBLE(RGB_TO_FLOAT(tmp_color.red)),
-				     C_TO_XEN_DOUBLE(RGB_TO_FLOAT(tmp_color.green)),
-				     C_TO_XEN_DOUBLE(RGB_TO_FLOAT(tmp_color.blue))),
-			  obj));
+  return(XEN_LIST_3(C_TO_XEN_DOUBLE(RGB_TO_FLOAT(tmp_color.red)),
+		    C_TO_XEN_DOUBLE(RGB_TO_FLOAT(tmp_color.green)),
+		    C_TO_XEN_DOUBLE(RGB_TO_FLOAT(tmp_color.blue))));
 }
 
 

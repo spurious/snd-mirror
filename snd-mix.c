@@ -2570,7 +2570,7 @@ static bool xen_mix_equalp(xen_mix *v1, xen_mix *v2)
 static XEN equalp_xen_mix(XEN obj1, XEN obj2)
 {
   if ((!(XEN_MIX_P(obj1))) || (!(XEN_MIX_P(obj2)))) return(XEN_FALSE);
-  return(xen_return_first(C_TO_XEN_BOOLEAN(xen_mix_equalp(XEN_TO_XEN_MIX(obj1), XEN_TO_XEN_MIX(obj2))), obj1, obj2));
+  return(C_TO_XEN_BOOLEAN(xen_mix_equalp(XEN_TO_XEN_MIX(obj1), XEN_TO_XEN_MIX(obj2))));
 }
 #endif
 
@@ -3251,7 +3251,7 @@ mix data (a vct) into snd's channel chn starting at beg; return the new mix id, 
 #endif
   update_graph(cp);
 
-  return(xen_return_first(new_xen_mix(mix_id), obj, origin));
+  return(new_xen_mix(mix_id));
 }
 
 
@@ -3622,7 +3622,7 @@ XEN g_free_mix_sampler(XEN obj)
 	mf->sf = free_snd_fd(mf->sf);
       mf->md = NULL;
     }
-  return(xen_return_first(XEN_FALSE, obj));
+  return(XEN_FALSE);
 }
 
 

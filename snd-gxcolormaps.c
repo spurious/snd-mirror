@@ -950,7 +950,7 @@ static bool xen_colormap_equalp(xen_colormap *v1, xen_colormap *v2)
 static XEN equalp_xen_colormap(XEN obj1, XEN obj2)
 {
   if ((!(XEN_COLORMAP_P(obj1))) || (!(XEN_COLORMAP_P(obj2)))) return(XEN_FALSE);
-  return(xen_return_first(C_TO_XEN_BOOLEAN(xen_colormap_equalp(XEN_TO_XEN_COLORMAP(obj1), XEN_TO_XEN_COLORMAP(obj2))), obj1, obj2));
+  return(C_TO_XEN_BOOLEAN(xen_colormap_equalp(XEN_TO_XEN_COLORMAP(obj1), XEN_TO_XEN_COLORMAP(obj2))));
 }
 #endif
 

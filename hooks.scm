@@ -37,10 +37,7 @@
 
 ;;; -------- remove-local-hook!
 ;;;
-;;; Guile's remove-hook! does not work with locally defined functions, and
-;;;   the functions themselves are not eq/eqv/equal to themselves!  So,
-;;;   we kludge around it using the procedure name as a string (but anonymous
-;;;   lambdas have #f for a name).
+;;; TODO: is this still needed?
 
 (define (remove-local-hook! hook func)
   "(remove-local-hook! hook func) removes func from hook even if func is defined locally"

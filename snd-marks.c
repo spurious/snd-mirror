@@ -2072,7 +2072,7 @@ static bool xen_mark_equalp(xen_mark *v1, xen_mark *v2)
 static XEN equalp_xen_mark(XEN obj1, XEN obj2)
 {
   if ((!(XEN_MARK_P(obj1))) || (!(XEN_MARK_P(obj2)))) return(XEN_FALSE);
-  return(xen_return_first(C_TO_XEN_BOOLEAN(xen_mark_equalp(XEN_TO_XEN_MARK(obj1), XEN_TO_XEN_MARK(obj2))), obj1, obj2));
+  return(C_TO_XEN_BOOLEAN(xen_mark_equalp(XEN_TO_XEN_MARK(obj1), XEN_TO_XEN_MARK(obj2))));
 }
 #endif
 

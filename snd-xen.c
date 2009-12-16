@@ -360,7 +360,7 @@ static XEN snd_format_if_needed(XEN args)
     }
   result = C_TO_XEN_STRING(errmsg);
   free(errmsg);
-  return(xen_return_first(result, args));
+  return(result);
 }
 #endif
 
@@ -1241,7 +1241,7 @@ XEN run_progn_hook(XEN hook, XEN args, const char *caller)
   s7_gc_unprotect_at(s7, gc_loc);
 #endif
 
-  return(xen_return_first(result, args));
+  return(result);
 }
 
 
@@ -1268,7 +1268,7 @@ XEN run_hook(XEN hook, XEN args, const char *caller)
   s7_gc_unprotect_at(s7, gc_loc);
 #endif
 
-  return(xen_return_first(XEN_FALSE, args));
+  return(XEN_FALSE);
 }
 
 
@@ -1299,7 +1299,7 @@ XEN run_or_hook(XEN hook, XEN args, const char *caller)
   s7_gc_unprotect_at(s7, gc_loc);
 #endif
 
-  return(xen_return_first(hook_result, args));
+  return(hook_result);
 }
 
 

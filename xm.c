@@ -2442,7 +2442,7 @@ static XEN gxm_XtGetValues_1(XEN arg1, XEN larg2, int len)
   free_args(args, len);
   free(locs);
   xm_unprotect_at(gcloc);
-  return(xen_return_first(val, larg2));
+  return(val);
 }
 
 #endif
@@ -2754,7 +2754,7 @@ removes renditions"
   if (XEN_BOUND_P(arg2)) tags = (XmStringTag *)XEN_TO_C_Strings(arg2, len);
   rt = XmRenderTableRemoveRenditions(XEN_TO_C_XmRenderTable(arg1), tags, len);
   if (tags) free(tags);
-  return(xen_return_first(C_TO_XEN_XmRenderTable(rt), arg2));
+  return(C_TO_XEN_XmRenderTable(rt));
 }
 
 static XEN gxm_XmRenderTableCopy(XEN arg1, XEN arg2, XEN arg3)
@@ -2782,7 +2782,7 @@ static XEN gxm_XmRenderTableCopy(XEN arg1, XEN arg2, XEN arg3)
   if (XEN_BOUND_P(arg2)) tags = (XmStringTag *)XEN_TO_C_Strings(arg2, len);
   rt = XmRenderTableCopy(XEN_TO_C_XmRenderTable(arg1), tags, len);
   if (tags) free(tags);
-  return(xen_return_first(C_TO_XEN_XmRenderTable(rt), arg2));
+  return(C_TO_XEN_XmRenderTable(rt));
 }
 
 static XEN gxm_XmRenderTableFree(XEN arg1)
@@ -2853,7 +2853,7 @@ matches rendition tags"
     lst = XEN_CONS(C_TO_XEN_XmRendition(rs[i]), lst);
   free(rs);
   xm_unprotect_at(loc);
-  return(xen_return_first(lst, arg2));
+  return(lst);
 }
 
 static XEN gxm_XmRenditionCreate(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
@@ -2919,7 +2919,7 @@ retrieves rendition resources"
     free_args(args, len);
     free(locs);
     xm_unprotect_at(gcloc);
-    return(xen_return_first(val, larg2));
+    return(val);
   }
 }
 
@@ -3218,7 +3218,7 @@ retrieves attributes of a parse mapping"
     free_args(args, len);
     free(locs);
     xm_unprotect_at(gcloc);
-    return(xen_return_first(val, larg2));
+    return(val);
   }
 }
 
@@ -3371,7 +3371,7 @@ to a compound string table"
   lst = C_TO_XEN_XmStringTable(val, len);
   free(val);
   if (pt) free(pt); 
-  return(xen_return_first(lst, arg1));
+  return(lst);
 }
 
 static XEN gxm_XmStringTableUnparse(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7, XEN arg8)
@@ -3493,7 +3493,7 @@ XmParseTable parse_table, Cardinal parse_count, XtPointer call_data) converts a 
   if (XEN_XmParseTable_P(arg5)) pt = XEN_TO_C_XmParseTable(arg5, len);
   rtn = C_TO_XEN_XmString(XmStringParseText((char *)str, intext, (char *)tag, type, pt, len, (XtPointer)arg7));
   if (pt) free(pt);
-  return(xen_return_first(rtn, arg1, arg2));
+  return(rtn);
 }
 
 static XEN gxm_XmStringUnparse(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7)
@@ -6176,7 +6176,7 @@ retrieves resource values set on a drop site"
   free_args(args, len);
   free(locs);
   xm_unprotect_at(gcloc);
-  return(xen_return_first(val, larg2));
+  return(val);
 }
 
 static XEN gxm_XmDropSiteEndUpdate(XEN arg1)
@@ -8037,7 +8037,7 @@ static XEN gxm_XSetWMProperties(XEN dpy, XEN win, XEN win_name, XEN icon_name, X
 		   XEN_TO_C_XWMHints(wm_hints),
 		   NULL);
   if (c_argv) free(c_argv);
-  return(xen_return_first(XEN_FALSE, win_name, icon_name, argv));
+  return(XEN_FALSE);
 }
 
 static XEN gxm_XSetRegion(XEN arg1, XEN arg2, XEN arg3)
@@ -9051,7 +9051,7 @@ static XEN gxm_XSetFontPath(XEN arg1, XEN arg2, XEN arg3)
   else paths = NULL;
   rtn = XSetFontPath(XEN_TO_C_Display(arg1), paths, len);
   if (paths) free(paths);
-  return(xen_return_first(C_TO_XEN_INT(rtn), arg2));
+  return(C_TO_XEN_INT(rtn));
 }
 
 static XEN gxm_XSetFont(XEN arg1, XEN arg2, XEN arg3)
@@ -9120,7 +9120,7 @@ static XEN gxm_XSetCommand(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
   str = XEN_TO_C_Strings(arg3, len);
   val = XSetCommand(XEN_TO_C_Display(arg1), XEN_TO_C_Window(arg2), str, len);
   free(str);
-  return(xen_return_first(C_TO_XEN_INT(val), arg3));
+  return(C_TO_XEN_INT(val));
 }
 
 static XEN gxm_XSetCloseDownMode(XEN arg1, XEN arg2)
@@ -11516,7 +11516,7 @@ window and causes the X server to generate a PropertyNotify event on that window
 				     XEN_TO_C_INT(arg5), XEN_TO_C_INT(arg6), 
 				     (const unsigned char *)command, len));
   if (data) free(data);
-  return(xen_return_first(rtn, arg7));
+  return(rtn);
 }
 
 static XEN gxm_XChangePointerControl(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6)
@@ -14360,7 +14360,7 @@ handler and passes the specified information."
 		  (char *)XEN_TO_C_STRING(arg3), (char *)XEN_TO_C_STRING(arg4), (char *)XEN_TO_C_STRING(arg5), 
 		  pars, &csize);
   free(pars);
-  return(xen_return_first(XEN_FALSE, arg6));
+  return(XEN_FALSE);
 }
 
 static XEN gxm_XtAppErrorMsg(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7)
@@ -14387,7 +14387,7 @@ handler and passes the specified information."
 		(char *)XEN_TO_C_STRING(arg3), (char *)XEN_TO_C_STRING(arg4), 
 		(char *)XEN_TO_C_STRING(arg5), pars, &csize);
   free(pars);
-  return(xen_return_first(XEN_FALSE, arg6));
+  return(XEN_FALSE);
 }
 
 static XEN xm_XtErrorMsgHandler;
@@ -14647,7 +14647,7 @@ from the list of strings"
     fallbacks[i] = (char *)XEN_TO_C_STRING(XEN_CAR(lst));
   XtAppSetFallbackResources(XEN_TO_C_XtAppContext(app), fallbacks);
   free(fallbacks);
-  return(xen_return_first(app, specs));
+  return(app);
 }
 
 static XEN gxm_XtVaAppInitialize(XEN arg2, XEN arg5, XEN arg6, XEN arg8, XEN specs)
@@ -15457,7 +15457,7 @@ the specified widget's callback list.  In xm, the client-data is optional, defau
   XEN_LIST_SET(call_descr, CALLBACK_GC_LOC, C_TO_XEN_INT(gc_loc));
   XEN_LIST_SET(call_descr, CALLBACK_STRUCT_TYPE, C_TO_XEN_INT(callback_struct_type(w, name)));
   XtAddCallback(w, name, gxm_XtCallbackProc, (XtPointer)call_descr);
-  return(xen_return_first(call_descr, arg2));
+  return(call_descr);
 }
 
 static XEN gxm_XtAddCallbacks(XEN arg1, XEN arg2, XEN arg3)
@@ -16277,7 +16277,7 @@ and parameters."
 	if (params[i]) free(params[i]);
       free(params);
     }
-  return(xen_return_first(XEN_FALSE, arg4));
+  return(XEN_FALSE);
 }
 
 static XEN gxm_XtGetActionList(XEN arg1)
@@ -17509,7 +17509,7 @@ static XEN gxm_XpmColorSymbol(XEN name, XEN value, XEN pixel)
   r->name = (char *)XEN_TO_C_STRING(name);
   r->value = (XEN_FALSE_P(value)) ? NULL : (char *)XEN_TO_C_STRING(value);
   r->pixel = XEN_TO_C_Pixel(pixel);
-  return(xen_return_first(WRAP_FOR_XEN_OBJ("XpmColorSymbol",r), name, value));
+  return(WRAP_FOR_XEN_OBJ("XpmColorSymbol",r));
 }
 
 static XEN gxm_XpmImage(XEN width, XEN height, XEN cpp, XEN ncolors, XEN data)
@@ -20202,7 +20202,7 @@ static XEN gxm_XTextItem(XEN chars, XEN nchars, XEN delta, XEN font)
   r->nchars = XEN_TO_C_INT(nchars);
   r->delta = XEN_TO_C_INT(delta);
   r->font = XEN_TO_C_Font(font);
-  return(xen_return_first(WRAP_FOR_XEN_OBJ("XTextItem", (XTextItem *)r), chars));
+  return(WRAP_FOR_XEN_OBJ("XTextItem", (XTextItem *)r));
 }
 
 static XEN gxm_chars(XEN ptr)

@@ -15,7 +15,7 @@
 
 /* HISTORY:
  *
- *  16-Dec:    removed Guile support.
+ *  16-Dec:    removed Guile support. removed xen_return_first (a guile-ism).
  *  2-Nov:     XEN_VECTOR_RANK.
  *  5-Oct:     use s7_c_pointer etc.
  *  7-Aug:     use s7_new_type_x in XEN_MAKE_OBJECT_TYPE.  XEN_DEFINE_SET_PROCEDURE.
@@ -1761,7 +1761,6 @@ void xen_no_ext_lang_check_args(const char *name, int args, int req_args, int op
 extern "C" {
 #endif
 
-XEN xen_return_first(XEN a, ...);
 char *xen_strdup(const char *str);
 
 #if (!HAVE_S7)

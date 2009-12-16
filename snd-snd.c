@@ -2478,7 +2478,7 @@ static bool xen_sound_equalp(xen_sound *v1, xen_sound *v2)
 static XEN equalp_xen_sound(XEN obj1, XEN obj2)
 {
   if ((!(XEN_SOUND_P(obj1))) || (!(XEN_SOUND_P(obj2)))) return(XEN_FALSE);
-  return(xen_return_first(C_TO_XEN_BOOLEAN(xen_sound_equalp(XEN_TO_XEN_SOUND(obj1), XEN_TO_XEN_SOUND(obj2))), obj1, obj2));
+  return(C_TO_XEN_BOOLEAN(xen_sound_equalp(XEN_TO_XEN_SOUND(obj1), XEN_TO_XEN_SOUND(obj2))));
 }
 #endif
 
@@ -2740,7 +2740,7 @@ If more than one such sound exists, 'nth' chooses which one to return."
   sp = find_sound(XEN_TO_C_STRING(filename), XEN_TO_C_INT_OR_ELSE(which, 0));
   if (sp) return(C_INT_TO_XEN_SOUND(sp->index));
 
-  return(xen_return_first(XEN_FALSE, filename));
+  return(XEN_FALSE);
 }
 
 
@@ -5494,7 +5494,13 @@ bool write_peak_env_info_file(chan_info *cp)
 
 
 typedef enum {PEAK_ENV_NO_ERROR, PEAK_ENV_BAD_HEADER, PEAK_ENV_BAD_FORMAT, PEAK_ENV_BAD_SIZE, PEAK_ENV_NO_FILE, PEAK_ENV_NO_DATA} peak_env_error_t;
-static const char *peak_env_error[6] = {"no error", "bad header", "bad format", "bad size", "no file", "no data in file"};
+static const char *peak_env_error[6] = {
+  "no error", 
+  "peak-env file has a bad header!", 
+  "peak-env file is in the wrong data format; will re-make it.", 
+  "peak-env file size is messed up!", 
+  "peak-env file has vanished!", 
+  "peak-env file is empty!"};
 
 static bool peak_env_info_type_ok(int val)
 {
@@ -5872,7 +5878,7 @@ If 'filename' is a sound index or a sound object, 'size' is interpreted as an ed
 	}
       cp->active = CHANNEL_INACTIVE;
       completely_free_snd_info(sp);
-      return(xen_return_first(peak, peak_func));
+      return(peak);
     }
   return(XEN_FALSE);
 }

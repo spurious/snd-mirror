@@ -193,46 +193,6 @@
 	(stopping #f)
 	(stop-widget #f))
 
-    (define (vector-print v)
-      (if (< (length v) 3)
-	  (object->string v)
-	  (let ((str (format #f "'#(~A" (vector-ref v 0))))
-	    (do ((i 1 (+ 1 i)))
-		((= i 3))
-	      (set! str (string-append str " " (object->string (vector-ref v i)))))
-	    (string-append str " ...)"))))
-
-    (define (display-properties props)
-      ;; there's no way to tell Guile's format that enormous vectors should not be printed in full
-      ;; so we search for them here and handle them ourselves
-      
-      ;; TODO: fix this!
-
-      (let ((str ""))
-	(for-each
-	 (lambda (pr)
-	   (let ((property (car pr))
-		 (value (cdr pr)))
-	     (set! str (string-append str (string #\newline) "    " (object->string property) ": "))
-	     (if (vector? value)
-		 (set! str (string-append str (vector-print value)))
-		 (if (list? value)
-		     (let ((prev #f))
-		       (set! str (string-append str "'("))
-		       (for-each
-			(lambda (v)
-			  (if prev 
-			      (set! str (string-append str " "))
-			      (set! prev #t))
-			  (if (vector? v)
-			      (set! str (string-append str (vector-print v)))
-			      (set! str (string-append str (object->string v)))))
-			value)
-		       (set! str (string-append str ")")))
-		     (set! str (string-append str (object->string value)))))))
-	 props)
-	str))
-
     (add-hook! stop-playing-hook
 	       (lambda (snd) 
 		 (if stopping
@@ -361,8 +321,7 @@
 			    (format #f "  sounds: ~{~{~%     ~S start: ~A, loop: ~A ~A~}~}" (soundfont-info))
 			    "")
 			(if (not (null? (sound-properties snd)))
-			    (format #f "  properties: ~A"
-				    (display-properties (sound-properties snd)))
+			    (format #f "  properties: ~A" (sound-properties snd))
 			    "")
 			(let ((chan-str ""))
 			  (do ((i 0 (+ 1 i)))
@@ -370,8 +329,7 @@
 			    (if (not (null? (channel-properties snd i)))
 				(set! chan-str 
 				      (string-append chan-str
-						     (format #f "~%  chan ~D properties: ~A" 
-							     i (display-properties (channel-properties snd i)))))))
+						     (format #f "~%  chan ~D properties: ~A" i (channel-properties snd i))))))
 			  chan-str)
 			)))))
       (list "Add mark"           xmPushButtonWidgetClass every-menu 

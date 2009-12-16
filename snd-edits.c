@@ -6379,7 +6379,10 @@ static void next_sound_1(snd_fd *sf)
   if (at_end)
     {
       snd_data *nxt_snd;
-      if                                                                 snd->inuse = false; 
+      if (sf->current_sound) 
+	{
+	  nxt_snd = sf->current_sound; 
+	  nxt_snd->inuse = false; 
 	  sf->current_sound = NULL;
 	  if (nxt_snd->copy) nxt_snd = free_snd_data(nxt_snd);
 	}
@@ -8209,7 +8212,7 @@ static XEN g_free_sampler(XEN obj)
 
   if (mix_sampler_p(obj))
     return(g_free_mix_sampler(obj));
-  return(xen_return_first(XEN_FALSE, obj));
+  return(XEN_FALSE);
 }
 
 
@@ -8450,7 +8453,7 @@ static XEN g_as_one_edit(XEN proc, XEN origin)
 #if HAVE_S7
   s7_gc_unprotect_at(s7, loc);
 #endif
-  return(xen_return_first(result, proc, origin));
+  return(result);
 }
 
 
@@ -9069,7 +9072,7 @@ static XEN g_change_samples_with_origin(XEN samp_0, XEN samps, XEN origin, XEN v
 		      XEN_TO_C_STRING(origin), 
 		      pos);
   update_graph(cp);
-  return(xen_return_first(vect, origin));
+  return(vect);
 }
 
 
@@ -9306,7 +9309,7 @@ static XEN g_insert_samples_with_origin(XEN samp, XEN samps, XEN origin, XEN vec
   check_saved_temp_file("sound", vect, date);
   file_insert_samples(beg, len, XEN_TO_C_STRING(vect), cp, 0, DONT_DELETE_ME, XEN_TO_C_STRING(origin), pos);
   update_graph(cp);
-  return(xen_return_first(C_TO_XEN_INT64_T(len), vect));
+  return(C_TO_XEN_INT64_T(len));
 }
 
 

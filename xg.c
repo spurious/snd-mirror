@@ -3679,7 +3679,7 @@ gint ydith)"
   gdk_draw_rgb_image_dithalign(XEN_TO_C_GdkDrawable_(drawable), XEN_TO_C_GdkGC_(gc), XEN_TO_C_gint(x), XEN_TO_C_gint(y), 
                                XEN_TO_C_gint(width), XEN_TO_C_gint(height), XEN_TO_C_GdkRgbDither(dith), XEN_TO_C_guchar_(rgb_buf), 
                                XEN_TO_C_gint(rowstride), XEN_TO_C_gint(xdith), XEN_TO_C_gint(ydith));
-  return(xen_return_first(XEN_FALSE, arglist));
+  return(XEN_FALSE);
 }
 
 static XEN gxg_gdk_draw_rgb_32_image(XEN drawable, XEN gc, XEN x, XEN y, XEN width, XEN height, XEN dith, XEN buf, XEN rowstride)
@@ -3731,7 +3731,7 @@ gint ydith)"
   gdk_draw_rgb_32_image_dithalign(XEN_TO_C_GdkDrawable_(drawable), XEN_TO_C_GdkGC_(gc), XEN_TO_C_gint(x), XEN_TO_C_gint(y), 
                                   XEN_TO_C_gint(width), XEN_TO_C_gint(height), XEN_TO_C_GdkRgbDither(dith), XEN_TO_C_guchar_(buf), 
                                   XEN_TO_C_gint(rowstride), XEN_TO_C_gint(xdith), XEN_TO_C_gint(ydith));
-  return(xen_return_first(XEN_FALSE, arglist));
+  return(XEN_FALSE);
 }
 
 static XEN gxg_gdk_draw_gray_image(XEN drawable, XEN gc, XEN x, XEN y, XEN width, XEN height, XEN dith, XEN buf, XEN rowstride)
@@ -3780,7 +3780,7 @@ gint y, gint width, gint height, GdkRgbDither dith, guchar* buf, gint rowstride,
   gdk_draw_indexed_image(XEN_TO_C_GdkDrawable_(drawable), XEN_TO_C_GdkGC_(gc), XEN_TO_C_gint(x), XEN_TO_C_gint(y), XEN_TO_C_gint(width), 
                          XEN_TO_C_gint(height), XEN_TO_C_GdkRgbDither(dith), XEN_TO_C_guchar_(buf), XEN_TO_C_gint(rowstride), 
                          XEN_TO_C_GdkRgbCmap_(cmap));
-  return(xen_return_first(XEN_FALSE, arglist));
+  return(XEN_FALSE);
 }
 
 static XEN gxg_gdk_rgb_cmap_new(XEN colors, XEN n_colors)
@@ -5076,7 +5076,7 @@ int dest_width, int dest_height, double offset_x, double offset_y, double scale_
   gdk_pixbuf_scale(XEN_TO_C_GdkPixbuf_(src), XEN_TO_C_GdkPixbuf_(dest), XEN_TO_C_int(dest_x), XEN_TO_C_int(dest_y), XEN_TO_C_int(dest_width), 
                    XEN_TO_C_int(dest_height), XEN_TO_C_double(offset_x), XEN_TO_C_double(offset_y), XEN_TO_C_double(scale_x), 
                    XEN_TO_C_double(scale_y), XEN_TO_C_GdkInterpType(interp_type));
-  return(xen_return_first(XEN_FALSE, arglist));
+  return(XEN_FALSE);
 }
 
 static XEN gxg_gdk_pixbuf_composite(XEN arglist)
@@ -5112,7 +5112,7 @@ GdkInterpType interp_type, int overall_alpha)"
   gdk_pixbuf_composite(XEN_TO_C_GdkPixbuf_(src), XEN_TO_C_GdkPixbuf_(dest), XEN_TO_C_int(dest_x), XEN_TO_C_int(dest_y), XEN_TO_C_int(dest_width), 
                        XEN_TO_C_int(dest_height), XEN_TO_C_double(offset_x), XEN_TO_C_double(offset_y), XEN_TO_C_double(scale_x), 
                        XEN_TO_C_double(scale_y), XEN_TO_C_GdkInterpType(interp_type), XEN_TO_C_int(overall_alpha));
-  return(xen_return_first(XEN_FALSE, arglist));
+  return(XEN_FALSE);
 }
 
 static XEN gxg_gdk_pixbuf_composite_color(XEN arglist)
@@ -5161,7 +5161,7 @@ guint32 color1, guint32 color2)"
                              XEN_TO_C_double(scale_x), XEN_TO_C_double(scale_y), XEN_TO_C_GdkInterpType(interp_type), XEN_TO_C_int(overall_alpha), 
                              XEN_TO_C_int(check_x), XEN_TO_C_int(check_y), XEN_TO_C_int(check_size), XEN_TO_C_guint32(color1), 
                              XEN_TO_C_guint32(color2));
-  return(xen_return_first(XEN_FALSE, arglist));
+  return(XEN_FALSE);
 }
 
 static XEN gxg_gdk_pixbuf_scale_simple(XEN src, XEN dest_width, XEN dest_height, XEN interp_type)
@@ -11307,7 +11307,7 @@ gint height)"
   gtk_paint_shadow(XEN_TO_C_GtkStyle_(style), XEN_TO_C_GdkWindow_(window), XEN_TO_C_GtkStateType(state_type), XEN_TO_C_GtkShadowType(shadow_type), 
                    XEN_TO_C_GdkRectangle_(area), XEN_TO_C_GtkWidget_(widget), XEN_TO_C_gchar_(detail), XEN_TO_C_gint(x), 
                    XEN_TO_C_gint(y), XEN_TO_C_gint(width), XEN_TO_C_gint(height));
-  return(xen_return_first(XEN_FALSE, arglist));
+  return(XEN_FALSE);
 }
 
 static XEN gxg_gtk_paint_polygon(XEN arglist)
@@ -11339,7 +11339,7 @@ gboolean fill)"
   gtk_paint_polygon(XEN_TO_C_GtkStyle_(style), XEN_TO_C_GdkWindow_(window), XEN_TO_C_GtkStateType(state_type), XEN_TO_C_GtkShadowType(shadow_type), 
                     XEN_TO_C_GdkRectangle_(area), XEN_TO_C_GtkWidget_(widget), XEN_TO_C_gchar_(detail), XEN_TO_C_GdkPoint_(points), 
                     XEN_TO_C_gint(npoints), XEN_TO_C_gboolean(fill));
-  return(xen_return_first(XEN_FALSE, arglist));
+  return(XEN_FALSE);
 }
 
 static XEN gxg_gtk_paint_arrow(XEN arglist)
@@ -11377,7 +11377,7 @@ gboolean fill, gint x, gint y, gint width, gint height)"
   gtk_paint_arrow(XEN_TO_C_GtkStyle_(style), XEN_TO_C_GdkWindow_(window), XEN_TO_C_GtkStateType(state_type), XEN_TO_C_GtkShadowType(shadow_type), 
                   XEN_TO_C_GdkRectangle_(area), XEN_TO_C_GtkWidget_(widget), XEN_TO_C_gchar_(detail), XEN_TO_C_GtkArrowType(arrow_type), 
                   XEN_TO_C_gboolean(fill), XEN_TO_C_gint(x), XEN_TO_C_gint(y), XEN_TO_C_gint(width), XEN_TO_C_gint(height));
-  return(xen_return_first(XEN_FALSE, arglist));
+  return(XEN_FALSE);
 }
 
 static XEN gxg_gtk_paint_diamond(XEN arglist)
@@ -11411,7 +11411,7 @@ gint height)"
   gtk_paint_diamond(XEN_TO_C_GtkStyle_(style), XEN_TO_C_GdkWindow_(window), XEN_TO_C_GtkStateType(state_type), XEN_TO_C_GtkShadowType(shadow_type), 
                     XEN_TO_C_GdkRectangle_(area), XEN_TO_C_GtkWidget_(widget), XEN_TO_C_gchar_(detail), XEN_TO_C_gint(x), 
                     XEN_TO_C_gint(y), XEN_TO_C_gint(width), XEN_TO_C_gint(height));
-  return(xen_return_first(XEN_FALSE, arglist));
+  return(XEN_FALSE);
 }
 
 static XEN gxg_gtk_paint_box(XEN arglist)
@@ -11445,7 +11445,7 @@ gint height)"
   gtk_paint_box(XEN_TO_C_GtkStyle_(style), XEN_TO_C_GdkWindow_(window), XEN_TO_C_GtkStateType(state_type), XEN_TO_C_GtkShadowType(shadow_type), 
                 XEN_TO_C_GdkRectangle_(area), XEN_TO_C_GtkWidget_(widget), XEN_TO_C_gchar_(detail), XEN_TO_C_gint(x), XEN_TO_C_gint(y), 
                 XEN_TO_C_gint(width), XEN_TO_C_gint(height));
-  return(xen_return_first(XEN_FALSE, arglist));
+  return(XEN_FALSE);
 }
 
 static XEN gxg_gtk_paint_flat_box(XEN arglist)
@@ -11479,7 +11479,7 @@ gint height)"
   gtk_paint_flat_box(XEN_TO_C_GtkStyle_(style), XEN_TO_C_GdkWindow_(window), XEN_TO_C_GtkStateType(state_type), XEN_TO_C_GtkShadowType(shadow_type), 
                      XEN_TO_C_GdkRectangle_(area), XEN_TO_C_GtkWidget_(widget), XEN_TO_C_gchar_(detail), XEN_TO_C_gint(x), 
                      XEN_TO_C_gint(y), XEN_TO_C_gint(width), XEN_TO_C_gint(height));
-  return(xen_return_first(XEN_FALSE, arglist));
+  return(XEN_FALSE);
 }
 
 static XEN gxg_gtk_paint_check(XEN arglist)
@@ -11513,7 +11513,7 @@ gint height)"
   gtk_paint_check(XEN_TO_C_GtkStyle_(style), XEN_TO_C_GdkWindow_(window), XEN_TO_C_GtkStateType(state_type), XEN_TO_C_GtkShadowType(shadow_type), 
                   XEN_TO_C_GdkRectangle_(area), XEN_TO_C_GtkWidget_(widget), XEN_TO_C_gchar_(detail), XEN_TO_C_gint(x), XEN_TO_C_gint(y), 
                   XEN_TO_C_gint(width), XEN_TO_C_gint(height));
-  return(xen_return_first(XEN_FALSE, arglist));
+  return(XEN_FALSE);
 }
 
 static XEN gxg_gtk_paint_option(XEN arglist)
@@ -11547,7 +11547,7 @@ gint height)"
   gtk_paint_option(XEN_TO_C_GtkStyle_(style), XEN_TO_C_GdkWindow_(window), XEN_TO_C_GtkStateType(state_type), XEN_TO_C_GtkShadowType(shadow_type), 
                    XEN_TO_C_GdkRectangle_(area), XEN_TO_C_GtkWidget_(widget), XEN_TO_C_gchar_(detail), XEN_TO_C_gint(x), 
                    XEN_TO_C_gint(y), XEN_TO_C_gint(width), XEN_TO_C_gint(height));
-  return(xen_return_first(XEN_FALSE, arglist));
+  return(XEN_FALSE);
 }
 
 static XEN gxg_gtk_paint_tab(XEN arglist)
@@ -11581,7 +11581,7 @@ gint height)"
   gtk_paint_tab(XEN_TO_C_GtkStyle_(style), XEN_TO_C_GdkWindow_(window), XEN_TO_C_GtkStateType(state_type), XEN_TO_C_GtkShadowType(shadow_type), 
                 XEN_TO_C_GdkRectangle_(area), XEN_TO_C_GtkWidget_(widget), XEN_TO_C_gchar_(detail), XEN_TO_C_gint(x), XEN_TO_C_gint(y), 
                 XEN_TO_C_gint(width), XEN_TO_C_gint(height));
-  return(xen_return_first(XEN_FALSE, arglist));
+  return(XEN_FALSE);
 }
 
 static XEN gxg_gtk_paint_shadow_gap(XEN arglist)
@@ -11622,7 +11622,7 @@ gint height, GtkPositionType gap_side, gint gap_x, gint gap_width)"
                        XEN_TO_C_GdkRectangle_(area), XEN_TO_C_GtkWidget_(widget), XEN_TO_C_gchar_(detail), XEN_TO_C_gint(x), 
                        XEN_TO_C_gint(y), XEN_TO_C_gint(width), XEN_TO_C_gint(height), XEN_TO_C_GtkPositionType(gap_side), 
                        XEN_TO_C_gint(gap_x), XEN_TO_C_gint(gap_width));
-  return(xen_return_first(XEN_FALSE, arglist));
+  return(XEN_FALSE);
 }
 
 static XEN gxg_gtk_paint_box_gap(XEN arglist)
@@ -11663,7 +11663,7 @@ gint height, GtkPositionType gap_side, gint gap_x, gint gap_width)"
                     XEN_TO_C_GdkRectangle_(area), XEN_TO_C_GtkWidget_(widget), XEN_TO_C_gchar_(detail), XEN_TO_C_gint(x), 
                     XEN_TO_C_gint(y), XEN_TO_C_gint(width), XEN_TO_C_gint(height), XEN_TO_C_GtkPositionType(gap_side), XEN_TO_C_gint(gap_x), 
                     XEN_TO_C_gint(gap_width));
-  return(xen_return_first(XEN_FALSE, arglist));
+  return(XEN_FALSE);
 }
 
 static XEN gxg_gtk_paint_extension(XEN arglist)
@@ -11699,7 +11699,7 @@ gint height, GtkPositionType gap_side)"
   gtk_paint_extension(XEN_TO_C_GtkStyle_(style), XEN_TO_C_GdkWindow_(window), XEN_TO_C_GtkStateType(state_type), XEN_TO_C_GtkShadowType(shadow_type), 
                       XEN_TO_C_GdkRectangle_(area), XEN_TO_C_GtkWidget_(widget), XEN_TO_C_gchar_(detail), XEN_TO_C_gint(x), 
                       XEN_TO_C_gint(y), XEN_TO_C_gint(width), XEN_TO_C_gint(height), XEN_TO_C_GtkPositionType(gap_side));
-  return(xen_return_first(XEN_FALSE, arglist));
+  return(XEN_FALSE);
 }
 
 static XEN gxg_gtk_paint_focus(XEN arglist)
@@ -11730,7 +11730,7 @@ GdkRectangle* area, GtkWidget* widget, gchar* detail, gint x, gint y, gint width
   gtk_paint_focus(XEN_TO_C_GtkStyle_(style), XEN_TO_C_GdkWindow_(window), XEN_TO_C_GtkStateType(state_type), XEN_TO_C_GdkRectangle_(area), 
                   XEN_TO_C_GtkWidget_(widget), XEN_TO_C_gchar_(detail), XEN_TO_C_gint(x), XEN_TO_C_gint(y), XEN_TO_C_gint(width), 
                   XEN_TO_C_gint(height));
-  return(xen_return_first(XEN_FALSE, arglist));
+  return(XEN_FALSE);
 }
 
 static XEN gxg_gtk_paint_slider(XEN arglist)
@@ -11766,7 +11766,7 @@ gint height, GtkOrientation orientation)"
   gtk_paint_slider(XEN_TO_C_GtkStyle_(style), XEN_TO_C_GdkWindow_(window), XEN_TO_C_GtkStateType(state_type), XEN_TO_C_GtkShadowType(shadow_type), 
                    XEN_TO_C_GdkRectangle_(area), XEN_TO_C_GtkWidget_(widget), XEN_TO_C_gchar_(detail), XEN_TO_C_gint(x), 
                    XEN_TO_C_gint(y), XEN_TO_C_gint(width), XEN_TO_C_gint(height), XEN_TO_C_GtkOrientation(orientation));
-  return(xen_return_first(XEN_FALSE, arglist));
+  return(XEN_FALSE);
 }
 
 static XEN gxg_gtk_paint_handle(XEN arglist)
@@ -11802,7 +11802,7 @@ gint height, GtkOrientation orientation)"
   gtk_paint_handle(XEN_TO_C_GtkStyle_(style), XEN_TO_C_GdkWindow_(window), XEN_TO_C_GtkStateType(state_type), XEN_TO_C_GtkShadowType(shadow_type), 
                    XEN_TO_C_GdkRectangle_(area), XEN_TO_C_GtkWidget_(widget), XEN_TO_C_gchar_(detail), XEN_TO_C_gint(x), 
                    XEN_TO_C_gint(y), XEN_TO_C_gint(width), XEN_TO_C_gint(height), XEN_TO_C_GtkOrientation(orientation));
-  return(xen_return_first(XEN_FALSE, arglist));
+  return(XEN_FALSE);
 }
 
 static XEN gxg_gtk_paint_expander(XEN style, XEN window, XEN state_type, XEN area, XEN widget, XEN detail, XEN x, XEN y, XEN expander_style)
@@ -11851,7 +11851,7 @@ gboolean use_text, GdkRectangle* area, GtkWidget* widget, gchar* detail, gint x,
   gtk_paint_layout(XEN_TO_C_GtkStyle_(style), XEN_TO_C_GdkWindow_(window), XEN_TO_C_GtkStateType(state_type), XEN_TO_C_gboolean(use_text), 
                    XEN_TO_C_GdkRectangle_(area), XEN_TO_C_GtkWidget_(widget), XEN_TO_C_gchar_(detail), XEN_TO_C_gint(x), 
                    XEN_TO_C_gint(y), XEN_TO_C_PangoLayout_(layout));
-  return(xen_return_first(XEN_FALSE, arglist));
+  return(XEN_FALSE);
 }
 
 static XEN gxg_gtk_paint_resize_grip(XEN arglist)
@@ -11885,7 +11885,7 @@ gint height)"
   gtk_paint_resize_grip(XEN_TO_C_GtkStyle_(style), XEN_TO_C_GdkWindow_(window), XEN_TO_C_GtkStateType(state_type), XEN_TO_C_GdkRectangle_(area), 
                         XEN_TO_C_GtkWidget_(widget), XEN_TO_C_gchar_(detail), XEN_TO_C_GdkWindowEdge(edge), XEN_TO_C_gint(x), 
                         XEN_TO_C_gint(y), XEN_TO_C_gint(width), XEN_TO_C_gint(height));
-  return(xen_return_first(XEN_FALSE, arglist));
+  return(XEN_FALSE);
 }
 
 static XEN gxg_gtk_border_copy(XEN border)
@@ -11951,7 +11951,7 @@ guint xpadding, guint ypadding)"
   gtk_table_attach(XEN_TO_C_GtkTable_(table), XEN_TO_C_GtkWidget_(child), XEN_TO_C_guint(left_attach), XEN_TO_C_guint(right_attach), 
                    XEN_TO_C_guint(top_attach), XEN_TO_C_guint(bottom_attach), XEN_TO_C_GtkAttachOptions(xoptions), XEN_TO_C_GtkAttachOptions(yoptions), 
                    XEN_TO_C_guint(xpadding), XEN_TO_C_guint(ypadding));
-  return(xen_return_first(XEN_FALSE, arglist));
+  return(XEN_FALSE);
 }
 
 static XEN gxg_gtk_table_attach_defaults(XEN table, XEN widget, XEN left_attach, XEN right_attach, XEN top_attach, XEN bottom_attach)
@@ -19760,7 +19760,7 @@ int y_dither)"
   gdk_draw_pixbuf(XEN_TO_C_GdkDrawable_(drawable), XEN_TO_C_GdkGC_(gc), XEN_TO_C_GdkPixbuf_(pixbuf), XEN_TO_C_int(src_x), 
                   XEN_TO_C_int(src_y), XEN_TO_C_int(dest_x), XEN_TO_C_int(dest_y), XEN_TO_C_int(width), XEN_TO_C_int(height), 
                   XEN_TO_C_GdkRgbDither(dither), XEN_TO_C_int(x_dither), XEN_TO_C_int(y_dither));
-  return(xen_return_first(XEN_FALSE, arglist));
+  return(XEN_FALSE);
 }
 
 static XEN gxg_gtk_tree_model_get_string_from_iter(XEN tree_model, XEN iter)
@@ -49366,7 +49366,7 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("15-Dec-09"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("16-Dec-09"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

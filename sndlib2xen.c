@@ -741,7 +741,7 @@ header-type is a sndlib type indicator such as " S_mus_aiff "; sndlib currently 
       else XEN_OUT_OF_RANGE_ERROR(S_mus_sound_open_output, 5, header_type, "~A: invalid header type");
     }
   else XEN_OUT_OF_RANGE_ERROR(S_mus_sound_open_output, 4, data_format, "~A: invalid data format");
-  return(xen_return_first(C_TO_XEN_INT(fd), comment));
+  return(C_TO_XEN_INT(fd));
 }
 
 
@@ -1165,7 +1165,7 @@ to the audio line from sound-data sdata."
 #endif
   val = mus_audio_write(fd, obuf, outbytes);
   free(obuf);
-  return(xen_return_first(C_TO_XEN_INT(val), sdata));
+  return(C_TO_XEN_INT(val));
 }
 
 
@@ -1209,11 +1209,10 @@ from the audio line into sound-data sdata."
   }
 #endif
   free(inbuf);
-  return(xen_return_first(C_TO_XEN_INT(val), sdata));
+  return(C_TO_XEN_INT(val));
 }
 
 
-/* TODO: fix the rb/fs cases for mus-audio-* changes */
 /* global default clipping and prescaler values */
 
 static XEN g_mus_clipping(void)
@@ -1367,7 +1366,7 @@ srate and channels.  'len' samples are written."
 				 samps,
 				 XEN_TO_C_INT(srate),
 				 XEN_TO_C_INT(channels));
-  return(xen_return_first(C_TO_XEN_INT64_T(olen), filename));
+  return(C_TO_XEN_INT64_T(olen));
 }
 
 
@@ -1418,7 +1417,7 @@ at frame 'start' and reading 'samples' samples altogether."
 			 C_TO_XEN_STRING("chans <= 0")));
 
   mus_file_to_float_array(name, chn, XEN_TO_C_INT64_T(start), samps, v->data);
-  return(xen_return_first(data, filename));
+  return(data);
 }
 
 
@@ -1567,7 +1566,7 @@ static XEN equalp_sound_data(XEN obj1, XEN obj2)
 #if HAVE_RUBY || HAVE_FORTH
   if ((!(SOUND_DATA_P(obj1))) || (!(SOUND_DATA_P(obj2)))) return(XEN_FALSE);
 #endif
-  return(xen_return_first(C_TO_XEN_BOOLEAN(sound_data_equalp(XEN_TO_SOUND_DATA(obj1), XEN_TO_SOUND_DATA(obj2))), obj1, obj2));
+  return(C_TO_XEN_BOOLEAN(sound_data_equalp(XEN_TO_SOUND_DATA(obj1), XEN_TO_SOUND_DATA(obj2))));
 }
 #endif
 

@@ -3776,7 +3776,7 @@ and its value is returned."
 	  else str = new_str;
 	  help_text = C_TO_XEN_STRING(str);
 	  if (str) free(str);
-	  return(xen_return_first(help_text, text));
+	  return(help_text);
 	}
     }
 
@@ -3788,7 +3788,7 @@ and its value is returned."
 
 XEN g_snd_help(XEN text, int widget_wid)
 {
-  return(xen_return_first(g_snd_help_with_search(text, widget_wid, true), text));
+  return(g_snd_help_with_search(text, widget_wid, true));
 }
 
 
@@ -3904,7 +3904,7 @@ static XEN g_help_dialog(XEN subject, XEN msg, XEN xrefs, XEN xurls)
   else w = snd_help(XEN_TO_C_STRING(subject), 
 		    XEN_TO_C_STRING(msg), 
 		    WITH_WORD_WRAP);
-  return(xen_return_first(XEN_WRAP_WIDGET(w), xrefs, xurls));
+  return(XEN_WRAP_WIDGET(w));
 }
 
 

@@ -437,24 +437,23 @@ If 'check' is #f, the hooks are removed."
 
 ;;; -------- mix-channel, insert-channel, c-channel
 
-(define (channel->mix input-snd input-chn input-beg input-len output-snd output-chn output-beg)
-  (if (< input-len 1000000)
-      (mix-vct (channel->vct input-beg input-len input-snd input-chn) output-beg output-snd output-chn #t)
-      (let* ((output-name (snd-tempnam))
-	     (output (new-sound output-name :size input-len))
-	     (reader (make-sampler input-beg input-snd input-chn)))
-	(map-channel (lambda (val) 
-		       (next-sample reader)) 
-		     0 input-len output 0)
-	(save-sound output)
-	(close-sound output)
-	(mix output-name output-beg 0 output-snd output-chn #t #t))))
-  
-
 (define* (mix-channel input-data :optional (beg 0) dur snd (chn 0) edpos with-tag)
 
   "(mix-channel file :optional beg dur snd chn edpos with-tag) mixes in file. file can be the file name, a sound index, or \
 a list (file-name-or-sound-index [beg [channel]])."
+
+  (define (channel->mix input-snd input-chn input-beg input-len output-snd output-chn output-beg)
+    (if (< input-len 1000000)
+	(mix-vct (channel->vct input-beg input-len input-snd input-chn) output-beg output-snd output-chn #t)
+	(let* ((output-name (snd-tempnam))
+	       (output (new-sound output-name :size input-len))
+	       (reader (make-sampler input-beg input-snd input-chn)))
+	  (map-channel (lambda (val) 
+			 (next-sample reader)) 
+		       0 input-len output 0)
+	  (save-sound output)
+	  (close-sound output)
+	  (mix output-name output-beg 0 output-snd output-chn #t #t))))
 
   (let* ((input (if (not (list? input-data)) 
 		    input-data 

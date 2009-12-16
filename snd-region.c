@@ -1391,7 +1391,7 @@ static bool xen_region_equalp(xen_region *v1, xen_region *v2)
 static XEN equalp_xen_region(XEN obj1, XEN obj2)
 {
   if ((!(XEN_REGION_P(obj1))) || (!(XEN_REGION_P(obj2)))) return(XEN_FALSE);
-  return(xen_return_first(C_TO_XEN_BOOLEAN(xen_region_equalp(XEN_TO_XEN_REGION(obj1), XEN_TO_XEN_REGION(obj2))), obj1, obj2));
+  return(C_TO_XEN_BOOLEAN(xen_region_equalp(XEN_TO_XEN_REGION(obj1), XEN_TO_XEN_REGION(obj2))));
 }
 #endif
 

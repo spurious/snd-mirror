@@ -2630,7 +2630,7 @@ static bool xen_player_equalp(xen_player *v1, xen_player *v2)
 static XEN equalp_xen_player(XEN obj1, XEN obj2)
 {
   if ((!(XEN_PLAYER_P(obj1))) || (!(XEN_PLAYER_P(obj2)))) return(XEN_FALSE);
-  return(xen_return_first(C_TO_XEN_BOOLEAN(xen_player_equalp(XEN_TO_XEN_PLAYER(obj1), XEN_TO_XEN_PLAYER(obj2))), obj1, obj2));
+  return(C_TO_XEN_BOOLEAN(xen_player_equalp(XEN_TO_XEN_PLAYER(obj1), XEN_TO_XEN_PLAYER(obj2))));
 }
 #endif
 

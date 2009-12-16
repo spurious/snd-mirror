@@ -3484,7 +3484,7 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
 
       update_graph(cp);
     }
-  return(xen_return_first(res, org));
+  return(res);
 }
 
 
@@ -4787,7 +4787,7 @@ If sign is -1, perform inverse fft.  Incoming data is in vcts."
       free(rl);
       free(im);
     }
-  return(xen_return_first(reals, imag));
+  return(reals);
 }
 
 
@@ -4898,7 +4898,7 @@ magnitude spectrum of data (a vct), in data if in-place, using fft-window win an
     }
   if (in_data)
     return(data);
-  return(xen_return_first(xen_make_vct(n, rdat), data, win)); /* xen_make_vct uses the data array directly (frees upon gc) */
+  return(xen_make_vct(n, rdat)); /* xen_make_vct uses the data array directly (frees upon gc) */
 }
 
 
@@ -4938,7 +4938,7 @@ static XEN g_convolve_with_1(XEN file, XEN new_amp, chan_info *cp, XEN edpos, co
 	}
     }
   else return(snd_no_such_file_error(caller, file));
-  return(xen_return_first(file, new_amp));
+  return(file);
 }
 
 
@@ -5162,7 +5162,7 @@ static XEN g_src_1(XEN ratio_or_env, XEN ebase, XEN snd, XEN chn_n, XEN edpos, c
 			   over_selection, egen, edpos, 5);
 	}
     }
-  return(xen_return_first(ratio_or_env, ebase));
+  return(ratio_or_env);
 }
 
 
@@ -5339,7 +5339,7 @@ static XEN g_filter_1(XEN e, XEN order, XEN snd, XEN chn_n, XEN edpos, const cha
 	  if (new_origin) free(new_origin);
 	}
     }
-  return(xen_return_first(XEN_TRUE, e));
+  return(XEN_TRUE);
 }
 
 

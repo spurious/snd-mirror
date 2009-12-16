@@ -2689,7 +2689,6 @@
 	  (arg-start 0)
 	  (line-len 0)
 	  (line-max 120)
-	  (protect-arglist #f)
 	  (max-args 10)) 
 
      (define (hey-start)
@@ -2723,8 +2722,7 @@
 	 (heyc "void")
 	 (if (>= (length args) max-args)
 	     (begin
-	       (heyc "XEN arglist")
-	       (set! protect-arglist #t))
+	       (heyc "XEN arglist"))
 	     (let ((previous-arg #f))
 	       (for-each 
 		(lambda (arg)
@@ -2987,12 +2985,8 @@
 			     (hey "    XEN_LIST_SET(gxg_ptr, 2, XEN_LIST_3(C_STRING_TO_XEN_SYMBOL(\"idler\"), ~A, C_TO_XEN_INT(loc)));~%"
 				  (if (string=? return-type "void") "XEN_FALSE" "result")))
 			 (if using-result
-			     (if protect-arglist
-				 (hey "    return(xen_return_first(result, arglist));~%")
-				 (hey "    return(result);~%"))
-			     (if protect-arglist
-				 (hey "    return(xen_return_first(XEN_FALSE, arglist));~%")
-				 (hey "    return(XEN_FALSE);~%")))
+			     (hey "    return(result);~%")
+			     (hey "    return(XEN_FALSE);~%"))
 			 (hey "   }~%"))
 		       (begin ;'fnc
 			 (if (> refargs 0)
@@ -3029,9 +3023,7 @@
 				       (hey "  xm_unprotect_idler(XEN_TO_C_guint(~A));~%" (cadr (car args)))
 				       (hey "  xm_unprotect_at(XEN_TO_C_INT(XEN_CADDR(~A)));~%" (cadr (car args)))))
 			       (if (string=? return-type "void")
-				   (if protect-arglist
-				       (hey "  return(xen_return_first(XEN_FALSE, arglist));~%")
-				       (hey "  return(XEN_FALSE);~%"))))))))
+				   (hey "  return(XEN_FALSE);~%")))))))
 		 (begin ; 'lambda (see line 1846)
 		   (hey "if (XEN_REQUIRED_ARGS_OK(func, 2))~%")
 		   (hey-start)
@@ -3069,9 +3061,7 @@
 		   (if (string=? return-type "void")
 		       (begin
 			 (hey ");~%")
-			 (if protect-arglist
-			     (hey "    return(xen_return_first(XEN_FALSE, arglist));~%")
-			     (hey "    return(XEN_FALSE);~%")))
+			 (hey "    return(XEN_FALSE);~%"))
 		       (hey ")));~%"))
 		   (hey "  }~%")) ;'lambda
 		 ))) ; 'begin

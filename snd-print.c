@@ -648,7 +648,7 @@ static XEN g_graph_to_ps(XEN filename)
 			   C_TO_XEN_STRING(file),
 			   result));
     }
-  return(xen_return_first(C_TO_XEN_STRING(file), filename));
+  return(C_TO_XEN_STRING(file));
 }
 
 
@@ -727,7 +727,7 @@ OpenGL graphics. type can be 0: eps, 1: ps, 2: pdf, 3: tex, 4: svg, 5: pgf."
   if (old_locale) free(old_locale);
 #endif
   
-  return(xen_return_first(C_TO_XEN_STRING(file), filename));
+  return(C_TO_XEN_STRING(file));
 }
   
 

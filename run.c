@@ -591,7 +591,7 @@ XEN run_hook(XEN hook, XEN args, const char *caller)
     }
 
   s7_gc_unprotect_at(s7, gc_loc);
-  return(xen_return_first(XEN_FALSE, args));
+  return(XEN_FALSE);
 }
 
 #endif

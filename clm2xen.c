@@ -583,9 +583,7 @@ static XEN g_dot_product(XEN val1, XEN val2, XEN size)
   else len = v1->length; 
   if (len > v2->length) len = v2->length;
 
-  return(xen_return_first(C_TO_XEN_DOUBLE(mus_dot_product(v1->data, v2->data, len)), 
-			  val1, 
-			  val2));
+  return(C_TO_XEN_DOUBLE(mus_dot_product(v1->data, v2->data, len)));
 }
 
 
@@ -626,8 +624,7 @@ static XEN g_edot_product(XEN val1, XEN val2)
     }
   result = C_TO_XEN_COMPLEX(mus_edot_product(freq, vals, len));
   free(vals);
-  return(xen_return_first(result,
-			  val2));
+  return(result);
 }
 #endif
 
@@ -662,7 +659,7 @@ static XEN g_fft_window_1(xclm_window_t choice, XEN val1, XEN val2, XEN ulen, co
     case G_RECTANGULAR_MAGNITUDES: mus_rectangular_to_magnitudes(v1->data, v2->data, len); break;
     case G_POLAR_RECTANGULAR:      mus_polar_to_rectangular(v1->data, v2->data, len);      break;
     }
-  return(xen_return_first(val1, val2));
+  return(val1);
 }
 
 
@@ -751,7 +748,7 @@ the real and imaginary parts of the data; len should be a power of 2, dir = 1 fo
    *   and takes 61 secs).  
    */
 
-  return(xen_return_first(url, uim));
+  return(url);
 }
 
 
@@ -842,7 +839,7 @@ and type determines how the spectral data is scaled:\n\
     XEN_OUT_OF_RANGE_ERROR(S_spectrum, 4, utype, "type must be 0..2");
   
   mus_spectrum(v1->data, v2->data, (v3) ? (v3->data) : NULL, n, (mus_spectrum_t)type);
-  return(xen_return_first(url, uim, uwin));
+  return(url);
 }
 
 
@@ -915,7 +912,7 @@ of vcts v1 with v2, using fft of size len (a power of 2), result in v1"
     }
 
   mus_convolution(v1->data, v2->data, n);
-  return(xen_return_first(url1, url2));
+  return(url1);
 }
 
 
@@ -926,7 +923,7 @@ static XEN g_clear_array(XEN arr)
   XEN_ASSERT_TYPE(MUS_VCT_P(arr), arr, XEN_ONLY_ARG, S_clear_array, "a vct");
   v = XEN_TO_VCT(arr);
   mus_clear_array(v->data, v->length);
-  return(xen_return_first(arr));
+  return(arr);
 }
 
 
@@ -938,7 +935,7 @@ of degree, so coeff[0] is the constant term."
   XEN_ASSERT_TYPE(MUS_VCT_P(arr), arr, XEN_ARG_1, S_polynomial, "a vct");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ARG_2, S_polynomial, "a number");
   v = XEN_TO_VCT(arr);
-  return(xen_return_first(C_TO_XEN_DOUBLE(mus_polynomial(v->data, XEN_TO_C_DOUBLE(x), v->length)), arr));
+  return(C_TO_XEN_DOUBLE(mus_polynomial(v->data, XEN_TO_C_DOUBLE(x), v->length)));
 }
 
 
@@ -965,7 +962,7 @@ taking into account wrap-around (size is size of data), with linear interpolatio
     }
   else len = v->length;
 
-  return(xen_return_first(C_TO_XEN_DOUBLE(mus_array_interp(v->data, XEN_TO_C_DOUBLE(phase), len)), obj));
+  return(C_TO_XEN_DOUBLE(mus_array_interp(v->data, XEN_TO_C_DOUBLE(phase), len)));
 }
 
 
@@ -1004,7 +1001,7 @@ data ('v' is a vct) using interpolation 'type', such as " S_mus_interp_linear ".
   if (XEN_NUMBER_P(yn1))
     y = XEN_TO_C_DOUBLE(yn1);
 
-  return(xen_return_first(C_TO_XEN_DOUBLE(mus_interpolate((mus_interp_t)itype, XEN_TO_C_DOUBLE(x), v->data, len, y))));
+  return(C_TO_XEN_DOUBLE(mus_interpolate((mus_interp_t)itype, XEN_TO_C_DOUBLE(x), v->data, len, y)));
 }
 
 
@@ -1708,7 +1705,7 @@ static XEN g_mus_set_data(XEN gen, XEN val)
       ms->vcts[MUS_DATA_WRAPPER] = val;
       return(val);
     }
-  return(xen_return_first(XEN_FALSE, gen, val));
+  return(XEN_FALSE);
 }
 
 
@@ -1917,10 +1914,9 @@ static XEN g_mus_apply(XEN arglist)
     return(C_TO_XEN_DOUBLE(mus_apply(gen, 
 				     XEN_TO_C_DOUBLE(XEN_CADR(arglist)),
 				     0.0)));
-  return(xen_return_first(C_TO_XEN_DOUBLE(mus_apply(gen, 
-						    XEN_TO_C_DOUBLE(XEN_CADR(arglist)), 
-						    XEN_TO_C_DOUBLE(XEN_CADDR(arglist)))),
-			  arglist));
+  return(C_TO_XEN_DOUBLE(mus_apply(gen, 
+				   XEN_TO_C_DOUBLE(XEN_CADR(arglist)), 
+				   XEN_TO_C_DOUBLE(XEN_CADDR(arglist)))));
 }
 
 
@@ -2151,7 +2147,7 @@ static XEN g_make_delay_1(xclm_delay_t choice, XEN arglist)
 	return(mus_xen_to_object(mus_any_to_mus_xen_with_vct(ge, orig_v)));
       return(mus_xen_to_object(mus_any_to_mus_xen_with_two_vcts(ge, orig_v, xen_filt)));
     }
-  return(xen_return_first(clm_mus_error(local_error_type, local_error_msg), arglist));
+  return(clm_mus_error(local_error_type, local_error_msg));
 }
 
 
@@ -2828,7 +2824,7 @@ a new one is created.  If normalize is " PROC_TRUE ", the resulting waveform goe
   s7_gc_unprotect_at(s7, gc_loc);
 #endif
 
-  return(xen_return_first(table, partials, utable));
+  return(table);
 }
 
 
@@ -2920,7 +2916,7 @@ a new one is created.  If normalize is " PROC_TRUE ", the resulting waveform goe
   s7_gc_unprotect_at(s7, gc_loc);
 #endif
 
-  return(xen_return_first(table, partials, utable));
+  return(table);
 }
 
 
@@ -3549,7 +3545,7 @@ static XEN g_formant_bank(XEN amps, XEN gens, XEN inp)
   inval = XEN_TO_C_DOUBLE(inp);
   outval = mus_formant_bank(scls, gs, inval, size);
   if (gs) free(gs);
-  return(xen_return_first(C_TO_XEN_DOUBLE(outval), gens));
+  return(C_TO_XEN_DOUBLE(outval));
 }
 
 
@@ -3651,7 +3647,7 @@ static XEN g_make_frame_2(int len, XEN args)
 	}
       return(mus_xen_to_object(mus_any_to_mus_xen_with_vct(ge, xen_make_vct_wrapper(mus_length(ge), mus_data(ge)))));
     }
-  return(xen_return_first(XEN_FALSE, args));
+  return(XEN_FALSE);
 }
 
 
@@ -3990,7 +3986,7 @@ static XEN g_frame_to_list(XEN fr)
   vals = mus_data(val);
   for (i = (int)mus_length(val) - 1; i >= 0; i--) 
     res = XEN_CONS(C_TO_XEN_DOUBLE(vals[i]), res);
-  return(xen_return_first(res, fr));
+  return(res);
 }
 
 
@@ -4081,7 +4077,7 @@ static XEN g_make_mixer_2(int len, XEN args)
 	}
       return(mus_xen_to_object(mus_any_to_mus_xen(ge)));
     }
-  return(xen_return_first(XEN_FALSE, args));
+  return(XEN_FALSE);
 
 }
 
@@ -4414,7 +4410,7 @@ to create (via waveshaping) the harmonic spectrum described by the partials argu
 			 amps));
 
   wave = mus_partials_to_polynomial(npartials, partials, kind); /* wave == partials; in both vct and list cases, partials is newly allocated */
-  return(xen_return_first(xen_make_vct(npartials, wave), amps));
+  return(xen_make_vct(npartials, wave));
 }
 
 
@@ -4876,7 +4872,7 @@ static XEN g_make_fir_coeffs(XEN order, XEN envl)
 			 XEN_LIST_2(order, envl)));
 
   a = mus_make_fir_coeffs(XEN_TO_C_INT(order), v->data, NULL);
-  return(xen_return_first(xen_make_vct(v->length, a), envl));
+  return(xen_make_vct(v->length, a));
 }
 
 
@@ -5681,7 +5677,7 @@ static XEN g_make_file_to_sample(XEN name, XEN buffer_size)
   else size = mus_file_buffer_size();
 
   ge = mus_make_file_to_sample_with_buffer_size(XEN_TO_C_STRING(name), size);
-  if (ge) return(xen_return_first(mus_xen_to_object(mus_any_to_mus_xen(ge)), name));
+  if (ge) return(mus_xen_to_object(mus_any_to_mus_xen(ge)));
   return(XEN_FALSE);
 }
 
@@ -5749,7 +5745,7 @@ should be sndlib identifiers:\n  " make_sample_to_file_example
 	      rgen = mus_make_sample_to_file_with_comment(XEN_TO_C_STRING(name),
 							  chns, df, ht,
 							  (XEN_STRING_P(comment)) ? XEN_TO_C_STRING(comment) : NULL);
-	      if (rgen) return(xen_return_first(mus_xen_to_object(mus_any_to_mus_xen(rgen)), name));
+	      if (rgen) return(mus_xen_to_object(mus_any_to_mus_xen(rgen)));
 	    }
 	  else XEN_OUT_OF_RANGE_ERROR(S_make_sample_to_file, 2, chans, "chans ~A <= 0?");
 	}
@@ -5768,7 +5764,7 @@ that reopens an existing sound file 'filename' ready for output via " S_sample_t
   mus_any *rgen = NULL;
   XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_1, S_continue_sample_to_file, "a string");
   rgen = mus_continue_sample_to_file(XEN_TO_C_STRING(name));
-  if (rgen) return(xen_return_first(mus_xen_to_object(mus_any_to_mus_xen(rgen)), name));
+  if (rgen) return(mus_xen_to_object(mus_any_to_mus_xen(rgen)));
   return(XEN_FALSE);
 }
 
@@ -5835,7 +5831,7 @@ static XEN g_make_file_to_frame(XEN name, XEN buffer_size)
     }
   else size = mus_file_buffer_size();
   ge = mus_make_file_to_frame_with_buffer_size(XEN_TO_C_STRING(name), size);
-  if (ge) return(xen_return_first(mus_xen_to_object(mus_any_to_mus_xen(ge)), name));
+  if (ge) return(mus_xen_to_object(mus_any_to_mus_xen(ge)));
   return(XEN_FALSE);
 }
 
@@ -5888,7 +5884,7 @@ should be sndlib identifiers:\n  " make_frame_to_file_example
 					     XEN_TO_C_INT_OR_ELSE(out_format, (int)MUS_OUT_FORMAT),
 					     XEN_TO_C_INT_OR_ELSE(out_type, (int)MUS_NEXT),
 					     (XEN_STRING_P(comment)) ? XEN_TO_C_STRING(comment) : NULL);
-  if (fgen) return(xen_return_first(mus_xen_to_object(mus_any_to_mus_xen(fgen)), name));
+  if (fgen) return(mus_xen_to_object(mus_any_to_mus_xen(fgen)));
   return(XEN_FALSE);
 }
 
@@ -5901,7 +5897,7 @@ that reopens an existing sound file 'filename' ready for output via " S_frame_to
   mus_any *rgen = NULL;
   XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_1, S_continue_frame_to_file, "a string");
   rgen = mus_continue_frame_to_file(XEN_TO_C_STRING(name));
-  if (rgen) return(xen_return_first(mus_xen_to_object(mus_any_to_mus_xen(rgen)), name));
+  if (rgen) return(mus_xen_to_object(mus_any_to_mus_xen(rgen)));
   return(XEN_FALSE);
 }
 
@@ -7690,7 +7686,7 @@ it in conjunction with mixer to scale/envelope all the various ins and outs. \
     if (infile) free(infile);
     if (outfile) free(outfile);
   }
-  return(xen_return_first(XEN_TRUE, envs, in, out));
+  return(XEN_TRUE);
 }
 
 

@@ -20,12 +20,6 @@
 #define S_gc_on  "gc-on"
 
 
-XEN xen_return_first(XEN a, ...)
-{
-  return(a);
-}
-
-
 char *xen_strdup(const char *str)
 {
   char *newstr = NULL;

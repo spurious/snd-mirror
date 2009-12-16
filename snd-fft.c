@@ -2155,7 +2155,7 @@ static bool xen_transform_equalp(xen_transform *v1, xen_transform *v2)
 static XEN equalp_xen_transform(XEN obj1, XEN obj2)
 {
   if ((!(XEN_TRANSFORM_P(obj1))) || (!(XEN_TRANSFORM_P(obj2)))) return(XEN_FALSE);
-  return(xen_return_first(C_TO_XEN_BOOLEAN(xen_transform_equalp(XEN_TO_XEN_TRANSFORM(obj1), XEN_TO_XEN_TRANSFORM(obj2))), obj1, obj2));
+  return(C_TO_XEN_BOOLEAN(xen_transform_equalp(XEN_TO_XEN_TRANSFORM(obj1), XEN_TO_XEN_TRANSFORM(obj2))));
 }
 #endif
 

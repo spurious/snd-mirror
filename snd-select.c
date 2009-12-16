@@ -892,7 +892,7 @@ static bool xen_selection_equalp(xen_selection *v1, xen_selection *v2)
 static XEN equalp_xen_selection(XEN obj1, XEN obj2)
 {
   if ((!(XEN_SELECTION_P(obj1))) || (!(XEN_SELECTION_P(obj2)))) return(XEN_FALSE);
-  return(xen_return_first(C_TO_XEN_BOOLEAN(xen_selection_equalp(XEN_TO_XEN_SELECTION(obj1), XEN_TO_XEN_SELECTION(obj2))), obj1, obj2));
+  return(C_TO_XEN_BOOLEAN(xen_selection_equalp(XEN_TO_XEN_SELECTION(obj1), XEN_TO_XEN_SELECTION(obj2))));
 }
 #endif
 

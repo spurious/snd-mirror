@@ -533,7 +533,7 @@ a user interface edit the parameter in a useful way."
 				   C_TO_XEN_STRING("outputs:"),
 				   C_TO_XEN_INT(outchans)),
 		XEN_CONS(xenList, XEN_EMPTY_LIST)))));
-  return(xen_return_first(xenList, ladspa_plugin_filename, ladspa_plugin_label));
+  return(xenList);
 }
 
 
@@ -904,7 +904,7 @@ Information about parameters can be acquired using " S_analyse_ladspa "."
   if (sf) free(sf);
   if (pfControls) free(pfControls);
   free(data);
-  return(xen_return_first(XEN_FALSE, ladspa_plugin_configuration, origin));
+  return(XEN_FALSE);
 }
 
 

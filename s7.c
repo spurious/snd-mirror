@@ -14497,7 +14497,8 @@ static s7_pointer g_for_each(s7_scheme *sc, s7_pointer args)
     return(g_object_for_each(sc, args));
   
   /* hash-table? -- this seems special because one arg->2, and only one ht arg? */
-  /*    these will currently work because they are vectors, but the func arg = alist */
+  /*    TODO: these will not currently work because they are vectors, but the func arg = alist */
+  /*    TODO: also need hash-table-for-each, I think since vector-ref does not work */
 
   return(s7_wrong_type_arg_error(sc, "for-each", 2, car(fargs), "an applicable object"));
 }

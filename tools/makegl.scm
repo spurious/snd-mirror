@@ -576,7 +576,6 @@
 	  (arg-start 0)
 	  (line-len 0)
 	  (line-max 120)
-	  (protect-arglist #f)
 	  (max-args 10)) 
 
      (define (hey-start)
@@ -616,8 +615,7 @@
 	 (heyc "void")
 	 (if (>= (length args) max-args)
 	     (begin
-	       (heyc "XEN arglist")
-	       (set! protect-arglist #t))
+	       (heyc "XEN arglist"))
 	     (let ((previous-arg #f))
 	       (for-each 
 		(lambda (arg)
@@ -728,9 +726,7 @@
 		   (hey "      result = XEN_CONS(C_TO_XEN_~A(~A[i]), result);~%" 
 			(no-stars (deref-type (list-ref args (- (length args) 1))))
 			(deref-name (list-ref args (- (length args) 1))))
-		   (if protect-arglist
-		       (hey "    return(xen_return_first(result, arglist));~%")
-		       (hey "    return(result);~%"))
+		   (hey "    return(result);~%")
 		   (hey "  }~%"))
 		 (begin
 		   (hey "  return(XEN_LIST_~D(" (+ refargs (if using-result 1 0)))
@@ -748,9 +744,7 @@
 	   (if (string=? return-type "void")
 	       (begin
 		 (hey ");~%")
-		 (if protect-arglist
-		     (hey "  return(xen_return_first(XEN_FALSE, arglist));~%")
-		     (hey "  return(XEN_FALSE);~%")))
+		 (hey "  return(XEN_FALSE);~%"))
 	       (hey ")));~%")))
        )
 

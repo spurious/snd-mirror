@@ -277,7 +277,7 @@ XEN_MAKE_OBJECT_PRINT_PROCEDURE(vct, print_vct, mus_vct_to_string)
 static XEN equalp_vct(XEN obj1, XEN obj2)
 {
   if ((!(MUS_VCT_P(obj1))) || (!(MUS_VCT_P(obj2)))) return(XEN_FALSE);
-  return(xen_return_first(C_TO_XEN_BOOLEAN(mus_vct_equalp(XEN_TO_VCT(obj1), XEN_TO_VCT(obj2))), obj1, obj2));
+  return(C_TO_XEN_BOOLEAN(mus_vct_equalp(XEN_TO_VCT(obj1), XEN_TO_VCT(obj2))));
 }
 #endif
 
@@ -482,7 +482,7 @@ static XEN g_vct_set(XEN obj, XEN pos, XEN val)
     XEN_OUT_OF_RANGE_ERROR(S_vct_setB, 2, pos, "index ~A >= vct-length?");
 
   v->data[loc] = XEN_TO_C_DOUBLE(val);
-  return(xen_return_first(val, obj, pos));
+  return(val);
 }
 
 
@@ -499,7 +499,7 @@ static XEN g_vct_multiply(XEN obj1, XEN obj2)
   v2 = XEN_TO_VCT(obj2);
   lim = MIN(v1->length, v2->length);
   for (i = 0; i < lim; i++) v1->data[i] *= v2->data[i];
-  return(xen_return_first(obj1, obj2)); /* I wonder if this is necessary */
+  return(obj1);
 }
 
 
@@ -528,7 +528,7 @@ static XEN g_vct_add(XEN obj1, XEN obj2, XEN offs)
   else
     for (i = 0; i < lim; i++) 
       v1->data[i] += v2->data[i];
-  return(xen_return_first(obj1, obj2));
+  return(obj1);
 }
 
 
@@ -545,7 +545,7 @@ static XEN g_vct_subtract(XEN obj1, XEN obj2)
   v2 = XEN_TO_VCT(obj2);
   lim = MIN(v1->length, v2->length);
   for (i = 0; i < lim; i++) v1->data[i] -= v2->data[i];
-  return(xen_return_first(obj1, obj2));
+  return(obj1);
 }
 
 
@@ -568,7 +568,7 @@ static XEN g_vct_scale(XEN obj1, XEN obj2)
       if (scl != 1.0)
 	for (i = 0; i < v1->length; i++) v1->data[i] *= scl;
     }
-  return(xen_return_first(obj1, obj2));
+  return(obj1);
 }
 
 
@@ -586,7 +586,7 @@ static XEN g_vct_offset(XEN obj1, XEN obj2)
   scl = XEN_TO_C_DOUBLE(obj2);
   if (scl != 0.0)
     for (i = 0; i < v1->length; i++) v1->data[i] += scl;
-  return(xen_return_first(obj1, obj2));
+  return(obj1);
 }
 
 
@@ -605,7 +605,7 @@ static XEN g_vct_fill(XEN obj1, XEN obj2)
   if (scl == 0.0)
     mus_clear_array(v1->data, v1->length);
   else for (i = 0; i < v1->length; i++) v1->data[i] = scl;
-  return(xen_return_first(obj1, obj2));
+  return(obj1);
 }
 
 
@@ -644,7 +644,7 @@ v. " vct_map_example " is the same as " vct_fill_example
 	    for (i = 0; i < v->length; i++) 
 	      v->data[i] = mus_run_evaluate_ptree_0f2f(pt);
 	    mus_run_free_ptree(pt);
-	    return(xen_return_first(obj, proc));
+	    return(obj);
 	  }
       }
 
@@ -658,7 +658,7 @@ v. " vct_map_example " is the same as " vct_fill_example
     v->data[i] = XEN_TO_C_DOUBLE(XEN_CALL_0_NO_CATCH(proc));
 #endif
 
-  return(xen_return_first(obj, proc));
+  return(obj);
 }
 
 
@@ -727,7 +727,7 @@ static XEN g_vct_subseq(XEN vobj, XEN start, XEN end, XEN newv)
   for (i = istart, j = 0; (j < new_len) && (i < old_len); i++, j++)
     vnew->data[j] = vold->data[i];
 
-  return(xen_return_first(res, vobj, vnew));
+  return(res);
 }
 
 
@@ -747,7 +747,7 @@ XEN xen_list_to_vct(XEN lst)
   for (i = 0, lst1 = XEN_COPY_ARG(lst); i < len; i++, lst1 = XEN_CDR(lst1)) 
     v->data[i] = (mus_float_t)XEN_TO_C_DOUBLE_OR_ELSE(XEN_CAR(lst1), 0.0);
 
-  return(xen_return_first(scv, lst));
+  return(scv);
 }
 
 
@@ -774,7 +774,7 @@ static XEN g_vct_to_list(XEN vobj)
   vct *v;
   XEN_ASSERT_TYPE(MUS_VCT_P(vobj), vobj, XEN_ONLY_ARG, S_vct_to_list, "a vct");
   v = XEN_TO_VCT(vobj);
-  return(xen_return_first(mus_array_to_list(v->data, 0, v->length), vobj));
+  return(mus_array_to_list(v->data, 0, v->length));
 }
 
 
@@ -804,7 +804,7 @@ static XEN g_vector_to_vct(XEN vect)
 #if HAVE_S7
   s7_gc_unprotect_at(s7, gc_loc);
 #endif
-  return(xen_return_first(scv, vect));
+  return(scv);
 }
 
 
@@ -845,7 +845,7 @@ static XEN g_vct_to_vector(XEN vobj)
   rb_gc_enable();
 #endif
 
-  return(xen_return_first(new_vect, vobj));
+  return(new_vect);
 }
 
 

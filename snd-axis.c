@@ -1730,7 +1730,7 @@ Returns actual (pixel) axis bounds -- a list (x0 y0 x1 y1)."
 #endif
   free_axis_info(ap);
 
-  return(xen_return_first(val, args));
+  return(val);
 }
 
 
